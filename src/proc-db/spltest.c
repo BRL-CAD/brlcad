@@ -1,7 +1,7 @@
 /*                       S P L T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -90,10 +90,12 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
     s->srfs[s->nsrf++] = srf;
 }
 
+
 void
 printusage(char *argv[]) {
-	bu_log("Usage: %s [filename, default to spltest.g]\n", argv[0]);
+    bu_log("Usage: %s [filename, default to spltest.g]\n", argv[0]);
 }
+
 
 int
 main(int argc, char *argv[])
@@ -110,15 +112,16 @@ main(int argc, char *argv[])
     }
 
     helpflag = (argc == 2 && ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")));
-    if (argc == 1 || helpflag) {
+    if (helpflag) {
     	printusage(argv);
 	if (helpflag)
 		bu_exit(1,NULL);
-	bu_log("       Program continues running:\n");
     }
 
     if (argc == 2)
 	filename = argv[1];
+
+    bu_log("Writing out geometry to file [%s] ...", filename);
 
     if ((fp = wdb_fopen(filename)) == NULL) {
 	perror("unable to open geometry database for writing");
@@ -141,7 +144,8 @@ main(int argc, char *argv[])
 
     /* wdb_export */
     mk_export_fwrite(fp, "spltest", (void *)si, ID_BSPLINE);
-    bu_log("Saving file %s\n",filename);
+
+    bu_log(" done.\n");
 
     return 0;
 }

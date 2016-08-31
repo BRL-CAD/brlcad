@@ -1,7 +1,7 @@
 #                        V I E W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2014 United States Government as represented by
+# Copyright (c) 1998-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -63,7 +63,6 @@
     public method perspective {args}
     public method pmat {args}
     public method pmodel2view {args}
-    public method pov {args}
     public method rmat {args}
     public method rot {args}
     public method rotate_about {args}
@@ -297,14 +296,6 @@
     eval $view pmodel2view $args
 }
 
-::itcl::body View::pov {args} {
-    eval $view pov $args
-
-    set ae [$view ae]
-    set center [$view center]
-    return
-}
-
 ::itcl::body View::rmat {args} {
     # get rotation matrix
     if {$args == ""} {
@@ -463,7 +454,6 @@
     $help add perspective	{{[angle]} {set/get the perspective angle}}
     $help add pmat		{{} {get the perspective matrix}}
     $help add pmodel2view	{{} {get the pmodel2view matrix}}
-    $help add pov		{{args}	{experimental:  set point-of-view}}
     $help add rmat		{{} {get/set the rotation matrix}}
     $help add rot		{{"x y z"} {rotate the view}}
     $help add rotate_about	{{[e|k|m|v]} {set/get the rotate about point}}

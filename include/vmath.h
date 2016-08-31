@@ -1,7 +1,7 @@
 /*                         V M A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,27 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup mat */
+/** @addtogroup vmath */
 /** @{ */
 /** @file vmath.h
  *
- * @brief vector/matrix math
+ * @brief vector/matrix math, matrix representation
  *
  * This header file defines many commonly used 3D vector math macros,
  * and operates on vect_t, point_t, mat_t, and quat_t objects.
  *
- * @brief matrix representation
  * 4 x 4 Matrix manipulation functions...
  *
  * Matrix array elements have the following positions in the matrix:
- @code
+ * @code
  *			|  0  1  2  3 |		| 0 |
  *	[ 0 1 2 3 ]	|  4  5  6  7 |		| 1 |
  *			|  8  9 10 11 |		| 2 |
  *			| 12 13 14 15 |		| 3 |
  *
  * preVector (vect_t) Matrix (mat_t) postVector (vect_t)
- @endcode
+ * @endcode
  *
  * Note that while many people in the computer graphics field use
  * post-multiplication with row vectors (i.e., vector * matrix * matrix
@@ -52,20 +51,20 @@
  * Furthermore, additional transformations are multiplied on the left,
  * i.e.:
  *
- <tt> @code
+ * @code
  * vec'  =  T1 * vec
  * vec'' =  T2 * T1 * vec  =  T2 * vec'
- @endcode </tt>
+ * @endcode
  *
  * The most notable implication of this is the location of the "delta"
  * (translation) values in the matrix, i.e.:
  *
- <tt> @code
+ * @code
  * x'   (R0  R1  R2 Dx) x
  * y' = (R4  R5  R6 Dy) * y
  * z'   (R8  R9 R10 Dz) z
  * w'   (0   0   0  1/s) w
- @endcode </tt>
+ * @endcode
  *
  * Note -
  *@n  vect_t objects are 3-tuples
@@ -79,7 +78,9 @@
  * underscore in order to (hopefully) minimize any name conflicts with
  * user-provided parameters, such as _f in the following example:
  *
+ * @code
  * #define ABC() do { register double _f; do stuff; } while (0)
+ * @endcode
  *
  * All of the macros that introduce a scope like the preceding
  * example are written as do { } while (0) loops in order to require
@@ -232,28 +233,28 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/** @brief # of fastf_t's per vect2d_t */
+/** @brief number of fastf_t's per vect2d_t */
 #define ELEMENTS_PER_VECT2D	2
 
-/** @brief # of fastf_t's per point2d_t */
+/** @brief number of fastf_t's per point2d_t */
 #define ELEMENTS_PER_POINT2D	2
 
-/** @brief # of fastf_t's per vect_t */
+/** @brief number of fastf_t's per vect_t */
 #define ELEMENTS_PER_VECT	3
 
-/** @brief # of fastf_t's per point_t */
+/** @brief number of fastf_t's per point_t */
 #define ELEMENTS_PER_POINT	3
 
-/** @brief # of fastf_t's per hvect_t (homogeneous vector) */
+/** @brief number of fastf_t's per hvect_t (homogeneous vector) */
 #define ELEMENTS_PER_HVECT	4
 
-/** @brief # of fastf_t's per hpt_t (homogeneous point) */
+/** @brief number of fastf_t's per hpt_t (homogeneous point) */
 #define ELEMENTS_PER_HPOINT	4
 
-/** @brief # of fastf_t's per plane_t */
+/** @brief number of fastf_t's per plane_t */
 #define ELEMENTS_PER_PLANE	4
 
-/** @brief # of fastf_t's per mat_t */
+/** @brief number of fastf_t's per mat_t */
 #define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
 
 /*
@@ -348,24 +349,24 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * Evaluates truthfully whether a number is not within valid range of
- * INFINITY to -INFINITY inclusive.
+ * INFINITY to -INFINITY exclusive (open set).
  */
-#define INVALID(n) (!((n) >= -INFINITY && (n) <= INFINITY))
+#define INVALID(n) (!((n) > -INFINITY && (n) < INFINITY))
 
 /**
- * Evaluates truthfully whether all components of a vector are not
+ * Evaluates truthfully whether any components of a vector are not
  * within a valid range.
  */
 #define VINVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]) || INVALID((v)[Z]))
 
 /**
- * Evaluates truthfully whether all components of a 2D vector are not
+ * Evaluates truthfully whether any components of a 2D vector are not
  * within a valid range.
  */
 #define V2INVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]))
 
 /**
- * Evaluates truthfully whether all components of a 4D vector are not
+ * Evaluates truthfully whether any components of a 4D vector are not
  * within a valid range.
  */
 #define HINVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]) || INVALID((v)[Z]) || INVALID((v)[W]))
@@ -1299,6 +1300,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * @brief Project vector `a' onto `b'
  * vector `c' is the component of `a' parallel to `b'
  *     "    `d' "   "     "      "   "  orthogonal "   "
+ *
+ * FIXME: consistency, the result should come first
  */
 #define VPROJECT(a, b, c, d) do { \
     VSCALE(c, b, VDOT(a, b) / VDOT(b, b)); \

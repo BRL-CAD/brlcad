@@ -1,7 +1,7 @@
 /*                     R B _ C R E A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "bu/rb.h"
-#include "./rb_internals.h"
+#include "./rb.h"
 
 
 struct bu_rb_tree *

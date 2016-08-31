@@ -1,7 +1,7 @@
 #      B R L C A D _ C O M P I L E R F L A G S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -201,6 +201,12 @@ if(BRLCAD_ENABLE_COVERAGE)
 endif(BRLCAD_ENABLE_COVERAGE)
 
 if(BRLCAD_ENABLE_STRICT)
+  # If we're going strict, suppress C11 warnings about isnan due to
+  # clang issue:  https://llvm.org/bugs/show_bug.cgi?id=17788
+  CHECK_C_FLAG(Wno-c11-extensions)
+  CHECK_CXX_FLAG(Wno-c11-extensions)
+
+  # Add the flag that actually turns warnings into errors
   CHECK_C_FLAG(Werror)
   CHECK_CXX_FLAG(Werror)
 endif(BRLCAD_ENABLE_STRICT)

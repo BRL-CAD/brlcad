@@ -6,7 +6,7 @@ Index: src/libbrep/libbrep_curvetree.cpp
 +/*          L I B B R E P _ C U R V E T R E E . C P P
 + * BRL-CAD
 + *
-+ * Copyright (c) 2013 United States Government as represented by
++ * Copyright (c) 2013-2016 United States Government as represented by
 + * the U.S. Army Research Laboratory.
 + *
 + * This library is free software; you can redistribute it and/or
@@ -641,7 +641,7 @@ Index: src/libbrep/libbrep_surfacetree.cpp
 +/*        L I B B R E P _ S U R F A C E T R E E . C P P
 + * BRL-CAD
 + *
-+ * Copyright (c) 2013 United States Government as represented by
++ * Copyright (c) 2013-2016 United States Government as represented by
 + * the U.S. Army Research Laboratory.
 + *
 + * This library is free software; you can redistribute it and/or
@@ -1093,7 +1093,7 @@ Index: src/libbrep/libbrep_curvetree.h
 +/*            L I B B R E P _ C U R V E T R E E . H
 + * BRL-CAD
 + *
-+ * Copyright (c) 2013 United States Government as represented by
++ * Copyright (c) 2013-2016 United States Government as represented by
 + * the U.S. Army Research Laboratory.
 + *
 + * This library is free software; you can redistribute it and/or
@@ -1286,7 +1286,7 @@ Index: src/libbrep/libbrep_surfacetree.h
 +/*          L I B B R E P _ S U R F A C E T R E E . H
 + * BRL-CAD
 + *
-+ * Copyright (c) 2013 United States Government as represented by
++ * Copyright (c) 2013-2016 United States Government as represented by
 + * the U.S. Army Research Laboratory.
 + *
 + * This library is free software; you can redistribute it and/or
@@ -1499,7 +1499,7 @@ Index: src/libbrep/libbrep_util.cpp
 +/*                L I B B R E P _ U T I L . C P P
 + * BRL-CAD
 + *
-+ * Copyright (c) 2013 United States Government as represented by
++ * Copyright (c) 2013-2016 United States Government as represented by
 + * the U.S. Army Research Laboratory.
 + *
 + * This library is free software; you can redistribute it and/or
@@ -1868,7 +1868,7 @@ Index: src/libbrep/libbrep_util.h
 +/*      L I B B R E P _ S U R F A C E T R E E U T I L . H
 + * BRL-CAD
 + *
-+ * Copyright (c) 2013 United States Government as represented by
++ * Copyright (c) 2013-2016 United States Government as represented by
 + * the U.S. Army Research Laboratory.
 + *
 + * This library is free software; you can redistribute it and/or

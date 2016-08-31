@@ -1,7 +1,7 @@
 /*                       D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,11 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/defines.h
+/** @addtogroup rt_defines
  *
  * Common definitions for LIBRT
  *
  */
+
+/** @{ */
+/** @file rt/defines.h */
 
 #ifndef RT_DEFINES_H
 #define RT_DEFINES_H
@@ -38,7 +41,31 @@
 #  endif
 #endif
 
-#endif /* RT_DEFINES_H */
+#include "common.h"
+
+#ifdef USE_OPENCL
+#include <limits.h>
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#define CL_USE_DEPRECATED_OPENCL_2_0_APIS
+
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
+
+#ifndef CL_VERSION_1_2
+#  error "OpenCL 1.2 required."
+#endif
+
+#ifdef CLT_SINGLE_PRECISION
+#define cl_double cl_float
+#define cl_double3 cl_float3
+#define cl_double4 cl_float4
+#define cl_double16 cl_float16
+#endif
+#endif
+
 
 /*
  * Values for Solid ID.
@@ -194,6 +221,9 @@
 #define VPRINT(a, b) bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
 #define HPRINT(a, b) bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
+#endif /* RT_DEFINES_H */
+
+/** @} */
 
 /*
  * Local Variables:

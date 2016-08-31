@@ -1,7 +1,7 @@
 /*                    R T _ I N S T A N C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -348,6 +348,22 @@ RT_EXPORT extern void rt_fr_cut(struct rt_i *rtip,
  * Called once, from rt_prep(), before raytracing begins.
  */
 RT_EXPORT extern void rt_regionfix(struct rt_i *rtip);
+
+
+#ifdef USE_OPENCL
+RT_EXPORT extern void clt_init(void);
+
+RT_EXPORT extern void
+clt_db_store(size_t count, struct soltab *solids[]);
+
+RT_EXPORT extern void
+clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes);
+
+RT_EXPORT extern void clt_db_release(void);
+
+
+RT_EXPORT void clt_prep(struct rt_i *rtip);
+#endif
 
 
 __END_DECLS

@@ -1,7 +1,7 @@
 /*                      B O O L W E A V E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -167,7 +167,7 @@ RT_EXPORT extern int rt_boolfinal(struct partition *InputHdp,
  *
  * Return the new pointer for what was previously the last element.
  */
-RT_EXPORT extern void rt_grow_boolstack(struct resource *res);
+RT_EXPORT extern void rt_bool_growstack(struct resource *res);
 
 __END_DECLS
 

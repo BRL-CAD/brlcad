@@ -1,7 +1,7 @@
 /*                      S P H F L A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -166,13 +166,13 @@ int main(int argc, char **argv)
 	}
     }
     if (bu_optind <= 1) {
-	usage(argv[0]);
 	fprintf(stderr,"Using all default parameters.\n");
-	fprintf(stderr,"       Program continues running:\n");
 	memset(fileName, 0, MAX_INPUT_LENGTH);
 	bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
 	inter = 0;
     }
+
+    bu_log("Writing out geometry to file [%s] ...", fileName);
 
     initializeInfo(&params, inter, fileName, depth);
 
@@ -200,6 +200,8 @@ int main(int argc, char **argv)
     wdb_close(fp);
     bu_free(wmemberArray, "free wmemberArray");
     bu_free(params.matArray, "free matArray");
+
+    bu_log(" done.\n");
 
     return 0;
 }

@@ -1,7 +1,7 @@
 #             F I N D P K G M A C R O S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -170,8 +170,8 @@ macro(findpkg_framework fwk)
       /System/Library/Frameworks
       /Network/Library/Frameworks
       /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS3.0.sdk/System/Library/Frameworks/
-      ${CMAKE_CURRENT_SOURCE_DIR}/lib/Release
-      ${CMAKE_CURRENT_SOURCE_DIR}/lib/Debug
+      "${CMAKE_CURRENT_SOURCE_DIR}/lib/Release"
+      "${CMAKE_CURRENT_SOURCE_DIR}/lib/Debug"
       ${OGRE_PREFIX_PATH}/lib/Release
       ${OGRE_PREFIX_PATH}/lib/Debug
       ${OGRE_PREFIX_BUILD}/lib/Release

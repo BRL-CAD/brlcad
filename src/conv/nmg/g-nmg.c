@@ -1,7 +1,7 @@
 /*                         G - N M G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -75,7 +75,7 @@ print_usage(const char *progname)
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = NULL;
+    static union tree *ret_tree = NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
@@ -424,6 +424,9 @@ main(int argc, char **argv)
     int	c;
     int suppliedname = 0;
     double percent;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);

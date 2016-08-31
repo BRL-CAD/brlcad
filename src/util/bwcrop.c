@@ -1,7 +1,7 @@
 /*                        B W C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -99,7 +99,8 @@ fill_buffer(int y)
     size_t ret;
 
     buf_start = y - buflines/2;
-    if (buf_start < 0) buf_start = 0;
+    if (buf_start < 0)
+	buf_start = 0;
 
     bu_fseek(ifp, buf_start * scanlen, 0);
     ret = fread(buffer, scanlen, buflines, ifp);
@@ -267,6 +268,7 @@ main(int argc, char **argv)
 		fill_buffer(round(y));
 		yindex = round(y) - buf_start;
 	    }
+	    yindex = yindex + buf_start;
 
 	    value = buffer[ yindex * scanlen + round(x) ];
 	    ret = fwrite(&value, sizeof(value), 1, ofp);

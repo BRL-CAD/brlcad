@@ -1,7 +1,7 @@
 /*                           D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2014 United States Government as represented by
+ * Copyright (c) 1999-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -4960,7 +4960,7 @@ project_pt(point_t out,
 	bu_log("x:%g y:%g dx:%d dy:%d alpha:%g beta:%g\n",
 	       x, y, dx, dy, alpha, beta);
     }
-    if ((alpha+beta) > (1.0+SMALL_FASTF)) {
+    if (alpha + beta - 1.0 > SMALL_FASTF) {
 	if (RT_G_DEBUG & DEBUG_HF) bu_log("Not this triangle\n");
 	return 1;
     }

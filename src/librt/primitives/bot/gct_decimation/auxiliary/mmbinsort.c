@@ -88,7 +88,6 @@ typedef struct {
 
     /* Top-level group, *MUST* be at end of struct due to bucket[] zero-length array */
     mmBinSortGroup root;
-
 } mmBinSortHead;
 
 
@@ -122,7 +121,7 @@ static mmBinSortGroup *mmBinSortSpawnGroup(mmBinSortHead *bsort, void *itembase,
 
     bucket = group->bucket;
 
-    for (bucketindex = 0 ; bucketindex < bsort->groupbucketcount ; bucketindex++) {
+    for (bucketindex = 0; bucketindex < bsort->groupbucketcount; bucketindex++) {
 	bucket->flags = 0;
 	bucket->itemcount = 0;
 	bucket->min =  FLT_MAX;
@@ -132,7 +131,7 @@ static mmBinSortGroup *mmBinSortSpawnGroup(mmBinSortHead *bsort, void *itembase,
 	bucket++;
     }
 
-    for (item = itembase ; item ; item = itemnext) {
+    for (item = itembase; item; item = itemnext) {
 	itemnext = ((mmListNode *)ADDRESS(item, bsort->itemlistoffset))->next;
 
 	value = bsort->itemvalue(item);
@@ -144,7 +143,7 @@ static mmBinSortGroup *mmBinSortSpawnGroup(mmBinSortHead *bsort, void *itembase,
 	if (value > bucket->max)
 	    bucket->max = value;
 
-	bucket = &group->bucket[ bucketindex ];
+	bucket = &group->bucket[bucketindex];
 	bucket->itemcount++;
 	mmListAdd(bucket->last, item, bsort->itemlistoffset);
 	bucket->last = &((mmListNode *)ADDRESS(item, bsort->itemlistoffset))->next;
@@ -167,11 +166,11 @@ static void mmBinSortCollapseGroup(mmBinSortHead *bsort, mmBinSortBucket *parent
 
     itemcount = 0;
 
-    for (bucketindex = 0, bucket = group->bucket ; bucketindex < bsort->groupbucketcount ; bucketindex++, bucket++) {
+    for (bucketindex = 0, bucket = group->bucket; bucketindex < bsort->groupbucketcount; bucketindex++, bucket++) {
 	if (bucket->flags & MM_BINSORT_BUCKET_FLAGS_SUBGROUP)
 	    mmBinSortCollapseGroup(bsort, bucket);
 
-	for (item = bucket->p ; item ; item = itemnext) {
+	for (item = bucket->p; item; item = itemnext) {
 	    itemnext = ((mmListNode *)ADDRESS(item, bsort->itemlistoffset))->next;
 	    mmListAdd(parentbucket->last, item, bsort->itemlistoffset);
 	    parentbucket->last = &((mmListNode *)ADDRESS(item, bsort->itemlistoffset))->next;
@@ -181,8 +180,6 @@ static void mmBinSortCollapseGroup(mmBinSortHead *bsort, mmBinSortBucket *parent
 
     parentbucket->flags &= ~MM_BINSORT_BUCKET_FLAGS_SUBGROUP;
     parentbucket->itemcount = itemcount;
-
-    return;
 }
 
 
@@ -204,7 +201,7 @@ static void *mmBinSortGroupFirstItem(mmBinSortHead *bsort, mmBinSortGroup *group
 
     bucket = group->bucket;
 
-    for (bucketindex = 0 ; bucketindex <= topbucket ; bucketindex++, bucket++) {
+    for (bucketindex = 0; bucketindex <= topbucket; bucketindex++, bucket++) {
 	if (bucket->flags & MM_BINSORT_BUCKET_FLAGS_SUBGROUP) {
 	    subgroup = (mmBinSortGroup *)bucket->p;
 	    item = mmBinSortGroupFirstItem(bsort, subgroup, failmax);
@@ -264,7 +261,7 @@ void *mmBinSortInit(size_t itemlistoffset, int rootbucketcount, int groupbucketc
     group->bucketmax = rootbucketcount - 1;
     bucket = group->bucket;
 
-    for (bucketindex = 0 ; bucketindex < rootbucketcount ; bucketindex++) {
+    for (bucketindex = 0; bucketindex < rootbucketcount; bucketindex++) {
 	bucket->flags = 0;
 	bucket->itemcount = 0;
 	bucket->min =  FLT_MAX;
@@ -303,9 +300,9 @@ void mmBinSortAdd(void *binsort, void *item, double itemvalue)
     value = itemvalue;
     group = &bsort->root;
 
-    for (depth = 0 ; ; group = (mmBinSortGroup *)bucket->p, depth++) {
+    for (depth = 0;; group = (mmBinSortGroup *)bucket->p, depth++) {
 	bucketindex = mmBinSortBucketIndex(group, value);
-	bucket = &group->bucket[ bucketindex ];
+	bucket = &group->bucket[bucketindex];
 	bucket->itemcount++;
 
 	if (bucket->flags & MM_BINSORT_BUCKET_FLAGS_SUBGROUP)
@@ -330,7 +327,7 @@ void mmBinSortAdd(void *binsort, void *item, double itemvalue)
 	void **insert;
 	insert = &bucket->p;
 
-	for (itemfind = bucket->p ; itemfind ; itemfind = itemnext) {
+	for (itemfind = bucket->p; itemfind; itemfind = itemnext) {
 	    itemnext = ((mmListNode *)ADDRESS(itemfind, bsort->itemlistoffset))->next;
 
 	    if (itemvalue <= bsort->itemvalue(itemfind))
@@ -346,8 +343,6 @@ void mmBinSortAdd(void *binsort, void *item, double itemvalue)
 
 	break;
     }
-
-    return;
 }
 
 
@@ -363,9 +358,9 @@ void mmBinSortRemove(void *binsort, void *item, double itemvalue)
     value = itemvalue;
     group = &bsort->root;
 
-    for (; ; group = (mmBinSortGroup *)bucket->p) {
+    for (;; group = (mmBinSortGroup *)bucket->p) {
 	bucketindex = mmBinSortBucketIndex(group, value);
-	bucket = &group->bucket[ bucketindex ];
+	bucket = &group->bucket[bucketindex];
 	bucket->itemcount--;
 
 	if (bucket->flags & MM_BINSORT_BUCKET_FLAGS_SUBGROUP) {
@@ -379,8 +374,6 @@ void mmBinSortRemove(void *binsort, void *item, double itemvalue)
     }
 
     mmListRemove(item, bsort->itemlistoffset);
-
-    return;
 }
 
 
@@ -388,7 +381,6 @@ void mmBinSortUpdate(void *binsort, void *item, double olditemvalue, double newi
 {
     mmBinSortRemove(binsort, item, olditemvalue);
     mmBinSortAdd(binsort, item, newitemvalue);
-    return;
 }
 
 
@@ -413,7 +405,7 @@ void *mmBinSortGetFirstItem(void *binsort, double failmax)
 
     bucket = bsort->root.bucket;
 
-    for (bucketindex = 0 ; bucketindex <= topbucket ; bucketindex++, bucket++) {
+    for (bucketindex = 0; bucketindex <= topbucket; bucketindex++, bucket++) {
 	if (bucket->flags & MM_BINSORT_BUCKET_FLAGS_SUBGROUP) {
 	    group = (mmBinSortGroup *)bucket->p;
 	    item = mmBinSortGroupFirstItem(bsort, group, (mmbsf)failmax);

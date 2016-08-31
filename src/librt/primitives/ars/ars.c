@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -625,7 +625,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)verts, "rt_ars_tess *verts[]");
 
     /* kill any degenerate faces that may have been created */
-    for (i = 0; i < (size_t)BU_PTBL_END(&kill_fus); i++) {
+    for (i = 0; i < (size_t)BU_PTBL_LEN(&kill_fus); i++) {
 	fu = (struct faceuse *)BU_PTBL_GET(&kill_fus, i);
 	NMG_CK_FACEUSE(fu);
 	(void)nmg_kfu(fu);
@@ -1253,7 +1253,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    j = atoi(ptr+1);
 		    len = 3;
 		    array = &ars->curves[i][j*3];
-		    if (rt_tcl_list_to_fastf_array(argv[1], &array, &len)!= len) {
+		    if (_rt_tcl_list_to_fastf_array(argv[1], &array, &len)!= len) {
 			bu_vls_printf(logstr, "WARNING: incorrect number of parameters provided for a point\n");
 		    }
 		} else {
@@ -1273,7 +1273,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    if (!ars->curves[i]) {
 			ars->curves[i] = (fastf_t *)bu_calloc(ars->pts_per_curve * 3, sizeof(fastf_t), "ars->curves[i]");
 		    }
-		    if (rt_tcl_list_to_fastf_array(dupstr, &ars->curves[i], &len) != len) {
+		    if (_rt_tcl_list_to_fastf_array(dupstr, &ars->curves[i], &len) != len) {
 			bu_vls_printf(logstr, "WARNING: incorrect number of parameters provided for a curve\n");
 		    }
 		    bu_free(dupstr, "bu_strdup ars curve");

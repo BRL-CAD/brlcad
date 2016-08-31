@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution.
+in the documentation and/or other materials provided with the distribution. 
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission.
+prior written permission. 
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -46,8 +46,8 @@ DAMAGE.
 #include "omp.h"
 #endif // _OPENMP
 void DumpOutput( const char* format , ... );
-void DumpOutput2( char* str , const char* format , ... );
 #include "MultiGridOctreeData.h"
+void DumpOutput2( std::vector< char* >& comments , const char* format , ... );
 
 #define DEFAULT_FULL_DEPTH 5
 
@@ -79,7 +79,7 @@ void DumpOutput( const char* format , ... )
 		va_end( args );
 	}
 }
-void DumpOutput2( char* str , const char* format , ... )
+void DumpOutput2( std::vector< char* >& comments  , const char* format , ... )
 {
 	if( outputFile )
 	{
@@ -97,6 +97,8 @@ void DumpOutput2( char* str , const char* format , ... )
 		vprintf( format , args );
 		va_end( args );
 	}
+	comments.push_back( new char[1024] );
+	char* str = comments.back();
 	va_list args;
 	va_start( args , format );
 	vsprintf( str , format , args );
@@ -141,7 +143,8 @@ cmdLineInt
 	Threads( "threads" , omp_get_num_procs() );
 
 cmdLineFloat
-	SamplesPerNode( "samplesPerNode" , 1.f ) ,
+	Color( "color" , 16.f ) ,
+	SamplesPerNode( "samplesPerNode" , 1.5f ) ,
 	Scale( "scale" , 1.1f ) ,
 	CSSolverAccuracy( "cgAccuracy" , float(1e-3) ) ,
 	PointWeight( "pointWeight" , 4.f );
@@ -159,6 +162,7 @@ cmdLineReadable* params[] =
 	&MinDepth ,
 	&CGDepth , &Iters ,
 	&Complete ,
+	&Color ,
 #ifdef _WIN32
 	&Performance ,
 #endif // _WIN32
@@ -170,8 +174,8 @@ void ShowUsage(char* ex)
 	printf( "Usage: %s\n" , ex );
 	printf( "\t --%s  <input points>\n" , In.name );
 
-	printf( "\t[--%s <output triangle mesh>]\n" , Out.name );
-	printf( "\t[--%s <output voxel grid>]\n" , VoxelGrid.name );
+	printf( "\t[--%s <ouput triangle mesh>]\n" , Out.name );
+	printf( "\t[--%s <ouput voxel grid>]\n" , VoxelGrid.name );
 
 	printf( "\t[--%s <maximum reconstruction depth>=%d]\n" , Depth.name , Depth.value );
 	printf( "\t\t Running at depth d corresponds to solving on a 2^d x 2^d x 2^d\n" );
@@ -199,6 +203,9 @@ void ShowUsage(char* ex)
 
 	printf( "\t[--%s <iterations>=%d]\n" , Iters.name , Iters.value );
 	printf( "\t\t This flag specifies the (maximum if CG) number of solver iterations.\n" );
+
+	printf( "\t[--%s <pull factor>]\n" , Color.name );
+	printf( "\t\t This flag specifies the pull factor for color interpolation\n" );
 
 #ifdef _OPENMP
 	printf( "\t[--%s <num threads>=%d]\n" , Threads.name , Threads.value );
@@ -249,28 +256,43 @@ void ShowUsage(char* ex)
 #if 0
 	printf( "\t[--%s]\n" , ASCII.name );
 	printf( "\t\t If this flag is enabled, the output file is written out in ASCII format.\n" );
-
+	
 	printf( "\t[--%s]\n" , NoComments.name );
 	printf( "\t\t If this flag is enabled, the output file will not include comments.\n" );
 #endif
-
+	
 	printf( "\t[--%s]\n" , Double.name );
 	printf( "\t\t If this flag is enabled, the reconstruction will be performed with double-precision floats.\n" );
 
 	printf( "\t[--%s]\n" , Verbose.name );
 	printf( "\t\t If this flag is enabled, the progress of the reconstructor will be output to STDOUT.\n" );
 }
+
+Point3D< unsigned char > ReadASCIIColor( FILE* fp )
+{
+	Point3D< unsigned char > c;
+	if( fscanf( fp , " %c %c %c " , &c[0] , &c[1] , &c[2] )!=3 ) fprintf( stderr , "[ERROR] Failed to read color\n" ) , exit( 0 );
+	return c;
+}
+
+PlyProperty PlyColorProperties[]=
+{
+	{ "r"     , PLY_UCHAR , PLY_UCHAR , int( offsetof( Point3D< unsigned char > , coords[0] ) ) , 0 , 0 , 0 , 0 } ,
+	{ "g"     , PLY_UCHAR , PLY_UCHAR , int( offsetof( Point3D< unsigned char > , coords[1] ) ) , 0 , 0 , 0 , 0 } ,
+	{ "b"     , PLY_UCHAR , PLY_UCHAR , int( offsetof( Point3D< unsigned char > , coords[2] ) ) , 0 , 0 , 0 , 0 } ,
+	{ "red"   , PLY_UCHAR , PLY_UCHAR , int( offsetof( Point3D< unsigned char > , coords[0] ) ) , 0 , 0 , 0 , 0 } , 
+	{ "green" , PLY_UCHAR , PLY_UCHAR , int( offsetof( Point3D< unsigned char > , coords[1] ) ) , 0 , 0 , 0 , 0 } ,
+	{ "blue"  , PLY_UCHAR , PLY_UCHAR , int( offsetof( Point3D< unsigned char > , coords[2] ) ) , 0 , 0 , 0 , 0 }
+};
+
+bool ValidPlyColorProperties( const bool* props ){ return ( props[0] || props[3] ) && ( props[1] || props[4] ) && ( props[2] || props[5] ); }
+
 template< class Real , class Vertex >
 int Execute( int argc , char* argv[] )
 {
 	Reset< Real >();
-	int i;
 	int paramNum = sizeof(params)/sizeof(cmdLineReadable*);
-	int commentNum=0;
-	char **comments;
-
-	comments = new char*[paramNum+7];
-	for( i=0 ; i<paramNum+7 ; i++ ) comments[i] = new char[1024];
+	std::vector< char* > comments;
 
 	if( Verbose.set ) echoStdout=1;
 
@@ -288,7 +310,7 @@ int Execute( int argc , char* argv[] )
 			for( int i=0 ; i<4 ; i++ ) for( int j=0 ; j<4 ; j++ )
 			{
 				float f;
-				fscanf( fp , " %f " , &f );
+				if( fscanf( fp , " %f " , &f )!=1 ) fprintf( stderr , "[ERROR] Execute: Failed to read xform\n" ) , exit( 0 );
 				xForm(i,j) = (Real)f;
 			}
 			fclose( fp );
@@ -297,14 +319,14 @@ int Execute( int argc , char* argv[] )
 	else xForm = XForm4x4< Real >::Identity();
 	iXForm = xForm.inverse();
 
-	DumpOutput2( comments[commentNum++] , "Running Screened Poisson Reconstruction (Version 6.13)\n" );
+	DumpOutput2( comments , "Running Screened Poisson Reconstruction (Version 7.0)\n" );
 	char str[1024];
 	for( int i=0 ; i<paramNum ; i++ )
 		if( params[i]->set )
 		{
 			params[i]->writeValue( str );
-			if( strlen( str ) ) DumpOutput2( comments[commentNum++] , "\t--%s %s\n" , params[i]->name , str );
-			else                DumpOutput2( comments[commentNum++] , "\t--%s\n" , params[i]->name );
+			if( strlen( str ) ) DumpOutput2( comments , "\t--%s %s\n" , params[i]->name , str );
+			else                DumpOutput2( comments , "\t--%s\n" , params[i]->name );
 		}
 
 	double t;
@@ -319,7 +341,7 @@ int Execute( int argc , char* argv[] )
 		return 0;
 	}
 	if( !MaxSolveDepth.set ) MaxSolveDepth.value = Depth.value;
-
+	
 	OctNode< TreeNodeData >::SetAllocator( MEMORY_ALLOCATOR_BLOCK_SIZE );
 
 	t=Time();
@@ -332,20 +354,43 @@ int Execute( int argc , char* argv[] )
 
 	double maxMemoryUsage;
 	t=Time() , tree.maxMemoryUsage=0;
-	typename Octree< Real >::PointInfo* pointInfo = new typename Octree< Real >::PointInfo();
-	typename Octree< Real >::NormalInfo* normalInfo = new typename Octree< Real >::NormalInfo();
+	typename Octree< Real >::template SparseNodeData< typename Octree< Real >::PointData >* pointInfo = new typename Octree< Real >::template SparseNodeData< typename Octree< Real >::PointData >();
+	typename Octree< Real >::template SparseNodeData< Point3D< Real > >* normalInfo = new typename Octree< Real >::template SparseNodeData< Point3D< Real > >();
 	std::vector< Real >* kernelDensityWeights = new std::vector< Real >();
 	std::vector< Real >* centerWeights = new std::vector< Real >();
-	PointStream< float >* pointStream;
+	int pointCount;
+	typedef typename Octree< Real >::template ProjectiveData< Point3D< Real > > ProjectiveColor;
+	typename Octree< Real >::template SparseNodeData< ProjectiveColor > colorData;
+
 	char* ext = GetFileExtension( In.value );
-	if     ( !strcasecmp( ext , "bnpts" ) ) pointStream = new BinaryPointStream< float >( In.value );
-	else if( !strcasecmp( ext , "ply"   ) ) pointStream = new    PLYPointStream< float >( In.value );
-	else                                    pointStream = new  ASCIIPointStream< float >( In.value );
+	if( Color.set && Color.value>0 )
+	{
+		OrientedPointStreamWithData< float , Point3D< unsigned char > >* pointStream;
+		if     ( !strcasecmp( ext , "bnpts" ) ) pointStream = new BinaryOrientedPointStreamWithData< float , Point3D< unsigned char > >( In.value );
+		else if( !strcasecmp( ext , "ply"   ) ) pointStream = new    PLYOrientedPointStreamWithData< float , Point3D< unsigned char > >( In.value , PlyColorProperties , 6 , ValidPlyColorProperties );
+		else                                    pointStream = new  ASCIIOrientedPointStreamWithData< float , Point3D< unsigned char > >( In.value , ReadASCIIColor );
+		pointCount = tree.template SetTree< float >( pointStream , MinDepth.value , Depth.value , FullDepth.value , kernelDepth , Real(SamplesPerNode.value) , Scale.value , Confidence.set , NormalWeights.set , PointWeight.value , AdaptiveExponent.value , *kernelDensityWeights , *pointInfo , *normalInfo , *centerWeights , colorData , xForm , BoundaryType.value , Complete.set );
+		delete pointStream;
+
+		for( const OctNode< TreeNodeData >* n = tree.tree.nextNode() ; n!=NULL ; n=tree.tree.nextNode( n ) )
+		{
+			int idx = colorData.index( n );
+			if( idx>=0 ) colorData.data[idx] *= (Real)pow( Color.value , n->depth() );
+		}
+	}
+	else
+	{
+		OrientedPointStream< float >* pointStream;
+		if     ( !strcasecmp( ext , "bnpts" ) ) pointStream = new BinaryOrientedPointStream< float >( In.value );
+		else if( !strcasecmp( ext , "ply"   ) ) pointStream = new    PLYOrientedPointStream< float >( In.value );
+		else                                    pointStream = new  ASCIIOrientedPointStream< float >( In.value );
+		pointCount = tree.template SetTree< float >( pointStream , MinDepth.value , Depth.value , FullDepth.value , kernelDepth , Real(SamplesPerNode.value) , Scale.value , Confidence.set , NormalWeights.set , PointWeight.value , AdaptiveExponent.value , *kernelDensityWeights , *pointInfo , *normalInfo , *centerWeights , xForm , BoundaryType.value , Complete.set );
+		delete pointStream;
+	}
 	delete[] ext;
-	int pointCount = tree.template SetTree< float >( pointStream , MinDepth.value , Depth.value , FullDepth.value , kernelDepth , Real(SamplesPerNode.value) , Scale.value , Confidence.set , NormalWeights.set , PointWeight.value , AdaptiveExponent.value , *pointInfo , *normalInfo , *kernelDensityWeights , *centerWeights , BoundaryType.value , xForm , Complete.set );
 	if( !Density.set ) delete kernelDensityWeights , kernelDensityWeights = NULL;
 
-	DumpOutput2( comments[commentNum++] , "#             Tree set in: %9.1f (s), %9.1f (MB)\n" , Time()-t , tree.maxMemoryUsage );
+	DumpOutput2( comments , "#             Tree set in: %9.1f (s), %9.1f (MB)\n" , Time()-t , tree.maxMemoryUsage );
 	DumpOutput( "Input Points: %d\n" , pointCount );
 	DumpOutput( "Leaves/Nodes: %d/%d\n" , tree.tree.leaves() , tree.tree.nodes() );
 	DumpOutput( "Memory Usage: %.3f MB\n" , float( MemoryInfo::Usage() )/(1<<20) );
@@ -354,7 +399,7 @@ int Execute( int argc , char* argv[] )
 	t=Time() , tree.maxMemoryUsage=0;
 	Pointer( Real ) constraints = tree.SetLaplacianConstraints( *normalInfo );
 	delete normalInfo;
-	DumpOutput2( comments[commentNum++] , "#      Constraints set in: %9.1f (s), %9.1f (MB)\n" , Time()-t , tree.maxMemoryUsage );
+	DumpOutput2( comments , "#      Constraints set in: %9.1f (s), %9.1f (MB)\n" , Time()-t , tree.maxMemoryUsage );
 	DumpOutput( "Memory Usage: %.3f MB\n" , float( MemoryInfo::Usage())/(1<<20) );
 	maxMemoryUsage = std::max< double >( maxMemoryUsage , tree.maxMemoryUsage );
 
@@ -362,7 +407,8 @@ int Execute( int argc , char* argv[] )
 	Pointer( Real ) solution = tree.SolveSystem( *pointInfo , constraints , ShowResidual.set , Iters.value , MaxSolveDepth.value , CGDepth.value , CSSolverAccuracy.value );
 	delete pointInfo;
 	FreePointer( constraints );
-	DumpOutput2( comments[commentNum++] , "# Linear system solved in: %9.1f (s), %9.1f (MB)\n" , Time()-t , tree.maxMemoryUsage );
+
+	DumpOutput2( comments , "# Linear system solved in: %9.1f (s), %9.1f (MB)\n" , Time()-t , tree.maxMemoryUsage );
 	DumpOutput( "Memory Usage: %.3f MB\n" , float( MemoryInfo::Usage() )/(1<<20) );
 	maxMemoryUsage = std::max< double >( maxMemoryUsage , tree.maxMemoryUsage );
 
@@ -382,8 +428,8 @@ int Execute( int argc , char* argv[] )
 		if( !fp ) fprintf( stderr , "Failed to open voxel file for writing: %s\n" , VoxelGrid.value );
 		else
 		{
-			int res;
-			Pointer( Real ) values = tree.Evaluate( solution , res , isoValue , VoxelDepth.value );
+			int res = 0;
+			Pointer( Real ) values = tree.Evaluate( ( ConstPointer( Real ) )solution , res , isoValue , VoxelDepth.value );
 			fwrite( &res , sizeof(int) , 1 , fp );
 			if( sizeof(Real)==sizeof(float) ) fwrite( values , sizeof(float) , res*res*res , fp );
 			else
@@ -402,11 +448,11 @@ int Execute( int argc , char* argv[] )
 	if( Out.set )
 	{
 		t = Time() , tree.maxMemoryUsage = 0;
-		tree.GetMCIsoSurface( kernelDensityWeights ? GetPointer( *kernelDensityWeights ) : NullPointer< Real >() , solution , isoValue , mesh , true , !NonManifold.set , PolygonMesh.set );
-		if( PolygonMesh.set ) DumpOutput2( comments[commentNum++] , "#         Got polygons in: %9.1f (s), %9.1f (MB)\n" , Time()-t , tree.maxMemoryUsage );
-		else                  DumpOutput2( comments[commentNum++] , "#        Got triangles in: %9.1f (s), %9.1f (MB)\n" , Time()-t , tree.maxMemoryUsage );
+		tree.GetMCIsoSurface( kernelDensityWeights ? GetPointer( *kernelDensityWeights ) : NullPointer( Real ) , Color.set ? &colorData : NULL , solution , isoValue , mesh , true , !NonManifold.set , PolygonMesh.set );
+		if( PolygonMesh.set ) DumpOutput2( comments , "#         Got polygons in: %9.1f (s), %9.1f (MB)\n" , Time()-t , tree.maxMemoryUsage );
+		else                  DumpOutput2( comments , "#        Got triangles in: %9.1f (s), %9.1f (MB)\n" , Time()-t , tree.maxMemoryUsage );
 		maxMemoryUsage = std::max< double >( maxMemoryUsage , tree.maxMemoryUsage );
-		DumpOutput2( comments[commentNum++],"#             Total Solve: %9.1f (s), %9.1f (MB)\n" , Time()-tt , maxMemoryUsage );
+		DumpOutput2( comments , "#             Total Solve: %9.1f (s), %9.1f (MB)\n" , Time()-tt , maxMemoryUsage );
 
 		if( NoComments.set )
 		{
@@ -415,8 +461,8 @@ int Execute( int argc , char* argv[] )
 		}
 		else
 		{
-			if( ASCII.set ) PlyWritePolygons( Out.value , &mesh , PLY_ASCII         , comments , commentNum , iXForm );
-			else            PlyWritePolygons( Out.value , &mesh , PLY_BINARY_NATIVE , comments , commentNum , iXForm );
+			if( ASCII.set ) PlyWritePolygons( Out.value , &mesh , PLY_ASCII         , &comments[0] , (int)comments.size() , iXForm );
+			else            PlyWritePolygons( Out.value , &mesh , PLY_BINARY_NATIVE , &comments[0] , (int)comments.size() , iXForm );
 		}
 		DumpOutput( "Vertices / Polygons: %d / %d\n" , mesh.outOfCorePointCount()+mesh.inCorePoints.size() , mesh.polygonCount() );
 	}
@@ -456,11 +502,19 @@ int main( int argc , char* argv[] )
 
 	cmdLineParse( argc-1 , &argv[1] , sizeof(params)/sizeof(cmdLineReadable*) , params , 1 );
 	if( Density.set )
-		if( Double.set ) Execute< double , PlyValueVertex< float > >( argc , argv );
-		else             Execute< float  , PlyValueVertex< float > >( argc , argv );
+		if( Color.set )
+			if( Double.set ) Execute< double , PlyColorAndValueVertex< float > >( argc , argv );
+			else             Execute< float  , PlyColorAndValueVertex< float > >( argc , argv );
+		else
+			if( Double.set ) Execute< double , PlyValueVertex< float > >( argc , argv );
+			else             Execute< float  , PlyValueVertex< float > >( argc , argv );
 	else
-		if( Double.set ) Execute< double , PlyVertex< float > >( argc , argv );
-		else             Execute< float  , PlyVertex< float > >( argc , argv );
+		if( Color.set )
+			if( Double.set ) Execute< double , PlyColorVertex< float > >( argc , argv );
+			else             Execute< float  , PlyColorVertex< float > >( argc , argv );
+		else
+			if( Double.set ) Execute< double , PlyVertex< float > >( argc , argv );
+			else             Execute< float  , PlyVertex< float > >( argc , argv );
 #ifdef _WIN32
 	if( Performance.set )
 	{

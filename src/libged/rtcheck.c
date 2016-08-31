@@ -1,7 +1,7 @@
 /*                         R T C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,11 +30,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #   include <sys/types.h>
 #endif
-
-#ifdef HAVE_SYS_WAIT_H
-#   include <sys/wait.h>
-#endif
-
+#include "bresource.h"
 
 #include "bu/cmd.h"
 
@@ -330,9 +326,9 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 	*vp = 0;
 	vp = &gedp->ged_gdp->gd_rt_cmd[0];
 	while (*vp)
-	    Tcl_AppendResult(brlcad_interp, *vp++, " ", (char *)NULL);
+	    Tcl_AppendResult((Tcl_Interp *)gedp->ged_interp, *vp++, " ", (char *)NULL);
 
-	Tcl_AppendResult(brlcad_interp, "\n", (char *)NULL);
+	Tcl_AppendResult((Tcl_Interp *)gedp->ged_interp, "\n", (char *)NULL);
     }
 
 #ifndef _WIN32
@@ -400,7 +396,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
     rtcp->gedp = gedp;
-    rtcp->interp = brlcad_interp;
+    rtcp->interp = (Tcl_Interp *)gedp->ged_interp;
 
     /* file handlers */
     Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
@@ -409,7 +405,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     BU_GET(rtcop, struct rtcheck_output);
     rtcop->fd = e_pipe[0];
     rtcop->gedp = gedp;
-    rtcop->interp = brlcad_interp;
+    rtcop->interp = (Tcl_Interp *)gedp->ged_interp;
     Tcl_CreateFileHandler(rtcop->fd,
 			  TCL_READABLE,
 			  rtcheck_output_handler,
@@ -505,7 +501,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
     rtcp->gedp = gedp;
-    rtcp->interp = brlcad_interp;
+    rtcp->interp = (Tcl_Interp *)gedp->ged_interp;
 
     rtcp->chan = Tcl_MakeFileChannel(pipe_iDup, TCL_READABLE);
     Tcl_CreateChannelHandler(rtcp->chan, TCL_READABLE,
@@ -516,7 +512,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcop->fd = pipe_eDup;
     rtcop->chan = Tcl_MakeFileChannel(pipe_eDup, TCL_READABLE);
     rtcop->gedp = gedp;
-    rtcop->interp = brlcad_interp;
+    rtcop->interp = (Tcl_Interp *)gedp->ged_interp;
     Tcl_CreateChannelHandler(rtcop->chan,
 			     TCL_READABLE,
 			     rtcheck_output_handler,

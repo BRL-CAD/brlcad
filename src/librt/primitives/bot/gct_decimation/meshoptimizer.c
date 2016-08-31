@@ -40,7 +40,6 @@
 
 #include "auxiliary/cc.h"
 #include "auxiliary/mm.h"
-#include "auxiliary/math3d.h"
 
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -62,9 +61,6 @@ typedef float mof;
 
 
 #define MO_CACHE_HASH_SIZE_MAX (0x100)
-
-
-#define mopowf(base, exponent) pow((base), (exponent))
 
 
 /****/
@@ -100,25 +96,25 @@ static void moBarrierDestroy(moBarrier *barrier)
 
 static int moBarrierSync(moBarrier *barrier)
 {
-    int vindex, ret;
+    int index, ret;
 
     if (mtx_lock(&barrier->mutex) == thrd_error)
 	bu_bomb("mtx_lock() failed");
 
-    vindex = barrier->index;
+    index = barrier->index;
     ret = 0;
 
-    if (!(--barrier->count[vindex])) {
+    if (!(--barrier->count[index])) {
 	ret = 1;
 
 	if (cnd_broadcast(&barrier->signal) == thrd_error)
 	    bu_bomb("cnd_broadcast() failed");
 
-	vindex ^= 1;
-	barrier->index = vindex;
-	barrier->count[vindex] = barrier->resetcount;
+	index ^= 1;
+	barrier->index = index;
+	barrier->count[index] = barrier->resetcount;
     } else {
-	for (; barrier->count[vindex] ;)
+	for (; barrier->count[index];)
 	    if (cnd_wait(&barrier->signal, &barrier->mutex) == thrd_error)
 		bu_bomb("cnd_wait() failed");
     }
@@ -128,6 +124,7 @@ static int moBarrierSync(moBarrier *barrier)
 
     return ret;
 }
+
 
 /****/
 
@@ -189,7 +186,6 @@ typedef struct {
     /* Synchronization stuff */
     moBarrier workbarrier;
     moBarrier globalbarrier;
-
 } moMesh;
 
 typedef struct {
@@ -209,7 +205,6 @@ typedef struct {
     moCacheEntry cachehash[MO_CACHE_HASH_SIZE_MAX];
 
     ccQuickRandState32 randstate;
-
 } moThreadData;
 
 
@@ -222,7 +217,6 @@ static void moIndicesInt8ToNative(moi *dst, void *src)
     dst[0] = s[0];
     dst[1] = s[1];
     dst[2] = s[2];
-    return;
 }
 
 static void moIndicesInt16ToNative(moi *dst, void *src)
@@ -231,7 +225,6 @@ static void moIndicesInt16ToNative(moi *dst, void *src)
     dst[0] = s[0];
     dst[1] = s[1];
     dst[2] = s[2];
-    return;
 }
 
 static void moIndicesInt32ToNative(moi *dst, void *src)
@@ -240,7 +233,6 @@ static void moIndicesInt32ToNative(moi *dst, void *src)
     dst[0] = s[0];
     dst[1] = s[1];
     dst[2] = s[2];
-    return;
 }
 
 static void moIndicesInt64ToNative(moi *dst, void *src)
@@ -249,7 +241,6 @@ static void moIndicesInt64ToNative(moi *dst, void *src)
     dst[0] = s[0];
     dst[1] = s[1];
     dst[2] = s[2];
-    return;
 }
 
 
@@ -259,7 +250,6 @@ static void moIndicesNativeToInt8(void *dst, moi *src)
     d[0] = src[0];
     d[1] = src[1];
     d[2] = src[2];
-    return;
 }
 
 static void moIndicesNativeToInt16(void *dst, moi *src)
@@ -268,7 +258,6 @@ static void moIndicesNativeToInt16(void *dst, moi *src)
     d[0] = src[0];
     d[1] = src[1];
     d[2] = src[2];
-    return;
 }
 
 static void moIndicesNativeToInt32(void *dst, moi *src)
@@ -277,7 +266,6 @@ static void moIndicesNativeToInt32(void *dst, moi *src)
     d[0] = src[0];
     d[1] = src[1];
     d[2] = src[2];
-    return;
 }
 
 static void moIndicesNativeToInt64(void *dst, moi *src)
@@ -286,7 +274,6 @@ static void moIndicesNativeToInt64(void *dst, moi *src)
     d[0] = src[0];
     d[1] = src[1];
     d[2] = src[2];
-    return;
 }
 
 
@@ -308,7 +295,7 @@ static void moMeshInitVertices(moMesh *mesh, moThreadData *tdata, int threadcoun
 
     vertex = &mesh->vertexlist[vertexindex];
 
-    for (; vertexindex < vertexindexmax ; vertexindex++, vertex++) {
+    for (; vertexindex < vertexindexmax; vertexindex++, vertex++) {
 #ifdef MM_ATOMIC_SUPPORT
 	mmAtomicWrite32(&vertex->atomicowner, -1);
 	mmAtomicWrite32(&vertex->atomictrirefcount, 0);
@@ -319,8 +306,6 @@ static void moMeshInitVertices(moMesh *mesh, moThreadData *tdata, int threadcoun
 #endif
 	vertex->redirectindex = -1;
     }
-
-    return;
 }
 
 
@@ -343,7 +328,7 @@ static void moMeshInitTriangles(moMesh *mesh, moThreadData *tdata, int threadcou
     indices = ADDRESS(mesh->indices, triindex * mesh->indicesstride);
     tri = &mesh->trilist[triindex];
 
-    for (; triindex < triindexmax ; triindex++, indices = ADDRESS(indices, mesh->indicesstride), tri++) {
+    for (; triindex < triindexmax; triindex++, indices = ADDRESS(indices, mesh->indicesstride), tri++) {
 	mesh->indicesUserToNative(tri->v, indices);
 #ifdef MM_ATOMIC_SUPPORT
 	mmAtomicWrite32(&tri->atomictrinext, MO_TRINEXT_PENDING);
@@ -352,8 +337,8 @@ static void moMeshInitTriangles(moMesh *mesh, moThreadData *tdata, int threadcou
 	mtSpinInit(&tri->spinlock);
 #endif
 
-	for (i = 0 ; i < 3 ; i++) {
-	    vertex = &mesh->vertexlist[ tri->v[i] ];
+	for (i = 0; i < 3; i++) {
+	    vertex = &mesh->vertexlist[tri->v[i]];
 #ifdef MM_ATOMIC_SUPPORT
 	    mmAtomicAdd32(&vertex->atomictrirefcount, 1);
 #else
@@ -363,8 +348,6 @@ static void moMeshInitTriangles(moMesh *mesh, moThreadData *tdata, int threadcou
 #endif
 	}
     }
-
-    return;
 }
 
 
@@ -378,7 +361,7 @@ static void moMeshInitTrirefs(moMesh *mesh)
     trirefcount = 0;
     vertex = mesh->vertexlist;
 
-    for (vertexindex = 0 ; vertexindex < mesh->vertexcount ; vertexindex++, vertex++) {
+    for (vertexindex = 0; vertexindex < mesh->vertexcount; vertexindex++, vertex++) {
 #ifdef MM_ATOMIC_SUPPORT
 	trirefcount += mmAtomicRead32(&vertex->atomictrirefcount);
 #else
@@ -388,8 +371,6 @@ static void moMeshInitTrirefs(moMesh *mesh)
     }
 
     mesh->trirefcount = trirefcount;
-
-    return;
 }
 
 
@@ -402,6 +383,8 @@ static moi moMeshBuildTrirefs(moMesh *mesh, moThreadData *tdata, int threadcount
     moTriangle *tri;
     moVertex *vertex;
 
+    score = 0.0;
+
     triperthread = (mesh->tricount / threadcount) + 1;
     triindex = tdata->threadid * triperthread;
     triindexmax = triindex + triperthread;
@@ -413,25 +396,25 @@ static moi moMeshBuildTrirefs(moMesh *mesh, moThreadData *tdata, int threadcount
     bestscore = 0.0;
     tri = &mesh->trilist[triindex];
 
-    for (; triindex < triindexmax ; triindex++, tri++) {
+    for (; triindex < triindexmax; triindex++, tri++) {
 	score = 0.0;
 
-	for (i = 0 ; i < 3 ; i++) {
-	    vertex = &mesh->vertexlist[ tri->v[i] ];
+	for (i = 0; i < 3; i++) {
+	    vertex = &mesh->vertexlist[tri->v[i]];
 #ifdef MM_ATOMIC_SUPPORT
 	    mmAtomicSpin32(&vertex->atomicowner, -1, tdata->threadid);
-	    mesh->trireflist[ --vertex->trirefbase ] = triindex;
+	    mesh->trireflist[--vertex->trirefbase] = triindex;
 	    mmAtomicWrite32(&vertex->atomicowner, -1);
 	    trirefcount = mmAtomicRead32(&vertex->atomictrirefcount);
 #else
 	    mtSpinLock(&vertex->ownerspinlock);
-	    mesh->trireflist[ --vertex->trirefbase ] = triindex;
+	    mesh->trireflist[--vertex->trirefbase] = triindex;
 	    mtSpinUnlock(&vertex->ownerspinlock);
 	    trirefcount = vertex->trirefcount;
 #endif
 
 	    if (trirefcount < MO_TRIREFSCORE_COUNT)
-		score += mesh->trirefscore[ trirefcount ];
+		score += mesh->trirefscore[trirefcount];
 	}
 
 	if (score > bestscore) {
@@ -447,10 +430,10 @@ static moi moMeshBuildTrirefs(moMesh *mesh, moThreadData *tdata, int threadcount
 /****/
 
 
-static inline uint32_t moCacheHashKey(moi vindex)
+static inline uint32_t moCacheHashKey(moi index)
 {
     uint32_t hashkey;
-    hashkey = vindex;
+    hashkey  = index;
     hashkey += hashkey << 10;
     hashkey ^= hashkey >> 6;
     hashkey += hashkey << 6;
@@ -469,13 +452,11 @@ static void moCacheInit(moMesh *UNUSED(mesh), moThreadData *tdata, int minimumco
 
     tdata->hashmask = tdata->hashsize - 1;
 
-    for (entryindex = 0 ; entryindex < tdata->hashsize ; entryindex++) {
+    for (entryindex = 0; entryindex < tdata->hashsize; entryindex++) {
 	cache = &tdata->cachehash[entryindex];
 	cache->vertexindex = -1;
 	cache->cacheorder = 0;
     }
-
-    return;
 }
 
 static int moCacheGetOrder(moMesh *mesh, moThreadData *tdata, moi vertexindex)
@@ -486,7 +467,7 @@ static int moCacheGetOrder(moMesh *mesh, moThreadData *tdata, moi vertexindex)
     cacheorder = mesh->vertexcachesize;
     hashkey = moCacheHashKey(vertexindex) & tdata->hashmask;
 
-    for (; ; hashkey = (hashkey + 1) & tdata->hashmask) {
+    for (;; hashkey = (hashkey + 1) & tdata->hashmask) {
 	cache = &tdata->cachehash[hashkey];
 
 	if (cache->vertexindex == -1)
@@ -508,7 +489,7 @@ static int moCacheSetOrder(moMesh *UNUSED(mesh), moThreadData *tdata, moi vertex
     moCacheEntry *cache;
     hashkey = moCacheHashKey(vertexindex) & tdata->hashmask;
 
-    for (; ; hashkey = (hashkey + 1) & tdata->hashmask) {
+    for (;; hashkey = (hashkey + 1) & tdata->hashmask) {
 	cache = &tdata->cachehash[hashkey];
 
 	if (cache->vertexindex == -1) {
@@ -534,7 +515,7 @@ static void moCacheDelete(moMesh *UNUSED(mesh), moThreadData *tdata, moi vertexi
     moCacheEntry *cache, *cachesource, *cachetarget;
     hashkey = moCacheHashKey(vertexindex) & tdata->hashmask;
 
-    for (; ; hashkey = (hashkey + 1) & tdata->hashmask) {
+    for (;; hashkey = (hashkey + 1) & tdata->hashmask) {
 	cache = &tdata->cachehash[hashkey];
 
 	if (cache->vertexindex == -1) {
@@ -546,7 +527,7 @@ static void moCacheDelete(moMesh *UNUSED(mesh), moThreadData *tdata, moi vertexi
 	    break;
     }
 
-    for (delbase = hashkey ; ;) {
+    for (delbase = hashkey;;) {
 	delbase = (delbase - 1) & tdata->hashmask;
 
 	if (tdata->cachehash[delbase].vertexindex == -1)
@@ -555,11 +536,11 @@ static void moCacheDelete(moMesh *UNUSED(mesh), moThreadData *tdata, moi vertexi
 
     delbase = (delbase + 1) & tdata->hashmask;
 
-    for (; ;) {
+    for (;;) {
 	targetkey = hashkey;
 	cachetarget = 0;
 
-	for (sourceindex = hashkey ; ;) {
+	for (sourceindex = hashkey;;) {
 	    sourceindex = (sourceindex + 1) & tdata->hashmask;
 	    cachesource = &tdata->cachehash[sourceindex];
 
@@ -591,8 +572,6 @@ static void moCacheDelete(moMesh *UNUSED(mesh), moThreadData *tdata, moi vertexi
 	cache->cacheorder = cachetarget->cacheorder;
 	hashkey = targetindex;
     }
-
-    return;
 }
 
 
@@ -611,11 +590,11 @@ static mof moTriangleScore(moMesh *mesh, moThreadData *tdata, moTriangle *tri)
 
     score = 0.0;
 
-    for (axisindex = 0 ; axisindex < 3 ; axisindex++) {
+    for (axisindex = 0; axisindex < 3; axisindex++) {
 	vertexindex = tri->v[axisindex];
 	cacheorder = moCacheGetOrder(mesh, tdata, vertexindex);
-	score += mesh->cachescore[ cacheorder ];
-	vertex = &mesh->vertexlist[ vertexindex ];
+	score += mesh->cachescore[cacheorder];
+	vertex = &mesh->vertexlist[vertexindex];
 #ifdef MM_ATOMIC_SUPPORT
 	trirefcount = mmAtomicRead32(&vertex->atomictrirefcount);
 #else
@@ -630,7 +609,7 @@ static mof moTriangleScore(moMesh *mesh, moThreadData *tdata, moTriangle *tri)
 #endif
 
 	if (trirefcount < MO_TRIREFSCORE_COUNT)
-	    score += mesh->trirefscore[ trirefcount ];
+	    score += mesh->trirefscore[trirefcount];
     }
 
     return score;
@@ -649,7 +628,7 @@ static mof moTriangleNextScore(moMesh *mesh, moThreadData *tdata, moTriangle *tr
 
     score = 0.0;
 
-    for (axisindex = 0 ; axisindex < 3 ; axisindex++) {
+    for (axisindex = 0; axisindex < 3; axisindex++) {
 	vertexindex = tri->v[axisindex];
 	cacheorder = 0;
 
@@ -660,8 +639,8 @@ static mof moTriangleNextScore(moMesh *mesh, moThreadData *tdata, moTriangle *tr
 		cacheorder = mesh->vertexcachesize;
 	}
 
-	score += mesh->cachescore[ cacheorder ];
-	vertex = &mesh->vertexlist[ vertexindex ];
+	score += mesh->cachescore[cacheorder];
+	vertex = &mesh->vertexlist[vertexindex];
 #ifdef MM_ATOMIC_SUPPORT
 	trirefcount = mmAtomicRead32(&vertex->atomictrirefcount);
 #else
@@ -676,7 +655,7 @@ static mof moTriangleNextScore(moMesh *mesh, moThreadData *tdata, moTriangle *tr
 #endif
 
 	if (trirefcount < MO_TRIREFSCORE_COUNT)
-	    score += mesh->trirefscore[ trirefcount ];
+	    score += mesh->trirefscore[trirefcount];
     }
 
     return score;
@@ -692,11 +671,12 @@ static mof moLookAheadScore(moMesh *mesh, moThreadData *tdata, moTriangle *tri)
     moVertex *vertex;
     moTriangle *tricheck;
 
+    score = 0.0;
     bestscore = 0.0;
 
-    for (axisindex = 0 ; axisindex < 3 ; axisindex++) {
+    for (axisindex = 0; axisindex < 3; axisindex++) {
 	vertexindex = tri->v[axisindex];
-	vertex = &mesh->vertexlist[ vertexindex ];
+	vertex = &mesh->vertexlist[vertexindex];
 	trireflist = &mesh->trireflist[vertex->trirefbase];
 #ifdef MM_ATOMIC_SUPPORT
 	mmAtomicSpin32(&vertex->atomicowner, -1, tdata->threadid);
@@ -708,7 +688,7 @@ static mof moLookAheadScore(moMesh *mesh, moThreadData *tdata, moTriangle *tri)
 	trirefcount = vertex->trirefcount;
 #endif
 
-	for (trirefindex = 0 ; trirefindex < trirefcount ; trirefindex++) {
+	for (trirefindex = 0; trirefindex < trirefcount; trirefindex++) {
 	    triindex = trireflist[trirefindex];
 	    tricheck = &mesh->trilist[triindex];
 
@@ -729,8 +709,8 @@ static mof moLookAheadScore(moMesh *mesh, moThreadData *tdata, moTriangle *tri)
 	mtSpinUnlock(&vertex->ownerspinlock);
 #endif
 	cacheorder = moCacheGetOrder(mesh, tdata, vertexindex);
-	score += mesh->cachescore[ cacheorder ];
-	vertex = &mesh->vertexlist[ vertexindex ];
+	score += mesh->cachescore[cacheorder];
+	vertex = &mesh->vertexlist[vertexindex];
     }
 
     return bestscore;
@@ -747,7 +727,7 @@ static void moDetachTriangle(moMesh *mesh, moThreadData *tdata, moi detachtriind
 
     tri = &mesh->trilist[detachtriindex];
 
-    for (axisindex = 0 ; axisindex < 3 ; axisindex++) {
+    for (axisindex = 0; axisindex < 3; axisindex++) {
 	/* Adjust triref lists and count for the 3 vertices */
 	vertexindex = tri->v[axisindex];
 	vertex = &mesh->vertexlist[vertexindex];
@@ -759,7 +739,18 @@ static void moDetachTriangle(moMesh *mesh, moThreadData *tdata, moi detachtriind
 #endif
 	trireflist = &mesh->trireflist[vertex->trirefbase];
 
-	for (trirefindex = 0 ; ; trirefindex++) {
+	for (trirefindex = 0;; trirefindex++) {
+#ifdef MM_ATOMIC_SUPPORT
+
+	    if (trirefindex >= mmAtomicRead32(&vertex->atomictrirefcount))
+		bu_bomb("SHOULD NOT HAPPEN");
+
+#else
+
+	    if (trirefindex >= vertex->trirefcount)
+		bu_bomb("SHOULD NOT HAPPEN");
+
+#endif
 	    triindex = trireflist[trirefindex];
 
 	    if (triindex != detachtriindex)
@@ -773,7 +764,7 @@ static void moDetachTriangle(moMesh *mesh, moThreadData *tdata, moi detachtriind
 	    vertex->trirefcount = trirefcount;
 #endif
 
-	    for (; trirefindex < trirefcount ; trirefindex++)
+	    for (; trirefindex < trirefcount; trirefindex++)
 		trireflist[trirefindex] = trireflist[trirefindex + 1];
 
 	    break;
@@ -786,8 +777,6 @@ static void moDetachTriangle(moMesh *mesh, moThreadData *tdata, moi detachtriind
 	mtSpinUnlock(&vertex->ownerspinlock);
 #endif
     }
-
-    return;
 }
 
 static moi moFindSeedTriangle(moMesh *mesh, moThreadData *tdata)
@@ -799,6 +788,8 @@ static moi moFindSeedTriangle(moMesh *mesh, moThreadData *tdata)
 #ifndef MM_ATOMIC_SUPPORT
     moi trinext;
 #endif
+
+    score = 0.0;
 
     testcount = 16384;
 
@@ -813,10 +804,10 @@ static moi moFindSeedTriangle(moMesh *mesh, moThreadData *tdata)
     bestscore = 0;
     seedindex = -1;
 
-    for (; ;) {
+    for (;;) {
 	tri = &mesh->trilist[triindexstart];
 
-	for (triindex = triindexstart ; triindex < triindexend ; triindex++, tri++) {
+	for (triindex = triindexstart; triindex < triindexend; triindex++, tri++) {
 	    if ((--testcount < 0) && (seedindex != -1))
 		goto done;
 
@@ -872,6 +863,8 @@ static moi moFindNextStep(moMesh *mesh, moThreadData *tdata)
     moi trinext;
 #endif
 
+    score = 0.0;
+
     cacheordercap = mesh->vertexcachesize;
 
     if (mesh->operationflags & MO_FLAGS_ENABLE_LAZY_SEARCH)
@@ -880,10 +873,10 @@ static moi moFindNextStep(moMesh *mesh, moThreadData *tdata)
     bestscore = 0.0;
     besttriindex = -1;
 
-    for (; ;) {
+    for (;;) {
 	cache = tdata->cachehash;
 
-	for (hashkey = 0 ; hashkey < (uint32_t)tdata->hashsize ; hashkey++, cache++) {
+	for (hashkey = 0; (int32_t)hashkey < tdata->hashsize; hashkey++, cache++) {
 	    if (cache->vertexindex == -1)
 		continue;
 
@@ -902,7 +895,7 @@ static moi moFindNextStep(moMesh *mesh, moThreadData *tdata)
 	    trirefcount = vertex->trirefcount;
 #endif
 
-	    for (trirefindex = 0 ; trirefindex < trirefcount ; trirefindex++) {
+	    for (trirefindex = 0; trirefindex < trirefcount; trirefindex++) {
 		triindex = trireflist[trirefindex];
 		tri = &mesh->trilist[triindex];
 #ifdef MM_ATOMIC_SUPPORT
@@ -948,7 +941,6 @@ static moi moFindNextStep(moMesh *mesh, moThreadData *tdata)
 
     /* Add score bonus for triangle strip continuity ? */
 
-
     return besttriindex;
 }
 
@@ -969,7 +961,7 @@ static inline void moBufferRegisterScore(moScoreEntry *entry, moi triindex, mof 
 
     targetindex = 0;
 
-    for (bufferindex = 1 ; bufferindex < MO_LOOK_AHEAD_BEST_BUFFER_SIZE ; bufferindex++) {
+    for (bufferindex = 1; bufferindex < MO_LOOK_AHEAD_BEST_BUFFER_SIZE; bufferindex++) {
 	if (score < entry[bufferindex].score)
 	    break;
 
@@ -979,12 +971,11 @@ static inline void moBufferRegisterScore(moScoreEntry *entry, moi triindex, mof 
 	targetindex = bufferindex;
     }
 
-    for (bufferindex = 0 ; bufferindex < targetindex ; bufferindex++)
+    for (bufferindex = 0; bufferindex < targetindex; bufferindex++)
 	entry[bufferindex + 0] = entry[bufferindex + 1];
 
     entry[targetindex].triindex = triindex;
     entry[targetindex].score = score;
-    return;
 }
 
 static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
@@ -1003,7 +994,9 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
     moi trinext;
 #endif
 
-    for (entry = &scorebuffer[MO_LOOK_AHEAD_BEST_BUFFER_SIZE - 1] ; entry >= scorebuffer ; entry--) {
+    score = 0.0;
+
+    for (entry = &scorebuffer[MO_LOOK_AHEAD_BEST_BUFFER_SIZE - 1]; entry >= scorebuffer; entry--) {
 	entry->triindex = -1;
 	entry->score = 0.0;
     }
@@ -1016,10 +1009,10 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
     bestscore = 0.0;
     besttriindex = -1;
 
-    for (; ;) {
+    for (;;) {
 	cache = tdata->cachehash;
 
-	for (hashkey = 0 ; hashkey < (uint32_t)tdata->hashsize ; hashkey++, cache++) {
+	for (hashkey = 0; (int32_t)hashkey < tdata->hashsize; hashkey++, cache++) {
 	    if (cache->vertexindex == -1)
 		continue;
 
@@ -1038,7 +1031,7 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
 	    trirefcount = vertex->trirefcount;
 #endif
 
-	    for (trirefindex = 0 ; trirefindex < trirefcount ; trirefindex++) {
+	    for (trirefindex = 0; trirefindex < trirefcount; trirefindex++) {
 		triindex = trireflist[trirefindex];
 		tri = &mesh->trilist[triindex];
 #ifdef MM_ATOMIC_SUPPORT
@@ -1080,15 +1073,14 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
     bestscore = 0.0;
     besttriindex = -1;
 
-    for (entry = &scorebuffer[MO_LOOK_AHEAD_BEST_BUFFER_SIZE - 1] ; entry >= scorebuffer ; entry--) {
-
+    for (entry = &scorebuffer[MO_LOOK_AHEAD_BEST_BUFFER_SIZE - 1]; entry >= scorebuffer; entry--) {
 	if (entry->triindex == -1)
 	    break;
 
 	tri = &mesh->trilist[entry->triindex];
 	nextscore = moLookAheadScore(mesh, tdata, tri);
 
-	for (entrynext = &scorebuffer[MO_LOOK_AHEAD_BEST_BUFFER_SIZE - 1] ; entrynext >= scorebuffer ; entrynext--) {
+	for (entrynext = &scorebuffer[MO_LOOK_AHEAD_BEST_BUFFER_SIZE - 1]; entrynext >= scorebuffer; entrynext--) {
 	    if (entrynext->triindex == -1)
 		break;
 
@@ -1112,7 +1104,6 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
 
     /* Add score bonus for triangle strip continuity ? */
 
-
     return besttriindex;
 }
 
@@ -1135,7 +1126,7 @@ static void moRebuildMesh(moMesh *mesh, moThreadData *tdata, moi seedindex)
     moi trinext;
 #endif
 
-    for (; ;) {
+    for (;;) {
 	if (seedindex == -1) {
 	    /* Exhaustive search for a new seed triangle */
 	    seedindex = moFindSeedTriangle(mesh, tdata);
@@ -1145,7 +1136,6 @@ static void moRebuildMesh(moMesh *mesh, moThreadData *tdata, moi seedindex)
 	}
 
 	tri = &mesh->trilist[seedindex];
-
 
 	/* Add triangle to list */
 #ifdef MM_ATOMIC_SUPPORT
@@ -1186,18 +1176,16 @@ static void moRebuildMesh(moMesh *mesh, moThreadData *tdata, moi seedindex)
     if (mesh->operationflags & MO_FLAGS_DISABLE_LOOK_AHEAD)
 	findnextstep = moFindNextStep;
 
-    for (; ;) {
+    for (;;) {
 	/* Find highest score triangle of all the triangles linked to vertices present in cache */
 	besttriindex = findnextstep(mesh, tdata);
 
 	if (besttriindex == -1) {
-
 	    /* Exhaustive search for a new seed triangle */
 	    besttriindex = moFindSeedTriangle(mesh, tdata);
 
 	    if (besttriindex == -1)
 		return;
-
 	}
 
 	/* If triangle has already been added by the time we got here, we have to start over... */
@@ -1239,16 +1227,16 @@ static void moRebuildMesh(moMesh *mesh, moThreadData *tdata, moi seedindex)
 	/* Build the shift table */
 	caheorderaddglobal = 3;
 
-	for (cacheorder = 0 ; cacheorder < mesh->vertexcachesize ; cacheorder++)
+	for (cacheorder = 0; cacheorder < mesh->vertexcachesize; cacheorder++)
 	    cacheorderadd[cacheorder] = 0;
 
-	for (axisindex = 0 ; axisindex < 3 ; axisindex++) {
+	for (axisindex = 0; axisindex < 3; axisindex++) {
 	    cacheorder = moCacheGetOrder(mesh, tdata, tri->v[axisindex]);
 
 	    if (cacheorder != -1) {
 		caheorderaddglobal--;
 
-		for (; cacheorder >= 0 ; cacheorder--)
+		for (; cacheorder >= 0; cacheorder--)
 		    cacheorderadd[cacheorder]++;
 	    }
 	}
@@ -1257,25 +1245,23 @@ static void moRebuildMesh(moMesh *mesh, moThreadData *tdata, moi seedindex)
 	delcount = 0;
 	cache = tdata->cachehash;
 
-	for (hashkey = 0 ; hashkey < (uint32_t)tdata->hashsize ; hashkey++, cache++) {
+	for (hashkey = 0; (int32_t)hashkey < tdata->hashsize; hashkey++, cache++) {
 	    if (cache->vertexindex == -1)
 		continue;
 
 	    cache->cacheorder += caheorderaddglobal + cacheorderadd[cache->cacheorder];
 
 	    if (cache->cacheorder >= mesh->vertexcachesize)
-		delbuffer[ delcount++ ] = cache->vertexindex;
+		delbuffer[delcount++] = cache->vertexindex;
 	}
 
-	for (delindex = 0 ; delindex < delcount ; delindex++)
+	for (delindex = 0; delindex < delcount; delindex++)
 	    moCacheDelete(mesh, tdata, delbuffer[delindex]);
 
 	/* Set new cache entries */
-	for (axisindex = 0 ; axisindex < 3 ; axisindex++)
+	for (axisindex = 0; axisindex < 3; axisindex++)
 	    moCacheSetOrder(mesh, tdata, tri->v[axisindex], 0);
     }
-
-    return;
 }
 
 
@@ -1305,9 +1291,7 @@ static int moThreadMain(void *value)
     tdata.trifirst = MO_TRINEXT_ENDOFLIST;
     tdata.trilast = -1;
     tdata.tricount = 0;
-    /*
-      ccQuickRand32Seed( &tdata.randstate, (int)((uintptr_t)&tdata) + tdata.threadid );
-    */
+
     ccQuickRand32Seed(&tdata.randstate, 2);
 
 
@@ -1356,10 +1340,10 @@ static void moWriteIndices(moMesh *mesh, moThreadInit *threadinit)
 
     indices = mesh->indices;
 
-    for (threadindex = 0 ; threadindex < mesh->threadcount ; threadindex++) {
+    for (threadindex = 0; threadindex < mesh->threadcount; threadindex++) {
 	tinit = &threadinit[threadindex];
 
-	for (triindex = tinit->trifirst ; triindex !=  MO_TRINEXT_ENDOFLIST ; triindex = trinext) {
+	for (triindex = tinit->trifirst; triindex !=  MO_TRINEXT_ENDOFLIST; triindex = trinext) {
 	    tri = &mesh->trilist[triindex];
 #ifdef MM_ATOMIC_SUPPORT
 	    trinext = mmAtomicRead32(&tri->atomictrinext);
@@ -1367,13 +1351,10 @@ static void moWriteIndices(moMesh *mesh, moThreadInit *threadinit)
 	    trinext = tri->trinext;
 #endif
 
-
 	    mesh->indicesNativeToUser(indices, tri->v);
 	    indices = ADDRESS(indices, mesh->indicesstride);
 	}
     }
-
-    return;
 }
 
 
@@ -1387,10 +1368,10 @@ static void moBuildRedirection(moMesh *mesh, moThreadInit *threadinit)
 
     redirectindex = 0;
 
-    for (threadindex = 0 ; threadindex < mesh->threadcount ; threadindex++) {
+    for (threadindex = 0; threadindex < mesh->threadcount; threadindex++) {
 	tinit = &threadinit[threadindex];
 
-	for (triindex = tinit->trifirst ; triindex !=  MO_TRINEXT_ENDOFLIST ; triindex = trinext) {
+	for (triindex = tinit->trifirst; triindex !=  MO_TRINEXT_ENDOFLIST; triindex = trinext) {
 	    tri = &mesh->trilist[triindex];
 #ifdef MM_ATOMIC_SUPPORT
 	    trinext = mmAtomicRead32(&tri->atomictrinext);
@@ -1419,8 +1400,6 @@ static void moBuildRedirection(moMesh *mesh, moThreadInit *threadinit)
 	    }
 	}
     }
-
-    return;
 }
 
 
@@ -1436,10 +1415,10 @@ static void moWriteRedirectIndices(moMesh *mesh, moThreadInit *threadinit)
 
     indices = mesh->indices;
 
-    for (threadindex = 0 ; threadindex < mesh->threadcount ; threadindex++) {
+    for (threadindex = 0; threadindex < mesh->threadcount; threadindex++) {
 	tinit = &threadinit[threadindex];
 
-	for (triindex = tinit->trifirst ; triindex !=  MO_TRINEXT_ENDOFLIST ; triindex = trinext) {
+	for (triindex = tinit->trifirst; triindex !=  MO_TRINEXT_ENDOFLIST; triindex = trinext) {
 	    tri = &mesh->trilist[triindex];
 #ifdef MM_ATOMIC_SUPPORT
 	    trinext = mmAtomicRead32(&tri->atomictrinext);
@@ -1453,13 +1432,10 @@ static void moWriteRedirectIndices(moMesh *mesh, moThreadInit *threadinit)
 	    vertex = &mesh->vertexlist[tri->v[2]];
 	    triindices[2] = vertex->redirectindex;
 
-
 	    mesh->indicesNativeToUser(indices, triindices);
 	    indices = ADDRESS(indices, mesh->indicesstride);
 	}
     }
-
-    return;
 }
 
 
@@ -1479,7 +1455,12 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
 	return 1;
 
     threadcount = bu_avail_cpus();
-    threadcount = FMIN((size_t)threadcount, tricount / 1024);
+
+    if ((size_t)threadcount > tricount / 1024)
+	threadcount = tricount / 1024;
+
+    if (threadcount < 1)
+	threadcount = 1;
 
     mesh.vertexcount = vertexcount;
     mesh.tricount = tricount;
@@ -1520,7 +1501,6 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     moBarrierInit(&mesh.workbarrier, threadcount);
     moBarrierInit(&mesh.globalbarrier, threadcount + 1);
 
-
     /* Score look-up tables */
     mesh.lookaheadfactor = 0.5;
 
@@ -1530,10 +1510,10 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
 	vertexcachesize = MO_VERTEX_CACHE_SIZE_MAX - 1;
 
     mesh.vertexcachesize = vertexcachesize;
-    mesh.cachescore[0] = 0.85;
+    mesh.cachescore[0] = 0.85f;
 
     if (mesh.operationflags & MO_FLAGS_FIXED_CACHE_SIZE)
-	mesh.cachescore[0] = 0.75;
+	mesh.cachescore[0] = 0.75f;
 
     mesh.cachescore[mesh.vertexcachesize] = 0.0;
     factor = 1.0 / (mof)(mesh.vertexcachesize - 3);
@@ -1541,8 +1521,8 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     if (mesh.operationflags & MO_FLAGS_FIXED_CACHE_SIZE)
 	factor *= 0.25;
 
-    for (a = 3 ; a < mesh.vertexcachesize ; a++)
-	mesh.cachescore[a] = mopowf(1.0 - ((mof)(a - 3) * factor), 1.5);
+    for (a = 3; a < mesh.vertexcachesize; a++)
+	mesh.cachescore[a] = powf(1.0 - ((mof)(a - 3) * factor), 1.5);
 
     if (mesh.operationflags & MO_FLAGS_FIXED_CACHE_SIZE) {
 	if (mesh.vertexcachesize > 1)
@@ -1554,19 +1534,19 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
 
     mesh.trirefscore[0] = -256.0;
 
-    for (a = 1 ; a < MO_TRIREFSCORE_COUNT ; a++)
-	mesh.trirefscore[a] = 2.0 * mopowf((float)a, -0.5);
+    for (a = 1; a < MO_TRIREFSCORE_COUNT; a++)
+	mesh.trirefscore[a] = 2.0 * powf((float)a, -0.5);
 
     /* Allocation */
     mesh.vertexlist = (moVertex *)mmAlignAlloc(mesh.vertexcount * sizeof(moVertex), 0x40);
     mesh.trilist = (moTriangle *)mmAlignAlloc(mesh.tricount * sizeof(moTriangle), 0x40);
     mesh.trirefcount = 0;
-    mesh.trireflist = (moi *)bu_malloc(3 * mesh.tricount * sizeof(moi), "mesh.trireflist");
+    mesh.trireflist = (moi *)bu_malloc(3 * mesh.tricount * sizeof(moi), "trireflist");
 
     /* Launch threads! */
     tinit = threadinit;
 
-    for (threadid = 0 ; threadid < threadcount ; threadid++, tinit++) {
+    for (threadid = 0; threadid < threadcount; threadid++, tinit++) {
 	tinit->threadid = threadid;
 	tinit->mesh = &mesh;
 
@@ -1577,7 +1557,7 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     /* Wait for all threads to be done */
     moBarrierSync(&mesh.globalbarrier);
 
-    for (threadid = 0 ; threadid < threadcount ; threadid++)
+    for (threadid = 0; threadid < threadcount; threadid++)
 	if (thrd_join(thread[threadid], NULL) == thrd_error)
 	    bu_bomb("thrd_join() failed");
 
@@ -1592,7 +1572,7 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     /* Free all global data */
     mmAlignFree(mesh.vertexlist);
     mmAlignFree(mesh.trilist);
-    bu_free(mesh.trireflist, "mesh.trireflist");
+    bu_free(mesh.trireflist, "trireflist");
     moBarrierDestroy(&mesh.workbarrier);
     moBarrierDestroy(&mesh.globalbarrier);
 
@@ -1611,7 +1591,7 @@ static int moEvalCacheInsert(moi *vertexcache, int vertexcachesize, moi vertexin
     pushlimit = vertexcachesize - 1;
     cachemiss = 1;
 
-    for (cacheindex = 0 ; cacheindex < vertexcachesize ; cacheindex++) {
+    for (cacheindex = 0; cacheindex < vertexcachesize; cacheindex++) {
 	if (vertexcache[cacheindex] != vertexindex)
 	    continue;
 
@@ -1620,7 +1600,7 @@ static int moEvalCacheInsert(moi *vertexcache, int vertexcachesize, moi vertexin
 	break;
     }
 
-    for (cacheindex = pushlimit - 1 ; cacheindex >= 0 ; cacheindex--)
+    for (cacheindex = pushlimit - 1; cacheindex >= 0; cacheindex--)
 	vertexcache[cacheindex + 1] = vertexcache[cacheindex + 0];
 
     vertexcache[0] = vertexindex;
@@ -1634,7 +1614,7 @@ ACMR is the sum of vertex cache miss divided by the number of triangles in the m
 double moEvaluateMesh(size_t tricount, void *indices, int indiceswidth, size_t indicesstride, int vertexcachesize, int UNUSED(flags))
 {
     int cacheindex, cachemiss;
-    moi triindex;
+    size_t triindex;
     void (*indicesUserToNative)(moi * dst, void *src);
     moi vertexcache[MO_EVAL_VERTEX_CACHE_MAX];
     moi triv[3];
@@ -1663,12 +1643,12 @@ double moEvaluateMesh(size_t tricount, void *indices, int indiceswidth, size_t i
     if (vertexcachesize > MO_EVAL_VERTEX_CACHE_MAX)
 	vertexcachesize = MO_EVAL_VERTEX_CACHE_MAX;
 
-    for (cacheindex = 0 ; cacheindex < vertexcachesize ; cacheindex++)
+    for (cacheindex = 0; cacheindex < vertexcachesize; cacheindex++)
 	vertexcache[cacheindex] = -1;
 
     cachemiss = 0;
 
-    for (triindex = 0 ; triindex < (moi)tricount ; triindex++) {
+    for (triindex = 0; triindex < tricount; triindex++) {
 	indicesUserToNative(triv, indices);
 	indices = ADDRESS(indices, indicesstride);
 	cachemiss += moEvalCacheInsert(vertexcache, vertexcachesize, triv[0]);

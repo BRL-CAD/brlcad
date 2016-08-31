@@ -1,7 +1,7 @@
 /*                         G - O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2014 United States Government as represented by
+ * Copyright (c) 1996-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,14 +48,15 @@
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 static char usage[] =
-"[-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol][-P #_of_CPUs]\n"
-"[-e error_file_name ][-D dist_calc_tol][-o output_file_name ] brlcad_db.g object(s)\n";
+    "[-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol][-P #_of_CPUs]\n"
+    "[-e error_file_name ][-D dist_calc_tol][-o output_file_name ] brlcad_db.g object(s)\n";
 
 static void
 print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
+
 
 static off_t vert_offset=0;
 static off_t norm_offset=0;
@@ -99,6 +100,7 @@ parse_tol_abs(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSE
     return ret;
 }
 
+
 static int
 parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
@@ -109,6 +111,7 @@ parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *UNUS
     ttol.rel = 0.0;
     return ret;
 }
+
 
 static int
 parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
@@ -122,6 +125,7 @@ parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *UNUS
     return ret;
 }
 
+
 static int
 parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
 {
@@ -130,6 +134,7 @@ parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *UNUS
     sscanf(argv[0], "%x", (unsigned int *)&RTG.debug);
     return 1;
 }
+
 
 static int
 parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
@@ -140,6 +145,7 @@ parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *UNU
     NMG_debug = RTG.NMG_debug;
     return 1;
 }
+
 
 static struct bu_opt_desc options[] = {
     {"?", "", NULL,         NULL,            &print_help,  "print help and exit"},
@@ -159,6 +165,7 @@ static struct bu_opt_desc options[] = {
     {"r", "", "#",          bu_opt_fastf_t,  &ttol.rel,    "relative tolerance"},
     BU_OPT_DESC_NULL
 };
+
 
 int
 main(int argc, const char **argv)
@@ -303,7 +310,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     nmg_vertex_tabulate(&verts, &r->l.magic);
 
     /* Get number of vertices */
-    numverts = BU_PTBL_END(&verts);
+    numverts = BU_PTBL_LEN(&verts);
 
     /* get list of vertexuse normals */
     if (do_normals)
@@ -490,7 +497,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     vert_offset += numverts;
     bu_ptbl_free(&verts);
     if (do_normals) {
-	norm_offset += BU_PTBL_END(&norms);
+	norm_offset += BU_PTBL_LEN(&norms);
 	bu_ptbl_free(&norms);
     }
     bu_free(region_name, "region name");
@@ -539,7 +546,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {

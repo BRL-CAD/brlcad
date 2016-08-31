@@ -1,7 +1,7 @@
 #                      C U R S O R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2014 United States Government as represented by
+# Copyright (c) 2006-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 
 namespace eval cadwidgets {
     set cursorWaitcount 0
+    set ignoreCursorWait 0
 }
 
 # PROCEDURE: SetWaitCursor
@@ -41,6 +42,10 @@ namespace eval cadwidgets {
 #       None
 #
 proc SetWaitCursor {_w} {
+    if {$::cadwidgets::ignoreCursorWait} {
+	return
+    }
+
     incr ::cadwidgets::cursorWaitCount
 
     if {1 < $::cadwidgets::cursorWaitCount} {
@@ -66,6 +71,10 @@ proc SetWaitCursor {_w} {
 #       None
 #
 proc SetNormalCursor {_w} {
+    if {$::cadwidgets::ignoreCursorWait} {
+	return
+    }
+
     incr ::cadwidgets::cursorWaitCount -1
 
     if {$::cadwidgets::cursorWaitCount != 0} {

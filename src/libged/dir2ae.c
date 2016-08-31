@@ -1,7 +1,7 @@
 /*                         D I R 2 A E. C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,11 +73,11 @@ ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
     }
     /* convert from double to fastf_t */
     VMOVE(dir, scan);
-    AZEL_FROM_V3DIR(az, el, dir);
 
     if (iflag)
 	VSCALE(dir, dir, -1);
 
+    AZEL_FROM_V3DIR(az, el, dir);
     bu_vls_printf(gedp->ged_result_str, "%lf %lf", az, el);
 
     return GED_OK;

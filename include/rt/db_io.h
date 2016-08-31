@@ -1,7 +1,7 @@
 /*                      D B _ I O . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -302,6 +302,13 @@ RT_EXPORT extern int db5_decode_signed(size_t			*lenp,
 RT_EXPORT extern size_t db5_decode_length(size_t *lenp,
 					  const unsigned char *cp,
 					  int format);
+#if defined(USE_BINARY_ATTRIBUTES)
+/**
+ * Given a pointer to a binary attribute, determine its length.
+ */
+RT_EXPORT extern void decode_binary_attribute(const size_t len,
+					      const unsigned char *cp);
+#endif
 
 /**
  * Given a number to encode, decide which is the smallest encoding
@@ -889,7 +896,6 @@ RT_EXPORT extern int db5_type_codes_from_descrip(int	*major,
 RT_EXPORT extern size_t db5_type_sizeof_h_binu(const int minor);
 
 RT_EXPORT extern size_t db5_type_sizeof_n_binu(const int minor);
-
 
 __END_DECLS
 

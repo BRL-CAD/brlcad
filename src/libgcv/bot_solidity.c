@@ -1,7 +1,7 @@
 /*                  B O T _ S O L I D I T Y . C
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,17 +19,20 @@
  */
 /** @file libgcv/bot_solidity.c
  *
- * Functions for determining whether a BoT is solid.
+ * Topological tests for determining whether a given BoT satisfies
+ * the conditions for solidity.
  *
  */
 
 
-#include "bot_solidity.h"
+#include "common.h"
+#include "bu/sort.h"
+#include "gcv/util.h"
 
 #include <stdlib.h>
 
 
-#define EDGE_EQUAL(e1, e2) (((e1).va == (e2).va) && ((e1).vb == (e2).vb))
+#define EDGE_EQUAL(e1, e2) ((e1).va == (e2).va && (e1).vb == (e2).vb)
 
 
 struct halfedge {
@@ -38,12 +41,9 @@ struct halfedge {
 };
 
 
-HIDDEN int
+HIDDEN inline void
 set_edge(struct halfedge *edge, int va, int vb)
 {
-    if (va == vb)
-	return 0;
-
     if (va < vb) {
 	edge->va = va;
 	edge->vb = vb;
@@ -53,18 +53,16 @@ set_edge(struct halfedge *edge, int va, int vb)
 	edge->vb = va;
 	edge->flipped = 1;
     }
-
-    return 1;
 }
 
 
 HIDDEN int
-halfedge_compare(const void  *pleft, const void *pright)
+halfedge_compare(const void *pleft, const void *pright, void *UNUSED(context))
 {
-    const struct halfedge *left = (const struct halfedge *)pleft;
-    const struct halfedge *right = (const struct halfedge *)pright;
+    const struct halfedge * const left = (struct halfedge *)pleft;
+    const struct halfedge * const right = (struct halfedge *)pright;
 
-    int a = left->va - right->va;
+    const int a = left->va - right->va;
     return a ? a : left->vb - right->vb;
 }
 
@@ -74,29 +72,28 @@ generate_edge_list(const struct rt_bot_internal *bot)
 {
     size_t num_edges;
     struct halfedge *edge_list;
-    size_t face_index, edge_index;
+    size_t face_index;
 
     RT_BOT_CK_MAGIC(bot);
 
     num_edges = 3 * bot->num_faces;
     edge_list = (struct halfedge *)bu_calloc(num_edges, sizeof(struct halfedge),
-		"edge_list");
+					     "edge_list");
 
-    for (face_index = 0, edge_index = 0; face_index < bot->num_faces;
-	 ++face_index) {
-	const int *face = &bot->faces[face_index * 3];
+    for (face_index = 0; face_index < bot->num_faces; ++face_index) {
+	const int * const face = &bot->faces[face_index * 3];
 
-	int success = set_edge(&edge_list[edge_index++], face[0], face[1])
-		      && set_edge(&edge_list[edge_index++], face[1], face[2])
-		      && set_edge(&edge_list[edge_index++], face[2], face[0]);
-
-	if (!success) {
+	if (face[0] == face[1] || face[1] == face[2] || face[2] == face[0]) {
 	    bu_free(edge_list, "edge_list");
 	    return NULL;
 	}
+
+	set_edge(&edge_list[face_index * 3 + 0], face[0], face[1]);
+	set_edge(&edge_list[face_index * 3 + 1], face[1], face[2]);
+	set_edge(&edge_list[face_index * 3 + 2], face[2], face[0]);
     }
 
-    qsort(edge_list, num_edges, sizeof(struct halfedge), halfedge_compare);
+    bu_sort(edge_list, num_edges, sizeof(struct halfedge), halfedge_compare, NULL);
 
     return edge_list;
 }

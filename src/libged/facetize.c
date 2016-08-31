@@ -1,7 +1,7 @@
 /*                         F A C E T I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,13 +83,16 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     union tree *facetize_tree;
     struct model *nmg_model;
 
-    static const char *usage = "[ [-P] | [-n] [-t] [-T] ] new_obj old_obj [old_obj2 old_obj3 ...]";
+    static const char *usage = "[ [-P [-L | -M | -H] ] | [-n] [-t] [-T] ] new_obj old_obj [old_obj2 old_obj3 ...]";
 
     /* static due to jumping */
     static int triangulate;
     static int make_bot;
     static int marching_cube;
     static int screened_poisson;
+#ifdef ENABLE_SPR
+    int sp_fidelity = 0;  /* default to LOW fidelity */
+#endif
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -126,7 +129,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options. */
     bu_optind = 1;		/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "mntTP")) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "mntTPLMH")) != -1) {
 	switch (c) {
 	    case 'm':
 		marching_cube = triangulate = 1;
@@ -139,6 +142,17 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		triangulate = 1;
 		make_bot = 1;
 		break;
+#ifdef ENABLE_SPR
+	    case 'L':
+		sp_fidelity = 0;
+		break;
+	    case 'M':
+		sp_fidelity = 1;
+		break;
+	    case 'H':
+		sp_fidelity = 2;
+		break;
+#endif
 	    case 'T':
 		triangulate = 1;
 		break;
@@ -177,7 +191,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (screened_poisson) {
-
+#ifdef ENABLE_SPR
 	struct rt_bot_internal *bot;
 
 	BU_ALLOC(bot, struct rt_bot_internal);
@@ -188,8 +202,10 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	bot->face_mode = (struct bu_bitv *)NULL;
 
 	/* TODO - generate point cloud, then mesh - need to see the input points for debugging */
-	(void)rt_generate_mesh(&(bot->faces), (int *)&(bot->num_faces), (point_t **)&(bot->vertices), (int *)&(bot->num_vertices),
-		dbip, argv[0], 15);
+	(void)rt_generate_mesh(&(bot->faces), (int *)&(bot->num_faces),
+			       (point_t **)&(bot->vertices),
+			       (int *)&(bot->num_vertices),
+			       dbip, argv[0], sp_fidelity);
 
 	/* Export BOT as a new solid */
 	RT_DB_INTERNAL_INIT(&intern);
@@ -197,7 +213,10 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_type = ID_BOT;
 	intern.idb_meth = &OBJ[ID_BOT];
 	intern.idb_ptr = (void *) bot;
-
+#else
+	bu_vls_printf(gedp->ged_result_str, "Screened Poisson support was not enabled for this build.  To test, pass -DBRLCAD_ENABLE_SPR=ON to the cmake configure.\n", newname);
+	return GED_ERROR;
+#endif
     } else {
 
 	bu_vls_printf(gedp->ged_result_str,

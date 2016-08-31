@@ -1,7 +1,7 @@
 /*                      G E N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,8 +56,10 @@ printusage(int i)
 {
     bu_log("%s\n", Usage);
     bu_log("       (Must redirect output; cannot send to tty)\n");
-    if (i != 3) bu_exit(i, NULL);
-    fprintf(stderr, "       Program continues running:\n");
+    if (i != 3)
+	bu_exit(i, NULL);
+    else
+	bu_log("Writing pattern to your redirected output\n");
 }
 
 void
@@ -102,8 +104,10 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (isatty(fileno(stdout))) printusage(1);
-    if (argc == 1 ) printusage(3);
+    if (isatty(fileno(stdout)))
+	printusage(1);
+    if (argc == 1 )
+	printusage(3);
 
     return;
 }

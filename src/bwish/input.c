@@ -1,7 +1,7 @@
 /*                         I N P U T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,6 +26,8 @@
  */
 
 #include "common.h"
+
+#ifndef HAVE_WINDOWS_H
 
 /* system headers */
 #include <string.h>
@@ -561,6 +563,7 @@ insert_beep(void)
     bu_log("%c", 7);
 }
 
+#endif /* HAVE_WINDOWS_H */
 
 /*
  * Local Variables:

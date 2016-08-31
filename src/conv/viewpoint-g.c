@@ -1,7 +1,7 @@
 /*                   V I E W P O I N T - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -79,9 +79,9 @@ main(int argc, char **argv)
     int name_len;
     struct bn_tol tol;
     int done=0;
-    int i;
-    int no_of_verts;
-    int no_of_faces=0;
+    size_t i;
+    size_t no_of_verts;
+    size_t no_of_faces=0;
     char line[MAX_LINE_SIZE];
     struct viewpoint_verts *verts;	/* array of structures holding coordinates and normals */
     struct bu_ptbl vertices;		/* table of vertices for one face */
@@ -92,6 +92,9 @@ main(int argc, char **argv)
     struct shell *s;
     struct faceuse *fu;
     struct wmember reg_head;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     bu_setprogname(argv[0]);
 
@@ -185,12 +188,12 @@ main(int argc, char **argv)
     /* Now read the vertices again and store them */
     rewind(coords);
     while (bu_fgets(line, MAX_LINE_SIZE, coords) != NULL) {
-	int number_scanned;
-	number_scanned = sscanf(line, "%d, %f, %f, %f, %f, %f, %f", &i, &x, &z, &y, &nx, &ny, &nz);
+	size_t number_scanned;
+	number_scanned = bu_sscanf(line, "%zu, %f, %f, %f, %f, %f, %f", &i, &x, &z, &y, &nx, &ny, &nz);
 	if (number_scanned < 4)
 	    break;
 	if (i >= no_of_verts)
-	    bu_log("vertex number too high (%d) only allowed for %d\n", i, no_of_verts);
+	    bu_log("vertex number too high (%zu) only allowed for %d\n", i, no_of_verts);
 	VSET(verts[i].coord, x, y, z);
 
 	if (number_scanned == 7) {
@@ -201,7 +204,7 @@ main(int argc, char **argv)
     }
 
     /* Let the user know that something is happening */
-    fprintf(stderr, "%d vertices\n", no_of_verts-1);
+    fprintf(stderr, "%ld vertices\n", (long)(no_of_verts-1));
 
     /* initialize tables */
     bu_ptbl_init(&vertices, 64, " &vertices ");
@@ -218,7 +221,7 @@ main(int argc, char **argv)
 	while (bu_fgets(line, MAX_LINE_SIZE, elems) != NULL) {
 	    line[strlen(line)-1] = '\0';
 	    name = strtok(line, tok_sep);
-	    if (BU_PTBL_END(&names) == 0) {
+	    if (BU_PTBL_LEN(&names) == 0) {
 		/* this is the first element processed */
 		bu_strlcpy(curr_name, name, sizeof(curr_name));
 
@@ -230,7 +233,7 @@ main(int argc, char **argv)
 		int found=0;
 
 		/* check the list to see if this name is already there */
-		for (i=0; i<BU_PTBL_END(&names); i++) {
+		for (i=0; i<BU_PTBL_LEN(&names); i++) {
 		    if (BU_STR_EQUAL((char *)BU_PTBL_GET(&names, i), name)) {
 			/* found it, so go back and read the next line */
 			found = 1;
@@ -271,14 +274,14 @@ main(int argc, char **argv)
 	    while ((ptr = strtok((char *)NULL, tok_sep)) != NULL) {
 		i = atoi(ptr);
 		if (i >= no_of_verts)
-		    bu_log("vertex number (%d) too high in element, only allowed for %d\n", i, no_of_verts);
+		    bu_log("vertex number (%zu) too high in element, only allowed for %zu\n", i, no_of_verts);
 
 		bu_ptbl_ins(&vertices, (long *)(&verts[i].vp));
 	    }
 
-	    if (BU_PTBL_END(&vertices) > 2) {
+	    if (BU_PTBL_LEN(&vertices) > 2) {
 		/* make face */
-		fu = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&vertices), BU_PTBL_END(&vertices));
+		fu = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&vertices), BU_PTBL_LEN(&vertices));
 		no_of_faces++;
 
 		/* put faceuse in list for the current named object */
@@ -371,9 +374,9 @@ main(int argc, char **argv)
 	    fu = next_fu;
 	}
 
-	if (BU_PTBL_END(&faces)) {
+	if (BU_PTBL_LEN(&faces)) {
 	    /* glue faces together */
-	    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), &tol);
+	    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &tol);
 
 	    nmg_rebound(m, &tol);
 	    nmg_fix_normals(s, &tol);
@@ -397,11 +400,11 @@ main(int argc, char **argv)
 	rewind(elems);
     }
 
-    fprintf(stderr, "%d polygons\n", no_of_faces);
+    bu_log("%zu polygons\n", no_of_faces);
 
     /* make a top level group with all the objects as members */
     BU_LIST_INIT(&reg_head.l);
-    for (i=0; i<BU_PTBL_END(&names); i++)
+    for (i=0; i<BU_PTBL_LEN(&names); i++)
 	if (mk_addmember((char *)BU_PTBL_GET(&names, i), &reg_head.l, NULL, WMOP_UNION) == WMEMBER_NULL)
 	    bu_exit(1, "Cannot make top level group\n");
 

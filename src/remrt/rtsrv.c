@@ -1,7 +1,7 @@
 /*                         R T S R V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
-#  include <sys/resource.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
@@ -42,9 +41,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
+#include "bresource.h"
 #include "bsocket.h"
 
 #ifdef VMIN
@@ -238,14 +235,8 @@ main(int argc, char **argv)
 	setpgrp();
 #endif
 
-	/*
-	 *  Unless controller process has specifically said
-	 *  that this is an interactive session, e.g., for a demo,
-	 *  drop to the lowest sensible priority.
-	 */
-	if (!interactive)  {
-	    bu_nice_set(19);		/* lowest priority */
-	}
+	/* Drop to the lowest sensible priority. */
+	bu_nice_set(19);
 
 	/* Close off the world */
 	fclose(stdin);

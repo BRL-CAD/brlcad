@@ -1,7 +1,7 @@
 /*                          N M G . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -99,7 +99,7 @@ struct hitmiss {
 
 
 #ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS(hm) BU_IGNORE((hm))
+#  define NMG_CK_HITMISS(hm) (void)(hm)
 #else
 #  define NMG_CK_HITMISS(hm) \
     {\
@@ -109,25 +109,25 @@ struct hitmiss {
             case NMG_RT_MISS_MAGIC: \
                 break; \
             case NMG_MISS_LIST: \
-                bu_log(BU_FLSTR ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
+                bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
                 bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
             case NMG_HIT_LIST: \
-                bu_log(BU_FLSTR ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
+                bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
                 bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
             default: \
-                bu_log(BU_FLSTR ": bad struct hitmiss magic: %u:(0x%08x)\n", \
+                bu_log(CPP_FILELINE ": bad struct hitmiss magic: %u:(0x%08x)\n", \
                        hm->l.magic, hm->l.magic); \
                 bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
         }\
         if (!hm->hit.hit_private) { \
-            bu_log(BU_FLSTR ": NULL hit_private in hitmiss struct\n"); \
+            bu_log(CPP_FILELINE ": NULL hit_private in hitmiss struct\n"); \
             bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
         } \
     }
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS_LISTS(rd) BU_IGNORE((rd))
+#  define NMG_CK_HITMISS_LISTS(rd) (void)(rd)
 #else
 #  define NMG_CK_HITMISS_LISTS(rd) \
     { \
@@ -228,7 +228,7 @@ struct ray_data {
 
 
 #ifdef NO_BOMBING_MACROS
-#  define nmg_bu_bomb(rd, str) BU_IGNORE((rd))
+#  define nmg_bu_bomb(rd, str) (void)(rd)
 #else
 #  define nmg_bu_bomb(rd, str) { \
         bu_log("%s", str); \
@@ -261,7 +261,7 @@ struct nmg_inter_struct {
     struct bu_ptbl      *l2;            /**< @brief  intersection between planes */
     fastf_t             *mag1;          /**< @brief  Distances along intersection line */
     fastf_t             *mag2;          /**< @brief  for each vertexuse in l1 and l2. */
-    int                 mag_len;        /**< @brief  Array size of mag1 and mag2 */
+    size_t              mag_len;        /**< @brief  Array size of mag1 and mag2 */
     struct shell        *s1;
     struct shell        *s2;
     struct faceuse      *fu1;           /**< @brief  null if l1 comes from a wire */
@@ -274,7 +274,7 @@ struct nmg_inter_struct {
     point_t             pt2d;           /**< @brief  2D projection of isect line */
     vect_t              dir2d;
     fastf_t             *vert2d;        /**< @brief  Array of 2d vertex projections [index] */
-    int                 maxindex;       /**< @brief  size of vert2d[] */
+    size_t              maxindex;       /**< @brief  size of vert2d[] */
     mat_t               proj;           /**< @brief  Matrix to project onto XY plane */
     const uint32_t      *twod;          /**< @brief  ptr to face/edge of 2d projection */
 };
@@ -685,8 +685,8 @@ RT_EXPORT extern void nmg_ck_fu(const struct shell *s,
                                 const char *str);
 RT_EXPORT extern int nmg_ck_eg_verts(const struct edge_g_lseg *eg,
                                      const struct bn_tol *tol);
-RT_EXPORT extern int nmg_ck_geometry(const struct model *m,
-                                     const struct bn_tol *tol);
+RT_EXPORT extern size_t nmg_ck_geometry(const struct model *m,
+					const struct bn_tol *tol);
 RT_EXPORT extern int nmg_ck_face_worthless_edges(const struct faceuse *fu);
 RT_EXPORT extern void nmg_ck_lueu(const struct loopuse *lu, const char *s);
 RT_EXPORT extern int nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol);

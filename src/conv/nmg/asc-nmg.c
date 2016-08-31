@@ -1,7 +1,7 @@
 /*                       A S C - N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,6 @@ main(int argc, char **argv)
 
     if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
 	usage();
-	bu_log("       Program continues running:\n");
     }
 
     bu_setprogname(argv[0]);
@@ -175,7 +174,7 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 
 /*
  *	Convert an ascii description of an nmg to an actual nmg.
- *	(This should be done with lex and yacc.)
+ *	(This should be done with perplex and lemon.)
  */
 static void
 descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
@@ -185,7 +184,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 {
 #define MAXV	10000
 
-    char token[80] = {0};	/* Token read from ascii nmg file. */
+    char token[81] = {0};	/* Token read from ascii nmg file. */
     double x, y, z;	/* Coordinates of a vertex. */
     int	dir = OT_NONE;	/* Direction of face. */
     int	i,

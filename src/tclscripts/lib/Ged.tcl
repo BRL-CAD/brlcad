@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2014 United States Government as represented by
+# Copyright (c) 1998-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -85,6 +85,7 @@ package provide cadwidgets::Ged 1.0
     itk_option define -centerDotEnable centerDotEnable CenterDotEnable 1
     itk_option define -gridEnable gridEnable GridEnable 0
     itk_option define -gridSnap gridSnap GridSnap 0
+    itk_option define -hideSubtractions hideSubtractions HideSubtractions 0
     itk_option define -measuringStickColor measuringStickColor MeasuringStickColor Yellow
     itk_option define -measuringStickMode measuringStickMode MeasuringStickMode 0
     itk_option define -primitiveLabelColor primitiveLabelColor PrimitiveLabelColor Yellow
@@ -475,7 +476,6 @@ package provide cadwidgets::Ged 1.0
 	method pane_pmodel2view {_pane args}
 	method pane_png {_pane args}
 	method pane_pngwf {_pane args}
-	method pane_pov {_pane args}
 	method pane_preview {_pane args}
 	method pane_protate_mode {_pane args}
 	method pane_ps {_pane args}
@@ -539,8 +539,6 @@ package provide cadwidgets::Ged 1.0
 	method pmodel2view {args}
 	method png {args}
 	method pngwf {args}
-	method polybinout {args}
-	method pov {args}
 	method prcolor {args}
 	method prefix {args}
 	method preview {args}
@@ -743,6 +741,7 @@ package provide cadwidgets::Ged 1.0
 	method init_data_scale {{_button 1}}
 	method init_data_poly_circ {{_button 1}}
 	method init_data_poly_cont {{_button1 1} {_button2 2}}
+	method init_data_poly_cont_flag {}
 	method init_data_poly_ell {{_button 1}}
 	method init_data_poly_rect {{_button 1} {_sflag 0}}
 	method init_find_arb_edge {_obj {_button 1} {_callback {}}}
@@ -762,11 +761,11 @@ package provide cadwidgets::Ged 1.0
 	method init_view_scale {{_button 1}}
 	method init_view_translate {{_button 1}}
 	method center_ray {{_pflag 0}}
-	method mouse_ray {_x _y {_pflag 0}}
+	method mouse_ray {_x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}}
 	method pane_mouse_3dpoint {_pane _x _y {_vflag 1}}
 	method pane_mouse_data_label {_pane _x _y}
 	method pane_mouse_data_pick {_pane _x _y}
-	method pane_mouse_ray {_pane _x _y {_pflag 0}}
+	method pane_mouse_ray {_pane _x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}}
 	method pane {args}
 	method init_shoot_ray {_rayname _prep _no_bool _onehit _bot_dflag _objects}
 	method shoot_ray_who {_start _op _target _prep _no_bool _onehit _bot_dflag}
@@ -1249,7 +1248,12 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::blast {args} {
     set mRayNeedGettrees 1
-    eval $mGed blast $args
+
+    if {$itk_option(-hideSubtractions)} {
+	eval $mGed blast -S $args
+    } else {
+	eval $mGed blast $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::bn_dist_pt2_lseg2 {args} {
@@ -1627,7 +1631,12 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::draw {args} {
     set mRayNeedGettrees 1
-    eval $mGed draw $args
+
+    if {$itk_option(-hideSubtractions)} {
+	eval $mGed draw -S $args
+    } else {
+	eval $mGed draw $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::draw_ray {_start _partitions} {
@@ -3111,14 +3120,6 @@ package provide cadwidgets::Ged 1.0
     eval $mGed pngwf $itk_component($_pane) $args
 }
 
-::itcl::body cadwidgets::Ged::pane_pov {_pane args} {
-    eval $mGed pov $itk_component($_pane) $args
-}
-
-::itcl::body cadwidgets::Ged::pane_preview {_pane args} {
-    eval $mGed preview $itk_component($_pane) $args
-}
-
 ::itcl::body cadwidgets::Ged::pane_protate_mode {_pane args} {
     eval $mGed protate_mode $itk_component($_pane) $args
 }
@@ -3384,14 +3385,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pngwf {args} {
     eval $mGed pngwf $itk_component($itk_option(-pane)) $args
-}
-
-::itcl::body cadwidgets::Ged::polybinout {args} {
-    eval $mGed polybinout $args
-}
-
-::itcl::body cadwidgets::Ged::pov {args} {
-    eval $mGed pov $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::prcolor {args} {
@@ -4043,13 +4036,16 @@ package provide cadwidgets::Ged 1.0
 
 ############################### Public Methods Specific to cadwidgets::Ged ###############################
 
+
 ::itcl::body cadwidgets::Ged::? {} {
     return [$help ? 20 8]
 }
 
+
 ::itcl::body cadwidgets::Ged::apropos {args} {
     return [eval $help apropos $args]
 }
+
 
 # Create a new arrow with both points the same.
 # Go into data move mode for this arrow and its second point.
@@ -4927,6 +4923,13 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::init_data_poly_cont_flag {} {
+    foreach dm {ur ul ll lr} {
+	$mGed poly_cont_build_end $itk_component($dm)
+    }
+}
+
+
 ::itcl::body cadwidgets::Ged::init_data_poly_ell {{_button 1}} {
     measure_line_erase
 
@@ -5147,9 +5150,11 @@ package provide cadwidgets::Ged 1.0
     mouse_ray $x $y $_pflag
 }
 
-::itcl::body cadwidgets::Ged::mouse_ray {_x _y {_pflag 0}} {
-    pane_mouse_ray $itk_option(-pane) $_x $_y $_pflag
+
+::itcl::body cadwidgets::Ged::mouse_ray {_x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}} {
+    pane_mouse_ray $itk_option(-pane) $_x $_y $_pflag $_prflag $_nbflag $_ohflag $_bdflag
 }
+
 
 ## pane_mouse_3dpoint
 #
@@ -5245,7 +5250,7 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
-::itcl::body cadwidgets::Ged::pane_mouse_ray {_pane _x _y {_pflag 0}} {
+::itcl::body cadwidgets::Ged::pane_mouse_ray {_pane _x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}} {
     set mLastMouseRayPos "$_x $_y"
 
     set view [$mGed screen2view $itk_component($_pane) $_x $_y]
@@ -5258,7 +5263,7 @@ package provide cadwidgets::Ged 1.0
     set mLastMouseRayStart [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
     set mLastMouseRayTarget [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] 0]
 
-    if {[catch {shoot_ray_who $mLastMouseRayStart "at" $mLastMouseRayTarget 1 1 0 1} partitions]} {
+    if {[catch {shoot_ray_who $mLastMouseRayStart "at" $mLastMouseRayTarget $_prflag $_nbflag $_ohflag $_bdflag} partitions]} {
 	return $partitions
     }
 
@@ -6352,8 +6357,6 @@ package provide cadwidgets::Ged 1.0
     $help add pmat		{{} {get the perspective matrix}}
     $help add pmodel2view	{{} {get the pmodel2view matrix}}
     $help add png		{{[-c r/g/b] [-s size] file} {creates a png file of the current view (wireframe only)}}
-    $help add polybinout	{{file}	{write out polygons (binary) of the currently displayed geometry}}
-    $help add pov		{{args}	{experimental:  set point-of-view}}
     $help add prcolor		{{} {print color and material table}}
     $help add prefix		{{new_prefix object(s)} {prefix each occurrence of object name(s)}}
     $help add preview		{{[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file} {preview new style RT animation script}}
@@ -6448,7 +6451,7 @@ package provide cadwidgets::Ged 1.0
     $help add who		{{[r(eal)|p(hony)|b(oth)]} {list the top-level objects currently being displayed}}
     $help add wmater		{{file comb1 [comb2 ...]} {write material properties to a file for the specified combinations}}
     $help add x 		{{[lvl]} {print solid table & vector list}}
-    $help add xpush		{{object} {Experimental Push Command}}
+    $help add xpush		{{object} {push matrices onto primitives, creating copies as needed}}
     $help add ypr		{{yaw pitch roll} {set the view orientation given the yaw, pitch and roll}}
     $help add zap		{{} {clear screen}}
     $help add zoom		{{sf} {zoom view by specified scale factor}}

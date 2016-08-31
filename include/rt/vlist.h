@@ -1,7 +1,7 @@
 /*                      V L I S T . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,6 +89,15 @@ RT_EXPORT extern int rt_uplot_to_vlist(struct bn_vlblock *vbp,
  */
 RT_EXPORT extern void rt_label_vlist_verts(struct bn_vlblock *vbp,
                                            struct bu_list *src,
+                                           mat_t mat,
+                                           double sz,
+                                           double mm2local);
+
+/**
+ * Used by MGED's "labelface" command.
+ */
+RT_EXPORT extern void rt_label_vlist_faces(struct bn_vlblock *vbp,
+                                           struct bu_list* f_list,
                                            mat_t mat,
                                            double sz,
                                            double mm2local);

@@ -2,7 +2,7 @@
 #                    C O P Y R I G H T . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,11 @@ files="$*"
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
+# required so sed doesn't truncate files with illegal byte sequence
+LANG=C
+
+export LC_ALL LANG
+
 
 # if we weren't already provided with a list of files, generate a list
 # of files to check, excluding directories that are not BRL-CAD source
@@ -88,7 +93,7 @@ fi
 
 # process the files
 for file in $files ; do
-    echo -n $file
+    printf $file
 
   # sanity checks
     if [ -d "$file" ] ; then
@@ -109,7 +114,7 @@ for file in $files ; do
 	continue
     fi
 
-    echo -n "."
+    printf "."
 
     if [ -f "$file.copyright.new" ] ; then
 	# echo ""
@@ -120,16 +125,17 @@ for file in $files ; do
 	# echo "WARNING: $file.copyright.old is in the way (moving it to .bak)"
 	mv $file.copyright.old $file.copyright.old.bak
     fi
-    echo -n "."
+    printf "."
 
     year=`date +%Y`
+
     sed "s/[cC][oO][pP][yY][rR][iI][gG][hH][tT] \{0,1\}(\{0,1\}[cC]\{0,1\})\{0,1\}.\{0,1\} \{0,1\}\([0-9][0-9][0-9][0-9]\) \{0,1\}-\{0,1\} \{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}\([ .;]\{1,\}\)\(.*United \{1,\}States\)/Copyright (c) \1-$year\2\3/" < $file > $file.copyright.new
-    echo -n "."
+    printf "."
 
     modified=no
     filediff="`diff $file $file.copyright.new`"
     if [ "x$filediff" = "x" ] ; then
-	echo -n "."
+	printf "."
 	rm -f $file.copyright.new
     elif [ ! "x`echo $filediff | grep \"No newline at end of file\"`" = "x" ] ; then
 	echo ". `basename $file` has no newline -- SKIPPING"
@@ -140,7 +146,7 @@ for file in $files ; do
 	rm -f $file.copyright.new
 	continue
     else
-	echo -n "."
+	printf "."
 	modified=yes
 	mv $file $file.copyright.old
 	mv $file.copyright.new $file
@@ -149,27 +155,27 @@ for file in $files ; do
     if [ "x$modified" = "xyes" ] ; then
 	# make sure it's not a current year
 	sed "s/Copyright ([cC]) $year-$year/Copyright (c) $year/" < $file > $file.copyright.new
-	echo -n "."
+	printf "."
 
 	filediff="`diff $file $file.copyright.new`"
 	if [ "x$filediff" = "x" ] ; then
-	    echo -n "."
+	    printf "."
 	    rm -f $file.copyright.new
 	elif [ ! "x`echo $filediff | grep \"No newline at end of file\"`" = "x" ] ; then
-	    echo -n "."
+	    printf "."
 	    rm -f $file.copyright.new
 	elif [ ! "x`echo $filediff | grep \"Binary files\"`" = "x" ] ; then
-	    echo -n "."
+	    printf "."
 	    rm -f $file.copyright.new
 	else
-	    echo -n "."
+	    printf "."
 	    modified=no
 	    mv $file $file.repeat.copyright.old
 	    mv $file.copyright.new $file
 	fi
 
 	if [ "x$modified" = "xyes" ] ; then
-	    echo -n ". `basename $file` is MODIFIED"
+	    printf ". `basename $file` is MODIFIED"
 	fi
     fi
 

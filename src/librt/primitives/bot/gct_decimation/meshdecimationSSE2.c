@@ -36,72 +36,18 @@
 
 #include "common.h"
 
-#include "meshdecimation.h"
 
-#include "auxiliary/cpuconfig.h"
-#include "auxiliary/cpuinfo.h"
-#include "auxiliary/cc.h"
+#if defined(__SSE2__) && ((defined(__GNUC__) && !defined(__OpenBSD__)) || defined(__INTEL_COMPILER) || defined(_MSC_VER))
+
 #include "auxiliary/mm.h"
-#include "auxiliary/mmhash.h"
-#include "auxiliary/math3d.h"
-#include "auxiliary/mmbinsort.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-#include <math.h>
-#include <float.h>
+#include "vmath.h"
 
-
-#ifdef __SSE__
-#include <xmmintrin.h>
-#endif
-#ifdef __SSE2__
 #include <emmintrin.h>
-#endif
-#ifdef __SSE3__
-#include <pmmintrin.h>
-#endif
-#ifdef __SSSE3__
-#include <tmmintrin.h>
-#endif
-#ifdef __SSE4A__
-#include <ammintrin.h>
-#endif
-#ifdef __SSE4_1__
-#include <smmintrin.h>
-#endif
-
-
-/****/
-
-
-#ifdef __SSE2__
-#define MD_CONFIG_SSE2_SUPPORT
-#else
-#warning "SSE2 wasn't enabled to compile this file."
-#endif
-
-
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#define RF_ALIGN16 __attribute__((aligned(16)))
-#elif defined(_MSC_VER)
-#define RF_ALIGN16 __declspec(align(16))
-#else
-#define RF_ALIGN16
-#warning "SSE Disabled: Unsupported Compiler."
-#ifdef MD_CONFIG_SSE2_SUPPORT
-#undef MD_CONFIG_SSE2_SUPPORT
-#endif
-#endif
 
 
 #define MD_CONFIG_SSE_APPROX
 
-
-#ifdef MD_CONFIG_SSE2_SUPPORT
 
 typedef union {
     __m128 v;
@@ -112,6 +58,7 @@ int mdPathSSE2 = 0x1 | 0x2;
 
 
 #define MD_COMPACTNESS_NORMALIZATION_FACTOR (0.5*4.0*1.732050808)
+
 
 float mdEdgeCollapsePenaltyTriangleSSE2f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag, float compactnesstarget)
 {
@@ -136,33 +83,33 @@ float mdEdgeCollapsePenaltyTriangleSSE2f(float *newpoint, float *oldpoint, float
 		  );
 
     /* Detect normal inversion */
-    if (M3D_VectorDotProduct(oldnormal.f, newnormal.f) < 0.0) {
+    if (VDOT(oldnormal.f, newnormal.f) < 0.0) {
 	*denyflag = 1;
 	return 0.0;
     }
 
     /* Penalize long thin triangles */
     penalty = 0.0;
-    vectadp = M3D_VectorDotProduct(vecta.f, vecta.f);
+    vectadp = VDOT(vecta.f, vecta.f);
     newvectc.v = _mm_sub_ps(_mm_load_ps(newpoint), _mm_load_ps(rightpoint));
 #ifdef MD_CONFIG_SSE_APPROX
-    norm = vectadp + M3D_VectorDotProduct(newvectb.f, newvectb.f) + M3D_VectorDotProduct(newvectc.f, newvectc.f);
-    newcompactness = _mm_cvtss_f32(_mm_mul_ss(_mm_set_ss(MD_COMPACTNESS_NORMALIZATION_FACTOR), _mm_rcp_ss(_mm_mul_ss(_mm_rsqrt_ss(_mm_set_ss(M3D_VectorDotProduct(newnormal.f, newnormal.f))), _mm_set_ss(norm)))));
+    norm = vectadp + VDOT(newvectb.f, newvectb.f) + VDOT(newvectc.f, newvectc.f);
+    newcompactness = _mm_cvtss_f32(_mm_mul_ss(_mm_set_ss(MD_COMPACTNESS_NORMALIZATION_FACTOR), _mm_rcp_ss(_mm_mul_ss(_mm_rsqrt_ss(_mm_set_ss(VDOT(newnormal.f, newnormal.f))), _mm_set_ss(norm)))));
 
     if (newcompactness < compactnesstarget) {
 #else
-    newcompactness = MD_COMPACTNESS_NORMALIZATION_FACTOR * sqrtf(M3D_VectorDotProduct(newnormal.f, newnormal.f));
-    norm = vectadp + M3D_VectorDotProduct(newvectb.f, newvectb.f) + M3D_VectorDotProduct(newvectc.f, newvectc.f);
+    newcompactness = MD_COMPACTNESS_NORMALIZATION_FACTOR * sqrtf(VDOT(newnormal.f, newnormal.f));
+    norm = vectadp + VDOT(newvectb.f, newvectb.f) + VDOT(newvectc.f, newvectc.f);
 
     if (newcompactness < (compactnesstarget * norm)) {
 	newcompactness /= norm;
 #endif
 	oldvectc.v = _mm_sub_ps(_mm_load_ps(oldpoint), _mm_load_ps(rightpoint));
 #ifdef MD_CONFIG_SSE_APPROX
-	norm = vectadp + M3D_VectorDotProduct(oldvectb.f, oldvectb.f) + M3D_VectorDotProduct(oldvectc.f, oldvectc.f);
-	oldcompactness = _mm_cvtss_f32(_mm_mul_ss(_mm_set_ss(MD_COMPACTNESS_NORMALIZATION_FACTOR), _mm_rcp_ss(_mm_mul_ss(_mm_rsqrt_ss(_mm_set_ss(M3D_VectorDotProduct(oldnormal.f, oldnormal.f))), _mm_set_ss(norm)))));
+	norm = vectadp + VDOT(oldvectb.f, oldvectb.f) + VDOT(oldvectc.f, oldvectc.f);
+	oldcompactness = _mm_cvtss_f32(_mm_mul_ss(_mm_set_ss(MD_COMPACTNESS_NORMALIZATION_FACTOR), _mm_rcp_ss(_mm_mul_ss(_mm_rsqrt_ss(_mm_set_ss(VDOT(oldnormal.f, oldnormal.f))), _mm_set_ss(norm)))));
 #else
-	oldcompactness = (MD_COMPACTNESS_NORMALIZATION_FACTOR * sqrtf(M3D_VectorDotProduct(oldnormal.f, oldnormal.f))) / (vectadp + M3D_VectorDotProduct(oldvectb.f, oldvectb.f) + M3D_VectorDotProduct(oldvectc.f, oldvectc.f));
+	oldcompactness = (MD_COMPACTNESS_NORMALIZATION_FACTOR * sqrtf(VDOT(oldnormal.f, oldnormal.f))) / (vectadp + VDOT(oldvectb.f, oldvectb.f) + VDOT(oldvectc.f, oldvectc.f));
 #endif
 	compactness = fmin(compactnesstarget, oldcompactness) - newcompactness;
 
@@ -261,12 +208,14 @@ double mdEdgeCollapsePenaltyTriangleSSE2d(double *newpoint, double *oldpoint, do
 
 int mdPathSSE2 = 0x0;
 
-float mdEdgeCollapsePenaltyTriangleSSE2f(float *newpoint, float *oldpoint, float *leftpoint, float *rightpoint, int *denyflag)
+
+float mdEdgeCollapsePenaltyTriangleSSE2f(float *UNUSED(newpoint), float *UNUSED(oldpoint), float *UNUSED(leftpoint), float *UNUSED(rightpoint), int *UNUSED(denyflag))
 {
     return 0.0;
 }
 
-double mdEdgeCollapsePenaltyTriangleSSE2d(double *newpoint, double *oldpoint, double *leftpoint, double *rightpoint, int *denyflag)
+
+double mdEdgeCollapsePenaltyTriangleSSE2d(double *UNUSED(newpoint), double *UNUSED(oldpoint), double *UNUSED(leftpoint), double *UNUSED(rightpoint), int *UNUSED(denyflag))
 {
     return 0.0;
 }

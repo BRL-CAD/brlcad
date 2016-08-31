@@ -1,7 +1,7 @@
 /*                         O C E N T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,7 +82,7 @@ ged_ocenter(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 2) {
 	VSCALE(center, oldCenter, gedp->ged_wdbp->dbip->dbi_base2local);
-	bn_encode_vect(gedp->ged_result_str, center);
+	bn_encode_vect(gedp->ged_result_str, center, 1);
 
 	return GED_OK;
     }

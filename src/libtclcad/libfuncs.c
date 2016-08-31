@@ -1,7 +1,7 @@
 /*                        L I B F U N C S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -487,585 +487,113 @@ bn_hdivide(fastf_t *o, const mat_t i)
     HDIVIDE(o, i);
 }
 
-
-static void
-bn_vjoin1(fastf_t *o, const point_t pnt, double scale, const vect_t dir)
+static int
+tclcad_bn_dist_pt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
-    VJOIN1(o, pnt, scale, dir);
-}
-
-
-static void bn_vblend(mat_t a, fastf_t b, mat_t c, fastf_t d, mat_t e)
-{
-    VBLEND2(a, b, c, d, e);
-}
-
-
-#define MATH_FUNC_VOID_CAST(_func) ((void (*)(void))_func)
-
-static struct math_func_link {
-    const char *name;
-    void (*func)(void);
-} math_funcs[] = {
-    {"bn_dist_pt2_lseg2",	 MATH_FUNC_VOID_CAST(bn_dist_pt2_lseg2)},
-    {"bn_isect_line2_line2",	 MATH_FUNC_VOID_CAST(bn_isect_line2_line2)},
-    {"bn_isect_line3_line3",	 MATH_FUNC_VOID_CAST(bn_isect_line3_line3)},
-    {"mat_mul",                  MATH_FUNC_VOID_CAST(bn_mat_mul)},
-    {"mat_inv",                  MATH_FUNC_VOID_CAST(bn_mat_inv)},
-    {"mat_trn",                  MATH_FUNC_VOID_CAST(bn_mat_trn)},
-    {"matXvec",                  MATH_FUNC_VOID_CAST(bn_matXvec)},
-    {"mat4x3vec",                MATH_FUNC_VOID_CAST(bn_mat4x3vec)},
-    {"mat4x3pnt",                MATH_FUNC_VOID_CAST(bn_mat4x3pnt)},
-    {"hdivide",                  MATH_FUNC_VOID_CAST(bn_hdivide)},
-    {"vjoin1",	                 MATH_FUNC_VOID_CAST(bn_vjoin1)},
-    {"vblend",	                 MATH_FUNC_VOID_CAST(bn_vblend)},
-    {"mat_ae",                   MATH_FUNC_VOID_CAST(bn_mat_ae)},
-    {"mat_ae_vec",               MATH_FUNC_VOID_CAST(bn_ae_vec)},
-    {"mat_aet_vec",              MATH_FUNC_VOID_CAST(bn_aet_vec)},
-    {"mat_angles",               MATH_FUNC_VOID_CAST(bn_mat_angles)},
-    {"mat_eigen2x2",             MATH_FUNC_VOID_CAST(bn_eigen2x2)},
-    {"mat_fromto",               MATH_FUNC_VOID_CAST(bn_mat_fromto)},
-    {"mat_xrot",                 MATH_FUNC_VOID_CAST(bn_mat_xrot)},
-    {"mat_yrot",                 MATH_FUNC_VOID_CAST(bn_mat_yrot)},
-    {"mat_zrot",                 MATH_FUNC_VOID_CAST(bn_mat_zrot)},
-    {"mat_lookat",               MATH_FUNC_VOID_CAST(bn_mat_lookat)},
-    {"mat_vec_ortho",            MATH_FUNC_VOID_CAST(bn_vec_ortho)},
-    {"mat_vec_perp",             MATH_FUNC_VOID_CAST(bn_vec_perp)},
-    {"mat_scale_about_pt",       MATH_FUNC_VOID_CAST(bn_mat_scale_about_pt_wrapper)},
-    {"mat_xform_about_pt",       MATH_FUNC_VOID_CAST(bn_mat_xform_about_pt)},
-    {"mat_arb_rot",              MATH_FUNC_VOID_CAST(bn_mat_arb_rot)},
-    {"quat_mat2quat",            MATH_FUNC_VOID_CAST(quat_mat2quat)},
-    {"quat_quat2mat",            MATH_FUNC_VOID_CAST(quat_quat2mat)},
-    {"quat_distance",            MATH_FUNC_VOID_CAST(bn_quat_distance_wrapper)},
-    {"quat_double",              MATH_FUNC_VOID_CAST(quat_double)},
-    {"quat_bisect",              MATH_FUNC_VOID_CAST(quat_bisect)},
-    {"quat_slerp",               MATH_FUNC_VOID_CAST(quat_slerp)},
-    {"quat_sberp",               MATH_FUNC_VOID_CAST(quat_sberp)},
-    {"quat_make_nearest",        MATH_FUNC_VOID_CAST(quat_make_nearest)},
-    {"quat_exp",                 MATH_FUNC_VOID_CAST(quat_exp)},
-    {"quat_log",                 MATH_FUNC_VOID_CAST(quat_log)},
-    {0, 0}
-};
-
-
-/**
- *@brief
- * Tcl wrappers for the math functions.
- *
- * This is where you should put clauses, in the below "if" statement, to add
- * Tcl support for the LIBBN math routines.
- */
-int
-bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    void (*math_func)(void);
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    struct math_func_link *mfl;
+    point_t ptA, ptB, pca;
+    point_t pt;
+    fastf_t dist;
+    int ret;
+    static const struct bn_tol tol = {
+	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
+    };
 
-    mfl = (struct math_func_link *)clientData;
-    math_func = mfl->func;
-
-    if (math_func == MATH_FUNC_VOID_CAST(bn_mat_mul)) {
-	mat_t o, a, b;
-	if (argc < 3 || bn_decode_mat(a, argv[1]) < 16 ||
-	    bn_decode_mat(b, argv[2]) < 16) {
-	    bu_vls_printf(&result, "usage: %s matA matB", argv[0]);
-	    goto error;
-	}
-	bn_mat_mul(o, a, b);
-	bn_encode_mat(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_mat_inv)
-	       || math_func == MATH_FUNC_VOID_CAST(bn_mat_trn)) {
-	mat_t o, a;
-	/* need new math func pointer of correct signature */
-	void (*_math_func)(mat_t, register const mat_t);
-	/* cast math_func to new func pointer */
-	_math_func = (void (*)(mat_t, register const mat_t))math_func;
-
-	if (argc < 2 || bn_decode_mat(a, argv[1]) < 16) {
-	    bu_vls_printf(&result, "usage: %s mat", argv[0]);
-	    goto error;
-	}
-	_math_func(o, a);
-	bn_encode_mat(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_matXvec)) {
-	mat_t m;
-	hvect_t i, o;
-	if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
-	    bn_decode_hvect(i, argv[2]) < 4) {
-	    bu_vls_printf(&result, "usage: %s mat hvect", argv[0]);
-	    goto error;
-	}
-	bn_matXvec(o, m, i);
-	bn_encode_hvect(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_mat4x3pnt)) {
-	mat_t m;
-	point_t i, o;
-	MAT_ZERO(m);
-	if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
-	    bn_decode_vect(i, argv[2]) < 3) {
-	    bu_vls_printf(&result, "usage: %s mat point", argv[0]);
-	    goto error;
-	}
-	bn_mat4x3pnt(o, m, i);
-	bn_encode_vect(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_mat4x3vec)) {
-	mat_t m;
-	vect_t i, o;
-	MAT_ZERO(m);
-	if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
-	    bn_decode_vect(i, argv[2]) < 3) {
-	    bu_vls_printf(&result, "usage: %s mat vect", argv[0]);
-	    goto error;
-	}
-	bn_mat4x3vec(o, m, i);
-	bn_encode_vect(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_hdivide)) {
-	hvect_t i;
-	vect_t o;
-	if (argc < 2 || bn_decode_hvect(i, argv[1]) < 4) {
-	    bu_vls_printf(&result, "usage: %s hvect", argv[0]);
-	    goto error;
-	}
-	bn_hdivide(o, i);
-	bn_encode_vect(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_vjoin1)) {
-	point_t o;
-	point_t b, d;
-	double c;
-
-	if (argc < 4) {
-	    bu_vls_printf(&result, "usage: %s pnt scale dir", argv[0]);
-	    goto error;
-	}
-	if (bn_decode_vect(b, argv[1]) < 3) goto error;
-	if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
-	if (bn_decode_vect(d, argv[3]) < 3) goto error;
-
-	VJOIN1(o, b, c, d);	/* bn_vjoin1(o, b, c, d) */
-	bn_encode_vect(&result, o);
-
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_vblend)) {
-	point_t a, c, e;
-	double b, d;
-
-	if (argc < 5) {
-	    bu_vls_printf(&result, "usage: %s scale pnt scale pnt", argv[0]);
-	    goto error;
-	}
-
-	if (Tcl_GetDouble(interp, argv[1], &b) != TCL_OK) goto error;
-	if (bn_decode_vect(c, argv[2]) < 3) goto error;
-	if (Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
-	if (bn_decode_vect(e, argv[4]) < 3) goto error;
-
-	VBLEND2(a, b, c, d, e);
-	bn_encode_vect(&result, a);
-
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_mat_ae)) {
-	mat_t o;
-	double az, el;
-
-	if (argc < 3) {
-	    bu_vls_printf(&result, "usage: %s azimuth elevation", argv[0]);
-	    goto error;
-	}
-	if (Tcl_GetDouble(interp, argv[1], &az) != TCL_OK) goto error;
-	if (Tcl_GetDouble(interp, argv[2], &el) != TCL_OK) goto error;
-
-	bn_mat_ae(o, (fastf_t)az, (fastf_t)el);
-	bn_encode_mat(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_ae_vec)) {
-	fastf_t az, el;
-	vect_t v;
-
-	if (argc < 2 || bn_decode_vect(v, argv[1]) < 3) {
-	    bu_vls_printf(&result, "usage: %s vect", argv[0]);
-	    goto error;
-	}
-
-	bn_ae_vec(&az, &el, v);
-	bu_vls_printf(&result, "%g %g", az, el);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_aet_vec)) {
-	double acc;
-	fastf_t az, el, twist, accuracy;
-	vect_t vec_ae, vec_twist;
-
-	if (argc < 4 || bn_decode_vect(vec_ae, argv[1]) < 3 ||
-	    bn_decode_vect(vec_twist, argv[2]) < 3 ||
-	    sscanf(argv[3], "%lf", &acc) < 1) {
-	    bu_vls_printf(&result, "usage: %s vec_ae vec_twist accuracy",
-			  argv[0]);
-	    goto error;
-	}
-	accuracy = acc;
-
-	bn_aet_vec(&az, &el, &twist, vec_ae, vec_twist, accuracy);
-	bu_vls_printf(&result, "%g %g %g", az, el, twist);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_mat_angles)) {
-	mat_t o;
-	double alpha, beta, ggamma;
-
-	if (argc < 4) {
-	    bu_vls_printf(&result, "usage: %s alpha beta gamma", argv[0]);
-	    goto error;
-	}
-	if (Tcl_GetDouble(interp, argv[1], &alpha) != TCL_OK) goto error;
-	if (Tcl_GetDouble(interp, argv[2], &beta) != TCL_OK) goto error;
-	if (Tcl_GetDouble(interp, argv[3], &ggamma) != TCL_OK) goto error;
-
-	bn_mat_angles(o, alpha, beta, ggamma);
-	bn_encode_mat(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_eigen2x2)) {
-	fastf_t val1, val2;
-	vect_t vec1, vec2;
-	double a, b, c;
-
-	if (argc < 4) {
-	    bu_vls_printf(&result, "usage: %s a b c", argv[0]);
-	    goto error;
-	}
-	if (Tcl_GetDouble(interp, argv[1], &a) != TCL_OK) goto error;
-	if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
-	if (Tcl_GetDouble(interp, argv[3], &b) != TCL_OK) goto error;
-
-	bn_eigen2x2(&val1, &val2, vec1, vec2, (fastf_t)a, (fastf_t)b,
-		    (fastf_t)c);
-	bu_vls_printf(&result, "%g %g {%g %g %g} {%g %g %g}", INTCLAMP(val1), INTCLAMP(val2),
-		      V3INTCLAMPARGS(vec1), V3INTCLAMPARGS(vec2));
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_mat_fromto)) {
-	mat_t o;
-	vect_t from, to;
-	static const struct bn_tol tol = {
-	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
-	};
-
-	if (argc < 3 || bn_decode_vect(from, argv[1]) < 3 ||
-	    bn_decode_vect(to, argv[2]) < 3) {
-	    bu_vls_printf(&result, "usage: %s vecFrom vecTo", argv[0]);
-	    goto error;
-	}
-	bn_mat_fromto(o, from, to, &tol);
-	bn_encode_mat(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_mat_xrot)
-	       || math_func == MATH_FUNC_VOID_CAST(bn_mat_yrot)
-	       || math_func == MATH_FUNC_VOID_CAST(bn_mat_zrot)) {
-	mat_t o;
-	double s, c;
-	/* need new math func pointer of correct signature */
-	void (*_math_func)(fastf_t *, double, double);
-	/* cast math_func to new func pointer */
-	_math_func = (void (*)(fastf_t *, double, double))math_func;
-
-	if (argc < 3) {
-	    bu_vls_printf(&result, "usage: %s sinAngle cosAngle", argv[0]);
-	    goto error;
-	}
-	if (Tcl_GetDouble(interp, argv[1], &s) != TCL_OK) goto error;
-	if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
-
-	_math_func(o, s, c);
-	bn_encode_mat(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_mat_lookat)) {
-	mat_t o;
-	vect_t dir;
-	int yflip;
-	if (argc < 3 || bn_decode_vect(dir, argv[1]) < 3) {
-	    bu_vls_printf(&result, "usage: %s dir yflip", argv[0]);
-	    goto error;
-	}
-	if (Tcl_GetBoolean(interp, argv[2], &yflip) != TCL_OK) goto error;
-
-	bn_mat_lookat(o, dir, yflip);
-	bn_encode_mat(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_vec_ortho)
-	       || math_func == MATH_FUNC_VOID_CAST(bn_vec_perp)) {
-	vect_t ov, vec;
-	/* need new math func pointer of correct signature */
-	void (*_math_func)(vect_t, const vect_t);
-	/* cast math_func to new func pointer */
-	_math_func = (void (*)(vect_t, const vect_t))math_func;
-
-	if (argc < 2 || bn_decode_vect(vec, argv[1]) < 3) {
-	    bu_vls_printf(&result, "usage: %s vec", argv[0]);
-	    goto error;
-	}
-
-	_math_func(ov, vec);
-	bn_encode_vect(&result, ov);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_mat_scale_about_pt_wrapper)) {
-	mat_t o;
-	vect_t v;
-	double scale;
-	int status;
-
-	if (argc < 3 || bn_decode_vect(v, argv[1]) < 3) {
-	    bu_vls_printf(&result, "usage: %s pt scale", argv[0]);
-	    goto error;
-	}
-	if (Tcl_GetDouble(interp, argv[2], &scale) != TCL_OK) goto error;
-
-	bn_mat_scale_about_pt_wrapper(&status, o, v, scale);
-	if (status != 0) {
-	    bu_vls_printf(&result, "error performing calculation");
-	    goto error;
-	}
-	bn_encode_mat(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_mat_xform_about_pt)) {
-	mat_t o, xform;
-	vect_t v;
-
-	if (argc < 3 || bn_decode_mat(xform, argv[1]) < 16 ||
-	    bn_decode_vect(v, argv[2]) < 3) {
-	    bu_vls_printf(&result, "usage: %s xform pt", argv[0]);
-	    goto error;
-	}
-
-	bn_mat_xform_about_pt(o, xform, v);
-	bn_encode_mat(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_mat_arb_rot)) {
-	mat_t o;
-	point_t pt;
-	vect_t dir;
-	double angle;
-
-	if (argc < 4 || bn_decode_vect(pt, argv[1]) < 3 ||
-	    bn_decode_vect(dir, argv[2]) < 3) {
-	    bu_vls_printf(&result, "usage: %s pt dir angle", argv[0]);
-	    goto error;
-	}
-	if (Tcl_GetDouble(interp, argv[3], &angle) != TCL_OK)
-	    return TCL_ERROR;
-
-	bn_mat_arb_rot(o, pt, dir, (fastf_t)angle);
-	bn_encode_mat(&result, o);
-    } else if (math_func == MATH_FUNC_VOID_CAST(quat_mat2quat)) {
-	mat_t mat;
-	quat_t quat;
-
-	if (argc < 2 || bn_decode_mat(mat, argv[1]) < 16) {
-	    bu_vls_printf(&result, "usage: %s mat", argv[0]);
-	    goto error;
-	}
-
-	quat_mat2quat(quat, mat);
-	bn_encode_quat(&result, quat);
-    } else if (math_func == MATH_FUNC_VOID_CAST(quat_quat2mat)) {
-	mat_t mat;
-	quat_t quat;
-
-	if (argc < 2 || bn_decode_quat(quat, argv[1]) < 4) {
-	    bu_vls_printf(&result, "usage: %s quat", argv[0]);
-	    goto error;
-	}
-
-	quat_quat2mat(mat, quat);
-	bn_encode_mat(&result, mat);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_quat_distance_wrapper)) {
-	quat_t q1, q2;
-	double d;
-
-	if (argc < 3 || bn_decode_quat(q1, argv[1]) < 4 ||
-	    bn_decode_quat(q2, argv[2]) < 4) {
-	    bu_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
-	    goto error;
-	}
-
-	bn_quat_distance_wrapper(&d, q1, q2);
-	bu_vls_printf(&result, "%g", d);
-    } else if (math_func == MATH_FUNC_VOID_CAST(quat_double)
-	       || math_func == MATH_FUNC_VOID_CAST(quat_bisect)
-	       || math_func == MATH_FUNC_VOID_CAST(quat_make_nearest)) {
-	quat_t oqot, q1, q2;
-	void (*_math_func)(fastf_t *, const fastf_t *, const fastf_t *);
-	/* cast math_func to new func pointer */
-	_math_func = (void (*)(fastf_t *, const fastf_t *, const fastf_t *))math_func;
-
-	if (argc < 3 || bn_decode_quat(q1, argv[1]) < 4 ||
-	    bn_decode_quat(q2, argv[2]) < 4) {
-	    bu_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
-	    goto error;
-	}
-
-	_math_func(oqot, q1, q2);
-	bn_encode_quat(&result, oqot);
-    } else if (math_func == MATH_FUNC_VOID_CAST(quat_slerp)) {
-	quat_t oq, q1, q2;
-	double d;
-
-	if (argc < 4 || bn_decode_quat(q1, argv[1]) < 4 ||
-	    bn_decode_quat(q2, argv[2]) < 4) {
-	    bu_vls_printf(&result, "usage: %s quat1 quat2 factor", argv[0]);
-	    goto error;
-	}
-	if (Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
-
-	quat_slerp(oq, q1, q2, d);
-	bn_encode_quat(&result, oq);
-    } else if (math_func == MATH_FUNC_VOID_CAST(quat_sberp)) {
-	quat_t oq, q1, qa, qb, q2;
-	double d;
-
-	if (argc < 6 || bn_decode_quat(q1, argv[1]) < 4 ||
-	    bn_decode_quat(qa, argv[2]) < 4 || bn_decode_quat(qb, argv[3]) < 4 ||
-	    bn_decode_quat(q2, argv[4]) < 4) {
-	    bu_vls_printf(&result, "usage: %s quat1 quatA quatB quat2 factor",
-			  argv[0]);
-	    goto error;
-	}
-	if (Tcl_GetDouble(interp, argv[5], &d) != TCL_OK) goto error;
-
-	quat_sberp(oq, q1, qa, qb, q2, d);
-	bn_encode_quat(&result, oq);
-    } else if (math_func == MATH_FUNC_VOID_CAST(quat_exp)
-	       || math_func == MATH_FUNC_VOID_CAST(quat_log)) {
-	quat_t qout, qin;
-	/* need new math func pointer of correct signature */
-	void (*_math_func)(fastf_t *, const fastf_t *);
-	/* cast math_func to new func pointer */
-	_math_func = (void (*)(fastf_t *, const fastf_t *))math_func;
-
-	if (argc < 2 || bn_decode_quat(qin, argv[1]) < 4) {
-	    bu_vls_printf(&result, "usage: %s quat", argv[0]);
-	    goto error;
-	}
-
-	_math_func(qout, qin);
-	bn_encode_quat(&result, qout);
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_isect_line3_line3)) {
-	fastf_t t, u;
-	point_t pt, a;
-	vect_t dir, c;
-	int i;
-	static const struct bn_tol tol = {
-	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
-	};
-	if (argc != 5) {
-	    bu_vls_printf(&result,
-			  "Usage: bn_isect_line3_line3 pt dir pt dir (%d args specified)",
-			  argc-1);
-	    goto error;
-	}
-
-	if (bn_decode_vect(pt, argv[1]) < 3) {
-	    bu_vls_printf(&result, "bn_isect_line3_line3 no pt: %s\n", argv[0]);
-	    goto error;
-	}
-	if (bn_decode_vect(dir, argv[2]) < 3) {
-	    bu_vls_printf(&result, "bn_isect_line3_line3 no dir: %s\n", argv[0]);
-	    goto error;
-	}
-	if (bn_decode_vect(a, argv[3]) < 3) {
-	    bu_vls_printf(&result, "bn_isect_line3_line3 no a pt: %s\n", argv[0]);
-	    goto error;
-	}
-	if (bn_decode_vect(c, argv[4]) < 3) {
-	    bu_vls_printf(&result, "bn_isect_line3_line3 no c dir: %s\n", argv[0]);
-	    goto error;
-	}
-	i = bn_isect_line3_line3(&t, &u, pt, dir, a, c, &tol);
-	if (i != 1) {
-	    bu_vls_printf(&result, "bn_isect_line3_line3 no intersection: %s\n", argv[0]);
-	    goto error;
-	}
-
-	VJOIN1(a, pt, t, dir);
-	bn_encode_vect(&result, a);
-
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_isect_line2_line2)) {
-	fastf_t dist[2];
-	point_t pt, a;
-	vect_t dir, c;
-	int i;
-	static const struct bn_tol tol = {
-	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
-	};
-
-	if (argc != 5) {
-	    bu_vls_printf(&result,
-			  "Usage: bn_isect_line2_line2 pt dir pt dir (%d args specified)",
-			  argc-1);
-	    goto error;
-	}
-
-	/* i = bn_isect_line2_line2 {0 0} {1 0} {1 1} {0 -1} */
-
-	VSETALL(pt, 0.0);
-	VSETALL(dir, 0.0);
-	VSETALL(a, 0.0);
-	VSETALL(c, 0.0);
-
-	if (bn_decode_vect(pt, argv[1]) < 2) {
-	    bu_vls_printf(&result, "bn_isect_line2_line2 no pt: %s\n", argv[0]);
-	    goto error;
-	}
-	if (bn_decode_vect(dir, argv[2]) < 2) {
-	    bu_vls_printf(&result, "bn_isect_line2_line2 no dir: %s\n", argv[0]);
-	    goto error;
-	}
-	if (bn_decode_vect(a, argv[3]) < 2) {
-	    bu_vls_printf(&result, "bn_isect_line2_line2 no a pt: %s\n", argv[0]);
-	    goto error;
-	}
-	if (bn_decode_vect(c, argv[4]) < 2) {
-	    bu_vls_printf(&result, "bn_isect_line2_line2 no c dir: %s\n", argv[0]);
-	    goto error;
-	}
-	i = bn_isect_line2_line2(dist, pt, dir, a, c, &tol);
-	if (i != 1) {
-	    bu_vls_printf(&result, "bn_isect_line2_line2 no intersection: %s\n", argv[0]);
-	    goto error;
-	}
-
-	VJOIN1(a, pt, dist[0], dir);
-	bu_vls_printf(&result, "%g %g", V2INTCLAMPARGS(a));
-
-    } else if (math_func == MATH_FUNC_VOID_CAST(bn_dist_pt2_lseg2)) {
-	point_t ptA, ptB, pca;
-	point_t pt;
-	fastf_t dist;
-	int ret;
-	static const struct bn_tol tol = {
-	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
-	};
-
-	if (argc != 4) {
-	    bu_vls_printf(&result,
-			  "Usage: bn_dist_pt2_lseg2 ptA ptB pt (%d args specified)", argc-1);
-	    goto error;
-	}
-
-	if (bn_decode_vect(ptA, argv[1]) < 2) {
-	    bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptA: %s\n", argv[0]);
-	    goto error;
-	}
-
-	if (bn_decode_vect(ptB, argv[2]) < 2) {
-	    bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptB: %s\n", argv[0]);
-	    goto error;
-	}
-
-	if (bn_decode_vect(pt, argv[3]) < 2) {
-	    bu_vls_printf(&result, "bn_dist_pt2_lseg2 no pt: %s\n", argv[0]);
-	    goto error;
-	}
-
-	ret = bn_dist_pt2_lseg2(&dist, pca, ptA, ptB, pt, &tol);
-	switch (ret) {
-	    case 0:
-	    case 1:
-	    case 2:
-		dist = 0.0;
-		break;
-	    default:
-		break;
-	}
-
-	bu_vls_printf(&result, "%g", dist);
-    } else {
-	bu_vls_printf(&result, "libbn/bn_tcl.c: math function %s not supported yet\n", argv[0]);
+    if (argc != 4) {
+	bu_vls_printf(&result,
+		"Usage: bn_dist_pt2_lseg2 ptA ptB pt (%d args specified)", argc-1);
 	goto error;
     }
+
+    if (bn_decode_vect(ptA, argv[1]) < 2) {
+	bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptA: %s\n", argv[0]);
+	goto error;
+    }
+
+    if (bn_decode_vect(ptB, argv[2]) < 2) {
+	bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptB: %s\n", argv[0]);
+	goto error;
+    }
+
+    if (bn_decode_vect(pt, argv[3]) < 2) {
+	bu_vls_printf(&result, "bn_dist_pt2_lseg2 no pt: %s\n", argv[0]);
+	goto error;
+    }
+
+    ret = bn_dist_pt2_lseg2(&dist, pca, ptA, ptB, pt, &tol);
+    switch (ret) {
+	case 0:
+	case 1:
+	case 2:
+	    dist = 0.0;
+	    break;
+	default:
+	    break;
+    }
+
+    bu_vls_printf(&result, "%g", dist);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+
+} 
+
+static int
+tclcad_bn_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    fastf_t dist[2];
+    point_t pt, a;
+    vect_t dir, c;
+    int i;
+    static const struct bn_tol tol = {
+	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
+    };
+
+    if (argc != 5) {
+	bu_vls_printf(&result,
+		"Usage: bn_isect_line2_line2 pt dir pt dir (%d args specified)",
+		argc-1);
+	goto error;
+    }
+
+    /* i = bn_isect_line2_line2 {0 0} {1 0} {1 1} {0 -1} */
+
+    VSETALL(pt, 0.0);
+    VSETALL(dir, 0.0);
+    VSETALL(a, 0.0);
+    VSETALL(c, 0.0);
+
+    if (bn_decode_vect(pt, argv[1]) < 2) {
+	bu_vls_printf(&result, "bn_isect_line2_line2 no pt: %s\n", argv[0]);
+	goto error;
+    }
+    if (bn_decode_vect(dir, argv[2]) < 2) {
+	bu_vls_printf(&result, "bn_isect_line2_line2 no dir: %s\n", argv[0]);
+	goto error;
+    }
+    if (bn_decode_vect(a, argv[3]) < 2) {
+	bu_vls_printf(&result, "bn_isect_line2_line2 no a pt: %s\n", argv[0]);
+	goto error;
+    }
+    if (bn_decode_vect(c, argv[4]) < 2) {
+	bu_vls_printf(&result, "bn_isect_line2_line2 no c dir: %s\n", argv[0]);
+	goto error;
+    }
+    i = bn_isect_line2_line2(dist, pt, dir, a, c, &tol);
+    if (i != 1) {
+	bu_vls_printf(&result, "bn_isect_line2_line2 no intersection: %s\n", argv[0]);
+	goto error;
+    }
+
+    VJOIN1(a, pt, dist[0], dir);
+    bu_vls_printf(&result, "%g %g", V2INTCLAMPARGS(a));
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1077,6 +605,1023 @@ error:
     return TCL_ERROR;
 }
 
+static int
+tclcad_bn_isect_line3_line3(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+
+    fastf_t t, u;
+    point_t pt, a;
+    vect_t dir, c;
+    int i;
+    static const struct bn_tol tol = {
+	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
+    };
+    if (argc != 5) {
+	bu_vls_printf(&result,
+		"Usage: bn_isect_line3_line3 pt dir pt dir (%d args specified)",
+		argc-1);
+	goto error;
+    }
+
+    if (bn_decode_vect(pt, argv[1]) < 3) {
+	bu_vls_printf(&result, "bn_isect_line3_line3 no pt: %s\n", argv[0]);
+	goto error;
+    }
+    if (bn_decode_vect(dir, argv[2]) < 3) {
+	bu_vls_printf(&result, "bn_isect_line3_line3 no dir: %s\n", argv[0]);
+	goto error;
+    }
+    if (bn_decode_vect(a, argv[3]) < 3) {
+	bu_vls_printf(&result, "bn_isect_line3_line3 no a pt: %s\n", argv[0]);
+	goto error;
+    }
+    if (bn_decode_vect(c, argv[4]) < 3) {
+	bu_vls_printf(&result, "bn_isect_line3_line3 no c dir: %s\n", argv[0]);
+	goto error;
+    }
+    i = bn_isect_line3_line3(&t, &u, pt, dir, a, c, &tol);
+    if (i != 1) {
+	bu_vls_printf(&result, "bn_isect_line3_line3 no intersection: %s\n", argv[0]);
+	goto error;
+    }
+
+    VJOIN1(a, pt, t, dir);
+    bn_encode_vect(&result, a, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+} 
+
+
+static int
+tclcad_bn_mat_mul(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t o, a, b;
+    if (argc < 3 || bn_decode_mat(a, argv[1]) < 16 ||
+	    bn_decode_mat(b, argv[2]) < 16) {
+	bu_vls_printf(&result, "usage: %s matA matB", argv[0]);
+	goto error;
+    }
+    bn_mat_mul(o, a, b);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_mat_inv(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+
+    mat_t o, a;
+
+    if (argc < 2 || bn_decode_mat(a, argv[1]) < 16) {
+	bu_vls_printf(&result, "usage: %s mat", argv[0]);
+	goto error;
+    }
+    bn_mat_inv(o, a);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_mat_trn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+
+    mat_t o, a;
+
+    if (argc < 2 || bn_decode_mat(a, argv[1]) < 16) {
+	bu_vls_printf(&result, "usage: %s mat", argv[0]);
+	goto error;
+    }
+    bn_mat_trn(o, a);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_matXvec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+
+    mat_t m;
+    hvect_t i, o;
+    if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
+	    bn_decode_hvect(i, argv[2]) < 4) {
+	bu_vls_printf(&result, "usage: %s mat hvect", argv[0]);
+	goto error;
+    }
+    bn_matXvec(o, m, i);
+    bn_encode_hvect(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_mat4x3vec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t m;
+    vect_t i, o;
+    MAT_ZERO(m);
+    if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
+	    bn_decode_vect(i, argv[2]) < 3) {
+	bu_vls_printf(&result, "usage: %s mat vect", argv[0]);
+	goto error;
+    }
+    bn_mat4x3vec(o, m, i);
+    bn_encode_vect(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_mat4x3pnt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t m;
+    point_t i, o;
+    MAT_ZERO(m);
+    if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
+	    bn_decode_vect(i, argv[2]) < 3) {
+	bu_vls_printf(&result, "usage: %s mat point", argv[0]);
+	goto error;
+    }
+    bn_mat4x3pnt(o, m, i);
+    bn_encode_vect(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_hdivide(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    hvect_t i;
+    vect_t o;
+    if (argc < 2 || bn_decode_hvect(i, argv[1]) < 4) {
+	bu_vls_printf(&result, "usage: %s hvect", argv[0]);
+	goto error;
+    }
+    bn_hdivide(o, i);
+    bn_encode_vect(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_vjoin1(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    point_t o;
+    point_t b, d;
+    double c;
+
+    if (argc < 4) {
+	bu_vls_printf(&result, "usage: %s pnt scale dir", argv[0]);
+	goto error;
+    }
+    if (bn_decode_vect(b, argv[1]) < 3) goto error;
+    if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
+    if (bn_decode_vect(d, argv[3]) < 3) goto error;
+
+    VJOIN1(o, b, c, d);	/* bn_vjoin1(o, b, c, d) */
+    bn_encode_vect(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_vblend(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    point_t a, c, e;
+    double b, d;
+
+    if (argc < 5) {
+	bu_vls_printf(&result, "usage: %s scale pnt scale pnt", argv[0]);
+	goto error;
+    }
+
+    if (Tcl_GetDouble(interp, argv[1], &b) != TCL_OK) goto error;
+    if (bn_decode_vect(c, argv[2]) < 3) goto error;
+    if (Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
+    if (bn_decode_vect(e, argv[4]) < 3) goto error;
+
+    VBLEND2(a, b, c, d, e);
+    bn_encode_vect(&result, a, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_mat_ae(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t o;
+    double az, el;
+
+    if (argc < 3) {
+	bu_vls_printf(&result, "usage: %s azimuth elevation", argv[0]);
+	goto error;
+    }
+    if (Tcl_GetDouble(interp, argv[1], &az) != TCL_OK) goto error;
+    if (Tcl_GetDouble(interp, argv[2], &el) != TCL_OK) goto error;
+
+    bn_mat_ae(o, (fastf_t)az, (fastf_t)el);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_ae_vec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    fastf_t az, el;
+    vect_t v;
+
+    if (argc < 2 || bn_decode_vect(v, argv[1]) < 3) {
+	bu_vls_printf(&result, "usage: %s vect", argv[0]);
+	goto error;
+    }
+
+    bn_ae_vec(&az, &el, v);
+    bu_vls_printf(&result, "%g %g", az, el);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_aet_vec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    double acc;
+    fastf_t az, el, twist, accuracy;
+    vect_t vec_ae, vec_twist;
+
+    if (argc < 4 || bn_decode_vect(vec_ae, argv[1]) < 3 ||
+	    bn_decode_vect(vec_twist, argv[2]) < 3 ||
+	    sscanf(argv[3], "%lf", &acc) < 1) {
+	bu_vls_printf(&result, "usage: %s vec_ae vec_twist accuracy",
+		argv[0]);
+	goto error;
+    }
+    accuracy = acc;
+
+    bn_aet_vec(&az, &el, &twist, vec_ae, vec_twist, accuracy);
+    bu_vls_printf(&result, "%g %g %g", az, el, twist);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_mat_angles(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t o;
+    double alpha, beta, ggamma;
+
+    if (argc < 4) {
+	bu_vls_printf(&result, "usage: %s alpha beta gamma", argv[0]);
+	goto error;
+    }
+    if (Tcl_GetDouble(interp, argv[1], &alpha) != TCL_OK) goto error;
+    if (Tcl_GetDouble(interp, argv[2], &beta) != TCL_OK) goto error;
+    if (Tcl_GetDouble(interp, argv[3], &ggamma) != TCL_OK) goto error;
+
+    bn_mat_angles(o, alpha, beta, ggamma);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_eigen2x2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    fastf_t val1, val2;
+    vect_t vec1, vec2;
+    double a, b, c;
+
+    if (argc < 4) {
+	bu_vls_printf(&result, "usage: %s a b c", argv[0]);
+	goto error;
+    }
+    if (Tcl_GetDouble(interp, argv[1], &a) != TCL_OK) goto error;
+    if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
+    if (Tcl_GetDouble(interp, argv[3], &b) != TCL_OK) goto error;
+
+    bn_eigen2x2(&val1, &val2, vec1, vec2, (fastf_t)a, (fastf_t)b,
+	    (fastf_t)c);
+    bu_vls_printf(&result, "%g %g {%g %g %g} {%g %g %g}", INTCLAMP(val1), INTCLAMP(val2),
+	    V3INTCLAMPARGS(vec1), V3INTCLAMPARGS(vec2));
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_mat_fromto(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t o;
+    vect_t from, to;
+    static const struct bn_tol tol = {
+	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
+    };
+
+    if (argc < 3 || bn_decode_vect(from, argv[1]) < 3 ||
+	    bn_decode_vect(to, argv[2]) < 3) {
+	bu_vls_printf(&result, "usage: %s vecFrom vecTo", argv[0]);
+	goto error;
+    }
+    bn_mat_fromto(o, from, to, &tol);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_mat_xrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t o;
+    double s, c;
+
+    if (argc < 3) {
+	bu_vls_printf(&result, "usage: %s sinAngle cosAngle", argv[0]);
+	goto error;
+    }
+    if (Tcl_GetDouble(interp, argv[1], &s) != TCL_OK) goto error;
+    if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
+
+    bn_mat_xrot(o, s, c);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_mat_yrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t o;
+    double s, c;
+
+    if (argc < 3) {
+	bu_vls_printf(&result, "usage: %s sinAngle cosAngle", argv[0]);
+	goto error;
+    }
+    if (Tcl_GetDouble(interp, argv[1], &s) != TCL_OK) goto error;
+    if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
+
+    bn_mat_yrot(o, s, c);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_mat_zrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t o;
+    double s, c;
+
+    if (argc < 3) {
+	bu_vls_printf(&result, "usage: %s sinAngle cosAngle", argv[0]);
+	goto error;
+    }
+    if (Tcl_GetDouble(interp, argv[1], &s) != TCL_OK) goto error;
+    if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
+
+    bn_mat_zrot(o, s, c);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_mat_lookat(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t o;
+    vect_t dir;
+    int yflip;
+    if (argc < 3 || bn_decode_vect(dir, argv[1]) < 3) {
+	bu_vls_printf(&result, "usage: %s dir yflip", argv[0]);
+	goto error;
+    }
+    if (Tcl_GetBoolean(interp, argv[2], &yflip) != TCL_OK) goto error;
+
+    bn_mat_lookat(o, dir, yflip);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_vec_ortho(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    vect_t ov, vec;
+
+    if (argc < 2 || bn_decode_vect(vec, argv[1]) < 3) {
+	bu_vls_printf(&result, "usage: %s vec", argv[0]);
+	goto error;
+    }
+
+    bn_vec_ortho(ov, vec);
+    bn_encode_vect(&result, ov, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_vec_perp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    vect_t ov, vec;
+
+    if (argc < 2 || bn_decode_vect(vec, argv[1]) < 3) {
+	bu_vls_printf(&result, "usage: %s vec", argv[0]);
+	goto error;
+    }
+
+    bn_vec_perp(ov, vec);
+    bn_encode_vect(&result, ov, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_mat_scale_about_pt_wrapper(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t o;
+    vect_t v;
+    double scale;
+    int status;
+
+    if (argc < 3 || bn_decode_vect(v, argv[1]) < 3) {
+	bu_vls_printf(&result, "usage: %s pt scale", argv[0]);
+	goto error;
+    }
+    if (Tcl_GetDouble(interp, argv[2], &scale) != TCL_OK) goto error;
+
+    bn_mat_scale_about_pt_wrapper(&status, o, v, scale);
+    if (status != 0) {
+	bu_vls_printf(&result, "error performing calculation");
+	goto error;
+    }
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_mat_xform_about_pt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t o, xform;
+    vect_t v;
+
+    if (argc < 3 || bn_decode_mat(xform, argv[1]) < 16 ||
+	    bn_decode_vect(v, argv[2]) < 3) {
+	bu_vls_printf(&result, "usage: %s xform pt", argv[0]);
+	goto error;
+    }
+
+    bn_mat_xform_about_pt(o, xform, v);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_mat_arb_rot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t o;
+    point_t pt;
+    vect_t dir;
+    double angle;
+
+    if (argc < 4 || bn_decode_vect(pt, argv[1]) < 3 ||
+	    bn_decode_vect(dir, argv[2]) < 3) {
+	bu_vls_printf(&result, "usage: %s pt dir angle", argv[0]);
+	goto error;
+    }
+    if (Tcl_GetDouble(interp, argv[3], &angle) != TCL_OK)
+	return TCL_ERROR;
+
+    bn_mat_arb_rot(o, pt, dir, (fastf_t)angle);
+    bn_encode_mat(&result, o, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_quat_mat2quat(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t mat;
+    quat_t quat;
+
+    if (argc < 2 || bn_decode_mat(mat, argv[1]) < 16) {
+	bu_vls_printf(&result, "usage: %s mat", argv[0]);
+	goto error;
+    }
+
+    quat_mat2quat(quat, mat);
+    bn_encode_quat(&result, quat, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_quat_quat2mat(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    mat_t mat;
+    quat_t quat;
+
+    if (argc < 2 || bn_decode_quat(quat, argv[1]) < 4) {
+	bu_vls_printf(&result, "usage: %s quat", argv[0]);
+	goto error;
+    }
+
+    quat_quat2mat(mat, quat);
+    bn_encode_mat(&result, mat, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_quat_distance(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    quat_t q1, q2;
+    double d;
+
+    if (argc < 3 || bn_decode_quat(q1, argv[1]) < 4 ||
+	    bn_decode_quat(q2, argv[2]) < 4) {
+	bu_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
+	goto error;
+    }
+
+    bn_quat_distance_wrapper(&d, q1, q2);
+    bu_vls_printf(&result, "%g", d);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_quat_double(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    quat_t oqot, q1, q2;
+
+    if (argc < 3 || bn_decode_quat(q1, argv[1]) < 4 ||
+	    bn_decode_quat(q2, argv[2]) < 4) {
+	bu_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
+	goto error;
+    }
+
+    quat_double(oqot, q1, q2);
+    bn_encode_quat(&result, oqot, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+
+static int
+tclcad_bn_quat_bisect(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    quat_t oqot, q1, q2;
+
+    if (argc < 3 || bn_decode_quat(q1, argv[1]) < 4 ||
+	    bn_decode_quat(q2, argv[2]) < 4) {
+	bu_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
+	goto error;
+    }
+
+    quat_bisect(oqot, q1, q2);
+    bn_encode_quat(&result, oqot, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+
+static int
+tclcad_bn_quat_make_nearest(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    quat_t oqot, q1;
+
+    if (argc < 2 || bn_decode_quat(oqot, argv[1]) < 4) {
+	bu_vls_printf(&result, "usage: %s orig_quat", argv[0]);
+	goto error;
+    }
+
+    quat_make_nearest(q1, oqot);
+    bn_encode_quat(&result, q1, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+static int
+tclcad_bn_quat_slerp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    quat_t oq, q1, q2;
+    double d;
+
+    if (argc < 4 || bn_decode_quat(q1, argv[1]) < 4 ||
+	    bn_decode_quat(q2, argv[2]) < 4) {
+	bu_vls_printf(&result, "usage: %s quat1 quat2 factor", argv[0]);
+	goto error;
+    }
+    if (Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
+
+    quat_slerp(oq, q1, q2, d);
+    bn_encode_quat(&result, oq, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+
+static int
+tclcad_bn_quat_sberp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    quat_t oq, q1, qa, qb, q2;
+    double d;
+
+    if (argc < 6 || bn_decode_quat(q1, argv[1]) < 4 ||
+	    bn_decode_quat(qa, argv[2]) < 4 || bn_decode_quat(qb, argv[3]) < 4 ||
+	    bn_decode_quat(q2, argv[4]) < 4) {
+	bu_vls_printf(&result, "usage: %s quat1 quatA quatB quat2 factor",
+		argv[0]);
+	goto error;
+    }
+    if (Tcl_GetDouble(interp, argv[5], &d) != TCL_OK) goto error;
+
+    quat_sberp(oq, q1, qa, qb, q2, d);
+    bn_encode_quat(&result, oq, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+
+static int
+tclcad_bn_quat_exp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    quat_t qout, qin;
+
+    if (argc < 2 || bn_decode_quat(qin, argv[1]) < 4) {
+	bu_vls_printf(&result, "usage: %s quat", argv[0]);
+	goto error;
+    }
+
+    quat_exp(qout, qin);
+    bn_encode_quat(&result, qout, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+static int
+tclcad_bn_quat_log(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls result = BU_VLS_INIT_ZERO;
+    quat_t qout, qin;
+
+    if (argc < 2 || bn_decode_quat(qin, argv[1]) < 4) {
+	bu_vls_printf(&result, "usage: %s quat", argv[0]);
+	goto error;
+    }
+
+    quat_log(qout, qin);
+    bn_encode_quat(&result, qout, 1);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_OK;
+
+error:
+    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+    bu_vls_free(&result);
+    return TCL_ERROR;
+}
+
+
+#define BN_FUNC_TCL_CAST(_func) ((int (*)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv))_func)
+
+static struct math_func_link {
+    const char *name;
+    int (*func)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+} math_funcs[] = {
+    {"bn_dist_pt2_lseg2",	 BN_FUNC_TCL_CAST(tclcad_bn_dist_pt2_lseg2) },
+    {"bn_isect_line2_line2",	 BN_FUNC_TCL_CAST(tclcad_bn_isect_line2_line2) },
+    {"bn_isect_line3_line3",	 BN_FUNC_TCL_CAST(tclcad_bn_isect_line3_line3) },
+    {"mat_mul",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_mul) },
+    {"mat_inv",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_inv) },
+    {"mat_trn",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_trn) },
+    {"matXvec",                  BN_FUNC_TCL_CAST(tclcad_bn_matXvec) },
+    {"mat4x3vec",                BN_FUNC_TCL_CAST(tclcad_bn_mat4x3vec) },
+    {"mat4x3pnt",                BN_FUNC_TCL_CAST(tclcad_bn_mat4x3pnt) },
+    {"hdivide",                  BN_FUNC_TCL_CAST(tclcad_bn_hdivide) },
+    {"vjoin1",	                 BN_FUNC_TCL_CAST(tclcad_bn_vjoin1) },
+    {"vblend",	                 BN_FUNC_TCL_CAST(tclcad_bn_vblend) },
+    {"mat_ae",                   BN_FUNC_TCL_CAST(tclcad_bn_mat_ae) },
+    {"mat_ae_vec",               BN_FUNC_TCL_CAST(tclcad_bn_ae_vec) },
+    {"mat_aet_vec",              BN_FUNC_TCL_CAST(tclcad_bn_aet_vec) },
+    {"mat_angles",               BN_FUNC_TCL_CAST(tclcad_bn_mat_angles) },
+    {"mat_eigen2x2",             BN_FUNC_TCL_CAST(tclcad_bn_eigen2x2) },
+    {"mat_fromto",               BN_FUNC_TCL_CAST(tclcad_bn_mat_fromto) },
+    {"mat_xrot",                 BN_FUNC_TCL_CAST(tclcad_bn_mat_xrot) },
+    {"mat_yrot",                 BN_FUNC_TCL_CAST(tclcad_bn_mat_yrot) },
+    {"mat_zrot",                 BN_FUNC_TCL_CAST(tclcad_bn_mat_zrot) },
+    {"mat_lookat",               BN_FUNC_TCL_CAST(tclcad_bn_mat_lookat) },
+    {"mat_vec_ortho",            BN_FUNC_TCL_CAST(tclcad_bn_vec_ortho) },
+    {"mat_vec_perp",             BN_FUNC_TCL_CAST(tclcad_bn_vec_perp) },
+    {"mat_scale_about_pt",       BN_FUNC_TCL_CAST(tclcad_bn_mat_scale_about_pt_wrapper) },
+    {"mat_xform_about_pt",       BN_FUNC_TCL_CAST(tclcad_bn_mat_xform_about_pt) },
+    {"mat_arb_rot",              BN_FUNC_TCL_CAST(tclcad_bn_mat_arb_rot) },
+    {"quat_mat2quat",            BN_FUNC_TCL_CAST(tclcad_bn_quat_mat2quat) },
+    {"quat_quat2mat",            BN_FUNC_TCL_CAST(tclcad_bn_quat_quat2mat) },
+    {"quat_distance",            BN_FUNC_TCL_CAST(tclcad_bn_quat_distance) },
+    {"quat_double",              BN_FUNC_TCL_CAST(tclcad_bn_quat_double) },
+    {"quat_bisect",              BN_FUNC_TCL_CAST(tclcad_bn_quat_bisect) },
+    {"quat_make_nearest",        BN_FUNC_TCL_CAST(tclcad_bn_quat_make_nearest) },
+    {"quat_slerp",               BN_FUNC_TCL_CAST(tclcad_bn_quat_slerp) },
+    {"quat_sberp",               BN_FUNC_TCL_CAST(tclcad_bn_quat_sberp) },
+    {"quat_exp",                 BN_FUNC_TCL_CAST(tclcad_bn_quat_exp) },
+    {"quat_log",                 BN_FUNC_TCL_CAST(tclcad_bn_quat_log) },
+    {0, 0}
+};
 
 int
 bn_cmd_noise_perlin(ClientData UNUSED(clientData),
@@ -1306,7 +1851,7 @@ bn_cmd_random(ClientData UNUSED(clientData),
 
 
 void
-bn_tcl_mat_print(Tcl_Interp *interp,
+tclcad_bn_mat_print(Tcl_Interp *interp,
 		 const char *title,
 		 const mat_t m)
 {
@@ -1318,14 +1863,14 @@ bn_tcl_mat_print(Tcl_Interp *interp,
 
 
 void
-bn_tcl_setup(Tcl_Interp *interp)
+tclcad_bn_setup(Tcl_Interp *interp)
 {
     struct math_func_link *mp;
 
     for (mp = math_funcs; mp->name != NULL; mp++) {
 	(void)Tcl_CreateCommand(interp, mp->name,
-				(Tcl_CmdProc *)bn_math_cmd,
-				(ClientData)mp,
+				(Tcl_CmdProc *)mp->func,
+				(ClientData)NULL,
 				(Tcl_CmdDeleteProc *)NULL);
     }
 
@@ -1354,21 +1899,32 @@ bn_tcl_setup(Tcl_Interp *interp)
 int
 Bn_Init(Tcl_Interp *interp)
 {
-    bn_tcl_setup(interp);
+    tclcad_bn_setup(interp);
     return TCL_OK;
 }
 
+int
+Sysv_Init(Tcl_Interp *UNUSED(interp))
+{
+    return TCL_OK;
+}
 
+int
+Pkg_Init(Tcl_Interp *interp)
+{
+    if (!interp)
+	return TCL_ERROR;
+    return TCL_OK;
+}
 
 #define RT_FUNC_TCL_CAST(_func) ((int (*)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv))_func)
 
-static int rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
-static int rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
-static int rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
-static int rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
-static int rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
-static int rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv);
-static int rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv);
+static int tclcad_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+static int tclcad_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+static int tclcad_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+static int tclcad_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+static int tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+static int tclcad_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv);
 
 
 /************************************************************************
@@ -1383,20 +1939,20 @@ struct dbcmdstruct {
 };
 
 
-static struct dbcmdstruct rt_tcl_rt_cmds[] = {
-    {"shootray",	RT_FUNC_TCL_CAST(rt_tcl_rt_shootray)},
-    {"onehit",		RT_FUNC_TCL_CAST(rt_tcl_rt_onehit)},
-    {"no_bool",		RT_FUNC_TCL_CAST(rt_tcl_rt_no_bool)},
-    {"check",		RT_FUNC_TCL_CAST(rt_tcl_rt_check)},
-    {"prep",		RT_FUNC_TCL_CAST(rt_tcl_rt_prep)},
-    {"cutter",		RT_FUNC_TCL_CAST(rt_tcl_rt_cutter)},
-    {"set",		RT_FUNC_TCL_CAST(rt_tcl_rt_set)},
+static struct dbcmdstruct tclcad_rt_cmds[] = {
+    {"shootray",	RT_FUNC_TCL_CAST(tclcad_rt_shootray)},
+    {"onehit",		RT_FUNC_TCL_CAST(tclcad_rt_onehit)},
+    {"no_bool",		RT_FUNC_TCL_CAST(tclcad_rt_no_bool)},
+    {"check",		RT_FUNC_TCL_CAST(tclcad_rt_check)},
+    {"prep",		RT_FUNC_TCL_CAST(tclcad_rt_prep)},
+    {"cutter",		RT_FUNC_TCL_CAST(tclcad_rt_cutter)},
+    {"set",		RT_FUNC_TCL_CAST(tclcad_rt_set)},
     {(char *)0,		RT_FUNC_TCL_CAST(0)}
 };
 
 
 int
-rt_tcl_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
+tclcad_rt_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
 {
     if (bn_decode_vect(rp->r_pt,  argv[0]) != 3) {
 	Tcl_AppendResult(interp,
@@ -1429,7 +1985,7 @@ rt_tcl_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
 
 
 void
-rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
+tclcad_rt_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 {
     static const char xyz[4] = "XYZ";
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -1482,7 +2038,7 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 	    }
 	    break;
 	default:
-	    bu_vls_printf(&str, "rt_tcl_pr_cutter() bad pointer cutp=%p",
+	    bu_vls_printf(&str, "tclcad_rt_pr_cutter() bad pointer cutp=%p",
 			  (void *)cutp);
 	    break;
     }
@@ -1498,8 +2054,8 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
  * Example -
  *	.rt cutter 7 {0 0 0} dir {0 0 -1}
  */
-static int
-rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv)
+int
+tclcad_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1519,7 +2075,7 @@ rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
     RT_CK_RTI(rtip);
 
     n = atoi(argv[2]);
-    if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[3]) == TCL_ERROR)
+    if (tclcad_rt_parse_ray(interp, &ap->a_ray, &argv[3]) == TCL_ERROR)
 	return TCL_ERROR;
 
     cutp = rt_cell_n_on_ray(ap, n);
@@ -1527,13 +2083,13 @@ rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
 	Tcl_AppendResult(interp, "rt_cell_n_on_ray() failed to find cell ", argv[2], (char *)NULL);
 	return TCL_ERROR;
     }
-    rt_tcl_pr_cutter(interp, cutp);
+    tclcad_rt_pr_cutter(interp, cutp);
     return TCL_OK;
 }
 
 
 void
-rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag)
+tclcad_rt_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     vect_t norm;
@@ -1551,12 +2107,12 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int 
     RT_CURVATURE(&crv, hitp, flipflag, stp);
 
     bu_vls_printf(&str, " {dist %g point {", hitp->hit_dist);
-    bn_encode_vect(&str, hitp->hit_point);
+    bn_encode_vect(&str, hitp->hit_point, 1);
     bu_vls_printf(&str, "} normal {");
-    bn_encode_vect(&str, norm);
+    bn_encode_vect(&str, norm, 1);
     bu_vls_printf(&str, "} c1 %g c2 %g pdir {",
 		  crv.crv_c1, crv.crv_c2);
-    bn_encode_vect(&str, crv.crv_pdir);
+    bn_encode_vect(&str, crv.crv_pdir, 1);
     bu_vls_printf(&str, "} surfno %d", hitp->hit_surfno);
     if (stp->st_path.magic == DB_FULL_PATH_MAGIC) {
 	/* Magic is left 0 if the path is not filled in. */
@@ -1573,7 +2129,7 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int 
 
 
 int
-rt_tcl_a_hit(struct application *ap,
+tclcad_rt_a_hit(struct application *ap,
 	     struct partition *PartHeadp,
 	     struct seg *UNUSED(segHeadp))
 {
@@ -1585,9 +2141,9 @@ rt_tcl_a_hit(struct application *ap,
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	RT_CK_PT(pp);
 	Tcl_AppendResult(interp, "{in", (char *)NULL);
-	rt_tcl_pr_hit(interp, pp->pt_inhit, pp->pt_inseg, pp->pt_inflip);
+	tclcad_rt_pr_hit(interp, pp->pt_inhit, pp->pt_inseg, pp->pt_inflip);
 	Tcl_AppendResult(interp, "\nout", (char *)NULL);
-	rt_tcl_pr_hit(interp, pp->pt_outhit, pp->pt_outseg, pp->pt_outflip);
+	tclcad_rt_pr_hit(interp, pp->pt_outhit, pp->pt_outseg, pp->pt_outflip);
 	Tcl_AppendResult(interp,
 			 "\nregion ",
 			 pp->pt_regionp->reg_name,
@@ -1600,7 +2156,7 @@ rt_tcl_a_hit(struct application *ap,
 
 
 int
-rt_tcl_a_miss(struct application *ap)
+tclcad_rt_a_miss(struct application *ap)
 {
     if (ap) RT_CK_APPLICATION(ap);
     return 0;
@@ -1631,7 +2187,7 @@ rt_tcl_a_miss(struct application *ap)
  * associated value.
  */
 static int
-rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+tclcad_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1656,10 +2212,10 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
     rtip = ap->a_rt_i;
     RT_CK_RTI(rtip);
 
-    if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[idx]) == TCL_ERROR)
+    if (tclcad_rt_parse_ray(interp, &ap->a_ray, &argv[idx]) == TCL_ERROR)
 	return TCL_ERROR;
-    ap->a_hit = rt_tcl_a_hit;
-    ap->a_miss = rt_tcl_a_miss;
+    ap->a_hit = tclcad_rt_a_hit;
+    ap->a_miss = tclcad_rt_a_miss;
     ap->a_uptr = (void *)interp;
 
     (void)rt_shootray(ap);
@@ -1674,7 +2230,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
  * procname onehit #
  */
 static int
-rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+tclcad_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1707,7 +2263,7 @@ rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char
  * procname no_bool #
  */
 int
-rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+tclcad_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1742,7 +2298,7 @@ rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const cha
  * procname check
  */
 int
-rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+tclcad_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1773,7 +2329,7 @@ rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char 
  * procname prep use_air [hasty_prep]
  */
 int
-rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1844,7 +2400,7 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
  * procname set vname val
  */
 int
-rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+tclcad_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
@@ -1915,7 +2471,7 @@ rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *c
 
 
 int
-rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+tclcad_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct dbcmdstruct *dbcmd;
 
@@ -1927,7 +2483,7 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 	return TCL_ERROR;
     }
 
-    for (dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
+    for (dbcmd = tclcad_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
 	if (BU_STR_EQUAL(dbcmd->cmdname, argv[1])) {
 	    /* need proper cmd func pointer for actual call */
 	    int (*_cmdfunc)(void*, Tcl_Interp*, int, const char* const*);
@@ -1941,7 +2497,7 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
     Tcl_AppendResult(interp, "unknown LIBRT command '",
 		     argv[1], "'; must be one of:",
 		     (char *)NULL);
-    for (dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
+    for (dbcmd = tclcad_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
 	Tcl_AppendResult(interp, " ", dbcmd->cmdname, (char *)NULL);
     }
     return TCL_ERROR;
@@ -1955,7 +2511,7 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
  ************************************************************************/
 
 int
-rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
+tclcad_rt_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
 {
     struct db_i *dbip;
     int status;
@@ -1978,7 +2534,7 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 	db_full_path_init(&new_path);
 
 	if (db_string_to_path(&new_path, dbip, path) < 0) {
-	    Tcl_AppendResult(interp, "rt_tcl_import_from_path: '",
+	    Tcl_AppendResult(interp, "tclcad_rt_import_from_path: '",
 			     path, "' contains unknown object names\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -1992,7 +2548,7 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 	db_free_full_path(&new_path);
 
 	if (ret < 0) {
-	    Tcl_AppendResult(interp, "rt_tcl_import_from_path: '",
+	    Tcl_AppendResult(interp, "tclcad_rt_import_from_path: '",
 			     path, "' is a bad path\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -2027,15 +2583,12 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 
 
 void
-rt_tcl_setup(Tcl_Interp *interp)
+tclcad_rt_setup(Tcl_Interp *interp)
 {
     Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_WIDE_INT);
 
     Tcl_LinkVar(interp, "rt_bot_tri_per_piece",
 		(char *)&rt_bot_tri_per_piece, TCL_LINK_WIDE_INT);
-
-    /*XXX Use of brlcad_interp is temporary */
-    brlcad_interp = interp;
 }
 
 
@@ -2056,7 +2609,7 @@ Rt_Init(Tcl_Interp *interp)
 	}
     }
 
-    rt_tcl_setup(interp);
+    tclcad_rt_setup(interp);
 
     Tcl_PkgProvide(interp,  "Rt", brlcad_version());
 

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Converted by db4-upgrade version 1.1 -->
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="gvoxel1">
+  <refmeta>
+    <refentrytitle>G-VOXEL</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>g-voxel</refname>
+    <refpurpose>generates a list of voxels from a BRL-CAD database</refpurpose>
+  </refnamediv>
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>g-voxel</command>
+      <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-s <replaceable>"dx</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>dy</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>dz"</replaceable></arg></arg>
+      <arg choice="opt" rep="norepeat">-d <replaceable>n</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-t <replaceable>f</replaceable></arg>
+      <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
+      <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg>
+
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+
+  <refsect1 xml:id="description"><title>DESCRIPTION</title>
+  <para>The <command>g-voxel</command> command generates a list of voxels from a .g file (BRL-CAD database)
+  and writes them to a voxels.txt file.</para>
+
+  <para>The command takes two compulsory arguments: a BRL-CAD database and at least one
+  geometry object (though there can be as many of the latter as you like).</para>
+  </refsect1>
+
+  <refsect1 xml:id="options"><title>OPTIONS</title>
+  <variablelist remap="IP">
+    <varlistentry>
+      <term><option>-s "dx dy dz"</option></term>
+      <listitem>
+        <para>The voxel's size in the x, y and z axes.</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-d n</option></term>
+      <listitem>
+        <para>The level of detail used (influences the number of rays used).</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-t f</option></term>
+      <listitem>
+        <para>The threshold upon which the voxel is considered.</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+  </refsect1>
+
+  <refsect1 xml:id="copyright"><title>COPYRIGHT</title>
+  <para>This software is Copyright (c) 2004-2016 United States Government as represented
+  by the U.S. Army Research Laboratory. Al rights reserved.</para>
+  </refsect1>
+
+  <refsect1 xml:id="author"><title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+  </refsect1>
+</refentry>

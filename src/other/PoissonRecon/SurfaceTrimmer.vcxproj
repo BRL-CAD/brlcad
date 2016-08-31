@@ -164,13 +164,12 @@
     <ClCompile Include="Src\CmdLineParser.cpp" />
     <ClCompile Include="Src\PlyFile.cpp" />
     <ClCompile Include="Src\SurfaceTrimmer.cpp" />
-    <ClCompile Include="Src\Time.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Src\CmdLineParser.h" />
+    <ClInclude Include="Src\MyTime.h" />
     <ClInclude Include="Src\Ply.h" />
     <ClInclude Include="Src\PlyFile.h" />
-    <ClInclude Include="Src\Time.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Src\CmdLineParser.inl" />

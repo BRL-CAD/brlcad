@@ -61,7 +61,7 @@ static inline void ccQuickRand32Seed(ccQuickRandState32 *randstate, uint32_t see
     randstate->c = seed;
     randstate->d = seed;
 
-    for (i = 0 ; i < 20 ; i++)
+    for (i = 0; i < 20; i++)
 	ccQuickRand32(randstate);
 }
 
@@ -83,11 +83,20 @@ static inline unsigned ccLog2Int(unsigned value)
 {
     unsigned result = 0;
 
-    while (value >>= 1)
+    while (value /= 2)
 	++result;
 
     return result;
 }
 
+static void ccQuellPedantic(int var)
+{
+if (!var) {
+  (void)ccQuickRand32Seed(NULL, 0);
+  (void)ccPow2Round32(0);
+  (void)ccLog2Int(0);
+  (void)ccQuellPedantic(1);
+}
+}
 
 #endif

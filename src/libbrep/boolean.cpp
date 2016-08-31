@@ -1,7 +1,7 @@
 /*                  B O O L E A N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,14 +31,16 @@
 #include <queue>
 #include <set>
 #include <map>
-#include <algorithm>
+
+#include "bio.h"
 
 #include "vmath.h"
-#include "bio.h"
 #include "bu/log.h"
 #include "brep.h"
+
 #include "raytrace.h"
 #include "brep_except.h"
+
 
 // Whether to output the debug messages about b-rep booleans.
 #define DEBUG_BREP_BOOLEAN 0
@@ -51,6 +53,7 @@
 // than the default one ON_PI/180.
 #define ANGLE_TOL ON_PI/1800.0
 
+
 struct IntersectPoint {
     ON_3dPoint m_pt;	// 3D intersection point
     double m_seg_t;	// param on the loop curve
@@ -60,8 +63,8 @@ struct IntersectPoint {
     double m_curve_t;	// param on the SSI curve
     enum {
 	UNSET,
-	IN,
-	OUT,
+	IN_HIT,
+	OUT_HIT,
 	TANGENT
     } m_dir;		// dir is going inside/outside
     int m_split_li;	// between clx_points[m_split_li] and
@@ -985,7 +988,7 @@ interval_2d_to_3d(
 		    }
 		}
 	    }
-	    if (int_params.size() == 0) {
+	    if (int_params.empty()) {
 		int_params.push_back(curve_t);
 	    }
 
@@ -2295,7 +2298,7 @@ combine_loops(
 	    }
 	}
 	merged_innerloops.push_back(candidate_innerloop);
-    } else if (orig_face->m_innerloop.size() > 0) {
+    } else if (!orig_face->m_innerloop.empty()) {
 	for (size_t i = 0; i < orig_face->m_innerloop.size(); ++i) {
 	    merged_innerloops.push_back(orig_face->m_innerloop[i]);
 	}
@@ -2504,11 +2507,11 @@ split_face_into_loops(
 	    continue;
 	}
 	if (is_first_ipt && ON_NearZero(curve_t - curve_min_t)) {
-	    ipt->m_dir = next_in ? IntersectPoint::IN : IntersectPoint::OUT;
+	    ipt->m_dir = next_in ? IntersectPoint::IN_HIT : IntersectPoint::OUT_HIT;
 	    continue;
 	}
 	if (is_last_ipt && ON_NearZero(curve_t - curve_max_t)) {
-	    ipt->m_dir = prev_in ? IntersectPoint::OUT : IntersectPoint::IN;
+	    ipt->m_dir = prev_in ? IntersectPoint::OUT_HIT : IntersectPoint::IN_HIT;
 	    continue;
 	}
 	if (prev_in && next_in) {
@@ -2522,10 +2525,10 @@ split_face_into_loops(
 	    ipt->m_dir = IntersectPoint::UNSET;
 	} else if (prev_in && !next_in) {
 	    // transversal point, going outside
-	    ipt->m_dir = IntersectPoint::OUT;
+	    ipt->m_dir = IntersectPoint::OUT_HIT;
 	} else {
 	    // transversal point, going inside
-	    ipt->m_dir = IntersectPoint::IN;
+	    ipt->m_dir = IntersectPoint::IN_HIT;
 	}
     }
 
@@ -2614,13 +2617,13 @@ split_face_into_loops(
 	    continue;
 	}
 	if (q.m_curve_pos - p.m_curve_pos == 1 &&
-	    q.m_dir != IntersectPoint::IN &&
-	    p.m_dir != IntersectPoint::OUT)
+	    q.m_dir != IntersectPoint::IN_HIT &&
+	    p.m_dir != IntersectPoint::OUT_HIT)
 	{
 	    s.pop();
 	} else if (p.m_curve_pos - q.m_curve_pos == 1 &&
-		   p.m_dir != IntersectPoint::IN &&
-		   q.m_dir != IntersectPoint::OUT)
+		   p.m_dir != IntersectPoint::IN_HIT &&
+		   q.m_dir != IntersectPoint::OUT_HIT)
 	{
 	    s.pop();
 	} else {
@@ -2701,7 +2704,7 @@ split_face_into_loops(
 	}
     }
 
-    if (out.size() > 0) {
+    if (!out.empty()) {
 	// The remaining part after splitting some parts out.
 	close_small_gaps(outerloop_segs);
 	if (is_loop_valid(outerloop_segs, ON_ZERO_TOLERANCE)) {
@@ -2833,7 +2836,7 @@ split_trimmed_face(
 			ssx_loops[j], BOOLEAN_INTERSECT);
 
 		if (ssx_curves[i].IsClosed()) {
-		    if (intersect_loops.outerloops.size() == 0) {
+		    if (intersect_loops.outerloops.empty()) {
 			// no intersection, just keep the face as-is
 			next_out.Append(out[k]->Duplicate());
 			continue;

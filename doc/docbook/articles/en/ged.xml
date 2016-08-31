@@ -53,7 +53,7 @@
       </personname>
 </author>
   </info>
-<section>
+<section xml:id="Preface">
   <title>
     Preface
   </title>
@@ -72,7 +72,7 @@ each step.  The GED system virtually eliminates explicit numerical
 input and opens a new dimension in the target description process.
 </para>
 </section>
-<section>
+<section xml:id="INTRODUCTION">
 <title>
   INTRODUCTION
 </title>
@@ -128,7 +128,7 @@ in detail.  The internal data structure is also covered, as it is an
 important part in the overall design of the GED system.
 </para>
 </section>
-<section>
+<section xml:id="COMGEOM_BACKGROUND">
   <title>
   COMGEOM BACKGROUND
 </title>
@@ -169,7 +169,7 @@ code).  Regions identified with different air codes however, can not
 overlap.
 </para>
 </section>
-<section>
+<section xml:id="COMPUTER_GRAPHICS">
   <title>
    COMPUTER GRAPHICS
 </title>
@@ -190,7 +190,7 @@ immediately reflected on the display.  Thus a fast channel of
 communication is available between person and machine.
 </para>
 </section>
-<section>
+<section xml:id="APPROACH_TO_THE_PROBLEM">
   <title>
   APPROACH TO THE PROBLEM
 </title>
@@ -224,7 +224,7 @@ The production level GED code has been used since January 1982 to
 build target descriptions interactively at BRL.
 </para>
 </section>
-<section>
+<section xml:id="GED_OVERVIEW">
   <title>
  GED OVERVIEW
 </title>
@@ -263,7 +263,7 @@ parameters, etc.  The keyboard commands are discussed in a later
 section.
 </para>
 </section>
-<section>
+<section xml:id="GED_INTERNAL_DATA_STRUCTURE">
   <title>
  GED INTERNAL DATA STRUCTURE
 </title>
@@ -312,7 +312,7 @@ object will then be automatically reflected in all the instances of
 that object.
 </para>
 </section>
-<section>
+<section xml:id="KEYBOARD_COMMANDS">
   <title>
   KEYBOARD COMMANDS
 </title>
@@ -631,7 +631,7 @@ This command is used to quit the graphics editor code.  This is the
 normal halt.
 </para>
 </section>
-<section>
+<section xml:id="PERIPHERAL_DEVICES">
   <title>
 PERIPHERAL DEVICES
 </title>
@@ -684,7 +684,7 @@ depends on what is being done and will be covered in the appropriate
 sections of this report.
 </para>
 </section>
-<section>
+<section xml:id="ANGLE_DISTANCE_CURSOR">
   <title>
  ANGLE DISTANCE CURSOR (ADC)
 </title>
@@ -722,7 +722,7 @@ center of the ADC, and the location of the center of the ADC.  This
 information is continually updated on the screen.
 </para>
 </section>
-<section>
+<section xml:id="VIEWING_FUNCTIONS">
   <title>
   VIEWING FUNCTIONS
 </title>
@@ -788,7 +788,7 @@ with the parts of the display closest disappearing first.  To leave
 the slice mode, just press the "slice mode" button again.
 </para>
 </section>
-<section>
+<section xml:id="SELECTING_OBJECTS_FOR_EDITING">
   <title>
  SELECTING OBJECTS FOR EDITING
 </title>
@@ -848,7 +848,7 @@ process an incorrect object is selected, just press the "reject"
 button and begin the selection process again.
 </para>
 </section>
-<section>
+<section xml:id="OBJECT_EDITING">
   <title>
   OBJECT EDITING
 </title>
@@ -929,7 +929,7 @@ return to its pre-edit state.  If the "accept" button is pressed, the
 data base will be changed to reflect the object editing performed.
 </para>
 </section>
-<section>
+<section xml:id="SOLID_EDITING">
   <title>
   SOLID EDITING
 </title>
@@ -1085,7 +1085,7 @@ cylindrical solid types are treated as the general type - the TGC.  In
 the following paragraphs, we will discuss parameter editing for each
 of these general types of solids.
 </para>
-<section>
+<section xml:id="ARB_PARAMETER_EDITING">
   <title>
   ARB PARAMETER EDITING
 </title>
@@ -1159,7 +1159,7 @@ with crossed edges.  Visual feedback from the display is considered
 adequate to detect these situations.
 </para>
 </section>
-<section>
+<section xml:id="TGC_PARAMETER_EDITING">
   <title>
  TGC PARAMETER EDITING
 </title>
@@ -1237,7 +1237,7 @@ where "a", "b", "g" are the direction cosines and "rot" and "fb" are
 the rotation and fallback angles of the listed vector.
 </para>
 </section>
-<section>
+<section xml:id="ELLG_PARAMETER_EDITING">
   <title>
 ELLG PARAMETER EDITING
 </title>
@@ -1286,7 +1286,7 @@ where "a", "b", "g" are the direction cosines and "rot" and "fb" are
 the rotation and fallback angles of the listed vector.
 </para>
 </section>
-<section>
+<section xml:id="TOR_PARAMETER_EDITING">
   <title>
  TOR PARAMETER EDITING
 </title>
@@ -1340,7 +1340,7 @@ general solid classes.
 </para>
 </section>
 </section>
-<section>
+<section xml:id="CONCLUSION">
   <title>
   CONCLUSION
 </title>

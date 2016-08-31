@@ -1,7 +1,7 @@
 /*                       P I X - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,6 +49,8 @@
 #define ROWSIZE (file_width * BYTESPERPIXEL)
 #define SIZE (file_height * ROWSIZE)
 
+size_t file_width = 512; /* default input width */
+size_t file_height = 512; /* default input height */
 static int autosize = 0;			/* !0 to autosize input */
 static int fileinput = 0;			/* file of pipe on input? */
 static char *file_name = (char *)NULL;
@@ -188,9 +190,6 @@ main(int argc, char *argv[])
 
     FILE *infp = (FILE *)NULL;
     FILE *outfp = (FILE *)NULL;
-
-    size_t file_width = 512; /* default input width */
-    size_t file_height = 512; /* default input height */
 
     char usage[] = "Usage: pix-png [-a] [-w file_width] [-n file_height] [-g gamma]\n\
 	[-s square_file_size] [-o file.png] [file.pix] [> file.png]\n";

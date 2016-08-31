@@ -1,7 +1,7 @@
 #            B R L C A D _ S U M M A R Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2014 United States Government as represented by
+# Copyright (c) 2012-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -256,7 +256,6 @@ set(BRLCAD_SC_BUILD_LABEL "Compile STEPcode")
 set(BRLCAD_ENABLE_X11_LABEL "X11 support (optional) ")
 set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
 set(BRLCAD_ENABLE_QT_LABEL "Qt support (optional) ")
-set(BRLCAD_ENABLE_RTSERVER_LABEL "librtserver JDK support (optional) ")
 set(BRLCAD_ENABLE_RUNTIME_DEBUG_LABEL "Enable run-time debugging (optional) ")
 set(BRLCAD_ARCH_BITSETTING_LABEL "Build 32/64-bit release ")
 set(BRLCAD_OPTIMIZED_BUILD_LABEL "Build optimized release ")
@@ -282,7 +281,6 @@ set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_OPENGL
     BRLCAD_ENABLE_X11
     BRLCAD_ENABLE_QT
-    BRLCAD_ENABLE_RTSERVER
     BRLCAD_ENABLE_RUNTIME_DEBUG
     )
 
@@ -430,6 +428,9 @@ if(BRLCAD_EXTRADOCS)
   if(BRLCAD_EXTRADOCS_PHP)
     set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} php)
   endif(BRLCAD_EXTRADOCS_PHP)
+  if(BRLCAD_EXTRADOCS_PPT)
+    set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} html)
+  endif(BRLCAD_EXTRADOCS_PPT)
   if(BRLCAD_EXTRADOCS_MAN)
     set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} man)
   endif(BRLCAD_EXTRADOCS_MAN)

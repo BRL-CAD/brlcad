@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -373,7 +373,7 @@ db_close(register struct db_i *dbip)
     }
 
     if (dbip->dbi_filepath != NULL) {
-	bu_free_argv(2, dbip->dbi_filepath);
+	bu_argv_free(2, dbip->dbi_filepath);
 	dbip->dbi_filepath = NULL; /* sanity */
     }
 

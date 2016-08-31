@@ -1,7 +1,7 @@
 /*                         D X F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -3288,14 +3288,14 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&head_all);
     for (i = 0; i < next_layer; i++) {
 	struct bu_list head;
-	int j;
+	size_t j;
 
 	BU_LIST_INIT(&head);
 
 	if (layers[i]->color_number < 0)
 	    layers[i]->color_number = 7;
 
-	if (layers[i]->curr_tri || BU_PTBL_END(&layers[i]->solids) || layers[i]->m) {
+	if (layers[i]->curr_tri || BU_PTBL_LEN(&layers[i]->solids) || layers[i]->m) {
 	    bu_log("LAYER: %s, color = %d (%d %d %d)\n", layers[i]->name, layers[i]->color_number, V3ARGS(&rgb[layers[i]->color_number*3]));
 	}
 
@@ -3310,7 +3310,7 @@ main(int argc, char *argv[])
 	    }
 	}
 
-	for (j = 0; j < BU_PTBL_END(&layers[i]->solids); j++) {
+	for (j = 0; j < BU_PTBL_LEN(&layers[i]->solids); j++) {
 	    (void)mk_addmember((char *)BU_PTBL_GET(&layers[i]->solids, j), &head, NULL, WMOP_UNION);
 	    bu_free((char *)BU_PTBL_GET(&layers[i]->solids, j), "solid_name");
 	}

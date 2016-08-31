@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -100,6 +100,7 @@ size_t		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 int		transpose_grid = 0;     /* reverse the order of grid traversal */
 int             random_mode = 0;        /* Mode to shoot rays at random directions */
+int		opencl_mode = 0;	/* enable/disable OpenCL */
 /***** end variables shared with worker() *****/
 
 /***** Photon Mapping Variables *****/
@@ -121,7 +122,6 @@ int		finalframe = -1;	/* frame to halt at */
 int		curframe = 0;		/* current frame number,
 					 * also shared with view.c */
 char		*outputfile = (char *)NULL;	/* name of base of output file */
-int		interactive = 0;	/* human is watching results */
 int		benchmark = 0;		/* No random numbers:  benchmark */
 
 int		sub_grid_mode = 0;	/* mode to raytrace a rectangular portion of view */
@@ -194,7 +194,7 @@ get_args(int argc, const char *argv[])
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
+	".:,:@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v:w:x:z:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
 
     while ( (c=bu_getopt( argc, (char * const *)argv, GETOPT_STR )) != -1 )  {
     	if (bu_optopt == '?')
@@ -212,8 +212,10 @@ get_args(int argc, const char *argv[])
 		bn_randhalftabsize = i;
 		break;
 	    case 'm':
-		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg",
-			   &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		if ( i != 4 ) {
+		    bu_exit( EXIT_FAILURE, "ERROR: bad air density + haze\n" );
+		}
 		break;
 	    case 't':
 		transpose_grid = 1;
@@ -340,9 +342,6 @@ get_args(int argc, const char *argv[])
 	    }
 	    case 'U':
 		use_air = atoi( bu_optarg );
-		break;
-	    case 'I':
-		interactive = 1;
 		break;
 	    case 'i':
 		incr_mode = 1;
@@ -608,6 +607,9 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'd':
 		rpt_dist = atoi( bu_optarg );
+		break;
+	    case 'z':
+		opencl_mode = atoi( bu_optarg );
 		break;
 	    case '+':
 	    {

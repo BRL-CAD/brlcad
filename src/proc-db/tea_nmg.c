@@ -1,7 +1,7 @@
 /*                       T E A _ N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -188,11 +188,7 @@ main(int argc, char **argv)
 	}
     }
 
-    if (argc == 1) {
-	fprintf(stderr,"Usage: %s [-d]\n", *argv);
-    	bu_log("       Program continues running:\n");
-    }
-
+    bu_log("Writing out geometry to file [tea_nmg.g] ...");
 
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
@@ -233,6 +229,8 @@ main(int argc, char **argv)
     } else {
 	rt_vlist_to_uplot(fp, &vhead);
     }
+
+    bu_log(" done.\n");
 
     return 0;
 }

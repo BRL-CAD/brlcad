@@ -1,7 +1,7 @@
 /*                           G C V . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,11 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gcv.h
+/** @addtogroup libgcv
  *
  * API of the LIBGCV geometry conversion library.
  *
  */
+/** @{ */
+/** @file gcv.h */
 
 #ifndef GCV_H
 #define GCV_H
@@ -37,6 +39,8 @@ __BEGIN_DECLS
 __END_DECLS
 
 #endif /* GCV_H */
+
+/** @} */
 
 /*
  * Local Variables:

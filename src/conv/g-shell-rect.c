@@ -1,7 +1,7 @@
 /*                  G - S H E L L - R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -125,7 +125,7 @@ static short vert_ids[8]={1, 2, 4, 8, 16, 32, 64, 128};
 static int debug=0;
 static char *token_seps=" \t, ;\n";
 static int cur_dir=0;
-static int cell_count[3];
+static size_t cell_count[3];
 static fastf_t decimation_tol=0.0;
 static fastf_t min_angle=0.0;
 static int bot=0;
@@ -224,6 +224,7 @@ print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
+
 
 /* routine to replace default overlap handler.
  * overlaps are irrelevant to this application
@@ -487,7 +488,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     struct nmgregion_a *ra;
     struct model *m;
     struct nmg_shot_data *sd;
-    int i;
+    size_t i;
 
     sd = (struct nmg_shot_data *)ap->a_uptr;
     s = sd->s;
@@ -513,7 +514,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     extreme_dist2 = -MAX_FASTF;
 
     /* find hit vertex */
-    for (i = 0; i < BU_PTBL_END(&verts); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&verts); i++) {
 	struct vertex *v;
 	struct vertex_g *vg;
 	fastf_t dist;
@@ -759,7 +760,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
     struct loopuse *lu;
     struct edgeuse *eu;
     struct bu_ptbl faces;
-    int face_no;
+    size_t face_no;
 
     NMG_CK_SHELL(s);
 
@@ -788,11 +789,11 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 	bu_ptbl_ins(&faces, (long *)fu);
     }
 
-    for (face_no = 0; face_no < BU_PTBL_END(&faces); face_no++) {
+    for (face_no = 0; face_no < BU_PTBL_LEN(&faces); face_no++) {
 	struct edgeuse *eu1=(struct edgeuse *)NULL, *eu2=(struct edgeuse *)NULL;
 	fastf_t min_coord1=MAX_FASTF, min_coord2=MAX_FASTF;
 	struct vertex_g *vg1a, *vg1b, *vg2a, *vg2b;
-	int cell_no;
+	size_t cell_no;
 
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, face_no);
 	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
@@ -974,8 +975,8 @@ shrink_wrap(struct shell *s)
     struct nmg_shot_data sd;
     struct bu_ptbl extra_verts;
     struct model *m;
-    int vert_no;
-    int i, j;
+    size_t vert_no;
+    size_t i, j;
     int dirs;
 
     NMG_CK_SHELL(s);
@@ -1041,7 +1042,7 @@ shrink_wrap(struct shell *s)
 	}
     }
 
-    for (vert_no = 0; vert_no < BU_PTBL_END(&extra_verts); vert_no++) {
+    for (vert_no = 0; vert_no < BU_PTBL_LEN(&extra_verts); vert_no++) {
 	struct vertex *v;
 	struct vertexuse *vu;
 	vect_t dir;
@@ -1262,7 +1263,7 @@ refine_edges(struct shell *s)
     struct model *m;
     int breaks=0;
     int loop_count=0;
-    int i;
+    size_t i;
 
     NMG_CK_SHELL(s);
 
@@ -1293,7 +1294,7 @@ refine_edges(struct shell *s)
 	breaks = 0;
 	ref_data.new_edges = next;
 
-	for (i = 0; i < BU_PTBL_END(cur); i++) {
+	for (i = 0; i < BU_PTBL_LEN(cur); i++) {
 	    vect_t v1, v2, v3, v4;
 	    fastf_t alpha, cosa, sina;
 	    vect_t ave_norm;
@@ -1419,7 +1420,7 @@ static void
 Make_shell(void)
 {
     int i;
-    int x_index, y_index, z_index;
+    size_t x_index, y_index, z_index;
     int cell_no[4];
     int status;
     struct model *m;
@@ -1647,7 +1648,7 @@ main(int argc, char **argv)
 {
     char idbuf[132];
     struct application ap;
-    int i, j;
+    size_t i, j;
     int c;
     fastf_t x_start, y_start, z_start;
     fastf_t bb_area[3];
@@ -1690,61 +1691,61 @@ main(int argc, char **argv)
 			bu_exit(1, "Illegal ray direction (%c), must be X, Y, or Z!\n", *bu_optarg);
 		}
 		break;
-	    case 'a':	/* add an rpp for refining */
-		{
-		    char *ptr;
-		    struct refine_rpp *rpp;
-		    int bad_opt = 0;
+	    case 'a': {
+		/* add an rpp for refining */
+		char *ptr;
+		struct refine_rpp *rpp;
+		int bad_opt = 0;
 
-		    ptr = bu_optarg;
+		ptr = bu_optarg;
 
-		    rpp = (struct refine_rpp *)bu_malloc(sizeof(struct refine_rpp), "add refine rpp");
-		    ptr = strtok(bu_optarg, token_seps);
-		    if (!ptr) {
-			bu_log("Bad -a option '%s'\n", bu_optarg);
-			bu_free((char *)rpp, "rpp");
-			break;
-		    }
-
-		    rpp->tolerance = atof(ptr);
-		    if (rpp->tolerance <= 0.0) {
-			bu_log("Illegal tolerance in -a option (%s)\n", ptr);
-			bu_free((char *)rpp, "rpp");
-			break;
-		    }
-
-		    /* get minimum */
-		    for (i = 0; i < 3; i++) {
-			ptr = strtok((char *)NULL, token_seps);
-			if (!ptr) {
-			    bu_log("Unexpected end of option args for -a\n");
-			    bad_opt = 1;
-			    break;
-			}
-			rpp->min[i] = atof(ptr);
-		    }
-		    if (bad_opt) {
-			bu_free((char *)rpp, "rpp");
-			break;
-		    }
-
-		    /* get maximum */
-		    for (i = 0; i < 3; i++) {
-			ptr = strtok((char *)NULL, token_seps);
-			if (!ptr) {
-			    bu_log("Unexpected end of option args for -a\n");
-			    bad_opt = 1;
-			    break;
-			}
-			rpp->max[i] = atof(ptr);
-		    }
-		    if (bad_opt) {
-			bu_free((char *) rpp, "rpp");
-			break;
-		    }
-
-		    BU_LIST_APPEND(&add_rpp_head, &rpp->h);
+		rpp = (struct refine_rpp *)bu_malloc(sizeof(struct refine_rpp), "add refine rpp");
+		ptr = strtok(bu_optarg, token_seps);
+		if (!ptr) {
+		    bu_log("Bad -a option '%s'\n", bu_optarg);
+		    bu_free((char *)rpp, "rpp");
+		    break;
 		}
+
+		rpp->tolerance = atof(ptr);
+		if (rpp->tolerance <= 0.0) {
+		    bu_log("Illegal tolerance in -a option (%s)\n", ptr);
+		    bu_free((char *)rpp, "rpp");
+		    break;
+		}
+
+		/* get minimum */
+		for (i = 0; i < 3; i++) {
+		    ptr = strtok((char *)NULL, token_seps);
+		    if (!ptr) {
+			bu_log("Unexpected end of option args for -a\n");
+			bad_opt = 1;
+			break;
+		    }
+		    rpp->min[i] = atof(ptr);
+		}
+		if (bad_opt) {
+		    bu_free((char *)rpp, "rpp");
+		    break;
+		}
+
+		/* get maximum */
+		for (i = 0; i < 3; i++) {
+		    ptr = strtok((char *)NULL, token_seps);
+		    if (!ptr) {
+			bu_log("Unexpected end of option args for -a\n");
+			bad_opt = 1;
+			break;
+		    }
+		    rpp->max[i] = atof(ptr);
+		}
+		if (bad_opt) {
+		    bu_free((char *) rpp, "rpp");
+		    break;
+		}
+
+		BU_LIST_APPEND(&add_rpp_head, &rpp->h);
+	    }
 		break;
 	    case 'n':	/* don't do extra raytracing to refine shape */
 		do_extra_rays = 0;

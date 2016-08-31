@@ -1,7 +1,7 @@
 /*                        D E M - G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,6 +89,7 @@ const char record_type_names[4][24] = {
     "logical record type 'B'",
     "logical record type 'C'"
 };
+
 
 typedef enum _lrt {
     type_a=1,
@@ -1551,6 +1552,7 @@ read_dem(
     return status;
 }
 
+
 /* convert 'load-by-column to load-by-row' */
 int
 convert_load_order(
@@ -1599,6 +1601,7 @@ convert_load_order(
 
     return BRLCAD_OK;
 }
+
 
 int
 create_model(

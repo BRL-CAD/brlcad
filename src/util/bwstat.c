@@ -1,7 +1,7 @@
 /*                        B W S T A T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -89,7 +89,7 @@ main(int argc, char **argv)
 	argc--;
     }
 
-    /* look for optional input file */
+    /* check for optional input file */
     if (argc > 1) {
 	if ((fp = fopen(argv[1], "r")) == 0) {
 	    bu_exit(1, "bwstat: can't open \"%s\"\n", argv[1]);

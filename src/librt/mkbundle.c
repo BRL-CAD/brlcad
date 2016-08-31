@@ -1,7 +1,7 @@
 /*                      M K B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -314,6 +314,9 @@ rt_pattern_rect_orthogrid(fastf_t **rays, size_t *ray_cnt, const point_t center_
     fastf_t b_length = MAGNITUDE(b_vec);
 
     if (!rays || !ray_cnt) return -1;
+
+    if (NEAR_ZERO(a_length, SMALL_FASTF) || NEAR_ZERO(b_length, SMALL_FASTF)) return -1;
+    if (NEAR_ZERO(da, SMALL_FASTF) || NEAR_ZERO(db, SMALL_FASTF)) return -1;
 
     VMOVE(a_dir, a_vec);
     VUNITIZE(a_dir);

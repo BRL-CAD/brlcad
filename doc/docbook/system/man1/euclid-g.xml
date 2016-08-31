@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='euclidg1'>
+<refmeta>
+    <refentrytitle>EUCLID-G
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>euclid-g</refname>
+<refpurpose>EUCLID Translator (EUCLID to BRL-CAD)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>euclid-g</command>
+    <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
+    <arg choice="opt">&lt; <replaceable>euclid_file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>euclid-g</command>
+converts the specified
+<emphasis remap='I'>euclid_file</emphasis>
+to a BRL-CAD
+<emphasis remap='I'>database.g</emphasis>
+file. The
+<emphasis remap='I'>euclid_file</emphasis>
+is expected to be an ASCII file format that is the "decoded" version
+of the Euclid file. The decoded file represents each object as a series
+of polygonal faces. Each face may be one of either a simple face (no holes),
+a complex face (contains at least one hole), or a simple hole.
+This converter creates a region for each object ID number by unioning
+together all the objects with the same ID number.</para>
+
+    <para>The following options are recognized:</para>
+    <variablelist remap='TP'>
+      <varlistentry>
+	<term><option>-d tolerance</option></term>
+	<listitem>
+	  <para>
+	    sets tolerance (units of mm); default value is 0.0005
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-v</option></term>
+	<listitem>
+	  <para>
+	    turns on verbose mode, for debugging; its output is to standard error
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-i euclid_file_name</option></term>
+	<listitem>
+	  <para>
+	    sets input file name; default is to take standard input
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-o filename.g</option></term>
+	<listitem>
+	  <para>
+	    sets output file name; default file name is euclid.g
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-n</option></term>
+	<listitem>
+	  <para>
+	    indicates NOT to write as polysolids; opposite of <option>-p</option>
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-p</option></term>
+	<listitem>
+	  <para>
+	    indicates to write as polysolids (this is default); opposite of <option>-n</option>
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-x #</option> and <option>-X #</option></term>
+	<listitem>
+	  <para>
+	    sets debug flags
+	  </para>
+	</listitem>
+    </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<synopsis>
+$ euclid-g <emphasis remap='I'>sample.euclid sample.g</emphasis>
+</synopsis>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1993-2016 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

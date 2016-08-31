@@ -7,9 +7,6 @@
     <ClCompile Include="Src\SurfaceTrimmer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Time.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Src\PlyFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -24,7 +21,7 @@
     <ClInclude Include="Src\PlyFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Time.h">
+    <ClInclude Include="Src\MyTime.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

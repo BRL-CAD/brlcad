@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file librt/bundle.c
- *
- * NOTE:  This is experimental code right now.
- *
- */
-/** @} */
 
 #include "common.h"
 
@@ -38,6 +30,15 @@
 #include "raytrace.h"
 
 #include "librt_private.h"
+
+
+/* book-keeping structure so rt_shootrays can keep track of which rays
+ * have completed without without semaphore-locking.
+ */
+struct shootrays_data {
+    struct application *ap;
+    struct bu_bitv *done;
+};
 
 
 /**
@@ -578,6 +579,34 @@ bundle_miss(register struct application *ap)
 }
 
 
+void
+shootrays_in_parallel(int UNUSED(cpu), void *data)
+{
+    size_t i;
+    struct shootrays_data *rays = (struct shootrays_data *)data;
+
+    RT_CK_APPLICATION(&rays->ap[0]);
+    BU_CK_BITV(rays->done);
+
+    i = 0;
+    while (rays->ap[i].a_magic != RT_AP_MAGIC) {
+	bu_semaphore_acquire(RT_SEM_WORKER);
+	if (BU_BITTEST(rays->done, i)) {
+	    BU_BITSET(rays->done, i);
+	    bu_semaphore_release(RT_SEM_WORKER);
+
+	    rt_shootray(&rays->ap[i]);
+
+	} else {
+	    bu_semaphore_release(RT_SEM_WORKER);
+	}
+	i++;
+    }
+
+    return;
+}
+
+
 int
 rt_shootrays(struct application_bundle *bundle)
 {
@@ -587,12 +616,19 @@ rt_shootrays(struct application_bundle *bundle)
     int (*a_hit)(struct application *, struct partition *, struct seg *);
     int (*a_miss)(struct application *);
 
-    struct application *ray_ap = NULL;
-    int hit;
     struct rt_i * rt_i = bundle->b_ap.a_rt_i;		/**< @brief this librt instance */
     struct resource * resource = bundle->b_ap.a_resource;	/**< @brief dynamic memory resources */
     struct xrays *r;
     struct partition_list *pl;
+
+    size_t nrays = 0;
+    struct application *ray_aps = NULL;
+
+/* #define SHOOTRAYS_IN_PARALLEL 1 */
+
+#ifdef SHOOTRAYS_IN_PARALLEL
+    struct shootrays_data rays = {NULL, NULL};
+#endif
 
     /*
      * temporarily hijack ap->a_uptr, ap->a_ray, ap->a_hit(), ap->a_miss()
@@ -626,24 +662,44 @@ rt_shootrays(struct application_bundle *bundle)
 
     bundle->b_uptr = (void *)pb;
 
+    /* PASS1: count up how many rays we have */
+    nrays = 0;
     for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
-	BU_ALLOC(ray_ap, struct application);
-	*ray_ap = bundle->b_ap; /* structure copy */
+	nrays++;
+    }
 
-	ray_ap->a_ray = r->ray;
+    /* +1 to 0-terminate the array */
+    ray_aps = (struct application*)bu_calloc(nrays+1, sizeof(struct application), "app rays");
+
+    /* PASS2: fill in our AoS */
+    nrays = 0;
+    for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
+	struct application *ray_ap = &ray_aps[nrays];
+
+	*ray_ap = bundle->b_ap; /* structure copy */
+	ray_ap->a_ray = r->ray; /* structure copy */
+
 	ray_ap->a_ray.magic = RT_RAY_MAGIC;
 	ray_ap->a_uptr = (void *)pb;
 	ray_ap->a_rt_i = rt_i;
 	ray_ap->a_resource = resource;
 
-	hit = rt_shootray(ray_ap);
-
-	rt_i = ray_ap->a_rt_i;
-	resource = ray_ap->a_resource;
-
-	if (hit == 0)
-	    bu_free((void *)(ray_ap), "ray application structure");
+	nrays++;
     }
+
+    /* PASS3: shoot our rays */
+#ifndef SHOOTRAYS_IN_PARALLEL
+    nrays = 0;
+    for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
+	rt_shootray(&ray_aps[nrays]);
+	nrays++;
+    }
+#else
+    rays.ap = ray_aps;
+    rays.done = bu_bitv_new(nrays);
+    bu_parallel(&shootrays_in_parallel, 0, &rays);
+#endif
+
 
     if ((bundle->b_hit) && (pb->hits > 0)) {
 	/* "HIT" */
@@ -661,12 +717,16 @@ rt_shootrays(struct application_bundle *bundle)
 	    BU_LIST_DEQUEUE(&(pl->l));
 	    RT_FREE_SEG_LIST(&pl->segHeadp, resource);
 	    RT_FREE_PT_LIST(&pl->PartHeadp, resource);
-	    bu_free(pl->ap, "ray application structure");
 	    bu_free(pl, "free partition_list pl");
 	}
 	bu_free(pb->list, "free partition_list header");
     }
     bu_free(pb, "partition bundle");
+    /* Free all the pl->ap ray application structures - don't do it
+     * as part of the while loop above or we end up with a double
+     * free error. */
+    bu_free(ray_aps, "app rays");
+
     /*
      * set back to original values before exiting
      */

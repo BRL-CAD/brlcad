@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,26 +35,17 @@
 #include <string.h>
 #include <math.h>
 #include <signal.h>
-#ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>		/* For struct timeval */
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-
-#include "tcl.h"
+#include "bresource.h"
 
 #include "bn.h"
 #include "bu/cmd.h"
 #include "vmath.h"
 
-
 #include "./qray.h"
 #include "./ged_private.h"
-
 
 /**
  * Invoke nirt with the current view & stuff

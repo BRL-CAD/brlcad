@@ -1,7 +1,7 @@
 /*                     N M G _ C L A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,25 +74,25 @@ struct neighbor {
 };
 
 
-static void nmg_class_pt_e(struct neighbor *closest,
+HIDDEN void nmg_class_pt_e(struct neighbor *closest,
 			   const point_t pt, const struct edgeuse *eu,
 			   const struct bn_tol *tol);
-static void nmg_class_pt_l(struct neighbor *closest,
+HIDDEN void nmg_class_pt_l(struct neighbor *closest,
 			   const point_t pt, const struct loopuse *lu,
 			   const struct bn_tol *tol);
-static int class_vu_vs_s(struct vertexuse *vu, struct shell *sB,
+HIDDEN int class_vu_vs_s(struct vertexuse *vu, struct shell *sB,
 			 char **classlist, const struct bn_tol *tol);
-static int class_eu_vs_s(struct edgeuse *eu, struct shell *s,
+HIDDEN int class_eu_vs_s(struct edgeuse *eu, struct shell *s,
 			 char **classlist, const struct bn_tol *tol);
-static int class_lu_vs_s(struct loopuse *lu, struct shell *s,
+HIDDEN int class_lu_vs_s(struct loopuse *lu, struct shell *s,
 			 char **classlist, const struct bn_tol *tol);
-static void class_fu_vs_s(struct faceuse *fu, struct shell *s,
+HIDDEN void class_fu_vs_s(struct faceuse *fu, struct shell *s,
 			  char **classlist, const struct bn_tol *tol);
 
 /**
  * Convert classification status to string.
  */
-const char *
+HIDDEN const char *
 nmg_class_status(int status)
 {
     switch (status) {
@@ -107,7 +107,7 @@ nmg_class_status(int status)
 }
 
 
-void
+HIDDEN void
 nmg_pr_class_status(char *prefix, int status)
 {
     bu_log("%s has classification status %s\n",
@@ -124,7 +124,7 @@ nmg_pr_class_status(char *prefix, int status)
  * Called by -
  * nmg_class_pt_e
  */
-static void
+HIDDEN void
 joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
 {
     const struct edgeuse *eu_rinf;
@@ -200,7 +200,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
  * Called by -
  * nmg_class_pt_l
  */
-static void
+HIDDEN void
 nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse *eu, const struct bn_tol *tol)
 {
     vect_t ptvec;	/* vector from lseg to pt */
@@ -403,7 +403,7 @@ out:
  * nmg_classify_lu_lu()
  *		from: nmg_misc.c / nmg_split_loops_handler()
  */
-static void
+HIDDEN void
 nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse *lu, const struct bn_tol *tol)
 {
     vect_t delta;
@@ -499,7 +499,7 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
  * Called by -
  * nmg_mod.c, nmg_lu_reorient()
  */
-int
+HIDDEN int
 nmg_class_lu_fu(const struct loopuse *lu, const struct bn_tol *tol)
 {
     const struct faceuse *fu;
@@ -772,7 +772,7 @@ out:
 /**
  * Classify a loopuse/vertexuse from shell A WRT shell B.
  */
-static int
+HIDDEN int
 class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, const struct bn_tol *tol)
 {
     struct vertexuse *vup;
@@ -901,7 +901,7 @@ out:
 }
 
 
-static int
+HIDDEN int
 class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struct bn_tol *tol)
 {
     int euv_cl, matev_cl;
@@ -1254,7 +1254,7 @@ out:
  *
  * "newclass" should only be AonBshared or AonBanti.
  */
-void
+HIDDEN void
 nmg_reclassify_lu_eu(struct loopuse *lu, char **classlist, int newclass)
 {
     struct vertexuse *vu;
@@ -1354,7 +1354,7 @@ nmg_reclassify_lu_eu(struct loopuse *lu, char **classlist, int newclass)
  * NMG_CLASS_AonBanti
  * NMG_CLASS_AoutB
  */
-static int
+HIDDEN int
 class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const struct bn_tol *tol)
 {
     struct shell *s_ref;
@@ -1497,7 +1497,7 @@ class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const st
  * Called by -
  * class_fu_vs_s
  */
-static int
+HIDDEN int
 class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, const struct bn_tol *tol)
 {
     int nmg_class;
@@ -1918,7 +1918,7 @@ out:
  * Called by -
  *	nmg_class_shells()
  */
-static void
+HIDDEN void
 class_fu_vs_s(struct faceuse *fu, struct shell *s, char **classlist, const struct bn_tol *tol)
 {
     struct loopuse *lu;
@@ -2097,7 +2097,7 @@ nmg_classify_pt_loop(const point_t pt,
  * 3 - Loop is a crack
  * 4 - Just plain can't find an interior point
  */
-int
+HIDDEN int
 nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, const struct bn_tol *tol)
 {
     struct edgeuse *eu;
@@ -2499,7 +2499,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 int
 nmg_classify_s_vs_s(struct shell *s2, struct shell *s, const struct bn_tol *tol)
 {
-    int i;
+    size_t i;
     int nmg_class;
     struct faceuse *fu;
     struct loopuse *lu;
@@ -2581,7 +2581,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, const struct bn_tol *tol)
 
     /* classification returned NMG_CLASS_AonB, so need to try other points */
     nmg_vertex_tabulate(&verts, &s2->l.magic);
-    for (i = 0; i < BU_PTBL_END(&verts); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&verts); i++) {
 	struct vertex *v;
 
 	v = (struct vertex *)BU_PTBL_GET(&verts, i);

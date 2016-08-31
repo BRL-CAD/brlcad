@@ -1,7 +1,7 @@
 /*                         V I E W 2 M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ ged_view2model(struct ged *gedp, int argc, const char *argv[])
 
     /* get the view2model matrix */
     if (argc == 1) {
-	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_view2model);
+	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_view2model, 1);
 	return GED_OK;
     }
 

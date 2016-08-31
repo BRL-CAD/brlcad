@@ -1,7 +1,7 @@
 /*                        T Y P E I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -2975,7 +2975,7 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 		return GED_MORE;
 	    }
 
-	    for (count = 0; count > ARGS_PER_POINT; count++) {
+	    for (count = 0; count < ARGS_PER_POINT; count++) {
 		double val;
 		char *endptr = NULL;
 		val = strtod(argv[idx+count], &endptr);
@@ -2992,7 +2992,7 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 		return GED_MORE;
 	    }
 
-	    for (count = 0; count > ARGS_PER_LINE; count++) {
+	    for (count = 0; count < ARGS_PER_LINE; count++) {
 		double val;
 		char *endptr = NULL;
 		val = strtod(argv[idx+count], &endptr);
@@ -3009,7 +3009,7 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 		return GED_MORE;
 	    }
 
-	    for (count = 0; count > ARGS_PER_PLANE; count++) {
+	    for (count = 0; count < ARGS_PER_PLANE; count++) {
 		double val;
 		char *endptr = NULL;
 		val = strtod(argv[idx+count], &endptr);
@@ -3025,56 +3025,63 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 	}
     }
 
-    /* second pass, allocate and create with confidence */
+    /* second pass, allocate and process with confidence */
 
-    datums = (struct rt_datum_internal *)bu_calloc(num_points + num_lines + num_planes, sizeof(struct rt_datum_internal), "alloc datums");
-
+    datums = NULL; /* must allocate individually as we free individually */
     for (count = 0, idx = ARGS_START_AT, prev = NULL; count < num_points + num_lines + num_planes; count++) {
 	/* more than necessary but sufficiently robust to changes */
-	double vals[ARGS_PER_POINT + ARGS_PER_LINE + ARGS_PER_POINT] = {0.0};
+	double vals[ARGS_PER_POINT + ARGS_PER_LINE + ARGS_PER_PLANE] = {0.0};
+
+	struct rt_datum_internal *datum = (struct rt_datum_internal *)bu_calloc(1, sizeof(struct rt_datum_internal), "alloc datum");
+	if (!datums)
+	    datums = datum; /* and so it begins */
 
 	if (BU_STR_EQUIV(argv[idx], "point")) {
-	    vals[X] = strtod(argv[idx+1], NULL);
-	    vals[Y] = strtod(argv[idx+2], NULL);
-	    vals[Z] = strtod(argv[idx+3], NULL);
-	    VMOVE(datums[count].pnt, vals);
-	    VSETALL(datums[count].dir, 0.0);
-	    datums[count].w = 0.0;
+	    vals[X] = strtod(argv[idx+1], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Y] = strtod(argv[idx+2], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Z] = strtod(argv[idx+3], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    VMOVE(datum->pnt, vals);
+	    VSETALL(datum->dir, 0.0);
+	    datum->w = 0.0;
 	    idx += ARGS_PER_POINT;
 	} else if (BU_STR_EQUIV(argv[idx], "line")) {
-	    vals[X] = strtod(argv[idx+1], NULL);
-	    vals[Y] = strtod(argv[idx+2], NULL);
-	    vals[Z] = strtod(argv[idx+3], NULL);
-	    (vals+3)[X] = strtod(argv[idx+4], NULL);
-	    (vals+3)[Y] = strtod(argv[idx+5], NULL);
-	    (vals+3)[Z] = strtod(argv[idx+6], NULL);
-	    VMOVE(datums[count].pnt, vals);
-	    VMOVE(datums[count].dir, vals+3);
-	    datums[count].w = 0.0;
+	    vals[X] = strtod(argv[idx+1], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Y] = strtod(argv[idx+2], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Z] = strtod(argv[idx+3], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[X] = strtod(argv[idx+4], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Y] = strtod(argv[idx+5], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Z] = strtod(argv[idx+6], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    VMOVE(datum->pnt, vals);
+	    VMOVE(datum->dir, vals+3);
+	    datum->w = 0.0;
 	    idx += ARGS_PER_LINE;
 	} else if (BU_STR_EQUIV(argv[idx], "plane")) {
-	    vals[X] = strtod(argv[idx+1], NULL);
-	    vals[Y] = strtod(argv[idx+2], NULL);
-	    vals[Z] = strtod(argv[idx+3], NULL);
-	    (vals+3)[X] = strtod(argv[idx+4], NULL);
-	    (vals+3)[Y] = strtod(argv[idx+5], NULL);
-	    (vals+3)[Z] = strtod(argv[idx+6], NULL);
-	    VMOVE(datums[count].pnt, vals);
-	    VMOVE(datums[count].dir, vals+3);
-	    datums[count].w = 1.0;
+	    vals[X] = strtod(argv[idx+1], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Y] = strtod(argv[idx+2], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Z] = strtod(argv[idx+3], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[X] = strtod(argv[idx+4], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Y] = strtod(argv[idx+5], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Z] = strtod(argv[idx+6], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    VMOVE(datum->pnt, vals);
+	    VMOVE(datum->dir, vals+3);
+	    datum->w = 1.0;
 	    idx += ARGS_PER_PLANE;
 	}
+	idx++; /* next datum label */
 
-	datums[count].magic = RT_DATUM_INTERNAL_MAGIC;
+	datum->magic = RT_DATUM_INTERNAL_MAGIC;
 	if (prev) {
-	    prev->next = &datums[count];
+	    prev->next = datum;
 	}
-	prev = &datums[count];
+	prev = datum;
     }
 
-    intern->idb_ptr = &datums[0];
+    intern->idb_ptr = datums;
     intern->idb_meth = &OBJ[ID_DATUM];
     intern->idb_type = ID_DATUM;
+
+    /* Set a default color for datum objects */
+    bu_avs_add(&intern->idb_avs, "color", "255/255/0");
 
     return GED_OK;
 }

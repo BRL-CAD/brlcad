@@ -1,7 +1,7 @@
 /*                       D B _ T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -983,10 +983,12 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
     RT_DB_INTERNAL_INIT(&intern);
 
     if (pathp->fp_len <= 0) {
-	bu_log("db_recurse() null path?\n");
 	return TREE_NULL;
     }
+
     dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp || dp->d_addr == RT_DIR_PHONY_ADDR)
+	return TREE_NULL;
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
@@ -1003,8 +1005,6 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
      * Load the entire object into contiguous memory.  Note that this
      * code depends on the d_flags being set properly.
      */
-    if (!dp || dp->d_addr == RT_DIR_PHONY_ADDR) return TREE_NULL;
-
     if (dp->d_flags & RT_DIR_COMB) {
 	struct rt_comb_internal *comb;
 	struct db_tree_state nts;
@@ -2043,6 +2043,10 @@ db_walk_tree(struct db_i *dbip,
     RT_CK_DBTS(init_state);
     RT_CHECK_DBI(dbip);
 
+    if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
+	rt_init_resource(&rt_uniresource, 0, NULL);
+    }
+
     if (init_state->ts_rtip == NULL || ncpu == 1) {
 	resp = &rt_uniresource;
     } else {
@@ -2501,7 +2505,7 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 	    tree_list_append(vls, tp->tr_l.tl_name);
 	    if (tp->tr_l.tl_mat) {
 		tree_list_sublist_begin(vls);
-		bn_encode_mat(vls, tp->tr_l.tl_mat);
+		bn_encode_mat(vls, tp->tr_l.tl_mat, 0);
 		tree_list_sublist_end(vls);
 	    }
 	    count++;

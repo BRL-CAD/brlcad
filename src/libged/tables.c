@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -258,7 +258,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	int cur_length;
 
 	bu_ptbl_ins(cur_path, (long *)dp);
-	cur_length = BU_PTBL_END(cur_path);
+	cur_length = BU_PTBL_LEN(cur_path);
 
 	for (i = 0; i < actual_count; i++) {
 	    struct directory *nextdp;

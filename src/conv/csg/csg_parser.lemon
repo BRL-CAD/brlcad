@@ -1,7 +1,7 @@
 /*                 C S G _ P A R S E R . L E M O N
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ group_content ::= .
 group_content ::= entry group_content.
 {printf("entry\n");}
 
-entry ::= TEXT LB params RB LCURLY ceva GROUP_END.
+entry ::= TXT LB params RB LCURLY ceva GROUP_END.
 {printf("function_name( parameters ){smth}\n");}
 ceva ::= entry.
 {printf("{function_name( parameters ){smth}}\n");}
@@ -69,15 +69,15 @@ param_type ::= assign.
 param_type ::= array_of_vectors.
 {printf("param type = array_of_vectors\n");}
 
-assign ::= TEXT EQ expr.
-{printf("text = X\n");}
+assign ::= TXT EQ expr.
+{printf("txt = X\n");}
 
 expr ::= array_of_vectors.
 {printf("X from the assign is array_of_vectors\n");}
 expr ::= INTEGER.
 {printf("X from the assign is INTEGER\n");}
-expr ::= TEXT.
-{printf("X from the assign is text\n");}
+expr ::= TXT.
+{printf("X from the assign is txt\n");}
 
 
 array_of_vectors ::= LSB vecs.

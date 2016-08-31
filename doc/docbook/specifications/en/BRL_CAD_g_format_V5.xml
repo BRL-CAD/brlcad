@@ -84,7 +84,7 @@
     </authorgroup>
   </info>
 
-  <section>
+  <section xml:id="Background_and_Terminology">
     <title>Background and Terminology</title>
 
     <para>
@@ -92,8 +92,8 @@
       are combined using boolean operations to form regions of homogeneous material.
     </para>
     <para>
-      The database is organized as a <emphasis>directed acyclic graph</emphasis> (DAG), which
-      comprises
+      The database is organized as a <emphasis>directed acyclic graph</emphasis> (DAG), which is
+      comprised of:
 
       <itemizedlist>
 	<listitem>
@@ -107,7 +107,7 @@
 	  </para>
 	</listitem>
 	<listitem>
-	  <para><emphasis>arcs</emphasis> - contain boolean operators and 4x4 homogeneous transformation matrices.</para>
+	  <para><emphasis>arcs</emphasis> - containing boolean operators and 4x4 homogeneous transformation matrices.</para>
 	</listitem>
       </itemizedlist>
     </para>
@@ -116,7 +116,7 @@
       of trees. In this context, the solids are also called <emphasis>leaves</emphasis>.
     </para>
 
-    <section>
+    <section xml:id="Format_of_Data_Elements_Database_External_Format">
       <title>Format of Data Elements/Database External Format</title>
 
       <para>
@@ -167,7 +167,7 @@
     </section>
   </section>
 
-  <section>
+  <section xml:id="Definition_of_a_Single_Generic_Database_Object">
     <title>Definition of a Single, Generic Database Object</title>
 
     <para>
@@ -182,7 +182,7 @@
       node or leaf (solid) node.
     </para>
 
-    <section>
+    <section xml:id="Object_Structure">
       <title>Object Structure</title>
 
       <para>
@@ -431,7 +431,7 @@
       </para>
     </section>
 
-    <section>
+    <section xml:id="Flags">
       <title>Flags</title>
 
       <para>
@@ -534,7 +534,7 @@
 	</tgroup>
       </table>
 
-      <section>
+      <section xml:id="Wid_Flags">
 	<title>Wid Flags</title>
 
 	<para>
@@ -620,7 +620,7 @@
 
       </section>
 
-      <section>
+      <section xml:id="r_Bits">
 	<title>"r" Bits</title>
 
 	<para>
@@ -629,7 +629,7 @@
 	</para>
       </section>
 
-      <section>
+      <section xml:id="HFlags_the_DLI_Flag">
 	<title>HFlags - the DLI Flag</title>
 
 	<para>
@@ -723,7 +723,7 @@
       </note>
       </section>
 
-      <section>
+      <section xml:id="HFlags_the_NP_Bit">
 	<title>HFlags - the NP Bit</title>
 
 	<para>
@@ -735,7 +735,7 @@
 	</para>
       </section>
 
-      <section>
+      <section xml:id="AFlags_BFlags_the_AP_BP_Bit">
 	<title>AFlags/BFlags - the AP/BP Bit</title>
 
 	<para>
@@ -746,7 +746,7 @@
 	</para>
       </section>
 
-      <section>
+      <section xml:id="AFlags_BFlags_the_AZ_BZ_Flag">
 	<title>AFlags/BFlags - the AZ/BZ Flag</title>
 
 	<para>
@@ -807,7 +807,7 @@
       </section>
     </section>
 
-    <section>
+    <section xml:id="Object_Type">
       <title>Object Type</title>
 
       <para>
@@ -932,7 +932,7 @@
 	beyond what the "attribute" method permits.
       </para>
 
-      <section>
+      <section xml:id="Major_Type">
 	<title>Major_Type = 0: Reserved</title>
 
 	<para>
@@ -1278,7 +1278,7 @@
 	</para>
       </section>
 
-      <section>
+      <section xml:id="Bulk_Binary_Objects">
 	<title>Bulk Binary Objects (Major_Types 8-31)</title>
 
 	<para>
@@ -1546,7 +1546,7 @@
 
     </section>
 
-    <section>
+    <section xml:id="Object_Length">
       <title>Object Length</title>
 
       <para>
@@ -1555,7 +1555,7 @@
       </para>
     </section>
 
-    <section>
+    <section xml:id="Object_Name">
       <title>Object Name</title>
 
       <para>
@@ -1576,7 +1576,7 @@
       </para>
     </section>
 
-    <section>
+    <section xml:id="Object_Attributes">
       <title>Object Attributes</title>
 
       <para>
@@ -1598,14 +1598,6 @@
 	this will simply be: <literallayout class="normal">aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL</literallayout>
 	where NULL represents a byte with all bits zero. The NULL in
 	place of anameN+1 signals the end of the ASCII attribute data.
-      </para>
-
-      <para>
-	PROPOSED: A second type of attribute has an ASCII key but a binary value.
-        Such attributes follow the ASCII-valued ones after the double NULLs:
-	<literallayout class="normal">anameN+1 NULL uintN &lt;uintN  binary bytes&gt; [...0 or more binary attribute pairs]</literallayout>
-        where, for each binary attribute pair, the uintN is of size AWid and is
-        the length of the binary value for its ASCII key.
       </para>
 
       <para>
@@ -1704,7 +1696,7 @@
 	end-user-created attributes.
       </para>
     </section>
-    <section>
+    <section xml:id="Object_Body">
       <title>Object Body</title>
 
       <para>
@@ -1713,7 +1705,7 @@
       </para>
     </section>
 
-    <section>
+    <section xml:id="Padding_and_Length_Rounding">
       <title>Padding and Length Rounding</title>
 
       <para>
@@ -1801,7 +1793,7 @@ Magic2 (1 byte)</literallayout>
   </section>
 
 
-  <section>
+  <section xml:id="How_Objects_Are_Grouped_into_a_Database">
     <title>How Objects Are Grouped into a Database</title>
 
     <para>
@@ -1809,7 +1801,7 @@ Magic2 (1 byte)</literallayout>
     </para>
   </section>
 
-  <section>
+  <section xml:id="Details_of_BRL-CAD-Specific_Nongeometric_Database_Object_Types">
     <title>Details of BRL-CAD-Specific Nongeometric Database Object Types</title>
 
     <para>
@@ -1817,7 +1809,7 @@ Magic2 (1 byte)</literallayout>
     </para>
   </section>
 
-  <section>
+  <section xml:id="Details_of_BRL-CAD-Specific_Geometric_Database_Object_Types">
     <title>Details of BRL-CAD-Specific Geometric Database Object Types</title>
 
     <para>
@@ -1825,7 +1817,7 @@ Magic2 (1 byte)</literallayout>
     </para>
   </section>
 
-  <section>
+  <section xml:id="Extensions_for_Deferred_Implementation">
     <title>Extensions for Deferred Implementation</title>
 
     <para>
@@ -1833,7 +1825,7 @@ Magic2 (1 byte)</literallayout>
     </para>
   </section>
 
-  <section>
+  <section xml:id="Community_Feedback_on_the_Proposal">
     <title>Community Feedback on the Proposal</title>
 
     <para>
@@ -1841,7 +1833,7 @@ Magic2 (1 byte)</literallayout>
     </para>
   </section>
 
-  <section>
+  <section xml:id="Database_Library_Application_Programming_Interface">
     <title>Database Library Application Programming Interface (API)</title>
 
     <para>

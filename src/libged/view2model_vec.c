@@ -1,7 +1,7 @@
 /*                         V I E W 2 M O D E L _ V E C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ ged_view2model_vec(struct ged *gedp, int argc, const char *argv[])
     bn_mat_inv(inv_Viewrot, gedp->ged_gvp->gv_rotation);
     MAT4X3PNT(model_vec, inv_Viewrot, view_vec);
 
-    bn_encode_vect(gedp->ged_result_str, model_vec);
+    bn_encode_vect(gedp->ged_result_str, model_vec, 1);
 
     return GED_OK;
 

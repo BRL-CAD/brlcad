@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution.
+in the documentation and/or other materials provided with the distribution. 
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission.
+prior written permission. 
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -436,21 +436,6 @@ int CoredVectorMeshData< Vertex >::addOutOfCorePoint( const Vertex& p )
 	return int(oocPoints.size())-1;
 }
 template< class Vertex >
-int CoredVectorMeshData< Vertex >::addPolygon( const std::vector< CoredVertexIndex >& vertices )
-{
-	std::vector< int > polygon( vertices.size() );
-	for( int i=0 ; i<(int)vertices.size() ; i++ )
-		if( vertices[i].inCore ) polygon[i] =  vertices[i].idx;
-		else                     polygon[i] = -vertices[i].idx-1;
-	return addPolygon( polygon );
-}
-template< class Vertex >
-int CoredVectorMeshData< Vertex >::addPolygon( const std::vector< int >& vertices )
-{
-	polygons.push_back( vertices );
-	return (int)polygons.size()-1;
-}
-template< class Vertex >
 int CoredVectorMeshData< Vertex >::addOutOfCorePoint_s( const Vertex& p )
 {
 	size_t sz;
@@ -476,7 +461,7 @@ template< class Vertex >
 int CoredVectorMeshData< Vertex >::addPolygon_s( const std::vector< CoredVertexIndex >& vertices )
 {
 	std::vector< int > polygon( vertices.size() );
-	for( int i=0 ; i<(int)vertices.size() ; i++ )
+	for( int i=0 ; i<(int)vertices.size() ; i++ ) 
 		if( vertices[i].inCore ) polygon[i] =  vertices[i].idx;
 		else                     polygon[i] = -vertices[i].idx-1;
 	return addPolygon_s( polygon );
@@ -517,7 +502,7 @@ template< class Vertex >
 CoredFileMeshData< Vertex >::CoredFileMeshData( void )
 {
 	oocPoints = polygons = 0;
-
+	
 	oocPointFile = new BufferedReadWriteFile();
 	polygonFile = new BufferedReadWriteFile();
 }
@@ -539,24 +524,6 @@ int CoredFileMeshData< Vertex >::addOutOfCorePoint( const Vertex& p )
 	oocPointFile->write( &p , sizeof( Vertex ) );
 	oocPoints++;
 	return oocPoints-1;
-}
-template< class Vertex >
-int CoredFileMeshData< Vertex >::addPolygon( const std::vector< int >& vertices )
-{
-	int vSize = (int)vertices.size();
-	polygonFile->write( &vSize , sizeof(int) );
-	polygonFile->write( &vertices[0] , sizeof(int)*vSize );
-	polygons++;
-	return polygons-1;
-}
-template< class Vertex >
-int CoredFileMeshData< Vertex >::addPolygon( const std::vector< CoredVertexIndex >& vertices )
-{
-	std::vector< int > polygon( vertices.size() );
-	for( int i=0 ; i<(int)vertices.size() ; i++ )
-		if( vertices[i].inCore ) polygon[i] =  vertices[i].idx;
-		else                     polygon[i] = -vertices[i].idx-1;
-	return addPolygon( polygon );
 }
 template< class Vertex >
 int CoredFileMeshData< Vertex >::addOutOfCorePoint_s( const Vertex& p )
@@ -587,7 +554,7 @@ template< class Vertex >
 int CoredFileMeshData< Vertex >::addPolygon_s( const std::vector< CoredVertexIndex >& vertices )
 {
 	std::vector< int > polygon( vertices.size() );
-	for( int i=0 ; i<(int)vertices.size() ; i++ )
+	for( int i=0 ; i<(int)vertices.size() ; i++ ) 
 		if( vertices[i].inCore ) polygon[i] =  vertices[i].idx;
 		else                     polygon[i] = -vertices[i].idx-1;
 	return addPolygon_s( polygon );

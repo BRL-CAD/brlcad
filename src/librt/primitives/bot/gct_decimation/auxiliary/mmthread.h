@@ -37,6 +37,8 @@
 
 #include "common.h"
 
+#include <stddef.h>
+
 #include "mmatomic.h"
 
 #include "bu/log.h"
@@ -44,7 +46,7 @@
 #include "tinycthread.h"
 
 
-static inline void mtSignalWaitTimeout(cnd_t *signal, mtx_t *mutex, long milliseconds)
+static inline void mtSignalWaitTimeout(cnd_t *gsignal, mtx_t *mutex, long milliseconds)
 {
     uint64_t microsecs;
     struct timespec ts;
@@ -60,7 +62,7 @@ static inline void mtSignalWaitTimeout(cnd_t *signal, mtx_t *mutex, long millise
 
     ts.tv_nsec = microsecs * 1000;
 
-    if (cnd_timedwait(signal, mutex, &ts) == thrd_error)
+    if (cnd_timedwait(gsignal, mutex, &ts) == thrd_error)
 	bu_bomb("cnd_timedwait() failed");
 }
 
@@ -99,6 +101,23 @@ static inline void mtSpinUnlock(mtSpin *spin)
 
 
 #else
+
+
+static inline int mtMutexTryLock(mtx_t *mutex)
+{
+    switch (mtx_trylock(mutex)) {
+	case thrd_success:
+	    return 1;
+
+	case thrd_busy:
+	    return 0;
+
+	default:
+	    bu_bomb("mtx_trylock() failed");
+	    return -1; /* silence warnings */
+    };
+}
+
 
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
@@ -173,5 +192,16 @@ static inline void mtSpinUnlock(mtSpin *spin)
 #endif
 #endif
 
+static void mtQuellPedantic(int var)
+{
+if (!var) {
+  (void)mtSignalWaitTimeout(NULL, NULL, 0);
+  (void)mtSpinInit(NULL);
+  (void)mtSpinDestroy(NULL);
+  (void)mtSpinLock(NULL);
+  (void)mtSpinUnlock(NULL);
+  (void)mtQuellPedantic(1);
+}
+}
 
 #endif

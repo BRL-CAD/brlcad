@@ -1,7 +1,7 @@
 /*                         C O P Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/str.h"
 #include "bu/units.h"
 
 #include "./ged_private.h"
@@ -133,7 +134,7 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 	}
 
 	if ((val = bu_avs_get(&avs, "title")) != NULL)
-	    to_gedp->ged_wdbp->dbip->dbi_title = strdup(val);
+	    to_gedp->ged_wdbp->dbip->dbi_title = bu_strdup(val);
 
 	if ((val = bu_avs_get(&avs, "units")) != NULL) {
 	    double loc2mm;

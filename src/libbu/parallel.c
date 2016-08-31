@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,34 +30,20 @@
 #  include <sys/time.h>
 #endif
 
-#ifdef HAVE_SYS_RESOURCE_H
-#  include <sys/resource.h>
-#endif
-
 #ifdef linux
 #  include <sys/types.h>
-#  ifdef HAVE_SYS_WAIT_H
-#    include <sys/wait.h>
-#  endif
 #  include <sys/stat.h>
-#  include <sys/sysinfo.h>
 #endif
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #  include <sys/types.h>
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
-#  ifdef HAVE_SYS_WAIT_H
-#    include <sys/wait.h>
-#  endif
 #  include <sys/stat.h>
 #endif
 
 #ifdef __APPLE__
 #  include <sys/types.h>
-#  ifdef HAVE_SYS_WAIT_H
-#    include <sys/wait.h>
-#  endif
 #  include <sys/stat.h>
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
@@ -79,10 +65,6 @@
 #  include <sys/sysmp.h> /* for sysmp() */
 #endif
 
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-
 #ifdef HAVE_SCHED_H
 #  include <sched.h>
 #else
@@ -90,6 +72,8 @@
 #    include <sys/sched.h>
 #  endif
 #endif
+
+#include "bresource.h"
 
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
@@ -393,7 +377,7 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
 
     while (1) {
 	if (parent->started < parent->finished) {
-	    bu_log("Warning - parent->started (%d) is less than parent->finished (%d)\n", parent->started, parent->finished);
+	    /*bu_log("Warning - parent->started (%d) is less than parent->finished (%d)\n", parent->started, parent->finished);*/
 	    return;
 	}
 	threads = parent->started - parent->finished;
@@ -557,7 +541,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	/* single cpu case bypasses nearly everything, just invoke */
 	(*func)(0, arg);
 
-	parallel_mapping(PARALLEL_PUT, bu_parallel_id(), 0);
+	parallel_mapping(PARALLEL_PUT, bu_parallel_id(), 0); /* correct? we never got. */
 	return;
     }
 
@@ -776,8 +760,6 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	thread_tbl[x] = (rt_thread_t)-1;
     }
 #  endif /* end if Win32 threads */
-
-    parallel_mapping(PARALLEL_PUT, bu_parallel_id(), 0);
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%zd) complete\n", ncpu);

@@ -124,6 +124,9 @@ set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_ENABLE_OSG)
   BRLCAD_ADDEXEC(osg-test osg-test.cpp "librt;libbu;${OSG_LIBRARIES}" NO_STRICT NO_INSTALL)
+  if(CPP_DLL_DEFINES)
+    set_property(TARGET libdm APPEND PROPERTY COMPILE_DEFINITIONS "FREETYPE_DLL_IMPORTS")
+  endif(CPP_DLL_DEFINES)
 endif(BRLCAD_ENABLE_OSG)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
@@ -133,30 +136,31 @@ if(BRLCAD_ENABLE_OSG)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif(BRLCAD_ENABLE_OSG)
 set(libdm_ignore_files
-  dm-wgl.c
-  dm-X.c
-  dm-ogl.c
-  dm-osgl.cpp
-  dm-qt.cpp
-  dm-rtgl.c
-  dm-tk.c
-  osg_bob.cpp
-  osg-test.cpp
+  README
   TODO
-  dm-glx.h
   dm-Null.h
+  dm-X.c
+  dm-X.h
+  dm-glx.h
+  dm-ogl.c
   dm-ogl.h
+  dm-osgl.cpp
   dm-osgl.h
   dm-pex.h
   dm-plot.h
-  dm_private.h
   dm-ps.h
+  dm-qt.cpp
   dm-qt.h
+  dm-rtgl.c
   dm-rtgl.h
+  dm-tk.c
   dm-tk.h
+  dm-wgl.c
   dm-wgl.h
-  dm-X.h
+  dm_private.h
   fontstash
+  osg-test.cpp
+  osg_bob.cpp
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_private.h)

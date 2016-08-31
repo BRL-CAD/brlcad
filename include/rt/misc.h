@@ -1,7 +1,7 @@
 /*                      M I S C . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,10 +64,22 @@ struct rt_point_labels {
  * change */
 RT_EXPORT void
 rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
-                                struct db_i *dbip, const char *obj, fastf_t delta);
+		 struct db_i *dbip, const char *obj, int fidelity);
 
 
 RT_EXPORT extern void rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
+
+/**
+ * reduce an object into some form of simpler representation
+ */
+RT_EXPORT extern void rt_reduce_obj(struct rt_db_internal *dest, const struct rt_db_internal *ip, fastf_t reduction_level, unsigned flags);
+
+#define RT_REDUCE_OBJ_PRESERVE_VOLUME 0x1
+
+/**
+ * reduce the database hierarchy
+ */
+RT_EXPORT extern void rt_reduce_db(struct db_i *db, size_t num_preserved_attributes, const char * const * preserved_attributes, const struct bu_ptbl *preserved_combs_dirs);
 
 __END_DECLS
 

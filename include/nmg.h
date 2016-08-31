@@ -1,7 +1,7 @@
 /*                           N M G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,9 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup nmg */
-/** @{ */
-/** @file nmg.h
+/** @addtogroup rt_nmg
  *
  * Definition of data structures for "Non-Manifold Geometry
  * Modelling."  Developed from "Non-Manifold Geometric Boundary
@@ -29,6 +27,8 @@
  * by Kevin J. Weiler - RPI Phd thesis from 1986.
  *
  */
+/** @{ */
+/** @file include/nmg.h */
 
 #ifndef NMG_H
 #define NMG_H

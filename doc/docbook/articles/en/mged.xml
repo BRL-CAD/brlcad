@@ -3,7 +3,7 @@
       <info>
         <title>MGED Tutorial</title>
 </info>
-<section>
+<section xml:id="Preface">
 	<title>
 		Preface
 	</title>
@@ -11,11 +11,11 @@
 			This manual is designed to get the user familiar with BRL-CAD and the facilities available for creating and using geometry. To accomplish this, we start with an introduction to the geometry editor,<emphasis> MGED</emphasis>.
 		</para>
 </section>
-<section>
+<section xml:id="Modeling_With_CSG">
 	<title>
 		Modeling With CSG
 	</title>
-	<section>
+	<section xml:id="Modeling_With_CSG1">
 		<title>
 		Modeling With CSG
 		</title>
@@ -382,7 +382,7 @@ Mugs (u)- Mug 2--Mug (u)	    Outside
 Users familiar with other CAD software may prefer to think of the ``region'' as a ``part''.  Combinations containing of ``regions'' may be thought of as ``assemblies''.
 </para>
 	</section>
-<section>
+<section xml:id="Starting_MGED">
 	<title>
 		Starting MGED
 	</title>
@@ -563,7 +563,7 @@ The second line has several uses, depending on editor mode.  In various editing 
 All numeric interaction between the user and the editor are in terms of user-selected display units.  The user may select from millimeters, centimeters, meters, inches, and feet, and the currently active display units are noted in the first display line.  One important implementation detail is that all numeric values are stored in the database in millimeters. When MGED interacts with the user, it converts values from the database into the units selected by the user before displaying them.  Likewise, values that the user enters are converted to millimeters before being written to the database.
 </para>
 </section>
-<section>
+<section xml:id="The_Screen_Coordinate_System">
 	<title>
 		The Screen Coordinate System
 	</title>
@@ -586,7 +586,7 @@ The MGED editor uses the standard right-handed screen coordinate system shown in
 	The Z axis is perpendicular to the screen and the positive Z direction is out of the screen towards the viewer.  The directions of positive (+) and negative (-) axis rotations are also indicated.  For these rotations, the ``Right Hand Rule'' applies: Point the thumb of the right hand along the direction of +X axis and the other fingers will describe the sense of positive rotation.
 </para>
 </section>
-<section>
+<section xml:id="Creating_Geometry">
 	<title>
 		Creating Geometry: The Cup
 	</title>
@@ -853,7 +853,7 @@ Now we are ready to raytrace again.
     </figure>
   </para>
 	</section>
-<section>
+<section xml:id="Editing_Solids">
 	<title>
 	Editing Solids
 </title>
@@ -890,7 +890,7 @@ comb handle.c u handle_01.s - handle_02.s - outside.s u handle_04.s - handle_02.
       </figure>
     </para>
 </section>
-<section>
+<section xml:id="Adding_a_Base">
 	<title>
 Adding a Base
 </title>
@@ -922,7 +922,7 @@ rt -s 512 -F :1
     </para>
 
 </section>
-<section>
+<section xml:id="Adding_a_fillet">
 	<title>
 Adding a fillet
 </title>
@@ -951,7 +951,7 @@ rt -s 512 -F :1
     </para>
 </section>
 </section>
-<section>
+<section xml:id="New_Graphical_User_Interface">
 	<title>
 		MGED’s New Graphical User Interface
 	</title>
@@ -4883,7 +4883,7 @@ rt -s 512 -F :1
 	<title>
 		Command Line Editing
 	</title>
-		<section>
+		<section xml:id="Emacs_Bindings">
 			<title>
 Emacs Bindings
 </title>
@@ -4915,7 +4915,7 @@ C-w						backward delete word
 </programlisting>
 	</para>
 </section>
-<section>
+<section xml:id="VI_Bindings">
 	<title>
 	VI Bindings
 </title>
@@ -4947,7 +4947,7 @@ Control-w		backward delete word
 </programlisting>
 </para>
 </section>
-<section>
+<section xml:id="Insert_Mode">
 <title>
 Insert Mode
 </title>
@@ -4961,7 +4961,7 @@ BackSpace		backward delete character
 </programlisting>
 </para>
 </section>
-<section>
+<section xml:id="Command_Mode">
 	<title>
 Command Mode
 </title>
@@ -5004,7 +5004,7 @@ x 					delete character
 </section>
 	</section>
 
-<section>
+<section xml:id="MGED_User_Commands">
 	<title>
 		MGED User Commands
 	</title>
@@ -5466,19 +5466,10 @@ x 					delete character
     <link linkend="permute">permute</link>
   </entry>
   <entry>
-    <link linkend="pl">pl</link>
-  </entry>
-  <entry>
     <link linkend="plot">plot</link>
-  </entry>
-  <entry>
-    <link linkend="polybinout">polybinout</link>
   </entry>
   </row>
 <row>
-  <entry>
-    <link linkend="pov">pov</link>
-  </entry>
   <entry>
     <link linkend="prcolor">prcolor</link>
   </entry>
@@ -6975,7 +6966,7 @@ x 					delete character
 
 <literal>mged&gt;</literal>
     <emphasis role="strong">attach -t 0 -S 800 -n .t.ogl ogl</emphasis>
-     – Open a 800x800 OpenGl display window named .t.ogl
+     – Open a 800x800 OpenGL display window named .t.ogl
     that is not a top-level window.
   </para>
   <para>
@@ -9440,7 +9431,7 @@ x 					delete character
     </listitem>
     <listitem>
       <para>
-        S – Draw tNURBs with trimming curves only, no surfaces.
+        S – Draw tNURBS with trimming curves only, no surfaces.
       </para>
     </listitem>
     <listitem>
@@ -11731,12 +11722,12 @@ foo.r_xpand/R
     </listitem>
     <listitem>
       <para>
-        extrude – experimental.
+        extrude
       </para>
     </listitem>
     <listitem>
       <para>
-        sketch – experimental.
+        sketch
       </para>
     </listitem>
   </itemizedlist>
@@ -12690,53 +12681,6 @@ foo.r_xpand/R
   <para>
     <emphasis role="strong"></emphasis>
   </para>
-  <variablelist xml:id="pl">
-    <varlistentry>
-      <term>
-        pl [<emphasis>-float</emphasis>] [<emphasis>-zclip</emphasis>]
-        [<emphasis>-2d</emphasis>] [<emphasis>-grid</emphasis>]
-        <emphasis>out_file</emphasis> | <quote>|</quote> filter
-      </term>
-      <listitem>
-        <para>
-          The <quote>pl</quote> command creates a UNIX plot of the
-          current MGED display. If an <emphasis>output_file</emphasis>
-          is specified, the plot is stored in that file. If a
-          <emphasis>filter</emphasis> is specified, the output is sent
-          to that <emphasis>filter</emphasis>. The
-          <emphasis>-float</emphasis> option requests a plot file with
-          real numbers rather than integers. The
-          <emphasis>-zclip</emphasis> option requests that the plot be
-          clipped to the viewing cube in the Z-direction. The
-          <emphasis>-2d</emphasis> option requests a two-dimensional
-          plot (the default is 3D). The <emphasis>-grid</emphasis>
-          option is intended to include a grid in the plot, but is
-          currently not implemented. This command uses the
-          <emphasis>dm-plot</emphasis> display manager. The
-          <link linkend="plot">plot</link> command performs the same
-          function, but does not use the <emphasis>dm-plot</emphasis>
-          display manager.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; pl -float | pldebug
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – Create a UNIX plot of the current MGED display and pipe the
-    results to the <emphasis>pldebug</emphasis> command.
-  </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
   <variablelist xml:id="plot">
     <varlistentry>
       <term>
@@ -12758,11 +12702,7 @@ foo.r_xpand/R
           <emphasis>-2d</emphasis> option requests a two-dimensional
           plot (the default is 3D). The <emphasis>-grid</emphasis>
           option is intended to include a grid in the plot, but is
-          currently not implemented. This command does not use the
-          <emphasis>dm-plot</emphasis> display manager. The
-          <link linkend="pl">pl</link> command performs the same
-          function, but does use the <emphasis>dm-plot</emphasis>
-          display manager.
+          currently not implemented.
         </para>
       </listitem>
     </varlistentry>
@@ -12781,36 +12721,6 @@ foo.r_xpand/R
     – Create a UNIX plot of the current MGED display and pipe the
     results to the <emphasis>pldebug</emphasis> command.
   </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
-  <variablelist>
-    <varlistentry>
-      <term xml:id="polybinout">
-        polybinout file
-      </term>
-      <listitem>
-        <para>
-          Store vlist polygons into polygon file (experimental).
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
-  <variablelist>
-    <varlistentry>
-      <term xml:id="pov">
-        pov args
-      </term>
-      <listitem>
-        <para>
-          Set the point-of-view (experimental).
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
   <para>
     <emphasis role="strong"></emphasis>
   </para>
@@ -18706,7 +18616,7 @@ EOF
   </table>
 </section>
 </section>
-	<section>
+	<section xml:id="MGED_Tcl_Variables">
   <title>MGED Tcl Variables</title>
 			<section>
   <title>MGED Tcl Variables</title>
@@ -19016,7 +18926,7 @@ EOF
   </para>
 </section>
 </section>
-<section>
+<section xml:id="MGED_Environment_Variable">
   <title>MGED Environment Variable</title>
 <section>
   <title>MGED Environment Variables</title>
@@ -19063,7 +18973,7 @@ EOF
   </para>
 </section>
 </section>
-<section>
+<section xml:id="MGED_Callback">
   <title>MGED Callback</title>
 <section>
   <title>MGED Callbacks</title>
@@ -19119,7 +19029,7 @@ EOF
   </itemizedlist>
 </section>
 </section>
-<section>
+<section xml:id="Glossary">
 	<title>
 		Glossary
 	</title>
@@ -19773,7 +19683,7 @@ EOF
 </section>
 </section>
 
-<section>
+<section xml:id="BRL-CAD_Solid">
 	<title>BRL-CAD Solid</title>
 <para><emphasis role="bold"> ARB</emphasis>
 </para>
@@ -19895,7 +19805,7 @@ The right parabolic cylinder (also referred to as RPC) is a solid built by extru
 spline
 </emphasis></para>
 <para>
-The spline solid is defined by a set of non­uniform rational B­spline surfaces (NURBs). There are no trimming curves in the spline solid, so each NURB surface must exactly adjoin its neighbor so that the interior of the spline solid is completely enclosed and no parts of any NURB surface are dangling outside the solid.
+The spline solid is defined by a set of non­uniform rational B­spline surfaces (NURBS). There are no trimming curves in the spline solid, so each NURB surface must exactly adjoin its neighbor so that the interior of the spline solid is completely enclosed and no parts of any NURB surface are dangling outside the solid.
 </para>
 <para xml:id="torus"><emphasis role="bold">
 torus

@@ -1,7 +1,7 @@
 /*                          F E N C E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -271,10 +271,7 @@ int parseArguments(int argc, char **argv)
 	bu_strlcpy(progname, argv[0], (strlen(argv[0])+1>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])+1));
     } else {
 	bu_strlcpy(progname, "fence\0", 6);
-	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, NULL);
-	bu_log("\n       Program continues running:\n\n");
     }
-    fflush(stdout);
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
 	double scan[3] = VINIT_ZERO;

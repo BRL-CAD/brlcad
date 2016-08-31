@@ -1,7 +1,7 @@
 /*                   A P P L I C A T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -198,7 +198,7 @@ struct application_bundle
 
 
 #ifdef NO_BOMBING_MACROS
-#  define RT_AP_CHECK(_ap) BU_IGNORE((_ap))
+#  define RT_AP_CHECK(_ap) (void)(_ap)
 #else
 #  define RT_AP_CHECK(_ap)      \
     {if ((_ap)->a_zero1||(_ap)->a_zero2) \

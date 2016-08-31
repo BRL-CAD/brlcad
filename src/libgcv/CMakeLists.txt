@@ -1,37 +1,3 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/wfobj
-  ${CMAKE_CURRENT_BINARY_DIR}
-  )
-
-PERPLEX_TARGET(OBJ_Scanner wfobj/obj_rules.l
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp ${CMAKE_CURRENT_BINARY_DIR}/obj_scanner.h)
-LEMON_TARGET(OBJ_Parser wfobj/obj_grammar.yy
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.hpp)
-ADD_PERPLEX_LEMON_DEPENDENCY(OBJ_Scanner OBJ_Parser)
-
-set(OBJ_G_SRCS
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
-  wfobj/obj_parser.cpp
-  ../conv/obj-g.c
-  wfobj/tri_face.c
-  )
-
-BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu;libbn;librt;libwdb")
-
-set(wfobj_ignore_files
-  wfobj/obj_grammar_decls.h
-  wfobj/obj_grammar.yy
-  wfobj/obj_parser.h
-  wfobj/obj_parser_state.h
-  wfobj/obj_rules.h
-  wfobj/obj_rules.l
-  wfobj/obj_token_type.h
-  wfobj/tri_face.h
-  )
-CMAKEFILES(${wfobj_ignore_files})
-
-
 # Include directories needed by libgcv users
 set(GCV_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
@@ -41,59 +7,49 @@ set(GCV_INCLUDE_DIRS
   )
 BRLCAD_LIB_INCLUDE_DIRS(gcv GCV_INCLUDE_DIRS "")
 
+if(CPP_DLL_DEFINES)
+  set(LIBGCV_PLUGINS_PATH "${BIN_DIR}")
+else(CPP_DLL_DEFINES)
+  set(LIBGCV_PLUGINS_PATH "${LIB_DIR}")
+endif(CPP_DLL_DEFINES)
+set(LIBGCV_PLUGINS_DIRECTORY "libgcv_plugins")
+add_subdirectory(plugins)
+
 set(LIBGCV_SOURCES
+  bot_solidity.c
   bottess.c
   facetize.c
-  plugin.c
+  gcv.c
   region_end.c
   region_end_mc.c
   tri_intersect.c
-  bot_solidity.c
   )
 
-list(APPEND LIBGCV_SOURCES
-  setup.cpp
-  conv/brlcad.c
-  conv/fastgen4/fastgen4_read.c
-  conv/fastgen4/fastgen4_write.cpp
-  conv/obj/obj_write.c
-  conv/stl/stl_read.c
-  conv/stl/stl_write.c
-  conv/vrml/vrml_write.c
 
-  conv/obj/obj_read.c
-  wfobj/obj_parser.cpp
-  wfobj/tri_face.c
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
-  )
-
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu")
-SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
-
-BRLCAD_ADDEXEC(gcv_test gcv_test.c libgcv NO_INSTALL)
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu" SO_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
+set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGINS_DIRECTORY=\"${LIBGCV_PLUGINS_DIRECTORY}\"")
+set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGINS_PATH=\"${LIBGCV_PLUGINS_PATH}\"")
+set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
 enable_testing()
 BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
 if(CPP_DLL_DEFINES)
-  SET_PROPERTY(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
+  set_property(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 add_test(NAME bottess_test COMMAND test_bottess)
 
+
 set(GCV_IGNORE_FILES
   NOTES
-  conv/fastgen4/NOTES
-  facetize.h
-  gcv_private.h
-  plugin.h
   soup.h
   tri_intersect.h
-  bot_solidity.h
   )
 CMAKEFILES(${GCV_IGNORE_FILES})
 
+
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/wfobj/CTestTestfile.cmake)
+
 
 # Local Variables:
 # tab-width: 8

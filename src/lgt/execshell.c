@@ -1,7 +1,7 @@
 /*                     E X E C S H E L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,10 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#include "bresource.h"
 
 #include "vmath.h"
 #include "raytrace.h"

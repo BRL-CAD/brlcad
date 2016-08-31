@@ -1,7 +1,7 @@
 /*                      P A R S E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -228,18 +228,30 @@ typedef struct bu_external bu_external_t;
 /**
  * initializes a bu_external struct without allocating any memory.
  */
-#define BU_EXTERNAL_INIT(_p) { \
+#if defined(USE_BINARY_ATTRIBUTES)
+  #define BU_EXTERNAL_INIT(_p) { \
+	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
+	(_p)->ext_nbytes = 0; \
+	(_p)->widcode = 0; \
+	(_p)->ext_buf = NULL; \
+    }
+#else
+  #define BU_EXTERNAL_INIT(_p) { \
 	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
 	(_p)->ext_nbytes = 0; \
 	(_p)->ext_buf = NULL; \
     }
+#endif
 
 /**
  * macro suitable for declaration statement initialization of a
  * bu_external struct. does not allocate memory.
  */
-#define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, NULL }
-
+#if defined(USE_BINARY_ATTRIBUTES)
+  #define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, 0, NULL }
+#else
+  #define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, NULL }
+#endif
 /**
  * returns truthfully whether a bu_external struct has been
  * initialized.  is not reliable unless the struct has been
@@ -450,30 +462,6 @@ BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 	while (*(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
 			  *(_cp) == '\t' || *(_cp) == '{'))  ++(_cp); \
     }
-
-
-/** @brief routines for parsing boolean values from strings */
-
-/**
- * Returns truthfully if a given input string represents an
- * "affirmative string".
- *
- * Input values that are null, empty, begin with the letter 'n', or
- * are 0-valued return as false.  Any other input value returns as
- * true.  Strings that strongly indicate true return as 1, other
- * values still return as true but may be a value greater than 1.
- */
-BU_EXPORT extern int bu_str_true(const char *str);
-
-/**
- * Returns truthfully if a given input string represents a
- * "negative string".
- *
- * Input values that are null, empty, begin with the letter 'n', or
- * are 0-valued return as true.  Any other input value returns as
- * false.
- */
-BU_EXPORT extern int bu_str_false(const char *str);
 
 
 /** @} */

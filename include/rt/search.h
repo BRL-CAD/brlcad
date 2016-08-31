@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -152,7 +152,6 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 /* TODO - implement this flag
 #define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
                                               globbing rules (default) */
-
 
 
 /***************************************************************

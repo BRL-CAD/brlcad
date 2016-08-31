@@ -112,7 +112,6 @@ set(LIBGED_SOURCES
   get_solid_kp.c
   get_type.c
   glob.c
-  globals.c
   gdiff.c
   gqa.c
   grid.c
@@ -162,32 +161,15 @@ set(LIBGED_SOURCES
   mrot.c
   nirt.c
   nmg.c
+  nmg_make_v.c
   nmg_mm.c
-  nmg_me.c
-  nmg_eins.c
-  nmg_esplit.c
-  nmg_eusplit.c
-  nmg_meonvu.c
-  nmg_mf.c
-  nmg_ml.c
-  nmg_mlv.c
-  nmg_mmr.c
-  nmg_mrsv.c
-  nmg_msv.c
-  nmg_mvu.c
-  nmg_mvvu.c
-  nmg_cface.c
   nmg_cmface.c
-  nmg_keu.c
-  nmg_kfu.c
-  nmg_klu.c
-  nmg_km.c
-  nmg_kr.c
-  nmg_ks.c
-  nmg_kvu.c
   nmg_collapse.c
   nmg_fix_normals.c
   nmg_simplify.c
+  nmg_kill_v.c
+  nmg_kill_f.c
+  nmg_move_v.c
   ocenter.c
   open.c
   orient.c
@@ -201,12 +183,10 @@ set(LIBGED_SOURCES
   perspective.c
   pix2fb.c
   plot.c
-  polybinout.c
   pmat.c
   pmodel2view.c
   png.c
   polyclip.cpp
-  pov.c
   prcolor.c
   prefix.c
   preview.c

@@ -1,7 +1,7 @@
 /*                    V E C T O R _ F P U . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vector_fpu.h
- *
- *
- */
 
 #ifndef VECTOR_FPU_H
 #define VECTOR_FPU_H
 
 #include "common.h"
+
+/** @addtogroup bn_vectormath */
+/** @{ */
+/** @file bn/vector_fpu.h */
 
 #ifdef __GNUC__
 #undef VEC_ALIGN
@@ -315,6 +315,7 @@ operator<<(std::ostream& out, const vec2d& v)
     return out;
 }
 
+/** @} */
 #endif
 
 /*

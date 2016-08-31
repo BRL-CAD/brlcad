@@ -1,7 +1,7 @@
 #                   M A N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ encoding system utf-8
 
 proc man {{cmdname {}}} {
     if {![winfo exists .mgedMan]} {
-	ManBrowser .mgedMan -parentName MGED
+	ManBrowser .mgedMan -useToC 1 -listDir n -parentName MGED
     }
 
     if {$cmdname != {} && ![.mgedMan select $cmdname]} {

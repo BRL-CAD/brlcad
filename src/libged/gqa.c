@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
-#include "sysv.h"
 #include "analyze.h"
 
 #include "./ged_private.h"
@@ -410,7 +409,7 @@ int
 read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 {
     double a;
-    char units_string[256] = {0};
+    char units_string[257] = {0};
     int i;
 
 
@@ -439,7 +438,7 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 	*val = a * cvt->val;
 	return 0;
     }
-    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s sscanf problem on \"%s\" got %d\n", BU_FLSTR, buf, i);
+    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s sscanf problem on \"%s\" got %d\n", CPP_FILELINE, buf, i);
     return 1;
 }
 
@@ -1447,7 +1446,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 	}
     }
 
-    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", BU_FLSTR, name, num_objects);
+    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, num_objects);
 
     return GED_ERROR;
 }
@@ -1971,13 +1970,13 @@ terminate_check(struct cstate *state)
 
 		if (all_hit && wv_status == 0) {
 		    if (verbose)
-			bu_vls_printf(_ged_current_gedp->ged_result_str, "%s: Volume/Weight tolerance met. Terminate\n", BU_FLSTR);
+			bu_vls_printf(_ged_current_gedp->ged_result_str, "%s: Volume/Weight tolerance met. Terminate\n", CPP_FILELINE);
 		    return 0; /* terminate */
 		}
 	    } else {
 		if (wv_status == 0) {
 		    if (verbose)
-			bu_vls_printf(_ged_current_gedp->ged_result_str, "%s: Volume/Weight tolerance met. Terminate\n", BU_FLSTR);
+			bu_vls_printf(_ged_current_gedp->ged_result_str, "%s: Volume/Weight tolerance met. Terminate\n", CPP_FILELINE);
 		    return 0; /* terminate */
 		}
 	    }
