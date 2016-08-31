@@ -1823,7 +1823,6 @@ The following binaries are not yet available on Windows.  The reason
 is identified in parentheses.
 
 bombardier (possibly just a problem with the build logic)
-burst      (TERMLIB)
 enigma     (not ported)
 fbcolor    (TERMLIB)
 fbed       (TERMLIB)
