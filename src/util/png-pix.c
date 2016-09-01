@@ -27,7 +27,6 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <zlib.h>
 #include <png.h>
 #include "bio.h"
 
