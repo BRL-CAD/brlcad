@@ -38,7 +38,6 @@
 #include <errno.h>
 #include <assert.h>
 
-#include <zlib.h>
 #include <png.h>
 
 #include "tcl.h"
@@ -11301,7 +11300,7 @@ to_png(struct ged *gedp,
 
     png_init_io(png_p, fp);
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
-    png_set_compression_level(png_p, Z_BEST_COMPRESSION);
+    png_set_compression_level(png_p, 9);
     png_set_IHDR(png_p, info_p, width, height, bits_per_channel,
 		 PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
