@@ -27,7 +27,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <zlib.h>
 #include <png.h>
 
 #include "bu/getopt.h"
