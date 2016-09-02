@@ -598,6 +598,7 @@ endfunction(check_umask)
 # determine whether the umask check is appropriate.  If we don't find an
 # executable, follow up to see if we can use sh to get the info.
 find_program(UMASK_EXEC umask)
+mark_as_advanced(UMASK_EXEC)
 if(NOT UMASK_EXEC)
   # If we don't have a umask cmd, see if sh -c "umask -S" works
   execute_process(COMMAND sh -c "umask -S" OUTPUT_VARIABLE umask_out)
