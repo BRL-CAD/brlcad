@@ -35,7 +35,7 @@ Be specific.
 
 * 'audit' command: determine if the model is valid, provide option(s)
   to fix any errors encountered.  this could be a refactoring or
-  calling of g_lint and/or other tools.
+  calling of glint and/or other tools.
 
 * 'array' command: to create a shallow copy of geometry in a
   rectangular or polar pattern.  similar to clone, perhaps mergeable
