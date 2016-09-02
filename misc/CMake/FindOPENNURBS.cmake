@@ -37,9 +37,9 @@
 #
 # The following variables are set:
 #
-#  OPENNURBS_INCLUDE_DIRS   - where to find zlib.h, etc.
-#  OPENNURBS_LIBRARIES      - List of libraries when using zlib.
-#  OPENNURBS_FOUND          - True if zlib found.
+#  OPENNURBS_INCLUDE_DIRS   - where to find opennurbs.h, etc.
+#  OPENNURBS_LIBRARIES      - List of libraries when using openNURBS
+#  OPENNURBS_FOUND          - True if openNURBS found.
 
 find_path(OPENNURBS_INCLUDE_DIR opennurbs.h)
 find_library(OPENNURBS_LIBRARY NAMES opennurbs openNURBS OpenNURBS)
