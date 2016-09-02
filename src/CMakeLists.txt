@@ -160,7 +160,7 @@ endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 #    $<TARGET_OBJECTS:libicv_OBJECTS>
 #    $<TARGET_OBJECTS:libged_OBJECTS>
 #    )
-#  target_link_libraries(libbrlcad ${OPENNURBS_LIBRARY} ${TCL_LIBRARY})
+#  target_link_libraries(libbrlcad ${OPENNURBS_LIBRARIES} ${TCL_LIBRARY})
 #endif(${HIGHEST_TARGET_LEVEL} GREATER 1)
 
 CMAKEFILES(README external)

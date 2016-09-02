@@ -1,8 +1,9 @@
-# local includes
-include_directories(
+set(IFC_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${OPENNURBS_INCLUDE_DIRS}
   )
+BRLCAD_INCLUDE_DIRS(IFC_INCLUDE_DIRS)
 
 set(IFC_SCHEMA_FILE ${STEPCODE_DIR}/data/ifc4/IFC4.exp)
 
@@ -23,7 +24,7 @@ set(ifcg_LIBS
   stepeditor
   stepdai
   stepcore
-  ${OPENNURBS_LIBRARY}
+  ${OPENNURBS_LIBRARIES}
   )
 list(APPEND ifcg_LIBS ${ifcg_LIBS})
 
