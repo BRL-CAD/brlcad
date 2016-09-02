@@ -97,6 +97,7 @@ set(mann_EN
   g.xml
   garbage_collect.xml
   gastank.xml
+  gdiff.xml
   gqa.xml
   gr.xml
   graph.xml

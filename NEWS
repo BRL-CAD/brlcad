@@ -13,6 +13,10 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* updated MGED gdiff default drawing options to -l -r - Cliff Yapp
+* updated MGED gdiff default tolerance to 100mm - Cliff Yapp
+* removed MGED gdiff -R option - now default behavior - Cliff Yapp
+* added MGED gdiff man page - Cliff Yapp
 * removed obsolete g_diff man page - Cliff Yapp
 * updated resizing behavior of main rtwizard panel - Cliff Yapp
 * updated default size of rtwizard images to match gui - Cliff Yapp
