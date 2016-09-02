@@ -106,7 +106,6 @@ set(man1_EN
   g-x3d.xml
   g-dot.xml
   g2asc.xml
-  g_diff.xml
   g_lint.xml
   gdiff.xml
   gencolor.xml
