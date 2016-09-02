@@ -15,7 +15,7 @@ familiar with the project.
 
 * Render some pictures using rt and rtedge
 
-* Perform basic geometric analysis using rtarea, rtweight, and g_qa
+* Perform basic geometric analysis using rtarea, rtweight, and gqa
 
 * Write a procedural geometry tool (see examples in src/proc-db)
 
