@@ -55,12 +55,12 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     const char **av = argv+1;
 
     struct bu_opt_desc d[7];
-    BU_OPT(d[0], "h", "help",      "", NULL, (void *)&print_help, "Print help.")
-    BU_OPT(d[1], "t", "tol",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Tolerance - when used with -R, controls spacing of test ray grids (units are mm.)  Otherwise, sets a numerical comparison tolerance.")
-    BU_OPT(d[2], "l", "view-left", "", NULL, (void *)&view_left, "Visualize volumes occurring only in the left object")
-    BU_OPT(d[3], "b", "view-both", "", NULL, (void *)&view_overlap, "Visualize volumes common to both objects")
-    BU_OPT(d[4], "r", "view-right", "", NULL, (void *)&view_right, "Visualize volumes occurring only in the right object")
-    BU_OPT(d[5], "G", "grazing",    "", NULL, (void *)&grazereport, "Report differences in grazing hits")
+    BU_OPT(d[0], "h", "help",      "", NULL, (void *)&print_help, "Print help.");
+    BU_OPT(d[1], "t", "tol",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Tolerance - when used with -R, controls spacing of test ray grids (units are mm.)  Otherwise, sets a numerical comparison tolerance.");
+    BU_OPT(d[2], "l", "view-left", "", NULL, (void *)&view_left, "Visualize volumes occurring only in the left object");
+    BU_OPT(d[3], "b", "view-both", "", NULL, (void *)&view_overlap, "Visualize volumes common to both objects");
+    BU_OPT(d[4], "r", "view-right", "", NULL, (void *)&view_right, "Visualize volumes occurring only in the right object");
+    BU_OPT(d[5], "G", "grazing",    "", NULL, (void *)&grazereport, "Report differences in grazing hits");
     BU_OPT_NULL(d[6]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
