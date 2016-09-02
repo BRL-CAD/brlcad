@@ -87,6 +87,7 @@ set(man1_EN
   fbzoom.xml
   firpass.xml
   g-acad.xml
+  g-dot.xml
   g-dxf.xml
   g-egg.xml
   g-euclid.xml
@@ -104,13 +105,12 @@ set(man1_EN
   g-voxel.xml
   g-vrml.xml
   g-x3d.xml
-  g-dot.xml
   g2asc.xml
-  g_lint.xml
   gdiff.xml
   gencolor.xml
   gif-fb.xml
   gif2fb.xml
+  glint.xml
   gqa.xml
   halftone.xml
   hex.xml
