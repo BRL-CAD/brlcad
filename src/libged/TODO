@@ -11,6 +11,8 @@ Be specific.
 
 * merge get_eyemodel's functionality as "view eyemodel" sub-command
 
+* convert garbage_collect Tcl to "db compact" subcommand in libged
+
 
 --- NEW COMMANDS ---
 
