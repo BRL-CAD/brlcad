@@ -62,12 +62,10 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><emphasis remap="B" role="bold">-t #</emphasis></term>
+	<term><emphasis remap="B" role="bold">-g #</emphasis></term>
 	<listitem>
 	  <para>
-	    Specify a numerical tolerance.  Note that the diffing process is not unit aware, so this
-	    threshold is strictly based on numbers and will not properly adjust if values are recorded
-	    in different physical units.
+	    Controls grid spacing.  Units are mm.
 	  </para>
 	</listitem>
       </varlistentry>

@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* renamed MGED gdiff grid spacing -t option to -g - Cliff Yapp
 * updated Fb sizing in rtwizard to be aware of MGED size - Cliff Yapp
 * added brlman and man manual pages documenting viewer - Cliff Yapp
 * updated brlman to support browsing all page categories - Cliff Yapp
