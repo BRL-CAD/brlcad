@@ -65,7 +65,9 @@
 	<term><emphasis remap="B" role="bold">-t #</emphasis></term>
 	<listitem>
 	  <para>
-	    Specify a tolerance in millimeters.
+	    Specify a numerical tolerance.  Note that the diffing process is not unit aware, so this
+	    threshold is strictly based on numbers and will not properly adjust if values are recorded
+	    in different physical units.
 	  </para>
 	</listitem>
       </varlistentry>
