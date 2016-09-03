@@ -20,7 +20,6 @@
 
 
 package require Iwidgets
-package require cadwidgets::Accordian
 package require ManBrowser 1.0
 wm state . withdrawn
 if {[info exists ::section_number]} {

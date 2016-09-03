@@ -34,6 +34,7 @@
 package require Tk
 package require Itcl
 package require hv3
+package require cadwidgets::Accordian 1.0
 package provide ManBrowser 1.0
 
 ::itcl::class ::ManBrowser {
