@@ -69,7 +69,7 @@
 			</varlistentry>
 			<varlistentry>
 				<term><option>-t #</option></term>
-				<listitem><para>Set the length tolerance used to compare numerical properties.  Units are millimeters.  Default value is RT_LEN_TOL.</para></listitem>
+				<listitem><para>Set a numerical comparison tolerance used to compare numerical properties.  Default value is RT_LEN_TOL, but be aware that this comparison is not aware of units.</para></listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>-F "filter_string"</option></term>
