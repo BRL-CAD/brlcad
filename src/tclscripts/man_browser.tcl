@@ -125,55 +125,55 @@ package provide ManBrowser 1.0
 # Loads a list of enabled commands into ToC, after comparing pages found in
 # 'path' with those listed in 'disabledPages' and 'enabledPages'.
 ::itcl::body ManBrowser::setPageNames {} {
-   if {[file exists $path]} {
-    set manFiles [glob -nocomplain -directory $path *.html ]
+    if {[file exists $path]} {
+	set manFiles [glob -nocomplain -directory $path *.html ]
 
-    set pages($this) [list]
-    foreach manFile $manFiles {
-	set rootName [file rootname [file tail $manFile]]
+	set pages($this) [list]
+	foreach manFile $manFiles {
+	    set rootName [file rootname [file tail $manFile]]
 
-	# If the page exists in disabledPages, disable it
-	set isDisabled [expr [lsearch -sorted -exact \
-			      $disabledPages $rootName] != -1]
+	    # If the page exists in disabledPages, disable it
+	    set isDisabled [expr [lsearch -sorted -exact \
+		$disabledPages $rootName] != -1]
 
-	# If enabledPages is defined and the page exists, enable it
-	if {$enabledPages != {}} {
-	    set isEnabled [expr [lsearch -sorted -exact \
-				 $enabledPages $rootName] != -1]
-	} else {
-	    set isEnabled 1
+		# If enabledPages is defined and the page exists, enable it
+	    if {$enabledPages != {}} {
+		set isEnabled [expr [lsearch -sorted -exact \
+		    $enabledPages $rootName] != -1]
+	    } else {
+		set isEnabled 1
+	    }
+
+	    # Obviously, if the page is both disabled/enabled, it will be disabled
+	    if {!$isDisabled && $isEnabled} {
+		lappend pages($this) $rootName
+	    }
 	}
-
-	# Obviously, if the page is both disabled/enabled, it will be disabled
-	if {!$isDisabled && $isEnabled} {
-	    lappend pages($this) $rootName
-	}
+	set pages($this) [lsort $pages($this)]
     }
-    set pages($this) [lsort $pages($this)]
-  }
 }
 
 ##
 # Loads pages selected graphically or through the command line into HTML browser
 #
 ::itcl::body ManBrowser::loadPage {pageName} {
-    # Get page
-    if {[file exists $pageName] && ![file isdirectory $pageName]} {set pathname $pageName}
-    if {![info exists pathname]} {
-       if {[file exists [file join $path $pageName.html]]} {
-	  set pathname [file join $path $pageName.html]
-       }
+# Get page
+if {[file exists $pageName] && ![file isdirectory $pageName]} {set pathname $pageName}
+if {![info exists pathname]} {
+if {[file exists [file join $path $pageName.html]]} {
+    set pathname [file join $path $pageName.html]
+}
     }
     if {[info exists pathname]} {
-       set htmlFile [open $pathname]
-       set pageData [read $htmlFile]
-       close $htmlFile
+	set htmlFile [open $pathname]
+	set pageData [read $htmlFile]
+	close $htmlFile
 
-       # Display page
-       set htmlview [[$this childsite].browser.htmlview html]
-       $htmlview reset
-       $htmlview configure -parsemode html
-       $htmlview parse $pageData
+	# Display page
+	set htmlview [[$this childsite].browser.htmlview html]
+	$htmlview reset
+	$htmlview configure -parsemode html
+	$htmlview parse $pageData
     }
 }
 
@@ -181,7 +181,7 @@ package provide ManBrowser 1.0
 # Selects page in ToC & loads into HTML browser; used for command line calls
 #
 ::itcl::body ManBrowser::select {pageName} {
-    # Select the requested man page
+# Select the requested man page
     set idx [lsearch -sorted -exact $pages($this) $pageName]
 
     if {$idx != -1} {
@@ -231,7 +231,7 @@ package provide ManBrowser 1.0
 	-borderwidth 1 \
 	-pady 0
 
-    # ITCL can be nasty
+	# ITCL can be nasty
     set win [$this component bbox component OK component hull]
     after idle "$win configure -relief flat"
 
@@ -239,32 +239,32 @@ package provide ManBrowser 1.0
 
     # Table of Contents
     if {$itk_option(-useToC)} {
-       itk_component add toc {
-	   ::tk::frame $parent.toc
-       } {}
+	itk_component add toc {
+	    ::tk::frame $parent.toc
+	} {}
 
-       set toc $itk_component(toc)
+	set toc $itk_component(toc)
 
-       itk_component add toc_scrollbar {
-	   ::ttk::scrollbar $toc.toc_scrollbar
-       } {}
+	itk_component add toc_scrollbar {
+	    ::ttk::scrollbar $toc.toc_scrollbar
+	} {}
 
-       itk_component add toc_listbox {
-	   ::tk::listbox $toc.toc_listbox -bd 2 \
-				       -width 16 \
-					  -exportselection false \
-					  -yscroll "$toc.toc_scrollbar set" \
-				       -listvariable [scope pages($this)]
-       } {}
+	itk_component add toc_listbox {
+	    ::tk::listbox $toc.toc_listbox -bd 2 \
+		-width 16 \
+		-exportselection false \
+		-yscroll "$toc.toc_scrollbar set" \
+		-listvariable [scope pages($this)]
+	} {}
 
-       $toc.toc_scrollbar configure -command "$toc.toc_listbox yview"
+	$toc.toc_scrollbar configure -command "$toc.toc_listbox yview"
 
-       grid $toc.toc_listbox $toc.toc_scrollbar -sticky nsew -in $toc
+	grid $toc.toc_listbox $toc.toc_scrollbar -sticky nsew -in $toc
 
-       grid columnconfigure $toc 0 -weight 1
-       grid rowconfigure $toc 0 -weight 1
+	grid columnconfigure $toc 0 -weight 1
+	grid rowconfigure $toc 0 -weight 1
 
-       pack $toc -side left -expand no -fill y
+	pack $toc -side left -expand no -fill y
     }
 
     # Main HTML window
@@ -293,10 +293,10 @@ package provide ManBrowser 1.0
     }
 
     if {$itk_option(-useToC)} {
-       bind $toc.toc_listbox <<ListboxSelect>> {
-	   set mb [itcl_info objects -class ManBrowser]
-	   $mb loadPage [%W get [%W curselection]]
-       }
+	bind $toc.toc_listbox <<ListboxSelect>> {
+	    set mb [itcl_info objects -class ManBrowser]
+	    $mb loadPage [%W get [%W curselection]]
+	}
     }
 
     configure -height 600 -width 800
