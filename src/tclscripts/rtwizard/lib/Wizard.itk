@@ -580,9 +580,9 @@ namespace eval RtWizard {
 	    if {[info exists ::env(HOME)]} {
 		set homefile [file join $::env(HOME) .rtwizardrc]
 	        if {[file exists $homefile]} {
-		  set fp [open ".rtwizardrc" w]
+		  set fp [open $homefile w]
 	          set existing_file $homefile
-	        }
+		}
 	   } else {
 	       if {[file exists ".rtwizardrc"]} {
 	         set fp [open ".rtwizardrc" w]
