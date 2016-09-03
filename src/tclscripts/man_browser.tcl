@@ -31,90 +31,40 @@
 #    -Add support for args like "*make*", returning >1 results in browser pane
 #    -Make a parent class; then a HelpBrowser sibling (removes much duplication)
 
+package provide ManBrowser 1.0
 package require Tk
 package require Itcl
 package require hv3
 package require cadwidgets::Accordian 1.0
-package provide ManBrowser 1.0
 
 ::itcl::class ::ManBrowser {
     inherit iwidgets::Dialog
 
     itk_option define -useToC useToC UseToC 1
-    itk_option define -listDir listDir ListDir 1
+    itk_option define -defaultDir defaultDir DefaultDir 1
 
     public {
 	variable path
 	variable parentName
 	variable disabledPages
-	variable enabledPages
 
-	method setPageNames	{}
+	method setManType	{}
 	method loadPage		{pageName}
 	method select		{pageName}
     }
+    protected {
+	method getPages		{section}
+	method accordianCallback {_item _state}
+    }
 
-    # List of pages loaded into ToC listbox
-    private common pages
+    # Lists of pages for loading into ToC listbox
+    private {
+	common pages
+	variable current_section
+	variable mAccordianCallbackActive 0
+    }
 
     constructor {args} {}
-}
-
-# ------------------------------------------------------------
-#                      OPTIONS
-# ------------------------------------------------------------
-
-##
-# Path to HTML manual pages
-#
-::itcl::configbody ManBrowser::path {
-    if {![info exists path] || ![file isdirectory $path]} {
-	set path [file join [bu_brlcad_data "doc/html"] man$itk_option(-listDir)]
-    }
-}
-
-##
-# Used in window title string
-#
-::itcl::configbody ManBrowser::parentName {
-    if {![info exists parentName] || ![string is print -strict $parentName]} {
-	set parentName BRLCAD
-    }
-    configure -title "[string trim $parentName] Manual Page Browser"
-}
-
-##
-# Page names in disabledByDefault and those added to this list are *always*
-# disabled.
-::itcl::configbody ManBrowser::disabledPages {
-    set disabledByDefault [list Introduction]
-
-    if {![info exists disabledPages] || ![string is list $disabledPages]} {
-	set disabledPages $disabledByDefault
-    } else {
-	lappend disabledPages $disabledByDefault
-    }
-    set disabledPages [lsort $disabledPages]
-
-    # Reset pages list
-    if {[info exists pages($this)] && $pages($this) != {}} {
-	setPageNames
-    }
-}
-
-##
-# All pages are enabled by default. If this list is defined, page names added
-# to it are the only ones that may be enabled.
-::itcl::configbody ManBrowser::enabledPages {
-    if {![info exists enabledPages] || ![string is list $enabledPages]} {
-	set enabledPages [list]
-    }
-    set enabledPages [lsort $enabledPages]
-
-    # Reset pages list
-    if {[info exists pages($this)] && $pages($this) != {}} {
-	setPageNames
-    }
 }
 
 # ------------------------------------------------------------
@@ -122,34 +72,21 @@ package provide ManBrowser 1.0
 # ------------------------------------------------------------
 
 ##
-# Loads a list of enabled commands into ToC, after comparing pages found in
-# 'path' with those listed in 'disabledPages' and 'enabledPages'.
-::itcl::body ManBrowser::setPageNames {} {
-    if {[file exists $path]} {
-	set manFiles [glob -nocomplain -directory $path *.html ]
+# Populate a section's man page list (man1, man3, man5 or mann).
+::itcl::body ManBrowser::getPages {section} {
+    set mpath [file join $path $section]
+    if {[file exists $mpath]} {
+	set manFiles [glob -nocomplain -directory $mpath *.html ]
 
-	set pages($this) [list]
+	set mlist [list]
 	foreach manFile $manFiles {
 	    set rootName [file rootname [file tail $manFile]]
-
-	    # If the page exists in disabledPages, disable it
-	    set isDisabled [expr [lsearch -sorted -exact \
-		$disabledPages $rootName] != -1]
-
-		# If enabledPages is defined and the page exists, enable it
-	    if {$enabledPages != {}} {
-		set isEnabled [expr [lsearch -sorted -exact \
-		    $enabledPages $rootName] != -1]
-	    } else {
-		set isEnabled 1
-	    }
-
-	    # Obviously, if the page is both disabled/enabled, it will be disabled
-	    if {!$isDisabled && $isEnabled} {
-		lappend pages($this) $rootName
+	    # If the page is not disabled, add it
+	    if {![expr [lsearch -sorted -exact $disabledPages $rootName] != -1]} {
+		lappend mlist $rootName
 	    }
 	}
-	set pages($this) [lsort $pages($this)]
+	set pages($section) [lsort $mlist]
     }
 }
 
@@ -158,11 +95,11 @@ package provide ManBrowser 1.0
 #
 ::itcl::body ManBrowser::loadPage {pageName} {
 # Get page
-if {[file exists $pageName] && ![file isdirectory $pageName]} {set pathname $pageName}
-if {![info exists pathname]} {
-if {[file exists [file join $path $pageName.html]]} {
-    set pathname [file join $path $pageName.html]
-}
+    if {[file exists $pageName] && ![file isdirectory $pageName]} {set pathname $pageName}
+    if {![info exists pathname]} {
+	if {[file exists [file join $path $current_section $pageName.html]]} {
+	    set pathname [file join $path $current_section $pageName.html]
+	}
     }
     if {[info exists pathname]} {
 	set htmlFile [open $pathname]
@@ -181,12 +118,14 @@ if {[file exists [file join $path $pageName.html]]} {
 # Selects page in ToC & loads into HTML browser; used for command line calls
 #
 ::itcl::body ManBrowser::select {pageName} {
-# Select the requested man page
-    set idx [lsearch -sorted -exact $pages($this) $pageName]
+
+    # Select the requested man page
+    set rootName [file rootname [file tail $pageName]]
+    set idx [lsearch -sorted -exact $pages($current_section) $rootName]
 
     if {$idx != -1} {
 	set result True
-	set toc $itk_component(toc_listbox)
+	set toc $itk_component(manpagelistbox)
 
 	# Deselect previous selection
 	$toc selection clear 0 [$toc index end]
@@ -210,13 +149,29 @@ if {[file exists [file join $path $pageName.html]]} {
 ::itcl::body ManBrowser::constructor {args} {
     eval itk_initialize $args
 
-    # Trigger configbody defaults if user didn't pass them
-    set opts {{path} {parentName} {disabledPages} {enabledPages}}
-    foreach o $opts {
-	if {![info exists $o]} {eval itk_initialize {-$o {}}}
+    # Path to HTML man page directories
+    if {![info exists path] || ![file isdirectory $path]} {
+	set path [file join [bu_brlcad_data "doc/html"]]
     }
 
-    setPageNames
+    configure -title "BRL-CAD Manual Page Browser"
+
+    # We don't list Introduction page as a man page.  Right
+    # now that's the only one we filter out - any additional
+    # pages that shouldn't be listed should be added here.
+    set disabledPages [list Introduction]
+
+    # Build the lists of files
+    getPages "man1"
+    getPages "man3"
+    getPages "man5"
+    getPages "mann"
+
+    # unless we know better, set the current section to man1
+    set current_section man$itk_option(-defaultDir)
+    if {$itk_option(-defaultDir) == ""} {
+	set current_section "man1"
+    }
 
     $this hide 1
     $this hide 2
@@ -239,32 +194,35 @@ if {[file exists [file join $path $pageName.html]]} {
 
     # Table of Contents
     if {$itk_option(-useToC)} {
-	itk_component add toc {
-	    ::tk::frame $parent.toc
-	} {}
 
-	set toc $itk_component(toc)
+	itk_component add treeAccordian {
+	    ::cadwidgets::Accordian $parent.treeAccordian
+	} {}
+	$itk_component(treeAccordian) addTogglePanelCallback [::itcl::code $this accordianCallback]
+	$itk_component(treeAccordian) insert 0 "MGED (mann)"
+	$itk_component(treeAccordian) insert 0 "Conventions (man5)"
+	$itk_component(treeAccordian) insert 0 "Libraries (man3)"
+	$itk_component(treeAccordian) insert 0 "Programs (man1)"
 
 	itk_component add toc_scrollbar {
-	    ::ttk::scrollbar $toc.toc_scrollbar
+	    ::ttk::scrollbar $itk_component(treeAccordian).toc_scrollbar
 	} {}
 
-	itk_component add toc_listbox {
-	    ::tk::listbox $toc.toc_listbox -bd 2 \
+	itk_component add manpagelistbox {
+	    ::tk::listbox $itk_component(treeAccordian).manpagelistbox -bd 2 \
 		-width 16 \
 		-exportselection false \
-		-yscroll "$toc.toc_scrollbar set" \
-		-listvariable [scope pages($this)]
+		-yscroll "$itk_component(treeAccordian).toc_scrollbar set"
 	} {}
 
-	$toc.toc_scrollbar configure -command "$toc.toc_listbox yview"
+	$itk_component(treeAccordian).toc_scrollbar configure -command "$itk_component(treeAccordian).manpagelistbox yview"
 
-	grid $toc.toc_listbox $toc.toc_scrollbar -sticky nsew -in $toc
+	if {$current_section == "man1"} {$itk_component(treeAccordian) togglePanel "Programs (man1)"}
+	if {$current_section == "man3"} {$itk_component(treeAccordian) togglePanel "Libraries (man3)"}
+	if {$current_section == "man5"} {$itk_component(treeAccordian) togglePanel "Conventions (man5)"}
+	if {$current_section == "mann"} {$itk_component(treeAccordian) togglePanel "MGED (mann)"}
 
-	grid columnconfigure $toc 0 -weight 1
-	grid rowconfigure $toc 0 -weight 1
-
-	pack $toc -side left -expand no -fill y
+	pack $itk_component(treeAccordian) -side left -expand no -fill y
     }
 
     # Main HTML window
@@ -289,11 +247,11 @@ if {[file exists [file join $path $pageName.html]]} {
     if {[file exists [file join $path Introduction.html]]} {
 	loadPage Introduction
     } else {
-	loadPage [lindex $pages($this) 0]
+	loadPage [lindex $pages($current_section) 0]
     }
 
     if {$itk_option(-useToC)} {
-	bind $toc.toc_listbox <<ListboxSelect>> {
+	bind $itk_component(manpagelistbox) <<ListboxSelect>> {
 	    set mb [itcl_info objects -class ManBrowser]
 	    $mb loadPage [%W get [%W curselection]]
 	}
@@ -301,6 +259,47 @@ if {[file exists [file join $path $pageName.html]]} {
 
     configure -height 600 -width 800
     return $this
+}
+
+::itcl::body ManBrowser::accordianCallback {_item _state} {
+    if {$mAccordianCallbackActive} { return }
+    set mAccordianCallbackActive 1
+
+    #puts "got callback: $_item, $_state"
+
+    if {$_item == "Programs (man1)"} {
+	set current_section "man1"
+	configure -title "BRL-CAD Manual Page Browser (man1)"
+    }
+    if {$_item == "Libraries (man3)"} {
+	set current_section "man3"
+	configure -title "BRL-CAD Manual Page Browser (man3)"
+    }
+    if {$_item == "Conventions (man5)"} {
+	set current_section "man5"
+	configure -title "BRL-CAD Manual Page Browser (man5)"
+    }
+    if {$_item == "MGED (mann)"} {
+	set current_section "mann"
+	configure -title "BRL-CAD Manual Page Browser (mann)"
+    }
+
+    set childsite [$itk_component(treeAccordian) itemChildsite $_item]
+
+    $itk_component(manpagelistbox) selection clear 0 [$itk_component(manpagelistbox) index end]
+    $itk_component(manpagelistbox) delete 0 [$itk_component(manpagelistbox) size]
+    foreach pg $pages($current_section) {
+	$itk_component(manpagelistbox) insert end $pg
+    }
+    grid $itk_component(manpagelistbox) $itk_component(toc_scrollbar) -sticky nsew -in $childsite
+
+    grid columnconfigure $childsite 0 -weight 1
+    grid rowconfigure $childsite 0 -weight 1
+
+    raise $itk_component(manpagelistbox)
+    raise $itk_component(toc_scrollbar)
+
+    set mAccordianCallbackActive 0
 }
 
 # Local Variables:
