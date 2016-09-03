@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* added brlman and man manual pages documenting viewer - Cliff Yapp
 * updated brlman to support browsing all page categories - Cliff Yapp
 * added support for .rtwizardrc configuration file - Cliff Yapp
 * updated MGED gdiff default drawing options to -l -r - Cliff Yapp

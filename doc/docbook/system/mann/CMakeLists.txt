@@ -134,6 +134,7 @@ set(mann_EN
   lt.xml
   make.xml
   make_pnts.xml
+  man.xml
   mater.xml
   matpick.xml
   memprint.xml

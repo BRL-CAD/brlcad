@@ -12,6 +12,7 @@ set(man1_EN
   azel.xml
   bary.xml
   benchmark.xml
+  brlman.xml
   bot_dump.xml
   bot_shell-vtk.xml
   brep_simple.xml
