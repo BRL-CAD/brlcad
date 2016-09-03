@@ -274,6 +274,7 @@ namespace eval RtWizard {
 	} {
 	    usual
         }
+	set ::panedwin $itk_component(midFrame)
 	$itk_component(midFrame) add hierarchyView
 	set hparent [$itk_component(midFrame) childsite hierarchyView]
 	$itk_component(midFrame) add mgedView
@@ -372,7 +373,6 @@ namespace eval RtWizard {
 	    set ::gpane [list 40 60]
 	}
 	$itk_component(midFrame) fraction [lindex $::gpane 0] [lindex $::gpane 1]
-
     }
 
     #

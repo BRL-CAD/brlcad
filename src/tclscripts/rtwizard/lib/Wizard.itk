@@ -94,6 +94,19 @@ namespace eval RtWizard {
     #
     set ::wizardInstance ""
 
+    if {![info exists wizard_width]} {
+	set ::DEF_WIDTH 600
+    } else {
+	set ::DEF_WIDTH $wizard_width
+    }
+
+    if {![info exists wizard_height]} {
+	set ::DEF_HEIGHT 600
+    } else {
+	set ::DEF_HEIGHT $wizard_height
+    }
+
+
     ::itcl::class Wizard {
 	inherit ::itk::Widget
 
@@ -124,6 +137,8 @@ namespace eval RtWizard {
 	    method fullSize {}
 	    method preview {}
 
+	    method UpdateRC {}
+
 	    method updateRenderMenu {}
 	    method activateMenu {token}
 	}
@@ -137,7 +152,6 @@ namespace eval RtWizard {
 	    #
 	    # variables
 	    #
-	    variable DEF_WIDTH 600
 
 	    variable currentPageToken
 	    variable prevPageToken
@@ -191,8 +205,8 @@ namespace eval RtWizard {
 	#
 	itk_component add notebook {
 	    iwidgets::notebook $itk_interior.notebook \
-		-width $DEF_WIDTH \
-		-height 570
+		-width $::DEF_WIDTH \
+		-height $::DEF_HEIGHT
 	} {
 	    usual
 	}
@@ -252,6 +266,11 @@ namespace eval RtWizard {
 
 	$itk_component(menubar) menuconfigure .file.goOpen \
 	    -state disabled
+
+	$itk_component(menubar) add command .file.doRC \
+	    -label "Write .rtwizardrc" \
+	    -helpstr "Create or update a .rtwizardrc file" \
+	    -command "[itcl::code $this UpdateRC]"
 
 	$itk_component(menubar) add separator .file.sep
 
@@ -545,6 +564,54 @@ namespace eval RtWizard {
     itcl::body Wizard::getIntroPage { } {
 
     }
+
+
+    #
+    # UpdateRC - update .rtwizardrc file with current info. 
+    #
+    itcl::body Wizard::UpdateRC { } {
+	set existing_file 0
+	if {[info exists ::env(RTWIZARD_RCFILE)]} {
+	    if {[file exists $::env(RTWIZARD_RCFILE)]} {
+	      set fp [open $::env(RTWIZARD_RCFILE) w]
+	      set existing_file $::env(RTWIZARD_RCFILE)
+	    }
+        } else {
+	    if {[info exists ::env(HOME)]} {
+		set homefile [file join $::env(HOME) .rtwizardrc]
+	        if {[file exists $homefile]} {
+		  set fp [open ".rtwizardrc" w]
+	          set existing_file $homefile
+	        }
+	   } else {
+	       if {[file exists ".rtwizardrc"]} {
+	         set fp [open ".rtwizardrc" w]
+	         set existing_file ".rtwizardrc"
+	       }
+	   }
+        }
+	if {$existing_file == 0} {
+	    if {[info exists ::env(HOME)]} {
+		set homefile [file join $::env(HOME) .rtwizardrc]
+	        set fp [open $homefile w]
+	        set existing_file $homefile
+	    } else {
+	        set fp [open ".rtwizardrc" w]
+	        set existing_file ".rtwizardrc"
+	    }
+        }
+
+	eval $pages($currentPageToken) onDeselect
+	eval $pages($currentPageToken) onSelect
+	set cwidth [winfo width .]
+	set cheight [winfo height .]
+	puts $fp "set ::wizard_width $cwidth"
+	puts $fp "set ::wizard_height $cheight"
+	puts $fp "set ::gpane [list $::gpane]"
+	close $fp
+	tk_messageBox -message "Updated RtWizard configuration file is located at $existing_file" -type ok
+    }
+
 
     #
     # fullSize - front-end to the type specific method
