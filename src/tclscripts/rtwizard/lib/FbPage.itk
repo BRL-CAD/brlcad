@@ -128,7 +128,6 @@ namespace eval RtWizard {
 	    #
 	    # variables
 	    #
-	    common sizes { 256 480 512 640 768 1024 1200 1600 2048 }
 	    common topSpot 8
 	    variable rbvar
 
@@ -230,9 +229,8 @@ namespace eval RtWizard {
 	    keep -textbackground
 	}
 
-	set widthIndex 5
 	$itk_component(width) clear
-	$itk_component(width) insert 0 [ lindex $sizes $widthIndex ]
+	$itk_component(width) insert 0 -1
 
 	itk_component add height {
 	    iwidgets::spinint $szCs.height \
@@ -245,9 +243,8 @@ namespace eval RtWizard {
 	    keep -textbackground
 	}
 
-	set heightIndex 5
 	$itk_component(height) clear
-	$itk_component(height) insert 0 [ lindex $sizes $heightIndex ]
+	$itk_component(height) insert 0 -1
 
 	#
 	# Build the contents of the right-hand-size
@@ -374,9 +371,14 @@ namespace eval RtWizard {
     # when this page is selected.
     #
     ::itcl::body FbPage::onSelect {} {
-	#
-	# Nothing yet!
-	#
+	if { [$itk_component(width) get] == -1 || [$itk_component(height) get] == -1 } {
+	    if { [winfo width $::mgedObj] > 3 && [winfo height $::mgedObj] > 3 } {
+		$itk_component(width) clear
+		$itk_component(width) insert 0 [winfo width $::mgedObj]
+		$itk_component(height) clear
+		$itk_component(height) insert 0 [winfo height $::mgedObj]
+	    }
+	}
     }
 
     #
@@ -385,8 +387,10 @@ namespace eval RtWizard {
     # Cleans up when the page is deselected
     #
     ::itcl::body FbPage::onDeselect {} {
-	if { ![$itk_component(width) get] == 0 || ![$itk_component(width) get] == 0 } {
-	    set hard_set 1
+	if { ![$itk_component(width) get] <= 0 || ![$itk_component(height) get] <= 0 } {
+	    if { ![$itk_component(width) get] == [winfo width $::mgedObj] || ![$itk_component(height) get] == [winfo height $::mgedObj] } {
+		set hard_set 1
+	    }
 	} else {
 	    set hard_set 0
 	}
