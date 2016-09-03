@@ -40,12 +40,12 @@
     </para>
 
     <para>
-      Users will want to pay careful attention to specifying tolerances - it is
-      a good idea to use the <command>bb</command> command to get a sense of the
-      size of the objects to be raytraced before specifying a gdiff command. If
-      no tolerance is given a default of 100mm is used, but depending on the size
-      of the objects to be raytraced this may be either far too large or so small
-      as to make raytracing costs prohibitive.
+      Users will want to pay careful attention to grid size.  By default gdiff
+      will try to guess a reasonable grid spacing using the bounding boxes of the
+      objects in question, but depending on the visual quality of the result users
+      may want to adjust the spacing up or down.  Be careful of specifying tolerances
+      that are too fine - performance will drop off rapidly as grid spacing becomes
+      very small.
     </para>
 
   </refsection>

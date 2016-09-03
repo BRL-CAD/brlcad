@@ -48,7 +48,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     const char *left_obj;
     const char *right_obj;
-    fastf_t len_tol = 100;
+    fastf_t len_tol = 0;
     int ret_ac = 0;
     /* Skip command name */
     int ac = argc - 1;
@@ -89,7 +89,6 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	right_obj = av[1];
     }
 
-    tol.dist = len_tol;
 
     /* There are possible convention-based interpretations of 1, 2, 3, 4 and n args
      * beyond those used as options.  For the shortest cases, the interpretation depends
@@ -132,6 +131,23 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	if (db_lookup(gedp->ged_wdbp->dbip, right_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
 	    return GED_ERROR;
 	}
+
+	/* If we don't have a tolerance, try to guess something sane from the bbox */
+	if (NEAR_ZERO(len_tol, RT_LEN_TOL)) {
+	    point_t rpp_min, rpp_max;
+	    point_t obj_min, obj_max;
+	    VSETALL(rpp_min, INFINITY);
+	    VSETALL(rpp_max, -INFINITY);
+	    ged_get_obj_bounds(gedp, 1, (const char **)&left_obj, 0, obj_min, obj_max);
+	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
+	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
+	    ged_get_obj_bounds(gedp, 1, (const char **)&right_obj, 0, obj_min, obj_max);
+	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
+	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
+	    len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
+	}
+	tol.dist = len_tol;
+
 	analyze_raydiff(&results, gedp->ged_wdbp->dbip, left_obj, right_obj, &tol, !grazereport);
 
 	/* TODO - may want to integrate with a "regular" diff and report intelligently.  Needs
