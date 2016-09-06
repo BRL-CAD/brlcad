@@ -732,6 +732,8 @@ SetTargetFolder(openNURBS-static "Third Party Libraries")
 if(BRLCAD_OPENNURBS_BUILD)
   set(OPENNURBS_INCLUDE_DIRS "${OPENNURBS_INCLUDE_DIR};${ZLIB_INCLUDE_DIR}" CACHE STRING "Require opennurbs header includes" FORCE)
   set(OPENNURBS_LIBRARIES "${OPENNURBS_LIBRARY};${ZLIB_LIBRARY}" CACHE STRING "Require opennurbs libraries" FORCE)
+  mark_as_advanced(OPENNURBS_INCLUDE_DIRS)
+  mark_as_advanced(OPENNURBS_LIBRARIES)
 endif(BRLCAD_OPENNURBS_BUILD)
 
 # Screened Poisson Reconstruction Library
