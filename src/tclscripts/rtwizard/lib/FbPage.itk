@@ -131,8 +131,6 @@ namespace eval RtWizard {
 	    common topSpot 8
 	    variable rbvar
 
-	    variable hard_set 0
-
 	    variable width
 	    variable height
 
@@ -371,7 +369,7 @@ namespace eval RtWizard {
     # when this page is selected.
     #
     ::itcl::body FbPage::onSelect {} {
-	if { [$itk_component(width) get] == -1 || [$itk_component(height) get] == -1 } {
+	if { [$itk_component(width) get] <= 0 || [$itk_component(height) get] <= 0 } {
 	    if { [winfo width $::mgedObj] > 3 && [winfo height $::mgedObj] > 3 } {
 		$itk_component(width) clear
 		$itk_component(width) insert 0 [winfo width $::mgedObj]
@@ -387,12 +385,11 @@ namespace eval RtWizard {
     # Cleans up when the page is deselected
     #
     ::itcl::body FbPage::onDeselect {} {
-	if { ![$itk_component(width) get] <= 0 || ![$itk_component(height) get] <= 0 } {
-	    if { ![$itk_component(width) get] == [winfo width $::mgedObj] || ![$itk_component(height) get] == [winfo height $::mgedObj] } {
-		set hard_set 1
-	    }
-	} else {
-	    set hard_set 0
+	if { [$itk_component(width) get] == [winfo width $::mgedObj] || [$itk_component(height) get] == [winfo height $::mgedObj] } {
+	    $itk_component(width) clear
+	    $itk_component(width) insert 0 0
+	    $itk_component(height) clear
+	    $itk_component(height) insert 0 0
 	}
     }
 
@@ -413,10 +410,10 @@ namespace eval RtWizard {
     # getWidth - returns the current width
     #
     ::itcl::body FbPage::getWidth {} {
-	if { $hard_set > 0 } {
-	    return [$itk_component(width) get]
-	} else {
+	if { [$itk_component(width) get] <= 0 || [$itk_component(height) get] <= 0 } {
 	    return [winfo width $::mgedObj]
+	} else {
+	    return [$itk_component(width) get]
 	}
     }
 
@@ -424,10 +421,10 @@ namespace eval RtWizard {
     # getHeight - returns the current height
     #
     ::itcl::body FbPage::getHeight {} {
-	if { $hard_set > 0 } {
-	    return [$itk_component(height) get]
-	} else {
+	if { [$itk_component(width) get] <= 0 || [$itk_component(height) get] <= 0 } {
 	    return [winfo height $::mgedObj]
+	} else {
+	    return [$itk_component(height) get]
 	}
     }
 
@@ -505,6 +502,24 @@ namespace eval RtWizard {
     # onOK - called when the OK button is called
     #
     ::itcl::body FbPage::onOK {} {
+	set tmpwidth [ lindex $sizes $widthIndex ]
+	set tmpheight [ lindex $sizes $heightIndex ]
+	if { $tmpwidth > 0 && $tmpheight > 0 } {
+	    $itk_component(width) clear
+	    $itk_component(width) insert 0 [ lindex $sizes $widthIndex ]
+	    $itk_component(height) clear
+	    $itk_component(height) insert 0 [ lindex $sizes $heightIndex ]
+	} else {
+	    if { [winfo width $::mgedObj] > 3 && [winfo height $::mgedObj] > 3 } {
+		if { $tmpwidth != [winfo width $::mgedObj] || $tmpheight != [winfo height $::mgedObj] } {
+		    $itk_component(width) clear
+		    $itk_component(width) insert 0 [winfo width $::mgedObj]
+		    $itk_component(height) clear
+		    $itk_component(height) insert 0 [winfo height $::mgedObj]
+		}
+	    }
+	}
+
 	$::wizardInstance select intro
     }
 
@@ -550,7 +565,6 @@ namespace eval RtWizard {
     #               current value.
     #
     ::itcl::body FbPage::updateWidth { } {
-	set hard_set 1
 	$itk_component(width) clear
 	$itk_component(width) insert 0 [ lindex $sizes $widthIndex ]
     }
@@ -582,7 +596,6 @@ namespace eval RtWizard {
     #                current value.
     #
     ::itcl::body FbPage::updateHeight { } {
-	set hard_set 1
 	$itk_component(height) clear
 	$itk_component(height) insert 0 [ lindex $sizes $heightIndex ]
     }
