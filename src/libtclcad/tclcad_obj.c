@@ -5925,8 +5925,8 @@ to_fit_png_image(struct ged *gedp,
     }
 
     if (argc != 6 ||
-	bu_sscanf(argv[2], "%lu", &o_w_requested) != 1 ||
-	bu_sscanf(argv[3], "%lu", &o_n_requested) != 1 ||
+	bu_sscanf(argv[2], "%zu", &o_w_requested) != 1 ||
+	bu_sscanf(argv[3], "%zu", &o_n_requested) != 1 ||
 	bu_sscanf(argv[4], "%lf", &sf) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
