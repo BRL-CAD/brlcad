@@ -958,7 +958,7 @@ ged_polygon_fill_segments(struct ged *gedp, bview_polygon *poly, vect2d_t vfilld
 	}
     }
 
-    VUNITIZE(vfilldir);
+    V2UNITIZE(vfilldir);
     bu_vls_init(&result_vls);
 
     /* Intersect diagonal view lines with the 2d polygon */

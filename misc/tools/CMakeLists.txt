@@ -36,7 +36,6 @@ foreach(ITEM ${dlists})
   CMAKEFILES(${dlist})
 endforeach(ITEM ${dlists})
 
-
 # For those wanting to use a system version of the LEMON parser
 # generator from sqlite, remember that the presence of /usr/bin/lemon
 # is not enough.  LEMON needs a template file, lempar.c, and by

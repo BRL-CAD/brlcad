@@ -86,7 +86,7 @@
 #include "./bu/parallel.h"
 #include "./bu/parse.h"
 #include "./bu/ptbl.h"
-#include "./bu/rb.h"
+#include "./bu/redblack.h"
 #include "./bu/simd.h"
 #include "./bu/sort.h"
 #include "./bu/str.h"

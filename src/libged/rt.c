@@ -151,7 +151,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 	read_failed = 1;
     }
 #else
-    if (Tcl_Eof(run_rtp->chan) ||
+    if (Tcl_Eof((Tcl_Channel)run_rtp->chan) ||
 	(!ReadFile(run_rtp->fd, line, RT_MAXLINE, &count, 0))) {
 	read_failed = 1;
     }
@@ -182,10 +182,10 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 	aborted = run_rtp->aborted;
 #else
 	DWORD retcode = 0;
-	Tcl_DeleteChannelHandler(run_rtp->chan,
+	Tcl_DeleteChannelHandler((Tcl_Channel)run_rtp->chan,
 				 _ged_rt_output_handler,
 				 (ClientData)drcdp);
-	Tcl_Close((Tcl_Interp *)drcdp->gedp->ged_interp, run_rtp->chan);
+	Tcl_Close((Tcl_Interp *)drcdp->gedp->ged_interp, (Tcl_Channel)run_rtp->chan);
 
 	/* wait for the forked process
 	 * either EOF has been sent or there was a read error.
@@ -390,7 +390,7 @@ _ged_run_rt(struct ged *gedp)
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
-    Tcl_CreateChannelHandler(run_rtp->chan,
+    Tcl_CreateChannelHandler((Tcl_Channel)run_rtp->chan,
 			     TCL_READABLE,
 			     _ged_rt_output_handler,
 			     (ClientData)drcdp);

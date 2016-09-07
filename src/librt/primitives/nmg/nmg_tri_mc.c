@@ -570,7 +570,7 @@ rt_nmg_mc_pew(struct shell *s, struct whack *primp[4], struct application *a, fa
 	} else {
 	    /* if we know we're intersecting the surface, walk slow. */
 	    if (NEAR_ZERO(last_b+VOODOO, tol->dist))
-		bu_log("teh fux? lastb = %g\n", last_b);
+		bu_log("what? lastb = %g\n", last_b);
 	    b = last_b + step;
 	}
 
