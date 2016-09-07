@@ -5052,7 +5052,7 @@ package provide cadwidgets::Ged 1.0
 
 
 ::itcl::body cadwidgets::Ged::fit_png_image {_image_in _w _n _sf _image_out} {
-    eval $mGed fit_png_image $_image_in $_w $_n $_sf $_image_out
+    $mGed fit_png_image $_image_in $_w $_n $_sf $_image_out
 }
 
 
