@@ -146,6 +146,7 @@ get_args(int argc, char **argv)
 	    return 0;
 	file_name = "-";
 	infd = 0;
+	setmode(infd, O_BINARY);
     } else {
 	file_name = argv[bu_optind];
 	if ((infd = open(file_name, 0)) < 0) {

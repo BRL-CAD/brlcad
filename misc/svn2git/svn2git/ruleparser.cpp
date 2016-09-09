@@ -207,6 +207,18 @@ void Rules::load(const QString &filename)
                     repo.prefix = matchPrefixLine.cap(1);
                     continue;
                 } else if (line == "end repository") {
+                    if (!repo.forwardTo.isEmpty()
+                        && !repo.description.isEmpty()) {
+
+                        qFatal("Specifing repository and description on repository is invalid on line %d", lineNumber);
+                    }
+
+                    if (!repo.forwardTo.isEmpty()
+                        && !repo.branches.isEmpty()) {
+
+                        qFatal("Specifing repository and branches on repository is invalid on line %d", lineNumber);
+                    }
+
                     m_repositories += repo;
                     {
                         // clear out 'repo'
@@ -319,7 +331,7 @@ public:
     void ruleMatched(const Rules::Match &rule, const int rev);
     void addRule(const Rules::Match &rule);
 private:
-    QMap<QString,int> m_usedRules;
+    QMap<Rules::Match,int> m_usedRules;
 };
 
 Stats::Stats() : d(new Private())
@@ -369,29 +381,27 @@ Stats::Private::Private()
 void Stats::Private::printStats() const
 {
     printf("\nRule stats\n");
-    foreach(const QString name, m_usedRules.keys()) {
-        printf("%s was matched %i times\n", qPrintable(name), m_usedRules[name]);
+    foreach(const Rules::Match rule, m_usedRules.keys()) {
+        printf("%s was matched %i times\n", qPrintable(rule.info()), m_usedRules[rule]);
     }
 }
 
 void Stats::Private::ruleMatched(const Rules::Match &rule, const int rev)
 {
     Q_UNUSED(rev);
-    const QString name = rule.info();
-    if(!m_usedRules.contains(name)) {
-        m_usedRules.insert(name, 1);
-        qWarning() << "WARN: New match rule, should have been added when created.";
+    if(!m_usedRules.contains(rule)) {
+        m_usedRules.insert(rule, 1);
+        qWarning() << "WARN: New match rule" << rule.info() << ", should have been added when created.";
     } else {
-        m_usedRules[name]++;
+        m_usedRules[rule]++;
     }
 }
 
 void Stats::Private::addRule( const Rules::Match &rule)
 {
-    const QString name = rule.info();
-    if(m_usedRules.contains(name))
-        qWarning() << "WARN: Rule" << name << "was added multiple times.";
-    m_usedRules.insert(name, 0);
+    if(m_usedRules.contains(rule))
+        qWarning() << "WARN: Rule" << rule.info() << "was added multiple times.";
+    m_usedRules.insert(rule, 0);
 }
 
 #ifndef QT_NO_DEBUG_STREAM

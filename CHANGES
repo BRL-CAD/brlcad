@@ -422,7 +422,7 @@ mged
 SGI-specific tools
 	pl-sgi -> pl-fb [deprecated 7.16]
 src/gtools
-	g_[toolname] -> g[toolname] [deprecated 7.14]
+	g_diff, g_lint, g_qa, g_transfer -> gdiff, glint, gqa, gtransfer [deprecated 7.14]
 src/librt/cmd.c
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 any-png.sh

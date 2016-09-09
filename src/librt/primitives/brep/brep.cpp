@@ -411,6 +411,7 @@ brep_build_bvh(struct brep_specific* bs)
     }
     //bu_log("!!! PREP FACES: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
 
+    // note: the SurfaceTrees in bbbp.faces are never destroyed/freed
     bu_free(bbbp.faces, "free face array");
 
     bs->bvh->BuildBBox();
