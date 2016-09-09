@@ -97,6 +97,7 @@ set(mann_EN
   g.xml
   garbage_collect.xml
   gastank.xml
+  gdiff.xml
   gqa.xml
   gr.xml
   graph.xml
@@ -133,6 +134,7 @@ set(mann_EN
   lt.xml
   make.xml
   make_pnts.xml
+  man.xml
   mater.xml
   matpick.xml
   memprint.xml

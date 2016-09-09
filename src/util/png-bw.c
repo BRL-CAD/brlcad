@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <zlib.h>
 #include <png.h>
 #include "bio.h"
 

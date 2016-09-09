@@ -20,7 +20,7 @@ endif(MSVC)
 #    n_iges.cpp
 #    n_main.cpp
 #)
-#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARY} ${WIN32LIBS} ${M_LIBRARY})
+#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARIES} ${WIN32LIBS} ${M_LIBRARY})
 #install(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 set(iges-g_SRCS

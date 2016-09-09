@@ -83,6 +83,11 @@ public:
         } action;
 
         Match() : minRevision(-1), maxRevision(-1), annotate(false), action(Ignore) { }
+        bool operator<(const Match other) const {
+            if (filename != other.filename)
+                return filename < other.filename;
+            return lineNumber < other.lineNumber;
+        }
         const QString info() const {
             const QString info = Rule::filename % ":" % QByteArray::number(Rule::lineNumber) % " " % rx.pattern();
             return info;

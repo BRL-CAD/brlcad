@@ -2384,7 +2384,7 @@ wdb_get_cmd(struct rt_wdb *wdbp,
  * string.
  *
  *
- * NOTE: This is called directly by gdiff/g_diff.c
+ * NOTE: This function may be directly called by gdiff
  */
 int
 wdb_get_tcl(void *clientData,

@@ -52,7 +52,6 @@ CPP_XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
     register CPP_XGLUE(tri_specific_, TRI_TYPE) *trip;
     vect_t work;
     fastf_t m1, m2, m3, m4;
-    vect_t BA_N, CA_N;
     size_t i;
 
     BU_GET(trip, CPP_XGLUE(tri_specific_, TRI_TYPE));
@@ -62,21 +61,16 @@ CPP_XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
     VCROSS(trip->tri_wn, trip->tri_BA, trip->tri_CA);
     trip->tri_surfno = face_no;
 
-    VMOVE(BA_N, trip->tri_BA);
-    VMOVE(CA_N, trip->tri_CA);
-    VUNITIZE(BA_N);
-    VUNITIZE(CA_N);
-
     /* Check to see if this plane is a line or pnt */
     m1 = MAGSQ(trip->tri_BA);
     m2 = MAGSQ(trip->tri_CA);
     VSUB2(work, bp, cp);
     m3 = MAGSQ(work);
-    m4 = fabs(VDOT(BA_N, CA_N));
+    m4 = MAGSQ(trip->tri_wn);
     if (m1 < tol->dist_sq
 	|| m2 < tol->dist_sq
 	|| m3 < tol->dist_sq
-	|| m4 >= tol->para)
+	|| m4 < tol->dist_sq)
     {
 	BU_PUT(trip, CPP_XGLUE(tri_specific_, TRI_TYPE));
 

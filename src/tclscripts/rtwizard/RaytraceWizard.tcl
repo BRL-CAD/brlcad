@@ -115,6 +115,8 @@ namespace eval RaytraceWizard {
 	set w [ RtWizard::Wizard .\#auto ]
 	$fb inform "Wizard megawidget created" 5
 
+	wm title . "RtWizard"
+
 	#
 	# Add the first set of pages to the wizard.
 	# Note that we can't create the Mged-based pages until
