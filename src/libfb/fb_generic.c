@@ -33,6 +33,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <png.h>
 
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
@@ -46,6 +47,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 
+#include "vmath.h"
 #include "fb_private.h"
 #include "fb.h"
 
@@ -849,6 +851,260 @@ fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int 
 	}
     }
     free(scanline);
+    return BRLCAD_OK;
+}
+
+
+static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
+
+int
+fb_read_png(fb *ifp, FILE *fp_in, int file_xoff, int file_yoff, int scr_xoff, int scr_yoff, int clear, int zoom, int inverse, int one_line_only, int multiple_lines, int verbose, int header_only, double def_screen_gamma, struct bu_vls *result)
+{
+    int y;
+    int i;
+    int xout, yout, m, xstart;
+    png_structp png_p;
+    png_infop info_p;
+    char header[8];
+    int bit_depth;
+    int color_type;
+    png_color_16p input_backgrd;
+    double gammaval=1.0;
+    int file_width, file_height;
+    unsigned char *image;
+    unsigned char **scanline;	/* 1 scanline pixel buffer */
+    int scanbytes;		/* # of bytes of scanline */
+    int scanpix;		/* # of pixels of scanline */
+    int scr_width;
+    int scr_height;
+
+    if (fread(header, 8, 1, fp_in) != 1) {
+	bu_vls_printf(result, "png-fb: ERROR: Failed while reading file header!!!\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (png_sig_cmp((png_bytep)header, 0, 8)) {
+	bu_vls_printf(result,  "png-fb: This is not a PNG file!!!\n");
+	return BRLCAD_ERROR;
+    }
+
+    png_p = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png_p) {
+	bu_vls_printf(result,  "png-fb: png_create_read_struct() failed!!\n");
+	return BRLCAD_ERROR;
+    }
+
+    info_p = png_create_info_struct(png_p);
+    if (!info_p) {
+	bu_vls_printf(result,  "png-fb: png_create_info_struct() failed!!\n");
+	return BRLCAD_ERROR;
+    }
+
+    png_init_io(png_p, fp_in);
+
+    png_set_sig_bytes(png_p, 8);
+
+    png_read_info(png_p, info_p);
+
+    color_type = png_get_color_type(png_p, info_p);
+
+    png_set_expand(png_p);
+    bit_depth = png_get_bit_depth(png_p, info_p);
+    if (bit_depth == 16)
+	png_set_strip_16(png_p);
+
+    if (color_type == PNG_COLOR_TYPE_GRAY ||
+	color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+	png_set_gray_to_rgb(png_p);
+
+    file_width = png_get_image_width(png_p, info_p);
+    file_height = png_get_image_height(png_p, info_p);
+
+    if (verbose) {
+	switch (color_type) {
+	    case PNG_COLOR_TYPE_GRAY:
+		bu_vls_printf(result, "color type: b/w (bit depth=%d)\n", bit_depth);
+		break;
+	    case PNG_COLOR_TYPE_GRAY_ALPHA:
+		bu_vls_printf(result, "color type: b/w with alpha channel (bit depth=%d)\n", bit_depth);
+		break;
+	    case PNG_COLOR_TYPE_PALETTE:
+		bu_vls_printf(result, "color type: color palette (bit depth=%d)\n", bit_depth);
+		break;
+	    case PNG_COLOR_TYPE_RGB:
+		bu_vls_printf(result, "color type: RGB (bit depth=%d)\n", bit_depth);
+		break;
+	    case PNG_COLOR_TYPE_RGB_ALPHA:
+		bu_vls_printf(result, "color type: RGB with alpha channel (bit depth=%d)\n", bit_depth);
+		break;
+	    default:
+		bu_vls_printf(result, "Unrecognized color type (bit depth=%d)\n", bit_depth);
+		break;
+	}
+	bu_vls_printf(result, "Image size: %d X %d\n", file_width, file_height);
+    }
+
+    if (header_only) {
+	bu_vls_printf(result, "WIDTH=%d HEIGHT=%d\n", file_width, file_height);
+	return BRLCAD_OK;
+    }
+
+    if (png_get_bKGD(png_p, info_p, &input_backgrd)) {
+	if (verbose && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
+			color_type == PNG_COLOR_TYPE_RGB_ALPHA))
+	    bu_vls_printf(result, "background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue);
+	png_set_background(png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0);
+    } else
+	png_set_background(png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0);
+
+    if (!png_get_gAMA(png_p, info_p, &gammaval))
+	gammaval = 0.5;
+    png_set_gamma(png_p, def_screen_gamma, gammaval);
+    if (verbose)
+	bu_vls_printf(result, "file gamma: %f, additional screen gamma: %f\n",
+		      gammaval, def_screen_gamma);
+
+    if (verbose) {
+	if (png_get_interlace_type(png_p, info_p) == PNG_INTERLACE_NONE)
+	    bu_vls_printf(result, "not interlaced\n");
+	else
+	    bu_vls_printf(result, "interlaced\n");
+    }
+
+    png_read_update_info(png_p, info_p);
+
+    /* allocate memory for image */
+    image = (unsigned char *)bu_calloc(1, file_width*file_height*3, "image");
+
+    /* create rows array */
+    scanline = (unsigned char **)bu_calloc(file_height, sizeof(unsigned char *), "scanline");
+    for (i=0; i<file_height; i++)
+	scanline[i] = image+(i*file_width*3);
+
+    png_read_image(png_p, scanline);
+
+    if (verbose) {
+	png_timep mod_time;
+	png_textp text;
+	int num_text;
+
+	png_read_end(png_p, info_p);
+	if (png_get_text(png_p, info_p, &text, &num_text)) {
+	    for (i=0; i<num_text; i++)
+		bu_vls_printf(result, "%s: %s\n", text[i].key, text[i].text);
+	}
+	if (png_get_tIME(png_p, info_p, &mod_time))
+	    bu_vls_printf(result, "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
+			  mod_time->year, mod_time->hour, mod_time->minute, mod_time->second);
+    }
+
+    /* Get the screen size we were given */
+    scr_width = fb_getwidth(ifp);
+    scr_height = fb_getheight(ifp);
+
+    /* compute number of pixels to be output to screen */
+    if (scr_xoff < 0) {
+	xout = scr_width + scr_xoff;
+	xstart = 0;
+    } else {
+	xout = scr_width - scr_xoff;
+	xstart = scr_xoff;
+    }
+
+    if (xout < 0) {
+	bu_free(image, "image");
+	bu_free(scanline, "scanline");
+	return BRLCAD_OK;
+    }
+    V_MIN(xout, (file_width-file_xoff));
+    scanpix = xout;				/* # pixels on scanline */
+
+    if (inverse)
+	scr_yoff = (-scr_yoff);
+
+    yout = scr_height - scr_yoff;
+    if (yout < 0) {
+	bu_free(image, "image");
+	bu_free(scanline, "scanline");
+	return BRLCAD_OK;
+    }
+    V_MIN(yout, (file_height-file_yoff));
+
+    /* Only in the simplest case use multi-line writes */
+    if (!one_line_only && multiple_lines > 0 && !inverse && !zoom &&
+	xout == file_width && file_xoff == 0 &&
+	file_width <= scr_width) {
+	scanpix *= multiple_lines;
+    }
+
+    scanbytes = scanpix * sizeof(RGBpixel);
+
+    if (clear) {
+	fb_clear(ifp, PIXEL_NULL);
+    }
+    if (zoom) {
+	/* Zoom in, and center the display.  Use square zoom. */
+	int newzoom;
+	newzoom = scr_width/xout;
+	V_MIN(newzoom, scr_height/yout);
+
+	if (inverse) {
+	    fb_view(ifp,
+		    scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),
+		    newzoom, newzoom);
+	} else {
+	    fb_view(ifp,
+		    scr_xoff+xout/2, scr_yoff+yout/2,
+		    newzoom, newzoom);
+	}
+    }
+
+    if (multiple_lines) {
+	/* Bottom to top with multi-line reads & writes */
+	int height=file_height;
+	for (y = scr_yoff; y < scr_yoff + yout; y += multiple_lines) {
+	    /* Don't over-write */
+	    if (y + height > scr_yoff + yout)
+		height = scr_yoff + yout - y;
+	    if (height <= 0) break;
+	    m = fb_writerect(ifp, scr_xoff, y,
+			     file_width, height,
+			     scanline[file_yoff++]);
+	    if (m != file_width*height) {
+		bu_vls_printf(result,
+			      "png-fb: fb_writerect(x=%d, y=%d, w=%d, h=%d) failure, ret=%d, s/b=%d\n",
+			      scr_xoff, y,
+			      file_width, height, m, scanbytes);
+	    }
+	}
+    } else if (!inverse) {
+	/* Normal way -- bottom to top */
+	int line=file_height-file_yoff-1;
+	for (y = scr_yoff; y < scr_yoff + yout; y++) {
+	    m = fb_write(ifp, xstart, y, scanline[line--]+(3*file_xoff), xout);
+	    if (m != xout) {
+		bu_vls_printf(result,
+			      "png-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
+			      scr_xoff, y, xout,
+			      m, xout);
+	    }
+	}
+    } else {
+	/* Inverse -- top to bottom */
+	int line=file_height-file_yoff-1;
+	for (y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y--) {
+	    m = fb_write(ifp, xstart, y, scanline[line--]+(3*file_xoff), xout);
+	    if (m != xout) {
+		bu_vls_printf(result,
+			      "png-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
+			      scr_xoff, y, xout,
+			      m, xout);
+	    }
+	}
+    }
+
+    bu_free(image, "image");
+    bu_free(scanline, "scanline");
     return BRLCAD_OK;
 }
 
