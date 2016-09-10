@@ -18,6 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* alias-pix belongs in man1 not mann - move, and check other mann
+  man pages to make sure they're all actually representing MGED
+  or Archer commands.
+
 * update astyle
 
 * bundle primary rays in rt front end into postage stamps, shoot via
