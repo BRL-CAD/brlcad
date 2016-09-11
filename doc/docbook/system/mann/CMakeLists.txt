@@ -228,7 +228,6 @@ set(mann_EN
   vnirt.xml
   voxelize.xml
   vquery_ray.xml
-  vrmgr.xml
   vrot.xml
   wcodes.xml
   whatid.xml
