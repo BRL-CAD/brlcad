@@ -82,7 +82,6 @@ set(mann_EN
   em.xml
   eqn.xml
   erase.xml
-  erase_all.xml
   ev.xml
   exists.xml
   exit.xml
