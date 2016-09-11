@@ -86,7 +86,6 @@ set(mann_EN
   exists.xml
   exit.xml
   expand.xml
-  export_body.xml
   extrude.xml
   eye_pt.xml
   facedef.xml
