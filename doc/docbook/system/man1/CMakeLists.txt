@@ -135,6 +135,7 @@ set(man1_EN
   obj-g.xml
   patch-g.xml
   pictx.xml
+  picket_fence.xml
   pix-alias.xml
   pix-bw.xml
   pix-fb.xml
@@ -240,6 +241,9 @@ set(man1_EN
   vdeck.xml
   viewpoint-g.xml
   wavelet.xml
+  window.xml
+  window_frame.xml
+  wire.xml
   wdb_example.xml
   )
 

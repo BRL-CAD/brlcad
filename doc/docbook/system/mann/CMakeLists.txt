@@ -150,7 +150,6 @@ set(mann_EN
   pathlist.xml
   paths.xml
   permute.xml
-  picket_fence.xml
   plot.xml
   prcolor.xml
   prefix.xml
@@ -237,9 +236,6 @@ set(mann_EN
   whichair.xml
   whichid.xml
   who.xml
-  window.xml
-  window_frame.xml
-  wire.xml
   wmater.xml
   x.xml
   xpush.xml
