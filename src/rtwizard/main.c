@@ -832,6 +832,55 @@ rtwizard_help_dev(struct bu_opt_desc *d)
     bu_vls_free(&filtered);
 }
 
+#define RCFILE  ".rtwizardrc"
+static int
+rtwizard_rc(Tcl_Interp *interp)
+{
+    FILE *fp = NULL;
+    char *path;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+
+
+    if ((path = getenv("RTWIZARD_RCFILE")) != (char *)NULL) {
+	if ((fp = fopen(path, "r")) != NULL) {
+	    bu_vls_strcpy(&str, path);
+	}
+    }
+
+    if (!fp) {
+	if ((path = getenv("HOME")) != (char *)NULL) {
+	    bu_vls_strcpy(&str, path);
+	    bu_vls_strcat(&str, "/");
+	    bu_vls_strcat(&str, RCFILE);
+
+	    fp = fopen(bu_vls_addr(&str), "r");
+	}
+    }
+
+    if (!fp) {
+	if ((fp = fopen(RCFILE, "r")) != NULL) {
+	    bu_vls_strcpy(&str, RCFILE);
+	}
+    }
+
+    /* At this point, if none of the above attempts panned out, give up. */
+
+    if (!fp) {
+	bu_vls_free(&str);
+	return -1;
+    }
+    fclose(fp);
+
+    if (Tcl_EvalFile(interp, bu_vls_addr(&str)) != TCL_OK) {
+	bu_log("Error reading %s:\n%s\n", RCFILE,
+		Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY));
+    }
+
+    bu_vls_free(&str);
+
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1018,6 +1067,9 @@ main(int argc, char **argv)
 	tclcad_set_argv(interp, 1, (const char **)&av0);
 
 	Init_RtWizard_Vars(interp, s);
+
+	/* If we have a .rtwizardrc file, get the previous size settings from it */
+	rtwizard_rc(interp);
 
 	/* We're using this path on the file system, not in Tcl: translate it
 	 * to the appropriate form before doing the eval */

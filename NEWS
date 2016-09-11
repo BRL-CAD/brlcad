@@ -13,6 +13,23 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* relocated various procedural command man pages to man1 - Cliff Yapp
+* removed obsolete man pages: erase_all export_body vrmgr - Cliff Yapp
+* updated gdiff default grid spacing to use bounding box - Cliff Yapp
+* renamed MGED gdiff grid spacing -t option to -g - Cliff Yapp
+* updated Fb sizing in rtwizard to be aware of MGED size - Cliff Yapp
+* added brlman and man manual pages documenting viewer - Cliff Yapp
+* updated brlman to support browsing all page categories - Cliff Yapp
+* added support for .rtwizardrc configuration file - Cliff Yapp
+* updated MGED gdiff default drawing options to -l -r - Cliff Yapp
+* updated MGED gdiff default tolerance to 100mm - Cliff Yapp
+* removed MGED gdiff -R option - now default behavior - Cliff Yapp
+* added MGED gdiff man page - Cliff Yapp
+* removed obsolete g_diff man page - Cliff Yapp
+* updated resizing behavior of main rtwizard panel - Cliff Yapp
+* updated default size of rtwizard images to match gui - Cliff Yapp
+* keep window sizing consistent on rtwizard pages - Cliff Yapp
+* improved keep error message when file not created - Cliff Yapp
 * changed window name for rtwizard gui to "RtWizard" - Cliff Yapp
 * brep command attaches .brep suffix instead of _brep - Sean Morrison
 * changed ogl & wgl framebuffer delayed write behavior - Sean Morrison

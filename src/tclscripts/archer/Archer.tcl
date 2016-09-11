@@ -3450,7 +3450,7 @@ proc title_node_handler {node} {
     buildarcherHelp
 
     # Build manual browser
-    ManBrowser $itk_interior.archerMan -useToC 1 -listDir n -parentName Archer
+    ManBrowser $itk_interior.archerMan -useToC 1 -defaultDir n -parentName Archer
     $itk_interior.archerMan center
 
     if {0} {

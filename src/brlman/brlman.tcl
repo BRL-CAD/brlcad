@@ -23,23 +23,24 @@ package require Iwidgets
 package require ManBrowser 1.0
 wm state . withdrawn
 if {[info exists ::section_number]} {
-    set w [ ManBrowser .browser -useToC 1 -listDir $::section_number ]
+    set w [ ManBrowser .browser -useToC 1 -defaultDir $::section_number ]
 } else {
-    set w [ ManBrowser .browser -useToC 1 -listDir 1 ]
+    set w [ ManBrowser .browser -useToC 1 -defaultDir 1 ]
 }
 $w buttonconfigure 0 -text Close -command ::exit
 
 if {[info exists ::man_file]} {
-    wm title .browser "BRL-CAD Man Page ($::section_number) - $::man_name"
+    wm title .browser "BRL-CAD Manual Page Browser (man$::section_number)"
 } else {
-    wm title .browser "BRL-CAD Man Pages"
+    wm title .browser "BRL-CAD Manual Page Browser"
 }
+
 wm protocol .browser WM_DELETE_WINDOW ::exit
 bind $w <Escape> ::exit
 bind $w <q> ::exit
 
 if {[info exists ::man_file]} {
-    $w loadPage $man_file
+    $w select $man_file
 } else {
     set intro_file [file join [bu_brlcad_data $::data_dir] mann/Introduction.html]
     $w loadPage $intro_file

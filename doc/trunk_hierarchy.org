@@ -1007,7 +1007,6 @@
 ****** [[file:../doc/docbook/system/mann/en/facedef.xml][facedef.xml]]
 ****** [[file:../doc/docbook/system/mann/en/rcc-cap.xml][rcc-cap.xml]]
 ****** [[file:../doc/docbook/system/mann/en/quit.xml][quit.xml]]
-****** [[file:../doc/docbook/system/mann/en/vrmgr.xml][vrmgr.xml]]
 ****** [[file:../doc/docbook/system/mann/en/make.xml][make.xml]]
 ****** [[file:../doc/docbook/system/mann/en/whichair.xml][whichair.xml]]
 ****** [[file:../doc/docbook/system/mann/en/viewsize.xml][viewsize.xml]]

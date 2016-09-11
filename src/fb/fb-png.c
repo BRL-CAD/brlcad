@@ -29,7 +29,6 @@
 
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <zlib.h>
 #include <png.h>
 
 #include "bu/getopt.h"
@@ -176,7 +175,7 @@ Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 
     png_init_io(png_p, outfp);
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
-    png_set_compression_level(png_p, Z_BEST_COMPRESSION);
+    png_set_compression_level(png_p, 9);
     png_set_IHDR(png_p, info_p,
 		 screen_width, screen_height, 8,
 		 pixbytes == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_GRAY,

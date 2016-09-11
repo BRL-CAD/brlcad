@@ -2525,7 +2525,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     }
 
     /* if points are in a file */
-    if ((BU_STR_EQUAL(argv[3], "yes")) || (BU_STR_EQUAL(argv[3], "y"))) {
+    if (bu_str_true(argv[3])) {
 
 	/* prompt for point file path and name */
 	if (argc < 5) {

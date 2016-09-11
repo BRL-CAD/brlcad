@@ -40,7 +40,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     struct analyze_raydiff_results *results;
     struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
 
-    int do_diff_raytrace = 0;
+    int do_diff_raytrace = 1;
     int view_left = 0;
     int view_right = 0;
     int view_overlap = 0;
@@ -48,21 +48,20 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     const char *left_obj;
     const char *right_obj;
-    fastf_t len_tol = BN_TOL_DIST;
+    fastf_t len_tol = 0;
     int ret_ac = 0;
     /* Skip command name */
     int ac = argc - 1;
     const char **av = argv+1;
 
-    struct bu_opt_desc d[8];
-    BU_OPT(d[0], "h", "help",      "", NULL, (void *)&print_help, "Print help.")
-    BU_OPT(d[1], "t", "tol",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Tolerance - when used with -R, controls spacing of test ray grids (units are mm.)  Otherwise, sets a numerical comparison tolerance.")
-    BU_OPT(d[2], "R", "ray-diff", "", NULL, (void *)&do_diff_raytrace, "Test for differences with raytracing")
-    BU_OPT(d[3], "l", "view-left", "", NULL, (void *)&view_left, "Visualize volumes added only by left object")
-    BU_OPT(d[4], "b", "view-both", "", NULL, (void *)&view_overlap, "Visualize volumes common to both objects")
-    BU_OPT(d[5], "r", "view-right", "", NULL, (void *)&view_right, "Visualize volumes added only by right object")
-    BU_OPT(d[6], "G", "grazing",    "", NULL, (void *)&grazereport, "Report differences in grazing hits (raytracing mode)")
-    BU_OPT_NULL(d[7]);
+    struct bu_opt_desc d[7];
+    BU_OPT(d[0], "h", "help",      "", NULL, (void *)&print_help, "Print help.");
+    BU_OPT(d[1], "g", "grid-spacing",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Controls spacing of test ray grids (units are mm.)");
+    BU_OPT(d[2], "l", "view-left", "", NULL, (void *)&view_left, "Visualize volumes occurring only in the left object");
+    BU_OPT(d[3], "b", "view-both", "", NULL, (void *)&view_overlap, "Visualize volumes common to both objects");
+    BU_OPT(d[4], "r", "view-right", "", NULL, (void *)&view_right, "Visualize volumes occurring only in the right object");
+    BU_OPT(d[5], "G", "grazing",    "", NULL, (void *)&grazereport, "Report differences in grazing hits");
+    BU_OPT_NULL(d[6]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -74,7 +73,8 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	const char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
-	bu_vls_printf(gedp->ged_result_str, "Usage: gdiff [opts] left_obj right_obj\nOptions:\n%s\nNote that when visualizing differences with -R, red segments are those generated\nonly from intersections with \"left_obj\" while blue segments represent\nintersections unique to \"right_obj\".  White segments represent intersections\ncommon to both objects.", usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: gdiff [opts] left_obj right_obj\nOptions:\n%s\nRed segments are those generated\nonly from intersections with \"left_obj\" while blue segments represent\nintersections unique to \"right_obj\".  White segments represent intersections\ncommon to both objects. By default, segments unique to left and right objects are displayed.  ", usage);
+	bu_vls_printf(gedp->ged_result_str, "If no tolerance is given, a default of 100mm is used.\n\n Be careful of using too fine a grid - finer grides will (up to a point) yield better visuals, but too fine a grid can cause very long raytracing times.");
 	bu_free((char *)usage, "help str");
 	return GED_OK;
     }
@@ -89,7 +89,6 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	right_obj = av[1];
     }
 
-    tol.dist = len_tol;
 
     /* There are possible convention-based interpretations of 1, 2, 3, 4 and n args
      * beyond those used as options.  For the shortest cases, the interpretation depends
@@ -132,6 +131,23 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	if (db_lookup(gedp->ged_wdbp->dbip, right_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
 	    return GED_ERROR;
 	}
+
+	/* If we don't have a tolerance, try to guess something sane from the bbox */
+	if (NEAR_ZERO(len_tol, RT_LEN_TOL)) {
+	    point_t rpp_min, rpp_max;
+	    point_t obj_min, obj_max;
+	    VSETALL(rpp_min, INFINITY);
+	    VSETALL(rpp_max, -INFINITY);
+	    ged_get_obj_bounds(gedp, 1, (const char **)&left_obj, 0, obj_min, obj_max);
+	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
+	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
+	    ged_get_obj_bounds(gedp, 1, (const char **)&right_obj, 0, obj_min, obj_max);
+	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
+	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
+	    len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
+	}
+	tol.dist = len_tol;
+
 	analyze_raydiff(&results, gedp->ged_wdbp->dbip, left_obj, right_obj, &tol, !grazereport);
 
 	/* TODO - may want to integrate with a "regular" diff and report intelligently.  Needs
@@ -143,11 +159,11 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* For now, graphical output is the main output of this mode, so if we don't have any
-	 * specifics do all */
+	 * specifics do left and right */
 	if (!view_left && !view_overlap && !view_right) {
 	    view_left = 1;
 	    view_right = 1;
-	    view_overlap = 1;
+	    view_overlap = 0;
 	}
 
 	if (view_left || view_overlap || view_right) {

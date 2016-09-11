@@ -467,9 +467,6 @@
 <FONT SIZE=2><P></FONT><A HREF="#vnirt"><FONT SIZE=2>vnirt</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#vquery_ray"><FONT SIZE=2>vquery_ray</FONT></A></TD>
-<TD WIDTH="22%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#vrmgr"><FONT SIZE=2>vrmgr</FONT></A></TD>
-<TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#vrot"><FONT SIZE=2>vrot</FONT></A></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="MIDDLE">
@@ -3510,15 +3507,6 @@ All textual arguments may be abbreviated by their first letter. </P>
 <DT><A NAME="vquery_ray"></A>vquery_ray</B> <I>x y</DT>
 </I><DD>Same as <A HREF="#vnirt">vnirt</A>.</DD>
 </DL>
-<FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="vrmgr"></A>vrmgr</B> <I>host</I> {<I>master</I> | <I>slave</I> | <I>overview</I>}</DT>
-<DD>The &quot;vrmgr&quot; command establishes a link between the current MGED display and a <I>vrmgr</I> process running on the specified <I>host</I>.  The <I>vrmgr</I> program is a manager for virtual reality displays using MGED.  The <I>vrmgr</I> process must be started on <I>host</I> prior to executing the <I>vrmgr</I> command in MGED.  The second command line argument to the <I>vrmgr</I> command is the role of the current MGED display.  The <I>master</I> display controls the viewing parameters of itself and all the <I>slave</I> displays.  The <I>overview</I> display acts as an observer of the entire virtual reality process.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>vrmgr host1.brlcad.org master</DD>
-</DL><DIR>
-
-</B><FONT SIZE=2><P>-- Set the current MGED display as the <I>master</I> for the <I>vrmgr</I> process running on the host named <I>host1.brlcad.org.</I> </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>

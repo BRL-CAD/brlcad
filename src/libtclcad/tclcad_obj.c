@@ -38,7 +38,6 @@
 #include <errno.h>
 #include <assert.h>
 
-#include <zlib.h>
 #include <png.h>
 
 #include "tcl.h"
@@ -1248,6 +1247,7 @@ static struct to_cmdtab to_cmds[] = {
     {"pix",	"file", TO_UNLIMITED, to_pix, GED_FUNC_PTR_NULL},
     {"png",	"file", TO_UNLIMITED, to_png, GED_FUNC_PTR_NULL},
 #endif
+    /*{"png2fb",  	"[options] [file.png]", TO_UNLIMITED, to_view_func, ged_png2fb},*/
     {"pngwf",	"[options] file.png", 16, to_view_func, ged_png},
     {"poly_circ_mode",	"x y", TO_UNLIMITED, to_poly_circ_mode, GED_FUNC_PTR_NULL},
     {"poly_cont_build",	"x y", TO_UNLIMITED, to_poly_cont_build, GED_FUNC_PTR_NULL},
@@ -5926,8 +5926,8 @@ to_fit_png_image(struct ged *gedp,
     }
 
     if (argc != 6 ||
-	bu_sscanf(argv[2], "%lu", &o_w_requested) != 1 ||
-	bu_sscanf(argv[3], "%lu", &o_n_requested) != 1 ||
+	bu_sscanf(argv[2], "%zu", &o_w_requested) != 1 ||
+	bu_sscanf(argv[3], "%zu", &o_n_requested) != 1 ||
 	bu_sscanf(argv[4], "%lf", &sf) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
@@ -5993,7 +5993,7 @@ to_fit_png_image(struct ged *gedp,
 	}
     }
 
-    bu_vls_printf(gedp->ged_result_str, "%lu %lu %lu %lu", img->width, img->height, x_offset, y_offset);
+    bu_vls_printf(gedp->ged_result_str, "%zu %zu %zu %zu", img->width, img->height, x_offset, y_offset);
 
     /* icv_write should return < 0 for errors but doesn't */
     if (icv_write(img, argv[5], BU_MIME_IMAGE_PNG) == 0) {
@@ -11301,7 +11301,7 @@ to_png(struct ged *gedp,
 
     png_init_io(png_p, fp);
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
-    png_set_compression_level(png_p, Z_BEST_COMPRESSION);
+    png_set_compression_level(png_p, 9);
     png_set_IHDR(png_p, info_p, width, height, bits_per_channel,
 		 PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);

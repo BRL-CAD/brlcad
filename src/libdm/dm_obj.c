@@ -30,7 +30,6 @@
 #include <string.h>
 #include <math.h>
 
-#include <zlib.h>
 #include <png.h>
 
 #include "tcl.h"
@@ -2293,7 +2292,7 @@ dmo_png_cmd(struct dm_obj *dmop,
 
     png_init_io(png_p, fp);
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
-    png_set_compression_level(png_p, Z_BEST_COMPRESSION);
+    png_set_compression_level(png_p, 9);
     png_set_IHDR(png_p, info_p, ximage_p->width, ximage_p->height, bits_per_channel,
 		 PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
 		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);

@@ -26,6 +26,7 @@
 #   This widget has two modes: single selection and multiple selection, which is
 #   different from tabs which operate only in a single selection mode.
 
+package provide cadwidgets::Accordian 1.0
 
 ::itcl::class cadwidgets::Accordian {
     inherit ::itk::Widget

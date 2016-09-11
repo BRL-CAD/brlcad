@@ -5715,9 +5715,6 @@ x 					delete character
     <link linkend="vquery_ray">vquery_ray</link>
   </entry>
   <entry>
-    <link linkend="vrmgr">vrmgr</link>
-  </entry>
-  <entry>
     <link linkend="vrot">vrot</link>
   </entry>
   </row>
@@ -16732,50 +16729,6 @@ EOF
       </listitem>
     </varlistentry>
   </variablelist>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
-  <variablelist xml:id="vrmgr">
-    <varlistentry>
-      <term>
-        vrmgr <emphasis>host</emphasis> {<emphasis>master</emphasis> |
-        <emphasis>slave</emphasis> | <emphasis>overview</emphasis>}
-      </term>
-      <listitem>
-        <para>
-          The <quote>vrmgr</quote> command establishes a link between
-          the current MGED display and a <emphasis>vrmgr</emphasis>
-          process running on the specified <emphasis>host</emphasis>.
-          The <emphasis>vrmgr</emphasis> program is a manager for
-          virtual reality displays using MGED. The
-          <emphasis>vrmgr</emphasis> process must be started on
-          <emphasis>host</emphasis> prior to executing the
-          <emphasis>vrmgr</emphasis> command in MGED. The second command
-          line argument to the <emphasis>vrmgr</emphasis> command is the
-          role of the current MGED display. The
-          <emphasis>master</emphasis> display controls the viewing
-          parameters of itself and all the <emphasis>slave</emphasis>
-          displays. The <emphasis>overview</emphasis> display acts as an
-          observer of the entire virtual reality process.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; vrmgr host1.brlcad.org master
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – Set the current MGED display as the <emphasis>master</emphasis>
-    for the <emphasis>vrmgr</emphasis> process running on the host named
-    <emphasis>host1.brlcad.org.</emphasis>
-  </para>
   <para>
     <emphasis role="strong"></emphasis>
   </para>

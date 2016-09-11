@@ -471,6 +471,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_paint_rect_area {_pane args}
 	method pane_perspective {_pane args}
 	method pane_pix2fb {_pane args}
+	method pane_png2fb {_pane args}
 	method pane_plot {_pane args}
 	method pane_pmat {_pane args}
 	method pane_pmodel2view {_pane args}
@@ -534,6 +535,7 @@ package provide cadwidgets::Ged 1.0
 	method perspective_all {args}
 	method pix {args}
 	method pix2fb {args}
+	method png2fb {args}
 	method plot {args}
 	method pmat {args}
 	method pmodel2view {args}
@@ -752,7 +754,7 @@ package provide cadwidgets::Ged 1.0
 	method init_find_metaballpt {_obj {_button 1} {_callback {}}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
-	method fit_png_image {args}
+	method fit_png_image {_image_in _w _n _sf _image_out}
 	method init_view_bindings {{_type default}}
 	method init_view_center {{_button 1}}
 	method init_view_measure {{_button 1} {_part2_button 2}}
@@ -3101,6 +3103,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed pix2fb $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_png2fb {_pane args} {
+    eval $mGed png2fb $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_plot {_pane args} {
     eval $mGed plot $itk_component($_pane) $args
 }
@@ -3366,6 +3372,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pix2fb {args} {
     eval $mGed pix2fb $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::png2fb {args} {
+    eval $mGed png2fb $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::plot {args} {
@@ -5051,8 +5061,8 @@ package provide cadwidgets::Ged 1.0
 }
 
 
-::itcl::body cadwidgets::Ged::fit_png_image {args} {
-    eval $mGed fit_png_image $args
+::itcl::body cadwidgets::Ged::fit_png_image {_image_in _w _n _sf _image_out} {
+    $mGed fit_png_image $_image_in $_w $_n $_sf $_image_out
 }
 
 

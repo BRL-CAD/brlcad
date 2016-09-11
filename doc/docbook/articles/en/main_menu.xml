@@ -3388,11 +3388,6 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../man1/en/g-vrml.php">G-vrml</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
         <link xlink:href="../../man1/en/g-x3d.php">G x3d</link>
       </para>
     </listitem>
@@ -5231,11 +5226,6 @@
     <listitem>
       <para>
         <link xlink:href="../../mann/en/vquery_ray.php">Vquery Ray</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../mann/en/vrmgr.php">Vrmgr</link>
       </para>
     </listitem>
     <listitem>

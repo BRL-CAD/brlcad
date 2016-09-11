@@ -1,23 +1,23 @@
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="gastank1">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="window1">
 
 <refmeta>
-  <refentrytitle>GASTANK</refentrytitle>
-  <manvolnum>nged</manvolnum>
+  <refentrytitle>WINDOW</refentrytitle>
+  <manvolnum>1</manvolnum>
   <refmiscinfo class="source">BRL-CAD</refmiscinfo>
   <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
 <refnamediv xml:id="name">
-  <refname>gastank</refname>
+  <refname>window</refname>
   <refpurpose>
-    Creates a BRL-CAD .g file containing gas tanks.
+    Creates a BRL-CAD .g file containing windows.
   </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>gastank</command>
+    <command>window</command>
     <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
@@ -25,17 +25,15 @@
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
-    <command>gastank</command> is a program to create a BRL-CAD data base of
-    gas tanks. Up to twenty-six gas tanks of the same size may be created.
-    These gas tanks are solid with rounded corners and edges.  They are
-    appropriate for use with millimeter wave signature analysis.  They are not
-    appropriate for infra  red or vulnerability analysis.  <command>gastank</command>
-    uses libwdb to create a BRL-CAD database.  The gas tanks are composed of three
-    arb8s, eight spheres, and twelve cylinders.  This program may be run interactively
-    or the user may specify options on a command line.  If the user chooses to run
-    the program interactively he answers the questions as the program prompts him.
-    Below are the options that can be used on the command line.
-  </para>
+    <command>window</command> is a program to create a BRL-CAD database of
+    windows.  Up to twenty-six windows of the same size may be created.  The
+    windows are made with rounded corners.  <command>window</command> uses
+    libwdb to create a BRL-CAD database.  The windows are composed of two
+    arb8s and four cylinders.   This program may be run interactively or
+    the user may specify options on a command line.  If the user chooses to
+    run the program interactively, he answers the questions as the program
+    prompts him.  Below are the options that can be used on the command line.
+ </para>
 </refsection>
 
 
@@ -46,7 +44,7 @@
       <term><option>-f </option><replaceable>name.g</replaceable></term>
       <listitem>
 	<para>
-	 BRL-CAD file name.
+	BRL-CAD file name.
 	</para>
       </listitem>
     </varlistentry>
@@ -54,7 +52,7 @@
       <term><option>-n #</option></term>
       <listitem>
 	<para>
-	 The number of gas tanks to be created (must be less than or equal to 26).
+	 The number of windows to be created (must be less than or equal to 26).
 	</para>
       </listitem>
     </varlistentry>
@@ -62,7 +60,7 @@
       <term><option>-H #</option></term>
       <listitem>
 	<para>
-	 Height of gas tank in millimeters.
+	 Height of window in millimeters.
 	</para>
       </listitem>
     </varlistentry>
@@ -70,7 +68,7 @@
       <term><option>-w #</option></term>
       <listitem>
 	<para>
-	 Width of gas tank in millimeters.
+	 Width of window in millimeters.
 	</para>
       </listitem>
     </varlistentry>
@@ -78,7 +76,7 @@
       <term><option>-d #</option></term>
       <listitem>
 	<para>
-	 Depth of gas tank in millimeters.
+	 Depth of window in millimeters.
 	</para>
       </listitem>
     </varlistentry>
@@ -90,57 +88,56 @@
 	</para>
       </listitem>
     </varlistentry>
- </variablelist>
+  </variablelist>
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <example><title>Interactive <command>gastank</command> Session</title>
+  <example><title>Interactive <command>window</command> Session</title>
 
     <para>
     <literallayout class="normal">
-$ gastank
-
-This program constructs a solid gas tank with all
-edges and corners rounded.
+The windows are composed of 2 arb8s and 4 cylinders.
+The front of the window is centered at (0, 0, 0) and
+extends in the negative x-direction the depth of the
+window.
 
 Enter the mged file to be created (25 char max).
-	gastank.g
-Enter the number of gas tanks to create (26 max).
+	window.g
+Enter the number of windows to create (26 max).
 	3
-Enter the height, width, and depth of the gas tank (units mm).
-	300 200 400
-Enter the radius of the corners (units mm).
+Enter the height, width, and depth of the window.
+	200 300 20
+Enter the radius of the corner.
 	30
 
-mged file:  gastank.g
-height of gas tank:  300.000000 mm
-width of gas tank:  200.000000 mm
-depth of gas tank:  400.000000 mm
+mged file:  window.g
+height of window:  200.000000 mm
+width of window:  300.000000 mm
+depth of window:  20.000000 mm
 radius of corner:  30.000000 mm
-number of gas tanks:  3
+number of windows:  3
    </literallayout>
     </para>
   </example>
 
-  <example><title>Single-Line <command>gastank</command> Command</title>
+  <example><title>Single-Line <command>window</command> Command</title>
 
     <para>
-      <userinput>gastank -fgastank.g -n3 -H300 -w200 -d400 -r30</userinput>
+      <userinput>window -fwindow.g -n3 -H200 -w300 -d20 -r30</userinput>
     </para>
   </example>
 
   <para>
-   Both of these examples produce the same result - 3 gas tanks
-   with a height of 300mm, a width of 200mm, a depth of 400mm, and
-   a radius for the corner of 30mm.  The BRL-CAD database file
-   created in each case is gastank.g
+   Both of these examples create a database named window.g containing
+   three windows with a height of 200mm, width of 300mm, depth of 20mm,
+   and corner radius of 30mm.
   </para>
 
 </refsection>
 
 <refsection xml:id="author"><title>AUTHOR</title>
-    <para>Susan A. Coates</para>
+  <para>Susan A. Coates</para>
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
@@ -154,7 +151,7 @@ number of gas tanks:  3
 <refsection xml:id="see_also"><title>SEE ALSO</title>
 
   <para>
-   bolt(1), handle(1), window(1), window_frame(1)
+  bolt(1), handle(1), window_frame(1), gastank(1)
   </para>
 </refsection>
 
