@@ -6,7 +6,6 @@ set(mann_EN
   Z.xml
   adc.xml
   ae.xml
-  alias-pix.xml
   all_sf.xml
   analyze.xml
   anim_cascade.xml
@@ -94,13 +93,11 @@ set(mann_EN
   fracture.xml
   g.xml
   garbage_collect.xml
-  gastank.xml
   gdiff.xml
   gqa.xml
   gr.xml
   graph.xml
   gui.xml
-  handle.xml
   help.xml
   helpdevel.xml
   helplib.xml

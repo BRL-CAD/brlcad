@@ -5,6 +5,7 @@ set(man1_EN
   anim_track.xml
   anim_turn.xml
   ap-pix.xml
+  alias-pix.xml
   asc-nmg.xml
   asc-plot3.xml
   asc2dsp.xml
@@ -107,6 +108,7 @@ set(man1_EN
   g-vrml.xml
   g-x3d.xml
   g2asc.xml
+  gastank.xml
   gdiff.xml
   gencolor.xml
   gif-fb.xml
@@ -114,6 +116,7 @@ set(man1_EN
   glint.xml
   gqa.xml
   halftone.xml
+  handle.xml
   hex.xml
   icv.xml
   iges-g.xml
