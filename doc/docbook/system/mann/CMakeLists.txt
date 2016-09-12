@@ -200,7 +200,7 @@ set(mann_EN
   sed.xml
   setview.xml
   shader.xml
-  shell.xml
+  shells.xml
   showmats.xml
   size.xml
   solids.xml
