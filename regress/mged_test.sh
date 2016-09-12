@@ -368,7 +368,7 @@ who
 Z
 e dall1.s dall2.s dall1.c dall2.c dall3.c dall4.c
 who
-erase_all dall1.s
+erase -r dall1.s
 who
 EOF
 

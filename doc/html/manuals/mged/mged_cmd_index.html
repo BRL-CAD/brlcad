@@ -165,8 +165,6 @@
 <FONT SIZE=2><P></FONT><A HREF="#em"><FONT SIZE=2>em</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#erase"><FONT SIZE=2>erase</FONT></A></TD>
-<TD WIDTH="22%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#erase_all"><FONT SIZE=2>erase_all</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#ev"><FONT SIZE=2>ev</FONT></A></TD>
 </TR>
@@ -1089,7 +1087,7 @@
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="d"></A>d</B> <I>&lt;objects</I>&gt;</DT>
-<DD>The &quot;d&quot; command deletes the specified list of objects from the <I>mged</I> display.  This is a synonym for the <A HREF="#erase">erase</A> command.  Only objects that have been explicitly displayed may be deleted with the &quot;d&quot; command (use the <A HREF="#who">who</A> command to see a list of explicitly displayed objects).  Objects that are displayed as members of explicitly displayed combinations cannot be deleted from the display with this command (see <A HREF="#dall">dall</A> or <A HREF="#erase_all">erase_all</A>).  Note that this has no effect on the <I>BRL-CAD</I> database itself. To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
+<DD>The &quot;d&quot; command deletes the specified list of objects from the <I>mged</I> display.  This is a synonym for the <A HREF="#erase">erase</A> command.  Only objects that have been explicitly displayed may be deleted with the &quot;d&quot; command (use the <A HREF="#who">who</A> command to see a list of explicitly displayed objects).  Objects that are displayed as members of explicitly displayed combinations cannot be deleted from the display with this command (see <A HREF="#dall">dall</A> or <A HREF="#erase">erase -r</A>).  Note that this has no effect on the <I>BRL-CAD</I> database itself. To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>d region1 shapea</DD>
 </DL>
@@ -1098,7 +1096,7 @@
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="dall"></A>dall</B> <I>&lt;objects</I>&gt;</DT>
-<DD>The &quot;dall&quot; command deletes the specified list of objects from the <I>mged</I> display.  This is a synonym for the <A HREF="#erase_all">erase_all</A> command.  This command will allow the user to delete objects that have not been explicitly displayed (unlike the <A HREF="#d">d</A> command).  Note that this has no effect on the <I>BRL-CAD</I> database itself.  To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
+<DD>The &quot;dall&quot; command deletes the specified list of objects from the <I>mged</I> display.  This is a synonym for the <A HREF="#erase">erase -r</A> command.  This command will allow the user to delete objects that have not been explicitly displayed (unlike the <A HREF="#d">d</A> command).  Note that this has no effect on the <I>BRL-CAD</I> database itself.  To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>dall region1 shapea</DD>
 </DL>
@@ -1463,17 +1461,9 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <DD><HR ALIGN="RIGHT"></DD></DIR>
 
 <B><DT>erase</B> <I>&lt;objects</I>&gt;</DT>
-<DD>The &quot;erase&quot; command deletes the specified list of objects from the MGED<I> </I>display.  This is a synonym for the <A HREF="#d">d</A> command.  Only objects that have been explicitly displayed may be deleted with the &quot;erase&quot; command (use the <A HREF="#who">who</A> command to see a list of explicitly displayed objects).  Objects that are displayed as members of explicitly displayed combinations cannot be deleted from the display with this command (see <A HREF="#dall">dall</A> or <A HREF="#erase_all">erase_all</A>).  Note that this has no effect on the <I>BRL-CAD</I> database itself.  To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
+<DD>The &quot;erase&quot; command deletes the specified list of objects from the MGED<I> </I>display.  This is a synonym for the <A HREF="#d">d</A> command.  Only objects that have been explicitly displayed may be deleted with the &quot;erase&quot; command (use the <A HREF="#who">who</A> command to see a list of explicitly displayed objects).  Objects that are displayed as members of explicitly displayed combinations cannot be deleted from the display with this command (see <A HREF="#dall">dall</A> or <A HREF="#erase">erase -r</A>).  Note that this has no effect on the <I>BRL-CAD</I> database itself.  To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>erase region1 shapea</DD>
-</DL>
-</B><FONT SIZE=2><P>-- Delete <I>region1</I> and <I>shapea</I> from the MGED display. </P>
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="erase_all"></A>erase_all</B> <I>&lt;objects</I>&gt;</DT>
-<DD>The &quot;erase_all&quot; command deletes the specified list of objects from the MGED display. This is a synonym for the <A HREF="#dall">dall</A> command.  This command will allow the user to delete objects that have not been explicitly displayed (unlike the <A HREF="#d">d</A> or <A HREF="#erase">erase</A> commands).  Note that this has no effect on the <I>BRL-CAD</I> database itself. To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>erase_all region1 shapea</DD>
 </DL>
 </B><FONT SIZE=2><P>-- Delete <I>region1</I> and <I>shapea</I> from the MGED display. </P>
 <P><HR ALIGN="RIGHT"></P>

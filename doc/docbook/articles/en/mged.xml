@@ -5248,9 +5248,6 @@ x 					delete character
     <link linkend="erase">erase</link>
   </entry>
   <entry>
-    <link linkend="erase_all">erase_all</link>
-  </entry>
-  <entry>
     <link linkend="ev">ev</link>
   </entry>
 </row>
@@ -7915,8 +7912,7 @@ x 					delete character
           explicitly displayed objects). Objects that are displayed as
           members of explicitly displayed combinations cannot be deleted
           from the display with this command (see
-          <link linkend="dall">dall</link> or
-          <link linkend="erase_all">erase_all</link>). Note that this
+          <link linkend="erase">erase -r</link>). Note that this
           has no effect on the <emphasis>BRL-CAD</emphasis> database
           itself. To actually remove objects from the database, use the
           <link linkend="kill">kill</link> command.
@@ -7951,7 +7947,7 @@ x 					delete character
         <para>
           The <quote>dall</quote> command deletes the specified list of
           objects from the <emphasis>mged</emphasis> display. This is a
-          synonym for the <link linkend="erase_all">erase_all</link>
+          synonym for the <link linkend="erase">erase -r</link>
           command. This command will allow the user to delete objects
           that have not been explicitly displayed (unlike the
           <link linkend="d">d</link> command). Note that this has no
@@ -9298,8 +9294,7 @@ x 					delete character
           explicitly displayed objects). Objects that are displayed as
           members of explicitly displayed combinations cannot be deleted
           from the display with this command (see
-          <link linkend="dall">dall</link> or
-          <link linkend="erase_all">erase_all</link>). Note that this
+          <link linkend="erase">erase -r</link>). Note that this
           has no effect on the <emphasis>BRL-CAD</emphasis> database
           itself. To actually remove objects from the database, use the
           <link linkend="kill">kill</link> command.
@@ -9324,36 +9319,6 @@ x 					delete character
   <para>
     <emphasis role="strong"></emphasis>
   </para>
-  <variablelist xml:id="erase_all">
-    <varlistentry>
-      <term>
-        erase_all <emphasis>&lt;objects</emphasis>&gt;
-      </term>
-      <listitem>
-        <para>
-          The <quote>erase_all</quote> command deletes the specified
-          list of objects from the MGED display. This is a synonym for
-          the <link linkend="dall">dall</link> command. This command
-          will allow the user to delete objects that have not been
-          explicitly displayed (unlike the <link linkend="d">d</link> or
-          <link linkend="erase">erase</link> commands). Note that this
-          has no effect on the <emphasis>BRL-CAD</emphasis> database
-          itself. To actually remove objects from the database, use the
-          <link linkend="kill">kill</link> command.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; erase_all region1 shapea
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
   <para>
     – Delete <emphasis>region1</emphasis> and
     <emphasis>shapea</emphasis> from the MGED display.

@@ -1073,7 +1073,7 @@
 ****** [[file:../doc/docbook/system/mann/en/preview.xml][preview.xml]]
 ****** [[file:../doc/docbook/system/mann/en/search.xml][search.xml]]
 ****** [[file:../doc/docbook/system/mann/en/brep.xml][brep.xml]]
-****** [[file:../doc/docbook/system/mann/en/erase_all.xml][erase_all.xml]]
+****** [[file:../doc/docbook/system/mann/en/erase.xml][erase.xml]]
 ****** [[file:../doc/docbook/system/mann/en/expand.xml][expand.xml]]
 ****** [[file:../doc/docbook/system/mann/en/xpush.xml][xpush.xml]]
 ****** [[file:../doc/docbook/system/mann/en/pull.xml][pull.xml]]

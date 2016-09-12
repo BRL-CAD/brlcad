@@ -10,7 +10,7 @@
   <refnamediv xml:id="name">
     <refname>dall</refname>
     <refpurpose>Deletes the specified list of objects from the <emphasis>mged</emphasis>
-    display. This is a synonym for the <command>erase_all</command>command.
+    display. This is a synonym for the <command>erase -r</command>command.
     </refpurpose>
   </refnamediv>
 
@@ -26,7 +26,7 @@
 
     <para>
       Deletes the specified list of objects from the <emphasis>mged</emphasis>
-      display. This is a synonym for the <command>erase_all</command> command.
+      display. This is a synonym for the <command>erase -r</command> command.
       This command will allow the user to delete objects that have not been explicitly
       displayed (unlike the <command>d</command> command). Note that this has no effect on the
       <emphasis>BRL-CAD</emphasis> database itself. To actually remove objects from the database,

@@ -176,7 +176,6 @@ set helplib_data(dgo_clear)		{{} {erase all objects from the display}}
 set helplib_data(dgo_draw)		{{[-A] [-o] [-C#/#/#] [-s] <objects | attribute name/value pairs>} {prepare object(s) for display}}
 set helplib_data(dgo_E)			{{[-C#/#/#] [-s] <objects>} {evaluated display of objects}}
 set helplib_data(dgo_erase)		{{<objects>} {erase objects from the display}}
-set helplib_data(dgo_erase_all)		{{<objects>} {erase all occurrences of objects from the display}}
 set helplib_data(dgo_ev)		{{[-dfnstuvwT] [-P #] <objects>}	{evaluate objects via NMG tessellation}}
 set helplib_data(dgo_get_autoview)	{{}	{get view size and center such that all displayed solids would be in view}}
 set helplib_data(dgo_headSolid)		{{} {return pointer to solid list}}
