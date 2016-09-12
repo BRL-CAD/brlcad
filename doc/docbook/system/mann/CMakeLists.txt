@@ -52,7 +52,6 @@ set(mann_EN
   cp.xml
   cpi.xml
   d.xml
-  dall.xml
   db.xml
   db_glob.xml
   dbconcat.xml

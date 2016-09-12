@@ -15,7 +15,6 @@ set(MGED_TESTS
   copymat.mged
   cpi.mged
   cp.mged
-  dall.mged
   draw_e_erase_d_who.mged
   draw.mged
   erase.mged
