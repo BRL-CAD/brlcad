@@ -1081,7 +1081,6 @@
 ****** [[file:../doc/docbook/system/mann/en/l.xml][l.xml]]
 ****** [[file:../doc/docbook/system/mann/en/handle.xml][handle.xml]]
 ****** [[file:../doc/docbook/system/mann/en/edmater.xml][edmater.xml]]
-****** [[file:../doc/docbook/system/mann/en/export_body.xml][export_body.xml]]
 ****** [[file:../doc/docbook/system/mann/en/tol.xml][tol.xml]]
 ****** [[file:../doc/docbook/system/mann/en/exists.xml][exists.xml]]
 ****** [[file:../doc/docbook/system/mann/en/title.xml][title.xml]]

@@ -5256,9 +5256,6 @@ x 					delete character
     <link linkend="expand">expand</link>
   </entry>
   <entry>
-    <link linkend="export_body">export_body</link>
-  </entry>
-  <entry>
     <link linkend="expand_comb">expand_comb</link>
   </entry>
   <entry>
@@ -9464,28 +9461,6 @@ x 					delete character
   </para>
   <para>
     <emphasis role="strong"></emphasis>
-  </para>
-  <para xml:id="export_body">
-    export_body object file
-  </para>
-  <para>
-    The <quote>export_body</quote> command is used to copy the contents
-    of the specified binary <emphasis>object</emphasis> into the
-    specified <emphasis>file</emphasis>. Currently, only binary objects
-    containing a uniform array of simple objects is supported.
-  </para>
-  <para>
-    Examples:
-  </para>
-  <para>
-    <literal></literal>
-  </para>
-  <para>
-    mged&gt; export_body bin_chars /home/fred/chars
-  </para>
-  <para>
-    – Copy the contents of <quote>bin_chars</quote> into the file
-    <quote>/home/fred/chars</quote>
   </para>
   <para xml:id="expand_comb">
     expand_comb <emphasis>prefix comb …</emphasis>

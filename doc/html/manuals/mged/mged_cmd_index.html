@@ -170,8 +170,6 @@
 <FONT SIZE=2><P></FONT><A HREF="#exit"><FONT SIZE=2>exit</FONT></A></TD>
 <TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#expand"><FONT SIZE=2>expand</FONT></A></TD>
-<TD WIDTH="20%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#export_body"><FONT SIZE=2>export_body</FONT></A></TD>
 <TD WIDTH="22%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#expand_comb"><FONT SIZE=2>expand_comb</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
@@ -1505,13 +1503,6 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Display a list of all database object names that end in &quot;.r&quot;. </P>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="export_body"></A>export_body <I>object file </DT>
-</B></I><DD>The &quot;export_body&quot; command is used to copy the contents of the specified binary <I>object</I> into the specified <I>file</I>.  Currently, only binary objects containing a uniform array of simple objects is supported. </DD>
-<DT></DT>
-<FONT SIZE=4><DD>Examples: </DD>
-</FONT><TT><DD>mged&gt;</TT> <B>export_body bin_chars /home/fred/chars</DD>
-</B><DD>-- Copy the contents of &quot;bin_chars&quot; into the file &quot;/home/fred/chars&quot;</DD>
-<DT><HR ALIGN="RIGHT"></DT>
 <DT><b><a name="expand_comb"></a>expand_comb <i>prefix comb ...</i></DT>
 <DD>The <i>expand_comb</i> will create a new combination object <i>prefix</i>.
 For each Boolean node in the original tree of the combination a new

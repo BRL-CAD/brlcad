@@ -442,7 +442,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 	rt_binunif_dump(bip);
 
     if (RT_G_DEBUG & DEBUG_VOL)
-	bu_log("cmd_export_body() thinks bip->count=%zu\n",
+	bu_log("rt_retrieve_binunif thinks bip->count=%zu\n",
 	       bip->count);
 
     switch (bip->type) {
