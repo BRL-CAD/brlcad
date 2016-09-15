@@ -1846,6 +1846,9 @@ missing on Windows due to needing lex.
 CONVERTERS
 ----------
 
+* add gcv support for the Microstation file format (DGN), probably
+  leveraging http://dgnlib.maptools.org/ (MIT-licensed)
+
 * integrate the submitted x3d-g (Web3D, VRML successor) importer
   (pending patch on sf)
 
