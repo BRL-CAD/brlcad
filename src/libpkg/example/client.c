@@ -37,6 +37,7 @@
 #include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
+#include "bu/vls.h"
 #include "pkg.h"
 #include "ntp.h"
 
@@ -51,32 +52,6 @@ typedef struct _my_data_ {
 
 
 /**
- * print a usage statement when invoked with bad, help, or no arguments
- */
-static void
-usage(const char *msg, const char *argv0)
-{
-    if (msg) {
-	bu_log("%s\n", msg);
-    }
-    bu_log("Client Usage: %s [-p#] [host] file\n\t-p#\tport number to send to (default 2000)\n\thost\thostname or IP address of receiving server\n\tfile\tsome file to transfer\n", argv0 ? argv0 : MAGIC_ID);
-
-    bu_log("\n%s", pkg_version());
-
-    exit(1);
-}
-
-/**
- * simple "valid" port number check used by client and server
- */
-static void
-validate_port(int port) {
-    if (port < 0 || port > 0xffff) {
-	bu_bomb("Invalid negative port range\n");
-    }
-}
-
-/**
  * callback when a HELO message packet is received.
  *
  * We should not encounter this packet specifically since we listened
@@ -84,7 +59,7 @@ validate_port(int port) {
  * handshake setup.
  */
 void
-server_helo(struct pkg_conn *UNUSED(connection), char *buf)
+client_helo(struct pkg_conn *UNUSED(connection), char *buf)
 {
     bu_log("Unexpected HELO encountered\n");
     free(buf);
@@ -95,9 +70,10 @@ server_helo(struct pkg_conn *UNUSED(connection), char *buf)
  * callback when a DATA message packet is received
  */
 void
-server_data(struct pkg_conn *UNUSED(connection), char *buf)
+client_data(struct pkg_conn *connection, char *buf)
 {
-    bu_log("Received file data\n");
+    bu_log("Received file data: %s\n", buf);
+    bu_vls_printf((struct bu_vls *)connection->pkc_user_data, "\n%s\n", buf);
     free(buf);
 }
 
@@ -106,46 +82,32 @@ server_data(struct pkg_conn *UNUSED(connection), char *buf)
  * callback when a CIAO message packet is received
  */
 void
-server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
+client_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 {
-    bu_log("CIAO encountered\n");
+    bu_log("CIAO encountered: %s\n", buf);
     free(buf);
 }
 
 
 /**
- * start up a client that connects to the given server, and sends
- * serialized file data.
+ * start up a client that connects to the given server.
  */
 void
-run_client(const char *server, int port, const char *file)
+run_client(const char *server, int port, struct bu_vls *all_msgs)
 {
     my_data stash;
     char s_port[MAX_DIGITS + 1] = {0};
     long bytes = 0;
-    FILE *fp = (FILE *)NULL;
     int pkg_result = 0;
-    static const unsigned int TPKG_BUFSIZE = 2048;
-    char *buffer;
     /** our callbacks for each message type */
     struct pkg_switch callbacks[] = {
-	{MSG_HELO, server_helo, "HELO", NULL},
-	{MSG_DATA, server_data, "DATA", NULL},
-	{MSG_CIAO, server_ciao, "CIAO", NULL},
+	{MSG_HELO, client_helo, "HELO", NULL},
+	{MSG_DATA, client_data, "DATA", NULL},
+	{MSG_CIAO, client_ciao, "CIAO", NULL},
 	{0, 0, (char *)0, (void*)0}
     };
 
-    buffer = (char *)bu_calloc(TPKG_BUFSIZE, 1, "buffer allocation");
-
-    /* make sure the file can be opened */
-    fp = fopen(file, "rb");
-    if (fp == NULL) {
-	bu_log("Unable to open %s\n", file);
-	bu_bomb("Unable to read file\n");
-    }
-
-    /* open a connection to the server */
-    validate_port(port);
+    callbacks[1].pks_user_data = (void *)all_msgs;
 
     snprintf(s_port, MAX_DIGITS, "%d", port);
     stash.connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
@@ -166,8 +128,7 @@ run_client(const char *server, int port, const char *file)
 	bu_bomb("ERROR: Unable to communicate with the server\n");
     }
 
-
-    /* Server should have a file to send us.
+    /* Server should have a message to send us.
      */
     bu_log("Processing data from server\n");
     do {
@@ -196,11 +157,8 @@ run_client(const char *server, int port, const char *file)
 	} else {
 	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
 	}
-	bu_log("buffer: %s\n", stash.connection->pkc_inbuf);
-    } while (stash.connection->pkc_type != MSG_CIAO);
 
-    /* print the CIAO message */
-    bu_log("buffer: %s\n", stash.connection->pkc_inbuf);
+    } while (stash.connection->pkc_type != MSG_CIAO);
 
     /* let the server know we're done. */
     bytes = pkg_send(MSG_CIAO, "BYE", 4, stash.connection);
@@ -210,8 +168,6 @@ run_client(const char *server, int port, const char *file)
 
     /* flush output and close */
     pkg_close(stash.connection);
-    fclose(fp);
-    bu_free(buffer, "buffer release");
 
     return;
 }
@@ -221,61 +177,21 @@ run_client(const char *server, int port, const char *file)
  * main application for both the client and server
  */
 int
-main(int argc, char *argv[]) {
-    const char * const argv0 = argv[0];
-    int c;
+main() {
     int port = 2000;
-
-    /* client stuff */
-    const char *server_name = NULL;
-    const char *file = NULL;
-
-    /* process the command-line arguments after the application name */
-    while ((c = bu_getopt(argc, argv, "p:P:hH?")) != -1) {
-	if (bu_optopt == '?') c='h';
-	switch (c) {
-	    case 'p':
-	    case 'P':
-		port = atoi(bu_optarg);
-		break;
-	    case 'h':
-	    case 'H':
-		/* help */
-		usage(NULL, argv0);
-		break;
-	    default:
-		usage("ERROR: Unknown argument\n", argv0);
-	}
-    }
-
-    argc -= bu_optind;
-    argv += bu_optind;
-
-
-    /* prep up the client */
-    if (argc < 1) {
-	usage("ERROR: Missing file argument\n", argv0);
-    } else if (argc > 2) {
-	usage("ERROR: Too many arguments provided\n", argv0);
-    }
-
-    if (argc < 2) {
-	server_name = "127.0.0.1";
-    } else {
-	server_name = *argv++;
-    }
-    file = *argv++;
-
-    /* make sure the file exists */
-    if (!bu_file_exists(file, NULL)) {
-	bu_log("File does not exist: %s\n", file);
-	return 1;
-    }
+    const char *server_name = "127.0.0.1";
+    struct bu_vls *all_msgs;
+    BU_GET(all_msgs, struct bu_vls);
+    bu_vls_init(all_msgs);
 
     /* fire up the client */
     bu_log("Connecting to %s, port %d\n", server_name, port);
-    run_client(server_name, port, file);
+    run_client(server_name, port, all_msgs);
 
+    bu_log("All messages: %s\n", bu_vls_addr(all_msgs));
+
+    bu_vls_free(all_msgs);
+    BU_PUT(all_msgs, struct bu_vls);
     return 0;
 }
 

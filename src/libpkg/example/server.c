@@ -40,32 +40,6 @@
 #include "ntp.h"
 
 /**
- * print a usage statement when invoked with bad, help, or no arguments
- */
-static void
-usage(const char *msg, const char *argv0)
-{
-    if (msg) {
-	bu_log("%s\n", msg);
-    }
-    bu_log("Server Usage: %s [-p#]\n\t-p#\tport number to listen on (default 2000)\n", argv0 ? argv0 : MAGIC_ID);
-
-    bu_log("\n%s", pkg_version());
-
-    exit(1);
-}
-
-/**
- * simple "valid" port number check used by client and server
- */
-static void
-validate_port(int port) {
-    if (port < 0 || port > 0xffff) {
-	bu_bomb("Invalid negative port range\n");
-    }
-}
-
-/**
  * callback when a HELO message packet is received.
  *
  * We should not encounter this packet specifically since we listened
@@ -86,7 +60,7 @@ server_helo(struct pkg_conn *UNUSED(connection), char *buf)
 void
 server_data(struct pkg_conn *UNUSED(connection), char *buf)
 {
-    bu_log("Received file data\n");
+    bu_log("Received file data: %s\n", buf);
     free(buf);
 }
 
@@ -97,7 +71,7 @@ server_data(struct pkg_conn *UNUSED(connection), char *buf)
 void
 server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 {
-    bu_log("CIAO encountered\n");
+    bu_log("CIAO encountered: %s\n", buf);
     free(buf);
 }
 
@@ -113,7 +87,6 @@ run_server(int port) {
     /* int pkg_result  = 0; */
     char *buffer, *msgbuffer;
     long bytes = 0;
-    FILE *fp;
 
     /** our server callbacks for each message type */
     struct pkg_switch callbacks[] = {
@@ -122,8 +95,6 @@ run_server(int port) {
 	{MSG_CIAO, server_ciao, "CIAO", NULL},
 	{0, 0, (char *)0, (void*)0}
     };
-
-    validate_port(port);
 
     /* start up the server on the given port */
     snprintf(portname, MAX_DIGITS, "%d", port);
@@ -167,28 +138,26 @@ run_server(int port) {
     } while (client == PKC_NULL);
 
     /* have client, will send file */
-    fp = fopen("lempar.c", "rb");
     buffer = (char *)bu_calloc(2048, 1, "buffer allocation");
+    snprintf(buffer, 2048, "This is a message from the server.");
 
-    if (fp == NULL) {
-	bu_log("Unable to open lempar.c\n");
-	bu_bomb("Unable to read file\n");
+    /* send the message to the server */
+    bytes = pkg_send(MSG_DATA, buffer, (size_t)strlen(buffer), client);
+    if (bytes < 0) {
+	pkg_close(client);
+	bu_log("Unable to successfully send message");
+	bu_free(buffer, "buffer release");
+	return;
     }
 
-    /* send the file data to the server */
-    while (!feof(fp) && !ferror(fp)) {
-	bytes = fread(buffer, 1, 2048, fp);
-	bu_log("Read %ld bytes from lempar.c\n", bytes);
-
-	if (bytes > 0) {
-	    bytes = pkg_send(MSG_DATA, buffer, (size_t)bytes, client);
-	    if (bytes < 0) {
-		pkg_close(client);
-		bu_log("Unable to successfully send data");
-		bu_free(buffer, "buffer release");
-		return;
-	    }
-	}
+    /* send another message to the server */
+    snprintf(buffer, 2048, "Yet another message from the server.");
+    bytes = pkg_send(MSG_DATA, buffer, (size_t)strlen(buffer), client);
+    if (bytes < 0) {
+	pkg_close(client);
+	bu_log("Unable to successfully send message");
+	bu_free(buffer, "buffer release");
+	return;
     }
 
     /* Tell the client we're done */
@@ -198,7 +167,7 @@ run_server(int port) {
     }
 
     /* Confirm the client is done */
-    buffer = pkg_bwaitfor (MSG_CIAO , client);
+    buffer = pkg_bwaitfor(MSG_CIAO , client);
     bu_log("buffer: %s\n", buffer);
 
     /* shut down the server, one-time use */
@@ -209,39 +178,8 @@ run_server(int port) {
  * main application for both the client and server
  */
 int
-main(int argc, char *argv[]) {
-    const char * const argv0 = argv[0];
-    int c;
+main() {
     int port = 2000;
-
-    if (argc > 2) {
-	usage("ERROR: Incorrect number of arguments\n", argv[0]);
-    }
-
-    /* process the command-line arguments after the application name */
-    while ((c = bu_getopt(argc, argv, "p:P:hH?")) != -1) {
-	if (bu_optopt == '?') c='h';
-	switch (c) {
-	    case 'p':
-	    case 'P':
-		port = atoi(bu_optarg);
-		break;
-	    case 'h':
-	    case 'H':
-		/* help */
-		usage(NULL, argv0);
-		break;
-	    default:
-		usage("ERROR: Unknown argument\n", argv0);
-	}
-    }
-
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    if (argc > 0) {
-	usage("ERROR: Unexpected extra server arguments\n", argv0);
-    }
 
     /* ignore broken pipes, on platforms where we have SIGPIPE */
 #ifdef SIGPIPE
