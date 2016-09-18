@@ -38,7 +38,7 @@
 #include "bu/getopt.h"
 #include "bu/vls.h"
 #include "pkg.h"
-#include "ntp.h"
+#include "ncp.h"
 
 /*
  * callback when a HELO message packet is received.

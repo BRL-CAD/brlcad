@@ -39,7 +39,7 @@
 #include "bu/file.h"
 #include "bu/vls.h"
 #include "pkg.h"
-#include "ntp.h"
+#include "ncp.h"
 
 /* callback when an unexpected message packet is received. */
 void
