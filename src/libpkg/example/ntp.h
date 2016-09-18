@@ -1,4 +1,4 @@
-/*                          N T P . H
+/*                          N C P . H
  * BRL-CAD
  *
  * Copyright (c) 2006-2016 United States Government as represented by
@@ -17,16 +17,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libpkg/example/ntp.h
+/** @file libpkg/example/ncp.h
  *
- * Example file transfer protocol definition
+ * Example network communications protocol definition
  *
  */
 
 #ifndef LIBPKG_EXAMPLE_NTP_H
 #define LIBPKG_EXAMPLE_NTP_H
 
-/* simple network transport protocol. connection starts with a HELO,
+/* simple network communication protocol. connection starts with a HELO,
  * then a variable number of GEOM/ARGS messages, then a CIAO to end.
  */
 #define MAGIC_ID	"TPKG"
@@ -37,7 +37,7 @@
 /* maximum number of digits on a port number */
 #define MAX_DIGITS      5
 
-#endif /* LIBPKG_EXAMPLE_NTP_H */
+#endif /* LIBPKG_EXAMPLE_NCP_H */
 
 /*
  * Local Variables:

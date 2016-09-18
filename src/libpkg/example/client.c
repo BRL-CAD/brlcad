@@ -41,34 +41,16 @@
 #include "pkg.h"
 #include "ntp.h"
 
-/* used by the client to pass the dbip and opened transfer file
- * descriptor.
- */
-typedef struct _my_data_ {
-    struct pkg_conn *connection;
-    const char *server;
-    int port;
-} my_data;
-
-
-/**
- * callback when a HELO message packet is received.
- *
- * We should not encounter this packet specifically since we listened
- * for it before beginning processing of packets as part of a simple
- * handshake setup.
- */
+/* callback when an unexpected message packet is received. */
 void
-client_helo(struct pkg_conn *UNUSED(connection), char *buf)
+client_unexpected(struct pkg_conn *UNUSED(connection), char *buf)
 {
-    bu_log("Unexpected HELO encountered\n");
+    bu_log("Unexpected message package encountered\n");
     free(buf);
 }
 
 
-/**
- * callback when a DATA message packet is received
- */
+/* callback when a DATA message packet is received */
 void
 client_data(struct pkg_conn *connection, char *buf)
 {
@@ -77,71 +59,66 @@ client_data(struct pkg_conn *connection, char *buf)
     free(buf);
 }
 
-
-/**
- * callback when a CIAO message packet is received
- */
+/* callback when a CIAO message packet is received */
 void
 client_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 {
-    bu_log("CIAO encountered: %s\n", buf);
+    bu_log("CIAO received from server: %s\n", buf);
     free(buf);
 }
 
-
-/**
- * start up a client that connects to the given server.
- */
-void
-run_client(const char *server, int port, struct bu_vls *all_msgs)
-{
-    my_data stash;
+int
+main() {
+    int port = 2000;
+    const char *server = "127.0.0.1";
+    struct bu_vls all_msgs = BU_VLS_INIT_ZERO;
+    struct pkg_conn *connection;
     char s_port[MAX_DIGITS + 1] = {0};
     long bytes = 0;
     int pkg_result = 0;
     /** our callbacks for each message type */
     struct pkg_switch callbacks[] = {
-	{MSG_HELO, client_helo, "HELO", NULL},
+	{MSG_HELO, client_unexpected, "HELO", NULL},
 	{MSG_DATA, client_data, "DATA", NULL},
 	{MSG_CIAO, client_ciao, "CIAO", NULL},
 	{0, 0, (char *)0, (void*)0}
     };
 
-    callbacks[1].pks_user_data = (void *)all_msgs;
+    /* Collect data from more than one server communication for later use */
+    callbacks[1].pks_user_data = (void *)&all_msgs;
 
+    /* fire up the client */
+    bu_log("Connecting to %s, port %d\n", server, port);
     snprintf(s_port, MAX_DIGITS, "%d", port);
-    stash.connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
-    if (stash.connection == PKC_ERROR) {
+    connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
+    if (connection == PKC_ERROR) {
 	bu_log("Connection to %s, port %d, failed.\n", server, port);
 	bu_bomb("ERROR: Unable to open a connection to the server\n");
     }
-    stash.server = server;
-    stash.port = port;
-    stash.connection->pkc_switch = callbacks;
-
+    connection->pkc_switch = callbacks;
 
     /* let the server know we're cool. */
-    bytes = pkg_send(MSG_HELO, MAGIC_ID, strlen(MAGIC_ID) + 1, stash.connection);
+    bytes = pkg_send(MSG_HELO, MAGIC_ID, strlen(MAGIC_ID) + 1, connection);
     if (bytes < 0) {
-	pkg_close(stash.connection);
+	pkg_close(connection);
 	bu_log("Connection to %s, port %d, seems faulty.\n", server, port);
 	bu_bomb("ERROR: Unable to communicate with the server\n");
     }
 
     /* Server should have a message to send us.
-     */
+    */
     bu_log("Processing data from server\n");
     do {
 	/* process packets potentially received in a processing callback */
-	pkg_result = pkg_process(stash.connection);
+	pkg_result = pkg_process(connection);
 	if (pkg_result < 0) {
 	    bu_log("Unable to process packets? Weird.\n");
-	} else {
+	} else if (pkg_result > 0) {
 	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
 	}
 
 	/* suck in data from the network */
-	pkg_result = pkg_suckin(stash.connection);
+	pkg_result = pkg_suckin(connection);
 	if (pkg_result < 0) {
 	    bu_log("Seemed to have trouble sucking in packets.\n");
 	    break;
@@ -151,47 +128,31 @@ run_client(const char *server, int port, struct bu_vls *all_msgs)
 	}
 
 	/* process new packets received */
-	pkg_result = pkg_process(stash.connection);
+	pkg_result = pkg_process(connection);
 	if (pkg_result < 0) {
 	    bu_log("Unable to process packets? Weird.\n");
-	} else {
+	} else if (pkg_result > 0) {
 	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
 	}
 
-    } while (stash.connection->pkc_type != MSG_CIAO);
+    } while (connection->pkc_type != MSG_CIAO);
+
+    /* server's done, send our own message back to it */
+    bytes = pkg_send(MSG_DATA, "Message from client", 20, connection);
 
     /* let the server know we're done. */
-    bytes = pkg_send(MSG_CIAO, "BYE", 4, stash.connection);
+    bytes = pkg_send(MSG_CIAO, "DONE", 5, connection);
+    bytes = pkg_send(MSG_CIAO, "BYE", 4, connection);
     if (bytes < 0) {
 	bu_log("Unable to cleanly disconnect from %s, port %d.\n", server, port);
     }
 
     /* flush output and close */
-    pkg_close(stash.connection);
+    pkg_close(connection);
 
-    return;
-}
+    bu_log("All messages: %s\n", bu_vls_addr(&all_msgs));
 
-
-/**
- * main application for both the client and server
- */
-int
-main() {
-    int port = 2000;
-    const char *server_name = "127.0.0.1";
-    struct bu_vls *all_msgs;
-    BU_GET(all_msgs, struct bu_vls);
-    bu_vls_init(all_msgs);
-
-    /* fire up the client */
-    bu_log("Connecting to %s, port %d\n", server_name, port);
-    run_client(server_name, port, all_msgs);
-
-    bu_log("All messages: %s\n", bu_vls_addr(all_msgs));
-
-    bu_vls_free(all_msgs);
-    BU_PUT(all_msgs, struct bu_vls);
+    bu_vls_free(&all_msgs);
     return 0;
 }
 

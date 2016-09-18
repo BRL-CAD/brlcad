@@ -36,10 +36,11 @@
 #include "bu/str.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
+#include "bu/vls.h"
 #include "pkg.h"
 #include "ntp.h"
 
-/**
+/*
  * callback when a HELO message packet is received.
  *
  * We should not encounter this packet specifically since we listened
@@ -53,21 +54,16 @@ server_helo(struct pkg_conn *UNUSED(connection), char *buf)
     free(buf);
 }
 
-
-/**
- * callback when a DATA message packet is received
- */
+/* callback when a DATA message packet is received */
 void
 server_data(struct pkg_conn *UNUSED(connection), char *buf)
 {
-    bu_log("Received file data: %s\n", buf);
+    bu_log("Received message from client: %s\n", buf);
     free(buf);
 }
 
 
-/**
- * callback when a CIAO message packet is received
- */
+/* callback when a CIAO message packet is received */
 void
 server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 {
@@ -75,19 +71,16 @@ server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
     free(buf);
 }
 
-
-/**
- * start up a server that listens for a single client.
- */
-void
-run_server(int port) {
+int
+main() {
+    int port = 2000;
     struct pkg_conn *client;
     int netfd;
     char portname[MAX_DIGITS + 1] = {0};
     /* int pkg_result  = 0; */
-    char *buffer, *msgbuffer;
+    struct bu_vls buffer = BU_VLS_INIT_ZERO;
+    char *msgbuffer;
     long bytes = 0;
-
     /** our server callbacks for each message type */
     struct pkg_switch callbacks[] = {
 	{MSG_HELO, server_helo, "HELO", NULL},
@@ -95,6 +88,11 @@ run_server(int port) {
 	{MSG_CIAO, server_ciao, "CIAO", NULL},
 	{0, 0, (char *)0, (void*)0}
     };
+
+    /* ignore broken pipes, on platforms where we have SIGPIPE */
+#ifdef SIGPIPE
+    (void)signal(SIGPIPE, SIG_IGN);
+#endif
 
     /* start up the server on the given port */
     snprintf(portname, MAX_DIGITS, "%d", port);
@@ -107,6 +105,7 @@ run_server(int port) {
      * handshake that waits for a HELO message from the client.  if it
      * doesn't get one, the server continues to wait.
      */
+    bu_log("Listening on port %d\n", port);
     do {
 	client = pkg_getclient(netfd, callbacks, NULL, 0);
 	if (client == PKC_NULL) {
@@ -137,28 +136,15 @@ run_server(int port) {
 	}
     } while (client == PKC_NULL);
 
-    /* have client, will send file */
-    buffer = (char *)bu_calloc(2048, 1, "buffer allocation");
-    snprintf(buffer, 2048, "This is a message from the server.");
-
-    /* send the message to the server */
-    bytes = pkg_send(MSG_DATA, buffer, (size_t)strlen(buffer), client);
-    if (bytes < 0) {
-	pkg_close(client);
-	bu_log("Unable to successfully send message");
-	bu_free(buffer, "buffer release");
-	return;
-    }
+    /* send the first message to the server */
+    bu_vls_sprintf(&buffer, "This is a message from the server.");
+    bytes = pkg_send(MSG_DATA, bu_vls_addr(&buffer), (size_t)bu_vls_strlen(&buffer)+1, client);
+    if (bytes < 0) goto failure;
 
     /* send another message to the server */
-    snprintf(buffer, 2048, "Yet another message from the server.");
-    bytes = pkg_send(MSG_DATA, buffer, (size_t)strlen(buffer), client);
-    if (bytes < 0) {
-	pkg_close(client);
-	bu_log("Unable to successfully send message");
-	bu_free(buffer, "buffer release");
-	return;
-    }
+    bu_vls_sprintf(&buffer, "Yet another message from the server.");
+    bytes = pkg_send(MSG_DATA, bu_vls_addr(&buffer), (size_t)bu_vls_strlen(&buffer)+1, client);
+    if (bytes < 0) goto failure;
 
     /* Tell the client we're done */
     bytes = pkg_send(MSG_CIAO, "DONE", 5, client);
@@ -166,30 +152,24 @@ run_server(int port) {
 	bu_log("Connection to client seems faulty.\n");
     }
 
+    /* Wait to hear from the client */
+    do {
+	(void)pkg_process(client);
+	(void)pkg_suckin(client);
+	(void)pkg_process(client);
+    } while (client->pkc_type != MSG_CIAO);
+
+
     /* Confirm the client is done */
-    buffer = pkg_bwaitfor(MSG_CIAO , client);
-    bu_log("buffer: %s\n", buffer);
+    (void)pkg_bwaitfor(MSG_CIAO , client);
 
     /* shut down the server, one-time use */
     pkg_close(client);
-}
-
-/**
- * main application for both the client and server
- */
-int
-main() {
-    int port = 2000;
-
-    /* ignore broken pipes, on platforms where we have SIGPIPE */
-#ifdef SIGPIPE
-    (void)signal(SIGPIPE, SIG_IGN);
-#endif
-
-    /* fire up the server */
-    bu_log("Listening on port %d\n", port);
-    run_server(port);
-
+    return 0;
+failure:
+    pkg_close(client);
+    bu_log("Unable to successfully send message");
+    bu_vls_free(&buffer);
     return 0;
 }
 
