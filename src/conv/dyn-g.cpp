@@ -52,9 +52,15 @@ struct dyna_element_shell {
     long nodal_pnts[4];
 };
 
+struct dyna_part {
+    const char *heading;
+    long PID;
+};
+
 struct dyna_world {
     struct bu_ptbl *nodes;
     struct bu_ptbl *element_shells;
+    struct bu_ptbl *parts;
 };
 
 /* See if keyword matches pattern ^keyword* */
@@ -65,10 +71,9 @@ keyword_match(const char *key, std::string line)
     return 0;
 }
 
-/* Scrub spaces - this may not be necessary... */
-/*
+/* Scrub spaces from beginning and end of string */
 void
-scrub_column(std::string &col)
+scrub_string(std::string &col)
 {
     size_t startpos = col.find_first_not_of(" \t");
     if (std::string::npos != startpos) {
@@ -79,7 +84,48 @@ scrub_column(std::string &col)
 	col = col.substr(0 ,endpos+1);
     }
 }
-*/
+
+/* There is a lot of information (potentially) stored in a part.  For now, we
+ * care about the HEADING and the part id. */
+void
+process_parts(std::ifstream &infile, int offset, struct dyna_world *world)
+{
+    std::string line;
+    int end_part = 0;
+    infile.clear();
+    infile.seekg(offset);
+    int line_cnt = 0;
+    struct dyna_part *part;
+    BU_GET(part, struct dyna_part);
+    part->heading = NULL;
+    part->PID = -1;
+    while (std::getline(infile, line) && !end_part) {
+	if (line_cnt == 2 || line.c_str()[0] == '*') {
+	    end_part = 1;
+	    break;
+	}
+	if (line_cnt == 0) {
+	    scrub_string(line);
+	    part->heading = bu_strdup(line.c_str());
+	    line_cnt++;
+	    continue;
+	}
+	if (line_cnt == 1) {
+	    std::string col = line.substr(0,10);
+	    char *endptr;
+	    long pid = strtol(col.c_str(), &endptr, 10);
+	    if (endptr == col.c_str()) {
+		bu_log("Error: string to long didn't work: %s\n", col.c_str());
+		part->PID = -1;
+	    } else {
+		part->PID = pid;
+	    }
+	    line_cnt++;
+	    continue;
+	}
+    }
+    bu_ptbl_ins(world->parts, (long *)part);
+}
 
 void
 process_nodes(std::ifstream &infile, int offset, struct dyna_world *world)
@@ -213,37 +259,59 @@ main(int argc, char **argv)
 	bu_exit(1, "Error: unable to open %s for reading.\n", argv[1]);
     }
 
+    /* Initialize the dyna world storage */
     BU_GET(world, struct dyna_world);
     BU_GET(world->nodes, struct bu_ptbl);
     BU_GET(world->element_shells, struct bu_ptbl);
+    BU_GET(world->parts, struct bu_ptbl);
     bu_ptbl_init(world->nodes, 8, "init node tbl");
     bu_ptbl_init(world->element_shells, 8, "init element tbl");
+    bu_ptbl_init(world->parts, 8, "init part tbl");
 
+    /* all_head will hold all the parts/regions */
     BU_LIST_INIT(&all_head.l);
 
+
+    /* TODO: This is inefficient and ugly - I should just call the processing
+     * bits, return the new line pos if needed, and continue. */
     std::string line;
-    int nodepos = 0;
-    int espos = 0;
+    std::set<int> nodes;
+    std::set<int> parts;
+    std::set<int> element_shells;
     while (std::getline(infile, line)) {
 	if (line.c_str()[0] == '*') {
 	    size_t endpos = line.find_last_not_of(" \t");
 	    std::string keyword = line.substr(1,endpos+1);
 	    //printf("file position: %d\n", (int)infile.tellg());
-	    if (keyword_match("ELEMENT", keyword)) {
-		printf("Have element type: %s\n", keyword.c_str());
-	    }
 	    if (BU_STR_EQUAL(keyword.c_str(), "ELEMENT_SHELL")) {
-		espos = (int)infile.tellg();
+		element_shells.insert((int)infile.tellg());
+		continue;
+	    }
+	    if (BU_STR_EQUAL(keyword.c_str(), "PART")) {
+		parts.insert((int)infile.tellg());
+		continue;
 	    }
 	    if (keyword_match("NODE", keyword)) {
-		printf("%s\n", keyword.c_str());
-		nodepos = (int)infile.tellg();
+		nodes.insert((int)infile.tellg());
+		continue;
+	    }
+	    if (keyword_match("ELEMENT", keyword)) {
+		printf("Warning: have unhandled element type: %s\n", keyword.c_str());
 	    }
 	}
     }
-    process_nodes(infile, nodepos, world);
-    process_element_shell(infile, espos, world);
+    for (std::set<int>::iterator it = nodes.begin(); it != nodes.end(); it++) {
+	process_nodes(infile, *it, world);
+    }
+    for (std::set<int>::iterator it = element_shells.begin(); it != element_shells.end(); it++) {
+	process_element_shell(infile, *it, world);
+    }
+    for (std::set<int>::iterator it = parts.begin(); it != parts.end(); it++) {
+	process_parts(infile, *it, world);
+    }
 
+
+    /* We need to reference the various dyna objects by their id numbers - build maps */
     std::map<long,long> NID_to_world;
     for (size_t i = 0; i < BU_PTBL_LEN(world->nodes); i++) {
 	struct dyna_node *n = (struct dyna_node *)BU_PTBL_GET(world->nodes, i);
@@ -254,7 +322,14 @@ main(int argc, char **argv)
 	struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, i);
 	EID_to_world.insert(std::pair<long,long>(es->EID, (long)i));
     }
+    std::map<long,long> PID_to_world;
+    for (size_t i = 0; i < BU_PTBL_LEN(world->parts); i++) {
+	struct dyna_part *p = (struct dyna_part *)BU_PTBL_GET(world->parts, i);
+	PID_to_world.insert(std::pair<long,long>(p->PID, (long)i));
+    }
 
+
+    /* Time for a .g file */
     struct rt_wdb *fd_out;
     if ((fd_out=wdb_fopen(argv[2])) == NULL) {
 	bu_log("Error: cannot open BRL-CAD file (%s)\n", argv[2]);
@@ -330,7 +405,9 @@ main(int argc, char **argv)
 	struct wmember head;
 	BU_LIST_INIT(&head.l);
 	struct bu_vls rname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&rname, "%ld.r", *it);
+	long wid = PID_to_world.find(*it)->second;
+	struct dyna_part *p = (struct dyna_part *)BU_PTBL_GET(world->parts, wid);
+	bu_vls_sprintf(&rname, "%s.r", p->heading);
 	/* steal this from step-g coloring - really need to fold into a libbu random color function
 	 * once the API gets figured out... */
 	unsigned char rgb[3];
