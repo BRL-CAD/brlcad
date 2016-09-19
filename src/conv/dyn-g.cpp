@@ -195,6 +195,7 @@ process_element_shell(std::ifstream &infile, int offset, struct dyna_world *worl
 int
 main(int argc, char **argv)
 {
+    struct wmember all_head;
     struct dyna_world *world;
 
     if (argc != 3) {
@@ -217,6 +218,8 @@ main(int argc, char **argv)
     BU_GET(world->element_shells, struct bu_ptbl);
     bu_ptbl_init(world->nodes, 8, "init node tbl");
     bu_ptbl_init(world->element_shells, 8, "init element tbl");
+
+    BU_LIST_INIT(&all_head.l);
 
     std::string line;
     int nodepos = 0;
@@ -319,13 +322,32 @@ main(int argc, char **argv)
 	    eind++;
 	}
 
-	struct bu_vls ptname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&ptname, "%ld.bot", *it);
-	mk_bot(fd_out, bu_vls_addr(&ptname), RT_BOT_SURFACE, RT_BOT_UNORIENTED, NULL, NIDs.size(), EIDs.size() * 2, bot_vertices, bot_faces, NULL, NULL);
-	bu_vls_free(&ptname);
+	struct bu_vls sname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&sname, "%ld.bot", *it);
+	mk_bot(fd_out, bu_vls_addr(&sname), RT_BOT_SURFACE, RT_BOT_UNORIENTED, NULL, NIDs.size(), EIDs.size() * 2, bot_vertices, bot_faces, NULL, NULL);
 
+	/* Make containing region */
+	struct wmember head;
+	BU_LIST_INIT(&head.l);
+	struct bu_vls rname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&rname, "%ld.r", *it);
+	/* steal this from step-g coloring - really need to fold into a libbu random color function
+	 * once the API gets figured out... */
+	unsigned char rgb[3];
+	fastf_t hsv[3] = { 0.0, 0.5, 0.95 };
+	double golden_ratio_conjugate = 0.618033988749895;
+	fastf_t h = drand48();
+	h = fmod(h+golden_ratio_conjugate,1.0);
+	*hsv = h * 360.0;
+	bu_hsv_to_rgb(hsv,rgb);
+	(void)mk_addmember(bu_vls_addr(&sname), &head.l, NULL, WMOP_UNION);
+	mk_comb(fd_out, bu_vls_addr(&rname), &head.l, 1, (char *)NULL, (char *)NULL, rgb, *it, 0, 0, 0, 0, 0, 0);
+	(void)mk_addmember(bu_vls_addr(&rname), &all_head.l, NULL, WMOP_UNION);
+	bu_vls_free(&sname);
+	bu_vls_free(&rname);
     }
 
+    mk_comb(fd_out, "all", &all_head.l, 0, (char *)NULL, (char *)NULL, NULL, 0, 0, 0, 0, 0, 0, 0);
 
     wdb_close(fd_out);
     rt_clean_resource_complete(NULL, &rt_uniresource);
