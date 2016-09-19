@@ -305,12 +305,12 @@ main(int argc, char **argv)
 	    int np3 = (int)NID_to_array.find(es->nodal_pnts[2])->second;
 	    int np4 = (int)NID_to_array.find(es->nodal_pnts[3])->second;
 	    bot_faces[(eind*6)+0] = np1;
-	    bot_faces[(eind*6)+1] = np3;
-	    bot_faces[(eind*6)+2] = np2;
+	    bot_faces[(eind*6)+1] = np2;
+	    bot_faces[(eind*6)+2] = np3;
 	    if (np4 != -1) {
 		bot_faces[(eind*6)+3] = np1;
-		bot_faces[(eind*6)+4] = np4;
-		bot_faces[(eind*6)+5] = np3;
+		bot_faces[(eind*6)+4] = np3;
+		bot_faces[(eind*6)+5] = np4;
 	    } else {
 		bot_faces[(eind*6)+3] = -1;
 		bot_faces[(eind*6)+4] = -1;
