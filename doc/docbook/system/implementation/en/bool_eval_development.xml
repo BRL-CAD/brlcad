@@ -398,10 +398,19 @@ ON_Intersect(const ON_Surface *surfA,
 	</para>
 	<warning>
 	  <para>
-	    The OpenNURBS array classes do not check for out-of-bounds indexing. This isn't a problem in the simple case where items are added with <function>Append</function> and elements <inlineequation><mathphrase>[0, </mathphrase></inlineequation><function>Count()</function><inlineequation><mathphrase> - 1]</mathphrase></inlineequation> are iterated over.
+	    The OpenNURBS array classes do not check for out-of-bounds
+	    indexing. This isn't a problem in the simple case where
+	    items are added with <function>Append</function> and
+	    elements <inlineequation><mathphrase>[0, </mathphrase></inlineequation><function>Count()</function><inlineequation><mathphrase>
+	    - 1]</mathphrase></inlineequation> are iterated over.
 	  </para>
 	  <para>
-	    However, if the array will be a fixed size whose items are assigned in a non-sequential order, both the <emphasis>capacity</emphasis> and <emphasis>count</emphasis> should be set, or else the reported <function>Count</function> will be incorrect, and copying arrays by assignment won't work.
+	    However, if the array will be a fixed size whose items are
+	    assigned in a non-sequential order, both
+	    the <emphasis>capacity</emphasis>
+	    and <emphasis>count</emphasis> should be set, or else the
+	    reported <function>Count</function> will be incorrect, and
+	    copying arrays by assignment won't work.
 	  </para>
 	  <programlisting>
 	<![CDATA[
@@ -414,17 +423,28 @@ ON_Intersect(const ON_Surface *surfA,
       <section>
         <title>Memory</title>
         <para>
-          Curves and surfaces are nearly always allocated on the heap and referenced by pointers, both in the OpenNURBS library, and in the NURBS boolean evaluation implementation.
+          Curves and surfaces are nearly always allocated on the heap
+          and referenced by pointers, both in the OpenNURBS library,
+          and in the NURBS boolean evaluation implementation.
         </para>
         <para>
-          Mostly these allocations are simply done with the <code>new</code> keyword as with any other class. However, a few classes, notably <classname>ON_Brep</classname> have a <function>New()</function> function that wraps the allocation, which is preferred over using <code>new</code> directly for technical reasons specified in <filename>opennurbs_brep.h</filename>.
+          Mostly these allocations are simply done with
+          the <code>new</code> keyword as with any other
+          class. However, a few classes,
+          notably <classname>ON_Brep</classname> have
+          a <function>New()</function> function that wraps the
+          allocation, which is preferred over using <code>new</code>
+          directly for technical reasons specified
+          in <filename>opennurbs_brep.h</filename>.
         </para>
         <para>
           Pointers to objects, curves in particular, are generally
           "stolen" to avoid having to create a new copy of the object.
           <warning>
             <para>
-              Classes containing heap-allocated objects delete them in their destructors. Proper stealing of pointers requires the instance's members be set to NULL.
+              Classes containing heap-allocated objects delete them in
+              their destructors. Proper stealing of pointers requires
+              the instance's members be set to NULL.
             </para>
 	    <programlisting>
 	      <![CDATA[
@@ -448,14 +468,25 @@ for (int i = 0; i < csx_events.Count(); ++i) {
       <section>
         <title>Tolerance Tests</title>
         <para>
-          The OpenNURBS routines make extensive use of the symbol <varname>ON_ZERO_TOLERANCE</varname> in calculations to test if a result is to be considered equal to zero, or if two values are to be considered equal.
+          The OpenNURBS routines make extensive use of the
+          symbol <varname>ON_ZERO_TOLERANCE</varname> in calculations
+          to test if a result is to be considered equal to zero, or if
+          two values are to be considered equal.
         </para>
         <note>
           <para>
-            The NURBS boolean evaluation implementation generally uses the function <function>ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE)</function> to check if values are near zero, or to check if two values are identical (e.g <function>ON_NearZero(t - last_t)</function>).
+            The NURBS boolean evaluation implementation generally uses
+            the function <function>ON_NearZero(double x, double
+            tolerance = ON_ZERO_TOLERANCE)</function> to check if
+            values are near zero, or to check if two values are
+            identical (e.g <function>ON_NearZero(t -
+            last_t)</function>).
           </para>
           <para>
-            This function is also used to determine if objects are close enough to be considered intersecting: <function>ON_NearZero(pt.DistanceTo(other.pt), INTERSECTION_TOL)</function>.
+            This function is also used to determine if objects are
+            close enough to be considered
+            intersecting: <function>ON_NearZero(pt.DistanceTo(other.pt),
+            INTERSECTION_TOL)</function>.
           </para>
         </note>
       </section>
@@ -469,48 +500,111 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 	  scaled.
 	</para>
 	<para>
-	  The <function>operator[]</function> functions are notable because coordinates are not actually stored as arrays in these classes, but rather in the named members <varname>x</varname>, <varname>y</varname>, and <varname>z</varname>. So while accessing coordinates as <varname>pt[0]</varname>, <varname>pt[1]</varname> is possible, the more readable <varname>pt.x</varname>, <varname>pt.y</varname>, is more typically seen.
+	  The <function>operator[]</function> functions are notable
+	  because coordinates are not actually stored as arrays in
+	  these classes, but rather in the named
+	  members <varname>x</varname>, <varname>y</varname>,
+	  and <varname>z</varname>. So while accessing coordinates
+	  as <varname>pt[0]</varname>, <varname>pt[1]</varname> is
+	  possible, the more
+	  readable <varname>pt.x</varname>, <varname>pt.y</varname>,
+	  is more typically seen.
 	</para>
 
 	<para>
-	  The most frequently used member function is <function><![CDATA[DistanceTo(const ON_3dPoint &p)]]></function>, used to check inter-point distances, either as part of an intersection test or to identify closeable gaps or duplicate points.
+	  The most frequently used member function
+	  is <function><![CDATA[DistanceTo(const ON_3dPoint
+	  &p)]]></function>, used to check inter-point distances,
+	  either as part of an intersection test or to identify
+	  closeable gaps or duplicate points.
 	</para>
 	<note>
 	  <para>
-	    <classname>ON_2dPoint</classname> objects can be, and are, safely passed to functions that take <classname>ON_3dPoint</classname> arguments. The <classname>ON_3dPoint</classname> arguments are constructed from the provided <classname>ON_2dPoint</classname> objects, with their <varname>z</varname> coordinates set to 0.
+	    <classname>ON_2dPoint</classname> objects can be, and are,
+	    safely passed to functions that
+	    take <classname>ON_3dPoint</classname>
+	    arguments. The <classname>ON_3dPoint</classname> arguments
+	    are constructed from the
+	    provided <classname>ON_2dPoint</classname> objects, with
+	    their <varname>z</varname> coordinates set to 0.
 	  </para>
           <para>
-            The NURBS boolean evaluation implementation generally constructs 2D curves by populating an <classname>ON_3dPointArray</classname> with 2D points, rather than using an <classname>ON_2dPointArray</classname>, as the 3D version of the class (besides having additional useful member functions), can be used to initialize an <classname>ON_PolylineCurve</classname>.
+            The NURBS boolean evaluation implementation generally
+            constructs 2D curves by populating
+            an <classname>ON_3dPointArray</classname> with 2D points,
+            rather than using
+            an <classname>ON_2dPointArray</classname>, as the 3D
+            version of the class (besides having additional useful
+            member functions), can be used to initialize
+            an <classname>ON_PolylineCurve</classname>.
           </para>
 	</note>
       </section>
       <section>
 	<title>Bounding Boxes</title>
         <para>
-        <classname>ON_BoundingBox</classname> is returned by the <function>BoundingBox</function>, <function>GetTightBoundingBox</function>, and <function>GetBBox</function> functions, which are implemented by all geometry classes inheriting from <classname>ON_Geometry</classname>.
+          <classname>ON_BoundingBox</classname> is returned by
+          the <function>BoundingBox</function>, <function>GetTightBoundingBox</function>,
+          and <function>GetBBox</function> functions, which are
+          implemented by all geometry classes inheriting
+          from <classname>ON_Geometry</classname>.
         </para>
         <para>
-          The most commonly used members of <classname>ON_BoundingBox</classname> are <function>Diagonal</function> (usually in an expression such as <varname>bbox.Diagonal().Length()</varname> used as a scalar size estimate), and <function>IsPointIn</function> and <function>MinimumDistanceTo</function> (used in intersection tests).
+          The most commonly used members
+          of <classname>ON_BoundingBox</classname>
+          are <function>Diagonal</function> (usually in an expression
+          such as <varname>bbox.Diagonal().Length()</varname> used as
+          a scalar size estimate), and <function>IsPointIn</function>
+          and <function>MinimumDistanceTo</function> (used in
+          intersection tests).
         </para>
       </section>
       <section>
 	<title>Domain Intervals</title>
 	<para>
-	  <classname>ON_Interval</classname> is used to represent the domains of parametric curves and surfaces. The domain <emphasis>starts</emphasis> at <varname>m_t[0]</varname> and <emphasis>ends</emphasis> at <varname>m_t[1]</varname>. These members can be set directly or via <function>Set(double t0, double t1)</function>.
+	  <classname>ON_Interval</classname> is used to represent the
+	  domains of parametric curves and surfaces. The
+	  domain <emphasis>starts</emphasis>
+	  at <varname>m_t[0]</varname> and <emphasis>ends</emphasis>
+	  at <varname>m_t[1]</varname>. These members can be set
+	  directly or via <function>Set(double t0, double
+	  t1)</function>.
 	</para>
 	<warning>
 	  <para>
-	    The start, end, and overall length of the domain are <emphasis>arbitrary</emphasis>, and <varname>m_t[0]</varname> need not be less than <varname>m_t[1]</varname>. If the numerically smaller or larger domain endpoint is needed, these should be accessed via the <function>Min</function> and <function>Max</function> member functions.
+	    The start, end, and overall length of the domain
+	    are <emphasis>arbitrary</emphasis>,
+	    and <varname>m_t[0]</varname> need not be less
+	    than <varname>m_t[1]</varname>. If the numerically smaller
+	    or larger domain endpoint is needed, these should be
+	    accessed via the <function>Min</function>
+	    and <function>Max</function> member functions.
 	  </para>
 	</warning>
 	<para>
-	  The <function>ParameterAt(double x)</function> function translates a <emphasis>normalized</emphasis> parameter (from a domain starting at 0.0 and ending at 1.0) into a <emphasis>real</emphasis> parameter. Thus, the start of the domain is at <varname>domain.ParameterAt(0.0)</varname>, the midpoint is at <varname>domain.ParameterAt(.5)</varname>, etc.
+	  The <function>ParameterAt(double x)</function> function
+	  translates a <emphasis>normalized</emphasis> parameter (from
+	  a domain starting at 0.0 and ending at 1.0) into
+	  a <emphasis>real</emphasis> parameter. Thus, the start of
+	  the domain is at <varname>domain.ParameterAt(0.0)</varname>,
+	  the midpoint is
+	  at <varname>domain.ParameterAt(.5)</varname>, etc.
 	</para>
       </section>
       <section>
 	<title>Parametric Curves</title>
 	<para>
-	  The most frequently used geometry class is <classname>ON_Curve</classname>, a generic container for parametric curves. The curve is interrogated by using the <function>PointAt(double t)</function> method to evaluate points at arbitrary values inside the curve's domain, which is specified by the <classname>ON_Interval</classname> returned by the <function>Domain()</function> method. The start and end points of the curve have dedicated access methods, <function>PointAtStart()</function> and <function>PointAtEnd()</function>.
+	  The most frequently used geometry class
+	  is <classname>ON_Curve</classname>, a generic container for
+	  parametric curves. The curve is interrogated by using
+	  the <function>PointAt(double t)</function> method to
+	  evaluate points at arbitrary values inside the curve's
+	  domain, which is specified by
+	  the <classname>ON_Interval</classname> returned by
+	  the <function>Domain()</function> method. The start and end
+	  points of the curve have dedicated access
+	  methods, <function>PointAtStart()</function>
+	  and <function>PointAtEnd()</function>.
 	</para>
 	<warning>
 	  <para>
@@ -525,7 +619,10 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 	  </para>
 	</warning>
 	<para>
-	  All the <function>PointAt</function> methods return an <classname>ON_3dPoint</classname>, though in the common case where <classname>ON_Curve</classname> objects are representing 2D trim curves, the z coordinate will be 0.0.
+	  All the <function>PointAt</function> methods return
+	  an <classname>ON_3dPoint</classname>, though in the common
+	  case where <classname>ON_Curve</classname> objects are
+	  representing 2D trim curves, the z coordinate will be 0.0.
 	</para>
 	<para>
 	  It is sometimes necessary to reverse a curve's domain.  This
@@ -576,21 +673,45 @@ ON_Curve* Duplicate()
 }
 	</programlisting>
 	<para>
-	  This function is common to all OpenNURBS geometry classes, but curves are by far the most frequently duplicated objects. However, if curves are simply being retained from a working set of container objects, the curve pointers are generally "stolen" rather than copied, with curve members set to <constant>NULL</constant> so that the curves aren't destructed with the containers.
+	  This function is common to all OpenNURBS geometry classes,
+	  but curves are by far the most frequently duplicated
+	  objects. However, if curves are simply being retained from a
+	  working set of container objects, the curve pointers are
+	  generally "stolen" rather than copied, with curve members
+	  set to <constant>NULL</constant> so that the curves aren't
+	  destructed with the containers.
 	</para>
       </section>
       <section>
 	<title>Lines</title>
 	<para>
-	  <classname>ON_Line</classname> is used to represent an infinite line, defined by two points, <varname>from</varname> and <varname>to</varname>.
+	  <classname>ON_Line</classname> is used to represent an
+	  infinite line, defined by two
+	  points, <varname>from</varname> and <varname>to</varname>.
 	</para>
 
 	<para>
-	  <classname>ON_Line</classname> is not a subclass of <classname>ON_Curve</classname> and should not be confused with <classname>ON_LineCurve</classname> (which has an <classname>ON_Line</classname> member), though it does have some of the same methods as an <classname>ON_Curve</classname> class, including <function>PointAt(double t)</function>. However, because the line has an infinite domain, it can be evaluated at any <varname>t</varname> value, though evaluating at 0.0 returns <varname>from</varname> and evaluating at 1.0 returns <varname>to</varname>, as if the line was a parametric curve with a domain between 0.0 and 1.0.
+	  <classname>ON_Line</classname> is not a subclass
+	  of <classname>ON_Curve</classname> and should not be
+	  confused with <classname>ON_LineCurve</classname> (which has
+	  an <classname>ON_Line</classname> member), though it does
+	  have some of the same methods as
+	  an <classname>ON_Curve</classname> class,
+	  including <function>PointAt(double t)</function>. However,
+	  because the line has an infinite domain, it can be evaluated
+	  at any <varname>t</varname> value, though evaluating at 0.0
+	  returns <varname>from</varname> and evaluating at 1.0
+	  returns <varname>to</varname>, as if the line was a
+	  parametric curve with a domain between 0.0 and 1.0.
 	</para>
 
 	<para>
-	  <classname>ON_Line</classname> has helpful line-specific methods such as <function><![CDATA[ClosestPointTo(const ON_3dPoint &point)]]></function>. Again, because the line is treated as infinite, this function doesn't necessarily return a point in the segment between <varname>from</varname> and <varname>to</varname>.
+	  <classname>ON_Line</classname> has helpful line-specific
+	  methods such as <function><![CDATA[ClosestPointTo(const
+	  ON_3dPoint &point)]]></function>. Again, because the line is
+	  treated as infinite, this function doesn't necessarily
+	  return a point in the segment
+	  between <varname>from</varname> and <varname>to</varname>.
 	</para>
 
 	<para>
@@ -599,7 +720,14 @@ ON_Curve* Duplicate()
       <section>
 	<title>Surfaces</title>
 	<para>
-	  An <classname>ON_Surface</classname> has a similar interface to an <classname>ON_Curve</classname>, but adapted to support the surface's two domains, <parameter>u</parameter> and <parameter>v</parameter> (sometimes called <parameter>s</parameter> and <parameter>t</parameter>) which correspond with 0 and 1 (first example) or <parameter>x</parameter> and <parameter>y</parameter> (second example).
+	  An <classname>ON_Surface</classname> has a similar interface
+	  to an <classname>ON_Curve</classname>, but adapted to
+	  support the surface's two domains, <parameter>u</parameter>
+	  and <parameter>v</parameter> (sometimes
+	  called <parameter>s</parameter>
+	  and <parameter>t</parameter>) which correspond with 0 and 1
+	  (first example) or <parameter>x</parameter>
+	  and <parameter>y</parameter> (second example).
 	</para>
 	<example>
 	  <title>Projecting an arbitrary <inlineequation><mathphrase>(u, v)</mathphrase></inlineequation> point into 3D.</title>
@@ -625,16 +753,37 @@ ON_3dPoint trim_midpt_3d = surface->PointAt(trim_midpt_uv.x, trim_midpt_uv.y);
       <section>
 	<title>Boundary Representation Objects</title>
 	<para>
-	  <classname>ON_Brep</classname> is the top-level OpenNURBS class used to represent the two input objects and the evaluated result of the <function>ON_Boolean</function> function. The geometry is encoded as a collection of faces, which for our purposes should be topologically connected to enclose solid volumes.
+	  <classname>ON_Brep</classname> is the top-level OpenNURBS
+	  class used to represent the two input objects and the
+	  evaluated result of the <function>ON_Boolean</function>
+	  function. The geometry is encoded as a collection of faces,
+	  which for our purposes should be topologically connected to
+	  enclose solid volumes.
 	</para>
 	<para>
-	  An object's faces are <classname>ON_BrepFace</classname> objects stored in the <classname>ON_Brep</classname> face array, <varname>m_F</varname>.
+	  An object's faces are <classname>ON_BrepFace</classname>
+	  objects stored in the <classname>ON_Brep</classname> face
+	  array, <varname>m_F</varname>.
 	</para>
 	<para>
-	  Each <classname>ON_BrepFace</classname> is defined as the subset of an <classname>ON_Surface</classname> lying inside the face's <glossterm>outerloop</glossterm> (a.k.a. the <glossterm>face boundary</glossterm>) and outside all of its <glossterm>innerloops</glossterm> (a.k.a. <glossterm>trim loops</glossterm> or just <glossterm>trims</glossterm>). 
+	  Each <classname>ON_BrepFace</classname> is defined as the
+	  subset of an <classname>ON_Surface</classname> lying inside
+	  the face's <glossterm>outerloop</glossterm>
+	  (a.k.a. the <glossterm>face boundary</glossterm>) and
+	  outside all of its <glossterm>innerloops</glossterm>
+	  (a.k.a. <glossterm>trim loops</glossterm> or
+	  just <glossterm>trims</glossterm>).
 	</para>
 	<para>
-	  The loops of an <classname>ON_BrepFace</classname> are listed in its loop array <varname>m_li</varname> as indexes into the associated <classname>ON_Brep</classname> object's <classname>ON_BrepLoop</classname> array, <varname>m_L</varname>. The first (and possibly only) loop listed in the face's loop index array is the outerloop, and all following loops are inner trim loops. The type of the loop is also recorded in the loop's <varname>m_type</varname> member.
+	  The loops of an <classname>ON_BrepFace</classname> are
+	  listed in its loop array <varname>m_li</varname> as indexes
+	  into the associated <classname>ON_Brep</classname>
+	  object's <classname>ON_BrepLoop</classname>
+	  array, <varname>m_L</varname>. The first (and possibly only)
+	  loop listed in the face's loop index array is the outerloop,
+	  and all following loops are inner trim loops. The type of
+	  the loop is also recorded in the
+	  loop's <varname>m_type</varname> member.
 	</para>
 	<programlisting>
 brep->m_L[brep->m_F[0]->m_li[0]].m_type;      // ON_BrepLoop::outer
@@ -732,8 +881,8 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
           <caption>
             <para>
               Two surfaces (red and blue) intersect in a curve
-              (white). The normals of both surfaces are parallel
-              to each other everywhere along the curve.
+              (white). The normals of both surfaces are parallel to
+              each other everywhere along the curve.
             </para>
           </caption>
         </figure>
@@ -750,8 +899,8 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
           <caption>
             <para>
               Two surfaces (red and blue) intersect in a curve
-              (yellow). The normals of both surfaces are not
-              parallel to each other along the curve.
+              (yellow). The normals of both surfaces are not parallel
+              to each other along the curve.
             </para>
           </caption>
         </figure>
@@ -813,21 +962,52 @@ for (int i = 0; i < x_event.Count(); ++i) {
       <section>
         <title>2D vs 3D</title>
         <para>
-          Implicit in working with parametric geometry is that some operations are done in 2D while others are done in 3D and it's very important to know the dimension currently being worked in at all times.
+          Implicit in working with parametric geometry is that some
+          operations are done in 2D while others are done in 3D and
+          it's very important to know the dimension currently being
+          worked in at all times.
         </para>
         <para>
-          As mentioned in the section above on 2D and 3D points, 3D classes are often used in the implementation to store 2D points, and thus are not a reliable indication that an operation is happening in 3D.
+          As mentioned in the section above on 2D and 3D points, 3D
+          classes are often used in the implementation to store 2D
+          points, and thus are not a reliable indication that an
+          operation is happening in 3D.
         </para>
         <para>
-          Being that operations in 2D tend to be a lot simpler, 2D is normally the dimension being worked in. However, because parametric curves and surfaces of different objects have different parameterizations, determining where two objects intersect can't be done by comparing 2D parameters; it must happen in 3D.
+          Being that operations in 2D tend to be a lot simpler, 2D is
+          normally the dimension being worked in. However, because
+          parametric curves and surfaces of different objects have
+          different parameterizations, determining where two objects
+          intersect can't be done by comparing 2D parameters; it must
+          happen in 3D.
         </para>
         <section>
           <title>Naming Convention</title>
           <para>
-            Generally, when 2D and 3D operations are taking place near one another, you'll see a naming convention being used to disambiguate 2D and 3D data. 3D identifiers are unadorned, while 2D names will be suffixed with 1/2 or A/B.
+            Generally, when 2D and 3D operations are taking place near
+            one another, you'll see a naming convention being used to
+            disambiguate 2D and 3D data. 3D identifiers are unadorned,
+            while 2D names will be suffixed with 1/2 or A/B.
           </para>
           <para>
-            Suppose for example we have three arrays of corresponding points that are samples along an intersection curve between two surfaces. The 3D array might simply be named <varname>points</varname>. The corresponding 2D points in the domains of the two surfaces involved are then  very likely to be named <varname>points1</varname> and <varname>points2</varname> or <varname>pointsA</varname> and <varname>pointsB</varname>. Whether the 1/2 or A/B suffixes are used typically depends on whether the input surfaces have names like <varname>surf1</varname>/<varname>surf2</varname> or <varname>surfA</varname>/<varname>surfB</varname>. The latter is more likely to be used when processing intersection events, as members of the OpenNURBS intersection event classes are named <varname>m_a</varname> and <varname>m_b</varname>, etc.
+            Suppose for example we have three arrays of corresponding
+            points that are samples along an intersection curve
+            between two surfaces. The 3D array might simply be
+            named <varname>points</varname>. The corresponding 2D
+            points in the domains of the two surfaces involved are
+            then very likely to be named <varname>points1</varname>
+            and <varname>points2</varname>
+            or <varname>pointsA</varname>
+            and <varname>pointsB</varname>. Whether the 1/2 or A/B
+            suffixes are used typically depends on whether the input
+            surfaces have names
+            like <varname>surf1</varname>/<varname>surf2</varname>
+            or <varname>surfA</varname>/<varname>surfB</varname>. The
+            latter is more likely to be used when processing
+            intersection events, as members of the OpenNURBS
+            intersection event classes are
+            named <varname>m_a</varname> and <varname>m_b</varname>,
+            etc.
           </para>
         </section>
         <section>
@@ -843,11 +1023,30 @@ for (int i = 0; i < x_event.Count(); ++i) {
             <varname>isect_tolB</varname>.
           </para>
           <para>
-            2D tolerance values for curves and surfaces are derived from the 3D tolerance value using the <function>tolerance_2d_from_3d</function> routines. The length of the diagonal of the 3D bounding box of the curve or surface is divided by the length of the 2D domain to get a rough estimate of what distance in the 2D domain corresponds to the 3D tolerance distance. In other words, the hope is that two points on a <varname>curveA</varname> or <varname>surfA</varname> that are <varname>isect_tolA</varname> units apart in 2D, will evaluate to two 3D points that are <varname>isect_tol</varname> units apart in 3D.
+            2D tolerance values for curves and surfaces are derived
+            from the 3D tolerance value using
+            the <function>tolerance_2d_from_3d</function>
+            routines. The length of the diagonal of the 3D bounding
+            box of the curve or surface is divided by the length of
+            the 2D domain to get a rough estimate of what distance in
+            the 2D domain corresponds to the 3D tolerance distance. In
+            other words, the hope is that two points on
+            a <varname>curveA</varname> or <varname>surfA</varname>
+            that are <varname>isect_tolA</varname> units apart in 2D,
+            will evaluate to two 3D points that
+            are <varname>isect_tol</varname> units apart in 3D.
           </para>
           <warning>
             <para>
-              The difference between <varname>isect_tol</varname> and <varname>isect_tolA</varname> and <varname>isect_tolB</varname> can be arbitrarily large, so it's import that the correct tolerance is used in all cases. However, it's sometimes tempting to use the wrong tolerance, for instance using the 2D <varname>isect_tolA</varname> in a 3D intersection test simply because the 3D points were evaluated from 2D points in the <varname>surfA</varname> domain.
+              The difference between <varname>isect_tol</varname>
+              and <varname>isect_tolA</varname>
+              and <varname>isect_tolB</varname> can be arbitrarily
+              large, so it's import that the correct tolerance is used
+              in all cases. However, it's sometimes tempting to use
+              the wrong tolerance, for instance using the
+              2D <varname>isect_tolA</varname> in a 3D intersection
+              test simply because the 3D points were evaluated from 2D
+              points in the <varname>surfA</varname> domain.
             </para>
           </warning>
         </section>
@@ -900,36 +1099,79 @@ for (int i = 0; i < x_event.Count(); ++i) {
           error.
         </para>
         <para>
-          Over the course of the evaluation, the same data is interrogated and processed a number of times. If ignored, the error introduced in one stage of the evaluation can grow over subsequent stages, causing an incorrect determination that leaves a curve unclosed, a surface unsplit, and ultimately an incorrect evaluated result.
+          Over the course of the evaluation, the same data is
+          interrogated and processed a number of times. If ignored,
+          the error introduced in one stage of the evaluation can grow
+          over subsequent stages, causing an incorrect determination
+          that leaves a curve unclosed, a surface unsplit, and
+          ultimately an incorrect evaluated result.
         </para>
         <para>
-          As a consequence, it's generally a good idea to remove fuzziness when you find it, and avoid algorithms that introduce more error.
+          As a consequence, it's generally a good idea to remove
+          fuzziness when you find it, and avoid algorithms that
+          introduce more error.
         </para>
         <section>
           <title>Clamping</title>
           <para>
-            Start and end points of closed curves are rarely identical. So if a curve is found to be closed within tolerance, it's a good idea to actually set the end point equal to the start point. Similarly, if an interval of a domain is calculated whose endpoints are within tolerance of the domain endpoints, the entire domain should be used.
+            Start and end points of closed curves are rarely
+            identical. So if a curve is found to be closed within
+            tolerance, it's a good idea to actually set the end point
+            equal to the start point. Similarly, if an interval of a
+            domain is calculated whose endpoints are within tolerance
+            of the domain endpoints, the entire domain should be used.
           </para>
           <note>
             <para>
-              Producing subcurves of existing curves is a common operation in the NURBS boolean evaluation implementation. This is a prime example of an operation that can introduce fuzziness into the evaluation. For example, we may be splitting a curve to remove a portion of it, and end up with two new curves with endpoints that used to align when part of the original curve, but no longer do.
+              Producing subcurves of existing curves is a common
+              operation in the NURBS boolean evaluation
+              implementation. This is a prime example of an operation
+              that can introduce fuzziness into the evaluation. For
+              example, we may be splitting a curve to remove a portion
+              of it, and end up with two new curves with endpoints
+              that used to align when part of the original curve, but
+              no longer do.
             </para>
             <para>
-              The <function>Split</function> method of <classname>ON_Curve</classname> can be used to produce subcurves, but in the implementation it's much preferred to use the <function>sub_curve</function> function defined in <filename>intersect.cpp</filename> which wraps <function>Split</function> and correctly handles clamping of curve parameters to domain endpoints.
+              The <function>Split</function> method
+              of <classname>ON_Curve</classname> can be used to
+              produce subcurves, but in the implementation it's much
+              preferred to use the <function>sub_curve</function>
+              function defined in <filename>intersect.cpp</filename>
+              which wraps <function>Split</function> and correctly
+              handles clamping of curve parameters to domain
+              endpoints.
             </para>
           </note>
         </section>
         <section>
           <title>Iterated Solutions</title>
           <para>
-            The iterative method used to solve points on parametric curves and surfaces is expected to produce better answers given better inputs and more iterations. However, our algorithms can't always produce sufficient inputs, and the value the solver converges on isn't always the correct one.
+            The iterative method used to solve points on parametric
+            curves and surfaces is expected to produce better answers
+            given better inputs and more iterations. However, our
+            algorithms can't always produce sufficient inputs, and the
+            value the solver converges on isn't always the correct
+            one.
           </para>
           <para>
-            This fuzziness produced in the solver's results can be mitigated in the context of finding intersection curves for example, because we solve many points and fit a curve between them. So, one unsolved point on the curve isn't going to cause an evaluation failure.
+            This fuzziness produced in the solver's results can be
+            mitigated in the context of finding intersection curves
+            for example, because we solve many points and fit a curve
+            between them. So, one unsolved point on the curve isn't
+            going to cause an evaluation failure.
           </para>
           <warning>
             <para>
-              It's tempting to test curve characteristics or make inside/outside determinations, etc. by using the <function>ON_Intersect</function> functions. However, there's a persistent risk that the error in the iteratively solved results will cause incorrect determinations that cascade into larger problems over the course of the evaluation. For this reason, the <function>ON_Intersect</function> functions should be avoided whenever possible.
+              It's tempting to test curve characteristics or make
+              inside/outside determinations, etc. by using
+              the <function>ON_Intersect</function>
+              functions. However, there's a persistent risk that the
+              error in the iteratively solved results will cause
+              incorrect determinations that cascade into larger
+              problems over the course of the evaluation. For this
+              reason, the <function>ON_Intersect</function> functions
+              should be avoided whenever possible.
             </para>
           </warning>
         </section>
@@ -939,10 +1181,16 @@ for (int i = 0; i < x_event.Count(); ++i) {
   <section>
     <title>Debugging NURBS Boolean Evaluations</title>
     <para>
-      The current ongoing development activity for NURBS Boolean Evaluation is debugging specific evaluation cases in order to find bugs and unhandled geometry cases in the implementation to support the evaluation of more geometry.
+      The current ongoing development activity for NURBS Boolean
+      Evaluation is debugging specific evaluation cases in order to
+      find bugs and unhandled geometry cases in the implementation to
+      support the evaluation of more geometry.
     </para>
     <para>
-      Because NURBS Boolean Evaluation is an immature feature still in development, new changes are made in a separate branch of the BRL-CAD code repository, <link>https://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/branches/brep-debug/</link>.
+      Because NURBS Boolean Evaluation is an immature feature still in
+      development, new changes are made in a separate branch of the
+      BRL-CAD code
+      repository, <link>https://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/branches/brep-debug/</link>.
     </para>
     <section>
       <title>Debug Plotting</title>
@@ -1011,8 +1259,8 @@ for (int i = 0; i < x_event.Count(); ++i) {
             For evaluations involving more than two objects, the final
             brep NURBS object is made by converting two leaf objects
             into breps, performing a boolean evaluation on them,
-            converting the next relevant object to brep and combining it
-            with the first intermediate evaluation to make a second
+            converting the next relevant object to brep and combining
+            it with the first intermediate evaluation to make a second
             intermediate evaluation, and so on up the tree.
           </para>
           <para>
@@ -1182,7 +1430,8 @@ for (int i = 0; i < x_event.Count(); ++i) {
 	  </itemizedlist>
 	  <para>
 	    The isocsx curves are written in the
-	    <function>find_overlap_boundary_curves</function> function in
+	    <function>find_overlap_boundary_curves</function> function
+	    in
 	    <filename>src/libbrep/intersect.cpp</filename>.
 	  </para>
 	</section>
@@ -1213,8 +1462,8 @@ for (int i = 0; i < x_event.Count(); ++i) {
 		together.
 	      </para>
 	      <para>
-		After each curve is drawn independently, all curves are
-		drawn at the same time.
+		After each curve is drawn independently, all curves
+		are drawn at the same time.
 	      </para>
 	      <para>
 		This subcommand doesn't draw any contextual geometry;
@@ -1235,7 +1484,8 @@ for (int i = 0; i < x_event.Count(); ++i) {
                 <caption>
                   <para>
                     An evaluated brep is drawn shaded to give context
-                    to the linked intersection curves (yellow) drawn by
+                    to the linked intersection curves (yellow) drawn
+                    by
                     <command>dplot bool1.dplot lcurves</command>.
                   </para>
                 </caption>
@@ -1694,9 +1944,9 @@ Press [Enter] to show surface-surface intersection 13
               <emphasis>brep1</emphasis> transversely intersects the
               two similar faces of <emphasis>brep2</emphasis>
               (<varname>ssx_index</varname> 0, 1, 4, 5). Two edges of
-              each of these faces lie in the same plane (the X-Y
-              plane and another plane parallel to it) as two of the
-              four smaller-area faces of the other brep
+              each of these faces lie in the same plane (the X-Y plane
+              and another plane parallel to it) as two of the four
+              smaller-area faces of the other brep
               (<varname>ssx_index</varname> 2, 3, 6, 7, 8, 9, 11,
               12). These two pairs of smaller area faces also
               intersect each other in square overlap intersections
@@ -1741,9 +1991,10 @@ Archer> dplot bool1.dplot ssx 13
               intersections that make each edge of the square overlap.
             </para>
             <para>
-              The <function>isocsx &lt;ssx_index&gt;</function> subcommand of
-              the <function>dplot</function> command is used to check
-              that all isocurve-surface intersections were attempted.
+              The <function>isocsx &lt;ssx_index&gt;</function>
+              subcommand of the <function>dplot</function> command is
+              used to check that all isocurve-surface intersections
+              were attempted.
             </para>
             <screen>
 Archer> dplot bool1.dplot ssx 10
