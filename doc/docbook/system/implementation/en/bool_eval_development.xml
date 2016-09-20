@@ -173,7 +173,12 @@
           reading and writing 3DM files.</para></footnote> Additional
           functionality implemented for BRL-CAD is primarily contained
           within the boundary representation and ray trace libraries
-          (LIBBREP and LIBRT).
+          (LIBBREP and LIBRT). <footnote><para>Unless specified
+          otherwise, file references are for LIBBREP source files.  As
+          published, LIBBREP implementation files reside in
+          the <filename>src/libbrep/</filename> directory with public
+          header files residing in the <filename>include/</filename>
+          directory of a BRL-CAD source hierarchy.</para></footnote>
         </para>
 
         <para>
@@ -182,7 +187,7 @@
           Combinations of Sculptured Solids.</emphasis> (S. Krishnan
           et al., 1995). The main implementation file for the Boolean
           Evaluation algorithm is
-          <filename>src/libbrep/boolean.cpp</filename>.
+          <filename>boolean.cpp</filename>.
         </para>
         <para>
           The NURBS surface-surface intersection algorithm is based on
@@ -192,14 +197,14 @@
           2008). A detailed outline of the algorithm, as implemented,
           appears in the main implementation file for the NURBS
           Surface-Surface intersection algorithm,
-          <filename>src/libbrep/intersection.cpp</filename>.
+          <filename>intersect.cpp</filename>.
         </para>
       </section>        
     </section>
     <section>
       <title>Descriptions of Major Functions</title>
       <section>
-	<title><filename>src/libbrep/boolean.cpp</filename></title>
+	<title><filename>boolean.cpp</filename></title>
         <para>
           The <function>ON_Boolean</function> function performs a
           single evaluation. A single execution of the
@@ -275,7 +280,7 @@ get_face_intersection_curves(
 	</para>
       </section>
       <section>
-	<title><filename>src/libbrep/intersect.cpp</filename></title>
+	<title><filename>intersect.cpp</filename></title>
 	<synopsis>
 	<![CDATA[
 int
@@ -328,7 +333,7 @@ ON_Intersect(const ON_Surface *surfA,
 	  which subsurfaces potentially intersect. This subdivision
 	  repeats to a fixed depth determined by the constant
 	  <constant>MAX_SSI_DEPTH</constant> (defined in
-	  <filename>src/libbrep/brep_defines.h</filename>).
+	  <filename>brep_defines.h</filename>).
         </para>
         <para>
           Subsurfaces that lie completely inside an overlap region
@@ -465,8 +470,8 @@ ON_Intersect(const ON_Surface *surfA,
           notably <classname>ON_Brep</classname> have
           a <function>New()</function> function that wraps the
           allocation, which is preferred over using <code>new</code>
-          directly for technical reasons specified
-          in <filename>opennurbs_brep.h</filename>.
+          directly for technical reasons specified in the
+          OpenNURBS <filename>opennurbs_brep.h</filename> header.
         </para>
         <para>
           Pointers to objects, curves in particular, are generally
@@ -947,8 +952,8 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
           The <varname>m_type</varname> of an intersection event
           determines how values in the
           <varname>m_a/m_b/m_A/m_B</varname> array members of the
-          event instance are to be interpreted (documented in
-          <filename>opennurbs_x.h</filename>).
+          event instance are to be interpreted (documented in the
+          OpenNURBS <filename>opennurbs_x.h</filename> header).
         </para>
 	<warning>
 	  <para>
@@ -1326,7 +1331,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
           In the development branch, the NURBS Boolean Evaluation
           source code contains additional calls to
           <classname>DebugPlot</classname> functions (implemented in
-          <filename>src/libbrep/debug_plot.*</filename>) that create
+          <filename>debug_plot.cpp</filename>) that create
           wireframe visualizations of data produced during the
           evaluations.
         </para>
@@ -1420,7 +1425,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
 	  <para>
 	    The ssx pairs are recorded in the
 	    <function>find_overlap_boundary_curves</function> function
-	    in <filename>src/libbrep/intersect.cpp</filename>.
+	    in <filename>intersect.cpp</filename>.
 	  </para>
         </section>
         <section>
@@ -1463,7 +1468,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
 	    The isocsx curves are written in the
 	    <function>find_overlap_boundary_curves</function> function
 	    in
-	    <filename>src/libbrep/intersect.cpp</filename>.
+	    <filename>intersect.cpp</filename>.
 	  </para>
 	</section>
         <section>
@@ -1547,12 +1552,12 @@ for (int i = 0; i < x_event.Count(); ++i) {
           <para>
             The clipped face curves are recorded in
             <function>get_face_intersection_curves</function> in
-            <filename>src/libbrep/boolean.cpp</filename>.
+            <filename>boolean.cpp</filename>.
           </para>
           <para>
             The linked curves and the categorized split faces are
             recorded in <function>get_evaluated_faces</function> in
-            <filename>src/libbrep/boolean.cpp</filename>.
+            <filename>boolean.cpp</filename>.
           </para>
 	</section>
       </section>
@@ -1576,7 +1581,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
           the curve. The <function>DebugPlot::Plot3DCurve</function>
           has an optional <varname>vlist</varname> parameter which you
           should omit (see the full definitions in
-          <filename>src/libbrep/debug_plot.*</filename>).
+          <filename>debug_plot.cpp</filename>).
         </para>
         <example>
 	  <title>Writing a 2D Curve as a plot3 File</title>
@@ -2087,12 +2092,12 @@ Archer> dplot bool1.dplot fcurves 10
               <function>DebugPlot::IsoCSX</function> method inside the
               <function>find_overlap_boundary_curves</function>
               routine in
-              <filename>src/libbrep/intersect.cpp</filename>. The
+              <filename>intersect.cpp</filename>. The
               <function>find_overlap_boundary_curves</function>
               routine is called from the
               <function>ON_Intersect</function> surface-surface
               intersection function, also defined in
-              <filename>src/libbrep/intersect.cpp</filename>. The next
+              <filename>intersect.cpp</filename>. The next
               call after
               <function>find_overlap_boundary_curves</function>
               returns is
