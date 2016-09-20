@@ -561,10 +561,10 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 
 	<para>
 	  The most frequently used member function
-	  is <function><![CDATA[DistanceTo(const ON_3dPoint
-	  &p)]]></function>, used to check inter-point distances,
-	  either as part of an intersection test or to identify
-	  closeable gaps or duplicate points.
+	  is <function>DistanceTo(const ON_3dPoint &amp;p)</function>,
+	  used to check inter-point distances, either as part of an
+	  intersection test or to identify closeable gaps or duplicate
+	  points.
 	</para>
 	<note>
 	  <para>
@@ -755,11 +755,11 @@ ON_Curve* Duplicate()
 
 	<para>
 	  <classname>ON_Line</classname> has helpful line-specific
-	  methods such as <function><![CDATA[ClosestPointTo(const
-	  ON_3dPoint &point)]]></function>. Again, because the line is
-	  treated as infinite, this function doesn't necessarily
-	  return a point in the segment
-	  between <varname>from</varname> and <varname>to</varname>.
+	  methods such as <function>ClosestPointTo(const ON_3dPoint
+	  &amp;point)</function>. Again, because the line is treated
+	  as infinite, this function doesn't necessarily return a
+	  point in the segment between <varname>from</varname>
+	  and <varname>to</varname>.
 	</para>
 
 	<para>
@@ -1252,10 +1252,10 @@ for (int i = 0; i < x_event.Count(); ++i) {
         that are drawn in the view window. While drawn, these objects
         appear in the in-memory database, so the
         <function>ls</function> command will show these objects (with
-        names like <varname><![CDATA[_BC_S_<obj>_646464]]></varname>
-        or <varname><![CDATA[bool1_brep1_surface03838ff]]></varname>,
-        but they are not saved with the database, and are deleted when
-        erased from the display.
+        names like <varname>_BC_S_&lt;obj&gt;_646464></varname>
+        or <varname>bool1_brep1_surface03838ff</varname>), but they are
+        not saved with the database, and are deleted when erased from
+        the display.
       </para>
       <note>
         <para>
