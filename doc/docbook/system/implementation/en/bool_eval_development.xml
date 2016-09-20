@@ -201,6 +201,18 @@
         </para>
       </section>        
     </section>
+
+    <!--
+    <section>
+      <title>The Boolean Evaluation Algorithm</title>
+      <section>
+        <para>
+          TODO: write pseudocode for the overall algorithm
+        </para>
+      </section>
+    </section>
+    -->
+
     <section>
       <title>Descriptions of Major Functions</title>
       <section>
