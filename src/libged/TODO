@@ -11,7 +11,10 @@ Be specific.
 
 * merge get_eyemodel's functionality as "view eyemodel" sub-command
 
-* convert garbage_collect Tcl to "db compact" subcommand in libged
+* convert garbage_collect Tcl to libged.  naming options include
+  "compact", "purge", "compress". possibly as subcommand to "db".
+  possible generalization to remove unused/unreferenced objects of
+  particular type (e.g., prims, combs, regions, all).
 
 
 --- NEW COMMANDS ---
@@ -37,7 +40,11 @@ Be specific.
 
 * 'audit' command: determine if the model is valid, provide option(s)
   to fix any errors encountered.  this could be a refactoring or
-  calling of glint and/or other tools.
+  calling of glint and/or other tools.  this ideally needs to separate
+  geometric validation (e.g., defines a solid volume, no overlaps)
+  from policy/business/convention validation (e.g., uses proper naming
+  convention, unique region IDs), possibly providing predefined
+  auditing profiles similar to nirt's predefined output formats.
 
 * 'array' command: to create a shallow copy of geometry in a
   rectangular or polar pattern.  similar to clone, perhaps mergeable
@@ -91,7 +98,9 @@ Be specific.
   normals, distances, ... powerful calculator for those places where
   the user needs some value we don't display for them (like needing to
   calculate a distance between two nirt rays, or something that always
-  prints mm, or a command that print radians instead of degrees).
+  prints mm, or a command that print radians instead of
+  degrees). basically a geometric version of 'expr'.  alternate names
+  include calc, gcalc, expr, gexpr, gc.
 
 * 'compile' command: evaluate and cache results of geometry
   computations for improved performance.  this could be a variety of
