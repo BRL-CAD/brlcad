@@ -115,6 +115,17 @@
           <imagedata fileref="images/evaluation_overview.png" />
         </imageobject>
         <imageobject role="fo">
+
+            <!-- TODO: a different visual that does not have a
+            overlapping/depth component would probably be easier to
+            follow and understand.  the split-out separation of the
+            individual faces and changing colors in the left to right
+            progression makes intuitive reading nearly impossible.  as
+            this visual is the first overview of the implementation
+            process, it would be beneficial to devise an intuitive
+            visual that offers some interesting value regardless of
+            caption (the caption should enhance understanding). -->
+
 	    <imagedata align="center" width="3.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/evaluation_overview.png" />
         </imageobject>
       </mediaobject>
