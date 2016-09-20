@@ -143,8 +143,39 @@
       </caption>
     </figure>
     <section>
-      <title>Major Algorithms</title>
+      <title>Technical Approach</title>
       <section>
+        <para>
+          The technical approach used for evaluating Boolean
+          operations on NURBS entities involves calculating geometric
+          intersections, trimming surfaces accordingly, and stitching
+          together a resulting object.  Boundary representation (BREP)
+          NURBS objects are composed of faces, edges, and vertices;
+          and these topologically describe how surfaces, curves, and
+          points are joined together to represent geometry.  The
+          geometry is used to find intersections.  The topology is
+          used in the application of Boolean logic.  This is
+          oversimplified as there are also trimming curves, loops,
+          orientations, and other details involved, but this is
+          nonetheless a useful foundation for understanding the basic
+          approach employed.
+        </para>
+        <para>
+          BRL-CAD heavily integrates and extends the OpenNURBS Toolkit
+          by Robert McNeel &amp; Associates, developers of the
+          proprietary Rhinoceros freeform NURBS modeling software.
+          BRL-CAD heavily uses OpenNURBS for trimmed NURBS geometry
+          representation (both in-memory and on-disk) and implements
+          functionality not included with OpenNURBS such as ray
+          tracing and Boolean evaluation.  <footnote><para>While their
+          license is permissive, the OpenNURBS Toolkit is only
+          intended for and McNeel only supports it being using for
+          reading and writing 3DM files.</para></footnote> Additional
+          functionality implemented for BRL-CAD is primarily contained
+          within the boundary representation and ray trace libraries
+          (LIBBREP and LIBRT).
+        </para>
+
         <para>
           The overall NURBS Boolean Evaluation algorithm is based on
           the paper <emphasis>BOOLE: A System to Compute Boolean
@@ -157,10 +188,10 @@
           The NURBS surface-surface intersection algorithm is based on
           the "NURBS Intersection Curve Evaluation" section of the
           paper <emphasis>Performing Efficient NURBS Modeling
-          Operations on the GPU</emphasis> (A. Krishnamurthy et
-          al., 2008). A detailed outline of the algorithm, as
-          implemented, appears in the main implementation file for the
-          NURBS Surface-Surface intersection algorithm,
+          Operations on the GPU</emphasis> (A. Krishnamurthy et al.,
+          2008). A detailed outline of the algorithm, as implemented,
+          appears in the main implementation file for the NURBS
+          Surface-Surface intersection algorithm,
           <filename>src/libbrep/intersection.cpp</filename>.
         </para>
       </section>        
