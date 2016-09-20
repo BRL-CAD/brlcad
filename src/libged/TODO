@@ -29,6 +29,11 @@ Be specific.
   'summary' command.  provide option for writing results out to a
   file.
 
+  loosely related, would be useful to have some command (e.g., "fs"
+  command) that reports extrinsic capacity such as amount of disk
+  space remaining where current .g or db cache files are housed,
+  memory allocation sizes, object cache size, cache utilization, etc.
+
 * 'align' command: taking a from 3d pt and a to 3d pt target.
   moves/rotates the source object into alignment.
 
