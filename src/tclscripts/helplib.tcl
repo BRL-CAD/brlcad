@@ -186,7 +186,7 @@ set helplib_data(dgo_observer)		{{cmd [args]} {Attach/detach observer to/from li
 set helplib_data(dgo_open)		{{name wdb_obj} {open/create a new drawable geometry object}}
 set helplib_data(dgo_overlay)		{{file.plot3 [name]}	{overlay the specified 2D/3D UNIX plot file}}
 set helplib_data(dgo_qray)		{{subcommand}	{get/set query_ray characteristics}}
-set helplib_data(dgo_report)		{{[lvl]} {print solid table & vector list}}
+set helplib_data(dgo_solid_report)	{{[lvl]} {print solid table & vector list}}
 set helplib_data(dgo_rt)		{{[options] [-- objects]}	{do raytrace of view or specified objects}}
 set helplib_data(dgo_rtabort)		{{} {abort the associated raytraces}}
 set helplib_data(dgo_rtcheck)		{{[options]}	{check for overlaps in current view}}

@@ -576,7 +576,7 @@ package provide cadwidgets::Ged 1.0
 	method refresh_on {}
 	method regdef {args}
 	method regions {args}
-	method report {args}
+	method solid_report {args}
 	method rfarb {args}
 	method rm {args}
 	method rmap {args}
@@ -3548,7 +3548,7 @@ package provide cadwidgets::Ged 1.0
     eval $mGed regions $args
 }
 
-::itcl::body cadwidgets::Ged::report {args} {
+::itcl::body cadwidgets::Ged::solid_report {args} {
     eval $mGed solid_report $args
 }
 
@@ -6399,7 +6399,6 @@ package provide cadwidgets::Ged 1.0
     $help add red		{{comb} {edit comb}}
     $help add regdef		{{item air los mat} {get/set region defaults}}
     $help add regions		{{file object(s)} {returns an ascii summary of regions}}
-    $help add report		{{[lvl]} {print solid table & vector list}}
     $help add rfarb		{{} {makes an arb given a point, 2 coords of 3 points, rot, fb and thickness}}
     $help add rm		{{comb <members>} {remove members from comb}}
     $help add rmap		{{} {returns a region ids to region(s) mapping}}
@@ -6432,6 +6431,7 @@ package provide cadwidgets::Ged 1.0
     $help add size		{{vsize} {set/get the view size}}
     $help add slew		{{"x y"} {slew the view}}
     $help add snap_view		{{vx vy} {snap the view to grid}}
+    $help add solid_report	{{[lvl]} {print solid table & vector list}}
     $help add solids		{{file object(s)} {returns an ascii summary of solids}}
     $help add summary		{{[s r g]}	{count/list solid/reg/groups}}
     $help add sv		{{"x y"} {slew the view}}
