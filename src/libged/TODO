@@ -276,6 +276,8 @@ Be specific.
   an object is written or the file is explicitly "saved", we'd write
   out time information.
 
+  the non-timer aspects may better fit with the db or about commands.
+
 * 'transact' command: describes a transaction as a series of commands
   to be run in succession which must all succeed for any to apply.
   this can be viewed as a meta-command or basic user script which can
