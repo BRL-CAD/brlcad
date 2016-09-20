@@ -76,6 +76,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* change _mged_ command prefix to a simple '.' prefix to hide/protect
+  the built-in commands.
+
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
@@ -557,9 +560,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * figure out what in f_matpick (or possibly some other related function)
   is causing ipathpos to get incremented to a number larger than the
   number of objects in the full path it's supposed to be referencing.
-
-* change _mged_ command prefix to a simple '.' prefix to hide/protect
-  the built-in commands.
 
 * refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
 
