@@ -72,7 +72,7 @@
     </para>
     <para>
       There are a number of known limitations to the NURBS Boolean
-      Evaluator as currently implemented:
+      evaluator as currently implemented:
     </para>
     <itemizedlist>
       <listitem>
@@ -239,7 +239,7 @@ ON_Boolean(
 	  <parameter>brep1</parameter> and
 	  <parameter>brep2</parameter> intersect,
 	  <function>get_evaluated_faces()</function> is called to get
-	  the trimmed NURBS faces of the evaluated boolean result. The
+	  the trimmed NURBS faces of the evaluated Boolean result. The
 	  faces are then combined into a single B-Rep object returned
 	  via the <parameter>evaluated_brep</parameter> argument.
 	</para>
@@ -260,7 +260,7 @@ get_evaluated_faces(
 	  curves are used to split the original surfaces into pieces,
 	  each becoming a new trimmed NURBS face. The
 	  <function>categorize_trimmed_faces()</function> function is
-	  used to identify which pieces, based on the boolean
+	  used to identify which pieces, based on the Boolean
 	  operation, are part of the evaluated result. Each
 	  <classname>TrimmedFace</classname> whose
 	  <varname>m_belong_to_final</varname> member is marked
@@ -383,7 +383,7 @@ ON_Intersect(const ON_Surface *surfA,
         classes that represent general (i.e. NURBS) B-Rep surface,
         curve, and point geometry. The following sections describe the
         OpenNURBS library symbols most commonly used in the NURBS
-        boolean evaluation implementation, with relevant usage notes.
+        Boolean evaluation implementation, with relevant usage notes.
       </para>
       <warning>
         <para>
@@ -434,7 +434,7 @@ ON_Intersect(const ON_Surface *surfA,
           to have correctly implemented copy and assignment functions.
         </para>
 	<para>
-	  The NURBS boolean evaluation implementation generally
+	  The NURBS Boolean Evaluation implementation generally
 	  employs a combined array of known size to index elements
 	  from two input objects. For example, if
 	  <parameter>brepA</parameter> has
@@ -473,7 +473,7 @@ ON_Intersect(const ON_Surface *surfA,
         <para>
           Curves and surfaces are nearly always allocated on the heap
           and referenced by pointers, both in the OpenNURBS library,
-          and in the NURBS boolean evaluation implementation.
+          and in the NURBS Boolean Evaluation implementation.
         </para>
         <para>
           Mostly these allocations are simply done with
@@ -523,7 +523,7 @@ for (int i = 0; i < csx_events.Count(); ++i) {
         </para>
         <note>
           <para>
-            The NURBS boolean evaluation implementation generally uses
+            The NURBS Boolean Evaluation implementation generally uses
             the function <function>ON_NearZero(double x, double
             tolerance = ON_ZERO_TOLERANCE)</function> to check if
             values are near zero, or to check if two values are
@@ -577,7 +577,7 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 	    their <varname>z</varname> coordinates set to 0.
 	  </para>
           <para>
-            The NURBS boolean evaluation implementation generally
+            The NURBS Boolean Evaluation implementation generally
             constructs 2D curves by populating
             an <classname>ON_3dPointArray</classname> with 2D points,
             rather than using
@@ -676,7 +676,7 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 	  It is sometimes necessary to reverse a curve's domain.  This
 	  is done using the <function>Reverse()</function> method to
 	  facilitate stitching curves together. The function has a
-	  boolean <literal>int</literal> return value that must be
+	  Boolean <literal>int</literal> return value that must be
 	  checked.
 	</para>
 	<para>
@@ -988,8 +988,8 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
           <varname>m_a[0]</varname>.
         </para>
         <para>
-          As a result, a pattern seen repeatedly in the NURBS boolean
-          evaluation implementation is a loop over intersection events
+          As a result, a pattern seen repeatedly in the NURBS Boolean
+          Evaluation implementation is a loop over intersection events
           that gathers intersection points for processing, including
           overlap endpoints if the event represents an overlap.
         </para>
@@ -1172,7 +1172,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
           <note>
             <para>
               Producing subcurves of existing curves is a common
-              operation in the NURBS boolean evaluation
+              operation in the NURBS Boolean Evaluation
               implementation. This is a prime example of an operation
               that can introduce fuzziness into the evaluation. For
               example, we may be splitting a curve to remove a portion
@@ -1306,7 +1306,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
           <para>
             For evaluations involving more than two objects, the final
             brep NURBS object is made by converting two leaf objects
-            into breps, performing a boolean evaluation on them,
+            into breps, performing a Boolean evaluation on them,
             converting the next relevant object to brep and combining
             it with the first intermediate evaluation to make a second
             intermediate evaluation, and so on up the tree.
