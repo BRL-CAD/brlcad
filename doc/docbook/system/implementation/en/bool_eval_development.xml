@@ -218,9 +218,9 @@
       <section>
 	<title><filename>boolean.cpp</filename></title>
         <para>
-          The <function>ON_Boolean</function> function performs a
+          The <function>ON_Boolean()</function> function performs a
           single Boolean evaluation on two B-Rep objects. A single
-          execution of the <function>brep</function> command in MGED
+          execution of the <command>brep</command> command in MGED
           or Archer may involve passing several successive pairs of
           B-Rep objects to this function.
         </para>
@@ -238,7 +238,7 @@ ON_Boolean(
 	  In the nontrivial case where the bounding boxes of
 	  <parameter>brep1</parameter> and
 	  <parameter>brep2</parameter> intersect,
-	  <function>get_evaluated_faces</function> is called to get
+	  <function>get_evaluated_faces()</function> is called to get
 	  the trimmed NURBS faces of the evaluated boolean result. The
 	  faces are then combined into a single B-Rep object returned
 	  via the <parameter>evaluated_brep</parameter> argument.
@@ -256,16 +256,16 @@ get_evaluated_faces(
 	  The intersection curves between the faces of
 	  <parameter>brep1</parameter> and
 	  <parameter>brep2</parameter> are found by
-	  <function>get_face_intersection_curves</function>. These
+	  <function>get_face_intersection_curves()</function>. These
 	  curves are used to split the original surfaces into pieces,
 	  each becoming a new trimmed NURBS face. The
-	  <function>categorize_trimmed_faces</function> function is
+	  <function>categorize_trimmed_faces()</function> function is
 	  used to identify which pieces, based on the boolean
 	  operation, are part of the evaluated result. Each
 	  <classname>TrimmedFace</classname> whose
 	  <varname>m_belong_to_final</varname> member is marked
 	  <constant>TrimmedFace::BELONG</constant> is used by
-	  <function>ON_Boolean</function> to create the final
+	  <function>ON_Boolean()</function> to create the final
 	  evaluated result.
 	</para>
 	<synopsis>
@@ -283,9 +283,9 @@ get_face_intersection_curves(
 	  Each pair of <parameter>brep1</parameter> and
 	  <parameter>brep2</parameter> surfaces whose bounding boxes
 	  intersect are passed to the
-	  <function>ON_Intersect</function> surface-surface
+	  <function>ON_Intersect()</function> surface-surface
 	  intersection routine. The
-	  <function>get_subcurves_inside_faces</function> routine is
+	  <function>get_subcurves_inside_faces()</function> routine is
 	  used to remove irrelevant parts of the surface-surface
 	  intersection curves based on the trimming curves of the
 	  associated faces.
@@ -323,14 +323,14 @@ ON_Intersect(const ON_Surface *surfA,
             that the surfaces are coincident on one side of the curve
             but not the other, potentially form part of overlap
             boundaries. These curves are identified using
-            <function>find_overlap_boundary_curves</function>. To
+            <function>find_overlap_boundary_curves()</function>. To
             avoid wasted computations, this function also returns
             intersection points and non-boundary intersection curves
             which were found during the search for boundary curves.
         </para>
         <para>
             Then, the
-            <function>split_overlaps_at_intersections</function>
+            <function>split_overlaps_at_intersections()</function>
             function is run, and curve pieces that share endpoints are
             stitched together. The stitched boundary curves which
             close to form loops are recorded as overlap intersection
@@ -358,7 +358,7 @@ ON_Intersect(const ON_Surface *surfA,
           accurate fit). The triangles are then intersected, and the
           average of all intersection points is used as the initial
           guess for a Newton iterative solver, implemented by
-          <function>newton_ssi</function>, which searches for a point
+          <function>newton_ssi()</function>, which searches for a point
           close to the initial guess point which lies on both
           surfaces.
         </para>
@@ -421,8 +421,8 @@ ON_Intersect(const ON_Surface *surfA,
           C++'s <classname>std::vector</classname>. Besides having
           slightly friendlier interfaces, they also feature some
           higher-level member functions like
-          <function>Reverse</function> and
-          <function>Quicksort</function>.
+          <function>Reverse()</function> and
+          <function>Quicksort()</function>.
         </para>
         <para>
           The primary difference between the two classes is that
@@ -448,7 +448,7 @@ ON_Intersect(const ON_Surface *surfA,
 	  <para>
 	    The OpenNURBS array classes do not check for out-of-bounds
 	    indexing. This isn't a problem in the simple case where
-	    items are added with <function>Append</function> and
+	    items are added with <function>Append()</function> and
 	    elements <inlineequation><mathphrase>[0, </mathphrase></inlineequation><function>Count()</function><inlineequation><mathphrase>
 	    - 1]</mathphrase></inlineequation> are iterated over.
 	  </para>
@@ -457,7 +457,7 @@ ON_Intersect(const ON_Surface *surfA,
 	    assigned in a non-sequential order, both
 	    the <emphasis>capacity</emphasis>
 	    and <emphasis>count</emphasis> should be set, or else the
-	    reported <function>Count</function> will be incorrect, and
+	    reported <function>Count()</function> will be incorrect, and
 	    copying arrays by assignment won't work.
 	  </para>
 	  <programlisting>
@@ -592,18 +592,18 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 	<title>Bounding Boxes</title>
         <para>
           <classname>ON_BoundingBox</classname> is returned by
-          the <function>BoundingBox</function>, <function>GetTightBoundingBox</function>,
-          and <function>GetBBox</function> functions, which are
+          the <function>BoundingBox()</function>, <function>GetTightBoundingBox()</function>,
+          and <function>GetBBox()</function> functions, which are
           implemented by all geometry classes inheriting
           from <classname>ON_Geometry</classname>.
         </para>
         <para>
           The most commonly used members
           of <classname>ON_BoundingBox</classname>
-          are <function>Diagonal</function> (usually in an expression
+          are <function>Diagonal()</function> (usually in an expression
           such as <varname>bbox.Diagonal().Length()</varname> used as
-          a scalar size estimate), and <function>IsPointIn</function>
-          and <function>MinimumDistanceTo</function> (used in
+          a scalar size estimate), and <function>IsPointIn()</function>
+          and <function>MinimumDistanceTo()</function> (used in
           intersection tests).
         </para>
       </section>
@@ -625,8 +625,8 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 	    and <varname>m_t[0]</varname> need not be less
 	    than <varname>m_t[1]</varname>. If the numerically smaller
 	    or larger domain endpoint is needed, these should be
-	    accessed via the <function>Min</function>
-	    and <function>Max</function> member functions.
+	    accessed via the <function>Min()</function>
+	    and <function>Max()</function> member functions.
 	  </para>
 	</warning>
 	<para>
@@ -656,18 +656,18 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 	</para>
 	<warning>
 	  <para>
-	    <function>PointAt</function> takes a real parameter;
+	    <function>PointAt()</function> takes a real parameter;
 	    parameters normalized to <inlineequation><mathphrase>[0,
 	    1]</mathphrase></inlineequation> must be converted. For
 	    example, the midpoint of the curve can be found as
-	    <varname>curve->PointAt(curve->Domain().ParameterAt(.5))</varname>. <function>PointAt</function>
+	    <varname>curve->PointAt(curve->Domain().ParameterAt(.5))</varname>. <function>PointAt()</function>
 	    <emphasis>does not check</emphasis> if the
 	    <parameter>t</parameter> value you give it is inside the
 	    curve's domain, so you have to get this right!
 	  </para>
 	</warning>
 	<para>
-	  All the <function>PointAt</function> methods return
+	  All the <function>PointAt()</function> methods return
 	  an <classname>ON_3dPoint</classname>, though in the common
 	  case where <classname>ON_Curve</classname> objects are
 	  representing 2D trim curves, the z coordinate will be 0.0.
@@ -803,7 +803,7 @@ ON_3dPoint trim_midpt_3d = surface->PointAt(trim_midpt_uv.x, trim_midpt_uv.y);
 	<para>
 	  <classname>ON_Brep</classname> is the top-level OpenNURBS
 	  class used to represent the two input objects and the
-	  evaluated result of the <function>ON_Boolean</function>
+	  evaluated result of the <function>ON_Boolean()</function>
 	  function. The geometry is encoded as a collection of faces,
 	  which for our purposes should be topologically connected to
 	  enclose solid volumes.
@@ -1061,7 +1061,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
         <section>
           <title>Intersection Tolerances</title>
           <para>
-            The <function>ON_Intersect</function> intersection
+            The <function>ON_Intersect()</function> intersection
             routines (<filename>intersect.cpp</filename>) generally
             take an <varname>isect_tol</varname> argument, which is a
             3D tolerance normally equal to the constant
@@ -1073,7 +1073,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
           <para>
             2D tolerance values for curves and surfaces are derived
             from the 3D tolerance value using
-            the <function>tolerance_2d_from_3d</function>
+            the <function>tolerance_2d_from_3d()</function>
             routines. The length of the diagonal of the 3D bounding
             box of the curve or surface is divided by the length of
             the 2D domain to get a rough estimate of what distance in
@@ -1181,12 +1181,12 @@ for (int i = 0; i < x_event.Count(); ++i) {
               no longer do.
             </para>
             <para>
-              The <function>Split</function> method
+              The <function>Split()</function> method
               of <classname>ON_Curve</classname> can be used to
               produce subcurves, but in the implementation it's much
-              preferred to use the <function>sub_curve</function>
+              preferred to use the <function>sub_curve()</function>
               function defined in <filename>intersect.cpp</filename>
-              which wraps <function>Split</function> and correctly
+              which wraps <function>Split()</function> and correctly
               handles clamping of curve parameters to domain
               endpoints.
             </para>
@@ -1213,12 +1213,12 @@ for (int i = 0; i < x_event.Count(); ++i) {
             <para>
               It's tempting to test curve characteristics or make
               inside/outside determinations, etc. by using
-              the <function>ON_Intersect</function>
+              the <function>ON_Intersect()</function>
               functions. However, there's a persistent risk that the
               error in the iteratively solved results will cause
               incorrect determinations that cascade into larger
               problems over the course of the evaluation. For this
-              reason, the <function>ON_Intersect</function> functions
+              reason, the <function>ON_Intersect()</function> functions
               should be avoided whenever possible.
             </para>
           </warning>
@@ -1436,7 +1436,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
           </itemizedlist>
 	  <para>
 	    The ssx pairs are recorded in the
-	    <function>find_overlap_boundary_curves</function> function
+	    <function>find_overlap_boundary_curves()</function> function
 	    in <filename>intersect.cpp</filename>.
 	  </para>
         </section>
@@ -1478,7 +1478,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
 	  </itemizedlist>
 	  <para>
 	    The isocsx curves are written in the
-	    <function>find_overlap_boundary_curves</function> function
+	    <function>find_overlap_boundary_curves()</function> function
 	    in
 	    <filename>intersect.cpp</filename>.
 	  </para>
@@ -1563,12 +1563,12 @@ for (int i = 0; i < x_event.Count(); ++i) {
 	  </itemizedlist>
           <para>
             The clipped face curves are recorded in
-            <function>get_face_intersection_curves</function> in
+            <function>get_face_intersection_curves()</function> in
             <filename>boolean.cpp</filename>.
           </para>
           <para>
             The linked curves and the categorized split faces are
-            recorded in <function>get_evaluated_faces</function> in
+            recorded in <function>get_evaluated_faces()</function> in
             <filename>boolean.cpp</filename>.
           </para>
 	</section>
@@ -1582,15 +1582,15 @@ for (int i = 0; i < x_event.Count(); ++i) {
         </para>
         <para>
           You can pass a 3D <classname>ON_Curve</classname> to the
-          <function>DebugPlot::Plot3DCurve</function> function or a 2D
+          <function>DebugPlot::Plot3DCurve()</function> function or a 2D
           <classname>ON_Curve</classname> and an associated
           <classname>ON_Surface</classname> to the
-          <function>DebugPlot::Plot3DCurve</function> function.
+          <function>DebugPlot::Plot3DCurve()</function> function.
         </para>
         <para>
           Both of these functions take an arbitrary filename for a
           plot3 file the function will write, as well as a color for
-          the curve. The <function>DebugPlot::Plot3DCurve</function>
+          the curve. The <function>DebugPlot::Plot3DCurve()</function>
           has an optional <varname>vlist</varname> parameter which you
           should omit (see the full definitions in
           <filename>debug_plot.cpp</filename>).
@@ -1663,15 +1663,15 @@ Archer> overlay mycurve1.plot3 1
           <listitem>
             <para>
               Set a breakpoint at the
-              <function>ON_Intersect</function> call in
-              <function>get_face_intersection_curves</function> with
+              <function>ON_Intersect()</function> call in
+              <function>get_face_intersection_curves()</function> with
               the condition <literal>i == &lt;i&gt; &amp;&amp; j ==
               &lt;j&gt;</literal>.
             </para>
             <para>
               For a multi-part evaluation, you'll need to first skip
               to the correct invocation of
-              <function>ON_Boolean</function>, either manually, or by
+              <function>ON_Boolean()</function>, either manually, or by
               conditioning a breakpoint on the value of the static
               <varname>calls</varname> variable defined at the top of
               that function.
@@ -1714,8 +1714,8 @@ Archer> overlay mycurve1.plot3 1
           <listitem>
             <para>
               Set a breakpoint at the
-              <function>ON_Intersect</function> call in
-              <function>get_face_intersection_curves</function> with
+              <function>ON_Intersect()</function> call in
+              <function>get_face_intersection_curves()</function> with
               the condition <literal>dplot->SurfacePairs() == &lt;n
               - 1&gt; &amp;&amp; i == &lt;i&gt; &amp;&amp; j ==
               &lt;j&gt;</literal>.
@@ -1723,7 +1723,7 @@ Archer> overlay mycurve1.plot3 1
             <para>
               For a multi-part evaluation, you'll need to first skip
               to the correct invocation of
-              <function>ON_Boolean</function>, either manually, or by
+              <function>ON_Boolean()</function>, either manually, or by
               conditioning a breakpoint on the value of the static
               <varname>calls</varname> variable defined at the top of
               that function.
@@ -1732,7 +1732,7 @@ Archer> overlay mycurve1.plot3 1
           <listitem>
             <para>
               When the break is reached, add a breakpoint at
-              <function>find_overlap_boundary_curves</function> and
+              <function>find_overlap_boundary_curves()</function> and
               advance to that function.
             </para>
           </listitem>
@@ -1768,7 +1768,7 @@ Archer> overlay mycurve1.plot3 1
           <listitem>
             <para>
               Set a break after the call to
-              <function>find_overlap_boundary_curves</function> in
+              <function>find_overlap_boundary_curves()</function> in
               <filename>intersect.cpp</filename> with the condition
               <literal>dplot->SurfacePairs() ==
               &lt;n&gt;</literal>.
@@ -1776,7 +1776,7 @@ Archer> overlay mycurve1.plot3 1
             <para>
               For a multi-part evaluation, you'll need to first skip
               to the correct invocation of
-              <function>ON_Boolean</function>, either manually, or by
+              <function>ON_Boolean()</function>, either manually, or by
               conditioning a breakpoint on the value of the static
               <varname>calls</varname> variable defined at the top of
               that function.
@@ -1803,15 +1803,15 @@ Archer> overlay mycurve1.plot3 1
           <listitem>
             <para>
               Set a breakpoint at the
-              <function>ON_Intersect</function> call in
-              <function>get_face_intersection_curves</function> with
+              <function>ON_Intersect()</function> call in
+              <function>get_face_intersection_curves()</function> with
               the condition <literal>dplot->SurfacePairs() == &lt;n
               - 1&gt;</literal>.
             </para>
             <para>
               For a multi-part evaluation, you'll need to first skip
               to the correct invocation of
-              <function>ON_Boolean</function>, either manually, or by
+              <function>ON_Boolean()</function>, either manually, or by
               conditioning a breakpoint on the value of the static
               <varname>calls</varname> variable defined at the top of
               that function.
@@ -1819,7 +1819,7 @@ Archer> overlay mycurve1.plot3 1
           </listitem>
           <listitem>
             <para>
-              Step into <function>ON_Intersect</function> and wait for
+              Step into <function>ON_Intersect()</function> and wait for
               <literal>x.Count() == &lt;k - 1&gt;</literal>.
             </para>
           </listitem>
@@ -1849,15 +1849,15 @@ Archer> overlay mycurve1.plot3 1
           <listitem>
             <para>
               Set a breakpoint at the
-              <function>get_subcurves_inside_faces</function> call
-              inside <function>get_face_intersection_curves</function>
+              <function>get_subcurves_inside_faces()</function> call
+              inside <function>get_face_intersection_curves()</function>
               with the condition <literal>dplot->SurfacePairs() ==
               &lt;n + 1&gt; &amp;&amp; k == &lt;k&gt;</literal>.
             </para>
             <para>
               For a multi-part evaluation, you'll need to first skip
               to the correct invocation of
-              <function>ON_Boolean</function>, either manually, or by
+              <function>ON_Boolean()</function>, either manually, or by
               conditioning a breakpoint on the value of the static
               <varname>calls</varname> variable defined at the top of
               that function.
@@ -1866,7 +1866,7 @@ Archer> overlay mycurve1.plot3 1
           <listitem>
             <para>
               Start stepping through
-              <function>get_face_intersection_curves</function> to
+              <function>get_face_intersection_curves()</function> to
               investigate how the event intersection curves are being
               clipped.
             </para>
@@ -1886,15 +1886,15 @@ Archer> overlay mycurve1.plot3 1
           <listitem>
             <para>
               Set a breakpoint at the
-              <function>split_trimmed_face</function> call inside
-              <function>get_evaluated_faces</function> with the
+              <function>split_trimmed_face()</function> call inside
+              <function>get_evaluated_faces()</function> with the
               condition <literal>dplot->LinkedCurves() >= &lt;n +
               1&gt;</literal>.
             </para>
             <para>
               For a multi-part evaluation, you'll need to first skip
               to the correct invocation of
-              <function>ON_Boolean</function>, either manually, or by
+              <function>ON_Boolean()</function>, either manually, or by
               conditioning a breakpoint on the value of the static
               <varname>calls</varname> variable defined at the top of
               that function.
@@ -1902,7 +1902,7 @@ Archer> overlay mycurve1.plot3 1
           </listitem>
           <listitem>
             <para>
-              Inside <function>split_trimmed_face</function>, check
+              Inside <function>split_trimmed_face()</function>, check
               the input face loops and ssx curves:
             </para>
             <screen>
@@ -2101,26 +2101,26 @@ Archer> dplot bool1.dplot fcurves 10
           <listitem>
             <para>
               The isocsx plots are written by the
-              <function>DebugPlot::IsoCSX</function> method inside the
-              <function>find_overlap_boundary_curves</function>
+              <function>DebugPlot::IsoCSX()</function> method inside the
+              <function>find_overlap_boundary_curves()</function>
               routine in
               <filename>intersect.cpp</filename>. The
-              <function>find_overlap_boundary_curves</function>
+              <function>find_overlap_boundary_curves()</function>
               routine is called from the
-              <function>ON_Intersect</function> surface-surface
+              <function>ON_Intersect()</function> surface-surface
               intersection function, also defined in
               <filename>intersect.cpp</filename>. The next
               call after
-              <function>find_overlap_boundary_curves</function>
+              <function>find_overlap_boundary_curves()</function>
               returns is
-              <function>split_overlaps_at_intersections</function>.
+              <function>split_overlaps_at_intersections()</function>.
             </para>
             <para>
               To quickly check if the splitting function introduced a
               problem in the overlap curves, we insert code to write
               out the overlap curves as <filename>.plot3</filename>
               files just after the
-              <function>split_overlaps_at_intersections</function>
+              <function>split_overlaps_at_intersections()</function>
               call.
             </para>
             <para>
@@ -2277,8 +2277,8 @@ Archer> overlay linked_5_4.plot3 1
             </para>
             <para>
               A breakpoint is set just before the calls to
-              <function>link_curves</function> in the
-              <function>ON_Intersect</function> surface-surface
+              <function>link_curves()</function> in the
+              <function>ON_Intersect()</function> surface-surface
               intersection function (line 3885 in
               <filename>intersect.cpp</filename> at the time of
               writing), with the condition that
@@ -2305,11 +2305,11 @@ $ gdb mged
             </para>
             <para>
               Looking at the implementation of
-              <function>link_curves</function> in
+              <function>link_curves()</function> in
               <filename>intersect.cpp</filename>, we can see that the
               second curve argument is joined to the first curve
               argument using the OpenNURBS
-              <function>ON_NurbsCurve::Append</function> member
+              <function>ON_NurbsCurve::Append()</function> member
               function. So, the start point of the second curve is
               joined to the end point of the first curve.
             </para>
@@ -2340,7 +2340,7 @@ link_curves(ON_Curve *&c1, ON_Curve *&c2)
 ]]>
             </programlisting>
             <para>
-              <function>link_curves</function> is here being called
+              <function>link_curves()</function> is here being called
               with <varname>overlaps[j]->m_curve3d</varname> as its
               first argument and
               <varname>overlaps[i]->m_curve3d</varname> as its second
@@ -2350,9 +2350,9 @@ link_curves(ON_Curve *&c1, ON_Curve *&c2)
             </para>
             <para>
               However, going back to the
-              <function>link_curves</function> implementation, we also
+              <function>link_curves()</function> implementation, we also
               see a call to
-              <function>extend_curve_end_to_point</function> which may
+              <function>extend_curve_end_to_point()</function> which may
               modify the first curve argument.
             </para>
             <para>
@@ -2365,7 +2365,7 @@ link_curves(ON_Curve *&c1, ON_Curve *&c2)
             </para>
             <para>
               However, we see the point argument passed to
-              <function>extend_curve_end_to_point</function> is
+              <function>extend_curve_end_to_point()</function> is
               <varname>c2->PointAtEnd()</varname>, when it should be
               <varname>c2->PointAtStart()</varname>.
             </para>
