@@ -64,9 +64,9 @@
     <para>
       By default, the evaluated brep-type object is written to the
       database with its original name plus the suffix
-      <literal>_brep</literal> (e.g. running the
+      <literal>.brep</literal> (e.g. running the
       <function>brep</function> command on <literal>obj</literal>
-      produces <literal>obj_brep</literal>). If a specific name is
+      produces <literal>obj.brep</literal>). If a specific name is
       desired for the output object, it can be provided as the second
       argument to the <function>brep</function> command.
     </para>
@@ -1631,7 +1631,7 @@ $ svn merge -r 65179:65178 ^/brlcad/branches/brep-debug
               <screen>
 Archer> opendb axis.g
 Archer> brep X
-X_brep is made.
+X.brep is made.
               </screen>
             </para>
             <para>
@@ -1920,7 +1920,7 @@ Archer> overlay split_overlap7.plot3 1 ol7
           </listitem>
           <listitem>
             <para>
-              The code is re-compiled, <literal>X_brep</literal> is
+              The code is re-compiled, <literal>X.brep</literal> is
               removed from the database, and the dplot-related files
               are once again cleared from the working directory before
               re-running the evaluation.
@@ -1957,7 +1957,7 @@ Archer> overlay linked_5_4.plot3 1
           <listitem>
             <para>
               We'll perform the evaluation again via a
-              debugger. <literal>X_brep</literal> is removed from the
+              debugger. <literal>X.brep</literal> is removed from the
               database, and the <filename>*.dplot</filename> and
               <filename>*.plot3</filename> files are removed from the
               working directory.
