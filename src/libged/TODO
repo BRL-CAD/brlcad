@@ -325,19 +325,20 @@ Be specific.
 
 ANALYZE command design thoughts:
 
-If we consider consolidating what are currently "special purpose" analysis
-commands (bounding box calculators, convex hull, gqa's functionality, etc.)
-all underneath a single unified analyze command, we would need a different
-command option structure.  The outline below captures some early stage thoughts
-on how such a command might be organized.
+  If we consider consolidating what are currently "special purpose"
+  analysis commands (bounding box calculators, convex hull, gqa's
+  functionality, etc.)  all underneath a single unified analyze
+  command, we would need a different command option structure.  The
+  outline below captures some early stage thoughts on how such a
+  command might be organized.
 
-analyze
+  analyze
 
---visualize
+  --visualize
 
---tolerance #
+  --tolerance #
 
---component:
+  --component:
            default when unspecified is whole shape (only option currently for combs)
 
            F (default all faces, accept number lists and ranges)
@@ -349,7 +350,7 @@ analyze
             specified value ranges)
 
 
---property: (accept 1 or a comma separated list, can specify multiple --property options as well)
+  --property: (accept 1 or a comma separated list, can specify multiple --property options as well)
            volume (default for volume component if no property specified)
            surface_area (default for surface component (F, S) if no property specified)
            projected surface area
@@ -371,7 +372,7 @@ analyze
            exposed-air[=<name_template>]
            adjacent-air[=<name_template>]
 
---report-format:
+  --report-format:
            default when unspecified would be ascii text
 
            ascii
@@ -380,14 +381,27 @@ analyze
            xml
            ...
 
-[args] obj1 [obj2 ...]
+  [args] obj1 [obj2 ...]
 
-Sample invocations:
+  Sample invocations:
 
-analyze --visualize --property bounding-box,centroid obj1.s
+    analyze --visualize --property bounding-box,centroid obj1.s
+    analyze --component F 1-10,23-30 --property surface_area mesh.s
+    analyze --property overlaps=overlap.s obj1.c obj2.c
 
-analyze --component F 1-10,23-30 --property surface_area mesh.s
+Alternative usage possibility:
 
-analyze --property overlaps=overlap.s obj1.c obj2.c
+  analyze [format] {area|mass|moments|surface|volume}[,more] [options] [objects]
 
+  The "options" include most if not all of the ones described above
+  with the main distinction being that specifying a property is
+  required, hence making it the dominant subcommand (as a csv list of
+  properties to report).  The "format" options would include any
+  options that are global to all output types, such as requesting json
+  vs csv vs text output formatting.
 
+  Sample invocations:
+
+    analyze --visualize aabb,centroid obj1.s
+    analyze surface --component F:1-10,23-30 mesh.s
+    analyze overlap --create=overlap.s  obj1.c obj2.c
