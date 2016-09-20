@@ -24,7 +24,7 @@
       run its applications with a debugging program. It is also
       assumed that the reader has a basic understanding of concepts
       from geometry such as surface normal vectors, parametric
-      functions, and NURBS used as a boundary representation (B-rep).
+      functions, and NURBS used as a boundary representation (B-Rep).
     </para>
     <para>
       Section 2 of this document briefly describes NURBS Boolean
@@ -52,7 +52,7 @@
     </para>
   </section>
   <section>
-    <title>NURBS Boolean Evaluation Using the brep Command</title>
+    <title>NURBS Boolean Evaluation Using the <function>brep</function> Command</title>
     <para>
       The <function>brep</function> command is available in BRL-CAD's
       MGED and Archer applications. If the command is run with a
@@ -62,7 +62,7 @@
       operations in the combination.
     </para>
     <para>
-      By default, the evaluated brep-type object is written to the
+      By default, the evaluated B-Rep-type object is written to the
       database with its original name plus the suffix
       <literal>.brep</literal> (e.g. running the
       <function>brep</function> command on <literal>obj</literal>
@@ -132,7 +132,7 @@
       <caption>
         <para>
           One cube (red) is subtracted from another (blue). Leftmost
-          image: the two cubes are first converted to B-rep objects
+          image: the two cubes are first converted to B-Rep objects
           and intersected. Middle images: the individual faces
           involved in the intersection are split by the intersection
           curves and categorized as belonging (red, blue) or not
@@ -149,9 +149,9 @@
           The technical approach used for evaluating Boolean
           operations on NURBS entities involves calculating geometric
           intersections, trimming surfaces accordingly, and stitching
-          together a resulting object.  Boundary representation (BREP)
-          NURBS objects are composed of faces, edges, and vertices;
-          and these topologically describe how surfaces, curves, and
+          together a resulting object.  Boundary representation NURBS
+          objects are composed of faces, edges, and vertices; and
+          these topologically describe how surfaces, curves, and
           points are joined together to represent geometry.  The
           geometry is used to find intersections.  The topology is
           used in the application of Boolean logic.  This is
@@ -207,10 +207,10 @@
 	<title><filename>boolean.cpp</filename></title>
         <para>
           The <function>ON_Boolean</function> function performs a
-          single evaluation. A single execution of the
-          <function>brep</function> command in MGED or Archer may
-          involve passing several successive pairs of B-rep objects to
-          this function.
+          single Boolean evaluation on two B-Rep objects. A single
+          execution of the <function>brep</function> command in MGED
+          or Archer may involve passing several successive pairs of
+          B-Rep objects to this function.
         </para>
 	<synopsis>
 	<![CDATA[
@@ -228,7 +228,7 @@ ON_Boolean(
 	  <parameter>brep2</parameter> intersect,
 	  <function>get_evaluated_faces</function> is called to get
 	  the trimmed NURBS faces of the evaluated boolean result. The
-	  faces are then combined into a single brep object returned
+	  faces are then combined into a single B-Rep object returned
 	  via the <parameter>evaluated_brep</parameter> argument.
 	</para>
 	<synopsis>
@@ -368,7 +368,7 @@ ON_Intersect(const ON_Surface *surfA,
       <title>The OpenNURBS API</title>
       <para>
         BRL-CAD leverages the OpenNURBS library primarily for its
-        classes that represent general (i.e. NURBS) b-rep, surface,
+        classes that represent general (i.e. NURBS) B-Rep surface,
         curve, and point geometry. The following sections describe the
         OpenNURBS library symbols most commonly used in the NURBS
         boolean evaluation implementation, with relevant usage notes.
@@ -1270,7 +1270,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
         <para>
           The Archer <function>brep</function> command (also
           implemented in MGED) can be used to get structural
-          information about brep objects and visualize different
+          information about B-Rep objects and visualize different
           subcomponents.
         </para>
         <para>
@@ -1374,7 +1374,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
                 ssx</function></emphasis> lets you interactively step
                 through the pairs of surfaces whose axis-aligned
                 bounding boxes were found to intersect. The wireframes
-                of the brep objects being intersected are drawn with
+                of the B-Rep objects being intersected are drawn with
                 the current surface pair highlighted. The
                 <varname>ssx_index</varname> assigned to the pair,
                 which can be used as an argument to other dplot
@@ -1519,7 +1519,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
                 </mediaobject>
                 <caption>
                   <para>
-                    An evaluated brep is drawn shaded to give context
+                    An evaluated B-Rep is drawn shaded to give context
                     to the linked intersection curves (yellow) drawn
                     by
                     <command>dplot bool1.dplot lcurves</command>.
@@ -1962,7 +1962,7 @@ X.brep is made.
               The <function>ssx</function> subcommand of
               <function>dplot</function> is used to check that all
               expected surface-surface intersections were attempted
-              between the brep NURBS versions of the two arb8s,
+              between the B-Rep NURBS versions of the two arb8s,
               hereafter referred to as <emphasis>brep1</emphasis> and
               <emphasis>brep2</emphasis>.
             </para>
@@ -1982,7 +1982,7 @@ Press [Enter] to show surface-surface intersection 13
               (<varname>ssx_index</varname> 0, 1, 4, 5). Two edges of
               each of these faces lie in the same plane (the X-Y plane
               and another plane parallel to it) as two of the four
-              smaller-area faces of the other brep
+              smaller-area faces of the other B-Rep
               (<varname>ssx_index</varname> 2, 3, 6, 7, 8, 9, 11,
               12). These two pairs of smaller area faces also
               intersect each other in square overlap intersections
