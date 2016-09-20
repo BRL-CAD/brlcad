@@ -94,8 +94,8 @@
       </listitem>
       <listitem>
         <para>
-          Some primitive conversions to NURBS are ill-defined or
-          undefinable (e.g., halfspace).
+          Some primitive conversions to NURBS are undefined (e.g., an
+          infinite halfspace).
         </para>
       </listitem>
       <listitem>
