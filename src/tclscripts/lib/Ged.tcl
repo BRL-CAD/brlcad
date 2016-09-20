@@ -3549,7 +3549,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::report {args} {
-    eval $mGed report $args
+    eval $mGed solid_report $args
 }
 
 ::itcl::body cadwidgets::Ged::rfarb {args} {
