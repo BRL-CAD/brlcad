@@ -46,6 +46,13 @@ struct dyna_node {
     point_t pnt;
 };
 
+struct dyna_element_solid {
+    long EID;
+    long PID;
+    int pntcnt;
+    long nodal_pnts[8];
+};
+
 struct dyna_element_shell {
     long EID;
     long PID;
@@ -60,6 +67,7 @@ struct dyna_part {
 struct dyna_world {
     struct bu_ptbl *nodes;
     struct bu_ptbl *element_shells;
+    struct bu_ptbl *element_solids;
     struct bu_ptbl *parts;
 };
 
@@ -177,6 +185,74 @@ process_nodes(std::ifstream &infile, int offset, struct dyna_world *world)
 
 
 void
+process_element_solid(std::ifstream &infile, int offset, struct dyna_world *world)
+{
+    std::string line;
+    int end_es = 0;
+    infile.clear();
+    infile.seekg(offset);
+    char *endptr;
+    while (std::getline(infile, line) && !end_es) {
+	if (line.c_str()[0] == '*') {
+	    end_es = 1;
+	    break;
+	}
+	int i = 0;
+	int col_cnt = 0;
+	int next_line = 0;
+	int npnts = 0;
+	struct dyna_element_solid *es;
+	BU_GET(es, struct dyna_element_solid);
+	while (i < 80 && i < (int)strlen(line.c_str())) {
+	    int incr = 8;
+	    std::string col = line.substr(i,incr);
+	    if (!next_line && col_cnt == 0) {
+		long eid = strtol(col.c_str(), &endptr, 10);
+		printf("es eid: %s\n", col.c_str());
+		es->EID = (endptr == col.c_str()) ? -1 : eid;
+	    }
+	    if (!next_line && col_cnt == 1) {
+		long pid = strtol(col.c_str(), &endptr, 10);
+		es->PID = (endptr == col.c_str()) ? -1 : pid;
+
+		// If all whitespace after first two columns, next line
+		// is presumed to hold the nodes per LS-DYNA Manual.
+		// Otherwise, assume nodes are in the remaining columns
+		// on this line and continue as normal.
+		std::string remainder = line.substr(i,incr);
+		if (remainder.find_first_not_of(" \t\n\v\f\r") == std::string::npos) {
+		    std::getline(infile, line);
+		    i = 0;
+		    col_cnt = 0;
+		    next_line = 1;
+		}
+	    }
+	    if (col_cnt > 1 && col_cnt < 8) {
+		long npnt = strtol(col.c_str(), &endptr, 10);
+		if (endptr == col.c_str()) {
+		    es->nodal_pnts[npnts] = -1;
+		} else {
+		    es->nodal_pnts[npnts] = npnt;
+		}
+		if (es->nodal_pnts[npnts] == -1) {
+		    if (npnts == 4) {
+			es->pntcnt = 4;
+		    } else {
+			bu_log("Error reading point %d\n", npnts+1);
+			break;
+		    }
+		} else {
+		    npnts++;
+		}
+	    }
+	    i = i + incr;
+	    col_cnt++;
+	}
+	bu_ptbl_ins(world->element_shells, (long *)es);
+    }
+}
+
+void
 process_element_shell(std::ifstream &infile, int offset, struct dyna_world *world)
 {
     std::string line;
@@ -263,9 +339,11 @@ main(int argc, char **argv)
     BU_GET(world, struct dyna_world);
     BU_GET(world->nodes, struct bu_ptbl);
     BU_GET(world->element_shells, struct bu_ptbl);
+    BU_GET(world->element_solids, struct bu_ptbl);
     BU_GET(world->parts, struct bu_ptbl);
     bu_ptbl_init(world->nodes, 8, "init node tbl");
     bu_ptbl_init(world->element_shells, 8, "init element tbl");
+    bu_ptbl_init(world->element_solids, 8, "init element tbl");
     bu_ptbl_init(world->parts, 8, "init part tbl");
 
     /* all_head will hold all the parts/regions */
@@ -278,6 +356,7 @@ main(int argc, char **argv)
     std::set<int> nodes;
     std::set<int> parts;
     std::set<int> element_shells;
+    std::set<int> element_solids;
     while (std::getline(infile, line)) {
 	if (line.c_str()[0] == '*') {
 	    size_t endpos = line.find_last_not_of(" \t");
@@ -287,11 +366,15 @@ main(int argc, char **argv)
 		element_shells.insert((int)infile.tellg());
 		continue;
 	    }
+	    if (BU_STR_EQUAL(keyword.c_str(), "ELEMENT_SOLID")) {
+		element_solids.insert((int)infile.tellg());
+		continue;
+	    }
 	    if (BU_STR_EQUAL(keyword.c_str(), "PART")) {
 		parts.insert((int)infile.tellg());
 		continue;
 	    }
-	    if (keyword_match("NODE", keyword)) {
+	    if (BU_STR_EQUAL(keyword.c_str(), "NODE")) {
 		nodes.insert((int)infile.tellg());
 		continue;
 	    }
@@ -306,6 +389,9 @@ main(int argc, char **argv)
     for (std::set<int>::iterator it = element_shells.begin(); it != element_shells.end(); it++) {
 	process_element_shell(infile, *it, world);
     }
+    for (std::set<int>::iterator it = element_solids.begin(); it != element_solids.end(); it++) {
+	process_element_solid(infile, *it, world);
+    }
     for (std::set<int>::iterator it = parts.begin(); it != parts.end(); it++) {
 	process_parts(infile, *it, world);
     }
@@ -317,10 +403,10 @@ main(int argc, char **argv)
 	struct dyna_node *n = (struct dyna_node *)BU_PTBL_GET(world->nodes, i);
 	NID_to_world.insert(std::pair<long,long>(n->NID, (long)i));
     }
-    std::map<long,long> EID_to_world;
+    std::map<long,long> EIDSHELLS_to_world;
     for (size_t i = 0; i < BU_PTBL_LEN(world->element_shells); i++) {
 	struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, i);
-	EID_to_world.insert(std::pair<long,long>(es->EID, (long)i));
+	EIDSHELLS_to_world.insert(std::pair<long,long>(es->EID, (long)i));
     }
     std::map<long,long> PID_to_world;
     for (size_t i = 0; i < BU_PTBL_LEN(world->parts); i++) {
@@ -336,12 +422,12 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    /* Construct map of part ids to EIS */
-    std::multimap<long,long> PID_to_EIS;
+    /* Construct map of part ids to EIS for element_shell objects */
+    std::multimap<long,long> PID_to_EISSHELLS;
     std::set<long> PIDs;
     for (size_t i = 0; i < BU_PTBL_LEN(world->element_shells); i++) {
 	struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, i);
-	PID_to_EIS.insert(std::pair<long,long>(es->PID,es->EID));
+	PID_to_EISSHELLS.insert(std::pair<long,long>(es->PID,es->EID));
 	PIDs.insert(es->PID);
     }
 
@@ -350,9 +436,9 @@ main(int argc, char **argv)
 	std::set<long> EIDs;
 	std::set<long> NIDs;
 	std::pair<std::multimap<long,long>::iterator, std::multimap<long,long>::iterator> ret;
-	ret = PID_to_EIS.equal_range(*it);
+	ret = PID_to_EISSHELLS.equal_range(*it);
 	for (std::multimap<long,long>::iterator eit=ret.first; eit != ret.second; eit++) {
-	    long wid = EID_to_world.find(eit->second)->second;
+	    long wid = EIDSHELLS_to_world.find(eit->second)->second;
 	    struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, wid);
 	    EIDs.insert(eit->second);
 	    for (int ind = 0; ind < 4; ind++) {
@@ -376,7 +462,7 @@ main(int argc, char **argv)
 	int *bot_faces = (int *)bu_calloc(EIDs.size() * 2 * 3, sizeof(int), "BoT faces (2 per Dyna element shell quad, 1 per triangle)");
 	int eind = 0;
 	for (std::set<long>::iterator eit = EIDs.begin(); eit != EIDs.end(); eit++) {
-	    long wid = EID_to_world.find(*eit)->second;
+	    long wid = EIDSHELLS_to_world.find(*eit)->second;
 	    struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, wid);
 	    int np1 = (int)NID_to_array.find(es->nodal_pnts[0])->second;
 	    int np2 = (int)NID_to_array.find(es->nodal_pnts[1])->second;
@@ -440,8 +526,12 @@ main(int argc, char **argv)
 
     bu_ptbl_free(world->nodes);
     bu_ptbl_free(world->element_shells);
+    bu_ptbl_free(world->element_solids);
+    bu_ptbl_free(world->parts);
+    BU_PUT(world->element_solids, struct bu_ptbl);
     BU_PUT(world->element_shells, struct bu_ptbl);
     BU_PUT(world->nodes, struct bu_ptbl);
+    BU_PUT(world->parts, struct bu_ptbl);
     BU_PUT(world, struct dyna_world);
 
     return 0;
