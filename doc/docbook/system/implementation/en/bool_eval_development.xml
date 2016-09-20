@@ -77,13 +77,14 @@
     <itemizedlist>
       <listitem>
         <para>
-          Frequently produces incorrect output due to unhandled
-          intersection cases.
+          May produce incorrect output due to unhandled intersection
+          cases.
         </para>
       </listitem>
       <listitem>
         <para>
-          Unoptimized performance.
+          Unoptimized performance resulting in potentially significant
+          runtimes.
         </para>
       </listitem>
       <listitem>
@@ -93,7 +94,8 @@
       </listitem>
       <listitem>
         <para>
-          Some primitive conversions to NURBS are ill-defined.
+          Some primitive conversions to NURBS are ill-defined or
+          undefinable (e.g., halfspace).
         </para>
       </listitem>
       <listitem>
@@ -321,7 +323,7 @@ ON_Intersect(const ON_Surface *surfA,
         BRL-CAD leverages the OpenNURBS library primarily for its
         classes that represent general (i.e. NURBS) b-rep, surface,
         curve, and point geometry. The following sections describe the
-        OpenNURBS library symbols most frequently used in the NURBS
+        OpenNURBS library symbols most commonly used in the NURBS
         boolean evaluation implementation, with relevant usage notes.
       </para>
       <warning>
@@ -373,7 +375,7 @@ ON_Intersect(const ON_Surface *surfA,
           to have correctly implemented copy and assignment functions.
         </para>
 	<para>
-	  The NURBS boolean evaluation implementation frequently
+	  The NURBS boolean evaluation implementation generally
 	  employs a combined array of known size to index elements
 	  from two input objects. For example, if
 	  <parameter>brepA</parameter> has
@@ -407,8 +409,8 @@ ON_Intersect(const ON_Surface *surfA,
           Mostly these allocations are simply done with the <code>new</code> keyword as with any other class. However, a few classes, notably <classname>ON_Brep</classname> have a <function>New()</function> function that wraps the allocation, which is preferred over using <code>new</code> directly for technical reasons specified in <filename>opennurbs_brep.h</filename>.
         </para>
         <para>
-          Pointers to objects, curves in particular, are frequently
-          stolen to avoid having to create a new copy of the object.
+          Pointers to objects, curves in particular, are generally
+          "stolen" to avoid having to create a new copy of the object.
           <warning>
             <para>
               Classes containing heap-allocated objects delete them in their destructors. Proper stealing of pointers requires the instance's members be set to NULL.
@@ -439,7 +441,7 @@ for (int i = 0; i < csx_events.Count(); ++i) {
         </para>
         <note>
           <para>
-            The NURBS boolean evaluation implementation frequently uses the function <function>ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE)</function> to check if values are near zero, or to check if two values are identical (e.g <function>ON_NearZero(t - last_t)</function>).
+            The NURBS boolean evaluation implementation generally uses the function <function>ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE)</function> to check if values are near zero, or to check if two values are identical (e.g <function>ON_NearZero(t - last_t)</function>).
           </para>
           <para>
             This function is also used to determine if objects are close enough to be considered intersecting: <function>ON_NearZero(pt.DistanceTo(other.pt), INTERSECTION_TOL)</function>.
@@ -467,7 +469,7 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 	    <classname>ON_2dPoint</classname> objects can be, and are, safely passed to functions that take <classname>ON_3dPoint</classname> arguments. The <classname>ON_3dPoint</classname> arguments are constructed from the provided <classname>ON_2dPoint</classname> objects, with their <varname>z</varname> coordinates set to 0.
 	  </para>
           <para>
-            The NURBS boolean evaluation implementation frequently constructs 2D curves by populating an <classname>ON_3dPointArray</classname> with 2D points, rather than using an <classname>ON_2dPointArray</classname>, as the 3D version of the class (besides having additional useful member functions), can be used to initialize an <classname>ON_PolylineCurve</classname>.
+            The NURBS boolean evaluation implementation generally constructs 2D curves by populating an <classname>ON_3dPointArray</classname> with 2D points, rather than using an <classname>ON_2dPointArray</classname>, as the 3D version of the class (besides having additional useful member functions), can be used to initialize an <classname>ON_PolylineCurve</classname>.
           </para>
 	</note>
       </section>
@@ -515,10 +517,11 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 	  All the <function>PointAt</function> methods return an <classname>ON_3dPoint</classname>, though in the common case where <classname>ON_Curve</classname> objects are representing 2D trim curves, the z coordinate will be 0.0.
 	</para>
 	<para>
-	  A curve's domain is frequently reversed using the
-	  <function>Reverse()</function> method to facilitate
-	  stitching curves together. The function has a boolean
-	  <literal>int</literal> return value that must be checked.
+	  It is sometimes necessary to reverse a curve's domain.  This
+	  is done using the <function>Reverse()</function> method to
+	  facilitate stitching curves together. The function has a
+	  boolean <literal>int</literal> return value that must be
+	  checked.
 	</para>
 	<para>
 	  <programlisting>
@@ -562,7 +565,7 @@ ON_Curve* Duplicate()
 }
 	</programlisting>
 	<para>
-	  This function is common to all OpenNURBS geometry classes, but curves are by far the most frequently duplicated objects. However, if curves are simply being retained from a working set of container objects, the curve pointers are frequently stolen rather than copied, with curve members set to <constant>NULL</constant> so that the curves aren't destructed with the containers.
+	  This function is common to all OpenNURBS geometry classes, but curves are by far the most frequently duplicated objects. However, if curves are simply being retained from a working set of container objects, the curve pointers are generally "stolen" rather than copied, with curve members set to <constant>NULL</constant> so that the curves aren't destructed with the containers.
 	</para>
       </section>
       <section>
@@ -650,7 +653,7 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
           The intersection classes enumerate a number of intersection
           types. Over the course of an evaluation, the
           <varname>m_type</varname> of intersection events is
-          frequently checked to determine how each event should be
+          repeatedly checked to determine how each event should be
           processed.
         </para>
         <para>
