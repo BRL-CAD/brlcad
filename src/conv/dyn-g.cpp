@@ -296,7 +296,7 @@ process_element_shell(std::ifstream &infile, int offset, struct dyna_world *worl
 		long esid = strtol(col.c_str(), &endptr, 10);
 		es->PID = (endptr == col.c_str()) ? -1 : esid;
 	    }
-	    if (col_cnt > 1) {
+	    if (col_cnt > 1 && col_cnt < 6) {
 		char *endptr;
 		long npnt = strtol(col.c_str(), &endptr, 10);
 		es->nodal_pnts[col_cnt-2] = (endptr == col.c_str()) ? -1 : npnt;
