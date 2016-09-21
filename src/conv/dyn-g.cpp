@@ -108,6 +108,7 @@ process_parts(std::ifstream &infile, int offset, struct dyna_world *world)
     part->heading = NULL;
     part->PID = -1;
     while (std::getline(infile, line) && !end_part) {
+	if (line.c_str()[0] == '$') continue;
 	if (line_cnt == 2 || line.c_str()[0] == '*') {
 	    end_part = 1;
 	    break;
@@ -143,6 +144,7 @@ process_nodes(std::ifstream &infile, int offset, struct dyna_world *world)
     infile.clear();
     infile.seekg(offset);
     while (std::getline(infile, line) && !end_nodes) {
+	if (line.c_str()[0] == '$') continue;
 	if (line.c_str()[0] == '*') {
 	    end_nodes = 1;
 	    break;
@@ -193,6 +195,7 @@ process_element_solid(std::ifstream &infile, int offset, struct dyna_world *worl
     infile.seekg(offset);
     char *endptr;
     while (std::getline(infile, line) && !end_es) {
+	if (line.c_str()[0] == '$') continue;
 	if (line.c_str()[0] == '*') {
 	    end_es = 1;
 	    break;
@@ -223,6 +226,9 @@ process_element_solid(std::ifstream &infile, int offset, struct dyna_world *worl
 		std::string remainder = line.substr(i,incr);
 		if (remainder.find_first_not_of(" \t\n\v\f\r") == std::string::npos) {
 		    std::getline(infile, line);
+		    while (line.c_str()[0] == '$' && !line.c_str()[0] == '$') {
+			std::getline(infile, line);
+		    };
 		    i = 0;
 		    col_cnt = 0;
 		    next_line = 1;
@@ -259,6 +265,7 @@ process_element_shell(std::ifstream &infile, int offset, struct dyna_world *worl
     infile.clear();
     infile.seekg(offset);
     while (std::getline(infile, line) && !end_es) {
+	if (line.c_str()[0] == '$') continue;
 	if (line.c_str()[0] == '*') {
 	    end_es = 1;
 	    break;
@@ -443,6 +450,7 @@ main(int argc, char **argv)
     std::set<int> element_shells;
     std::set<int> element_solids;
     while (std::getline(infile, line)) {
+	if (line.c_str()[0] == '$') continue;
 	if (line.c_str()[0] == '*') {
 	    size_t endpos = line.find_last_not_of(" \t");
 	    std::string keyword = line.substr(1,endpos+1);
