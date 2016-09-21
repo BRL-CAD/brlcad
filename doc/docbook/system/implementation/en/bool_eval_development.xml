@@ -52,9 +52,9 @@
     </para>
   </section>
   <section>
-    <title>NURBS Boolean Evaluation Using the <function>brep</function> Command</title>
+    <title>NURBS Boolean Evaluation Using the <command>brep</command> Command</title>
     <para>
-      The <function>brep</function> command is available in BRL-CAD's
+      The <command>brep</command> command is available in BRL-CAD's
       MGED and Archer applications. If the command is run with a
       single argument naming a combination, the components of the
       combination are converted into NURBS objects which are combined
@@ -65,10 +65,10 @@
       By default, the evaluated B-Rep-type object is written to the
       database with its original name plus the suffix
       <literal>.brep</literal> (e.g. running the
-      <function>brep</function> command on <literal>obj</literal>
+      <command>brep</command> command on <literal>obj</literal>
       produces <literal>obj.brep</literal>). If a specific name is
       desired for the output object, it can be provided as the second
-      argument to the <function>brep</function> command.
+      argument to the <command>brep</command> command.
     </para>
     <para>
       There are a number of known limitations to the NURBS Boolean
@@ -1251,7 +1251,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
         These commands work by creating temporary wireframe objects
         that are drawn in the view window. While drawn, these objects
         appear in the in-memory database, so the
-        <function>ls</function> command will show these objects (with
+        <command>ls</command> command will show these objects (with
         names like <varname>_BC_S_&lt;obj&gt;_646464></varname>
         or <varname>bool1_brep1_surface03838ff</varname>), but they are
         not saved with the database, and are deleted when erased from
@@ -1261,9 +1261,10 @@ for (int i = 0; i < x_event.Count(); ++i) {
         <para>
           Debug wireframe objects are not drawn the same way as
           geometry, and do not trigger an automatic resize and refresh
-          of the view. This means that after running a plot command,
-          you may have to trigger a refresh manually (e.g. by running
-          the <function>autoview</function> command or interactively
+          of the view. This means that after running
+          a <command>plot</command> command, you may have to trigger a
+          refresh manually (e.g. by running
+          the <command>autoview</command> command or interactively
           rotating/resizing the view.
         </para>
         <para>
@@ -1278,25 +1279,25 @@ for (int i = 0; i < x_event.Count(); ++i) {
       <para>
       </para>
       <section>
-        <title>The brep Command</title>
+        <title>The <command>brep</command> Command</title>
         <para>
-          The Archer <function>brep</function> command (also
+          The Archer <command>brep</command> command (also
           implemented in MGED) can be used to get structural
           information about B-Rep objects and visualize different
           subcomponents.
         </para>
         <para>
-          Most importantly, <function>brep &lt;obj&gt; info</function>
+          Most importantly, <command>brep &lt;obj&gt; info</command>
           will report summary information, including the number of
-          NURBS surfaces and faces and <function>brep &lt;obj&gt; plot
-          S &lt;index&gt;</function> can be used to plot individual
+          NURBS surfaces and faces and <command>brep &lt;obj&gt; plot
+          S &lt;index&gt;</command> can be used to plot individual
           surfaces in 3D.
         </para>
         <para>
           This is the primary way you can conceptually link a surface
           or face index to the 3D geometry it represents. So if you
           notice an error in an object while viewing it in the editor,
-          you can use the <function>brep</function> command to
+          you can use the <command>brep</command> command to
           determine the index of the surface with the error, and then
           inspect the in-memory object in a debugger using that index
           into the final surface array, tracing that surface object to
@@ -1314,10 +1315,10 @@ for (int i = 0; i < x_event.Count(); ++i) {
           <para>
             In order to inspect the surfaces and indices for a
             particular stage of the overall evaluation using the
-            <function>brep</function> command, it's necessary to
+            <command>brep</command> command, it's necessary to
             manually create the intermediate combination (a subtree of
             the one being evaluated), and use the
-            <function>brep</function> command to produce the
+            <command>brep</command> command to produce the
             intermediate NURBS result.
           </para>
         </note>
@@ -1325,14 +1326,14 @@ for (int i = 0; i < x_event.Count(); ++i) {
       <section>
         <title>The dplot Command</title>
         <para>
-          The <function>dplot</function> command is used to visualize
+          The <command>dplot</command> command is used to visualize
           the results of different stages of the NURBS Boolean
           Evaluation algorithm. This makes it easier to isolate the
           source of a problem in an evaluation.
         </para>
         <para>
-          Unlike the <function>brep</function> command, the
-          <function>dplot</function> command is purely a development
+          Unlike the <command>brep</command> command, the
+          <command>dplot</command> command is purely a development
           tool. Its implementation does not honor library boundaries
           and does not conform to the typical conventions for editor
           commands, and for this reason is only available as an Archer
@@ -1354,7 +1355,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
           <filename>bool1_*.plot3</filename>.  An additional
           <filename>bool1.dplot</filename> is written which describes
           the <filename>.plot3</filename> files that were written in a
-          format understood by the <function>dplot</function> command.
+          format understood by the <command>dplot</command> command.
         </para>
         <para>
           One set of files is written for each evaluation. Between
@@ -1372,18 +1373,18 @@ for (int i = 0; i < x_event.Count(); ++i) {
           the same file names and do not check if written files
           already exist. It is assumed that you will run an
           evaluation, inspect the generated files using the
-          <function>dplot</function> command, and then manually remove
+          <command>dplot</command> command, and then manually remove
           (or just move) the generated <filename>.dplot</filename> and
           <filename>.plot3</filename> files before performing another
-          evaluation with the <function>brep</function> command.
+          evaluation with the <command>brep</command> command.
         </para>
         <section>
           <title>The ssx Subcommands</title>
           <itemizedlist>
             <listitem>
               <para>
-                <emphasis role="bold"><function>dplot bool1.dplot
-                ssx</function></emphasis> lets you interactively step
+                <emphasis role="bold"><command>dplot bool1.dplot
+                ssx</command></emphasis> lets you interactively step
                 through the pairs of surfaces whose axis-aligned
                 bounding boxes were found to intersect. The wireframes
                 of the B-Rep objects being intersected are drawn with
@@ -1395,14 +1396,14 @@ for (int i = 0; i < x_event.Count(); ++i) {
             </listitem>
 	    <listitem>
               <para>
-		<emphasis role="bold"><function>dplot bool1.dplot
-		&lt;ssx_index&gt;</function></emphasis> lets you
+		<emphasis role="bold"><command>dplot bool1.dplot
+		&lt;ssx_index&gt;</command></emphasis> lets you
 		interactively step through the specific
 		surface-surface intersections found between the pair
 		of surfaces identified by an
 		<varname>ssx_index</varname>, excluding
 		isocurve-surface intersections (shown by
-		<function>dplot bool1.dplot isocsx</function>).
+		<command>dplot bool1.dplot isocsx</command>).
               </para>
 	      <para>
 		To make it easier to check that drawn intersection
@@ -1445,8 +1446,8 @@ for (int i = 0; i < x_event.Count(); ++i) {
           <itemizedlist>
             <listitem>
               <para>
-		<emphasis role="bold"><function>dplot bool1.dplot
-		isocsx &lt;ssx_index&gt;</function></emphasis> lets
+		<emphasis role="bold"><command>dplot bool1.dplot
+		isocsx &lt;ssx_index&gt;</command></emphasis> lets
 		you step through the isocurve-surface intersections
 		from the pair of intersecting surfaces identified by
 		the given <varname>ssx_index</varname>. Wireframe
@@ -1455,15 +1456,15 @@ for (int i = 0; i < x_event.Count(); ++i) {
 		highlighted. Each combination of isocurve and surface
 		is assigned an <varname>isocsx_index</varname> (shown
 		in the command window) that can be used as an argument
-		in the second form of the <function>isocsx</function>
+		in the second form of the <command>isocsx</command>
 		subcommand.
 	      </para>
 	    </listitem>
             <listitem>
               <para>
-		<emphasis role="bold"><function>dplot bool1.dplot
+		<emphasis role="bold"><command>dplot bool1.dplot
 		isocsx &lt;ssx_index&gt;
-		&lt;isocsx_index&gt;</function></emphasis> shows the
+		&lt;isocsx_index&gt;</command></emphasis> shows the
 		actual intersection curve found between the isocurve
 		and surface pair identified by the given
 		<varname>ssx_index</varname> and
@@ -1488,8 +1489,8 @@ for (int i = 0; i < x_event.Count(); ++i) {
           <itemizedlist>
             <listitem>
               <para>
-		<emphasis role="bold"><function>dplot bool1.dplot
-		fcurves &lt;ssx_index&gt;</function></emphasis> lets
+		<emphasis role="bold"><command>dplot bool1.dplot
+		fcurves &lt;ssx_index&gt;</command></emphasis> lets
 		you step through the surface-surface intersection
 		curves identified by the given
 		<varname>ssx_index</varname> after they've been
@@ -1503,8 +1504,8 @@ for (int i = 0; i < x_event.Count(); ++i) {
 	    </listitem>
             <listitem>
               <para>
-		<emphasis role="bold"><function>dplot bool1.dplot
-		lcurves</function></emphasis> steps through the final
+		<emphasis role="bold"><command>dplot bool1.dplot
+		lcurves</command></emphasis> steps through the final
 		3D intersection curves used to split faces, after
 		contiguous face-clipped pieces have been linked
 		together.
@@ -1541,8 +1542,8 @@ for (int i = 0; i < x_event.Count(); ++i) {
 	    </listitem>
             <listitem>
               <para>
-		<emphasis role="bold"><function>dplot bool1.dplot
-		faces</function></emphasis> lets you step through the
+		<emphasis role="bold"><command>dplot bool1.dplot
+		faces</command></emphasis> lets you step through the
 		new set of faces formed by splitting the original
 		faces with the final linked intersection curves. Faces
 		that are considered part of the final result are drawn
@@ -1578,7 +1579,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
         <para>
           It's possible to write out custom curves from any part of
           the evaluation (i.e. those not covered by
-          <function>dplot</function>) and view them in MGED/Archer.
+          <command>dplot</command>) and view them in MGED/Archer.
         </para>
         <para>
           You can pass a 3D <classname>ON_Curve</classname> to the
@@ -1617,7 +1618,7 @@ if (face1_curves.Count() > 0 && face1_curves[0] != NULL) {
         </example>
         <para>
           After running an evaluation that produces a custom plot3
-          file, you can draw it using the <function>overlay</function>
+          file, you can draw it using the <command>overlay</command>
           editor command.
         </para>
         <example>
@@ -1629,12 +1630,12 @@ Archer> overlay mycurve1.plot3 1
       </section>
     </section>
     <section>
-      <title>Debugging with the dplot Command</title>
+      <title>Debugging with the <command>dplot</command> Command</title>
       <section>
         <title>Tracing Output to the Code That Created It</title>
         <para>
           After you notice a problem in the output shown by the
-          <function>dplot</function> command, you need to locate the
+          <command>dplot</command> command, you need to locate the
           source code that created the erroneous geometry so you can
           start debugging. The following sections provide example
           procedures you can perform in Archer and a debugger to start
@@ -1645,9 +1646,9 @@ Archer> overlay mycurve1.plot3 1
         <orderedlist>
           <listitem>
             <para>
-              Use the <function>info</function> and
-              <function>plot</function> subcommands of the
-              <function>brep</function> command to find the indexes
+              Use the <command>info</command> and
+              <command>plot</command> subcommands of the
+              <command>brep</command> command to find the indexes
               (<literal>&lt;i&gt;</literal> and
               <literal>&lt;j&gt;</literal>) of the two faces involved
               in the missing intersection.
@@ -1657,7 +1658,7 @@ Archer> overlay mycurve1.plot3 1
               create the appropriate intermediate evaluation,
               corresponding to the
               <filename>bool&lt;n&gt;.dplot</filename> showing the
-              error, to run the <function>brep</function> command on.
+              error, to run the <command>brep</command> command on.
             </para>
           </listitem>
           <listitem>
@@ -1684,21 +1685,21 @@ Archer> overlay mycurve1.plot3 1
             </para>
           </listitem>          
         </orderedlist>
-        <bridgehead>If the isocsx subcommand shows that an
+        <bridgehead>If the <command>isocsx</command> subcommand shows that an
         isocurve-surface intersection is missing...</bridgehead>
         <orderedlist>
           <listitem>
             <para>
               Note the index <literal>&lt;n&gt;</literal> of the
               surface-surface intersection used as the argument to the
-              <function>isocsx</function> subcommand.
+              <command>isocsx</command> subcommand.
             </para>
           </listitem>
           <listitem>
             <para>
-              Use the <function>info</function> and
-              <function>plot</function> subcommands of the
-              <function>brep</function> command to find the indexes
+              Use the <command>info</command> and
+              <command>plot</command> subcommands of the
+              <command>brep</command> command to find the indexes
               (<literal>&lt;i&gt;</literal> and
               <literal>&lt;j&gt;</literal>) of the two faces involved
               in the missing intersection.
@@ -1708,7 +1709,7 @@ Archer> overlay mycurve1.plot3 1
               create the appropriate intermediate evaluation,
               corresponding to the
               <filename>bool&lt;n&gt;.dplot</filename> showing the
-              error, to run the <function>brep</function> command on.
+              error, to run the <command>brep</command> command on.
             </para>
           </listitem>
           <listitem>
@@ -1755,14 +1756,14 @@ Archer> overlay mycurve1.plot3 1
             </para>
           </listitem>
         </orderedlist>
-        <bridgehead>If the isocsx subcommand shows that isocurve
+        <bridgehead>If the <command>isocsx</command> subcommand shows that isocurve
         intersections are incorrect...</bridgehead>
         <orderedlist>
           <listitem>
             <para>
               Note the index <literal>&lt;n&gt;</literal> of the
               surface-surface intersection used as the argument to the
-              <function>isocsx</function> subcommand.
+              <command>isocsx</command> subcommand.
             </para>
           </listitem>
           <listitem>
@@ -1788,14 +1789,14 @@ Archer> overlay mycurve1.plot3 1
             </para>
           </listitem>
         </orderedlist>
-        <bridgehead>If the ssx subcommand shows an incorrect
+        <bridgehead>If the <command>ssx</command> subcommand shows an incorrect
         intersection curve...</bridgehead>
         <orderedlist>
           <listitem>
             <para>
               Note the index <literal>&lt;n&gt;</literal> of the
               surface-surface intersection used as the argument to the
-              <function>ssx</function> subcommand, and the index
+              <command>ssx</command> subcommand, and the index
               <literal>&lt;k&gt;</literal> assigned to the incorrect
               intersection event.
             </para>
@@ -1839,10 +1840,10 @@ Archer> overlay mycurve1.plot3 1
             <para>
               Note the index <literal>&lt;n&gt;</literal> of the
               surface-surface intersection used as the argument to the
-              <function>ssx</function> and
-              <function>fcurves</function> subcommands, and the index
+              <command>ssx</command> and
+              <command>fcurves</command> subcommands, and the index
               <literal>&lt;k&gt;</literal> assigned by
-              <function>fcurves</function> to the incorrect clipped
+              <command>fcurves</command> to the incorrect clipped
               curves.
             </para>
           </listitem>
@@ -1879,7 +1880,7 @@ Archer> overlay mycurve1.plot3 1
           <listitem>
             <para>
               Note the index <literal>&lt;n&gt;</literal> assigned by
-              <function>lcurves</function> to the relevant linked
+              <command>lcurves</command> to the relevant linked
               curves.
             </para>
           </listitem>
@@ -1971,8 +1972,8 @@ X.brep is made.
               </mediaobject>
             </figure>
             <para>
-              The <function>ssx</function> subcommand of
-              <function>dplot</function> is used to check that all
+              The <command>ssx</command> subcommand of
+              <command>dplot</command> is used to check that all
               expected surface-surface intersections were attempted
               between the B-Rep NURBS versions of the two arb8s,
               hereafter referred to as <emphasis>brep1</emphasis> and
@@ -2003,8 +2004,8 @@ Press [Enter] to show surface-surface intersection 13
           </listitem>
           <listitem>
             <para>
-              The <function>ssx &lt;ssx_index&gt;</function> subcommand of
-              <function>dplot</function> is used to check the
+              The <command>ssx &lt;ssx_index&gt;</command> subcommand of
+              <command>dplot</command> is used to check the
               individual intersection events.
             </para>
             <screen>
@@ -2039,8 +2040,8 @@ Archer> dplot bool1.dplot ssx 13
               intersections that make each edge of the square overlap.
             </para>
             <para>
-              The <function>isocsx &lt;ssx_index&gt;</function>
-              subcommand of the <function>dplot</function> command is
+              The <command>isocsx &lt;ssx_index&gt;</command>
+              subcommand of the <command>dplot</command> command is
               used to check that all isocurve-surface intersections
               were attempted.
             </para>
@@ -2054,9 +2055,9 @@ Archer> dplot bool1.dplot ssx 10
           </listitem>
           <listitem>
             <para>
-              The <function>isocsx &lt;ssx_index&gt;
-              &lt;isocsx_index&gt;</function> subcommand of the
-              <function>dplot</function> command is used to check each
+              The <command>isocsx &lt;ssx_index&gt;
+              &lt;isocsx_index&gt;</command> subcommand of the
+              <command>dplot</command> command is used to check each
               isocurve-surface intersection curve.
             </para>
             <screen>
@@ -2075,8 +2076,8 @@ Archer> dplot bool1.dplot isocsx 10 3
           </listitem>
           <listitem>
             <para>
-              The <function>fcurves</function> subcommand of the
-              <function>dplot</function> command is used to check the
+              The <command>fcurves</command> subcommand of the
+              <command>dplot</command> command is used to check the
               overlap intersection curve that resulted from stitching
               together the four (correct) isocurve-surface
               intersection curves. The command shows the 3D projection
@@ -2125,7 +2126,7 @@ Archer> dplot bool1.dplot fcurves 10
             </para>
             <para>
               Since the <varname>ssx_index</varname> values reported
-              by <function>dplot</function> are numbered from 0, the
+              by <command>dplot</command> are numbered from 0, the
               intersection we want to investigate, whose
               <varname>ssx_index</varname> is 10, will be the 11th
               intersection recorded during the evaluation.
@@ -2176,7 +2177,7 @@ Archer> dplot bool1.dplot fcurves 10
               <filename>split_overlap7.plot3</filename>.
             </para>
             <para>
-              The <function>overlay</function> command is used to draw
+              The <command>overlay</command> command is used to draw
               the contents of the <filename>.plot3</filename> files.
             </para>
             <screen>
@@ -2202,10 +2203,10 @@ Archer> overlay split_overlap7.plot3 1 ol7
             <para>
               Curve endpoints are tested to see if they coincide, and
               contiguous curves are linked with the
-              <function>link_curves</function> routine, which returns
+              <function>link_curves()</function> routine, which returns
               a linked curve that replaces the original curves in the
               <varname>overlaps</varname> array. We'll write out each
-              such curve returned by <function>link_curves</function>.
+              such curve returned by <function>link_curves()</function>.
             </para>
             <programlisting>
 <![CDATA[
@@ -2297,7 +2298,7 @@ $ gdb mged
             </screen>
             <para>
               Stepping from the breakpoint (e.g. with gdb's
-              <function>next</function> command) we see that the macro
+              <command>next</command> command) we see that the macro
               test <literal>OVERLAPS_LINKED(Start, End)</literal>
               evaluates as true, indicating that the start of the
               <varname>overlaps[i]</varname> curves coincide with the
@@ -2374,7 +2375,7 @@ link_curves(ON_Curve *&c1, ON_Curve *&c2)
             <para>
               This error is corrected and the code is rebuilt. The
               evaluation is re-run, and we use the
-              <function>dplot</function> command to verify that the
+              <command>dplot</command> command to verify that the
               overlap intersection associated with
               <varname>ssx_index</varname> 10 is now correct.
             </para>
