@@ -203,6 +203,7 @@ process_element_solid(std::ifstream &infile, int offset, struct dyna_world *worl
 	int npnts = 0;
 	struct dyna_element_solid *es;
 	BU_GET(es, struct dyna_element_solid);
+	es->pntcnt = 8;
 	while (i < 80 && i < (int)strlen(line.c_str())) {
 	    int incr = 8;
 	    std::string col = line.substr(i,incr);
@@ -227,16 +228,14 @@ process_element_solid(std::ifstream &infile, int offset, struct dyna_world *worl
 		    next_line = 1;
 		}
 	    }
-	    if (col_cnt > 1 && col_cnt < 8) {
+	    if ((col_cnt > 1 && col_cnt < 10) || next_line) {
 		long npnt = strtol(col.c_str(), &endptr, 10);
-		if (endptr == col.c_str()) {
-		    es->nodal_pnts[npnts] = -1;
-		} else {
-		    es->nodal_pnts[npnts] = npnt;
-		}
+		es->nodal_pnts[npnts] = (endptr == col.c_str()) ? -1 : npnt;
 		if (es->nodal_pnts[npnts] == -1) {
 		    if (npnts == 4) {
 			es->pntcnt = 4;
+		    } else if (npnts == 6) {
+			es->pntcnt = 6;
 		    } else {
 			bu_log("Error reading point %d\n", npnts+1);
 			break;
@@ -281,33 +280,19 @@ process_element_shell(std::ifstream &infile, int offset, struct dyna_world *worl
 		// node id
 		char *endptr;
 		long nodeid = strtol(col.c_str(), &endptr, 10);
-		if (endptr == col.c_str()) {
-		    bu_log("Error: string to long didn't work: %s\n", col.c_str());
-		    es->EID = -1;
-		} else {
-		    es->EID = nodeid;
-		}
+		es->EID = (endptr == col.c_str()) ? -1 : nodeid;
 	    }
 	    /* PID */
 	    if (col_cnt == 1) {
 		// node id
 		char *endptr;
 		long esid = strtol(col.c_str(), &endptr, 10);
-		if (endptr == col.c_str()) {
-		    bu_log("Error: string to long didn't work: %s\n", col.c_str());
-		    es->PID = -1;
-		} else {
-		    es->PID = esid;
-		}
+		es->PID = (endptr == col.c_str()) ? -1 : esid;
 	    }
 	    if (col_cnt > 1) {
 		char *endptr;
 		long npnt = strtol(col.c_str(), &endptr, 10);
-		if (endptr == col.c_str()) {
-		    es->nodal_pnts[col_cnt-2] = -1;
-		} else {
-		    es->nodal_pnts[col_cnt-2] = npnt;
-		}
+		es->nodal_pnts[col_cnt-2] = (endptr == col.c_str()) ? -1 : npnt;
 	    }
 	    i = i + incr;
 	    col_cnt++;
@@ -378,6 +363,41 @@ add_element_shell_mesh(std::map<long,long> &EIDSHELLS_to_world, std::map<long,lo
     bu_vls_free(&sname);
 }
 
+void
+add_element_solid(long wid, std::map<long,long> &NID_to_world, struct wmember *head, struct dyna_world *world, struct rt_wdb *fd_out)
+{
+    struct dyna_element_solid *es = (struct dyna_element_solid *)BU_PTBL_GET(world->element_solids, wid);
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&pname, "%ld.s", es->EID);
+    if (es->pntcnt == 4) {
+	/* ARB4 */
+	fastf_t pnts[3*4];
+	for (int i = 0; i < 4; i++) {
+	    struct dyna_node *n = (struct dyna_node *)BU_PTBL_GET(world->nodes, NID_to_world.find(es->nodal_pnts[i])->second);
+	    for (int j = 0; j < 3; j++) pnts[i*3+j] = n->pnt[j];
+	}
+	mk_arb4(fd_out, bu_vls_addr(&pname), pnts);
+    } else if (es->pntcnt == 6) {
+	/* ARB6 */
+	fastf_t pnts[3*6];
+	for (int i = 0; i < 6; i++) {
+	    struct dyna_node *n = (struct dyna_node *)BU_PTBL_GET(world->nodes, NID_to_world.find(es->nodal_pnts[i])->second);
+	    for (int j = 0; j < 3; j++) pnts[i*3+j] = n->pnt[j];
+	}
+	mk_arb6(fd_out, bu_vls_addr(&pname), pnts);
+    } else {
+	/* ARB8 */
+	fastf_t pnts[3*8];
+	for (int i = 0; i < 8; i++) {
+	    struct dyna_node *n = (struct dyna_node *)BU_PTBL_GET(world->nodes, NID_to_world.find(es->nodal_pnts[i])->second);
+	    for (int j = 0; j < 3; j++) pnts[i*3+j] = n->pnt[j];
+	}
+	mk_arb8(fd_out, bu_vls_addr(&pname), pnts);
+    }
+    /* Add the ARB to the parent Comb*/
+    (void)mk_addmember(bu_vls_addr(&pname), &(*head).l, NULL, WMOP_UNION);
+    bu_vls_free(&pname); 
+}
 
 int
 main(int argc, char **argv)
@@ -473,6 +493,11 @@ main(int argc, char **argv)
 	struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, i);
 	EIDSHELLS_to_world.insert(std::pair<long,long>(es->EID, (long)i));
     }
+    std::map<long,long> EIDSOLIDS_to_world;
+    for (size_t i = 0; i < BU_PTBL_LEN(world->element_solids); i++) {
+	struct dyna_element_solid *es = (struct dyna_element_solid *)BU_PTBL_GET(world->element_solids, i);
+	EIDSOLIDS_to_world.insert(std::pair<long,long>(es->EID, (long)i));
+    }
     std::map<long,long> PID_to_world;
     for (size_t i = 0; i < BU_PTBL_LEN(world->parts); i++) {
 	struct dyna_part *p = (struct dyna_part *)BU_PTBL_GET(world->parts, i);
@@ -534,6 +559,16 @@ main(int argc, char **argv)
 	 * are situations where the granularity is needed */
 	if (PID_to_EISSHELLS.find(*it) != PID_to_EISSHELLS.end()) {
 	    add_element_shell_mesh(EIDSHELLS_to_world, NID_to_world, PID_to_EISSHELLS, *it, &head, world, fd_out);
+	}
+
+	/* Solids */
+	std::pair<std::multimap<long,long>::iterator, std::multimap<long,long>::iterator> ret;
+	if (PID_to_EISSOLIDS.find(*it) != PID_to_EISSOLIDS.end()) {
+	    ret = PID_to_EISSOLIDS.equal_range(*it);
+	    for (std::multimap<long,long>::iterator eit=ret.first; eit != ret.second; eit++) {
+		wid = EIDSOLIDS_to_world.find(eit->second)->second;
+		add_element_solid(wid, NID_to_world, &head, world, fd_out);
+	    }
 	}
 
 
