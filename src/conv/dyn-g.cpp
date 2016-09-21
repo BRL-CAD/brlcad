@@ -208,7 +208,7 @@ process_element_solid(std::ifstream &infile, int offset, struct dyna_world *worl
 	    std::string col = line.substr(i,incr);
 	    if (!next_line && col_cnt == 0) {
 		long eid = strtol(col.c_str(), &endptr, 10);
-		printf("es eid: %s\n", col.c_str());
+		//printf("es eid: %s\n", col.c_str());
 		es->EID = (endptr == col.c_str()) ? -1 : eid;
 	    }
 	    if (!next_line && col_cnt == 1) {
@@ -248,7 +248,7 @@ process_element_solid(std::ifstream &infile, int offset, struct dyna_world *worl
 	    i = i + incr;
 	    col_cnt++;
 	}
-	bu_ptbl_ins(world->element_shells, (long *)es);
+	bu_ptbl_ins(world->element_solids, (long *)es);
     }
 }
 
@@ -268,6 +268,9 @@ process_element_shell(std::ifstream &infile, int offset, struct dyna_world *worl
 	int col_cnt = 0;
 	struct dyna_element_shell *es;
 	BU_GET(es, struct dyna_element_shell);
+	es->nodal_pnts[0] = -1;
+	es->nodal_pnts[1] = -1;
+	es->nodal_pnts[2] = -1;
 	es->nodal_pnts[3] = -1;
 	while (i < 80 && i < (int)strlen(line.c_str())) {
 	    int incr = 8;
@@ -311,6 +314,68 @@ process_element_shell(std::ifstream &infile, int offset, struct dyna_world *worl
 	}
 	bu_ptbl_ins(world->element_shells, (long *)es);
     }
+}
+
+void
+add_element_shell_mesh(std::map<long,long> &EIDSHELLS_to_world, std::map<long,long> &NID_to_world, std::multimap<long,long> &PID_to_EISSHELLS, long pid, struct wmember *head, struct dyna_world *world, struct rt_wdb *fd_out)
+{
+
+    std::set<long> EIDs;
+    std::set<long> NIDs;
+    std::pair<std::multimap<long,long>::iterator, std::multimap<long,long>::iterator> ret;
+    ret = PID_to_EISSHELLS.equal_range(pid);
+    for (std::multimap<long,long>::iterator eit=ret.first; eit != ret.second; eit++) {
+	long wid = EIDSHELLS_to_world.find(eit->second)->second;
+	struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, wid);
+	EIDs.insert(eit->second);
+	for (int ind = 0; ind < 4; ind++) {
+	    if (es->nodal_pnts[ind] != -1) NIDs.insert(es->nodal_pnts[ind]);
+	}
+    }
+
+    int array_ind = 0;
+    std::map<long, long> NID_to_array;
+    fastf_t *bot_vertices = (fastf_t *)bu_calloc(NIDs.size()*3, sizeof(fastf_t), "BoT vertices (Dyna nodes)");
+    for (std::set<long>::iterator nit = NIDs.begin(); nit != NIDs.end(); nit++) {
+	long wid = NID_to_world.find(*nit)->second;
+	struct dyna_node *n = (struct dyna_node *)BU_PTBL_GET(world->nodes, wid);
+	NID_to_array.insert(std::pair<long, long>(*nit,(long)array_ind));
+	for (int j = 0; j < 3; j++) {
+	    bot_vertices[(array_ind*3)+j] = n->pnt[j];
+	}
+	array_ind++;
+    }
+
+    int *bot_faces = (int *)bu_calloc(EIDs.size() * 2 * 3, sizeof(int), "BoT faces (2 per Dyna element shell quad, 1 per triangle)");
+    int eind = 0;
+    for (std::set<long>::iterator eit = EIDs.begin(); eit != EIDs.end(); eit++) {
+	long wid = EIDSHELLS_to_world.find(*eit)->second;
+	struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, wid);
+	int np1 = (int)NID_to_array.find(es->nodal_pnts[0])->second;
+	int np2 = (int)NID_to_array.find(es->nodal_pnts[1])->second;
+	int np3 = (int)NID_to_array.find(es->nodal_pnts[2])->second;
+	int np4 = (int)NID_to_array.find(es->nodal_pnts[3])->second;
+	bot_faces[(eind*6)+0] = np1;
+	bot_faces[(eind*6)+1] = np2;
+	bot_faces[(eind*6)+2] = np3;
+	if (np4 != -1) {
+	    bot_faces[(eind*6)+3] = np1;
+	    bot_faces[(eind*6)+4] = np3;
+	    bot_faces[(eind*6)+5] = np4;
+	} else {
+	    bot_faces[(eind*6)+3] = -1;
+	    bot_faces[(eind*6)+4] = -1;
+	    bot_faces[(eind*6)+5] = -1;
+	}
+	eind++;
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "%ld.bot", pid);
+    mk_bot(fd_out, bu_vls_addr(&sname), RT_BOT_SURFACE, RT_BOT_UNORIENTED, NULL, NIDs.size(), EIDs.size() * 2, bot_vertices, bot_faces, NULL, NULL);
+    /* Add the BoT to the parent Comb*/
+    (void)mk_addmember(bu_vls_addr(&sname), &(*head).l, NULL, WMOP_UNION);
+    bu_vls_free(&sname);
 }
 
 
@@ -390,7 +455,7 @@ main(int argc, char **argv)
 	process_element_shell(infile, *it, world);
     }
     for (std::set<int>::iterator it = element_solids.begin(); it != element_solids.end(); it++) {
-	process_element_solid(infile, *it, world);
+        process_element_solid(infile, *it, world);
     }
     for (std::set<int>::iterator it = parts.begin(); it != parts.end(); it++) {
 	process_parts(infile, *it, world);
@@ -422,72 +487,31 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
+
+    /* We need to know what all our active PIDs are */
+    std::set<long> PIDs;
+
     /* Construct map of part ids to EIS for element_shell objects */
     std::multimap<long,long> PID_to_EISSHELLS;
-    std::set<long> PIDs;
     for (size_t i = 0; i < BU_PTBL_LEN(world->element_shells); i++) {
 	struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, i);
 	PID_to_EISSHELLS.insert(std::pair<long,long>(es->PID,es->EID));
 	PIDs.insert(es->PID);
     }
 
-    /* For each PID, make a bot with the set of EID elements associated with it */
+    /* Construct map of part ids to EIS for element_solid objects */
+    std::multimap<long,long> PID_to_EISSOLIDS;
+    for (size_t i = 0; i < BU_PTBL_LEN(world->element_solids); i++) {
+	struct dyna_element_solid *es = (struct dyna_element_solid *)BU_PTBL_GET(world->element_solids, i);
+	PID_to_EISSOLIDS.insert(std::pair<long,long>(es->PID,es->EID));
+	PIDs.insert(es->PID);
+    }
+
+    /* For each PID, make a combination and associated solids */
     for (std::set<long>::iterator it = PIDs.begin(); it != PIDs.end(); it++) {
-	std::set<long> EIDs;
-	std::set<long> NIDs;
-	std::pair<std::multimap<long,long>::iterator, std::multimap<long,long>::iterator> ret;
-	ret = PID_to_EISSHELLS.equal_range(*it);
-	for (std::multimap<long,long>::iterator eit=ret.first; eit != ret.second; eit++) {
-	    long wid = EIDSHELLS_to_world.find(eit->second)->second;
-	    struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, wid);
-	    EIDs.insert(eit->second);
-	    for (int ind = 0; ind < 4; ind++) {
-		if (es->nodal_pnts[ind] != -1) NIDs.insert(es->nodal_pnts[ind]);
-	    }
-	}
 
-	int array_ind = 0;
-	std::map<long, long> NID_to_array;
-	fastf_t *bot_vertices = (fastf_t *)bu_calloc(NIDs.size()*3, sizeof(fastf_t), "BoT vertices (Dyna nodes)");
-	for (std::set<long>::iterator nit = NIDs.begin(); nit != NIDs.end(); nit++) {
-	    long wid = NID_to_world.find(*nit)->second;
-	    struct dyna_node *n = (struct dyna_node *)BU_PTBL_GET(world->nodes, wid);
-	    NID_to_array.insert(std::pair<long, long>(*nit,(long)array_ind));
-	    for (int j = 0; j < 3; j++) {
-		bot_vertices[(array_ind*3)+j] = n->pnt[j];
-	    }
-	    array_ind++;
-	}
 
-	int *bot_faces = (int *)bu_calloc(EIDs.size() * 2 * 3, sizeof(int), "BoT faces (2 per Dyna element shell quad, 1 per triangle)");
-	int eind = 0;
-	for (std::set<long>::iterator eit = EIDs.begin(); eit != EIDs.end(); eit++) {
-	    long wid = EIDSHELLS_to_world.find(*eit)->second;
-	    struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, wid);
-	    int np1 = (int)NID_to_array.find(es->nodal_pnts[0])->second;
-	    int np2 = (int)NID_to_array.find(es->nodal_pnts[1])->second;
-	    int np3 = (int)NID_to_array.find(es->nodal_pnts[2])->second;
-	    int np4 = (int)NID_to_array.find(es->nodal_pnts[3])->second;
-	    bot_faces[(eind*6)+0] = np1;
-	    bot_faces[(eind*6)+1] = np2;
-	    bot_faces[(eind*6)+2] = np3;
-	    if (np4 != -1) {
-		bot_faces[(eind*6)+3] = np1;
-		bot_faces[(eind*6)+4] = np3;
-		bot_faces[(eind*6)+5] = np4;
-	    } else {
-		bot_faces[(eind*6)+3] = -1;
-		bot_faces[(eind*6)+4] = -1;
-		bot_faces[(eind*6)+5] = -1;
-	    }
-	    eind++;
-	}
-
-	struct bu_vls sname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&sname, "%ld.bot", *it);
-	mk_bot(fd_out, bu_vls_addr(&sname), RT_BOT_SURFACE, RT_BOT_UNORIENTED, NULL, NIDs.size(), EIDs.size() * 2, bot_vertices, bot_faces, NULL, NULL);
-
-	/* Make containing region */
+	/* Set up containing region */
 	struct wmember head;
 	BU_LIST_INIT(&head.l);
 	struct bu_vls rname = BU_VLS_INIT_ZERO;
@@ -503,10 +527,21 @@ main(int argc, char **argv)
 	h = fmod(h+golden_ratio_conjugate,1.0);
 	*hsv = h * 360.0;
 	bu_hsv_to_rgb(hsv,rgb);
-	(void)mk_addmember(bu_vls_addr(&sname), &head.l, NULL, WMOP_UNION);
+
+
+	/* TODO - need an option to make each shell EID its own shape, rather
+	 * than combining them into one bot.  Should be an option, but there
+	 * are situations where the granularity is needed */
+	if (PID_to_EISSHELLS.find(*it) != PID_to_EISSHELLS.end()) {
+	    add_element_shell_mesh(EIDSHELLS_to_world, NID_to_world, PID_to_EISSHELLS, *it, &head, world, fd_out);
+	}
+
+
+	/* We've got everything now - make the region comb and add it to the top level comb */
 	mk_comb(fd_out, bu_vls_addr(&rname), &head.l, 1, (char *)NULL, (char *)NULL, rgb, *it, 0, 0, 0, 0, 0, 0);
 	(void)mk_addmember(bu_vls_addr(&rname), &all_head.l, NULL, WMOP_UNION);
-	bu_vls_free(&sname);
+
+	/* Clean up */
 	bu_vls_free(&rname);
     }
 
