@@ -76,6 +76,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* define geometry URL and VFS behavior
+
 * change _mged_ command prefix to a simple '.' prefix to hide/protect
   the built-in commands.
 
