@@ -425,7 +425,7 @@ ON_Intersect(const ON_Surface *surfA,
           pair of subsurfaces with intersecting bounding boxes is
           tested for intersection. This is accomplished by
           approximating each subsurface with two triangles (i.e. a
-          planar quad whose corners coincide with those of the actual
+          'split' quad whose corners coincide with those of the actual
           subsurface patch, which has been split diagonally for a more
           accurate fit). The triangles are then intersected, and the
           average of all intersection points is used as the initial
@@ -435,9 +435,9 @@ ON_Intersect(const ON_Surface *surfA,
           surfaces.
         </para>
         <para>
-          Solved points that lies inside an overlap region identified
-          in the first stage are discarded. Of the remaining points
-          solved intersection points between
+          Solved points that reside inside an overlap region
+          identified in the first stage are discarded. Of the
+          remaining solved intersection points between
           <parameter>surfA</parameter> and
           <parameter>surfB</parameter>, those which are near one
           another are stitched together into polyline curves. If a
