@@ -209,16 +209,81 @@
       </section>        
     </section>
 
-    <!--
     <section>
       <title>The Boolean Evaluation Algorithm</title>
       <section>
-        <para>
-          TODO: write pseudocode for the overall algorithm
-        </para>
+        <task>
+          <title>Evaluating a Boolean</title>
+          <tasksummary>
+            <para>
+              This is a high-level overview of the Boolean
+              evaluation performed on two B-Rep objects.
+            </para>
+          </tasksummary>
+          <taskprerequisites>
+            <para>
+              Make sure you have two entities that are geometric,
+              solid, and valid; that they are topologically connected,
+              describe manifold surfaces, and enclose some
+              non-infinite volume.
+            </para>
+            <para>
+              Make sure you have a valid Boolean operation (i.e.,
+              UNION, SUBTRACT, INTERSECT).
+            </para>
+            <para>
+              Make sure their bounding boxes overlap, otherwise
+              evaluation is trivial.
+            </para>
+          </taskprerequisites>
+          <procedure>
+            <title>Evaluate Intersections</title>
+            <step>
+              <para>Determine face intersections between the two input objects</para>
+              <para>For each face:</para>
+              <substeps>
+                <step>
+                  <para>Calculate surface intersection with all other surfaces to get intersection curves</para>
+                  <para>For all surfaces whose bounding poxes intersect, calculate surface-surface intersections (SSI)</para>
+                  <substeps>
+                    <step>
+                      <para>Identify any coincident overlap surfaces</para>
+                    </step>
+                    <step>
+                      <para>Identify coincident overlap boundary curves</para>
+                    </step>
+                    <step>
+                      <para>If stitched boundary curves form a closed loop, record an overlap intersection event</para>
+                    </step>
+                    <step>
+                      <para>Identify any other intersection curves and points</para>
+                    </step>
+                  </substeps>
+                </step>
+                <step>
+                  <para>Split original surfaces into pieces</para>
+                  <para>For each intersection curve and overlap intersection event:</para>
+                  <substeps>
+                    <step>
+                      <para>Divide original surface into separate surfaces according to the Boolean operation</para>
+                    </step>
+                    <step>
+                      <para>For each new surface, create new trimmed NURBS face</para>
+                    </step>
+                  </substeps>
+                </step>
+              </substeps>
+            </step>
+            <step>
+              <para>Join trimmed NURBS faces based on intersections and the Boolean operation</para>
+            </step>
+            <step>
+              <para>Combine resulting faces into a new evaluated B-Rep object</para>
+            </step>
+          </procedure>
+        </task>
       </section>
     </section>
-    -->
 
     <section>
       <title>Descriptions of Major Functions</title>
