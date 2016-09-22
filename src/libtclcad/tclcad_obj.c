@@ -1247,7 +1247,7 @@ static struct to_cmdtab to_cmds[] = {
     {"pix",	"file", TO_UNLIMITED, to_pix, GED_FUNC_PTR_NULL},
     {"png",	"file", TO_UNLIMITED, to_png, GED_FUNC_PTR_NULL},
 #endif
-    /*{"png2fb",  	"[options] [file.png]", TO_UNLIMITED, to_view_func, ged_png2fb},*/
+    {"png2fb",  	"[options] [file.png]", TO_UNLIMITED, to_view_func, ged_png2fb},
     {"pngwf",	"[options] file.png", 16, to_view_func, ged_png},
     {"poly_circ_mode",	"x y", TO_UNLIMITED, to_poly_circ_mode, GED_FUNC_PTR_NULL},
     {"poly_cont_build",	"x y", TO_UNLIMITED, to_poly_cont_build, GED_FUNC_PTR_NULL},
