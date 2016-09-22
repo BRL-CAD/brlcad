@@ -27,6 +27,7 @@
 #include "common.h"
 
 #include <iostream>
+#include <algorithm>
 #include <fstream>
 #include <string>
 #include <map>
@@ -104,6 +105,7 @@ process_parts(std::ifstream &infile, int offset, struct dyna_world *world)
     infile.seekg(offset);
     int line_cnt = 0;
     struct dyna_part *part;
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
     BU_GET(part, struct dyna_part);
     part->heading = NULL;
     part->PID = -1;
@@ -115,7 +117,17 @@ process_parts(std::ifstream &infile, int offset, struct dyna_world *world)
 	}
 	if (line_cnt == 0) {
 	    scrub_string(line);
-	    part->heading = bu_strdup(line.c_str());
+	    if (line.find_first_not_of(" \t\n\v\f\r") != std::string::npos) {
+		std::replace(line.begin(), line.end(), '#', '_');
+		std::replace(line.begin(), line.end(), ' ', '_');
+		std::replace(line.begin(), line.end(), '\t','_');
+		std::replace(line.begin(), line.end(), '&', '_');
+		std::replace(line.begin(), line.end(), '(', '_');
+		std::replace(line.begin(), line.end(), ')', '_');
+		std::replace(line.begin(), line.end(), '/', '_');
+		bu_vls_sprintf(&pname, "%s", line.c_str());
+		part->heading = bu_strdup(bu_vls_addr(&pname));
+	    }
 	    line_cnt++;
 	    continue;
 	}
@@ -133,6 +145,11 @@ process_parts(std::ifstream &infile, int offset, struct dyna_world *world)
 	    continue;
 	}
     }
+    if (part->heading == NULL) {
+	bu_vls_sprintf(&pname, "part_");
+	part->heading = bu_strdup(bu_vls_addr(&pname));
+    }
+    bu_vls_free(&pname);
     bu_ptbl_ins(world->parts, (long *)part);
 }
 
@@ -247,6 +264,18 @@ process_element_solid(std::ifstream &infile, int offset, struct dyna_world *worl
 			break;
 		    }
 		} else {
+		    if (npnts > 3 && npnts < 5 && es->nodal_pnts[3] == es->nodal_pnts[npnts]) {
+			/* We have a duplicate point - we're done */
+			es->pntcnt = 4;
+			es->nodal_pnts[npnts] = -1;
+			break;
+		    }
+		    if (npnts > 5 && es->nodal_pnts[5] == es->nodal_pnts[npnts]) {
+			/* We have a duplicate point - we're done */
+			es->pntcnt = 6;
+			es->nodal_pnts[npnts] = -1;
+			break;
+		    }
 		    npnts++;
 		}
 	    }
@@ -309,7 +338,9 @@ process_element_shell(std::ifstream &infile, int offset, struct dyna_world *worl
 }
 
 void
-add_element_shell_mesh(std::map<long,long> &EIDSHELLS_to_world, std::map<long,long> &NID_to_world, std::multimap<long,long> &PID_to_EISSHELLS, long pid, struct wmember *head, struct dyna_world *world, struct rt_wdb *fd_out)
+add_element_shell_mesh(std::map<long,long> &EIDSHELLS_to_world, std::map<long,long> &NID_to_world,
+       	std::multimap<long,long> &PID_to_EISSHELLS, std::set<long> &EIDSHELLS, long pid, struct wmember *head,
+       	struct dyna_world *world, struct rt_wdb *fd_out)
 {
 
     std::set<long> EIDs;
@@ -320,6 +351,7 @@ add_element_shell_mesh(std::map<long,long> &EIDSHELLS_to_world, std::map<long,lo
 	long wid = EIDSHELLS_to_world.find(eit->second)->second;
 	struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, wid);
 	EIDs.insert(eit->second);
+	EIDSHELLS.erase(eit->second);
 	for (int ind = 0; ind < 4; ind++) {
 	    if (es->nodal_pnts[ind] != -1) NIDs.insert(es->nodal_pnts[ind]);
 	}
@@ -452,8 +484,8 @@ main(int argc, char **argv)
     while (std::getline(infile, line)) {
 	if (line.c_str()[0] == '$') continue;
 	if (line.c_str()[0] == '*') {
-	    size_t endpos = line.find_last_not_of(" \t");
-	    std::string keyword = line.substr(1,endpos+1);
+	    size_t endpos = line.find_last_not_of(" \t\r");
+	    std::string keyword = line.substr(1,endpos);
 	    //printf("file position: %d\n", (int)infile.tellg());
 	    if (BU_STR_EQUAL(keyword.c_str(), "ELEMENT_SHELL")) {
 		element_shells.insert((int)infile.tellg());
@@ -497,14 +529,18 @@ main(int argc, char **argv)
 	NID_to_world.insert(std::pair<long,long>(n->NID, (long)i));
     }
     std::map<long,long> EIDSHELLS_to_world;
+    std::set<long> EIDSHELLS;
     for (size_t i = 0; i < BU_PTBL_LEN(world->element_shells); i++) {
 	struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, i);
 	EIDSHELLS_to_world.insert(std::pair<long,long>(es->EID, (long)i));
+	EIDSHELLS.insert(es->EID);
     }
     std::map<long,long> EIDSOLIDS_to_world;
+    std::set<long> EIDSOLIDS;
     for (size_t i = 0; i < BU_PTBL_LEN(world->element_solids); i++) {
 	struct dyna_element_solid *es = (struct dyna_element_solid *)BU_PTBL_GET(world->element_solids, i);
 	EIDSOLIDS_to_world.insert(std::pair<long,long>(es->EID, (long)i));
+	EIDSOLIDS.insert(es->EID);
     }
     std::map<long,long> PID_to_world;
     for (size_t i = 0; i < BU_PTBL_LEN(world->parts); i++) {
@@ -540,9 +576,11 @@ main(int argc, char **argv)
 	PIDs.insert(es->PID);
     }
 
-    /* For each PID, make a combination and associated solids */
+    /* If we have parts, for each PID make a combination and associated solids */
     for (std::set<long>::iterator it = PIDs.begin(); it != PIDs.end(); it++) {
 
+	/* If it's not in the world, keep going */
+	if (PID_to_world.find(*it) == PID_to_world.end()) continue;
 
 	/* Set up containing region */
 	struct wmember head;
@@ -550,7 +588,7 @@ main(int argc, char **argv)
 	struct bu_vls rname = BU_VLS_INIT_ZERO;
 	long wid = PID_to_world.find(*it)->second;
 	struct dyna_part *p = (struct dyna_part *)BU_PTBL_GET(world->parts, wid);
-	bu_vls_sprintf(&rname, "%s.r", p->heading);
+	bu_vls_sprintf(&rname, "%s_%ld.r", p->heading, p->PID);
 	/* steal this from step-g coloring - really need to fold into a libbu random color function
 	 * once the API gets figured out... */
 	unsigned char rgb[3];
@@ -566,7 +604,7 @@ main(int argc, char **argv)
 	 * than combining them into one bot.  Should be an option, but there
 	 * are situations where the granularity is needed */
 	if (PID_to_EISSHELLS.find(*it) != PID_to_EISSHELLS.end()) {
-	    add_element_shell_mesh(EIDSHELLS_to_world, NID_to_world, PID_to_EISSHELLS, *it, &head, world, fd_out);
+	    add_element_shell_mesh(EIDSHELLS_to_world, NID_to_world, PID_to_EISSHELLS, EIDSHELLS, *it, &head, world, fd_out);
 	}
 
 	/* Solids */
@@ -576,6 +614,7 @@ main(int argc, char **argv)
 	    for (std::multimap<long,long>::iterator eit=ret.first; eit != ret.second; eit++) {
 		wid = EIDSOLIDS_to_world.find(eit->second)->second;
 		add_element_solid(wid, NID_to_world, &head, world, fd_out);
+		EIDSOLIDS.erase(eit->second);
 	    }
 	}
 
@@ -586,6 +625,15 @@ main(int argc, char **argv)
 
 	/* Clean up */
 	bu_vls_free(&rname);
+    }
+    
+    /* TODO - handle leftover shells without parent parts.  Need individual element to mesh logic for this... */
+    bu_log("EIDSHELLS size: %d\n", EIDSHELLS.size());
+
+    /* Collect any leftover solids that didn't have parent parts */
+    for (std::set<long>::iterator sit = EIDSOLIDS.begin(); sit != EIDSOLIDS.end(); sit++) {
+	long wid = EIDSOLIDS_to_world.find(*sit)->second;   
+	add_element_solid(wid, NID_to_world, &all_head, world, fd_out);
     }
 
     mk_comb(fd_out, "all", &all_head.l, 0, (char *)NULL, (char *)NULL, NULL, 0, 0, 0, 0, 0, 0, 0);
