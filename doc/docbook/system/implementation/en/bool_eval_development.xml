@@ -628,7 +628,7 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 	  as <varname>pt[0]</varname>, <varname>pt[1]</varname> is
 	  possible, the more
 	  readable <varname>pt.x</varname>, <varname>pt.y</varname>,
-	  is more typically seen.
+	  is more typically utilized.
 	</para>
 
 	<para>
@@ -758,6 +758,7 @@ if (curveA->PointAtStart().DistanceTo(curveB->PointAtStart()) < dist_tol) {
   if (curveA->Reverse()) {
       curveA = link_curves(curveA, curveB);
   }
+  /* curves that cannot be reversed are degenerate and discarded */
 }
 ]]>
 	  </programlisting>
@@ -845,9 +846,11 @@ ON_Curve* Duplicate()
 	  support the surface's two domains, <parameter>u</parameter>
 	  and <parameter>v</parameter> (sometimes
 	  called <parameter>s</parameter>
-	  and <parameter>t</parameter>) which correspond with 0 and 1
-	  (first example) or <parameter>x</parameter>
-	  and <parameter>y</parameter> (second example).
+	  and <parameter>t</parameter>).  These also correspond to as
+	  the 0 and 1 surface domains (as in the first example in
+	  following) or with an <parameter>x</parameter>
+	  and <parameter>y</parameter> parameterization (as shown in
+	  the second example).
 	</para>
 	<example>
 	  <title>Projecting an arbitrary <inlineequation><mathphrase>(u, v)</mathphrase></inlineequation> point into 3D.</title>
@@ -883,7 +886,7 @@ ON_3dPoint trim_midpt_3d = surface->PointAt(trim_midpt_uv.x, trim_midpt_uv.y);
 	<para>
 	  An object's faces are <classname>ON_BrepFace</classname>
 	  objects stored in the <classname>ON_Brep</classname> face
-	  array, <varname>m_F</varname>.
+	  array, <varname>m_F[]</varname>.
 	</para>
 	<para>
 	  Each <classname>ON_BrepFace</classname> is defined as the
@@ -896,10 +899,10 @@ ON_3dPoint trim_midpt_3d = surface->PointAt(trim_midpt_uv.x, trim_midpt_uv.y);
 	</para>
 	<para>
 	  The loops of an <classname>ON_BrepFace</classname> are
-	  listed in its loop array <varname>m_li</varname> as indexes
+	  listed in its loop array <varname>m_li[]</varname> as indexes
 	  into the associated <classname>ON_Brep</classname>
 	  object's <classname>ON_BrepLoop</classname>
-	  array, <varname>m_L</varname>. The first (and possibly only)
+	  array, <varname>m_L[]</varname>. The first (and possibly only)
 	  loop listed in the face's loop index array is the outerloop,
 	  and all following loops are inner trim loops. The type of
 	  the loop is also recorded in the
@@ -1034,16 +1037,17 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
         </para>
         <para>
           The <varname>m_type</varname> of an intersection event
-          determines how values in the
-          <varname>m_a/m_b/m_A/m_B</varname> array members of the
-          event instance are to be interpreted (documented in the
+          determines how values in the <varname>m_a[]</varname>,
+          <varname>m_b[]</varname>, <varname>m_A[]</varname>,
+          and <varname>m_B[]</varname> array members of the event
+          instance are to be interpreted (documented in the
           OpenNURBS <filename>opennurbs_x.h</filename> header).
         </para>
 	<warning>
 	  <para>
-	    It's very easy to confuse <varname>m_a</varname>,
-	    <varname>m_b</varname>, <varname>m_A</varname>, and
-	    <varname>m_B</varname>, as well as
+	    It's very easy to confuse the <varname>m_a[]</varname>,
+	    <varname>m_b[]</varname>, <varname>m_A[]</varname>, and
+	    <varname>m_B[]</varname> arrays, as well as
 	    <varname>m_a[0]</varname> vs. <varname>m_a[1]</varname>,
 	    etc. This is especially true when copying and pasting
 	    code.
@@ -1126,8 +1130,8 @@ for (int i = 0; i < x_event.Count(); ++i) {
             latter is more likely to be used when processing
             intersection events, as members of the OpenNURBS
             intersection event classes are
-            named <varname>m_a</varname> and <varname>m_b</varname>,
-            etc.
+            named <varname>m_a</varname>
+            and <varname>m_b</varname>, etc.
           </para>
         </section>
         <section>
@@ -2271,7 +2275,7 @@ Archer> overlay split_overlap7.plot3 1 ol7
               contiguous curves are linked with the
               <function>link_curves()</function> routine, which returns
               a linked curve that replaces the original curves in the
-              <varname>overlaps</varname> array. We'll write out each
+              <varname>overlaps[]</varname> array. We'll write out each
               such curve returned by <function>link_curves()</function>.
             </para>
             <programlisting>
