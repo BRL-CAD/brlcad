@@ -84,11 +84,11 @@ keyword_match(const char *key, std::string line)
 void
 scrub_string(std::string &col)
 {
-    size_t startpos = col.find_first_not_of(" \t");
+    size_t startpos = col.find_first_not_of(" \t\n\v\f\r");
     if (std::string::npos != startpos) {
 	col = col.substr(startpos);
     }
-    size_t endpos = col.find_last_not_of(" \t");
+    size_t endpos = col.find_last_not_of(" \t\n\v\f\r");
     if (std::string::npos != endpos) {
 	col = col.substr(0 ,endpos+1);
     }
@@ -189,7 +189,12 @@ process_nodes(std::ifstream &infile, int offset, struct dyna_world *world)
 		char *endptr;
 		double doubleval = strtod(col.c_str(), &endptr);
 		if (endptr == col.c_str()) {
-		    bu_log("Error: string to double didn't work: %s\n", col.c_str());
+		    // Some files will have blank entries in columns - assuming intent is
+		    // to have that number be zero.  Only complain if we don't have an
+		    // all whitespace column
+		    if (col.find_first_not_of(" \t\n\v\f\r") != std::string::npos) {
+			bu_log("Error: string to double didn't work: %s\n", col.c_str());
+		    }
 		    node->pnt[point_ind] = 0.0;
 		} else {
 		    node->pnt[point_ind] = doubleval;
