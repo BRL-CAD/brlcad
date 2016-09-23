@@ -521,6 +521,11 @@ main(int argc, char **argv)
 	process_parts(infile, *it, world);
     }
 
+    /* If we have no nodes, this .k file does not have the information needed
+     * to define geometry - bail. */
+    if (nodes.empty()) {
+	bu_exit(1, "No geometry NODE information present in file - cannot define geometry\n");
+    }
 
     /* We need to reference the various dyna objects by their id numbers - build maps */
     std::map<long,long> NID_to_world;
@@ -626,7 +631,7 @@ main(int argc, char **argv)
 	/* Clean up */
 	bu_vls_free(&rname);
     }
-    
+
     /* TODO - handle leftover shells without parent parts.  Need individual element to mesh logic for this... */
     bu_log("EIDSHELLS size: %d\n", EIDSHELLS.size());
 
