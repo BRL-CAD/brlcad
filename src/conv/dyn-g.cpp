@@ -132,6 +132,14 @@ process_parts(std::ifstream &infile, int offset, struct dyna_world *world)
 	    continue;
 	}
 	if (line_cnt == 1) {
+
+	    /* The Dyna keyword file spec allows comma separated files as well as
+	     * column formatted files. Try to figure out what we're dealing with.*/
+	    if (line.find(" ") == std::string::npos && line.find(",") != std::string::npos) {
+		bu_exit(1, "Error: This looks like a csv formatted k file, which is not yet supported.");
+	    }
+
+
 	    std::string col = line.substr(0,10);
 	    char *endptr;
 	    long pid = strtol(col.c_str(), &endptr, 10);
@@ -170,6 +178,13 @@ process_nodes(std::ifstream &infile, int offset, struct dyna_world *world)
 	int point_ind = 0;
 	struct dyna_node *node;
 	BU_GET(node, struct dyna_node);
+
+	/* The Dyna keyword file spec allows comma separated files as well as
+	 * column formatted files. Try to figure out what we're dealing with.*/
+	if (line.find(" ") == std::string::npos && line.find(",") != std::string::npos) {
+	    bu_exit(1, "Error: This looks like a csv formatted k file, which is not yet supported.");
+	}
+
 	while (i < 80 && i < (int)strlen(line.c_str())) {
 	    int incr = (i < 7 || i > 55) ? 8 : 16;
 	    std::string col = line.substr(i,incr);
@@ -229,6 +244,14 @@ process_element_solid(std::ifstream &infile, int offset, struct dyna_world *worl
 	struct dyna_element_solid *es;
 	BU_GET(es, struct dyna_element_solid);
 	es->pntcnt = 8;
+
+	/* The Dyna keyword file spec allows comma separated files as well as
+	 * column formatted files. Try to figure out what we're dealing with.*/
+	if (line.find(" ") == std::string::npos && line.find(",") != std::string::npos) {
+	    bu_exit(1, "Error: This looks like a csv formatted k file, which is not yet supported.");
+	}
+
+
 	while (i < 80 && i < (int)strlen(line.c_str())) {
 	    int incr = 8;
 	    std::string col = line.substr(i,incr);
@@ -312,6 +335,14 @@ process_element_shell(std::ifstream &infile, int offset, struct dyna_world *worl
 	es->nodal_pnts[1] = -1;
 	es->nodal_pnts[2] = -1;
 	es->nodal_pnts[3] = -1;
+
+	/* The Dyna keyword file spec allows comma separated files as well as
+	 * column formatted files. Try to figure out what we're dealing with.*/
+	if (line.find(" ") == std::string::npos && line.find(",") != std::string::npos) {
+	    bu_exit(1, "Error: This looks like a csv formatted k file, which is not yet supported.");
+	}
+
+
 	while (i < 80 && i < (int)strlen(line.c_str())) {
 	    int incr = 8;
 	    std::string col = line.substr(i,incr);
