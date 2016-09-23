@@ -35,6 +35,7 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
+#include "bu/opt.h"
 #include "bu/ptbl.h"
 #include "bu/sort.h"
 #include "nmg.h"
@@ -373,6 +374,67 @@ process_element_shell(std::ifstream &infile, int offset, struct dyna_world *worl
     }
 }
 
+
+void
+add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EIDs, std::map<long,long> &NID_to_world, struct wmember *head,
+       	struct dyna_world *world, struct rt_wdb *fd_out)
+{
+    std::set<long> NIDs;
+    for (std::set<long>::iterator sit = EIDs.begin(); sit != EIDs.end(); sit++) {
+	long wid = EIDSHELLS_to_world.find(*sit)->second;
+	struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, wid);
+	for (int ind = 0; ind < 4; ind++) {
+	    if (es->nodal_pnts[ind] != -1) NIDs.insert(es->nodal_pnts[ind]);
+	}
+    }
+
+
+    int array_ind = 0;
+    std::map<long, long> NID_to_array;
+    fastf_t *bot_vertices = (fastf_t *)bu_calloc(NIDs.size()*3, sizeof(fastf_t), "BoT vertices (Dyna nodes)");
+    for (std::set<long>::iterator nit = NIDs.begin(); nit != NIDs.end(); nit++) {
+	long wid = NID_to_world.find(*nit)->second;
+	struct dyna_node *n = (struct dyna_node *)BU_PTBL_GET(world->nodes, wid);
+	NID_to_array.insert(std::pair<long, long>(*nit,(long)array_ind));
+	for (int j = 0; j < 3; j++) {
+	    bot_vertices[(array_ind*3)+j] = n->pnt[j];
+	}
+	array_ind++;
+    }
+
+    int *bot_faces = (int *)bu_calloc(EIDs.size() * 2 * 3, sizeof(int), "BoT faces (2 per Dyna element shell quad, 1 per triangle)");
+    int eind = 0;
+    for (std::set<long>::iterator eit = EIDs.begin(); eit != EIDs.end(); eit++) {
+	long wid = EIDSHELLS_to_world.find(*eit)->second;
+	struct dyna_element_shell *es = (struct dyna_element_shell *)BU_PTBL_GET(world->element_shells, wid);
+	int np1 = (int)NID_to_array.find(es->nodal_pnts[0])->second;
+	int np2 = (int)NID_to_array.find(es->nodal_pnts[1])->second;
+	int np3 = (int)NID_to_array.find(es->nodal_pnts[2])->second;
+	int np4 = (int)NID_to_array.find(es->nodal_pnts[3])->second;
+	bot_faces[(eind*6)+0] = np1;
+	bot_faces[(eind*6)+1] = np2;
+	bot_faces[(eind*6)+2] = np3;
+	if (np4 != -1) {
+	    bot_faces[(eind*6)+3] = np1;
+	    bot_faces[(eind*6)+4] = np3;
+	    bot_faces[(eind*6)+5] = np4;
+	} else {
+	    bot_faces[(eind*6)+3] = -1;
+	    bot_faces[(eind*6)+4] = -1;
+	    bot_faces[(eind*6)+5] = -1;
+	}
+	eind++;
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "uncategorized.bot");
+    mk_bot(fd_out, bu_vls_addr(&sname), RT_BOT_SURFACE, RT_BOT_UNORIENTED, NULL, NIDs.size(), EIDs.size() * 2, bot_vertices, bot_faces, NULL, NULL);
+    /* Add the BoT to the parent Comb*/
+    (void)mk_addmember(bu_vls_addr(&sname), &(*head).l, NULL, WMOP_UNION);
+    bu_vls_free(&sname);
+}
+
+
 void
 add_element_shell_mesh(std::map<long,long> &EIDSHELLS_to_world, std::map<long,long> &NID_to_world,
        	std::multimap<long,long> &PID_to_EISSHELLS, std::set<long> &EIDSHELLS, long pid, struct wmember *head,
@@ -479,20 +541,41 @@ main(int argc, char **argv)
 {
     struct wmember all_head;
     struct dyna_world *world;
+    int all_elements_one_bot = 0;
+    int need_help = 0;
+    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    int uac = 0;
 
-    if (argc != 3) {
-	bu_exit(1, "Usage: dyn-g input.key out.g");
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",             "",   NULL, (void *)&need_help,    "Print help and exit");
+    BU_OPT(d[1], "",  "aggregate-bots",  "",   NULL, (void *)&all_elements_one_bot,    "Rather than grouping elements into separate BoTs by part, put them all in one BoT");
+    BU_OPT_NULL(d[2]);
+  
+    argv++; argc--; 
+    uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
+
+    if (uac == -1) {
+	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
     }
-    if (!bu_file_exists(argv[1], NULL)) {
-	bu_exit(1, "Error: file %s not found, aborting.\n", argv[1]);
+    bu_vls_free(&optparse_msg);
+
+    if (need_help || argc < 2) {
+	int ret = (argc < 2) ? 1 : 0;
+	const char *help = bu_opt_describe(d, NULL);
+	bu_log("Usage: dyn-g [options] input.key out.g\nOptions:\n%s\n", help);
+	if (help) bu_free((char *)help, "help str");
+	bu_exit(ret, NULL); 
     }
-    if (bu_file_exists(argv[2], NULL)) {
-	bu_exit(1, "Error: file %s already exists.\n", argv[2]);
+    if (!bu_file_exists(argv[0], NULL)) {
+	bu_exit(1, "Error: file %s not found, aborting.\n", argv[0]);
+    }
+    if (bu_file_exists(argv[1], NULL)) {
+	bu_exit(1, "Error: file %s already exists.\n", argv[1]);
     }
 
-    std::ifstream infile(argv[1]);
+    std::ifstream infile(argv[0]);
     if (!infile.is_open()) {
-	bu_exit(1, "Error: unable to open %s for reading.\n", argv[1]);
+	bu_exit(1, "Error: unable to open %s for reading.\n", argv[0]);
     }
 
     /* Initialize the dyna world storage */
@@ -592,8 +675,8 @@ main(int argc, char **argv)
 
     /* Time for a .g file */
     struct rt_wdb *fd_out;
-    if ((fd_out=wdb_fopen(argv[2])) == NULL) {
-	bu_log("Error: cannot open BRL-CAD file (%s)\n", argv[2]);
+    if ((fd_out=wdb_fopen(argv[1])) == NULL) {
+	bu_log("Error: cannot open BRL-CAD file (%s)\n", argv[1]);
 	bu_exit(1, NULL);
     }
 
@@ -641,11 +724,11 @@ main(int argc, char **argv)
 	bu_hsv_to_rgb(hsv,rgb);
 
 
-	/* TODO - need an option to make each shell EID its own shape, rather
-	 * than combining them into one bot.  Should be an option, but there
-	 * are situations where the granularity is needed */
-	if (PID_to_EISSHELLS.find(*it) != PID_to_EISSHELLS.end()) {
-	    add_element_shell_mesh(EIDSHELLS_to_world, NID_to_world, PID_to_EISSHELLS, EIDSHELLS, *it, &head, world, fd_out);
+	/* Handle shells associated with this PID, unless we're going to aggregate */
+	if (!all_elements_one_bot) {
+	    if (PID_to_EISSHELLS.find(*it) != PID_to_EISSHELLS.end()) {
+		add_element_shell_mesh(EIDSHELLS_to_world, NID_to_world, PID_to_EISSHELLS, EIDSHELLS, *it, &head, world, fd_out);
+	    }
 	}
 
 	/* Solids */
@@ -668,12 +751,17 @@ main(int argc, char **argv)
 	bu_vls_free(&rname);
     }
 
-    /* TODO - handle leftover shells without parent parts.  Need individual element to mesh logic for this... */
-    bu_log("EIDSHELLS size: %d\n", EIDSHELLS.size());
+    /* Collect any leftover shells that didn't have parent parts */
+    if (EIDSHELLS.size() > 0 && !all_elements_one_bot) {
+	bu_log("Warning - %d unorganized ELEMENT_SHELL objects.  This may be an indication that this file uses features of the dyna keyword format we don't support yet.\n", EIDSHELLS.size());
+    }
+    if (EIDSHELLS.size() > 0) {
+	add_element_shell_set(EIDSHELLS_to_world, EIDSHELLS, NID_to_world, &all_head, world, fd_out);
+    }
 
     /* Collect any leftover solids that didn't have parent parts */
     for (std::set<long>::iterator sit = EIDSOLIDS.begin(); sit != EIDSOLIDS.end(); sit++) {
-	long wid = EIDSOLIDS_to_world.find(*sit)->second;   
+	long wid = EIDSOLIDS_to_world.find(*sit)->second;
 	add_element_solid(wid, NID_to_world, &all_head, world, fd_out);
     }
 
