@@ -1,4 +1,4 @@
-/*                     D Y N - G . C P P
+/*                       K - G . C P P
  * BRL-CAD
  *
  * Copyright (c) 2010-2016 United States Government as represented by
@@ -22,7 +22,7 @@
  * This is a program to convert the geometric elements of an LS Dyna
  * keyword file to a BRL-CAD database file.
  *
- * Usage: dyn-g input.key output.g
+ * Usage: k-g input.key output.g
  */
 #include "common.h"
 
@@ -562,7 +562,7 @@ main(int argc, char **argv)
     if (need_help || argc < 2) {
 	int ret = (argc < 2) ? 1 : 0;
 	const char *help = bu_opt_describe(d, NULL);
-	bu_log("Usage: dyn-g [options] input.key out.g\nOptions:\n%s\n", help);
+	bu_log("Usage: k-g [options] input.key out.g\nOptions:\n%s\n", help);
 	if (help) bu_free((char *)help, "help str");
 	bu_exit(ret, NULL); 
     }
