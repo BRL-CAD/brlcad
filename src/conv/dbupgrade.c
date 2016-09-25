@@ -36,35 +36,39 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "bn.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
+
 void
-usage (char *name)
+usage(const char *name)
 {
-    fprintf(stderr, "Usage: %s input.g output.g\n", name);
+    bu_log("Usage: %s [-f] input.g output.g\n", name);
 }
 
 
 int
 main(int argc, char **argv)
 {
-    struct rt_wdb *fp;
-    struct db_i *dbip;
-    struct db_i *dbip4;
-    struct directory *dp;
+    char name[17] = {0};
+    const char *argv0 = argv[0];
+    int flag_force = 0;
+    int flag_revert = 0;
+    int i;
+    int in_arg;
+    int out_arg;
+    int version;
+    long errors = 0, skipped = 0;
     struct bn_tol tol;
     struct bu_vls colortab = BU_VLS_INIT_ZERO;
-    char name[17];
-    int reverse=0;
-    int in_arg=1;
-    int out_arg=2;
-    long errors = 0, skipped = 0;
-    int version;
-    name[16] = '\0';
+    struct db_i *dbip4;
+    struct db_i *dbip;
+    struct directory *dp;
+    struct rt_wdb *fp;
 
-    bu_setprogname(argv[0]);
+    bu_setprogname(argv0);
 
     /* this tolerance structure is only used for converting polysolids to BOT's
      * use zero distance to avoid losing any polysolid facets
@@ -75,23 +79,32 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    if (argc != 3 && argc != 4) {
-	usage(argv[0]);
+    while ((i = bu_getopt(argc, argv, "rfh?")) != -1) {
+	switch (i) {
+	    case 'r':
+		/* undocumented option to revert to an old db version
+		 * currently, can only revert to db version 4
+		 */
+		flag_revert = 1;
+		break;
+	    case 'f':
+		flag_force = 1;
+		break;
+	    default:
+		usage(argv0);
+		return 1;
+	}
+    }
+    argc -= bu_optind;
+    argv += bu_optind;
+
+    if (argc != 2) {
+	usage(argv0);
 	return 1;
     }
 
-    if (argc == 4) {
-	/* undocumented option to revert to an old db version
-	 * currently, can only revert to db version 4
-	 */
-	if (!BU_STR_EQUAL(argv[1], "-r")) {
-	    usage(argv[0]);
-	    return 1;
-	}
-	reverse = 1;
-	in_arg = 2;
-	out_arg = 3;
-    }
+    in_arg = 0;
+    out_arg = 1;
 
     if ((dbip = db_open(argv[in_arg], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[in_arg]);
@@ -99,31 +112,36 @@ main(int argc, char **argv)
     }
 
     version = db_version(dbip);
-    if (!reverse) {
-	if (version == 5) {
-	    bu_log("This database (%s) is already at the current version\n",
+    if (!flag_revert) {
+	if (version == 5 && !flag_force) {
+	    bu_log("WARNING: This database (%s) is already at the current version.\n",
 		   argv[in_arg]);
+	    bu_log("         Run with -f to force upgrade (v5->v5) or -r to revert (v5->v4).\n");
+	    bu_log("Halting.\n");
 	    return 5;
 	}
-	if (version != 4) {
-	    bu_log("Input database version not recognized!!!!\n");
+	if (version != 4 && version != 5) {
+	    bu_log("ERROR: Input database version (%d) not recognized!\n", version);
 	    return 4;
 	}
 	if ((fp = wdb_fopen(argv[out_arg])) == NULL) {
+	    bu_log("ERROR: Failed to open the output database (%s)\n", argv[out_arg]);
 	    perror(argv[out_arg]);
 	    return 3;
 	}
     } else {
-	if (version != 5) {
-	    bu_log("Can only revert from db version 5\n");
+	if (version != 5 && !flag_force) {
+	    bu_log("WARNING: Can only revert from database version 5\n");
+	    bu_log("         Run with -f and -r to force revert (v4->v4).\n");
+	    bu_log("Halting.\n");
 	    return 6;
 	}
 	if ((dbip4 = db_create(argv[out_arg], 4)) == DBI_NULL) {
-	    bu_log("Failed to create output database (%s)\n", argv[out_arg]);
+	    bu_log("ERROR: Failed to create the output database (%s)\n", argv[out_arg]);
 	    return 3;
 	}
 	if ((fp = wdb_dbopen(dbip4, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
-	    bu_log("db_dbopen() failed for %s\n", argv[out_arg]);
+	    bu_log("ERROR: Failed to open the v4 output database (%s)\n", argv[out_arg]);
 	    return 4;
 	}
     }
@@ -152,7 +170,7 @@ main(int argc, char **argv)
 	int id;
 	int ret;
 
-	if (reverse && dp->d_major_type != DB5_MAJORTYPE_BRLCAD) {
+	if (flag_revert && dp->d_major_type != DB5_MAJORTYPE_BRLCAD) {
 	    bu_log("\t%s not supported in version4 databases, not converted\n",
 		   dp->d_namep);
 	    skipped++;
@@ -172,6 +190,8 @@ main(int argc, char **argv)
 
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    RT_CK_COMB(comb);
+
+	    /* bu_log("!!!shader is [%s]", bu_vls_addr(&comb->shader)); */
 
 	    /* Convert "plastic" to "phong" in the shader string */
 	    while ((ptr=strstr(bu_vls_addr(&comb->shader), "plastic")) != NULL) {
