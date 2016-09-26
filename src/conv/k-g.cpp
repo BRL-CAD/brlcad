@@ -576,7 +576,7 @@ main(int argc, char **argv)
 
     struct bu_opt_desc d[3];
     BU_OPT(d[0], "h", "help",             "",   NULL, (void *)&need_help,    "Print help and exit");
-    BU_OPT(d[1], "",  "aggregate-element-shells",   "",   NULL, (void *)&all_elements_one_bot,    "Rather than grouping ELEMENT_SHELL entities into separate BoTs by part, put them all in one BoT.  Also adds mappings from ELEMENT_SHELL and NODE id numbers to BoT face and vertex indices as attributes (vert_map and face_map) on the BoT");
+    BU_OPT(d[1], "",  "aggregate-element-shells",   "",   NULL, (void *)&all_elements_one_bot,    "Rather than grouping ELEMENT_SHELL entities into separate BoTs by part, put them all in one BoT.  Also adds mappings from ELEMENT_SHELL and NODE id numbers to BoT face and vertex indices as attributes (face_map and vert_map) on the BoT");
     BU_OPT_NULL(d[2]);
 
     argv++; argc--;
