@@ -376,10 +376,14 @@ process_element_shell(std::ifstream &infile, int offset, struct dyna_world *worl
 
 
 void
-add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EIDs, std::map<long,long> &NID_to_world, struct wmember *head,
-       	struct dyna_world *world, struct rt_wdb *fd_out, int print_maps)
+add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EIDs, std::map<long,long> &NID_to_world,
+       	struct wmember *head, struct dyna_world *world, struct rt_wdb *fd_out, int print_map)
 {
-    std::ofstream node_map, face_map;
+    struct bu_attribute_value_set avs;
+    bu_avs_init_empty(&avs);
+    struct bu_vls node_map = BU_VLS_INIT_ZERO;
+    struct bu_vls face_map = BU_VLS_INIT_ZERO;
+
 
     std::set<long> NIDs;
     for (std::set<long>::iterator sit = EIDs.begin(); sit != EIDs.end(); sit++) {
@@ -390,11 +394,6 @@ add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EI
 	}
     }
 
-    if (print_maps) {
-	node_map.open("vertices.map");
-	face_map.open("faces.map");
-    }
-
     int array_ind = 0;
     std::map<long, long> NID_to_array;
     fastf_t *bot_vertices = (fastf_t *)bu_calloc(NIDs.size()*3, sizeof(fastf_t), "BoT vertices (Dyna nodes)");
@@ -402,16 +401,13 @@ add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EI
 	long wid = NID_to_world.find(*nit)->second;
 	struct dyna_node *n = (struct dyna_node *)BU_PTBL_GET(world->nodes, wid);
 	NID_to_array.insert(std::pair<long, long>(*nit,(long)array_ind));
-	if (print_maps) {
-	    node_map << array_ind << "," << *nit << "\n";
+	if (print_map) {
+	    bu_vls_printf(&node_map, "%ld,%ld\n", (long)array_ind, *nit);
 	}
 	for (int j = 0; j < 3; j++) {
 	    bot_vertices[(array_ind*3)+j] = n->pnt[j];
 	}
 	array_ind++;
-    }
-    if (print_maps) {
-	node_map.close();
     }
 
     // The actual face count may not be EIDs.size() * 2 if we have triangle elements, so
@@ -428,19 +424,19 @@ add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EI
 	bot_faces[(eind*3)+0] = np1;
 	bot_faces[(eind*3)+1] = np2;
 	bot_faces[(eind*3)+2] = np3;
-	if (print_maps) face_map << eind << "," << *eit << "\n";
+	if (print_map) {
+	    bu_vls_printf(&face_map, "%ld,%ld\n", (long)eind, *eit);
+	}
 	eind++;
 	if (es->nodal_pnts[3] != -1) {
 	    bot_faces[(eind*3)+0] = np1;
 	    bot_faces[(eind*3)+1] = np3;
 	    bot_faces[(eind*3)+2] = np4;
-	    if (print_maps) face_map << eind << "," << *eit << "\n";
+	    if (print_map) {
+		bu_vls_printf(&face_map, "%ld,%ld\n", (long)eind, *eit);
+	    }
 	    eind++;
 	}
-    }
-
-    if (print_maps) {
-	face_map.close();
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -448,7 +444,18 @@ add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EI
     mk_bot(fd_out, bu_vls_addr(&sname), RT_BOT_SURFACE, RT_BOT_UNORIENTED, NULL, NIDs.size(), eind, bot_vertices, bot_faces, NULL, NULL);
     /* Add the BoT to the parent Comb*/
     (void)mk_addmember(bu_vls_addr(&sname), &(*head).l, NULL, WMOP_UNION);
+
+    if (print_map) {
+	/* Add the node and face mappings as attributes to the bot */
+	struct directory *dp = db_lookup(fd_out->dbip, "uncategorized.bot", LOOKUP_QUIET);
+	(void)bu_avs_add(&avs, "vert_map", bu_vls_addr(&node_map));
+	(void)bu_avs_add(&avs, "face_map", bu_vls_addr(&face_map));
+	db5_update_attributes(dp, &avs, fd_out->dbip);
+    }
+
     bu_vls_free(&sname);
+    bu_vls_free(&node_map);
+    bu_vls_free(&face_map);
 }
 
 
@@ -565,7 +572,7 @@ main(int argc, char **argv)
 
     struct bu_opt_desc d[3];
     BU_OPT(d[0], "h", "help",             "",   NULL, (void *)&need_help,    "Print help and exit");
-    BU_OPT(d[1], "",  "aggregate-bots",   "",   NULL, (void *)&all_elements_one_bot,    "Rather than grouping elements into separate BoTs by part, put them all in one BoT.  Also outputs mappings from ELEMENT_SHELL and NODE id numbers to BoT face and vertex indices into faces.map and vertices.map files");
+    BU_OPT(d[1], "",  "aggregate-bots",   "",   NULL, (void *)&all_elements_one_bot,    "Rather than grouping elements into separate BoTs by part, put them all in one BoT.  Also outputs mappings from ELEMENT_SHELL and NODE id numbers to BoT face and vertex indices as attributes on the BoT");
     BU_OPT_NULL(d[2]);
 
     argv++; argc--;
@@ -588,14 +595,6 @@ main(int argc, char **argv)
     }
     if (bu_file_exists(argv[1], NULL)) {
 	bu_exit(1, "Error: file %s already exists.\n", argv[1]);
-    }
-    if (all_elements_one_bot) {
-	if (bu_file_exists("vertices.map", NULL)) {
-	    bu_exit(1, "Error: option aggregate-bots enabled and file vertices.map already exists.\n");
-	}
-	if (bu_file_exists("faces.map", NULL)) {
-	    bu_exit(1, "Error: option aggregate-bots enabled and file faces.map already exists.\n");
-	}
     }
 
     std::ifstream infile(argv[0]);
@@ -769,8 +768,10 @@ main(int argc, char **argv)
 
 
 	/* We've got everything now - make the region comb and add it to the top level comb */
-	mk_comb(fd_out, bu_vls_addr(&rname), &head.l, 1, (char *)NULL, (char *)NULL, rgb, *it, 0, 0, 0, 0, 0, 0);
-	(void)mk_addmember(bu_vls_addr(&rname), &all_head.l, NULL, WMOP_UNION);
+	if (!all_elements_one_bot || (all_elements_one_bot && PID_to_EISSOLIDS.find(*it) != PID_to_EISSOLIDS.end())) {
+	    mk_comb(fd_out, bu_vls_addr(&rname), &head.l, 1, (char *)NULL, (char *)NULL, rgb, *it, 0, 0, 0, 0, 0, 0);
+	    (void)mk_addmember(bu_vls_addr(&rname), &all_head.l, NULL, WMOP_UNION);
+	}
 
 	/* Clean up */
 	bu_vls_free(&rname);
