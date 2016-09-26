@@ -440,14 +440,18 @@ add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EI
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "uncategorized.bot");
+    if (print_map) {
+	bu_vls_sprintf(&sname, "all_element_shell.bot");
+    } else {
+	bu_vls_sprintf(&sname, "uncategorized.bot");
+    }
     mk_bot(fd_out, bu_vls_addr(&sname), RT_BOT_SURFACE, RT_BOT_UNORIENTED, NULL, NIDs.size(), eind, bot_vertices, bot_faces, NULL, NULL);
     /* Add the BoT to the parent Comb*/
     (void)mk_addmember(bu_vls_addr(&sname), &(*head).l, NULL, WMOP_UNION);
 
     if (print_map) {
 	/* Add the node and face mappings as attributes to the bot */
-	struct directory *dp = db_lookup(fd_out->dbip, "uncategorized.bot", LOOKUP_QUIET);
+	struct directory *dp = db_lookup(fd_out->dbip, bu_vls_addr(&sname), LOOKUP_QUIET);
 	(void)bu_avs_add(&avs, "vert_map", bu_vls_addr(&node_map));
 	(void)bu_avs_add(&avs, "face_map", bu_vls_addr(&face_map));
 	db5_update_attributes(dp, &avs, fd_out->dbip);
