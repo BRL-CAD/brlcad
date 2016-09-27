@@ -170,9 +170,9 @@ CMAKEFILES(README external)
 # so it can be used for experimentation that needs to be
 # part of the build but the dev doesn't want to accidentally
 # commit.
-if(EXISTS testing)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
   add_subdirectory(testing)
-endif(EXISTS testing)
+endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
 
 
 # Local Variables:
