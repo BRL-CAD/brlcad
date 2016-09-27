@@ -30,6 +30,8 @@
 
 #include "common.h"
 
+#include <stdexcept>
+
 #include "raytrace.h"
 
 
