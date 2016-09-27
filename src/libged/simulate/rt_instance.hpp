@@ -19,7 +19,7 @@
  */
 /** @file rt_instance.hpp
  *
- * Brief description
+ * Rt instance for the ray tracing collision algorithm.
  *
  */
 
@@ -27,6 +27,8 @@
 #ifndef RT_INSTANCE_H
 #define RT_INSTANCE_H
 
+
+#include "common.h"
 
 #include "raytrace.h"
 

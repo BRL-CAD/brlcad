@@ -19,41 +19,21 @@
  */
 /** @file simulate.cpp
  *
- * Brief description
+ * GED command.
  *
  */
 
+
 #include "common.h"
-#include "ged.h"
+
 
 #ifdef HAVE_BULLET
 
+
 #include "simulation.hpp"
-#include <sstream>
-#include <stdexcept>
+#include "utility.hpp"
 
-
-namespace
-{
-
-
-template<typename Target, typename Source>
-Target lexical_cast(Source arg,
-		    const std::string &description = "bad lexical_cast")
-{
-    std::stringstream interpreter;
-    Target result;
-
-    if (!(interpreter << arg) ||
-	!(interpreter >> result) ||
-	!(interpreter >> std::ws).eof())
-	throw std::invalid_argument(description);
-
-    return result;
-}
-
-
-}
+#include "ged.h"
 
 
 int
@@ -73,8 +53,8 @@ ged_simulate(ged *gedp, int argc, const char **argv)
     if (!dir) return GED_ERROR;
 
     try {
-	btScalar seconds = lexical_cast<btScalar>(argv[2],
-			   "invalid value for 'seconds'");
+	btScalar seconds = simulate::lexical_cast<btScalar>(argv[2],
+			   std::invalid_argument("invalid value for 'seconds'"));
 
 	if (seconds < 0.0) throw std::runtime_error("invalid value for 'seconds'");
 
@@ -93,6 +73,10 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 
 
 #else
+
+
+#include "ged.h"
+
 
 int
 ged_simulate(ged *gedp, int argc, const char **argv)

@@ -19,7 +19,7 @@
  */
 /** @file physics_world.hpp
  *
- * Brief description
+ * State for a simulated scene.
  *
  */
 
@@ -27,8 +27,11 @@
 #ifndef PHYSICS_WORLD_H
 #define PHYSICS_WORLD_H
 
+
 #include "common.h"
+
 #include <btBulletDynamicsCommon.h>
+
 
 namespace simulate
 {

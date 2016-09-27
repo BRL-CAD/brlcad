@@ -19,12 +19,13 @@
  */
 /** @file physics_world.cpp
  *
- * Brief description
+ * State for a simulated scene.
  *
  */
 
 
 #ifdef HAVE_BULLET
+
 
 #include "common.h"
 
