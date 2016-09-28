@@ -98,6 +98,8 @@ struct bu_structparse light_parse[] = {
     {"%f",	3, "target",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
     {"%f",	3, "t",		LIGHT_O(lt_target),	aim_set, NULL, NULL },
     {"%f",	3, "aim",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "d",		LIGHT_O(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "dir",	LIGHT_O(lt_target),	aim_set, NULL, NULL },
 
     {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "s",		LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
