@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed infinite loop bug in when using shadow lights - Sean Morrison
 * removed obsolete man page: dall - Cliff Yapp
 * relocated various procedural command man pages to man1 - Cliff Yapp
 * removed obsolete man pages: erase_all export_body vrmgr - Cliff Yapp
