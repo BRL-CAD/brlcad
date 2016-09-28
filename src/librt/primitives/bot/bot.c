@@ -153,6 +153,8 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
         for (idx=0; idx<bip->num_faces; idx++) {
             size_t i0, i1, i2;
 
+	    i0 = i1 = i2 = bip->num_vertices;
+
 	    switch (bip->orientation) {
 	    case RT_BOT_CW:
 		i0 = bip->faces[idx*3];
@@ -176,11 +178,12 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
                 bu_free(bot->clt_triangles, "bot triangles");
                 bot->clt_triangles = NULL;
                 return -1;
-            }
-            VMOVE(bot->clt_triangles[idx].v0, &bip->vertices[i0*3]);
-            VMOVE(bot->clt_triangles[idx].v1, &bip->vertices[i1*3]);
-            VMOVE(bot->clt_triangles[idx].v2, &bip->vertices[i2*3]);
-            bot->clt_triangles[idx].surfno = idx;
+            } else {
+		VMOVE(bot->clt_triangles[idx].v0, &bip->vertices[i0*3]);
+		VMOVE(bot->clt_triangles[idx].v1, &bip->vertices[i1*3]);
+		VMOVE(bot->clt_triangles[idx].v2, &bip->vertices[i2*3]);
+		bot->clt_triangles[idx].surfno = idx;
+	    }
         }
     } else {
         bot->clt_triangles = NULL;
@@ -194,6 +197,8 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
 
         for (idx=0; idx<bip->num_face_normals; idx++) {
             size_t i0, i1, i2;
+
+	    i0 = i1 = i2 = bip->num_normals;
 
 	    switch (bip->orientation) {
 	    case RT_BOT_CW:
@@ -218,10 +223,11 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
                 bu_free(bot->clt_normals, "bot normals");
                 bot->clt_normals = NULL;
                 return -1;
-            }
-            VMOVE(&bot->clt_normals[idx*9+0], &bip->normals[i0*3]);
-            VMOVE(&bot->clt_normals[idx*9+3], &bip->normals[i1*3]);
-            VMOVE(&bot->clt_normals[idx*9+6], &bip->normals[i2*3]);
+            } else {
+		VMOVE(&bot->clt_normals[idx*9+0], &bip->normals[i0*3]);
+		VMOVE(&bot->clt_normals[idx*9+3], &bip->normals[i1*3]);
+		VMOVE(&bot->clt_normals[idx*9+6], &bip->normals[i2*3]);
+	    }
         }
     } else {
     	bot->clt_normals = NULL;
