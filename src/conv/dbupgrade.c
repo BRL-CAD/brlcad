@@ -22,11 +22,10 @@
  *
  * This is a program to upgrade database files to the current version.
  *
- * Dbupgrade takes one input file and one output file name.  It
- * recognizes the version of the BRL-CAD database provided as input
- * and converts it to the current database version.  This code is
- * intended to be upgraded as new database versions are
- * created. Currently, only db version 4 can be upgraded.
+ * DBUPGRADE takes one input file and one output file name.  It
+ * recognizes the BRL-CAD database version provided as input and
+ * converts it at specified.  DBUPGRADE also upgrades database
+ * structures in current database versions.
  */
 
 #include "common.h"
@@ -59,7 +58,8 @@ main(int argc, char **argv)
     int i;
     int in_arg;
     int out_arg;
-    int version;
+    int in_version;
+    int out_version;
     long errors = 0, skipped = 0;
     struct bn_tol tol;
     struct bu_vls colortab = BU_VLS_INIT_ZERO;
@@ -106,22 +106,28 @@ main(int argc, char **argv)
     in_arg = 0;
     out_arg = 1;
 
+    if (!bu_file_exists(argv[in_arg], NULL)) {
+	bu_exit(1, "ERROR: Input file (%s) does not exist\n", argv[in_arg]);
+    } else if (bu_file_exists(argv[out_arg], NULL)) {
+	bu_exit(1, "ERROR: Output file (%s) already exists\n", argv[out_arg]);
+    }
+
     if ((dbip = db_open(argv[in_arg], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[in_arg]);
 	return 2;
     }
+    in_version = db_version(dbip);
 
-    version = db_version(dbip);
     if (!flag_revert) {
-	if (version == 5 && !flag_force) {
+	if (in_version == 5 && !flag_force) {
 	    bu_log("WARNING: This database (%s) is already at the current version.\n",
 		   argv[in_arg]);
 	    bu_log("         Run with -f to force upgrade (v5->v5) or -r to revert (v5->v4).\n");
 	    bu_log("Halting.\n");
 	    return 5;
 	}
-	if (version != 4 && version != 5) {
-	    bu_log("ERROR: Input database version (%d) not recognized!\n", version);
+	if (in_version < 4) {
+	    bu_log("ERROR: Input database version (%d) not recognized!\n", in_version);
 	    return 4;
 	}
 	if ((fp = wdb_fopen(argv[out_arg])) == NULL) {
@@ -130,7 +136,7 @@ main(int argc, char **argv)
 	    return 3;
 	}
     } else {
-	if (version != 5 && !flag_force) {
+	if (in_version != 5 && !flag_force) {
 	    bu_log("WARNING: Can only revert from database version 5\n");
 	    bu_log("         Run with -f and -r to force revert (v4->v4).\n");
 	    bu_log("Halting.\n");
@@ -150,7 +156,7 @@ main(int argc, char **argv)
     if (db_dirbuild(dbip))
 	bu_exit(1, "db_dirbuild failed\n");
 
-    if ((BU_STR_EQUAL(dbip->dbi_title, "Untitled v4 BRL-CAD Database")) && (version == 4)) {
+    if ((BU_STR_EQUAL(dbip->dbi_title, "Untitled v4 BRL-CAD Database")) && (in_version == 4)) {
 	dbip->dbi_title=bu_strdup("Untitled BRL-CAD Database");
     }
     db_update_ident(fp->dbip, dbip->dbi_title, dbip->dbi_local2base);
@@ -171,7 +177,7 @@ main(int argc, char **argv)
 	int ret;
 
 	if (flag_revert && dp->d_major_type != DB5_MAJORTYPE_BRLCAD) {
-	    bu_log("\t%s not supported in version4 databases, not converted\n",
+	    bu_log("\t%s not supported in version 4 databases, not converted\n",
 		   dp->d_namep);
 	    skipped++;
 	    continue;
