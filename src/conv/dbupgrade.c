@@ -59,7 +59,6 @@ main(int argc, char **argv)
     int in_arg;
     int out_arg;
     int in_version;
-    int out_version;
     long errors = 0, skipped = 0;
     struct bn_tol tol;
     struct bu_vls colortab = BU_VLS_INIT_ZERO;
