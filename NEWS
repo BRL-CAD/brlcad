@@ -26,8 +26,7 @@ changes made.  See document footer for additional details.
 * updated MGED gdiff default drawing options to -l -r - Cliff Yapp
 * updated MGED gdiff default tolerance to 100mm - Cliff Yapp
 * removed MGED gdiff -R option - now default behavior - Cliff Yapp
-* added MGED gdiff man page - Cliff Yapp
-* removed obsolete g_diff man page - Cliff Yapp
+* replaced obsolete 'g_diff' manual page with 'gdiff' - Cliff Yapp
 * improved 'keep' error message when file is not created - Cliff Yapp
 * improved rtwizard window sizing and "RtWizard" titling - Cliff Yapp
 * brep command attaches .brep suffix instead of _brep - Sean Morrison
