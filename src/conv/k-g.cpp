@@ -272,7 +272,7 @@ process_element_solid(std::ifstream &infile, int offset, struct dyna_world *worl
 		std::string remainder = line.substr(i,incr);
 		if (remainder.find_first_not_of(" \t\n\v\f\r") == std::string::npos) {
 		    std::getline(infile, line);
-		    while (line.c_str()[0] == '$' && !line.c_str()[0] == '$') {
+		    while (line.c_str()[0] == '$' && !line.c_str()[0] == '*') {
 			std::getline(infile, line);
 		    };
 		    i = 0;
@@ -445,7 +445,7 @@ add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EI
     } else {
 	bu_vls_sprintf(&sname, "uncategorized.bot");
     }
-    mk_bot(fd_out, bu_vls_addr(&sname), RT_BOT_SURFACE, RT_BOT_UNORIENTED, NULL, NIDs.size(), eind, bot_vertices, bot_faces, NULL, NULL);
+    mk_bot(fd_out, bu_vls_addr(&sname), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, NIDs.size(), eind, bot_vertices, bot_faces, NULL, NULL);
     /* Add the BoT to the parent Comb*/
     (void)mk_addmember(bu_vls_addr(&sname), &(*head).l, NULL, WMOP_UNION);
 
@@ -522,7 +522,7 @@ add_element_shell_mesh(std::map<long,long> &EIDSHELLS_to_world, std::map<long,lo
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "%ld.bot", pid);
-    mk_bot(fd_out, bu_vls_addr(&sname), RT_BOT_SURFACE, RT_BOT_UNORIENTED, NULL, NIDs.size(), EIDs.size() * 2, bot_vertices, bot_faces, NULL, NULL);
+    mk_bot(fd_out, bu_vls_addr(&sname), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, NIDs.size(), EIDs.size() * 2, bot_vertices, bot_faces, NULL, NULL);
     /* Add the BoT to the parent Comb*/
     (void)mk_addmember(bu_vls_addr(&sname), &(*head).l, NULL, WMOP_UNION);
     bu_vls_free(&sname);
