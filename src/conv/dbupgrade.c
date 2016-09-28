@@ -197,6 +197,7 @@ main(int argc, char **argv)
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    RT_CK_COMB(comb);
 
+	    /* TODO: update d/dir {} shader strings to target {} */
 	    /* bu_log("!!!shader is [%s]", bu_vls_addr(&comb->shader)); */
 
 	    /* Convert "plastic" to "phong" in the shader string */
