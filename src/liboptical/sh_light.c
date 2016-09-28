@@ -314,7 +314,7 @@ ray_setup(struct application *ap,
 {
     int face;
     point_t pt = VINIT_ZERO;
-    static int idx = 0;
+    static size_t idx = 0;
 
     /* pick a face of the bounding RPP at which we will start the ray */
     face = BN_RANDOM(idx) * 2.9999;
@@ -408,13 +408,8 @@ light_gen_sample_pts_hit(register struct application *ap, struct partition *Part
 	/* The inbound point is not against another object, so
 	 * light will be emitted in this direction
 	 */
-	if (lsp->lt_sample_pts) {
-	    light_pt_allocate(lsp);
-	    lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
-	} else {
-	    /* no sample points? */
-	    break;
-	}
+	light_pt_allocate(lsp);
+	lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
 
 	stp = pp->pt_inseg->seg_stp;
 
@@ -447,13 +442,8 @@ light_gen_sample_pts_hit(register struct application *ap, struct partition *Part
 	/* The out point isn't against another object, so light
 	 * will be emitted in this direction
 	 */
-	if (lsp->lt_sample_pts) {
-	    light_pt_allocate(lsp);
-	    lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
-	} else {
-	    /* no sample points? */
-	    break;
-	}
+	light_pt_allocate(lsp);
+	lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
 
 	stp = pp->pt_outseg->seg_stp;
 
@@ -497,6 +487,7 @@ light_gen_sample_pts(struct application *upap,
     point_t tree_max;
     vect_t span;
     int total_samples;
+    int setup_count;
 
     RT_CK_LIGHT(lsp);
 
@@ -535,7 +526,8 @@ light_gen_sample_pts(struct application *upap,
 
     /* need enough samples points to avoid shadow patterns */
     total_samples = SOME_LIGHT_SAMPLES * lsp->lt_shadows;
-    while (lsp->lt_pt_count < total_samples) {
+    setup_count = 0; /* FIXME: cannot acquire more than BN_RAND_TABSIZE unique samples */
+    while (lsp->lt_pt_count < total_samples && setup_count++ < BN_RAND_TABSIZE) {
 	ray_setup(&ap, tree_min, tree_max, span);
 	(void)rt_shootray(&ap);
     }
