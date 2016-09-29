@@ -19,7 +19,7 @@
  */
 /** @file simulation.hpp
  *
- * Brief description
+ * Programmatic interface for simulate.
  *
  */
 
@@ -27,6 +27,8 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
+
+#include "common.h"
 
 #include "physics_world.hpp"
 #include "world_object.hpp"

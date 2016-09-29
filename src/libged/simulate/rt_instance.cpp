@@ -19,7 +19,7 @@
  */
 /** @file rt_instance.cpp
  *
- * Brief description
+ * Rt instance for the ray tracing collision algorithm.
  *
  */
 
@@ -30,8 +30,6 @@
 #include "common.h"
 
 #include "rt_instance.hpp"
-
-#include <stdexcept>
 
 
 namespace

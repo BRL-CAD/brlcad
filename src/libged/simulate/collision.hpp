@@ -19,7 +19,7 @@
  */
 /** @file collision.hpp
  *
- * Brief description
+ * Bullet collision algorithm.
  *
  */
 
@@ -27,11 +27,14 @@
 #ifndef COLLISION_H
 #define COLLISION_H
 
+
+#include "common.h"
+
 #include "rt_instance.hpp"
 
-#include <string>
-
 #include <btBulletDynamicsCommon.h>
+
+#include <string>
 
 
 namespace simulate

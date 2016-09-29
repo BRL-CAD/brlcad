@@ -19,7 +19,7 @@
  */
 /** @file world_object.cpp
  *
- * Brief description
+ * Class for objects within a simulation.
  *
  */
 
@@ -30,9 +30,7 @@
 #include "common.h"
 
 #include "world_object.hpp"
-
-#include <sstream>
-#include <stdexcept>
+#include "utility.hpp"
 
 
 namespace
@@ -40,42 +38,6 @@ namespace
 
 
 static const std::string attribute_prefix = "simulate::";
-
-
-template <typename T, void (*Destructor)(T *)>
-struct AutoDestroyer {
-    AutoDestroyer(T *vptr) : ptr(vptr) {}
-
-
-    ~AutoDestroyer()
-    {
-	Destructor(ptr);
-    }
-
-
-    T * const ptr;
-
-
-private:
-    AutoDestroyer(const AutoDestroyer &source);
-    AutoDestroyer &operator=(const AutoDestroyer &source);
-};
-
-
-template<typename Target, typename Source>
-Target lexical_cast(Source arg,
-		    const std::string &description = "bad lexical_cast")
-{
-    std::stringstream interpreter;
-    Target result;
-
-    if (!(interpreter << arg) ||
-	!(interpreter >> result) ||
-	!(interpreter >> std::ws).eof())
-	throw std::invalid_argument(description);
-
-    return result;
-}
 
 
 HIDDEN std::pair<btVector3, btVector3>
@@ -107,7 +69,7 @@ get_volume(db_i &db_instance, directory &dir)
 			   &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_get_internal() failed");
 
-    AutoDestroyer<rt_db_internal, rt_db_free_internal> internal_autodestroy(
+    simulate::AutoPtr<rt_db_internal, rt_db_free_internal> internal_autoptr(
 	&internal);
 
     if (internal.idb_meth->ft_volume) {
@@ -135,7 +97,8 @@ deserialize_vector(const std::string &source)
     for (int i = 0; i < 3; ++i) {
 	std::string value;
 	std::getline(stream, value, i != 2 ? ',' : '>');
-	result[i] = lexical_cast<btScalar>(value, "invalid vector");
+	result[i] = simulate::lexical_cast<btScalar>(value,
+		    std::invalid_argument("invalid vector"));
     }
 
     if (stream.unget().get() != '>' || !(stream >> std::ws).eof())
@@ -236,7 +199,7 @@ WorldObject::create(db_i &db_instance, directory &vdirectory, mat_t matrix,
 	if (db5_get_attributes(&db_instance, &obj_avs, &vdirectory) < 0)
 	    throw std::runtime_error("db5_get_attributes() failed");
 
-	AutoDestroyer<bu_attribute_value_set, bu_avs_free> obj_avs_autodestroy(
+	simulate::AutoPtr<bu_attribute_value_set, bu_avs_free> obj_avs_autoptr(
 	    &obj_avs);
 
 	for (std::size_t i = 0; i < obj_avs.count; ++i)
@@ -246,7 +209,8 @@ WorldObject::create(db_i &db_instance, directory &vdirectory, mat_t matrix,
 		const std::string value = obj_avs.avp[i].value;
 
 		if (name == "mass") {
-		    mass = lexical_cast<btScalar>(value, "invalid attribute 'mass'");
+		    mass = lexical_cast<btScalar>(value,
+						  std::invalid_argument("invalid attribute 'mass'"));
 
 		    if (mass < 0.0) throw std::invalid_argument("invalid attribute 'mass'");
 		} else if (name == "linear_velocity") {

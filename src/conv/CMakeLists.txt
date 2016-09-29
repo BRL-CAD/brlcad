@@ -62,6 +62,8 @@ BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "libwdb;librt;libbu")
 
 BRLCAD_ADDEXEC(dem-g dem-g.c "libwdb;${M_LIBRARY}")
 
+BRLCAD_ADDEXEC(k-g k-g.cpp "libwdb;librt;libbu;${M_LIBRARY}")
+
 BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libbn;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}")

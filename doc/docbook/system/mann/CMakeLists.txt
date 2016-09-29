@@ -52,7 +52,6 @@ set(mann_EN
   cp.xml
   cpi.xml
   d.xml
-  dall.xml
   db.xml
   db_glob.xml
   dbconcat.xml
@@ -200,7 +199,7 @@ set(mann_EN
   sed.xml
   setview.xml
   shader.xml
-  shell.xml
+  shells.xml
   showmats.xml
   size.xml
   solids.xml

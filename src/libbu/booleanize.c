@@ -52,8 +52,8 @@ bu_str_true(const char *str)
 	return 0;
     }
 
-    /* case-insensitive "no" */
-    if (BU_STR_EQUIV(newstr, "n") || BU_STR_EQUIV(newstr, "no")) {
+    /* starts with 'n', [nN]* looks like 'no' */
+    if (newstr[0] == 'n' || newstr[0] == 'N') {
 	bu_vls_free(&vls);
 	return 0;
     }
@@ -85,8 +85,8 @@ bu_str_true(const char *str)
 
     /* true value from here on out */
 
-    /* case-insensitive "yes" */
-    if (BU_STR_EQUIV(newstr, "y") || BU_STR_EQUIV(newstr, "yes")) {
+    /* starts with 'y', [yY]* looks like 'yes' */
+    if (newstr[0] == 'y' || newstr[0] == 'Y') {
 	bu_vls_free(&vls);
 	return 1;
     }

@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* add regression test for directional light sources
+
 * update astyle
 
 * bundle primary rays in rt front end into postage stamps, shoot via
@@ -75,6 +77,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* define geometry URL and VFS behavior
+
+* change _mged_ command prefix to a simple '.' prefix to hide/protect
+  the built-in commands.
 
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
@@ -557,9 +564,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * figure out what in f_matpick (or possibly some other related function)
   is causing ipathpos to get incremented to a number larger than the
   number of objects in the full path it's supposed to be referencing.
-
-* change _mged_ command prefix to a simple '.' prefix to hide/protect
-  the built-in commands.
 
 * refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
 
@@ -1845,6 +1849,9 @@ missing on Windows due to needing lex.
 
 CONVERTERS
 ----------
+
+* add gcv support for the Microstation file format (DGN), probably
+  leveraging http://dgnlib.maptools.org/ (MIT-licensed)
 
 * integrate the submitted x3d-g (Web3D, VRML successor) importer
   (pending patch on sf)

@@ -123,41 +123,44 @@ SetTargetFolder(tinycthread "Third Party Libraries")
 SetTargetFolder(tinycthread-static "Third Party Libraries")
 
 # FreeType Libraries
-set(FREETYPE_NO_DIST 1)
-set(freetype_ALIASES ENABLE_FREETYPE)
-set(freetype_DESCRIPTION "
-Option for enabling and disabling compilation of the FreeType
-libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
-if(BRLCAD_FREETYPE_BUILD)
-  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-  set(FREETYPE_INCLUDE_DIR_freetype2
-    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
-    CACHE STRING "FreeType freetype2 include dir" FORCE
-    )
-  set(FREETYPE_INCLUDE_DIR_ft2build
-    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
-    CACHE STRING "FreeType ft2build include dir" FORCE
-    )
-  set(FREETYPE_INCLUDE_DIRS
-    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
-    CACHE STRING "Directories containing FreeType headers." FORCE)
-  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
-  SetTargetFolder(freetype "Third Party Libraries")
-endif(BRLCAD_FREETYPE_BUILD)
-if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
-endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
-mark_as_advanced(FREETYPE_INCLUDE_DIRS)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
-mark_as_advanced(FREETYPE_LIBRARIES)
+
+#set(freetype_ALIASES ENABLE_FREETYPE)
+#set(freetype_DESCRIPTION "
+#Option for enabling and disabling compilation of the FreeType
+#libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
+#the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+#version if BRLCAD_BUNDLED_LIBS is also AUTO.
+#")
+## We don't want the Freetype distribution build targets
+#set(FREETYPE_NO_DIST 1)
+#THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
+#if(BRLCAD_FREETYPE_BUILD)
+#  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
+#  set(FREETYPE_INCLUDE_DIR_freetype2
+#    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
+#    CACHE STRING "FreeType freetype2 include dir" FORCE
+#    )
+#  set(FREETYPE_INCLUDE_DIR_ft2build
+#    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
+#    CACHE STRING "FreeType ft2build include dir" FORCE
+#    )
+#  set(FREETYPE_INCLUDE_DIRS
+#    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
+#    CACHE STRING "Directories containing FreeType headers." FORCE)
+#  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
+#  SetTargetFolder(freetype "Third Party Libraries")
+#endif(BRLCAD_FREETYPE_BUILD)
+#if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+#  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
+#  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
+#endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
+#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
+#mark_as_advanced(FREETYPE_INCLUDE_DIRS)
+#mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
+#mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
+#mark_as_advanced(FREETYPE_LIBRARIES)
+CMAKEFILES(freetype)
 
 # --------------------------------------------------------------------
 # The incrtTcl subdirectory isn't directly referenced, but its
