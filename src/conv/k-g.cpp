@@ -383,6 +383,7 @@ add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EI
     bu_avs_init_empty(&avs);
     struct bu_vls node_map = BU_VLS_INIT_ZERO;
     struct bu_vls face_map = BU_VLS_INIT_ZERO;
+    struct bu_vls elem_node_map = BU_VLS_INIT_ZERO;
 
 
     std::set<long> NIDs;
@@ -426,6 +427,11 @@ add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EI
 	bot_faces[(eind*3)+2] = np3;
 	if (print_map) {
 	    bu_vls_printf(&face_map, "%ld,%ld\n", (long)eind, *eit);
+	    if (es->nodal_pnts[3] != -1) {
+		bu_vls_printf(&elem_node_map, "%ld:%d,%d,%d,%d\n", es->EID, es->nodal_pnts[0], es->nodal_pnts[1], es->nodal_pnts[2], es->nodal_pnts[3]);
+	    } else {
+		bu_vls_printf(&elem_node_map, "%ld:%d,%d,%d\n", es->EID, es->nodal_pnts[0], es->nodal_pnts[1], es->nodal_pnts[2]);
+	    }
 	}
 	eind++;
 	if (es->nodal_pnts[3] != -1) {
@@ -454,12 +460,14 @@ add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EI
 	struct directory *dp = db_lookup(fd_out->dbip, bu_vls_addr(&sname), LOOKUP_QUIET);
 	(void)bu_avs_add(&avs, "vert_map", bu_vls_addr(&node_map));
 	(void)bu_avs_add(&avs, "face_map", bu_vls_addr(&face_map));
+	(void)bu_avs_add(&avs, "elem_node_map", bu_vls_addr(&elem_node_map));
 	db5_update_attributes(dp, &avs, fd_out->dbip);
     }
 
     bu_vls_free(&sname);
     bu_vls_free(&node_map);
     bu_vls_free(&face_map);
+    bu_vls_free(&elem_node_map);
 }
 
 
