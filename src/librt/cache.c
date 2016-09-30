@@ -33,6 +33,7 @@
 #include "bnetwork.h"
 #include "bu/cv.h"
 #include "bu/log.h"
+#include "bu/path.h"
 #include "bu/str.h"
 #include "bu/uuid.h"
 #include "rt/db_attr.h"
@@ -135,13 +136,55 @@ rt_cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
 struct rt_cache *
 rt_cache_open(void)
 {
-    const char * const path = "rt_cache.tmp";
-    const int create = !bu_file_exists(path, NULL);
+    struct bu_vls full_path = BU_VLS_INIT_ZERO;
+    struct bu_vls tmp_path = BU_VLS_INIT_ZERO;
+    const char * const file_name = "rt_cache.tmp";
+    char *home_path;
+    FILE *tmpfp;
+    char temppath[MAXPATHLEN];
+    int create;
     struct rt_cache *result;
-
     BU_GET(result, struct rt_cache);
 
-    result->dbip = create ? db_create(path, 5) : db_open(path, DB_OPEN_READWRITE);
+    /* First, check HOME, tmp and the current working directory for
+     * a pre-existing cache file */
+    if ((home_path = getenv("HOME")) != (char *)NULL) {
+	bu_vls_sprintf(&full_path, "%s/%s", home_path, file_name);
+	if (bu_file_exists(bu_vls_addr(&full_path), NULL)) goto have_cache_file;
+    }
+
+    /* create a temp file in order to extract the tmp file working
+     * directory - we have our own name, but need the path */
+    tmpfp = bu_temp_file(temppath, MAXPATHLEN);
+    if (tmpfp != NULL) {
+	struct bu_vls dir = BU_VLS_INIT_ZERO;
+	fclose(tmpfp);
+	if (bu_path_component(&dir, temppath, BU_PATH_DIRNAME)) {
+	    bu_vls_sprintf(&full_path, "%s/%s", bu_vls_addr(&dir), file_name);
+	    bu_vls_sprintf(&tmp_path, "%s/%s", bu_vls_addr(&dir), file_name);
+	    bu_vls_free(&dir);
+	    if (bu_file_exists(bu_vls_addr(&full_path),NULL)) goto have_cache_file;
+	}
+    }
+
+    /* As a last resort, check the current directory */
+    bu_vls_sprintf(&full_path, "%s", file_name);
+    if (bu_file_exists(bu_vls_addr(&full_path),NULL)) goto have_cache_file;
+
+    /* If we got this far, we have nothing.  If we have HOME, use that, else
+     * fall back on tmp, and as a last resort try current dir */
+    if (home_path) {
+	bu_vls_sprintf(&full_path, "%s/%s", home_path, file_name);
+    } else if (bu_vls_strlen(&tmp_path) > 0) {
+	bu_vls_sprintf(&full_path, "%s", bu_vls_addr(&tmp_path));
+    } else {
+	bu_vls_sprintf(&full_path, "%s", file_name);
+    }
+
+have_cache_file:
+    create = !bu_file_exists(bu_vls_addr(&full_path), NULL);
+    result->dbip = create ? db_create(bu_vls_addr(&full_path), 5) : db_open(bu_vls_addr(&full_path), DB_OPEN_READWRITE);
+    bu_vls_free(&full_path);
 
     if (!result->dbip || (!create && db_dirbuild(result->dbip))) {
 	db_close(result->dbip);
