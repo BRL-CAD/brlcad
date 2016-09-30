@@ -26,13 +26,13 @@
 #include <string.h>
 #include "bio.h"
 
-
-#include "cache.h"
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rt/db4.h"
 #include "raytrace.h"
+
+#include "./cache.h"
 
 
 #define ACQUIRE_SEMAPHORE_TREE(_hash) switch ((_hash)&03) {	\
