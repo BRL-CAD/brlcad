@@ -17,22 +17,23 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
+/** @{ */
+/** @file brep/util.h */
 /** @addtogroup brep_util
  *
  * @brief
  * These are utility routines for libbrep, used throughout the library.
  *
  */
+
 #ifndef BREP_UTIL_H
 #define BREP_UTIL_H
 
 #include "common.h"
 
-/** @{ */
-/** @file brep/util.h */
-
 #ifdef __cplusplus
+
+#include <cstring>
 
 #include "brep.h"
 
@@ -42,12 +43,9 @@
 #include "bu/malloc.h"
 #include "bu/parse.h"
 
-#include <arpa/inet.h>
-
 __BEGIN_DECLS
 
 extern "C++" {
-#include <cstring>
 
     BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
@@ -333,12 +331,11 @@ extern "C++" {
 		}
 	};
 
-
 } /* extern C++ */
 
 __END_DECLS
 
-#endif  /* __cplusplus */
+#endif /* __cplusplus */
 
 /** @} */
 

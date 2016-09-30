@@ -17,30 +17,29 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
+/** @{ */
+/** @file brep/curvetree.h */
 /** @addtogroup brep_curvetree
  *
  * @brief
  * Curve Tree.
  *
  */
+
 #ifndef BREP_CURVETREE_H
 #define BREP_CURVETREE_H
 
 #include "common.h"
 
-/** @{ */
-/** @file brep/curvetree.h */
-
 #ifdef __cplusplus
-
-__BEGIN_DECLS
-
-extern "C++" {
 
 #include <map>
 
 #include "brep.h"
+
+__BEGIN_DECLS
+
+extern "C++" {
 
     namespace brlcad {
 
@@ -105,13 +104,13 @@ extern "C++" {
 		mutable std::map<const BRNode *, std::size_t> *m_sortedX_indices;
 	};
 
-
     } /* namespace brlcad */
+
 } /* extern C++ */
 
 __END_DECLS
 
-#endif
+#endif /* __cplusplus */
 
 /** @} */
 
