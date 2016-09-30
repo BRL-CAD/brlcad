@@ -17,7 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
+/** @{ */
+/** @file brep/brnode.h */
 /** @addtogroup brep_brnode
  *
  * @brief
@@ -28,23 +29,21 @@
 #define BREP_BRNODE_H
 
 #include "common.h"
+
 #ifdef __cplusplus
 extern "C++" {
 /* @cond */
-#include <vector>
-#include <list>
+#  include <vector>
+#  include <list>
 /* @endcond */
 }
 #endif
+
 #include "brep.h"
-
-/** @{ */
-/** @file brep/brnode.h */
-
-#ifdef __cplusplus
 
 __BEGIN_DECLS
 
+#ifdef __cplusplus
 extern "C++" {
     namespace brlcad {
 

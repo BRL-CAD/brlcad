@@ -32,8 +32,10 @@
 #include "common.h"
 
 #ifdef __cplusplus
-
-#include <cstring>
+extern "C++" {
+#  include <cstring>
+}
+#endif
 
 #include "brep.h"
 
@@ -43,8 +45,10 @@
 #include "bu/malloc.h"
 #include "bu/parse.h"
 
+
 __BEGIN_DECLS
 
+#ifdef __cplusplus
 extern "C++" {
 
     BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);

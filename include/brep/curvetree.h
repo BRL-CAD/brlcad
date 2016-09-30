@@ -32,13 +32,17 @@
 #include "common.h"
 
 #ifdef __cplusplus
-
-#include <map>
+extern "C++" {
+#  include <map>
+}
+#endif
 
 #include "brep.h"
 
+
 __BEGIN_DECLS
 
+#ifdef __cplusplus
 extern "C++" {
 
     namespace brlcad {
