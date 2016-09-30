@@ -272,7 +272,7 @@ process_element_solid(std::ifstream &infile, int offset, struct dyna_world *worl
 		std::string remainder = line.substr(i,incr);
 		if (remainder.find_first_not_of(" \t\n\v\f\r") == std::string::npos) {
 		    std::getline(infile, line);
-		    while (line.c_str()[0] == '$' && !line.c_str()[0] == '*') {
+		    while (line.c_str()[0] == '$' && line.c_str()[0] != '*') {
 			std::getline(infile, line);
 		    };
 		    i = 0;
