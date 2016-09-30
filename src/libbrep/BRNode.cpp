@@ -28,15 +28,15 @@ namespace brlcad {
 
 
 BRNode::BRNode(
-	const ON_Curve *curve,
-	int trim_index,
-	int adj_face_index,
-	const ON_BoundingBox &node,
-	const ON_BrepFace *face,
-	const ON_Interval &t,
-	bool innerTrim,
-	bool checkTrim,
-	bool trimmed) :
+    const ON_Curve *curve,
+    int trim_index,
+    int adj_face_index,
+    const ON_BoundingBox &node,
+    const ON_BrepFace *face,
+    const ON_Interval &t,
+    bool innerTrim,
+    bool checkTrim,
+    bool trimmed) :
     m_node(node),
     m_v(),
     m_adj_face_index(adj_face_index),
@@ -131,15 +131,15 @@ BRNode::BRNode(const ON_BoundingBox &node) :
     m_start(ON_3dPoint::UnsetPoint),
     m_end(ON_3dPoint::UnsetPoint)
 {
-	for (int i = 0; i < 3; i++) {
-	    double d = m_node.m_max[i] - m_node.m_min[i];
-	    if (NEAR_ZERO(d, ON_ZERO_TOLERANCE)) {
-		m_node.m_min[i] -= 0.001;
-		m_node.m_max[i] += 0.001;
-	    }
+    for (int i = 0; i < 3; i++) {
+	double d = m_node.m_max[i] - m_node.m_min[i];
+	if (NEAR_ZERO(d, ON_ZERO_TOLERANCE)) {
+	    m_node.m_min[i] -= 0.001;
+	    m_node.m_max[i] += 0.001;
 	}
-	m_start = m_node.m_min;
-	m_end = m_node.m_max;
+    }
+    m_start = m_node.m_min;
+    m_end = m_node.m_max;
 }
 
 
@@ -257,6 +257,7 @@ BRNode::depth() const
     return d;
 }
 
+
 void
 BRNode::getLeaves(std::list<const BRNode *> &out_leaves) const
 {
@@ -268,6 +269,7 @@ BRNode::getLeaves(std::list<const BRNode *> &out_leaves) const
 	out_leaves.push_back(this);
     }
 }
+
 
 const BRNode *
 BRNode::closer(const ON_3dPoint &pt, const BRNode *left, const BRNode *right) const
@@ -281,6 +283,7 @@ BRNode::closer(const ON_3dPoint &pt, const BRNode *left, const BRNode *right) co
 	return right;
     }
 }
+
 
 bool
 BRNode::isTrimmed(const ON_2dPoint &uv, double &trimdist) const
@@ -316,6 +319,7 @@ BRNode::isTrimmed(const ON_2dPoint &uv, double &trimdist) const
     }
 }
 
+
 ON_2dPoint
 BRNode::getClosestPointEstimate(const ON_3dPoint &pt) const
 {
@@ -323,15 +327,16 @@ BRNode::getClosestPointEstimate(const ON_3dPoint &pt) const
     return getClosestPointEstimate(pt, u, v);
 }
 
+
 ON_2dPoint
 BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const
 {
     if (isLeaf()) {
 	double uvs[5][2] = {{m_u.Min(), m_v.Min()},  /* include the corners for an easy refinement */
-	    {m_u.Max(), m_v.Min()},
-	    {m_u.Max(), m_v.Max()},
-	    {m_u.Min(), m_v.Max()},
-	    {m_u.Mid(), m_v.Mid()}
+			    {m_u.Max(), m_v.Min()},
+			    {m_u.Max(), m_v.Max()},
+			    {m_u.Min(), m_v.Max()},
+			    {m_u.Mid(), m_v.Mid()}
 	}; /* include the estimate */
 	ON_3dPoint corners[5];
 	const ON_Surface *surf = m_face->SurfaceOf();
@@ -378,12 +383,14 @@ BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
     }
 }
 
+
 fastf_t
 BRNode::getLinearEstimateOfV(fastf_t u) const
 {
     fastf_t v = m_start[Y] + m_slope * (u - m_start[X]);
     return v;
 }
+
 
 fastf_t
 BRNode::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
@@ -472,10 +479,11 @@ BRNode::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     }
     if (cnt > 999) {
 	bu_log("getCurveEstimateOfV(): estimate of 'v' given a trim curve and "
-		"'u' did not converge within iteration bound(%d).\n", cnt);
+	       "'u' did not converge within iteration bound(%d).\n", cnt);
     }
     return p[Y];
 }
+
 
 fastf_t
 BRNode::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
@@ -555,11 +563,12 @@ BRNode::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
     }
     if (cnt > 999) {
 	bu_log("getCurveEstimateOfV(): estimate of 'u' given a trim curve and "
-		"'v' did not converge within iteration bound(%d).\n", cnt);
+	       "'v' did not converge within iteration bound(%d).\n", cnt);
     }
     return p[X];
 }
 }
+
 
 // Local Variables:
 // tab-width: 8

@@ -10,14 +10,18 @@
 #include "brep.h"
 #include "shape_recognition.h"
 
+#define COMMA ','
+
+
 void
 set_key(struct bu_vls *key, int k_cnt, int *k_array)
 {
     for (int i = 0; i < k_cnt; i++) {
 	bu_vls_printf(key, "%d", k_array[i]);
-	if (i != k_cnt - 1) bu_vls_printf(key, ",");
+	if (i != k_cnt - 1) bu_vls_printf(key, "%c", COMMA);
     }
 }
+
 
 void
 set_to_array(int **array, int *array_cnt, std::set<int> *set)
@@ -34,6 +38,7 @@ set_to_array(int **array, int *array_cnt, std::set<int> *set)
 	}
     }
 }
+
 
 void
 array_to_set(std::set<int> *set, int *array, int array_cnt)
@@ -57,13 +62,14 @@ csg_object_params_init(struct csg_object_params *csg, struct subbrep_shoal_data 
     csg->csg_verts = NULL;
 }
 
+
 void
 csg_object_params_free(struct csg_object_params *csg)
 {
     if (!csg) return;
     if (csg->planes) bu_free(csg->planes, "free planes");
-    if (csg->csg_faces) bu_free(csg->csg_faces , "free faces");
-    if (csg->csg_verts) bu_free(csg->csg_verts , "free verts");
+    if (csg->csg_faces) bu_free(csg->csg_faces, "free faces");
+    if (csg->csg_verts) bu_free(csg->csg_verts, "free verts");
 }
 
 
@@ -73,11 +79,12 @@ subbrep_shoal_init(struct subbrep_shoal_data *data, struct subbrep_island_data *
     data->i = i;
     BU_GET(data->params, struct csg_object_params);
     csg_object_params_init(data->params, data);
-    BU_GET(data->shoal_children , struct bu_ptbl);
+    BU_GET(data->shoal_children, struct bu_ptbl);
     bu_ptbl_init(data->shoal_children, 8, "sub_params table");
     data->shoal_loops = NULL;
     data->shoal_loops_cnt = 0;
 }
+
 
 void
 subbrep_shoal_free(struct subbrep_shoal_data *data)
@@ -95,6 +102,7 @@ subbrep_shoal_free(struct subbrep_shoal_data *data)
     BU_PUT(data->shoal_children, struct bu_ptbl);
     if (data->shoal_loops) bu_free(data->shoal_loops, "free loop array");
 }
+
 
 void
 subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
@@ -132,6 +140,7 @@ subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
     obj->null_edges = NULL;
 }
 
+
 void
 subbrep_island_free(struct subbrep_island_data *obj)
 {
@@ -151,7 +160,7 @@ subbrep_island_free(struct subbrep_island_data *obj)
     BU_PUT(obj->key, struct bu_vls);
     obj->key = NULL;
 
-    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->island_children); i++){
+    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->island_children); i++) {
 	struct subbrep_shoal_data *cobj = (struct subbrep_shoal_data *)BU_PTBL_GET(obj->island_children, i);
 	subbrep_shoal_free(cobj);
 	BU_PUT(cobj, struct subbrep_shoal_data);
@@ -181,6 +190,7 @@ subbrep_island_free(struct subbrep_island_data *obj)
     obj->null_edges = NULL;
 }
 
+
 /* Geometry utilities */
 
 void
@@ -193,6 +203,7 @@ ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
     max->y = -ON_DBL_MAX;
     max->z = -ON_DBL_MAX;
 }
+
 
 #define LN_DOTP_TOL 0.000001
 ON_3dPoint
@@ -222,6 +233,7 @@ ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane)
     result = d*l + l0;
     return result;
 }
+
 
 surface_t
 GetSurfaceType(const ON_Surface *orig_surface)
@@ -322,6 +334,7 @@ subbrep_highest_order_face(struct subbrep_island_data *data)
     }
     return hofo;
 }
+
 
 void
 subbrep_bbox(struct subbrep_island_data *obj)
@@ -480,6 +493,7 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
     return 0;
 }
 
+
 int
 subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
 {
@@ -565,7 +579,7 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
 
 		// Edge
 		if (edge_map.find(edge->m_edge_index) == edge_map.end()) {
-		    ON_BrepEdge& new_edge = nbrep->NewEdge(nbrep->m_V[v0i], nbrep->m_V[v1i], c3i, NULL ,0);
+		    ON_BrepEdge& new_edge = nbrep->NewEdge(nbrep->m_V[v0i], nbrep->m_V[v1i], c3i, NULL, 0);
 		    edge_map[edge->m_edge_index] = new_edge.m_edge_index;
 		}
 		nedge = &(nbrep->m_E[edge_map[edge->m_edge_index]]);
@@ -647,6 +661,7 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
     return 1;
 }
 
+
 // Tikz LaTeX output from B-Rep wireframes
 int
 ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
@@ -699,7 +714,7 @@ ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
 		bu_vls_printf(&output, "\\draw[%s] plot [smooth] coordinates {", bu_vls_addr(&color));
 		for (int si = 0; si < poly.Count(); si++) {
 		    ON_3dPoint p = poly[si];
-		    bu_vls_printf(&output, "(%f,%f,%f) ", p.x, p.y, p.z);
+		    bu_vls_printf(&output, "(%f, %f, %f) ", p.x, p.y, p.z);
 		}
 		bu_vls_printf(&output, "};\n", bu_vls_addr(&color));
 	    }
@@ -714,7 +729,6 @@ ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
     bu_vls_free(&prefix);
     return 1;
 }
-
 
 
 // Local Variables:

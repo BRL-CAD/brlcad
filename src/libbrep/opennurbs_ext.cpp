@@ -668,7 +668,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
 	max[i] += within_distance_tol;
 #endif
 	if ((min != ON_3dPoint::UnsetPoint) && (max != ON_3dPoint::UnsetPoint)) {
-	    dom[i].Set(min[i],max[i]);
+	    dom[i].Set(min[i], max[i]);
 	}
     }
     ON_Interval u = dom[0];
@@ -821,7 +821,7 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const BBNode* node) {
 	    new_uv[1] = node->m_v[1];
 
 
-	surface_EvNormal(surf,new_uv[0], new_uv[1], newpt, ray.m_dir);
+	surface_EvNormal(surf, new_uv[0], new_uv[1], newpt, ray.m_dir);
 	ray.m_dir.Reverse();
 	brep_get_plane_ray(ray, pr);
 
@@ -900,18 +900,18 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 //static int bb_cnt=0;
 BBNode *
 SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
-	bool isLeaf,
-	const ON_Plane frames[9],
-	const ON_Interval& u,
-	const ON_Interval& v,
-	double within_distance_tol) const
+			 bool isLeaf,
+			 const ON_Plane frames[9],
+			 const ON_Interval& u,
+			 const ON_Interval& v,
+			 double within_distance_tol) const
 {
     point_t min, max, buffer;
 #ifdef _OLD_SUBDIVISION_
     ON_BoundingBox bbox = localsurf->BoundingBox();
 #else
     ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
-    if (!surface_GetBoundingBox(localsurf,u,v,bbox,false)) {
+    if (!surface_GetBoundingBox(localsurf, u, v, bbox, false)) {
 	return NULL;
     }
 #endif
@@ -967,14 +967,14 @@ initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_Interval& u
     ON_BoundingBox bb = surf->BoundingBox();
 #else
     ON_BoundingBox bb = ON_BoundingBox::EmptyBoundingBox;
-    if (!surface_GetBoundingBox(surf,u,v,bb,false)) {
+    if (!surface_GetBoundingBox(surf, u, v, bb, false)) {
 	return NULL;
     }
 #endif
     BBNode* node = new BBNode(ctree, bb, u, v, false, false);
     ON_3dPoint estimate;
     ON_3dVector normal;
-    if (!surface_EvNormal(surf,surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
+    if (!surface_EvNormal(surf, surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
 	bu_bomb("Could not evaluate estimate point on surface");
     }
     node->m_estimate = estimate;
@@ -1007,7 +1007,7 @@ hasSplit(const ON_Surface *surf, const int dir, const ON_Interval& interval, dou
 
 	return false;
     }
-    if (prev_surf[p] != surf ) {
+    if (prev_surf[p] != surf) {
 	// load new surf info
 	for(int i=0; i<2; i++) {
 	    dom[p][i] = surf->Domain(i);
@@ -1135,11 +1135,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	}
 #else
 	int dir = 0; // U direction
-	if (hasSplit(localsurf,dir,u,usplit)) {
+	if (hasSplit(localsurf, dir, u, usplit)) {
 	    do_u_split = 1;
 	}
 	dir = 1; // V direction
-	if (hasSplit(localsurf,dir,v,vsplit)) {
+	if (hasSplit(localsurf, dir, v, vsplit)) {
 	    if (do_u_split) {
 		do_both_splits = 1;
 		do_u_split = 0;

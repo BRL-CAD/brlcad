@@ -49,12 +49,12 @@ BBNode::BBNode(const ON_BoundingBox &node, const CurveTree *ct) :
 
 
 BBNode::BBNode(
-	const CurveTree *ct,
-	const ON_BoundingBox &node,
-	const ON_Interval &u,
-	const ON_Interval &v,
-	bool checkTrim,
-	bool trimmed):
+    const CurveTree *ct,
+    const ON_BoundingBox &node,
+    const ON_Interval &u,
+    const ON_Interval &v,
+    bool checkTrim,
+    bool trimmed):
     m_node(node),
     m_u(u),
     m_v(v),
@@ -181,7 +181,7 @@ BBNode::intersectedBy(const ON_Ray &ray, double *tnear_opt /* = NULL */, double 
 	    }
 	    /* go ahead and solve hits behind us
 	       if (tfar < 0) untrimmedresult = false;
-	       */
+	    */
 	}
     }
     if (LIKELY(tnear_opt != NULL && tfar_opt != NULL)) {
@@ -211,6 +211,7 @@ BBNode::intersectsHierarchy(const ON_Ray &ray, std::list<const BBNode *> &result
     return intersects;
 }
 
+
 bool
 BBNode::containsUV(const ON_2dPoint &uv) const
 {
@@ -221,6 +222,7 @@ BBNode::containsUV(const ON_2dPoint &uv) const
     }
 }
 
+
 int
 BBNode::depth() const
 {
@@ -230,6 +232,7 @@ BBNode::depth() const
     }
     return d;
 }
+
 
 void
 BBNode::getLeaves(std::list<const BBNode *> &out_leaves) const
@@ -242,6 +245,7 @@ BBNode::getLeaves(std::list<const BBNode *> &out_leaves) const
 	out_leaves.push_back(this);
     }
 }
+
 
 const BBNode *
 BBNode::closer(const ON_3dPoint &pt, const BBNode *left, const BBNode *right) const
@@ -256,6 +260,7 @@ BBNode::closer(const ON_3dPoint &pt, const BBNode *left, const BBNode *right) co
     }
 }
 
+
 ON_2dPoint
 BBNode::getClosestPointEstimate(const ON_3dPoint &pt) const
 {
@@ -263,13 +268,14 @@ BBNode::getClosestPointEstimate(const ON_3dPoint &pt) const
     return getClosestPointEstimate(pt, u, v);
 }
 
+
 ON_2dPoint
 BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const
 {
     if (isLeaf()) {
 	double uvs[5][2] = {{m_u.Min(), m_v.Min()}, {m_u.Max(), m_v.Min()},
-	    {m_u.Max(), m_v.Max()}, {m_u.Min(), m_v.Max()},
-	    {m_u.Mid(), m_v.Mid()}
+			    {m_u.Max(), m_v.Max()}, {m_u.Min(), m_v.Max()},
+			    {m_u.Mid(), m_v.Mid()}
 	}; /* include the estimate */
 	ON_3dPoint corners[5];
 	const ON_Surface *surf = get_face().SurfaceOf();
@@ -316,6 +322,7 @@ BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
     }
 }
 
+
 int
 BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<const BBNode *> &out) const
 {
@@ -339,6 +346,7 @@ BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<const BBNode *> &
 	return sum;
     }
 }
+
 
 bool
 BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closesttrim, double within_distance_tol) const
@@ -456,6 +464,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closestt
     }
 }
 
+
 void
 BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<const BRNode *> &out_leaves) const
 {
@@ -470,6 +479,7 @@ BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<const BRNode *> &out_leave
 	}
     }
 }
+
 
 void BBNode::BuildBBox()
 {
@@ -489,6 +499,7 @@ void BBNode::BuildBBox()
 	}
     }
 }
+
 
 bool
 BBNode::prepTrims()
@@ -580,6 +591,7 @@ BBNode::prepTrims()
     return true;
 }
 }
+
 
 // Local Variables:
 // tab-width: 8
