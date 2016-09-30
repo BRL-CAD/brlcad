@@ -129,7 +129,7 @@ struct rt_functab {
 #define RTFUNCTAB_FUNC_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *, const struct rt_view_info *))_func)
 
     int (*ft_adaptive_plot)(struct rt_db_internal * /*ip*/,
-		   const struct rt_view_info * /*view info*/);
+			    const struct rt_view_info * /*view info*/);
 #define RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(_func) ((int (*)(struct rt_db_internal *, const struct rt_view_info *))_func)
 
     void (*ft_vshot)(struct soltab * /*stp*/[],
@@ -170,7 +170,7 @@ struct rt_functab {
 		      struct resource * /*resp*/);
 #define RTFUNCTAB_FUNC_EXPORT5_CAST(_func) ((int (*)(struct bu_external *, const struct rt_db_internal *, double, const struct db_i *, struct resource *))_func)
 
-   int (*ft_import4)(struct rt_db_internal * /*ip*/,
+    int (*ft_import4)(struct rt_db_internal * /*ip*/,
 		      const struct bu_external * /*ep*/,
 		      const mat_t /*mat*/,
 		      const struct db_i * /*dbip*/,
@@ -237,8 +237,8 @@ struct rt_functab {
 #define RTFUNCTAB_FUNC_CENTROID_CAST(_func) ((void (*)(point_t *, const struct rt_db_internal *))_func)
 
     int (*ft_oriented_bbox)(struct rt_arb_internal * /* bounding arb8 */,
-		   struct rt_db_internal * /*ip*/,
-		   const fastf_t);
+			    struct rt_db_internal * /*ip*/,
+			    const fastf_t);
 #define RTFUNCTAB_FUNC_ORIENTED_BBOX_CAST(_func) ((int (*)(struct rt_arb_internal *, struct rt_db_internal *, const fastf_t))_func)
 
     /** get a list of the selections matching a query */
@@ -250,9 +250,9 @@ struct rt_functab {
      *  NOT a) to create a new selection
      */
     struct rt_selection *(*ft_evaluate_selection)(const struct rt_db_internal *,
-						 int op,
-						 const struct rt_selection *,
-						 const struct rt_selection *);
+						  int op,
+						  const struct rt_selection *,
+						  const struct rt_selection *);
 #define RTFUNCTAB_FUNC_EVALUATE_SELECTION_CAST(_func) ((struct rt_selection *(*)(const struct rt_db_internal *, int op, const struct rt_selection *, const struct rt_selection *))_func)
 
     /** apply an operation to a selected subset of a primitive */
@@ -262,6 +262,7 @@ struct rt_functab {
 				const struct rt_selection_operation *);
 #define RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(_func) ((int (*)(struct rt_db_internal *, struct db_i *, const struct rt_selection *, const struct rt_selection_operation *))_func)
 
+    /** cache and uncache prep data for faster future lookup */
     int (*ft_prep_serialize)(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, uint32_t *version);
 #define RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(_func) ((int (*)(struct soltab *, const struct rt_db_internal *, struct bu_external *, uint32_t *))_func)
 };
