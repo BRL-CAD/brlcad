@@ -29,8 +29,6 @@
 
 #include "common.h"
 
-#include "brep.h"
-
 /** @{ */
 /** @file brep/curvetree.h */
 
@@ -39,7 +37,10 @@
 __BEGIN_DECLS
 
 extern "C++" {
+
 #include <map>
+
+#include "brep.h"
 
     namespace brlcad {
 
