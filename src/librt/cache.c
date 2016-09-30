@@ -29,18 +29,49 @@
 #include <errno.h>
 #include <zlib.h>
 
-#include "bnetwork.h"
-
 #include "cache.h"
-
+#include "bnetwork.h"
 #include "bu/cv.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/uuid.h"
-#include "pstdint.h"
 #include "rt/db_attr.h"
 #include "rt/db_io.h"
 #include "rt/func.h"
+
+/* Make sure we have PRINTF_INT32_MODIFIER defined */
+#if !defined (_PSTDINT_H_INCLUDED)
+#  if ((defined(__STDC__) && __STDC__ && __STDC_VERSION__ >= 199901L) || (defined (__WATCOMC__) && (defined (_STDINT_H_INCLUDED) || __WATCOMC__ >= 1250)) || (defined(__GNUC__) && (defined(_STDINT_H) || defined(_STDINT_H_) || defined (__UINT_FAST64_TYPE__)) ))
+#    ifndef PRINTF_INT32_MODIFIER
+#     define PRINTF_INT32_MODIFIER "l"
+#    endif
+#  endif
+#  if (ULONG_MAX == UINT32_MAX) || defined (S_SPLINT_S)
+#    ifndef PRINTF_INT32_MODIFIER
+#      define PRINTF_INT32_MODIFIER "l"
+#    endif
+#  elif (UINT_MAX == UINT32_MAX)
+#    ifndef PRINTF_INT32_MODIFIER
+#     define PRINTF_INT32_MODIFIER ""
+#    endif
+#  elif (USHRT_MAX == UINT32_MAX)
+#    ifndef PRINTF_INT32_MODIFIER
+#     define PRINTF_INT32_MODIFIER ""
+#    endif
+#  endif
+#  if (LONG_MAX == INT32_MAX) || defined (S_SPLINT_S)
+#    ifndef PRINTF_INT32_MODIFIER
+#     define PRINTF_INT32_MODIFIER "l"
+#    endif
+#  elif (INT_MAX == INT32_MAX)
+#    ifndef PRINTF_INT32_MODIFIER
+#     define PRINTF_INT32_MODIFIER ""
+#    endif
+#  endif
+#  ifndef PRINTF_INT32_MODIFIER
+#    define PRINTF_INT32_MODIFIER ""
+#  endif
+#endif
 
 
 static const char * const cache_mime_type = "brlcad/cache";
