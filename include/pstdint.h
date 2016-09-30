@@ -182,6 +182,9 @@
  *
  */
 
+#ifndef PSTDINT_H
+#define PSTDINT_H
+
 #include <stddef.h>
 #include <limits.h>
 #include <signal.h>
@@ -802,3 +805,5 @@ int main () {
 }
 
 #endif
+
+#endif /*PSTDINT_H*/
