@@ -281,6 +281,7 @@ set(LIBRT_SOURCES
   )
 
 set(librt_ignored_files
+  cache.h
   columnparse.c
   librt_private.h
   prcomb.c
