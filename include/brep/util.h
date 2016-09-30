@@ -31,6 +31,8 @@
 
 #include "common.h"
 
+#include "bnetwork.h" /* Needed for ntohl and htonl */
+
 #ifdef __cplusplus
 extern "C++" {
 #  include <cstring>

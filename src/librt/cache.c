@@ -26,6 +26,11 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <zlib.h>
+
+#include "bnetwork.h"
+
 #include "cache.h"
 
 #include "bu/cv.h"
@@ -36,10 +41,6 @@
 #include "rt/db_attr.h"
 #include "rt/db_io.h"
 #include "rt/func.h"
-
-#include <arpa/inet.h>
-#include <errno.h>
-#include <zlib.h>
 
 
 static const char * const cache_mime_type = "brlcad/cache";
