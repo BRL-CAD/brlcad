@@ -97,6 +97,7 @@ RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt
 struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
 int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
 int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
+int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, uint32_t *version);
 #ifdef __cplusplus
 }
 #endif
@@ -1212,7 +1213,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     for (std::list<const BBNode*>::const_iterator i = inters.begin(); i != inters.end(); i++) {
 	const BBNode* sbv = (*i);
-	const ON_BrepFace* f = sbv->m_face;
+	const ON_BrepFace* f = &sbv->get_face();
 	const ON_Surface* surf = f->SurfaceOf();
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
 	utah_brep_intersect(sbv, f, surf, uv, r, all_hits);
@@ -1623,7 +1624,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
 		if (out.direction == brep_hit::ENTERING) bu_log("+");
 		if (out.direction == brep_hit::LEAVING) bu_log("-");
-		bu_log("<%d>", out.sbv->m_face->m_bRev);
+		bu_log("<%d>", out.sbv->get_face().m_bRev);
 
 		bu_log(")");
 	    }
@@ -1762,9 +1763,9 @@ plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit
 
     }
 
-    for (size_t i = 0; i < node->m_children->size(); i++) {
+    for (size_t i = 0; i < node->get_children().size(); i++) {
 	if (i < 1) {
-	    std::vector<brlcad::BBNode*> &nodes = *node->m_children;
+	    const std::vector<brlcad::BBNode*> &nodes = node->get_children();
 	    plot_bbnode(nodes[i], vhead, depth + 1, start, limit);
 	}
     }
@@ -2124,7 +2125,7 @@ plot_BBNode(struct bu_list *vhead, SurfaceTree* st, const BBNode * node, int iso
 	    return;
 	}
     } else {
-	    for (std::vector<BBNode*>::const_iterator childnode = node->m_children->begin(); childnode != node->m_children->end(); ++childnode) {
+	    for (std::vector<BBNode*>::const_iterator childnode = node->get_children().begin(); childnode != node->get_children().end(); ++childnode) {
 		plot_BBNode(vhead, st, *childnode, isocurveres, gridres);
 	    }
     }
@@ -5029,6 +5030,83 @@ int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log)
     }
     return 0;
 }
+
+
+int
+rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, uint32_t *version)
+{
+    RT_CK_SOLTAB(stp);
+    RT_CK_DB_INTERNAL(ip);
+    BU_CK_EXTERNAL(external);
+
+    const uint32_t current_version = 0;
+
+    RT_CK_SOLTAB(stp);
+    BU_CK_EXTERNAL(external);
+
+    if (stp->st_specific) {
+	/* export to external */
+
+	const brep_specific &specific = *static_cast<brep_specific *>(stp->st_specific);
+
+	Serializer serializer;
+	serializer.write_uint32(specific.bvh->get_children().size());
+
+	for (std::vector<BBNode *>::const_iterator it = specific.bvh->get_children().begin(); it != specific.bvh->get_children().end(); ++it) {
+	    (*it)->m_ctree->serialize(serializer);
+	    (*it)->serialize(serializer);
+	}
+
+	*version = current_version;
+	*external = serializer.take();
+	return 0;
+    } else {
+	/* load from external */
+
+	if (*version != current_version)
+	    return 1;
+
+	brep_specific * const specific = brep_specific_new();
+	stp->st_specific = specific;
+	std::swap(specific->brep, static_cast<rt_brep_internal *>(ip->idb_ptr)->brep);
+	specific->bvh = new BBNode(specific->brep->BoundingBox());
+
+	Deserializer deserializer(*external);
+	const uint32_t num_children = deserializer.read_uint32();
+
+	for (uint32_t i = 0; i < num_children; ++i) {
+	    const CurveTree * const ctree = new CurveTree(deserializer, *specific->brep->m_F.At(i));
+	    specific->bvh->addChild(new BBNode(deserializer, *ctree));
+	}
+
+	specific->bvh->BuildBBox();
+
+	{
+	    /* Once a proper SurfaceTree is built, finalize the bounding
+	     * volumes.  This takes no time. */
+	    specific->bvh->GetBBox(stp->st_min, stp->st_max);
+
+	    // expand outer bounding box just a little bit
+	    const struct bn_tol *tol = &stp->st_rtip->rti_tol;
+	    point_t adjust;
+	    VSETALL(adjust, tol->dist < SMALL_FASTF ? SMALL_FASTF : tol->dist);
+	    VSUB2(stp->st_min, stp->st_min, adjust);
+	    VADD2(stp->st_max, stp->st_max, adjust);
+
+	    VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+	    vect_t work;
+	    VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
+	    fastf_t f = work[X];
+	    V_MAX(f, work[Y]);
+	    V_MAX(f, work[Z]);
+	    stp->st_aradius = f;
+	    stp->st_bradius = MAGNITUDE(work);
+	}
+
+	return 0;
+    }
+}
+
 
 /** @} */
 

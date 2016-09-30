@@ -28,16 +28,26 @@
 #define BREP_UTIL_H
 
 #include "common.h"
-#include "brep/defines.h"
 
 /** @{ */
 /** @file brep/util.h */
 
 #ifdef __cplusplus
 
+#include "brep.h"
+
+#include "bu/cv.h"
+#include "bu/endian.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parse.h"
+
+#include <arpa/inet.h>
+
 __BEGIN_DECLS
 
 extern "C++" {
+#include <cstring>
 
     BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
@@ -92,6 +102,237 @@ extern "C++" {
 
 
     BREP_EXPORT void set_key(struct bu_vls *key, int k, int *karray);
+
+
+    class Serializer
+    {
+	public:
+	    Serializer() :
+		m_capacity(1024 * 1024),
+		m_external()
+	{
+	    BU_EXTERNAL_INIT(&m_external);
+
+	    m_external.ext_buf = static_cast<uint8_t *>(bu_malloc(m_capacity, "m_external"));
+	}
+
+
+	    ~Serializer()
+	    {
+		bu_free_external(&m_external);
+	    }
+
+
+	    bu_external take()
+	    {
+		const bu_external result = m_external;
+		m_capacity = 1024 * 1024;
+		BU_EXTERNAL_INIT(&m_external);
+		m_external.ext_buf = static_cast<uint8_t *>(bu_malloc(m_capacity, "m_external"));
+		return result;
+	    }
+
+
+	    void write_uint8(uint8_t value)
+	    {
+		uint8_t * const dest = extend(sizeof(value));
+		*dest = value;
+	    }
+
+
+	    void write_uint32(uint32_t value)
+	    {
+		uint8_t * const dest = extend(SIZEOF_NETWORK_LONG);
+		const uint32_t out_value = htonl(value);
+		std::memcpy(dest, &out_value, SIZEOF_NETWORK_LONG);
+	    }
+
+
+	    void write_int32(int32_t value)
+	    {
+		uint8_t * const dest = extend(SIZEOF_NETWORK_LONG);
+		long out_value = value;
+
+		if (UNLIKELY(1 != bu_cv_htonsl(dest, SIZEOF_NETWORK_LONG, &out_value, 1)))
+		    bu_bomb("bu_cv_htonsl() failed");
+	    }
+
+
+	    void write_double(double value)
+	    {
+		uint8_t * const dest = extend(SIZEOF_NETWORK_DOUBLE);
+		bu_cv_htond(dest, reinterpret_cast<const unsigned char *>(&value), 1);
+	    }
+
+
+	    void write(const ON_3dPoint &value)
+	    {
+		write_double(value.x);
+		write_double(value.y);
+		write_double(value.z);
+	    }
+
+
+	    void write(const ON_BoundingBox &value)
+	    {
+		write(value.m_min);
+		write(value.m_max);
+	    }
+
+
+	    void write(const ON_Interval &value)
+	    {
+		write_double(value.m_t[0]);
+		write_double(value.m_t[1]);
+	    }
+
+
+	private:
+	    Serializer(const Serializer &source);
+	    Serializer &operator=(const Serializer &source);
+
+
+	    uint8_t *extend(std::size_t size)
+	    {
+		const std::size_t position = m_external.ext_nbytes;
+		m_external.ext_nbytes += size;
+
+		if (m_external.ext_nbytes > m_capacity) {
+		    m_capacity = m_external.ext_nbytes * 2;
+		    m_external.ext_buf = static_cast<uint8_t *>(bu_realloc(m_external.ext_buf, m_capacity, "m_external"));
+		}
+
+		return &m_external.ext_buf[position];
+	    }
+
+
+	    std::size_t m_capacity;
+	    bu_external m_external;
+    };
+
+
+    class Deserializer
+    {
+	public:
+	    Deserializer(const bu_external &external) :
+		m_position(0),
+		m_external(external)
+	{
+	    BU_CK_EXTERNAL(&m_external);
+	}
+
+
+	    ~Deserializer()
+	    {
+		if (m_position != m_external.ext_nbytes)
+		    bu_bomb("did not deserialize entire stream");
+	    }
+
+
+	    uint8_t read_uint8()
+	    {
+		return *get(1);
+	    }
+
+
+	    uint32_t read_uint32()
+	    {
+		uint32_t result;
+		std::memcpy(&result, get(SIZEOF_NETWORK_LONG), SIZEOF_NETWORK_LONG);
+		return ntohl(result);
+	    }
+
+
+	    int32_t read_int32()
+	    {
+		long result;
+
+		if (UNLIKELY(1 != bu_cv_ntohsl(&result, sizeof(result), const_cast<void *>(reinterpret_cast<const void *>(get(SIZEOF_NETWORK_LONG))), 1)))
+		    bu_bomb("bu_cv_ntohsl() failed");
+
+		return result;
+	    }
+
+
+	    double read_double()
+	    {
+		double result;
+		bu_cv_ntohd(reinterpret_cast<unsigned char *>(&result), get(SIZEOF_NETWORK_DOUBLE), 1);
+		return result;
+	    }
+
+
+	    void read(ON_3dPoint &value)
+	    {
+		value.x = read_double();
+		value.y = read_double();
+		value.z = read_double();
+	    }
+
+
+	    void read(ON_3dVector &value)
+	    {
+		value.x = read_double();
+		value.y = read_double();
+		value.z = read_double();
+	    }
+
+
+	    void read(ON_BoundingBox &value)
+	    {
+		read(value.m_min);
+		read(value.m_max);
+	    }
+
+
+	    void read(ON_Interval &value)
+	    {
+		value.m_t[0] = read_double();
+		value.m_t[1] = read_double();
+	    }
+
+
+	private:
+	    Deserializer(const Deserializer &source);
+	    Deserializer &operator=(const Deserializer &source);
+
+
+	    const uint8_t *get(std::size_t size)
+	    {
+		const std::size_t result_position = m_position;
+		m_position += size;
+
+		if (UNLIKELY(m_position > m_external.ext_nbytes))
+		    bu_bomb("invalid position");
+
+		return &m_external.ext_buf[result_position];
+	    }
+
+
+	    std::size_t m_position;
+	    const bu_external &m_external;
+    };
+
+
+    template <typename T>
+	class PooledObject
+	{
+	    public:
+		static void *operator new(std::size_t size)
+		{
+		    if (UNLIKELY(size != sizeof(T)))
+			throw std::bad_alloc();
+
+		    return bu_heap_get(size);
+		}
+
+
+		static void operator delete(void *pointer)
+		{
+		    bu_heap_put(pointer, sizeof(T));
+		}
+	};
+
 
 } /* extern C++ */
 
