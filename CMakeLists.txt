@@ -675,9 +675,6 @@ if (IS_DIRECTORY /usr/local)
     set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
     include_directories(AFTER SYSTEM /usr/local/include)
   endif (IS_DIRECTORY /usr/local/include)
-  if (IS_DIRECTORY /usr/local/lib)
-    LINK_DIRECTORIES(/usr/local/lib)
-  endif (IS_DIRECTORY /usr/local/lib)
 endif (IS_DIRECTORY /usr/local)
 
 #---------------------------------------------------------------------
@@ -1873,6 +1870,7 @@ BRLCAD_CHECK_LIBRARY(M m cos)
 
 # uuid library
 BRLCAD_CHECK_LIBRARY(UUID uuid uuid_generate)
+find_package(UUID)
 
 # network socket library (linux, bsd)
 BRLCAD_CHECK_LIBRARY(SOCKET socket socket)
