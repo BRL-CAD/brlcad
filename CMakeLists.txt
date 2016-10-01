@@ -1869,8 +1869,10 @@ endif(BRLCAD_ENABLE_X11)
 BRLCAD_CHECK_LIBRARY(M m cos)
 
 # uuid library
-BRLCAD_CHECK_LIBRARY(UUID uuid uuid_generate)
 find_package(UUID)
+if (UUID_FOUND)
+  BRLCAD_CHECK_LIBRARY(UUID uuid uuid_generate)
+endif (UUID_FOUND)
 
 # network socket library (linux, bsd)
 BRLCAD_CHECK_LIBRARY(SOCKET socket socket)
