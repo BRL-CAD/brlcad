@@ -58,27 +58,32 @@ bu_str_true(const char *str)
 	return 0;
     }
 
-    /* case-insensitive "false" */
+    /* exactly "f" or "F" (for false) */
+    if (BU_STR_EQUIV(newstr, "f")) {
+	bu_vls_free(&vls);
+	return 0;
+    }
+
+    /* exact case insensitive match for "false" */
     if (BU_STR_EQUIV(newstr, "false")) {
 	bu_vls_free(&vls);
 	return 0;
     }
-
-    /* case-insensitive "off" */
-    if (BU_STR_EQUIV(newstr, "off")) {
+    /* exactly "0" */
+    if (BU_STR_EQUAL(newstr, "0")) {
 	bu_vls_free(&vls);
 	return 0;
     }
 
-    /* any variant of "0" (e.g., 000) */
+    /* variant of "0" (e.g., 000) */
     val = strtol(newstr, &endptr, 10);
     if (val == 0 && errno != EINVAL && *endptr == '\0') {
 	bu_vls_free(&vls);
 	return 0;
     }
 
-    /* case-insensitive "(null)" */
-    if (BU_STR_EQUIV(newstr, "(null)")) {
+    /* exactly "(null)" */
+    if (BU_STR_EQUAL(newstr, "(null)")) {
 	bu_vls_free(&vls);
 	return 0;
     }
@@ -91,14 +96,20 @@ bu_str_true(const char *str)
 	return 1;
     }
 
-    /* case-insensitive "true" */
+    /* exactly "t" or "T" (for true) */
+    if (BU_STR_EQUIV(newstr, "t")) {
+	bu_vls_free(&vls);
+	return 1;
+    }
+
+    /* exact case insensitive match for "true" */
     if (BU_STR_EQUIV(newstr, "true")) {
 	bu_vls_free(&vls);
 	return 1;
     }
 
-    /* case-insensitive "on" */
-    if (BU_STR_EQUIV(newstr, "on")) {
+    /* exactly "1" */
+    if (BU_STR_EQUAL(newstr, "1")) {
 	bu_vls_free(&vls);
 	return 1;
     }
@@ -115,7 +126,9 @@ bu_str_true(const char *str)
     bu_vls_free(&vls);
 
     /* anything else */
-    return (int)val;
+    if ((int)val > 1)
+	return (int)val;
+    return 2;
 }
 
 
