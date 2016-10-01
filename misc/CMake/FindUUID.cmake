@@ -91,3 +91,6 @@ mark_as_advanced(
   UUID_INCLUDE_DIR
   )
 set(CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK_SAVE})
+
+# We've done the work - be quiet if called again
+set(UUID_FIND_QUIETLY ON CACHE INTERNAL "Quitet FindUUID messages")
