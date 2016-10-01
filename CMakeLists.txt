@@ -675,6 +675,9 @@ if (IS_DIRECTORY /usr/local)
     set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
     include_directories(AFTER SYSTEM /usr/local/include)
   endif (IS_DIRECTORY /usr/local/include)
+  if (IS_DIRECTORY /usr/local/lib)
+    set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} -L/usr/local/lib)
+  endif (IS_DIRECTORY /usr/local/lib)
 endif (IS_DIRECTORY /usr/local)
 
 #---------------------------------------------------------------------
