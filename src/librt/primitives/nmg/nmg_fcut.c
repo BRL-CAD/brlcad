@@ -1493,7 +1493,7 @@ nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_r
  * at this vertexuse.
  */
 HIDDEN int
-nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *exclude, const struct bn_tol *tol)
+nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *exclude, struct bu_list *vlfree, const struct bn_tol *tol)
 
 /* vu index of coincident range */
 
@@ -1525,7 +1525,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	/* Plot all the loops that touch here. */
 	m = nmg_find_model((uint32_t *)vs[start].vu);
 	b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]");
-	vbp = rt_vlblock_init();
+	vbp = bn_vlblock_init(vlfree, 32);
 	for (i=start; i < end; i++) {
 	    struct loopuse *lu;
 	    lu = nmg_find_lu_of_vu(vs[i].vu);
@@ -1629,7 +1629,8 @@ again_inner:
 
     /* Recurse on inner wedge */
     if (nmg_special_wedge_processing(vs, start, end,
-				     vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass, exclude, tol))
+				     vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass,
+				     exclude, vlfree, tol))
 	return 1;	/* An inner wedge was cut */
 
     /*
@@ -1653,7 +1654,7 @@ again_inner:
  * sort them into the "proper" order for driving the state machine.
  */
 HIDDEN int
-nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
+nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end, struct bu_list *vlfree)
 
 /* first index */
 /* last index + 1 */
@@ -1794,13 +1795,13 @@ top:
     /* XXX */
 
     /* Here is where the special wedge-breaking code goes */
-    if (nmg_special_wedge_processing(vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT, (int *)0, rs->tol)) {
+    if (nmg_special_wedge_processing(vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT, (int *)0, vlfree, rs->tol)) {
 	if (RTG.NMG_debug&DEBUG_VU_SORT)
 	    bu_log("*** nmg_face_coincident_vu_sort(, %d, %d) restarting after 0--180 wedge\n", start, end);
 	goto top;
     }
     /* XXX reclass on/on edges from WEDGE_RIGHT to WEDGE_LEFT here? */
-    if (nmg_special_wedge_processing(vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT, (int *)0, rs->tol)) {
+    if (nmg_special_wedge_processing(vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT, (int *)0, vlfree, rs->tol)) {
 	if (RTG.NMG_debug&DEBUG_VU_SORT)
 	    bu_log("*** nmg_face_coincident_vu_sort(, %d, %d) restarting after 180-360 wedge\n", start, end);
 	goto top;
