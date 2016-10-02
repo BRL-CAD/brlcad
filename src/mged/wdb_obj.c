@@ -5867,7 +5867,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	    return TCL_ERROR;
 	}
 
-	failed = nmg_boolean(facetize_tree, nmg_model, &wdbp->wdb_tol, &rt_uniresource);
+	failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource);
 	BU_UNSETJUMP;
     } else
 	failed = 1;

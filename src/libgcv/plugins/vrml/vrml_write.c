@@ -1055,7 +1055,7 @@ vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree,
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);

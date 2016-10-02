@@ -172,7 +172,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     /* Now, evaluate the boolean tree into ONE region */
     if (!BU_SETJUMP) {
 	/* try */
-	if (nmg_boolean(facetize_tree, nmg_model, tol, &rt_uniresource)) {
+	if (nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, tol, &rt_uniresource)) {
 	    BU_UNSETJUMP;
 	    return _gcv_facetize_cleanup(nmg_model, facetize_tree);
 	}

@@ -333,7 +333,7 @@ obj_write_process_boolean(const struct conversion_state *pstate, union tree *cur
 	/* try */
 
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */

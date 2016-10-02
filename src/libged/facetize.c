@@ -252,7 +252,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
 	    if (!BU_SETJUMP) {
 		/* try */
-		failed = nmg_boolean(facetize_tree, nmg_model, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
+		failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
 	    } else {
 		/* catch */
 		BU_UNSETJUMP;

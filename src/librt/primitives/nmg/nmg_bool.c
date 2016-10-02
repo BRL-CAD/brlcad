@@ -623,7 +623,7 @@ nmg_kill_wire_edges(struct shell *s)
  *
  * XXX this probably should operate on regions, not shells.
  */
-HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_tol *tol)
+HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int oper, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int i;
     long nelem;
@@ -1000,7 +1000,7 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     nmg_s_radial_check(sA, tol);
     nmg_s_radial_check(sB, tol);
-    nmg_evaluate_boolean(sA, sB, oper, classlist, tol);
+    nmg_evaluate_boolean(sA, sB, oper, classlist, vlfree, tol);
     sB = NULL; /* sanity, killed during boolean eval */
 
     if (RTG.NMG_debug & DEBUG_BOOL) {
@@ -1116,7 +1116,7 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
  * BUG: we assume only one shell per region
  */
 struct nmgregion *
-nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const struct bn_tol *tol)
+nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct shell *s;
     struct nmgregion *r;
@@ -1129,7 +1129,7 @@ nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const st
 
     s = nmg_bool(BU_LIST_FIRST(shell, &rA->s_hd),
 		 BU_LIST_FIRST(shell, &rB->s_hd),
-		 oper, tol);
+		 oper, vlfree, tol);
     r = s->r_p;
 
     /* shell B was destroyed, need to eliminate region B */
@@ -1304,7 +1304,7 @@ int nmg_bool_eval_silent=0;
  * curtree = nmg_booltree_evaluate(curtree, tol);
  */
 union tree *
-nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct resource *resp)
+nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const struct bn_tol *tol, struct resource *resp)
 {
     union tree *tl;
     union tree *tr;
@@ -1344,8 +1344,8 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     }
 
     /* Handle a boolean operation node.  First get its leaves. */
-    tl = nmg_booltree_evaluate(tp->tr_b.tb_left, tol, resp);
-    tr = nmg_booltree_evaluate(tp->tr_b.tb_right, tol, resp);
+    tl = nmg_booltree_evaluate(tp->tr_b.tb_left, vlfree, tol, resp);
+    tr = nmg_booltree_evaluate(tp->tr_b.tb_right, vlfree, tol, resp);
 
     if (tl) {
 	RT_CK_TREE(tl);
@@ -1469,7 +1469,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     }
 
     /* input r1 and r2 are destroyed, output is new region */
-    reg = nmg_do_bool(tl->tr_d.td_r, tr->tr_d.td_r, op, tol);
+    reg = nmg_do_bool(tl->tr_d.td_r, tr->tr_d.td_r, op, vlfree, tol);
 
     /* build string of result name */
     rem = strlen(tl->tr_d.td_name) + 3 + strlen(tr->tr_d.td_name) + 2 + 1;
@@ -1520,7 +1520,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
  * typically with db_free_tree(tp);
  */
 int
-nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct resource *resp)
+nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struct bn_tol *tol, struct resource *resp)
 {
     union tree *result;
     int ret;
@@ -1550,7 +1550,7 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
      * Evaluate the nodes of the boolean tree one at a time, until
      * only a single region remains.
      */
-    result = nmg_booltree_evaluate(tp, tol, resp);
+    result = nmg_booltree_evaluate(tp, vlfree, tol, resp);
 
     if (result == TREE_NULL) {
 	bu_log("nmg_boolean(): result of nmg_booltree_evaluate() is NULL\n");

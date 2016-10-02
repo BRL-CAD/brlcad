@@ -419,7 +419,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	result = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
+	result = nmg_boolean(curtree, *tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol, tsp->ts_resp);
 
     } else {
 	/* catch */

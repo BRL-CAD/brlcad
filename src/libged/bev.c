@@ -249,7 +249,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	failed = nmg_boolean(tmp_tree, bev_nmg_model, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
+	failed = nmg_boolean(tmp_tree, bev_nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
 	BU_UNSETJUMP;
     } else
 	failed = 1;

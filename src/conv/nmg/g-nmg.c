@@ -81,7 +81,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 
     } else {
 	/* catch */

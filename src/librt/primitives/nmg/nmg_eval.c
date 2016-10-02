@@ -45,6 +45,7 @@ struct nmg_bool_state {
     char **bs_classtab;
     const int *bs_actions;
     const struct bn_tol *bs_tol;
+    struct bu_list *vlfree;
 };
 
 
@@ -186,7 +187,7 @@ static const int intersect_actions[8] = {
  *
  */
 void
-nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlist, const struct bn_tol *tol)
+nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlist, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int const *actions;
     struct nmg_bool_state bool_state;
@@ -221,6 +222,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     bool_state.bs_src = sB;
     bool_state.bs_classtab = classlist;
     bool_state.bs_actions = actions;
+    bool_state.vlfree = vlfree;
     bool_state.bs_tol = tol;
 
     bool_state.bs_isA = 1;
@@ -621,9 +623,7 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
     }
 
     if (do_anim) {
-	struct bn_vlblock *vbp;
-
-	vbp = rt_vlblock_init();
+	struct bn_vlblock *vbp = bn_vlblock_init(bs->vlfree, 32);
 
 	nmg_vlblock_s(vbp, bs->bs_dest, 0);
 	nmg_vlblock_s(vbp, bs->bs_src, 0);

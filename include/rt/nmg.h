@@ -523,7 +523,7 @@ RT_EXPORT extern double nmg_measure_fu_angle(const struct edgeuse *eu,
 /* from nmg_bool.c */
 RT_EXPORT extern struct nmgregion *nmg_do_bool(struct nmgregion *s1,
                                                struct nmgregion *s2,
-                                               const int oper, const struct bn_tol *tol);
+                                               const int oper, struct bu_list *vlfree, const struct bn_tol *tol);
 RT_EXPORT extern void nmg_shell_coplanar_face_merge(struct shell *s,
                                                     const struct bn_tol *tol,
                                                     const int simplify);
@@ -543,10 +543,12 @@ RT_EXPORT extern union tree *nmg_booltree_leaf_tnurb(struct db_tree_state *tsp,
 
 RT_EXPORT extern int nmg_bool_eval_silent;      /* quell output from nmg_booltree_evaluate */
 RT_EXPORT extern union tree *nmg_booltree_evaluate(union tree *tp,
+						   struct bu_list *vlfree,
                                                    const struct bn_tol *tol,
                                                    struct resource *resp);
 RT_EXPORT extern int nmg_boolean(union tree *tp,
                                  struct model *m,
+				 struct bu_list *vlfree,
                                  const struct bn_tol *tol,
                                  struct resource *resp);
 
@@ -603,6 +605,7 @@ RT_EXPORT extern void nmg_evaluate_boolean(struct shell *sA,
                                            struct shell *sB,
                                            int          op,
                                            char         **classlist,
+					   struct bu_list *vlfree,
                                            const struct bn_tol  *tol);
 
 /* The following functions cannot be publicly declared because struct
