@@ -84,7 +84,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &conv_data->tol);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &conv_data->tol);
 
     /* Write pertinent info for this region */
     fprintf(conv_data->fp, "  <VertexPool> %s {\n", (region_name+1));

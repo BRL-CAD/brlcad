@@ -549,7 +549,7 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
  * XXX probably should return count;
  */
 void
-nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *tol)
+nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int count = 0;
 
@@ -558,7 +558,7 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *to
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_MESH_EU && RTG.NMG_debug & DEBUG_PLOTEM) {
-	nmg_pl_2fu("Before_mesh%d.plot3", fu1, fu2, 1);
+	nmg_pl_2fu("Before_mesh%d.plot3", fu1, fu2, 1, vlfree);
     }
 
     if (RTG.NMG_debug & DEBUG_MESH_EU)
@@ -574,7 +574,7 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *to
     count += nmg_mesh_two_faces(fu1, fu2, tol);
 
     if (RTG.NMG_debug & DEBUG_MESH_EU && RTG.NMG_debug & DEBUG_PLOTEM) {
-	nmg_pl_2fu("After_mesh%d.plot3", fu1, fu2, 1);
+	nmg_pl_2fu("After_mesh%d.plot3", fu1, fu2, 1, vlfree);
     }
 }
 
@@ -611,7 +611,7 @@ nmg_mesh_face_shell(struct faceuse *fu1, struct shell *s, const struct bn_tol *t
  * to the absolute minimum necessary.
  */
 int
-nmg_mesh_shell_shell(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
+nmg_mesh_shell_shell(struct shell *s1, struct shell *s2, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct faceuse *fu1;
     struct faceuse *fu2;
@@ -621,8 +621,8 @@ nmg_mesh_shell_shell(struct shell *s1, struct shell *s2, const struct bn_tol *to
     NMG_CK_SHELL(s2);
     BN_CK_TOL(tol);
 
-    nmg_region_v_unique(s1->r_p, tol);
-    nmg_region_v_unique(s2->r_p, tol);
+    nmg_region_v_unique(s1->r_p, vlfree, tol);
+    nmg_region_v_unique(s2->r_p, vlfree, tol);
 
     /* First, mesh all faces of shell 2 with themselves */
     for (BU_LIST_FOR(fu2, faceuse, &s2->fu_hd)) {

@@ -1024,14 +1024,14 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     }
 
     if (!is_light) {
-	nmg_triangulate_model(m, tol2);
+	nmg_triangulate_model(m, &RTG.rtg_vlfree, tol2);
 	fprintf(fp_out, "\t\t\t}\n");
 	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
 	fprintf(fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
-    nmg_vertex_tabulate(&verts, &m->magic);
+    nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
     if (!is_light) {
 	fprintf(fp_out, "\t\t\t\t\tpoint [");
     } else {

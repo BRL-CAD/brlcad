@@ -90,7 +90,7 @@ verts_in_nmg_face(struct faceuse *fu)
  * Translate a face using a vector's magnitude and direction.
  */
 void
-nmg_translate_face(struct faceuse *fu, const fastf_t *Vec)
+nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, struct bu_list *vlfree)
 {
     int in_there;
     size_t i;
@@ -143,7 +143,7 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec)
 	fu_tmp = fu_tmp->fumate_p;
 
     /* Move edge geometry */
-    nmg_edge_g_tabulate(&edge_g_tbl, &fu->l.magic);
+    nmg_edge_g_tabulate(&edge_g_tbl, &fu->l.magic, vlfree);
     for (i=0; i<BU_PTBL_LEN(&edge_g_tbl); i++) {
 	long *ep;
 	struct edge_g_lseg *eg;
@@ -176,7 +176,7 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec)
  * a solid bounded by these faces.
  */
 int
-nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *tol)
+nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, struct bu_list *vlfree, const struct bn_tol *tol)
 /* Face to extrude. */
 /* Magnitude and direction of extrusion. */
 /* NMG tolerances. */
@@ -208,9 +208,9 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
     if (NEAR_ZERO(cosang, MIKE_TOL))
 	bu_bomb("extrude_nmg_face: extrusion cannot be parallel to face\n");
     if (cosang > 0.)
-	nmg_translate_face(fu, Vec);
+	nmg_translate_face(fu, Vec, vlfree);
     else if (cosang < 0.)
-	nmg_translate_face(fu2->fumate_p, Vec);
+	nmg_translate_face(fu2->fumate_p, Vec, vlfree);
 
     nfaces = verts_in_nmg_face(fu);
     outfaces = (struct faceuse **)bu_calloc(nfaces+2, sizeof(struct faceuse *) ,
@@ -242,7 +242,7 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
 	    vertlist[2] = eu2->eumate_p->vu_p->v_p;
 	    vertlist[3] = eu->eumate_p->vu_p->v_p;
 	    outfaces[face_count] = nmg_cface(fu->s_p, vertlist, 4);
-	    if (nmg_calc_face_g(outfaces[face_count])) {
+	    if (nmg_calc_face_g(outfaces[face_count], vlfree)) {
 		bu_log("nmg_extrude_face: failed to calculate plane eqn\n");
 		return -1;
 	    }
@@ -251,7 +251,7 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
 
     }
 
-    nmg_gluefaces(outfaces, face_count, tol);
+    nmg_gluefaces(outfaces, face_count, vlfree, tol);
 
     bu_free((char *)outfaces, "nmg_extrude_face: outfaces");
 
@@ -411,7 +411,7 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
  * original loopuses are killed
  */
 void
-nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
+nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct faceuse *fu;
     struct edgeuse *start_eu;
@@ -424,7 +424,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	bu_log("nmg_fix_overlapping_loops: s = %p\n", (void *)s);
 
     /* this routine needs simple faceuses */
-    nmg_split_loops_into_faces(&s->l.magic, tol);
+    nmg_split_loops_into_faces(&s->l.magic, vlfree, tol);
 
     /* This table will contain a list of bu_ptbl's when we are
      * finished. Each of those bu_ptbl's will be a list of
@@ -505,7 +505,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	    if (!nmg_find_vertex_in_lu(vu->v_p, lu1)) {
 		int nmg_class;
 
-		nmg_class = nmg_classify_pt_loop(vu->v_p->vg_p->coord, lu1, tol);
+		nmg_class = nmg_classify_pt_loop(vu->v_p->vg_p->coord, lu1, vlfree, tol);
 		if (nmg_class == NMG_CLASS_AoutB)
 		    outside++;
 		else if (nmg_class == NMG_CLASS_AinB)
@@ -602,7 +602,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	     */
 	    VBLEND2(mid_pt, 0.5, v1->vg_p->coord, 0.5, v2->vg_p->coord);
 
-	    if (nmg_classify_pt_loop(mid_pt, lu2, tol) == NMG_CLASS_AoutB) {
+	    if (nmg_classify_pt_loop(mid_pt, lu2, vlfree, tol) == NMG_CLASS_AoutB) {
 		start_eu = eu1;
 		break;
 	    }
@@ -800,7 +800,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
  * are detected and killed
  */
 struct shell *
-nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_tol *tol)
+nmg_extrude_cleanup(struct shell *in_shell, const int is_void, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct model *m;
     struct nmgregion *new_r;
@@ -822,10 +822,10 @@ nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_t
     /* intersect each face in the shell with every other face in the
      * same shell
      */
-    nmg_isect_shell_self(in_shell, tol);
+    nmg_isect_shell_self(in_shell, vlfree, tol);
 
     /* Extrusion may create loops that overlap */
-    nmg_fix_overlapping_loops(in_shell, tol);
+    nmg_fix_overlapping_loops(in_shell, vlfree, tol);
 
     /* look for self-touching loops */
     for (BU_LIST_FOR(fu, faceuse, &in_shell->fu_hd)) {
@@ -884,7 +884,7 @@ nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_t
 	bu_bomb("nmg_extrude_shell: Nothing got moved to new region\n");
 
     /* now decompose our shell, count number of inside shells */
-    if (nmg_decompose_shell(in_shell, tol) < 2) {
+    if (nmg_decompose_shell(in_shell, vlfree, tol) < 2) {
 
 	/* We still have only one shell. If there's a problem with it, then
 	 * kill it. Otherwise, move it back to the region it came from.
@@ -949,7 +949,7 @@ nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_t
 	    if (s_tmp == in_shell) {
 		continue;
 	    }
-	    nmg_js(in_shell, s_tmp, tol);
+	    nmg_js(in_shell, s_tmp, vlfree, tol);
 	}
 
 	/* move resulting shell back to the original region */
@@ -979,7 +979,7 @@ nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_t
  * minimum distance from the intersecting faces.
  */
 void
-nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, const struct bn_tol *tol)
+nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct nmgregion *new_r, *old_r;
     struct vertexuse *vu;
@@ -1025,7 +1025,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
     (void)nmg_mv_shell_to_region(s, new_r);
 
     /* decompose this shell */
-    (void)nmg_decompose_shell(s, tol);
+    (void)nmg_decompose_shell(s, vlfree, tol);
 
     /* kill the extra shell created by nmg_mrsv above */
     (void)nmg_ks(s_tmp);
@@ -1043,7 +1043,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 	s_tmp = (struct shell *)BU_PTBL_GET(&shells, shell_no);
 
 	/* first make a copy of this shell */
-	is = nmg_dup_shell(s_tmp, &copy_tbl, tol);
+	is = nmg_dup_shell(s_tmp, &copy_tbl, vlfree, tol);
 
 	/* make a translation table for this model */
 	flags = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_extrude_shell flags");
@@ -1095,7 +1095,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 			NMG_CK_VERTEX(new_v);
 			if (NMG_INDEX_TEST_AND_SET(flags, new_v)) {
 			    /* move this vertex */
-			    if (nmg_in_vert(new_v, approximate, tol))
+			    if (nmg_in_vert(new_v, approximate, vlfree, tol))
 				bu_bomb("Failed to get a new point from nmg_inside_vert\n");
 			}
 		    }
@@ -1110,31 +1110,31 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 
 	s_tmp_is_closed = !nmg_check_closed_shell(s_tmp, tol);
 	if (s_tmp_is_closed)
-	    is = nmg_extrude_cleanup(is, is_void, tol);
+	    is = nmg_extrude_cleanup(is, is_void, vlfree, tol);
 
 	/* Inside shell is done */
 	if (is) {
 	    if (s_tmp_is_closed) {
 		if (nmg_check_closed_shell(is, tol)) {
 		    bu_log("nmg_extrude_shell: inside shell is not closed, calling nmg_close_shell\n");
-		    nmg_close_shell(is, tol);
+		    nmg_close_shell(is, vlfree, tol);
 		}
 
-		nmg_shell_coplanar_face_merge(is, tol, 0);
-		nmg_simplify_shell(is);
+		nmg_shell_coplanar_face_merge(is, tol, 0, vlfree);
+		nmg_simplify_shell(is, vlfree);
 
 		/* now merge the inside and outside shells */
-		nmg_js(s_tmp, is, tol);
+		nmg_js(s_tmp, is, vlfree, tol);
 	    } else {
 		if (!nmg_check_closed_shell(is, tol)) {
 		    bu_log("nmg_extrude_shell: inside shell is closed, outer isn't!!\n");
-		    nmg_shell_coplanar_face_merge(is, tol, 0);
-		    nmg_simplify_shell(is);
-		    nmg_js(s_tmp, is, tol);
+		    nmg_shell_coplanar_face_merge(is, tol, 0, vlfree);
+		    nmg_simplify_shell(is, vlfree);
+		    nmg_js(s_tmp, is, vlfree, tol);
 		} else {
 		    /* connect the boundaries of the two open shells */
 		    nmg_open_shells_connect(s_tmp, is ,
-					    (const long **)copy_tbl, tol);
+					    (const long **)copy_tbl, vlfree, tol);
 		}
 	    }
 	}
@@ -1153,7 +1153,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 
 	s2 = (struct shell *)BU_PTBL_GET(&shells, shell_no);
 	if (s2 != s)
-	    nmg_js(s, s2, tol);
+	    nmg_js(s, s2, vlfree, tol);
     }
 
     bu_ptbl_free(&shells);
@@ -1178,7 +1178,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
  * NULL on failure
  */
 struct shell *
-nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, const int approximate, const struct bn_tol *tol)
+nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, const int approximate, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     fastf_t thick;
     int along_normal;
@@ -1215,7 +1215,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
     new_r = nmg_mrsv(m);
     s_tmp = BU_LIST_FIRST(shell, &new_r->s_hd);
     (void)nmg_mv_shell_to_region(s, new_r);
-    (void)nmg_decompose_shell(s, tol);
+    (void)nmg_decompose_shell(s, vlfree, tol);
 
     /* kill the not-needed shell created by nmg_mrsv() */
     (void)nmg_ks(s_tmp);
@@ -1266,7 +1266,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	bu_free((char *)flags, "nmg_extrude_shell flags");
 
 	/* get table of vertices in this shell */
-	nmg_vertex_tabulate(&verts, &s_tmp->l.magic);
+	nmg_vertex_tabulate(&verts, &s_tmp->l.magic, vlfree);
 
 	/* now move all the vertices */
 	for (vert_no = 0; vert_no < BU_PTBL_LEN(&verts); vert_no++) {
@@ -1275,7 +1275,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	    new_v = (struct vertex *)BU_PTBL_GET(&verts, vert_no);
 	    NMG_CK_VERTEX(new_v);
 
-	    if (nmg_in_vert(new_v, approximate, tol)) {
+	    if (nmg_in_vert(new_v, approximate, vlfree, tol)) {
 		bu_log("nmg_extrude_shell: Failed to calculate new vertex at v=%p was (%f %f %f)\n",
 		       (void *)new_v, V3ARGS(new_v->vg_p->coord));
 		failed = 1;
@@ -1324,7 +1324,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	/* recompute the bounding boxes */
 	nmg_region_a(s_tmp->r_p, tol);
 
-	(void)nmg_extrude_cleanup(s_tmp, is_void, tol);
+	(void)nmg_extrude_cleanup(s_tmp, is_void, vlfree, tol);
     }
 
 out:
@@ -1338,7 +1338,7 @@ out:
 	    struct shell *next_s;
 
 	    next_s = BU_LIST_PNEXT(shell, &s2->l);
-	    nmg_js(s_tmp, s2, tol);
+	    nmg_js(s_tmp, s2, vlfree, tol);
 
 	    s2 = next_s;
 	}

@@ -287,7 +287,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		if (marching_cube == 1)
 		    nmg_triangulate_model_mc(nmg_model, &gedp->ged_wdbp->wdb_tol);
 		else
-		    nmg_triangulate_model(nmg_model, &gedp->ged_wdbp->wdb_tol);
+		    nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 	    } else {
 		/* catch */
 		BU_UNSETJUMP;
@@ -319,7 +319,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
 	    if (!BU_SETJUMP) {
 		/* try */
-		bot = (struct rt_bot_internal *)nmg_bot(s, &gedp->ged_wdbp->wdb_tol);
+		bot = (struct rt_bot_internal *)nmg_bot(s, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 	    } else {
 		/* catch */
 		BU_UNSETJUMP;

@@ -143,7 +143,7 @@ nmg_to_rib(struct model *m)
 
 
     if (triangulate)
-	nmg_triangulate_model(m, &tol);
+	nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
 	for (BU_LIST_FOR(s, shell, &r->s_hd))

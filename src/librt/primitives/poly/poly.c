@@ -612,7 +612,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 	}
 
 	/* Associate face geometry */
-	if (nmg_calc_face_g(fu)) {
+	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 	    nmg_pr_fu_briefly(fu, "");
 	    bu_free((char *)verts, "pg_tess verts[]");
 	    bu_free((char *)vertp, "pg_tess vertp[]");
@@ -626,7 +626,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
     /* Polysolids are often built with incorrect face normals.
      * Don't depend on them here.
      */
-    nmg_fix_normals(s, tol);
+    nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
     bu_free((char *)verts, "pg_tess verts[]");
     bu_free((char *)vertp, "pg_tess vertp[]");
 

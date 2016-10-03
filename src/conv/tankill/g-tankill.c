@@ -183,7 +183,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	}
     }
     /* Now triangulate the entire model */
-    nmg_triangulate_model( m, &tol );
+    nmg_triangulate_model( m, &RTG.rtg_vlfree, &tol );
 
     /* Need a flag array to insure that no loops are missed */
     flags = (long *)bu_calloc( m->maxindex, sizeof( long ), "g-tankill: flags" );
@@ -622,7 +622,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if ( !BU_SETJUMP ) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else  {

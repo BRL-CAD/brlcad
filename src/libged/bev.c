@@ -282,7 +282,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    bev_nmg_model = (struct model *)NULL;
 	    return GED_ERROR;
 	}
-	nmg_triangulate_model(bev_nmg_model, &gedp->ged_wdbp->wdb_tol);
+	nmg_triangulate_model(bev_nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 	BU_UNSETJUMP;
     }
 

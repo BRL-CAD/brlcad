@@ -2243,7 +2243,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
     /* make sure face normal is in correct direction */
     bu_free((char *)verts, "verts");
-    if (nmg_calc_face_plane(fu, pl)) {
+    if (nmg_calc_face_plane(fu, pl, &RTG.rtg_vlfree)) {
 	bu_log("Failed to calculate face plane for extrusion\n");
 	return -1;
     }
@@ -2331,7 +2331,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     }
 
     /* extrude this face */
-    if (nmg_extrude_face(fu, extrude_ip->h, tol)) {
+    if (nmg_extrude_face(fu, extrude_ip->h, &RTG.rtg_vlfree, tol)) {
 	bu_log("Failed to extrude face sketch\n");
 	return -1;
     }

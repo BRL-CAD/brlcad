@@ -1441,7 +1441,7 @@ Convtrimsurfs()
 	bu_mem_barriercheck();
 
     if (convsurf) {
-	(void)nmg_vertex_fuse(&m->magic, &tol);
+	(void)nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
 
 	if (!BU_STR_EMPTY(curr_file->obj_name))
 	    mk_nmg(fdout, curr_file->obj_name, m);

@@ -443,7 +443,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
     if (!BU_SETJUMP) {
 	/* try */
 
-	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
+	nmg_triangulate_model(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
 	result = 0;
 
     } else {

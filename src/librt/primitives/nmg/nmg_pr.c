@@ -976,7 +976,7 @@ nmg_pr_fu_around_eu(const struct edgeuse *eu, const struct bn_tol *tol)
  * Don't bother drawing the loopuse mates.
  */
 void
-nmg_pl_lu_around_eu(const struct edgeuse *eu)
+nmg_pl_lu_around_eu(const struct edgeuse *eu, struct bu_list *vlfree)
 {
     FILE *fp;
     const struct edgeuse *eu1;
@@ -1010,7 +1010,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu)
 
 	if (*eu1->up.magic_p == NMG_LOOPUSE_MAGIC) {
 	    lu1 = eu1->up.lu_p;
-	    nmg_pl_lu(fp, lu1, b, 80, 100, 170);
+	    nmg_pl_lu(fp, lu1, b, 80, 100, 170, vlfree);
 	}
 
 	/* Now back around to the radial edgeuse */

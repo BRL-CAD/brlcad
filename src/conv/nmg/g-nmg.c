@@ -165,7 +165,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if (ret_tree) {
 	r = ret_tree->tr_d.td_r;
 	if (do_bots && r) {
-	    bot = nmg_bot(BU_LIST_FIRST(shell, &r->s_hd), tsp->ts_tol);
+	    bot = nmg_bot(BU_LIST_FIRST(shell, &r->s_hd), &RTG.rtg_vlfree, tsp->ts_tol);
 	}
     } else {
 	if (verbose) {

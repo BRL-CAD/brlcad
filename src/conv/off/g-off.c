@@ -211,7 +211,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if ( !BU_SETJUMP ) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
@@ -404,7 +404,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
     map = (int *)bu_calloc(r->m_p->maxindex, sizeof(int), "Jack vert map");
 
     /* Built list of vertex structs */
-    nmg_vertex_tabulate( &vtab, &r->l.magic );
+    nmg_vertex_tabulate( &vtab, &r->l.magic, &RTG.rtg_vlfree );
 
     /* FIXME: What to do if 0 vertices?  */
 

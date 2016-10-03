@@ -167,7 +167,7 @@ nmg_visit_face(struct face *f, const struct nmg_visit_handlers *htab, void *stat
 
 
 void
-nmg_visit_faceuse(struct faceuse *fu, const struct nmg_visit_handlers *htab, void *state)
+nmg_visit_faceuse(struct faceuse *fu, const struct nmg_visit_handlers *htab, void *state, struct bu_list *vlfree)
 
 
 /* Handler's private state */
@@ -184,12 +184,12 @@ nmg_visit_faceuse(struct faceuse *fu, const struct nmg_visit_handlers *htab, voi
 
     nmg_visit_face(fu->f_p, htab, state);
 
-    if (htab->aft_faceuse) htab->aft_faceuse((uint32_t *)fu, state, 1);
+    if (htab->aft_faceuse) htab->aft_faceuse((uint32_t *)fu, state, 1, vlfree);
 }
 
 
 void
-nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, void *state)
+nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, void *state, struct bu_list *vlfree)
 
 
 /* Handler's private state */
@@ -203,7 +203,7 @@ nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, void *st
     if (htab->bef_shell) htab->bef_shell((uint32_t *)s, state, 0);
 
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	nmg_visit_faceuse(fu, htab, state);
+	nmg_visit_faceuse(fu, htab, state, vlfree);
     }
     for (BU_LIST_FOR(lu, loopuse, &s->lu_hd)) {
 	nmg_visit_loopuse(lu, htab, state);
@@ -220,7 +220,7 @@ nmg_visit_shell(struct shell *s, const struct nmg_visit_handlers *htab, void *st
 
 
 void
-nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, void *state)
+nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, void *state, struct bu_list *vlfree)
 
 
 /* Handler's private state */
@@ -232,7 +232,7 @@ nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, voi
     if (htab->bef_region) htab->bef_region((uint32_t *)r, state, 0);
 
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	nmg_visit_shell(s, htab, state);
+	nmg_visit_shell(s, htab, state, vlfree);
     }
     if (htab->vis_region_a && r->ra_p)
 	htab->vis_region_a((uint32_t *)r->ra_p, state, 0);
@@ -240,7 +240,7 @@ nmg_visit_region(struct nmgregion *r, const struct nmg_visit_handlers *htab, voi
     if (htab->aft_region) htab->aft_region((uint32_t *)r, state, 1);
 }
 void
-nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, void *state)
+nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, void *state, struct bu_list *vlfree)
 
 
 /* Handler's private state */
@@ -252,7 +252,7 @@ nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, void
     if (htab->bef_model) htab->bef_model((uint32_t *)model, state, 0);
 
     for (BU_LIST_FOR(r, nmgregion, &model->r_hd)) {
-	nmg_visit_region(r, htab, state);
+	nmg_visit_region(r, htab, state, vlfree);
     }
 
     if (htab->aft_model) htab->aft_model((uint32_t *)model, state, 1);
@@ -260,7 +260,7 @@ nmg_visit_model(struct model *model, const struct nmg_visit_handlers *htab, void
 
 
 void
-nmg_visit(const uint32_t *magicp, const struct nmg_visit_handlers *htab, void *state)
+nmg_visit(const uint32_t *magicp, const struct nmg_visit_handlers *htab, void *state, struct bu_list *vlfree)
 /* Handler's private state */
 {
     switch (*magicp) {
@@ -269,16 +269,16 @@ nmg_visit(const uint32_t *magicp, const struct nmg_visit_handlers *htab, void *s
 	    bu_bomb("nmg_visit()\n");
 	    /* NOTREACHED */
 	case NMG_MODEL_MAGIC:
-	    nmg_visit_model((struct model *)magicp, htab, state);
+	    nmg_visit_model((struct model *)magicp, htab, state, vlfree);
 	    break;
 	case NMG_REGION_MAGIC:
-	    nmg_visit_region((struct nmgregion *)magicp, htab, state);
+	    nmg_visit_region((struct nmgregion *)magicp, htab, state, vlfree);
 	    break;
 	case NMG_SHELL_MAGIC:
-	    nmg_visit_shell((struct shell *)magicp, htab, state);
+	    nmg_visit_shell((struct shell *)magicp, htab, state, vlfree);
 	    break;
 	case NMG_FACEUSE_MAGIC:
-	    nmg_visit_faceuse((struct faceuse *)magicp, htab, state);
+	    nmg_visit_faceuse((struct faceuse *)magicp, htab, state, vlfree);
 	    break;
 	case NMG_LOOPUSE_MAGIC:
 	    nmg_visit_loopuse((struct loopuse *)magicp, htab, state);

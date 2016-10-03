@@ -1088,13 +1088,13 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, face, tol);
+    nmg_gluefaces(outfaceuses, face, &RTG.rtg_vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1);
+    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
 
     /* free mem */
     if (outfaceuses)
@@ -1111,7 +1111,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_free((char *)vells, "vertex [][]");
 
     /* Assign vertexuse normals */
-    nmg_vertex_tabulate(&vert_tab, &s->l.magic);
+    nmg_vertex_tabulate(&vert_tab, &s->l.magic, &RTG.rtg_vlfree);
     for (i = 0; i < BU_PTBL_LEN(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;

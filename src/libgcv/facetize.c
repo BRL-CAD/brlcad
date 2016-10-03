@@ -201,11 +201,11 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	    if (!BU_SETJUMP) {
 		/* try */
 		if (!result)
-		    result = nmg_bot(current_shell, tol);
+		    result = nmg_bot(current_shell, &RTG.rtg_vlfree, tol);
 		else {
 		    struct rt_bot_internal *bots[2];
 		    bots[0] = result;
-		    bots[1] = nmg_bot(current_shell, tol);
+		    bots[1] = nmg_bot(current_shell, &RTG.rtg_vlfree, tol);
 		    result = rt_bot_merge(sizeof(bots) / sizeof(bots[0]),
 					  (const struct rt_bot_internal * const *)bots);
 		    _gcv_facetize_free_bot(bots[0]);

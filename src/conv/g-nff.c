@@ -90,7 +90,7 @@ nmg_to_nff(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
 
     /* output triangles */
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
@@ -182,7 +182,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {

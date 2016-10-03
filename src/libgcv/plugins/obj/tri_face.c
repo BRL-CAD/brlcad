@@ -137,7 +137,7 @@ make_model_from_face(const double points[], size_t numPoints)
     /* add geometry to face */
     fu = BU_LIST_FIRST(faceuse, &shell->fu_hd);
     attach_face_g_plane(model, fu->f_p);
-    if (nmg_calc_face_plane(fu, fu->f_p->g.plane_p->N)) {
+    if (nmg_calc_face_plane(fu, fu->f_p->g.plane_p->N, &RTG.rtg_vlfree)) {
 	nmg_km(model);
 	model = NULL;
     } else {
@@ -230,7 +230,7 @@ triangulateFace(
     }
 
     /* triangulate face */
-    if (nmg_triangulate_fu(fu, &tol)) {
+    if (nmg_triangulate_fu(fu, &RTG.rtg_vlfree, &tol)) {
 	*faces = NULL;
 	*numFaces = 0;
 	return;

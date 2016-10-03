@@ -707,11 +707,10 @@ nmg_pl_eu(FILE *fp, const struct edgeuse *eu, long *b, int red, int green, int b
 
 
 void
-nmg_pl_lu(FILE *fp, const struct loopuse *lu, long *b, int red, int green, int blue)
+nmg_pl_lu(FILE *fp, const struct loopuse *lu, long *b, int red, int green, int blue, struct bu_list *vlfree)
 {
-    struct bn_vlblock *vbp;
+    struct bn_vlblock *vbp = bn_vlblock_init(vlfree, 32);
 
-    vbp = rt_vlblock_init();
     nmg_vlblock_lu(vbp, lu, b, red, green, blue, 0);
     rt_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
@@ -719,7 +718,7 @@ nmg_pl_lu(FILE *fp, const struct loopuse *lu, long *b, int red, int green, int b
 
 
 void
-nmg_pl_fu(FILE *fp, const struct faceuse *fu, long *b, int red, int green, int blue)
+nmg_pl_fu(FILE *fp, const struct faceuse *fu, long *b, int red, int green, int blue, struct bu_list *vlfree)
 {
     struct loopuse *lu;
     struct bn_vlblock *vbp;
@@ -727,7 +726,7 @@ nmg_pl_fu(FILE *fp, const struct faceuse *fu, long *b, int red, int green, int b
     NMG_CK_FACEUSE(fu);
     NMG_INDEX_RETURN_IF_SET_ELSE_SET(b, fu->index);
 
-    vbp = rt_vlblock_init();
+    vbp = bn_vlblock_init(vlfree, 32);
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	nmg_vlblock_lu(vbp, lu, b, red, green, blue, 1);
@@ -743,11 +742,10 @@ nmg_pl_fu(FILE *fp, const struct faceuse *fu, long *b, int red, int green, int b
  * malloc/free calls when plotting multiple shells.
  */
 void
-nmg_pl_s(FILE *fp, const struct shell *s)
+nmg_pl_s(FILE *fp, const struct shell *s, struct bu_list *vlfree)
 {
-    struct bn_vlblock *vbp;
+    struct bn_vlblock *vbp = bn_vlblock_init(vlfree, 32);
 
-    vbp = rt_vlblock_init();
     nmg_vlblock_s(vbp, s, 0);
     rt_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
@@ -755,11 +753,10 @@ nmg_pl_s(FILE *fp, const struct shell *s)
 
 
 void
-nmg_pl_shell(FILE *fp, const struct shell *s, int fancy)
+nmg_pl_shell(FILE *fp, const struct shell *s, int fancy, struct bu_list *vlfree)
 {
-    struct bn_vlblock *vbp;
+    struct bn_vlblock *vbp = bn_vlblock_init(vlfree, 32);
 
-    vbp = rt_vlblock_init();
     nmg_vlblock_s(vbp, s, fancy);
     rt_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
@@ -767,11 +764,10 @@ nmg_pl_shell(FILE *fp, const struct shell *s, int fancy)
 
 
 void
-nmg_pl_r(FILE *fp, const struct nmgregion *r)
+nmg_pl_r(FILE *fp, const struct nmgregion *r, struct bu_list *vlfree)
 {
-    struct bn_vlblock *vbp;
+    struct bn_vlblock *vbp = bn_vlblock_init(vlfree, 32);
 
-    vbp = rt_vlblock_init();
     nmg_vlblock_r(vbp, r, 0);
     rt_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
@@ -779,11 +775,10 @@ nmg_pl_r(FILE *fp, const struct nmgregion *r)
 
 
 void
-nmg_pl_m(FILE *fp, const struct model *m)
+nmg_pl_m(FILE *fp, const struct model *m, struct bu_list *vlfree)
 {
-    struct bn_vlblock *vbp;
+    struct bn_vlblock *vbp = bn_vlblock_init(vlfree, 32);
 
-    vbp = rt_vlblock_init();
     nmg_vlblock_m(vbp, m, 0);
     rt_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
@@ -1253,7 +1248,7 @@ nmg_pl_edges_in_2_shells(struct bn_vlblock *vbp, long *b, const struct edgeuse *
  * Called by nmg_bool.c
  */
 void
-nmg_pl_isect(const char *filename, const struct shell *s, const struct bn_tol *tol)
+nmg_pl_isect(const char *filename, const struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -1275,7 +1270,7 @@ nmg_pl_isect(const char *filename, const struct shell *s, const struct bn_tol *t
     b = (long *)bu_calloc(s->r_p->m_p->maxindex+1, sizeof(long),
 			  "nmg_pl_isect flags[]");
 
-    vbp = rt_vlblock_init();
+    vbp = bn_vlblock_init(vlfree, 32);
 
     bu_log("overlay %s\n", filename);
     if (s->sa_p) {
@@ -1313,7 +1308,7 @@ nmg_pl_isect(const char *filename, const struct shell *s, const struct bn_tol *t
  * Called from nmg_bool.c/nmg_face_combine()
  */
 void
-nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1)
+nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1, struct bu_list *vlfree)
 {
     FILE *fp;
     char name[64];
@@ -1335,7 +1330,7 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1)
     tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
 			    "nmg_pl_comb_fu tab[]");
 
-    vbp = rt_vlblock_init();
+    vbp = bn_vlblock_init(vlfree, 32);
 
     nmg_vlblock_fu(vbp, fu1, tab, 3);
 
@@ -1377,7 +1372,7 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1)
  * Called from nmg_isect_2faces and other places.
  */
 void
-nmg_pl_2fu(const char *str, const struct faceuse *fu1, const struct faceuse *fu2, int show_mates)
+nmg_pl_2fu(const char *str, const struct faceuse *fu1, const struct faceuse *fu2, int show_mates, struct bu_list *vlfree)
 {
     FILE *fp;
     char name[32];
@@ -1395,7 +1390,7 @@ nmg_pl_2fu(const char *str, const struct faceuse *fu1, const struct faceuse *fu2
 			    "nmg_pl_comb_fu tab[]");
 
     /* Create the vlblock */
-    vbp = rt_vlblock_init();
+    vbp = bn_vlblock_init(vlfree, 32);
 
     nmg_vlblock_fu(vbp, fu1, tab, 3);
     if (show_mates)
@@ -1730,7 +1725,7 @@ nmg_plot_sigstepalong(int UNUSED(i))
  * that this is a graphical display of classifier operation.
  */
 void
-nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int fancy, const char *a_string)
+nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int fancy, const char *a_string, struct bu_list *vlfree)
 {
     static struct bn_vlblock *vbp = (struct bn_vlblock *)NULL;
     struct model *m;
@@ -1742,11 +1737,11 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
     nmg_class_nothing_broken = 0;
 
     if (!vbp)
-	vbp = rt_vlblock_init();
+	vbp = bn_vlblock_init(vlfree, 32);
     else if (all_new) {
 	bn_vlblock_free(vbp);
 	vbp = (struct bn_vlblock *)NULL;
-	vbp = rt_vlblock_init();
+	vbp = bn_vlblock_init(vlfree, 32);
     }
 
     m = nmg_find_model(p);
@@ -1859,7 +1854,7 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
 
 
 void
-nmg_face_plot(const struct faceuse *fu)
+nmg_face_plot(const struct faceuse *fu, struct bu_list *vlfree)
 {
     FILE *fp;
     char name[32];
@@ -1880,7 +1875,7 @@ nmg_face_plot(const struct faceuse *fu)
     tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
 			    "nmg_face_plot tab[]");
 
-    vbp = rt_vlblock_init();
+    vbp = bn_vlblock_init(vlfree, 32);
 
     fancy = 3;	/* show both types of edgeuses */
     nmg_vlblock_fu(vbp, fu, tab, fancy);
@@ -1921,7 +1916,7 @@ nmg_face_plot(const struct faceuse *fu)
  * Just like nmg_face_plot, except it draws two faces each iteration.
  */
 void
-nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2)
+nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2, struct bu_list *vlfree)
 {
     struct model *m;
     struct bn_vlblock *vbp;
@@ -1940,7 +1935,7 @@ nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2)
     tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
 			    "nmg_2face_plot tab[]");
 
-    vbp = rt_vlblock_init();
+    vbp = bn_vlblock_init(vlfree, 32);
 
     fancy = 3;	/* show both types of edgeuses */
     nmg_vlblock_fu(vbp, fu1, tab, fancy);
@@ -1968,7 +1963,7 @@ nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2)
  * Plot the loop, and a ray from vu1 to vu2.
  */
 void
-nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const struct vertexuse *vu2)
+nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const struct vertexuse *vu2, struct bu_list *vlfree)
 {
     FILE *fp;
     struct model *m;
@@ -1993,7 +1988,7 @@ nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const st
 	return;
     }
     b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_face_lu_plot flag[]");
-    nmg_pl_lu(fp, lu, b, 255, 0, 0);
+    nmg_pl_lu(fp, lu, b, 255, 0, 0, vlfree);
 
     /*
      * Two yellow lines for the ray.
@@ -2017,7 +2012,7 @@ nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const st
  * Plot the loop, a ray from vu1 to vu2, and the left vector.
  */
 void
-nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const struct vertexuse *vu2, const fastf_t *left)
+nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const struct vertexuse *vu2, const fastf_t *left, struct bu_list *vlfree)
 {
     FILE *fp;
     struct model *m;
@@ -2043,7 +2038,7 @@ nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const str
 	return;
     }
     b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_plot_lu_ray flag[]");
-    nmg_pl_lu(fp, lu, b, 255, 0, 0);
+    nmg_pl_lu(fp, lu, b, 255, 0, 0, vlfree);
 
     /*
      * Two yellow lines for the ray, and a third for the left vector.
@@ -2069,7 +2064,7 @@ nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const str
 
 
 void
-nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const struct faceuse *fu)
+nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const struct faceuse *fu, struct bu_list *vlfree)
 {
     FILE *fp;
     long *b;
@@ -2090,7 +2085,7 @@ nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const stru
 
     b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex, sizeof(long), "bit vec");
 
-    nmg_pl_fu(fp, fu, b, 200, 200, 200);
+    nmg_pl_fu(fp, fu, b, 200, 200, 200, vlfree);
 
     bu_free((char *)b, "bit vec");
 
@@ -2108,7 +2103,7 @@ nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const stru
  * Called by nmg_radial_join_eu().
  */
 void
-nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, const struct bn_tol *tol)
+nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     char file[256];
     static int num = 0;
@@ -2133,7 +2128,7 @@ nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, const struct
     NMG_CK_MODEL(m);
     tab = (long *)bu_calloc(m->maxindex, sizeof(long), "bit vec");
 
-    vbp = rt_vlblock_init();
+    vbp = bn_vlblock_init(vlfree, 32);
 
     /* Draw all the left vectors, and a fancy edgeuse plot */
     nmg_vlblock_around_eu(vbp, eu, tab, 3, tol);

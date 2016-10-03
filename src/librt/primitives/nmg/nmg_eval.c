@@ -238,7 +238,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     /* Write sA and sB into separate files, if wanted? */
 
     /* Move everything left in sB into sA.  sB is killed. */
-    nmg_js(sA, sB, tol);
+    nmg_js(sA, sB, vlfree, tol);
 
     /* Plot the result */
     if (RTG.NMG_debug & DEBUG_BOOLEVAL && RTG.NMG_debug & DEBUG_PLOTEM) {
@@ -249,12 +249,12 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
 	    bu_bomb("unable to open bool_ans.plot3 for writing");
 	}
 	bu_log("plotting bool_ans.plot3\n");
-	nmg_pl_s(fp, sA);
+	nmg_pl_s(fp, sA, vlfree);
 	(void)fclose(fp);
     }
 
     /* Remove loops/edges/vertices that appear more than once in result */
-    nmg_rm_redundancies(sA, tol);
+    nmg_rm_redundancies(sA, vlfree, tol);
 }
 
 
@@ -616,8 +616,8 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
 	}
 	bu_log("Plotting %s\n", fname);
 
-	nmg_pl_s(fp, bs->bs_dest);
-	nmg_pl_s(fp, bs->bs_src);
+	nmg_pl_s(fp, bs->bs_dest, bs->vlfree);
+	nmg_pl_s(fp, bs->bs_src, bs->vlfree);
 
 	fclose(fp);
     }

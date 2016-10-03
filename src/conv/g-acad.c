@@ -101,11 +101,11 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
 
 
     /* list all vertices in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic);
+    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
 
     /* Get number of vertices */
 
