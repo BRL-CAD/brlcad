@@ -70,7 +70,7 @@ __BEGIN_DECLS
 #define BU_RB_NODE_MAGIC		0x72626e6f /**< rbno */
 #define BU_RB_PKG_MAGIC			0x7262706b /**< rbpk */
 #define BU_RB_TREE_MAGIC		0x72627472 /**< rbtr */
-#define BU_VLB_MAGIC                    0x5f564c42 /**< _VLB */
+#define BU_VLB_MAGIC			0x5f564c42 /**< _VLB */
 #define BU_VLS_MAGIC			0x89333bbb /**< ?3;? */
 
 /* libbn */
@@ -189,18 +189,18 @@ __BEGIN_DECLS
 /* fb */
 
 #define FB_MAGIC			0xfbfb00fb /**< ???? */
-#define FB_WGL_MAGIC    0x574f4642 /**< WOFB */
-#define FB_OGL_MAGIC    0x584f4642 /**< XOFB */
-#define FB_X24_MAGIC    0x58324642 /**< X2FB */
-#define FB_TK_MAGIC     0x544b4642 /**< TKFB */
-#define FB_QT_MAGIC     0x51544642 /**< QTFB */
-#define FB_DEBUG_MAGIC  0x44424642 /**< DBFB */
-#define FB_DISK_MAGIC   0x44494642 /**< STFB */
-#define FB_STK_MAGIC    0x53544642 /**< STFB */
-#define FB_MEMORY_MAGIC 0x4d454642 /**< MEFB */
-#define FB_REMOTE_MAGIC 0x524d4642 /**< MEFB */
-#define FB_NULL_MAGIC   0x4e554642 /**< NUFB */
-#define FB_OSGL_MAGIC   0x4f474642 /**< OGFB */
+#define FB_WGL_MAGIC			0x574f4642 /**< WOFB */
+#define FB_OGL_MAGIC			0x584f4642 /**< XOFB */
+#define FB_X24_MAGIC			0x58324642 /**< X2FB */
+#define FB_TK_MAGIC			0x544b4642 /**< TKFB */
+#define FB_QT_MAGIC			0x51544642 /**< QTFB */
+#define FB_DEBUG_MAGIC			0x44424642 /**< DBFB */
+#define FB_DISK_MAGIC			0x44494642 /**< STFB */
+#define FB_STK_MAGIC			0x53544642 /**< STFB */
+#define FB_MEMORY_MAGIC			0x4d454642 /**< MEFB */
+#define FB_REMOTE_MAGIC			0x524d4642 /**< MEFB */
+#define FB_NULL_MAGIC			0x4e554642 /**< NUFB */
+#define FB_OSGL_MAGIC			0x4f474642 /**< OGFB */
 
 /* misc */
 
@@ -224,7 +224,7 @@ __BEGIN_DECLS
 #define WDB_METABALLPT_MAGIC		0x6d627074 /**< mbpt */
 #define WDB_PIPESEG_MAGIC		0x9723ffef /**< ?\#?? */
 #define WMEMBER_MAGIC			0x43128912 /**< C??? */
-#define ICV_IMAGE_MAGIC		0x6269666d /**< bifm */
+#define ICV_IMAGE_MAGIC			0x6269666d /**< bifm */
 
 /** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */
 
