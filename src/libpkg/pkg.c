@@ -762,6 +762,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
 #endif
 
     do  {
+	errno = 0;
 #ifdef HAVE_WINSOCK_H
 	s2 = accept(fd, (struct sockaddr *)NULL, NULL);
 #else
@@ -897,6 +898,7 @@ _pkg_checkin(struct pkg_conn *pc, int nodelay)
     else
 	tv.tv_usec = 20000;	/* 20 ms */
 
+    errno = 0;
     FD_ZERO(&bits);
     FD_SET(pc->pkc_fd, &bits);
     i = select(pc->pkc_fd+1, &bits, (fd_set *)0, (fd_set *)0, &tv);
@@ -1010,6 +1012,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	if (len > 0)
 	    memcpy(tbuf+sizeof(hdr), buf, len);
 
+	errno = 0;
 	i = PKG_SEND(pc->pkc_fd, tbuf, len+sizeof(hdr));
 	if ((size_t)i != len+sizeof(hdr)) {
 	    if (i < 0) {
@@ -1026,6 +1029,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	return (int)len;
     }
     /* Send them separately */
+    errno = 0;
     if ((i = PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr))) != sizeof(hdr)) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1040,6 +1044,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
     }
     if (len <= 0)
 	return 0;
+    errno = 0;
     i = PKG_SEND(pc->pkc_fd, buf, len);
     if ((size_t)i != len) {
 	if (i < 0) {
@@ -1134,6 +1139,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	    memcpy(tbuf+sizeof(hdr), buf1, len1);
 	if (len2 > 0)
 	    memcpy(tbuf+sizeof(hdr)+len1, buf2, len2);
+	errno = 0;
 	i = PKG_SEND(pc->pkc_fd, tbuf, len1+len2+sizeof(hdr));
 	if ((size_t)i != len1+len2+sizeof(hdr)) {
 	    if (i < 0) {
@@ -1150,7 +1156,9 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	return (int)(len1+len2);
     }
     /* Send it in three pieces */
-    if ((i = (ssize_t)PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr))) != sizeof(hdr)) {
+    errno = 0;
+    i = (ssize_t)PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr));
+    if (i != sizeof(hdr)) {
 	if (i < 0) {
 	    if (errno == EBADF)
 		return -1;
@@ -1166,6 +1174,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	return -1;		/* amount of user data sent */
     }
 
+    errno = 0;
     i = PKG_SEND(pc->pkc_fd, buf1, len1);
     if ((size_t)i != len1) {
 	if (i < 0) {
@@ -1185,6 +1194,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
     if (len2 <= (size_t)0)
 	return i;
 
+    errno = 0;
     i = PKG_SEND(pc->pkc_fd, buf2, len2);
     if (i != (ssize_t)len2) {
 	if (i < 0) {
@@ -1257,6 +1267,7 @@ pkg_flush(struct pkg_conn *pc)
 	return 0;
     }
 
+    errno = 0;
     i = write(pc->pkc_fd, pc->pkc_stream, (size_t)pc->pkc_strpos);
     if (i != pc->pkc_strpos) {
 	if (i < 0) {
