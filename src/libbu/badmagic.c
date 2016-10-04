@@ -44,9 +44,11 @@ bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *fi
 		 str, (unsigned long)magic,
 		 bu_identify_magic(*(ptr)), (unsigned long)*(ptr),
 		 file, line);
+    } else {
+	snprintf(buf, MAGICBUFSIZ, "ERROR: bad %d pointer %p @ file %s:%d\n", str, (void *)ptr, file, line);
     }
-    if (UNLIKELY(buf[0] != '\0'))
-	bu_bomb(buf);
+
+    bu_bomb(buf);
 }
 
 /*
