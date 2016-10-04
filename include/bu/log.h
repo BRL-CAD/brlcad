@@ -177,7 +177,7 @@ BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, void *clientdata);
  * This routine should never return unless there is a BU_SETJUMP()
  * handler registered.
  */
-BU_EXPORT extern void bu_bomb(const char *str)_BU_ATTR_ANALYZE_NORETURN _BU_ATTR_NORETURN;
+BU_EXPORT extern void bu_bomb(const char *str) _BU_ATTR_ANALYZE_NORETURN _BU_ATTR_NORETURN;
 
 /**
  * Semi-graceful termination of the application that doesn't cause a
