@@ -30,6 +30,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 # We do want to install the mime header
 install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
 
+# Year 2038+ support lib
+add_subdirectory(y2038)
+
 set(LIBBU_SOURCES
   affinity.c
   argv.c
@@ -120,8 +123,9 @@ endif(CPP_DLL_DEFINES)
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
 
-add_subdirectory(tests)
-add_subdirectory(y2038)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+  add_subdirectory(tests)
+endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 set(bu_ignore_files
   bitv.h
