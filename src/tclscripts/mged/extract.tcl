@@ -19,11 +19,7 @@
 #
 ###
 #
-#			E X T R A C T . T C L
-#
 #	Tool for extracting objects out of the current MGED database.
-#
-#	Author - Robert G. Parker
 #
 
 check_externs "_mged_opendb _mged_keep db_glob"

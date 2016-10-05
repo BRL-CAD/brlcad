@@ -19,13 +19,7 @@
 #
 ###
 #
-#                        H O C . T C L
-#
 #	Procs for implementing "Help On Context".
-#
-#	Authors -
-#		Robert G. Parker
-#		Paul Tanenbaum
 #
 
 if {[namespace exists ::tk]} {

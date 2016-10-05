@@ -19,11 +19,7 @@
 #
 ###
 #
-#			C O M B . T C L
-#
 #	Widget for editing a combination.
-#
-#	Author - Robert G. Parker
 #
 # This is the widget hierarchy from the top level down to the shader frames or Boolean
 # expression frames

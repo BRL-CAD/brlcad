@@ -19,14 +19,9 @@
 #
 ###
 #
-#	Author -
-#		Robert G. Parker
-#
-#	Description -
-#		Tcl routines to specify a combination for editing
-#		from among all combinations in the database or from
-#		among those currently being displayed.
-#
+# Tcl routines to specify a combination for editing from among all
+# combinations in the database or from among those currently being
+# displayed.
 #
 
 if ![info exists mged_default(display)] {
