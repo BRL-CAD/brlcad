@@ -170,9 +170,11 @@ CMAKEFILES(README external)
 # so it can be used for experimentation that needs to be
 # part of the build but the dev doesn't want to accidentally
 # commit.
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
-  add_subdirectory(testing)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
+if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
+    add_subdirectory(testing)
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
+endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 
 
 # Local Variables:
