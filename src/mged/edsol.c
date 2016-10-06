@@ -5726,13 +5726,13 @@ sedit(void)
 		    nmg_face_g(fu, new_lu_pl);
 		}
 
-		(void)nmg_extrude_face(fu, extrude_vec, &mged_tol);
+		(void)nmg_extrude_face(fu, extrude_vec, &RTG.rtg_vlfree, &mged_tol);
 
-		nmg_fix_normals(fu->s_p, &mged_tol);
+		nmg_fix_normals(fu->s_p, &RTG.rtg_vlfree, &mged_tol);
 
 		m = nmg_find_model(&fu->l.magic);
 		nmg_rebound(m, &mged_tol);
-		(void)nmg_ck_geometry(m, &mged_tol);
+		(void)nmg_ck_geometry(m, &RTG.rtg_vlfree, &mged_tol);
 
 		es_eu = (struct edgeuse *)NULL;
 
@@ -7025,7 +7025,7 @@ sedit_mouse(const vect_t mousevec)
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
-						view_state->vs_gvp->gv_model2view, &tmp_tol)) == (struct edge *)NULL) {
+						view_state->vs_gvp->gv_model2view, &RTG.rtg_vlfree, &tmp_tol)) == (struct edge *)NULL) {
 		    Tcl_AppendResult(INTERP, "ECMD_NMG_EPICK: unable to find an edge\n",
 				     (char *)NULL);
 		    mged_print_result(TCL_ERROR);

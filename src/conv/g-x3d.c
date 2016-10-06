@@ -575,7 +575,7 @@ process_non_light(struct model *m) {
 			 */
 			if (!BU_SETJUMP) {
 			    /* try */
-			    if (nmg_triangulate_fu(fu, &tol)) {
+			    if (nmg_triangulate_fu(fu, &RTG.rtg_vlfree, &tol)) {
 				if (nmg_kfu(fu)) {
 				    (void) nmg_ks(s);
 				    shell_is_dead = 1;
@@ -740,7 +740,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     /* FIXME: need code to handle light */
 
     /* get list of vertices */
-    nmg_vertex_tabulate(&verts, &m->magic);
+    nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
 
     fprintf(fp, "\t\t<IndexedFaceSet coordIndex=\"\n");
     first = 1;
@@ -965,7 +965,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */

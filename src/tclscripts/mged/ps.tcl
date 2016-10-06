@@ -19,11 +19,7 @@
 #
 ###
 #
-#			P S . T C L
-#
 #	Tool for producing PostScript files of MGED's current view.
-#
-#	Author - Robert G. Parker
 #
 
 check_externs "_mged_opendb _mged_ps"

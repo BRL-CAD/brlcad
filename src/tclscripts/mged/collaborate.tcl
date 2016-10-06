@@ -21,9 +21,6 @@
 #
 #	TCL macros for maintaining collaborative relationships.
 #
-#	Author -
-#		Robert Parker
-#
 
 proc collaborate { cmd {id ""} } {
     global mged_collaborators

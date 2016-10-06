@@ -1421,7 +1421,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Mark the edges of this face as real, this is the only real edge */
-    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic);
+    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic, &RTG.rtg_vlfree);
 
     /* connect ellipses with triangles */
     for (i = nell-2; i >= 0; i--) {
@@ -1575,13 +1575,13 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, face, tol);
+    nmg_gluefaces(outfaceuses, face, &RTG.rtg_vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1);
+    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
 
     /* free mem */
     bu_free((char *)outfaceuses, "faceuse []");

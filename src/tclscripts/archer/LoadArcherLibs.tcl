@@ -19,10 +19,6 @@
 #
 ###
 #
-# Author(s):
-#    Bob Parker (SURVICE Engineering Company)
-#
-# Description:
 #    Code to load Archer's shared libraries.
 ###
 

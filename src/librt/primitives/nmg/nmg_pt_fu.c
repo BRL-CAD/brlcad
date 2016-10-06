@@ -90,9 +90,9 @@ struct fpi {
 
 static int nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu);
 static struct edge_info *nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list, const int in_or_out_only);
-static int compute_loop_class(struct fpi *fpi, const struct loopuse *lu, struct edge_info *edge_list);
-static int nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only);
-int nmg_class_pt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func)(struct edgeuse *, point_t, const char *), void (*vu_func)(struct vertexuse *, point_t, const char *), const char *priv, const int call_on_hits, const int in_or_out_only, const struct bn_tol *tol);
+static int compute_loop_class(struct fpi *fpi, const struct loopuse *lu, struct edge_info *edge_list, struct bu_list *vlfree);
+static int nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only, struct bu_list *vlfree);
+int nmg_class_pt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func)(struct edgeuse *, point_t, const char *), void (*vu_func)(struct vertexuse *, point_t, const char *), const char *priv, const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol);
 
 
 /**
@@ -818,7 +818,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
 
 
 static void
-pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
+pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei, struct bu_list *vlfree)
 {
     FILE *fp;
     char name[25];
@@ -855,7 +855,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 	      fpi->fu_p->f_p->max_pt[1]+1.0,
 	      fpi->fu_p->f_p->max_pt[2]+1.0);
 
-    nmg_pl_lu(fp, lu, b, 255, 255, 255);
+    nmg_pl_lu(fp, lu, b, 255, 255, 255, vlfree);
 
     tmp_tol.magic = BN_TOL_MAGIC;
     tmp_tol.dist = 0.0005;
@@ -895,7 +895,8 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 static int
 compute_loop_class(struct fpi *fpi,
 		   const struct loopuse *lu,
-		   struct edge_info *edge_list)
+		   struct edge_info *edge_list,
+		   struct bu_list *vlfree)
 {
     struct edge_info *ei;
     struct bu_list near1;
@@ -950,7 +951,7 @@ compute_loop_class(struct fpi *fpi,
 	    case 2: /* pt is on ei->ved_p->v2 */
 		lu_class = NMG_CLASS_AonBshared;
 		if (UNLIKELY(RTG.NMG_debug & DEBUG_PT_FU))
-		    pl_pt_lu(fpi, lu, ei);
+		    pl_pt_lu(fpi, lu, ei, vlfree);
 		done = 1;
 		break;
 	    case 3: /* pt pca is v1 */
@@ -962,7 +963,7 @@ compute_loop_class(struct fpi *fpi,
 			   nmg_class_name(lu_class));
 		}
 		if (UNLIKELY(RTG.NMG_debug & DEBUG_PT_FU))
-		    pl_pt_lu(fpi, lu, ei);
+		    pl_pt_lu(fpi, lu, ei, vlfree);
 		done = 1;
 		break;
 	    default:
@@ -1029,7 +1030,7 @@ compute_loop_class(struct fpi *fpi,
  *
  */
 static int
-nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only)
+nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only, struct bu_list *vlfree)
 {
     int lu_class = NMG_CLASS_Unknown;
 
@@ -1094,7 +1095,7 @@ nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only)
 		/* orientation here is OT_SAME */
 		lu_class = NMG_CLASS_AoutB;
 	    } else {
-		lu_class = compute_loop_class(fpi, lu, &edge_list);
+		lu_class = compute_loop_class(fpi, lu, &edge_list, vlfree);
 	    }
 	} else {
 	    /* pt touches edge or vertex */
@@ -1150,7 +1151,7 @@ out:
 
 
 static void
-plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
+plot_parity_error(const struct faceuse *fu, const fastf_t *pt, struct bu_list *vlfree)
 {
     long *b;
     FILE *fp;
@@ -1177,7 +1178,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
 	      fu->f_p->max_pt[1]+1.0,
 	      fu->f_p->max_pt[2]+1.0);
 
-    nmg_pl_fu(fp, fu, b, 200, 200, 200);
+    nmg_pl_fu(fp, fu, b, 200, 200, 200, vlfree);
 
 
     /* make a nice axis-cross at the point in question */
@@ -1228,7 +1229,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
 int
 nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct loopuse *ignore_lu,
 		       void (*eu_func) (struct edgeuse *, point_t, const char *), void (*vu_func) (struct vertexuse *, point_t, const char *), const char *priv,
-		       const int call_on_hits, const int in_or_out_only, const struct bn_tol *tol)
+		       const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
 
 /* func to call when pt on edgeuse */
 /* func to call when pt on vertexuse*/
@@ -1303,7 +1304,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	    continue;
 	}
 
-	lu_class = nmg_class_pt_lu(lu, &fpi, in_or_out_only);
+	lu_class = nmg_class_pt_lu(lu, &fpi, in_or_out_only, vlfree);
 	if (RTG.NMG_debug & DEBUG_PT_FU)
 	    bu_log("loop %s says pt is %s\n",
 		   nmg_orientation(lu->orientation),
@@ -1356,7 +1357,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	bu_log("fu=%p\n",  (void *)fu);
 	nmg_pr_fu_briefly(fu, "");
 
-	plot_parity_error(fu, pt);
+	plot_parity_error(fu, pt, vlfree);
 
 	bu_bomb("nmg_class_pt_fu_except() loop classification parity error\n");
     }
@@ -1383,7 +1384,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
  * It will not work properly on crack loops.
  */
 int
-nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge *e_p, const struct bn_tol *tol)
+nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge *e_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     register struct edgeuse *eu;
     struct edge_info edge_list;
@@ -1469,7 +1470,7 @@ nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge 
 	}
     }
     if (lu_class == NMG_CLASS_Unknown)
-	lu_class = compute_loop_class(&fpi, lu, &edge_list);
+	lu_class = compute_loop_class(&fpi, lu, &edge_list, vlfree);
     else if (RTG.NMG_debug & DEBUG_PT_FU)
 	bu_log("loop class already known (pt must touch edge)\n");
 

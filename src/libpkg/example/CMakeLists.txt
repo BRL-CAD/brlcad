@@ -10,7 +10,7 @@ include_directories(${PKG_EXAMPLE_INCLUDES})
 BRLCAD_ADDEXEC(pkg_test_server server.c "libbu;libpkg" NO_INSTALL)
 BRLCAD_ADDEXEC(pkg_test_client client.c "libbu;libpkg" NO_INSTALL)
 
-CMAKEFILES(ntp.h)
+CMAKEFILES(ncp.h)
 
 # Local Variables:
 # tab-width: 8

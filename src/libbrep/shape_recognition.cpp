@@ -81,6 +81,7 @@ island_faces_characterize(struct subbrep_island_data *sb)
     return loops_planar;
 }
 
+
 int
 bbox_isect(struct subbrep_island_data *s, struct subbrep_island_data *c)
 {
@@ -99,6 +100,7 @@ bbox_isect(struct subbrep_island_data *s, struct subbrep_island_data *c)
 	return 1;
     }
 }
+
 
 /*
  * This is the point at which we characterize the relationships between
@@ -194,7 +196,6 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 }
 
 
-
 int
 shoal_filter_loop(int control_loop, int candidate_loop, struct subbrep_island_data *data)
 {
@@ -226,6 +227,7 @@ shoal_filter_loop(int control_loop, int candidate_loop, struct subbrep_island_da
 
     return 1;
 }
+
 
 int
 shoal_build(int **s_loops, int loop_index, struct subbrep_island_data *data)
@@ -267,7 +269,6 @@ shoal_build(int **s_loops, int loop_index, struct subbrep_island_data *data)
     set_to_array(s_loops, &(s_loops_cnt), &shoal_loops);
     return s_loops_cnt;
 }
-
 
 
 /* In order to represent complex shapes, it is necessary to identify
@@ -366,6 +367,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     // non-self-intersecting loops for now...
     return 1;
 }
+
 
 struct bu_ptbl *
 brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
@@ -543,7 +545,7 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
 
 bail:
     // Free memory
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
 	subbrep_island_free(obj);
 	BU_PUT(obj, struct subbrep_island_data);
@@ -552,7 +554,6 @@ bail:
     BU_PUT(subbreps, struct bu_ptbl);
     return NULL;
 }
-
 
 
 // Local Variables:

@@ -19,11 +19,7 @@
 #
 ###
 #
-#			R T _ S C R I P T . T C L
-#
 #	Widget for producing RT script files of MGED's current view.
-#
-#	Author - Robert G. Parker
 #
 
 check_externs "_mged_opendb _mged_saveview"

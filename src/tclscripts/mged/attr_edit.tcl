@@ -19,11 +19,7 @@
 #
 ###
 #
-#                     A T T R _ E D I T . T C L
-#
 #       Widget for editing attributes
-#
-#       Author - John Anderson
 #
 
 package require Iwidgets

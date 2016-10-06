@@ -325,7 +325,7 @@ fi
 MATCHES=
 echo "Searching sources ..."
 for file in $SRCFILES /dev/null ; do
-    this="`eval $grepcmd $regex $file /dev/null | grep -v uce-dirent.h`"
+    this="`eval $grepcmd $regex $file /dev/null | grep -v uce-dirent.h | grep -v mime.c `"
     if test "x$this" != "x" ; then
 	MATCHES="$MATCHES
 $this"

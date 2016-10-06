@@ -19,10 +19,6 @@
 #
 ###
 #
-# Author:
-#    Bob Parker
-#
-# Description:
 #    The class for editing elliptical hyperboloids within Archer.
 #
 

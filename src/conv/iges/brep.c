@@ -89,16 +89,16 @@ brep(int entityno)
     Orient_loops(r);
 
     /* orient shells */
-    nmg_fix_normals(s_outer, &tol);
+    nmg_fix_normals(s_outer, &RTG.rtg_vlfree, &tol);
     for (i = 0; i < num_of_voids; i++) {
-	nmg_fix_normals(void_shells[i], &tol);
+	nmg_fix_normals(void_shells[i], &RTG.rtg_vlfree, &tol);
 	nmg_invert_shell(void_shells[i]);
     }
 
     if (do_bots) {
 	/* Merge all shells into one */
 	for (i = 0; i < num_of_voids; i++)
-	    nmg_js(s_outer, void_shells[i], &tol);
+	    nmg_js(s_outer, void_shells[i], &RTG.rtg_vlfree, &tol);
 
 	/* write out BOT */
 	if (mk_bot_from_nmg(fdout, dir[entityno]->name, s_outer))

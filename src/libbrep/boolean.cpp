@@ -99,6 +99,7 @@ struct SSICurve {
     }
 };
 
+
 HIDDEN void
 append_to_polycurve(ON_Curve *curve, ON_PolyCurve &polycurve);
 // We link the SSICurves that share an endpoint, and form this new structure,
@@ -319,6 +320,7 @@ struct TrimmedFace {
     }
 };
 
+
 HIDDEN int
 loop_t_compare(const IntersectPoint *p1, const IntersectPoint *p2)
 {
@@ -396,7 +398,7 @@ is_loop_valid(const ON_SimpleArray<ON_Curve *> &loop, double tolerance, ON_PolyC
 	}
     }
     if (ret && (polycurve->PointAtStart().DistanceTo(polycurve->PointAtEnd()) >= ON_ZERO_TOLERANCE ||
-	!polycurve->IsClosed()))
+		!polycurve->IsClosed()))
     {
 	bu_log("The input loop is not closed.\n");
 	ret = false;
@@ -406,7 +408,7 @@ is_loop_valid(const ON_SimpleArray<ON_Curve *> &loop, double tolerance, ON_PolyC
 	// Check whether the loop is degenerated.
 	ON_BoundingBox bbox = polycurve->BoundingBox();
 	ret = !ON_NearZero(bbox.Diagonal().Length(), tolerance)
-	      && !polycurve->IsLinear(tolerance);
+	    && !polycurve->IsLinear(tolerance);
     }
 
     if (delete_curve) {
@@ -416,10 +418,12 @@ is_loop_valid(const ON_SimpleArray<ON_Curve *> &loop, double tolerance, ON_PolyC
     return ret;
 }
 
+
 enum {
     OUTSIDE_OR_ON_LOOP,
     INSIDE_OR_ON_LOOP
 };
+
 
 //   Returns whether the point is inside/on or outside/on the loop
 //   boundary.
@@ -502,17 +506,20 @@ is_point_on_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
     return false;
 }
 
+
 HIDDEN bool
 is_point_inside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
     return (point_loop_location(pt, loop) == INSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
 }
 
+
 HIDDEN bool
 is_point_outside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
     return (point_loop_location(pt, loop) == OUTSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
 }
+
 
 HIDDEN ON_Interval
 union_intervals(const ON_SimpleArray<ON_Interval> &intervals)
@@ -527,6 +534,7 @@ union_intervals(const ON_SimpleArray<ON_Interval> &intervals)
     return union_interval;
 }
 
+
 HIDDEN ON_Interval
 intersect_intervals(const ON_Interval &interval1, const ON_Interval &interval2)
 {
@@ -537,6 +545,7 @@ intersect_intervals(const ON_Interval &interval1, const ON_Interval &interval2)
     return intersection_interval;
 }
 
+
 HIDDEN void
 replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
 {
@@ -546,9 +555,10 @@ replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
 	curve = subcurve;
     } catch (InvalidInterval &) {
 	throw GeometryGenerationError("replace_curve_with_subcurve(): NULL "
-		"subcurve\n");
+				      "subcurve\n");
     }
 }
+
 
 HIDDEN ON_SimpleArray<ON_Interval>
 get_curve_intervals_inside_or_on_face(
@@ -640,17 +650,20 @@ get_curve_intervals_inside_or_on_face(
     return final_intervals;
 }
 
+
 HIDDEN int
 compare_interval(const ON_Interval *a, const ON_Interval *b)
 {
     return a->Compare(*b);
 }
 
+
 struct IntervalPoints {
     ON_3dPoint min;
     ON_3dPoint mid;
     ON_3dPoint max;
 };
+
 
 class IntervalParams {
 public:
@@ -673,6 +686,7 @@ public:
 	}
     }
 };
+
 
 // given parameters in a curve interval, create new interval
 // parameters that reflect the the non-degenerate (different
@@ -717,6 +731,7 @@ curve_interval_from_params(
 
     return interval_t;
 }
+
 
 enum seam_location {SEAM_NONE, SEAM_ALONG_V, SEAM_ALONG_U, SEAM_ALONG_UV};
 
@@ -763,7 +778,7 @@ uv_interval_from_points(
 	// get interval midpoint in uv space
 	ON_ClassArray<ON_PX_EVENT> events;
 	ON_3dPoint midpt = surf->PointAt(interval_pts.mid.x,
-		interval_pts.mid.y);
+					 interval_pts.mid.y);
 	ON_Intersect(midpt, *surf, events, INTERSECTION_TOL);
 
 	if (events.Count() == 1) {
@@ -809,6 +824,7 @@ uv_interval_from_points(
     return interval_pts;
 }
 
+
 HIDDEN IntervalPoints
 interval_2d_to_uv(
     const ON_Interval &interval_2d,
@@ -823,6 +839,7 @@ interval_2d_to_uv(
 
     return uv_interval_from_points(pts, surf);
 }
+
 
 HIDDEN std::pair<IntervalPoints, IntervalPoints>
 interval_2d_to_2uv(
@@ -842,6 +859,7 @@ interval_2d_to_2uv(
     return out;
 }
 
+
 HIDDEN IntervalPoints
 points_uv_to_3d(
     const IntervalPoints &interval_uv,
@@ -855,6 +873,7 @@ points_uv_to_3d(
 
     return pts_3d;
 }
+
 
 HIDDEN IntervalParams
 points_3d_to_params_3d(
@@ -877,6 +896,7 @@ points_3d_to_params_3d(
 
     return params_3d;
 }
+
 
 HIDDEN std::vector<ON_Interval>
 interval_2d_to_3d(
@@ -937,7 +957,7 @@ interval_2d_to_3d(
 			if (surf_seam == SEAM_ALONG_U || surf_seam == SEAM_ALONG_UV) {
 			    ON_Interval vdom = surf->Domain(1);
 			    if (ON_NearZero(surf_pt.y - vdom.Min(),
-					ON_ZERO_TOLERANCE)) {
+					    ON_ZERO_TOLERANCE)) {
 				surf_pt.y = vdom.Max();
 			    } else {
 				surf_pt.y = vdom.Min();
@@ -946,7 +966,7 @@ interval_2d_to_3d(
 			if (surf_seam == SEAM_ALONG_V || surf_seam == SEAM_ALONG_UV) {
 			    ON_Interval udom = surf->Domain(0);
 			    if (ON_NearZero(surf_pt.x - udom.Min(),
-					ON_ZERO_TOLERANCE)) {
+					    ON_ZERO_TOLERANCE)) {
 				surf_pt.x = udom.Max();
 			    } else {
 				surf_pt.x = udom.Min();
@@ -971,7 +991,7 @@ interval_2d_to_3d(
 			    // split 2d interval at seam point
 			    std::pair<IntervalPoints, IntervalPoints> halves =
 				interval_2d_to_2uv(interval, curve2d, surf,
-					split_t[i]);
+						   split_t[i]);
 
 			    // convert new intervals to 3d curve intervals
 			    IntervalPoints left_3d, right_3d;
@@ -1069,6 +1089,7 @@ interval_3d_to_2d(
     return interval_2d;
 }
 
+
 HIDDEN void
 get_subcurves_inside_faces(
     ON_SimpleArray<ON_Curve *> &subcurves_on1,
@@ -1134,26 +1155,26 @@ get_subcurves_inside_faces(
     ON_SimpleArray<ON_Interval> intervals1, intervals2;
 
     intervals1 = get_curve_intervals_inside_or_on_face(event->m_curveA,
-	    face1_loops, INTERSECTION_TOL);
+						       face1_loops, INTERSECTION_TOL);
 
     intervals2 = get_curve_intervals_inside_or_on_face(event->m_curveB,
-	    face2_loops, INTERSECTION_TOL);
+						       face2_loops, INTERSECTION_TOL);
 
     // get subcurves for each face
     for (int i = 0; i < intervals1.Count(); ++i) {
 	// convert interval on face 1 to equivalent interval on face 2
 	std::vector<ON_Interval> intervals_3d;
 	intervals_3d = interval_2d_to_3d(intervals1[i], event->m_curveA,
-		event->m_curve3d, &brep1->m_F[face_i1]);
+					 event->m_curve3d, &brep1->m_F[face_i1]);
 
 	for (size_t j = 0; j < intervals_3d.size(); ++j) {
 	    ON_Interval interval_on2 = interval_3d_to_2d(intervals_3d[j],
-		    event->m_curveB, event->m_curve3d, &brep2->m_F[face_i2]);
+							 event->m_curveB, event->m_curve3d, &brep2->m_F[face_i2]);
 	    if (interval_on2.IsValid()) {
 		// create subcurve from interval
 		try {
 		    ON_Curve *subcurve_on2 = sub_curve(event->m_curveB,
-			    interval_on2.Min(), interval_on2.Max());
+						       interval_on2.Min(), interval_on2.Max());
 
 		    subcurves_on2.Append(subcurve_on2);
 		} catch (InvalidInterval &e) {
@@ -1167,16 +1188,16 @@ get_subcurves_inside_faces(
 	// convert interval on face 1 to equivalent interval on face 2
 	std::vector<ON_Interval> intervals_3d;
 	intervals_3d = interval_2d_to_3d(intervals2[i], event->m_curveB,
-		event->m_curve3d, &brep2->m_F[face_i2]);
+					 event->m_curve3d, &brep2->m_F[face_i2]);
 
 	for (size_t j = 0; j < intervals_3d.size(); ++j) {
 	    ON_Interval interval_on1 = interval_3d_to_2d(intervals_3d[j],
-		    event->m_curveA, event->m_curve3d, &brep1->m_F[face_i1]);
+							 event->m_curveA, event->m_curve3d, &brep1->m_F[face_i1]);
 	    if (interval_on1.IsValid()) {
 		// create subcurve from interval
 		try {
 		    ON_Curve *subcurve_on1 = sub_curve(event->m_curveA,
-			    interval_on1.Min(), interval_on1.Max());
+						       interval_on1.Min(), interval_on1.Max());
 
 		    subcurves_on1.Append(subcurve_on1);
 		} catch (InvalidInterval &e) {
@@ -1187,6 +1208,7 @@ get_subcurves_inside_faces(
 
     }
 }
+
 
 HIDDEN double
 bbox_diagonal_length(ON_Curve *curve)
@@ -1203,6 +1225,7 @@ bbox_diagonal_length(ON_Curve *curve)
     return len;
 }
 
+
 HIDDEN void
 split_curve(ON_Curve *&left, ON_Curve *&right, const ON_Curve *in, double t)
 {
@@ -1218,12 +1241,13 @@ split_curve(ON_Curve *&left, ON_Curve *&right, const ON_Curve *in, double t)
     }
 }
 
+
 HIDDEN double
 configure_for_linking(
-	LinkedCurve *&first,
-	LinkedCurve *&second,
-	LinkedCurve &in1,
-	LinkedCurve &in2)
+    LinkedCurve *&first,
+    LinkedCurve *&second,
+    LinkedCurve &in1,
+    LinkedCurve &in2)
 {
     double dist_s1s2 = in1.PointAtStart().DistanceTo(in2.PointAtStart());
     double dist_s1e2 = in1.PointAtStart().DistanceTo(in2.PointAtEnd());
@@ -1255,11 +1279,13 @@ configure_for_linking(
     return min_dist;
 }
 
+
 struct LinkedCurveX {
     int ssi_idx_a;
     int ssi_idx_b;
     ON_SimpleArray<ON_X_EVENT> events;
 };
+
 
 HIDDEN ON_ClassArray<LinkedCurve>
 get_joinable_ssi_curves(const ON_SimpleArray<SSICurve> &in)
@@ -1310,7 +1336,7 @@ get_joinable_ssi_curves(const ON_SimpleArray<SSICurve> &in)
 
 		    for (int l = 0; l < 2; ++l) {
 			if (ON_NearZero(dom[k].m_t[l] - range[k].m_t[l],
-			    ON_ZERO_TOLERANCE)) {
+					ON_ZERO_TOLERANCE)) {
 			    range[k].m_t[l] = dom[k].m_t[l];
 			}
 		    }
@@ -1401,6 +1427,7 @@ get_joinable_ssi_curves(const ON_SimpleArray<SSICurve> &in)
     }
     return out;
 }
+
 
 HIDDEN ON_ClassArray<LinkedCurve>
 link_curves(const ON_SimpleArray<SSICurve> &in)
@@ -1535,6 +1562,7 @@ public:
     }
 };
 
+
 class CurvePointAbsoluteCompare {
 public:
     bool
@@ -1546,6 +1574,7 @@ public:
 	return a.pt < b.pt;
     }
 };
+
 
 CurvePoint::Location
 CurvePoint::PointLoopLocation(
@@ -1560,6 +1589,7 @@ CurvePoint::PointLoopLocation(
     }
     return CurvePoint::INSIDE;
 }
+
 
 class CurveSegment {
 public:
@@ -1605,20 +1635,20 @@ public:
 	if (ON_NearZero(from.curve_t - from_dom.m_t[1], INTERSECTION_TOL)) {
 	    // starting at end of 'from' same as starting at start of 'to'
 	    ON_Curve *seg_curve = sub_curve(to_curve, to_dom.m_t[0],
-		    to.curve_t);
+					    to.curve_t);
 	    return seg_curve;
 	}
 	if (ON_NearZero(to.curve_t - to_dom.m_t[0], INTERSECTION_TOL)) {
 	    // ending at start of 'to' same as ending at end of 'from'
 	    ON_Curve *seg_curve = sub_curve(from_curve, from.curve_t,
-		    from_dom.m_t[1]);
+					    from_dom.m_t[1]);
 	    return seg_curve;
 	}
 	ON_PolyCurve *pcurve = new ON_PolyCurve();
 	append_to_polycurve(sub_curve(from_curve, from.curve_t,
-		    from_dom.m_t[1]), *pcurve);
+				      from_dom.m_t[1]), *pcurve);
 	append_to_polycurve(sub_curve(to_curve, to_dom.m_t[0], to.curve_t),
-		*pcurve);
+			    *pcurve);
 	return pcurve;
     }
 
@@ -1635,7 +1665,7 @@ public:
 	double length = 0.0;
 	if (seg_curve->IsLinear(INTERSECTION_TOL)) {
 	    length = seg_curve->PointAtStart().DistanceTo(
-		    seg_curve->PointAtEnd());
+		seg_curve->PointAtEnd());
 	} else {
 	    double min[3] = {0.0, 0.0, 0.0};
 	    double max[3] = {0.0, 0.0, 0.0};
@@ -1653,6 +1683,7 @@ public:
 	return from < other.from;
     }
 };
+
 
 class LoopBooleanResult {
 public:
@@ -1675,6 +1706,7 @@ public:
     }
 };
 
+
 #define LOOP_DIRECTION_CCW  1
 #define LOOP_DIRECTION_CW  -1
 #define LOOP_DIRECTION_NONE 0
@@ -1694,6 +1726,7 @@ close_small_gap(ON_SimpleArray<ON_Curve *> &loop, int curr, int next)
     return false;
 }
 
+
 HIDDEN void
 close_small_gaps(ON_SimpleArray<ON_Curve *> &loop)
 {
@@ -1708,6 +1741,7 @@ close_small_gaps(ON_SimpleArray<ON_Curve *> &loop)
     close_small_gap(loop, loop.Count() - 1, 0);
 }
 
+
 ON_Curve *
 get_loop_curve(const ON_SimpleArray<ON_Curve *> &loop)
 {
@@ -1717,6 +1751,7 @@ get_loop_curve(const ON_SimpleArray<ON_Curve *> &loop)
     }
     return pcurve;
 }
+
 
 std::list<ON_SimpleArray<ON_Curve *> >::iterator
 find_innerloop(std::list<ON_SimpleArray<ON_Curve *> > &loops)
@@ -1733,6 +1768,7 @@ find_innerloop(std::list<ON_SimpleArray<ON_Curve *> > &loops)
     }
     return loops.end();
 }
+
 
 bool
 set_loop_direction(ON_SimpleArray<ON_Curve *> &loop, int dir)
@@ -1758,6 +1794,7 @@ set_loop_direction(ON_SimpleArray<ON_Curve *> &loop, int dir)
     return true;
 }
 
+
 void
 add_point_to_set(std::multiset<CurvePoint> &set, CurvePoint pt)
 {
@@ -1765,6 +1802,7 @@ add_point_to_set(std::multiset<CurvePoint> &set, CurvePoint pt)
 	set.insert(pt);
     }
 }
+
 
 std::multiset<CurveSegment>
 make_segments(
@@ -1788,7 +1826,7 @@ make_segments(
 	}
 
 	if (from.location == CurvePoint::BOUNDARY &&
-	      to.location == CurvePoint::BOUNDARY)
+	    to.location == CurvePoint::BOUNDARY)
 	{
 	    ON_Curve *seg_curve = loop1[from.loop_index];
 
@@ -1797,7 +1835,7 @@ make_segments(
 		end_t = seg_curve->Domain().m_t[1];
 	    }
 	    ON_2dPoint seg_midpt = seg_curve->PointAt(
-		    ON_Interval(from.curve_t, end_t).Mid());
+		ON_Interval(from.curve_t, end_t).Mid());
 
 	    CurvePoint::Location midpt_location =
 		CurvePoint::PointLoopLocation(seg_midpt, loop2);
@@ -1808,11 +1846,11 @@ make_segments(
 		new_seg.location = CurveSegment::OUTSIDE;
 	    }
 	} else if (from.location == CurvePoint::INSIDE ||
-		    to.location == CurvePoint::INSIDE)
+		   to.location == CurvePoint::INSIDE)
 	{
 	    new_seg.location = CurveSegment::INSIDE;
 	} else if (from.location == CurvePoint::OUTSIDE ||
-		     to.location == CurvePoint::OUTSIDE)
+		   to.location == CurvePoint::OUTSIDE)
 	{
 	    new_seg.location = CurveSegment::OUTSIDE;
 	}
@@ -1820,6 +1858,7 @@ make_segments(
     }
     return out;
 }
+
 
 void
 set_append_segment(
@@ -1844,12 +1883,13 @@ set_append_segment(
     out.insert(seg);
 }
 
+
 void
 set_append_segments_at_location(
-	std::multiset<CurveSegment> &out,
-	std::multiset<CurveSegment> &in,
-	CurveSegment::Location location,
-	bool reversed_segs_cancel)
+    std::multiset<CurveSegment> &out,
+    std::multiset<CurveSegment> &in,
+    CurveSegment::Location location,
+    bool reversed_segs_cancel)
 {
     std::multiset<CurveSegment>::iterator i;
     if (reversed_segs_cancel) {
@@ -1866,6 +1906,7 @@ set_append_segments_at_location(
 	}
     }
 }
+
 
 std::multiset<CurveSegment>
 find_similar_segments(
@@ -1885,28 +1926,29 @@ find_similar_segments(
     return out;
 }
 
+
 HIDDEN std::multiset<CurveSegment>
 get_op_segments(
-	std::multiset<CurveSegment> &curve1_segments,
-	std::multiset<CurveSegment> &curve2_segments,
-	op_type op)
+    std::multiset<CurveSegment> &curve1_segments,
+    std::multiset<CurveSegment> &curve2_segments,
+    op_type op)
 {
     std::multiset<CurveSegment> out;
 
     std::multiset<CurveSegment> c1_boundary_segs;
     set_append_segments_at_location(c1_boundary_segs, curve1_segments,
-	    CurveSegment::BOUNDARY, false);
+				    CurveSegment::BOUNDARY, false);
 
     std::multiset<CurveSegment> c2_boundary_segs;
     set_append_segments_at_location(c2_boundary_segs, curve2_segments,
-	    CurveSegment::BOUNDARY, false);
+				    CurveSegment::BOUNDARY, false);
 
     if (op == BOOLEAN_INTERSECT) {
 	set_append_segments_at_location(out, curve1_segments,
-		CurveSegment::INSIDE, true);
+					CurveSegment::INSIDE, true);
 
 	set_append_segments_at_location(out, curve2_segments,
-		CurveSegment::INSIDE, true);
+					CurveSegment::INSIDE, true);
 
 	std::multiset<CurveSegment>::iterator i;
 	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
@@ -1925,10 +1967,10 @@ get_op_segments(
 	}
     } else if (op == BOOLEAN_DIFF) {
 	set_append_segments_at_location(out, curve1_segments,
-		CurveSegment::OUTSIDE, true);
+					CurveSegment::OUTSIDE, true);
 
 	set_append_segments_at_location(out, curve2_segments,
-		CurveSegment::INSIDE, true);
+					CurveSegment::INSIDE, true);
 
 	std::multiset<CurveSegment>::iterator i;
 	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
@@ -1949,10 +1991,10 @@ get_op_segments(
 	}
     } else if (op == BOOLEAN_UNION) {
 	set_append_segments_at_location(out, curve1_segments,
-		CurveSegment::OUTSIDE, true);
+					CurveSegment::OUTSIDE, true);
 
 	set_append_segments_at_location(out, curve2_segments,
-		CurveSegment::OUTSIDE, true);
+					CurveSegment::OUTSIDE, true);
 
 	std::multiset<CurveSegment>::iterator i;
 	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
@@ -1981,6 +2023,7 @@ get_op_segments(
 
     return out;
 }
+
 
 std::list<ON_SimpleArray<ON_Curve *> >
 construct_loops_from_segments(
@@ -2054,6 +2097,7 @@ construct_loops_from_segments(
     return out;
 }
 
+
 std::multiset<CurvePoint>
 get_loop_points(
     int source_loop,
@@ -2064,16 +2108,17 @@ get_loop_points(
 
     ON_Curve *loop1_seg = loop1[0];
     out.insert(CurvePoint(source_loop, 0, loop1_seg->Domain().m_t[0], loop1_seg,
-		loop2));
+			  loop2));
 
     for (int i = 0; i < loop1.Count(); ++i) {
 	loop1_seg = loop1[i];
 	out.insert(CurvePoint(source_loop, i, loop1_seg->Domain().m_t[1],
-		    loop1_seg, loop2));
+			      loop1_seg, loop2));
     }
 
     return out;
 }
+
 
 // separate outerloops and innerloops
 HIDDEN LoopBooleanResult
@@ -2167,21 +2212,21 @@ loop_boolean(
 
 	    for (int k = 0; k < x_events.Count(); ++k) {
 		add_point_to_set(loop1_points, CurvePoint(1, i,
-			    x_events[k].m_a[0], x_events[k].m_A[0],
-			    CurvePoint::BOUNDARY));
+							  x_events[k].m_a[0], x_events[k].m_A[0],
+							  CurvePoint::BOUNDARY));
 
 		add_point_to_set(loop2_points, CurvePoint(2, j,
-			    x_events[k].m_b[0], x_events[k].m_B[0],
-			    CurvePoint::BOUNDARY));
+							  x_events[k].m_b[0], x_events[k].m_B[0],
+							  CurvePoint::BOUNDARY));
 
 		if (x_events[k].m_type == ON_X_EVENT::ccx_overlap) {
 		    add_point_to_set(loop1_points, CurvePoint(1, i,
-				x_events[k].m_a[1], x_events[k].m_A[1],
-				CurvePoint::BOUNDARY));
+							      x_events[k].m_a[1], x_events[k].m_A[1],
+							      CurvePoint::BOUNDARY));
 
 		    add_point_to_set(loop2_points, CurvePoint(2, j,
-				x_events[k].m_b[1], x_events[k].m_B[1],
-				CurvePoint::BOUNDARY));
+							      x_events[k].m_b[1], x_events[k].m_B[1],
+							      CurvePoint::BOUNDARY));
 		}
 	    }
 	}
@@ -2216,6 +2261,7 @@ loop_boolean(
     return out;
 }
 
+
 std::list<ON_SimpleArray<ON_Curve *> >
 innerloops_inside_outerloop(
     const ON_SimpleArray<ON_Curve *> &outerloop_curve,
@@ -2227,7 +2273,7 @@ innerloops_inside_outerloop(
 	std::list<ON_SimpleArray<ON_Curve *> > new_innerloops;
 	LoopBooleanResult new_loops;
 	new_loops = loop_boolean(outerloop_curve, innerloop_curves[i],
-		BOOLEAN_INTERSECT);
+				 BOOLEAN_INTERSECT);
 
 	// grab outerloops
 	for (size_t j = 0; j < new_loops.outerloops.size(); ++j) {
@@ -2239,11 +2285,12 @@ innerloops_inside_outerloop(
     return out;
 }
 
+
 TrimmedFace *
 make_face_from_loops(
-	const TrimmedFace *orig_face,
-	const ON_SimpleArray<ON_Curve *> &outerloop,
-	const std::vector<ON_SimpleArray<ON_Curve *> > &innerloops)
+    const TrimmedFace *orig_face,
+    const ON_SimpleArray<ON_Curve *> &outerloop,
+    const std::vector<ON_SimpleArray<ON_Curve *> > &innerloops)
 {
     TrimmedFace *face = new TrimmedFace();
 
@@ -2262,6 +2309,7 @@ make_face_from_loops(
     }
     return face;
 }
+
 
 HIDDEN LoopBooleanResult
 combine_loops(
@@ -2288,7 +2336,7 @@ combine_loops(
 
 	for (size_t i = 0; i < orig_face->m_innerloop.size(); ++i) {
 	    LoopBooleanResult merged = loop_boolean(candidate_innerloop,
-		    orig_face->m_innerloop[i], BOOLEAN_UNION);
+						    orig_face->m_innerloop[i], BOOLEAN_UNION);
 
 	    if (merged.outerloops.size() == 1) {
 		candidate_innerloop = merged.outerloops[0];
@@ -2331,7 +2379,7 @@ combine_loops(
 	    part = outerloop_parts.begin();
 	    for (; part != outerloop_parts.end(); part = next_part) {
 		LoopBooleanResult diffed = loop_boolean(*part,
-			merged_innerloops[j], BOOLEAN_DIFF);
+							merged_innerloops[j], BOOLEAN_DIFF);
 
 		next_part = part;
 		++next_part;
@@ -2381,19 +2429,20 @@ combine_loops(
 
 HIDDEN void
 append_faces_from_loops(
-	ON_SimpleArray<TrimmedFace *> &out,
-	const TrimmedFace *orig_face,
-	const LoopBooleanResult &new_loops)
+    ON_SimpleArray<TrimmedFace *> &out,
+    const TrimmedFace *orig_face,
+    const LoopBooleanResult &new_loops)
 {
     LoopBooleanResult combined_loops = combine_loops(orig_face, new_loops);
 
     // make a face from each outerloop, using appropriate innerloops
     for (size_t i = 0; i < combined_loops.outerloops.size(); ++i) {
 	out.Append(make_face_from_loops(orig_face,
-		    combined_loops.outerloops[i],
-		    combined_loops.innerloops));
+					combined_loops.outerloops[i],
+					combined_loops.innerloops));
     }
 }
+
 
 /* Turn an open curve into a closed curve by using segments from the
  * face outerloop to connect its endpoints.
@@ -2430,7 +2479,7 @@ split_face_into_loops(
     for (int i = 0; i < orig_face->m_outerloop.Count(); i++) {
 	ON_SimpleArray<ON_X_EVENT> x_events;
 	ON_Intersect(orig_face->m_outerloop[i], linked_curve.Curve(),
-		x_events, INTERSECTION_TOL);
+		     x_events, INTERSECTION_TOL);
 
 	for (int j = 0; j < x_events.Count(); j++) {
 	    IntersectPoint tmp_pt;
@@ -2721,6 +2770,7 @@ split_face_into_loops(
     return out;
 }
 
+
 void
 free_loops(std::vector<ON_SimpleArray<ON_Curve *> > &loops)
 {
@@ -2731,6 +2781,7 @@ free_loops(std::vector<ON_SimpleArray<ON_Curve *> > &loops)
 	}
     }
 }
+
 
 bool
 loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
@@ -2748,6 +2799,7 @@ loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
 
     return pt1.DistanceTo(pt2) < INTERSECTION_TOL;
 }
+
 
 // It might be worth investigating the following approach to building a set of faces from the splitting
 // in order to achieve robustness in the final result:
@@ -2833,7 +2885,7 @@ split_trimmed_face(
 		// get the portion of the face outerloop inside the
 		// ssx loop
 		intersect_loops = loop_boolean(out[k]->m_outerloop,
-			ssx_loops[j], BOOLEAN_INTERSECT);
+					       ssx_loops[j], BOOLEAN_INTERSECT);
 
 		if (ssx_curves[i].IsClosed()) {
 		    if (intersect_loops.outerloops.empty()) {
@@ -2845,7 +2897,7 @@ split_trimmed_face(
 		    // for a naturally closed ssx curve, we also need
 		    // the portion outside the loop
 		    diff_loops = loop_boolean(out[k]->m_outerloop, ssx_loops[j],
-			    BOOLEAN_DIFF);
+					      BOOLEAN_DIFF);
 
 		    append_faces_from_loops(next_out, out[k], diff_loops);
 		    diff_loops.ClearInnerloops();
@@ -2920,22 +2972,22 @@ is_same_surface(const ON_Surface *surf1, const ON_Surface *surf2)
 	return false;
     }
     /*
-        // Deal with two planes, if that's what we have - in that case
-        // the determination can be more general than the CV comparison
-        ON_Plane surf1_plane, surf2_plane;
-        if (surf1->IsPlanar(&surf1_plane) && surf2->IsPlanar(&surf2_plane)) {
-    	ON_3dVector surf1_normal = surf1_plane.Normal();
-    	ON_3dVector surf2_normal = surf2_plane.Normal();
-    	if (surf1_normal.IsParallelTo(surf2_normal) == 1) {
-    	    if (surf1_plane.DistanceTo(surf2_plane.Origin()) < ON_ZERO_TOLERANCE) {
-    		return true;
-    	    } else {
-    		return false;
-    	    }
-    	} else {
-    	    return false;
-    	}
-        }
+    // Deal with two planes, if that's what we have - in that case
+    // the determination can be more general than the CV comparison
+    ON_Plane surf1_plane, surf2_plane;
+    if (surf1->IsPlanar(&surf1_plane) && surf2->IsPlanar(&surf2_plane)) {
+    ON_3dVector surf1_normal = surf1_plane.Normal();
+    ON_3dVector surf2_normal = surf2_plane.Normal();
+    if (surf1_normal.IsParallelTo(surf2_normal) == 1) {
+    if (surf1_plane.DistanceTo(surf2_plane.Origin()) < ON_ZERO_TOLERANCE) {
+    return true;
+    } else {
+    return false;
+    }
+    } else {
+    return false;
+    }
+    }
     */
 
     ON_NurbsSurface nurbs_surf1, nurbs_surf2;
@@ -3164,6 +3216,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve *> 
     }
 }
 
+
 HIDDEN bool
 is_point_on_brep_surface(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
 {
@@ -3298,6 +3351,7 @@ is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
     return pt_no_dup.Count() % 2 != 0;
 }
 
+
 HIDDEN bool
 is_point_inside_trimmed_face(const ON_2dPoint &pt, const TrimmedFace *tface)
 {
@@ -3313,6 +3367,7 @@ is_point_inside_trimmed_face(const ON_2dPoint &pt, const TrimmedFace *tface)
     }
     return inside;
 }
+
 
 // TODO: For faces that have most of their area trimmed away, this is
 // a very inefficient algorithm. If the grid approach doesn't work
@@ -3352,11 +3407,13 @@ get_point_inside_trimmed_face(const TrimmedFace *tface)
     return test_pt2d;
 }
 
+
 enum {
     OUTSIDE_BREP,
     INSIDE_BREP,
     ON_BREP_SURFACE
 };
+
 
 // Returns the location of the face with respect to the brep.
 //
@@ -3407,13 +3464,14 @@ face_brep_location(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArray
     return is_point_inside_brep(test_pt3d, brep, surf_tree) ? INSIDE_BREP : OUTSIDE_BREP;
 }
 
+
 HIDDEN ON_ClassArray<ON_SimpleArray<SSICurve> >
 get_face_intersection_curves(
-	ON_SimpleArray<Subsurface *> &surf_tree1,
-	ON_SimpleArray<Subsurface *> &surf_tree2,
-	const ON_Brep *brep1,
-	const ON_Brep *brep2,
-	op_type operation)
+    ON_SimpleArray<Subsurface *> &surf_tree1,
+    ON_SimpleArray<Subsurface *> &surf_tree2,
+    const ON_Brep *brep1,
+    const ON_Brep *brep2,
+    op_type operation)
 {
     std::set<int> unused1, unused2;
     std::set<int> finalform1, finalform2;
@@ -3432,23 +3490,23 @@ get_face_intersection_curves(
 	int curr_index = i < face_count1 ? i : i - face_count1;
 	if (face.BoundingBox().MinimumDistanceTo(brep->BoundingBox()) > ON_ZERO_TOLERANCE) {
 	    switch (operation) {
-	    case BOOLEAN_UNION:
-		intact->insert(curr_index);
-		break;
-	    case BOOLEAN_DIFF:
-		if (i < face_count1) {
+		case BOOLEAN_UNION:
 		    intact->insert(curr_index);
-		}
-		if (i >= face_count1) {
+		    break;
+		case BOOLEAN_DIFF:
+		    if (i < face_count1) {
+			intact->insert(curr_index);
+		    }
+		    if (i >= face_count1) {
+			unused->insert(curr_index);
+		    }
+		    break;
+		case BOOLEAN_INTERSECT:
 		    unused->insert(curr_index);
-		}
-		break;
-	    case BOOLEAN_INTERSECT:
-		unused->insert(curr_index);
-		break;
-	    default:
-		throw InvalidBooleanOperation("Error - unknown "
-					      "boolean operation\n");
+		    break;
+		default:
+		    throw InvalidBooleanOperation("Error - unknown "
+						  "boolean operation\n");
 	    }
 	}
     }
@@ -3499,7 +3557,7 @@ get_face_intersection_curves(
     if (DEBUG_BREP_BOOLEAN) {
 	bu_log("Summary of brep status: \n unused1: %zd\n unused2: %zd\n finalform1: %zd\n finalform2 %zd\nintersection_candidates(%zd):\n", unused1.size(), unused2.size(), finalform1.size(), finalform2.size(), intersection_candidates.size());
 	for (std::set<std::pair<int, int> >::iterator it = intersection_candidates.begin(); it != intersection_candidates.end(); ++it) {
-	    bu_log("     (%d,%d)\n", (*it).first, (*it).second);
+	    bu_log("     (%d, %d)\n", (*it).first, (*it).second);
 	}
     }
 
@@ -3557,7 +3615,7 @@ get_face_intersection_curves(
 			ON_SimpleArray<ON_Curve *> subcurves_on1, subcurves_on2;
 
 			get_subcurves_inside_faces(subcurves_on1,
-				subcurves_on2, brep1, brep2, i, j, &events[k]);
+						   subcurves_on2, brep1, brep2, i, j, &events[k]);
 
 			for (int l = 0; l < subcurves_on1.Count(); ++l) {
 			    SSICurve ssi_on1;
@@ -3595,6 +3653,7 @@ get_face_intersection_curves(
     return curves_array;
 }
 
+
 HIDDEN ON_SimpleArray<ON_Curve *>get_face_trim_loop(const ON_Brep *brep, int face_loop_index)
 {
     const ON_BrepLoop &loop = brep->m_L[face_loop_index];
@@ -3606,6 +3665,7 @@ HIDDEN ON_SimpleArray<ON_Curve *>get_face_trim_loop(const ON_Brep *brep, int fac
     }
     return face_trim_loop;
 }
+
 
 HIDDEN ON_SimpleArray<TrimmedFace *>
 get_trimmed_faces(const ON_Brep *brep)
@@ -3632,14 +3692,15 @@ get_trimmed_faces(const ON_Brep *brep)
     return trimmed_faces;
 }
 
+
 HIDDEN void
 categorize_trimmed_faces(
-	ON_ClassArray<ON_SimpleArray<TrimmedFace *> > &trimmed_faces,
-	const ON_Brep *brep1,
-	const ON_Brep *brep2,
-	ON_SimpleArray<Subsurface *> &surf_tree1,
-	ON_SimpleArray<Subsurface *> &surf_tree2,
-	op_type operation)
+    ON_ClassArray<ON_SimpleArray<TrimmedFace *> > &trimmed_faces,
+    const ON_Brep *brep1,
+    const ON_Brep *brep2,
+    ON_SimpleArray<Subsurface *> &surf_tree1,
+    ON_SimpleArray<Subsurface *> &surf_tree2,
+    op_type operation)
 {
     int face_count1 = brep1->m_F.Count();
     for (int i = 0; i < trimmed_faces.Count(); i++) {
@@ -3711,7 +3772,7 @@ categorize_trimmed_faces(
 			ON_ClassArray<ON_PX_EVENT> px_event;
 
 			if (ON_Intersect(face_pt3d, *brep_surf, px_event,
-				    INTERSECTION_TOL, 0, 0, surf_tree[face.m_si]))
+					 INTERSECTION_TOL, 0, 0, surf_tree[face.m_si]))
 			{
 			    found = true;
 			    brep_pt2d = px_event[0].m_b;
@@ -3742,12 +3803,13 @@ categorize_trimmed_faces(
 	    }
 	    if (DEBUG_BREP_BOOLEAN) {
 		bu_log("The trimmed face is %s the other brep.",
-			(face_location == INSIDE_BREP) ? "inside" :
-			((face_location == OUTSIDE_BREP) ? "outside" : "on the surface of"));
+		       (face_location == INSIDE_BREP) ? "inside" :
+		       ((face_location == OUTSIDE_BREP) ? "outside" : "on the surface of"));
 	    }
 	}
     }
 }
+
 
 HIDDEN ON_ClassArray<ON_SimpleArray<TrimmedFace *> >
 get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
@@ -3818,6 +3880,7 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
     return trimmed_faces;
 }
 
+
 HIDDEN void
 standardize_loop_orientations(ON_Brep *brep)
 {
@@ -3873,7 +3936,7 @@ standardize_loop_orientations(ON_Brep *brep)
 			ON_Curve *curve_copy = trim->EdgeCurveOf()->DuplicateCurve();
 			int copy_c3i = brep->AddEdgeCurve(curve_copy);
 			ON_BrepEdge &edge_copy = brep->NewEdge(v_start,
-				v_end, copy_c3i, &dom, edge->m_tolerance);
+							       v_end, copy_c3i, &dom, edge->m_tolerance);
 
 			reversed_edge[trim->m_ei] = copy_c3i;
 
@@ -3890,6 +3953,7 @@ standardize_loop_orientations(ON_Brep *brep)
     }
 }
 
+
 int
 ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
 {
@@ -3898,18 +3962,18 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
 	/* Deal with the trivial cases up front */
 	if (brep1->BoundingBox().MinimumDistanceTo(brep2->BoundingBox()) > ON_ZERO_TOLERANCE) {
 	    switch (operation) {
-	    case BOOLEAN_UNION:
-		evaluated_brep->Append(*brep1);
-		evaluated_brep->Append(*brep2);
-		break;
-	    case BOOLEAN_DIFF:
-		evaluated_brep->Append(*brep1);
-		break;
-	    case BOOLEAN_INTERSECT:
-		return 0;
-		break;
-	    default:
-		throw InvalidBooleanOperation("Error - unknown boolean operation\n");
+		case BOOLEAN_UNION:
+		    evaluated_brep->Append(*brep1);
+		    evaluated_brep->Append(*brep2);
+		    break;
+		case BOOLEAN_DIFF:
+		    evaluated_brep->Append(*brep1);
+		    break;
+		case BOOLEAN_INTERSECT:
+		    return 0;
+		    break;
+		default:
+		    throw InvalidBooleanOperation("Error - unknown boolean operation\n");
 	    }
 	    evaluated_brep->ShrinkSurfaces();
 	    evaluated_brep->Compact();

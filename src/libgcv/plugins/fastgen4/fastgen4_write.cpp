@@ -2406,7 +2406,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     for (BU_LIST_FOR(current_shell, shell, &nmg_region->s_hd)) {
 	NMG_CK_SHELL(current_shell);
 
-	rt_bot_internal * const bot = nmg_bot(current_shell, &data.m_tol);
+	rt_bot_internal * const bot = nmg_bot(current_shell, &RTG.rtg_vlfree, &data.m_tol);
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;

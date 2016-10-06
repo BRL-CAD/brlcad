@@ -212,7 +212,7 @@ main(int argc, char **argv)
     }
 
     /* Connect up the coincident vertexuses and edges */
-    (void)nmg_model_fuse(m, &tol);
+    (void)nmg_model_fuse(m, &RTG.rtg_vlfree, &tol);
 
     /* write NMG to output file */
     (void)mk_nmg(outfp, tea_name, m);

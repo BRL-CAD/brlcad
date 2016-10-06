@@ -47,7 +47,6 @@ cone_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand)
 }
 
 
-
 /* Return -1 if the cone face is pointing in toward the axis,
  * 1 if it is pointing out, and 0 if there is some other problem */
 int
@@ -260,7 +259,6 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
 	(*cone_planes).Append(ON_Plane(arbmid + v2, cone.CircleAt(cone.height - hdelta).Plane().yaxis));
 	(*cone_planes).Append(ON_Plane(arbmid - v2, -1 * cone.CircleAt(cone.height - hdelta).Plane().yaxis));
     }
-
 
 
     return need_arbn;

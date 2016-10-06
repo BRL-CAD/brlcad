@@ -124,7 +124,7 @@ nmg_is_common_bigloop(const struct face *f1, const struct face *f2)
  * and should remain true throughout the intersection process.
  */
 void
-nmg_region_v_unique(struct nmgregion *r1, const struct bn_tol *tol)
+nmg_region_v_unique(struct nmgregion *r1, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int i;
     int j;
@@ -133,7 +133,7 @@ nmg_region_v_unique(struct nmgregion *r1, const struct bn_tol *tol)
     NMG_CK_REGION(r1);
     BN_CK_TOL(tol);
 
-    nmg_vertex_tabulate(&t, &r1->l.magic);
+    nmg_vertex_tabulate(&t, &r1->l.magic, vlfree);
 
     for (i = BU_PTBL_LEN(&t)-1; i >= 0; i--) {
 	register struct vertex *vi;
@@ -303,7 +303,7 @@ nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_to
  * into this function, the calling function must free this structure.
  */
 int
-nmg_vertex_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
+nmg_vertex_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl *t1;
     struct bu_ptbl tmp;
@@ -328,7 +328,7 @@ nmg_vertex_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 	}
     } else {
 	t1 = &tmp;
-	nmg_vertex_tabulate(t1, magic_p);
+	nmg_vertex_tabulate(t1, magic_p, vlfree);
 	t1_len = BU_PTBL_LEN(t1);
     }
 
@@ -1059,7 +1059,7 @@ v_ptr_comp(const void *p1, const void *p2, void *UNUSED(arg))
  *       shell level.
  */
 int
-nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
+nmg_edge_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     typedef size_t (*edgeuse_vert_list_t)[2];
     edgeuse_vert_list_t edgeuse_vert_list;
@@ -1092,16 +1092,16 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 	} else {
 	    m = ((struct nmgregion *)tmp_magic_p)->m_p;
 	}
-	(void)nmg_vertex_fuse(&m->magic, tol);
+	(void)nmg_vertex_fuse(&m->magic, vlfree, tol);
     } else {
 	s = nmg_find_shell(tmp_magic_p);
-	(void)nmg_vertex_fuse(&s->l.magic, tol);
+	(void)nmg_vertex_fuse(&s->l.magic, vlfree, tol);
     }
     if (*magic_p == BU_PTBL_MAGIC) {
 	eu_list = (struct bu_ptbl *)magic_p;
     } else {
 	bu_ptbl_init(&tmp, 64, "eu_list buffer");
-	nmg_edgeuse_tabulate(&tmp, magic_p);
+	nmg_edgeuse_tabulate(&tmp, magic_p, vlfree);
 	eu_list = &tmp;
     }
 
@@ -1196,7 +1196,7 @@ e_rr_xyp_comp(const void *p1, const void *p2, void *arg)
  * Fuse edge_g structs.
  */
 int
-nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
+nmg_edge_g_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     register size_t i, j;
     register struct edge_g_lseg *eg1, *eg2;
@@ -1218,7 +1218,7 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     char *edge_sc, *edge_sc_xyp, *edge_sc_xzp, *edge_sc_yzp;
 
     /* Make a list of all the edge geometry structs in the model */
-    nmg_edge_g_tabulate(&etab, magic_p);
+    nmg_edge_g_tabulate(&etab, magic_p, vlfree);
 
     /* number of edges in table etab */
     etab_cnt = BU_PTBL_LEN(&etab);
@@ -1674,14 +1674,14 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
  * distance tolerance of the 1st face's plane equation.
  */
 int
-nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
+nmg_model_face_fuse(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl ftab;
     int total = 0;
     register int i, j;
 
     /* Make a list of all the face structs in the model */
-    nmg_face_tabulate(&ftab, &m->magic);
+    nmg_face_tabulate(&ftab, &m->magic, vlfree);
 
     for (i = BU_PTBL_LEN(&ftab)-1; i >= 0; i--) {
 	register struct face *f1;
@@ -1717,7 +1717,7 @@ nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
 
 
 int
-nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *tol)
+nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl eus;
     size_t i;
@@ -1735,7 +1735,7 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
 	bu_bomb("Bad magic pointer passed to nmg_break_all_es_on_v()\n");
     }
 
-    nmg_edgeuse_tabulate(&eus, magic_p);
+    nmg_edgeuse_tabulate(&eus, magic_p, vlfree);
 
     for (i = 0; i < BU_PTBL_LEN(&eus); i++) {
 	struct edgeuse *eu;
@@ -1799,7 +1799,7 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
  * Number of edges broken.
  */
 int
-nmg_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
+nmg_break_e_on_v(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int count = 0;
     struct bu_ptbl verts;
@@ -1810,7 +1810,7 @@ nmg_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
 
     BN_CK_TOL(tol);
 
-    nmg_e_and_v_tabulate(&edgeuses, &verts, magic_p);
+    nmg_e_and_v_tabulate(&edgeuses, &verts, magic_p, vlfree);
 
     /* Repeat the process until no new edgeuses are created */
     while (BU_PTBL_LEN(&edgeuses) > 0) {
@@ -1892,9 +1892,9 @@ nmg_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
 
 /* DEPRECATED: use nmg_break_e_on_v() */
 int
-nmg_model_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
+nmg_model_break_e_on_v(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
-    return nmg_break_e_on_v(magic_p, tol);
+    return nmg_break_e_on_v(magic_p, vlfree, tol);
 }
 
 /**
@@ -1916,7 +1916,7 @@ nmg_model_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
  * XXX with a single traversal of the model.
  */
 int
-nmg_model_fuse(struct model *m, const struct bn_tol *tol)
+nmg_model_fuse(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int total = 0;
 
@@ -1934,12 +1934,12 @@ nmg_model_fuse(struct model *m, const struct bn_tol *tol)
     /* Step 1 -- the vertices. */
     if (RTG.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: vertices\n");
-    total += nmg_vertex_fuse(&m->magic, tol);
+    total += nmg_vertex_fuse(&m->magic, vlfree, tol);
 
     /* Step 1.5 -- break edges on vertices, before fusing edges */
     if (RTG.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: break edges\n");
-    total += nmg_break_e_on_v(&m->magic, tol);
+    total += nmg_break_e_on_v(&m->magic, vlfree, tol);
 
     if (total) {
 	struct nmgregion *r;
@@ -1951,24 +1951,24 @@ nmg_model_fuse(struct model *m, const struct bn_tol *tol)
 
 	for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	    for (BU_LIST_FOR(s, shell, &r->s_hd))
-		nmg_make_faces_within_tol(s, tol);
+		nmg_make_faces_within_tol(s, vlfree, tol);
 	}
     }
 
     /* Step 2 -- the face geometry */
     if (RTG.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: faces\n");
-    total += nmg_model_face_fuse(m, tol);
+    total += nmg_model_face_fuse(m, vlfree, tol);
 
     /* Step 3 -- edges */
     if (RTG.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: edges\n");
-    total += nmg_edge_fuse(&m->magic, tol);
+    total += nmg_edge_fuse(&m->magic, vlfree, tol);
 
     /* Step 4 -- edge geometry */
     if (RTG.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: edge geometries\n");
-    total += nmg_edge_g_fuse(&m->magic, tol);
+    total += nmg_edge_g_fuse(&m->magic, vlfree, tol);
 
     if (RTG.NMG_debug & DEBUG_BASIC && total > 0)
 	bu_log("nmg_model_fuse(): %d entities fused\n", total);
@@ -2412,7 +2412,7 @@ nmg_radial_merge_lists(struct bu_list *dest, struct bu_list *src, const struct b
  * and is not checked for here.
  */
 int
-nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
+nmg_is_crack_outie(const struct edgeuse *eu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     const struct loopuse *lu;
     const struct edge *e;
@@ -2462,7 +2462,7 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
 	    tmp_tol.dist = SMALL_FASTF;
 	    tmp_tol.dist_sq = SMALL_FASTF * SMALL_FASTF;
 	}
-	nmg_class = nmg_class_pt_lu_except(midpt, lu, e, &tmp_tol);
+	nmg_class = nmg_class_pt_lu_except(midpt, lu, e, vlfree, &tmp_tol);
     }
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_is_crack_outie(eu=%p) lu=%p, e=%p, nmg_class=%s\n",
@@ -2555,7 +2555,7 @@ nmg_find_next_use_of_2e_in_lu(const struct edgeuse *eu, const struct edge *e1, c
  * in the loopuse's edgeuse order.
  */
 void
-nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct edge *e2, const struct bn_tol *tol)
+nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct edge *e2, struct bu_list *vlfree, const struct bn_tol *tol)
 
 
 /* may be NULL */
@@ -2601,7 +2601,7 @@ nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct e
 	/* OK, we have a crack. Which kind? */
 	if ((uses & 1) == 0) {
 	    /* Even number of edgeuses. */
-	    outie = nmg_is_crack_outie(rad->eu, tol);
+	    outie = nmg_is_crack_outie(rad->eu, vlfree, tol);
 	    rad->is_crack = 1;
 	    rad->is_outie = outie;
 	    if (RTG.NMG_debug & DEBUG_MESH_EU) {
@@ -3372,7 +3372,7 @@ nmg_radial_exchange_marked(struct bu_list *hd, const struct bn_tol *tol)
  * due to a boolean operation or whatever, fix it.
  */
 void
-nmg_s_radial_harmonize(struct shell *s, const struct bn_tol *tol)
+nmg_s_radial_harmonize(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl edges;
     struct edgeuse *eu;
@@ -3386,7 +3386,7 @@ nmg_s_radial_harmonize(struct shell *s, const struct bn_tol *tol)
     if (RTG.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_s_radial_harmonize(s=%p) BEGIN\n", (void *)s);
 
-    nmg_edge_tabulate(&edges, &s->l.magic);
+    nmg_edge_tabulate(&edges, &s->l.magic, vlfree);
     for (ep = (struct edge **)BU_PTBL_LASTADDR(&edges);
 	 ep >= (struct edge **)BU_PTBL_BASEADDR(&edges); ep--
 	) {
@@ -3430,7 +3430,7 @@ nmg_s_radial_harmonize(struct shell *s, const struct bn_tol *tol)
  * Visit each edge in this shell exactly once, and check it.
  */
 void
-nmg_s_radial_check(struct shell *s, const struct bn_tol *tol)
+nmg_s_radial_check(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl edges;
     struct edge **ep;
@@ -3441,7 +3441,7 @@ nmg_s_radial_check(struct shell *s, const struct bn_tol *tol)
     if (RTG.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_s_radial_check(s=%p) BEGIN\n", (void *)s);
 
-    nmg_edge_tabulate(&edges, &s->l.magic);
+    nmg_edge_tabulate(&edges, &s->l.magic, vlfree);
     for (ep = (struct edge **)BU_PTBL_LASTADDR(&edges); ep >= (struct edge **)BU_PTBL_BASEADDR(&edges); ep--) {
 	NMG_CK_EDGE(*ep);
     }
@@ -3454,7 +3454,7 @@ nmg_s_radial_check(struct shell *s, const struct bn_tol *tol)
 
 
 void
-nmg_r_radial_check(const struct nmgregion *r, const struct bn_tol *tol)
+nmg_r_radial_check(const struct nmgregion *r, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct shell *s;
 
@@ -3466,7 +3466,7 @@ nmg_r_radial_check(const struct nmgregion *r, const struct bn_tol *tol)
 
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	NMG_CK_SHELL(s);
-	nmg_s_radial_check(s, tol);
+	nmg_s_radial_check(s, vlfree, tol);
     }
 }
 

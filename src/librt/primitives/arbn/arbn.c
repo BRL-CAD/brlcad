@@ -777,9 +777,9 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
     bu_free((char *)fu, "rt_arbn_tess: fu");
 
-    nmg_fix_normals(s, tol);
+    nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
 
-    (void)nmg_mark_edges_real(&s->l.magic);
+    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);

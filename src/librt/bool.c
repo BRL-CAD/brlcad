@@ -273,7 +273,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    newpp->pt_inhit = &segp->seg_in;
 	    newpp->pt_outseg = segp;
 	    newpp->pt_outhit = &segp->seg_out;
-	    INSERT_PT(newpp, PartHdp);
+	    INSERT_PT(newpp, pp);
 	} else if (NEAR_ZERO(diff, tol_dist)) {
 	    /* Check for zero-thickness segment, within tol */
 	    bool_weave0seg(segp, PartHdp, ap);

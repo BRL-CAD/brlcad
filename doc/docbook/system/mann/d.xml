@@ -31,7 +31,7 @@
       <command>d</command> command (use the <command>who</command> command to see
       a list of explicitly displayed objects). Objects that are displayed as members
       of explicitly displayed combinations cannot be deleted from the display with
-      this command (see <command>dall</command> or <command>erase_all</command>).
+      this command (see <command>erase -r</command>).
       Note that this has no effect on the <emphasis>BRL-CAD</emphasis> database
       itself. To actually remove objects from the database, use the
       <command>kill</command> command.

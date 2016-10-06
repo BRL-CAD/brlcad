@@ -19,7 +19,7 @@
  */
 /** @file simulation.cpp
  *
- * Brief description
+ * Programmatic interface for simulate.
  *
  */
 

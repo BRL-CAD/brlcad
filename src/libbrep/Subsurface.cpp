@@ -27,6 +27,7 @@ Subsurface::Subsurface()
     m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
 }
 
+
 Subsurface::Subsurface(ON_Surface *surf)
 {
     m_surf = surf;
@@ -41,6 +42,7 @@ Subsurface::Subsurface(ON_Surface *surf)
     m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
 }
 
+
 Subsurface::Subsurface(const Subsurface &_ssurf)
 {
     m_surf = _ssurf.m_surf->Duplicate();
@@ -51,6 +53,7 @@ Subsurface::Subsurface(const Subsurface &_ssurf)
     SetBBox(_ssurf.m_node);
 }
 
+
 Subsurface::~Subsurface()
 {
     for (int i = 0; i < 4; i++) {
@@ -60,6 +63,7 @@ Subsurface::~Subsurface()
     }
     delete m_surf;
 }
+
 
 int
 Subsurface::Split()
@@ -112,12 +116,14 @@ Subsurface::Split()
     return 0;
 }
 
+
 void
 Subsurface::GetBBox(ON_3dPoint &min, ON_3dPoint &max)
 {
     min = m_node.m_min;
     max = m_node.m_max;
 }
+
 
 void
 Subsurface::SetBBox(const ON_BoundingBox &bbox)
@@ -136,6 +142,7 @@ Subsurface::SetBBox(const ON_BoundingBox &bbox)
     }
 }
 
+
 bool
 Subsurface::IsPointIn(const ON_3dPoint &pt, double tolerance /* = 0.0 */)
 {
@@ -144,11 +151,12 @@ Subsurface::IsPointIn(const ON_3dPoint &pt, double tolerance /* = 0.0 */)
     return new_bbox.IsPointIn(pt);
 }
 
+
 bool
 Subsurface::Intersect(
-	const Subcurve &curve,
-	double tolerance /* = 0.0 */,
-	ON_BoundingBox *intersection /* = NULL */) const
+    const Subcurve &curve,
+    double tolerance /* = 0.0 */,
+    ON_BoundingBox *intersection /* = NULL */) const
 {
     ON_3dVector vtol(tolerance, tolerance, tolerance);
     ON_BoundingBox new_bbox(m_node.m_min - vtol, m_node.m_max + vtol);
@@ -160,11 +168,12 @@ Subsurface::Intersect(
     return ret;
 }
 
+
 bool
 Subsurface::Intersect(
-	const Subsurface &surf,
-	double tolerance /* = 0.0 */,
-	ON_BoundingBox *intersection /* = NULL */) const
+    const Subsurface &surf,
+    double tolerance /* = 0.0 */,
+    ON_BoundingBox *intersection /* = NULL */) const
 {
     ON_3dVector vtol(tolerance, tolerance, tolerance);
     ON_BoundingBox new_bbox(m_node.m_min - vtol, m_node.m_max + vtol);
@@ -175,6 +184,7 @@ Subsurface::Intersect(
     }
     return ret;
 }
+
 
 // Local Variables:
 // tab-width: 8

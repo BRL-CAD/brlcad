@@ -90,7 +90,7 @@ nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_to
  * leaving all the geometric calculations to the code in nmg_fuse.c ?
  */
 void
-nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const int simplify)
+nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const int simplify, struct bu_list *vlfree)
 {
     char *flags;
     register struct faceuse *fu1, *fu2;
@@ -181,7 +181,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 	    if (simplify) {
 		struct loopuse *lu;
 		for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd))
-		    nmg_simplify_loop(lu);
+		    nmg_simplify_loop(lu, vlfree);
 	    }
 	}
     }
@@ -206,7 +206,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
  * 1 If shell is now empty
  */
 int
-nmg_simplify_shell(struct shell *s)
+nmg_simplify_shell(struct shell *s, struct bu_list *vlfree)
 {
     struct faceuse *fu;
     int ret_val;
@@ -214,7 +214,7 @@ nmg_simplify_shell(struct shell *s)
     NMG_CK_SHELL(s);
 
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	if (nmg_simplify_face(fu)) {
+	if (nmg_simplify_face(fu, vlfree)) {
 	    struct faceuse *kfu = fu;
 	    fu = BU_LIST_PREV(faceuse, &fu->l);
 	    nmg_kfu(kfu);
@@ -239,7 +239,7 @@ nmg_simplify_shell(struct shell *s)
  * match vertices in a face loop, wire loop, or wire edge.
  */
 void
-nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
+nmg_rm_redundancies(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -403,7 +403,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		    continue;
 		}
 
-		if (nmg_classify_lu_lu(lu, lu1, tol) != NMG_CLASS_AonBshared) {
+		if (nmg_classify_lu_lu(lu, lu1, vlfree, tol) != NMG_CLASS_AonBshared) {
 		    lu1 = next_lu1;
 		    continue;
 		}
@@ -474,7 +474,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		    continue;
 		}
 
-		if (nmg_classify_lu_lu(lu1, lu, tol) != NMG_CLASS_AinB) {
+		if (nmg_classify_lu_lu(lu1, lu, vlfree, tol) != NMG_CLASS_AinB) {
 		    lu1 = next_lu;
 		    continue;
 		}
@@ -495,8 +495,8 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		    if (lu2->orientation == lu->orientation)
 			continue;
 
-		    class1 = nmg_classify_lu_lu(lu2, lu, tol);
-		    class2 = nmg_classify_lu_lu(lu1, lu2, tol);
+		    class1 = nmg_classify_lu_lu(lu2, lu, vlfree, tol);
+		    class2 = nmg_classify_lu_lu(lu1, lu2, vlfree, tol);
 
 		    if (class1 == NMG_CLASS_AinB &&
 			class2 == NMG_CLASS_AinB) {
@@ -538,7 +538,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		    continue;
 		}
 
-		nmg_class = nmg_classify_lu_lu(lu, lu1, tol);
+		nmg_class = nmg_classify_lu_lu(lu, lu1, vlfree, tol);
 
 		if (nmg_class == NMG_CLASS_AonBshared) {
 		    nmg_klu(lu1); /* lu1 is redundant */
@@ -737,7 +737,7 @@ nmg_s_join_touchingloops(struct shell *s, const struct bn_tol *tol)
  * The 'tol' arg is used strictly for printing purposes.
  */
 void
-nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol *tol)
+nmg_js(register struct shell *s1, register struct shell *s2, struct bu_list *vlfree, const struct bn_tol *tol)
 /* destination */
 /* source */
 
@@ -864,7 +864,7 @@ nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol
     nmg_ks(s2);
 
     /* Some edges may need faceuse parity touched up. */
-    nmg_s_radial_harmonize(s1, tol);
+    nmg_s_radial_harmonize(s1, vlfree, tol);
 
     if (RTG.NMG_debug & DEBUG_VERIFY)
 	nmg_vshell(&s1->r_p->s_hd, s1->r_p);
@@ -1405,7 +1405,7 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
  * make faces which share vertex structures.
  */
 void
-nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
+nmg_gluefaces(struct faceuse **fulist, int n, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     register int i;
     struct loopuse *lu;
@@ -1424,7 +1424,7 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 	}
     }
 
-    nmg_edge_fuse((const uint32_t *)&ftab, tol);
+    nmg_edge_fuse((const uint32_t *)&ftab, vlfree, tol);
     bu_ptbl_free(&ftab);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
@@ -1443,7 +1443,7 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
  * 1 If faceuse is now empty
  */
 int
-nmg_simplify_face(struct faceuse *fu)
+nmg_simplify_face(struct faceuse *fu, struct bu_list *vlfree)
 {
     struct loopuse *lu;
     int ret_val;
@@ -1451,11 +1451,11 @@ nmg_simplify_face(struct faceuse *fu)
     NMG_CK_FACEUSE(fu);
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	nmg_simplify_loop(lu);
+	nmg_simplify_loop(lu, vlfree);
     }
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	if (nmg_kill_snakes(lu)) {
+	if (nmg_kill_snakes(lu, vlfree)) {
 	    struct loopuse *klu = lu;
 	    lu = BU_LIST_PREV(loopuse, &lu->l);
 	    nmg_klu(klu);
@@ -2280,7 +2280,7 @@ nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
  * lu is loopuse of new loop, on success.
  */
 struct loopuse *
-nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
+nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2, struct bu_list *vlfree)
 {
     struct loopuse *lu, *oldlu;
     struct edgeuse *eu1, *eu2, *eunext, *neweu, *eu;
@@ -2334,8 +2334,8 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 		bu_bomb("unable to open file for writing");
 	    }
 
-	    nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100);
-	    nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, tab, 100, 100, 100);
+	    nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100, vlfree);
+	    nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, tab, 100, 100, 100, vlfree);
 	    (void)fclose(fd);
 	    bu_free((char *)tab, "nmg_cut_loop flag[] 1");
 	}
@@ -2406,8 +2406,8 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 	    bu_bomb("unable to open file for writing");
 	}
 
-	nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100);
-	nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, tab, 100, 100, 100);
+	nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100, vlfree);
+	nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, tab, 100, 100, 100, vlfree);
 	(void)fclose(fd);
 	bu_free((char *)tab, "nmg_cut_loop flag[] 2");
     }
@@ -3229,7 +3229,7 @@ top:
  * common edge into a single loop, with the edge eliminated.
  */
 void
-nmg_simplify_loop(struct loopuse *lu)
+nmg_simplify_loop(struct loopuse *lu, struct bu_list *vlfree)
 {
     struct edgeuse *eu, *eu_r, *tmpeu;
 
@@ -3285,7 +3285,7 @@ nmg_simplify_loop(struct loopuse *lu)
 	    eu = tmpeu;
 
 	    if (RTG.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) && *lu->up.magic_p == NMG_FACEUSE_MAGIC) {
-		nmg_pl_2fu("After_joinloop%d.plot3", lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
+		nmg_pl_2fu("After_joinloop%d.plot3", lu->up.fu_p, lu->up.fu_p->fumate_p, 0, vlfree);
 	    }
 	}
 	eu = BU_LIST_PNEXT(edgeuse, eu);
@@ -3301,7 +3301,7 @@ nmg_simplify_loop(struct loopuse *lu)
  * 1 If the loopuse is now empty and needs to be killed.
  */
 int
-nmg_kill_snakes(struct loopuse *lu)
+nmg_kill_snakes(struct loopuse *lu, struct bu_list *vlfree)
 {
     struct edgeuse *eu, *eu_r;
     struct vertexuse *vu;
@@ -3353,7 +3353,7 @@ nmg_kill_snakes(struct loopuse *lu)
 
 		if (RTG.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) && *lu->up.magic_p == NMG_FACEUSE_MAGIC) {
 
-		    nmg_pl_2fu("After_joinloop%d.plot3", lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
+		    nmg_pl_2fu("After_joinloop%d.plot3", lu->up.fu_p, lu->up.fu_p->fumate_p, 0, vlfree);
 
 		}
 

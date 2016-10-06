@@ -132,16 +132,18 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 // CurveTree
 CurveTree::CurveTree(const ON_BrepFace* face) :
     m_face(face),
-    m_root(initialLoopBBox()),
-    m_sortedX(new std::list<const BRNode *>)
+    m_root(new BRNode(initialLoopBBox(*face))),
+    m_stl(new Stl),
+    m_sortedX_indices(NULL)
 {
     for (int li = 0; li < face->LoopCount(); li++) {
 	bool innerLoop = (li > 0) ? true : false;
 	const ON_BrepLoop* loop = face->Loop(li);
 	// for each trim
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-	    int adj_face_index = -99;
-	    const ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+	    int adj_face_index = -1;
+	    const int trim_index = loop->m_ti[ti];
+	    const ON_BrepTrim& trim = face->Brep()->m_T[trim_index];
 
 	    if (trim.m_ei != -1) { // does not lie on a portion of a singular surface side
 		const ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
@@ -216,7 +218,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		for (std::list<fastf_t>::const_iterator l = splitlist.begin(); l != splitlist.end(); l++) {
 		    double xmax = *l;
 		    if (!NEAR_EQUAL(xmax, min, TOL)) {
-			m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
+			m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
 		    }
 		    min = xmax;
 		}
@@ -229,7 +231,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
 		    double xmax = knots[knot_index];
 		    if (!NEAR_EQUAL(xmax, min, TOL)) {
-			m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
+			m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
 		    }
 		    min = xmax;
 		}
@@ -237,13 +239,15 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 	    }
 
 	    if (!NEAR_EQUAL(max, min, TOL)) {
-		m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, max, innerLoop, 0));
+		m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, max, innerLoop, 0));
 	    }
 	}
     }
 
-    getLeaves(*m_sortedX);
-    m_sortedX->sort(sortX);
+    std::list<const BRNode *> temp;
+    getLeaves(temp);
+    temp.sort(sortX);
+    m_stl->m_sortedX.insert(m_stl->m_sortedX.end(), temp.begin(), temp.end());
 
     return;
 }
@@ -252,7 +256,70 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 CurveTree::~CurveTree()
 {
     delete m_root;
-    delete m_sortedX;
+    delete m_stl;
+    delete m_sortedX_indices;
+}
+
+
+CurveTree::CurveTree(Deserializer &deserializer, const ON_BrepFace &face) :
+    m_face(&face),
+    m_root(NULL),
+    m_stl(new Stl),
+    m_sortedX_indices(NULL)
+{
+    m_root = new BRNode(deserializer, *m_face->Brep());
+
+    std::list<const BRNode *> temp;
+    getLeaves(temp);
+    temp.sort(sortX);
+    m_stl->m_sortedX.insert(m_stl->m_sortedX.end(), temp.begin(), temp.end());
+}
+
+
+void
+CurveTree::serialize(Serializer &serializer) const
+{
+    m_root->serialize(serializer);
+}
+
+
+std::vector<std::size_t>
+CurveTree::serialize_get_leaves_keys(const std::list<const BRNode *> &leaves) const
+{
+    if (!m_sortedX_indices) {
+	m_sortedX_indices = new std::map<const BRNode *, std::size_t>;
+	std::size_t index = 0;
+
+	for (std::vector<const BRNode *>::const_iterator it = m_stl->m_sortedX.begin(); it != m_stl->m_sortedX.end(); ++it, ++index)
+	    m_sortedX_indices->insert(std::make_pair(*it, index));
+    }
+
+    std::vector<std::size_t> result;
+
+    for (std::list<const BRNode *>::const_iterator it = leaves.begin(); it != leaves.end(); ++it)
+	result.push_back(m_sortedX_indices->at(*it));
+
+    return result;
+}
+
+
+std::list<const BRNode *>
+CurveTree::serialize_get_leaves(const std::size_t *keys, std::size_t num_keys) const
+{
+    std::list<const BRNode *> result;
+
+    for (std::size_t i = 0; i < num_keys; ++i)
+	result.push_back(m_stl->m_sortedX.at(keys[i]));
+
+    return result;
+}
+
+
+void
+CurveTree::serialize_cleanup() const
+{
+    delete m_sortedX_indices;
+    m_sortedX_indices = NULL;
 }
 
 
@@ -296,7 +363,7 @@ CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_Interva
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_stl->m_sortedX.begin(); i != m_stl->m_sortedX.end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
@@ -316,7 +383,7 @@ void
 CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol) const
 {
     point_t bmin, bmax;
-    for (std::list<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_stl->m_sortedX.begin(); i != m_stl->m_sortedX.end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
@@ -336,7 +403,7 @@ CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_Interva
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_stl->m_sortedX.begin(); i != m_stl->m_sortedX.end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
@@ -356,7 +423,7 @@ void
 CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol) const
 {
     point_t bmin, bmax;
-    for (std::list<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_stl->m_sortedX.begin(); i != m_stl->m_sortedX.end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
@@ -409,14 +476,14 @@ CurveTree::getHVTangents(const ON_Curve* curve, const ON_Interval& t, std::list<
 
 
 BRNode*
-CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, const ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb) const
+CurveTree::curveBBox(const ON_Curve* curve, int trim_index, int adj_face_index, const ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb) const
 {
     BRNode* node;
     bool vdot = true;
 
     if (isLeaf) {
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() << ") v(" << v.Min() << ", " << v.Max() << ")");
-	node = new BRNode(curve, adj_face_index, bb, m_face, t, vdot, innerTrim, false);
+	node = new BRNode(curve, trim_index, adj_face_index, bb, m_face, t, vdot, innerTrim, false);
     } else {
 	node = new BRNode(bb);
     }
@@ -426,14 +493,14 @@ CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, const ON_Interva
 }
 
 
-BRNode*
-CurveTree::initialLoopBBox() const
+ON_BoundingBox
+CurveTree::initialLoopBBox(const ON_BrepFace &face)
 {
     ON_BoundingBox bb;
-    m_face->SurfaceOf()->GetBBox(bb[0], bb[1]);
+    face.SurfaceOf()->GetBBox(bb[0], bb[1]);
 
-    for (int i = 0; i < m_face->LoopCount(); i++) {
-	const ON_BrepLoop* loop = m_face->Loop(i);
+    for (int i = 0; i < face.LoopCount(); i++) {
+	const ON_BrepLoop* loop = face.Loop(i);
 	if (loop->m_type == ON_BrepLoop::outer) {
 	    if (loop->GetBBox(bb[0], bb[1], 0)) {
 		TRACE("BBox for Loop min<" << bb[0][0] << ", " << bb[0][1] ", " << bb[0][2] << ">");
@@ -442,13 +509,13 @@ CurveTree::initialLoopBBox() const
 	    break;
 	}
     }
-    BRNode* node = new BRNode(bb);
-    return node;
+
+    return bb;
 }
 
 
 BRNode*
-CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min, double max, bool innerTrim, int divDepth) const
+CurveTree::subdivideCurve(const ON_Curve* curve, int trim_index, int adj_face_index, double min, double max, bool innerTrim, int divDepth) const
 {
     ON_Interval dom = curve->Domain();
     ON_3dPoint points[2];
@@ -484,14 +551,14 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min,
 	bb.Set(pnt, false);
 	VMOVE(pnt, maxpt);
 	bb.Set(pnt, true);
-	return curveBBox(curve, adj_face_index, t, true, innerTrim, bb);
+	return curveBBox(curve, trim_index, adj_face_index, t, true, innerTrim, bb);
     }
 
     // else subdivide
-    BRNode* parent = curveBBox(curve, adj_face_index, t, false, innerTrim, bb);
+    BRNode* parent = curveBBox(curve, trim_index, adj_face_index, t, false, innerTrim, bb);
     double mid = (max+min)/2.0;
-    BRNode* l = subdivideCurve(curve, adj_face_index, min, mid, innerTrim, divDepth+1);
-    BRNode* r = subdivideCurve(curve, adj_face_index, mid, max, innerTrim, divDepth+1);
+    BRNode* l = subdivideCurve(curve, trim_index, adj_face_index, min, mid, innerTrim, divDepth+1);
+    BRNode* r = subdivideCurve(curve, trim_index, adj_face_index, mid, max, innerTrim, divDepth+1);
     parent->addChild(l);
     parent->addChild(r);
     return parent;
@@ -601,7 +668,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
 	max[i] += within_distance_tol;
 #endif
 	if ((min != ON_3dPoint::UnsetPoint) && (max != ON_3dPoint::UnsetPoint)) {
-	    dom[i].Set(min[i],max[i]);
+	    dom[i].Set(min[i], max[i]);
 	}
     }
     ON_Interval u = dom[0];
@@ -691,7 +758,7 @@ SurfaceTree::getSurface() const
 int
 brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const BBNode* node) {
     plane_ray pr;
-    const ON_Surface *surf = node->m_face->SurfaceOf();
+    const ON_Surface *surf = node->get_face().SurfaceOf();
     double umin, umax;
     double vmin, vmax;
     surf->GetDomain(0, &umin, &umax);
@@ -754,7 +821,7 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const BBNode* node) {
 	    new_uv[1] = node->m_v[1];
 
 
-	surface_EvNormal(surf,new_uv[0], new_uv[1], newpt, ray.m_dir);
+	surface_EvNormal(surf, new_uv[0], new_uv[1], newpt, ray.m_dir);
 	ray.m_dir.Reverse();
 	brep_get_plane_ray(ray, pr);
 
@@ -833,18 +900,18 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 //static int bb_cnt=0;
 BBNode *
 SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
-	bool isLeaf,
-	const ON_Plane frames[9],
-	const ON_Interval& u,
-	const ON_Interval& v,
-	double within_distance_tol) const
+			 bool isLeaf,
+			 const ON_Plane frames[9],
+			 const ON_Interval& u,
+			 const ON_Interval& v,
+			 double within_distance_tol) const
 {
     point_t min, max, buffer;
 #ifdef _OLD_SUBDIVISION_
     ON_BoundingBox bbox = localsurf->BoundingBox();
 #else
     ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
-    if (!surface_GetBoundingBox(localsurf,u,v,bbox,false)) {
+    if (!surface_GetBoundingBox(localsurf, u, v, bbox, false)) {
 	return NULL;
     }
 #endif
@@ -878,7 +945,7 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 	*/
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 	      ") v(" << v.Min() << ", " << v.Max() << ")");
-	node = new BBNode(m_ctree, ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), m_face, u, v, false, false);
+	node = new BBNode(m_ctree, ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), u, v, false, false);
 	node->prepTrims();
 
     } else {
@@ -887,33 +954,31 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 
     node->m_estimate = estimate;
     node->m_normal = normal;
-    node->m_face = m_face;
     node->m_u = u;
     node->m_v = v;
     return node;
 }
 
 
-BBNode*
-initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_BrepFace* face, const ON_Interval& u, const ON_Interval& v)
+HIDDEN BBNode*
+initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
 {
 #ifdef _OLD_SUBDIVISION_
     ON_BoundingBox bb = surf->BoundingBox();
 #else
     ON_BoundingBox bb = ON_BoundingBox::EmptyBoundingBox;
-    if (!surface_GetBoundingBox(surf,u,v,bb,false)) {
+    if (!surface_GetBoundingBox(surf, u, v, bb, false)) {
 	return NULL;
     }
 #endif
-    BBNode* node = new BBNode(ctree, bb, face, u, v, false, false);
+    BBNode* node = new BBNode(ctree, bb, u, v, false, false);
     ON_3dPoint estimate;
     ON_3dVector normal;
-    if (!surface_EvNormal(surf,surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
+    if (!surface_EvNormal(surf, surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
 	bu_bomb("Could not evaluate estimate point on surface");
     }
     node->m_estimate = estimate;
     node->m_normal = normal;
-    node->m_face = face;
     node->m_u = u;
     node->m_v = v;
     return node;
@@ -942,7 +1007,7 @@ hasSplit(const ON_Surface *surf, const int dir, const ON_Interval& interval, dou
 
 	return false;
     }
-    if (prev_surf[p] != surf ) {
+    if (prev_surf[p] != surf) {
 	// load new surf info
 	for(int i=0; i<2; i++) {
 	    dom[p][i] = surf->Domain(i);
@@ -1048,7 +1113,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #ifdef _OLD_SUBDIVISION_
 	int spanu_cnt = localsurf->SpanCount(0);
 	int spanv_cnt = localsurf->SpanCount(1);
-	parent = initialBBox(m_ctree, localsurf, m_face, u, v);
+	parent = initialBBox(m_ctree, localsurf, u, v);
 	if (spanu_cnt > 1) {
 	    double *spanu = new double[spanu_cnt+1];
 	    localsurf->GetSpanVector(0, spanu);
@@ -1070,11 +1135,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	}
 #else
 	int dir = 0; // U direction
-	if (hasSplit(localsurf,dir,u,usplit)) {
+	if (hasSplit(localsurf, dir, u, usplit)) {
 	    do_u_split = 1;
 	}
 	dir = 1; // V direction
-	if (hasSplit(localsurf,dir,v,vsplit)) {
+	if (hasSplit(localsurf, dir, v, vsplit)) {
 	    if (do_u_split) {
 		do_both_splits = 1;
 		do_u_split = 0;
@@ -1082,7 +1147,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 		do_v_split = 1;
 	    }
 	}
-	parent = initialBBox(m_ctree, localsurf, m_face, u, v);
+	parent = initialBBox(m_ctree, localsurf, u, v);
 #endif
     }
     // Flatness
@@ -1090,7 +1155,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	bool isUFlat = isFlatU(frames);
 	bool isVFlat = isFlatV(frames);
 
-	parent = (divDepth == 0) ? initialBBox(m_ctree, localsurf, m_face, u, v) : surfaceBBox(localsurf, false, frames, u, v, within_distance_tol);
+	parent = (divDepth == 0) ? initialBBox(m_ctree, localsurf, u, v) : surfaceBBox(localsurf, false, frames, u, v, within_distance_tol);
 
 	if ((!isVFlat || (width/height > ratio)) && (!isUFlat || (height/width > ratio))) {
 	    do_both_splits = 1;

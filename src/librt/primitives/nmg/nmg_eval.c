@@ -45,6 +45,7 @@ struct nmg_bool_state {
     char **bs_classtab;
     const int *bs_actions;
     const struct bn_tol *bs_tol;
+    struct bu_list *vlfree;
 };
 
 
@@ -186,7 +187,7 @@ static const int intersect_actions[8] = {
  *
  */
 void
-nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlist, const struct bn_tol *tol)
+nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlist, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int const *actions;
     struct nmg_bool_state bool_state;
@@ -221,6 +222,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     bool_state.bs_src = sB;
     bool_state.bs_classtab = classlist;
     bool_state.bs_actions = actions;
+    bool_state.vlfree = vlfree;
     bool_state.bs_tol = tol;
 
     bool_state.bs_isA = 1;
@@ -236,7 +238,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     /* Write sA and sB into separate files, if wanted? */
 
     /* Move everything left in sB into sA.  sB is killed. */
-    nmg_js(sA, sB, tol);
+    nmg_js(sA, sB, vlfree, tol);
 
     /* Plot the result */
     if (RTG.NMG_debug & DEBUG_BOOLEVAL && RTG.NMG_debug & DEBUG_PLOTEM) {
@@ -247,12 +249,12 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
 	    bu_bomb("unable to open bool_ans.plot3 for writing");
 	}
 	bu_log("plotting bool_ans.plot3\n");
-	nmg_pl_s(fp, sA);
+	nmg_pl_s(fp, sA, vlfree);
 	(void)fclose(fp);
     }
 
     /* Remove loops/edges/vertices that appear more than once in result */
-    nmg_rm_redundancies(sA, tol);
+    nmg_rm_redundancies(sA, vlfree, tol);
 }
 
 
@@ -614,16 +616,14 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
 	}
 	bu_log("Plotting %s\n", fname);
 
-	nmg_pl_s(fp, bs->bs_dest);
-	nmg_pl_s(fp, bs->bs_src);
+	nmg_pl_s(fp, bs->bs_dest, bs->vlfree);
+	nmg_pl_s(fp, bs->bs_src, bs->vlfree);
 
 	fclose(fp);
     }
 
     if (do_anim) {
-	struct bn_vlblock *vbp;
-
-	vbp = rt_vlblock_init();
+	struct bn_vlblock *vbp = bn_vlblock_init(bs->vlfree, 32);
 
 	nmg_vlblock_s(vbp, bs->bs_dest, 0);
 	nmg_vlblock_s(vbp, bs->bs_src, 0);

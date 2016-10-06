@@ -774,7 +774,7 @@ nmgregion_to_iges(char *name,
 	return 0;
 
     /* Find outer shells and void shells and their associations */
-    outer_shell_count = nmg_find_outer_and_void_shells(r, &shells, &tol);
+    outer_shell_count = nmg_find_outer_and_void_shells(r, &shells, &RTG.rtg_vlfree, &tol);
 
     brep_de = (int *)bu_calloc(outer_shell_count, sizeof(int), "nmgregion_to_iges: brep_de");
 
@@ -1094,7 +1094,7 @@ write_vertex_list(struct nmgregion *r,
 	dir_entry[i] = DEFAULT;
 
     /* Built list of vertex structs */
-    nmg_vertex_tabulate(vtab, &r->l.magic);
+    nmg_vertex_tabulate(vtab, &r->l.magic, &RTG.rtg_vlfree);
 
     /* write parameter data for vertex list entity */
     bu_vls_printf(&str, "502,%ld", (long int)BU_PTBL_LEN(vtab));
@@ -1244,7 +1244,7 @@ write_edge_list(struct nmgregion *r,
 	dir_entry[i] = DEFAULT;
 
     /* Build list of edge structures */
-    nmg_edge_tabulate(etab, &r->l.magic);
+    nmg_edge_tabulate(etab, &r->l.magic, &RTG.rtg_vlfree);
 
     bu_vls_printf(&str, "504,%ld", (long int)BU_PTBL_LEN(etab));
 

@@ -19,13 +19,7 @@
 #
 ###
 #
-# DESCRIPTION
 #    General dialogs.
-#
-# AUTHOR
-#    Keith Bowman
-#    Doug Howard
-#    Bob Parker
 #
 ##############################################################
 
