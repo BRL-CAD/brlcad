@@ -83,11 +83,6 @@ main(int argc, char *argv[])
 	bu_badmagic(ptr, magic, str, file, line);
 	return 1;
     case 2:
-	*ptr = BU_BITV_MAGIC;
-	magic = BU_BITV_MAGIC;
-	str = (char *)bu_identify_magic(*ptr);
-	expected_str = "\0";
-	bu_badmagic(ptr, magic, str, file, line);
 	return 0;
     case 3:
 	ptr = NULL;
