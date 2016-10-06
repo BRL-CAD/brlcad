@@ -542,7 +542,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # where we cannot pass an empty string through this wrapper to
   # _add_test()/add_test().  passed as a list (e.g., via ARGN, ARGV,
   # or manually composed), the empty string is skipped(!).  passed as
-  # a string, it is all treated as commnad name with no arguments.
+  # a string, it is all treated as command name with no arguments.
   #
   # manual workaround used here involves invoking _add_test() with all
   # args individually recreated/specified (i.e., not as a list) as
