@@ -555,6 +555,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(idx 0)
     set(matches)
     foreach (ARG IN LISTS ARGV)
+      # need 'x' to avoid older cmake seeing "COMMAND" "STREQUAL" ""
       if ("x${ARG}" STREQUAL "x")
 	list(APPEND matches ${idx})
       endif ("x${ARG}" STREQUAL "x")
