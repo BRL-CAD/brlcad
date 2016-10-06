@@ -208,7 +208,6 @@ void cad_register_commands(CADApp *app)
     app->register_command(QString("rcodes"), ged_rcodes);
     app->register_command(QString("regdef"), ged_regdef);
     app->register_command(QString("regions"), ged_tables);
-    app->register_command(QString("report"), ged_report);
     app->register_command(QString("rfarb"), ged_rfarb);
     app->register_command(QString("rm"), ged_remove); // to_pass_through_and_refresh_func
     app->register_command(QString("rmap"), ged_rmap);
@@ -244,7 +243,7 @@ void cad_register_commands(CADApp *app)
     app->register_command(QString("size"), ged_size);
     app->register_command(QString("simulate"), ged_simulate); // cmd_ged_simulate_wrapper
     app->register_command(QString("slew"), ged_slew);
-    app->register_command(QString("solid_report"), ged_report);
+    app->register_command(QString("solid_report"), ged_solid_report);
     app->register_command(QString("solids"), ged_tables);
     app->register_command(QString("solids_on_ray"), ged_solids_on_ray);
     app->register_command(QString("summary"), ged_summary);
@@ -275,7 +274,7 @@ void cad_register_commands(CADApp *app)
     app->register_command(QString("whichid"), ged_which);
     app->register_command(QString("who"), ged_who);
     app->register_command(QString("wmater"), ged_wmater);
-    app->register_command(QString("x"), ged_report);
+    app->register_command(QString("x"), ged_solid_report);
     app->register_command(QString("xpush"), ged_xpush);
     app->register_command(QString("ypr"), ged_ypr);
     app->register_command(QString("zap"), ged_zap); // to_pass_through_and_refresh_func
