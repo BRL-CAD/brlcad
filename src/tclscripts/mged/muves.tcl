@@ -728,22 +728,102 @@ proc muves_read_final_results { fr_file } {
     set nviews [llength $muves_views]
     set muves_shot_records(num) [expr $nthreats * $nviews]
 
+    set SV 0
+    set FP 0
+    set AP 0
+    set V 0
+    set muves_shot_records($V,nshots) 0
+    while {![eof $fr_file_cid]} {
+	gets $fr_file_cid line
+
+	# skip comments
+	if {[string range $line 0 0] == "\#"} {
+	    continue
+	}
+	# stop at end
+	if {$line == "END"} {
+	    break
+	}
+
+	# get the label
+	set key [lindex $line 0]
+
+	# skip CS
+	if {$key == "CS:"} {
+	    continue
+	}
+
+	if {$key == "SV:"} {
+	    set muves_shot_records([expr $V - 1],[expr $muves_shot_records([expr $V - 1],nshots) + 1],$SV) [lrange $line 2 end]
+	    incr SV
+	    continue
+	}
+
+	if {$key == "FP:"} {
+	    set muves_shot_records(SR:[expr $V - 1],FP:[expr $muves_shot_records([expr $V - 1],nshots) + 1]) [lrange $line 2 end]
+	    incr muves_shot_records([expr $V - 1],nshots)
+	    incr FP
+	    set SV 0
+	    continue
+	}
+
+	if {$key == "AP:"} {
+	    set muves_shot_records(AP:$AP) [lrange $line 2 end]
+	    incr AP
+	    set SV 0
+	    continue
+	}
+
+	if {$key == "V:"} {
+	    if {$V > 0} {
+puts "View $V"
+#puts "  $AP aim points"
+puts "  $FP fire points"
+		set SV 0
+		set FP 0
+#		set AP 0
+	    }
+
+	    incr V
+	    set muves_shot_records($V,nshots) 0
+	    set muves_shot_records($V,nshots) 0
+	    continue
+	}
+
+
+puts "READ: $key"
+    }
+puts "View $V"
+#puts "  $AP aim points"
+puts "  $FP fire points"
+return
+
     # skip first shot record number
     gets $fr_file_cid line
+puts "read: $line"
 
     for { set i 0 } { $i < $muves_shot_records(num) } { incr i } {
+puts "i=$i shot record"
 	if [eof $fr_file_cid] {
 	    break
 	}
 
 	# record aim point
 	gets $fr_file_cid line
+puts "read: $line"
 	set muves_shot_records(AP:$i) [lrange $line 2 end]
+puts "AP=$muves_shot_records(AP:$i)"
+
+	# skip CS
+	gets $fr_file_cid line
+puts "skip: $line"
 
 	for { set j 1 } {[eof $fr_file_cid] == 0} { incr j } {
 	    gets $fr_file_cid line
+puts "read: $line"
 
 	    set key [lindex $line 0]
+puts "key=$key, j=$j"
 	    if {$key != "FP:"} {
 		# start next shot record or END
 		set muves_shot_records($i,nshots) [expr $j - 1]
@@ -751,6 +831,7 @@ proc muves_read_final_results { fr_file } {
 		if {$key == "V:"} {
 		    # skip next shot record number
 		    gets $fr_file_cid line
+puts "skip: $line"
 		}
 
 		break
@@ -762,6 +843,7 @@ proc muves_read_final_results { fr_file } {
 	    # record state vectors for this shot
 	    for { set k 0 } { $k < $muves_states(num) } { incr k } {
 		gets $fr_file_cid line
+puts "state: $line"
 		set muves_shot_records($i,$j,$k) [lrange $line 2 end]
 	    }
 	}
@@ -895,8 +977,10 @@ proc muves_process_shot_records {} {
 
     # For each shot record "i"
     for { set i 0 } { $i < $muves_shot_records(num) } { incr i } {
+puts "i=$i"
 	# For each state vector "j"
 	for { set j 0 } { $j < $muves_states(num) } { incr j } {
+puts "j=$j"
 	    # Get the number of values in state vector "j"
 	    set nval [lindex $muves_states(nval) $j]
 
@@ -911,6 +995,7 @@ proc muves_process_shot_records {} {
 	    set maxlist {}
 	    set meanlist {}
 
+puts "switching on $muves_states(types)"
 	    switch [lindex $muves_states(types) $j] {
 		lof -
 		pk {
@@ -979,13 +1064,16 @@ proc muves_process_shot_records {} {
 		}
 	    }
 
+puts "turning arrays into lists"
 	    # turn arrays into lists
 	    for { set m 0 } { $m < $nval } { incr m } {
+puts "hello m=$m nval=$nval"
 		lappend minlist $min($m)
 		lappend maxlist $max($m)
+puts "i=$i"
+puts "shot_recs= [array names muves_shot_records]"
 		lappend meanlist [expr $total($m) / $muves_shot_records($i,nshots)]
 	    }
-
 	    lappend muves_states(SR:$i,min) $minlist
 	    lappend muves_states(SR:$i,max) $maxlist
 	    lappend muves_states(SR:$i,mean) $meanlist
