@@ -90,7 +90,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     mirmat[3 + Z*4] += mirror_pt[Z] * mirror_dir[Z];
 
     /* move every vertex */
-    nmg_vertex_tabulate(&table, &nmg->magic);
+    nmg_vertex_tabulate(&table, &nmg->magic, &RTG.rtg_vlfree);
     for (i=0; i<BU_PTBL_LEN(&table); i++) {
 	point_t pt;
 
@@ -103,7 +103,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
 
     bu_ptbl_reset(&table);
 
-    nmg_face_tabulate(&table, &nmg->magic);
+    nmg_face_tabulate(&table, &nmg->magic, &RTG.rtg_vlfree);
     for (i=0; i<BU_PTBL_LEN(&table); i++) {
 	struct face *f;
 
@@ -144,7 +144,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
 	    return 2;
 	}
 
-	if (nmg_calc_face_g(fu)) {
+	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 	    bu_log("ERROR: Unable to calculate NMG faces for mirroring\n");
 	    bu_ptbl_free(&table);
 	    return 3;

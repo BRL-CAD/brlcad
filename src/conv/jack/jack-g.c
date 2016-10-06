@@ -277,7 +277,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 			jfile, i+1);
     }
 
-    nmg_vertex_fuse(&m->magic, &tol);
+    nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
 
     /* Associate the face geometry. */
     for (i = 0, fail = 0; i < face; i++)
@@ -306,11 +306,11 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 	  /* Compute "geometry" for region and shell */
 	  nmg_region_a(r, &tol);
 
-	  nmg_break_e_on_v(&m->magic, &tol);
+	  nmg_break_e_on_v(&m->magic, &RTG.rtg_vlfree, &tol);
 	  empty_model = nmg_kill_zero_length_edgeuses(m);
 
 	  /* Glue edges of outward pointing face uses together. */
-	  if (!empty_model) nmg_edge_fuse(&m->magic, &tol);
+	  if (!empty_model) nmg_edge_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
 	}
     }
 

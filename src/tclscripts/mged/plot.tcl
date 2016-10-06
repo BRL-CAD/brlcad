@@ -19,11 +19,7 @@
 #
 ###
 #
-#			P L O T . T C L
-#
 #	Widget for producing Unix Plot files of MGED's current view.
-#
-#	Author - Robert G. Parker
 #
 
 check_externs "_mged_opendb _mged_pl"

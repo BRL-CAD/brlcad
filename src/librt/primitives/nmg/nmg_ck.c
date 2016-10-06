@@ -1053,7 +1053,7 @@ nmg_ck_eg_verts(const struct edge_g_lseg *eg, const struct bn_tol *tol)
  * returns number of vertices that do not lie on geometry
  */
 size_t
-nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
+nmg_ck_geometry(const struct model *m, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl g_tbl;
     size_t i;
@@ -1064,7 +1064,7 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 
     bu_ptbl_init(&g_tbl, 64, " &g_tbl ");
 
-    nmg_edge_g_tabulate(&g_tbl, &m->magic);
+    nmg_edge_g_tabulate(&g_tbl, &m->magic, vlfree);
 
     for (i=0; i<BU_PTBL_LEN(&g_tbl); i++) {
 	uint32_t *ep;
@@ -1085,7 +1085,7 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 
     bu_ptbl_reset(&g_tbl);
 
-    nmg_face_tabulate(&g_tbl, &m->magic);
+    nmg_face_tabulate(&g_tbl, &m->magic, vlfree);
 
     for (i=0; i<BU_PTBL_LEN(&g_tbl); i++) {
 	struct face *f;
@@ -1632,7 +1632,7 @@ nmg_ck_v_in_fus(uint32_t *vp, void *state, int UNUSED(unused))
 
 
 void
-nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
+nmg_ck_vs_in_region(const struct nmgregion *r, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct model *m;
     struct v_ck_state st;
@@ -1655,7 +1655,7 @@ nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
 
     (void)bu_ptbl_init(&tab, 64, " &tab");
 
-    nmg_visit(&r->l.magic, &handlers, (void *)&st);
+    nmg_visit(&r->l.magic, &handlers, (void *)&st, vlfree);
 
     bu_ptbl_free(&tab);
 

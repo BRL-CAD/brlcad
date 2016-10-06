@@ -904,7 +904,7 @@ visitor(uint32_t *l_p, void *tbl, int UNUSED(unused))
  * Add an element provided by nmg_visit to a bu_ptbl struct.
  */
 HIDDEN void
-build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
+build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl, struct bu_list *vlfree)
 {
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -926,7 +926,7 @@ build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
 
     switch (*l_p) {
 	case NMG_FACEUSE_MAGIC:
-	    nmg_visit(l_p, &htab, (void *)tbl);
+	    nmg_visit(l_p, &htab, (void *)tbl, vlfree);
 	    break;
 	case NMG_EDGEUSE_MAGIC:
 	    eu = eu_p = (struct edgeuse *)l_p;
@@ -1030,7 +1030,7 @@ unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next
 
 
 HIDDEN int
-check_hitstate(struct bu_list *hd, struct ray_data *rd)
+check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
 {
     struct hitmiss *a_hit;
     struct hitmiss *next_hit;
@@ -1093,11 +1093,11 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
 
 	    bu_ptbl_reset(a_tbl);
 	    NMG_CK_HITMISS(a_hit);
-	    build_topo_list((uint32_t *)a_hit->outbound_use, a_tbl);
+	    build_topo_list((uint32_t *)a_hit->outbound_use, a_tbl, vlfree);
 
 	    bu_ptbl_reset(next_tbl);
 	    NMG_CK_HITMISS(next_hit);
-	    build_topo_list((uint32_t *)next_hit->outbound_use, next_tbl);
+	    build_topo_list((uint32_t *)next_hit->outbound_use, next_tbl, vlfree);
 
 
 	    /* If the tables have elements in common,
@@ -1147,7 +1147,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
  * # of segments added to list.
  */
 int
-nmg_ray_segs(struct ray_data *rd)
+nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 {
     struct hitmiss *a_hit;
     static int last_miss=0;
@@ -1183,7 +1183,7 @@ nmg_ray_segs(struct ray_data *rd)
 
     last_miss = 0;
 
-    if (check_hitstate(&rd->rd_hit, rd)) {
+    if (check_hitstate(&rd->rd_hit, rd, vlfree)) {
 	NMG_FREE_HITLIST(&rd->rd_hit, rd->ap);
 	NMG_FREE_HITLIST(&rd->rd_miss, rd->ap);
 	return 0;

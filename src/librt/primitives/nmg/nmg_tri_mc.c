@@ -434,7 +434,7 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	nmg_vertex_gv(vertl[0], edges[vi[0]]);
 	nmg_vertex_gv(vertl[1], edges[vi[1]]);
 	nmg_vertex_gv(vertl[2], edges[vi[2]]);
-	if (nmg_calc_face_g(fu)) {
+	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 	    /* this flips out and spins. */
 	    bu_log("Face calc failed\n");
 	    nmg_kfu(fu);

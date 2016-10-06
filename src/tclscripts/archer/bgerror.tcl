@@ -18,34 +18,16 @@
 # information.
 #
 ###
-#    Filename: bgerror.tcl
-#      Author: Rick Garriques, Jr.
-#        Date: 30-May-2000
-# Description: This file contains the procedures used to override the
-#              standard Tcl/Tk error code. To use it all you need to do
-#              is source it into your main Tcl/Tk file. The following
-#              global variables are used in this code (they could interfer
-#              with other code):
+# This file contains the procedures used to override the standard
+# Tcl/Tk error code. To use it all you need to do is source it into
+# your main Tcl/Tk file. The following global variables are used in
+# this code (they could interfer with other code):
 #
 #                 bgerrorMessage - holds error message displayed in error dialog
 #                 bgerrorLog    - holds stack track error
 #                 bgerrorInfo   - holds user entered information
 #                 bgerrorButton - allows for notification of a button press
 #
-#   Revisions:
-#              -----
-#
-#              Miscellaneous changes, standardized globals, etc.
-#
-#              12 Jun 00
-#              MTB
-#              -----
-#
-#              Changed error text height to from 30 to 20.
-#
-#              25 May 01
-#              MTB
-#              -----
 
 # globals
 set bgerrorMessage ""

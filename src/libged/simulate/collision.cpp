@@ -19,7 +19,7 @@
  */
 /** @file collision.cpp
  *
- * Brief description
+ * Bullet collision algorithm.
  *
  */
 

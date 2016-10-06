@@ -841,6 +841,7 @@ bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_int");
 
+    errno = 0;
     l = strtol(argv[0], &endptr, 0);
 
     if (endptr != NULL && strlen(endptr) > 0) {
@@ -876,6 +877,7 @@ bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_long");
 
+    errno = 0;
     l = strtol(argv[0], &endptr, 0);
 
     if (endptr != NULL && strlen(endptr) > 0) {
@@ -903,6 +905,7 @@ bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_fastf_t");
 
+    errno = 0;
     d = strtod(argv[0], &endptr);
 
     if (endptr != NULL && strlen(endptr) > 0) {

@@ -19,7 +19,7 @@
  */
 /** @file world_object.hpp
  *
- * Brief description
+ * Class for objects within a simulation.
  *
  */
 
@@ -27,6 +27,8 @@
 #ifndef WORLD_OBJECT_H
 #define WORLD_OBJECT_H
 
+
+#include "common.h"
 
 #include "collision.hpp"
 

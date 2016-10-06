@@ -101,11 +101,11 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
 
 
     /* list all vertices in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic);
+    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
 
     /* Get number of vertices */
 
@@ -279,7 +279,7 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 
 	printf("Attempting to process region %s\n", db_path_to_string(pathp));
 	fflush(stdout);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 	if (ret_tree != curtree) {
 	    db_free_tree(curtree, &rt_uniresource);
 	}

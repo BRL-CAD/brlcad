@@ -22,10 +22,12 @@ set(LIBANALYZE_SOURCES
   voxels.c
   )
 
-add_subdirectory(tests)
-
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "${TCL_LIBRARY};libbu;librt")
 set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+  add_subdirectory(tests)
+endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 CMAKEFILES(analyze_private.h find_subtracted_shapes.cpp)
 

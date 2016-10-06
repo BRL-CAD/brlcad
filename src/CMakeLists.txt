@@ -171,6 +171,18 @@ endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 
 CMAKEFILES(README external)
 
+# Add a convenience directory that is only added to the
+# build if it exists.  This directory is ignored by svn,
+# so it can be used for experimentation that needs to be
+# part of the build but the dev doesn't want to accidentally
+# commit.
+if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
+    add_subdirectory(testing)
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
+endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

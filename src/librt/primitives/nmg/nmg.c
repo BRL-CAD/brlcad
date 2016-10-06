@@ -211,10 +211,10 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     rd.magic = NMG_RAY_DATA_MAGIC;
 
     /* intersect the ray with the geometry (sets surfno) */
-    nmg_isect_ray_model(&rd);
+    nmg_isect_ray_model(&rd,&RTG.rtg_vlfree);
 
     /* build the sebgent lists */
-    status = nmg_ray_segs(&rd);
+    status = nmg_ray_segs(&rd,&RTG.rtg_vlfree);
 
     /* free the hitmiss table */
     bu_free((char *)rd.hitmiss, "free nmg geom hit list");
@@ -2787,7 +2787,7 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     if (attr == (char *)NULL) {
 	bu_vls_strcpy(logstr, "nmg");
 	bu_ptbl_init(&verts, 256, "nmg verts");
-	nmg_vertex_tabulate(&verts, &m->magic);
+	nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
 
 	/* first list all the vertices */
 	bu_vls_strcat(logstr, " V {");
@@ -2853,7 +2853,7 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	/* list of vertices */
 
 	bu_ptbl_init(&verts, 256, "nmg verts");
-	nmg_vertex_tabulate(&verts, &m->magic);
+	nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
 	for (i=0; i<BU_PTBL_LEN(&verts); i++) {
 	    v = (struct vertex *) BU_PTBL_GET(&verts, i);
 	    NMG_CK_VERTEX(v);
@@ -3009,7 +3009,7 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
 	    if (fu->orientation != OT_SAME)
 		continue;
-	    nmg_calc_face_g(fu);
+	    nmg_calc_face_g(fu,&RTG.rtg_vlfree);
 	}
     }
 
@@ -3069,7 +3069,7 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
     size_t *npts;
     point_t **tmp_pts;
     plane_t *eqs;
-    nmg_face_tabulate(&nmg_faces, &s->l.magic);
+    nmg_face_tabulate(&nmg_faces, &s->l.magic, &RTG.rtg_vlfree);
     num_faces = BU_PTBL_LEN(&nmg_faces);
     tmp_pts = (point_t **)bu_calloc(num_faces, sizeof(point_t *), "rt_nmg_faces_area: tmp_pts");
     npts = (size_t *)bu_calloc(num_faces, sizeof(size_t), "rt_nmg_faces_area: npts");
@@ -3112,7 +3112,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    struct poly_face *faces;
 
 	    /*get faces of this shell*/
-	    nmg_face_tabulate(&nmg_faces, &s->l.magic);
+	    nmg_face_tabulate(&nmg_faces, &s->l.magic, &RTG.rtg_vlfree);
 	    num_faces = BU_PTBL_LEN(&nmg_faces);
 	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_surf_area: faces");
 
@@ -3153,7 +3153,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
     /*get faces*/
-    nmg_face_tabulate(&nmg_faces, &s->l.magic);
+    nmg_face_tabulate(&nmg_faces, &s->l.magic, &RTG.rtg_vlfree);
     num_faces = BU_PTBL_LEN(&nmg_faces);
     faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_centroid: faces");
 
@@ -3213,7 +3213,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	    struct poly_face *faces;
 
 	    /*get faces of this shell*/
-	    nmg_face_tabulate(&nmg_faces, &s->l.magic);
+	    nmg_face_tabulate(&nmg_faces, &s->l.magic, &RTG.rtg_vlfree);
 	    num_faces = BU_PTBL_LEN(&nmg_faces);
 	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_volume: faces");
 
@@ -3237,6 +3237,67 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
     }
 }
 
+/**
+ * Store an NMG model as a separate .g file, for later examination.
+ * Don't free the model, as the caller may still have uses for it.
+ *
+ * NON-PARALLEL because of rt_uniresource.
+ */
+void
+nmg_stash_model_to_file(const char *filename, const struct model *m, const char *title)
+{
+    struct rt_wdb *fp;
+    struct rt_db_internal intern;
+    struct bu_external ext;
+    int ret;
+    int flags;
+    char *name="error.s";
+
+    bu_log("nmg_stash_model_to_file('%s', %p, %s)\n", filename, (void *)m, title);
+
+    NMG_CK_MODEL(m);
+    nmg_vmodel(m);
+
+    if ((fp = wdb_fopen(filename)) == NULL) {
+	perror(filename);
+	return;
+    }
+
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_NMG;
+    intern.idb_meth = &OBJ[ID_NMG];
+    intern.idb_ptr = (void *)m;
+
+    if (db_version(fp->dbip) < 5) {
+	BU_EXTERNAL_INIT(&ext);
+	ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
+	if (ret < 0) {
+	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
+		   name);
+	    ret = -1;
+	    goto out;
+	}
+	db_wrap_v4_external(&ext, name);
+    } else {
+	if (rt_db_cvt_to_external5(&ext, name, &intern, 1.0, fp->dbip, &rt_uniresource, intern.idb_major_type) < 0) {
+	    bu_log("wdb_export4(%s): solid export failure\n",
+		   name);
+	    ret = -2;
+	    goto out;
+	}
+    }
+    BU_CK_EXTERNAL(&ext);
+
+    flags = db_flags_internal(&intern);
+    ret = wdb_export_external(fp, &ext, name, flags, intern.idb_type);
+out:
+    bu_free_external(&ext);
+    wdb_close(fp);
+
+    bu_log("nmg_stash_model_to_file(): wrote error.s to '%s'\n",
+	   filename);
+}
 
 /*
  * Local Variables:

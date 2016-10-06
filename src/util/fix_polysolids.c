@@ -172,7 +172,7 @@ main(int argc, char *argv[])
 			eu = BU_LIST_NEXT(edgeuse, &eu->l);
 		    }
 
-		    if (nmg_calc_face_g(fu)) {
+		    if (nmg_calc_face_g(fu, &RTG.rtg_vlfree)) {
 			bu_log("\tEliminating degenerate face\n");
 			nmg_kfu(fu);
 		    } else {
@@ -181,9 +181,9 @@ main(int argc, char *argv[])
 		}
 		nmg_rebound(m, &tol);
 		(void)nmg_break_long_edges(s, &tol);
-		(void)nmg_vertex_fuse(&m->magic, &tol);
-		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &tol);
-		nmg_fix_normals(s, &tol);
+		(void)nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
+		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, &tol);
+		nmg_fix_normals(s, &RTG.rtg_vlfree, &tol);
 
 		break;
 	    default:

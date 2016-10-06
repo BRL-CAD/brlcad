@@ -71,8 +71,9 @@ bu_str_true(const char *str)
     }
 
     /* any variant of "0" (e.g., 000) */
+    errno = 0;
     val = strtol(newstr, &endptr, 10);
-    if (val == 0 && errno != EINVAL && *endptr == '\0') {
+    if (val == 0 && !errno && *endptr == '\0') {
 	bu_vls_free(&vls);
 	return 0;
     }
@@ -104,8 +105,9 @@ bu_str_true(const char *str)
     }
 
     /* variant of "1" (e.g., 001) */
+    errno = 0;
     val = strtol(newstr, &endptr, 10);
-    if (val == 1 && errno != EINVAL && *endptr == '\0') {
+    if (val == 1 && !errno && *endptr == '\0') {
 	bu_vls_free(&vls);
 	return 1;
     }

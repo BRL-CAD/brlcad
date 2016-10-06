@@ -113,6 +113,7 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int lo
     return num_faces;
 }
 
+
 // This shouldn't actually be needed if we don't have self intersecting islands...
 int
 triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_cnt, int *loop_starts, int **ffaces, const ON_Brep *UNUSED(brep))
@@ -217,7 +218,6 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 
     return num_faces;
 }
-
 
 
 /* TODO -rename to planar_polygon_tri */
@@ -330,6 +330,7 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
     }
     return num_faces;
 }
+
 
 // A shoal, unlike a planar face, may define it's bounding planar loop using
 // data from multiple face loops.  For this situation we walk the edges, and if
@@ -464,8 +465,8 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 	ON_3dVector v3d = v->Point() - p.Origin();
 	double xcoord = ON_DotProduct(v3d, xaxis);
 	double ycoord = ON_DotProduct(v3d, yaxis);
-	on2dpts.Append(ON_2dPoint(xcoord,ycoord));
-	//bu_log("x,y: %f,%f\n", xcoord, ycoord);
+	on2dpts.Append(ON_2dPoint(xcoord, ycoord));
+	//bu_log("x, y: %f, %f\n", xcoord, ycoord);
     }
 
     if (polygon_verts.empty()) return 0;
@@ -481,14 +482,15 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     return num_faces;
 }
 
+
 /*
  * To determine if a polyhedron is inside or outside, we do a ray-based
  * test.  We will assume that determining the positive/negative status of one
  * face is sufficient - i.e., we will not check for flipped normals on faces.
  *
-   1.  Construct a ray with a point outside the bounding box and
+ 1.  Construct a ray with a point outside the bounding box and
  *     a point on one of the faces (try to make sure the face normal is not
- *     close to perpendicular relative to the constructed ray.)  Intersect this
+ *     close to perpendicular relative to the constructed ray.) Intersect this
  *     ray with all triangles in the BoT (unless BoTs regularly appear that are
  *     *far* larger than expected here, it's not worth building acceleration
  *     structures for a one time, one ray conversion process.
@@ -592,6 +594,7 @@ negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
     return io_state;
 }
 
+
 // Check for a hard-to-spot degenerate nucleus case that can crop up if we
 // have an island with one child.
 //
@@ -652,6 +655,7 @@ arbn_nucleus_degeneracy(struct subbrep_island_data *data, std::set<int> *planar_
     return 0;
 }
 
+
 int
 island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
@@ -660,7 +664,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     int parallel_planes = 0;
     int curr_vert = 0;
     ON_Plane seed_plane;
-    std::map<int,int> vert_map;
+    std::map<int, int> vert_map;
     std::vector<int> all_faces;
     std::set<int> all_used_verts;
     std::set<int>::iterator auv_it;
@@ -706,7 +710,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	const ON_BrepFace *face = &(brep->m_F[(int)*p_it]);
 	ON_Plane p;
 	face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
-	//bu_log("face(%d): %f,%f,%f %f,%f,%f\n", face->m_face_index,  p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
+	//bu_log("face(%d): %f, %f, %f %f, %f, %f\n", face->m_face_index,  p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
 
 	// Determine if we have 1 or a set of loops.
 	for (int i = 0; i < face->LoopCount(); i++) {
@@ -808,7 +812,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
     for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
 	ON_3dPoint vp = brep->m_V[(int)(*auv_it)].Point();
 	BN_VMOVE(data->nucleus->params->csg_verts[curr_vert], vp);
-	vert_map.insert(std::pair<int,int>((int)*auv_it, curr_vert));
+	vert_map.insert(std::pair<int, int>((int)*auv_it, curr_vert));
 	curr_vert++;
     }
     for (unsigned int i = 0; i < all_faces.size(); i++) {
@@ -890,7 +894,7 @@ island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 	data->nucleus->params->planes = (plane_t *)bu_calloc(planes.Count(), sizeof(plane_t), "planes");
 	for (int i = 0; i < planes.Count(); i++) {
 	    ON_Plane p = planes[i];
-	    double d = p.DistanceTo(ON_3dPoint(0,0,0));
+	    double d = p.DistanceTo(ON_3dPoint(0, 0, 0));
 	    data->nucleus->params->planes[i][0] = p.Normal().x;
 	    data->nucleus->params->planes[i][1] = p.Normal().y;
 	    data->nucleus->params->planes[i][2] = p.Normal().z;
@@ -983,6 +987,7 @@ degenerate:
 
     return 1;
 }
+
 
 // Local Variables:
 // tab-width: 8

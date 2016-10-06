@@ -1650,7 +1650,7 @@ namespace eval ArcherCore {
     set rtrans [lindex $rdata 1]
     set obj [file tail $obj]
 
-    foreach item [gedCmd report 0] {
+    foreach item [gedCmd solid_report 0] {
 	if {[lsearch [split $item /] $obj] != -1} {
 	    if { $rmode == $DISPLAY_MODE_HIDDEN } {
 		gedCmd draw -h $item

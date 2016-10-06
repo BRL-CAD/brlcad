@@ -140,7 +140,7 @@ int read_faces(struct model *m, FILE *fgeom)
 
     if (fail) return -1;
 
-    nmg_gluefaces(outfaceuses, nfaces, &tol);
+    nmg_gluefaces(outfaceuses, nfaces, &RTG.rtg_vlfree, &tol);
     nmg_region_a(r, &tol);
 
     bu_free((char *)pts, "points list");

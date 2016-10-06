@@ -163,7 +163,7 @@ static int bot=0;
 	    nmg_vertex_gv(*_v[1], _ep1->pt); \
 	if (!(*_v[2])->vg_p) \
 	    nmg_vertex_gv(*_v[2], _ep2->pt); \
-	if (nmg_calc_face_g(_fu)) { \
+	if (nmg_calc_face_g(_fu,&RTG.rtg_vlfree)) { \
 	    if (debug > 3) \
 		bu_log("Killing degenerate face\n"); \
 	    (void)nmg_kfu(_fu); \
@@ -198,7 +198,7 @@ static int bot=0;
 	    nmg_vertex_gv(*_v[2], _ep2->pt); \
 	if (!(*_v[3])->vg_p) \
 	    nmg_vertex_gv(*_v[3], _ep3->pt); \
-	if (nmg_calc_face_g(_fu)) { \
+	if (nmg_calc_face_g(_fu,&RTG.rtg_vlfree)) { \
 	    if (debug > 3) \
 		bu_log("Killing degenerate face\n"); \
 	    (void)nmg_kfu(_fu); \
@@ -447,7 +447,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
     }
     rd.magic = NMG_RAY_DATA_MAGIC;
 
-    nmg_isect_ray_model(&rd);
+    nmg_isect_ray_model(&rd,&RTG.rtg_vlfree);
 
     if (BU_LIST_IS_EMPTY(&rd.rd_hit))
 	ret = 0;
@@ -690,7 +690,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	    if (fu->orientation != OT_SAME)
 		continue;
 
-	    nmg_calc_face_g(fu);
+	    nmg_calc_face_g(fu,&RTG.rtg_vlfree);
 	    f = fu->f_p;
 	    nmg_face_bb(f, &tol);
 
@@ -735,7 +735,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	    if (fu->orientation != OT_SAME)
 		continue;
 
-	    nmg_calc_face_g(fu);
+	    nmg_calc_face_g(fu,&RTG.rtg_vlfree);
 	    f = fu->f_p;
 	    nmg_face_bb(f, &tol);
 
@@ -954,7 +954,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		if (vu1_cut->v_p == eu1->eumate_p->vu_p->v_p)
 		    eu1 = BU_LIST_PNEXT_CIRC(edgeuse, &eu1->l);
 		/* cut loop */
-		new_lu = nmg_cut_loop(vu1_cut, vu2_cut);
+		new_lu = nmg_cut_loop(vu1_cut, vu2_cut, &RTG.rtg_vlfree);
 		lu->orientation = OT_SAME;
 		lu->lumate_p->orientation = OT_SAME;
 		new_lu->orientation = OT_SAME;
@@ -988,9 +988,9 @@ shrink_wrap(struct shell *s)
     bu_ptbl_init(&verts, 128, "verts");
     Split_side_faces(s, &verts);
 
-    nmg_triangulate_shell(s, &tol);
+    nmg_triangulate_shell(s, &RTG.rtg_vlfree, &tol);
 
-    nmg_split_loops_into_faces(&s->l.magic, &tol);
+    nmg_split_loops_into_faces(&s->l.magic, &RTG.rtg_vlfree, &tol);
 
     sd.s = s;
     sd.manifolds = nmg_manifolds(m);
@@ -1182,8 +1182,8 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     }
     if (!new_vu2)
 	bu_exit(1, "ERROR: Cannot find VU in lu2\n");
-    new_lu1 = nmg_cut_loop(new_vu1, vu1);
-    new_lu2 = nmg_cut_loop(new_vu2, vu2);
+    new_lu1 = nmg_cut_loop(new_vu1, vu1, &RTG.rtg_vlfree);
+    new_lu2 = nmg_cut_loop(new_vu2, vu2, &RTG.rtg_vlfree);
     ref_data->lu1->orientation = OT_SAME;
     ref_data->lu2->orientation = OT_SAME;
     new_lu1->orientation = OT_SAME;
@@ -1226,8 +1226,8 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	}
     }
 
-    (void)nmg_split_loops_into_faces(&ref_data->fu1->l.magic, &tol);
-    (void)nmg_split_loops_into_faces(&ref_data->fu2->l.magic, &tol);
+    (void)nmg_split_loops_into_faces(&ref_data->fu1->l.magic, &RTG.rtg_vlfree, &tol);
+    (void)nmg_split_loops_into_faces(&ref_data->fu2->l.magic, &RTG.rtg_vlfree, &tol);
 
     for (BU_LIST_FOR(vu, vertexuse, &new_vu->v_p->vu_hd)) {
 	struct faceuse *fu;
@@ -1246,7 +1246,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
 	bu_ptbl_ins(ref_data->new_edges, (long *)eu->e_p);
 
-	nmg_calc_face_g(fu);
+	nmg_calc_face_g(fu,&RTG.rtg_vlfree);
     }
 
     return 1;
@@ -1269,7 +1269,7 @@ refine_edges(struct shell *s)
 
     m = nmg_find_model(&s->l.magic);
 
-    nmg_edge_tabulate(&edges_1, &s->l.magic);
+    nmg_edge_tabulate(&edges_1, &s->l.magic, &RTG.rtg_vlfree);
     cur = &edges_1;
     bu_ptbl_init(&edges_2, 64, "edges_2");
     next = &edges_2;
@@ -1557,7 +1557,7 @@ Make_shell(void)
 
     if (decimation_tol > 0.0) {
 	bu_log("%d edges eliminated by decimation to tolerance of %gmm\n",
-	       nmg_edge_collapse(m, &tol, decimation_tol, min_angle), decimation_tol);
+	       nmg_edge_collapse(m, &tol, decimation_tol, min_angle, &RTG.rtg_vlfree), decimation_tol);
     }
 
     if (do_extra_rays || edge_tol > 0.0 || decimation_tol > 0.0)

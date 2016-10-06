@@ -161,11 +161,11 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 	nmg_face_g( fu, pl );
 
     if (!NEAR_ZERO(MAGNITUDE(Ext), 0.001))
-	nmg_extrude_face(BU_LIST_FIRST(faceuse, &s->fu_hd), Ext, &tol);
+	nmg_extrude_face(BU_LIST_FIRST(faceuse, &s->fu_hd), Ext, &RTG.rtg_vlfree, &tol);
 
     nmg_region_a(r, &tol);	/* Calculate geometry for region and shell. */
 
-    nmg_fix_normals( s, &tol ); /* insure that faces have outward pointing normals */
+    nmg_fix_normals( s, &RTG.rtg_vlfree, &tol ); /* insure that faces have outward pointing normals */
 
     create_brlcad_db(fpout, m, reg_name, grp_name);
 

@@ -1311,7 +1311,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Front face topology.  Verts are considered to go CCW */
     outfaceuses[0] = nmg_cface(s, vfront, n);
 
-    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic);
+    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic, &RTG.rtg_vlfree);
 
     /* Back face topology.  Verts must go in opposite dir (CW) */
     outfaceuses[1] = nmg_cface(s, vtemp, n);
@@ -1320,7 +1320,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	vback[i] = vtemp[n - 1 - i];
     }
 
-    (void)nmg_mark_edges_real(&outfaceuses[1]->l.magic);
+    (void)nmg_mark_edges_real(&outfaceuses[1]->l.magic, &RTG.rtg_vlfree);
 
     /* Duplicate [0] as [n] to handle loop end condition, below */
     vfront[n] = vfront[0];
@@ -1338,7 +1338,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	outfaceuses[2 + i] = nmg_cface(s, vertlist, 4);
     }
 
-    (void)nmg_mark_edges_real(&outfaceuses[n + 1]->l.magic);
+    (void)nmg_mark_edges_real(&outfaceuses[n + 1]->l.magic,&RTG.rtg_vlfree);
 
     for (i = 0; i < n; i++) {
 	NMG_CK_VERTEX(vfront[i]);
@@ -1414,7 +1414,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, n + 2, tol);
+    nmg_gluefaces(outfaceuses, n + 2, &RTG.rtg_vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);

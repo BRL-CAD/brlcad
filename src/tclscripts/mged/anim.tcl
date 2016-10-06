@@ -18,11 +18,11 @@
 # information.
 #
 ###
-# ANIM.TCL - AnimMate
+#
 # Tcl/Tk Gui Interface for Creating and Displaying Animation Scripts within
-#  MGED.
-# Author: Carl Nuzman
-#Sections:
+# MGED.
+#
+# Sections:
 #	Create main window
 #	Curve Editor
 #	Table Editor

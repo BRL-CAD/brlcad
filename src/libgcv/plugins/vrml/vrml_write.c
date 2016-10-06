@@ -789,14 +789,14 @@ nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, con
     }
 
     if (!is_light) {
-	nmg_triangulate_model(m, tol2);
+	nmg_triangulate_model(m, &RTG.rtg_vlfree, tol2);
 	fprintf(pstate->fp_out, "\t\t\t}\n");
 	fprintf(pstate->fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
 	fprintf(pstate->fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
-    nmg_vertex_tabulate(&verts, &m->magic);
+    nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
     if (!is_light) {
 	fprintf(pstate->fp_out, "\t\t\t\t\tpoint [");
     } else {
@@ -1055,7 +1055,7 @@ vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree,
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);

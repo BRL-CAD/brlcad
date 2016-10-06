@@ -754,7 +754,7 @@ struct nmg_visit_handlers {
     void (*vis_shell_a)(uint32_t *, void *, int);
 
     void (*bef_faceuse)(uint32_t *, void *, int);
-    void (*aft_faceuse)(uint32_t *, void *, int);
+    void (*aft_faceuse)(uint32_t *, void *, int, struct bu_list *);
 
     void (*vis_face)(uint32_t *, void *, int);
     void (*vis_face_g)(uint32_t *, void *, int);

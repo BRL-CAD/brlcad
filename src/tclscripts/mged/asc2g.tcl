@@ -19,11 +19,7 @@
 #
 ###
 #
-#			A S C 2 G . T C L
-#
 #	Tool for importing an ascii database to the current database
-#
-#	Author - Christopher Sean Morrison
 #
 
 proc init_asc2g { id } {

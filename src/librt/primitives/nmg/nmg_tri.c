@@ -139,7 +139,7 @@ find_pt2d(struct bu_list *tbl2d, struct vertexuse *vu)
 
 
 static void
-nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
+nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d, struct bu_list *vlfree)
 {
     static int file_number=0;
     FILE *fp;
@@ -174,7 +174,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 	      fu->f_p->max_pt[1]+1.0,
 	      fu->f_p->max_pt[2]+1.0);
 
-    nmg_pl_fu(fp, fu, b, 255, 255, 255);
+    nmg_pl_fu(fp, fu, b, 255, 255, 255, vlfree);
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
@@ -1053,7 +1053,7 @@ pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2,
 }
 
 
-static void join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol);
+static void join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, struct bu_list *vlfree, const struct bn_tol *tol);
 
 /**
  *
@@ -1063,7 +1063,7 @@ static void join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2
  *
  */
 static struct pt2d *
-cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol, int void_ok)
+cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol, int void_ok, struct bu_list *vlfree)
 {
     struct loopuse *new_lu;
     struct loopuse *old_lu;
@@ -1092,7 +1092,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	if (void_ok) {
 	    if (RTG.NMG_debug)
 		bu_log("cut_mapped_loop() parent loops are not the same %s %d, trying join\n", __FILE__, __LINE__);
-	    join_mapped_loops(tbl2d, p1, p2, color, tol);
+	    join_mapped_loops(tbl2d, p1, p2, color, vlfree, tol);
 	    return (struct pt2d *)NULL;
 	} else {
 	    char buf[80];
@@ -1142,7 +1142,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 
     old_lu = p1->vu_p->up.eu_p->up.lu_p;
     NMG_CK_LOOPUSE(old_lu);
-    new_lu = nmg_cut_loop(p1->vu_p, p2->vu_p);
+    new_lu = nmg_cut_loop(p1->vu_p, p2->vu_p, vlfree);
     NMG_CK_LOOPUSE(new_lu);
     NMG_CK_LOOP(new_lu->l_p);
     nmg_loop_g(new_lu->l_p, tol);
@@ -1246,7 +1246,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
  *
  */
 static void
-join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol)
+join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct vertexuse *vu, *vu1, *vu2;
     struct edgeuse *eu = (struct edgeuse *)NULL;
@@ -1321,7 +1321,7 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
 	    bu_log("join_mapped_loops(): parent loops are the same %s %d\n",
 		   __FILE__, __LINE__);
 	}
-	(void)cut_mapped_loop(tbl2d, p1, p2, color, tol, 1);
+	(void)cut_mapped_loop(tbl2d, p1, p2, color, tol, 1, vlfree);
 	return;
     }
 
@@ -1785,7 +1785,7 @@ nmg_isect_potcut_fu(struct edgeuse *eu1, struct edgeuse *eu2, struct faceuse *fu
 
 
 void
-nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct bn_tol *tol)
+nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     vect_t N;
     int hit;
@@ -1840,7 +1840,7 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
 
 			    NMG_CK_PT2D(pt2d_cut_from);
 			    NMG_CK_PT2D(pt2d_cut_to);
-			    join_mapped_loops(tbl2d, pt2d_cut_from, pt2d_cut_to, cut_color, tol);
+			    join_mapped_loops(tbl2d, pt2d_cut_from, pt2d_cut_to, cut_color, vlfree, tol);
 			    fast_exit = 1;
 			    break;
 			}
@@ -1897,7 +1897,7 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
 
 				    NMG_CK_PT2D(pt2d_cut_from);
 				    NMG_CK_PT2D(pt2d_cut_to);
-				    join_mapped_loops(tbl2d, pt2d_cut_from, pt2d_cut_to, cut_color, tol);
+				    join_mapped_loops(tbl2d, pt2d_cut_from, pt2d_cut_to, cut_color, vlfree, tol);
 
 				    if (fast_exit) {
 					break; /* Break from eu2 */
@@ -2347,7 +2347,7 @@ validate_tbl2d(const char *str, struct bu_list *tbl2d, struct faceuse *fu)
  * Given a unimonotone loopuse, triangulate it into multiple loopuses
  */
 HIDDEN void
-cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *tol)
+cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int verts = 0;
     int excess_loop_count = 0;
@@ -2433,7 +2433,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	if (loop_count > excess_loop_count) {
 	    if (RTG.NMG_debug & DEBUG_TRI) {
 		eu = BU_LIST_FIRST(edgeuse, &(current->vu_p->up.eu_p->up.lu_p->down_hd));
-		nmg_plot_lu_around_eu("cut_unimonotone_infinite_loopuse", eu, tol);
+		nmg_plot_lu_around_eu("cut_unimonotone_infinite_loopuse", eu, vlfree, tol);
 		m = nmg_find_model(current->vu_p->up.eu_p->up.lu_p->up.magic_p);
 		nmg_stash_model_to_file("cut_unimonotone_infinite_model.g", m, "cut_unimonotone_infinite_model");
 		nmg_pr_lu(current->vu_p->up.eu_p->up.lu_p, "cut_unimonotone_loopuse");
@@ -2590,7 +2590,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	    next_orig = next;
 
 	    /* cut a triangular piece off of the loop to create a new loop */
-	    current = cut_mapped_loop(tbl2d, next, prev, cut_color, tol, 0);
+	    current = cut_mapped_loop(tbl2d, next, prev, cut_color, tol, 0, vlfree);
 
 	    prev = prev_orig;
 	    next = next_orig;
@@ -2761,7 +2761,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	    NMG_CK_LOOPUSE(lu);
 
 	    if (RTG.NMG_debug & DEBUG_TRI) {
-		nmg_tri_plfu(lu->up.fu_p, tbl2d);
+		nmg_tri_plfu(lu->up.fu_p, tbl2d, vlfree);
 	    }
 
 	    if (current->vu_p == first->vu_p) {
@@ -3128,7 +3128,7 @@ nmg_classify_lu_lu_new(const struct loopuse *lu1, const struct loopuse *lu2, con
 
 
 void
-insert_above(struct loopuse *lu, struct loopuse_tree_node *node, const struct bn_tol *tol)
+insert_above(struct loopuse *lu, struct loopuse_tree_node *node, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct loopuse_tree_node *new_node, *node_tmp, *node_idx;
     int done = 0;
@@ -3165,7 +3165,7 @@ insert_above(struct loopuse *lu, struct loopuse_tree_node *node, const struct bn
 	    done = 1;
 	} else {
 	    NMG_CK_LOOPUSE(node_idx->lu);
-	    result = nmg_classify_lu_lu(node_idx->lu, lu, tol);
+	    result = nmg_classify_lu_lu(node_idx->lu, lu, vlfree, tol);
 
 	    if (result == NMG_CLASS_AinB) {
 		node_tmp = BU_LIST_PNEXT(loopuse_tree_node, node_idx);
@@ -3187,7 +3187,7 @@ insert_above(struct loopuse *lu, struct loopuse_tree_node *node, const struct bn
 
 void
 insert_node(struct loopuse *lu, struct bu_list *head,
-	    struct loopuse_tree_node *parent, const struct bn_tol *tol)
+	    struct loopuse_tree_node *parent, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     /* when 'insert_node' is first called, the level must be '0' */
     int found = 0;
@@ -3208,7 +3208,7 @@ insert_node(struct loopuse *lu, struct bu_list *head,
 	    orientation_tmp_b = node->lu->orientation;
 	    lu->orientation = 1;
 	    node->lu->orientation = 1;
-	    result1 = nmg_classify_lu_lu(lu, node->lu, tol);
+	    result1 = nmg_classify_lu_lu(lu, node->lu, vlfree, tol);
 	    lu->orientation = orientation_tmp_a;
 	    node->lu->orientation = orientation_tmp_b;
 	    bu_log("---- lu %p %d vs lu %p %d result1 = %d\n",
@@ -3223,7 +3223,7 @@ insert_node(struct loopuse *lu, struct bu_list *head,
 	    bu_log("NEW FUNCTION ---- lu %p lu-orient = %d vs lu %p lu-orient = %d result_tmp = %d\n",
 		   (void *)node->lu, node->lu->orientation,
 		   (void *)lu, lu->orientation, result_tmp);
-	    result2 = nmg_classify_lu_lu(node->lu, lu, tol);
+	    result2 = nmg_classify_lu_lu(node->lu, lu, vlfree, tol);
 
 	    node->lu->orientation = orientation_tmp_a;
 	    lu->orientation = orientation_tmp_b;
@@ -3239,7 +3239,7 @@ insert_node(struct loopuse *lu, struct bu_list *head,
 		/* insert new node below current node */
 		found = 1;
 		bu_log("lu %p in lu %p\n", (void *)lu, (void *)node->lu);
-		insert_node(lu, &(node->children_hd), parent, tol);
+		insert_node(lu, &(node->children_hd), parent, vlfree, tol);
 		break;
 	    }
 	    if (result2 == NMG_CLASS_AinB) {
@@ -3283,7 +3283,7 @@ insert_node(struct loopuse *lu, struct bu_list *head,
 
 
 void
-nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, const struct bn_tol *tol)
+nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, struct bu_list *vlfree, const struct bn_tol *tol)
 {
 
     struct loopuse *lu;
@@ -3315,7 +3315,7 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, cons
 	       loopuse_cnt, (void *)fu, (void *)lu);
 	bu_log("nmg_build_loopuse_tree(): root child ptr = %p root ptr = %p\n",
 	       (void *)&((*root)->children_hd), (void *)*root);
-	insert_node(lu, &((*root)->children_hd), *root, tol);
+	insert_node(lu, &((*root)->children_hd), *root, vlfree, tol);
     }
 }
 
@@ -3324,7 +3324,7 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, cons
  *
  */
 int
-nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
+nmg_triangulate_fu(struct faceuse *fu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int ccw_result;
     int vert_count = 0;
@@ -3434,7 +3434,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
      * loopuse with outer loopuse so the inner loopuse becomes part
      * of the outer loopuse
      */
-    nmg_triangulate_rm_holes(fu, tbl2d, tol);
+    nmg_triangulate_rm_holes(fu, tbl2d, vlfree, tol);
 
     if (RTG.NMG_debug & DEBUG_TRI) {
 	validate_tbl2d("after nmg_triangulate_rm_holes", tbl2d, fu);
@@ -3471,7 +3471,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 			nmg_set_lu_orientation(lu, 0);
 		    }
 		    /* ear clip loopuse */
-		    cut_unimonotone(tbl2d, lu, tol);
+		    cut_unimonotone(tbl2d, lu, vlfree, tol);
 		    cut = 1;
 		} else if (ccw_result == -1) {
 		    /* true when loopuse rotation is cw or unknown */
@@ -3656,7 +3656,7 @@ triangulate:
 	    bu_log("\tpt2d %26.20e %26.20e\n", point->coord[0], point->coord[1]);
 	}
 
-	nmg_tri_plfu(fu, tbl2d);
+	nmg_tri_plfu(fu, tbl2d, vlfree);
 	nmg_plot_flat_face(fu, tbl2d);
 	bu_log("Face plotted\n\tmaking trapezoids...\n");
     }
@@ -3738,7 +3738,7 @@ triangulate:
 	nmg_lu_reorient(lu);
 
     if (RTG.NMG_debug & DEBUG_TRI)
-	nmg_tri_plfu(fu, tbl2d);
+	nmg_tri_plfu(fu, tbl2d, vlfree);
 
     while (BU_LIST_WHILE(tp, trap, &tlist)) {
 	BU_LIST_DEQUEUE(&tp->l);
@@ -3760,7 +3760,7 @@ triangulate:
 
 
 void
-nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
+nmg_triangulate_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct faceuse *fu, *fu_next;
 
@@ -3771,8 +3771,8 @@ nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
 	bu_log("nmg_triangulate_shell(): Triangulating NMG shell.\n");
     }
 
-    (void)nmg_edge_g_fuse(&s->l.magic, tol);
-    (void)nmg_unbreak_region_edges(&s->l.magic);
+    (void)nmg_edge_g_fuse(&s->l.magic, vlfree, tol);
+    (void)nmg_unbreak_region_edges(&s->l.magic, vlfree);
 
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
     while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
@@ -3796,7 +3796,7 @@ nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
 		/* sanity check */
 		bu_bomb("nmg_triangulate_shell(): Invalid faceuse orientation. (2)\n");
 	    }
-	    if (nmg_triangulate_fu(fu, tol)) {
+	    if (nmg_triangulate_fu(fu, vlfree, tol)) {
 		/* true when faceuse is empty */
 		if (nmg_kfu(fu)) {
 		    bu_bomb("nmg_triangulate_shell(): Shell contains no faceuse.\n");
@@ -3815,7 +3815,7 @@ nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
 
 
 void
-nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
+nmg_triangulate_model(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct nmgregion *r;
     struct shell *s;
@@ -3830,7 +3830,7 @@ nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	NMG_CK_REGION(r);
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    nmg_triangulate_shell(s, tol);
+	    nmg_triangulate_shell(s, vlfree, tol);
 	}
     }
 

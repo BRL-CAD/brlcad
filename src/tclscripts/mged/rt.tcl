@@ -19,11 +19,7 @@
 #
 ###
 #
-#                        R T . T C L
-#
 #	Widget for raytracing MGED's current view.
-#
-#	Author - Robert G. Parker
 #
 
 check_externs "_mged_opendb _mged_rt"

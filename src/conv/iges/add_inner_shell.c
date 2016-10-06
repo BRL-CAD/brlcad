@@ -62,7 +62,7 @@ Add_inner_shell(struct nmgregion *r, int entityno)
 	    face_count++;
     }
 
-    nmg_gluefaces(fu, face_count, &tol);
+    nmg_gluefaces(fu, face_count, &RTG.rtg_vlfree, &tol);
 
     bu_free((char *)fu, "Add_inner_shell: faceuse list");
     bu_free((char *)face_de, "Add_inner_shell: face DE's");

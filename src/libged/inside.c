@@ -326,14 +326,14 @@ arbin(struct ged *gedp,
 	 * This does all the vertices
 	 */
 	bu_ptbl_init(&vert_tab, 64, "vert_tab");
-	nmg_vertex_tabulate(&vert_tab, &m->magic);
+	nmg_vertex_tabulate(&vert_tab, &m->magic, &RTG.rtg_vlfree);
 	for (i = 0; i < BU_PTBL_LEN(&vert_tab); i++) {
 	    struct vertex *v;
 
 	    v = (struct vertex *)BU_PTBL_GET(&vert_tab, i);
 	    NMG_CK_VERTEX(v);
 
-	    if (nmg_in_vert(v, 0, &gedp->ged_wdbp->wdb_tol)) {
+	    if (nmg_in_vert(v, 0, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol)) {
 		bu_vls_printf(gedp->ged_result_str, "Could not find coordinates for inside arb7\n");
 		nmg_km(m);
 		bu_ptbl_free(&vert_tab);
@@ -345,13 +345,13 @@ arbin(struct ged *gedp,
 	/* rebound model */
 	nmg_rebound(m, &gedp->ged_wdbp->wdb_tol);
 
-	nmg_extrude_cleanup(s, 0, &gedp->ged_wdbp->wdb_tol);
+	nmg_extrude_cleanup(s, 0, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 
 	/* free old ip pointer */
 	rt_db_free_internal(ip);
 
 	/* convert the NMG to a BOT */
-	bot = (struct rt_bot_internal *)nmg_bot(s, &gedp->ged_wdbp->wdb_tol);
+	bot = (struct rt_bot_internal *)nmg_bot(s, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 	nmg_km(m);
 
 	/* put new solid in "ip" */
@@ -870,9 +870,9 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 
 	    next_s = BU_LIST_PNEXT(shell, &s->l);
 
-	    nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 1);
+	    nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 1, &RTG.rtg_vlfree);
 	    if (!nmg_kill_cracks(s))
-		(void)nmg_extrude_shell(s, thick, 0, 0, &gedp->ged_wdbp->wdb_tol);
+		(void)nmg_extrude_shell(s, thick, 0, 0, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 
 	    s = next_s;
 	}
