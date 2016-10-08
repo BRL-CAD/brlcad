@@ -18,7 +18,7 @@ endif(CPP_DLL_DEFINES)
 # NOTE: Building "GUI" doesn't matter except on Windows, but on Windows archer
 # currently works only in graphical mode - might as well behave "nicely" there.
 # If/when we add MGED's ability to work in "classic" mode, Archer will have
-# to be built as a non-GUI application (or we'll have to build too executables)
+# to be built as a non-GUI application (or we'll have to build two executables)
 if(BRLCAD_ENABLE_TK)
   BRLCAD_ADDEXEC(archer archer.c "${archer_libs}" GUI)
   add_dependencies(archer archer_launch_tcl_cp)

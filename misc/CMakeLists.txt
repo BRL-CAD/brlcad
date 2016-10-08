@@ -59,13 +59,8 @@ endif(DOXYGEN_FOUND)
 set(misc_ignore_files
   ${misc_ignore_files}
   Bullet_Box_Chain_Demo.cpp
-  clang-static-analyzer-run.sh
   CMake
   Description.txt
-  profont/LICENSE
-  profont/profont-IIx-charmap.png
-  profont/profont_IIx_readme.pdf
-  profont/readme.txt
   Makefile.defs
   archlinux
   astyle.opt
@@ -73,6 +68,7 @@ set(misc_ignore_files
   batch-indent-region.el
   brlcad-config.in
   brlcad.spec.in
+  clang-static-analyzer-run.sh
   d-bindings
   debian
   flawfinder
@@ -82,10 +78,14 @@ set(misc_ignore_files
   mime_cad.types
   nsis
   osl_shaders
-  wix
+  profont/LICENSE
+  profont/profont-IIx-charmap.png
+  profont/profont_IIx_readme.pdf
+  profont/readme.txt
   svn2git
   uncpowerplant2g.sh
   win32-msvc
+  wix
   )
 CMAKEFILES(${misc_ignore_files})
 
