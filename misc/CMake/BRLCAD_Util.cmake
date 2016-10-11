@@ -238,7 +238,7 @@ endfunction(SRCS_LANG)
 #---------------------------------------------------------------------------
 # Add dependencies to a target, but only if they are defined as targets in
 # CMake
-macro(ADD_TARGET_DEPS tname)
+function(ADD_TARGET_DEPS tname)
   if(TARGET ${tname})
     foreach(target ${ARGN})
       if(TARGET ${target})
@@ -246,7 +246,7 @@ macro(ADD_TARGET_DEPS tname)
       endif(TARGET ${target})
     endforeach(target ${ARGN})
   endif(TARGET ${tname})
-endmacro(ADD_TARGET_DEPS tname)
+endfunction(ADD_TARGET_DEPS tname)
 
 # Local Variables:
 # tab-width: 8
