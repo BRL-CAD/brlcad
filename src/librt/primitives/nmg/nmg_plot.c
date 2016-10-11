@@ -2289,7 +2289,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	n.order = 2;
 	n.l.magic = NMG_EDGE_G_CNURB_MAGIC;
 	n.c_size = 2;
-	rt_nurb_gen_knot_vector(&n.k, n.order, 0.0, 1.0, (struct resource *)NULL);
+	nmg_nurb_gen_knot_vector(&n.k, n.order, 0.0, 1.0, (struct resource *)NULL);
 	n.pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT);
 	n.ctl_points = (fastf_t *)bu_malloc(
 	    sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(n.pt_type) *
@@ -2330,7 +2330,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	if (coords != 2 && !RT_NURB_IS_PT_RATIONAL(c->pt_type)) bu_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
 	s = fu->f_p->g.snurb_p;
 
-	/* This section uses nmg_nurb_c_eval(), but rt_nurb_c_refine is likely faster.
+	/* This section uses nmg_nurb_c_eval(), but nmg_nurb_c_refine is likely faster.
 	 * XXXX Need a way to selectively and recursively refine curve to avoid
 	 * feeding nmg_nurb_s_eval() parameters outside domain of surface.
 	 */

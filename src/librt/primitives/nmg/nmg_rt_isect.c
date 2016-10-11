@@ -1905,7 +1905,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	    if (RTG.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("isect_ray_snurb_face: using planes (%g %g %g %g) (%g %g %g %g)\n",
 		       V4ARGS(pl1), V4ARGS(pl2));
-	    (void)rt_nurb_s_bound(srf, srf_min, srf_max);
+	    (void)nmg_nurb_s_bound(srf, srf_min, srf_max);
 	    if (!rt_in_rpp(rd->rp, rd->rd_invdir, srf_min, srf_max)) {
 		nmg_nurb_free_snurb(srf, rd->ap->a_resource);
 		continue;

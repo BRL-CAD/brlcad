@@ -37,7 +37,7 @@
 
 
 void
-rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t u, fastf_t v)
+nmg_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t u, fastf_t v)
 {
     struct face_g_snurb * us, *vs, * uus, * vvs, *uvs;
     fastf_t ue[4], ve[4], uue[4], vve[4], uve[4], se[4];
@@ -50,11 +50,11 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
     vect_t norm;
     int i;
 
-    us = rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-    vs = rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
-    uus = rt_nurb_s_diff(us, RT_NURB_SPLIT_ROW);
-    vvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
-    uvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
+    us = nmg_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+    vs = nmg_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+    uus = nmg_nurb_s_diff(us, RT_NURB_SPLIT_ROW);
+    vvs = nmg_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
+    uvs = nmg_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
 
     nmg_nurb_s_eval(srf, u, v, se);
     nmg_nurb_s_eval(us, u, v, ue);
@@ -131,7 +131,7 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 
     if (fabs(E*G - F*F) < 0.0001) {
 	/* XXX */
-	bu_log("rt_nurb_curvature: first fundamental form is singular E = %g F= %g G = %g\n",
+	bu_log("nmg_nurb_curvature: first fundamental form is singular E = %g F= %g G = %g\n",
 	       E, F, G);
 	bn_vec_ortho(cvp->crv_pdir, norm);	/* sanity */
 	return;

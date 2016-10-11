@@ -76,7 +76,7 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
 	srf->u.knots[ki] = srf->v.knots[ki] = cur_kv;
     }
 
-    rt_nurb_pr_kv(&srf->u);
+    nmg_nurb_pr_kv(&srf->u);
 
     /*
      * The control mesh is stored in row-major order.

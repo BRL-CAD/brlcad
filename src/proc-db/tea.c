@@ -68,10 +68,10 @@ dump_patch(struct face_g_snurb **surfp, pt patch)
      */
 
     bu_free((char *)b_patch->u.knots, "dumping u knots I'm about to realloc");
-    rt_nurb_kvknot(&b_patch->u, 4, 0.0, 1.0, 0, &rt_uniresource);
+    nmg_nurb_kvknot(&b_patch->u, 4, 0.0, 1.0, 0, &rt_uniresource);
 
     bu_free((char *)b_patch->v.knots, "dumping v_kv knots I'm about to realloc");
-    rt_nurb_kvknot(&b_patch->v, 4, 0.0, 1.0, 0, &rt_uniresource);
+    nmg_nurb_kvknot(&b_patch->v, 4, 0.0, 1.0, 0, &rt_uniresource);
 
     /* Copy the control points */
 

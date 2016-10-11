@@ -126,7 +126,7 @@ nmg_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 
 	nmg_nurb_s_eval(srf, p, v, ue);
 
-	vsrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	vsrf = (struct face_g_snurb *) nmg_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
 
 	nmg_nurb_s_eval(vsrf, u, v, ve);
 
@@ -180,7 +180,7 @@ nmg_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 
 	nmg_nurb_s_eval(srf, u, p, ve);
 
-	usrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+	usrf = (struct face_g_snurb *) nmg_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
 
 	nmg_nurb_s_eval(usrf, u, v, ue);
 
@@ -220,8 +220,8 @@ nmg_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
     /* Case Non Rational (order > 2, order > 2) */
     if (!RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 
-	usrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-	vsrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	usrf = (struct face_g_snurb *) nmg_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+	vsrf = (struct face_g_snurb *) nmg_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
 
 	nmg_nurb_s_eval(usrf, u, v, ue);
 	nmg_nurb_s_eval(vsrf, u, v, ve);
@@ -242,8 +242,8 @@ nmg_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 
 	nmg_nurb_s_eval(srf, u, v, se);
 
-	usrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-	vsrf = (struct face_g_snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	usrf = (struct face_g_snurb *) nmg_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+	vsrf = (struct face_g_snurb *) nmg_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
 
 	nmg_nurb_s_eval(usrf, u, v, ue);
 

@@ -39,7 +39,7 @@
 void rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax);
 
 struct face_g_snurb *
-rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, struct resource *res)
+nmg_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, struct resource *res)
 {
 
     register struct face_g_snurb *psrf;
@@ -49,7 +49,7 @@ rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pl
     int i;
 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	bu_log("rt_nurb_project_srf: projecting surface, planes = (%g %g %g %g) (%g %g %g %g)\n",
+	bu_log("nmg_nurb_project_srf: projecting surface, planes = (%g %g %g %g) (%g %g %g %g)\n",
 	       V4ARGS(plane1), V4ARGS(plane2));
 
     rational = RT_NURB_IS_PT_RATIONAL(srf->pt_type);
@@ -128,7 +128,7 @@ struct internal_convex_hull {
 #endif
 
 void
-rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *max)
+nmg_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *max)
 {
     struct internal_convex_hull ch[20]; /* max order is 10 */
     register fastf_t * mp1;
@@ -281,7 +281,7 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
 
 
 struct face_g_snurb *
-rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1, fastf_t param2, struct resource *res)
+nmg_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1, fastf_t param2, struct resource *res)
 {
     register int i;
     struct face_g_snurb *region;
@@ -343,7 +343,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 
     /* project the surface to a 2 dimensional problem */
     /* NOTE that this gives a single snurb back, NOT a list */
-    psrf = rt_nurb_project_srf(srf, plane2, plane1, res);
+    psrf = nmg_nurb_project_srf(srf, plane2, plane1, res);
     psrf->dir = 1;
     BU_LIST_APPEND(plist, &psrf->l);
 
@@ -383,7 +383,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 		continue;
 	    }
 
-	    rt_nurb_clip_srf(psrf, dir, &smin, &smax);
+	    nmg_nurb_clip_srf(psrf, dir, &smin, &smax);
 
 	    if ((smax - smin) > .8) {
 		struct nmg_nurb_uv_hit *hp;
@@ -392,7 +392,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 		/* New surfs will have same dir as arg, here */
 		if (RT_G_DEBUG & DEBUG_SPLINE)
 		    bu_log("splitting this surface\n");
-		rt_nurb_s_split(plist, psrf, dir, res);
+		nmg_nurb_s_split(plist, psrf, dir, res);
 		nmg_nurb_free_snurb(psrf, res);
 
 		hp = nmg_nurb_intersect(srf, plane1, plane2, uv_tol, res, plist);
@@ -422,14 +422,14 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 	    }
 
 	    osrf = psrf;
-	    psrf = (struct face_g_snurb *) rt_nurb_region_from_srf(
+	    psrf = (struct face_g_snurb *) nmg_nurb_region_from_srf(
 		osrf, dir, smin, smax, res);
 
 	    psrf->dir = dir;
 	    nmg_nurb_free_snurb(osrf, res);
 
 	    if (RT_G_DEBUG & DEBUG_SPLINE) {
-		bu_log("After call to rt_nurb_region_from_srf() (smin=%g, smax=%g)\n", smin, smax);
+		bu_log("After call to nmg_nurb_region_from_srf() (smin=%g, smax=%g)\n", smin, smax);
 		nmg_nurb_s_print("psrf", psrf);
 	    }
 

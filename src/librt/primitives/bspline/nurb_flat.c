@@ -41,7 +41,7 @@
 
 
 int
-rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
+nmg_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
     /* Epsilon value for flatness testing */
 {
@@ -68,7 +68,7 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
     crv = (fastf_t *) bu_malloc(sizeof(fastf_t) *
 				RT_NURB_EXTRACT_COORDS(srf->pt_type) * srf->s_size[1],
-				"rt_nurb_s_flat: crv");
+				"nmg_nurb_s_flat: crv");
 
     /* Test Row and RT_NURB_SPLIT_COL curves for flatness, If a curve
      * is not flat than get distance to line
@@ -84,16 +84,16 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 	     j++)
 	    crv[j] = *mesh_ptr++;
 
-	rdist = rt_nurb_crv_flat(crv, srf->s_size[1],
+	rdist = nmg_nurb_crv_flat(crv, srf->s_size[1],
 				 srf->pt_type);
 	max_row_dist = FMAX(max_row_dist, rdist);
     }
 
-    bu_free((char *)crv, "rt_nurb_s_flat: crv");
+    bu_free((char *)crv, "nmg_nurb_s_flat: crv");
 
     crv = (fastf_t *) bu_malloc(sizeof(fastf_t) *
 				RT_NURB_EXTRACT_COORDS(srf->pt_type) *
-				srf->s_size[0], 	"rt_nurb_s_flat: crv");
+				srf->s_size[0], 	"nmg_nurb_s_flat: crv");
 
     for (i = 0; i < (coords * srf->s_size[1]); i += coords) {
 	fastf_t rdist;
@@ -107,13 +107,13 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 		    srf->ctl_points[mesh_elt + k];
 	}
 
-	rdist = rt_nurb_crv_flat(crv,
+	rdist = nmg_nurb_crv_flat(crv,
 				 srf->s_size[0], srf->pt_type);
 
 	max_col_dist = FMAX(max_col_dist, rdist);
     }
 
-    bu_free((char *)crv, "rt_nurb_s_flat: crv");
+    bu_free((char *)crv, "nmg_nurb_s_flat: crv");
 
     max_dist = FMAX(max_row_dist, max_col_dist);
 
@@ -195,7 +195,7 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
 
 fastf_t
-rt_nurb_crv_flat(fastf_t *crv, int size, int pt_type)
+nmg_nurb_crv_flat(fastf_t *crv, int size, int pt_type)
 {
     point_t p1, p2;
     vect_t ln;

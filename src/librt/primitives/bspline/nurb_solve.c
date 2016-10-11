@@ -25,7 +25,7 @@
  *
  * These Procedures take a set of matrices of the form Ax = b and
  * allows one to solve the system by various means. The
- * rt_nurb_doolittle routine takes the system and creates a lu
+ * nmg_nurb_doolittle routine takes the system and creates a lu
  * decomposition using pivoting to get the system in a desired
  * form. Forward and backward substitution are then used to solve the
  * system.  All work is done in place.
@@ -55,7 +55,7 @@
  * The solution is written into the solution[] array.
  */
 void
-rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int coords)
+nmg_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int coords)
     /* A and b array of the system Ax= b*/
 
 
@@ -68,15 +68,15 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
     fastf_t * s;
 
     y = (fastf_t *) bu_malloc(sizeof (fastf_t) * dim,
-			      "rt_nurb_solve: y");/* Create temp array */
+			      "nmg_nurb_solve: y");/* Create temp array */
 
     b = (fastf_t *) bu_malloc(sizeof (fastf_t) * dim,
-			      "rt_nurb_solve: b");/* Create temp array */
+			      "nmg_nurb_solve: b");/* Create temp array */
 
     s = (fastf_t *) bu_malloc(sizeof (fastf_t) * dim,
-			      "rt_nurb_solve: s");/* Create temp array */
+			      "nmg_nurb_solve: s");/* Create temp array */
 
-    rt_nurb_doolittle (mat_1, mat_2, dim, coords);/* Create LU decomposition */
+    nmg_nurb_doolittle (mat_1, mat_2, dim, coords);/* Create LU decomposition */
 
     for (k =0; k < coords; k++) {
 	fastf_t * ptr;
@@ -89,10 +89,10 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
 	}
 
 	/* Solve the system Ly =b */
-	rt_nurb_forw_solve (mat_1, b, y, dim);
+	nmg_nurb_forw_solve (mat_1, b, y, dim);
 
 	/* Solve the system Ux = y */
-	rt_nurb_back_solve (mat_1, y, s, dim);
+	nmg_nurb_back_solve (mat_1, y, s, dim);
 
 
 	ptr = solution + k;
@@ -102,9 +102,9 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
 	}
     }
 
-    bu_free ((char *)y, "rt_nurb_solve: y");			/* Free up storage */
-    bu_free ((char *)b, "rt_nurb_solve: b");			/* Free up storage */
-    bu_free ((char *)s, "rt_nurb_solve: s");			/* Free up storage */
+    bu_free ((char *)y, "nmg_nurb_solve: y");			/* Free up storage */
+    bu_free ((char *)b, "nmg_nurb_solve: b");			/* Free up storage */
+    bu_free ((char *)s, "nmg_nurb_solve: s");			/* Free up storage */
 }
 
 
@@ -113,7 +113,7 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
  * Modifies both mat_1 and mat_2 values.
  */
 void
-rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
+nmg_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 {
     register int i;
     register int j;
@@ -129,11 +129,11 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
     int max_pivot;
 
     d = (fastf_t *) bu_malloc(sizeof (fastf_t) * row,
-			      "rt_nurb_doolittle:d");	/* scale factor */
+			      "nmg_nurb_doolittle:d");	/* scale factor */
     s = (fastf_t *) bu_malloc(sizeof (fastf_t) * row * row,
-			      "rt_nurb_doolittle:s");	/* vector to check */
+			      "nmg_nurb_doolittle:s");	/* vector to check */
     ds = (fastf_t *) bu_malloc(sizeof (fastf_t) * row,
-			       "rt_nurb_doolittle:ds");	/* if rows need to be swapped */
+			       "nmg_nurb_doolittle:ds");	/* if rows need to be swapped */
 
     for (i = 0; i < row; i++) {
 	/* calculate the scaling factors */
@@ -196,14 +196,14 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 	}
 
     }
-    bu_free((char *)d, "rt_nurb_doolittle:d");		/* Free up the storage. */
-    bu_free((char *)s, "rt_nurb_doolittle:s");
-    bu_free((char *)ds, "rt_nurb_doolittle:ds");
+    bu_free((char *)d, "nmg_nurb_doolittle:d");		/* Free up the storage. */
+    bu_free((char *)s, "nmg_nurb_doolittle:s");
+    bu_free((char *)ds, "nmg_nurb_doolittle:ds");
 }
 
 
 void
-rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* spl_solve lower triangular matrix */
+nmg_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* spl_solve lower triangular matrix */
 
 
 {
@@ -220,7 +220,7 @@ rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* s
 
 
 void
-rt_nurb_back_solve(const fastf_t *lu, const fastf_t *y, fastf_t *x, int n)		/* spl_solve upper triangular matrix */
+nmg_nurb_back_solve(const fastf_t *lu, const fastf_t *y, fastf_t *x, int n)		/* spl_solve upper triangular matrix */
 
 
 {
@@ -238,7 +238,7 @@ rt_nurb_back_solve(const fastf_t *lu, const fastf_t *y, fastf_t *x, int n)		/* s
 
 
 void
-rt_nurb_p_mat(const fastf_t *mat, int dim)
+nmg_nurb_p_mat(const fastf_t *mat, int dim)
 {
     int i;
 

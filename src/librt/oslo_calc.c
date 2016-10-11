@@ -48,7 +48,7 @@
 #define AMIN(i, j)    ((i) < (j) ? (i) : (j))
 
 struct oslo_mat *
-rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv, register struct knot_vector *t_kv, struct resource *res)
+nmg_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv, register struct knot_vector *t_kv, struct resource *res)
 
 /* old knot vector */
 /* new knot vector */
@@ -83,7 +83,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 
     head = (struct oslo_mat *) bu_malloc (
 	sizeof(struct oslo_mat),
-	"rt_nurb_calc_oslo: oslo mat head");
+	"nmg_nurb_calc_oslo: oslo mat head");
 
     o_ptr = head;
 
@@ -93,7 +93,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 	if (j != 0) {
 	    new_o = (struct oslo_mat *) bu_malloc (
 		sizeof(struct oslo_mat),
-		"rt_nurb_calc_oslo: oslo mat struct");
+		"nmg_nurb_calc_oslo: oslo mat struct");
 
 	    o_ptr->next = new_o;
 	    o_ptr = new_o;
@@ -170,7 +170,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 	}
 
 	o_ptr->o_vec = (fastf_t *) bu_malloc (sizeof(fastf_t) * (v+1),
-					      "rt_nurb_calc_oslo: oslo vector");
+					      "nmg_nurb_calc_oslo: oslo vector");
 
 	o_ptr->offset = AMAX(muprim -v, 0);
 	o_ptr->osize = v;
@@ -188,7 +188,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
  * For debugging purposes only
  */
 void
-rt_nurb_pr_oslo(struct oslo_mat *om)
+nmg_nurb_pr_oslo(struct oslo_mat *om)
 {
     struct oslo_mat * omp;
     int j;
@@ -211,7 +211,7 @@ rt_nurb_pr_oslo(struct oslo_mat *om)
  * Free up the structures and links for the oslo matrix.
  */
 void
-rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
+nmg_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
 {
     register struct oslo_mat * omp;
 
@@ -220,8 +220,8 @@ rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
     while (om != (struct oslo_mat *) 0) {
 	omp = om;
 	om = om->next;
-	bu_free((char *)omp->o_vec, "rt_nurb_free_oslo: ovec");
-	bu_free((char *)omp, "rt_nurb_free_oslo: struct oslo");
+	bu_free((char *)omp->o_vec, "nmg_nurb_free_oslo: ovec");
+	bu_free((char *)omp, "nmg_nurb_free_oslo: struct oslo");
     }
 }
 

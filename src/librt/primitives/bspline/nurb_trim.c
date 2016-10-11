@@ -480,8 +480,8 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 	crv->k.knots[crv->k.k_size -1] * umax;
 
     /* subdivide the curve */
-    c1 = (struct edge_g_cnurb *) rt_nurb_c_xsplit(crv, m1);
-    c2 = rt_nurb_c_xsplit((struct edge_g_cnurb *) c1->l.forw, m2);
+    c1 = (struct edge_g_cnurb *) nmg_nurb_c_xsplit(crv, m1);
+    c2 = nmg_nurb_c_xsplit((struct edge_g_cnurb *) c1->l.forw, m2);
 
     tmp = (struct edge_g_cnurb *) c1->l.forw;
     BU_LIST_DEQUEUE(&tmp->l);
