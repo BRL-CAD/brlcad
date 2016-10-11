@@ -1230,4 +1230,13 @@ s/rt_nurb_new_snurb/nmg_nurb_new_snurb/g
 s/rt_nurb_s_eval/nmg_nurb_s_eval/g
 s/rt_nurb_s_norm/nmg_nurb_s_norm/g
 s/rt_nurb_uv_hit/nmg_nurb_uv_hit/g
+s/rt_arc2d_to_cnurb/nmg_arc2d_to_cnurb/g
+s/rt_join_cnurbs/nmg_join_cnurbs/g
+s/rt_nurb_c_eval/nmg_nurb_c_eval/g
+s/rt_nurb_c_print/nmg_nurb_c_print/g
+s/rt_nurb_kvgen/nmg_nurb_kvgen/g
+s/rt_nurb_kvmerge/nmg_nurb_kvmerge/g
+s/rt_nurb_s_print/nmg_nurb_s_print/g
+s/rt_nurb_s_refine/nmg_nurb_s_refine/g
         rename old nurbs functions intertwined with nmg to use nmg prefix [7.26]
+

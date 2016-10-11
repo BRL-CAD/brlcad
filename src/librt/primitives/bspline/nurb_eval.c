@@ -76,7 +76,7 @@ nmg_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *f
     if (k_index < 0) {
 	bu_log("nmg_nurb_s_eval: u value outside parameter range\n");
 	bu_log("\tUV = (%g %g)\n", u, v);
-	rt_nurb_s_print("", srf);
+	nmg_nurb_s_print("", srf);
 	bu_bomb("nmg_nurb_s_eval: u value outside parameter range\n");
     }
 
@@ -107,7 +107,7 @@ nmg_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *f
     if (k_index < 0) {
 	bu_log("nmg_nurb_s_eval: v value outside parameter range\n");
 	bu_log("\tUV = (%g %g)\n", u, v);
-	rt_nurb_s_print("", srf);
+	nmg_nurb_s_print("", srf);
 	bu_bomb("nmg_nurb_s_eval: v value outside parameter range\n");
     }
 
@@ -122,7 +122,7 @@ nmg_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *f
 
 
 void
-rt_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_value)
+nmg_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_value)
 {
     fastf_t * pnts;
     fastf_t * ev_pt;
@@ -135,14 +135,14 @@ rt_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_val
 
     k_index = rt_nurb_knot_index(&crv->k, param, crv->order);
     if (k_index < 0) {
-	bu_log("rt_nurb_c_eval: param value outside parameter range\n");
+	bu_log("nmg_nurb_c_eval: param value outside parameter range\n");
 	bu_log("\tparam = (%g)\n", param);
-	rt_nurb_c_print(crv);
-	bu_bomb("rt_nurb_c_eval: param value outside parameter range\n");
+	nmg_nurb_c_print(crv);
+	bu_bomb("nmg_nurb_c_eval: param value outside parameter range\n");
     }
 
     pnts = (fastf_t *) bu_malloc(coords * sizeof(fastf_t) *
-				 crv->c_size, "diff: rt_nurb_c_eval");
+				 crv->c_size, "diff: nmg_nurb_c_eval");
 
     for (i = 0; i < coords * crv->c_size; i++)
 	pnts[i] = crv->ctl_points[i];
@@ -153,7 +153,7 @@ rt_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_val
     for (i = 0; i < coords; i++)
 	final_value[i] = ev_pt[i];
 
-    bu_free((char *) pnts, "rt_nurb_c_eval");
+    bu_free((char *) pnts, "nmg_nurb_c_eval");
 }
 
 

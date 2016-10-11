@@ -178,7 +178,7 @@ nmg_nurb_free_cnurb(struct edge_g_cnurb *crv)
 
 
 void
-rt_nurb_c_print(const struct edge_g_cnurb *crv)
+nmg_nurb_c_print(const struct edge_g_cnurb *crv)
 {
     register fastf_t * ptr;
     int i, j;
@@ -211,7 +211,7 @@ rt_nurb_c_print(const struct edge_g_cnurb *crv)
 
 
 void
-rt_nurb_s_print(char *c, const struct face_g_snurb *srf)
+nmg_nurb_s_print(char *c, const struct face_g_snurb *srf)
 {
 
     bu_log("%s\n", c);

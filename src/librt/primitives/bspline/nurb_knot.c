@@ -104,7 +104,7 @@ rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num
     for (i = 0; i < num - n; i++)
 	check.knots[i] = val;
 
-    rt_nurb_kvmerge(new_kv, &check, kv, res);
+    nmg_nurb_kvmerge(new_kv, &check, kv, res);
 
     /* free up old knot values */
     bu_free((char *)check.knots, "rt_nurb_kvmult:check knots");
@@ -112,13 +112,13 @@ rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num
 
 
 /**
- * rt_nurb_kvgen()
+ * nmg_nurb_kvgen()
  *
  * Generate a knot vector with num knots from lower value to the upper
  * value.
  */
 void
-rt_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int num, struct resource *res)
+nmg_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int num, struct resource *res)
 {
     register int i;
     register fastf_t inc;
@@ -130,7 +130,7 @@ rt_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int
     kv->k_size = num;
 
     kv->knots = (fastf_t *) bu_malloc (sizeof(fastf_t) * num,
-				       "rt_nurb_kvgen: kv knots");
+				       "nmg_nurb_kvgen: kv knots");
 
     for (i = 1; i <= num; i++)
 	kv->knots[i-1] = lower + i * inc;
@@ -138,13 +138,13 @@ rt_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int
 
 
 /**
- * rt_nurb_kvmerge()
+ * nmg_nurb_kvmerge()
  *
  * Merge two knot vectors together and return the new resulting knot
  * vector.
  */
 void
-rt_nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, const struct knot_vector *kv2, struct resource *res)
+nmg_nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, const struct knot_vector *kv2, struct resource *res)
 {
     int kv1_ptr = 0;
     int kv2_ptr = 0;
@@ -156,7 +156,7 @@ rt_nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, co
 
     new_knots->knots = (fastf_t *) bu_malloc(
 	sizeof (fastf_t) * new_knots->k_size,
-	"rt_nurb_kvmerge: new knot values");
+	"nmg_nurb_kvmerge: new knot values");
 
     for (new_ptr = 0; new_ptr < new_knots->k_size; new_ptr++) {
 	if (kv1_ptr >= kv1->k_size)

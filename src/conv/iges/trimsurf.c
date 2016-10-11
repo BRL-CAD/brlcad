@@ -453,7 +453,7 @@ Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
 	    VSET(end, y+u_translation, x+v_translation, z);
 
 		/* build edge_g_cnurb arc */
-	    crv = rt_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
+	    crv = nmg_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
 
 	    /* apply transformation to control points */
 	    for (i = 0; i < crv->c_size; i++) {
@@ -602,7 +602,7 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
 	    VSET(end, x+u_translation, y+v_translation, z);
 
 	    /* build edge_g_cnurb circle */
-	    crv = rt_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
+	    crv = nmg_arc2d_to_cnurb(center, start, end, RT_NURB_PT_UV, &tol);
 
 	    /* split circle into two pieces */
 	    BU_LIST_INIT(&curv_hd);

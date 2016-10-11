@@ -1507,8 +1507,8 @@ RT_EXPORT extern void nmg_make_faces_within_tol(struct shell *s,
                                                 const struct bn_tol *tol);
 RT_EXPORT extern void nmg_intersect_loops_self(struct shell *s,
                                                const struct bn_tol *tol);
-RT_EXPORT extern struct edge_g_cnurb *rt_join_cnurbs(struct bu_list *crv_head);
-RT_EXPORT extern struct edge_g_cnurb *rt_arc2d_to_cnurb(point_t i_center,
+RT_EXPORT extern struct edge_g_cnurb *nmg_join_cnurbs(struct bu_list *crv_head);
+RT_EXPORT extern struct edge_g_cnurb *nmg_arc2d_to_cnurb(point_t i_center,
                                                         point_t i_start,
                                                         point_t i_end,
                                                         int point_type,

@@ -42,7 +42,7 @@
  * Returns a refined surface.  The original surface is unmodified.
  */
 struct face_g_snurb *
-rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv, struct resource *res)
+nmg_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv, struct resource *res)
     /* Old surface to be refined */
     /* Direction to refine */
     /* Row = 0, Col = 1 */
@@ -72,7 +72,7 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 		      nurb_srf->s_size[0] *
 		      nurb_srf->s_size[1] *
 		      RT_NURB_EXTRACT_COORDS(nurb_srf->pt_type),
-		      "rt_nurb_s_refine: row mesh control points");
+		      "nmg_nurb_s_refine: row mesh control points");
 
 	oslo = (struct oslo_mat *)
 	    rt_nurb_calc_oslo (srf -> order[RT_NURB_SPLIT_ROW], &srf->u, kv, res);
@@ -114,7 +114,7 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 		      nurb_srf->s_size[0] *
 		      nurb_srf->s_size[1] *
 		      RT_NURB_EXTRACT_COORDS(nurb_srf->pt_type),
-		      "rt_nurb_s_refine: row mesh control points");
+		      "nmg_nurb_s_refine: row mesh control points");
 
 	oslo = (struct oslo_mat *)
 	    rt_nurb_calc_oslo (srf->order[RT_NURB_SPLIT_COL], &srf->v, kv, res);

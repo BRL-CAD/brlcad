@@ -2843,7 +2843,7 @@ process_spline_entities_code(int code)
 	    startParam = knots[0];
 	    stopParam = knots[numKnots-1];
 	    paramDelta = (stopParam - startParam) / (double)splineSegs;
-	    rt_nurb_c_eval(crv, startParam, pt);
+	    nmg_nurb_c_eval(crv, startParam, pt);
 	    for (i = 0; i < splineSegs; i++) {
 		fastf_t param = startParam + paramDelta * (i+1);
 		eu = nmg_me(v1, v2, layers[curr_layer]->s);
@@ -2851,7 +2851,7 @@ process_spline_entities_code(int code)
 		if (i == 0) {
 		    nmg_vertex_gv(v1, pt);
 		}
-		rt_nurb_c_eval(crv, param, pt);
+		nmg_nurb_c_eval(crv, param, pt);
 		v2 = eu->eumate_p->vu_p->v_p;
 		nmg_vertex_gv(v2, pt);
 

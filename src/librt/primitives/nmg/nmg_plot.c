@@ -2174,22 +2174,22 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
     BU_CK_LIST_HEAD(vhead);
     NMG_CK_FACE_G_SNURB(fg);
 
-    rt_nurb_kvgen(&tkv1,
+    nmg_nurb_kvgen(&tkv1,
 		  fg->u.knots[0],
 		  fg->u.knots[fg->u.k_size-1], n_interior, (struct resource *)NULL);
 
-    rt_nurb_kvgen(&tkv2,
+    nmg_nurb_kvgen(&tkv2,
 		  fg->v.knots[0],
 		  fg->v.knots[fg->v.k_size-1], n_interior, (struct resource *)NULL);
 
-    rt_nurb_kvmerge(&tau1, &tkv1, &fg->u, (struct resource *)NULL);
-    rt_nurb_kvmerge(&tau2, &tkv2, &fg->v, (struct resource *)NULL);
+    nmg_nurb_kvmerge(&tau1, &tkv1, &fg->u, (struct resource *)NULL);
+    nmg_nurb_kvmerge(&tau2, &tkv2, &fg->v, (struct resource *)NULL);
 
 /** nmg_hack_snurb(&n, fg);	/ XXX */
 
-    r = rt_nurb_s_refine(fg, RT_NURB_SPLIT_COL, &tau2, (struct resource *)NULL);
+    r = nmg_nurb_s_refine(fg, RT_NURB_SPLIT_COL, &tau2, (struct resource *)NULL);
     NMG_CK_SNURB(r);
-    c = rt_nurb_s_refine(r, RT_NURB_SPLIT_ROW, &tau1, (struct resource *)NULL);
+    c = nmg_nurb_s_refine(r, RT_NURB_SPLIT_ROW, &tau1, (struct resource *)NULL);
     NMG_CK_SNURB(c);
 
     coords = RT_NURB_EXTRACT_COORDS(c->pt_type);
@@ -2330,7 +2330,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	if (coords != 2 && !RT_NURB_IS_PT_RATIONAL(c->pt_type)) bu_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
 	s = fu->f_p->g.snurb_p;
 
-	/* This section uses rt_nurb_c_eval(), but rt_nurb_c_refine is likely faster.
+	/* This section uses nmg_nurb_c_eval(), but rt_nurb_c_refine is likely faster.
 	 * XXXX Need a way to selectively and recursively refine curve to avoid
 	 * feeding nmg_nurb_s_eval() parameters outside domain of surface.
 	 */
@@ -2344,7 +2344,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 
 	    VSETALL(uvw, 0);
 
-	    rt_nurb_c_eval(c, crv_param, uvw);
+	    nmg_nurb_c_eval(c, crv_param, uvw);
 
 	    if (RT_NURB_IS_PT_RATIONAL(c->pt_type)) {
 		uvw[0] = uvw[0]/uvw[2];

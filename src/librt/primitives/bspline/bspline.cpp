@@ -308,7 +308,7 @@ rt_nurb_print(register const struct soltab *stp)
 
     for (; nurb != (struct nurb_specific *)0; nurb = nurb->next) {
 	/* XXX There is a linked list of Bezier surfaces to print here too */
-	rt_nurb_s_print("NURB", nurb->srf);
+	nmg_nurb_s_print("NURB", nurb->srf);
     }
 #endif /* CONVERT_TO_BREP */
 }
@@ -643,13 +643,13 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 
 	if (tkv2.k_size > n->v.k_size) {
-	    r = (struct face_g_snurb *) rt_nurb_s_refine(n, RT_NURB_SPLIT_COL, &tkv2, (struct resource *)NULL);
+	    r = (struct face_g_snurb *) nmg_nurb_s_refine(n, RT_NURB_SPLIT_COL, &tkv2, (struct resource *)NULL);
 	    refined_col = 1;
 	} else {
 	    r = n;
 	}
 	if (tkv1.k_size > r->u.k_size) {
-	    c = (struct face_g_snurb *) rt_nurb_s_refine(r, RT_NURB_SPLIT_ROW, &tkv1, (struct resource *)NULL);
+	    c = (struct face_g_snurb *) nmg_nurb_s_refine(r, RT_NURB_SPLIT_ROW, &tkv1, (struct resource *)NULL);
 	    refined_row = 1;
 	} else {
 	    c = r;

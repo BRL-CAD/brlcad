@@ -371,7 +371,7 @@ nmg_cnurb_is_linear(const struct edge_g_cnurb *cnrb)
 
     if (RTG.NMG_debug & DEBUG_MESH) {
 	bu_log("nmg_cnurb_is_linear(%p)\n", (void *)cnrb);
-	rt_nurb_c_print(cnrb);
+	nmg_nurb_c_print(cnrb);
     }
 
     if (cnrb->order <= 0) {
@@ -435,7 +435,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 
     if (RTG.NMG_debug & DEBUG_MESH) {
 	bu_log("nmg_snurb_is_planar(%p)\n", (void *)srf);
-	rt_nurb_s_print("", srf);
+	nmg_nurb_s_print("", srf);
     }
 
     if (srf->order[0] == 2 && srf->order[1] == 2) {
@@ -533,7 +533,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 
 	} else {
 	    bu_log("nmg_snurb_is_plana: Cannot calculate plane for snurb %p\n", (void *)srf);
-	    rt_nurb_s_print("", srf);
+	    nmg_nurb_s_print("", srf);
 	    bu_bomb("nmg_snurb_is_plana: Cannot calculate plane for snurb\n");
 	}
     }
@@ -598,7 +598,7 @@ nmg_eval_trim_curve(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *
 	NMG_CK_FACE_G_SNURB(snrb);
     }
 
-    rt_nurb_c_eval(cnrb, t, uvw);
+    nmg_nurb_c_eval(cnrb, t, uvw);
 
     if (RT_NURB_IS_PT_RATIONAL(cnrb->pt_type)) {
 	fastf_t inverse_weight;

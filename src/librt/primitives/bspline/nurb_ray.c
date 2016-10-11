@@ -292,7 +292,7 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
     knot_vec = (fastf_t *)bu_calloc(maxorder * 2, sizeof(fastf_t), "knot vector");
 
     /* Build the new knot vector in a local array, which gets copied
-     * later in rt_nurb_s_refine(). */
+     * later in nmg_nurb_s_refine(). */
     new_knots.knots = &knot_vec[0];
 
     if (dir == RT_NURB_SPLIT_ROW) {
@@ -311,7 +311,7 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
 	}
     }
 
-    region = rt_nurb_s_refine(srf, dir, &new_knots, res);
+    region = nmg_nurb_s_refine(srf, dir, &new_knots, res);
     bu_free(knot_vec, "knot vector");
 
     return region;
@@ -348,7 +348,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
     BU_LIST_APPEND(plist, &psrf->l);
 
     if (RT_G_DEBUG & DEBUG_SPLINE)
-	rt_nurb_s_print("srf", psrf);
+	nmg_nurb_s_print("srf", psrf);
 
     /* This list starts out with only a single snurb, but more may be
      * added on as work progresses.
@@ -369,7 +369,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 	    dir = (dir == 0)?1:0;	/* change direction */
 
 	    if (RT_G_DEBUG & DEBUG_SPLINE)
-		rt_nurb_s_print("psrf", psrf);
+		nmg_nurb_s_print("psrf", psrf);
 
 	    rt_nurb_pbound(psrf, vmin, vmax);
 
@@ -430,7 +430,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 
 	    if (RT_G_DEBUG & DEBUG_SPLINE) {
 		bu_log("After call to rt_nurb_region_from_srf() (smin=%g, smax=%g)\n", smin, smax);
-		rt_nurb_s_print("psrf", psrf);
+		nmg_nurb_s_print("psrf", psrf);
 	    }
 
 	    u[0] = psrf->u.knots[0];

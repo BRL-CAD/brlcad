@@ -119,7 +119,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 		t = t1 + (t2 - t1) * 0.2 * (fastf_t)i;
 
 		VSETALLN(crv_pt, 0.0, coords);
-		rt_nurb_c_eval(eg, t, crv_pt);
+		nmg_nurb_c_eval(eg, t, crv_pt);
 		if (RT_NURB_IS_PT_RATIONAL(eg->pt_type)) {
 		    VSCALE(pts[edge_no], crv_pt, crv_pt[coords-1]);
 		} else {
@@ -8589,7 +8589,7 @@ nmg_intersect_loops_self(struct shell *s, const struct bn_tol *tol)
  * list.
  */
 struct edge_g_cnurb *
-rt_join_cnurbs(struct bu_list *crv_head)
+nmg_join_cnurbs(struct bu_list *crv_head)
 {
     struct edge_g_cnurb *crv, *next_crv;
     struct edge_g_cnurb *new_crv=(struct edge_g_cnurb *)NULL;
@@ -8612,7 +8612,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
      */
     for (BU_LIST_FOR (crv, edge_g_cnurb, crv_head)) {
 	curve_count++;
-	rt_nurb_c_print(crv);
+	nmg_nurb_c_print(crv);
 	if (crv->order > max_order)
 	    max_order = crv->order;
 
@@ -8620,7 +8620,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	while (ZERO(crv->k.knots[++i] - crv->k.knots[0]));
 	if (i != crv->order) {
 	    bu_log("Curve does not have multiplicity equal to order at start:\n");
-	    rt_nurb_c_print(crv);
+	    nmg_nurb_c_print(crv);
 	    return new_crv;
 	}
 
@@ -8628,7 +8628,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	while (ZERO(crv->k.knots[--i] - crv->k.knots[crv->k.k_size - 1]));
 	if (crv->k.k_size - i - 1 != crv->order) {
 	    bu_log("Curve does not have multiplicity equal to order at end:\n");
-	    rt_nurb_c_print(crv);
+	    nmg_nurb_c_print(crv);
 	    return new_crv;
 	}
 
@@ -8636,7 +8636,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	    pt_type = crv->pt_type;
 	else {
 	    if (crv->pt_type != pt_type) {
-		bu_log("rt_join_cnurbs: curves are not the same pt_type (%d vs %d)\n",
+		bu_log("nmg_join_cnurbs: curves are not the same pt_type (%d vs %d)\n",
 		       pt_type, crv->pt_type);
 		return new_crv;
 	    }
@@ -8657,7 +8657,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 
 	/* This curve must have its order raised to max_order */
 	/* XXXX Need a routine to raise order of a curve */
-	bu_bomb("rt_join_cnurbs: Need to raise order of curve\n");
+	bu_bomb("nmg_join_cnurbs: Need to raise order of curve\n");
     }
 
     /* Check that endpoints match */
@@ -8687,9 +8687,9 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	    continue;
 	}
 
-	bu_log("rt_join_cnurbs: Curve endpoints do not match:\n");
-	rt_nurb_c_print(crv);
-	rt_nurb_c_print(next_crv);
+	bu_log("nmg_join_cnurbs: Curve endpoints do not match:\n");
+	nmg_nurb_c_print(crv);
+	nmg_nurb_c_print(next_crv);
 	return new_crv;
     }
 
@@ -8756,7 +8756,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
  * the +Z direction).
  */
 struct edge_g_cnurb *
-rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point_type, const struct bn_tol *tol)
+nmg_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point_type, const struct bn_tol *tol)
 {
     struct edge_g_cnurb *crv;
     struct bu_list crv_head;
@@ -8802,19 +8802,19 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
     if (point_type == RT_NURB_PT_XYZ) {
 	/* check for points at same Z-coordinate value */
 	if (center[Z] - start[Z] > tol->dist) {
-	    bu_log("rt_arc2d_to_cnurb: center and start points not at same Z value (%g vs %g)\n",
+	    bu_log("nmg_arc2d_to_cnurb: center and start points not at same Z value (%g vs %g)\n",
 		   center[Z], start[Z]);
 	    return (struct edge_g_cnurb *)NULL;
 	}
 
 	if (end[Z] - start[Z] > tol->dist) {
-	    bu_log("rt_arc2d_to_cnurb: end and start points not at same Z value (%g vs %g)\n",
+	    bu_log("nmg_arc2d_to_cnurb: end and start points not at same Z value (%g vs %g)\n",
 		   end[Z], start[Z]);
 	    return (struct edge_g_cnurb *)NULL;
 	}
 
 	if (end[Z] - center[Z] > tol->dist) {
-	    bu_log("rt_arc2d_to_cnurb: end and center points not at same Z value (%g vs %g)\n",
+	    bu_log("nmg_arc2d_to_cnurb: end and center points not at same Z value (%g vs %g)\n",
 		   end[Z], center[Z]);
 	    return (struct edge_g_cnurb *)NULL;
 	}
@@ -8838,7 +8838,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 
     /* make sure radii are consistent */
     if (!NEAR_EQUAL(radius, tmp_radius, tol->dist)) {
-	bu_log("rt_arc2d_to_cnurb: distances from center to start and center to end are different\n");
+	bu_log("nmg_arc2d_to_cnurb: distances from center to start and center to end are different\n");
 	bu_log("                        (%g and %g)\n", radius, tmp_radius);
 	return (struct edge_g_cnurb *)NULL;
     }
@@ -8869,7 +8869,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 	if (VDOT(t2, v1) > 0.0)
 	    VREVERSE(t2, t2);
 	if ((ret_val=bn_isect_line3_line3(&dist1, &dist2, start, t1, end, t2, tol)) < 1) {
-	    bu_log("rt_arc2d_to_cnurb: Cannot calculate second control point\n");
+	    bu_log("nmg_arc2d_to_cnurb: Cannot calculate second control point\n");
 	    bu_log("                   bn_isect_line3_line3 returns %d\n", ret_val);
 	    return (struct edge_g_cnurb *)NULL;
 	}
@@ -8933,12 +8933,12 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 	    VJOIN2(end1, center, radius*cos(angles[i]), ref1, radius*sin(angles[i]), ref2);
 	}
 
-	crv = rt_arc2d_to_cnurb(center, start1, end1, point_type, tol);
+	crv = nmg_arc2d_to_cnurb(center, start1, end1, point_type, tol);
 	BU_LIST_INSERT(&crv_head, &crv->l);
     }
 
     /* join the arc segments into one edge_g_cnurb */
-    crv = rt_join_cnurbs(&crv_head);
+    crv = nmg_join_cnurbs(&crv_head);
 
     return crv;
 }
