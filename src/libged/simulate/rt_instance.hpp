@@ -30,8 +30,6 @@
 
 #include "common.h"
 
-#include <stdexcept>
-
 #include "raytrace.h"
 
 
@@ -42,7 +40,7 @@ namespace simulate
 class TreeUpdater
 {
 public:
-    TreeUpdater(db_i &db_instance, directory &vdirectory);
+    explicit TreeUpdater(db_i &db, directory &dir);
     ~TreeUpdater();
 
     void mark_modified();
@@ -54,8 +52,8 @@ private:
     TreeUpdater(const TreeUpdater &source);
     TreeUpdater &operator=(const TreeUpdater &source);
 
-    db_i &m_db_instance;
-    directory &m_directory;
+    db_i &m_db;
+    directory &m_dir;
     rt_db_internal m_comb_internal;
 
     mutable bool m_is_modified;

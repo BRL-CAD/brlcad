@@ -31,6 +31,8 @@
 
 #include "rt_instance.hpp"
 
+#include <stdexcept>
+
 
 namespace
 {
@@ -39,8 +41,7 @@ namespace
 HIDDEN rt_db_internal
 duplicate_comb_internal(const rt_db_internal &source)
 {
-    if (source.idb_minor_type != ID_COMBINATION)
-	throw std::invalid_argument("source is not a combination");
+    RT_CK_DB_INTERNAL(&source);
 
     rt_db_internal dest = source;
     BU_GET(dest.idb_ptr, rt_comb_internal);
@@ -51,6 +52,8 @@ duplicate_comb_internal(const rt_db_internal &source)
 	const rt_comb_internal &source_comb = *static_cast<const rt_comb_internal *>
 					      (source.idb_ptr);
 	rt_comb_internal &dest_comb = *static_cast<rt_comb_internal *>(dest.idb_ptr);
+
+	RT_CK_COMB(&source_comb);
 
 	dest_comb = source_comb;
 	BU_VLS_INIT(&dest_comb.shader);
@@ -65,14 +68,13 @@ duplicate_comb_internal(const rt_db_internal &source)
 
 
 HIDDEN void
-write_comb_internal(db_i &db_instance, directory &vdirectory,
+write_comb_internal(db_i &db, directory &dir,
 		    const rt_db_internal &comb_internal)
 {
 
     rt_db_internal temp_internal = duplicate_comb_internal(comb_internal);
 
-    if (rt_db_put_internal(&vdirectory, &db_instance, &temp_internal,
-			   &rt_uniresource) < 0)
+    if (rt_db_put_internal(&dir, &db, &temp_internal, &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_put_internal() failed");
 }
 
@@ -84,26 +86,25 @@ namespace simulate
 {
 
 
-TreeUpdater::TreeUpdater(db_i &db_instance, directory &vdirectory) :
-    m_db_instance(db_instance),
-    m_directory(vdirectory),
+TreeUpdater::TreeUpdater(db_i &db, directory &dir) :
+    m_db(db),
+    m_dir(dir),
     m_comb_internal(),
     m_is_modified(false),
     m_rt_instance(NULL)
 {
-    if (rt_db_get_internal(&m_comb_internal, &m_directory, &m_db_instance,
-			   bn_mat_identity, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&m_comb_internal, &m_dir, &m_db, bn_mat_identity,
+			   &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_get_internal() failed");
 
-    if (m_comb_internal.idb_minor_type != ID_COMBINATION)
-	throw std::invalid_argument("object is not a combination");
+    RT_CK_COMB(m_comb_internal.idb_ptr);
 }
 
 
 TreeUpdater::~TreeUpdater()
 {
     if (m_is_modified)
-	write_comb_internal(m_db_instance, m_directory, m_comb_internal);
+	write_comb_internal(m_db, m_dir, m_comb_internal);
 
     if (m_rt_instance)
 	rt_free_rti(m_rt_instance);
@@ -130,19 +131,19 @@ rt_i &
 TreeUpdater::get_rt_instance() const
 {
     if (m_is_modified)
-	write_comb_internal(m_db_instance, m_directory, m_comb_internal);
+	write_comb_internal(m_db, m_dir, m_comb_internal);
     else if (m_rt_instance)
 	return *m_rt_instance;
 
     if (m_rt_instance)
 	rt_free_rti(m_rt_instance);
 
-    m_rt_instance = rt_new_rti(&m_db_instance);
+    m_rt_instance = rt_new_rti(&m_db);
 
     if (!m_rt_instance)
 	throw std::runtime_error("rt_new_rti() failed");
 
-    if (rt_gettree(m_rt_instance, m_directory.d_namep) != 0) {
+    if (rt_gettree(m_rt_instance, m_dir.d_namep) != 0) {
 	rt_free_rti(m_rt_instance);
 	m_rt_instance = NULL;
 	throw std::runtime_error("rt_gettree() failed");

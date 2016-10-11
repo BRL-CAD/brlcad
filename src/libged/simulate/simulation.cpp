@@ -38,13 +38,16 @@ namespace simulate
 {
 
 
-Simulation::Simulation(db_i &db_instance, directory &vdirectory) :
-    m_db_instance(db_instance),
-    m_directory(vdirectory),
-    m_tree_updater(db_instance, m_directory),
+Simulation::Simulation(db_i &db, directory &dir) :
+    m_db(db),
+    m_dir(dir),
+    m_tree_updater(db, m_dir),
     m_objects()
 {
-    if (m_directory.d_minor_type != ID_COMBINATION)
+    RT_CK_DBI(&m_db);
+    RT_CK_DIR(&m_dir);
+
+    if (m_dir.d_minor_type != ID_COMBINATION)
 	throw std::runtime_error("object is not a combination");
 
     tree * const vtree = m_tree_updater.get_tree();
@@ -81,7 +84,7 @@ Simulation::get_tree_objects(tree &vtree)
 {
     switch (vtree.tr_op) {
 	case OP_DB_LEAF: {
-	    directory *dir = db_lookup(&m_db_instance, vtree.tr_l.tl_name, LOOKUP_NOISY);
+	    directory * const dir = db_lookup(&m_db, vtree.tr_l.tl_name, true);
 
 	    if (!dir) throw std::runtime_error("db_lookup() failed");
 
@@ -90,7 +93,7 @@ Simulation::get_tree_objects(tree &vtree)
 		MAT_IDN(vtree.tr_l.tl_mat);
 	    }
 
-	    WorldObject * const object = WorldObject::create(m_db_instance, *dir,
+	    WorldObject * const object = WorldObject::create(m_db, *dir,
 					 vtree.tr_l.tl_mat, m_tree_updater);
 	    m_objects.push_back(object);
 	    object->add_to_world(m_world);
