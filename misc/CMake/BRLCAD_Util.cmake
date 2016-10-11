@@ -164,7 +164,7 @@ endmacro(BRLCAD_GET_DIR_LIST_CONTENTS)
 # The routine below does the check without using regex matching, in order to
 # handle path names that contain characters that would be interpreted as active
 # in a regex string.
-macro(IS_SUBPATH in_candidate_subpath in_full_path result_var)
+function(IS_SUBPATH in_candidate_subpath in_full_path result_var)
   # Convert paths to lists of directories - regex based
   # matching won't work reliably, so instead look at each
   # element compared to its corresponding element in the
@@ -180,7 +180,7 @@ macro(IS_SUBPATH in_candidate_subpath in_full_path result_var)
   string(LENGTH "${full_path}" FULL_LENGTH)
   string(LENGTH "${candidate_subpath}" SUB_LENGTH)
   if("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
-    set(${result_var} 0)
+    set(${result_var} 0 PARENT_SCOPE)
   else("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
     # OK, maybe it's a subpath - time to actually check
     string(REPLACE "/" ";" full_path_list "${full_path}")
@@ -198,17 +198,17 @@ macro(IS_SUBPATH in_candidate_subpath in_full_path result_var)
     endwhile(NOT found_difference AND candidate_subpath_list)
     # Now we know - report the result
     if(NOT found_difference)
-      set(${result_var} 1)
+      set(${result_var} 1 PARENT_SCOPE)
     else(NOT found_difference)
-      set(${result_var} 0)
+      set(${result_var} 0 PARENT_SCOPE)
     endif(NOT found_difference)
   endif("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
-endmacro(IS_SUBPATH)
+endfunction(IS_SUBPATH)
 
 #-----------------------------------------------------------------------------
 # Determine whether a list of source files contains all C, all C++, or
 # mixed source types.
-macro(SRCS_LANG sourceslist resultvar targetname)
+function(SRCS_LANG sourceslist resultvar targetname)
   # Check whether we have a mixed C/C++ library or just a single language.
   # If the former, different compilation flag management is needed.
   set(has_C 0)
@@ -229,15 +229,15 @@ macro(SRCS_LANG sourceslist resultvar targetname)
       message("WARNING - file ${srcfile} listed in the ${targetname} sources list does not appear to be a C or C++ file.")
     endif(NOT file_language)
   endforeach(srcfile ${sourceslist})
-  set(${resultvar} "UNKNOWN")
+  set(${resultvar} "UNKNOWN" PARENT_SCOPE)
   if(has_C AND has_CXX)
-    set(${resultvar} "MIXED")
+    set(${resultvar} "MIXED" PARENT_SCOPE)
   elseif(has_C AND NOT has_CXX)
-    set(${resultvar} "C")
+    set(${resultvar} "C" PARENT_SCOPE)
   elseif(NOT has_C AND has_CXX)
-    set(${resultvar} "CXX")
+    set(${resultvar} "CXX" PARENT_SCOPE)
   endif(has_C AND has_CXX)
-endmacro(SRCS_LANG)
+endfunction(SRCS_LANG)
 
 #---------------------------------------------------------------------------
 # Add dependencies to a target, but only if they are defined as targets in
