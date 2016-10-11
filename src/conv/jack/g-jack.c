@@ -388,7 +388,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 		/* nmg_pl_r(fp, r); */
 		BU_LIST_INIT(&vhead);
 		nmg_r_to_vlist(&vhead, r, 0);
-		rt_vlist_to_uplot(fp, &vhead);
+		bn_vlist_to_uplot(fp, &vhead);
 		fclose(fp);
 		RT_FREE_VLIST(&vhead);
 		if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));

@@ -48,10 +48,10 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bn/plot3.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "rt/nurb.h"
-#include "bn/plot3.h"
 
 
 #define US_DELAY 10 /* Additional delay between frames */
@@ -712,7 +712,7 @@ nmg_pl_lu(FILE *fp, const struct loopuse *lu, long *b, int red, int green, int b
     struct bn_vlblock *vbp = bn_vlblock_init(vlfree, 32);
 
     nmg_vlblock_lu(vbp, lu, b, red, green, blue, 0);
-    rt_plot_vlblock(fp, vbp);
+    bn_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
 }
 
@@ -732,7 +732,7 @@ nmg_pl_fu(FILE *fp, const struct faceuse *fu, long *b, int red, int green, int b
 	nmg_vlblock_lu(vbp, lu, b, red, green, blue, 1);
     }
 
-    rt_plot_vlblock(fp, vbp);
+    bn_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
 }
 
@@ -747,7 +747,7 @@ nmg_pl_s(FILE *fp, const struct shell *s, struct bu_list *vlfree)
     struct bn_vlblock *vbp = bn_vlblock_init(vlfree, 32);
 
     nmg_vlblock_s(vbp, s, 0);
-    rt_plot_vlblock(fp, vbp);
+    bn_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
 }
 
@@ -758,7 +758,7 @@ nmg_pl_shell(FILE *fp, const struct shell *s, int fancy, struct bu_list *vlfree)
     struct bn_vlblock *vbp = bn_vlblock_init(vlfree, 32);
 
     nmg_vlblock_s(vbp, s, fancy);
-    rt_plot_vlblock(fp, vbp);
+    bn_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
 }
 
@@ -769,7 +769,7 @@ nmg_pl_r(FILE *fp, const struct nmgregion *r, struct bu_list *vlfree)
     struct bn_vlblock *vbp = bn_vlblock_init(vlfree, 32);
 
     nmg_vlblock_r(vbp, r, 0);
-    rt_plot_vlblock(fp, vbp);
+    bn_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
 }
 
@@ -780,7 +780,7 @@ nmg_pl_m(FILE *fp, const struct model *m, struct bu_list *vlfree)
     struct bn_vlblock *vbp = bn_vlblock_init(vlfree, 32);
 
     nmg_vlblock_m(vbp, m, 0);
-    rt_plot_vlblock(fp, vbp);
+    bn_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
 }
 
@@ -1295,7 +1295,7 @@ nmg_pl_isect(const char *filename, const struct shell *s, struct bu_list *vlfree
 	}
     }
 
-    rt_plot_vlblock(fp, vbp);
+    bn_plot_vlblock(fp, vbp);
     bn_vlblock_free(vbp);
 
     bu_free((char *)b, "nmg_pl_isect flags[]");
@@ -1343,7 +1343,7 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1, struct bu_list *vl
 	}
 	bu_log("overlay %s\n", name);
 
-	rt_plot_vlblock(fp, vbp);
+	bn_plot_vlblock(fp, vbp);
 
 	(void)fclose(fp);
     }
@@ -1408,7 +1408,7 @@ nmg_pl_2fu(const char *str, const struct faceuse *fu1, const struct faceuse *fu2
 	    perror(name);
 	    return;
 	}
-	rt_plot_vlblock(fp, vbp);
+	bn_plot_vlblock(fp, vbp);
 	(void)fclose(fp);
     }
 
@@ -1839,7 +1839,7 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
 	sprintf(buf, "cbroke%d.plot3", num++);
 	fp = fopen(buf, "wb");
 	if (fp) {
-	    rt_plot_vlblock(fp, vbp);
+	    bn_plot_vlblock(fp, vbp);
 	    fclose(fp);
 	    bu_log("overlay %s for %s\n", buf, a_string);
 	}
@@ -1888,7 +1888,7 @@ nmg_face_plot(const struct faceuse *fu, struct bu_list *vlfree)
 	    perror(name);
 	    return;
 	}
-	rt_plot_vlblock(fp, vbp);
+	bn_plot_vlblock(fp, vbp);
 	(void)fclose(fp);
     }
 
@@ -2144,7 +2144,7 @@ nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, struct bu_li
 	eur = eur->radial_p->eumate_p;
     } while (eur != eu);
 
-    rt_plot_vlblock(fp, vbp);
+    bn_plot_vlblock(fp, vbp);
     (void)fclose(fp);
     bn_vlblock_free(vbp);
     bu_free((char *)tab, "bit vec");

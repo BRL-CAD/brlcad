@@ -50,21 +50,6 @@ RT_EXPORT extern struct bn_vlblock *    rt_vlblock_init(void);
  *                                                                      *
  ************************************************************************/
 
-/**
- * Output a bn_vlblock object in extended UNIX-plot format, including
- * color.
- */
-RT_EXPORT extern void rt_plot_vlblock(FILE *fp,
-                                      const struct bn_vlblock *vbp);
-
-
-/**
- * Output a vlist as an extended 3-D floating point UNIX-Plot file.
- * You provide the file.  Uses libplot3 routines to create the
- * UNIX-Plot output.
- */
-RT_EXPORT extern void rt_vlist_to_uplot(FILE *fp,
-                                        const struct bu_list *vhead);
 RT_EXPORT extern int rt_process_uplot_value(struct bu_list **vhead,
                                             struct bn_vlblock *vbp,
                                             FILE *fp,

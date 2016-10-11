@@ -168,7 +168,7 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
     int useful = 0;
 
     if (((struct plot_vars *)dmp->dm_vars.priv_vars)->floating) {
-	rt_vlist_to_uplot(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, &vp->l);
+	bn_vlist_to_uplot(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, &vp->l);
 
 	return BRLCAD_OK;
     }

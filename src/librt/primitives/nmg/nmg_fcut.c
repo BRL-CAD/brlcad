@@ -46,8 +46,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/sort.h"
 #include "vmath.h"
+#include "bu/sort.h"
+#include "bn/plot3.h"
 #include "nmg.h"
 #include "raytrace.h"
 
@@ -1540,7 +1541,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	}
 	sprintf(buf, "wedge%d.plot3", num++);
 	fp = fopen(buf, "wb");
-	rt_plot_vlblock(fp, vbp);
+	bn_plot_vlblock(fp, vbp);
 	fclose(fp);
 	bu_log("wrote %s\n", buf);
 	bu_free((char *)b, "nmg_special_wedge_processing flag[]");
