@@ -128,9 +128,7 @@ static double RTable[MAXSIZE];
 struct str_ht {
     uint32_t magic;
     char hashTableValid;
-    uint32_t *hashTableMagic1;
     uint32_t *hashTable;
-    uint32_t *hashTableMagic2;
     uint32_t magic_end;
 };
 
@@ -145,12 +143,6 @@ static struct str_ht ht;
 #define CK_HT() {							\
 	BU_CKMAG(&ht.magic, MAGIC_STRHT1, "struct str_ht ht 1");	\
 	BU_CKMAG(&ht.magic_end, MAGIC_STRHT2, "struct str_ht ht 2");	\
-	BU_CKMAG(ht.hashTableMagic1, MAGIC_TAB1, "hashTable Magic 1");	\
-	BU_CKMAG(ht.hashTableMagic2, MAGIC_TAB2, "hashTable Magic 2");	\
-	if (ht.hashTable != &ht.hashTableMagic1[1])			\
-	    bu_bomb("ht.hashTable changed rel ht.hashTableMagic1");	\
-	if (ht.hashTableMagic2 != &ht.hashTable[TABLE_SIZE])		\
-	    bu_bomb("ht.hashTable changed rel ht.hashTableMagic2");	\
     }
 
 
@@ -184,14 +176,7 @@ bn_noise_init(void)
 
     BN_RANDSEED(rndtabi, (BN_RAND_TABSIZE-1));
 
-    /* alloc table size plus two magic numbers */
-    ht.hashTableMagic1 = (uint32_t *) bu_calloc(1, 2*sizeof(uint32_t) + TABLE_SIZE*sizeof(uint32_t), "noise hashTable");
-
-    ht.hashTable = &ht.hashTableMagic1[1];
-    ht.hashTableMagic2 = &ht.hashTable[TABLE_SIZE];
-
-    *ht.hashTableMagic1 = (uint32_t)MAGIC_TAB1;
-    *ht.hashTableMagic2 = (uint32_t)MAGIC_TAB2;
+    ht.hashTable = (uint32_t *)bu_calloc(1, (TABLE_SIZE*sizeof(uint32_t)), "noise hashTable");
 
     ht.magic_end = (uint32_t)MAGIC_STRHT2;
     ht.magic = (uint32_t)MAGIC_STRHT1;
