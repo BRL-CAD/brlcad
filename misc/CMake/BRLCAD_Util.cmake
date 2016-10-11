@@ -36,7 +36,7 @@
 #-----------------------------------------------------------------------------
 # Pretty-printing macro that generates a box around a string and prints the
 # resulting message.
-macro(BOX_PRINT input_string border_string)
+function(BOX_PRINT input_string border_string)
   string(LENGTH ${input_string} MESSAGE_LENGTH)
   string(LENGTH ${border_string} SEPARATOR_STRING_LENGTH)
   while(${MESSAGE_LENGTH} GREATER ${SEPARATOR_STRING_LENGTH})
@@ -46,7 +46,7 @@ macro(BOX_PRINT input_string border_string)
   message("${SEPARATOR_STRING}")
   message("${input_string}")
   message("${SEPARATOR_STRING}")
-endmacro()
+endfunction()
 
 #-----------------------------------------------------------------------------
 # For situations like file copying, where we sometimes need to autogenerate
