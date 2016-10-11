@@ -48,31 +48,6 @@ function(BOX_PRINT input_string border_string)
   message("${SEPARATOR_STRING}")
 endfunction()
 
-#-----------------------------------------------------------------------------
-# For situations like file copying, where we sometimes need to autogenerate
-# target names, it is important to make sure we can avoid generating absurdly
-# long names.  To do this, we run candidate names through a length filter
-# and use their MD5 hash if they are too long.
-macro(BRLCAD_TARGET_NAME input_string outputvar)
-  string(REGEX REPLACE "/" "_" targetstr ${input_string})
-  string(REGEX REPLACE "\\." "_" targetstr ${targetstr})
-  string(LENGTH "${targetstr}" STRLEN)
-  # If the input string is longer than 30 characters, generate a
-  # shorter string using the md5 hash.  It will be cryptic but
-  # the odds are very good it'll be a unique target name
-  # and the string will be short enough, which is what we need.
-  if ("${STRLEN}" GREATER 30)
-    file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS" "${targetstr}")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum "${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS" OUTPUT_VARIABLE targetname)
-    string(REPLACE " ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS" "" targetname "${targetname}")
-    string(STRIP "${targetname}" targetname)
-    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS")
-    set(${outpvar} ${targetname})
-  else ("${STRLEN}" GREATER 30)
-    set(${outputvar} "${targetstr}")
-  endif ("${STRLEN}" GREATER 30)
-endmacro(BRLCAD_TARGET_NAME)
-
 
 #-----------------------------------------------------------------------------
 # It is sometimes convenient to be able to supply both a filename and a
@@ -96,11 +71,32 @@ macro(NORMALIZE_FILE_LIST inlist targetvar fullpath_targetvar)
   # Put the list contents in the targetvar variable and
   # generate a target name.
   if(NOT havevarname)
+
     set(${targetvar} "${inlist}")
-    BRLCAD_TARGET_NAME("${inlist}" targetname)
+
+    # Initial clean-up
+    string(REGEX REPLACE " " "_" targetstr "${inlist}")
+    string(REGEX REPLACE "/" "_" targetstr "${targetstr}")
+    string(REGEX REPLACE "\\." "_" targetstr "${targetstr}")
+
+    # For situations like file copying, where we sometimes need to autogenerate
+    # target names, it is important to make sure we can avoid generating absurdly
+    # long names.  To do this, we run candidate names through a length filter
+    # and use their MD5 hash if they are longer than 30 characters.
+    # It's cryptic but the odds are very good the result will be a unique
+    # target name and the string will be short enough, which is what we need.
+    string(LENGTH "${targetstr}" STRLEN)
+    if ("${STRLEN}" GREATER 30)
+      string(MD5 targetname "${targetstr}")
+    else ("${STRLEN}" GREATER 30)
+      set(targetname "${targetstr}")
+    endif ("${STRLEN}" GREATER 30)
+
   else(NOT havevarname)
+
     set(${targetvar} "${${inlist}}")
     set(targetname "${inlist}")
+
   endif(NOT havevarname)
 
   # Mark the inputs as files to ignore in distcheck
