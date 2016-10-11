@@ -300,7 +300,7 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;	/* restore mode */
+	nmg_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -424,7 +424,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 		/* Sometimes the NMG library adds debugging bits when
 		 * it detects an internal error, before bombing out.
 		 */
-		RTG.NMG_debug = NMG_debug;	/* restore mode */
+		nmg_debug = NMG_debug;	/* restore mode */
 
 		/* Release any intersector 2d tables */
 		nmg_isect2d_final_cleanup();
@@ -539,8 +539,8 @@ main(int argc, char **argv)
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		NMG_debug = RTG.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		NMG_debug = nmg_debug;
 		break;
 	    case 'e':		/* Error file name. */
 		error_file = bu_optarg;

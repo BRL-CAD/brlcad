@@ -395,7 +395,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, size_t *face_count, struct patch_
     bu_free((char *)flags1, "nmg_shell_coplanar_face_merge flags1[]");
     bu_free((char *)flags2, "nmg_shell_coplanar_face_merge flags2[]");
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("nmg_shell_coplanar_face_merge(s=%p, tol=%p, simplify=%d)\n",
 	       (void *)s, (void *)tol, simplify);
     }
@@ -3455,7 +3455,7 @@ main(int argc, char **argv)
 
 	    case 'X':  /* librt NMG debug flags */
 
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
 		break;
 
 	    case 'p':  /* polysolid output */
@@ -3545,8 +3545,8 @@ main(int argc, char **argv)
 	bu_log("\n");
     }
 
-    if (RTG.NMG_debug) {
-	bu_log("librt RTG.NMG_debug = 0x%x\n", RTG.NMG_debug);
+    if (nmg_debug) {
+	bu_log("librt nmg_debug = 0x%x\n", nmg_debug);
     }
 
     /* This section opens input files - the data file defaults to

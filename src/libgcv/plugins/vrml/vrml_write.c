@@ -1067,7 +1067,7 @@ vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree,
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = pstate->nmg_debug; /* restore mode */
+	nmg_debug = pstate->nmg_debug; /* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -1227,7 +1227,7 @@ vrml_write(struct gcv_context *context, const struct gcv_opts *gcv_options, cons
     state.gcv_options = gcv_options;
     state.vrml_write_options = (struct vrml_write_options *)options_data;
     state.dbip = context->dbip;
-    state.nmg_debug = RTG.NMG_debug;
+    state.nmg_debug = nmg_debug;
 
     region_end_data.pstate = &state;
     region_end_data.pmp = &pm;

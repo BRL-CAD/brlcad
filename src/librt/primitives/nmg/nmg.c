@@ -154,7 +154,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     struct nmg_specific *nmg =
 	(struct nmg_specific *)stp->st_specific;
 
-    if (RTG.NMG_debug & DEBUG_NMGRT) {
+    if (nmg_debug & DEBUG_NMGRT) {
 	bu_log("rt_nmg_shot()\n\t");
 	rt_pr_tol(&ap->a_rt_i->rti_tol);
     }
@@ -2430,7 +2430,7 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
 
-    if (RT_G_DEBUG || RTG.NMG_debug)
+    if (RT_G_DEBUG || nmg_debug)
 	nmg_vmodel(m);
 
     return 0;			/* OK */
@@ -2524,7 +2524,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
     bu_free((char *)ecnt, "ecnt[]");
     bu_free((char *)real_ptrs, "ptrs[]");
 
-    if (RT_G_DEBUG || RTG.NMG_debug) {
+    if (RT_G_DEBUG || nmg_debug) {
 	nmg_vmodel(m);
     }
     return 0;		/* OK */
@@ -3353,7 +3353,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
     }
 
     NMG_CK_REGION(r1);
-    if (RTG.NMG_debug & DEBUG_VERIFY) {
+    if (nmg_debug & DEBUG_VERIFY) {
 	nmg_vshell(&r1->s_hd, r1);
     }
 
@@ -3409,7 +3409,7 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
     }
 
     NMG_CK_REGION(r1);
-    if (RTG.NMG_debug & DEBUG_VERIFY) {
+    if (nmg_debug & DEBUG_VERIFY) {
 	nmg_vshell(&r1->s_hd, r1);
     }
 
@@ -3471,7 +3471,7 @@ nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const str
 	    return TREE_NULL;
 	case OP_NMG_TESS:
 	    /* Hit a tree leaf */
-	    if (RTG.NMG_debug & DEBUG_VERIFY) {
+	    if (nmg_debug & DEBUG_VERIFY) {
 		nmg_vshell(&tp->tr_d.td_r->s_hd, tp->tr_d.td_r);
 	    }
 	    return tp;
@@ -3604,7 +3604,7 @@ nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const str
     nmg_r_radial_check(tr->tr_d.td_r, vlfree, tol);
     nmg_r_radial_check(tl->tr_d.td_r, vlfree, tol);
 
-    if (RTG.NMG_debug & DEBUG_BOOL) {
+    if (nmg_debug & DEBUG_BOOL) {
 	bu_log("Before model fuse\nShell A:\n");
 	nmg_pr_s_briefly(BU_LIST_FIRST(shell, &tl->tr_d.td_r->s_hd), "");
 	bu_log("Shell B:\n");
@@ -3639,7 +3639,7 @@ nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const str
 	tp->tr_d.td_r = reg;
 	tp->tr_d.td_name = name;
 
-	if (RTG.NMG_debug & DEBUG_VERIFY) {
+	if (nmg_debug & DEBUG_VERIFY) {
 	    nmg_vshell(&reg->s_hd, reg);
 	}
 	return tp;
@@ -3678,7 +3678,7 @@ nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struc
     BN_CK_TOL(tol);
     RT_CK_RESOURCE(resp);
 
-    if (RTG.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC)) {
+    if (nmg_debug & (DEBUG_BOOL|DEBUG_BASIC)) {
 	bu_log("\n\nnmg_boolean(tp=%p, m=%p) START\n",
 	       (void *)tp, (void *)m);
     }
@@ -3731,7 +3731,7 @@ nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struc
     ret = 0;
 
 out:
-    if (RTG.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC)) {
+    if (nmg_debug & (DEBUG_BOOL|DEBUG_BASIC)) {
 	bu_log("nmg_boolean(tp=%p, m=%p) END, ret=%d\n\n",
 	       (void *)tp, (void *)m, ret);
     }
@@ -4484,7 +4484,7 @@ nmg_to_poly(const struct model *m, struct rt_pg_internal *poly_int, struct bu_li
 
 		/* if any loop has more than 5 vertices, triangulate the face */
 		if (max_count > 5) {
-		    if (RTG.NMG_debug & DEBUG_BASIC)
+		    if (nmg_debug & DEBUG_BASIC)
 			bu_log("nmg_to_poly: triangulating fu %p\n", (void *)fu);
 		    nmg_triangulate_fu(fu, vlfree, tol);
 		}

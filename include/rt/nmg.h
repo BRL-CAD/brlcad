@@ -232,10 +232,10 @@ struct ray_data {
 #else
 #  define nmg_bu_bomb(rd, vlfree, str) { \
         bu_log("%s", str); \
-        if (RTG.NMG_debug & DEBUG_NMGRT) bu_bomb("End of diagnostics"); \
+        if (nmg_debug & DEBUG_NMGRT) bu_bomb("End of diagnostics"); \
         BU_LIST_INIT(&rd->rd_hit); \
         BU_LIST_INIT(&rd->rd_miss); \
-        RTG.NMG_debug |= DEBUG_NMGRT; \
+        nmg_debug |= DEBUG_NMGRT; \
         nmg_isect_ray_model(rd,vlfree); \
         (void) nmg_ray_segs(rd,vlfree); \
         bu_bomb("Should have bombed before this\n"); \

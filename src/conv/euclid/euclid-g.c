@@ -145,7 +145,7 @@ main(int argc, char **argv)
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
 		break;
 	    default:
 		print_usage(argv[0]);

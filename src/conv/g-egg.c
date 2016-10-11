@@ -256,7 +256,7 @@ main(int argc, char *argv[])
 		rt_pr_tol(&conv_data.tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
 		break;
 	    case '8':
 		use_mc = 1;
