@@ -46,7 +46,7 @@
  * parametric value on a curve. This is expanded to the surface.
  */
 void
-rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *final_value)
+nmg_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *final_value)
 {
     fastf_t * mesh_ptr = srf->ctl_points;
     fastf_t * curves;
@@ -74,14 +74,14 @@ rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *fi
 
     k_index = rt_nurb_knot_index(&srf->u, u, srf->order[RT_NURB_SPLIT_ROW]);
     if (k_index < 0) {
-	bu_log("rt_nurb_s_eval: u value outside parameter range\n");
+	bu_log("nmg_nurb_s_eval: u value outside parameter range\n");
 	bu_log("\tUV = (%g %g)\n", u, v);
 	rt_nurb_s_print("", srf);
-	bu_bomb("rt_nurb_s_eval: u value outside parameter range\n");
+	bu_bomb("nmg_nurb_s_eval: u value outside parameter range\n");
     }
 
     curves = (fastf_t *) bu_malloc(col_size * sizeof(fastf_t) * coords,
-				   "rt_nurb_s_eval:crv_ptr");
+				   "nmg_nurb_s_eval:crv_ptr");
 
     for (i = 0; i < row_size; i++) {
 	fastf_t * rtr_pt;
@@ -101,14 +101,14 @@ rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *fi
 	c_ptr += coords;
     }
 
-    bu_free((char *)curves, "rt_nurb_s_eval: curves");
+    bu_free((char *)curves, "nmg_nurb_s_eval: curves");
 
     k_index = rt_nurb_knot_index(&srf->v, v, srf->order[RT_NURB_SPLIT_COL]);
     if (k_index < 0) {
-	bu_log("rt_nurb_s_eval: v value outside parameter range\n");
+	bu_log("nmg_nurb_s_eval: v value outside parameter range\n");
 	bu_log("\tUV = (%g %g)\n", u, v);
 	rt_nurb_s_print("", srf);
-	bu_bomb("rt_nurb_s_eval: v value outside parameter range\n");
+	bu_bomb("nmg_nurb_s_eval: v value outside parameter range\n");
     }
 
     ev_pt = (fastf_t *) rt_nurb_eval_crv(diff_curve, srf->order[RT_NURB_SPLIT_COL],
@@ -117,7 +117,7 @@ rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *fi
     for (k = 0; k < coords; k++)
 	final_value[k] = ev_pt[k];
 
-    bu_free ((char *)diff_curve, "rt_nurb_s_eval: diff curve");
+    bu_free ((char *)diff_curve, "nmg_nurb_s_eval: diff curve");
 }
 
 

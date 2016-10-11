@@ -121,11 +121,11 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
     /* free up storage */
 
-    rt_nurb_free_snurb(us, (struct resource *)NULL);
-    rt_nurb_free_snurb(vs, (struct resource *)NULL);
-    rt_nurb_free_snurb(uus, (struct resource *)NULL);
-    rt_nurb_free_snurb(vvs, (struct resource *)NULL);
-    rt_nurb_free_snurb(uvs, (struct resource *)NULL);
+    nmg_nurb_free_snurb(us, (struct resource *)NULL);
+    nmg_nurb_free_snurb(vs, (struct resource *)NULL);
+    nmg_nurb_free_snurb(uus, (struct resource *)NULL);
+    nmg_nurb_free_snurb(vvs, (struct resource *)NULL);
+    nmg_nurb_free_snurb(uvs, (struct resource *)NULL);
 
 
     /* The paper uses the following to calculate the longest edge size
@@ -191,8 +191,8 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 	}
     }
 
-    rt_nurb_free_cnurb(d1);
-    rt_nurb_free_cnurb(d2);
+    nmg_nurb_free_cnurb(d1);
+    nmg_nurb_free_cnurb(d2);
 
     for (j=0; j<num_coords; j++) {
 	if (ZERO(der2[j]))

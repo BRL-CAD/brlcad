@@ -255,7 +255,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
  * The original curve is undisturbed by this operation.
  */
 void
-rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
+nmg_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 {
     struct knot_vector new_kv;
     fastf_t value;
@@ -296,7 +296,7 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
     crv1->ctl_points = (fastf_t *)
 	bu_malloc(sizeof(fastf_t) * crv1->c_size *
 		  RT_NURB_EXTRACT_COORDS(crv1->pt_type),
-		  "rt_nurb_c_split: crv1 control points");
+		  "nmg_nurb_c_split: crv1 control points");
 
     GET_CNURB(crv2);
     crv2->order  = crv->order;
@@ -317,7 +317,7 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 
     rt_nurb_free_oslo(oslo, (struct resource *)NULL);
 
-    bu_free((char *) new_kv.knots, "rt_nurb_c_split; new_kv.knots");
+    bu_free((char *) new_kv.knots, "nmg_nurb_c_split; new_kv.knots");
 
     /* Arrangement will be:  head, crv1, crv2 */
     BU_LIST_APPEND(split_hd, &crv2->l);

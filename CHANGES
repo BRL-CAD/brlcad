@@ -1218,7 +1218,16 @@ s/bu_free_array/bu_free_args/g
 s/(#[[:space:]]*include[[:space:]]+["<])bu\/rb\.h/\1bu\/redblack.h/g
 	clearer header name [7.26]
 s/rt_plot_vlblock/bn_plot_vlblock/g
-        move function to libbn [7.26]
 s/rt_vlist_to_uplot/bn_vlist_to_uplot/g
-        move function to libbn [7.26]
-
+        move vlist functions to libbn [7.26]
+s/rt_nurb_bezier/nmg_nurb_bezier/g
+s/rt_nurb_c_split/nmg_nurb_c_split/g
+s/rt_nurb_free_cnurb/nmg_nurb_free_cnurb/g
+s/rt_nurb_free_snurb/nmg_nurb_free_snurb/g
+s/rt_nurb_intersect/nmg_nurb_intersect/g
+s/rt_nurb_new_cnurb/nmg_nurb_new_cnurb/g
+s/rt_nurb_new_snurb/nmg_nurb_new_snurb/g
+s/rt_nurb_s_eval/nmg_nurb_s_eval/g
+s/rt_nurb_s_norm/nmg_nurb_s_norm/g
+s/rt_nurb_uv_hit/nmg_nurb_uv_hit/g
+        rename old nurbs functions intertwined with nmg to use nmg prefix [7.26]

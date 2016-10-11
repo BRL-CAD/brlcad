@@ -568,7 +568,7 @@ nmg_eval_linear_trim_curve(const struct face_g_snurb *snrb, const fastf_t *uvw, 
 
     if (snrb) {
 	NMG_CK_FACE_G_SNURB(snrb);
-	rt_nurb_s_eval(snrb, uvw[0], uvw[1], xyz1);
+	nmg_nurb_s_eval(snrb, uvw[0], uvw[1], xyz1);
 	if (RT_NURB_IS_PT_RATIONAL(snrb->pt_type)) {
 	    fastf_t inverse_weight;
 
@@ -610,7 +610,7 @@ nmg_eval_trim_curve(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *
     }
 
     if (snrb) {
-	rt_nurb_s_eval(snrb, uvw[0], uvw[1], xyz1);
+	nmg_nurb_s_eval(snrb, uvw[0], uvw[1], xyz1);
 	if (RT_NURB_IS_PT_RATIONAL(snrb->pt_type)) {
 	    fastf_t inverse_weight;
 

@@ -273,7 +273,7 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	if (caset == CASE_C)
 	    trim_flag = rt_process_casec(clip, u, v);
 
-	rt_nurb_free_cnurb(clip);
+	nmg_nurb_free_cnurb(clip);
 
 	if (trim_flag == TRIM_IN) jordan_hit++;
 	if (trim_flag == TRIM_ON) break;
@@ -281,7 +281,7 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
     while (BU_LIST_WHILE(clip, edge_g_cnurb, &plist)) {
 	BU_LIST_DEQUEUE(&clip->l);
-	rt_nurb_free_cnurb(clip);
+	nmg_nurb_free_cnurb(clip);
     }
 
     if (trim_flag == TRIM_ON)
@@ -485,7 +485,7 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 
     tmp = (struct edge_g_cnurb *) c1->l.forw;
     BU_LIST_DEQUEUE(&tmp->l);
-    rt_nurb_free_cnurb(tmp);
+    nmg_nurb_free_cnurb(tmp);
 
     BU_LIST_INIT(plist);
     BU_LIST_INSERT(&c2->l, plist);

@@ -175,7 +175,7 @@ nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fa
 	bu_bomb("nmg_snurb_fu_get_norm: bad face\n");
     }
 
-    rt_nurb_s_eval(f->g.snurb_p, u, v, tmp_pt);
+    nmg_nurb_s_eval(f->g.snurb_p, u, v, tmp_pt);
 
     if (RT_NURB_IS_PT_RATIONAL(f->g.snurb_p->pt_type)) {
 	double d;
@@ -206,7 +206,7 @@ nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v
 	bu_bomb("nmg_snurb_fu_get_norm: bad face\n");
     }
 
-    rt_nurb_s_norm(f->g.snurb_p, u, v, norm);
+    nmg_nurb_s_norm(f->g.snurb_p, u, v, norm);
 
     if ((fu->orientation != OT_SAME) != (f->flip != 0))
 	VREVERSE(norm, norm);
@@ -8703,7 +8703,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
     }
     knot_length++;
 
-    new_crv = rt_nurb_new_cnurb(max_order, knot_length, ctl_points, pt_type);
+    new_crv = nmg_nurb_new_cnurb(max_order, knot_length, ctl_points, pt_type);
 
     crv = BU_LIST_FIRST(edge_g_cnurb, crv_head);
 
@@ -8875,7 +8875,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 	}
 
 	/* Get memory for this curve (order=3, 6 knot values, 3 control points) */
-	crv = rt_nurb_new_cnurb(3, 6, 3, pt_type);
+	crv = nmg_nurb_new_cnurb(3, 6, 3, pt_type);
 
 	/* Set knot values */
 	for (i=0; i<3; i++)

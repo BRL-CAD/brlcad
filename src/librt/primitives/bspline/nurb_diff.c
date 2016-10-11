@@ -64,7 +64,7 @@ rt_nurb_s_diff(const struct face_g_snurb *srf, int dir)
 
     if (dir == RT_NURB_SPLIT_ROW) {
 	nsrf = (struct face_g_snurb *)
-	    rt_nurb_new_snurb(srf->order[0] - 1, srf->order[1],
+	    nmg_nurb_new_snurb(srf->order[0] - 1, srf->order[1],
 			      srf->u.k_size - 2, srf->v.k_size,
 			      srf->s_size[0], srf->s_size[1] - 1,
 			      srf->pt_type, (struct resource *)NULL);
@@ -93,7 +93,7 @@ rt_nurb_s_diff(const struct face_g_snurb *srf, int dir)
 	for (i = 0; i < srf->v.k_size; i++)
 	    nsrf->v.knots[i] = srf->v.knots[i];
     } else {
-	nsrf = (struct face_g_snurb *) rt_nurb_new_snurb(
+	nsrf = (struct face_g_snurb *) nmg_nurb_new_snurb(
 	    srf->order[0], srf->order[1] - 1,
 	    srf->u.k_size, srf->v.k_size - 2,
 	    srf->s_size[0] - 1, srf->s_size[1],
@@ -139,7 +139,7 @@ rt_nurb_c_diff(const struct edge_g_cnurb *crv)
 
     NMG_CK_CNURB(crv);
 
-    ncrv = (struct edge_g_cnurb *) rt_nurb_new_cnurb(crv->order - 1,
+    ncrv = (struct edge_g_cnurb *) nmg_nurb_new_cnurb(crv->order - 1,
 						     crv->k.k_size - 2, crv->c_size - 1,
 						     crv->pt_type);
 

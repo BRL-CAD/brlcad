@@ -50,7 +50,7 @@
  * 1 Original surface was Bezier, only a copy was done.
  */
 int
-rt_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, struct resource *res)
+nmg_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, struct resource *res)
 {
     struct face_g_snurb *s;
     int dir;
@@ -76,7 +76,7 @@ rt_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, 
 	    /* Split, and keep going */
 	    BU_LIST_DEQUEUE(&s->l);
 	    rt_nurb_s_split(&todo, s, dir, res);
-	    rt_nurb_free_snurb(s, res);
+	    nmg_nurb_free_snurb(s, res);
 	}
     }
     return 0;		/* Bezier snurbs on bezier_hd list */
@@ -165,7 +165,7 @@ nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv)
 
 	crv1 = rt_nurb_c_xsplit(crv_copy, split);
 
-	rt_nurb_free_cnurb(crv_copy);
+	nmg_nurb_free_cnurb(crv_copy);
 	crv_copy = BU_LIST_PNEXT(edge_g_cnurb, &crv1->l);
 	BU_LIST_DEQUEUE(&crv_copy->l);
 

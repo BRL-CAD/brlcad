@@ -56,18 +56,18 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
     vvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
     uvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
 
-    rt_nurb_s_eval(srf, u, v, se);
-    rt_nurb_s_eval(us, u, v, ue);
-    rt_nurb_s_eval(vs, u, v, ve);
-    rt_nurb_s_eval(uus, u, v, uue);
-    rt_nurb_s_eval(vvs, u, v, vve);
-    rt_nurb_s_eval(uvs, u, v, uve);
+    nmg_nurb_s_eval(srf, u, v, se);
+    nmg_nurb_s_eval(us, u, v, ue);
+    nmg_nurb_s_eval(vs, u, v, ve);
+    nmg_nurb_s_eval(uus, u, v, uue);
+    nmg_nurb_s_eval(vvs, u, v, vve);
+    nmg_nurb_s_eval(uvs, u, v, uve);
 
-    rt_nurb_free_snurb(us, (struct resource *)NULL);
-    rt_nurb_free_snurb(vs, (struct resource *)NULL);
-    rt_nurb_free_snurb(uus, (struct resource *)NULL);
-    rt_nurb_free_snurb(vvs, (struct resource *)NULL);
-    rt_nurb_free_snurb(uvs, (struct resource *)NULL);
+    nmg_nurb_free_snurb(us, (struct resource *)NULL);
+    nmg_nurb_free_snurb(vs, (struct resource *)NULL);
+    nmg_nurb_free_snurb(uus, (struct resource *)NULL);
+    nmg_nurb_free_snurb(vvs, (struct resource *)NULL);
+    nmg_nurb_free_snurb(uvs, (struct resource *)NULL);
 
     if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	for (i = 0; i < 3; i++) {

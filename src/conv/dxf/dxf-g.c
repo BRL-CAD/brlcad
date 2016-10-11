@@ -2824,7 +2824,7 @@ process_spline_entities_code(int code)
 		ncoords = 3;
 		pt_type = RT_NURB_MAKE_PT_TYPE(ncoords, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
 	    }
-	    crv = rt_nurb_new_cnurb(degree+1, numCtlPts+degree+1, numCtlPts, pt_type);
+	    crv = nmg_nurb_new_cnurb(degree+1, numCtlPts+degree+1, numCtlPts, pt_type);
 
 	    for (i = 0; i < numKnots; i++) {
 		crv->k.knots[i] = knots[i];
@@ -2859,7 +2859,7 @@ process_spline_entities_code(int code)
 		v2 = NULL;
 	    }
 
-	    rt_nurb_free_cnurb(crv);
+	    nmg_nurb_free_cnurb(crv);
 
 	    if (knots != NULL) bu_free(knots, "spline knots");
 	    if (weights != NULL) bu_free(weights, "spline weights");

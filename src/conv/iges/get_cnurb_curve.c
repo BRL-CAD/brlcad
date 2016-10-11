@@ -66,7 +66,7 @@ Get_cnurb_curve(int curve_de, int *linear)
 	    pt_type = RT_NURB_MAKE_PT_TYPE(3, 3, 1);
 
 	    /* make a linear edge_g_cnurb (order=2) */
-	    crv = rt_nurb_new_cnurb(2, 4, 2, pt_type);
+	    crv = nmg_nurb_new_cnurb(2, 4, 2, pt_type);
 
 	    /* insert control mesh */
 	    VMOVE(crv->ctl_points, start_pt);

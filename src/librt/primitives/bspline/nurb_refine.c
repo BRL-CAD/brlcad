@@ -152,7 +152,7 @@ rt_nurb_c_refine(const struct edge_g_cnurb *crv, struct knot_vector *kv)
 
     coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
 
-    new_crv = (struct edge_g_cnurb *) rt_nurb_new_cnurb(
+    new_crv = (struct edge_g_cnurb *) nmg_nurb_new_cnurb(
 	crv->order, kv->k_size, kv->k_size - crv->order,
 	crv->pt_type);
 

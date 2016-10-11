@@ -57,7 +57,7 @@ dump_patch(struct face_g_snurb **surfp, pt patch)
 
     pt_type = RT_NURB_MAKE_PT_TYPE(3, 2, 0); /* see nurb.h for details */
 
-    b_patch = (struct face_g_snurb *) rt_nurb_new_snurb(4, 4, 8, 8, 4, 4, pt_type, &rt_uniresource);
+    b_patch = (struct face_g_snurb *) nmg_nurb_new_snurb(4, 4, 8, 8, 4, 4, pt_type, &rt_uniresource);
     *surfp = b_patch;
 
     /* Now fill in the pieces */

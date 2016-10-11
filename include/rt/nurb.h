@@ -105,8 +105,8 @@ struct rt_nurb_poly {
     fastf_t		uv[3][2];	/**< @brief U, V parametric values */
 };
 
-struct rt_nurb_uv_hit {
-    struct rt_nurb_uv_hit * next;
+struct nmg_nurb_uv_hit {
+    struct nmg_nurb_uv_hit * next;
     int		sub;
     fastf_t		u;
     fastf_t		v;
@@ -134,7 +134,7 @@ RT_EXPORT extern fastf_t rt_nurb_basis_eval(struct knot_vector *knts, int interv
 						 int order, fastf_t mu);
 
 /* nurb_bezier.c */
-RT_EXPORT extern int rt_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb * srf, struct resource *res);
+RT_EXPORT extern int nmg_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb * srf, struct resource *res);
 RT_EXPORT extern int rt_bez_check(const struct face_g_snurb * srf);
 RT_EXPORT extern int nurb_crv_is_bezier(const struct edge_g_cnurb *crv);
 RT_EXPORT extern void nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv);
@@ -158,7 +158,7 @@ RT_EXPORT extern void rt_nurb_mesh_diff(int order, const fastf_t *o_pts,
 					     int o_size, int pt_type);
 
 /* nurb_eval.c */
-RT_EXPORT extern void rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t * final_value);
+RT_EXPORT extern void nmg_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t * final_value);
 RT_EXPORT extern void rt_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t * final_value);
 RT_EXPORT extern fastf_t *rt_nurb_eval_crv(fastf_t *crv, int order,
 						fastf_t param,
@@ -192,7 +192,7 @@ RT_EXPORT extern void rt_nurb_gen_knot_vector(struct knot_vector *new_knots,
 						   int order, fastf_t lower, fastf_t upper, struct resource *res);
 
 /* nurb_norm.c */
-RT_EXPORT extern void rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t * norm);
+RT_EXPORT extern void nmg_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t * norm);
 
 /* nurb_c2.c */
 RT_EXPORT extern void rt_nurb_curvature(struct curvature *cvp,
@@ -221,7 +221,7 @@ RT_EXPORT extern void rt_nurb_clip_srf(const struct face_g_snurb *srf,
 					    int dir, fastf_t *min, fastf_t *max);
 RT_EXPORT extern struct face_g_snurb *rt_nurb_region_from_srf(const struct face_g_snurb *srf,
 								   int dir, fastf_t param1, fastf_t param2, struct resource *res);
-RT_EXPORT extern struct rt_nurb_uv_hit *rt_nurb_intersect(const struct face_g_snurb * srf,
+RT_EXPORT extern struct nmg_nurb_uv_hit *nmg_nurb_intersect(const struct face_g_snurb * srf,
 							       plane_t plane1, plane_t plane2, double uv_tol, struct resource *res, struct bu_list *plist);
 
 /* nurb_refine.c */
@@ -244,19 +244,19 @@ RT_EXPORT extern void rt_nurb_p_mat(const fastf_t * mat, int dim);
 /* nurb_split.c */
 RT_EXPORT extern void rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf,
 					   int dir, struct resource *res);
-RT_EXPORT extern void rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv);
+RT_EXPORT extern void nmg_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv);
 
 /* nurb_trim.c */
 RT_EXPORT extern int nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu);
 
 /* nurb_util.c */
-RT_EXPORT extern struct face_g_snurb *rt_nurb_new_snurb(int u_order, int v_order,
+RT_EXPORT extern struct face_g_snurb *nmg_nurb_new_snurb(int u_order, int v_order,
 							     int n_u_knots, int n_v_knots,
 							     int n_rows, int n_cols, int pt_type, struct resource *res);
-RT_EXPORT extern struct edge_g_cnurb *rt_nurb_new_cnurb(int order, int n_knots,
+RT_EXPORT extern struct edge_g_cnurb *nmg_nurb_new_cnurb(int order, int n_knots,
 							     int n_pts, int pt_type);
-RT_EXPORT extern void rt_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res);
-RT_EXPORT extern void rt_nurb_free_cnurb(struct edge_g_cnurb * crv);
+RT_EXPORT extern void nmg_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res);
+RT_EXPORT extern void nmg_nurb_free_cnurb(struct edge_g_cnurb * crv);
 RT_EXPORT extern void rt_nurb_c_print(const struct edge_g_cnurb *crv);
 RT_EXPORT extern void rt_nurb_s_print(char *c, const struct face_g_snurb *srf);
 RT_EXPORT extern void rt_nurb_pr_kv(const struct knot_vector *kv);

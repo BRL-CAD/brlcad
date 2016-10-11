@@ -2228,8 +2228,8 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
 	    vp += stride;
 	}
     }
-    rt_nurb_free_snurb(c, (struct resource *)NULL);
-    rt_nurb_free_snurb(r, (struct resource *)NULL);
+    nmg_nurb_free_snurb(c, (struct resource *)NULL);
+    nmg_nurb_free_snurb(r, (struct resource *)NULL);
 
     bu_free((char *) tau1.knots, "rt_nurb_plot:tau1.knots");
     bu_free((char *) tau2.knots, "rt_nurb_plot:tau2.knots");
@@ -2332,7 +2332,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 
 	/* This section uses rt_nurb_c_eval(), but rt_nurb_c_refine is likely faster.
 	 * XXXX Need a way to selectively and recursively refine curve to avoid
-	 * feeding rt_nurb_s_eval() parameters outside domain of surface.
+	 * feeding nmg_nurb_s_eval() parameters outside domain of surface.
 	 */
 	param_delta = (c->k.knots[c->k.k_size-1] - c->k.knots[0])/(fastf_t)(n_interior+1);
 	crv_param = c->k.knots[0];
@@ -2352,7 +2352,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	    }
 
 	    /* convert 'uvw' from UV coord to XYZ coord via surf! */
-	    rt_nurb_s_eval(s, uvw[0], uvw[1], final);
+	    nmg_nurb_s_eval(s, uvw[0], uvw[1], final);
 
 	    if (RT_NURB_IS_PT_RATIONAL(s->pt_type)) {
 		/* divide out homogeneous coordinate */
