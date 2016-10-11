@@ -148,9 +148,9 @@
 
 /**
  *  If we're compiling strict, turn off "format string vs arguments"
- *  checks - BRL-CAD customizes the arguments to some of these
- *  function types (adding bu_vls support) and that is a problem with
- *  strict checking.
+ *  checks. As long as we are using C89, the proper printf support
+ *  for size_t is not available in the standard and we will get
+ *  warnings about using extensions.
  */
 #if defined(STRICT_FLAGS)
 #  undef _BU_ATTR_PRINTF12
