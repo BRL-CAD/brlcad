@@ -37,6 +37,8 @@
 
 __BEGIN_DECLS
 
+RT_EXPORT extern uint32_t nmg_debug;      /**< @brief  debug bits for NMG's see nmg.h */
+
 /*********************************************************************************
  *      The following section is an exact copy of what was previously "nmg_rt.h" *
  *      (with minor changes to NMG_GET_HITMISS and NMG_FREE_HITLIST              *

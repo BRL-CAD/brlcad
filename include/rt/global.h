@@ -44,9 +44,6 @@ struct rt_g {
 };
 #define RT_G_INIT_ZERO { 0, 0, BU_LIST_INIT_ZERO, RT_WDB_INIT_ZERO }
 
-
-RT_EXPORT extern uint32_t nmg_debug;      /**< @brief  debug bits for NMG's see nmg.h */
-
 /**
  * global ray-trace geometry state
  */

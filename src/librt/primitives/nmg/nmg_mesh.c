@@ -35,8 +35,9 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bn/plane.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 
 
 /**

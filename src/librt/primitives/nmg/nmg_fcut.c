@@ -48,9 +48,10 @@
 
 #include "vmath.h"
 #include "bu/sort.h"
+#include "bn/plane.h"
 #include "bn/plot3.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 
 
 #define PLOT_BOTH_FACES 1
@@ -3507,7 +3508,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 			      (void *)vu, pos,
 			      nmg_state_names[old_state], nmg_v_assessment_names[assessment],
 			      nmg_state_names[new_state], action_names[action]);
-		if (RT_G_DEBUG || nmg_debug) {
+		if (nmg_debug) {
 		    /* First, print this faceuse */
 		    lu = nmg_find_lu_of_vu(vu);
 		    NMG_CK_LOOPUSE(lu);

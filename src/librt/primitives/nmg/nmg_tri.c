@@ -32,11 +32,13 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/parallel.h"
 #include "vmath.h"
-#include "nmg.h"
-#include "raytrace.h"
+#include "bn/mat.h"
+#include "bu/parallel.h"
+#include "bn/plane.h"
 #include "bn/plot3.h"
+#include "nmg.h"
+#include "rt/nmg.h"
 
 
 /* macros for comparing 2D points in scanline order */

@@ -35,11 +35,9 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rt/geom.h"
-#include "raytrace.h"
+#include "bn/mat.h"
+#include "rt/nmg.h"
 #include "rt/nurb.h"
-
-#include "rt/db4.h"		/* for debugging stuff at bottom */
 
 /* externed */
 uint32_t nmg_debug;

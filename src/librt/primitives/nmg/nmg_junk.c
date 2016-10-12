@@ -43,7 +43,8 @@
 
 #include "bn.h"
 #include "vmath.h"
-#include "raytrace.h"
+#include "nmg.h"
+#include "rt/nmg.h"
 
 
 /**

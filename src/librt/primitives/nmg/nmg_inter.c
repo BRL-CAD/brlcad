@@ -60,9 +60,12 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "nmg.h"
-#include "raytrace.h"
+#include "bn/mat.h"
+#include "bn/plane.h"
 #include "bn/plot3.h"
+#include "nmg.h"
+#include "rt/nmg.h"
+#include "raytrace.h" /* for rt/calc.h - rt_in_rpp */
 
 
 #define ISECT_NONE 0

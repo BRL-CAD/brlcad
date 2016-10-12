@@ -33,9 +33,10 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "nmg.h"
-#include "raytrace.h"
+#include "bn/plane.h"
 #include "bn/plot3.h"
+#include "nmg.h"
+#include "rt/nmg.h"
 
 
 /* vertex/edge distance

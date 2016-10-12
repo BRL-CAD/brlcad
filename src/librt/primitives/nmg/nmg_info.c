@@ -37,8 +37,11 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/debug.h"
+#include "bn/mat.h"
+#include "bn/plane.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 
 /************************************************************************
  *									*
@@ -540,7 +543,7 @@ nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *UNUSED(norm), const str
     area = nmg_loop_plane_area2(lu, pl, tol);
 
     if (NEAR_ZERO(area, tol->dist_sq)) {
-	if (RT_G_DEBUG & DEBUG_MATH) {
+	if (nmg_debug & BU_DEBUG_MATH) {
 	    bu_log("nmg_loop_is_ccw: Loop area (%g) is less than tol->dist_sq (%g)\n", area, tol->dist_sq);
 	    nmg_pr_lu_briefly(lu, " ");
 	}

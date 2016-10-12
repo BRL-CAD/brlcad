@@ -36,7 +36,8 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "bu/str.h"
+#include "rt/nmg.h"
 #include "rt/nurb.h"
 
 

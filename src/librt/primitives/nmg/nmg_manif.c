@@ -33,7 +33,7 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 
 #define PAINT_INTERIOR 1
 #define PAINT_EXTERIOR 0

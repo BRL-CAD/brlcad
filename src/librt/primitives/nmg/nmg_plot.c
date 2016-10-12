@@ -50,9 +50,9 @@
 #include "vmath.h"
 #include "bn/plot3.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 #include "rt/nurb.h"
-
+#include "raytrace.h" /* RT_ADD_VLIST will be a problem - more rtg_vlfree work */
 
 #define US_DELAY 10 /* Additional delay between frames */
 

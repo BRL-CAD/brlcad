@@ -35,7 +35,7 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 
 /**
  * Return the structure index number of an arbitrary NMG structure.

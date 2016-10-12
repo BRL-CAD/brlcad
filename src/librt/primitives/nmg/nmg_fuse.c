@@ -35,10 +35,12 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/sort.h"
 #include "vmath.h"
+#include "bu/sort.h"
+#include "bu/str.h"
+#include "bn/mat.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 #include "rt/nurb.h"
 
 
