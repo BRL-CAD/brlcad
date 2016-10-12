@@ -1906,7 +1906,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		bu_log("isect_ray_snurb_face: using planes (%g %g %g %g) (%g %g %g %g)\n",
 		       V4ARGS(pl1), V4ARGS(pl2));
 	    (void)nmg_nurb_s_bound(srf, srf_min, srf_max);
-	    if (!bg_ray_in_rpp(rd->rp, rd->rd_invdir, srf_min, srf_max)) {
+	    if (!rt_in_rpp(rd->rp, rd->rd_invdir, srf_min, srf_max)) {
 		nmg_nurb_free_snurb(srf, rd->ap->a_resource);
 		continue;
 	    }
@@ -2284,7 +2284,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p, struct bu_list *vlf
 
 	VMOVE(rd->plane_pt, hit_pt);
 	rd->ray_dist_to_plane = dist;
-    } else if (!bg_ray_in_rpp(rd->rp, rd->rd_invdir,
+    } else if (!rt_in_rpp(rd->rp, rd->rd_invdir,
 			  fu_p->f_p->min_pt, fu_p->f_p->max_pt)) {
 	NMG_GET_HITMISS(myhit, rd->ap);
 	NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
@@ -2331,7 +2331,7 @@ nmg_isect_ray_shell(struct ray_data *rd, const struct shell *s_p, struct bu_list
      * is no need to record the miss for the shell, as there is only
      * one "use" of a shell.
      */
-    if (!bg_ray_in_rpp(rd->rp, rd->rd_invdir,
+    if (!rt_in_rpp(rd->rp, rd->rd_invdir,
 		   s_p->sa_p->min_pt, s_p->sa_p->max_pt)) {
 	if (nmg_debug & DEBUG_RT_ISECT)
 	    bu_log("nmg_isect_ray_shell(no RPP overlap) %p, %p\n", (void *)rd, (void *)s_p);
@@ -2383,7 +2383,7 @@ nmg_isect_ray_model(struct ray_data *rd, struct bu_list *vlfree)
 	NMG_CK_REGION_A(r_p->ra_p);
 
 	/* does ray intersect nmgregion rpp? */
-	if (! bg_ray_in_rpp(rd->rp, rd->rd_invdir,
+	if (! rt_in_rpp(rd->rp, rd->rd_invdir,
 			r_p->ra_p->min_pt, r_p->ra_p->max_pt))
 	    continue;
 

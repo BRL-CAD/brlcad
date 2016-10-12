@@ -548,7 +548,7 @@ main(int argc, char *argv[])
 		VSCALE(ap.a_ray.r_pt, sum, 1.0/3.0);
 		VREVERSE(ap.a_ray.r_dir, tri->tri_N);
 		VINVDIR(inv_dir, ap.a_ray.r_dir);
-		if (bg_ray_in_rpp(&ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max) == 0) {
+		if (rt_in_rpp(&ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max) == 0) {
 		    tri = tri->tri_forw;
 		    continue;
 		}

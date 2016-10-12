@@ -1293,5 +1293,3 @@ s/rt_nurb_to_poly/nmg_nurb_to_poly/g
         rename old nurbs functions intertwined with nmg to use nmg prefix [7.26]
 s/RTG.NMG_debug/nmg_debug/g
 	make nmg debug flag top level, like libbu's [7.26]
-s/rt_in_rpp/bg_ray_in_rpp/g
-	move rt_in_rpp into libbg [7.26]

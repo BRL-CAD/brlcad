@@ -222,7 +222,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
      * If ray does not enter the model RPP, skip on.
      * If ray ends exactly at the model RPP, trace it.
      */
-    if (!bg_ray_in_rpp(&ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
+    if (!rt_in_rpp(&ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
 	ap->a_ray.r_max < 0.0) {
 	resp->re_nmiss_model++;
 	if (ap->a_miss)
@@ -326,7 +326,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 
 		/* Check against bounding RPP, if desired by solid */
 		if (OBJ[stp->st_id].ft_use_rpp) {
-		    if (!bg_ray_in_rpp(&ss2_newray, ss.inv_dir,
+		    if (!rt_in_rpp(&ss2_newray, ss.inv_dir,
 				   stp->st_min, stp->st_max)) {
 			if (debug_shoot)bu_log("rpp miss %s by ray %d\n", stp->st_name, ray);
 			resp->re_prune_solrpp++;

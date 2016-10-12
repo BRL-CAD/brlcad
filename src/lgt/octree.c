@@ -371,7 +371,7 @@ hit_octant(struct application *ap, Octree *op, Octree **lpp, fastf_t *inv_dir, i
 	octnt_max[X] = op->o_points->c_point[X] + delta;
 	octnt_max[Y] = op->o_points->c_point[Y] + delta;
 	octnt_max[Z] = op->o_points->c_point[Z] + delta;
-	if (bg_ray_in_rpp(&ap->a_ray, inv_dir, octnt_min, octnt_max)) {
+	if (rt_in_rpp(&ap->a_ray, inv_dir, octnt_min, octnt_max)) {
 	    /* Hit octant.				*/
 	    if (op->o_child == OCTREE_NULL) {
 		/* We are at a leaf node.		*/

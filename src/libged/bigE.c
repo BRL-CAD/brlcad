@@ -1265,7 +1265,7 @@ shoot_and_plot(point_t start_pt,
 	/* actually shoot the ray, assign segments to the leaf, and
 	 * mark them as IN_SOL.
 	 */
-	if (bg_ray_in_rpp(&rp, rd.rd_invdir, shoot->l.stp->st_min, shoot->l.stp->st_max)) {
+	if (rt_in_rpp(&rp, rd.rd_invdir, shoot->l.stp->st_min, shoot->l.stp->st_max)) {
 	    if (OBJ[shoot->l.stp->st_id].ft_shot && OBJ[shoot->l.stp->st_id].ft_shot(shoot->l.stp, &rp, dgcdp->ap, rd.seghead)) {
 		struct seg *seg;
 

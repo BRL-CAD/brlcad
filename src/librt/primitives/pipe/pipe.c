@@ -1703,7 +1703,7 @@ rt_pipe_shot(
 
 	if (!pipe_id->pipe_is_bend) {
 	    struct lin_pipe *lin = (struct lin_pipe *)pipe_id;
-	    if (!bg_ray_in_rpp(rp, ap->a_inv_dir, lin->pipe_min, lin->pipe_max)) {
+	    if (!rt_in_rpp(rp, ap->a_inv_dir, lin->pipe_min, lin->pipe_max)) {
 		continue;
 	    }
 	    linear_pipe_shot(stp, rp, lin, hits, &total_hits, seg_no);

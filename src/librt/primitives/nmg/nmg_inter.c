@@ -63,9 +63,10 @@
 #include "bn/mat.h"
 #include "bn/plane.h"
 #include "bn/plot3.h"
-#include "bg/util.h"
 #include "nmg.h"
 #include "rt/nmg.h"
+#include "raytrace.h" /* for rt/calc.h - rt_in_rpp */
+
 
 #define ISECT_NONE 0
 #define ISECT_SHARED_V 1
@@ -2038,7 +2039,7 @@ nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
     VINVDIR(invdir, line.r_dir);
 
     /* nmg_loop_g() makes sure there are no 0-thickness faces */
-    if (!bg_ray_in_rpp(&line, invdir, fu2->f_p->min_pt, fu2->f_p->max_pt)) {
+    if (!rt_in_rpp(&line, invdir, fu2->f_p->min_pt, fu2->f_p->max_pt)) {
 	/* The edge ray missed the face RPP, nothing to do. */
 	if (nmg_debug & DEBUG_POLYSECT) {
 	    VPRINT("r_pt ", line.r_pt);

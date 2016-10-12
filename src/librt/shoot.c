@@ -572,7 +572,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		ssp->newray.r_pt[X] = px;
 		ssp->newray.r_pt[Y] = py;
 		ssp->newray.r_pt[Z] = pz;
-		if (!bg_ray_in_rpp(&ssp->newray, ssp->inv_dir,
+		if (!rt_in_rpp(&ssp->newray, ssp->inv_dir,
 			       cutp->bn.bn_min,
 			       cutp->bn.bn_max)) {
 		    bu_log("rt_advance_to_next_cell():  MISSED BOX\nrmin, rmax(%.20e, %.20e) box(%.20e, %.20e)\n",
@@ -690,7 +690,7 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
 
 	/* we are now at the box node for the current point */
 	/* check if the ray intersects this box */
-	if (!bg_ray_in_rpp(&ray, ss->inv_dir, cutp->bn.bn_min, cutp->bn.bn_max)) {
+	if (!rt_in_rpp(&ray, ss->inv_dir, cutp->bn.bn_min, cutp->bn.bn_max)) {
 	    /* ray does not intersect this cell
 	     * one of two situations must exist:
 	     * 1. ray starts outside model bounding box (no need for these calculations)
@@ -709,7 +709,7 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
 
 	    if (BU_BITTEST(solidbits, plp->stp->st_bit) == 0) {
 		/* we haven't looked at this primitive before */
-		if (bg_ray_in_rpp(&ray, ss->inv_dir, plp->stp->st_min, plp->stp->st_max)) {
+		if (rt_in_rpp(&ray, ss->inv_dir, plp->stp->st_min, plp->stp->st_max)) {
 		    /* ray intersects this primitive bounding box */
 
 		    if (ray.r_min < BACKING_DIST) {
@@ -1022,7 +1022,7 @@ rt_shootray(register struct application *ap)
      * If ray does not enter the model RPP, skip on.  If ray ends
      * exactly at the model RPP, trace it.
      */
-    if (!bg_ray_in_rpp(&ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
+    if (!rt_in_rpp(&ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
 	ap->a_ray.r_max < 0.0) {
 	cutp = &ap->a_rt_i->rti_inf_box;
 	if (cutp->bn.bn_len > 0) {
@@ -1216,7 +1216,7 @@ rt_shootray(register struct application *ap)
 		    /* Compute ray entry and exit to entire solid's
 		     * bounding box.
 		     */
-		    if (!bg_ray_in_rpp(&ss.newray, ss.inv_dir,
+		    if (!rt_in_rpp(&ss.newray, ss.inv_dir,
 				   stp->st_min, stp->st_max)) {
 			if (debug_shoot)bu_log("rpp miss %s (all pieces)\n", stp->st_name);
 			resp->re_prune_solrpp++;
@@ -1299,7 +1299,7 @@ rt_shootray(register struct application *ap)
 
 		/* Check against bounding RPP, if desired by solid */
 		if (stp->st_meth->ft_use_rpp) {
-		    if (!bg_ray_in_rpp(&ss.newray, ss.inv_dir,
+		    if (!rt_in_rpp(&ss.newray, ss.inv_dir,
 				   stp->st_min, stp->st_max)) {
 			if (debug_shoot)bu_log("rpp miss %s\n", stp->st_name);
 			resp->re_prune_solrpp++;
@@ -1667,7 +1667,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
      * If ray does not enter the model RPP, skip on.
      * If ray ends exactly at the model RPP, trace it.
      */
-    if (!bg_ray_in_rpp(&ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
+    if (!rt_in_rpp(&ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
 	ap->a_ray.r_max < 0.0) {
 	cutp = &ap->a_rt_i->rti_inf_box;
 	if (cutp->bn.bn_len > 0) {

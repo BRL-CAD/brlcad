@@ -28,10 +28,23 @@
 
 #include "common.h"
 #include "vmath.h"
-#include "bg/defines.h"
 
 __BEGIN_DECLS
 #define CORNER_PTS 4
+
+/**
+ * @brief Primary ray data structure
+ *
+ * Not called just "ray" to prevent conflicts with VLD stuff.
+ */
+struct xray {
+    uint32_t            magic;
+    int                 index;          /**< @brief Which ray of a bundle */
+    point_t             r_pt;           /**< @brief Point at which ray starts */
+    vect_t              r_dir;          /**< @brief Direction of ray (UNIT Length) */
+    fastf_t             r_min;          /**< @brief entry dist to bounding sphere */
+    fastf_t             r_max;          /**< @brief exit dist from bounding sphere */
+};
 #define RAY_NULL        ((struct xray *)0)
 #define RT_CK_RAY(_p) BU_CKMAG(_p, RT_RAY_MAGIC, "struct xray");
 

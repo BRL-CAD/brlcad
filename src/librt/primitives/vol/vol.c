@@ -164,7 +164,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     /* intersect ray with ideal grid rpp */
     VSETALL(P, 0);
-    if (! bg_ray_in_rpp(rp, invdir, P, volp->vol_large))
+    if (! rt_in_rpp(rp, invdir, P, volp->vol_large))
 	return 0;	/* MISS */
     VJOIN1(P, rp->r_pt, rp->r_min, rp->r_dir);	/* P is hit point */
     if (RT_G_DEBUG&DEBUG_VOL)VPRINT("vol_large", volp->vol_large);

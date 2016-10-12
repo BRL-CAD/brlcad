@@ -799,7 +799,7 @@ isect_plant(const struct plant *pl, struct grass_ray *r, struct shadework *swp, 
     }
 
     r->r.r_min = r->r.r_max = 0.0;
-    if (! bg_ray_in_rpp(&r->r, r->rev, pl->pmin, pl->pmax)) {
+    if (! rt_in_rpp(&r->r, r->rev, pl->pmin, pl->pmax)) {
 	if (rdebug&RDEBUG_SHADE) {
 	    point_t in_pt, out_pt;
 	    bu_log("min:%g max:%g\n", r->r.r_min, r->r.r_max);
