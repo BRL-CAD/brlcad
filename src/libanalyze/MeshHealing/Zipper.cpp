@@ -30,6 +30,7 @@
 #include <utility>
 #include <vector>
 
+#include "vmath.h"
 #include "Geometry.h"
 
 void
@@ -341,7 +342,7 @@ bool
 checkIfValidPQ(std::priority_queue<queue_element, std::vector<queue_element>, compareDist> PQ)
 {
     while(!PQ.empty()) {
-	if (PQ.top().dist != INT_MAX)
+	if (NEAR_EQUAL(PQ.top().dist, INT_MAX, SMALL_FASTF))
 	    return true;
 	PQ.pop();
     }
