@@ -33,8 +33,9 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/str.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 
 
 /************************************************************************

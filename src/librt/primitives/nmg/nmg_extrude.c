@@ -33,10 +33,10 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "rt/db4.h"
+#include "bu/malloc.h"
+#include "bn/plane.h"
 #include "nmg.h"
-#include "rt/geom.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 
 
 /**

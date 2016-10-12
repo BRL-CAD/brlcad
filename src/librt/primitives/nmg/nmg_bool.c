@@ -40,7 +40,7 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 #include "bn/plot3.h"
 
 

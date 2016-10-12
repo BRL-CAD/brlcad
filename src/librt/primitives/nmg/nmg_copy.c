@@ -31,7 +31,8 @@
 
 #include <string.h>
 
-#include "raytrace.h"
+#include "nmg.h"
+#include "rt/nmg.h"
 #include "rt/nurb.h"
 
 

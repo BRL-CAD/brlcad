@@ -35,7 +35,7 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 
 
 struct nmg_bool_state {

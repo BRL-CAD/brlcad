@@ -46,9 +46,10 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "nmg.h"
-#include "raytrace.h"
+#include "bn/plane.h"
 #include "bn/plot3.h"
+#include "nmg.h"
+#include "rt/nmg.h"
 
 
 #define MAX_DIR_TRYS 10
@@ -986,7 +987,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, struct bu_l
 
 	nmg_pr_class_status("class_eu_vs_s(): eu vu", euv_cl);
 	nmg_pr_class_status("class_eu_vs_s(): eumate vu", matev_cl);
-	if (RT_G_DEBUG || nmg_debug) {
+	if (nmg_debug) {
 	    /* Do them over, so we can watch */
 	    bu_log("class_eu_vs_s(): Edge not cut, doing it over\n");
 	    NMG_INDEX_CLEAR(classlist[NMG_CLASS_AinB], eu->vu_p);
