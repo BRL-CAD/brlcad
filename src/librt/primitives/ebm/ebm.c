@@ -282,7 +282,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 
     /* intersect ray with ideal grid rpp */
     VSETALL(P, 0);
-    if (! rt_in_rpp(rp, invdir, P, ebmp->ebm_large))
+    if (! bg_ray_in_rpp(rp, invdir, P, ebmp->ebm_large))
 	return 0;	/* MISS */
 
     VJOIN1(P, rp->r_pt, rp->r_min, rp->r_dir);

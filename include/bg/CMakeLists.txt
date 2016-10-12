@@ -5,6 +5,7 @@ set(bg_headers
   polygon.h
   tri_ray.h
   tri_tri.h
+  util.h
   )
 
 install(FILES ${bg_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bg)

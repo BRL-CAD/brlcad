@@ -2450,7 +2450,7 @@ bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const size_t pl_count)
  * Intersect a line segment with a rectangular parallelepiped (RPP)
  * that has faces parallel to the coordinate planes (a clipping RPP).
  * The RPP is defined by a minimum point and a maximum point.  This is
- * a very close relative to rt_in_rpp() from librt/shoot.c
+ * a very close relative to bg_ray_in_rpp() from librt/shoot.c
  *
  * @return 0   if ray does not hit RPP,
  * @return !0  if ray hits RPP.

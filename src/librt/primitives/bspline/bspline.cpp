@@ -383,7 +383,7 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	struct nmg_nurb_uv_hit *hp;
 
 	for (BU_LIST_FOR (s, face_g_snurb, &nurb->bez_hd)) {
-	    if (!rt_in_rpp(rp, invdir, s->min_pt, s->max_pt))
+	    if (!bg_ray_in_rpp(rp, invdir, s->min_pt, s->max_pt))
 		continue;
 
 #define UV_TOL 1.0e-6	/* Paper says 1.0e-4 is reasonable for 1k images, not close up */

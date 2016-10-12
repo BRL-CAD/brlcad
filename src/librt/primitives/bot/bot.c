@@ -4124,7 +4124,7 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 		inv_dir[Z] = INFINITY;
 	    }
 
-	    if (!rt_in_rpp(&ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max)) {
+	    if (!bg_ray_in_rpp(&ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max)) {
 		/* ray missed!!! */
 		bu_log("ERROR: Ray missed target!!!!\n");
 	    }

@@ -30,6 +30,7 @@
 #define BG_DEFINES_H
 
 #include "common.h"
+#include "vmath.h"
 
 #ifndef BG_EXPORT
 #  if defined(BG_DLL_EXPORTS) && defined(BG_DLL_IMPORTS)
@@ -46,6 +47,24 @@
 /* Definitions for clockwise and counter-clockwise loop directions */
 #define BG_CW 1
 #define BG_CCW -1
+
+__BEGIN_DECLS
+
+/**
+ * @brief Primary ray data structure
+ *
+ * Not called just "ray" to prevent conflicts with VLD stuff.
+ */
+struct xray {
+    uint32_t            magic;
+    int                 index;          /**< @brief Which ray of a bundle */
+    point_t             r_pt;           /**< @brief Point at which ray starts */
+    vect_t              r_dir;          /**< @brief Direction of ray (UNIT Length) */
+    fastf_t             r_min;          /**< @brief entry dist to bounding sphere */
+    fastf_t             r_max;          /**< @brief exit dist from bounding sphere */
+};
+
+__END_DECLS
 
 #endif  /* BG_DEFINES_H */
 /** @} */

@@ -210,7 +210,7 @@ rt_vshootray(struct application *ap)
      * If ray does not enter the model RPP, skip on.
      * If ray ends exactly at the model RPP, trace it.
      */
-    if (!rt_in_rpp(&ap->a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
+    if (!bg_ray_in_rpp(&ap->a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
 	ap->a_ray.r_max < 0.0) {
 	rtip->nmiss_model++;
 	if (ap->a_miss)

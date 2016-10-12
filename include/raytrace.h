@@ -58,6 +58,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bn.h"
+#include "bg.h" /* bg_ray_in_rpp - should be pushed into C files */
 #include "./rt/db5.h"
 #include "nmg.h"
 #include "pc.h"
