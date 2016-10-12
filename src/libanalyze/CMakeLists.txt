@@ -20,6 +20,12 @@ set(LIBANALYZE_SOURCES
   util.cpp
   volume.c
   voxels.c
+  MeshHealing/MeshConversion_brlcad.cpp
+  MeshHealing/MeshConversion.cpp
+  MeshHealing/Zipper.cpp
+  MeshHealing/Geometry.cpp
+  MeshHealing/Stitch.cpp
+  heal_mesh.cpp
   )
 
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "${TCL_LIBRARY};libbu;librt")

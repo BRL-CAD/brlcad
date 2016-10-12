@@ -1119,6 +1119,7 @@ static struct to_cmdtab to_cmds[] = {
     {"grid2model_lu",	"x y", 4, to_view_func_less, ged_grid2model_lu},
     {"grid2view_lu",	"x y", 4, to_view_func_less, ged_grid2view_lu},
     {"handle_expose",	"vname count", TO_UNLIMITED, to_handle_expose, GED_FUNC_PTR_NULL},
+    {"heal",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_heal},
     {"hide",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_hide},
     {"hide_view",	"vname [0|1]", 3, to_hide_view, GED_FUNC_PTR_NULL},
     {"how",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_how},
