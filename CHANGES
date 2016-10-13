@@ -610,13 +610,19 @@ Included in following are various minimally impacting API changes that
 have been identified in chronological order.  As expressions are not
 extensively tested, use with caution.
 
-Unless noted otherwise, expressions are shown using Perl syntax and
-may need adjustment (particularly quoting of '(', ')', and '|'
-characters) for other environments.  Most expressions will apply with:
-	perl -0777 -pi -e 'EXPRESSION' FILE
+Unless noted otherwise, expressions are shown using Perl syntax (i.e.,
+the '(', ')', and '|' characters pertain to subexpression captures,
+escape with '\' to match literally.  Expressions should apply with:
 
-To apply them to an entire SVN checkout, the following pattern is useful:
+perl -0777 -pi -e 'EXPRESSION' FILE
+
+To apply an expression to an entire SVN checkout, the following
+pattern is useful:
+
 find . -type f -not -path "*.svn/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 'EXPRESSION' {} \;
+
+Our catalog of minimally impacting changes follows with the most
+recent changes listed at the bottom.
 
 6.0 (sed lines)
 ---
@@ -1293,3 +1299,5 @@ s/rt_nurb_to_poly/nmg_nurb_to_poly/g
         rename old nurbs functions intertwined with nmg to use nmg prefix [7.26]
 s/RTG.NMG_debug/nmg_debug/g
 	make nmg debug flag top level, like libbu's [7.26]
+s/BU_ASSERT(_[A-Z_]+)\(([^,]+),([^,]+),(.+)\);/BU_ASSERT(\2\3\4);/g
+	consolidated BU_ASSERT_PTR, BU_ASSERT_LONG, BU_ASSERT_SIZE_T, BU_ASSERT_SSIZE_T, BU_ASSERT_DOUBLE [7.26]
