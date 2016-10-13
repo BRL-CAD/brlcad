@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* added Wavefront OBJ File->Open GUI support in Archer - Cliff Yapp
 * fixed attr show error printing large attribute values - Cliff Yapp
 * fixed rt support for lights created prior to rel 6.0 - Sean Morrison
 * fixed infinite loop bug in when using shadow lights - Sean Morrison
