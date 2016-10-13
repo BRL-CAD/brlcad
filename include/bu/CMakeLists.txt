@@ -1,6 +1,7 @@
 set(bu_headers
   avs.h
   bitv.h
+  bomb.h
   cmd.h
   color.h
   cv.h
@@ -12,6 +13,7 @@ set(bu_headers
   getopt.h
   hash.h
   hist.h
+  hook.h
   list.h
   log.h
   magic.h
