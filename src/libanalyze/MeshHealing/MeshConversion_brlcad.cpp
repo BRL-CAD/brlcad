@@ -27,7 +27,6 @@
 
 #include <bu/defines.h>
 #include <bu/malloc.h>
-#include <malloc.h>
 #include <rt/geom.h>
 #include <rt/primitives/bot.h>
 #include <stddef.h>
@@ -339,7 +338,7 @@ void
 BrlcadMesh::setVertices()
 {
     bu_free(bot->vertices, "vertices");
-    bot->vertices = (fastf_t*)bu_malloc(sizeof(fastf_t) * vertexlist.size() * 3, "vertices reallocation");
+    bot->vertices = (fastf_t*)bu_malloc(sizeof(fastf_t) * vertexlist.size() * 3, "alloc vertices");
     bot->num_vertices = vertexlist.size();
 
     for (unsigned int i = 0; i < vertexlist.size(); i++) {
@@ -353,7 +352,7 @@ BrlcadMesh::setFaces()
 {
     DCEL_Edge *edge;
 
-    bot->faces = (int*)realloc(bot->faces, 3* (facelist.size() - 1) * sizeof(int));
+    bot->faces = (int*)bu_realloc(bot->faces, 3* (facelist.size() - 1) * sizeof(int), "realloc faces");
     bot->num_faces = facelist.size() - 1;
 
     /* Unbounded face is the first record, so skip */
@@ -404,7 +403,7 @@ BrlcadMesh::deleteVertex(int ID)
     }
 
     bot->num_vertices -= 1;
-    /*bot->vertices = (fastf_t*)realloc(bot->vertices, 3 * getNumVertices() * sizeof(fastf_t));*/
+    /*bot->vertices = (fastf_t*)bu_realloc(bot->vertices, 3 * getNumVertices() * sizeof(fastf_t), "realloc vertices");*/
 }
 
 void
@@ -417,13 +416,13 @@ BrlcadMesh::deleteFace(int ID)
     }
     bot->num_faces -= 1;
 
-    /*bot->faces = (int*)realloc(bot->faces, 3 * getNumFaces() * sizeof(int));*/
+    /*bot->faces = (int*)bu_realloc(bot->faces, 3 * getNumFaces() * sizeof(int), "realloc vertices");*/
 }
 
 void
 BrlcadMesh::addFace()
 {
-    int *new_faces = (int*)realloc(bot->faces, 3 * (getNumFaces() + 1) * sizeof(int));
+    int *new_faces = (int*)bu_realloc(bot->faces, 3 * (getNumFaces() + 1) * sizeof(int), "realloc faces");
     bot->faces = new_faces;
     int ID = facelist.size() - 1;
     DCEL_Edge *trav_edge = facelist[ID].start_edge;
@@ -439,7 +438,7 @@ BrlcadMesh::addFace()
 void
 BrlcadMesh::addVertex(int ID)
 {
-    fastf_t *new_vertices = (fastf_t*)realloc(bot->vertices, 3 * (getNumVertices() + 1) * sizeof(fastf_t));
+    fastf_t *new_vertices = (fastf_t*)bu_realloc(bot->vertices, 3 * (getNumVertices() + 1) * sizeof(fastf_t), "realloc vertices");
 
     bot->vertices = new_vertices;
 
