@@ -81,7 +81,7 @@
 #include "bu/cv.h"
 #include "bu/getopt.h"
 #include "bu/parallel.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "fb.h"
 #include "bn/plot3.h"
 

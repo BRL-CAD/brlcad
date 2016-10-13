@@ -21,7 +21,7 @@
 #include "common.h"
 
 /* inteface header */
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 /* system headers */
 #include <stdlib.h>

@@ -34,7 +34,7 @@
 #include "common.h"
 
 #include "bu/malloc.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "bu/vls.h"
 #include "bn/randmt.h"
 

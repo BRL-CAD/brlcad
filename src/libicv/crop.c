@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 #include "bu/malloc.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "vmath.h"
 #include "icv.h"
 

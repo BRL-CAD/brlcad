@@ -29,7 +29,7 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 FILE *out1;

@@ -38,7 +38,7 @@
 
 #include "bu/getopt.h"
 #include "bu/str.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 #define EL_WIDTH 32 /* Max width of one element */

@@ -23,7 +23,7 @@
 #include "bio.h"
 
 #include "bu/magic.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 void

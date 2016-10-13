@@ -35,7 +35,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "bu/str.h"
 #include "vmath.h"
 

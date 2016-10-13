@@ -36,7 +36,7 @@
 
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 /* declarations to support use of bu_getopt() system call */

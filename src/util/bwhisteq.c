@@ -34,7 +34,7 @@
 
 #include "bu/file.h"
 #include "bu/str.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 int

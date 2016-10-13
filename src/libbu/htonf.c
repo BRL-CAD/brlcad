@@ -28,7 +28,7 @@
 
 #include "bu/cv.h"
 #include "bu/endian.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 void

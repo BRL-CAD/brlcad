@@ -35,7 +35,7 @@
 
 #include "bu/file.h"
 #include "bu/log.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 /* wrap for hack above */

@@ -33,7 +33,7 @@
 #include<X11/Xutil.h>
 #include "bio.h"
 
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 int

@@ -25,7 +25,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/vls.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 static int

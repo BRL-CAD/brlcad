@@ -46,7 +46,7 @@
 #include "bio.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 #define MAXLEN 40

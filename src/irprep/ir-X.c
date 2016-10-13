@@ -42,7 +42,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"

@@ -40,7 +40,7 @@
 
 #include "bu/malloc.h"
 #include "bu/parallel.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "vmath.h"
 #include "bn/noise.h"
 #include "bn/rand.h"

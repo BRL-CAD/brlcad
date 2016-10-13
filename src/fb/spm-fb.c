@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "bu/getopt.h"
 #include "fb.h"
 #include "bn/spm.h"

@@ -30,7 +30,7 @@
 #include <stdlib.h>
 
 #include "bu/getopt.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "vmath.h"
 #include "fb.h"
 #include "rle.h"

@@ -1,7 +1,6 @@
 set(bu_headers
   avs.h
   bitv.h
-  bomb.h
   cmd.h
   color.h
   cv.h
@@ -9,6 +8,7 @@ set(bu_headers
   defines.h
   endian.h
   env.h
+  exit.h
   file.h
   getopt.h
   hash.h

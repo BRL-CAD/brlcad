@@ -39,7 +39,7 @@
 
 #include <stddef.h>
 
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "mmatomic.h"
 
 

@@ -40,7 +40,7 @@
 #include <errno.h>
 
 #include "vmath.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "bu/malloc.h"
 #include "bn/vert_tree.h"
 

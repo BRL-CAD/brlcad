@@ -30,7 +30,7 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 int

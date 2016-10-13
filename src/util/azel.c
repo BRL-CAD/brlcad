@@ -56,7 +56,7 @@
 
 #include "vmath.h"
 #include "bu/getopt.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 #define OPT_STRING "a:c:e:iprh?"	/* For bu_getopt(3) */

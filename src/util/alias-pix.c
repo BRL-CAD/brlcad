@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include "bio.h"
 #include "bu/malloc.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 char noname[] = "(noname)";

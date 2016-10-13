@@ -30,7 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "vmath.h"
 #include "bn/plot3.h"
 

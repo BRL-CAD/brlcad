@@ -31,7 +31,7 @@
 #include "bu/parse.h"
 #include "bu/hook.h"
 
-#include "bu/bomb.h" /* XXX not used here, not intended to be kept included here */
+#include "bu/exit.h" /* XXX not used here, not intended to be kept included here */
 
 
 __BEGIN_DECLS

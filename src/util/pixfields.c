@@ -34,7 +34,7 @@
 
 #include "bu/getopt.h"
 #include "bu/malloc.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 #define DEFAULT_WIDTH 512

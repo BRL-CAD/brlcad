@@ -45,7 +45,7 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "bn.h"
 #include "bn/anim.h"
 #include "vmath.h"

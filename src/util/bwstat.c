@@ -40,7 +40,7 @@
 #include "bio.h"
 
 #include "bu/str.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 #define IBUFSIZE 1024		/* Max read size in pixels */

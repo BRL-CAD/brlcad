@@ -34,7 +34,7 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "vmath.h"
 
 #define MAXFFT 4096

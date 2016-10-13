@@ -37,7 +37,7 @@
 
 /* implementation headers */
 #include "sha1.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "bu/log.h"
 
 

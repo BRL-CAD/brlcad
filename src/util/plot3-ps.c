@@ -36,7 +36,7 @@
 #include "bu/getopt.h"
 #include "bu/cv.h"
 #include "bu/str.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 #define TBAD	0	/* no such command */

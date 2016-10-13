@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 /**

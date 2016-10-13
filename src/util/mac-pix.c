@@ -44,7 +44,7 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 #define MAC_HEIGHT 576	/* input height (y), in bits */

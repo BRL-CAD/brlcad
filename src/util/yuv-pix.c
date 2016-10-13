@@ -42,7 +42,7 @@
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "bu/log.h"
 #include "bn.h"
 #include "fb.h"

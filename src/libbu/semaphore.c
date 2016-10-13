@@ -28,7 +28,7 @@
 #include "bio.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 /*

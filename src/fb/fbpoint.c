@@ -31,7 +31,7 @@
 
 #include "bu/color.h"
 #include "bu/str.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "vmath.h"
 #include "fb.h"
 #include "libtermio.h"

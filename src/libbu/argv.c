@@ -26,7 +26,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/file.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 size_t

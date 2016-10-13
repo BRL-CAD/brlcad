@@ -33,7 +33,7 @@
 
 #include "bu/str.h"
 #include "bu/cv.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 struct uplot {

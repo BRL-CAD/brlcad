@@ -28,7 +28,7 @@
 
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "fb.h"
 
 

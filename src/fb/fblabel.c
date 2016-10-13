@@ -33,7 +33,7 @@
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "bu/vfont.h"
 #include "fb.h"
 #include "pkg.h"

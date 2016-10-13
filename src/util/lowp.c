@@ -31,7 +31,7 @@
 
 #include "bu/file.h"
 #include "bu/malloc.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 #define MAX_LINE 10000		/* Max pixels/line */

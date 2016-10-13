@@ -39,7 +39,7 @@
 
 #include "bu/file.h"
 #include "bu/malloc.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 
 
 #define round(x) ((int)(x+0.5))

@@ -35,7 +35,7 @@
 #include "bu/str.h"
 #include "bu/opt.h"
 #include "bu/mime.h"
-#include "bu/bomb.h"
+#include "bu/exit.h"
 #include "icv.h"
 
 

@@ -1,4 +1,4 @@
-/*                        B O M B . H
+/*                        E X I T . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2016 United States Government as represented by
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef BU_BOMB_H
-#define BU_BOMB_H
+#ifndef BU_EXIT_H
+#define BU_EXIT_H
 
 #include "common.h"
 
@@ -32,7 +32,7 @@
 __BEGIN_DECLS
 
 /** @{ */
-/** @file bu/bomb.h */
+/** @file bu/exit.h */
 
 /**
  * this routine provides a trace of the call stack to the caller,
@@ -137,7 +137,7 @@ BU_EXPORT extern int bu_crashreport(const char *filename);
 
 __END_DECLS
 
-#endif  /* BU_LOG_H */
+#endif  /* BU_EXIT_H */
 
 /*
  * Local Variables:
