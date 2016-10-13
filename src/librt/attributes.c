@@ -38,7 +38,7 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 
     BU_CK_EXTERNAL(ap);
 
-    BU_ASSERT_LONG(ap->ext_nbytes, >=, 4);
+    BU_ASSERT(ap->ext_nbytes >= 4);
 
     /* First pass -- count number of attributes */
     cp = (const char *)ap->ext_buf;
@@ -85,10 +85,10 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	++cp;
     }
     /* Ensure we're exactly at the end */
-    BU_ASSERT_PTR(cp, ==, ep);
+    BU_ASSERT(cp == ep);
 #else
     /* Ensure we're exactly at the end */
-    BU_ASSERT_PTR(cp+1, ==, ep);
+    BU_ASSERT(cp+1 == ep);
 #endif
 
     /* not really needed for AVS_ADD since bu_avs_add will
@@ -133,13 +133,13 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	++cp;
     }
     /* Ensure we're exactly at the end */
-    BU_ASSERT_PTR(cp, ==, ep);
+    BU_ASSERT(cp == ep);
 #else
-    BU_ASSERT_PTR(cp+1, ==, ep);
+    BU_ASSERT(cp+1 == ep);
 #endif
 
-    BU_ASSERT_LONG(avs->count, <=, avs->max);
-    BU_ASSERT_LONG((size_t)avs->count, ==, (size_t)count);
+    BU_ASSERT(avs->count <= avs->max);
+    BU_ASSERT((size_t)avs->count == (size_t)count);
 
     if (bu_debug & BU_DEBUG_AVS) {
 	bu_avs_print(avs, "db5_import_attributes");
@@ -214,7 +214,7 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
 
     /* sanity check */
     need = cp - ((char *)ext->ext_buf);
-    BU_ASSERT_LONG(need, ==, ext->ext_nbytes);
+    BU_ASSERT(need == ext->ext_nbytes);
 }
 
 
@@ -243,7 +243,7 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
 	return -1;
     }
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -2;		/* FAIL */
@@ -306,7 +306,7 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 	return -1;
     }
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -2;		/* FAIL */

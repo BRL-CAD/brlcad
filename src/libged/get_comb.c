@@ -96,7 +96,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 								   OP_UNION,
 								   1,
 								   &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	    BU_ASSERT(actual_count == node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    rt_tree_array = (struct rt_tree_array *)NULL;

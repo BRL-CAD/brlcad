@@ -3346,7 +3346,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
 
 /* bu_log("increasing %i from capacity %ld given next is %ld\n", slot, bin_capacity[slot], bin_todonext[slot]); */
 
-	    BU_ASSERT_LONG(bin_capacity[slot], <, LONG_MAX / 2);
+	    BU_ASSERT(bin_capacity[slot] < LONG_MAX / 2);
 
 	    bin[slot] = bu_realloc(bin[slot], bin_capacity[slot] * 2 * sizeof(int), "increase vertices bin");
 	    bin_capacity[slot] *= 2;

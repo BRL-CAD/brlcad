@@ -936,11 +936,11 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     /* maximum possible vertices */
     max_pts = ip_pg->npoly * ip_pg->max_npts;
-    BU_ASSERT_SIZE_T(max_pts, >, 0);
+    BU_ASSERT(max_pts > 0);
 
     /* maximum possible triangular faces */
     max_tri = ip_pg->npoly * 3;
-    BU_ASSERT_SIZE_T(max_tri, >, 0);
+    BU_ASSERT(max_tri > 0);
 
     ip_bot->num_vertices = 0;
     ip_bot->num_faces = 0;

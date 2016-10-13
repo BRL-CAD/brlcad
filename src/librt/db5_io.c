@@ -535,7 +535,7 @@ db5_export_object3(
 	 * followed by no bytes (for an empty value), followed by a NULL value termination,
 	 * followed by a NULL attribute-value termination. Minimum is 4 bytes
 	 */
-	BU_ASSERT_PTR(attrib->ext_nbytes, >=, 4);
+	BU_ASSERT(attrib->ext_nbytes >= 4);
 	cp = db5_encode_length(cp, attrib->ext_nbytes, a_width);
 	memcpy(cp, attrib->ext_buf, attrib->ext_nbytes);
 	cp += attrib->ext_nbytes;
@@ -557,14 +557,14 @@ db5_export_object3(
 
     /* Verify multiple of 8 */
     togo = cp - ((unsigned char *)out->ext_buf);
-    BU_ASSERT_LONG(togo&7, ==, 0);
+    BU_ASSERT((togo&7) == 0);
 
     /* Finally, go back to the header and write the actual object length */
     cp = ((unsigned char *)out->ext_buf) + sizeof(struct db5_ondisk_header);
     (void)db5_encode_length(cp, togo>>3, h_width);
 
     out->ext_nbytes = togo;
-    BU_ASSERT_LONG(out->ext_nbytes, >=, 8);
+    BU_ASSERT(out->ext_nbytes >= 8);
 }
 
 void
@@ -576,8 +576,8 @@ db5_make_free_object_hdr(struct bu_external *ep, size_t length)
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_SIZE_T(length, >=, 8);
-    BU_ASSERT_SIZE_T(length&7, ==, 0);
+    BU_ASSERT(length >= 8);
+    BU_ASSERT((length&7) == 0);
 
     /* Reserve enough space to hold any free header, even w/64-bit len */
     ep->ext_nbytes = 8+8;
@@ -605,8 +605,8 @@ db5_make_free_object(struct bu_external *ep, size_t length)
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_SIZE_T(length, >=, 8);
-    BU_ASSERT_SIZE_T(length&7, ==, 0);
+    BU_ASSERT(length >= 8);
+    BU_ASSERT((length&7) == 0);
 
     ep->ext_buf = (uint8_t *)bu_calloc(1, length, "db5_make_free_object");
     ep->ext_nbytes = length;
@@ -711,7 +711,7 @@ db_wrap_v5_external(struct bu_external *ep, const char *name)
 	       name);
 	return -1;
     }
-    BU_ASSERT_LONG(raw.h_dli, ==, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT);
+    BU_ASSERT(raw.h_dli == DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT);
 
     /* See if name needs to be changed */
     if (raw.name.ext_buf == NULL || !BU_STR_EQUAL(name, (const char *)raw.name.ext_buf)) {
@@ -755,7 +755,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 	return -1;
     }
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     /* First, change the name. */
     if (db_wrap_v5_external(ep, dp->d_namep) < 0) {
@@ -771,7 +771,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 	    return -5;
 	}
     }
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, dp->d_len);
+    BU_ASSERT(ep->ext_nbytes == dp->d_len);
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy(dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes);
@@ -797,7 +797,7 @@ rt_db_put_internal5(
     RT_CK_DIR(dp);
     RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     if (resp)
 	RT_CK_RESOURCE(resp);
@@ -816,7 +816,7 @@ rt_db_put_internal5(
 	    goto fail;
 	}
     }
-    BU_ASSERT_LONG(ext.ext_nbytes, ==, dp->d_len);
+    BU_ASSERT(ext.ext_nbytes == dp->d_len);
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy(dp->d_un.ptr, ext.ext_buf, ext.ext_nbytes);
@@ -873,7 +873,7 @@ rt_db_external5_to_internal5(
 	resp = &rt_uniresource;
     }
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     if (db5_get_raw_internal_ptr(&raw, ep->ext_buf) == NULL) {
 	bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
@@ -972,7 +972,7 @@ rt_db_get_internal5(
 	RT_CK_RESOURCE(resp);
     }
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -2;		/* FAIL */
@@ -1011,7 +1011,7 @@ db5_put_color_table(struct db_i *dbip)
     int ret;
 
     RT_CK_DBI(dbip);
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     db5_export_color_table(&str, dbip);
 

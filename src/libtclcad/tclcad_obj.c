@@ -1682,7 +1682,7 @@ Usage: go_open\n\
     /* initialize ged_obj */
     BU_ALLOC(top->to_gop, struct ged_obj);
 
-    BU_ASSERT_PTR(gedp, !=, NULL);
+    BU_ASSERT(gedp != NULL);
     top->to_gop->go_gedp = gedp;
 
     top->to_gop->go_gedp->ged_output_handler = to_output_handler;
@@ -1691,7 +1691,7 @@ Usage: go_open\n\
     top->to_gop->go_gedp->ged_create_vlist_callback = to_create_vlist_callback;
     top->to_gop->go_gedp->ged_free_vlist_callback = to_free_vlist_callback;
 
-    BU_ASSERT_PTR(gedp->ged_gdp, !=, NULL);
+    BU_ASSERT(gedp->ged_gdp != NULL);
     top->to_gop->go_gedp->ged_gdp->gd_rtCmdNotify = to_rt_end_callback_internal;
 
     bu_vls_init(&top->to_gop->go_name);
@@ -14967,7 +14967,7 @@ to_rt_gettrees_application(struct ged *gedp,
      * rt_clean() will clean 'em up.
      */
     rt_init_resource(&resp, 0, rtip);
-    BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
+    BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, 0) != NULL);
 
     BU_ALLOC(ap, struct application);
     RT_APPLICATION_INIT(ap);

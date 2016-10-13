@@ -129,7 +129,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
     /*
      * There's no particular size to expect
      *
-     * BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4);
+     * BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 3*4);
      */
 
     RT_CK_DB_INTERNAL(ip);

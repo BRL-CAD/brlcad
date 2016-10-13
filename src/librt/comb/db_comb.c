@@ -436,7 +436,7 @@ rt_comb_export4(
 	/* Convert tree into array form */
 	actual_count = db_flatten_tree(rt_tree_array, comb->tree,
 				       OP_UNION, 1, resp) - rt_tree_array;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
@@ -621,8 +621,8 @@ db_tree_flatten_describe(
 	union tree *itp = rt_tree_array[i].tl_tree;
 
 	RT_CK_TREE(itp);
-	BU_ASSERT_LONG(itp->tr_op, ==, OP_DB_LEAF);
-	BU_ASSERT_PTR(itp->tr_l.tl_name, !=, NULL);
+	BU_ASSERT(itp->tr_op == OP_DB_LEAF);
+	BU_ASSERT(itp->tr_l.tl_name != NULL);
 
 	switch (rt_tree_array[i].tl_op) {
 	    case OP_INTERSECT:
@@ -1023,7 +1023,7 @@ db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource
 
     RT_CK_RESOURCE(resp);
 
-    BU_ASSERT_SIZE_T(subtreecount, <, LONG_MAX);
+    BU_ASSERT(subtreecount < LONG_MAX);
     treecount = (long)subtreecount;
 
     /*

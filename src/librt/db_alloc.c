@@ -188,7 +188,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
     if (dbip->dbi_read_only)
 	return -1;
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 4);
+    BU_ASSERT(dbip->dbi_version == 4);
 
     if (dp->d_len < start)
 	return -1;
@@ -216,7 +216,7 @@ db_alloc_directory_block(struct resource *resp)
     RT_CK_RESOURCE(resp);
     BU_CK_PTBL(&resp->re_directory_blocks);
 
-    BU_ASSERT_PTR(resp->re_directory_hd, ==, NULL);
+    BU_ASSERT(resp->re_directory_hd == NULL);
 
     /* Get a BIG block */
     bytes = (size_t)bu_malloc_len_roundup(1024*sizeof(struct directory));

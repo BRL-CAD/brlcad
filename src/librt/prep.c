@@ -283,7 +283,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 					 rtip->rti_dbip->dbi_uses);
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 	/* Ensure bit numbers are unique */
-	BU_ASSERT_PTR(rtip->Regions[regp->reg_bit], ==, REGION_NULL);
+	BU_ASSERT(rtip->Regions[regp->reg_bit] == REGION_NULL);
 	rtip->Regions[regp->reg_bit] = regp;
 	rt_optim_tree(regp->reg_treetop, resp);
 	rt_solid_bitfinder(regp->reg_treetop, regp, resp);
@@ -323,7 +323,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	    bu_log("2nd soltab also claiming that bit is (st_rtip=%p):\n", (void *)stp->st_rtip);
 	    rt_pr_soltab(stp);
 	}
-	BU_ASSERT_PTR(*ssp, ==, SOLTAB_NULL);
+	BU_ASSERT(*ssp == SOLTAB_NULL);
 	*ssp = stp;
 	rtip->rti_nsol_by_type[stp->st_id]++;
     } RT_VISIT_ALL_SOLTABS_END;
@@ -669,8 +669,8 @@ rt_init_resource(struct resource *resp,
     if (!resp)
 	return;
 
-    BU_ASSERT_LONG(cpu_num, >=, 0);
-    BU_ASSERT_LONG(cpu_num, <, MAX_PSW);
+    BU_ASSERT(cpu_num >= 0);
+    BU_ASSERT(cpu_num < MAX_PSW);
 
     if (rtip)
 	RT_CK_RTI(rtip);
@@ -680,7 +680,7 @@ rt_init_resource(struct resource *resp,
     } else {
 	if (rtip != NULL && rtip->rti_treetop) {
 	    /* this is a submodel */
-	    BU_ASSERT_LONG(cpu_num, <, (long)rtip->rti_resources.blen);
+	    BU_ASSERT(cpu_num < (long)rtip->rti_resources.blen);
 	}
     }
 
