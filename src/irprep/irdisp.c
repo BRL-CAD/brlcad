@@ -34,8 +34,8 @@
 #include<X11/Xlib.h>
 #include<X11/Xutil.h>
 
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
 #include "vmath.h"
 
 

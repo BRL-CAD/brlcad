@@ -78,10 +78,11 @@
 
 #include "../libfb/fb_private.h" /* for _fb_disk_enable */
 #include "bu/getopt.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
 #include "vmath.h"
 #include "fb.h"
 #include "pkg.h"
+
 
 fd_set select_list;			/* master copy */
 int max_fd;

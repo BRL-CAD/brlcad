@@ -30,8 +30,9 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
+#include "bu/log.h"
 
 
 typedef struct

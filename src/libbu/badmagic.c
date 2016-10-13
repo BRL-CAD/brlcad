@@ -22,14 +22,14 @@
 
 #include "bio.h"
 
-#include "bu/log.h"
 #include "bu/magic.h"
+#include "bu/bomb.h"
 
-#define MAGICBUFSIZ 512
 
 void
 bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line)
 {
+#define MAGICBUFSIZ 512
     char buf[MAGICBUFSIZ] = {'\0'};
 
     if (UNLIKELY(!(ptr))) {

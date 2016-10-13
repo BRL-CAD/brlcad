@@ -32,8 +32,8 @@
 #include <ctype.h>
 
 #include "bu/color.h"
-#include "bu/log.h"
 #include "bu/getopt.h"
+#include "bu/bomb.h"
 #include "vmath.h"
 #include "fb.h"
 #include "pkg.h"

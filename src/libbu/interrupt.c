@@ -35,6 +35,8 @@
 
 #include "bu/file.h"
 #include "bu/log.h"
+#include "bu/bomb.h"
+
 
 /* wrap for hack above */
 #if !defined(C99_POSIX_USE_BSD)

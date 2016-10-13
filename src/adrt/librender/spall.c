@@ -27,12 +27,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
-#include "bu/malloc.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "adrt_struct.h"
 #include "render.h"
+
 
 #define TESSELLATION 32
 #define SPALL_LEN 20

@@ -30,8 +30,8 @@
 #include <ctype.h>
 #include <string.h>
 #include "bio.h"
+#include "bu/bomb.h"
 
-#include "bu/log.h"
 
 #define COMMENT_CHAR '#'
 

@@ -33,8 +33,9 @@
 
 #include "bu/getopt.h"
 #include "bu/parallel.h"
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "rt/db4.h"
 

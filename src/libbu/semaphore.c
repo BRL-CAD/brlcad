@@ -26,9 +26,10 @@
 #include <math.h>
 
 #include "bio.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/bomb.h"
+
 
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x

@@ -33,7 +33,8 @@
 #include "bio.h"
 
 #include "bu/str.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
+
 
 #define DIFF	0
 #define MAG	1

@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "bu/getopt.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
 #include "fb.h"
 
 

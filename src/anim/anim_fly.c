@@ -37,8 +37,8 @@
 
 #include <stdlib.h>
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/bomb.h"
 #include "bn/anim.h"
 #include "vmath.h"
 

@@ -43,8 +43,8 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/bomb.h"
 
 
 /* declarations to support use of bu_getopt() system call */

@@ -38,7 +38,7 @@
 #include <math.h>
 
 #include "bu/malloc.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
 #include "vmath.h"
 #include "bn/msr.h"
 

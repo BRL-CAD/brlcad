@@ -29,9 +29,10 @@
 #include <stdlib.h>
 
 #include "bu/color.h"
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
 #include "fb.h"
+
 
 #define MAXPTS 4096
 

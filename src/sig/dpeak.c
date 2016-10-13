@@ -31,8 +31,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/log.h"
+#include "bu/bomb.h"
 #include "vmath.h"
+
 
 struct peaks {
     int sample;

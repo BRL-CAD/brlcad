@@ -35,9 +35,11 @@
 
 #include <stdlib.h>
 #include "bio.h"
-#include "bu/log.h"
+
 #include "bu/file.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
+#include "bu/log.h"
 
 
 #define SIZE (1024*1024)

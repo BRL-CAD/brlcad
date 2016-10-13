@@ -31,9 +31,10 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/units.h"
+#include "bu/bomb.h"
 #include "vmath.h"
+
 
 /* declarations to support use of bu_getopt() */
 char *options = "w:n:d:W:N:sB:t:Du:mc:C:h?";

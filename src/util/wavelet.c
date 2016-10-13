@@ -47,7 +47,7 @@
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
 #include "bn.h"
 #include "fb.h"
 

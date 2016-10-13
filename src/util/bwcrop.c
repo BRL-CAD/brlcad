@@ -37,9 +37,9 @@
 #include <stdio.h>
 #include <limits.h> /* for INT_MAX */
 
-#include "bu/log.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
+#include "bu/bomb.h"
 
 
 #define round(x) ((int)(x+0.5))

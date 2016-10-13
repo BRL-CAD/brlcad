@@ -25,7 +25,6 @@
 #endif
 #include "bio.h"
 
-#include "bu/log.h"
 
 long int
 bu_mread(int fd, void *bufp, long int n)

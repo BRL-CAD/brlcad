@@ -25,15 +25,15 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include<string.h>
 #include<math.h>
 #include<stdlib.h>
 #include<X11/Xlib.h>
 #include<X11/Xutil.h>
+#include "bio.h"
 
-#include "bu/log.h"
+#include "bu/bomb.h"
 
 
 int

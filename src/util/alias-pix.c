@@ -29,7 +29,8 @@
 #include <ctype.h>
 #include "bio.h"
 #include "bu/malloc.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
+
 
 char noname[] = "(noname)";
 char *progname = noname;

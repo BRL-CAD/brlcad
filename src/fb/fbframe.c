@@ -30,8 +30,8 @@
 #include <stdlib.h>
 
 #include "bu/color.h"
-#include "bu/log.h"
 #include "bu/getopt.h"
+#include "bu/bomb.h"
 #include "fb.h"
 
 char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N frame_height]\n";

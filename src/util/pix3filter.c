@@ -33,8 +33,9 @@
 
 #include "bu/getopt.h"
 #include "bu/malloc.h"
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
+
 
 #define MAXLINE (8*1024)
 #define DEFAULT_WIDTH 512

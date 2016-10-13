@@ -29,9 +29,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/log.h"
 #include "bu/file.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
+
 
 static void
 usage(const char *argv0) {

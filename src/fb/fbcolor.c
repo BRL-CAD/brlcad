@@ -32,7 +32,7 @@
 
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
 #include "fb.h"
 #include "libtermio.h"
 

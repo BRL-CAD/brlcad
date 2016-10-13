@@ -30,8 +30,8 @@
 #include <string.h>
 #include <signal.h>
 
-#include "vmath.h"
 #include "bu/log.h"
+#include "vmath.h"
 
 #include "./burst.h"
 #include "./extern.h"

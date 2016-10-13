@@ -31,8 +31,8 @@
 
 #include "bu/getopt.h"
 #include "bu/file.h"
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
 #include "fb.h"
 #include "rle.h"
 

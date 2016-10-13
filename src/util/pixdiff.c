@@ -39,7 +39,8 @@
 #include "bio.h"
 
 #include "bu/str.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
+
 
 #define RGB_DIFF(c1, c2) \
     do { \

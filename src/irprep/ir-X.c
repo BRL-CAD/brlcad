@@ -42,9 +42,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include "bu/bomb.h"
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/log.h"
 #include "vmath.h"
 
 

@@ -31,7 +31,7 @@
 
 #include "bresource.h"
 
-#include "bu/log.h"
+#include "bu/bomb.h"
 #include "fb.h"
 
 #include "./std.h"

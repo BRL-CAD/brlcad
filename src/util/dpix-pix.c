@@ -35,9 +35,9 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu/log.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
+#include "bu/bomb.h"
 
 
 #define NUM (1024 * 16)	/* Note the powers of 2 -- v. efficient */

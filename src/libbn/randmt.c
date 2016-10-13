@@ -31,9 +31,13 @@
  * matumoto@math.keio.ac.jp
  */
 
-#include "bu/log.h"
+#include "common.h"
+
 #include "bu/malloc.h"
+#include "bu/bomb.h"
+#include "bu/vls.h"
 #include "bn/randmt.h"
+
 
 /* Period parameters */
 #define N 624

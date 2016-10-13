@@ -30,9 +30,10 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu/log.h"
 #include "bu/cv.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
+
 
 #define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */

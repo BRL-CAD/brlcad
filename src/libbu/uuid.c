@@ -36,8 +36,9 @@
 #endif
 
 /* implementation headers */
-#include "bu/log.h"
 #include "sha1.h"
+#include "bu/bomb.h"
+#include "bu/log.h"
 
 
 int

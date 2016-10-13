@@ -30,13 +30,15 @@
 
 #include "bu/getopt.h"
 #include "bu/file.h"
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
+#include "bu/log.h"
 
 #include "./burst.h"
 #include "./trie.h"
 #include "./ascii.h"
 #include "./extern.h"
+
 
 #ifndef SIGCLD
 #  define SIGCLD SIGCHLD

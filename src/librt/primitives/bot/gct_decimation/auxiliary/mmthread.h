@@ -39,9 +39,9 @@
 
 #include <stddef.h>
 
+#include "bu/bomb.h"
 #include "mmatomic.h"
 
-#include "bu/log.h"
 
 #include "tinycthread.h"
 

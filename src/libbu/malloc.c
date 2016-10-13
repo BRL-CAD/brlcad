@@ -33,9 +33,11 @@
 
 #include "bu/debug.h"
 #include "bu/list.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/bomb.h"
+#include "bu/log.h"
+
 
 /**
  * this controls whether to semaphore protect malloc calls

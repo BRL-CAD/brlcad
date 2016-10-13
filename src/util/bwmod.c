@@ -41,10 +41,11 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu/log.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
+#include "bu/bomb.h"
+
 
 char hyphen[] = "-";
 char noname[] = "(noname)";

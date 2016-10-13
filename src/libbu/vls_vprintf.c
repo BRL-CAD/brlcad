@@ -29,10 +29,12 @@
 
 #include "bio.h"
 
-#include "bu/log.h"
 #include "bu/vls.h"
+#include "bu/log.h"
+#include "bu/bomb.h"
 
 #include "./vls_vprintf.h"
+
 
 /* private constants */
 

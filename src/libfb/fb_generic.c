@@ -43,9 +43,10 @@
 #include "bio.h"
 
 #include "bu/color.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "bu/log.h"
+#include "bu/bomb.h"
 
 #include "vmath.h"
 #include "fb_private.h"

@@ -24,8 +24,8 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
 #include "vmath.h"
 #include "bn/mat.h"
 #include "bn/plot3.h"

@@ -24,9 +24,10 @@
 
 #include "bu/getopt.h"
 #include "bu/list.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
+#include "bu/log.h"
 
 #include "./tokens.h"
 

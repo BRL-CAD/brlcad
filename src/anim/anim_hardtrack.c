@@ -34,9 +34,10 @@
 
 #include "vmath.h"
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "bn/anim.h"
 

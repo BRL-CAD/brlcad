@@ -28,7 +28,8 @@
 
 #include "bu/cv.h"
 #include "bu/endian.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
+
 
 void
 bu_cv_htonf(register unsigned char *out, register const unsigned char *in, size_t count)

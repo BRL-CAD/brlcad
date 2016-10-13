@@ -35,7 +35,6 @@
 
 #include "bu/getopt.h"
 #include "bu/sort.h"
-#include "bu/log.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"

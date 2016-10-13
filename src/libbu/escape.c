@@ -22,10 +22,11 @@
 
 #include <string.h>
 
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/vls.h"
+#include "bu/bomb.h"
+
 
 static int
 expand_expression(const char *expression, struct bu_vls *vp)

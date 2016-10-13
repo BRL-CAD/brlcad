@@ -32,10 +32,10 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/str.h"
 #include "bu/opt.h"
 #include "bu/mime.h"
+#include "bu/bomb.h"
 #include "icv.h"
 
 

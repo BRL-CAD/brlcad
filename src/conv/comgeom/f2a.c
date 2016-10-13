@@ -28,7 +28,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu/log.h"
+#include "bu/bomb.h"
+
 
 /**
  * convert float to ascii w.df format.	No leading blanks.

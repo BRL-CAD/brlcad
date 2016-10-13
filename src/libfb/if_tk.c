@@ -40,8 +40,8 @@
 #include <tk.h>
 
 #include "bu/color.h"
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
 
 #include "fb_private.h"
 #include "fb.h"

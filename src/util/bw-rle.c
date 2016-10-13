@@ -29,8 +29,8 @@
 #include <time.h>
 #include <string.h>
 
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/bomb.h"
 
 #include "fb.h"
 

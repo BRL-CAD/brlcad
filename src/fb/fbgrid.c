@@ -28,8 +28,9 @@
 
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
 #include "fb.h"
+
 
 static unsigned char *white_line, *grey_line, *dark_line;
 static fb *fbp;

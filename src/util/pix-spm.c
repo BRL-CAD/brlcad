@@ -28,9 +28,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu/log.h"
+#include "bu/bomb.h"
 #include "bn/spm.h"
-
 #include "fb.h"
 
 

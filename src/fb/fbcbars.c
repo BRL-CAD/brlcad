@@ -64,8 +64,9 @@
 
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
 #include "fb.h"
+
 
 #define MAX_LINE (8*1024)	/* Max pixels/line */
 static unsigned char scanline[3*MAX_LINE];	/* 1 scanline pixel buffer */

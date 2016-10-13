@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu/log.h"
 #include "bu/str.h"
 #include "fb_private.h"
 #include "fb.h"

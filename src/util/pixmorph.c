@@ -46,9 +46,10 @@
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
-#include "bu/log.h"
+#include "bu/bomb.h"
 #include "bn.h"
 #include "fb.h"
+
 
 /* Adapted from an assignment for
  * 15-463 Advanced Computer Graphics

@@ -20,16 +20,21 @@
 
 #include "common.h"
 
+/* inteface header */
+#include "bu/bomb.h"
+
+/* system headers */
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
 #include "bio.h"
 
+/* implementation headers */
 #include "bu/debug.h"
 #include "bu/file.h"
-#include "bu/log.h"
 #include "bu/parallel.h"
+
 
 /**
  * list of callbacks to call during bu_bomb.

@@ -80,8 +80,8 @@
 #include "bu/color.h"
 #include "bu/cv.h"
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/parallel.h"
+#include "bu/bomb.h"
 #include "fb.h"
 #include "bn/plot3.h"
 

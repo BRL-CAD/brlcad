@@ -40,8 +40,8 @@
 #include <errno.h>
 
 #include "vmath.h"
+#include "bu/bomb.h"
 #include "bu/malloc.h"
-#include "bu/log.h"
 #include "bn/vert_tree.h"
 
 
