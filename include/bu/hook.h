@@ -31,40 +31,7 @@ __BEGIN_DECLS
 
 /** @addtogroup bu_log
  *
- * @brief
- * BRL-CAD support library, error logging routines.
- *
- * Note that the user may provide his own logging routine, by replacing these
- * functions.  That is why this is in file of its own.  For example, LGT and
- * RTSRV take advantage of this.
- *
- * Here is an example of how to set up a custom logging callback.  While bu_log
- * presently writes to STDERR by default, this behavior should not be relied
- * upon and may be changed to STDOUT in the future without notice.
- *
- @code
- --- BEGIN EXAMPLE ---
-
- int log_output_to_file(void *data, void *str)
- {
-   FILE *fp = (FILE *)data;
-   fprintf(fp, "LOG: %s", str);
-   return 0;
- }
-
- int main(int ac, char *av[])
- {
-   FILE *fp = fopen("whatever.log", "w+");
-   bu_log_add_hook(log_output_to_file, (void *)fp);
-   bu_log("Logging to file.\n");
-   bu_log_delete_hook(log_output_to_file, (void *)fp);
-   bu_log("Logging to stderr.\n");
-   fclose(fp);
-   return 0;
- }
-
- --- END EXAMPLE ---
- @endcode
+ * These are hook routines for keeping track of callback functions.
  *
  */
 /** @{ */
@@ -129,7 +96,7 @@ BU_EXPORT extern void bu_hook_restore_all(struct bu_hook_list *hlp,
 
 __END_DECLS
 
-#endif  /* BU_LOG_H */
+#endif  /* BU_HOOK_H */
 
 /*
  * Local Variables:
