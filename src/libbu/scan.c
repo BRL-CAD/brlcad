@@ -24,9 +24,9 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-
 
 int
 bu_scan_fastf_t(int *c, const char *src, const char *delim, size_t n, ...)
