@@ -298,7 +298,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
 
-    nmg_m_to_vlist(vhead, m, 0);
+    nmg_m_to_vlist(vhead, m, 0, &RTG.rtg_vlfree);
 
     return 0;
 }

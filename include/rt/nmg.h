@@ -334,25 +334,30 @@ RT_EXPORT extern void nmg_pl_shell(FILE *fp,
 				   struct bu_list *vlfree);
 
 RT_EXPORT extern void nmg_vu_to_vlist(struct bu_list *vhead,
-                                      const struct vertexuse    *vu);
+                                      const struct vertexuse    *vu,
+				      struct bu_list *vlfree);
 RT_EXPORT extern void nmg_eu_to_vlist(struct bu_list *vhead,
                                       const struct bu_list      *eu_hd);
 RT_EXPORT extern void nmg_lu_to_vlist(struct bu_list *vhead,
                                       const struct loopuse      *lu,
                                       int                       poly_markers,
-                                      const vectp_t             norm);
+                                      const vectp_t             norm,
+				      struct bu_list *vlfree);
 RT_EXPORT extern void nmg_snurb_fu_to_vlist(struct bu_list              *vhead,
                                             const struct faceuse        *fu,
                                             int                 poly_markers);
 RT_EXPORT extern void nmg_s_to_vlist(struct bu_list             *vhead,
                                      const struct shell *s,
-                                     int                        poly_markers);
+                                     int                        poly_markers,
+				     struct bu_list *vlfree);
 RT_EXPORT extern void nmg_r_to_vlist(struct bu_list             *vhead,
                                      const struct nmgregion     *r,
-                                     int                        poly_markers);
+                                     int                        poly_markers,
+				     struct bu_list *vlfree);
 RT_EXPORT extern void nmg_m_to_vlist(struct bu_list     *vhead,
                                      struct model       *m,
-                                     int                poly_markers);
+                                     int                poly_markers,
+				     struct bu_list *vlfree);
 RT_EXPORT extern void nmg_offset_eu_vert(point_t                        base,
                                          const struct edgeuse   *eu,
                                          const vect_t           face_normal,

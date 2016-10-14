@@ -49,6 +49,7 @@
 
 #include "vmath.h"
 #include "bn/plot3.h"
+#include "bn/vlist.h"
 #include "nmg.h"
 #include "rt/nmg.h"
 #include "rt/nurb.h"
@@ -68,7 +69,7 @@
  * Plot a single vertexuse
  */
 void
-nmg_vu_to_vlist(struct bu_list *vhead, const struct vertexuse *vu)
+nmg_vu_to_vlist(struct bu_list *vhead, const struct vertexuse *vu, struct bu_list *vlfree)
 {
     struct vertex *v;
     register struct vertex_g *vg;
@@ -81,8 +82,8 @@ nmg_vu_to_vlist(struct bu_list *vhead, const struct vertexuse *vu)
     if (vg) {
 	/* Only thing in this shell is a point */
 	NMG_CK_VERTEX_G(vg);
-	RT_ADD_VLIST(vhead, vg->coord, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, vg->coord, BN_VLIST_LINE_DRAW);
+	BN_ADD_VLIST(vlfree, vhead, vg->coord, BN_VLIST_LINE_MOVE);
+	BN_ADD_VLIST(vlfree, vhead, vg->coord, BN_VLIST_LINE_DRAW);
     }
 }
 
@@ -137,7 +138,7 @@ nmg_eu_to_vlist(struct bu_list *vhead, const struct bu_list *eu_hd)
  * Needs to be able to handle both linear edges and cnurb edges.
  */
 void
-nmg_lu_to_vlist(struct bu_list *vhead, const struct loopuse *lu, int poly_markers, const vectp_t normal)
+nmg_lu_to_vlist(struct bu_list *vhead, const struct loopuse *lu, int poly_markers, const vectp_t normal, struct bu_list *vlfree)
 
 
 /* bit vector! */
@@ -159,7 +160,7 @@ nmg_lu_to_vlist(struct bu_list *vhead, const struct loopuse *lu, int poly_marker
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd)==NMG_VERTEXUSE_MAGIC) {
 	/* Process a loop of a single vertex */
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-	nmg_vu_to_vlist(vhead, vu);
+	nmg_vu_to_vlist(vhead, vu, vlfree);
 	return;
     }
 
@@ -344,7 +345,7 @@ nmg_snurb_fu_to_vlist(struct bu_list *vhead, const struct faceuse *fu, int poly_
  * 2 for polygons and surface normals drawn with vectors
  */
 void
-nmg_s_to_vlist(struct bu_list *vhead, const struct shell *s, int poly_markers)
+nmg_s_to_vlist(struct bu_list *vhead, const struct shell *s, int poly_markers, struct bu_list *vlfree)
 {
     struct faceuse *fu;
     struct face_g_plane *fg;
@@ -370,7 +371,7 @@ nmg_s_to_vlist(struct bu_list *vhead, const struct shell *s, int poly_markers)
 
 	    VSET(n, 1, 0, 0);	/* sanity */
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		nmg_lu_to_vlist(vhead, lu, poly_markers, n);
+		nmg_lu_to_vlist(vhead, lu, poly_markers, n, vlfree);
 	    }
 	    continue;
 	}
@@ -380,14 +381,14 @@ nmg_s_to_vlist(struct bu_list *vhead, const struct shell *s, int poly_markers)
 	NMG_CK_FACE_G_PLANE(fg);
 	NMG_GET_FU_NORMAL(n, fu);
 	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	    nmg_lu_to_vlist(vhead, lu, poly_markers, n);
+	    nmg_lu_to_vlist(vhead, lu, poly_markers, n, vlfree);
 	}
     }
 
     /* wire loops.  poly_markers=0 so wires are always drawn as vectors */
     VSETALL(normal, 0);
     for (BU_LIST_FOR(lu, loopuse, &s->lu_hd)) {
-	nmg_lu_to_vlist(vhead, lu, 0, normal);
+	nmg_lu_to_vlist(vhead, lu, 0, normal, vlfree);
     }
 
     /* wire edges */
@@ -395,26 +396,26 @@ nmg_s_to_vlist(struct bu_list *vhead, const struct shell *s, int poly_markers)
 
     /* single vertices */
     if (s->vu_p) {
-	nmg_vu_to_vlist(vhead, s->vu_p);
+	nmg_vu_to_vlist(vhead, s->vu_p, vlfree);
     }
 }
 
 
 void
-nmg_r_to_vlist(struct bu_list *vhead, const struct nmgregion *r, int poly_markers)
+nmg_r_to_vlist(struct bu_list *vhead, const struct nmgregion *r, int poly_markers, struct bu_list *vlfree)
 {
     register struct shell *s;
 
     BU_CK_LIST_HEAD(vhead);
     NMG_CK_REGION(r);
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	nmg_s_to_vlist(vhead, s, poly_markers);
+	nmg_s_to_vlist(vhead, s, poly_markers, vlfree);
     }
 }
 
 
 void
-nmg_m_to_vlist(struct bu_list *vhead, struct model *m, int poly_markers)
+nmg_m_to_vlist(struct bu_list *vhead, struct model *m, int poly_markers, struct bu_list *vlfree)
 {
     register struct nmgregion *r;
 
@@ -422,7 +423,7 @@ nmg_m_to_vlist(struct bu_list *vhead, struct model *m, int poly_markers)
     NMG_CK_MODEL(m);
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	NMG_CK_REGION(r);
-	nmg_r_to_vlist(vhead, r, poly_markers);
+	nmg_r_to_vlist(vhead, r, poly_markers, vlfree);
     }
 }
 
@@ -1614,7 +1615,7 @@ show_broken_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, int fancy)
 
 
 static void
-show_broken_lu(struct bn_vlblock *vbp, const struct loopuse *lu, int fancy)
+show_broken_lu(struct bn_vlblock *vbp, const struct loopuse *lu, int fancy, struct bu_list *vlfree)
 {
     register struct edgeuse *eu;
     struct bu_list *vh;
@@ -1650,10 +1651,10 @@ show_broken_lu(struct bn_vlblock *vbp, const struct loopuse *lu, int fancy)
 
     if ((nmg_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) == (DEBUG_PL_LOOP)) {
 	/* If only DEBUG_PL_LOOP set, just draw lu as wires */
-	nmg_lu_to_vlist(vh, lu, 0, n);
+	nmg_lu_to_vlist(vh, lu, 0, n, vlfree);
     } else if ((nmg_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) == (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
 	/* Draw as polygons if both set */
-	nmg_lu_to_vlist(vh, lu, 1, n);
+	nmg_lu_to_vlist(vh, lu, 1, n, vlfree);
     } else {
 	/* If only DEBUG_GRAPHCL set, don't draw lu's at all */
     }
@@ -1661,19 +1662,19 @@ show_broken_lu(struct bn_vlblock *vbp, const struct loopuse *lu, int fancy)
 
 
 static void
-show_broken_fu(struct bn_vlblock *vbp, const struct faceuse *fu, int fancy)
+show_broken_fu(struct bn_vlblock *vbp, const struct faceuse *fu, int fancy, struct bu_list *vlfree)
 {
     register struct loopuse *lu;
 
     NMG_CK_FACEUSE(fu);
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	show_broken_lu(vbp, lu, fancy);
+	show_broken_lu(vbp, lu, fancy, vlfree);
     }
 }
 
 
 static void
-show_broken_s(struct bn_vlblock *vbp, const struct shell *s, int fancy)
+show_broken_s(struct bn_vlblock *vbp, const struct shell *s, int fancy, struct bu_list *vlfree)
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -1681,33 +1682,33 @@ show_broken_s(struct bn_vlblock *vbp, const struct shell *s, int fancy)
 
     NMG_CK_SHELL(s);
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
-	show_broken_fu(vbp, fu, fancy);
+	show_broken_fu(vbp, fu, fancy, vlfree);
     for (BU_LIST_FOR(lu, loopuse, &s->lu_hd))
-	show_broken_lu(vbp, lu, fancy);
+	show_broken_lu(vbp, lu, fancy, vlfree);
     for (BU_LIST_FOR(eu, edgeuse, &s->eu_hd))
 	show_broken_eu(vbp, eu, fancy);
     if (s->vu_p)
 	show_broken_vu(vbp, s->vu_p);
 }
 static void
-show_broken_r(struct bn_vlblock *vbp, const struct nmgregion *r, int fancy)
+show_broken_r(struct bn_vlblock *vbp, const struct nmgregion *r, int fancy, struct bu_list *vlfree)
 {
     register struct shell *s;
 
     NMG_CK_REGION(r);
     for (BU_LIST_FOR(s, shell, & r->s_hd))
-	show_broken_s(vbp, s, fancy);
+	show_broken_s(vbp, s, fancy, vlfree);
 }
 
 
 static void
-show_broken_m(struct bn_vlblock *vbp, const struct model *m, int fancy)
+show_broken_m(struct bn_vlblock *vbp, const struct model *m, int fancy, struct bu_list *vlfree)
 {
     register struct nmgregion *r;
 
     NMG_CK_MODEL(m);
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
-	show_broken_r(vbp, r, fancy);
+	show_broken_r(vbp, r, fancy, vlfree);
 }
 
 
@@ -1767,22 +1768,22 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
 
     switch (*p) {
 	case NMG_MODEL_MAGIC:
-	    show_broken_m(vbp, (struct model *)p, fancy);
+	    show_broken_m(vbp, (struct model *)p, fancy, vlfree);
 	    break;
 	case NMG_REGION_MAGIC:
-	    show_broken_r(vbp, (struct nmgregion *)p, fancy);
+	    show_broken_r(vbp, (struct nmgregion *)p, fancy, vlfree);
 	    break;
 	case NMG_SHELL_MAGIC:
-	    show_broken_s(vbp, (struct shell *)p, fancy);
+	    show_broken_s(vbp, (struct shell *)p, fancy, vlfree);
 	    break;
 	case NMG_FACE_MAGIC:
-	    show_broken_fu(vbp, ((struct face *)p)->fu_p, fancy);
+	    show_broken_fu(vbp, ((struct face *)p)->fu_p, fancy, vlfree);
 	    break;
 	case NMG_FACEUSE_MAGIC:
-	    show_broken_fu(vbp, (struct faceuse *)p, fancy);
+	    show_broken_fu(vbp, (struct faceuse *)p, fancy, vlfree);
 	    break;
 	case NMG_LOOPUSE_MAGIC:
-	    show_broken_lu(vbp, (struct loopuse *)p, fancy);
+	    show_broken_lu(vbp, (struct loopuse *)p, fancy, vlfree);
 	    break;
 	case NMG_EDGE_MAGIC:
 	    show_broken_eu(vbp, ((struct edge *)p)->eu_p, fancy);
