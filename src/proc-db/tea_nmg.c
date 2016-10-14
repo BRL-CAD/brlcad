@@ -220,7 +220,7 @@ main(int argc, char **argv)
 
     /* Make a vlist drawing of the model */
     BU_LIST_INIT(&vhead);
-    nmg_m_to_vlist(&vhead, m, 0);
+    nmg_m_to_vlist(&vhead, m, 0, &RTG.rtg_vlfree);
 
     /* Make a UNIX plot file from this vlist */
     if ((fp=fopen(uplot_name, "w")) == NULL) {
