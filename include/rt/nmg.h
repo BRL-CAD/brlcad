@@ -337,7 +337,8 @@ RT_EXPORT extern void nmg_vu_to_vlist(struct bu_list *vhead,
                                       const struct vertexuse    *vu,
 				      struct bu_list *vlfree);
 RT_EXPORT extern void nmg_eu_to_vlist(struct bu_list *vhead,
-                                      const struct bu_list      *eu_hd);
+                                      const struct bu_list      *eu_hd,
+				      struct bu_list *vlfree);
 RT_EXPORT extern void nmg_lu_to_vlist(struct bu_list *vhead,
                                       const struct loopuse      *lu,
                                       int                       poly_markers,
@@ -345,7 +346,8 @@ RT_EXPORT extern void nmg_lu_to_vlist(struct bu_list *vhead,
 				      struct bu_list *vlfree);
 RT_EXPORT extern void nmg_snurb_fu_to_vlist(struct bu_list              *vhead,
                                             const struct faceuse        *fu,
-                                            int                 poly_markers);
+                                            int                 poly_markers,
+					    struct bu_list *vlfree);
 RT_EXPORT extern void nmg_s_to_vlist(struct bu_list             *vhead,
                                      const struct shell *s,
                                      int                        poly_markers,
@@ -403,20 +405,23 @@ RT_EXPORT extern void nmg_pl_m(FILE *fp,
 			       struct bu_list *vlfree);
 RT_EXPORT extern void nmg_vlblock_v(struct bn_vlblock *vbp,
                                     const struct vertex *v,
-                                    long *tab);
+                                    long *tab,
+				    struct bu_list *vlfree);
 RT_EXPORT extern void nmg_vlblock_e(struct bn_vlblock *vbp,
                                     const struct edge *e,
                                     long *tab,
                                     int red,
                                     int green,
-                                    int blue);
+                                    int blue,
+				    struct bu_list *vlfree);
 RT_EXPORT extern void nmg_vlblock_eu(struct bn_vlblock *vbp,
                                      const struct edgeuse *eu,
                                      long *tab,
                                      int red,
                                      int green,
                                      int blue,
-                                     int fancy);
+                                     int fancy,
+				     struct bu_list *vlfree);
 RT_EXPORT extern void nmg_vlblock_euleft(struct bu_list                 *vh,
                                          const struct edgeuse           *eu,
                                          const point_t                  center,
@@ -424,11 +429,13 @@ RT_EXPORT extern void nmg_vlblock_euleft(struct bu_list                 *vh,
                                          const vect_t                   xvec,
                                          const vect_t                   yvec,
                                          double                         len,
+					 struct bu_list 	        *vlfree,
                                          const struct bn_tol            *tol);
 RT_EXPORT extern void nmg_vlblock_around_eu(struct bn_vlblock           *vbp,
                                             const struct edgeuse        *arg_eu,
                                             long                        *tab,
                                             int                 fancy,
+					    struct bu_list *vlfree,
                                             const struct bn_tol *tol);
 RT_EXPORT extern void nmg_vlblock_lu(struct bn_vlblock *vbp,
                                      const struct loopuse *lu,
@@ -436,25 +443,30 @@ RT_EXPORT extern void nmg_vlblock_lu(struct bn_vlblock *vbp,
                                      int red,
                                      int green,
                                      int blue,
-                                     int fancy);
+                                     int fancy,
+				     struct bu_list *vlfree);
 RT_EXPORT extern void nmg_vlblock_fu(struct bn_vlblock *vbp,
                                      const struct faceuse *fu,
-                                     long *tab, int fancy);
+                                     long *tab, int fancy, struct bu_list *vlfree);
 RT_EXPORT extern void nmg_vlblock_s(struct bn_vlblock *vbp,
                                     const struct shell *s,
-                                    int fancy);
+                                    int fancy,
+				    struct bu_list *vlfree);
 RT_EXPORT extern void nmg_vlblock_r(struct bn_vlblock *vbp,
                                     const struct nmgregion *r,
-                                    int fancy);
+                                    int fancy,
+				    struct bu_list *vlfree);
 RT_EXPORT extern void nmg_vlblock_m(struct bn_vlblock *vbp,
                                     const struct model *m,
-                                    int fancy);
+                                    int fancy,
+				    struct bu_list *vlfree);
 
 /* visualization helper routines */
 RT_EXPORT extern void nmg_pl_edges_in_2_shells(struct bn_vlblock        *vbp,
                                                long                     *b,
                                                const struct edgeuse     *eu,
                                                int                      fancy,
+					       struct bu_list *vlfree,
                                                const struct bn_tol      *tol);
 RT_EXPORT extern void nmg_pl_isect(const char           *filename,
                                    const struct shell   *s,
@@ -500,11 +512,13 @@ RT_EXPORT extern void nmg_plot_lu_around_eu(const char          *prefix,
                                             const struct bn_tol *tol);
 RT_EXPORT extern int nmg_snurb_to_vlist(struct bu_list          *vhead,
                                         const struct face_g_snurb       *fg,
-                                        int                     n_interior);
+                                        int                     n_interior,
+					struct bu_list *vlfree);
 RT_EXPORT extern void nmg_cnurb_to_vlist(struct bu_list *vhead,
                                          const struct edgeuse *eu,
                                          int n_interior,
-					 int cmd);
+					 int cmd,
+					 struct bu_list *vlfree);
 
 /**
  * global nmg animation plot callback

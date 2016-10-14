@@ -625,8 +625,8 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
     if (do_anim) {
 	struct bn_vlblock *vbp = bn_vlblock_init(bs->vlfree, 32);
 
-	nmg_vlblock_s(vbp, bs->bs_dest, 0);
-	nmg_vlblock_s(vbp, bs->bs_src, 0);
+	nmg_vlblock_s(vbp, bs->bs_dest, 0, bs->vlfree);
+	nmg_vlblock_s(vbp, bs->bs_src, 0, bs->vlfree);
 
 	/* Cause animation of boolean operation as it proceeds! */
 	if (nmg_vlblock_anim_upcall) {

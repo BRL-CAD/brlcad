@@ -1619,7 +1619,7 @@ nmg_ed(int arg)
 					    "nmg_ed tab[]");
 		    vbp = rt_vlblock_init();
 
-		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &mged_tol);
+		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &RTG.rtg_vlfree, &mged_tol);
 		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
 
 		    bn_vlblock_free(vbp);
