@@ -764,6 +764,15 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
       endif(NOT CMAKE_CONFIGURATION_TYPES)
     endforeach(filename ${fullpath_datalist})
 
+    # check for and remove any dead symbolic links from a previous run
+    file(GLOB listing LIST_DIRECTORIES false "${CMAKE_BINARY_DIR}/${targetdir}/*")
+    foreach (filename ${listing})
+      if (NOT EXISTS ${filename})
+	message("Removing stale symbolic link ${filename}")
+	execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${filename})
+      endif (NOT EXISTS ${filename})
+    endforeach (filename ${listing})
+
     # The custom command is still necessary - since it depends on the original source files,
     # this will be the trigger that tells other commands depending on this data that
     # they need to re-run one one of the source files is changed.
