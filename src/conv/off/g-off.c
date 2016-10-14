@@ -359,7 +359,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 			  (int)(tsp->ts_mater.ma_color[2] * 255) );
 		/* nmg_pl_r( fp, r ); */
 		BU_LIST_INIT( &vhead );
-		nmg_r_to_vlist( &vhead, r, 0 );
+		nmg_r_to_vlist(&vhead, r, 0, &RTG.rtg_vlfree);
 		bn_vlist_to_uplot( fp, &vhead );
 		fclose(fp);
 		if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
