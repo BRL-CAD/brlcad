@@ -32,8 +32,9 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/list.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/hit.h"
 #include "rt/nurb.h"
 
 

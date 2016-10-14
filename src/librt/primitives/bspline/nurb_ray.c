@@ -31,8 +31,13 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/debug.h"
+#include "rt/wdb.h"
+#include "rt/global.h"
+#include "rt/nmg.h"
+#include "rt/hit.h"
 #include "rt/nurb.h"
 
 

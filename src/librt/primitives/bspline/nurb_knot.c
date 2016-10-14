@@ -32,7 +32,10 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "raytrace.h"
+#include "bu/malloc.h"
+#include "nmg.h"
+#include "rt/hit.h"
+#include "rt/resource.h"
 #include "rt/nurb.h"
 
 

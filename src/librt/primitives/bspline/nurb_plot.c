@@ -32,9 +32,10 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "raytrace.h"
-#include "rt/nurb.h"
 #include "bn/plot3.h"
+#include "nmg.h"
+#include "rt/hit.h"
+#include "rt/nurb.h"
 
 
 void
