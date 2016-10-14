@@ -29,24 +29,65 @@
 
 #include "bu.h"
 
-#ifdef HAVE_BASENAME
-/* These two functions wrap the system and bu implementations to
+/* These functions wrap the system and bu implementations to
  * standardize the memory behavior. The input string is unmodified,
  * the output string is dynamically allocated and must be freed by the
  * caller.
  */
 
+#ifdef HAVE_BASENAME
 char *
 get_system_output(const char *input)
 {
-    char *in = input ? bu_strdup(input) : NULL;
-    char *out = bu_strdup(basename(in));
+	char *in = input ? bu_strdup(input) : NULL;
+	char *out = bu_strdup(basename(in));
 
-    if (in) {
-	bu_free(in, "input copy");
-    }
-    return out;
+	if (in) {
+		bu_free(in, "input copy");
+	}
+	return out;
 }
+#endif
+
+#if !defined(HAVE_BASENAME) && defined(HAVE__SPLITPATH)
+char *
+get_system_output(const char *input)
+{
+	char fname[_MAX_FNAME];
+	char dir[_MAX_DIR];
+	char *base = NULL;
+	if (input && !strlen(input) == 0) {
+		char *in = bu_strdup(input);
+		if (!strchr(in, '/') && !strchr(in, '\\')) return in;
+		if (BU_STR_EQUAL(in, "/")) {
+			base = bu_strdup("/");
+			bu_free(in, "input copy");
+			return base;
+		}
+		_splitpath(in, NULL, dir, fname, NULL);
+		if (strlen(dir) != strlen(in) && strlen(fname) == 0 && in[strlen(in) - 1] == '.') {
+			base = bu_strdup(&(in[strlen(in) - 1]));
+			bu_free(in, "input copy");
+			return base;
+		}
+		while (strlen(dir) > 1 && strlen(fname) == 0) {
+			in[strlen(in) - 1] = '\0';
+			_splitpath(in, NULL, dir, fname, NULL);
+		}
+		if (strlen(fname) > 0) {
+			base = bu_strdup(fname);
+		} else {
+			if (in[strlen(in) - 1] == '/') {
+				base = bu_strdup("/");
+			}
+		}
+		bu_free(in, "input copy");
+	} else {
+		base = bu_strdup(".");
+	}
+    return base;
+}
+#endif
 
 char *
 get_bu_output(const char *input)
@@ -61,12 +102,11 @@ get_bu_output(const char *input)
 
     return output;
 }
-#endif
 
 void
 compare_bu_to_system_basename(const char *input)
 {
-#ifdef HAVE_BASENAME
+#if defined(HAVE_BASENAME) || defined(HAVE__SPLITPATH)
     char *sys_out = get_system_output(input);
     char *bu_out = get_bu_output(input);
 
@@ -81,9 +121,7 @@ compare_bu_to_system_basename(const char *input)
 	bu_exit(EXIT_FAILURE, "");
     }
 #else
-    /* TODO - need to add tests using Windows specific routines as well:
-     * https://msdn.microsoft.com/en-us/library/e737s6tf.aspx */
-    bu_exit(EXIT_SUCCESS, "BASENAME not available on this platform\n");
+    bu_exit(EXIT_FAILURE, "BASENAME not available on this platform\n");
 #endif
 }
 
