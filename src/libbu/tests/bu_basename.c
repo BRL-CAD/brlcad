@@ -81,6 +81,8 @@ compare_bu_to_system_basename(const char *input)
 	bu_exit(EXIT_FAILURE, "");
     }
 #else
+    /* TODO - need to add tests using Windows specific routines as well:
+     * https://msdn.microsoft.com/en-us/library/e737s6tf.aspx */
     bu_exit(EXIT_SUCCESS, "BASENAME not available on this platform\n");
 #endif
 }
