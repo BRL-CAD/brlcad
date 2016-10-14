@@ -29,12 +29,12 @@ set(LIBANALYZE_SOURCES
   )
 
 set(libanalyze_ignored_files
-  src/libanalyze/MeshHealing/DCEL.h
-  src/libanalyze/MeshHealing/Geometry.h
-  src/libanalyze/MeshHealing/MeshConversion.h
-  src/libanalyze/MeshHealing/MeshConversion_brlcad.h
-  src/libanalyze/MeshHealing/Stitch.h
-  src/libanalyze/MeshHealing/Zipper.h
+  MeshHealing/DCEL.h
+  MeshHealing/Geometry.h
+  MeshHealing/MeshConversion.h
+  MeshHealing/MeshConversion_brlcad.h
+  MeshHealing/Stitch.h
+  MeshHealing/Zipper.h
 )
 CMAKEFILES(${libanalyze_ignored_files})
 
