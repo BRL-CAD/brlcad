@@ -26,9 +26,11 @@
 #ifndef SRC_LIBANALYZE_MESHHEALING_MESHCONVERSION_BRLCAD_H_
 #define SRC_LIBANALYZE_MESHHEALING_MESHCONVERSION_BRLCAD_H_
 
-#include "MeshConversion.h"
+#include "./MeshConversion.h"
+
 
 struct rt_bot_internal;
+
 
 class BrlcadMesh: public PolygonalMesh {
 

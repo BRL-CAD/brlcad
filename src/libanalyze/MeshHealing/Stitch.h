@@ -26,9 +26,9 @@
 #ifndef SRC_LIBANALYZE_MESHHEALING_STITCH_H_
 #define SRC_LIBANALYZE_MESHHEALING_STITCH_H_
 
-#include "MeshConversion.h"
+#include "./MeshConversion.h"
+/*#include "./MeshConversion_brlcad.h"*/
 
-/*#include "MeshConversion_brlcad.h"*/
 
 /* Function to stitch gaps of chain start_A to end_A with start_B to end_B
  * Advancing rule is that whichever chain has a triangle with the other other chain with the lesser perimeter,

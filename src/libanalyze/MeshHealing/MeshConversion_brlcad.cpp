@@ -23,18 +23,24 @@
  *
  */
 
-#include "MeshConversion_brlcad.h"
+#include "common.h"
 
-#include <bu/defines.h>
-#include <bu/malloc.h>
-#include <rt/geom.h>
-#include <rt/primitives/bot.h>
+/* interface header */
+#include "./MeshConversion_brlcad.h"
+
+/* system implementation headers */
 #include <stddef.h>
 #include <utility>
 #include <vector>
 
-#include "DCEL.h"
-#include "Geometry.h"
+/* local implementation headers */
+#include <bu/defines.h>
+#include <bu/malloc.h>
+#include <rt/geom.h>
+#include <rt/primitives/bot.h>
+#include "./DCEL.h"
+#include "./Geometry.h"
+
 
 BrlcadMesh::BrlcadMesh(rt_bot_internal *bot_mesh)
 {

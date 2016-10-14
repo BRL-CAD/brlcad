@@ -23,9 +23,14 @@
  *
  */
 
-#include "Geometry.h"
+#include "common.h"
 
+/* interface header */
+#include "./Geometry.h"
+
+/* system implementation headers */
 #include <cmath>
+
 
 /* Calculates the determinant of a 3x3 matrix */
 double

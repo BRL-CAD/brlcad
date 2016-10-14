@@ -23,15 +23,21 @@
  *
  */
 
-#include "Zipper.h"
+#include "common.h"
 
+/* interface header */
+#include "./Zipper.h"
+
+/* system implementation headers */
 #include <stddef.h>
 #include <climits>
 #include <utility>
 #include <vector>
 
+/* local implementation headers */
 #include "vmath.h"
-#include "Geometry.h"
+#include "./Geometry.h"
+
 
 void
 calcFeaturePair(PolygonalMesh *polymesh, queue_element *node)

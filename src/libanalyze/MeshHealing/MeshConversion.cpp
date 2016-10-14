@@ -23,13 +23,19 @@
  *
  */
 
-#include "MeshConversion.h"
+#include "common.h"
 
+/* interface header */
+#include "./MeshConversion.h"
+
+/* system implementation headers */
 #include <cstddef>
 #include <iterator>
 #include <limits>
 
-#include "Geometry.h"
+/* local implementation headers */
+#include "./Geometry.h"
+
 
 /* Vertex record function */
 
