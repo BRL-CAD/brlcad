@@ -28,6 +28,16 @@ set(LIBANALYZE_SOURCES
   heal_mesh.cpp
   )
 
+set(libanalyze_ignored_files
+  src/libanalyze/MeshHealing/DCEL.h
+  src/libanalyze/MeshHealing/Geometry.h
+  src/libanalyze/MeshHealing/MeshConversion.h
+  src/libanalyze/MeshHealing/MeshConversion_brlcad.h
+  src/libanalyze/MeshHealing/Stitch.h
+  src/libanalyze/MeshHealing/Zipper.h
+)
+CMAKEFILES(${libanalyze_ignored_files})
+
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "${TCL_LIBRARY};libbu;librt")
 set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
