@@ -81,7 +81,7 @@ compare_bu_to_system_basename(const char *input)
 	bu_exit(EXIT_FAILURE, "");
     }
 #else
-    bu_exit(EXIT_FAILURE, "BASENAME not available on this platform\n");
+    bu_exit(EXIT_SUCCESS, "BASENAME not available on this platform\n");
 #endif
 }
 
