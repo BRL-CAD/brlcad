@@ -247,16 +247,6 @@ struct ray_data {
  */
 RT_EXPORT extern void (*nmg_plot_anim_upcall)(void);
 
-/**
- * global nmg animation vblock callback
- */
-RT_EXPORT extern void (*nmg_vlblock_anim_upcall)(void);
-
-/**
- * global nmg mged display debug callback
- */
-RT_EXPORT extern void (*nmg_mged_debug_display_hack)(void);
-
 
 /* From nmg_rt_isect.c */
 RT_EXPORT extern void nmg_rt_print_hitlist(struct bu_list *hd);

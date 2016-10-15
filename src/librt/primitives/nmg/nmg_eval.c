@@ -34,8 +34,10 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/exit.h"
+#include "bu/list.h"
+#include "bu/log.h"
 #include "nmg.h"
-#include "rt/nmg.h"
 
 
 struct nmg_bool_state {

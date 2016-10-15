@@ -32,8 +32,8 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "nmg.h"
-#include "rt/nmg.h"
 
 #define PAINT_INTERIOR 1
 #define PAINT_EXTERIOR 0

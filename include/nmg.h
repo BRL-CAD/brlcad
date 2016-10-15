@@ -825,6 +825,17 @@ struct nmg_inter_struct {
 };
 #define NMG_CK_INTER_STRUCT(_p) NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
 
+/**
+ * global nmg animation vblock callback
+ */
+RT_EXPORT extern void (*nmg_vlblock_anim_upcall)(void);
+
+/**
+ * global nmg mged display debug callback (ew)
+ */
+RT_EXPORT extern void (*nmg_mged_debug_display_hack)(void);
+
+
 
 
 /* From file nmg_mk.c */

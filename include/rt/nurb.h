@@ -37,6 +37,7 @@
 #include "bu/list.h"
 #include "bn/plane.h"
 #include "rt/defines.h"
+#include "rt/hit.h"
 
 struct resource; /* forward declaration */
 

@@ -36,8 +36,6 @@
 #include "bu/malloc.h"
 #include "bn/plane.h"
 #include "nmg.h"
-#include "rt/nmg.h"
-
 
 /**
  * Count number of vertices in an NMG loop.

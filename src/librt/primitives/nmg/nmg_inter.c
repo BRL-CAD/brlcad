@@ -60,11 +60,11 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "bn/mat.h"
 #include "bn/plane.h"
 #include "bn/plot3.h"
 #include "nmg.h"
-#include "rt/nmg.h"
 
 #define ISECT_NONE 0
 #define ISECT_SHARED_V 1

@@ -48,10 +48,10 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "bn/plot3.h"
 #include "bn/vlist.h"
 #include "nmg.h"
-#include "rt/nmg.h"
 #include "rt/nurb.h"
 
 #define US_DELAY 10 /* Additional delay between frames */

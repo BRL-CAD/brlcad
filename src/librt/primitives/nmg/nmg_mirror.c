@@ -28,7 +28,6 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 
-
 /**
  * Given a pointer to an internal GED database object, mirror the
  * object's values about the given transformation matrix.

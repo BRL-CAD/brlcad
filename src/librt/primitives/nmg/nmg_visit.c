@@ -42,8 +42,6 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rt/nmg.h"
-
 
 void
 nmg_visit_vertex(struct vertex *v, const struct nmg_visit_handlers *htab, void *state)

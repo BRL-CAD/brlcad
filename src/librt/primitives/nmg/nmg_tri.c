@@ -33,12 +33,12 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bn/mat.h"
+#include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bn/mat.h"
 #include "bn/plane.h"
 #include "bn/plot3.h"
 #include "nmg.h"
-#include "rt/nmg.h"
 
 
 /* macros for comparing 2D points in scanline order */

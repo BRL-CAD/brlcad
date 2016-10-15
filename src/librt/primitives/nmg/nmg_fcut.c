@@ -47,12 +47,11 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bn/plane.h"
 #include "bn/plot3.h"
 #include "nmg.h"
-#include "rt/nmg.h"
-
 
 #define PLOT_BOTH_FACES 1
 

@@ -37,8 +37,6 @@
 #include "vmath.h"
 #include "bn/plane.h"
 #include "nmg.h"
-#include "rt/nmg.h"
-
 
 /**
  * Determine if T lies within angle AB, such that A < T < B.

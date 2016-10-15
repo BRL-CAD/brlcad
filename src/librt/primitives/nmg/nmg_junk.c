@@ -44,7 +44,6 @@
 #include "bn.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rt/nmg.h"
 
 
 /**

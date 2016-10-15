@@ -38,10 +38,10 @@
 
 #include "vmath.h"
 #include "bu/debug.h"
+#include "bu/malloc.h"
 #include "bn/mat.h"
 #include "bn/plane.h"
 #include "nmg.h"
-#include "rt/nmg.h"
 
 /************************************************************************
  *									*
