@@ -39,9 +39,9 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "nmg.h"
-#include "rt/nmg.h"
+#include "bu/malloc.h"
 #include "bn/plot3.h"
+#include "nmg.h"
 
 
 extern int nmg_class_nothing_broken;

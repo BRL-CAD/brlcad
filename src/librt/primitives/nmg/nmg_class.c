@@ -46,6 +46,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "bn/plane.h"
 #include "bn/plot3.h"
 #include "nmg.h"

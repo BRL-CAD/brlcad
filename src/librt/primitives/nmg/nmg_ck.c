@@ -33,9 +33,9 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "nmg.h"
-#include "rt/nmg.h"
 
 
 /************************************************************************
