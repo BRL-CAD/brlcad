@@ -39,7 +39,7 @@
 
 
 void
-nmg_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t u, fastf_t v)
+nmg_nurb_curvature(struct nmg_curvature *cvp, const struct face_g_snurb *srf, fastf_t u, fastf_t v)
 {
     struct face_g_snurb * us, *vs, * uus, * vvs, *uvs;
     fastf_t ue[4], ve[4], uue[4], vve[4], uve[4], se[4];

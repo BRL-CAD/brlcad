@@ -525,7 +525,7 @@ rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct 
     u = hitp->hit_vpriv[0];
     v = hitp->hit_vpriv[1];
 
-    nmg_nurb_curvature(cvp, srf, u, v);
+    nmg_nurb_curvature((struct nmg_curvature *)cvp, srf, u, v);
 #endif /* CONVERT_TO_BREP */
 }
 

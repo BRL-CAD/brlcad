@@ -37,7 +37,6 @@
 #include "bu/list.h"
 #include "bn/plane.h"
 #include "rt/defines.h"
-#include "rt/hit.h"
 
 /* Define parametric directions for splitting. */
 
@@ -128,6 +127,13 @@ struct bezier_2d_list {
 
 __BEGIN_DECLS
 
+/* TODO - this is another one of those data concepts common to librt and libnmg */
+struct nmg_curvature {
+    vect_t      crv_pdir;       /**< @brief Principle direction */
+    fastf_t     crv_c1;         /**< @brief curvature in principle dir */
+    fastf_t     crv_c2;         /**< @brief curvature in other direction */
+};
+
 /* nurb_basis.c */
 RT_EXPORT extern fastf_t nmg_nurb_basis_eval(struct knot_vector *knts, int interval,
 						 int order, fastf_t mu);
@@ -194,7 +200,7 @@ RT_EXPORT extern void nmg_nurb_gen_knot_vector(struct knot_vector *new_knots,
 RT_EXPORT extern void nmg_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t * norm);
 
 /* nurb_c2.c */
-RT_EXPORT extern void nmg_nurb_curvature(struct curvature *cvp,
+RT_EXPORT extern void nmg_nurb_curvature(struct nmg_curvature *cvp,
 					     const struct face_g_snurb *srf, fastf_t u, fastf_t v);
 
 /* nurb_plot.c */
