@@ -1933,7 +1933,7 @@ nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_
 	eg->k.knots = kv;
     } else {
 	/* Give a default curve, no interior knots */
-	nmg_nurb_kvknot(&eg->k, order, 0.0, 1.0, n_knots - (2 * order), (struct resource *)NULL);
+	nmg_nurb_kvknot(&eg->k, order, 0.0, 1.0, n_knots - (2 * order));
     }
 
     if (n_pts < 2) bu_bomb("nmg_edge_g_cnurb() n_pts < 2\n");

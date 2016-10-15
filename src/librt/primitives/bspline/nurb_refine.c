@@ -43,7 +43,7 @@
  * Returns a refined surface.  The original surface is unmodified.
  */
 struct face_g_snurb *
-nmg_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv, struct resource *res)
+nmg_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv)
     /* Old surface to be refined */
     /* Direction to refine */
     /* Row = 0, Col = 1 */
@@ -62,8 +62,8 @@ nmg_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *k
 	nurb_srf->order[0] = srf->order[0];
 	nurb_srf->order[1] = srf->order[1];
 
-	nmg_nurb_kvcopy(&nurb_srf->u, kv, res);
-	nmg_nurb_kvcopy(&nurb_srf->v, &srf->v, res);
+	nmg_nurb_kvcopy(&nurb_srf->u, kv);
+	nmg_nurb_kvcopy(&nurb_srf->v, &srf->v);
 
 	nurb_srf->s_size[0] = srf->s_size[0];
 	nurb_srf->s_size[1] = kv->k_size - srf->order[0];
@@ -76,7 +76,7 @@ nmg_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *k
 		      "nmg_nurb_s_refine: row mesh control points");
 
 	oslo = (struct oslo_mat *)
-	    nmg_nurb_calc_oslo (srf -> order[RT_NURB_SPLIT_ROW], &srf->u, kv, res);
+	    nmg_nurb_calc_oslo (srf -> order[RT_NURB_SPLIT_ROW], &srf->u, kv);
 
 	for (i = 0; i < nurb_srf->s_size[0]; i++) {
 	    fastf_t * old_mesh_ptr;
@@ -95,7 +95,7 @@ nmg_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *k
 			     nurb_srf->pt_type);
 	}
 
-	nmg_nurb_free_oslo(oslo, res);
+	nmg_nurb_free_oslo(oslo);
 
     } else {
 	/* Col (v) direction */
@@ -103,8 +103,8 @@ nmg_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *k
 	nurb_srf->order[0] = srf->order[0];
 	nurb_srf->order[1] = srf->order[1];
 
-	nmg_nurb_kvcopy(&nurb_srf->u, &srf->u, res);
-	nmg_nurb_kvcopy(&nurb_srf->v, kv, res);
+	nmg_nurb_kvcopy(&nurb_srf->u, &srf->u);
+	nmg_nurb_kvcopy(&nurb_srf->v, kv);
 
 	nurb_srf->s_size[0] = kv->k_size - srf->order[1];
 	nurb_srf->s_size[1] = srf->s_size[1];
@@ -118,7 +118,7 @@ nmg_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *k
 		      "nmg_nurb_s_refine: row mesh control points");
 
 	oslo = (struct oslo_mat *)
-	    nmg_nurb_calc_oslo (srf->order[RT_NURB_SPLIT_COL], &srf->v, kv, res);
+	    nmg_nurb_calc_oslo (srf->order[RT_NURB_SPLIT_COL], &srf->v, kv);
 
 	for (i = 0; i < nurb_srf->s_size[1]; i++) {
 	    fastf_t * old_mesh_ptr;
@@ -136,7 +136,7 @@ nmg_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *k
 			     0, kv->k_size - nurb_srf->order[1],
 			     nurb_srf->pt_type);
 	}
-	nmg_nurb_free_oslo(oslo, res);
+	nmg_nurb_free_oslo(oslo);
     }
     return nurb_srf;
 }
@@ -158,7 +158,7 @@ nmg_nurb_c_refine(const struct edge_g_cnurb *crv, struct knot_vector *kv)
 	crv->pt_type);
 
     oslo = (struct oslo_mat *) nmg_nurb_calc_oslo(
-	crv->order, &crv->k, kv, (struct resource *)NULL);
+	crv->order, &crv->k, kv);
 
     nmg_nurb_map_oslo(oslo, crv->ctl_points,
 		     new_crv->ctl_points,
@@ -171,7 +171,7 @@ nmg_nurb_c_refine(const struct edge_g_cnurb *crv, struct knot_vector *kv)
     for (i = 0; i < kv->k_size; i++)
 	new_crv->k.knots[i] = kv->knots[i];
 
-    nmg_nurb_free_oslo(oslo, (struct resource *)NULL);
+    nmg_nurb_free_oslo(oslo);
 
     return new_crv;
 }

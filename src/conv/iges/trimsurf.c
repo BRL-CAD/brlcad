@@ -97,7 +97,7 @@ Get_nurb_surf(int entityno, struct model *m)
     n_u = n_cols+u_order;
     n_v = n_rows+v_order;
     if (!m) {
-	srf = nmg_nurb_new_snurb(u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type, (struct resource *)NULL);
+	srf = nmg_nurb_new_snurb(u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type);
     } else {
 	int pnum;
 
@@ -1092,7 +1092,7 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
 
     BU_LIST_INIT(&bezier);
 
-    nmg_nurb_bezier(&bezier, fg, (struct resource *)NULL);
+    nmg_nurb_bezier(&bezier, fg);
     while (BU_LIST_NON_EMPTY(&bezier)) {
 	struct face_g_snurb *srf;
 	struct nmg_nurb_uv_hit *hp;
@@ -1100,7 +1100,7 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
 	srf = BU_LIST_FIRST(face_g_snurb,  &bezier);
 	BU_LIST_DEQUEUE(&srf->l);
 
-	hp = nmg_nurb_intersect(srf, pl1, pl2, UV_TOL, (struct resource *)NULL, NULL);
+	hp = nmg_nurb_intersect(srf, pl1, pl2, UV_TOL, NULL);
 	/* process each hit point */
 	while (hp != (struct nmg_nurb_uv_hit *)NULL) {
 	    struct nmg_nurb_uv_hit *next;
@@ -1171,7 +1171,7 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
 	    bu_free((char *)hp, "nurb_uv_hit");
 	    hp = next;
 	}
-	nmg_nurb_free_snurb(srf, (struct resource *)NULL);
+	nmg_nurb_free_snurb(srf);
     }
 }
 

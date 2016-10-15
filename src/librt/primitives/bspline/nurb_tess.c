@@ -122,11 +122,11 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
     /* free up storage */
 
-    nmg_nurb_free_snurb(us, (struct resource *)NULL);
-    nmg_nurb_free_snurb(vs, (struct resource *)NULL);
-    nmg_nurb_free_snurb(uus, (struct resource *)NULL);
-    nmg_nurb_free_snurb(vvs, (struct resource *)NULL);
-    nmg_nurb_free_snurb(uvs, (struct resource *)NULL);
+    nmg_nurb_free_snurb(us);
+    nmg_nurb_free_snurb(vs);
+    nmg_nurb_free_snurb(uus);
+    nmg_nurb_free_snurb(vvs);
+    nmg_nurb_free_snurb(uvs);
 
 
     /* The paper uses the following to calculate the longest edge size

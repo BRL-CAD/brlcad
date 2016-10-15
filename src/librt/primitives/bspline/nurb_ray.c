@@ -44,7 +44,7 @@
 void rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax);
 
 struct face_g_snurb *
-nmg_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, struct resource *res)
+nmg_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2)
 {
 
     register struct face_g_snurb *psrf;
@@ -63,7 +63,7 @@ nmg_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *p
 
     psrf = (struct face_g_snurb *) nmg_nurb_new_snurb(srf->order[0], srf->order[1],
 						     srf->u.k_size, srf->v.k_size,
-						     srf->s_size[0], srf->s_size[1], n_pt_type, res);
+						     srf->s_size[0], srf->s_size[1], n_pt_type);
 
     psrf->dir = RT_NURB_SPLIT_COL;
 
@@ -286,7 +286,7 @@ nmg_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t
 
 
 struct face_g_snurb *
-nmg_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1, fastf_t param2, struct resource *res)
+nmg_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1, fastf_t param2)
 {
     register int i;
     struct face_g_snurb *region;
@@ -316,7 +316,7 @@ nmg_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1
 	}
     }
 
-    region = nmg_nurb_s_refine(srf, dir, &new_knots, res);
+    region = nmg_nurb_s_refine(srf, dir, &new_knots);
     bu_free(knot_vec, "knot vector");
 
     return region;
@@ -324,7 +324,7 @@ nmg_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1
 
 
 struct nmg_nurb_uv_hit *
-nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, double uv_tol, struct resource *res, struct bu_list *plist)
+nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, double uv_tol, struct bu_list *plist)
 {
     struct nmg_nurb_uv_hit * h;
     struct face_g_snurb * psrf,
@@ -348,7 +348,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 
     /* project the surface to a 2 dimensional problem */
     /* NOTE that this gives a single snurb back, NOT a list */
-    psrf = nmg_nurb_project_srf(srf, plane2, plane1, res);
+    psrf = nmg_nurb_project_srf(srf, plane2, plane1);
     psrf->dir = 1;
     BU_LIST_APPEND(plist, &psrf->l);
 
@@ -384,7 +384,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 		if (RT_G_DEBUG & DEBUG_SPLINE)
 		    bu_log("this srf doesn't include the origin\n");
 		flat = 1;
-		nmg_nurb_free_snurb(psrf, res);
+		nmg_nurb_free_snurb(psrf);
 		continue;
 	    }
 
@@ -397,17 +397,17 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 		/* New surfs will have same dir as arg, here */
 		if (RT_G_DEBUG & DEBUG_SPLINE)
 		    bu_log("splitting this surface\n");
-		nmg_nurb_s_split(plist, psrf, dir, res);
-		nmg_nurb_free_snurb(psrf, res);
+		nmg_nurb_s_split(plist, psrf, dir);
+		nmg_nurb_free_snurb(psrf);
 
-		hp = nmg_nurb_intersect(srf, plane1, plane2, uv_tol, res, plist);
+		hp = nmg_nurb_intersect(srf, plane1, plane2, uv_tol, plist);
 		return hp;
 	    }
 	    if (smin > 1.0 || smax < 0.0) {
 		if (RT_G_DEBUG & DEBUG_SPLINE)
 		    bu_log("eliminating this surface (smin=%g, smax=%g)\n", smin, smax);
 		flat = 1;
-		nmg_nurb_free_snurb(psrf, res);
+		nmg_nurb_free_snurb(psrf);
 		continue;
 	    }
 	    if (dir == RT_NURB_SPLIT_ROW) {
@@ -428,10 +428,10 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 
 	    osrf = psrf;
 	    psrf = (struct face_g_snurb *) nmg_nurb_region_from_srf(
-		osrf, dir, smin, smax, res);
+		osrf, dir, smin, smax);
 
 	    psrf->dir = dir;
-	    nmg_nurb_free_snurb(osrf, res);
+	    nmg_nurb_free_snurb(osrf);
 
 	    if (RT_G_DEBUG & DEBUG_SPLINE) {
 		bu_log("After call to nmg_nurb_region_from_srf() (smin=%g, smax=%g)\n", smin, smax);
@@ -486,7 +486,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 		    h = hit;
 		}
 		flat = 1;
-		nmg_nurb_free_snurb(psrf, res);
+		nmg_nurb_free_snurb(psrf);
 	    }
 	    if ((u[1] - u[0]) > (v[1] - v[0]))
 		dir = 1;

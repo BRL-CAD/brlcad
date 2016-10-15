@@ -65,11 +65,11 @@ nmg_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_
     nmg_nurb_s_eval(vvs, u, v, vve);
     nmg_nurb_s_eval(uvs, u, v, uve);
 
-    nmg_nurb_free_snurb(us, (struct resource *)NULL);
-    nmg_nurb_free_snurb(vs, (struct resource *)NULL);
-    nmg_nurb_free_snurb(uus, (struct resource *)NULL);
-    nmg_nurb_free_snurb(vvs, (struct resource *)NULL);
-    nmg_nurb_free_snurb(uvs, (struct resource *)NULL);
+    nmg_nurb_free_snurb(us);
+    nmg_nurb_free_snurb(vs);
+    nmg_nurb_free_snurb(uus);
+    nmg_nurb_free_snurb(vvs);
+    nmg_nurb_free_snurb(uvs);
 
     if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 	for (i = 0; i < 3; i++) {

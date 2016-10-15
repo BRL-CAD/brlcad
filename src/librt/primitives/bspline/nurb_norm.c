@@ -160,7 +160,7 @@ nmg_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	VCROSS(norm, uvec, ve);
 	VUNITIZE(norm);
 
-	nmg_nurb_free_snurb(vsrf, (struct resource *)NULL);
+	nmg_nurb_free_snurb(vsrf);
 	return;
     }
     if (srf->order[1] == 2 && srf->order[0] > 2) {
@@ -214,7 +214,7 @@ nmg_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	VCROSS(norm, ue, vvec);
 	VUNITIZE(norm);
 
-	nmg_nurb_free_snurb(usrf, (struct resource *)NULL);
+	nmg_nurb_free_snurb(usrf);
 	return;
     }
 
@@ -230,8 +230,8 @@ nmg_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	VCROSS(norm, ue, ve);
 	VUNITIZE(norm);
 
-	nmg_nurb_free_snurb(usrf, (struct resource *)NULL);
-	nmg_nurb_free_snurb(vsrf, (struct resource *)NULL);
+	nmg_nurb_free_snurb(usrf);
+	nmg_nurb_free_snurb(vsrf);
 
 	return;
     }
@@ -263,8 +263,8 @@ nmg_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	VCROSS(norm, unorm, vnorm);
 	VUNITIZE(norm);
 
-	nmg_nurb_free_snurb(usrf, (struct resource *)NULL);
-	nmg_nurb_free_snurb(vsrf, (struct resource *)NULL);
+	nmg_nurb_free_snurb(usrf);
+	nmg_nurb_free_snurb(vsrf);
 
 	return;
     }

@@ -48,7 +48,7 @@
 #define AMIN(i, j)    ((i) < (j) ? (i) : (j))
 
 struct oslo_mat *
-nmg_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv, register struct knot_vector *t_kv, struct resource *res)
+nmg_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv, register struct knot_vector *t_kv)
 
 /* old knot vector */
 /* new knot vector */
@@ -71,8 +71,6 @@ nmg_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv
     fastf_t tj;
 
     struct oslo_mat * head, * o_ptr, *new_o;
-
-    if (res) RT_CK_RESOURCE(res);
 
     n1 = t_kv->k_size - order;
 
@@ -211,11 +209,9 @@ nmg_nurb_pr_oslo(struct oslo_mat *om)
  * Free up the structures and links for the oslo matrix.
  */
 void
-nmg_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
+nmg_nurb_free_oslo(struct oslo_mat *om)
 {
     register struct oslo_mat * omp;
-
-    if (res) RT_CK_RESOURCE(res);
 
     while (om != (struct oslo_mat *) 0) {
 	omp = om;

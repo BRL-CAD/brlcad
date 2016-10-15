@@ -41,12 +41,10 @@
  * Create a place holder for a nurb surface.
  */
 struct face_g_snurb *
-nmg_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_cols, int pt_type, struct resource *res)
+nmg_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_cols, int pt_type)
 {
     register struct face_g_snurb * srf;
     int pnum;
-
-    if (res) RT_CK_RESOURCE(res);
 
     GET_SNURB(srf);
     srf->order[0] = u_order;
@@ -106,11 +104,9 @@ nmg_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
  * pointers, or use automatic variables to hold one.
  */
 void
-rt_nurb_clean_snurb(struct face_g_snurb *srf, struct resource *res)
+rt_nurb_clean_snurb(struct face_g_snurb *srf)
 {
     NMG_CK_SNURB(srf);
-
-    if (res) RT_CK_RESOURCE(res);
 
     bu_free((char *)srf->u.knots, "rt_nurb_clean_snurb() u.knots");
     bu_free((char *)srf->v.knots, "nmg_nurb_free_snurb() v.knots");
@@ -126,11 +122,9 @@ rt_nurb_clean_snurb(struct face_g_snurb *srf, struct resource *res)
 
 
 void
-nmg_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res)
+nmg_nurb_free_snurb(struct face_g_snurb *srf)
 {
     NMG_CK_SNURB(srf);
-
-    if (res) RT_CK_RESOURCE(res);
 
     /* assume that links to other surface and curves are already
      * deleted.

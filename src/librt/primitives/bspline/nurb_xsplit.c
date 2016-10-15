@@ -62,19 +62,19 @@ nmg_nurb_s_xsplit(struct face_g_snurb *srf, fastf_t param, int dir)
     NMG_CK_SNURB(srf);
 
     if (dir == RT_NURB_SPLIT_ROW) {
-	nmg_nurb_kvmult(&new_kv, &srf->u, srf->order[0], param, (struct resource *)NULL);
+	nmg_nurb_kvmult(&new_kv, &srf->u, srf->order[0], param);
 
 	k_index = srf->order[0];
 
 	oslo = (struct oslo_mat *)
-	    nmg_nurb_calc_oslo(srf->order[RT_NURB_SPLIT_ROW], &srf->u, &new_kv, (struct resource *)NULL);
+	    nmg_nurb_calc_oslo(srf->order[RT_NURB_SPLIT_ROW], &srf->u, &new_kv);
 
 	GET_SNURB(srf1);
 	srf1->order[0]  = srf->order[0];
 	srf1->order[1]  = srf->order[1];
 	srf1->dir = RT_NURB_SPLIT_ROW;
-	nmg_nurb_kvextract(&srf1->u, &new_kv, 0, k_index + srf1->order[0], (struct resource *)NULL);
-	nmg_nurb_kvcopy(&srf1->v, &srf->v, (struct resource *)NULL);
+	nmg_nurb_kvextract(&srf1->u, &new_kv, 0, k_index + srf1->order[0]);
+	nmg_nurb_kvcopy(&srf1->v, &srf->v);
 
 	srf1->pt_type = srf->pt_type;
 	srf1->s_size[0] = srf1->v.k_size -
@@ -92,8 +92,8 @@ nmg_nurb_s_xsplit(struct face_g_snurb *srf, fastf_t param, int dir)
 	srf2->order[0]  = srf->order[0];
 	srf2->order[1]  = srf->order[1];
 	srf2->dir = RT_NURB_SPLIT_ROW;
-	nmg_nurb_kvextract(&srf2->u, &new_kv, k_index, new_kv.k_size, (struct resource *)NULL);
-	nmg_nurb_kvcopy(&srf2->v, &srf->v, (struct resource *)NULL);
+	nmg_nurb_kvextract(&srf2->u, &new_kv, k_index, new_kv.k_size);
+	nmg_nurb_kvcopy(&srf2->v, &srf->v);
 
 	srf2->pt_type = srf->pt_type;
 	srf2->s_size[0] = srf2->v.k_size -
@@ -131,19 +131,19 @@ nmg_nurb_s_xsplit(struct face_g_snurb *srf, fastf_t param, int dir)
 			     srf2->pt_type);
 	}
     } else {
-	nmg_nurb_kvmult(&new_kv, &srf->v, srf->order[RT_NURB_SPLIT_COL], param, (struct resource *)NULL);
+	nmg_nurb_kvmult(&new_kv, &srf->v, srf->order[RT_NURB_SPLIT_COL], param);
 
 	k_index = srf->order[1];
 
 	oslo = (struct oslo_mat *)
-	    nmg_nurb_calc_oslo(srf->order[RT_NURB_SPLIT_COL], &srf->v, &new_kv, (struct resource *)NULL);
+	    nmg_nurb_calc_oslo(srf->order[RT_NURB_SPLIT_COL], &srf->v, &new_kv);
 
 	GET_SNURB(srf1);
 	srf1->order[0]  = srf->order[0];
 	srf1->order[1]  = srf->order[1];
 	srf1->dir = RT_NURB_SPLIT_COL;
-	nmg_nurb_kvextract(&srf1->v, &new_kv, 0, k_index + srf1->order[RT_NURB_SPLIT_COL], (struct resource *)NULL);
-	nmg_nurb_kvcopy(&srf1->u, &srf->u, (struct resource *)NULL);
+	nmg_nurb_kvextract(&srf1->v, &new_kv, 0, k_index + srf1->order[RT_NURB_SPLIT_COL]);
+	nmg_nurb_kvcopy(&srf1->u, &srf->u);
 
 	srf1->pt_type = srf->pt_type;
 	srf1->s_size[0] = srf1->v.k_size -
@@ -161,8 +161,8 @@ nmg_nurb_s_xsplit(struct face_g_snurb *srf, fastf_t param, int dir)
 	srf2->order[0]  = srf->order[0];
 	srf2->order[1]  = srf->order[1];
 	srf2->dir = RT_NURB_SPLIT_COL;
-	nmg_nurb_kvextract(&srf2->v, &new_kv, k_index, new_kv.k_size, (struct resource *)NULL);
-	nmg_nurb_kvcopy(&srf2->u, &srf->u, (struct resource *)NULL);
+	nmg_nurb_kvextract(&srf2->v, &new_kv, k_index, new_kv.k_size);
+	nmg_nurb_kvcopy(&srf2->u, &srf->u);
 
 	srf2->pt_type = srf->pt_type;
 	srf2->s_size[0] = srf2->v.k_size -
@@ -206,7 +206,7 @@ nmg_nurb_s_xsplit(struct face_g_snurb *srf, fastf_t param, int dir)
 
     bu_free((char *) new_kv.knots, "nmg_nurb_s_xsplit: new_kv.knots");
 
-    nmg_nurb_free_oslo(oslo, (struct resource *)NULL);
+    nmg_nurb_free_oslo(oslo);
 
     return srf1;
 }
@@ -237,14 +237,14 @@ nmg_nurb_c_xsplit(struct edge_g_cnurb *crv, fastf_t param)
     coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
 
 	k_index = crv->order;
-    nmg_nurb_kvmult(&new_kv, &crv->k, crv->order, param, (struct resource *)NULL);
+    nmg_nurb_kvmult(&new_kv, &crv->k, crv->order, param);
 
     oslo = (struct oslo_mat *)
-	nmg_nurb_calc_oslo(crv->order, &crv->k, &new_kv, (struct resource *)NULL);
+	nmg_nurb_calc_oslo(crv->order, &crv->k, &new_kv);
 
     GET_CNURB(crv1);
     crv1->order  = crv->order;
-    nmg_nurb_kvextract(&crv1->k, &new_kv, 0, k_index + crv->order, (struct resource *)NULL);
+    nmg_nurb_kvextract(&crv1->k, &new_kv, 0, k_index + crv->order);
     crv1->pt_type = crv->pt_type;
     crv1->c_size = crv1->k.k_size - crv1->order;
     crv1->ctl_points = (fastf_t *)
@@ -254,7 +254,7 @@ nmg_nurb_c_xsplit(struct edge_g_cnurb *crv, fastf_t param)
 
     GET_CNURB(crv2);
     crv2->order  = crv->order;
-    nmg_nurb_kvextract(&crv2->k, &new_kv, k_index, new_kv.k_size, (struct resource *)NULL);
+    nmg_nurb_kvextract(&crv2->k, &new_kv, k_index, new_kv.k_size);
     crv2->pt_type = crv->pt_type;
     crv2->c_size = crv2->k.k_size - crv2->order;
     crv2->ctl_points = (fastf_t *)
@@ -269,7 +269,7 @@ nmg_nurb_c_xsplit(struct edge_g_cnurb *crv, fastf_t param)
 		     coords, coords, k_index, new_kv.k_size - crv2->order,
 		     crv2->pt_type);
 
-    nmg_nurb_free_oslo(oslo, (struct resource *)NULL);
+    nmg_nurb_free_oslo(oslo);
 
     bu_free((char *) new_kv.knots, "nmg_nurb_c_xsplit: new_kv.knots");
 

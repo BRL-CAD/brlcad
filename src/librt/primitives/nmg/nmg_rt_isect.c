@@ -1810,7 +1810,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
     BU_LIST_INIT(&bezier);
     BU_LIST_INIT(&hit_list);
 
-    nmg_nurb_bezier(&bezier, fg, rd->ap->a_resource);
+    nmg_nurb_bezier(&bezier, fg);
 
     while (BU_LIST_NON_EMPTY(&bezier)) {
 	point_t srf_min, srf_max;
@@ -1880,7 +1880,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		if (nmg_debug & DEBUG_RT_ISECT)
 		    bu_log("\tNo intersection\n");
 
-		nmg_nurb_free_snurb(srf, rd->ap->a_resource);
+		nmg_nurb_free_snurb(srf);
 		continue;
 	    }
 
@@ -1907,10 +1907,10 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		       V4ARGS(pl1), V4ARGS(pl2));
 	    (void)nmg_nurb_s_bound(srf, srf_min, srf_max);
 	    if (!rt_in_rpp(rd->rp, rd->rd_invdir, srf_min, srf_max)) {
-		nmg_nurb_free_snurb(srf, rd->ap->a_resource);
+		nmg_nurb_free_snurb(srf);
 		continue;
 	    }
-	    hp = nmg_nurb_intersect(srf, pl1, pl2, UV_TOL, rd->ap->a_resource, NULL);
+	    hp = nmg_nurb_intersect(srf, pl1, pl2, UV_TOL, NULL);
 	}
 
 	/* process each hit point */
@@ -2050,7 +2050,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	    bu_free((char *)hp, "hit");
 	    hp = next;
 	}
-	nmg_nurb_free_snurb(srf, rd->ap->a_resource);
+	nmg_nurb_free_snurb(srf);
     }
 }
 

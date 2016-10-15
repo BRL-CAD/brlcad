@@ -103,7 +103,7 @@ nmg_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n
     /* First set up Curve data structs */
     /* For now we will assume that all parameterizations are uniform */
 
-    nmg_nurb_kvknot(&crv->k, order, 0.0, 1.0, (n - order), (struct resource *)NULL);
+    nmg_nurb_kvknot(&crv->k, order, 0.0, 1.0, (n - order));
 
     /* Calculate Nodes at which the data points will be evaluated in
      * the curve
@@ -176,8 +176,8 @@ nmg_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int y
      * vector
      */
 
-    nmg_nurb_kvknot(&srf->u, order, 0.0, 1.0, ymax - order, (struct resource *)NULL);
-    nmg_nurb_kvknot(&srf->v, order, 0.0, 1.0, xmax - order, (struct resource *)NULL);
+    nmg_nurb_kvknot(&srf->u, order, 0.0, 1.0, ymax - order);
+    nmg_nurb_kvknot(&srf->v, order, 0.0, 1.0, xmax - order);
 
     srf->ctl_points = (fastf_t *) bu_malloc(
 	sizeof(fastf_t) * xmax * ymax * 3,

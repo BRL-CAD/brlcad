@@ -51,7 +51,7 @@
  * 1 Original surface was Bezier, only a copy was done.
  */
 int
-nmg_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, struct resource *res)
+nmg_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf)
 {
     struct face_g_snurb *s;
     int dir;
@@ -60,13 +60,13 @@ nmg_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf,
     NMG_CK_SNURB(orig_surf);
 
     if ((dir = nmg_bez_check(orig_surf)) == -1) {
-	s = nmg_nurb_scopy(orig_surf, res);
+	s = nmg_nurb_scopy(orig_surf);
 	BU_LIST_APPEND(bezier_hd, &s->l);
 	return 1;	/* Was already Bezier, nothing done */
     }
 
     BU_LIST_INIT(&todo);
-    nmg_nurb_s_split(&todo, orig_surf, dir, res);
+    nmg_nurb_s_split(&todo, orig_surf, dir);
 
     while (BU_LIST_WHILE(s, face_g_snurb, &todo)) {
 	if ((dir = nmg_bez_check(s)) == -1) {
@@ -76,8 +76,8 @@ nmg_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf,
 	} else {
 	    /* Split, and keep going */
 	    BU_LIST_DEQUEUE(&s->l);
-	    nmg_nurb_s_split(&todo, s, dir, res);
-	    nmg_nurb_free_snurb(s, res);
+	    nmg_nurb_s_split(&todo, s, dir);
+	    nmg_nurb_free_snurb(s);
 	}
     }
     return 0;		/* Bezier snurbs on bezier_hd list */
