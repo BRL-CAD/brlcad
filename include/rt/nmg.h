@@ -39,40 +39,6 @@ __BEGIN_DECLS
 
 struct rt_db_internal; /*forward declaration*/
 
-#define NMG_HIT_LIST    0
-#define NMG_MISS_LIST   1
-
-/* These values are for the hitmiss "in_out" variable and indicate the
- * nature of the hit when known
- */
-#define HMG_INBOUND_STATE(_hm) (((_hm)->in_out & 0x0f0) >> 4)
-#define HMG_OUTBOUND_STATE(_hm) ((_hm)->in_out & 0x0f)
-
-
-#define NMG_RAY_STATE_INSIDE    1
-#define NMG_RAY_STATE_ON        2
-#define NMG_RAY_STATE_OUTSIDE   4
-#define NMG_RAY_STATE_ANY       8
-
-#define HMG_HIT_IN_IN   0x11    /**< @brief  hit internal structure */
-#define HMG_HIT_IN_OUT  0x14    /**< @brief  breaking out */
-#define HMG_HIT_OUT_IN  0x41    /**< @brief  breaking in */
-#define HMG_HIT_OUT_OUT 0x44    /**< @brief  edge/vertex graze */
-#define HMG_HIT_IN_ON   0x12
-#define HMG_HIT_ON_IN   0x21
-#define HMG_HIT_ON_ON   0x22
-#define HMG_HIT_OUT_ON  0x42
-#define HMG_HIT_ON_OUT  0x24
-#define HMG_HIT_ANY_ANY 0x88    /**< @brief  hit on non-3-manifold */
-
-#define NMG_VERT_ENTER 1
-#define NMG_VERT_ENTER_LEAVE 0
-#define NMG_VERT_LEAVE -1
-#define NMG_VERT_UNKNOWN -2
-
-#define NMG_HITMISS_SEG_IN 0x696e00     /**< @brief  "in" */
-#define NMG_HITMISS_SEG_OUT 0x6f757400  /**< @brief  "out" */
-
 struct hitmiss {
     struct bu_list      l;
     struct hit          hit;
@@ -92,44 +58,6 @@ struct hitmiss {
 };
 
 
-#ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS(hm) (void)(hm)
-#else
-#  define NMG_CK_HITMISS(hm) \
-    {\
-        switch (hm->l.magic) { \
-            case NMG_RT_HIT_MAGIC: \
-            case NMG_RT_HIT_SUB_MAGIC: \
-            case NMG_RT_MISS_MAGIC: \
-                break; \
-            case NMG_MISS_LIST: \
-                bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
-                bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
-            case NMG_HIT_LIST: \
-                bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
-                bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
-            default: \
-                bu_log(CPP_FILELINE ": bad struct hitmiss magic: %u:(0x%08x)\n", \
-                       hm->l.magic, hm->l.magic); \
-                bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
-        }\
-        if (!hm->hit.hit_private) { \
-            bu_log(CPP_FILELINE ": NULL hit_private in hitmiss struct\n"); \
-            bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
-        } \
-    }
-#endif
-
-#ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS_LISTS(rd) (void)(rd)
-#else
-#  define NMG_CK_HITMISS_LISTS(rd) \
-    { \
-        struct hitmiss *_a_hit; \
-        for (BU_LIST_FOR(_a_hit, hitmiss, &rd->rd_hit)) {NMG_CK_HITMISS(_a_hit);} \
-        for (BU_LIST_FOR(_a_hit, hitmiss, &rd->rd_miss)) {NMG_CK_HITMISS(_a_hit);} \
-    }
-#endif
 
 /**
  * Ray Data structure
@@ -199,23 +127,6 @@ struct ray_data {
 #define NMG_PCA_EDGE    1
 #define NMG_PCA_EDGE_VERTEX 2
 #define NMG_PCA_VERTEX 3
-#define NMG_CK_RD(_rd) NMG_CKMAG(_rd, NMG_RAY_DATA_MAGIC, "ray data");
-
-
-#ifdef NO_BOMBING_MACROS
-#  define nmg_bu_bomb(rd, vlfree, str) (void)(rd)
-#else
-#  define nmg_bu_bomb(rd, vlfree, str) { \
-        bu_log("%s", str); \
-        if (nmg_debug & DEBUG_NMGRT) bu_bomb("End of diagnostics"); \
-        BU_LIST_INIT(&rd->rd_hit); \
-        BU_LIST_INIT(&rd->rd_miss); \
-        nmg_debug |= DEBUG_NMGRT; \
-        rt_isect_ray_model(rd,vlfree); \
-        (void) nmg_ray_segs(rd,vlfree); \
-        bu_bomb("Should have bombed before this\n"); \
-    }
-#endif
 
 /**
  * global nmg animation plot callback
@@ -227,14 +138,6 @@ RT_EXPORT extern void (*nmg_plot_anim_upcall)(void);
 RT_EXPORT extern void rt_nmg_print_hitlist(struct bu_list *hd);
 RT_EXPORT extern void rt_nmg_print_hitmiss(struct hitmiss *a_hit);
 RT_EXPORT extern void rt_isect_ray_model(struct ray_data *rd, struct bu_list *vlfree);
-
-RT_EXPORT extern void nmg_isect_ray_model(struct ray_data *rd, struct bu_list *vlfree);
-RT_EXPORT extern int nmg_class_ray_vs_shell(struct xray *rp,
-	const struct shell *s,
-	const int in_or_out_only,
-	struct bu_list *vlfree,
-	const struct bn_tol *tol);
-
 
 /************************************************************************
  *                                                                      *

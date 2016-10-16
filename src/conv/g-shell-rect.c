@@ -447,7 +447,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
     }
     rd.magic = NMG_RAY_DATA_MAGIC;
 
-    nmg_isect_ray_model(&rd,&RTG.rtg_vlfree);
+    nmg_isect_ray_model((struct nmg_ray_data *)&rd,&RTG.rtg_vlfree);
 
     if (BU_LIST_IS_EMPTY(&rd.rd_hit))
 	ret = 0;

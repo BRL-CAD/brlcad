@@ -629,7 +629,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     int nmg_class = 0;
     vect_t projection_dir = VINIT_ZERO;
     int tries = 0;
-    struct xray rp;
+    struct nmg_ray rp;
     fastf_t model_bb_max_width;
     point_t m_min_pt, m_max_pt; /* nmg model min and max points */
 

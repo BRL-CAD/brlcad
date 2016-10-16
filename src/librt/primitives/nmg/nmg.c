@@ -1388,7 +1388,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     rd.magic = NMG_RAY_DATA_MAGIC;
 
     /* intersect the ray with the geometry (sets surfno) */
-    nmg_isect_ray_model(&rd,&RTG.rtg_vlfree);
+    nmg_isect_ray_model((struct nmg_ray_data *)&rd,&RTG.rtg_vlfree);
 
     /* build the sebgent lists */
     status = nmg_ray_segs(&rd,&RTG.rtg_vlfree);
@@ -5912,8 +5912,7 @@ rt_nmg_print_hitlist(struct bu_list *hd)
 void
 rt_isect_ray_model(struct ray_data *rd, struct bu_list *vlfree)
 {
-    /* TODO - struct ray_data to struct nmg_ray_data, then back */
-    nmg_isect_ray_model(rd, vlfree);
+    nmg_isect_ray_model((struct nmg_ray_data *)rd, vlfree);
 }
 
 /*

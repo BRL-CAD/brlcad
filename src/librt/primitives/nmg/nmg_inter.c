@@ -2000,7 +2000,7 @@ nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, str
     return discards;
 }
 
-HIDDEN int
+int
 ray_in_rpp(struct nmg_ray *rp,
           register const fastf_t *invdir,       /* inverses of rp->r_dir[] */
           register const fastf_t *min,

@@ -831,10 +831,87 @@ struct nmg_inter_struct {
  * coupling dependency. */
 
 RT_EXPORT extern struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmiss freelist */
+
+#define NMG_HIT_LIST    0
+#define NMG_MISS_LIST   1
+
+/* These values are for the hitmiss "in_out" variable and indicate the
+ * nature of the hit when known
+ */
+#define HMG_INBOUND_STATE(_hm) (((_hm)->in_out & 0x0f0) >> 4)
+#define HMG_OUTBOUND_STATE(_hm) ((_hm)->in_out & 0x0f)
+
+
+#define NMG_RAY_STATE_INSIDE    1
+#define NMG_RAY_STATE_ON        2
+#define NMG_RAY_STATE_OUTSIDE   4
+#define NMG_RAY_STATE_ANY       8
+
+#define HMG_HIT_IN_IN   0x11    /**< @brief  hit internal structure */
+#define HMG_HIT_IN_OUT  0x14    /**< @brief  breaking out */
+#define HMG_HIT_OUT_IN  0x41    /**< @brief  breaking in */
+#define HMG_HIT_OUT_OUT 0x44    /**< @brief  edge/vertex graze */
+#define HMG_HIT_IN_ON   0x12
+#define HMG_HIT_ON_IN   0x21
+#define HMG_HIT_ON_ON   0x22
+#define HMG_HIT_OUT_ON  0x42
+#define HMG_HIT_ON_OUT  0x24
+#define HMG_HIT_ANY_ANY 0x88    /**< @brief  hit on non-3-manifold */
+
+#define NMG_VERT_ENTER 1
+#define NMG_VERT_ENTER_LEAVE 0
+#define NMG_VERT_LEAVE -1
+#define NMG_VERT_UNKNOWN -2
+
+#define NMG_HITMISS_SEG_IN 0x696e00     /**< @brief  "in" */
+#define NMG_HITMISS_SEG_OUT 0x6f757400  /**< @brief  "out" */
+
+#define NMG_CK_RD(_rd) NMG_CKMAG(_rd, NMG_RAY_DATA_MAGIC, "ray data");
+
+#ifdef NO_BOMBING_MACROS
+#  define NMG_CK_HITMISS(hm) (void)(hm)
+#else
+#  define NMG_CK_HITMISS(hm) \
+    {\
+        switch (hm->l.magic) { \
+            case NMG_RT_HIT_MAGIC: \
+            case NMG_RT_HIT_SUB_MAGIC: \
+            case NMG_RT_MISS_MAGIC: \
+                break; \
+            case NMG_MISS_LIST: \
+                bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
+                bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+            case NMG_HIT_LIST: \
+                bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
+                bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+            default: \
+                bu_log(CPP_FILELINE ": bad struct hitmiss magic: %u:(0x%08x)\n", \
+                       hm->l.magic, hm->l.magic); \
+                bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+        }\
+        if (!hm->hit.hit_private) { \
+            bu_log(CPP_FILELINE ": NULL hit_private in hitmiss struct\n"); \
+            bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+        } \
+    }
+#endif
+
+#ifdef NO_BOMBING_MACROS
+#  define NMG_CK_HITMISS_LISTS(rd) (void)(rd)
+#else
+#  define NMG_CK_HITMISS_LISTS(rd) \
+    { \
+        struct nmg_hitmiss *_a_hit; \
+        for (BU_LIST_FOR(_a_hit, nmg_hitmiss, &rd->rd_hit)) {NMG_CK_HITMISS(_a_hit);} \
+        for (BU_LIST_FOR(_a_hit, nmg_hitmiss, &rd->rd_miss)) {NMG_CK_HITMISS(_a_hit);} \
+    }
+#endif
+
+
 #define NMG_GET_HITMISS(_p) { \
-            (_p) = BU_LIST_FIRST(hitmiss, &(re_nmgfree)); \
+            (_p) = BU_LIST_FIRST(nmg_hitmiss, &(re_nmgfree)); \
             if (BU_LIST_IS_HEAD((_p), &(re_nmgfree))) \
-                BU_ALLOC((_p), struct hitmiss); \
+                BU_ALLOC((_p), struct nmg_hitmiss); \
             else \
                 BU_LIST_DEQUEUE(&((_p)->l)); \
         }
@@ -844,11 +921,28 @@ RT_EXPORT extern struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmiss
             BU_CK_LIST_HEAD((_p)); \
             BU_LIST_APPEND_LIST(&(re_nmgfree), (_p)); \
         }
+
+#ifdef NO_BOMBING_MACROS
+#  define nmg_bu_bomb(rd, vlfree, str) (void)(rd)
+#else
+#  define nmg_bu_bomb(rd, vlfree, str) { \
+        bu_log("%s", str); \
+        if (nmg_debug & DEBUG_NMGRT) bu_bomb("End of diagnostics"); \
+        BU_LIST_INIT(&rd->rd_hit); \
+        BU_LIST_INIT(&rd->rd_miss); \
+        nmg_debug |= DEBUG_NMGRT; \
+        nmg_isect_ray_model(rd,vlfree); \
+        bu_bomb("Should have bombed before this\n"); \
+    }
+#endif
+
+
 #define HIT 1   /**< @brief  a hit on a face */
 #define MISS 0  /**< @brief  a miss on the face */
 
 
 struct nmg_ray {
+    uint32_t		magic;
     point_t             r_pt;           /**< @brief Point at which ray starts */
     vect_t              r_dir;          /**< @brief Direction of ray (UNIT Length) */
     fastf_t             r_min;          /**< @brief entry dist to bounding sphere */
@@ -860,6 +954,7 @@ struct nmg_hit {
     fastf_t             hit_dist;       /**< @brief dist from r_pt to hit_point */
     point_t             hit_point;      /**< @brief DEPRECATED: Intersection point, use VJOIN1 hit_dist */
     vect_t              hit_normal;     /**< @brief DEPRECATED: Surface Normal at hit_point, use RT_HIT_NORMAL */
+    vect_t              hit_vpriv;      /**< @brief PRIVATE vector for xxx_*() */
     void *              hit_private;    /**< @brief PRIVATE handle for xxx_shot() */ 
     int                 hit_surfno;     /**< @brief solid-specific surface indicator */
     struct nmg_ray *    hit_rayp;       /**< @brief pointer to defining ray */
@@ -869,6 +964,7 @@ struct nmg_seg {
     struct bu_list      l;
     struct nmg_hit      seg_in;         /**< @brief IN information */
     struct nmg_hit      seg_out;        /**< @brief OUT information */
+    void *		seg_stp;	/**< @brief pointer back to soltab */
 };
 
 struct nmg_hitmiss {
@@ -914,7 +1010,9 @@ struct nmg_ray_data {
     char                *manifolds; /**< @brief   structure 1-3manifold table */
     vect_t              rd_invdir;
     struct nmg_ray      *rp;
-    struct seg          *seghead;
+    void *		*ap;
+    struct nmg_seg      *seghead;
+    void *		*stp;
     const struct bn_tol *tol;
     struct nmg_hitmiss  **hitmiss;      /**< @brief  1 struct hitmiss ptr per elem. */
     struct bu_list      rd_hit;         /**< @brief  list of hit elements */
@@ -952,8 +1050,11 @@ struct nmg_ray_data {
     int                 classifying_ray;
 };
 
-
-
+int
+ray_in_rpp(struct nmg_ray *rp,
+	register const fastf_t *invdir,       /* inverses of rp->r_dir[] */
+	register const fastf_t *min,
+	register const fastf_t *max);
 
 /**
  * global nmg animation vblock callback
@@ -2409,7 +2510,6 @@ RT_EXPORT extern long nmg_find_max_index(const struct model *m);
 /* From nmg_rt_isect.c */
 RT_EXPORT extern const char * nmg_rt_inout_str(int code);
 
-#if 0
 RT_EXPORT extern void nmg_rt_print_hitlist(struct bu_list *hd);
 
 RT_EXPORT extern void nmg_rt_print_hitmiss(struct nmg_hitmiss *a_hit);
@@ -2421,7 +2521,6 @@ RT_EXPORT extern int nmg_class_ray_vs_shell(struct nmg_ray *rp,
                                             const struct bn_tol *tol);
 
 RT_EXPORT extern void nmg_isect_ray_model(struct nmg_ray_data *rd, struct bu_list *vlfree);
-#endif
 
 __END_DECLS
 
