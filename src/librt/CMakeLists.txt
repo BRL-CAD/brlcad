@@ -4,8 +4,6 @@ set(RT_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
-  ${BG_INCLUDE_DIRS}
-  ${NMG_INCLUDE_DIRS}
   ${BREP_INCLUDE_DIRS}
   ${P2T_INCLUDE_DIR}
   ${OPENNURBS_INCLUDE_DIRS}
@@ -108,6 +106,31 @@ set(LIBRT_SOURCES
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
   primitives/bspline/bspline_mirror.c
+  primitives/bspline/nurb_basis.c
+  primitives/bspline/nurb_bezier.c
+  primitives/bspline/nurb_bound.c
+  primitives/bspline/nurb_c2.c
+  primitives/bspline/nurb_copy.c
+  primitives/bspline/nurb_diff.c
+  primitives/bspline/nurb_eval.c
+  primitives/bspline/nurb_flat.c
+  primitives/bspline/nurb_interp.c
+  primitives/bspline/nurb_knot.c
+  primitives/bspline/nurb_norm.c
+  primitives/bspline/nurb_oslo_calc.c
+  primitives/bspline/nurb_oslo_map.c
+  primitives/bspline/nurb_plot.c
+  primitives/bspline/nurb_poly.c
+  primitives/bspline/nurb_ray.c
+  primitives/bspline/nurb_refine.c
+  primitives/bspline/nurb_reverse.c
+  primitives/bspline/nurb_solve.c
+  primitives/bspline/nurb_split.c
+  primitives/bspline/nurb_tess.c
+  primitives/bspline/nurb_trim.c
+  primitives/bspline/nurb_trim_util.c
+  primitives/bspline/nurb_util.c
+  primitives/bspline/nurb_xsplit.c
   primitives/cline/cline.c
   primitives/cline/cline_brep.cpp
   primitives/datum/datum.c
@@ -151,9 +174,31 @@ set(LIBRT_SOURCES
   primitives/metaball/metaball_tri.c
   primitives/mirror.c
   primitives/nmg/nmg.c
+  primitives/nmg/nmg_bool.c
+  primitives/nmg/nmg_ck.c
   primitives/nmg/nmg_brep.cpp
+  primitives/nmg/nmg_class.c
+  primitives/nmg/nmg_copy.c
+  primitives/nmg/nmg_eval.c
+  primitives/nmg/nmg_extrude.c
+  primitives/nmg/nmg_fcut.c
+  primitives/nmg/nmg_fuse.c
+  primitives/nmg/nmg_index.c
+  primitives/nmg/nmg_info.c
+  primitives/nmg/nmg_inter.c
+  primitives/nmg/nmg_manif.c
+  primitives/nmg/nmg_mesh.c
   primitives/nmg/nmg_mirror.c
+  primitives/nmg/nmg_misc.c
+  primitives/nmg/nmg_mk.c
+  primitives/nmg/nmg_mod.c
+  primitives/nmg/nmg_plot.c
+  primitives/nmg/nmg_pr.c
+  primitives/nmg/nmg_pt_fu.c
+  primitives/nmg/nmg_rt_isect.c
+  primitives/nmg/nmg_tri.c
   primitives/nmg/nmg_tri_mc.c
+  primitives/nmg/nmg_visit.c
   primitives/obj_adjust.c
   primitives/obj_curve.c
   primitives/obj_describe.c
@@ -268,6 +313,7 @@ set(librt_ignored_files
   primitives/eto/eto_shot.cl
   primitives/fixpt.h
   primitives/metaball/metaball.h
+  primitives/nmg/nmg_junk.c
   primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
   primitives/revolve/revolve.h
@@ -327,7 +373,7 @@ if(BRLCAD_ENABLE_SPR)
   set(SPR_LIB libSPR)
 endif(BRLCAD_ENABLE_SPR)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libnmg;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${TINYCTHREAD_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${TINYCTHREAD_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
