@@ -825,6 +825,136 @@ struct nmg_inter_struct {
 };
 #define NMG_CK_INTER_STRUCT(_p) NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
 
+/* TODO - these structs and ray_in_rpp are versions of librt functionality,
+ * and we need to think about how/where to merge them into a common function
+ * and struct that are available to both libraries without introducing a
+ * coupling dependency. */
+
+RT_EXPORT extern struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmiss freelist */
+#define NMG_GET_HITMISS(_p) { \
+            (_p) = BU_LIST_FIRST(hitmiss, &(re_nmgfree)); \
+            if (BU_LIST_IS_HEAD((_p), &(re_nmgfree))) \
+                BU_ALLOC((_p), struct hitmiss); \
+            else \
+                BU_LIST_DEQUEUE(&((_p)->l)); \
+        }
+
+
+#define NMG_FREE_HITLIST(_p) { \
+            BU_CK_LIST_HEAD((_p)); \
+            BU_LIST_APPEND_LIST(&(re_nmgfree), (_p)); \
+        }
+#define HIT 1   /**< @brief  a hit on a face */
+#define MISS 0  /**< @brief  a miss on the face */
+
+
+struct nmg_ray {
+    point_t             r_pt;           /**< @brief Point at which ray starts */
+    vect_t              r_dir;          /**< @brief Direction of ray (UNIT Length) */
+    fastf_t             r_min;          /**< @brief entry dist to bounding sphere */
+    fastf_t             r_max;          /**< @brief exit dist from bounding sphere */
+};
+
+struct nmg_hit {
+    uint32_t		hit_magic;
+    fastf_t             hit_dist;       /**< @brief dist from r_pt to hit_point */
+    point_t             hit_point;      /**< @brief DEPRECATED: Intersection point, use VJOIN1 hit_dist */
+    vect_t              hit_normal;     /**< @brief DEPRECATED: Surface Normal at hit_point, use RT_HIT_NORMAL */
+    void *              hit_private;    /**< @brief PRIVATE handle for xxx_shot() */ 
+    int                 hit_surfno;     /**< @brief solid-specific surface indicator */
+    struct nmg_ray *    hit_rayp;       /**< @brief pointer to defining ray */
+};
+
+struct nmg_seg {
+    struct bu_list      l;
+    struct nmg_hit      seg_in;         /**< @brief IN information */
+    struct nmg_hit      seg_out;        /**< @brief OUT information */
+};
+
+struct nmg_hitmiss {
+    struct bu_list      l;
+    struct nmg_hit      hit;
+    fastf_t             dist_in_plane;  /**< @brief  distance from plane intersect */
+    int                 in_out;         /**< @brief  status of ray as it transitions
+                                         * this hit point.
+                                         */
+    long                *inbound_use;
+    vect_t              inbound_norm;
+    long                *outbound_use;
+    vect_t              outbound_norm;
+    int                 start_stop;     /**< @brief  is this a seg_in or seg_out */
+    struct nmg_hitmiss  *other;         /**< @brief  for keeping track of the other
+                                         * end of the segment when we know
+                                         * it
+                                         */
+};
+
+/**
+ * Ray Data structure
+ *
+ * A) the hitmiss table has one element for each nmg structure in the
+ * nmgmodel.  The table keeps track of which elements have been
+ * processed before and which haven't.  Elements in this table will
+ * either be: (NULL) item not previously processed hitmiss ptr item
+ * previously processed
+ *
+ * the 0th item in the array is a pointer to the head of the "hit"
+ * list.  The 1th item in the array is a pointer to the head of the
+ * "miss" list.
+ *
+ * B) If plane_pt is non-null then we are currently processing a face
+ * intersection.  The plane_dist and ray_dist_to_plane are valid.  The
+ * ray/edge intersector should check the distance from the plane
+ * intercept to the edge and update "plane_closest" if the current
+ * edge is closer to the intercept than the previous closest object.
+ */
+struct nmg_ray_data {
+    uint32_t            magic;
+    struct model        *rd_m;
+    char                *manifolds; /**< @brief   structure 1-3manifold table */
+    vect_t              rd_invdir;
+    struct nmg_ray      *rp;
+    struct seg          *seghead;
+    const struct bn_tol *tol;
+    struct nmg_hitmiss  **hitmiss;      /**< @brief  1 struct hitmiss ptr per elem. */
+    struct bu_list      rd_hit;         /**< @brief  list of hit elements */
+    struct bu_list      rd_miss;        /**< @brief  list of missed/sub-hit elements */
+
+/* The following are to support isect_ray_face() */
+
+    /**
+     * plane_pt is the intercept point of the ray with the plane of
+     * the face.
+     */
+    point_t             plane_pt;       /**< @brief  ray/plane(face) intercept point */
+
+    /**
+     * ray_dist_to_plane is the parametric distance along the ray from
+     * the ray origin (rd->rp->r_pt) to the ray/plane intercept point
+     */
+    fastf_t             ray_dist_to_plane; /**< @brief  ray parametric dist to plane */
+
+    /**
+     * the "face_subhit" element is a boolean used by isect_ray_face
+     * and [e|v]u_touch_func to record the fact that the
+     * ray/(plane/face) intercept point was within tolerance of an
+     * edge/vertex of the face.  In such instances, isect_ray_face
+     * does NOT need to generate a hit point for the face, as the hit
+     * point for the edge/vertex will suffice.
+     */
+    int                 face_subhit;
+
+    /**
+     * the "classifying_ray" flag indicates that this ray is being
+     * used to classify a point, so that the "eu_touch" and "vu_touch"
+     * functions should not be called.
+     */
+    int                 classifying_ray;
+};
+
+
+
+
 /**
  * global nmg animation vblock callback
  */
@@ -2276,7 +2406,20 @@ RT_EXPORT extern void nmg_merge_models(struct model *m1,
                                        struct model *m2);
 RT_EXPORT extern long nmg_find_max_index(const struct model *m);
 
+#if 0
+/* From nmg_rt_isect.c */
+RT_EXPORT extern void nmg_rt_print_hitlist(struct bu_list *hd);
 
+RT_EXPORT extern void nmg_rt_print_hitmiss(struct nmg_hitmiss *a_hit);
+
+RT_EXPORT extern int nmg_class_ray_vs_shell(struct nmg_ray *rp,
+                                            const struct shell *s,
+                                            const int in_or_out_only,
+					    struct bu_list *vlfree,
+                                            const struct bn_tol *tol);
+
+RT_EXPORT extern void nmg_isect_ray_model(struct nmg_ray_data *rd, struct bu_list *vlfree);
+#endif
 
 __END_DECLS
 

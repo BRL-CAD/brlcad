@@ -37,12 +37,6 @@
 
 __BEGIN_DECLS
 
-/*********************************************************************************
- *      The following section is an exact copy of what was previously "nmg_rt.h" *
- *      (with minor changes to NMG_GET_HITMISS and NMG_FREE_HITLIST              *
- *      moved here to use RTG.rtg_nmgfree freelist for hitmiss structs.         *
- ******************************************************************************* */
-
 struct rt_db_internal; /*forward declaration*/
 
 #define NMG_HIT_LIST    0
@@ -206,25 +200,6 @@ struct ray_data {
 #define NMG_PCA_EDGE_VERTEX 2
 #define NMG_PCA_VERTEX 3
 #define NMG_CK_RD(_rd) NMG_CKMAG(_rd, NMG_RAY_DATA_MAGIC, "ray data");
-
-
-#define NMG_GET_HITMISS(_p, _ap) { \
-        (_p) = BU_LIST_FIRST(hitmiss, &((_ap)->a_resource->re_nmgfree)); \
-        if (BU_LIST_IS_HEAD((_p), &((_ap)->a_resource->re_nmgfree))) \
-            BU_ALLOC((_p), struct hitmiss); \
-        else \
-            BU_LIST_DEQUEUE(&((_p)->l)); \
-    }
-
-
-#define NMG_FREE_HITLIST(_p, _ap) { \
-        BU_CK_LIST_HEAD((_p)); \
-        BU_LIST_APPEND_LIST(&((_ap)->a_resource->re_nmgfree), (_p)); \
-    }
-
-
-#define HIT 1   /**< @brief  a hit on a face */
-#define MISS 0  /**< @brief  a miss on the face */
 
 
 #ifdef NO_BOMBING_MACROS

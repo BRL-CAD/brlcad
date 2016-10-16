@@ -708,8 +708,10 @@ rt_init_resource(struct resource *resp,
     if (!BU_LIST_IS_INITIALIZED(&resp->re_region_ptbl))
 	BU_LIST_INIT(&resp->re_region_ptbl);
 
-    if (!BU_LIST_IS_INITIALIZED(&resp->re_nmgfree))
-	BU_LIST_INIT(&resp->re_nmgfree);
+    /* transitioning to using a global independent of the librt
+     * structures as an intermediate step during lib refactoring */
+    if (!BU_LIST_IS_INITIALIZED(&re_nmgfree))
+	BU_LIST_INIT(&re_nmgfree);
 
     resp->re_boolstack = NULL;
     resp->re_boolslen = 0;
@@ -763,14 +765,14 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
     }
 
     /* The "struct hitmiss' guys are individually malloc()ed */
-    if (BU_LIST_IS_INITIALIZED(&resp->re_nmgfree)) {
+    if (BU_LIST_IS_INITIALIZED(&re_nmgfree)) {
 	struct hitmiss *hitp;
-	while (BU_LIST_WHILE(hitp, hitmiss, &resp->re_nmgfree)) {
+	while (BU_LIST_WHILE(hitp, hitmiss, &re_nmgfree)) {
 	    NMG_CK_HITMISS(hitp);
 	    BU_LIST_DEQUEUE((struct bu_list *)hitp);
 	    bu_free((void *)hitp, "struct hitmiss");
 	}
-	resp->re_nmgfree.forw = BU_LIST_NULL;
+	re_nmgfree.forw = BU_LIST_NULL;
     }
 
     /* The 'struct partition' guys are individually malloc()ed */

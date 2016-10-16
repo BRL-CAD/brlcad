@@ -41,6 +41,7 @@
 
 /* externed */
 uint32_t nmg_debug;
+struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmiss freelist */
 
 int
 nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)

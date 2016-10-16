@@ -459,12 +459,12 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
 	a_hit = BU_LIST_LAST(hitmiss, &rd.rd_hit);
 	VMOVE(hit2, a_hit->hit.hit_point);
 
-	NMG_FREE_HITLIST(&rd.rd_hit, ap);
+	NMG_FREE_HITLIST(&rd.rd_hit);
 
 	ret = 1;
     }
 
-    NMG_FREE_HITLIST(&rd.rd_miss, ap);
+    NMG_FREE_HITLIST(&rd.rd_miss);
 
     return ret;
 }

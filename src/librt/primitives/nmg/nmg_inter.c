@@ -2000,19 +2000,6 @@ nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, str
     return discards;
 }
 
-
-/* TODO - this struct and ray_in_rpp are versions of librt functionality,
- * and we need to think about how/where to merge them into a common function
- * and struct that are available to both libraries without introducing a
- * coupling dependency. */
-struct nmg_ray {
-    point_t             r_pt;           /**< @brief Point at which ray starts */
-    vect_t              r_dir;          /**< @brief Direction of ray (UNIT Length) */
-    fastf_t             r_min;          /**< @brief entry dist to bounding sphere */
-    fastf_t             r_max;          /**< @brief exit dist from bounding sphere */
-};
-
-
 HIDDEN int
 ray_in_rpp(struct nmg_ray *rp,
           register const fastf_t *invdir,       /* inverses of rp->r_dir[] */
