@@ -50,10 +50,10 @@
 #include "bn/plane.h"
 #include "bn/plot3.h"
 #include "nmg.h"
-#include "rt/nmg.h"
-
 
 #define MAX_DIR_TRYS 10
+
+#define NMG_DOT_TOL 0.001
 
 /* XXX These should go the way of the dodo bird. */
 #define INSIDE 32
@@ -341,7 +341,7 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
     VUNITIZE(ptvec);
 
     dot = VDOT(left, ptvec);
-    if (NEAR_ZERO(dot, RT_DOT_TOL)) {
+    if (NEAR_ZERO(dot, NMG_DOT_TOL)) {
 	if (nmg_debug & DEBUG_CLASSIFY)
 	    bu_log("\t\tpt lies on line of edge, outside verts. Skipping this edge\n");
 	goto out;
