@@ -34,7 +34,6 @@
 #include "vmath.h"
 #include "bn/plot3.h"
 #include "nmg.h"
-#include "rt/hit.h"
 #include "rt/nurb.h"
 
 

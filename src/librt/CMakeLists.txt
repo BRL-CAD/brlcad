@@ -197,7 +197,6 @@ set(LIBRT_SOURCES
   primitives/nmg/nmg_pr.c
   primitives/nmg/nmg_pt_fu.c
   primitives/nmg/nmg_rt_isect.c
-  primitives/nmg/nmg_rt_segs.c
   primitives/nmg/nmg_tri.c
   primitives/nmg/nmg_tri_mc.c
   primitives/nmg/nmg_visit.c

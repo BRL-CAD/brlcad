@@ -74,6 +74,8 @@
 #define RT_NURB_IS_PT_RATIONAL(pt)		(pt & 0x1)
 #define RT_NURB_STRIDE(pt)		(RT_NURB_EXTRACT_COORDS(pt) * sizeof( fastf_t))
 
+#define DEBUG_NMG_SPLINE	0x00000100	/**< @brief 9 Splines */
+
 /* macros to check/validate a structure pointer
  */
 #define NMG_CK_KNOT(_p)		BU_CKMAG(_p, RT_KNOT_VECTOR_MAGIC, "knot_vector")

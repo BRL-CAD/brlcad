@@ -38,7 +38,6 @@
 #include "vmath.h"
 #include "bu/log.h"
 #include "nmg.h"
-#include "rt/hit.h"
 #include "rt/nurb.h"
 
 

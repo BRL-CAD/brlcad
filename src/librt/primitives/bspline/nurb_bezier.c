@@ -34,7 +34,6 @@
 #include "vmath.h"
 #include "bu/list.h"
 #include "nmg.h"
-#include "rt/hit.h"
 #include "rt/nurb.h"
 
 
