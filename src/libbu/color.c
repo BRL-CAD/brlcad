@@ -290,7 +290,7 @@ int
 bu_color_from_str(struct bu_color *color, const char *str)
 {
     size_t i;
-    char separator;
+    char separator = '\0';
     int mode = 0;
 
     BU_COLOR_INIT(color);

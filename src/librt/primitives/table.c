@@ -77,7 +77,8 @@
     extern int rt_##name##_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, const fastf_t tol); \
     extern struct rt_selection_set *rt_##name##_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query); \
     extern struct rt_selection *rt_##name##_evaluate_selection(const struct rt_db_internal *ip, int op, const struct rt_selection *a, const struct rt_selection *b); \
-    extern int rt_##name##_process_selection(struct rt_db_internal *ip, struct db_i *, const struct rt_selection *selection, const struct rt_selection_operation *op)
+    extern int rt_##name##_process_selection(struct rt_db_internal *ip, struct db_i *, const struct rt_selection *selection, const struct rt_selection_operation *op); \
+    extern int rt_##name##_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, uint32_t *version)
 
 RT_DECLARE_INTERFACE(tor);
 RT_DECLARE_INTERFACE(tgc);
@@ -197,6 +198,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -239,6 +241,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_tor_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_tor_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_tor_centroid),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -287,6 +290,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -329,6 +333,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_ell_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ell_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_ell_centroid),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -377,6 +382,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -422,6 +428,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -460,6 +467,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
 	NULL,
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_hlf_params),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -512,6 +520,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -551,6 +560,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_pg_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_pg_bbox),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -602,6 +612,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -644,6 +655,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_ell_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ell_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_ell_centroid),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -692,6 +704,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -734,6 +747,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ebm_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_ebm_centroid),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -782,6 +796,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -824,6 +839,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_arbn_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_arbn_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_arbn_centroid),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -872,6 +888,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -914,6 +931,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_part_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_part_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_part_centroid),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -962,6 +980,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1004,6 +1023,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_rhc_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_rhc_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_rhc_centroid),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1052,6 +1072,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1093,6 +1114,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ehy_bbox),
 	NULL,
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ehy_surf_area),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1142,6 +1164,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1180,6 +1203,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
 	NULL,
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_grp_params),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1232,7 +1256,8 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(rt_joint_find_selections),
 	NULL,
-	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_joint_process_selection)
+	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_joint_process_selection),
+	NULL
 #if 0
 	0, /* ft_use_rpp */
 	NULL,/* prep */
@@ -1319,6 +1344,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1358,6 +1384,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_dsp_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_dsp_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_dsp_bbox),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1409,6 +1436,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1454,6 +1482,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1492,6 +1521,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
 	NULL,
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_submodel_params),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1544,6 +1574,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1587,6 +1618,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_bot_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_bot_centroid),
 	RTFUNCTAB_FUNC_ORIENTED_BBOX_CAST(rt_bot_oriented_bbox),
+	NULL,
 	NULL,
 	NULL,
 	NULL
@@ -1634,6 +1666,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1669,6 +1702,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	0,
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1726,6 +1760,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1761,6 +1796,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	0,
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1818,6 +1854,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1857,6 +1894,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_metaball_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_metaball_bbox),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1908,7 +1946,8 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(rt_brep_find_selections),
 	NULL,
-	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_brep_process_selection)
+	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_brep_process_selection),
+        RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(rt_brep_prep_serialize)
     },
 
     {
@@ -1953,6 +1992,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1986,6 +2026,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	0,
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -2043,6 +2084,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -2088,6 +2130,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -2121,6 +2164,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	sizeof(struct rt_annotation_internal),
 	RT_ANNOTATION_INTERNAL_MAGIC,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -2178,6 +2222,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -2224,6 +2269,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -2257,6 +2303,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	0,
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,

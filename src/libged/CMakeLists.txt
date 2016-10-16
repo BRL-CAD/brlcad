@@ -201,6 +201,7 @@ set(LIBGED_SOURCES
   pmat.c
   pmodel2view.c
   png.c
+  png2fb.c
   polyclip.cpp
   prcolor.c
   prefix.c
@@ -364,6 +365,7 @@ set(ged_ignore_files
   simulate/physics_world.hpp
   simulate/rt_instance.hpp
   simulate/simulation.hpp
+  simulate/utility.hpp
   simulate/world_object.hpp
   osg.cpp
   )

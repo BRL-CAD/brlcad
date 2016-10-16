@@ -130,10 +130,6 @@ do
                                   shift;;
      --disable-tinycthread)                options="$options -DBRLCAD_TINYCTHREAD=SYSTEM";
                                   shift;;
-     --enable-freetype)                options="$options -DBRLCAD_FREETYPE=BUNDLED";
-                                  shift;;
-     --disable-freetype)                options="$options -DBRLCAD_FREETYPE=SYSTEM";
-                                  shift;;
      --enable-termlib)                options="$options -DBRLCAD_TERMLIB=BUNDLED";
                                   shift;;
      --disable-termlib)                options="$options -DBRLCAD_TERMLIB=SYSTEM";

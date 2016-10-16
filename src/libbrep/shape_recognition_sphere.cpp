@@ -131,6 +131,7 @@ sph_implicit_plane(const ON_Brep *brep, int ec, int *edges, ON_SimpleArray<ON_Pl
     return (*sph_planes).Count() - 1;
 }
 
+
 int
 sph_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *sph_planes, int shoal_nonplanar_face)
 {
@@ -153,8 +154,8 @@ sph_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *s
     data->params->radius = sph.Radius();
 
     if (need_arbn) {
-	ON_3dVector xplus = sph.PointAt(0,0) - sph.Center();
-	ON_3dVector yplus = sph.PointAt(M_PI/2,0) - sph.Center();
+	ON_3dVector xplus = sph.PointAt(0, 0) - sph.Center();
+	ON_3dVector yplus = sph.PointAt(M_PI/2, 0) - sph.Center();
 	ON_3dVector zplus = sph.NorthPole() - sph.Center();
 	ON_3dPoint xmax = sph.Center() + 1.01*xplus;
 	ON_3dPoint xmin = sph.Center() - 1.01*xplus;
@@ -175,7 +176,6 @@ sph_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *s
 
     return need_arbn;
 }
-
 
 
 // Local Variables:
