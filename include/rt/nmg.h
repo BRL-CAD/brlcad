@@ -198,6 +198,12 @@ RT_EXPORT extern int nmg_mc_evaluate(struct shell *s,
                                      const struct bn_tol *tol);
 
 
+/* nmg.c */
+RT_EXPORT extern void nmg_stash_model_to_file(const char *filename,
+                                              const struct model *m,
+                                              const char *title);
+
+
 #endif
 
 __END_DECLS

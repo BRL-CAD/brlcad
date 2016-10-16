@@ -242,33 +242,6 @@ nmg_show_each_loop(struct shell *s, char **classlist, int redraw, int fancy, con
 
 
 HIDDEN void
-stash_shell(struct shell *s, char *file_name, char *title, const struct bn_tol *tol)
-{
-    struct model *m;
-    struct nmgregion *r;
-    struct shell *new_s;
-    struct faceuse *fu;
-    char counted_name[256];
-
-    m = nmg_mm();
-    r = nmg_mrsv(m);
-    new_s = BU_LIST_FIRST(shell, &r->s_hd);
-
-    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	if (fu->orientation != OT_SAME)
-	    continue;
-
-	(void)nmg_dup_face(fu, new_s);
-    }
-
-    nmg_rebound(m, tol);
-    snprintf(counted_name, 256, "%s%d.g", file_name, debug_file_count);
-    nmg_stash_model_to_file(counted_name, m, title);
-    nmg_km(m);
-}
-
-
-HIDDEN void
 nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 {
     struct faceuse *fu;
@@ -783,15 +756,12 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	char file_name[256];
 
 	sprintf(file_name, "before%d.g", debug_file_count);
-	nmg_stash_model_to_file(file_name, m, "Before crackshells");
     }
 
     /* Perform shell/shell intersections */
     nmg_crackshells(sA, sB, vlfree, tol);
 
     if (nmg_debug & DEBUG_BOOL) {
-	stash_shell(sA, "a1_", "sA", tol);
-	stash_shell(sB, "b1_", "sB", tol);
 	bu_log("Just After Crackshells:\nShell A:\n");
 	nmg_pr_s_briefly(sA, 0);
 	bu_log("Just After Crackshells:\nShell B:\n");
@@ -854,7 +824,6 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	    bu_log("nmg_bool(): Dangling faces detected in model before classification\n");
 	}
 	if (dangle_error) {
-	    nmg_stash_model_to_file("dangle.g", m, "After Boolean");
 	    bu_bomb("nmg_bool(): Dangling faces detected before classification\n");
 	}
     }
@@ -875,7 +844,6 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	char file_name[256];
 
 	sprintf(file_name, "notjoined%d.g", debug_file_count);
-	nmg_stash_model_to_file(file_name, m, "Before s_join_touchingloops");
     }
 
     /* Re-build bounding boxes, edge geometry, as needed. */
@@ -883,9 +851,6 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     nmg_shell_a(sB, tol);
 
     if (nmg_debug & DEBUG_BOOL) {
-	stash_shell(sA, "a", "sA", tol);
-	stash_shell(sB, "b", "sB", tol);
-
 	bu_log("sA:\n");
 	nmg_pr_s_briefly(sA, 0);
 	bu_log("sB:\n");
@@ -896,7 +861,6 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	char file_name[256];
 
 	sprintf(file_name, "after%d.g", debug_file_count);
-	nmg_stash_model_to_file(file_name, m, "After crackshells");
     }
 
     if (nmg_debug & DEBUG_BOOL) {
@@ -1042,7 +1006,6 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 		bu_log("nmg_bool(): Dangling faces detected in m after boolean\n");
 	    }
 	    if (dangle_error) {
-		nmg_stash_model_to_file("dangle.g", m, "After Boolean");
 		bu_bomb("nmg_bool(): Dangling faces detected after boolean\n");
 	    }
 	} else {
@@ -1088,7 +1051,6 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	if (nmg_debug & DEBUG_BOOL) {
 	    char tmp_name[256];
 	    sprintf(tmp_name, "after_bool_%d.g", debug_file_count);
-	    nmg_stash_model_to_file(tmp_name, m, "After Boolean");
 	}
     }
 

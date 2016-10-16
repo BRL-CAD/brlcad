@@ -1636,7 +1636,6 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, struct bu_l
 		    bu_log("wrote %s\n", buf);
 		}
 		nmg_pr_lu(lu, "");
-		nmg_stash_model_to_file("class.g", nmg_find_model((uint32_t *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
 		bu_free((char *)b, "nmg_pl_lu flag[]");
 	    }
 

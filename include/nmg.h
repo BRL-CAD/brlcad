@@ -1718,9 +1718,6 @@ RT_EXPORT extern int nmg_split_loops_into_faces(uint32_t *magic_p, struct bu_lis
                                                 const struct bn_tol *tol);
 RT_EXPORT extern int nmg_decompose_shell(struct shell *s, struct bu_list *vlfree,
                                          const struct bn_tol *tol);
-RT_EXPORT extern void nmg_stash_model_to_file(const char *filename,
-                                              const struct model *m,
-                                              const char *title);
 RT_EXPORT extern int nmg_unbreak_region_edges(uint32_t *magic_p, struct bu_list *vlfree);
 RT_EXPORT extern void nmg_vlist_to_eu(struct bu_list *vlist,
                                       struct shell *s);
