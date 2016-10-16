@@ -1790,7 +1790,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 {
     plane_t pl, pl1, pl2;
     struct nmg_nurb_uv_hit *hp;
-    struct bu_list bezier;
+    struct bu_list bezier_l;
     struct bu_list hit_list;
     struct face_g_snurb *srf;
     struct face *f;
@@ -1807,12 +1807,12 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
     pl1[W] = VDOT(rd->rp->r_pt, pl1);
     pl2[W] = VDOT(rd->rp->r_pt, pl2);
 
-    BU_LIST_INIT(&bezier);
+    BU_LIST_INIT(&bezier_l);
     BU_LIST_INIT(&hit_list);
 
-    nmg_nurb_bezier(&bezier, fg);
+    nmg_nurb_bezier(&bezier_l, fg);
 
-    while (BU_LIST_NON_EMPTY(&bezier)) {
+    while (BU_LIST_NON_EMPTY(&bezier_l)) {
 	point_t srf_min, srf_max;
 	int planar;
 	point_t hit;
@@ -1820,7 +1820,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 
 	VSETALL(hit, 0);
 
-	srf = BU_LIST_FIRST(face_g_snurb,  &bezier);
+	srf = BU_LIST_FIRST(face_g_snurb,  &bezier_l);
 	BU_LIST_DEQUEUE(&srf->l);
 
 	/* calculate intersection points on NURB surface (in uv space) */

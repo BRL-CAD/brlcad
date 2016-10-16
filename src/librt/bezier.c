@@ -40,9 +40,6 @@
 #include "nmg.h"
 #include "raytrace.h"
 
-#include "./librt_private.h"
-
-
 #define SGN(_x) (((_x)<0) ? -1 : 1)
 #define MAXDEPTH 64
 

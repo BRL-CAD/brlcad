@@ -108,19 +108,19 @@ nurb_crv_is_bezier(const struct edge_g_cnurb *crv)
 {
     int i;
     fastf_t knot_min, knot_max;
-    int bezier=1;
+    int bezier_f=1;
 
     knot_min = crv->k.knots[0];
     knot_max = crv->k.knots[crv->k.k_size-1];
 
     for (i=1; i<crv->k.k_size-1; i++) {
 	if (!ZERO(crv->k.knots[i] - knot_min) && !ZERO(crv->k.knots[i] - knot_max)) {
-	    bezier = 0;
+	    bezier_f = 0;
 	    break;
 	}
     }
 
-    return bezier;
+    return bezier_f;
 }
 
 
