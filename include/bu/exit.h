@@ -87,7 +87,7 @@ BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, void *clientdata);
  * 4. Outputs str to the terminal device in case standard error is
  *    redirected.
  *
- * 5. Aborts abnormally (via abort()) if BU_DEBUG_COREDUMP is defined.
+ * 5. Aborts abnormally (via abort) if BU_DEBUG_COREDUMP is defined.
  *
  * 6. Exits with exit(12).
  *

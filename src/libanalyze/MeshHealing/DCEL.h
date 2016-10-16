@@ -26,6 +26,8 @@
 #ifndef SRC_LIBANALYZE_MESHHEALING_DCEL_H_
 #define SRC_LIBANALYZE_MESHHEALING_DCEL_H_
 
+#include "common.h"
+
 #include <utility>
 
 struct DCEL_Edge;
