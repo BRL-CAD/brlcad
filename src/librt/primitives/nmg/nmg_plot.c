@@ -55,6 +55,7 @@
 
 #define US_DELAY 10 /* Additional delay between frames */
 
+double nmg_eue_dist = 0.05;
 
 /************************************************************************
  *									*

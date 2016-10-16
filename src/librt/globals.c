@@ -41,7 +41,6 @@ struct resource rt_uniresource = RT_RESOURCE_INIT_ZERO;
 
 void (*nmg_plot_anim_upcall)(void);
 
-double nmg_eue_dist = 0.05;
 
 /**
  * this array depends on the values of the definitions of the
