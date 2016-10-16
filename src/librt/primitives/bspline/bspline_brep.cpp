@@ -1,4 +1,4 @@
-/*                   N U R B _ B R E P . C P P
+/*                B S P L I N E _ B R E P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2009-2016 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nurb_poly.c
+/** @file bspline_brep.cpp
  *
  * Convert old NURBS to new NURBS
  *
