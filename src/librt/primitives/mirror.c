@@ -34,7 +34,7 @@
 #include "bn.h"
 
 #include "vmath.h"
-#include "rt/nurb.h"
+#include "nmg.h"
 
 
 /* FIXME: temporary until all mirror functions are migrated and the

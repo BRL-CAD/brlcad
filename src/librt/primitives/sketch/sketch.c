@@ -43,7 +43,6 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 
 #include "../../librt_private.h"
 

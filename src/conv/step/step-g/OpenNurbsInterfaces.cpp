@@ -33,7 +33,7 @@ class SDAI_Application_instance;
 
 /* must come after nist step headers */
 #include "brep.h"
-#include "rt/nurb.h"
+#include "nmg.h"
 
 #include "STEPEntity.h"
 #include "Axis1Placement.h"

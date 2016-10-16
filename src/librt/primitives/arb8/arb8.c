@@ -62,7 +62,6 @@
 #include "rt/geom.h"
 #include "rt/arb_edit.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 
 #include "../../librt_private.h"
 

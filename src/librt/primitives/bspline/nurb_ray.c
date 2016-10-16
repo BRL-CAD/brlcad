@@ -33,7 +33,6 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "nmg.h"
-#include "rt/nurb.h"
 
 
 void rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax);

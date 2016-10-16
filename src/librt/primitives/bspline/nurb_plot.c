@@ -34,8 +34,6 @@
 #include "vmath.h"
 #include "bn/plot3.h"
 #include "nmg.h"
-#include "rt/nurb.h"
-
 
 void
 nmg_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)

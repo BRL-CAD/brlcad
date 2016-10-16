@@ -40,9 +40,9 @@
 #include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
+#include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "rt/nurb.h"
 
 /* private headers */
 #include "./dxf.h"

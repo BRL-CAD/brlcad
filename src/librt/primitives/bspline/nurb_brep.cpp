@@ -25,9 +25,9 @@
 
 #include "common.h"
 
+#include "nmg.h"
 #include "raytrace.h"
 #include "rt/geom.h"
-#include "rt/nurb.h"
 #include "brep.h"
 
 

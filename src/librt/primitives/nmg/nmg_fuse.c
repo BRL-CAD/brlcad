@@ -41,7 +41,6 @@
 #include "bu/str.h"
 #include "bn/mat.h"
 #include "nmg.h"
-#include "rt/nurb.h"
 
 
 extern int debug_file_count;

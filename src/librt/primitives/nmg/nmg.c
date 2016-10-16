@@ -34,13 +34,12 @@
 #include <string.h>
 #include "bnetwork.h"
 
+#include "vmath.h"
 #include "bu/cv.h"
 #include "bg/polygon.h"
-#include "vmath.h"
-#include "rt/db4.h"
 #include "nmg.h"
+#include "rt/db4.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 #include "../../librt_private.h"
 
 /* rt_nmg_internal is just "model", from nmg.h */

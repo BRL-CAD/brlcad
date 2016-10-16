@@ -34,7 +34,6 @@
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"
 #include "raytrace.h"
-#include "rt/nurb.h"		/* BRL-CAD Spline data structures */
 #include "wdb.h"
 
 #include "./tea.h"		/* Teapot Data */

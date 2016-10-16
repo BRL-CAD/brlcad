@@ -41,8 +41,6 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "nmg.h"
-#include "rt/nurb.h"
-
 
 /**
  * Solve must be passed two matrices that are of the form of pointer

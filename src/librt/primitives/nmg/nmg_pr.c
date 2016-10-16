@@ -38,7 +38,6 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "nmg.h"
-#include "rt/nurb.h"
 
 
 static char nmg_pr_padstr[128];

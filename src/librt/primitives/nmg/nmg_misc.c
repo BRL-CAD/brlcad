@@ -37,7 +37,6 @@
 #include "bu/malloc.h"
 #include "bn/mat.h"
 #include "nmg.h"
-#include "rt/nurb.h"
 
 /* externed */
 uint32_t nmg_debug;

@@ -35,8 +35,6 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "nmg.h"
-#include "rt/nurb.h"
-
 
 /**
  * Algorithm

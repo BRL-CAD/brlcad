@@ -41,8 +41,8 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "nmg.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 
 #define AMAX(i, j)    ((i) > (j) ? (i) : (j))
 #define AMIN(i, j)    ((i) < (j) ? (i) : (j))

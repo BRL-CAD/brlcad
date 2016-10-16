@@ -29,10 +29,10 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
+#include "bu/getopt.h"
+#include "nmg.h"		/* BRL-CAD Vector macros */
 #include "raytrace.h"
-#include "rt/nurb.h"		/* BRL-CAD Spline data structures */
 #include "wdb.h"
 
 

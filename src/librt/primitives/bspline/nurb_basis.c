@@ -31,7 +31,6 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rt/nurb.h"
 
 /**
  * This uses the traditional De Boor-Cox algorithm,

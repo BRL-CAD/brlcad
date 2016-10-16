@@ -33,7 +33,6 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rt/nurb.h"
 
 /**
  * Check to see if the curve control polygon wanders outside the

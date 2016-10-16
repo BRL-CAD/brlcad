@@ -38,7 +38,6 @@
 #include "bn/mat.h"
 #include "bn/plot3.h"
 #include "nmg.h"
-#include "rt/nurb.h"
 
 
 /* Plot a faceuse and a line between pt and plane_pt */

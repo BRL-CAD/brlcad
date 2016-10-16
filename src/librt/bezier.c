@@ -37,8 +37,8 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "nmg.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 
 #include "./librt_private.h"
 

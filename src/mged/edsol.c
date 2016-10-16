@@ -36,7 +36,6 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "rt/arb_edit.h"
-#include "rt/nurb.h"
 #include "wdb.h"
 #include "rt/db4.h"
 

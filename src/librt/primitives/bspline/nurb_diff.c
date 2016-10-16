@@ -32,8 +32,6 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rt/nurb.h"
-
 
 /**
  * Given a NURB surface and a direction, differentiate the surface and

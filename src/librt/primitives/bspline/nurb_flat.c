@@ -35,7 +35,6 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "nmg.h"
-#include "rt/nurb.h"
 
 /* This doesn't seem to be used anymore: */
 /* extern fastf_t spl_crv_flat(); */

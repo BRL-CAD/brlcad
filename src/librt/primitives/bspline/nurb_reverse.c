@@ -34,7 +34,6 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "nmg.h"
-#include "rt/nurb.h"
 
 void
 rt_nurb_reverse_srf(struct face_g_snurb *srf)

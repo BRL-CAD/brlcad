@@ -33,8 +33,6 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rt/nurb.h"
-
 
 /**
  * If the order of the surface is linear either direction than

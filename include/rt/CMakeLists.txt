@@ -33,7 +33,6 @@ set(rt_headers
   mem.h
   nmg.h
   nongeom.h
-  nurb.h
   op.h
   overlap.h
   pattern.h

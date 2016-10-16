@@ -35,7 +35,6 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "nmg.h"
-#include "rt/nurb.h"
 
 void
 nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_tol *tol)

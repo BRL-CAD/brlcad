@@ -30,8 +30,8 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "nmg.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 
 /* This routine takes a oslo refinement matrix as described in the
  * paper "Making the Oslo Algorithm More Efficient" and maps it to the
