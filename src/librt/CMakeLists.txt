@@ -104,11 +104,11 @@ set(LIBRT_SOURCES
   primitives/brep/brep.cpp
   primitives/brep/brep_debug.cpp
   primitives/bspline/bspline.cpp
+  primitives/bspline/bspline_brep.cpp
   primitives/bspline/bspline_mirror.c
   primitives/bspline/nurb_basis.c
   primitives/bspline/nurb_bezier.c
   primitives/bspline/nurb_bound.c
-  primitives/bspline/nurb_brep.cpp
   primitives/bspline/nurb_c2.c
   primitives/bspline/nurb_copy.c
   primitives/bspline/nurb_diff.c
