@@ -41,10 +41,6 @@ struct resource rt_uniresource = RT_RESOURCE_INIT_ZERO;
 
 void (*nmg_plot_anim_upcall)(void);
 
-void (*nmg_vlblock_anim_upcall)(void);
-
-void (*nmg_mged_debug_display_hack)(void);
-
 double nmg_eue_dist = 0.05;
 
 /**

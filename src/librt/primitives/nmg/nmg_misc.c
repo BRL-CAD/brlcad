@@ -42,6 +42,10 @@
 uint32_t nmg_debug;
 struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmiss freelist */
 
+void (*nmg_vlblock_anim_upcall)(void);
+
+void (*nmg_mged_debug_display_hack)(void);
+
 int
 nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 {
