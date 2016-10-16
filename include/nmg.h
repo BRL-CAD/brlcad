@@ -2406,8 +2406,10 @@ RT_EXPORT extern void nmg_merge_models(struct model *m1,
                                        struct model *m2);
 RT_EXPORT extern long nmg_find_max_index(const struct model *m);
 
-#if 0
 /* From nmg_rt_isect.c */
+RT_EXPORT extern const char * nmg_rt_inout_str(int code);
+
+#if 0
 RT_EXPORT extern void nmg_rt_print_hitlist(struct bu_list *hd);
 
 RT_EXPORT extern void nmg_rt_print_hitmiss(struct nmg_hitmiss *a_hit);

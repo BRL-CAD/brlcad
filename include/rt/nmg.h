@@ -211,7 +211,7 @@ struct ray_data {
         BU_LIST_INIT(&rd->rd_hit); \
         BU_LIST_INIT(&rd->rd_miss); \
         nmg_debug |= DEBUG_NMGRT; \
-        nmg_isect_ray_model(rd,vlfree); \
+        rt_isect_ray_model(rd,vlfree); \
         (void) nmg_ray_segs(rd,vlfree); \
         bu_bomb("Should have bombed before this\n"); \
     }
@@ -224,17 +224,17 @@ RT_EXPORT extern void (*nmg_plot_anim_upcall)(void);
 
 
 /* From nmg_rt_isect.c */
-RT_EXPORT extern void nmg_rt_print_hitlist(struct bu_list *hd);
-
-RT_EXPORT extern void nmg_rt_print_hitmiss(struct hitmiss *a_hit);
-
-RT_EXPORT extern int nmg_class_ray_vs_shell(struct xray *rp,
-                                            const struct shell *s,
-                                            const int in_or_out_only,
-					    struct bu_list *vlfree,
-                                            const struct bn_tol *tol);
+RT_EXPORT extern void rt_nmg_print_hitlist(struct bu_list *hd);
+RT_EXPORT extern void rt_nmg_print_hitmiss(struct hitmiss *a_hit);
+RT_EXPORT extern void rt_isect_ray_model(struct ray_data *rd, struct bu_list *vlfree);
 
 RT_EXPORT extern void nmg_isect_ray_model(struct ray_data *rd, struct bu_list *vlfree);
+RT_EXPORT extern int nmg_class_ray_vs_shell(struct xray *rp,
+	const struct shell *s,
+	const int in_or_out_only,
+	struct bu_list *vlfree,
+	const struct bn_tol *tol);
+
 
 /************************************************************************
  *                                                                      *

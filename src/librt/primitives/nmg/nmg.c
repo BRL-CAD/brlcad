@@ -363,10 +363,10 @@ unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next
     for (BU_LIST_FOR(hm, hitmiss, hd)) {
 	if (hm == next_hit) {
 	    bu_log("======= ======\n");
-	    nmg_rt_print_hitmiss(hm);
+	    rt_nmg_print_hitmiss(hm);
 	    bu_log("================\n");
 	} else
-	    nmg_rt_print_hitmiss(hm);
+	    rt_nmg_print_hitmiss(hm);
     }
 
     bu_log("topo table A\n");
@@ -411,7 +411,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
     if (((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE ||
 	nmg_debug & DEBUG_RT_SEGS) {
 	bu_log("check_hitstate()\n");
-	nmg_rt_print_hitlist(hd);
+	rt_nmg_print_hitlist(hd);
 
 	bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 	       V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir));
@@ -1187,10 +1187,10 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 	    for (BU_LIST_FOR(hm, hitmiss, &rd->rd_hit)) {
 		if (hm == a_hit) {
 		    bu_log("======= State %d ======\n", ray_state);
-		    nmg_rt_print_hitmiss(hm);
+		    rt_nmg_print_hitmiss(hm);
 		    bu_log("================\n");
 		} else
-		    nmg_rt_print_hitmiss(hm);
+		    rt_nmg_print_hitmiss(hm);
 	    }
 
 	    /* Now bomb off */
@@ -1275,7 +1275,7 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 	bu_log("\n\nnmg_ray_segs(rd)\nsorted nmg/ray hit list\n");
 
 	for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit))
-	    nmg_rt_print_hitmiss(a_hit);
+	    rt_nmg_print_hitmiss(a_hit);
     }
 
     last_miss = 0;
@@ -1289,7 +1289,7 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
     if (nmg_debug & DEBUG_RT_SEGS) {
 	bu_log("----------morphed nmg/ray hit list---------\n");
 	for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit))
-	    nmg_rt_print_hitmiss(a_hit);
+	    rt_nmg_print_hitmiss(a_hit);
 
 	pl_ray(rd);
     }
@@ -5871,6 +5871,49 @@ nmg_bot(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
     bu_ptbl_free(&nmg_faces);
 
     return bot;
+}
+
+
+void
+rt_nmg_print_hitmiss(struct hitmiss *a_hit)
+{
+    NMG_CK_HITMISS(a_hit);
+
+    bu_log("   dist:%12g pt=(%f %f %f) %s=%p\n",
+	   a_hit->hit.hit_dist,
+	   a_hit->hit.hit_point[0],
+	   a_hit->hit.hit_point[1],
+	   a_hit->hit.hit_point[2],
+	   bu_identify_magic(*(uint32_t *)a_hit->hit.hit_private),
+	   (void *)a_hit->hit.hit_private
+	);
+    bu_log("\tstate:%s", nmg_rt_inout_str(a_hit->in_out));
+
+    switch (a_hit->start_stop) {
+	case NMG_HITMISS_SEG_IN:	bu_log(" SEG_START"); break;
+	case NMG_HITMISS_SEG_OUT:	bu_log(" SEG_STOP"); break;
+    }
+
+    VPRINT("\n\tin_normal", a_hit->inbound_norm);
+    VPRINT("\tout_normal", a_hit->outbound_norm);
+}
+void
+rt_nmg_print_hitlist(struct bu_list *hd)
+{
+    struct hitmiss *a_hit;
+
+    bu_log("nmg/ray hit list:\n");
+
+    for (BU_LIST_FOR(a_hit, hitmiss, hd)) {
+	rt_nmg_print_hitmiss(a_hit);
+    }
+}
+
+void
+rt_isect_ray_model(struct ray_data *rd, struct bu_list *vlfree)
+{
+    /* TODO - struct ray_data to struct nmg_ray_data, then back */
+    nmg_isect_ray_model(rd, vlfree);
 }
 
 /*
