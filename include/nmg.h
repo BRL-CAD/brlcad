@@ -2796,6 +2796,9 @@ RT_EXPORT extern void nmg_nurb_map_oslo(struct oslo_mat *oslo,
 					    int o_stride, int n_stride,
 					    int lower, int upper, int pt_type);
 
+/* nurb_tess.c */
+RT_EXPORT extern fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
+
 __END_DECLS
 
 #endif /* NMG_H */
