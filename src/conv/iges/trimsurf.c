@@ -1072,7 +1072,7 @@ void
 find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu_list *hit_list)
 {
     plane_t pl1, pl2;
-    struct bu_list bezier;
+    struct bu_list bezier_l;
     struct face *f;
     struct face_g_snurb *fg;
 
@@ -1090,14 +1090,14 @@ find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu
     pl1[W] = VDOT(mid_pt, pl1);
     pl2[W] = VDOT(mid_pt, pl2);
 
-    BU_LIST_INIT(&bezier);
+    BU_LIST_INIT(&bezier_l);
 
-    nmg_nurb_bezier(&bezier, fg);
-    while (BU_LIST_NON_EMPTY(&bezier)) {
+    nmg_nurb_bezier(&bezier_l, fg);
+    while (BU_LIST_NON_EMPTY(&bezier_l)) {
 	struct face_g_snurb *srf;
 	struct nmg_nurb_uv_hit *hp;
 
-	srf = BU_LIST_FIRST(face_g_snurb,  &bezier);
+	srf = BU_LIST_FIRST(face_g_snurb,  &bezier_l);
 	BU_LIST_DEQUEUE(&srf->l);
 
 	hp = nmg_nurb_intersect(srf, pl1, pl2, UV_TOL, NULL);
