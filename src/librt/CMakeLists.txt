@@ -72,8 +72,6 @@ set(LIBRT_SOURCES
   memalloc.c
   mkbundle.c
   op.c
-  oslo_calc.c
-  oslo_map.c
   pr.c
   prep.c
   primitives/arb8/arb8.c
@@ -120,6 +118,8 @@ set(LIBRT_SOURCES
   primitives/bspline/nurb_interp.c
   primitives/bspline/nurb_knot.c
   primitives/bspline/nurb_norm.c
+  primitives/bspline/nurb_oslo_calc.c
+  primitives/bspline/nurb_oslo_map.c
   primitives/bspline/nurb_plot.c
   primitives/bspline/nurb_poly.c
   primitives/bspline/nurb_ray.c
