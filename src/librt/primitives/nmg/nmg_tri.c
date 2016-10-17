@@ -2368,7 +2368,6 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, struct bu_list *vlfre
     struct pt2d *min, *max, *newpt, *first, *prev, *next, *current, *tmp;
     struct pt2d *prev_orig, *next_orig, *pt, *t;
 
-    struct model *m;
     struct faceuse *fu;
     struct loopuse *lu2, *orig_lu_p;
     struct edgeuse *eu;
@@ -2433,7 +2432,6 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, struct bu_list *vlfre
 	    if (nmg_debug & DEBUG_TRI) {
 		eu = BU_LIST_FIRST(edgeuse, &(current->vu_p->up.eu_p->up.lu_p->down_hd));
 		nmg_plot_lu_around_eu("cut_unimonotone_infinite_loopuse", eu, vlfree, tol);
-		m = nmg_find_model(current->vu_p->up.eu_p->up.lu_p->up.magic_p);
 		nmg_pr_lu(current->vu_p->up.eu_p->up.lu_p, "cut_unimonotone_loopuse");
 		nmg_plot_fu("cut_unimonotone_infinite_loopuse", current->vu_p->up.eu_p->up.lu_p->up.fu_p, tol);
 	    }
