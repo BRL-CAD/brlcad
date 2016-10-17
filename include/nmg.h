@@ -30,6 +30,29 @@
 /** @{ */
 /** @file include/nmg.h */
 
+/*
+ * TODO: since this original work, there have been a number of subsequent
+ * papers published on ways of representing non-manifold geometry.  In
+ * particular, the "partial entity" structure is purported to have essentially
+ * the same representation power as Weiler's radial edge approach but with
+ * more compact storage:
+ *
+ *  Sang Hun Lee and Kunwoo Lee, Partial Entity Structure: A Compact Boundary
+ *  Representation for Non-Manifold Geometric Modeling, J. Comput. Inf. Sci.
+ *  Eng 1(4), 356-365 (Nov 01, 2001)
+ *
+ *  Sang Hun Lee and Kunwoo Lee, Partial entity structure: a compact
+ *  non-manifold boundary representation based on partial topological entities,
+ *  SMA '01 Proceedings of the sixth ACM symposium on Solid modeling and
+ *  applications Pages 159-170
+ *
+ * Also, from a design perspective, it would be nice if we could set this up so
+ * that the more general non-manifold data structures include less general
+ * containers and just extend them with the necessary extra information...
+ * Don't know if that's possible, but it would be really nice from a data
+ * conversion standpoint...
+ */
+
 #ifndef NMG_H
 #define NMG_H
 
