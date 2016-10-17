@@ -63,7 +63,7 @@ bottie_push_double(void *vtie, TIE_3 **tri, unsigned int ntri, void *u, unsigned
 }
 
 int
-bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *UNUSED(rtip))
+bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *rtip)
 {
     struct tie_s *tie;
     struct bot_specific *bot;
@@ -129,6 +129,21 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 
     VMOVE(stp->st_min, tie->amin);
     VMOVE(stp->st_max, tie->amax);
+
+    /* zero thickness will get missed by the raytracer */
+    if (NEAR_EQUAL(stp->st_min[X], stp->st_max[X], rtip->rti_tol.dist)) {
+	stp->st_min[X] -= rtip->rti_tol.dist;
+	stp->st_max[X] += rtip->rti_tol.dist;
+    }
+    if (NEAR_EQUAL(stp->st_min[Y], stp->st_max[Y], rtip->rti_tol.dist)) {
+	stp->st_min[Y] -= rtip->rti_tol.dist;
+	stp->st_max[Y] += rtip->rti_tol.dist;
+    }
+    if (NEAR_EQUAL(stp->st_min[Z], stp->st_max[Z], rtip->rti_tol.dist)) {
+	stp->st_min[Z] -= rtip->rti_tol.dist;
+	stp->st_max[Z] += rtip->rti_tol.dist;
+    }
+
     VMOVE(stp->st_center, tie->mid);
     stp->st_aradius = tie->radius;
     stp->st_bradius = tie->radius;
