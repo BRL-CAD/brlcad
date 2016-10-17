@@ -158,18 +158,7 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 	nurbs = n;
     }
     /* zero thickness will get missed by the raytracer */
-    if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
-	(*min)[X] -= SMALL_FASTF;
-	(*max)[X] += SMALL_FASTF;
-    }
-    if (NEAR_EQUAL((*min)[Y], (*max)[Y], SMALL_FASTF)) {
-	(*min)[Y] -= SMALL_FASTF;
-	(*max)[Y] += SMALL_FASTF;
-    }
-    if (NEAR_EQUAL((*min)[Z], (*max)[Z], SMALL_FASTF)) {
-	(*min)[Z] -= SMALL_FASTF;
-	(*max)[Z] += SMALL_FASTF;
-    }
+    BBOX_NONDEGEN((*min), (*max), SMALL_FASTF);
 
     for (; nurbs != (struct nurb_specific *)0; nurbs = next) {
 	register struct face_g_snurb *s;
@@ -260,7 +249,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_specific = (void *)nurbs;
 
     /* zero thickness will get missed by the raytracer */
-    BBOX_NONDEGEN(stp->st_min, stp->st_max, los)
+    BBOX_NONDEGEN(stp->st_min, stp->st_max, los);
 
     VADD2SCALE(stp->st_center, stp->st_max, stp->st_min, 0.5);
     {

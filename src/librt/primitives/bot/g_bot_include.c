@@ -328,7 +328,7 @@ CPP_XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bo
     }
 
     /* zero thickness will get missed by the raytracer */
-    BBOX_NONDEGEN(stp->st_min, stp->st_max, los)
+    BBOX_NONDEGEN(stp->st_min, stp->st_max, los);
 
     VADD2SCALE(stp->st_center, stp->st_max, stp->st_min, 0.5);
 
