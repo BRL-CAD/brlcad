@@ -50,6 +50,7 @@
 /* private implementation headers */
 #include "./btg.h"	/* for the bottie_ functions */
 #include "./bot_edge.h"
+#include "../../librt_private.h"
 
 
 #define MAXHITS 128

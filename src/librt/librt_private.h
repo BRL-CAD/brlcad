@@ -33,6 +33,7 @@
 
 #include "common.h"
 
+#include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 
@@ -40,6 +41,23 @@
 #define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
     (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))) \
     / (10.0 + sqrt(4.0 - 3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b)))))
+
+/* logic to ensure bboxes are not degenerate in any dimension - zero thickness
+ * bounding boxes will get missed by the raytracer */
+#define BBOX_NONDEGEN(min, max, dist) \
+    if (NEAR_EQUAL(min[X], max[X], dist)) { \
+    	min[X] -= dist; \
+    	max[X] += dist; \
+        } \
+    if (NEAR_EQUAL(min[Y], max[Y], dist)) { \
+	min[Y] -= dist; \
+	max[Y] += dist; \
+    } \
+    if (NEAR_EQUAL(min[Z], max[Z], dist)) { \
+	min[Z] -= dist; \
+	max[Z] += dist; \
+    }
+
 
 __BEGIN_DECLS
 

@@ -36,6 +36,7 @@
 #include "rt/tie.h"
 
 #include "btg.h"
+#include "../../librt_private.h"
 
 #include "tie.c"
 #include "tie_kdtree.c"
@@ -131,18 +132,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     VMOVE(stp->st_max, tie->amax);
 
     /* zero thickness will get missed by the raytracer */
-    if (NEAR_EQUAL(stp->st_min[X], stp->st_max[X], rtip->rti_tol.dist)) {
-	stp->st_min[X] -= rtip->rti_tol.dist;
-	stp->st_max[X] += rtip->rti_tol.dist;
-    }
-    if (NEAR_EQUAL(stp->st_min[Y], stp->st_max[Y], rtip->rti_tol.dist)) {
-	stp->st_min[Y] -= rtip->rti_tol.dist;
-	stp->st_max[Y] += rtip->rti_tol.dist;
-    }
-    if (NEAR_EQUAL(stp->st_min[Z], stp->st_max[Z], rtip->rti_tol.dist)) {
-	stp->st_min[Z] -= rtip->rti_tol.dist;
-	stp->st_max[Z] += rtip->rti_tol.dist;
-    }
+    BBOX_NONDEGEN(stp->st_min, stp->st_max, rtip->rti_tol.dist)
 
     VMOVE(stp->st_center, tie->mid);
     stp->st_aradius = tie->radius;
