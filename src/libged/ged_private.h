@@ -310,6 +310,8 @@ extern int _ged_cm_orientation(const int argc,
 			       const char **argv);
 extern int _ged_cm_set(const int argc,
 		       const char **argv);
+extern int _ged_cm_end(const int argc,
+		       const char **argv);
 extern int _ged_cm_null(const int argc,
 			const char **argv);
 

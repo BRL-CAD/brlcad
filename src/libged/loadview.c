@@ -62,7 +62,7 @@ struct command_tab ged_loadview_cmdtab[] = {
     {"clean", "", "clean articulation from previous frame",
      _ged_cm_null,	1, 1},
     {"end", 	"", "end of frame setup, begin raytrace",
-     _ged_cm_null,		1, 1},
+     _ged_cm_end,		1, 1},
 
     /* not output, by default in saveview */
 
@@ -93,6 +93,7 @@ int
 ged_loadview(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
+    int failed = 0;
     FILE *fp;
     char buffer[512] = {0};
 
@@ -143,17 +144,25 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     while (!feof(fp)) {
 	memset(buffer, 0, 512);
 	ret = fscanf(fp, "%512s", buffer);
-	if (ret != 1)
+	if (ret != 1) {
 	    bu_log("Failed to read buffer\n");
+	    failed++;
+	}
 
 	if (bu_strncmp(buffer, "-p", 2) == 0) {
+	    char perspective_angle[128] = {0};
+	    const char *perspective_argv[2] = {"perspective", NULL};
+	    perspective_argv[1] = perspective_angle;
+
 	    /* we found perspective */
 
 	    buffer[0] = ' ';
 	    buffer[1] = ' ';
 	    sscanf(buffer, "%d", &perspective);
 	    /* bu_log("perspective=%d\n", perspective);*/
-	    gedp->ged_gvp->gv_perspective = perspective;
+	    snprintf(perspective_angle, sizeof(perspective_angle), "%d", perspective);
+
+	    ged_perspective(gedp, 2, (const char **)perspective_argv);
 
 	} else if (bu_strncmp(buffer, "$*", 2) == 0) {
 	    /* the next read is the file name, the objects come
@@ -162,8 +171,10 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 
 	    memset(dbName, 0, MAX_DBNAME);
 	    ret = fscanf(fp, "%2048s", dbName); /* MAX_DBNAME */
-	    if (ret != 1)
+	    if (ret != 1) {
 		bu_log("Failed to read database name\n");
+		failed++;
+	    }
 
 	    /* if the last character is a line termination,
 	     * remove it (it should always be unless the user
@@ -175,27 +186,26 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    /* bu_log("dbName=%s\n", dbName); */
 
 	    if (!bu_same_file(gedp->ged_wdbp->dbip->dbi_filename, dbName)) {
-		/* stop here if they are not the same file,
-		 * otherwise, we may proceed as expected, and load
-		 * the objects.
+		/* warn here if they are not the same file, otherwise,
+		 * proceed as expected, and try to load the objects.
 		 */
-		bu_vls_printf(gedp->ged_result_str, "View script references a different database\nCannot load the view without closing the current database\n(i.e. run \"opendb %s\")\n", dbName);
-
-		/* restore state before leaving */
-		gedp->ged_gvp->gv_perspective = prevPerspective;
-		fclose(fp);
-		return GED_ERROR;
+		bu_log("WARNING: view script seems to reference a different database\n([%s] != [%s])\n", dbName, gedp->ged_wdbp->dbip->dbi_filename);
 	    }
 
 	    /* get rid of anything that may be displayed, since we
 	     * will load objects that are listed in the script next.
+	     *
+	     * TODO: should only zap if the objects to be displayed
+	     * all exist.
 	     */
 	    (void)ged_zap(gedp, 1, NULL);
 
 	    /* now get the objects listed */
 	    ret = fscanf(fp, "%10000s", objects);
-	    if (ret != 1)
+	    if (ret != 1) {
 		bu_log("Failed to read object names\n");
+		failed++;
+	    }
 
 	    /* bu_log("OBJECTS=%s\n", objects);*/
 	    while ((!feof(fp)) && (bu_strncmp(objects, "\\", 1) != 0)) {
@@ -216,8 +226,10 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 
 		/* bu_log("objects=%s\n", objects);*/
 		ret = fscanf(fp, "%10000s", objects);
-		if (ret != 1)
+		if (ret != 1) {
 		    bu_log("Failed to read object names\n");
+		    failed++;
+		}
 	    }
 
 	    /* end iteration over reading in listed objects */
@@ -231,6 +243,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		 */
 		if (rt_do_cmd((struct rt_i *)0, cmdBuffer, ged_loadview_cmdtab) < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "command failed: %s\n", cmdBuffer);
+		    failed++;
 		}
 		bu_free((void *)cmdBuffer, "loadview cmdBuffer");
 	    }
@@ -243,14 +256,8 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     /* end iteration over file until eof */
     fclose(fp);
 
-    /* now we have to finish the eye point calculations that usually get
-     * postponed until the end command runs.  Since we are at the "end"
-     * of a commands section, we may finish the computations.
-     */
-    /* First step:  put eye at view center (view 0, 0, 0) */
-    MAT_COPY(gedp->ged_gvp->gv_rotation, _ged_viewrot);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, _ged_eye_model);
-    ged_view_update(gedp->ged_gvp);
+    if (failed)
+	return GED_ERROR;
 
     return GED_OK;
 }
@@ -277,7 +284,8 @@ _ged_cm_eyept(const int argc, const char **argv)
     _ged_eye_model[X] = atof(argv[1]);
     _ged_eye_model[Y] = atof(argv[2]);
     _ged_eye_model[Z] = atof(argv[3]);
-    /* Processing is deferred until ged_cm_end() */
+
+    /* Processing is deferred until view 'end' */
     return 0;
 }
 
@@ -308,7 +316,7 @@ _ged_cm_lookat_pt(const int argc, const char **argv)
 	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis, &_ged_current_gedp->ged_wdbp->wdb_tol);
     }
 
-    /* Final processing is deferred until ged_cm_end(), but eye_pt
+    /* Final processing is deferred until view 'end', but eye_pt
      * must have been specified before here (for now)
      */
     return 0;
@@ -324,7 +332,7 @@ _ged_cm_vrot(const int argc, const char **argv)
 	return -1;
     for (i = 0; i < 16; i++)
 	_ged_viewrot[i] = atof(argv[i+1]);
-    /* Processing is deferred until ged_cm_end() */
+    /* Processing is deferred until view 'end' */
     return 0;
 }
 
@@ -366,6 +374,34 @@ _ged_cm_null(const int argc, const char **argv)
     return 0;
 }
 
+
+/**
+ * process the 'end' of a view.  currently, requires an eye point be
+ * specified beforehand.
+ */
+int
+_ged_cm_end(const int argc, const char **argv)
+{
+    struct bu_vls eye = BU_VLS_INIT_ZERO;
+    char *eye_argv[4] = {"eye", NULL, NULL, NULL};
+
+    if (argc < 0 || argv == NULL)
+	return 1;
+
+    /* now we have to finish view calculations that are deferred until
+     * the end command runs.
+     */
+    MAT_COPY(_ged_current_gedp->ged_gvp->gv_rotation, _ged_viewrot);
+    MAT_DELTAS_VEC_NEG(_ged_current_gedp->ged_gvp->gv_center, _ged_eye_model);
+    ged_view_update(_ged_current_gedp->ged_gvp);
+
+    bu_vls_printf(&eye, "%lf %lf %lf", V3ARGS(_ged_eye_model));
+    bu_argv_from_string(eye_argv+1, 4, bu_vls_addr(&eye));
+    ged_eye(_ged_current_gedp, 4, (const char **)eye_argv);
+    bu_vls_free(&eye);
+
+    return 0;
+}
 
 /*
  * Local Variables:
