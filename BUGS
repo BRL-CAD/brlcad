@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* loadview command doesn't seem to be working (doesn't set perspective
+  angle, view size, etc) and gets stuck not reading from a "different"
+  database even when it's literally the same string opendb reports.
+  needs to be rewritten.
+
 * rtedge's overlay mode appears to be generating different results on
   Windows and Linux for the m35 steering wheel (rtwizard rendering
   mode D.)
