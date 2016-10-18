@@ -379,7 +379,7 @@ main(int argc, char *argv[])
     int i = 0;
     double x, y, z;
 
-    if (argc < 1) {
+    if (argc < 2) {
 	printf("Must supply at least the dimension.\n");
 	return -1;
     }
