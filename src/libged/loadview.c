@@ -103,7 +103,6 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     char dbName[MAX_DBNAME] = {0};
     char objects[10000] = {0};
     char *editArgv[3];
-    int prevPerspective;
     static const char *usage = "filename";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -131,7 +130,6 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    prevPerspective =  gedp->ged_gvp->gv_perspective;
     _ged_current_gedp = gedp;
 
     /* turn perspective mode off, by default.  A "-p" option in the
