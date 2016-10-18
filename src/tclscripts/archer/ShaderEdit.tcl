@@ -82,6 +82,7 @@
 	}
 
 	common SHADER_TYPES {
+	    phong
 	    plastic
 	    mirror
 	    glass
