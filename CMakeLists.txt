@@ -3148,6 +3148,27 @@ mark_as_advanced(CMAKE_C_COMPILER)
 
 set(CONFIG_FATAL_ERROR 0)
 
+function(DIFF_FILE filename)
+  file(READ "${BRLCAD_SOURCE_DIR}/${filename}" SRC_STR)
+  file(READ "${BRLCAD_BINARY_DIR}/${filename}.new" BIN_STR)
+  string(REGEX REPLACE "\\r?\\n" "" OLD_STR "${SRC_STR}")
+  string(REGEX REPLACE "\\r?\\n" "" NEW_STR "${BIN_STR}")
+  file(WRITE "${BRLCAD_BINARY_DIR}/${filename}.old_nws" "${OLD_STR}")
+  file(WRITE "${BRLCAD_BINARY_DIR}/${filename}.new_nws" "${NEW_STR}")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${filename}.old_nws")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${filename}.new_nws")
+  set(IS_DIFFERENT 0)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
+    "${BRLCAD_BINARY_DIR}/${filename}.old_nws" "${BRLCAD_BINARY_DIR}/${filename}.new_nws"
+    RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
+    DIFF_ERROR)
+  if(IS_DIFFERENT)
+    set(CONFIG_FATAL_ERROR 1 PARENT_SCOPE)
+    message("\n\"${BRLCAD_SOURCE_DIR}/${filename}\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/${filename}.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/${filename}\" with \"${BRLCAD_BINARY_DIR}/${filename}.new\"\n")
+  endif(IS_DIFFERENT)
+endfunction(DIFF_FILE filename)
+
+# Finalize and check INSTALL file
 file(READ "${BRLCAD_SOURCE_DIR}/INSTALL" SRC_INSTALL_STR)
 string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX "${SRC_INSTALL_STR}")
 file(WRITE "${BRLCAD_BINARY_DIR}/INSTALL.new" "${INSTALL_PREFIX}")
@@ -3158,29 +3179,15 @@ file(APPEND "${BRLCAD_BINARY_DIR}/INSTALL.new" "\n\n*** Note - Do not add or edi
    the toplevel CMakeLists.txt file and src/other/CMakeLists.txt - any changes
    should be made in those files.  The CMake configuration process will
    automatically re-generate INSTALL with the new descriptions and alias
-   information.\n")
-execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${BRLCAD_SOURCE_DIR}/INSTALL" "${BRLCAD_BINARY_DIR}/INSTALL.new"
-  RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
-  DIFF_ERROR)
-if(IS_DIFFERENT)
-  set(CONFIG_FATAL_ERROR 1)
-  message("\n\"${BRLCAD_SOURCE_DIR}/INSTALL\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/INSTALL\" with \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\n")
-endif(IS_DIFFERENT)
+   information.\n"
+   )
+DIFF_FILE(INSTALL)
 
 # Do the same thing for the configure shell script - finish it and check
 # for differences.
 file(READ "${BRLCAD_CMAKE_DIR}/configure_suffix.sh" CONFIG_SUFFIX)
 file(APPEND "${CMAKE_BINARY_DIR}/configure.new" "${CONFIG_SUFFIX}")
-# Compare
-execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${BRLCAD_SOURCE_DIR}/configure" "${BRLCAD_BINARY_DIR}/configure.new"
-  RESULT_VARIABLE IS_CONFIG_SH_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
-  DIFF_ERROR)
-if(IS_CONFIG_SH_DIFFERENT)
-  set(CONFIG_FATAL_ERROR 1)
-  message("\n\"${BRLCAD_SOURCE_DIR}/configure\" is out of date. An updated version has been generated at \"${BRLCAD_BINARY_DIR}/configure.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/configure\" with \"${BRLCAD_BINARY_DIR}/configure.new\"\n")
-endif(IS_CONFIG_SH_DIFFERENT)
+DIFF_FILE(configure)
 
 if(CONFIG_FATAL_ERROR)
   message(FATAL_ERROR "Configure haulted.")
