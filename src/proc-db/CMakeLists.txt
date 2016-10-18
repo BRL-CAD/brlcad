@@ -19,13 +19,13 @@ BRLCAD_ADDEXEC(brep_cube "brep_cube.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIB
 BRLCAD_ADDEXEC(brep_simple "brep_simple.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL) # NOTE: has manual page
 BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(breplicator breplicator.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(csgbrep csgbrep.cpp libwdb NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(nmgmodel nmgmodel.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(csgbrep csgbrep.cpp "libwdb;libnmg" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(nmgmodel nmgmodel.c "libwdb;libnmg" NO_INSTALL)
 BRLCAD_ADDEXEC(pipetest pipetest.c libwdb NO_INSTALL)
-BRLCAD_ADDEXEC(spltest spltest.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(spltest spltest.c "libwdb;libnmg" NO_INSTALL)
 BRLCAD_ADDEXEC(surfaceintersect "surfaceintersect.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(tea_nmg tea_nmg.c libwdb NO_INSTALL)
-BRLCAD_ADDEXEC(tube tube.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(tea_nmg tea_nmg.c "libwdb;libnmg" NO_INSTALL)
+BRLCAD_ADDEXEC(tube tube.c "libwdb;libnmg;${M_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(wdb_example wdb_example.c libwdb NO_INSTALL) # NOTE: has manual page
 
 add_subdirectory(naca)
@@ -58,10 +58,10 @@ BRLCAD_ADDEXEC(pyramid pyramid.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(ringworld ringworld.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(sketch sketch.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(sphflake sphflake.c "libwdb;${M_LIBRARY}" NO_INSTALL)
-BRLCAD_ADDEXEC(tea tea.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(tea tea.c "libwdb;libnmg" NO_INSTALL)
 BRLCAD_ADDEXEC(torii torii.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(vegetation vegetation.c "libwdb;${M_LIBRARY}" NO_INSTALL)
-BRLCAD_ADDEXEC(wavy wavy.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(wavy wavy.c "libwdb;libnmg" NO_INSTALL)
 
 
 set(proc-db_ignore_files

@@ -24,13 +24,13 @@ BRLCAD_INCLUDE_DIRS(ASC_CONV_INCLUDE_DIRS)
 
 BRLCAD_ADDEXEC(asc2dsp asc2dsp.c libbu)
 
-BRLCAD_ADDEXEC(asc2g asc2g.c "libtclcad;libged;libwdb;librt;libbu;${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDEXEC(asc2g asc2g.c "libtclcad;libged;libwdb;librt;libnmg;libbu;${WINSOCK_LIB};${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(asc2pix asc2pix.c libbu)
 
 BRLCAD_ADDEXEC(pix2asc pix2asc.c libbu)
 
-BRLCAD_ADDEXEC(g2asc g2asc.c "libtclcad;librt;libbu;${WINSOCK_LIB}")
+BRLCAD_ADDEXEC(g2asc g2asc.c "libtclcad;librt;libnmg;libbu;${WINSOCK_LIB}")
 
 # Local Variables:
 # tab-width: 8

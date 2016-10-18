@@ -6,7 +6,7 @@ set(MGED_INCLUDE_DIRS
   ${WDB_INCLUDE_DIRS}
   ${DM_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
-  ${SYSV_INCLUDE_DIRS}
+  ${NMG_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
   ${TCL_INCLUDE_PATH}
   ${TERMIO_INCLUDE_DIRS}
@@ -65,7 +65,7 @@ set(MGED_SOURCES
   wdb_obj.c
   )
 
-set(mged_libs libtclcad libged libwdb libdm ${ITCL_LIBRARY} ${ITK_LIBRARY})
+set(mged_libs libtclcad libged libwdb libdm libnmg ${ITCL_LIBRARY} ${ITK_LIBRARY})
 if(TARGET libtermio)
   set(mged_libs ${mged_libs} libtermio)
 endif(TARGET libtermio)
