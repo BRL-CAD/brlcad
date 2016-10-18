@@ -133,6 +133,7 @@ set(LIBGED_SOURCES
   grid2model_lu.c
   grid2view_lu.c
   group.c
+  heal.c
   hide.c
   how.c
   human.c

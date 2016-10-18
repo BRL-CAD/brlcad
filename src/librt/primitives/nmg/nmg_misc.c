@@ -35,12 +35,12 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rt/geom.h"
-#include "raytrace.h"
+#include "bn/mat.h"
+#include "rt/nmg.h"
 #include "rt/nurb.h"
 
-#include "rt/db4.h"		/* for debugging stuff at bottom */
-
+/* externed */
+uint32_t nmg_debug;
 
 int
 nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
@@ -119,7 +119,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 		t = t1 + (t2 - t1) * 0.2 * (fastf_t)i;
 
 		VSETALLN(crv_pt, 0.0, coords);
-		rt_nurb_c_eval(eg, t, crv_pt);
+		nmg_nurb_c_eval(eg, t, crv_pt);
 		if (RT_NURB_IS_PT_RATIONAL(eg->pt_type)) {
 		    VSCALE(pts[edge_no], crv_pt, crv_pt[coords-1]);
 		} else {
@@ -175,7 +175,7 @@ nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fa
 	bu_bomb("nmg_snurb_fu_get_norm: bad face\n");
     }
 
-    rt_nurb_s_eval(f->g.snurb_p, u, v, tmp_pt);
+    nmg_nurb_s_eval(f->g.snurb_p, u, v, tmp_pt);
 
     if (RT_NURB_IS_PT_RATIONAL(f->g.snurb_p->pt_type)) {
 	double d;
@@ -206,7 +206,7 @@ nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v
 	bu_bomb("nmg_snurb_fu_get_norm: bad face\n");
     }
 
-    rt_nurb_s_norm(f->g.snurb_p, u, v, norm);
+    nmg_nurb_s_norm(f->g.snurb_p, u, v, norm);
 
     if ((fu->orientation != OT_SAME) != (f->flip != 0))
 	VREVERSE(norm, norm);
@@ -242,7 +242,7 @@ nmg_snurb_fu_get_norm_at_vu(const struct faceuse *fu, const struct vertexuse *vu
 
 
 void
-nmg_find_zero_length_edges(const struct model *m)
+nmg_find_zero_length_edges(const struct model *m, struct bu_list *vlfree)
 {
     struct bu_ptbl eu_tab;
     struct edgeuse *eu;
@@ -250,7 +250,7 @@ nmg_find_zero_length_edges(const struct model *m)
 
     bu_ptbl_init(&eu_tab, 64, " &eu_tab");
 
-    nmg_edgeuse_tabulate(&eu_tab, &m->magic);
+    nmg_edgeuse_tabulate(&eu_tab, &m->magic, vlfree);
 
     for (i=0; i<BU_PTBL_LEN(&eu_tab); i++) {
 	struct loopuse *lu;
@@ -302,7 +302,7 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
     struct vertexuse *vu;
     struct vertex *v1, *v2;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_find_top_face_in_dir(s = %p, dir=%d, flags = %p)\n",
 	       (void *)s, dir, (void *)flags);
 
@@ -339,7 +339,7 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	return (struct face *)NULL;
     }
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("top vertex is %p at (%g %g %g)\n",
 	       (void *)vp_top, V3ARGS(vp_top->vg_p->coord));
 
@@ -356,7 +356,7 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	eu = vu->up.eu_p;
 	NMG_CK_EDGEUSE(eu);
 
-	if (RTG.NMG_debug & DEBUG_BASIC) {
+	if (nmg_debug & DEBUG_BASIC) {
 	    bu_log("Checking edge (%g %g %g)<->(%g %g %g)\n",
 		   V3ARGS(eu->vu_p->v_p->vg_p->coord),
 		   V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
@@ -390,7 +390,7 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	VSUB2(edge, vu1->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 	VUNITIZE(edge);
 
-	if (RTG.NMG_debug & DEBUG_BASIC) {
+	if (nmg_debug & DEBUG_BASIC) {
 	    bu_log("Checking edge (%g %g %g)<->(%g %g %g)\n",
 		   V3ARGS(eu->vu_p->v_p->vg_p->coord),
 		   V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
@@ -400,7 +400,7 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 
 	/* check against current maximum slope */
 	if (edge[dir] > extreme_slope) {
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("New top edge!\n");
 	    extreme_slope = edge[dir];
 	    e_top = eu->e_p;
@@ -418,7 +418,7 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
     v2 = eu->eumate_p->vu_p->v_p;
     NMG_CK_VERTEX(v2);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("top EU is %p (%g %g %g) <-> (%g %g %g)\n",
 	       (void *)eu, V3ARGS(v1->vg_p->coord),
 	       V3ARGS(v2->vg_p->coord));
@@ -460,14 +460,14 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	    continue;
 
 	/* make a vector in the direction of "eu1" */
-	if (RTG.NMG_debug & DEBUG_BASIC)
+	if (nmg_debug & DEBUG_BASIC)
 	    bu_log("test EU is %p (%g %g %g) <-> (%g %g %g)\n",
 		   (void *)eu, V3ARGS(eu->vu_p->v_p->vg_p->coord),
 		   V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
 
 	VSUB2(edge_dir, eu1->eumate_p->vu_p->v_p->vg_p->coord, eu1->vu_p->v_p->vg_p->coord);
 
-	if (RTG.NMG_debug & DEBUG_BASIC)
+	if (nmg_debug & DEBUG_BASIC)
 	    bu_log("edge_dir is (%g %g %g)\n", V3ARGS(edge_dir));
 
 	/* find the normal for this faceuse */
@@ -477,7 +477,7 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	    nmg_snurb_fu_get_norm_at_vu(fu, eu1->vu_p, normal);
 	}
 
-	if (RTG.NMG_debug & DEBUG_BASIC)
+	if (nmg_debug & DEBUG_BASIC)
 	    bu_log("fu normal is (%g %g %g)\n", V3ARGS(normal));
 
 	/* normal cross edge direction gives vector in face */
@@ -485,14 +485,14 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 
 	/* unitize to get slope */
 	VUNITIZE(left);
-	if (RTG.NMG_debug & DEBUG_BASIC) {
+	if (nmg_debug & DEBUG_BASIC) {
 	    bu_log("left vector is (%g %g %g)\n", V3ARGS(left));
 	    bu_log("\textreme slope in %d direction is %g\n", dir, extreme_slope);
 	}
 
 	/* check against current most extreme slope */
 	if (left[dir] > extreme_slope) {
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("new f_top\n");
 	    extreme_slope = left[dir];
 	    f_top = fu->f_p;
@@ -504,7 +504,7 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	return (struct face *)NULL;
     }
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_find_top_face_in_dir: top face = %p, dir = %d, top vertex = %p (%g %g %g)\n",
 	       (void *)f_top, dir,
 	       (void *)vp_top, V3ARGS(vp_top->vg_p->coord));
@@ -560,7 +560,7 @@ struct top_face
 
 
 HIDDEN void
-nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const struct bn_tol *ttol)
+nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, struct bu_list *vlfree, const struct bn_tol *ttol)
 {
     struct shell *outer_shell, *void_s, *s;
     struct faceuse *fu;
@@ -659,7 +659,7 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
 		    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 			int nmg_class;
 
-			nmg_class = nmg_class_pt_s(eu->vu_p->v_p->vg_p->coord, outer_shell, 0, ttol);
+			nmg_class = nmg_class_pt_s(eu->vu_p->v_p->vg_p->coord, outer_shell, 0, vlfree, ttol);
 
 			if (nmg_class == NMG_CLASS_AoutB) {
 			    breakout = 1;
@@ -753,7 +753,7 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
  * geometry is altered.
  */
 int
-nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, const struct bn_tol *tol)
+nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl *outer_shells;
     struct shell *s;
@@ -776,7 +776,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
     }
     for (i=0; i<BU_PTBL_LEN(outer_shells); i++) {
 	s = (struct shell *)BU_PTBL_GET(outer_shells, i);
-	if (nmg_decompose_shell(s, tol) > 1)
+	if (nmg_decompose_shell(s, vlfree, tol) > 1)
 	    re_bound = 1;
     }
     bu_ptbl_reset(outer_shells);
@@ -829,7 +829,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
 	BU_CK_PTBL((*shells)[i]);
 	bu_ptbl_ins((*shells)[i], BU_PTBL_GET(outer_shells, i));
 	if (outer_shell_count != total_shells) /* must be some void shells */
-	    nmg_assoc_void_shells(r, (*shells)[i], tol);
+	    nmg_assoc_void_shells(r, (*shells)[i], vlfree, tol);
     }
 
     bu_free((char *)flags, "nmg_find_outer_and_void_shells: flags");
@@ -843,12 +843,12 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
  * passed. Returns the number of flags set.
  */
 int
-nmg_mark_edges_real(const uint32_t *magic_p)
+nmg_mark_edges_real(const uint32_t *magic_p, struct bu_list *vlfree)
 {
     struct bu_ptbl edges;
     int i, count;
 
-    nmg_edge_tabulate(&edges, magic_p);
+    nmg_edge_tabulate(&edges, magic_p, vlfree);
 
     count = BU_PTBL_LEN(&edges);
     for (i=0; i<count; i++) {
@@ -933,7 +933,7 @@ nmg_tabulate_face_g_verts(struct bu_ptbl *tab, const struct face_g_plane *fg)
  * shell Intended for use after extrusion
  */
 void
-nmg_isect_shell_self(struct shell *s, const struct bn_tol *tol)
+nmg_isect_shell_self(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct model *m;
     struct nmgregion *r;
@@ -985,7 +985,7 @@ nmg_isect_shell_self(struct shell *s, const struct bn_tol *tol)
 
 	    fu2 = (struct faceuse *)BU_PTBL_GET(&fus, fu2_no);
 
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("nmg_extrude_cleanup: fu=%p, fu2=%p\n", (void *)fu, (void *)fu2);
 
 	    /* skip faceuses radial to fu or not OT_SAME */
@@ -999,11 +999,11 @@ nmg_isect_shell_self(struct shell *s, const struct bn_tol *tol)
 	    if (!V3RPP_OVERLAP(f->min_pt, f->max_pt, f2->min_pt, f2->max_pt))
 		continue;
 
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("nmg_extrude_cleanup: calling nmg_isect_two_generic_faces(fu=%p, fu2=%p)\n",
 		       (void *)fu, (void *)fu2);
 
-	    nmg_isect_two_generic_faces(fu, fu2, tol);
+	    nmg_isect_two_generic_faces(fu, fu2, vlfree, tol);
 	}
 	/* move fu back where it belongs */
 	while (BU_LIST_NON_EMPTY(&s_fu->fu_hd)) {
@@ -1012,7 +1012,7 @@ nmg_isect_shell_self(struct shell *s, const struct bn_tol *tol)
 	    fu_tmp = BU_LIST_FIRST(faceuse, &s_fu->fu_hd);
 	    NMG_CK_FACEUSE(fu_tmp);
 
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("nmg_extrude_cleanup: moving fu %p back\n", (void *)fu_tmp);
 
 	    nmg_mv_fu_between_shells(s, s_fu, fu_tmp);
@@ -1195,7 +1195,7 @@ nmg_move_lu_between_fus(struct faceuse *dest, struct faceuse *src, struct loopus
     NMG_CK_FACEUSE(src->fumate_p);
     NMG_CK_LOOPUSE(lu);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_move_lu_between_fus(dest=%p, src=%p, lu=%p)\n",
 	       (void *)dest, (void *)src, (void *)lu);
 
@@ -1554,7 +1554,7 @@ out:
  *
  */
 int
-nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
+nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl, struct bu_list *vlfree)
 {
     double one_over_vertex_count;
     fastf_t det;
@@ -1628,7 +1628,7 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	    goto out;
 	}
 
-	nmg_vertex_tabulate(&verts, &fu->l.magic);
+	nmg_vertex_tabulate(&verts, &fu->l.magic, vlfree);
     }
 
     /* Get the direction for the plane normal in "old_pl".
@@ -1783,12 +1783,12 @@ out:
  * resulting plane
  */
 int
-nmg_calc_face_g(struct faceuse *fu)
+nmg_calc_face_g(struct faceuse *fu, struct bu_list *vlfree)
 {
     plane_t pl;
     int ret_val;
 
-    ret_val = nmg_calc_face_plane(fu, pl);
+    ret_val = nmg_calc_face_plane(fu, pl, vlfree);
 
     if (!ret_val)
 	nmg_face_g(fu, pl);
@@ -1915,7 +1915,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
     NMG_CK_FACEUSE(fu);
     BN_CK_TOL(tol);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_purge_unwanted_intersection_points(%p, %p)\n", (void *)vert_list, (void *)fu);
 	bu_log("\t%ld vertexuses in list\n", vert_list->end);
     }
@@ -1942,7 +1942,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	lg = lu->l_p->lg_p;
 	NMG_CK_LOOP_G(lg);
 
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("vu[%d]: %p (%g %g %g) lu: %p %s\n",
 		   i,
 		   (void *)vu, V3ARGS(vu->v_p->vg_p->coord),
@@ -1990,7 +1990,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	    fu2lg = fu2lu->l_p->lg_p;
 	    NMG_CK_LOOP_G(fu2lg);
 
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		bu_log("\tfu2lu BBox: (%g %g %g)  (%g %g %g) %s\n",
 		       V3ARGS(fu2lg->min_pt), V3ARGS(fu2lg->max_pt),
 		       nmg_orientation(fu2lu->orientation));
@@ -2003,14 +2003,14 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	}
 	if (!overlap) {
 	    /* why is this vertexuse in the list? */
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		bu_log("nmg_purge_unwanted_intersection_points This little bugger slipped in somehow.  Deleting it from the list.\n");
 		nmg_pr_vu_briefly(vu, (char *)NULL);
 	    }
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC &&
 		lu->orientation == OT_UNSPEC) {
 		/* Drop this loop of a single vertex in sanitize() */
-		if (RTG.NMG_debug & DEBUG_POLYSECT)
+		if (nmg_debug & DEBUG_POLYSECT)
 		    bu_log("nmg_purge_unwanted_intersection_points() remarking as OT_BOOLPLACE\n");
 		lu->orientation =
 		    lu->lumate_p->orientation = OT_BOOLPLACE;
@@ -2028,7 +2028,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	    --i;
 	}
     }
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("\tAt end of nmg_purge_unwanted_intersection_points, %ld vertexuses in list\n",
 	       vert_list->end);
 }
@@ -2253,7 +2253,7 @@ order_tbl(struct bu_ptbl *tbl, int start_idx, int **idx, size_t tbl_size, size_t
  * of free edges and the two used ones are removed.
  */
 void
-nmg_close_shell(struct shell *s, const struct bn_tol *tol)
+nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl eu_tbl;		/* table of free edgeuses from shell */
     struct bu_ptbl vert_tbl;	/* table of vertices for use in nmg_cface */
@@ -2266,7 +2266,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
     size_t  i;
     int found;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_close_shell: s = %p\n", (void *)s);
 
     NMG_CK_SHELL(s);
@@ -2599,7 +2599,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 		    tol))
 	    {
 		fu = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&vert_tbl), 3);
-		if (nmg_calc_face_g(fu)) {
+		if (nmg_calc_face_g(fu,vlfree)) {
 		    bu_log("Failed planeeq\n");
 		    nmg_kfu(fu);
 		}
@@ -2637,7 +2637,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 
 	    /* Create last face from remaining 3 edges */
 	    fu = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&vert_tbl), 3);
-	    if (nmg_calc_face_g(fu))
+	    if (nmg_calc_face_g(fu,vlfree))
 		bu_log("Failed planeeq\n");
 
 	} else
@@ -2680,7 +2680,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
  * is assigned a correspondence.
  */
 struct shell *
-nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
+nmg_dup_shell(struct shell *s, long int ***trans_tbl, struct bu_list *vlfree, const struct bn_tol *tol)
 {
 
     struct model *m;
@@ -2692,7 +2692,7 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
     struct bu_ptbl faces;
     int tbl_size;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_dup_shell(s = %p, trans_tbl = %p)\n", (void *)s, (void *)trans_tbl);
 
     NMG_CK_SHELL(s);
@@ -2776,7 +2776,7 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
     }
 
     /* glue new faces */
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), vlfree, tol);
     bu_ptbl_free(&faces);
 
     /* copy wire loops */
@@ -2873,7 +2873,7 @@ nmg_reverse_radials(struct faceuse *fu, const struct bn_tol *tol)
 {
     struct loopuse *lu;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_reverse_radials(fu = %p)\n", (void *)fu);
 
     NMG_CK_FACEUSE(fu);
@@ -2925,7 +2925,7 @@ nmg_reverse_face_and_radials(struct faceuse *fu, const struct bn_tol *tol)
 {
     struct loopuse *lu;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_reverse_face_and_radials(fu = %p)\n", (void *)fu);
 
     NMG_CK_FACEUSE(fu);
@@ -3044,7 +3044,7 @@ nmg_propagate_normals(struct faceuse *fu_in, long int *flags, const struct bn_to
     struct edgeuse *eu, *eu1;
     struct faceuse *fu;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_propagate_normals(fu_in = %p, flags = %p)\n", (void *)fu_in, (void *)flags);
 
     NMG_CK_FACEUSE(fu_in);
@@ -3097,7 +3097,7 @@ nmg_propagate_normals(struct faceuse *fu_in, long int *flags, const struct bn_to
 
 	/* if this face has already been processed, skip it */
 	if (NMG_INDEX_TEST_AND_SET(flags, fu->f_p)) {
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("nmg_propagate_normals: checking fu %p, eu = %p, eu1 = %p\n",
 		       (void *)fu, (void *)eu, (void *)eu1);
 
@@ -3154,7 +3154,7 @@ nmg_propagate_normals(struct faceuse *fu_in, long int *flags, const struct bn_to
  * creates new edges so that there is no sharing of edges among shells
  */
 HIDDEN void
-nmg_disconnect_shells(struct nmgregion *r)
+nmg_disconnect_shells(struct nmgregion *r, struct bu_list *vlfree)
 {
     struct shell *s1;
     struct bu_ptbl edges;
@@ -3172,7 +3172,7 @@ nmg_disconnect_shells(struct nmgregion *r)
 	return;
 
     /* get a list of all edges in this region */
-    nmg_edge_tabulate(&edges, &r->l.magic);
+    nmg_edge_tabulate(&edges, &r->l.magic, vlfree);
 
     /* look at every edge in region */
     for (i=0; i<BU_PTBL_LEN(&edges); i++) {
@@ -3355,7 +3355,7 @@ missed:
     }
     NMG_GET_FU_NORMAL(normal, fu);
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("\tnmg_fix_decomposed_shell_normals: top face is %p in %d direction, OT_SAME use is %p\n",
 	       (void *)f_top, dir, (void *)fu);
 	bu_log("\toutward normal = (%g %g %g)\n", V3ARGS(normal));
@@ -3364,7 +3364,7 @@ missed:
     /* f_top is the topmost face (in the "dir" direction), so its OT_SAME use should have a
      * normal with component in the "dir" direction */
     if (normal[dir] < 0.0) {
-	if (RTG.NMG_debug & DEBUG_BASIC)
+	if (nmg_debug & DEBUG_BASIC)
 	    bu_log("nmg_fix_decomposed_shell_normals: reversing fu %p\n", (void *)fu);
 
 	nmg_reverse_face_and_radials(fu, tol);
@@ -3383,7 +3383,7 @@ missed:
 
     nmg_propagate_normals(fu, flags, tol);
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	vect_t new_norm;
 
 	NMG_GET_FU_NORMAL(new_norm, fu);
@@ -3423,7 +3423,7 @@ missed:
  * the region are being used for table look-up.
  */
 struct model *
-nmg_mk_model_from_region(struct nmgregion *r, int reindex)
+nmg_mk_model_from_region(struct nmgregion *r, int reindex, struct bu_list *vlfree)
 {
     struct model *m;
     struct bu_ptbl tbl;
@@ -3434,7 +3434,7 @@ nmg_mk_model_from_region(struct nmgregion *r, int reindex)
 
 
     /* check if anything in this region has uses in another region */
-    nmg_vertex_tabulate(&tbl, &r->l.magic);
+    nmg_vertex_tabulate(&tbl, &r->l.magic, vlfree);
 
     for (i=0; i<BU_PTBL_LEN(&tbl); i++) {
 	struct vertex *v;
@@ -3453,7 +3453,7 @@ nmg_mk_model_from_region(struct nmgregion *r, int reindex)
     }
     bu_ptbl_free(&tbl);
 
-    nmg_edge_tabulate(&tbl, &r->l.magic);
+    nmg_edge_tabulate(&tbl, &r->l.magic, vlfree);
     for (i=0; i<BU_PTBL_LEN(&tbl); i++) {
 	struct edge *e;
 	struct edgeuse *eu;
@@ -3512,7 +3512,7 @@ nmg_mk_model_from_region(struct nmgregion *r, int reindex)
  *   7. Destroy the copy model.
  */
 void
-nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
+nmg_fix_normals(struct shell *s_orig, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct model *tmp_m;
     struct model *m;
@@ -3524,7 +3524,7 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
     int shell_count;
     long **trans_tbl;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_fix_normals(s = %p)\n", (void *)s_orig);
 
     NMG_CK_SHELL(s_orig);
@@ -3564,17 +3564,17 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
     (void)nmg_ks(BU_LIST_FIRST(shell, &tmp_r->s_hd));
 
     /* make a copy of the shell of interest */
-    dup_s = nmg_dup_shell(s_orig, &trans_tbl, tol);
+    dup_s = nmg_dup_shell(s_orig, &trans_tbl, vlfree, tol);
 
     /* move the copy to our work area */
     nmg_mv_shell_to_region(dup_s, tmp_r);
 
     /* move duplicate shell to another model */
-    tmp_m = nmg_mk_model_from_region(tmp_r, 0); /* don't reindex, We need the old indices */
+    tmp_m = nmg_mk_model_from_region(tmp_r, 0, vlfree); /* don't reindex, We need the old indices */
     nmg_rebound(tmp_m, tol);
 
     /* decompose the shell */
-    shell_count = nmg_decompose_shell(dup_s, tol);
+    shell_count = nmg_decompose_shell(dup_s, vlfree, tol);
 
     if (shell_count == 1) {
 	/* just one shell, so fix it and return */
@@ -3586,7 +3586,7 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
     }
 
     /* make sure the shells don't share any edges */
-    nmg_disconnect_shells(tmp_r);
+    nmg_disconnect_shells(tmp_r, vlfree);
 
     /* Make sure all OT_SAME faceuses are radial to OT_SAME faceuses */
     for (BU_LIST_FOR (s1, shell, &tmp_r->s_hd))
@@ -3614,7 +3614,7 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 	    if (s1 == s2)
 		continue;
 
-	    nmg_class = nmg_classify_s_vs_s(s1, s2, tol);
+	    nmg_class = nmg_classify_s_vs_s(s1, s2, vlfree, tol);
 	    if (nmg_class == NMG_CLASS_AinB)
 		inner_count++;
 	    else if (nmg_class == NMG_CLASS_Unknown) {
@@ -3702,7 +3702,7 @@ nmg_break_long_edges(struct shell *s, const struct bn_tol *tol)
     struct edgeuse *eu;
     int split_count=0;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_break_long_edges(s = %p)\n", (void *)s);
 
     NMG_CK_SHELL(s);
@@ -3760,7 +3760,7 @@ nmg_break_long_edges(struct shell *s, const struct bn_tol *tol)
 			VSUB2(v1, eu1->eumate_p->vu_p->v_p->vg_p->coord, eu1->vu_p->v_p->vg_p->coord);
 
 			if (MAGSQ(v0) > MAGSQ(v1) && VDOT(v0, v1) < 0.0) {
-			    if (RTG.NMG_debug & DEBUG_BASIC) {
+			    if (nmg_debug & DEBUG_BASIC) {
 				bu_log("Breaking edge from (%f %f %f) to (%f %f %f) at (%f %f %f)\n",
 				       V3ARGS(eu->vu_p->v_p->vg_p->coord),
 				       V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord),
@@ -3768,7 +3768,7 @@ nmg_break_long_edges(struct shell *s, const struct bn_tol *tol)
 			    }
 			    (void) nmg_ebreak(eu1->vu_p->v_p, eu);
 			    split_count++;
-			} else if (RTG.NMG_debug & DEBUG_BASIC) {
+			} else if (nmg_debug & DEBUG_BASIC) {
 			    bu_log("Not splitting collinear edges %p and %p:\n", (void *)eu, (void *)eu1);
 			    bu_log("\t(%f %f %f) -> (%f %f %f)\n",
 				   V3ARGS(eu->vu_p->v_p->vg_p->coord),
@@ -3801,7 +3801,7 @@ nmg_mk_new_face_from_loop(struct loopuse *lu)
     struct loopuse *lu_mate;
     int ot_same_loops=0;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_mk_new_face_from_loop(lu = %p)\n", (void *)lu);
 
     NMG_CK_LOOPUSE(lu);
@@ -3863,7 +3863,7 @@ struct nmg_split_loops_state
 
 
 HIDDEN void
-nmg_split_loops_handler(uint32_t *fu_p, void *sl_state, int UNUSED(unused))
+nmg_split_loops_handler(uint32_t *fu_p, void *sl_state, int UNUSED(unused), struct bu_list *vlfree)
 {
     struct faceuse *fu;
     struct nmg_split_loops_state *state;
@@ -3945,7 +3945,7 @@ nmg_split_loops_handler(uint32_t *fu_p, void *sl_state, int UNUSED(unused))
 		    continue;
 
 		/* skip loops that are not within lu */
-		if (nmg_classify_lu_lu(lu1, lu, tol) != NMG_CLASS_AinB)
+		if (nmg_classify_lu_lu(lu1, lu, vlfree, tol) != NMG_CLASS_AinB)
 		    continue;
 
 		/* lu1 is an OT_OPPOSITE loopuse within the OT_SAME lu
@@ -3962,9 +3962,9 @@ nmg_split_loops_handler(uint32_t *fu_p, void *sl_state, int UNUSED(unused))
 		    if (lu2->orientation != OT_SAME)
 			continue;
 
-		    if (nmg_classify_lu_lu(lu2, lu, tol) == NMG_CLASS_AinB) {
+		    if (nmg_classify_lu_lu(lu2, lu, vlfree, tol) == NMG_CLASS_AinB) {
 			/* lu2 is within lu, does it contain lu1?? */
-			if (nmg_classify_lu_lu(lu1, lu2, tol) == NMG_CLASS_AinB) {
+			if (nmg_classify_lu_lu(lu1, lu2, vlfree, tol) == NMG_CLASS_AinB) {
 			    /* Yes, lu1 is within lu2, so lu1 is not
 			     * a hole in lu
 			     */
@@ -4042,7 +4042,7 @@ nmg_split_loops_handler(uint32_t *fu_p, void *sl_state, int UNUSED(unused))
  * Returns the number of faces modified.
  */
 int
-nmg_split_loops_into_faces(uint32_t *magic_p, const struct bn_tol *tol)
+nmg_split_loops_into_faces(uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct model *m;
     struct nmg_split_loops_state sl_state;
@@ -4054,7 +4054,7 @@ nmg_split_loops_into_faces(uint32_t *magic_p, const struct bn_tol *tol)
 						   NULL, NULL, NULL, NULL, NULL};
     /* htab.aft_faceuse = nmg_split_loops_handler; */
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_split_loops_into_faces(magic_p = %p)\n", (void *)magic_p);
 
     BN_CK_TOL(tol);
@@ -4068,7 +4068,7 @@ nmg_split_loops_into_faces(uint32_t *magic_p, const struct bn_tol *tol)
     sl_state.flags = (long *)bu_calloc(m->maxindex*2, sizeof(long), "nmg_split_loops_into_faces: flags");
     sl_state.tol = tol;
 
-    nmg_visit(magic_p, &htab, (void *)&sl_state);
+    nmg_visit(magic_p, &htab, (void *)&sl_state, vlfree);
 
     count = sl_state.split;
 
@@ -4089,7 +4089,7 @@ nmg_split_loops_into_faces(uint32_t *magic_p, const struct bn_tol *tol)
  *   additional shells in the passed in shell's region.
  */
 int
-nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
+nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int missed_faces;
     size_t no_of_shells=1;
@@ -4107,7 +4107,7 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
     struct bu_ptbl shared_edges;
     long *flags;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_decompose_shell(s = %p) START\n", (void *)s);
 
     NMG_CK_SHELL(s);
@@ -4125,7 +4125,7 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
     bu_ptbl_init(&shared_edges, 64, " &shared_edges ");
 
     /* Need to be sure that every face has just one OT_SAME loop */
-    (void)nmg_split_loops_into_faces(&s->l.magic, tol);
+    (void)nmg_split_loops_into_faces(&s->l.magic, vlfree, tol);
 
     /* get first faceuse from shell */
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
@@ -4483,7 +4483,7 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
 	    fu = next_fu;
 	}
 
-	nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), tol);
+	nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), vlfree, tol);
 	bu_ptbl_free(&faces);
 	nmg_shell_a(new_s, tol);
     }
@@ -4493,73 +4493,10 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
 
     nmg_rebound(m , tol);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_decompose_shell END (%d shells)\n", no_of_shells);
 
     return no_of_shells;
-}
-
-
-/**
- * Store an NMG model as a separate .g file, for later examination.
- * Don't free the model, as the caller may still have uses for it.
- *
- * NON-PARALLEL because of rt_uniresource.
- */
-void
-nmg_stash_model_to_file(const char *filename, const struct model *m, const char *title)
-{
-    struct rt_wdb *fp;
-    struct rt_db_internal intern;
-    struct bu_external ext;
-    int ret;
-    int flags;
-    char *name="error.s";
-
-    bu_log("nmg_stash_model_to_file('%s', %p, %s)\n", filename, (void *)m, title);
-
-    NMG_CK_MODEL(m);
-    nmg_vmodel(m);
-
-    if ((fp = wdb_fopen(filename)) == NULL) {
-	perror(filename);
-	return;
-    }
-
-    RT_DB_INTERNAL_INIT(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_NMG;
-    intern.idb_meth = &OBJ[ID_NMG];
-    intern.idb_ptr = (void *)m;
-
-    if (db_version(fp->dbip) < 5) {
-	BU_EXTERNAL_INIT(&ext);
-	ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
-	if (ret < 0) {
-	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
-		   name);
-	    ret = -1;
-	    goto out;
-	}
-	db_wrap_v4_external(&ext, name);
-    } else {
-	if (rt_db_cvt_to_external5(&ext, name, &intern, 1.0, fp->dbip, &rt_uniresource, intern.idb_major_type) < 0) {
-	    bu_log("wdb_export4(%s): solid export failure\n",
-		   name);
-	    ret = -2;
-	    goto out;
-	}
-    }
-    BU_CK_EXTERNAL(&ext);
-
-    flags = db_flags_internal(&intern);
-    ret = wdb_export_external(fp, &ext, name, flags, intern.idb_type);
-out:
-    bu_free_external(&ext);
-    wdb_close(fp);
-
-    bu_log("nmg_stash_model_to_file(): wrote error.s to '%s'\n",
-	   filename);
 }
 
 
@@ -4657,7 +4594,7 @@ nmg_unbreak_handler(uint32_t *eup, void *state, int UNUSED(unused))
  * returns the number of edges mended
  */
 int
-nmg_unbreak_region_edges(uint32_t *magic_p)
+nmg_unbreak_region_edges(uint32_t *magic_p, struct bu_list *vlfree)
 {
     struct model *m;
     struct nmg_unbreak_state ub_state;
@@ -4669,7 +4606,7 @@ nmg_unbreak_region_edges(uint32_t *magic_p)
 						   NULL, NULL, NULL, NULL, NULL};
     /* htab.aft_edgeuse = nmg_unbreak_handler; */
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_unbreak_region_edges(magic_p = %p)\n", (void *)magic_p);
 
     m = nmg_find_model(magic_p);
@@ -4678,7 +4615,7 @@ nmg_unbreak_region_edges(uint32_t *magic_p)
     ub_state.unbroken = 0;
     ub_state.flags = (long *)bu_calloc(m->maxindex*2, sizeof(long), "nmg_unbreak_region_edges: flags");
 
-    nmg_visit(magic_p, &htab, (void *)&ub_state);
+    nmg_visit(magic_p, &htab, (void *)&ub_state, vlfree);
 
     count = ub_state.unbroken;
 
@@ -4701,7 +4638,7 @@ nmg_mv_shell_to_region(struct shell *s, struct nmgregion *r)
 {
     int ret_val;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_mv_shell_to_region(s=%p, r=%p)\n", (void *)s, (void *)r);
 
     NMG_CK_SHELL(s);
@@ -4748,7 +4685,7 @@ nmg_find_isect_faces(const struct vertex *new_v, struct bu_ptbl *faces, int *fre
     size_t i;
     int unique;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_find_isect_faces(new_v=%p, faces=%p)\n", (void *)new_v, (void *)faces);
 
     NMG_CK_VERTEX(new_v);
@@ -4818,7 +4755,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
     struct vertex_g *vg;
     int failed=0;
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	struct face *f;
 	struct faceuse *fu;
 	plane_t pl;
@@ -4918,7 +4855,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
     if (failed)
 	bu_log("nmg_simple_vertex_solve: Failed to determine new coordinates for vertex at (%f %f %f)\n",
 	       V3ARGS(new_v->vg_p->coord));
-    else if (RTG.NMG_debug & DEBUG_BASIC)
+    else if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_simple_vertex_solve: new coords = (%f %f %f)\n",
 	       V3ARGS(new_v->vg_p->coord));
 
@@ -5114,7 +5051,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
     BN_CK_TOL(tol);
     BU_CK_PTBL(int_faces);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_get_edge_lines(new_v=%p, int_faces=%p)\n", (void *)new_v, (void *)int_faces);
 
     /* A temporary tolerance struct for times when I don't want tolerancing */
@@ -5309,7 +5246,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 		done = 1;
 	}
     }
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("After getting edge lines:\n");
 	nmg_pr_inter(new_v, int_faces);
     }
@@ -5330,7 +5267,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
     struct nmgregion *r;
     size_t edge_no;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_get_max_edge_inters(new_v = %p, %ld intersect_fus structs, %ld faces)\n",
 	       (void *)new_v, BU_PTBL_LEN(int_faces), BU_PTBL_LEN(faces));
 
@@ -5383,7 +5320,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 	/* if we found another edge, calculate its intersection with the edge */
 	if (other_fus != edge_fus) {
 	    if (!bn_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol)) {
-		if (RTG.NMG_debug & DEBUG_BASIC)
+		if (nmg_debug & DEBUG_BASIC)
 		    bu_log("Edge #%d intersects edge #%d at dist = %f\n", edge_no, next_edge_no, dist[0]);
 		if (NEAR_ZERO(dist[0], tol->dist))
 		    dist[0] = 0.0;
@@ -5411,7 +5348,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 
 	if (other_fus != edge_fus) {
 	    if (bn_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol) >= 0) {
-		if (RTG.NMG_debug & DEBUG_BASIC)
+		if (nmg_debug & DEBUG_BASIC)
 		    bu_log("Edge #%d intersects edge #%d at dist = %f\n", edge_no, prev_edge_no, dist[0]);
 		if (NEAR_ZERO(dist[0], tol->dist))
 		    dist[0] = 0.0;
@@ -5449,7 +5386,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 		if (bn_isect_line3_plane(&dist[0], edge_fus->start, edge_fus->dir, f->g.plane_p->N, tol) > 1)
 		    continue;
 
-		if (RTG.NMG_debug & DEBUG_BASIC)
+		if (nmg_debug & DEBUG_BASIC)
 		    bu_log("Edge #%d intersects fu[0] from edge #%d at dist = %f\n", edge_no, other_index, dist[0]);
 
 		if (NEAR_ZERO(dist[0], tol->dist))
@@ -5477,7 +5414,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 	}
     }
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("After nmg_get_max_edge_inters:\n");
 	nmg_pr_inter(new_v, int_faces);
     }
@@ -5500,7 +5437,7 @@ nmg_fuse_inters(struct intersect_fus *i_fus, struct intersect_fus *j_fus, struct
     BU_CK_PTBL(int_faces);
     BN_CK_TOL(tol);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_fuse_inters: i_fus=%p, j_fus=%p, %ld edges\n",
 	       (void *)i_fus, (void *)j_fus, BU_PTBL_LEN(int_faces));
 
@@ -5523,7 +5460,7 @@ nmg_fuse_inters(struct intersect_fus *i_fus, struct intersect_fus *j_fus, struct
      * do a radial join
      */
     if (i_fus->fu[0] && j_fus->fu[1]) {
-	if (RTG.NMG_debug & DEBUG_BASIC) {
+	if (nmg_debug & DEBUG_BASIC) {
 	    bu_log("radial join of eu's %p and %p\n", (void *)i_fus->eu, (void *)radial_eu);
 	    bu_log("\t%p to %p and %p to %p\n" ,
 		   (void *)i_fus->eu->vu_p->v_p, (void *)i_fus->eu->eumate_p->vu_p->v_p,
@@ -5559,7 +5496,7 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
 {
     size_t edge_no;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_split_edges_at_pts(new_v = %p, %ld intersect_fus structs)\n",
 	       (void *)new_v, BU_PTBL_LEN(int_faces));
 
@@ -5600,7 +5537,7 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
 	if (i_fus && !i_fus->vp->vg_p)
 	    nmg_vertex_gv(i_fus->vp, i_fus->pt);
     }
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("After splitting edges:\n");
 	nmg_pr_inter(new_v, int_faces);
     }
@@ -5649,7 +5586,7 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
 	}
 	edge_no++;
     }
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("After loops of same face\n");
 	nmg_pr_inter(new_v, int_faces);
     }
@@ -5669,7 +5606,7 @@ nmg_remove_short_eus_inter(struct vertex *new_v, struct bu_ptbl *int_faces, cons
     BU_CK_PTBL(int_faces);
     BN_CK_TOL(tol);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_remove_short_eus: new_v=%p (%f %f %f), %ld edges\n",
 	       (void *)new_v, V3ARGS(new_v->vg_p->coord), BU_PTBL_LEN(int_faces));
 
@@ -5739,7 +5676,7 @@ nmg_remove_short_eus_inter(struct vertex *new_v, struct bu_ptbl *int_faces, cons
 			   BU_LIST_NOT_HEAD(eu_next, &lu->down_hd))
 			eu_next = BU_LIST_PNEXT(edgeuse, &eu_next->l);
 
-		    if (RTG.NMG_debug & DEBUG_BASIC)
+		    if (nmg_debug & DEBUG_BASIC)
 			bu_log("\tkilling eu %p (%p)\n", (void *)eu, (void *)eu->eumate_p);
 
 		    bad_loop = nmg_keu(eu);
@@ -5760,7 +5697,7 @@ nmg_remove_short_eus_inter(struct vertex *new_v, struct bu_ptbl *int_faces, cons
 			   BU_LIST_NOT_HEAD(eu_next, &lu->down_hd))
 			eu_next = BU_LIST_PNEXT(edgeuse, &eu_next->l);
 
-		    if (RTG.NMG_debug & DEBUG_BASIC)
+		    if (nmg_debug & DEBUG_BASIC)
 			bu_log("\tkilling eu %p (%p)\n", (void *)eu, (void *)eu->eumate_p);
 
 		    bad_loop = nmg_keu(eu);
@@ -5806,7 +5743,7 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
     size_t edge_no=0;
     size_t next_edge_no;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_simplify_inter(new_v=%p (%f %f %f), int_faces=%p)\n",
 	       (void *)new_v, V3ARGS(new_v->vg_p->coord), (void *)int_faces);
 
@@ -5888,7 +5825,7 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
 	    if (i_dist < tol->dist_sq || j_dist < tol->dist_sq)
 		bu_bomb("nmg_simplify_inter: vertex within tolerance of new_v\n");
 
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\tCollinear vertices %p, %p, and %p\n",
 		       (void *)new_v, (void *)i_fus->vp, (void *)j_fus->vp);
 
@@ -5897,7 +5834,7 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
 		 * split edge at j point
 		 */
 
-		if (RTG.NMG_debug & DEBUG_BASIC)
+		if (nmg_debug & DEBUG_BASIC)
 		    bu_log("\tSplitting i_fus->eu %p at vertex %p\n",
 			   (void *)i_fus->eu, (void *)j_fus->vp);
 
@@ -5911,7 +5848,7 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
 		 * split edge at i point
 		 */
 
-		if (RTG.NMG_debug & DEBUG_BASIC)
+		if (nmg_debug & DEBUG_BASIC)
 		    bu_log("\tSplitting j_fus->eu %p at vertex %p\n",
 			   (void *)j_fus->eu, (void *)i_fus->vp);
 
@@ -5922,7 +5859,7 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
 	}
 	edge_no++;
     }
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("\nAfter nmg_simplify_inter:\n");
 	nmg_pr_inter(new_v, int_faces);
     }
@@ -5936,13 +5873,13 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
  * combined with new_v to form triangular faces around new_v
  */
 void
-nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
+nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct loopuse *old_lu;
     size_t edge_no=0;
     size_t next_edge_no;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_make_faces_at_vert(%p, %ld intersect_fus structs)\n",
 	       (void *)new_v, BU_PTBL_LEN(int_faces));
 
@@ -6077,7 +6014,7 @@ nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, const st
 	}
 
 	/* cut the face loop across the two vertices */
-	new_lu = nmg_cut_loop(vu1, vu2);
+	new_lu = nmg_cut_loop(vu1, vu2, vlfree);
 
 	/* Fix orientations.
 	 * We will never be cutting an OT_OPPOSITE loop
@@ -6136,7 +6073,7 @@ nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, const st
 	NMG_CK_FACEUSE(new_fu);
 
 	/* calculate a plane equation for the new face */
-	if (nmg_calc_face_g(new_fu)) {
+	if (nmg_calc_face_g(new_fu,vlfree)) {
 	    bu_log("nmg_make_faces_at_vert: Failed to calculate plane eqn for face:\n ");
 	    bu_log("\tnew_v is %p at (%f %f %f)\n", (void *)new_v, V3ARGS(new_v->vg_p->coord));
 	    if (bn_3pts_collinear(new_v->vg_p->coord,
@@ -6165,7 +6102,7 @@ nmg_kill_cracks_at_vertex(const struct vertex *vp)
     struct faceuse *fu;
     size_t fu_no;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_kill_cracks_at_vertex(vp=%p)\n", (void *)vp);
 
     NMG_CK_VERTEX(vp);
@@ -6318,7 +6255,7 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
     VSUB2(i_dir, i_end_pt, i_start->vg_p->coord);
     VSUB2(j_dir, j_end_pt, j_start->vg_p->coord);
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("nmg_dist_to_cross: checking edges %p and %p:\n", (void *)i_fus, (void *)j_fus);
 	bu_log("\t(%f %f %f) <-> (%f %f %f)\n", V3ARGS(i_start->vg_p->coord), V3ARGS(i_end_pt));
 	bu_log("\t(%f %f %f) <-> (%f %f %f)\n", V3ARGS(j_start->vg_p->coord), V3ARGS(j_end_pt));
@@ -6329,7 +6266,7 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
 	fastf_t max_dist1;
 	int ret_val;
 
-	if (RTG.NMG_debug & DEBUG_BASIC)
+	if (nmg_debug & DEBUG_BASIC)
 	    bu_log("\tBoth are free edges\n");
 
 	max_dist0 = MAGNITUDE(i_dir);
@@ -6341,7 +6278,7 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
 	if ((ret_val=bn_dist_line3_line3(dist, i_start->vg_p->coord, i_dir ,
 					 j_start->vg_p->coord, j_dir, tol)) >= 0)
 	{
-	    if (RTG.NMG_debug & DEBUG_BASIC) {
+	    if (nmg_debug & DEBUG_BASIC) {
 		bu_log("max_dists = %f, %f\n", max_dist0, max_dist1);
 		bu_log("dist = %f, %f\n", dist[0], dist[1]);
 	    }
@@ -6354,7 +6291,7 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
 	    {
 		plane_t pl1, pl2, pl3;
 
-		if (RTG.NMG_debug & DEBUG_BASIC) {
+		if (nmg_debug & DEBUG_BASIC) {
 		    point_t tmp_pt;
 
 		    bu_log("\t\tintersection!!\n");
@@ -6375,7 +6312,7 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
 	    } else
 		return (fastf_t)(-1.0);
 	} else {
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("ret_val = %d\n", ret_val);
 
 	    return (fastf_t)(-1.0);
@@ -6402,7 +6339,7 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
 		VJOIN1(new_pt, i_start->vg_p->coord, dist[0], i_dir);
 	    }
 
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\tdist=%f, new_pt=(%f %f %f)\n", dist[0], V3ARGS(new_pt));
 
 	    return dist[0]*len0;
@@ -6438,7 +6375,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 {
     size_t edge_no;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_fix_crossed_loops(new_v=%p (%f %f %f), %ld edges)\n",
 	       (void *)new_v, V3ARGS(new_v->vg_p->coord), BU_PTBL_LEN(int_faces));
 
@@ -6495,7 +6432,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 	    /* if no intersections, continue */
 	    if (nmg_continue) continue;
 
-	    if (RTG.NMG_debug & DEBUG_BASIC) {
+	    if (nmg_debug & DEBUG_BASIC) {
 		bu_log("fus=%p, prev=%p, next=%p, dist1=%f, dist2=%f\n",
 		       (void *)edge_fus, (void *)prev_fus, (void *)next_fus, dist1, dist2);
 		bu_log("\t(%f %f %f), (%f %f %f)\n", V3ARGS(pt1), V3ARGS(pt2));
@@ -6503,7 +6440,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 
 	    /* if both intersections are at the same point, merge all three */
 	    if (bn_pt3_pt3_equal(pt1, pt2, tol)) {
-		if (RTG.NMG_debug & DEBUG_BASIC)
+		if (nmg_debug & DEBUG_BASIC)
 		    bu_log("\tMerging all three points to pt1\n");
 
 		VMOVE(edge_fus->vp->vg_p->coord, pt1);
@@ -6514,7 +6451,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 		VMOVE(prev_fus->pt, pt1);
 	    } else if (dist1 > dist2) {
 		/* merge edge point with next edge point */
-		if (RTG.NMG_debug & DEBUG_BASIC)
+		if (nmg_debug & DEBUG_BASIC)
 		    bu_log("\tMerging edge and next to pt1, moving prev to pt2\n");
 		VMOVE(edge_fus->vp->vg_p->coord, pt1);
 		VMOVE(edge_fus->pt, pt1);
@@ -6525,7 +6462,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 		VMOVE(prev_fus->pt, pt2);
 	    } else {
 		/* merge edge point with previous point */
-		if (RTG.NMG_debug & DEBUG_BASIC)
+		if (nmg_debug & DEBUG_BASIC)
 		    bu_log("\tMerging edge and prev to pt2, moving next to pt1\n");
 		VMOVE(edge_fus->vp->vg_p->coord, pt2);
 		VMOVE(edge_fus->pt, pt2);
@@ -6538,7 +6475,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 	}
     }
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("After fixing edges that intersect two edges:\n");
 	nmg_pr_inter(new_v, int_faces);
     }
@@ -6571,7 +6508,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 
 	if (dist > tol->dist) {
 	    /* there is an intersection */
-	    if (RTG.NMG_debug & DEBUG_BASIC) {
+	    if (nmg_debug & DEBUG_BASIC) {
 		bu_log("edge %p intersect next edge %p\n", (void *)edge_fus, (void *)next_fus);
 		bu_log("\tdist=%f, (%f %f %f)\n", dist, V3ARGS(pt));
 	    }
@@ -6591,7 +6528,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 	    }
 	}
     }
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("After nmg_fix_crossed_loops:\n");
 	nmg_pr_inter(new_v, int_faces);
     }
@@ -6612,7 +6549,7 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
     BU_CK_PTBL(int_faces);
     BN_CK_TOL(tol);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_calc_new_v: (%f %f %f), %ld faces\n", V3ARGS(new_v->vg_p->coord), BU_PTBL_LEN(int_faces));
 
     /* make space for at least three planes */
@@ -6681,7 +6618,7 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
 	return 1;
     }
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("\tnew_v = (%f %f %f)\n", V3ARGS(new_v->vg_p->coord));
 
     bu_free((char *)planes, "nmg_calc_new_v: planes");
@@ -6695,7 +6632,7 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
 	(void)bn_dist_pt3_line3(&dist, fus->start, fus->start, fus->dir, new_v->vg_p->coord, tol);
     }
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("After nmg_calc_new_v:\n");
 	nmg_pr_inter(new_v, int_faces);
     }
@@ -6720,7 +6657,7 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
  * 	1 - failure
  */
 int
-nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const int free_edges, const int approximate, const struct bn_tol *tol)
+nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const int free_edges, const int approximate, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct faceuse *fu;
     struct face *fp1;
@@ -6731,7 +6668,7 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
      * Calculate intersection point along each edge
      * emanating from new_v */
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_complex_vertex_solve(new_v = %p, %ld faces)\n",
 	       (void *)new_v, BU_PTBL_LEN(faces));
 
@@ -6753,11 +6690,11 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
 	    fu = fp1->fu_p;
 	    NMG_GET_FU_PLANE(planes[i], fu);
 
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\t plane #%d: %g %g %g %g\n", i, V4ARGS(planes[i]));
 	}
 
-	if (RTG.NMG_debug & DEBUG_BASIC) {
+	if (nmg_debug & DEBUG_BASIC) {
 	    size_t j;
 
 	    for (i=0; i<BU_PTBL_LEN(faces); i++) {
@@ -6804,7 +6741,7 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
 
 		    planes[plane_count][W] = VDOT(planes[plane_count], new_v->vg_p->coord);
 
-		    if (RTG.NMG_debug & DEBUG_BASIC)
+		    if (nmg_debug & DEBUG_BASIC)
 			bu_log("\t added plane #%d: %g %g %g %g\n", plane_count, V4ARGS(planes[plane_count]));
 
 		    plane_count++;
@@ -6823,7 +6760,7 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
 	}
 	bu_free((char *) planes, "nmg_complex_vertex_solve: planes");
 
-	if (RTG.NMG_debug & DEBUG_BASIC)
+	if (nmg_debug & DEBUG_BASIC)
 	    bu_log("nmg_complex_vertex_solve: new coords = (%f %f %f)\n",
 		   V3ARGS(new_v->vg_p->coord));
 	return 0;
@@ -6866,7 +6803,7 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
     nmg_simplify_inter(new_v, &int_faces, tol);
 
     /* Build needed faces */
-    nmg_make_faces_at_vert(new_v, &int_faces, tol);
+    nmg_make_faces_at_vert(new_v, &int_faces, vlfree, tol);
 
     /* Where faces were not built, cracks have formed */
     nmg_kill_cracks_at_vertex(new_v);
@@ -6880,7 +6817,7 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
     }
     bu_ptbl_free(&int_faces);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_co, mplex_vertex_solve: new coords = (%f %f %f)\n",
 	       V3ARGS(new_v->vg_p->coord));
 
@@ -7014,7 +6951,7 @@ nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_
     int count;
     long *flags;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_move_edge_thru_pt(mv_eu=%p, pt=(%f %f %f))\n", (void *)mv_eu, V3ARGS(pt));
 
     NMG_CK_EDGEUSE(mv_eu);
@@ -7396,7 +7333,7 @@ nmg_follow_free_edges_to_vertex(const struct vertex *vpa, const struct vertex *v
 
     NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("nmg_follow_free_edges_to_vertex(vpa=%p, vpb=%p s=%p, eu=%p, found=%d)\n",
 	       (void *)vpa, (void *)vpb, (void *)s, (void *)eu, *found);
     }
@@ -7416,7 +7353,7 @@ nmg_follow_free_edges_to_vertex(const struct vertex *vpa, const struct vertex *v
 
 	NMG_CK_EDGEUSE(eu1);
 
-	if (RTG.NMG_debug & DEBUG_BASIC)
+	if (nmg_debug & DEBUG_BASIC)
 	    bu_log("\tchecking eu %p: %p (%f %f %f)\n\t\tto %p (%f %f %f)\n",
 		   (void *)eu1,
 		   (void *)eu1->vu_p->v_p, V3ARGS(eu1->vu_p->v_p->vg_p->coord),
@@ -7424,49 +7361,49 @@ nmg_follow_free_edges_to_vertex(const struct vertex *vpa, const struct vertex *v
 
 	/* stick to free edges */
 	if (eu1->eumate_p != eu1->radial_p) {
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\t\tnot a dangling edge\n");
 	    continue;
 	}
 
 	/* don`t go back the way we came */
 	if (eu1 == eu->eumate_p) {
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\t\tback the way we came\n");
 	    continue;
 	}
 
 	if (eu1->eumate_p->vu_p->v_p == vpb) {
 	    /* found it! */
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\t\tfound goal\n");
 	    bu_ptbl_ins(verts, (long *)vu->v_p);
 	    bu_ptbl_ins(verts, (long *)vpb);
 	    *found = 1;
 	} else if (eu1->eumate_p->vu_p->v_p == vpa) {
 	    /* back where we started */
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\t\tback at start\n");
 	    continue;
 	} else if (bu_ptbl_locate(bad_verts, (long *)eu1->eumate_p->vu_p->v_p) != (-1)) {
 	    /* this is the wrong way */
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\t\tA bad vertex\n");
 	    continue;
 	} else if (bu_ptbl_locate(verts, (long *)eu1->eumate_p->vu_p->v_p) != (-1)) {
 	    /* This is a loop! */
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("a loop\n");
 	    continue;
 	} else {
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\t\tinserting vertex %p\n", (void *)vu->v_p);
 	    bu_ptbl_ins(verts, (long *)vu->v_p);
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\t\tCalling follow edges\n");
 	    nmg_follow_free_edges_to_vertex(vpa, vpb, bad_verts, s, eu1, verts, found);
 	    if (*found < 0) {
-		if (RTG.NMG_debug & DEBUG_BASIC) {
+		if (nmg_debug & DEBUG_BASIC) {
 		    bu_log("\t\treturn is %d\n", *found);
 		    bu_log("\t\t\tremove vertex %p\n", (void *)vu->v_p);
 		}
@@ -7494,7 +7431,7 @@ nmg_find_path(const struct vertex *vpa, const struct vertex *vpb, struct bu_ptbl
     NMG_CK_VERTEX(vpa);
     NMG_CK_VERTEX(vpb);
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	size_t i;
 
 	bu_log("nmg_find_path(vpa=%p (%f %f %f), vpb=%p (%f %f %f)\n",
@@ -7527,33 +7464,33 @@ nmg_find_path(const struct vertex *vpa, const struct vertex *vpb, struct bu_ptbl
 
 	NMG_CK_EDGEUSE(eua);
 
-	if (RTG.NMG_debug & DEBUG_BASIC)
+	if (nmg_debug & DEBUG_BASIC)
 	    bu_log("\tchecking eu %p: %p (%f %f %f)\n\t\tto %p (%f %f %f)\n",
 		   (void *)eua,
 		   (void *)eua->vu_p->v_p, V3ARGS(eua->vu_p->v_p->vg_p->coord),
 		   (void *)eua->eumate_p->vu_p->v_p, V3ARGS(eua->eumate_p->vu_p->v_p->vg_p->coord));
 
 	if (eua->eumate_p != eua->radial_p) {
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\t\tback the way we came!\n");
 	    continue;
 	}
 
 	if (bu_ptbl_locate(bad_verts, (long *)eua->eumate_p->vu_p->v_p) != (-1)) {
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\t\tOne of the bad vertices!!\n");
 	    continue;
 	}
 
 	if (eua->eumate_p->vu_p->v_p == vpb) {
-	    if (RTG.NMG_debug & DEBUG_BASIC)
+	    if (nmg_debug & DEBUG_BASIC)
 		bu_log("\t\tfound goal!!\n");
 	    bu_ptbl_ins(&verts, (long *)vpb);
 	    return &verts;
 	}
 
 	done = 0;
-	if (RTG.NMG_debug & DEBUG_BASIC)
+	if (nmg_debug & DEBUG_BASIC)
 	    bu_log("\tCall follow edges\n");
 	nmg_follow_free_edges_to_vertex(vpa, vpb, bad_verts, s, eua, &verts, &done);
 
@@ -7617,7 +7554,7 @@ nmg_make_connect_faces(struct shell *dst, struct vertex *vpa, struct vertex *vpb
     fastf_t dist_to_a_sq, dist_to_b_sq;
     vect_t to_vpa, to_vpb;
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("nmg_make_connect_faces(dst=%p, vpa=%p (%f %f %f), vpb=%p (%f %f %f)\n",
 	       (void *)dst,
 	       (void *)vpa, V3ARGS(vpa->vg_p->coord),
@@ -7690,7 +7627,7 @@ nmg_make_connect_faces(struct shell *dst, struct vertex *vpa, struct vertex *vpb
 	if (!still_collinear) {
 	    /* make the new face */
 
-	    if (RTG.NMG_debug & DEBUG_BASIC) {
+	    if (nmg_debug & DEBUG_BASIC) {
 		size_t debug_int;
 
 		bu_log("make face:\n");
@@ -7852,7 +7789,7 @@ struct dangle
  * 	1 - failure
  */
 int
-nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **copy_tbl, const struct bn_tol *tol)
+nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **copy_tbl, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -7862,7 +7799,7 @@ nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **c
     int open_src, open_dst;
     size_t i, j, k;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_open_shells_connect(dst=%p, src=%p, copy_tbl=%p)\n",
 	       (void *)dst, (void *)src, (void *)copy_tbl);
 
@@ -7875,7 +7812,7 @@ nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **c
 
     if (!open_dst && !open_src) {
 	/* both shells are closed, just join them */
-	nmg_js(dst, src, tol);
+	nmg_js(dst, src, vlfree, tol);
 	return 0;
     }
 
@@ -8073,7 +8010,7 @@ nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **c
     }
 
     bu_ptbl_free(&dangles);
-    nmg_js(dst, src, tol);
+    nmg_js(dst, src, vlfree, tol);
 
     /* now glue it all together */
     bu_ptbl_init(&faces, 64, " &faces ");
@@ -8082,7 +8019,7 @@ nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **c
 	if (fu->orientation == OT_SAME)
 	    bu_ptbl_ins(&faces, (long *)fu);
     }
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), vlfree, tol);
     bu_ptbl_free(&faces);
 
     return 0;
@@ -8102,14 +8039,14 @@ nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **c
  * three faces intersect.
  */
 int
-nmg_in_vert(struct vertex *new_v, const int approximate, const struct bn_tol *tol)
+nmg_in_vert(struct vertex *new_v, const int approximate, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl faces;
     int failed=0;
     int free_edges=0;
     int face_count;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_in_vert(new_v=%p at (%f %f %f))\n",
 	       (void *)new_v, V3ARGS(new_v->vg_p->coord));
 
@@ -8121,7 +8058,7 @@ nmg_in_vert(struct vertex *new_v, const int approximate, const struct bn_tol *to
     /* find all unique faces that intersect at this vertex (new_v) */
     face_count = nmg_find_isect_faces(new_v, &faces, &free_edges, tol);
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("\tnmg_in_vert: found %d faces at new_v, %d free_edges\n",
 	       face_count, free_edges);
 
@@ -8131,7 +8068,7 @@ nmg_in_vert(struct vertex *new_v, const int approximate, const struct bn_tol *to
 	    bu_log("Could not solve simple vertex\n");
 	}
     } else {
-	if (nmg_complex_vertex_solve(new_v, &faces, free_edges, approximate, tol)) {
+	if (nmg_complex_vertex_solve(new_v, &faces, free_edges, approximate, vlfree, tol)) {
 	    failed = 1;
 	    bu_log("Could not solve complex vertex\n");
 	}
@@ -8149,7 +8086,7 @@ nmg_in_vert(struct vertex *new_v, const int approximate, const struct bn_tol *to
  * changes the model passed to it
  */
 void
-nmg_mirror_model(struct model *m)
+nmg_mirror_model(struct model *m, struct bu_list *vlfree)
 {
     struct bu_ptbl vertices;
     struct nmgregion *r;
@@ -8159,7 +8096,7 @@ nmg_mirror_model(struct model *m)
     NMG_CK_MODEL(m);
 
     /* mirror all vertices across the y axis */
-    nmg_vertex_tabulate(&vertices, &m->magic);
+    nmg_vertex_tabulate(&vertices, &m->magic, vlfree);
 
     for (i = 0; i < BU_PTBL_LEN(&vertices); i++) {
 	struct vertex *v;
@@ -8209,7 +8146,7 @@ nmg_kill_cracks(struct shell *s)
     struct faceuse *fu_next;
     int empty_shell=0;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_kill_cracks(s=%p)\n", (void *)s);
 
     NMG_CK_SHELL(s);
@@ -8353,13 +8290,13 @@ nmg_kill_cracks(struct shell *s)
     }
 
     if (empty_shell) {
-	if (RTG.NMG_debug & DEBUG_BASIC)
+	if (nmg_debug & DEBUG_BASIC)
 	    bu_log("nmg_kill_cracks: ret = %d\n", empty_shell);
 	return empty_shell;
     }
 
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_kill_cracks: ret = %d\n", empty_shell);
 
     return empty_shell;
@@ -8372,7 +8309,7 @@ nmg_kill_zero_length_edgeuses(struct model *m)
     struct nmgregion *r;
     int empty_model=0;
 
-    if (RTG.NMG_debug & DEBUG_BASIC)
+    if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_kill_zero_length_edgeuses(m=%p)\n", (void *)m);
 
     NMG_CK_MODEL(m);
@@ -8479,7 +8416,7 @@ nmg_kill_zero_length_edgeuses(struct model *m)
  * triangulated and broken into separate faces
  */
 void
-nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
+nmg_make_faces_within_tol(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl faceuses;
     struct faceuse *fu;
@@ -8508,15 +8445,15 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
 	    plane_t pl = HINIT_ZERO; /* sanity */
 
 	    /* Need to triangulate this face */
-	    if (nmg_triangulate_fu(fu, tol)) {
+	    if (nmg_triangulate_fu(fu, vlfree, tol)) {
 		/* true when faceuse is empty */
 		continue;
 	    }
 
 	    /* split each triangular loop into its own face */
-	    (void)nmg_split_loops_into_faces(&fu->l.magic, tol);
+	    (void)nmg_split_loops_into_faces(&fu->l.magic, vlfree, tol);
 
-	    if (nmg_calc_face_plane(fu, pl)) {
+	    if (nmg_calc_face_plane(fu, pl, vlfree)) {
 		bu_log("nmg_make_faces_within_tol(): nmg_calc_face_plane() failed\n");
 		bu_bomb("nmg_make_faces_within_tol(): nmg_calc_face_plane() failed");
 	    }
@@ -8533,7 +8470,7 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
 	if (bu_ptbl_locate(&faceuses, (long *)fu) != (-1))
 	    continue;
 
-	if (nmg_calc_face_plane(fu, pl)) {
+	if (nmg_calc_face_plane(fu, pl, vlfree)) {
 	    bu_log("nmg_make_faces_within_tol(): nmg_calc_face_plane() failed\n");
 	    bu_bomb("nmg_make_faces_within_tol(): nmg_calc_face_plane() failed");
 	}
@@ -8652,7 +8589,7 @@ nmg_intersect_loops_self(struct shell *s, const struct bn_tol *tol)
  * list.
  */
 struct edge_g_cnurb *
-rt_join_cnurbs(struct bu_list *crv_head)
+nmg_join_cnurbs(struct bu_list *crv_head)
 {
     struct edge_g_cnurb *crv, *next_crv;
     struct edge_g_cnurb *new_crv=(struct edge_g_cnurb *)NULL;
@@ -8675,7 +8612,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
      */
     for (BU_LIST_FOR (crv, edge_g_cnurb, crv_head)) {
 	curve_count++;
-	rt_nurb_c_print(crv);
+	nmg_nurb_c_print(crv);
 	if (crv->order > max_order)
 	    max_order = crv->order;
 
@@ -8683,7 +8620,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	while (ZERO(crv->k.knots[++i] - crv->k.knots[0]));
 	if (i != crv->order) {
 	    bu_log("Curve does not have multiplicity equal to order at start:\n");
-	    rt_nurb_c_print(crv);
+	    nmg_nurb_c_print(crv);
 	    return new_crv;
 	}
 
@@ -8691,7 +8628,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	while (ZERO(crv->k.knots[--i] - crv->k.knots[crv->k.k_size - 1]));
 	if (crv->k.k_size - i - 1 != crv->order) {
 	    bu_log("Curve does not have multiplicity equal to order at end:\n");
-	    rt_nurb_c_print(crv);
+	    nmg_nurb_c_print(crv);
 	    return new_crv;
 	}
 
@@ -8699,7 +8636,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	    pt_type = crv->pt_type;
 	else {
 	    if (crv->pt_type != pt_type) {
-		bu_log("rt_join_cnurbs: curves are not the same pt_type (%d vs %d)\n",
+		bu_log("nmg_join_cnurbs: curves are not the same pt_type (%d vs %d)\n",
 		       pt_type, crv->pt_type);
 		return new_crv;
 	    }
@@ -8720,7 +8657,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 
 	/* This curve must have its order raised to max_order */
 	/* XXXX Need a routine to raise order of a curve */
-	bu_bomb("rt_join_cnurbs: Need to raise order of curve\n");
+	bu_bomb("nmg_join_cnurbs: Need to raise order of curve\n");
     }
 
     /* Check that endpoints match */
@@ -8750,9 +8687,9 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	    continue;
 	}
 
-	bu_log("rt_join_cnurbs: Curve endpoints do not match:\n");
-	rt_nurb_c_print(crv);
-	rt_nurb_c_print(next_crv);
+	bu_log("nmg_join_cnurbs: Curve endpoints do not match:\n");
+	nmg_nurb_c_print(crv);
+	nmg_nurb_c_print(next_crv);
 	return new_crv;
     }
 
@@ -8766,7 +8703,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
     }
     knot_length++;
 
-    new_crv = rt_nurb_new_cnurb(max_order, knot_length, ctl_points, pt_type);
+    new_crv = nmg_nurb_new_cnurb(max_order, knot_length, ctl_points, pt_type);
 
     crv = BU_LIST_FIRST(edge_g_cnurb, crv_head);
 
@@ -8819,7 +8756,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
  * the +Z direction).
  */
 struct edge_g_cnurb *
-rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point_type, const struct bn_tol *tol)
+nmg_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point_type, const struct bn_tol *tol)
 {
     struct edge_g_cnurb *crv;
     struct bu_list crv_head;
@@ -8865,19 +8802,19 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
     if (point_type == RT_NURB_PT_XYZ) {
 	/* check for points at same Z-coordinate value */
 	if (center[Z] - start[Z] > tol->dist) {
-	    bu_log("rt_arc2d_to_cnurb: center and start points not at same Z value (%g vs %g)\n",
+	    bu_log("nmg_arc2d_to_cnurb: center and start points not at same Z value (%g vs %g)\n",
 		   center[Z], start[Z]);
 	    return (struct edge_g_cnurb *)NULL;
 	}
 
 	if (end[Z] - start[Z] > tol->dist) {
-	    bu_log("rt_arc2d_to_cnurb: end and start points not at same Z value (%g vs %g)\n",
+	    bu_log("nmg_arc2d_to_cnurb: end and start points not at same Z value (%g vs %g)\n",
 		   end[Z], start[Z]);
 	    return (struct edge_g_cnurb *)NULL;
 	}
 
 	if (end[Z] - center[Z] > tol->dist) {
-	    bu_log("rt_arc2d_to_cnurb: end and center points not at same Z value (%g vs %g)\n",
+	    bu_log("nmg_arc2d_to_cnurb: end and center points not at same Z value (%g vs %g)\n",
 		   end[Z], center[Z]);
 	    return (struct edge_g_cnurb *)NULL;
 	}
@@ -8901,7 +8838,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 
     /* make sure radii are consistent */
     if (!NEAR_EQUAL(radius, tmp_radius, tol->dist)) {
-	bu_log("rt_arc2d_to_cnurb: distances from center to start and center to end are different\n");
+	bu_log("nmg_arc2d_to_cnurb: distances from center to start and center to end are different\n");
 	bu_log("                        (%g and %g)\n", radius, tmp_radius);
 	return (struct edge_g_cnurb *)NULL;
     }
@@ -8932,13 +8869,13 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 	if (VDOT(t2, v1) > 0.0)
 	    VREVERSE(t2, t2);
 	if ((ret_val=bn_isect_line3_line3(&dist1, &dist2, start, t1, end, t2, tol)) < 1) {
-	    bu_log("rt_arc2d_to_cnurb: Cannot calculate second control point\n");
+	    bu_log("nmg_arc2d_to_cnurb: Cannot calculate second control point\n");
 	    bu_log("                   bn_isect_line3_line3 returns %d\n", ret_val);
 	    return (struct edge_g_cnurb *)NULL;
 	}
 
 	/* Get memory for this curve (order=3, 6 knot values, 3 control points) */
-	crv = rt_nurb_new_cnurb(3, 6, 3, pt_type);
+	crv = nmg_nurb_new_cnurb(3, 6, 3, pt_type);
 
 	/* Set knot values */
 	for (i=0; i<3; i++)
@@ -8996,12 +8933,12 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 	    VJOIN2(end1, center, radius*cos(angles[i]), ref1, radius*sin(angles[i]), ref2);
 	}
 
-	crv = rt_arc2d_to_cnurb(center, start1, end1, point_type, tol);
+	crv = nmg_arc2d_to_cnurb(center, start1, end1, point_type, tol);
 	BU_LIST_INSERT(&crv_head, &crv->l);
     }
 
     /* join the arc segments into one edge_g_cnurb */
-    crv = rt_join_cnurbs(&crv_head);
+    crv = nmg_join_cnurbs(&crv_head);
 
     return crv;
 }
@@ -9087,7 +9024,7 @@ nmg_break_edge_at_verts(struct edge *e, struct bu_ptbl *verts, const struct bn_t
 
 
 int
-nmg_break_edges(uint32_t *magic_p, const struct bn_tol *tol)
+nmg_break_edges(uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl edges;
     struct bu_ptbl verts;
@@ -9096,8 +9033,8 @@ nmg_break_edges(uint32_t *magic_p, const struct bn_tol *tol)
 
     BN_CK_TOL(tol);
 
-    nmg_edge_tabulate(&edges, magic_p);
-    nmg_vertex_tabulate(&verts, magic_p);
+    nmg_edge_tabulate(&edges, magic_p, vlfree);
+    nmg_vertex_tabulate(&verts, magic_p, vlfree);
 
     for (i=0; i<BU_PTBL_LEN(&edges); i++) {
 	struct edge *e;
@@ -9114,670 +9051,6 @@ nmg_break_edges(uint32_t *magic_p, const struct bn_tol *tol)
     return break_count;
 }
 
-
-HIDDEN int
-Shell_is_arb(struct shell *s, struct bu_ptbl *tab)
-{
-    struct faceuse *fu;
-    struct face *f;
-    size_t four_verts=0;
-    size_t three_verts=0;
-    size_t face_count=0;
-    size_t loop_count;
-
-    NMG_CK_SHELL(s);
-
-    nmg_vertex_tabulate(tab, &s->l.magic);
-
-    if (BU_PTBL_LEN(tab) > 8 || BU_PTBL_LEN(tab) < 4)
-	goto not_arb;
-
-    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-	struct loopuse *lu;
-	vect_t fu_norm;
-
-	NMG_CK_FACEUSE(fu);
-
-	if (fu->orientation != OT_SAME)
-	    continue;
-
-	f = fu->f_p;
-	NMG_CK_FACE(f);
-
-	if (*f->g.magic_p != NMG_FACE_G_PLANE_MAGIC)
-	    goto not_arb;
-
-	NMG_GET_FU_NORMAL(fu_norm, fu);
-
-	loop_count = 0;
-	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-	    struct edgeuse *eu;
-
-	    NMG_CK_LOOPUSE(lu);
-
-	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		goto not_arb;
-
-	    loop_count++;
-
-	    /* face must be a single loop */
-	    if (loop_count > 1)
-		goto not_arb;
-
-	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-		struct edgeuse *eu_radial;
-		struct faceuse *fu_radial;
-		struct face *f_radial;
-		vect_t norm_radial;
-		vect_t eu_dir;
-		vect_t cross;
-		fastf_t dot;
-
-		NMG_CK_EDGEUSE(eu);
-
-		eu_radial = nmg_next_radial_eu(eu, s, 0);
-
-		/* Can't have any dangling faces */
-		if (eu_radial == eu || eu_radial == eu->eumate_p)
-		    goto not_arb;
-
-		fu_radial = nmg_find_fu_of_eu(eu_radial);
-		NMG_CK_FACEUSE(fu_radial);
-
-		if (fu_radial->orientation != OT_SAME)
-		    fu_radial = fu_radial->fumate_p;
-
-		f_radial = fu_radial->f_p;
-		NMG_CK_FACE(f_radial);
-
-		/* faces must be planar */
-		if (*f_radial->g.magic_p != NMG_FACE_G_PLANE_MAGIC)
-		    goto not_arb;
-
-
-		/* Make sure shell is convex by checking that edgeuses
-		 * run in direction fu_norm X norm_radial
-		 */
-		NMG_GET_FU_NORMAL(norm_radial, fu_radial);
-
-		dot = VDOT(norm_radial, fu_norm);
-
-		if (!NEAR_EQUAL(dot, 1.0, 0.00001)) {
-
-		    VCROSS(cross, fu_norm, norm_radial);
-
-		    if (eu->orientation == OT_NONE) {
-			VSUB2(eu_dir, eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord);
-			if (eu->orientation != OT_SAME) {
-			    VREVERSE(eu_dir, eu_dir);
-			}
-		    } else {
-			VMOVE(eu_dir, eu->g.lseg_p->e_dir);
-		    }
-
-		    if (eu->orientation == OT_SAME || eu->orientation == OT_NONE) {
-			if (VDOT(cross, eu_dir) < 0.0)
-			    goto not_arb;
-		    } else {
-			if (VDOT(cross, eu_dir) > 0.0)
-			    goto not_arb;
-		    }
-		}
-	    }
-	}
-    }
-
-    /* count face types */
-    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-	struct loopuse *lu;
-	int vert_count=0;
-
-	if (fu->orientation != OT_SAME)
-	    continue;
-
-	face_count++;
-	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-	    struct edgeuse *eu;
-
-	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
-		vert_count++;
-	}
-
-	if (vert_count == 3)
-	    three_verts++;
-	else if (vert_count == 4)
-	    four_verts++;
-    }
-
-    /* must have only three and four vertices in each face */
-    if (face_count != three_verts + four_verts)
-	goto not_arb;
-
-    /* which type of arb is this?? */
-    switch (BU_PTBL_LEN(tab)) {
-	case 4:		/* each face must have 3 vertices */
-	    if (three_verts != 4 || four_verts != 0)
-		goto not_arb;
-	    break;
-	case 5:		/* one face with 4 verts, four with 3 verts */
-	    if (four_verts != 1 || three_verts != 4)
-		goto not_arb;
-	    break;
-	case 6:		/* three faces with 4 verts, two with 3 verts */
-	    if (three_verts != 2 || four_verts != 3)
-		goto not_arb;
-	    break;
-	case 7:		/* four faces with 4 verts, two with 3 verts */
-	    if (four_verts != 4 || three_verts != 2)
-		goto not_arb;
-	    break;
-	case 8:		/* each face must have 4 vertices */
-	    if (four_verts != 6 || three_verts != 0)
-		goto not_arb;
-	    break;
-    }
-
-    return BU_PTBL_LEN(tab);
-
-
-not_arb:
-    bu_ptbl_free(tab);
-    return 0;
-}
-
-
-/**
- * Converts an NMG to an ARB, if possible.
- *
- * NMG must have been coplanar face merged and simplified
- *
- * Returns:
- * 	1 - Equivalent ARB was constructed
- * 	0 - Cannot construct an equivalent ARB
- *
- * The newly constructed arb is in "arb_int"
- */
-int
-nmg_to_arb(const struct model *m, struct rt_arb_internal *arb_int)
-{
-    struct nmgregion *r;
-    struct shell *s;
-    struct faceuse *fu;
-    struct loopuse *lu;
-    struct edgeuse *eu;
-    struct vertex *v;
-    struct edgeuse *eu_start;
-    struct faceuse *fu1;
-    struct bu_ptbl tab = BU_PTBL_INIT_ZERO;
-    int face_verts;
-    int i, j;
-    int found;
-    int ret_val = 0;
-
-    NMG_CK_MODEL(m);
-
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-
-    /* must be a single region */
-    if (BU_LIST_NEXT_NOT_HEAD(&r->l, &m->r_hd))
-	return 0;
-
-    s = BU_LIST_FIRST(shell, &r->s_hd);
-    NMG_CK_SHELL(s);
-
-    /* must be a single shell */
-    if (BU_LIST_NEXT_NOT_HEAD(&s->l, &r->s_hd))
-	return 0;
-
-    switch (Shell_is_arb(s, &tab)) {
-	case 0:
-	    ret_val = 0;
-	    break;
-	case 4:
-	    v = (struct vertex *)BU_PTBL_GET(&tab, 0);
-	    NMG_CK_VERTEX(v);
-	    VMOVE(arb_int->pt[0], v->vg_p->coord);
-	    v = (struct vertex *)BU_PTBL_GET(&tab, 1);
-	    NMG_CK_VERTEX(v);
-	    VMOVE(arb_int->pt[1], v->vg_p->coord);
-	    v = (struct vertex *)BU_PTBL_GET(&tab, 2);
-	    NMG_CK_VERTEX(v);
-	    VMOVE(arb_int->pt[2], v->vg_p->coord);
-	    VMOVE(arb_int->pt[3], v->vg_p->coord);
-	    v = (struct vertex *)BU_PTBL_GET(&tab, 3);
-	    NMG_CK_VERTEX(v);
-	    VMOVE(arb_int->pt[4], v->vg_p->coord);
-	    VMOVE(arb_int->pt[5], v->vg_p->coord);
-	    VMOVE(arb_int->pt[6], v->vg_p->coord);
-	    VMOVE(arb_int->pt[7], v->vg_p->coord);
-
-	    bu_ptbl_free(&tab);
-	    ret_val = 1;
-	    break;
-	case 5:
-	    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
-	    face_verts = 0;
-	    while (face_verts != 4) {
-		face_verts = 0;
-		fu = BU_LIST_PNEXT_CIRC(faceuse, &fu->l);
-		lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
-		    face_verts++;
-	    }
-	    NMG_CK_FACEUSE(fu);
-	    if (fu->orientation != OT_SAME)
-		fu = fu->fumate_p;
-	    NMG_CK_FACEUSE(fu);
-
-	    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-	    j = 0;
-	    eu_start = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-		VMOVE(arb_int->pt[j], eu->vu_p->v_p->vg_p->coord);
-		j++;
-	    }
-
-	    eu = eu_start->radial_p;
-	    eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    eu = eu->eumate_p;
-	    for (i=0; i<4; i++) {
-		VMOVE(arb_int->pt[j], eu->vu_p->v_p->vg_p->coord);
-		j++;
-	    }
-
-	    bu_ptbl_free(&tab);
-	    ret_val = 1;
-	    break;
-	case 6:
-	    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
-	    face_verts = 0;
-	    while (face_verts != 3) {
-		face_verts = 0;
-		fu = BU_LIST_PNEXT_CIRC(faceuse, &fu->l);
-		lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
-		    face_verts++;
-	    }
-	    NMG_CK_FACEUSE(fu);
-	    if (fu->orientation != OT_SAME)
-		fu = fu->fumate_p;
-	    NMG_CK_FACEUSE(fu);
-
-	    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-
-	    eu_start = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-	    eu = eu_start;
-	    VMOVE(arb_int->pt[1], eu->vu_p->v_p->vg_p->coord);
-	    eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    VMOVE(arb_int->pt[0], eu->vu_p->v_p->vg_p->coord);
-	    eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    VMOVE(arb_int->pt[4], eu->vu_p->v_p->vg_p->coord);
-	    VMOVE(arb_int->pt[5], eu->vu_p->v_p->vg_p->coord);
-
-	    eu = eu_start->radial_p;
-	    eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    eu = eu->radial_p->eumate_p;
-	    VMOVE(arb_int->pt[2], eu->vu_p->v_p->vg_p->coord);
-	    eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    VMOVE(arb_int->pt[3], eu->vu_p->v_p->vg_p->coord);
-	    eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    VMOVE(arb_int->pt[6], eu->vu_p->v_p->vg_p->coord);
-	    VMOVE(arb_int->pt[7], eu->vu_p->v_p->vg_p->coord);
-
-	    bu_ptbl_free(&tab);
-	    ret_val = 1;
-	    break;
-	case 7:
-	    found = 0;
-	    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
-	    while (!found) {
-		int verts4=0, verts3=0;
-
-		lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-		    struct loopuse *lu1;
-		    struct edgeuse *eu1;
-		    int vert_count=0;
-
-		    fu1 = nmg_find_fu_of_eu(eu->radial_p);
-		    lu1 = BU_LIST_FIRST(loopuse, &fu1->lu_hd);
-		    for (BU_LIST_FOR (eu1, edgeuse, &lu1->down_hd))
-			vert_count++;
-
-		    if (vert_count == 4)
-			verts4++;
-		    else if (vert_count == 3)
-			verts3++;
-		}
-
-		if (verts4 == 2 && verts3 == 2)
-		    found = 1;
-	    }
-	    if (fu->orientation != OT_SAME)
-		fu = fu->fumate_p;
-	    NMG_CK_FACEUSE(fu);
-
-	    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-	    j = 0;
-	    eu_start = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-		VMOVE(arb_int->pt[j], eu->vu_p->v_p->vg_p->coord);
-		j++;
-	    }
-
-	    eu = eu_start->radial_p;
-	    eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    eu = eu->radial_p->eumate_p;
-	    fu1 = nmg_find_fu_of_eu(eu);
-	    if (nmg_faces_are_radial(fu, fu1)) {
-		eu = eu_start->radial_p;
-		eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-		eu = eu->radial_p->eumate_p;
-	    }
-	    for (i=0; i<4; i++) {
-		VMOVE(arb_int->pt[j], eu->vu_p->v_p->vg_p->coord);
-		j++;
-		eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    }
-
-	    bu_ptbl_free(&tab);
-	    ret_val = 1;
-	    break;
-	case 8:
-	    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
-	    NMG_CK_FACEUSE(fu);
-	    if (fu->orientation != OT_SAME)
-		fu = fu->fumate_p;
-	    NMG_CK_FACEUSE(fu);
-
-	    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-	    j = 0;
-	    eu_start = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-		VMOVE(arb_int->pt[j], eu->vu_p->v_p->vg_p->coord);
-		j++;
-	    }
-
-	    eu = eu_start->radial_p;
-	    eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    eu = eu->radial_p->eumate_p;
-	    for (i=0; i<4; i++) {
-		VMOVE(arb_int->pt[j], eu->vu_p->v_p->vg_p->coord);
-		j++;
-		eu = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-	    }
-
-	    bu_ptbl_free(&tab);
-	    ret_val = 1;
-	    break;
-	default:
-	    bu_bomb("Shell_is_arb screwed up");
-	    break;
-    }
-    if (ret_val)
-	arb_int->magic = RT_ARB_INTERNAL_MAGIC;
-    return ret_val;
-}
-
-
-/**
- * Converts an NMG to a TGC, if possible.
- *
- *
- * NMG must have been coplanar face merged and simplified
- *
- * Returns:
- * 	1 - Equivalent TGC was constructed
- * 	0 - Cannot construct an equivalent TGC
- *
- * The newly constructed tgc is in "tgc_int"
- *
- * Currently only supports RCC, and creates circumscribed RCC
- */
-int
-nmg_to_tgc(
-    const struct model *m,
-    struct rt_tgc_internal *tgc_int,
-    const struct bn_tol *tol)
-{
-    struct nmgregion *r;
-    struct shell *s;
-    struct faceuse *fu;
-    struct loopuse *lu;
-    struct edgeuse *eu;
-    struct faceuse *fu_base=(struct faceuse *)NULL;
-    struct faceuse *fu_top=(struct faceuse *)NULL;
-    int three_vert_faces=0;
-    int four_vert_faces=0;
-    int many_vert_faces=0;
-    int base_vert_count=0;
-    int top_vert_count=0;
-    point_t sum = VINIT_ZERO;
-    int vert_count=0;
-    fastf_t one_over_vert_count;
-    point_t base_center;
-    fastf_t min_base_r_sq;
-    fastf_t max_base_r_sq;
-    fastf_t sum_base_r_sq;
-    fastf_t ave_base_r_sq;
-    fastf_t base_r;
-    point_t top_center;
-    fastf_t min_top_r_sq;
-    fastf_t max_top_r_sq;
-    fastf_t sum_top_r_sq;
-    fastf_t ave_top_r_sq;
-    fastf_t top_r;
-    plane_t top_pl = HINIT_ZERO;
-    plane_t base_pl = HINIT_ZERO;
-    vect_t plv_1, plv_2;
-
-    NMG_CK_MODEL(m);
-
-    BN_CK_TOL(tol);
-
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-
-    /* must be a single region */
-    if (BU_LIST_NEXT_NOT_HEAD(&r->l, &m->r_hd))
-	return 0;
-
-    s = BU_LIST_FIRST(shell, &r->s_hd);
-    NMG_CK_SHELL(s);
-
-    /* must be a single shell */
-    if (BU_LIST_NEXT_NOT_HEAD(&s->l, &r->s_hd))
-	return 0;
-
-    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-	int lu_count=0;
-
-	NMG_CK_FACEUSE(fu);
-	if (fu->orientation != OT_SAME)
-	    continue;
-
-	vert_count = 0;
-
-	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-
-	    NMG_CK_LOOPUSE(lu);
-
-	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		return 0;
-
-	    lu_count++;
-	    if (lu_count > 1)
-		return 0;
-
-	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
-		vert_count++;
-	}
-
-	if (vert_count < 3)
-	    return 0;
-
-	if (vert_count == 4)
-	    four_vert_faces++;
-	else if (vert_count == 3)
-	    three_vert_faces++;
-	else {
-	    many_vert_faces++;
-	    if (many_vert_faces > 2)
-		return 0;
-
-	    if (many_vert_faces == 1) {
-		fu_base = fu;
-		base_vert_count = vert_count;
-		NMG_GET_FU_PLANE(base_pl, fu_base);
-	    } else if (many_vert_faces == 2) {
-		fu_top = fu;
-		top_vert_count = vert_count;
-		NMG_GET_FU_PLANE(top_pl, fu_top);
-	    }
-	}
-    }
-    /* if there are any three vertex faces,
-     * there must be an even number of them
-     */
-    if (three_vert_faces%2)
-	return 0;
-
-    /* base and top must have same number of vertices */
-    if (base_vert_count != top_vert_count)
-	return 0;
-
-    /* Must have correct number of side faces */
-    if ((base_vert_count != four_vert_faces) &&
-	(base_vert_count*2 != three_vert_faces))
-	return 0;
-
-    if (!NEAR_EQUAL(VDOT(top_pl, base_pl), -1.0, tol->perp))
-	return 0;
-
-    /* This looks like a good candidate,
-     * Calculate center of base and top faces
-     */
-
-    if (fu_base) {
-	vert_count = 0;
-	VSETALL(sum, 0.0);
-	lu = BU_LIST_FIRST(loopuse, &fu_base->lu_hd);
-	for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-	    struct vertex_g *vg;
-
-	    NMG_CK_EDGEUSE(eu);
-
-	    NMG_CK_VERTEXUSE(eu->vu_p);
-	    NMG_CK_VERTEX(eu->vu_p->v_p);
-	    vg = eu->vu_p->v_p->vg_p;
-	    NMG_CK_VERTEX_G(vg);
-
-	    VADD2(sum, sum, vg->coord);
-	    vert_count++;
-	}
-
-	one_over_vert_count = 1.0/(fastf_t)vert_count;
-	VSCALE(base_center, sum, one_over_vert_count);
-
-	/* Calculate Average Radius */
-	min_base_r_sq = MAX_FASTF;
-	max_base_r_sq = (-min_base_r_sq);
-	sum_base_r_sq = 0.0;
-	lu = BU_LIST_FIRST(loopuse, &fu_base->lu_hd);
-	for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-	    struct vertex_g *vg;
-	    vect_t rad_vect;
-	    fastf_t r_sq;
-
-	    vg = eu->vu_p->v_p->vg_p;
-
-	    VSUB2(rad_vect, vg->coord, base_center);
-	    r_sq = MAGSQ(rad_vect);
-	    if (r_sq > max_base_r_sq)
-		max_base_r_sq = r_sq;
-	    if (r_sq < min_base_r_sq)
-		min_base_r_sq = r_sq;
-
-	    sum_base_r_sq += r_sq;
-	}
-
-	ave_base_r_sq = sum_base_r_sq * one_over_vert_count;
-
-	base_r = sqrt(max_base_r_sq);
-
-	if (!NEAR_ZERO((max_base_r_sq - ave_base_r_sq)/ave_base_r_sq, 0.001) ||
-	    !NEAR_ZERO((min_base_r_sq - ave_base_r_sq)/ave_base_r_sq, 0.001))
-	    return 0;
-
-	VSETALL(sum, 0.0);
-	lu = BU_LIST_FIRST(loopuse, &fu_top->lu_hd);
-	for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-	    struct vertex_g *vg;
-
-	    NMG_CK_EDGEUSE(eu);
-
-	    NMG_CK_VERTEXUSE(eu->vu_p);
-	    NMG_CK_VERTEX(eu->vu_p->v_p);
-	    vg = eu->vu_p->v_p->vg_p;
-	    NMG_CK_VERTEX_G(vg);
-
-	    VADD2(sum, sum, vg->coord);
-	}
-
-	VSCALE(top_center, sum, one_over_vert_count);
-
-	/* Calculate Average Radius */
-	min_top_r_sq = MAX_FASTF;
-	max_top_r_sq = (-min_top_r_sq);
-	sum_top_r_sq = 0.0;
-	lu = BU_LIST_FIRST(loopuse, &fu_top->lu_hd);
-	for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-	    struct vertex_g *vg;
-	    vect_t rad_vect;
-	    fastf_t r_sq;
-
-	    vg = eu->vu_p->v_p->vg_p;
-
-	    VSUB2(rad_vect, vg->coord, top_center);
-	    r_sq = MAGSQ(rad_vect);
-	    if (r_sq > max_top_r_sq)
-		max_top_r_sq = r_sq;
-	    if (r_sq < min_top_r_sq)
-		min_top_r_sq = r_sq;
-
-	    sum_top_r_sq += r_sq;
-	}
-
-	ave_top_r_sq = sum_top_r_sq * one_over_vert_count;
-	top_r = sqrt(max_top_r_sq);
-
-	if (!NEAR_ZERO((max_top_r_sq - ave_top_r_sq)/ave_top_r_sq, 0.001) ||
-	    !NEAR_ZERO((min_top_r_sq - ave_top_r_sq)/ave_top_r_sq, 0.001))
-	    return 0;
-
-
-	VMOVE(tgc_int->v, base_center);
-	VSUB2(tgc_int->h, top_center, base_center);
-
-	bn_vec_perp(plv_1, top_pl);
-	VCROSS(plv_2, top_pl, plv_1);
-	VUNITIZE(plv_1);
-	VUNITIZE(plv_2);
-	VSCALE(tgc_int->a, plv_1, base_r);
-	VSCALE(tgc_int->b, plv_2, base_r);
-	VSCALE(tgc_int->c, plv_1, top_r);
-	VSCALE(tgc_int->d, plv_2, top_r);
-
-	tgc_int->magic = RT_TGC_INTERNAL_MAGIC;
-
-    }
-
-    return 1;
-}
-
-
 /**
  * Checks if lu is convex
  *
@@ -9786,7 +9059,7 @@ nmg_to_tgc(
  * 0 - otherwise
  */
 int
-nmg_lu_is_convex(struct loopuse *lu, const struct bn_tol *tol)
+nmg_lu_is_convex(struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct edgeuse *eu1, *eu2, *eu3, *eu_start;
 
@@ -9820,7 +9093,7 @@ nmg_lu_is_convex(struct loopuse *lu, const struct bn_tol *tol)
 
 	VBLEND2(mid_pt, 0.5, vg1->coord, 0.5, vg3->coord);
 
-	nmg_class = nmg_class_pt_lu_except(mid_pt, lu, NULL, tol);
+	nmg_class = nmg_class_pt_lu_except(mid_pt, lu, NULL, vlfree, tol);
 
 	if ((nmg_class == NMG_CLASS_AoutB && lu->orientation == OT_SAME) ||
 	    (nmg_class == NMG_CLASS_AinB  && lu->orientation == OT_OPPOSITE))
@@ -9835,159 +9108,6 @@ nmg_lu_is_convex(struct loopuse *lu, const struct bn_tol *tol)
     return 1;
 }
 
-
-/**
- * XXX This routine is deprecated in favor of BoTs
- */
-int
-nmg_to_poly(const struct model *m, struct rt_pg_internal *poly_int, const struct bn_tol *tol)
-{
-    struct nmgregion *r;
-    struct shell *s;
-    struct faceuse *fu;
-    struct loopuse *lu;
-    struct edgeuse *eu;
-    struct model *dup_m;
-    struct nmgregion *dup_r;
-    struct shell *dup_s;
-    int max_count;
-    int count_npts;
-    int face_count=0;
-
-    NMG_CK_MODEL(m);
-
-    BN_CK_TOL(tol);
-
-    for (BU_LIST_FOR (r, nmgregion, &m->r_hd)) {
-	for (BU_LIST_FOR (s, shell, &r->s_hd)) {
-	    if (nmg_check_closed_shell(s, tol))
-		return 0;
-	}
-    }
-
-    dup_m = nmg_mm();
-    dup_r = nmg_mrsv(dup_m);
-    dup_s = BU_LIST_FIRST(shell, &dup_r->s_hd);
-
-    for (BU_LIST_FOR (r, nmgregion, &m->r_hd)) {
-	for (BU_LIST_FOR (s, shell, &r->s_hd)) {
-	    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-		if (fu->orientation != OT_SAME)
-		    continue;
-		(void)nmg_dup_face(fu, dup_s);
-	    }
-	}
-    }
-
-    for (BU_LIST_FOR (dup_r, nmgregion, &dup_m->r_hd)) {
-	for (BU_LIST_FOR (dup_s, shell, &dup_r->s_hd)) {
-	    for (BU_LIST_FOR (fu, faceuse, &dup_s->fu_hd)) {
-		NMG_CK_FACEUSE(fu);
-
-		/* only do OT_SAME faces */
-		if (fu->orientation != OT_SAME)
-		    continue;
-
-		/* count vertices in loops */
-		max_count = 0;
-		for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-		    NMG_CK_LOOPUSE(lu);
-		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-			continue;
-
-		    if (lu->orientation != OT_SAME) {
-			/* triangulate holes */
-			max_count = 6;
-			break;
-		    }
-
-		    count_npts = 0;
-		    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
-			count_npts++;
-
-		    if (count_npts > 5) {
-			max_count = count_npts;
-			break;
-		    }
-		    if (!nmg_lu_is_convex(lu, tol)) {
-			/* triangulate non-convex faces */
-			max_count = 6;
-			break;
-		    }
-		}
-
-		/* if any loop has more than 5 vertices, triangulate the face */
-		if (max_count > 5) {
-		    if (RTG.NMG_debug & DEBUG_BASIC)
-			bu_log("nmg_to_poly: triangulating fu %p\n", (void *)fu);
-		    nmg_triangulate_fu(fu, tol);
-		}
-
-		for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-		    NMG_CK_LOOPUSE(lu);
-		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-			continue;
-
-		    face_count++;
-		}
-	    }
-	}
-    }
-    poly_int->npoly = face_count;
-    poly_int->poly = (struct rt_pg_face_internal *)bu_calloc(face_count,
-							     sizeof(struct rt_pg_face_internal), "nmg_to_poly: poly");
-
-    face_count = 0;
-    for (BU_LIST_FOR (dup_r, nmgregion, &dup_m->r_hd)) {
-	for (BU_LIST_FOR (dup_s, shell, &dup_r->s_hd)) {
-	    for (BU_LIST_FOR (fu, faceuse, &dup_s->fu_hd)) {
-		vect_t norm;
-
-		NMG_CK_FACEUSE(fu);
-
-		/* only do OT_SAME faces */
-		if (fu->orientation != OT_SAME)
-		    continue;
-
-		NMG_GET_FU_NORMAL(norm, fu);
-
-		for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-		    int pt_no=0;
-
-		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-			continue;
-
-		    /* count vertices in loop */
-		    count_npts = 0;
-		    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
-			count_npts++;
-
-		    poly_int->poly[face_count].npts = count_npts;
-		    poly_int->poly[face_count].verts = (fastf_t *) bu_calloc(3*count_npts, sizeof(fastf_t), "nmg_to_poly: verts");
-		    poly_int->poly[face_count].norms = (fastf_t *) bu_calloc(3*count_npts, sizeof(fastf_t), "nmg_to_poly: norms");
-
-		    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-			struct vertex_g *vg;
-
-			vg = eu->vu_p->v_p->vg_p;
-			NMG_CK_VERTEX_G(vg);
-
-			VMOVE(&(poly_int->poly[face_count].verts[pt_no*3]), vg->coord);
-			VMOVE(&(poly_int->poly[face_count].norms[pt_no*3]), norm);
-
-			pt_no++;
-		    }
-		    face_count++;
-		}
-	    }
-	}
-    }
-
-    poly_int->magic = RT_PG_INTERNAL_MAGIC;
-    nmg_km(dup_m);
-
-    return 1;
-}
 
 
 int
@@ -10217,7 +9337,7 @@ nmg_select_collapse(const fastf_t max_dist1, const fastf_t max_dot1, const int f
  * returns number of edges collapsed
  */
 int
-nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_coll, const fastf_t min_angle)
+nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_coll, const fastf_t min_angle, struct bu_list *vlfree)
 {
     fastf_t max_dot;
     struct bu_ptbl edge_table;
@@ -10233,9 +9353,9 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
     max_dot = cos(min_angle * DEG2RAD);
 
     /* Each triangle must be its own face */
-    (void)nmg_split_loops_into_faces(&m->magic, tol);
+    (void)nmg_split_loops_into_faces(&m->magic, vlfree, tol);
 
-    nmg_edge_tabulate(&edge_table, &m->magic);
+    nmg_edge_tabulate(&edge_table, &m->magic, vlfree);
 
     while (sub_count) {
 	sub_count = 0;
@@ -10816,7 +9936,7 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 	/* recalculate face planes */
 	/* re-use edge table space */
 	bu_ptbl_reset(&edge_table);
-	nmg_face_tabulate(&edge_table, &m->magic);
+	nmg_face_tabulate(&edge_table, &m->magic, vlfree);
 
 	for (i=0; i<BU_PTBL_LEN(&edge_table); i++) {
 	    struct face *f;
@@ -10830,153 +9950,11 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 	    if (fu->orientation != OT_SAME)
 		bu_bomb("nmg_edge_collapse: Face has no OT_SAME use!\n");
 
-	    nmg_calc_face_g(fu);
+	    nmg_calc_face_g(fu,vlfree);
 	}
     }
     bu_ptbl_free(&edge_table);
     return count;
-}
-
-
-/**
- * Convert an NMG to a BOT solid
- */
-struct rt_bot_internal *
-nmg_bot(struct shell *s, const struct bn_tol *tol)
-{
-    struct rt_bot_internal *bot;
-    struct bu_ptbl nmg_vertices;
-    struct bu_ptbl nmg_faces;
-    size_t i, face_no;
-    struct vertex *v;
-
-    NMG_CK_SHELL(s);
-    BN_CK_TOL(tol);
-
-    /* first convert the NMG to triangles */
-    (void)nmg_triangulate_shell(s, tol);
-
-    /* make a list of all the vertices */
-    nmg_vertex_tabulate(&nmg_vertices, &s->l.magic);
-
-    /* and a list of all the faces */
-    nmg_face_tabulate(&nmg_faces, &s->l.magic);
-
-    /* now build the BOT */
-    BU_ALLOC(bot, struct rt_bot_internal);
-
-    bot->magic = RT_BOT_INTERNAL_MAGIC;
-    bot->mode = RT_BOT_SOLID;
-    bot->orientation = RT_BOT_CCW;
-    bot->bot_flags = 0;
-
-    bot->num_vertices = BU_PTBL_LEN(&nmg_vertices);
-    bot->num_faces = 0;
-
-    /* count the number of triangles */
-    for (i=0; i<BU_PTBL_LEN(&nmg_faces); i++) {
-	struct face *f;
-	struct faceuse *fu;
-	struct loopuse *lu;
-
-	f = (struct face *)BU_PTBL_GET(&nmg_faces, i);
-	NMG_CK_FACE(f);
-
-	fu = f->fu_p;
-
-	if (fu->orientation != OT_SAME) {
-	    fu = fu->fumate_p;
-	    if (fu->orientation != OT_SAME) {
-		bu_log("nmg_bot(): Face has no OT_SAME use!\n");
-		bu_free((char *)bot->vertices, "BOT vertices");
-		bu_free((char *)bot->faces, "BOT faces");
-		bu_free((char *)bot, "BOT");
-		return (struct rt_bot_internal *)NULL;
-	    }
-	}
-
-	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		continue;
-	    bot->num_faces++;
-	}
-    }
-
-    bot->faces = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "BOT faces");
-    bot->vertices = (fastf_t *)bu_calloc(bot->num_vertices * 3, sizeof(fastf_t), "BOT vertices");
-
-    bot->thickness = (fastf_t *)NULL;
-    bot->face_mode = (struct bu_bitv *)NULL;
-
-    /* fill in the vertices */
-    for (i=0; i<BU_PTBL_LEN(&nmg_vertices); i++) {
-	struct vertex_g *vg;
-
-	v = (struct vertex *)BU_PTBL_GET(&nmg_vertices, i);
-	NMG_CK_VERTEX(v);
-
-	vg = v->vg_p;
-	NMG_CK_VERTEX_G(vg);
-
-	VMOVE(&bot->vertices[i*3], vg->coord);
-    }
-
-    /* fill in the faces */
-    face_no = 0;
-    for (i=0; i<BU_PTBL_LEN(&nmg_faces); i++) {
-	struct face *f;
-	struct faceuse *fu;
-	struct loopuse *lu;
-
-	f = (struct face *)BU_PTBL_GET(&nmg_faces, i);
-	NMG_CK_FACE(f);
-
-	fu = f->fu_p;
-
-	if (fu->orientation != OT_SAME) {
-	    fu = fu->fumate_p;
-	    if (fu->orientation != OT_SAME) {
-		bu_log("nmg_bot(): Face has no OT_SAME use!\n");
-		bu_free((char *)bot->vertices, "BOT vertices");
-		bu_free((char *)bot->faces, "BOT faces");
-		bu_free((char *)bot, "BOT");
-		return (struct rt_bot_internal *)NULL;
-	    }
-	}
-
-	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-	    struct edgeuse *eu;
-	    size_t vertex_no=0;
-
-	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		continue;
-
-	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-		if (vertex_no > 2) {
-		    bu_log("nmg_bot(): Face has not been triangulated!\n");
-		    bu_free((char *)bot->vertices, "BOT vertices");
-		    bu_free((char *)bot->faces, "BOT faces");
-		    bu_free((char *)bot, "BOT");
-		    return (struct rt_bot_internal *)NULL;
-		}
-
-		v = eu->vu_p->v_p;
-		NMG_CK_VERTEX(v);
-
-
-		bot->faces[ face_no*3 + vertex_no ] = bu_ptbl_locate(&nmg_vertices, (long *)v);
-
-		vertex_no++;
-	    }
-
-	    face_no++;
-	}
-    }
-
-    bu_ptbl_free(&nmg_vertices);
-    bu_ptbl_free(&nmg_faces);
-
-    return bot;
 }
 
 

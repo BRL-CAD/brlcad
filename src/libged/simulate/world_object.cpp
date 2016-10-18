@@ -41,13 +41,13 @@ static const std::string attribute_prefix = "simulate::";
 
 
 HIDDEN std::pair<btVector3, btVector3>
-get_bounding_box(db_i &db_instance, directory &dir)
+get_bounding_box(db_i &db, directory &dir)
 {
     btVector3 bounding_box_min, bounding_box_max;
     {
 	point_t bb_min, bb_max;
 
-	if (rt_bound_internal(&db_instance, &dir, bb_min, bb_max))
+	if (rt_bound_internal(&db, &dir, bb_min, bb_max))
 	    throw std::runtime_error("failed to get bounding box");
 
 	VMOVE(bounding_box_min, bb_min);
@@ -60,12 +60,12 @@ get_bounding_box(db_i &db_instance, directory &dir)
 }
 
 
-HIDDEN btScalar
-get_volume(db_i &db_instance, directory &dir)
+HIDDEN fastf_t
+get_volume(db_i &db, directory &dir)
 {
     rt_db_internal internal;
 
-    if (rt_db_get_internal(&internal, &dir, &db_instance, bn_mat_identity,
+    if (rt_db_get_internal(&internal, &dir, &db, bn_mat_identity,
 			   &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_get_internal() failed");
 
@@ -79,7 +79,7 @@ get_volume(db_i &db_instance, directory &dir)
     }
 
     // approximate volume using the bounding box
-    btVector3 bounding_box_dims = get_bounding_box(db_instance, dir).second;
+    btVector3 bounding_box_dims = get_bounding_box(db, dir).second;
     return bounding_box_dims.getX() * bounding_box_dims.getY() *
 	   bounding_box_dims.getZ();
 }
@@ -97,7 +97,7 @@ deserialize_vector(const std::string &source)
     for (int i = 0; i < 3; ++i) {
 	std::string value;
 	std::getline(stream, value, i != 2 ? ',' : '>');
-	result[i] = simulate::lexical_cast<btScalar>(value,
+	result[i] = simulate::lexical_cast<fastf_t>(value,
 		    std::invalid_argument("invalid vector"));
     }
 
@@ -110,7 +110,7 @@ deserialize_vector(const std::string &source)
 
 HIDDEN btRigidBody::btRigidBodyConstructionInfo
 build_construction_info(btMotionState &motion_state,
-			btCollisionShape &collision_shape, btScalar mass)
+			btCollisionShape &collision_shape, fastf_t mass)
 {
     btVector3 inertia;
     collision_shape.calculateLocalInertia(mass, inertia);
@@ -126,8 +126,8 @@ namespace simulate
 {
 
 
-MatrixMotionState::MatrixMotionState(mat_t matrix, const btVector3 &origin,
-				     TreeUpdater &tree_updater) :
+MatrixMotionState::MatrixMotionState(fastf_t * const matrix,
+				     const btVector3 &origin, TreeUpdater &tree_updater) :
     m_matrix(matrix),
     m_origin(origin),
     m_tree_updater(tree_updater)
@@ -175,14 +175,13 @@ MatrixMotionState::setWorldTransform(const btTransform &transform)
 
 
 WorldObject *
-WorldObject::create(db_i &db_instance, directory &vdirectory, mat_t matrix,
+WorldObject::create(db_i &db, directory &dir, fastf_t * const matrix,
 		    TreeUpdater &tree_updater)
 {
     btVector3 linear_velocity(0.0, 0.0, 0.0), angular_velocity(0.0, 0.0, 0.0);
-    btScalar mass;
+    fastf_t mass;
 
-    std::pair<btVector3, btVector3> bounding_box = get_bounding_box(db_instance,
-	    vdirectory);
+    std::pair<btVector3, btVector3> bounding_box = get_bounding_box(db, dir);
     // apply matrix scaling
     bounding_box.second[X] *= 1.0 / matrix[MSX];
     bounding_box.second[Y] *= 1.0 / matrix[MSY];
@@ -190,13 +189,13 @@ WorldObject::create(db_i &db_instance, directory &vdirectory, mat_t matrix,
     bounding_box.second *= 1.0 / matrix[MSA];
 
     {
-	const btScalar density = 1.0;
-	mass = density * get_volume(db_instance, vdirectory);
+	const fastf_t density = 1.0;
+	mass = density * get_volume(db, dir);
 
 	bu_attribute_value_set obj_avs;
 	BU_AVS_INIT(&obj_avs);
 
-	if (db5_get_attributes(&db_instance, &obj_avs, &vdirectory) < 0)
+	if (db5_get_attributes(&db, &obj_avs, &dir) < 0)
 	    throw std::runtime_error("db5_get_attributes() failed");
 
 	simulate::AutoPtr<bu_attribute_value_set, bu_avs_free> obj_avs_autoptr(
@@ -209,8 +208,8 @@ WorldObject::create(db_i &db_instance, directory &vdirectory, mat_t matrix,
 		const std::string value = obj_avs.avp[i].value;
 
 		if (name == "mass") {
-		    mass = lexical_cast<btScalar>(value,
-						  std::invalid_argument("invalid attribute 'mass'"));
+		    mass = lexical_cast<fastf_t>(value,
+						 std::invalid_argument("invalid attribute 'mass'"));
 
 		    if (mass < 0.0) throw std::invalid_argument("invalid attribute 'mass'");
 		} else if (name == "linear_velocity") {
@@ -222,20 +221,20 @@ WorldObject::create(db_i &db_instance, directory &vdirectory, mat_t matrix,
 	    }
     }
 
-    WorldObject *object = new WorldObject(vdirectory, matrix, tree_updater,
-					  bounding_box.first, bounding_box.second, mass);
+    WorldObject * const object = new WorldObject(dir, matrix, tree_updater,
+	    bounding_box.first, bounding_box.second, mass);
     object->m_rigid_body.setLinearVelocity(linear_velocity);
     object->m_rigid_body.setAngularVelocity(angular_velocity);
     return object;
 }
 
 
-WorldObject::WorldObject(directory &vdirectory, mat_t matrix,
+WorldObject::WorldObject(directory &dir, fastf_t * const matrix,
 			 TreeUpdater &tree_updater, btVector3 bounding_box_pos,
-			 btVector3 bounding_box_dims, btScalar mass) :
+			 btVector3 bounding_box_dims, const fastf_t mass) :
     m_world(NULL),
     m_motion_state(matrix, bounding_box_pos, tree_updater),
-    m_collision_shape(tree_updater, vdirectory.d_namep, bounding_box_dims / 2.0),
+    m_collision_shape(tree_updater, dir.d_namep, bounding_box_dims / 2.0),
     m_rigid_body(build_construction_info(m_motion_state, m_collision_shape, mass))
 {}
 

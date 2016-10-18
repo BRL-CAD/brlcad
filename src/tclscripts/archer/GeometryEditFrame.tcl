@@ -19,10 +19,6 @@
 #
 ###
 #
-# Author(s):
-#    Bob Parker
-#
-# Description:
 #    The super class for editing geometry within Archer.
 #
 ##############################################################

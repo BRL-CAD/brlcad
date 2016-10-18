@@ -93,6 +93,42 @@ DebugPlot::LinkedCurves(void)
 }
 
 HIDDEN void
+rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
+{
+    register struct bn_vlist *vp;
+
+    for (BU_LIST_FOR(vp, bn_vlist, vhead)) {
+	register int i;
+	register int nused = vp->nused;
+	register const int *cmd = vp->cmd;
+	register point_t *pt = vp->pt;
+
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    switch (*cmd) {
+		case BN_VLIST_POLY_START:
+		case BN_VLIST_TRI_START:
+		    break;
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
+		    pdv_3move(fp, *pt);
+		    break;
+		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_POLY_END:
+		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
+		    pdv_3cont(fp, *pt);
+		    break;
+		default:
+		    bu_log("rt_vlist_to_uplot: unknown vlist cmd x%x\n",
+			   *cmd);
+	    }
+	}
+    }
+}
+
+HIDDEN void
 write_plot_to_file(
     const char *filename,
     const struct bu_list *vhead,
@@ -228,42 +264,6 @@ DebugPlot::WriteLog()
     }
     fclose(fp);
     BN_FREE_VLIST(&vlist_free_list, &vhead);
-}
-
-HIDDEN void
-rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
-{
-    register struct bn_vlist *vp;
-
-    for (BU_LIST_FOR(vp, bn_vlist, vhead)) {
-	register int i;
-	register int nused = vp->nused;
-	register const int *cmd = vp->cmd;
-	register point_t *pt = vp->pt;
-
-	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    switch (*cmd) {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_TRI_START:
-		    break;
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_TRI_MOVE:
-		    pdv_3move(fp, *pt);
-		    break;
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_TRI_DRAW:
-		case BN_VLIST_TRI_END:
-		    pdv_3cont(fp, *pt);
-		    break;
-		default:
-		    bu_log("rt_vlist_to_uplot: unknown vlist cmd x%x\n",
-			   *cmd);
-	    }
-	}
-    }
 }
 
 HIDDEN double

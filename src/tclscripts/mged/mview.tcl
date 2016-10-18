@@ -18,7 +18,6 @@
 # information.
 #
 ###
-# Author - Bob Parker
 
 check_externs "_mged_attach"
 

@@ -42,10 +42,11 @@ set(LIBBN_SOURCES
 
 
 BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" "libbu")
-SET_TARGET_PROPERTIES(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_target_properties(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-
-add_subdirectory(tests)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+  add_subdirectory(tests)
+endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 CMAKEFILES(README)
 

@@ -38,7 +38,7 @@
 
 
 void
-rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
+nmg_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 {
     int i, j;
     const fastf_t * m_ptr = srf->ctl_points;
@@ -99,7 +99,7 @@ rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 
 
 void
-rt_nurb_plot_cnurb(FILE *fp, const struct edge_g_cnurb *crv)
+nmg_nurb_plot_cnurb(FILE *fp, const struct edge_g_cnurb *crv)
 {
     register int i, k;
     const fastf_t * m_ptr = crv->ctl_points;
@@ -141,9 +141,9 @@ rt_nurb_closefile(void)
 }
 
 
-void rt_nurb_s_plot(const struct face_g_snurb *srf)
+void nmg_nurb_s_plot(const struct face_g_snurb *srf)
 {
-    rt_nurb_plot_snurb(stdout, srf);
+    nmg_nurb_plot_snurb(stdout, srf);
 }
 
 

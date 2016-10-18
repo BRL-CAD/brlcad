@@ -2260,7 +2260,7 @@ osgl_openFb(struct dm_internal *dmp)
     return 0;
 }
 
-void
+int
 osgl_get_internal(struct dm_internal *dmp)
 {
     struct modifiable_osgl_vars *mvars = NULL;
@@ -2270,9 +2270,10 @@ osgl_get_internal(struct dm_internal *dmp)
 	mvars->this_dm = dmp;
 	bu_vls_init(&(mvars->log));
     }
+    return 0;
 }
 
-void
+int
 osgl_put_internal(struct dm_internal *dmp)
 {
     struct modifiable_osgl_vars *mvars = NULL;
@@ -2281,6 +2282,7 @@ osgl_put_internal(struct dm_internal *dmp)
 	bu_vls_free(&(mvars->log));
 	BU_PUT(dmp->m_vars, struct modifiable_osgl_vars);
     }
+    return 0;
 }
 
 void

@@ -615,7 +615,7 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    tree_list = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 	    if (comb->tree) {
 		actual_count = BU_PTBL_LEN(&to_subtract) + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
-		BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+		BU_ASSERT(actual_count == node_count);
 		comb->tree = TREE_NULL;
 	    }
 	    for (size_t si = 0; si < BU_PTBL_LEN(&to_subtract); si++) {

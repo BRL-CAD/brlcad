@@ -23,55 +23,24 @@
  *
  */
 
-
 #include "common.h"
 
+/* interface header */
+#include "./cache.h"
+
+/* system headers */
 #include <errno.h>
 #include <zlib.h>
-
-#include "cache.h"
 #include "bnetwork.h"
+
+/* implementation headers */
 #include "bu/cv.h"
-#include "bu/log.h"
+#include "bu/path.h"
 #include "bu/str.h"
 #include "bu/uuid.h"
 #include "rt/db_attr.h"
 #include "rt/db_io.h"
 #include "rt/func.h"
-
-/* Make sure we have PRINTF_INT32_MODIFIER defined */
-#if !defined (_PSTDINT_H_INCLUDED)
-#  if ((defined(__STDC__) && __STDC__ && __STDC_VERSION__ >= 199901L) || (defined (__WATCOMC__) && (defined (_STDINT_H_INCLUDED) || __WATCOMC__ >= 1250)) || (defined(__GNUC__) && (defined(_STDINT_H) || defined(_STDINT_H_) || defined (__UINT_FAST64_TYPE__)) ))
-#    ifndef PRINTF_INT32_MODIFIER
-#     define PRINTF_INT32_MODIFIER "l"
-#    endif
-#  endif
-#  if (ULONG_MAX == UINT32_MAX) || defined (S_SPLINT_S)
-#    ifndef PRINTF_INT32_MODIFIER
-#      define PRINTF_INT32_MODIFIER "l"
-#    endif
-#  elif (UINT_MAX == UINT32_MAX)
-#    ifndef PRINTF_INT32_MODIFIER
-#     define PRINTF_INT32_MODIFIER ""
-#    endif
-#  elif (USHRT_MAX == UINT32_MAX)
-#    ifndef PRINTF_INT32_MODIFIER
-#     define PRINTF_INT32_MODIFIER ""
-#    endif
-#  endif
-#  if (LONG_MAX == INT32_MAX) || defined (S_SPLINT_S)
-#    ifndef PRINTF_INT32_MODIFIER
-#     define PRINTF_INT32_MODIFIER "l"
-#    endif
-#  elif (INT_MAX == INT32_MAX)
-#    ifndef PRINTF_INT32_MODIFIER
-#     define PRINTF_INT32_MODIFIER ""
-#    endif
-#  endif
-#  ifndef PRINTF_INT32_MODIFIER
-#    define PRINTF_INT32_MODIFIER ""
-#  endif
-#endif
 
 
 static const char * const cache_mime_type = "brlcad/cache";
@@ -83,7 +52,7 @@ struct rt_cache {
 
 
 HIDDEN void
-rt_cache_check(const struct rt_cache *cache)
+cache_check(const struct rt_cache *cache)
 {
     if (!cache)
 	bu_bomb("NULL rt_cache pointer");
@@ -93,7 +62,7 @@ rt_cache_check(const struct rt_cache *cache)
 
 
 HIDDEN void
-rt_cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
+cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
 {
     struct bu_external raw_external;
     struct db5_raw_internal raw_internal;
@@ -135,13 +104,55 @@ rt_cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
 struct rt_cache *
 rt_cache_open(void)
 {
-    const char * const path = "rt_cache.tmp";
-    const int create = !bu_file_exists(path, NULL);
+    struct bu_vls full_path = BU_VLS_INIT_ZERO;
+    struct bu_vls tmp_path = BU_VLS_INIT_ZERO;
+    const char * const file_name = "rt_cache.tmp";
+    char *home_path;
+    FILE *tmpfp;
+    char temppath[MAXPATHLEN];
+    int create;
     struct rt_cache *result;
-
     BU_GET(result, struct rt_cache);
 
-    result->dbip = create ? db_create(path, 5) : db_open(path, DB_OPEN_READWRITE);
+    /* First, check HOME, tmp and the current working directory for
+     * a pre-existing cache file */
+    if ((home_path = getenv("HOME")) != (char *)NULL) {
+	bu_vls_sprintf(&full_path, "%s/%s", home_path, file_name);
+	if (bu_file_exists(bu_vls_addr(&full_path), NULL)) goto have_cache_file;
+    }
+
+    /* create a temp file in order to extract the tmp file working
+     * directory - we have our own name, but need the path */
+    tmpfp = bu_temp_file(temppath, MAXPATHLEN);
+    if (tmpfp != NULL) {
+	struct bu_vls dir = BU_VLS_INIT_ZERO;
+	fclose(tmpfp);
+	if (bu_path_component(&dir, temppath, BU_PATH_DIRNAME)) {
+	    bu_vls_sprintf(&full_path, "%s/%s", bu_vls_addr(&dir), file_name);
+	    bu_vls_sprintf(&tmp_path, "%s/%s", bu_vls_addr(&dir), file_name);
+	    bu_vls_free(&dir);
+	    if (bu_file_exists(bu_vls_addr(&full_path),NULL)) goto have_cache_file;
+	}
+    }
+
+    /* As a last resort, check the current directory */
+    bu_vls_sprintf(&full_path, "%s", file_name);
+    if (bu_file_exists(bu_vls_addr(&full_path),NULL)) goto have_cache_file;
+
+    /* If we got this far, we have nothing.  If we have HOME, use that, else
+     * fall back on tmp, and as a last resort try current dir */
+    if (home_path) {
+	bu_vls_sprintf(&full_path, "%s/%s", home_path, file_name);
+    } else if (bu_vls_strlen(&tmp_path) > 0) {
+	bu_vls_sprintf(&full_path, "%s", bu_vls_addr(&tmp_path));
+    } else {
+	bu_vls_sprintf(&full_path, "%s", file_name);
+    }
+
+have_cache_file:
+    create = !bu_file_exists(bu_vls_addr(&full_path), NULL);
+    result->dbip = create ? db_create(bu_vls_addr(&full_path), 5) : db_open(bu_vls_addr(&full_path), DB_OPEN_READWRITE);
+    bu_vls_free(&full_path);
 
     if (!result->dbip || (!create && db_dirbuild(result->dbip))) {
 	db_close(result->dbip);
@@ -156,7 +167,7 @@ rt_cache_open(void)
 void
 rt_cache_close(struct rt_cache *cache)
 {
-    rt_cache_check(cache);
+    cache_check(cache);
 
     db_close(cache->dbip);
     BU_PUT(cache, struct rt_cache);
@@ -208,14 +219,14 @@ uncompress_external(const struct bu_external *external,
 
 
 HIDDEN int
-rt_cache_try_load(const struct rt_cache *cache,
-		  const struct directory *cache_dir, struct soltab *stp,
-		  const struct rt_db_internal *internal)
+cache_try_load(const struct rt_cache *cache,
+	       const struct directory *cache_dir, struct soltab *stp,
+	       const struct rt_db_internal *internal)
 {
     struct bu_external data_external = BU_EXTERNAL_INIT_ZERO;
-    uint32_t version = UINT32_MAX;
+    size_t version = (size_t)-1;
 
-    rt_cache_check(cache);
+    cache_check(cache);
     RT_CK_DIR(cache_dir);
     RT_CK_SOLTAB(stp);
 
@@ -277,14 +288,14 @@ rt_cache_try_load(const struct rt_cache *cache,
 
 
 HIDDEN void
-rt_cache_try_store(struct rt_cache *cache, struct directory *cache_dir,
-		   struct soltab *stp, const struct rt_db_internal *internal)
+cache_try_store(struct rt_cache *cache, struct directory *cache_dir,
+		struct soltab *stp, const struct rt_db_internal *internal)
 {
     struct bu_external attributes_external;
     struct bu_external data_external = BU_EXTERNAL_INIT_ZERO;
-    uint32_t version = UINT32_MAX;
+    size_t version = (size_t)-1;
 
-    rt_cache_check(cache);
+    cache_check(cache);
     RT_CK_DIR(cache_dir);
     RT_CK_SOLTAB(stp);
 
@@ -295,7 +306,7 @@ rt_cache_try_store(struct rt_cache *cache, struct directory *cache_dir,
     cache_dir->d_minor_type = 0;
 
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version)
-	|| version == UINT32_MAX)
+	|| version == (size_t)-1)
 	bu_bomb("rt_obj_prep_serialize() failed");
 
     compress_external(&data_external);
@@ -304,7 +315,7 @@ rt_cache_try_store(struct rt_cache *cache, struct directory *cache_dir,
 	struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
 	struct bu_vls version_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_sprintf(&version_vls, "%" PRINTF_INT32_MODIFIER "u", version);
+	bu_vls_sprintf(&version_vls, "%zu", version);
 	bu_avs_add(&attributes, "mime_type", cache_mime_type);
 	bu_avs_add(&attributes, "rt_cache::version", bu_vls_addr(&version_vls));
 	db5_export_attributes(&attributes_external, &attributes);
@@ -334,16 +345,16 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
     char name[37];
     struct directory *dir;
 
-    rt_cache_check(cache);
+    cache_check(cache);
     RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(internal);
 
-    rt_cache_generate_name(name, stp);
+    cache_generate_name(name, stp);
     dir = db_lookup(cache->dbip, name, 0);
 
     if (dir) {
-	if (!rt_cache_try_load(cache, dir, stp, internal))
-	    bu_bomb("rt_cache_try_load() failed");
+	if (!cache_try_load(cache, dir, stp, internal))
+	    bu_bomb("cache_try_load() failed");
     } else {
 	char type = 0;
 
@@ -355,7 +366,7 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
 				  (void *)&type)))
 		bu_bomb("db_diradd() failed");
 
-	    rt_cache_try_store(cache, dir, stp, internal);
+	    cache_try_store(cache, dir, stp, internal);
 	}
     }
 

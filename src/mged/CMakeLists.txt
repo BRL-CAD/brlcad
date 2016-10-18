@@ -73,6 +73,9 @@ if(CPP_DLL_DEFINES)
   set(mged_libs ${mged_libs} ws2_32.lib;opengl32.lib)
 endif(CPP_DLL_DEFINES)
 
+# Ideally we'd build as GUI for Windows to avoid the command window popping up,
+# but I'm not sure if that would be a problem for scripting with mged.exe on
+# Windows so leave it for now...
 BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${mged_libs}")
 
 # mged depends on the creation/installation of all the
@@ -85,16 +88,6 @@ BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(cad_parea cad_parea.c libbu)
 
-if(CMAKE_CONFIGURATION_TYPES)
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    configure_file(mged.bat ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/mged.bat COPYONLY)
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-else(CMAKE_CONFIGURATION_TYPES)
-  configure_file(mged.bat ${CMAKE_BINARY_DIR}/bin/mged.bat COPYONLY)
-endif(CMAKE_CONFIGURATION_TYPES)
-install(PROGRAMS mged.bat DESTINATION bin)
-
 set(mged_ignore_files
   bool_rewrite.c
   cmd.h
@@ -104,7 +97,6 @@ set(mged_ignore_files
   fbserv.h
   htmlLibraryUi.h
   menu.h
-  mged.bat
   mged.h
   mged_dm.h
   qray.h

@@ -249,11 +249,14 @@ BU_EXPORT extern int bu_str_isprint(const char *cp);
  * Returns truthfully if a given input string represents an
  * "affirmative string".
  *
- * Input values that are case-insensitively NULL, empty, "n", "no",
- * "false", "off", "(null)", or are 0-valued return as false.  Any
- * other input value return true.  Strings strongly indicating true
- * such as "y", "yes", "true", "on", or are 1-valued will return as 1,
- * other strings still return as true but may be greater than 1.
+ * Input values that are case-insensitively NULL, empty (i.e., ""
+ * after disregarding whitespace), "n", "no", "false", "off",
+ * "(null)", or are 0-valued return as false.  Any other input value
+ * returns true.
+ *
+ * Strings strongly indicating true such as "y", "yes", "true", "on",
+ * or are 1-valued will return as 1, other non-empty strings still
+ * return as true but may be greater than 1.
  */
 BU_EXPORT extern int bu_str_true(const char *str);
 
@@ -261,9 +264,10 @@ BU_EXPORT extern int bu_str_true(const char *str);
  * Returns truthfully if a given input string represents a
  * "negative string".
  *
- * Input values that are case-insensitively NULL, empty, "n", "no",
- * "false", "off", "(null)", or are 0-valued return as true.  Any
- * other input value returns as false.
+ * Input values that are case-insensitively NULL, empty (i.e., ""
+ * after disregarding whitespace), "n", "no", "false", "off",
+ * "(null)", or are 0-valued return as true.  Any other input value
+ * returns as false.
  */
 BU_EXPORT extern int bu_str_false(const char *str);
 

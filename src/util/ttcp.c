@@ -451,6 +451,7 @@ int
 Nwrite(int fd, char *buf, int count)
 {
     int cnt;
+    errno = 0;
     if (udp) {
     again:
 	cnt = sendto(fd, (const void *)buf, (size_t) count, 0,

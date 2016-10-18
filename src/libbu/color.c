@@ -316,7 +316,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 		return 0;
 	}
 
-	if (!((NEAR_ZERO(result, SMALL_FASTF) && errno) || endptr == str
+	if (!((NEAR_ZERO(result, 0.0) && errno) || endptr == str
 		    || !strchr(allowed_separators, *endptr))) {
 	    separator = *endptr;
 	    break;
@@ -343,7 +343,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 		bu_bomb("error");
 	}
 
-	if ((NEAR_ZERO(color->buc_rgb[i], SMALL_FASTF) && errno) || endptr == str || *endptr != expected_char
+	if ((NEAR_ZERO(color->buc_rgb[i], 0.0) && errno) || endptr == str || *endptr != expected_char
 		|| !(0.0 <= color->buc_rgb[i] && color->buc_rgb[i] <= 1.0)) {
 	    VSETALL(color->buc_rgb, 0.0);
 	    return 0;

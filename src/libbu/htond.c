@@ -28,7 +28,8 @@
 
 #include "bu/cv.h"
 #include "bu/endian.h"
-#include "bu/log.h"
+#include "bu/exit.h"
+
 
 #define OUT_IEEE_ZERO { \
 	*out++ = 0; \

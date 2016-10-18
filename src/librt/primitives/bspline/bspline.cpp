@@ -137,20 +137,20 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 	BU_GET(n, struct nurb_specific);
 
 	/* Store off the original face_g_snurb */
-	s = rt_nurb_scopy(sip->srfs[i], (struct resource *)NULL);
+	s = nmg_nurb_scopy(sip->srfs[i], (struct resource *)NULL);
 	NMG_CK_SNURB(s);
-	rt_nurb_s_bound(s, s->min_pt, s->max_pt);
+	nmg_nurb_s_bound(s, s->min_pt, s->max_pt);
 
 	n->srf = s;
 	BU_LIST_INIT(&n->bez_hd);
 
 	/* Grind up the original surf into a list of Bezier face_g_snurbs */
-	(void)rt_nurb_bezier(&n->bez_hd, sip->srfs[i], (struct resource *)NULL);
+	(void)nmg_nurb_bezier(&n->bez_hd, sip->srfs[i], (struct resource *)NULL);
 
 	/* Compute bounds of each Bezier face_g_snurb */
 	for (BU_LIST_FOR(s, face_g_snurb, &n->bez_hd)) {
 	    NMG_CK_SNURB(s);
-	    rt_nurb_s_bound(s, s->min_pt, s->max_pt);
+	    nmg_nurb_s_bound(s, s->min_pt, s->max_pt);
 	    VMINMAX((*min), (*max), s->min_pt);
 	    VMINMAX((*min), (*max), s->max_pt);
 	}
@@ -181,9 +181,9 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 	while (BU_LIST_WHILE (s, face_g_snurb, &nurbs->bez_hd)) {
 	    NMG_CK_SNURB(s);
 	    BU_LIST_DEQUEUE(&(s->l));
-	    rt_nurb_free_snurb(s, (struct resource *)NULL);
+	    nmg_nurb_free_snurb(s, (struct resource *)NULL);
 	}
-	rt_nurb_free_snurb(nurbs->srf, (struct resource *)NULL);	/* original surf */
+	nmg_nurb_free_snurb(nurbs->srf, (struct resource *)NULL);	/* original surf */
 	BU_PUT(nurbs, struct nurb_specific);
     }
 
@@ -236,20 +236,20 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	BU_GET(n, struct nurb_specific);
 
 	/* Store off the original face_g_snurb */
-	s = rt_nurb_scopy(sip->srfs[i], (struct resource *)NULL);
+	s = nmg_nurb_scopy(sip->srfs[i], (struct resource *)NULL);
 	NMG_CK_SNURB(s);
-	rt_nurb_s_bound(s, s->min_pt, s->max_pt);
+	nmg_nurb_s_bound(s, s->min_pt, s->max_pt);
 
 	n->srf = s;
 	BU_LIST_INIT(&n->bez_hd);
 
 	/* Grind up the original surf into a list of Bezier face_g_snurbs */
-	(void)rt_nurb_bezier(&n->bez_hd, sip->srfs[i], (struct resource *)NULL);
+	(void)nmg_nurb_bezier(&n->bez_hd, sip->srfs[i], (struct resource *)NULL);
 
 	/* Compute bounds of each Bezier face_g_snurb */
 	for (BU_LIST_FOR(s, face_g_snurb, &n->bez_hd)) {
 	    NMG_CK_SNURB(s);
-	    rt_nurb_s_bound(s, s->min_pt, s->max_pt);
+	    nmg_nurb_s_bound(s, s->min_pt, s->max_pt);
 	    VMINMAX(stp->st_min, stp->st_max, s->min_pt);
 	    VMINMAX(stp->st_min, stp->st_max, s->max_pt);
 	}
@@ -308,7 +308,7 @@ rt_nurb_print(register const struct soltab *stp)
 
     for (; nurb != (struct nurb_specific *)0; nurb = nurb->next) {
 	/* XXX There is a linked list of Bezier surfaces to print here too */
-	rt_nurb_s_print("NURB", nurb->srf);
+	nmg_nurb_s_print("NURB", nurb->srf);
     }
 #endif /* CONVERT_TO_BREP */
 }
@@ -380,17 +380,17 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     while (nurb != (struct nurb_specific *) 0) {
 	struct face_g_snurb * s;
-	struct rt_nurb_uv_hit *hp;
+	struct nmg_nurb_uv_hit *hp;
 
 	for (BU_LIST_FOR (s, face_g_snurb, &nurb->bez_hd)) {
 	    if (!rt_in_rpp(rp, invdir, s->min_pt, s->max_pt))
 		continue;
 
 #define UV_TOL 1.0e-6	/* Paper says 1.0e-4 is reasonable for 1k images, not close up */
-	    hp = rt_nurb_intersect(
+	    hp = nmg_nurb_intersect(
 		s, plane1, plane2, UV_TOL, (struct resource *)ap->a_resource, NULL);
-	    while (hp != (struct rt_nurb_uv_hit *)0) {
-		struct rt_nurb_uv_hit * o;
+	    while (hp != (struct nmg_nurb_uv_hit *)0) {
+		struct nmg_nurb_uv_hit * o;
 
 		if (RT_G_DEBUG & DEBUG_SPLINE)
 		    bu_log("hit at %d %d sub = %d u = %f v = %f\n",
@@ -403,7 +403,7 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		o = hp;
 		hp = hp->next;
 		bu_free((char *)o,
-			"rt_nurb_shot:rt_nurb_uv_hit structure");
+			"rt_nurb_shot:nmg_nurb_uv_hit structure");
 
 		rt_nurb_add_hit(&hit_list, hit, tol);
 	    }
@@ -487,7 +487,7 @@ rt_nurb_norm(register struct hit *hitp, struct soltab *stp, register struct xray
     fastf_t v = hitp->hit_vpriv[1];
     fastf_t norm[4];
 
-    rt_nurb_s_norm(n, u, v, norm);
+    nmg_nurb_s_norm(n, u, v, norm);
 
     VMOVE(hitp->hit_normal, norm);
 
@@ -525,7 +525,7 @@ rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct 
     u = hitp->hit_vpriv[0];
     v = hitp->hit_vpriv[1];
 
-    rt_nurb_curvature(cvp, srf, u, v);
+    nmg_nurb_curvature(cvp, srf, u, v);
 #endif /* CONVERT_TO_BREP */
 }
 
@@ -574,9 +574,9 @@ rt_nurb_free(register struct soltab *stp)
 	while (BU_LIST_WHILE (s, face_g_snurb, &nurb->bez_hd)) {
 	    NMG_CK_SNURB(s);
 	    BU_LIST_DEQUEUE(&(s->l));
-	    rt_nurb_free_snurb(s, (struct resource *)NULL);
+	    nmg_nurb_free_snurb(s, (struct resource *)NULL);
 	}
-	rt_nurb_free_snurb(nurb->srf, (struct resource *)NULL);	/* original surf */
+	nmg_nurb_free_snurb(nurb->srf, (struct resource *)NULL);	/* original surf */
 	BU_PUT(nurb, struct nurb_specific);
     }
     return;
@@ -633,23 +633,23 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	if (num_knots < 2) num_knots = 2;
 
-	rt_nurb_kvknot(&tkv1, n->order[0],
+	nmg_nurb_kvknot(&tkv1, n->order[0],
 		       n->u.knots[0],
 		       n->u.knots[n->u.k_size-1], num_knots, (struct resource *)NULL);
 
-	rt_nurb_kvknot(&tkv2, n->order[1],
+	nmg_nurb_kvknot(&tkv2, n->order[1],
 		       n->v.knots[0],
 		       n->v.knots[n->v.k_size-1], num_knots, (struct resource *)NULL);
 
 
 	if (tkv2.k_size > n->v.k_size) {
-	    r = (struct face_g_snurb *) rt_nurb_s_refine(n, RT_NURB_SPLIT_COL, &tkv2, (struct resource *)NULL);
+	    r = (struct face_g_snurb *) nmg_nurb_s_refine(n, RT_NURB_SPLIT_COL, &tkv2, (struct resource *)NULL);
 	    refined_col = 1;
 	} else {
 	    r = n;
 	}
 	if (tkv1.k_size > r->u.k_size) {
-	    c = (struct face_g_snurb *) rt_nurb_s_refine(r, RT_NURB_SPLIT_ROW, &tkv1, (struct resource *)NULL);
+	    c = (struct face_g_snurb *) nmg_nurb_s_refine(r, RT_NURB_SPLIT_ROW, &tkv1, (struct resource *)NULL);
 	    refined_row = 1;
 	} else {
 	    c = r;
@@ -691,10 +691,10 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    }
 	}
 	if (refined_col) {
-	    rt_nurb_free_snurb(r, (struct resource *)NULL);
+	    nmg_nurb_free_snurb(r, (struct resource *)NULL);
 	}
 	if (refined_row) {
-	    rt_nurb_free_snurb(c, (struct resource *)NULL);
+	    nmg_nurb_free_snurb(c, (struct resource *)NULL);
 	}
 	bu_free((char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
 	bu_free((char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
@@ -803,7 +803,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	    d.d.d_nctls = rp->d.d_nctls;
 	}
 
-	sip->srfs[s] = (struct face_g_snurb *) rt_nurb_new_snurb(
+	sip->srfs[s] = (struct face_g_snurb *) nmg_nurb_new_snurb(
 	    d.d.d_order[0], d.d.d_order[1],
 	    d.d.d_kv_size[0], d.d.d_kv_size[1],
 	    d.d.d_ctl_size[0], d.d.d_ctl_size[1],
@@ -827,8 +827,8 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	    }
 	}
 
-	rt_nurb_kvnorm(&sip->srfs[s]->u);
-	rt_nurb_kvnorm(&sip->srfs[s]->v);
+	nmg_nurb_kvnorm(&sip->srfs[s]->u);
+	nmg_nurb_kvnorm(&sip->srfs[s]->v);
 
 	vp = (dbfloat_t *) &rp[d.d.d_nknots+1];
 	m = sip->srfs[s]->ctl_points;
@@ -877,7 +877,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	}
 
 	/* bound the surface for tolerancing and other bounding box tests */
-	rt_nurb_s_bound(sip->srfs[s], sip->srfs[s]->min_pt,
+	nmg_nurb_s_bound(sip->srfs[s], sip->srfs[s]->min_pt,
 			sip->srfs[s]->max_pt);
 
 	rp += 1 + d.d.d_nknots + d.d.d_nctls;
@@ -1146,7 +1146,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	else
 	    pt_type = RT_NURB_MAKE_PT_TYPE(4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL);
 
-	sip->srfs[s] = (struct face_g_snurb *) rt_nurb_new_snurb(
+	sip->srfs[s] = (struct face_g_snurb *) nmg_nurb_new_snurb(
 	    order[0], order[1],
 	    u_size, v_size,
 	    s_size[0], s_size[1],
@@ -1174,8 +1174,8 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	bu_free(uknots, "uknots");
 	bu_free(vknots, "vknots");
 
-	rt_nurb_kvnorm(&srf->u);
-	rt_nurb_kvnorm(&srf->v);
+	nmg_nurb_kvnorm(&srf->u);
+	nmg_nurb_kvnorm(&srf->v);
 
 	points = (double *)bu_malloc(coords * srf->s_size[0] * srf->s_size[1] * sizeof(double), "points");
 
@@ -1205,7 +1205,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	}
 
 	/* bound the surface for tolerancing and other bounding box tests */
-	rt_nurb_s_bound(sip->srfs[s], sip->srfs[s]->min_pt,
+	nmg_nurb_s_bound(sip->srfs[s], sip->srfs[s]->min_pt,
 			sip->srfs[s]->max_pt);
     }
     return 0;
@@ -1225,7 +1225,7 @@ rt_nurb_ifree(struct rt_db_internal *ip)
 
     /* Free up storage for the nurb surfaces */
     for (i = 0; i < sip->nsrf; i++) {
-	rt_nurb_free_snurb(sip->srfs[i], (struct resource *)NULL);
+	nmg_nurb_free_snurb(sip->srfs[i], (struct resource *)NULL);
     }
     sip->magic = 0;
     sip->nsrf = 0;
@@ -1377,7 +1377,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	if (BU_STR_EQUAL(argv[0], "N")) {
 	    if (nurb->srfs) {
 		for (i=0; i<nurb->nsrf; i++)
-		    rt_nurb_free_snurb(nurb->srfs[i], NULL);
+		    nmg_nurb_free_snurb(nurb->srfs[i], NULL);
 		bu_free((char *)nurb->srfs, "nurb surfaces");
 	    }
 	    nurb->nsrf = atoi(argv[1]);
@@ -1425,7 +1425,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 			    bu_free((char *)srf_param_array, "srf_param_array");
 			    return BRLCAD_ERROR;
 			}
-			nurb->srfs[srf_no] = (struct face_g_snurb *) rt_nurb_new_snurb(
+			nurb->srfs[srf_no] = (struct face_g_snurb *) nmg_nurb_new_snurb(
 				order[0], order[1],
 				u_size, v_size,
 				s_size[0], s_size[1],

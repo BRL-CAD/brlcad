@@ -97,7 +97,7 @@ RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt
 struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
 int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
 int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
-int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, uint32_t *version);
+int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #ifdef __cplusplus
 }
 #endif
@@ -5033,13 +5033,13 @@ int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log)
 
 
 int
-rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, uint32_t *version)
+rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version)
 {
     RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(external);
 
-    const uint32_t current_version = 0;
+    const size_t current_version = 0;
 
     RT_CK_SOLTAB(stp);
     BU_CK_EXTERNAL(external);

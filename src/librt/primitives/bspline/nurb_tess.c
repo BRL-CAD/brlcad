@@ -45,7 +45,7 @@
  * and Arnaud Richard.
  *
  * There is a slight deviation from the paper; since libnurb
- * (rt_nurb_s_diff) differentiation correctly handles rational
+ * (nmg_nurb_s_diff) differentiation correctly handles rational
  * surfaces, no special processing for rational is needed.
  *
  * The idea is to compute the longest edge size in parametric space
@@ -64,11 +64,11 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
     fastf_t *pt;
 
 
-    us = rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-    vs = rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
-    uus = rt_nurb_s_diff(us, RT_NURB_SPLIT_ROW);
-    vvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
-    uvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
+    us = nmg_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+    vs = nmg_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+    uus = nmg_nurb_s_diff(us, RT_NURB_SPLIT_ROW);
+    vvs = nmg_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
+    uvs = nmg_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
 
     d1 = 0.0;
     d2 = 0.0;
@@ -121,11 +121,11 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
     /* free up storage */
 
-    rt_nurb_free_snurb(us, (struct resource *)NULL);
-    rt_nurb_free_snurb(vs, (struct resource *)NULL);
-    rt_nurb_free_snurb(uus, (struct resource *)NULL);
-    rt_nurb_free_snurb(vvs, (struct resource *)NULL);
-    rt_nurb_free_snurb(uvs, (struct resource *)NULL);
+    nmg_nurb_free_snurb(us, (struct resource *)NULL);
+    nmg_nurb_free_snurb(vs, (struct resource *)NULL);
+    nmg_nurb_free_snurb(uus, (struct resource *)NULL);
+    nmg_nurb_free_snurb(vvs, (struct resource *)NULL);
+    nmg_nurb_free_snurb(uvs, (struct resource *)NULL);
 
 
     /* The paper uses the following to calculate the longest edge size
@@ -176,8 +176,8 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
     final_t = MAX_FASTF;
     num_coord_factor = sqrt((double)num_coords);
 
-    d1 = rt_nurb_c_diff(crv);
-    d2 = rt_nurb_c_diff(d1);
+    d1 = nmg_nurb_c_diff(crv);
+    d2 = nmg_nurb_c_diff(d1);
 
     pt = d2->ctl_points;
     for (i=0; i<d2->c_size; i++) {
@@ -191,8 +191,8 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 	}
     }
 
-    rt_nurb_free_cnurb(d1);
-    rt_nurb_free_cnurb(d2);
+    nmg_nurb_free_cnurb(d1);
+    nmg_nurb_free_cnurb(d2);
 
     for (j=0; j<num_coords; j++) {
 	if (ZERO(der2[j]))

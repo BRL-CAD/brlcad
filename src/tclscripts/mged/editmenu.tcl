@@ -19,14 +19,8 @@
 #
 ###
 #
-#			E D I T M E N U . T C L
-#
 #	TCL macros for MGED(1) to specify a solid/obj_path for editing
 #	from among those currently being displayed.
-#
-#	Authors -
-#		Paul Tanenbaum
-#		Robert Parker
 #
 
 if ![info exists mged_default(display)] {

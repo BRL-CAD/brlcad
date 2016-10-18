@@ -19,12 +19,8 @@
 #
 ###
 #
-#			E O B J M E N U . T C L
-#
 #	TCL macros for MGED(1) to specify an object for editing
 #	from among those currently being displayed
-#
-#	Author - Paul Tanenbaum
 #
 #	Grab the output of MGED's 'x' command, and use it to build a menu
 

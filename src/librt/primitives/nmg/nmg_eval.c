@@ -35,7 +35,7 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "raytrace.h"
+#include "rt/nmg.h"
 
 
 struct nmg_bool_state {
@@ -45,6 +45,7 @@ struct nmg_bool_state {
     char **bs_classtab;
     const int *bs_actions;
     const struct bn_tol *bs_tol;
+    struct bu_list *vlfree;
 };
 
 
@@ -186,7 +187,7 @@ static const int intersect_actions[8] = {
  *
  */
 void
-nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlist, const struct bn_tol *tol)
+nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlist, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     int const *actions;
     struct nmg_bool_state bool_state;
@@ -195,7 +196,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     NMG_CK_SHELL(sB);
     BN_CK_TOL(tol);
 
-    if (RTG.NMG_debug & DEBUG_BOOLEVAL) {
+    if (nmg_debug & DEBUG_BOOLEVAL) {
 	bu_log("nmg_evaluate_boolean(sA=%p, sB=%p, op=%d) START\n",
 	       (void *)sA, (void *)sB, op);
     }
@@ -221,6 +222,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     bool_state.bs_src = sB;
     bool_state.bs_classtab = classlist;
     bool_state.bs_actions = actions;
+    bool_state.vlfree = vlfree;
     bool_state.bs_tol = tol;
 
     bool_state.bs_isA = 1;
@@ -229,17 +231,17 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     bool_state.bs_isA = 0;
     nmg_eval_shell(sB, &bool_state);
 
-    if (RTG.NMG_debug & DEBUG_BOOLEVAL) {
+    if (nmg_debug & DEBUG_BOOLEVAL) {
 	bu_log("nmg_evaluate_boolean(sA=%p, sB=%p, op=%d), evaluations done\n",
 	       (void *)sA, (void *)sB, op);
     }
     /* Write sA and sB into separate files, if wanted? */
 
     /* Move everything left in sB into sA.  sB is killed. */
-    nmg_js(sA, sB, tol);
+    nmg_js(sA, sB, vlfree, tol);
 
     /* Plot the result */
-    if (RTG.NMG_debug & DEBUG_BOOLEVAL && RTG.NMG_debug & DEBUG_PLOTEM) {
+    if (nmg_debug & DEBUG_BOOLEVAL && nmg_debug & DEBUG_PLOTEM) {
 	FILE *fp;
 
 	if ((fp=fopen("bool_ans.plot3", "wb")) == (FILE *)NULL) {
@@ -247,12 +249,12 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
 	    bu_bomb("unable to open bool_ans.plot3 for writing");
 	}
 	bu_log("plotting bool_ans.plot3\n");
-	nmg_pl_s(fp, sA);
+	nmg_pl_s(fp, sA, vlfree);
 	(void)fclose(fp);
     }
 
     /* Remove loops/edges/vertices that appear more than once in result */
-    nmg_rm_redundancies(sA, tol);
+    nmg_rm_redundancies(sA, vlfree, tol);
 }
 
 
@@ -329,7 +331,7 @@ nmg_eval_action(uint32_t *ptr, register struct nmg_bool_state *bs)
     nmg_class = NMG_CLASS_BAD;
     ret = BACTION_RETAIN;
 out:
-    if (RTG.NMG_debug & DEBUG_BOOLEVAL) {
+    if (nmg_debug & DEBUG_BOOLEVAL) {
 	bu_log("nmg_eval_action(ptr=%p) index=%d %s %s %s %s\n",
 	       (void *)ptr, index,
 	       bs->bs_isA ? "A" : "B",
@@ -363,7 +365,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
     NMG_CK_SHELL(s);
     BN_CK_TOL(bs->bs_tol);
 
-    if (RTG.NMG_debug & DEBUG_VERIFY)
+    if (nmg_debug & DEBUG_VERIFY)
 	nmg_vshell(&s->r_p->s_hd, s->r_p);
 
     /*
@@ -417,10 +419,10 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	    lu = nextlu;
 	}
 
-	if (RTG.NMG_debug & DEBUG_BOOLEVAL)
+	if (nmg_debug & DEBUG_BOOLEVAL)
 	    bu_log("faceuse %p loops retained=%d\n",
 		   (void *)fu, loops_retained);
-	if (RTG.NMG_debug & DEBUG_VERIFY)
+	if (nmg_debug & DEBUG_VERIFY)
 	    nmg_vshell(&s->r_p->s_hd, s->r_p);
 
 	/*
@@ -431,10 +433,10 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	if (BU_LIST_IS_EMPTY(&fu->lu_hd)) {
 	    if (loops_retained) bu_bomb("nmg_eval_shell() empty faceuse with retained loops?\n");
 	    /* faceuse is empty, face & mate die */
-	    if (RTG.NMG_debug & DEBUG_BOOLEVAL)
+	    if (nmg_debug & DEBUG_BOOLEVAL)
 		bu_log("faceuse %p empty, kill\n", (void *)fu);
 	    nmg_kfu(fu);	/* kill face & mate, dequeue from shell */
-	    if (RTG.NMG_debug & DEBUG_VERIFY)
+	    if (nmg_debug & DEBUG_VERIFY)
 		nmg_vshell(&s->r_p->s_hd, s->r_p);
 	    nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 	    fu = nextfu;
@@ -447,7 +449,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	}
 	fu = nextfu;
     }
-    if (RTG.NMG_debug & DEBUG_VERIFY)
+    if (nmg_debug & DEBUG_VERIFY)
 	nmg_vshell(&s->r_p->s_hd, s->r_p);
 
     /*
@@ -484,7 +486,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	}
 	lu = nextlu;
     }
-    if (RTG.NMG_debug & DEBUG_VERIFY)
+    if (nmg_debug & DEBUG_VERIFY)
 	nmg_vshell(&s->r_p->s_hd, s->r_p);
 
     /*
@@ -556,7 +558,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	}
 	lu = nextlu;
     }
-    if (RTG.NMG_debug & DEBUG_VERIFY)
+    if (nmg_debug & DEBUG_VERIFY)
 	nmg_vshell(&s->r_p->s_hd, s->r_p);
 
     /*
@@ -578,7 +580,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		bu_bomb("nmg_eval_shell() bad BACTION\n");
 	}
     }
-    if (RTG.NMG_debug & DEBUG_VERIFY)
+    if (nmg_debug & DEBUG_VERIFY)
 	nmg_vshell(&s->r_p->s_hd, s->r_p);
     nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 }
@@ -598,9 +600,9 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
     int do_plot = 0;
     int do_anim = 0;
 
-    if (RTG.NMG_debug & DEBUG_BOOLEVAL && RTG.NMG_debug & DEBUG_PLOTEM)
+    if (nmg_debug & DEBUG_BOOLEVAL && nmg_debug & DEBUG_PLOTEM)
 	do_plot = 1;
-    if (RTG.NMG_debug & DEBUG_PL_ANIM) do_anim = 1;
+    if (nmg_debug & DEBUG_PL_ANIM) do_anim = 1;
 
     if (!do_plot && !do_anim) return;
 
@@ -614,16 +616,14 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
 	}
 	bu_log("Plotting %s\n", fname);
 
-	nmg_pl_s(fp, bs->bs_dest);
-	nmg_pl_s(fp, bs->bs_src);
+	nmg_pl_s(fp, bs->bs_dest, bs->vlfree);
+	nmg_pl_s(fp, bs->bs_src, bs->vlfree);
 
 	fclose(fp);
     }
 
     if (do_anim) {
-	struct bn_vlblock *vbp;
-
-	vbp = rt_vlblock_init();
+	struct bn_vlblock *vbp = bn_vlblock_init(bs->vlfree, 32);
 
 	nmg_vlblock_s(vbp, bs->bs_dest, 0);
 	nmg_vlblock_s(vbp, bs->bs_src, 0);
@@ -635,7 +635,7 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
 	    void (*cfp)(struct bn_vlblock *, int, int);
 	    cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
 	    cfp(vbp,
-		(RTG.NMG_debug&DEBUG_PL_SLOW) ? 250000 : 0,
+		(nmg_debug&DEBUG_PL_SLOW) ? 250000 : 0,
 		0);
 	} else {
 	    bu_log("null nmg_vlblock_anim_upcall, no animation\n");

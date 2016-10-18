@@ -41,7 +41,7 @@ mk_write_color_table(struct rt_wdb *ofp)
 {
     RT_CK_WDB(ofp);
     if (db_version(ofp->dbip) < 5) {
-	BU_ASSERT_LONG(mk_version, ==, 4);
+	BU_ASSERT(mk_version == 4);
 
 	bu_log("mk_write_color_table(): not implemented for v4 database\n");
     } else {

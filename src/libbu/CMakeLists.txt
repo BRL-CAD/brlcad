@@ -10,6 +10,9 @@ endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # locally used but not needed by users of the library
 set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+if (${UUID_INCLUDE_DIR})
+  set(BU_LOCAL_INCLUDE_DIRS ${BU_LOCAL_INCLUDE_DIRS} ${UUID_INCLUDE_DIR})
+endif (${UUID_INCLUDE_DIR})
 
 BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 
@@ -26,6 +29,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 
 # We do want to install the mime header
 install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
+
+# Year 2038+ support lib
+add_subdirectory(y2038)
 
 set(LIBBU_SOURCES
   affinity.c
@@ -108,7 +114,7 @@ set(LIBBU_SOURCES
   xdr.c
   )
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${UUID_LIBRARY};${BSON_LIBRARIES};${M_LIBRARY};y2038")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${M_LIBRARY};y2038")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
   set_property(TARGET libbu APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_IMPORTS")
@@ -117,8 +123,9 @@ endif(CPP_DLL_DEFINES)
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
 
-add_subdirectory(tests)
-add_subdirectory(y2038)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+  add_subdirectory(tests)
+endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 set(bu_ignore_files
   bitv.h

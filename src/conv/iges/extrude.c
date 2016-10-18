@@ -118,14 +118,14 @@ extrude(int entityno)
 		pt_ptr = pt_ptr->next;
 	    }
 
-	    if (nmg_calc_face_g(fu)) {
+	    if (nmg_calc_face_g(fu, &RTG.rtg_vlfree)) {
 		bu_log("Extrude: Failed to calculate face geometry\n");
 		nmg_km(m);
 		bu_free((char *)curv_pts, "curve_pts");
 		return 0;
 	    }
 
-	    if (nmg_extrude_face(fu, evect, &tol)) {
+	    if (nmg_extrude_face(fu, evect, &RTG.rtg_vlfree, &tol)) {
 		bu_log("Extrude: extrusion failed\n");
 		nmg_km(m);
 		bu_free((char *)curv_pts, "curve_pts");

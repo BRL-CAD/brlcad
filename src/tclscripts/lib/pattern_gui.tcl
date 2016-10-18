@@ -18,12 +18,8 @@
 # information.
 #
 ###
-##
-#		I P A T T . T C L
 #
 # Description - GUI for Anderson's pattern replicator tools.
-#
-# Author - Robert F. Hartley
 #
 ##
 

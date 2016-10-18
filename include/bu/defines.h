@@ -120,13 +120,20 @@
 /**
  * shorthand declaration of a function that doesn't return
  */
-#if defined(HAVE_NORETURN_ATTRIBUTE) && defined(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
-   /* clang static analyzer is needing an additional flag set */
-#  define _BU_ATTR_NORETURN __attribute__((__noreturn__)) __attribute__((analyzer_noreturn))
-#elif defined(HAVE_NORETURN_ATTRIBUTE)
+#ifdef HAVE_NORETURN_ATTRIBUTE
 #  define _BU_ATTR_NORETURN __attribute__((__noreturn__))
 #else
 #  define _BU_ATTR_NORETURN
+#endif
+
+/* For the moment, we need to specially flag some functions
+ * for clang.  It's not clear if we will always need to do
+ * this, but for now this suppresses a lot of noise in the
+ * reports */
+#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
+#  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
+#else
+#  define _BU_ATTR_ANALYZE_NORETURN
 #endif
 
 /**
@@ -141,9 +148,9 @@
 
 /**
  *  If we're compiling strict, turn off "format string vs arguments"
- *  checks - BRL-CAD customizes the arguments to some of these
- *  function types (adding bu_vls support) and that is a problem with
- *  strict checking.
+ *  checks. As long as we are using C89, the proper printf support
+ *  for size_t is not available in the standard and we will get
+ *  warnings about using extensions.
  */
 #if defined(STRICT_FLAGS)
 #  undef _BU_ATTR_PRINTF12

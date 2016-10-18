@@ -19,13 +19,9 @@
 #
 ###
 #
-#		P A T T E R N . T C L
-#
 #	procedures to build duplicates of objects in a specified pattern
 #
-# Author - John R. Anderson
-#
-#
+###
 #	C R E A T E _ N E W _ N A M E
 #
 # procedure to create a new unique name for an MGED database object.

@@ -203,10 +203,10 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 		/* evaluate srf at the parameter values for v2 to get geometry */
 		if (RT_NURB_EXTRACT_PT_TYPE(crv->pt_type) == RT_NURB_PT_UV &&
 		    RT_NURB_IS_PT_RATIONAL(crv->pt_type)) {
-		    rt_nurb_s_eval(srf, end_uv[0]/end_uv[2],
+		    nmg_nurb_s_eval(srf, end_uv[0]/end_uv[2],
 				   end_uv[1]/end_uv[2], pt_on_srf);
 		} else if (coords == 2)
-		    rt_nurb_s_eval(srf, end_uv[0], end_uv[1], pt_on_srf);
+		    nmg_nurb_s_eval(srf, end_uv[0], end_uv[1], pt_on_srf);
 
 		if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 		    fastf_t sca;
@@ -230,7 +230,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 		new_eu = nmg_esplit(v2, eu, 0);
 
 		/* split the curve */
-		rt_nurb_c_split(&split_hd, crv);
+		nmg_nurb_c_split(&split_hd, crv);
 		crv1 = BU_LIST_FIRST(edge_g_cnurb, &split_hd);
 		crv2 = BU_LIST_LAST(edge_g_cnurb, &split_hd);
 
@@ -240,12 +240,12 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 		VMOVE(end_uv, &crv1->ctl_points[(crv1->c_size-1)*coords]);
 		if (RT_NURB_EXTRACT_PT_TYPE(crv1->pt_type) == RT_NURB_PT_UV &&
 		    RT_NURB_IS_PT_RATIONAL(crv1->pt_type)) {
-		    rt_nurb_s_eval(srf, end_uv[0]/end_uv[2],
+		    nmg_nurb_s_eval(srf, end_uv[0]/end_uv[2],
 				   end_uv[1]/end_uv[2], pt_on_srf);
 		} else {
 		    start_uv[2] = 1.0;
 		    end_uv[2] = 1.0;
-		    rt_nurb_s_eval(srf, end_uv[0], end_uv[1], pt_on_srf);
+		    nmg_nurb_s_eval(srf, end_uv[0], end_uv[1], pt_on_srf);
 		}
 
 		if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
@@ -270,12 +270,12 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 		VMOVE(end_uv, &crv2->ctl_points[(crv2->c_size-1)*coords]);
 		if (RT_NURB_EXTRACT_PT_TYPE(crv2->pt_type) == RT_NURB_PT_UV &&
 		    RT_NURB_IS_PT_RATIONAL(crv2->pt_type)) {
-		    rt_nurb_s_eval(srf, start_uv[0]/start_uv[2],
+		    nmg_nurb_s_eval(srf, start_uv[0]/start_uv[2],
 				   start_uv[1]/start_uv[2], pt_on_srf);
 		} else {
 		    start_uv[2] = 1.0;
 		    end_uv[2] = 1.0;
-		    rt_nurb_s_eval(srf, start_uv[0], start_uv[1], pt_on_srf);
+		    nmg_nurb_s_eval(srf, start_uv[0], start_uv[1], pt_on_srf);
 		}
 
 		if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {

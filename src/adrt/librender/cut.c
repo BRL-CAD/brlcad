@@ -26,9 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-#include "bu/malloc.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 
 #include "adrt.h"

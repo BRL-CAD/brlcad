@@ -8,10 +8,12 @@ set(bu_headers
   defines.h
   endian.h
   env.h
+  exit.h
   file.h
   getopt.h
   hash.h
   hist.h
+  hook.h
   list.h
   log.h
   magic.h

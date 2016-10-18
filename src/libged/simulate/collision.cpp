@@ -37,7 +37,7 @@ namespace
 
 
 HIDDEN bool
-path_match(const char *full_path, const char *toplevel_path)
+path_match(const char *full_path, const char * const toplevel_path)
 {
     if (*full_path++ != '/') return false;
 
@@ -83,8 +83,8 @@ struct OverlapHandlerArgs {
 
 
 HIDDEN void
-on_multioverlap(application *app, partition *partition1, bu_ptbl *region_table,
-		partition *partition2)
+on_multioverlap(application * const app, partition * const partition1,
+		bu_ptbl * const region_table, partition * const partition2)
 {
     OverlapHandlerArgs &args = *static_cast<OverlapHandlerArgs *>(app->a_uptr);
 
@@ -98,7 +98,7 @@ on_multioverlap(application *app, partition *partition1, bu_ptbl *region_table,
 	   app->a_ray.r_dir);
     VJOIN1(point_on_b, app->a_ray.r_pt, partition1->pt_outhit->hit_dist,
 	   app->a_ray.r_dir);
-    btScalar depth = -DIST_PT_PT(point_on_a, point_on_b);
+    fastf_t depth = -DIST_PT_PT(point_on_a, point_on_b);
     args.result.addContactPoint(args.normal_world_on_b, point_on_b, depth);
 
     // handle the overlap
@@ -151,12 +151,12 @@ calculate_contact_points(btManifoldResult &result,
 	// radius of the circle of rays
 	// half of the diagonal of the overlap rpp so that rays will cover
 	// the entire volume from all orientations
-	btScalar radius = (overlap_max - overlap_min).length() / 2.0;
+	const fastf_t radius = (overlap_max - overlap_min).length() / 2.0;
 
 	// calculate the origin of the center ray
 	{
 	    // center of the overlap volume
-	    btVector3 overlap_center = (overlap_min + overlap_max) / 2.0;
+	    const btVector3 overlap_center = (overlap_min + overlap_max) / 2.0;
 
 	    // step back from overlap_center, along the normal by `radius`,
 	    // to ensure that rays start from outside of the overlap region
@@ -177,7 +177,7 @@ calculate_contact_points(btManifoldResult &result,
 	}
 
 	// equivalent to Bullet's collision tolerance (4mm after scaling is enabled)
-	const btScalar grid_size = 4.0;
+	const fastf_t grid_size = 4.0;
 
 	rt_gen_circular_grid(rays, &center_ray, radius, up_vect, grid_size);
     }
@@ -240,7 +240,8 @@ RtCollisionShape::getName() const
 
 
 void
-RtCollisionShape::calculateLocalInertia(btScalar mass, btVector3 &inertia) const
+RtCollisionShape::calculateLocalInertia(const btScalar mass,
+					btVector3 &inertia) const
 {
     // in most cases we can approximate the inertia tensor with that of a bounding box
     btBoxShape::calculateLocalInertia(mass, inertia);
@@ -268,16 +269,17 @@ RtCollisionAlgorithm::CreateFunc::CreateCollisionAlgorithm(
     const btCollisionObjectWrapper *body_a_wrap,
     const btCollisionObjectWrapper *body_b_wrap)
 {
-    void *ptr = cinfo.m_dispatcher1->allocateCollisionAlgorithm(sizeof(
-		    RtCollisionAlgorithm));
+    void * const ptr = cinfo.m_dispatcher1->allocateCollisionAlgorithm(sizeof(
+			   RtCollisionAlgorithm));
     return new(ptr) RtCollisionAlgorithm(NULL, cinfo, body_a_wrap, body_b_wrap);
 }
 
 
-RtCollisionAlgorithm::RtCollisionAlgorithm(btPersistentManifold *manifold,
+RtCollisionAlgorithm::RtCollisionAlgorithm(btPersistentManifold * const
+	manifold,
 	const btCollisionAlgorithmConstructionInfo &cinfo,
-	const btCollisionObjectWrapper *body_a_wrap,
-	const btCollisionObjectWrapper *body_b_wrap) :
+	const btCollisionObjectWrapper * const body_a_wrap,
+	const btCollisionObjectWrapper * const body_b_wrap) :
     btActivatingCollisionAlgorithm(cinfo, body_a_wrap, body_b_wrap),
     m_owns_manifold(false),
     m_manifold(manifold)
@@ -300,10 +302,10 @@ RtCollisionAlgorithm::~RtCollisionAlgorithm()
 
 
 void
-RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper
-				       *body_a_wrap,
-				       const btCollisionObjectWrapper *body_b_wrap,
-				       const btDispatcherInfo &, btManifoldResult *result)
+RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper * const
+				       body_a_wrap,
+				       const btCollisionObjectWrapper * const body_b_wrap,
+				       const btDispatcherInfo &, btManifoldResult * const result)
 {
     if (!m_manifold)
 	return;

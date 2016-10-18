@@ -264,7 +264,7 @@ build_spline(char *name, int npts, double radius)
      * The V direction is down the first column,
      * and has NROWS+order[V] positions.
      */
-    bp = rt_nurb_new_snurb(3,	4,		/* u, v order */
+    bp = nmg_nurb_new_snurb(3,	4,		/* u, v order */
 			   N_CIRCLE_KNOTS,	npts+6,		/* u, v knot vector size */
 			   npts+2,		NCOLS,		/* nrows, ncols */
 			   RT_NURB_MAKE_PT_TYPE(4, 2, 1),
@@ -333,7 +333,7 @@ build_spline(char *name, int npts, double radius)
 	mk_bspline(outfp, name, surfp);
     }
 
-    rt_nurb_free_snurb(bp, &rt_uniresource);
+    nmg_nurb_free_snurb(bp, &rt_uniresource);
 }
 
 

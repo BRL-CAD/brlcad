@@ -243,7 +243,7 @@ set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struc
     /* copy the normal */
     VMOVE((*seg_p)->seg_in.hit_normal, a_hit->inbound_norm);
 
-    if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+    if (nmg_debug & DEBUG_RT_SEGS) {
 	bu_log("Set seg_in:\n\tdist %g  pt(%g, %g, %g) N(%g, %g, %g)\n",
 	       (*seg_p)->seg_in.hit_dist,
 	       (*seg_p)->seg_in.hit_point[0],
@@ -277,7 +277,7 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
     /* copy the normal */
     VMOVE((*seg_p)->seg_out.hit_normal, a_hit->outbound_norm);
 
-    if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+    if (nmg_debug & DEBUG_RT_SEGS) {
 	bu_log("Set seg_out:\n\tdist %g  pt(%g, %g, %g) N(%g, %g, %g)  =>\n",
 	       (*seg_p)->seg_in.hit_dist,
 	       (*seg_p)->seg_in.hit_point[0],
@@ -904,7 +904,7 @@ visitor(uint32_t *l_p, void *tbl, int UNUSED(unused))
  * Add an element provided by nmg_visit to a bu_ptbl struct.
  */
 HIDDEN void
-build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
+build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl, struct bu_list *vlfree)
 {
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -926,7 +926,7 @@ build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
 
     switch (*l_p) {
 	case NMG_FACEUSE_MAGIC:
-	    nmg_visit(l_p, &htab, (void *)tbl);
+	    nmg_visit(l_p, &htab, (void *)tbl, vlfree);
 	    break;
 	case NMG_EDGEUSE_MAGIC:
 	    eu = eu_p = (struct edgeuse *)l_p;
@@ -1030,7 +1030,7 @@ unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next
 
 
 HIDDEN int
-check_hitstate(struct bu_list *hd, struct ray_data *rd)
+check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
 {
     struct hitmiss *a_hit;
     struct hitmiss *next_hit;
@@ -1048,7 +1048,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
     NMG_CK_HITMISS(a_hit);
 
     if (((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE ||
-	RTG.NMG_debug & DEBUG_RT_SEGS) {
+	nmg_debug & DEBUG_RT_SEGS) {
 	bu_log("check_hitstate()\n");
 	nmg_rt_print_hitlist(hd);
 
@@ -1093,11 +1093,11 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
 
 	    bu_ptbl_reset(a_tbl);
 	    NMG_CK_HITMISS(a_hit);
-	    build_topo_list((uint32_t *)a_hit->outbound_use, a_tbl);
+	    build_topo_list((uint32_t *)a_hit->outbound_use, a_tbl, vlfree);
 
 	    bu_ptbl_reset(next_tbl);
 	    NMG_CK_HITMISS(next_hit);
-	    build_topo_list((uint32_t *)next_hit->outbound_use, next_tbl);
+	    build_topo_list((uint32_t *)next_hit->outbound_use, next_tbl, vlfree);
 
 
 	    /* If the tables have elements in common,
@@ -1147,7 +1147,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
  * # of segments added to list.
  */
 int
-nmg_ray_segs(struct ray_data *rd)
+nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
 {
     struct hitmiss *a_hit;
     static int last_miss=0;
@@ -1164,13 +1164,13 @@ nmg_ray_segs(struct ray_data *rd)
 
 	NMG_FREE_HITLIST(&rd->rd_miss, rd->ap);
 
-	if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+	if (nmg_debug & DEBUG_RT_SEGS) {
 	    if (last_miss) bu_log(".");
 	    else bu_log("ray missed NMG\n");
 	}
 	last_miss = 1;
 	return 0;			/* MISS */
-    } else if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+    } else if (nmg_debug & DEBUG_RT_SEGS) {
 	int seg_count=0;
 
 	print_seg_list(rd->seghead, seg_count, "before");
@@ -1183,13 +1183,13 @@ nmg_ray_segs(struct ray_data *rd)
 
     last_miss = 0;
 
-    if (check_hitstate(&rd->rd_hit, rd)) {
+    if (check_hitstate(&rd->rd_hit, rd, vlfree)) {
 	NMG_FREE_HITLIST(&rd->rd_hit, rd->ap);
 	NMG_FREE_HITLIST(&rd->rd_miss, rd->ap);
 	return 0;
     }
 
-    if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+    if (nmg_debug & DEBUG_RT_SEGS) {
 	bu_log("----------morphed nmg/ray hit list---------\n");
 	for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit))
 	    nmg_rt_print_hitmiss(a_hit);
@@ -1205,7 +1205,7 @@ nmg_ray_segs(struct ray_data *rd)
 	NMG_FREE_HITLIST(&rd->rd_miss, rd->ap);
 
 
-	if (RTG.NMG_debug & DEBUG_RT_SEGS) {
+	if (nmg_debug & DEBUG_RT_SEGS) {
 	    /* print debugging data before returning */
 	    print_seg_list(rd->seghead, seg_count, "after");
 	}

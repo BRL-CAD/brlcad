@@ -212,7 +212,7 @@ main(int argc, char **argv)
     }
 
     /* Connect up the coincident vertexuses and edges */
-    (void)nmg_model_fuse(m, &tol);
+    (void)nmg_model_fuse(m, &RTG.rtg_vlfree, &tol);
 
     /* write NMG to output file */
     (void)mk_nmg(outfp, tea_name, m);
@@ -227,7 +227,7 @@ main(int argc, char **argv)
 	bu_log("Cannot open plot3 file: %s\n", uplot_name);
 	perror("teapot_nmg");
     } else {
-	rt_vlist_to_uplot(fp, &vhead);
+	bn_vlist_to_uplot(fp, &vhead);
     }
 
     bu_log(" done.\n");

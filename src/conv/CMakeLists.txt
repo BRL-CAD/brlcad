@@ -9,17 +9,17 @@ add_definitions(
   -DBRLCAD_DLL
   )
 
-add_subdirectory(3dm)
-add_subdirectory(asc)
-add_subdirectory(gcv)
-add_subdirectory(step)
-add_subdirectory(csg)
+verbose_add_subdirectory("src/conv" 3dm)
+verbose_add_subdirectory("src/conv" asc)
+verbose_add_subdirectory("src/conv" gcv)
+verbose_add_subdirectory("src/conv" step)
+verbose_add_subdirectory("src/conv" csg)
 
-add_subdirectory(iges)
-add_subdirectory(intaval)
-add_subdirectory(ply)
-add_subdirectory(raw)
-add_subdirectory(vdeck)
+verbose_add_subdirectory("src/conv" iges)
+verbose_add_subdirectory("src/conv" intaval)
+verbose_add_subdirectory("src/conv" ply)
+verbose_add_subdirectory("src/conv" raw)
+verbose_add_subdirectory("src/conv" vdeck)
 
 set(CONV_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}

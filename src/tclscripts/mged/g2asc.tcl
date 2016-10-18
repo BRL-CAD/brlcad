@@ -19,11 +19,7 @@
 #
 ###
 #
-#			G 2 A S C . T C L
-#
 #	Tool for saving the current database to an ascii file.
-#
-#	Author - Robert G. Parker
 #
 
 proc init_g2asc { id } {

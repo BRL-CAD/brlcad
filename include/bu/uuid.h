@@ -45,7 +45,7 @@ __BEGIN_DECLS
  * entropy).  Providing a byte array and namespace will create a (SHA1-based)
  * version 5 UUID suitable for repeatable identifier hashing.
  */
-int
+BU_EXPORT int
 bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, const uint8_t *bytes, const uint8_t namespace_uuid[STATIC_ARRAY(16)]);
 
 /**

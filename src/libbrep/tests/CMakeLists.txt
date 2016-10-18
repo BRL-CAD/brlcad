@@ -10,7 +10,7 @@ set(distcheck_files
   )
 
 BRLCAD_ADDEXEC(test_brep_ppx ppx.cpp "libbrep"  NO_INSTALL)
-add_test(brep_ppx test_brep_ppx)
+add_test(NAME brep_ppx COMMAND test_brep_ppx)
 
 # Local Variables:
 # tab-width: 8

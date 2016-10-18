@@ -937,7 +937,7 @@ rt_shootray(register struct application *ap)
     }
     /* Ensure that this CPU's resource structure is registered */
     if (resp != &rt_uniresource)
-	BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL);
+	BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
 
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);
 
@@ -1383,7 +1383,7 @@ rt_shootray(register struct application *ap)
 			register fastf_t dist;
 
 			dist = (*psp)->mindist;
-			BU_ASSERT_DOUBLE(dist, <, INFINITY);
+			BU_ASSERT(dist < INFINITY);
 			if (dist < pending_hit) {
 			    pending_hit = dist;
 			    if (debug_shoot) bu_log("pending_hit lowered to %g by %s\n", pending_hit, (*psp)->stp->st_name);
@@ -1609,7 +1609,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 	rt_init_resource(resp, resp->re_cpu, rtip);
     }
     /* Ensure that this CPU's resource structure is registered */
-    BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL);
+    BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
 
     /* Verify that direction vector has unit length */
     if (RT_G_DEBUG) {

@@ -60,9 +60,12 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "nmg.h"
-#include "raytrace.h"
+#include "bn/mat.h"
+#include "bn/plane.h"
 #include "bn/plot3.h"
+#include "nmg.h"
+#include "rt/nmg.h"
+#include "raytrace.h" /* for rt/calc.h - rt_in_rpp */
 
 
 #define ISECT_NONE 0
@@ -81,7 +84,7 @@ struct ee_2d_state {
 
 HIDDEN int nmg_isect_edge2p_face2p(struct nmg_inter_struct *is,
 				   struct edgeuse *eu, struct faceuse *fu,
-				   struct faceuse *eu_fu);
+				   struct faceuse *eu_fu, struct bu_list *vlfree);
 
 
 static struct nmg_inter_struct *nmg_hack_last_is;	/* see nmg_isect2d_final_cleanup() */
@@ -97,13 +100,13 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
     NMG_CK_FACEUSE(fu);
     BN_CK_TOL(tol);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_make_dualvu(v=%p, fu=%p)\n", (void *)v, (void *)fu);
 
     /* check for existing vu */
     dualvu=nmg_find_v_in_face(v, fu);
     if (dualvu) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\tdualvu already exists (%p)\n", (void *)dualvu);
 	return dualvu;
     }
@@ -111,7 +114,7 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
     new_eu = (struct edgeuse *)NULL;
 
     /* check if v lies within tolerance of an edge in face */
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("\tLooking for an edge to split\n");
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	struct edgeuse *eu;
@@ -124,7 +127,7 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
 	    fastf_t dist;
 	    point_t pca;
 
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("\tChecking eu %p (%f %f %f) <-> (%f %f %f)\n",
 		       (void *)eu,
 		       V3ARGS(eu->vu_p->v_p->vg_p->coord),
@@ -135,7 +138,7 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
 				     eu->eumate_p->vu_p->v_p->vg_p->coord,
 				     v->vg_p->coord, tol);
 
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("bn_dist_pt3_lseg3 returns %d, dist=%f\n", code, dist);
 
 	    if (code > 2)
@@ -146,7 +149,7 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
 		continue;
 
 	    /* split edge */
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("nmg_make_dualvu is splitting eu %p at v %p\n", (void *)eu, (void *)v);
 	    new_eu = nmg_esplit(v, eu, 1);
 	}
@@ -157,7 +160,7 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
 
     /* need a self loop */
     lu = nmg_mlv(&fu->l.magic, v, OT_BOOLPLACE);
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_make_dualvu is making a self_loop (lu=%p, vu=%p) for v=%p\n",
 	       (void *)lu, (void *)BU_LIST_FIRST(vertexuse, &lu->down_hd),
 	       (void *)v);
@@ -293,7 +296,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	if (!dualvu)
 	    dualvu = nmg_make_dualvu(vu->v_p, dualfu, &(is->tol));
 	else {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		bu_log("nmg_enlist_vu(vu=%p, dv=%p) re-using dualvu=%p from dualfu=%p\n",
 		       (void *)vu, (void *)dualvu,
 		       (void *)dualvu, (void *)dualfu);
@@ -356,7 +359,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	    is->mag1[bu_ptbl_locate(is->l1, (long *)&dualvu->l.magic)] = dist;
     }
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_enlist_vu(vu=%p, dv=%p) v=%p, dist=%g (%s) ret=%p\n",
 	       (void *)vu, (void *)dualvu, (void *)vu->v_p, dist,
 	       (sv == is->s1) ? "shell 1" : "shell 2",
@@ -364,7 +367,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
     }
 
     /* Some (expensive) centralized sanity checking */
-    if ((RTG.NMG_debug & DEBUG_VERIFY) && is->fu1 && is->fu2) {
+    if ((nmg_debug & DEBUG_VERIFY) && is->fu1 && is->fu2) {
 	nmg_ck_v_in_2fus(vu->v_p, is->fu1, is->fu2, &(is->tol));
     }
     return dualvu;
@@ -452,7 +455,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	}
 	/* Need to extend array, it's grown. */
 	is->maxindex = m->maxindex * 4;
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("nmg_get_2d_vertex() extending vert2d array from %d to %d points (m max=%ld)\n",
 		   oldmax, is->maxindex, m->maxindex);
 	}
@@ -496,7 +499,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	}
     }
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("2d #%ld (%g %g %g) becomes (%g, %g) %g\n",
 	       v->index, V3ARGS(vg->coord), V3ARGS(pt));
     }
@@ -566,7 +569,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const uint32_t *assoc_use)
 	} else {
 	    HMOVE(n, fg->N);
 	}
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("nmg_isect2d_prep(f=%p) flip=%d\n", (void *)f1, f1->flip);
 	    PLPRINT("N", n);
 	}
@@ -674,7 +677,7 @@ nmg_isect_vert2p_face2p(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
     pointp_t pt;
     int ret = 0;
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_vert2p_face2p(, vu1=%p, fu2=%p)\n", (void *)vu1, (void *)fu2);
     NMG_CK_INTER_STRUCT(is);
     NMG_CK_VERTEXUSE(vu1);
@@ -728,7 +731,7 @@ nmg_isect_vert2p_face2p(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
 
     if (ret == 0) {
 	/* The vertex lies in the face, but touches nothing.  Place marker */
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    VPRINT("Making vertexloop", pt);
 
 	lu2 = nmg_mlv(&fu2->l.magic, vu1->v_p, OT_BOOLPLACE);
@@ -760,13 +763,13 @@ nmg_isect_3vertex_3face(struct nmg_inter_struct *is, struct vertexuse *vu, struc
     NMG_CK_VERTEX(vu->v_p);
     NMG_CK_FACEUSE(fu);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_3vertex_3face(, vu=%p, fu=%p) v=%p\n", (void *)vu, (void *)fu, (void *)vu->v_p);
 
     /* check the topology first */
     vup=nmg_find_v_in_face(vu->v_p, fu);
     if (vup) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT) bu_log("\tvu lies in face (topology 1)\n");
+	if (nmg_debug & DEBUG_POLYSECT) bu_log("\tvu lies in face (topology 1)\n");
 	(void)bu_ptbl_ins_unique(is->l1, (long *)&vu->l.magic);
 	(void)bu_ptbl_ins_unique(is->l2, (long *)&vup->l.magic);
 	return;
@@ -781,7 +784,7 @@ nmg_isect_3vertex_3face(struct nmg_inter_struct *is, struct vertexuse *vu, struc
     dist = DIST_PT_PLANE(pt, n);
 
     if (!NEAR_ZERO(dist, is->tol.dist)) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT) bu_log("\tvu not on face (geometry)\n");
+	if (nmg_debug & DEBUG_POLYSECT) bu_log("\tvu not on face (geometry)\n");
 	return;
     }
 
@@ -802,7 +805,7 @@ nmg_isect_3vertex_3face(struct nmg_inter_struct *is, struct vertexuse *vu, struc
  *
  */
 HIDDEN struct vertexuse *
-nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_inter_struct *is, struct edgeuse *eu1)
+nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_inter_struct *is, struct edgeuse *eu1, struct bu_list *vlfree)
 
 /* The face that eu intersects */
 
@@ -828,7 +831,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
     /* Intersection is between first and second vertex points.
      * Insert new vertex at intersection point.
      */
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_break_3edge_at_plane() Splitting %g, %g, %g <-> %g, %g, %g\n",
 	       V3ARGS(v1->vg_p->coord),
 	       V3ARGS(v1mate->vg_p->coord));
@@ -873,7 +876,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
     v2 = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
     if (v2) {
 	/* the other face has a convenient vertex for us */
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("re-using vertex v=%p from other shell\n", (void *)v2);
 
 	eu1forw = nmg_ebreaker(v2, eu1, &(is->tol));
@@ -895,12 +898,12 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 					   (void (*)(struct edgeuse *, point_t, const char *))NULL,
 					   (void (*)(struct vertexuse *, point_t, const char *))NULL,
 					   (const char *)NULL, 0,
-					   0, &is->tol);
+					   0, vlfree, &is->tol);
 
 	eu1forw = nmg_ebreaker((struct vertex *)NULL, eu1, &is->tol);
 	vu1_final = eu1forw->vu_p;
 	nmg_vertex_gv(vu1_final->v_p, hit_pt);
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("Made new vertex vu=%p, v=%p\n",
 		   (void *)vu1_final, (void *)vu1_final->v_p);
 
@@ -909,7 +912,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 	NMG_CK_VERTEX_G(eu1forw->vu_p->v_p->vg_p);
 	NMG_CK_VERTEX_G(eu1forw->eumate_p->vu_p->v_p->vg_p);
 
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    register pointp_t p1 = eu1->vu_p->v_p->vg_p->coord;
 	    register pointp_t p2 = eu1->eumate_p->vu_p->v_p->vg_p->coord;
 
@@ -929,7 +932,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 		break;
 	    case NMG_CLASS_AonBshared:
 		/* point is on a loop boundary.  Break fu2 loop too? */
-		if (RTG.NMG_debug & DEBUG_POLYSECT)
+		if (nmg_debug & DEBUG_POLYSECT)
 		    bu_log("%%%%%% point is on loop boundary.  Break fu2 loop too?\n");
 		nmg_isect_3vertex_3face(is, vu1_final, fu2);
 		/* XXX should get new vu2 from isect_3vertex_3face! */
@@ -954,7 +957,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 	NMG_CK_VERTEXUSE(vu2_final);
 	nmg_loop_g(plu2->l_p, &is->tol);
 
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("Made vertexloop in other face. lu=%p vu=%p on v=%p\n",
 		   (void *)plu2,
 		   (void *)vu2_final, (void *)vu2_final->v_p);
@@ -962,7 +965,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 	vu2_final = nmg_enlist_vu(is, vu1_final, vu2_final, MAX_FASTF);
     }
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	register pointp_t p1, p2;
 	p1 = eu1->vu_p->v_p->vg_p->coord;
 	p2 = eu1->eumate_p->vu_p->v_p->vg_p->coord;
@@ -1054,7 +1057,7 @@ nmg_break_eu_on_v(struct edgeuse *eu1, struct vertex *v2, struct faceuse *fu, st
 	case 3:
 	    /* P is in the middle, break edge */
 	    new_eu = nmg_ebreaker(v2, eu1, &is->tol);
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		bu_log("nmg_break_eu_on_v() breaking eu=%p on v=%p, new_eu=%p\n",
 		       (void *)eu1, (void *)v2, (void *)new_eu);
 	    }
@@ -1126,7 +1129,7 @@ nmg_break_eg_on_v(const struct edge_g_lseg *eg, struct vertex *v, const struct b
 	if (NEAR_EQUAL(b, vdist, tol->dist)) continue;
 	if (!bn_between(a, vdist, b, tol)) continue;
 	new_eu = nmg_ebreaker(v, *eup, tol);
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("nmg_break_eg_on_v(eg=%p, v=%p) new_eu=%p\n",
 		   (void *)eg, (void *)v, (void *)new_eu);
 	}
@@ -1186,7 +1189,7 @@ nmg_isect_2colinear_edge2p(struct edgeuse *eu1, struct edgeuse *eu2, struct face
     register int j;
     int neu;	/* Number of edgeuses */
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_2colinear_edge2p(eu1=%p, eu2=%p) START\n",
 	       (void *)eu1, (void *)eu2);
     }
@@ -1246,7 +1249,7 @@ nmg_isect_2colinear_edge2p(struct edgeuse *eu1, struct edgeuse *eu2, struct face
     next_i:		;
     }
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_2colinear_edge2p(eu1=%p, eu2=%p) ret #eu=%d\n",
 	       (void *)eu1, (void *)eu2, neu);
     }
@@ -1309,7 +1312,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     NMG_CK_VERTEXUSE(vu2a);
     NMG_CK_VERTEXUSE(vu2b);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_edge2p_edge2p(eu1=%p, eu2=%p) START\n\tfu1=%p, fu2=%p\n\tvu1a=%p vu1b=%p, vu2a=%p vu2b=%p\n\tv1a=%p v1b=%p,   v2a=%p v2b=%p\n",
 	       (void *)eu1, (void *)eu2,
 	       (void *)fu1, (void *)fu2,
@@ -1322,7 +1325,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
      * If both endpoints of both edges match, this is a trivial accept.
      */
     if (vu1a->v_p == vu2a->v_p && vu1b->v_p == vu2b->v_p) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("nmg_isect_edge2p_edge2p: shared edge topology, both ends\n");
 	nmg_radial_join_eu(eu1, eu2, &is->tol);
 	nmg_enlist_vu(is, vu1a, vu2a, MAX_FASTF);
@@ -1331,7 +1334,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	goto out;		/* vu1a, vu1b already listed */
     }
     if (vu1a->v_p == vu2b->v_p && vu1b->v_p == vu2a->v_p) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("nmg_isect_edge2p_edge2p: shared edge topology, both ends, reversed.\n");
 	nmg_radial_join_eu(eu1, eu2, &is->tol);
 	nmg_enlist_vu(is, vu1a, vu2b, MAX_FASTF);
@@ -1369,7 +1372,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     status = bn_isect_line2_lseg2(dist, eu1_start, eu1_dir,
 				  eu2_start, eu2_dir, &is->tol);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("\tbn_isect_line2_lseg2()=%d, dist: %g, %g\n",
 	       status, dist[0], dist[1]);
     }
@@ -1385,7 +1388,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	(vu1a->v_p == vu2a->v_p || vu1a->v_p == vu2b->v_p ||
 	 vu1b->v_p == vu2a->v_p || vu1b->v_p == vu2b->v_p)
 	) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("edge2p_edge2p: non-colinear edges share one vertex (topology)\n");
 	if (vu1a->v_p == vu2a->v_p)
 	    nmg_enlist_vu(is, vu1a, vu2a, MAX_FASTF);
@@ -1432,10 +1435,10 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 
     if (ZERO(dist[0])) {
 	/* First point of eu1 is on eu2, by geometry */
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\tvu=%p vu1a is intersect point\n", (void *)vu1a);
 	if (dist[1] < 0 || dist[1] > 1) {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("\teu1 line intersects eu2 outside vu2a...vu2b range, ignore.\n");
 	    ret = ISECT_NONE;
 	    goto topo;
@@ -1445,7 +1448,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	 * or break eu2 on our vert.
 	 */
 	if (ZERO(dist[1])) {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("\tvu2a matches vu1a\n");
 	    nmg_jv(vu1a->v_p, vu2a->v_p);
 	    nmg_enlist_vu(is, vu1a, vu2a, MAX_FASTF);
@@ -1453,7 +1456,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	    goto topo;
 	}
 	if (ZERO(dist[1] - 1.0)) {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("\tsecond point of eu2 matches vu1a\n");
 	    nmg_jv(vu1a->v_p, vu2b->v_p);
 	    nmg_enlist_vu(is, vu1a, vu2b, MAX_FASTF);
@@ -1461,7 +1464,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	    goto topo;
 	}
 	/* Break eu2 on our first vertex */
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\tbreaking eu2 on vu1a\n");
 	vu = nmg_ebreaker(vu1a->v_p, eu2, &is->tol)->vu_p;
 	nmg_enlist_vu(is, vu1a, vu, MAX_FASTF);
@@ -1471,10 +1474,10 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 
     if (ZERO(dist[0] - 1.0)) {
 	/* Second point of eu1 is on eu2, by geometry */
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\tvu=%p vu1b is intersect point\n", (void *)vu1b);
 	if (dist[1] < 0 || dist[1] > 1) {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("\teu1 line intersects eu2 outside vu2a...vu2b range, ignore.\n");
 	    ret = ISECT_NONE;
 	    goto topo;
@@ -1484,7 +1487,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	 * or break eu2 on our vert.
 	 */
 	if (ZERO(dist[1])) {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("\tvu2a matches vu1b\n");
 	    nmg_jv(vu1b->v_p, vu2a->v_p);
 	    nmg_enlist_vu(is, vu1b, vu2a, MAX_FASTF);
@@ -1492,7 +1495,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	    goto topo;
 	}
 	if (ZERO(dist[1] - 1.0)) {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("\tsecond point of eu2 matches vu1b\n");
 	    nmg_jv(vu1b->v_p, vu2b->v_p);
 	    nmg_enlist_vu(is, vu1b, vu2b, MAX_FASTF);
@@ -1500,7 +1503,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	    goto topo;
 	}
 	/* Break eu2 on our second vertex */
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\tbreaking eu2 on vu1b\n");
 	vu = nmg_ebreaker(vu1b->v_p, eu2, &is->tol)->vu_p;
 	nmg_enlist_vu(is, vu1b, vu, MAX_FASTF);
@@ -1512,7 +1515,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
      * Since it crosses the line of intersection, it must be broken.
      */
     if (dist[0] < 0 || dist[0] > 1) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\tIntersect point on eu2 is outside vu1a...vu1b.  Break eu2 anyway.\n");
 
 	if (ZERO(dist[1])) {
@@ -1527,7 +1530,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	    /* Break eu2 somewhere in the middle */
 	    struct vertexuse *new_vu2;
 	    struct vertex *new_v2;
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		VPRINT("\t\tBreaking eu2 at intersect point", hit_pt);
 	    new_v2 = nmg_find_pt_in_model(m, hit_pt, &(is->tol));
 	    new_vu2 = nmg_ebreaker(new_v2, eu2, &is->tol)->vu_p;
@@ -1547,21 +1550,21 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 
     /* Intersection is in the middle of the reference edge (eu1) */
     /* dist[0] >= 0 && dist[0] <= 1) */
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("\tintersect is in middle of eu1, breaking it\n");
 
     /* Edges not collinear. Either join up with a matching vertex,
      * or break eu2 on our vert.
      */
     if (ZERO(dist[1])) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\t\tintersect point is vu2a\n");
 	vu = nmg_ebreaker(vu2a->v_p, eu1, &is->tol)->vu_p;
 	nmg_enlist_vu(is, vu2a, vu, MAX_FASTF);
 	ret |= ISECT_SPLIT1;
 	goto topo;
     } else if (ZERO(dist[1] - 1.0)) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\t\tintersect point is vu2b\n");
 	vu = nmg_ebreaker(vu2b->v_p, eu1, &is->tol)->vu_p;
 	nmg_enlist_vu(is, vu2b, vu, MAX_FASTF);
@@ -1570,7 +1573,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     } else if (dist[1] > 0 && dist[1] < 1) {
 	/* Intersection is in the middle of both, split edge */
 	struct vertex *new_v;
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    VPRINT("\t\tBreaking both edges at intersect point", hit_pt);
 	ret = ISECT_SPLIT1 | ISECT_SPLIT2;
 	new_v = nmg_e2break(eu1, eu2);
@@ -1612,7 +1615,7 @@ topo:
     nmg_enlist_vu(is, vu1b, 0, MAX_FASTF);
 out:
     /* By here, vu1a and vu1b MUST have been enlisted */
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_edge2p_edge2p(eu1=%p, eu2=%p) END, ret=%d %s%s%s\n",
 	       (void *)eu1, (void *)eu2, ret,
 	       (ret&ISECT_SHARED_V)? "SHARED_V|" :
@@ -1639,7 +1642,7 @@ out:
  * 1 If vu[] list along the intersection line needs to be re-done.
  */
 HIDDEN int
-nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct faceuse *fu2)
+nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct faceuse *fu2, struct bu_list *vlfree)
 {
     struct vertexuse *vu1_final = (struct vertexuse *)NULL;
     struct vertexuse *vu2_final = (struct vertexuse *)NULL;
@@ -1657,7 +1660,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
     plane_t n2;
     int ret = 0;
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_wireedge3p_face3p(, eu1=%p, fu2=%p) START\n", (void *)eu1, (void *)fu2);
 
     NMG_CK_INTER_STRUCT(is);
@@ -1703,7 +1706,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
     }
 
     NMG_GET_FU_PLANE(n2, fu2);
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("Testing (%g, %g, %g) -> (%g, %g, %g) dir=(%g, %g, %g)\n",
 	       V3ARGS(start_pt),
 	       V3ARGS(v1b->vg_p->coord),
@@ -1714,7 +1717,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
     status = bn_isect_line3_plane(&dist, start_pt, edge_vect,
 				  n2, &is->tol);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	if (status >= 0)
 	    bu_log("\tHit. bn_isect_line3_plane=%d, dist=%g (%e)\n",
 		   status, dist, dist);
@@ -1731,7 +1734,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 	 * possible intersections (there may be many),
 	 * and any cut/joins, then resume with the previous work.
 	 */
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("nmg_isect_wireedge3p_face3p: edge lies ON face, using 2D code\n@ @ @ @ @ @ @ @ @ @ 2D CODE, START\n");
 	    bu_log(" The status of the face/face intersect line, before 2d:\n");
 	    nmg_pr_ptbl_vert_list("l1", is->l1, is->mag1);
@@ -1741,7 +1744,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 	is2 = *is;	/* make private copy */
 	is2.vert2d = 0;	/* Don't use previously initialized stuff */
 
-	ret = nmg_isect_edge2p_face2p(&is2, eu1, fu2, fu1);
+	ret = nmg_isect_edge2p_face2p(&is2, eu1, fu2, fu1, vlfree);
 
 	nmg_isect2d_cleanup(&is2);
 
@@ -1752,7 +1755,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 	 */
 
 	/* Only do this if list is still OK */
-	if (RTG.NMG_debug & DEBUG_POLYSECT && ret == 0) {
+	if (nmg_debug & DEBUG_POLYSECT && ret == 0) {
 	    bu_log("nmg_isect_wireedge3p_face3p: @ @ @ @ @ @ @ @ @ @ 2D CODE, END, resume 3d problem.\n");
 	    bu_log(" The status of the face/face intersect line, so far:\n");
 	    nmg_pr_ptbl_vert_list("l1", is->l1, is->mag1);
@@ -1762,7 +1765,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 	/* See if start vertex is now shared */
 	vu2_final=nmg_find_v_in_face(eu1->vu_p->v_p, fu2);
 	if (vu2_final) {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("\tEdge start vertex lies on other face (2d topology).\n");
 	    vu1_final = eu1->vu_p;
 	    (void)bu_ptbl_ins_unique(is->l1, (long *)&vu1_final->l.magic);
@@ -1789,7 +1792,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
     vu2_final=nmg_find_v_in_face(v1a, fu2);
     if (vu2_final) {
 	vu1_final = eu1->vu_p;
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("\tEdge start vertex lies on other face (topology).\n\tAdding vu1_final=%p (v=%p), vu2_final=%p (v=%p)\n",
 		   (void *)vu1_final, (void *)vu1_final->v_p,
 		   (void *)vu2_final, (void *)vu2_final->v_p);
@@ -1813,7 +1816,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 	bu_bomb("nmg_isect_wireedge3p_face3p: Edge start vertex lies on other face (geometry)\n");
 
 	/* Start point lies on plane of other face */
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\tEdge start vertex lies on other face (geometry)\n");
 	dist = VSUB2DOT(v1a->vg_p->coord, start_pt, edge_vect)
 	    / edge_len;
@@ -1831,19 +1834,19 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
      */
     dist_to_plane = edge_len * dist;
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("\tedge_len=%g, dist=%g, dist_to_plane=%g\n",
 	       edge_len, dist, dist_to_plane);
 
     if (dist_to_plane < -is->tol.dist) {
 	/* Hit is behind first point */
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\tplane behind first point\n");
 	goto out;
     }
 
     if (dist_to_plane > edge_len + is->tol.dist) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\tplane beyond second point\n");
 	goto out;
     }
@@ -1870,7 +1873,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
      */
     if (dist_to_plane < is->tol.dist) {
 	/* First point is on plane of face, by geometry */
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\tedge starts at plane intersect\n");
 	vu1_final = eu1->vu_p;
 	vu2_final = nmg_enlist_vu(is, vu1_final, 0, MAX_FASTF);
@@ -1881,14 +1884,14 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 	/* Intersection is between first and second vertex points.
 	 * Insert new vertex at intersection point.
 	 */
-	vu2_final = nmg_break_3edge_at_plane(hit_pt, fu2, is, eu1);
+	vu2_final = nmg_break_3edge_at_plane(hit_pt, fu2, is, eu1, vlfree);
 	if (vu2_final)
 	    vu1_final = BU_LIST_PNEXT_CIRC(edgeuse, eu1)->vu_p;
 	goto out;
     }
 
     /* Second point is on plane of face, by geometry */
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("\tedge ends at plane intersect\n");
 
     eunext = BU_LIST_PNEXT_CIRC(edgeuse, eu1);
@@ -1921,7 +1924,7 @@ out:
 	}
     }
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_wireedge3p_face3p(, eu1=%p, fu2=%p) ret=%d END\n",
 	       (void *)eu1, (void *)fu2, ret);
     return ret;
@@ -1937,13 +1940,13 @@ out:
  * >0 vu[] list along intersection line needs to be re-done.
  */
 HIDDEN int
-nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, struct faceuse *fu)
+nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, struct faceuse *fu, struct bu_list *vlfree)
 {
     struct edgeuse *eu;
     uint32_t magic1;
     int discards = 0;
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	plane_t n;
 	bu_log("nmg_isect_wireloop3p_face3p(, lu=%p, fu=%p) START\n", (void *)lu, (void *)fu);
 	NMG_GET_FU_PLANE(n, fu);
@@ -1987,12 +1990,12 @@ nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, str
 	    bu_bomb("nmg_isect_wireloop3p_face3p: edge does not share loop\n");
 	}
 
-	discards += nmg_isect_wireedge3p_face3p(bs, eu, fu);
+	discards += nmg_isect_wireedge3p_face3p(bs, eu, fu, vlfree);
 
 	nmg_ck_lueu(lu, "nmg_isect_wireloop3p_face3p");
     }
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_wireloop3p_face3p(, lu=%p, fu=%p) END, discards=%d\n",
 	       (void *)lu, (void *)fu, discards);
     }
@@ -2038,7 +2041,7 @@ nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
     /* nmg_loop_g() makes sure there are no 0-thickness faces */
     if (!rt_in_rpp(&line, invdir, fu2->f_p->min_pt, fu2->f_p->max_pt)) {
 	/* The edge ray missed the face RPP, nothing to do. */
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    VPRINT("r_pt ", line.r_pt);
 	    VPRINT("r_dir", line.r_dir);
 	    VPRINT("fu2 min", fu2->f_p->min_pt);
@@ -2048,7 +2051,7 @@ nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
 	}
 	return 1;	/* Missed */
     }
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	VPRINT("fu2 min", fu2->f_p->min_pt);
 	VPRINT("fu2 max", fu2->f_p->max_pt);
 	bu_log("r_min=%g, r_max=%g\n", line.r_min, line.r_max);
@@ -2058,12 +2061,12 @@ nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
     if (line.r_min > line.r_max) {
 	/* Direction is heading the wrong way, flip it */
 	VREVERSE(is->dir, line.r_dir);
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("flipping dir\n");
     } else {
 	VMOVE(is->dir, line.r_dir);
     }
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	VPRINT("r_pt ", line.r_pt);
 	VPRINT("r_dir", line.r_dir);
 	VPRINT("->pt ", is->pt);
@@ -2110,7 +2113,7 @@ nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
  * >0 Caller needs to invalidate his l1/l2 list.
  */
 HIDDEN int
-nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct faceuse *fu2, struct faceuse *fu1)
+nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct faceuse *fu2, struct faceuse *fu1, struct bu_list *vlfree)
 
 /* edge to be intersected w/fu2 */
 /* face to be intersected w/eu1 */
@@ -2130,7 +2133,7 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     NMG_CK_FACEUSE(fu2);
     if (fu1) NMG_CK_FACEUSE(fu1);	 /* fu1 may be null */
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_edge2p_face2p(eu1=%p, fu2=%p, fu1=%p) START\n",
 	       (void *)eu1, (void *)fu2, (void *)fu1);
 
@@ -2152,7 +2155,7 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	    nmg_radial_join_eu(eu1, fu2_eu, &is->tol);
 	}
 	/* Topology is completely shared */
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("nmg_isect_edge2p_face2p() topology is shared\n");
 	ret = 0;
 	goto do_ret;
@@ -2172,9 +2175,9 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     is->fu1 = fu1;
     is->fu2 = fu2;
 
-    if (fu1 && RTG.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
-	&& RTG.NMG_debug & DEBUG_PLOTEM) {
-	nmg_pl_2fu("Iface%d.plot3", fu2, fu1, 0);
+    if (fu1 && nmg_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
+	&& nmg_debug & DEBUG_PLOTEM) {
+	nmg_pl_2fu("Iface%d.plot3", fu2, fu1, 0, vlfree);
     }
 
     vu1 = eu1->vu_p;
@@ -2191,20 +2194,20 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
      */
     if (nmg_isect_construct_nice_ray(is, fu2)) goto out;
 
-    if (RTG.NMG_debug & DEBUG_VERIFY) {
+    if (nmg_debug & DEBUG_VERIFY) {
 	nmg_fu_touchingloops(fu2);
 	if (fu1)nmg_fu_touchingloops(fu1);
-	nmg_region_v_unique(is->s1->r_p, &is->tol);
-	nmg_region_v_unique(is->s2->r_p, &is->tol);
+	nmg_region_v_unique(is->s1->r_p, vlfree, &is->tol);
+	nmg_region_v_unique(is->s2->r_p, vlfree, &is->tol);
     }
 
     /* Build list of all edgeuses in eu1/fu1 and fu2 */
     if (fu1) {
-	nmg_edgeuse_tabulate(&eu1_list, &fu1->l.magic);
+	nmg_edgeuse_tabulate(&eu1_list, &fu1->l.magic, vlfree);
     } else {
-	nmg_edgeuse_tabulate(&eu1_list, &eu1->l.magic);
+	nmg_edgeuse_tabulate(&eu1_list, &eu1->l.magic, vlfree);
     }
-    nmg_edgeuse_tabulate(&eu2_list, &fu2->l.magic);
+    nmg_edgeuse_tabulate(&eu2_list, &fu2->l.magic, vlfree);
 
     is->mag_len = 2 * (BU_PTBL_LEN(&eu1_list) + BU_PTBL_LEN(&eu2_list));
     mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "mag1");
@@ -2214,21 +2217,21 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     is->mag2 = mag2;
 
     /* Run infinite line containing eu1 through fu2 */
-    nmg_isect_line2_face2pNEW(is, fu2, fu1, &eu2_list, &eu1_list);
+    nmg_isect_line2_face2pNEW(is, fu2, fu1, &eu2_list, &eu1_list, vlfree);
 
     /* If eu1 is a wire, there is no fu1 to run line through. */
     if (fu1) {
 	/* We are intersecting with ourselves */
-	nmg_isect_line2_face2pNEW(is, fu1, fu2, &eu1_list, &eu2_list);
+	nmg_isect_line2_face2pNEW(is, fu1, fu2, &eu1_list, &eu2_list, vlfree);
     }
 
-    if (RTG.NMG_debug & DEBUG_FCUT) {
+    if (nmg_debug & DEBUG_FCUT) {
 	bu_log("nmg_isect_edge2p_face2p(eu1=%p, fu2=%p) vert_lists C:\n", (void *)eu1, (void *)fu2);
 	nmg_pr_ptbl_vert_list("vert_list1", &vert_list1, mag1);
 	nmg_pr_ptbl_vert_list("vert_list2", &vert_list2, mag2);
     }
 
-    if (RTG.NMG_debug & DEBUG_FCUT) {
+    if (nmg_debug & DEBUG_FCUT) {
 	bu_log("nmg_isect_edge2p_face2p(eu1=%p, fu2=%p) vert_lists D:\n", (void *)eu1, (void *)fu2);
 	nmg_pr_ptbl_vert_list("vert_list1", &vert_list1, mag1);
 	nmg_pr_ptbl_vert_list("vert_list2", &vert_list2, mag2);
@@ -2238,7 +2241,7 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 
     /* Invoke the face cutter to snip and join loops along isect line */
     if (fu1 && fu2) {
-	is->on_eg = nmg_face_cutjoin(&vert_list1, &vert_list2, mag1, mag2, fu1, fu2, is->pt, is->dir, is->on_eg, &is->tol);
+	is->on_eg = nmg_face_cutjoin(&vert_list1, &vert_list2, mag1, mag2, fu1, fu2, is->pt, is->dir, is->on_eg, vlfree, &is->tol);
 	ret = 1;		/* face cutter was called. */
     }
 
@@ -2253,7 +2256,7 @@ out:
 	bu_free((char *)mag2, "nmg_isect_edge2p_face2p: mag2");
 
 do_ret:
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_edge2p_face2p(eu1=%p, fu2=%p) ret=%d\n",
 	       (void *)eu1, (void *)fu2, ret);
     }
@@ -2320,21 +2323,21 @@ nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf
 	bu_bomb("nmg_enlist_one_vu: vu is not in s1 or s2\n");
     }
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_enlist_one_vu(vu=%p) v=%p, dist=%g (%s)\n",
 	       (void *)vu, (void *)vu->v_p, dist,
 	       (sv == is->s1) ? "shell 1" : "shell 2");
     }
 
     /* Some (expensive) centralized sanity checking */
-    if ((RTG.NMG_debug & DEBUG_VERIFY) && is->fu1 && is->fu2) {
+    if ((nmg_debug & DEBUG_VERIFY) && is->fu1 && is->fu2) {
 	nmg_ck_v_in_2fus(vu->v_p, is->fu1, is->fu2, &(is->tol));
     }
 }
 
 
 HIDDEN void
-nmg_coplanar_face_vertex_fuse(struct faceuse *fu1, struct faceuse *fu2, struct bn_tol *tol)
+nmg_coplanar_face_vertex_fuse(struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree, struct bn_tol *tol)
 {
     struct bu_ptbl verts;
     struct faceuse *faces[4];
@@ -2372,14 +2375,14 @@ nmg_coplanar_face_vertex_fuse(struct faceuse *fu1, struct faceuse *fu2, struct b
 	}
     }
 
-    (void)nmg_vertex_fuse((const uint32_t *)&verts, tol);
+    (void)nmg_vertex_fuse((const uint32_t *)&verts, vlfree, tol);
 
     bu_ptbl_free(&verts);
 }
 
 
 HIDDEN void
-nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2)
+nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree)
 {
     struct model *m;
     struct loopuse *lu;
@@ -2394,17 +2397,17 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
     NMG_CK_FACEUSE(fu2);
     NMG_CK_INTER_STRUCT(is);
 
-    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 	bu_log("nmg_isect_two)face2p_jra: fu1=%p, fu2=%p\n", (void *)fu1, (void *)fu2);
     }
 
-    nmg_coplanar_face_vertex_fuse(fu1, fu2, &is->tol);
+    nmg_coplanar_face_vertex_fuse(fu1, fu2, vlfree, &is->tol);
 
     m = nmg_find_model(&fu1->l.magic);
     NMG_CK_MODEL(m);
 
-    nmg_edgeuse_tabulate(&eu1_list, &fu1->l.magic);
-    nmg_edgeuse_tabulate(&eu2_list, &fu2->l.magic);
+    nmg_edgeuse_tabulate(&eu1_list, &fu1->l.magic, vlfree);
+    nmg_edgeuse_tabulate(&eu2_list, &fu2->l.magic, vlfree);
 
     is->mag_len = 2 * (BU_PTBL_LEN(&eu1_list) + BU_PTBL_LEN(&eu2_list));
     mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "mag1");
@@ -2594,11 +2597,11 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 			bu_bomb("nmg_isect_two_face2p_jra(): Can not find vertexuse");
 		    }
 		}
-		if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+		if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 		    bu_log("eus %p and %p intersect #%d at (%f %f %f)\n",
 			   (void *)eu1, (void *)eu2, hit_no, V3ARGS(hit_pt));
 		}
-		if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT && hitv)) {
+		if (UNLIKELY(nmg_debug & DEBUG_POLYSECT && hitv)) {
 		    bu_log("Found vertex (%p) at hit_pt\n", (void *)hitv);
 		}
 
@@ -2609,7 +2612,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    prev_eu = BU_LIST_PPREV_CIRC(edgeuse, &eu1->l);
 
 		    if (hitv != prev_eu->vu_p->v_p && hitv != next_eu->eumate_p->vu_p->v_p) {
-			if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+			if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 			    bu_log("Splitting eu1 %p\n", (void *)eu1);
 			}
 			new_eu = nmg_esplit(hitv, eu1, 1);
@@ -2627,7 +2630,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    prev_eu = BU_LIST_PPREV_CIRC(edgeuse, &eu2->l);
 
 		    if (hitv != prev_eu->vu_p->v_p && hitv != next_eu->eumate_p->vu_p->v_p) {
-			if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+			if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 			    vect_t tmp1, tmp2;
 			    VSUB2(tmp1, hit_pt, eu2->vu_p->v_p->vg_p->coord);
 			    VSUB2(tmp2, hit_pt, eu2->eumate_p->vu_p->v_p->vg_p->coord);
@@ -2644,8 +2647,8 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		}
 
 		if (hitv) {
-		    (void)nmg_break_all_es_on_v(&fu1->l.magic, hitv, &is->tol);
-		    (void)nmg_break_all_es_on_v(&fu2->l.magic, hitv, &is->tol);
+		    (void)nmg_break_all_es_on_v(&fu1->l.magic, hitv, vlfree, &is->tol);
+		    (void)nmg_break_all_es_on_v(&fu2->l.magic, hitv, vlfree, &is->tol);
 		}
 	    }
 	}
@@ -2657,7 +2660,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
     /* Make sure every vertex in fu1 has dual in fu2
      * (if they overlap)
      */
-    nmg_vertex_tabulate(&v_list, &fu1->l.magic);
+    nmg_vertex_tabulate(&v_list, &fu1->l.magic, vlfree);
 
     for (i=0; i<BU_PTBL_LEN(&v_list); i++) {
 	struct vertex *v;
@@ -2671,10 +2674,10 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 
 	/* Check if this vertex is within other FU */
 	nmg_class = nmg_class_pt_fu_except(v->vg_p->coord, fu2, NULL, NULL, NULL,
-					   (char *)NULL, 0, 0, &is->tol);
+					   (char *)NULL, 0, 0, vlfree, &is->tol);
 
 	if (nmg_class == NMG_CLASS_AinB) {
-	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+	    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 		bu_log("Making dualvu of vertex %p in fu2 %p\n", (void *)v, (void *)fu2);
 	    }
 	    (void)nmg_make_dualvu(v, fu2, &is->tol);
@@ -2683,7 +2686,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
     bu_ptbl_reset(&v_list);
 
     /* same for fu2 */
-    nmg_vertex_tabulate(&v_list, &fu2->l.magic);
+    nmg_vertex_tabulate(&v_list, &fu2->l.magic, vlfree);
 
     for (i=0; i<BU_PTBL_LEN(&v_list); i++) {
 	struct vertex *v;
@@ -2697,10 +2700,10 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 
 	/* Check if this vertex is within other FU */
 	nmg_class = nmg_class_pt_fu_except(v->vg_p->coord, fu1, NULL, NULL, NULL,
-					   (char *)NULL, 0, 0, &is->tol);
+					   (char *)NULL, 0, 0, vlfree, &is->tol);
 
 	if (nmg_class == NMG_CLASS_AinB) {
-	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+	    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 		bu_log("Making dualvu of vertex %p in fu1 %p\n", (void *)v, (void *)fu1);
 	    }
 	    (void)nmg_make_dualvu(v, fu1, &is->tol);
@@ -2737,7 +2740,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		!nmg_find_v_in_face(v2, fu2))
 		continue;
 
-	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+	    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 		bu_log("Making EU %p an intersect line for face cutting\n", (void *)eu);
 	    }
 
@@ -2760,10 +2763,10 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	    }
 
 	    /* Now do face cutting */
-	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+	    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 		bu_log("Calling face cutter for fu2 %p\n", (void *)fu2);
 	    }
-	    nmg_fcut_face_2d(is->l2, is->mag2, fu2, fu1, &is->tol);
+	    nmg_fcut_face_2d(is->l2, is->mag2, fu2, fu1, vlfree, &is->tol);
 
 	    bu_ptbl_reset(is->l1);
 	    bu_ptbl_reset(is->l2);
@@ -2793,7 +2796,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		!nmg_find_v_in_face(v2, fu1))
 		continue;
 
-	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+	    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 		bu_log("Making EU %p an intersect line for face cutting\n", (void *)eu);
 	    }
 
@@ -2816,10 +2819,10 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	    }
 
 	    /* Now do face cutting */
-	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+	    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 		bu_log("Calling face cutter for fu1 %p\n", (void *)fu1);
 	    }
-	    nmg_fcut_face_2d(is->l1, is->mag1, fu1, fu2, &is->tol);
+	    nmg_fcut_face_2d(is->l1, is->mag1, fu1, fu2, vlfree, &is->tol);
 
 	    bu_ptbl_reset(is->l1);
 	    bu_ptbl_reset(is->l2);
@@ -2874,7 +2877,7 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
     NMG_CK_VERTEXUSE(vu1a);
     NMG_CK_VERTEXUSE(vu1b);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_line2_edge2p(eu1=%p, fu1=%p)\n\tvu1a=%p vu1b=%p\n\tv2a=%p v2b=%p\n",
 	       (void *)eu1, (void *)fu1,
 	       (void *)vu1a, (void *)vu1b,
@@ -2894,7 +2897,7 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
     status = bn_isect_line2_lseg2(dist, is->pt2d, is->dir2d,
 				  eu1_start, eu1_dir, &is->tol);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("\tbn_isect_line2_lseg2()=%d, dist: %g, %g\n",
 	       status, dist[0], dist[1]);
     }
@@ -2906,7 +2909,7 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
 	 * The edge is collinear with the line.
 	 * List both vertexuse structures, and return.
 	 */
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\t\tedge collinear with isect line.  Listing vu1a, vu1b\n");
 	nmg_enlist_vu(is, vu1a, 0, MAX_FASTF);
 	nmg_enlist_vu(is, vu1b, 0, MAX_FASTF);
@@ -2922,14 +2925,14 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
      * or break eu1.
      */
     if (status == 1 || ZERO(dist[1])) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\t\tintersect point is vu1a\n");
 	if (!bn_pt3_pt3_equal(hit_pt, vu1a->v_p->vg_p->coord, &(is->tol)))
 	    bu_bomb("vu1a does not match calculated point\n");
 	nmg_enlist_vu(is, vu1a, 0, MAX_FASTF);
 	ret = 0;
     } else if (status == 2 || ZERO(dist[1] - 1.0)) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\t\tintersect point is vu1b\n");
 	if (!bn_pt3_pt3_equal(hit_pt, vu1b->v_p->vg_p->coord, &(is->tol)))
 	    bu_bomb("vu1b does not match calculated point\n");
@@ -2940,7 +2943,7 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
 	fastf_t distance;
 	struct vertexuse *vu1_final;
 	struct vertex *new_v;
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    int code;
 	    bu_log("\t2D: pt2d=(%g, %g), dir2d=(%g, %g)\n",
 		   is->pt2d[X], is->pt2d[Y],
@@ -2983,11 +2986,11 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
 	ret = 1;
 	if (!new_v) {
 	    nmg_vertex_gv(vu1_final->v_p, hit_pt);	/* 3d geom */
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("\t\tmaking new vertex vu=%p v=%p\n",
 		       (void *)vu1_final, (void *)vu1_final->v_p);
 	} else {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("\t\tre-using vertex v=%p vu=%p\n", (void *)new_v, (void *)vu1_final);
 	}
 	nmg_enlist_vu(is, vu1_final, 0, MAX_FASTF);
@@ -2996,7 +2999,7 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
     }
 
 out:
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_line2_edge2p(eu1=%p, fu1=%p) END ret=%d\n",
 	       (void *)eu1, (void *)fu1, ret);
     return ret;
@@ -3017,14 +3020,14 @@ nmg_isect_line2_vertex2(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
     NMG_CK_VERTEXUSE(vu1);
     NMG_CK_FACEUSE(fu1);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_line2_vertex2(vu=%p)\n", (void *)vu1);
 
     /* Needs to be a 3D comparison */
     if (bn_distsq_line3_pt3(is->pt, is->dir, vu1->v_p->vg_p->coord) > is->tol.dist_sq)
 	return;
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_line2_vertex2(vu=%p) line hits vertex v=%p\n",
 	       (void *)vu1, (void *)vu1->v_p);
 
@@ -3104,7 +3107,7 @@ enlist:
 	vu1b = 0;
     }
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_two_ptbls() intersection! vu=%p, vu_dual=%p\n",
 	       (void *)vu1a, (void *)vu1b);
     }
@@ -3118,7 +3121,7 @@ enlist:
  * If the fuser did its job, there should be only one.
  */
 struct edge_g_lseg *
-nmg_find_eg_on_line(const uint32_t *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
+nmg_find_eg_on_line(const uint32_t *magic_p, const fastf_t *pt, const fastf_t *dir, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl eutab;
     struct edgeuse **eup;
@@ -3127,7 +3130,7 @@ nmg_find_eg_on_line(const uint32_t *magic_p, const fastf_t *pt, const fastf_t *d
 
     BN_CK_TOL(tol);
 
-    nmg_edgeuse_on_line_tabulate(&eutab, magic_p, pt, dir, tol);
+    nmg_edgeuse_on_line_tabulate(&eutab, magic_p, pt, dir, vlfree, tol);
 
     for (eup = (struct edgeuse **)BU_PTBL_LASTADDR(&eutab);
 	 eup >= (struct edgeuse **)BU_PTBL_BASEADDR(&eutab); eup--
@@ -3153,7 +3156,7 @@ nmg_find_eg_on_line(const uint32_t *magic_p, const fastf_t *pt, const fastf_t *d
 	bu_log("nmg_find_eg_on_line() 2 different eg's, taking better one.\n");
     }
     (void)bu_ptbl_free(&eutab);
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("rt_find_eg_on_line(%p) ret=%p\n", (void *)magic_p, (void *)ret);
     }
     return ret;
@@ -3329,7 +3332,7 @@ nmg_search_v_eg(const struct edgeuse *eu, int second, const struct edge_g_lseg *
 	if (!seen1 || !seen2) continue;
 
 	/* Both edge_g's have been seen at 'v', this is a hit. */
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log(" seen1=%p, seen2=%p, hit_v=%p, v=%p\n",
 		   (void *)seen1, (void *)seen2, (void *)hit_v, (void *)v);
 	}
@@ -3349,7 +3352,7 @@ nmg_search_v_eg(const struct edgeuse *eu, int second, const struct edge_g_lseg *
 
 	bu_bomb("nmg_search_v_eg() two different vertices for intersect point?\n");
     }
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_search_v_eg(eu=%p, %d, eg1=%p, eg2=%p) ret=%p\n",
 	       (void *)eu, second, (void *)eg1, (void *)eg2, (void *)hit_v);
     }
@@ -3385,7 +3388,7 @@ nmg_common_v_2eg(struct edge_g_lseg *eg1, struct edge_g_lseg *eg2, const struct 
 	hit_v = nmg_search_v_eg(eu1, 0, eg1, eg2, hit_v, tol);
 	hit_v = nmg_search_v_eg(eu1, 1, eg1, eg2, hit_v, tol);
     }
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_common_v_2eg(eg1=%p, eg2=%p) hit_v=%p\n",
 	       (void *)eg1, (void *)eg2, (void *)hit_v);
     }
@@ -3397,7 +3400,7 @@ nmg_common_v_2eg(struct edge_g_lseg *eg1, struct edge_g_lseg *eg2, const struct 
 #define VDIST_SQ(a, b)	((a[X]-b[X])*(a[X]-b[X]) + (a[Y]-b[Y])*(a[Y]-b[Y]) + (a[Z]-b[Z])*(a[Z]-b[Z]))
 
 int
-nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu2, struct nmg_inter_struct *is)
+nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu2, struct nmg_inter_struct *is, struct bu_list *vlfree)
 {
     struct vertex_g *vg;
     plane_t pl1, pl2;
@@ -3434,14 +3437,14 @@ nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu
     code = nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL,
 				  (void (*)(struct edgeuse *, point_t, const char *))NULL,
 				  (void (*)(struct vertexuse *, point_t, const char *))NULL,
-				  (const char *)NULL, 0, 0, &is->tol);
+				  (const char *)NULL, 0, 0, vlfree, &is->tol);
     if (code != NMG_CLASS_AinB)
 	return 0;
 
     code = nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL,
 				  (void (*)(struct edgeuse *, point_t, const char *))NULL,
 				  (void (*)(struct vertexuse *, point_t, const char *))NULL,
-				  (const char *)NULL, 0, 0, &is->tol);
+				  (const char *)NULL, 0, 0, vlfree, &is->tol);
     if (code != NMG_CLASS_AinB)
 	return 0;
 
@@ -3501,7 +3504,7 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
     point_t hit_pt;
     vect_t e1_min_pt, e1_max_pt, e2_min_pt, e2_max_pt;
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_eu_eu(eu1=%p, eu2=%p)\n", (void *)eu1, (void *)eu2);
 
     m = nmg_find_model(&eu1->l.magic);
@@ -3530,7 +3533,7 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
     code = bn_isect_lseg3_lseg3(dist, vg1a->coord, dir1, vg2a->coord, dir2, tol);
 
     if (code < 0) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("\tnmg_isect_eu_eu: No intersection\n");
 	return;
     }
@@ -3567,7 +3570,7 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
 
 	v = nmg_find_pt_in_model(m, hit_pt, tol);
 
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("nmg_isect_eu_eu: intersection at (%g %g %g)\n", V3ARGS(hit_pt));
 	    bu_log("splitting eu %p at v=%p\n", (void *)eu2, (void *)v);
 	}
@@ -3575,7 +3578,7 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
 	if (!v) {
 	    v = new_eu->vu_p->v_p;
 	    nmg_vertex_gv(v, hit_pt);
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("\tcreated new vertex %p\n", (void *)v);
 	}
 	bu_ptbl_ins_unique(inters, (long *)v);
@@ -3604,7 +3607,7 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
 
 
 void
-nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeuse *eu, struct faceuse *fu)
+nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeuse *eu, struct faceuse *fu, struct bu_list *vlfree)
 {
     struct model *m;
     struct vertex_g *vg1, *vg2;
@@ -3620,7 +3623,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     fastf_t *inter_dist;
     size_t i;
 
-    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 	bu_log("nmg_isect_eu_fu: eu=%p, fu=%p START\n", (void *)eu, (void *)fu);
 
     NMG_CK_INTER_STRUCT(is);
@@ -3652,7 +3655,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     VMOVE(edir, dir);
     eu_len = MAGNITUDE(dir);
     if (eu_len < is->tol.dist) {
-	if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+	if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 	    bu_log("\tnmg_isec_eu_fu: 0 length edge\n");
 	return;
     }
@@ -3663,14 +3666,14 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     NMG_GET_FU_PLANE(pl, fu);
     /* check if edge line intersects plane of fu */
     if (bn_isect_line3_plane(&dist, vg1->coord, dir, pl, &is->tol) < 1) {
-	if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+	if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 	    bu_log("\tnmg_isec_eu_fu: no intersection\n");
 	return;
     }
 
     VJOIN1(hit_pt, vg1->coord, dist, dir);
 
-    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 	bu_log("\tintersection point at (%g %g %g)\n", V3ARGS(hit_pt));
 
     /* create a list of intersection vertices */
@@ -3704,7 +3707,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	int nmg_class;
 	fastf_t dist_to_plane;
 
-	if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+	if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 	    bu_log("\tNo intersection points found\n");
 
 	/* check if EU endpoints are within tolerance of FU
@@ -3714,7 +3717,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	if (dist_to_plane < is->tol.dist) {
 	    /* check if hit point is within fu */
 	    nmg_class = nmg_class_pt_fu_except(vg1->coord, fu, (struct loopuse *)NULL,
-					       0, 0, (char *)NULL, 0, 0, &is->tol);
+					       0, 0, (char *)NULL, 0, 0, vlfree, &is->tol);
 	    if (nmg_class != NMG_CLASS_AinB)
 		goto out;
 
@@ -3732,7 +3735,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	if (dist_to_plane < is->tol.dist) {
 	    /* check if hit point is within fu */
 	    nmg_class = nmg_class_pt_fu_except(vg2->coord, fu, (struct loopuse *)NULL,
-					       0, 0, (char *)NULL, 0, 0, &is->tol);
+					       0, 0, (char *)NULL, 0, 0, vlfree, &is->tol);
 	    if (nmg_class != NMG_CLASS_AinB)
 		goto out;
 
@@ -3750,7 +3753,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 
 	/* make sure intersection is within limits of eu */
 	if (dist < (-is->tol.dist) || dist > eu_len+is->tol.dist) {
-	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+	    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 		bu_log("\tnmg_isec_eu_fu: intersection beyond ends of EU\n");
 	    goto out;
 	}
@@ -3764,7 +3767,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	    VMOVE(hit_pt, vg2->coord);
 	}
 
-	if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+	if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 	    bu_log("\tHit point is not within tolerance of eu endpoints\n");
 	    bu_log("\t\thit_pt=(%g %g %g), eu=(%g %g %g)<->(%g %g %g)\n",
 		   V3ARGS(hit_pt), V3ARGS(vg1->coord), V3ARGS(vg2->coord));
@@ -3772,7 +3775,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 
 	/* check if hit point is within fu */
 	nmg_class = nmg_class_pt_fu_except(hit_pt, fu, (struct loopuse *)NULL,
-					   0, 0, (char *)NULL, 0, 0, &is->tol);
+					   0, 0, (char *)NULL, 0, 0, vlfree, &is->tol);
 
 	if (nmg_class == NMG_CLASS_AinB) {
 	    struct edgeuse *new_eu;
@@ -3781,13 +3784,13 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	    if (!v)
 		v = nmg_find_pt_in_model(m, hit_pt, &is->tol);
 	    if (v != eu->vu_p->v_p && v != eu->eumate_p->vu_p->v_p) {
-		if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+		if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 		    bu_log("\tsplitting eu (%p) at hit_pt (v=%p)\n", (void *)eu, (void *)v);
 
 		new_eu = nmg_esplit(v, eu, 1);
 		if (!v) {
 		    v = new_eu->vu_p->v_p;
-		    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+		    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 			bu_log("\tnew vertex at hit point is %p\n", (void *)v);
 		    nmg_vertex_gv(v, hit_pt);
 		}
@@ -3811,14 +3814,14 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	v = (struct vertex *)BU_PTBL_GET(&inters, 0);
 	NMG_CK_VERTEX(v);
 
-	if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+	if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 	    bu_log("Only one intersect vertex (%p), just split all EU's at (%p)\n", (void *)v, (void *)eu);
 
 	if (v == eu->vu_p->v_p || v == eu->eumate_p->vu_p->v_p)
 	    goto out;
 
-	(void)nmg_break_all_es_on_v(&fu->l.magic, v, &is->tol);
-	(void)nmg_break_all_es_on_v(&eu->l.magic, v, &is->tol);
+	(void)nmg_break_all_es_on_v(&fu->l.magic, v, vlfree, &is->tol);
+	(void)nmg_break_all_es_on_v(&eu->l.magic, v, vlfree, &is->tol);
 
 	goto out;
     }
@@ -3827,7 +3830,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     inter_dist = (fastf_t *)bu_calloc(BU_PTBL_LEN(&inters), sizeof(fastf_t),
 				      "nmg_isect_eu_fu: inter_dist");
 
-    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 	bu_log("%ld intersect vertices along eu (%p)\n", BU_PTBL_LEN(&inters), (void *)eu);
 
     for (i=0; i<BU_PTBL_LEN(&inters); i++) {
@@ -3847,7 +3850,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	inter_dist[i] = MAGSQ(diff);
     }
 
-    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 	bu_log("Intersect vertices along eu %p:\n", (void *)eu);
 	for (i = 0; i < BU_PTBL_LEN(&inters); i++)
 	    bu_log("%d %p %g\n", i+1, (void *)BU_PTBL_GET(&inters, i), inter_dist[i]);
@@ -3875,10 +3878,10 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	NMG_CK_VERTEX(v);
 
 	if (v != eu->vu_p->v_p && v != eu->eumate_p->vu_p->v_p) {
-	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+	    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 		bu_log("Breaking edges at vertex #%d, dist=%g, v=%p\n", i+1, inter_dist[i], (void *)v);
-	    (void)nmg_break_all_es_on_v(&fu->l.magic, v, &is->tol);
-	    (void)nmg_break_all_es_on_v(&eu->l.magic, v, &is->tol);
+	    (void)nmg_break_all_es_on_v(&fu->l.magic, v, vlfree, &is->tol);
+	    (void)nmg_break_all_es_on_v(&eu->l.magic, v, vlfree, &is->tol);
 	}
 
 	inter_dist[index_at_max] = (-10.0);
@@ -3889,20 +3892,20 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 out:
     bu_ptbl_free(&inters);
 
-    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
+    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
 	bu_log("nmg_isect_eu_fu: eu=%p, fu=%p END\n", (void *)eu, (void *)fu);
 
 }
 
 
 void
-nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_ptbl *eu1_list, struct bu_ptbl *eu2_list)
+nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_ptbl *eu1_list, struct bu_ptbl *eu2_list, struct bu_list *vlfree)
 {
     struct model *m;
     struct bu_ptbl verts1, verts2, eus;
     size_t i;
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_fu_jra(fu1=%p, fu2=%p) START\n", (void *)fu1, (void *)fu2);
 
     NMG_CK_INTER_STRUCT(is);
@@ -3915,8 +3918,8 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
     NMG_CK_MODEL(m);
 
     /* Intersect fu1 edgeuses */
-    nmg_vertex_tabulate(&verts2, &fu2->l.magic);
-    nmg_edgeuse_tabulate(&eus, &fu1->l.magic);
+    nmg_vertex_tabulate(&verts2, &fu2->l.magic, vlfree);
+    nmg_edgeuse_tabulate(&eus, &fu1->l.magic, vlfree);
     for (i = 0; i < BU_PTBL_LEN(&eus); i++) {
 	struct edgeuse *eu;
 
@@ -3925,14 +3928,14 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
 	if (eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC) {
 	    continue;
 	}
-	nmg_isect_eu_fu(is, &verts2, eu, fu2);
+	nmg_isect_eu_fu(is, &verts2, eu, fu2, vlfree);
     }
     bu_ptbl_free(&verts2);
     bu_ptbl_free(&eus);
 
     /* Intersect fu2 edgeuses */
-    nmg_vertex_tabulate(&verts1, &fu1->l.magic);
-    nmg_edgeuse_tabulate(&eus, &fu2->l.magic);
+    nmg_vertex_tabulate(&verts1, &fu1->l.magic, vlfree);
+    nmg_edgeuse_tabulate(&eus, &fu2->l.magic, vlfree);
     for (i = 0; i < BU_PTBL_LEN(&eus); i++) {
 	struct edgeuse *eu;
 
@@ -3941,7 +3944,7 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
 	if (eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC) {
 	    continue;
 	}
-	nmg_isect_eu_fu(is, &verts1, eu, fu1);
+	nmg_isect_eu_fu(is, &verts1, eu, fu1, vlfree);
     }
     bu_ptbl_free(&verts1);
     bu_ptbl_free(&eus);
@@ -3950,8 +3953,8 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
     /* XXXX this is the second time this tabulate is being done,
      * but for now it's safer this way
      */
-    nmg_vertex_tabulate(&verts1, &fu1->l.magic);
-    nmg_vertex_tabulate(&verts2, &fu2->l.magic);
+    nmg_vertex_tabulate(&verts1, &fu1->l.magic, vlfree);
+    nmg_vertex_tabulate(&verts2, &fu2->l.magic, vlfree);
 
     /* merge the two lists */
     for (i=0; i<BU_PTBL_LEN(&verts2); i++) {
@@ -3972,7 +3975,7 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
 	v = (struct vertex *)BU_PTBL_GET(&verts1, i);
 	NMG_CK_VERTEX(v);
 
-	if (!nmg_is_vertex_on_inter(v, fu1, fu2, is))
+	if (!nmg_is_vertex_on_inter(v, fu1, fu2, is, vlfree))
 	    continue;
 
 	/* calculate distance along intersect ray */
@@ -3986,7 +3989,7 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
 
 	    fu_tmp = nmg_find_fu_of_vu(vu);
 	    if (fu_tmp == fu1 || fu_tmp == fu2) {
-		if (RTG.NMG_debug & DEBUG_POLYSECT)
+		if (nmg_debug & DEBUG_POLYSECT)
 		    bu_log("\tenlisting vu %p (%p) from fu (%p)\n",
 			   (void *)vu, (void *)v, (void *)fu_tmp);
 		nmg_enlist_one_vu(is, vu, dist);
@@ -3996,7 +3999,7 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
 
     bu_ptbl_free(&verts1);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_fu_jra(fu1=%p, fu2=%p) END\n", (void *)fu1, (void *)fu2);
 }
 
@@ -4021,7 +4024,7 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
  * nmg_isect_two_face3p()
  */
 void
-nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_ptbl *eu1_list, struct bu_ptbl *eu2_list)
+nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_ptbl *eu1_list, struct bu_ptbl *eu2_list, struct bu_list *vlfree)
 {
     struct bu_ptbl eg_list;
     struct edge_g_lseg **eg1;
@@ -4046,7 +4049,7 @@ nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, stru
     BU_CK_PTBL(eu1_list);
     BU_CK_PTBL(eu2_list);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_line2_face2pNEW(, fu1=%p, fu2=%p) on_eg=%p\n",
 	       (void *)fu1, (void *)fu2, (void *)is->on_eg);
 
@@ -4059,7 +4062,7 @@ nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, stru
 re_tabulate:
     /* Build list of all edge_g_lseg's in fu1 */
     /* XXX This could be more cheaply done by cooking down eu1_list */
-    nmg_edge_g_tabulate(&eg_list, &fu1->l.magic);
+    nmg_edge_g_tabulate(&eg_list, &fu1->l.magic, vlfree);
 
     /* Process each distinct line in the face fu1 */
     for (eg1 = (struct edge_g_lseg **)BU_PTBL_LASTADDR(&eg_list);
@@ -4069,7 +4072,7 @@ re_tabulate:
 
 	NMG_CK_EDGE_G_LSEG(*eg1);
 
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("\tChecking eg=%p\n", (void *)*eg1);
 	}
 
@@ -4080,7 +4083,7 @@ re_tabulate:
 	    plane_t pl1, pl2;
 
 	colinear:
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		bu_log("\tThis edge_geom generated the line.  Enlisting.\n");
 	    }
 
@@ -4100,7 +4103,7 @@ re_tabulate:
 
 		    if (DIST_PT_PLANE(vg->coord, pl2) <= is->tol.dist) {
 			/* and in plane of fu2 */
-			if (nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol)) != NMG_CLASS_AoutB) {
+			if (nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol)) != NMG_CLASS_AoutB) {
 			    /* and within fu2 */
 			    distance = VDIST(is->pt, vg->coord);
 			    nmg_enlist_vu(is, eu1->vu_p, 0, distance);
@@ -4116,7 +4119,7 @@ re_tabulate:
 
 		    if (DIST_PT_PLANE(vg->coord, pl2) <= is->tol.dist) {
 			/* and in plane of fu2 */
-			if (nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol)) != NMG_CLASS_AoutB) {
+			if (nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol)) != NMG_CLASS_AoutB) {
 			    /* and within fu2 */
 			    distance = VDIST(is->pt, vg->coord);
 			    nmg_enlist_vu(is, eu_end->vu_p, 0, distance);
@@ -4140,7 +4143,7 @@ re_tabulate:
 
 		    if (DIST_PT_PLANE(vg->coord, pl1) <= is->tol.dist) {
 			/* and in plane of fu1 */
-			if (nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol)) != NMG_CLASS_AoutB) {
+			if (nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol)) != NMG_CLASS_AoutB) {
 			    /* and within fu1 */
 			    distance = VDIST(is->pt, vg->coord);
 			    nmg_enlist_vu(is, eu2->vu_p, 0, distance);
@@ -4156,7 +4159,7 @@ re_tabulate:
 
 		    if (DIST_PT_PLANE(vg->coord, pl1) <= is->tol.dist) {
 			/* and in plane of fu1 */
-			if (nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol)) != NMG_CLASS_AoutB) {
+			if (nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol)) != NMG_CLASS_AoutB) {
 			    /* and within fu1 */
 			    distance = VDIST(is->pt, vg->coord);
 			    nmg_enlist_vu(is, eu_end->vu_p, 0, distance);
@@ -4189,7 +4192,7 @@ re_tabulate:
 		goto fixup;
 	    }
 	    /* on_eg wasn't set, use it and continue on */
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("NOTICE: setting on_eg to eg1 and continuing with collinear case.\n");
 	    is->on_eg = (*eg1);
 	    goto colinear;
@@ -4212,7 +4215,7 @@ re_tabulate:
 
 	/* If on_eg was specified, do a search for topology intersection */
 	if (is->on_eg && !hit_v) {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		bu_log("non-colinear.  Searching for topological intersection between on_eg and eg1\n");
 	    }
 	    /* See if any vu along eg1 is used by edge from on_eg */
@@ -4227,7 +4230,7 @@ re_tabulate:
 		fastf_t dist1, dist2;
 		plane_t n1, n2;
 
-		if (RTG.NMG_debug & DEBUG_POLYSECT) {
+		if (nmg_debug & DEBUG_POLYSECT) {
 		    static int num=0;
 		    char buf[128];
 		    FILE *fp;
@@ -4258,7 +4261,7 @@ re_tabulate:
 		    !V3PT_IN_RPP(hit_v->vg_p->coord, fu2->f_p->min_pt, fu2->f_p->max_pt)
 		    ) {
 		    /* Lines intersect outside bounds of both faces. */
-		    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+		    if (nmg_debug & DEBUG_POLYSECT) {
 			VPRINT("\t\tisect pt outside fu1 & fu2 RPP:", hit_v->vg_p->coord);
 			bu_log("\t\tfu1 RPP: (%g %g %g) <-> (%g %g %g)\n",
 			       V3ARGS(fu1->f_p->min_pt), V3ARGS(fu1->f_p->max_pt));
@@ -4296,13 +4299,13 @@ re_tabulate:
 		if (!NEAR_ZERO(dist1, is->tol.dist) || !NEAR_ZERO(dist2, is->tol.dist)) {
 		    continue;
 		}
-		if ((nmg_class=nmg_class_pt_fu_except(hit_v->vg_p->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
-		    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+		if ((nmg_class=nmg_class_pt_fu_except(hit_v->vg_p->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol))) == NMG_CLASS_AoutB) {
+		    if (nmg_debug & DEBUG_POLYSECT) {
 			VPRINT("\t\tisect pt outside face fu1 (nmg_class_pt_fu_except):", hit_v->vg_p->coord);
 		    }
 		    continue;
-		} else if ((nmg_class=nmg_class_pt_fu_except(hit_v->vg_p->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
-		    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+		} else if ((nmg_class=nmg_class_pt_fu_except(hit_v->vg_p->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol))) == NMG_CLASS_AoutB) {
+		    if (nmg_debug & DEBUG_POLYSECT) {
 			VPRINT("\t\tisect pt outside face fu2 (nmg_class_pt_fu_except):", hit_v->vg_p->coord);
 		    }
 		    continue;
@@ -4339,13 +4342,13 @@ re_tabulate:
 
 	/* Geometry says 2 lines intersect at a point */
 	VJOIN1(hit3d, is->pt, dist[0], is->dir);
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    VPRINT("\t2 lines intersect at", hit3d);
 	}
 
 	if (!V3PT_IN_RPP(hit3d, fu1->f_p->min_pt, fu1->f_p->max_pt)) {
 	    /* Lines intersect outside bounds of this face. */
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		VPRINT("\t\tisect pt outside fu1 face RPP:", hit3d);
 		bu_log("\t\tface RPP: (%g %g %g) <-> (%g %g %g)\n",
 		       V3ARGS(fu1->f_p->min_pt), V3ARGS(fu1->f_p->max_pt));
@@ -4353,17 +4356,17 @@ re_tabulate:
 	    continue;
 	}
 
-	if ((nmg_class=nmg_class_pt_fu_except(hit3d, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if ((nmg_class=nmg_class_pt_fu_except(hit3d, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol))) == NMG_CLASS_AoutB) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		VPRINT("\t\tisect pt outside face fu1 (nmg_class_pt_fu_except):", hit3d);
 	    }
 	    continue;
-	} else if ((nmg_class=nmg_class_pt_fu_except(hit3d, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	} else if ((nmg_class=nmg_class_pt_fu_except(hit3d, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol))) == NMG_CLASS_AoutB) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		VPRINT("\t\tisect pt outside face fu2 (nmg_class_pt_fu_except):", hit3d);
 	    }
 	    continue;
-	} else if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	} else if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("\t\tnmg_class_pt_fu_except(fu1) returns %s\n", nmg_class_name(nmg_class));
 	}
 
@@ -4375,7 +4378,7 @@ re_tabulate:
 	    /* Force things to be consistent, use geom from hit_v */
 	    VMOVE(hit3d, hit_v->vg_p->coord);
 	    nmg_get_2d_vertex(hit2d, hit_v, is, &fu1->l.magic);
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		bu_log("hit_v=%p\n", (void *)hit_v);
 		VPRINT("hit3d", hit3d);
 		V2PRINT("hit2d", hit2d);
@@ -4402,12 +4405,12 @@ re_tabulate:
 
 	    NMG_CK_EDGEUSE(eu1);
 
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		bu_log("\tChecking eu %p\n", (void *)eu1);
 	    }
 
 	    if (eu1->g.lseg_p != *eg1) {
-		if (RTG.NMG_debug & DEBUG_POLYSECT) {
+		if (nmg_debug & DEBUG_POLYSECT) {
 		    bu_log("\t\teg %p is not eg1=%p\n", (void *)eu1->g.lseg_p, (void *)*eg1);
 		}
 		continue;
@@ -4418,7 +4421,7 @@ re_tabulate:
 	    /* First, a topology check of both endpoints */
 	    if (vu1a->v_p == hit_v) {
 	    hit_a:
-		if (RTG.NMG_debug & DEBUG_POLYSECT) {
+		if (nmg_debug & DEBUG_POLYSECT) {
 		    bu_log("\tlisting intersect point at vu1a=%p\n", (void *)vu1a);
 		}
 		/* Note that the distance dist[0] may not actually
@@ -4434,7 +4437,7 @@ re_tabulate:
 	    }
 	    if (vu1b->v_p == hit_v) {
 	    hit_b:
-		if (RTG.NMG_debug & DEBUG_POLYSECT) {
+		if (nmg_debug & DEBUG_POLYSECT) {
 		    bu_log("\tlisting intersect point at vu1b=%p\n", (void *)vu1b);
 		}
 		/* see above note about dist[0] */
@@ -4447,12 +4450,12 @@ re_tabulate:
 	     * with comparisons elsewhere.
 	     */
 	    tmp_dist_sq = bn_distsq_line3_pt3(is->pt, is->dir, vu1a->v_p->vg_p->coord);
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		bu_log("\tvu1a is sqrt(%g) from the intersect line\n", tmp_dist_sq);
 	    }
 	    if (tmp_dist_sq <= is->tol.dist_sq) {
 		if (!hit_v) {
-		    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+		    if (nmg_debug & DEBUG_POLYSECT) {
 			bu_log("\tnmg_isect_line2_face2pNEW: using nearby vu1a vertex %p from eu %p\n",
 			       (void *)vu1a->v_p, (void *)eu1);
 		    }
@@ -4464,12 +4467,12 @@ re_tabulate:
 		/* Fall through to bn_isect_pt2_lseg2() */
 	    }
 	    tmp_dist_sq = bn_distsq_line3_pt3(is->pt, is->dir, vu1b->v_p->vg_p->coord);
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		bu_log("\tvu1b is sqrt(%g) from the intersect line\n", tmp_dist_sq);
 	    }
 	    if (tmp_dist_sq <= is->tol.dist_sq) {
 		if (!hit_v) {
-		    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+		    if (nmg_debug & DEBUG_POLYSECT) {
 			bu_log("\tnmg_isect_line2_face2pNEW: using nearby vu1b vertex %p from eu %p\n",
 			       (void *)vu1b->v_p, (void *)eu1);
 		    }
@@ -4486,7 +4489,7 @@ re_tabulate:
 	    nmg_get_2d_vertex(eu1_end2d, vu1b->v_p, is, &fu1->l.magic);
 	    ldist = 0;
 	    code = bn_isect_pt2_lseg2(&ldist, eu1_pt2d, eu1_end2d, hit2d, &(is->tol));
-	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	    if (nmg_debug & DEBUG_POLYSECT) {
 		bu_log("\tbn_isect_pt2_lseg2() returned %d, ldist=%g\n", code, ldist);
 	    }
 	    switch (code) {
@@ -4504,7 +4507,7 @@ re_tabulate:
 			goto re_tabulate;
 		    }
 		    hit_v = vu1a->v_p;
-		    if (RTG.NMG_debug & DEBUG_POLYSECT)
+		    if (nmg_debug & DEBUG_POLYSECT)
 			bu_log("\thit_v = %p (vu1a)\n", (void *)hit_v);
 		    goto hit_a;
 		case 2:
@@ -4516,7 +4519,7 @@ re_tabulate:
 			goto re_tabulate;
 		    }
 		    hit_v = vu1b->v_p;
-		    if (RTG.NMG_debug & DEBUG_POLYSECT)
+		    if (nmg_debug & DEBUG_POLYSECT)
 			bu_log("\thit_v = %p (vu1b)\n", (void *)hit_v);
 		    goto hit_b;
 		case 3:
@@ -4537,7 +4540,7 @@ re_tabulate:
 		    if (!hit_v) {
 			hit_v = vu1_midpt->v_p;
 			nmg_vertex_gv(hit_v, hit3d);
-			if (RTG.NMG_debug & DEBUG_POLYSECT) {
+			if (nmg_debug & DEBUG_POLYSECT) {
 			    bu_log("\tmaking new vertex vu=%p hit_v=%p\n",
 				   (void *)vu1_midpt, (void *)hit_v);
 			}
@@ -4551,12 +4554,12 @@ re_tabulate:
 					      hit_v, &(is->tol));
 			}
 		    } else {
-			if (RTG.NMG_debug & DEBUG_POLYSECT) {
+			if (nmg_debug & DEBUG_POLYSECT) {
 			    bu_log("\tre-using hit_v=%p, vu=%p\n", (void *)hit_v, (void *)vu1_midpt);
 			}
 			if (hit_v != vu1_midpt->v_p) bu_bomb("hit_v changed?\n");
 		    }
-		    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+		    if (nmg_debug & DEBUG_POLYSECT) {
 			bu_log("Faceuses after nmg_ebreaker() call\n");
 			bu_log("fu1:\n");
 			nmg_pr_fu_briefly(fu1, "\t");
@@ -4586,7 +4589,7 @@ re_tabulate:
 				vu1->v_p->vg_p->coord) > is->tol.dist_sq)
 	    continue;
 
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("\tself-loop vu=%p lies on line of intersection\n", (void *)vu1);
 	}
 
@@ -4691,7 +4694,7 @@ nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *UNUSED(pt), const fa
  * NULL is returned if no common edge geometry could be found.
  */
 struct edge_g_lseg *
-nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, const struct bn_tol *tol)
+nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     const struct faceuse *fu1;
     const struct loopuse *lu1;
@@ -4712,7 +4715,7 @@ nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, c
 
     if (fg1 == fg2) bu_bomb("nmg_find_eg_between_2fg() face_g_plane shared, infinitely many results\n");
 
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	nmg_pr_fus_in_fg(&fg1->magic);
 	nmg_pr_fus_in_fg(&fg2->magic);
     }
@@ -4730,7 +4733,7 @@ nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, c
 	    NMG_CK_LOOPUSE(lu1);
 	    if (BU_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_VERTEXUSE_MAGIC)
 		continue;
-	    if (RTG.NMG_debug & DEBUG_BASIC) {
+	    if (nmg_debug & DEBUG_BASIC) {
 		bu_log(" visiting lu1=%p, fu1=%p, fg1=%p\n",
 		       (void *)lu1, (void *)fu1, (void *)fg1);
 	    }
@@ -4754,7 +4757,7 @@ nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, c
 		    NMG_CK_EDGE_G_EITHER(eur->g.lseg_p);
 
 		    /* Found the other face on this edge! */
-		    if (RTG.NMG_debug & DEBUG_BASIC) {
+		    if (nmg_debug & DEBUG_BASIC) {
 			bu_log(" Found shared edge, eur=%p, eg=%p\n", (void *)eur, (void *)eur->g.lseg_p);
 			nmg_pr_eu_briefly(eur, (char *)NULL);
 			nmg_pr_eu_briefly(eur->eumate_p, (char *)NULL);
@@ -4764,8 +4767,8 @@ nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, c
 
 		    if (!ret) {
 			/* First common edge found */
-			if (RTG.NMG_debug & DEBUG_BASIC) {
-			    nmg_pl_lu_around_eu(eur);
+			if (nmg_debug & DEBUG_BASIC) {
+			    nmg_pl_lu_around_eu(eur, vlfree);
 			}
 			ret = eur;
 			continue;
@@ -4776,7 +4779,7 @@ nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, c
 
 		    /* Edge geometry differs. vu's same? */
 		    if (NMG_ARE_EUS_ADJACENT(eur, ret)) {
-			if (RTG.NMG_debug & DEBUG_BASIC) {
+			if (nmg_debug & DEBUG_BASIC) {
 			    bu_log("nmg_find_eg_between_2fg() joining edges eur=%p, ret=%p\n",
 				   (void *)eur, (void *)ret);
 			}
@@ -4801,7 +4804,7 @@ nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, c
 			       (void *)ret->e_p, (void *)ret->g.lseg_p);
 			nmg_jeg(ret->g.lseg_p, eur->g.lseg_p);
 			/* See if there are any others. */
-			nmg_model_fuse(nmg_find_model(&eur->l.magic), tol);
+			nmg_model_fuse(nmg_find_model(&eur->l.magic), vlfree, tol);
 		    } else {
 			bu_bomb("nmg_find_eg_between_2fg() 2 faces intersect with differing edge geometries?\n");
 		    }
@@ -4810,7 +4813,7 @@ nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, c
 	    }
 	}
     }
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("nmg_find_eg_between_2fg(fu1=%p, fu2=%p) edge_g=%p\n",
 	       (void *)ofu1, (void *)fu2, ret ? (void *)ret->g.lseg_p : (void *)0);
     }
@@ -4843,7 +4846,7 @@ nmg_does_fu_use_eg(const struct faceuse *fu1, const uint32_t *eg)
 	NMG_CK_LOOPUSE(lu1);
 	if (BU_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_VERTEXUSE_MAGIC)
 	    continue;
-	if (RTG.NMG_debug & DEBUG_BASIC) {
+	if (nmg_debug & DEBUG_BASIC) {
 	    bu_log(" visiting lu1=%p, fu1=%p\n",
 		   (void *)lu1, (void *)fu1);
 	}
@@ -4853,7 +4856,7 @@ nmg_does_fu_use_eg(const struct faceuse *fu1, const uint32_t *eg)
     }
     eu1 = (struct edgeuse *)NULL;
 out:
-    if (RTG.NMG_debug & DEBUG_BASIC) {
+    if (nmg_debug & DEBUG_BASIC) {
 	bu_log("nmg_does_fu_use_eg(fu1=%p, eg=%p) eu1=%p\n",
 	       (void *)fu1, (void *)eg, (void *)eu1);
     }
@@ -4901,7 +4904,7 @@ rt_line_on_plane(const fastf_t *pt, const fastf_t *dir, const fastf_t *plane, co
  * This is the HEART of the intersection code.
  */
 HIDDEN void
-nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2)
+nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree)
 {
     struct bu_ptbl vert_list1, vert_list2;
     struct bu_ptbl eu1_list;	/* all eu's in fu1 */
@@ -4914,13 +4917,13 @@ nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct fa
     NMG_CK_FACEUSE(fu1);
     NMG_CK_FACEUSE(fu2);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_two_face3p(fu1=%p, fu2=%p) START12\n", (void *)fu1, (void *)fu2);
 	VPRINT("isect ray is->pt ", is->pt);
 	VPRINT("isect ray is->dir", is->dir);
     }
 
-    if (RTG.NMG_debug & DEBUG_VERIFY) {
+    if (nmg_debug & DEBUG_VERIFY) {
 	nmg_vfu(&fu1->s_p->fu_hd, fu1->s_p);
 	nmg_vfu(&fu2->s_p->fu_hd, fu2->s_p);
 	nmg_fu_touchingloops(fu1);
@@ -4937,17 +4940,17 @@ nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct fa
 	bu_log("WARNING: intersect line not on plane of fu2\n");
 #endif
 
-    if (RTG.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
-	&& RTG.NMG_debug & DEBUG_PLOTEM) {
-	nmg_pl_2fu("Iface%d.plot3", fu1, fu2, 0);
+    if (nmg_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
+	&& nmg_debug & DEBUG_PLOTEM) {
+	nmg_pl_2fu("Iface%d.plot3", fu1, fu2, 0, vlfree);
     }
 
     bu_ptbl_init(&vert_list1, 64, "vert_list1 buffer");
     bu_ptbl_init(&vert_list2, 64, "vert_list2 buffer");
 
     /* Build list of all edgeuses in fu1 and fu2 */
-    nmg_edgeuse_tabulate(&eu1_list, &fu1->l.magic);
-    nmg_edgeuse_tabulate(&eu2_list, &fu2->l.magic);
+    nmg_edgeuse_tabulate(&eu1_list, &fu1->l.magic, vlfree);
+    nmg_edgeuse_tabulate(&eu2_list, &fu2->l.magic, vlfree);
 
     is->mag_len = 2 * (BU_PTBL_LEN(&eu1_list) + BU_PTBL_LEN(&eu2_list));
     mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "mag1");
@@ -4981,16 +4984,16 @@ nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct fa
     is->mag2 = mag1;
 /* nmg_isect_line2_face2pNEW(is, fu2, fu1, &eu2_list, &eu1_list); */
     is->on_eg = (struct edge_g_lseg *)NULL;
-    nmg_isect_fu_jra(is, fu1, fu2, &eu1_list, &eu2_list);
+    nmg_isect_fu_jra(is, fu1, fu2, &eu1_list, &eu2_list, vlfree);
 
-    if (RTG.NMG_debug & DEBUG_VERIFY) {
+    if (nmg_debug & DEBUG_VERIFY) {
 	nmg_fu_touchingloops(fu1);
 	nmg_fu_touchingloops(fu2);
 	nmg_vfu(&fu1->s_p->fu_hd, fu1->s_p);
 	nmg_vfu(&fu2->s_p->fu_hd, fu2->s_p);
     }
 
-    if (RTG.NMG_debug & DEBUG_FCUT) {
+    if (nmg_debug & DEBUG_FCUT) {
 	bu_log("nmg_isect_two_face3p(fu1=%p, fu2=%p) vert_lists B:\n", (void *)fu1, (void *)fu2);
 	nmg_pr_ptbl_vert_list("vert_list1", &vert_list1, mag1);
 	nmg_pr_ptbl_vert_list("vert_list2", &vert_list2, mag2);
@@ -5001,23 +5004,23 @@ nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct fa
 	goto out;
     }
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_two_face3p(fu1=%p, fu2=%p) MIDDLE\n", (void *)fu1, (void *)fu2);
     }
 
-    is->on_eg = nmg_face_cutjoin(&vert_list1, &vert_list2, mag1, mag2, fu1, fu2, is->pt, is->dir, is->on_eg, &is->tol);
+    is->on_eg = nmg_face_cutjoin(&vert_list1, &vert_list2, mag1, mag2, fu1, fu2, is->pt, is->dir, is->on_eg, vlfree, &is->tol);
 
-    if (RTG.NMG_debug & DEBUG_VERIFY) {
+    if (nmg_debug & DEBUG_VERIFY) {
 	nmg_fu_touchingloops(fu1);
 	nmg_fu_touchingloops(fu2);
-	nmg_region_v_unique(fu1->s_p->r_p, &is->tol);
-	nmg_region_v_unique(fu2->s_p->r_p, &is->tol);
+	nmg_region_v_unique(fu1->s_p->r_p, vlfree, &is->tol);
+	nmg_region_v_unique(fu2->s_p->r_p, vlfree, &is->tol);
 	nmg_vfu(&fu1->s_p->fu_hd, fu1->s_p);
 	nmg_vfu(&fu2->s_p->fu_hd, fu2->s_p);
     }
 
-    nmg_mesh_faces(fu1, fu2, &is->tol);
-    if (RTG.NMG_debug & DEBUG_VERIFY) {
+    nmg_mesh_faces(fu1, fu2, vlfree, &is->tol);
+    if (nmg_debug & DEBUG_VERIFY) {
 	nmg_fu_touchingloops(fu1);
 	nmg_fu_touchingloops(fu2);
     }
@@ -5033,11 +5036,11 @@ out:
 	bu_free((char *)mag2, "nmg_isect_two_face3p: mag2");
 
 
-    if (RTG.NMG_debug & DEBUG_VERIFY) {
+    if (nmg_debug & DEBUG_VERIFY) {
 	nmg_vfu(&fu1->s_p->fu_hd, fu1->s_p);
 	nmg_vfu(&fu2->s_p->fu_hd, fu2->s_p);
     }
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_two_face3p(fu1=%p, fu2=%p) END\n", (void *)fu1, (void *)fu2);
 	VPRINT("isect ray is->pt ", is->pt);
 	VPRINT("isect ray is->dir", is->dir);
@@ -5046,7 +5049,7 @@ out:
 
 
 void
-nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_inter_struct *is)
+nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_inter_struct *is, struct bu_list *vlfree)
 {
     struct model *m;
     struct edgeuse *eu;
@@ -5060,7 +5063,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
     size_t out=0;
     size_t i;
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_cut_lu_into_coplanar_and_non(lu=%p, pl=%g %g %g %g)\n", (void *)lu, V4ARGS(pl));
 
     NMG_CK_LOOPUSE(lu);
@@ -5126,7 +5129,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 	}
     }
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("\t pl=(%g %g %g %g)\n", V4ARGS(pl));
 	bu_log("\tcut_lists=%ld, on=%d, in=%d, out=%d\n", BU_PTBL_LEN(&cut_list), on, in, out);
 	if (BU_PTBL_LEN(&cut_list)) {
@@ -5146,7 +5149,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
     if (BU_PTBL_LEN(&cut_list) < 2) {
 	bu_ptbl_free(&cut_list);
 
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("No loops need cutting\n");
 	return;
     }
@@ -5154,7 +5157,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
     if (nmg_loop_is_a_crack(lu)) {
 	struct bu_ptbl lus;
 
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("Loop is a crack\n");
 
 	i = 0;
@@ -5181,7 +5184,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 	if (BU_PTBL_LEN(&cut_list) == 0) {
 	    bu_ptbl_free(&cut_list);
 
-	    if (RTG.NMG_debug & DEBUG_POLYSECT)
+	    if (nmg_debug & DEBUG_POLYSECT)
 		bu_log("no loops need cutting\n");
 	    return;
 	}
@@ -5203,7 +5206,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 
 		for (BU_LIST_FOR(vu1, vertexuse, &vcut1->vu_hd)) {
 		    if (nmg_find_lu_of_vu(vu1) == lu1) {
-			if (RTG.NMG_debug & DEBUG_POLYSECT)
+			if (nmg_debug & DEBUG_POLYSECT)
 			    bu_log("Splitting lu %p at vu %p\n", (void *)lu1, (void *)vu1);
 			new_lu = nmg_split_lu_at_vu(lu1, vu1);
 			nmg_lu_reorient(lu1);
@@ -5305,7 +5308,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 	    }
 	}
 
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("After sorting:\n");
 	    for (i = 0; i < BU_PTBL_LEN(&cut_list); i++)
 		bu_log("v=%p, dist=%g\n", (void *)BU_PTBL_GET(&cut_list, i), dist_array[i]);
@@ -5443,11 +5446,11 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 	    }
 	}
 
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("nmg_cut_lu_into_coplanar_and_non: calling face cutter\n");
 	bu_ptbl_reset(is->l2);
 	(void)nmg_face_cutjoin(is->l1, is->l2, is->mag1, is->mag2, is->fu1,
-			       is->fu2, is->pt, is->dir, is->on_eg, &is->tol);
+			       is->fu2, is->pt, is->dir, is->on_eg, vlfree, &is->tol);
 
 	vcut1 = (struct vertex *)NULL;
 	vcut2 = (struct vertex *)NULL;
@@ -5459,7 +5462,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 
 #define MAX_FACES 200
 void
-nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
+nmg_check_radial_angles(char *str, struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl edges;
     vect_t xvec, yvec, zvec;
@@ -5473,7 +5476,7 @@ nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     bu_ptbl_init(&edges, 64, " &edges");
-    nmg_edge_tabulate(&edges, &s->l.magic);
+    nmg_edge_tabulate(&edges, &s->l.magic, vlfree);
 
     for (i=0; i<BU_PTBL_LEN(&edges); i++) {
 	struct edge *e;
@@ -5571,7 +5574,7 @@ nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
  * 0 - must use nmg_isect_nearly_coplanar_faces
  */
 int
-nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *fu1, const struct faceuse *fu2, const struct bn_tol *tol)
+nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *fu1, const struct faceuse *fu2, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     plane_t pl1, pl2;
     point_t min_pt;
@@ -5616,7 +5619,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     VCROSS(left, pl1, bs->dir);
 
     /* check vertices from fu1 versus plane of fu2 */
-    nmg_vertex_tabulate(&verts, &fu1->l.magic);
+    nmg_vertex_tabulate(&verts, &fu1->l.magic, vlfree);
     on_line = 0;
     above_left = 0;
     below_left = 0;
@@ -5672,7 +5675,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
 	return 0;
 
     /* check vertices from fu2 versus plane of fu1 */
-    nmg_vertex_tabulate(&verts, &fu2->l.magic);
+    nmg_vertex_tabulate(&verts, &fu2->l.magic, vlfree);
     on_line = 0;
     above_left = 0;
     below_left = 0;
@@ -5791,7 +5794,7 @@ out:
  * Intersect a pair of faces
  */
 void
-nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *tol)
+nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct nmg_inter_struct bs;
     plane_t pl1, pl2;
@@ -5819,7 +5822,7 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
     NMG_GET_FU_PLANE(pl1, fu1);
     NMG_GET_FU_PLANE(pl2, fu2);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("\nnmg_isect_two_generic_faces(fu1=%p, fu2=%p)\n", (void *)fu1, (void *)fu2);
 	bu_log("Planes\t%gx + %gy + %gz = %g\n\t%gx + %gy + %gz = %g\n",
 	       pl1[X], pl1[Y], pl1[Z], pl1[W],
@@ -5835,7 +5838,7 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 
     status = 10;
     if (f1->g.plane_p == f2->g.plane_p) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("co-planar faces (shared fg)\n");
 	}
 	status = (-1);
@@ -5873,7 +5876,7 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
     if (status == 10) {
 	status = nmg_isect_2faceuse(bs.pt, bs.dir, fu1, fu2, tol);
 
-	if (RTG.NMG_debug & DEBUG_POLYSECT) {
+	if (nmg_debug & DEBUG_POLYSECT) {
 	    bu_log("\tnmg_isect_two_generic_faces: intersect ray start (%f, %f, %f)\n\t\tin direction (%f, %f, %f)\n",
 		   bs.pt[X], bs.pt[Y], bs.pt[Z], bs.dir[X], bs.dir[Y], bs.dir[Z]);
 	}
@@ -5882,12 +5885,12 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
     switch (status) {
 	case 0:
 	    bs.coplanar = 0;
-	    nmg_isect_two_face3p(&bs, fu1, fu2);
+	    nmg_isect_two_face3p(&bs, fu1, fu2, vlfree);
 	    break;
 	case -1:
 	    /* co-planar faces */
 	    bs.coplanar = 1;
-	    nmg_isect_two_face2p_jra(&bs, fu1, fu2);
+	    nmg_isect_two_face2p_jra(&bs, fu1, fu2, vlfree);
 	    break;
 	case -2:
 	    /* no intersection, faceuse are parallel but not coplanar */
@@ -5902,40 +5905,40 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
     nmg_isect2d_cleanup(&bs);
 
     /* Eliminate stray vertices that were added along edges in this step */
-    (void)nmg_unbreak_region_edges(&fu1->l.magic);
-    (void)nmg_unbreak_region_edges(&fu2->l.magic);
+    (void)nmg_unbreak_region_edges(&fu1->l.magic, vlfree);
+    (void)nmg_unbreak_region_edges(&fu2->l.magic, vlfree);
 
-    if (RTG.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
-	&& RTG.NMG_debug & DEBUG_PLOTEM) {
+    if (nmg_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
+	&& nmg_debug & DEBUG_PLOTEM) {
 	static int nshell = 1;
 	char name[32];
 	FILE *fp;
 
 	/* Both at once */
-	nmg_pl_2fu("Iface%d.plot3", fu2, fu1, 0);
+	nmg_pl_2fu("Iface%d.plot3", fu2, fu1, 0, vlfree);
 
 	/* Each in its own file */
-	nmg_face_plot(fu1);
-	nmg_face_plot(fu2);
+	nmg_face_plot(fu1, vlfree);
+	nmg_face_plot(fu2, vlfree);
 
 	sprintf(name, "shellA%d.plot3", nshell);
 	if ((fp = fopen(name, "wb")) != NULL) {
 	    bu_log("overlay %s\n", name);
-	    nmg_pl_s(fp, fu1->s_p);
+	    nmg_pl_s(fp, fu1->s_p, vlfree);
 	    fclose(fp);
 	}
 
 	sprintf(name, "shellB%d.plot3", nshell++);
 	if ((fp = fopen(name, "wb")) != NULL) {
 	    bu_log("overlay %s\n", name);
-	    nmg_pl_s(fp, fu2->s_p);
+	    nmg_pl_s(fp, fu2->s_p, vlfree);
 	    fclose(fp);
 	}
     }
 
-    if (RTG.NMG_debug & DEBUG_VERIFY) {
-	nmg_region_v_unique(fu1->s_p->r_p, &bs.tol);
-	nmg_region_v_unique(fu2->s_p->r_p, &bs.tol);
+    if (nmg_debug & DEBUG_VERIFY) {
+	nmg_region_v_unique(fu1->s_p->r_p, vlfree, &bs.tol);
+	nmg_region_v_unique(fu2->s_p->r_p, vlfree, &bs.tol);
 	nmg_fu_touchingloops(fu1);
 	nmg_fu_touchingloops(fu2);
 	nmg_ck_face_worthless_edges(fu1);
@@ -5979,7 +5982,7 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     NMG_CK_VERTEXUSE(vu2a);
     NMG_CK_VERTEXUSE(vu2b);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT)
+    if (nmg_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_edge3p_edge3p(eu1=%p, eu2=%p)\n\tvu1a=%p vu1b=%p, vu2a=%p vu2b=%p\n\tv1a=%p v1b=%p,   v2a=%p v2b=%p\n",
 	       (void *)eu1, (void *)eu2,
 	       (void *)vu1a, (void *)vu1b, (void *)vu2a, (void *)vu2b,
@@ -5991,7 +5994,7 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
      */
     if ((vu1a->v_p == vu2a->v_p && vu1b->v_p == vu2b->v_p) ||
 	(vu1a->v_p == vu2b->v_p && vu1b->v_p == vu2a->v_p)) {
-	if (RTG.NMG_debug & DEBUG_POLYSECT)
+	if (nmg_debug & DEBUG_POLYSECT)
 	    bu_log("nmg_isect_edge3p_edge3p: shared edge topology, both ends\n");
 	if (eu1->e_p != eu2->e_p)
 	    nmg_radial_join_eu(eu1, eu2, &is->tol);
@@ -6006,7 +6009,7 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 				  vu1a->v_p->vg_p->coord, eu1_dir,
 				  vu2a->v_p->vg_p->coord, eu2_dir, &is->tol);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("\trt_isect_line3_lseg3()=%d, dist: %g, %g\n",
 	       status, dist[0], dist[1]);
     }
@@ -6154,7 +6157,7 @@ nmg_isect_vertex3_edge3p(struct nmg_inter_struct *is, struct vertexuse *vu1, str
  * Called by nmg_crackshells().
  */
 HIDDEN void
-nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct shell *s2)
+nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct shell *s2, struct bu_list *vlfree)
 {
     struct faceuse *fu2;
     struct loopuse *lu2;
@@ -6166,7 +6169,7 @@ nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct 
     NMG_CK_EDGEUSE(eu1);
     NMG_CK_SHELL(s2);
 
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_edge3p_shell(, eu1=%p, s2=%p) START\n",
 	       (void *)eu1, (void *)s2);
     }
@@ -6190,7 +6193,7 @@ nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct 
 	is->fu2 = fu2;
 
 	/* We aren't interested in the vert_list's, ignore return */
-	(void)nmg_isect_wireedge3p_face3p(is, eu1, fu2);
+	(void)nmg_isect_wireedge3p_face3p(is, eu1, fu2, vlfree);
     }
 
     /* Check eu1 of s1 against all wire loops in s2 */
@@ -6243,7 +6246,7 @@ nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct 
      */
     VADD2SCALE(midpt, eu1->vu_p->v_p->vg_p->coord,
 	       eu1->eumate_p->vu_p->v_p->vg_p->coord,  0.5);
-    if (nmg_class_pt_s(midpt, s2, 0, &is->tol) == NMG_CLASS_AoutB)
+    if (nmg_class_pt_s(midpt, s2, 0, vlfree, &is->tol) == NMG_CLASS_AoutB)
 	goto out;		/* Nothing more to do */
 
     /* Add a wire loop in s2 connecting the two vertices */
@@ -6262,13 +6265,13 @@ nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct 
 	nmg_radial_join_eu(eu1, neu1, &is->tol);
     }
     nmg_loop_g(lu2->l_p, &is->tol);
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_edge3p_shell(, eu1=%p, s2=%p) Added wire lu=%p\n",
 	       (void *)eu1, (void *)s2, (void *)lu2);
     }
 
 out:
-    if (RTG.NMG_debug & DEBUG_POLYSECT) {
+    if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_isect_edge3p_shell(, eu1=%p, s2=%p) END\n",
 	       (void *)eu1, (void *)s2);
     }
@@ -6281,7 +6284,7 @@ out:
  * in preparation for performing boolean operations on the shells.
  */
 void
-nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
+nmg_crackshells(struct shell *s1, struct shell *s2, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl faces1, faces2;
     struct bu_ptbl vert_list1, vert_list2;
@@ -6294,7 +6297,7 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     size_t i, j;
     point_t isect_min_pt, isect_max_pt;
 
-    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
+    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 	bu_log("nmg_crackshells(s1=%p, s2=%p)\n", (void *)s1, (void *)s2);
     }
 
@@ -6314,9 +6317,9 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	bu_bomb("nmg_crackshells(): shells are not in the same model");
     }
 
-    if (UNLIKELY(RTG.NMG_debug & DEBUG_VERIFY)) {
-	nmg_ck_vs_in_region(s1->r_p, tol);
-	nmg_ck_vs_in_region(s2->r_p, tol);
+    if (UNLIKELY(nmg_debug & DEBUG_VERIFY)) {
+	nmg_ck_vs_in_region(s1->r_p, vlfree, tol);
+	nmg_ck_vs_in_region(s2->r_p, vlfree, tol);
     }
 
     /* test if shell s1 and s2 disjoint by at least distance tolerance */
@@ -6326,8 +6329,8 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 
     bu_ptbl_init(&faces1, 64, "faces1 buffer");
     bu_ptbl_init(&faces2, 64, "faces2 buffer");
-    nmg_face_tabulate(&faces1, &s1->l.magic);
-    nmg_face_tabulate(&faces2, &s2->l.magic);
+    nmg_face_tabulate(&faces1, &s1->l.magic, vlfree);
+    nmg_face_tabulate(&faces2, &s2->l.magic, vlfree);
 
     /* create a new bounding box which is the intersection
      * of the shell s1 and s2 bounding boxes
@@ -6351,7 +6354,7 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     (void)bu_ptbl_init(&vert_list1, 64, "&vert_list1");
     (void)bu_ptbl_init(&vert_list2, 64, "&vert_list2");
 
-    if (UNLIKELY(RTG.NMG_debug & DEBUG_VERIFY)) {
+    if (UNLIKELY(nmg_debug & DEBUG_VERIFY)) {
 	nmg_vshell(&s1->r_p->s_hd, s1->r_p);
 	nmg_vshell(&s2->r_p->s_hd, s2->r_p);
     }
@@ -6381,7 +6384,7 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	    if (V3RPP_DISJOINT_TOL(fp2->min_pt, fp2->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
 		continue;
 	    }
-	    nmg_isect_two_generic_faces(fu1, fu2, tol);
+	    nmg_isect_two_generic_faces(fu1, fu2, vlfree, tol);
 	}
 
 	/*
@@ -6403,19 +6406,19 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	for (BU_LIST_FOR(lu2, loopuse, &s2->lu_hd)) {
 	    NMG_CK_LOOPUSE(lu2);
 	    /* Not interested in vert_list here */
-	    (void)nmg_isect_wireloop3p_face3p(&is, lu2, fu1);
+	    (void)nmg_isect_wireloop3p_face3p(&is, lu2, fu1, vlfree);
 	}
 	/* Check f1 from s1 against wire edges of s2 */
 	for (BU_LIST_FOR(eu2, edgeuse, &s2->eu_hd)) {
 	    NMG_CK_EDGEUSE(eu2);
-	    nmg_isect_wireedge3p_face3p(&is, eu2, fu1);
+	    nmg_isect_wireedge3p_face3p(&is, eu2, fu1, vlfree);
 	}
 	/* Check f1 from s1 against lone vert of s2 */
 	if (s2->vu_p) {
 	    nmg_isect_3vertex_3face(&is, s2->vu_p, fu1);
 	}
 
-	if (UNLIKELY(RTG.NMG_debug & DEBUG_VERIFY)) {
+	if (UNLIKELY(nmg_debug & DEBUG_VERIFY)) {
 	    nmg_vshell(&s1->r_p->s_hd, s1->r_p);
 	    nmg_vshell(&s2->r_p->s_hd, s2->r_p);
 	}
@@ -6437,14 +6440,14 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	for (BU_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {
 	    NMG_CK_EDGEUSE(eu1);
 	    /* Check eu1 against all of shell 2 */
-	    nmg_isect_edge3p_shell(&is, eu1, s2);
+	    nmg_isect_edge3p_shell(&is, eu1, s2, vlfree);
 	}
     }
 
     /* Check each wire edge of shell 1 against all of shell 2. */
     for (BU_LIST_FOR(eu1, edgeuse, &s1->eu_hd)) {
 	NMG_CK_EDGEUSE(eu1);
-	nmg_isect_edge3p_shell(&is, eu1, s2);
+	nmg_isect_edge3p_shell(&is, eu1, s2, vlfree);
     }
 
     /* Check each lone vert of s1 against shell 2 */
@@ -6480,16 +6483,16 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     (void)bu_ptbl_free(&vert_list2);
 
     /* Eliminate stray vertices that were added along edges in this step */
-    (void)nmg_unbreak_region_edges(&s1->l.magic);
-    (void)nmg_unbreak_region_edges(&s2->l.magic);
+    (void)nmg_unbreak_region_edges(&s1->l.magic, vlfree);
+    (void)nmg_unbreak_region_edges(&s2->l.magic, vlfree);
 
     nmg_isect2d_cleanup(&is);
 
-    if (UNLIKELY(RTG.NMG_debug & DEBUG_VERIFY)) {
+    if (UNLIKELY(nmg_debug & DEBUG_VERIFY)) {
 	nmg_vshell(&s1->r_p->s_hd, s1->r_p);
 	nmg_vshell(&s2->r_p->s_hd, s2->r_p);
-	nmg_ck_vs_in_region(s1->r_p, tol);
-	nmg_ck_vs_in_region(s2->r_p, tol);
+	nmg_ck_vs_in_region(s1->r_p, vlfree, tol);
+	nmg_ck_vs_in_region(s2->r_p, vlfree, tol);
     }
 }
 
@@ -6512,7 +6515,7 @@ nmg_fu_touchingloops(const struct faceuse *fu)
 	     * However, note that this condition happens a lot
 	     * for valid reasons, too.
 	     */
-	    if (RTG.NMG_debug & DEBUG_MANIF) {
+	    if (nmg_debug & DEBUG_MANIF) {
 		bu_log("nmg_fu_touchingloops(lu=%p, vu=%p, v=%p)\n",
 		       (void *)lu, (void *)vu, (void *)vu->v_p);
 		nmg_pr_lu_briefly(lu, 0);

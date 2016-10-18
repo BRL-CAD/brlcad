@@ -42,7 +42,7 @@
  */
 
 void
-rt_nurb_map_oslo(struct oslo_mat *oslo, fastf_t *old_pts, fastf_t *new_pts, int o_stride, int n_stride, int lower, int upper, int pt_type)
+nmg_nurb_map_oslo(struct oslo_mat *oslo, fastf_t *old_pts, fastf_t *new_pts, int o_stride, int n_stride, int lower, int upper, int pt_type)
 /* Oslo matrix */
 /* Old control points */
 /* New control points */

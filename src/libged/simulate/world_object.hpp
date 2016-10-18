@@ -40,8 +40,8 @@ namespace simulate
 class MatrixMotionState : public btMotionState
 {
 public:
-    MatrixMotionState(mat_t matrix, const btVector3 &origin,
-		      TreeUpdater &tree_updater);
+    explicit MatrixMotionState(fastf_t *matrix, const btVector3 &origin,
+			       TreeUpdater &tree_updater);
 
     virtual void getWorldTransform(btTransform &dest) const;
     virtual void setWorldTransform(const btTransform &transform);
@@ -60,8 +60,8 @@ private:
 class WorldObject
 {
 public:
-    static WorldObject *create(db_i &db_instance, directory &vdirectory,
-			       mat_t matrix, TreeUpdater &tree_updater);
+    static WorldObject *create(db_i &db, directory &dir, fastf_t *matrix,
+			       TreeUpdater &tree_updater);
     ~WorldObject();
 
     void add_to_world(btDiscreteDynamicsWorld &world);
@@ -71,8 +71,9 @@ private:
     WorldObject(const WorldObject &source);
     WorldObject &operator=(const WorldObject &source);
 
-    WorldObject(directory &vdirectory, mat_t matrix, TreeUpdater &tree_updater,
-		btVector3 bounding_box_pos, btVector3 bounding_box_dims, btScalar mass);
+    explicit WorldObject(directory &dir, fastf_t *matrix,
+			 TreeUpdater &tree_updater, btVector3 bounding_box_pos,
+			 btVector3 bounding_box_dims, fastf_t mass);
 
 
     btDiscreteDynamicsWorld *m_world;

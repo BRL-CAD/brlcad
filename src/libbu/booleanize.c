@@ -52,8 +52,8 @@ bu_str_true(const char *str)
 	return 0;
     }
 
-    /* starts with 'n', [nN]* looks like 'no' */
-    if (newstr[0] == 'n' || newstr[0] == 'N') {
+    /* case-insensitive "no" */
+    if (BU_STR_EQUIV(newstr, "n") || BU_STR_EQUIV(newstr, "no")) {
 	bu_vls_free(&vls);
 	return 0;
     }
@@ -71,8 +71,9 @@ bu_str_true(const char *str)
     }
 
     /* any variant of "0" (e.g., 000) */
+    errno = 0;
     val = strtol(newstr, &endptr, 10);
-    if (val == 0 && errno != EINVAL && *endptr == '\0') {
+    if (val == 0 && !errno && *endptr == '\0') {
 	bu_vls_free(&vls);
 	return 0;
     }
@@ -85,8 +86,8 @@ bu_str_true(const char *str)
 
     /* true value from here on out */
 
-    /* starts with 'y', [yY]* looks like 'yes' */
-    if (newstr[0] == 'y' || newstr[0] == 'Y') {
+    /* case-insensitive "yes" */
+    if (BU_STR_EQUIV(newstr, "y") || BU_STR_EQUIV(newstr, "yes")) {
 	bu_vls_free(&vls);
 	return 1;
     }
@@ -104,8 +105,9 @@ bu_str_true(const char *str)
     }
 
     /* variant of "1" (e.g., 001) */
+    errno = 0;
     val = strtol(newstr, &endptr, 10);
-    if (val == 1 && errno != EINVAL && *endptr == '\0') {
+    if (val == 1 && !errno && *endptr == '\0') {
 	bu_vls_free(&vls);
 	return 1;
     }

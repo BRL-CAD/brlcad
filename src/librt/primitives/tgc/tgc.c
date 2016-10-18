@@ -1697,7 +1697,7 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*6);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*6);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -2713,7 +2713,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACEUSE(fu);
 
-	if (nmg_calc_face_g(fu)) {
+	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 	    bu_log("rt_tess_tgc: failed to calculate plane equation\n");
 	    nmg_pr_fu_briefly(fu, "");
 	    return -1;
@@ -2830,7 +2830,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_region_a(*r, tol);
 
     /* glue faces together */
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
     bu_ptbl_free(&faces);
 
     return 0;
@@ -3102,11 +3102,11 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 
 
     if (!flip) {
-	rt_nurb_s_eval(fu->f_p->g.snurb_p,
+	nmg_nurb_s_eval(fu->f_p->g.snurb_p,
 		       nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point);
 	nmg_vertex_gv(eu->vu_p->v_p, point);
     } else {
-	rt_nurb_s_eval(fu->f_p->g.snurb_p,
+	nmg_nurb_s_eval(fu->f_p->g.snurb_p,
 		       nmg_uv_unitcircle[12], nmg_uv_unitcircle[13], point);
 	nmg_vertex_gv(eu->vu_p->v_p, point);
     }
@@ -3224,7 +3224,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 
     /* March around the fu's loop assigning uv parameter values */
 
-    rt_nurb_s_eval(fg, 0.0, 0.0, hvect);
+    nmg_nurb_s_eval(fg, 0.0, 0.0, hvect);
     HDIVIDE(point, hvect);
     nmg_vertex_gv(eu->vu_p->v_p, point);	/* 0, 0 vertex */
 
@@ -3245,7 +3245,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
     VSET(uvw, 0, 1, 0);
     nmg_vertexuse_a_cnurb(eu->eumate_p->vu_p, uvw);
 
-    rt_nurb_s_eval(fg, 1., 1., hvect);
+    nmg_nurb_s_eval(fg, 1., 1., hvect);
     HDIVIDE(point, hvect);
     nmg_vertex_gv(eu->vu_p->v_p, point);		/* 4, 1 vertex */
 

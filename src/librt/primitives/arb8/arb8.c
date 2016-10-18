@@ -1320,7 +1320,7 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*8);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 3*8);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARB8;
@@ -1569,13 +1569,13 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Mark edges as real */
-    (void)nmg_mark_edges_real(&s->l.magic);
+    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* Some arbs may not be within tolerance, so triangulate faces where needed */
-    nmg_make_faces_within_tol(s, tol);
+    nmg_make_faces_within_tol(s, &RTG.rtg_vlfree, tol);
 
     return 0;
 }
@@ -1750,7 +1750,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 
     /* Mark edges as real */
-    (void)nmg_mark_edges_real(&s->l.magic);
+    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
