@@ -313,6 +313,8 @@ BrlcadMesh::initNextEdge()
 		}
 	    }
 	} else {
+
+	    third_vertex = -1;
 	    for (unsigned int j = 0; j < VERTICES_PER_FACE; j++) {
 
 		/*Finding the third vertex, that is one that is not vertex1 or vertex2 */
@@ -323,7 +325,8 @@ BrlcadMesh::initNextEdge()
 	    }
 
 	    /* Finding the edge_id of the edge from vertex2 to third_vertex */
-	    edgelist[i].next = getEdge(std::make_pair(vertex2, third_vertex));
+	    if (third_vertex != -1)
+		edgelist[i].next = getEdge(std::make_pair(vertex2, third_vertex));
 	}
     }
 }
