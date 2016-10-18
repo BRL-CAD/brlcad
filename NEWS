@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* improved 'loadview' command view script handling - Sean Morrison
 * fixed TIE raytracing for zero thickness BoTs - Cliff Yapp
 * added Wavefront OBJ File->Open GUI support in Archer - Cliff Yapp
 * fixed attr show error printing large attribute values - Cliff Yapp
