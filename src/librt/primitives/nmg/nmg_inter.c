@@ -2108,7 +2108,7 @@ ray_in_rpp(struct nmg_ray *rp,
 int
 nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
 {
-    struct nmg_ray line;
+    struct nmg_ray line = {0, VINIT_ZERO, VINIT_ZERO, 0.0, 0.0};
     vect_t invdir;
 
     NMG_CK_INTER_STRUCT(is);
