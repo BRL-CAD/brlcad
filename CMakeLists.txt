@@ -3149,21 +3149,12 @@ set(CONFIG_FATAL_ERROR 0)
 function(DIFF_FILE filename)
   file(READ "${BRLCAD_SOURCE_DIR}/${filename}" SRC_STR)
   file(READ "${BRLCAD_BINARY_DIR}/${filename}.new" BIN_STR)
-  string(REGEX REPLACE "\\r?\\n" "" OLD_STR "${SRC_STR}")
-  string(REGEX REPLACE "\\r?\\n" "" NEW_STR "${BIN_STR}")
-  file(WRITE "${BRLCAD_BINARY_DIR}/${filename}.old_nws" "${OLD_STR}")
-  file(WRITE "${BRLCAD_BINARY_DIR}/${filename}.new_nws" "${NEW_STR}")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/${filename}.old_nws")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/${filename}.new_nws")
-  set(IS_DIFFERENT 0)
-  execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
-    "${BRLCAD_BINARY_DIR}/${filename}.old_nws" "${BRLCAD_BINARY_DIR}/${filename}.new_nws"
-    RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
-    DIFF_ERROR)
-  if(IS_DIFFERENT)
+  string(REGEX REPLACE "\r?\n" "" OLD_STR "${SRC_STR}")
+  string(REGEX REPLACE "\r?\n" "" NEW_STR "${BIN_STR}")
+  if(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
     set(CONFIG_FATAL_ERROR 1 PARENT_SCOPE)
     message("\n\"${BRLCAD_SOURCE_DIR}/${filename}\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/${filename}.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/${filename}\" with \"${BRLCAD_BINARY_DIR}/${filename}.new\"\n")
-  endif(IS_DIFFERENT)
+  endif(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
 endfunction(DIFF_FILE filename)
 
 # Finalize and check INSTALL file
