@@ -31,13 +31,15 @@ main(int argc, char *argv[])
     int expect_true = 0;
 
     const char *input = NULL;
-
-    bu_log("argc: %d, %s %s %s\n", argc, argv[0], argv[1], argv[2]);
-
-    if (argc > 3 || argc == 2) {
+	
+    if (argc > 3 || argc == 2 ) {
 	fprintf(stderr, "Usage: %s [test_string expect_true]\n", argv[0]);
 	return 1;
     }
+
+	if (argc == 3) {
+		bu_log("argc: %d, %s %s %s\n", argc, argv[0], argv[1], argv[2]);
+	}
 
     if (argc > 1) {
 	input = argv[1];
