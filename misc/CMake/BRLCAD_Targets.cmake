@@ -227,7 +227,7 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
   string(TOUPPER "${execname}" EXECNAME_UPPER)
   if(${ARGC} GREATER 3)
-    CMAKE_PARSE_ARGUMENTS(${EXECNAME_UPPER} "NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
+    CMAKE_PARSE_ARGUMENTS(${EXECNAME_UPPER} "TEST;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
   endif(${ARGC} GREATER 3)
 
   # Go all C++ if the settings request it
@@ -247,11 +247,19 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
   # Set the FOLDER property.  If the target has supplied a folder, use
   # that as a subfolder
-  if("${${EXECNAME_UPPER}_FOLDER}" STREQUAL "")
+  set(SUBFOLDER "${${EXECNAME_UPPER}_FOLDER}")
+  if(${EXECNAME_UPPER}_NO_INSTALL AND "${SUBFOLDER}" STREQUAL "")
+    set(SUBFOLDER "Build Only")
+  endif(${EXECNAME_UPPER}_NO_INSTALL AND "${SUBFOLDER}" STREQUAL "")
+  if(${EXECNAME_UPPER}_TEST AND "${SUBFOLDER}" STREQUAL "")
+    set(SUBFOLDER "Test Programs")
+  endif(${EXECNAME_UPPER}_TEST AND "${SUBFOLDER}" STREQUAL "")
+
+  if("${SUBFOLDER}" STREQUAL "")
     set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables")
-  else("${${EXECNAME_UPPER}_FOLDER}" STREQUAL "")
-    set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables/${${EXECNAME_UPPER}_FOLDER}")
-  endif("${${EXECNAME_UPPER}_FOLDER}" STREQUAL "")
+  else("${SUBFOLDER}" STREQUAL "")
+    set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables/${SUBFOLDER}")
+  endif("${SUBFOLDER}" STREQUAL "")
 
   # In some situations (usually test executables) we want to be able
   # to force the executable to remain in the local compilation
@@ -260,7 +268,7 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   # If an executable isn't to be installed or needs to be installed
   # somewhere other than the default location, the NO_INSTALL argument
   # bypasses the standard install command call.
-  if(${EXECNAME_UPPER}_NO_INSTALL)
+  if(${EXECNAME_UPPER}_NO_INSTALL OR ${EXECNAME_UPPER}_TEST)
     # Unfortunately, we currently need Windows binaries in the same directories as their DLL libraries
     if(NOT WIN32)
       if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -272,9 +280,9 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif(NOT CMAKE_CONFIGURATION_TYPES)
     endif(NOT WIN32)
-  else(${EXECNAME_UPPER}_NO_INSTALL)
+  else(${EXECNAME_UPPER}_NO_INSTALL OR ${EXECNAME_UPPER}_TEST)
     install(TARGETS ${execname} DESTINATION ${BIN_DIR})
-  endif(${EXECNAME_UPPER}_NO_INSTALL)
+  endif(${EXECNAME_UPPER}_NO_INSTALL OR ${EXECNAME_UPPER}_TEST)
 
   # Use the list of libraries to be linked into this target to
   # accumulate the necessary definitions and compilation flags.
