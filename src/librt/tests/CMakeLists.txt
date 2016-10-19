@@ -1,42 +1,42 @@
-BRLCAD_ADDEXEC(test_bundle test_bundle.c "librt" NO_INSTALL)
-add_test(NAME rt_test_bundle COMMAND test_bundle)
+BRLCAD_ADDEXEC(bundle bundle.c "librt" TEST)
+add_test(NAME rt_bundle COMMAND bundle)
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/bundle.plot3")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/bundle.plot3")
 
-BRLCAD_ADDEXEC(rt_pattern rt_pattern.c "librt" NO_INSTALL)
+BRLCAD_ADDEXEC(rt_pattern rt_pattern.c "librt" TEST)
 add_test(NAME rt_pattern_5 COMMAND rt_pattern 5)
-set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/rt_pattern_test_5.plot3")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/rt_pattern_test_5.plot3")
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/rt_pattern_5.plot3")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/rt_pattern_5.plot3")
 
 
-BRLCAD_ADDEXEC(test_dvec test_dvec.cpp "librt" NO_STRICT NO_INSTALL)
-add_test(NAME rt_test_dvec COMMAND test_dvec)
+BRLCAD_ADDEXEC(rt_dvec dvec.cpp "librt" NO_STRICT TEST)
+add_test(NAME rt_dvec COMMAND rt_dvec)
 
-BRLCAD_ADDEXEC(test_ssi test_ssi.cpp "librt" NO_INSTALL)
+BRLCAD_ADDEXEC(rt_ssi ssi.cpp "librt" TEST)
 
 # disabled prior to 7.22.2 release due to unresolved failures in the implementation
-# add_test(NAME test_ssi COMMAND test_ssi)
+# add_test(NAME rt_ssi COMMAND rt_ssi)
 
 # NURBS testing
-BRLCAD_ADDEXEC(nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(rt_nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu" TEST)
 
 # disabled prior to 7.22.2 release due to unresolved failures in the implementation
 #add_test(NAME NURBS-get_closest_point-distinct_points nurbs_tester ${CMAKE_CURRENT_SOURCE_DIR}/nurbs_surfaces.g 1)
 
 # diff testing
-BRLCAD_ADDEXEC(test_diff test_diff.c "librt" NO_INSTALL)
+BRLCAD_ADDEXEC(rt_diff diff.c "librt" TEST)
 
 # nmg_mk testing
-BRLCAD_ADDEXEC(test_nmg_mk test_nmg_mk.c "librt" NO_INSTALL)
-add_test(NAME rt_test_nmg_mk COMMAND test_nmg_mk)
+BRLCAD_ADDEXEC(rt_nmg_mk nmg_mk.c "librt" TEST)
+add_test(NAME rt_nmg_mk COMMAND rt_nmg_mk)
 
 # nmg_copy testing
-BRLCAD_ADDEXEC(test_nmg_copy test_nmg_copy.c "librt" NO_INSTALL)
-add_test(NAME rt_test_nmg_copy COMMAND test_nmg_copy)
+BRLCAD_ADDEXEC(rt_nmg_copy nmg_copy.c "librt" TEST)
+add_test(NAME rt_nmg_copy COMMAND rt_nmg_copy)
 
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-  BRLCAD_ADDEXEC(test_binary_attribute test_binary_attribute.c "librt" NO_INSTALL)
-  add_test(NAME rt_test_binary_attribute COMMAND test_binary_attribute)
+  BRLCAD_ADDEXEC(rt_binary_attribute binary_attribute.c "librt" TEST)
+  add_test(NAME rt_binary_attribute COMMAND rt_binary_attribute)
 endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 set(distcheck_files
@@ -44,7 +44,7 @@ set(distcheck_files
   brep_boolean_tests.g
   nurbs_surfaces.g
   extreme_ssi_test.g
-  test_binary_attribute.c
+  binary_attribute.c
   )
 
 CMAKEFILES(${distcheck_files})
