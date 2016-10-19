@@ -530,7 +530,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development\\).  All dependencies required"
     COMMAND ${CMAKE_COMMAND} -E echo "      by the tests are compiled automatically."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
     )
 
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
