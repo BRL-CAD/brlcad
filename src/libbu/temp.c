@@ -30,11 +30,15 @@
 #  include <sys/stat.h>
 #endif
 #include "bio.h"
+#ifdef HAVE_WINDOWS_H
+#  include<crtdbg.h> /* For _CrtSetReportMode */
+#endif
 
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/list.h"
 #include "bu/malloc.h"
+#include "bu/time.h"
 #include "bu/vls.h"
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
@@ -74,7 +78,7 @@ HIDDEN void
 temp_close_files(void)
 {
 #if defined(HAVE_WINDOWS_H)
-    _invalid_parameter_handler stdhandler;
+    _invalid_parameter_handler stdhandler, nhandler;
 #endif
     struct temp_file_list *popped;
     if (!TF) {
@@ -82,7 +86,10 @@ temp_close_files(void)
     }
 
 #if defined(HAVE_WINDOWS_H)
-    stdhandler = _set_invalid_parameter_handler(disable_duplicate_close_check);
+	nhandler = disable_duplicate_close_check;
+    stdhandler = _set_invalid_parameter_handler(nhandler);
+	/* Turn off the message box as well. */
+	(void)_CrtSetReportMode(_CRT_ASSERT, 0);
 #endif 
 
     /* close all files, free their nodes, and unlink */
