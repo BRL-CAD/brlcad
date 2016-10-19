@@ -161,7 +161,7 @@ mkstemp(char *file_template)
 
     do {
 	/* replace the template with random chars */
-	srand((unsigned)time(NULL));
+	srand((unsigned)(bu_gettime() % UINT_MAX));
 	for (i=start; i>=end; i--) {
 	    file_template[i] = replace[(int)(replacelen * ((double)rand() / (double)RAND_MAX))];
 	}
