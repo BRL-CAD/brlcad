@@ -146,7 +146,7 @@ main(int ac, char *av[])
     res = bu_argv0_full_path();
     bu_basename(res, basename);
 
-    if (res[0] == BU_DIR_SEPARATOR || (strlen(res) > 3 && res[1] == ':' && res[2] == BU_DIR_SEPARATOR)) {
+    if (res[0] == BU_DIR_SEPARATOR || (strlen(res) > 3 && res[1] == ':' && (res[2] == BU_DIR_SEPARATOR || res[2] == '/'))) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, basename, res);
     } else {
 	printf("%24s -> %24s (should start with %c) [FAIL]\n", label, res, BU_DIR_SEPARATOR);
