@@ -56,7 +56,6 @@ random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const in
 	char c = chars[n];
 	bu_vls_putc(v, c);
     }
-	bu_vls_putc(v, '\0');
 
     if (typ == HEX) {
 	bu_vls_prepend(v, "0x");
@@ -478,7 +477,7 @@ dump_bitv(const struct bu_bitv *b)
     bu_log("\nbitv dump:");
     bu_log("\n nbits = %zu", len);
 
-  NEXT:
+NEXT:
 
     k = i + x;
     bu_log("\n---------------------------------------------------------------------");
