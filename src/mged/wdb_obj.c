@@ -1399,7 +1399,7 @@ wdb_combadd(struct db_i *dbip,
     /* flatten tree */
     if (comb->tree) {
 	actual_count = 1 + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     }
 
@@ -3008,7 +3008,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
      * Once on the rti_resources list, rt_clean() will clean 'em up.
      */
     rt_init_resource(&resp, 0, rtip);
-    BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
+    BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, 0) != NULL);
 
     BU_ALLOC(ap, struct application);
     RT_APPLICATION_INIT(ap);
@@ -6471,7 +6471,7 @@ wdb_list_children(struct rt_wdb *wdbp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	    BU_ASSERT(actual_count == node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
@@ -6675,7 +6675,7 @@ wdb_print_node(struct rt_wdb *wdbp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	    BU_ASSERT(actual_count == node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;

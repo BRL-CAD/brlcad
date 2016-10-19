@@ -182,7 +182,7 @@ rt_comb_v5_serialize(
 		mi = (ssize_t)-1;
 	    }
 
-	    BU_ASSERT_SSIZE_T(mi, <, (ssize_t)ssp->nmat);
+	    BU_ASSERT(mi < (ssize_t)ssp->nmat);
 
 	    /* there should be a better way than casting
 	     * 'mi' from ssize_t to size_t
@@ -354,11 +354,11 @@ rt_comb_export5(
     if (comb->tree)
 	rt_comb_v5_serialize(comb->tree, &ss);
 
-    BU_ASSERT_SIZE_T(ss.mat_num, ==, tcs.n_mat);
-    BU_ASSERT_PTR(ss.matp, ==, cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE));
-    BU_ASSERT_PTR(ss.leafp, ==, leafp_end);
+    BU_ASSERT(ss.mat_num == tcs.n_mat);
+    BU_ASSERT(ss.matp == cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE));
+    BU_ASSERT(ss.leafp == leafp_end);
     if (rpn_len)
-	BU_ASSERT_PTR(ss.exprp, <=, ((unsigned char *)ep->ext_buf) + ep->ext_nbytes);
+	BU_ASSERT(ss.exprp <= ((unsigned char *)ep->ext_buf) + ep->ext_nbytes);
 
     /* Encode all the other stuff as attributes. */
     /* WARNING:  We remove const from the ip pointer!!! */
@@ -529,7 +529,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		double scanmat[16];
 
 		/* Unpack indicated matrix mi */
-		BU_ASSERT_SIZE_T(mi, <, nmat);
+		BU_ASSERT(mi < nmat);
 
 		/* read matrix */
 		bu_cv_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
@@ -608,7 +608,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	    tbl1 = tmp;
 	    bu_ptbl_trunc(tbl2, 0);
 	}
-	BU_ASSERT_PTR(leafp, ==, leafp_end);
+	BU_ASSERT(leafp == leafp_end);
 	goto finish;
     }
 
@@ -652,7 +652,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		    double scanmat[16];
 
 		    /* Unpack indicated matrix mi */
-		    BU_ASSERT_SIZE_T(mi, <, nmat);
+		    BU_ASSERT(mi < nmat);
 
 		    /* read matrix */
 		    bu_cv_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
@@ -714,10 +714,10 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	/* Push this node on the stack */
 	*sp++ = tp;
     }
-    BU_ASSERT_PTR(leafp, ==, leafp_end);
+    BU_ASSERT(leafp == leafp_end);
 
     /* There should only be one thing left on the stack, the result */
-    BU_ASSERT_PTR(sp, ==, &stack[1]);
+    BU_ASSERT(sp == &stack[1]);
 
     comb->tree = stack[0];
     RT_CK_TREE(comb->tree);

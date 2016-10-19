@@ -67,7 +67,6 @@
 
 #include <osgText/Text>
 
-#include "bu/log.h"
 #include "bu/list.h"
 #include "raytrace.h"
 #include "rt/func.h"

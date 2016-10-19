@@ -29,9 +29,10 @@
 #include <stdlib.h>
 
 #include "bio.h"
-#include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
+#include "bu/exit.h"
+
 
 static void
 printusage (void)

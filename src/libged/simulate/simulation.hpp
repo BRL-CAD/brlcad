@@ -41,15 +41,15 @@ namespace simulate
 class Simulation : public PhysicsWorld
 {
 public:
-    Simulation(db_i &db_instance, directory &vdirectory);
+    explicit Simulation(db_i &db_instance, directory &dir);
     virtual ~Simulation();
 
 
 private:
     void get_tree_objects(tree &vtree);
 
-    db_i &m_db_instance;
-    directory &m_directory;
+    db_i &m_db;
+    directory &m_dir;
     TreeUpdater m_tree_updater;
     std::vector<WorldObject *> m_objects;
 };

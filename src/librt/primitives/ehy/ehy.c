@@ -1414,7 +1414,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     for (i = 0; i < nseg; i++)
 	vells[nell-1][i] = (struct vertex *)NULL;
     face = 0;
-    BU_ASSERT_PTR(outfaceuses, !=, NULL);
+    BU_ASSERT(outfaceuses != NULL);
     if ((outfaceuses[face++] = nmg_cface(s, vells[nell-1], nseg)) == 0) {
 	bu_log("rt_ehy_tess() failure, top face\n");
 	goto fail;
@@ -1781,7 +1781,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 3*4);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;

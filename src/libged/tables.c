@@ -157,7 +157,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
     /* flatten tree */
     actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list,
 							   comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
-    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+    BU_ASSERT(actual_count == node_count);
 
     if (dp->d_flags & RT_DIR_REGION) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;

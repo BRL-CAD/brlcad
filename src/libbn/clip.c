@@ -24,7 +24,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu/log.h"
 #include "bu/str.h"
 #include "vmath.h"
 #include "bn/adc.h"

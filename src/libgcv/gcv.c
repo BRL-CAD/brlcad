@@ -421,7 +421,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 {
     const int bu_debug_orig = bu_debug;
     const uint32_t rt_debug_orig = RTG.debug;
-    const uint32_t nmg_debug_orig = RTG.NMG_debug;
+    const uint32_t nmg_debug_orig = nmg_debug;
     int dbi_read_only_orig;
 
     int result;
@@ -463,7 +463,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 
     bu_debug |= gcv_options->bu_debug_flag;
     RTG.debug |= gcv_options->rt_debug_flag;
-    RTG.NMG_debug |= gcv_options->nmg_debug_flag;
+    nmg_debug |= gcv_options->nmg_debug_flag;
 
     dbi_read_only_orig = context->dbip->dbi_read_only;
 
@@ -493,7 +493,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 
     bu_debug = bu_debug_orig;
     RTG.debug = rt_debug_orig;
-    RTG.NMG_debug = nmg_debug_orig;
+    nmg_debug = nmg_debug_orig;
     context->dbip->dbi_read_only = dbi_read_only_orig;
 
     _gcv_filter_options_free(filter, options_data);

@@ -457,7 +457,7 @@ nmgbld(void)
     ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26*SIZEOF_NETWORK_LONG + 128 * granules;
     ext.ext_buf = (uint8_t *)bu_malloc(ext.ext_nbytes, "nmg ext_buf");
     *(uint32_t *)ext.ext_buf = htonl(version);
-    BU_ASSERT_LONG(version, ==, 1);	/* DISK_MODEL_VERSION */
+    BU_ASSERT(version == 1);	/* DISK_MODEL_VERSION */
 
     /* Get next line of input with the 26 counts on it */
     if (bu_fgets(buf, BUFSIZE, ifp) == (char *)0)
@@ -1054,7 +1054,7 @@ polyhbld(void)
 	if (bu_fgets(buf, BUFSIZE, ifp) == NULL) break;
 	if (buf[0] != ID_P_DATA) break;	/* 'Q' */
     }
-    BU_ASSERT_LONG(nlines, >, 0);
+    BU_ASSERT(nlines > 0);
 
     /* Allocate storage for the faces */
     BU_ALLOC(pg, struct rt_pg_internal);

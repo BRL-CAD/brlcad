@@ -81,7 +81,7 @@ BRLCAD_ADDEXEC(dpix-pix dpix-pix.c libbu)
 # a new admin file (used also for option handling testing)
 BRLCAD_ADDEXEC(admin-db "admin-db.cpp" "libbu;librt" NO_INSTALL)
 
-BRLCAD_ADDEXEC(fix_polysolids fix_polysolids.c "librt;libbu")
+BRLCAD_ADDEXEC(fix_polysolids fix_polysolids.c "librt;libnmg;libbu")
 BRLCAD_ADDEXEC(gencolor gencolor.c libbu)
 BRLCAD_ADDEXEC(hex hex.c libbu)
 

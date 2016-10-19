@@ -235,12 +235,11 @@ __BEGIN_DECLS
 #ifdef NO_BOMBING_MACROS
 #  define BU_CKMAG(_ptr, _magic, _str) (void)(_ptr)
 #else
-#  define BU_CKMAG(_ptr, _magic, _str) { \
-        const uintptr_t _ptrval = (const uintptr_t)(_ptr); \
-        if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
-            bu_badmagic((const uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
+#  define BU_CKMAG(_ptr, _magic, _str) do { \
+        if (UNLIKELY(((const uintptr_t)(_ptr) == 0) || ((const uintptr_t)(_ptr) & (sizeof((const uintptr_t)(_ptr))-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+            bu_badmagic((const uint32_t *)(_ptr), (uint32_t)(_magic), _str, __FILE__, __LINE__); \
         } \
-    }
+    } while (0)
 #endif
 
 

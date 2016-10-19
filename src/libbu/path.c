@@ -23,7 +23,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "bu/log.h"
 #include "bu/path.h"
 #include "bu/malloc.h"
 #include "bu/str.h"

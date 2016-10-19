@@ -1735,7 +1735,7 @@ cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), 
      */
     BU_ALLOC(resp, struct resource);
     rt_init_resource(resp, 0, rtip);
-    BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
+    BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, 0) != NULL);
 
     BU_ALLOC(ap, struct application);
     RT_APPLICATION_INIT(ap);

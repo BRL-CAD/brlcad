@@ -93,6 +93,7 @@ if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
    BRLCAD_ADDDATA(terra.dsp db)
 endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 CMAKEFILES(
+  aet.rt
   cornell.rt
   cube.rt
   db.php

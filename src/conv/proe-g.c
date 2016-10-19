@@ -959,7 +959,7 @@ Rm_nulls(void)
 	    tree_list = (struct rt_tree_array *)bu_calloc(node_count,
 							  sizeof(struct rt_tree_array), "tree list");
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
-	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	    BU_ASSERT(actual_count == node_count);
 	} else {
 	    tree_list = (struct rt_tree_array *)NULL;
 	    actual_count = 0;

@@ -4080,7 +4080,7 @@ rt_pipe_import5(
     double_count = pipe_count * 6;
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
     total_count = 4 + byte_count;
-    BU_ASSERT_LONG(ep->ext_nbytes, == , total_count);
+    BU_ASSERT(ep->ext_nbytes ==  total_count);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;

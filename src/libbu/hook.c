@@ -20,11 +20,18 @@
 
 #include "common.h"
 
+/* inteface header */
+#include "bu/hook.h"
+
+/* systeam headers */
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "bu/log.h"
+/* implementation headers */
 #include "bu/malloc.h"
+#include "bu/list.h"
+#include "bu/log.h"
+
 
 void
 bu_hook_list_init(struct bu_hook_list *hlp)

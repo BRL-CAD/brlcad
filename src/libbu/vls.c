@@ -807,7 +807,7 @@ bu_vls_prepend(struct bu_vls *vp, char *str)
     bu_vls_extend(vp, len);
 
     /* memmove is supposed to be safe even if strings overlap */
-    memmove(vp->vls_str+vp->vls_offset+len, vp->vls_str+vp->vls_offset, vp->vls_len);
+    memmove(vp->vls_str+vp->vls_offset+len, vp->vls_str+vp->vls_offset, vp->vls_len+1);
 
     /* insert the data at the head of the string */
     memcpy(vp->vls_str+vp->vls_offset, str, len);

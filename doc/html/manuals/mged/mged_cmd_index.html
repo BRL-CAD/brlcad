@@ -194,6 +194,8 @@
 <FONT SIZE=2><P></FONT><A HREF="#garbage_collect"><FONT SIZE=2>garbage_collect</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#gui"><FONT SIZE=2>gui</FONT></A></TD>
+<TD WIDTH="20%" VALIGN="MIDDLE">
+<FONT SIZE=2><P></FONT><A HREF="#heal"><FONT SIZE=2>heal</FONT></A></TD>
 <TD WIDTH="22%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#help"><FONT SIZE=2>help</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
@@ -1713,6 +1715,16 @@ foo.r_xpand/R
 <FONT SIZE=2><P>Print the help message.</FONT></TD>
 </TR>
 </TABLE>
+
+<FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
+</FONT><B><DL>
+<DT><A NAME="heal"></A>heal</B> [<I>command</I>]</DT>
+<DD><P>The &quot;heal&quot; command takes in the bot as input along with the tolerances. As of now, it takes the tolerance only for zippering. </P>
+
+<P>The healing essentially comprises only of zippering now, but more features will be added later on. The algorithm cannot support non-manifold meshes (those containing singular vertices or edges). The bots need not be oriented, the algorithm takes care of that. </P></DD>
+<FONT SIZE=4><DT>Examples:</DT>
+</FONT><TT><DD>mged&gt;</TT> <B>heal samplebot.s 47.3</DD>
+</DL>
 
 <FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>

@@ -4333,7 +4333,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, >, 141);
+    BU_ASSERT(ep->ext_nbytes > 141);
 
     RT_CK_DB_INTERNAL(ip);
 

@@ -344,7 +344,7 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 	MAT4XSCALOR(up_segp->seg_out.hit_dist, submodel->subm2m, outseg->seg_out.hit_dist);
 	up_segp->seg_out.hit_dist -= gp->delta;
 
-	BU_ASSERT_DOUBLE(up_segp->seg_in.hit_dist, <=, up_segp->seg_out.hit_dist);
+	BU_ASSERT(up_segp->seg_in.hit_dist <= up_segp->seg_out.hit_dist);
 
 	/* Link to ray in upper model, not submodel */
 	up_segp->seg_in.hit_rayp = &up_ap->a_ray;
@@ -477,7 +477,7 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
      */
     restbl = &submodel->rtip->rti_resources;	/* a ptbl */
     cpu = ap->a_resource->re_cpu;
-    BU_ASSERT_SIZE_T(cpu, <, BU_PTBL_LEN(restbl));
+    BU_ASSERT(cpu < BU_PTBL_LEN(restbl));
     if ((resp = (struct resource *)BU_PTBL_GET(restbl, cpu)) == NULL) {
 	/* First ray for this cpu for this submodel, alloc up */
 	BU_ALLOC(resp, struct resource);

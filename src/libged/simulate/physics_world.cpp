@@ -51,9 +51,9 @@ PhysicsWorld::~PhysicsWorld()
 
 
 void
-PhysicsWorld::step(btScalar seconds)
+PhysicsWorld::step(fastf_t seconds)
 {
-    for (int i = 0; i < 600.0 * seconds; ++i)
+    for (unsigned i = 0; i < 600.0 * seconds; ++i)
 	m_world.stepSimulation(1.0 / 600.0, 6000);
 }
 

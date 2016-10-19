@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", &debug);
-		RTG.NMG_debug = debug;
+		nmg_debug = debug;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);

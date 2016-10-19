@@ -771,10 +771,10 @@ nmg_triangulate_model_mc(struct model *m, const struct bn_tol *tol)
     NMG_CK_MODEL(m);
     nmg_vmodel(m);
 
-    if (RTG.NMG_debug & DEBUG_TRI)
+    if (nmg_debug & DEBUG_TRI)
 	bu_log("Triangulating NMG\n");
 
-    if (RTG.NMG_debug & DEBUG_TRI)
+    if (nmg_debug & DEBUG_TRI)
 	bu_log("Triangulation completed\n");
 }
 

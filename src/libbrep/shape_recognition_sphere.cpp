@@ -3,7 +3,6 @@
 #include <set>
 #include <map>
 
-#include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
 #include "shape_recognition.h"

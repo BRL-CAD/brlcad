@@ -82,6 +82,7 @@
 	}
 
 	common SHADER_TYPES {
+	    phong
 	    plastic
 	    mirror
 	    glass
@@ -1100,6 +1101,7 @@
 	-command [::itcl::code $this delete_shader "stk_$index"]
 
     switch -- $stype {
+	phong -
 	plastic {
 	    build_plastic $parent stk_$index
 	    set addspec [list plastic {}]
@@ -1367,6 +1369,7 @@
     set stackParams(env_$index,name) $stype
 
     switch -- $stype {
+	phong -
 	plastic {
 	    build_plastic $parent env_$index
 	    set addspec [list plastic {}]
@@ -1777,6 +1780,9 @@
 #
 ::itcl::body ShaderEdit::changeShader {} {
     switch -- $shaderSpec {
+	"Phong" {
+	    set stype plastic
+	}
 	"Plastic" {
 	    set stype plastic
 	}
@@ -2341,6 +2347,7 @@
 	    -command [::itcl::code $this delete_shader "stk_$index"]
 
 	switch -- $stype {
+	    phong -
 	    plastic {
 		build_plastic $parent stk_$index
 		updateForm_plastic $subspec stk_$index
@@ -2429,6 +2436,7 @@
     set stackParams(env_$index,name) $stype
 
     switch -- $stype {
+	phong -
 	plastic {
 	    build_plastic $parent env_$index
 	    updateForm_plastic $subspec env_$index

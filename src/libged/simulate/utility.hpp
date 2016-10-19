@@ -48,7 +48,7 @@ autoptr_wrap_bu_free(T *ptr)
 }
 
 
-template<typename Target, typename Source>
+template <typename Target, typename Source>
 Target lexical_cast(Source arg,
 		    const std::exception &exception = std::invalid_argument("bad lexical_cast"))
 {

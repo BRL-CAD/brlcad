@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -63,6 +64,7 @@ compare_result(char *expected_buf, FILE *result_fd)
     memset(result_buf, 0, BUFFER_SIZE);
 
     rewind(result_fd);
+	errno = 0;
     ret = fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
     if (ret < BUFFER_SIZE)
 	perror("fread");
@@ -379,7 +381,7 @@ main(int argc, char *argv[])
     int i = 0;
     double x, y, z;
 
-    if (argc < 1) {
+    if (argc < 2) {
 	printf("Must supply at least the dimension.\n");
 	return -1;
     }

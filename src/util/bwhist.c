@@ -30,9 +30,8 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/log.h"
 #include "bu/str.h"
-
+#include "bu/exit.h"
 #include "fb.h"
 
 

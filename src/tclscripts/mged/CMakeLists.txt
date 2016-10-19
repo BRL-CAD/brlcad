@@ -54,7 +54,6 @@ set(mged_TCLSCRIPTS
   mgedrc.tcl
   mike.tcl
   mouse.tcl
-  muves.tcl
   mview.tcl
   openw.tcl
   overlap.tcl

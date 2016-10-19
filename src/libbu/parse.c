@@ -448,7 +448,7 @@ bu_struct_import(void *base, const struct bu_structparse *imp, const struct bu_e
     }
 
     /* This number may differ from that stored as "claimed_length" */
-    BU_ASSERT_LONG(bytes_used, <, INT_MAX);
+    BU_ASSERT(bytes_used < INT_MAX);
     return (int)bytes_used;
 }
 

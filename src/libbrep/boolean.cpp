@@ -38,7 +38,6 @@
 #include "bu/log.h"
 #include "brep.h"
 
-#include "raytrace.h"
 #include "brep_except.h"
 
 

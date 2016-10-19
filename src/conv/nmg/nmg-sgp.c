@@ -161,8 +161,8 @@ main(int argc, char *argv[])
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", &RTG.NMG_debug );
-		bu_printb( "librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT );
+		sscanf( bu_optarg, "%x", &nmg_debug );
+		bu_printb( "librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    default:

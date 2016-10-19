@@ -951,7 +951,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     double_count = neqn * ELEMENTS_PER_PLANE;
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, 4+ byte_count);
+    BU_ASSERT(ep->ext_nbytes == 4+ byte_count);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARBN;

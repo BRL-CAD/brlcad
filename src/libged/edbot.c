@@ -30,7 +30,6 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "ged.h"
-#include "rt/nurb.h"
 #include "wdb.h"
 
 

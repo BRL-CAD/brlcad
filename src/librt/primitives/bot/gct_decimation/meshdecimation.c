@@ -42,7 +42,6 @@
 #include "auxiliary/mmhash.h"
 #include "auxiliary/mmbinsort.h"
 
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/simd.h"
