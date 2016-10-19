@@ -39,7 +39,6 @@
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
-
 /* c99 doesn't declare these */
 #if !defined(_WIN32) || defined(__CYGWIN__)
 #  if !defined(__cplusplus)
@@ -57,14 +56,34 @@ struct temp_file_list {
 static int temp_files = 0;
 static struct temp_file_list *TF = NULL;
 
+/* Get Windows to shut up about trying to close an already closed file -
+ * the libbu temp_close_files routine is designed to make sure that any
+ * files the user may not have closed get closed.  The way the MSVC
+ * assertion was working, it would *preclude* the user from using close
+ * on temp files. Disable the parameter handler for just this function
+ * to avoid the issue. */
+#if defined(HAVE_WINDOWS_H)
+static void disable_duplicate_close_check(const wchar_t* UNUSED(expression),
+	const wchar_t* UNUSED(function),
+	const wchar_t* UNUSED(file),
+	unsigned int UNUSED(line),
+	uintptr_t UNUSED(pReserved)) {}
+#endif
 
 HIDDEN void
 temp_close_files(void)
 {
+#if defined(HAVE_WINDOWS_H)
+    _invalid_parameter_handler stdhandler;
+#endif
     struct temp_file_list *popped;
     if (!TF) {
 	return;
     }
+
+#if defined(HAVE_WINDOWS_H)
+    stdhandler = _set_invalid_parameter_handler(disable_duplicate_close_check);
+#endif 
 
     /* close all files, free their nodes, and unlink */
     while (BU_LIST_WHILE(popped, temp_file_list, &(TF->l))) {
@@ -98,6 +117,12 @@ temp_close_files(void)
 	bu_vls_free(&TF->fn);
     }
     BU_PUT(TF, struct temp_file_list);
+
+#if defined(HAVE_WINDOWS_H)
+    /* Now that we're done, restore default behavior */
+    (void)_set_invalid_parameter_handler(stdhandler);
+#endif 
+
 }
 
 
@@ -174,7 +199,6 @@ mkstemp(char *file_template)
 /* for c99 strict, doesn't declare */
 extern int mkstemp(char *);
 #endif
-
 
 FILE *
 bu_temp_file(char *filepath, size_t len)
