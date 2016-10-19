@@ -33,7 +33,7 @@
 
 /* Test against sprintf */
 int
-test_vls(const char *fmt, ...)
+vls_vs_sys(const char *fmt, ...)
 {
     int status        = BRLCAD_OK; /* okay */
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -65,6 +65,34 @@ test_vls(const char *fmt, ...)
     return status;
 }
 
+/* Test against a pre-defined string for formatting that
+ * is not supported reliably across operating systems */
+int
+vls_vs_string(const char *correct, const char *fmt, ...)
+{
+    int status        = BRLCAD_OK; /* okay */
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    char output[80]   = {0};
+    va_list ap;
+
+    va_start(ap, fmt);
+    /* use BRL-CAD bu_vls version for comparison */
+    bu_vls_vprintf(&vls, fmt, ap);
+    va_end(ap);
+
+    snprintf(output, sizeof(output), "%-24s -> '%s'", fmt, bu_vls_addr(&vls));
+    if (BU_STR_EQUAL(correct, bu_vls_addr(&vls))
+	&& strlen(correct) == bu_vls_strlen(&vls)) {
+	printf("%-*s[PASS]\n", 60, output);
+    } else {
+	printf("%-*s[FAIL]  (should be: '%s')\n", 60, output, correct);
+	status = BRLCAD_ERROR;
+    }
+
+    bu_vls_free(&vls);
+
+    return status;
+}
 
 int
 check_format_chars(void)
@@ -127,187 +155,187 @@ main(int argc, char *argv[])
 	    /* check that we handle all known format chars */
 	    return check_format_chars();
 	case 2:
-	    return test_vls("");
+	    return vls_vs_sys("");
 	case 3:
-	    return test_vls("\n");
+	    return vls_vs_sys("\n");
 	case 4:
-	    return test_vls("hello");
+	    return vls_vs_sys("hello");
 	case 5:
-	    return test_vls("%s", "hello");
+	    return vls_vs_sys("%s", "hello");
 	case 6:
-	    return test_vls("%d", 123);
+	    return vls_vs_sys("%d", 123);
 	case 7:
-	    return test_vls("%u", -123);
+	    return vls_vs_sys("%u", -123);
 	case 8:
-	    return test_vls("%e %E", 1.23, -3.21);
+	    return vls_vs_sys("%e %E", 1.23, -3.21);
 	case 9:
-	    return test_vls("%g %G", 1.23, -3.21);
+	    return vls_vs_sys("%g %G", 1.23, -3.21);
 	case 10:
-	    return test_vls("%x %X", 1.23, -3.21);
+	    return vls_vs_sys("%x %X", 1.23, -3.21);
 	case 11:
-	    return test_vls("%x %X", 123, -321);
+	    return vls_vs_sys("%x %X", 123, -321);
 	case 12:
-	    return test_vls("%o", 1.23);
+	    return vls_vs_sys("%o", 1.23);
 	case 13:
-	    return test_vls("%c%c%c", '1', '2', '3');
+	    return vls_vs_sys("%c%c%c", '1', '2', '3');
 	case 14:
-	    return test_vls("%p", (void *)argv);
+	    return vls_vs_sys("%p", (void *)argv);
 	case 15:
-	    return test_vls("%%%d%%", argc);
+	    return vls_vs_sys("%%%d%%", argc);
 	/* various lengths */
 	case 16:
-	    return test_vls("%zu %zd", (size_t)123, (ssize_t)-123);
+	    return vls_vs_string("123 -123", "%zu %zd", (size_t)123, (ssize_t)-123);
 	case 17:
-	    return test_vls("%jd %td", (intmax_t)123, (ptrdiff_t)-123);
+	    return vls_vs_string("123 -123", "%jd %td", (intmax_t)123, (ptrdiff_t)-123);
 	/* various widths */
 	case 18:
-	    return test_vls("he%*so", 2, "ll");
+	    return vls_vs_sys("he%*so", 2, "ll");
 	case 19:
-	    return test_vls("he%*so", 2, "llll");
+	    return vls_vs_sys("he%*so", 2, "llll");
 	case 20:
-	    return test_vls("he%*so", 4, "ll");
+	    return vls_vs_sys("he%*so", 4, "ll");
 	/* various precisions */
 	case 21:
-	    return test_vls("he%.*so", 2, "ll");
+	    return vls_vs_sys("he%.*so", 2, "ll");
 	case 22:
-	    return test_vls("he%.-1-o", 123);
+	    return vls_vs_sys("he%.-1-o", 123);
 	case 23:
-	    return test_vls("%6.-3f", 123);
+	    return vls_vs_sys("%6.-3f", 123);
 	/* various flags */
 	case 24:
-	    return test_vls("%010d", 123);
+	    return vls_vs_sys("%010d", 123);
 	case 25:
-	    return test_vls("%#-.10lx", 123);
+	    return vls_vs_sys("%#-.10lx", 123);
 	case 26:
-	    return test_vls("%#lf", 123.0);
+	    return vls_vs_sys("%#lf", 123.0);
 	/* two-character length modifiers */
 	case 27:
-	    return test_vls("he%10dllo", 123);
+	    return vls_vs_sys("he%10dllo", 123);
 	case 28:
-	    return test_vls("he%-10ullo", 123);
+	    return vls_vs_sys("he%-10ullo", 123);
 	case 29:
-	    return test_vls("he%#-12.10tullo", (ptrdiff_t)0x1234);
+	    return vls_vs_string("he0000004660  llo", "he%#-12.10tullo", (ptrdiff_t)0x1234);
 	case 30:
-	    return test_vls("he%+-6.3ld%-+3.6dllo", 123, 321);
+	    return vls_vs_sys("he%+-6.3ld%-+3.6dllo", 123, 321);
 	case 31:
-	    return test_vls("he%.10dllo", 123);
+	    return vls_vs_sys("he%.10dllo", 123);
 	case 32:
-	    return test_vls("he%.-10ullo", 123);
+	    return vls_vs_sys("he%.-10ullo", 123);
 	case 33:
-	    return test_vls("%hd %hhd", 123, -123);
+	    return vls_vs_sys("%hd %hhd", 123, -123);
 	/* combinations, e.g., bug ID 3475562, fixed at rev 48958 */
 	/* left justify, right justify, in wider fields than the strings */
 	case 34:
 	    f = p = 2;
-	    return test_vls("|%-*.*s|%*.*s|", f, p, "t", f, p, "t");
+	    return vls_vs_sys("|%-*.*s|%*.*s|", f, p, "t", f, p, "t");
 	case 35:
 	    f = p = 2;
-	    return test_vls("|%*s|%-*s|", f, "test", f, "test");
+	    return vls_vs_sys("|%*s|%-*s|", f, "test", f, "test");
 	case 36:
 	    f = p = 2;
-	    return test_vls("|%*s|%-*s|", f, word, f, word);
+	    return vls_vs_sys("|%*s|%-*s|", f, word, f, word);
 	/* min field width; max string length ('precision'); string */
 	case 37:
 	    f = 2; p = 4;
 	    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
-	    return test_vls("%*.*s", f, p, word);
+	    return vls_vs_sys("%*.*s", f, p, word);
 	case 38:
 	    f = 4; p = 2;
 	    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
-	    return test_vls("%*.*s", f, p, word);
+	    return vls_vs_sys("%*.*s", f, p, word);
 	case 39:
 	    f = 4; p = 8;
 	    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
-	    return test_vls("%*.*s", f, p, word);
+	    return vls_vs_sys("%*.*s", f, p, word);
 	case 40:
 	    f = 0; p = 8;
 	    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
-	    return test_vls("%*.*s", f, p, word);
+	    return vls_vs_sys("%*.*s", f, p, word);
 	case 41:
 	    f = 8; p = 0;
 	    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
-	    return test_vls("%*.*s", f, p, word);
+	    return vls_vs_sys("%*.*s", f, p, word);
 	case 42:
 	    /* mged bug at rev 48989 */
 	    f = 8; p = 0;
 	    printf("fw=%d, '%s': '%%%ds'\n", f, word, f);
-	    return test_vls("%*s", f, word);
+	    return vls_vs_sys("%*s", f, word);
 	/* same but left justify */
 	case 43:
 	    f = 2; p = 4;
 	    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
-	    return test_vls("%-*.*s", f, p, word);
+	    return vls_vs_sys("%-*.*s", f, p, word);
 	case 44:
 	    f = 4; p = 2;
 	    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
-	    return test_vls("%-*.*s", f, p, word);
+	    return vls_vs_sys("%-*.*s", f, p, word);
 	case 45:
 	    f = 4; p = 8;
 	    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
-	    return test_vls("%-*.*s", f, p, word);
+	    return vls_vs_sys("%-*.*s", f, p, word);
 	case 46:
 	    f = 0; p = 8;
 	    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
-	    return test_vls("%-*.*s", f, p, word);
+	    return vls_vs_sys("%-*.*s", f, p, word);
 	case 47:
 	    f = 8; p = 0;
 	    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
-	    return test_vls("%-*.*s", f, p, word);
+	    return vls_vs_sys("%-*.*s", f, p, word);
 	/* from "various types" */
 	case 48:
-	    return test_vls("%f %F", 1.23, -3.21);
+	    return vls_vs_sys("%f %F", 1.23, -3.21);
 	/* from "two-character length modifiers" */
 	case 49:
-	    return test_vls("%ld %lld", 123, -123LL);
+	    return vls_vs_sys("%ld %lld", 123, -123LL);
 	/* unsigned variant */
 	case 50:
-	    return test_vls("%lu %llu", 123, 123ULL);
+	    return vls_vs_sys("%lu %llu", 123, 123ULL);
 	/* from "two-character length modifiers" */
 	case 51:
-	    return test_vls("%ld %lld", 123, -123);
+	    return vls_vs_sys("%ld %lld", 123, -123);
 	/* unsigned variant */
 	case 52:
-	    return test_vls("%lu %llu", 123, 123);
+	    return vls_vs_sys("%lu %llu", 123, 123);
 	case 53:
-	    return test_vls("%hd %hhd", 123, -123);
+	    return vls_vs_sys("%hd %hhd", 123, -123);
 	/* misc */
 	case 54:
-	    return test_vls("% d % d", 123, -123);
+	    return vls_vs_sys("% d % d", 123, -123);
 	case 55:
-	    return test_vls("% 05d % d", 123, -123);
+	    return vls_vs_sys("% 05d % d", 123, -123);
 	case 56:
-	    return test_vls("%'d", 123000);
+	    return vls_vs_sys("%'d", 123000);
 	case 57:
-	    return test_vls("%c", 'r');
+	    return vls_vs_sys("%c", 'r');
 	case 58:
-	    return test_vls("%20s", "right");
+	    return vls_vs_sys("%20s", "right");
 	case 59:
-	    return test_vls("%-20s", "left");
+	    return vls_vs_sys("%-20s", "left");
 	case 60:
-	    return test_vls("%10.20s", "12345");
+	    return vls_vs_sys("%10.20s", "12345");
 	case 61:
-	    return test_vls("%-10.20s", "12345");
+	    return vls_vs_sys("%-10.20s", "12345");
 	case 62:
-	    return test_vls("%10.20s", "123456789012345");
+	    return vls_vs_sys("%10.20s", "123456789012345");
 	case 63:
-	    return test_vls("%-10.20s", "123456789012345");
+	    return vls_vs_sys("%-10.20s", "123456789012345");
 	case 64:
-	    return test_vls("%20.10s", "123456789012345");
+	    return vls_vs_sys("%20.10s", "123456789012345");
 	case 65:
-	    return test_vls("%-20.10s", "123456789012345");
+	    return vls_vs_sys("%-20.10s", "123456789012345");
 	case 66:
-	    return test_vls("%010d", 1);
+	    return vls_vs_sys("%010d", 1);
 	case 67:
-	    return test_vls("%.030s", "1234567890123456789012345678901234567890");
+	    return vls_vs_sys("%.030s", "1234567890123456789012345678901234567890");
 
 	/* this test needs a relook
-	    return test_vls("%H", 123);
+	    return vls_vs_sys("%H", 123);
 	 */
 
 	/* obsolete but usable */
 	/*
-	   test_vls("%S", (wchar_t *)"hello");
-	   test_vls("%qd %qd", 123, -123);
+	   vls_vs_sys("%S", (wchar_t *)"hello");
+	   vls_vs_sys("%qd %qd", 123, -123);
 	 */
 
 	/* EXPECTED FAILURES (don't use in production code):
@@ -326,13 +354,13 @@ main(int argc, char *argv[])
 
 	 /* obsolete - expected failures
 	case 10000:
-	    return !test_vls("%C", 'N');
+	    return !vls_vs_sys("%C", 'N');
 	case 10001:
-	    return !test_vls("%D %D", 123, -123);
+	    return !vls_vs_sys("%D %D", 123, -123);
 	case 10002:
-	    return !test_vls("%O %O", 123, -123);
+	    return !vls_vs_sys("%O %O", 123, -123);
 	case 10003:
-	    return !test_vls("%U %U", 123, -123);a
+	    return !vls_vs_sys("%U %U", 123, -123);a
 	*/
     }
 

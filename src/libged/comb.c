@@ -813,7 +813,7 @@ addmembers:
     /* flatten tree */
     if (comb->tree) {
 	actual_count = argc + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     }
 

@@ -30,6 +30,8 @@
 
 #include "common.h"
 
+#include "bu/defines.h"
+
 #include <btBulletDynamicsCommon.h>
 
 
@@ -40,10 +42,10 @@ namespace simulate
 class PhysicsWorld
 {
 public:
-    PhysicsWorld();
+    explicit PhysicsWorld();
     virtual ~PhysicsWorld();
 
-    void step(btScalar seconds);
+    void step(fastf_t seconds);
     void add_rigid_body(btRigidBody &rigid_body);
     void remove_rigid_body(btRigidBody &rigid_body);
 

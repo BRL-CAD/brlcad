@@ -322,7 +322,7 @@ Combination::Combination(db_i &db, directory &dir) :
 				     sizeof(rt_tree_array), "tree list"));
     const std::size_t actual_count = (struct rt_tree_array *)db_flatten_tree(
 					 tree_list.ptr, comb.tree, OP_UNION, false, &rt_uniresource) - tree_list.ptr;
-    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+    BU_ASSERT(actual_count == node_count);
 
     for (std::size_t i = 0; i < node_count; ++i) {
 	struct directory * const member_dir = db_lookup(&db,

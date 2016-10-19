@@ -345,7 +345,7 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 3*4);
 
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;

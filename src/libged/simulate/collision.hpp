@@ -47,8 +47,8 @@ public:
     static const int RT_SHAPE_TYPE = CUSTOM_POLYHEDRAL_SHAPE_TYPE;
 
 
-    RtCollisionShape(const TreeUpdater &tree_updater, const std::string &db_path,
-		     const btVector3 &half_extents);
+    explicit RtCollisionShape(const TreeUpdater &tree_updater,
+			      const std::string &db_path, const btVector3 &half_extents);
 
     virtual const char *getName() const;
     virtual void calculateLocalInertia(btScalar mass, btVector3 &inertia) const;
@@ -66,10 +66,10 @@ private:
 class RtCollisionAlgorithm : public btActivatingCollisionAlgorithm
 {
 public:
-    RtCollisionAlgorithm(btPersistentManifold *manifold,
-			 const btCollisionAlgorithmConstructionInfo &cinfo,
-			 const btCollisionObjectWrapper *body_a_wrap,
-			 const btCollisionObjectWrapper *body_b_wrap);
+    explicit RtCollisionAlgorithm(btPersistentManifold *manifold,
+				  const btCollisionAlgorithmConstructionInfo &cinfo,
+				  const btCollisionObjectWrapper *body_a_wrap,
+				  const btCollisionObjectWrapper *body_b_wrap);
 
     virtual ~RtCollisionAlgorithm();
 

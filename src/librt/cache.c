@@ -35,7 +35,6 @@
 
 /* implementation headers */
 #include "bu/cv.h"
-#include "bu/log.h"
 #include "bu/path.h"
 #include "bu/str.h"
 #include "bu/uuid.h"

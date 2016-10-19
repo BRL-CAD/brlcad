@@ -1416,7 +1416,7 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
                         pl_linmod(fp, "solid");
                     Dashing = sp->s_soldash;
                 }
-                rt_vlist_to_uplot(fp, &(sp->s_vlist));
+                bn_vlist_to_uplot(fp, &(sp->s_vlist));
             }
 
             gdlp = next_gdlp;

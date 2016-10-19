@@ -34,7 +34,6 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 #include "rt/geom.h"
 
 #include "./mged.h"

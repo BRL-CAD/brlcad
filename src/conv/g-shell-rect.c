@@ -447,7 +447,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
     }
     rd.magic = NMG_RAY_DATA_MAGIC;
 
-    nmg_isect_ray_model(&rd,&RTG.rtg_vlfree);
+    nmg_isect_ray_model((struct nmg_ray_data *)&rd,&RTG.rtg_vlfree);
 
     if (BU_LIST_IS_EMPTY(&rd.rd_hit))
 	ret = 0;
@@ -459,12 +459,12 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
 	a_hit = BU_LIST_LAST(hitmiss, &rd.rd_hit);
 	VMOVE(hit2, a_hit->hit.hit_point);
 
-	NMG_FREE_HITLIST(&rd.rd_hit, ap);
+	NMG_FREE_HITLIST(&rd.rd_hit);
 
 	ret = 1;
     }
 
-    NMG_FREE_HITLIST(&rd.rd_miss, ap);
+    NMG_FREE_HITLIST(&rd.rd_miss);
 
     return ret;
 }
@@ -1770,8 +1770,8 @@ main(int argc, char **argv)
 		bot = 1;
 		break;
 	    case 'X':	/* nmg debug flags */
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		bu_log("%s: setting RTG.NMG_debug to x%x\n", argv[0], RTG.NMG_debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		bu_log("%s: setting nmg_debug to x%x\n", argv[0], nmg_debug);
 		break;
 	    default:
 		print_usage(argv[0]);

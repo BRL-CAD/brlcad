@@ -22,10 +22,11 @@
 
 #include <stdio.h>
 
+#include "bu/log.h"
 #include "vmath.h"
 #include "bn/tol.h"
 #include "bn/qmath.h"
-#include "bu/log.h"
+
 
 int
 test_quat_mat2quat(int argc, const char *argv[])

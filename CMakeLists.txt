@@ -542,7 +542,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # where we cannot pass an empty string through this wrapper to
   # _add_test()/add_test().  passed as a list (e.g., via ARGN, ARGV,
   # or manually composed), the empty string is skipped(!).  passed as
-  # a string, it is all treated as commnad name with no arguments.
+  # a string, it is all treated as command name with no arguments.
   #
   # manual workaround used here involves invoking _add_test() with all
   # args individually recreated/specified (i.e., not as a list) as
@@ -555,9 +555,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(idx 0)
     set(matches)
     foreach (ARG IN LISTS ARGV)
-      if ("${ARG}" STREQUAL "")
+      # need 'x' to avoid older cmake seeing "COMMAND" "STREQUAL" ""
+      if ("x${ARG}" STREQUAL "x")
 	list(APPEND matches ${idx})
-      endif ("${ARG}" STREQUAL "")
+      endif ("x${ARG}" STREQUAL "x")
       math(EXPR idx "${idx} + 1")
     endforeach()
 
@@ -2207,6 +2208,7 @@ BRLCAD_ALLOCA()
 
 BRLCAD_FUNCTION_EXISTS(XQueryExtension HAVE_XQUERYEXTENSION)
 BRLCAD_FUNCTION_EXISTS(_putenv_s HAVE__PUTENV_S)
+BRLCAD_FUNCTION_EXISTS(_splitpath HAVE__SPLITPATH)
 BRLCAD_FUNCTION_EXISTS(alarm HAVE_ALARM)
 BRLCAD_FUNCTION_EXISTS(dlopen HAVE_DLOPEN)
 BRLCAD_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
@@ -2493,9 +2495,9 @@ endif(MSVC)
 
 # Before we finalize, set some specific global linker flags
 if(MSVC)
-  set(CMAKE_EXE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
-  set(CMAKE_SHARED_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
-  set(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
 endif(MSVC)
 
 #-----------------------------------------------------------------------------
@@ -2784,7 +2786,6 @@ if(NOT BRLCAD_DISABLE_SUMMARY)
   include("${BRLCAD_CMAKE_DIR}/BRLCAD_Summary.cmake")
 endif(NOT BRLCAD_DISABLE_SUMMARY)
 
-
 # *******************************************************************
 # ***                      Timestamp Rules                        ***
 # *******************************************************************
@@ -3031,6 +3032,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     # sure there is at least one set of four (4) backslashes.
     set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
     set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\uninstall.ico")
+    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
     set(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
     set(CPACK_NSIS_MODIFY_PATH ON)
     if(BRLCAD_ENABLE_WIX)
@@ -3042,8 +3044,14 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif(BRLCAD_ENABLE_WIX)
     if(CMAKE_CL_64)
       set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_win64")
+      set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME} ${CPACK_PACKAGE_VERSION} win64")
+      # Use the setting from http://public.kitware.com/pipermail/cmake/2013-June/055000.html to
+      # provide the correct default 64 bit directory with older CMake versions
+      set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
     else(CMAKE_CL_64)
       set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_win32")
+      set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME} ${CPACK_PACKAGE_VERSION} win32")
+      set(CPACK_NSIS_PACKAGE_NAME "BRL-CAD (32 Bit)")
     endif(CMAKE_CL_64)
   endif(WIN32)
 
@@ -3139,6 +3147,18 @@ mark_as_advanced(CMAKE_C_COMPILER)
 
 set(CONFIG_FATAL_ERROR 0)
 
+function(DIFF_FILE filename)
+  file(READ "${BRLCAD_SOURCE_DIR}/${filename}" SRC_STR)
+  file(READ "${BRLCAD_BINARY_DIR}/${filename}.new" BIN_STR)
+  string(REGEX REPLACE "\r?\n" "" OLD_STR "${SRC_STR}")
+  string(REGEX REPLACE "\r?\n" "" NEW_STR "${BIN_STR}")
+  if(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
+    set(CONFIG_FATAL_ERROR 1 PARENT_SCOPE)
+    message("\n\"${BRLCAD_SOURCE_DIR}/${filename}\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/${filename}.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/${filename}\" with \"${BRLCAD_BINARY_DIR}/${filename}.new\"\n")
+  endif(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
+endfunction(DIFF_FILE filename)
+
+# Finalize and check INSTALL file
 file(READ "${BRLCAD_SOURCE_DIR}/INSTALL" SRC_INSTALL_STR)
 string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX "${SRC_INSTALL_STR}")
 file(WRITE "${BRLCAD_BINARY_DIR}/INSTALL.new" "${INSTALL_PREFIX}")
@@ -3149,29 +3169,15 @@ file(APPEND "${BRLCAD_BINARY_DIR}/INSTALL.new" "\n\n*** Note - Do not add or edi
    the toplevel CMakeLists.txt file and src/other/CMakeLists.txt - any changes
    should be made in those files.  The CMake configuration process will
    automatically re-generate INSTALL with the new descriptions and alias
-   information.\n")
-execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${BRLCAD_SOURCE_DIR}/INSTALL" "${BRLCAD_BINARY_DIR}/INSTALL.new"
-  RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
-  DIFF_ERROR)
-if(IS_DIFFERENT)
-  set(CONFIG_FATAL_ERROR 1)
-  message("\n\"${BRLCAD_SOURCE_DIR}/INSTALL\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/INSTALL\" with \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\n")
-endif(IS_DIFFERENT)
+   information.\n"
+   )
+DIFF_FILE(INSTALL)
 
 # Do the same thing for the configure shell script - finish it and check
 # for differences.
 file(READ "${BRLCAD_CMAKE_DIR}/configure_suffix.sh" CONFIG_SUFFIX)
 file(APPEND "${CMAKE_BINARY_DIR}/configure.new" "${CONFIG_SUFFIX}")
-# Compare
-execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${BRLCAD_SOURCE_DIR}/configure" "${BRLCAD_BINARY_DIR}/configure.new"
-  RESULT_VARIABLE IS_CONFIG_SH_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
-  DIFF_ERROR)
-if(IS_CONFIG_SH_DIFFERENT)
-  set(CONFIG_FATAL_ERROR 1)
-  message("\n\"${BRLCAD_SOURCE_DIR}/configure\" is out of date. An updated version has been generated at \"${BRLCAD_BINARY_DIR}/configure.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/configure\" with \"${BRLCAD_BINARY_DIR}/configure.new\"\n")
-endif(IS_CONFIG_SH_DIFFERENT)
+DIFF_FILE(configure)
 
 if(CONFIG_FATAL_ERROR)
   message(FATAL_ERROR "Configure haulted.")

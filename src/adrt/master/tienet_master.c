@@ -45,7 +45,6 @@
 
 #include "rt/tie.h"
 #include "bu/str.h"
-#include "bu/log.h"
 
 #include "adrt.h"
 
@@ -54,6 +53,7 @@
 
 #include "bio.h"
 
+#include "bu/log.h"
 #include "master.h"
 
 

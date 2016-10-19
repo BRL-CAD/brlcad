@@ -37,6 +37,7 @@ set(level_1_dirs
   libbu
   libbn
   libbg
+  libnmg
   libbrep
   librt
   libwdb

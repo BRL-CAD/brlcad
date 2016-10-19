@@ -305,7 +305,7 @@ process_triangulation(struct conversion_state *pstate, struct nmgregion *r, cons
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	RTG.NMG_debug = pstate->nmg_debug;	/* restore mode */
+	nmg_debug = pstate->nmg_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -345,7 +345,7 @@ obj_write_process_boolean(const struct conversion_state *pstate, union tree *cur
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = pstate->nmg_debug;/* restore mode */
+	nmg_debug = pstate->nmg_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -513,7 +513,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     memset(&state, 0, sizeof(state));
     state.gcv_options = gcv_options;
     state.obj_write_options = (struct obj_write_options *)options_data;
-    state.nmg_debug = RTG.NMG_debug;
+    state.nmg_debug = nmg_debug;
 
     if (!(state.fp = fopen(dest_path, "wb+"))) {
 	perror("libgcv");

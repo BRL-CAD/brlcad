@@ -37,7 +37,7 @@
 
 
 int
-ged_simulate(ged *gedp, int argc, const char **argv)
+ged_simulate(ged * const gedp, const int argc, const char ** const argv)
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -48,15 +48,15 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    directory *dir = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    directory * const dir = db_lookup(gedp->ged_wdbp->dbip, argv[1], true);
 
     if (!dir) return GED_ERROR;
 
     try {
-	btScalar seconds = simulate::lexical_cast<btScalar>(argv[2],
-			   std::invalid_argument("invalid value for 'seconds'"));
+	const fastf_t seconds = simulate::lexical_cast<btScalar>(argv[2],
+				std::invalid_argument("invalid value for 'seconds'"));
 
-	if (seconds < 0.0) throw std::runtime_error("invalid value for 'seconds'");
+	if (seconds < 0.0) throw std::invalid_argument("invalid value for 'seconds'");
 
 	simulate::Simulation simulation(*gedp->ged_wdbp->dbip, *dir);
 	simulation.step(seconds);
@@ -79,7 +79,7 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 
 
 int
-ged_simulate(ged *gedp, int argc, const char **argv)
+ged_simulate(ged * const gedp, const int argc, const char ** const argv)
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);

@@ -215,6 +215,11 @@ GED_EXPORT extern int ged_get_comb(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_group(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Heal command to heal the defects in bots
+ */
+GED_EXPORT extern int ged_heal(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Set the "hidden" flag for the specified objects so they do not
  * appear in an "ls" command output
  */

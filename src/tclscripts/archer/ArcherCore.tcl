@@ -2211,6 +2211,7 @@ namespace eval ArcherCore {
 	{"BRL-CAD Database" {".g" ".asc"}}
 	{"3dm (Rhino)" {".3dm"}}
 	{"FASTGEN 4" {".bdf" ".fas" ".fg" ".fg4"}}
+	{"OBJ" {".obj"}}
 	{"STEP" {".stp" ".step"}}
 	{"STL" {".stl"}}
 	{"All Files" {*}}

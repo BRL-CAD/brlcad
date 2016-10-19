@@ -33,14 +33,13 @@
 #include <string.h>
 #include "bnetwork.h"
 
+#include "vmath.h"
 #include "bu/cv.h"
 #include "bu/debug.h"
-#include "vmath.h"
-#include "rt/db4.h"
 #include "nmg.h"
+#include "rt/db4.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 
 #include "../../librt_private.h"
 
@@ -1642,7 +1641,7 @@ get_seg_midpoint(void *seg, struct rt_sketch_internal *skt, point2d_t pt)
 		    V2MOVE(&eg.ctl_points[i*coords], skt->verts[nsg->ctl_points[i]]);
 		}
 	    }
-	    rt_nurb_c_eval(&eg, (nsg->k.knots[nsg->k.k_size-1] - nsg->k.knots[0]) * 0.5, tmp_pt);
+	    nmg_nurb_c_eval(&eg, (nsg->k.knots[nsg->k.k_size-1] - nsg->k.knots[0]) * 0.5, tmp_pt);
 	    if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 		int j;
 

@@ -132,8 +132,8 @@ main(int argc, char **argv)
 		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
-		NMG_debug = RTG.NMG_debug;
+		sscanf( bu_optarg, "%x", (unsigned int *)&nmg_debug );
+		NMG_debug = nmg_debug;
 		break;
 	    default:
 		print_usage(argv[0]);
@@ -224,7 +224,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;/* restore mode */
+	nmg_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -359,8 +359,8 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 			  (int)(tsp->ts_mater.ma_color[2] * 255) );
 		/* nmg_pl_r( fp, r ); */
 		BU_LIST_INIT( &vhead );
-		nmg_r_to_vlist( &vhead, r, 0 );
-		rt_vlist_to_uplot( fp, &vhead );
+		nmg_r_to_vlist(&vhead, r, 0, &RTG.rtg_vlfree);
+		bn_vlist_to_uplot( fp, &vhead );
 		fclose(fp);
 		if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 	    }

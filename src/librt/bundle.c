@@ -153,7 +153,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	rt_init_resource(resp, resp->re_cpu, rtip);
 
 	/* Ensure that this CPU's resource structure is registered */
-	BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL);
+	BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
     }
 
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);

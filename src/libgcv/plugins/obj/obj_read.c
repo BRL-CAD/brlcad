@@ -2676,7 +2676,7 @@ output_to_nmg(struct ga_t *ga,
 	/* Sometimes the NMG library adds debugging bits when it
 	 * detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = ga->nmg_debug; /* restore mode */
+	nmg_debug = ga->nmg_debug; /* restore mode */
 
 	if (verts)
 	    bu_free(verts, "verts");
@@ -3479,7 +3479,7 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     memset(&ga, 0, sizeof(ga));
 
     ga.gcv_options = gcv_options;
-    ga.nmg_debug = RTG.NMG_debug;
+    ga.nmg_debug = nmg_debug;
 
     if (obj_parser_create(&ga.parser)) {
 	bu_log("Cannot initialize an obj_parser_t object\n");

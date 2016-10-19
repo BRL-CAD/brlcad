@@ -28,7 +28,6 @@
 #include <iostream>
 
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/vls.h"
 #include "rt/geom.h"
 #include "raytrace.h"

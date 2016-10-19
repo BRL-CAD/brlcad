@@ -26,9 +26,9 @@
 
 #include <string.h>
 
+#include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "rt/nurb.h"
 #include "./ged_private.h"
 
 

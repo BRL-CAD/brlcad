@@ -477,7 +477,7 @@ dump_bitv(const struct bu_bitv *b)
     bu_log("\nbitv dump:");
     bu_log("\n nbits = %zu", len);
 
-  NEXT:
+NEXT:
 
     k = i + x;
     bu_log("\n---------------------------------------------------------------------");

@@ -41,7 +41,6 @@
 #include "auxiliary/cc.h"
 #include "auxiliary/mm.h"
 
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 

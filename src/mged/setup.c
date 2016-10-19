@@ -170,6 +170,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"grid2model_lu", cmd_ged_plain_wrapper, ged_grid2model_lu},
     {"grid2view_lu", cmd_ged_plain_wrapper, ged_grid2view_lu},
     {"has_embedded_fb", cmd_has_embedded_fb, GED_FUNC_PTR_NULL},
+    {"heal", cmd_ged_plain_wrapper, ged_heal},
     {"hide", cmd_ged_plain_wrapper, ged_hide},
     {"hist", cmd_hist, GED_FUNC_PTR_NULL},
     {"history", f_history, GED_FUNC_PTR_NULL},

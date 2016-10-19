@@ -143,24 +143,51 @@ attr_cmd(const char* arg)
 	return ATTR_UNKNOWN;
 }
 
-
 HIDDEN void
-attr_print(struct ged *gedp, struct bu_attribute_value_set *avs,
-	   const size_t max_attr_name_len)
+attr_print(struct ged *gedp, struct bu_attribute_value_set *avs, int argc, const char **argv)
 {
+    size_t max_attr_name_len  = 0;
     struct bu_attribute_value_pair *avpp;
-    size_t i;
-
-    for (i = 0, avpp = avs->avp; i < avs->count; i++, avpp++) {
-	size_t len_diff = 0;
-	size_t count = 0;
-	bu_vls_printf(gedp->ged_result_str, "\t%s", avpp->name);
-	len_diff = max_attr_name_len - strlen(avpp->name);
-	while (count < (len_diff) + 1) {
-	    bu_vls_printf(gedp->ged_result_str, " ");
-	    count++;
+    size_t i, j;
+    /* If we don't have a specified set, do everything */
+    /* find the max_attr_name_len  */
+    if (argc == 0 || !argv) {
+	for (j = 0, avpp = avs->avp; j < avs->count; j++, avpp++) {
+	    size_t len = strlen(avpp->name);
+	    if (len > max_attr_name_len) max_attr_name_len = len;
 	}
-	bu_vls_printf(gedp->ged_result_str, "%s\n", avpp->value);
+	for (i = 0, avpp = avs->avp; i < avs->count; i++, avpp++) {
+	    size_t len_diff = 0;
+	    size_t count = 0;
+	    bu_vls_printf(gedp->ged_result_str, "\t%s", avpp->name);
+	    len_diff = max_attr_name_len - strlen(avpp->name);
+	    while (count < (len_diff) + 1) {
+		bu_vls_printf(gedp->ged_result_str, " ");
+		count++;
+	    }
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", avpp->value);
+	}
+    } else {
+	for (i = 0; i < (size_t)argc; i++) {
+	    size_t len = strlen(argv[i]);
+	    if (len > max_attr_name_len) max_attr_name_len = len;
+	}
+	for (i = 0; i < (size_t)argc; i++) {
+	    const char *aval = bu_avs_get(avs, argv[i]);
+	    size_t len_diff = 0;
+	    size_t count = 0;
+	    if (!aval) {
+		bu_vls_sprintf(gedp->ged_result_str, "ERROR: attribute %s not found\n", argv[i]);
+		return;
+	    }
+	    bu_vls_printf(gedp->ged_result_str, "\t%s", argv[i]);
+	    len_diff = max_attr_name_len - strlen(argv[i]);
+	    while (count < (len_diff) + 1) {
+		bu_vls_printf(gedp->ged_result_str, " ");
+		count++;
+	    }
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", aval);
+	}
     }
 }
 
@@ -239,7 +266,6 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	for (i = 0; i < path_cnt; i++) {
 	    /* for pretty printing */
 	    size_t j = 0;
-	    size_t max_attr_name_len  = 0;
 	    size_t max_attr_value_len = 0;
 
 	    struct bu_attribute_value_set avs;
@@ -254,11 +280,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
 	    /* get a jump on calculating name and value lengths */
 	    for (j = 0, avpp = avs.avp; j < avs.count; j++, avpp++) {
-		size_t len = strlen(avpp->name);
-		if (len > max_attr_name_len)
-		    max_attr_name_len = len;
 		if (avpp->value) {
-		    len = strlen(avpp->value);
+		    size_t len = strlen(avpp->value);
 		    if (len > max_attr_value_len)
 			max_attr_value_len = len;
 		}
@@ -270,7 +293,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    if (argc == 3) {
 		/* just list the already sorted attribute-value pairs */
-		attr_print(gedp, &avs, max_attr_name_len);
+		attr_print(gedp, &avs, 0, NULL);
 	    } else {
 		/* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
 		if (BU_STR_EQUIV(argv[3], NOCASE)) {
@@ -283,7 +306,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		    ; /* don't need to do anything since this is the existing (default) sort */
 		}
 		/* just list the already sorted attribute-value pairs */
-		attr_print(gedp, &avs, max_attr_name_len);
+		attr_print(gedp, &avs, 0, NULL);
 	    }
 	    bu_avs_free(&avs);
 	}
@@ -540,11 +563,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     } else if (scmd == ATTR_SHOW) {
 	for (i = 0; i < path_cnt; i++) {
 	    /* for pretty printing */
-	    size_t max_attr_name_len  = 0;
 	    size_t max_attr_value_len = 0;
 
 	    size_t j = 0;
-	    size_t tabs1 = 0;
 	    struct bu_attribute_value_set avs;
 	    bu_avs_init_empty(&avs);
 	    dp = paths[i];
@@ -556,11 +577,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    /* get a jump on calculating name and value lengths */
 	    for (j = 0, avpp = avs.avp; j < avs.count; j++, avpp++) {
-		size_t len = strlen(avpp->name);
-		if (len > max_attr_name_len)
-		    max_attr_name_len = len;
 		if (avpp->value) {
-		    len = strlen(avpp->value);
+		    size_t len = strlen(avpp->value);
 		    if (len > max_attr_value_len)
 			max_attr_value_len = len;
 		}
@@ -573,54 +591,10 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (argc == 3) {
 		/* just display all attributes */
-		attr_print(gedp, &avs, max_attr_name_len);
+		attr_print(gedp, &avs, 0, NULL);
 	    } else {
-		const char *val;
-		size_t len;
-
 		/* show just the specified attributes */
-		for (j = 0; j < (size_t)argc; j++) {
-		    len = strlen(argv[j]);
-		    if (len > max_attr_name_len) {
-			max_attr_name_len = len;
-		    }
-		}
-		tabs1 = 2 + max_attr_name_len/8;
-		for (j = 3; j < (size_t)argc; j++) {
-		    size_t tabs2;
-		    size_t k;
-		    const char *c;
-
-		    val = bu_avs_get(&avs, argv[j]);
-		    if (!val && path_cnt == 1) {
-			bu_vls_printf(gedp->ged_result_str,
-				"Object %s does not have a %s attribute\n",
-				dp->d_namep,
-				argv[j]);
-			bu_avs_free(&avs);
-			return GED_ERROR;
-		    } else {
-			if (val) {
-			    bu_vls_printf(gedp->ged_result_str, "\t%s", argv[j]);
-			    len = strlen(val);
-			    tabs2 = tabs1 - 1 - len/8;
-			    for (k = 0; k < tabs2; k++) {
-				bu_vls_putc(gedp->ged_result_str, '\t');
-			    }
-			    c = val;
-			    while (*c) {
-				bu_vls_putc(gedp->ged_result_str, *c);
-				if (*c == '\n') {
-				    for (k = 0; k < tabs1; k++) {
-					bu_vls_putc(gedp->ged_result_str, '\t');
-				    }
-				}
-				c++;
-			    }
-			    bu_vls_putc(gedp->ged_result_str, '\n');
-			}
-		    }
-		}
+		attr_print(gedp, &avs, argc - 3, argv + 3);
 	    }
 	}
     } else {
