@@ -359,7 +359,7 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
 	char type = 0;
 
 	if (rt_obj_prep(stp, internal, stp->st_rtip))
-	    bu_bomb("rt_obj_prep() failed");
+	    return 1;
 
 	if (OBJ[stp->st_id].ft_prep_serialize) {
 	    if (!(dir = db_diradd(cache->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM,
@@ -370,7 +370,7 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
 	}
     }
 
-    return 1;
+    return 0;
 }
 
 
