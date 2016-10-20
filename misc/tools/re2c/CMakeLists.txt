@@ -28,34 +28,6 @@ include_directories(
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 find_package(LEMON)
 
-LEMON_TARGET(re2cParse parser.yy OUT_SRC_FILE parser.cc OUT_HDR_FILE parser_tokens.h)
-
-set(re2c_common_SRCS
-  code.cc
-  dfa.cc
-  main.cc
-  ${LEMON_re2cParse_SRC}
-  actions.cc
-  substr.cc
-  translate.cc
-  mbo_getopt.cc
-  )
-
-set(re2c_HDRS
-  basics.h
-  dfa.h
-  globals.h
-  ins.h
-  re2c_parser.h
-  re.h
-  scanner.h
-  substr.h
-  token.h
-  mbo_getopt.h
-  code.h
-  stream_lc.h
-  code_names.h
-  )
 
 set(STDC_HEADERS 1)
 include(CheckIncludeFile)
@@ -84,15 +56,42 @@ CHECK_TYPE_SIZE(short SIZEOF_SHORT)
 configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 add_definitions(-DHAVE_CONFIG_H)
 
+set(re2c_common_SRCS
+  code.cc
+  dfa.cc
+  main.cc
+  actions.cc
+  substr.cc
+  translate.cc
+  mbo_getopt.cc
+  )
 
+set(re2c_HDRS
+  basics.h
+  dfa.h
+  globals.h
+  ins.h
+  re2c_parser.h
+  re.h
+  scanner.h
+  substr.h
+  token.h
+  mbo_getopt.h
+  code.h
+  stream_lc.h
+  code_names.h
+  )
+
+set(parser_WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}/bootstrap_parser")
+LEMON_TARGET(re2cParse_bootstrap parser.yy OUT_SRC_FILE bootstrap_parser.cc OUT_HDR_FILE bootstrap_parser_tokens.h)
 set(re2c_bootstrap_SRCS
   ${re2c_common_SRCS}
+  ${LEMON_re2cParse_bootstrap_SRC}
+  ${LEMON_re2cParse_bootstrap_HDR}
   bootstrap/scanner.cc
   )
-set_source_files_properties(bootstrap/scanner.cc PROPERTIES OBJECT_DEPENDS ${LEMON_re2cParse_HDR})
-
 add_executable(re2c_bootstrap ${re2c_bootstrap_SRCS})
-set_property(TARGET re2c_bootstrap APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_re2cParse_INCLUDE_DIR}")
+set_property(TARGET re2c_bootstrap APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_re2cParse_bootstrap_INCLUDE_DIR}")
 
 # Need to link against stl library with some compilers.
 target_link_libraries(re2c_bootstrap "${STDCXX_LIBRARIES}")
@@ -108,14 +107,17 @@ if(${LEMON_EXECUTABLE_TARGET})
   add_dependencies(re2c_bootstrap ${LEMON_EXECUTABLE_TARGET})
 endif(${LEMON_EXECUTABLE_TARGET})
 
+set(parser_WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}/re2c_parser")
+LEMON_TARGET(re2cParse parser.yy OUT_SRC_FILE parser.cc OUT_HDR_FILE parser_tokens.h)
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
   COMMAND re2c_bootstrap -bi -o ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc	${CMAKE_CURRENT_SOURCE_DIR}/scanner.re
   DEPENDS re2c_bootstrap
   )
-
 set(re2c_SRCS
   ${re2c_common_SRCS}
+  ${LEMON_re2cParse_SRC}
+  ${LEMON_re2cParse_HDR}
   ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
   )
 
