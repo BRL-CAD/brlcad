@@ -38,6 +38,13 @@ foreach(filenum ${FFT_NUMLIST})
   set(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c")
 endforeach(filenum ${FFT_NUMLIST})
 
+add_custom_command(
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fft_gen_files.sentinel"
+  COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/fft_gen_files.sentinel"
+  DEPENDS ${FFT_GEN_SRCS} fftc ifftc
+  )
+add_custom_target(fft_filegen ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/fft_gen_files.sentinel")
+
 set(LIBFFT_SRCS
   fftfast.c
   splitdit.c
@@ -46,8 +53,15 @@ set(LIBFFT_SRCS
   )
 
 BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "${M_LIBRARY}")
-SET_TARGET_PROPERTIES(libfft PROPERTIES LINKER_LANGUAGE C)
-SET_TARGET_PROPERTIES(libfft PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_target_properties(libfft PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(libfft PROPERTIES VERSION 20.0.1 SOVERSION 20)
+if(TARGET libfft)
+  add_dependencies(libfft fft_filegen)
+endif(TARGET libfft)
+if(TARGET libfft-static)
+  add_dependencies(libfft-static fft_filegen)
+endif(TARGET libfft-static)
+
 
 add_executable(fftest fftest.c)
 SetTargetFolder(fftest "Compilation Utilities")
