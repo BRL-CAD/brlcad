@@ -5,8 +5,8 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/bundle.plot3")
 
 BRLCAD_ADDEXEC(rt_pattern rt_pattern.c "librt" TEST)
 add_test(NAME rt_pattern_5 COMMAND rt_pattern 5)
-set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/rt_pattern_5.plot3")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/rt_pattern_5.plot3")
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/rt_pattern_test_5.plot3")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/rt_pattern_test_5.plot3")
 
 
 BRLCAD_ADDEXEC(rt_dvec dvec.cpp "librt" NO_STRICT TEST)
