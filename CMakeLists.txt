@@ -1224,6 +1224,7 @@ if(BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_AQUA)
 
 # Enable features requiring Qt
+# TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
 find_package(Qt5Widgets QUIET)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
