@@ -984,18 +984,17 @@ endif(BRLCAD_BULLET_BUILD)
 # is code that will make use of it if it is available.  If that code
 # becomes sufficiently useful, Adaptagrams will be integrated.  In the
 # meantime, locate the find logic for that package here.
-
 # Adaptagrams library
-if(BRLCAD_LEVEL2)
-  find_package(ADAPTAGRAMS)
-  if(ADAPTAGRAMS_FOUND)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_ADAPTAGRAMS 1\n")
-  endif(ADAPTAGRAMS_FOUND)
-  set(ADAPTAGRAMS_LIBRARIES "${ADAPTAGRAMS_LIBRARIES}" CACHE STRING "Adaptagrams libs" FORCE) 
-  set(ADAPTAGRAMS_FOUND "${ADAPTAGRAMS_FOUND}" CACHE BOOL "Adaptagrams status" FORCE) 
-  mark_as_advanced(ADAPTAGRAMS_FOUND)
-  mark_as_advanced(ADAPTAGRAMS_LIBRARIES)
-endif(BRLCAD_LEVEL2)
+#if(BRLCAD_LEVEL2)
+# find_package(ADAPTAGRAMS)
+# if(ADAPTAGRAMS_FOUND)
+#   CONFIG_H_APPEND(BRLCAD "#define HAVE_ADAPTAGRAMS 1\n")
+# endif(ADAPTAGRAMS_FOUND)
+# set(ADAPTAGRAMS_LIBRARIES "${ADAPTAGRAMS_LIBRARIES}" CACHE STRING "Adaptagrams libs" FORCE)
+# set(ADAPTAGRAMS_FOUND "${ADAPTAGRAMS_FOUND}" CACHE BOOL "Adaptagrams status" FORCE)
+# mark_as_advanced(ADAPTAGRAMS_FOUND)
+# mark_as_advanced(ADAPTAGRAMS_LIBRARIES)
+#endif(BRLCAD_LEVEL2)
 
 # Poly2Tri CDT library
 add_subdirectory(poly2tri)
