@@ -44,8 +44,10 @@ set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 
 # the RPATH/INSTALL_NAME_DIR to be used when installing
-if (NOT APPLE)
+if(NOT APPLE)
   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}")
+else(NOT APPLE)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:@loader_path/../${LIB_DIR}")
 endif(NOT APPLE)
 # On OSX, we need to set INSTALL_NAME_DIR instead of RPATH for CMake < 3.0
 # http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
