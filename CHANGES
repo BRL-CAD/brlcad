@@ -1301,3 +1301,4 @@ s/RTG.NMG_debug/nmg_debug/g
 	make nmg debug flag top level, like libbu's [7.26]
 s/BU_ASSERT(_[A-Z_]+)\(([^,]+|.*\(.*,.*\)),([^,]+|.*\(.*,.*\)),([^,]+|.*\(.*,.*\))\);/BU_ASSERT(\2\3\4);/g
 	consolidated BU_ASSERT_PTR, BU_ASSERT_LONG, BU_ASSERT_SIZE_T, BU_ASSERT_SSIZE_T, BU_ASSERT_DOUBLE [7.26]
+s/BU_FLSTR/CPP_FILELINE/g
