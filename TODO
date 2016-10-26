@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* check on ORCA_Comp reg_bit hash key size
+
 * add regression test for directional light sources
 
 * update astyle
