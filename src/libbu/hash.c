@@ -222,10 +222,6 @@ bu_hash_set(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, voi
     /* If we don't have a key, error */
     if (!key || key_len == 0) return -1;
 
-    /* If we don't have a value, "already set" in the sense that a lookup with this
-     * key will already return the expected value (null) so we don't need to add it. */
-    if (!val) return 0;
-
     /* Use key hash to get bin, add entry to bin list */
     idx = _bu_hash(key, key_len) & hsh_tbl->mask;
 
