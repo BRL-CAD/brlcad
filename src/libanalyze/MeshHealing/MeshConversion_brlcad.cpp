@@ -23,18 +23,24 @@
  *
  */
 
-#include "MeshConversion_brlcad.h"
+#include "common.h"
 
-#include <bu/defines.h>
-#include <bu/malloc.h>
-#include <rt/geom.h>
-#include <rt/primitives/bot.h>
+/* interface header */
+#include "./MeshConversion_brlcad.h"
+
+/* system implementation headers */
 #include <stddef.h>
 #include <utility>
 #include <vector>
 
-#include "DCEL.h"
-#include "Geometry.h"
+/* local implementation headers */
+#include <bu/defines.h>
+#include <bu/malloc.h>
+#include <rt/geom.h>
+#include <rt/primitives/bot.h>
+#include "./DCEL.h"
+#include "./Geometry.h"
+
 
 BrlcadMesh::BrlcadMesh(rt_bot_internal *bot_mesh)
 {
@@ -307,6 +313,8 @@ BrlcadMesh::initNextEdge()
 		}
 	    }
 	} else {
+
+	    third_vertex = -1;
 	    for (unsigned int j = 0; j < VERTICES_PER_FACE; j++) {
 
 		/*Finding the third vertex, that is one that is not vertex1 or vertex2 */
@@ -317,7 +325,8 @@ BrlcadMesh::initNextEdge()
 	    }
 
 	    /* Finding the edge_id of the edge from vertex2 to third_vertex */
-	    edgelist[i].next = getEdge(std::make_pair(vertex2, third_vertex));
+	    if (third_vertex != -1)
+		edgelist[i].next = getEdge(std::make_pair(vertex2, third_vertex));
 	}
     }
 }

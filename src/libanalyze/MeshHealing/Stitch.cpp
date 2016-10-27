@@ -23,13 +23,19 @@
  *
  */
 
-#include "Stitch.h"
+#include "common.h"
 
+/* interface header */
+#include "./Stitch.h"
+
+/* system implementation headers */
 #include <stddef.h>
 #include <algorithm>
 #include <utility>
 
-#include "Geometry.h"
+/* local implementation headers */
+#include "./Geometry.h"
+
 
 void
 stitchGaps(PolygonalMesh *polymesh, DCEL_Edge* start_A, DCEL_Edge* start_B, double tolerance)

@@ -30,8 +30,8 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "nmg.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
@@ -55,8 +55,7 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
     srf = nmg_nurb_new_snurb(order, order,
 			    2*order+interior_pts, 2*order+interior_pts,	/* # knots */
 			    2+interior_pts, 2+interior_pts,
-			    RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT),
-			    &rt_uniresource);
+			    RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT));
 
     /* Build both knot vectors */
 

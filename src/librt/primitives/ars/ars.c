@@ -715,7 +715,6 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	nmg_km(m);
 	return -1;
     }
-    rt_ars_ifree(ip);
 
     s = BU_LIST_FIRST(shell, &r->s_hd);
     bot = nmg_bot(s, &RTG.rtg_vlfree, &rtip->rti_tol);

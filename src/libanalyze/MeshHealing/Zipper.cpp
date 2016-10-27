@@ -23,15 +23,21 @@
  *
  */
 
-#include "Zipper.h"
+#include "common.h"
 
+/* interface header */
+#include "./Zipper.h"
+
+/* system implementation headers */
 #include <stddef.h>
 #include <climits>
 #include <utility>
 #include <vector>
 
+/* local implementation headers */
 #include "vmath.h"
-#include "Geometry.h"
+#include "./Geometry.h"
+
 
 void
 calcFeaturePair(PolygonalMesh *polymesh, queue_element *node)
@@ -96,7 +102,7 @@ initPriorityQueue(PolygonalMesh *polymesh, DCEL_Edge *start, double tolerance)
     /* If it is a triangular hole, perform vertex contraction on the two closest vertices */
     if (no_of_sides == 3) {
 
-	DCEL_Edge *temp = start, *feature;
+	DCEL_Edge *temp = start, *feature = NULL;
 	int min_dist = INT_MAX;
 
 	for(int i = 0; i < 3; i++) {
@@ -108,6 +114,9 @@ initPriorityQueue(PolygonalMesh *polymesh, DCEL_Edge *start, double tolerance)
 	    }
 	    temp = temp->next;
 	}
+
+	if (!feature)
+	    return PQ;
 
 	node.vertex = feature->previous->origin;
 	node.feature_edge = feature;

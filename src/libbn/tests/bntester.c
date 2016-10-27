@@ -35,8 +35,12 @@
 #include "vmath.h"
 #include "bn.h"
 
-#define USAGE "Usage: bntester [-l test_case_line_number] [-f function_number] -i input_file [-o output_file]\n"
+/**
+ * TODO - break this up into the more standard function-per-exec paradigm...
+ * would make a good introductory student task.
+ */
 
+#define USAGE "Usage: bntester [-l test_case_line_number] [-f function_number] -i input_file [-o output_file]\n"
 
 int
 parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt_str, unsigned long line_num, FILE *stream)

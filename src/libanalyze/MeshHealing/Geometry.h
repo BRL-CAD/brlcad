@@ -26,7 +26,10 @@
 #ifndef SRC_LIBANALYZE_MESHHEALING_GEOMETRY_H_
 #define SRC_LIBANALYZE_MESHHEALING_GEOMETRY_H_
 
+#include "common.h"
+
 #include <cstdlib>
+
 
 #define COLL 0
 #define CW 1

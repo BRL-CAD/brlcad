@@ -42,7 +42,6 @@
 #include "rt/db5.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 
 
 /* size of each element (in bytes) for the different BINUNIF types */

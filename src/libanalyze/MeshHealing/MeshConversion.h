@@ -26,10 +26,13 @@
 #ifndef SRC_LIBANALYZE_MESHHEALING_MESHCONVERSION_H_
 #define SRC_LIBANALYZE_MESHHEALING_MESHCONVERSION_H_
 
+#include "common.h"
+
 #include <utility>
 #include <vector>
 
 #include "DCEL.h"
+
 
 #define VERTICES_PER_FACE 3
 #define UNBOUNDED_FACE 0

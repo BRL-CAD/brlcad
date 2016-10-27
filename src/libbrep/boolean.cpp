@@ -41,7 +41,6 @@
 #include "bu/log.h"
 #include "brep.h"
 
-#include "raytrace.h"
 #include "debug_plot.h"
 #include "brep_except.h"
 #include "brep_defines.h"

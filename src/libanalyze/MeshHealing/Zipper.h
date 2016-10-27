@@ -26,10 +26,13 @@
 #ifndef SRC_LIBANALYZE_MESHHEALING_ZIPPER_H_
 #define SRC_LIBANALYZE_MESHHEALING_ZIPPER_H_
 
+#include "common.h"
+
 #include <queue>
 #include <vector>
 
-#include "MeshConversion.h"
+#include "./MeshConversion.h"
+
 
 struct queue_element {
     DCEL_Vertex *vertex;

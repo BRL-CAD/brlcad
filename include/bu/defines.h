@@ -177,19 +177,6 @@
  * Quick and easy macros to generate an informative error message and
  * abort execution if the specified condition does not hold true.
  *
- * @def BU_ASSERT_PTR(eqn)
- * Quick and easy macros to generate an informative error message and
- * abort execution if the specified condition does not hold true.
- *
- * @def BU_ASSERT_LONG(eqn)
- * Quick and easy macros to generate an informative error message and
- * abort execution if the specified condition does not hold true.
- *
- * @def BU_ASSERT_DOUBLE(eqn)
- * Quick and easy macros to generate an informative error message and
- * abort execution if the specified condition does not hold true.
- *
- * Example: BU_ASSERT_LONG(j+7, <, 42);
  */
 #ifdef NO_BOMBING_MACROS
 #  define BU_ASSERT(_equation) (void)(_equation)
@@ -202,69 +189,6 @@
     }
 #endif
 
-#ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_PTR(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
-#else
-#  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
-    if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
-	bu_log("BU_ASSERT_PTR(" #_lhs #_relation #_rhs ") failed, lhs=%p, rhs=%p, file %s, line %d\n", \
-	       (void *)(_lhs), (void *)(_rhs), \
-	       __FILE__, __LINE__); \
-	bu_bomb("BU_ASSERT_PTR failure\n"); \
-    }
-#endif
-
-
-#ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_LONG(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
-#else
-#  define BU_ASSERT_LONG(_lhs, _relation, _rhs)	\
-    if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
-	bu_log("BU_ASSERT_LONG(" #_lhs #_relation #_rhs ") failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
-	       (long)(_lhs), (long)(_rhs), \
-	       __FILE__, __LINE__); \
-	bu_bomb("BU_ASSERT_LONG failure\n"); \
-    }
-#endif
-
-
-#ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
-#else
-#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
-    if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
-	bu_log("BU_ASSERT_SIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%zd, rhs=%zd, file %s, line %d\n", \
-	       (size_t)(_lhs), (size_t)(_rhs), \
-	       __FILE__, __LINE__); \
-	bu_bomb("BU_ASSERT_SIZE_T failure\n"); \
-    }
-#endif
-
-
-#ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
-#else
-#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs)	\
-    if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
-	bu_log("BU_ASSERT_SSIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%zd, rhs=%zd, file %s, line %d\n", \
-	       (ssize_t)(_lhs), (ssize_t)(_rhs), \
-	       __FILE__, __LINE__); \
-	bu_bomb("BU_ASSERT_SSIZE_T failure\n"); \
-    }
-#endif
-
-
-#ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
-#else
-#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
-    if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
-	bu_log("BU_ASSERT_DOUBLE(" #_lhs #_relation #_rhs ") failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
-	       (double)(_lhs), (double)(_rhs), \
-	       __FILE__, __LINE__); \
-	bu_bomb("BU_ASSERT_DOUBLE failure\n"); \
-    }
-#endif
 
 /**
  * fastf_t - Intended to be the fastest floating point data type on

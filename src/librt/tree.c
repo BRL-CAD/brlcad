@@ -523,7 +523,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
      */
     ret = rt_cache_prep(data->cache, stp, ip);
 
-    if (ret != 1) {
+    if (ret) {
 	int hash;
 	/* Error, solid no good */
 	bu_log("_rt_gettree_leaf(%s):  prep failure\n", dp->d_namep);

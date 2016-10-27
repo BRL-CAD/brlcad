@@ -234,7 +234,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strdup strn
 | sed 's/.*\/str\.c:.*strncat.*//' \
 | sed 's/.*\/str\.c:.*strncmp.*//' \
 | sed 's/.*\/str\.c:.*strncpy.*//' \
-| sed 's/.*\/bu_dirname\.c:.*dirname.*//' \
+| sed 's/.*\/tests\/dirname\.c:.*dirname.*//' \
 | sed 's/.*\/ttcp.c:.*//' \
 | sed 's/.*\/vls\.c:.*strncpy.*//' \
 | sed 's/.*\/wfobj\/obj_util\.cpp:.*strncpy.*//' \
@@ -361,7 +361,7 @@ fi
 # make sure no more WIN32 issues are introduced than existed
 # previously.  for cases where it "seems" necessary, can find and fix
 # a case that is not before adding another.  lets not increase this.
-NEED_FIXING=197
+NEED_FIXING=194
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	echo "********************************************************"

@@ -43,12 +43,10 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 
 #include "../../librt_private.h"
 
 
-fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
 extern void get_indices(void *seg, int *start, int *end);	/* from g_extrude.c */
 
 
