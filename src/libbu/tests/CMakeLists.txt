@@ -545,6 +545,13 @@ add_test(NAME bu_hash_one_entry    COMMAND bu_hash 1)
 add_test(NAME bu_hash_lorem_ipsum  COMMAND bu_hash 2)
 
 #
+#  *********** humanize_number.c tests ************
+#
+
+BRLCAD_ADDEXEC(bu_humanize_number humanize_number.c libbu TEST)
+add_test(NAME bu_humanize_number_BSD COMMAND bu_humanize_number)
+
+#
 #  *********** uuid.c tests ************
 #
 

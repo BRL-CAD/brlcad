@@ -19,7 +19,7 @@ command.  If the object argument is supplied, only those objects are listed.
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>ls</command>
-      <arg choice="opt" rep="norepeat">-A -o -a -c -r -s -p -l -q</arg>
+      <arg choice="opt" rep="norepeat">-A -o -a -c -r -s -p -l -q -H -S</arg>
 	<arg choice="opt" rep="norepeat"><replaceable>objects</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
@@ -58,6 +58,14 @@ command.  If the object argument is supplied, only those objects are listed.
 <listitem>
  <para>l -- Use long format showing object name, object type, major type, minor type, and
    length.
+ </para>
+</listitem>
+<listitem>
+ <para>H -- When printing using long format, use human readable sizes for object size.
+ </para>
+</listitem>
+<listitem>
+ <para>S -- When printing using long format, sort using object size rather than object name.
  </para>
 </listitem>
 <listitem>
