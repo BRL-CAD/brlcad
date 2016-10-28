@@ -173,6 +173,28 @@ extern int cyclic_path(const struct db_full_path *fp, const char *name);
 extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
 
 
+/* db5_io.c */
+#define DB_SIZE_GEOM 0x1
+#define DB_SIZE_TREE 0x2
+#define DB_SIZE_ATTR 0x4
+/**
+ * Flag behavior:
+ *
+ * FLAG(S)            | Reported value
+ * -------------------|---------------
+ * NONE (0)           | Geometry + Attribute size of object
+ * GEOM               | Geometry size of object
+ * ATTR               | Attribute size of object
+ * GEOM + ATTR        | Geometry + Attribute size of object
+ * TREE               | Geometry + Attribute size of tree
+ * GEOM + TREE        | Geometry size of tree
+ * ATTR + TREE        | Attribute size of tree 
+ * GEOM + ATTR + TREE | Geometry + Attribute size of tree
+ *
+ */
+extern int db5_size(struct db_i *dbip, struct directory *dp, int flags);
+
+
 /* primitive_util.c */
 
 extern int _rt_tcl_list_to_int_array(const char *list, int **array, int *array_len);
