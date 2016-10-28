@@ -177,6 +177,7 @@ extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *
 #define DB_SIZE_GEOM 0x1
 #define DB_SIZE_TREE 0x2
 #define DB_SIZE_ATTR 0x4
+#define DB_SIZE_XPUSH 0x8
 /**
  * Flag behavior:
  *
@@ -191,6 +192,9 @@ extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *
  * ATTR + TREE        | Attribute size of tree 
  * GEOM + ATTR + TREE | Geometry + Attribute size of tree
  *
+ * The XPUSH flag tells the calculator to treat each object
+ * instance as unique, rather than recognizing a reference
+ * to an object that has already been processed.
  */
 extern int db5_size(struct db_i *dbip, struct directory *dp, int flags);
 
