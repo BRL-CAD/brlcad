@@ -102,7 +102,8 @@ void
 _ged_vls_col_pr4v(struct bu_vls *vls,
 		  struct directory **list_of_names,
 		  size_t num_in_list,
-		  int no_decorate)
+		  int no_decorate,
+		  int ssflag)
 {
     size_t lines, i, j, k, this_one;
     size_t namelen;
@@ -110,9 +111,15 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
     size_t cwidth;	/* column width */
     size_t numcol;	/* number of columns */
 
-    bu_sort((void *)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  cmpdirname, NULL);
+    if (!ssflag) {
+	bu_sort((void *)list_of_names,
+		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+		cmpdirname, NULL);
+    } else {
+	bu_sort((void *)list_of_names,
+		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+		cmpdlen, NULL);
+    }
 
     /*
      * Traverse the list of names, find the longest name and set the
@@ -331,15 +338,22 @@ vls_line_dpp(struct ged *gedp,
 	     int aflag,	/* print all objects */
 	     int cflag,	/* print combinations */
 	     int rflag,	/* print regions */
-	     int sflag)	/* print solids */
+	     int sflag,	/* print solids */
+	     int ssflag) /* sort by size */
 {
     int i;
     int isComb, isRegion;
     int isSolid;
 
-    bu_sort((void *)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  cmpdirname, NULL);
+    if (!ssflag) {
+	bu_sort((void *)list_of_names,
+		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+		cmpdirname, NULL);
+    } else {
+	bu_sort((void *)list_of_names,
+		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+		cmpdlen, NULL);
+    }
 
     /*
      * i - tracks the list item
@@ -531,9 +545,9 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     if (lflag)
 	vls_long_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag, hflag, ssflag);
     else if (aflag || cflag || rflag || sflag)
-	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
+	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag, ssflag);
     else {
-	_ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
+	_ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0, ssflag);
 	_ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
     }
 

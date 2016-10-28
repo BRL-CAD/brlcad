@@ -65,7 +65,7 @@ command.  If the object argument is supplied, only those objects are listed.
  </para>
 </listitem>
 <listitem>
- <para>S -- When printing using long format, sort using object size rather than object name.
+ <para>S -- Sort using object size rather than object name.
  </para>
 </listitem>
 <listitem>
