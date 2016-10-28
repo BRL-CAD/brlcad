@@ -31,6 +31,7 @@
 
 #include "common.h"
 
+#include "bu/parse.h" /* for bu_external */
 #include "./rt/defines.h"
 #include "./rt/op.h"
 
