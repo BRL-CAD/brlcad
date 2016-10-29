@@ -36,6 +36,7 @@
 
 #include "bu/exit.h"
 #include "bu/getopt.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/units.h"
@@ -413,7 +414,7 @@ read_options(int argc, char * const argv[], size_t *bufLength,
 		bu_exit(0, NULL);
 		break;	/* UNREACHABLE */
 	    case 'l' :
-		sscanf(bu_optarg, "%zu", &temp);
+		bu_sscanf(bu_optarg, "%zu", &temp);
 		*bufLength = temp + 1;
 		break;
 	    case 'n' :
@@ -514,7 +515,7 @@ main(int argc, char * const argv[])
     skipped = 0;
 
     if (buflen != 4)
-	printf("Warning: buffer size %zu != 4, expect some results to differ.\n", buflen);
+	bu_log("Warning: buffer size %zu != 4, expect some results to differ.\n", buflen);
 
     printf("1..%lu\n", sizeof test_args / sizeof *test_args);
     for (i = 0; i < sizeof test_args / sizeof *test_args; i++) {
@@ -525,8 +526,7 @@ main(int argc, char * const argv[])
 	    buflen = 6;
 	    buf = (char *)bu_malloc(buflen, NULL);
 	    if (verbose)
-		printf("Buffer length increased to %zu\n",
-			buflen);
+		bu_log("Buffer length increased to %zu\n", buflen);
 	}
 
 	if (test_args[i].scale < 0 && ! includeNegScale) {
@@ -547,7 +547,7 @@ main(int argc, char * const argv[])
 
 	if (r != test_args[i].retval) {
 	    if (verbose)
-		printf("wrong return value on index %lu, buflen: %zu, got: %d + \"%s\", expected %d + \"%s\"; num = %" PRId64 ", scale = %s, flags= %s.\n",
+		bu_log("wrong return value on index %lu, buflen: %zu, got: %d + \"%s\", expected %d + \"%s\"; num = %" PRId64 ", scale = %s, flags= %s.\n",
 			i, buflen, r, buf, test_args[i].retval,
 			test_args[i].res, test_args[i].num,
 			scale_str, flag_str);
