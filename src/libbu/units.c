@@ -567,8 +567,8 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
 	bu_vls_sprintf(&tmpbuf, "%d%s%d%s%s%s", sign * s1, ".", s2, sep, SCALE2PREFIX(i), suffix);
 	bu_vls_trimspace(&tmpbuf);
 	r = bu_vls_strlen(&tmpbuf);
-	rcpy = r > (int)len ? (int)len : r;
-	bu_strlcpy(buf, bu_vls_addr(&tmpbuf), rcpy + 1);
+	rcpy = r + 1 > (int)len ? (int)len : r + 1;
+	bu_strlcpy(buf, bu_vls_addr(&tmpbuf), rcpy);
 	bu_vls_free(&tmpbuf);
 	buf[len-1] = '\0';
     } else {
@@ -576,8 +576,8 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
 	bu_vls_sprintf(&tmpbuf, "%" PRId64 "%s%s%s", sign * (quotient + (remainder + divisor / 2) / divisor), sep, SCALE2PREFIX(i), suffix);
 	bu_vls_trimspace(&tmpbuf);
 	r = bu_vls_strlen(&tmpbuf);
-	rcpy = r > (int)len ? (int)len : r;
-	bu_strlcpy(buf, bu_vls_addr(&tmpbuf), rcpy + 1);
+	rcpy = r + 1 > (int)len ? (int)len : r + 1;
+	bu_strlcpy(buf, bu_vls_addr(&tmpbuf), rcpy);
 	bu_vls_free(&tmpbuf);
 	buf[len-1] = '\0';
     }
