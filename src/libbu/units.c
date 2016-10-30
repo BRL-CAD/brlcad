@@ -446,6 +446,7 @@ int
 bu_humanize_number(char *buf, size_t len, int64_t quotient,
 	const char *suffix, int scale, int flags)
 {
+    struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
     const char *prefixes, *sep;
     int	i, r, remainder, s1, s2, sign;
     int	divisordeccut;
@@ -559,18 +560,27 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
      * XXX - should we make sure there is enough space for the decimal
      * place and if not, don't do BU_HN_DECIMAL?
      */
-    if (((quotient == 9 && remainder < divisordeccut) || quotient < 9) &&
-	    i > 0 && flags & BU_HN_DECIMAL) {
-	s1 = (int)quotient + ((remainder * 10 + divisor / 2) /
-		divisor / 10);
+    if (((quotient == 9 && remainder < divisordeccut) || quotient < 9) && i > 0 && flags & BU_HN_DECIMAL) {
+	int rcpy = 0;
+	s1 = (int)quotient + ((remainder * 10 + divisor / 2) / divisor / 10);
 	s2 = ((remainder * 10 + divisor / 2) / divisor) % 10;
-	r = snprintf(buf, len, "%d%s%d%s%s%s",
-		sign * s1, ".", s2,
-		sep, SCALE2PREFIX(i), suffix);
-    } else
-	r = snprintf(buf, len, "%" PRId64 "%s%s%s",
-		sign * (quotient + (remainder + divisor / 2) / divisor),
-		sep, SCALE2PREFIX(i), suffix);
+	bu_vls_sprintf(&tmpbuf, "%d%s%d%s%s%s", sign * s1, ".", s2, sep, SCALE2PREFIX(i), suffix);
+	bu_vls_trimspace(&tmpbuf);
+	r = bu_vls_strlen(&tmpbuf);
+	rcpy = r > (int)len ? (int)len : r;
+	bu_strlcpy(buf, bu_vls_addr(&tmpbuf), rcpy + 1);
+	bu_vls_free(&tmpbuf);
+	buf[len-1] = '\0';
+    } else {
+	int rcpy = 0;
+	bu_vls_sprintf(&tmpbuf, "%" PRId64 "%s%s%s", sign * (quotient + (remainder + divisor / 2) / divisor), sep, SCALE2PREFIX(i), suffix);
+	bu_vls_trimspace(&tmpbuf);
+	r = bu_vls_strlen(&tmpbuf);
+	rcpy = r > (int)len ? (int)len : r;
+	bu_strlcpy(buf, bu_vls_addr(&tmpbuf), rcpy + 1);
+	bu_vls_free(&tmpbuf);
+	buf[len-1] = '\0';
+    }
 
     return (r);
 }

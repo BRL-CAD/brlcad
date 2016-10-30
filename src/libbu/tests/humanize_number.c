@@ -54,14 +54,14 @@ static struct {
     int scale;
 } test_args[] = {
     /* tests 0-13 test 1000 suffixes */
-    { 2, "0 ", (int64_t)0L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
+    { 1, "0", (int64_t)0L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 3, "1 k", (int64_t)500L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 3, "1 M", (int64_t)500*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 3, "1 G", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 3, "1 T", (int64_t)500*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 3, "1 P", (int64_t)500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 3, "1 E", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 2, "1 ", (int64_t)1L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
+    { 1, "1", (int64_t)1L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 3, "2 k", (int64_t)1500L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 3, "2 M", (int64_t)1500*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 3, "2 G", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
@@ -70,14 +70,14 @@ static struct {
     { 3, "2 E", (int64_t)1500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
 
     /* tests 14-27 test 1024 suffixes */
-    { 2, "0 ", (int64_t)0L, 0, BU_HN_AUTOSCALE },
+    { 1, "0", (int64_t)0L, 0, BU_HN_AUTOSCALE },
     { 3, "1 K", (int64_t)512L, 0, BU_HN_AUTOSCALE },
     { 3, "1 M", (int64_t)512*1024L, 0, BU_HN_AUTOSCALE },
     { 3, "1 G", (int64_t)512*1024*1024L, 0, BU_HN_AUTOSCALE },
     { 3, "1 T", (int64_t)512*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
     { 3, "1 P", (int64_t)512*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
     { 3, "1 E", (int64_t)512*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 2, "1 ", (int64_t)1L, 0, BU_HN_AUTOSCALE },
+    { 1, "1", (int64_t)1L, 0, BU_HN_AUTOSCALE },
     { 3, "2 K", (int64_t)1536L, 0, BU_HN_AUTOSCALE },
     { 3, "2 M", (int64_t)1536*1024L, 0, BU_HN_AUTOSCALE },
     { 3, "2 G", (int64_t)1536*1024*1024L, 0, BU_HN_AUTOSCALE },
@@ -173,35 +173,35 @@ static struct {
 
     /* tests for scale == 0, without autoscale */
     /* tests 100-114 test scale 0 with 1000 divisor - print first N digits */
-    { 2, "0 ", (int64_t)0L, BU_HN_DIVISOR_1000, 0 },
-    { 2, "1 ", (int64_t)1L, BU_HN_DIVISOR_1000, 0 },
-    { 3, "10 ", (int64_t)10L, BU_HN_DIVISOR_1000, 0 },
+    { 1, "0", (int64_t)0L, BU_HN_DIVISOR_1000, 0 },
+    { 1, "1", (int64_t)1L, BU_HN_DIVISOR_1000, 0 },
+    { 2, "10", (int64_t)10L, BU_HN_DIVISOR_1000, 0 },
     { 3, "0 M", (int64_t)150L, BU_HN_DIVISOR_1000, BU_HN_NOSPACE },
     { 3, "0 M", (int64_t)500L, BU_HN_DIVISOR_1000, BU_HN_NOSPACE },
     { 3, "0 M", (int64_t)999L, BU_HN_DIVISOR_1000, BU_HN_NOSPACE },
-    /*{ 4, "150", (int64_t)150L, BU_HN_DIVISOR_1000, 0 },
-    { 4, "500", (int64_t)500L, BU_HN_DIVISOR_1000, 0 },
-    { 4, "999", (int64_t)999L, BU_HN_DIVISOR_1000, 0 },
-    { 5, "100", (int64_t)1000L, BU_HN_DIVISOR_1000, 0 },
-    { 5, "150", (int64_t)1500L, BU_HN_DIVISOR_1000, 0 },
-    { 7, "500", (int64_t)500*1000L, BU_HN_DIVISOR_1000, 0 },
-    { 8, "150", (int64_t)1500*1000L, BU_HN_DIVISOR_1000, 0 },
-    { 10, "500", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, 0 },
-    { 11, "150", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, 0 },*/
+    { 3, "150", (int64_t)150L, BU_HN_DIVISOR_1000, 0 },
+    { 3, "500", (int64_t)500L, BU_HN_DIVISOR_1000, 0 },
+    { 3, "999", (int64_t)999L, BU_HN_DIVISOR_1000, 0 },
+    { 4, "100", (int64_t)1000L, BU_HN_DIVISOR_1000, 0 },
+    { 4, "150", (int64_t)1500L, BU_HN_DIVISOR_1000, 0 },
+    { 6, "500", (int64_t)500*1000L, BU_HN_DIVISOR_1000, 0 },
+    { 7, "150", (int64_t)1500*1000L, BU_HN_DIVISOR_1000, 0 },
+    { 9, "500", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, 0 },
+    { 10, "150", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, 0 },
 
     /* tests 115-126 test scale 0 with 1024 divisor - print first N digits */
-    { 2, "0 ", (int64_t)0L, 0, 0 },
-    { 2, "1 ", (int64_t)1L, 0, 0 },
-    { 3, "10 ", (int64_t)10L, 0, 0 },
-    /*{ 4, "150", (int64_t)150L, 0, 0 },
-    { 4, "500", (int64_t)500L, 0, 0 },
-    { 4, "999", (int64_t)999L, 0, 0 },
-    { 5, "100", (int64_t)1000L, 0, 0 },
-    { 5, "150", (int64_t)1500L, 0, 0 },
-    { 7, "500", (int64_t)500*1000L, 0, 0 },
-    { 8, "150", (int64_t)1500*1000L, 0, 0 },
-    { 10, "500", (int64_t)500*1000*1000L, 0, 0 },
-    { 11, "150", (int64_t)1500*1000*1000L, 0, 0 },*/
+    { 1, "0", (int64_t)0L, 0, 0 },
+    { 1, "1", (int64_t)1L, 0, 0 },
+    { 2, "10", (int64_t)10L, 0, 0 },
+    { 3, "150", (int64_t)150L, 0, 0 },
+    { 3, "500", (int64_t)500L, 0, 0 },
+    { 3, "999", (int64_t)999L, 0, 0 },
+    { 4, "100", (int64_t)1000L, 0, 0 },
+    { 4, "150", (int64_t)1500L, 0, 0 },
+    { 6, "500", (int64_t)500*1000L, 0, 0 },
+    { 7, "150", (int64_t)1500*1000L, 0, 0 },
+    { 9, "500", (int64_t)500*1000*1000L, 0, 0 },
+    { 10, "150", (int64_t)1500*1000*1000L, 0, 0 },
 
     /* Test boundary cases for very large positive/negative number formatting */
     /* Explicit scale, divisor 1024 */
@@ -254,25 +254,25 @@ static struct {
 
     /* 0 scale, divisor 1024 */
     { 12, "skdj",  INT64_MAX, 0, 0 },
-    /*{ 21, "-9223", -INT64_MAX, 0, 0 },
-    { 19, "10358", (int64_t)92*1024*1024*1024*1024*1024L, 0, 0 },
-    { 20, "-1035", -(int64_t)92*1024*1024*1024*1024*1024L, 0, 0 },
-    { 18, "92323", (int64_t)82*1024*1024*1024*1024*1024L, 0, 0 },
-    { 19, "-9232", -(int64_t)82*1024*1024*1024*1024*1024L, 0, 0 },
-    { 18, "91197", (int64_t)81*1024*1024*1024*1024*1024L, 0, 0 },
-    { 19, "-9119", -(int64_t)81*1024*1024*1024*1024*1024L, 0, 0 },*/
+    { 20, "-9223", -INT64_MAX, 0, 0 },
+    { 18, "10358", (int64_t)92*1024*1024*1024*1024*1024L, 0, 0 },
+    { 19, "-1035", -(int64_t)92*1024*1024*1024*1024*1024L, 0, 0 },
+    { 17, "92323", (int64_t)82*1024*1024*1024*1024*1024L, 0, 0 },
+    { 18, "-9232", -(int64_t)82*1024*1024*1024*1024*1024L, 0, 0 },
+    { 17, "91197", (int64_t)81*1024*1024*1024*1024*1024L, 0, 0 },
+    { 18, "-9119", -(int64_t)81*1024*1024*1024*1024*1024L, 0, 0 },
 
     /* 0 scale, divisor 1000 */
     /* XXX - why does this fail? */
     { -1, "", INT64_MAX, BU_HN_DIVISOR_1000, 0 },
-    /*{ 21, "-9223", -INT64_MAX, BU_HN_DIVISOR_1000,  0 },
-    { 19, "10358", (int64_t)92*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
-    { 20, "-1035", -(int64_t)92*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
-    { 18, "92323", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
-    { 19, "-9232", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },*/
+    { 20, "-9223", -INT64_MAX, BU_HN_DIVISOR_1000,  0 },
+    { 18, "10358", (int64_t)92*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
+    { 19, "-1035", -(int64_t)92*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
+    { 17, "92323", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
+    { 18, "-9232", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
     /* Expected to pass */
-    /*{ 18, "91197", (int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
-    { 19, "-9119", -(int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },*/
+    { 17, "91197", (int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
+    { 18, "-9119", -(int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
 
 
 
@@ -323,13 +323,13 @@ static struct {
     { 5, "1.0 G", (int64_t)1023*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
 
     /* Negative, Autoscale - should pass */
-    /*{ 6, "-1.5 ", -(int64_t)1500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
+    { 6, "-1.5 ", -(int64_t)1500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 6, "-1.9 ", -(int64_t)1949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 6, "-9.9 ", -(int64_t)9949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
 
     { 6, "-1.5 ", -(int64_t)1536*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
     { 6, "-1.9 ", -(int64_t)1949*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 6, "-9.7 ", -(int64_t)9949*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },*/
+    { 6, "-9.7 ", -(int64_t)9949*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
 
     /* Positive/negative, at maximum scale */
     { 5, "500 P", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
@@ -337,13 +337,13 @@ static struct {
     { 5, "8.9 E", (int64_t)8949*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     { 5, "9.2 E", INT64_MAX, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
     /* Negatives work with latest rev only: */
-    /*{ 6, "-9.2 ", -INT64_MAX, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 6, "-8.9 ", -(int64_t)8949*1000*1000*1000*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },*/
+    { 6, "-9.2 ", -INT64_MAX, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
+    { 6, "-8.9 ", -(int64_t)8949*1000*1000*1000*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
 
     { 5, "8.0 E",   INT64_MAX, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
     { 5, "7.9 E",   INT64_MAX-(int64_t)100*1024*1024*1024*1024*1024LL, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    /*{ 6, "-8.0 ", -INT64_MAX, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 6, "-7.9 ",   -INT64_MAX+(int64_t)100*1024*1024*1024*1024*1024LL, BU_HN_DECIMAL, BU_HN_AUTOSCALE },*/
+    { 6, "-8.0 ", -INT64_MAX, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
+    { 6, "-7.9 ",   -INT64_MAX+(int64_t)100*1024*1024*1024*1024*1024LL, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
 
     /* Positive, Fixed scales */
     { 5, "500 k", (int64_t)500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 1 },
