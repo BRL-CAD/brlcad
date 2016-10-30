@@ -1159,6 +1159,66 @@ db_comb_mvall(struct directory *dp, struct db_i *dbip, const char *old_name, con
     return 1;
 }
 
+HIDDEN void
+_db_comb_get_children(struct directory **children, int *curr_ind, struct db_i *dbip, union tree *tp)
+{
+   struct directory *dp;
+
+    if (!tp)
+        return;
+
+    RT_CHECK_DBI(dbip);
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+        case OP_UNION:
+        case OP_INTERSECT:
+        case OP_SUBTRACT:
+        case OP_XOR:
+            _db_comb_get_children(children, curr_ind, dbip, tp->tr_b.tb_right);
+        case OP_NOT:
+        case OP_GUARD:
+        case OP_XNOP:
+            _db_comb_get_children(children, curr_ind, dbip, tp->tr_b.tb_left);
+            break;
+        case OP_DB_LEAF:
+            if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+                return;
+            } else {
+                /* List the child, if it isn't hidden */
+                if (!(dp->d_flags & RT_DIR_HIDDEN)) {
+		    children[*curr_ind] = dp;
+		    (*curr_ind) = (*curr_ind) + 1;
+		}
+                break;
+            }
+
+        default:
+            bu_log("_db_comb_get_children: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("_db_comb_get_children\n");
+    }
+}
+
+struct directory **
+db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb)
+{
+    int dp_index = 0;
+    int node_count = 0;
+    struct directory **children;
+
+    RT_CK_DBI(dbip);
+    RT_CK_COMB(comb);
+
+    node_count = db_tree_nleaves(comb->tree);
+    if (!node_count) return NULL;
+    children = (struct directory **)bu_calloc(node_count + 1, sizeof(struct directory *), "directory array");
+
+    _db_comb_get_children(children, &dp_index, dbip, comb->tree);
+
+    children[node_count] = RT_DIR_NULL;
+    return children;
+}
+
 /** @} */
 /*
  * Local Variables:
