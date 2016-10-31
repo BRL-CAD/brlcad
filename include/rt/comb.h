@@ -105,8 +105,20 @@ RT_EXPORT extern int db_comb_mvall(struct directory *dp,
  */
 RT_EXPORT extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
 
-/* Return a RT_DIR_NULL terminated array of directory pointers that
+/**
+ * Return a RT_DIR_NULL terminated array of directory pointers that
  * holds the set of immediate children associated with comb */
+/* TODO - probably should optionally return arrays of bool_op and mat_t
+ * corresponding to the directory pointers in the return array - in
+ * combination, those should fully capture the comb structure in a way that's a
+ * lot easier to deal with than the tree... something like:
+ *
+ * RT_EXPORT extern struct directory **
+ * db_comb_children(struct db_i *dbip,
+ * 			 struct rt_comb_internal *comb,
+ * 			 bool_op **ops,
+ * 			 mat_t **mats);
+ */
 RT_EXPORT extern struct directory **
 db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb);
 
