@@ -119,7 +119,7 @@ RT_EXPORT extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_
  * terminated, the matrix array is NULL terminated.  For example:
  *
  * @code
- * int i;
+ * int i = 0;
  * struct directory *wdp;
  * struct directory **children;
  * int *bool_ops;
@@ -127,16 +127,17 @@ RT_EXPORT extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_
  * matp_t m;
  * children = db_comb_children(dbip, comb, &bool_ops, &matrices);
  * if (children) {
+ *    i = 0;
  *    wdp = children[0];
  *    while (wdp != RT_DIR_NULL) {
  *       char obuf[1024];
- *       bu_log("%s child %d: %d %s\n", dp->d_namep, ind, bool_ops[ind], wdp->d_namep);
+ *       bu_log("%s child %d: %d %s\n", dp->d_namep, i, bool_ops[ind], wdp->d_namep);
  *       if (mats[ind]){
- *          bn_mat_print_guts("", mats[ind], obuf, 1024);
+ *          bn_mat_print_guts("", mats[i], obuf, 1024);
  *          bu_log("%s %s\n", wdp->d_namep, obuf);
  *       }
- *       ind++;
- *       wdp = children[ind];
+ *       i++;
+ *       wdp = children[i];
  *    }
  * }
  * i = 0;
