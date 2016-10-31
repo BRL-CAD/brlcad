@@ -107,7 +107,48 @@ RT_EXPORT extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_
 
 /**
  * Return a RT_DIR_NULL terminated array of directory pointers that
- * holds the set of immediate children associated with comb */
+ * holds the set of immediate children associated with comb.  The
+ * caller is responsible for freeing the array, but not the directory
+ * structures pointed to by the array.
+ *
+ * Optionally, pointers may also be supplied to collect arrays holding
+ * the boolean operations and matrices associated with the comb entries.
+ * For boolean operations, the caller is responsible for freeing the
+ * array.  For matrices, both the array and the matrices themselves
+ * must be freed by the caller.  The boolean operations array is zero
+ * terminated, the matrix array is NULL terminated.  For example:
+ *
+ * @code
+ * int i;
+ * struct directory *wdp;
+ * struct directory **children;
+ * int *bool_ops;
+ * matp_t *matrices;
+ * matp_t m;
+ * children = db_comb_children(dbip, comb, &bool_ops, &matrices);
+ * if (children) {
+ *    wdp = children[0];
+ *    while (wdp != RT_DIR_NULL) {
+ *       char obuf[1024];
+ *       bu_log("%s child %d: %d %s\n", dp->d_namep, ind, bool_ops[ind], wdp->d_namep);
+ *       if (mats[ind]){
+ *          bn_mat_print_guts("", mats[ind], obuf, 1024);
+ *          bu_log("%s %s\n", wdp->d_namep, obuf);
+ *       }
+ *       ind++;
+ *       wdp = children[ind];
+ *    }
+ * }
+ * i = 0;
+ * while (mats[i]) {
+ *    bu_free(mats[i], "free matrix");
+ *    i++;
+ * }
+ * bu_free(mats, "free mats array");
+ * bu_free(bool_ops, "free ops");
+ * bu_free(children, "free children struct directory ptr array");
+ * @endcode
+ */
 RT_EXPORT extern struct directory **
 db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb, int **bool_ops, matp_t **mats);
 
