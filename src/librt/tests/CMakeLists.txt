@@ -26,14 +26,6 @@ BRLCAD_ADDEXEC(rt_nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu" TEST)
 # diff testing
 BRLCAD_ADDEXEC(rt_diff diff.c "librt" TEST)
 
-# nmg_mk testing
-BRLCAD_ADDEXEC(rt_nmg_mk nmg_mk.c "librt" TEST)
-add_test(NAME rt_nmg_mk COMMAND rt_nmg_mk)
-
-# nmg_copy testing
-BRLCAD_ADDEXEC(rt_nmg_copy nmg_copy.c "librt" TEST)
-add_test(NAME rt_nmg_copy COMMAND rt_nmg_copy)
-
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
   BRLCAD_ADDEXEC(rt_binary_attribute binary_attribute.c "librt" TEST)
   add_test(NAME rt_binary_attribute COMMAND rt_binary_attribute)
