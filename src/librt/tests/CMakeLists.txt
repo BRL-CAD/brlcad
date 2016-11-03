@@ -31,6 +31,9 @@ if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
   add_test(NAME rt_binary_attribute COMMAND rt_binary_attribute)
 endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
+# size testing
+BRLCAD_ADDEXEC(db5_size db5_size.c "librt" TEST)
+
 set(distcheck_files
   arb_intersect.g
   brep_boolean_tests.g

@@ -28,6 +28,7 @@
 #include "common.h"
 
 #include <set>
+#include <queue>
 
 #include <stdio.h>
 #include <string.h>
@@ -36,18 +37,30 @@
 
 #include "vmath.h"
 #include "bu/avs.h"
+#include "bu/units.h"
 #include "rt/db5.h"
 #include "raytrace.h"
 #include "librt_private.h"
 
-/* TODO - should halt on recursive path, but need full path aware
- * tree walk ala search for that... */
-#define DB_SIZE_CYCLIC_LIMIT 10000
+/* flags for size calculations */
+#define RT_DIR_SIZE_FINALIZED   0x1
+#define RT_DIR_SIZE_ATTR_DONE   0x2
+#define RT_DIR_SIZE_COMB_DONE   0x4
+#define RT_DIR_SIZE_ACTIVE      0x8
 
-HIDDEN int
+/* sizes in directory pointer arrays */
+#define RT_DIR_SIZE_OBJ 0
+#define RT_DIR_SIZE_KEEP 1
+#define RT_DIR_SIZE_XPUSH 2
+
+#define HSIZE(buf, var) \
+    (void)bu_humanize_number(buf, 5, (int64_t)var, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
+
+
+HIDDEN long
 _bu_avs_size(struct bu_attribute_value_set *avs)
 {
-    int size = 0;
+    long size = 0;
     struct bu_attribute_value_pair *avpp;
     for (BU_AVS_FOR(avpp, avs)) {
 	size += (strlen(avpp->name)+1) * sizeof(char);
@@ -56,126 +69,319 @@ _bu_avs_size(struct bu_attribute_value_set *avs)
     return size;
 }
 
-
-HIDDEN void
-_db5_calc_subsize(int *ret, union tree *tp, struct db_i *dbip, int *depth, int max_depth, int flags, std::set<struct directory *> &visited,
-	void (*traverse_func) (int *ret, struct directory *, struct db_i *, int *, int, int, std::set<struct directory *> &))
+long
+db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 {
+    int local_flags = flags;
+    int size_flag_cnt = 0;
+    int i, j, finalized, finalized_prev, active_prev;
+    int active = 0;
+    int dcnt = 0;
+    int *s_lflags;
     struct directory *dp;
-    if (!tp) return;
-    RT_CHECK_DBI(dbip);
-    RT_CK_TREE(tp);
-    (*depth)++;
-    if (*depth > max_depth) {
-	(*depth)--;
-	return;
+    if (!dbip) return 0;
+    if (!in_dp) return 0;
+    if (flags & DB_SIZE_OBJ) size_flag_cnt++;
+    if (flags & DB_SIZE_KEEP) size_flag_cnt++;
+    if (flags & DB_SIZE_XPUSH) size_flag_cnt++;
+
+    if (!size_flag_cnt) {
+	local_flags |= DB_SIZE_OBJ;
     }
-    switch (tp->tr_op) {
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    _db5_calc_subsize(ret, tp->tr_b.tb_right, dbip, depth, flags, max_depth, visited, traverse_func);
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    _db5_calc_subsize(ret, tp->tr_b.tb_left, dbip, depth, flags, max_depth, visited, traverse_func);
-	    (*depth)--;
-	    break;
-	case OP_DB_LEAF:
-	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
-		(*depth)--;
-		return;
-	    } else {
-		if (!(dp->d_flags & RT_DIR_HIDDEN)) {
-		    traverse_func(ret, dp, dbip, depth, flags, max_depth, visited);
-		}
-		(*depth)--;
-		break;
-	    }
 
-	default:
-	    bu_log("db_functree_subtree: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("db_functree_subtree: unrecognized operator\n");
+    /* If we're being asked for a) the isolated size of the object or b) any
+     * size for a self-contained solid, take a short cut. DB_SIZE_OBJ is always
+     * the d_len, and if the object is not a comb or one of the primitives that
+     * references other primitives it's KEEP and XPUSH sizes are also just the
+     * object size. In that situation, we don't need the more elaborate iterative
+     * logic and can just return the local size. */
+    if ((local_flags & DB_SIZE_OBJ) || (!(in_dp->d_flags & RT_DIR_COMB) &&
+	    !(in_dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) &&
+	    !(in_dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) &&
+	    !(in_dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP))) {
+	long fsize = 0;
+	if (local_flags & DB_SIZE_ATTR) {
+	    struct bu_attribute_value_set avs;
+	    bu_avs_init_empty(&avs);
+	    db5_get_attributes(dbip, &avs, in_dp);
+	    fsize += _bu_avs_size(&avs);
+	}
+	fsize += in_dp->d_len;	
+	return fsize;
     }
-    return;
-}
 
+    /* It's not one of the simple cases - we've been asked for a definition that
+     * requires awareness of some portion of the hierarchy. */
 
-HIDDEN void
-_db5_calc_size(int *ret, struct directory *dp, struct db_i *dbip, int *depth, int flags, int max_depth, std::set<struct directory *> &visited)
-{
-    int xpush = flags & DB_SIZE_XPUSH;
+    /* Get a count of all objects we might care about. */
+    for (i = 0; i < RT_DBNHASH; i++) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_HIDDEN)) dcnt++;
+	}
+    }
+    s_lflags = (int *)bu_calloc(dcnt+1, sizeof(int), "local size flags");
 
-    /* If we don't have a variety of things, we're done*/
-    if (!dp || !ret || !dbip || !depth) return;
-
-    /* If we're either a) counting all objects regardless of previous visitation status or
-     * b) we haven't seen this particular object before, process it */
-    if (xpush || visited.find(dp) == visited.end()) {
-	/* If we aren't treating things as xpushed, make a note of the current dp */
-	if (!xpush) visited.insert(dp);
-
-	/* If we have a comb and we are tree processing, we have to walk the comb */
-	if (dp->d_flags & RT_DIR_COMB && max_depth != 0) {
-	    /* If we have a comb, open it up. */
-	    struct rt_db_internal in;
-	    struct rt_comb_internal *comb;
-	    if (flags & DB_SIZE_GEOM) {
-		(*ret) += dp->d_len;
-	    }
-	    if (flags & DB_SIZE_ATTR) {
-		struct bu_attribute_value_set avs;
-		bu_avs_init_empty(&avs);
-		db5_get_attributes(dbip, &avs, dp);
-		(*ret) += _bu_avs_size(&avs);
-	    }
-
-	    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) return;
-
-	    comb = (struct rt_comb_internal *)in.idb_ptr;
-	    _db5_calc_subsize(ret, comb->tree, dbip, depth, flags, max_depth, visited, _db5_calc_size);
-	    rt_db_free_internal(&in);
-	} else {
-	    /* Solid - just increment with its size */
-	    if (flags & DB_SIZE_GEOM) {
-		(*ret) += dp->d_len;
-	    }
-	    if (flags & DB_SIZE_ATTR) {
-		struct bu_attribute_value_set avs;
-		bu_avs_init_empty(&avs);
-		db5_get_attributes(dbip, &avs, dp);
-		(*ret) += _bu_avs_size(&avs);
+    /* Associate the local flag with the directory pointer */
+    j = 0;
+    for (i = 0; i < RT_DBNHASH; i++) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_HIDDEN)) {
+		dp->u_data = (void *)(&(s_lflags[j]));
+		j++;
 	    }
 	}
     }
-    return;
-}
 
-
-int
-db5_size(struct db_i *dbip, struct directory *dp, int flags)
-{
-    int full_size = 0;
-    int depth = 0;
-    int local_flags = flags;
-    std::set<struct directory *> visited;
-    if (!dp || !dbip) return 0;
-
-    if (!flags || flags == DB_SIZE_TREE) {
-	local_flags |= DB_SIZE_GEOM;
-	local_flags |= DB_SIZE_ATTR;
+    /* If we are asked to force a recalculation, redo everything - otherwise,
+     * just deactivate everything. */
+    for (i = 0; i < RT_DBNHASH; i++) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_HIDDEN)) {
+		if (flags & DB_SIZE_FORCE_RECALC) {
+		    dp->s_flags = 0;
+		    if (dp->children) bu_free(dp->children, "free child dp ptr array");
+		    dp->children = NULL;
+		    for (int dpcind = 0; dpcind != 3; dpcind++) dp->sizes[dpcind] = 0;
+		    for (int dpcind = 0; dpcind != 3; dpcind++) dp->sizes_wattr[dpcind] = 0;
+		} else {
+		    dp->s_flags = dp->s_flags & ~(RT_DIR_SIZE_ACTIVE);
+		}
+	    }
+	}
     }
 
-    if(flags & DB_SIZE_TREE) {
-	_db5_calc_size(&full_size, dp, dbip, &depth, local_flags, DB_SIZE_CYCLIC_LIMIT, visited);
+    /* Activate our directory object of interest. */
+    in_dp->s_flags |= RT_DIR_SIZE_ACTIVE;
+    active++;
+
+    /* Now that we have our initial setup, start calculating sizes.  Each pass should
+     * resolve at least one size - if no sizes are resolved, we either are done or
+     * there is a cyclic loop in the database.  We can't do all combs at once after
+     * processing the solids because of the possibility of cyclic loops - those would
+     * trigger an infinite loop when walking the child trees. "finalization" is the
+     * indication that a comb is safe to process. */
+    finalized = 0;
+    finalized_prev = -1;
+    active_prev = -1;
+    while (finalized != finalized_prev || active != active_prev) {
+	finalized_prev = finalized;
+	active_prev = active;
+	for (i = 0; i < RT_DBNHASH; i++) {
+	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if ((dp->s_flags & RT_DIR_SIZE_ACTIVE) && !(dp->s_flags & RT_DIR_SIZE_FINALIZED)) {
+		    if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
+			struct bu_attribute_value_set avs;
+			bu_avs_init_empty(&avs);
+			db5_get_attributes(dbip, &avs, dp);
+			dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _bu_avs_size(&avs);
+			dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
+			//bu_log("%s attr size: %d\n", dp->d_namep, dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
+		    }
+
+		    if (dp->d_flags & RT_DIR_COMB) {
+			struct directory *cdp;
+			int children_finalized = 1;
+			if (!(dp->s_flags & RT_DIR_SIZE_COMB_DONE)) {
+			    struct rt_db_internal in;
+			    struct rt_comb_internal *comb;
+			    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
+			    comb = (struct rt_comb_internal *)in.idb_ptr;
+			    if (dp->children) bu_free(dp->children, "free old dp child list");
+			    dp->children = db_comb_children(dbip, comb, NULL, NULL);
+			    dp->s_flags |= RT_DIR_SIZE_COMB_DONE;
+			    rt_db_free_internal(&in);
+			}
+
+			if (dp->children) {
+			    int cind = 0;
+			    cdp = dp->children[0];
+			    while (cdp != RT_DIR_NULL) {
+				if (!(cdp->s_flags & RT_DIR_SIZE_FINALIZED)) children_finalized = 0;
+				if (!(cdp->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
+				cdp->s_flags |= RT_DIR_SIZE_ACTIVE;
+				cind++;
+				cdp = dp->children[cind];
+			    }
+			    if (children_finalized) {
+				/* Handle the xpushed size, which is just the sum of all of the
+				 * xpushed sizes of the children plus this object. */
+				cind = 0;
+				cdp = dp->children[0];
+				while (cdp) {
+				    //bu_log("XPUSH %s: adding %s (%ld)\n", dp->d_namep, cdp->d_namep, cdp->sizes[RT_DIR_SIZE_XPUSH]);
+				    dp->sizes[RT_DIR_SIZE_XPUSH] += cdp->sizes[RT_DIR_SIZE_XPUSH];
+				    dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += cdp->sizes_wattr[RT_DIR_SIZE_XPUSH];
+				    cind++;
+				    cdp = dp->children[cind];
+				}
+				dp->sizes[RT_DIR_SIZE_XPUSH] += dp->d_len;
+				dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += (dp->d_len + dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
+
+				/* Now that we've handled the hierarchy, finalize the obj numbers */
+				dp->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
+				dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
+
+				/* Mark the comb as done */
+				dp->s_flags |= RT_DIR_SIZE_FINALIZED;
+				finalized++;
+			    }
+			} else {
+			    /* No children - it's just the comb */
+			    dp->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
+			    dp->sizes[RT_DIR_SIZE_KEEP] = dp->d_len;
+			    dp->sizes[RT_DIR_SIZE_XPUSH] = dp->d_len;
+			    dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
+			    dp->sizes_wattr[RT_DIR_SIZE_KEEP] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
+			    dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
+			    dp->s_flags |= RT_DIR_SIZE_FINALIZED;
+			    finalized++;
+			}
+		    } else {
+			/* This is not a comb - handle the solids that have other data
+			 * associated with them and otherwise use dp->d_len */
+			struct directory *edp = NULL;
+			struct rt_db_internal in;
+
+			if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
+			    struct bu_attribute_value_set avs;
+			    bu_avs_init_empty(&avs);
+			    db5_get_attributes(dbip, &avs, dp);
+			    dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _bu_avs_size(&avs);
+			    dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
+			    //bu_log("%s attr size: %d\n", dp->d_namep, dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
+			}
+			if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
+			    struct rt_extrude_internal *extr;
+			    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
+			    extr = (struct rt_extrude_internal *)in.idb_ptr;
+			    if (extr->sketch_name) {
+				edp = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
+			    }
+			    rt_db_free_internal(&in);
+			} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_REVOLVE) {
+			    struct rt_revolve_internal *revolve;
+			    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
+			    revolve = (struct rt_revolve_internal *)in.idb_ptr;
+			    if (bu_vls_strlen(&revolve->sketch_name) > 0) {
+				edp = db_lookup(dbip, bu_vls_addr(&revolve->sketch_name), LOOKUP_QUIET);
+			    }
+			    rt_db_free_internal(&in);
+			} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP) {
+			    struct rt_dsp_internal *dsp;
+			    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
+			    dsp = (struct rt_dsp_internal *)in.idb_ptr;
+			    /* TODO - handle other dsp_datasrc cases */
+			    if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
+				edp = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name), LOOKUP_QUIET);
+			    }
+			    rt_db_free_internal(&in);
+			}
+			if (edp) {
+			    if (!(edp->s_flags & RT_DIR_SIZE_FINALIZED)) {
+				if (!(edp->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
+				edp->s_flags |= RT_DIR_SIZE_ACTIVE;
+				continue;
+			    } else {
+				dp->sizes[RT_DIR_SIZE_OBJ] += edp->sizes[RT_DIR_SIZE_OBJ];
+				dp->sizes[RT_DIR_SIZE_KEEP] += edp->sizes[RT_DIR_SIZE_OBJ];
+				dp->sizes[RT_DIR_SIZE_XPUSH] += edp->sizes[RT_DIR_SIZE_OBJ];
+				dp->sizes_wattr[RT_DIR_SIZE_OBJ] += edp->sizes_wattr[RT_DIR_SIZE_OBJ];
+				dp->sizes_wattr[RT_DIR_SIZE_KEEP] += edp->sizes_wattr[RT_DIR_SIZE_OBJ];
+				dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += edp->sizes_wattr[RT_DIR_SIZE_XPUSH];
+			    }
+			}
+			dp->sizes[RT_DIR_SIZE_OBJ] += dp->d_len;
+			dp->sizes[RT_DIR_SIZE_KEEP] += dp->d_len;
+			dp->sizes[RT_DIR_SIZE_XPUSH] += dp->d_len;
+			dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
+			dp->sizes_wattr[RT_DIR_SIZE_KEEP] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
+			dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
+			dp->s_flags |= RT_DIR_SIZE_FINALIZED;
+			finalized++;
+		    }
+		}
+	    }
+	}
+    }
+
+    /* Now that we have completed our size calculations, see if there are any active but
+     * unfinalized directory objects.  These will be an indication of a cyclic loop and
+     * require returning a -1 error code (since the size of geometry definitions containing
+     * a cyclic loop is meaningless - arguably the evaluated size is infinite */
+    int cycl_finalized = 1;
+    for (i = 0; i < RT_DBNHASH; i++) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_HIDDEN)) {
+		if (dp->d_flags & RT_DIR_SIZE_ACTIVE && !(dp->d_flags & RT_DIR_SIZE_FINALIZED)) {
+		    bu_log("unfinalized object size: %s\n", dp->d_namep);
+		    cycl_finalized = 0;
+		}
+	    }
+	}
+    }
+
+    if (!cycl_finalized) return 0;
+
+    /* IFF we need it, calculate the keep size for dp.  This is harder than the
+     * other calculations, because the size is (possibly) smaller than the sum
+     * of the children if the child combs share objects. We must find all
+     * unique directory objects and sum over that unique set.  Because of the
+     * finalize guard, we do not need to be concerned in this logic with
+     * possible cyclic paths. Since the keep size for an object doesn't help in
+     * calculating other objects' sizes, we evaluate it only for the specific
+     * object of interest rather than mass evaluating it in the loop. */
+    if (local_flags & DB_SIZE_KEEP && !in_dp->sizes[RT_DIR_SIZE_KEEP]) {
+	std::set<struct directory *> uniq;
+	std::queue<struct directory *> q;
+	struct directory *cdp;
+	int cind = 0;
+	q.push(in_dp);
+	while (!q.empty()) {
+	    struct directory *qdp = q.front();
+	    q.pop();
+	    if (qdp->u_data) {
+		*((int *)(qdp->u_data)) = 1;
+		uniq.insert(qdp);
+	    }
+	    cind = 0;
+	    cdp = (qdp->children) ? qdp->children[0] : NULL;
+	    while (cdp) {
+		if (qdp->u_data && !(*((int *)(cdp->u_data)))) q.push(cdp);
+		cind++;
+		cdp = qdp->children[cind];
+	    }
+	}
+	for (std::set<struct directory *>::iterator di = uniq.begin(); di != uniq.end(); di++) {
+	    in_dp->sizes[RT_DIR_SIZE_KEEP] += (*di)->sizes[RT_DIR_SIZE_OBJ];
+	    in_dp->sizes_wattr[RT_DIR_SIZE_KEEP] += (*di)->sizes_wattr[RT_DIR_SIZE_OBJ];
+	}
+    }
+
+    /* We now have what we need to return the requested size */
+    long fsize = 0;
+    if (local_flags & DB_SIZE_ATTR) {
+	if (local_flags & DB_SIZE_KEEP) {
+	    fsize = in_dp->sizes_wattr[RT_DIR_SIZE_KEEP];
+	} else if (local_flags & DB_SIZE_XPUSH) {
+	    fsize = in_dp->sizes_wattr[RT_DIR_SIZE_XPUSH];
+	}
     } else {
-	_db5_calc_size(&full_size, dp, dbip, &depth, local_flags, 0, visited);
+	if (local_flags & DB_SIZE_KEEP) {
+	    fsize = in_dp->sizes[RT_DIR_SIZE_KEEP];
+	} else if (local_flags & DB_SIZE_XPUSH) {
+	    fsize = in_dp->sizes[RT_DIR_SIZE_XPUSH];
+	}
     }
 
-    return full_size;
+#if 0
+    char hlen[6] = { '\0' };
+    char hlen2[6] = { '\0' };
+    HSIZE(hlen, dp->sizes[RT_DIR_SIZE_OBJ]);
+    HSIZE(hlen2, dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
+    bu_log("%s/%s: %s\n", hlen, hlen2, dp->d_namep);
+#endif
+    return fsize;
 }
-
 
 /** @} */
 /*

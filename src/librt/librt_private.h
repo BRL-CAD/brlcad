@@ -134,29 +134,29 @@ extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *
 
 
 /* db5_io.c */
-#define DB_SIZE_GEOM 0x1
-#define DB_SIZE_TREE 0x2
-#define DB_SIZE_ATTR 0x4
-#define DB_SIZE_XPUSH 0x8
+#define DB_SIZE_OBJ 0x1
+#define DB_SIZE_KEEP 0x2
+#define DB_SIZE_XPUSH 0x4
+#define DB_SIZE_ATTR 0x8
+#define DB_SIZE_FORCE_RECALC 0x10
 /**
- * Flag behavior:
+ * Flag behavior: The OBJ, KEEP, and XPUSH flags tell db5_size to add the total
+ * from the object(s) calculations for that size value to the summed total.
+ * Specifying multiple flags from the OBJ/KEEP/XPUSH set will result in the
+ * smallest specified size being reported. If none of these flags are specified
+ * the default is DB_SIZE_OBJ
  *
- * FLAG(S)            | Reported value
- * -------------------|---------------
- * NONE (0)           | Geometry + Attribute size of object
- * GEOM               | Geometry size of object
- * ATTR               | Attribute size of object
- * GEOM + ATTR        | Geometry + Attribute size of object
- * TREE               | Geometry + Attribute size of tree
- * GEOM + TREE        | Geometry size of tree
- * ATTR + TREE        | Attribute size of tree 
- * GEOM + ATTR + TREE | Geometry + Attribute size of tree
+ * The ATTR flag is optional and tells db5_size whether to report totals with
+ * or without the sizes of the attributes stored on the objects added in.  By
+ * default, attributes are not included in size calculations.
  *
- * The XPUSH flag tells the calculator to treat each object
- * instance as unique, rather than recognizing a reference
- * to an object that has already been processed.
+ * The FORCE_RECALC flag is also optional and will result in a re-evaluation of
+ * the cached size information in the directory structures instead of using any
+ * cached information from previous db5_size evaluations. This flag should be
+ * supplied if the geometry information in the database has changed since the
+ * last db5_size call.
  */
-extern int db5_size(struct db_i *dbip, struct directory *dp, int flags);
+extern long db5_size(struct db_i *dbip, struct directory *dp, int flags);
 
 
 /* primitive_util.c */
