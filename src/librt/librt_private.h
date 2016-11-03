@@ -112,46 +112,6 @@ extern const union cutter *rt_advance_to_next_cell(struct rt_shootray_status *ss
 extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
 
-extern fastf_t primitive_get_absolute_tolerance(
-	const struct rt_tess_tol *ttol,
-	fastf_t rel_to_abs);
-
-extern fastf_t primitive_diagonal_samples(
-	struct rt_db_internal *ip,
-	const struct rt_view_info *info);
-
-extern int approximate_parabolic_curve(
-	struct rt_pt_node *pts,
-	fastf_t p,
-	int num_new_points);
-
-extern fastf_t primitive_curve_count(
-	struct rt_db_internal *ip,
-	const struct rt_view_info *info);
-
-extern int approximate_hyperbolic_curve(
-	struct rt_pt_node *pts,
-	fastf_t a,
-	fastf_t b,
-	int num_new_points);
-
-extern void
-ellipse_point_at_radian(
-	point_t result,
-	const vect_t center,
-	const vect_t axis_a,
-	const vect_t axis_b,
-	fastf_t radian);
-
-extern void plot_ellipse(
-	struct bu_list *vhead,
-	const vect_t t,
-	const vect_t a,
-	const vect_t b,
-	int num_points);
-
-
-
 /* db_fullpath.c */
 
 /**
@@ -200,6 +160,46 @@ extern int db5_size(struct db_i *dbip, struct directory *dp, int flags);
 
 
 /* primitive_util.c */
+
+extern void primitive_hitsort(struct hit h[], int nh);
+
+extern fastf_t primitive_get_absolute_tolerance(
+	const struct rt_tess_tol *ttol,
+	fastf_t rel_to_abs);
+
+extern fastf_t primitive_diagonal_samples(
+	struct rt_db_internal *ip,
+	const struct rt_view_info *info);
+
+extern int approximate_parabolic_curve(
+	struct rt_pt_node *pts,
+	fastf_t p,
+	int num_new_points);
+
+extern fastf_t primitive_curve_count(
+	struct rt_db_internal *ip,
+	const struct rt_view_info *info);
+
+extern int approximate_hyperbolic_curve(
+	struct rt_pt_node *pts,
+	fastf_t a,
+	fastf_t b,
+	int num_new_points);
+
+extern void
+ellipse_point_at_radian(
+	point_t result,
+	const vect_t center,
+	const vect_t axis_a,
+	const vect_t axis_b,
+	fastf_t radian);
+
+extern void plot_ellipse(
+	struct bu_list *vhead,
+	const vect_t t,
+	const vect_t a,
+	const vect_t b,
+	int num_points);
 
 extern int _rt_tcl_list_to_int_array(const char *list, int **array, int *array_len);
 extern int _rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);

@@ -30,6 +30,28 @@
 #include "../librt_private.h"
 #include "optical/plastic.h"
 
+
+/**
+ * Sort an array of hits into ascending order.
+ */
+void
+primitive_hitsort(register struct hit *h, register int nh)
+{
+    register int i, j;
+    struct hit temp;
+
+    for (i = 0; i < nh-1; i++) {
+	for (j = i + 1; j < nh; j++) {
+	    if (h[i].hit_dist <= h[j].hit_dist)
+		continue;
+	    temp = h[j];                /* struct copy */
+	    h[j] = h[i];                /* struct copy */
+	    h[i] = temp;                /* struct copy */
+	}
+    }
+}
+
+
 /**
  * If only the absolute tolerance is valid (positive), it is returned.
  *
