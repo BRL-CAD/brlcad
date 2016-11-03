@@ -219,13 +219,14 @@ bu_hash_set(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, voi
 
     BU_CK_HASH_TBL(hsh_tbl);
 
-    /* If we don't have a key, error */
-    if (!key || key_len == 0) return -1;
+    /* must have a key */
+    if (!key || key_len == 0)
+	return -1;
 
     /* Use key hash to get bin, add entry to bin list */
     idx = _bu_hash(key, key_len) & hsh_tbl->mask;
 
-    /* If we have existing entries, go hunting.  Otherwise, just add */
+    /* If we have existing entries, see if we need to update. */
     hsh_entry = hsh_tbl->lists[idx];
     end_entry = NULL;
     while (hsh_entry && !found) {
@@ -235,20 +236,25 @@ bu_hash_set(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, voi
 	    hsh_entry = hsh_entry->next;
 	    continue;
 	}
+
 	/* key lengths are the same, now compare the actual keys */
 	found = _nhash_keycmp(key, hsh_entry->key, key_len);
-	if (found) break;
+	if (found)
+	    break;
+
 	end_entry = hsh_entry;
 	hsh_entry = hsh_entry->next;
     }
 
-    /* If and only if we ended up with a null hsh_entry, create a new one */
+    /* If and only if we ended up with a NULL entry, create a new one */
     if (!hsh_entry) {
+	/* FIXME: should use BU_GET/PUT for small memory allocations */
 	hsh_entry  = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
 	hsh_entry->next = NULL;
 	hsh_entry->key_len = key_len;
 	hsh_entry->magic = BU_HASH_ENTRY_MAGIC;
 	/* make a copy of the key */
+	/* FIXME: should use BU_GET/PUT for small memory allocations */
 	hsh_entry->key = (uint8_t *)malloc((size_t)key_len);
 	memcpy(hsh_entry->key, key, (size_t)key_len);
 	if (!end_entry) {
@@ -261,7 +267,7 @@ bu_hash_set(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, voi
 	ret = 1;
     }
 
-    /* Whether the structure is old or new, it gets the value */
+    /* finally do as asked, set the value */
     hsh_entry->value = val;
 
     return ret;
