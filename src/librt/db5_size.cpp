@@ -36,7 +36,6 @@
 #include "bnetwork.h"
 
 #include "vmath.h"
-#include "bu/avs.h"
 #include "bu/units.h"
 #include "rt/db5.h"
 #include "raytrace.h"
@@ -58,15 +57,20 @@
 
 
 HIDDEN long
-_bu_avs_size(struct bu_attribute_value_set *avs)
+_db5_get_attributes_size(const struct db_i *dbip, const struct directory *dp)
 {
-    long size = 0;
-    struct bu_attribute_value_pair *avpp;
-    for (BU_AVS_FOR(avpp, avs)) {
-	size += (strlen(avpp->name)+1) * sizeof(char);
-	size += (strlen(avpp->value)+1) * sizeof(char);
+    long attr_size = 0;
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
+    struct db5_raw_internal raw;
+    if (dbip->dbi_version < 5) return 0; /* db4 has no attributes */
+    if (db_get_external(&ext, dp, dbip) < 0) return 0;
+    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
+	bu_free_external(&ext);
+	return 0;
     }
-    return size;
+    attr_size = raw.attributes.ext_nbytes;
+    bu_free_external(&ext);
+    return attr_size;
 }
 
 long
@@ -101,10 +105,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	    !(in_dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP))) {
 	long fsize = 0;
 	if (local_flags & DB_SIZE_ATTR) {
-	    struct bu_attribute_value_set avs;
-	    bu_avs_init_empty(&avs);
-	    db5_get_attributes(dbip, &avs, in_dp);
-	    fsize += _bu_avs_size(&avs);
+	    fsize += _db5_get_attributes_size(dbip, in_dp);
 	}
 	fsize += in_dp->d_len;	
 	return fsize;
@@ -170,12 +171,8 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if ((dp->s_flags & RT_DIR_SIZE_ACTIVE) && !(dp->s_flags & RT_DIR_SIZE_FINALIZED)) {
 		    if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
-			struct bu_attribute_value_set avs;
-			bu_avs_init_empty(&avs);
-			db5_get_attributes(dbip, &avs, dp);
-			dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _bu_avs_size(&avs);
+			dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(dbip, dp);
 			dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
-			//bu_log("%s attr size: %d\n", dp->d_namep, dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
 		    }
 
 		    if (dp->d_flags & RT_DIR_COMB) {
@@ -243,10 +240,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 			struct rt_db_internal in;
 
 			if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
-			    struct bu_attribute_value_set avs;
-			    bu_avs_init_empty(&avs);
-			    db5_get_attributes(dbip, &avs, dp);
-			    dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _bu_avs_size(&avs);
+			    dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(dbip, dp);
 			    dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
 			    //bu_log("%s attr size: %d\n", dp->d_namep, dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
 			}
