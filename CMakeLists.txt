@@ -494,11 +494,17 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(JFLAG)
   endif(NOT N EQUAL 0)
 
-  if(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    set(CONFIG $<CONFIG>)
-  else(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    set(CONFIG $<CONFIGURATION>)
-  endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  if(CMAKE_CONFIGURATION_TYPES)
+    if(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIG>)
+    else(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIGURATION>)
+    endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  else(CMAKE_CONFIGURATION_TYPES)
+    if ("${CONFIG}" STREQUAL "")
+      set(CONFIG "\"\"")
+    endif ("${CONFIG}" STREQUAL "")
+  endif(CMAKE_CONFIGURATION_TYPES)
 
   add_custom_target(check
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
@@ -534,11 +540,17 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(JFLAG)
   endif(NOT N EQUAL 0)
 
-  if(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    set(CONFIG $<CONFIG>)
-  else(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    set(CONFIG $<CONFIGURATION>)
-  endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  if(CMAKE_CONFIGURATION_TYPES)
+    if(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIG>)
+    else(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIGURATION>)
+    endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  else(CMAKE_CONFIGURATION_TYPES)
+    if ("${CONFIG}" STREQUAL "")
+      set(CONFIG "\"\"")
+    endif ("${CONFIG}" STREQUAL "")
+  endif(CMAKE_CONFIGURATION_TYPES)
 
   add_custom_target(unit
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
@@ -640,7 +652,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       else ("${empty}" EQUAL 4)
 	message(FATAL_ERROR "ERROR: encountered an empty string passed to add_test(${test_name}) as ARGV${empty} > ARGV9.  Expand support in the top-level CMakeLists.txt file (grep ADD_EMPTY_HERE).")
       endif ("${empty}" EQUAL 4)
-	
+
     else ("${cnt}" GREATER 0)
       # no empty strings, no worries
       _add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGN})
