@@ -83,6 +83,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     int dcnt = 0;
     int *s_lflags;
     struct directory *dp;
+    struct directory **dps;
     if (!dbip) return 0;
     if (!in_dp) return 0;
     if (flags & DB_SIZE_OBJ) size_flag_cnt++;
@@ -121,6 +122,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	}
     }
     s_lflags = (int *)bu_calloc(dcnt+1, sizeof(int), "local size flags");
+    dps = (struct directory **)bu_calloc(dcnt+1, sizeof(struct directory *), "sortable array");
 
     /* Associate the local flag with the directory pointer */
     j = 0;
@@ -128,6 +130,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & RT_DIR_HIDDEN)) {
 		dp->u_data = (void *)(&(s_lflags[j]));
+		dps[j] = dp;
 		j++;
 	    }
 	}
@@ -135,19 +138,16 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 
     /* If we are asked to force a recalculation, redo everything - otherwise,
      * just deactivate everything. */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & RT_DIR_HIDDEN)) {
-		if (flags & DB_SIZE_FORCE_RECALC) {
-		    dp->s_flags = 0;
-		    if (dp->children) bu_free(dp->children, "free child dp ptr array");
-		    dp->children = NULL;
-		    for (int dpcind = 0; dpcind != 3; dpcind++) dp->sizes[dpcind] = 0;
-		    for (int dpcind = 0; dpcind != 3; dpcind++) dp->sizes_wattr[dpcind] = 0;
-		} else {
-		    dp->s_flags = dp->s_flags & ~(RT_DIR_SIZE_ACTIVE);
-		}
-	    }
+    for (i = 0; i < dcnt; i++) {
+	dp = dps[i];
+	if (flags & DB_SIZE_FORCE_RECALC) {
+	    dp->s_flags = 0;
+	    if (dp->children) bu_free(dp->children, "free child dp ptr array");
+	    dp->children = NULL;
+	    for (int dpcind = 0; dpcind != 3; dpcind++) dp->sizes[dpcind] = 0;
+	    for (int dpcind = 0; dpcind != 3; dpcind++) dp->sizes_wattr[dpcind] = 0;
+	} else {
+	    dp->s_flags = dp->s_flags & ~(RT_DIR_SIZE_ACTIVE);
 	}
     }
 
@@ -167,132 +167,131 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     while (finalized != finalized_prev || active != active_prev) {
 	finalized_prev = finalized;
 	active_prev = active;
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if ((dp->s_flags & RT_DIR_SIZE_ACTIVE) && !(dp->s_flags & RT_DIR_SIZE_FINALIZED)) {
-		    if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
-			dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(dbip, dp);
-			dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
+	for (i = 0; i < dcnt; i++) {
+	    dp = dps[i];
+	    if ((dp->s_flags & RT_DIR_SIZE_ACTIVE) && !(dp->s_flags & RT_DIR_SIZE_FINALIZED)) {
+		if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
+		    dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(dbip, dp);
+		    dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
+		}
+
+		if (dp->d_flags & RT_DIR_COMB) {
+		    struct directory *cdp;
+		    int children_finalized = 1;
+		    if (!(dp->s_flags & RT_DIR_SIZE_COMB_DONE)) {
+			struct rt_db_internal in;
+			struct rt_comb_internal *comb;
+			if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
+			comb = (struct rt_comb_internal *)in.idb_ptr;
+			if (dp->children) bu_free(dp->children, "free old dp child list");
+			dp->children = db_comb_children(dbip, comb, NULL, NULL);
+			dp->s_flags |= RT_DIR_SIZE_COMB_DONE;
+			rt_db_free_internal(&in);
 		    }
 
-		    if (dp->d_flags & RT_DIR_COMB) {
-			struct directory *cdp;
-			int children_finalized = 1;
-			if (!(dp->s_flags & RT_DIR_SIZE_COMB_DONE)) {
-			    struct rt_db_internal in;
-			    struct rt_comb_internal *comb;
-			    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
-			    comb = (struct rt_comb_internal *)in.idb_ptr;
-			    if (dp->children) bu_free(dp->children, "free old dp child list");
-			    dp->children = db_comb_children(dbip, comb, NULL, NULL);
-			    dp->s_flags |= RT_DIR_SIZE_COMB_DONE;
-			    rt_db_free_internal(&in);
+		    if (dp->children) {
+			int cind = 0;
+			cdp = dp->children[0];
+			while (cdp != RT_DIR_NULL) {
+			    if (!(cdp->s_flags & RT_DIR_SIZE_FINALIZED)) children_finalized = 0;
+			    if (!(cdp->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
+			    cdp->s_flags |= RT_DIR_SIZE_ACTIVE;
+			    cind++;
+			    cdp = dp->children[cind];
 			}
-
-			if (dp->children) {
-			    int cind = 0;
+			if (children_finalized) {
+			    /* Handle the xpushed size, which is just the sum of all of the
+			     * xpushed sizes of the children plus this object. */
+			    cind = 0;
 			    cdp = dp->children[0];
-			    while (cdp != RT_DIR_NULL) {
-				if (!(cdp->s_flags & RT_DIR_SIZE_FINALIZED)) children_finalized = 0;
-				if (!(cdp->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
-				cdp->s_flags |= RT_DIR_SIZE_ACTIVE;
+			    while (cdp) {
+				//bu_log("XPUSH %s: adding %s (%ld)\n", dp->d_namep, cdp->d_namep, cdp->sizes[RT_DIR_SIZE_XPUSH]);
+				dp->sizes[RT_DIR_SIZE_XPUSH] += cdp->sizes[RT_DIR_SIZE_XPUSH];
+				dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += cdp->sizes_wattr[RT_DIR_SIZE_XPUSH];
 				cind++;
 				cdp = dp->children[cind];
 			    }
-			    if (children_finalized) {
-				/* Handle the xpushed size, which is just the sum of all of the
-				 * xpushed sizes of the children plus this object. */
-				cind = 0;
-				cdp = dp->children[0];
-				while (cdp) {
-				    //bu_log("XPUSH %s: adding %s (%ld)\n", dp->d_namep, cdp->d_namep, cdp->sizes[RT_DIR_SIZE_XPUSH]);
-				    dp->sizes[RT_DIR_SIZE_XPUSH] += cdp->sizes[RT_DIR_SIZE_XPUSH];
-				    dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += cdp->sizes_wattr[RT_DIR_SIZE_XPUSH];
-				    cind++;
-				    cdp = dp->children[cind];
-				}
-				dp->sizes[RT_DIR_SIZE_XPUSH] += dp->d_len;
-				dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += (dp->d_len + dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
+			    dp->sizes[RT_DIR_SIZE_XPUSH] += dp->d_len;
+			    dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += (dp->d_len + dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
 
-				/* Now that we've handled the hierarchy, finalize the obj numbers */
-				dp->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
-				dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
-
-				/* Mark the comb as done */
-				dp->s_flags |= RT_DIR_SIZE_FINALIZED;
-				finalized++;
-			    }
-			} else {
-			    /* No children - it's just the comb */
+			    /* Now that we've handled the hierarchy, finalize the obj numbers */
 			    dp->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
-			    dp->sizes[RT_DIR_SIZE_KEEP] = dp->d_len;
-			    dp->sizes[RT_DIR_SIZE_XPUSH] = dp->d_len;
 			    dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
-			    dp->sizes_wattr[RT_DIR_SIZE_KEEP] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
-			    dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
+
+			    /* Mark the comb as done */
 			    dp->s_flags |= RT_DIR_SIZE_FINALIZED;
 			    finalized++;
 			}
 		    } else {
-			/* This is not a comb - handle the solids that have other data
-			 * associated with them and otherwise use dp->d_len */
-			struct directory *edp = NULL;
-			struct rt_db_internal in;
-
-			if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
-			    dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(dbip, dp);
-			    dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
-			    //bu_log("%s attr size: %d\n", dp->d_namep, dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
-			}
-			if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
-			    struct rt_extrude_internal *extr;
-			    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
-			    extr = (struct rt_extrude_internal *)in.idb_ptr;
-			    if (extr->sketch_name) {
-				edp = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
-			    }
-			    rt_db_free_internal(&in);
-			} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_REVOLVE) {
-			    struct rt_revolve_internal *revolve;
-			    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
-			    revolve = (struct rt_revolve_internal *)in.idb_ptr;
-			    if (bu_vls_strlen(&revolve->sketch_name) > 0) {
-				edp = db_lookup(dbip, bu_vls_addr(&revolve->sketch_name), LOOKUP_QUIET);
-			    }
-			    rt_db_free_internal(&in);
-			} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP) {
-			    struct rt_dsp_internal *dsp;
-			    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
-			    dsp = (struct rt_dsp_internal *)in.idb_ptr;
-			    /* TODO - handle other dsp_datasrc cases */
-			    if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
-				edp = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name), LOOKUP_QUIET);
-			    }
-			    rt_db_free_internal(&in);
-			}
-			if (edp) {
-			    if (!(edp->s_flags & RT_DIR_SIZE_FINALIZED)) {
-				if (!(edp->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
-				edp->s_flags |= RT_DIR_SIZE_ACTIVE;
-				continue;
-			    } else {
-				dp->sizes[RT_DIR_SIZE_OBJ] += edp->sizes[RT_DIR_SIZE_OBJ];
-				dp->sizes[RT_DIR_SIZE_KEEP] += edp->sizes[RT_DIR_SIZE_OBJ];
-				dp->sizes[RT_DIR_SIZE_XPUSH] += edp->sizes[RT_DIR_SIZE_OBJ];
-				dp->sizes_wattr[RT_DIR_SIZE_OBJ] += edp->sizes_wattr[RT_DIR_SIZE_OBJ];
-				dp->sizes_wattr[RT_DIR_SIZE_KEEP] += edp->sizes_wattr[RT_DIR_SIZE_OBJ];
-				dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += edp->sizes_wattr[RT_DIR_SIZE_XPUSH];
-			    }
-			}
-			dp->sizes[RT_DIR_SIZE_OBJ] += dp->d_len;
-			dp->sizes[RT_DIR_SIZE_KEEP] += dp->d_len;
-			dp->sizes[RT_DIR_SIZE_XPUSH] += dp->d_len;
+			/* No children - it's just the comb */
+			dp->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
+			dp->sizes[RT_DIR_SIZE_KEEP] = dp->d_len;
+			dp->sizes[RT_DIR_SIZE_XPUSH] = dp->d_len;
 			dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
 			dp->sizes_wattr[RT_DIR_SIZE_KEEP] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
 			dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
 			dp->s_flags |= RT_DIR_SIZE_FINALIZED;
 			finalized++;
 		    }
+		} else {
+		    /* This is not a comb - handle the solids that have other data
+		     * associated with them and otherwise use dp->d_len */
+		    struct directory *edp = NULL;
+		    struct rt_db_internal in;
+
+		    if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
+			dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(dbip, dp);
+			dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
+			//bu_log("%s attr size: %d\n", dp->d_namep, dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
+		    }
+		    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
+			struct rt_extrude_internal *extr;
+			if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
+			extr = (struct rt_extrude_internal *)in.idb_ptr;
+			if (extr->sketch_name) {
+			    edp = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
+			}
+			rt_db_free_internal(&in);
+		    } else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_REVOLVE) {
+			struct rt_revolve_internal *revolve;
+			if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
+			revolve = (struct rt_revolve_internal *)in.idb_ptr;
+			if (bu_vls_strlen(&revolve->sketch_name) > 0) {
+			    edp = db_lookup(dbip, bu_vls_addr(&revolve->sketch_name), LOOKUP_QUIET);
+			}
+			rt_db_free_internal(&in);
+		    } else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP) {
+			struct rt_dsp_internal *dsp;
+			if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
+			dsp = (struct rt_dsp_internal *)in.idb_ptr;
+			/* TODO - handle other dsp_datasrc cases */
+			if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
+			    edp = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name), LOOKUP_QUIET);
+			}
+			rt_db_free_internal(&in);
+		    }
+		    if (edp) {
+			if (!(edp->s_flags & RT_DIR_SIZE_FINALIZED)) {
+			    if (!(edp->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
+			    edp->s_flags |= RT_DIR_SIZE_ACTIVE;
+			    continue;
+			} else {
+			    dp->sizes[RT_DIR_SIZE_OBJ] += edp->sizes[RT_DIR_SIZE_OBJ];
+			    dp->sizes[RT_DIR_SIZE_KEEP] += edp->sizes[RT_DIR_SIZE_OBJ];
+			    dp->sizes[RT_DIR_SIZE_XPUSH] += edp->sizes[RT_DIR_SIZE_OBJ];
+			    dp->sizes_wattr[RT_DIR_SIZE_OBJ] += edp->sizes_wattr[RT_DIR_SIZE_OBJ];
+			    dp->sizes_wattr[RT_DIR_SIZE_KEEP] += edp->sizes_wattr[RT_DIR_SIZE_OBJ];
+			    dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += edp->sizes_wattr[RT_DIR_SIZE_XPUSH];
+			}
+		    }
+		    dp->sizes[RT_DIR_SIZE_OBJ] += dp->d_len;
+		    dp->sizes[RT_DIR_SIZE_KEEP] += dp->d_len;
+		    dp->sizes[RT_DIR_SIZE_XPUSH] += dp->d_len;
+		    dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
+		    dp->sizes_wattr[RT_DIR_SIZE_KEEP] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
+		    dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
+		    dp->s_flags |= RT_DIR_SIZE_FINALIZED;
+		    finalized++;
 		}
 	    }
 	}
@@ -303,13 +302,12 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
      * require returning a -1 error code (since the size of geometry definitions containing
      * a cyclic loop is meaningless - arguably the evaluated size is infinite */
     int cycl_finalized = 1;
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & RT_DIR_HIDDEN)) {
-		if (dp->d_flags & RT_DIR_SIZE_ACTIVE && !(dp->d_flags & RT_DIR_SIZE_FINALIZED)) {
-		    bu_log("unfinalized object size: %s\n", dp->d_namep);
-		    cycl_finalized = 0;
-		}
+    for (i = 0; i < dcnt; i++) {
+	dp = dps[i];
+	if (!(dp->d_flags & RT_DIR_HIDDEN)) {
+	    if (dp->d_flags & RT_DIR_SIZE_ACTIVE && !(dp->d_flags & RT_DIR_SIZE_FINALIZED)) {
+		bu_log("unfinalized object size: %s\n", dp->d_namep);
+		cycl_finalized = 0;
 	    }
 	}
     }
