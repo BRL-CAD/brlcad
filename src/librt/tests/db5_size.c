@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bu/time.h"
 #include "bu/units.h"
 #include "raytrace.h"
 #include "../librt_private.h"
@@ -31,6 +32,8 @@
 int
 main(int argc, char *argv[])
 {
+    int64_t start, elapsed;
+    fastf_t seconds;
     long fsize;
     struct db_i *dbip;
     struct directory *dp;
@@ -39,6 +42,8 @@ main(int argc, char *argv[])
     if (argc != 3) {
 	bu_exit(1, "Usage: %s file.g [object]", argv[0]);
     }
+
+    start = bu_gettime();
 
     dbip = db_open(argv[1], DB_OPEN_READWRITE);
     if (dbip == DBI_NULL) {
@@ -56,24 +61,51 @@ main(int argc, char *argv[])
 	bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
     }
 
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Initialization time: %f seconds\n", seconds);
+
+    start = bu_gettime();
     fsize = db5_size(dbip, dp, 0);
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
     HSIZE(hlen, fsize);
-    bu_log("obj, no attributes: %ld (%s)\n", fsize, hlen);
+    bu_log("obj, no attributes(%f sec): %ld (%s)\n", seconds, fsize, hlen);
+
+    start = bu_gettime();
     fsize = db5_size(dbip, dp, DB_SIZE_ATTR);
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
     HSIZE(hlen, fsize);
-    bu_log("obj, attributes: %ld (%s)\n", fsize, hlen);
+    bu_log("obj, attributes(%f sec):: %ld (%s)\n",seconds,  fsize, hlen);
+
+    start = bu_gettime();
     fsize = db5_size(dbip, dp, DB_SIZE_KEEP);
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
     HSIZE(hlen, fsize);
-    bu_log("keep, no attributes: %ld (%s)\n", fsize, hlen);
+    bu_log("keep, no attributes(%f sec):: %ld (%s)\n",seconds,  fsize, hlen);
+
+    start = bu_gettime();
     fsize = db5_size(dbip, dp, DB_SIZE_KEEP|DB_SIZE_ATTR);
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
     HSIZE(hlen, fsize);
-    bu_log("keep, with attributes: %ld (%s)\n", fsize, hlen);
+    bu_log("keep, with attributes(%f sec):: %ld (%s)\n",seconds,  fsize, hlen);
+
+    start = bu_gettime();
     fsize = db5_size(dbip, dp, DB_SIZE_XPUSH);
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
     HSIZE(hlen, fsize);
-    bu_log("xpush, no attributes: %ld (%s)\n", fsize, hlen);
+    bu_log("xpush, no attributes(%f sec):: %ld (%s)\n",seconds,  fsize, hlen);
+
+    start = bu_gettime();
     fsize = db5_size(dbip, dp, DB_SIZE_XPUSH|DB_SIZE_ATTR);
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
     HSIZE(hlen, fsize);
-    bu_log("xpush, with attributes: %ld (%s)\n", fsize, hlen);
+    bu_log("xpush, with attributes(%f sec):: %ld (%s)\n",seconds,  fsize, hlen);
 
     return 0;
 }
