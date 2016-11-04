@@ -555,7 +555,7 @@ main(int argc, char * const argv[])
 		printf("not ok %lu # return %d != %d\n", i, r,
 			test_args[i].retval);
 	    errcnt++;
-	} else if (strcmp(buf, test_args[i].res) != 0) {
+	} else if (bu_strcmp(buf, test_args[i].res) != 0) {
 	    if (verbose)
 		printf("result mismatch on index %lu, got: \"%s\", expected \"%s\"; num = %" PRId64 ", scale = %s, flags= %s.\n",
 			i, buf, test_args[i].res, test_args[i].num,
