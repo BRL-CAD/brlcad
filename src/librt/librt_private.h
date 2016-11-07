@@ -132,6 +132,8 @@ extern int cyclic_path(const struct db_full_path *fp, const char *name);
  */
 extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
 
+/* db_io.c */
+extern int db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset);
 
 /* db5_io.c */
 #define DB_SIZE_OBJ 0x1
@@ -157,6 +159,9 @@ extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *
  * last db5_size call.
  */
 extern long db5_size(struct db_i *dbip, struct directory *dp, int flags);
+
+/* FIXME: should have gone away with v6.  needed now to pass the minor_type down during read */
+extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
 
 
 /* primitive_util.c */

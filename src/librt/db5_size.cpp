@@ -36,6 +36,8 @@
 #include "bnetwork.h"
 
 #include "vmath.h"
+#include "bu/sort.h"
+#include "bu/time.h"
 #include "bu/units.h"
 #include "rt/db5.h"
 #include "raytrace.h"
@@ -56,21 +58,105 @@
     (void)bu_humanize_number(buf, 5, (int64_t)var, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
 
 
+HIDDEN int
+db_get_external_reuse(register struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
+{
+    ep->ext_nbytes = dp->d_len;
+
+    if (dp->d_flags & RT_DIR_INMEM) {
+	memcpy((char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes);
+	return 0;
+    }
+
+    if (db_read(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
+	memset(ep->ext_buf, 0, dp->d_len);
+	ep->ext_nbytes = 0;
+	return -1;      /* VERY BAD */
+    }
+    return 0;
+}
+
+HIDDEN int
+rt_db_get_internal_reuse(
+	struct bu_external *ext,
+	struct rt_db_internal *ip,
+	const struct directory *dp,
+	const struct db_i *dbip,
+	const mat_t mat,
+	struct resource *resp)
+{
+    register int id;
+    int ret;
+    struct db5_raw_internal raw;
+    RT_DB_INTERNAL_INIT(ip);
+    if (db_get_external_reuse(ext, dp, dbip) < 0) return -1;
+    if (db5_get_raw_internal_ptr(&raw, ext->ext_buf) == NULL) return -1;
+    if (!raw.body.ext_buf) return -1;
+
+    /* FIXME: This is a temporary kludge accommodating dumb binunifs
+     * that don't export their minor type or have table entries for
+     * all their types. (this gets pushed up when a functab wrapper is
+     * created)
+     */
+    switch (raw.major_type) {
+	case DB5_MAJORTYPE_BRLCAD:
+	    id = raw.minor_type; break;
+	case DB5_MAJORTYPE_BINARY_UNIF:
+	    id = ID_BINUNIF; break;
+	default:
+	    return -1;
+    }
+
+    if (id == ID_BINUNIF) {
+	/* FIXME: binunif export needs to write out minor_type so this isn't
+	 * needed, but breaks compatibility.  slate for v6. */
+	ret = rt_binunif_import5_minor_type(ip, &raw.body, mat, dbip, resp, raw.minor_type);
+    } else if (OBJ[id].ft_import5) {
+	ret = OBJ[id].ft_import5(ip, &raw.body, mat, dbip, resp);
+    }
+    if (ret < 0) {
+	rt_db_free_internal(ip);
+	return -1;
+    }
+
+    ip->idb_major_type = raw.major_type;
+    ip->idb_minor_type = raw.minor_type;
+    ip->idb_meth = &OBJ[id];
+
+    return id;
+}
+
+
 HIDDEN long
-_db5_get_attributes_size(const struct db_i *dbip, const struct directory *dp)
+_db5_get_attributes_size(struct bu_external *ext, const struct db_i *dbip, const struct directory *dp)
 {
     long attr_size = 0;
-    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
     struct db5_raw_internal raw;
     if (dbip->dbi_version < 5) return 0; /* db4 has no attributes */
-    if (db_get_external(&ext, dp, dbip) < 0) return 0;
-    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
-	bu_free_external(&ext);
+    if (db_get_external_reuse(ext, dp, dbip) < 0) return 0;
+    if (db5_get_raw_internal_ptr(&raw, ext->ext_buf) == NULL) {
 	return 0;
     }
     attr_size = raw.attributes.ext_nbytes;
-    bu_free_external(&ext);
     return attr_size;
+}
+
+HIDDEN int
+_cmp_dp_states(const void *a, const void *b, void *UNUSED(arg))
+{
+    struct directory **dpe1 = (struct directory **)a;
+    struct directory **dpe2 = (struct directory **)b;
+    struct directory *dp1 = *dpe1;
+    struct directory *dp2 = *dpe2;
+
+    //bu_log("a: name %s, flags %d\n",  dp1->d_namep, dp1->s_flags);
+    //bu_log("b: name %s, flags %d\n",  dp2->d_namep, dp2->s_flags);
+
+    if ((dp1->s_flags & RT_DIR_SIZE_FINALIZED) && !(dp2->s_flags & RT_DIR_SIZE_FINALIZED)) return 1;
+    if (!(dp1->s_flags & RT_DIR_SIZE_FINALIZED) && (dp2->s_flags & RT_DIR_SIZE_FINALIZED)) return -1;
+    if (dp1->s_flags > dp2->s_flags) return -1;
+    if (dp1->s_flags < dp2->s_flags) return 1;
+    return 0;
 }
 
 long
@@ -81,9 +167,15 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     int i, j, finalized, finalized_prev, active_prev;
     int active = 0;
     int dcnt = 0;
+    int wcnt = 0;
     int *s_lflags;
     struct directory *dp;
     struct directory **dps;
+    //int64_t start, elapsed;
+    //int64_t total = 0;
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
+    unsigned int max_bufsize = 0;
+
     if (!dbip) return 0;
     if (!in_dp) return 0;
     if (flags & DB_SIZE_OBJ) size_flag_cnt++;
@@ -93,6 +185,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     if (!size_flag_cnt) {
 	local_flags |= DB_SIZE_OBJ;
     }
+    BU_EXTERNAL_INIT(&ext);
 
     /* If we're being asked for a) the isolated size of the object or b) any
      * size for a self-contained solid, take a short cut. DB_SIZE_OBJ is always
@@ -106,25 +199,36 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	    !(in_dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP))) {
 	long fsize = 0;
 	if (local_flags & DB_SIZE_ATTR) {
-	    fsize += _db5_get_attributes_size(dbip, in_dp);
+	    ext.ext_buf = (uint8_t *)bu_realloc(ext.ext_buf, in_dp->d_len, "resize ext_buf");
+	    fsize += _db5_get_attributes_size(&ext, dbip, in_dp);
 	}
-	fsize += in_dp->d_len;	
+	fsize += in_dp->d_len;
+	if (ext.ext_buf) bu_free(ext.ext_buf, "free ext_buf");
 	return fsize;
     }
 
     /* It's not one of the simple cases - we've been asked for a definition that
      * requires awareness of some portion of the hierarchy. */
 
-    /* Get a count of all objects we might care about. */
+    /* Get a count of all objects we might care about, and find out what the
+     * size of our biggest object is. */
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & RT_DIR_HIDDEN)) dcnt++;
+	    if (!(dp->d_flags & RT_DIR_HIDDEN)) {
+		dcnt++;
+		if (dp->d_len > max_bufsize) max_bufsize = dp->d_len;
+	    }
 	}
     }
-    s_lflags = (int *)bu_calloc(dcnt+1, sizeof(int), "local size flags");
-    dps = (struct directory **)bu_calloc(dcnt+1, sizeof(struct directory *), "sortable array");
 
-    /* Associate the local flag with the directory pointer */
+    /* Get the flags array and the array to hold usable struct directory pointers */
+    s_lflags = (int *)bu_calloc(dcnt+1, sizeof(int), "local size flags");
+    dps = (struct directory **)bu_calloc(dcnt+1, sizeof(struct directory *), "sortable directory pointer array *");
+
+    /* Make sure the bu_external buffer has as much memory as it will ever need to handle any one object */
+    ext.ext_buf = (uint8_t *)bu_realloc(ext.ext_buf, max_bufsize, "resize ext_buf");
+
+    /* Associate the local flag with the directory pointer and put ptr in array */
     j = 0;
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
@@ -164,14 +268,21 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     finalized = 0;
     finalized_prev = -1;
     active_prev = -1;
+    wcnt = dcnt;
     while (finalized != finalized_prev || active != active_prev) {
 	finalized_prev = finalized;
 	active_prev = active;
-	for (i = 0; i < dcnt; i++) {
+#if 0
+	bu_sort((void *)dps, wcnt, sizeof(struct directory *), _cmp_dp_states, NULL);
+	wcnt = 0;
+	while (wcnt < dcnt && !(dps[wcnt]->s_flags & RT_DIR_SIZE_FINALIZED)) wcnt++;
+	bu_log("wcnt: %d\n", wcnt);
+#endif
+	for (i = 0; i < wcnt; i++) {
 	    dp = dps[i];
 	    if ((dp->s_flags & RT_DIR_SIZE_ACTIVE) && !(dp->s_flags & RT_DIR_SIZE_FINALIZED)) {
 		if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
-		    dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(dbip, dp);
+		    dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(&ext, dbip, dp);
 		    dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
 		}
 
@@ -179,14 +290,17 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 		    struct directory *cdp;
 		    int children_finalized = 1;
 		    if (!(dp->s_flags & RT_DIR_SIZE_COMB_DONE)) {
+			//start = bu_gettime();
 			struct rt_db_internal in;
 			struct rt_comb_internal *comb;
-			if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
+			if (rt_db_get_internal_reuse(&ext, &in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
 			comb = (struct rt_comb_internal *)in.idb_ptr;
 			if (dp->children) bu_free(dp->children, "free old dp child list");
 			dp->children = db_comb_children(dbip, comb, NULL, NULL);
 			dp->s_flags |= RT_DIR_SIZE_COMB_DONE;
 			rt_db_free_internal(&in);
+			//elapsed = bu_gettime() - start;
+			//total += elapsed;
 		    }
 
 		    if (dp->children) {
@@ -240,7 +354,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 		    struct rt_db_internal in;
 
 		    if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
-			dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(dbip, dp);
+			dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(&ext, dbip, dp);
 			dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
 			//bu_log("%s attr size: %d\n", dp->d_namep, dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
 		    }
@@ -296,6 +410,9 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	    }
 	}
     }
+
+    //fastf_t seconds = total / 1000000.0;
+    //bu_log("comb processing: %f\n", seconds);
 
     /* Now that we have completed our size calculations, see if there are any active but
      * unfinalized directory objects.  These will be an indication of a cyclic loop and
@@ -372,6 +489,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     HSIZE(hlen2, dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
     bu_log("%s/%s: %s\n", hlen, hlen2, dp->d_namep);
 #endif
+    if (ext.ext_buf) bu_free(ext.ext_buf, "final free of ext_buf");
     return fsize;
 }
 
