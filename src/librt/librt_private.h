@@ -137,8 +137,8 @@ extern int db_read(const struct db_i *dbip, void *addr, size_t count, off_t offs
 
 /* db5_io.c */
 #define DB_SIZE_OBJ 0x1
-#define DB_SIZE_KEEP 0x2
-#define DB_SIZE_XPUSH 0x4
+#define DB_SIZE_TREE_INSTANCED 0x2
+#define DB_SIZE_TREE_DEINSTANCED 0x4
 #define DB_SIZE_ATTR 0x8
 #define DB_SIZE_FORCE_RECALC 0x10
 /**

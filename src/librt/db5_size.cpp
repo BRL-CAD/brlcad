@@ -51,8 +51,8 @@
 
 /* sizes in directory pointer arrays */
 #define RT_DIR_SIZE_OBJ 0
-#define RT_DIR_SIZE_KEEP 1
-#define RT_DIR_SIZE_XPUSH 2
+#define RT_DIR_SIZE_TREE_INSTANCED 1
+#define RT_DIR_SIZE_TREE_DEINSTANCED 2
 
 #define HSIZE(buf, var) \
     (void)bu_humanize_number(buf, 5, (int64_t)var, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
@@ -179,8 +179,8 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     if (!dbip) return 0;
     if (!in_dp) return 0;
     if (flags & DB_SIZE_OBJ) size_flag_cnt++;
-    if (flags & DB_SIZE_KEEP) size_flag_cnt++;
-    if (flags & DB_SIZE_XPUSH) size_flag_cnt++;
+    if (flags & DB_SIZE_TREE_INSTANCED) size_flag_cnt++;
+    if (flags & DB_SIZE_TREE_DEINSTANCED) size_flag_cnt++;
 
     if (!size_flag_cnt) {
 	local_flags |= DB_SIZE_OBJ;
@@ -319,14 +319,14 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 			    cind = 0;
 			    cdp = dp->children[0];
 			    while (cdp) {
-				//bu_log("XPUSH %s: adding %s (%ld)\n", dp->d_namep, cdp->d_namep, cdp->sizes[RT_DIR_SIZE_XPUSH]);
-				dp->sizes[RT_DIR_SIZE_XPUSH] += cdp->sizes[RT_DIR_SIZE_XPUSH];
-				dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += cdp->sizes_wattr[RT_DIR_SIZE_XPUSH];
+				//bu_log("XPUSH %s: adding %s (%ld)\n", dp->d_namep, cdp->d_namep, cdp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED]);
+				dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += cdp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED];
+				dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += cdp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
 				cind++;
 				cdp = dp->children[cind];
 			    }
-			    dp->sizes[RT_DIR_SIZE_XPUSH] += dp->d_len;
-			    dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += (dp->d_len + dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
+			    dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->d_len;
+			    dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += (dp->d_len + dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
 
 			    /* Now that we've handled the hierarchy, finalize the obj numbers */
 			    dp->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
@@ -339,11 +339,11 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 		    } else {
 			/* No children - it's just the comb */
 			dp->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
-			dp->sizes[RT_DIR_SIZE_KEEP] = dp->d_len;
-			dp->sizes[RT_DIR_SIZE_XPUSH] = dp->d_len;
+			dp->sizes[RT_DIR_SIZE_TREE_INSTANCED] = dp->d_len;
+			dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] = dp->d_len;
 			dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
-			dp->sizes_wattr[RT_DIR_SIZE_KEEP] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
-			dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
+			dp->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
+			dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
 			dp->s_flags |= RT_DIR_SIZE_FINALIZED;
 			finalized++;
 		    }
@@ -391,19 +391,19 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 			    continue;
 			} else {
 			    dp->sizes[RT_DIR_SIZE_OBJ] += edp->sizes[RT_DIR_SIZE_OBJ];
-			    dp->sizes[RT_DIR_SIZE_KEEP] += edp->sizes[RT_DIR_SIZE_OBJ];
-			    dp->sizes[RT_DIR_SIZE_XPUSH] += edp->sizes[RT_DIR_SIZE_OBJ];
+			    dp->sizes[RT_DIR_SIZE_TREE_INSTANCED] += edp->sizes[RT_DIR_SIZE_OBJ];
+			    dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += edp->sizes[RT_DIR_SIZE_OBJ];
 			    dp->sizes_wattr[RT_DIR_SIZE_OBJ] += edp->sizes_wattr[RT_DIR_SIZE_OBJ];
-			    dp->sizes_wattr[RT_DIR_SIZE_KEEP] += edp->sizes_wattr[RT_DIR_SIZE_OBJ];
-			    dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += edp->sizes_wattr[RT_DIR_SIZE_XPUSH];
+			    dp->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += edp->sizes_wattr[RT_DIR_SIZE_OBJ];
+			    dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += edp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
 			}
 		    }
 		    dp->sizes[RT_DIR_SIZE_OBJ] += dp->d_len;
-		    dp->sizes[RT_DIR_SIZE_KEEP] += dp->d_len;
-		    dp->sizes[RT_DIR_SIZE_XPUSH] += dp->d_len;
+		    dp->sizes[RT_DIR_SIZE_TREE_INSTANCED] += dp->d_len;
+		    dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->d_len;
 		    dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
-		    dp->sizes_wattr[RT_DIR_SIZE_KEEP] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
-		    dp->sizes_wattr[RT_DIR_SIZE_XPUSH] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
+		    dp->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
+		    dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
 		    dp->s_flags |= RT_DIR_SIZE_FINALIZED;
 		    finalized++;
 		}
@@ -439,7 +439,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
      * possible cyclic paths. Since the keep size for an object doesn't help in
      * calculating other objects' sizes, we evaluate it only for the specific
      * object of interest rather than mass evaluating it in the loop. */
-    if (local_flags & DB_SIZE_KEEP && !in_dp->sizes[RT_DIR_SIZE_KEEP]) {
+    if (local_flags & DB_SIZE_TREE_INSTANCED && !in_dp->sizes[RT_DIR_SIZE_TREE_INSTANCED]) {
 	std::set<struct directory *> uniq;
 	std::queue<struct directory *> q;
 	struct directory *cdp;
@@ -461,24 +461,24 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	    }
 	}
 	for (std::set<struct directory *>::iterator di = uniq.begin(); di != uniq.end(); di++) {
-	    in_dp->sizes[RT_DIR_SIZE_KEEP] += (*di)->sizes[RT_DIR_SIZE_OBJ];
-	    in_dp->sizes_wattr[RT_DIR_SIZE_KEEP] += (*di)->sizes_wattr[RT_DIR_SIZE_OBJ];
+	    in_dp->sizes[RT_DIR_SIZE_TREE_INSTANCED] += (*di)->sizes[RT_DIR_SIZE_OBJ];
+	    in_dp->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += (*di)->sizes_wattr[RT_DIR_SIZE_OBJ];
 	}
     }
 
     /* We now have what we need to return the requested size */
     long fsize = 0;
     if (local_flags & DB_SIZE_ATTR) {
-	if (local_flags & DB_SIZE_KEEP) {
-	    fsize = in_dp->sizes_wattr[RT_DIR_SIZE_KEEP];
-	} else if (local_flags & DB_SIZE_XPUSH) {
-	    fsize = in_dp->sizes_wattr[RT_DIR_SIZE_XPUSH];
+	if (local_flags & DB_SIZE_TREE_INSTANCED) {
+	    fsize = in_dp->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED];
+	} else if (local_flags & DB_SIZE_TREE_DEINSTANCED) {
+	    fsize = in_dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
 	}
     } else {
-	if (local_flags & DB_SIZE_KEEP) {
-	    fsize = in_dp->sizes[RT_DIR_SIZE_KEEP];
-	} else if (local_flags & DB_SIZE_XPUSH) {
-	    fsize = in_dp->sizes[RT_DIR_SIZE_XPUSH];
+	if (local_flags & DB_SIZE_TREE_INSTANCED) {
+	    fsize = in_dp->sizes[RT_DIR_SIZE_TREE_INSTANCED];
+	} else if (local_flags & DB_SIZE_TREE_DEINSTANCED) {
+	    fsize = in_dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED];
 	}
     }
 

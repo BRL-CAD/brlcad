@@ -80,28 +80,28 @@ main(int argc, char *argv[])
     bu_log("obj, attributes(%f sec):: %ld (%s)\n",seconds,  fsize, hlen);
 
     start = bu_gettime();
-    fsize = db5_size(dbip, dp, DB_SIZE_KEEP);
+    fsize = db5_size(dbip, dp, DB_SIZE_TREE_INSTANCED);
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     HSIZE(hlen, fsize);
     bu_log("keep, no attributes(%f sec):: %ld (%s)\n",seconds,  fsize, hlen);
 
     start = bu_gettime();
-    fsize = db5_size(dbip, dp, DB_SIZE_KEEP|DB_SIZE_ATTR);
+    fsize = db5_size(dbip, dp, DB_SIZE_TREE_INSTANCED|DB_SIZE_ATTR);
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     HSIZE(hlen, fsize);
     bu_log("keep, with attributes(%f sec):: %ld (%s)\n",seconds,  fsize, hlen);
 
     start = bu_gettime();
-    fsize = db5_size(dbip, dp, DB_SIZE_XPUSH);
+    fsize = db5_size(dbip, dp, DB_SIZE_TREE_DEINSTANCED);
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     HSIZE(hlen, fsize);
     bu_log("xpush, no attributes(%f sec):: %ld (%s)\n",seconds,  fsize, hlen);
 
     start = bu_gettime();
-    fsize = db5_size(dbip, dp, DB_SIZE_XPUSH|DB_SIZE_ATTR);
+    fsize = db5_size(dbip, dp, DB_SIZE_TREE_DEINSTANCED|DB_SIZE_ATTR);
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     HSIZE(hlen, fsize);
