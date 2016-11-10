@@ -59,13 +59,11 @@ _bn_unit_sph_sample(point_t pnt)
 	    if (V2flag > 0.5) {V2 = bn_randmt(); have_rand_2++;}
 	    if (V2flag < 0.5) {V2 = -1*bn_randmt(); have_rand_2++;}
 	}
-	if (have_rand_1 && have_rand_2) {
-	    /* Check that V1^2+V2^2 < 1 */
-	    S = V1*V1 + V2*V2;
-	    if (S >= 1) {
-		have_rand_1 = 0;
-		have_rand_2 = 0;
-	    }
+	/* Check that V1^2+V2^2 < 1 */
+	S = V1*V1 + V2*V2;
+	if (S >= 1) {
+	    have_rand_1 = 0;
+	    have_rand_2 = 0;
 	}
     }
 
