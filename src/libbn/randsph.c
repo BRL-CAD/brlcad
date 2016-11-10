@@ -69,7 +69,6 @@ _bn_unit_sph_sample(point_t pnt)
 
     /* Given the random numbers, generate the xyz points on the
      * unit sphere */
-    S  = V1*V1 + V2*V2;
     px = 2 * V1 * sqrt(1 - S);
     py = 2 * V2 * sqrt(1 - S);
     pz = 1 - 2 * S;
