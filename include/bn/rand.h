@@ -140,6 +140,20 @@ BN_EXPORT extern const float bn_sin_table[BN_SINTABSIZE];
  */
 BN_EXPORT extern void bn_mathtab_constant(void);
 
+/**
+ * @brief
+ * Generate a sample point on a sphere per Marsaglia (1972).
+ *
+ * This routine use bn_randmt internally for the random numbers needed.
+ *
+ * Note that bn_sph_sample and its internal routines do not initialize the
+ * randmt seed - the user should call bn_randmt_seed in their code if a
+ * variable seed is required.
+ */
+BN_EXPORT extern void bn_sph_sample(point_t sample, const point_t center, const fastf_t radius);
+
+
+
 __END_DECLS
 
 #endif  /* BN_RAND_H */
