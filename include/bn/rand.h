@@ -149,6 +149,10 @@ BN_EXPORT extern void bn_mathtab_constant(void);
  * Note that bn_sph_sample and its internal routines do not initialize the
  * randmt seed - the user should call bn_randmt_seed in their code if a
  * variable seed is required.
+ *
+ * NOTE: this form of the function is almost certainly not final - will
+ * investigate quasi-random rather than random points for better distribution,
+ * which may require a different function signature...
  */
 BN_EXPORT extern void bn_sph_sample(point_t sample, const point_t center, const fastf_t radius);
 
