@@ -18,7 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* check on ORCA_Comp reg_bit hash key size
+* user report of runtime failure on Windows.  apparently need a build
+  flag to be portable:
+  https://blogs.msdn.microsoft.com/vcblog/2009/08/27/windows-sdk-v7-0v7-0a-incompatibility-workaround/
 
 * add regression test for directional light sources
 
