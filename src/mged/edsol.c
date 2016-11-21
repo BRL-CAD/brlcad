@@ -4285,7 +4285,8 @@ sedit(void)
 	    {
 		struct rt_bot_internal *bot =
 		    (struct rt_bot_internal *)es_int.idb_ptr;
-		size_t face_no;
+		size_t face_no = 0;
+		int face_state = 0;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -4318,17 +4319,18 @@ sedit(void)
 		    if (!inpara)
 			break;
 
-		    face_no = (size_t)-1;
+		    face_state = -1;
 		    for (i=0; i < bot->num_faces; i++) {
 			if (bot_verts[0] == bot->faces[i*3] &&
 			    bot_verts[1] == bot->faces[i*3+1] &&
 			    bot_verts[2] == bot->faces[i*3+2])
 			{
 			    face_no = i;
+			    face_state = 0;
 			    break;
 			}
 		    }
-		    if (face_no == (size_t)-1) {
+		    if (face_state > -1) {
 			bu_log("Cannot find face with vertices %d %d %d!\n",
 			       V3ARGS(bot_verts));
 			break;
@@ -4394,7 +4396,8 @@ sedit(void)
 		    (struct rt_bot_internal *)es_int.idb_ptr;
 		char fmode[10];
 		const char *radio_result;
-		size_t face_no;
+		size_t face_no = 0;
+		int face_state = 0;
 		int ret_tcl = TCL_ERROR;
 
 		RT_BOT_CK_MAGIC(bot);
@@ -4415,27 +4418,28 @@ sedit(void)
 		    if (atoi(Tcl_GetStringResult(INTERP)))
 			break;
 
-		    face_no = (size_t)-2;
+		    face_state = -2;
 		} else {
 		    /* setting thickness for just one face */
-		    face_no = (size_t)-1;
+		    face_state = -1;
 		    for (i=0; i < bot->num_faces; i++) {
 			if (bot_verts[0] == bot->faces[i*3] &&
 			    bot_verts[1] == bot->faces[i*3+1] &&
 			    bot_verts[2] == bot->faces[i*3+2])
 			{
 			    face_no = i;
+			    face_state = 0;
 			    break;
 			}
 		    }
-		    if (face_no == (size_t)-1 || face_no == (size_t)-2) {
+		    if (face_state < 0) {
 			bu_log("Cannot find face with vertices %d %d %d!\n",
 			       V3ARGS(bot_verts));
 			break;
 		    }
 		}
 
-		if (face_no != (size_t)-1)
+		if (face_state > -1)
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, face_no)?1:0);
 		else
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
@@ -4454,7 +4458,7 @@ sedit(void)
 		}
 		radio_result = Tcl_GetVar(INTERP, "_bot_fmode_result", TCL_GLOBAL_ONLY);
 
-		if (face_no != (size_t)-1) {
+		if (face_state > -1) {
 		    if (atoi(radio_result))
 			BU_BITSET(bot->face_mode, face_no);
 		    else

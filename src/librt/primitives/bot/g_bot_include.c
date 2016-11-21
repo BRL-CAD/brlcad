@@ -1092,7 +1092,7 @@ CPP_XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct ap
 	return 0;		/* MISS */
 
     /* Sort hits, Near to Far */
-    rt_hitsort(hits, nhits);
+    primitive_hitsort(hits, nhits);
 
     /* build segments */
     return rt_bot_makesegs(hits, nhits, stp, rp, ap, seghead, NULL);
@@ -1251,7 +1251,7 @@ CPP_XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pie
 	 * seg.  Saving an odd number of these will confuse a_onehit
 	 * processing.
 	 */
-	rt_hitsort(psp->htab.hits, psp->htab.end);
+	primitive_hitsort(psp->htab.hits, psp->htab.end);
 	return rt_bot_makesegs(psp->htab.hits, psp->htab.end,
 			       stp, rp, ap, seghead, psp);
     }

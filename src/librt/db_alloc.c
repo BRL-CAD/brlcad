@@ -138,6 +138,8 @@ db_delete(struct db_i *dbip, struct directory *dp)
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_delete(%s) %p, %p\n",
 				    dp->d_namep, (void *)dbip, (void *)dp);
 
+    if (dp->children) bu_free(dp->children, "free child pointer array");
+
     if (dp->d_flags & RT_DIR_INMEM) {
 	bu_free(dp->d_un.ptr, "db_delete d_un.ptr");
 	dp->d_un.ptr = NULL;

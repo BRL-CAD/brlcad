@@ -272,7 +272,7 @@ int part_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const u
 	 * Do this by sorting the intersections,
 	 * and using the minimum and maximum values.
 	 */
-	rt_hitsort(hits, hitp - &hits[0]);
+	primitive_hitsort(hits, hitp - &hits[0]);
 
 	/* [0] is minimum, make [1] be maximum (hitp is +1 off end) */
 	hits[1] = hitp[-1];	/* struct copy */

@@ -1184,7 +1184,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
     if (hit_count) {
 	/* Sort hits, Near to Far */
-	rt_hitsort(hits, hit_count);
+	primitive_hitsort(hits, hit_count);
     }
 
     if (hits_before_bottom & 1) {

@@ -642,7 +642,7 @@ rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct appl
     RT_CK_HTBL(&psp->htab);
 
     /* Sort hits, Near to Far */
-    rt_hitsort(psp->htab.hits, psp->htab.end);
+    primitive_hitsort(psp->htab.hits, psp->htab.end);
 
     /* build sebgents */
     (void)rt_bot_makesegs(psp->htab.hits, psp->htab.end, psp->stp, &ap->a_ray, ap, seghead, psp);
