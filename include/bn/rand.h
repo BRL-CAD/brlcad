@@ -51,6 +51,7 @@
 
 #include "common.h"
 #include "bn/defines.h"
+#include "vmath.h"
 
 __BEGIN_DECLS
 
@@ -139,6 +140,16 @@ BN_EXPORT extern const float bn_sin_table[BN_SINTABSIZE];
  *  Setting to all zeros keeps dithered values at their original values.
  */
 BN_EXPORT extern void bn_mathtab_constant(void);
+
+/* Sobol' low-discrepancy-sequence generation */
+typedef struct bn_soboldata_s *bn_soboldata;
+BN_EXPORT extern double bn_sobol_urand(bn_soboldata, double a, double b);
+BN_EXPORT extern bn_soboldata bn_sobol_create(unsigned sdim, unsigned long seed);
+BN_EXPORT extern void bn_sobol_destroy(bn_soboldata s);
+BN_EXPORT extern void bn_sobol_next01(bn_soboldata s, double *x);
+BN_EXPORT extern void bn_sobol_next(bn_soboldata s, double *x,
+	const double *lb, const double *ub);
+BN_EXPORT extern void bn_sobol_skip(bn_soboldata s, unsigned n, double *x);
 
 /**
  * @brief

@@ -27,6 +27,7 @@ set(LIBBN_SOURCES
   randmt.c
   randsph.c
   scale.c
+  sobolseq.c
   sphmap.c
   str.c
   symbol.c
@@ -49,7 +50,10 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
   add_subdirectory(tests)
 endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
-CMAKEFILES(README)
+CMAKEFILES(
+  README
+  soboldata.h
+  )
 
 # Local Variables:
 # tab-width: 8
