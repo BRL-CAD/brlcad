@@ -13,11 +13,10 @@ BRLCAD_ADDEXEC(bn_plane_dist plane_dist.c "libbu;libbn" TEST)
 BRLCAD_ADDEXEC(bn_plane_isect plane_isect.c "libbu;libbn" TEST)
 BRLCAD_ADDEXEC(bn_complex complex.c "libbu;libbn" TEST)
 BRLCAD_ADDEXEC(bn_mat mat.c "libbu;libbn" TEST)
-BRLCAD_ADDEXEC(bn_sobolseq sobolseq.c "libbu;libbn" TEST)
 BRLCAD_ADDEXEC(bn_tabdata tabdata.c "libbu;libbn" TEST)
 BRLCAD_ADDEXEC(bn_qmath qmath.c "libbu;libbn" TEST)
 BRLCAD_ADDEXEC(bn_randsph randsph.c "libbu;libbn" TEST)
-CMAKEFILES(poly_cubic_roots.c poly_quartic_roots.c)
+CMAKEFILES(poly_cubic_roots.c poly_quartic_roots.c sobolseq.c)
 
 #
 #  ************ list.c tests *************

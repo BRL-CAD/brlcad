@@ -27,7 +27,6 @@ set(LIBBN_SOURCES
   randmt.c
   randsph.c
   scale.c
-  sobolseq.c
   sphmap.c
   str.c
   symbol.c
@@ -52,6 +51,7 @@ endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 CMAKEFILES(
   README
+  sobolseq.c
   soboldata.h
   )
 

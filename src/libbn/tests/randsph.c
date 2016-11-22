@@ -44,7 +44,7 @@ main(int argc, const char *argv[])
 
     parray = (point_t *)bu_malloc(500 * sizeof(point_t), "point array");
     for(i = 0; i < 500; i++) {
-	(void)bn_sph_sample(parray[i], center, radius);
+	(void)bn_rand_sph_sample(parray[i], center, radius);
     }
 
     for (i=0; i < 500; i++) {
@@ -55,7 +55,7 @@ main(int argc, const char *argv[])
     radius = 10.0;
     parray = (point_t *)bu_malloc(5000 * sizeof(point_t), "point array");
     for(i = 0; i < 5000; i++) {
-	(void)bn_sph_sample(parray[i], center, radius);
+	(void)bn_rand_sph_sample(parray[i], center, radius);
     }
 
     for (i=0; i < 5000; i++) {
@@ -67,7 +67,7 @@ main(int argc, const char *argv[])
     VSET(center, 50, 50, 30);
     parray = (point_t *)bu_malloc(5000 * sizeof(point_t), "point array");
     for(i = 0; i < 5000; i++) {
-	(void)bn_sph_sample(parray[i], center, radius);
+	(void)bn_rand_sph_sample(parray[i], center, radius);
     }
 
     for (i=0; i < 5000; i++) {

@@ -79,6 +79,9 @@ _bn_unit_sph_sample(point_t pnt)
 }
 
 #if 0
+/* TODO - investigate implementation of http://www.dtic.mil/docs/citations/ADA510216
+ * scrambling method to see if Sobol can actually work for this... Basic Sobol
+ * sequences result in patterns. */
 HIDDEN void
 _bn_unit_sph_sample_sobol(point_t pnt, bn_soboldata s)
 {
@@ -117,7 +120,7 @@ _bn_unit_sph_sample_sobol(point_t pnt, bn_soboldata s)
 
 
 void
-bn_sph_sample(point_t sample, const point_t center, const fastf_t radius)
+bn_rand_sph_sample(point_t sample, const point_t center, const fastf_t radius)
 {
     _bn_unit_sph_sample(sample);
 
