@@ -81,7 +81,7 @@ _bn_unit_sph_sample(point_t pnt)
 #if 0
 /* TODO - investigate implementation of http://www.dtic.mil/docs/citations/ADA510216
  * scrambling method to see if Sobol can actually work for this... Basic Sobol
- * sequences result in patterns. */
+ * sequences result in patterns. Also relevant: people.sc.fsu.edu/~hcc8471/ssobol.pdf */
 HIDDEN void
 _bn_unit_sph_sample_sobol(point_t pnt, bn_soboldata s)
 {
