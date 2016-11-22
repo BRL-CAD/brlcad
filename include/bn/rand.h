@@ -168,6 +168,8 @@ BN_EXPORT extern void bn_sobol_next(bn_soboldata s, double *x,
 
 /**
  * Return the next vector x[sdim] in Sobol sequence, with each x[i] in (0,1).
+ * This saves some extra math operations compared to bn_sobol_next if the
+ * required interval for the caller's application happens to be (0,1).
  *
  * Note: If the user attempts to read more than 2^32-1 points from the sequence,
  * the generator will fall back on pseudo random number generation.
