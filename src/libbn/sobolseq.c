@@ -262,7 +262,7 @@ static void sobol_destroy(soboldata *sd)
 /* API to Sobol sequence creation, which hides bn_soboldata structure
    behind an opaque pointer */
 
-bn_soboldata bn_sobol_create(unsigned sdim, unsigned long seed)
+bn_soboldata bn_sobol_create(unsigned int sdim, unsigned long seed)
 {
     bn_soboldata s = (bn_soboldata) bu_malloc(sizeof(soboldata), "sobol data");
     if (!s) return NULL;
@@ -284,7 +284,7 @@ void bn_sobol_next01(bn_soboldata s, double *x)
     if (!sobol_gen(s, x)) {
 	/* fall back on pseudo random numbers in the unlikely event
 	   that we exceed 2^32-1 points */
-	unsigned i;
+	unsigned int i;
 	for (i = 0; i < s->sdim; ++i)
 	    x[i] = bn_sobol_urand(s, 0.0,1.0);
     }
@@ -294,10 +294,11 @@ void bn_sobol_next01(bn_soboldata s, double *x)
 void bn_sobol_next(bn_soboldata s, double *x,
 	const double *lb, const double *ub)
 {
-    unsigned i, sdim;
+    unsigned int i;
     bn_sobol_next01(s, x);
-    for (sdim = s->sdim, i = 0; i < sdim; ++i)
+    for (i = 0; i < s->sdim; ++i) {
 	x[i] = lb[i] + (ub[i] - lb[i]) * x[i];
+    }
 }
 
 /* if we know in advance how many points (n) we want to compute, then
@@ -307,7 +308,7 @@ void bn_sobol_next(bn_soboldata s, double *x,
 void bn_sobol_skip(bn_soboldata s, unsigned n, double *x)
 {
     if (s) {
-	unsigned k = 1;
+	unsigned int k = 1;
 	while (k*2 < n) k *= 2;
 	while (k-- > 0) sobol_gen(s, x);
     }

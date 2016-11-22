@@ -152,7 +152,7 @@ typedef struct bn_soboldata_s *bn_soboldata;
  * Create and initialize an instance of a Sobol sequence data container.  If seed
  * is non-zero the value will be used in initialization, otherwise a default will
  * be used.  User must destroy the returned data with bn_sobol_destroy */
-BN_EXPORT extern bn_soboldata bn_sobol_create(unsigned sdim, unsigned long seed);
+BN_EXPORT extern bn_soboldata bn_sobol_create(unsigned int sdim, unsigned long seed);
 
 /** Destroy a Sobol data container */
 BN_EXPORT extern void bn_sobol_destroy(bn_soboldata s);
