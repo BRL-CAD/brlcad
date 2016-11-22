@@ -29,6 +29,8 @@
 
 #define MAXDIM 1111
 
+extern double bn_sobol_urand(bn_soboldata, double a, double b);
+
 /* test integrand from Joe and Kuo paper ... integrates to 1 */
 static double testfunc(unsigned n, const double *x)
 {
