@@ -145,11 +145,23 @@ BN_EXPORT extern void bn_mathtab_constant(void);
  * @brief
  * Generate a sample point on a sphere per Marsaglia (1972).
  *
- * This routine use bn_randmt internally for the random numbers needed.
- *
  * Note that bn_sph_sample and its internal routines do not initialize the
  * randmt seed - the user should call bn_randmt_seed in their code if a
  * variable seed is required.
+ *
+ *
+ *
+ * TODO - this function in this form may belong in libbg - the unit sphere
+ * generator is probably the appropriate libbn interface.  Should return
+ * an array of points with cnt requested by user (can still do one point with
+ * that API, and allows for other options)
+ *
+ * If bn_numgen API goes through, pass the sampler a number generator to use
+ * as the source of input numbers. That way there is no longer a tie between
+ * this function and a specific source of input like randmt.  Once that is done,
+ * rename to bn_sph_sample - should look like:
+ *
+ * void bn_sph_sample(point_t *pnts, size_t cnt, bn_numgen n);
  */
 BN_EXPORT extern void bn_rand_sph_sample(point_t sample, const point_t center, const fastf_t radius);
 
