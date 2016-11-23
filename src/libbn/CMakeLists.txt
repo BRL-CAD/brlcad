@@ -53,6 +53,7 @@ CMAKEFILES(
   README
   sobolseq.c
   soboldata.h
+  numgen.c
   )
 
 # Local Variables:
