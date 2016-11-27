@@ -113,7 +113,11 @@ rt_db_get_internal_reuse(
 	ret = rt_binunif_import5_minor_type(ip, &raw.body, mat, dbip, resp, raw.minor_type);
     } else if (OBJ[id].ft_import5) {
 	ret = OBJ[id].ft_import5(ip, &raw.body, mat, dbip, resp);
+    } else {
+	/* nothing to do, success */
+	ret = 0;
     }
+
     if (ret < 0) {
 	rt_db_free_internal(ip);
 	return -1;
