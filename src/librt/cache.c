@@ -30,7 +30,16 @@
 
 /* system headers */
 #include <errno.h>
+
+#define USE_NEW_COMPRESSION 0
+
+#if USE_NEW_COMPRESSION
+//#include <lz4.h>
+#include <lz4.h>
+#else
 #include <zlib.h>
+#endif
+
 #include "bnetwork.h"
 
 /* implementation headers */
@@ -177,18 +186,38 @@ rt_cache_close(struct rt_cache *cache)
 HIDDEN void
 compress_external(struct bu_external *external)
 {
+    int ret;
+    int compressed = 0;
     uint8_t *buffer;
     size_t compressed_size;
     BU_CK_EXTERNAL(external);
 
+#if USE_NEW_COMPRESSION
+    compressed_size = LZ4_compressBound(external->ext_nbytes);
+#else
     compressed_size = compressBound(external->ext_nbytes);
+#endif
+    /* buffer is uncompsize + maxcompsize + compressed_data */
     buffer = (uint8_t *)bu_malloc(compressed_size + SIZEOF_NETWORK_LONG, "buffer");
 
     *(uint32_t *)buffer = htonl(external->ext_nbytes);
 
-    if (Z_OK != compress(buffer + SIZEOF_NETWORK_LONG, &compressed_size,
-			 external->ext_buf, external->ext_nbytes))
-	bu_bomb("compress() failed");
+#if USE_NEW_COMPRESSION
+    ret = LZ4_compress_fast((const char *)external->ext_buf, (char *)(buffer + SIZEOF_NETWORK_LONG), external->ext_nbytes, compressed_size, 1);
+    if (ret != 0)
+	compressed = 1;
+#else
+    ret = compress(buffer + SIZEOF_NETWORK_LONG, &compressed_size, external->ext_buf, external->ext_nbytes);
+    if (ret == Z_OK)
+	compressed = 1;
+#endif
+
+    if (!compressed) {
+	bu_log("compression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, external->ext_buf, compressed_size);
+	return;
+    }
+
+    *(uint32_t *)buffer = htonl(external->ext_nbytes);
 
     bu_free(external->ext_buf, "ext_buf");
     external->ext_nbytes = compressed_size + SIZEOF_NETWORK_LONG;
@@ -200,6 +229,8 @@ HIDDEN void
 uncompress_external(const struct bu_external *external,
 		    struct bu_external *dest)
 {
+    int ret;
+    int uncompressed = 0;
     uint8_t *buffer;
 
     BU_CK_EXTERNAL(external);
@@ -209,10 +240,21 @@ uncompress_external(const struct bu_external *external,
     dest->ext_nbytes = ntohl(*(uint32_t *)external->ext_buf);
     buffer = (uint8_t *)bu_malloc(dest->ext_nbytes, "buffer");
 
-    if (Z_OK != uncompress(buffer, &dest->ext_nbytes,
-			   external->ext_buf + SIZEOF_NETWORK_LONG,
-			   external->ext_nbytes - SIZEOF_NETWORK_LONG))
-	bu_bomb("uncompress() failed");
+#if USE_NEW_COMPRESSION
+    ret = LZ4_decompress_fast((const char *)(external->ext_buf + SIZEOF_NETWORK_LONG), (char *)buffer, dest->ext_nbytes);
+/*((const char *)external->ext_buf + SIZEOF_NETWORK_LONG, (char *)buffer, external->ext_nbytes - SIZEOF_NETWORK_LONG, dest->ext_nbytes); */
+    if (ret > 0)
+	uncompressed = 1;
+#else
+    ret = uncompress(buffer, &dest->ext_nbytes, external->ext_buf + SIZEOF_NETWORK_LONG, external->ext_nbytes - SIZEOF_NETWORK_LONG);
+    if (Z_OK == ret)
+	uncompressed = 1;
+#endif
+
+    if (!uncompressed) {
+	bu_log("decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, external->ext_buf, dest->ext_nbytes);
+	return;
+    }
 
     dest->ext_buf = buffer;
 }
