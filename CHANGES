@@ -116,6 +116,15 @@ and new names should be listed for reference.  If an item is marked
 with a "'" (single quote), that means it was not documented and may be
 removed at any time.
 
+7.28
+----
+
+MGED commands
+	?lib, aproposlib, %, animmate, db_glob,
+	debugbu, debugdir, debuglib, debugmem, debugnmg, expand,
+	loadtk, match, memprint, preview, regdebug, rrt, savekey,
+	shaded_mode, syn
+	Removed as part of distillation effort [deprecated 7.28]
 
 7.26
 ----
