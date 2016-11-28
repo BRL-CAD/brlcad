@@ -34,7 +34,6 @@
 #define USE_NEW_COMPRESSION 0
 
 #if USE_NEW_COMPRESSION
-//#include <lz4.h>
 #include <lz4.h>
 #else
 #include <zlib.h>
