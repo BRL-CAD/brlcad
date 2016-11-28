@@ -183,7 +183,6 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     int wcnt = 0;
     struct directory *dp;
     struct directory **dps;
-    void **old_udata;
     struct db5_sizecalc *dsr;
     int64_t start, elapsed;
     int64_t s1, s2;
@@ -242,7 +241,6 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     /* Also, make the containers that will hold size specific data */
     dps = (struct directory **)bu_calloc(dcnt+1, sizeof(struct directory *), "sortable directory pointer array *");
     dsr = (struct db5_sizecalc *)bu_calloc(dcnt+1, sizeof(db5_sizecalc), "per-dp size information");
-    old_udata = (void **)bu_calloc(dcnt+1, sizeof(void *), "old void ptrs");
 
     /* TODO - make reusable directory pointer array container to test on-the-fly child lookup as oppose to lookup-and-store */
 
@@ -254,7 +252,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & RT_DIR_HIDDEN)) {
-		old_udata[j] = dp->u_data;
+		dsr[j].data = dp->u_data;
 		dp->u_data = (void *)(&(dsr[j]));
 		dps[j] = dp;
 		j++;
@@ -520,15 +518,13 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 #endif
 
 db5size_freemem:
-    /* Put the original u_data pointers back */
-    for (i = 0; i < dcnt; i++) {
-	dps[i]->u_data = old_udata[i];
-    }
-
     /* Free memory */
-    bu_free(old_udata, "old u_data pointers");
     for(i = 0; i < dcnt; i++) {
 	if (dsr[i].children) bu_free(dsr[i].children, "child array");
+    }
+    /* Put the original u_data pointers back */
+    for (i = 0; i < dcnt; i++) {
+	dps[i]->u_data = DB5SIZE(dps[i])->data;
     }
     bu_free(dsr, "data size containers");
     bu_free(dps, "old u_data pointers");
