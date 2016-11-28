@@ -27,7 +27,7 @@
 
 #include "common.h"
 
-#include <set>
+#include <vector>
 #include <queue>
 
 #include <stdio.h>
@@ -185,8 +185,9 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     struct directory **dps;
     void **old_udata;
     struct db5_sizecalc *dsr;
-    //int64_t start, elapsed;
-    //int64_t total = 0;
+    int64_t start, elapsed;
+    int64_t s1, s2;
+    int64_t total = 0;
     struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
     unsigned int max_bufsize = 0;
     long fsize = 0;
@@ -290,6 +291,8 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     finalized_prev = -1;
     active_prev = -1;
     wcnt = dcnt;
+
+    s1 = bu_gettime();
     while (finalized != finalized_prev || active != active_prev) {
 	finalized_prev = finalized;
 	active_prev = active;
@@ -311,7 +314,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 		    struct directory *cdp;
 		    int children_finalized = 1;
 		    if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_COMB_DONE)) {
-			//start = bu_gettime();
+			start = bu_gettime();
 			struct rt_db_internal in;
 			struct rt_comb_internal *comb;
 			if (rt_db_get_internal_reuse(&ext, &in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
@@ -321,8 +324,8 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 			(void)db_comb_children(dbip, comb, &(DB5SIZE(dp)->children), NULL, NULL);
 			DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_COMB_DONE;
 			rt_db_free_internal(&in);
-			//elapsed = bu_gettime() - start;
-			//total += elapsed;
+			elapsed = bu_gettime() - start;
+			total += elapsed;
 		    }
 
 		    if (DB5SIZE(dp)->children) {
@@ -433,8 +436,10 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	}
     }
 
-    //fastf_t seconds = total / 1000000.0;
-    //bu_log("comb processing: %f\n", seconds);
+    s2 = bu_gettime() - s1;
+    fastf_t seconds = total / 1000000.0;
+    bu_log("comb processing: %f\n", seconds);
+    bu_log("other comb processing: %f\n", (s2 - total) / 1000000.0);
 
     /* Now that we have completed our size calculations, see if there are any active but
      * unfinalized directory objects.  These will be an indication of a cyclic loop and
@@ -465,7 +470,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
      * calculating other objects' sizes, we evaluate it only for the specific
      * object of interest rather than mass evaluating it in the loop. */
     if (local_flags & DB_SIZE_TREE_INSTANCED && !DB5SIZE(in_dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED]) {
-	std::set<struct directory *> uniq; // TODO - may not need set to guarantee uniqueness if flag setting works...
+	std::vector<struct directory *> uniq;
 	std::queue<struct directory *> q;
 	struct directory *cdp;
 	int cind = 0;
@@ -475,7 +480,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	    q.pop();
 	    if (qdp->u_data && !(DB5SIZE(qdp)->queue_flag)) {
 		DB5SIZE(qdp)->queue_flag = 1;
-		uniq.insert(qdp);
+		uniq.push_back(qdp);
 	    }
 	    cind = 0;
 	    cdp = (DB5SIZE(qdp)->children) ? DB5SIZE(qdp)->children[0] : NULL;
@@ -485,7 +490,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 		cdp = DB5SIZE(qdp)->children[cind];
 	    }
 	}
-	for (std::set<struct directory *>::iterator di = uniq.begin(); di != uniq.end(); di++) {
+	for (std::vector<struct directory *>::iterator di = uniq.begin(); di != uniq.end(); di++) {
 	    DB5SIZE(in_dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE((*di))->sizes[RT_DIR_SIZE_OBJ];
 	    DB5SIZE(in_dp)->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE((*di))->sizes_wattr[RT_DIR_SIZE_OBJ];
 	}
