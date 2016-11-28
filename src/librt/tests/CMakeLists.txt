@@ -1,6 +1,3 @@
-
-BRLCAD_ADDEXEC(lookup lookup_tests.c "librt" TEST)
-
 BRLCAD_ADDEXEC(bundle bundle.c "librt" TEST)
 add_test(NAME rt_bundle COMMAND bundle)
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/bundle.plot3")
