@@ -57,6 +57,15 @@
 #define HSIZE(buf, var) \
     (void)bu_humanize_number(buf, 5, (int64_t)var, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
 
+struct db5_sizecalc {
+    int s_flags;		/**< @brief flags having to do with the state of size calculations */
+    long sizes[3];              /**< @brief calculated sizes of directory object */
+    long sizes_wattr[3];        /**< @brief calculated sizes of directory object including attributes */
+    struct directory **children;/**< @brief RT_DIR_NULL terminated array of child objects of this object */
+    int queue_flag;
+    void *data; 		/**< @brief void pointer hook for misc user data. */
+};
+#define DB5SIZE(_dp) ((struct db5_sizecalc *)_dp->u_data)
 
 HIDDEN int
 db_get_external_reuse(register struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
@@ -153,13 +162,13 @@ _cmp_dp_states(const void *a, const void *b, void *UNUSED(arg))
     struct directory *dp1 = *dpe1;
     struct directory *dp2 = *dpe2;
 
-    //bu_log("a: name %s, flags %d\n",  dp1->d_namep, dp1->s_flags);
-    //bu_log("b: name %s, flags %d\n",  dp2->d_namep, dp2->s_flags);
+    //bu_log("a: name %s, flags %d\n",  dp1->d_namep, DB5SIZE(dp1)->s_flags);
+    //bu_log("b: name %s, flags %d\n",  dp2->d_namep, DB5SIZE(dp2)->s_flags);
 
-    if ((dp1->s_flags & RT_DIR_SIZE_FINALIZED) && !(dp2->s_flags & RT_DIR_SIZE_FINALIZED)) return 1;
-    if (!(dp1->s_flags & RT_DIR_SIZE_FINALIZED) && (dp2->s_flags & RT_DIR_SIZE_FINALIZED)) return -1;
-    if (dp1->s_flags > dp2->s_flags) return -1;
-    if (dp1->s_flags < dp2->s_flags) return 1;
+    if ((DB5SIZE(dp1)->s_flags & RT_DIR_SIZE_FINALIZED) && !(DB5SIZE(dp2)->s_flags & RT_DIR_SIZE_FINALIZED)) return 1;
+    if (!(DB5SIZE(dp1)->s_flags & RT_DIR_SIZE_FINALIZED) && (DB5SIZE(dp2)->s_flags & RT_DIR_SIZE_FINALIZED)) return -1;
+    if (DB5SIZE(dp1)->s_flags > DB5SIZE(dp2)->s_flags) return -1;
+    if (DB5SIZE(dp1)->s_flags < DB5SIZE(dp2)->s_flags) return 1;
     return 0;
 }
 
@@ -172,13 +181,15 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     int active = 0;
     int dcnt = 0;
     int wcnt = 0;
-    int *s_lflags;
     struct directory *dp;
     struct directory **dps;
+    void **old_udata;
+    struct db5_sizecalc *dsr;
     //int64_t start, elapsed;
     //int64_t total = 0;
     struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
     unsigned int max_bufsize = 0;
+    long fsize = 0;
 
     if (!dbip) return 0;
     if (!in_dp) return 0;
@@ -201,7 +212,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	    !(in_dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) &&
 	    !(in_dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) &&
 	    !(in_dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP))) {
-	long fsize = 0;
+	fsize = 0;
 	if (local_flags & DB_SIZE_ATTR) {
 	    ext.ext_buf = (uint8_t *)bu_realloc(ext.ext_buf, in_dp->d_len, "resize ext_buf");
 	    fsize += _db5_get_attributes_size(&ext, dbip, in_dp);
@@ -214,6 +225,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     /* It's not one of the simple cases - we've been asked for a definition that
      * requires awareness of some portion of the hierarchy. */
 
+
     /* Get a count of all objects we might care about, and find out what the
      * size of our biggest object is. */
     for (i = 0; i < RT_DBNHASH; i++) {
@@ -225,19 +237,24 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	}
     }
 
-    /* Get the flags array and the array to hold usable struct directory pointers */
-    s_lflags = (int *)bu_calloc(dcnt+1, sizeof(int), "local size flags");
+    /* Make he array to hold usable struct directory pointers */
+    /* Also, make the containers that will hold size specific data */
     dps = (struct directory **)bu_calloc(dcnt+1, sizeof(struct directory *), "sortable directory pointer array *");
+    dsr = (struct db5_sizecalc *)bu_calloc(dcnt+1, sizeof(db5_sizecalc), "per-dp size information");
+    old_udata = (void **)bu_calloc(dcnt+1, sizeof(void *), "old void ptrs");
 
-    /* Make sure the bu_external buffer has as much memory as it will ever need to handle any one object */
+    /* TODO - make reusable directory pointer array container to test on-the-fly child lookup as oppose to lookup-and-store */
+
+   /* Make sure the bu_external buffer has as much memory as it will ever need to handle any one object */
     ext.ext_buf = (uint8_t *)bu_realloc(ext.ext_buf, max_bufsize, "resize ext_buf");
 
-    /* Associate the local flag with the directory pointer and put ptr in array */
+    /* Associate the local struct with the directory pointer and put ptr in array */
     j = 0;
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & RT_DIR_HIDDEN)) {
-		dp->u_data = (void *)(&(s_lflags[j]));
+		old_udata[j] = dp->u_data;
+		dp->u_data = (void *)(&(dsr[j]));
 		dps[j] = dp;
 		j++;
 	    }
@@ -249,18 +266,18 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     for (i = 0; i < dcnt; i++) {
 	dp = dps[i];
 	if (flags & DB_SIZE_FORCE_RECALC) {
-	    dp->s_flags = 0;
-	    if (dp->children) bu_free(dp->children, "free child dp ptr array");
-	    dp->children = NULL;
-	    for (int dpcind = 0; dpcind != 3; dpcind++) dp->sizes[dpcind] = 0;
-	    for (int dpcind = 0; dpcind != 3; dpcind++) dp->sizes_wattr[dpcind] = 0;
+	    DB5SIZE(dp)->s_flags = 0;
+	    if (DB5SIZE(dp)->children) bu_free(DB5SIZE(dp)->children, "free child dp ptr array");
+	    DB5SIZE(dp)->children = NULL;
+	    for (int dpcind = 0; dpcind != 3; dpcind++) DB5SIZE(dp)->sizes[dpcind] = 0;
+	    for (int dpcind = 0; dpcind != 3; dpcind++) DB5SIZE(dp)->sizes_wattr[dpcind] = 0;
 	} else {
-	    dp->s_flags = dp->s_flags & ~(RT_DIR_SIZE_ACTIVE);
+	    DB5SIZE(dp)->s_flags = DB5SIZE(dp)->s_flags & ~(RT_DIR_SIZE_ACTIVE);
 	}
     }
 
     /* Activate our directory object of interest. */
-    in_dp->s_flags |= RT_DIR_SIZE_ACTIVE;
+    DB5SIZE(in_dp)->s_flags |= RT_DIR_SIZE_ACTIVE;
     active++;
 
     /* Now that we have our initial setup, start calculating sizes.  Each pass should
@@ -279,77 +296,77 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 #if 0
 	bu_sort((void *)dps, wcnt, sizeof(struct directory *), _cmp_dp_states, NULL);
 	wcnt = 0;
-	while (wcnt < dcnt && !(dps[wcnt]->s_flags & RT_DIR_SIZE_FINALIZED)) wcnt++;
+	while (wcnt < dcnt && !(DB5SIZE(dps[wcnt])->s_flags & RT_DIR_SIZE_FINALIZED)) wcnt++;
 	bu_log("wcnt: %d\n", wcnt);
 #endif
 	for (i = 0; i < wcnt; i++) {
 	    dp = dps[i];
-	    if ((dp->s_flags & RT_DIR_SIZE_ACTIVE) && !(dp->s_flags & RT_DIR_SIZE_FINALIZED)) {
-		if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
-		    dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(&ext, dbip, dp);
-		    dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
+	    if ((DB5SIZE(dp)->s_flags & RT_DIR_SIZE_ACTIVE) && !(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_FINALIZED)) {
+		if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
+		    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(&ext, dbip, dp);
+		    DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_ATTR_DONE;
 		}
 
 		if (dp->d_flags & RT_DIR_COMB) {
 		    struct directory *cdp;
 		    int children_finalized = 1;
-		    if (!(dp->s_flags & RT_DIR_SIZE_COMB_DONE)) {
+		    if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_COMB_DONE)) {
 			//start = bu_gettime();
 			struct rt_db_internal in;
 			struct rt_comb_internal *comb;
 			if (rt_db_get_internal_reuse(&ext, &in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
 			comb = (struct rt_comb_internal *)in.idb_ptr;
-			if (dp->children) bu_free(dp->children, "free old dp child list");
-			dp->children = NULL;
-			(void)db_comb_children(dbip, comb, &(dp->children), NULL, NULL);
-			dp->s_flags |= RT_DIR_SIZE_COMB_DONE;
+			if (DB5SIZE(dp)->children) bu_free(DB5SIZE(dp)->children, "free old dp child list");
+			DB5SIZE(dp)->children = NULL;
+			(void)db_comb_children(dbip, comb, &(DB5SIZE(dp)->children), NULL, NULL);
+			DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_COMB_DONE;
 			rt_db_free_internal(&in);
 			//elapsed = bu_gettime() - start;
 			//total += elapsed;
 		    }
 
-		    if (dp->children) {
+		    if (DB5SIZE(dp)->children) {
 			int cind = 0;
-			cdp = dp->children[0];
+			cdp = DB5SIZE(dp)->children[0];
 			while (cdp != RT_DIR_NULL) {
-			    if (!(cdp->s_flags & RT_DIR_SIZE_FINALIZED)) children_finalized = 0;
-			    if (!(cdp->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
-			    cdp->s_flags |= RT_DIR_SIZE_ACTIVE;
+			    if (!(DB5SIZE(cdp)->s_flags & RT_DIR_SIZE_FINALIZED)) children_finalized = 0;
+			    if (!(DB5SIZE(cdp)->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
+			    DB5SIZE(cdp)->s_flags |= RT_DIR_SIZE_ACTIVE;
 			    cind++;
-			    cdp = dp->children[cind];
+			    cdp = DB5SIZE(dp)->children[cind];
 			}
 			if (children_finalized) {
 			    /* Handle the xpushed size, which is just the sum of all of the
 			     * xpushed sizes of the children plus this object. */
 			    cind = 0;
-			    cdp = dp->children[0];
+			    cdp = DB5SIZE(dp)->children[0];
 			    while (cdp) {
-				//bu_log("XPUSH %s: adding %s (%ld)\n", dp->d_namep, cdp->d_namep, cdp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED]);
-				dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += cdp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED];
-				dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += cdp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
+				//bu_log("XPUSH %s: adding %s (%ld)\n", dp->d_namep, cdp->d_namep, DB5SIZE(cdp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED]);
+				DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(cdp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED];
+				DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(cdp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
 				cind++;
-				cdp = dp->children[cind];
+				cdp = DB5SIZE(dp)->children[cind];
 			    }
-			    dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->d_len;
-			    dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += (dp->d_len + dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
+			    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->d_len;
+			    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += (dp->d_len + DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ]);
 
 			    /* Now that we've handled the hierarchy, finalize the obj numbers */
-			    dp->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
-			    dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
+			    DB5SIZE(dp)->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
+			    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
 
 			    /* Mark the comb as done */
-			    dp->s_flags |= RT_DIR_SIZE_FINALIZED;
+			    DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_FINALIZED;
 			    finalized++;
 			}
 		    } else {
 			/* No children - it's just the comb */
-			dp->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
-			dp->sizes[RT_DIR_SIZE_TREE_INSTANCED] = dp->d_len;
-			dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] = dp->d_len;
-			dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
-			dp->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
-			dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
-			dp->s_flags |= RT_DIR_SIZE_FINALIZED;
+			DB5SIZE(dp)->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
+			DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED] = dp->d_len;
+			DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] = dp->d_len;
+			DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
+			DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ];
+			DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ];
+			DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_FINALIZED;
 			finalized++;
 		    }
 		} else {
@@ -358,10 +375,10 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 		    struct directory *edp = NULL;
 		    struct rt_db_internal in;
 
-		    if (!(dp->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
-			dp->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(&ext, dbip, dp);
-			dp->s_flags |= RT_DIR_SIZE_ATTR_DONE;
-			//bu_log("%s attr size: %d\n", dp->d_namep, dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
+		    if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
+			DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(&ext, dbip, dp);
+			DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_ATTR_DONE;
+			//bu_log("%s attr size: %d\n", dp->d_namep, DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ]);
 		    }
 		    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
 			struct rt_extrude_internal *extr;
@@ -390,26 +407,26 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 			rt_db_free_internal(&in);
 		    }
 		    if (edp) {
-			if (!(edp->s_flags & RT_DIR_SIZE_FINALIZED)) {
-			    if (!(edp->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
-			    edp->s_flags |= RT_DIR_SIZE_ACTIVE;
+			if (!(DB5SIZE(edp)->s_flags & RT_DIR_SIZE_FINALIZED)) {
+			    if (!(DB5SIZE(edp)->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
+			    DB5SIZE(edp)->s_flags |= RT_DIR_SIZE_ACTIVE;
 			    continue;
 			} else {
-			    dp->sizes[RT_DIR_SIZE_OBJ] += edp->sizes[RT_DIR_SIZE_OBJ];
-			    dp->sizes[RT_DIR_SIZE_TREE_INSTANCED] += edp->sizes[RT_DIR_SIZE_OBJ];
-			    dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += edp->sizes[RT_DIR_SIZE_OBJ];
-			    dp->sizes_wattr[RT_DIR_SIZE_OBJ] += edp->sizes_wattr[RT_DIR_SIZE_OBJ];
-			    dp->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += edp->sizes_wattr[RT_DIR_SIZE_OBJ];
-			    dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += edp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
+			    DB5SIZE(dp)->sizes[RT_DIR_SIZE_OBJ] += DB5SIZE(edp)->sizes[RT_DIR_SIZE_OBJ];
+			    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE(edp)->sizes[RT_DIR_SIZE_OBJ];
+			    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(edp)->sizes[RT_DIR_SIZE_OBJ];
+			    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] += DB5SIZE(edp)->sizes_wattr[RT_DIR_SIZE_OBJ];
+			    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE(edp)->sizes_wattr[RT_DIR_SIZE_OBJ];
+			    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(edp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
 			}
 		    }
-		    dp->sizes[RT_DIR_SIZE_OBJ] += dp->d_len;
-		    dp->sizes[RT_DIR_SIZE_TREE_INSTANCED] += dp->d_len;
-		    dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->d_len;
-		    dp->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
-		    dp->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
-		    dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->sizes_wattr[RT_DIR_SIZE_OBJ];
-		    dp->s_flags |= RT_DIR_SIZE_FINALIZED;
+		    DB5SIZE(dp)->sizes[RT_DIR_SIZE_OBJ] += dp->d_len;
+		    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED] += dp->d_len;
+		    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->d_len;
+		    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
+		    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ];
+		    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ];
+		    DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_FINALIZED;
 		    finalized++;
 		}
 	    }
@@ -434,7 +451,10 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	}
     }
 
-    if (!cycl_finalized) return 0;
+    if (!cycl_finalized) {
+	fsize = 0;
+	goto db5size_freemem;
+    }
 
     /* IFF we need it, calculate the keep size for dp.  This is harder than the
      * other calculations, because the size is (possibly) smaller than the sum
@@ -444,7 +464,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
      * possible cyclic paths. Since the keep size for an object doesn't help in
      * calculating other objects' sizes, we evaluate it only for the specific
      * object of interest rather than mass evaluating it in the loop. */
-    if (local_flags & DB_SIZE_TREE_INSTANCED && !in_dp->sizes[RT_DIR_SIZE_TREE_INSTANCED]) {
+    if (local_flags & DB_SIZE_TREE_INSTANCED && !DB5SIZE(in_dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED]) {
 	std::set<struct directory *> uniq;
 	std::queue<struct directory *> q;
 	struct directory *cdp;
@@ -453,47 +473,60 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	while (!q.empty()) {
 	    struct directory *qdp = q.front();
 	    q.pop();
-	    if (qdp->u_data) {
-		*((int *)(qdp->u_data)) = 1;
+	    if (qdp->u_data && !(DB5SIZE(qdp)->queue_flag)) {
+		DB5SIZE(qdp)->queue_flag = 1;
 		uniq.insert(qdp);
 	    }
 	    cind = 0;
-	    cdp = (qdp->children) ? qdp->children[0] : NULL;
+	    cdp = (DB5SIZE(qdp)->children) ? DB5SIZE(qdp)->children[0] : NULL;
 	    while (cdp) {
-		if (qdp->u_data && !(*((int *)(cdp->u_data)))) q.push(cdp);
+		if (cdp->u_data && !(DB5SIZE(qdp)->queue_flag)) q.push(cdp);
 		cind++;
-		cdp = qdp->children[cind];
+		cdp = DB5SIZE(qdp)->children[cind];
 	    }
 	}
 	for (std::set<struct directory *>::iterator di = uniq.begin(); di != uniq.end(); di++) {
-	    in_dp->sizes[RT_DIR_SIZE_TREE_INSTANCED] += (*di)->sizes[RT_DIR_SIZE_OBJ];
-	    in_dp->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += (*di)->sizes_wattr[RT_DIR_SIZE_OBJ];
+	    DB5SIZE(in_dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE((*di))->sizes[RT_DIR_SIZE_OBJ];
+	    DB5SIZE(in_dp)->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE((*di))->sizes_wattr[RT_DIR_SIZE_OBJ];
 	}
     }
 
     /* We now have what we need to return the requested size */
-    long fsize = 0;
     if (local_flags & DB_SIZE_ATTR) {
 	if (local_flags & DB_SIZE_TREE_INSTANCED) {
-	    fsize = in_dp->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED];
+	    fsize = DB5SIZE(in_dp)->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED];
 	} else if (local_flags & DB_SIZE_TREE_DEINSTANCED) {
-	    fsize = in_dp->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
+	    fsize = DB5SIZE(in_dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
 	}
     } else {
 	if (local_flags & DB_SIZE_TREE_INSTANCED) {
-	    fsize = in_dp->sizes[RT_DIR_SIZE_TREE_INSTANCED];
+	    fsize = DB5SIZE(in_dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED];
 	} else if (local_flags & DB_SIZE_TREE_DEINSTANCED) {
-	    fsize = in_dp->sizes[RT_DIR_SIZE_TREE_DEINSTANCED];
+	    fsize = DB5SIZE(in_dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED];
 	}
     }
 
 #if 0
     char hlen[6] = { '\0' };
     char hlen2[6] = { '\0' };
-    HSIZE(hlen, dp->sizes[RT_DIR_SIZE_OBJ]);
-    HSIZE(hlen2, dp->sizes_wattr[RT_DIR_SIZE_OBJ]);
+    HSIZE(hlen, DB5SIZE(dp)->sizes[RT_DIR_SIZE_OBJ]);
+    HSIZE(hlen2, DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ]);
     bu_log("%s/%s: %s\n", hlen, hlen2, dp->d_namep);
 #endif
+
+db5size_freemem:
+    /* Put the original u_data pointers back */
+    for (i = 0; i < dcnt; i++) {
+	dps[j]->u_data = old_udata[j];
+    }
+
+    /* Free memory */
+    bu_free(old_udata, "old u_data pointers");
+    for(i = 0; i < dcnt; i++) {
+	if (dsr[i].children) bu_free(dsr[i].children, "child array");
+    }
+    bu_free(dsr, "data size containers");
+    bu_free(dps, "old u_data pointers");
     if (ext.ext_buf) bu_free(ext.ext_buf, "final free of ext_buf");
     return fsize;
 }
