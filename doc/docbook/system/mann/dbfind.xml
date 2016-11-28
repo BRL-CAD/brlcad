@@ -1,14 +1,14 @@
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="find">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="dbfind">
 
 <refmeta>
-  <refentrytitle>FIND</refentrytitle>
+  <refentrytitle>DBFIND</refentrytitle>
   <manvolnum>nged</manvolnum>
   <refmiscinfo class="source">BRL-CAD</refmiscinfo>
   <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
 <refnamediv xml:id="name">
-  <refname>find</refname>
+  <refname>dbfind</refname>
   <refpurpose>Displays all combinations that have any of the <emphasis>objects</emphasis> specified
 as a member.
    </refpurpose>
@@ -17,7 +17,7 @@ as a member.
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>find</command>
+    <command>dbfind</command>
        <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
@@ -31,13 +31,13 @@ as a member.
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <para>The example shows the use of the <command>find</command> command to display all combinations that refer to the specified object.
+  <para>The example shows the use of the <command>dbfind</command> command to display all combinations that refer to the specified object.
   </para>
   <example><title>Display all combinations that refer to a specified object.</title>
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>find shapea</userinput></term>
+	   <term><prompt>mged&gt;</prompt> <userinput>dbfind shapea</userinput></term>
 	   <listitem>
 	     <para>Lists all combinations that refer to <emphasis>shapea</emphasis>.
 	      </para>

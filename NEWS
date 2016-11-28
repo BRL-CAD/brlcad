@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed name of dbfind man page (was listed as 'find') - Cliff Yapp
 * added -H option to ls for human readable size reporting - Cliff Yapp
 * added -S option to ls command for size based sorting - Cliff Yapp
 * improved 'loadview' command view script handling - Sean Morrison
