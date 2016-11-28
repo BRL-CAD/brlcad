@@ -85,58 +85,88 @@ db_get_external_reuse(register struct bu_external *ep, const struct directory *d
     return 0;
 }
 
+#define DB5COMB_TOKEN_LEAF 1
 HIDDEN int
-rt_db_get_internal_reuse(
-	struct bu_external *ext,
-	struct rt_db_internal *ip,
+_db5_children(
 	const struct directory *dp,
 	const struct db_i *dbip,
-	const mat_t mat,
-	struct resource *resp)
+       	struct bu_external *ext,
+       	struct directory ***children)
 {
-    register int id;
-    int ret;
     struct db5_raw_internal raw;
-    RT_DB_INTERNAL_INIT(ip);
-    if (db_get_external_reuse(ext, dp, dbip) < 0) return -1;
-    if (db5_get_raw_internal_ptr(&raw, ext->ext_buf) == NULL) return -1;
-    if (!raw.body.ext_buf) return -1;
+    unsigned char *cp;
+    int wid;
+    size_t mi;
+    size_t ius;
+    size_t nmat, nleaf, rpn_len, max_stack_depth;
+    size_t leafbytes;
+    unsigned char *leafp;
+    unsigned char *leafp_end;
+    unsigned char *exprp;
+    struct directory **c = NULL;
+    int dpcnt = 0;
 
-    /* FIXME: This is a temporary kludge accommodating dumb binunifs
-     * that don't export their minor type or have table entries for
-     * all their types. (this gets pushed up when a functab wrapper is
-     * created)
-     */
-    switch (raw.major_type) {
-	case DB5_MAJORTYPE_BRLCAD:
-	    id = raw.minor_type; break;
-	case DB5_MAJORTYPE_BINARY_UNIF:
-	    id = ID_BINUNIF; break;
-	default:
-	    return -1;
-    }
+    if (db_get_external_reuse(ext, dp, dbip) < 0) return 0;
+    if (db5_get_raw_internal_ptr(&raw, ext->ext_buf) == NULL) return 0;
+    if (!raw.body.ext_buf) return 0;
 
-    if (id == ID_BINUNIF) {
-	/* FIXME: binunif export needs to write out minor_type so this isn't
-	 * needed, but breaks compatibility.  slate for v6. */
-	ret = rt_binunif_import5_minor_type(ip, &raw.body, mat, dbip, resp, raw.minor_type);
-    } else if (OBJ[id].ft_import5) {
-	ret = OBJ[id].ft_import5(ip, &raw.body, mat, dbip, resp);
+    //bu_log("children of: %s\n", dp->d_namep);
+
+    cp = raw.body.ext_buf;
+    wid = *cp++;
+    cp += db5_decode_length(&nmat, cp, wid);
+    cp += db5_decode_length(&nleaf, cp, wid);
+    cp += db5_decode_length(&leafbytes, cp, wid);
+    cp += db5_decode_length(&rpn_len, cp, wid);
+    cp += db5_decode_length(&max_stack_depth, cp, wid);
+    leafp = cp + nmat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
+    exprp = leafp + leafbytes;
+    leafp_end = exprp;
+
+
+    if (rpn_len == 0) {
+	ssize_t is;
+	c = (struct directory **)bu_calloc(nleaf + 1, sizeof(struct directory *), "children");
+	for (is = nleaf-1; is >= 0; is--) {
+	    struct directory *ndp = db_lookup(dbip, (const char *)leafp, LOOKUP_QUIET);
+	    leafp += strlen((const char *)leafp) + 1;
+	    mi = 4095;                  /* sanity */
+	    leafp += db5_decode_signed(&mi, leafp, wid);
+	    if (ndp) {
+		c[dpcnt] = ndp;
+		//bu_log("             %s\n", ndp->d_namep);
+		dpcnt++;
+	    }
+	}
     } else {
-	/* nothing to do, success */
-	ret = 0;
+	c = (struct directory **)bu_calloc(rpn_len + 1, sizeof(struct directory *), "children");
+	for (ius = 0; ius < rpn_len; ius++, exprp++) {
+	    struct directory *ndp = RT_DIR_NULL;
+	    switch (*exprp) {
+		case DB5COMB_TOKEN_LEAF:
+		    ndp = db_lookup(dbip, (const char *)leafp, LOOKUP_QUIET);
+		    leafp += strlen((const char *)leafp) + 1;
+		    /* Get matrix index */
+		    mi = 4095;                      /* sanity */
+		    leafp += db5_decode_signed(&mi, leafp, wid);
+		    if (ndp) {
+			c[dpcnt] = ndp;
+			//bu_log("             %s\n", ndp->d_namep);
+			dpcnt++;
+		    }
+		    break;
+		default:
+		    break;
+	    }
+	}
+	BU_ASSERT(leafp == leafp_end);
     }
 
-    if (ret < 0) {
-	rt_db_free_internal(ip);
-	return -1;
+    if (c) {
+	c[dpcnt] = RT_DIR_NULL;
+	(*children) = c;
     }
-
-    ip->idb_major_type = raw.major_type;
-    ip->idb_minor_type = raw.minor_type;
-    ip->idb_meth = &OBJ[id];
-
-    return id;
+    return dpcnt;
 }
 
 
@@ -313,15 +343,10 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 		    int children_finalized = 1;
 		    if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_COMB_DONE)) {
 			start = bu_gettime();
-			struct rt_db_internal in;
-			struct rt_comb_internal *comb;
-			if (rt_db_get_internal_reuse(&ext, &in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
-			comb = (struct rt_comb_internal *)in.idb_ptr;
 			if (DB5SIZE(dp)->children) bu_free(DB5SIZE(dp)->children, "free old dp child list");
 			DB5SIZE(dp)->children = NULL;
-			(void)db_comb_children(dbip, comb, &(DB5SIZE(dp)->children), NULL, NULL);
+			(void)_db5_children(dp, dbip, &ext, &(DB5SIZE(dp)->children));
 			DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_COMB_DONE;
-			rt_db_free_internal(&in);
 			elapsed = bu_gettime() - start;
 			total += elapsed;
 		    }
