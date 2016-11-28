@@ -465,7 +465,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
      * calculating other objects' sizes, we evaluate it only for the specific
      * object of interest rather than mass evaluating it in the loop. */
     if (local_flags & DB_SIZE_TREE_INSTANCED && !DB5SIZE(in_dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED]) {
-	std::set<struct directory *> uniq;
+	std::set<struct directory *> uniq; // TODO - may not need set to guarantee uniqueness if flag setting works...
 	std::queue<struct directory *> q;
 	struct directory *cdp;
 	int cind = 0;
@@ -480,7 +480,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	    cind = 0;
 	    cdp = (DB5SIZE(qdp)->children) ? DB5SIZE(qdp)->children[0] : NULL;
 	    while (cdp) {
-		if (cdp->u_data && !(DB5SIZE(qdp)->queue_flag)) q.push(cdp);
+		if (cdp->u_data && !(DB5SIZE(cdp)->queue_flag)) q.push(cdp);
 		cind++;
 		cdp = DB5SIZE(qdp)->children[cind];
 	    }
@@ -517,7 +517,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 db5size_freemem:
     /* Put the original u_data pointers back */
     for (i = 0; i < dcnt; i++) {
-	dps[j]->u_data = old_udata[j];
+	dps[i]->u_data = old_udata[i];
     }
 
     /* Free memory */
