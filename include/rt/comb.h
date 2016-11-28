@@ -121,12 +121,12 @@ RT_EXPORT extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_
  * @code
  * int i = 0;
  * struct directory *wdp;
- * struct directory **children;
- * int *bool_ops;
- * matp_t *matrices;
+ * struct directory **children = NULL;
+ * int *bool_ops = NULL;
+ * matp_t *matrices = NULL;
  * matp_t m;
- * children = db_comb_children(dbip, comb, &bool_ops, &matrices);
- * if (children) {
+ * db_comb_children(dbip, comb, &children, &bool_ops, &matrices);
+ * if (db_comb_children(dbip, comb, &bool_ops, &matrices) > 0) {
  *    i = 0;
  *    wdp = children[0];
  *    while (wdp != RT_DIR_NULL) {
@@ -150,8 +150,7 @@ RT_EXPORT extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_
  * bu_free(children, "free children struct directory ptr array");
  * @endcode
  */
-RT_EXPORT extern struct directory **
-db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb, int **bool_ops, matp_t **mats);
+RT_EXPORT extern int db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb, struct directory ***children, int **bool_ops, matp_t **mats);
 
 __END_DECLS
 

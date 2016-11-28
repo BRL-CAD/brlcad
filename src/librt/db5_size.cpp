@@ -300,7 +300,8 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 			if (rt_db_get_internal_reuse(&ext, &in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
 			comb = (struct rt_comb_internal *)in.idb_ptr;
 			if (dp->children) bu_free(dp->children, "free old dp child list");
-			dp->children = db_comb_children(dbip, comb, NULL, NULL);
+			dp->children = NULL;
+			(void)db_comb_children(dbip, comb, &(dp->children), NULL, NULL);
 			dp->s_flags |= RT_DIR_SIZE_COMB_DONE;
 			rt_db_free_internal(&in);
 			//elapsed = bu_gettime() - start;
