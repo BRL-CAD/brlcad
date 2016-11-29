@@ -178,15 +178,10 @@ _db5_children(
 HIDDEN long
 _db5_get_attributes_size(struct bu_external *ext, const struct db_i *dbip, const struct directory *dp)
 {
-    long attr_size = 0;
     struct db5_raw_internal raw;
-    if (dbip->dbi_version < 5) return 0; /* db4 has no attributes */
     if (db_get_external_reuse(ext, dp, dbip) < 0) return 0;
-    if (db5_get_raw_internal_ptr(&raw, ext->ext_buf) == NULL) {
-	return 0;
-    }
-    attr_size = raw.attributes.ext_nbytes;
-    return attr_size;
+    if (db5_get_raw_internal_ptr(&raw, ext->ext_buf) == NULL) return 0;
+    return (long)(raw.attributes.ext_nbytes);
 }
 
 long
@@ -314,46 +309,22 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	for (i = 0; i < wcnt; i++) {
 	    dp = dps[i];
 	    if ((DB5SIZE(dp)->s_flags & RT_DIR_SIZE_ACTIVE) && !(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_FINALIZED)) {
+		start = bu_gettime();
 		if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
 		    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(&ext, dbip, dp);
 		    DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_ATTR_DONE;
 		}
+		elapsed = bu_gettime() - start;
+		total += elapsed;
 
 		if (dp->d_flags & RT_DIR_COMB) {
 		    struct directory *cdp;
 		    int children_finalized = 1;
 		    if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_COMB_DONE)) {
-			start = bu_gettime();
-
-#if 0
-			int ccnt, ccntn;
-			struct rt_db_internal in;
-			struct rt_comb_internal *comb;
-			if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
-			comb = (struct rt_comb_internal *)in.idb_ptr;
-			ccnt = db_comb_children(dbip, comb, &(DB5SIZE(dp)->children), NULL, NULL);
-			rt_db_free_internal(&in);
-			for (k = 0; k < ccnt; k++) {
-			    if (DB5SIZE(dp)->children[k])
-				bu_log("old:%s:%s\n", dp->d_namep, DB5SIZE(dp)->children[k]->d_namep);
-			}
-#endif
 			if (DB5SIZE(dp)->children) bu_free(DB5SIZE(dp)->children, "free old dp child list");
 			DB5SIZE(dp)->children = NULL;
 			(void)_db5_children(dp, dbip, &ext, &(DB5SIZE(dp)->children));
-#if 0
-			for (k = 0; k < ccnt; k++) {
-			    if (DB5SIZE(dp)->children[k])
-				bu_log("new:%s:%s\n", dp->d_namep, DB5SIZE(dp)->children[k]->d_namep);
-			}
-			if (ccnt != ccntn) {
-			    bu_log("different counts: %d vs %d, %s\n", ccnt, ccntn, dp->d_namep);
-			}
-#endif
-
 			DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_COMB_DONE;
-			elapsed = bu_gettime() - start;
-			total += elapsed;
 		    }
 
 		    if (DB5SIZE(dp)->children) {
@@ -461,7 +432,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 
     s2 = bu_gettime() - s1;
     fastf_t seconds = total / 1000000.0;
-    bu_log("comb processing: %f\n", seconds);
+    bu_log("specific processing: %f\n", seconds);
     bu_log("other comb processing: %f\n", (s2 - total) / 1000000.0);
 
     /* Now that we have completed our size calculations, see if there are any active but
