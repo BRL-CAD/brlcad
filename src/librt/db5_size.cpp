@@ -430,11 +430,6 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 		    struct directory *edp = NULL;
 		    struct rt_db_internal in;
 
-		    if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
-			DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(&ext, dbip, dp);
-			DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_ATTR_DONE;
-			//bu_log("%s attr size: %d\n", dp->d_namep, DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ]);
-		    }
 		    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
 			struct rt_extrude_internal *extr;
 			if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
