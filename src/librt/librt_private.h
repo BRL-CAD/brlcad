@@ -158,7 +158,7 @@ extern int db_read(const struct db_i *dbip, void *addr, size_t count, off_t offs
  * supplied if the geometry information in the database has changed since the
  * last db5_size call.
  */
-extern long db5_size(struct db_i *dbip, struct directory *dp, int flags);
+extern RT_EXPORT long db5_size(struct db_i *dbip, struct directory *dp, int flags);
 
 /* FIXME: should have gone away with v6.  needed now to pass the minor_type down during read */
 extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
