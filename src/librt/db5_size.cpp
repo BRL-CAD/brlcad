@@ -264,9 +264,6 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     struct directory *dp;
     struct directory **dps;
     struct db5_sizecalc *dsr;
-    int64_t start, elapsed;
-    int64_t s1, s2;
-    int64_t total = 0;
     struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
     unsigned int max_bufsize = 0;
     long fsize = 0;
@@ -370,6 +367,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     active_prev = -1;
     wcnt = dcnt;
 
+    int64_t s1, s2;
     s1 = bu_gettime();
     while (finalized != finalized_prev || active != active_prev) {
 	finalized_prev = finalized;
@@ -378,14 +376,11 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	    dp = dps[i];
 	    if ((DB5SIZE(dp)->s_flags & RT_DIR_SIZE_ACTIVE) && !(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_FINALIZED)) {
 		int have_extern = 0;
-		start = bu_gettime();
 		if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
 		    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(&ext, dbip, dp);
 		    DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_ATTR_DONE;
 		    have_extern = 1;
 		}
-		elapsed = bu_gettime() - start;
-		total += elapsed;
 
 		struct directory *cdp;
 		int children_finalized = 1;
@@ -445,9 +440,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     }
 
     s2 = bu_gettime() - s1;
-    fastf_t seconds = total / 1000000.0;
-    bu_log("specific processing: %f\n", seconds);
-    bu_log("other comb processing: %f\n", (s2 - total) / 1000000.0);
+    bu_log("processing time: %f\n", s2 / 1000000.0);
 
     /* Now that we have completed our size calculations, see if there are any active but
      * unfinalized directory objects.  These will be an indication of a cyclic loop and
