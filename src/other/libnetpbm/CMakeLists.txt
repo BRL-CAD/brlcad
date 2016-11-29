@@ -50,7 +50,7 @@ endif(COMMAND CMAKE_POLICY)
 
 
 # set CMake project name
-project(NETBPM)
+project(NETPBM)
 
 
 if(NOT BIN_DIR)
