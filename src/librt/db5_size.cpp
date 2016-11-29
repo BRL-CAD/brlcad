@@ -136,7 +136,9 @@ _db5_children(
 		c[dpcnt] = ndp;
 		//bu_log("             %s\n", ndp->d_namep);
 		dpcnt++;
-	    }
+	    } /*else {
+		bu_log("lookup failure: %s\n", (const char *)leafp);
+	    }*/
 	}
     } else {
 	c = (struct directory **)bu_calloc(rpn_len + 1, sizeof(struct directory *), "children");
@@ -154,7 +156,9 @@ _db5_children(
 			c[dpcnt] = ndp;
 			//bu_log("             %s\n", ndp->d_namep);
 			dpcnt++;
-		    }
+		    } /*else {
+			bu_log("lookup failure: %s\n", (const char *)leafp);
+		    }*/
 		    break;
 		default:
 		    break;
@@ -344,9 +348,33 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 		    int children_finalized = 1;
 		    if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_COMB_DONE)) {
 			start = bu_gettime();
+
+#if 0
+			int ccnt, ccntn;
+			struct rt_db_internal in;
+			struct rt_comb_internal *comb;
+			if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
+			comb = (struct rt_comb_internal *)in.idb_ptr;
+			ccnt = db_comb_children(dbip, comb, &(DB5SIZE(dp)->children), NULL, NULL);
+			rt_db_free_internal(&in);
+			for (k = 0; k < ccnt; k++) {
+			    if (DB5SIZE(dp)->children[k])
+				bu_log("old:%s:%s\n", dp->d_namep, DB5SIZE(dp)->children[k]->d_namep);
+			}
+#endif
 			if (DB5SIZE(dp)->children) bu_free(DB5SIZE(dp)->children, "free old dp child list");
 			DB5SIZE(dp)->children = NULL;
 			(void)_db5_children(dp, dbip, &ext, &(DB5SIZE(dp)->children));
+#if 0
+			for (k = 0; k < ccnt; k++) {
+			    if (DB5SIZE(dp)->children[k])
+				bu_log("new:%s:%s\n", dp->d_namep, DB5SIZE(dp)->children[k]->d_namep);
+			}
+			if (ccnt != ccntn) {
+			    bu_log("different counts: %d vs %d, %s\n", ccnt, ccntn, dp->d_namep);
+			}
+#endif
+
 			DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_COMB_DONE;
 			elapsed = bu_gettime() - start;
 			total += elapsed;
