@@ -96,7 +96,6 @@ _db5_children(
     struct db5_raw_internal raw;
     unsigned char *cp;
     int wid;
-    size_t mi;
     size_t ius;
     size_t nmat, nleaf, rpn_len, max_stack_depth;
     size_t leafbytes;
@@ -128,6 +127,7 @@ _db5_children(
 	ssize_t is;
 	c = (struct directory **)bu_calloc(nleaf + 1, sizeof(struct directory *), "children");
 	for (is = nleaf-1; is >= 0; is--) {
+	    size_t mi;
 	    struct directory *ndp = db_lookup(dbip, (const char *)leafp, LOOKUP_QUIET);
 	    leafp += strlen((const char *)leafp) + 1;
 	    mi = 4095;                  /* sanity */
@@ -141,6 +141,7 @@ _db5_children(
     } else {
 	c = (struct directory **)bu_calloc(rpn_len + 1, sizeof(struct directory *), "children");
 	for (ius = 0; ius < rpn_len; ius++, exprp++) {
+	    size_t mi;
 	    struct directory *ndp = RT_DIR_NULL;
 	    switch (*exprp) {
 		case DB5COMB_TOKEN_LEAF:
