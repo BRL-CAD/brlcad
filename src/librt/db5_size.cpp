@@ -46,7 +46,7 @@
 /* flags for size calculations */
 #define RT_DIR_SIZE_FINALIZED   0x1
 #define RT_DIR_SIZE_ATTR_DONE   0x2
-#define RT_DIR_SIZE_COMB_DONE   0x4
+#define RT_DIR_SIZE_CHILDREN_DONE   0x4
 #define RT_DIR_SIZE_ACTIVE      0x8
 
 /* sizes in directory pointer arrays */
@@ -85,6 +85,7 @@ db_get_external_reuse(register struct bu_external *ep, const struct directory *d
     return 0;
 }
 
+// TODO - figure out what to do about submodel...
 #define DB5COMB_TOKEN_LEAF 1
 HIDDEN int
 _db5_children(
@@ -95,86 +96,150 @@ _db5_children(
        	struct directory ***children)
 {
     struct db5_raw_internal raw;
-    unsigned char *cp;
-    int wid;
-    size_t ius;
-    size_t nmat, nleaf, rpn_len, max_stack_depth;
-    size_t leafbytes;
-    unsigned char *leafp;
-    unsigned char *leafp_end;
-    unsigned char *exprp;
     struct directory **c = NULL;
     int dpcnt = 0;
 
-    if (!have_extern) {
-	if (db_get_external_reuse(ext, dp, dbip) < 0) return 0;
-    }
-    if (db5_get_raw_internal_ptr(&raw, ext->ext_buf) == NULL) return 0;
-    if (!raw.body.ext_buf) return 0;
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
+	int wid;
+	size_t ius;
+	size_t nmat, nleaf, rpn_len, max_stack_depth;
+	size_t leafbytes;
+	unsigned char *leafp;
+	unsigned char *leafp_end;
+	unsigned char *exprp;
+	unsigned char *cp;
 
-    //bu_log("children of: %s\n", dp->d_namep);
-
-    cp = raw.body.ext_buf;
-    wid = *cp++;
-    cp += db5_decode_length(&nmat, cp, wid);
-    cp += db5_decode_length(&nleaf, cp, wid);
-    cp += db5_decode_length(&leafbytes, cp, wid);
-    cp += db5_decode_length(&rpn_len, cp, wid);
-    cp += db5_decode_length(&max_stack_depth, cp, wid);
-    leafp = cp + nmat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
-    exprp = leafp + leafbytes;
-    leafp_end = exprp;
-
-
-    if (rpn_len == 0) {
-	ssize_t is;
-	c = (struct directory **)bu_calloc(nleaf + 1, sizeof(struct directory *), "children");
-	for (is = nleaf-1; is >= 0; is--) {
-	    size_t mi;
-	    struct directory *ndp = db_lookup(dbip, (const char *)leafp, LOOKUP_QUIET);
-	    leafp += strlen((const char *)leafp) + 1;
-	    mi = 4095;                  /* sanity */
-	    leafp += db5_decode_signed(&mi, leafp, wid);
-	    if (ndp) {
-		c[dpcnt] = ndp;
-		//bu_log("             %s\n", ndp->d_namep);
-		dpcnt++;
-	    } /*else {
-		bu_log("lookup failure: %s\n", (const char *)leafp);
-	    }*/
+	if (!have_extern) {
+	    if (db_get_external_reuse(ext, dp, dbip) < 0) return 0;
 	}
-    } else {
-	c = (struct directory **)bu_calloc(rpn_len + 1, sizeof(struct directory *), "children");
-	for (ius = 0; ius < rpn_len; ius++, exprp++) {
-	    size_t mi;
-	    struct directory *ndp = RT_DIR_NULL;
-	    switch (*exprp) {
-		case DB5COMB_TOKEN_LEAF:
-		    ndp = db_lookup(dbip, (const char *)leafp, LOOKUP_QUIET);
-		    leafp += strlen((const char *)leafp) + 1;
-		    /* Get matrix index */
-		    mi = 4095;                      /* sanity */
-		    leafp += db5_decode_signed(&mi, leafp, wid);
-		    if (ndp) {
-			c[dpcnt] = ndp;
-			//bu_log("             %s\n", ndp->d_namep);
-			dpcnt++;
-		    } /*else {
-			bu_log("lookup failure: %s\n", (const char *)leafp);
-		    }*/
-		    break;
-		default:
-		    break;
+	if (db5_get_raw_internal_ptr(&raw, ext->ext_buf) == NULL) return 0;
+	if (!raw.body.ext_buf) return 0;
+
+	//bu_log("children of: %s\n", dp->d_namep);
+
+	cp = raw.body.ext_buf;
+	wid = *cp++;
+	cp += db5_decode_length(&nmat, cp, wid);
+	cp += db5_decode_length(&nleaf, cp, wid);
+	cp += db5_decode_length(&leafbytes, cp, wid);
+	cp += db5_decode_length(&rpn_len, cp, wid);
+	cp += db5_decode_length(&max_stack_depth, cp, wid);
+	leafp = cp + nmat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
+	exprp = leafp + leafbytes;
+	leafp_end = exprp;
+
+
+	if (rpn_len == 0) {
+	    ssize_t is;
+	    c = (struct directory **)bu_calloc(nleaf + 1, sizeof(struct directory *), "children");
+	    for (is = nleaf-1; is >= 0; is--) {
+		size_t mi;
+		struct directory *ndp = db_lookup(dbip, (const char *)leafp, LOOKUP_QUIET);
+		leafp += strlen((const char *)leafp) + 1;
+		mi = 4095;                  /* sanity */
+		leafp += db5_decode_signed(&mi, leafp, wid);
+		if (ndp) {
+		    c[dpcnt] = ndp;
+		    dpcnt++;
+		}
 	    }
+	} else {
+	    c = (struct directory **)bu_calloc(rpn_len + 1, sizeof(struct directory *), "children");
+	    for (ius = 0; ius < rpn_len; ius++, exprp++) {
+		size_t mi;
+		struct directory *ndp = RT_DIR_NULL;
+		switch (*exprp) {
+		    case DB5COMB_TOKEN_LEAF:
+			ndp = db_lookup(dbip, (const char *)leafp, LOOKUP_QUIET);
+			leafp += strlen((const char *)leafp) + 1;
+			/* Get matrix index */
+			mi = 4095;                      /* sanity */
+			leafp += db5_decode_signed(&mi, leafp, wid);
+			if (ndp) {
+			    c[dpcnt] = ndp;
+			    dpcnt++;
+			}
+			break;
+		    default:
+			break;
+		}
+	    }
+	    BU_ASSERT(leafp == leafp_end);
 	}
-	BU_ASSERT(leafp == leafp_end);
+
+	if (c) {
+	    c[dpcnt] = RT_DIR_NULL;
+	    (*children) = c;
+	}
+	return dpcnt;
+
+    } else  if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE || dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
+	char *sketch_name;
+	unsigned char *ptr;
+	struct directory *ndp = RT_DIR_NULL;
+
+	if (!have_extern) {
+	    if (db_get_external_reuse(ext, dp, dbip) < 0) return 0;
+	}
+	if (db5_get_raw_internal_ptr(&raw, ext->ext_buf) == NULL) return 0;
+	if (!raw.body.ext_buf) return 0;
+
+	ptr = (unsigned char *)raw.body.ext_buf;
+	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
+	    sketch_name = (char *)ptr + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
+	}
+	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
+	    sketch_name = (char *)ptr + (ELEMENTS_PER_VECT*3 + 1)*SIZEOF_NETWORK_DOUBLE;
+	}
+
+	if (db_lookup(dbip, sketch_name, LOOKUP_QUIET) != RT_DIR_NULL) {
+	    c = (struct directory **)bu_calloc(dpcnt + 1, sizeof(struct directory *), "children");
+	    c[0] = ndp;
+	    c[1] = RT_DIR_NULL;
+	    dpcnt++;
+	}
+	return dpcnt;
+    } else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP) {
+	struct directory *ndp = RT_DIR_NULL;
+	unsigned char *cp;
+	char dsp_datasrc;
+
+	if (!have_extern) {
+	    if (db_get_external_reuse(ext, dp, dbip) < 0) return 0;
+	}
+	if (db5_get_raw_internal_ptr(&raw, ext->ext_buf) == NULL) return 0;
+	if (!raw.body.ext_buf) return 0;
+
+	cp = (unsigned char *)raw.body.ext_buf;
+	cp += 2*SIZEOF_NETWORK_LONG + SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT + SIZEOF_NETWORK_SHORT;
+	dsp_datasrc = *cp;
+	cp++; cp++;
+	switch (dsp_datasrc) {
+	    case RT_DSP_SRC_V4_FILE:
+		/* TODO - get file size and add it to obj size */
+		break;
+	    case RT_DSP_SRC_FILE:
+		/* TODO - get file size and add it to obj size */
+		break;
+	    case RT_DSP_SRC_OBJ:
+		ndp = db_lookup(dbip, (char *)cp, LOOKUP_QUIET);
+		break;
+	    default:
+		bu_log("%s: invalid DSP datasrc: '%c'\n", (char *)cp, dsp_datasrc);
+		break;
+	}
+
+	if (ndp != RT_DIR_NULL) {
+	    c = (struct directory **)bu_calloc(dpcnt + 1, sizeof(struct directory *), "children");
+	    c[0] = ndp;
+	    c[1] = RT_DIR_NULL;
+	    dpcnt++;
+	}
+	return dpcnt;
     }
 
-    if (c) {
-	c[dpcnt] = RT_DIR_NULL;
-	(*children) = c;
-    }
-    return dpcnt;
+    /* If it's none of the above, it has no children. */
+    return 0;
 }
 
 
@@ -322,109 +387,53 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 		elapsed = bu_gettime() - start;
 		total += elapsed;
 
-		if (dp->d_flags & RT_DIR_COMB) {
-		    struct directory *cdp;
-		    int children_finalized = 1;
-		    if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_COMB_DONE)) {
-			if (DB5SIZE(dp)->children) bu_free(DB5SIZE(dp)->children, "free old dp child list");
-			DB5SIZE(dp)->children = NULL;
-			(void)_db5_children(dp, dbip, have_extern, &ext, &(DB5SIZE(dp)->children));
-			DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_COMB_DONE;
-		    }
+		struct directory *cdp;
+		int children_finalized = 1;
+		if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_CHILDREN_DONE)) {
+		    if (DB5SIZE(dp)->children) bu_free(DB5SIZE(dp)->children, "free old dp child list");
+		    DB5SIZE(dp)->children = NULL;
+		    (void)_db5_children(dp, dbip, have_extern, &ext, &(DB5SIZE(dp)->children));
+		    DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_CHILDREN_DONE;
+		}
 
-		    if (DB5SIZE(dp)->children) {
-			int cind = 0;
+		if (DB5SIZE(dp)->children) {
+		    int cind = 0;
+		    cdp = DB5SIZE(dp)->children[0];
+		    while (cdp != RT_DIR_NULL) {
+			if (!(DB5SIZE(cdp)->s_flags & RT_DIR_SIZE_FINALIZED)) children_finalized = 0;
+			if (!(DB5SIZE(cdp)->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
+			DB5SIZE(cdp)->s_flags |= RT_DIR_SIZE_ACTIVE;
+			cind++;
+			cdp = DB5SIZE(dp)->children[cind];
+		    }
+		    if (children_finalized) {
+			/* Handle the xpushed size, which is just the sum of all of the
+			 * xpushed sizes of the children plus this object. */
+			cind = 0;
 			cdp = DB5SIZE(dp)->children[0];
-			while (cdp != RT_DIR_NULL) {
-			    if (!(DB5SIZE(cdp)->s_flags & RT_DIR_SIZE_FINALIZED)) children_finalized = 0;
-			    if (!(DB5SIZE(cdp)->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
-			    DB5SIZE(cdp)->s_flags |= RT_DIR_SIZE_ACTIVE;
+			while (cdp) {
+			    //bu_log("XPUSH %s: adding %s (%ld)\n", dp->d_namep, cdp->d_namep, DB5SIZE(cdp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED]);
+			    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(cdp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED];
+			    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(cdp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
 			    cind++;
 			    cdp = DB5SIZE(dp)->children[cind];
 			}
-			if (children_finalized) {
-			    /* Handle the xpushed size, which is just the sum of all of the
-			     * xpushed sizes of the children plus this object. */
-			    cind = 0;
-			    cdp = DB5SIZE(dp)->children[0];
-			    while (cdp) {
-				//bu_log("XPUSH %s: adding %s (%ld)\n", dp->d_namep, cdp->d_namep, DB5SIZE(cdp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED]);
-				DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(cdp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED];
-				DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(cdp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
-				cind++;
-				cdp = DB5SIZE(dp)->children[cind];
-			    }
-			    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->d_len;
-			    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += (dp->d_len + DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ]);
+			DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->d_len;
+			DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += (dp->d_len + DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ]);
 
-			    /* Now that we've handled the hierarchy, finalize the obj numbers */
-			    DB5SIZE(dp)->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
-			    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
-
-			    /* Mark the comb as done */
-			    DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_FINALIZED;
-			    finalized++;
-			}
-		    } else {
-			/* No children - it's just the comb */
+			/* Now that we've handled the hierarchy, finalize the obj numbers */
 			DB5SIZE(dp)->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
-			DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED] = dp->d_len;
-			DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] = dp->d_len;
 			DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
-			DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ];
-			DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ];
+
+			/* Mark the comb as done */
 			DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_FINALIZED;
 			finalized++;
 		    }
 		} else {
-		    /* This is not a comb - handle the solids that have other data
-		     * associated with them and otherwise use dp->d_len */
-		    struct directory *edp = NULL;
-		    struct rt_db_internal in;
-
-		    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
-			struct rt_extrude_internal *extr;
-			if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
-			extr = (struct rt_extrude_internal *)in.idb_ptr;
-			if (extr->sketch_name) {
-			    edp = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
-			}
-			rt_db_free_internal(&in);
-		    } else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_REVOLVE) {
-			struct rt_revolve_internal *revolve;
-			if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
-			revolve = (struct rt_revolve_internal *)in.idb_ptr;
-			if (bu_vls_strlen(&revolve->sketch_name) > 0) {
-			    edp = db_lookup(dbip, bu_vls_addr(&revolve->sketch_name), LOOKUP_QUIET);
-			}
-			rt_db_free_internal(&in);
-		    } else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP) {
-			struct rt_dsp_internal *dsp;
-			if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) continue;
-			dsp = (struct rt_dsp_internal *)in.idb_ptr;
-			/* TODO - handle other dsp_datasrc cases */
-			if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
-			    edp = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name), LOOKUP_QUIET);
-			}
-			rt_db_free_internal(&in);
-		    }
-		    if (edp) {
-			if (!(DB5SIZE(edp)->s_flags & RT_DIR_SIZE_FINALIZED)) {
-			    if (!(DB5SIZE(edp)->s_flags & RT_DIR_SIZE_ACTIVE)) active++;
-			    DB5SIZE(edp)->s_flags |= RT_DIR_SIZE_ACTIVE;
-			    continue;
-			} else {
-			    DB5SIZE(dp)->sizes[RT_DIR_SIZE_OBJ] += DB5SIZE(edp)->sizes[RT_DIR_SIZE_OBJ];
-			    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE(edp)->sizes[RT_DIR_SIZE_OBJ];
-			    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(edp)->sizes[RT_DIR_SIZE_OBJ];
-			    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] += DB5SIZE(edp)->sizes_wattr[RT_DIR_SIZE_OBJ];
-			    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE(edp)->sizes_wattr[RT_DIR_SIZE_OBJ];
-			    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(edp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED];
-			}
-		    }
-		    DB5SIZE(dp)->sizes[RT_DIR_SIZE_OBJ] += dp->d_len;
-		    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED] += dp->d_len;
-		    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] += dp->d_len;
+		    /* No children - it's just the object */
+		    DB5SIZE(dp)->sizes[RT_DIR_SIZE_OBJ] = dp->d_len;
+		    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_INSTANCED] = dp->d_len;
+		    DB5SIZE(dp)->sizes[RT_DIR_SIZE_TREE_DEINSTANCED] = dp->d_len;
 		    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] += dp->d_len;
 		    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_INSTANCED] += DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ];
 		    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_TREE_DEINSTANCED] += DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ];
