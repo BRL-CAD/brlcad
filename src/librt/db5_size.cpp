@@ -90,6 +90,7 @@ HIDDEN int
 _db5_children(
 	const struct directory *dp,
 	const struct db_i *dbip,
+	int have_extern,
        	struct bu_external *ext,
        	struct directory ***children)
 {
@@ -105,7 +106,9 @@ _db5_children(
     struct directory **c = NULL;
     int dpcnt = 0;
 
-    if (db_get_external_reuse(ext, dp, dbip) < 0) return 0;
+    if (!have_extern) {
+	if (db_get_external_reuse(ext, dp, dbip) < 0) return 0;
+    }
     if (db5_get_raw_internal_ptr(&raw, ext->ext_buf) == NULL) return 0;
     if (!raw.body.ext_buf) return 0;
 
@@ -309,10 +312,12 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 	for (i = 0; i < wcnt; i++) {
 	    dp = dps[i];
 	    if ((DB5SIZE(dp)->s_flags & RT_DIR_SIZE_ACTIVE) && !(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_FINALIZED)) {
+		int have_extern = 0;
 		start = bu_gettime();
 		if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_ATTR_DONE)) {
 		    DB5SIZE(dp)->sizes_wattr[RT_DIR_SIZE_OBJ] = _db5_get_attributes_size(&ext, dbip, dp);
 		    DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_ATTR_DONE;
+		    have_extern = 1;
 		}
 		elapsed = bu_gettime() - start;
 		total += elapsed;
@@ -323,7 +328,7 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 		    if (!(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_COMB_DONE)) {
 			if (DB5SIZE(dp)->children) bu_free(DB5SIZE(dp)->children, "free old dp child list");
 			DB5SIZE(dp)->children = NULL;
-			(void)_db5_children(dp, dbip, &ext, &(DB5SIZE(dp)->children));
+			(void)_db5_children(dp, dbip, have_extern, &ext, &(DB5SIZE(dp)->children));
 			DB5SIZE(dp)->s_flags |= RT_DIR_SIZE_COMB_DONE;
 		    }
 
