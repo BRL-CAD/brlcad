@@ -31,7 +31,7 @@
 /* system headers */
 #include <errno.h>
 
-#define USE_NEW_COMPRESSION 0
+#define USE_NEW_COMPRESSION 1
 
 #if USE_NEW_COMPRESSION
 #include <lz4.h>
