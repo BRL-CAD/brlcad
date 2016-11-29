@@ -189,24 +189,6 @@ _db5_get_attributes_size(struct bu_external *ext, const struct db_i *dbip, const
     return attr_size;
 }
 
-HIDDEN int
-_cmp_dp_states(const void *a, const void *b, void *UNUSED(arg))
-{
-    struct directory **dpe1 = (struct directory **)a;
-    struct directory **dpe2 = (struct directory **)b;
-    struct directory *dp1 = *dpe1;
-    struct directory *dp2 = *dpe2;
-
-    //bu_log("a: name %s, flags %d\n",  dp1->d_namep, DB5SIZE(dp1)->s_flags);
-    //bu_log("b: name %s, flags %d\n",  dp2->d_namep, DB5SIZE(dp2)->s_flags);
-
-    if ((DB5SIZE(dp1)->s_flags & RT_DIR_SIZE_FINALIZED) && !(DB5SIZE(dp2)->s_flags & RT_DIR_SIZE_FINALIZED)) return 1;
-    if (!(DB5SIZE(dp1)->s_flags & RT_DIR_SIZE_FINALIZED) && (DB5SIZE(dp2)->s_flags & RT_DIR_SIZE_FINALIZED)) return -1;
-    if (DB5SIZE(dp1)->s_flags > DB5SIZE(dp2)->s_flags) return -1;
-    if (DB5SIZE(dp1)->s_flags < DB5SIZE(dp2)->s_flags) return 1;
-    return 0;
-}
-
 long
 db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
 {
@@ -329,12 +311,6 @@ db5_size(struct db_i *dbip, struct directory *in_dp, int flags)
     while (finalized != finalized_prev || active != active_prev) {
 	finalized_prev = finalized;
 	active_prev = active;
-#if 0
-	bu_sort((void *)dps, wcnt, sizeof(struct directory *), _cmp_dp_states, NULL);
-	wcnt = 0;
-	while (wcnt < dcnt && !(DB5SIZE(dps[wcnt])->s_flags & RT_DIR_SIZE_FINALIZED)) wcnt++;
-	bu_log("wcnt: %d\n", wcnt);
-#endif
 	for (i = 0; i < wcnt; i++) {
 	    dp = dps[i];
 	    if ((DB5SIZE(dp)->s_flags & RT_DIR_SIZE_ACTIVE) && !(DB5SIZE(dp)->s_flags & RT_DIR_SIZE_FINALIZED)) {
