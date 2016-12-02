@@ -174,7 +174,7 @@ _db5_children(
 	return dpcnt;
 
     } else  if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE || dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
-	char *sketch_name;
+	char *sketch_name = NULL;
 	unsigned char *ptr;
 	struct directory *ndp = RT_DIR_NULL;
 
@@ -191,6 +191,7 @@ _db5_children(
 	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
 	    sketch_name = (char *)ptr + (ELEMENTS_PER_VECT*3 + 1)*SIZEOF_NETWORK_DOUBLE;
 	}
+	if (!sketch_name) return 0;
 
 	if (db_lookup(dbip, sketch_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	    c = (struct directory **)bu_calloc(dpcnt + 1, sizeof(struct directory *), "children");
