@@ -485,7 +485,7 @@ static void
 testskipped(size_t i)
 {
 
-    printf("ok %lu # skip - not turned on\n", i);
+    printf("ok %lu # skip - not turned on\n", (long unsigned int)i);
 }
 
 int
@@ -517,7 +517,7 @@ main(int argc, char * const argv[])
     if (buflen != 4)
 	bu_log("Warning: buffer size %zu != 4, expect some results to differ.\n", buflen);
 
-    printf("1..%lu\n", sizeof test_args / sizeof *test_args);
+    printf("1..%lu\n", (long unsigned int)(sizeof test_args / sizeof *test_args));
     for (i = 0; i < sizeof test_args / sizeof *test_args; i++) {
 	/* KLUDGE */
 	if (test_args[i].num == INT64_MAX && buflen == 4) {
@@ -552,32 +552,32 @@ main(int argc, char * const argv[])
 			test_args[i].res, test_args[i].num,
 			scale_str, flag_str);
 	    else
-		printf("not ok %lu # return %d != %d\n", i, r,
+		printf("not ok %lu # return %d != %d\n", (long unsigned int)i, r,
 			test_args[i].retval);
 	    errcnt++;
 	} else if (bu_strcmp(buf, test_args[i].res) != 0) {
 	    if (verbose)
 		printf("result mismatch on index %lu, got: \"%s\", expected \"%s\"; num = %" PRId64 ", scale = %s, flags= %s.\n",
-			i, buf, test_args[i].res, test_args[i].num,
+			(long unsigned int)i, buf, test_args[i].res, test_args[i].num,
 			scale_str, flag_str);
 	    else
-		printf("not ok %lu # buf \"%s\" != \"%s\"\n", i,
+		printf("not ok %lu # buf \"%s\" != \"%s\"\n", (long unsigned int)i,
 			buf, test_args[i].res);
 	    errcnt++;
 	} else {
 	    if (verbose)
 		printf("successful result on index %lu, returned %d, got: \"%s\"; num = %" PRId64 ", scale = %s, flags= %s.\n",
-			i, r, buf, test_args[i].num, scale_str,
+			(long unsigned int)i, r, buf, test_args[i].num, scale_str,
 			flag_str);
 	    else
-		printf("ok %lu\n", i);
+		printf("ok %lu\n", (long unsigned int)i);
 	}
 	tested++;
     }
 
     if (verbose)
-	printf("total errors: %lu/%lu tests, %lu skipped\n", errcnt,
-		tested, skipped);
+	printf("total errors: %lu/%lu tests, %lu skipped\n", (long unsigned int)errcnt,
+		(long unsigned int)tested, (long unsigned int)skipped);
 
     if (errcnt)
 	return 1;
