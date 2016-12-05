@@ -2081,6 +2081,9 @@ being rtgl specific.
 Provide a generic mechanism in MGED run loop to hook in features like
 point cloud rendering, instead of hard-coding it.
 
+* consider utilizing something like moodycamel::ConcurrentQueue for
+  handling ray dispatch: https://github.com/cameron314/concurrentqueue
+
 
 LIBPC
 -----
