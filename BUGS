@@ -336,9 +336,10 @@ Recent Bugs
 
 * File->Export seems to not work on Windows
 
-* xpush fails to properly create a hierarchy leaving some as top-level
-  objects and killing other existing objects resulting in dangling
-  references.
+* xpush fails to properly create a hierarchy killing existing objects
+  resulting in dangling references. This may have been fixed by
+  r69256, but a model that exposes the issue has to be tested to be
+  sure.
 
 * mged on Mac OS X will crash on an X11 call if compiled against
   system Tcl/Tk (at least on 10.4 linking against 8.4), see TODO
