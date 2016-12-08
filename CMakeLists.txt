@@ -483,11 +483,29 @@ if(NOT BRLCAD_IS_SUBBUILD)
   include(ProcessorCount)
   ProcessorCount(N)
   if(NOT N EQUAL 0)
-    set(JFLAG "-j${N}")
+    math(EXPR NC "${N} / 2")
+    if(${NC} GREATER 1)
+      set(JFLAG "-j${NC}")
+    else(${NC} GREATER 1)
+      set(JFLAG)
+    endif(${NC} GREATER 1)
   else(NOT N EQUAL 0)
     # Huh?  No j flag if we can't get a processor count
     set(JFLAG)
   endif(NOT N EQUAL 0)
+
+  if(CMAKE_CONFIGURATION_TYPES)
+    if(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIG>)
+    else(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIGURATION>)
+    endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  else(CMAKE_CONFIGURATION_TYPES)
+    if ("${CONFIG}" STREQUAL "")
+      set(CONFIG "\"\"")
+    endif ("${CONFIG}" STREQUAL "")
+  endif(CMAKE_CONFIGURATION_TYPES)
+
   add_custom_target(check
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
@@ -495,9 +513,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
     COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
-    COMMAND ${CMAKE_CTEST_COMMAND} -R \"benchmark\" --output-on-failure ${JFLAG}
-    COMMAND ${CMAKE_CTEST_COMMAND} -L \"Regression\" --output-on-failure ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -R \"benchmark\" --output-on-failure ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -L \"Regression\" --output-on-failure ${JFLAG}
     )
   set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
 endif(NOT BRLCAD_IS_SUBBUILD)
@@ -511,17 +529,28 @@ if(NOT BRLCAD_IS_SUBBUILD)
   include(ProcessorCount)
   ProcessorCount(N)
   if(NOT N EQUAL 0)
-    set(JFLAG "-j${N}")
+    math(EXPR NC "${N} / 2")
+    if(${NC} GREATER 1)
+      set(JFLAG "-j${NC}")
+    else(${NC} GREATER 1)
+      set(JFLAG)
+    endif(${NC} GREATER 1)
   else(NOT N EQUAL 0)
     # Huh?  No j flag if we can't get a processor count
     set(JFLAG)
   endif(NOT N EQUAL 0)
 
-  if(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    set(CONFIG $<CONFIG>)
-  else(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    set(CONFIG $<CONFIGURATION>)
-  endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  if(CMAKE_CONFIGURATION_TYPES)
+    if(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIG>)
+    else(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIGURATION>)
+    endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  else(CMAKE_CONFIGURATION_TYPES)
+    if ("${CONFIG}" STREQUAL "")
+      set(CONFIG "\"\"")
+    endif ("${CONFIG}" STREQUAL "")
+  endif(CMAKE_CONFIGURATION_TYPES)
 
   add_custom_target(unit
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
@@ -530,7 +559,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development\\).  All dependencies required"
     COMMAND ${CMAKE_COMMAND} -E echo "      by the tests are compiled automatically."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
     )
 
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
@@ -623,7 +652,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       else ("${empty}" EQUAL 4)
 	message(FATAL_ERROR "ERROR: encountered an empty string passed to add_test(${test_name}) as ARGV${empty} > ARGV9.  Expand support in the top-level CMakeLists.txt file (grep ADD_EMPTY_HERE).")
       endif ("${empty}" EQUAL 4)
-	
+
     else ("${cnt}" GREATER 0)
       # no empty strings, no worries
       _add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGN})
@@ -1207,6 +1236,7 @@ if(BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_AQUA)
 
 # Enable features requiring Qt
+# TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
 find_package(Qt5Widgets QUIET)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)

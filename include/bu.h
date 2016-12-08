@@ -81,6 +81,7 @@
 #include "./bu/malloc.h"
 #include "./bu/mapped_file.h"
 #include "./bu/mime.h"
+#include "./bu/namegen.h"
 #include "./bu/observer.h"
 #include "./bu/opt.h"
 #include "./bu/parallel.h"

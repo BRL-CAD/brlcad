@@ -15,6 +15,14 @@ on-going issues.
 Recent Bugs
 -----------
 
+* ogl display manager and framebuffer are creating windows with
+  transparent backgrounds (the glClear color is not being drawn) on
+  Linux.  Presumably a driver-related issue, alpha channel, or expose
+  event issue.  Inspecting further, it may be related to environments
+  where shmget() fails (or is requested via /dev/oglp) and we get
+  private memory -- looks like private memory is not initialized
+  (observed on Mac 10.6, Windows, and Ubuntu Linux using 7.26).
+
 * rtedge's overlay mode appears to be generating different results on
   Windows and Linux for the m35 steering wheel (rtwizard rendering
   mode D.)
@@ -67,14 +75,6 @@ Recent Bugs
 
 * report of g-iges crashing (on Windows) when exporting a 1.2MB BoT
   mesh (presumably imported via stl-g).  worked for smaller models.
-
-* ogl display manager and framebuffer are creating windows with
-  transparent backgrounds (the glClear color is not being drawn) on
-  Linux.  Presumably a driver-related issue, alpha channel, or expose
-  event issue.  Inspecting further, it may be related to environments
-  where shmget() fails (or is requested via /dev/oglp) and we get
-  private memory -- looks like private memory is not initialized
-  (observed on Mac 10.6).
 
 * autoview [scale] isn't updating the wireframe when opening a
   database, drawing geometry, then running autoview.  the status bar
@@ -336,9 +336,10 @@ Recent Bugs
 
 * File->Export seems to not work on Windows
 
-* xpush fails to properly create a hierarchy leaving some as top-level
-  objects and killing other existing objects resulting in dangling
-  references.
+* xpush fails to properly create a hierarchy killing existing objects
+  resulting in dangling references. This may have been fixed by
+  r69256, but a model that exposes the issue has to be tested to be
+  sure.
 
 * mged on Mac OS X will crash on an X11 call if compiled against
   system Tcl/Tk (at least on 10.4 linking against 8.4), see TODO

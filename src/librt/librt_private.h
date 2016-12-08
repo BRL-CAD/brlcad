@@ -112,6 +112,62 @@ extern const union cutter *rt_advance_to_next_cell(struct rt_shootray_status *ss
 extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
 
+/* db_fullpath.c */
+
+/**
+ * Function to test whether a path has a cyclic entry in it.
+ *
+ * @param fp [i] Full path to test
+ * @param name [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
+ * @return 1 if the path is cyclic, 0 if it is not.
+ */
+extern int cyclic_path(const struct db_full_path *fp, const char *name);
+
+
+/* db_diff.c */
+
+/**
+ * Function to convert an ft_get list of parameters into an avs.
+ * @return 0 if the conversion succeeds, -1 if it does not.
+ */
+extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
+
+/* db_io.c */
+extern int db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset);
+
+/* db5_io.c */
+#define DB_SIZE_OBJ 0x1
+#define DB_SIZE_TREE_INSTANCED 0x2
+#define DB_SIZE_TREE_DEINSTANCED 0x4
+#define DB_SIZE_ATTR 0x8
+#define DB_SIZE_FORCE_RECALC 0x10
+/**
+ * Flag behavior: The OBJ, KEEP, and XPUSH flags tell db5_size to add the total
+ * from the object(s) calculations for that size value to the summed total.
+ * Specifying multiple flags from the OBJ/KEEP/XPUSH set will result in the
+ * smallest specified size being reported. If none of these flags are specified
+ * the default is DB_SIZE_OBJ
+ *
+ * The ATTR flag is optional and tells db5_size whether to report totals with
+ * or without the sizes of the attributes stored on the objects added in.  By
+ * default, attributes are not included in size calculations.
+ *
+ * The FORCE_RECALC flag is also optional and will result in a re-evaluation of
+ * the cached size information in the directory structures instead of using any
+ * cached information from previous db5_size evaluations. This flag should be
+ * supplied if the geometry information in the database has changed since the
+ * last db5_size call.
+ */
+extern RT_EXPORT long db5_size(struct db_i *dbip, struct directory *dp, int flags);
+
+/* FIXME: should have gone away with v6.  needed now to pass the minor_type down during read */
+extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
+
+
+/* primitive_util.c */
+
+extern void primitive_hitsort(struct hit h[], int nh);
+
 extern fastf_t primitive_get_absolute_tolerance(
 	const struct rt_tess_tol *ttol,
 	fastf_t rel_to_abs);
@@ -149,31 +205,6 @@ extern void plot_ellipse(
 	const vect_t a,
 	const vect_t b,
 	int num_points);
-
-
-
-/* db_fullpath.c */
-
-/**
- * Function to test whether a path has a cyclic entry in it.
- *
- * @param fp [i] Full path to test
- * @param name [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
- * @return 1 if the path is cyclic, 0 if it is not.
- */
-extern int cyclic_path(const struct db_full_path *fp, const char *name);
-
-
-/* db_diff.c */
-
-/**
- * Function to convert an ft_get list of parameters into an avs.
- * @return 0 if the conversion succeeds, -1 if it does not.
- */
-extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
-
-
-/* primitive_util.c */
 
 extern int _rt_tcl_list_to_int_array(const char *list, int **array, int *array_len);
 extern int _rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);

@@ -39,7 +39,7 @@
 #include "bn.h"
 #include "rt/db5.h"
 #include "raytrace.h"
-
+#include "librt_private.h"
 
 int
 db5_header_is_valid(const unsigned char *hp)
@@ -838,9 +838,6 @@ fail:
 }
 
 
-/* FIXME: should have gone away with v6.  needed now to pass the minor_type down during read */
-extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
-
 /**
  * Given an object in external form, convert it to internal form.  The
  * caller is responsible for freeing the external form.
@@ -1055,7 +1052,6 @@ db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, 
     bu_free_external(&ext);
     return 0;
 }
-
 
 /** @} */
 /*

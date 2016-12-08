@@ -25,6 +25,7 @@
 
 #include "bu/defines.h"
 #include "bu/parse.h"
+#include "bu/vls.h"
 
 __BEGIN_DECLS
 
@@ -88,6 +89,38 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
 				void *base,
 				const char *value,
 				void *data);
+
+
+/* Values for bu_humanize_number's flags parameter. */
+#define	BU_HN_DECIMAL		0x01
+#define	BU_HN_NOSPACE		0x02
+#define	BU_HN_B			0x04
+#define	BU_HN_DIVISOR_1000	0x08
+#define	BU_HN_IEC_PREFIXES	0x10
+
+/* Values for bu_humanize_number's scale parameter. */
+#define	BU_HN_GETSCALE		0x10
+#define	BU_HN_AUTOSCALE		0x20
+/**
+ * Convert digital sizes to human readable form.  Based off the
+ * BSD function humanize_number(3).
+ * Upon success, the humanize_number function returns the number of characters
+ * that would have been stored in buf (excluding the terminating NUL) if buf
+ * was large enough, or -1 upon failure.  Even upon failure, the contents of
+ * buf may be modified.  If BU_HN_GETSCALE is specified, the prefix index
+ * number will be returned instead.
+ */
+BU_EXPORT extern int bu_humanize_number(char *buf, size_t len,
+       	int64_t quotient, const char *suffix, int scale, int flags);
+/*
+ * Converts the number given in 'str', which may be given in a humanized
+ * form (as described in BSD's humanize_number(3), but with some limitations),
+ * to an int64_t without units.
+ * In case of success, 0 is returned and *size holds the value.
+ * Otherwise, -1 is returned and *size is untouched.
+ */
+BU_EXPORT extern int bu_dehumanize_number(const char *str, int64_t *size);
+
 
 __END_DECLS
 

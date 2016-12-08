@@ -25,12 +25,6 @@
  */
 
 /** @ingroup librt */
-/**  @defgroup rt_nmg N-Manifold Geometry */
-/**  @addtogroup rt_nmg
-     @brief Support for N-Manifold Geometry */
- */
-
-/** @ingroup librt */
 /**  @defgroup rt_timer Timer*/
 
 /** @ingroup librt */

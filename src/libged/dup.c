@@ -228,7 +228,7 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     }
     rt_mempurge(&(newdbp->dbi_freep));        /* didn't really build a directory */
 
-    _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0);
+    _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0, 0);
     bu_vls_printf(gedp->ged_result_str, "\n -----  %d duplicate names found  -----", gedp->ged_wdbp->wdb_num_dups);
     bu_free((void *)dirp0, "_ged_getspace array");
     db_close(newdbp);

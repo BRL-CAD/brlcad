@@ -1108,7 +1108,8 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		   stp->st_specific, (void *)arbp->arb_opt);
 	    return;
 	}
-	if (RT_G_DEBUG&DEBUG_SOLIDS) rt_pr_soltab(stp);
+	if (RT_G_DEBUG&DEBUG_SOLIDS)
+	    rt_pr_soltab(stp);
     }
 
     ofp = &arbp->arb_opt[hitp->hit_surfno];

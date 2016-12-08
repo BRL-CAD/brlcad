@@ -259,8 +259,8 @@ rt_submodel_print(const struct soltab *stp)
     /* Loop through submodel's solid table printing them too. */
     RT_VISIT_ALL_SOLTABS_START(stp, submodel->rtip) {
 	rt_pr_soltab(stp);
-    } RT_VISIT_ALL_SOLTABS_END
-	  bu_log_indent_delta(-4);
+    } RT_VISIT_ALL_SOLTABS_END;
+    bu_log_indent_delta(-4);
 }
 
 

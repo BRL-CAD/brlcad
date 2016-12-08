@@ -712,7 +712,7 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
  * Sort an array of hits into ascending order.
  */
 void
-rt_hitsort(struct hit *h, int nh)
+primitive_hitsort(struct hit *h, int nh)
 {
     int i, j;
     struct hit temp;

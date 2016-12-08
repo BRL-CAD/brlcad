@@ -1,6 +1,5 @@
 set(primitives_headers
   arb8.h
-  ars.h
   bot.h
   brep.h
   cline.h

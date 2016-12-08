@@ -320,7 +320,8 @@ extern int _ged_cm_null(const int argc,
 extern void _ged_vls_col_pr4v(struct bu_vls *vls,
 			      struct directory **list_of_names,
 			      size_t num_in_list,
-			      int no_decorate);
+			      int no_decorate,
+			      int ssflag);
 extern struct directory ** _ged_getspace(struct db_i *dbip,
 					 size_t num_entries);
 
