@@ -305,7 +305,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	return 0;		/* MISS */
 
     /* Sort hits, Near to Far */
-    rt_hitsort(hits, nhits);
+    primitive_hitsort(hits, nhits);
 
     /* Remove duplicate hits.
        We remove one of a pair of hits when they are

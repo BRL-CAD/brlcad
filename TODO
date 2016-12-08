@@ -18,6 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* user report of runtime failure on Windows.  apparently need a build
+  flag to be portable:
+  https://blogs.msdn.microsoft.com/vcblog/2009/08/27/windows-sdk-v7-0v7-0a-incompatibility-workaround/
+
 * add regression test for directional light sources
 
 * update astyle
@@ -2076,6 +2080,9 @@ being rtgl specific.
 
 Provide a generic mechanism in MGED run loop to hook in features like
 point cloud rendering, instead of hard-coding it.
+
+* consider utilizing something like moodycamel::ConcurrentQueue for
+  handling ray dispatch: https://github.com/cameron314/concurrentqueue
 
 
 LIBPC

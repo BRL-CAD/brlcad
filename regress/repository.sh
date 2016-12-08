@@ -234,7 +234,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strdup strn
 | sed 's/.*\/str\.c:.*strncat.*//' \
 | sed 's/.*\/str\.c:.*strncmp.*//' \
 | sed 's/.*\/str\.c:.*strncpy.*//' \
-| sed 's/.*\/bu_dirname\.c:.*dirname.*//' \
+| sed 's/.*\/tests\/dirname\.c:.*dirname.*//' \
 | sed 's/.*\/ttcp.c:.*//' \
 | sed 's/.*\/vls\.c:.*strncpy.*//' \
 | sed 's/.*\/wfobj\/obj_util\.cpp:.*strncpy.*//' \

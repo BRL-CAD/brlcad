@@ -755,7 +755,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	 * Do this by sorting the intersections,
 	 * and using the minimum and maximum values.
 	 */
-	rt_hitsort(hits, hitp - &hits[0]);
+	primitive_hitsort(hits, hitp - &hits[0]);
 
 	/* [0] is minimum, make [1] be maximum (hitp is +1 off end) */
 	hits[1] = hitp[-1];	/* struct copy */

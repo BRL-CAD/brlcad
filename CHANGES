@@ -116,6 +116,15 @@ and new names should be listed for reference.  If an item is marked
 with a "'" (single quote), that means it was not documented and may be
 removed at any time.
 
+7.28
+----
+
+MGED commands
+	?lib, aproposlib, %, animmate, db_glob,
+	debugbu, debugdir, debuglib, debugmem, debugnmg, expand,
+	loadtk, match, memprint, preview, regdebug, rrt, savekey,
+	shaded_mode, syn
+	Removed as part of distillation effort [deprecated 7.28]
 
 7.26
 ----
@@ -1301,3 +1310,4 @@ s/RTG.NMG_debug/nmg_debug/g
 	make nmg debug flag top level, like libbu's [7.26]
 s/BU_ASSERT(_[A-Z_]+)\(([^,]+|.*\(.*,.*\)),([^,]+|.*\(.*,.*\)),([^,]+|.*\(.*,.*\))\);/BU_ASSERT(\2\3\4);/g
 	consolidated BU_ASSERT_PTR, BU_ASSERT_LONG, BU_ASSERT_SIZE_T, BU_ASSERT_SSIZE_T, BU_ASSERT_DOUBLE [7.26]
+s/BU_FLSTR/CPP_FILELINE/g

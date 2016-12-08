@@ -1,0 +1,6 @@
+SET(lz4_ignore_files
+README.md
+LICENSE
+lz4frame_static.h
+xxhash.h
+)

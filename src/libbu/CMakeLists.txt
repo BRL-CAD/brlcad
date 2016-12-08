@@ -9,7 +9,10 @@ if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # locally used but not needed by users of the library
-set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+set(BU_LOCAL_INCLUDE_DIRS 
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${REGEX_INCLUDE_DIR}
+  )
 if (${UUID_INCLUDE_DIR})
   set(BU_LOCAL_INCLUDE_DIRS ${BU_LOCAL_INCLUDE_DIRS} ${UUID_INCLUDE_DIR})
 endif (${UUID_INCLUDE_DIR})
@@ -82,6 +85,7 @@ set(LIBBU_SOURCES
   mappedfile.c
   ${BU_MIME_C_FILE}
   mread.c
+  namegen.c
   observer.c
   opt.c
   parallel.c

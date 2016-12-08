@@ -31,6 +31,16 @@
  * matumoto@math.keio.ac.jp
  */
 
+/* TODO - note that there is now a BSD licensed version of this
+ * file at http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
+ *
+ * Also, there is a BSD licensed SIMD-oriented Fast Mersenne Twister (SFMT)
+ * at the same source.
+ *
+ * Need to investigate whether we can swap out this LGPL version for
+ * one or more of the BSD licensed variations
+ */
+
 #include "common.h"
 
 #include "bu/malloc.h"

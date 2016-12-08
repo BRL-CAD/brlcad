@@ -148,7 +148,6 @@ __BEGIN_DECLS
 #include "./rt/primitives/pipe.h"
 #include "./rt/primitives/metaball.h"
 #include "./rt/primitives/rpc.h"
-#include "./rt/primitives/ars.h"
 #include "./rt/primitives/pg.h"
 #include "./rt/primitives/hf.h"
 #include "./rt/primitives/dsp.h"

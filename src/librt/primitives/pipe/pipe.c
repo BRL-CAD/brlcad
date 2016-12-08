@@ -1725,7 +1725,7 @@ rt_pipe_shot(
     }
 
     /* sort the hits */
-    rt_hitsort(hits, total_hits);
+    primitive_hitsort(hits, total_hits);
 
     /* eliminate duplicate hits */
     rt_pipe_elim_dups(hits, &total_hits, rp, stp);

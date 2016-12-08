@@ -13,6 +13,10 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed brlman problem with viewing benchmark man page - Cliff Yapp
+* fixed name of dbfind man page (was listed as 'find') - Cliff Yapp
+* added -H option to ls for human readable size reporting - Cliff Yapp
+* added -S option to ls command for size based sorting - Cliff Yapp
 * improved 'loadview' command view script handling - Sean Morrison
 * fixed TIE raytracing for zero thickness BoTs - Cliff Yapp
 * added Wavefront OBJ File->Open GUI support in Archer - Cliff Yapp
@@ -37,6 +41,7 @@ changes made.  See document footer for additional details.
 * upgraded zlib to version 1.2.8 - Cliff Yapp
 * fix rtedge foreground/background color options - Jon Engbert
 * support rt -C colors specified as 0-255 or 0.0-1.0 - Jon Engbert
+* fixed xpush bug leaving stray top-level objects - Nick Reed
 
 
 ----------------------------------------------------------------------

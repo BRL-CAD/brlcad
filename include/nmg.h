@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rt_nmg
+/** @addtogroup libnmg
  *
  * Definition of data structures for "Non-Manifold Geometry
  * Modelling."  Developed from "Non-Manifold Geometric Boundary
