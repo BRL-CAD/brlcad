@@ -41,11 +41,16 @@
     <para>
       Search Inputs are specified using
       <link linkend="primitives">PATHS</link> and
-      matching of objects is done according to boolean
-      expressions formed using the
+      matching of objects is done according to a search plan
+      built using boolean
+      expressions constructed using the
       <link linkend="primitives">PRIMITIVES</link> and
       <link linkend="operators">OPERATORS</link>
-      described below.
+      described below. Note that <link linkend="search_options">OPTIONS</link>
+      are not used to form search plans - unlike the search plan they are specified
+      <emphasis remap="I">before</emphasis> the paths and are used to control settings
+      that apply globally to <command>search</command>'s behavior and reporting during
+      the execution of the search.
 
     </para>
   </refsection>
@@ -656,7 +661,6 @@
       </para>
     </example>
 
-
     <example><title>Name Pattern Matching at Depth &gt;= 3</title>
 
       <para>
@@ -866,6 +870,26 @@
       </para>
       <para>
 	Prints all BoT primitives using "plate" mode, instead of the closed-mesh-requiring "volume" mode.
+      </para>
+    </example>
+    
+    <example><title>Verbose Reporting of Search Information </title>
+
+      <para>
+        <prompt>mged&gt; </prompt><userinput>search -v /all.g ! -type comb</userinput>
+	<literallayout class="normal">
+/u all.g(c)/u platform.r(r)/u platform.s(arb8)
+/u all.g(c)/u box.r(r)/u box.s(arb8)
+/u all.g(c)/u cone.r(r)/u cone.s(tgc)
+/u all.g(c)/u ellipse.r(r)/u ellipse.s(ell)
+/u all.g(c)/u tor.r(r)/u tor(tor)
+/u all.g(c)/u light.r(r)/u LIGHT(ell)
+	</literallayout>
+      </para>
+      <para>
+	Report all paths ending in an object that is not a comb using "verbose" output style. The
+	verbose form of path reporting reports not just the path, but the boolean operator used at
+	each setp along the path and the primitive type of each object along the path.
       </para>
     </example>
 
