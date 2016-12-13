@@ -34,12 +34,13 @@ main(int ac, char *av[])
   int c;
   int i;
   int iterations = 1;
-  const char *usage = "Usage: %s [-i iterations] file.g\n";
+  const int SKIP = 1000;
+  const char *USAGE = "Usage: %s [-i iterations] file.g\n";
 
   struct db_i *dbip;
 
   if (ac < 2) {
-    printf(usage, av[0]);
+    printf(USAGE, av[0]);
     return 1;
   }
 
@@ -52,7 +53,7 @@ main(int ac, char *av[])
         break;
       default:
         printf("ERROR: unexpected [%c] option\n", c);
-        printf(usage, av[0]);
+        printf(USAGE, av[0]);
         return 1;
     }
   }
@@ -64,6 +65,9 @@ main(int ac, char *av[])
     return 2;
   }
 
+  if (iterations >= SKIP)
+      printf("NOTE: only printing times every %d iterations\n\n", SKIP);
+
   for (i=0; i < iterations; i++) {
 
     timer = bu_gettime();
@@ -73,17 +77,20 @@ main(int ac, char *av[])
       return 2;
     }
     seconds[1] += (bu_gettime() - timer) / 1000000.0;
-    printf("[%2d] db_open: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
+    if (iterations < SKIP || (i % SKIP == 0))
+	printf("[%2d] db_open: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
     (void)db_dirbuild(dbip);
     seconds[2] += (bu_gettime() - timer) / 1000000.0;
-    printf("[%2d] db_dirbuild: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
+    if (iterations < SKIP || (i % SKIP == 0))
+	printf("[%2d] db_dirbuild: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
     db_update_nref(dbip, &rt_uniresource);
     seconds[3] += (bu_gettime() - timer) / 1000000.0;
-    printf("[%2d] db_update_nref: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
+    if (iterations < SKIP || (i % SKIP == 0))
+	printf("[%2d] db_update_nref: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
     {
@@ -96,13 +103,14 @@ main(int ac, char *av[])
       ret = ged_tops(&ged, tops_ac, (const char **)tops_av);
     }
     seconds[4] += (bu_gettime() - timer) / 1000000.0;
-    printf("[%2d] ged_tops: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
+    if (iterations < SKIP || (i % SKIP == 0))
+	printf("[%2d] ged_tops: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
     db_close(dbip);
     seconds[5] += (bu_gettime() - timer) / 1000000.0;
-    printf("[%2d] db_close: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
-
+    if (iterations < SKIP || (i % SKIP == 0))
+	printf("[%2d] db_close: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
   }
 
   seconds[0] += (bu_gettime() - begin) / 1000000.0;
