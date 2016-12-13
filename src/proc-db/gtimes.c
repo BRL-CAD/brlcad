@@ -78,19 +78,19 @@ main(int ac, char *av[])
     }
     seconds[1] += (bu_gettime() - timer) / 1000000.0;
     if (iterations < SKIP || (i % SKIP == 0))
-	printf("[%2d] db_open: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
+	printf("[%2d] db_open: %02fs\n", i, (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
     (void)db_dirbuild(dbip);
     seconds[2] += (bu_gettime() - timer) / 1000000.0;
     if (iterations < SKIP || (i % SKIP == 0))
-	printf("[%2d] db_dirbuild: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
+	printf("[%2d] db_dirbuild: %02fs\n", i, (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
     db_update_nref(dbip, &rt_uniresource);
     seconds[3] += (bu_gettime() - timer) / 1000000.0;
     if (iterations < SKIP || (i % SKIP == 0))
-	printf("[%2d] db_update_nref: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
+	printf("[%2d] db_update_nref: %02fs\n", i, (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
     {
@@ -104,24 +104,24 @@ main(int ac, char *av[])
     }
     seconds[4] += (bu_gettime() - timer) / 1000000.0;
     if (iterations < SKIP || (i % SKIP == 0))
-	printf("[%2d] ged_tops: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
+	printf("[%2d] ged_tops: %02fs\n", i, (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
     db_close(dbip);
     seconds[5] += (bu_gettime() - timer) / 1000000.0;
     if (iterations < SKIP || (i % SKIP == 0))
-	printf("[%2d] db_close: %02lfs\n", i, (bu_gettime() - timer) / 1000000.0);
+	printf("[%2d] db_close: %02fs\n", i, (bu_gettime() - timer) / 1000000.0);
   }
 
   seconds[0] += (bu_gettime() - begin) / 1000000.0;
 
   printf("\n");
-  printf("db_open: %02lfs\n", seconds[1]);
-  printf("db_dirbuild: %02lfs\n", seconds[2]);
-  printf("db_update_nref: %02lfs\n", seconds[3]);
-  printf("ged_tops: %02lfs\n", seconds[4]);
-  printf("db_close: %02lfs\n", seconds[5]);
-  printf("\nELAPSED: %02lfs\n", seconds[0]);
+  printf("db_open: %02fs\n", seconds[1]);
+  printf("db_dirbuild: %02fs\n", seconds[2]);
+  printf("db_update_nref: %02fs\n", seconds[3]);
+  printf("ged_tops: %02fs\n", seconds[4]);
+  printf("db_close: %02fs\n", seconds[5]);
+  printf("\nELAPSED: %02fs\n", seconds[0]);
 
   return 0;
 }
