@@ -674,7 +674,7 @@ solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
 }
 
 void
-dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct solid *sp), struct solid *freesolid)
+dl_add_path(struct display_list *gdlp, int dashflag, fastf_t transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct solid *sp), struct solid *freesolid)
 {
     struct solid *sp;
     GET_SOLID(sp, &freesolid->l);
