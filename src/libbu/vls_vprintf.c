@@ -851,8 +851,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	sp = ep + 1;
     }
 
-    va_end(ap);
-
     bu_vls_free(&fbuf);
 }
 
