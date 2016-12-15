@@ -120,10 +120,10 @@ removed at any time.
 ----
 
 MGED commands
-	?lib, aproposlib, %, animmate, db_glob,
+	?devel, ?lib, aproposdevel, aproposlib, %, animmate, db_glob,
 	debugbu, debugdir, debuglib, debugmem, debugnmg, expand,
 	loadtk, match, memprint, preview, regdebug, rrt, savekey,
-	shaded_mode, syn
+	shaded_mode, sync
 	Removed as part of distillation effort [deprecated 7.28]
 
 7.26
