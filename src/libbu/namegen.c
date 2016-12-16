@@ -83,17 +83,10 @@ _bu_namegen_next(struct bu_vls *next_incr, const char *incr_state, const char *i
 	ret = 1;
     }
 
-    /* if we've got a value that exceeds our column allotment, roll over */
+    /* find out if we need padding zeros */
     if (vals[0]) {
 	spacer_val = state_val;
 	while ((spacer_val = spacer_val / 10)) spacer_cnt++;
-	if (spacer_cnt > vals[0]) {
-	     state_val = vals[1];
-	     ret = 1;
-	     spacer_cnt = 1;
-	     spacer_val = vals[0];
-	     while ((spacer_val = spacer_val / 10)) spacer_cnt++;
-	}
     }
 
     if (wstr) {

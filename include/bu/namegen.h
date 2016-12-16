@@ -55,12 +55,13 @@ __BEGIN_DECLS
  * TODO - describe how to specify regex expressions for matching - will use ()
  * subexpressions.
  *
- * An incrementer specification has the following form:
+ * The caller may optionally specify incrementation behavior with an incrementer
+ * specification string, which has the following form:
  *
- * width:init:max:step[:left_sepchar:right_sepchar]
+ * minwidth:init:max:step[:left_sepchar:right_sepchar]
  *
  * In the case of spacing, init, min, max, and step a '0' always indicates default
- * unspecified behavior.  So, an incrementer specified as d:0:0:0:0 would behave
+ * unspecified behavior.  So, an incrementer specified as 0:0:0:0 would behave
  * as follows:
  *
  * spacing: standard printf handling of number value
@@ -68,10 +69,7 @@ __BEGIN_DECLS
  * max: LONG_MAX
  * step: 1
  *
- * These modifiers are optional, but their presence is an all or nothing
- * proposition - their absence will result in the default behavior of the
- * sequence type.  A partial sequence of modifiers will result in a fatal
- * error.  The last two separator chars *are* optional - they may be specified
+ * The last two separator chars are optional - they may be specified
  * if the user wants to guarantee a separation between the active incremented
  * substring and its surroundings.  If the user wants to use a colon *as* the
  * separator character, they need to quote it with the '\' character.  For
@@ -79,6 +77,11 @@ __BEGIN_DECLS
  * and add a suffix with a dash:
  *
  * 2:1:50:5:\::-
+ *
+ * If no specifier is passed in, bu_namegen will analyze the string to
+ * determine the minimum width of the incrementer string.  So, for example,
+ * engine_part-001.s would by default be incremented to engine_part-002.s, and
+ * so on to maintain an incrementer string width of at least 3.
  */
 /** @{ */
 /** @file bu/namegen.h */
