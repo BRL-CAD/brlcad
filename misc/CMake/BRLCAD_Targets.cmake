@@ -172,26 +172,42 @@ macro(VALIDATE_STYLE srcslist targetname)
 	get_property(IS_GENERATED SOURCE ${srcfile} PROPERTY GENERATED)
 
 	if(NOT IS_GENERATED)
-	  # Set up the test scripts and tie them to the object file output
-	  # produced by compiling this particular source file.  This hooks
-	  # in the "integrated" style checking
-	  get_filename_component(root_name ${srcfile} NAME_WE)
-	  string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-	  set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}_${test_name}")
-	  set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-	  set(stampfile_tmp "${stampfile}")
-	  configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/style/${test_name}.cmake.in" ${outfiles_root}.cmake @ONLY)
-	  add_custom_command(
-	    OUTPUT ${outfiles_root}.checked
-	    COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
-	    DEPENDS ${srcfile} ${${test_name}_test_deps}
-	    COMMENT "Validating style of ${srcfile}"
-	    )
-	  set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
+	  set(srcfdir)
+	  set(root_dir)
+	  #message("srcfile: ${srcfile}")
+	  get_filename_component(srcfdir ${srcfile} DIRECTORY)
+	  while(srcfdir AND NOT "${srcfdir}" STREQUAL "/")
+	    set(root_dir ${srcfdir})
+	    get_filename_component(srcfdir ${srcfdir} DIRECTORY)
+	  endwhile(srcfdir AND NOT "${srcfdir}" STREQUAL "/")
+	  if(NOT "${root_dir}" MATCHES "/.*" AND NOT "${root_dir}" MATCHES ".*ext.*")
+	    if (root_dir)
+	      #message("root_dir passed: ${root_dir}")
+	    endif (root_dir)
 
-	  set(test_stamp_files ${test_stamp_files} ${outfiles_root}.checked)
-	  set(test_valid_files ${test_valid_files} ${outfiles_root}.valid)
-	  set(test_src_files ${test_src_files} ${srcfile})
+	    # Set up the test scripts and tie them to the object file output
+	    # produced by compiling this particular source file.  This hooks
+	    # in the "integrated" style checking
+	    get_filename_component(root_name ${srcfile} NAME_WE)
+	    string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+	    set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}_${test_name}")
+	    set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+	    set(stampfile_tmp "${stampfile}")
+	    configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/style/${test_name}.cmake.in" ${outfiles_root}.cmake @ONLY)
+	    add_custom_command(
+	      OUTPUT ${outfiles_root}.checked
+	      COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
+	      DEPENDS ${srcfile} ${${test_name}_test_deps}
+	      COMMENT "Validating style of ${srcfile}"
+	      )
+	    set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
+
+	    set(test_stamp_files ${test_stamp_files} ${outfiles_root}.checked)
+	    set(test_valid_files ${test_valid_files} ${outfiles_root}.valid)
+	    set(test_src_files ${test_src_files} ${srcfile})
+	  else(NOT "${root_dir}" MATCHES "/.*" AND NOT "${root_dir}" MATCHES ".*ext.*")
+	    #message("root_dir rejected: ${root_dir}")
+	  endif(NOT "${root_dir}" MATCHES "/.*" AND NOT "${root_dir}" MATCHES ".*ext.*")
 
 	endif(NOT IS_GENERATED)
       endforeach(srcfile ${srcslist})
