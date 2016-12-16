@@ -142,10 +142,10 @@ set(bu_ignore_files
   mime.cmake
   parallel.h
   sha1.h
-  uce-dirent.h
   vfont.h
   vls_vprintf.h
   TODO.binary_attributes
+  ext/uce-dirent.h
   ext/y2038/LICENSE
   ext/y2038/README.txt
   ext/y2038/time64.h

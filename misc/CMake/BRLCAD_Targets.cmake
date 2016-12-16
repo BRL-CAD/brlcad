@@ -212,16 +212,20 @@ macro(VALIDATE_STYLE srcslist targetname)
 	endif(NOT IS_GENERATED)
       endforeach(srcfile ${srcslist})
 
-      # Set up build targets that can be used to independently trigger the testing
-      configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/validate_checkstamp.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake" @ONLY)
-      add_custom_target(regress-${test_name}-${targetname}
-	${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake"
-	DEPENDS ${test_stamp_files}
-	)
-      if(NOT TARGET regress-${test_name})
-	add_custom_target(regress-${test_name})
-      endif(NOT TARGET regress-${test_name})
-      add_dependencies(regress-${test_name} regress-${test_name}-${targetname})
+      if(test_stamp_files)
+
+	# Set up build targets that can be used to independently trigger the testing
+	configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/validate_checkstamp.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake" @ONLY)
+	add_custom_target(regress-${test_name}-${targetname}
+	  ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake"
+	  DEPENDS ${test_stamp_files}
+	  )
+	if(NOT TARGET regress-${test_name})
+	  add_custom_target(regress-${test_name})
+	endif(NOT TARGET regress-${test_name})
+	add_dependencies(regress-${test_name} regress-${test_name}-${targetname})
+
+      endif(test_stamp_files)
 
     endforeach(test_name ${BRLCAD_STYLE_TESTS})
 
