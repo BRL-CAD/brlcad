@@ -29,29 +29,40 @@
 int
 main(int argc, const char **argv)
 {
+    int i = 0;
     int ret = -1;
-    const char *instr = NULL;
-    struct bu_vls out = BU_VLS_INIT_ZERO;
-    long increment_states[10];
-    const char *time_incrementers[3] = {"d:0:1:12:0","d:2:0:59:0","d:2:0:59:0"};
-    const char *regex_str = "([0-9]+):([0-9]+):([0-9]+).*($)";
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    const char *i1 = "0:0:0:0:-";
+    const char *regex_str = "([-_:]*[0-9]+[-_:]*)[^0-9]*$";
+    const char *regex_str_2 = "([0-9]+)[^0-9]*$";
 
     /* Sanity check */
-    if (argc < 2)
-	bu_exit(1, "ERROR: wrong number of parameters");
+    if (argc < 2) bu_exit(1, "ERROR: wrong number of parameters");
 
-    instr = argv[1];
-    if (strlen(instr) <= 0) {
+    if (strlen(argv[1]) <= 0) {
 	bu_exit(1, "invalid string: %s\n", argv[1]);
     }
 
+    bu_vls_sprintf(&name, "%s", argv[1]);
+    ret = bu_namegen(&name, regex_str, i1);
+    bu_log("output: %s\n", bu_vls_addr(&name));
+
+    bu_vls_sprintf(&name, "%s", argv[1]);
+    while (i < 100) {
+	ret = bu_namegen(&name, regex_str_2, NULL);
+	bu_log("output: %s\n", bu_vls_addr(&name));
+	i++;
+    }
+
+/*
     switch (argc) {
 	case 2:
-	    ret = bu_namegen(&out, instr, regex_str, time_incrementers, increment_states);
+	    bu_log("output: %s\n", bu_vls_addr(&out));
 	    break;
 	default:
 	    break;
     }
+*/
 
     return ret;
 }

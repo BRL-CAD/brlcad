@@ -57,11 +57,7 @@ __BEGIN_DECLS
  *
  * An incrementer specification has the following form:
  *
- * d[width:init:max:step[:left_sepchar:right_sepchar]]
- * u[left_sepchar:right_sepchar]
- *
- * d = sequential digit sequence (0-9, 10-99, 100-999, etc.)
- * u = UUID
+ * width:init:max:step[:left_sepchar:right_sepchar]
  *
  * In the case of spacing, init, min, max, and step a '0' always indicates default
  * unspecified behavior.  So, an incrementer specified as d:0:0:0:0 would behave
@@ -82,47 +78,12 @@ __BEGIN_DECLS
  * example, the following would prefix the incrementer output with a colon
  * and add a suffix with a dash:
  *
- * #d:2:1:50:5:\::-
- *
- * If multiple incrementers are present in an template, they will be
- * incremented in least significant(right) to most significant(left) order.  So
- * the incrementer closest to the end of the template will be exhausted before
- * the one to the left of it is incremented, and once the one to the left is
- * incremented the least significant incrementer resets and begins again.
- *
- * For example, a "digital clock" incrementer would be specified using three
- * incrementers as follows:
- *
- * const char *incrs[4];
- * const char *hrs = "d:0:1:12:0";
- * const char *min = "d:2:0:59:0";
- * const char *sec = "d:2:0:59:0";
- * incrs[0] = hrs;
- * incrs[1] = min;
- * incrs[2] = sec;
- * incrs[3] = NULL;
- *
- * and the state of each increment would be held in an array:
- * unsigned long incr_states[3] = {0};
- *
- * The "input string" to set up the formatting would be:
- *
- * const char *clock_str = "00:00:00"
- *
- * and the regular expression to identify the incrementers would be:
- *
- * const char *regexp = "([0-9]+):([0-9]+):([0-9]+).*($)";
- *
- * If we wanted a clock with 24 hour counting, we could change the hrs specifier
- * to:
- *
- * const char *hrs = "d:2:0:23:0";
- *
+ * 2:1:50:5:\::-
  */
 /** @{ */
 /** @file bu/namegen.h */
 
-BU_EXPORT extern int bu_namegen(struct bu_vls *name, const char *in_str, const char *regex_str, const char **incrs, long *incr_states);
+BU_EXPORT extern int bu_namegen(struct bu_vls *name, const char *regex_str, const char *incr_spec);
 
 
 __END_DECLS
