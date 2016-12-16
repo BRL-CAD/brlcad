@@ -65,7 +65,7 @@ __BEGIN_DECLS
  * as follows:
  *
  * spacing: standard printf handling of number value
- * init: 0
+ * init: from initial name string
  * max: LONG_MAX
  * step: 1
  *
