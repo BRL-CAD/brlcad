@@ -19,6 +19,11 @@
 #  include <inttypes.h>
 #endif
 
+/* Using GetTempPath() for Visual Studio 2015 onwards */
+#if defined(_MSC_VER) && (_MSC_VER > 1800)
+#  include <Windows.h>
+#endif
+
 #cmakedefine HAVE_INT64 1
 
 #if defined(USG) || defined(SVR4) || defined(VMS) || defined(__SVR4)
@@ -326,13 +331,8 @@ typedef long int pm_filepos;
 #if defined(_PLAN9)
   #define TMPDIR "/tmp"
 #else
-  /* P_tmpdir is no-go on newer MSVC - see https://connect.microsoft.com/VisualStudio/feedback/details/1107169/vs-2015-ctp-5-c-c-p-tmpdir-is-never-defined */
-  #if defined(_MSC_VER) && (_MSC_VER > 1800)
-    #define TMPDIR GetTempPathA()
-  #else
-    /* Use POSIX value P_tmpdir from libc */
-    #define TMPDIR P_tmpdir
-  #endif
+  /* Use POSIX value P_tmpdir from libc */
+  #define TMPDIR P_tmpdir
 #endif
 
 /* Note that if you _don't_ have mkstemp(), you'd better have a safe

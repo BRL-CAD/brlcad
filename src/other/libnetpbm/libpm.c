@@ -714,14 +714,14 @@ pm_openw(const char * const name) {
 
 
 static const char *
-tmpDir(void) {
+tmpDir(char *tmpdir_aux_win32) {
 /*----------------------------------------------------------------------------
    Return the name of the directory in which we should create temporary
    files.
 
    The name is a constant in static storage.
 -----------------------------------------------------------------------------*/
-    const char * tmpdir;
+    const char *tmpdir;
         /* running approximation of the result */
 
     tmpdir = getenv("TMPDIR");   /* Unix convention */
@@ -732,8 +732,14 @@ tmpDir(void) {
     if (!tmpdir || strlen(tmpdir) == 0)
         tmpdir = getenv("TEMP"); /* Windows convention */
 
-    if (!tmpdir || strlen(tmpdir) == 0)
+    if (!tmpdir || strlen(tmpdir) == 0) {
+#if defined(_MSC_VER) && (_MSC_VER > 1800)
+        GetTempPathA(MAX_PATH + 1, tmpdir_aux_win32);
+        tmpdir = tmpdir_aux_win32;
+#else
         tmpdir = TMPDIR;
+#endif
+    }
 
     return tmpdir;
 }
@@ -822,9 +828,15 @@ pm_make_tmpfile(FILE **       const filePP,
     const char * tmpdir;
     const char * dirseparator;
 
+#if defined(_MSC_VER) && (_MSC_VER > 1800)
+    char tmpdir_aux_win32[MAX_PATH + 1];
+#else
+    char *tmpdir_aux_win32;
+#endif
+
     fnamelen = strlen (pm_progname) + 10; /* "/" + "_XXXXXX\0" */
 
-    tmpdir = tmpDir();
+    tmpdir = tmpDir(tmpdir_aux_win32);
 
     if (tmpdir[strlen(tmpdir) - 1] == '/')
         dirseparator = "";
