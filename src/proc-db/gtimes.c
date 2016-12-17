@@ -94,13 +94,12 @@ main(int ac, char *av[])
 
     timer = bu_gettime();
     {
-      int ret;
       struct ged ged;
       int tops_ac = 1;
       const char *tops_av[2] = {"tops", NULL};
 
       GED_INIT(&ged, dbip->dbi_wdbp);
-      ret = ged_tops(&ged, tops_ac, (const char **)tops_av);
+      (void)ged_tops(&ged, tops_ac, (const char **)tops_av);
     }
     seconds[4] += (bu_gettime() - timer) / 1000000.0;
     if (iterations < SKIP || (i % SKIP == 0))
