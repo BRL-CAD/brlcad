@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* running rt -C255/0/0 -o file.pix ... does not result in the
+  background color getting used.  It does work with -F file.pix, going
+  through libfb instead of libicv.
+
 * ogl display manager and framebuffer are creating windows with
   transparent backgrounds (the glClear color is not being drawn) on
   Linux.  Presumably a driver-related issue, alpha channel, or expose
