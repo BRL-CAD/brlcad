@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* running rt -s20 -F file.pix ... does not result in an 20x20 image
+  being written out.  it ends up being 512x512.
+
 * running rt -C255/0/0 -o file.pix ... does not result in the
   background color getting used.  It does work with -F file.pix, going
   through libfb instead of libicv.
