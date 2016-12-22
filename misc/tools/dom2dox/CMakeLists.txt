@@ -78,11 +78,10 @@ endif(NOT DOM2DOX_IS_SUBBUILD)
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${BRLCAD_SRC_INCLUDE_DIR}
-  ${BRLCAD_BUILD_INCLUDE_DIR}
+  ${BRLCAD_SOURCE_DIR}/include
+  ${BRLCAD_BINARY_DIR}/include
   ${TCL_INCLUDE_DIRS}
   )
-
 
 PERPLEX_TARGET(dom2dox_scanner dom2dox_scanner.perplex)
 LEMON_TARGET(dom2dox_parser dom2dox_parser.lemon)
@@ -94,7 +93,7 @@ set(dom2dox_srcs
   ${LEMON_dom2dox_parser_SRC}
 )
 add_executable(dom2dox ${dom2dox_srcs})
-target_link_libraries(dom2dox ${BU_LIBRARY})
+target_link_libraries(dom2dox libbu)
 set_property(TARGET dom2dox APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_dom2dox_scanner_INCLUDE_DIR}")
 set_property(TARGET dom2dox APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_dom2dox_parser_INCLUDE_DIR}")
 
