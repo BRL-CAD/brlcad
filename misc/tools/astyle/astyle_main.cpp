@@ -591,6 +591,7 @@ void ASConsole::formatFile(const string& fileName_)
 	// if file has changed, write the new file
 	if (!filesAreIdentical || streamIterator.getLineEndChange(lineEndFormat))
 	{
+		Changed_Count++;
 		if (!isDryRun)
 			writeFile(fileName_, encoding, out);
 		printMsg(_("Formatted  %s\n"), displayName);
@@ -657,6 +658,12 @@ bool ASConsole::getIgnoreExcludeErrorsDisplay() const
 // for unit testing
 bool ASConsole::getIsDryRun() const
 { return isDryRun; }
+
+bool ASConsole::getIsReport() const
+{ return isReport; }
+
+int ASConsole::getChangedCount () const
+{ return Changed_Count; }
 
 // for unit testing
 bool ASConsole::getIsFormattedOnly() const
@@ -795,6 +802,9 @@ void ASConsole::setIsRecursive(bool state)
 
 void ASConsole::setIsDryRun(bool state)
 { isDryRun = state; }
+
+void ASConsole::setIsReport(bool state)
+{ isReport = state; }
 
 void ASConsole::setIsVerbose(bool state)
 { isVerbose = state; }
@@ -3133,6 +3143,11 @@ void ASOptions::parseOption(const string& arg, const string& errorInfo)
 	{
 		g_console->setIsDryRun(true);
 	}
+	else if (isOption(arg, "report"))
+	{
+		g_console->setIsDryRun(true);
+		g_console->setIsReport(true);
+	}
 	else if ( isOption(arg, "Z", "preserve-date") )
 	{
 		g_console->setPreserveDate(true);
@@ -3783,6 +3798,7 @@ extern "C" EXPORT const char* STDCALL AStyleGetVersion(void)
 
 int main(int argc, char** argv)
 {
+	int ret = EXIT_SUCCESS;
 	// create objects
 	ASFormatter formatter;
 	g_console = new ASConsole(formatter);
@@ -3797,14 +3813,19 @@ int main(int argc, char** argv)
 	if (g_console->fileNameVectorIsEmpty())
 	{
 		g_console->formatCinToCout();
+		// Since we can't know how many files we processed on cin,
+		// just report success
 		return EXIT_SUCCESS;
 	}
 
 	// process entries in the fileNameVector
 	g_console->processFiles();
 
+	if (g_console->getIsReport()) {
+		ret = g_console->getChangedCount();
+	}
 	delete g_console;
-	return EXIT_SUCCESS;
+	return ret;
 }
 
 #endif	// ASTYLE_LIB

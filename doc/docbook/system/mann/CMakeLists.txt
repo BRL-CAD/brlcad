@@ -53,6 +53,7 @@ set(mann_EN
   cpi.xml
   d.xml
   db.xml
+  dbfind.xml
   db_glob.xml
   dbconcat.xml
   dbupgrade.xml
@@ -88,7 +89,6 @@ set(mann_EN
   eye_pt.xml
   facedef.xml
   facetize.xml
-  find.xml
   fracture.xml
   g.xml
   garbage_collect.xml

@@ -122,6 +122,26 @@ THIRD_PARTY(tinycthread TINYCTHREAD tinycthread tinycthread_DESCRIPTION ALIASES 
 SetTargetFolder(tinycthread "Third Party Libraries")
 SetTargetFolder(tinycthread-static "Third Party Libraries")
 
+
+# LZ4 compression/decompression library
+
+set(lz4_ALIASES ENABLE_LZ4)
+set(lz4_DESCRIPTION "
+Option for enabling and disabling compilation of the lz4 data
+compression library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ${lz4_ALIASES})
+if(BRLCAD_LZ4_BUILD)
+  set(LIBLZ4_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lz4" CACHE STRING "Directory containing lz4 headers." FORCE)
+  mark_as_advanced(LIBLZ4_INCLUDE_DIR)
+  SetTargetFolder(lz4 "Third Party Libraries")
+  SetTargetFolder(lz4-static "Third Party Libraries")
+endif(BRLCAD_LZ4_BUILD)
+
+
 # FreeType Libraries
 
 #set(freetype_ALIASES ENABLE_FREETYPE)

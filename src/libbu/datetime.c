@@ -91,6 +91,16 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 }
 
 
+
+/* FIXME: this implementation of bu_gettime() doesn't work with
+ * bu_utctime() on Windows, which expects the return result to be a
+ * time offset (which we would get if we use
+ * GetSystemTimePreciseAsFileTime() instead).  The performance counter
+ * gives a number of ticks since application start, independent of any
+ * external time clock.  Need to document whether this function should
+ * be returning wallclock or cpu time too.
+ */
+
 int64_t
 bu_gettime(void)
 {

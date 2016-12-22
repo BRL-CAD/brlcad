@@ -49,7 +49,12 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
   add_subdirectory(tests)
 endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
-CMAKEFILES(README)
+CMAKEFILES(
+  README
+  sobolseq.c
+  soboldata.h
+  numgen.c
+  )
 
 # Local Variables:
 # tab-width: 8

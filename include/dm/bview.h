@@ -275,7 +275,7 @@ struct bview_client_data {
     int draw_solid_lines_only;
     int wireframe_color_override;
     int wireframe_color[3];
-    int transparency;
+    fastf_t transparency;
     int dmode;
     int hiddenLine;
     void *freesolid;

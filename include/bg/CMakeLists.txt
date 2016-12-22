@@ -11,6 +11,8 @@ install(FILES ${bg_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bg)
 
 CMAKEFILES(${bg_headers})
 
+CMAKEFILES(pointgen.h)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

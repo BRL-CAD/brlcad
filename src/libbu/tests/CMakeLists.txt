@@ -436,6 +436,12 @@ add_test(NAME bu_badmagic_null_ptr    COMMAND bu_badmagic 3)
 add_test(NAME bu_badmagic_misaligned  COMMAND bu_badmagic 4)
 
 #
+#  *********** namegen.c tests ************
+#
+BRLCAD_ADDEXEC(bu_namegen namegen.c libbu TEST)
+
+
+#
 #  *********** opt.c tests ************
 #
 

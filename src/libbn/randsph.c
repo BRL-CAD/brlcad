@@ -38,7 +38,8 @@ HIDDEN void
 _bn_unit_sph_sample(point_t pnt)
 {
     fastf_t px, py, pz, S;
-    fastf_t V1, V2;
+    fastf_t V1 = 0;
+    fastf_t V2 = 0;
     int have_rand_1 = 0;
     int have_rand_2 = 0;
 
@@ -78,8 +79,49 @@ _bn_unit_sph_sample(point_t pnt)
     pnt[2] = pz;
 }
 
+#if 0
+/* TODO - investigate implementation of http://www.dtic.mil/docs/citations/ADA510216
+ * scrambling method to see if Sobol can actually work for this... Basic Sobol
+ * sequences result in patterns. Also relevant: people.sc.fsu.edu/~hcc8471/ssobol.pdf */
+HIDDEN void
+_bn_unit_sph_sample_sobol(point_t pnt, bn_soboldata s)
+{
+    double p[2];
+    double lb[2] = {-1, -1};
+    double ub[2] = {1, 1};
+    double px, py, pz;
+    double S;
+    int success = 0;
+
+    /* Get our two random numbers */
+    while (!success) {
+
+	/* Assume the next numbers will work until proven otherwise... */
+	success = 1;
+
+	/* Get our next two quasi-random numbers */
+	bn_sobol_next(s, (double *)p, (double *)lb, (double *)ub);
+
+	/* Check that p[0]^2+p[1]^2 < 1 */
+	S = p[0]*p[0] + p[1]*p[1];
+	if (S >= 1) success = 0;
+    }
+
+    /* Given the random numbers, generate the xyz points on the
+     * unit sphere */
+    px = 2 * p[0] * sqrt(1 - S);
+    py = 2 * p[1] * sqrt(1 - S);
+    pz = 1 - 2 * S;
+
+    pnt[0] = px;
+    pnt[1] = py;
+    pnt[2] = pz;
+}
+#endif
+
+
 void
-bn_sph_sample(point_t sample, const point_t center, const fastf_t radius)
+bn_rand_sph_sample(point_t sample, const point_t center, const fastf_t radius)
 {
     _bn_unit_sph_sample(sample);
 

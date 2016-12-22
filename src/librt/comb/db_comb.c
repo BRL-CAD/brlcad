@@ -1160,6 +1160,37 @@ db_comb_mvall(struct directory *dp, struct db_i *dbip, const char *old_name, con
 }
 
 HIDDEN void
+_db_comb_find_invalid(int *inv_cnt, struct db_i *dbip, union tree *tp)
+{
+    if (!tp) return;
+
+    RT_CHECK_DBI(dbip);
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+        case OP_UNION:
+        case OP_INTERSECT:
+        case OP_SUBTRACT:
+        case OP_XOR:
+            _db_comb_find_invalid(inv_cnt, dbip, tp->tr_b.tb_right);
+        case OP_NOT:
+        case OP_GUARD:
+        case OP_XNOP:
+            _db_comb_find_invalid(inv_cnt, dbip, tp->tr_b.tb_left);
+            break;
+	case OP_DB_LEAF:
+	    if (db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL) {
+		(*inv_cnt) = (*inv_cnt) + 1;
+            }
+	    break;
+	default:
+	    bu_log("_db_comb_get_children: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("_db_comb_get_children\n");
+    }
+}
+
+
+HIDDEN void
 _db_comb_get_children(struct directory **children, int *curr_ind, int curr_bool, struct db_i *dbip, union tree *tp, int *bool_ops, matp_t *mats)
 {
    struct directory *dp;
@@ -1189,12 +1220,14 @@ _db_comb_get_children(struct directory **children, int *curr_ind, int curr_bool,
             } else {
                 /* List the child, if it isn't hidden */
                 if (!(dp->d_flags & RT_DIR_HIDDEN)) {
-		    children[*curr_ind] = dp;
+		    if (children) {
+			children[*curr_ind] = dp;
+		    }
 		    if (bool_ops) {
 			bool_ops[*curr_ind] = bool_op;
 		    }
 		    if (mats) {
-			mats[*curr_ind] = (matp_t)bu_calloc(1, sizeof(mat_t), "mat copy");
+			if (!mats[*curr_ind]) mats[*curr_ind] = (matp_t)bu_calloc(1, sizeof(mat_t), "mat copy");
 			if (tp->tr_l.tl_mat) {
 			    MAT_COPY(mats[*curr_ind], tp->tr_l.tl_mat);
 			} else {
@@ -1212,37 +1245,44 @@ _db_comb_get_children(struct directory **children, int *curr_ind, int curr_bool,
     }
 }
 
-struct directory **
-db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb, int **bool_ops, matp_t **mats)
+int
+db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb, struct directory ***children, int **bool_ops, matp_t **mats)
 {
     int dp_index = 0;
     int node_count = 0;
-    struct directory **children;
     int *bops = NULL;
     matp_t *ms = NULL;
+    int invalid_cnt = 0;
 
     RT_CK_DBI(dbip);
     RT_CK_COMB(comb);
 
     node_count = db_tree_nleaves(comb->tree);
-    if (!node_count) return NULL;
-    children = (struct directory **)bu_calloc(node_count + 1, sizeof(struct directory *), "directory array");
+    if (!node_count) return 0;
+
+    _db_comb_find_invalid(&invalid_cnt, dbip, comb->tree);
+
+    node_count = node_count - invalid_cnt;
+
+    if (children) {
+	if (!*children) (*children) = (struct directory **)bu_calloc(node_count + 1, sizeof(struct directory *), "directory array");
+    }
     if (bool_ops) {
-	(*bool_ops) = (int *)bu_calloc(node_count + 1, sizeof(int), "bool ops");
+	if (!*bool_ops) (*bool_ops) = (int *)bu_calloc(node_count + 1, sizeof(int), "bool ops");
 	bops = (*bool_ops);
 	bops[node_count] = 0;
     }
     if (mats) {
-	(*mats) = (matp_t *)bu_calloc(node_count + 1, sizeof(matp_t), "pointers to matrices");
+	if (!*mats) (*mats) = (matp_t *)bu_calloc(node_count + 1, sizeof(matp_t), "pointers to matrices");
 	ms = (*mats);
 	ms[node_count] = NULL;
     }
 
     dp_index = node_count - 1;
-    _db_comb_get_children(children, &dp_index, OP_UNION, dbip, comb->tree, bops, ms);
+    _db_comb_get_children(*children, &dp_index, OP_UNION, dbip, comb->tree, bops, ms);
 
-    children[node_count] = RT_DIR_NULL;
-    return children;
+    (*children)[node_count] = RT_DIR_NULL;
+    return node_count;
 }
 
 /** @} */

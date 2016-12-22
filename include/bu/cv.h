@@ -154,12 +154,12 @@ __BEGIN_DECLS
 /**
  * provide for 64-bit network/host conversions using ntohl()
  */
-#ifndef HAVE_NTOHLL
+#if !defined(HAVE_NTOHLL) && !defined(ntohll)
 #  define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				\
 			((((uint64_t)ntohl((_val))) << 32) + ntohl((_val) >> 32)) : \
 			(_val)) /* sorry pdp-endian */
 #endif
-#ifndef HAVE_HTONLL
+#if !defined(HAVE_HTONLL) && !defined(htonll)
 #  define htonll(_val) ntohll(_val)
 #endif
 

@@ -95,7 +95,10 @@ package require cadwidgets::Accordian 1.0
 #
 ::itcl::body ManBrowser::loadPage {pageName} {
 # Get page
-    if {[file exists $pageName] && ![file isdirectory $pageName]} {set pathname $pageName}
+    # For the moment doing this explicit 'existing file' read test is a problem
+    # since benchmark the file shows up before benchmark the man page in the
+    # search order...
+    #if {[file exists $pageName] && ![file isdirectory $pageName]} {set pathname $pageName}
     if {![info exists pathname]} {
 	if {[file exists [file join $path $current_section $pageName.html]]} {
 	    set pathname [file join $path $current_section $pageName.html]

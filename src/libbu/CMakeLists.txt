@@ -9,7 +9,12 @@ if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # locally used but not needed by users of the library
-set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+set(BU_LOCAL_INCLUDE_DIRS 
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext/y2038
+  ${REGEX_INCLUDE_DIR}
+  )
 if (${UUID_INCLUDE_DIR})
   set(BU_LOCAL_INCLUDE_DIRS ${BU_LOCAL_INCLUDE_DIRS} ${UUID_INCLUDE_DIR})
 endif (${UUID_INCLUDE_DIR})
@@ -31,7 +36,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
 
 # Year 2038+ support lib
-add_subdirectory(y2038)
+BRLCAD_ADDLIB(y2038 "ext/y2038/time64.c" "")
+if(CPP_DLL_DEFINES)
+  set_property(TARGET y2038 APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_EXPORTS")
+endif(CPP_DLL_DEFINES)
 
 set(LIBBU_SOURCES
   affinity.c
@@ -82,6 +90,7 @@ set(LIBBU_SOURCES
   mappedfile.c
   ${BU_MIME_C_FILE}
   mread.c
+  namegen.c
   observer.c
   opt.c
   parallel.c
@@ -114,7 +123,7 @@ set(LIBBU_SOURCES
   xdr.c
   )
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${M_LIBRARY};y2038")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY};y2038")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
   set_property(TARGET libbu APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_IMPORTS")
@@ -133,10 +142,15 @@ set(bu_ignore_files
   mime.cmake
   parallel.h
   sha1.h
-  uce-dirent.h
   vfont.h
   vls_vprintf.h
   TODO.binary_attributes
+  ext/uce-dirent.h
+  ext/y2038/LICENSE
+  ext/y2038/README.txt
+  ext/y2038/time64.h
+  ext/y2038/time64_config.h
+  ext/y2038/time64_limits.h
   )
 CMAKEFILES(${bu_ignore_files})
 

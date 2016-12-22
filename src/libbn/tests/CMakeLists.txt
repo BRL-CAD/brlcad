@@ -16,7 +16,7 @@ BRLCAD_ADDEXEC(bn_mat mat.c "libbu;libbn" TEST)
 BRLCAD_ADDEXEC(bn_tabdata tabdata.c "libbu;libbn" TEST)
 BRLCAD_ADDEXEC(bn_qmath qmath.c "libbu;libbn" TEST)
 BRLCAD_ADDEXEC(bn_randsph randsph.c "libbu;libbn" TEST)
-CMAKEFILES(poly_cubic_roots.c poly_quartic_roots.c)
+CMAKEFILES(poly_cubic_roots.c poly_quartic_roots.c sobolseq.c)
 
 #
 #  ************ list.c tests *************

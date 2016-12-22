@@ -210,8 +210,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_tor_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_tor_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_tor_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_tor_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_tor_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
@@ -220,7 +220,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_tor_adaptive_plot),
 	RTFUNCTAB_FUNC_VSHOT_CAST(rt_tor_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_tor_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_tor_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_tor_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_tor_export5),
@@ -235,17 +235,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_tor_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_tor_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_tor_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_tor_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_tor_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -256,8 +256,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_tgc_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_tgc_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_tgc_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_tgc_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_tgc_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
@@ -281,17 +281,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_tgc_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_tgc_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_tgc_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_tgc_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_tgc_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -302,8 +302,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_ell_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_ell_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_ell_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_ell_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_ell_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
@@ -327,17 +327,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_ell_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ell_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_ell_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ell_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_ell_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -348,14 +348,14 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_arb_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_arb_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_arb_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_arb_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_arb_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_arb_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_arb_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_arb_plot),
-	NULL,
+	NULL, /* adaptive_plot */
 	RTFUNCTAB_FUNC_VSHOT_CAST(rt_arb_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_arb_tess),
 	RTFUNCTAB_FUNC_TNURB_CAST(rt_arb_tnurb),
@@ -373,17 +373,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_arb_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_arb_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_arb_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_arb_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_arb_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -401,10 +401,10 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_bot_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_bot_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_ars_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_ars_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_ars_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_ars_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_ars_export5),
@@ -413,23 +413,23 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_ars_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_ars_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct rt_ars_internal),
 	RT_ARS_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_ars_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_ars_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_ars_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ars_bbox),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -440,17 +440,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_hlf_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_hlf_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_hlf_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_hlf_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_hlf_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_hlf_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_hlf_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_hlf_plot),
-	NULL,
+	NULL, /* adaptive_plot */
 	RTFUNCTAB_FUNC_VSHOT_CAST(rt_hlf_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_hlf_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_hlf_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_hlf_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_hlf_export5),
@@ -465,17 +465,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_hlf_params),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -486,8 +486,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_rec_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_rec_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_rec_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_rec_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_rec_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
@@ -496,7 +496,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_tgc_adaptive_plot),
 	RTFUNCTAB_FUNC_VSHOT_CAST(rt_rec_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_tgc_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_tgc_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_tgc_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_tgc_export5),
@@ -511,17 +511,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_rec_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_rec_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_tgc_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_tgc_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_tgc_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -532,42 +532,42 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_pg_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_pg_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_pg_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_pg_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_pg_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_pg_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_pg_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_pg_tess),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL, /* tnurb */
+	NULL, /* brep */
+	NULL, /* import5 */
+	NULL, /* export5 */
 	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_pg_import4),
 	RTFUNCTAB_FUNC_EXPORT4_CAST(rt_pg_export4),
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_pg_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_pg_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct rt_pg_internal),
 	RT_PG_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_pg_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_pg_bbox),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -578,18 +578,18 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_nurb_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_nurb_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_nurb_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_nurb_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_nurb_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_nurb_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_nurb_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_nurb_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_nurb_tess),
-	NULL,
-	NULL,
+	NULL, /* tnurb */
+	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_nurb_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_nurb_export5),
 	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_nurb_import4),
@@ -597,23 +597,23 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_nurb_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_nurb_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct rt_nurb_internal),
 	RT_NURB_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_nurb_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_nurb_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_nurb_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_nurb_bbox),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -624,8 +624,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_sph_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_sph_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_sph_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_sph_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_sph_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
@@ -649,17 +649,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_sph_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ell_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_ell_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ell_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_ell_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -670,17 +670,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_nmg_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_nmg_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_nmg_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_nmg_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_nmg_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_nmg_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_nmg_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_nmg_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_nmg_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_nmg_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_nmg_export5),
@@ -689,7 +689,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_nmg_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_nmg_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct model),
 	NMG_MODEL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_nmg_get),
@@ -701,11 +701,11 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_nmg_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_nmg_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_nmg_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -716,17 +716,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_ebm_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_ebm_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_ebm_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_ebm_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_ebm_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_ebm_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_ebm_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_ebm_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_ebm_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_ebm_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_ebm_export5),
@@ -744,14 +744,14 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_ebm_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_ebm_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ebm_bbox),
-	NULL,
+	NULL, /* volume */
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ebm_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_ebm_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -762,17 +762,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_vol_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_vol_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_vol_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_vol_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_vol_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_vol_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_vol_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_vol_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_vol_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_vol_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_vol_export5),
@@ -787,17 +787,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_vol_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_vol_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_vol_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_vol_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_vol_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -808,17 +808,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_arbn_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_arbn_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_arbn_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_arbn_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_arbn_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_arbn_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_arbn_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_arbn_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_arbn_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_arbn_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_arbn_export5),
@@ -827,23 +827,23 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_arbn_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_arbn_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct rt_arbn_internal),
 	RT_ARBN_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_arbn_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_arbn_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_arbn_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_arbn_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_arbn_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_arbn_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_arbn_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -854,17 +854,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_pipe_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_pipe_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_pipe_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_pipe_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_pipe_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_pipe_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_pipe_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_pipe_adaptive_plot),
-	NULL,
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_pipe_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_pipe_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_pipe_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_pipe_export5),
@@ -873,23 +873,23 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_pipe_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_pipe_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct rt_pipe_internal),
 	RT_PIPE_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_pipe_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_pipe_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_pipe_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_pipe_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_pipe_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_pipe_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_pipe_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -900,17 +900,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_part_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_part_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_part_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_part_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_part_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_part_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_part_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_part_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_part_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_part_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_part_export5),
@@ -925,17 +925,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_part_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_part_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_part_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_part_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_part_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -946,17 +946,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_rpc_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_rpc_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_rpc_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_rpc_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_rpc_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_rpc_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_rpc_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_rpc_adaptive_plot),
-	NULL,
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_rpc_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_rpc_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_rpc_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_rpc_export5),
@@ -971,17 +971,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_rpc_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_rpc_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_rpc_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_rpc_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_rpc_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -992,17 +992,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_rhc_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_rhc_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_rhc_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_rhc_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_rhc_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_rhc_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_rhc_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_rhc_adaptive_plot),
-	NULL,
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_rhc_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_rhc_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_rhc_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_rhc_export5),
@@ -1017,17 +1017,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_rhc_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_rhc_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_rhc_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_rhc_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_rhc_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1038,17 +1038,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_epa_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_epa_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_epa_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_epa_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_epa_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_epa_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_epa_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_epa_adaptive_plot),
-	NULL,
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_epa_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_epa_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_epa_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_epa_export5),
@@ -1063,17 +1063,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_epa_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_epa_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_epa_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_epa_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_epa_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1084,17 +1084,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_ehy_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_ehy_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_ehy_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_ehy_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_ehy_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_ehy_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_ehy_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_ehy_adaptive_plot),
-	NULL,
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_ehy_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_ehy_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_ehy_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_ehy_export5),
@@ -1109,17 +1109,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_ehy_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ehy_bbox),
-	NULL,
+	NULL, /* volume */
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ehy_surf_area),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1130,17 +1130,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_eto_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_eto_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_eto_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_eto_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_eto_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_eto_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_eto_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_eto_adaptive_plot),
-	NULL,
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_eto_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_eto_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_eto_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_eto_export5),
@@ -1155,17 +1155,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_eto_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_eto_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_eto_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_eto_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_eto_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1176,17 +1176,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_grp_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_grp_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_grp_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_grp_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_grp_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_grp_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_grp_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_grp_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_grp_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_grp_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_grp_export5),
@@ -1201,17 +1201,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_grp_params),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1222,17 +1222,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_joint_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_joint_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_joint_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_joint_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_joint_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_joint_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_joint_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_joint_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_joint_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_joint_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_joint_export5),
@@ -1247,58 +1247,59 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_joint_params),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
 	RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(rt_joint_find_selections),
-	NULL,
+	NULL, /* evaluate_selections */
 	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_joint_process_selection),
-	NULL
+	NULL /* serialize */
 #if 0
 	0, /* ft_use_rpp */
-	NULL,/* prep */
-	NULL,/* shot */
-	NULL,/* print */
-	NULL,/* norm */
-	NULL,/* piece_shot */
-	NULL,/* piece_hitsegs */
-	NULL,/* uv */
-	NULL,/* curve */
-	NULL,/* classify */
-	NULL,/* free */
-	RTFUNCTAB_FUNC_PLOT_CAST(rt_joint_plot),/* plot */
-	NULL,/* adaptive_plot */
-	NULL,/* vshot */
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	0,
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* prep */
+	NULL, /* shot */
+	NULL, /* print */
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* classify */
+	NULL, /* free */
+	RTFUNCTAB_FUNC_PLOT_CAST(rt_joint_plot), /* plot */
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
+	NULL, /* import5 */
+	NULL, /* export5 */
+	NULL, /* import4 */
+	NULL, /* export4 */
+	NULL, /* ifree */
+	NULL, /* describe */
+	NULL, /* xform */
+	NULL, /* parse */
+	0, /* sizeof(internal) */
+	0, /* magic */
+	NULL, /* get */
+	NULL, /* adjust */
+	NULL, /* form */
+	NULL, /* make */
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
 #endif
     },
 
@@ -1310,17 +1311,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_hf_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_hf_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_hf_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_hf_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_hf_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_hf_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_hf_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_hf_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_hf_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_hf_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_hf_export5),
@@ -1335,17 +1336,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_hf_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_hf_bbox),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1356,17 +1357,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_dsp_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_dsp_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_dsp_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_dsp_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_dsp_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_dsp_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_dsp_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_dsp_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_dsp_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_dsp_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_dsp_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_dsp_export5),
@@ -1380,18 +1381,18 @@ const struct rt_functab OBJ[] = {
 	RT_DSP_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_dsp_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_dsp_adjust),
-	NULL,
+	NULL, /* form */
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_dsp_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_dsp_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_dsp_bbox),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1402,17 +1403,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_sketch_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_sketch_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_sketch_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_sketch_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_sketch_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_sketch_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_sketch_plot),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_sketch_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_sketch_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_sketch_export5),
@@ -1421,23 +1422,23 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_sketch_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_sketch_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct rt_sketch_internal),
 	RT_SKETCH_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_sketch_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_sketch_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_sketch_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_sketch_params),
-	NULL,
-	NULL,
+	NULL, /* bbox */
+	NULL, /* volume */
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_sketch_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_sketch_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1448,17 +1449,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_extrude_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_extrude_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_extrude_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_extrude_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_extrude_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_extrude_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_extrude_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_extrude_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_extrude_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_extrude_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_extrude_export5),
@@ -1467,23 +1468,23 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_extrude_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_extrude_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_extrude_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct rt_extrude_internal),
 	RT_EXTRUDE_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_extrude_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_extrude_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_extrude_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_extrude_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_extrude_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_extrude_volume),
-	NULL,
+	NULL, /* surf_area */
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_extrude_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1494,18 +1495,18 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_submodel_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_submodel_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_submodel_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_submodel_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_submodel_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_submodel_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_submodel_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_submodel_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_submodel_tess),
-	NULL,
-	NULL,
+	NULL, /* tnurb */
+	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_submodel_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_submodel_export5),
 	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_submodel_import4),
@@ -1519,17 +1520,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_submodel_params),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1540,17 +1541,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_cline_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_cline_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_cline_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_cline_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_cline_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_cline_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_cline_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_cline_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_cline_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_cline_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_cline_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_cline_export5),
@@ -1565,17 +1566,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_cline_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_cline_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_cline_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_cline_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_cline_bbox),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1594,9 +1595,9 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FREE_CAST(rt_bot_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_bot_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_bot_adaptive_plot),
-	NULL,
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_bot_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_bot_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_bot_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_bot_export5),
@@ -1605,45 +1606,45 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_bot_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_bot_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_bot_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct rt_bot_internal),
 	RT_BOT_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_bot_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_bot_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_bot_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_bot_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_bot_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_bot_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_bot_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_bot_centroid),
 	RTFUNCTAB_FUNC_ORIENTED_BBOX_CAST(rt_bot_oriented_bbox),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
 	/* 31 combination objects (should not be in this table) */
 	RT_FUNCTAB_MAGIC, "ID_COMBINATION", "comb",
 	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL, /* prep */
+	NULL, /* shot */
+	NULL, /* print */
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* classify */
+	NULL, /* free */
+	NULL, /* plot */
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_comb_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_comb_export5),
 	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_comb_import4),
@@ -1651,23 +1652,23 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_comb_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_comb_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	0,
 	0,
 	RTFUNCTAB_FUNC_GET_CAST(rt_comb_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_comb_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_comb_form),
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_comb_make),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1675,93 +1676,93 @@ const struct rt_functab OBJ[] = {
 	 * (was ID_BINEXPM)
 	 */
 	RT_FUNCTAB_MAGIC, "ID_UNUSED1", "unused1",
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	0,
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	0, /* ft_use_rpp */
+	NULL, /* prep */
+	NULL, /* shot */
+	NULL, /* print */
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* classify */
+	NULL, /* free */
+	NULL, /* plot */
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
+	NULL, /* import5 */
+	NULL, /* export5 */
+	NULL, /* import4 */
+	NULL, /* export4 */
+	NULL, /* ifree */
+	NULL, /* describe */
+	NULL, /* xform */
+	NULL, /* parse */
+	0, /* sizeof(internal) */
+	0, /* magic */
+	NULL, /* get */
+	NULL, /* adjust */
+	NULL, /* form */
+	NULL, /* make */
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
 	/* 33 */
 	RT_FUNCTAB_MAGIC, "ID_BINUNIF", "binunif",
 	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL, /* prep */
+	NULL, /* shot */
+	NULL, /* print */
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* classify */
+	NULL, /* free */
+	NULL, /* plot */
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
+	NULL, /* import5 */
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_binunif_export5),
-	NULL,
-	NULL,
+	NULL, /* import4 */
+	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_binunif_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_binunif_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	0,
 	0,
 	RTFUNCTAB_FUNC_GET_CAST(rt_binunif_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_binunif_adjust),
-	NULL,
+	NULL, /* form */
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_binunif_make),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1769,47 +1770,47 @@ const struct rt_functab OBJ[] = {
 	 * (was ID_BINMIME)
 	 */
 	RT_FUNCTAB_MAGIC, "ID_UNUSED2", "unused2",
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	0,
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	0, /* ft_use_rpp */
+	NULL, /* prep */
+	NULL, /* shot */
+	NULL, /* print */
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* classify */
+	NULL, /* free */
+	NULL, /* plot */
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
+	NULL, /* import5 */
+	NULL, /* export5 */
+	NULL, /* import4 */
+	NULL, /* export4 */
+	NULL, /* ifree */
+	NULL, /* describe */
+	NULL, /* xform */
+	NULL, /* parse */
+	0, /* sizeof(internal) */
+	0, /* magic */
+	NULL, /* get */
+	NULL, /* adjust */
+	NULL, /* form */
+	NULL, /* make */
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1820,17 +1821,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_superell_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_superell_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_superell_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_superell_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_superell_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_superell_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_superell_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_superell_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_superell_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_superell_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_superell_export5),
@@ -1845,17 +1846,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_superell_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_superell_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_superell_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_superell_surf_area),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1866,42 +1867,42 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_metaball_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_metaball_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_metaball_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_metaball_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_metaball_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_metaball_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_metaball_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_metaball_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_metaball_tess),
-	NULL,
-	NULL,
+	NULL, /* tnurb */
+	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_metaball_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_metaball_export5),
-	NULL,
-	NULL,
+	NULL, /* import4 */
+	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_metaball_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_metaball_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct rt_metaball_internal),
 	RT_METABALL_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_metaball_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_metaball_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_metaball_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_metaball_bbox),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -1912,40 +1913,40 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_brep_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_brep_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_brep_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_brep_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_brep_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_brep_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_brep_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_brep_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_brep_adaptive_plot),
-	NULL,
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_brep_tess),
-	NULL,
-	NULL,
+	NULL, /* tnurb */
+	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_brep_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_brep_export5),
-	NULL,
-	NULL,
+	NULL, /* import4 */
+	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_brep_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_brep_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct rt_brep_internal),
 	RT_BREP_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_brep_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_brep_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_brep_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_brep_bbox),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
 	RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(rt_brep_find_selections),
-	NULL,
+	NULL, /* evaluate_selection */
 	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_brep_process_selection),
         RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(rt_brep_prep_serialize)
     },
@@ -1958,22 +1959,22 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_hyp_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_hyp_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_hyp_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_hyp_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_hyp_curve),
-	NULL,
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_hyp_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_hyp_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_hyp_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_hyp_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_hyp_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_hyp_export5),
-	NULL,
-	NULL,
+	NULL, /* import4 */
+	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_hyp_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_hyp_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
@@ -1983,63 +1984,63 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_hyp_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_hyp_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_hyp_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_hyp_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_hyp_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
 	/* 39 */
 	RT_FUNCTAB_MAGIC, "ID_CONSTRAINT", "constrnt",
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	0, /* ft_use_rpp */
+	NULL, /* prep */
+	NULL, /* shot */
+	NULL, /* print */
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* classify */
+	NULL, /* free */
+	NULL, /* plot */
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_constraint_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_constraint_export5),
-	NULL,
-	NULL,
+	NULL, /* import4 */
+	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_constraint_ifree),
-	NULL,
-	NULL,
-	NULL,
-	0,
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* describe */
+	NULL, /* xform */
+	NULL, /* parse */
+	0, /* sizeof(internal) */
+	0, /* magic */
+	NULL, /* get */
+	NULL, /* adjust */
+	NULL, /* form */
+	NULL, /* make */
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -2050,17 +2051,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_revolve_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_revolve_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_revolve_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_revolve_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_revolve_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_revolve_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_revolve_plot),
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_revolve_tess),
-	NULL,
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_revolve_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_revolve_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_revolve_export5),
@@ -2076,108 +2077,108 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_revolve_make),
-	NULL,
+	NULL, /* params */
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_revolve_bbox),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
 	/* 41 */
 	RT_FUNCTAB_MAGIC, "ID_PNTS", "pnts",
 	0,
-	NULL,
-	NULL,
+	NULL, /* prep */
+	NULL, /* shot */
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_pnts_print),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* class */
+	NULL, /* free */
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_pnts_plot),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
 	RTFUNCTAB_FUNC_BREP_CAST(rt_pnts_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_pnts_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_pnts_export5),
-	NULL,
-	NULL,
+	NULL, /* import4 */
+	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_pnts_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_pnts_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	NULL,
+	NULL, /* parse */
 	sizeof(struct rt_pnts_internal),
 	RT_PNTS_INTERNAL_MAGIC,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL, /* get */
+	NULL, /* adjust */
+	NULL, /* form */
+	NULL, /* make */
+	NULL, /* params */
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_pnts_bbox),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
 	/* 42 */
 	RT_FUNCTAB_MAGIC, "ID_ANNOTATION", "anno",
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	0, /* ft_use_rpp */
+	NULL, /* prep */
+	NULL, /* shot */
+	NULL, /* print */
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* classify */
+	NULL, /* free */
+	NULL, /* plot */
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
+	NULL, /* import5 */
+	NULL, /* export5 */
+	NULL, /* import4 */
+	NULL, /* export4 */
+	NULL, /* ifree */
+	NULL, /* describe */
+	NULL, /* xform */
+	NULL, /* parse */
 	sizeof(struct rt_annotation_internal),
 	RT_ANNOTATION_INTERNAL_MAGIC,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* get */
+	NULL, /* adjust */
+	NULL, /* form */
+	NULL, /* make */
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
@@ -2188,8 +2189,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_hrt_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_hrt_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_hrt_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_hrt_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_hrt_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
@@ -2198,12 +2199,12 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_hrt_adaptive_plot),
 	RTFUNCTAB_FUNC_VSHOT_CAST(rt_hrt_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_hrt_tess),
-	NULL,
-	NULL,
+	NULL, /* tnurb */
+	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_hrt_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_hrt_export5),
-	NULL,
-	NULL,
+	NULL, /* import4 */
+	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_hrt_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_hrt_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
@@ -2213,17 +2214,17 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_hrt_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_hrt_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_hrt_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_hrt_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_hrt_centroid),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
 
@@ -2235,22 +2236,22 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_datum_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_datum_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_datum_norm),
-	NULL,
-	NULL,
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_datum_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_datum_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_datum_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_datum_plot),
-	NULL,
+	NULL, /* adaptive_plot */
 	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_datum_tess),
-	NULL,
-	NULL,
+	NULL, /* tnurb */
+	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_datum_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_datum_export5),
-	NULL,
-	NULL,
+	NULL, /* import4 */
+	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_datum_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_datum_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
@@ -2260,63 +2261,63 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL,
+	NULL, /* make */
 	NULL, /* params */
 	NULL, /* bbox */
 	NULL, /* volume */
-	NULL, /* surface */
+	NULL, /* surf_area */
 	NULL, /* centroid */
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     },
 
     {
 	/* this entry for sanity only */
 	0L, ">ID_MAXIMUM", ">id_max",
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	0,
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	0, /* ft_use_rpp */
+	NULL, /* prep */
+	NULL, /* shot */
+	NULL, /* print */
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* classify */
+	NULL, /* free */
+	NULL, /* plot */
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
+	NULL, /* import5 */
+	NULL, /* export5 */
+	NULL, /* import4 */
+	NULL, /* export4 */
+	NULL, /* ifree */
+	NULL, /* describe */
+	NULL, /* xform */
+	NULL, /* parse */
+	0, /* sizeof(internal) */
+	0, /* magic */
+	NULL, /* get */
+	NULL, /* adjust */
+	NULL, /* form */
+	NULL, /* make */
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
     }
 };
 

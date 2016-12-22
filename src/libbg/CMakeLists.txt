@@ -24,7 +24,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
   add_subdirectory(tests)
 endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
-CMAKEFILES(bg_private.h)
+CMAKEFILES(bg_private.h pointgen.c)
 
 # Local Variables:
 # tab-width: 8

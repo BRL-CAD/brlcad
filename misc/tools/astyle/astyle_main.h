@@ -232,6 +232,8 @@ private:    // variables
 	// command line options
 	bool isRecursive;                   // recursive option
 	bool isDryRun;                      // dry-run option
+	bool isReport;                      // dry-run and return number of changed files
+	int  Changed_Count;                 // number of files with formatting changes
 	bool noBackup;                      // suffix=none option
 	bool preserveDate;                  // preserve-date option
 	bool isVerbose;                     // verbose option
@@ -273,6 +275,8 @@ public:     // variables
 		// command line options
 		isRecursive = false;
 		isDryRun = false;
+		isReport = false;
+		Changed_Count = 0;
 		noBackup = false;
 		preserveDate = false;
 		isVerbose = false;
@@ -307,6 +311,8 @@ public:     // functions
 	bool getIgnoreExcludeErrors() const;
 	bool getIgnoreExcludeErrorsDisplay() const;
 	bool getIsDryRun() const;
+	bool getIsReport() const;
+	int  getChangedCount() const;
 	bool getIsFormattedOnly() const;
 	bool getIsQuiet() const;
 	bool getIsRecursive() const;
@@ -325,6 +331,7 @@ public:     // functions
 	void setIgnoreExcludeErrors(bool state);
 	void setIgnoreExcludeErrorsAndDisplay(bool state);
 	void setIsDryRun(bool state);
+	void setIsReport(bool state);
 	void setIsFormattedOnly(bool state);
 	void setIsQuiet(bool state);
 	void setIsRecursive(bool state);

@@ -72,12 +72,8 @@ struct directory {
     unsigned char d_major_type; /**< @brief object major type */
     unsigned char d_minor_type; /**< @brief object minor type */
     struct bu_list d_use_hd;    /**< @brief heads list of uses (struct soltab l2) */
-    int s_flags;		/**< @brief flags having to do with the state of size calculations */
-    long sizes[3];              /**< @brief calculated sizes of directory object */
-    long sizes_wattr[3];        /**< @brief calculated sizes of directory object including attributes */
-    struct directory **children;/**< @brief RT_DIR_NULL terminated array of child objects of this object */
-    void *u_data;		/**< @brief void pointer hook for user data. user is responsible for freeing. */
     char d_shortname[16];       /**< @brief Stash short names locally */
+    void *u_data;		/**< @brief void pointer hook for user data. user is responsible for freeing. */
 };
 #define RT_DIR_NULL     ((struct directory *)0)
 #define RT_CK_DIR(_dp) BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
