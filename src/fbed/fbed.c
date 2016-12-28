@@ -582,7 +582,6 @@ do_Key_Cmd(int key, int n)
 {
     last_key = key;
     if (*cptr == NUL) {
-	/*prnt_Prompt("");*/
 	prnt_Event("");
     }
     if (remembering) {
@@ -1992,7 +1991,6 @@ general_Handler(int sig)
 #endif
 	default :
 	    prnt_Event("\"%s\", signal(%d).", __FILE__, sig);
-	    /* restore_Tty(); */
 	    break;
     }
     (void)signal(sig, general_Handler);

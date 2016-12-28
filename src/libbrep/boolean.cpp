@@ -2269,7 +2269,6 @@ innerloops_inside_outerloop(
     std::list<ON_SimpleArray<ON_Curve *> > out;
 
     for (size_t i = 0; i < innerloop_curves.size(); ++i) {
-	std::list<ON_SimpleArray<ON_Curve *> > new_innerloops;
 	LoopBooleanResult new_loops;
 	new_loops = loop_boolean(outerloop_curve, innerloop_curves[i],
 				 BOOLEAN_INTERSECT);

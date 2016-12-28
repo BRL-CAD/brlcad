@@ -283,7 +283,6 @@ main(int argc, char **argv)
 
     /* Normal way -- bottom to top */
     for (y = 0; y < scr_height; y++) {
-	/*sleep(1);*/
 	printf("y: %d\n", y);
 	n = bu_mread(infd, (char *)scanline, scanbytes);
 	if (n <= 0) break;

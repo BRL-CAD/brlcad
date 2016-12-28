@@ -853,7 +853,6 @@ SDAI_Application_instance *
 STEPWrapper::getSuperType(int STEPid, const char *name)
 {
     SDAI_Application_instance *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
-    std::string attrval;
 
     if (sse->IsComplex()) {
 	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
@@ -1250,8 +1249,6 @@ STEPWrapper::getSuperTypes(SDAI_Application_instance *sse, MAP_OF_SUPERTYPES &m)
 SDAI_Application_instance *
 STEPWrapper::getSuperType(SDAI_Application_instance *sse, const char *name)
 {
-    std::string attrval;
-
     if (sse->IsComplex()) {
 	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
 	while (sc) {

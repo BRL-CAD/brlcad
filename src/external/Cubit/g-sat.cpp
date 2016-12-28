@@ -333,7 +333,6 @@ region_start (db_tree_state *tsp,
 	      const rt_comb_internal *combp,
 	      void *client_data)
 {
-    rt_comb_internal *comb;
     directory *dp;
     bu_vls str = BU_VLS_INIT_ZERO;
     std::ostringstream ostr;

@@ -412,10 +412,7 @@ render_camera_render_thread(int UNUSED(cpu), void *ptr)
     td->camera->render.tie = td->tie;
 
     res_ind = 0;
-/* row, vertical */
-/*
-  for (i = td->tile->orig_y; i < td->tile->orig_y + td->tile->size_y; i++) {
-*/
+
     while (1) {
 	/* Determine if this scanline should be computed by this thread */
 	bu_semaphore_acquire(TIE_SEM_WORKER);
@@ -520,8 +517,6 @@ render_camera_render_thread(int UNUSED(cpu), void *ptr)
 
 		res_ind += 4;
 	    }
-/*          printf("Pixel: [%d, %d, %d]\n", rgb[0], rgb[1], rgb[2]); */
-
 	}
     }
 }

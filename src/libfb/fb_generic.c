@@ -174,7 +174,6 @@ fb_configure_window(fb *ifp, int width, int height)
 void fb_set_name(fb *ifp, const char *name)
 {
     if (!ifp) return;
-    /*if (ifp->if_name) bu_free(ifp->if_name, "free pre-existing fb name");*/
     ifp->if_name = (char *)bu_malloc((unsigned)strlen(name)+1, "if_name");
     bu_strlcpy(ifp->if_name, name, strlen(name)+1);
 }

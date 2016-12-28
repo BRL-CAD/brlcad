@@ -113,7 +113,7 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
      * First intersect this ray with the plane and fire the ray from there
      * Plane: Ax + By + Cz + D = 0
      * Ray = O + td
-     * t = -(Pn · R0 + D) / (Pn · Rd)
+     * t = -(Pn . R0 + D) / (Pn . Rd)
      *
      */
 
@@ -251,7 +251,6 @@ render_spall_init(render_t *render, const char *buf)
 	}
     }
 
-/*  TIE_PUSH(&d->tie, tri_list, TESSELLATION, NULL, 0);   */
     TIE_PREP(&d->tie);
 
     bu_free(vec_list, "vec_list");

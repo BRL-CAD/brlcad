@@ -75,7 +75,6 @@ ABDEGHIJKRTUYZ
 static int pl_outputMode = PL_OUTPUT_MODE_BINARY;
 
 /* For the sake of efficiency, we trust putc() to write only one byte */
-/*#define putsi(a)	putc(a&0377, plotfp); putc((a>>8)&0377, plotfp)*/
 #define putsi(a)	putc(a, plotfp); putc((a>>8), plotfp)
 
 /* Making a common pd_3 to be used in pd_3cont and pd_3move */

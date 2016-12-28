@@ -377,7 +377,6 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     if (fstate->capture) {
 	VMOVE(fstate->min, fstate->rtip->mdl_min);
 	VMOVE(fstate->max, fstate->rtip->mdl_max);
-/*	z_max = fstate->rtip->mdl_max[Z];*/
     }
     /*else {
      * instead of storing min and max, just compute
@@ -404,7 +403,6 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     */
 
 
-    /*rt_prep_parallel(fstate->rtip, fstate->ncpu)o;*/
 
     rt_prep(fstate->rtip);
     if (fstate->capture) {
@@ -446,7 +444,6 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 
 
     rt_worker(0, (void *)fstate);
-    /*bu_parallel(rt_worker, fstate->ncpu, (void *)fstate);*/
 
     /* normalize fitness if we aren't just saving the source */
     if (!fstate->capture) {
