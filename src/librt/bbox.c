@@ -361,8 +361,7 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 			combp = (struct rt_comb_internal *)intern.idb_ptr;
 		    } else {
 			/* if it's not a comb, then something else is cooking */
-			bu_log("rt_traverse_tree: WARNING : rt_db_lookup_internal(%s) got the internal form of a \
-							primitive when it should not, the bounds may not be correct", tp->tr_l.tl_name);
+			bu_log("rt_traverse_tree: WARNING : rt_db_lookup_internal(%s) got the internal form of a primitive when it should not, the bounds may not be correct", tp->tr_l.tl_name);
 			return -1;
 		    }
 
