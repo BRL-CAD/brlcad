@@ -167,7 +167,7 @@ function(VALIDATE_STYLE srcslist targetname)
       add_custom_command(
 	TARGET ${targetname} PRE_LINK
 	COMMAND "${ASTYLE_EXECUTABLE}" --report --options=${BRLCAD_SOURCE_DIR}/misc/astyle.opt ${fullpath_srcslist}
-	COMMENT "Checking validation status of ${targetname} srcs"
+	COMMENT "Checking formatting of ${targetname} srcs"
 	)
       if(TARGET astyle)
 	add_dependencies(${targetname} astyle)
