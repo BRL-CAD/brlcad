@@ -154,91 +154,28 @@ macro(CXX_NO_STRICT cxx_srcslist)
 endmacro(CXX_NO_STRICT cxx_srcslist)
 
 # BRL-CAD style checking test
-macro(VALIDATE_STYLE srcslist targetname)
+function(VALIDATE_STYLE srcslist targetname)
   if(BRLCAD_STYLE_VALIDATE)
-    include("${BRLCAD_SOURCE_DIR}/misc/CMake/style/test_list.cmake")
-    make_directory("${CMAKE_CURRENT_BINARY_DIR}/validation")
+    set(fullpath_srcslist)
+    foreach(srcfile ${srcslist})
+      if(NOT "${srcfile}" MATCHES "^ext/*" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+	set(fullpath_srcslist ${fullpath_srcslist} "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+      endif(NOT "${srcfile}" MATCHES "^ext/*" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+    endforeach(srcfile ${srcslist})
 
-    foreach(test_name ${BRLCAD_STYLE_TESTS})
-
-      # Clear dependency array
-      set(test_stamp_files)
-      set(test_valid_files)
-      set(test_src_files)
-
-      foreach(srcfile ${srcslist})
-
-	# Generated files won't conform to our style guidelines
-	get_property(IS_GENERATED SOURCE ${srcfile} PROPERTY GENERATED)
-
-	if(NOT IS_GENERATED)
-	  set(srcfdir)
-	  set(root_dir)
-	  #message("srcfile: ${srcfile}")
-	  get_filename_component(srcfdir ${srcfile} DIRECTORY)
-	  while(srcfdir AND NOT "${srcfdir}" STREQUAL "/")
-	    set(root_dir ${srcfdir})
-	    get_filename_component(srcfdir ${srcfdir} DIRECTORY)
-	  endwhile(srcfdir AND NOT "${srcfdir}" STREQUAL "/")
-	  if(NOT "${root_dir}" MATCHES "/.*" AND NOT "${root_dir}" MATCHES ".*ext.*")
-	    if (root_dir)
-	      #message("root_dir passed: ${root_dir}")
-	    endif (root_dir)
-
-	    # Set up the test scripts and tie them to the object file output
-	    # produced by compiling this particular source file.  This hooks
-	    # in the "integrated" style checking
-	    get_filename_component(root_name ${srcfile} NAME_WE)
-	    string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-	    set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}_${test_name}")
-	    set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-	    set(stampfile_tmp "${stampfile}")
-	    configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/style/${test_name}.cmake.in" ${outfiles_root}.cmake @ONLY)
-	    add_custom_command(
-	      OUTPUT ${outfiles_root}.checked
-	      COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
-	      DEPENDS ${srcfile} ${${test_name}_test_deps}
-	      COMMENT "Validating style of ${srcfile}"
-	      )
-	    set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
-
-	    set(test_stamp_files ${test_stamp_files} ${outfiles_root}.checked)
-	    set(test_valid_files ${test_valid_files} ${outfiles_root}.valid)
-	    set(test_src_files ${test_src_files} ${srcfile})
-	  else(NOT "${root_dir}" MATCHES "/.*" AND NOT "${root_dir}" MATCHES ".*ext.*")
-	    #message("root_dir rejected: ${root_dir}")
-	  endif(NOT "${root_dir}" MATCHES "/.*" AND NOT "${root_dir}" MATCHES ".*ext.*")
-
-	endif(NOT IS_GENERATED)
-      endforeach(srcfile ${srcslist})
-
-      if(test_stamp_files)
-
-	# Set up build targets that can be used to independently trigger the testing
-	configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/validate_checkstamp.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake" @ONLY)
-	add_custom_target(regress-${test_name}-${targetname}
-	  ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake"
-	  DEPENDS ${test_stamp_files}
-	  )
-	if(NOT TARGET regress-${test_name})
-	  add_custom_target(regress-${test_name})
-	endif(NOT TARGET regress-${test_name})
-	add_dependencies(regress-${test_name} regress-${test_name}-${targetname})
-
-      endif(test_stamp_files)
-
-    endforeach(test_name ${BRLCAD_STYLE_TESTS})
-
-    # Set up build-integrated validation that is run automatically at compile time.
-    configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/validate_style.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake" @ONLY)
-    add_custom_command(
-      TARGET ${targetname} PRE_LINK
-      COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake"
-      COMMENT "Checking validation status of ${targetname} srcs"
-      )
+    if(fullpath_srcslist)
+      add_custom_command(
+	TARGET ${targetname} PRE_LINK
+	COMMAND "${ASTYLE_EXECUTABLE}" --report --options=${BRLCAD_SOURCE_DIR}/misc/astyle.opt ${fullpath_srcslist}
+	COMMENT "Checking validation status of ${targetname} srcs"
+	)
+      if(TARGET astyle)
+	add_dependencies(${targetname} astyle)
+      endif(TARGET astyle)
+    endif(fullpath_srcslist)
 
   endif(BRLCAD_STYLE_VALIDATE)
-endmacro(VALIDATE_STYLE)
+endfunction(VALIDATE_STYLE)
 
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
