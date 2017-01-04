@@ -128,12 +128,16 @@ bu_namegen(struct bu_vls *name, const char *regex_str, const char *incr_spec)
     struct bu_vls curr_incr = BU_VLS_INIT_ZERO;
     struct bu_vls ispec = BU_VLS_INIT_ZERO;
     const char *num_regex = "([0-9]+)";
+    const char *last_regex = "([0-9]+)[^0-9]*$";
+    const char *rs = NULL;
     struct bu_vls num_str = BU_VLS_INIT_ZERO;
 
-    if (!name || !regex_str) return -1;
+    if (!name) return -1;
+
+    rs = (regex_str) ? regex_str : last_regex;
 
     /* Find incrementer. */
-    ret = regcomp(&compiled_regex, regex_str, REG_EXTENDED);
+    ret = regcomp(&compiled_regex, rs, REG_EXTENDED);
     if (ret != 0) return -1;
     incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
     ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);

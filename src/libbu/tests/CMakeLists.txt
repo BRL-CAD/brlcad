@@ -438,8 +438,19 @@ add_test(NAME bu_badmagic_misaligned  COMMAND bu_badmagic 4)
 #
 #  *********** namegen.c tests ************
 #
-BRLCAD_ADDEXEC(bu_namegen namegen.c libbu TEST)
 
+BRLCAD_ADDEXEC(bu_namegen namegen.c libbu TEST)
+add_test(NAME bu_namegen_1  COMMAND bu_namegen "test1.r"      0 "NULL"        1  "test2.r")
+add_test(NAME bu_namegen_2  COMMAND bu_namegen "test1.r"      0 "0:0:0:0"     10 "test11.r")
+add_test(NAME bu_namegen_3  COMMAND bu_namegen "test1_1.r"    0 "0:0:0:0"     2  "test1_3.r")
+add_test(NAME bu_namegen_4  COMMAND bu_namegen "test-1.r"     0 "0:0:0:0"     1  "test-2.r")
+add_test(NAME bu_namegen_5  COMMAND bu_namegen "test1.r"      0 "3:0:0:0"     1  "test002.r")
+add_test(NAME bu_namegen_6  COMMAND bu_namegen "test1.r"      0 "3:5:0:0"     1  "test005.r")
+add_test(NAME bu_namegen_7  COMMAND bu_namegen "test5.r"      0 "3:5:0:0"     1  "test006.r")
+add_test(NAME bu_namegen_8  COMMAND bu_namegen "test8.r"      0 "0:0:9:0"     2  "test0.r")
+add_test(NAME bu_namegen_9  COMMAND bu_namegen "test1.r"      0 "0:0:0:2"     2  "test5.r")
+add_test(NAME bu_namegen_10 COMMAND bu_namegen "test90.r"     0 "4:20:99:5"   2  "test0020.r")
+add_test(NAME bu_namegen_11 COMMAND bu_namegen "test_1_obj.r" 1 "0:0:0:0:-:-" 1  "test-2-obj.r")
 
 #
 #  *********** opt.c tests ************

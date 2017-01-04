@@ -20,7 +20,9 @@
 
 #include "common.h"
 #include <limits.h>
+#include <stdlib.h> /* for strtol */
 #include <ctype.h>
+#include <errno.h> /* for errno */
 #include "bu.h"
 #include "bn.h"
 #include "string.h"
@@ -29,40 +31,45 @@
 int
 main(int argc, const char **argv)
 {
+    int ret = 1;
     int i = 0;
-    int ret = -1;
     struct bu_vls name = BU_VLS_INIT_ZERO;
-    const char *i1 = "0:0:0:0:-";
-    const char *regex_str = "([-_:]*[0-9]+[-_:]*)[^0-9]*$";
-    const char *regex_str_2 = "([0-9]+)[^0-9]*$";
+    long inc_count = 0;
+    char *endptr;
+    const char *rs = NULL;
+    const char *rs_complex = "([-_:]*[0-9]+[-_:]*)[^0-9]*$";
+    const char *formatting = NULL;
 
     /* Sanity check */
-    if (argc < 2) bu_exit(1, "ERROR: wrong number of parameters");
+    if (argc < 6) bu_exit(1, "ERROR: wrong number of parameters");
 
-    if (strlen(argv[1]) <= 0) {
-	bu_exit(1, "invalid string: %s\n", argv[1]);
+    if (BU_STR_EQUAL(argv[2], "1")) {
+	rs = rs_complex;
+    }
+
+    if (!rs && !BU_STR_EQUAL(argv[2], "0") && !BU_STR_EQUAL(argv[2], "NULL")) {
+	rs = argv[2];
+    }
+
+    if (!BU_STR_EQUAL(argv[3], "NULL")) {
+	formatting = argv[3];
+    }
+
+    errno = 0;
+    inc_count = strtol(argv[4], &endptr, 10);
+    if (errno == ERANGE || inc_count <= 0) {
+	bu_exit(1, "invalid increment count: %s\n", argv[4]);
     }
 
     bu_vls_sprintf(&name, "%s", argv[1]);
-    ret = bu_namegen(&name, regex_str, i1);
-    bu_log("output: %s\n", bu_vls_addr(&name));
-
-    bu_vls_sprintf(&name, "%s", argv[1]);
-    while (i < 100) {
-	ret = bu_namegen(&name, regex_str_2, NULL);
-	bu_log("output: %s\n", bu_vls_addr(&name));
+    while (i < inc_count) {
+	(void)bu_namegen(&name, rs, formatting);
 	i++;
     }
 
-/*
-    switch (argc) {
-	case 2:
-	    bu_log("output: %s\n", bu_vls_addr(&out));
-	    break;
-	default:
-	    break;
-    }
-*/
+    if (BU_STR_EQUAL(bu_vls_addr(&name), argv[5])) ret = 0;
+
+    bu_log("output: %s\n", bu_vls_addr(&name));
 
     return ret;
 }
