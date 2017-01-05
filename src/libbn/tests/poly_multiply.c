@@ -1,4 +1,4 @@
-/*              T E S T _ B N _ P O L Y _ M U L T I P L Y . C
+/*                P O L Y _ M U L T I P L Y . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2016 United States Government as represented by
@@ -30,71 +30,71 @@
 #include "bn.h"
 
 
-struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
+struct bn_poly bn_mZero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
 /*holds three polynomials to be used in test.*/
-bn_poly_t input[3], output[3];
+bn_poly_t pmul_input[3], pmul_output[3];
 
 
 /*
  *Initialises polynomial storing negative, positive and zero coefficients.
  */
 void
-poly_init(void)
+mpoly_init(void)
 {
 
-    /*stores coefficients (zeros) to polynomial for input and output.*/
-    output[0] = bn_Zero_poly;
-    input[0] = bn_Zero_poly;
-    input[0].dgr = 2;
-    input[0].cf[0] = input[0].cf[1] = input[0].cf[2] = input[0].cf[3] = 0.0;
+    /*stores coefficients (zeros) to polynomial for pmul_input and pmul_output.*/
+    pmul_output[0] = bn_mZero_poly;
+    pmul_input[0] = bn_mZero_poly;
+    pmul_input[0].dgr = 2;
+    pmul_input[0].cf[0] = pmul_input[0].cf[1] = pmul_input[0].cf[2] = pmul_input[0].cf[3] = 0.0;
 
-    output[0].dgr = 4;
-    output[0].cf[0] = output[0].cf[1] = output[0].cf[2] = output[0].cf[3] = output[0].cf[4] = 0.0;
+    pmul_output[0].dgr = 4;
+    pmul_output[0].cf[0] = pmul_output[0].cf[1] = pmul_output[0].cf[2] = pmul_output[0].cf[3] = pmul_output[0].cf[4] = 0.0;
 
     /*stores negative coefficients to polynomial.*/
-    output[1] = bn_Zero_poly;
-    input[1] = bn_Zero_poly;
-    input[1].dgr = 2;
-    output[1].dgr = 4;
+    pmul_output[1] = bn_mZero_poly;
+    pmul_input[1] = bn_mZero_poly;
+    pmul_input[1].dgr = 2;
+    pmul_output[1].dgr = 4;
 
-    input[1].cf[0] = -4;
-    input[1].cf[1] = -3;
-    input[1].cf[2] = -2;
+    pmul_input[1].cf[0] = -4;
+    pmul_input[1].cf[1] = -3;
+    pmul_input[1].cf[2] = -2;
 
     /**
-     * The known output values used for these tests were generated from
+     * The known pmul_output values used for these tests were generated from
      * GNU Octave, version 3.4.3
      */
 
-    output[1].cf[0] = 16;
-    output[1].cf[1] = 24;
-    output[1].cf[2] = 25;
-    output[1].cf[3] = 12;
-    output[1].cf[4] = 4;
+    pmul_output[1].cf[0] = 16;
+    pmul_output[1].cf[1] = 24;
+    pmul_output[1].cf[2] = 25;
+    pmul_output[1].cf[3] = 12;
+    pmul_output[1].cf[4] = 4;
 
-    /*stores positive coefficients to to polynomial input.*/
-    output[2] = bn_Zero_poly;
-    input[2] = bn_Zero_poly;
-    input[2].dgr = 2;
-    output[2].dgr = 4;
+    /*stores positive coefficients to to polynomial pmul_input.*/
+    pmul_output[2] = bn_mZero_poly;
+    pmul_input[2] = bn_mZero_poly;
+    pmul_input[2].dgr = 2;
+    pmul_output[2].dgr = 4;
 
-    input[2].cf[0] = 7854;
-    input[2].cf[1] = 2136;
-    input[2].cf[2] = 1450;
+    pmul_input[2].cf[0] = 7854;
+    pmul_input[2].cf[1] = 2136;
+    pmul_input[2].cf[2] = 1450;
 
-    output[2].cf[0] = 61685316;
-    output[2].cf[1] = 33552288;
-    output[2].cf[2] = 27339096;
-    output[2].cf[3] = 6194400;
-    output[2].cf[4] = 2102500;
+    pmul_output[2].cf[0] = 61685316;
+    pmul_output[2].cf[1] = 33552288;
+    pmul_output[2].cf[2] = 27339096;
+    pmul_output[2].cf[3] = 6194400;
+    pmul_output[2].cf[4] = 2102500;
 
 }
 
 
 /* compares the values of the array and returns 0. */
 static size_t
-check_results(fastf_t a[], fastf_t b[], size_t n)
+m_check_results(fastf_t a[], fastf_t b[], size_t n)
 {
     size_t i;
 
@@ -109,19 +109,19 @@ check_results(fastf_t a[], fastf_t b[], size_t n)
 
 /*tests the polynomials to make sure bn_poly_mul() works properly.*/
 static int
-test_bn_poly(void)
+test_bn_mpoly(void)
 {
     size_t val, val1, val2;
     bn_poly_t a, b, c;
-    a = bn_Zero_poly, b = bn_Zero_poly, c = bn_Zero_poly;
+    a = bn_mZero_poly, b = bn_mZero_poly, c = bn_mZero_poly;
 
-    bn_poly_mul(&a, &input[0], &input[0]);
-    bn_poly_mul(&b, &input[1], &input[1]);
-    bn_poly_mul(&c, &input[2], &input[2]);
+    bn_poly_mul(&a, &pmul_input[0], &pmul_input[0]);
+    bn_poly_mul(&b, &pmul_input[1], &pmul_input[1]);
+    bn_poly_mul(&c, &pmul_input[2], &pmul_input[2]);
 
-    val = check_results(a.cf, output[0].cf, output[0].dgr + 1);
-    val1 = check_results(b.cf, output[1].cf, output[1].dgr + 1);
-    val2 = check_results(c.cf, output[2].cf, output[2].dgr + 1);
+    val = m_check_results(a.cf, pmul_output[0].cf, pmul_output[0].dgr + 1);
+    val1 = m_check_results(b.cf, pmul_output[1].cf, pmul_output[1].dgr + 1);
+    val2 = m_check_results(c.cf, pmul_output[2].cf, pmul_output[2].dgr + 1);
 
     if (val == 0 && val1 == 0 && val2 == 0)
 	return 0;
@@ -131,16 +131,16 @@ test_bn_poly(void)
 
 
 int
-main(void)
+poly_multiply_main(int UNUSED(ac), char **UNUSED(av))
 {
     int ret;
 
-    poly_init();
+    mpoly_init();
 
-    ret = test_bn_poly();
+    ret = test_bn_mpoly();
 
     if (ret != 0) {
-	bu_log("\nInvalid output.\n");
+	bu_log("\nInvalid pmul_output.\n");
 	return ret;
     }
 

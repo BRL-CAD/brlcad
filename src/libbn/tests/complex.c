@@ -1,4 +1,4 @@
-/*                 B N _ C O M P L E X . C
+/*                 C O M P L E X . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -227,7 +227,7 @@ test_bn_cx_parts(int argc, char **argv)
 }
 
 int
-main(int argc, char *argv[])
+complex_main(int argc, char *argv[])
 {
     int function_num = 0;
 

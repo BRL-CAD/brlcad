@@ -1,4 +1,4 @@
-/*              T E S T _ B N _ P O L Y _ S U B . C
+/*                    P O L Y _ S U B . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -32,7 +32,7 @@
 #include "bn.h"
 
 /* holds three polynomials to be used in test. */
-bn_poly_t input[3], output[3];
+bn_poly_t psub_input[3], psub_output[3];
 
 struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
@@ -40,48 +40,48 @@ struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
  * Initialises polynomial storing negative, positive and zero coefficients.
  */
 void
-poly_init(void)
+psub_poly_init(void)
 {
-    /* stores zero-value coefficients to polynomial for input and output. */
-    output[0] = bn_Zero_poly;
-    input[0] = bn_Zero_poly;
-    input[0].dgr = 2;
-    input[0].cf[0] = input[0].cf[1] = input[0].cf[2] = 0.0;
+    /* stores zero-value coefficients to polynomial for psub_input and psub_output. */
+    psub_output[0] = bn_Zero_poly;
+    psub_input[0] = bn_Zero_poly;
+    psub_input[0].dgr = 2;
+    psub_input[0].cf[0] = psub_input[0].cf[1] = psub_input[0].cf[2] = 0.0;
 
-    output[0].dgr = 2;
-    output[0].cf[0] = output[0].cf[1] = output[0].cf[2] = 0.0;
+    psub_output[0].dgr = 2;
+    psub_output[0].cf[0] = psub_output[0].cf[1] = psub_output[0].cf[2] = 0.0;
 
     /* stores negative coefficients to polynomial. */
-    output[1] = bn_Zero_poly;
-    input[1] = bn_Zero_poly;
-    input[1].dgr = 2;
-    output[1].dgr = 2;
+    psub_output[1] = bn_Zero_poly;
+    psub_input[1] = bn_Zero_poly;
+    psub_input[1].dgr = 2;
+    psub_output[1].dgr = 2;
 
-    input[1].cf[0] = -4853;
-    input[1].cf[1] = -324;
-    input[1].cf[2] = -275;
+    psub_input[1].cf[0] = -4853;
+    psub_input[1].cf[1] = -324;
+    psub_input[1].cf[2] = -275;
 
     /**
      * The known values used for these tests are generated from
      * GNU Octave, version 3.4.3
      */
-    output[1].cf[0] = -9706;
-    output[1].cf[1] = -648;
-    output[1].cf[2] = -550;
+    psub_output[1].cf[0] = -9706;
+    psub_output[1].cf[1] = -648;
+    psub_output[1].cf[2] = -550;
 
-    /* stores positive coefficients to to polynomial input. */
-    output[2] = bn_Zero_poly;
-    input[2] = bn_Zero_poly;
-    input[2].dgr = 2;
-    output[2].dgr = 2;
+    /* stores positive coefficients to to polynomial psub_input. */
+    psub_output[2] = bn_Zero_poly;
+    psub_input[2] = bn_Zero_poly;
+    psub_input[2].dgr = 2;
+    psub_output[2].dgr = 2;
 
-    input[2].cf[0] = 61685316;
-    input[2].cf[1] = 33552288;
-    input[2].cf[2] = 27339096;
+    psub_input[2].cf[0] = 61685316;
+    psub_input[2].cf[1] = 33552288;
+    psub_input[2].cf[2] = 27339096;
 
-    output[2].cf[0] = 61695022;
-    output[2].cf[1] = 33552936;
-    output[2].cf[2] = 27339646;
+    psub_output[2].cf[0] = 61695022;
+    psub_output[2].cf[1] = 33552936;
+    psub_output[2].cf[2] = 27339646;
 
     return;
 }
@@ -89,7 +89,7 @@ poly_init(void)
 
 /* compares the values of the array and returns 0. */
 size_t
-check_results(fastf_t a[], fastf_t b[], size_t n)
+psub_check_results(fastf_t a[], fastf_t b[], size_t n)
 {
     size_t i;
 
@@ -111,13 +111,13 @@ test_bn_poly_sub(void)
 
     a = bn_Zero_poly, b = bn_Zero_poly, c = bn_Zero_poly;
 
-    bn_poly_sub(&a, &input[0], &input[0]);
-    bn_poly_sub(&b, &input[1], &input[0]);
-    bn_poly_sub(&c, &input[2], &input[1]);
+    bn_poly_sub(&a, &psub_input[0], &psub_input[0]);
+    bn_poly_sub(&b, &psub_input[1], &psub_input[0]);
+    bn_poly_sub(&c, &psub_input[2], &psub_input[1]);
 
-    val = check_results(a.cf, output[0].cf, output[0].dgr + 1);
-    val1 = check_results(b.cf, output[1].cf, output[1].dgr + 1);
-    val2 = check_results(c.cf, output[2].cf, output[2].dgr + 1);
+    val = psub_check_results(a.cf, psub_output[0].cf, psub_output[0].dgr + 1);
+    val1 = psub_check_results(b.cf, psub_output[1].cf, psub_output[1].dgr + 1);
+    val2 = psub_check_results(c.cf, psub_output[2].cf, psub_output[2].dgr + 1);
 
     if (val == 0 && val1 == 0 && val2 == 0)
 	return 0;
@@ -127,11 +127,11 @@ test_bn_poly_sub(void)
 
 
 int
-main(void)
+poly_sub_main(int UNUSED(ac), char **UNUSED(av))
 {
     int ret;
 
-    poly_init();
+    psub_poly_init();
 
     ret = test_bn_poly_sub();
     if (ret != 0) {
