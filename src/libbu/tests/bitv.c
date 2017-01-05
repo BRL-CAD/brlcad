@@ -1,4 +1,4 @@
-/*                       B U _ B I T V . C
+/*                       B I T V . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2016 United States Government as represented by
@@ -973,7 +973,7 @@ test_bu_hexstr_to_binstr(int argc, char **argv)
 
 
 int
-main(int argc, char **argv)
+bitv_main(int argc, char **argv)
 {
     int function_num = 0;
 

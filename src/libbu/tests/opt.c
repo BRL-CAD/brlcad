@@ -1,4 +1,4 @@
-/*                       B U _ O P T . C
+/*                       O P T . C
  * BRL-CAD
  *
  * Copyright (c) 2015-2016 United States Government as represented by
@@ -854,7 +854,7 @@ int desc_3(int test_num)
 
 
 int
-main(int argc, const char **argv)
+opt_main(int argc, char **argv)
 {
     int ret = -1;
     long desc_num;

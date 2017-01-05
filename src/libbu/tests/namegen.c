@@ -29,7 +29,7 @@
 
 
 int
-main(int argc, const char **argv)
+namegen_main(int argc, char **argv)
 {
     int ret = 1;
     int i = 0;
