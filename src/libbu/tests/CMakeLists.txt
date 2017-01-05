@@ -451,6 +451,7 @@ add_test(NAME bu_namegen_8  COMMAND bu_namegen "test8.r"      0 "0:0:9:0"     2 
 add_test(NAME bu_namegen_9  COMMAND bu_namegen "test1.r"      0 "0:0:0:2"     2  "test5.r")
 add_test(NAME bu_namegen_10 COMMAND bu_namegen "test90.r"     0 "4:20:99:5"   2  "test0020.r")
 add_test(NAME bu_namegen_11 COMMAND bu_namegen "test_1_obj.r" 1 "0:0:0:0:-:-" 1  "test-2-obj.r")
+add_test(NAME bu_namegen_12 COMMAND bu_namegen "test.r"       1 "3:0:0:0:-"   5  "test.r-005")
 
 #
 #  *********** opt.c tests ************
