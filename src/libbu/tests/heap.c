@@ -1,4 +1,4 @@
-/*                       B U _ H E A P . C
+/*                       H E A P . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -41,7 +41,7 @@
  * it's always faster.
  */
 int
-main (int ac, char *av[])
+heap_main (int ac, char *av[])
 {
     int i;
     void *ptr;

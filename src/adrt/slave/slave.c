@@ -414,8 +414,6 @@ adrt_slave(int port, char *host, int threads)
     /* Initialize all workspaces as inactive */
     for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
 	adrt_workspace_list[i].active = 0;
-
-/*  slave_last_frame = 0; */
 }
 
 

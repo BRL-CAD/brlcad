@@ -1,4 +1,4 @@
-/*                   T E S T _ E S C A P E . C
+/*                   E S C A P E . C
  * BRL-CAD
  *
  * Copyright (c) 2011-2016 United States Government as represented by
@@ -25,7 +25,7 @@
 #include "bu.h"
 
 static int
-compare(const char *input, const char *output, const char *correct)
+esc_compare(const char *input, const char *output, const char *correct)
 {
     if (BU_STR_EQUAL(output, correct)) {
 	printf("%24s -> %28s [PASS]\n", input, output);
@@ -38,7 +38,7 @@ compare(const char *input, const char *output, const char *correct)
 
 
 int
-main(int ac, char *av[])
+escape_main(int ac, char *av[])
 {
     int function_num = 0;
     int test_num = 0;
@@ -52,7 +52,7 @@ main(int ac, char *av[])
     sscanf(av[2], "%d", &test_num);
 
     if (function_num == 1) {
-#define CMP_UNESC(in, out) compare((in), bu_str_unescape((in), buffer, 32), (out))
+#define CMP_UNESC(in, out) esc_compare((in), bu_str_unescape((in), buffer, 32), (out))
 	switch (test_num) {
 	    case 1:
 		return !CMP_UNESC(NULL, "");
@@ -105,7 +105,7 @@ main(int ac, char *av[])
     }
 
     if (function_num == 2) {
-#define CMP_ESC(in, c, out) compare((in), bu_str_escape((in), (c), buffer, 32), (out))
+#define CMP_ESC(in, c, out) esc_compare((in), bu_str_escape((in), (c), buffer, 32), (out))
 	switch (test_num) {
 	    case 1:
 		return !CMP_ESC(NULL, NULL, "");
@@ -178,22 +178,22 @@ main(int ac, char *av[])
 	switch (test_num) {
 	    case 1:
 		bufp = bu_str_unescape(bu_str_escape("abc", "b", buffer, 32), NULL, 0);
-		pass = compare("abc", bufp, "abc");
+		pass = esc_compare("abc", bufp, "abc");
 		bu_free(bufp, NULL);
 
 	    case 2:
 		bufp = bu_str_unescape(bu_str_escape("abc\\cba", "b", buffer, 32), NULL, 0);
-		pass = compare("abc\\cba", bufp, "abccba");
+		pass = esc_compare("abc\\cba", bufp, "abccba");
 		bu_free(bufp, NULL);
 
 	    case 3:
 		bufp = bu_str_unescape(bu_str_escape("abc\\\\cba", "b", buffer, 32), NULL, 0);
-		pass = compare("abc\\\\cba", bufp, "abc\\cba");
+		pass = esc_compare("abc\\\\cba", bufp, "abc\\cba");
 		bu_free(bufp, NULL);
 
 	    case 4:
 		bufp = bu_str_unescape(bu_str_escape("abc\\\\\\c\\ba\\", "b", buffer, 32), NULL, 0);
-		pass = compare("abc\\\\\\c\\ba\\", bufp, "abc\\c\\ba");
+		pass = esc_compare("abc\\\\\\c\\ba\\", bufp, "abc\\c\\ba");
 		bu_free(bufp, NULL);
 	}
 	return !pass;

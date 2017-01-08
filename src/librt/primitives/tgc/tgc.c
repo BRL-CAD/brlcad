@@ -806,6 +806,9 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	/* Here, 'npts' is number of points being returned */
 	if (npts != 0 && npts != 2 && npts != 4 && npts > 0) {
+	    /* prevent overflow, compile sanity */
+	    if (npts > 6)
+		npts = 6;
 	    bu_log("tgc:  reduced %d to %d roots\n", nroots, npts);
 	    bn_pr_roots(stp->st_name, val, nroots);
 	} else if (nroots < 0) {

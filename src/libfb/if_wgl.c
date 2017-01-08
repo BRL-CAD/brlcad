@@ -815,7 +815,6 @@ _wgl_open_existing(fb *ifp,
 	return -1;
 
     WGL(ifp)->dispp = dpy;
-    /* ifp->if_selfd = ConnectionNumber(WGL(ifp)->dispp); */
 
     WGL(ifp)->vip = vip;
     WGL(ifp)->glxc = glxc;
@@ -907,7 +906,6 @@ wgl_flush(fb *ifp)
 	/* unattach context for other threads to use, also flushes */
 	wglMakeCurrent(NULL, NULL);
     }
-    /* XFlush(WGL(ifp)->dispp); */
     glFlush();
     return 0;
 }
@@ -1738,7 +1736,6 @@ wgl_do_event(fb *ifp)
 HIDDEN void
 expose_callback(fb *ifp, int eventPtr)
 {
-    /* XWindowAttributes xwa; */
     struct wgl_clip *clp;
 
     if (CJDEBUG) fb_log("entering expose_callback()\n");

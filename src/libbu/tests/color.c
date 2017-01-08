@@ -1,4 +1,4 @@
-/*                       B U _ C O L O R . C
+/*                       C O L O R . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2016 United States Government as represented by
@@ -155,7 +155,7 @@ test_bu_color_from_rgb_floats(int argc, char *argv[])
 }
 
 int
-main(int argc, char *argv[])
+color_main(int argc, char *argv[])
 {
     int function_num = 0;
 

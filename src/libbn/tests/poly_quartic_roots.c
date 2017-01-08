@@ -1,4 +1,4 @@
-/*         B N _ P O L Y _ Q U A R T I C _ R O O T S. C
+/*            P O L Y _ Q U A R T I C _ R O O T S. C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -135,7 +135,7 @@ test_bn_poly_qua_rts(void)
 
 
 int
-main(void)
+main(int UNUSED(ac), char **UNUSED(av))
 {
     int ret;
     poly_init();

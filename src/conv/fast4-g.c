@@ -234,9 +234,6 @@ static char *facemode;	/* mode for each face */
 static int face_size=0;	/* actual length of above arrays */
 static int face_count=0;	/* number of faces in above arrays */
 
-/*static int *int_list;*/		/* Array of integers */
-/*static int int_list_count=0;*/	/* Number of ints in above array */
-/*static int int_list_length=0;*/	/* Length of int_list array */
 
 static point_t *grid_points = NULL;
 

@@ -2454,18 +2454,14 @@ process_text_attrib_entities_code(int code)
 static int
 process_dimension_entities_code(int code)
 {
-    /* static point_t def_pt={0.0, 0.0, 0.0}; */
     static char *block_name=NULL;
     static struct state_data *new_state=NULL;
     struct block_list *blk;
-    /* int coord; */
 
     switch (code) {
 	case 10:
 	case 20:
 	case 30:
-	    /* coord = (code / 10) - 1; */
-	    /* def_pt[coord] = atof(line) * units_conv[units] * scale_factor; */
 	    break;
 	case 8:		/* layer name */
 	    if (curr_layer_name) {
@@ -2722,8 +2718,6 @@ process_spline_entities_code(int code)
 	case 220:
 	case 230:
 	    coord = code / 10 - 21;
-	    /* normal, unhandled */
-	    /* normal[coord] = atof(line) * units_conv[units] * scale_factor; */
 	    break;
 	case 70:
 	    flag = atoi(line);
@@ -2758,16 +2752,10 @@ process_spline_entities_code(int code)
 	    }
 	    break;
 	case 42:
-	    /* unhandled */
-	    /* knotTol = atof(line) * units_conv[units] * scale_factor; */
 	    break;
 	case 43:
-	    /* unhandled */
-	    /* ctlPtTol = atof(line) * units_conv[units] * scale_factor; */
 	    break;
 	case 44:
-	    /* unhandled */
-	    /* fitPtTol = atof(line) * units_conv[units] * scale_factor; */
 	    break;
 	case 12:
 	case 22:

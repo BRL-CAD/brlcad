@@ -1,4 +1,4 @@
-/*                    T E S T _ E N C O D E . C
+/*                    E N C O D E . C
  * BRL-CAD
  *
  * Copyright (c) 2011-2016 United States Government as represented by
@@ -82,7 +82,7 @@ test_encode(const char *str)
 
 
 int
-main(int ac, char *av[])
+encode_main(int ac, char *av[])
 {
     int test_num = 0;
     if (ac != 2)

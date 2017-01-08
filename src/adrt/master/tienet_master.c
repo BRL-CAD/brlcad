@@ -506,9 +506,6 @@ int* tienet_master_listener(void *UNUSED(ptr))
 			    /* Append to select list */
 			    V_MAX(tienet_master_highest_fd, slave_socket);
 			}
-
-			/* Send some work */
-			/* tienet_master_send_work(sock); */
 		    }
 		} else {
 		    /* Make sure socket is still active on this recv */

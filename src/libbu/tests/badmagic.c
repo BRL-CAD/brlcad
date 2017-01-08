@@ -1,4 +1,4 @@
-/*                   B U _ B A D M A G I C . C
+/*                     B A D M A G I C . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -53,7 +53,7 @@ bomb_callback(const void *data, const char *str)
 }
 
 int
-main(int argc, char *argv[])
+badmagic_main(int argc, char *argv[])
 {
     unsigned char *misalign = (unsigned char *)bu_malloc(1, "bu_badmagic.c");
     uint32_t *ptr = (uint32_t *)bu_malloc(sizeof(uint32_t), "bu_badmagic.c");

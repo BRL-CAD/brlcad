@@ -1,4 +1,4 @@
-/*                    B U _ B 6 4 . C
+/*                         B 6 4 . C
  * BRL-CAD
  *
  * Copyright (c) 2011-2016 United States Government as represented by
@@ -34,7 +34,7 @@
  *
  */
 static void
-test_encode(const signed char *str)
+test_b64_encode(const signed char *str)
 {
     int passed = 1;
     int decoded_size = 0;
@@ -60,13 +60,13 @@ test_encode(const signed char *str)
 
 
 int
-main(int ac, char *av[])
+b64_main(int ac, char *av[])
 {
     if (ac != 1)
 	fprintf(stderr,"Usage: %s \n", av[0]);
 
-    test_encode((const signed char *)"hello world!");
-    test_encode((const signed char *)"!@#&#$%@&#$^@(*&^%(#$@&^#*$nasty_string!<>?");
+    test_b64_encode((const signed char *)"hello world!");
+    test_b64_encode((const signed char *)"!@#&#$%@&#$^@(*&^%(#$@&^#*$nasty_string!<>?");
 
     return 0;
 }

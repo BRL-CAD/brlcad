@@ -1,4 +1,4 @@
-/*                      B N _ M A T . C
+/*                      M A T . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -532,7 +532,7 @@ test_bn_mat_dup(void)
 }
 
 int
-main(int argc, char *argv[])
+mat_main(int argc, char *argv[])
 {
     int function_num = 0;
 

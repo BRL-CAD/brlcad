@@ -212,7 +212,7 @@ compress_external(struct bu_external *external)
 #endif
 
     if (!compressed) {
-	bu_log("compression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, external->ext_buf, compressed_size);
+	bu_log("compression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
 	return;
     }
 
@@ -251,7 +251,7 @@ uncompress_external(const struct bu_external *external,
 #endif
 
     if (!uncompressed) {
-	bu_log("decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, external->ext_buf, dest->ext_nbytes);
+	bu_log("decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
 	return;
     }
 

@@ -22,6 +22,8 @@
 
 #ifdef HAVE_INTTYPES_H
 #  include <inttypes.h>
+#else
+#  include "pinttypes.h"
 #endif
 #include <stdlib.h>
 #include <stdio.h>

@@ -166,10 +166,10 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	}
 	case 106: {
 	    /* copius data */
-	    int interpflag;	/* interpretation flag
-				   1 => x, y pairs (common z-coord)
-				   2 => x, y, z coords
-				   3 => x, y, z coords and i, j, k vectors */
+	    int interpflag;	/* interpretation flag */
+				/* 1 => x, y pairs (common z-coord) */
+				/* 2 => x, y, z coords */
+				/* 3 => x, y, z coords and i, j, k vectors */
 	    int ntuples;	/* number of points */
 	    fastf_t common_z;	/* common z-coordinate */
 	    point_t pt1;		/* temporary storage for incoming point */

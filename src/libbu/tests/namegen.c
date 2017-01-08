@@ -20,38 +20,56 @@
 
 #include "common.h"
 #include <limits.h>
+#include <stdlib.h> /* for strtol */
 #include <ctype.h>
+#include <errno.h> /* for errno */
 #include "bu.h"
 #include "bn.h"
 #include "string.h"
 
 
 int
-main(int argc, const char **argv)
+namegen_main(int argc, char **argv)
 {
-    int ret = -1;
-    const char *instr = NULL;
-    struct bu_vls out = BU_VLS_INIT_ZERO;
-    long increment_states[10];
-    const char *time_incrementers[3] = {"d:0:1:12:0","d:2:0:59:0","d:2:0:59:0"};
-    const char *regex_str = "([0-9]+):([0-9]+):([0-9]+).*($)";
+    int ret = 1;
+    int i = 0;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    long inc_count = 0;
+    char *endptr;
+    const char *rs = NULL;
+    const char *rs_complex = "([-_:]*[0-9]+[-_:]*)[^0-9]*$";
+    const char *formatting = NULL;
 
     /* Sanity check */
-    if (argc < 2)
-	bu_exit(1, "ERROR: wrong number of parameters");
+    if (argc < 6) bu_exit(1, "ERROR: wrong number of parameters");
 
-    instr = argv[1];
-    if (strlen(instr) <= 0) {
-	bu_exit(1, "invalid string: %s\n", argv[1]);
+    if (BU_STR_EQUAL(argv[2], "1")) {
+	rs = rs_complex;
     }
 
-    switch (argc) {
-	case 2:
-	    ret = bu_namegen(&out, instr, regex_str, time_incrementers, increment_states);
-	    break;
-	default:
-	    break;
+    if (!rs && !BU_STR_EQUAL(argv[2], "0") && !BU_STR_EQUAL(argv[2], "NULL")) {
+	rs = argv[2];
     }
+
+    if (!BU_STR_EQUAL(argv[3], "NULL")) {
+	formatting = argv[3];
+    }
+
+    errno = 0;
+    inc_count = strtol(argv[4], &endptr, 10);
+    if (errno == ERANGE || inc_count <= 0) {
+	bu_exit(1, "invalid increment count: %s\n", argv[4]);
+    }
+
+    bu_vls_sprintf(&name, "%s", argv[1]);
+    while (i < inc_count) {
+	(void)bu_namegen(&name, rs, formatting);
+	i++;
+    }
+
+    if (BU_STR_EQUAL(bu_vls_addr(&name), argv[5])) ret = 0;
+
+    bu_log("output: %s\n", bu_vls_addr(&name));
 
     return ret;
 }
