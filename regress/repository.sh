@@ -307,7 +307,7 @@ grepcmd="grep -n -E"
 MATCHES=
 echo "Searching headers ..."
 for file in $INCFILES /dev/null ; do
-    this="`eval $grepcmd $regex $file /dev/null | grep -v pstdint.h`"
+    this="`eval $grepcmd $regex $file /dev/null | grep -v pstdint.h |grep -v pinttypes.h`"
     if test "x$this" != "x" ; then
 	MATCHES="$MATCHES
 $this"
