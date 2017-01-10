@@ -1,4 +1,4 @@
-/*                      P R O E - B R L . C
+/*                   P R O E - B R L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2001-2016 United States Government as represented by
@@ -17,22 +17,22 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file proe-brl.c
+/** @file proe-brl.cpp
  *
  *  This code uses the Pro/Toolkit from Pro/Engineer to add a menu item in Pro/E
  *  to convert models to the BRL-CAD ".asc" format (actually a tcl script).
- *
- *  Author -
- *	John R. Anderson
  */
 
 #include "common.h"
+
 #include "bio.h"
 
+#include <set>
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <wchar.h>
 #include <errno.h>
 #include "ProToolkit.h"
 #include "ProAssembly.h"
@@ -41,9 +41,11 @@
 #include "ProMode.h"
 #include "ProMdl.h"
 #include "ProFaminstance.h"
-#include "pd_proto_deprecated.h"
+#include "pd_proto.h"
+#include "ProFeatType.h"
 #include "ProPart.h"
 #include "ProSolid.h"
+#include "ProSurface.h"
 #include "ProSkeleton.h"
 #include "ProWindows.h"
 #include "ProUIDialog.h"
@@ -56,16 +58,31 @@
 #include "ProAsmcomppath.h"
 #include "ProHole.h"
 #include "ProNotify.h"
-#include "prodev_light.h"
+#include "ProUtil.h"
+#include "ProMdlUnits.h"
 #include "vmath.h"
 #include "bu/hash.h"
 #include "bu/ptbl.h"
 #include "bu/malloc.h"
+#include "bu/namegen.h"
 #include "bu/log.h"
-#include "bu/redblack.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bn.h"
+
+struct StrCmp {
+    bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {
+	return (strcmp(bu_vls_addr(str1), bu_vls_addr(str2)) < 0);
+    }
+};
+
+
+struct WStrCmp {
+    bool operator()(wchar_t *str1, wchar_t *str2) const {
+	return (wcscmp(str1, str2) < 0);
+    }
+};
+
 
 int is_non_identity(ProMatrix xform);
 
@@ -155,9 +172,9 @@ static double hole_depth=0.0;		/* drilled hole depth */
 static double drill_angle=0.0;		/* drill tip angle */
 #define MIN_RADIUS	1.0e-7		/* BRL-CAD does not allow tgc's with zero radius */
 static Pro3dPnt end1, end2;		/* axis endpoints for holes */
-static struct bu_rb_tree *done_list_part=NULL;	/* list of parts already done */
-static struct bu_rb_tree *done_list_asm=NULL;	/* list of assemblies already done */
-static struct bu_rb_tree *brlcad_names=NULL;	/* list of BRL-CAD names in use */
+std::set<wchar_t *, WStrCmp> done_list_part;	/* list of parts already done */
+std::set<wchar_t *, WStrCmp> done_list_asm;	/* list of assemblies already done */
+std::set<struct bu_vls *, StrCmp> brlcad_names;	/* BRL-CAD names in use */
 
 /* declaration of functions passed to the feature visit routine */
 static ProError assembly_comp( ProFeature *feat, ProError status, ProAppData app_data );
@@ -165,11 +182,12 @@ static ProError assembly_filter( ProFeature *feat, ProAppData *data );
 
 /* structure to hold info about CSG operations for current part */
 struct csg_ops {
-    char operator;
+    char op;
     struct bu_vls name;
     struct bu_vls dbput;
     struct csg_ops *next;
 };
+
 struct csg_ops *csg_root;
 static int hole_no=0;	/* hole counter for unique names */
 static char *tgc_format="tgc V {%.25G %.25G %.25G} H {%.25G %.25G %.25G} A {%.25G %.25G %.25G} B {%.25G %.25G %.25G} C {%.25G %.25G %.25G} D {%.25G %.25G %.25G}\n";
@@ -212,7 +230,8 @@ char *feat_type[NUM_FEAT_TYPES];
 #define MAX_LINE_LEN		256	/* maximum allowed line length for part number to name map file */
 #define PROE_NAME_ATTR "Proe_Name"
 
-void
+
+    void
 do_initialize()
 {
     int i;
@@ -535,7 +554,7 @@ static char *feat_status[]={
     "PRO_FEAT_UNREGENERATED"
 };
 
-void
+    void
 lower_case( char *name )
 {
     unsigned char *c;
@@ -547,7 +566,7 @@ lower_case( char *name )
     }
 }
 
-void
+    void
 make_legal( char *name )
 {
     unsigned char *c;
@@ -564,54 +583,45 @@ make_legal( char *name )
 }
 
 /* create a unique BRL-CAD object name from a possibly illegal name */
-char *
+    char *
 create_unique_name( char *name )
 {
-    struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
-    int initial_length=0;
-    int count=0;
+    struct bu_vls *tmp_name;
+    std::pair<std::set<struct bu_vls *, StrCmp>::iterator, bool> ret;
+    long count=0;
 
     if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "create_unique_name( %s )\n", name );
     }
 
-    /* if we do not already have a brlcad name tree, create one here */
-    if ( !brlcad_names ) {
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "\tCreating rb tree for brlcad names\n" );
-	}
-	brlcad_names = bu_rb_create1( "BRL-CAD names", bu_strcmp );
-	bu_rb_uniq_all_on( brlcad_names );
-    }
-
     /* create a unique name */
-    bu_vls_strcpy( &tmp_name, name );
-    lower_case( bu_vls_addr( &tmp_name ) );
-    make_legal( bu_vls_addr( &tmp_name ) );
-    initial_length = bu_vls_strlen( &tmp_name );
-    while ( bu_rb_insert( brlcad_names, bu_vls_addr( &tmp_name ) ) < 0 ) {
-	char *data;
-	if ( (data=(char *)bu_rb_search1( brlcad_names, bu_vls_addr( &tmp_name ) ) ) != NULL ) {
-	    if ( logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( logger, "\t\tfound duplicate (%s)\n", data );
-		fflush( logger );
-	    }
-	}
-	bu_vls_trunc( &tmp_name, initial_length );
+    BU_GET(tmp_name, struct bu_vls);
+    bu_vls_init(tmp_name);
+    bu_vls_strcpy(tmp_name, name);
+    lower_case(bu_vls_addr(tmp_name));
+    make_legal(bu_vls_addr(tmp_name));
+    ret = brlcad_names.insert(tmp_name);
+    while (ret.second == false) {
+	(void)bu_namegen(tmp_name, NULL, NULL);
 	count++;
-	bu_vls_printf( &tmp_name, "_%d", count );
 	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "\tTrying %s\n", bu_vls_addr( &tmp_name ) );
+	    fprintf( logger, "\tTrying %s\n", bu_vls_addr(tmp_name) );
 	}
+	if (count == LONG_MAX) {
+	    bu_vls_free(tmp_name);
+	    BU_PUT(tmp_name, struct bu_vls);
+	    return NULL;
+	}
+	ret = brlcad_names.insert(tmp_name);
     }
 
     if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "\tnew name for %s is %s\n", name, bu_vls_addr( &tmp_name ) );
+	fprintf( logger, "\tnew name for %s is %s\n", name, bu_vls_addr(tmp_name) );
     }
-    return bu_vls_strgrab( &tmp_name );
+    return bu_vls_addr(tmp_name);
 }
 
-char *
+    char *
 get_brlcad_name( char *part_name )
 {
     char *brlcad_name=NULL;
@@ -650,44 +660,31 @@ get_brlcad_name( char *part_name )
     }
 }
 
-void
+    void
 model_units( ProMdl model )
 {
-    int unit_subtype;
-    wchar_t unit_name[PRO_NAME_SIZE];
+    // TODO - the following is completely untested - fix that!!
+    ProUnitsystem us;
+    ProUnititem lmu;
+    char *lname = NULL;
+    ProUnititem mmu;
+    ProUnitConversion conv;
     double proe_conv;
 
-    /* get units, and adjust conversion factor */
-    if ( prodb_get_model_units( model, LENGTH_UNIT, &unit_subtype,
-				unit_name, &proe_conv ) ) {
-	if ( unit_subtype == UNIT_MM )
-	    proe_to_brl_conv = 1.0;
-	else
-	    proe_to_brl_conv = proe_conv * 25.4;
-    } else {
-	ProMessageDisplay(MSGFIL, "USER_NO_UNITS" );
-	ProMessageClear();
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "No units specified, assuming inches\n" );
-	}
-	fprintf( stderr, "No units specified, assuming inches\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	proe_to_brl_conv = 25.4;
-    }
+    ProMdlPrincipalunitsystemGet(model, &us);
+    ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu);
+    ProUnitInit(model, L"mm", &mmu);
+    ProWstringToString(lname, lmu.name);
+    ProUnitConversionGet(&lmu, &conv, &mmu);
+    proe_conv = conv.scale;
 
     /* adjust tolerance for Pro/E units */
-    local_tol = tol_dist / proe_to_brl_conv;
+    local_tol = tol_dist / proe_conv;
     local_tol_sq = local_tol * local_tol;
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Units: %s, proe_to_brl_conv = %g\n",
-		 ProWstringToString( astr, unit_name ),
-		 proe_to_brl_conv );
-    }
 }
 
 /* routine to free the list of CSG operations */
-void
+    void
 free_csg_ops()
 {
     struct csg_ops *ptr1, *ptr2;
@@ -708,7 +705,7 @@ free_csg_ops()
 void doit( char *dialog, char *compnent, ProAppData appdata );
 void do_quit( char *dialog, char *compnent, ProAppData appdata );
 
-void
+    void
 add_to_done_part( wchar_t *name )
 {
     wchar_t *name_copy;
@@ -717,39 +714,25 @@ add_to_done_part( wchar_t *name )
 	fprintf( logger, "Added %s to list of done parts\n", ProWstringToString( astr, name ) );
     }
 
-    if ( !done_list_part ) {
-	done_list_part = bu_rb_create1( "Names of Parts already Processed",
-					wcscmp );
-	bu_rb_uniq_all_on( done_list_part );
-    }
-
-    name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
-				       "part name for done list" );
-    wcsncpy( name_copy, name, wcslen(name)+1 );
-
-    if ( bu_rb_insert( done_list_part, name_copy ) < 0 ) {
-	bu_free( (char *)name_copy, "part name for done list" );
+    if (done_list_part.find(name) == done_list_part.end()) {
+	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
+		"part name for done list" );
+	wcsncpy( name_copy, name, wcslen(name)+1 );
+	done_list_part.insert(name_copy);
     }
 }
 
-int
+    int
 already_done_part( wchar_t *name )
 {
-    char *found=NULL;
-
-    if ( !done_list_part )
-	return 0;
-
-    found = bu_rb_search1( done_list_part, (void *)name );
-    if ( !found ) {
-	return 0;
-    } else {
+    if (done_list_part.find(name) != done_list_part.end()) {
 	return 1;
     }
+    return 0;
 }
 
 
-void
+    void
 add_to_done_asm( wchar_t *name )
 {
     wchar_t *name_copy;
@@ -758,38 +741,24 @@ add_to_done_asm( wchar_t *name )
 	fprintf( logger, "Added %s to list of done assemblies\n", ProWstringToString( astr, name ) );
     }
 
-    if ( !done_list_asm ) {
-	done_list_asm = bu_rb_create1( "Names of Asms already Processed",
-				       wcscmp );
-	bu_rb_uniq_all_on( done_list_asm );
-    }
-
-    name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
-				       "asm name for done list" );
-    wcsncpy( name_copy, name, wcslen(name)+1 );
-
-    if ( bu_rb_insert( done_list_asm, name_copy ) < 0 ) {
-	bu_free( (char *)name_copy, "asm name for done list" );
+    if (done_list_asm.find(name) == done_list_part.end()) {
+	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
+		"asm name for done list" );
+	wcsncpy( name_copy, name, wcslen(name)+1 );
+	done_list_asm.insert(name_copy);
     }
 }
 
-int
+    int
 already_done_asm( wchar_t *name )
 {
-    char *found=NULL;
-
-    if ( !done_list_asm )
-	return 0;
-
-    found = bu_rb_search1(done_list_asm, (void *)name );
-    if ( !found ) {
-	return 0;
-    } else {
+    if (done_list_asm.find(name) != done_list_asm.end()) {
 	return 1;
     }
+    return 0;
 }
 
-void
+    void
 add_to_empty_list( char *name )
 {
     struct empty_parts *ptr;
@@ -821,7 +790,7 @@ add_to_empty_list( char *name )
     ptr->name = (char *)bu_strdup( name );
 }
 
-void
+    void
 kill_empty_parts()
 {
     struct empty_parts *ptr;
@@ -841,7 +810,7 @@ kill_empty_parts()
     }
 }
 
-void
+    void
 free_empty_parts()
 {
     struct empty_parts *ptr, *prev;
@@ -868,7 +837,7 @@ free_empty_parts()
 /* routine to check for bad triangles
  * only checks for triangles with duplicate vertices
  */
-int
+    int
 bad_triangle( int v1, int v2, int v3 )
 {
     double dist;
@@ -912,23 +881,23 @@ bad_triangle( int v1, int v2, int v3 )
 }
 
 /* routine to add a new triangle and its normals to the current part */
-void
+    void
 add_triangle_and_normal( int v1, int v2, int v3, int n1, int n2, int n3 )
 {
     if ( curr_tri >= max_tri ) {
 	/* allocate more memory for triangles and normals */
 	max_tri += TRI_BLOCK;
 	part_tris = (ProTriangle *)bu_realloc( part_tris, sizeof( ProTriangle ) * max_tri,
-					       "part triangles");
+		"part triangles");
 	if ( !part_tris ) {
 	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR",
-				    "Failed to allocate memory for part triangles" );
+		    "Failed to allocate memory for part triangles" );
 	    fprintf( stderr, "Failed to allocate memory for part triangles\n" );
 	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	    bu_exit( 1, NULL );
 	}
 	part_norms = (int *)bu_realloc( part_norms, sizeof( int ) * max_tri * 3,
-					"part normals");
+		"part normals");
     }
 
     /* fill in triangle info */
@@ -946,17 +915,17 @@ add_triangle_and_normal( int v1, int v2, int v3, int n1, int n2, int n3 )
 
 
 /* routine to add a new triangle to the current part */
-void
+    void
 add_triangle( int v1, int v2, int v3 )
 {
     if ( curr_tri >= max_tri ) {
 	/* allocate more memory for triangles */
 	max_tri += TRI_BLOCK;
 	part_tris = (ProTriangle *)bu_realloc( part_tris, sizeof( ProTriangle ) * max_tri,
-					       "part triangles");
+		"part triangles");
 	if ( !part_tris ) {
 	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR",
-				    "Failed to allocate memory for part triangles" );
+		    "Failed to allocate memory for part triangles" );
 	    fprintf( stderr, "Failed to allocate memory for part triangles\n" );
 	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	    bu_exit( 1, NULL );
@@ -972,7 +941,7 @@ add_triangle( int v1, int v2, int v3 )
     curr_tri++;
 }
 
-ProError
+    ProError
 check_dimension( ProDimension *dim, ProError status, ProAppData data )
 {
     ProDimensiontype dim_type;
@@ -1023,25 +992,25 @@ dimension_filter( ProDimension *dim, ProAppData data ) {
     return PRO_TK_NO_ERROR;
 }
 
-void
+    void
 Add_to_feature_delete_list( int id )
 {
     if ( feat_id_count >= feat_id_len ) {
 	feat_id_len += FEAT_ID_BLOCK;
 	feat_ids_to_delete = (int *)bu_realloc( (char *)feat_ids_to_delete,
-						feat_id_len * sizeof( int ),
-						"feature ids to delete");
+		feat_id_len * sizeof( int ),
+		"feature ids to delete");
 
     }
     feat_ids_to_delete[feat_id_count++] = id;
 
     if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Adding feature %d to list of features to delete (list length = %d)\n",
-		 id, feat_id_count );
+		id, feat_id_count );
     }
 }
 
-ProError
+    ProError
 geomitem_visit( ProGeomitem *item, ProError status, ProAppData data )
 {
     ProGeomitemdata *geom;
@@ -1050,7 +1019,7 @@ geomitem_visit( ProGeomitem *item, ProError status, ProAppData data )
 
     if ( (ret=ProGeomitemdataGet( item, &geom )) != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get geomitem for type %d\n",
-		 item->type );
+		item->type );
 	return ret;
     }
 
@@ -1063,13 +1032,13 @@ geomitem_visit( ProGeomitem *item, ProError status, ProAppData data )
     return PRO_TK_NO_ERROR;
 }
 
-ProError
+    ProError
 geomitem_filter( ProGeomitem *item, ProAppData data )
 {
     return PRO_TK_NO_ERROR;
 }
 
-ProError
+    ProError
 hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data )
 {
     ProError ret;
@@ -1308,7 +1277,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
     return PRO_TK_NO_ERROR;
 }
 
-ProError
+    ProError
 hole_elem_filter( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data )
 {
     return PRO_TK_NO_ERROR;
@@ -1321,7 +1290,7 @@ hole_elem_filter( ProElement elem_tree, ProElement elem, ProElempath elem_path, 
  *		0 - do not delete this hole feature before tessellating
  *		1 - delete this hole feature before tessellating
  */
-int
+    int
 Subtract_hole()
 {
     struct csg_ops *csg;
@@ -1356,7 +1325,7 @@ Subtract_hole()
 	bu_vls_init( &csg->name );
 	bu_vls_init( &csg->dbput );
 
-	csg->operator = '-';
+	csg->op = '-';
 	hole_no++;
 	bu_vls_printf( &csg->name, "hole.%d ", hole_no );
 	VSUB2( h, end1, end2 );
@@ -1368,12 +1337,12 @@ Subtract_hole()
 	VSCALE( b, b, radius*proe_to_brl_conv );
 	VSCALE( h, h, proe_to_brl_conv );
 	bu_vls_printf( &csg->dbput, tgc_format,
-		       V3ARGS( end2 ),
-		       V3ARGS( h ),
-		       V3ARGS( a ),
-		       V3ARGS( b ),
-		       V3ARGS( a ),
-		       V3ARGS( b ) );
+		V3ARGS( end2 ),
+		V3ARGS( h ),
+		V3ARGS( a ),
+		V3ARGS( b ),
+		V3ARGS( a ),
+		V3ARGS( b ) );
     } else if ( hole_type == PRO_HLE_NEW_TYPE_STANDARD ) {
 	/* drilled hole with possible countersink and counterbore */
 	point_t start;
@@ -1405,7 +1374,7 @@ Subtract_hole()
 	    bu_vls_init( &csg->name );
 	    bu_vls_init( &csg->dbput );
 
-	    csg->operator = '-';
+	    csg->op = '-';
 	    hole_no++;
 	    bu_vls_printf( &csg->name, "hole.%d ", hole_no );
 	    bn_vec_ortho( a, dir );
@@ -1416,12 +1385,12 @@ Subtract_hole()
 	    VSCALE( b, b, cb_radius );
 	    VSCALE( h, dir, cb_depth * proe_to_brl_conv );
 	    bu_vls_printf( &csg->dbput, tgc_format,
-			   V3ARGS( start ),
-			   V3ARGS( h ),
-			   V3ARGS( a ),
-			   V3ARGS( b ),
-			   V3ARGS( a ),
-			   V3ARGS( b ) );
+		    V3ARGS( start ),
+		    V3ARGS( h ),
+		    V3ARGS( a ),
+		    V3ARGS( b ),
+		    V3ARGS( a ),
+		    V3ARGS( b ) );
 	    VADD2( start, start, h );
 	    accum_depth += cb_depth;
 	    cb_diam = 0.0;
@@ -1443,7 +1412,7 @@ Subtract_hole()
 	    bu_vls_init( &csg->name );
 	    bu_vls_init( &csg->dbput );
 
-	    csg->operator = '-';
+	    csg->op = '-';
 	    hole_no++;
 	    bu_vls_printf( &csg->name, "hole.%d ", hole_no );
 	    cs_depth = (cs_diam - hole_diam) / (2.0 * tan( cs_angle * M_PI / 360.0 ) );
@@ -1458,12 +1427,12 @@ Subtract_hole()
 	    VSCALE( c, c, hole_diam * proe_to_brl_conv / 2.0 );
 	    VSCALE( d, d, hole_diam * proe_to_brl_conv / 2.0 );
 	    bu_vls_printf( &csg->dbput, tgc_format,
-			   V3ARGS( start ),
-			   V3ARGS( h ),
-			   V3ARGS( a ),
-			   V3ARGS( b ),
-			   V3ARGS( c ),
-			   V3ARGS( d ) );
+		    V3ARGS( start ),
+		    V3ARGS( h ),
+		    V3ARGS( a ),
+		    V3ARGS( b ),
+		    V3ARGS( c ),
+		    V3ARGS( d ) );
 	    VADD2( start, start, h );
 	    accum_depth += cs_depth;
 	    cs_diam = 0.0;
@@ -1482,7 +1451,7 @@ Subtract_hole()
 	bu_vls_init( &csg->name );
 	bu_vls_init( &csg->dbput );
 
-	csg->operator = '-';
+	csg->op = '-';
 	hole_no++;
 	bu_vls_printf( &csg->name, "hole.%d ", hole_no );
 	bn_vec_ortho( a, dir );
@@ -1496,12 +1465,12 @@ Subtract_hole()
 	VSCALE( d, d, hole_radius * proe_to_brl_conv );
 	VSCALE( h, dir, (hole_depth - accum_depth) * proe_to_brl_conv );
 	bu_vls_printf( &csg->dbput, tgc_format,
-		       V3ARGS( start ),
-		       V3ARGS( h ),
-		       V3ARGS( a ),
-		       V3ARGS( b ),
-		       V3ARGS( c ),
-		       V3ARGS( d ) );
+		V3ARGS( start ),
+		V3ARGS( h ),
+		V3ARGS( a ),
+		V3ARGS( b ),
+		V3ARGS( c ),
+		V3ARGS( d ) );
 	VADD2( start, start, h );
 	hole_diam = 0.0;
 	hole_depth = 0.0;
@@ -1520,7 +1489,7 @@ Subtract_hole()
 	    bu_vls_init( &csg->name );
 	    bu_vls_init( &csg->dbput );
 
-	    csg->operator = '-';
+	    csg->op = '-';
 	    hole_no++;
 	    bu_vls_printf( &csg->name, "hole.%d ", hole_no );
 	    bn_vec_ortho( a, dir );
@@ -1535,12 +1504,12 @@ Subtract_hole()
 	    VSCALE( c, c, MIN_RADIUS );
 	    VSCALE( d, d, MIN_RADIUS );
 	    bu_vls_printf( &csg->dbput, tgc_format,
-			   V3ARGS( start ),
-			   V3ARGS( h ),
-			   V3ARGS( a ),
-			   V3ARGS( b ),
-			   V3ARGS( c ),
-			   V3ARGS( d ) );
+		    V3ARGS( start ),
+		    V3ARGS( h ),
+		    V3ARGS( a ),
+		    V3ARGS( b ),
+		    V3ARGS( c ),
+		    V3ARGS( d ) );
 	    drill_angle = 0.0;
 	}
     } else {
@@ -1551,7 +1520,7 @@ Subtract_hole()
     return 1;
 }
 
-ProError
+    ProError
 do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
 {
     ProError ret;
@@ -1560,10 +1529,10 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
 
     if ( (ret=ProFeatureElemtreeCreate( feat, &elem_tree ) ) == PRO_TK_NO_ERROR ) {
 	if ( (ret=ProElemtreeElementVisit( elem_tree, elem_path,
-					   hole_elem_filter, hole_elem_visit,
-					   data ) ) != PRO_TK_NO_ERROR ) {
+			hole_elem_filter, hole_elem_visit,
+			data ) ) != PRO_TK_NO_ERROR ) {
 	    fprintf( stderr, "Element visit failed for feature (%d) of %s\n",
-		     feat->id, curr_part_name );
+		    feat->id, curr_part_name );
 	    if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Error freeing element tree\n" );
 	    }
@@ -1582,14 +1551,14 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
     got_distance1 = 0;
 
     if ( (ret=ProFeatureDimensionVisit( feat, check_dimension, dimension_filter, data ) ) !=
-	 PRO_TK_NO_ERROR ) {
+	    PRO_TK_NO_ERROR ) {
 	return ret;
     }
 
     if ( curr_feat_type == PRO_FEAT_HOLE ) {
 	/* need more info to recreate holes */
 	if ( (ret=ProFeatureGeomitemVisit( feat, PRO_AXIS, geomitem_visit,
-					   geomitem_filter, data ) ) != PRO_TK_NO_ERROR ) {
+			geomitem_filter, data ) ) != PRO_TK_NO_ERROR ) {
 	    return ret;
 	}
     }
@@ -1606,7 +1575,7 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
 	    break;
 	case PRO_FEAT_CHAMFER:
 	    if ( got_distance1 && distance1 < min_chamfer_dim &&
-		 distance2 < min_chamfer_dim ) {
+		    distance2 < min_chamfer_dim ) {
 		Add_to_feature_delete_list( feat->id );
 	    }
 	    break;
@@ -1616,7 +1585,7 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
     return ret;
 }
 
-int
+    int
 feat_adds_material( ProFeattype feat_type )
 {
     if ( feat_type >= PRO_FEAT_UDF_THREAD ) {
@@ -1652,7 +1621,7 @@ feat_adds_material( ProFeattype feat_type )
     return 0;
 }
 
-void
+    void
 remove_holes_from_id_list( ProMdl model )
 {
     int i;
@@ -1667,23 +1636,23 @@ remove_holes_from_id_list( ProMdl model )
     free_csg_ops();		/* these are only holes */
     for ( i=0; i<feat_id_count; i++ ) {
 	status = ProFeatureInit( ProMdlToSolid(model),
-				 feat_ids_to_delete[i],
-				 &feat );
+		feat_ids_to_delete[i],
+		&feat );
 	if ( status != PRO_TK_NO_ERROR ) {
 	    fprintf( stderr, "Failed to get handle for id %d\n",
-		     feat_ids_to_delete[i] );
+		    feat_ids_to_delete[i] );
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "Failed to get handle for id %d\n",
-			 feat_ids_to_delete[i] );
+			feat_ids_to_delete[i] );
 	    }
 	}
 	status = ProFeatureTypeGet( &feat, &type );
 	if ( status != PRO_TK_NO_ERROR ) {
 	    fprintf( stderr, "Failed to get feature type for id %d\n",
-		     feat_ids_to_delete[i] );
+		    feat_ids_to_delete[i] );
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "Failed to get feature type for id %d\n",
-			 feat_ids_to_delete[i] );
+			feat_ids_to_delete[i] );
 	    }
 	}
 	if ( type == PRO_FEAT_HOLE ) {
@@ -1692,7 +1661,7 @@ remove_holes_from_id_list( ProMdl model )
 
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "\tRemoving feature id %d from deletion list\n",
-			 feat_ids_to_delete[i] );
+			feat_ids_to_delete[i] );
 	    }
 	    feat_id_count--;
 	    for ( j=i; j<feat_id_count; j++ ) {
@@ -1707,7 +1676,7 @@ remove_holes_from_id_list( ProMdl model )
 /* this routine filters out which features should be visited by the feature visit initiated in
  * the output_part() routine.
  */
-ProError
+    ProError
 feature_filter( ProFeature *feat, ProAppData data )
 {
     ProError ret;
@@ -1726,8 +1695,8 @@ feature_filter( ProFeature *feat, ProAppData data )
 
     /* handle holes, chamfers, and rounds only */
     if ( curr_feat_type == PRO_FEAT_HOLE ||
-	 curr_feat_type == PRO_FEAT_CHAMFER ||
-	 curr_feat_type == PRO_FEAT_ROUND ) {
+	    curr_feat_type == PRO_FEAT_CHAMFER ||
+	    curr_feat_type == PRO_FEAT_ROUND ) {
 	return PRO_TK_NO_ERROR;
     }
 
@@ -1743,7 +1712,7 @@ feature_filter( ProFeature *feat, ProAppData data )
     return PRO_TK_CONTINUE;
 }
 
-void
+    void
 build_tree( char *sol_name, struct bu_vls *tree )
 {
     struct csg_ops *ptr;
@@ -1753,7 +1722,7 @@ build_tree( char *sol_name, struct bu_vls *tree )
     }
     ptr = csg_root;
     while ( ptr ) {
-	bu_vls_printf( tree, "{%c ", ptr->operator );
+	bu_vls_printf( tree, "{%c ", ptr->op );
 	ptr = ptr->next;
     }
 
@@ -1763,7 +1732,7 @@ build_tree( char *sol_name, struct bu_vls *tree )
     ptr = csg_root;
     while ( ptr ) {
 	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "Adding %c %s\n", ptr->operator, bu_vls_addr( &ptr->name ) );
+	    fprintf( logger, "Adding %c %s\n", ptr->op, bu_vls_addr( &ptr->name ) );
 	}
 	bu_vls_printf( tree, " {l {%s}}}", bu_vls_addr( &ptr->name ) );
 	ptr = ptr->next;
@@ -1774,7 +1743,7 @@ build_tree( char *sol_name, struct bu_vls *tree )
     }
 }
 
-void
+    void
 output_csg_prims()
 {
     struct csg_ops *ptr;
@@ -1784,7 +1753,7 @@ output_csg_prims()
     while ( ptr ) {
 	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "Creating primitive: %s %s\n",
-		     bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
+		    bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
 	}
 
 	fprintf( outfp, "put {%s} %s", bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
@@ -1792,13 +1761,13 @@ output_csg_prims()
     }
 }
 
-void
+    void
 kill_error_dialog( char *dialog, char *component, ProAppData appdata )
 {
     (void)ProUIDialogDestroy( "proe_brl_error" );
 }
 
-void
+    void
 kill_gen_error_dialog( char *dialog, char *component, ProAppData appdata )
 {
     (void)ProUIDialogDestroy( "proe_brl_gen_error" );
@@ -1813,11 +1782,12 @@ kill_gen_error_dialog( char *dialog, char *component, ProAppData appdata )
  *		1 - Failure
  *		2 - empty part, nothing output
  */
-int
+    int
 output_part( ProMdl model )
 {
     ProName part_name;
-    Pro_surf_props props;
+    ProModelitem mitm;
+    ProSurfaceAppearanceProps aprops;
     char *brl_name=NULL;
     char *sol_name=NULL;
     ProSurfaceTessellationData *tess=NULL;
@@ -1837,6 +1807,7 @@ output_part( ProMdl model )
 	fprintf( stderr, "Failed to get name for a part\n" );
 	return 1;
     }
+
     if ( already_done_part( part_name ) )
 	return 0;
 
@@ -1859,29 +1830,29 @@ output_part( ProMdl model )
     status = ProUIDialogActivate( "proe_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
-		 status );
+		status );
 	fprintf( stderr, "\t dialog returned %d\n", ret_status );
     }
 
     if ( !do_facets_only || do_elims ) {
 	free_csg_ops();
 	ProSolidFeatVisit( ProMdlToSolid(model), do_feature_visit,
-			   feature_filter, (ProAppData)model );
+		feature_filter, (ProAppData)model );
 
 	if ( feat_id_count ) {
 	    int i;
 
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "suppressing %d features of %s:\n",
-			 feat_id_count, curr_part_name );
+			feat_id_count, curr_part_name );
 		for ( i=0; i<feat_id_count; i++ ) {
 		    fprintf( logger, "\t%d\n", feat_ids_to_delete[i] );
 		}
 	    }
 	    fprintf( stderr, "suppressing %d features\n", feat_id_count );
 	    ret = ProFeatureSuppress( ProMdlToSolid(model),
-				      feat_ids_to_delete, feat_id_count,
-				      NULL, 0 );
+		    feat_ids_to_delete, feat_id_count,
+		    NULL, 0 );
 	    if ( ret != PRO_TK_NO_ERROR ) {
 		ProFeatureResumeOptions resume_opts[1];
 		ProFeatStatus feat_stat;
@@ -1893,66 +1864,66 @@ output_part( ProMdl model )
 		    fprintf( logger, "Failed to suppress features!!!\n" );
 		}
 		fprintf( stderr, "Failed to delete %d features from %s\n",
-			 feat_id_count, curr_part_name );
+			feat_id_count, curr_part_name );
 
 		for ( i=0; i<feat_id_count; i++ ) {
 		    status = ProFeatureInit( ProMdlToSolid(model),
-					     feat_ids_to_delete[i],
-					     &feat );
+			    feat_ids_to_delete[i],
+			    &feat );
 		    if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to get handle for id %d\n",
-				 feat_ids_to_delete[i] );
+				feat_ids_to_delete[i] );
 			if ( logger_type == LOGGER_TYPE_ALL ) {
 			    fprintf( logger, "Failed to get handle for id %d\n",
-				     feat_ids_to_delete[i] );
+				    feat_ids_to_delete[i] );
 			}
 		    } else {
 			status = ProFeatureStatusGet( &feat, &feat_stat );
 			if ( status != PRO_TK_NO_ERROR ) {
 			    fprintf( stderr,
-				     "Failed to get status for feature %d\n",
-				     feat_ids_to_delete[i] );
+				    "Failed to get status for feature %d\n",
+				    feat_ids_to_delete[i] );
 			    if ( logger_type == LOGGER_TYPE_ALL ) {
 				fprintf( logger,
-					 "Failed to get status for feature %d\n",
-					 feat_ids_to_delete[i] );
+					"Failed to get status for feature %d\n",
+					feat_ids_to_delete[i] );
 			    }
 			} else {
 			    if ( logger_type == LOGGER_TYPE_ALL ) {
 				if ( feat_stat < 0 ) {
 				    fprintf( logger,
-					     "invalid feature (%d)\n",
-					     feat_ids_to_delete[i] );
+					    "invalid feature (%d)\n",
+					    feat_ids_to_delete[i] );
 				} else {
 				    fprintf( logger, "feat %d status = %s\n",
-					     feat_ids_to_delete[i],
-					     feat_status[ feat_stat ] );
+					    feat_ids_to_delete[i],
+					    feat_status[ feat_stat ] );
 				}
 			    }
 			    if ( feat_stat == PRO_FEAT_SUPPRESSED ) {
 				/* unsuppress this one */
 				if ( logger_type == LOGGER_TYPE_ALL ) {
 				    fprintf( logger,
-					     "Unsuppressing feature %d\n",
-					     feat_ids_to_delete[i] );
+					    "Unsuppressing feature %d\n",
+					    feat_ids_to_delete[i] );
 				}
 				status = ProFeatureResume( ProMdlToSolid(model),
-							   &feat_ids_to_delete[i],
-							   1, resume_opts, 1 );
+					&feat_ids_to_delete[i],
+					1, resume_opts, 1 );
 				if ( logger_type == LOGGER_TYPE_ALL ) {
 				    if ( status == PRO_TK_NO_ERROR ) {
 					fprintf( logger,
-						 "\tfeature id %d unsuppressed\n",
-						 feat_ids_to_delete[i] );
+						"\tfeature id %d unsuppressed\n",
+						feat_ids_to_delete[i] );
 				    } else if ( status == PRO_TK_SUPP_PARENTS ) {
 					fprintf( logger,
-						 "\tsuppressed parents for feature %d not found\n",
-						 feat_ids_to_delete[i] );
+						"\tsuppressed parents for feature %d not found\n",
+						feat_ids_to_delete[i] );
 
 				    } else {
 					fprintf( logger,
-						 "\tfeature id %d unsuppression failed\n",
-						 feat_ids_to_delete[i] );
+						"\tfeature id %d unsuppression failed\n",
+						feat_ids_to_delete[i] );
 				    }
 				}
 			    }
@@ -1990,7 +1961,7 @@ output_part( ProMdl model )
 	}
 
 	status = ProPartTessellate( ProMdlToPart(model), curr_error/proe_to_brl_conv,
-				    curr_angle, PRO_B_TRUE, &tess  );
+		curr_angle, PRO_B_TRUE, &tess  );
 
 	if ( status == PRO_TK_NO_ERROR )
 	    break;
@@ -2031,7 +2002,7 @@ output_part( ProMdl model )
 
 	if ( logger_type == LOGGER_TYPE_ALL || logger_type == LOGGER_TYPE_SUCCESS || logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
 	    fprintf( logger, "Successfully tessellated %s using: tessellation error - %g, angle - %g!!!\n",
-		     curr_part_name, curr_error, curr_angle );
+		    curr_part_name, curr_error, curr_angle );
 	}
 
 	status = ProArraySizeGet( (ProArray)tess, &surface_count );
@@ -2057,7 +2028,6 @@ output_part( ProMdl model )
 	    int v1, v2, v3, n1, n2, n3;
 	    int surfno;
 	    int vert_no;
-	    int stat;
 	    ProName material;
 	    ProMassProperty mass_prop;
 	    ProMaterialProps material_props;
@@ -2077,13 +2047,13 @@ output_part( ProMdl model )
 		    /* grab the triangle */
 		    vert_no = tess[surfno].facets[i][0];
 		    v1 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-				   tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
+			    tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
 		    vert_no = tess[surfno].facets[i][1];
 		    v2 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-				   tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
+			    tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
 		    vert_no = tess[surfno].facets[i][2];
 		    v3 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-				   tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
+			    tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
 		    if ( bad_triangle( v1, v2, v3 ) ) {
 			continue;
 		    }
@@ -2097,15 +2067,15 @@ output_part( ProMdl model )
 		    vert_no = tess[surfno].facets[i][0];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
 		    n1 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-				   tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
+			    tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
 		    vert_no = tess[surfno].facets[i][1];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
 		    n2 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-				   tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
+			    tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
 		    vert_no = tess[surfno].facets[i][2];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
 		    n3 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-				   tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
+			    tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
 
 		    add_triangle_and_normal( v1, v2, v3, n1, n2, n3 );
 		}
@@ -2118,39 +2088,39 @@ output_part( ProMdl model )
 	    snprintf( sol_name, strlen(brl_name)+3, "s.%s", brl_name );
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "Creating bot primitive (%s) for part %s\n",
-			 sol_name, brl_name );
+			sol_name, brl_name );
 	    }
 
 	    fprintf( outfp, "put {%s} bot mode volume orient no V { ", sol_name );
 
 	    for ( i=0; i<vert_tree_root->curr_vert; i++ ) {
 		fprintf( outfp, " {%.12e %.12e %.12e}",
-			 vert_tree_root->the_array[i*3] * proe_to_brl_conv,
-			 vert_tree_root->the_array[i*3+1] * proe_to_brl_conv,
-			 vert_tree_root->the_array[i*3+2] * proe_to_brl_conv );
+			vert_tree_root->the_array[i*3] * proe_to_brl_conv,
+			vert_tree_root->the_array[i*3+1] * proe_to_brl_conv,
+			vert_tree_root->the_array[i*3+2] * proe_to_brl_conv );
 	    }
 	    fprintf( outfp, " } F {" );
 	    for ( i=0; i<curr_tri; i++ ) {
 		/* Proe orders things using left-hand rule, so reverse the order */
 		fprintf( outfp, " {%d %d %d}", part_tris[i][2],
-			 part_tris[i][1], part_tris[i][0] );
+			part_tris[i][1], part_tris[i][0] );
 	    }
 	    if ( get_normals ) {
 		if ( logger ) {
 		    fprintf( logger, "Getting vertex normals for part %s\n",
-			     curr_part_name );
+			    curr_part_name );
 		}
 		fprintf( outfp, " } flags { has_normals use_normals } N {" );
 		for ( i=0; i<norm_tree_root->curr_vert; i++ ) {
 		    fprintf( outfp, " {%.12e %.12e %.12e}",
-			     norm_tree_root->the_array[i*3] * proe_to_brl_conv,
-			     norm_tree_root->the_array[i*3+1] * proe_to_brl_conv,
-			     norm_tree_root->the_array[i*3+2] * proe_to_brl_conv );
+			    norm_tree_root->the_array[i*3] * proe_to_brl_conv,
+			    norm_tree_root->the_array[i*3+1] * proe_to_brl_conv,
+			    norm_tree_root->the_array[i*3+2] * proe_to_brl_conv );
 		}
 		fprintf( outfp, " } fn {" );
 		for ( i=0; i<curr_tri; i++ ) {
 		    fprintf( outfp, " {%d %d %d}", part_norms[i*3],
-			     part_norms[i*3+1], part_norms[i*3+2] );
+			    part_norms[i*3+1], part_norms[i*3+2] );
 		}
 	    }
 	    fprintf( outfp, " }\n" );
@@ -2169,42 +2139,44 @@ output_part( ProMdl model )
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "Creating region for part %s\n", curr_part_name );
 	    }
-	    stat = prodb_get_surface_props( model, SEL_3D_PART, -1, 0, &props );
 
-	    if ( stat == PRODEV_SURF_PROPS_NOT_SET ) {
+
+	    ProMdlToModelitem(model, &mitm);
+	    ProError aerr = ProSurfaceAppearancepropsGet(&mitm, &aprops);
+	    if (aerr  == PRO_TK_NOT_EXIST ) {
 		/* no surface properties */
 		fprintf( outfp,
-			 "put {%s} comb region yes id %d los 100 GIFTmater 1 tree %s\n",
-			 get_brlcad_name( curr_part_name ), reg_id, bu_vls_addr( &tree) );
-	    } else if ( stat == PRODEV_SURF_PROPS_SET ) {
+			"put {%s} comb region yes id %d los 100 GIFTmater 1 tree %s\n",
+			get_brlcad_name( curr_part_name ), reg_id, bu_vls_addr( &tree) );
+	    } else if ( aerr == PRO_TK_NO_ERROR ) {
 		/* use the colors, ... that was set in Pro/E */
 		fprintf( outfp,
-			 "put {%s} comb region yes id %d los 100 GIFTmater 1 rgb {%d %d %d} shader {plastic {",
-			 get_brlcad_name( curr_part_name ),
-			 reg_id,
-			 (int)(props.color_rgb[0]*255.0),
-			 (int)(props.color_rgb[1]*255.0),
-			 (int)(props.color_rgb[2]*255.0) );
-		if ( props.transparency != 0.0 ) {
-		    fprintf( outfp, " tr %g", props.transparency );
+			"put {%s} comb region yes id %d los 100 GIFTmater 1 rgb {%d %d %d} shader {plastic {",
+			get_brlcad_name( curr_part_name ),
+			reg_id,
+			(int)(aprops.color_rgb[0]*255.0),
+			(int)(aprops.color_rgb[1]*255.0),
+			(int)(aprops.color_rgb[2]*255.0) );
+		if ( aprops.transparency != 0.0 ) {
+		    fprintf( outfp, " tr %g", aprops.transparency );
 		}
-		if ( props.shininess != 1.0 ) {
-		    fprintf( outfp, " sh %d", (int)(props.shininess * 18 + 2.0) );
+		if ( aprops.shininess != 1.0 ) {
+		    fprintf( outfp, " sh %d", (int)(aprops.shininess * 18 + 2.0) );
 		}
-		if ( props.diffuse != 0.3 ) {
-		    fprintf( outfp, " di %g", props.diffuse );
+		if ( aprops.diffuse != 0.3 ) {
+		    fprintf( outfp, " di %g", aprops.diffuse );
 		}
-		if ( props.highlite != 0.7 ) {
-		    fprintf( outfp, " sp %g", props.highlite );
+		if ( aprops.highlite != 0.7 ) {
+		    fprintf( outfp, " sp %g", aprops.highlite );
 		}
 		fprintf( outfp, "} }" );
 		fprintf( outfp, " tree %s\n", bu_vls_addr( &tree ) );
 	    } else {
 		/* something is wrong, but just ignore the missing properties */
 		fprintf( stderr, "Error getting surface properties for %s\n",
-			 curr_part_name );
+			curr_part_name );
 		fprintf( outfp, "put {%s} comb region yes id %d los 100 GIFTmater 1 tree %s\n",
-			 get_brlcad_name( curr_part_name ), reg_id, bu_vls_addr( &tree ) );
+			get_brlcad_name( curr_part_name ), reg_id, bu_vls_addr( &tree ) );
 	    }
 
 	    /* Set the PROE_NAME attributes for the region */
@@ -2215,16 +2187,16 @@ output_part( ProMdl model )
 	    status = ProPartMaterialNameGet( ProMdlToPart(model), material );
 	    if ( status == PRO_TK_NO_ERROR ) {
 		fprintf( outfp, "attr set {%s} material_name {%s}\n",
-			 get_brlcad_name( curr_part_name ),
-			 ProWstringToString( str, material ) );
+			get_brlcad_name( curr_part_name ),
+			ProWstringToString( str, material ) );
 
 		/* get the density for this material */
 		status = ProPartMaterialdataGet( ProMdlToPart(model), material, &material_props );
 		if ( status == PRO_TK_NO_ERROR ) {
 		    got_density = 1;
 		    fprintf( outfp, "attr set {%s} density %g\n",
-			     get_brlcad_name( curr_part_name ),
-			     material_props.mass_density );
+			    get_brlcad_name( curr_part_name ),
+			    material_props.mass_density );
 		}
 	    }
 
@@ -2234,19 +2206,19 @@ output_part( ProMdl model )
 		if ( !got_density ) {
 		    if ( mass_prop.density > 0.0 ) {
 			fprintf( outfp, "attr set {%s} density %g\n",
-				 get_brlcad_name( curr_part_name ),
-				 mass_prop.density );
+				get_brlcad_name( curr_part_name ),
+				mass_prop.density );
 		    }
 		}
 		if ( mass_prop.mass > 0.0 ) {
 		    fprintf( outfp, "attr set {%s} mass %g\n",
-			     get_brlcad_name( curr_part_name ),
-			     mass_prop.mass );
+			    get_brlcad_name( curr_part_name ),
+			    mass_prop.mass );
 		}
 		if ( mass_prop.volume > 0.0 ) {
 		    fprintf( outfp, "attr set {%s} volume %g\n",
-			     get_brlcad_name( curr_part_name ),
-			     mass_prop.volume );
+			    get_brlcad_name( curr_part_name ),
+			    mass_prop.volume );
 		}
 	    }
 
@@ -2273,11 +2245,11 @@ output_part( ProMdl model )
 	}
 	fprintf( stderr, "Unsuppressing %d features\n", feat_id_count );
 	if ( (ret=ProFeatureResume( ProMdlToSolid(model),
-				    feat_ids_to_delete, feat_id_count,
-				    NULL, 0 )) != PRO_TK_NO_ERROR) {
+			feat_ids_to_delete, feat_id_count,
+			NULL, 0 )) != PRO_TK_NO_ERROR) {
 
 	    fprintf( stderr, "Failed to unsuppress %d features from %s\n",
-		     feat_id_count, curr_part_name );
+		    feat_id_count, curr_part_name );
 
 	    /* use UI dialog */
 	    status = ProUIDialogCreate( "proe_brl_error", "proe_brl_error" );
@@ -2286,12 +2258,12 @@ output_part( ProMdl model )
 		return 0;
 	    }
 	    snprintf( err_mess, 512,
-		      "During the conversion %d features of part %s\n"
-		      "were suppressed. After the conversion was complete, an\n"
-		      "attempt was made to unsuppress these same features.\n"
-		      "The unsuppression failed, so these features are still\n"
-		      "suppressed. Please exit Pro/E without saving any\n"
-		      "changes so that this problem will not persist.", feat_id_count, curr_part_name );
+		    "During the conversion %d features of part %s\n"
+		    "were suppressed. After the conversion was complete, an\n"
+		    "attempt was made to unsuppress these same features.\n"
+		    "The unsuppression failed, so these features are still\n"
+		    "suppressed. Please exit Pro/E without saving any\n"
+		    "changes so that this problem will not persist.", feat_id_count, curr_part_name );
 
 	    (void)ProStringToWstring( werr_mess, err_mess );
 	    status = ProUITextareaValueSet( "proe_brl_error", "the_message", werr_mess );
@@ -2303,7 +2275,7 @@ output_part( ProMdl model )
 	    status = ProUIDialogActivate( "proe_brl_error", &ret_status );
 	    if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Error in proe-brl error Dialog, error = %d\n",
-			 status );
+			status );
 		fprintf( stderr, "\t dialog returned %d\n", ret_status );
 	    }
 
@@ -2318,7 +2290,7 @@ output_part( ProMdl model )
 }
 
 /* routine to free the memory associated with our assembly info */
-void
+    void
 free_assem( struct asm_head *curr_assem )
 {
     struct asm_member *ptr, *tmp;
@@ -2336,7 +2308,7 @@ free_assem( struct asm_head *curr_assem )
 }
 
 /* routine to list assembly info (for debugging) */
-void
+    void
 list_assem( struct asm_head *curr_asm )
 {
     struct asm_member *ptr;
@@ -2353,7 +2325,7 @@ list_assem( struct asm_head *curr_asm )
  * The combination will have the Pro/E name with a ".c" suffix.
  * Cannot just use the Pro/E name, because assembly can have the same name as a part.
  */
-void
+    void
 output_assembly( ProMdl model )
 {
     ProName asm_name;
@@ -2389,7 +2361,7 @@ output_assembly( ProMdl model )
     status = ProUIDialogActivate( "proe_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
-		 status );
+		status );
 	fprintf( stderr, "\t dialog returned %d\n", ret_status );
     }
 
@@ -2405,7 +2377,7 @@ output_assembly( ProMdl model )
      * some careless designers leave assemblies in exploded mode
      */
 
-    status = ProAssemblyIsExploded( model, &is_exploded );
+    status = ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get explode status of %s\n", curr_assem.name );
 	if ( logger_type == LOGGER_TYPE_ALL ) {
@@ -2415,7 +2387,7 @@ output_assembly( ProMdl model )
 
     if ( is_exploded ) {
 	/* unexplode this assembly !!!! */
-	status = ProAssemblyUnexplode( model );
+	status = ProAssemblyUnexplode(*(ProAssembly *)model );
 	if ( status != PRO_TK_NO_ERROR ) {
 	    fprintf( stderr, "Failed to un-explode assembly %s\n", curr_assem.name );
 	    fprintf( stderr, "\tcomponents will be incorrectly positioned\n" );
@@ -2430,9 +2402,9 @@ output_assembly( ProMdl model )
      * also calls output functions for members (parts or assemblies)
      */
     status = ProSolidFeatVisit( ProMdlToPart(model),
-				assembly_comp,
-				(ProFeatureFilterAction)assembly_filter,
-				(ProAppData)&curr_assem );
+	    assembly_comp,
+	    (ProFeatureFilterAction)assembly_filter,
+	    (ProAppData)&curr_assem );
 
     /* output the accumulated assembly info */
     fprintf( outfp, "put {%s.c} comb region no tree ", get_brlcad_name( curr_assem.name ) );
@@ -2470,10 +2442,10 @@ output_assembly( ProMdl model )
 		for ( k=0; k<4; k++ ) {
 		    if ( k == 3 && j < 3 ) {
 			fprintf( outfp, " %.12e",
-				 member->xform[k][j] * proe_to_brl_conv );
+				member->xform[k][j] * proe_to_brl_conv );
 		    } else {
 			fprintf( outfp, " %.12e",
-				 member->xform[k][j] );
+				member->xform[k][j] );
 		    }
 		}
 	    }
@@ -2490,9 +2462,9 @@ output_assembly( ProMdl model )
     fprintf( outfp, "\n" );
 
     fprintf( outfp, "attr set {%s.c} %s %s\n",
-	     get_brlcad_name( curr_assem.name ),
-	     PROE_NAME_ATTR,
-	     curr_assem.name );
+	    get_brlcad_name( curr_assem.name ),
+	    PROE_NAME_ATTR,
+	    curr_assem.name );
 
     /* calculate mass properties */
     if ( logger_type == LOGGER_TYPE_ALL ) {
@@ -2503,18 +2475,18 @@ output_assembly( ProMdl model )
     if ( status == PRO_TK_NO_ERROR ) {
 	if ( mass_prop.density > 0.0 ) {
 	    fprintf( outfp, "attr set {%s.c} density %g\n",
-		     get_brlcad_name( curr_assem.name ),
-		     mass_prop.density );
+		    get_brlcad_name( curr_assem.name ),
+		    mass_prop.density );
 	}
 	if ( mass_prop.mass > 0.0 ) {
 	    fprintf( outfp, "attr set {%s.c} mass %g\n",
-		     get_brlcad_name( curr_assem.name ),
-		     mass_prop.mass );
+		    get_brlcad_name( curr_assem.name ),
+		    mass_prop.mass );
 	}
 	if ( mass_prop.volume > 0.0 ) {
 	    fprintf( outfp, "attr set {%s.c} volume %g\n",
-		     get_brlcad_name( curr_assem.name ),
-		     mass_prop.volume );
+		    get_brlcad_name( curr_assem.name ),
+		    mass_prop.volume );
 	}
     }
     /* add this assembly to the list of already output objects */
@@ -2527,7 +2499,7 @@ output_assembly( ProMdl model )
 /* routine that is called by feature visit for each assembly member
  * the "app_data" is the head of the assembly info for this assembly
  */
-ProError
+    ProError
 assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 {
     ProIdTable id_table;
@@ -2559,7 +2531,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     status = ProAsmcomppathInit( (ProSolid)curr_assem->model, id_table, 1, &comp_path );
     if ( status != PRO_TK_NO_ERROR ) {
 	snprintf( astr, sizeof(astr), "Failed to get path from %s to %s (aborting)", curr_asm_name,
-		  curr_part_name );
+		curr_part_name );
 	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -2571,7 +2543,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
     if ( status != PRO_TK_NO_ERROR ) {
 	snprintf( astr, sizeof(astr), "Failed to get transformation matrix %s/%s, error = %d, id = %d",
-		  curr_asm_name, curr_part_name, status, feat->id );
+		curr_asm_name, curr_part_name, status, feat->id );
 	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -2597,7 +2569,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 
     if ( !member ) {
 	(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
-				"memory allocation for member failed" );
+		"memory allocation for member failed" );
 	ProMessageClear();
 	fprintf( stderr, "memory allocation for member failed\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -2619,7 +2591,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     status = ProAsmcompMdlGet( feat, &model );
     if ( status != PRO_TK_NO_ERROR ) {
 	snprintf( astr, sizeof(astr), "Failed to get model for component %s",
-		  curr_part_name );
+		curr_part_name );
 	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -2631,7 +2603,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     status = ProMdlTypeGet( model, &type );
     if ( status != PRO_TK_NO_ERROR ) {
 	snprintf( astr, sizeof(astr), "Failed to get type for component %s",
-		  curr_part_name );
+		curr_part_name );
 	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -2666,7 +2638,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 /* this routine is a filter for the feature visit routine
  * selects only "component" items (should be only parts and assemblies)
  */
-ProError
+    ProError
 assembly_filter( ProFeature *feat, ProAppData *data )
 {
     ProFeattype type;
@@ -2676,7 +2648,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
     status = ProFeatureTypeGet( feat, &type );
     if ( status != PRO_TK_NO_ERROR ) {
 	sprintf( astr, "In assembly_filter, cannot get feature type for feature %d",
-		 feat->id );
+		feat->id );
 	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -2691,7 +2663,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
     status = ProFeatureStatusGet( feat, &feat_status );
     if ( status != PRO_TK_NO_ERROR ) {
 	sprintf( astr, "In assembly_filter, cannot get feature status for feature %d",
-		 feat->id );
+		feat->id );
 	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -2706,7 +2678,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
     return PRO_TK_NO_ERROR;
 }
 
-void
+    void
 set_identity( ProMatrix xform )
 {
     int i, j;
@@ -2723,7 +2695,7 @@ set_identity( ProMatrix xform )
 }
 
 /* routine to check if xform is an identity */
-int
+    int
 is_non_identity( ProMatrix xform )
 {
     int i, j;
@@ -2744,7 +2716,7 @@ is_non_identity( ProMatrix xform )
 }
 
 /* routine to output the top level object that is currently displayed in Pro/E */
-void
+    void
 output_top_level_object( ProMdl model, ProMdlType type )
 {
     ProName name;
@@ -2754,7 +2726,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
     /* get its name */
     if ( ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) {
 	(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
-				"Could not get name for part!!" );
+		"Could not get name for part!!" );
 	ProMessageClear();
 	fprintf( stderr, "Could not get name for part" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -2779,7 +2751,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
 	output_assembly( model );
     } else {
 	snprintf( astr, sizeof(astr), "Object %s is neither PART nor ASSEMBLY, skipping",
-		  curr_part_name );
+		curr_part_name );
 	(void)ProMessageDisplay(MSGFIL, "USER_WARNING", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -2814,16 +2786,10 @@ output_top_level_object( ProMdl model, ProMdlType type )
 	    "  %s\n"
 	    "}\n",
 	    buffer
-	);
+	   );
 }
 
-void
-free_rb_data( void *data )
-{
-    bu_free( data, "rb_data" );
-}
-
-int
+    int
 create_temp_directory()
 {
     ProError status;
@@ -2855,14 +2821,14 @@ create_temp_directory()
     status = ProUIDialogActivate( "proe_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
-		 status );
+		status );
 	fprintf( stderr, "\t dialog returned %d\n", ret_status );
     }
 
     return 0;
 }
 
-void
+    void
 free_hash_values( struct bu_hash_tbl *htbl )
 {
     struct bu_hash_entry *entry;
@@ -2876,16 +2842,15 @@ free_hash_values( struct bu_hash_tbl *htbl )
     }
 }
 
-struct bu_hash_tbl *
+    struct bu_hash_tbl *
 create_name_hash( FILE *name_fd )
 {
     struct bu_hash_tbl *htbl;
     char line[MAX_LINE_LEN];
     struct bu_hash_entry *entry=NULL;
-    int new_entry=0;
     long line_no=0;
 
-    htbl = bu_hash_tbl_create( NUM_HASH_TABLE_BINS );
+    htbl = bu_hash_create( NUM_HASH_TABLE_BINS );
 
     if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "name hash created, now filling it:\n" );
@@ -2914,8 +2879,7 @@ create_name_hash( FILE *name_fd )
 	    bu_log( "\tIgnoring\n" );
 	    continue;
 	}
-	entry = bu_hash_tbl_add( htbl, (unsigned char *)part_no, strlen( part_no ), &new_entry );
-	if ( !new_entry ) {
+	if (bu_hash_get( htbl, (unsigned char *)part_no, strlen( part_no )) ) {
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "\t\t\tHash table entry already exists for part number (%s)\n", part_no );
 	    }
@@ -2950,22 +2914,19 @@ create_name_hash( FILE *name_fd )
 	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\t\t\tCreating new hash tabel entry for above names\n" );
 	}
-	bu_set_hash_value( entry, (unsigned char *)part_name );
+	bu_hash_set( htbl, (unsigned char *)part_no, strlen( part_no ), part_name );
     }
 
     return htbl;
 }
 
-void
+    void
 doit( char *dialog, char *compnent, ProAppData appdata )
 {
     ProError status;
     ProMdl model;
     ProMdlType type;
     ProLine tmp_line;
-    int unit_subtype;
-    wchar_t unit_name[PRO_NAME_SIZE];
-    double proe_conv;
     wchar_t *w_output_file;
     wchar_t *w_name_file;
     wchar_t *tmp_str;
@@ -2978,7 +2939,6 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     int ret_status=0;
 
     empty_parts_root = (struct empty_parts *)NULL;
-    brlcad_names = (struct bu_rb_tree *)NULL;
 
     ProStringToWstring( tmp_line, "Not processing" );
     status = ProUILabelTextSet( "proe_brl", "curr_proc", tmp_line );
@@ -2988,7 +2948,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     status = ProUIDialogActivate( "proe_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
-		 status );
+		status );
 	fprintf( stderr, "\t dialog returned %d\n", ret_status );
     }
 
@@ -3263,10 +3223,10 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		fprintf( stderr, "Failed to create error dialog (%d)\n", status );
 	    }
 	    (void)ProUIPushbuttonActivateActionSet( "proe_brl_gen_error",
-						    "ok_button",
-						    kill_gen_error_dialog, NULL );
+		    "ok_button",
+		    kill_gen_error_dialog, NULL );
 	    bu_vls_printf( &error_msg, "\n\tCannot open part name file (%s)\n\t",
-			   name_file );
+		    name_file );
 	    bu_vls_strcat( &error_msg, strerror( errno ) );
 	    ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
 	    status = ProUITextareaValueSet( "proe_brl_gen_error", "error_message", w_error_msg );
@@ -3295,7 +3255,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	status = ProUIDialogActivate( "proe_brl", &ret_status );
 	if ( status != PRO_TK_NO_ERROR ) {
 	    fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
-		     status );
+		    status );
 	    fprintf( stderr, "\t dialog returned %d\n", ret_status );
 	}
 
@@ -3307,7 +3267,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    fprintf( logger, "No name hash used\n" );
 	}
 	/* create an empty hash table */
-	name_hash = bu_hash_tbl_create( 512 );
+	name_hash = bu_hash_create( 512 );
     }
 
     /* get the currently displayed model in Pro/E */
@@ -3356,20 +3316,16 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 	return;
     }
-    /* get units, and adjust conversion factor */
-    if ( prodb_get_model_units( model, LENGTH_UNIT, &unit_subtype,
-				unit_name, &proe_conv ) ) {
-	if ( unit_subtype == UNIT_MM )
-	    proe_to_brl_conv = 1.0;
-	else
-	    proe_to_brl_conv = proe_conv * 25.4;
-    } else {
-	ProMessageDisplay(MSGFIL, "USER_NO_UNITS" );
-	ProMessageClear();
-	fprintf( stderr, "No units specified, assuming inches\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	proe_to_brl_conv = 25.4;
-    }
+    ProUnitsystem us;
+    ProUnititem lmu;
+    ProUnititem mmu;
+    ProUnitConversion conv;
+
+    ProMdlPrincipalunitsystemGet(model, &us);
+    ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu);
+    ProUnitInit(model, L"mm", &mmu);
+    ProUnitConversionGet(&lmu, &conv, &mmu);
+    proe_to_brl_conv = conv.scale;
 
     /* adjust tolerance for Pro/E units */
     local_tol = tol_dist / proe_to_brl_conv;
@@ -3391,14 +3347,18 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProUILabelTextSet( "proe_brl", "curr_proc", tmp_line );
 
     /* free a bunch of stuff */
-    if ( done_list_part ) {
-	bu_rb_free( done_list_part, free_rb_data );
-	done_list_part = NULL;
+    if ( done_list_part.size() > 0 ) {
+	std::set<wchar_t *, WStrCmp>::iterator d_it;
+	for (d_it = done_list_part.begin(); d_it != done_list_part.end(); d_it++) {
+	    bu_free(*d_it, "free wchar str copy");
+	}
     }
 
-    if ( done_list_asm ) {
-	bu_rb_free( done_list_asm, free_rb_data );
-	done_list_asm = NULL;
+    if ( done_list_asm.size() > 0 ) {
+	std::set<wchar_t *, WStrCmp>::iterator d_it;
+	for (d_it = done_list_asm.begin(); d_it != done_list_asm.end(); d_it++) {
+	    bu_free(*d_it, "free wchar str copy");
+	}
     }
 
     if ( part_tris ) {
@@ -3435,12 +3395,16 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	name_hash = (struct bu_hash_tbl *)NULL;
     }
 
-    if ( brlcad_names ) {
+    if ( brlcad_names.size() > 0 ) {
+	std::set<struct bu_vls *, StrCmp>::iterator s_it;
 	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "freeing name rb_tree\n" );
+	    fprintf( logger, "freeing names\n" );
 	}
-	bu_rb_free( brlcad_names, NULL );	/* data was already freed by free_hash_values() */
-	brlcad_names = (struct bu_rb_tree *)NULL;
+	for (s_it = brlcad_names.begin(); s_it != brlcad_names.end(); s_it++) {
+	    struct bu_vls *v = *s_it;
+	    bu_vls_free(v);
+	    BU_PUT(v, struct bu_vls);
+	}
     }
 
     if ( logger_type != LOGGER_TYPE_NONE ) {
@@ -3454,7 +3418,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     return;
 }
 
-void
+    void
 elim_small_activate( char *dialog_name, char *button_name, ProAppData data )
 {
     ProBoolean state;
@@ -3502,7 +3466,7 @@ elim_small_activate( char *dialog_name, char *button_name, ProAppData data )
 }
 
 /* this is the driver routine for converting Pro/E to BRL-CAD */
-int
+    int
 proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 {
     ProError status;
@@ -3560,7 +3524,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&vls, "Error in proe-brl Dialog, error = %d\n",
-		 status );
+		status );
 	bu_vls_printf(&vls, "\t dialog returned %d\n", ret_status );
 	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -3573,7 +3537,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 /* this routine determines whether the "proe-brl" menu item in Pro/E
  * should be displayed as available or greyed out
  */
-static uiCmdAccessState
+    static uiCmdAccessState
 proe_brl_access( uiCmdAccessMode access_mode )
 {
     /* doing the correct checks appears to be unreliable */
@@ -3582,7 +3546,7 @@ proe_brl_access( uiCmdAccessMode access_mode )
 
 
 /* routine to add our menu item */
-int
+    int
 user_initialize( int argc, char *argv[], char *version, char *build, wchar_t errbuf[80] )
 {
     ProError status;
@@ -3603,7 +3567,7 @@ user_initialize( int argc, char *argv[], char *version, char *build, wchar_t err
 
     /* add a command that calls our proe-brl routine */
     status = ProCmdActionAdd( "Proe-BRL", (uiCmdCmdActFn)proe_brl, uiProe2ndImmediate,
-			      proe_brl_access, PRO_B_FALSE, PRO_B_FALSE, &cmd_id );
+	    proe_brl_access, PRO_B_FALSE, PRO_B_FALSE, &cmd_id );
     if ( status != PRO_TK_NO_ERROR ) {
 	sprintf( astr, "Failed to add proe-brl action" );
 	fprintf( stderr, "%s\n", astr);
@@ -3615,7 +3579,7 @@ user_initialize( int argc, char *argv[], char *version, char *build, wchar_t err
 
     /* add a menu item that runs the new command */
     status = ProMenubarmenuPushbuttonAdd( "File", "Proe-BRL", "Proe-BRL", "Proe-BRL-HELP",
-					  "File.psh_exit", PRO_B_FALSE, cmd_id, MSGFIL );
+	    "File.psh_exit", PRO_B_FALSE, cmd_id, MSGFIL );
     if ( status != PRO_TK_NO_ERROR ) {
 	sprintf( astr, "Failed to add proe-brl menu button" );
 	fprintf( stderr, "%s\n", astr);
@@ -3632,14 +3596,14 @@ user_initialize( int argc, char *argv[], char *version, char *build, wchar_t err
     return 0;
 }
 
-void
+    void
 do_quit( char *dialog, char *compnent, ProAppData appdata )
 {
     ProUIDialogDestroy( "proe_brl" );
 }
 
 
-void
+    void
 user_terminate()
 {
 }
