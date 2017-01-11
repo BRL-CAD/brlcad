@@ -4063,6 +4063,10 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 }
 
 
+/* FIXME, not publicly exposed anywhere as it's a non-geom object */
+extern int rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i);
+
+
 /**
  * Retrieve data for DSP from a database object.
  */
@@ -4076,7 +4080,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 
     BU_ALLOC(dsp_ip->dsp_bip, struct rt_db_internal);
 
-    ret = rt_retrieve_binunif (dsp_ip->dsp_bip, dbip, bu_vls_addr(&dsp_ip->dsp_name));
+    ret = rt_retrieve_binunif(dsp_ip->dsp_bip, dbip, bu_vls_addr(&dsp_ip->dsp_name));
     if (ret)
 	return -1;
 
@@ -4093,6 +4097,32 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	bu_log("binunif magic: 0x%08x  type: %d count:%zu data[0]:%u\n",
 	       bip->magic, bip->type, bip->count, bip->u.uint16[0]);
 
+    if (bip->type != DB5_MINORTYPE_BINU_16BITINT_U
+	|| (size_t)bip->count != (size_t)(dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt))
+    {
+	size_t i = 0;
+	size_t size;
+	struct bu_vls binudesc = BU_VLS_INIT_ZERO;
+	rt_binunif_describe(&binudesc, dsp_ip->dsp_bip, 0, dbip->dbi_base2local, NULL, (struct db_i *)dbip);
+
+	/* skip the first title line */
+	size = bu_vls_strlen(&binudesc);
+	while (size > 0 && i < size && bu_vls_cstr(&binudesc)[0] != '\n') {
+	    bu_vls_nibble(&binudesc, 1);
+	}
+	if (bu_vls_cstr(&binudesc)[0] == '\n')
+	    bu_vls_nibble(&binudesc, 1);
+
+	bu_log("ERROR: Binary object '%s' has invalid data (expected type %d, found %d).\n"
+	       "       Expecting %llu 16-bit unsigned short (nus) integer data values.\n"
+	       "       Encountered %s\n",
+	       bu_vls_cstr(&dsp_ip->dsp_name),
+	       DB5_MINORTYPE_BINU_16BITINT_U,
+	       bip->type,
+	       dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt,
+	       bu_vls_cstr(&binudesc));
+	return -2;
+    }
 
     in_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
     out_cookie = bu_cv_cookie("hus");
