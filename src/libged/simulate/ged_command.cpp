@@ -1,7 +1,7 @@
-/*                    S I M U L A T E . C P P
+/*                 G E D _ C O M M A N D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2017 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file simulate.cpp
+/** @file ged_command.cpp
  *
- * GED command.
+ * Simulate GED command.
  *
  */
 
@@ -27,7 +27,27 @@
 #include "common.h"
 
 
-#ifdef HAVE_BULLET
+#ifndef HAVE_BULLET
+
+
+#include "ged.h"
+
+
+int
+ged_simulate(ged * const gedp, const int argc, const char ** const argv)
+{
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    bu_vls_sprintf(gedp->ged_result_str,
+		   "%s: This build of BRL-CAD was not compiled with Bullet support", argv[0]);
+
+    return GED_ERROR;
+}
+
+
+#else
 
 
 #include "simulation.hpp"
@@ -40,54 +60,34 @@ int
 ged_simulate(ged * const gedp, const int argc, const char ** const argv)
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     if (argc != 3) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: USAGE: %s <scene_comb> <seconds>",
+	bu_vls_sprintf(gedp->ged_result_str, "%s: USAGE: %s <combination> <seconds>",
 		       argv[0], argv[0]);
 	return GED_ERROR;
     }
 
-    directory * const dir = db_lookup(gedp->ged_wdbp->dbip, argv[1], true);
-
-    if (!dir) return GED_ERROR;
+    rt_wdb * const orig_wdbp = gedp->ged_wdbp->dbip->dbi_wdbp;
+    gedp->ged_wdbp->dbip->dbi_wdbp = gedp->ged_wdbp;
 
     try {
-	const fastf_t seconds = simulate::lexical_cast<btScalar>(argv[2],
-				std::invalid_argument("invalid value for 'seconds'"));
+	const fastf_t seconds = simulate::lexical_cast<fastf_t>(argv[2],
+				"invalid value for 'seconds'");
 
-	if (seconds < 0.0) throw std::invalid_argument("invalid value for 'seconds'");
+	if (!(seconds >= 0.0))
+	    throw simulate::InvalidSimulationError("invalid value for 'seconds'");
 
-	simulate::Simulation simulation(*gedp->ged_wdbp->dbip, *dir);
-	simulation.step(seconds);
-    } catch (const std::logic_error &e) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], e.what());
-	return GED_ERROR;
-    } catch (const std::runtime_error &e) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], e.what());
+	simulate::Simulation(*gedp->ged_wdbp->dbip, argv[1]).step(seconds);
+    } catch (const simulate::InvalidSimulationError &exception) {
+	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], exception.what());
+	gedp->ged_wdbp->dbip->dbi_wdbp = orig_wdbp;
 	return GED_ERROR;
     }
 
+    gedp->ged_wdbp->dbip->dbi_wdbp = orig_wdbp;
     return GED_OK;
-}
-
-
-#else
-
-
-#include "ged.h"
-
-
-int
-ged_simulate(ged * const gedp, const int argc, const char ** const argv)
-{
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    bu_vls_sprintf(gedp->ged_result_str,
-		   "%s: This build of BRL-CAD was not compiled with Bullet support", argv[0]);
-
-    return GED_ERROR;
 }
 
 

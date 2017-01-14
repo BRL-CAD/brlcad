@@ -1,7 +1,7 @@
-/*                   C O L L I S I O N . H P P
+/*      R T _ C O L L I S I O N _ A L G O R I T H M . H P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2017 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file collision.hpp
+/** @file rt_collision_algorithm.hpp
  *
- * Bullet collision algorithm.
+ * A librt-based collision algorithm for RtCollisionShape pairs.
  *
  */
 
 
-#ifndef COLLISION_H
-#define COLLISION_H
+#ifndef SIMULATE_RT_COLLISION_ALGORITHM_H
+#define SIMULATE_RT_COLLISION_ALGORITHM_H
 
 
 #include "common.h"
@@ -34,62 +34,46 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#include <string>
-
 
 namespace simulate
 {
 
 
-class RtCollisionShape : public btBoxShape
+class RtCollisionAlgorithm : public btCollisionAlgorithm
 {
 public:
-    static const int RT_SHAPE_TYPE = CUSTOM_POLYHEDRAL_SHAPE_TYPE;
+    class CreateFunc : public btCollisionAlgorithmCreateFunc
+    {
+    public:
+	CreateFunc(const RtInstance &rt_instance, btIDebugDraw &debug_draw);
+
+	virtual btCollisionAlgorithm *CreateCollisionAlgorithm(
+	    btCollisionAlgorithmConstructionInfo &cinfo,
+	    const btCollisionObjectWrapper *body_a_wrap,
+	    const btCollisionObjectWrapper *body_b_wrap);
 
 
-    explicit RtCollisionShape(const TreeUpdater &tree_updater,
-			      const std::string &db_path, const btVector3 &half_extents);
-
-    virtual const char *getName() const;
-    virtual void calculateLocalInertia(btScalar mass, btVector3 &inertia) const;
-
-    std::string get_db_path() const;
-    rt_i &get_rt_instance() const;
+    private:
+	const RtInstance &m_rt_instance;
+	btIDebugDraw &m_debug_draw;
+    };
 
 
-private:
-    const TreeUpdater &m_tree_updater;
-    const std::string m_db_path;
-};
-
-
-class RtCollisionAlgorithm : public btActivatingCollisionAlgorithm
-{
-public:
     explicit RtCollisionAlgorithm(btPersistentManifold *manifold,
 				  const btCollisionAlgorithmConstructionInfo &cinfo,
 				  const btCollisionObjectWrapper *body_a_wrap,
-				  const btCollisionObjectWrapper *body_b_wrap);
-
+				  const btCollisionObjectWrapper *body_b_wrap,
+				  const RtInstance &rt_instance,
+				  btIDebugDraw &debug_draw);
     virtual ~RtCollisionAlgorithm();
 
     virtual void processCollision(const btCollisionObjectWrapper *body_a_wrap,
 				  const btCollisionObjectWrapper *body_b_wrap,
 				  const btDispatcherInfo &dispatch_info, btManifoldResult *result);
-
     virtual btScalar calculateTimeOfImpact(btCollisionObject *body_a,
 					   btCollisionObject *body_b, const btDispatcherInfo &dispatch_info,
 					   btManifoldResult *result);
-
     virtual void getAllContactManifolds(btManifoldArray &manifold_array);
-
-
-    struct CreateFunc : public btCollisionAlgorithmCreateFunc {
-	virtual btCollisionAlgorithm *CreateCollisionAlgorithm(
-	    btCollisionAlgorithmConstructionInfo &cinfo,
-	    const btCollisionObjectWrapper *body_a_wrap,
-	    const btCollisionObjectWrapper *body_b_wrap);
-    };
 
 
 private:
@@ -98,6 +82,8 @@ private:
 
     bool m_owns_manifold;
     btPersistentManifold *m_manifold;
+    const RtInstance &m_rt_instance;
+    btIDebugDraw &m_debug_draw;
 };
 
 

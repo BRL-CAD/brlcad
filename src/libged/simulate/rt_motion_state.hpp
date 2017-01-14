@@ -1,7 +1,7 @@
-/*                W O R L D _ O B J E C T . H P P
+/*             R T _ M O T I O N _ S T A T E . H P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2014-2017 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,69 +17,45 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file world_object.hpp
+/** @file rt_motion_state.hpp
  *
- * Class for objects within a simulation.
+ * Motion state for objects in an rt instance.
  *
  */
 
-
-#ifndef WORLD_OBJECT_H
-#define WORLD_OBJECT_H
+#ifndef SIMULATE_RT_MOTION_STATE_H
+#define SIMULATE_RT_MOTION_STATE_H
 
 
 #include "common.h"
 
-#include "collision.hpp"
+#include "rt/db_instance.h"
+
+#include <btBulletDynamicsCommon.h>
+
+#include <string>
 
 
 namespace simulate
 {
 
 
-class MatrixMotionState : public btMotionState
+class RtMotionState : public btMotionState
 {
 public:
-    explicit MatrixMotionState(fastf_t *matrix, const btVector3 &origin,
-			       TreeUpdater &tree_updater);
+    explicit RtMotionState(db_i &db, const std::string &path,
+			   const btVector3 &aabb_center);
+
+    const std::string &get_path() const;
 
     virtual void getWorldTransform(btTransform &dest) const;
     virtual void setWorldTransform(const btTransform &transform);
 
 
 private:
-    MatrixMotionState(const MatrixMotionState &source);
-    MatrixMotionState &operator=(const MatrixMotionState &source);
-
-    const matp_t m_matrix;
-    const btVector3 m_origin;
-    TreeUpdater &m_tree_updater;
-};
-
-
-class WorldObject
-{
-public:
-    static WorldObject *create(db_i &db, directory &dir, fastf_t *matrix,
-			       TreeUpdater &tree_updater);
-    ~WorldObject();
-
-    void add_to_world(btDiscreteDynamicsWorld &world);
-
-
-private:
-    WorldObject(const WorldObject &source);
-    WorldObject &operator=(const WorldObject &source);
-
-    explicit WorldObject(directory &dir, fastf_t *matrix,
-			 TreeUpdater &tree_updater, btVector3 bounding_box_pos,
-			 btVector3 bounding_box_dims, fastf_t mass);
-
-
-    btDiscreteDynamicsWorld *m_world;
-    MatrixMotionState m_motion_state;
-    RtCollisionShape m_collision_shape;
-    btRigidBody m_rigid_body;
+    db_i &m_db;
+    const std::string m_path;
+    btTransform m_transform;
 };
 
 

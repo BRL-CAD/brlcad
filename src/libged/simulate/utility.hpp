@@ -1,7 +1,7 @@
 /*                     U T I L I T Y . H P P
  * BRL-CAD
  *
- * Copyright (c) 2016 United States Government as represented by
+ * Copyright (c) 2014-2017 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,10 @@
  */
 
 
+#ifndef SIMULATE_UTILITY_H
+#define SIMULATE_UTILITY_H
+
+
 #include "common.h"
 
 #include <sstream>
@@ -39,7 +43,7 @@ namespace detail
 
 
 template <typename T> void
-autoptr_wrap_bu_free(T *ptr)
+autoptr_wrap_bu_free(T * const ptr)
 {
     bu_free(ptr, "AutoPtr");
 }
@@ -48,9 +52,17 @@ autoptr_wrap_bu_free(T *ptr)
 }
 
 
+class InvalidSimulationError : public std::runtime_error
+{
+public:
+    explicit InvalidSimulationError(const std::string &value) :
+	std::runtime_error(value)
+    {}
+};
+
+
 template <typename Target, typename Source>
-Target lexical_cast(Source arg,
-		    const std::exception &exception = std::invalid_argument("bad lexical_cast"))
+Target lexical_cast(Source arg, const std::string &message)
 {
     std::stringstream interpreter;
     Target result;
@@ -58,7 +70,7 @@ Target lexical_cast(Source arg,
     if (!(interpreter << arg) ||
 	!(interpreter >> result) ||
 	!(interpreter >> std::ws).eof())
-	throw exception;
+	throw InvalidSimulationError(message);
 
     return result;
 }
@@ -66,8 +78,8 @@ Target lexical_cast(Source arg,
 
 template <typename T, void free_fn(T *) = detail::autoptr_wrap_bu_free>
 struct AutoPtr {
-    explicit AutoPtr(T *vptr = NULL) :
-	ptr(vptr)
+    explicit AutoPtr(T * const value) :
+	ptr(value)
     {}
 
 
@@ -78,7 +90,7 @@ struct AutoPtr {
     }
 
 
-    T *ptr;
+    T * const ptr;
 
 
 private:
@@ -88,6 +100,9 @@ private:
 
 
 }
+
+
+#endif
 
 
 // Local Variables:

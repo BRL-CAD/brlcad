@@ -1,7 +1,7 @@
-/*               P H Y S I C S _ W O R L D . H P P
+/*                     U T I L I T Y . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2017 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,48 +17,28 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file physics_world.hpp
+/** @file utility.cpp
  *
- * State for a simulated scene.
+ * Helpers used by simulate.
  *
  */
 
 
-#ifndef PHYSICS_WORLD_H
-#define PHYSICS_WORLD_H
-
-
 #include "common.h"
 
-#include "bu/defines.h"
 
-#include <btBulletDynamicsCommon.h>
+#ifdef HAVE_BULLET
+
+
+#include "utility.hpp"
 
 
 namespace simulate
 {
 
 
-class PhysicsWorld
-{
-public:
-    explicit PhysicsWorld();
-    virtual ~PhysicsWorld();
-
-    void step(fastf_t seconds);
-    void add_rigid_body(btRigidBody &rigid_body);
-    void remove_rigid_body(btRigidBody &rigid_body);
-
-
-protected:
-    btDbvtBroadphase m_broadphase;
-    btDefaultCollisionConfiguration m_collision_config;
-    btCollisionDispatcher m_collision_dispatcher;
-    btSequentialImpulseConstraintSolver m_constraint_solver;
-    btDiscreteDynamicsWorld m_world;
-};
-
 }
+
 
 #endif
 

@@ -1,7 +1,7 @@
 /*                 R T _ I N S T A N C E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2014-2017 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,63 +19,53 @@
  */
 /** @file rt_instance.cpp
  *
- * Rt instance for the ray tracing collision algorithm.
+ * Manage rt instances.
  *
  */
+
+
+#include "common.h"
 
 
 #ifdef HAVE_BULLET
 
 
-#include "common.h"
-
 #include "rt_instance.hpp"
+#include "utility.hpp"
 
-#include <stdexcept>
+#include "rt/application.h"
+#include "rt/overlap.h"
+#include "rt/rt_instance.h"
+#include "rt/shoot.h"
 
 
 namespace
 {
 
 
-HIDDEN rt_db_internal
-duplicate_comb_internal(const rt_db_internal &source)
-{
-    RT_CK_DB_INTERNAL(&source);
-
-    rt_db_internal dest = source;
-    BU_GET(dest.idb_ptr, rt_comb_internal);
-    BU_AVS_INIT(&dest.idb_avs);
-    bu_avs_merge(&dest.idb_avs, &source.idb_avs);
-
-    {
-	const rt_comb_internal &source_comb = *static_cast<const rt_comb_internal *>
-					      (source.idb_ptr);
-	rt_comb_internal &dest_comb = *static_cast<rt_comb_internal *>(dest.idb_ptr);
-
-	RT_CK_COMB(&source_comb);
-
-	dest_comb = source_comb;
-	BU_VLS_INIT(&dest_comb.shader);
-	BU_VLS_INIT(&dest_comb.material);
-	bu_vls_vlscat(&dest_comb.shader, &source_comb.shader);
-	bu_vls_vlscat(&dest_comb.material, &source_comb.material);
-	dest_comb.tree = db_dup_subtree(source_comb.tree, &rt_uniresource);
-    }
-
-    return dest;
-}
+struct MultiOverlapHandlerArgs {
+    std::vector<std::pair<btVector3, btVector3> > &result;
+};
 
 
 HIDDEN void
-write_comb_internal(db_i &db, directory &dir,
-		    const rt_db_internal &comb_internal)
+multioverlap_handler(application * const app, partition * const partition1,
+		     bu_ptbl * const region_table, partition * const partition2)
 {
+    MultiOverlapHandlerArgs &args = *static_cast<MultiOverlapHandlerArgs *>
+				    (app->a_uptr);
 
-    rt_db_internal temp_internal = duplicate_comb_internal(comb_internal);
+    // TODO: ensure that point_on_{a,b} correspond to their body_{a,b}
+    btVector3 point_on_a(0.0, 0.0, 0.0), point_on_b(0.0, 0.0, 0.0);
+    VJOIN1(point_on_a, app->a_ray.r_pt, partition1->pt_inhit->hit_dist,
+	   app->a_ray.r_dir);
+    VJOIN1(point_on_b, app->a_ray.r_pt, partition1->pt_outhit->hit_dist,
+	   app->a_ray.r_dir);
 
-    if (rt_db_put_internal(&dir, &db, &temp_internal, &rt_uniresource) < 0)
-	throw std::runtime_error("rt_db_put_internal() failed");
+    args.result.push_back(std::make_pair(point_on_a, point_on_b));
+
+    // handle the overlap
+    rt_default_multioverlap(app, partition1, region_table, partition2);
 }
 
 
@@ -86,72 +76,53 @@ namespace simulate
 {
 
 
-TreeUpdater::TreeUpdater(db_i &db, directory &dir) :
-    m_db(db),
-    m_dir(dir),
-    m_comb_internal(),
-    m_is_modified(false),
-    m_rt_instance(NULL)
+RtInstance::RtInstance(db_i &db) :
+    m_db(db)
 {
-    if (rt_db_get_internal(&m_comb_internal, &m_dir, &m_db, bn_mat_identity,
-			   &rt_uniresource) < 0)
-	throw std::runtime_error("rt_db_get_internal() failed");
-
-    RT_CK_COMB(m_comb_internal.idb_ptr);
+    RT_CK_DBI(&m_db);
 }
 
 
-TreeUpdater::~TreeUpdater()
+std::vector<std::pair<btVector3, btVector3> >
+RtInstance::get_overlaps(const std::string &path_a, const std::string &path_b,
+			 const xrays &rays) const
 {
-    if (m_is_modified)
-	write_comb_internal(m_db, m_dir, m_comb_internal);
+    AutoPtr<rt_i, rt_free_rti> rti(rt_new_rti(&m_db));
 
-    if (m_rt_instance)
-	rt_free_rti(m_rt_instance);
+    if (!rti.ptr)
+	bu_bomb("rt_new_rti() failed");
 
-    rt_db_free_internal(&m_comb_internal);
-}
+    const char *paths[2] = {path_a.c_str(), path_b.c_str()};
 
+    if (rt_gettrees(rti.ptr, 2, paths, 1))
+	bu_bomb("rt_gettrees() failed");
 
-void
-TreeUpdater::mark_modified()
-{
-    m_is_modified = true;
-}
+    rt_prep_parallel(rti.ptr, 1);
 
+    std::vector<std::pair<btVector3, btVector3> > result;
 
-tree *
-TreeUpdater::get_tree()
-{
-    return static_cast<rt_comb_internal *>(m_comb_internal.idb_ptr)->tree;
-}
+    application app;
+    MultiOverlapHandlerArgs handler_args = {result};
+    RT_APPLICATION_INIT(&app);
+    app.a_rt_i = rti.ptr;
+    app.a_logoverlap = rt_silent_logoverlap;
+    app.a_multioverlap = multioverlap_handler;
+    app.a_uptr = &handler_args;
 
+    // shoot center ray
+    VMOVE(app.a_ray.r_pt, rays.ray.r_pt);
+    VMOVE(app.a_ray.r_dir, rays.ray.r_dir);
+    rt_shootray(&app);
 
-rt_i &
-TreeUpdater::get_rt_instance() const
-{
-    if (m_is_modified)
-	write_comb_internal(m_db, m_dir, m_comb_internal);
-    else if (m_rt_instance)
-	return *m_rt_instance;
+    const xrays *entry = NULL;
 
-    if (m_rt_instance)
-	rt_free_rti(m_rt_instance);
-
-    m_rt_instance = rt_new_rti(&m_db);
-
-    if (!m_rt_instance)
-	throw std::runtime_error("rt_new_rti() failed");
-
-    if (rt_gettree(m_rt_instance, m_dir.d_namep) != 0) {
-	rt_free_rti(m_rt_instance);
-	m_rt_instance = NULL;
-	throw std::runtime_error("rt_gettree() failed");
+    for (BU_LIST_FOR(entry, xrays, &rays.l)) {
+	VMOVE(app.a_ray.r_pt, entry->ray.r_pt);
+	VMOVE(app.a_ray.r_dir, entry->ray.r_dir);
+	rt_shootray(&app);
     }
 
-    rt_prep(m_rt_instance);
-    m_is_modified = false;
-    return *m_rt_instance;
+    return result;
 }
 
 

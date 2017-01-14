@@ -1,4 +1,4 @@
-/*                  S I M U L A T I O N . H P P
+/*               R T _ D E B U G _ D R A W . H P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2017 United States Government as represented by
@@ -17,23 +17,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file simulation.hpp
+/** @file rt_debug_draw.hpp
  *
- * Programmatic interface for simulate.
+ * Bullet debug renderer.
  *
  */
 
 
-#ifndef SIMULATE_SIMULATION_H
-#define SIMULATE_SIMULATION_H
+#ifndef SIMULATE_RT_DEBUG_DRAW_H
+#define SIMULATE_RT_DEBUG_DRAW_H
 
 
 #include "common.h"
 
-#include "rt_debug_draw.hpp"
-#include "rt_instance.hpp"
-
-#include "rt/rt_instance.h"
+#include "rt/db_instance.h"
 
 #include <btBulletDynamicsCommon.h>
 
@@ -42,25 +39,29 @@ namespace simulate
 {
 
 
-class Simulation
+class RtDebugDraw : public btIDebugDraw
 {
 public:
-    explicit Simulation(db_i &db, const std::string &path);
+    explicit RtDebugDraw(db_i &db);
 
-    void step(fastf_t seconds);
+    virtual void setDefaultColors(const DefaultColors &default_colors);
+    virtual void drawLine(const btVector3 &from, const btVector3 &to,
+			  const btVector3 &color);
+    virtual void drawContactPoint(const btVector3 &point_on_b,
+				  const btVector3 &normal_world_on_b,
+				  btScalar distance, int lifetime,
+				  const btVector3 &color);
+    virtual void reportErrorWarning(const char *message);
+    virtual void draw3dText(const btVector3 &location, const char *text);
+    virtual void setDebugMode(int mode);
+    virtual int getDebugMode() const;
+    virtual DefaultColors getDefaultColors() const;
 
 
 private:
-    class Region;
-
-    RtDebugDraw m_debug_draw;
-    btDbvtBroadphase m_broadphase;
-    btDefaultCollisionConfiguration m_collision_config;
-    btCollisionDispatcher m_collision_dispatcher;
-    btSequentialImpulseConstraintSolver m_constraint_solver;
-    btDiscreteDynamicsWorld m_world;
-    std::vector<const Region *> m_regions;
-    const RtInstance m_rt_instance;
+    db_i &m_db;
+    DefaultColors m_default_colors;
+    DebugDrawModes m_debug_mode;
 };
 
 
