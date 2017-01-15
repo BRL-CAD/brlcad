@@ -40,6 +40,7 @@
 #include "rt/pattern.h"
 
 #include <stdexcept>
+#include <cmath>
 
 
 namespace
