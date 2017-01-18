@@ -12,9 +12,9 @@ db="$1"
 skip="$2"
 sz="512"
 pwd=`pwd`
-loop="$pwd/bin/loop"
-mged="$pwd/bin/mged"
-rtcheck="$pwd/bin/rtcheck"
+loop="loop"
+mged="mged"
+rtcheck="rtcheck"
 
 
 echo ""
