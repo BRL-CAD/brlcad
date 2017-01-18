@@ -106,6 +106,24 @@ HIDDEN Target lexical_cast(const Source &value)
 }
 
 
+HIDDEN void
+comb_to_region(db_i &db, const std::string &name)
+{
+    RT_CK_DBI(&db);
+
+    if (directory * const dir = db_lookup(&db, name.c_str(), true)) {
+	if (dir->d_flags & RT_DIR_COMB) {
+	    dir->d_flags |= RT_DIR_REGION;
+
+	    if (db5_update_attribute(name.c_str(), "region", "R", &db))
+		throw std::runtime_error("db5_update_attribute() failed");
+	} else
+	    throw std::invalid_argument("invalid directory type");
+    } else
+	throw std::runtime_error("db_lookup() failed");
+}
+
+
 struct UuidCompare {
     bool operator()(const ON_UUID &left, const ON_UUID &right) const
     {
@@ -117,8 +135,9 @@ struct UuidCompare {
 class InvalidRhinoModelError : public std::runtime_error
 {
 public:
-    explicit InvalidRhinoModelError(const std::string &value) : std::runtime_error(
-	    value) {}
+    explicit InvalidRhinoModelError(const std::string &value) :
+	std::runtime_error(value)
+    {}
 };
 
 
@@ -653,8 +672,8 @@ import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
     rgb[1] = static_cast<unsigned char>(layer.Color().Green());
     rgb[2] = static_cast<unsigned char>(layer.Color().Blue());
 
-    const Shader &shader = get_shader(layer.RenderMaterialIndex() != -1 ?
-				      at(model.m_material_table, layer.RenderMaterialIndex()) : ON_Material());
+    const Shader shader = get_shader(layer.RenderMaterialIndex() != -1 ?
+				     at(model.m_material_table, layer.RenderMaterialIndex()) : ON_Material());
 
     write_comb(wdb, name, get_layer_members(layer, model), NULL,
 	       shader.first.c_str(), shader.second.c_str(), rgb);
@@ -702,9 +721,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	directory **entry;
 
 	for (BU_PTBL_FOR(entry, (directory **), &found)) {
-	    // FIXME: the in-memory records need to be updated as well
-	    if (db5_update_attribute((*entry)->d_namep, "region", "R", &db))
-		throw std::runtime_error("db5_update_attribute() failed");
+	    comb_to_region(db, (*entry)->d_namep);
 
 	    if (gcv_options.debug_mode) {
 		// random colors debug mode: TODO: move this into a filter after 7.26.0
@@ -780,7 +797,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     BU_PTBL_INIT(&found);
 
     if (0 > db_search(&found, DB_SEARCH_TREE,
-		      "-type shape -not -below -attr region=R", 0, NULL, &db))
+		      "-type shape -not -below -type region", 0, NULL, &db))
 	throw std::runtime_error("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -814,9 +831,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	    members.insert(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
 	    write_comb(*db.dbi_wdbp, region_name, members);
 
-	    // FIXME: the in-memory records need to be updated as well
-	    if (db5_update_attribute(region_name.c_str(), "region", "R", &db))
-		throw std::runtime_error("db5_update_attribute() failed");
+	    comb_to_region(db, region_name);
 
 	    bool has_rgb = false, has_shader = false;
 
