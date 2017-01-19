@@ -71,7 +71,7 @@ RtDebugDraw::drawLine(const btVector3 &from, const btVector3 &to,
 
     std::ostringstream name_str, color_str;
     name_str << "RtDebugDraw::line_" << static_cast<std::size_t>
-	     (drand48() * 100000.0 + 0.5) << ".s";
+	     (drand48() * 1.0e5 + 0.5) << ".s";
 
     for (std::size_t i = 0; i < 3; ++i) {
 	color_str << static_cast<unsigned>(color[i] * 255.0 + 0.5);
@@ -99,7 +99,7 @@ RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
 
     std::ostringstream name_str, color_str;
     name_str << "RtDebugDraw::contact_" << static_cast<std::size_t>
-	     (drand48() * 100000.0 + 0.5) << ".s";
+	     (drand48() * 1.0e5 + 0.5) << ".s";
 
     for (std::size_t i = 0; i < 3; ++i) {
 	color_str << static_cast<unsigned>(color[i] * 255.0 + 0.5);

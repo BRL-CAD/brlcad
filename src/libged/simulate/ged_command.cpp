@@ -76,7 +76,7 @@ ged_simulate(ged * const gedp, const int argc, const char ** const argv)
 	const fastf_t seconds = simulate::lexical_cast<fastf_t>(argv[2],
 				"invalid value for 'seconds'");
 
-	if (!(seconds >= 0.0))
+	if (seconds < 0.0)
 	    throw simulate::InvalidSimulationError("invalid value for 'seconds'");
 
 	simulate::Simulation(*gedp->ged_wdbp->dbip, argv[1]).step(seconds);

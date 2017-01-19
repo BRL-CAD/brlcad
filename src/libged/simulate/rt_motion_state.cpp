@@ -32,12 +32,8 @@
 #include "rt_motion_state.hpp"
 #include "utility.hpp"
 
-#include "bn/mat.h"
-#include "bu/str.h"
 #include "rt/db_internal.h"
 #include "rt/nongeom.h"
-
-#include <stdexcept>
 
 
 namespace
@@ -122,14 +118,20 @@ RtMotionState::setWorldTransform(const btTransform &transform)
     if (full_path.fp_len < 2)
 	throw InvalidSimulationError("invalid path");
 
+    directory &parent_dir = *full_path.fp_names[full_path.fp_len - 2];
+
+    if (parent_dir.d_nref != 0 && parent_dir.d_nref != 1)
+	throw InvalidSimulationError(
+	    std::string("multiple references to parent combination '") + parent_dir.d_namep
+	    + "'");
+
     rt_db_internal parent_internal;
     RT_DB_INTERNAL_INIT(&parent_internal);
     AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(
 	&parent_internal);
 
-    if (rt_db_get_internal(&parent_internal,
-			   full_path.fp_names[full_path.fp_len - 2], &m_db, bn_mat_identity,
-			   &rt_uniresource) < 0)
+    if (0 > rt_db_get_internal(&parent_internal, &parent_dir, &m_db,
+			       bn_mat_identity, &rt_uniresource))
 	bu_bomb("rt_db_get_internal() failed");
 
     rt_comb_internal &comb = *static_cast<rt_comb_internal *>
@@ -152,8 +154,8 @@ RtMotionState::setWorldTransform(const btTransform &transform)
 
     bn_mat_mul2(temp, leaf->tr_l.tl_mat);
 
-    if (rt_db_put_internal(full_path.fp_names[full_path.fp_len - 2], &m_db,
-			   &parent_internal, &rt_uniresource) < 0)
+    if (0 > rt_db_put_internal(&parent_dir, &m_db, &parent_internal,
+			       &rt_uniresource))
 	bu_bomb("rt_db_put_internal() failed");
 }
 

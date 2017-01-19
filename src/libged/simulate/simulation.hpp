@@ -35,8 +35,6 @@
 
 #include "rt/rt_instance.h"
 
-#include <btBulletDynamicsCommon.h>
-
 
 namespace simulate
 {

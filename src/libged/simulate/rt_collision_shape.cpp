@@ -32,8 +32,6 @@
 
 #include "rt_collision_shape.hpp"
 
-#include "rt/tree.h"
-
 
 namespace simulate
 {

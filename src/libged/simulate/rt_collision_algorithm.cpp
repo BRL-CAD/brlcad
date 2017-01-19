@@ -31,15 +31,12 @@
 
 
 #include "rt_collision_algorithm.hpp"
-#include "rt_collision_shape.hpp"
 #include "rt_motion_state.hpp"
-#include "utility.hpp"
 
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "rt/pattern.h"
 
-#include <stdexcept>
 #include <cmath>
 
 
@@ -133,7 +130,7 @@ calculate_contact_points(btManifoldResult &result,
 	    btVector3 up = normal_world_on_b.cross(btVector3(1.0, 0.0, 0.0));
 
 	    // use the y-axis if parallel to x-axis
-	    if (up.isZero())
+	    if (up.fuzzyZero())
 		up = normal_world_on_b.cross(btVector3(0.0, 1.0, 0.0));
 
 	    VMOVE(up_vect, up);
@@ -142,18 +139,16 @@ calculate_contact_points(btManifoldResult &result,
 	// NOTE: Bullet's collision tolerance is 4 units (4mm)
 	const btScalar minimum_grid_size = 0.25; // arbitrary
 	const btScalar grid_size = std::max(minimum_grid_size,
-					    radius / static_cast<btScalar>(10.0));
+					    radius / static_cast<btScalar>(1.0e1));
 
 	rt_gen_circular_grid(rays, &center_ray, radius, up_vect, grid_size);
     }
 
     // shoot the rays
     const std::string &body_a_path = static_cast<const simulate::RtMotionState *>
-				     (static_cast<const btRigidBody *>
-				      (body_a_wrap.getCollisionObject())->getMotionState())->get_path();
+				     (body_a_rb.getMotionState())->get_path();
     const std::string &body_b_path = static_cast<const simulate::RtMotionState *>
-				     (static_cast<const btRigidBody *>
-				      (body_b_wrap.getCollisionObject())->getMotionState())->get_path();
+				     (body_b_rb.getMotionState())->get_path();
     const std::vector<std::pair<btVector3, btVector3> > overlaps =
 	rt_instance.get_overlaps(body_a_path, body_b_path, *rays);
 

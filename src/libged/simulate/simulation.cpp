@@ -37,10 +37,10 @@
 #include "utility.hpp"
 
 #include "bu/str.h"
-#include "rt/calc.h"
 #include "rt/db_attr.h"
 #include "rt/search.h"
 
+#include <limits>
 #include <stack>
 
 
@@ -116,36 +116,15 @@ get_aabb(db_i &db, const std::string &path)
 		break;
 
 	    default:
-		throw simulate::InvalidSimulationError(
-		    "invalid tree operation in '" + path + "'");
+		bu_bomb("invalid tree operation");
 	}
     }
 
     if (!found_soltab)
-	throw simulate::InvalidSimulationError(
-	    "no solids found in tree of '" + path + "'");
+	throw simulate::InvalidSimulationError("no solids found in tree of '" + path +
+					       "'");
 
     return result;
-}
-
-
-HIDDEN btVector3
-get_aabb_center(db_i &db, const std::string &path)
-{
-    RT_CK_DBI(&db);
-
-    const std::pair<btVector3, btVector3> aabb = get_aabb(db, path);
-    return (aabb.first + aabb.second) / 2.0;
-}
-
-
-HIDDEN btVector3
-get_aabb_half_extents(db_i &db, const std::string &path)
-{
-    RT_CK_DBI(&db);
-
-    const std::pair<btVector3, btVector3> aabb = get_aabb(db, path);
-    return (aabb.second - aabb.first) / 2.0;
 }
 
 
@@ -188,9 +167,10 @@ public:
 
 
 private:
-    Region(db_i &db, const std::string &path, btDiscreteDynamicsWorld &world,
-	   btScalar mass, const btVector3 &linear_velocity,
-	   const btVector3 &angular_velocity);
+    explicit Region(db_i &db, const std::string &path,
+		    btDiscreteDynamicsWorld &world, const std::pair<btVector3, btVector3> &aabb,
+		    btScalar mass, const btVector3 &linear_velocity,
+		    const btVector3 &angular_velocity);
 
     btDiscreteDynamicsWorld &m_world;
     RtMotionState m_motion_state;
@@ -210,7 +190,7 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
     AutoPtr<db_full_path, db_free_full_path> autofree_full_path(&full_path);
 
     if (db_string_to_path(&full_path, &db, root_path.c_str()))
-	bu_bomb("db_string_to_path() failed");
+	throw InvalidSimulationError("invalid path");
 
     bu_ptbl found = BU_PTBL_INIT_ZERO;
     AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
@@ -219,7 +199,6 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
 		      " -type region -or -type shape -not -below -type region", full_path.fp_len,
 		      full_path.fp_names, &db))
 	bu_bomb("db_search() failed");
-
 
     if (!BU_PTBL_LEN(&found))
 	throw InvalidSimulationError("no regions found");
@@ -261,8 +240,8 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
 		}
 	}
 
-	result.push_back(new Region(db, path.ptr, world, mass, linear_velocity,
-				    angular_velocity));
+	result.push_back(new Region(db, path.ptr, world, get_aabb(db, path.ptr), mass,
+				    linear_velocity, angular_velocity));
     }
 
     return result;
@@ -270,11 +249,12 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
 
 
 Simulation::Region::Region(db_i &db, const std::string &path,
-			   btDiscreteDynamicsWorld &world, const btScalar mass,
-			   const btVector3 &linear_velocity, const btVector3 &angular_velocity) :
+			   btDiscreteDynamicsWorld &world, const std::pair<btVector3, btVector3> &aabb,
+			   const btScalar mass, const btVector3 &linear_velocity,
+			   const btVector3 &angular_velocity) :
     m_world(world),
-    m_motion_state(db, path, get_aabb_center(db, path)),
-    m_collision_shape(get_aabb_half_extents(db, path)),
+    m_motion_state(db, path, (aabb.first + aabb.second) / 2.0),
+    m_collision_shape((aabb.second - aabb.first) / 2.0),
     m_rigid_body(get_rigid_body_construction_info(m_motion_state, m_collision_shape,
 		 db, mass))
 {
@@ -321,17 +301,14 @@ void
 Simulation::step(const fastf_t seconds)
 {
     const btScalar fixed_time_step = 1.0 / 60.0;
+    const int max_substeps = std::numeric_limits<int16_t>::max();
 
     if (seconds < fixed_time_step)
 	throw InvalidSimulationError("duration is less than fixed timestep");
+    else if (seconds > max_substeps * fixed_time_step)
+	throw InvalidSimulationError("duration is too large for a single step");
 
-    bu_log("warning: currently, the parameters for "
-	   "btDiscreteDynamicsWorld::stepSimulation() have a very "
-	   "significant impact on how the physics are evaluated; "
-	   "need to determine how best to use this function\n");
-
-    m_world.stepSimulation(seconds, seconds / fixed_time_step + 0.5,
-			   fixed_time_step);
+    m_world.stepSimulation(seconds, max_substeps, fixed_time_step);
     m_world.debugDrawWorld();
 }
 

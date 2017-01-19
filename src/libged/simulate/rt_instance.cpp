@@ -33,7 +33,6 @@
 #include "rt_instance.hpp"
 #include "utility.hpp"
 
-#include "rt/application.h"
 #include "rt/overlap.h"
 #include "rt/rt_instance.h"
 #include "rt/shoot.h"
@@ -45,6 +44,7 @@ namespace
 
 struct MultiOverlapHandlerArgs {
     std::vector<std::pair<btVector3, btVector3> > &result;
+    const std::string &path_a, &path_b;
 };
 
 
@@ -55,12 +55,26 @@ multioverlap_handler(application * const app, partition * const partition1,
     MultiOverlapHandlerArgs &args = *static_cast<MultiOverlapHandlerArgs *>
 				    (app->a_uptr);
 
-    // TODO: ensure that point_on_{a,b} correspond to their body_{a,b}
+    if (BU_PTBL_LEN(region_table) != 2)
+	bu_bomb("unexpected region table length");
+
     btVector3 point_on_a(0.0, 0.0, 0.0), point_on_b(0.0, 0.0, 0.0);
     VJOIN1(point_on_a, app->a_ray.r_pt, partition1->pt_inhit->hit_dist,
 	   app->a_ray.r_dir);
     VJOIN1(point_on_b, app->a_ray.r_pt, partition1->pt_outhit->hit_dist,
 	   app->a_ray.r_dir);
+
+    const region &region0 = *reinterpret_cast<const region *>(BU_PTBL_GET(
+				region_table, 0));
+    const region &region1 = *reinterpret_cast<const region *>(BU_PTBL_GET(
+				region_table, 1));
+    RT_CK_REGION(&region0);
+    RT_CK_REGION(&region1);
+
+    if (region0.reg_name == args.path_b && region1.reg_name == args.path_a)
+	std::swap(point_on_a, point_on_b);
+    else if (region0.reg_name != args.path_a || region1.reg_name != args.path_b)
+	bu_bomb("unexpected hit regions");
 
     args.result.push_back(std::make_pair(point_on_a, point_on_b));
 
@@ -92,9 +106,9 @@ RtInstance::get_overlaps(const std::string &path_a, const std::string &path_b,
     if (!rti.ptr)
 	bu_bomb("rt_new_rti() failed");
 
-    const char *paths[2] = {path_a.c_str(), path_b.c_str()};
+    const char *paths[] = {path_a.c_str(), path_b.c_str()};
 
-    if (rt_gettrees(rti.ptr, 2, paths, 1))
+    if (rt_gettrees(rti.ptr, sizeof(paths) / sizeof(paths[0]), paths, 1))
 	bu_bomb("rt_gettrees() failed");
 
     rt_prep_parallel(rti.ptr, 1);
@@ -102,7 +116,7 @@ RtInstance::get_overlaps(const std::string &path_a, const std::string &path_b,
     std::vector<std::pair<btVector3, btVector3> > result;
 
     application app;
-    MultiOverlapHandlerArgs handler_args = {result};
+    MultiOverlapHandlerArgs handler_args = {result, path_a, path_b};
     RT_APPLICATION_INIT(&app);
     app.a_rt_i = rti.ptr;
     app.a_logoverlap = rt_silent_logoverlap;
