@@ -6,7 +6,6 @@ if(BULLET_LIBRARIES)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${BULLET_LIBRARIES})
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
   add_definitions(-DHAVE_BULLET=1)
-  add_subdirectory(simulate/tests)
 endif(BULLET_LIBRARIES)
 
 if(ADAPTAGRAMS_FOUND)
@@ -342,6 +341,8 @@ endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+add_subdirectory(simulate/tests)
 
 set(ged_ignore_files
   TODO
