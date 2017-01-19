@@ -66,7 +66,7 @@ public:
 private:
     db_i &m_db;
     DefaultColors m_default_colors;
-    DebugDrawModes m_debug_mode;
+    int m_debug_mode;
 };
 
 

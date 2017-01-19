@@ -118,13 +118,17 @@ RtMotionState::setWorldTransform(const btTransform &transform)
     if (full_path.fp_len < 2)
 	throw InvalidSimulationError("invalid path");
 
+    if (full_path.fp_names[0]->d_nref)
+	throw InvalidSimulationError(std::string() + "root '" +
+				     full_path.fp_names[0]->d_namep + "' is referenced elsewhere");
+
+    for (std::size_t i = 1; i < full_path.fp_len - 1; ++i)
+	if (full_path.fp_names[i]->d_nref != 1)
+	    throw InvalidSimulationError(std::string() +
+					 "multiple references to parent combination '" + full_path.fp_names[i]->d_namep +
+					 "'");
+
     directory &parent_dir = *full_path.fp_names[full_path.fp_len - 2];
-
-    if (parent_dir.d_nref != 0 && parent_dir.d_nref != 1)
-	throw InvalidSimulationError(
-	    std::string("multiple references to parent combination '") + parent_dir.d_namep
-	    + "'");
-
     rt_db_internal parent_internal;
     RT_DB_INTERNAL_INIT(&parent_internal);
     AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(
@@ -144,15 +148,15 @@ RtMotionState::setWorldTransform(const btTransform &transform)
     if (!leaf)
 	bu_bomb("db_find_named_leaf() failed");
 
-    mat_t temp = MAT_INIT_IDN;
-    bt_transform_to_matrix(incremental_transform, temp);
+    mat_t incremental_matrix = MAT_INIT_IDN;
+    bt_transform_to_matrix(incremental_transform, incremental_matrix);
 
     if (!leaf->tr_l.tl_mat) {
 	leaf->tr_l.tl_mat = static_cast<fastf_t *>(bu_malloc(sizeof(mat_t), "tl_mat"));
 	MAT_IDN(leaf->tr_l.tl_mat);
     }
 
-    bn_mat_mul2(temp, leaf->tr_l.tl_mat);
+    bn_mat_mul2(incremental_matrix, leaf->tr_l.tl_mat);
 
     if (0 > rt_db_put_internal(&parent_dir, &m_db, &parent_internal,
 			       &rt_uniresource))

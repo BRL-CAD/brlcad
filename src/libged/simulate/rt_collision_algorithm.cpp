@@ -77,12 +77,12 @@ calculate_contact_points(btManifoldResult &result,
 	// TODO: implement a better strategy
 
 	const btScalar z = drand48();
-	const btScalar q = std::sqrt(1 - z * z);
+	const btScalar q = std::sqrt(1.0 - z * z);
 	const btScalar theta = drand48() * 2.0 * M_PI;
 	normal_world_on_b = btVector3(q * std::cos(theta), q * std::sin(theta), z);
     }
 
-    // shoot a circular grid of rays about `normal_world_on_b`
+    // generate a circular grid of rays about `normal_world_on_b`
     xrays *rays = NULL;
     {
 	BU_ALLOC(rays, xrays);
@@ -269,11 +269,9 @@ RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper * const
 
 btScalar
 RtCollisionAlgorithm::calculateTimeOfImpact(btCollisionObject * const body_a,
-	btCollisionObject * const body_b, const btDispatcherInfo &dispatch_info,
+	btCollisionObject * const body_b, const btDispatcherInfo &UNUSED(dispatch_info),
 	btManifoldResult * const result)
 {
-    (void)dispatch_info;
-
     if (!body_a || !body_b || !result)
 	bu_bomb("missing argument");
 

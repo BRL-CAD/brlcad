@@ -74,7 +74,7 @@ apply_color(db_i &db, const std::string &name, const btVector3 &color)
     }
 
     if (db5_update_attribute(name.c_str(), "color", sstream.str().c_str(), &db))
-	bu_bomb("db5_update_attributes() failed");
+	bu_bomb("db5_update_attribute() failed");
 }
 
 
@@ -170,7 +170,7 @@ RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
 void
 RtDebugDraw::setDebugMode(const int mode)
 {
-    m_debug_mode = static_cast<DebugDrawModes>(mode);
+    m_debug_mode = mode;
 }
 
 

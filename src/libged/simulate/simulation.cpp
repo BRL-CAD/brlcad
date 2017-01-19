@@ -38,6 +38,7 @@
 
 #include "bu/str.h"
 #include "rt/db_attr.h"
+#include "rt/db_io.h"
 #include "rt/search.h"
 
 #include <limits>
@@ -184,6 +185,8 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
 				btDiscreteDynamicsWorld &world)
 {
     RT_CK_DBI(&db);
+
+    db_update_nref(&db, &rt_uniresource);
 
     db_full_path full_path;
     db_full_path_init(&full_path);
