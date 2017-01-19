@@ -2,14 +2,18 @@
 
 export LC_ALL=C
 
-if test "x$1" = "x" ; then
-    echo "Usage: $0 filename.g"
+dry_run=false
+if [ $# -gt 0 ] && [ "$1" = "-d" ]; then
+    dry_run=true
+    shift
+fi
+
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 filename.g [objects...]"
     exit 1
 fi
 
-
 db="$1"
-skip="$2"
 sz="512"
 pwd=`pwd`
 loop="loop"
@@ -19,7 +23,7 @@ rtcheck="rtcheck"
 
 echo ""
 echo "CHECKING FOR OVERLAPS"
-if test "x$skip" != "x" ; then
+if $dry_run; then
     echo " (skipping rtcheck)"
 fi
 echo "====================="
@@ -35,9 +39,14 @@ cp $db $DIR/$JOB.g
 cd $DIR
 DB=$JOB.g
 
-tops=`$mged -c $DB tops -n 2>&1`
-echo "Processing top-level objects @ $sz:" $tops
-
+if [ $# -lt 2 ]; then
+    tops=`$mged -c $DB tops -n 2>&1`
+    echo "Processing top-level objects @ $sz:" $tops
+else
+    shift
+    tops="$*"
+    echo "Processing objects @ $sz:" $tops
+fi
 
 # count how many views (should be 16 views)
 total=0
@@ -51,7 +60,7 @@ done
 
 
 # check the views
-if test "x$skip" = "x" ; then
+if ! $dry_run; then
     rm -f $OBJ.plot3
 fi
 count=1
@@ -61,7 +70,7 @@ for obj in $tops ; do
 	for el in `$loop 0 179 45` ; do
 	    echo "[$count/$total]"
 	    chmod -f 755 $OBJ.$az.$el.plot3
-	    if test "x$skip" = "x" ; then
+	    if ! $dry_run; then
 		$rtcheck -o $OBJ.$az.$el.plot3 -s $sz -a $az -e $el $DB $obj 2> $OBJ.$az.$el
 		cat $OBJ.$az.$el.plot3 >> $OBJ.plot3
 	    fi
@@ -79,7 +88,7 @@ for obj in $tops ; do
     rm -f $OBJ.pairings
     for az in `$loop 0 179 45` ; do
 	for el in `$loop 0 179 45` ; do
-	    if ! test -f $OBJ.$az.$el ; then
+	    if ! [ -f $OBJ.$az.$el ]; then
 		echo "WARNING: $OBJ.$az.$el is MISSING"
 	    else
 		grep "maximum depth" $OBJ.$az.$el | sed 's/[<>]//g' | sed 's/[,:] / /g' | sed 's/^[[:space:]]*//g' | sed 's/mm[[:space:]]*$//g' | cut -f 1,2,3,9 -d' ' | awk '{print $1, $2, $3 * $4}' >> $OBJ.pairings
@@ -164,7 +173,7 @@ echo "Found $overlapcnt unique pairings"
 # check each pairing
 sz="`echo $sz | awk '{print $1 / 4}'`"
 count=1
-if test "x$skip" = "x" ; then
+if ! $dry_run; then
     rm -f $JOB.more.plot3
 fi
 while read overlap ; do
@@ -175,7 +184,7 @@ while read overlap ; do
     for az in `$loop 0 179 45` ; do
 	for el in `$loop 0 179 45` ; do
 	    chmod -f 755 $JOB.$count.$az.$el.plot3
-	    if test "x$skip" = "x" ; then
+	    if ! $dry_run; then
 		$rtcheck -o $JOB.$count.$az.$el.plot3 -s $sz -a $az -e $el $DB $objs 2> $JOB.$count.$az.$el
 		cat $JOB.$count.$az.$el.plot3 >> $JOB.more.plot3
 	    fi
