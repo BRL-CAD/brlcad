@@ -113,10 +113,10 @@ comb_to_region(db_i &db, const std::string &name)
 
     if (directory * const dir = db_lookup(&db, name.c_str(), true)) {
 	if (dir->d_flags & RT_DIR_COMB) {
-	    dir->d_flags |= RT_DIR_REGION;
-
 	    if (db5_update_attribute(name.c_str(), "region", "R", &db))
 		throw std::runtime_error("db5_update_attribute() failed");
+
+	    dir->d_flags |= RT_DIR_REGION;
 	} else
 	    throw std::invalid_argument("invalid directory type");
     } else
