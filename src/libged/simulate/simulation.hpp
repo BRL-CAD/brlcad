@@ -45,7 +45,7 @@ class Simulation
 public:
     explicit Simulation(db_i &db, const std::string &path);
 
-    void step(fastf_t seconds);
+    void step(fastf_t seconds, bool debug = false);
 
 
 private:

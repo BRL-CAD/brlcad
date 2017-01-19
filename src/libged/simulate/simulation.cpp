@@ -293,12 +293,11 @@ Simulation::Simulation(db_i &db, const std::string &path) :
     m_world.setGravity(gravity);
 
     m_world.setDebugDrawer(&m_debug_draw);
-    m_world.getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawAabb);
 }
 
 
 void
-Simulation::step(const fastf_t seconds)
+Simulation::step(const fastf_t seconds, const bool debug)
 {
     const btScalar fixed_time_step = 1.0 / 60.0;
     const int max_substeps = std::numeric_limits<int16_t>::max();
@@ -307,6 +306,12 @@ Simulation::step(const fastf_t seconds)
 	throw InvalidSimulationError("duration is less than fixed timestep");
     else if (seconds > max_substeps * fixed_time_step)
 	throw InvalidSimulationError("duration is too large for a single step");
+
+    if (debug)
+	m_world.getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawAabb |
+					       btIDebugDraw::DBG_DrawFrames);
+    else
+	m_world.getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_NoDebug);
 
     m_world.stepSimulation(seconds, max_substeps, fixed_time_step);
     m_world.debugDrawWorld();

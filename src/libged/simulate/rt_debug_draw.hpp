@@ -44,17 +44,22 @@ class RtDebugDraw : public btIDebugDraw
 public:
     explicit RtDebugDraw(db_i &db);
 
-    virtual void setDefaultColors(const DefaultColors &default_colors);
+    virtual void reportErrorWarning(const char *message);
+
     virtual void drawLine(const btVector3 &from, const btVector3 &to,
 			  const btVector3 &color);
-    virtual void drawContactPoint(const btVector3 &point_on_b,
-				  const btVector3 &normal_world_on_b,
-				  btScalar distance, int lifetime,
-				  const btVector3 &color);
-    virtual void reportErrorWarning(const char *message);
     virtual void draw3dText(const btVector3 &location, const char *text);
+
+    virtual void drawAabb(const btVector3 &from, const btVector3 &to,
+			  const btVector3 &color);
+    virtual void drawContactPoint(const btVector3 &point_on_b,
+				  const btVector3 &normal_world_on_b, btScalar distance, int lifetime,
+				  const btVector3 &color);
+
     virtual void setDebugMode(int mode);
     virtual int getDebugMode() const;
+
+    virtual void setDefaultColors(const DefaultColors &default_colors);
     virtual DefaultColors getDefaultColors() const;
 
 

@@ -37,6 +37,50 @@
 #include <sstream>
 
 
+namespace
+{
+
+
+HIDDEN std::string
+make_name(const std::string &base)
+{
+    const char * const prefix = "RtDebugDraw::";
+
+    std::ostringstream sstream;
+    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
+
+    sstream << prefix << base << static_cast<std::size_t>(drand48() * 1.0e5 + 0.5)
+	    << ".s";
+    return sstream.str();
+}
+
+
+HIDDEN void
+apply_color(db_i &db, const std::string &name, const btVector3 &color)
+{
+    RT_CK_DBI(&db);
+
+    std::ostringstream sstream;
+    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
+
+    for (std::size_t i = 0; i < 3; ++i) {
+	if (!(0.0 <= color[i] && color[i] <= 1.0))
+	    bu_bomb("invalid color");
+
+	sstream << static_cast<unsigned>(color[i] * 255.0 + 0.5);
+
+	if (i != 2)
+	    sstream.put(' ');
+    }
+
+    if (db5_update_attribute(name.c_str(), "color", sstream.str().c_str(), &db))
+	bu_bomb("db5_update_attributes() failed");
+}
+
+
+}
+
+
 namespace simulate
 {
 
@@ -54,9 +98,10 @@ RtDebugDraw::RtDebugDraw(db_i &db) :
 
 
 void
-RtDebugDraw::setDefaultColors(const DefaultColors &default_colors)
+RtDebugDraw::reportErrorWarning(const char * const message)
 {
-    m_default_colors = default_colors;
+    bu_log("WARNING: Bullet: %s\n", message);
+    bu_bomb(message);
 }
 
 
@@ -69,61 +114,12 @@ RtDebugDraw::drawLine(const btVector3 &from, const btVector3 &to,
     VMOVE(from_pt, from);
     VMOVE(height, to - from);
 
-    std::ostringstream name_str, color_str;
-    name_str << "RtDebugDraw::line_" << static_cast<std::size_t>
-	     (drand48() * 1.0e5 + 0.5) << ".s";
+    const std::string name = make_name("line");
 
-    for (std::size_t i = 0; i < 3; ++i) {
-	color_str << static_cast<unsigned>(color[i] * 255.0 + 0.5);
-
-	if (i != 2)
-	    color_str.put(' ');
-    }
-
-    if (mk_rcc(m_db.dbi_wdbp, name_str.str().c_str(), from_pt, height, 1.0e-8))
+    if (mk_rcc(m_db.dbi_wdbp, name.c_str(), from_pt, height, 1.0e-8))
 	bu_bomb("mk_rcc() failed");
 
-    if (db5_update_attribute(name_str.str().c_str(), "color",
-			     color_str.str().c_str(), &m_db))
-	bu_bomb("db5_update_attributes() failed");
-}
-
-
-void
-RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
-			      const btVector3 &normal_world_on_b, btScalar distance, int UNUSED(lifetime),
-			      const btVector3 &color)
-{
-    point_t point_on_b_pt = VINIT_ZERO;
-    VMOVE(point_on_b_pt, point_on_b);
-
-    std::ostringstream name_str, color_str;
-    name_str << "RtDebugDraw::contact_" << static_cast<std::size_t>
-	     (drand48() * 1.0e5 + 0.5) << ".s";
-
-    for (std::size_t i = 0; i < 3; ++i) {
-	color_str << static_cast<unsigned>(color[i] * 255.0 + 0.5);
-
-	if (i != 2)
-	    color_str.put(' ');
-    }
-
-    if (mk_sph(m_db.dbi_wdbp, name_str.str().c_str(), point_on_b_pt, 3.0))
-	bu_bomb("mk_sph() failed");
-
-    if (db5_update_attribute(name_str.str().c_str(), "color",
-			     color_str.str().c_str(), &m_db))
-	bu_bomb("db5_update_attributes() failed");
-
-    drawLine(point_on_b, normal_world_on_b * distance, color);
-}
-
-
-void
-RtDebugDraw::reportErrorWarning(const char * const message)
-{
-    bu_log("WARNING: Bullet: %s\n", message);
-    bu_bomb(message);
+    apply_color(m_db, name, color);
 }
 
 
@@ -132,6 +128,42 @@ RtDebugDraw::draw3dText(const btVector3 &UNUSED(location),
 			const char * const UNUSED(text))
 {
     bu_bomb("not implemented");
+}
+
+
+void RtDebugDraw::drawAabb(const btVector3 &from, const btVector3 &to,
+			   const btVector3 &color)
+{
+    point_t min_pt = VINIT_ZERO, max_pt = VINIT_ZERO;
+    VMOVE(min_pt, from);
+    VMIN(min_pt, to);
+    VMOVE(max_pt, from);
+    VMAX(max_pt, to);
+
+    const std::string name = make_name("aabb");
+
+    if (mk_rpp(m_db.dbi_wdbp, name.c_str(), min_pt, max_pt))
+	bu_bomb("mk_rpp() failed");
+
+    apply_color(m_db, name, color);
+}
+
+
+void
+RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
+			      const btVector3 &normal_world_on_b, const btScalar distance,
+			      const int UNUSED(lifetime), const btVector3 &color)
+{
+    point_t point_on_b_pt = VINIT_ZERO;
+    VMOVE(point_on_b_pt, point_on_b);
+
+    const std::string name = make_name("contact");
+
+    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt, 3.0))
+	bu_bomb("mk_sph() failed");
+
+    apply_color(m_db, name, color);
+    drawLine(point_on_b, normal_world_on_b * distance, color);
 }
 
 
@@ -146,6 +178,13 @@ int
 RtDebugDraw::getDebugMode() const
 {
     return m_debug_mode;
+}
+
+
+void
+RtDebugDraw::setDefaultColors(const DefaultColors &default_colors)
+{
+    m_default_colors = default_colors;
 }
 
 

@@ -201,8 +201,8 @@ RtCollisionAlgorithm::CreateFunc::CreateCollisionAlgorithm(
 
     void * const ptr = cinfo.m_dispatcher1->allocateCollisionAlgorithm(sizeof(
 			   RtCollisionAlgorithm));
-    return new (ptr) RtCollisionAlgorithm(NULL, cinfo, body_a_wrap, body_b_wrap,
-					  m_rt_instance, m_debug_draw);
+    return new(ptr) RtCollisionAlgorithm(NULL, cinfo, body_a_wrap, body_b_wrap,
+					 m_rt_instance, m_debug_draw);
 }
 
 
