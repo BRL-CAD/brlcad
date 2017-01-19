@@ -137,5 +137,5 @@ simulate_test()
 int
 main()
 {
-    return !simulate_test();
+    return simulate_test() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
