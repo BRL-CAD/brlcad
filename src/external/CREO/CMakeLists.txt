@@ -38,12 +38,16 @@ add_custom_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 add_custom_target(CREO-G ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll DESTINATION .)
 
 add_custom_target(UNLOCK
   COMMAND "${CREO_ROOT_DIR}/../Parametric/bin/protk_unlock.bat" ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll
   DEPENDS CREO-G
   COMMENT "Unlocking CREO-G dll..."
   )
+
+set(CPACK_GENERATOR NSIS ZIP)
+include(CPack)
 
 # Local Variables:
 # tab-width: 8
