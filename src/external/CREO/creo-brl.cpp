@@ -28,16 +28,26 @@
 #ifndef _WSTUDIO_DEFINED
 # define _WSTUDIO_DEFINED
 #endif
-#include "ProToolkit.h"
-#include <ProUiDialog.h>
+#include <ProToolkit.h>
+#include <ProMessage.h>
+#include <ProUIMessage.h>
+#include <ProArray.h>
+
+ProError ShowMsg()
+{
+    ProUIMessageButton* button;
+    ProUIMessageButton bresult;
+    ProArrayAlloc(1, sizeof(ProUIMessageButton), 1, (ProArray*)&button);
+    button[0] = PRO_UI_MESSAGE_OK;
+    ProUIMessageDialogDisplay(PROUIMESSAGE_INFO, L"Hello World", L"Hello world!", button, PRO_UI_MESSAGE_OK, &bresult);
+    ProArrayFree((ProArray*)&button);
+    return PRO_TK_NO_ERROR;
+}
 
 extern "C" int user_initialize()
 {
-    ProError perr;
-    perr = ProUIDialogCreate("Do Something!", NULL);
-    perr = ProUIDialogActivate("Do Something!", NULL);
-    perr = ProUIDialogExit("Do Something!", NULL);
-    return 0;
+    ShowMsg(); 
+    return 1; /* until we do something beyond initialize, we don't want to keep running - return something other than 0 */
 }
 extern "C" void user_terminate()
 {
