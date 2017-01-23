@@ -1,4 +1,4 @@
-/*                  T E S T _ D I R N A M E . C
+/*                  D I R N A M E . C
  * BRL-CAD
  *
  * Copyright (c) 2011-2016 United States Government as represented by
@@ -74,7 +74,7 @@ automatic_test(const char *input)
 
 
 int
-main(int argc, char *argv[])
+dirname_main(int argc, char *argv[])
 {
     if (argc == 1)
        return !automatic_test(NULL);

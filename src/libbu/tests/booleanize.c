@@ -1,4 +1,4 @@
-/*                   B U _ B O O L E A N I Z E . C
+/*                   B O O L E A N I Z E . C
  * BRL-CAD
  *
  * Copyright (c) 2012-2016 United States Government as represented by
@@ -24,7 +24,7 @@
 
 
 int
-main(int argc, char *argv[])
+booleanize_main(int argc, char *argv[])
 {
     int result_true = 0;
     int result_false = 0;

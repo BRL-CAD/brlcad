@@ -39,7 +39,7 @@
 
 fb *fbp;
 
-int JumpSpeed;		/* # pixels skiped with fast commands. */
+int JumpSpeed;		/* # pixels skipped with fast commands. */
 
 RGBpixel curPix; 		/* Current pixel value */
 int curX, curY;		/* current position */

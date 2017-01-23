@@ -80,7 +80,7 @@ template <typename T>
 class Triple
 {
 public:
-    Triple() :
+    explicit Triple() :
 	m_value() // zero
     {}
 
@@ -130,7 +130,7 @@ color_from_floats(const float *float_color)
 class InvalidModelError : public std::runtime_error
 {
 public:
-    InvalidModelError(const std::string &value) :
+    explicit InvalidModelError(const std::string &value) :
 	std::runtime_error(value)
     {}
 };
@@ -150,7 +150,8 @@ private:
 };
 
 
-Matrix::Matrix(const fastf_t *values)
+Matrix::Matrix(const fastf_t *values) :
+    m_value()
 {
     if (values)
 	MAT_COPY(m_value, values);
@@ -173,8 +174,8 @@ class DBInternal
 public:
     static const directory &lookup(const db_i &db, const std::string &name);
 
-    DBInternal();
-    DBInternal(const db_i &db, const directory &dir);
+    explicit DBInternal();
+    explicit DBInternal(const db_i &db, const directory &dir);
     ~DBInternal();
 
     void load(const db_i &db, const directory &dir);
@@ -193,6 +194,8 @@ private:
 const directory &
 DBInternal::lookup(const db_i &db, const std::string &name)
 {
+    RT_CK_DBI(&db);
+
     const directory * const dir = db_lookup(&db, name.c_str(), LOOKUP_QUIET);
 
     if (!dir)
@@ -212,6 +215,9 @@ DBInternal::DBInternal(const db_i &db, const directory &dir) :
     m_valid(false),
     m_internal()
 {
+    RT_CK_DBI(&db);
+    RT_CK_DIR(&dir);
+
     load(db, dir);
 }
 
@@ -234,7 +240,7 @@ DBInternal::load(const db_i &db, const directory &dir)
 	m_valid = false;
     }
 
-    if (rt_db_get_internal(&m_internal, &dir, &db, NULL, &rt_uniresource) < 0)
+    if (0 > rt_db_get_internal(&m_internal, &dir, &db, NULL, &rt_uniresource))
 	throw std::runtime_error("rt_db_get_internal() failed");
 
     m_valid = true;
@@ -257,7 +263,7 @@ class RecordWriter
 public:
     class Record;
 
-    RecordWriter();
+    explicit RecordWriter();
     virtual ~RecordWriter();
 
     void write_comment(const std::string &value);
@@ -430,7 +436,8 @@ RecordWriter::write_comment(const std::string &value)
 class StringBuffer : public RecordWriter
 {
 public:
-    StringBuffer();
+    explicit StringBuffer();
+
     void write(RecordWriter &writer) const;
 
 
@@ -616,7 +623,7 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 class GridManager
 {
 public:
-    GridManager();
+    explicit GridManager();
 
     // return a vector of grid IDs corresponding to the given points,
     // with no duplicate indices in the returned vector
@@ -716,8 +723,7 @@ class Section
 public:
     class SectionModeError;
 
-
-    Section();
+    explicit Section();
 
     bool empty() const;
 
@@ -775,7 +781,7 @@ private:
 class Section::SectionModeError : public std::logic_error
 {
 public:
-    SectionModeError(const std::string &message) :
+    explicit SectionModeError(const std::string &message) :
 	std::logic_error("Section mode inconsistency: " + message)
     {}
 };
@@ -1906,8 +1912,8 @@ class FastgenConversion
 public:
     class RegionManager;
 
-    FastgenConversion(db_i &db, const bn_tol &tol,
-		      const std::set<const directory *> &facetize_regions);
+    explicit FastgenConversion(db_i &db, const bn_tol &tol,
+			       const std::set<const directory *> &facetize_regions);
     ~FastgenConversion();
 
     RegionManager &get_region(const directory &region_dir);
@@ -1938,7 +1944,8 @@ private:
 class FastgenConversion::RegionManager
 {
 public:
-    RegionManager(const db_i &db, const directory &region_dir, const bn_tol &tol);
+    explicit RegionManager(const db_i &db, const directory &region_dir,
+			   const bn_tol &tol);
     ~RegionManager();
 
     std::vector<FastgenWriter::SectionID> write(FastgenWriter &writer) const;
@@ -1979,7 +1986,11 @@ FastgenConversion::RegionManager::RegionManager(const db_i &db,
     m_enabled(true),
     m_compsplt(false, 0.0),
     m_sections()
-{}
+{
+    RT_CK_DBI(&db);
+    RT_CK_DIR(&m_region_dir);
+    BN_CK_TOL(&tol);
+}
 
 
 FastgenConversion::RegionManager::~RegionManager()
@@ -2198,9 +2209,15 @@ FastgenConversion::FastgenConversion(db_i &db, const bn_tol &tol,
 
     // create a RegionManager for all regions in the database
     try {
-	for (std::size_t i = 0; i < num_regions; ++i)
-	    m_regions[region_dirs.ptr[i]] = new RegionManager(m_db, *region_dirs.ptr[i],
-		    m_tol);
+	for (std::size_t i = 0; i < num_regions; ++i) {
+	    const std::pair<const directory *, RegionManager *>
+	    temp(region_dirs.ptr[i], new RegionManager(m_db, *region_dirs.ptr[i], m_tol));
+
+	    if (!m_regions.insert(temp).second) {
+		delete temp.second;
+		throw std::logic_error("RegionManager already exists");
+	    }
+	}
     } catch (...) {
 	for (std::map<const directory *, RegionManager *>::iterator it =
 		 m_regions.begin(); it != m_regions.end(); ++it)
@@ -2252,6 +2269,8 @@ FastgenConversion::~FastgenConversion()
 FastgenConversion::RegionManager &
 FastgenConversion::get_region(const directory &region_dir)
 {
+    RT_CK_DIR(&region_dir);
+
     return *m_regions.at(&region_dir);
 }
 
@@ -2406,7 +2425,8 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     for (BU_LIST_FOR(current_shell, shell, &nmg_region->s_hd)) {
 	NMG_CK_SHELL(current_shell);
 
-	rt_bot_internal * const bot = nmg_bot(current_shell, &RTG.rtg_vlfree, &data.m_tol);
+	rt_bot_internal * const bot = nmg_bot(current_shell, &RTG.rtg_vlfree,
+					      &data.m_tol);
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;

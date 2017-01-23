@@ -71,17 +71,14 @@ __BEGIN_DECLS
  *
  * The last two separator chars are optional - they may be specified
  * if the user wants to guarantee a separation between the active incremented
- * substring and its surroundings.  If the user wants to use a colon *as* the
- * separator character, they need to quote it with the '\' character.  For
- * example, the following would prefix the incrementer output with a colon
- * and add a suffix with a dash:
+ * substring and its surroundings. For example, the following would prefix the
+ * incrementer output with an underscore and add a suffix with a dash:
  *
- * 2:1:50:5:\::-
+ * 2:1:50:5:_:-
  *
  * If no specifier is passed in, bu_namegen will analyze the string to
  * determine the minimum width of the incrementer string.  So, for example,
- * engine_part-001.s would by default be incremented to engine_part-002.s, and
- * so on to maintain an incrementer string width of at least 3.
+ * engine_part-001.s would by default be incremented to engine_part-002.s.
  */
 /** @{ */
 /** @file bu/namegen.h */

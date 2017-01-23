@@ -643,6 +643,21 @@ if(NOT BRLCAD_IS_SUBBUILD)
 	  endif (ARGN)
 	endforeach ()
 	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} "" ${ARGN})
+      elseif ("${empty}" EQUAL 10)
+	foreach (i 1 2 3 4 5 6)
+	  if (ARGN)
+	    list(REMOVE_AT ARGN 0)
+	  endif (ARGN)
+	endforeach ()
+	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} "" ${ARGN})
+      elseif ("${empty}" EQUAL 11)
+	foreach (i 1 2 3 4 5 6)
+	  if (ARGN)
+	    list(REMOVE_AT ARGN 0)
+	  endif (ARGN)
+	endforeach ()
+	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} "" ${ARGN})
+
 
 	# ADD_EMPTY_HERE: insert support for addition argv positions
 	# as extra elseif tests here using the preceding pattern.  be

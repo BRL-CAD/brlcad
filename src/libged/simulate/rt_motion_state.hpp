@@ -1,7 +1,7 @@
-/*               P H Y S I C S _ W O R L D . H P P
+/*             R T _ M O T I O N _ S T A T E . H P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2017 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,48 +17,50 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file physics_world.hpp
+/** @file rt_motion_state.hpp
  *
- * State for a simulated scene.
+ * Motion state for objects in an rt instance.
  *
  */
 
-
-#ifndef PHYSICS_WORLD_H
-#define PHYSICS_WORLD_H
+#ifndef SIMULATE_RT_MOTION_STATE_H
+#define SIMULATE_RT_MOTION_STATE_H
 
 
 #include "common.h"
 
-#include "bu/defines.h"
+#include "rt/db_instance.h"
 
 #include <btBulletDynamicsCommon.h>
+
+#include <string>
 
 
 namespace simulate
 {
 
 
-class PhysicsWorld
+class RtMotionState : public btMotionState
 {
 public:
-    explicit PhysicsWorld();
-    virtual ~PhysicsWorld();
+    explicit RtMotionState(db_i &db, const std::string &path,
+			   const btVector3 &aabb_center);
 
-    void step(fastf_t seconds);
-    void add_rigid_body(btRigidBody &rigid_body);
-    void remove_rigid_body(btRigidBody &rigid_body);
+    const std::string &get_path() const;
+
+    virtual void getWorldTransform(btTransform &dest) const;
+    virtual void setWorldTransform(const btTransform &transform);
 
 
-protected:
-    btDbvtBroadphase m_broadphase;
-    btDefaultCollisionConfiguration m_collision_config;
-    btCollisionDispatcher m_collision_dispatcher;
-    btSequentialImpulseConstraintSolver m_constraint_solver;
-    btDiscreteDynamicsWorld m_world;
+private:
+    db_i &m_db;
+    const std::string m_path;
+    btTransform m_transform;
 };
 
+
 }
+
 
 #endif
 

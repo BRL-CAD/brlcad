@@ -1,4 +1,4 @@
-/*                      B N _ T A B D A T A . C
+/*                      T A B D A T A . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -625,7 +625,7 @@ test_bn_tabdata_get_constval(int argc, char *argv[])
 
 
 int
-main(int argc, char *argv[])
+tabdata_main(int argc, char *argv[])
 {
     int function_num = 0;
 

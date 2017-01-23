@@ -1139,7 +1139,6 @@ materbld(void)
     cp++;			/* skip ID_MATERIAL */
     cp = nxt_spc(cp);		/* skip the space */
 
-    /* flags = (char)atoi(cp); */
     cp = nxt_spc(cp);
     low = (short)atoi(cp);
     cp = nxt_spc(cp);

@@ -106,6 +106,24 @@ HIDDEN Target lexical_cast(const Source &value)
 }
 
 
+HIDDEN void
+comb_to_region(db_i &db, const std::string &name)
+{
+    RT_CK_DBI(&db);
+
+    if (directory * const dir = db_lookup(&db, name.c_str(), true)) {
+	if (dir->d_flags & RT_DIR_COMB) {
+	    if (db5_update_attribute(name.c_str(), "region", "R", &db))
+		throw std::runtime_error("db5_update_attribute() failed");
+
+	    dir->d_flags |= RT_DIR_REGION;
+	} else
+	    throw std::invalid_argument("invalid directory type");
+    } else
+	throw std::runtime_error("db_lookup() failed");
+}
+
+
 struct UuidCompare {
     bool operator()(const ON_UUID &left, const ON_UUID &right) const
     {
@@ -117,7 +135,7 @@ struct UuidCompare {
 class InvalidRhinoModelError : public std::runtime_error
 {
 public:
-    InvalidRhinoModelError(const std::string &value) :
+    explicit InvalidRhinoModelError(const std::string &value) :
 	std::runtime_error(value)
     {}
 };
@@ -189,14 +207,14 @@ replace_invalid_uuids(ONX_Model &model)
     srand48(time(NULL));
 
 #define REPLACE_UUIDS(array, member) \
-do { \
-    for (std::size_t i = 0; i < (array).UnsignedCount(); ++i) { \
-	while (!seen.insert(at((array), i)member).second) { \
-	    at((array), i)member = generate_uuid(); \
-	    ++num_repairs; \
+    do { \
+	for (std::size_t i = 0; i < (array).UnsignedCount(); ++i) { \
+	    while (!seen.insert(at((array), i)member).second) { \
+		at((array), i)member = generate_uuid(); \
+		++num_repairs; \
+	    } \
 	} \
-    } \
-} while (false)
+    } while (false)
 
     REPLACE_UUIDS(model.m_object_table, .m_attributes.m_uuid);
     REPLACE_UUIDS(model.m_layer_table, .m_layer_id);
@@ -245,13 +263,13 @@ load_model(const gcv_opts &gcv_options, const std::string &path,
     if (!model.Read(path.c_str()))
 	throw InvalidRhinoModelError("ONX_Model::Read() failed");
 
-    int num_problems;
-    int num_repairs = replace_invalid_uuids(model);
+    std::size_t num_problems;
+    std::size_t num_repairs = replace_invalid_uuids(model);
 
     {
 	int temp;
-	num_problems = model.Audit(true, &temp, NULL, NULL);
-	num_repairs += temp;
+	num_problems = static_cast<std::size_t>(model.Audit(true, &temp, NULL, NULL));
+	num_repairs += static_cast<std::size_t>(temp);
     }
 
     if (num_problems)
@@ -268,10 +286,10 @@ load_model(const gcv_opts &gcv_options, const std::string &path,
     }
 
 #define REPLACE_NAMES(array, member) \
-do { \
-    for (std::size_t i = 0; i < (array).UnsignedCount(); ++i) \
-	clean_name(seen, gcv_options.default_name, at((array), i).member); \
-} while (false)
+    do { \
+	for (std::size_t i = 0; i < (array).UnsignedCount(); ++i) \
+	    clean_name(seen, gcv_options.default_name, at((array), i).member); \
+    } while (false)
 
     REPLACE_NAMES(model.m_layer_table, m_name);
     REPLACE_NAMES(model.m_idef_table, m_name);
@@ -446,18 +464,20 @@ get_object_material(const ON_3dmObjectAttributes &attributes,
     out_shader = get_shader(temp);
     out_own_shader = attributes.MaterialSource() != ON::material_from_parent;
 
-    out_rgb[0] = model.WireframeColor(attributes).Red();
-    out_rgb[1] = model.WireframeColor(attributes).Green();
-    out_rgb[2] = model.WireframeColor(attributes).Blue();
+    out_rgb[0] = static_cast<unsigned char>(model.WireframeColor(attributes).Red());
+    out_rgb[1] = static_cast<unsigned char>(model.WireframeColor(
+	    attributes).Green());
+    out_rgb[2] = static_cast<unsigned char>(model.WireframeColor(
+	    attributes).Blue());
     out_own_rgb = attributes.ColorSource() != ON::color_from_parent;
 
     if (!out_rgb[0] && !out_rgb[1] && !out_rgb[2]) {
 	ON_Material material;
 	model.GetRenderMaterial(attributes, material);
 
-	out_rgb[0] = material.m_diffuse.Red();
-	out_rgb[1] = material.m_diffuse.Green();
-	out_rgb[2] = material.m_diffuse.Blue();
+	out_rgb[0] = static_cast<unsigned char>(material.m_diffuse.Red());
+	out_rgb[1] = static_cast<unsigned char>(material.m_diffuse.Green());
+	out_rgb[2] = static_cast<unsigned char>(material.m_diffuse.Blue());
 	out_own_rgb = out_own_shader;
     }
 }
@@ -489,7 +509,8 @@ import_object(rt_wdb &wdb, const std::string &name,
 	      const char *shader_name, const char *shader_options, const unsigned char *rgb)
 {
     const ON_InstanceDefinition &idef = at(model.m_idef_table,
-					   model.IDefIndex(instance_ref.m_instance_definition_uuid));
+					   static_cast<std::size_t>(model.IDefIndex(
+						   instance_ref.m_instance_definition_uuid)));
 
     mat_t matrix;
 
@@ -647,12 +668,12 @@ import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
     const std::string name = ON_String(layer.m_name).Array();
 
     unsigned char rgb[3];
-    rgb[0] = layer.Color().Red();
-    rgb[1] = layer.Color().Green();
-    rgb[2] = layer.Color().Blue();
+    rgb[0] = static_cast<unsigned char>(layer.Color().Red());
+    rgb[1] = static_cast<unsigned char>(layer.Color().Green());
+    rgb[2] = static_cast<unsigned char>(layer.Color().Blue());
 
-    const Shader &shader = get_shader(layer.RenderMaterialIndex() != -1 ?
-				      at(model.m_material_table, layer.RenderMaterialIndex()) : ON_Material());
+    const Shader shader = get_shader(layer.RenderMaterialIndex() != -1 ?
+				     at(model.m_material_table, layer.RenderMaterialIndex()) : ON_Material());
 
     write_comb(wdb, name, get_layer_members(layer, model), NULL,
 	       shader.first.c_str(), shader.second.c_str(), rgb);
@@ -700,8 +721,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	directory **entry;
 
 	for (BU_PTBL_FOR(entry, (directory **), &found)) {
-	    if (db5_update_attribute((*entry)->d_namep, "region", "R", &db))
-		throw std::runtime_error("db5_update_attribute() failed");
+	    comb_to_region(db, (*entry)->d_namep);
 
 	    if (gcv_options.debug_mode) {
 		// random colors debug mode: TODO: move this into a filter after 7.26.0
@@ -775,8 +795,9 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     // ensure that all solids are below regions
     db_search_free(&found);
     BU_PTBL_INIT(&found);
+
     if (0 > db_search(&found, DB_SEARCH_TREE,
-		      "-type shape -not -below -attr region=R", 0, NULL, &db))
+		      "-type shape -not -below -type region", 0, NULL, &db))
 	throw std::runtime_error("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -810,8 +831,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	    members.insert(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
 	    write_comb(*db.dbi_wdbp, region_name, members);
 
-	    if (db5_update_attribute(region_name.c_str(), "region", "R", &db))
-		throw std::runtime_error("db5_update_attribute() failed");
+	    comb_to_region(db, region_name);
 
 	    bool has_rgb = false, has_shader = false;
 

@@ -1,4 +1,4 @@
-/*              T E S T _ B N _ P O L Y _ S C A L E . C
+/*                  P O L Y _ S C A L E . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -40,7 +40,7 @@ static bn_poly_t input[3], output[3];
  * Initialises polynomial storing a negative, positive and zero coefficients.
  */
 void
-poly_init(void)
+scale_poly_init(void)
 {
     struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
@@ -92,7 +92,7 @@ poly_init(void)
 
 /* compares the values of the array and returns 0. */
 size_t
-check_results(fastf_t a[], fastf_t b[], size_t n)
+scale_check_results(fastf_t a[], fastf_t b[], size_t n)
 {
     size_t i;
 
@@ -115,9 +115,9 @@ test_bn_poly_scale(void)
     bn_poly_scale(&input[1], 2000);
     bn_poly_scale(&input[2], -400);
 
-    val = check_results(input[0].cf, output[0].cf, output[0].dgr + 1);
-    val1 = check_results(input[1].cf, output[1].cf, output[1].dgr + 1);
-    val2 = check_results(input[2].cf, output[2].cf, output[2].dgr + 1);
+    val = scale_check_results(input[0].cf, output[0].cf, output[0].dgr + 1);
+    val1 = scale_check_results(input[1].cf, output[1].cf, output[1].dgr + 1);
+    val2 = scale_check_results(input[2].cf, output[2].cf, output[2].dgr + 1);
 
     if (val == 0 && val1 == 0 && val2 == 0)
 	return 0;
@@ -127,11 +127,11 @@ test_bn_poly_scale(void)
 
 
 int
-main(void)
+poly_scale_main(int UNUSED(ac), char **UNUSED(av))
 {
     int ret;
 
-    poly_init();
+    scale_poly_init();
 
     ret = test_bn_poly_scale();
 

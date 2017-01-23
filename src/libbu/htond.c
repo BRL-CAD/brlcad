@@ -217,22 +217,18 @@ bu_cv_htond(register unsigned char *out, register const unsigned char *in, size_
 	exp *= 4;			/* excess 128, base 2 */
     ibm_normalized:
 	if (left & 0x00800000) {
-	    /* fix = 0; */
 	    exp += 1023-129+1+ 3-0;/* fudge, slide hidden bit */
 	} else if (left & 0x00400000) {
-	    /* fix = 1; */
 	    exp += 1023-129+1+ 3-1;
 	    left = (left<<1) |
 		((right>>(32-1)) & (0x7FFFFFFF>>(31-1)));
 	    right <<= 1;
 	} else if (left & 0x00200000) {
-	    /* fix = 2; */
 	    exp += 1023-129+1+ 3-2;
 	    left = (left<<2) |
 		((right>>(32-2)) & (0x7FFFFFFF>>(31-2)));
 	    right <<= 2;
 	} else if (left & 0x00100000) {
-	    /* fix = 3; */
 	    exp += 1023-129+1+ 3-3;
 	    left = (left<<3) |
 		((right>>(32-3)) & (0x7FFFFFFF>>(31-3)));

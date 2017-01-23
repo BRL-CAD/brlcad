@@ -136,8 +136,8 @@ rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const 
     VMOVE(C, center_ray->r_pt);
     VMOVE(dir, center_ray->r_dir);
     /* make sure avec perpendicular to bvec perpendicular to ray direction */
-    BU_ASSERT(NEAR_ZERO(VDOT(avec, bvec), VUNITIZE_TOL));
-    BU_ASSERT(NEAR_ZERO(VDOT(avec, dir), VUNITIZE_TOL));
+    BU_ASSERT(NEAR_ZERO(VDOT(avec, bvec), RT_DOT_TOL));
+    BU_ASSERT(NEAR_ZERO(VDOT(avec, dir), RT_DOT_TOL));
 
     for (y=gridsize * (-bcpr); y <= b; y=y+gridsize) {
 	for (x= gridsize * (-acpr); x <= a; x=x+gridsize) {

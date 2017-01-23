@@ -1,4 +1,4 @@
-/*                   T E S T _ R B T R E E . C
+/*                    R E D B L A C K . C
  * BRL-CAD
  *
  * Copyright (c) 2012-2016 United States Government as represented by
@@ -57,7 +57,7 @@ displayNode(void* data, int dep)
 
 
 int
-main(int ac, char *av[])
+redblack_main(int ac, char *av[])
 {
     struct bu_rb_tree *testTree;
     void *searchedValue;

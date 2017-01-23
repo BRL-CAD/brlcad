@@ -1,4 +1,4 @@
-/*         B N _ P O L Y _ S Y N T H E T I C _ D I V . C
+/*           P O L Y _ S Y N T H E T I C _ D I V . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -32,7 +32,7 @@
 
 
 /* holds three polynomials to be used in test. */
-bn_poly_t input[2] = { BN_POLY_INIT_ZERO, BN_POLY_INIT_ZERO };
+bn_poly_t psynthdiv_input[2] = { BN_POLY_INIT_ZERO, BN_POLY_INIT_ZERO };
 bn_poly_t quo[1] = { BN_POLY_INIT_ZERO };
 bn_poly_t rem[1] = { BN_POLY_INIT_ZERO };
 
@@ -42,15 +42,15 @@ bn_poly_t rem[1] = { BN_POLY_INIT_ZERO };
  * degrees.
  */
 void
-poly_init(void)
+sd_poly_init(void)
 {
     /* initializes a 3rd degree polynomial with negative
      * coefficients.
      */
-    input[0].dgr = 3;
+    psynthdiv_input[0].dgr = 3;
     quo[0].dgr = rem[0].dgr = 4;
 
-    input[0].cf[0] = -4, input[0].cf[1] = -3, input[0].cf[2] = -2, input[0].cf[3] = -38;/* input coeff */
+    psynthdiv_input[0].cf[0] = -4, psynthdiv_input[0].cf[1] = -3, psynthdiv_input[0].cf[2] = -2, psynthdiv_input[0].cf[3] = -38;/* psynthdiv_input coeff */
 
     /**
      * The known output values used for these tests were generated from
@@ -60,9 +60,9 @@ poly_init(void)
     rem[0].cf[0] = -3313.375000, rem[0].cf[1] = 205834.750000, rem[0].cf[2] = 41708.250000, rem[0].cf[3] = 0.0; /* remainder coeff */
 
     /* initializes a 4th degree positive polynomial */
-    input[1].dgr = 4;
+    psynthdiv_input[1].dgr = 4;
 
-    input[1].cf[0] = 5478, input[1].cf[1] = 5485, input[1].cf[2] = 458, input[1].cf[3] = 258564, input[1].cf[4] = 54785;/* input coeff */
+    psynthdiv_input[1].cf[0] = 5478, psynthdiv_input[1].cf[1] = 5485, psynthdiv_input[1].cf[2] = 458, psynthdiv_input[1].cf[3] = 258564, psynthdiv_input[1].cf[4] = 54785;/* psynthdiv_input coeff */
 
     return;
 }
@@ -70,7 +70,7 @@ poly_init(void)
 
 /* compares the values of the array and returns 0 if they all match */
 size_t
-check_results(fastf_t a[], fastf_t b[], size_t n)
+sd_check_results(fastf_t a[], fastf_t b[], size_t n)
 {
     size_t i;
 
@@ -92,11 +92,11 @@ test_bn_poly_syn_div(void)
     bn_poly_t q2 = BN_POLY_INIT_ZERO;
     bn_poly_t r2 = BN_POLY_INIT_ZERO;
 
-    bn_poly_synthetic_division(&q2, &r2, &input[1], &input[0]);
+    bn_poly_synthetic_division(&q2, &r2, &psynthdiv_input[1], &psynthdiv_input[0]);
 
     /*checks the quotients */
-    val1[0] = check_results(q2.cf, quo[0].cf, quo[0].dgr + 1);
-    val1[1] = check_results(r2.cf, rem[0].cf, rem[0].dgr + 1);
+    val1[0] = sd_check_results(q2.cf, quo[0].cf, quo[0].dgr + 1);
+    val1[1] = sd_check_results(r2.cf, rem[0].cf, rem[0].dgr + 1);
 
     if (val1[0] == 0 && val1[1] == 0)
 	return 0;
@@ -106,11 +106,11 @@ test_bn_poly_syn_div(void)
 
 
 int
-main(void)
+poly_synthetic_div_main(int UNUSED(ac), char **UNUSED(av))
 {
     int ret;
 
-    poly_init();
+    sd_poly_init();
     ret = test_bn_poly_syn_div();
 
     if (ret)

@@ -283,9 +283,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     int csg_fail = 0;
     std::set<int> loops;
     std::set<int> active;
-    std::set<int> fully_planar;
-    std::set<int> partly_planar;
-    std::set<int>::iterator l_it, e_it;
+    std::set<int>::iterator l_it;
 
     array_to_set(&loops, data->island_loops, data->island_loops_cnt);
     array_to_set(&active, data->island_loops, data->island_loops_cnt);

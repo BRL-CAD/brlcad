@@ -1,4 +1,4 @@
-/*                       B U _ S T R . C
+/*                       S T R . C
  * BRL-CAD
  *
  * Copyright (c) 2014-2016 United States Government as represented by
@@ -172,7 +172,7 @@ test_bu_strncmp_like_functions(int argc, char *argv[], int (*fun)(const char *, 
 }
 
 int
-main(int argc, char *argv[])
+str_main(int argc, char *argv[])
 {
     int function_num = 0;
 

@@ -125,8 +125,6 @@ raydiff_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNU
     fastf_t part_len = 0.0;
     struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(ap->a_uptr);
     struct raydiff_container *state = (struct raydiff_container *)(s->ptr);
-    /*rt_pr_seg(segs);*/
-    /*rt_pr_partitions(ap->a_rt_i, PartHeadp, "hits");*/
 
     for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
 	VJOIN1(in_pt, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);

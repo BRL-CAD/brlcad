@@ -195,6 +195,8 @@ foreach(fmt ${CURRENT_OUTPUT_FORMATS})
       message(FATAL_ERROR "Unsupported XML validator specified: ${XE}")
     endif ("xsltproc" MATCHES "${XE}")
 
+    # Apache FOP executable
+    set(APACHE_FOP @APACHE_FOP@)
     # Apache FOP version from parent CMake build system
     set(APACHE_FOP_VERSION @APACHE_FOP_VERSION@)
 

@@ -1,4 +1,4 @@
-/*                    T E S T _ V L S _ V P R I N T F. C
+/*                    V L S _ V P R I N T F. C
  * BRL-CAD
  *
  * Copyright (c) 2011-2016 United States Government as represented by
@@ -98,17 +98,17 @@ int
 check_format_chars(void)
 {
   int status = BRLCAD_OK; /* assume okay */
-  int i, flags;
+  int i, cflags;
   vflags_t f;
 
   for (i = 0; i < 255; ++i) {
     unsigned char c = (unsigned char)i;
     if (!isprint(c))
       continue;
-    flags = format_part_status(c);
-    if (flags & VP_VALID) {
+    cflags = format_part_status(c);
+    if (cflags & VP_VALID) {
       /* we need a valid part handler */
-      int vp_part = flags & VP_PARTS;
+      int vp_part = cflags & VP_PARTS;
 
       /* for the moment we only have one such handler */
       if (vp_part ^ VP_LENGTH_MOD) /* same as !(vp_part & VP_LENGTH_MOD) */
@@ -119,7 +119,7 @@ check_format_chars(void)
 	printf("Unhandled valid char '%c'                                    [FAIL]\n", c);
 	status = BRLCAD_ERROR;
       }
-    } else if (flags & VP_OBSOLETE) {
+    } else if (cflags & VP_OBSOLETE) {
       /* we need an obsolete part handler */
       if (!handle_obsolete_format_char(c, VP_NOPRINT)) {
 	/* tell user */
@@ -134,7 +134,7 @@ check_format_chars(void)
 
 
 int
-main(int argc, char *argv[])
+vls_vprintf_main(int argc, char *argv[])
 {
 
     int test_num = 0;

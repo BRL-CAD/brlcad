@@ -573,6 +573,10 @@ void ASConsole::formatFile(const string& fileName_)
 				filesAreIdentical = false;
 			streamIterator.checkForEmptyLine = false;
 		}
+
+		// If we're doing a report run, we can stop as soon as we know
+		// there is a change.
+		if (isReport && !filesAreIdentical) break;
 	}
 	// correct for mixed line ends
 	if (lineEndsMixed)
@@ -599,12 +603,12 @@ void ASConsole::formatFile(const string& fileName_)
 	}
 	else
 	{
-		if (!isFormattedOnly)
+		if (!isFormattedOnly && !isReport)
 			printMsg(_("Unchanged  %s\n"), displayName);
 		filesUnchanged++;
 	}
 
-	assert(formatter.getChecksumDiff() == 0);
+	if (!isReport) assert(formatter.getChecksumDiff() == 0);
 }
 
 // build a vector of argv options

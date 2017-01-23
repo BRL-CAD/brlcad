@@ -261,15 +261,11 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
 	{
 	    struct loopuse *lu;
-	    /* vect_t facet_normal; */
 
 	    NMG_CK_FACEUSE(fu);
 
 	    if (fu->orientation != OT_SAME)
 		continue;
-
-	    /* Grab the face normal if needed */
-	    /* NMG_GET_FU_NORMAL(facet_normal, fu); */
 
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
 	    {

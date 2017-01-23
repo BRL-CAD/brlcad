@@ -1,4 +1,4 @@
-/*                    B U _ D A T E T I M E . C
+/*                    D A T E T I M E . C
  * BRL-CAD
  *
  * Copyright (c) 2014-2016 United States Government as represented by
@@ -22,7 +22,7 @@
 
 
 int
-main(int argc, char **argv)
+datetime_main(int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     int64_t curr_time;
