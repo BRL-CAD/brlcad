@@ -43,6 +43,9 @@ namespace
 HIDDEN btTransform
 matrix_to_bt_transform(const fastf_t * const matrix)
 {
+    if (!matrix)
+	bu_bomb("invalid argument");
+
     btTransform result;
     result.setIdentity();
     result.setOrigin(btVector3(matrix[MDX], matrix[MDY], matrix[MDZ]));
@@ -58,6 +61,9 @@ bt_transform_to_matrix(const btTransform &transform, fastf_t * const matrix)
 {
     (void)matrix_to_bt_transform; // silence unused function warning
 
+    if (!matrix)
+	bu_bomb("invalid argument");
+
     MAT_IDN(matrix);
     matrix[MDX] = transform.getOrigin().getX();
     matrix[MDY] = transform.getOrigin().getY();
@@ -65,6 +71,26 @@ bt_transform_to_matrix(const btTransform &transform, fastf_t * const matrix)
     VMOVE(&matrix[0], transform.getBasis()[0]);
     VMOVE(&matrix[4], transform.getBasis()[1]);
     VMOVE(&matrix[8], transform.getBasis()[2]);
+}
+
+
+HIDDEN void
+check_region_path(const db_full_path &full_path)
+{
+    RT_CK_FULL_PATH(&full_path);
+
+    if (full_path.fp_len < 2)
+	throw simulate::InvalidSimulationError("invalid path");
+
+    if (full_path.fp_names[0]->d_nref)
+	throw simulate::InvalidSimulationError(std::string() + "root '" +
+					       full_path.fp_names[0]->d_namep + "' is referenced elsewhere");
+
+    for (std::size_t i = 1; i < full_path.fp_len - 1; ++i)
+	if (full_path.fp_names[i]->d_nref != 1)
+	    throw simulate::InvalidSimulationError(std::string() +
+						   "multiple references to parent combination '" + full_path.fp_names[i]->d_namep +
+						   "'");
 }
 
 
@@ -115,18 +141,7 @@ RtMotionState::setWorldTransform(const btTransform &transform)
     if (db_string_to_path(&full_path, &m_db, m_path.c_str()))
 	bu_bomb("db_string_to_path() failed");
 
-    if (full_path.fp_len < 2)
-	throw InvalidSimulationError("invalid path");
-
-    if (full_path.fp_names[0]->d_nref)
-	throw InvalidSimulationError(std::string() + "root '" +
-				     full_path.fp_names[0]->d_namep + "' is referenced elsewhere");
-
-    for (std::size_t i = 1; i < full_path.fp_len - 1; ++i)
-	if (full_path.fp_names[i]->d_nref != 1)
-	    throw InvalidSimulationError(std::string() +
-					 "multiple references to parent combination '" + full_path.fp_names[i]->d_namep +
-					 "'");
+    check_region_path(full_path);
 
     directory &parent_dir = *full_path.fp_names[full_path.fp_len - 2];
     rt_db_internal parent_internal;

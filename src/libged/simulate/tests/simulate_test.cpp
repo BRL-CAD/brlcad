@@ -106,11 +106,11 @@ test_basic()
 	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
 		    0, 0, 0, false, true, false))
 	    bu_bomb("mk_comb() failed");
-    }
 
-    if (db5_update_attribute("scene.c", "simulate::gravity", "<0.0, 0.0, -9.8>",
-			     db.ptr))
-	bu_bomb("db5_update_attribute() failed");
+	if (db5_update_attribute("scene.c", "simulate::gravity", "<0.0, 0.0, -9.8>",
+				 db.ptr))
+	    bu_bomb("db5_update_attribute() failed");
+    }
 
     simulate::Simulation(*db.ptr, "scene.c").step(3.0,
 	    simulate::Simulation::debug_none);

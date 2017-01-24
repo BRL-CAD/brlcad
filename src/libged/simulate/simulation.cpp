@@ -58,6 +58,9 @@ get_rigid_body_construction_info(btMotionState &motion_state,
 {
     RT_CK_DBI(&db);
 
+    if (mass < 0.0)
+	bu_bomb("invalid argument");
+
     btVector3 inertia(0.0, 0.0, 0.0);
     collision_shape.calculateLocalInertia(mass, inertia);
     return btRigidBody::btRigidBodyConstructionInfo(mass, &motion_state,
@@ -179,11 +182,14 @@ get_simulation_parameters(const db_i &db, const std::string &path)
     for (std::size_t i = 0; i < avs.count; ++i)
 	if (!bu_strncmp(avs.avp[i].name, attribute_prefix, strlen(attribute_prefix))) {
 	    const char * const name = avs.avp[i].name + strlen(attribute_prefix);
+	    const char * const value = avs.avp[i].value;
 
 	    if (!bu_strcmp(name, "gravity"))
-		gravity = deserialize_vector(avs.avp[i].value);
+		gravity = deserialize_vector(value);
 	    else
-		throw simulate::InvalidSimulationError("invalid attribute");
+		throw simulate::InvalidSimulationError(std::string() +
+						       "invalid scene attribute '" +
+						       avs.avp[i].name + "' on '" + path + "'");
 	}
 
     return gravity;
@@ -202,6 +208,9 @@ class Simulation::Region
 public:
     ~Region();
 
+    static Region *get_region(db_i &db, const db_full_path &path,
+			      btDiscreteDynamicsWorld &world);
+
     static std::vector<const Region *> get_regions(db_i &db,
 	    const std::string &root_path, btDiscreteDynamicsWorld &world);
 
@@ -217,6 +226,63 @@ private:
     RtCollisionShape m_collision_shape;
     btRigidBody m_rigid_body;
 };
+
+
+Simulation::Region *
+Simulation::Region::get_region(db_i &db, const db_full_path &full_path,
+			       btDiscreteDynamicsWorld &world)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&full_path);
+
+    AutoPtr<char> path(db_path_to_string(&full_path));
+
+    if (!(DB_FULL_PATH_CUR_DIR(&full_path)->d_flags & (RT_DIR_REGION |
+	    RT_DIR_SOLID)))
+	throw InvalidSimulationError(std::string() + "'" + path.ptr +
+				     "' is not a region");
+
+    for (std::size_t i = 0; i < full_path.fp_len - 1; ++i)
+	if (full_path.fp_names[i]->d_flags & RT_DIR_REGION)
+	    throw InvalidSimulationError(std::string() + "nested regions in path '" +
+					 path.ptr + "'");
+
+    btScalar mass = 1.0;
+    btVector3 linear_velocity(0.0, 0.0, 0.0);
+    btVector3 angular_velocity(0.0, 0.0, 0.0);
+    {
+	bu_attribute_value_set avs;
+	BU_AVS_INIT(&avs);
+	AutoPtr<bu_attribute_value_set, bu_avs_free> avs_autoptr(&avs);
+
+	if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(&full_path)))
+	    bu_bomb("db5_get_attributes() failed");
+
+	for (std::size_t i = 0; i < avs.count; ++i)
+	    if (!bu_strncmp(avs.avp[i].name, attribute_prefix, strlen(attribute_prefix))) {
+		const char * const name = avs.avp[i].name + strlen(attribute_prefix);
+		const char * const value = avs.avp[i].value;
+
+		if (!bu_strcmp(name, "mass")) {
+		    mass = lexical_cast<btScalar>(value,
+						  std::string() + "invalid mass on '" + path.ptr + "'");
+
+		    if (mass < 0.0)
+			throw InvalidSimulationError(std::string() + "invalid mass on '" + path.ptr +
+						     "'");
+		} else if (!bu_strcmp(name, "linear_velocity")) {
+		    linear_velocity = deserialize_vector(value);
+		} else if (!bu_strcmp(name, "angular_velocity")) {
+		    angular_velocity = deserialize_vector(value);
+		} else
+		    throw InvalidSimulationError(std::string() + "invalid attribute '" +
+						 avs.avp[i].name + "' on '" + path.ptr + "'");
+	    }
+    }
+
+    return new Region(db, path.ptr, world, get_aabb(db, path.ptr), mass,
+		      linear_velocity, angular_velocity);
+}
 
 
 std::vector<const Simulation::Region *>
@@ -238,7 +304,7 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
     AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
 
     if (0 > db_search(&found, DB_SEARCH_TREE,
-		      " -type region -or -type shape -not -below -type region", full_path.fp_len,
+		      "-type region -or -type shape -not -below -type region", full_path.fp_len,
 		      full_path.fp_names, &db))
 	bu_bomb("db_search() failed");
 
@@ -248,40 +314,15 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
     std::vector<const Simulation::Region *> result;
     db_full_path **entry;
 
-    for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
-	AutoPtr<char> path(db_path_to_string(*entry));
+    try {
+	for (BU_PTBL_FOR(entry, (db_full_path **), &found))
+	    result.push_back(get_region(db, **entry, world));
+    } catch (...) {
+	for (std::vector<const Region *>::const_iterator it = result.begin();
+	     it != result.end(); ++it)
+	    delete *it;
 
-	btScalar mass = 1.0;
-	btVector3 linear_velocity(0.0, 0.0, 0.0);
-	btVector3 angular_velocity(0.0, 0.0, 0.0);
-	{
-	    bu_attribute_value_set avs;
-	    BU_AVS_INIT(&avs);
-	    AutoPtr<bu_attribute_value_set, bu_avs_free> avs_autoptr(&avs);
-
-	    if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(*entry)))
-		bu_bomb("db5_get_attributes() failed");
-
-	    for (std::size_t i = 0; i < avs.count; ++i)
-		if (!bu_strncmp(avs.avp[i].name, attribute_prefix, strlen(attribute_prefix))) {
-		    const char * const name = avs.avp[i].name + strlen(attribute_prefix);
-
-		    if (!bu_strcmp(name, "mass")) {
-			mass = lexical_cast<btScalar>(avs.avp[i].value, "invalid mass");
-
-			if (mass < 0.0)
-			    throw InvalidSimulationError("invalid mass");
-		    } else if (!bu_strcmp(name, "linear_velocity")) {
-			linear_velocity = deserialize_vector(avs.avp[i].value);
-		    } else if (!bu_strcmp(name, "angular_velocity")) {
-			angular_velocity = deserialize_vector(avs.avp[i].value);
-		    } else
-			throw InvalidSimulationError("invalid attribute");
-		}
-	}
-
-	result.push_back(new Region(db, path.ptr, world, get_aabb(db, path.ptr), mass,
-				    linear_velocity, angular_velocity));
+	throw;
     }
 
     return result;
@@ -331,6 +372,14 @@ Simulation::Simulation(db_i &db, const std::string &path) :
 
     const btVector3 gravity = get_simulation_parameters(db, path);
     m_world.setGravity(gravity);
+}
+
+
+Simulation::~Simulation()
+{
+    for (std::vector<const Region *>::const_iterator it = m_regions.begin();
+	 it != m_regions.end(); ++it)
+	delete *it;
 }
 
 

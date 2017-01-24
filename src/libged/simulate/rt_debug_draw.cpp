@@ -109,12 +109,9 @@ void
 RtDebugDraw::drawLine(const btVector3 &from, const btVector3 &to,
 		      const btVector3 &color)
 {
-    point_t from_pt = VINIT_ZERO;
-    vect_t height = VINIT_ZERO;
-    VMOVE(from_pt, from);
-    VMOVE(height, to - from);
-
     const std::string name = make_name("line");
+    const point_t from_pt = {V3ARGS(from)};
+    const vect_t height = {V3ARGS(to - from)};
 
     if (mk_rcc(m_db.dbi_wdbp, name.c_str(), from_pt, height, 1.0e-8))
 	bu_bomb("mk_rcc() failed");
@@ -134,13 +131,10 @@ RtDebugDraw::draw3dText(const btVector3 &UNUSED(location),
 void RtDebugDraw::drawAabb(const btVector3 &from, const btVector3 &to,
 			   const btVector3 &color)
 {
-    point_t min_pt = VINIT_ZERO, max_pt = VINIT_ZERO;
-    VMOVE(min_pt, from);
-    VMIN(min_pt, to);
-    VMOVE(max_pt, from);
-    VMAX(max_pt, to);
-
     const std::string name = make_name("aabb");
+    point_t min_pt = {V3ARGS(from)}, max_pt = {V3ARGS(from)};
+    VMIN(min_pt, to);
+    VMAX(max_pt, to);
 
     if (mk_rpp(m_db.dbi_wdbp, name.c_str(), min_pt, max_pt))
 	bu_bomb("mk_rpp() failed");
@@ -154,10 +148,8 @@ RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
 			      const btVector3 &normal_world_on_b, const btScalar distance,
 			      const int UNUSED(lifetime), const btVector3 &color)
 {
-    point_t point_on_b_pt = VINIT_ZERO;
-    VMOVE(point_on_b_pt, point_on_b);
-
     const std::string name = make_name("contact");
+    const point_t point_on_b_pt = {V3ARGS(point_on_b)};
 
     if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt, 1.0))
 	bu_bomb("mk_sph() failed");

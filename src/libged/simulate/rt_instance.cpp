@@ -50,8 +50,13 @@ struct MultiOverlapHandlerArgs {
 
 HIDDEN void
 multioverlap_handler(application * const app, partition * const partition1,
-		     bu_ptbl * const region_table, partition * const partition2)
+		     bu_ptbl * const region_table, partition * const partition_list)
 {
+    RT_CK_APPLICATION(app);
+    RT_CK_PARTITION(partition1);
+    BU_CK_PTBL(region_table);
+    RT_CK_PT_HD(partition_list);
+
     MultiOverlapHandlerArgs &args = *static_cast<MultiOverlapHandlerArgs *>
 				    (app->a_uptr);
 
@@ -79,7 +84,7 @@ multioverlap_handler(application * const app, partition * const partition1,
     args.result.push_back(std::make_pair(point_on_a, point_on_b));
 
     // handle the overlap
-    rt_default_multioverlap(app, partition1, region_table, partition2);
+    rt_default_multioverlap(app, partition1, region_table, partition_list);
 }
 
 
@@ -101,6 +106,9 @@ std::vector<std::pair<btVector3, btVector3> >
 RtInstance::get_overlaps(const std::string &path_a, const std::string &path_b,
 			 const xrays &rays) const
 {
+    BU_CK_LIST_HEAD(&rays);
+    RT_CK_RAY(&(&rays)->ray);
+
     AutoPtr<rt_i, rt_free_rti> rti(rt_new_rti(&m_db));
 
     if (!rti.ptr)

@@ -101,7 +101,7 @@ ged_simulate(ged * const gedp, const int argc, const char ** const argv)
 
     const char *debug_mode_string = "";
     const bu_opt_desc options_description[] = {
-	{NULL, "debug", "mode", bu_opt_str, &debug_mode_string, "enable debug mode (example: --debug=aabb,contact,ray)"},
+	{NULL, "debug", "mode", bu_opt_str, &debug_mode_string, "set debug mode (example: --debug=aabb,contact,ray)"},
 	BU_OPT_DESC_NULL
     };
 
