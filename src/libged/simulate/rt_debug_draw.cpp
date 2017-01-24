@@ -46,12 +46,12 @@ make_name(const std::string &base)
 {
     const char * const prefix = "RtDebugDraw::";
 
-    std::ostringstream sstream;
-    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
+    std::ostringstream stream;
+    stream.exceptions(std::ostream::failbit | std::ostream::badbit);
 
-    sstream << prefix << base << static_cast<std::size_t>(drand48() * 1.0e5 + 0.5)
-	    << ".s";
-    return sstream.str();
+    stream << prefix << base << static_cast<std::size_t>(drand48() * 1.0e5 + 0.5) <<
+	   ".s";
+    return stream.str();
 }
 
 
@@ -60,20 +60,20 @@ apply_color(db_i &db, const std::string &name, const btVector3 &color)
 {
     RT_CK_DBI(&db);
 
-    std::ostringstream sstream;
-    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
+    std::ostringstream stream;
+    stream.exceptions(std::ostream::failbit | std::ostream::badbit);
 
     for (std::size_t i = 0; i < 3; ++i) {
 	if (!(0.0 <= color[i] && color[i] <= 1.0))
 	    bu_bomb("invalid color");
 
-	sstream << static_cast<unsigned>(color[i] * 255.0 + 0.5);
+	stream << static_cast<unsigned>(color[i] * 255.0 + 0.5);
 
 	if (i != 2)
-	    sstream.put(' ');
+	    stream.put(' ');
     }
 
-    if (db5_update_attribute(name.c_str(), "color", sstream.str().c_str(), &db))
+    if (db5_update_attribute(name.c_str(), "color", stream.str().c_str(), &db))
 	bu_bomb("db5_update_attribute() failed");
 }
 
@@ -159,11 +159,11 @@ RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
 
     const std::string name = make_name("contact");
 
-    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt, 3.0))
+    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt, 1.0))
 	bu_bomb("mk_sph() failed");
 
     apply_color(m_db, name, color);
-    drawLine(point_on_b, normal_world_on_b * distance, color);
+    drawLine(point_on_b, point_on_b + normal_world_on_b * distance * 1.0e3, color);
 }
 
 

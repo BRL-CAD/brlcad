@@ -58,7 +58,7 @@ test_basic()
     }
 
     {
-	const point_t min = {-1.0, -4.0, -3.0};
+	const point_t min = { -1.0, -4.0, -3.0};
 	const point_t max = {6.0, 3.0, 5.0};
 
 	if (mk_rpp(db.ptr->dbi_wdbp, "base.s", min, max))
@@ -108,7 +108,8 @@ test_basic()
 	    bu_bomb("mk_comb() failed");
     }
 
-    simulate::Simulation(*db.ptr, "scene.c").step(3.0);
+    simulate::Simulation(*db.ptr, "scene.c").step(3.0,
+	    simulate::Simulation::debug_none);
 
     {
 	const mat_t expected_falling_matrix = {

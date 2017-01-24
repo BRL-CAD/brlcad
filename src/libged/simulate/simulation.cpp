@@ -49,6 +49,9 @@ namespace
 {
 
 
+const char * const attribute_prefix = "simulate::";
+
+
 HIDDEN btRigidBody::btRigidBodyConstructionInfo
 get_rigid_body_construction_info(btMotionState &motion_state,
 				 btCollisionShape &collision_shape, const db_i &db, const btScalar mass)
@@ -151,6 +154,42 @@ deserialize_vector(const std::string &source)
 }
 
 
+HIDDEN btVector3
+get_simulation_parameters(const db_i &db, const std::string &path)
+{
+    RT_CK_DBI(&db);
+
+    db_full_path full_path;
+    db_full_path_init(&full_path);
+    simulate::AutoPtr<db_full_path, db_free_full_path> autofree_full_path(
+	&full_path);
+
+    if (db_string_to_path(&full_path, &db, path.c_str()))
+	throw simulate::InvalidSimulationError("invalid path");
+
+    bu_attribute_value_set avs;
+    BU_AVS_INIT(&avs);
+    simulate::AutoPtr<bu_attribute_value_set, bu_avs_free> avs_autoptr(&avs);
+
+    if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(&full_path)))
+	bu_bomb("db5_get_attributes() failed");
+
+    btVector3 gravity(0.0, 0.0, -9.80665);
+
+    for (std::size_t i = 0; i < avs.count; ++i)
+	if (!bu_strncmp(avs.avp[i].name, attribute_prefix, strlen(attribute_prefix))) {
+	    const char * const name = avs.avp[i].name + strlen(attribute_prefix);
+
+	    if (!bu_strcmp(name, "gravity"))
+		gravity = deserialize_vector(avs.avp[i].value);
+	    else
+		throw simulate::InvalidSimulationError("invalid attribute");
+	}
+
+    return gravity;
+}
+
+
 }
 
 
@@ -223,11 +262,9 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
 	    if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(*entry)))
 		bu_bomb("db5_get_attributes() failed");
 
-	    const char * const prefix = "simulate::";
-
 	    for (std::size_t i = 0; i < avs.count; ++i)
-		if (!bu_strncmp(avs.avp[i].name, prefix, strlen(prefix))) {
-		    const char * const name = avs.avp[i].name + strlen(prefix);
+		if (!bu_strncmp(avs.avp[i].name, attribute_prefix, strlen(attribute_prefix))) {
+		    const char * const name = avs.avp[i].name + strlen(attribute_prefix);
 
 		    if (!bu_strcmp(name, "mass")) {
 			mass = lexical_cast<btScalar>(avs.avp[i].value, "invalid mass");
@@ -285,22 +322,20 @@ Simulation::Simulation(db_i &db, const std::string &path) :
     m_regions(Region::get_regions(db, path, m_world)),
     m_rt_instance(db)
 {
-    // TODO: gravity is at 9.8 mm/s/s
-    // other units may need to be scaled as well
-    const btVector3 gravity(0.0, 0.0, -9.8);
-
     m_collision_dispatcher.registerCollisionCreateFunc(
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
 	new RtCollisionAlgorithm::CreateFunc(m_rt_instance, m_debug_draw));
-    m_world.setGravity(gravity);
 
     m_world.setDebugDrawer(&m_debug_draw);
+
+    const btVector3 gravity = get_simulation_parameters(db, path);
+    m_world.setGravity(gravity);
 }
 
 
 void
-Simulation::step(const fastf_t seconds, const bool debug)
+Simulation::step(const fastf_t seconds, const DebugMode debug_mode)
 {
     const btScalar fixed_time_step = 1.0 / 60.0;
     const int max_substeps = std::numeric_limits<int16_t>::max();
@@ -310,11 +345,19 @@ Simulation::step(const fastf_t seconds, const bool debug)
     else if (seconds > max_substeps * fixed_time_step)
 	throw InvalidSimulationError("duration is too large for a single step");
 
-    if (debug)
-	m_world.getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawAabb |
-					       btIDebugDraw::DBG_DrawFrames);
-    else
-	m_world.getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_NoDebug);
+    m_world.getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_NoDebug);
+
+    if (debug_mode & debug_aabb)
+	m_world.getDebugDrawer()->setDebugMode(m_world.getDebugDrawer()->getDebugMode()
+					       | btIDebugDraw::DBG_DrawAabb);
+
+    if (debug_mode & debug_contact)
+	m_world.getDebugDrawer()->setDebugMode(m_world.getDebugDrawer()->getDebugMode()
+					       | btIDebugDraw::DBG_DrawContactPoints);
+
+    if (debug_mode & debug_ray)
+	m_world.getDebugDrawer()->setDebugMode(m_world.getDebugDrawer()->getDebugMode()
+					       | btIDebugDraw::DBG_DrawFrames);
 
     m_world.stepSimulation(seconds, max_substeps, fixed_time_step);
     m_world.debugDrawWorld();

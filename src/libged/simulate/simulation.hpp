@@ -43,9 +43,17 @@ namespace simulate
 class Simulation
 {
 public:
+    enum DebugMode {
+	debug_none,
+	debug_aabb = 1 << 0,
+	debug_contact = 1 << 1,
+	debug_ray = 1 << 2
+    };
+
+
     explicit Simulation(db_i &db, const std::string &path);
 
-    void step(fastf_t seconds, bool debug = false);
+    void step(fastf_t seconds, DebugMode debug_mode);
 
 
 private:
@@ -60,6 +68,21 @@ private:
     std::vector<const Region *> m_regions;
     const RtInstance m_rt_instance;
 };
+
+
+inline Simulation::DebugMode
+operator|(Simulation::DebugMode a, Simulation::DebugMode b)
+{
+    return static_cast<Simulation::DebugMode>(
+	       static_cast<int>(a) | static_cast<int>(b));
+}
+
+
+inline bool
+operator&(Simulation::DebugMode a, Simulation::DebugMode b)
+{
+    return static_cast<int>(a) & static_cast<int>(b);
+}
 
 
 }

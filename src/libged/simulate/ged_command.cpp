@@ -53,7 +53,43 @@ ged_simulate(ged * const gedp, const int argc, const char ** const argv)
 #include "simulation.hpp"
 #include "utility.hpp"
 
+#include "bu/opt.h"
 #include "ged.h"
+
+
+namespace
+{
+
+
+HIDDEN simulate::Simulation::DebugMode
+get_debug_mode(const std::string &debug_mode_string)
+{
+    simulate::Simulation::DebugMode result = simulate::Simulation::debug_none;
+
+    if (debug_mode_string.empty())
+	return result;
+
+    std::istringstream stream(debug_mode_string);
+
+    while (!stream.eof()) {
+	std::string value;
+	std::getline(stream, value, ',');
+
+	if (value == "aabb")
+	    result = result | simulate::Simulation::debug_aabb;
+	else if (value == "contact")
+	    result = result | simulate::Simulation::debug_contact;
+	else if (value == "ray")
+	    result = result | simulate::Simulation::debug_ray;
+	else
+	    throw simulate::InvalidSimulationError("invalid debug mode");
+    }
+
+    return result;
+}
+
+
+}
 
 
 int
@@ -63,9 +99,18 @@ ged_simulate(ged * const gedp, const int argc, const char ** const argv)
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    if (argc != 3) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: USAGE: %s <combination> <seconds>",
-		       argv[0], argv[0]);
+    const char *debug_mode_string = "";
+    const bu_opt_desc options_description[] = {
+	{NULL, "debug", "mode", bu_opt_str, &debug_mode_string, "enable debug mode (example: --debug=aabb,contact,ray)"},
+	BU_OPT_DESC_NULL
+    };
+
+    if (2 != bu_opt_parse(gedp->ged_result_str, argc - 1, &argv[1],
+			  options_description)) {
+	simulate::AutoPtr<char> usage(const_cast<char *>(bu_opt_describe(
+					  const_cast<bu_opt_desc *>(options_description), NULL)));
+	bu_vls_printf(gedp->ged_result_str,
+		      "USAGE: %s [OPTIONS] path duration\nOptions:\n%s\n", argv[0], usage.ptr);
 	return GED_ERROR;
     }
 
@@ -73,15 +118,18 @@ ged_simulate(ged * const gedp, const int argc, const char ** const argv)
     gedp->ged_wdbp->dbip->dbi_wdbp = gedp->ged_wdbp;
 
     try {
+	const simulate::Simulation::DebugMode debug_mode =
+	    get_debug_mode(debug_mode_string);
 	const fastf_t seconds = simulate::lexical_cast<fastf_t>(argv[2],
 				"invalid value for 'seconds'");
 
 	if (seconds < 0.0)
 	    throw simulate::InvalidSimulationError("invalid value for 'seconds'");
 
-	simulate::Simulation(*gedp->ged_wdbp->dbip, argv[1]).step(seconds);
+	simulate::Simulation simulation(*gedp->ged_wdbp->dbip, argv[1]);
+	simulation.step(seconds, debug_mode);
     } catch (const simulate::InvalidSimulationError &exception) {
-	bu_vls_sprintf(gedp->ged_result_str, "%s: %s", argv[0], exception.what());
+	bu_vls_sprintf(gedp->ged_result_str, "%s", exception.what());
 	gedp->ged_wdbp->dbip->dbi_wdbp = orig_wdbp;
 	return GED_ERROR;
     }

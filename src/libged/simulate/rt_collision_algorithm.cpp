@@ -44,6 +44,9 @@ namespace
 {
 
 
+static const bool use_persistent_contacts = false;
+
+
 HIDDEN void
 calculate_contact_points(btManifoldResult &result,
 			 const btCollisionObjectWrapper &body_a_wrap,
@@ -248,22 +251,18 @@ RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper * const
 	bu_bomb("missing argument");
 
     if (!m_manifold)
-	return;
+	bu_bomb("missing manifold");
 
     result->setPersistentManifold(m_manifold);
-#ifndef USE_PERSISTENT_CONTACTS
-    m_manifold->clearManifold();
-#endif
+
+    if (!use_persistent_contacts)
+	m_manifold->clearManifold();
 
     calculate_contact_points(*result, *body_a_wrap, *body_b_wrap, m_rt_instance,
 			     m_debug_draw);
 
-#ifdef USE_PERSISTENT_CONTACTS
-
-    if (m_owns_manifold)
+    if (use_persistent_contacts && m_owns_manifold)
 	result->refreshContactPoints();
-
-#endif
 }
 
 
