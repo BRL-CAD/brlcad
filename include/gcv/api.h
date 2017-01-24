@@ -183,7 +183,7 @@ struct gcv_plugin {
  */
 GCV_EXPORT const struct bu_ptbl *gcv_list_filters(void);
 
-GCV_EXPORT const struct gcv_plugin *gcv_plugin_info();
+GCV_EXPORT const struct gcv_plugin *gcv_plugin_info(void);
 
 /**
  * Perform a filtering operation on a gcv_context.
