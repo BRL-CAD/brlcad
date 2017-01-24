@@ -108,6 +108,10 @@ test_basic()
 	    bu_bomb("mk_comb() failed");
     }
 
+    if (db5_update_attribute("scene.c", "simulate::gravity", "<0.0, 0.0, -9.8>",
+			     db.ptr))
+	bu_bomb("db5_update_attribute() failed");
+
     simulate::Simulation(*db.ptr, "scene.c").step(3.0,
 	    simulate::Simulation::debug_none);
 
