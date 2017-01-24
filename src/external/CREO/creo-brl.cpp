@@ -66,9 +66,9 @@ ProError ShowMsg()
     ProArrayFree((ProArray*)&button);
     return PRO_TK_NO_ERROR;
 }
-#if 0
+
 /* driver routine for converting CREO to BRL-CAD */
-int
+extern "C" int
 creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 {
     ProFileName msgfil;
@@ -79,6 +79,7 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
     ProMessageDisplay(msgfil, "USER_INFO", "Launching creo_brl...");
 
+#if 0
     /* use UI dialog */
     status = ProUIDialogCreate( "creo_brl", "creo_brl" );
     if ( status != PRO_TK_NO_ERROR ) {
@@ -89,7 +90,6 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	bu_vls_free(&vls);
 	return 0;
     }
-#if 0
     status = ProUICheckbuttonActivateActionSet( "creo_brl", "elim_small", elim_small_activate, NULL );
     if ( status != PRO_TK_NO_ERROR ) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -121,7 +121,6 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	bu_vls_free(&vls);
 	return 0;
     }
-#endif
     status = ProUIDialogActivate( "creo_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -132,6 +131,7 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
+#endif
 
     return 0;
 }
@@ -139,13 +139,12 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 /* this routine determines whether the "proe-brl" menu item in Pro/E
  * should be displayed as available or greyed out
  */
-static uiCmdAccessState
+extern "C" static uiCmdAccessState
 creo_brl_access( uiCmdAccessMode access_mode )
 {
     /* doing the correct checks appears to be unreliable */
     return ACCESS_AVAILABLE;
 }
-#endif
 
 extern "C" int user_initialize()
 {
@@ -157,7 +156,7 @@ extern "C" int user_initialize()
     wchar_t errbuf[80];
 
     ProStringToWstring(msgfil, "usermsg.txt");
-#if 0
+
     /* Pro/E says always check the size of w_char */
     status = ProWcharSizeVerify (sizeof (wchar_t), &i);
     if ( status != PRO_TK_NO_ERROR || (i != sizeof (wchar_t)) ) {
@@ -193,7 +192,6 @@ extern "C" int user_initialize()
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	return -1;
     }
-#endif
 
     ShowMsg();
 

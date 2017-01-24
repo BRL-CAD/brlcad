@@ -14,6 +14,12 @@ project(CREO2G)
 set(BRLCAD_ROOT_DIR "C:/Program Files/BRLCAD 7.XX.X")
 set(CREO_ROOT_DIR "C:/Program Files/PTC/Creo XXX/MXXX/Common Files")
 
+# Will need copies of the BRL-CAD dlls along with the creo-brl.dll to make
+# a stand-alone package.
+set(BRLCAD_LIBS libbu libbn)
+foreach(blib ${BRLCAD_LIBS})
+  configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
+endforeach(blib ${BRLCAD_LIBS})
 
 # We will need to know where nmake.exe and link.exe are
 if (NOT DEFINED NMAKE_EXEC)
