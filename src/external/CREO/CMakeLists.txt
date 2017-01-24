@@ -32,15 +32,17 @@ endif (NOT EXISTS "${LINK_EXEC}")
 configure_file(creo-brl-nmake.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl-nmake @ONLY)
 configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat @ONLY)
 
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources)
+# List the resource files so we rebuild if one of them changes
+file(GLOB RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*)
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/creo-brl.cpp ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.cpp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/resources ${CMAKE_CURRENT_BINARY_DIR}/resources
   COMMAND ${NMAKE_EXEC} -f creo-brl-nmake clean
   COMMAND ${NMAKE_EXEC} -f creo-brl-nmake dll
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/creo-brl.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/creo-brl.cpp ${RESOURCE_FILES}
   )
 add_custom_target(CREO-G ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll DESTINATION .)
