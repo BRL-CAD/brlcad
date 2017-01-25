@@ -304,8 +304,9 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
 				     attribute_prefix + "type=region");
 
     if (0 > db_search(&found, DB_SEARCH_TREE,
-		      (std::string() + "-depth 1 -attr " + attribute_prefix + "* -not ( -attr " +
-		       attribute_prefix + "type=region -or -type shape )").c_str(), full_path.fp_len,
+		      (std::string() + "-depth >0 -attr " + attribute_prefix + "* -not ( -attr " +
+		       attribute_prefix + "type=region -or ( -type shape -not -below -attr " +
+		       attribute_prefix + "type=region ) )").c_str(), full_path.fp_len,
 		      full_path.fp_names, &db))
 	bu_bomb("db_search() failed");
 
