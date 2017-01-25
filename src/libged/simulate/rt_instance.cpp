@@ -33,6 +33,7 @@
 #include "rt_instance.hpp"
 #include "utility.hpp"
 
+#include "rt/db_attr.h"
 #include "rt/overlap.h"
 #include "rt/rt_instance.h"
 #include "rt/shoot.h"
@@ -40,6 +41,117 @@
 
 namespace
 {
+
+
+HIDDEN void
+toggle_region(db_i &db, directory &dir)
+{
+    RT_CK_DBI(&db);
+    RT_CK_DIR(&dir);
+
+    if (!(dir.d_flags & RT_DIR_COMB))
+	bu_bomb("invalid directory type");
+
+    if (dir.d_flags & RT_DIR_REGION) {
+	if (db5_update_attribute(dir.d_namep, "region", "", &db))
+	    bu_bomb("db5_update_attribute() failed");
+
+	dir.d_flags &= ~RT_DIR_REGION;
+    } else {
+	if (db5_update_attribute(dir.d_namep, "region", "R", &db))
+	    bu_bomb("db5_update_attribute() failed");
+
+	dir.d_flags |= RT_DIR_REGION;
+    }
+}
+
+
+HIDDEN directory &
+get_directory(const db_i &db, const std::string &path)
+{
+    RT_CK_DBI(&db);
+
+    db_full_path full_path;
+    db_full_path_init(&full_path);
+    simulate::AutoPtr<db_full_path, db_free_full_path> autofree_full_path(
+	&full_path);
+
+    if (db_string_to_path(&full_path, &db, path.c_str()))
+	bu_bomb("db_string_to_path() failed");
+
+    if (!full_path.fp_len)
+	bu_bomb("empty path");
+
+    return *DB_FULL_PATH_CUR_DIR(&full_path);
+}
+
+
+HIDDEN std::vector<directory *>
+get_parent_regions(const db_i &db, const std::string &path)
+{
+    RT_CK_DBI(&db);
+
+    db_full_path full_path;
+    db_full_path_init(&full_path);
+    simulate::AutoPtr<db_full_path, db_free_full_path> autofree_full_path(
+	&full_path);
+
+    if (db_string_to_path(&full_path, &db, path.c_str()))
+	bu_bomb("db_string_to_path() failed");
+
+    std::vector<directory *> result;
+
+    for (std::size_t i = 0; i < full_path.fp_len; ++i)
+	if (full_path.fp_names[i]->d_flags & RT_DIR_REGION)
+	    result.push_back(full_path.fp_names[i]);
+
+    return result;
+}
+
+
+class TemporaryRegionManager
+{
+public:
+    TemporaryRegionManager(db_i &db, const std::string &path);
+    ~TemporaryRegionManager();
+
+
+private:
+    TemporaryRegionManager(const TemporaryRegionManager &source);
+    TemporaryRegionManager &operator=(const TemporaryRegionManager &source);
+
+    db_i &m_db;
+    directory &m_dir;
+    const std::vector<directory *> m_parent_regions;
+};
+
+
+TemporaryRegionManager::TemporaryRegionManager(db_i &db,
+	const std::string &path) :
+    m_db(db),
+    m_dir(get_directory(m_db, path)),
+    m_parent_regions(get_parent_regions(m_db, path))
+{
+    RT_CK_DBI(&m_db);
+
+    for (std::vector<directory *>::const_iterator it = m_parent_regions.begin();
+	 it != m_parent_regions.end(); ++it)
+	toggle_region(m_db, **it);
+
+    if (!(m_dir.d_flags & RT_DIR_SOLID))
+	toggle_region(m_db, m_dir);
+}
+
+
+TemporaryRegionManager::~TemporaryRegionManager()
+{
+    if (!(m_dir.d_flags & RT_DIR_SOLID))
+	toggle_region(m_db, m_dir);
+
+    for (std::vector<directory *>::const_iterator it = m_parent_regions.begin();
+	 it != m_parent_regions.end(); ++it)
+	toggle_region(m_db, **it);
+}
 
 
 struct MultiOverlapHandlerArgs {
@@ -52,6 +164,9 @@ HIDDEN void
 multioverlap_handler(application * const app, partition * const partition1,
 		     bu_ptbl * const region_table, partition * const partition_list)
 {
+    if (!app || !partition1 || !region_table || !partition_list)
+	bu_bomb("missing argument");
+
     RT_CK_APPLICATION(app);
     RT_CK_PARTITION(partition1);
     BU_CK_PTBL(region_table);
@@ -107,13 +222,14 @@ RtInstance::get_overlaps(const std::string &path_a, const std::string &path_b,
 			 const xrays &rays) const
 {
     BU_CK_LIST_HEAD(&rays);
-    RT_CK_RAY(&(&rays)->ray);
+    RT_CK_RAY(&rays.ray);
 
     AutoPtr<rt_i, rt_free_rti> rti(rt_new_rti(&m_db));
 
     if (!rti.ptr)
 	bu_bomb("rt_new_rti() failed");
 
+    const TemporaryRegionManager region_a(m_db, path_a), region_b(m_db, path_b);
     const char *paths[] = {path_a.c_str(), path_b.c_str()};
 
     if (rt_gettrees(rti.ptr, sizeof(paths) / sizeof(paths[0]), paths, 1))

@@ -85,10 +85,7 @@ get_aabb(db_i &db, const std::string &path)
     std::stack<const tree *> stack;
 
     for (std::size_t i = 0; i < rti.ptr->nregions; ++i)
-	if (rti.ptr->Regions[i]->reg_name == path) {
-	    stack.push(rti.ptr->Regions[i]->reg_treetop);
-	    break;
-	}
+	stack.push(rti.ptr->Regions[i]->reg_treetop);
 
     std::pair<btVector3, btVector3> result(btVector3(0.0, 0.0, 0.0),
 					   btVector3(0.0, 0.0, 0.0));
@@ -237,16 +234,6 @@ Simulation::Region::get_region(db_i &db, const db_full_path &full_path,
 
     AutoPtr<char> path(db_path_to_string(&full_path));
 
-    if (!(DB_FULL_PATH_CUR_DIR(&full_path)->d_flags & (RT_DIR_REGION |
-	    RT_DIR_SOLID)))
-	throw InvalidSimulationError(std::string() + "'" + path.ptr +
-				     "' is not a region");
-
-    for (std::size_t i = 0; i < full_path.fp_len - 1; ++i)
-	if (full_path.fp_names[i]->d_flags & RT_DIR_REGION)
-	    throw InvalidSimulationError(std::string() + "nested regions in path '" +
-					 path.ptr + "'");
-
     btScalar mass = 1.0;
     btVector3 linear_velocity(0.0, 0.0, 0.0);
     btVector3 angular_velocity(0.0, 0.0, 0.0);
@@ -263,7 +250,10 @@ Simulation::Region::get_region(db_i &db, const db_full_path &full_path,
 		const char * const name = avs.avp[i].name + strlen(attribute_prefix);
 		const char * const value = avs.avp[i].value;
 
-		if (!bu_strcmp(name, "mass")) {
+		if (!bu_strcmp(name, "type")) {
+		    if (bu_strcmp(value, "region"))
+			throw InvalidSimulationError("invalid type");
+		} else if (!bu_strcmp(name, "mass")) {
 		    mass = lexical_cast<btScalar>(value,
 						  std::string() + "invalid mass on '" + path.ptr + "'");
 
@@ -304,8 +294,31 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
     AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
 
     if (0 > db_search(&found, DB_SEARCH_TREE,
-		      "-type region -or -type shape -not -below -type region", full_path.fp_len,
-		      full_path.fp_names, &db))
+		      (std::string() + "-attr " + attribute_prefix + "type=region -below -attr " +
+		       attribute_prefix + "type=region").c_str(), full_path.fp_len, full_path.fp_names,
+		      &db))
+	bu_bomb("db_search() failed");
+
+    if (BU_PTBL_LEN(&found))
+	throw InvalidSimulationError(std::string() + "nested objects with " +
+				     attribute_prefix + "type=region");
+
+    if (0 > db_search(&found, DB_SEARCH_TREE,
+		      (std::string() + "-attr " + attribute_prefix + "* -not -attr " +
+		       attribute_prefix + "type=region").c_str(), full_path.fp_len, full_path.fp_names,
+		      &db))
+	bu_bomb("db_search() failed");
+
+    if (BU_PTBL_LEN(&found))
+	throw InvalidSimulationError(std::string() +
+				     "simulation attributes set on objects that are not " + attribute_prefix +
+				     "type=region");
+
+    if (0 > db_search(&found, DB_SEARCH_TREE,
+		      (std::string() + "-attr " + attribute_prefix +
+		       "type=region -or -type shape -not -below -attr " + attribute_prefix +
+		       "type=region").c_str(),
+		      full_path.fp_len, full_path.fp_names, &db))
 	bu_bomb("db_search() failed");
 
     if (!BU_PTBL_LEN(&found))
@@ -363,12 +376,12 @@ Simulation::Simulation(db_i &db, const std::string &path) :
     m_regions(Region::get_regions(db, path, m_world)),
     m_rt_instance(db)
 {
+    m_world.setDebugDrawer(&m_debug_draw);
+
     m_collision_dispatcher.registerCollisionCreateFunc(
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
-	new RtCollisionAlgorithm::CreateFunc(m_rt_instance, m_debug_draw));
-
-    m_world.setDebugDrawer(&m_debug_draw);
+	new RtCollisionAlgorithm::CreateFunc(m_rt_instance, *m_world.getDebugDrawer()));
 
     const btVector3 gravity = get_simulation_parameters(db, path);
     m_world.setGravity(gravity);
