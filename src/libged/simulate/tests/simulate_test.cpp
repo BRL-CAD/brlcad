@@ -99,6 +99,9 @@ test_basic()
 		    0, 0, 0, 0, false, true, false))
 	    bu_bomb("mk_comb() failed");
 
+	if (db5_update_attribute("falling.r", "simulate::type", "region", db.ptr))
+	    bu_bomb("db5_update_attribute() failed");
+
 	BU_LIST_INIT(&members.l);
 	mk_addmember("base.s", &members.l, base_matrix, WMOP_UNION);
 	mk_addmember("falling.r", &members.l, NULL, WMOP_UNION);
