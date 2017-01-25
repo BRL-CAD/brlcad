@@ -16,7 +16,7 @@ set(CREO_ROOT_DIR "C:/Program Files/PTC/Creo XXX/MXXX/Common Files")
 
 # Will need copies of the BRL-CAD dlls along with the creo-brl.dll to make
 # a stand-alone package.
-set(BRLCAD_LIBS libbu libbn)
+set(BRLCAD_LIBS libbu libbn y2038 regex)
 foreach(blib ${BRLCAD_LIBS})
   configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
 endforeach(blib ${BRLCAD_LIBS})
@@ -47,6 +47,7 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/resources ${CMAKE_CURRENT_BINARY_DIR}/resources
   COMMAND ${NMAKE_EXEC} -f creo-brl-nmake clean
   COMMAND ${NMAKE_EXEC} -f creo-brl-nmake dll
+  COMMAND ${NMAKE_EXEC} -f creo-brl-nmake exe
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/creo-brl.cpp ${RESOURCE_FILES}
   )
