@@ -102,6 +102,11 @@ private:
 };
 
 
+// When an object of this class is constructed, it ensures that the object at
+// the specified path is the topmost region within the path (note: any child
+// regions placed below this object in the hierarchy will remain as regions;
+// this does not impact ray tracing results). Reverses any modifications upon
+// destruction.
 class TemporaryRegionHandle
 {
 public:
@@ -111,6 +116,7 @@ public:
 
 private:
     TemporaryRegionHandle(const TemporaryRegionHandle &source);
+    TemporaryRegionHandle &operator=(const TemporaryRegionHandle &source);
 
     db_i &m_db;
     directory *m_dir;
