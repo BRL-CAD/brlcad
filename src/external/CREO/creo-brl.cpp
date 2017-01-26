@@ -28,20 +28,42 @@
 #ifndef _WSTUDIO_DEFINED
 # define _WSTUDIO_DEFINED
 #endif
+extern "C" {
 #include <ProToolkit.h>
-#include <ProMessage.h>
-#include <ProUIMessage.h>
 #include <ProArray.h>
+#include <ProAsmcomppath.h>
+#include <ProAssembly.h>
+#include <ProFaminstance.h>
+#include <ProFeatType.h>
+#include <ProHole.h>
+#include <ProMdl.h>
+#include <ProMdlUnits.h>
 #include <ProMenuBar.h>
 #include <ProMessage.h>
-#include <ProUtil.h>
+#include <ProMode.h>
+#include <ProNotify.h>
+#include <ProPart.h>
+#include <ProSkeleton.h>
+#include <ProSolid.h>
+#include <ProSurface.h>
+#include <ProUICheckbutton.h>
 #include <ProUICmd.h>
 #include <ProUIDialog.h>
+#include <ProUIInputpanel.h>
+#include <ProUILabel.h>
+#include <ProUIMessage.h>
+#include <ProUIPushbutton.h>
+#include <ProUIRadiogroup.h>
+#include <ProUITextarea.h>
+#include <ProUtil.h>
 #include <ProWindows.h>
 #include <PtApplsUnicodeUtils.h>
+#include <pd_proto.h>
+
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
+}
 
 struct StrCmp {
     bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {
@@ -79,7 +101,6 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
     ProMessageDisplay(msgfil, "USER_INFO", "Launching creo_brl...");
 
-#if 0
     /* use UI dialog */
     status = ProUIDialogCreate( "creo_brl", "creo_brl" );
     if ( status != PRO_TK_NO_ERROR ) {
@@ -90,6 +111,7 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	bu_vls_free(&vls);
 	return 0;
     }
+#if 0
     status = ProUICheckbuttonActivateActionSet( "creo_brl", "elim_small", elim_small_activate, NULL );
     if ( status != PRO_TK_NO_ERROR ) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -121,6 +143,7 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	bu_vls_free(&vls);
 	return 0;
     }
+#endif
     status = ProUIDialogActivate( "creo_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -131,7 +154,6 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
-#endif
 
     return 0;
 }
