@@ -61,8 +61,17 @@ set_region(db_i &db, directory &dir, const bool is_region)
 	if (!(dir.d_flags & RT_DIR_REGION))
 	    bu_bomb("not a region");
 
-	if (db5_update_attribute(dir.d_namep, "region", "", &db))
-	    bu_bomb("db5_update_attribute() failed");
+	bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+	simulate::AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs(&avs);
+
+	if (db5_get_attributes(&db, &avs, &dir))
+	    bu_bomb("db5_get_attributes() failed");
+
+	if (bu_avs_remove(&avs, "region"))
+	    bu_bomb("bu_avs_remove() failed");
+
+	if (db5_replace_attributes(&dir, &avs, &db))
+	    bu_bomb("db5_replace_attributes() failed");
 
 	dir.d_flags &= ~RT_DIR_REGION;
     }

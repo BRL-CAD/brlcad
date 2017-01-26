@@ -95,19 +95,19 @@ test_basic()
 	mk_addmember("sphere.s", &members.l, sphere1_matrix, WMOP_UNION);
 	mk_addmember("sphere.s", &members.l, sphere2_matrix, WMOP_UNION);
 
-	if (mk_comb(db.ptr->dbi_wdbp, "falling.r", &members.l, true, NULL, NULL, NULL,
-		    0, 0, 0, 0, false, true, false))
+	if (mk_comb(db.ptr->dbi_wdbp, "falling.c", &members.l, false, NULL, NULL, NULL,
+		    0, 0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
 
-	if (db5_update_attribute("falling.r", "simulate::type", "region", db.ptr))
+	if (db5_update_attribute("falling.c", "simulate::type", "region", db.ptr))
 	    bu_bomb("db5_update_attribute() failed");
 
 	BU_LIST_INIT(&members.l);
 	mk_addmember("base.s", &members.l, base_matrix, WMOP_UNION);
-	mk_addmember("falling.r", &members.l, NULL, WMOP_UNION);
+	mk_addmember("falling.c", &members.l, NULL, WMOP_UNION);
 
 	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
-		    0, 0, 0, false, true, false))
+		    0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
 
 	if (db5_update_attribute("scene.c", "simulate::gravity", "<0.0, 0.0, -9.8>",
@@ -132,7 +132,7 @@ test_basic()
 	};
 
 	return matrix_equal(*db.ptr, "/scene.c/base.s", base_matrix)
-	       && matrix_equal(*db.ptr, "/scene.c/falling.r", expected_falling_matrix);
+	       && matrix_equal(*db.ptr, "/scene.c/falling.c", expected_falling_matrix);
     }
 }
 
@@ -166,7 +166,7 @@ test_tutorial()
 	mk_addmember("cube.s", &members.l, cube_matrix, WMOP_UNION);
 
 	if (mk_comb(db.ptr->dbi_wdbp, "cube.r", &members.l, true, NULL, NULL, NULL, 0,
-		    0, 0, 0, false, true, false))
+		    0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
     }
 
@@ -193,7 +193,7 @@ test_tutorial()
 	mk_addmember("ground.r", &members.l, NULL, WMOP_UNION);
 
 	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
-		    0, 0, 0, false, true, false))
+		    0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
     }
 
