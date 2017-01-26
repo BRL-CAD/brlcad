@@ -218,6 +218,7 @@ private:
 		    btScalar mass, const btVector3 &linear_velocity,
 		    const btVector3 &angular_velocity);
 
+    TemporaryRegionHandle m_region_handle;
     btDiscreteDynamicsWorld &m_world;
     RtMotionState m_motion_state;
     RtCollisionShape m_collision_shape;
@@ -346,6 +347,7 @@ Simulation::Region::Region(db_i &db, const std::string &path,
 			   btDiscreteDynamicsWorld &world, const std::pair<btVector3, btVector3> &aabb,
 			   const btScalar mass, const btVector3 &linear_velocity,
 			   const btVector3 &angular_velocity) :
+    m_region_handle(db, path),
     m_world(world),
     m_motion_state(db, path, (aabb.first + aabb.second) / 2.0),
     m_collision_shape((aabb.second - aabb.first) / 2.0),

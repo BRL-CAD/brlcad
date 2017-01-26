@@ -32,9 +32,90 @@
 
 #include "utility.hpp"
 
+#include "bu/log.h"
+#include "rt/db_attr.h"
+
+
+namespace
+{
+
+
+HIDDEN void
+set_region(db_i &db, directory &dir, const bool is_region)
+{
+    RT_CK_DBI(&db);
+    RT_CK_DIR(&dir);
+
+    if (!(dir.d_flags & RT_DIR_COMB))
+	bu_bomb("invalid directory type");
+
+    if (is_region) {
+	if (dir.d_flags & RT_DIR_REGION)
+	    bu_bomb("already a region");
+
+	if (db5_update_attribute(dir.d_namep, "region", "R", &db))
+	    bu_bomb("db5_update_attribute() failed");
+
+	dir.d_flags |= RT_DIR_REGION;
+    } else {
+	if (!(dir.d_flags & RT_DIR_REGION))
+	    bu_bomb("not a region");
+
+	if (db5_update_attribute(dir.d_namep, "region", "", &db))
+	    bu_bomb("db5_update_attribute() failed");
+
+	dir.d_flags &= ~RT_DIR_REGION;
+    }
+}
+
+
+}
+
 
 namespace simulate
 {
+
+
+TemporaryRegionHandle::TemporaryRegionHandle(db_i &db,
+	const std::string &path) :
+    m_db(db),
+    m_dir(NULL),
+    m_dir_modified(false),
+    m_parent_regions()
+{
+    RT_CK_DBI(&m_db);
+
+    db_full_path full_path;
+    db_full_path_init(&full_path);
+    AutoPtr<db_full_path, db_free_full_path> autofree_full_path(&full_path);
+
+    if (db_string_to_path(&full_path, &db, path.c_str()))
+	bu_bomb("db_string_to_path() failed");
+
+    m_dir = DB_FULL_PATH_CUR_DIR(&full_path);
+
+    if (m_dir->d_flags & RT_DIR_COMB && !(m_dir->d_flags & RT_DIR_REGION)) {
+	set_region(m_db, *m_dir, true);
+	m_dir_modified = true;
+    }
+
+    for (std::size_t i = 0; i < full_path.fp_len - 1; ++i)
+	if (full_path.fp_names[i]->d_flags & RT_DIR_REGION) {
+	    set_region(m_db, *full_path.fp_names[i], false);
+	    m_parent_regions.push_back(full_path.fp_names[i]);
+	}
+}
+
+
+TemporaryRegionHandle::~TemporaryRegionHandle()
+{
+    if (m_dir_modified)
+	set_region(m_db, *m_dir, false);
+
+    for (std::vector<directory *>::const_iterator it = m_parent_regions.begin();
+	 it != m_parent_regions.end(); ++it)
+	set_region(m_db, **it, true);
+}
 
 
 }

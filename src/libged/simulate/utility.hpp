@@ -32,6 +32,9 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <vector>
+
+#include "rt/db_instance.h"
 
 
 namespace simulate
@@ -96,6 +99,23 @@ struct AutoPtr {
 private:
     AutoPtr(const AutoPtr &source);
     AutoPtr &operator=(const AutoPtr &source);
+};
+
+
+class TemporaryRegionHandle
+{
+public:
+    explicit TemporaryRegionHandle(db_i &db, const std::string &path);
+    ~TemporaryRegionHandle();
+
+
+private:
+    TemporaryRegionHandle(const TemporaryRegionHandle &source);
+
+    db_i &m_db;
+    directory *m_dir;
+    bool m_dir_modified;
+    std::vector<directory *> m_parent_regions;
 };
 
 
