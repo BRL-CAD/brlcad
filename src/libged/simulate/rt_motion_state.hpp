@@ -44,7 +44,7 @@ class RtMotionState : public btMotionState
 {
 public:
     explicit RtMotionState(db_i &db, const std::string &path,
-			   const btVector3 &aabb_center);
+			   const btVector3 &center_of_mass);
 
     const std::string &get_path() const;
 

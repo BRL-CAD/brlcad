@@ -39,8 +39,10 @@ namespace simulate
 {
 
 
-RtCollisionShape::RtCollisionShape(const btVector3 &aabb_half_extents) :
+RtCollisionShape::RtCollisionShape(const btVector3 &aabb_half_extents,
+				   const btVector3 &aabb_center_height) :
     m_aabb_half_extents(aabb_half_extents),
+    m_aabb_center_height(aabb_center_height),
     m_local_scaling(1.0, 1.0, 1.0),
     m_collision_margin(4.0)
 {
@@ -63,10 +65,13 @@ void
 RtCollisionShape::getAabb(const btTransform &transform,
 			  btVector3 &dest_aabb_min, btVector3 &dest_aabb_max) const
 {
+    const btTransform aabb_center_transform(transform.getBasis(),
+					    transform.getOrigin() + m_aabb_center_height);
+
     btBoxShape box(m_aabb_half_extents);
     box.setLocalScaling(getLocalScaling());
     box.setMargin(getMargin());
-    box.getAabb(transform, dest_aabb_min, dest_aabb_max);
+    box.getAabb(aabb_center_transform, dest_aabb_min, dest_aabb_max);
 }
 
 

@@ -132,12 +132,19 @@ namespace simulate
 
 
 RtMotionState::RtMotionState(db_i &db, const std::string &path,
-			     const btVector3 &aabb_center) :
+			     const btVector3 &center_of_mass) :
     m_db(db),
     m_path(path),
-    m_transform(btMatrix3x3::getIdentity(), aabb_center)
+    m_transform(btMatrix3x3::getIdentity(), center_of_mass)
 {
     RT_CK_DBI(&m_db);
+
+    // Bullet requires that getWorldTransform() returns the center of mass of
+    // the rigid body.
+    //
+    // This is implemented here by keeping a translation to the center of
+    // mass in `m_transform`, but applying only the "incremental"
+    // transformations to the BRL-CAD matrix in setWorldTransform().
 }
 
 
@@ -158,12 +165,12 @@ RtMotionState::getWorldTransform(btTransform &dest) const
 void
 RtMotionState::setWorldTransform(const btTransform &transform)
 {
-    // TODO: not properly handling arbitrary rotations applied via
-    // parent combinations.
+    // FIXME: not properly handling arbitrary rotations applied via
+    // parent combinations. This can be worked around by
+    // using `xpush` on the scene path before starting the simulation.
     //
     // note: these btTransform objects only specify a rotation about the
-    // center of mass (aabb_center), followed by a translation.
-
+    // center of mass followed by a translation.
     apply_transform(m_db, m_path, transform * m_transform.inverse());
     m_transform = transform;
 }

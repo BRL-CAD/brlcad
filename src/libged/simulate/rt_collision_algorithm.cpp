@@ -155,7 +155,7 @@ get_rays(const btRigidBody &body_a, const btRigidBody &body_b)
 	    body_b);
 
     // radius of the circle of rays
-    // half of the diagonal of the overlap aabb so that rays will cover
+    // half of the diagonal of the overlap AABB so that rays will cover
     // the entire volume from all orientations
     const btScalar radius = (overlap_aabb.second - overlap_aabb.first).length() /
 			    2.0;

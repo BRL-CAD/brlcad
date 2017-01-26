@@ -133,6 +133,18 @@ get_aabb(db_i &db, const std::string &path)
 
 
 HIDDEN btVector3
+get_center_of_mass(db_i &db, const std::string &path)
+{
+    RT_CK_DBI(&db);
+
+    // TODO: not implemented; return the center of the AABB
+
+    const std::pair<btVector3, btVector3> aabb = get_aabb(db, path);
+    return (aabb.first + aabb.second) / 2.0;
+}
+
+
+HIDDEN btVector3
 deserialize_vector(const std::string &source)
 {
     std::istringstream stream(source);
@@ -215,8 +227,8 @@ public:
 private:
     explicit Region(db_i &db, const std::string &path,
 		    btDiscreteDynamicsWorld &world, const std::pair<btVector3, btVector3> &aabb,
-		    btScalar mass, const btVector3 &linear_velocity,
-		    const btVector3 &angular_velocity);
+		    const btVector3 &center_of_mass, btScalar mass,
+		    const btVector3 &linear_velocity, const btVector3 &angular_velocity);
 
     TemporaryRegionHandle m_region_handle;
     btDiscreteDynamicsWorld &m_world;
@@ -271,8 +283,8 @@ Simulation::Region::get_region(db_i &db, const db_full_path &full_path,
 	    }
     }
 
-    return new Region(db, path.ptr, world, get_aabb(db, path.ptr), mass,
-		      linear_velocity, angular_velocity);
+    return new Region(db, path.ptr, world, get_aabb(db, path.ptr),
+		      get_center_of_mass(db, path.ptr), mass, linear_velocity, angular_velocity);
 }
 
 
@@ -345,12 +357,13 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
 
 Simulation::Region::Region(db_i &db, const std::string &path,
 			   btDiscreteDynamicsWorld &world, const std::pair<btVector3, btVector3> &aabb,
-			   const btScalar mass, const btVector3 &linear_velocity,
-			   const btVector3 &angular_velocity) :
+			   const btVector3 &center_of_mass, const btScalar mass,
+			   const btVector3 &linear_velocity, const btVector3 &angular_velocity) :
     m_region_handle(db, path),
     m_world(world),
-    m_motion_state(db, path, (aabb.first + aabb.second) / 2.0),
-    m_collision_shape((aabb.second - aabb.first) / 2.0),
+    m_motion_state(db, path, center_of_mass),
+    m_collision_shape((aabb.second - aabb.first) / 2.0,
+		      (aabb.first + aabb.second) / 2.0 - center_of_mass),
     m_rigid_body(get_rigid_body_construction_info(m_motion_state, m_collision_shape,
 		 db, mass))
 {
