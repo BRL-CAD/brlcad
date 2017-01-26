@@ -165,12 +165,12 @@ RtMotionState::getWorldTransform(btTransform &dest) const
 void
 RtMotionState::setWorldTransform(const btTransform &transform)
 {
-    // FIXME: not properly handling arbitrary rotations applied via
-    // parent combinations. This can be worked around by
-    // using `xpush` on the scene path before starting the simulation.
+    // FIXME: Not properly handling rotations about the correct points.
+    // Note: Primitives rotate about primitive-specific points.
     //
-    // note: these btTransform objects only specify a rotation about the
+    // Note: These btTransform objects only specify a rotation about the
     // center of mass followed by a translation.
+
     apply_transform(m_db, m_path, transform * m_transform.inverse());
     m_transform = transform;
 }
