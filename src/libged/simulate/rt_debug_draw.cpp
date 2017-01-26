@@ -157,7 +157,7 @@ RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
     const std::string name = make_name("contact");
     const point_t point_on_b_pt = {V3ARGS(point_on_b)};
 
-    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt, 1.0))
+    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt, distance / 10.0))
 	bu_bomb("mk_sph() failed");
 
     apply_color(m_db, name, color);
