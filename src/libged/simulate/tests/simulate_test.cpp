@@ -115,8 +115,13 @@ test_basic()
 	    bu_bomb("db5_update_attribute() failed");
     }
 
-    simulate::Simulation(*db.ptr, "scene.c").step(3.0,
-	    simulate::Simulation::debug_none);
+    try {
+	simulate::Simulation(*db.ptr, "scene.c").step(3.0,
+		simulate::Simulation::debug_none);
+    } catch (const simulate::InvalidSimulationError &exception) {
+	bu_log("simulation failed: '%s'\n", exception.what());
+	return false;
+    }
 
     {
 	const mat_t expected_falling_matrix = {
@@ -192,8 +197,13 @@ test_tutorial()
 	    bu_bomb("mk_comb() failed");
     }
 
-    simulate::Simulation(*db.ptr, "scene.c").step(10.0,
-	    simulate::Simulation::debug_none);
+    try {
+	simulate::Simulation(*db.ptr, "scene.c").step(10.0,
+		simulate::Simulation::debug_none);
+    } catch (const simulate::InvalidSimulationError &exception) {
+	bu_log("simulation failed: '%s'\n", exception.what());
+	return false;
+    }
 
     {
 	const mat_t expected_cube_matrix = {
