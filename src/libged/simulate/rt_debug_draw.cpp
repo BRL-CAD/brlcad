@@ -161,7 +161,7 @@ RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
 	bu_bomb("mk_sph() failed");
 
     apply_color(m_db, name, color);
-    drawLine(point_on_b, point_on_b + normal_world_on_b * distance * 1.0e3, color);
+    drawLine(point_on_b, point_on_b + normal_world_on_b * distance, color);
 }
 
 
