@@ -1,7 +1,7 @@
 name creo-brl
 startup dll
-exec_file @CMAKE_CURRENT_BINARY_DIR@/creo-brl.dll
-text_dir @CMAKE_CURRENT_BINARY_DIR@/resources
+exec_file @CREO_ROOT_DIR@/@MDIR@/Common Files/x86e_win64/obj/creo-brl.dll
+text_dir @CREO_ROOT_DIR@/@MDIR@/Common Files/text/usascii
 description CREO to BRL-CAD
 end
 

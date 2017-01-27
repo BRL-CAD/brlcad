@@ -81,7 +81,7 @@ struct WStrCmp {
 extern "C" {
 int is_non_identity(ProMatrix xform);
 
-static wchar_t  MSGFIL[] = {'u', 's', 'e', 'r', 'm', 's', 'g', '.', 't', 'x', 't', '\0'};
+static wchar_t  MSGFIL[] = {'c', 'r', 'e', 'o', '-', 'b', 'r', 'l', '-', 'm', 's', 'g', '.', 't', 'x', 't', '\0'};
 
 static double creo_to_brl_conv=25.4;	/* inches to mm */
 
@@ -3570,7 +3570,7 @@ extern "C" int user_initialize()
     uiCmdCmdId cmd_id;
     wchar_t errbuf[80];
 
-    ProStringToWstring(msgfil, "usermsg.txt");
+    ProStringToWstring(msgfil, "creo-brl-msg.txt");
 
     /* Pro/E says always check the size of w_char */
     status = ProWcharSizeVerify (sizeof (wchar_t), &i);

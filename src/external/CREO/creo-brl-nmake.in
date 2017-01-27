@@ -10,11 +10,12 @@
 # Locate the programs' primary directories
 BRLCAD_ROOT_DIR = "@BRLCAD_ROOT_DIR@"
 CREO_ROOT_DIR = "@CREO_ROOT_DIR@"
+MDIR = @MDIR@
 
 # Set include directories
 BRLCAD_INCLUDE_DIR = $(BRLCAD_ROOT_DIR)/include/brlcad
-CREO_PROTK_INCDIR = $(CREO_ROOT_DIR)/protoolkit/includes
-CREO_PROTK_APPLS_INCDIR = $(CREO_ROOT_DIR)/protoolkit/protk_appls/includes
+CREO_PROTK_INCDIR = $(CREO_ROOT_DIR)/$(MDIR)/"Common Files"/protoolkit/includes
+CREO_PROTK_APPLS_INCDIR = $(CREO_ROOT_DIR)/$(MDIR)/"Common Files"/protoolkit/protk_appls/includes
 INCS = -I$(BRLCAD_INCLUDE_DIR) -I$(CREO_PROTK_INCDIR) -I$(CREO_PROTK_APPLS_INCDIR) 
 
 # Compiler flags
@@ -27,8 +28,8 @@ CFLAGS = $(CCFLAGS) $(INCS) $(MACHINE_DEFS) $(CREO_DEFS) $(BRLCAD_DEFS)
 
 # Libraries
 BRLCAD_LIBS = $(BRLCAD_ROOT_DIR)/lib/libbu.lib $(BRLCAD_ROOT_DIR)/lib/libbn.lib
-CREO_EXE_LIBS = $(CREO_ROOT_DIR)/protoolkit/x86e_win64/obj/protoolkit.lib
-CREO_DLL_LIBS = $(CREO_ROOT_DIR)/protoolkit/x86e_win64/obj/protk_dll.lib
+CREO_EXE_LIBS = $(CREO_ROOT_DIR)/$(MDIR)/"Common Files"/protoolkit/x86e_win64/obj/protoolkit.lib
+CREO_DLL_LIBS = $(CREO_ROOT_DIR)/$(MDIR)/"Common Files"/protoolkit/x86e_win64/obj/protk_dll.lib
 WIN_LIBS = libcmt.lib kernel32.lib user32.lib wsock32.lib advapi32.lib mpr.lib winspool.lib netapi32.lib psapi.lib gdi32.lib shell32.lib comdlg32.lib ole32.lib ws2_32.lib
 
 # DLL target
