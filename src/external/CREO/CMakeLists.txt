@@ -10,7 +10,6 @@ endif(COMMAND CMAKE_POLICY)
 # Set CMake project name
 project(CREO2G)
 
-
 set(BRLCAD_ROOT_DIR "C:/Program Files/BRLCAD 7.XX.X")
 set(CREO_ROOT_DIR "C:/Program Files/PTC/Creo XXX")
 file(GLOB MDIR RELATIVE "${CREO_ROOT_DIR}" "${CREO_ROOT_DIR}/M*" )
@@ -65,6 +64,7 @@ add_custom_target(UNLOCK
   COMMENT "Unlocking CREO-G dll..."
   )
 
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
 set(CPACK_GENERATOR NSIS ZIP)
 include(CPack)
 
