@@ -3490,7 +3490,7 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     ProError status;
     int ret_status=0;
 
-    ProStringToWstring(msgfil, "usermsg.txt");
+    ProStringToWstring(msgfil, "creo-brl-msg.txt");
 
     ProMessageDisplay(msgfil, "USER_INFO", "Launching creo_brl...");
 

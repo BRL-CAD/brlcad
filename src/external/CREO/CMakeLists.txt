@@ -51,11 +51,11 @@ add_custom_command(
 add_custom_target(CREO-G ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll DESTINATION "${MDIR}/Common Files/x86e_win64/obj")
 
-file(GLOB RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*)
+file(GLOB RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res)
 foreach(rfile ${RESOURCE_FILES})
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${rfile} DESTINATION "${MDIR}/Common Files/text/resource")
+  install(FILES ${rfile} DESTINATION "${MDIR}/Common Files/text/resource")
 endforeach(rfile ${RESOURCE_FILES})
-install(FILES creo-brl-msg.txt DESTINATION "${MDIR}/Common Files/text/usascii")
+install(FILES resources/creo-brl-msg.txt DESTINATION "${MDIR}/Common Files/text/usascii")
 
 
 add_custom_target(UNLOCK
