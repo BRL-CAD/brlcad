@@ -66,7 +66,7 @@ RtCollisionShape::getAabb(const btTransform &transform,
 			  btVector3 &dest_aabb_min, btVector3 &dest_aabb_max) const
 {
     const btTransform aabb_center_transform(transform.getBasis(),
-					    transform.getOrigin() + m_aabb_center_height);
+					    transform(transform.inverse()(transform.getOrigin()) + m_aabb_center_height));
 
     btBoxShape box(m_aabb_half_extents);
     box.setLocalScaling(getLocalScaling());
