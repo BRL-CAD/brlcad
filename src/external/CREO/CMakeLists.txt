@@ -40,11 +40,19 @@ configure_file(creo-brl-nmake.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl-nmake @ONL
 configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/Common Files/protoolkit")
 
+# For debugging - note that the BRL-CAD dlls need to be present in Common
+# Files/x86e_win64/obj, the resource files present in Common Files/text/resource
+# and creo-brl-msg.txt present in Common Files/text/usascii before this will
+# be usable.  The simplest thing to do is build a package and install it in
+# the CREO root directory before trying to do any debugging.
+configure_file(creo-brl-debug.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat @ONLY)
+
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/creo-brl.cpp ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.cpp
   COMMAND ${NMAKE_EXEC} -f creo-brl-nmake clean
   COMMAND ${NMAKE_EXEC} -f creo-brl-nmake dll
+  COMMAND ${NMAKE_EXEC} -f creo-brl-nmake exe
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/creo-brl.cpp ${RESOURCE_FILES}
   )
