@@ -10,59 +10,97 @@ endif(COMMAND CMAKE_POLICY)
 # Set CMake project name
 project(CREO2G)
 
+
+# TODO - clear compiler and linker flags
+
+# User must locate CREO and BRL-CAD
 set(BRLCAD_ROOT_DIR "C:/Program Files/BRLCAD 7.XX.X")
 set(CREO_ROOT_DIR "C:/Program Files/PTC/Creo XXX")
+
+# There will be a sub-directory that is specific to the installed
+# version of CREO - find it
 file(GLOB MDIR RELATIVE "${CREO_ROOT_DIR}" "${CREO_ROOT_DIR}/M*" )
 
-# Will need copies of the BRL-CAD dlls along with the creo-brl.dll to make
+# Set the relevant include directories
+include_directories(
+  "${BRLCAD_ROOT_DIR}/include/brlcad"
+  "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/includes"
+  "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/protk_appls/includes"
+  )
+
+
+# Win32 libraries
+set(WIN_LIBS
+  libcmt.lib
+  kernel32.lib
+  user32.lib
+  wsock32.lib
+  advapi32.lib
+  mpr.lib
+  winspool.lib
+  netapi32.lib
+  psapi.lib
+  gdi32.lib
+  shell32.lib
+  comdlg32.lib
+  ole32.lib
+  ws2_32.lib
+  )
+
+# for libcmt
+add_definitions(/NODEFAULTLIB:msvcrt.lib)
+
+# CREO libraries
+set(CREO_EXE_LIBS "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/x86e_win64/obj/protoolkit.lib")
+set(CREO_DLL_LIBS "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/x86e_win64/obj/protk_dll.lib")
+
+# We will need copies of the BRL-CAD dlls along with the creo-brl.dll to make
 # a stand-alone package.
 set(BRLCAD_LIBS libbu libbn y2038 regex)
+set(BRLCAD_STATIC_LIBS
 foreach(blib ${BRLCAD_LIBS})
   configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
+  set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/${blib}.lib")
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll DESTINATION "${MDIR}/Common Files/x86e_win64/obj")
 endforeach(blib ${BRLCAD_LIBS})
 
-# We will need to know where nmake.exe and link.exe are
-if (NOT DEFINED NMAKE_EXEC)
-  get_filename_component(VS_BIN_PATH ${CMAKE_CXX_COMPILER} DIRECTORY)
-  set(LINK_EXEC "${VS_BIN_PATH}/link.exe")
-  get_filename_component(VS_BIN_PATH ${VS_BIN_PATH} DIRECTORY)
-  set(NMAKE_EXEC "${VS_BIN_PATH}/nmake.exe")
-endif (NOT DEFINED NMAKE_EXEC)
-if (NOT EXISTS "${NMAKE_EXEC}")
-  message(FATAL_ERROR "nmake.exe not present: ${NMAKE_EXEC}\nPlease set NMAKE_EXEC to the location of the nmake executable associated with this version of Visual Studio.")
-endif (NOT EXISTS "${NMAKE_EXEC}")
-if (NOT EXISTS "${LINK_EXEC}")
-  message(FATAL_ERROR "link.exe not present: ${LINK_EXEC}\nPlease set LINK_EXEC to the location of the link executable associated with this version of Visual Studio.")
-endif (NOT EXISTS "${LINK_EXEC}")
 
-configure_file(creo-brl-nmake.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl-nmake @ONLY)
+# CREO Definitions (see example nmake file in your CREO install to
+# double check these and modify if needed)
+add_definitions(-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V100_SDK71_)
+
+# BRL-CAD definitions
+add_definitions(-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD
+  -DBU_DLL_IMPORTS
+  -DBN_DLL_IMPORTS
+  )
+
+# Primary (DLL) version of plugin
+# Note that for successful running of the DLL version of this plugin,
+# the BRL-CAD dlls need to be present in Common Files/x86e_win64/obj.  Also,
+# the resource files need to be present in Common Files/text/resource and
+# creo-brl-msg.txt present in Common Files/text/usascii before this will be
+# usable.  The simplest thing to do is build a package and install it in the
+# CREO root directory.  *** Any attempt run this plugin without the correct
+# DLLs in place will result in silent failure of the loading step. ***
+add_library(creo-brl SHARED creo-brl.cpp)
+target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_DLL_LIBS} ${BRLCAD_STATIC_LIBS})
+install(creo-brl DESTINATION "${MDIR}/Common Files/x86e_win64/obj")
 configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/Common Files/protoolkit")
 
-# For debugging - note that the BRL-CAD dlls need to be present in Common
-# Files/x86e_win64/obj, the resource files present in Common Files/text/resource
-# and creo-brl-msg.txt present in Common Files/text/usascii before this will
-# be usable.  The simplest thing to do is build a package and install it in
-# the CREO root directory before trying to do any debugging.
+# Debugging executable version of plugin
+add_executable(creo-g creo-brl.cpp)
+target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
 configure_file(creo-brl-debug.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat @ONLY)
 
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/creo-brl.cpp ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.cpp
-  COMMAND ${NMAKE_EXEC} -f creo-brl-nmake clean
-  COMMAND ${NMAKE_EXEC} -f creo-brl-nmake dll
-  COMMAND ${NMAKE_EXEC} -f creo-brl-nmake exe
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/creo-brl.cpp ${RESOURCE_FILES}
-  )
-add_custom_target(CREO-G ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll DESTINATION "${MDIR}/Common Files/x86e_win64/obj")
-
+# Install the resource files
 file(GLOB RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res)
 foreach(rfile ${RESOURCE_FILES})
   install(FILES ${rfile} DESTINATION "${MDIR}/Common Files/text/resource")
 endforeach(rfile ${RESOURCE_FILES})
+
+# Install the messages file
 install(FILES resources/creo-brl-msg.txt DESTINATION "${MDIR}/Common Files/text/usascii")
 
 

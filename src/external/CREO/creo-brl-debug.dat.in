@@ -1,6 +1,6 @@
 name creo-brl
 startup spawn
-exec_file @CMAKE_CURRENT_BINARY_DIR@/creo-brl.exe
+exec_file @CMAKE_CURRENT_BINARY_DIR@/creo-g.exe
 text_dir @CREO_ROOT_DIR@/@MDIR@/Common Files/text/usascii
 description CREO to BRL-CAD
 end
