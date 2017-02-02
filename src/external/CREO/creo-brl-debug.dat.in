@@ -1,7 +1,0 @@
-name creo-brl
-startup spawn
-exec_file @CMAKE_CURRENT_BINARY_DIR@/creo-g.exe
-text_dir @CREO_ROOT_DIR@/@MDIR@/@CREO_MSG_DIR@
-description CREO to BRL-CAD
-end
-

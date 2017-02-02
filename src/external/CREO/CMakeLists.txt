@@ -182,14 +182,18 @@ set(WIN_LIBS
 # a stand-alone package.
 set(BRLCAD_LIBS libbu libbn y2038 regex)
 set(BRLCAD_STATIC_LIBS)
+set(brlcadlibs_notinstalled)
 foreach(blib ${BRLCAD_LIBS})
   configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
   set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/${blib}.lib")
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll DESTINATION "${MDIR}/${CREO_OBJ_DIR}")
   if(NOT EXISTS ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}/${blib}.dll)
-    message("Note: ${blib}.dll is not present in ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}\nBe aware that attempting to load the DLL version of the plugin without this file in place will\ncause the loading process to silently fail: *NO* messages indicating why the loading failed will\nbe generated.\n")
+    set(brlcadlibs_notinstalled "${brlcadlibs_notinstalled}\n     ${blib}.dll")
   endif(NOT EXISTS ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}/${blib}.dll)
 endforeach(blib ${BRLCAD_LIBS})
+if(brlcadlibs_notinstalled)
+  message("Note: The following BRL-CAD dll(s) is/are not present in ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}:\n${brlcadlibs_notinstalled}\n\nBe aware that attempting to load the DLL version of the plugin without these files in place will\ncause the loading process to silently fail: *NO* messages indicating why the loading failed will\nbe generated.  Be sure to run the INSTALL command after building but before testing.\n")
+endif(brlcadlibs_notinstalled)
 
 
 # CREO Definitions (see example nmake file in your CREO install to
@@ -226,23 +230,40 @@ include_directories(
 # DLLs in place will result in silent failure of the loading step. ***
 add_library(creo-brl SHARED creo-brl.cpp)
 target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${BRLCAD_STATIC_LIBS})
-install(TARGETS creo-brl DESTINATION "${MDIR}/${CREO_OBJ_DIR}")
+install(TARGETS creo-brl
+  RUNTIME DESTINATION "${MDIR}/${CREO_OBJ_DIR}"
+  )
+set(DAT_STARTUP "dll")
+set(DAT_EXEC_FILE "${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}/creo-brl.dll")
+set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
 configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/${CREO_DAT_DIR}")
 
 # Debugging executable version of plugin
 add_executable(creo-g creo-brl.cpp)
 target_link_libraries(creo-g ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
-configure_file(creo-brl-debug.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat @ONLY)
+set(DAT_STARTUP "spawn")
+set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/creo-g.exe")
+set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
+configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat @ONLY)
 
 # Install the resource files
 file(GLOB RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res)
+set(rfiles_installed 1)
 foreach(rfile ${RESOURCE_FILES})
   install(FILES ${rfile} DESTINATION "${MDIR}/${CREO_RESOURCE_DIR}")
+  get_filename_component(rfilename "${rfile}" NAME)
+  if(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${CREO_RESOURCE_DIR}/${rfilename}")
+    set(rfiles_installed 0)
+  endif(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${CREO_RESOURCE_DIR}/${rfilename}")
 endforeach(rfile ${RESOURCE_FILES})
 
 # Install the messages file
 install(FILES resources/creo-brl-msg.txt DESTINATION "${MDIR}/${CREO_MSG_DIR}")
+
+if(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}/creo-brl-msg.txt" OR NOT rfiles_installed)
+  message("\nNote that even with the exe version of the plugin, the resource files\nmust be present in the correct locations within the CREO tree in order\nto successfully run the plugin.  Be sure to run the INSTALL target\nbefore starting a testing session.\n")
+endif(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}/creo-brl-msg.txt" OR NOT rfiles_installed)
 
 add_custom_target(UNLOCK
   COMMAND "${CREO_PTK_UNLOCKER}" ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll
@@ -250,6 +271,20 @@ add_custom_target(UNLOCK
   COMMENT "Unlocking CREO-G dll..."
   )
 
+# TODO - Need a more flexibly way to generate this target...
+add_custom_target(UNINSTALL
+  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_MSG_DIR}/creo-brl-msg.txt"
+  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_RESOURCE_DIR}/creo_brl.res"
+  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_RESOURCE_DIR}/creo_brl_error.res"
+  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_RESOURCE_DIR}/creo_brl_gen_error.res"
+  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_DAT_DIR}/creo-brl.dat"
+  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_OBJ_DIR}/libbu.dll"
+  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_OBJ_DIR}/libbn.dll"
+  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_OBJ_DIR}/regex.dll"
+  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_OBJ_DIR}/y2038.dll"
+  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_OBJ_DIR}/creo-brl.dll"
+  COMMENT "Removing installed CREO-BRL components..."
+  )
 
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
 set(CPACK_GENERATOR NSIS ZIP)
