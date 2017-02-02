@@ -12,6 +12,7 @@ project(CREO2G)
 
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CONFIGURATION_TYPES Release CACHE INTERNAL "Constrained configuration set")
+mark_as_advanced(CMAKE_INSTALL_PREFIX)
 
 # TODO - clear compiler and linker flags
 
@@ -37,19 +38,76 @@ if(NOT have_paths)
 endif(NOT have_paths)
 
 set(CMAKE_INSTALL_PREFIX "${CREO_ROOT_DIR}" CACHE PATH "Installation path" FORCE)
-mark_as_advanced(CMAKE_INSTALL_PREFIX)
 
 # There will be a sub-directory that is specific to the installed
 # version of CREO - find it
 file(GLOB MDIR RELATIVE "${CREO_ROOT_DIR}" "${CREO_ROOT_DIR}/M*" )
+if(NOT MDIR)
+  message(FATAL_ERROR "No directory matching the pattern M* found in ${CREO_ROOT_DIR}.  This may indicate the CREO installation directory conventions have changed - if so, the CMakeLists.txt file will need to be updated to reflect the new path structures.")
+endif(NOT MDIR)
+
+# Define a variable for the current CREO platform
+set(CREO_OS_VERSION x86e_win64)
+
+# Unlocker script
+set(CREO_PTK_UNLOCKER "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/protk_unlock.bat")
+
+# CREO libraries
+set(CREO_PTK_EXE_LIBS "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/${CREO_OS_VERSION}/obj/protoolkit.lib")
+set(CREO_PTK_DLL_LIBS "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/${CREO_OS_VERSION}/obj/protk_dll.lib")
+
+# CREO include directories
+set(CREO_PTK_INCDIR "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/includes")
+set(CREO_PTK_APPLS_INCDIR "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/includes")
+
+
+# Check that the expected directories and files in the CREO installation
+# are present. If not, these paths need to be updated for the current CREO
+# layout.
+set(have_creo_paths 1)
+set(CREO_REQUIRED_PATHS_ABS
+  CREO_PTK_UNLOCKER
+  CREO_PTK_EXE_LIBS
+  CREO_PTK_DLL_LIBS
+  CREO_PTK_INCDIR
+  CREO_PTK_APPLS_INCDIR
+  )
+foreach(reqpath ${CREO_REQUIRED_PATHS_ABS})
+  if(NOT EXISTS "${${reqpath}}")
+    set(have_creo_paths 0)
+    message(WARNING "Required CREO path variable ${reqpath} has non-existant path ${${reqpath}} - update ${reqpath} to reflect the correct path for this installation of CREO.")
+  endif(NOT EXISTS "${${reqpath}}")
+endforeach(reqpath ${CREO_REQUIRED_PATHS_ABS})
+
+# CREO resource paths
+set(CREO_RESOURCE_DIR "Common Files/text/resource")
+set(CREO_MSG_DIR "Common Files/text/usascii")
+set(CREO_OBJ_DIR "Common Files/${CREO_OS_VERSION}/obj")
+set(CREO_DAT_DIR "Common Files/protoolkit")
+
+set(CREO_REQUIRED_PATHS_REL
+  CREO_RESOURCE_DIR
+  CREO_MSG_DIR
+  CREO_OBJ_DIR
+  CREO_DAT_DIR
+)
+foreach(reqpath ${CREO_REQUIRED_PATHS_REL})
+  if(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${${reqpath}}")
+    set(have_creo_paths 0)
+    message(WARNING "Required CREO path variable ${reqpath} contains ${${reqpath}}, which is not found at ${CREO_ROOT_DIR}/${MDIR}/${${reqpath}} - update ${reqpath} to reflect the correct path for this installation of CREO.")
+  endif(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${${reqpath}}")
+endforeach(reqpath ${CREO_REQUIRED_PATHS_REL})
+
+if(NOT have_creo_paths)
+  message(FATAL_ERROR "Update CMake logic to reflect correct CREO paths to continue with configure")
+endif(NOT have_creo_paths)
 
 # Set the relevant include directories
 include_directories(
   "${BRLCAD_ROOT_DIR}/include/brlcad"
-  "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/includes"
-  "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/protk_appls/includes"
+  "${CREO_PTK_INCDIR}"
+  "${CREO_PTK_APPLS_INCDIR}"
   )
-
 
 # Win32 libraries
 set(WIN_LIBS
@@ -81,10 +139,6 @@ foreach(flist ${flaglists})
   string(REPLACE "/MD" "/MT" ${flist} "${${flist}}")
 endforeach(flist ${flaglists})
 
-# CREO libraries
-set(CREO_EXE_LIBS "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/x86e_win64/obj/protoolkit.lib")
-set(CREO_DLL_LIBS "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/x86e_win64/obj/protk_dll.lib")
-
 # We will need copies of the BRL-CAD dlls along with the creo-brl.dll to make
 # a stand-alone package.
 set(BRLCAD_LIBS libbu libbn y2038 regex)
@@ -92,7 +146,7 @@ set(BRLCAD_STATIC_LIBS)
 foreach(blib ${BRLCAD_LIBS})
   configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
   set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/${blib}.lib")
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll DESTINATION "${MDIR}/Common Files/x86e_win64/obj")
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll DESTINATION "${MDIR}/${CREO_OBJ_DIR}")
 endforeach(blib ${BRLCAD_LIBS})
 
 
@@ -112,7 +166,7 @@ add_definitions(-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD
 
 # Primary (DLL) version of plugin
 # Note that for successful running of the DLL version of this plugin,
-# the BRL-CAD dlls need to be present in Common Files/x86e_win64/obj.  Also,
+# the BRL-CAD dlls need to be present in Common Files/${CREO_OS_VERSION}/obj.  Also,
 # the resource files need to be present in Common Files/text/resource and
 # creo-brl-msg.txt present in Common Files/text/usascii before this will be
 # usable.  The simplest thing to do is build a package and install it in the
@@ -120,9 +174,9 @@ add_definitions(-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD
 # DLLs in place will result in silent failure of the loading step. ***
 add_library(creo-brl SHARED creo-brl.cpp)
 target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_DLL_LIBS} ${BRLCAD_STATIC_LIBS})
-install(TARGETS creo-brl DESTINATION "${MDIR}/Common Files/x86e_win64/obj")
+install(TARGETS creo-brl DESTINATION "${MDIR}/${CREO_OBJ_DIR}")
 configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/Common Files/protoolkit")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/${CREO_DAT_DIR}")
 
 # Debugging executable version of plugin
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /debug")
@@ -133,12 +187,11 @@ configure_file(creo-brl-debug.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.
 # Install the resource files
 file(GLOB RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res)
 foreach(rfile ${RESOURCE_FILES})
-  install(FILES ${rfile} DESTINATION "${MDIR}/Common Files/text/resource")
+  install(FILES ${rfile} DESTINATION "${MDIR}/${CREO_RESOURCE_DIR}")
 endforeach(rfile ${RESOURCE_FILES})
 
 # Install the messages file
-install(FILES resources/creo-brl-msg.txt DESTINATION "${MDIR}/Common Files/text/usascii")
-
+install(FILES resources/creo-brl-msg.txt DESTINATION "${MDIR}/${CREO_MSG_DIR}")
 
 add_custom_target(UNLOCK
   COMMAND "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/protk_unlock.bat" ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll
