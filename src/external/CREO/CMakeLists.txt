@@ -271,18 +271,14 @@ add_custom_target(UNLOCK
   COMMENT "Unlocking CREO-G dll..."
   )
 
-# TODO - Need a more flexibly way to generate this target...
+# Since we need to run "INSTALL" as part of normal development, it is
+# worthwhile to provide an "UNINSTALL" target to automate the cleanup.
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+  IMMEDIATE @ONLY)
 add_custom_target(UNINSTALL
-  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_MSG_DIR}/creo-brl-msg.txt"
-  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_RESOURCE_DIR}/creo_brl.res"
-  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_RESOURCE_DIR}/creo_brl_error.res"
-  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_RESOURCE_DIR}/creo_brl_gen_error.res"
-  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_DAT_DIR}/creo-brl.dat"
-  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_OBJ_DIR}/libbu.dll"
-  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_OBJ_DIR}/libbn.dll"
-  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_OBJ_DIR}/regex.dll"
-  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_OBJ_DIR}/y2038.dll"
-  COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_INSTALL_PREFIX}/${MDIR}/${CREO_OBJ_DIR}/creo-brl.dll"
+  COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
   COMMENT "Removing installed CREO-BRL components..."
   )
 
