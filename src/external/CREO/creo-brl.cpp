@@ -1842,13 +1842,14 @@ output_part( ProMdl model )
 	fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
 	return 1;
     }
+#if 0
     status = ProUIDialogActivate( "creo_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
 		status );
 	fprintf( stderr, "\t dialog returned %d\n", ret_status );
     }
-
+#endif
     if ( !do_facets_only || do_elims ) {
 	free_csg_ops();
 	ProSolidFeatVisit( ProMdlToSolid(model), do_feature_visit,
@@ -2287,13 +2288,14 @@ output_part( ProMdl model )
 		return 0;
 	    }
 	    (void)ProUIPushbuttonActivateActionSet( "creo_brl_error", "ok", kill_error_dialog, NULL );
+#if 0
 	    status = ProUIDialogActivate( "creo_brl_error", &ret_status );
 	    if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Error in creo-brl error Dialog, error = %d\n",
 			status );
 		fprintf( stderr, "\t dialog returned %d\n", ret_status );
 	    }
-
+#endif
 	    feat_id_count = 0;
 	    return 0;
 	}
@@ -2961,13 +2963,14 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
     }
+#if 0
     status = ProUIDialogActivate( "creo_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
 		status );
 	fprintf( stderr, "\t dialog returned %d\n", ret_status );
     }
-
+#endif
     /* get logger type */
     status = ProUIRadiogroupSelectednamesGet( "creo_brl", "log_file_type_rg", &n_selected_names, &selected_names );
     if ( status != PRO_TK_NO_ERROR ) {
@@ -3332,6 +3335,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 	return;
     }
+
     ProUnitsystem us;
     ProUnititem lmu;
     ProUnititem mmu;
@@ -3410,7 +3414,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	bu_hash_tbl_free( name_hash );
 	name_hash = (struct bu_hash_tbl *)NULL;
     }
-
+#if 0
     if ( brlcad_names.size() > 0 ) {
 	std::set<struct bu_vls *, StrCmp>::iterator s_it;
 	if ( logger_type == LOGGER_TYPE_ALL ) {
@@ -3422,6 +3426,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    BU_PUT(v, struct bu_vls);
 	}
     }
+#endif
 
     if ( logger_type != LOGGER_TYPE_NONE ) {
 	if ( logger_type == LOGGER_TYPE_ALL )
