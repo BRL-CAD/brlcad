@@ -102,6 +102,31 @@ if(NOT have_creo_paths)
   message(FATAL_ERROR "Update the above variables to reflect correct CREO paths to continue with configure.  If paths containing \"protoolkit\" are consistently not found, you may need to re-run your CREO installer and add the development frameworks - they are not installed as part of a \"standard\" CREO installation.")
 endif(NOT have_creo_paths)
 
+# When doing development, to avoid the need to unlock dlls and exes every
+# time for testing, you need to configure your parametric.psf file - see
+# https://www.ptcusercommunity.com/message/399253#399253
+#
+# This is necessary only for iterative development: for compilation the
+# program can just be built and unlocked (the latter step being necessary
+# prior to distribution in any case.)  Since it is not always needed,
+# we will check and print a warning to alert developers but will not
+# hault the configure process.
+if(EXISTS "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/parametric.psf")
+  file(STRINGS "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/parametric.psf" psf_strs)
+  foreach(pstr ${psf_strs})
+    if("${pstr}" MATCHES ".*CREOPMA_FEATURE_NAME.*")
+      set(CFN_STR "${pstr}")
+      string(REGEX REPLACE ".*CREOPMA_FEATURE_NAME.*[(]" "" CFN_STR "${CFN_STR}")
+      string(REGEX REPLACE "[)].*" "" CFN_STR "${CFN_STR}")
+      string(STRIP "${CFN_STR}" CFN_STR)
+      if("${CFN_STR}" STREQUAL "")
+	message(WARNING "The CREOPMA_FEATURE_NAME variable in ${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/parametric.psf has no arguments.  This means it is not set up to load a Pro/Toolkit license when started, and the plugin built by this project must be unlocked before it can be tested.  See https://www.ptcusercommunity.com/message/399253#399253 for more info.  This is a concern only for developers wanting to do iterative development without repeating the unlock step every time.  If you are only looking to compile and use the plugin, this warning may be safely ignored as long as the UNLOCK step is performed.")
+      endif("${CFN_STR}" STREQUAL "")
+    endif("${pstr}" MATCHES ".*CREOPMA_FEATURE_NAME.*")
+  endforeach(pstr ${psf_strs})
+endif(EXISTS "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/parametric.psf")
+
+
 # Set the relevant include directories
 include_directories(
   "${BRLCAD_ROOT_DIR}/include/brlcad"
