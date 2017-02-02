@@ -172,6 +172,9 @@ foreach(blib ${BRLCAD_LIBS})
   configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
   set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/${blib}.lib")
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll DESTINATION "${MDIR}/${CREO_OBJ_DIR}")
+  if(NOT EXISTS ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}/${blib}.dll)
+    message("Note: ${blib}.dll is not present in ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}\nBe aware that attempting to load the DLL version of the plugin without this file in place will\ncause the loading process to silently fail: *NO* messages indicating why the loading failed will\nbe generated.\n")
+  endif(NOT EXISTS ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}/${blib}.dll)
 endforeach(blib ${BRLCAD_LIBS})
 
 
