@@ -18,7 +18,7 @@ mark_as_advanced(CMAKE_INSTALL_PREFIX)
 
 # User must locate CREO and BRL-CAD
 if(NOT DEFINED BRLCAD_ROOT_DIR)
-  set(BRLCAD_ROOT_DIR "C:/Program Files/BRLCAD 7.XX.X" CACHE PATH "BRL-CAD root directory")
+  set(BRLCAD_ROOT_DIR "C:/Program Files/BRLCAD X.XX.X" CACHE PATH "BRL-CAD root directory")
 endif(NOT DEFINED BRLCAD_ROOT_DIR)
 if(NOT DEFINED CREO_ROOT_DIR)
   set(CREO_ROOT_DIR "C:/Program Files/PTC/Creo XXX" CACHE PATH "CREO root directory")
@@ -99,7 +99,7 @@ foreach(reqpath ${CREO_REQUIRED_PATHS_REL})
 endforeach(reqpath ${CREO_REQUIRED_PATHS_REL})
 
 if(NOT have_creo_paths)
-  message(FATAL_ERROR "Update CMake logic to reflect correct CREO paths to continue with configure")
+  message(FATAL_ERROR "Update the above variables to reflect correct CREO paths to continue with configure.  If paths containing \"protoolkit\" are consistently not found, you may need to re-run your CREO installer and add the development frameworks - they are not installed as part of a \"standard\" CREO installation.")
 endif(NOT have_creo_paths)
 
 # Set the relevant include directories
@@ -194,7 +194,7 @@ endforeach(rfile ${RESOURCE_FILES})
 install(FILES resources/creo-brl-msg.txt DESTINATION "${MDIR}/${CREO_MSG_DIR}")
 
 add_custom_target(UNLOCK
-  COMMAND "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/protk_unlock.bat" ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll
+  COMMAND "${CREO_PTK_UNLOCKER}" ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll
   DEPENDS CREO-G
   COMMENT "Unlocking CREO-G dll..."
   )
