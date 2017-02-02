@@ -58,7 +58,7 @@ set(CREO_PTK_DLL_LIBS "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/${CREO_O
 
 # CREO include directories
 set(CREO_PTK_INCDIR "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/includes")
-set(CREO_PTK_APPLS_INCDIR "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/includes")
+set(CREO_PTK_APPLS_INCDIR "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/protk_appls/includes")
 
 
 # Check that the expected directories and files in the CREO installation
@@ -201,7 +201,7 @@ add_definitions(-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD
 # CREO root directory.  *** Any attempt run this plugin without the correct
 # DLLs in place will result in silent failure of the loading step. ***
 add_library(creo-brl SHARED creo-brl.cpp)
-target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_DLL_LIBS} ${BRLCAD_STATIC_LIBS})
+target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${BRLCAD_STATIC_LIBS})
 install(TARGETS creo-brl DESTINATION "${MDIR}/${CREO_OBJ_DIR}")
 configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/${CREO_DAT_DIR}")
@@ -209,7 +209,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/${CR
 # Debugging executable version of plugin
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /debug")
 add_executable(creo-g creo-brl.cpp)
-target_link_libraries(creo-g ${WIN_LIBS} ${CREO_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
+target_link_libraries(creo-g ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
 configure_file(creo-brl-debug.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat @ONLY)
 
 # Install the resource files
