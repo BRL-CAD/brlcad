@@ -11,13 +11,33 @@ endif(COMMAND CMAKE_POLICY)
 project(CREO2G)
 
 set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CONFIGURATION_TYPES Release)
+set(CMAKE_CONFIGURATION_TYPES Release CACHE INTERNAL "Constrained configuration set")
 
 # TODO - clear compiler and linker flags
 
 # User must locate CREO and BRL-CAD
-set(BRLCAD_ROOT_DIR "C:/Program Files/BRLCAD 7.XX.X")
-set(CREO_ROOT_DIR "C:/Program Files/PTC/Creo XXX")
+if(NOT DEFINED BRLCAD_ROOT_DIR)
+  set(BRLCAD_ROOT_DIR "C:/Program Files/BRLCAD 7.XX.X" CACHE PATH "BRL-CAD root directory")
+endif(NOT DEFINED BRLCAD_ROOT_DIR)
+if(NOT DEFINED CREO_ROOT_DIR)
+  set(CREO_ROOT_DIR "C:/Program Files/PTC/Creo XXX" CACHE PATH "CREO root directory")
+endif(NOT DEFINED CREO_ROOT_DIR)
+
+set(have_paths 1)
+if(NOT EXISTS "${BRLCAD_ROOT_DIR}")
+  set(have_paths 0)
+  message(WARNING "${BRLCAD_ROOT_DIR} doesn't exist - set BRLCAD_ROOT_DIR to the location of your BRL-CAD installation.")
+endif(NOT EXISTS "${BRLCAD_ROOT_DIR}")
+if(NOT EXISTS "${BRLCAD_ROOT_DIR}")
+  set(have_paths 0)
+  message(WARNING "${CREO_ROOT_DIR} doesn't exist - set CREO_ROOT_DIR to the location of your CREO installation.")
+endif(NOT EXISTS "${BRLCAD_ROOT_DIR}")
+if(NOT have_paths)
+  message(FATAL_ERROR "Correct path settings to continue with configure")
+endif(NOT have_paths)
+
+set(CMAKE_INSTALL_PREFIX "${CREO_ROOT_DIR}" CACHE PATH "Installation path" FORCE)
+mark_as_advanced(CMAKE_INSTALL_PREFIX)
 
 # There will be a sub-directory that is specific to the installed
 # version of CREO - find it
