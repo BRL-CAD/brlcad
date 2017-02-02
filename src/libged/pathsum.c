@@ -50,6 +50,10 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    ged_results_clear(gedp->ged_results);
+
     /*
      * paths are matched up to last input member
      * ANY path the same up to this point is considered as matching
