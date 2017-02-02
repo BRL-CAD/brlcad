@@ -52,7 +52,6 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-    ged_results_clear(gedp->ged_results);
 
     /*
      * paths are matched up to last input member
