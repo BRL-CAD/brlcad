@@ -10,11 +10,42 @@ endif(COMMAND CMAKE_POLICY)
 # Set CMake project name
 project(CREO2G)
 
-set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CONFIGURATION_TYPES Release CACHE INTERNAL "Constrained configuration set")
-mark_as_advanced(CMAKE_INSTALL_PREFIX)
+# clear and reset compiler and linker flags
+set(flaglists
+  CMAKE_C_FLAGS
+  CMAKE_CXX_FLAGS
+  CMAKE_SHARED_LINKER_FLAGS
+  CMAKE_STATIC_LINKER_FLAGS
+  CMAKE_MODULE_LINKER_FLAGS
+  CMAKE_EXE_LINKER_FLAGS
+  )
+foreach(bflag ${flaglists})
+  set(${bflag} "" CACHE STRING "" FORCE)
+  foreach(BTYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${BTYPE}" BTYPE_UPPER)
+    set(${bflag}_${BTYPE_UPPER} "" CACHE STRING "" FORCE)
+  endforeach(BTYPE ${CMAKE_CONFIGURATION_TYPES})
+endforeach(bflag ${flaglists})
 
-# TODO - clear compiler and linker flags
+foreach(flist ${flaglists})
+  string(REPLACE "/MD" "/MT" ${flist} "${${flist}}")
+endforeach(flist ${flaglists})
+
+foreach(CT ${CMAKE_CONFIGURATION_TYPES})
+  set(CR ${CREO2G_BINARY_DIR})
+  string(TOUPPER "${CT}" CT_UPPER)
+  set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CT_UPPER}" "${CR}" CACHE INTERNAL "")
+  set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CT_UPPER}" "${CR}" CACHE INTERNAL "")
+  set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CT_UPPER}" "${CR}" CACHE INTERNAL "")
+  set("CMAKE_BINARY_DIR_${CT_UPPER}" "${CR}" CACHE INTERNAL "")
+  set("CREO2G_BINARY_DIR_${CT_UPPER}" ${CR} CACHE INTERNAL "")
+endforeach(CT ${CMAKE_CONFIGURATION_TYPES})
+
+# We're not set up to support multiple VS configs - limit our options
+set(CMAKE_CONFIGURATION_TYPES Release CACHE INTERNAL "Constrained configuration set")
+
+# Install dir is a function of the CREO dir.
+mark_as_advanced(CMAKE_INSTALL_PREFIX)
 
 # User must locate CREO and BRL-CAD
 if(NOT DEFINED BRLCAD_ROOT_DIR)
@@ -127,13 +158,6 @@ if(EXISTS "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/parametric.psf")
 endif(EXISTS "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/parametric.psf")
 
 
-# Set the relevant include directories
-include_directories(
-  "${BRLCAD_ROOT_DIR}/include/brlcad"
-  "${CREO_PTK_INCDIR}"
-  "${CREO_PTK_APPLS_INCDIR}"
-  )
-
 # Win32 libraries
 set(WIN_LIBS
   #libcmt.lib
@@ -152,17 +176,7 @@ set(WIN_LIBS
   ws2_32.lib
   )
 
-set(flaglists
-  CMAKE_CXX_FLAGS
-  CMAKE_CXX_FLAGS_DEBUG
-  CMAKE_CXX_FLAGS_RELEASE
-  CMAKE_C_FLAGS
-  CMAKE_C_FLAGS_DEBUG
-  CMAKE_C_FLAGS_RELEASE
-  )
-foreach(flist ${flaglists})
-  string(REPLACE "/MD" "/MT" ${flist} "${${flist}}")
-endforeach(flist ${flaglists})
+
 
 # We will need copies of the BRL-CAD dlls along with the creo-brl.dll to make
 # a stand-alone package.
@@ -180,17 +194,27 @@ endforeach(blib ${BRLCAD_LIBS})
 
 # CREO Definitions (see example nmake file in your CREO install to
 # double check these and modify if needed)
-add_definitions(-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V100_SDK71_)
+set(CREO_DEFS "-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V100_SDK71_")
 
 # for libcmt
 #set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT")
 add_definitions(-D_ITERATOR_DEBUG_LEVEL=0)
 
 # BRL-CAD definitions
-add_definitions(-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD
-  -DBU_DLL_IMPORTS
-  -DBN_DLL_IMPORTS
+set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS")
+
+set(CMAKE_C_FLAGS "-c -GS -fp:precise /MT ${CREO_DEFS} ${BRLCAD_DEFS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "/subsystem:console /debug:none /machine:amd64")
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/subsystem:console /debug /machine:amd64")
+
+# Set the relevant include directories
+include_directories(
+  "${BRLCAD_ROOT_DIR}/include/brlcad"
+  "${CREO_PTK_INCDIR}"
+  "${CREO_PTK_APPLS_INCDIR}"
   )
+
 
 # Primary (DLL) version of plugin
 # Note that for successful running of the DLL version of this plugin,
@@ -207,7 +231,6 @@ configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/${CREO_DAT_DIR}")
 
 # Debugging executable version of plugin
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /debug")
 add_executable(creo-g creo-brl.cpp)
 target_link_libraries(creo-g ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
 configure_file(creo-brl-debug.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat @ONLY)
