@@ -2354,7 +2354,7 @@ output_assembly( ProMdl model )
     int member_count=0;
     int i, j, k;
     int ret_status=0;
-
+    
     if ( ProMdlNameGet( model, asm_name ) != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get model name for an assembly\n" );
 	return;
@@ -2375,13 +2375,16 @@ output_assembly( ProMdl model )
 	fprintf( stderr, "Failed to update dialog label for currently processed assembly\n" );
 	return;
     }
+#if 0
     status = ProUIDialogActivate( "creo_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
 		status );
 	fprintf( stderr, "\t dialog returned %d\n", ret_status );
     }
+#endif
 
+bu_log("got here\n");
     /* everything starts out in "curr_part_name", copy name to "curr_asm_name" */
     bu_strlcpy( curr_asm_name, curr_part_name, sizeof(curr_asm_name) );
 
@@ -2393,7 +2396,7 @@ output_assembly( ProMdl model )
     /* make sure this assembly is not "exploded"!!!
      * some careless designers leave assemblies in exploded mode
      */
-
+#if 0
     status = ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get explode status of %s\n", curr_assem.name );
@@ -2414,6 +2417,7 @@ output_assembly( ProMdl model )
 	    }
 	}
     }
+#endif
 
     /* use feature visit to get info about assembly members.
      * also calls output functions for members (parts or assemblies)
@@ -2506,6 +2510,7 @@ output_assembly( ProMdl model )
 		    mass_prop.volume );
 	}
     }
+
     /* add this assembly to the list of already output objects */
     add_to_done_asm( asm_name );
 
