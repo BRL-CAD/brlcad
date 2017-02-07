@@ -76,6 +76,7 @@ catch {delete class GeometryChecker} error
 	variable _drawLeftCommand
 	variable _drawRightCommand
 
+	variable _drawMode
 	variable _drew
 
 	variable _whoCallback
@@ -125,16 +126,28 @@ catch {delete class GeometryChecker} error
 	};
     }
 
+    itk_component add headerFrame {
+    	ttk::frame $itk_interior.headerFrame -padding 6
+    } {}
+
+    itk_component add headerLabelIntro {
+    	ttk::label $itk_component(headerFrame).headerLabelIntro -text "This tool is intended to help resolve geometry overlaps and is a work-in-progress"
+    } {}
+    itk_component add headerLabelStatus {
+    	ttk::label $itk_component(headerFrame).headerLabelStatus -text "Data Not Yet Loaded"
+    } {}
+    itk_component add headerLabelDraw {
+    	ttk::label $itk_component(headerFrame).headerLabelDraw -text "Autodraw" -padding 2
+    } {}
+    itk_component add headerComboDraw {
+    	ttk::combobox $itk_component(headerFrame).headerComboDraw \
+	    -state readonly \
+	    -textvariable [scope _drawMode] \
+	    -values {"Never" "One Selection" "Multi-Selection"}
+    } {}
+
     itk_component add checkFrame {
     	ttk::frame $itk_interior.checkFrame -padding 2 
-    } {}
-
-    itk_component add checkLabelIntro {
-    	ttk::label $itk_component(checkFrame).checkLabelIntro -text "This tool is intended to help resolve geometry overlaps and is a work-in-progress"
-    } {}
-
-    itk_component add checkLabelStatus {
-    	ttk::label $itk_component(checkFrame).checkLabelStatus -text "Data Not Yet Loaded"
     } {}
 
     itk_component add checkList {
@@ -178,8 +191,8 @@ catch {delete class GeometryChecker} error
     set _colorOdd \#ffffff
     set _colorEven \#f0fdf0
 
-    set _ck $itk_component(checkFrame).checkList
-    set _status $itk_component(checkFrame).checkLabelStatus
+    set _ck $itk_component(checkList)
+    set _status $itk_component(headerLabelStatus)
 
     puts $_ck
 
@@ -192,25 +205,30 @@ catch {delete class GeometryChecker} error
     $_ck heading Right -text "Right" -image _arrowOff -anchor center -command [list $this sortBy Right 0]
     $_ck heading Size -text "Vol. Est." -image _arrowOff -anchor e -command [list $this sortBy Size 0]
 
+    pack $itk_component(headerFrame) -side top -fill x
+    pack $itk_component(headerLabelStatus) -side left
+    pack $itk_component(headerComboDraw) -side right
+    pack $itk_component(headerLabelDraw) -side right
+
     pack $itk_component(checkFrame) -expand true -fill both -anchor center
-    pack $itk_component(checkButtonFrame).checkGrip -side right -anchor se
-#    pack $itk_component(checkFrame).checkLabelIntro -fill y -padx 10 -pady 10
-    pack $itk_component(checkFrame).checkLabelStatus -side top -fill x -padx 10 -pady 10
+    pack $itk_component(checkFrame).checkScroll -side right -fill y 
+    pack $itk_component(checkFrame).checkList -expand 1 -fill both -padx {20 0}
 
     pack $itk_component(checkButtonFrame) -side bottom -expand true -fill both
+    pack $itk_component(checkButtonFrame).checkGrip -side right -anchor se
     pack $itk_component(checkButtonFrame).buttonRight -side right -pady 10
-#    pack $itk_component(checkButtonFrame).buttonBoth -side right -pady 10
+#   pack $itk_component(checkButtonFrame).buttonBoth -side right -pady 10
     pack $itk_component(checkButtonFrame).buttonLeft -side right -padx 20 -pady 10
     pack $itk_component(checkButtonFrame).buttonPrev -side left -padx 20 -pady 10
     pack $itk_component(checkButtonFrame).buttonNext -side left -pady 10
 
-    pack $itk_component(checkFrame).checkScroll -side right -fill y 
-    pack $itk_component(checkFrame).checkList -expand 1 -fill both -padx {20 0}
 
     bind $itk_component(checkButtonFrame).buttonPrev <Up> [list $this goPrev]
     bind $itk_component(checkButtonFrame).buttonPrev <Down> [list $this goNext]
     bind $itk_component(checkButtonFrame).buttonNext <Up> [list $this goPrev]
     bind $itk_component(checkButtonFrame).buttonNext <Down> [list $this goNext]
+
+    $itk_component(headerComboDraw) current 1
 
     bind $_ck <<TreeviewSelect>> [list $this display]
 }
@@ -439,6 +457,12 @@ body GeometryChecker::display {} {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
 	    lappend drawing $left $right
 	}
+    }
+
+    # drawing is contingent on draw mode
+    if {$_drawMode == "Never" || ($_drawMode == "One Selection" && [llength $drawing] > 2)} {
+	set drawing {}
+	set sset ""
     }
 
     # erase anything we drew previously that we don't still need
