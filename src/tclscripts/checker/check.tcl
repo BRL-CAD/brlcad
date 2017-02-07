@@ -269,6 +269,17 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 	set left [lindex $line 0]
 	set right [lindex $line 1]
 	set size [lindex $line 2]
+
+	# put smaller volume on the left
+	set vol_left [lindex [bb -q -v $left] 3]
+	set vol_right [lindex [bb -q -v $right] 3]
+
+	if {$vol_left > $vol_right} {
+	    set tmp $left
+	    set left $right
+	    set right $tmp
+	}
+
 	set len_left [font measure $font $left]
 	set len_right [font measure $font $right]
 	set len_size [font measure $font $size]
