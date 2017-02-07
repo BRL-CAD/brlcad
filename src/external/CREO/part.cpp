@@ -329,13 +329,16 @@ free_csg_ops()
 extern "C" void
 add_triangle_and_normal( int v1, int v2, int v3, int n1, int n2, int n3 )
 {
+    ProFileName msgfil;
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
+
     if ( curr_tri >= max_tri ) {
 	/* allocate more memory for triangles and normals */
 	max_tri += TRI_BLOCK;
 	part_tris = (ProTriangle *)bu_realloc( part_tris, sizeof( ProTriangle ) * max_tri,
 		"part triangles");
 	if ( !part_tris ) {
-	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR",
+	    (void)ProMessageDisplay(msgfil, "USER_ERROR",
 		    "Failed to allocate memory for part triangles" );
 	    fprintf( stderr, "Failed to allocate memory for part triangles\n" );
 	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -369,7 +372,7 @@ add_triangle( int v1, int v2, int v3 )
 	part_tris = (ProTriangle *)bu_realloc( part_tris, sizeof( ProTriangle ) * max_tri,
 		"part triangles");
 	if ( !part_tris ) {
-	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR",
+	    (void)ProMessageDisplay(msgfil, "USER_ERROR",
 		    "Failed to allocate memory for part triangles" );
 	    fprintf( stderr, "Failed to allocate memory for part triangles\n" );
 	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -408,6 +411,7 @@ output_part( ProMdl model )
     ProSurfaceTessellationData *tess=NULL;
     ProError status;
     ProMdlType type;
+    ProFileName msgfil;
     char str[PRO_NAME_SIZE + 1];
     int ret=0;
     int ret_status=0;
@@ -416,6 +420,8 @@ output_part( ProMdl model )
     double curr_error;
     double curr_angle;
     register int i;
+
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
     /* if this part has already been output, do not do it again */
     if ( ProMdlNameGet( model, part_name ) != PRO_TK_NO_ERROR ) {
@@ -594,7 +600,7 @@ output_part( ProMdl model )
 	    fprintf( logger, "Failed to tessellate %s!!!\n", curr_part_name );
 	}
 	snprintf( astr, sizeof(astr), "Failed to tessellate part (%s)", curr_part_name);
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
+	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -606,7 +612,7 @@ output_part( ProMdl model )
 	    fprintf( logger, "Empty part. (%s) has no surfaces!!!\n", curr_part_name );
 	}
 	snprintf( astr, sizeof(astr), "%s has no surfaces, ignoring", curr_part_name );
-	(void)ProMessageDisplay(MSGFIL, "USER_WARNING", astr );
+	(void)ProMessageDisplay(msgfil, "USER_WARNING", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -623,7 +629,7 @@ output_part( ProMdl model )
 
 	status = ProArraySizeGet( (ProArray)tess, &surface_count );
 	if ( status != PRO_TK_NO_ERROR ) {
-	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Failed to get array size" );
+	    (void)ProMessageDisplay(msgfil, "USER_ERROR", "Failed to get array size" );
 	    ProMessageClear();
 	    fprintf( stderr, "Failed to get array size\n" );
 	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -633,7 +639,7 @@ output_part( ProMdl model )
 		fprintf( logger, "Empty part. (%s) has no surfaces!!!\n", curr_part_name );
 	    }
 	    snprintf( astr, sizeof(astr), "%s has no surfaces, ignoring", curr_part_name );
-	    (void)ProMessageDisplay(MSGFIL, "USER_WARNING", astr );
+	    (void)ProMessageDisplay(msgfil, "USER_WARNING", astr );
 	    ProMessageClear();
 	    fprintf( stderr, "%s\n", astr );
 	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );

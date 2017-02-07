@@ -65,6 +65,9 @@ extern "C" {
 #include "bn.h"
 }
 
+
+#define CREO_BRL_MSG_FILE "creo-brl-msg.txt"
+
 struct StrCmp {
     bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {
 	return (bu_strcmp(bu_vls_addr(str1), bu_vls_addr(str2)) < 0);
@@ -79,7 +82,6 @@ struct WStrCmp {
 };
 
 extern "C" {
-static wchar_t  MSGFIL[] = {'c', 'r', 'e', 'o', '-', 'b', 'r', 'l', '-', 'm', 's', 'g', '.', 't', 'x', 't', '\0'};
 
 static double creo_to_brl_conv=25.4;	/* inches to mm */
 

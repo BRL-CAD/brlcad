@@ -57,9 +57,12 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     ProMatrix xform;
     ProMdlType type;
     ProName name;
+    ProFileName msgfil;
     struct asm_head *curr_assem = (struct asm_head *)app_data;
     struct asm_member *member, *prev=NULL;
     int i, j;
+
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
     status = ProAsmcompMdlNameGet( feat, &type, name );
     if ( status != PRO_TK_NO_ERROR ) {
@@ -81,7 +84,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     if ( status != PRO_TK_NO_ERROR ) {
 	snprintf( astr, sizeof(astr), "Failed to get path from %s to %s (aborting)", curr_asm_name,
 		curr_part_name );
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
+	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -93,7 +96,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     if ( status != PRO_TK_NO_ERROR ) {
 	snprintf( astr, sizeof(astr), "Failed to get transformation matrix %s/%s, error = %d, id = %d",
 		curr_asm_name, curr_part_name, status, feat->id );
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
+	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -117,7 +120,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     }
 
     if ( !member ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
+	(void)ProMessageDisplay(msgfil, "USER_ERROR",
 		"memory allocation for member failed" );
 	ProMessageClear();
 	fprintf( stderr, "memory allocation for member failed\n" );
@@ -141,7 +144,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     if ( status != PRO_TK_NO_ERROR ) {
 	snprintf( astr, sizeof(astr), "Failed to get model for component %s",
 		curr_part_name );
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
+	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -153,7 +156,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     if ( status != PRO_TK_NO_ERROR ) {
 	snprintf( astr, sizeof(astr), "Failed to get type for component %s",
 		curr_part_name );
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
+	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -193,12 +196,15 @@ assembly_filter( ProFeature *feat, ProAppData *data )
     ProFeattype type;
     ProFeatStatus feat_status;
     ProError status;
+    ProFileName msgfil;
+
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
     status = ProFeatureTypeGet( feat, &type );
     if ( status != PRO_TK_NO_ERROR ) {
 	sprintf( astr, "In assembly_filter, cannot get feature type for feature %d",
 		feat->id );
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
+	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -213,7 +219,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
     if ( status != PRO_TK_NO_ERROR ) {
 	sprintf( astr, "In assembly_filter, cannot get feature status for feature %d",
 		feat->id );
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
+	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );

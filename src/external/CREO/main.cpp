@@ -402,12 +402,15 @@ extern "C" void
 output_top_level_object( ProMdl model, ProMdlType type )
 {
     ProName name;
+    ProFileName msgfil;
     ProCharName top_level;
     char buffer[1024] = {0};
 
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
+
     /* get its name */
     if ( ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
+	(void)ProMessageDisplay(msgfil, "USER_ERROR",
 		"Could not get name for part!!" );
 	ProMessageClear();
 	fprintf( stderr, "Could not get name for part" );
@@ -434,7 +437,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
     } else {
 	snprintf( astr, sizeof(astr), "Object %s is neither PART nor ASSEMBLY, skipping",
 		curr_part_name );
-	(void)ProMessageDisplay(MSGFIL, "USER_WARNING", astr );
+	(void)ProMessageDisplay(msgfil, "USER_WARNING", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -715,7 +718,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     /* open output file */
     if ( (outfp=fopen( output_file, "wb" ) ) == NULL ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open output file" );
+	(void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open output file" );
 	ProMessageClear();
 	fprintf( stderr, "Cannot open output file\n" );
 	perror( "\t" );
@@ -728,7 +731,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	if ( BU_STR_EQUAL( log_file, "stderr" ) ) {
 	    logger = stderr;
 	} else if ( (logger=fopen( log_file, "wb" ) ) == NULL ) {
-	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open log file" );
+	    (void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open log file" );
 	    ProMessageClear();
 	    fprintf( stderr, "Cannot open log file\n" );
 	    perror( "\t" );
@@ -768,7 +771,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		fprintf( logger, "%s\n", strerror( errno ) );
 	    }
 
-	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open part name file" );
+	    (void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open part name file" );
 	    ProMessageClear();
 	    fprintf( stderr, "Cannot open part name file\n" );
 	    perror( name_file );
@@ -827,7 +830,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     /* get the currently displayed model in Pro/E */
     status = ProMdlCurrentGet( &model );
     if ( status == PRO_TK_BAD_CONTEXT ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_NO_MODEL" );
+	(void)ProMessageDisplay(msgfil, "USER_NO_MODEL" );
 	ProMessageClear();
 	fprintf( stderr, "No model is displayed!!\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -843,7 +846,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     /* get its type */
     status = ProMdlTypeGet( model, &type );
     if ( status == PRO_TK_BAD_INPUTS ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_NO_TYPE" );
+	(void)ProMessageDisplay(msgfil, "USER_NO_TYPE" );
 	ProMessageClear();
 	fprintf( stderr, "Cannot get type of current model\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -858,7 +861,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     /* can only do parts and assemblies, no drawings, etc. */
     if ( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_TYPE_NOT_SOLID" );
+	(void)ProMessageDisplay(msgfil, "USER_TYPE_NOT_SOLID" );
 	ProMessageClear();
 	fprintf( stderr, "Current model is not a solid object\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -1037,7 +1040,7 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     ProError status;
     int ret_status=0;
 
-    ProStringToWstring(msgfil, "creo-brl-msg.txt");
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
     ProMessageDisplay(msgfil, "USER_INFO", "Launching creo_brl...");
 
@@ -1119,7 +1122,7 @@ extern "C" int user_initialize()
     uiCmdCmdId cmd_id;
     wchar_t errbuf[80];
 
-    ProStringToWstring(msgfil, "creo-brl-msg.txt");
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
     /* Pro/E says always check the size of w_char */
     status = ProWcharSizeVerify (sizeof (wchar_t), &i);
