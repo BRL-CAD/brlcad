@@ -79,8 +79,6 @@ struct WStrCmp {
 };
 
 extern "C" {
-int is_non_identity(ProMatrix xform);
-
 static wchar_t  MSGFIL[] = {'c', 'r', 'e', 'o', '-', 'b', 'r', 'l', '-', 'm', 's', 'g', '.', 't', 'x', 't', '\0'};
 
 static double creo_to_brl_conv=25.4;	/* inches to mm */
@@ -171,9 +169,17 @@ std::set<wchar_t *, WStrCmp> done_list_part;	/* list of parts already done */
 std::set<wchar_t *, WStrCmp> done_list_asm;	/* list of assemblies already done */
 std::set<struct bu_vls *, StrCmp> brlcad_names;	/* BRL-CAD names in use */
 
-/* declaration of functions passed to the feature visit routine */
-static ProError assembly_comp( ProFeature *feat, ProError status, ProAppData app_data );
-static ProError assembly_filter( ProFeature *feat, ProAppData *data );
+/* structure to hold info about CSG operations for current part */
+struct csg_ops {
+    char op;
+    struct bu_vls name;
+    struct bu_vls dbput;
+    struct csg_ops *next;
+};
+
+struct csg_ops *csg_root;
+
+static int hole_no=0;   /* hole counter for unique names */
 
 struct empty_parts {
     char *name;
@@ -207,8 +213,16 @@ static char *feat_status[]={
 }
 
 
-extern "C" void doit(char *dialog, char *compnent, ProAppData appdata);
+extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);
+extern "C" void kill_gen_error_dialog(char *dialog, char *component, ProAppData appdata);
+
 extern "C" void do_quit(char *dialog, char *compnent, ProAppData appdata);
+
+extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
+extern "C" char *get_brlcad_name(char *part_name);
+extern "C" struct bu_hash_tbl *create_name_hash(FILE *name_fd);
+extern "C" void output_assembly(ProMdl model);
+extern "C" int output_part(ProMdl model);
 
 /*
  * Local Variables:

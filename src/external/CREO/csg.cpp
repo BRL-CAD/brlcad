@@ -24,37 +24,8 @@
 #include "common.h"
 #include "creo-brl.h"
 
-/* structure to hold info about CSG operations for current part */
-struct csg_ops {
-    char op;
-    struct bu_vls name;
-    struct bu_vls dbput;
-    struct csg_ops *next;
-};
-
-struct csg_ops *csg_root;
 static int hole_no=0;	/* hole counter for unique names */
 static char *tgc_format="tgc V {%.25G %.25G %.25G} H {%.25G %.25G %.25G} A {%.25G %.25G %.25G} B {%.25G %.25G %.25G} C {%.25G %.25G %.25G} D {%.25G %.25G %.25G}\n";
-
-/* routine to free the list of CSG operations */
-extern "C" void
-free_csg_ops()
-{
-    struct csg_ops *ptr1, *ptr2;
-
-    ptr1 = csg_root;
-
-    while ( ptr1 ) {
-	ptr2 = ptr1->next;
-	bu_vls_free( &ptr1->name );
-	bu_vls_free( &ptr1->dbput );
-	bu_free( ptr1, "csg op" );
-	ptr1 = ptr2;
-    }
-
-    csg_root = NULL;
-}
-
 
 extern "C" void
 Add_to_feature_delete_list( int id )
@@ -585,6 +556,58 @@ Subtract_hole()
 }
 
 extern "C" ProError
+dimension_filter( ProDimension *dim, ProAppData data ) {
+        return PRO_TK_NO_ERROR;
+}
+
+extern "C" ProError
+check_dimension( ProDimension *dim, ProError status, ProAppData data )
+{
+    ProDimensiontype dim_type;
+    ProError ret;
+    double tmp;
+
+    if ( (ret=ProDimensionTypeGet( dim, &dim_type ) ) != PRO_TK_NO_ERROR ) {
+	fprintf( stderr, "ProDimensionTypeGet Failed for %s\n", curr_part_name );
+	return ret;
+    }
+
+    switch ( dim_type ) {
+	case PRODIMTYPE_RADIUS:
+	    if ( (ret=ProDimensionValueGet( dim, &radius ) ) != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
+		return ret;
+	    }
+	    diameter = 2.0 * radius;
+	    got_diameter = 1;
+	    break;
+	case PRODIMTYPE_DIAMETER:
+	    if ( (ret=ProDimensionValueGet( dim, &diameter ) ) != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
+		return ret;
+	    }
+	    radius = diameter / 2.0;
+	    got_diameter = 1;
+	    break;
+	case PRODIMTYPE_LINEAR:
+	    if ( (ret=ProDimensionValueGet( dim, &tmp ) ) != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
+		return ret;
+	    }
+	    if ( got_distance1 ) {
+		distance2 = tmp;
+	    } else {
+		got_distance1 = 1;
+		distance1 = tmp;
+	    }
+	    break;
+    }
+
+    return PRO_TK_NO_ERROR;
+}
+
+
+extern "C" ProError
 do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
 {
     ProError ret;
@@ -648,221 +671,6 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
 
     return ret;
 }
-
-extern "C" int
-feat_adds_material( ProFeattype feat_type )
-{
-    if ( feat_type >= PRO_FEAT_UDF_THREAD ) {
-	return 1;
-    }
-
-    switch ( feat_type ) {
-	case PRO_FEAT_SHAFT:
-	case PRO_FEAT_PROTRUSION:
-	case PRO_FEAT_NECK:
-	case PRO_FEAT_FLANGE:
-	case PRO_FEAT_RIB:
-	case PRO_FEAT_EAR:
-	case PRO_FEAT_DOME:
-	case PRO_FEAT_LOC_PUSH:
-	case PRO_FEAT_UDF:
-	case PRO_FEAT_DRAFT:
-	case PRO_FEAT_SHELL:
-	case PRO_FEAT_DOME2:
-	case PRO_FEAT_IMPORT:
-	case PRO_FEAT_MERGE:
-	case PRO_FEAT_MOLD:
-	case PRO_FEAT_OFFSET:
-	case PRO_FEAT_REPLACE_SURF:
-	case PRO_FEAT_PIPE:
-	    return 1;
-	    break;
-	default:
-	    return 0;
-	    break;
-    }
-
-    return 0;
-}
-
-extern "C" void
-remove_holes_from_id_list( ProMdl model )
-{
-    int i;
-    ProFeature feat;
-    ProError status;
-    ProFeattype type;
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Removing any holes from CSG list and from features to delete\n" );
-    }
-
-    free_csg_ops();		/* these are only holes */
-    for ( i=0; i<feat_id_count; i++ ) {
-	status = ProFeatureInit( ProMdlToSolid(model),
-		feat_ids_to_delete[i],
-		&feat );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get handle for id %d\n",
-		    feat_ids_to_delete[i] );
-	    if ( logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( logger, "Failed to get handle for id %d\n",
-			feat_ids_to_delete[i] );
-	    }
-	}
-	status = ProFeatureTypeGet( &feat, &type );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get feature type for id %d\n",
-		    feat_ids_to_delete[i] );
-	    if ( logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( logger, "Failed to get feature type for id %d\n",
-			feat_ids_to_delete[i] );
-	    }
-	}
-	if ( type == PRO_FEAT_HOLE ) {
-	    /* remove this from the list */
-	    int j;
-
-	    if ( logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( logger, "\tRemoving feature id %d from deletion list\n",
-			feat_ids_to_delete[i] );
-	    }
-	    feat_id_count--;
-	    for ( j=i; j<feat_id_count; j++ ) {
-		feat_ids_to_delete[j] = feat_ids_to_delete[j+1];
-	    }
-	    i--;
-	}
-    }
-}
-
-
-extern "C" void
-build_tree( char *sol_name, struct bu_vls *tree )
-{
-    struct csg_ops *ptr;
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Building CSG tree for %s\n", sol_name );
-    }
-    ptr = csg_root;
-    while ( ptr ) {
-	bu_vls_printf( tree, "{%c ", ptr->op );
-	ptr = ptr->next;
-    }
-
-    bu_vls_strcat( tree, "{ l {" );
-    bu_vls_strcat( tree, sol_name );
-    bu_vls_strcat( tree, "} }" );
-    ptr = csg_root;
-    while ( ptr ) {
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "Adding %c %s\n", ptr->op, bu_vls_addr( &ptr->name ) );
-	}
-	bu_vls_printf( tree, " {l {%s}}}", bu_vls_addr( &ptr->name ) );
-	ptr = ptr->next;
-    }
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Final tree: %s\n", bu_vls_addr( tree ) );
-    }
-}
-
-extern "C" void
-output_csg_prims()
-{
-    struct csg_ops *ptr;
-
-    ptr = csg_root;
-
-    while ( ptr ) {
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "Creating primitive: %s %s\n",
-		    bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
-	}
-
-	fprintf( outfp, "put {%s} %s", bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
-	ptr = ptr->next;
-    }
-}
-
-
-
-
-/* routine to output the top level object that is currently displayed in Pro/E */
-extern "C" void
-output_top_level_object( ProMdl model, ProMdlType type )
-{
-    ProName name;
-    ProCharName top_level;
-    char buffer[1024] = {0};
-
-    /* get its name */
-    if ( ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
-		"Could not get name for part!!" );
-	ProMessageClear();
-	fprintf( stderr, "Could not get name for part" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	bu_strlcpy( curr_part_name, "noname", PRO_NAME_SIZE );
-    } else {
-	(void)ProWstringToString( curr_part_name, name );
-    }
-
-    /* save name */
-    bu_strlcpy( top_level, curr_part_name, sizeof(top_level) );
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Output top level object (%s)\n", top_level );
-    }
-
-    /* output the object */
-    if ( type == PRO_MDL_PART ) {
-	/* tessellate part and output triangles */
-	output_part( model );
-    } else if ( type == PRO_MDL_ASSEMBLY ) {
-	/* visit all members of assembly */
-	output_assembly( model );
-    } else {
-	snprintf( astr, sizeof(astr), "Object %s is neither PART nor ASSEMBLY, skipping",
-		curr_part_name );
-	(void)ProMessageDisplay(MSGFIL, "USER_WARNING", astr );
-	ProMessageClear();
-	fprintf( stderr, "%s\n", astr );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-    }
-
-    if ( type == PRO_MDL_ASSEMBLY ) {
-	snprintf(buffer, 1024, "put $topname comb region no tree {l %s.c {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(top_level) );
-    } else {
-	snprintf(buffer, 1024, "put $topname comb region no tree {l %s {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(top_level) );
-    }
-
-    /* make a top level combination named "top", if there is not
-     * already one.  if one does already exist, try "top.#" where
-     * "#" is the first available number.  this combination
-     * contains the xform to rotate the model into BRL-CAD
-     * standard orientation.
-     */
-    fprintf(outfp,
-	    "set topname \"top\"\n"
-	    "if { ! [catch {get $topname} ret] } {\n"
-	    "  set num 0\n"
-	    "  while { $num < 1000 } {\n"
-	    "    set topname \"top.$num\"\n"
-	    "    if { [catch {get $name} ret ] } {\n"
-	    "      break\n"
-	    "    }\n"
-	    "    incr num\n"
-	    "  }\n"
-	    "}\n"
-	    "if { [catch {get $topname} ret] } {\n"
-	    "  %s\n"
-	    "}\n",
-	    buffer
-	   );
-}
-
 
 /*
  * Local Variables:

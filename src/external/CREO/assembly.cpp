@@ -48,7 +48,7 @@ struct asm_head {
 /* routine that is called by feature visit for each assembly member
  * the "app_data" is the head of the assembly info for this assembly
  */
-extern "C" ProError
+extern "C" static ProError
 assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 {
     ProIdTable id_table;
@@ -187,7 +187,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 /* this routine is a filter for the feature visit routine
  * selects only "component" items (should be only parts and assemblies)
  */
-extern "C" ProError
+extern "C" static ProError
 assembly_filter( ProFeature *feat, ProAppData *data )
 {
     ProFeattype type;
@@ -246,19 +246,33 @@ free_assem( struct asm_head *curr_assem )
     }
 }
 
-/* routine to list assembly info (for debugging) */
-extern "C" void
-list_assem( struct asm_head *curr_asm )
-{
-    struct asm_member *ptr;
 
-    fprintf( stderr, "Assembly %s:\n", curr_asm->name );
-    ptr = curr_asm->members;
-    while ( ptr ) {
-	fprintf( stderr, "\t%s\n", ptr->name );
-	ptr = ptr->next;
+extern "C" void
+add_to_done_asm( wchar_t *name )
+{
+    wchar_t *name_copy;
+
+    if ( logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( logger, "Added %s to list of done assemblies\n", ProWstringToString( astr, name ) );
+    }
+
+    if (done_list_asm.find(name) == done_list_part.end()) {
+	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
+		"asm name for done list" );
+	wcsncpy( name_copy, name, wcslen(name)+1 );
+	done_list_asm.insert(name_copy);
     }
 }
+
+extern "C" int
+already_done_asm( wchar_t *name )
+{
+    if (done_list_asm.find(name) != done_list_asm.end()) {
+	return 1;
+    }
+    return 0;
+}
+
 
 /* routine to output an assembly as a BRL-CAD combination
  * The combination will have the Pro/E name with a ".c" suffix.
@@ -276,7 +290,7 @@ output_assembly( ProMdl model )
     int member_count=0;
     int i, j, k;
     int ret_status=0;
-    
+
     if ( ProMdlNameGet( model, asm_name ) != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get model name for an assembly\n" );
 	return;
@@ -438,32 +452,6 @@ bu_log("got here\n");
 
     /* free the memory associated with this assembly */
     free_assem( &curr_assem );
-}
-
-extern "C" void
-add_to_done_asm( wchar_t *name )
-{
-    wchar_t *name_copy;
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Added %s to list of done assemblies\n", ProWstringToString( astr, name ) );
-    }
-
-    if (done_list_asm.find(name) == done_list_part.end()) {
-	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
-		"asm name for done list" );
-	wcsncpy( name_copy, name, wcslen(name)+1 );
-	done_list_asm.insert(name_copy);
-    }
-}
-
-extern "C" int
-already_done_asm( wchar_t *name )
-{
-    if (done_list_asm.find(name) != done_list_asm.end()) {
-	return 1;
-    }
-    return 0;
 }
 
 

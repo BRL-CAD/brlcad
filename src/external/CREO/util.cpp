@@ -25,93 +25,17 @@
 #include "creo-brl.h"
 
 extern "C" void
-set_identity( ProMatrix xform )
+kill_error_dialog( char *dialog, char *component, ProAppData appdata )
 {
-    int i, j;
-
-    for ( i=0; i<4; i++ ) {
-	for ( j=0; j<4; j++ ) {
-	    if ( i == j ) {
-		xform[i][j] = 1.0;
-	    } else {
-		xform[i][j] = 0.0;
-	    }
-	}
-    }
+        (void)ProUIDialogDestroy( "creo_brl_error" );
 }
 
-/* routine to check if xform is an identity */
-extern "C" int
-is_non_identity( ProMatrix xform )
+extern "C" void
+kill_gen_error_dialog( char *dialog, char *component, ProAppData appdata )
 {
-    int i, j;
-
-    for ( i=0; i<4; i++ ) {
-	for ( j=0; j<4; j++ ) {
-	    if ( i == j ) {
-		if ( xform[i][j] != 1.0 )
-		    return 1;
-	    } else {
-		if ( xform[i][j] != 0.0 )
-		    return 1;
-	    }
-	}
-    }
-
-    return 0;
+        (void)ProUIDialogDestroy( "creo_brl_gen_error" );
 }
 
-extern "C" ProError
-dimension_filter( ProDimension *dim, ProAppData data ) {
-    return PRO_TK_NO_ERROR;
-}
-
-
-extern "C" ProError
-check_dimension( ProDimension *dim, ProError status, ProAppData data )
-{
-    ProDimensiontype dim_type;
-    ProError ret;
-    double tmp;
-
-    if ( (ret=ProDimensionTypeGet( dim, &dim_type ) ) != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "ProDimensionTypeGet Failed for %s\n", curr_part_name );
-	return ret;
-    }
-
-    switch ( dim_type ) {
-	case PRODIMTYPE_RADIUS:
-	    if ( (ret=ProDimensionValueGet( dim, &radius ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
-		return ret;
-	    }
-	    diameter = 2.0 * radius;
-	    got_diameter = 1;
-	    break;
-	case PRODIMTYPE_DIAMETER:
-	    if ( (ret=ProDimensionValueGet( dim, &diameter ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
-		return ret;
-	    }
-	    radius = diameter / 2.0;
-	    got_diameter = 1;
-	    break;
-	case PRODIMTYPE_LINEAR:
-	    if ( (ret=ProDimensionValueGet( dim, &tmp ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
-		return ret;
-	    }
-	    if ( got_distance1 ) {
-		distance2 = tmp;
-	    } else {
-		got_distance1 = 1;
-		distance1 = tmp;
-	    }
-	    break;
-    }
-
-    return PRO_TK_NO_ERROR;
-}
 
 extern "C" void
 lower_case( char *name )
@@ -216,115 +140,6 @@ get_brlcad_name( char *part_name )
 	}
 	bu_free( name_copy, "name_copy" );
 	return brlcad_name;
-    }
-}
-
-extern "C" void
-model_units( ProMdl model )
-{
-    // TODO - the following is completely untested - fix that!!
-    ProUnitsystem us;
-    ProUnititem lmu;
-    char *lname = NULL;
-    ProUnititem mmu;
-    ProUnitConversion conv;
-    double creo_conv;
-
-    ProMdlPrincipalunitsystemGet(model, &us);
-    ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu);
-    ProUnitInit(model, L"mm", &mmu);
-    ProWstringToString(lname, lmu.name);
-    ProUnitConversionGet(&lmu, &conv, &mmu);
-    creo_conv = conv.scale;
-
-    /* adjust tolerance for Pro/E units */
-    local_tol = tol_dist / creo_conv;
-    local_tol_sq = local_tol * local_tol;
-}
-
-
-extern "C" void
-add_to_empty_list( char *name )
-{
-    struct empty_parts *ptr;
-    int found=0;
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Adding %s to list of empty parts\n", name );
-    }
-
-    if ( empty_parts_root == NULL ) {
-	BU_ALLOC(empty_parts_root, struct empty_parts);
-	ptr = empty_parts_root;
-    } else {
-	ptr = empty_parts_root;
-	while ( !found && ptr->next ) {
-	    if ( BU_STR_EQUAL( name, ptr->name ) ) {
-		found = 1;
-		break;
-	    }
-	    ptr = ptr->next;
-	}
-	if ( !found ) {
-	    BU_ALLOC(ptr->next, struct empty_parts);
-	    ptr = ptr->next;
-	}
-    }
-
-    ptr->next = NULL;
-    ptr->name = (char *)bu_strdup( name );
-}
-
-extern "C" int
-create_temp_directory()
-{
-    ProError status;
-    int ret_status;
-
-    empty_parts_root = NULL;
-
-    /* use UI dialog */
-    status = ProUIDialogCreate( "creo_brl", "creo_brl" );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to create dialog box for creo-brl, error = %d\n", status );
-	return 0;
-    }
-
-    status = ProUIPushbuttonActivateActionSet( "creo_brl", "doit", doit, NULL );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to set action for 'Go' button\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return 0;
-    }
-
-    status = ProUIPushbuttonActivateActionSet( "creo_brl", "quit", do_quit, NULL );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to set action for 'Go' button\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return 0;
-    }
-
-    status = ProUIDialogActivate( "creo_brl", &ret_status );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
-		status );
-	fprintf( stderr, "\t dialog returned %d\n", ret_status );
-    }
-
-    return 0;
-}
-
-extern "C" void
-free_hash_values( struct bu_hash_tbl *htbl )
-{
-    struct bu_hash_entry *entry;
-    struct bu_hash_record rec;
-
-    entry = bu_hash_tbl_first( htbl, &rec );
-
-    while ( entry ) {
-	bu_free( bu_get_hash_value( entry ), "hash entry" );
-	entry = bu_hash_tbl_next( &rec );
     }
 }
 

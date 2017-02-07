@@ -337,18 +337,141 @@ do_initialize()
 
 }
 
+extern "C" void
+kill_empty_parts()
+{
+    struct empty_parts *ptr;
+
+    if ( logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( logger, "Adding code to remove empty parts:\n" );
+    }
+
+    ptr = empty_parts_root;
+    while ( ptr ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( logger, "\t%s\n", ptr->name );
+	}
+	fprintf( outfp, "set combs [dbfind %s]\n", ptr->name );
+	fprintf( outfp, "foreach comb $combs {\n\tcatch {rm $comb %s}\n}\n", ptr->name );
+	ptr = ptr->next;
+    }
+}
+
 
 extern "C" void
-kill_error_dialog( char *dialog, char *component, ProAppData appdata )
+free_empty_parts()
 {
-    (void)ProUIDialogDestroy( "creo_brl_error" );
+    struct empty_parts *ptr, *prev;
+
+    if ( logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( logger, "Free empty parts list\n" );
+    }
+
+    ptr = empty_parts_root;
+    while ( ptr ) {
+	prev = ptr;
+	ptr = ptr->next;
+	bu_free( prev->name, "empty part node name" );
+	bu_free( prev, "empty part node" );
+    }
+
+    empty_parts_root = NULL;
+
+    if ( logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( logger, "Free empty parts list done\n" );
+    }
 }
 
 extern "C" void
-kill_gen_error_dialog( char *dialog, char *component, ProAppData appdata )
+free_hash_values( struct bu_hash_tbl *htbl )
 {
-    (void)ProUIDialogDestroy( "creo_brl_gen_error" );
+    struct bu_hash_entry *entry;
+    struct bu_hash_record rec;
+
+    entry = bu_hash_tbl_first( htbl, &rec );
+
+    while ( entry ) {
+	bu_free( bu_get_hash_value( entry ), "hash entry" );
+	entry = bu_hash_tbl_next( &rec );
+    }
 }
+
+
+/* routine to output the top level object that is currently displayed in Pro/E */
+extern "C" void
+output_top_level_object( ProMdl model, ProMdlType type )
+{
+    ProName name;
+    ProCharName top_level;
+    char buffer[1024] = {0};
+
+    /* get its name */
+    if ( ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) {
+	(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
+		"Could not get name for part!!" );
+	ProMessageClear();
+	fprintf( stderr, "Could not get name for part" );
+	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	bu_strlcpy( curr_part_name, "noname", PRO_NAME_SIZE );
+    } else {
+	(void)ProWstringToString( curr_part_name, name );
+    }
+
+    /* save name */
+    bu_strlcpy( top_level, curr_part_name, sizeof(top_level) );
+
+    if ( logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( logger, "Output top level object (%s)\n", top_level );
+    }
+
+    /* output the object */
+    if ( type == PRO_MDL_PART ) {
+	/* tessellate part and output triangles */
+	output_part( model );
+    } else if ( type == PRO_MDL_ASSEMBLY ) {
+	/* visit all members of assembly */
+	output_assembly( model );
+    } else {
+	snprintf( astr, sizeof(astr), "Object %s is neither PART nor ASSEMBLY, skipping",
+		curr_part_name );
+	(void)ProMessageDisplay(MSGFIL, "USER_WARNING", astr );
+	ProMessageClear();
+	fprintf( stderr, "%s\n", astr );
+	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+    }
+
+    if ( type == PRO_MDL_ASSEMBLY ) {
+	snprintf(buffer, 1024, "put $topname comb region no tree {l %s.c {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(top_level) );
+    } else {
+	snprintf(buffer, 1024, "put $topname comb region no tree {l %s {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(top_level) );
+    }
+
+    /* make a top level combination named "top", if there is not
+     * already one.  if one does already exist, try "top.#" where
+     * "#" is the first available number.  this combination
+     * contains the xform to rotate the model into BRL-CAD
+     * standard orientation.
+     */
+    fprintf(outfp,
+	    "set topname \"top\"\n"
+	    "if { ! [catch {get $topname} ret] } {\n"
+	    "  set num 0\n"
+	    "  while { $num < 1000 } {\n"
+	    "    set topname \"top.$num\"\n"
+	    "    if { [catch {get $name} ret ] } {\n"
+	    "      break\n"
+	    "    }\n"
+	    "    incr num\n"
+	    "  }\n"
+	    "}\n"
+	    "if { [catch {get $topname} ret] } {\n"
+	    "  %s\n"
+	    "}\n",
+	    buffer
+	   );
+}
+
+
 
 extern "C" void
 doit( char *dialog, char *compnent, ProAppData appdata )
@@ -900,7 +1023,11 @@ elim_small_activate( char *dialog_name, char *button_name, ProAppData data )
     }
 }
 
-
+extern "C" void
+do_quit( char *dialog, char *compnent, ProAppData appdata )
+{
+    ProUIDialogDestroy( "creo_brl" );
+}
 
 /* driver routine for converting CREO to BRL-CAD */
 extern "C" int
@@ -1037,12 +1164,6 @@ extern "C" int user_initialize()
     (void)ProWindowRefresh( PRO_VALUE_UNUSED );
 
     return 0;
-}
-
-extern "C" void
-do_quit( char *dialog, char *compnent, ProAppData appdata )
-{
-    ProUIDialogDestroy( "creo_brl" );
 }
 
 extern "C" void user_terminate()

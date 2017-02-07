@@ -25,50 +25,6 @@
 #include "creo-brl.h"
 
 
-extern "C" void
-kill_empty_parts()
-{
-    struct empty_parts *ptr;
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Adding code to remove empty parts:\n" );
-    }
-
-    ptr = empty_parts_root;
-    while ( ptr ) {
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "\t%s\n", ptr->name );
-	}
-	fprintf( outfp, "set combs [dbfind %s]\n", ptr->name );
-	fprintf( outfp, "foreach comb $combs {\n\tcatch {rm $comb %s}\n}\n", ptr->name );
-	ptr = ptr->next;
-    }
-}
-
-extern "C" void
-free_empty_parts()
-{
-    struct empty_parts *ptr, *prev;
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Free empty parts list\n" );
-    }
-
-    ptr = empty_parts_root;
-    while ( ptr ) {
-	prev = ptr;
-	ptr = ptr->next;
-	bu_free( prev->name, "empty part node name" );
-	bu_free( prev, "empty part node" );
-    }
-
-    empty_parts_root = NULL;
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Free empty parts list done\n" );
-    }
-}
-
 /* routine to check for bad triangles
  * only checks for triangles with duplicate vertices
  */
@@ -115,6 +71,37 @@ bad_triangle( int v1, int v2, int v3 )
     return 0;
 }
 
+extern "C" void
+add_to_empty_list( char *name )
+{
+    struct empty_parts *ptr;
+    int found=0;
+
+    if ( logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( logger, "Adding %s to list of empty parts\n", name );
+    }
+
+    if ( empty_parts_root == NULL ) {
+	BU_ALLOC(empty_parts_root, struct empty_parts);
+	ptr = empty_parts_root;
+    } else {
+	ptr = empty_parts_root;
+	while ( !found && ptr->next ) {
+	    if ( BU_STR_EQUAL( name, ptr->name ) ) {
+		found = 1;
+		break;
+	    }
+	    ptr = ptr->next;
+	}
+	if ( !found ) {
+	    BU_ALLOC(ptr->next, struct empty_parts);
+	    ptr = ptr->next;
+	}
+    }
+
+    ptr->next = NULL;
+    ptr->name = (char *)bu_strdup( name );
+}
 
 
 extern "C" void
@@ -141,6 +128,93 @@ already_done_part( wchar_t *name )
 	return 1;
     }
     return 0;
+}
+
+extern "C" int
+feat_adds_material( ProFeattype feat_type )
+{
+    if ( feat_type >= PRO_FEAT_UDF_THREAD ) {
+	return 1;
+    }
+
+    switch ( feat_type ) {
+	case PRO_FEAT_SHAFT:
+	case PRO_FEAT_PROTRUSION:
+	case PRO_FEAT_NECK:
+	case PRO_FEAT_FLANGE:
+	case PRO_FEAT_RIB:
+	case PRO_FEAT_EAR:
+	case PRO_FEAT_DOME:
+	case PRO_FEAT_LOC_PUSH:
+	case PRO_FEAT_UDF:
+	case PRO_FEAT_DRAFT:
+	case PRO_FEAT_SHELL:
+	case PRO_FEAT_DOME2:
+	case PRO_FEAT_IMPORT:
+	case PRO_FEAT_MERGE:
+	case PRO_FEAT_MOLD:
+	case PRO_FEAT_OFFSET:
+	case PRO_FEAT_REPLACE_SURF:
+	case PRO_FEAT_PIPE:
+	    return 1;
+	    break;
+	default:
+	    return 0;
+	    break;
+    }
+
+    return 0;
+}
+
+extern "C" void
+remove_holes_from_id_list( ProMdl model )
+{
+    int i;
+    ProFeature feat;
+    ProError status;
+    ProFeattype type;
+
+    if ( logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( logger, "Removing any holes from CSG list and from features to delete\n" );
+    }
+
+    free_csg_ops();             /* these are only holes */
+    for ( i=0; i<feat_id_count; i++ ) {
+	status = ProFeatureInit( ProMdlToSolid(model),
+		feat_ids_to_delete[i],
+		&feat );
+	if ( status != PRO_TK_NO_ERROR ) {
+	    fprintf( stderr, "Failed to get handle for id %d\n",
+		    feat_ids_to_delete[i] );
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
+		fprintf( logger, "Failed to get handle for id %d\n",
+			feat_ids_to_delete[i] );
+	    }
+	}
+	status = ProFeatureTypeGet( &feat, &type );
+	if ( status != PRO_TK_NO_ERROR ) {
+	    fprintf( stderr, "Failed to get feature type for id %d\n",
+		    feat_ids_to_delete[i] );
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
+		fprintf( logger, "Failed to get feature type for id %d\n",
+			feat_ids_to_delete[i] );
+	    }
+	}
+	if ( type == PRO_FEAT_HOLE ) {
+	    /* remove this from the list */
+	    int j;
+
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
+		fprintf( logger, "\tRemoving feature id %d from deletion list\n",
+			feat_ids_to_delete[i] );
+	    }
+	    feat_id_count--;
+	    for ( j=i; j<feat_id_count; j++ ) {
+		feat_ids_to_delete[j] = feat_ids_to_delete[j+1];
+	    }
+	    i--;
+	}
+    }
 }
 
 /* this routine filters out which features should be visited by the feature visit initiated in
@@ -180,6 +254,74 @@ feature_filter( ProFeature *feat, ProAppData data )
 
     /* skip everything else */
     return PRO_TK_CONTINUE;
+}
+
+extern "C" void
+build_tree( char *sol_name, struct bu_vls *tree )
+{
+    struct csg_ops *ptr;
+
+    if ( logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( logger, "Building CSG tree for %s\n", sol_name );
+    }
+    ptr = csg_root;
+    while ( ptr ) {
+	bu_vls_printf( tree, "{%c ", ptr->op );
+	ptr = ptr->next;
+    }
+
+    bu_vls_strcat( tree, "{ l {" );
+    bu_vls_strcat( tree, sol_name );
+    bu_vls_strcat( tree, "} }" );
+    ptr = csg_root;
+    while ( ptr ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( logger, "Adding %c %s\n", ptr->op, bu_vls_addr( &ptr->name ) );
+	}
+	bu_vls_printf( tree, " {l {%s}}}", bu_vls_addr( &ptr->name ) );
+	ptr = ptr->next;
+    }
+
+    if ( logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( logger, "Final tree: %s\n", bu_vls_addr( tree ) );
+    }
+}
+
+extern "C" void
+output_csg_prims()
+{
+    struct csg_ops *ptr;
+
+    ptr = csg_root;
+
+    while ( ptr ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( logger, "Creating primitive: %s %s\n",
+		    bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
+	}
+
+	fprintf( outfp, "put {%s} %s", bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
+	ptr = ptr->next;
+    }
+}
+
+/* routine to free the list of CSG operations */
+extern "C" void
+free_csg_ops()
+{
+    struct csg_ops *ptr1, *ptr2;
+
+    ptr1 = csg_root;
+
+    while ( ptr1 ) {
+	ptr2 = ptr1->next;
+	bu_vls_free( &ptr1->name );
+	bu_vls_free( &ptr1->dbput );
+	bu_free( ptr1, "csg op" );
+	ptr1 = ptr2;
+    }
+
+    csg_root = NULL;
 }
 
 
