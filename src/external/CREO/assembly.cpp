@@ -71,8 +71,8 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	return status;
     }
     (void)ProWstringToString( curr_part_name, name );
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Processing assembly member %s\n", curr_part_name );
+    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf(cinfo->logger, "Processing assembly member %s\n", curr_part_name );
     }
 
     /* the next two Pro/Toolkit calls are the only way I could find to get
@@ -242,8 +242,8 @@ free_assem( struct asm_head *curr_assem )
 {
     struct asm_member *ptr, *tmp;
 
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Freeing assembly info\n" );
+    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf(cinfo->logger, "Freeing assembly info\n" );
     }
 
     ptr = curr_assem->members;
@@ -261,8 +261,8 @@ add_to_done_asm( wchar_t *name )
     ProCharLine astr;
     wchar_t *name_copy;
 
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Added %s to list of done assemblies\n", ProWstringToString( astr, name ) );
+    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf(cinfo->logger, "Added %s to list of done assemblies\n", ProWstringToString( astr, name ) );
     }
 
     if (done_list_asm.find(name) == done_list_part.end()) {
@@ -288,7 +288,7 @@ already_done_asm( wchar_t *name )
  * Cannot just use the Pro/E name, because assembly can have the same name as a part.
  */
 extern "C" void
-output_assembly( ProMdl model )
+output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 {
     ProName asm_name;
     ProMassProperty mass_prop;
@@ -310,8 +310,8 @@ output_assembly( ProMdl model )
     if ( already_done_asm( asm_name ) )
 	return;
 
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Processing assembly %s:\n", ProWstringToString( astr, asm_name ) );
+    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf(cinfo->logger, "Processing assembly %s:\n", ProWstringToString( astr, asm_name ) );
     }
 
     /* let the user know we are doing something */
@@ -346,8 +346,8 @@ bu_log("got here\n");
     status = ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get explode status of %s\n", curr_assem.name );
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "Failed to get explode status of %s\n", curr_assem.name );
+	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf(cinfo->logger, "Failed to get explode status of %s\n", curr_assem.name );
 	}
     }
 
@@ -357,9 +357,9 @@ bu_log("got here\n");
 	if ( status != PRO_TK_NO_ERROR ) {
 	    fprintf( stderr, "Failed to un-explode assembly %s\n", curr_assem.name );
 	    fprintf( stderr, "\tcomponents will be incorrectly positioned\n" );
-	    if ( logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( logger, "Failed to un-explode assembly %s\n", curr_assem.name );
-		fprintf( logger, "\tcomponents will be incorrectly positioned\n" );
+	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+		fprintf(cinfo->logger, "Failed to un-explode assembly %s\n", curr_assem.name );
+		fprintf(cinfo->logger, "\tcomponents will be incorrectly positioned\n" );
 	    }
 	}
     }
@@ -383,8 +383,8 @@ bu_log("got here\n");
 	member = member->next;
     }
 
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Output %d members of assembly\n", member_count );
+    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf(cinfo->logger, "Output %d members of assembly\n", member_count );
     }
 
     /* output the "tree" */
@@ -434,8 +434,8 @@ bu_log("got here\n");
 	    curr_assem.name );
 
     /* calculate mass properties */
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Getting mass properties for this assembly\n" );
+    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf(cinfo->logger, "Getting mass properties for this assembly\n" );
     }
 
     status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
