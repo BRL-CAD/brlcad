@@ -390,6 +390,20 @@ add_triangle( int v1, int v2, int v3 )
 }
 
 
+extern "C" char *feat_status_to_str(ProFeatStatus feat_stat)
+{
+    static char *feat_status[]={
+	"PRO_FEAT_ACTIVE",
+	"PRO_FEAT_INACTIVE",
+	"PRO_FEAT_FAMTAB_SUPPRESSED",
+	"PRO_FEAT_SIMP_REP_SUPPRESSED",
+	"PRO_FEAT_PROG_SUPPRESSED",
+	"PRO_FEAT_SUPPRESSED",
+	"PRO_FEAT_UNREGENERATED"
+    };
+    return feat_status[feat_stat];
+}
+
 
 /* routine to output a part as a BRL-CAD region with one BOT solid
  * The region will have the name from Pro/E.
@@ -520,7 +534,7 @@ output_part( ProMdl model )
 				} else {
 				    fprintf( logger, "feat %d status = %s\n",
 					    feat_ids_to_delete[i],
-					    feat_status[ feat_stat ] );
+					    feat_status_to_str(feat_stat) );
 				}
 			    }
 			    if ( feat_stat == PRO_FEAT_SUPPRESSED ) {

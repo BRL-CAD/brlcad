@@ -68,6 +68,22 @@ extern "C" {
 
 #define CREO_BRL_MSG_FILE "creo-brl-msg.txt"
 
+#define LOGGER_TYPE_NONE -1
+#define LOGGER_TYPE_FAILURE 0
+#define LOGGER_TYPE_SUCCESS 1
+#define LOGGER_TYPE_FAILURE_OR_SUCCESS 2
+#define LOGGER_TYPE_ALL 3
+#define FEAT_ID_BLOCK	64		/* number of slots to allocate in above list */
+#define NUM_HASH_TABLE_BINS	4096	/* number of bins for part number to part name hash table */
+#define TRI_BLOCK 512			/* number of triangles to malloc per call */
+#define DONE_BLOCK 512			/* number of slots to malloc when above array gets full */
+#define MAX_LINE_LEN		256	/* maximum allowed line length for part number to name map file */
+#define CREO_NAME_ATTR "CREO_Name"
+#define NUM_OBJ_TYPES 629
+#define NUM_FEAT_TYPES 314
+#define FEAT_TYPE_OFFSET 910
+
+
 struct StrCmp {
     bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {
 	return (bu_strcmp(bu_vls_addr(str1), bu_vls_addr(str2)) < 0);
@@ -81,76 +97,6 @@ struct WStrCmp {
     }
 };
 
-extern "C" {
-
-static double creo_to_brl_conv=25.4;	/* inches to mm */
-
-static ProBool do_facets_only;	/* flag to indicate no CSG should be done */
-static ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
-static ProBool do_elims;	/* flag to indicate that small features are to be eliminated */
-static double max_error=1.5;	/* (mm) maximum allowable error in facetized approximation */
-static double min_error=1.5;	/* (mm) maximum allowable error in facetized approximation */
-static double tol_dist=0.0005;	/* (mm) minimum distance between two distinct vertices */
-static double max_angle_cntrl=0.5;	/* max angle control for tessellation ( 0.0 - 1.0 ) */
-static double min_angle_cntrl=0.5;	/* min angle control for tessellation ( 0.0 - 1.0 ) */
-static int max_to_min_steps = 1;	/* number of steps between max and min */
-static double error_increment=0.0;
-static double angle_increment=0.0;
-static double local_tol=0.0;	/* tolerance in Pro/E units */
-static double local_tol_sq=0.0;	/* tolerance squared */
-static double min_hole_diameter=0.0; /* if > 0.0, all holes features smaller than this will be deleted */
-static double min_chamfer_dim=0.0;   /* if > 0.0, all chamfers with both dimensions less
-				      * than this value will be deleted */
-static double min_round_radius=0.0;  /* if > 0.0, all rounds with radius less than this
-				      * value will be deleted */
-static int *feat_ids_to_delete=NULL; /* list of hole features to delete */
-static int feat_id_len=0;		/* number of available slots in the above array */
-static int feat_id_count=0;		/* number of hole features actually in the above list */
-#define FEAT_ID_BLOCK	64		/* number of slots to allocate in above list */
-
-static struct bu_hash_tbl *name_hash;
-#define NUM_HASH_TABLE_BINS	4096	/* number of bins for part number to part name hash table */
-
-static int reg_id = 1000;	/* region ident number (incremented with each part) */
-
-static struct vert_root *vert_tree_root;	/* structure for storing and searching on vertices */
-static struct vert_root *norm_tree_root;	/* structure for storing and searching on normals */
-
-static ProTriangle *part_tris=NULL;	/* list of triangles for current part */
-static int max_tri=0;			/* number of triangles currently malloced */
-static int curr_tri=0;			/* number of triangles currently being used */
-
-#define TRI_BLOCK 512			/* number of triangles to malloc per call */
-
-static int *part_norms=NULL;		/* list of indices into normals (matches part_tris) */
-
-static FILE *outfp=NULL;		/* output file */
-
-static FILE *logger=NULL;			/* log file */
-
-#define LOGGER_TYPE_NONE -1
-#define LOGGER_TYPE_FAILURE 0
-#define LOGGER_TYPE_SUCCESS 1
-#define LOGGER_TYPE_FAILURE_OR_SUCCESS 2
-#define LOGGER_TYPE_ALL 3
-
-static int logger_type = LOGGER_TYPE_NONE;
-
-static ProCharName curr_part_name;	/* current part name */
-static ProCharName curr_asm_name;	/* current assembly name */
-static ProFeattype curr_feat_type;	/* current feature type */
-
-static struct bu_ptbl search_path_list;	/* parsed list of search path directories */
-static ProName assem_ext;		/* "asm" */
-static ProName part_ext;		/* "prt" */
-
-#define DONE_BLOCK 512			/* number of slots to malloc when above array gets full */
-
-#define COPY_BUFFER_SIZE	1024
-
-std::set<wchar_t *, WStrCmp> done_list_part;	/* list of parts already done */
-std::set<wchar_t *, WStrCmp> done_list_asm;	/* list of assemblies already done */
-std::set<struct bu_vls *, StrCmp> brlcad_names;	/* BRL-CAD names in use */
 
 /* structure to hold info about CSG operations for current part */
 struct csg_ops {
@@ -160,40 +106,74 @@ struct csg_ops {
     struct csg_ops *next;
 };
 
-struct csg_ops *csg_root;
-
-static int hole_no=0;   /* hole counter for unique names */
-
 struct empty_parts {
     char *name;
     struct empty_parts *next;
 };
 
-static struct empty_parts *empty_parts_root=NULL;
+struct creo_conv_info {
+    ProBool do_facets_only;	/* flag to indicate no CSG should be done */
+    ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
+    ProBool do_elims;	/* flag to indicate that small features are to be eliminated */
 
-#define NUM_OBJ_TYPES 629
-int obj_type_count[NUM_OBJ_TYPES];
-char *obj_type[NUM_OBJ_TYPES];
+    int reg_id = 1000;	/* region ident number (incremented with each part) */
 
-#define NUM_FEAT_TYPES 314
-#define FEAT_TYPE_OFFSET 910
-int feat_type_count[NUM_FEAT_TYPES];
-char *feat_type[NUM_FEAT_TYPES];
+    FILE *outfp=NULL;		/* output file */
+    FILE *logger=NULL;			/* log file */
+    int logger_type = LOGGER_TYPE_NONE;
 
-#define MAX_LINE_LEN		256	/* maximum allowed line length for part number to name map file */
-#define CREO_NAME_ATTR "CREO_Name"
+    double creo_to_brl_conv=25.4;	/* inches to mm */
+    double local_tol=0.0;	/* tolerance in Pro/E units */
+    double local_tol_sq=0.0;	/* tolerance squared */
 
-static char *feat_status[]={
-    "PRO_FEAT_ACTIVE",
-    "PRO_FEAT_INACTIVE",
-    "PRO_FEAT_FAMTAB_SUPPRESSED",
-    "PRO_FEAT_SIMP_REP_SUPPRESSED",
-    "PRO_FEAT_PROG_SUPPRESSED",
-    "PRO_FEAT_SUPPRESSED",
-    "PRO_FEAT_UNREGENERATED"
+
+    double max_error=1.5;	/* (mm) maximum allowable error in facetized approximation */
+    double min_error=1.5;	/* (mm) maximum allowable error in facetized approximation */
+    double tol_dist=0.0005;	/* (mm) minimum distance between two distinct vertices */
+    double max_angle_cntrl=0.5;	/* max angle control for tessellation ( 0.0 - 1.0 ) */
+    double min_angle_cntrl=0.5;	/* min angle control for tessellation ( 0.0 - 1.0 ) */
+    int max_to_min_steps = 1;	/* number of steps between max and min */
+    double error_increment=0.0;
+    double angle_increment=0.0;
+
+    double min_hole_diameter=0.0; /* if > 0.0, all holes features smaller than this will be deleted */
+    double min_chamfer_dim=0.0;   /* if > 0.0, all chamfers with both dimensions less
+         			  * than this value will be deleted */
+    double min_round_radius=0.0;  /* if > 0.0, all rounds with radius less than this
+         			  * value will be deleted */
+
+    int *feat_ids_to_delete=NULL; /* list of hole features to delete */
+    int feat_id_len=0;		/* number of available slots in the above array */
+    int feat_id_count=0;		/* number of hole features actually in the above list */
+
+    struct bu_hash_tbl *name_hash;
+
+    struct vert_root *vert_tree_root;	/* structure for storing and searching on vertices */
+    struct vert_root *norm_tree_root;	/* structure for storing and searching on normals */
+
+    ProTriangle *part_tris=NULL;	/* list of triangles for current part */
+    int max_tri=0;			/* number of triangles currently malloced */
+    int curr_tri=0;			/* number of triangles currently being used */
+    int *part_norms=NULL;		/* list of indices into normals (matches part_tris) */
+
+    int obj_type_count[NUM_OBJ_TYPES];
+    char *obj_type[NUM_OBJ_TYPES];
+    int feat_type_count[NUM_FEAT_TYPES];
+    char *feat_type[NUM_FEAT_TYPES];
+
+    struct csg_ops *csg_root;
+    struct empty_parts *empty_parts_root;
+
+    int hole_no;   /* hole counter for unique names */
+
+    std::set<wchar_t *, WStrCmp> done_list_part;	/* list of parts already done */
+    std::set<wchar_t *, WStrCmp> done_list_asm;	/* list of assemblies already done */
+    std::set<struct bu_vls *, StrCmp> brlcad_names;	/* BRL-CAD names in use */
+
+    ProCharName curr_part_name;	/* current part name */
+    ProCharName curr_asm_name;	/* current assembly name */
+    ProFeattype curr_feat_type;	/* current feature type */
 };
-
-}
 
 
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);

@@ -195,7 +195,7 @@ extern "C" static ProError
 assembly_filter( ProFeature *feat, ProAppData *data )
 {
     ProFeattype type;
-    ProFeatStatus feat_status;
+    ProFeatStatus feat_stat;
     ProError status;
     ProFileName msgfil;
     ProCharLine astr;
@@ -217,7 +217,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 	return PRO_TK_CONTINUE;
     }
 
-    status = ProFeatureStatusGet( feat, &feat_status );
+    status = ProFeatureStatusGet( feat, &feat_stat );
     if ( status != PRO_TK_NO_ERROR ) {
 	sprintf( astr, "In assembly_filter, cannot get feature status for feature %d",
 		feat->id );
@@ -228,7 +228,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 	return PRO_TK_CONTINUE;
     }
 
-    if ( feat_status != PRO_FEAT_ACTIVE ) {
+    if ( feat_stat != PRO_FEAT_ACTIVE ) {
 	return PRO_TK_CONTINUE;
     }
 

@@ -25,312 +25,352 @@
 #include "creo-brl.h"
 
 extern "C" void
-do_initialize()
+creo_conv_info_init(struct creo_conv_info *cinfo)
 {
     int i;
 
-    /* initialize */
+    /* Region ID */
+    cinfo->reg_id = 1000;
 
-    csg_root = NULL;
+    /* File settings */
+    cinfo->outfp=NULL;
+    cinfo->logger=NULL;
+    cinfo->logger_type=LOGGER_TYPE_NONE;
+
+    /* units - model */
+    cinfo->creo_to_brl_conv = 25.4; /* inches to mm */
+    cinfo->local_tol=0.0;
+    cinfo->local_tol_sq=0.0;
+
+    /* facetization settings */
+    cinfo->max_error=1.5;
+    cinfo->min_error=1.5;
+    cinfo->tol_dist=0.0005;
+    cinfo->max_angle_cntrl=0.5;
+    cinfo->min_angle_cntrl=0.5;
+    cinfo->max_to_min_steps = 1;
+    cinfo->error_increment=0.0;
+    cinfo->angle_increment=0.0;
+
+    /* csg settings */
+    cinfo->min_hole_diameter=0.0;
+    cinfo->min_chamfer_dim=0.0;
+    cinfo->min_round_radius=0.0;
+
+    /* features */
+    cinfo->feat_ids_to_delete=NULL;
+    cinfo->feat_id_len=0;
+    cinfo->feat_id_count=0;
+
+    /* current part triangles */
+    cinfo->part_tris=NULL;
+    cinfo->max_tri=0;
+    cinfo->curr_tri=0;
+    cinfo->part_norms=NULL;
+
+    cinfo->hole_no=0;
+    cinfo->csg_root=NULL;
+    cinfo->empty_parts_root=NULL;
+
+
     for ( i=0; i<NUM_OBJ_TYPES; i++ ) {
-	obj_type_count[i] = 0;
-	obj_type[i] = NULL;
+	cinfo->obj_type_count[i] = 0;
+	cinfo->obj_type[i] = NULL;
     }
 
     for ( i=0; i<NUM_FEAT_TYPES; i++ ) {
-	feat_type_count[i] = 0;
-	feat_type[i] = NULL;
+	cinfo->feat_type_count[i] = 0;
+	cinfo->feat_type[i] = NULL;
     }
 
-    obj_type[0] = "PRO_TYPE_UNUSED";
-    obj_type[1] = "PRO_ASSEMBLY";
-    obj_type[2] = "PRO_PART";
-    obj_type[3] = "PRO_FEATURE";
-    obj_type[4] = "PRO_DRAWING";
-    obj_type[5] = "PRO_SURFACE";
-    obj_type[6] = "PRO_EDGE";
-    obj_type[7] = "PRO_3DSECTION";
-    obj_type[8] = "PRO_DIMENSION";
-    obj_type[11] = "PRO_2DSECTION";
-    obj_type[12] = "PRO_PAT_MEMBER";
-    obj_type[13] = "PRO_PAT_LEADER";
-    obj_type[19] = "PRO_LAYOUT";
-    obj_type[21] = "PRO_AXIS";
-    obj_type[25] = "PRO_CSYS";
-    obj_type[28] = "PRO_REF_DIMENSION";
-    obj_type[32] = "PRO_GTOL";
-    obj_type[33] = "PRO_DWGFORM";
-    obj_type[34] = "PRO_SUB_ASSEMBLY";
-    obj_type[37] = "PRO_MFG";
-    obj_type[57] = "PRO_QUILT";
-    obj_type[62] = "PRO_CURVE";
-    obj_type[66] = "PRO_POINT";
-    obj_type[68] = "PRO_NOTE";
-    obj_type[69] = "PRO_IPAR_NOTE";
-    obj_type[71] = "PRO_EDGE_START";
-    obj_type[72] = "PRO_EDGE_END";
-    obj_type[74] = "PRO_CRV_START";
-    obj_type[75] = "PRO_CRV_END";
-    obj_type[76] = "PRO_SYMBOL_INSTANCE";
-    obj_type[77] = "PRO_DRAFT_ENTITY";
-    obj_type[79] = "PRO_DRAFT_DATUM";
-    obj_type[83] = "PRO_DRAFT_GROUP";
-    obj_type[84] = "PRO_DRAW_TABLE";
-    obj_type[92] = "PRO_VIEW";
-    obj_type[96] = "PRO_CABLE";
-    obj_type[105] = "PRO_REPORT";
-    obj_type[116] = "PRO_MARKUP";
-    obj_type[117] = "PRO_LAYER";
-    obj_type[121] = "PRO_DIAGRAM";
-    obj_type[133] = "PRO_SKETCH_ENTITY";
-    obj_type[144] = "PRO_DATUM_TEXT";
-    obj_type[145] = "PRO_ENTITY_TEXT";
-    obj_type[147] = "PRO_DRAW_TABLE_CELL";
-    obj_type[176] = "PRO_DATUM_PLANE";
-    obj_type[180] = "PRO_COMP_CRV";
-    obj_type[211] = "PRO_BND_TABLE";
-    obj_type[240] = "PRO_PARAMETER";
-    obj_type[305] = "PRO_DIAGRAM_OBJECT";
-    obj_type[308] = "PRO_DIAGRAM_WIRE";
-    obj_type[309] = "PRO_SIMP_REP";
-    obj_type[371] = "PRO_WELD_PARAMS";
-    obj_type[377] = "PRO_SNAP_LINE";
-    obj_type[385] = "PRO_EXTOBJ";
-    obj_type[500] = "PRO_EXPLD_STATE";
-    obj_type[504] = "PRO_CABLE_LOCATION";
-    obj_type[533] = "PRO_RELSET";
-    obj_type[555] = "PRO_ANALYSIS";
-    obj_type[556] = "PRO_SURF_CRV";
-    obj_type[625] = "PRO_LOG_SRF";
-    obj_type[622] = "PRO_SOLID_GEOMETRY";
-    obj_type[626] = "PRO_LOG_EDG";
-    obj_type[627] = "PRO_DESKTOP";
-    obj_type[628] = "PRO_SYMBOL_DEFINITION";
+    cinfo->obj_type[0] = "PRO_TYPE_UNUSED";
+    cinfo->obj_type[1] = "PRO_ASSEMBLY";
+    cinfo->obj_type[2] = "PRO_PART";
+    cinfo->obj_type[3] = "PRO_FEATURE";
+    cinfo->obj_type[4] = "PRO_DRAWING";
+    cinfo->obj_type[5] = "PRO_SURFACE";
+    cinfo->obj_type[6] = "PRO_EDGE";
+    cinfo->obj_type[7] = "PRO_3DSECTION";
+    cinfo->obj_type[8] = "PRO_DIMENSION";
+    cinfo->obj_type[11] = "PRO_2DSECTION";
+    cinfo->obj_type[12] = "PRO_PAT_MEMBER";
+    cinfo->obj_type[13] = "PRO_PAT_LEADER";
+    cinfo->obj_type[19] = "PRO_LAYOUT";
+    cinfo->obj_type[21] = "PRO_AXIS";
+    cinfo->obj_type[25] = "PRO_CSYS";
+    cinfo->obj_type[28] = "PRO_REF_DIMENSION";
+    cinfo->obj_type[32] = "PRO_GTOL";
+    cinfo->obj_type[33] = "PRO_DWGFORM";
+    cinfo->obj_type[34] = "PRO_SUB_ASSEMBLY";
+    cinfo->obj_type[37] = "PRO_MFG";
+    cinfo->obj_type[57] = "PRO_QUILT";
+    cinfo->obj_type[62] = "PRO_CURVE";
+    cinfo->obj_type[66] = "PRO_POINT";
+    cinfo->obj_type[68] = "PRO_NOTE";
+    cinfo->obj_type[69] = "PRO_IPAR_NOTE";
+    cinfo->obj_type[71] = "PRO_EDGE_START";
+    cinfo->obj_type[72] = "PRO_EDGE_END";
+    cinfo->obj_type[74] = "PRO_CRV_START";
+    cinfo->obj_type[75] = "PRO_CRV_END";
+    cinfo->obj_type[76] = "PRO_SYMBOL_INSTANCE";
+    cinfo->obj_type[77] = "PRO_DRAFT_ENTITY";
+    cinfo->obj_type[79] = "PRO_DRAFT_DATUM";
+    cinfo->obj_type[83] = "PRO_DRAFT_GROUP";
+    cinfo->obj_type[84] = "PRO_DRAW_TABLE";
+    cinfo->obj_type[92] = "PRO_VIEW";
+    cinfo->obj_type[96] = "PRO_CABLE";
+    cinfo->obj_type[105] = "PRO_REPORT";
+    cinfo->obj_type[116] = "PRO_MARKUP";
+    cinfo->obj_type[117] = "PRO_LAYER";
+    cinfo->obj_type[121] = "PRO_DIAGRAM";
+    cinfo->obj_type[133] = "PRO_SKETCH_ENTITY";
+    cinfo->obj_type[144] = "PRO_DATUM_TEXT";
+    cinfo->obj_type[145] = "PRO_ENTITY_TEXT";
+    cinfo->obj_type[147] = "PRO_DRAW_TABLE_CELL";
+    cinfo->obj_type[176] = "PRO_DATUM_PLANE";
+    cinfo->obj_type[180] = "PRO_COMP_CRV";
+    cinfo->obj_type[211] = "PRO_BND_TABLE";
+    cinfo->obj_type[240] = "PRO_PARAMETER";
+    cinfo->obj_type[305] = "PRO_DIAGRAM_OBJECT";
+    cinfo->obj_type[308] = "PRO_DIAGRAM_WIRE";
+    cinfo->obj_type[309] = "PRO_SIMP_REP";
+    cinfo->obj_type[371] = "PRO_WELD_PARAMS";
+    cinfo->obj_type[377] = "PRO_SNAP_LINE";
+    cinfo->obj_type[385] = "PRO_EXTOBJ";
+    cinfo->obj_type[500] = "PRO_EXPLD_STATE";
+    cinfo->obj_type[504] = "PRO_CABLE_LOCATION";
+    cinfo->obj_type[533] = "PRO_RELSET";
+    cinfo->obj_type[555] = "PRO_ANALYSIS";
+    cinfo->obj_type[556] = "PRO_SURF_CRV";
+    cinfo->obj_type[625] = "PRO_LOG_SRF";
+    cinfo->obj_type[622] = "PRO_SOLID_GEOMETRY";
+    cinfo->obj_type[626] = "PRO_LOG_EDG";
+    cinfo->obj_type[627] = "PRO_DESKTOP";
+    cinfo->obj_type[628] = "PRO_SYMBOL_DEFINITION";
 
-    feat_type[0] = "PRO_FEAT_FIRST_FEAT";
-    feat_type[911 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HOLE";
-    feat_type[912 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHAFT";
-    feat_type[913 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ROUND";
-    feat_type[914 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CHAMFER";
-    feat_type[915 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLOT";
-    feat_type[916 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT";
-    feat_type[917 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PROTRUSION";
-    feat_type[918 - FEAT_TYPE_OFFSET] = "PRO_FEAT_NECK";
-    feat_type[919 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLANGE";
-    feat_type[920 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIB";
-    feat_type[921 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EAR";
-    feat_type[922 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DOME";
-    feat_type[923 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM";
-    feat_type[924 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LOC_PUSH";
-    feat_type[925 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF";
-    feat_type[926 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_AXIS";
-    feat_type[927 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRAFT";
-    feat_type[928 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHELL";
-    feat_type[929 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DOME2";
-    feat_type[930 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CORN_CHAMF";
-    feat_type[931 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_POINT";
-    feat_type[932 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IMPORT";
-    feat_type[932 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IGES";
-    feat_type[933 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COSMETIC";
-    feat_type[934 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ETCH";
-    feat_type[935 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MERGE";
-    feat_type[936 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MOLD";
-    feat_type[937 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SAW";
-    feat_type[938 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TURN";
-    feat_type[939 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MILL";
-    feat_type[940 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRILL";
-    feat_type[941 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OFFSET";
-    feat_type[942 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_SURF";
-    feat_type[943 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REPLACE_SURF";
-    feat_type[944 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GROOVE";
-    feat_type[945 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE";
-    feat_type[946 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_QUILT";
-    feat_type[947 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSEM_CUT";
-    feat_type[948 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_THREAD";
-    feat_type[949 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CURVE";
-    feat_type[950 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SRF_MDL";
-    feat_type[952 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WALL";
-    feat_type[953 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEND";
-    feat_type[954 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UNBEND";
-    feat_type[955 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT_SMT";
-    feat_type[956 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FORM";
-    feat_type[957 - FEAT_TYPE_OFFSET] = "PRO_FEAT_THICKEN";
-    feat_type[958 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEND_BACK";
-    feat_type[959 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_NOTCH";
-    feat_type[960 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_PUNCH";
-    feat_type[961 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INT_UDF";
-    feat_type[962 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPLIT_SURF";
-    feat_type[963 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GRAPH";
-    feat_type[964 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_PUNCH";
-    feat_type[965 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_CUT";
-    feat_type[966 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLATTEN";
-    feat_type[967 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SET";
-    feat_type[968 - FEAT_TYPE_OFFSET] = "PRO_FEAT_VDA";
-    feat_type[969 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_FORM";
-    feat_type[970 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_PUNCH_PNT";
-    feat_type[971 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LIP";
-    feat_type[972 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MANUAL";
-    feat_type[973 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_GATHER";
-    feat_type[974 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_TRIM";
-    feat_type[975 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_USEVOL";
-    feat_type[976 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LOCATION";
-    feat_type[977 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE_SEGM";
-    feat_type[978 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE";
-    feat_type[979 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CSYS";
-    feat_type[980 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CHANNEL";
-    feat_type[937 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WIRE_EDM";
-    feat_type[981 - FEAT_TYPE_OFFSET] = "PRO_FEAT_AREA_NIBBLE";
-    feat_type[982 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PATCH";
-    feat_type[983 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PLY";
-    feat_type[984 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CORE";
-    feat_type[985 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXTRACT";
-    feat_type[986 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_REFINE";
-    feat_type[987 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SILH_TRIM";
-    feat_type[988 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPLIT";
-    feat_type[989 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXTEND";
-    feat_type[990 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SOLIDIFY";
-    feat_type[991 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INTERSECT";
-    feat_type[992 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ATTACH";
-    feat_type[993 - FEAT_TYPE_OFFSET] = "PRO_FEAT_XSEC";
-    feat_type[994 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_ZONE";
-    feat_type[995 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_CLAMP";
-    feat_type[996 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRL_GRP";
-    feat_type[997 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ISEGM";
-    feat_type[998 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE_COSM";
-    feat_type[999 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPOOL";
-    feat_type[1000 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COMPONENT";
-    feat_type[1001 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_MERGE";
-    feat_type[1002 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FIXSETUP";
-    feat_type[1002 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SETUP";
-    feat_type[1003 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLAT_PAT";
-    feat_type[1004 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CONT_MAP";
-    feat_type[1005 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXP_RATIO";
-    feat_type[1006 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIP";
-    feat_type[1007 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OPERATION";
-    feat_type[1008 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WORKCELL";
-    feat_type[1009 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT_MOTION";
-    feat_type[1013 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BLD_PATH";
-    feat_type[1013 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUSTOMIZE";
-    feat_type[1014 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_SKETCH";
-    feat_type[1015 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_EDGE";
-    feat_type[1016 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_CURVE";
-    feat_type[1017 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_SURF";
-    feat_type[1018 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MAT_REMOVAL";
-    feat_type[1019 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TORUS";
-    feat_type[1020 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_SET_START";
-    feat_type[1021 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_PNT_PNT";
-    feat_type[1022 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_EXT";
-    feat_type[1023 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_TRIM";
-    feat_type[1024 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_FOLL";
-    feat_type[1025 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_JOIN";
-    feat_type[1026 - FEAT_TYPE_OFFSET] = "PRO_FEAT_AUXILIARY";
-    feat_type[1027 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_LINE";
-    feat_type[1028 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LINE_STOCK";
-    feat_type[1029 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLD_PIPE ";
-    feat_type[1030 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BULK_OBJECT";
-    feat_type[1031 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHRINKAGE  ";
-    feat_type[1032 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_JOINT ";
-    feat_type[1033 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_BRANCH ";
-    feat_type[1034 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_TWO_CNTR";
-    feat_type[1035 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SUBHARNESS";
-    feat_type[1036 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_OPTIMIZE";
-    feat_type[1037 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DECLARE";
-    feat_type[1038 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_POPULATE";
-    feat_type[1039 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OPER_COMP";
-    feat_type[1040 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MEASURE";
-    feat_type[1041 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRAFT_LINE";
-    feat_type[1042 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REMOVE_SURFS";
-    feat_type[1043 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_CABLE";
-    feat_type[1046 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ATTACH_VOLUME";
-    feat_type[1047 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BLD_OPERATION";
-    feat_type[1048 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_WRK_REG";
-    feat_type[1049 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPINAL_BEND";
-    feat_type[1050 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TWIST";
-    feat_type[1051 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FREE_FORM";
-    feat_type[1052 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ZONE";
-    feat_type[1053 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELDING_ROD";
-    feat_type[1054 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_FILLET";
-    feat_type[1055 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_GROOVE";
-    feat_type[1056 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_PLUG_SLOT";
-    feat_type[1057 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_SPOT";
-    feat_type[1058 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_SHEAR";
-    feat_type[1059 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PATH_SEGM";
-    feat_type[1060 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_SEGM";
-    feat_type[1059 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_PATH";
-    feat_type[1060 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_EXTEND";
-    feat_type[1061 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASMCUT_COPY";
-    feat_type[1062 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DEFORM_AREA";
-    feat_type[1063 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_SOLID";
-    feat_type[1064 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLAT_RIBBON_SEGM";
-    feat_type[1065 - FEAT_TYPE_OFFSET] = "PRO_FEAT_POSITION_FOLD";
-    feat_type[1066 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPRING_BACK";
-    feat_type[1067 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEAM_SECTION";
-    feat_type[1068 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHRINK_DIM";
-    feat_type[1070 - FEAT_TYPE_OFFSET] = "PRO_FEAT_THREAD";
-    feat_type[1071 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CONVERSION";
-    feat_type[1072 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_MEASSTEP";
-    feat_type[1073 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_CONSTR";
-    feat_type[1074 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_VERIFY";
-    feat_type[1075 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_SCAN_SET";
-    feat_type[1076 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_FIT";
-    feat_type[1077 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_DEVIATION";
-    feat_type[1078 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_ZONE";
-    feat_type[1079 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CLAMP";
-    feat_type[1080 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PROCESS_STEP";
-    feat_type[1081 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EDGE_BEND";
-    feat_type[1082 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_PROF";
-    feat_type[1083 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXPLODE_LINE";
-    feat_type[1084 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GEOM_COPY";
-    feat_type[1085 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ANALYSIS";
-    feat_type[1086 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WATER_LINE";
-    feat_type[1087 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_RMDT";
-    feat_type[1088 - FEAT_TYPE_OFFSET] = "PRO_FEAT_VOL_SPLIT";
-    feat_type[1089 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WLD_EDG_PREP";
-    feat_type[1090 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_OFFSET";
-    feat_type[1091 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_MATREM";
-    feat_type[1092 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_COSMETIC";
-    feat_type[1093 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_APPROACH";
-    feat_type[1094 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_SLOT";
-    feat_type[1095 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_SHAPE";
-    feat_type[1096 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IPM_QUILT";
-    feat_type[1097 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRVD";
-    feat_type[1098 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CRN_REL";
-    feat_type[1101 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLDBEND";
-    feat_type[1102 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLATQLT ";
-    feat_type[1103 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_TURN ";
-    feat_type[1104 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GROUP_HEAD";
-    feat_type[1211 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_PLATE";
-    feat_type[1212 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_HOLE  ";
-    feat_type[1213 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_CUTOUT";
-    feat_type[1214 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_STIFFENER";
-    feat_type[1215 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BEAM";
-    feat_type[1216 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_ENDCUT";
-    feat_type[1217 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_WLD_FLANGE";
-    feat_type[1218 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_COLLAR";
-    feat_type[1219 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_DRAW";
-    feat_type[1220 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BRACKET";
-    feat_type[1221 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_FOLDED_FLG";
-    feat_type[1222 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BLOCK";
-    feat_type[1223 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BLOCK_DEF";
-    feat_type[1105 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FR_SYS";
-    feat_type[1106 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_COMPT";
-    feat_type[1107 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REFERENCE";
-    feat_type[1108 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHELL_EXP";
-    feat_type[1109 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FREEFORM";
-    feat_type[1110 - FEAT_TYPE_OFFSET] = "PRO_FEAT_KERNEL ";
-    feat_type[1111 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_PROCESS";
-    feat_type[1112 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_REP_TMP";
-    feat_type[1113 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INSULATION";
-    feat_type[1114 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLD_PIP_INSUL";
-    feat_type[1115 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_EXTRACT";
-    feat_type[1116 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSY_MERGE";
-    feat_type[1117 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DS_OPTIMIZE";
-    feat_type[1118 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COMP_INTERFACE";
-    feat_type[1119 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OLE";
-    feat_type[1120 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TERMINATOR";
-    feat_type[1121 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WLD_NOTCH";
-    feat_type[1122 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSY_WLD_NOTCH";
-
+    cinfo->feat_type[0] = "PRO_FEAT_FIRST_FEAT";
+    cinfo->feat_type[911 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HOLE";
+    cinfo->feat_type[912 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHAFT";
+    cinfo->feat_type[913 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ROUND";
+    cinfo->feat_type[914 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CHAMFER";
+    cinfo->feat_type[915 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLOT";
+    cinfo->feat_type[916 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT";
+    cinfo->feat_type[917 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PROTRUSION";
+    cinfo->feat_type[918 - FEAT_TYPE_OFFSET] = "PRO_FEAT_NECK";
+    cinfo->feat_type[919 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLANGE";
+    cinfo->feat_type[920 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIB";
+    cinfo->feat_type[921 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EAR";
+    cinfo->feat_type[922 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DOME";
+    cinfo->feat_type[923 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM";
+    cinfo->feat_type[924 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LOC_PUSH";
+    cinfo->feat_type[925 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF";
+    cinfo->feat_type[926 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_AXIS";
+    cinfo->feat_type[927 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRAFT";
+    cinfo->feat_type[928 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHELL";
+    cinfo->feat_type[929 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DOME2";
+    cinfo->feat_type[930 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CORN_CHAMF";
+    cinfo->feat_type[931 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_POINT";
+    cinfo->feat_type[932 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IMPORT";
+    cinfo->feat_type[932 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IGES";
+    cinfo->feat_type[933 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COSMETIC";
+    cinfo->feat_type[934 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ETCH";
+    cinfo->feat_type[935 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MERGE";
+    cinfo->feat_type[936 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MOLD";
+    cinfo->feat_type[937 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SAW";
+    cinfo->feat_type[938 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TURN";
+    cinfo->feat_type[939 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MILL";
+    cinfo->feat_type[940 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRILL";
+    cinfo->feat_type[941 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OFFSET";
+    cinfo->feat_type[942 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_SURF";
+    cinfo->feat_type[943 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REPLACE_SURF";
+    cinfo->feat_type[944 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GROOVE";
+    cinfo->feat_type[945 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE";
+    cinfo->feat_type[946 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_QUILT";
+    cinfo->feat_type[947 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSEM_CUT";
+    cinfo->feat_type[948 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_THREAD";
+    cinfo->feat_type[949 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CURVE";
+    cinfo->feat_type[950 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SRF_MDL";
+    cinfo->feat_type[952 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WALL";
+    cinfo->feat_type[953 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEND";
+    cinfo->feat_type[954 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UNBEND";
+    cinfo->feat_type[955 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT_SMT";
+    cinfo->feat_type[956 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FORM";
+    cinfo->feat_type[957 - FEAT_TYPE_OFFSET] = "PRO_FEAT_THICKEN";
+    cinfo->feat_type[958 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEND_BACK";
+    cinfo->feat_type[959 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_NOTCH";
+    cinfo->feat_type[960 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_PUNCH";
+    cinfo->feat_type[961 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INT_UDF";
+    cinfo->feat_type[962 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPLIT_SURF";
+    cinfo->feat_type[963 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GRAPH";
+    cinfo->feat_type[964 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_PUNCH";
+    cinfo->feat_type[965 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_CUT";
+    cinfo->feat_type[966 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLATTEN";
+    cinfo->feat_type[967 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SET";
+    cinfo->feat_type[968 - FEAT_TYPE_OFFSET] = "PRO_FEAT_VDA";
+    cinfo->feat_type[969 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_FORM";
+    cinfo->feat_type[970 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_PUNCH_PNT";
+    cinfo->feat_type[971 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LIP";
+    cinfo->feat_type[972 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MANUAL";
+    cinfo->feat_type[973 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_GATHER";
+    cinfo->feat_type[974 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_TRIM";
+    cinfo->feat_type[975 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_USEVOL";
+    cinfo->feat_type[976 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LOCATION";
+    cinfo->feat_type[977 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE_SEGM";
+    cinfo->feat_type[978 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE";
+    cinfo->feat_type[979 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CSYS";
+    cinfo->feat_type[980 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CHANNEL";
+    cinfo->feat_type[937 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WIRE_EDM";
+    cinfo->feat_type[981 - FEAT_TYPE_OFFSET] = "PRO_FEAT_AREA_NIBBLE";
+    cinfo->feat_type[982 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PATCH";
+    cinfo->feat_type[983 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PLY";
+    cinfo->feat_type[984 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CORE";
+    cinfo->feat_type[985 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXTRACT";
+    cinfo->feat_type[986 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_REFINE";
+    cinfo->feat_type[987 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SILH_TRIM";
+    cinfo->feat_type[988 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPLIT";
+    cinfo->feat_type[989 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXTEND";
+    cinfo->feat_type[990 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SOLIDIFY";
+    cinfo->feat_type[991 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INTERSECT";
+    cinfo->feat_type[992 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ATTACH";
+    cinfo->feat_type[993 - FEAT_TYPE_OFFSET] = "PRO_FEAT_XSEC";
+    cinfo->feat_type[994 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_ZONE";
+    cinfo->feat_type[995 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_CLAMP";
+    cinfo->feat_type[996 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRL_GRP";
+    cinfo->feat_type[997 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ISEGM";
+    cinfo->feat_type[998 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE_COSM";
+    cinfo->feat_type[999 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPOOL";
+    cinfo->feat_type[1000 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COMPONENT";
+    cinfo->feat_type[1001 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_MERGE";
+    cinfo->feat_type[1002 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FIXSETUP";
+    cinfo->feat_type[1002 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SETUP";
+    cinfo->feat_type[1003 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLAT_PAT";
+    cinfo->feat_type[1004 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CONT_MAP";
+    cinfo->feat_type[1005 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXP_RATIO";
+    cinfo->feat_type[1006 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIP";
+    cinfo->feat_type[1007 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OPERATION";
+    cinfo->feat_type[1008 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WORKCELL";
+    cinfo->feat_type[1009 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT_MOTION";
+    cinfo->feat_type[1013 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BLD_PATH";
+    cinfo->feat_type[1013 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUSTOMIZE";
+    cinfo->feat_type[1014 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_SKETCH";
+    cinfo->feat_type[1015 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_EDGE";
+    cinfo->feat_type[1016 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_CURVE";
+    cinfo->feat_type[1017 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_SURF";
+    cinfo->feat_type[1018 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MAT_REMOVAL";
+    cinfo->feat_type[1019 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TORUS";
+    cinfo->feat_type[1020 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_SET_START";
+    cinfo->feat_type[1021 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_PNT_PNT";
+    cinfo->feat_type[1022 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_EXT";
+    cinfo->feat_type[1023 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_TRIM";
+    cinfo->feat_type[1024 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_FOLL";
+    cinfo->feat_type[1025 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_JOIN";
+    cinfo->feat_type[1026 - FEAT_TYPE_OFFSET] = "PRO_FEAT_AUXILIARY";
+    cinfo->feat_type[1027 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_LINE";
+    cinfo->feat_type[1028 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LINE_STOCK";
+    cinfo->feat_type[1029 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLD_PIPE ";
+    cinfo->feat_type[1030 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BULK_OBJECT";
+    cinfo->feat_type[1031 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHRINKAGE  ";
+    cinfo->feat_type[1032 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_JOINT ";
+    cinfo->feat_type[1033 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_BRANCH ";
+    cinfo->feat_type[1034 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_TWO_CNTR";
+    cinfo->feat_type[1035 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SUBHARNESS";
+    cinfo->feat_type[1036 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_OPTIMIZE";
+    cinfo->feat_type[1037 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DECLARE";
+    cinfo->feat_type[1038 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_POPULATE";
+    cinfo->feat_type[1039 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OPER_COMP";
+    cinfo->feat_type[1040 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MEASURE";
+    cinfo->feat_type[1041 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRAFT_LINE";
+    cinfo->feat_type[1042 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REMOVE_SURFS";
+    cinfo->feat_type[1043 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_CABLE";
+    cinfo->feat_type[1046 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ATTACH_VOLUME";
+    cinfo->feat_type[1047 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BLD_OPERATION";
+    cinfo->feat_type[1048 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_WRK_REG";
+    cinfo->feat_type[1049 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPINAL_BEND";
+    cinfo->feat_type[1050 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TWIST";
+    cinfo->feat_type[1051 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FREE_FORM";
+    cinfo->feat_type[1052 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ZONE";
+    cinfo->feat_type[1053 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELDING_ROD";
+    cinfo->feat_type[1054 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_FILLET";
+    cinfo->feat_type[1055 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_GROOVE";
+    cinfo->feat_type[1056 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_PLUG_SLOT";
+    cinfo->feat_type[1057 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_SPOT";
+    cinfo->feat_type[1058 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_SHEAR";
+    cinfo->feat_type[1059 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PATH_SEGM";
+    cinfo->feat_type[1060 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_SEGM";
+    cinfo->feat_type[1059 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_PATH";
+    cinfo->feat_type[1060 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_EXTEND";
+    cinfo->feat_type[1061 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASMCUT_COPY";
+    cinfo->feat_type[1062 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DEFORM_AREA";
+    cinfo->feat_type[1063 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_SOLID";
+    cinfo->feat_type[1064 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLAT_RIBBON_SEGM";
+    cinfo->feat_type[1065 - FEAT_TYPE_OFFSET] = "PRO_FEAT_POSITION_FOLD";
+    cinfo->feat_type[1066 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPRING_BACK";
+    cinfo->feat_type[1067 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEAM_SECTION";
+    cinfo->feat_type[1068 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHRINK_DIM";
+    cinfo->feat_type[1070 - FEAT_TYPE_OFFSET] = "PRO_FEAT_THREAD";
+    cinfo->feat_type[1071 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CONVERSION";
+    cinfo->feat_type[1072 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_MEASSTEP";
+    cinfo->feat_type[1073 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_CONSTR";
+    cinfo->feat_type[1074 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_VERIFY";
+    cinfo->feat_type[1075 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_SCAN_SET";
+    cinfo->feat_type[1076 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_FIT";
+    cinfo->feat_type[1077 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_DEVIATION";
+    cinfo->feat_type[1078 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_ZONE";
+    cinfo->feat_type[1079 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CLAMP";
+    cinfo->feat_type[1080 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PROCESS_STEP";
+    cinfo->feat_type[1081 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EDGE_BEND";
+    cinfo->feat_type[1082 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_PROF";
+    cinfo->feat_type[1083 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXPLODE_LINE";
+    cinfo->feat_type[1084 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GEOM_COPY";
+    cinfo->feat_type[1085 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ANALYSIS";
+    cinfo->feat_type[1086 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WATER_LINE";
+    cinfo->feat_type[1087 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_RMDT";
+    cinfo->feat_type[1088 - FEAT_TYPE_OFFSET] = "PRO_FEAT_VOL_SPLIT";
+    cinfo->feat_type[1089 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WLD_EDG_PREP";
+    cinfo->feat_type[1090 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_OFFSET";
+    cinfo->feat_type[1091 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_MATREM";
+    cinfo->feat_type[1092 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_COSMETIC";
+    cinfo->feat_type[1093 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_APPROACH";
+    cinfo->feat_type[1094 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_SLOT";
+    cinfo->feat_type[1095 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_SHAPE";
+    cinfo->feat_type[1096 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IPM_QUILT";
+    cinfo->feat_type[1097 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRVD";
+    cinfo->feat_type[1098 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CRN_REL";
+    cinfo->feat_type[1101 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLDBEND";
+    cinfo->feat_type[1102 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLATQLT ";
+    cinfo->feat_type[1103 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_TURN ";
+    cinfo->feat_type[1104 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GROUP_HEAD";
+    cinfo->feat_type[1211 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_PLATE";
+    cinfo->feat_type[1212 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_HOLE  ";
+    cinfo->feat_type[1213 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_CUTOUT";
+    cinfo->feat_type[1214 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_STIFFENER";
+    cinfo->feat_type[1215 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BEAM";
+    cinfo->feat_type[1216 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_ENDCUT";
+    cinfo->feat_type[1217 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_WLD_FLANGE";
+    cinfo->feat_type[1218 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_COLLAR";
+    cinfo->feat_type[1219 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_DRAW";
+    cinfo->feat_type[1220 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BRACKET";
+    cinfo->feat_type[1221 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_FOLDED_FLG";
+    cinfo->feat_type[1222 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BLOCK";
+    cinfo->feat_type[1223 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BLOCK_DEF";
+    cinfo->feat_type[1105 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FR_SYS";
+    cinfo->feat_type[1106 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_COMPT";
+    cinfo->feat_type[1107 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REFERENCE";
+    cinfo->feat_type[1108 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHELL_EXP";
+    cinfo->feat_type[1109 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FREEFORM";
+    cinfo->feat_type[1110 - FEAT_TYPE_OFFSET] = "PRO_FEAT_KERNEL ";
+    cinfo->feat_type[1111 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_PROCESS";
+    cinfo->feat_type[1112 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_REP_TMP";
+    cinfo->feat_type[1113 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INSULATION";
+    cinfo->feat_type[1114 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLD_PIP_INSUL";
+    cinfo->feat_type[1115 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_EXTRACT";
+    cinfo->feat_type[1116 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSY_MERGE";
+    cinfo->feat_type[1117 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DS_OPTIMIZE";
+    cinfo->feat_type[1118 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COMP_INTERFACE";
+    cinfo->feat_type[1119 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OLE";
+    cinfo->feat_type[1120 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TERMINATOR";
+    cinfo->feat_type[1121 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WLD_NOTCH";
+    cinfo->feat_type[1122 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSY_WLD_NOTCH";
 }
 
 extern "C" void
@@ -491,8 +531,10 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     char **selected_names;
     char logger_type_str[128];
     int ret_status=0;
+    struct creo_conv_info *cinfo = NULL;
+    BU_GET(cinfo, struct creo_conv_info);
 
-    empty_parts_root = (struct empty_parts *)NULL;
+    creo_conv_info_init(cinfo);
 
     ProStringToWstring( tmp_line, "Not processing" );
     status = ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
@@ -524,7 +566,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
-    ProWstringToString( log_file, tmp_str );
+    ProWstringToString( cinfo->log_file, tmp_str );
     ProWstringFree( tmp_str );
 
     /* get the name of the output file */
@@ -534,7 +576,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
-    ProWstringToString( output_file, w_output_file );
+    ProWstringToString( cinfo->output_file, w_output_file );
     ProWstringFree( w_output_file );
 
     /* get the name of the part number to part name mapping file */
@@ -544,7 +586,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
-    ProWstringToString( name_file, w_name_file );
+    ProWstringToString( cinfo->name_file, w_name_file );
     ProWstringFree( w_name_file );
 
     /* get starting ident */
@@ -557,7 +599,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     ProWstringToString( astr, tmp_str );
     ProWstringFree( tmp_str );
-    reg_id = atoi( astr );
+    cinfo->reg_id = atoi( astr );
     V_MAX(reg_id, 1);
 
     /* get max error */
@@ -570,7 +612,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     ProWstringToString( astr, tmp_str );
     ProWstringFree( tmp_str );
-    max_error = atof( astr );
+    cinfo->max_error = atof( astr );
 
     /* get min error */
     status = ProUIInputpanelValueGet( "creo_brl", "min_error", &tmp_str );
@@ -582,7 +624,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     ProWstringToString( astr, tmp_str );
     ProWstringFree( tmp_str );
-    min_error = atof( astr );
+    cinfo->min_error = atof( astr );
 
     V_MAX(max_error, min_error);
 
@@ -596,7 +638,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     ProWstringToString( astr, tmp_str );
     ProWstringFree( tmp_str );
-    max_angle_cntrl = atof( astr );
+    cinfo->max_angle_cntrl = atof( astr );
 
     /* get the min angle control */
     status = ProUIInputpanelValueGet( "creo_brl", "min_angle_ctrl", &tmp_str );
@@ -608,9 +650,9 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     ProWstringToString( astr, tmp_str );
     ProWstringFree( tmp_str );
-    min_angle_cntrl = atof( astr );
+    cinfo->min_angle_cntrl = atof( astr );
 
-    V_MAX(max_angle_cntrl, min_angle_cntrl);
+    V_MAX(cinfo->max_angle_cntrl, cinfo->min_angle_cntrl);
 
     /* get the max to min steps */
     status = ProUIInputpanelValueGet( "creo_brl", "isteps", &tmp_str );
@@ -622,28 +664,28 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     ProWstringToString( astr, tmp_str );
     ProWstringFree( tmp_str );
-    max_to_min_steps = atoi( astr );
-    if (max_to_min_steps <= 0) {
-	max_to_min_steps = 0;
-	error_increment = 0;
-	angle_increment = 0;
+    cinfo->max_to_min_steps = atoi( astr );
+    if (cinfo->max_to_min_steps <= 0) {
+	cinfo->max_to_min_steps = 0;
+	cinfo->error_increment = 0;
+	cinfo->angle_increment = 0;
     } else {
-	if (ZERO((max_error - min_error)))
-	    error_increment = 0;
+	if (ZERO((cinfo->max_error - cinfo->min_error)))
+	    cinfo->error_increment = 0;
 	else
-	    error_increment = (max_error - min_error) / (double)max_to_min_steps;
+	    cinfo->error_increment = (cinfo->max_error - cinfo->min_error) / (double)cinfo->max_to_min_steps;
 
-	if (ZERO((max_angle_cntrl - min_angle_cntrl)))
-	    angle_increment = 0;
+	if (ZERO((cinfo->max_angle_cntrl - cinfo->min_angle_cntrl)))
+	    cinfo->angle_increment = 0;
 	else
-	    angle_increment = (max_angle_cntrl - min_angle_cntrl) / (double)max_to_min_steps;
+	    cinfo->angle_increment = (cinfo->max_angle_cntrl - cinfo->min_angle_cntrl) / (double)cinfo->max_to_min_steps;
 
-	if (error_increment == 0 && angle_increment == 0)
-	    max_to_min_steps = 0;
+	if (cinfo->error_increment == 0 && cinfo->angle_increment == 0)
+	    cinfo->max_to_min_steps = 0;
     }
 
     /* check if user wants to do any CSG */
-    status = ProUICheckbuttonGetState( "creo_brl", "facets_only", &do_facets_only );
+    status = ProUICheckbuttonGetState( "creo_brl", "facets_only", &cinfo->do_facets_only );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get checkbutton setting (facetize only)\n" );
 	ProUIDialogDestroy( "creo_brl" );
@@ -651,7 +693,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     }
 
     /* check if user wants to eliminate small features */
-    status = ProUICheckbuttonGetState( "creo_brl", "elim_small", &do_elims );
+    status = ProUICheckbuttonGetState( "creo_brl", "elim_small", &cinfo->do_elims );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get checkbutton setting (eliminate small features)\n" );
 	ProUIDialogDestroy( "creo_brl" );
@@ -659,14 +701,14 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     }
 
     /* check if user wants surface normals in the BOT's */
-    status = ProUICheckbuttonGetState( "creo_brl", "get_normals", &get_normals );
+    status = ProUICheckbuttonGetState( "creo_brl", "get_normals", &cinfo->get_normals );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get checkbutton setting (extract surface normals)\n" );
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
 
-    if ( do_elims ) {
+    if ( cinfo->do_elims ) {
 
 	/* get the minimum hole diameter */
 	status = ProUIInputpanelValueGet( "creo_brl", "min_hole", &tmp_str );
@@ -678,8 +720,8 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	ProWstringToString( astr, tmp_str );
 	ProWstringFree( tmp_str );
-	min_hole_diameter = atof( astr );
-	V_MAX(min_hole_diameter, 0.0);
+	cinfo->min_hole_diameter = atof( astr );
+	V_MAX(cinfo->min_hole_diameter, 0.0);
 
 	/* get the minimum chamfer dimension */
 	status = ProUIInputpanelValueGet( "creo_brl", "min_chamfer", &tmp_str );
@@ -691,8 +733,8 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	ProWstringToString( astr, tmp_str );
 	ProWstringFree( tmp_str );
-	min_chamfer_dim = atof( astr );
-	V_MAX(min_chamfer_dim, 0.0);
+	cinfo->min_chamfer_dim = atof( astr );
+	V_MAX(cinfo->min_chamfer_dim, 0.0);
 
 	/* get the minimum round radius */
 	status = ProUIInputpanelValueGet( "creo_brl", "min_round", &tmp_str );
@@ -704,14 +746,14 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	ProWstringToString( astr, tmp_str );
 	ProWstringFree( tmp_str );
-	min_round_radius = atof( astr );
+	cinfo->min_round_radius = atof( astr );
 
-	V_MAX(min_round_radius, 0.0);
+	V_MAX(cinfo->min_round_radius, 0.0);
 
     } else {
-	min_hole_diameter = 0.0;
-	min_round_radius = 0.0;
-	min_chamfer_dim = 0.0;
+	cinfo->min_hole_diameter = 0.0;
+	cinfo->min_round_radius = 0.0;
+	cinfo->min_chamfer_dim = 0.0;
     }
 
     /* open output file */
@@ -739,40 +781,40 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* Set logger type */
 	if (BU_STR_EQUAL("Failure", logger_type_str))
-	    logger_type = LOGGER_TYPE_FAILURE;
+	    cinfo->logger_type = LOGGER_TYPE_FAILURE;
 	else if (BU_STR_EQUAL("Success", logger_type_str))
-	    logger_type = LOGGER_TYPE_SUCCESS;
+	    cinfo->logger_type = LOGGER_TYPE_SUCCESS;
 	else if (BU_STR_EQUAL("Failure/Success", logger_type_str))
-	    logger_type = LOGGER_TYPE_FAILURE_OR_SUCCESS;
+	    cinfo->logger_type = LOGGER_TYPE_FAILURE_OR_SUCCESS;
 	else
-	    logger_type = LOGGER_TYPE_ALL;
+	    cinfo->logger_type = LOGGER_TYPE_ALL;
     } else {
-	logger = (FILE *)NULL;
-	logger_type = LOGGER_TYPE_NONE;
+	cinfo->logger = (FILE *)NULL;
+	cinfo->logger_type = LOGGER_TYPE_NONE;
     }
 
     /* open part name mapper file, if a name was provided */
     if ( strlen( name_file ) > 0 ) {
 	FILE *name_fd;
 
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "Opening part name map file (%s)\n", name_file );
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( cinfo->logger, "Opening part name map file (%s)\n", cinfo->name_file );
 	}
 
-	if ( (name_fd=fopen( name_file, "rb" ) ) == NULL ) {
+	if ( (name_fd=fopen( cinfo->name_file, "rb" ) ) == NULL ) {
 	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 	    int dialog_return=0;
 	    wchar_t w_error_msg[512];
 
-	    if ( logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( logger, "Failed to open part name map file (%s)\n", name_file );
-		fprintf( logger, "%s\n", strerror( errno ) );
+	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+		fprintf( cinfo->logger, "Failed to open part name map file (%s)\n", name_file );
+		fprintf( cinfo->logger, "%s\n", strerror( errno ) );
 	    }
 
 	    (void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open part name file" );
 	    ProMessageClear();
 	    fprintf( stderr, "Cannot open part name file\n" );
-	    perror( name_file );
+	    perror( cinfo->name_file );
 	    status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
 	    if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to create error dialog (%d)\n", status );
@@ -781,7 +823,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		    "ok_button",
 		    kill_gen_error_dialog, NULL );
 	    bu_vls_printf( &error_msg, "\n\tCannot open part name file (%s)\n\t",
-		    name_file );
+		    cinfo->name_file );
 	    bu_vls_strcat( &error_msg, strerror( errno ) );
 	    ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
 	    status = ProUITextareaValueSet( "creo_brl_gen_error", "error_message", w_error_msg );
@@ -798,7 +840,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 
 	/* create a hash table of part numbers to part names */
-	if ( logger_type == LOGGER_TYPE_ALL ) {
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "Creating name hash\n" );
 	}
 
@@ -814,15 +856,15 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    fprintf( stderr, "\t dialog returned %d\n", ret_status );
 	}
 
-	name_hash = create_name_hash( name_fd );
+	cinfo->name_hash = create_name_hash( name_fd );
 	fclose( name_fd );
 
     } else {
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "No name hash used\n" );
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( cinfo->logger, "No name hash used\n" );
 	}
 	/* create an empty hash table */
-	name_hash = bu_hash_create( 512 );
+	cinfo->name_hash = bu_hash_create( 512 );
     }
 
     /* get the currently displayed model in Pro/E */
@@ -833,10 +875,10 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	fprintf( stderr, "No model is displayed!!\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	ProUIDialogDestroy( "creo_brl" );
-	if ( name_hash ) {
-	    free_hash_values( name_hash );
-	    bu_hash_tbl_free( name_hash );
-	    name_hash = (struct bu_hash_tbl *)NULL;
+	if ( cinfo->name_hash ) {
+	    free_hash_values( cinfo->name_hash );
+	    bu_hash_tbl_free( cinfo->name_hash );
+	    cinfo->name_hash = (struct bu_hash_tbl *)NULL;
 	}
 	return;
     }
@@ -849,10 +891,10 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	fprintf( stderr, "Cannot get type of current model\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	ProUIDialogDestroy( "creo_brl" );
-	if ( name_hash ) {
-	    free_hash_values( name_hash );
-	    bu_hash_tbl_free( name_hash );
-	    name_hash = (struct bu_hash_tbl *)NULL;
+	if ( cinfo->name_hash ) {
+	    free_hash_values( cinfo->name_hash );
+	    bu_hash_tbl_free( cinfo->name_hash );
+	    cinfo->name_hash = (struct bu_hash_tbl *)NULL;
 	}
 	return;
     }
@@ -864,10 +906,10 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	fprintf( stderr, "Current model is not a solid object\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	ProUIDialogDestroy( "creo_brl" );
-	if ( name_hash ) {
-	    free_hash_values( name_hash );
-	    bu_hash_tbl_free( name_hash );
-	    name_hash = (struct bu_hash_tbl *)NULL;
+	if ( cinfo->name_hash ) {
+	    free_hash_values( cinfo->name_hash );
+	    bu_hash_tbl_free( cinfo->name_hash );
+	    cinfo->name_hash = (struct bu_hash_tbl *)NULL;
 	}
 	return;
     }
@@ -881,14 +923,14 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu);
     ProUnitInit(model, L"mm", &mmu);
     ProUnitConversionGet(&lmu, &conv, &mmu);
-    creo_to_brl_conv = conv.scale;
+    cinfo->creo_to_brl_conv = conv.scale;
 
     /* adjust tolerance for Pro/E units */
-    local_tol = tol_dist / creo_to_brl_conv;
-    local_tol_sq = local_tol * local_tol;
+    cinfo->local_tol = tol_dist / creo_to_brl_conv;
+    cinfo->local_tol_sq = local_tol * local_tol;
 
-    vert_tree_root = create_vert_tree();
-    norm_tree_root = create_vert_tree();
+    cinfo->vert_tree_root = create_vert_tree();
+    cinfo->norm_tree_root = create_vert_tree();
 
     /* output the top level object
      * this will recurse through the entire model
