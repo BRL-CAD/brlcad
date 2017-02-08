@@ -24,6 +24,23 @@
 #include "common.h"
 #include "creo-brl.h"
 
+/* global variables for dimension visits */
+static double radius=0.0, diameter=0.0, distance1=0.0, distance2=0.0;
+static int got_diameter=0, got_distance1=0;
+static int hole_type;
+static int add_cbore;
+static int add_csink;
+static int hole_depth_type;
+
+static double cb_depth=0.0;             /* counter-bore depth */
+static double cb_diam=0.0;              /* counter-bore diam */
+static double cs_diam=0.0;              /* counter-sink diam */
+static double cs_angle=0.0;             /* counter-sink angle */
+static double hole_diam=0.0;            /* drilled hle diameter */
+static double hole_depth=0.0;           /* drilled hole depth */
+static double drill_angle=0.0;          /* drill tip angle */
+#define MIN_RADIUS      1.0e-7          /* BRL-CAD does not allow tgc's with zero radius */
+static Pro3dPnt end1, end2;             /* axis endpoints for holes */
 static int hole_no=0;	/* hole counter for unique names */
 static char *tgc_format="tgc V {%.25G %.25G %.25G} H {%.25G %.25G %.25G} A {%.25G %.25G %.25G} B {%.25G %.25G %.25G} C {%.25G %.25G %.25G} D {%.25G %.25G %.25G}\n";
 

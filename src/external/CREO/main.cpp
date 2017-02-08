@@ -30,10 +30,6 @@ do_initialize()
     int i;
 
     /* initialize */
-    bu_ptbl_init( &search_path_list, 8, "search_path" );
-
-    ProStringToWstring( assem_ext, "asm" );
-    ProStringToWstring( part_ext, "prt" );
 
     csg_root = NULL;
     for ( i=0; i<NUM_OBJ_TYPES; i++ ) {
@@ -404,6 +400,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
     ProName name;
     ProFileName msgfil;
     ProCharName top_level;
+    ProCharLine astr;
     char buffer[1024] = {0};
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
@@ -483,6 +480,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProMdl model;
     ProMdlType type;
     ProLine tmp_line;
+    ProCharLine astr;
     wchar_t *w_output_file;
     wchar_t *w_name_file;
     wchar_t *tmp_str;

@@ -412,6 +412,7 @@ output_part( ProMdl model )
     ProError status;
     ProMdlType type;
     ProFileName msgfil;
+    ProCharLine astr;
     char str[PRO_NAME_SIZE + 1];
     int ret=0;
     int ret_status=0;

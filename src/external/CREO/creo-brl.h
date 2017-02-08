@@ -144,29 +144,10 @@ static struct bu_ptbl search_path_list;	/* parsed list of search path directorie
 static ProName assem_ext;		/* "asm" */
 static ProName part_ext;		/* "prt" */
 
-static ProCharLine astr;		/* buffer for Pro/E output messages */
-
 #define DONE_BLOCK 512			/* number of slots to malloc when above array gets full */
 
 #define COPY_BUFFER_SIZE	1024
 
-/* global variables for dimension visits */
-static double radius=0.0, diameter=0.0, distance1=0.0, distance2=0.0;
-static int got_diameter=0, got_distance1=0;
-static int hole_type;
-static int add_cbore;
-static int add_csink;
-static int hole_depth_type;
-
-static double cb_depth=0.0;		/* counter-bore depth */
-static double cb_diam=0.0;		/* counter-bore diam */
-static double cs_diam=0.0;		/* counter-sink diam */
-static double cs_angle=0.0;		/* counter-sink angle */
-static double hole_diam=0.0;		/* drilled hle diameter */
-static double hole_depth=0.0;		/* drilled hole depth */
-static double drill_angle=0.0;		/* drill tip angle */
-#define MIN_RADIUS	1.0e-7		/* BRL-CAD does not allow tgc's with zero radius */
-static Pro3dPnt end1, end2;		/* axis endpoints for holes */
 std::set<wchar_t *, WStrCmp> done_list_part;	/* list of parts already done */
 std::set<wchar_t *, WStrCmp> done_list_asm;	/* list of assemblies already done */
 std::set<struct bu_vls *, StrCmp> brlcad_names;	/* BRL-CAD names in use */

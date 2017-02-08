@@ -57,6 +57,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     ProMatrix xform;
     ProMdlType type;
     ProName name;
+    ProCharLine astr;
     ProFileName msgfil;
     struct asm_head *curr_assem = (struct asm_head *)app_data;
     struct asm_member *member, *prev=NULL;
@@ -197,6 +198,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
     ProFeatStatus feat_status;
     ProError status;
     ProFileName msgfil;
+    ProCharLine astr;
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
@@ -256,6 +258,7 @@ free_assem( struct asm_head *curr_assem )
 extern "C" void
 add_to_done_asm( wchar_t *name )
 {
+    ProCharLine astr;
     wchar_t *name_copy;
 
     if ( logger_type == LOGGER_TYPE_ALL ) {
@@ -291,6 +294,7 @@ output_assembly( ProMdl model )
     ProMassProperty mass_prop;
     ProError status;
     ProBoolean is_exploded;
+    ProCharLine astr;
     struct asm_head curr_assem;
     struct asm_member *member;
     int member_count=0;

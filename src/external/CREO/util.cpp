@@ -221,6 +221,43 @@ create_name_hash( FILE *name_fd )
     return htbl;
 }
 
+#if 0
+extern "C" void
+creo_conv_info_init(struct creo_conv_info *i)
+{
+    /* Region ID */
+    i->reg_id = 1000;
+
+    /* File settings */
+    i->outfp=NULL;
+    i->logger=NULL;
+    i->logger_type=LOGGER_TYPE_NONE;
+
+    /* units - model */
+    i->creo_to_brl_conv = 25.4; /* inches to mm */
+    i->local_tol=0.0;
+    i->local_tol_sq=0.0;
+
+    /* facetization settings */
+    i->max_error=1.5;
+    i->min_error=1.5;
+    i->tol_dist=0.0005;
+    i->max_angle_cntrl=0.5;
+    i->min_angle_cntrl=0.5;
+    i->max_to_min_steps = 1;
+    i->max_angle_cntrl=0.5;
+    i->min_angle_cntrl=0.5;
+    i->max_to_min_steps = 1;
+    i->error_increment=0.0;
+    i->angle_increment=0.0;
+
+    /* csg settings */
+    i->min_hole_diameter=0.0;
+    i->min_chamfer_dim=0.0;
+    i->min_round_radius=0.0;
+}
+#endif
+
 /* Test function */
 ProError ShowMsg()
 {
