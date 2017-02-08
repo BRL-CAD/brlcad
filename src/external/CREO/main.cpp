@@ -374,15 +374,120 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
 }
 
 extern "C" void
-kill_empty_parts()
+creo_conv_info_free(struct creo_conv_info *cinfo)
 {
-    struct empty_parts *ptr;
 
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Adding code to remove empty parts:\n" );
+    /* name_hash */
+    if ( cinfo->name_hash ) {
+	struct bu_hash_entry *entry;
+	struct bu_hash_record rec;
+
+
+	if ( logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( logger, "freeing name hash\n" );
+	}
+
+	entry = bu_hash_tbl_first(cinfo->name_hash, &rec);
+	while (entry) {
+	    bu_free(bu_get_hash_value(entry), "hash entry" );
+	    entry = bu_hash_tbl_next(&rec);
+	}
+	bu_hash_tbl_free(cinfo->name_hash);
+	name_hash = (struct bu_hash_tbl *)NULL;
     }
 
-    ptr = empty_parts_root;
+    if (cinfo->done_list_part.size() > 0 ) {
+	std::set<wchar_t *, WStrCmp>::iterator d_it;
+	for (d_it = done_list_part.begin(); d_it != done_list_part.end(); d_it++) {
+	    bu_free(*d_it, "free wchar str copy");
+	}
+    }
+
+    if (cinfo->done_list_asm.size() > 0 ) {
+	std::set<wchar_t *, WStrCmp>::iterator d_it;
+	for (d_it = done_list_asm.begin(); d_it != done_list_asm.end(); d_it++) {
+	    bu_free(*d_it, "free wchar str copy");
+	}
+    }
+
+    if (cinfo->part_tris) {
+	bu_free((char *)cinfo->part_tris, "part triangles" );
+	cinfo->part_tris = NULL;
+    }
+
+    if (cinfo->part_norms) {
+	bu_free((char *)cinfo->part_norms, "part normals" );
+	part_norms = NULL;
+    }
+
+    free_vert_tree(cinfo->vert_tree_root);
+    vert_tree_root = NULL;
+    free_vert_tree(cinfo->norm_tree_root);
+    norm_tree_root = NULL;
+
+    /* empty parts */
+    if (cinfo->empty_parts_root) {
+	struct empty_parts *ptr, *prev;
+	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf(cinfo->logger, "Free empty parts list\n" );
+	}
+
+	ptr = cinfo->empty_parts_root;
+	while ( ptr ) {
+	    prev = ptr;
+	    ptr = ptr->next;
+	    bu_free(prev->name, "empty part node name" );
+	    bu_free(prev, "empty part node" );
+	}
+
+	cinfo->empty_parts_root = NULL;
+
+	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf(cinfo->logger, "Free empty parts list done\n" );
+	}
+    }
+
+    if ( logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( logger, "Closing output file\n" );
+    }
+
+    fclose( cinfo->outfp );
+
+#if 0
+    if ( brlcad_names.size() > 0 ) {
+	std::set<struct bu_vls *, StrCmp>::iterator s_it;
+	if ( logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( logger, "freeing names\n" );
+	}
+	for (s_it = brlcad_names.begin(); s_it != brlcad_names.end(); s_it++) {
+	    struct bu_vls *v = *s_it;
+	    bu_vls_free(v);
+	    BU_PUT(v, struct bu_vls);
+	}
+    }
+#endif
+
+    if ( cinfo->logger_type != LOGGER_TYPE_NONE ) {
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL )
+	    fprintf( cinfo->logger, "Closing logger file\n" );
+	fclose( cinfo->logger );
+	cinfo->logger = (FILE *)NULL;
+	cinfo->logger_type = LOGGER_TYPE_NONE;
+    }
+
+    /* Finally, clear the container */
+    BU_PUT(cinfo, struct creo_conv_info);
+}
+
+
+extern "C" void
+kill_empty_parts()
+{
+
+    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf(cinfo->logger, "Adding code to remove empty parts:\n" );
+    }
+
     while ( ptr ) {
 	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\t%s\n", ptr->name );
@@ -392,46 +497,6 @@ kill_empty_parts()
 	ptr = ptr->next;
     }
 }
-
-
-extern "C" void
-free_empty_parts()
-{
-    struct empty_parts *ptr, *prev;
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Free empty parts list\n" );
-    }
-
-    ptr = empty_parts_root;
-    while ( ptr ) {
-	prev = ptr;
-	ptr = ptr->next;
-	bu_free( prev->name, "empty part node name" );
-	bu_free( prev, "empty part node" );
-    }
-
-    empty_parts_root = NULL;
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Free empty parts list done\n" );
-    }
-}
-
-extern "C" void
-free_hash_values( struct bu_hash_tbl *htbl )
-{
-    struct bu_hash_entry *entry;
-    struct bu_hash_record rec;
-
-    entry = bu_hash_tbl_first( htbl, &rec );
-
-    while ( entry ) {
-	bu_free( bu_get_hash_value( entry ), "hash entry" );
-	entry = bu_hash_tbl_next( &rec );
-    }
-}
-
 
 /* routine to output the top level object that is currently displayed in Pro/E */
 extern "C" void
@@ -875,11 +940,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	fprintf( stderr, "No model is displayed!!\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	ProUIDialogDestroy( "creo_brl" );
-	if ( cinfo->name_hash ) {
-	    free_hash_values( cinfo->name_hash );
-	    bu_hash_tbl_free( cinfo->name_hash );
-	    cinfo->name_hash = (struct bu_hash_tbl *)NULL;
-	}
+	creo_conv_info_free(cinfo);
 	return;
     }
 
@@ -891,11 +952,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	fprintf( stderr, "Cannot get type of current model\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	ProUIDialogDestroy( "creo_brl" );
-	if ( cinfo->name_hash ) {
-	    free_hash_values( cinfo->name_hash );
-	    bu_hash_tbl_free( cinfo->name_hash );
-	    cinfo->name_hash = (struct bu_hash_tbl *)NULL;
-	}
+	creo_conv_info_free(cinfo);
 	return;
     }
 
@@ -906,11 +963,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	fprintf( stderr, "Current model is not a solid object\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	ProUIDialogDestroy( "creo_brl" );
-	if ( cinfo->name_hash ) {
-	    free_hash_values( cinfo->name_hash );
-	    bu_hash_tbl_free( cinfo->name_hash );
-	    cinfo->name_hash = (struct bu_hash_tbl *)NULL;
-	}
+	creo_conv_info_free(cinfo);
 	return;
     }
 
@@ -944,76 +997,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProStringToWstring( tmp_line, "Conversion complete" );
     ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
 
-    /* free a bunch of stuff */
-    if ( done_list_part.size() > 0 ) {
-	std::set<wchar_t *, WStrCmp>::iterator d_it;
-	for (d_it = done_list_part.begin(); d_it != done_list_part.end(); d_it++) {
-	    bu_free(*d_it, "free wchar str copy");
-	}
-    }
-
-    if ( done_list_asm.size() > 0 ) {
-	std::set<wchar_t *, WStrCmp>::iterator d_it;
-	for (d_it = done_list_asm.begin(); d_it != done_list_asm.end(); d_it++) {
-	    bu_free(*d_it, "free wchar str copy");
-	}
-    }
-
-    if ( part_tris ) {
-	bu_free( (char *)part_tris, "part triangles" );
-	part_tris = NULL;
-    }
-
-    if ( part_norms ) {
-	bu_free( (char *)part_norms, "part normals" );
-	part_norms = NULL;
-    }
-
-    free_vert_tree( vert_tree_root );
-    vert_tree_root = NULL;
-    free_vert_tree( norm_tree_root );
-    norm_tree_root = NULL;
-
-    max_tri = 0;
-
-    free_empty_parts();
-
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Closing output file\n" );
-    }
-
-    fclose( outfp );
-
-    if ( name_hash ) {
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "freeing name hash\n" );
-	}
-	free_hash_values( name_hash );
-	bu_hash_tbl_free( name_hash );
-	name_hash = (struct bu_hash_tbl *)NULL;
-    }
-#if 0
-    if ( brlcad_names.size() > 0 ) {
-	std::set<struct bu_vls *, StrCmp>::iterator s_it;
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "freeing names\n" );
-	}
-	for (s_it = brlcad_names.begin(); s_it != brlcad_names.end(); s_it++) {
-	    struct bu_vls *v = *s_it;
-	    bu_vls_free(v);
-	    BU_PUT(v, struct bu_vls);
-	}
-    }
-#endif
-
-    if ( logger_type != LOGGER_TYPE_NONE ) {
-	if ( logger_type == LOGGER_TYPE_ALL )
-	    fprintf( logger, "Closing logger file\n" );
-	fclose( logger );
-	logger = (FILE *)NULL;
-	logger_type = LOGGER_TYPE_NONE;
-    }
-
+    creo_conv_info_free(cinfo);
     return;
 }
 
