@@ -43,6 +43,10 @@ struct asm_head {
     struct asm_member *members;
 };
 
+struct app_data {
+    struct asm_head *c_assem;
+    struct creo_conv_info *cinfo;
+};
 
 
 /* routine that is called by feature visit for each assembly member
@@ -59,7 +63,9 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     ProName name;
     ProCharLine astr;
     ProFileName msgfil;
-    struct asm_head *curr_assem = (struct asm_head *)app_data;
+    struct app_data *adata = (struct app_data *)app_data;
+    struct asm_head *curr_assem = adata->c_assem;
+    struct creo_conv_info *cinfo = adata->cinfo;
     struct asm_member *member, *prev=NULL;
     int i, j;
 
@@ -70,9 +76,9 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	fprintf( stderr, "ProAsmcompMdlNameGet() failed\n" );
 	return status;
     }
-    (void)ProWstringToString( curr_part_name, name );
+    (void)ProWstringToString( cinfo->curr_part_name, name );
     if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Processing assembly member %s\n", curr_part_name );
+	fprintf(cinfo->logger, "Processing assembly member %s\n", cinfo->curr_part_name );
     }
 
     /* the next two Pro/Toolkit calls are the only way I could find to get
@@ -83,8 +89,8 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     id_table[0] = feat->id;
     status = ProAsmcomppathInit( (ProSolid)curr_assem->model, id_table, 1, &comp_path );
     if ( status != PRO_TK_NO_ERROR ) {
-	snprintf( astr, sizeof(astr), "Failed to get path from %s to %s (aborting)", curr_asm_name,
-		curr_part_name );
+	snprintf( astr, sizeof(astr), "Failed to get path from %s to %s (aborting)", cinfo->curr_asm_name,
+		cinfo->curr_part_name );
 	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -96,7 +102,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
     if ( status != PRO_TK_NO_ERROR ) {
 	snprintf( astr, sizeof(astr), "Failed to get transformation matrix %s/%s, error = %d, id = %d",
-		curr_asm_name, curr_part_name, status, feat->id );
+		cinfo->curr_asm_name, cinfo->curr_part_name, status, feat->id );
 	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -144,7 +150,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     status = ProAsmcompMdlGet( feat, &model );
     if ( status != PRO_TK_NO_ERROR ) {
 	snprintf( astr, sizeof(astr), "Failed to get model for component %s",
-		curr_part_name );
+		cinfo->curr_part_name );
 	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -156,7 +162,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     status = ProMdlTypeGet( model, &type );
     if ( status != PRO_TK_NO_ERROR ) {
 	snprintf( astr, sizeof(astr), "Failed to get type for component %s",
-		curr_part_name );
+		cinfo->curr_part_name );
 	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -170,10 +176,10 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     /* output this member */
     switch ( type ) {
 	case PRO_MDL_ASSEMBLY:
-	    output_assembly( model );
+	    output_assembly(cinfo, model );
 	    break;
 	case PRO_MDL_PART:
-	    if ( output_part( model ) == 2 ) {
+	    if ( output_part(cinfo, model ) == 2 ) {
 		/* part had no solid parts, eliminate from the assembly */
 		if ( prev ) {
 		    prev->next = NULL;
@@ -238,7 +244,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 
 /* routine to free the memory associated with our assembly info */
 extern "C" void
-free_assem( struct asm_head *curr_assem )
+free_assem(struct creo_conv_info *cinfo, struct asm_head *curr_assem )
 {
     struct asm_member *ptr, *tmp;
 
@@ -256,7 +262,7 @@ free_assem( struct asm_head *curr_assem )
 
 
 extern "C" void
-add_to_done_asm( wchar_t *name )
+add_to_done_asm(struct creo_conv_info *cinfo, wchar_t *name )
 {
     ProCharLine astr;
     wchar_t *name_copy;
@@ -265,23 +271,43 @@ add_to_done_asm( wchar_t *name )
 	fprintf(cinfo->logger, "Added %s to list of done assemblies\n", ProWstringToString( astr, name ) );
     }
 
-    if (done_list_asm.find(name) == done_list_part.end()) {
+    if (cinfo->done_list_asm.find(name) == cinfo->done_list_part.end()) {
 	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
 		"asm name for done list" );
 	wcsncpy( name_copy, name, wcslen(name)+1 );
-	done_list_asm.insert(name_copy);
+	cinfo->done_list_asm.insert(name_copy);
     }
 }
 
 extern "C" int
-already_done_asm( wchar_t *name )
+already_done_asm(struct creo_conv_info *cinfo, wchar_t *name )
 {
-    if (done_list_asm.find(name) != done_list_asm.end()) {
+    if (cinfo->done_list_asm.find(name) != cinfo->done_list_asm.end()) {
 	return 1;
     }
     return 0;
 }
 
+/* routine to check if xform is an identity */
+extern "C" int
+is_non_identity( ProMatrix xform )
+{
+    int i, j;
+
+    for ( i=0; i<4; i++ ) {
+	for ( j=0; j<4; j++ ) {
+	    if ( i == j ) {
+		if ( xform[i][j] != 1.0 )
+		    return 1;
+	    } else {
+		if ( xform[i][j] != 0.0 )
+		    return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
 
 /* routine to output an assembly as a BRL-CAD combination
  * The combination will have the Pro/E name with a ".c" suffix.
@@ -307,7 +333,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     }
 
     /* do not output this assembly more than once */
-    if ( already_done_asm( asm_name ) )
+    if ( already_done_asm( cinfo, asm_name ) )
 	return;
 
     if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
@@ -332,10 +358,10 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 
 bu_log("got here\n");
     /* everything starts out in "curr_part_name", copy name to "curr_asm_name" */
-    bu_strlcpy( curr_asm_name, curr_part_name, sizeof(curr_asm_name) );
+    bu_strlcpy( cinfo->curr_asm_name, cinfo->curr_part_name, sizeof(cinfo->curr_asm_name) );
 
     /* start filling in assembly info */
-    bu_strlcpy( curr_assem.name, curr_part_name, sizeof(curr_assem.name) );
+    bu_strlcpy( curr_assem.name, cinfo->curr_part_name, sizeof(curr_assem.name) );
     curr_assem.members = NULL;
     curr_assem.model = model;
 
@@ -368,13 +394,16 @@ bu_log("got here\n");
     /* use feature visit to get info about assembly members.
      * also calls output functions for members (parts or assemblies)
      */
+    struct app_data adata;
+    adata.c_assem = &curr_assem;
+    adata.cinfo = cinfo;
     status = ProSolidFeatVisit( ProMdlToPart(model),
 	    assembly_comp,
 	    (ProFeatureFilterAction)assembly_filter,
-	    (ProAppData)&curr_assem );
+	    (ProAppData)&adata);
 
     /* output the accumulated assembly info */
-    fprintf( outfp, "put {%s.c} comb region no tree ", get_brlcad_name( curr_assem.name ) );
+    fprintf(cinfo->outfp, "put {%s.c} comb region no tree ", get_brlcad_name(cinfo, curr_assem.name ) );
 
     /* count number of members */
     member = curr_assem.members;
@@ -389,7 +418,7 @@ bu_log("got here\n");
 
     /* output the "tree" */
     for ( i=1; i<member_count; i++ ) {
-	fprintf( outfp, "{u ");
+	fprintf(cinfo->outfp, "{u ");
     }
 
     member = curr_assem.members;
@@ -397,39 +426,39 @@ bu_log("got here\n");
     while ( member ) {
 	/* output the member name */
 	if ( member->type == PRO_MDL_ASSEMBLY ) {
-	    fprintf( outfp, "{l {%s.c}", get_brlcad_name( member->name ) );
+	    fprintf(cinfo->outfp, "{l {%s.c}", get_brlcad_name(cinfo, member->name ) );
 	} else {
-	    fprintf( outfp, "{l {%s}", get_brlcad_name( member->name ) );
+	    fprintf(cinfo->outfp, "{l {%s}", get_brlcad_name(cinfo, member->name ) );
 	}
 
 	/* if there is an xform matrix, put it here */
 	if ( is_non_identity( member->xform ) ) {
-	    fprintf( outfp, " {" );
+	    fprintf(cinfo->outfp, " {" );
 	    for ( j=0; j<4; j++ ) {
 		for ( k=0; k<4; k++ ) {
 		    if ( k == 3 && j < 3 ) {
-			fprintf( outfp, " %.12e",
-				member->xform[k][j] * creo_to_brl_conv );
+			fprintf(cinfo->outfp, " %.12e",
+				member->xform[k][j] * cinfo->creo_to_brl_conv );
 		    } else {
-			fprintf( outfp, " %.12e",
+			fprintf(cinfo->outfp, " %.12e",
 				member->xform[k][j] );
 		    }
 		}
 	    }
-	    fprintf( outfp, "}" );
+	    fprintf(cinfo->outfp, "}" );
 	}
 	if ( i ) {
-	    fprintf( outfp, "}} " );
+	    fprintf(cinfo->outfp, "}} " );
 	} else {
-	    fprintf( outfp, "} " );
+	    fprintf(cinfo->outfp, "} " );
 	}
 	member = member->next;
 	i++;
     }
-    fprintf( outfp, "\n" );
+    fprintf(cinfo->outfp, "\n" );
 
-    fprintf( outfp, "attr set {%s.c} %s %s\n",
-	    get_brlcad_name( curr_assem.name ),
+    fprintf(cinfo->outfp, "attr set {%s.c} %s %s\n",
+	    get_brlcad_name(cinfo, curr_assem.name ),
 	    CREO_NAME_ATTR,
 	    curr_assem.name );
 
@@ -441,27 +470,27 @@ bu_log("got here\n");
     status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
     if ( status == PRO_TK_NO_ERROR ) {
 	if ( mass_prop.density > 0.0 ) {
-	    fprintf( outfp, "attr set {%s.c} density %g\n",
-		    get_brlcad_name( curr_assem.name ),
+	    fprintf(cinfo->outfp, "attr set {%s.c} density %g\n",
+		    get_brlcad_name(cinfo, curr_assem.name ),
 		    mass_prop.density );
 	}
 	if ( mass_prop.mass > 0.0 ) {
-	    fprintf( outfp, "attr set {%s.c} mass %g\n",
-		    get_brlcad_name( curr_assem.name ),
+	    fprintf(cinfo->outfp, "attr set {%s.c} mass %g\n",
+		    get_brlcad_name(cinfo, curr_assem.name ),
 		    mass_prop.mass );
 	}
 	if ( mass_prop.volume > 0.0 ) {
-	    fprintf( outfp, "attr set {%s.c} volume %g\n",
-		    get_brlcad_name( curr_assem.name ),
+	    fprintf(cinfo->outfp, "attr set {%s.c} volume %g\n",
+		    get_brlcad_name(cinfo, curr_assem.name ),
 		    mass_prop.volume );
 	}
     }
 
     /* add this assembly to the list of already output objects */
-    add_to_done_asm( asm_name );
+    add_to_done_asm( cinfo, asm_name );
 
     /* free the memory associated with this assembly */
-    free_assem( &curr_assem );
+    free_assem(cinfo, &curr_assem );
 }
 
 

@@ -393,19 +393,19 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 	    entry = bu_hash_tbl_next(&rec);
 	}
 	bu_hash_tbl_free(cinfo->name_hash);
-	name_hash = (struct bu_hash_tbl *)NULL;
+	cinfo->name_hash = (struct bu_hash_tbl *)NULL;
     }
 
     if (cinfo->done_list_part.size() > 0 ) {
 	std::set<wchar_t *, WStrCmp>::iterator d_it;
-	for (d_it = done_list_part.begin(); d_it != done_list_part.end(); d_it++) {
+	for (d_it = cinfo->done_list_part.begin(); d_it != cinfo->done_list_part.end(); d_it++) {
 	    bu_free(*d_it, "free wchar str copy");
 	}
     }
 
     if (cinfo->done_list_asm.size() > 0 ) {
 	std::set<wchar_t *, WStrCmp>::iterator d_it;
-	for (d_it = done_list_asm.begin(); d_it != done_list_asm.end(); d_it++) {
+	for (d_it = cinfo->done_list_asm.begin(); d_it != cinfo->done_list_asm.end(); d_it++) {
 	    bu_free(*d_it, "free wchar str copy");
 	}
     }
@@ -417,13 +417,13 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 
     if (cinfo->part_norms) {
 	bu_free((char *)cinfo->part_norms, "part normals" );
-	part_norms = NULL;
+	cinfo->part_norms = NULL;
     }
 
     free_vert_tree(cinfo->vert_tree_root);
-    vert_tree_root = NULL;
+    cinfo->vert_tree_root = NULL;
     free_vert_tree(cinfo->norm_tree_root);
-    norm_tree_root = NULL;
+    cinfo->norm_tree_root = NULL;
 
     /* empty parts */
     if (cinfo->empty_parts_root) {
@@ -499,13 +499,13 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	ProMessageClear();
 	fprintf( stderr, "Could not get name for part" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	bu_strlcpy( curr_part_name, "noname", PRO_NAME_SIZE );
+	bu_strlcpy( cinfo->curr_part_name, "noname", PRO_NAME_SIZE );
     } else {
-	(void)ProWstringToString( curr_part_name, name );
+	(void)ProWstringToString( cinfo->curr_part_name, name );
     }
 
     /* save name */
-    bu_strlcpy( top_level, curr_part_name, sizeof(top_level) );
+    bu_strlcpy( top_level, cinfo->curr_part_name, sizeof(top_level) );
 
     if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf(cinfo->logger, "Output top level object (%s)\n", top_level );
@@ -528,9 +528,9 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     }
 
     if ( type == PRO_MDL_ASSEMBLY ) {
-	snprintf(buffer, 1024, "put $topname comb region no tree {l %s.c {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(top_level) );
+	snprintf(buffer, 1024, "put $topname comb region no tree {l %s.c {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(cinfo, top_level) );
     } else {
-	snprintf(buffer, 1024, "put $topname comb region no tree {l %s {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(top_level) );
+	snprintf(buffer, 1024, "put $topname comb region no tree {l %s {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(cinfo, top_level) );
     }
 
     /* make a top level combination named "top", if there is not
@@ -568,6 +568,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProMdlType type;
     ProLine tmp_line;
     ProCharLine astr;
+    ProFileName msgfil;
     wchar_t *w_output_file;
     wchar_t *w_name_file;
     wchar_t *tmp_str;
@@ -614,7 +615,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
-    ProWstringToString( cinfo->log_file, tmp_str );
+    ProWstringToString( log_file, tmp_str );
     ProWstringFree( tmp_str );
 
     /* get the name of the output file */
@@ -624,7 +625,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
-    ProWstringToString( cinfo->output_file, w_output_file );
+    ProWstringToString( output_file, w_output_file );
     ProWstringFree( w_output_file );
 
     /* get the name of the part number to part name mapping file */
@@ -634,7 +635,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
-    ProWstringToString( cinfo->name_file, w_name_file );
+    ProWstringToString( name_file, w_name_file );
     ProWstringFree( w_name_file );
 
     /* get starting ident */
@@ -648,7 +649,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProWstringToString( astr, tmp_str );
     ProWstringFree( tmp_str );
     cinfo->reg_id = atoi( astr );
-    V_MAX(reg_id, 1);
+    V_MAX(cinfo->reg_id, 1);
 
     /* get max error */
     status = ProUIInputpanelValueGet( "creo_brl", "max_error", &tmp_str );
@@ -674,7 +675,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProWstringFree( tmp_str );
     cinfo->min_error = atof( astr );
 
-    V_MAX(max_error, min_error);
+    V_MAX(cinfo->max_error, cinfo->min_error);
 
     /* get the max angle control */
     status = ProUIInputpanelValueGet( "creo_brl", "max_angle_ctrl", &tmp_str );
@@ -805,7 +806,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     }
 
     /* open output file */
-    if ( (outfp=fopen( output_file, "wb" ) ) == NULL ) {
+    if ( (cinfo->outfp=fopen( output_file, "wb" ) ) == NULL ) {
 	(void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open output file" );
 	ProMessageClear();
 	fprintf( stderr, "Cannot open output file\n" );
@@ -817,8 +818,8 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     /* open log file, if a name was provided */
     if ( strlen( log_file ) > 0 ) {
 	if ( BU_STR_EQUAL( log_file, "stderr" ) ) {
-	    logger = stderr;
-	} else if ( (logger=fopen( log_file, "wb" ) ) == NULL ) {
+	    cinfo->logger = stderr;
+	} else if ( (cinfo->logger=fopen( log_file, "wb" ) ) == NULL ) {
 	    (void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open log file" );
 	    ProMessageClear();
 	    fprintf( stderr, "Cannot open log file\n" );
@@ -846,10 +847,10 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	FILE *name_fd;
 
 	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "Opening part name map file (%s)\n", cinfo->name_file );
+	    fprintf( cinfo->logger, "Opening part name map file (%s)\n", name_file );
 	}
 
-	if ( (name_fd=fopen( cinfo->name_file, "rb" ) ) == NULL ) {
+	if ( (name_fd=fopen( name_file, "rb" ) ) == NULL ) {
 	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 	    int dialog_return=0;
 	    wchar_t w_error_msg[512];
@@ -862,7 +863,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    (void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open part name file" );
 	    ProMessageClear();
 	    fprintf( stderr, "Cannot open part name file\n" );
-	    perror( cinfo->name_file );
+	    perror( name_file );
 	    status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
 	    if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to create error dialog (%d)\n", status );
@@ -871,7 +872,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		    "ok_button",
 		    kill_gen_error_dialog, NULL );
 	    bu_vls_printf( &error_msg, "\n\tCannot open part name file (%s)\n\t",
-		    cinfo->name_file );
+		    name_file );
 	    bu_vls_strcat( &error_msg, strerror( errno ) );
 	    ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
 	    status = ProUITextareaValueSet( "creo_brl_gen_error", "error_message", w_error_msg );
@@ -889,7 +890,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 	/* create a hash table of part numbers to part names */
 	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "Creating name hash\n" );
+	    fprintf( cinfo->logger, "Creating name hash\n" );
 	}
 
 	ProStringToWstring( tmp_line, "Processing part name file" );
@@ -904,7 +905,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    fprintf( stderr, "\t dialog returned %d\n", ret_status );
 	}
 
-	cinfo->name_hash = create_name_hash( name_fd );
+	cinfo->name_hash = create_name_hash(cinfo, name_fd );
 	fclose( name_fd );
 
     } else {
@@ -962,8 +963,8 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     cinfo->creo_to_brl_conv = conv.scale;
 
     /* adjust tolerance for Pro/E units */
-    cinfo->local_tol = tol_dist / creo_to_brl_conv;
-    cinfo->local_tol_sq = local_tol * local_tol;
+    cinfo->local_tol = cinfo->tol_dist / cinfo->creo_to_brl_conv;
+    cinfo->local_tol_sq = cinfo->local_tol * cinfo->local_tol;
 
     cinfo->vert_tree_root = create_vert_tree();
     cinfo->norm_tree_root = create_vert_tree();
@@ -974,15 +975,16 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     output_top_level_object(cinfo, model, type );
 
     /* kill any references to empty parts */
+    struct empty_parts *ptr = cinfo->empty_parts_root;
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf(cinfo->logger, "Adding code to remove empty parts:\n" );
     }
     while ( ptr ) {
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "\t%s\n", ptr->name );
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( cinfo->logger, "\t%s\n", ptr->name );
 	}
-	fprintf( outfp, "set combs [dbfind %s]\n", ptr->name );
-	fprintf( outfp, "foreach comb $combs {\n\tcatch {rm $comb %s}\n}\n", ptr->name );
+	fprintf( cinfo->outfp, "set combs [dbfind %s]\n", ptr->name );
+	fprintf( cinfo->outfp, "foreach comb $combs {\n\tcatch {rm $comb %s}\n}\n", ptr->name );
 	ptr = ptr->next;
     }
 

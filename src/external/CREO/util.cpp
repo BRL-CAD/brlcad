@@ -67,14 +67,14 @@ make_legal( char *name )
 
 /* create a unique BRL-CAD object name from a possibly illegal name */
 extern "C" char *
-create_unique_name( char *name )
+create_unique_name(struct creo_conv_info *cinfo, char *name )
 {
     struct bu_vls *tmp_name;
     std::pair<std::set<struct bu_vls *, StrCmp>::iterator, bool> ret;
     long count=0;
 
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "create_unique_name( %s )\n", name );
+    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( cinfo->logger, "create_unique_name( %s )\n", name );
     }
 
     /* create a unique name */
@@ -83,29 +83,29 @@ create_unique_name( char *name )
     bu_vls_strcpy(tmp_name, name);
     lower_case(bu_vls_addr(tmp_name));
     make_legal(bu_vls_addr(tmp_name));
-    ret = brlcad_names.insert(tmp_name);
+    ret = cinfo->brlcad_names.insert(tmp_name);
     while (ret.second == false) {
 	(void)bu_namegen(tmp_name, NULL, NULL);
 	count++;
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "\tTrying %s\n", bu_vls_addr(tmp_name) );
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(tmp_name) );
 	}
 	if (count == LONG_MAX) {
 	    bu_vls_free(tmp_name);
 	    BU_PUT(tmp_name, struct bu_vls);
 	    return NULL;
 	}
-	ret = brlcad_names.insert(tmp_name);
+	ret = cinfo->brlcad_names.insert(tmp_name);
     }
 
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "\tnew name for %s is %s\n", name, bu_vls_addr(tmp_name) );
+    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( cinfo->logger, "\tnew name for %s is %s\n", name, bu_vls_addr(tmp_name) );
     }
     return bu_vls_addr(tmp_name);
 }
 
 extern "C" char *
-get_brlcad_name( char *part_name )
+get_brlcad_name(struct creo_conv_info *cinfo, char *part_name )
 {
     char *brlcad_name=NULL;
     struct bu_hash_entry *entry=NULL, *prev=NULL;
@@ -116,27 +116,27 @@ get_brlcad_name( char *part_name )
     name_copy = bu_strdup( part_name );
     lower_case( name_copy );
 
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "get_brlcad_name( %s )\n", name_copy );
+    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( cinfo->logger, "get_brlcad_name( %s )\n", name_copy );
     }
 
     /* find name for this part in hash table */
-    entry = bu_hash_tbl_find( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
+    entry = bu_hash_tbl_find( cinfo->name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
 
     if ( entry ) {
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "\treturning %s\n", (char *)bu_get_hash_value( entry ) );
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( cinfo->logger, "\treturning %s\n", (char *)bu_get_hash_value( entry ) );
 	}
 	bu_free( name_copy, "name_copy" );
 	return (char *)bu_get_hash_value( entry );
     } else {
 
 	/* must create a new name */
-	brlcad_name = create_unique_name( name_copy );
-	entry = bu_hash_tbl_add( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &new_entry );
+	brlcad_name = create_unique_name(cinfo, name_copy );
+	entry = bu_hash_tbl_add( cinfo->name_hash, (unsigned char *)name_copy, strlen( name_copy ), &new_entry );
 	bu_set_hash_value( entry, (unsigned char *)brlcad_name );
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "\tCreating new brlcad name (%s) for part (%s)\n", brlcad_name, name_copy );
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( cinfo->logger, "\tCreating new brlcad name (%s) for part (%s)\n", brlcad_name, name_copy );
 	}
 	bu_free( name_copy, "name_copy" );
 	return brlcad_name;
@@ -144,7 +144,7 @@ get_brlcad_name( char *part_name )
 }
 
 extern "C" struct bu_hash_tbl *
-create_name_hash( FILE *name_fd )
+create_name_hash(struct creo_conv_info *cinfo, FILE *name_fd )
 {
     struct bu_hash_tbl *htbl;
     char line[MAX_LINE_LEN];
@@ -153,15 +153,15 @@ create_name_hash( FILE *name_fd )
 
     htbl = bu_hash_create( NUM_HASH_TABLE_BINS );
 
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "name hash created, now filling it:\n" );
+    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf( cinfo->logger, "name hash created, now filling it:\n" );
     }
     while ( bu_fgets( line, MAX_LINE_LEN, name_fd ) ) {
 	char *part_no, *part_name, *ptr;
 	line_no++;
 
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "line %ld: %s", line_no, line );
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( cinfo->logger, "line %ld: %s", line_no, line );
 	}
 
 	ptr = strtok( line, " \t\n" );
@@ -181,8 +181,8 @@ create_name_hash( FILE *name_fd )
 	    continue;
 	}
 	if (bu_hash_get( htbl, (unsigned char *)part_no, strlen( part_no )) ) {
-	    if ( logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( logger, "\t\t\tHash table entry already exists for part number (%s)\n", part_no );
+	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+		fprintf( cinfo->logger, "\t\t\tHash table entry already exists for part number (%s)\n", part_no );
 	    }
 	    bu_free( part_no, "part_no" );
 	    continue;
@@ -205,15 +205,15 @@ create_name_hash( FILE *name_fd )
 
 	/* generate the name sans spaces, lowercase */
 	lower_case( part_name );
-	part_name = create_unique_name( part_name );
+	part_name = create_unique_name(cinfo, part_name );
 
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "\t\tpart_no = %s, part name = %s\n", part_no, part_name );
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( cinfo->logger, "\t\tpart_no = %s, part name = %s\n", part_no, part_name );
 	}
 
 
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "\t\t\tCreating new hash tabel entry for above names\n" );
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( cinfo->logger, "\t\t\tCreating new hash tabel entry for above names\n" );
 	}
 	bu_hash_set( htbl, (unsigned char *)part_no, strlen( part_no ), part_name );
     }

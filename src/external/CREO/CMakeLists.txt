@@ -221,6 +221,13 @@ include_directories(
   "${CREO_PTK_APPLS_INCDIR}"
   )
 
+set(creo_brl_srcs
+  assembly.cpp
+  csg.cpp
+  main.cpp
+  part.cpp
+  util.cpp
+  )
 
 # Primary (DLL) version of plugin
 # Note that for successful running of the DLL version of this plugin,
@@ -230,7 +237,7 @@ include_directories(
 # usable.  The simplest thing to do is build a package and install it in the
 # CREO root directory.  *** Any attempt run this plugin without the correct
 # DLLs in place will result in silent failure of the loading step. ***
-add_library(creo-brl SHARED creo-brl.cpp)
+add_library(creo-brl SHARED ${creo_brl_srcs})
 target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${BRLCAD_STATIC_LIBS})
 install(TARGETS creo-brl
   RUNTIME DESTINATION "${MDIR}/${CREO_OBJ_DIR}"
@@ -242,7 +249,7 @@ configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/${CREO_DAT_DIR}")
 
 # Debugging executable version of plugin
-add_executable(creo-g creo-brl.cpp)
+add_executable(creo-g ${creo_brl_srcs})
 target_link_libraries(creo-g ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
 set(DAT_STARTUP "spawn")
 set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/creo-g.exe")

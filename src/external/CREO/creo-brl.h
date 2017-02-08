@@ -119,45 +119,45 @@ struct creo_conv_info {
     ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
     ProBool do_elims;	/* flag to indicate that small features are to be eliminated */
 
-    int reg_id = 1000;	/* region ident number (incremented with each part) */
+    int reg_id;	/* region ident number (incremented with each part) */
 
-    FILE *outfp=NULL;		/* output file */
-    FILE *logger=NULL;			/* log file */
-    int logger_type = LOGGER_TYPE_NONE;
+    FILE *outfp;		/* output file */
+    FILE *logger;			/* log file */
+    int logger_type;
 
-    double creo_to_brl_conv=25.4;	/* inches to mm */
-    double local_tol=0.0;	/* tolerance in Pro/E units */
-    double local_tol_sq=0.0;	/* tolerance squared */
+    double creo_to_brl_conv;	/* inches to mm */
+    double local_tol;	/* tolerance in Pro/E units */
+    double local_tol_sq;	/* tolerance squared */
 
 
-    double max_error=1.5;	/* (mm) maximum allowable error in facetized approximation */
-    double min_error=1.5;	/* (mm) maximum allowable error in facetized approximation */
-    double tol_dist=0.0005;	/* (mm) minimum distance between two distinct vertices */
-    double max_angle_cntrl=0.5;	/* max angle control for tessellation ( 0.0 - 1.0 ) */
-    double min_angle_cntrl=0.5;	/* min angle control for tessellation ( 0.0 - 1.0 ) */
-    int max_to_min_steps = 1;	/* number of steps between max and min */
-    double error_increment=0.0;
-    double angle_increment=0.0;
+    double max_error;	/* (mm) maximum allowable error in facetized approximation */
+    double min_error;	/* (mm) maximum allowable error in facetized approximation */
+    double tol_dist;	/* (mm) minimum distance between two distinct vertices */
+    double max_angle_cntrl;	/* max angle control for tessellation ( 0.0 - 1.0 ) */
+    double min_angle_cntrl;	/* min angle control for tessellation ( 0.0 - 1.0 ) */
+    int max_to_min_steps;	/* number of steps between max and min */
+    double error_increment;
+    double angle_increment;
 
-    double min_hole_diameter=0.0; /* if > 0.0, all holes features smaller than this will be deleted */
-    double min_chamfer_dim=0.0;   /* if > 0.0, all chamfers with both dimensions less
+    double min_hole_diameter; /* if > 0.0, all holes features smaller than this will be deleted */
+    double min_chamfer_dim;   /* if > 0.0, all chamfers with both dimensions less
          			  * than this value will be deleted */
-    double min_round_radius=0.0;  /* if > 0.0, all rounds with radius less than this
+    double min_round_radius;  /* if > 0.0, all rounds with radius less than this
          			  * value will be deleted */
 
-    int *feat_ids_to_delete=NULL; /* list of hole features to delete */
-    int feat_id_len=0;		/* number of available slots in the above array */
-    int feat_id_count=0;		/* number of hole features actually in the above list */
+    int *feat_ids_to_delete; /* list of hole features to delete */
+    int feat_id_len;		/* number of available slots in the above array */
+    int feat_id_count;		/* number of hole features actually in the above list */
 
     struct bu_hash_tbl *name_hash;
 
     struct vert_root *vert_tree_root;	/* structure for storing and searching on vertices */
     struct vert_root *norm_tree_root;	/* structure for storing and searching on normals */
 
-    ProTriangle *part_tris=NULL;	/* list of triangles for current part */
-    int max_tri=0;			/* number of triangles currently malloced */
-    int curr_tri=0;			/* number of triangles currently being used */
-    int *part_norms=NULL;		/* list of indices into normals (matches part_tris) */
+    ProTriangle *part_tris;	/* list of triangles for current part */
+    int max_tri;			/* number of triangles currently malloced */
+    int curr_tri;			/* number of triangles currently being used */
+    int *part_norms;		/* list of indices into normals (matches part_tris) */
 
     int obj_type_count[NUM_OBJ_TYPES];
     char *obj_type[NUM_OBJ_TYPES];
@@ -178,17 +178,25 @@ struct creo_conv_info {
     ProFeattype curr_feat_type;	/* current feature type */
 };
 
+struct feature_data {
+    struct creo_conv_info *cinfo;
+    ProMdl model;
+};
 
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);
 extern "C" void kill_gen_error_dialog(char *dialog, char *component, ProAppData appdata);
 
 extern "C" void do_quit(char *dialog, char *compnent, ProAppData appdata);
+extern "C" void free_csg_ops(struct creo_conv_info *);
 
 extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
-extern "C" char *get_brlcad_name(char *part_name);
-extern "C" struct bu_hash_tbl *create_name_hash(FILE *name_fd);
+extern "C" char *get_brlcad_name(struct creo_conv_info *cinfo, char *part_name);
+extern "C" struct bu_hash_tbl *create_name_hash(struct creo_conv_info *cinfo, FILE *name_fd);
 extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
 extern "C" int output_part(struct creo_conv_info *, ProMdl model);
+
+
+extern "C" ProError ShowMsg();
 
 #endif /*CREO_BRL_H*/
 
