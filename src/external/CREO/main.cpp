@@ -480,24 +480,6 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 }
 
 
-extern "C" void
-kill_empty_parts()
-{
-
-    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Adding code to remove empty parts:\n" );
-    }
-
-    while ( ptr ) {
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "\t%s\n", ptr->name );
-	}
-	fprintf( outfp, "set combs [dbfind %s]\n", ptr->name );
-	fprintf( outfp, "foreach comb $combs {\n\tcatch {rm $comb %s}\n}\n", ptr->name );
-	ptr = ptr->next;
-    }
-}
-
 /* routine to output the top level object that is currently displayed in Pro/E */
 extern "C" void
 output_top_level_object( ProMdl model, ProMdlType type )
@@ -991,7 +973,17 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     output_top_level_object( model, type );
 
     /* kill any references to empty parts */
-    kill_empty_parts();
+    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf(cinfo->logger, "Adding code to remove empty parts:\n" );
+    }
+    while ( ptr ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf( logger, "\t%s\n", ptr->name );
+	}
+	fprintf( outfp, "set combs [dbfind %s]\n", ptr->name );
+	fprintf( outfp, "foreach comb $combs {\n\tcatch {rm $comb %s}\n}\n", ptr->name );
+	ptr = ptr->next;
+    }
 
     /* let user know we are done */
     ProStringToWstring( tmp_line, "Conversion complete" );
