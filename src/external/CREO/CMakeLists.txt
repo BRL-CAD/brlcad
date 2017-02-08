@@ -207,6 +207,7 @@ add_definitions(-D_ITERATOR_DEBUG_LEVEL=0)
 # BRL-CAD definitions
 set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS")
 
+# TODO - Need Zi in these flags for debugging
 set(CMAKE_C_FLAGS "-c -GS -fp:precise /MT ${CREO_DEFS} ${BRLCAD_DEFS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "/subsystem:console /debug:none /machine:amd64")
