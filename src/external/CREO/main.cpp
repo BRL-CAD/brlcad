@@ -383,8 +383,8 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 	struct bu_hash_record rec;
 
 
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "freeing name hash\n" );
+	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf(cinfo->logger, "freeing name hash\n" );
 	}
 
 	entry = bu_hash_tbl_first(cinfo->name_hash, &rec);
@@ -447,17 +447,17 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 	}
     }
 
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Closing output file\n" );
+    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf(cinfo->logger, "Closing output file\n" );
     }
 
-    fclose( cinfo->outfp );
+    fclose(cinfo->outfp);
 
 #if 0
     if ( brlcad_names.size() > 0 ) {
 	std::set<struct bu_vls *, StrCmp>::iterator s_it;
-	if ( logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( logger, "freeing names\n" );
+	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf(cinfo->logger, "freeing names\n" );
 	}
 	for (s_it = brlcad_names.begin(); s_it != brlcad_names.end(); s_it++) {
 	    struct bu_vls *v = *s_it;
@@ -482,7 +482,7 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 
 /* routine to output the top level object that is currently displayed in Pro/E */
 extern "C" void
-output_top_level_object( ProMdl model, ProMdlType type )
+output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType type )
 {
     ProName name;
     ProFileName msgfil;
@@ -507,20 +507,20 @@ output_top_level_object( ProMdl model, ProMdlType type )
     /* save name */
     bu_strlcpy( top_level, curr_part_name, sizeof(top_level) );
 
-    if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Output top level object (%s)\n", top_level );
+    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf(cinfo->logger, "Output top level object (%s)\n", top_level );
     }
 
     /* output the object */
     if ( type == PRO_MDL_PART ) {
 	/* tessellate part and output triangles */
-	output_part( model );
+	output_part(cinfo, model);
     } else if ( type == PRO_MDL_ASSEMBLY ) {
 	/* visit all members of assembly */
-	output_assembly( model );
+	output_assembly(cinfo, model);
     } else {
 	snprintf( astr, sizeof(astr), "Object %s is neither PART nor ASSEMBLY, skipping",
-		curr_part_name );
+		cinfo->curr_part_name );
 	(void)ProMessageDisplay(msgfil, "USER_WARNING", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -539,7 +539,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
      * contains the xform to rotate the model into BRL-CAD
      * standard orientation.
      */
-    fprintf(outfp,
+    fprintf(cinfo->outfp,
 	    "set topname \"top\"\n"
 	    "if { ! [catch {get $topname} ret] } {\n"
 	    "  set num 0\n"
@@ -578,9 +578,10 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     char **selected_names;
     char logger_type_str[128];
     int ret_status=0;
+
+    /* This replaces the global variables used in the original Pro/E converter */
     struct creo_conv_info *cinfo = NULL;
     BU_GET(cinfo, struct creo_conv_info);
-
     creo_conv_info_init(cinfo);
 
     ProStringToWstring( tmp_line, "Not processing" );
@@ -970,7 +971,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     /* output the top level object
      * this will recurse through the entire model
      */
-    output_top_level_object( model, type );
+    output_top_level_object(cinfo, model, type );
 
     /* kill any references to empty parts */
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
