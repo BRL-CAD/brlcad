@@ -21,6 +21,9 @@
  *
  */
 
+#ifndef CREO_BRL_H
+#define CREO_BRL_H
+
 #include "common.h"
 
 #include <set>
@@ -184,8 +187,10 @@ extern "C" void do_quit(char *dialog, char *compnent, ProAppData appdata);
 extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
 extern "C" char *get_brlcad_name(char *part_name);
 extern "C" struct bu_hash_tbl *create_name_hash(FILE *name_fd);
-extern "C" void output_assembly(ProMdl model);
-extern "C" int output_part(ProMdl model);
+extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
+extern "C" int output_part(struct creo_conv_info *, ProMdl model);
+
+#endif /*CREO_BRL_H*/
 
 /*
  * Local Variables:
