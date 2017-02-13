@@ -169,9 +169,9 @@ struct creo_conv_info {
 
     int hole_no;   /* hole counter for unique names */
 
-    std::set<wchar_t *, WStrCmp> done_list_part;	/* list of parts already done */
-    std::set<wchar_t *, WStrCmp> done_list_asm;	/* list of assemblies already done */
-    std::set<struct bu_vls *, StrCmp> brlcad_names;	/* BRL-CAD names in use */
+    std::set<wchar_t *, WStrCmp> *done_list_part;	/* list of parts already done */
+    std::set<wchar_t *, WStrCmp> *done_list_asm;	/* list of assemblies already done */
+    std::set<struct bu_vls *, StrCmp> *brlcad_names;	/* BRL-CAD names in use */
 
     ProCharName curr_part_name;	/* current part name */
     ProCharName curr_asm_name;	/* current assembly name */

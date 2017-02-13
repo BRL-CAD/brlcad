@@ -86,6 +86,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
      * this call is creating a path from the assembly to this particular member
      * (assembly/member)
      */
+	if(feat){
     id_table[0] = feat->id;
     status = ProAsmcomppathInit( (ProSolid)curr_assem->model, id_table, 1, &comp_path );
     if ( status != PRO_TK_NO_ERROR ) {
@@ -97,13 +98,16 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	return status;
     }
+	}
 
     /* this call accumulates the xform matrix along the path created above */
     status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
     if ( status != PRO_TK_NO_ERROR ) {
+		if(feat){
 	snprintf( astr, sizeof(astr), "Failed to get transformation matrix %s/%s, error = %d, id = %d",
 		cinfo->curr_asm_name, cinfo->curr_part_name, status, feat->id );
 	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
+	}
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
@@ -271,18 +275,18 @@ add_to_done_asm(struct creo_conv_info *cinfo, wchar_t *name )
 	fprintf(cinfo->logger, "Added %s to list of done assemblies\n", ProWstringToString( astr, name ) );
     }
 
-    if (cinfo->done_list_asm.find(name) == cinfo->done_list_part.end()) {
+    if (cinfo->done_list_asm->find(name) == cinfo->done_list_part->end()) {
 	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
 		"asm name for done list" );
 	wcsncpy( name_copy, name, wcslen(name)+1 );
-	cinfo->done_list_asm.insert(name_copy);
+	cinfo->done_list_asm->insert(name_copy);
     }
 }
 
 extern "C" int
 already_done_asm(struct creo_conv_info *cinfo, wchar_t *name )
 {
-    if (cinfo->done_list_asm.find(name) != cinfo->done_list_asm.end()) {
+    if (cinfo->done_list_asm->find(name) != cinfo->done_list_asm->end()) {
 	return 1;
     }
     return 0;

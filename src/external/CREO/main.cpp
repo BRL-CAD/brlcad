@@ -72,6 +72,10 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->csg_root=NULL;
     cinfo->empty_parts_root=NULL;
 
+	cinfo->done_list_part = new std::set<wchar_t *, WStrCmp>;
+	cinfo->done_list_asm = new std::set<wchar_t *, WStrCmp>;
+	cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
+
 
     for ( i=0; i<NUM_OBJ_TYPES; i++ ) {
 	cinfo->obj_type_count[i] = 0;
@@ -396,16 +400,16 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 	cinfo->name_hash = (struct bu_hash_tbl *)NULL;
     }
 
-    if (cinfo->done_list_part.size() > 0 ) {
+    if (cinfo->done_list_part->size() > 0 ) {
 	std::set<wchar_t *, WStrCmp>::iterator d_it;
-	for (d_it = cinfo->done_list_part.begin(); d_it != cinfo->done_list_part.end(); d_it++) {
+	for (d_it = cinfo->done_list_part->begin(); d_it != cinfo->done_list_part->end(); d_it++) {
 	    bu_free(*d_it, "free wchar str copy");
 	}
     }
 
-    if (cinfo->done_list_asm.size() > 0 ) {
+    if (cinfo->done_list_asm->size() > 0 ) {
 	std::set<wchar_t *, WStrCmp>::iterator d_it;
-	for (d_it = cinfo->done_list_asm.begin(); d_it != cinfo->done_list_asm.end(); d_it++) {
+	for (d_it = cinfo->done_list_asm->begin(); d_it != cinfo->done_list_asm->end(); d_it++) {
 	    bu_free(*d_it, "free wchar str copy");
 	}
     }
@@ -581,8 +585,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     int ret_status=0;
 
     /* This replaces the global variables used in the original Pro/E converter */
-    struct creo_conv_info *cinfo = NULL;
-    BU_GET(cinfo, struct creo_conv_info);
+    struct creo_conv_info *cinfo = new creo_conv_info;
     creo_conv_info_init(cinfo);
 
     ProStringToWstring( tmp_line, "Not processing" );

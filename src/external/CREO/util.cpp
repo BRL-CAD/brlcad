@@ -83,7 +83,7 @@ create_unique_name(struct creo_conv_info *cinfo, char *name )
     bu_vls_strcpy(tmp_name, name);
     lower_case(bu_vls_addr(tmp_name));
     make_legal(bu_vls_addr(tmp_name));
-    ret = cinfo->brlcad_names.insert(tmp_name);
+    ret = cinfo->brlcad_names->insert(tmp_name);
     while (ret.second == false) {
 	(void)bu_namegen(tmp_name, NULL, NULL);
 	count++;
@@ -95,7 +95,7 @@ create_unique_name(struct creo_conv_info *cinfo, char *name )
 	    BU_PUT(tmp_name, struct bu_vls);
 	    return NULL;
 	}
-	ret = cinfo->brlcad_names.insert(tmp_name);
+	ret = cinfo->brlcad_names->insert(tmp_name);
     }
 
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {

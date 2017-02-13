@@ -114,18 +114,18 @@ add_to_done_part(struct creo_conv_info *cinfo,  wchar_t *name )
 	fprintf(cinfo->logger, "Added %s to list of done parts\n", ProWstringToString( astr, name ) );
     }
 
-    if (cinfo->done_list_part.find(name) == cinfo->done_list_part.end()) {
+    if (cinfo->done_list_part->find(name) == cinfo->done_list_part->end()) {
 	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
 		"part name for done list" );
 	wcsncpy( name_copy, name, wcslen(name)+1 );
-	cinfo->done_list_part.insert(name_copy);
+	cinfo->done_list_part->insert(name_copy);
     }
 }
 
 extern "C" int
 already_done_part(struct creo_conv_info *cinfo,  wchar_t *name )
 {
-    if (cinfo->done_list_part.find(name) != cinfo->done_list_part.end()) {
+    if (cinfo->done_list_part->find(name) != cinfo->done_list_part->end()) {
 	return 1;
     }
     return 0;
