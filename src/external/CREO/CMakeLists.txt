@@ -10,7 +10,7 @@ endif(COMMAND CMAKE_POLICY)
 # Set CMake project name
 project(CREO2G)
 
-# clear and reset compiler and linker flags
+# Tweak compiler and linker flags
 set(flaglists
   CMAKE_C_FLAGS
   CMAKE_CXX_FLAGS
@@ -23,26 +23,25 @@ foreach(bflag ${flaglists})
   set(${bflag} "" CACHE STRING "" FORCE)
   foreach(BTYPE ${CMAKE_CONFIGURATION_TYPES})
     string(TOUPPER "${BTYPE}" BTYPE_UPPER)
-    set(${bflag}_${BTYPE_UPPER} "" CACHE STRING "" FORCE)
+    string(REPLACE "/MD" "/MT" ${bflag}_${BTYPE_UPPER} "${${bflag}_${BTYPE_UPPER}}")
+    set(${bflag}_${BTYPE_UPPER} "${${bflag}_${BTYPE_UPPER}}" CACHE STRING "" FORCE)
   endforeach(BTYPE ${CMAKE_CONFIGURATION_TYPES})
 endforeach(bflag ${flaglists})
 
-foreach(flist ${flaglists})
-  string(REPLACE "/MD" "/MT" ${flist} "${${flist}}")
-endforeach(flist ${flaglists})
+# CREO Definitions (see example nmake file in your CREO install to
+# double check these and modify if needed)
+set(CREO_DEFS "-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V100_SDK71_")
 
-foreach(CT ${CMAKE_CONFIGURATION_TYPES})
-  set(CR ${CREO2G_BINARY_DIR})
-  string(TOUPPER "${CT}" CT_UPPER)
-  set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CT_UPPER}" "${CR}" CACHE INTERNAL "")
-  set("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CT_UPPER}" "${CR}" CACHE INTERNAL "")
-  set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CT_UPPER}" "${CR}" CACHE INTERNAL "")
-  set("CMAKE_BINARY_DIR_${CT_UPPER}" "${CR}" CACHE INTERNAL "")
-  set("CREO2G_BINARY_DIR_${CT_UPPER}" ${CR} CACHE INTERNAL "")
-endforeach(CT ${CMAKE_CONFIGURATION_TYPES})
+# BRL-CAD definitions
+set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS -DRT_DLL_IMPORTS -DTIE_DLL_IMPORTS -DDB5_DLL_IMPORTS -DVDS_DLL_IMPORTS -DGDIAM_DLL_IMPORTS -DTINYCTHREAD_DLL_IMPORTS -DLZ4_DLL_IMPORT=1")
 
-# We're not set up to support multiple VS configs - limit our options
-set(CMAKE_CONFIGURATION_TYPES Release CACHE INTERNAL "Constrained configuration set")
+# Need Zi in these flags for debugging, and /MT is needed to work with
+# the CREO dlls.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CREO_DEFS} ${BRLCAD_DEFS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "/subsystem:console /debug:none /machine:amd64")
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/subsystem:console /debug /machine:amd64")
+
 
 # Install dir is a function of the CREO dir.
 mark_as_advanced(CMAKE_INSTALL_PREFIX)
@@ -201,6 +200,10 @@ set(BRLCAD_LIBS
 set(BRLCAD_STATIC_LIBS)
 set(brlcadlibs_notinstalled)
 foreach(blib ${BRLCAD_LIBS})
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/${blib}.dll COPYONLY)
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
   set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/${blib}.lib")
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll DESTINATION "${MDIR}/${CREO_OBJ_DIR}")
@@ -212,24 +215,6 @@ if(brlcadlibs_notinstalled)
   message("Note: The following BRL-CAD dll(s) is/are not present in ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}:\n${brlcadlibs_notinstalled}\n\nBe aware that attempting to load the DLL version of the plugin without these files in place will\ncause the loading process to silently fail: *NO* messages indicating why the loading failed will\nbe generated.  Be sure to run the INSTALL command after building but before testing.\n")
 endif(brlcadlibs_notinstalled)
 
-
-# CREO Definitions (see example nmake file in your CREO install to
-# double check these and modify if needed)
-set(CREO_DEFS "-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V100_SDK71_")
-
-# for libcmt
-#set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT")
-add_definitions(-D_ITERATOR_DEBUG_LEVEL=0)
-
-# BRL-CAD definitions
-set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS")
-
-# Need Zi in these flags for debugging, and /MT is needed to work with
-# the CREO dlls.
-set(CMAKE_C_FLAGS "-c -GS -fp:precise /MT -Zi ${CREO_DEFS} ${BRLCAD_DEFS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
-set(CMAKE_SHARED_LINKER_FLAGS "/subsystem:console /debug:none /machine:amd64")
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/subsystem:console /debug /machine:amd64")
 
 # Set the relevant include directories
 include_directories(
@@ -268,10 +253,13 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/${CR
 # Debugging executable version of plugin
 add_executable(creo-g ${creo_brl_srcs})
 target_link_libraries(creo-g ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
-set(DAT_STARTUP "spawn")
-set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/creo-g.exe")
-set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
-configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat @ONLY)
+foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+  set(DAT_STARTUP "spawn")
+  set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/creo-g.exe")
+  set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
+  configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-debug.dat @ONLY)
+endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 
 # Install the resource files
 file(GLOB RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res)
