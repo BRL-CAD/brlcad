@@ -18,6 +18,13 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* figure out if active/inactive panes are switched around in MGED -
+  have user report that inactive bg color is being used for active
+  window and vice versa.
+
+* Figure out why NSIS installer isn't showing option panels during
+  install.
+
 * user report of runtime failure on Windows.  apparently need a build
   flag to be portable:
   https://blogs.msdn.microsoft.com/vcblog/2009/08/27/windows-sdk-v7-0v7-0a-incompatibility-workaround/
