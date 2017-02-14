@@ -1235,13 +1235,15 @@ add_seg(struct isect_stuff *isect,
     }
 
     /* if the segment is inside-out, we need to say something about it */
-    if (delta < 0.0 && !NEAR_ZERO(delta, isect->tol->dist)) {
-	bu_log(" %s:%dDSP:  Adding inside-out seg in:%g out:%g\n",
-	       __FILE__, __LINE__,
-	       in_hit->hit_dist, out_hit->hit_dist);
+    if (RT_G_DEBUG & DEBUG_HF) {
+	if (delta < 0.0 && !NEAR_ZERO(delta, isect->tol->dist)) {
+	    bu_log(" %s:%dDSP:  Adding inside-out seg in:%g out:%g\n",
+		   __FILE__, __LINE__,
+		   in_hit->hit_dist, out_hit->hit_dist);
 
-	VPRINT("\tin_pt", in_hit->hit_point);
-	VPRINT("\tout_pt", out_hit->hit_point);
+	    VPRINT("\tin_pt", in_hit->hit_point);
+	    VPRINT("\tout_pt", out_hit->hit_point);
+	}
     }
 
 
