@@ -181,13 +181,13 @@ ged_free(struct ged *gedp)
 
 
 HIDDEN int
-cmds_add(struct ged *gedp, const struct ged_cmd *cmds)
+cmds_add(struct ged *gedp, const struct ged_cmd *cmd)
 {
-    struct ged_cmd *cmd;
-    while (BU_LIST_WHILE(cmd, ged_cmd, &(cmds->l))) {
-	BU_LIST_PUSH(&(gedp->cmds->l), cmd);
-    }
-
+    struct ged_cmd *copy;
+    BU_GET(copy, struct ged_cmd);
+    *copy = *cmd; /* struct copy */
+    BU_LIST_INIT_MAGIC(&(copy->l), GED_CMD_MAGIC);
+    BU_LIST_PUSH(&(gedp->cmds->l), copy);
     return 0;
 }
 
@@ -196,9 +196,11 @@ HIDDEN int
 cmds_del(struct ged *gedp, const char *name)
 {
     struct ged_cmd *cmd;
-    while (BU_LIST_WHILE(cmd, ged_cmd, &(gedp->cmds->l))) {
+    for (BU_LIST_FOR(cmd, ged_cmd, &(gedp->cmds->l))) {
 	if (BU_STR_EQUIV(cmd->name, name)) {
 	    BU_LIST_POP(ged_cmd, &(gedp->cmds->l), cmd);
+	    BU_PUT(cmd, struct ged_cmd);
+	    break;
 	}
     }
 
@@ -210,7 +212,7 @@ HIDDEN int
 cmds_run(struct ged *gedp, int ac, char *av[])
 {
     struct ged_cmd *cmd;
-    while (BU_LIST_WHILE(cmd, ged_cmd, &(gedp->cmds->l))) {
+    for (BU_LIST_FOR(cmd, ged_cmd, &(gedp->cmds->l))) {
 	if (BU_STR_EQUIV(cmd->name, av[0])) {
 	    return cmd->exec(gedp, ac, (const char **)av);
 	}
@@ -271,7 +273,7 @@ ged_init(struct ged *gedp)
 
     /* set up our command registration container */
     BU_GET(gedp->cmds, struct ged_cmd);
-    BU_LIST_INIT_MAGIC(&(gedp->cmds->l), GED_CMD_MAGIC);
+    BU_LIST_INIT(&(gedp->cmds->l));
     gedp->add = &cmds_add;
     gedp->del = &cmds_del;
     gedp->run = &cmds_run;
