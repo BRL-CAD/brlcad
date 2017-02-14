@@ -40,8 +40,8 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
 	return -1;
 
     count = 0;
-    entries = bu_calloc(sizeof(char *), max_count, "allocate entries");
-    dirs = bu_calloc(sizeof(char *), max_count, "allocate dirs");
+    entries = (char **)bu_calloc(sizeof(char **), max_count, "allocate entries");
+    dirs = (char **)bu_calloc(sizeof(char **), max_count, "allocate dirs");
 
     dir = bu_strdup(bu_brlcad_dir("doc", 0));
 
@@ -70,7 +70,7 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
 		bu_log("FILE: %s\n", bu_vls_cstr(&filepath));
 		if (count > max_count-1) {
 		    max_count *= 2;
-		    entries = bu_realloc(entries, sizeof(char *) * max_count, "increase entries");
+		    entries = (char **)bu_realloc(entries, sizeof(char **) * max_count, "increase entries");
 		}
 		entries[count++] = bu_vls_strdup(&filepath);
 	    } else {

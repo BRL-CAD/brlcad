@@ -250,9 +250,9 @@ typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
 struct ged_cmd {
     struct bu_list l;
 
-    const char *name;
-    const char description[80];
-    const char *manpage;
+    char *name;
+    char description[80];
+    char *manpage;
 
     int (*load)(struct ged *);
     void (*unload)(struct ged *);
