@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bn_numgen
+/** @addtogroup bn_rand
  *
  * @brief
  * Routines for generating series of pseudo-random or quasi-random numbers.
@@ -37,7 +37,8 @@
 #include "bn/defines.h"
 
 __BEGIN_DECLS
-
+/* Most of the following are API design possibilities only - not yet active */
+#if 0
 /**
  * The following container holds all state associated with a particular
  * number generator.  The details of that state are specific to the
@@ -110,6 +111,7 @@ BN_EXPORT int bn_numgen_next_ints(int *l, size_t cnt, bn_numgen ngen);
 BN_EXPORT int bn_numgen_next_ulongs(unsigned long *l, size_t cnt, bn_numgen ngen);
 BN_EXPORT int bn_numgen_next_fastf_t(fastf_t *l, size_t cnt, bn_numgen ngen);
 BN_EXPORT int bn_numgen_next_doubles(double *l, size_t cnt, bn_numgen ngen);
+#endif
 
 /**
  * @brief

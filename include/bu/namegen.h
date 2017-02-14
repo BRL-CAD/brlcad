@@ -85,6 +85,7 @@ __BEGIN_DECLS
 
 BU_EXPORT extern int bu_namegen(struct bu_vls *name, const char *regex_str, const char *incr_spec);
 
+/** @} */
 
 __END_DECLS
 
