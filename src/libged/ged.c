@@ -180,6 +180,46 @@ ged_free(struct ged *gedp)
 }
 
 
+HIDDEN int
+cmds_add(struct ged *gedp, const struct ged_cmd *cmds)
+{
+    struct ged_cmd *cmd;
+    while (BU_LIST_WHILE(cmd, ged_cmd, &(cmds->l))) {
+	BU_LIST_PUSH(&(gedp->cmds->l), cmd);
+    }
+
+    return 0;
+}
+
+
+HIDDEN int
+cmds_del(struct ged *gedp, const char *name)
+{
+    struct ged_cmd *cmd;
+    while (BU_LIST_WHILE(cmd, ged_cmd, &(gedp->cmds->l))) {
+	if (BU_STR_EQUIV(cmd->name, name)) {
+	    BU_LIST_POP(ged_cmd, &(gedp->cmds->l), cmd);
+	}
+    }
+
+    return 0;
+}
+
+
+HIDDEN int
+cmds_run(struct ged *gedp, int ac, char *av[])
+{
+    struct ged_cmd *cmd;
+    while (BU_LIST_WHILE(cmd, ged_cmd, &(gedp->cmds->l))) {
+	if (BU_STR_EQUIV(cmd->name, av[0])) {
+	    return cmd->exec(gedp, ac, (const char **)av);
+	}
+    }
+
+    return 0;
+}
+
+
 void
 ged_init(struct ged *gedp)
 {
@@ -229,6 +269,12 @@ ged_init(struct ged *gedp)
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
 
+    /* set up our command registration container */
+    BU_GET(gedp->cmds, struct ged_cmd);
+    BU_LIST_INIT_MAGIC(&(gedp->cmds->l), GED_CMD_MAGIC);
+    gedp->add = &cmds_add;
+    gedp->del = &cmds_del;
+    gedp->run = &cmds_run;
 }
 
 

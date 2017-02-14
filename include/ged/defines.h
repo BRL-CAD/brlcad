@@ -223,9 +223,10 @@ struct ged {
 
     /* FOR LIBGED INTERNAL USE */
     struct ged_cmd *cmds;
-    int (*add)(const struct ged_cmd *cmd);
-    int (*del)(const char *name);
-    int (*run)(int ac, char *av[]);
+    int (*add)(struct ged *gedp, const struct ged_cmd *cmd);
+    int (*del)(struct ged *gedp, const char *name);
+    int (*run)(struct ged *gedp, int ac, char *av[]);
+
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
 
     /* Interface to LIBDM */
