@@ -180,7 +180,24 @@ set(WIN_LIBS
 
 # We will need copies of the BRL-CAD dlls along with the creo-brl.dll to make
 # a stand-alone package.
-set(BRLCAD_LIBS libbu libbn y2038 regex)
+set(BRLCAD_LIBS
+  libbg
+  libbn
+  libbrep
+  libbu
+  libgdiam
+  liblz4
+  libnmg
+  libp2t
+  librt
+  libtinycthread
+  libvds
+  libwdb
+  openNURBS
+  regex
+  y2038
+  zlib1
+  )
 set(BRLCAD_STATIC_LIBS)
 set(brlcadlibs_notinstalled)
 foreach(blib ${BRLCAD_LIBS})
