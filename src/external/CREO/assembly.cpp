@@ -1,4 +1,4 @@
-/*               C R E O - B R L - I N I T . C P P
+/*                  A S S E M B L Y . C P P
  * BRL-CAD
  *
  * Copyright (c) 2017 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file creo-brl-init.cpp
+/** @file assembly.cpp
  *
  */
 
