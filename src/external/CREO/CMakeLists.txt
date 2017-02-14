@@ -10,23 +10,24 @@ endif(COMMAND CMAKE_POLICY)
 # Set CMake project name
 project(CREO2G)
 
-# Tweak compiler and linker flags
+# Tweak compiler flags - we *must* use /MT for this to work
 set(flaglists
   CMAKE_C_FLAGS
   CMAKE_CXX_FLAGS
-  CMAKE_SHARED_LINKER_FLAGS
-  CMAKE_STATIC_LINKER_FLAGS
-  CMAKE_MODULE_LINKER_FLAGS
-  CMAKE_EXE_LINKER_FLAGS
   )
 foreach(bflag ${flaglists})
   set(${bflag} "" CACHE STRING "" FORCE)
   foreach(BTYPE ${CMAKE_CONFIGURATION_TYPES})
     string(TOUPPER "${BTYPE}" BTYPE_UPPER)
     string(REPLACE "/MD" "/MT" ${bflag}_${BTYPE_UPPER} "${${bflag}_${BTYPE_UPPER}}")
+    string(REPLACE "/MTd" "/MT" ${bflag}_${BTYPE_UPPER} "${${bflag}_${BTYPE_UPPER}}")
+    # _DEBUG pulls in the wrong runtime for linking with CREO libs
+    string(REPLACE "/D_DEBUG" "" ${bflag}_${BTYPE_UPPER} "${${bflag}_${BTYPE_UPPER}}")
+    string(REPLACE "/D _DEBUG" "" ${bflag}_${BTYPE_UPPER} "${${bflag}_${BTYPE_UPPER}}")
     set(${bflag}_${BTYPE_UPPER} "${${bflag}_${BTYPE_UPPER}}" CACHE STRING "" FORCE)
   endforeach(BTYPE ${CMAKE_CONFIGURATION_TYPES})
 endforeach(bflag ${flaglists})
+mark_as_advanced(CMAKE_CONFIGURATION_TYPES)
 
 # CREO Definitions (see example nmake file in your CREO install to
 # double check these and modify if needed)
@@ -35,12 +36,11 @@ set(CREO_DEFS "-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V100_SDK7
 # BRL-CAD definitions
 set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS -DRT_DLL_IMPORTS -DTIE_DLL_IMPORTS -DDB5_DLL_IMPORTS -DVDS_DLL_IMPORTS -DGDIAM_DLL_IMPORTS -DTINYCTHREAD_DLL_IMPORTS -DLZ4_DLL_IMPORT=1")
 
-# Need Zi in these flags for debugging, and /MT is needed to work with
-# the CREO dlls.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CREO_DEFS} ${BRLCAD_DEFS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
-set(CMAKE_SHARED_LINKER_FLAGS "/subsystem:console /debug:none /machine:amd64")
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/subsystem:console /debug /machine:amd64")
+# These settings are global to all the configs.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CREO_DEFS} ${BRLCAD_DEFS}" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" FORCE)
+set(CMAKE_SHARED_LINKER_FLAGS "/subsystem:console /machine:amd64" CACHE STRING "" FORCE)
+set(CMAKE_EXE_LINKER_FLAGS "/subsystem:console /machine:amd64" CACHE STRING "" FORCE)
 
 
 # Install dir is a function of the CREO dir.
@@ -262,7 +262,7 @@ target_link_libraries(creo-g ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LI
 foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
   set(DAT_STARTUP "spawn")
-  set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/creo-g.exe")
+  set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-g.exe")
   set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
   configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-debug.dat @ONLY)
 endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
