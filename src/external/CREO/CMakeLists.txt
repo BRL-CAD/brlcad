@@ -29,6 +29,9 @@ foreach(bflag ${flaglists})
 endforeach(bflag ${flaglists})
 mark_as_advanced(CMAKE_CONFIGURATION_TYPES)
 
+# Install dir is a function of the CREO dir.
+mark_as_advanced(CMAKE_INSTALL_PREFIX)
+
 # CREO Definitions (see example nmake file in your CREO install to
 # double check these and modify if needed)
 set(CREO_DEFS "-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V100_SDK71_")
@@ -42,10 +45,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" FORCE)
 set(CMAKE_SHARED_LINKER_FLAGS "/subsystem:console /machine:amd64" CACHE STRING "" FORCE)
 set(CMAKE_EXE_LINKER_FLAGS "/subsystem:console /machine:amd64" CACHE STRING "" FORCE)
 
-
-# Install dir is a function of the CREO dir.
-mark_as_advanced(CMAKE_INSTALL_PREFIX)
-
 # User must locate CREO and BRL-CAD
 if(NOT DEFINED BRLCAD_ROOT_DIR)
   set(BRLCAD_ROOT_DIR "C:/Program Files/BRLCAD X.XX.X" CACHE PATH "BRL-CAD root directory")
@@ -54,6 +53,8 @@ if(NOT DEFINED CREO_ROOT_DIR)
   set(CREO_ROOT_DIR "C:/Program Files/PTC/Creo XXX" CACHE PATH "CREO root directory")
 endif(NOT DEFINED CREO_ROOT_DIR)
 
+# If paths haven't been set, hault configure immediately so the user
+# can set them.  We need this information for subsequent steps.
 set(have_paths 1)
 if(NOT EXISTS "${BRLCAD_ROOT_DIR}")
   set(have_paths 0)
@@ -67,6 +68,7 @@ if(NOT have_paths)
   message(FATAL_ERROR "Correct path settings to continue with configure")
 endif(NOT have_paths)
 
+# Install dir is a function of the CREO dir.
 set(CMAKE_INSTALL_PREFIX "${CREO_ROOT_DIR}" CACHE PATH "Installation path" FORCE)
 
 # CREO supports a specific toolset.  Based on the version, check
@@ -184,10 +186,10 @@ set(WIN_LIBS
   ws2_32.lib
   )
 
-
-
 # We will need copies of the BRL-CAD dlls along with the creo-brl.dll to make
-# a stand-alone package.
+# a stand-alone package, and we want the dlls in the same directories as our
+# build target dirs for the .exe version to find.  We'll link against the
+#.lib files so build that list at the same time.
 set(BRLCAD_LIBS
   libbg
   libbn
@@ -214,6 +216,7 @@ foreach(blib ${BRLCAD_LIBS})
     configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/${blib}.dll COPYONLY)
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
+  # Sigh - zlib doesn't follow the general pattern
   if("${blib}" STREQUAL "zlib1")
     set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/zlib.lib")
   else("${blib}" STREQUAL "zlib1")
@@ -295,7 +298,7 @@ if(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}/creo-brl-msg.txt" OR NOT
 endif(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}/creo-brl-msg.txt" OR NOT rfiles_installed)
 
 add_custom_target(UNLOCK
-  COMMAND "${CREO_PTK_UNLOCKER}" ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dll
+  COMMAND "${CREO_PTK_UNLOCKER}" ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIG)/creo-brl.dll
   DEPENDS CREO-G
   COMMENT "Unlocking CREO-G dll..."
   )
