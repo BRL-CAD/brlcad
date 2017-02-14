@@ -28,6 +28,17 @@
 
 __BEGIN_DECLS
 
+/* TODO: Plan for replacement of bu_list with a more memory coherent
+ * vector/array storage, ideally lockfree and threadsafe but not
+ * strictly necessary.  Some options to consider and benchmark:
+ *
+ *   http://libcds.sourceforge.net
+ *   https://code.google.com/archive/p/ccl/
+ *   http://sglib.sourceforge.net
+ *   tbb::concurrent_vector
+ *   std::vector et. al
+ */
+
 /*----------------------------------------------------------------------*/
 /** @addtogroup bu_list
  *
