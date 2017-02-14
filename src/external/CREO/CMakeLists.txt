@@ -205,7 +205,11 @@ foreach(blib ${BRLCAD_LIBS})
     configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/${blib}.dll COPYONLY)
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
-  set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/${blib}.lib")
+  if("${blib}" STREQUAL "zlib1")
+    set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/zlib.lib")
+  else("${blib}" STREQUAL "zlib1")
+    set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/${blib}.lib")
+  endif("${blib}" STREQUAL "zlib1")
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll DESTINATION "${MDIR}/${CREO_OBJ_DIR}")
   if(NOT EXISTS ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}/${blib}.dll)
     set(brlcadlibs_notinstalled "${brlcadlibs_notinstalled}\n     ${blib}.dll")
@@ -219,6 +223,8 @@ endif(brlcadlibs_notinstalled)
 # Set the relevant include directories
 include_directories(
   "${BRLCAD_ROOT_DIR}/include/brlcad"
+  "${BRLCAD_ROOT_DIR}/include"
+  "${BRLCAD_ROOT_DIR}/include/openNURBS"
   "${CREO_PTK_INCDIR}"
   "${CREO_PTK_APPLS_INCDIR}"
   )
