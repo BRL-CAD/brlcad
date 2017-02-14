@@ -69,6 +69,15 @@ endif(NOT have_paths)
 
 set(CMAKE_INSTALL_PREFIX "${CREO_ROOT_DIR}" CACHE PATH "Installation path" FORCE)
 
+# CREO supports a specific toolset.  Based on the version, check
+# if we are using the supported toolset and warn if we aren't.
+string(REGEX REPLACE "[A-Za-z:/ ]*([0-9.]+).*" "\\1" CREO_VERSION "${CREO_ROOT_DIR}")
+if("${CREO_VERSION}" VERSION_GREATER "2.9999" AND "${CREO_VERSION}" VERSION_LESS "4.0")
+  if(NOT "${CMAKE_GENERATOR_TOOLSET}" STREQUAL "v110_xp")
+    message(WARNING "CREO version is ${CREO_VERSION}, but supplied generator toolset is not set to v110_xp.  To use v110_xp, specify it as the -T option in the inital CMake GUI dialog thrown up by \"Configure\" below the dropdown menu where the Visual Studio version is chosen")
+  endif(NOT "${CMAKE_GENERATOR_TOOLSET}" STREQUAL "v110_xp")
+endif("${CREO_VERSION}" VERSION_GREATER "2.9999" AND "${CREO_VERSION}" VERSION_LESS "4.0")
+
 # There will be a sub-directory that is specific to the installed
 # version of CREO - find it
 file(GLOB MDIR RELATIVE "${CREO_ROOT_DIR}" "${CREO_ROOT_DIR}/M*" )
