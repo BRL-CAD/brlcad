@@ -37,6 +37,7 @@ __BEGIN_DECLS
  *   http://sglib.sourceforge.net
  *   tbb::concurrent_vector
  *   std::vector et. al
+ *   https://github.com/xant/libhl
  */
 
 /*----------------------------------------------------------------------*/
