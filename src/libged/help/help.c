@@ -101,7 +101,6 @@ help_tokenize(size_t count, const char **files)
     struct bu_mapped_file *data;
 
 #define MAX_WORDS 81920
-#define MAX_CHARS 32
     struct bu_vls words[MAX_WORDS] = {{0}};
     size_t cnt[MAX_WORDS] = {0};
     size_t indexed = 0;
@@ -267,15 +266,6 @@ help_cmd(void)
 
     BU_GET(hp, struct bu_list);
     BU_LIST_INIT(hp);
-
-#if 0
-    BU_LIST_MAGIC_SET(&(cmd[0].l), GED_CMD_MAGIC);
-    BU_LIST_MAGIC_SET(&(cmd[1].l), GED_CMD_MAGIC);
-    BU_LIST_MAGIC_SET(&(cmd[2].l), GED_CMD_MAGIC);
-    BU_LIST_MAGIC_SET(&(cmd[3].l), GED_CMD_MAGIC);
-    BU_LIST_MAGIC_SET(&(cmd[4].l), GED_CMD_MAGIC);
-    BU_LIST_MAGIC_SET(&(cmd[5].l), GED_CMD_MAGIC);
-#endif
 
     BU_LIST_PUSH(hp, &(cmd[0].l));
     BU_LIST_PUSH(hp, &(cmd[1].l));
