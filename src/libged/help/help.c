@@ -101,7 +101,7 @@ help_tokenize(size_t count, const char **files)
     struct bu_mapped_file *data;
 
 #define MAX_WORDS 81920
-    struct bu_vls words[MAX_WORDS] = {{0}};
+    struct bu_vls words[MAX_WORDS] = {BU_VLS_INIT_ZERO};
     size_t cnt[MAX_WORDS] = {0};
     size_t indexed = 0;
 
