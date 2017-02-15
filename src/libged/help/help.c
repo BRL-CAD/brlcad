@@ -20,61 +20,62 @@
 
 #include "common.h"
 
+#include <ctype.h>
+
 #include "ged.h"
 
 
-int
-ged_help(struct ged *gedp, int argc, const char *argv[])
+/**
+ * get a list of all the files under a given 'dir' filepath,
+ * dynamically allocated.  returns the number of files found in an
+ * argv array that the caller must free via bu_argv_free().
+ */
+HIDDEN size_t
+help_files(const char *dir, char ***files)
 {
-    char *dir;
-    size_t i, count, files_count, dir_count;
-    char **entries = NULL;
-    char **files;
     char **dirs;
-    size_t max_count = 2048;
+    char **entries;
+    char **listing;
+    size_t i, count, listing_count, dir_count;
+    size_t max_count = 2048; /* pfa number based on current doc count */
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (argc < 1 || !argv)
-	return -1;
+    if (!dir || !files)
+	return 0;
 
     count = 0;
-    entries = (char **)bu_calloc(sizeof(char **), max_count, "allocate entries");
-    dirs = (char **)bu_calloc(sizeof(char **), max_count, "allocate dirs");
+    entries = *files = (char **)bu_calloc(max_count, sizeof(char *), "allocate entries");
+    dirs = (char **)bu_calloc(max_count, sizeof(char *), "allocate dirs");
 
-    dir = bu_strdup(bu_brlcad_dir("doc", 0));
-
-    dirs[0] = dir;
+    dirs[0] = bu_strdup(dir);
     dir_count = 1;
-    files_count = 0;
+    listing_count = 0;
 
     while (dir_count-- > 0) {
 	char *curdir = dirs[dir_count];
 
 	bu_log("Processing %s\n", curdir);
-	files_count = bu_file_list(curdir, NULL, &files);
+	listing_count = bu_file_list(curdir, NULL, &listing);
 
-	for (i = 0; i < files_count; i++) {
+	for (i = 0; i < listing_count; i++) {
 	    struct bu_vls filepath = BU_VLS_INIT_ZERO;
 
-	    /* skip the canonical dirs */
-	    if (BU_STR_EQUIV(files[i], ".") || BU_STR_EQUIV(files[i], ".."))
-	    {
+	    /* skip the canonical dirs and unreadable paths */
+	    if (BU_STR_EQUIV(listing[i], ".") || BU_STR_EQUIV(listing[i], "..")) {
 		continue;
 	    }
 
-	    bu_vls_sprintf(&filepath, "%s%c%s", curdir, BU_DIR_SEPARATOR, files[i]);
+	    bu_vls_sprintf(&filepath, "%s%c%s", curdir, BU_DIR_SEPARATOR, listing[i]);
+	    if (!bu_file_readable(bu_vls_cstr(&filepath))) {
+		continue;
+	    }
 
 	    if (!bu_file_directory(bu_vls_cstr(&filepath))) {
-		bu_log("FILE: %s\n", bu_vls_cstr(&filepath));
 		if (count > max_count-1) {
 		    max_count *= 2;
-		    entries = (char **)bu_realloc(entries, sizeof(char **) * max_count, "increase entries");
+		    entries = *files = (char **)bu_realloc(*files, sizeof(char *) * max_count, "increase entries");
 		}
 		entries[count++] = bu_vls_strdup(&filepath);
 	    } else {
-		bu_log(" DIR: %s\n", bu_vls_cstr(&filepath));
 		dirs[dir_count] = bu_strdup(bu_vls_cstr(&filepath));
 		dir_count++;
 	    }
@@ -83,11 +84,117 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	bu_free(curdir, "free curdir");
+	dirs[dir_count] = NULL;
     }
 
-    bu_argv_free(files_count, files);
-    bu_argv_free(count, entries);
+    bu_argv_free(listing_count, listing);
+
+    return count;
+}
+
+
+HIDDEN void
+help_tokenize(size_t count, const char **files)
+{
+    size_t bytes;
+    size_t zeros;
+    struct bu_mapped_file *data;
+
+#define MAX_WORDS 81920
+#define MAX_CHARS 32
+    struct bu_vls words[MAX_WORDS] = {{0}};
+    size_t cnt[MAX_WORDS] = {0};
+    size_t indexed = 0;
+
+    while (count-- > 0) {
+	struct bu_vls word = BU_VLS_INIT_ZERO;
+
+	/* lotta words? leave an empty spot */
+	if (indexed+1 > MAX_WORDS-1) {
+	    continue;
+	}
+
+	bytes = zeros = 0;
+	data = bu_open_mapped_file(files[count], NULL);
+	if (!data)
+	    continue;
+
+	/* binary files have a propensity for nul bytes */
+	for (bytes = 0; bytes < data->buflen; bytes++) {
+	    if (((const char *)data->buf)[bytes] == '\0') {
+		zeros++;
+		if (zeros > 1) {
+		    break;
+		}
+	    }
+	}
+
+	/* skip binary */
+	if (zeros) {
+	    bu_close_mapped_file(data);
+	    continue;
+	}
+
+	/* tokenize one file */
+	bu_vls_trunc(&word, 0);
+	for (bytes = 0; bytes < data->buflen && indexed+1 <= MAX_WORDS-1; bytes++) {
+	    int c = ((const char *)data->buf)[bytes];
+	    if (isalnum(c)) {
+		bu_vls_putc(&word, c);
+	    } else if (bu_vls_strlen(&word) > 0) {
+		size_t i;
+		for (i = 0; i < indexed; i++) {
+		    if (BU_STR_EQUIV(bu_vls_cstr(&words[i]), bu_vls_cstr(&word))) {
+			bu_vls_trunc(&word, 0);
+			cnt[i]++;
+			break;
+		    }
+		}
+		if (i == indexed) {
+		    /* found a new word */
+		    /* bu_log("%zu WORD: %s\n", indexed, bu_vls_cstr(&word)); */
+
+		    bu_vls_init(&words[indexed]);
+		    bu_vls_strcpy(&words[indexed], bu_vls_cstr(&word));
+		    bu_vls_trunc(&word, 0);
+		    cnt[indexed]++;
+		    indexed++;
+		}
+	    }
+	}
+
+	bu_log("FILE: %s (%zu bytes, %zu words)\n", files[count], data->buflen, indexed);
+
+	bu_close_mapped_file(data);
+    }
+}
+
+
+int
+ged_help(struct ged *gedp, int argc, const char *argv[])
+{
+    char *dir;
+    char **entries;
+    size_t count;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc < 1 || !argv)
+	return -1;
+
+    /* get our doc dir */
+    dir = bu_strdup(bu_brlcad_dir("doc", 0));
+
+    /* get recursive list of documentation files */
+    count = help_files(dir, &entries);
+    bu_log("Found %zu files\n", count);
+
+    /* condense the file into searchable tokens */
+    help_tokenize(count, (const char **)entries);
+
     bu_free(dir, "free doc dir");
+    bu_argv_free(count, entries);
 
     return 0;
 }
