@@ -60,7 +60,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     ProAsmcomppath comp_path;
     ProMatrix xform;
     ProMdlType type;
-    ProName name;
+    wchar_t name[10000];
     ProCharLine astr;
     ProFileName msgfil;
     struct app_data *adata = (struct app_data *)app_data;
