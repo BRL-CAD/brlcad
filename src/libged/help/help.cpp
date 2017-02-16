@@ -25,6 +25,7 @@
 
 #include "ged.h"
 
+HIDDEN struct bu_list *help_cmd(void);
 
 /**
  * get a list of all the files under a given 'dir' filepath,
@@ -264,7 +265,6 @@ HIDDEN int
 help_load(struct ged *gedp)
 {
     int ret = 0;
-    HIDDEN struct bu_list *help_cmd(void);
     struct bu_list *hp = help_cmd();
     struct ged_cmd *cmd;
 
