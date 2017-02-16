@@ -185,7 +185,7 @@ cmds_add(struct ged *gedp, const struct ged_cmd *cmd)
 {
     struct ged_cmd *copy;
     BU_GET(copy, struct ged_cmd);
-    *copy = *cmd; /* struct copy */
+    memcpy(copy, cmd, sizeof(struct ged_cmd));
     BU_LIST_INIT_MAGIC(&(copy->l), GED_CMD_MAGIC);
     BU_LIST_PUSH(&(gedp->cmds->l), copy);
     return 0;

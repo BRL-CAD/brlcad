@@ -251,7 +251,7 @@ struct ged_cmd {
     struct bu_list l;
 
     const char *name;
-    char description[80];
+    const char description[80];
     const char *manpage;
 
     int (*load)(struct ged *);
