@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <ctype.h>
+#include <string>
 
 #include "ged.h"
 
@@ -100,18 +101,29 @@ help_tokenize(size_t count, const char **files)
     size_t zeros;
     struct bu_mapped_file *data;
 
-#define MAX_WORDS 81920
+#define USE_ARRAY 0
+#define MAX_WORDS 820000
+#if USE_ARRAY
     struct bu_vls words[MAX_WORDS] = {BU_VLS_INIT_ZERO};
+#else
+    struct bu_hash_tbl *hash;
+#endif
     size_t cnt[MAX_WORDS] = {0};
     size_t indexed = 0;
+
+#if !USE_ARRAY
+    hash = bu_hash_create(2048);
+#endif
 
     while (count-- > 0) {
 	struct bu_vls word = BU_VLS_INIT_ZERO;
 
+#if USE_ARRAY
 	/* lotta words? leave an empty spot */
 	if (indexed+1 > MAX_WORDS-1) {
 	    continue;
 	}
+#endif
 
 	bytes = zeros = 0;
 	data = bu_open_mapped_file(files[count], NULL);
@@ -135,12 +147,21 @@ help_tokenize(size_t count, const char **files)
 	}
 
 	/* tokenize one file */
-	bu_vls_trunc(&word, 0);
-	for (bytes = 0; bytes < data->buflen && indexed+1 <= MAX_WORDS-1; bytes++) {
+	/* && indexed+1 <= MAX_WORDS-1 */
+	for (bytes = 0; bytes < data->buflen; bytes++) {
+	    const uint8_t *wordbytes;
+	    size_t wordbyteslen;
 	    int c = ((const char *)data->buf)[bytes];
+	    int *cntptr;
+
 	    if (isalnum(c)) {
-		bu_vls_putc(&word, c);
+		bu_vls_putc(&word, tolower(c));
 	    } else if (bu_vls_strlen(&word) > 0) {
+		wordbytes = (const uint8_t *)bu_vls_cstr(&word);
+		wordbyteslen = bu_vls_strlen(&word);
+		bu_log("WORD: %s\n", (const char *)wordbytes);
+
+#if USE_ARRAY
 		size_t i;
 		for (i = 0; i < indexed; i++) {
 		    if (BU_STR_EQUIV(bu_vls_cstr(&words[i]), bu_vls_cstr(&word))) {
@@ -159,13 +180,53 @@ help_tokenize(size_t count, const char **files)
 		    cnt[indexed]++;
 		    indexed++;
 		}
-	    }
+#else
+		cntptr = (int *)bu_hash_get(hash, wordbytes, wordbyteslen);
+		if (cntptr) {
+/*		    bu_log("found existing %s\n", (char *)wordbytes); */
+		    (*cntptr)++;
+		} else {
+		    int ret = bu_hash_set(hash, wordbytes, wordbyteslen, &cnt[indexed]);
+/*		    bu_log("adding %s\n", (char *)wordbytes); */
+		    if (ret != 1)
+ 			bu_bomb("totally expected a new entry\n");
+		    cnt[indexed]++;
+		    indexed++;
+
+		}
+#endif
+		bu_vls_trunc(&word, 0);
+  	    }
 	}
 
 	bu_log("FILE: %s (%zu bytes, %zu words)\n", files[count], data->buflen, indexed);
 
 	bu_close_mapped_file(data);
     }
+
+    bu_log("FOUND:\n");
+
+#if USE_ARRAY
+    {
+	size_t i;
+	for (i = 0; i < indexed; i++) {
+	    bu_log("%s => %zu\n", (const char *)bu_vls_cstr(&words[i]), cnt[i]);
+	}
+    }
+#else
+    {
+	std::string foo = "bar";
+	struct bu_hash_entry *e = bu_hash_next(hash, NULL);
+	while (e) {
+	    uint8_t *found;
+	    size_t foundlen;
+	    bu_hash_key(e, &found, &foundlen);
+	    bu_log("%s => %zu\n", (char *)found, *(size_t *)bu_hash_value(e, NULL));
+	    e = bu_hash_next(hash, e);
+	}
+    }
+    bu_hash_destroy(hash);
+#endif
 }
 
 
