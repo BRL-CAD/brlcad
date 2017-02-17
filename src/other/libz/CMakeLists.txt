@@ -157,11 +157,11 @@ endif(MINGW)
 add_library(zlib SHARED ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 
 if(BUILD_STATIC_LIBS)
-	add_library(zlibstatic STATIC ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+	add_library(zlib-static STATIC ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 	if(CMAKE_CL_64)
-		set_target_properties(zlibstatic PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
+		set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
 	elseif(MSVC)
-		set_target_properties(zlibstatic PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x86")
+		set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x86")
 	endif(CMAKE_CL_64)
 endif(BUILD_STATIC_LIBS)
 
@@ -182,7 +182,7 @@ endif()
 if(UNIX)
     # On unix-like platforms the library is almost always called libz
 	 if(BUILD_STATIC_LIBS)
-		 set_target_properties(zlib zlibstatic PROPERTIES OUTPUT_NAME z)
+		 set_target_properties(zlib zlib-static PROPERTIES OUTPUT_NAME z)
 	 endif(BUILD_STATIC_LIBS)
 	 if(NOT APPLE AND BUILD_SHARED_LIBS)
      set_target_properties(zlib PROPERTIES LINK_FLAGS "-Wl,--version-script,\"${CMAKE_CURRENT_SOURCE_DIR}/zlib.map\"")
@@ -202,7 +202,7 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
 		 LIBRARY DESTINATION "${LIB_DIR}" )
 	endif(BUILD_SHARED_LIBS)
 	if(BUILD_STATIC_LIBS)
-    install(TARGETS zlibstatic
+    install(TARGETS zlib-static
 		 RUNTIME DESTINATION "${BIN_DIR}"
 		 ARCHIVE DESTINATION "${LIB_DIR}"
 		 LIBRARY DESTINATION "${LIB_DIR}" )

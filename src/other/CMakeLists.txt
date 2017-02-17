@@ -106,7 +106,7 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ${zlib_ALIASES} FIND_NAME BRLCADZLIB)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake")
 SetTargetFolder(zlib "Third Party Libraries")
-SetTargetFolder(zlibstatic "Third Party Libraries")
+SetTargetFolder(zlib-static "Third Party Libraries")
 SetTargetFolder(example "Third Party Executables")
 SetTargetFolder(minigzip "Third Party Executables")
 
