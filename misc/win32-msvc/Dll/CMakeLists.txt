@@ -46,8 +46,11 @@ target_link_libraries(BrlcadCore
   libbrep-static
   libvds-static
   libwdb-static
+  libnmg-static
+  y2038-static
   p2t-static
   zlib-static
+  lz4-static
   openNURBS-static
   tcl85
   )
@@ -123,8 +126,11 @@ target_link_libraries(brlcad
   libbrep-static
   libvds-static
   libwdb-static
+  libnmg-static
+  y2038-static
   p2t-static
   zlib-static
+  lz4-static
   openNURBS-static
   ${COREINTERFACE_MSVC_LIBRARIES}
   )
