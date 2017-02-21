@@ -613,6 +613,18 @@ proc drawPair {left right} {
 
 # All GeometryChecker stuff is in the GeometryChecker namespace
 proc check {{filename ""} {parent ""}} {
+
+    if {"$filename" == ""} {
+	set db_path [opendb]
+	set dir [file dirname $db_path]
+	set name [file tail $db_path]
+	set ol_path [file join $dir "${name}.ck" "ck.${name}.overlaps"]
+
+	if {[file exists $ol_path]} {
+	    set filename $ol_path
+	}
+    }
+
     if {"$filename" != "" && ![file exists "$filename"]} {
 	puts "ERROR: unable to open $filename"
 	return
