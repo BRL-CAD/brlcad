@@ -136,15 +136,6 @@ catch {delete class GeometryChecker} error
     itk_component add headerLabelStatus {
     	ttk::label $itk_component(headerFrame).headerLabelStatus -text "Data Not Yet Loaded"
     } {}
-    itk_component add headerLabelDraw {
-    	ttk::label $itk_component(headerFrame).headerLabelDraw -text "Autodraw" -padding 2
-    } {}
-    itk_component add headerComboDraw {
-    	ttk::combobox $itk_component(headerFrame).headerComboDraw \
-	    -state readonly \
-	    -textvariable [scope _drawMode] \
-	    -values {"Never" "One Selection" "Multi-Selection"}
-    } {}
 
     itk_component add checkFrame {
     	ttk::frame $itk_interior.checkFrame -padding 2 
@@ -205,10 +196,9 @@ catch {delete class GeometryChecker} error
     $_ck heading Right -text "Right" -image _arrowOff -anchor center -command [list $this sortBy Right 0]
     $_ck heading Size -text "Vol. Est." -image _arrowOff -anchor e -command [list $this sortBy Size 0]
 
-    pack $itk_component(headerFrame) -side top -fill x
-    pack $itk_component(headerLabelStatus) -side left
-    pack $itk_component(headerComboDraw) -side right
-    pack $itk_component(headerLabelDraw) -side right
+
+    pack $itk_component(headerFrame) -side top -fill both
+    pack $itk_component(headerLabelStatus) -side top -anchor nw
 
     pack $itk_component(checkFrame) -expand true -fill both -anchor center
     pack $itk_component(checkFrame).checkScroll -side right -fill y 
@@ -217,7 +207,6 @@ catch {delete class GeometryChecker} error
     pack $itk_component(checkButtonFrame) -side bottom -expand true -fill both
     pack $itk_component(checkButtonFrame).checkGrip -side right -anchor se
     pack $itk_component(checkButtonFrame).buttonRight -side right -pady 10
-#   pack $itk_component(checkButtonFrame).buttonBoth -side right -pady 10
     pack $itk_component(checkButtonFrame).buttonLeft -side right -padx 20 -pady 10
     pack $itk_component(checkButtonFrame).buttonPrev -side left -padx 20 -pady 10
     pack $itk_component(checkButtonFrame).buttonNext -side left -pady 10
@@ -227,8 +216,6 @@ catch {delete class GeometryChecker} error
     bind $itk_component(checkButtonFrame).buttonPrev <Down> [list $this goNext]
     bind $itk_component(checkButtonFrame).buttonNext <Up> [list $this goPrev]
     bind $itk_component(checkButtonFrame).buttonNext <Down> [list $this goNext]
-
-    $itk_component(headerComboDraw) current 1
 
     bind $_ck <<TreeviewSelect>> [list $this display]
 }
@@ -468,12 +455,6 @@ body GeometryChecker::display {} {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
 	    lappend drawing $left $right
 	}
-    }
-
-    # drawing is contingent on draw mode
-    if {$_drawMode == "Never" || ($_drawMode == "One Selection" && [llength $drawing] > 2)} {
-	set drawing {}
-	set sset ""
     }
 
     # erase anything we drew previously that we don't still need
