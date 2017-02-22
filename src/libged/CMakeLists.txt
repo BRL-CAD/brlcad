@@ -134,6 +134,7 @@ set(LIBGED_SOURCES
   grid2view_lu.c
   group.c
   heal.c
+  help/help.cpp
   hide.c
   how.c
   human.c

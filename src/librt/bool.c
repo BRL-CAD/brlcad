@@ -212,23 +212,27 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	if (segp->seg_stp->st_aradius < INFINITY &&
 	    !(segp->seg_in.hit_dist >= -INFINITY &&
 	      segp->seg_out.hit_dist <= INFINITY)) {
-	    bu_log("rt_boolweave:  Defective %s segment %s (%.18e, %.18e) %d, %d\n",
-		   OBJ[segp->seg_stp->st_id].ft_name,
-		   segp->seg_stp->st_name,
-		   segp->seg_in.hit_dist,
-		   segp->seg_out.hit_dist,
-		   segp->seg_in.hit_surfno,
-		   segp->seg_out.hit_surfno);
+	    if (RT_G_DEBUG&DEBUG_PARTITION) {
+		bu_log("rt_boolweave:  Defective %s segment %s (%.18e, %.18e) %d, %d\n",
+		       OBJ[segp->seg_stp->st_id].ft_name,
+		       segp->seg_stp->st_name,
+		       segp->seg_in.hit_dist,
+		       segp->seg_out.hit_dist,
+		       segp->seg_in.hit_surfno,
+		       segp->seg_out.hit_surfno);
+	    }
 	    continue;
 	}
 	if (segp->seg_in.hit_dist > segp->seg_out.hit_dist) {
-	    bu_log("rt_boolweave:  Inside-out %s segment %s (%.18e, %.18e) %d, %d\n",
-		   OBJ[segp->seg_stp->st_id].ft_name,
-		   segp->seg_stp->st_name,
-		   segp->seg_in.hit_dist,
-		   segp->seg_out.hit_dist,
-		   segp->seg_in.hit_surfno,
-		   segp->seg_out.hit_surfno);
+	    if (RT_G_DEBUG&DEBUG_PARTITION) {
+		bu_log("rt_boolweave:  Inside-out %s segment %s (%.18e, %.18e) %d, %d\n",
+		       OBJ[segp->seg_stp->st_id].ft_name,
+		       segp->seg_stp->st_name,
+		       segp->seg_in.hit_dist,
+		       segp->seg_out.hit_dist,
+		       segp->seg_in.hit_surfno,
+		       segp->seg_out.hit_surfno);
+	    }
 	    continue;
 	}
 

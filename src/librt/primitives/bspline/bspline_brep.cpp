@@ -71,7 +71,7 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	}
 
 	/* nurb->Dump(log); */
-	bu_log("NURBS surface %d %s valid\n", i, nurb->IsValid(&log) ? "is" : "is not");
+	/* bu_log("NURBS surface %d %s valid\n", i, nurb->IsValid(&log) ? "is" : "is not"); */
 
 	(*b)->m_S.Append(nurb);
 	int sindex = (*b)->m_S.Count();

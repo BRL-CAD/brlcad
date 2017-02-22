@@ -16,4 +16,6 @@
  /**  @defgroup chull Convex Hulls */
  /** @ingroup libbg */
  /**  @defgroup obr Oriented Bounding Rectangles/Rectangular Cuboids*/
+ /** @ingroup libbg */
+ /**  @defgroup pointgen Point Generation*/
 

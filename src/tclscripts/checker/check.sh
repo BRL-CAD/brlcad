@@ -91,7 +91,16 @@ for obj in $tops ; do
 	    if ! [ -f $OBJ.$az.$el ]; then
 		echo "WARNING: $OBJ.$az.$el is MISSING"
 	    else
-		grep "maximum depth" $OBJ.$az.$el | sed 's/[<>]//g' | sed 's/[,:] / /g' | sed 's/^[[:space:]]*//g' | sed 's/mm[[:space:]]*$//g' | cut -f 1,2,3,9 -d' ' | awk '{print $1, $2, $3 * $4}' >> $OBJ.pairings
+		sed -n '/maximum depth/{
+		    s/[<>]//g
+		    s/[,:] / /g
+		    s/^[[:space:]]*//g
+		    s/mm[[:space:]]*$//g
+		    p
+		    }' $OBJ.$az.$el |
+		    cut -f 1,2,3,9 -d ' ' |
+		    awk '{if ($2 < $1) { tmp = $1; $1 = $2; $2 = tmp}; print $1, $2, $3 * $4}' >> $OBJ.pairings
+
 		cat $OBJ.pairings >> $JOB.pairings
 	    fi
 	done
