@@ -46,12 +46,12 @@ make_name(const std::string &base)
 {
     const char * const prefix = "RtDebugDraw::";
 
-    std::ostringstream sstream;
-    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
+    std::ostringstream stream;
+    stream.exceptions(std::ostream::failbit | std::ostream::badbit);
 
-    sstream << prefix << base << static_cast<std::size_t>(drand48() * 1.0e5 + 0.5)
-	    << ".s";
-    return sstream.str();
+    stream << prefix << base << static_cast<std::size_t>(drand48() * 1.0e5 + 0.5) <<
+	   ".s";
+    return stream.str();
 }
 
 
@@ -60,20 +60,20 @@ apply_color(db_i &db, const std::string &name, const btVector3 &color)
 {
     RT_CK_DBI(&db);
 
-    std::ostringstream sstream;
-    sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
+    std::ostringstream stream;
+    stream.exceptions(std::ostream::failbit | std::ostream::badbit);
 
     for (std::size_t i = 0; i < 3; ++i) {
 	if (!(0.0 <= color[i] && color[i] <= 1.0))
 	    bu_bomb("invalid color");
 
-	sstream << static_cast<unsigned>(color[i] * 255.0 + 0.5);
+	stream << static_cast<unsigned>(color[i] * 255.0 + 0.5);
 
 	if (i != 2)
-	    sstream.put(' ');
+	    stream.put(' ');
     }
 
-    if (db5_update_attribute(name.c_str(), "color", sstream.str().c_str(), &db))
+    if (db5_update_attribute(name.c_str(), "color", stream.str().c_str(), &db))
 	bu_bomb("db5_update_attribute() failed");
 }
 
@@ -100,6 +100,9 @@ RtDebugDraw::RtDebugDraw(db_i &db) :
 void
 RtDebugDraw::reportErrorWarning(const char * const message)
 {
+    if (!message)
+	bu_bomb("missing argument");
+
     bu_log("WARNING: Bullet: %s\n", message);
     bu_bomb(message);
 }
@@ -109,12 +112,9 @@ void
 RtDebugDraw::drawLine(const btVector3 &from, const btVector3 &to,
 		      const btVector3 &color)
 {
-    point_t from_pt = VINIT_ZERO;
-    vect_t height = VINIT_ZERO;
-    VMOVE(from_pt, from);
-    VMOVE(height, to - from);
-
     const std::string name = make_name("line");
+    const point_t from_pt = {V3ARGS(from)};
+    const vect_t height = {V3ARGS(to - from)};
 
     if (mk_rcc(m_db.dbi_wdbp, name.c_str(), from_pt, height, 1.0e-8))
 	bu_bomb("mk_rcc() failed");
@@ -125,8 +125,11 @@ RtDebugDraw::drawLine(const btVector3 &from, const btVector3 &to,
 
 void
 RtDebugDraw::draw3dText(const btVector3 &UNUSED(location),
-			const char * const UNUSED(text))
+			const char * const text)
 {
+    if (!text)
+	bu_bomb("missing argument");
+
     bu_bomb("not implemented");
 }
 
@@ -134,13 +137,10 @@ RtDebugDraw::draw3dText(const btVector3 &UNUSED(location),
 void RtDebugDraw::drawAabb(const btVector3 &from, const btVector3 &to,
 			   const btVector3 &color)
 {
-    point_t min_pt = VINIT_ZERO, max_pt = VINIT_ZERO;
-    VMOVE(min_pt, from);
-    VMIN(min_pt, to);
-    VMOVE(max_pt, from);
-    VMAX(max_pt, to);
-
     const std::string name = make_name("aabb");
+    point_t min_pt = {V3ARGS(from)}, max_pt = {V3ARGS(from)};
+    VMIN(min_pt, to);
+    VMAX(max_pt, to);
 
     if (mk_rpp(m_db.dbi_wdbp, name.c_str(), min_pt, max_pt))
 	bu_bomb("mk_rpp() failed");
@@ -154,16 +154,14 @@ RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
 			      const btVector3 &normal_world_on_b, const btScalar distance,
 			      const int UNUSED(lifetime), const btVector3 &color)
 {
-    point_t point_on_b_pt = VINIT_ZERO;
-    VMOVE(point_on_b_pt, point_on_b);
-
     const std::string name = make_name("contact");
+    const point_t point_on_b_pt = {V3ARGS(point_on_b)};
 
-    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt, 3.0))
+    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt, distance / 10.0))
 	bu_bomb("mk_sph() failed");
 
     apply_color(m_db, name, color);
-    drawLine(point_on_b, normal_world_on_b * distance, color);
+    drawLine(point_on_b, point_on_b + normal_world_on_b * distance, color);
 }
 
 

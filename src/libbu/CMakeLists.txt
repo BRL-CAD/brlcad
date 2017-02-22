@@ -9,10 +9,9 @@ if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # locally used but not needed by users of the library
-set(BU_LOCAL_INCLUDE_DIRS 
+set(BU_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/ext
-  ${CMAKE_CURRENT_SOURCE_DIR}/ext/y2038
+  ${CMAKE_CURRENT_SOURCE_DIR}/y2038
   ${REGEX_INCLUDE_DIR}
   )
 if (${UUID_INCLUDE_DIR})
@@ -36,7 +35,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
 
 # Year 2038+ support lib
-BRLCAD_ADDLIB(y2038 "ext/y2038/time64.c" "")
+BRLCAD_ADDLIB(y2038 "y2038/time64.c" "")
 if(CPP_DLL_DEFINES)
   set_property(TARGET y2038 APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_EXPORTS")
 endif(CPP_DLL_DEFINES)
@@ -145,12 +144,12 @@ set(bu_ignore_files
   vfont.h
   vls_vprintf.h
   TODO.binary_attributes
-  ext/uce-dirent.h
-  ext/y2038/LICENSE
-  ext/y2038/README.txt
-  ext/y2038/time64.h
-  ext/y2038/time64_config.h
-  ext/y2038/time64_limits.h
+  uce-dirent.h
+  y2038/LICENSE
+  y2038/README.txt
+  y2038/time64.h
+  y2038/time64_config.h
+  y2038/time64_limits.h
   )
 CMAKEFILES(${bu_ignore_files})
 

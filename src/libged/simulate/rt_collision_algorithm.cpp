@@ -32,16 +32,141 @@
 
 #include "rt_collision_algorithm.hpp"
 #include "rt_motion_state.hpp"
+#include "utility.hpp"
 
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "rt/pattern.h"
+#include "rt/tol.h"
 
 #include <cmath>
 
 
 namespace
 {
+
+
+static const bool use_persistent_contacts = false;
+
+
+HIDDEN btVector3
+get_normal_world_on_b(const btRigidBody &body_a, const btRigidBody &body_b)
+{
+    // calculate the normal of the contact points as the resultant of the velocities -A and B
+    btVector3 result(0.0, 0.0, 0.0);
+
+    if (!body_a.getLinearVelocity().fuzzyZero())
+	result = -body_a.getLinearVelocity().normalized();
+
+    if (!body_b.getLinearVelocity().fuzzyZero())
+	result += body_b.getLinearVelocity().normalized();
+
+    if (!result.fuzzyZero())
+	result.normalize();
+    else {
+	// near-zero velocities for both objects
+	// objects are nearly motionless and may be either near each other or overlapping
+	// TODO: implement a better strategy
+
+	result = body_b.getWorldTransform().getOrigin()
+		 - body_a.getWorldTransform().getOrigin();
+
+	if (!result.fuzzyZero())
+	    result.normalize();
+	else
+	    result = btVector3(0.0, 0.0, 1.0);
+    }
+
+    return result;
+}
+
+
+HIDDEN std::pair<btVector3, btVector3>
+get_overlap_aabb(const btRigidBody &body_a, const btRigidBody &body_b)
+{
+    std::pair<btVector3, btVector3> result(btVector3(0.0, 0.0, 0.0), btVector3(0.0,
+					   0.0, 0.0));
+    body_a.getAabb(result.first, result.second);
+
+    btVector3 body_b_aabb_min(0.0, 0.0, 0.0), body_b_aabb_max(0.0, 0.0, 0.0);
+    body_b.getAabb(body_b_aabb_min, body_b_aabb_max);
+    result.first.setMax(body_b_aabb_min);
+    result.second.setMin(body_b_aabb_max);
+
+    return result;
+}
+
+
+HIDDEN void
+free_xrays(xrays * const rays)
+{
+    if (!rays)
+	bu_bomb("missing argument");
+
+    BU_CK_LIST_HEAD(rays);
+    RT_CK_RAY(&rays->ray);
+
+    bu_list_free(&rays->l);
+    bu_free(rays, "rays");
+}
+
+
+HIDDEN xrays *
+generate_ray_grid(const btVector3 &center, const btScalar radius,
+		  const btVector3 &normal)
+{
+    if (radius < 0.0 || !NEAR_EQUAL(normal.length(), 1.0, RT_DOT_TOL))
+	bu_bomb("invalid argument");
+
+    xrays * const result = static_cast<xrays *>(bu_malloc(sizeof(xrays), "result"));
+    BU_LIST_INIT(&result->l);
+
+    xray &center_ray = result->ray;
+    center_ray.magic = RT_RAY_MAGIC;
+    center_ray.index = 0;
+    VMOVE(center_ray.r_pt, center);
+    VMOVE(center_ray.r_dir, normal);
+
+    // calculate the 'up' vector
+    vect_t up_vect = VINIT_ZERO;
+    {
+	btVector3 up = normal.cross(btVector3(1.0, 0.0, 0.0));
+
+	// use the y-axis if parallel to x-axis
+	if (up.fuzzyZero())
+	    up = normal.cross(btVector3(0.0, 1.0, 0.0));
+
+	VMOVE(up_vect, up);
+    }
+
+    // NOTE: Bullet's collision tolerance is 4 units (4mm)
+    const btScalar grid_size = radius / static_cast<btScalar>(1.0e1);
+
+    rt_gen_circular_grid(result, &center_ray, radius, up_vect, grid_size);
+    return result;
+}
+
+
+HIDDEN xrays *
+get_rays(const btRigidBody &body_a, const btRigidBody &body_b)
+{
+    const btVector3 normal_world_on_b = get_normal_world_on_b(body_a, body_b);
+    const std::pair<btVector3, btVector3> overlap_aabb = get_overlap_aabb(body_a,
+	    body_b);
+
+    // radius of the circle of rays
+    // half of the diagonal of the overlap AABB so that rays will cover
+    // the entire volume from all orientations
+    const btScalar radius = (overlap_aabb.second - overlap_aabb.first).length() /
+			    2.0;
+
+    // step back from the overlap center, along the normal by `radius`,
+    // to ensure that rays start from outside of the overlap region
+    const btVector3 center = (overlap_aabb.first + overlap_aabb.second) / 2.0 -
+			     radius * normal_world_on_b;
+
+    return generate_ray_grid(center, radius, normal_world_on_b);
+}
 
 
 HIDDEN void
@@ -51,127 +176,36 @@ calculate_contact_points(btManifoldResult &result,
 			 const simulate::RtInstance &rt_instance,
 			 btIDebugDraw &debug_draw)
 {
-    const btRigidBody &body_a_rb = *btRigidBody::upcast(
-				       body_a_wrap.getCollisionObject());
-    const btRigidBody &body_b_rb = *btRigidBody::upcast(
-				       body_b_wrap.getCollisionObject());
-
-    // calculate the normal of the contact points as the resultant of the velocities -A and B
-    const btVector3 v_a = body_a_rb.getLinearVelocity();
-    const btVector3 v_b = body_b_rb.getLinearVelocity();
-
-    btVector3 normal_world_on_b(0.0, 0.0, 0.0);
-
-    if (!v_b.fuzzyZero())
-	normal_world_on_b = v_b.normalized();
-
-    if (!v_a.fuzzyZero())
-	normal_world_on_b -= v_a.normalized();
-
-    if (!normal_world_on_b.fuzzyZero())
-	normal_world_on_b.normalize();
-    else {
-	// near-zero velocities for both objects
-	// objects are nearly motionless and may be either near each other or overlapping
-	// select a random direction at this iteration
-	// TODO: implement a better strategy
-
-	const btScalar z = drand48();
-	const btScalar q = std::sqrt(1.0 - z * z);
-	const btScalar theta = drand48() * 2.0 * M_PI;
-	normal_world_on_b = btVector3(q * std::cos(theta), q * std::sin(theta), z);
-    }
-
-    // generate a circular grid of rays about `normal_world_on_b`
-    xrays *rays = NULL;
-    {
-	BU_ALLOC(rays, xrays);
-	BU_LIST_INIT(&rays->l);
-
-	xray &center_ray = rays->ray;
-	center_ray.magic = RT_RAY_MAGIC;
-	center_ray.index = 0;
-	VMOVE(center_ray.r_dir, normal_world_on_b);
-	VZERO(center_ray.r_pt);
-
-	// calculate the overlap volume between the AABBs
-	btVector3 overlap_min(0.0, 0.0, 0.0), overlap_max(0.0, 0.0, 0.0);
-	{
-	    btVector3 body_a_aabb_min(0.0, 0.0, 0.0), body_a_aabb_max(0.0, 0.0, 0.0),
-		      body_b_aabb_min(0.0, 0.0, 0.0), body_b_aabb_max(0.0, 0.0, 0.0);
-	    body_a_rb.getAabb(body_a_aabb_min, body_a_aabb_max);
-	    body_b_rb.getAabb(body_b_aabb_min, body_b_aabb_max);
-
-	    overlap_max = body_a_aabb_max;
-	    overlap_max.setMin(body_b_aabb_max);
-	    overlap_min = body_a_aabb_min;
-	    overlap_min.setMax(body_b_aabb_min);
-	}
-
-	// radius of the circle of rays
-	// half of the diagonal of the overlap rpp so that rays will cover
-	// the entire volume from all orientations
-	const btScalar radius = (overlap_max - overlap_min).length() / 2.0;
-
-	// calculate the origin of the center ray
-	{
-	    // center of the overlap volume
-	    const btVector3 overlap_center = (overlap_min + overlap_max) / 2.0;
-
-	    // step back from overlap_center, along the normal by `radius`,
-	    // to ensure that rays start from outside of the overlap region
-	    const btVector3 center_ray_point = overlap_center - radius * normal_world_on_b;
-	    VMOVE(center_ray.r_pt, center_ray_point);
-	}
-
-	// calculate the 'up' vector
-	vect_t up_vect = VINIT_ZERO;
-	{
-	    btVector3 up = normal_world_on_b.cross(btVector3(1.0, 0.0, 0.0));
-
-	    // use the y-axis if parallel to x-axis
-	    if (up.fuzzyZero())
-		up = normal_world_on_b.cross(btVector3(0.0, 1.0, 0.0));
-
-	    VMOVE(up_vect, up);
-	}
-
-	// NOTE: Bullet's collision tolerance is 4 units (4mm)
-	const btScalar minimum_grid_size = 0.25; // arbitrary
-	const btScalar grid_size = std::max(minimum_grid_size,
-					    radius / static_cast<btScalar>(1.0e1));
-
-	rt_gen_circular_grid(rays, &center_ray, radius, up_vect, grid_size);
-    }
-
-    // shoot the rays
+    const btRigidBody &body_a = *btRigidBody::upcast(
+				    body_a_wrap.getCollisionObject());
+    const btRigidBody &body_b = *btRigidBody::upcast(
+				    body_b_wrap.getCollisionObject());
     const std::string &body_a_path = static_cast<const simulate::RtMotionState *>
-				     (body_a_rb.getMotionState())->get_path();
+				     (body_a.getMotionState())->get_path();
     const std::string &body_b_path = static_cast<const simulate::RtMotionState *>
-				     (body_b_rb.getMotionState())->get_path();
+				     (body_b.getMotionState())->get_path();
+
+    simulate::AutoPtr<xrays, free_xrays> rays(get_rays(body_a, body_b));
     const std::vector<std::pair<btVector3, btVector3> > overlaps =
-	rt_instance.get_overlaps(body_a_path, body_b_path, *rays);
+	rt_instance.get_overlaps(body_a_path, body_b_path, *rays.ptr);
+    const btVector3 normal_world_on_b(V3ARGS(rays.ptr->ray.r_dir));
 
-    xrays *entry = NULL;
+    for (std::vector<std::pair<btVector3, btVector3> >::const_iterator it =
+	     overlaps.begin(); it != overlaps.end(); ++it) {
+	const btScalar depth = -(it->first - it->second).length();
+	result.addContactPoint(normal_world_on_b, it->second, depth);
+    }
 
-    while (BU_LIST_WHILE(entry, xrays, &rays->l)) {
-	BU_LIST_DEQUEUE(&entry->l);
+    if (debug_draw.getDebugMode() & btIDebugDraw::DBG_DrawFrames) {
+	xrays *entry = NULL;
 
-	if (debug_draw.getDebugMode() & btIDebugDraw::DBG_DrawFrames) {
+	for (BU_LIST_FOR(entry, xrays, &rays.ptr->l)) {
 	    const btVector3 point(V3ARGS(entry->ray.r_pt));
 	    const btVector3 direction(V3ARGS(entry->ray.r_dir));
 
 	    debug_draw.drawLine(point, point + direction * 4.0,
 				debug_draw.getDefaultColors().m_contactPoint);
 	}
-
-	bu_free(entry, "entry");
-    }
-
-    for (std::vector<std::pair<btVector3, btVector3> >::const_iterator it =
-	     overlaps.begin(); it != overlaps.end(); ++it) {
-	const btScalar depth = -(it->first - it->second).length();
-	result.addContactPoint(normal_world_on_b, it->second, depth);
     }
 }
 
@@ -248,22 +282,18 @@ RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper * const
 	bu_bomb("missing argument");
 
     if (!m_manifold)
-	return;
+	bu_bomb("missing manifold");
 
     result->setPersistentManifold(m_manifold);
-#ifndef USE_PERSISTENT_CONTACTS
-    m_manifold->clearManifold();
-#endif
+
+    if (!use_persistent_contacts)
+	m_manifold->clearManifold();
 
     calculate_contact_points(*result, *body_a_wrap, *body_b_wrap, m_rt_instance,
 			     m_debug_draw);
 
-#ifdef USE_PERSISTENT_CONTACTS
-
-    if (m_owns_manifold)
+    if (use_persistent_contacts && m_owns_manifold)
 	result->refreshContactPoints();
-
-#endif
 }
 
 

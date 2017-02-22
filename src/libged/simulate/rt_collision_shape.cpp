@@ -32,17 +32,25 @@
 
 #include "rt_collision_shape.hpp"
 
+#include "bu/log.h"
+
 
 namespace simulate
 {
 
 
-RtCollisionShape::RtCollisionShape(const btVector3 &aabb_half_extents) :
+RtCollisionShape::RtCollisionShape(const btVector3 &aabb_half_extents,
+				   const btVector3 &aabb_center_height) :
     m_aabb_half_extents(aabb_half_extents),
+    m_aabb_center_height(aabb_center_height),
     m_local_scaling(1.0, 1.0, 1.0),
     m_collision_margin(4.0)
 {
     m_shapeType = RT_COLLISION_SHAPE_TYPE;
+
+    for (std::size_t i = 0; i < 3; ++i)
+	if (m_aabb_half_extents[i] < 0.0)
+	    bu_bomb("invalid argument");
 }
 
 
@@ -57,10 +65,13 @@ void
 RtCollisionShape::getAabb(const btTransform &transform,
 			  btVector3 &dest_aabb_min, btVector3 &dest_aabb_max) const
 {
+    const btTransform aabb_center_transform(transform.getBasis(),
+					    transform(transform.inverse()(transform.getOrigin()) + m_aabb_center_height));
+
     btBoxShape box(m_aabb_half_extents);
     box.setLocalScaling(getLocalScaling());
     box.setMargin(getMargin());
-    box.getAabb(transform, dest_aabb_min, dest_aabb_max);
+    box.getAabb(aabb_center_transform, dest_aabb_min, dest_aabb_max);
 }
 
 
@@ -68,6 +79,9 @@ void
 RtCollisionShape::calculateLocalInertia(const btScalar mass,
 					btVector3 &dest_inertia) const
 {
+    if (mass < 0.0)
+	bu_bomb("invalid argument");
+
     btBoxShape box(m_aabb_half_extents);
     box.setLocalScaling(getLocalScaling());
     box.setMargin(getMargin());
@@ -92,6 +106,10 @@ RtCollisionShape::getMargin() const
 void
 RtCollisionShape::setLocalScaling(const btVector3 &local_scaling)
 {
+    for (std::size_t i = 0; i < 3; ++i)
+	if (local_scaling[i] < 0.0)
+	    bu_bomb("invalid argument");
+
     m_local_scaling = local_scaling;
 }
 
@@ -99,6 +117,9 @@ RtCollisionShape::setLocalScaling(const btVector3 &local_scaling)
 void
 RtCollisionShape::setMargin(const btScalar collision_margin)
 {
+    if (collision_margin < 0.0)
+	bu_bomb("invalid argument");
+
     m_collision_margin = collision_margin;
 }
 

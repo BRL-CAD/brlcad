@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed rtweight .density file loading on Windows - Cliff Yapp
 * fixed dsp handling of invalid uniform binary objects - Sean Morrison
 * fixed brlman problem with viewing benchmark man page - Cliff Yapp
 * fixed name of dbfind man page (was listed as 'find') - Cliff Yapp

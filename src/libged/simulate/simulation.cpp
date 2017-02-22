@@ -49,11 +49,17 @@ namespace
 {
 
 
+const char * const attribute_prefix = "simulate::";
+
+
 HIDDEN btRigidBody::btRigidBodyConstructionInfo
 get_rigid_body_construction_info(btMotionState &motion_state,
 				 btCollisionShape &collision_shape, const db_i &db, const btScalar mass)
 {
     RT_CK_DBI(&db);
+
+    if (mass < 0.0)
+	bu_bomb("invalid argument");
 
     btVector3 inertia(0.0, 0.0, 0.0);
     collision_shape.calculateLocalInertia(mass, inertia);
@@ -79,10 +85,7 @@ get_aabb(db_i &db, const std::string &path)
     std::stack<const tree *> stack;
 
     for (std::size_t i = 0; i < rti.ptr->nregions; ++i)
-	if (rti.ptr->Regions[i]->reg_name == path) {
-	    stack.push(rti.ptr->Regions[i]->reg_treetop);
-	    break;
-	}
+	stack.push(rti.ptr->Regions[i]->reg_treetop);
 
     std::pair<btVector3, btVector3> result(btVector3(0.0, 0.0, 0.0),
 					   btVector3(0.0, 0.0, 0.0));
@@ -130,6 +133,18 @@ get_aabb(db_i &db, const std::string &path)
 
 
 HIDDEN btVector3
+get_center_of_mass(db_i &db, const std::string &path)
+{
+    RT_CK_DBI(&db);
+
+    // TODO: not implemented; return the center of the AABB
+
+    const std::pair<btVector3, btVector3> aabb = get_aabb(db, path);
+    return (aabb.first + aabb.second) / 2.0;
+}
+
+
+HIDDEN btVector3
 deserialize_vector(const std::string &source)
 {
     std::istringstream stream(source);
@@ -151,6 +166,45 @@ deserialize_vector(const std::string &source)
 }
 
 
+HIDDEN btVector3
+get_simulation_parameters(const db_i &db, const std::string &path)
+{
+    RT_CK_DBI(&db);
+
+    db_full_path full_path;
+    db_full_path_init(&full_path);
+    simulate::AutoPtr<db_full_path, db_free_full_path> autofree_full_path(
+	&full_path);
+
+    if (db_string_to_path(&full_path, &db, path.c_str()))
+	throw simulate::InvalidSimulationError("invalid path");
+
+    bu_attribute_value_set avs;
+    BU_AVS_INIT(&avs);
+    simulate::AutoPtr<bu_attribute_value_set, bu_avs_free> avs_autoptr(&avs);
+
+    if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(&full_path)))
+	bu_bomb("db5_get_attributes() failed");
+
+    btVector3 gravity(0.0, 0.0, -9.80665);
+
+    for (std::size_t i = 0; i < avs.count; ++i)
+	if (!bu_strncmp(avs.avp[i].name, attribute_prefix, strlen(attribute_prefix))) {
+	    const char * const name = avs.avp[i].name + strlen(attribute_prefix);
+	    const char * const value = avs.avp[i].value;
+
+	    if (!bu_strcmp(name, "gravity"))
+		gravity = deserialize_vector(value);
+	    else
+		throw simulate::InvalidSimulationError(std::string() +
+						       "invalid scene attribute '" +
+						       avs.avp[i].name + "' on '" + path + "'");
+	}
+
+    return gravity;
+}
+
+
 }
 
 
@@ -163,6 +217,9 @@ class Simulation::Region
 public:
     ~Region();
 
+    static Region *get_region(db_i &db, const db_full_path &path,
+			      btDiscreteDynamicsWorld &world);
+
     static std::vector<const Region *> get_regions(db_i &db,
 	    const std::string &root_path, btDiscreteDynamicsWorld &world);
 
@@ -170,14 +227,65 @@ public:
 private:
     explicit Region(db_i &db, const std::string &path,
 		    btDiscreteDynamicsWorld &world, const std::pair<btVector3, btVector3> &aabb,
-		    btScalar mass, const btVector3 &linear_velocity,
-		    const btVector3 &angular_velocity);
+		    const btVector3 &center_of_mass, btScalar mass,
+		    const btVector3 &linear_velocity, const btVector3 &angular_velocity);
 
+    TemporaryRegionHandle m_region_handle;
     btDiscreteDynamicsWorld &m_world;
     RtMotionState m_motion_state;
     RtCollisionShape m_collision_shape;
     btRigidBody m_rigid_body;
 };
+
+
+Simulation::Region *
+Simulation::Region::get_region(db_i &db, const db_full_path &full_path,
+			       btDiscreteDynamicsWorld &world)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&full_path);
+
+    AutoPtr<char> path(db_path_to_string(&full_path));
+
+    btScalar mass = 1.0;
+    btVector3 linear_velocity(0.0, 0.0, 0.0);
+    btVector3 angular_velocity(0.0, 0.0, 0.0);
+    {
+	bu_attribute_value_set avs;
+	BU_AVS_INIT(&avs);
+	AutoPtr<bu_attribute_value_set, bu_avs_free> avs_autoptr(&avs);
+
+	if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(&full_path)))
+	    bu_bomb("db5_get_attributes() failed");
+
+	for (std::size_t i = 0; i < avs.count; ++i)
+	    if (!bu_strncmp(avs.avp[i].name, attribute_prefix, strlen(attribute_prefix))) {
+		const char * const name = avs.avp[i].name + strlen(attribute_prefix);
+		const char * const value = avs.avp[i].value;
+
+		if (!bu_strcmp(name, "type")) {
+		    if (bu_strcmp(value, "region"))
+			throw InvalidSimulationError("invalid type");
+		} else if (!bu_strcmp(name, "mass")) {
+		    mass = lexical_cast<btScalar>(value,
+						  std::string() + "invalid mass on '" + path.ptr + "'");
+
+		    if (mass < 0.0)
+			throw InvalidSimulationError(std::string() + "invalid mass on '" + path.ptr +
+						     "'");
+		} else if (!bu_strcmp(name, "linear_velocity")) {
+		    linear_velocity = deserialize_vector(value);
+		} else if (!bu_strcmp(name, "angular_velocity")) {
+		    angular_velocity = deserialize_vector(value);
+		} else
+		    throw InvalidSimulationError(std::string() + "invalid attribute '" +
+						 avs.avp[i].name + "' on '" + path.ptr + "'");
+	    }
+    }
+
+    return new Region(db, path.ptr, world, get_aabb(db, path.ptr),
+		      get_center_of_mass(db, path.ptr), mass, linear_velocity, angular_velocity);
+}
 
 
 std::vector<const Simulation::Region *>
@@ -199,8 +307,31 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
     AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
 
     if (0 > db_search(&found, DB_SEARCH_TREE,
-		      " -type region -or -type shape -not -below -type region", full_path.fp_len,
+		      (std::string() + "-attr " + attribute_prefix + "type=region -below -attr " +
+		       attribute_prefix + "type=region").c_str(), full_path.fp_len, full_path.fp_names,
+		      &db))
+	bu_bomb("db_search() failed");
+
+    if (BU_PTBL_LEN(&found))
+	throw InvalidSimulationError(std::string() + "nested objects with " +
+				     attribute_prefix + "type=region");
+
+    if (0 > db_search(&found, DB_SEARCH_TREE,
+		      (std::string() + "-depth >0 -attr " + attribute_prefix + "* -not ( -attr " +
+		       attribute_prefix + "type=region -or ( -type shape -not -below -attr " +
+		       attribute_prefix + "type=region ) )").c_str(), full_path.fp_len,
 		      full_path.fp_names, &db))
+	bu_bomb("db_search() failed");
+
+    if (BU_PTBL_LEN(&found))
+	throw InvalidSimulationError(std::string() +
+				     "simulation attributes set on objects that are not " + attribute_prefix +
+				     "type=region");
+
+    if (0 > db_search(&found, DB_SEARCH_TREE,
+		      (std::string() + "-attr " + attribute_prefix +
+		       "type=region -or -type shape -not -below -attr " + attribute_prefix +
+		       "type=region").c_str(), full_path.fp_len, full_path.fp_names, &db))
 	bu_bomb("db_search() failed");
 
     if (!BU_PTBL_LEN(&found))
@@ -209,42 +340,15 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
     std::vector<const Simulation::Region *> result;
     db_full_path **entry;
 
-    for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
-	AutoPtr<char> path(db_path_to_string(*entry));
+    try {
+	for (BU_PTBL_FOR(entry, (db_full_path **), &found))
+	    result.push_back(get_region(db, **entry, world));
+    } catch (...) {
+	for (std::vector<const Region *>::const_iterator it = result.begin();
+	     it != result.end(); ++it)
+	    delete *it;
 
-	btScalar mass = 1.0;
-	btVector3 linear_velocity(0.0, 0.0, 0.0);
-	btVector3 angular_velocity(0.0, 0.0, 0.0);
-	{
-	    bu_attribute_value_set avs;
-	    BU_AVS_INIT(&avs);
-	    AutoPtr<bu_attribute_value_set, bu_avs_free> avs_autoptr(&avs);
-
-	    if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(*entry)))
-		bu_bomb("db5_get_attributes() failed");
-
-	    const char * const prefix = "simulate::";
-
-	    for (std::size_t i = 0; i < avs.count; ++i)
-		if (!bu_strncmp(avs.avp[i].name, prefix, strlen(prefix))) {
-		    const char * const name = avs.avp[i].name + strlen(prefix);
-
-		    if (!bu_strcmp(name, "mass")) {
-			mass = lexical_cast<btScalar>(avs.avp[i].value, "invalid mass");
-
-			if (mass < 0.0)
-			    throw InvalidSimulationError("invalid mass");
-		    } else if (!bu_strcmp(name, "linear_velocity")) {
-			linear_velocity = deserialize_vector(avs.avp[i].value);
-		    } else if (!bu_strcmp(name, "angular_velocity")) {
-			angular_velocity = deserialize_vector(avs.avp[i].value);
-		    } else
-			throw InvalidSimulationError("invalid attribute");
-		}
-	}
-
-	result.push_back(new Region(db, path.ptr, world, get_aabb(db, path.ptr), mass,
-				    linear_velocity, angular_velocity));
+	throw;
     }
 
     return result;
@@ -253,11 +357,13 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
 
 Simulation::Region::Region(db_i &db, const std::string &path,
 			   btDiscreteDynamicsWorld &world, const std::pair<btVector3, btVector3> &aabb,
-			   const btScalar mass, const btVector3 &linear_velocity,
-			   const btVector3 &angular_velocity) :
+			   const btVector3 &center_of_mass, const btScalar mass,
+			   const btVector3 &linear_velocity, const btVector3 &angular_velocity) :
+    m_region_handle(db, path),
     m_world(world),
-    m_motion_state(db, path, (aabb.first + aabb.second) / 2.0),
-    m_collision_shape((aabb.second - aabb.first) / 2.0),
+    m_motion_state(db, path, center_of_mass),
+    m_collision_shape((aabb.second - aabb.first) / 2.0,
+		      (aabb.first + aabb.second) / 2.0 - center_of_mass),
     m_rigid_body(get_rigid_body_construction_info(m_motion_state, m_collision_shape,
 		 db, mass))
 {
@@ -285,22 +391,28 @@ Simulation::Simulation(db_i &db, const std::string &path) :
     m_regions(Region::get_regions(db, path, m_world)),
     m_rt_instance(db)
 {
-    // TODO: gravity is at 9.8 mm/s/s
-    // other units may need to be scaled as well
-    const btVector3 gravity(0.0, 0.0, -9.8);
+    m_world.setDebugDrawer(&m_debug_draw);
 
     m_collision_dispatcher.registerCollisionCreateFunc(
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
-	new RtCollisionAlgorithm::CreateFunc(m_rt_instance, m_debug_draw));
-    m_world.setGravity(gravity);
+	new RtCollisionAlgorithm::CreateFunc(m_rt_instance, *m_world.getDebugDrawer()));
 
-    m_world.setDebugDrawer(&m_debug_draw);
+    const btVector3 gravity = get_simulation_parameters(db, path);
+    m_world.setGravity(gravity);
+}
+
+
+Simulation::~Simulation()
+{
+    for (std::vector<const Region *>::const_iterator it = m_regions.begin();
+	 it != m_regions.end(); ++it)
+	delete *it;
 }
 
 
 void
-Simulation::step(const fastf_t seconds, const bool debug)
+Simulation::step(const fastf_t seconds, const DebugMode debug_mode)
 {
     const btScalar fixed_time_step = 1.0 / 60.0;
     const int max_substeps = std::numeric_limits<int16_t>::max();
@@ -310,11 +422,19 @@ Simulation::step(const fastf_t seconds, const bool debug)
     else if (seconds > max_substeps * fixed_time_step)
 	throw InvalidSimulationError("duration is too large for a single step");
 
-    if (debug)
-	m_world.getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawAabb |
-					       btIDebugDraw::DBG_DrawFrames);
-    else
-	m_world.getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_NoDebug);
+    m_world.getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_NoDebug);
+
+    if (debug_mode & debug_aabb)
+	m_world.getDebugDrawer()->setDebugMode(m_world.getDebugDrawer()->getDebugMode()
+					       | btIDebugDraw::DBG_DrawAabb);
+
+    if (debug_mode & debug_contact)
+	m_world.getDebugDrawer()->setDebugMode(m_world.getDebugDrawer()->getDebugMode()
+					       | btIDebugDraw::DBG_DrawContactPoints);
+
+    if (debug_mode & debug_ray)
+	m_world.getDebugDrawer()->setDebugMode(m_world.getDebugDrawer()->getDebugMode()
+					       | btIDebugDraw::DBG_DrawFrames);
 
     m_world.stepSimulation(seconds, max_substeps, fixed_time_step);
     m_world.debugDrawWorld();

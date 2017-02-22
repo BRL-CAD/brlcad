@@ -42,7 +42,10 @@ class RtCollisionShape : public btCollisionShape
 public:
     static const int RT_COLLISION_SHAPE_TYPE = CUSTOM_POLYHEDRAL_SHAPE_TYPE;
 
-    explicit RtCollisionShape(const btVector3 &aabb_half_extents);
+    // `aabb_center_height` is the vector from the center of mass to
+    // the center of the AABB
+    explicit RtCollisionShape(const btVector3 &aabb_half_extents,
+			      const btVector3 &aabb_center_height);
 
     virtual const char *getName() const;
     virtual void getAabb(const btTransform &transform, btVector3 &dest_aabb_min,
@@ -58,6 +61,7 @@ public:
 
 private:
     const btVector3 m_aabb_half_extents;
+    const btVector3 m_aabb_center_height;
     btVector3 m_local_scaling;
     btScalar m_collision_margin;
 };

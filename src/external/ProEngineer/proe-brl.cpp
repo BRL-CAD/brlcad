@@ -29,7 +29,6 @@
 
 #include <set>
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -72,7 +71,7 @@
 
 struct StrCmp {
     bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {
-	return (strcmp(bu_vls_addr(str1), bu_vls_addr(str2)) < 0);
+	return (bu_strcmp(bu_vls_addr(str1), bu_vls_addr(str2)) < 0);
     }
 };
 
