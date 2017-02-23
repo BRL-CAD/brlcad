@@ -24,29 +24,90 @@
 #include "common.h"
 #include "creo-brl.h"
 
-/* structure to hold info about a member of the current assembly
- * this structure is created during feature visit
+/* routine that is called by feature visit for each assembly member
+ * the "app_data" is the head of the assembly info for this assembly
  */
-struct asm_member {
-    ProCharName name;
-    ProMatrix xform;
-    ProMdlType type;
-    struct asm_member *next;
-};
-
-/* structure to hold info about current assembly
- * members are added during feature visit
- */
-struct asm_head {
-    ProCharName name;
+extern "C" static ProError
+assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
+{
     ProMdl model;
-    struct asm_member *members;
-};
+    ProMdlType type;
+    wchar_t wname[10000];
+    char name[10000];
+    struct app_data *adata = (struct app_data *)app_data;
+    struct creo_conv_info *cinfo = adata->cinfo;
 
-struct app_data {
-    struct asm_head *c_assem;
-    struct creo_conv_info *cinfo;
-};
+    if ( ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
+    (void)ProWstringToString(name, wname);
+
+    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
+	fprintf(cinfo->logger, "Processing assembly member %s\n", name );
+    }
+
+    /* get the model for this member */
+    if (ProAsmcompMdlGet(feat, &model) != PRO_TK_NO_ERROR) return status;
+
+    /* get its type (part or assembly are the only ones that should make it here) */
+    if (ProMdlTypeGet(model, &type) != PRO_TK_NO_ERROR) return status;
+
+    /* output this member */
+    switch ( type ) {
+	case PRO_MDL_ASSEMBLY:
+	    // Add to assem set
+	    return ProSolidFeatVisit( ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, app_data);
+	    break;
+	case PRO_MDL_PART:
+	    // Add to part set
+	    //
+	    // TODO - do we need parent combs for objects so we can set region flags?
+	    break;
+    }
+
+    return PRO_TK_NO_ERROR;
+}
+
+extern "C" static ProError
+assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
+{
+    struct bu_vls entry_name = BU_VLS_INIT_ZERO;
+    wchar_t wname[10000];
+    char name[10000];
+    struct app_data *adata = (struct app_data *)app_data;
+    struct creo_conv_info *cinfo = adata->cinfo;
+
+    if ( ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
+    (void)ProWstringToString(name, wname);
+
+    /* TODO: BRL-CAD name foo based on name - put result in entry_name */
+
+    (void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, 'u');
+}
+
+extern "C" static ProError
+assembly_write(ProMdl model, ProError status, ProAppData app_data)
+{
+    struct wmember wcomb;
+    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
+    wchar_t wname[10000];
+    char name[10000];
+    struct app_data *adata = (struct app_data *)app_data;
+    struct creo_conv_info *cinfo = adata->cinfo;
+
+    /* Initial comb setup */
+    ProMdlMdlnameGet(model, wname);
+    (void)ProWstringToString(name, wname);
+
+    /* TODO: BRL-CAD name foo based on name - put result in comb_name */
+
+    BU_LIST_INIT(&wcomb.l);
+
+    ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)assembly_filter, app_data);
+
+    mk_lcomb(cinfo->wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+
+    return PRO_TK_NO_ERROR;
+}
+
 
 
 /* routine that is called by feature visit for each assembly member
@@ -351,16 +412,8 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 	fprintf( stderr, "Failed to update dialog label for currently processed assembly\n" );
 	return;
     }
-#if 0
-    status = ProUIDialogActivate( "creo_brl", &ret_status );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
-		status );
-	fprintf( stderr, "\t dialog returned %d\n", ret_status );
-    }
-#endif
 
-bu_log("got here\n");
+
     /* everything starts out in "curr_part_name", copy name to "curr_asm_name" */
     bu_strlcpy( cinfo->curr_asm_name, cinfo->curr_part_name, sizeof(cinfo->curr_asm_name) );
 
@@ -401,10 +454,7 @@ bu_log("got here\n");
     struct app_data adata;
     adata.c_assem = &curr_assem;
     adata.cinfo = cinfo;
-    status = ProSolidFeatVisit( ProMdlToPart(model),
-	    assembly_comp,
-	    (ProFeatureFilterAction)assembly_filter,
-	    (ProAppData)&adata);
+    status = ProSolidFeatVisit( ProMdlToPart(model), assembly_comp, (ProFeatureFilterAction)assembly_filter, (ProAppData)&adata);
 
     /* output the accumulated assembly info */
     fprintf(cinfo->outfp, "put {%s.c} comb region no tree ", get_brlcad_name(cinfo, curr_assem.name ) );
