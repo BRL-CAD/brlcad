@@ -33,7 +33,6 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->reg_id = 1000;
 
     /* File settings */
-    cinfo->outfp=NULL;
     cinfo->logger=NULL;
     cinfo->logger_type=LOGGER_TYPE_NONE;
 
@@ -455,7 +454,8 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 	fprintf(cinfo->logger, "Closing output file\n" );
     }
 
-    fclose(cinfo->outfp);
+    ged_close(cinfo->gedp);
+    BU_PUT(cinfo->gedp, struct ged);
 
 #if 0
     if ( brlcad_names.size() > 0 ) {
@@ -543,7 +543,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
      * contains the xform to rotate the model into BRL-CAD
      * standard orientation.
      */
-    fprintf(cinfo->outfp,
+    /*
 	    "set topname \"top\"\n"
 	    "if { ! [catch {get $topname} ret] } {\n"
 	    "  set num 0\n"
@@ -560,6 +560,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	    "}\n",
 	    buffer
 	   );
+	   */
 }
 
 
@@ -808,16 +809,6 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	cinfo->min_chamfer_dim = 0.0;
     }
 
-    /* open output file */
-    if ( (cinfo->outfp=fopen( output_file, "wb" ) ) == NULL ) {
-	(void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open output file" );
-	ProMessageClear();
-	fprintf( stderr, "Cannot open output file\n" );
-	perror( "\t" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
     /* open log file, if a name was provided */
     if ( strlen( log_file ) > 0 ) {
 	if ( BU_STR_EQUAL( log_file, "stderr" ) ) {
@@ -919,6 +910,33 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	cinfo->name_hash = bu_hash_create( 512 );
     }
 
+    /* Safety check - don't overwrite a pre-existing file */
+    if (bu_file_exists(output_file, NULL)) {
+	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+	wchar_t w_error_msg[512];
+	bu_vls_printf( &error_msg, "Cannot create file %s - file already exists.\n", output_file );
+	ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
+	status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
+	(void)ProUIPushbuttonActivateActionSet( "creo_brl_gen_error", "ok_button", kill_gen_error_dialog, NULL );
+	status = ProUITextareaValueSet( "creo_brl_gen_error", "error_message", w_error_msg );
+	status = ProUIDialogActivate( "creo_brl_gen_error", &dialog_return );
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    }
+
+    /* open output file */
+    if ( (cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL ) {
+	(void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open output file" );
+	ProMessageClear();
+	fprintf( stderr, "Cannot open output file\n" );
+	perror( "\t" );
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    }
+    struct rt_wdb *ged_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    GED_INIT(cinfo->gedp, ged_wdbp);
+
+
     /* get the currently displayed model in Pro/E */
     status = ProMdlCurrentGet( &model );
     if ( status == PRO_TK_BAD_CONTEXT ) {
@@ -954,11 +972,11 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	return;
     }
 
+    /* TODO -verify this is working correctly */
     ProUnitsystem us;
     ProUnititem lmu;
     ProUnititem mmu;
     ProUnitConversion conv;
-
     ProMdlPrincipalunitsystemGet(model, &us);
     ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu);
     ProUnitInit(model, L"mm", &mmu);
@@ -976,20 +994,6 @@ doit( char *dialog, char *compnent, ProAppData appdata )
      * this will recurse through the entire model
      */
     output_top_level_object(cinfo, model, type );
-
-    /* kill any references to empty parts */
-    struct empty_parts *ptr = cinfo->empty_parts_root;
-    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Adding code to remove empty parts:\n" );
-    }
-    while ( ptr ) {
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "\t%s\n", ptr->name );
-	}
-	fprintf( cinfo->outfp, "set combs [dbfind %s]\n", ptr->name );
-	fprintf( cinfo->outfp, "foreach comb $combs {\n\tcatch {rm $comb %s}\n}\n", ptr->name );
-	ptr = ptr->next;
-    }
 
     /* let user know we are done */
     ProStringToWstring( tmp_line, "Conversion complete" );
