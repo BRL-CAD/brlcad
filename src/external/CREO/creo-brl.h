@@ -124,7 +124,7 @@ struct creo_conv_info {
     int reg_id;	/* region ident number (incremented with each part) */
 
     struct db_i *dbip;		/* output database */
-    struct ged *gedp;
+    struct rt_wdb *wdbp;
     FILE *logger;			/* log file */
     int logger_type;
 

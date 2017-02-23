@@ -454,8 +454,7 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 	fprintf(cinfo->logger, "Closing output file\n" );
     }
 
-    ged_close(cinfo->gedp);
-    BU_PUT(cinfo->gedp, struct ged);
+    wdb_close(cinfo->wdbp);
 
 #if 0
     if ( brlcad_names.size() > 0 ) {
@@ -933,8 +932,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
-    struct rt_wdb *ged_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    GED_INIT(cinfo->gedp, ged_wdbp);
+    cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
 
 
     /* get the currently displayed model in Pro/E */
