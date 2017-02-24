@@ -24,6 +24,119 @@
 #include "common.h"
 #include "creo-brl.h"
 
+int creo_logging_opts(void *data, void *str){
+    struct creo_conv_info *cinfo = (struct creo_conv_info *)data;
+    if (cinfo->logger_type == LOGGER_TYPE_NONE) return 0;
+    if (UNLIKELY(log_first_time)) {
+	bu_setlinebuf(stderr);
+	log_first_time = 0;
+    }
+    switch (cinfo->logger_type) {
+	case LOGGER_TYPE_FAILURE:
+	    if (cinfo->curr_msg_type == MSG_FAIL) {
+		if (cinfo->logger) {
+		    fprintf(cinfo->logger, "FAILURE: %s", str);
+		}
+		if (cinfo->print_to_console) {
+		    if (LIKELY(stderr != NULL)) {
+			fprintf(stderr, "FAILURE: %s", str);
+			fflush(stderr);
+		    }
+		}
+	    }
+	    break;
+	case LOGGER_TYPE_SUCCESS:
+	    if (cinfo->curr_msg_type == MSG_OK) {
+		if (cinfo->logger) {
+		    fprintf(cinfo->logger, "SUCCESS: %s", str);
+		}
+		if (cinfo->print_to_console) {
+		    if (LIKELY(stderr != NULL)) {
+			fprintf(stderr, "SUCCESS: %s", str);
+			fflush(stderr);
+		    }
+		}
+	    }
+	    break;
+	case LOGGER_TYPE_FAILURE_OR_SUCCESS:
+	    if (cinfo->curr_msg_type < MSG_DEBUG) {
+		if (cinfo->curr_msg_type == MSG_FAIL) {
+		    if (cinfo->logger) {
+			fprintf(cinfo->logger, "FAILURE: %s", str);
+		    }
+		    if (cinfo->print_to_console) {
+			if (LIKELY(stderr != NULL)) {
+			    fprintf(stderr, "FAILURE: %s", str);
+			    fflush(stderr);
+			}
+		    }
+		}
+		if (cinfo->curr_msg_type == MSG_OK) {
+		    if (cinfo->logger) {
+			fprintf(cinfo->logger, "SUCCESS: %s", str);
+		    }
+		    if (cinfo->print_to_console) {
+			if (LIKELY(stderr != NULL)) {
+			    fprintf(stderr, "SUCCESS: %s", str);
+			    fflush(stderr);
+			}
+		    }
+		}
+	    }
+	    break;
+	default:
+	    if (cinfo->curr_msg_type == MSG_FAIL) {
+		if (cinfo->logger) {
+		    fprintf(cinfo->logger, "FAILURE: %s", str);
+		}
+		if (cinfo->print_to_console) {
+		    if (cinfo->print_to_console) {
+			if (LIKELY(stderr != NULL)) {
+			    fprintf(stderr, "FAILURE: %s", str);
+			    fflush(stderr);
+			}
+		    }
+		}
+	    }
+	    if (cinfo->curr_msg_type == MSG_OK) {
+		if (cinfo->logger) {
+		    fprintf(cinfo->logger, "SUCCESS: %s", str);
+		}
+		if (cinfo->print_to_console) {
+		    if (LIKELY(stderr != NULL)) {
+			fprintf(stderr, "SUCCESS: %s", str);
+			fflush(stderr);
+		    }
+		}
+	    }
+	    if (cinfo->curr_msg_type == MSG_DEBUG) {
+		if (cinfo->logger) {
+		    fprintf(cinfo->logger, "DEBUG: %s", str);
+		}
+		if (cinfo->print_to_console) {
+		    if (LIKELY(stderr != NULL)) {
+			fprintf(stderr, "DEBUG: %s", str);
+			fflush(stderr);
+		    }
+		}
+	    }
+	    break;
+    }
+}
+
+extern "C" ProError
+creo_log(struct creo_conv_info *cinfo, int msg_type, ProError status, const char *fmt, ...) {
+    /* TODO - need creo specific semaphore lock for this if it's going to be used
+     * in multi-threading situations... - probably can't use libbu's logging safely */
+    va_list ap;
+    cinfo->curr_msg_type = msg_type;
+    bu_log_add_hook(creo_logging_opts, (void *)cinfo);
+    bu_log(fmt, ap);
+    bu_log_delete_hook(creo_logging_opts, (void *)cinfo);
+    return status;
+}
+
+
 extern "C" void
 kill_error_dialog( char *dialog, char *component, ProAppData appdata )
 {

@@ -35,6 +35,8 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     /* File settings */
     cinfo->logger = (FILE *)NULL;
     cinfo->logger_type=LOGGER_TYPE_NONE;
+    cinfo->curr_msg_type = MSG_DEBUG;
+    cinfo->print_to_console=1;
 
     /* units - model */
     cinfo->creo_to_brl_conv = 25.4; /* inches to mm */

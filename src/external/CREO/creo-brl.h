@@ -88,6 +88,9 @@ extern "C" {
 #define NUM_FEAT_TYPES 314
 #define FEAT_TYPE_OFFSET 910
 
+#define MSG_FAIL 0
+#define MSG_OK 1
+#define MSG_DEBUG 2
 
 struct StrCmp {
     bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {
@@ -123,6 +126,8 @@ struct creo_conv_info {
     /* File settings */
     FILE *logger;			/* log file */
     int logger_type;
+    int curr_msg_type;
+    int print_to_console;
 
     /* units - model */
     double creo_to_brl_conv;	/* inches to mm */
@@ -178,6 +183,7 @@ extern "C" struct bu_hash_tbl *create_name_hash(struct creo_conv_info *cinfo, FI
 extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
 extern "C" int output_part(struct creo_conv_info *, ProMdl model);
 
+extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
 
 extern "C" ProError ShowMsg();
 

@@ -39,14 +39,15 @@ assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
     struct app_data *adata = (struct app_data *)app_data;
     struct creo_conv_info *cinfo = adata->cinfo;
 
-    if (status = ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
+    /* Get feature name */
+    if (status = ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return creo_log(cinfo, MSG_FAIL, status, "Failure getting name");
     (void)ProWstringToString(name, wname);
 
     /* get the model for this member */
-    if (status = ProAsmcompMdlGet(feat, &model) != PRO_TK_NO_ERROR) return status;
+    if (status = ProAsmcompMdlGet(feat, &model) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, status, "%s: failure getting model", name);
 
     /* get its type (part or assembly are the only ones that should make it here) */
-    if (status = ProMdlTypeGet(model, &type) != PRO_TK_NO_ERROR) return status;
+    if (status = ProMdlTypeGet(model, &type) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, status, "%s: failure getting type", name);
 
     /* log this member */
     switch ( type ) {
