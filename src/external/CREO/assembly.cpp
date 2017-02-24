@@ -71,6 +71,45 @@ assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
 }
 
 extern "C" static ProError
+assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
+{
+    ProError status;
+    ProMdlType type;
+    char wname[10000];
+    int *has_shape = (int *)app_data;
+    if (status = ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
+    if (cinfo->empty->find(wname) == cinfo->empty->end()) (*has_shape) = 1;
+    return PRO_TK_NO_ERROR;
+}
+
+/* run this only *after* output_parts - need that information */
+extern "c" void
+find_empty_assemblies(struct creo_conv_info *cinfo)
+{
+    int steady_state = 0;
+    if (cinfo->empty->size() == 0) return;
+    while (!steady_state) {
+	std::set<wchar_t *, WStrCmp>::iterator d_it;
+	steady_state = 1;
+	for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
+	    /* for each assem, verify at least one child is non-empty.  If all
+	     * children are empty, add to empty set and unset steady_state. */
+	    int has_shape = 0;
+	    ProMdl model;
+	    if (ProMdlnameInit(*d_it, PRO_ASSEMBLY, &model) == PRO_TK_NO_ERROR ) {
+		if (cinfo->empty->find(*d_it) == cinfo->empty->end()) {
+		    ProSolidFeatVisit(ProMdlToPart(model), assembly_check_empty, (ProFeatureFilterAction)assembly_filter, (ProAppData)&has_shape);
+		    if (!has_shape) {
+			cinfo->empty->insert(*d_it);
+			steady_state = 0;
+		    }
+		}
+	    }
+	}
+    }
+}
+
+extern "C" static ProError
 assembly_entry_matrix(ProMdl parent, ProFeature *entry)
 {
 }
@@ -282,52 +321,6 @@ assembly_filter( ProFeature *feat, ProAppData *data )
     return PRO_TK_NO_ERROR;
 }
 
-
-/* routine to free the memory associated with our assembly info */
-extern "C" void
-free_assem(struct creo_conv_info *cinfo, struct asm_head *curr_assem )
-{
-    struct asm_member *ptr, *tmp;
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Freeing assembly info\n" );
-    }
-
-    ptr = curr_assem->members;
-    while ( ptr ) {
-	tmp = ptr;
-	ptr = ptr->next;
-	bu_free( (char *)tmp, "asm member" );
-    }
-}
-
-
-extern "C" void
-add_to_done_asm(struct creo_conv_info *cinfo, wchar_t *name )
-{
-    ProCharLine astr;
-    wchar_t *name_copy;
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Added %s to list of done assemblies\n", ProWstringToString( astr, name ) );
-    }
-
-    if (cinfo->done_list_asm->find(name) == cinfo->done_list_part->end()) {
-	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
-		"asm name for done list" );
-	wcsncpy( name_copy, name, wcslen(name)+1 );
-	cinfo->done_list_asm->insert(name_copy);
-    }
-}
-
-extern "C" int
-already_done_asm(struct creo_conv_info *cinfo, wchar_t *name )
-{
-    if (cinfo->done_list_asm->find(name) != cinfo->done_list_asm->end()) {
-	return 1;
-    }
-    return 0;
-}
 
 /* routine to check if xform is an identity */
 extern "C" int

@@ -86,15 +86,13 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 
     delete cinfo->parts;
     delete cinfo->assems;
+    delete cinfo->assem_child_cnts;
     delete cinfo->empty; /* entries in empty were freed in parts and assems */
-    delete cinfo->name_map;
     delete cinfo->brlcad_names;
+    delete cinfo->name_map; /* entries in name_map were freed in brlcad_names */
 
+    if (cinfo->logger) fclose(cinfo->logger);
     wdb_close(cinfo->wdbp);
-
-    if ( cinfo->logger ) {
-	fclose( cinfo->logger );
-    }
 
     /* Finally, clear the container */
     BU_PUT(cinfo, struct creo_conv_info);
@@ -111,21 +109,35 @@ output_parts(struct creo_conv_info *cinfo)
     }
 }
 
+extern "C" static ProError
+assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
+{
+    ProError status;
+    ProMdlType type;
+    char wname[10000];
+    int *has_shape = (int *)app_data;
+    if (status = ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
+    if (cinfo->empty->find(wname) == cinfo->empty->end()) (*has_shape) = 1;
+    return PRO_TK_NO_ERROR;
+}
+
 /* run this only *after* output_parts - need that information */
 extern "c" void
 find_empty_assemblies(struct creo_conv_info *cinfo)
 {
     int steady_state = 0;
+    if (cinfo->empty->size() == 0) return;
     while (!steady_state) {
 	std::set<wchar_t *, WStrCmp>::iterator d_it;
 	steady_state = 1;
 	for (d_it = cinfo->assems->begin(); d_it != cinfo->parts->end(); d_it++) {
 	    /* TODO - for each assem, verify at least one child is non-empty.  If all
 	     * children are empty, add to empty set and unset steady_state. */
+	    int has_shape = 0;
+	    ProSolidFeatVisit(ProMdlToPart(model), assembly_check_empty, (ProFeatureFilterAction)assembly_filter, (ProAppData)&has_shape);
 	}
     }
 }
-
 
 extern "c" void
 output_assems(struct creo_conv_info *cinfo)
@@ -144,10 +156,9 @@ output_top_level_object(struct creo_conv_info *cinfo, promdl model, promdltype t
     wchar_t wname[10000];
     char name[10000];
     wchar *wname_saved;
-    char buffer[1024] = {0};
 
     /* get object name */
-    if (ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) return;
+    if (ProMdlNameGet( model, wname ) != PRO_TK_NO_ERROR ) return;
     (void)ProWstringToString(name, wname);
 
     /* save name */
@@ -157,7 +168,7 @@ output_top_level_object(struct creo_conv_info *cinfo, promdl model, promdltype t
     /* output the object */
     if ( type == PRO_MDL_PART ) {
 	/* tessellate part and output triangles */
-	cinfo->parts-.insert(wname_saved);
+	cinfo->parts->insert(wname_saved);
 	output_parts(cinfo);
     } else if ( type == PRO_MDL_ASSEMBLY ) {
 	/* visit all members of assembly */
