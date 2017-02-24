@@ -117,22 +117,22 @@ struct empty_parts {
 };
 
 struct creo_conv_info {
-    ProBool do_facets_only;	/* flag to indicate no CSG should be done */
-    ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
-    ProBool do_elims;	/* flag to indicate that small features are to be eliminated */
-
+    /* Region ID */
     int reg_id;	/* region ident number (incremented with each part) */
 
-    struct db_i *dbip;		/* output database */
-    struct rt_wdb *wdbp;
+    /* File settings */
     FILE *logger;			/* log file */
     int logger_type;
 
+    /* units - model */
     double creo_to_brl_conv;	/* inches to mm */
     double local_tol;	/* tolerance in Pro/E units */
     double local_tol_sq;	/* tolerance squared */
 
-
+    /* facetization settings */
+    ProBool do_facets_only;	/* flag to indicate no CSG should be done */
+    ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
+    ProBool do_elims;		/* flag to indicate that small features are to be eliminated */
     double max_error;	/* (mm) maximum allowable error in facetized approximation */
     double min_error;	/* (mm) maximum allowable error in facetized approximation */
     double tol_dist;	/* (mm) minimum distance between two distinct vertices */
@@ -142,43 +142,29 @@ struct creo_conv_info {
     double error_increment;
     double angle_increment;
 
+    /* csg settings */
     double min_hole_diameter; /* if > 0.0, all holes features smaller than this will be deleted */
     double min_chamfer_dim;   /* if > 0.0, all chamfers with both dimensions less
          			  * than this value will be deleted */
     double min_round_radius;  /* if > 0.0, all rounds with radius less than this
          			  * value will be deleted */
 
-    int *feat_ids_to_delete; /* list of hole features to delete */
-    int feat_id_len;		/* number of available slots in the above array */
-    int feat_id_count;		/* number of hole features actually in the above list */
-
-    struct bu_hash_tbl *name_hash;
-
-    struct vert_root *vert_tree_root;	/* structure for storing and searching on vertices */
-    struct vert_root *norm_tree_root;	/* structure for storing and searching on normals */
-
-    ProTriangle *part_tris;	/* list of triangles for current part */
-    int max_tri;			/* number of triangles currently malloced */
-    int curr_tri;			/* number of triangles currently being used */
-    int *part_norms;		/* list of indices into normals (matches part_tris) */
 
     int obj_type_count[NUM_OBJ_TYPES];
     char *obj_type[NUM_OBJ_TYPES];
     int feat_type_count[NUM_FEAT_TYPES];
     char *feat_type[NUM_FEAT_TYPES];
 
-    struct csg_ops *csg_root;
-    struct empty_parts *empty_parts_root;
+    /* ------ Internal ------ */
+    struct db_i *dbip;		/* output database */
+    struct rt_wdb *wdbp;
 
-    int hole_no;   /* hole counter for unique names */
-
-    std::set<wchar_t *, WStrCmp> *done_list_part;	/* list of parts already done */
-    std::set<wchar_t *, WStrCmp> *done_list_asm;	/* list of assemblies already done */
-    std::set<struct bu_vls *, StrCmp> *brlcad_names;	/* BRL-CAD names in use */
-
-    ProCharName curr_part_name;	/* current part name */
-    ProCharName curr_asm_name;	/* current assembly name */
-    ProFeattype curr_feat_type;	/* current feature type */
+    std::set<wchar_t *, WStrCmp> *parts;	/* list of all parts in CREO hierarchy */
+    std::set<wchar_t *, WStrCmp> *assems;	/* list of all assemblies in CREO hierarchy */
+    std::map<wchar_t *, int> *assem_child_cnts; /* number of solid children in a given assembly */
+    std::set<wchar_t *, WStrCmp> *empty;	/* list of all parts and assemblies in CREO that have no shape */
+    std::map<wchar_t *, struct bu_vls *> *name_map; /* CREO names to BRL-CAD names */
+    std::set<struct bu_vls *, StrCmp> *brlcad_names; /* list of active .g object names */
 };
 
 struct feature_data {

@@ -30,36 +30,40 @@
 extern "C" static ProError
 assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
 {
+    ProError status;
     ProMdl model;
     ProMdlType type;
     wchar_t wname[10000];
     char name[10000];
+    wchar_t *wname_saved;
     struct app_data *adata = (struct app_data *)app_data;
     struct creo_conv_info *cinfo = adata->cinfo;
 
-    if ( ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
+    if (status = ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
     (void)ProWstringToString(name, wname);
 
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Processing assembly member %s\n", name );
-    }
-
     /* get the model for this member */
-    if (ProAsmcompMdlGet(feat, &model) != PRO_TK_NO_ERROR) return status;
+    if (status = ProAsmcompMdlGet(feat, &model) != PRO_TK_NO_ERROR) return status;
 
     /* get its type (part or assembly are the only ones that should make it here) */
-    if (ProMdlTypeGet(model, &type) != PRO_TK_NO_ERROR) return status;
+    if (status = ProMdlTypeGet(model, &type) != PRO_TK_NO_ERROR) return status;
 
-    /* output this member */
+    /* log this member */
     switch ( type ) {
 	case PRO_MDL_ASSEMBLY:
-	    // Add to assem set
-	    return ProSolidFeatVisit( ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, app_data);
+	    if (cinfo->assems->find(wname) == cinfo->assems->end()) {
+		wname_saved = (wchar *)bu_calloc(wcslen(wname)+1, sizeof(wchar), "CREO name");
+		wcsncpy(wname_saved, wname, wsclen(wname)+1);
+		cinfo->assems->insert(wname_saved);
+		return ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, app_data);
+	    }
 	    break;
 	case PRO_MDL_PART:
-	    // Add to part set
-	    //
-	    // TODO - do we need parent combs for objects so we can set region flags?
+	    if (cinfo->assems->find(wname) == cinfo->parts->end()) {
+		wname_saved = (wchar *)bu_calloc(wcslen(wname)+1, sizeof(wchar), "CREO name");
+		wcsncpy(wname_saved, wname, wsclen(wname)+1);
+		cinfo->parts->insert(wname_saved);
+	    }
 	    break;
     }
 
@@ -67,15 +71,21 @@ assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
 }
 
 extern "C" static ProError
+assembly_entry_matrix(ProMdl parent, ProFeature *entry)
+{
+}
+
+extern "C" static ProError
 assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
 {
+    ProError status;
     struct bu_vls entry_name = BU_VLS_INIT_ZERO;
     wchar_t wname[10000];
     char name[10000];
     struct app_data *adata = (struct app_data *)app_data;
     struct creo_conv_info *cinfo = adata->cinfo;
 
-    if ( ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
+    if (status = ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
     (void)ProWstringToString(name, wname);
 
     /* TODO: BRL-CAD name foo based on name - put result in entry_name */
@@ -267,42 +277,8 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 {
     ProFeattype type;
     ProFeatStatus feat_stat;
-    ProError status;
-    ProFileName msgfil;
-    ProCharLine astr;
-
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-
-    status = ProFeatureTypeGet( feat, &type );
-    if ( status != PRO_TK_NO_ERROR ) {
-	sprintf( astr, "In assembly_filter, cannot get feature type for feature %d",
-		feat->id );
-	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
-	ProMessageClear();
-	fprintf( stderr, "%s\n", astr );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return PRO_TK_CONTINUE;
-    }
-
-    if ( type != PRO_FEAT_COMPONENT ) {
-	return PRO_TK_CONTINUE;
-    }
-
-    status = ProFeatureStatusGet( feat, &feat_stat );
-    if ( status != PRO_TK_NO_ERROR ) {
-	sprintf( astr, "In assembly_filter, cannot get feature status for feature %d",
-		feat->id );
-	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
-	ProMessageClear();
-	fprintf( stderr, "%s\n", astr );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return PRO_TK_CONTINUE;
-    }
-
-    if ( feat_stat != PRO_FEAT_ACTIVE ) {
-	return PRO_TK_CONTINUE;
-    }
-
+    if (ProFeatureTypeGet(feat, &type) != PRO_TK_NO_ERROR || type != PRO_FEAT_COMPONENT) return PRO_TK_CONTINUE;
+    if (ProFeatureStatusGet(feat, &feat_stat) != PRO_TK_NO_ERROR || feat_stat != PRO_FEAT_ACTIVE) return PRO_TK_CONTINUE;
     return PRO_TK_NO_ERROR;
 }
 

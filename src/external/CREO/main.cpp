@@ -33,7 +33,7 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->reg_id = 1000;
 
     /* File settings */
-    cinfo->logger=NULL;
+    cinfo->logger = (FILE *)NULL;
     cinfo->logger_type=LOGGER_TYPE_NONE;
 
     /* units - model */
@@ -55,26 +55,6 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->min_hole_diameter=0.0;
     cinfo->min_chamfer_dim=0.0;
     cinfo->min_round_radius=0.0;
-
-    /* features */
-    cinfo->feat_ids_to_delete=NULL;
-    cinfo->feat_id_len=0;
-    cinfo->feat_id_count=0;
-
-    /* current part triangles */
-    cinfo->part_tris=NULL;
-    cinfo->max_tri=0;
-    cinfo->curr_tri=0;
-    cinfo->part_norms=NULL;
-
-    cinfo->hole_no=0;
-    cinfo->csg_root=NULL;
-    cinfo->empty_parts_root=NULL;
-
-	cinfo->done_list_part = new std::set<wchar_t *, WStrCmp>;
-	cinfo->done_list_asm = new std::set<wchar_t *, WStrCmp>;
-	cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
-
 
     for ( i=0; i<NUM_OBJ_TYPES; i++ ) {
 	cinfo->obj_type_count[i] = 0;
@@ -374,192 +354,126 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->feat_type[1120 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TERMINATOR";
     cinfo->feat_type[1121 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WLD_NOTCH";
     cinfo->feat_type[1122 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSY_WLD_NOTCH";
+
+
+    cinfo->parts = new std::set<wchar_t *, WStrCmp>;
+    cinfo->assems = new std::set<wchar_t *, WStrCmp>;
+    cinfo->assem_child_cnts = new std::map<wchar_t *, int>;
+    cinfo->empty = new std::set<wchar_t *, WStrCmp>;
+    cinfo->name_map = new std::map<wchar_t *, struct bu_vls *>;
+    cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
+
 }
 
 extern "C" void
 creo_conv_info_free(struct creo_conv_info *cinfo)
 {
 
-    /* name_hash */
-    if ( cinfo->name_hash ) {
-	struct bu_hash_entry *entry;
-	struct bu_hash_record rec;
-
-
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "freeing name hash\n" );
-	}
-
-	entry = bu_hash_tbl_first(cinfo->name_hash, &rec);
-	while (entry) {
-	    bu_free(bu_get_hash_value(entry), "hash entry" );
-	    entry = bu_hash_tbl_next(&rec);
-	}
-	bu_hash_tbl_free(cinfo->name_hash);
-	cinfo->name_hash = (struct bu_hash_tbl *)NULL;
+    std::set<wchar_t *, WStrCmp>::iterator d_it;
+    for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
+	bu_free(*d_it, "free wchar str copy");
+    }
+    for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
+	bu_free(*d_it, "free wchar str copy");
     }
 
-    if (cinfo->done_list_part->size() > 0 ) {
-	std::set<wchar_t *, WStrCmp>::iterator d_it;
-	for (d_it = cinfo->done_list_part->begin(); d_it != cinfo->done_list_part->end(); d_it++) {
-	    bu_free(*d_it, "free wchar str copy");
-	}
+    std::set<struct bu_vls *, StrCmp>::iterator s_it;
+    for (s_it = brlcad_names.begin(); s_it != brlcad_names.end(); s_it++) {
+	struct bu_vls *v = *s_it;
+	bu_vls_free(v);
+	BU_PUT(v, struct bu_vls);
     }
 
-    if (cinfo->done_list_asm->size() > 0 ) {
-	std::set<wchar_t *, WStrCmp>::iterator d_it;
-	for (d_it = cinfo->done_list_asm->begin(); d_it != cinfo->done_list_asm->end(); d_it++) {
-	    bu_free(*d_it, "free wchar str copy");
-	}
-    }
-
-    if (cinfo->part_tris) {
-	bu_free((char *)cinfo->part_tris, "part triangles" );
-	cinfo->part_tris = NULL;
-    }
-
-    if (cinfo->part_norms) {
-	bu_free((char *)cinfo->part_norms, "part normals" );
-	cinfo->part_norms = NULL;
-    }
-
-    free_vert_tree(cinfo->vert_tree_root);
-    cinfo->vert_tree_root = NULL;
-    free_vert_tree(cinfo->norm_tree_root);
-    cinfo->norm_tree_root = NULL;
-
-    /* empty parts */
-    if (cinfo->empty_parts_root) {
-	struct empty_parts *ptr, *prev;
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "Free empty parts list\n" );
-	}
-
-	ptr = cinfo->empty_parts_root;
-	while ( ptr ) {
-	    prev = ptr;
-	    ptr = ptr->next;
-	    bu_free(prev->name, "empty part node name" );
-	    bu_free(prev, "empty part node" );
-	}
-
-	cinfo->empty_parts_root = NULL;
-
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "Free empty parts list done\n" );
-	}
-    }
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Closing output file\n" );
-    }
+    delete cinfo->parts;
+    delete cinfo->assems;
+    delete cinfo->empty; /* entries in empty were freed in parts and assems */
+    delete cinfo->name_map;
+    delete cinfo->brlcad_names;
 
     wdb_close(cinfo->wdbp);
 
-#if 0
-    if ( brlcad_names.size() > 0 ) {
-	std::set<struct bu_vls *, StrCmp>::iterator s_it;
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "freeing names\n" );
-	}
-	for (s_it = brlcad_names.begin(); s_it != brlcad_names.end(); s_it++) {
-	    struct bu_vls *v = *s_it;
-	    bu_vls_free(v);
-	    BU_PUT(v, struct bu_vls);
-	}
-    }
-#endif
-
-    if ( cinfo->logger_type != LOGGER_TYPE_NONE ) {
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL )
-	    fprintf( cinfo->logger, "Closing logger file\n" );
+    if ( cinfo->logger ) {
 	fclose( cinfo->logger );
-	cinfo->logger = (FILE *)NULL;
-	cinfo->logger_type = LOGGER_TYPE_NONE;
     }
 
     /* Finally, clear the container */
     BU_PUT(cinfo, struct creo_conv_info);
 }
 
+extern "c" void
+output_parts(struct creo_conv_info *cinfo)
+{
+    std::set<wchar_t *, WStrCmp>::iterator d_it;
+    for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
+	ProMdl m = ProMdlnameInit(*d_it, PRO_PART);
+	int solid_part = output_part(cinfo, m);
+	if (!solid_part) cinfo->empty->insert(*d_it);
+    }
+}
+
+/* run this only *after* output_parts - need that information */
+extern "c" void
+find_empty_assemblies(struct creo_conv_info *cinfo)
+{
+    int steady_state = 0;
+    while (!steady_state) {
+	std::set<wchar_t *, WStrCmp>::iterator d_it;
+	steady_state = 1;
+	for (d_it = cinfo->assems->begin(); d_it != cinfo->parts->end(); d_it++) {
+	    /* TODO - for each assem, verify at least one child is non-empty.  If all
+	     * children are empty, add to empty set and unset steady_state. */
+	}
+    }
+}
+
+
+extern "c" void
+output_assems(struct creo_conv_info *cinfo)
+{
+    std::set<wchar_t *, WStrCmp>::iterator d_it;
+    for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
+	ProMdl parent = ProMdlnameInit(*d_it, PRO_ASSEM);
+	output_assembly(cinfo, parent);
+    }
+}
 
 /* routine to output the top level object that is currently displayed in Pro/E */
-extern "C" void
-output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType type )
+extern "c" void
+output_top_level_object(struct creo_conv_info *cinfo, promdl model, promdltype type )
 {
-    ProName name;
-    ProFileName msgfil;
-    ProCharName top_level;
-    ProCharLine astr;
+    wchar_t wname[10000];
+    char name[10000];
+    wchar *wname_saved;
     char buffer[1024] = {0};
 
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-
-    /* get its name */
-    if ( ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) {
-	(void)ProMessageDisplay(msgfil, "USER_ERROR",
-		"Could not get name for part!!" );
-	ProMessageClear();
-	fprintf( stderr, "Could not get name for part" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	bu_strlcpy( cinfo->curr_part_name, "noname", PRO_NAME_SIZE );
-    } else {
-	(void)ProWstringToString( cinfo->curr_part_name, name );
-    }
+    /* get object name */
+    if (ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) return;
+    (void)ProWstringToString(name, wname);
 
     /* save name */
-    bu_strlcpy( top_level, cinfo->curr_part_name, sizeof(top_level) );
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Output top level object (%s)\n", top_level );
-    }
+    wname_saved = (wchar *)bu_calloc(wcslen(wname)+1, sizeof(wchar), "CREO name");
+    wcsncpy(wname_saved, wname, wsclen(wname)+1);
 
     /* output the object */
     if ( type == PRO_MDL_PART ) {
 	/* tessellate part and output triangles */
-	output_part(cinfo, model);
+	cinfo->parts-.insert(wname_saved);
+	output_parts(cinfo);
     } else if ( type == PRO_MDL_ASSEMBLY ) {
 	/* visit all members of assembly */
-	output_assembly(cinfo, model);
+	cinfo->assems->insert(wname_saved);
+	ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, (ProAppData)&adata);
+	output_parts(cinfo);
+	find_empty_assemblies(cinfo);
+	output_assems(cinfo);
     } else {
-	snprintf( astr, sizeof(astr), "Object %s is neither PART nor ASSEMBLY, skipping",
-		cinfo->curr_part_name );
-	(void)ProMessageDisplay(msgfil, "USER_WARNING", astr );
-	ProMessageClear();
-	fprintf( stderr, "%s\n", astr );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	bu_log("Object %s is neither PART nor ASSEMBLY, skipping", cinfo->curr_part_name );
     }
 
-    if ( type == PRO_MDL_ASSEMBLY ) {
-	snprintf(buffer, 1024, "put $topname comb region no tree {l %s.c {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(cinfo, top_level) );
-    } else {
-	snprintf(buffer, 1024, "put $topname comb region no tree {l %s {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(cinfo, top_level) );
-    }
+    /* TODO - Make a final toplevel comb with the file name to hold the orientation matrix */
+    /* xform to rotate the model into standard BRL-CAD orientation */
+    /*0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1*/
 
-    /* make a top level combination named "top", if there is not
-     * already one.  if one does already exist, try "top.#" where
-     * "#" is the first available number.  this combination
-     * contains the xform to rotate the model into BRL-CAD
-     * standard orientation.
-     */
-    /*
-	    "set topname \"top\"\n"
-	    "if { ! [catch {get $topname} ret] } {\n"
-	    "  set num 0\n"
-	    "  while { $num < 1000 } {\n"
-	    "    set topname \"top.$num\"\n"
-	    "    if { [catch {get $name} ret ] } {\n"
-	    "      break\n"
-	    "    }\n"
-	    "    incr num\n"
-	    "  }\n"
-	    "}\n"
-	    "if { [catch {get $topname} ret] } {\n"
-	    "  %s\n"
-	    "}\n",
-	    buffer
-	   );
-	   */
 }
 
 
