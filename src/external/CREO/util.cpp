@@ -24,8 +24,9 @@
 #include "common.h"
 #include "creo-brl.h"
 
-int creo_logging_opts(void *data, void *str){
+int creo_logging_opts(void *data, void *vstr){
     struct creo_conv_info *cinfo = (struct creo_conv_info *)data;
+    const char *str = (const char *)vstr;
     if (cinfo->logger_type == LOGGER_TYPE_NONE) return 0;
     if (UNLIKELY(log_first_time)) {
 	bu_setlinebuf(stderr);
@@ -128,11 +129,20 @@ extern "C" ProError
 creo_log(struct creo_conv_info *cinfo, int msg_type, ProError status, const char *fmt, ...) {
     /* TODO - need creo specific semaphore lock for this if it's going to be used
      * in multi-threading situations... - probably can't use libbu's logging safely */
+
+    /* Can't do nested variable argument functions, so printf the message here */
     va_list ap;
+    char msg[100000];
+    va_start(ap, fmt);
+    vsprintf(msg, fmt, ap);
+    va_end(ap);
+
+    /* Set the type and hooks, then call libbu */
     cinfo->curr_msg_type = msg_type;
     bu_log_add_hook(creo_logging_opts, (void *)cinfo);
-    bu_log(fmt, ap);
+    bu_log("%s", msg);
     bu_log_delete_hook(creo_logging_opts, (void *)cinfo);
+
     return status;
 }
 
