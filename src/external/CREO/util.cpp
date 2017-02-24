@@ -28,10 +28,6 @@ int creo_logging_opts(void *data, void *vstr){
     struct creo_conv_info *cinfo = (struct creo_conv_info *)data;
     const char *str = (const char *)vstr;
     if (cinfo->logger_type == LOGGER_TYPE_NONE) return 0;
-    if (UNLIKELY(log_first_time)) {
-	bu_setlinebuf(stderr);
-	log_first_time = 0;
-    }
     switch (cinfo->logger_type) {
 	case LOGGER_TYPE_FAILURE:
 	    if (cinfo->curr_msg_type == MSG_FAIL) {
