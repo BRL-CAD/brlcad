@@ -234,11 +234,6 @@ feature_filter( ProFeature *feat, ProAppData data )
 	fprintf( stderr, "ProFeatureTypeGet Failed for %s!!\n", cinfo->curr_part_name );
 	return ret;
     }
-    if ( cinfo->curr_feat_type > 0 ) {
-	cinfo->feat_type_count[cinfo->curr_feat_type - FEAT_TYPE_OFFSET]++;
-    } else if ( cinfo->curr_feat_type == 0 ) {
-	cinfo->feat_type_count[0]++;
-    }
 
     /* handle holes, chamfers, and rounds only */
     if ( cinfo->curr_feat_type == PRO_FEAT_HOLE ||
@@ -459,8 +454,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
     if ( ProMdlTypeGet( model, &type ) != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get part type\n" );
-    } else {
-	cinfo->obj_type_count[type]++;
     }
     /* let user know we are doing something */
 

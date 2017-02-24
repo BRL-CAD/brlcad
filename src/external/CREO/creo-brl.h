@@ -149,12 +149,6 @@ struct creo_conv_info {
     double min_round_radius;  /* if > 0.0, all rounds with radius less than this
          			  * value will be deleted */
 
-
-    int obj_type_count[NUM_OBJ_TYPES];
-    char *obj_type[NUM_OBJ_TYPES];
-    int feat_type_count[NUM_FEAT_TYPES];
-    char *feat_type[NUM_FEAT_TYPES];
-
     /* ------ Internal ------ */
     struct db_i *dbip;		/* output database */
     struct rt_wdb *wdbp;
