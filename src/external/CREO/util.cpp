@@ -177,21 +177,17 @@ wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     return ret;
 }
 
-
-
 extern "C" void
 kill_error_dialog( char *dialog, char *component, ProAppData appdata )
 {
-        (void)ProUIDialogDestroy( "creo_brl_error" );
+    (void)ProUIDialogDestroy( "creo_brl_error" );
 }
 
 extern "C" void
 kill_gen_error_dialog( char *dialog, char *component, ProAppData appdata )
 {
-        (void)ProUIDialogDestroy( "creo_brl_gen_error" );
+    (void)ProUIDialogDestroy( "creo_brl_gen_error" );
 }
-
-
 
 
 extern "C" void
@@ -225,7 +221,12 @@ make_legal( char *name )
 
 /* TODO - investigate ProParameter as a source of name generation for
  * CREO parts.  Currently being done by a text processing script manually. */
-
+extern "C" char *
+creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
+{
+    struct bu_vls *tmp_name;
+    std::set<struct bu_vls *, StrCmp>::iterator found;
+}
 
 
 /* create a unique BRL-CAD object name from a possibly illegal name */
