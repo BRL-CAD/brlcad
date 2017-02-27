@@ -430,6 +430,8 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	return;
     }
 
+    /* TODO - add a setting to use CREO part ID as basis for object ID, rather than querying properties */
+
     /* check if user wants to eliminate small features */
     if ((status = ProUICheckbuttonGetState("creo_brl", "elim_small", &cinfo->do_elims)) != PRO_TK_NO_ERROR ) {
 	creo_log(cinfo, MSG_FAIL, status, "Failed to get checkbutton setting (eliminate small features).\n");
