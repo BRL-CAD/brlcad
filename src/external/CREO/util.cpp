@@ -156,6 +156,8 @@ kill_gen_error_dialog( char *dialog, char *component, ProAppData appdata )
 }
 
 
+
+
 extern "C" void
 lower_case( char *name )
 {
@@ -183,6 +185,12 @@ make_legal( char *name )
 	c++;
     }
 }
+
+
+/* TODO - investigate ProParameter as a source of name generation for
+ * CREO parts.  Currently being done by a text processing script manually. */
+
+
 
 /* create a unique BRL-CAD object name from a possibly illegal name */
 extern "C" char *
