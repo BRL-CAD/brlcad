@@ -64,7 +64,6 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->empty = new std::set<wchar_t *, WStrCmp>;
     cinfo->name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
     cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
-    cinfo->name_hash = new std::map<char *, struct bu_vls *, CharCmp>;
 
 }
 
@@ -101,7 +100,41 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
     BU_PUT(cinfo, struct creo_conv_info);
 }
 
-extern "c" void
+extern "C" long int
+wstr_to_long(struct creo_conv_info *cinfo, wchar_t *tmp_str)
+{
+    long int ret;
+    char *endptr = NULL;
+    ProCharLine astr;
+    ProWstringToString(astr, *tmp_str);
+    errno = 0;
+    ret = strtol(astr, &endptr, 0);
+    if (endptr != NULL && strlen(endptr) > 0) {
+	/* Had some invalid character in the input, fail */
+	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Invalid string specifier for int: %s\n", astr);
+	return -1;
+    }
+    return ret;
+}
+
+extern "C" double
+wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
+{
+    double ret;
+    char *endptr = NULL;
+    ProCharLine astr;
+    ProWstringToString(astr, *tmp_str);
+    errno = 0;
+    ret = strtod(astr, &endptr);
+    if (endptr != NULL && strlen(endptr) > 0) {
+	/* Had some invalid character in the input, fail */
+	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Invalid string specifier for double: %s\n", astr);
+	return -1.0;
+    }
+    return ret;
+}
+
+extern "C" void
 output_parts(struct creo_conv_info *cinfo)
 {
     std::set<wchar_t *, WStrCmp>::iterator d_it;
@@ -224,6 +257,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	status = ProUIInputpanelValueGet( "creo_brl", "log_file", &tmp_str );
 	if ( status != PRO_TK_NO_ERROR ) {
 	    fprintf(stderr, "Failed to get log file name\n");
+	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy("creo_brl");
 	    return;
 	}
@@ -234,6 +268,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	status = ProUIRadiogroupSelectednamesGet( "creo_brl", "log_file_type_rg", &n_selected_names, &selected_names );
 	if (status != PRO_TK_NO_ERROR) {
 	    fprintf( stderr, "Failed to get log file type\n" );
+	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy("creo_brl");
 	    return;
 	}
@@ -255,6 +290,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		ProMessageClear();
 		fprintf(stderr, "Cannot open log file\n");
 		perror("\t");
+		creo_conv_info_free(cinfo);
 		ProUIDialogDestroy("creo_brl");
 		return;
 	    }
@@ -273,6 +309,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	status = ProUIInputpanelValueGet("creo_brl", "output_file", &w_output_file);
 	if ( status != PRO_TK_NO_ERROR ) {
 	    creo_log(cinfo, MSG_FAIL, status, "Failed to get output file name\n");
+	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
 	}
@@ -297,279 +334,183 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	/* open output file */
 	if ( (cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL ) {
 	    creo_log(cinfo, MSG_FAIL, status, "Cannot open output file.\n");
+	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
 	}
 	cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
     }
 
-    /***********************************************************************/
-    /* Get the part number to part name mapping file, if one is specified. */
-    /***********************************************************************/
-    {
-	wchar_t *w_name_file;
-	char name_file[128];
-	status = ProUIInputpanelValueGet("creo_brl", "name_file", &w_name_file);
-	if (status != PRO_TK_NO_ERROR) {
-	    creo_log(cinfo, MSG_FAIL, status, "Failed to get name of part number to part name mapping file.\n");
-	    ProUIDialogDestroy("creo_brl");
-	    return;
-	}
-	ProWstringToString(name_file, w_name_file);
-	ProWstringFree(w_name_file);
-
-	/* open part name mapper file, if a name was provided */
-	if (strlen(name_file) > 0) {
-	    FILE *name_fd;
-	    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Opening part name map file (%s)\n", name_file);
-	    if ((name_fd=fopen(name_file, "rb")) == NULL) {
-		struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-		int dialog_return=0;
-		wchar_t w_error_msg[512];
-		creo_log(cinfo, MSG_DEBUG, status, "Failed to open part name map file (%s): %s\n", name_file, strerror(errno));
-
-		/* TODO - wrap this up into a creo msg dialog function of some kind... */
-		status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
-		(void)ProUIPushbuttonActivateActionSet( "creo_brl_gen_error", "ok_button", kill_gen_error_dialog, NULL);
-		bu_vls_printf( &error_msg, "\n\tCannot open part name file (%s)\n\t", name_file );
-		bu_vls_strcat( &error_msg, strerror( errno ) );
-		ProStringToWstring(w_error_msg, bu_vls_addr(&error_msg));
-		status = ProUITextareaValueSet( "creo_brl_gen_error", "error_message", w_error_msg );
-		bu_vls_free( &error_msg );
-		status = ProUIDialogActivate( "creo_brl_gen_error", &dialog_return );
-		ProUIDialogDestroy( "creo_brl" );
-		return;
-	    }
-
-	    /* create a hash table of part numbers to part names */
-	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( cinfo->logger, "Creating name hash\n" );
-	    }
-
-	    ProStringToWstring( tmp_line, "Processing part name file" );
-	    status = ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
-	    }
-	    status = ProUIDialogActivate( "creo_brl", &ret_status );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
-			status );
-		fprintf( stderr, "\t dialog returned %d\n", ret_status );
-	    }
-
-	    cinfo->name_hash = create_name_hash(cinfo, name_fd );
-	    fclose( name_fd );
-
-	} else {
-	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( cinfo->logger, "No name hash used\n" );
-	    }
-	    /* create an empty hash table */
-	    cinfo->name_hash = bu_hash_create( 512 );
-	}
-
-
-    }
 
     /* get starting ident */
-    status = ProUIInputpanelValueGet( "creo_brl", "starting_ident", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get starting ident\n" );
+    if ((status = ProUIInputpanelValueGet("creo_brl", "starting_ident", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get starting ident.\n");
+	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
+    } else {
+	cinfo->reg_id = wstr_to_long(cinfo, &tmp_str);
+	V_MAX(cinfo->reg_id, 1);
+	ProWstringFree(tmp_str);
     }
 
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->reg_id = atoi( astr );
-    V_MAX(cinfo->reg_id, 1);
 
     /* get max error */
-    status = ProUIInputpanelValueGet( "creo_brl", "max_error", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get max tesellation error\n" );
+    if ((status = ProUIInputpanelValueGet("creo_brl", "max_error", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get max tessellation error.\n");
+	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
+    } else {
+	cinfo->max_error = wstr_to_double(&tmp_str);
+	ProWstringFree(tmp_str);
     }
 
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->max_error = atof( astr );
 
     /* get min error */
-    status = ProUIInputpanelValueGet( "creo_brl", "min_error", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get min tesellation error\n" );
+    if ((status = ProUIInputpanelValueGet("creo_brl", "min_error", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get min tessellation error.\n");
+	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
+    } else {
+	cinfo->min_error = wstr_to_double(&tmp_str);
+	ProWstringFree(tmp_str);
+	V_MAX(cinfo->max_error, cinfo->min_error);
     }
 
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->min_error = atof( astr );
-
-    V_MAX(cinfo->max_error, cinfo->min_error);
 
     /* get the max angle control */
-    status = ProUIInputpanelValueGet( "creo_brl", "max_angle_ctrl", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get angle control\n" );
+    if ((status = ProUIInputpanelValueGet("creo_brl", "max_angle_ctrl", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get max angle control.\n");
+	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
+    } else {
+	cinfo->max_angle_cntrl = wstr_to_double(&tmp_str);
+	ProWstringFree(tmp_str);
     }
 
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->max_angle_cntrl = atof( astr );
 
     /* get the min angle control */
-    status = ProUIInputpanelValueGet( "creo_brl", "min_angle_ctrl", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get angle control\n" );
+    if ((status = ProUIInputpanelValueGet("creo_brl", "min_angle_ctrl", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get min angle control.\n");
+	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
+    } else {
+	cinfo->min_angle_cntrl = wstr_to_double(&tmp_str);
+	ProWstringFree(&tmp_str);
+	V_MAX(cinfo->max_angle_cntrl, cinfo->min_angle_cntrl);
     }
-
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->min_angle_cntrl = atof( astr );
-
-    V_MAX(cinfo->max_angle_cntrl, cinfo->min_angle_cntrl);
 
     /* get the max to min steps */
-    status = ProUIInputpanelValueGet( "creo_brl", "isteps", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get max to min steps\n" );
+    if ((status = ProUIInputpanelValueGet("creo_brl", "isteps", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get max to min steps.\n");
+	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
-    }
-
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->max_to_min_steps = atoi( astr );
-    if (cinfo->max_to_min_steps <= 0) {
-	cinfo->max_to_min_steps = 0;
-	cinfo->error_increment = 0;
-	cinfo->angle_increment = 0;
     } else {
-	if (ZERO((cinfo->max_error - cinfo->min_error)))
-	    cinfo->error_increment = 0;
-	else
-	    cinfo->error_increment = (cinfo->max_error - cinfo->min_error) / (double)cinfo->max_to_min_steps;
-
-	if (ZERO((cinfo->max_angle_cntrl - cinfo->min_angle_cntrl)))
-	    cinfo->angle_increment = 0;
-	else
-	    cinfo->angle_increment = (cinfo->max_angle_cntrl - cinfo->min_angle_cntrl) / (double)cinfo->max_to_min_steps;
-
-	if (cinfo->error_increment == 0 && cinfo->angle_increment == 0)
+	cinfo->max_to_min_steps = wstr_to_long(&tmp_str);
+	ProWstringFree(tmp_str);
+	if (cinfo->max_to_min_steps <= 0) {
 	    cinfo->max_to_min_steps = 0;
+	} else {
+	    cinfo->error_increment = (ZERO((cinfo->max_error - cinfo->min_error))) ? 0 : cinfo->error_increment = (cinfo->max_error - cinfo->min_error) / (double)cinfo->max_to_min_steps;
+	    cinfo->angle_increment = (ZERO((cinfo->max_angle_cntrl - cinfo->min_angle_cntrl))) ? 0 : (cinfo->max_angle_cntrl - cinfo->min_angle_cntrl) / (double)cinfo->max_to_min_steps;
+	    if (ZERO(cinfo->error_increment) && ZERO(cinfo->angle_increment)) cinfo->max_to_min_steps = 0;
+	}
     }
 
     /* check if user wants to do any CSG */
-    status = ProUICheckbuttonGetState( "creo_brl", "facets_only", &cinfo->do_facets_only );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get checkbutton setting (facetize only)\n" );
+    if ((status = ProUICheckbuttonGetState("creo_brl", "facets_only", &cinfo->do_facets_only)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get checkbutton setting (facetize only).\n");
+	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
 
     /* check if user wants to eliminate small features */
-    status = ProUICheckbuttonGetState( "creo_brl", "elim_small", &cinfo->do_elims );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get checkbutton setting (eliminate small features)\n" );
+    if ((status = ProUICheckbuttonGetState("creo_brl", "elim_small", &cinfo->do_elims)) != PRO_TK_NO_ERROR ) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get checkbutton setting (eliminate small features).\n");
+	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
 
     /* check if user wants surface normals in the BOT's */
-    status = ProUICheckbuttonGetState( "creo_brl", "get_normals", &cinfo->get_normals );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get checkbutton setting (extract surface normals)\n" );
+    if ((status = ProUICheckbuttonGetState("creo_brl", "get_normals", &cinfo->get_normals)) != PRO_TK_NO_ERROR ) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get checkbutton setting (extract surface normals).\n");
+	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
 
-    if ( cinfo->do_elims ) {
+    if (cinfo->do_elims) {
 
 	/* get the minimum hole diameter */
-	status = ProUIInputpanelValueGet( "creo_brl", "min_hole", &tmp_str );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get minimum hole diameter\n" );
+	if ((status = ProUIInputpanelValueGet("creo_brl", "min_hole", &tmp_str)) != PRO_TK_NO_ERROR) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get minimum hole diameter.\n");
+	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
+	} else {
+	    cinfo->min_hole_diameter = wstr_to_double(&tmp_str);
+	    V_MAX(cinfo->min_hole_diameter, 0.0);
+	    ProWstringFree(tmp_str);
 	}
-
-	ProWstringToString( astr, tmp_str );
-	ProWstringFree( tmp_str );
-	cinfo->min_hole_diameter = atof( astr );
-	V_MAX(cinfo->min_hole_diameter, 0.0);
 
 	/* get the minimum chamfer dimension */
-	status = ProUIInputpanelValueGet( "creo_brl", "min_chamfer", &tmp_str );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get minimum chamfer dimension\n" );
+	if ((status = ProUIInputpanelValueGet("creo_brl", "min_chamfer", &tmp_str)) != PRO_TK_NO_ERROR) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get minimum chamfer diameter.\n");
+	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
+	} else {
+	    cinfo->min_chamfer_dim = wstr_to_double(&tmp_str);
+	    V_MAX(cinfo->min_chamfer_dim, 0.0);
+	    ProWstringFree(tmp_str);
 	}
-
-	ProWstringToString( astr, tmp_str );
-	ProWstringFree( tmp_str );
-	cinfo->min_chamfer_dim = atof( astr );
-	V_MAX(cinfo->min_chamfer_dim, 0.0);
 
 	/* get the minimum round radius */
-	status = ProUIInputpanelValueGet( "creo_brl", "min_round", &tmp_str );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get minimum round radius\n" );
+	if ((status = ProUIInputpanelValueGet("creo_brl", "min_round", &tmp_str)) != PRO_TK_NO_ERROR) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get minimum round radius.\n");
+	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
+	} else {
+	    cinfo->min_round_radius = wstr_to_double(&tmp_str);
+	    V_MAX(cinfo->min_round_radius, 0.0);
+	    ProWstringFree(&tmp_str);
 	}
-
-	ProWstringToString( astr, tmp_str );
-	ProWstringFree( tmp_str );
-	cinfo->min_round_radius = atof( astr );
-
-	V_MAX(cinfo->min_round_radius, 0.0);
 
     } else {
 	cinfo->min_hole_diameter = 0.0;
 	cinfo->min_round_radius = 0.0;
 	cinfo->min_chamfer_dim = 0.0;
     }
+
     /* get the currently displayed model in Pro/E */
-    status = ProMdlCurrentGet( &model );
-    if ( status == PRO_TK_BAD_CONTEXT ) {
-	(void)ProMessageDisplay(msgfil, "USER_NO_MODEL" );
-	ProMessageClear();
-	fprintf( stderr, "No model is displayed!!\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	ProUIDialogDestroy( "creo_brl" );
+    if ((status = ProMdlCurrentGet(&model)) == PRO_TK_BAD_CONTEXT ) {
+	creo_log(cinfo, MSG_FAIL, status, "No model is displayed!!\n");
 	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
 
     /* get its type */
-    status = ProMdlTypeGet( model, &type );
-    if ( status == PRO_TK_BAD_INPUTS ) {
-	(void)ProMessageDisplay(msgfil, "USER_NO_TYPE" );
-	ProMessageClear();
-	fprintf( stderr, "Cannot get type of current model\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	ProUIDialogDestroy( "creo_brl" );
+    if (status = ProMdlTypeGet(model, &type) == PRO_TK_BAD_INPUTS) {
+	creo_log(cinfo, MSG_FAIL, status, "Cannot get type of current model!!\n");
 	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
 
     /* can only do parts and assemblies, no drawings, etc. */
     if ( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
-	(void)ProMessageDisplay(msgfil, "USER_TYPE_NOT_SOLID" );
-	ProMessageClear();
-	fprintf( stderr, "Current model is not a solid object\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	ProUIDialogDestroy( "creo_brl" );
+	creo_log(cinfo, MSG_FAIL, status, "Current model is not a solid object.\n");
 	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
 
@@ -587,9 +528,6 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     /* adjust tolerance for Pro/E units */
     cinfo->local_tol = cinfo->tol_dist / cinfo->creo_to_brl_conv;
     cinfo->local_tol_sq = cinfo->local_tol * cinfo->local_tol;
-
-    cinfo->vert_tree_root = create_vert_tree();
-    cinfo->norm_tree_root = create_vert_tree();
 
     /* output the top level object
      * this will recurse through the entire model

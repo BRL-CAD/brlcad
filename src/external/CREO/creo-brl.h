@@ -127,7 +127,7 @@ struct empty_parts {
 
 struct creo_conv_info {
     /* Region ID */
-    int reg_id;	/* region ident number (incremented with each part) */
+    long int reg_id;	/* region ident number (incremented with each part) */
 
     /* File settings */
     FILE *logger;			/* log file */
@@ -149,7 +149,7 @@ struct creo_conv_info {
     double tol_dist;	/* (mm) minimum distance between two distinct vertices */
     double max_angle_cntrl;	/* max angle control for tessellation ( 0.0 - 1.0 ) */
     double min_angle_cntrl;	/* min angle control for tessellation ( 0.0 - 1.0 ) */
-    int max_to_min_steps;	/* number of steps between max and min */
+    long int max_to_min_steps;	/* number of steps between max and min */
     double error_increment;
     double angle_increment;
 
