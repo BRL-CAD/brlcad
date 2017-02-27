@@ -60,10 +60,11 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
 
     cinfo->parts = new std::set<wchar_t *, WStrCmp>;
     cinfo->assems = new std::set<wchar_t *, WStrCmp>;
-    cinfo->assem_child_cnts = new std::map<wchar_t *, int>;
+    cinfo->assem_child_cnts = new std::map<wchar_t *, int, WStrCmp>;
     cinfo->empty = new std::set<wchar_t *, WStrCmp>;
-    cinfo->name_map = new std::map<wchar_t *, struct bu_vls *>;
+    cinfo->name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
     cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
+    cinfo->name_hash = new std::map<char *, struct bu_vls *, CharCmp>;
 
 }
 
@@ -180,13 +181,14 @@ output_top_level_object(struct creo_conv_info *cinfo, promdl model, promdltype t
 	find_empty_assemblies(cinfo);
 	output_assems(cinfo);
     } else {
-	bu_log("Object %s is neither PART nor ASSEMBLY, skipping", cinfo->curr_part_name );
+	bu_log("Object %s is neither PART nor ASSEMBLY, skipping", name);
     }
 
     /* TODO - Make a final toplevel comb with the file name to hold the orientation matrix */
     /* xform to rotate the model into standard BRL-CAD orientation */
     /*0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1*/
 
+    bu_free(wname_saved, "saved name");
 }
 
 
@@ -200,15 +202,8 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProLine tmp_line;
     ProCharLine astr;
     ProFileName msgfil;
-    wchar_t *w_output_file;
-    wchar_t *w_name_file;
-    wchar_t *tmp_str;
-    char output_file[128];
-    char name_file[128];
-    char log_file[128];
     int n_selected_names;
     char **selected_names;
-    char logger_type_str[128];
     int ret_status=0;
 
     /* This replaces the global variables used in the original Pro/E converter */
@@ -217,56 +212,165 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     ProStringToWstring( tmp_line, "Not processing" );
     status = ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
-    }
-#if 0
-    status = ProUIDialogActivate( "creo_brl", &ret_status );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
-		status );
-	fprintf( stderr, "\t dialog returned %d\n", ret_status );
-    }
-#endif
-    /* get logger type */
-    status = ProUIRadiogroupSelectednamesGet( "creo_brl", "log_file_type_rg", &n_selected_names, &selected_names );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get log file type\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-    sprintf(logger_type_str,"%s", selected_names[0]);
-    ProStringarrayFree(selected_names, n_selected_names);
 
-    /* get the name of the log file */
-    status = ProUIInputpanelValueGet( "creo_brl", "log_file", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get log file name\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-    ProWstringToString( log_file, tmp_str );
-    ProWstringFree( tmp_str );
+    /********************/
+    /*  Set up logging  */
+    /********************/
+    {
+	char log_file[128];
+	char logger_type_str[128];
+	wchar_t *tmp_str;
+	/* get the name of the log file */
+	status = ProUIInputpanelValueGet( "creo_brl", "log_file", &tmp_str );
+	if ( status != PRO_TK_NO_ERROR ) {
+	    fprintf(stderr, "Failed to get log file name\n");
+	    ProUIDialogDestroy("creo_brl");
+	    return;
+	}
+	ProWstringToString(log_file, tmp_str);
+	ProWstringFree(tmp_str);
 
-    /* get the name of the output file */
-    status = ProUIInputpanelValueGet( "creo_brl", "output_file", &w_output_file );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get output file name\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-    ProWstringToString( output_file, w_output_file );
-    ProWstringFree( w_output_file );
+	/* Set logger type */
+	status = ProUIRadiogroupSelectednamesGet( "creo_brl", "log_file_type_rg", &n_selected_names, &selected_names );
+	if (status != PRO_TK_NO_ERROR) {
+	    fprintf( stderr, "Failed to get log file type\n" );
+	    ProUIDialogDestroy("creo_brl");
+	    return;
+	}
+	sprintf(logger_type_str,"%s", selected_names[0]);
+	ProStringarrayFree(selected_names, n_selected_names);
+	if (BU_STR_EQUAL("Failure", logger_type_str))
+	    cinfo->logger_type = LOGGER_TYPE_FAILURE;
+	else if (BU_STR_EQUAL("Success", logger_type_str))
+	    cinfo->logger_type = LOGGER_TYPE_SUCCESS;
+	else if (BU_STR_EQUAL("Failure/Success", logger_type_str))
+	    cinfo->logger_type = LOGGER_TYPE_FAILURE_OR_SUCCESS;
+	else
+	    cinfo->logger_type = LOGGER_TYPE_ALL;
 
-    /* get the name of the part number to part name mapping file */
-    status = ProUIInputpanelValueGet( "creo_brl", "name_file", &w_name_file );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get name of part number to part name mapping file\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
+	/* open log file, if a name was provided */
+	if (strlen(log_file) > 0) {
+	    if ((cinfo->logger=fopen(log_file, "wb")) == NULL) {
+		(void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open log file");
+		ProMessageClear();
+		fprintf(stderr, "Cannot open log file\n");
+		perror("\t");
+		ProUIDialogDestroy("creo_brl");
+		return;
+	    }
+	} else {
+	    cinfo->logger = (FILE *)NULL;
+	}
     }
-    ProWstringToString( name_file, w_name_file );
-    ProWstringFree( w_name_file );
+
+    /**************************/
+    /* Set up the output file */
+    /**************************/
+    {
+	/* Get string from dialog */
+	char output_file[128];
+	wchar_t *w_output_file;
+	status = ProUIInputpanelValueGet("creo_brl", "output_file", &w_output_file);
+	if ( status != PRO_TK_NO_ERROR ) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get output file name\n");
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
+	}
+	ProWstringToString(output_file, w_output_file);
+	ProWstringFree(w_output_file);
+
+	/* Safety check - don't overwrite a pre-existing file */
+	if (bu_file_exists(output_file, NULL)) {
+	    /* TODO - wrap this up into a creo msg dialog function of some kind... */
+	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+	    wchar_t w_error_msg[512];
+	    bu_vls_printf( &error_msg, "Cannot create file %s - file already exists.\n", output_file );
+	    ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
+	    status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
+	    (void)ProUIPushbuttonActivateActionSet( "creo_brl_gen_error", "ok_button", kill_gen_error_dialog, NULL );
+	    status = ProUITextareaValueSet( "creo_brl_gen_error", "error_message", w_error_msg );
+	    status = ProUIDialogActivate( "creo_brl_gen_error", &dialog_return );
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
+	}
+
+	/* open output file */
+	if ( (cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL ) {
+	    creo_log(cinfo, MSG_FAIL, status, "Cannot open output file.\n");
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
+	}
+	cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
+    }
+
+    /***********************************************************************/
+    /* Get the part number to part name mapping file, if one is specified. */
+    /***********************************************************************/
+    {
+	wchar_t *w_name_file;
+	char name_file[128];
+	status = ProUIInputpanelValueGet("creo_brl", "name_file", &w_name_file);
+	if (status != PRO_TK_NO_ERROR) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get name of part number to part name mapping file.\n");
+	    ProUIDialogDestroy("creo_brl");
+	    return;
+	}
+	ProWstringToString(name_file, w_name_file);
+	ProWstringFree(w_name_file);
+
+	/* open part name mapper file, if a name was provided */
+	if (strlen(name_file) > 0) {
+	    FILE *name_fd;
+	    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Opening part name map file (%s)\n", name_file);
+	    if ((name_fd=fopen(name_file, "rb")) == NULL) {
+		struct bu_vls error_msg = BU_VLS_INIT_ZERO;
+		int dialog_return=0;
+		wchar_t w_error_msg[512];
+		creo_log(cinfo, MSG_DEBUG, status, "Failed to open part name map file (%s): %s\n", name_file, strerror(errno));
+
+		/* TODO - wrap this up into a creo msg dialog function of some kind... */
+		status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
+		(void)ProUIPushbuttonActivateActionSet( "creo_brl_gen_error", "ok_button", kill_gen_error_dialog, NULL);
+		bu_vls_printf( &error_msg, "\n\tCannot open part name file (%s)\n\t", name_file );
+		bu_vls_strcat( &error_msg, strerror( errno ) );
+		ProStringToWstring(w_error_msg, bu_vls_addr(&error_msg));
+		status = ProUITextareaValueSet( "creo_brl_gen_error", "error_message", w_error_msg );
+		bu_vls_free( &error_msg );
+		status = ProUIDialogActivate( "creo_brl_gen_error", &dialog_return );
+		ProUIDialogDestroy( "creo_brl" );
+		return;
+	    }
+
+	    /* create a hash table of part numbers to part names */
+	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+		fprintf( cinfo->logger, "Creating name hash\n" );
+	    }
+
+	    ProStringToWstring( tmp_line, "Processing part name file" );
+	    status = ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
+	    if ( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
+	    }
+	    status = ProUIDialogActivate( "creo_brl", &ret_status );
+	    if ( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
+			status );
+		fprintf( stderr, "\t dialog returned %d\n", ret_status );
+	    }
+
+	    cinfo->name_hash = create_name_hash(cinfo, name_fd );
+	    fclose( name_fd );
+
+	} else {
+	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+		fprintf( cinfo->logger, "No name hash used\n" );
+	    }
+	    /* create an empty hash table */
+	    cinfo->name_hash = bu_hash_create( 512 );
+	}
+
+
+    }
 
     /* get starting ident */
     status = ProUIInputpanelValueGet( "creo_brl", "starting_ident", &tmp_str );
@@ -434,134 +538,6 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	cinfo->min_round_radius = 0.0;
 	cinfo->min_chamfer_dim = 0.0;
     }
-
-    /* open log file, if a name was provided */
-    if ( strlen( log_file ) > 0 ) {
-	if ( BU_STR_EQUAL( log_file, "stderr" ) ) {
-	    cinfo->logger = stderr;
-	} else if ( (cinfo->logger=fopen( log_file, "wb" ) ) == NULL ) {
-	    (void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open log file" );
-	    ProMessageClear();
-	    fprintf( stderr, "Cannot open log file\n" );
-	    perror( "\t" );
-	    ProUIDialogDestroy( "creo_brl" );
-	    return;
-	}
-
-	/* Set logger type */
-	if (BU_STR_EQUAL("Failure", logger_type_str))
-	    cinfo->logger_type = LOGGER_TYPE_FAILURE;
-	else if (BU_STR_EQUAL("Success", logger_type_str))
-	    cinfo->logger_type = LOGGER_TYPE_SUCCESS;
-	else if (BU_STR_EQUAL("Failure/Success", logger_type_str))
-	    cinfo->logger_type = LOGGER_TYPE_FAILURE_OR_SUCCESS;
-	else
-	    cinfo->logger_type = LOGGER_TYPE_ALL;
-    } else {
-	cinfo->logger = (FILE *)NULL;
-	cinfo->logger_type = LOGGER_TYPE_NONE;
-    }
-
-    /* open part name mapper file, if a name was provided */
-    if ( strlen( name_file ) > 0 ) {
-	FILE *name_fd;
-
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "Opening part name map file (%s)\n", name_file );
-	}
-
-	if ( (name_fd=fopen( name_file, "rb" ) ) == NULL ) {
-	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-	    int dialog_return=0;
-	    wchar_t w_error_msg[512];
-
-	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( cinfo->logger, "Failed to open part name map file (%s)\n", name_file );
-		fprintf( cinfo->logger, "%s\n", strerror( errno ) );
-	    }
-
-	    (void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open part name file" );
-	    ProMessageClear();
-	    fprintf( stderr, "Cannot open part name file\n" );
-	    perror( name_file );
-	    status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to create error dialog (%d)\n", status );
-	    }
-	    (void)ProUIPushbuttonActivateActionSet( "creo_brl_gen_error",
-		    "ok_button",
-		    kill_gen_error_dialog, NULL );
-	    bu_vls_printf( &error_msg, "\n\tCannot open part name file (%s)\n\t",
-		    name_file );
-	    bu_vls_strcat( &error_msg, strerror( errno ) );
-	    ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
-	    status = ProUITextareaValueSet( "creo_brl_gen_error", "error_message", w_error_msg );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to set message for error dialog (%d)\n", status );
-	    }
-	    bu_vls_free( &error_msg );
-	    status = ProUIDialogActivate( "creo_brl_gen_error", &dialog_return );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to activate error dialog (%d)\n", status );
-	    }
-	    ProUIDialogDestroy( "creo_brl" );
-	    return;
-	}
-
-	/* create a hash table of part numbers to part names */
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "Creating name hash\n" );
-	}
-
-	ProStringToWstring( tmp_line, "Processing part name file" );
-	status = ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
-	}
-	status = ProUIDialogActivate( "creo_brl", &ret_status );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
-		    status );
-	    fprintf( stderr, "\t dialog returned %d\n", ret_status );
-	}
-
-	cinfo->name_hash = create_name_hash(cinfo, name_fd );
-	fclose( name_fd );
-
-    } else {
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "No name hash used\n" );
-	}
-	/* create an empty hash table */
-	cinfo->name_hash = bu_hash_create( 512 );
-    }
-
-    /* Safety check - don't overwrite a pre-existing file */
-    if (bu_file_exists(output_file, NULL)) {
-	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-	wchar_t w_error_msg[512];
-	bu_vls_printf( &error_msg, "Cannot create file %s - file already exists.\n", output_file );
-	ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
-	status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
-	(void)ProUIPushbuttonActivateActionSet( "creo_brl_gen_error", "ok_button", kill_gen_error_dialog, NULL );
-	status = ProUITextareaValueSet( "creo_brl_gen_error", "error_message", w_error_msg );
-	status = ProUIDialogActivate( "creo_brl_gen_error", &dialog_return );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
-    /* open output file */
-    if ( (cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL ) {
-	(void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open output file" );
-	ProMessageClear();
-	fprintf( stderr, "Cannot open output file\n" );
-	perror( "\t" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-    cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
-
-
     /* get the currently displayed model in Pro/E */
     status = ProMdlCurrentGet( &model );
     if ( status == PRO_TK_BAD_CONTEXT ) {

@@ -262,55 +262,40 @@ get_brlcad_name(struct creo_conv_info *cinfo, char *part_name )
     }
 }
 
-extern "C" struct bu_hash_tbl *
+extern "C" int 
 create_name_hash(struct creo_conv_info *cinfo, FILE *name_fd )
 {
-    struct bu_hash_tbl *htbl;
     char line[MAX_LINE_LEN];
-    struct bu_hash_entry *entry=NULL;
     long line_no=0;
 
-    htbl = bu_hash_create( NUM_HASH_TABLE_BINS );
-
-    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( cinfo->logger, "name hash created, now filling it:\n" );
-    }
-    while ( bu_fgets( line, MAX_LINE_LEN, name_fd ) ) {
+    while (bu_fgets(line, MAX_LINE_LEN, name_fd)) {
 	char *part_no, *part_name, *ptr;
 	line_no++;
 
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "line %ld: %s", line_no, line );
-	}
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "line %ld: %s", line_no, line);
 
 	ptr = strtok( line, " \t\n" );
-	if ( !ptr ) {
-	    bu_log( "Warning: unrecognizable line in part name file (bad part number):\n\t%s\n", line );
-	    bu_log( "\tIgnoring\n" );
+	if (!ptr) {
+	    creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Warning: unrecognizable line in part name file (bad part number):\n\t%s\n\tIgnoring\n", line );
 	    continue;
 	}
-	part_no = bu_strdup( ptr );
+	part_no = bu_strdup(ptr);
 	lower_case( part_no );
 
 	/* match up to the EOL, everything up to it minus surrounding ws is the name */
 	ptr = strtok( (char *)NULL, "\n" );
 	if ( !ptr ) {
-	    bu_log( "Warning: unrecognizable line in part name file (bad part name):\n\t%s\n", line );
-	    bu_log( "\tIgnoring\n" );
+	    creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Warning: unrecognizable line in part name file (bad part number):\n\t%s\n\tIgnoring\n", line );
 	    continue;
 	}
-	if (bu_hash_get( htbl, (unsigned char *)part_no, strlen( part_no )) ) {
-	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( cinfo->logger, "\t\t\tHash table entry already exists for part number (%s)\n", part_no );
-	    }
+	if (cinfo->name_hash->find(part_no) != cinfo->name_hash->end()) {
+	    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t\t\tHash table entry already exists for part number (%s)\n", part_no);
 	    bu_free( part_no, "part_no" );
 	    continue;
 	}
 
 	/* trim any left whitespace */
-	while (isspace(*ptr) && (*ptr != '\n')) {
-	    ptr++;
-	}
+	while (isspace(*ptr) && (*ptr != '\n')) {ptr++;}
 	part_name = ptr;
 
 	/* trim any right whitespace */

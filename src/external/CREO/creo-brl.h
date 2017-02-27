@@ -98,6 +98,12 @@ struct StrCmp {
     }
 };
 
+struct CharCmp {
+    bool operator()(char *str1, char *str2) const {
+	return (bu_strcmp(str1, str2) < 0);
+    }
+};
+
 
 struct WStrCmp {
     bool operator()(wchar_t *str1, wchar_t *str2) const {
@@ -160,10 +166,11 @@ struct creo_conv_info {
 
     std::set<wchar_t *, WStrCmp> *parts;	/* list of all parts in CREO hierarchy */
     std::set<wchar_t *, WStrCmp> *assems;	/* list of all assemblies in CREO hierarchy */
-    std::map<wchar_t *, int> *assem_child_cnts; /* number of solid children in a given assembly */
+    std::map<wchar_t *, int, WStrCmp> *assem_child_cnts; /* number of solid children in a given assembly */
     std::set<wchar_t *, WStrCmp> *empty;	/* list of all parts and assemblies in CREO that have no shape */
-    std::map<wchar_t *, struct bu_vls *> *name_map; /* CREO names to BRL-CAD names */
+    std::map<wchar_t *, struct bu_vls *, WStrCmp> *name_map;  /* CREO names to BRL-CAD names */
     std::set<struct bu_vls *, StrCmp> *brlcad_names; /* list of active .g object names */
+    std::map<char *, struct bu_vls *, CharCmp> *name_hash;     /* part names to part numbers */
 };
 
 struct feature_data {
@@ -179,7 +186,7 @@ extern "C" void free_csg_ops(struct creo_conv_info *);
 
 extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
 extern "C" char *get_brlcad_name(struct creo_conv_info *cinfo, char *part_name);
-extern "C" struct bu_hash_tbl *create_name_hash(struct creo_conv_info *cinfo, FILE *name_fd);
+extern "C" int create_name_hash(struct creo_conv_info *cinfo, FILE *name_fd);
 extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
 extern "C" int output_part(struct creo_conv_info *, ProMdl model);
 
