@@ -193,6 +193,9 @@ extern "C" int output_part(struct creo_conv_info *, ProMdl model);
 
 extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
 
+extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
+extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
+
 extern "C" ProError ShowMsg();
 
 #endif /*CREO_BRL_H*/

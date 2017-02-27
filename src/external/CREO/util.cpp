@@ -143,6 +143,42 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, ProError status, const char
 }
 
 
+extern "C" long int
+wstr_to_long(struct creo_conv_info *cinfo, wchar_t *tmp_str)
+{
+    long int ret;
+    char *endptr = NULL;
+    ProCharLine astr;
+    ProWstringToString(astr, *tmp_str);
+    errno = 0;
+    ret = strtol(astr, &endptr, 0);
+    if (endptr != NULL && strlen(endptr) > 0) {
+        /* Had some invalid character in the input, fail */
+        creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Invalid string specifier for int: %s\n", astr);
+        return -1;
+    }
+    return ret;
+}
+
+extern "C" double
+wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
+{
+    double ret;
+    char *endptr = NULL;
+    ProCharLine astr;
+    ProWstringToString(astr, *tmp_str);
+    errno = 0;
+    ret = strtod(astr, &endptr);
+    if (endptr != NULL && strlen(endptr) > 0) {
+        /* Had some invalid character in the input, fail */
+        creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Invalid string specifier for double: %s\n", astr);
+        return -1.0;
+    }
+    return ret;
+}
+
+
+
 extern "C" void
 kill_error_dialog( char *dialog, char *component, ProAppData appdata )
 {

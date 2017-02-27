@@ -100,40 +100,6 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
     BU_PUT(cinfo, struct creo_conv_info);
 }
 
-extern "C" long int
-wstr_to_long(struct creo_conv_info *cinfo, wchar_t *tmp_str)
-{
-    long int ret;
-    char *endptr = NULL;
-    ProCharLine astr;
-    ProWstringToString(astr, *tmp_str);
-    errno = 0;
-    ret = strtol(astr, &endptr, 0);
-    if (endptr != NULL && strlen(endptr) > 0) {
-	/* Had some invalid character in the input, fail */
-	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Invalid string specifier for int: %s\n", astr);
-	return -1;
-    }
-    return ret;
-}
-
-extern "C" double
-wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
-{
-    double ret;
-    char *endptr = NULL;
-    ProCharLine astr;
-    ProWstringToString(astr, *tmp_str);
-    errno = 0;
-    ret = strtod(astr, &endptr);
-    if (endptr != NULL && strlen(endptr) > 0) {
-	/* Had some invalid character in the input, fail */
-	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Invalid string specifier for double: %s\n", astr);
-	return -1.0;
-    }
-    return ret;
-}
-
 extern "C" void
 output_parts(struct creo_conv_info *cinfo)
 {
@@ -550,61 +516,52 @@ extern "C" void
 elim_small_activate( char *dialog_name, char *button_name, ProAppData data )
 {
     ProBoolean state;
-    ProError status;
 
-    status = ProUICheckbuttonGetState( dialog_name, button_name, &state );
-    if ( status != PRO_TK_NO_ERROR ) {
+    if (ProUICheckbuttonGetState( dialog_name, button_name, &state) != PRO_TK_NO_ERROR) {
 	fprintf( stderr, "checkbutton activate routine: failed to get state\n" );
 	return;
     }
 
-    if ( state ) {
-	status = ProUIInputpanelEditable( dialog_name, "min_hole" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to activate \"minimum hole diameter\"\n" );
+    if (state) {
+	if (ProUIInputpanelEditable(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to activate \"minimum hole diameter\"\n");
 	    return;
 	}
-	status = ProUIInputpanelEditable( dialog_name, "min_chamfer" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to activate \"minimum chamfer dimension\"\n" );
+	if (ProUIInputpanelEditable(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to activate \"minimum chamfer dimension\"\n");
 	    return;
 	}
-	status = ProUIInputpanelEditable( dialog_name, "min_round" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to activate \"minimum round radius\"\n" );
+	if (ProUIInputpanelEditable(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to activate \"minimum round radius\"\n");
 	    return;
 	}
     } else {
-	status = ProUIInputpanelReadOnly( dialog_name, "min_hole" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to de-activate \"minimum hole diameter\"\n" );
+	if (ProUIInputpanelReadOnly(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to de-activate \"minimum hole diameter\"\n");
 	    return;
 	}
-	status = ProUIInputpanelReadOnly( dialog_name, "min_chamfer" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to de-activate \"minimum chamfer dimension\"\n" );
+	if (ProUIInputpanelReadOnly(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to de-activate \"minimum chamfer dimension\"\n");
 	    return;
 	}
-	status = ProUIInputpanelReadOnly( dialog_name, "min_round" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to de-activate \"minimum round radius\"\n" );
+	if (ProUIInputpanelReadOnly(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to de-activate \"minimum round radius\"\n");
 	    return;
 	}
     }
 }
 
 extern "C" void
-do_quit( char *dialog, char *compnent, ProAppData appdata )
+do_quit(char *dialog, char *compnent, ProAppData appdata)
 {
-    ProUIDialogDestroy( "creo_brl" );
+    ProUIDialogDestroy("creo_brl");
 }
 
 /* driver routine for converting CREO to BRL-CAD */
 extern "C" int
-creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
+creo_brl(uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data)
 {
     ProFileName msgfil;
-    ProError status;
     int ret_status=0;
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
@@ -612,63 +569,49 @@ creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     ProMessageDisplay(msgfil, "USER_INFO", "Launching creo_brl...");
 
     /* use UI dialog */
-    status = ProUIDialogCreate( "creo_brl", "creo_brl" );
-    if ( status != PRO_TK_NO_ERROR ) {
+    if (ProUIDialogCreate("creo_brl", "creo_brl") != PRO_TK_NO_ERROR) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "Failed to create dialog box for creo-brl, error = %d\n", status );
+	bu_vls_printf(&vls, "Failed to create dialog box for creo-brl\n");
 	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return 0;
     }
 
-    status = ProUICheckbuttonActivateActionSet( "creo_brl", "elim_small", elim_small_activate, NULL );
-    if ( status != PRO_TK_NO_ERROR ) {
+    if (ProUICheckbuttonActivateActionSet("creo_brl", "elim_small", elim_small_activate, NULL) != PRO_TK_NO_ERROR) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "Failed to set action for \"eliminate small features\" checkbutton, error = %d\n", status );
+	bu_vls_printf(&vls, "Failed to set action for \"eliminate small features\" checkbutton\n");
 	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return 0;
     }
 
-    status = ProUIPushbuttonActivateActionSet( "creo_brl", "doit", doit, NULL );
-    if ( status != PRO_TK_NO_ERROR ) {
+    if (ProUIPushbuttonActivateActionSet("creo_brl", "doit", doit, NULL) != PRO_TK_NO_ERROR) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "Failed to set action for 'Go' button\n" );
+	bu_vls_printf(&vls, "Failed to set action for 'Go' button\n");
 	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	ProUIDialogDestroy( "creo_brl" );
+	ProUIDialogDestroy("creo_brl");
 	bu_vls_free(&vls);
 	return 0;
     }
 
-    status = ProUIPushbuttonActivateActionSet( "creo_brl", "quit", do_quit, NULL );
-    if ( status != PRO_TK_NO_ERROR ) {
+    if (ProUIPushbuttonActivateActionSet("creo_brl", "quit", do_quit, NULL) != PRO_TK_NO_ERROR) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "Failed to set action for 'Quit' button\n" );
+	bu_vls_printf(&vls, "Failed to set action for 'Quit' button\n");
 	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	ProUIDialogDestroy( "creo_brl" );
+	ProUIDialogDestroy("creo_brl");
 	bu_vls_free(&vls);
 	return 0;
     }
 
-    status = ProUIDialogActivate( "creo_brl", &ret_status );
-    if ( status != PRO_TK_NO_ERROR ) {
+    if (ProUIDialogActivate("creo_brl", &ret_status) != PRO_TK_NO_ERROR) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "Error in creo-brl Dialog, error = %d\n",
-		status );
-	bu_vls_printf(&vls, "\t dialog returned %d\n", ret_status );
+	bu_vls_printf(&vls, "Error in creo-brl Dialog: dialog returned %d\n", ret_status);
 	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
 
     return 0;
 }
-
-
 
 /* this routine determines whether the "creo-brl" menu item in Pro/E
  * should be displayed as available or greyed out
@@ -694,8 +637,7 @@ extern "C" int user_initialize()
     /* Pro/E says always check the size of w_char */
     status = ProWcharSizeVerify (sizeof (wchar_t), &i);
     if ( status != PRO_TK_NO_ERROR || (i != sizeof (wchar_t)) ) {
-	sprintf(astr, "ERROR wchar_t Incorrect size (%d). Should be: %d",
-		sizeof(wchar_t), i );
+	sprintf(astr, "ERROR wchar_t Incorrect size (%d). Should be: %d", sizeof(wchar_t), i );
 	status = ProMessageDisplay(msgfil, "USER_ERROR", astr);
 	printf("%s\n", astr);
 	ProStringToWstring(errbuf, astr);
@@ -704,8 +646,7 @@ extern "C" int user_initialize()
     }
 
     /* add a command that calls our creo-brl routine */
-    status = ProCmdActionAdd( "CREO-BRL", (uiCmdCmdActFn)creo_brl, uiProe2ndImmediate,
-	    creo_brl_access, PRO_B_FALSE, PRO_B_FALSE, &cmd_id );
+    status = ProCmdActionAdd( "CREO-BRL", (uiCmdCmdActFn)creo_brl, uiProe2ndImmediate, creo_brl_access, PRO_B_FALSE, PRO_B_FALSE, &cmd_id );
     if ( status != PRO_TK_NO_ERROR ) {
 	sprintf( astr, "Failed to add creo-brl action" );
 	fprintf( stderr, "%s\n", astr);
@@ -716,8 +657,7 @@ extern "C" int user_initialize()
     }
 
     /* add a menu item that runs the new command */
-    status = ProMenubarmenuPushbuttonAdd( "File", "CREO-BRL", "CREO-BRL", "CREO-BRL-HELP",
-	    "File.psh_exit", PRO_B_FALSE, cmd_id, msgfil );
+    status = ProMenubarmenuPushbuttonAdd( "File", "CREO-BRL", "CREO-BRL", "CREO-BRL-HELP", "File.psh_exit", PRO_B_FALSE, cmd_id, msgfil );
     if ( status != PRO_TK_NO_ERROR ) {
 	sprintf( astr, "Failed to add creo-brl menu button" );
 	fprintf( stderr, "%s\n", astr);
