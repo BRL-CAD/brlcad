@@ -27,6 +27,7 @@
 #include "common.h"
 
 #include <set>
+#include <map>
 
 #ifndef _WSTUDIO_DEFINED
 # define _WSTUDIO_DEFINED
