@@ -46,6 +46,7 @@ extern "C" {
 #include <ProMessage.h>
 #include <ProMode.h>
 #include <ProNotify.h>
+#include <ProParameter.h>
 #include <ProPart.h>
 #include <ProSkeleton.h>
 #include <ProSolid.h>

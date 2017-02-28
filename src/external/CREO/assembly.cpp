@@ -350,6 +350,26 @@ is_non_identity( ProMatrix xform )
     return 0;
 }
 
+ProError VisitParam(ProParameter *param, ProError status, ProAppData app_data)
+{
+	ProError lstatus;
+    char pname[100000];
+	ProParamvalue pval;
+	ProParamvalueType ptype;
+	wchar_t wval[10000];
+	char val[100000];
+	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+	ProWstringToString(pname, param->id);
+	lstatus = ProParameterValueGet(param, &pval);
+	lstatus = ProParamvalueTypeGet(&pval, &ptype);
+	if (ptype == PRO_PARAM_STRING) {
+	lstatus = ProParamvalueValueGet(&pval, ptype, wval);
+	ProWstringToString(val, wval);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "   %s:%s\n", pname, val);
+	}
+	return PRO_TK_NO_ERROR;
+}
+
 /* routine to output an assembly as a BRL-CAD combination
  * The combination will have the Pro/E name with a ".c" suffix.
  * Cannot just use the Pro/E name, because assembly can have the same name as a part.
@@ -377,12 +397,19 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     }
 
     /* let the user know we are doing something */
-
+#if 0
     status = ProUILabelTextSet( "creo_brl", "curr_proc", asm_name );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to update dialog label for currently processed assembly\n" );
 	return;
     }
+#endif
+
+	/* Experiment - see if we can walk and print parameters */
+	ProError pstatus;
+	ProModelitem itm;
+	pstatus = ProMdlToModelitem(model, &itm);
+	pstatus = ProParameterVisit(&itm,  NULL, VisitParam, (ProAppData)cinfo);
 
 #if 0
     /* everything starts out in "curr_part_name", copy name to "curr_asm_name" */
