@@ -129,7 +129,7 @@ output_assems(struct creo_conv_info *cinfo)
 	if (ProMdlNameGet(parent, wname) != PRO_TK_NO_ERROR) return;
 	(void)ProWstringToString(name, wname);
 	bu_log("Processing assembly %s\n", name);
-	//output_assembly(cinfo, parent);
+	output_assembly(cinfo, parent);
     }
 }
 

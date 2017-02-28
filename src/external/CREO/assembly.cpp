@@ -90,8 +90,9 @@ assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
     ProError lstatus;
     ProMdlType type;
     wchar_t wname[10000];
-	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
-    int *has_shape = (int *)app_data;
+	struct adata *ada = (struct adata *)app_data;
+	struct creo_conv_info *cinfo = ada->cinfo;
+    int *has_shape = (int *)ada->data;
     if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
     if (cinfo->empty->find(wname) == cinfo->empty->end()) (*has_shape) = 1;
     return PRO_TK_NO_ERROR;
@@ -106,14 +107,18 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
     while (!steady_state) {
 	std::set<wchar_t *, WStrCmp>::iterator d_it;
 	steady_state = 1;
+	struct adata *ada;
+	BU_GET(ada, struct adata);
+	ada->cinfo = cinfo;
 	for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
 	    /* for each assem, verify at least one child is non-empty.  If all
 	     * children are empty, add to empty set and unset steady_state. */
 	    int has_shape = 0;
+		ada->data = (void *)&has_shape;
 	    ProMdl model;
 	    if (ProMdlnameInit(*d_it, PRO_MDLFILE_ASSEMBLY, &model) == PRO_TK_NO_ERROR ) {
 		if (cinfo->empty->find(*d_it) == cinfo->empty->end()) {
-		    ProSolidFeatVisit(ProMdlToPart(model), assembly_check_empty, (ProFeatureFilterAction)assembly_filter, (ProAppData)&has_shape);
+		    ProSolidFeatVisit(ProMdlToPart(model), assembly_check_empty, (ProFeatureFilterAction)assembly_filter, (ProAppData)ada);
 		    if (!has_shape) {
 			cinfo->empty->insert(*d_it);
 			steady_state = 0;
