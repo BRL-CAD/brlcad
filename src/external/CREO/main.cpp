@@ -103,11 +103,16 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 extern "C" void
 output_parts(struct creo_conv_info *cinfo)
 {
+    wchar_t wname[10000];
+    char name[10000];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
 	ProMdl m = ProMdlnameInit(*d_it, PRO_PART);
-	int solid_part = output_part(cinfo, m);
-	if (!solid_part) cinfo->empty->insert(*d_it);
+	if (ProMdlNameGet(m, wname) != PRO_TK_NO_ERROR) return;
+	(void)ProWstringToString(name, wname);
+	bu_log("Processing part %s\n", name);
+	//int solid_part = output_part(cinfo, m);
+	//if (!solid_part) cinfo->empty->insert(*d_it);
     }
 }
 
@@ -144,10 +149,15 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
 extern "c" void
 output_assems(struct creo_conv_info *cinfo)
 {
+    wchar_t wname[10000];
+    char name[10000];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
 	ProMdl parent = ProMdlnameInit(*d_it, PRO_ASSEM);
-	output_assembly(cinfo, parent);
+	if (ProMdlNameGet(parent, wname) != PRO_TK_NO_ERROR) return;
+	(void)ProWstringToString(name, wname);
+	bu_log("Processing assembly %s\n", name);
+	//output_assembly(cinfo, parent);
     }
 }
 
