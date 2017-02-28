@@ -168,8 +168,6 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     /* TODO - Make a final toplevel comb with the file name to hold the orientation matrix */
     /* xform to rotate the model into standard BRL-CAD orientation */
     /*0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1*/
-
-    bu_free(wname_saved, "saved name");
 }
 
 
