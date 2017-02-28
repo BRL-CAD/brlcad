@@ -571,55 +571,45 @@ do_quit(char *dialog, char *compnent, ProAppData appdata)
 extern "C" int
 creo_brl(uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data)
 {
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     ProFileName msgfil;
     int ret_status=0;
+    int destroy_dialog = 0;
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-
     ProMessageDisplay(msgfil, "USER_INFO", "Launching creo_brl...");
 
     /* use UI dialog */
     if (ProUIDialogCreate("creo_brl", "creo_brl") != PRO_TK_NO_ERROR) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&vls, "Failed to create dialog box for creo-brl\n");
-	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return 0;
+	goto print_msg;
     }
 
     if (ProUICheckbuttonActivateActionSet("creo_brl", "elim_small", elim_small_activate, NULL) != PRO_TK_NO_ERROR) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&vls, "Failed to set action for \"eliminate small features\" checkbutton\n");
-	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return 0;
+	goto print_msg;
     }
 
     if (ProUIPushbuttonActivateActionSet("creo_brl", "doit", doit, NULL) != PRO_TK_NO_ERROR) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&vls, "Failed to set action for 'Go' button\n");
-	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	ProUIDialogDestroy("creo_brl");
-	bu_vls_free(&vls);
-	return 0;
+	destroy_dialog = 1;
+	goto print_msg;
     }
 
     if (ProUIPushbuttonActivateActionSet("creo_brl", "quit", do_quit, NULL) != PRO_TK_NO_ERROR) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&vls, "Failed to set action for 'Quit' button\n");
-	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	ProUIDialogDestroy("creo_brl");
-	bu_vls_free(&vls);
-	return 0;
+	destroy_dialog = 1;
+	goto print_msg;
     }
 
     if (ProUIDialogActivate("creo_brl", &ret_status) != PRO_TK_NO_ERROR) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&vls, "Error in creo-brl Dialog: dialog returned %d\n", ret_status);
-	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	bu_vls_free(&vls);
     }
 
+print_msg:
+    ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
+    if (destroy_dialog) ProUIDialogDestroy("creo_brl");
+    bu_vls_free(&vls);
     return 0;
 }
 
