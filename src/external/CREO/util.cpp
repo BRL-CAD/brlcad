@@ -25,100 +25,42 @@
 #include "creo-brl.h"
 
 int creo_logging_opts(void *data, void *vstr){
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct creo_conv_info *cinfo = (struct creo_conv_info *)data;
     const char *str = (const char *)vstr;
+
     if (cinfo->logger_type == LOGGER_TYPE_NONE) return 0;
-    switch (cinfo->logger_type) {
-	case LOGGER_TYPE_FAILURE:
-	    if (cinfo->curr_msg_type == MSG_FAIL) {
-		if (cinfo->logger) {
-		    fprintf(cinfo->logger, "FAILURE: %s", str);
-		}
-		if (cinfo->print_to_console) {
-		    if (LIKELY(stderr != NULL)) {
-			fprintf(stderr, "FAILURE: %s", str);
-			fflush(stderr);
-		    }
-		}
-	    }
+
+    switch (cinfo->curr_msg_type) {
+	case MSG_FAIL:
+	    bu_vls_sprintf(&msg, "FAILURE: %s", str);
 	    break;
-	case LOGGER_TYPE_SUCCESS:
-	    if (cinfo->curr_msg_type == MSG_OK) {
-		if (cinfo->logger) {
-		    fprintf(cinfo->logger, "SUCCESS: %s", str);
-		}
-		if (cinfo->print_to_console) {
-		    if (LIKELY(stderr != NULL)) {
-			fprintf(stderr, "SUCCESS: %s", str);
-			fflush(stderr);
-		    }
-		}
-	    }
+	case MSG_OK:
+	    bu_vls_sprintf(&msg, "SUCCESS: %s", str);
 	    break;
-	case LOGGER_TYPE_FAILURE_OR_SUCCESS:
-	    if (cinfo->curr_msg_type < MSG_DEBUG) {
-		if (cinfo->curr_msg_type == MSG_FAIL) {
-		    if (cinfo->logger) {
-			fprintf(cinfo->logger, "FAILURE: %s", str);
-		    }
-		    if (cinfo->print_to_console) {
-			if (LIKELY(stderr != NULL)) {
-			    fprintf(stderr, "FAILURE: %s", str);
-			    fflush(stderr);
-			}
-		    }
-		}
-		if (cinfo->curr_msg_type == MSG_OK) {
-		    if (cinfo->logger) {
-			fprintf(cinfo->logger, "SUCCESS: %s", str);
-		    }
-		    if (cinfo->print_to_console) {
-			if (LIKELY(stderr != NULL)) {
-			    fprintf(stderr, "SUCCESS: %s", str);
-			    fflush(stderr);
-			}
-		    }
-		}
-	    }
+	case MSG_DEBUG:
+	    bu_vls_sprintf(&msg, "DEBUG:   %s", str);
 	    break;
 	default:
-	    if (cinfo->curr_msg_type == MSG_FAIL) {
-		if (cinfo->logger) {
-		    fprintf(cinfo->logger, "FAILURE: %s", str);
-		}
-		if (cinfo->print_to_console) {
-		    if (cinfo->print_to_console) {
-			if (LIKELY(stderr != NULL)) {
-			    fprintf(stderr, "FAILURE: %s", str);
-			    fflush(stderr);
-			}
-		    }
-		}
-	    }
-	    if (cinfo->curr_msg_type == MSG_OK) {
-		if (cinfo->logger) {
-		    fprintf(cinfo->logger, "SUCCESS: %s", str);
-		}
-		if (cinfo->print_to_console) {
-		    if (LIKELY(stderr != NULL)) {
-			fprintf(stderr, "SUCCESS: %s", str);
-			fflush(stderr);
-		    }
-		}
-	    }
-	    if (cinfo->curr_msg_type == MSG_DEBUG) {
-		if (cinfo->logger) {
-		    fprintf(cinfo->logger, "DEBUG: %s", str);
-		}
-		if (cinfo->print_to_console) {
-		    if (LIKELY(stderr != NULL)) {
-			fprintf(stderr, "DEBUG: %s", str);
-			fflush(stderr);
-		    }
-		}
-	    }
+	    bu_vls_sprintf(&msg, "%s", str);
 	    break;
     }
+
+    if ( (cinfo->curr_msg_type == MSG_FAIL && cinfo->logger_type != LOGGER_TYPE_SUCCESS) ||
+	    (cinfo->curr_msg_type == MSG_OK && cinfo->logger_type != LOGGER_TYPE_FAILURE) ||
+	    (cinfo->curr_msg_type != MSG_DEBUG && cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) ||
+	    (cinfo->logger_type == LOGGER_TYPE_ALL)
+       ) {
+	if (cinfo->logger) fprintf(cinfo->logger, "%s", bu_vls_addr(&msg));
+	if (cinfo->print_to_console) {
+	    if (LIKELY(stderr != NULL)) {
+		fprintf(stderr, "%s", bu_vls_addr(&msg));
+		fflush(stderr);
+	    }
+	}
+    }
+    bu_vls_free(&msg);
+    return 0;
 }
 
 extern "C" ProError
