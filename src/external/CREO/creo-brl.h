@@ -174,9 +174,9 @@ struct creo_conv_info {
     std::map<char *, struct bu_vls *, CharCmp> *name_hash;     /* part names to part numbers */
 };
 
-struct feature_data {
+struct adata {
     struct creo_conv_info *cinfo;
-    ProMdl model;
+    void *data;
 };
 
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);
@@ -191,6 +191,8 @@ extern "C" int create_name_hash(struct creo_conv_info *cinfo, FILE *name_fd);
 extern "C" void find_empty_assemblies(struct creo_conv_info *);
 extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
 extern "C" int output_part(struct creo_conv_info *, ProMdl model);
+extern "C" ProError assembly_gather(ProFeature *, ProError, ProAppData);
+extern "C" ProError assembly_filter(ProFeature *, ProAppData *);
 
 extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
 

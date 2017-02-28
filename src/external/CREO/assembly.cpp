@@ -28,8 +28,8 @@
 /* this routine is a filter for the feature visit routine
  * selects only "component" items (should be only parts and assemblies)
  */
-extern "C" static ProError
-assembly_filter( ProFeature *feat, ProAppData *data )
+extern "C" ProError
+assembly_filter(ProFeature *feat, ProAppData *data)
 {
     ProFeattype type;
     ProFeatStatus feat_stat;
@@ -41,7 +41,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 /* routine that is called by feature visit for each assembly member
  * the "app_data" is the head of the assembly info for this assembly
  */
-extern "C" static ProError
+extern "C" ProError
 assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
 {
     ProError loc_status;
@@ -73,7 +73,7 @@ assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
 	    }
 	    break;
 	case PRO_MDL_PART:
-	    if (cinfo->assems->find(wname) == cinfo->parts->end()) {
+	    if (cinfo->parts->find(wname) == cinfo->parts->end()) {
 		wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
 		wcsncpy(wname_saved, wname, wcslen(wname)+1);
 		cinfo->parts->insert(wname_saved);

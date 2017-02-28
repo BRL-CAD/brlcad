@@ -157,7 +157,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     } else if ( type == PRO_MDL_ASSEMBLY ) {
 	/* visit all members of assembly */
 	cinfo->assems->insert(wname_saved);
-	//ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, (ProAppData)&adata);
+	ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, (ProAppData)cinfo);
 	output_parts(cinfo);
 	find_empty_assemblies(cinfo);
 	output_assems(cinfo);
