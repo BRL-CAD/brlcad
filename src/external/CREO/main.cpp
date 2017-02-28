@@ -80,7 +80,7 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
     }
 
     std::set<struct bu_vls *, StrCmp>::iterator s_it;
-    for (s_it = brlcad_names.begin(); s_it != brlcad_names.end(); s_it++) {
+    for (s_it = cinfo->brlcad_names->begin(); s_it != cinfo->brlcad_names->end(); s_it++) {
 	struct bu_vls *v = *s_it;
 	bu_vls_free(v);
 	BU_PUT(v, struct bu_vls);
@@ -107,7 +107,8 @@ output_parts(struct creo_conv_info *cinfo)
     char name[10000];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
-	ProMdl m = ProMdlnameInit(*d_it, PRO_PART);
+	ProMdl m;
+	if (ProMdlnameInit(*d_it, PRO_MDLFILE_PART, &m) != PRO_TK_NO_ERROR) return;
 	if (ProMdlNameGet(m, wname) != PRO_TK_NO_ERROR) return;
 	(void)ProWstringToString(name, wname);
 	bu_log("Processing part %s\n", name);
@@ -116,44 +117,15 @@ output_parts(struct creo_conv_info *cinfo)
     }
 }
 
-extern "C" static ProError
-assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
-{
-    ProError status;
-    ProMdlType type;
-    char wname[10000];
-    int *has_shape = (int *)app_data;
-    if (status = ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
-    if (cinfo->empty->find(wname) == cinfo->empty->end()) (*has_shape) = 1;
-    return PRO_TK_NO_ERROR;
-}
-
-/* run this only *after* output_parts - need that information */
-extern "c" void
-find_empty_assemblies(struct creo_conv_info *cinfo)
-{
-    int steady_state = 0;
-    if (cinfo->empty->size() == 0) return;
-    while (!steady_state) {
-	std::set<wchar_t *, WStrCmp>::iterator d_it;
-	steady_state = 1;
-	for (d_it = cinfo->assems->begin(); d_it != cinfo->parts->end(); d_it++) {
-	    /* TODO - for each assem, verify at least one child is non-empty.  If all
-	     * children are empty, add to empty set and unset steady_state. */
-	    int has_shape = 0;
-	    ProSolidFeatVisit(ProMdlToPart(model), assembly_check_empty, (ProFeatureFilterAction)assembly_filter, (ProAppData)&has_shape);
-	}
-    }
-}
-
-extern "c" void
+extern "C" void
 output_assems(struct creo_conv_info *cinfo)
 {
     wchar_t wname[10000];
     char name[10000];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
-	ProMdl parent = ProMdlnameInit(*d_it, PRO_ASSEM);
+	ProMdl parent;
+	ProMdlnameInit(*d_it, PRO_MDLFILE_ASSEMBLY, &parent);
 	if (ProMdlNameGet(parent, wname) != PRO_TK_NO_ERROR) return;
 	(void)ProWstringToString(name, wname);
 	bu_log("Processing assembly %s\n", name);
@@ -162,20 +134,20 @@ output_assems(struct creo_conv_info *cinfo)
 }
 
 /* routine to output the top level object that is currently displayed in Pro/E */
-extern "c" void
-output_top_level_object(struct creo_conv_info *cinfo, promdl model, promdltype type )
+extern "C" void
+output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType type )
 {
     wchar_t wname[10000];
     char name[10000];
-    wchar *wname_saved;
+    wchar_t *wname_saved;
 
     /* get object name */
     if (ProMdlNameGet( model, wname ) != PRO_TK_NO_ERROR ) return;
     (void)ProWstringToString(name, wname);
 
     /* save name */
-    wname_saved = (wchar *)bu_calloc(wcslen(wname)+1, sizeof(wchar), "CREO name");
-    wcsncpy(wname_saved, wname, wsclen(wname)+1);
+    wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
+    wcsncpy(wname_saved, wname, wcslen(wname)+1);
 
     /* output the object */
     if ( type == PRO_MDL_PART ) {
@@ -185,7 +157,7 @@ output_top_level_object(struct creo_conv_info *cinfo, promdl model, promdltype t
     } else if ( type == PRO_MDL_ASSEMBLY ) {
 	/* visit all members of assembly */
 	cinfo->assems->insert(wname_saved);
-	ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, (ProAppData)&adata);
+	//ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, (ProAppData)&adata);
 	output_parts(cinfo);
 	find_empty_assemblies(cinfo);
 	output_assems(cinfo);
@@ -211,6 +183,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProLine tmp_line;
     ProCharLine astr;
     ProFileName msgfil;
+	wchar_t *tmp_str;
     int n_selected_names;
     char **selected_names;
     int ret_status=0;
@@ -228,7 +201,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     {
 	char log_file[128];
 	char logger_type_str[128];
-	wchar_t *tmp_str;
+
 	/* get the name of the log file */
 	status = ProUIInputpanelValueGet( "creo_brl", "log_file", &tmp_str );
 	if ( status != PRO_TK_NO_ERROR ) {
@@ -297,6 +270,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    /* TODO - wrap this up into a creo msg dialog function of some kind... */
 	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 	    wchar_t w_error_msg[512];
+		int dialog_return;
 	    bu_vls_printf( &error_msg, "Cannot create file %s - file already exists.\n", output_file );
 	    ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
 	    status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
@@ -325,7 +299,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     } else {
-	cinfo->reg_id = wstr_to_long(cinfo, &tmp_str);
+	cinfo->reg_id = wstr_to_long(cinfo, tmp_str);
 	V_MAX(cinfo->reg_id, 1);
 	ProWstringFree(tmp_str);
     }
@@ -338,7 +312,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     } else {
-	cinfo->max_error = wstr_to_double(&tmp_str);
+	cinfo->max_error = wstr_to_double(cinfo, tmp_str);
 	ProWstringFree(tmp_str);
     }
 
@@ -350,7 +324,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     } else {
-	cinfo->min_error = wstr_to_double(&tmp_str);
+	cinfo->min_error = wstr_to_double(cinfo, tmp_str);
 	ProWstringFree(tmp_str);
 	V_MAX(cinfo->max_error, cinfo->min_error);
     }
@@ -363,7 +337,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     } else {
-	cinfo->max_angle_cntrl = wstr_to_double(&tmp_str);
+	cinfo->max_angle_cntrl = wstr_to_double(cinfo, tmp_str);
 	ProWstringFree(tmp_str);
     }
 
@@ -375,8 +349,8 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     } else {
-	cinfo->min_angle_cntrl = wstr_to_double(&tmp_str);
-	ProWstringFree(&tmp_str);
+	cinfo->min_angle_cntrl = wstr_to_double(cinfo, tmp_str);
+	ProWstringFree(tmp_str);
 	V_MAX(cinfo->max_angle_cntrl, cinfo->min_angle_cntrl);
     }
 
@@ -387,7 +361,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     } else {
-	cinfo->max_to_min_steps = wstr_to_long(&tmp_str);
+	cinfo->max_to_min_steps = wstr_to_long(cinfo, tmp_str);
 	ProWstringFree(tmp_str);
 	if (cinfo->max_to_min_steps <= 0) {
 	    cinfo->max_to_min_steps = 0;
@@ -433,7 +407,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
 	} else {
-	    cinfo->min_hole_diameter = wstr_to_double(&tmp_str);
+	    cinfo->min_hole_diameter = wstr_to_double(cinfo, tmp_str);
 	    V_MAX(cinfo->min_hole_diameter, 0.0);
 	    ProWstringFree(tmp_str);
 	}
@@ -445,7 +419,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
 	} else {
-	    cinfo->min_chamfer_dim = wstr_to_double(&tmp_str);
+	    cinfo->min_chamfer_dim = wstr_to_double(cinfo, tmp_str);
 	    V_MAX(cinfo->min_chamfer_dim, 0.0);
 	    ProWstringFree(tmp_str);
 	}
@@ -457,9 +431,9 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
 	} else {
-	    cinfo->min_round_radius = wstr_to_double(&tmp_str);
+	    cinfo->min_round_radius = wstr_to_double(cinfo, tmp_str);
 	    V_MAX(cinfo->min_round_radius, 0.0);
-	    ProWstringFree(&tmp_str);
+	    ProWstringFree(tmp_str);
 	}
 
     } else {
@@ -477,7 +451,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     }
 
     /* get its type */
-    if (status = ProMdlTypeGet(model, &type) == PRO_TK_BAD_INPUTS) {
+    if ((status = ProMdlTypeGet(model, &type)) == PRO_TK_BAD_INPUTS) {
 	creo_log(cinfo, MSG_FAIL, status, "Cannot get type of current model!!\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );

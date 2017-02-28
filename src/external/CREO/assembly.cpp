@@ -23,6 +23,20 @@
 
 #include "common.h"
 #include "creo-brl.h"
+#include <string.h>
+
+/* this routine is a filter for the feature visit routine
+ * selects only "component" items (should be only parts and assemblies)
+ */
+extern "C" static ProError
+assembly_filter( ProFeature *feat, ProAppData *data )
+{
+    ProFeattype type;
+    ProFeatStatus feat_stat;
+    if (ProFeatureTypeGet(feat, &type) != PRO_TK_NO_ERROR || type != PRO_FEAT_COMPONENT) return PRO_TK_CONTINUE;
+    if (ProFeatureStatusGet(feat, &feat_stat) != PRO_TK_NO_ERROR || feat_stat != PRO_FEAT_ACTIVE) return PRO_TK_CONTINUE;
+    return PRO_TK_NO_ERROR;
+}
 
 /* routine that is called by feature visit for each assembly member
  * the "app_data" is the head of the assembly info for this assembly
@@ -30,39 +44,38 @@
 extern "C" static ProError
 assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
 {
-    ProError status;
+    ProError loc_status;
     ProMdl model;
     ProMdlType type;
     wchar_t wname[10000];
     char name[10000];
     wchar_t *wname_saved;
-    struct app_data *adata = (struct app_data *)app_data;
-    struct creo_conv_info *cinfo = adata->cinfo;
+	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
 
     /* Get feature name */
-    if (status = ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return creo_log(cinfo, MSG_FAIL, status, "Failure getting name");
+    if ((loc_status = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return creo_log(cinfo, MSG_FAIL, loc_status, "Failure getting name");
     (void)ProWstringToString(name, wname);
 
     /* get the model for this member */
-    if (status = ProAsmcompMdlGet(feat, &model) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, status, "%s: failure getting model", name);
+    if ((loc_status = ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, loc_status, "%s: failure getting model", name);
 
     /* get its type (part or assembly are the only ones that should make it here) */
-    if (status = ProMdlTypeGet(model, &type) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, status, "%s: failure getting type", name);
+    if ((loc_status = ProMdlTypeGet(model, &type)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, loc_status, "%s: failure getting type", name);
 
     /* log this member */
     switch ( type ) {
 	case PRO_MDL_ASSEMBLY:
 	    if (cinfo->assems->find(wname) == cinfo->assems->end()) {
-		wname_saved = (wchar *)bu_calloc(wcslen(wname)+1, sizeof(wchar), "CREO name");
-		wcsncpy(wname_saved, wname, wsclen(wname)+1);
+		wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
+		wcsncpy(wname_saved, wname, wcslen(wname)+1);
 		cinfo->assems->insert(wname_saved);
 		return ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, app_data);
 	    }
 	    break;
 	case PRO_MDL_PART:
 	    if (cinfo->assems->find(wname) == cinfo->parts->end()) {
-		wname_saved = (wchar *)bu_calloc(wcslen(wname)+1, sizeof(wchar), "CREO name");
-		wcsncpy(wname_saved, wname, wsclen(wname)+1);
+		wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
+		wcsncpy(wname_saved, wname, wcslen(wname)+1);
 		cinfo->parts->insert(wname_saved);
 	    }
 	    break;
@@ -74,17 +87,18 @@ assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
 extern "C" static ProError
 assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
 {
-    ProError status;
+    ProError lstatus;
     ProMdlType type;
-    char wname[10000];
+    wchar_t wname[10000];
+	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
     int *has_shape = (int *)app_data;
-    if (status = ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
+    if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
     if (cinfo->empty->find(wname) == cinfo->empty->end()) (*has_shape) = 1;
     return PRO_TK_NO_ERROR;
 }
 
 /* run this only *after* output_parts - need that information */
-extern "c" void
+extern "C" void
 find_empty_assemblies(struct creo_conv_info *cinfo)
 {
     int steady_state = 0;
@@ -97,7 +111,7 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
 	     * children are empty, add to empty set and unset steady_state. */
 	    int has_shape = 0;
 	    ProMdl model;
-	    if (ProMdlnameInit(*d_it, PRO_ASSEMBLY, &model) == PRO_TK_NO_ERROR ) {
+	    if (ProMdlnameInit(*d_it, PRO_MDLFILE_ASSEMBLY, &model) == PRO_TK_NO_ERROR ) {
 		if (cinfo->empty->find(*d_it) == cinfo->empty->end()) {
 		    ProSolidFeatVisit(ProMdlToPart(model), assembly_check_empty, (ProFeatureFilterAction)assembly_filter, (ProAppData)&has_shape);
 		    if (!has_shape) {
@@ -118,19 +132,19 @@ assembly_entry_matrix(ProMdl parent, ProFeature *entry)
 extern "C" static ProError
 assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
 {
-    ProError status;
+    ProError lstatus;
+	ProMdlType type;
     struct bu_vls entry_name = BU_VLS_INIT_ZERO;
     wchar_t wname[10000];
     char name[10000];
-    struct app_data *adata = (struct app_data *)app_data;
-    struct creo_conv_info *cinfo = adata->cinfo;
+	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
 
-    if (status = ProAsmcompMdlNameGet(feat, &type, wname) != PRO_TK_NO_ERROR ) return status;
+    if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
     (void)ProWstringToString(name, wname);
 
     /* TODO: BRL-CAD name foo based on name - put result in entry_name */
 
-    (void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, 'u');
+    //(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, 'u');
 }
 
 extern "C" static ProError
@@ -140,8 +154,7 @@ assembly_write(ProMdl model, ProError status, ProAppData app_data)
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
     wchar_t wname[10000];
     char name[10000];
-    struct app_data *adata = (struct app_data *)app_data;
-    struct creo_conv_info *cinfo = adata->cinfo;
+	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
 
     /* Initial comb setup */
     ProMdlMdlnameGet(model, wname);
@@ -166,6 +179,7 @@ assembly_write(ProMdl model, ProError status, ProAppData app_data)
 extern "C" static ProError
 assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 {
+	ProError lstatus;
     ProIdTable id_table;
     ProMdl model;
     ProAsmcomppath comp_path;
@@ -174,18 +188,16 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     wchar_t name[10000];
     ProCharLine astr;
     ProFileName msgfil;
-    struct app_data *adata = (struct app_data *)app_data;
-    struct asm_head *curr_assem = adata->c_assem;
-    struct creo_conv_info *cinfo = adata->cinfo;
+	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
     struct asm_member *member, *prev=NULL;
     int i, j;
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-
-    status = ProAsmcompMdlNameGet( feat, &type, name );
-    if ( status != PRO_TK_NO_ERROR ) {
+#if 0
+    lstatus = ProAsmcompMdlNameGet( feat, &type, name );
+    if ( lstatus != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "ProAsmcompMdlNameGet() failed\n" );
-	return status;
+	return lstatus;
     }
     (void)ProWstringToString( cinfo->curr_part_name, name );
     if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
@@ -305,22 +317,11 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	    }
 	    break;
     }
-
+#endif
     return PRO_TK_NO_ERROR;
 }
 
-/* this routine is a filter for the feature visit routine
- * selects only "component" items (should be only parts and assemblies)
- */
-extern "C" static ProError
-assembly_filter( ProFeature *feat, ProAppData *data )
-{
-    ProFeattype type;
-    ProFeatStatus feat_stat;
-    if (ProFeatureTypeGet(feat, &type) != PRO_TK_NO_ERROR || type != PRO_FEAT_COMPONENT) return PRO_TK_CONTINUE;
-    if (ProFeatureStatusGet(feat, &feat_stat) != PRO_TK_NO_ERROR || feat_stat != PRO_FEAT_ACTIVE) return PRO_TK_CONTINUE;
-    return PRO_TK_NO_ERROR;
-}
+
 
 
 /* routine to check if xform is an identity */
@@ -356,7 +357,6 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     ProError status;
     ProBoolean is_exploded;
     ProCharLine astr;
-    struct asm_head curr_assem;
     struct asm_member *member;
     int member_count=0;
     int i, j, k;
@@ -366,10 +366,6 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 	fprintf( stderr, "Failed to get model name for an assembly\n" );
 	return;
     }
-
-    /* do not output this assembly more than once */
-    if ( already_done_asm( cinfo, asm_name ) )
-	return;
 
     if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf(cinfo->logger, "Processing assembly %s:\n", ProWstringToString( astr, asm_name ) );
@@ -383,7 +379,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 	return;
     }
 
-
+#if 0
     /* everything starts out in "curr_part_name", copy name to "curr_asm_name" */
     bu_strlcpy( cinfo->curr_asm_name, cinfo->curr_part_name, sizeof(cinfo->curr_asm_name) );
 
@@ -395,7 +391,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     /* make sure this assembly is not "exploded"!!!
      * some careless designers leave assemblies in exploded mode
      */
-#if 0
+
     status = ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get explode status of %s\n", curr_assem.name );
@@ -416,7 +412,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 	    }
 	}
     }
-#endif
+
 
     /* use feature visit to get info about assembly members.
      * also calls output functions for members (parts or assemblies)
@@ -515,6 +511,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 
     /* free the memory associated with this assembly */
     free_assem(cinfo, &curr_assem );
+#endif
 }
 
 

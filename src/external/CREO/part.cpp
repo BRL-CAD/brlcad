@@ -24,7 +24,7 @@
 #include "common.h"
 #include "creo-brl.h"
 
-
+#if 0
 /* routine to check for bad triangles
  * only checks for triangles with duplicate vertices
  */
@@ -928,6 +928,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
     return ret;
 }
+
+#endif
 
 /*
  * Local Variables:

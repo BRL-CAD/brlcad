@@ -91,7 +91,7 @@ wstr_to_long(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     long int ret;
     char *endptr = NULL;
     ProCharLine astr;
-    ProWstringToString(astr, *tmp_str);
+    ProWstringToString(astr, tmp_str);
     errno = 0;
     ret = strtol(astr, &endptr, 0);
     if (endptr != NULL && strlen(endptr) > 0) {
@@ -108,7 +108,7 @@ wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     double ret;
     char *endptr = NULL;
     ProCharLine astr;
-    ProWstringToString(astr, *tmp_str);
+    ProWstringToString(astr, tmp_str);
     errno = 0;
     ret = strtod(astr, &endptr);
     if (endptr != NULL && strlen(endptr) > 0) {
@@ -168,6 +168,7 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
 {
     struct bu_vls *tmp_name;
     std::set<struct bu_vls *, StrCmp>::iterator found;
+	return NULL;
 }
 
 
@@ -225,7 +226,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, char *part_name )
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( cinfo->logger, "get_brlcad_name( %s )\n", name_copy );
     }
-
+#if 0
     /* find name for this part in hash table */
     entry = bu_hash_tbl_find( cinfo->name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
 
@@ -247,6 +248,8 @@ get_brlcad_name(struct creo_conv_info *cinfo, char *part_name )
 	bu_free( name_copy, "name_copy" );
 	return brlcad_name;
     }
+#endif
+	return NULL;
 }
 
 extern "C" int 
@@ -306,10 +309,10 @@ create_name_hash(struct creo_conv_info *cinfo, FILE *name_fd )
 	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( cinfo->logger, "\t\t\tCreating new hash tabel entry for above names\n" );
 	}
-	bu_hash_set( htbl, (unsigned char *)part_no, strlen( part_no ), part_name );
+	//bu_hash_set( htbl, (unsigned char *)part_no, strlen( part_no ), part_name );
     }
 
-    return htbl;
+    return NULL;
 }
 
 /* Test function */
