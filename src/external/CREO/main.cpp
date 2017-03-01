@@ -311,13 +311,13 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    /* Parse the file contents into a list of parameter keys */
 	    std::ifstream pfile(param_file);
 	    std::string line;
-	    if (!pfile) {
+	    if (!param_file) {
 		creo_log(cinfo, MSG_FAIL, status, "Cannot read parameter keys file.\n");
 		creo_conv_info_free(cinfo);
 		ProUIDialogDestroy( "creo_brl" );
 		return;
 	    }
-	    while (std::getline(file, line)) {
+	    while (std::getline(param_file, line)) {
 		std::string pkey;
 		std::stringstream ls(line);
 		while (std::getline(ls, pkey, ",")) {
