@@ -50,7 +50,7 @@ assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
     wchar_t wname[10000];
     char name[10000];
     wchar_t *wname_saved;
-	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+    struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
 
     /* Get feature name */
     if ((loc_status = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return creo_log(cinfo, MSG_FAIL, loc_status, "Failure getting name");
@@ -90,8 +90,8 @@ assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
     ProError lstatus;
     ProMdlType type;
     wchar_t wname[10000];
-	struct adata *ada = (struct adata *)app_data;
-	struct creo_conv_info *cinfo = ada->cinfo;
+    struct adata *ada = (struct adata *)app_data;
+    struct creo_conv_info *cinfo = ada->cinfo;
     int *has_shape = (int *)ada->data;
     if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
     if (cinfo->empty->find(wname) == cinfo->empty->end()) (*has_shape) = 1;
@@ -114,7 +114,7 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
 	    /* for each assem, verify at least one child is non-empty.  If all
 	     * children are empty, add to empty set and unset steady_state. */
 	    int has_shape = 0;
-		ada->data = (void *)&has_shape;
+	    ada->data = (void *)&has_shape;
 	    ProMdl model;
 	    if (ProMdlnameInit(*d_it, PRO_MDLFILE_ASSEMBLY, &model) == PRO_TK_NO_ERROR ) {
 		if (cinfo->empty->find(*d_it) == cinfo->empty->end()) {
@@ -138,11 +138,11 @@ extern "C" static ProError
 assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
 {
     ProError lstatus;
-	ProMdlType type;
+    ProMdlType type;
     struct bu_vls entry_name = BU_VLS_INIT_ZERO;
     wchar_t wname[10000];
     char name[10000];
-	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+    struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
 
     if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
     (void)ProWstringToString(name, wname);
@@ -159,7 +159,7 @@ assembly_write(ProMdl model, ProError status, ProAppData app_data)
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
     wchar_t wname[10000];
     char name[10000];
-	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+    struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
 
     /* Initial comb setup */
     ProMdlMdlnameGet(model, wname);
@@ -184,7 +184,7 @@ assembly_write(ProMdl model, ProError status, ProAppData app_data)
 extern "C" static ProError
 assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 {
-	ProError lstatus;
+    ProError lstatus;
     ProIdTable id_table;
     ProMdl model;
     ProAsmcomppath comp_path;
@@ -193,7 +193,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     wchar_t name[10000];
     ProCharLine astr;
     ProFileName msgfil;
-	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+    struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
     struct asm_member *member, *prev=NULL;
     int i, j;
 
@@ -214,27 +214,27 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
      * this call is creating a path from the assembly to this particular member
      * (assembly/member)
      */
-	if(feat){
-    id_table[0] = feat->id;
-    status = ProAsmcomppathInit( (ProSolid)curr_assem->model, id_table, 1, &comp_path );
-    if ( status != PRO_TK_NO_ERROR ) {
-	snprintf( astr, sizeof(astr), "Failed to get path from %s to %s (aborting)", cinfo->curr_asm_name,
-		cinfo->curr_part_name );
-	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
-	ProMessageClear();
-	fprintf( stderr, "%s\n", astr );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return status;
-    }
+    if(feat){
+	id_table[0] = feat->id;
+	status = ProAsmcomppathInit( (ProSolid)curr_assem->model, id_table, 1, &comp_path );
+	if ( status != PRO_TK_NO_ERROR ) {
+	    snprintf( astr, sizeof(astr), "Failed to get path from %s to %s (aborting)", cinfo->curr_asm_name,
+		    cinfo->curr_part_name );
+	    (void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
+	    ProMessageClear();
+	    fprintf( stderr, "%s\n", astr );
+	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	    return status;
 	}
+    }
 
     /* this call accumulates the xform matrix along the path created above */
     status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
     if ( status != PRO_TK_NO_ERROR ) {
-		if(feat){
-	snprintf( astr, sizeof(astr), "Failed to get transformation matrix %s/%s, error = %d, id = %d",
-		cinfo->curr_asm_name, cinfo->curr_part_name, status, feat->id );
-	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
+	if(feat){
+	    snprintf( astr, sizeof(astr), "Failed to get transformation matrix %s/%s, error = %d, id = %d",
+		    cinfo->curr_asm_name, cinfo->curr_part_name, status, feat->id );
+	    (void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
 	}
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
@@ -352,22 +352,22 @@ is_non_identity( ProMatrix xform )
 
 ProError VisitParam(ProParameter *param, ProError status, ProAppData app_data)
 {
-	ProError lstatus;
+    ProError lstatus;
     char pname[100000];
-	ProParamvalue pval;
-	ProParamvalueType ptype;
-	wchar_t wval[10000];
-	char val[100000];
-	struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
-	ProWstringToString(pname, param->id);
-	lstatus = ProParameterValueGet(param, &pval);
-	lstatus = ProParamvalueTypeGet(&pval, &ptype);
-	if (ptype == PRO_PARAM_STRING) {
+    ProParamvalue pval;
+    ProParamvalueType ptype;
+    wchar_t wval[10000];
+    char val[100000];
+    struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+    ProWstringToString(pname, param->id);
+    lstatus = ProParameterValueGet(param, &pval);
+    lstatus = ProParamvalueTypeGet(&pval, &ptype);
+    if (ptype == PRO_PARAM_STRING) {
 	lstatus = ProParamvalueValueGet(&pval, ptype, wval);
 	ProWstringToString(val, wval);
 	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "   %s:%s\n", pname, val);
-	}
-	return PRO_TK_NO_ERROR;
+    }
+    return PRO_TK_NO_ERROR;
 }
 
 /* routine to output an assembly as a BRL-CAD combination
@@ -405,11 +405,11 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     }
 #endif
 
-	/* Experiment - see if we can walk and print parameters */
-	ProError pstatus;
-	ProModelitem itm;
-	pstatus = ProMdlToModelitem(model, &itm);
-	pstatus = ProParameterVisit(&itm,  NULL, VisitParam, (ProAppData)cinfo);
+    /* Experiment - see if we can walk and print parameters */
+    ProError pstatus;
+    ProModelitem itm;
+    pstatus = ProMdlToModelitem(model, &itm);
+    pstatus = ProParameterVisit(&itm,  NULL, VisitParam, (ProAppData)cinfo);
 
 #if 0
     /* everything starts out in "curr_part_name", copy name to "curr_asm_name" */
