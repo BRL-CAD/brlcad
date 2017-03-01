@@ -217,9 +217,11 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
 extern "C" struct bu_vls *
 get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
 {
+    struct bu_vls gname_root = BU_VLS_INIT_ZERO;
     struct bu_vls *gname;
     char *param_name = NULL;
-    long count=0;
+    long count = 0;
+    long have_name = 0;
 
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( cinfo->logger, "create_unique_name( %s )\n", name );
@@ -234,32 +236,35 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
     if (!param_name) {
 	char val[100000];
 	ProWstringToString(val, name);
-	bu_vls_sprintf(gname, "%s", val);
+	bu_vls_sprintf(&gname_root, "%s", val);
     } else {
-	bu_vls_sprintf(gname, "%s", param_name);
+	bu_vls_sprintf(&gname_root, "%s", param_name);
 	bu_free(param_name, "free original param name");
     }
 
     /* scrub */
-    lower_case(bu_vls_addr(gname));
-    make_legal(bu_vls_addr(gname));
+    lower_case(bu_vls_addr(&gname_root));
+    make_legal(bu_vls_addr(&gname_root));
+    bu_vls_sprintf(gname, "%s", bu_vls_addr(&gname_root));
 
     /* Provide a suffix for solids */
-    if (type != PRO_MDL_ASSEMBLY) {
-	bu_vls_printf(gname, ".s");
-    }
+    if (type != PRO_MDL_ASSEMBLY) {bu_vls_printf(gname, ".s");}
 
     /* create a unique name */
-    while (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
-	(void)bu_namegen(tmp_name, NULL, NULL);
-	count++;
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(tmp_name) );
-	}
-	if (count == LONG_MAX) {
-	    bu_vls_free(gname);
-	    BU_PUT(gname, struct bu_vls);
-	    return NULL;
+    if (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
+	bu_vls_sprintf(gname, "%s-1", bu_vls_addr(&gname_root));
+	if (type != PRO_MDL_ASSEMBLY) {bu_vls_printf(gname, ".s");}
+	while (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
+	    (void)bu_namegen(gname, NULL, NULL);
+	    count++;
+	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+		fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(tmp_name) );
+	    }
+	    if (count == LONG_MAX) {
+		bu_vls_free(gname);
+		BU_PUT(gname, struct bu_vls);
+		return NULL;
+	    }
 	}
     }
     cinfo->brlcad_names->insert(tmp_name);
