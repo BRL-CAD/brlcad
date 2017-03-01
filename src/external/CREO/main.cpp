@@ -319,8 +319,17 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    }
 	    while (std::getline(pfile, line)) {
 		std::string pkey;
-		std::stringstream ls(line);
-		while (std::getline(ls, pkey, ",")) {
+		std::istringstream ls(line);
+		while (std::getline(ls, pkey, ',')) {
+		    /* Scrub leading and trailing whitespace */
+		    size_t startpos = pkey.find_first_not_of(" \t\n\v\f\r");
+		    if (std::string::npos != startpos) {
+			pkey = pkey.substr(startpos);
+		    }
+		    size_t endpos = pkey.find_last_not_of(" \t\n\v\f\r");
+		    if (std::string::npos != endpos) {
+			pkey = pkey.substr(0 ,endpos+1);
+		    }
 		    if (pkey.length() > 0) {
 			creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Found model parameter naming key: %s.\n", pkey.c_str());
 			cinfo->model_parameters->push_back(bu_strdup(pkey.c_str()));
