@@ -22,6 +22,7 @@
  */
 
 #include "common.h"
+#include <regex.h>
 #include "creo-brl.h"
 
 int creo_logging_opts(void *data, void *vstr){
@@ -174,11 +175,17 @@ extern "C" ProError getkey(ProParameter *param, ProError status, ProAppData app_
     wchar_t wval[10000];
     ProParamvalue pval;
     ProParamvalueType ptype;
+    regex_t reg;
     struct pparam_data *pdata = (struct pparam_data *)app_data;
     struct creo_conv_info *cinfo = pdata->cinfo;
     if (pdata->val) return PRO_TK_NO_ERROR;
     ProWstringToString(pname, param->id);
-    if (!BU_STR_EQUAL(pname, pdata->key)) return PRO_TK_CONTINUE;
+    (void)regcomp(&reg, pdata->key, REG_NOSUB|REG_EXTENDED);
+    if (!(regexec(&reg, db_path_to_string(db_node->path), 0, NULL, 0))) {
+	regfree(&reg);
+       	return PRO_TK_CONTINUE;
+    }
+    regfree(&reg);
     if (ProParameterValueGet(param, &pval) != PRO_TK_NO_ERROR) return PRO_TK_CONTINUE;
     if (ProParamvalueTypeGet(&pval, &ptype) != PRO_TK_NO_ERROR) return PRO_TK_CONTINUE;
     if (ptype == PRO_PARAM_STRING) {
