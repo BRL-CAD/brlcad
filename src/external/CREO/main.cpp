@@ -64,6 +64,7 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->empty = new std::set<wchar_t *, WStrCmp>;
     cinfo->name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
     cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
+    cinfo->model_parameters = new std::vector<char *>;
 
 }
 
@@ -289,6 +290,45 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
     }
 
+    /***********************************************************************************/
+    /* Read a user supplied list of model parameters in which to look for naming info. */
+    /***********************************************************************************/
+    {
+	/* Get string from dialog */
+	char param_file[128];
+	wchar_t *w_param_file;
+	status = ProUIInputpanelValueGet("creo_brl", "name_file", &w_param_file);
+	if ( status != PRO_TK_NO_ERROR ) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get name of model parameter specification file.\n");
+	    creo_conv_info_free(cinfo);
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
+	}
+	ProWstringToString(param_file, w_param_file);
+	ProWstringFree(w_param_file);
+
+	if (strlen(param_file) > 0) {
+	    /* Parse the file contents into a list of parameter keys */
+	    std::ifstream pfile(param_file);
+	    std::string line;
+	    if (!pfile) {
+		creo_log(cinfo, MSG_FAIL, status, "Cannot read parameter keys file.\n");
+		creo_conv_info_free(cinfo);
+		ProUIDialogDestroy( "creo_brl" );
+		return;
+	    }
+	    while (std::getline(file, line)) {
+		std::string pkey;
+		std::stringstream ls(line);
+		while (std::getline(ls, pkey, ",")) {
+		    if (pkey.length() > 0) {
+			creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Found model parameter naming key: %s.\n", pkey.c_str());
+			cinfo->model_parameters->push_back(bu_strdup(pkey.c_str()));
+		    }
+		}
+	    }
+	}
+    }
 
     /* get starting ident */
     if ((status = ProUIInputpanelValueGet("creo_brl", "starting_ident", &tmp_str)) != PRO_TK_NO_ERROR) {

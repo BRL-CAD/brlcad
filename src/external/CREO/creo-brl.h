@@ -28,6 +28,10 @@
 
 #include <set>
 #include <map>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 #ifndef _WSTUDIO_DEFINED
 # define _WSTUDIO_DEFINED
@@ -171,8 +175,8 @@ struct creo_conv_info {
     std::map<wchar_t *, int, WStrCmp> *assem_child_cnts; /* number of solid children in a given assembly */
     std::set<wchar_t *, WStrCmp> *empty;	/* list of all parts and assemblies in CREO that have no shape */
     std::map<wchar_t *, struct bu_vls *, WStrCmp> *name_map;  /* CREO names to BRL-CAD names */
-    std::set<struct bu_vls *, StrCmp> *brlcad_names; /* list of active .g object names */
-    std::map<char *, struct bu_vls *, CharCmp> *name_hash;     /* part names to part numbers */
+    std::set<struct bu_vls *, StrCmp> *brlcad_names; /* set of active .g object names */
+    std::vector<char *> *model_parameters;     /* model parameters to use when generating .g names */
 };
 
 struct adata {
