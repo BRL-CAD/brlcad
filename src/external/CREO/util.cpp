@@ -160,159 +160,115 @@ make_legal( char *name )
     }
 }
 
+struct pparam_data {
+    struct creo_conv_info *cinfo;
+    char *key;
+    char *val;
+}
 
-/* TODO - investigate ProParameter as a source of name generation for
- * CREO parts.  Currently being done by a text processing script manually. */
+extern "C" ProError getkey(ProParameter *param, ProError status, ProAppData app_data)
+{
+    ProError lstatus;
+    char pname[100000];
+    char val[100000];
+    wchar_t wval[10000];
+    ProParamvalue pval;
+    ProParamvalueType ptype;
+    struct pparam_data *pdata = (struct pparam_data *)app_data;
+    struct creo_conv_info *cinfo = pdata->cinfo;
+    if (pdata->val) return PRO_TK_NO_ERROR;
+    ProWstringToString(pname, param->id);
+    if (!BU_STR_EQUAL(pname, pdata->key)) return PRO_TK_CONTINUE;
+    if (ProParameterValueGet(param, &pval) != PRO_TK_NO_ERROR) return PRO_TK_CONTINUE;
+    if (ProParamvalueTypeGet(&pval, &ptype) != PRO_TK_NO_ERROR) return PRO_TK_CONTINUE;
+    if (ptype == PRO_PARAM_STRING) {
+	if (ProParamvalueValueGet(&pval, ptype, wval) != PRO_TK_NO_ERROR) return PRO_TK_CONTINUE;
+	ProWstringToString(val, wval);
+	if (strlen(val) > 0) {
+	    pdata->val = bu_strdup(val);
+	}
+    }
+    return PRO_TK_NO_ERROR;
+}
+
+
 extern "C" char *
 creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
 {
-    struct bu_vls *tmp_name;
-    std::set<struct bu_vls *, StrCmp>::iterator found;
-	return NULL;
+    struct pparam_data pdata;
+    pdata.cinfo = cinfo;
+    pdata.val = NULL;
+
+    ProModelitem itm;
+    ProMdl model;
+    if (ProMdlnameInit(creo_name, type, &m) != PRO_TK_NO_ERROR) return NULL;
+    if (ProMdlToModelitem(model, &itm) != PRO_TK_NO_ERROR) return NULL;
+    for (int i = 0; int i < cinfo->model_parameters; i++) {
+	if (!pdata.val) {
+	    pdata.key = cinfo->model_parameters[i];
+	    ProParameterVisit(&itm,  NULL, getkey, (ProAppData)&pdata);
+	}
+    }
+    return pdata.val;
 }
 
 
 /* create a unique BRL-CAD object name from a possibly illegal name */
-extern "C" char *
-create_unique_name(struct creo_conv_info *cinfo, char *name )
+extern "C" struct bu_vls *
+get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
 {
-    struct bu_vls *tmp_name;
-    std::pair<std::set<struct bu_vls *, StrCmp>::iterator, bool> ret;
+    struct bu_vls *gname;
+    char *param_name = NULL;
     long count=0;
 
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( cinfo->logger, "create_unique_name( %s )\n", name );
     }
+    BU_GET(gname, struct bu_vls);
+    bu_vls_init(gname);
+
+    /* First try the parameters, if the user specified any */
+    param_name = creo_param_name(cinfo, name, type);
+
+    /* Fall back on the CREO name, if we don't get a param name */
+    if (!param_name) {
+	char val[100000];
+	ProWstringToString(val, name);
+	bu_vls_sprintf(gname, "%s", val);
+    } else {
+	bu_vls_sprintf(gname, "%s", param_name);
+	bu_free(param_name, "free original param name");
+    }
+
+    /* scrub */
+    lower_case(bu_vls_addr(gname));
+    make_legal(bu_vls_addr(gname));
+
+    /* Provide a suffix for solids */
+    if (type != PRO_MDL_ASSEMBLY) {
+	bu_vls_printf(gname, ".s");
+    }
 
     /* create a unique name */
-    BU_GET(tmp_name, struct bu_vls);
-    bu_vls_init(tmp_name);
-    bu_vls_strcpy(tmp_name, name);
-    lower_case(bu_vls_addr(tmp_name));
-    make_legal(bu_vls_addr(tmp_name));
-    ret = cinfo->brlcad_names->insert(tmp_name);
-    while (ret.second == false) {
+    while (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
 	(void)bu_namegen(tmp_name, NULL, NULL);
 	count++;
 	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(tmp_name) );
 	}
 	if (count == LONG_MAX) {
-	    bu_vls_free(tmp_name);
-	    BU_PUT(tmp_name, struct bu_vls);
+	    bu_vls_free(gname);
+	    BU_PUT(gname, struct bu_vls);
 	    return NULL;
 	}
-	ret = cinfo->brlcad_names->insert(tmp_name);
     }
+    cinfo->brlcad_names->insert(tmp_name);
 
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( cinfo->logger, "\tnew name for %s is %s\n", name, bu_vls_addr(tmp_name) );
     }
-    return bu_vls_addr(tmp_name);
-}
 
-extern "C" char *
-get_brlcad_name(struct creo_conv_info *cinfo, char *part_name )
-{
-    char *brlcad_name=NULL;
-    struct bu_hash_entry *entry=NULL, *prev=NULL;
-    int new_entry=0;
-    unsigned long index=0;
-    char *name_copy;
-
-    name_copy = bu_strdup( part_name );
-    lower_case( name_copy );
-
-    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( cinfo->logger, "get_brlcad_name( %s )\n", name_copy );
-    }
-#if 0
-    /* find name for this part in hash table */
-    entry = bu_hash_tbl_find( cinfo->name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
-
-    if ( entry ) {
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "\treturning %s\n", (char *)bu_get_hash_value( entry ) );
-	}
-	bu_free( name_copy, "name_copy" );
-	return (char *)bu_get_hash_value( entry );
-    } else {
-
-	/* must create a new name */
-	brlcad_name = create_unique_name(cinfo, name_copy );
-	entry = bu_hash_tbl_add( cinfo->name_hash, (unsigned char *)name_copy, strlen( name_copy ), &new_entry );
-	bu_set_hash_value( entry, (unsigned char *)brlcad_name );
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "\tCreating new brlcad name (%s) for part (%s)\n", brlcad_name, name_copy );
-	}
-	bu_free( name_copy, "name_copy" );
-	return brlcad_name;
-    }
-#endif
-	return NULL;
-}
-
-extern "C" int 
-create_name_hash(struct creo_conv_info *cinfo, FILE *name_fd )
-{
-    char line[MAX_LINE_LEN];
-    long line_no=0;
-
-    while (bu_fgets(line, MAX_LINE_LEN, name_fd)) {
-	char *part_no, *part_name, *ptr;
-	line_no++;
-
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "line %ld: %s", line_no, line);
-
-	ptr = strtok( line, " \t\n" );
-	if (!ptr) {
-	    creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Warning: unrecognizable line in part name file (bad part number):\n\t%s\n\tIgnoring\n", line );
-	    continue;
-	}
-	part_no = bu_strdup(ptr);
-	lower_case( part_no );
-
-	/* match up to the EOL, everything up to it minus surrounding ws is the name */
-	ptr = strtok( (char *)NULL, "\n" );
-	if ( !ptr ) {
-	    creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Warning: unrecognizable line in part name file (bad part number):\n\t%s\n\tIgnoring\n", line );
-	    continue;
-	}
-	if (cinfo->name_hash->find(part_no) != cinfo->name_hash->end()) {
-	    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t\t\tHash table entry already exists for part number (%s)\n", part_no);
-	    bu_free( part_no, "part_no" );
-	    continue;
-	}
-
-	/* trim any left whitespace */
-	while (isspace(*ptr) && (*ptr != '\n')) {ptr++;}
-	part_name = ptr;
-
-	/* trim any right whitespace */
-	if (strlen(ptr) > 0) {
-	    ptr += strlen(ptr) - 1;
-	    while ((ptr != part_name) && (isspace(*ptr))) {
-		*ptr = '\0';
-		ptr--;
-	    }
-	}
-
-	/* generate the name sans spaces, lowercase */
-	lower_case( part_name );
-	part_name = create_unique_name(cinfo, part_name );
-
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "\t\tpart_no = %s, part name = %s\n", part_no, part_name );
-	}
-
-
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "\t\t\tCreating new hash tabel entry for above names\n" );
-	}
-	//bu_hash_set( htbl, (unsigned char *)part_no, strlen( part_no ), part_name );
-    }
-
-    return NULL;
+    return gname;
 }
 
 /* Test function */
