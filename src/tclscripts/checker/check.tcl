@@ -41,6 +41,8 @@ catch {delete class GeometryChecker} error
     destructor {}
 
     public {
+	variable forceSubtract false {}
+
 	method loadOverlaps { args } {}
 	method sortBy { col direction } {}
 
@@ -710,8 +712,10 @@ body GeometryChecker::subLeft {} {
     set sset [$_ck selection]
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    if {![catch {$_overlapCallback $right $left}]} {
+	    if {![catch {$_overlapCallback $right $left $forceSubtract} err]} {
 		$this markOverlap $id
+	    } else {
+		puts "$err"
 	    }
 	}
     }
@@ -725,8 +729,10 @@ body GeometryChecker::subRight {} {
     set sset [$_ck selection]
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    if {![catch {$_overlapCallback $left $right}]} {
+	    if {![catch {$_overlapCallback $left $right $forceSubtract} err]} {
 		$this markOverlap $id
+	    } else {
+		puts "$err"
 	    }
 	}
     }
@@ -870,7 +876,7 @@ proc treeReplaceLeafWithSub {tree leaf sub} {
     return [list $op $newleft $newright]
 }
 
-proc subtractRightFromLeft {left right} {
+proc subtractRightFromLeft {left right {forceSubtract false}} {
     if [ catch { opendb } dbname ] {
 	puts ""
 	puts "ERROR: no database seems to be open"
@@ -897,13 +903,19 @@ proc subtractRightFromLeft {left right} {
 	return -code 1
     }
 
-    # simplify right to solid, or report error
-    set solids [search $right -type shape]
-    set nsolids [llength $solids]
-    if {$nsolids > 1} {
-	puts ""
-	puts "ERROR: $right isn't reducible to a single solid. Refusing to subtract a comb."
-	return -code 1
+    if {$forceSubtract} {
+        # if always subtracting, we'll choose the first unioned solid in right
+	set solids [search $right -type shape -bool u]
+    } else {
+	# simplify right to solid, or report error
+	set solids [search $right -type shape]
+	set nsolids [llength $solids]
+	if {$nsolids > 1} {
+	    puts ""
+	    puts "ERROR: $right isn't reducible to a single solid. Refusing to subtract a comb."
+	    puts "       Run check command with -F option to override."
+	    return -code 1
+	}
     }
     set rightsub [string trim [file tail [lindex $solids 0]]]
 
@@ -964,7 +976,39 @@ proc drawRight {path} {
 
 
 # All GeometryChecker stuff is in the GeometryChecker namespace
-proc check {{filename ""} {parent ""}} {
+proc check {{args}} {
+    set parent ""
+    set filename ""
+
+    set usage false
+    set force false
+    if {[llength $args] == 1} {
+	if {[lindex $args 0] == "-F"} {
+	    set force true
+	} else {
+	    set filename $args
+	}
+    } elseif {[llength $args] == 2} {
+	if {[lindex $args 0] == "-F"} {
+	    set force true
+	    set filename [lindex $args 1]
+	} else {
+	    set usage true
+	}
+    } elseif {[llength $args] > 3} {
+	set usage true
+    }
+
+    if {$usage} {
+	puts {Usage: check [-F] [overlaps_file]}
+	return -code 1
+    }
+
+    if {$force} {
+	puts "WARNING: Running with -F means regions containing multiple solids will be"
+	puts "         subtracted as the first unioned solid found in the region. This may"
+	puts "         cause the wrong volume to be subtracted."
+    }
 
     if {[winfo exists $parent.checker]} {
 	destroy $parent.checker
@@ -978,6 +1022,7 @@ proc check {{filename ""} {parent ""}} {
     set checkerWindow [toplevel $parent.checker]
     set checker [GeometryChecker $checkerWindow.ck]
 
+    $checker configure -forceSubtract $force
     $checker registerWhoCallback [code who]
     $checker registerDrawCallbacks [code drawLeft] [code drawRight]
     $checker registerEraseCallback [code erase]
