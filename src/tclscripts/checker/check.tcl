@@ -58,7 +58,6 @@ catch {delete class GeometryChecker} error
 	method registerDrawCallbacks { left_callback right_callback } {}
 	method registerEraseCallback { callback } {}
 	method registerOverlapCallback { callback } {}
-
     }
 
     private {
@@ -634,7 +633,7 @@ body GeometryChecker::writeMarks {} {
 	if {[gets $tmp_chan line] < 0 ||\
 	    $line != "[$_ck set $item "Left"] [$_ck set $item "Right"]"} \
 	{
-	    puts "Error: write to mark file failed"
+	    puts "ERROR: write to mark file failed"
 	    return
 	}
     }
@@ -645,7 +644,7 @@ body GeometryChecker::writeMarks {} {
 
     # verify copy matches temp
     if {[file size $tmp_mark_file] != [file size $tmp_mark_file]} {
-	puts "Error: overwrite of mark file failed"
+	puts "ERROR: overwrite of mark file failed"
 	return
     }
 
