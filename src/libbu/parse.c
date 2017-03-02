@@ -1407,9 +1407,6 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 HIDDEN void
 parse_vls_print_floating(struct bu_vls *vls, const char *name, size_t count, const fastf_t *fp, const double *dp)
 {
-    register size_t tmpi;
-    register char *cp;
-
     size_t increase;
 
     if (UNLIKELY(!vls || !name))
@@ -1418,28 +1415,20 @@ parse_vls_print_floating(struct bu_vls *vls, const char *name, size_t count, con
     increase = strlen(name) + 3 + 32 * count;
     bu_vls_extend(vls, (unsigned int)increase);
 
-
-    /* FIXME: should not directly access the bu_vls members */
-    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
     if (fp) {
-	snprintf(cp, increase, "%s%s=%.27G", (vls->vls_len?" ":""), name, *fp++);
+	bu_vls_printf(vls, "%s%s=%.27G", (bu_vls_strlen(vls)?" ":""), name, *fp++);
     }
     if (dp) {
-	snprintf(cp, increase, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
+	bu_vls_printf(vls, "%s%s=%.27G", (bu_vls_strlen(vls)?" ":""), name, *dp++);
     }
-    tmpi = strlen(cp);
-    vls->vls_len += tmpi;
 
     while (--count > 0) {
-	cp += tmpi;
 	if (fp) {
-	    sprintf(cp, "%c%.27G", COMMA, *fp++);
+	    bu_vls_printf(vls, "%c%.27G", COMMA, *fp++);
 	}
 	if (dp) {
-	    sprintf(cp, "%c%.27G", COMMA, *dp++);
+	    bu_vls_printf(vls, "%c%.27G", COMMA, *dp++);
 	}
-	tmpi = strlen(cp);
-	vls->vls_len += tmpi;
     }
 }
 
@@ -1505,14 +1494,14 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		if (sdp->sp_count == 1) {
 		    increase = strlen(sdp->sp_name)+6;
 		    bu_vls_extend(vls, (unsigned int)increase);
-		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
+		    cp = vls->vls_str + vls->vls_offset + bu_vls_strlen(vls);
 		    if (*loc == '"')
 			snprintf(cp, increase, "%s%s=\"%s\"",
-				 (vls->vls_len?" ":""),
+				 (bu_vls_strlen(vls)?" ":""),
 				 sdp->sp_name, "\\\"");
 		    else
 			snprintf(cp, increase, "%s%s=\"%c\"",
-				 (vls->vls_len?" ":""),
+				 (bu_vls_strlen(vls)?" ":""),
 				 sdp->sp_name,
 				 *loc);
 		    vls->vls_len += (int)strlen(cp);
@@ -1527,14 +1516,14 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			bu_vls_putc(&tmpstr, *loc);
 			loc++;
 		    }
-		    bu_vls_printf(vls, "%s%s=\"%s\"", (vls->vls_len?" ":""), sdp->sp_name, bu_vls_addr(&tmpstr));
+		    bu_vls_printf(vls, "%s%s=\"%s\"", (bu_vls_strlen(vls)?" ":""), sdp->sp_name, bu_vls_addr(&tmpstr));
 		    bu_vls_free(&tmpstr);
 		}
 		break;
 	    case 'V':
 		{
 		    struct bu_vls *vls_p = (struct bu_vls *)loc;
-		    bu_vls_printf(vls, "%s%s=\"%s\"", (vls->vls_len?" ":""), sdp->sp_name, bu_vls_addr(vls_p));
+		    bu_vls_printf(vls, "%s%s=\"%s\"", (bu_vls_strlen(vls)?" ":""), sdp->sp_name, bu_vls_addr(vls_p));
 		}
 		break;
 	    case 'i':
@@ -1547,9 +1536,9 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		    bu_vls_extend(vls, (unsigned int)increase);
 
 
-		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
+		    cp = vls->vls_str + vls->vls_offset + bu_vls_strlen(vls);
 		    snprintf(cp, increase, "%s%s=%d",
-			     (vls->vls_len?" ":""),
+			     (bu_vls_strlen(vls)?" ":""),
 			     sdp->sp_name, *sp++);
 		    tmpi = (int)strlen(cp);
 		    vls->vls_len += tmpi;
@@ -1567,7 +1556,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 
-		    bu_vls_printf(vls, "%s%s=%d", (vls->vls_len?" ":""), sdp->sp_name, *dp++);
+		    bu_vls_printf(vls, "%s%s=%d", (bu_vls_strlen(vls)?" ":""), sdp->sp_name, *dp++);
 
 		    while (--i > 0) {
 			bu_vls_printf(vls, "%c%d", COMMA, *dp++);
@@ -1665,7 +1654,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 
 		    bu_vls_printf(vls_out, "\t%s=\"%s\"\n", sdp->sp_name, bu_vls_addr(vls));
 		    bu_vls_printf(vls_out, "\t\t(vls_magic)%ld (vls_offset)%zu (vls_len)%zu (vls_max)%zu\n",
-				  (long unsigned int)vls->vls_magic, vls->vls_offset, vls->vls_len, vls->vls_max);
+				  (long unsigned int)vls->vls_magic, vls->vls_offset, bu_vls_strlen(vls), vls->vls_max);
 		}
 		break;
 	    case 'i':
