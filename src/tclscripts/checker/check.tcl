@@ -269,8 +269,6 @@ body GeometryChecker::handleCheckListSelect {} {
     set _ck $itk_component(checkList)
     set _status $itk_component(headerLabelStatus)
 
-    puts $_ck
-
     $_ck column ID -anchor center -width 100 -minwidth 50
     $_ck column Left -anchor w -width 200 -minwidth 100
     $_ck column Right -anchor w -width 200 -minwidth 100
