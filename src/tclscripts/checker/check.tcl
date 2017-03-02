@@ -338,8 +338,14 @@ body GeometryChecker::handleCheckListSelect {} {
 ###########
 
 body GeometryChecker::loadOverlaps {{filename ""}} {
+
+    if {[catch {opendb} db_path]} {
+	puts "ERROR: no database seems to be open"
+	return -code 1
+    }
+
     if {$filename == ""} {
-	set db_path [opendb]
+        # overlap file not specified, search current directory
 	set dir [file dirname $db_path]
 	set name [file tail $db_path]
 	set ol_path [file join $dir "${name}.ck" "ck.${name}.overlaps"]
@@ -349,9 +355,14 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 	}
     }
 
+    if {$filename == ""} {
+	puts "ERROR: No overlap file was specified. None was found in the current directory."
+	return -code 1
+    }
+
     if {$filename == "" || ![file exists $filename]} {
 	puts "ERROR: unable to open $filename"
-	return
+	return -code 1
     }
     set _ol_prefix "ck.[file tail $db_path]"
     set _ol_dir [file dirname $filename]
@@ -959,6 +970,11 @@ proc check {{filename ""} {parent ""}} {
 	destroy $parent.checker
     }
 
+    if {[catch {opendb} db_path]} {
+	puts "ERROR: no database seems to be open"
+	return
+    }
+
     set checkerWindow [toplevel $parent.checker]
     set checker [GeometryChecker $checkerWindow.ck]
 
@@ -967,7 +983,12 @@ proc check {{filename ""} {parent ""}} {
     $checker registerEraseCallback [code erase]
     $checker registerOverlapCallback [code subtractRightFromLeft]
 
-    $checker loadOverlaps $filename
+    if {[catch {$checker loadOverlaps $filename}]} {
+	wm withdraw $checkerWindow
+	update
+	destroy $checkerWindow
+	return
+    }
 
     wm title $checkerWindow "Geometry Checker"
     pack $checker -expand true -fill both
