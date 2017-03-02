@@ -1114,11 +1114,6 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 
     loc = (char *)(base + sdp->sp_offset);
 
-    if (UNLIKELY(sdp->sp_fmt[0] == 'i')) {
-	bu_log("Cannot print type 'i' yet!\n");
-	return;
-    }
-
     if (UNLIKELY(sdp->sp_fmt[0] != '%')) {
 	bu_log("bu_vls_struct_item:  %s: unknown format '%s'\n",
 	       sdp->sp_name, sdp->sp_fmt);
@@ -1470,7 +1465,9 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 	return;
 
     for (; sdp->sp_name != (char*)NULL; sdp++) {
-	/* Skip alternate keywords for same value */
+	/* Skip alternate keywords for same value, must be
+	 * sequentially listed in the parse table.
+	 */
 
 	if (lastoff == (int)sdp->sp_offset)
 	    continue;
@@ -1530,14 +1527,14 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			bu_vls_putc(&tmpstr, *loc);
 			loc++;
 		    }
-		    bu_vls_printf(vls, "%s=\"%s\"", sdp->sp_name, bu_vls_addr(&tmpstr));
+		    bu_vls_printf(vls, "%s%s=\"%s\"", (vls->vls_len?" ":""), sdp->sp_name, bu_vls_addr(&tmpstr));
 		    bu_vls_free(&tmpstr);
 		}
 		break;
 	    case 'V':
 		{
 		    struct bu_vls *vls_p = (struct bu_vls *)loc;
-		    bu_vls_printf(vls, "%s=\"%s\"", sdp->sp_name, bu_vls_addr(vls_p));
+		    bu_vls_printf(vls, "%s%s=\"%s\"", (vls->vls_len?" ":""), sdp->sp_name, bu_vls_addr(vls_p));
 		}
 		break;
 	    case 'i':
@@ -1570,7 +1567,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 
-		    bu_vls_printf(vls, "%s%s=%d", " ", sdp->sp_name, *dp++);
+		    bu_vls_printf(vls, "%s%s=%d", (vls->vls_len?" ":""), sdp->sp_name, *dp++);
 
 		    while (--i > 0) {
 			bu_vls_printf(vls, "%c%d", COMMA, *dp++);
