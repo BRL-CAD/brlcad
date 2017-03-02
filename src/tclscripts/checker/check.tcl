@@ -911,8 +911,9 @@ proc subtractRightFromLeft {left right {forceSubtract false}} {
 	set nsolids [llength $solids]
 	if {$nsolids > 1} {
 	    puts ""
-	    puts "ERROR: $right isn't reducible to a single solid. Refusing to subtract a comb."
-	    puts "       Run check command with -F option to override."
+	    puts "ERROR: $right"
+	    puts "       This regions isn't reducible to a single solid. Refusing to subtract a"
+	    puts "       comb. Run check command with -F option to override."
 	    return -code 1
 	}
     }
@@ -922,8 +923,7 @@ proc subtractRightFromLeft {left right {forceSubtract false}} {
     if {[llength [search $left -name $rightsub]] > 0} {
 	puts ""
 	puts "WARNING: attempting to subtract $rightsub from $left again"
-	puts ""
-	puts "An attempted manual resolution may already exist."
+	puts "         An attempted manual resolution may already exist."
 	return -code 1
     }
 
@@ -1007,6 +1007,7 @@ proc check {{args}} {
 	puts "WARNING: Running with -F means regions containing multiple solids will be"
 	puts "         subtracted as the first unioned solid found in the region. This may"
 	puts "         cause the wrong volume to be subtracted."
+	puts ""
     }
 
     if {[winfo exists $parent.checker]} {
