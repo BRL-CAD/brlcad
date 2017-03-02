@@ -210,47 +210,6 @@ static const vect_t dsp_pl[BBOX_PLANES] = {
 };
 
 
-/**
- * This function computes the DSP mtos matrix from the stom matrix
- * whenever the stom matrix is parsed using a bu_structparse.
- */
-HIDDEN void
-hook_mtos_from_stom(
-    const struct bu_structparse *sp,
-    const char *sp_name,
-    void *base,
-    const char *UNUSED(p),
-    void *UNUSED(data))
-{
-    struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
-
-    if (!sp) return;
-    if (!sp_name) return;
-    if (!base) return;
-
-    bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
-}
-
-
-HIDDEN void
-hook_file(
-    const struct bu_structparse *sp,
-    const char *sp_name,
-    void *base,
-    const char *UNUSED(p),
-    void *UNUSED(data))
-{
-    struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
-
-    if (!sp) return;
-    if (!sp_name) return;
-    if (!base) return;
-
-    dsp_ip->dsp_datasrc = RT_DSP_SRC_V4_FILE;
-    dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
-}
-
-
 HIDDEN void
 hook_verify(const struct bu_structparse *sp,
 	    const char *sp_name,
@@ -300,6 +259,25 @@ hook_verify(const struct bu_structparse *sp,
 }
 
 
+HIDDEN void
+hook_file(
+    const struct bu_structparse *sp,
+    const char *sp_name,
+    void *base,
+    const char *UNUSED(p),
+    void *UNUSED(data))
+{
+    struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
+
+    if (!sp) return;
+    if (!sp_name) return;
+    if (!base) return;
+
+    dsp_ip->dsp_datasrc = RT_DSP_SRC_FILE;
+    dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
+}
+
+
 #define DSP_O(m) bu_offsetof(struct rt_dsp_internal, m)
 
 
@@ -309,24 +287,13 @@ const struct bu_structparse dsp_v4_parse[] = {
     {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",     16, "stom", DSP_O(dsp_stom), hook_mtos_from_stom, NULL, NULL },
-    {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
-
-
-/** only used when editing a v4 database */
-const struct bu_structparse dsp_v4_printab[] = {
-    {"%V",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",     16, "stom", DSP_O(dsp_stom), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 /* only used on v5 database */
-const struct bu_structparse dsp_printab[] = {
+const struct bu_structparse rt_dsp_parse[] = {
     {"%V",  1, "file", DSP_O(dsp_name), hook_file, NULL, NULL },
     {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify, NULL, NULL },
@@ -4328,7 +4295,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     MAT_IDN(dsp_ip->dsp_mtos);
 
     bu_vls_strcpy(&str, rp->ss.ss_args);
-    if (bu_struct_parse(&str, dsp_v4_parse, (char *)dsp_ip, NULL) < 0) {
+    if (bu_struct_parse(&str, rt_dsp_parse, (char *)dsp_ip, NULL) < 0) {
 	if (BU_VLS_IS_INITIALIZED(&str)) bu_vls_free(&str);
 	IMPORT_FAIL("parse error");
     }
@@ -4345,7 +4312,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     if (RT_G_DEBUG & DEBUG_HF) {
 	bu_vls_trunc(&str, 0);
-	bu_vls_struct_print(&str, dsp_v4_printab, (char *)dsp_ip);
+	bu_vls_struct_print(&str, dsp_v4_parse, (char *)dsp_ip);
 	bu_log("  imported as(%s)\n", bu_vls_addr(&str));
 
     }
@@ -4391,7 +4358,7 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
      */
     dsp.dsp_stom[15] *= local2mm;
 
-    bu_vls_struct_print(&str, dsp_v4_printab, (char *)&dsp);
+    bu_vls_struct_print(&str, dsp_v4_parse, (char *)&dsp);
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_export4_v4(%s)\n", bu_vls_addr(&str));
 
@@ -4730,11 +4697,11 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 
 	switch (dsp_ip->dsp_datasrc) {
 	    case RT_DSP_SRC_V4_FILE:
-		sp = dsp_v4_printab;
+		sp = dsp_v4_parse;
 		break;
 	    case RT_DSP_SRC_FILE:
 	    case RT_DSP_SRC_OBJ:
-		sp = dsp_printab;
+		sp = rt_dsp_parse;
 		break;
 	}
 
@@ -4750,11 +4717,11 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
-	    sp = dsp_v4_printab;
+	    sp = dsp_v4_parse;
 	    break;
 	case RT_DSP_SRC_FILE:
 	case RT_DSP_SRC_OBJ:
-	    sp = dsp_printab;
+	    sp = rt_dsp_parse;
 	    break;
     }
 
@@ -4787,11 +4754,11 @@ rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
-	    sp = dsp_v4_printab;
+	    sp = dsp_v4_parse;
 	    break;
 	case RT_DSP_SRC_FILE:
 	case RT_DSP_SRC_OBJ:
-	    sp = dsp_printab;
+	    sp = rt_dsp_parse;
 	    break;
     }
 
