@@ -72,6 +72,7 @@ catch {delete class GeometryChecker} error
 	variable _abort
 
 	variable _count
+	variable _markedCount 0
 
 	variable _arrowUp
 	variable _arrowDown
@@ -455,6 +456,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     close $ovfile
 
     # read and apply saved marks
+    set _markedCount 0
     set mark_file [file join $_ol_dir "${_ol_prefix}.marked"]
     if {[file exists $mark_file]} {
 	set mfile [open $mark_file "r"]
@@ -467,6 +469,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 		    [$_ck set $item "Right"] == [lindex $line 1]} \
 		{
 		    $_ck tag add "marked" $item
+		    incr _markedCount
 		}
 	    }
 	}
@@ -474,10 +477,14 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 
     $this sortBy {*}$_lastSort
 
+    # update status text
     if {$count == 1} {
 	$_status configure -text "$count overlap"
     } else {
 	$_status configure -text "$count overlaps"
+    }
+    if {$_markedCount > 0} {
+	$_status configure -text "[$_status cget -text] ($_markedCount marked resolved)"
     }
 }
 
@@ -615,6 +622,7 @@ body GeometryChecker::writeMarks {} {
     set tmp_mark_file "${mark_file}.tmp"
 
     set marked_items [$_ck tag has "marked"]
+    set _markedCount [llength $marked_items]
 
     # write temp mark file
     set tmp_chan [open $tmp_mark_file "w"]
@@ -654,6 +662,7 @@ body GeometryChecker::writeMarks {} {
 
 body GeometryChecker::changeMarkOnOverlap {id tag_cmd} {
     $_ck tag $tag_cmd "marked" $id
+    $this writeMarks
 
     # remove id from selection set
     set sset [$_ck selection]
@@ -664,16 +673,24 @@ body GeometryChecker::changeMarkOnOverlap {id tag_cmd} {
 
     # move marked to bottom of checklist
     $this sortBy {*}$_lastSort
+
+    # update status text
+    if {$_count == 1} {
+	$_status configure -text "$_count overlap"
+    } else {
+	$_status configure -text "$_count overlaps"
+    }
+    if {$_markedCount > 0} {
+	$_status configure -text "[$_status configure -text] ($_markedCount marked resolved)"
+    }
 }
 
 body GeometryChecker::markOverlap {id} {
     $this changeMarkOnOverlap $id "add"
-    $this writeMarks
 }
 
 body GeometryChecker::unmarkOverlap {id} {
     $this changeMarkOnOverlap $id "remove"
-    $this writeMarks
 }
 
 body GeometryChecker::changeMarkOnSelection {tag_cmd} {
@@ -693,6 +710,16 @@ body GeometryChecker::changeMarkOnSelection {tag_cmd} {
 
     # move marked to bottom of checklist
     $this sortBy {*}$_lastSort
+
+    # update status text
+    if {$_count == 1} {
+	$_status configure -text "$_count overlap"
+    } else {
+	$_status configure -text "$_count overlaps"
+    }
+    if {$_markedCount > 0} {
+	$_status configure -text "[$_status cget -text] ($_markedCount marked resolved)"
+    }
 }
 
 body GeometryChecker::markSelection {} {
