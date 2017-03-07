@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Recursive submodel predictably goes infinite, need stack-based
+  db_walk_tree(): mged> in submodel submodel submodel grid test.g
+
 * running rt -s20 -F file.pix ... does not result in an 20x20 image
   being written out.  it ends up being 512x512.
 
