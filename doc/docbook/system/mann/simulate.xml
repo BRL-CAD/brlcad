@@ -1,0 +1,199 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="simulaten">
+
+  <refmeta>
+    <refentrytitle>SIMULATE</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>simulate</refname>
+    <refpurpose>
+      a Bullet-based physics simulator for MGED
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>simulate</command>
+      <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
+      <arg choice="plain"><replaceable>path</replaceable></arg>
+      <arg choice="plain"><replaceable>duration</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id="description"><title>DESCRIPTION</title>
+
+    <para>
+      <command>simulate</command> performs rigid-body physics evaluation.
+      The Bullet physics engine is used with a collision algorithm that
+      utilizes the librt ray tracer.
+    </para>
+
+    <para>
+      The <replaceable>path</replaceable> parameter specifies the path to the
+      objects within the simulation. All primitives under this path are regarded
+      as separate physical objects by default. If a combination has the
+      attribute <literal>simulate::type=region</literal>, all primitives below it
+      in the hierarchy are regarded as one physical object.
+
+      <emphasis remap="B" role="bold">NOTE:</emphasis>
+      Issues with the implementation of the internal RtMotionState class can
+      result in incorrect application of matrix transformations. This can be
+      worked around by using the <command>xpush</command> command on the scene path
+      before running the <command>simulate</command> command.
+    </para>
+
+    <para>
+      The <replaceable>duration</replaceable> parameter specifies the duration
+      of the physics simulation (each use of the <command>simulate</command>
+      command operates within a new physics environment).
+    </para>
+
+    <para>
+      The units are nominally in meters and seconds, but other units can be
+      used dependent on the scaling of the duration, of the forces, and of the
+      objects within the scene. Note that Bullet is primarily designed for
+      objects of sizes between approximately 0.05 and 10.0 units, with a
+      collision tolerance of 0.004 units; hence, resizing to these scales may
+      produce the best results where possible.
+    </para>
+
+  </refsection>
+
+  <refsection xml:id="simulate_options"><title>OPTIONS</title>
+
+    <variablelist remap="TP">
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">--debug=<replaceable>MODE</replaceable></emphasis></term>
+	<listitem>
+	  <para>
+	    Set the debugging mode. Multiple mode flags can be separated
+	    using commas.
+
+	    <variablelist remap="B">
+	      <varlistentry>
+		<term><emphasis remap="I">aabb</emphasis></term>
+		<listitem><para>
+		    Draw Bullet's perceived axis-aligned bounding boxes after
+		    the simulation step.
+		</para></listitem>
+	      </varlistentry>
+
+	      <varlistentry>
+		<term><emphasis remap="I">contact</emphasis></term>
+		<listitem><para>
+		    Draw all of Bullet's collision contact points during the
+		    simulation.
+		</para></listitem>
+	      </varlistentry>
+
+	      <varlistentry>
+		<term><emphasis remap="I">ray</emphasis></term>
+		<listitem><para>
+		    Draw all of the rays fired by the internal
+		    collision detection algorithm.
+		</para></listitem>
+	      </varlistentry>
+	    </variablelist>
+
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsection>
+
+  <refsection xml:id="simulate_attributes"><title>OBJECT ATTRIBUTES</title>
+    <para>
+      The simulation can be configured by setting certain attributes on objects
+      within the specified path.
+    </para>
+
+    <variablelist remap="TP">
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">simulate::type=<replaceable>TYPE</replaceable></emphasis></term>
+	<listitem>
+	  <para>
+	    Specify the type of the associated object.
+
+	    <variablelist remap="B">
+	      <varlistentry>
+		<term><emphasis remap="I">region</emphasis></term>
+		<listitem><para>
+		    Regard all solids under this combination as belonging to
+		    one rigid body.
+		</para></listitem>
+	      </varlistentry>
+	    </variablelist>
+
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">simulate::mass=<replaceable>SCALAR</replaceable></emphasis></term>
+	<listitem>
+	  <para>
+	    Specify the mass of the associated object. Objects with a mass of
+	    <literal>0.0</literal> are immobile.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">simulate::linear_velocity=&lt;<replaceable>x</replaceable>, <replaceable>y</replaceable>, <replaceable>z</replaceable>&gt;</emphasis></term>
+	<listitem>
+	  <para>
+	    Specify the linear velocity of the associated object as a vector.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">simulate::angular_velocity=&lt;<replaceable>x</replaceable>, <replaceable>y</replaceable>, <replaceable>z</replaceable>&gt;</emphasis></term>
+	<listitem>
+	  <para>
+	    Specify the angular velocity of the associated object as a vector.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">simulate::gravity=&lt;<replaceable>x</replaceable>, <replaceable>y</replaceable>, <replaceable>z</replaceable>&gt;</emphasis></term>
+	<listitem>
+	  <para>
+	    Specify the acceleration due to gravity as a vector. This
+	    attribute can only be applied to the topmost object under
+	    <replaceable>path</replaceable>. The default gravity vector
+	    is <literal>&lt;0.0, 0.0, -9.80665&gt;</literal>, specifying an
+	    accleration of -9.8 mm/s/s along the z-axis.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsection>
+
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
+
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
+    <para>
+      This software is Copyright (c) 2017 United States Government as
+      represented by the U.S. Army Research Laboratory.
+    </para>
+  </refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    </para>
+  </refsection>
+</refentry>
+
+<!-- vim: set shiftwidth=2 : -->

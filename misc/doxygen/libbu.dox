@@ -26,6 +26,11 @@
      @brief Routines for command processing, network byte order conversion, sorting algorithms, time, endian support, units, etc.
  */
 /** @ingroup libbu */
+/**  @defgroup bu_data_gen Data Generation */
+/**  @addtogroup bu_data
+     @brief Routines for generating UUIDs, names, etc.
+ */
+/** @ingroup libbu */
 /**  @defgroup bu_parallel  Parallel Processing */
 /**  @addtogroup bu_parallel
      @brief Cross platform API for parallel processing, handling issues like threads and semaphores.
@@ -113,6 +118,11 @@
 /** @ingroup bu_data */
 /**   @defgroup bu_units Units */
 
+/* Data Generators */
+/** @ingroup bu_data_gen */
+/**   @defgroup bu_namegen Sequential Name Generation */
+/** @ingroup bu_data_gen */
+/**   @defgroup bu_uuid Universally Unique IDentifiers (UUIDs) */
 
 /* Parallel Processing */
 /** @ingroup bu_parallel */

@@ -235,10 +235,10 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
     /* densityfile is global to this file and will be used later (and then freed) */
     densityfile = (char *)bu_calloc((unsigned int)i, sizeof(char), "densityfile");
 
-    snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
+    snprintf(densityfile, i, "%s%c%s", curdir, BU_DIR_SEPARATOR, DENSITY_FILE);
 
     if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
-	snprintf(densityfile, i, "%s/%s", homedir, DENSITY_FILE);
+	snprintf(densityfile, i, "%s%c%s", homedir, BU_DIR_SEPARATOR, DENSITY_FILE);
 	if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
 	    bu_log("Unable to load density file \"%s\" for reading\n", densityfile);
 	    perror(densityfile);

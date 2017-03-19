@@ -1,0 +1,31 @@
+# Per https://cmake.org/Wiki/CMake_FAQ#Can_I_do_.22make_uninstall.22_with_CMake.3F
+
+if(NOT EXISTS "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt")
+  message(WARNING "Cannot find install manifest: @CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt.  Note:  uninstall only works after install has been run.")
+else(NOT EXISTS "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt")
+  file(READ "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt" files)
+  string(REGEX REPLACE "\n" ";" files "${files}")
+  foreach(file ${files})
+    message(STATUS "Uninstalling ${file}")
+    if(IS_SYMLINK "${file}" OR EXISTS "${file}")
+      exec_program(
+	"@CMAKE_COMMAND@" ARGS "-E remove \"${file}\""
+	OUTPUT_VARIABLE rm_out
+	RETURN_VALUE rm_retval
+	)
+      if(NOT "${rm_retval}" STREQUAL 0)
+	message(FATAL_ERROR "Problem when removing ${file}")
+      endif(NOT "${rm_retval}" STREQUAL 0)
+    else(IS_SYMLINK "${file}" OR EXISTS "${file}")
+      message(STATUS "File ${file} does not exist.")
+    endif(IS_SYMLINK "${file}" OR EXISTS "${file}")
+  endforeach(file)
+endif(NOT EXISTS "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt")
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

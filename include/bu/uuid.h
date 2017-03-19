@@ -28,6 +28,15 @@
 
 #include "bu/defines.h"
 
+/*----------------------------------------------------------------------*/
+/** @addtogroup bu_uuid
+ *
+ * @brief
+ * Routines to generate and work with universally unique identifiers.
+ */
+/** @{ */
+/** @file bu/uuid.h */
+
 
 #ifdef HAVE_STATIC_ARRAYS
 #  define STATIC_ARRAY(x) static (x)
@@ -95,6 +104,8 @@ bu_uuid_decode(const char *cp, uint8_t uuid[STATIC_ARRAY(16)]);
 
 
 __END_DECLS
+
+/** @} */
 
 #endif  /* BU_UUID_H */
 
