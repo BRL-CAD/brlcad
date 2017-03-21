@@ -319,8 +319,6 @@ test_matrices()
 	return matrix_equal(*db.ptr, "/scene.c/falling.c/falling_solid.c",
 			    expected_falling_matrix);
     }
-
-    return true;
 }
 
 
