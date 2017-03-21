@@ -194,9 +194,9 @@ RtMotionState::setWorldTransform(const btTransform &transform)
 	bn_mat_inv(parent_path_matrix_inverse, parent_path_matrix);
     }
 
-    // leaf = path_inverse * transform * path * leaf
+    // leaf = path_inverse * transform * path * leaf_prev
     // so that when calculating the final transformation of the leaf node:
-    // path * leaf == transform * path * leaf
+    // path * leaf == transform * path * leaf_prev
     mat_t matrix = MAT_INIT_IDN;
     MAT_COPY(matrix, parent_path_matrix);
     bn_mat_mul2(transform_matrix, matrix);
