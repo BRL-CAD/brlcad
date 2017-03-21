@@ -15,12 +15,12 @@ fi
 
 db="$1"
 sz="1024"
-gsz="100mm-1mm"
 pwd=`pwd`
 loop="loop"
 mged="mged"
 rtcheck="rtcheck"
 gqa="gqa"
+gqa_opts="-q -g1mm,1mm"
 
 echo ""
 echo "CHECKING FOR OVERLAPS"
@@ -73,7 +73,6 @@ for obj in $tops ; do
 	    echo "[$count/$total]"
 	    chmod -f 755 $OBJ.$az.$el.plot3
 	    if ! $dry_run; then
-		echo $rtcheck -o $OBJ.$az.$el.plot3 -s $sz -a $az -e $el $DB $obj 
 		$rtcheck -o $OBJ.$az.$el.plot3 -s $sz -a $az -e $el $DB $obj 2> $OBJ.$az.$el.rtcheck.log
 		if test -f $OBJ.$az.$el.plot3 ; then
 		    cat $OBJ.$az.$el.plot3 >> $OBJ.plot3
@@ -118,7 +117,7 @@ for obj in $tops ; do
     OBJ=$JOB.$obj
     echo "[$obj]"
     if ! $dry_run; then
-	$gqa -Ao -g $gsz $DB $obj > $OBJ.gqa.log 2>&1
+	$gqa -Ao $gqa_opts $DB $obj > $OBJ.gqa.log 2>&1
     fi
 done
 
