@@ -23,17 +23,16 @@
  *
  */
 
+
 #ifndef SIMULATE_RT_MOTION_STATE_H
 #define SIMULATE_RT_MOTION_STATE_H
 
 
 #include "common.h"
 
-#include "rt/db_instance.h"
+#include "utility.hpp"
 
 #include <btBulletDynamicsCommon.h>
-
-#include <string>
 
 
 namespace simulate
@@ -43,10 +42,10 @@ namespace simulate
 class RtMotionState : public btMotionState
 {
 public:
-    explicit RtMotionState(db_i &db, const std::string &path,
+    explicit RtMotionState(db_i &db, const db_full_path &path,
 			   const btVector3 &center_of_mass);
 
-    const std::string &get_path() const;
+    const db_full_path &get_path() const;
 
     virtual void getWorldTransform(btTransform &dest) const;
     virtual void setWorldTransform(const btTransform &transform);
@@ -54,7 +53,8 @@ public:
 
 private:
     db_i &m_db;
-    const std::string m_path;
+    db_full_path m_path;
+    const AutoPtr<db_full_path, db_free_full_path> m_autofree_m_path;
     btTransform m_transform;
 };
 

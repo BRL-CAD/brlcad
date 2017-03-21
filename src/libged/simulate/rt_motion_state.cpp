@@ -23,6 +23,7 @@
  *
  */
 
+
 #include "common.h"
 
 
@@ -47,9 +48,7 @@ bt_transform_to_matrix(const btTransform &transform, fastf_t * const matrix)
 	bu_bomb("missing argument");
 
     MAT_IDN(matrix);
-    matrix[MDX] = transform.getOrigin().getX();
-    matrix[MDY] = transform.getOrigin().getY();
-    matrix[MDZ] = transform.getOrigin().getZ();
+    MAT_DELTAS_VEC(matrix, transform.getOrigin());
     VMOVE(&matrix[0], transform.getBasis()[0]);
     VMOVE(&matrix[4], transform.getBasis()[1]);
     VMOVE(&matrix[8], transform.getBasis()[2]);
@@ -57,42 +56,60 @@ bt_transform_to_matrix(const btTransform &transform, fastf_t * const matrix)
 
 
 HIDDEN void
-check_region_path(const db_full_path &full_path)
+path_to_mat(db_i &db, const db_full_path &path, fastf_t * const result)
 {
-    RT_CK_FULL_PATH(&full_path);
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
 
-    if (full_path.fp_len < 2)
+    if (!result)
+	bu_bomb("missing argument");
+
+    db_full_path temp;
+    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&temp);
+    db_full_path_init(&temp);
+    db_dup_full_path(&temp, &path);
+
+    if (1 != db_path_to_mat(&db, &temp, result, 0, &rt_uniresource))
+	throw std::runtime_error("db_path_to_mat() failed");
+}
+
+
+HIDDEN void
+check_region_path(const db_full_path &path)
+{
+    RT_CK_FULL_PATH(&path);
+
+    if (path.fp_len < 2)
 	throw simulate::InvalidSimulationError("invalid path");
 
-    if (full_path.fp_names[0]->d_nref)
+    if (path.fp_names[0]->d_nref)
 	throw simulate::InvalidSimulationError(std::string() + "root '" +
-					       full_path.fp_names[0]->d_namep + "' is referenced elsewhere");
+					       path.fp_names[0]->d_namep + "' is referenced elsewhere");
 
-    for (std::size_t i = 1; i < full_path.fp_len - 1; ++i)
-	if (full_path.fp_names[i]->d_nref != 1)
+    for (std::size_t i = 1; i < path.fp_len - 1; ++i)
+	if (path.fp_names[i]->d_nref != 1)
 	    throw simulate::InvalidSimulationError(std::string() +
-						   "multiple references to parent combination '" + full_path.fp_names[i]->d_namep +
+						   "multiple references to parent combination '" + path.fp_names[i]->d_namep +
 						   "'");
 }
 
 
 HIDDEN void
-apply_transform(db_i &db, const std::string &path, const btTransform &transform)
+set_child_matrix(db_i &db, const db_full_path &path,
+		 const fastf_t * const matrix)
 {
-    db_full_path full_path;
-    db_full_path_init(&full_path);
-    simulate::AutoPtr<db_full_path, db_free_full_path> autofree_full_path(
-	&full_path);
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
 
-    if (db_string_to_path(&full_path, &db, path.c_str()))
-	bu_bomb("db_string_to_path() failed");
+    if (!matrix)
+	bu_bomb("missing argument");
 
-    check_region_path(full_path);
+    check_region_path(path);
 
-    directory &parent_dir = *full_path.fp_names[full_path.fp_len - 2];
+    directory &parent_dir = *path.fp_names[path.fp_len - 2];
     rt_db_internal parent_internal;
     RT_DB_INTERNAL_INIT(&parent_internal);
-    simulate::AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(
+    const simulate::AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(
 	&parent_internal);
 
     if (0 > rt_db_get_internal(&parent_internal, &parent_dir, &db, bn_mat_identity,
@@ -104,20 +121,15 @@ apply_transform(db_i &db, const std::string &path, const btTransform &transform)
     RT_CK_COMB(&comb);
 
     tree * const leaf = db_find_named_leaf(comb.tree,
-					   DB_FULL_PATH_CUR_DIR(&full_path)->d_namep);
+					   DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 
     if (!leaf)
 	bu_bomb("db_find_named_leaf() failed");
 
-    mat_t matrix = MAT_INIT_IDN;
-    bt_transform_to_matrix(transform, matrix);
-
-    if (!leaf->tr_l.tl_mat) {
+    if (!leaf->tr_l.tl_mat)
 	leaf->tr_l.tl_mat = static_cast<fastf_t *>(bu_malloc(sizeof(mat_t), "tl_mat"));
-	MAT_IDN(leaf->tr_l.tl_mat);
-    }
 
-    bn_mat_mul2(matrix, leaf->tr_l.tl_mat);
+    MAT_COPY(leaf->tr_l.tl_mat, matrix);
 
     if (0 > rt_db_put_internal(&parent_dir, &db, &parent_internal, &rt_uniresource))
 	bu_bomb("rt_db_put_internal() failed");
@@ -131,24 +143,24 @@ namespace simulate
 {
 
 
-RtMotionState::RtMotionState(db_i &db, const std::string &path,
+RtMotionState::RtMotionState(db_i &db, const db_full_path &path,
 			     const btVector3 &center_of_mass) :
     m_db(db),
-    m_path(path),
+    m_path(),
+    m_autofree_m_path(&m_path),
     m_transform(btMatrix3x3::getIdentity(), center_of_mass)
 {
-    RT_CK_DBI(&m_db);
+    db_full_path_init(&m_path);
+    db_dup_full_path(&m_path, &path);
 
-    // Bullet requires that getWorldTransform() returns the center of mass of
-    // the rigid body.
-    //
-    // This is implemented here by keeping a translation to the center of
-    // mass in `m_transform`, but applying only the "incremental"
-    // transformations to the BRL-CAD matrix in setWorldTransform().
+    RT_CK_DBI(&m_db);
+    RT_CK_FULL_PATH(&m_path);
+
+    check_region_path(m_path);
 }
 
 
-const std::string &
+const db_full_path &
 RtMotionState::get_path() const
 {
     return m_path;
@@ -165,13 +177,16 @@ RtMotionState::getWorldTransform(btTransform &dest) const
 void
 RtMotionState::setWorldTransform(const btTransform &transform)
 {
-    // FIXME: Not properly handling rotations about the correct points.
-    // Note: Primitives rotate about primitive-specific points.
-    //
-    // Note: These btTransform objects only specify a rotation about the
-    // center of mass followed by a translation.
+    mat_t matrix = MAT_INIT_IDN;
+    path_to_mat(m_db, m_path, matrix);
 
-    apply_transform(m_db, m_path, transform * m_transform.inverse());
+    mat_t transform_matrix = MAT_INIT_IDN;
+    bt_transform_to_matrix(transform * m_transform.inverse(), transform_matrix);
+
+    bn_mat_mul2(transform_matrix, matrix);
+
+    set_child_matrix(m_db, m_path, matrix);
+
     m_transform = transform;
 }
 

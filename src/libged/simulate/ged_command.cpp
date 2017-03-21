@@ -107,8 +107,8 @@ ged_simulate(ged * const gedp, const int argc, const char ** const argv)
 
     if (2 != bu_opt_parse(gedp->ged_result_str, argc - 1, &argv[1],
 			  options_description)) {
-	simulate::AutoPtr<char> usage(const_cast<char *>(bu_opt_describe(
-					  const_cast<bu_opt_desc *>(options_description), NULL)));
+	const simulate::AutoPtr<char> usage(const_cast<char *>(bu_opt_describe(
+						const_cast<bu_opt_desc *>(options_description), NULL)));
 	bu_vls_printf(gedp->ged_result_str,
 		      "USAGE: %s [OPTIONS] path duration\nOptions:\n%s\n", argv[0], usage.ptr);
 	return GED_ERROR;
@@ -126,7 +126,14 @@ ged_simulate(ged * const gedp, const int argc, const char ** const argv)
 	if (seconds < 0.0)
 	    throw simulate::InvalidSimulationError("invalid value for 'seconds'");
 
-	simulate::Simulation simulation(*gedp->ged_wdbp->dbip, argv[1]);
+	db_full_path path;
+	db_full_path_init(&path);
+	const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+
+	if (db_string_to_path(&path, gedp->ged_wdbp->dbip, argv[1]))
+	    throw simulate::InvalidSimulationError("invalid path");
+
+	simulate::Simulation simulation(*gedp->ged_wdbp->dbip, path);
 	simulation.step(seconds, debug_mode);
     } catch (const simulate::InvalidSimulationError &exception) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s", exception.what());

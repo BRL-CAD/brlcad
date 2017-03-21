@@ -44,7 +44,7 @@ public:
 
     // `aabb_center_height` is the vector from the center of mass to
     // the center of the AABB
-    explicit RtCollisionShape(const btVector3 &aabb_half_extents,
+    explicit RtCollisionShape(const btVector3 &aabb_extents,
 			      const btVector3 &aabb_center_height);
 
     virtual const char *getName() const;

@@ -110,7 +110,7 @@ private:
 class TemporaryRegionHandle
 {
 public:
-    explicit TemporaryRegionHandle(db_i &db, const std::string &path);
+    explicit TemporaryRegionHandle(db_i &db, const db_full_path &path);
     ~TemporaryRegionHandle();
 
 
@@ -119,7 +119,7 @@ private:
     TemporaryRegionHandle &operator=(const TemporaryRegionHandle &source);
 
     db_i &m_db;
-    directory *m_dir;
+    directory &m_dir;
     bool m_dir_modified;
     std::vector<directory *> m_parent_regions;
 };

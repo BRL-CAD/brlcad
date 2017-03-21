@@ -51,7 +51,7 @@ public:
     };
 
 
-    explicit Simulation(db_i &db, const std::string &path);
+    explicit Simulation(db_i &db, const db_full_path &path);
     ~Simulation();
 
     void step(fastf_t seconds, DebugMode debug_mode);

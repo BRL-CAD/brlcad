@@ -180,12 +180,12 @@ calculate_contact_points(btManifoldResult &result,
 				    body_a_wrap.getCollisionObject());
     const btRigidBody &body_b = *btRigidBody::upcast(
 				    body_b_wrap.getCollisionObject());
-    const std::string &body_a_path = static_cast<const simulate::RtMotionState *>
-				     (body_a.getMotionState())->get_path();
-    const std::string &body_b_path = static_cast<const simulate::RtMotionState *>
-				     (body_b.getMotionState())->get_path();
+    const db_full_path &body_a_path = static_cast<const simulate::RtMotionState *>
+				      (body_a.getMotionState())->get_path();
+    const db_full_path &body_b_path = static_cast<const simulate::RtMotionState *>
+				      (body_b.getMotionState())->get_path();
 
-    simulate::AutoPtr<xrays, free_xrays> rays(get_rays(body_a, body_b));
+    const simulate::AutoPtr<xrays, free_xrays> rays(get_rays(body_a, body_b));
     const std::vector<std::pair<btVector3, btVector3> > overlaps =
 	rt_instance.get_overlaps(body_a_path, body_b_path, *rays.ptr);
     const btVector3 normal_world_on_b(V3ARGS(rays.ptr->ray.r_dir));

@@ -21,7 +21,7 @@ matrix_equal(const db_i &db, const std::string &path,
 
     db_full_path full_path;
     db_full_path_init(&full_path);
-    simulate::AutoPtr<db_full_path, db_free_full_path> autofree_full_path(
+    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_full_path(
 	&full_path);
 
     if (db_string_to_path(&full_path, &db, path.c_str()))
@@ -45,7 +45,7 @@ matrix_equal(const db_i &db, const std::string &path,
 HIDDEN bool
 test_basic()
 {
-    simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
+    const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
 
     if (!db.ptr)
 	bu_bomb("db_create_inmem() failed");
@@ -115,8 +115,15 @@ test_basic()
 	    bu_bomb("db5_update_attribute() failed");
     }
 
+    db_full_path path;
+    db_full_path_init(&path);
+    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+
+    if (db_string_to_path(&path, db.ptr, "scene.c"))
+	bu_bomb("db_string_to_path() failed");
+
     try {
-	simulate::Simulation(*db.ptr, "scene.c").step(3.0,
+	simulate::Simulation(*db.ptr, path).step(3.0,
 		simulate::Simulation::debug_none);
     } catch (const simulate::InvalidSimulationError &exception) {
 	bu_log("simulation failed: '%s'\n", exception.what());
@@ -140,7 +147,7 @@ test_basic()
 HIDDEN bool
 test_tutorial()
 {
-    simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
+    const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
 
     if (!db.ptr)
 	bu_bomb("db_create_inmem() failed");
@@ -197,8 +204,15 @@ test_tutorial()
 	    bu_bomb("mk_comb() failed");
     }
 
+    db_full_path path;
+    db_full_path_init(&path);
+    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+
+    if (db_string_to_path(&path, db.ptr, "scene.c"))
+	bu_bomb("db_string_to_path() failed");
+
     try {
-	simulate::Simulation(*db.ptr, "scene.c").step(10.0,
+	simulate::Simulation(*db.ptr, path).step(10.0,
 		simulate::Simulation::debug_none);
     } catch (const simulate::InvalidSimulationError &exception) {
 	bu_log("simulation failed: '%s'\n", exception.what());

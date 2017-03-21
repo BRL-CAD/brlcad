@@ -62,7 +62,7 @@ set_region(db_i &db, directory &dir, const bool is_region)
 	    bu_bomb("not a region");
 
 	bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
-	simulate::AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs(&avs);
+	const simulate::AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs(&avs);
 
 	if (db5_get_attributes(&db, &avs, &dir))
 	    bu_bomb("db5_get_attributes() failed");
@@ -86,32 +86,24 @@ namespace simulate
 
 
 TemporaryRegionHandle::TemporaryRegionHandle(db_i &db,
-	const std::string &path) :
+	const db_full_path &path) :
     m_db(db),
-    m_dir(NULL),
+    m_dir(*DB_FULL_PATH_CUR_DIR(&path)),
     m_dir_modified(false),
     m_parent_regions()
 {
     RT_CK_DBI(&m_db);
+    RT_CK_FULL_PATH(&path);
 
-    db_full_path full_path;
-    db_full_path_init(&full_path);
-    AutoPtr<db_full_path, db_free_full_path> autofree_full_path(&full_path);
-
-    if (db_string_to_path(&full_path, &db, path.c_str()))
-	bu_bomb("db_string_to_path() failed");
-
-    m_dir = DB_FULL_PATH_CUR_DIR(&full_path);
-
-    if (m_dir->d_flags & RT_DIR_COMB && !(m_dir->d_flags & RT_DIR_REGION)) {
-	set_region(m_db, *m_dir, true);
+    if (m_dir.d_flags & RT_DIR_COMB && !(m_dir.d_flags & RT_DIR_REGION)) {
+	set_region(m_db, m_dir, true);
 	m_dir_modified = true;
     }
 
-    for (std::size_t i = 0; i < full_path.fp_len - 1; ++i)
-	if (full_path.fp_names[i]->d_flags & RT_DIR_REGION) {
-	    set_region(m_db, *full_path.fp_names[i], false);
-	    m_parent_regions.push_back(full_path.fp_names[i]);
+    for (std::size_t i = 0; i < path.fp_len - 1; ++i)
+	if (path.fp_names[i]->d_flags & RT_DIR_REGION) {
+	    set_region(m_db, *path.fp_names[i], false);
+	    m_parent_regions.push_back(path.fp_names[i]);
 	}
 }
 
@@ -119,7 +111,7 @@ TemporaryRegionHandle::TemporaryRegionHandle(db_i &db,
 TemporaryRegionHandle::~TemporaryRegionHandle()
 {
     if (m_dir_modified)
-	set_region(m_db, *m_dir, false);
+	set_region(m_db, m_dir, false);
 
     for (std::vector<directory *>::const_iterator it = m_parent_regions.begin();
 	 it != m_parent_regions.end(); ++it)

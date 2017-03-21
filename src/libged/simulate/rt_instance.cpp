@@ -44,7 +44,7 @@ namespace
 
 struct MultiOverlapHandlerArgs {
     std::vector<std::pair<btVector3, btVector3> > &result;
-    const std::string &path_a, &path_b;
+    const std::string path_a, path_b;
 };
 
 
@@ -106,19 +106,23 @@ RtInstance::RtInstance(db_i &db) :
 
 
 std::vector<std::pair<btVector3, btVector3> >
-RtInstance::get_overlaps(const std::string &path_a, const std::string &path_b,
+RtInstance::get_overlaps(const db_full_path &path_a, const db_full_path &path_b,
 			 const xrays &rays) const
 {
+    RT_CK_FULL_PATH(&path_a);
+    RT_CK_FULL_PATH(&path_b);
     BU_CK_LIST_HEAD(&rays);
     RT_CK_RAY(&rays.ray);
 
-    AutoPtr<rt_i, rt_free_rti> rti(rt_new_rti(&m_db));
+    const AutoPtr<rt_i, rt_free_rti> rti(rt_new_rti(&m_db));
 
     if (!rti.ptr)
 	bu_bomb("rt_new_rti() failed");
 
     const TemporaryRegionHandle region_a(m_db, path_a), region_b(m_db, path_b);
-    const char *paths[] = {path_a.c_str(), path_b.c_str()};
+    const AutoPtr<char> path_a_str(db_path_to_string(&path_a));
+    const AutoPtr<char> path_b_str(db_path_to_string(&path_b));
+    const char *paths[] = {path_a_str.ptr, path_b_str.ptr};
 
     if (rt_gettrees(rti.ptr, sizeof(paths) / sizeof(paths[0]), paths, 1))
 	bu_bomb("rt_gettrees() failed");
@@ -128,7 +132,7 @@ RtInstance::get_overlaps(const std::string &path_a, const std::string &path_b,
     std::vector<std::pair<btVector3, btVector3> > result;
 
     application app;
-    MultiOverlapHandlerArgs handler_args = {result, path_a, path_b};
+    MultiOverlapHandlerArgs handler_args = {result, paths[0], paths[1]};
     RT_APPLICATION_INIT(&app);
     app.a_rt_i = rti.ptr;
     app.a_logoverlap = rt_silent_logoverlap;

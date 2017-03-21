@@ -39,9 +39,9 @@ namespace simulate
 {
 
 
-RtCollisionShape::RtCollisionShape(const btVector3 &aabb_half_extents,
+RtCollisionShape::RtCollisionShape(const btVector3 &aabb_extents,
 				   const btVector3 &aabb_center_height) :
-    m_aabb_half_extents(aabb_half_extents),
+    m_aabb_half_extents(aabb_extents / 2.0),
     m_aabb_center_height(aabb_center_height),
     m_local_scaling(1.0, 1.0, 1.0),
     m_collision_margin(4.0)
