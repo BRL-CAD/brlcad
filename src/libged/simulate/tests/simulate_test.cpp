@@ -241,7 +241,7 @@ test_matrices()
 	bu_bomb("db_create_inmem() failed");
 
     {
-	const point_t center = {00.0, 0.0, 10.0};
+	const point_t center = {0.0, 0.0, 10.0};
 
 	if (mk_sph(db.ptr->dbi_wdbp, "falling.s", center, 1.0))
 	    bu_bomb("mk_sph() failed");
