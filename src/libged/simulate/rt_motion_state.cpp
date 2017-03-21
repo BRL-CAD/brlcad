@@ -56,7 +56,7 @@ bt_transform_to_matrix(const btTransform &transform, fastf_t * const matrix)
 
 
 HIDDEN void
-path_to_mat(db_i &db, const db_full_path &path, fastf_t * const result)
+path_to_matrix(db_i &db, const db_full_path &path, fastf_t * const result)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -95,8 +95,47 @@ check_region_path(const db_full_path &path)
 
 
 HIDDEN void
-set_child_matrix(db_i &db, const db_full_path &path,
-		 const fastf_t * const matrix)
+get_tree_matrix(const db_i &db, const db_full_path &path,
+		fastf_t * const matrix)
+{
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
+
+    if (!matrix)
+	bu_bomb("missing argument");
+
+    MAT_IDN(matrix);
+
+    check_region_path(path);
+
+    const directory &parent_dir = *path.fp_names[path.fp_len - 2];
+    rt_db_internal parent_internal;
+    RT_DB_INTERNAL_INIT(&parent_internal);
+    const simulate::AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(
+	&parent_internal);
+
+    if (0 > rt_db_get_internal(&parent_internal, &parent_dir, &db, bn_mat_identity,
+			       &rt_uniresource))
+	bu_bomb("rt_db_get_internal() failed");
+
+    const rt_comb_internal &comb = *static_cast<rt_comb_internal *>
+				   (parent_internal.idb_ptr);
+    RT_CK_COMB(&comb);
+
+    tree * const leaf = db_find_named_leaf(comb.tree,
+					   DB_FULL_PATH_CUR_DIR(&path)->d_namep);
+
+    if (!leaf)
+	bu_bomb("db_find_named_leaf() failed");
+
+    if (leaf->tr_l.tl_mat)
+	MAT_COPY(matrix, leaf->tr_l.tl_mat);
+}
+
+
+HIDDEN void
+set_tree_matrix(db_i &db, const db_full_path &path,
+		const fastf_t * const matrix)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -177,17 +216,31 @@ RtMotionState::getWorldTransform(btTransform &dest) const
 void
 RtMotionState::setWorldTransform(const btTransform &transform)
 {
-    mat_t matrix = MAT_INIT_IDN;
-    path_to_mat(m_db, m_path, matrix);
+    const btTransform incremental_transform = transform * m_transform.inverse();
+    m_transform = transform;
 
     mat_t transform_matrix = MAT_INIT_IDN;
-    bt_transform_to_matrix(transform * m_transform.inverse(), transform_matrix);
+    bt_transform_to_matrix(incremental_transform, transform_matrix);
 
+    mat_t leaf_matrix = MAT_INIT_IDN;
+    get_tree_matrix(m_db, m_path, leaf_matrix);
+
+    mat_t parent_matrix = MAT_INIT_IDN, parent_matrix_inverse = MAT_INIT_IDN;
+    {
+	db_full_path parent_path = m_path;
+	DB_FULL_PATH_POP(&parent_path);
+	path_to_matrix(m_db, parent_path, parent_matrix);
+	bn_mat_inv(parent_matrix_inverse, parent_matrix);
+    }
+
+    // leaf = parent_inverse * transform * parent * leaf
+    mat_t matrix = MAT_INIT_IDN;
+    MAT_COPY(matrix, leaf_matrix);
+    bn_mat_mul2(parent_matrix, matrix);
     bn_mat_mul2(transform_matrix, matrix);
+    bn_mat_mul2(parent_matrix_inverse, matrix);
 
-    set_child_matrix(m_db, m_path, matrix);
-
-    m_transform = transform;
+    set_tree_matrix(m_db, m_path, matrix);
 }
 
 
