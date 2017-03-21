@@ -127,8 +127,8 @@ ged_simulate(ged * const gedp, const int argc, const char ** const argv)
 	    throw simulate::InvalidSimulationError("invalid value for 'seconds'");
 
 	db_full_path path;
-	db_full_path_init(&path);
 	const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+	db_full_path_init(&path);
 
 	if (db_string_to_path(&path, gedp->ged_wdbp->dbip, argv[1]))
 	    throw simulate::InvalidSimulationError("invalid path");

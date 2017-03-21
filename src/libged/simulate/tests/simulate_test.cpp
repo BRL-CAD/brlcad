@@ -233,9 +233,101 @@ test_tutorial()
 
 
 HIDDEN bool
+test_matrices()
+{
+    const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
+
+    if (!db.ptr)
+	bu_bomb("db_create_inmem() failed");
+
+    {
+	const point_t center = {00.0, 0.0, 10.0};
+
+	if (mk_sph(db.ptr->dbi_wdbp, "falling.s", center, 1.0))
+	    bu_bomb("mk_sph() failed");
+    }
+
+    {
+	const point_t center = {0.0, 0.0, 0.0};
+
+	if (mk_sph(db.ptr->dbi_wdbp, "ground.s", center, 5.0))
+	    bu_bomb("mk_sph() failed");
+    }
+
+    if (db5_update_attribute("ground.s", "simulate::mass", "0.0", db.ptr))
+	bu_bomb("db5_update_attribute() failed");
+
+    {
+	wmember members;
+	BU_LIST_INIT(&members.l);
+	mk_addmember("falling.s", &members.l, NULL, WMOP_UNION);
+
+	if (mk_comb(db.ptr->dbi_wdbp, "falling_solid.c", &members.l, false, NULL, NULL,
+		    NULL,
+		    0, 0, 0, 0, false, false, false))
+	    bu_bomb("mk_comb() failed");
+
+	if (db5_update_attribute("falling_solid.c", "simulate::type", "region", db.ptr))
+	    bu_bomb("db5_update_attribute() failed");
+
+	BU_LIST_INIT(&members.l);
+	mk_addmember("falling_solid.c", &members.l, NULL, WMOP_UNION);
+
+	if (mk_comb(db.ptr->dbi_wdbp, "falling.c", &members.l, false, NULL, NULL, NULL,
+		    0, 0, 0, 0, false, false, false))
+	    bu_bomb("mk_comb() failed");
+
+	mat_t falling_matrix = {
+	    1.879681598222e-01, 6.371933019316e-01, 7.474307104116e-01, -7.474307104116e+00,
+	    1.777804646915e-01, 7.263520916684e-01, -6.639327867359e-01, 6.639327867359e+00,
+	    -9.659513845256e-01, 2.576768031901e-01, 2.325054473825e-02, 9.767494552618e+00,
+	    0.0, 0.0, 0.0, 1.0
+	};
+
+	BU_LIST_INIT(&members.l);
+	mk_addmember("falling.c", &members.l, falling_matrix, WMOP_UNION);
+	mk_addmember("ground.s", &members.l, NULL, WMOP_UNION);
+
+	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
+		    0, 0, 0, false, false, false))
+	    bu_bomb("mk_comb() failed");
+    }
+
+    db_full_path path;
+    db_full_path_init(&path);
+    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+
+    if (db_string_to_path(&path, db.ptr, "scene.c"))
+	bu_bomb("db_string_to_path() failed");
+
+    try {
+	simulate::Simulation(*db.ptr, path).step(10.0,
+		simulate::Simulation::debug_none);
+    } catch (const simulate::InvalidSimulationError &exception) {
+	bu_log("simulation failed: '%s'\n", exception.what());
+	return false;
+    }
+
+    {
+	const mat_t expected_falling_matrix = {
+	    8.693316464693e-01, 4.453003990884e-01, 2.144078528305e-01, -2.136225176282e+00,
+	    -4.083346425447e-01, 8.915402353225e-01, -1.960082711628e-01, 1.972270250135e+00,
+	    -2.784349980193e-01, 8.284621363135e-02, 9.568743085221e-01, -3.596945807610e+00,
+	    0.0, 0.0, 0.0, 1.0
+	};
+
+	return matrix_equal(*db.ptr, "/scene.c/falling.c/falling_solid.c",
+			    expected_falling_matrix);
+    }
+
+    return true;
+}
+
+
+HIDDEN bool
 simulate_test()
 {
-    return test_basic() && test_tutorial();
+    return test_basic() && test_tutorial() && test_matrices();
 }
 
 
