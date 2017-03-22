@@ -55,6 +55,8 @@ const char * const attribute_prefix = "simulate::";
 HIDDEN std::string
 error_at(const std::string &message, const db_full_path &path)
 {
+    RT_CK_FULL_PATH(&path);
+
     return message + " at '" + DB_FULL_PATH_CUR_DIR(&path)->d_namep + "'";
 }
 
@@ -183,13 +185,18 @@ struct SimulationParameters {
     {}
 
 
+    static SimulationParameters get_simulation_parameters(const db_i &db,
+	    const db_full_path &path);
+
+
     btVector3 m_gravity;
     unsigned m_grid_radius;
 };
 
 
-HIDDEN SimulationParameters
-get_simulation_parameters(const db_i &db, const db_full_path &path)
+SimulationParameters
+SimulationParameters::get_simulation_parameters(const db_i &db,
+	const db_full_path &path)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -211,8 +218,8 @@ get_simulation_parameters(const db_i &db, const db_full_path &path)
 	    if (!bu_strcmp(name, "gravity"))
 		result.m_gravity = deserialize_vector(value);
 	    else if (!bu_strcmp(name, "grid_radius")) {
-		long temp = simulate::lexical_cast<long>(value, error_at("invalid grid_radius",
-			    path));
+		const long temp = simulate::lexical_cast<long>(value,
+				  error_at("invalid grid_radius", path));
 
 		if (temp < 0)
 		    throw simulate::InvalidSimulationError(error_at("invalid grid_radius", path));
@@ -406,7 +413,8 @@ Simulation::Simulation(db_i &db, const db_full_path &path) :
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
-    const SimulationParameters parameters = get_simulation_parameters(db, path);
+    const SimulationParameters parameters =
+	SimulationParameters::get_simulation_parameters(db, path);
 
     m_world.setDebugDrawer(&m_debug_draw);
     m_world.setGravity(parameters.m_gravity);
