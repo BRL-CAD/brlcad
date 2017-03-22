@@ -71,14 +71,14 @@ for obj in $tops ; do
     for az in `$loop 0 179 45` ; do
 	for el in `$loop 0 179 45` ; do
 	    echo "[$count/$total]"
-	    chmod -f 755 $OBJ.$az.$el.plot3
 	    if ! $dry_run; then
+		rm -f $OBJ.$az.$el.plot3
 		$rtcheck -o $OBJ.$az.$el.plot3 -s $sz -a $az -e $el $DB $obj 2> $OBJ.$az.$el.rtcheck.log
 		if test -f $OBJ.$az.$el.plot3 ; then
+		    chmod -f u+rw $OBJ.$az.$el.plot3
 		    cat $OBJ.$az.$el.plot3 >> $OBJ.plot3
 		fi
 	    fi
-	    chmod -f 755 $OBJ.$az.$el.plot3
 	    count="`expr $count + 1`"
 	done
     done
@@ -244,12 +244,14 @@ if `false` ; then
 
 	for az in `$loop 0 179 45` ; do
 	    for el in `$loop 0 179 45` ; do
-		chmod -f 755 $JOB.$count.$az.$el.plot3
 		if ! $dry_run; then
+		    rm -f $JOB.$count.$az.$el.plot3
 		    $rtcheck -o $JOB.$count.$az.$el.plot3 -s $sz -a $az -e $el $DB $objs 2> $JOB.$count.$az.$el
-		    cat $JOB.$count.$az.$el.plot3 >> $JOB.more.plot3
+		    if test -f $JOB.$count.$az.$el.plot3 ; then
+			chmod -f u+rw $JOB.$count.$az.$el.plot3
+			cat $JOB.$count.$az.$el.plot3 >> $JOB.more.plot3
+		    fi
 		fi
-		chmod -f 755 $JOB.$count.$az.$el.plot3
 	    done
 	done
 
@@ -268,6 +270,8 @@ cat $JOB.overlaps
 
 
 cd $pwd
+echo ""
+echo "Overlaps saved to $DIR/$JOB.overlaps"
 echo ""
 echo "Done."
 
