@@ -60,10 +60,8 @@ public:
 
 
 private:
-    const btVector3 m_aabb_half_extents;
     const btVector3 m_aabb_center_height;
-    btVector3 m_local_scaling;
-    btScalar m_collision_margin;
+    btBoxShape m_box_shape;
 };
 
 

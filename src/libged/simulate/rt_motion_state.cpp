@@ -64,6 +64,8 @@ path_to_matrix(db_i &db, const db_full_path &path, fastf_t * const result)
     if (!result)
 	bu_bomb("missing argument");
 
+    MAT_IDN(result);
+
     db_full_path temp;
     const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&temp);
     db_full_path_init(&temp);
