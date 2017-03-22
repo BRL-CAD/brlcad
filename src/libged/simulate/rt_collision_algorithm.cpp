@@ -82,7 +82,7 @@ get_normal_world_on_b(const btRigidBody &body_a, const btRigidBody &body_b)
 
 
 HIDDEN std::pair<btVector3, btVector3>
-get_overlap_aabb(const btRigidBody &body_a, const btRigidBody &body_b)
+get_aabb_overlap(const btRigidBody &body_a, const btRigidBody &body_b)
 {
     std::pair<btVector3, btVector3> result(btVector3(0.0, 0.0, 0.0), btVector3(0.0,
 					   0.0, 0.0));
@@ -113,7 +113,7 @@ free_xrays(xrays * const rays)
 
 HIDDEN xrays *
 generate_ray_grid(const btVector3 &center, const btScalar radius,
-		  const btVector3 &normal)
+		  const btVector3 &normal, const unsigned grid_radius)
 {
     if (radius < 0.0 || !NEAR_EQUAL(normal.length(), 1.0, RT_DOT_TOL))
 	bu_bomb("invalid argument");
@@ -140,7 +140,7 @@ generate_ray_grid(const btVector3 &center, const btScalar radius,
     }
 
     // NOTE: Bullet's collision tolerance is 4 units (4mm)
-    const btScalar grid_size = radius / static_cast<btScalar>(1.0e1);
+    const btScalar grid_size = radius / grid_radius;
 
     rt_gen_circular_grid(result, &center_ray, radius, up_vect, grid_size);
     return result;
@@ -148,24 +148,25 @@ generate_ray_grid(const btVector3 &center, const btScalar radius,
 
 
 HIDDEN xrays *
-get_rays(const btRigidBody &body_a, const btRigidBody &body_b)
+get_rays(const btRigidBody &body_a, const btRigidBody &body_b,
+	 const unsigned grid_radius)
 {
     const btVector3 normal_world_on_b = get_normal_world_on_b(body_a, body_b);
-    const std::pair<btVector3, btVector3> overlap_aabb = get_overlap_aabb(body_a,
+    const std::pair<btVector3, btVector3> aabb_overlap = get_aabb_overlap(body_a,
 	    body_b);
 
     // radius of the circle of rays
-    // half of the diagonal of the overlap AABB so that rays will cover
+    // half of the diagonal of the AABB overlap so that rays will cover
     // the entire volume from all orientations
-    const btScalar radius = (overlap_aabb.second - overlap_aabb.first).length() /
+    const btScalar radius = (aabb_overlap.second - aabb_overlap.first).length() /
 			    2.0;
 
     // step back from the overlap center, along the normal by `radius`,
     // to ensure that rays start from outside of the overlap region
-    const btVector3 center = (overlap_aabb.first + overlap_aabb.second) / 2.0 -
+    const btVector3 center = (aabb_overlap.first + aabb_overlap.second) / 2.0 -
 			     radius * normal_world_on_b;
 
-    return generate_ray_grid(center, radius, normal_world_on_b);
+    return generate_ray_grid(center, radius, normal_world_on_b, grid_radius);
 }
 
 
@@ -174,6 +175,7 @@ calculate_contact_points(btManifoldResult &result,
 			 const btCollisionObjectWrapper &body_a_wrap,
 			 const btCollisionObjectWrapper &body_b_wrap,
 			 const simulate::RtInstance &rt_instance,
+			 const unsigned grid_radius,
 			 btIDebugDraw &debug_draw)
 {
     const btRigidBody &body_a = *btRigidBody::upcast(
@@ -185,7 +187,8 @@ calculate_contact_points(btManifoldResult &result,
     const db_full_path &body_b_path = static_cast<const simulate::RtMotionState *>
 				      (body_b.getMotionState())->get_path();
 
-    const simulate::AutoPtr<xrays, free_xrays> rays(get_rays(body_a, body_b));
+    const simulate::AutoPtr<xrays, free_xrays> rays(get_rays(body_a, body_b,
+	    grid_radius));
     const std::vector<std::pair<btVector3, btVector3> > overlaps =
 	rt_instance.get_overlaps(body_a_path, body_b_path, *rays.ptr);
     const btVector3 normal_world_on_b(V3ARGS(rays.ptr->ray.r_dir));
@@ -218,8 +221,9 @@ namespace simulate
 
 
 RtCollisionAlgorithm::CreateFunc::CreateFunc(const RtInstance &rt_instance,
-	btIDebugDraw &debug_draw) :
+	const unsigned grid_radius, btIDebugDraw &debug_draw) :
     m_rt_instance(rt_instance),
+    m_grid_radius(grid_radius),
     m_debug_draw(debug_draw)
 {}
 
@@ -236,20 +240,21 @@ RtCollisionAlgorithm::CreateFunc::CreateCollisionAlgorithm(
     void * const ptr = cinfo.m_dispatcher1->allocateCollisionAlgorithm(sizeof(
 			   RtCollisionAlgorithm));
     return new(ptr) RtCollisionAlgorithm(NULL, cinfo, body_a_wrap, body_b_wrap,
-					 m_rt_instance, m_debug_draw);
+					 m_rt_instance, m_grid_radius, m_debug_draw);
 }
 
 
-RtCollisionAlgorithm::RtCollisionAlgorithm(
-    btPersistentManifold * const manifold,
-    const btCollisionAlgorithmConstructionInfo &cinfo,
-    const btCollisionObjectWrapper * const body_a_wrap,
-    const btCollisionObjectWrapper * const body_b_wrap,
-    const RtInstance &rt_instance, btIDebugDraw &debug_draw) :
+RtCollisionAlgorithm::RtCollisionAlgorithm(btPersistentManifold * const
+	manifold, const btCollisionAlgorithmConstructionInfo &cinfo,
+	const btCollisionObjectWrapper * const body_a_wrap,
+	const btCollisionObjectWrapper * const body_b_wrap,
+	const RtInstance &rt_instance, const unsigned grid_radius,
+	btIDebugDraw &debug_draw) :
     btCollisionAlgorithm(cinfo),
     m_owns_manifold(false),
     m_manifold(manifold),
     m_rt_instance(rt_instance),
+    m_grid_radius(grid_radius),
     m_debug_draw(debug_draw)
 {
     if (!body_a_wrap || !body_b_wrap)
@@ -290,7 +295,7 @@ RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper * const
 	m_manifold->clearManifold();
 
     calculate_contact_points(*result, *body_a_wrap, *body_b_wrap, m_rt_instance,
-			     m_debug_draw);
+			     m_grid_radius, m_debug_draw);
 
     if (use_persistent_contacts && m_owns_manifold)
 	result->refreshContactPoints();

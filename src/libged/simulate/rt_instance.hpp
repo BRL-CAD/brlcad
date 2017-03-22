@@ -45,7 +45,7 @@ namespace simulate
 class RtInstance
 {
 public:
-    RtInstance(db_i &db);
+    explicit RtInstance(db_i &db);
 
     std::vector<std::pair<btVector3, btVector3> > get_overlaps(
 	const db_full_path &path_a, const db_full_path &path_b,

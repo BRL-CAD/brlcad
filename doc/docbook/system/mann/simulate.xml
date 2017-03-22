@@ -176,6 +176,19 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">simulate::grid_radius=x</term>
+	<listitem>
+	  <para>
+	    Specify the number of rays along the radii of the circular grids of
+	    rays fired during collision detection. This attribute can only be
+	    applied to the topmost object under <replaceable>path</replaceable>.
+	    The default value is <literal>10</literal>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
     </variablelist>
 
   </refsection>

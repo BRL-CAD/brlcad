@@ -52,6 +52,13 @@ namespace
 const char * const attribute_prefix = "simulate::";
 
 
+HIDDEN std::string
+error_at(const std::string &message, const db_full_path &path)
+{
+    return message + " at '" + DB_FULL_PATH_CUR_DIR(&path)->d_namep + "'";
+}
+
+
 HIDDEN btRigidBody::btRigidBodyConstructionInfo
 get_rigid_body_construction_info(btMotionState &motion_state,
 				 btCollisionShape &collision_shape, const db_i &db, const btScalar mass)
@@ -128,8 +135,7 @@ get_aabb(db_i &db, const db_full_path &path)
     }
 
     if (!found_soltab)
-	throw simulate::InvalidSimulationError(std::string() +
-					       "no solids found in tree of '" + DB_FULL_PATH_CUR_DIR(&path)->d_namep + "'");
+	throw simulate::InvalidSimulationError(error_at("no solids found", path));
 
     return result;
 }
@@ -170,7 +176,19 @@ deserialize_vector(const std::string &source)
 }
 
 
-HIDDEN btVector3
+struct SimulationParameters {
+    explicit SimulationParameters() :
+	m_gravity(0.0, 0.0, -9.80665),
+	m_grid_radius(10)
+    {}
+
+
+    btVector3 m_gravity;
+    unsigned m_grid_radius;
+};
+
+
+HIDDEN SimulationParameters
 get_simulation_parameters(const db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
@@ -183,7 +201,7 @@ get_simulation_parameters(const db_i &db, const db_full_path &path)
     if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(&path)))
 	bu_bomb("db5_get_attributes() failed");
 
-    btVector3 gravity(0.0, 0.0, -9.80665);
+    SimulationParameters result;
 
     for (std::size_t i = 0; i < avs.count; ++i)
 	if (!bu_strncmp(avs.avp[i].name, attribute_prefix, strlen(attribute_prefix))) {
@@ -191,14 +209,21 @@ get_simulation_parameters(const db_i &db, const db_full_path &path)
 	    const char * const value = avs.avp[i].value;
 
 	    if (!bu_strcmp(name, "gravity"))
-		gravity = deserialize_vector(value);
-	    else
-		throw simulate::InvalidSimulationError(std::string() +
-						       "invalid scene attribute '" + avs.avp[i].name + "' on '" + DB_FULL_PATH_CUR_DIR(
-							       &path)->d_namep + "'");
+		result.m_gravity = deserialize_vector(value);
+	    else if (!bu_strcmp(name, "grid_radius")) {
+		long temp = simulate::lexical_cast<long>(value, error_at("invalid grid_radius",
+			    path));
+
+		if (temp < 0)
+		    throw simulate::InvalidSimulationError(error_at("invalid grid_radius", path));
+
+		result.m_grid_radius = temp;
+	    } else
+		throw simulate::InvalidSimulationError(error_at(std::string() +
+						       "invalid scene attribute '" + avs.avp[i].name + "'", path));
 	}
 
-    return gravity;
+    return result;
 }
 
 
@@ -260,22 +285,19 @@ Simulation::Region::get_region(db_i &db, const db_full_path &path,
 
 		if (!bu_strcmp(name, "type")) {
 		    if (bu_strcmp(value, "region"))
-			throw InvalidSimulationError("invalid type");
+			throw InvalidSimulationError(error_at("invalid type", path));
 		} else if (!bu_strcmp(name, "mass")) {
-		    mass = lexical_cast<btScalar>(value,
-						  std::string() + "invalid mass on '" + DB_FULL_PATH_CUR_DIR(
-						      &path)->d_namep + "'");
+		    mass = lexical_cast<btScalar>(value, error_at("invalid mass", path));
 
 		    if (mass < 0.0)
-			throw InvalidSimulationError(std::string() + "invalid mass on '" +
-						     DB_FULL_PATH_CUR_DIR(&path)->d_namep + "'");
+			throw InvalidSimulationError(error_at("invalid mass", path));
 		} else if (!bu_strcmp(name, "linear_velocity")) {
 		    linear_velocity = deserialize_vector(value);
 		} else if (!bu_strcmp(name, "angular_velocity")) {
 		    angular_velocity = deserialize_vector(value);
 		} else
-		    throw InvalidSimulationError(std::string() + "invalid attribute '" +
-						 avs.avp[i].name + "' on '" + DB_FULL_PATH_CUR_DIR(&path)->d_namep + "'");
+		    throw InvalidSimulationError(error_at(std::string() + "invalid attribute '" +
+							  avs.avp[i].name + "'", path));
 	    }
     }
 
@@ -384,15 +406,16 @@ Simulation::Simulation(db_i &db, const db_full_path &path) :
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
+    const SimulationParameters parameters = get_simulation_parameters(db, path);
+
     m_world.setDebugDrawer(&m_debug_draw);
+    m_world.setGravity(parameters.m_gravity);
 
     m_collision_dispatcher.registerCollisionCreateFunc(
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
-	new RtCollisionAlgorithm::CreateFunc(m_rt_instance, *m_world.getDebugDrawer()));
-
-    const btVector3 gravity = get_simulation_parameters(db, path);
-    m_world.setGravity(gravity);
+	new RtCollisionAlgorithm::CreateFunc(m_rt_instance, parameters.m_grid_radius,
+		*m_world.getDebugDrawer()));
 }
 
 
