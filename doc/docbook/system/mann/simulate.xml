@@ -77,8 +77,11 @@
 	      <varlistentry>
 		<term><emphasis remap="I">aabb</emphasis></term>
 		<listitem><para>
-		    Draw Bullet's perceived axis-aligned bounding boxes after
-		    the simulation step.
+		    Draw Bullet's axis-aligned bounding boxes after
+		    the simulation step. These can usually be regarded as
+		    indicating the "true" position of geometry. Any discrepancies
+		    may indicate that the <command>simulate</command> is
+		    incorrectly applying Bullet transformations to the geometry.
 		</para></listitem>
 	      </varlistentry>
 
