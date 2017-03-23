@@ -35,6 +35,7 @@
 
 #include "rt/rt_instance.h"
 
+
 #ifndef GED_EXPORT
 #  if defined(GED_DLL_EXPORTS) && defined(GED_DLL_IMPORTS)
 #    error "Only GED_DLL_EXPORTS or GED_DLL_IMPORTS can be defined, not both."
@@ -46,6 +47,7 @@
 #    define GED_EXPORT
 #  endif
 #endif
+
 
 namespace simulate
 {

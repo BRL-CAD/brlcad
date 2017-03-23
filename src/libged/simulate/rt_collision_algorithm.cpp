@@ -35,7 +35,6 @@
 #include "utility.hpp"
 
 #include "bu/log.h"
-#include "bu/malloc.h"
 #include "rt/pattern.h"
 #include "rt/tol.h"
 
@@ -66,7 +65,6 @@ get_normal_world_on_b(const btRigidBody &body_a, const btRigidBody &body_b)
     else {
 	// near-zero velocities for both objects
 	// objects are nearly motionless and may be either near each other or overlapping
-	// TODO: implement a better strategy
 
 	result = body_b.getWorldTransform().getOrigin()
 		 - body_a.getWorldTransform().getOrigin();
@@ -74,7 +72,7 @@ get_normal_world_on_b(const btRigidBody &body_a, const btRigidBody &body_b)
 	if (!result.fuzzyZero())
 	    result.normalize();
 	else
-	    result = btVector3(0.0, 0.0, 1.0);
+	    result = btVector3(0.0, 0.0, -1.0);
     }
 
     return result;
@@ -98,30 +96,29 @@ get_aabb_overlap(const btRigidBody &body_a, const btRigidBody &body_b)
 
 
 void
-simulate_free_xrays(xrays * const rays)
+free_xrays(xrays * const rays)
 {
     if (!rays)
 	bu_bomb("missing argument");
 
-    BU_CK_LIST_HEAD(rays);
+    BU_CK_LIST_HEAD(&rays->l);
     RT_CK_RAY(&rays->ray);
 
     bu_list_free(&rays->l);
-    bu_free(rays, "rays");
 }
 
 
-HIDDEN xrays *
+HIDDEN xrays
 generate_ray_grid(const btVector3 &center, const btScalar radius,
 		  const btVector3 &normal, const unsigned grid_radius)
 {
     if (radius < 0.0 || !NEAR_EQUAL(normal.length(), 1.0, RT_DOT_TOL))
 	bu_bomb("invalid argument");
 
-    xrays * const result = static_cast<xrays *>(bu_malloc(sizeof(xrays), "result"));
-    BU_LIST_INIT(&result->l);
+    xrays result;
+    BU_LIST_INIT(&result.l);
 
-    xray &center_ray = result->ray;
+    xray &center_ray = result.ray;
     center_ray.magic = RT_RAY_MAGIC;
     center_ray.index = 0;
     VMOVE(center_ray.r_pt, center);
@@ -142,12 +139,12 @@ generate_ray_grid(const btVector3 &center, const btScalar radius,
     // NOTE: Bullet's collision tolerance is 4 units (4mm)
     const btScalar grid_size = radius / grid_radius;
 
-    rt_gen_circular_grid(result, &center_ray, radius, up_vect, grid_size);
+    rt_gen_circular_grid(&result, &center_ray, radius, up_vect, grid_size);
     return result;
 }
 
 
-HIDDEN xrays *
+HIDDEN xrays
 get_rays(const btRigidBody &body_a, const btRigidBody &body_b,
 	 const unsigned grid_radius)
 {
@@ -187,11 +184,11 @@ calculate_contact_points(btManifoldResult &result,
     const db_full_path &body_b_path = static_cast<const simulate::RtMotionState *>
 				      (body_b.getMotionState())->get_path();
 
-    const simulate::AutoPtr<xrays, simulate_free_xrays> rays(get_rays(body_a, body_b,
-	    grid_radius));
+    xrays rays = get_rays(body_a, body_b, grid_radius);
+    const simulate::AutoPtr<xrays, free_xrays> autofree_rays(&rays);
     const std::vector<std::pair<btVector3, btVector3> > overlaps =
-	rt_instance.get_overlaps(body_a_path, body_b_path, *rays.ptr);
-    const btVector3 normal_world_on_b(V3ARGS(rays.ptr->ray.r_dir));
+	rt_instance.get_overlaps(body_a_path, body_b_path, rays);
+    const btVector3 normal_world_on_b(V3ARGS(rays.ray.r_dir));
 
     for (std::vector<std::pair<btVector3, btVector3> >::const_iterator it =
 	     overlaps.begin(); it != overlaps.end(); ++it) {
@@ -202,7 +199,7 @@ calculate_contact_points(btManifoldResult &result,
     if (debug_draw.getDebugMode() & btIDebugDraw::DBG_DrawFrames) {
 	xrays *entry = NULL;
 
-	for (BU_LIST_FOR(entry, xrays, &rays.ptr->l)) {
+	for (BU_LIST_FOR(entry, xrays, &rays.l)) {
 	    const btVector3 point(V3ARGS(entry->ray.r_pt));
 	    const btVector3 direction(V3ARGS(entry->ray.r_dir));
 
