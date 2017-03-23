@@ -34,6 +34,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "bu/malloc.h"
 #include "rt/db_instance.h"
 
 
