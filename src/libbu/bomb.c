@@ -204,8 +204,8 @@ bu_exit(int status, const char *fmt, ...)
 	struct bu_vls message = BU_VLS_INIT_ZERO;
 
 	va_start(ap, fmt);
-
 	bu_vls_vprintf(&message, fmt, ap);
+	va_end(ap);
 
 	/* don't dump a backtrace, etc. */
 	if (!BU_SETJUMP) {

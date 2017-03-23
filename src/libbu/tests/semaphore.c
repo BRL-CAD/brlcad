@@ -1,4 +1,4 @@
-/*                  B U _ S E M A P H O R E . C
+/*                  S E M A P H O R E . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -94,7 +94,7 @@ parallel_test(size_t ncpu, size_t reps)
     int parallel = 0;
     int running = 0;
 
-    size_t counter = 0;
+    size_t pcounter = 0;
     size_t expected = reps * ncpu;
 
     struct increment_thread_args args;
@@ -103,7 +103,7 @@ parallel_test(size_t ncpu, size_t reps)
     args.parallel = &parallel;
     args.running = &running;
     args.reps = reps;
-    args.counter = &counter;
+    args.counter = &pcounter;
 
     /* By default, bu_parallel() refuses to create more threads than
      * there are CPUs on the host system.  Setting the
@@ -116,8 +116,8 @@ parallel_test(size_t ncpu, size_t reps)
 
     bu_parallel(increment_thread, ncpu, &args);
 
-    if (counter != expected) {
-	bu_log("bu_semaphore parallel increment test:  counter is %lu, expected %lu\n [FAIL]", counter, expected);
+    if (pcounter != expected) {
+	bu_log("bu_semaphore parallel increment test:  counter is %lu, expected %lu\n [FAIL]", pcounter, expected);
 	return 0;
     }
 
@@ -131,7 +131,7 @@ parallel_test(size_t ncpu, size_t reps)
 
 
 int
-main(int argc, char **argv)
+semaphore_main(int argc, char **argv)
 {
     const char * const USAGE = "Usage: %s [-P ncpu] [-n reps]\n";
 

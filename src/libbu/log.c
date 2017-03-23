@@ -184,7 +184,6 @@ bu_log(const char *fmt, ...)
     }
 
     va_start(ap, fmt);
-
     if (log_indent_level > 0) {
 	struct bu_vls newfmt = BU_VLS_INIT_ZERO;
 
@@ -194,7 +193,6 @@ bu_log(const char *fmt, ...)
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
-
     va_end(ap);
 
     if (BU_LIST_IS_EMPTY(&(log_hook_list.l)) || log_hooks_called) {
@@ -259,6 +257,7 @@ bu_flog(FILE *fp, const char *fmt, ...)
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
+    va_end(ap);
 
     if (BU_LIST_IS_EMPTY(&(log_hook_list.l)) || log_hooks_called) {
 	size_t ret;
@@ -277,8 +276,6 @@ bu_flog(FILE *fp, const char *fmt, ...)
     } else {
 	log_call_hooks(bu_vls_addr(&output));
     }
-
-    va_end(ap);
 
     bu_vls_free(&output);
 }

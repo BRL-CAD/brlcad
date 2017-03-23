@@ -1,4 +1,4 @@
-/*                  B U _ S E M A P H O R E . C
+/*                    P A R A L L E L . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -91,7 +91,7 @@ tally(size_t ncpu)
 
 
 int
-main(int argc, char *argv[])
+parallel_main(int argc, char *argv[])
 {
     const char * const USAGE = "Usage: %s [-P ncpu]\n";
 

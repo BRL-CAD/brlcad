@@ -114,7 +114,7 @@ main(int argc, char **argv)
     fb *fbp;
 
     int x, y;
-    int xin, yin;		/* number of sceen output lines */
+    int xin, yin;		/* number of screen output lines */
 
     char usage[] = "Usage: fb-bw [-i] [-F framebuffer]\n\
 	[-X scr_xoff] [-Y scr_yoff]\n\

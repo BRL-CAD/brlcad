@@ -1,4 +1,4 @@
-/*                      B N _ Q M A T H . C
+/*                      Q M A T H . C
  * BRL-CAD
  *
  * Copyright (c) 2014-2016 United States Government as represented by
@@ -207,9 +207,11 @@ int test_quat_log(int argc, const char *argv[])
 }
 
 int
-main(int argc, const char *argv[])
+qmath_main(int argc, char *argv[])
 {
   int function_num = 0;
+
+  const char **av = (const char **)argv;
 
   if (argc < 3) {
       bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
@@ -219,25 +221,25 @@ main(int argc, const char *argv[])
 
   switch (function_num) {
 	case 1:
-	    return test_quat_mat2quat(argc - 2, argv + 2);
+	    return test_quat_mat2quat(argc - 2, av + 2);
 	case 2:
-	    return test_quat_quat2mat(argc - 2, argv + 2);
+	    return test_quat_quat2mat(argc - 2, av + 2);
 	case 3:
-	    return test_quat_distance(argc - 2, argv + 2);
+	    return test_quat_distance(argc - 2, av + 2);
 	case 4:
-	    return test_quat_double(argc - 2, argv + 2);
+	    return test_quat_double(argc - 2, av + 2);
 	case 5:
-	    return test_quat_bisect(argc - 2, argv + 2);
+	    return test_quat_bisect(argc - 2, av + 2);
 	case 6:
-	    return test_quat_slerp(argc - 2, argv + 2);
+	    return test_quat_slerp(argc - 2, av + 2);
 	case 7:
-	    return test_quat_sberp(argc - 2, argv + 2);
+	    return test_quat_sberp(argc - 2, av + 2);
 	case 8:
-	    return test_quat_make_nearest(argc - 2, argv + 2);
+	    return test_quat_make_nearest(argc - 2, av + 2);
 	case 9:
-	    return test_quat_exp(argc - 2, argv + 2);
+	    return test_quat_exp(argc - 2, av + 2);
 	case 10:
-	    return test_quat_log(argc - 2, argv + 2);
+	    return test_quat_log(argc - 2, av + 2);
 	default:
 	    bu_exit(1, "ERROR: Unrecognized function_num\n");
   }

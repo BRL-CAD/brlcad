@@ -405,7 +405,6 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
 
     // Collecte midpoints from all edges in the island
     ON_3dPointArray mid_points;
-    std::set<int> verts;
     for (int i = 0; i < data->island_loops_cnt; i++) {
 	const ON_BrepLoop *loop = &(brep->m_L[data->island_loops[i]]);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
@@ -453,7 +452,6 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
     // points of the surfaces included in the island via their outer loops.
     if (!pos_cnt && !neg_cnt) {
 	for (int i = 0; i < data->fil_cnt; i++) {
-	    std::set<int> active_loops;
 	    // Get face with inner loop
 	    const ON_BrepFace *face = &(brep->m_F[data->fil[i]]);
 	    const ON_Surface *surf = face->SurfaceOf();
@@ -510,7 +508,6 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
     std::map<int, int> edge_map;
     std::map<int, int> vertex_map;
     std::map<int, int> c3_map;
-    std::map<int, int> trim_map;
 
     std::set<int> faces;
     std::set<int> fil;

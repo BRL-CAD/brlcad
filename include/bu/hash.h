@@ -44,7 +44,7 @@ __BEGIN_DECLS
 
 /* Use typedefs to hide the details of the hash entry and table structures */
 typedef struct bu_hash_entry bu_hash_entry;
-typedef struct bu_hash_tbl   bu_hash_tbl;
+typedef struct bu_hash_tbl bu_hash_tbl;
 
 
 /**
@@ -91,12 +91,12 @@ BU_EXPORT extern void *bu_hash_get(const bu_hash_tbl *t, const uint8_t *key, siz
  * in the table is NULL - i.e. the return will be the same as if the key/value
  * pair had actually been added.  The only use case where this property is observable
  * is when a user iterates over the whole contents of a hash table - in that
- * situation a key,NULL entry might be expected, but will not be present.
+ * situation a key, NULL entry might be expected, but will not be present.
  *
  * @param[in] t - The hash table to look in
  * @param[in] key - the key to look for
  * @param[in] key_len - the length of the key in bytes
- * @param[in] val - the value to be associated with key 
+ * @param[in] val - the value to be associated with key
  *
  * @return
  * 1 if a new entry is created, 0 if an existing value was updated, -1 on error.
@@ -126,7 +126,7 @@ BU_EXPORT extern void bu_hash_rm(bu_hash_tbl *t, const uint8_t *key, size_t key_
      struct bu_hash_entry *e = bu_hash_next(t, NULL);
      while (e) {
          bu_log("Value: %p\n", bu_hash_value(e, NULL));
-	 e = bu_hash_next(t, e);
+         e = bu_hash_next(t, e);
      }
  }
  @endcode
@@ -166,7 +166,6 @@ BU_EXPORT extern int bu_hash_key(bu_hash_entry *e, uint8_t **key, size_t *key_le
  * @return Returns the hash entry's value pointer, or NULL on error.
  */
 BU_EXPORT extern void *bu_hash_value(bu_hash_entry *e, void *nval);
-
 
 
 /* Deprecated API */
@@ -222,23 +221,23 @@ typedef struct bu_hash_record bu_hash_record_t;
 #define BU_HASH_RECORD_INIT_ZERO { BU_HASH_RECORD_MAGIC, NULL, 0, NULL }
 #define BU_HASH_RECORD_IS_INITIALIZED(_h) (((struct bu_hash_record *)(_h) != BU_HASH_RECORD_NULL) && LIKELY((_h)->magic == BU_HASH_RECORD_MAGIC))
 DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl,
-							const uint8_t *key,
-							int key_len,
-							struct bu_hash_entry **prev,
-							unsigned long *idx);
+								   const uint8_t *key,
+								   int key_len,
+								   struct bu_hash_entry **prev,
+								   unsigned long *idx);
 DEPRECATED BU_EXPORT extern void bu_set_hash_value(struct bu_hash_entry *hsh_entry,
-					void *value);
+						   void *value);
 DEPRECATED BU_EXPORT extern void *bu_get_hash_value(const struct bu_hash_entry *hsh_entry);
 DEPRECATED BU_EXPORT extern uint8_t *bu_get_hash_key(const struct bu_hash_entry *hsh_entry);
 DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl,
-						       const uint8_t *key,
-						       int key_len,
-						       int *new_entry);
+								  const uint8_t *key,
+								  int key_len,
+								  int *new_entry);
 DEPRECATED BU_EXPORT extern void bu_hash_tbl_print(const struct bu_hash_tbl *hsh_tbl,
-					const char *str);
+						   const char *str);
 DEPRECATED BU_EXPORT extern void bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl);
 DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_first(const struct bu_hash_tbl *hsh_tbl,
-							 struct bu_hash_record *rec);
+								    struct bu_hash_record *rec);
 DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *rec);
 DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_entry *, void *), void *func_arg);
 #endif

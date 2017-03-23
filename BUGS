@@ -15,6 +15,18 @@ on-going issues.
 Recent Bugs
 -----------
 
+* screengrab on windows crashes
+
+* Recursive submodel predictably goes infinite, need stack-based
+  db_walk_tree(): mged> in submodel submodel submodel grid test.g
+
+* running rt -s20 -F file.pix ... does not result in an 20x20 image
+  being written out.  it ends up being 512x512.
+
+* running rt -C255/0/0 -o file.pix ... does not result in the
+  background color getting used.  It does work with -F file.pix, going
+  through libfb instead of libicv.
+
 * ogl display manager and framebuffer are creating windows with
   transparent backgrounds (the glClear color is not being drawn) on
   Linux.  Presumably a driver-related issue, alpha channel, or expose

@@ -30,6 +30,8 @@
 
 #ifdef HAVE_INTTYPES_H
 #  include <inttypes.h>
+#else
+#  include "pinttypes.h"
 #endif
 #include <limits.h>
 #include <string.h>
@@ -489,7 +491,7 @@ testskipped(size_t i)
 }
 
 int
-main(int argc, char * const argv[])
+humanize_number_main(int argc, char * const argv[])
 {
     char *buf;
     char *flag_str, *scale_str;

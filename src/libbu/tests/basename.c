@@ -1,4 +1,4 @@
-/*                 T E S T _ B A S E N A M E . C
+/*                     B A S E N A M E . C
  * BRL-CAD
  *
  * Copyright (c) 2011-2016 United States Government as represented by
@@ -127,7 +127,7 @@ compare_bu_to_system_basename(const char *input)
 
 
 int
-main(int argc, char *argv[])
+basename_main(int argc, char *argv[])
 {
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {

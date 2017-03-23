@@ -1,4 +1,4 @@
-/*                  T E S T _ L I S T . C
+/*                  L I S T . C
  * BRL-CAD
  *
  * Copyright (c) 2011-2016 United States Government as represented by
@@ -372,7 +372,7 @@ automatic_3d_test(double *double_x, double *double_y, double *double_z, int npoi
 
 
 int
-main(int argc, char *argv[])
+list_main(int argc, char *argv[])
 {
     double x_data[MAX_POINTS];
     double y_data[MAX_POINTS];

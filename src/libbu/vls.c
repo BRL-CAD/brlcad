@@ -701,10 +701,10 @@ void
 bu_vls_printf(struct bu_vls *vls, const char *fmt, ...)
 {
     va_list ap;
-    va_start(ap, fmt);
 
     BU_CK_VLS(vls);
 
+    va_start(ap, fmt);
     bu_vls_vprintf(vls, fmt, ap);
     va_end(ap);
 }
@@ -714,11 +714,12 @@ void
 bu_vls_sprintf(struct bu_vls *vls, const char *fmt, ...)
 {
     va_list ap;
-    va_start(ap, fmt);
 
     BU_CK_VLS(vls);
 
     bu_vls_trunc(vls, 0); /* poof */
+
+    va_start(ap, fmt);
     bu_vls_vprintf(vls, fmt, ap);
     va_end(ap);
 }

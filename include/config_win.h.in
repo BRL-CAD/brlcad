@@ -162,6 +162,10 @@
 #define sys_nerr _sys_nerr
 #define getcwd _getcwd
 
+#if !defined(HAVE_STRTOLL) && defined(HAVE__STRTOI64)
+#  define strtoll _strtoi64
+#endif
+
 /* set up stat */
 #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
 #   define stat _stati64

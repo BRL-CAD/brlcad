@@ -4009,8 +4009,6 @@ bool
 extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
 {
     const ON_Curve *next_curve = NULL;
-    std::set<const ON_Curve *> set;
-    std::map<const ON_Curve *, int> map;
     std::list<PBCData*>::iterator cs = pbcs.begin();
 
     while (cs != pbcs.end()) {
@@ -4063,7 +4061,6 @@ bool
 shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 {
     if (pbcs.size() == 1) { // single curve for this loop
-	std::list<PBCData*>::iterator cs;
 
 	PBCData *data = pbcs.front();
 	if (!data || !data->surf)

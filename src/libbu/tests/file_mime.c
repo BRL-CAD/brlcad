@@ -1,4 +1,4 @@
-/*                 B U _ F I L E _ M I M E . C
+/*                 F I L E _ M I M E . C
  * BRL-CAD
  *
  * Copyright (c) 2011-2016 United States Government as represented by
@@ -43,7 +43,7 @@ test_ext(const char *str, bu_mime_context_t context, int expected)
 
 
 int
-main(int ac, char *av[])
+file_mime_main(int ac, char *av[])
 {
     int context = 0;
     int expected = 0;

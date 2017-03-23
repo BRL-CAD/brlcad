@@ -388,8 +388,6 @@ Convert_assy(char *line)
 			wmem->wm_mat[4*i+j] = mat_col[i];
 		}
 
-		/* convert this matrix to separate scale factor into element #15 */
-/*			scale = MAGNITUDE(&wmem->wm_mat[0]); */
 		scale = pow(bn_mat_det3(wmem->wm_mat), 1.0/3.0);
 		if (debug) {
 		    bn_mat_print(brlcad_name, wmem->wm_mat);

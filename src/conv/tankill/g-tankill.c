@@ -65,7 +65,6 @@ static const char usage2[] =
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-/* static int	ncpu = 1; */		/* Number of processors */
 static int	surr_code = 1000;	/* Surroundings code */
 static int	curr_id;		/* Current region ident code */
 static int	id_counter;		/* Ident counter */
@@ -463,7 +462,6 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-/*			ncpu = atoi( bu_optarg ); */
 		bu_debug = BU_DEBUG_COREDUMP;	/* to get core dumps */
 		break;
 	    case 'x':

@@ -1117,7 +1117,6 @@ static int mdMeshHashInit( mdMesh *mesh, size_t trianglecount, mdf hashextrabits
 
   if( hashbits < 12 )
     hashbits = 12;
-  /* lockpageshift = 7; works great, 128 hash entries per lock page */
   if( lockpageshift < 3 )
     lockpageshift = 3;
   else if( lockpageshift > 16 )
@@ -1744,8 +1743,6 @@ static void mdEdgeCollapseUpdateTriangle( mdMesh *mesh, mdThreadData *tdata, mdT
 {
   mdEdge edge;
   mdOp *op;
-  // 2012-10-22 ch3: vertex set but never used, so commented
-  //mdVertex *vertex;
 
   memset (&edge, 0, sizeof (mdEdge));  //DRH added so it's initialized
 
@@ -1753,7 +1750,6 @@ static void mdEdgeCollapseUpdateTriangle( mdMesh *mesh, mdThreadData *tdata, mdT
 printf( "  Collapse Update %d : Tri %d,%d,%d\n", newv, tri->v[pivot], tri->v[right], tri->v[left] );
 #endif
 
-  //vertex = &mesh->vertexlist[ tri->v[right] ];
   edge.v[0] = tri->v[pivot];
   edge.v[1] = tri->v[right];
   if( edge.v[0] == newv )
@@ -1797,7 +1793,6 @@ printf( "    Edge %d,%d ; Value %f ; Penalty %f ; Cost %f\n", op->v0, op->v1, op
 #endif
   }
 
-  //vertex = &mesh->vertexlist[ tri->v[right] ];
   edge.v[0] = tri->v[left];
   edge.v[1] = tri->v[pivot];
   if( edge.v[1] == newv )
@@ -3414,10 +3409,6 @@ static void mdMeshVertexRedirectTriRefs( mdMesh *mesh, mdi vertexindex, mdi newv
   int index;
   mdi triindex;
   mdTriangle *tri;
-  // 2012-10-22 ch3: trinormal set but never used, so commented
-  //mdTriNormal *trinormal;
-
-  //trinormal = mesh->trinormal;
 
   for( index = 0 ; index < trirefcount ; index++ )
   {
@@ -3695,7 +3686,6 @@ static void mdMeshRecomputeNormals( mdMesh *mesh, mdOpAttrib *normalattrib )
   mdMeshBuildTriangleNormals( mesh );
 
   /* Build each vertex normal */
-  //vertexcount = 0;
   vertex = mesh->vertexlist;
   for( vertexindex = 0 ; vertexindex < mesh->vertexcount ; vertexindex++, vertex++ )
   {

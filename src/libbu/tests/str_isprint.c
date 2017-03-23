@@ -1,4 +1,4 @@
-/*                     T E S T _ C T Y P E . C
+/*                     S T R _ I S P R I N T . C
  * BRL-CAD
  *
  * Copyright (c) 2007-2016 United States Government as represented by
@@ -28,11 +28,11 @@
 
 
 int
-test_str_isprint(const char *inp , int exp)
+test_str_isprint(const char *inp , int texp)
 {
     int res;
     res = bu_str_isprint(inp);
-    if (res == exp) {
+    if (res == texp) {
 
 	if (res)
 	    printf("Testing with string : %10s is printable->PASSED!\n", inp);
@@ -47,7 +47,7 @@ test_str_isprint(const char *inp , int exp)
 
 
 int
-main(int argc, char **argv)
+str_isprint_main(int argc, char **argv)
 {
     int test_num = 0;
 

@@ -64,8 +64,6 @@ static struct db_tree_state	tree_state;	/* includes tol & model */
 static int	regions_tried = 0;
 static int	regions_converted = 0;
 
-/* extern struct mater* rt_material_head; */
-
 static void
 print_usage(const char *progname)
 {

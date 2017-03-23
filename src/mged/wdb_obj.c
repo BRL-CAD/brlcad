@@ -272,7 +272,7 @@ wdb_append_rparen(struct bu_list *hp)
 
 
 HIDDEN int
-add_operator(Tcl_Interp *interp, struct bu_list *hp, char *ptr, short int *last_tok)
+wdb_add_operator(Tcl_Interp *interp, struct bu_list *hp, char *ptr, short int *last_tok)
 {
     char illegal[2];
     db_op_t op = db_str2op(ptr);
@@ -714,7 +714,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 
 	    if (last_tok == WDB_TOK_RPAREN) {
 		/* next token MUST be an operator */
-		if (add_operator(interp, &tok_hd.l, ptr, &last_tok) == TCL_ERROR) {
+		if (wdb_add_operator(interp, &tok_hd.l, ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
 		    return TCL_ERROR;
 		}
@@ -732,7 +732,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		ptr += name_len;
 	    } else if (last_tok == WDB_TOK_TREE) {
 		/* must be an operator */
-		if (add_operator(interp, &tok_hd.l, ptr, &last_tok) == TCL_ERROR) {
+		if (wdb_add_operator(interp, &tok_hd.l, ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
 		    return TCL_ERROR;
 		}

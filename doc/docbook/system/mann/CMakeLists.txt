@@ -201,6 +201,7 @@ set(mann_EN
   shader.xml
   shells.xml
   showmats.xml
+  simulate.xml
   size.xml
   solids.xml
   sph-part.xml

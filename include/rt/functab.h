@@ -72,6 +72,7 @@ struct rt_functab {
     char ft_label[9]; /* current longest label is 8 chars, need one element for terminating NULL */
 
     int ft_use_rpp;
+
     int (*ft_prep)(struct soltab *stp,
 		   struct rt_db_internal *ip,
 		   struct rt_i *rtip);
@@ -201,9 +202,9 @@ struct rt_functab {
 		    struct resource * /*resp*/);
 #define RTFUNCTAB_FUNC_XFORM_CAST(_func) ((int (*)(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *, struct resource *))_func)
 
-    const struct bu_structparse *ft_parsetab;   /**< @brief  rt_xxx_parse */
-    size_t ft_internal_size;    /**< @brief  sizeof(struct rt_xxx_internal) */
-    uint32_t ft_internal_magic; /**< @brief  RT_XXX_INTERNAL_MAGIC */
+    const struct bu_structparse *ft_parsetab;   /**< @brief rt_xxx_parse */
+    size_t ft_internal_size;    /**< @brief sizeof(struct rt_xxx_internal) */
+    uint32_t ft_internal_magic; /**< @brief RT_XXX_INTERNAL_MAGIC */
 
     int (*ft_get)(struct bu_vls *, const struct rt_db_internal *, const char *item);
 #define RTFUNCTAB_FUNC_GET_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_db_internal *, const char *))_func)
@@ -246,8 +247,9 @@ struct rt_functab {
 						   const struct rt_selection_query *);
 #define RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(_func) ((struct rt_selection_set *(*)(const struct rt_db_internal *, const struct rt_selection_query *))_func)
 
-    /** evaluate a logical selection expression (e.g. a INTERSECT b,
-     *  NOT a) to create a new selection
+    /**
+     * evaluate a logical selection expression (e.g. a INTERSECT b,
+     * NOT a) to create a new selection
      */
     struct rt_selection *(*ft_evaluate_selection)(const struct rt_db_internal *,
 						  int op,

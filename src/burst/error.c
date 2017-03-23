@@ -71,7 +71,6 @@ brst_log(const char *fmt, ...)
 		if (*p == '\n')
 		    *p = '\0'; /* clobber newline */
 		(void) puts(buf);
-		/*(void) vprintf(fmt, ap);*/
 		(void) ScMvCursor(1, SCROLL_BTM+1);
 		(void) ScClrScrlReg();
 	    } else {

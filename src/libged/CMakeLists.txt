@@ -6,6 +6,9 @@ if(BULLET_LIBRARIES)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${BULLET_LIBRARIES})
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
   add_definitions(-DHAVE_BULLET=1)
+  if(CPP_DLL_DEFINES)
+    add_definitions(-DBULLET_DLL_IMPORTS)
+  endif(CPP_DLL_DEFINES)
 endif(BULLET_LIBRARIES)
 
 if(ADAPTAGRAMS_FOUND)
@@ -119,6 +122,7 @@ set(LIBGED_SOURCES
   grid2view_lu.c
   group.c
   heal.c
+  help/help.cpp
   hide.c
   how.c
   human.c
@@ -255,12 +259,14 @@ set(LIBGED_SOURCES
   shells.c
   shape_recognition.cpp
   showmats.c
-  simulate/collision.cpp
-  simulate/physics_world.cpp
+  simulate/ged_command.cpp
+  simulate/rt_collision_algorithm.cpp
+  simulate/rt_collision_shape.cpp
+  simulate/rt_debug_draw.cpp
   simulate/rt_instance.cpp
-  simulate/interface.cpp
+  simulate/rt_motion_state.cpp
   simulate/simulation.cpp
-  simulate/world_object.cpp
+  simulate/utility.cpp
   size.c
   slew.c
   solid_report.c
@@ -340,17 +346,20 @@ endif(CPP_DLL_DEFINES)
 BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
+add_subdirectory(simulate/tests)
+
 set(ged_ignore_files
   TODO
   ged_private.h
   joint.h
   qray.h
-  simulate/collision.hpp
-  simulate/physics_world.hpp
+  simulate/rt_collision_algorithm.hpp
+  simulate/rt_collision_shape.hpp
+  simulate/rt_debug_draw.hpp
+  simulate/rt_motion_state.hpp
   simulate/rt_instance.hpp
   simulate/simulation.hpp
   simulate/utility.hpp
-  simulate/world_object.hpp
   osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})

@@ -123,8 +123,6 @@ void
 Populate_Instance_List(ON_Brep_Info_AP203 *info)
 {
     std::vector<STEPentity *>::iterator v_it;
-    std::map<int, std::pair<STEPentity *, STEPentity *> >::iterator c_it;
-    std::map<int, STEPentity * >::iterator mpt_it;
 
     /* Topology */
 

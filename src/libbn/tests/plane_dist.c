@@ -1,4 +1,4 @@
-/*                 B N _ P L A N E _ D I S T . C
+/*                 P L A N E _ D I S T . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2016 United States Government as represented by
@@ -137,7 +137,7 @@ test_bn_dist_pt3_pt3(int argc, char **argv)
 
 
 int
-main(int argc, char *argv[])
+plane_dist_main(int argc, char *argv[])
 {
     int function_num = 0;
 
