@@ -1014,7 +1014,7 @@ chull3d_build_convex_hull(struct chull3d_data *cdata, gsitef *get_s, site_n *sit
     simplex *s = NULL;
     simplex *root = NULL;
 
-    if (ZERO(cdata->Huge)) cdata->Huge = DBL_MAX*DBL_MAX;
+    if (ZERO(cdata->Huge)) cdata->Huge = DBL_MAX;
 
     (cdata->cdim) = 0;
     cdata->get_site = get_s;

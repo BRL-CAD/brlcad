@@ -471,6 +471,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_paint_rect_area {_pane args}
 	method pane_perspective {_pane args}
 	method pane_pix2fb {_pane args}
+	method pane_png2fb {_pane args}
 	method pane_plot {_pane args}
 	method pane_pmat {_pane args}
 	method pane_pmodel2view {_pane args}
@@ -534,6 +535,7 @@ package provide cadwidgets::Ged 1.0
 	method perspective_all {args}
 	method pix {args}
 	method pix2fb {args}
+	method png2fb {args}
 	method plot {args}
 	method pmat {args}
 	method pmodel2view {args}
@@ -574,7 +576,7 @@ package provide cadwidgets::Ged 1.0
 	method refresh_on {}
 	method regdef {args}
 	method regions {args}
-	method report {args}
+	method solid_report {args}
 	method rfarb {args}
 	method rm {args}
 	method rmap {args}
@@ -752,6 +754,7 @@ package provide cadwidgets::Ged 1.0
 	method init_find_metaballpt {_obj {_button 1} {_callback {}}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
+	method fit_png_image {_image_in _w _n _sf _image_out}
 	method init_view_bindings {{_type default}}
 	method init_view_center {{_button 1}}
 	method init_view_measure {{_button 1} {_part2_button 2}}
@@ -761,11 +764,11 @@ package provide cadwidgets::Ged 1.0
 	method init_view_scale {{_button 1}}
 	method init_view_translate {{_button 1}}
 	method center_ray {{_pflag 0}}
-	method mouse_ray {_x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}}
+	method mouse_ray {_x _y {_pflag 0} {_prflag 1} {_nbflag 0} {_ohflag 0} {_bdflag 1}}
 	method pane_mouse_3dpoint {_pane _x _y {_vflag 1}}
 	method pane_mouse_data_label {_pane _x _y}
 	method pane_mouse_data_pick {_pane _x _y}
-	method pane_mouse_ray {_pane _x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}}
+	method pane_mouse_ray {_pane _x _y {_pflag 0} {_prflag 1} {_nbflag 0} {_ohflag 0} {_bdflag 1}}
 	method pane {args}
 	method init_shoot_ray {_rayname _prep _no_bool _onehit _bot_dflag _objects}
 	method shoot_ray_who {_start _op _target _prep _no_bool _onehit _bot_dflag}
@@ -3100,6 +3103,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed pix2fb $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_png2fb {_pane args} {
+    eval $mGed png2fb $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_plot {_pane args} {
     eval $mGed plot $itk_component($_pane) $args
 }
@@ -3367,6 +3374,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed pix2fb $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::png2fb {args} {
+    eval $mGed png2fb $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::plot {args} {
     eval $mGed plot $itk_component($itk_option(-pane)) $args
 }
@@ -3537,8 +3548,8 @@ package provide cadwidgets::Ged 1.0
     eval $mGed regions $args
 }
 
-::itcl::body cadwidgets::Ged::report {args} {
-    eval $mGed report $args
+::itcl::body cadwidgets::Ged::solid_report {args} {
+    eval $mGed solid_report $args
 }
 
 ::itcl::body cadwidgets::Ged::rfarb {args} {
@@ -5050,6 +5061,11 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::fit_png_image {_image_in _w _n _sf _image_out} {
+    $mGed fit_png_image $_image_in $_w $_n $_sf $_image_out
+}
+
+
 ::itcl::body cadwidgets::Ged::init_view_bindings {{_type default}} {
     global tcl_platform
 
@@ -5151,7 +5167,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 
-::itcl::body cadwidgets::Ged::mouse_ray {_x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}} {
+::itcl::body cadwidgets::Ged::mouse_ray {_x _y {_pflag 0} {_prflag 1} {_nbflag 0} {_ohflag 0} {_bdflag 1}} {
     pane_mouse_ray $itk_option(-pane) $_x $_y $_pflag $_prflag $_nbflag $_ohflag $_bdflag
 }
 
@@ -5250,7 +5266,7 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
-::itcl::body cadwidgets::Ged::pane_mouse_ray {_pane _x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}} {
+::itcl::body cadwidgets::Ged::pane_mouse_ray {_pane _x _y {_pflag 0} {_prflag 1} {_nbflag 0} {_ohflag 0} {_bdflag 1}} {
     set mLastMouseRayPos "$_x $_y"
 
     set view [$mGed screen2view $itk_component($_pane) $_x $_y]
@@ -6383,7 +6399,6 @@ package provide cadwidgets::Ged 1.0
     $help add red		{{comb} {edit comb}}
     $help add regdef		{{item air los mat} {get/set region defaults}}
     $help add regions		{{file object(s)} {returns an ascii summary of regions}}
-    $help add report		{{[lvl]} {print solid table & vector list}}
     $help add rfarb		{{} {makes an arb given a point, 2 coords of 3 points, rot, fb and thickness}}
     $help add rm		{{comb <members>} {remove members from comb}}
     $help add rmap		{{} {returns a region ids to region(s) mapping}}
@@ -6416,6 +6431,7 @@ package provide cadwidgets::Ged 1.0
     $help add size		{{vsize} {set/get the view size}}
     $help add slew		{{"x y"} {slew the view}}
     $help add snap_view		{{vx vy} {snap the view to grid}}
+    $help add solid_report	{{[lvl]} {print solid table & vector list}}
     $help add solids		{{file object(s)} {returns an ascii summary of solids}}
     $help add summary		{{[s r g]}	{count/list solid/reg/groups}}
     $help add sv		{{"x y"} {slew the view}}

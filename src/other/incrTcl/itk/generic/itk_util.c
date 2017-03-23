@@ -15,8 +15,6 @@
  *           Bell Labs Innovations for Lucent Technologies
  *           mmclennan@lucent.com
  *           http://www.tcltk.com/itcl
- *
- *     RCS:  $Id$
  * ========================================================================
  *           Copyright (c) 1993-1998  Lucent Technologies, Inc.
  * ------------------------------------------------------------------------
@@ -103,11 +101,12 @@ Itk_OptListAdd(olist, entry)
      */
     first = 0;
     last  = olist->len-1;
-    swname = Tcl_GetHashKey(olist->options, entry) + 1;
+    swname = ((char *)Tcl_GetHashKey(olist->options, entry)) + 1;
 
     while (last >= first) {
         pos = (first+last)/2;
-        optname = Tcl_GetHashKey(olist->options, olist->list[pos]) + 1;
+        optname = ((char *)Tcl_GetHashKey(olist->options,
+		olist->list[pos])) + 1;
         if (*swname == *optname) {
             cmp = strcmp(swname, optname);
             if (cmp == 0) {
@@ -164,11 +163,12 @@ Itk_OptListRemove(olist, entry)
 
     first = 0;
     last  = olist->len-1;
-    swname = Tcl_GetHashKey(olist->options, entry) + 1;
+    swname = ((char *)Tcl_GetHashKey(olist->options, entry)) + 1;
 
     while (last >= first) {
         pos = (first+last)/2;
-        optname = Tcl_GetHashKey(olist->options, olist->list[pos]) + 1;
+        optname = ((char *)Tcl_GetHashKey(olist->options,
+		olist->list[pos])) + 1;
         if (*swname == *optname) {
             cmp = strcmp(swname, optname);
             if (cmp == 0) {

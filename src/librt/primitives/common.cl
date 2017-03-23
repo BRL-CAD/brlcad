@@ -111,7 +111,7 @@ extern bool rt_in_rpp(const double3 pt, const double3 invdir,
 		      global const double *min, global const double *max);
 extern void do_segp(RESULT_TYPE *res, const uint idx,
 		    struct hit *seg_in, struct hit *seg_out);
-extern void rt_hitsort(struct hit *h, int nh);
+extern void primitive_hitsort(struct hit *h, int nh);
 
 
 /* *_shot.cl */

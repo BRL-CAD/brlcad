@@ -63,7 +63,7 @@ SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -na
 INCFILES="`find include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
 
 BLDFILES="`find src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
-`find misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+`find misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*autoheader.*'`
 CMakeLists.txt"
 
 
@@ -158,7 +158,7 @@ FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.
 #done`"
 
 LEXERS="schema.h csg_parser.c csg_scanner.h obj_libgcv_grammar.cpp obj_obj-g_grammar.cpp obj_grammar.c obj_scanner.h obj_parser.h obj_rules.l obj_util.h obj_grammar.cpp obj_rules.cpp points_scan.c script.c"
-EXEMPT="bnetwork.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c optionparser.h $LEXERS"
+EXEMPT="bnetwork.h bio.h config_win.h pstdint.h pinttypes.h uce-dirent.h ttcp.c optionparser.h $LEXERS"
 
 FOUND=
 for file in $FILES ; do
@@ -234,7 +234,7 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strdup strn
 | sed 's/.*\/str\.c:.*strncat.*//' \
 | sed 's/.*\/str\.c:.*strncmp.*//' \
 | sed 's/.*\/str\.c:.*strncpy.*//' \
-| sed 's/.*\/bu_dirname\.c:.*dirname.*//' \
+| sed 's/.*\/tests\/dirname\.c:.*dirname.*//' \
 | sed 's/.*\/ttcp.c:.*//' \
 | sed 's/.*\/vls\.c:.*strncpy.*//' \
 | sed 's/.*\/wfobj\/obj_util\.cpp:.*strncpy.*//' \
@@ -262,73 +262,106 @@ fi
 # have some characteristic feature.
 
 echo "running platform symbol usage check"
-PLATFORMS="WIN32 _WIN32 WIN64 _WIN64"
+PLATFORMS="
+AIX
+APPLE
+CYGWIN
+DARWIN
+FREEBSD
+HAIKU
+HPUX
+LINUX
+MINGW
+MSDOS
+QNX
+SGI
+SOLARIS
+SUN
+SUNOS
+SVR4
+SYSV
+ULTRIX
+UNIX
+VMS
+WIN16
+WIN32
+WIN64
+WINE
+WINNT
+"
+# build up a single regex that matches all platforms.
+# looks for cpp-style lines like "#if defined(PLATFORM)" or cmake-style "IF(PLATFORM)"
+regex=
+for platform in $PLATFORMS ; do
+    platformupper="`echo $platform | tr 'a-z' 'A-Z'`"
+    if test "x$regex" = "x" ; then
+	regex="^[[:space:]#]*\(if\|IF\).*[^A-Z]\($platform\|$platformupper\)\([^A-Z]\|\$\)"
+    else
+	regex="$regex\|^[[:space:]#]*\(if\|IF\).*[^A-Z]\($platform\|$platformupper\)\([^A-Z]\|\$\)"
+    fi
+done
+
 FOUND=0
-for platform in $PLATFORMS ; do
-    echo "Searching headers for $platform ..."
-    MATCH=
-    for file in $INCFILES /dev/null ; do
-	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
-	this="`grep -n -e $regex $file /dev/null | grep -v pstdint.h`"
-	if test "x$this" != "x" ; then
-	    MATCH="$MATCH
+grepcmd="grep -n -E"
+
+MATCHES=
+echo "Searching headers ..."
+for file in $INCFILES /dev/null ; do
+    this="`eval $grepcmd $regex $file /dev/null | grep -v pstdint.h |grep -v pinttypes.h`"
+    if test "x$this" != "x" ; then
+	MATCHES="$MATCHES
 $this"
-	fi
-    done
-    if test "x$MATCH" != "x" ; then
-	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
-	echo "FIXME: Found $cnt header instances of $platform ..."
-	echo "$MATCH
-"
-	FOUND=`expr $FOUND + 1`
     fi
 done
+if test "x$MATCHES" != "x" ; then
+    cnt="`echo \"$MATCHES\" | sort | uniq | tail -n +2 | wc -l | awk '{print $1}'`"
+    echo "FIXME: Found $cnt header instances ..."
+    echo "$MATCHES
+" | sort | uniq
+    FOUND=`expr $FOUND + $cnt`
+fi
 
 
-for platform in $PLATFORMS ; do
-    echo "Searching sources for $platform ..."
-    MATCH=
-    for file in $SRCFILES /dev/null ; do
-	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
-	this="`grep -n -E $regex $file /dev/null | grep -v uce-dirent.h`"
-	if test "x$this" != "x" ; then
-	    MATCH="$MATCH
+MATCHES=
+echo "Searching sources ..."
+for file in $SRCFILES /dev/null ; do
+    this="`eval $grepcmd $regex $file /dev/null | grep -v uce-dirent.h | grep -v mime.c `"
+    if test "x$this" != "x" ; then
+	MATCHES="$MATCHES
 $this"
-	fi
-    done
-    if test "x$MATCH" != "x" ; then
-	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
-	echo "FIXME: Found $cnt source instances of $platform ..."
-	echo "$MATCH
-"
-	FOUND=`expr $FOUND + $cnt`
     fi
 done
+if test "x$MATCHES" != "x" ; then
+    cnt="`echo \"$MATCHES\" | sort | uniq | tail -n +2 | wc -l | awk '{print $1}'`"
+    echo "FIXME: Found $cnt source instances ..."
+    echo "$MATCHES
+" | sort | uniq
+    FOUND=`expr $FOUND + $cnt`
+fi
 
-for platform in $PLATFORMS ; do
-    echo "Searching build files for $platform ..."
-    MATCH=
-    for file in $BLDFILES /dev/null ; do
-	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
-	this="`grep -n -E $regex $file /dev/null`"
-	if test "x$this" != "x" ; then
-	    MATCH="$MATCH
+
+MATCHES=
+echo "Searching build files ..."
+for file in $BLDFILES /dev/null ; do
+    this="`eval $grepcmd $regex $file /dev/null`"
+    if test "x$this" != "x" ; then
+	MATCHES="$MATCHES
 $this"
-	fi
-    done
-    if test "x$MATCH" != "x" ; then
-	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
-	echo "FIXME: Found $cnt build system instances of $platform ..."
-	echo "$MATCH
-"
-	FOUND=`expr $FOUND + $cnt`
     fi
 done
+if test "x$MATCHES" != "x" ; then
+    cnt="`echo \"$MATCHES\" | sort | uniq | tail -n +2 | wc -l | awk '{print $1}'`"
+    echo "FIXME: Found $cnt build system instances ..."
+    echo "$MATCHES
+" | sort | uniq
+    FOUND=`expr $FOUND + $cnt`
+fi
+
 
 # make sure no more WIN32 issues are introduced than existed
 # previously.  for cases where it "seems" necessary, can find and fix
 # a case that is not before adding another.  lets not increase this.
-NEED_FIXING=160
+NEED_FIXING=194
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	echo "********************************************************"

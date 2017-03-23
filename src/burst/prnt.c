@@ -870,7 +870,6 @@ prntScr(const char *format, ...)
 		   cause the screen to scroll, don't know why. */
 		(void) vsnprintf(buf, LNBUFSZ, format, ap);
 		(void) puts(buf);
-		/*(void) vprintf(format, ap);*/
 		(void) ScMvCursor(1, SCROLL_BTM+1);
 		(void) ScClrScrlReg();
 	    } else {

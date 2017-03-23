@@ -80,7 +80,7 @@ template <typename T>
 class Triple
 {
 public:
-    Triple() :
+    explicit Triple() :
 	m_value() // zero
     {}
 
@@ -91,15 +91,18 @@ public:
     }
 
 
-    operator const T *() const
+    const T &operator[](std::size_t index) const
     {
-	return m_value;
+	if (index > 2)
+	    throw std::invalid_argument("invalid index");
+
+	return m_value[index];
     }
 
 
-    operator T *()
+    T &operator[](std::size_t index)
     {
-	return m_value;
+	return const_cast<T &>(const_cast<const Triple<T> &>(*this)[index]);
     }
 
 
@@ -117,11 +120,20 @@ color_from_floats(const float *float_color)
 {
     Color result;
 
-    for (int i = 0; i < 3; ++i)
+    for (std::size_t i = 0; i < 3; ++i)
 	result[i] = static_cast<unsigned char>(float_color[i] * 255.0 + 0.5);
 
     return result;
 }
+
+
+class InvalidModelError : public std::runtime_error
+{
+public:
+    explicit InvalidModelError(const std::string &value) :
+	std::runtime_error(value)
+    {}
+};
 
 
 // Assignable/CopyConstructible for use with STL containers.
@@ -138,7 +150,8 @@ private:
 };
 
 
-Matrix::Matrix(const fastf_t *values)
+Matrix::Matrix(const fastf_t *values) :
+    m_value()
 {
     if (values)
 	MAT_COPY(m_value, values);
@@ -161,12 +174,11 @@ class DBInternal
 public:
     static const directory &lookup(const db_i &db, const std::string &name);
 
-    DBInternal();
-    DBInternal(const db_i &db, const directory &dir);
+    explicit DBInternal();
+    explicit DBInternal(const db_i &db, const directory &dir);
     ~DBInternal();
 
     void load(const db_i &db, const directory &dir);
-    const rt_db_internal &get() const;
     rt_db_internal &get();
 
 
@@ -182,6 +194,8 @@ private:
 const directory &
 DBInternal::lookup(const db_i &db, const std::string &name)
 {
+    RT_CK_DBI(&db);
+
     const directory * const dir = db_lookup(&db, name.c_str(), LOOKUP_QUIET);
 
     if (!dir)
@@ -201,6 +215,9 @@ DBInternal::DBInternal(const db_i &db, const directory &dir) :
     m_valid(false),
     m_internal()
 {
+    RT_CK_DBI(&db);
+    RT_CK_DIR(&dir);
+
     load(db, dir);
 }
 
@@ -223,21 +240,11 @@ DBInternal::load(const db_i &db, const directory &dir)
 	m_valid = false;
     }
 
-    if (rt_db_get_internal(&m_internal, &dir, &db, NULL, &rt_uniresource) < 0)
+    if (0 > rt_db_get_internal(&m_internal, &dir, &db, NULL, &rt_uniresource))
 	throw std::runtime_error("rt_db_get_internal() failed");
 
     m_valid = true;
     RT_CK_DB_INTERNAL(&m_internal);
-}
-
-
-const rt_db_internal &
-DBInternal::get() const
-{
-    if (!m_valid)
-	throw std::logic_error("invalid");
-
-    return m_internal;
 }
 
 
@@ -256,7 +263,7 @@ class RecordWriter
 public:
     class Record;
 
-    RecordWriter();
+    explicit RecordWriter();
     virtual ~RecordWriter();
 
     void write_comment(const std::string &value);
@@ -332,7 +339,7 @@ template <typename T> RecordWriter::Record &
 RecordWriter::Record::operator<<(const T &value)
 {
     if (++m_width > record_width)
-	throw std::logic_error("invalid record width");
+	throw std::length_error("invalid record width");
 
     std::ostringstream sstream;
     sstream.exceptions(std::ostream::failbit | std::ostream::badbit);
@@ -341,7 +348,7 @@ RecordWriter::Record::operator<<(const T &value)
     const std::string str_val = sstream.str();
 
     if (str_val.size() > field_width)
-	throw std::invalid_argument("length exceeds field width");
+	throw std::length_error("length exceeds field width");
 
     m_writer.get_ostream() << std::left << std::setw(field_width) << str_val;
     return *this;
@@ -351,14 +358,24 @@ RecordWriter::Record::operator<<(const T &value)
 RecordWriter::Record &
 RecordWriter::Record::operator<<(float value)
 {
-    return operator<<(truncate_float(value));
+    return operator<<(static_cast<double>(value));
 }
 
 
 RecordWriter::Record &
 RecordWriter::Record::operator<<(double value)
 {
-    return operator<<(truncate_float(value));
+    std::string string_value = truncate_float(value);
+
+    if (string_value == "-0.0")
+	string_value.erase(0, 1);
+
+    return operator<<(string_value);
+
+    // quell warning of unused function
+    // `float` and `double` overrides provided to match `fastf_t` despite templates
+    bu_bomb("shouldn't reach here");
+    return operator<<(static_cast<float>(0.0));
 }
 
 
@@ -402,10 +419,7 @@ RecordWriter::Record::truncate_float(fastf_t value)
     result.erase(std::min(result.size(), std::max(end_point + 2, end_digit + 1)));
 
     if (end_point >= result.size() - 1)
-	throw std::runtime_error("value exceeds width of field");
-
-    if (result == "-0.0")
-	result.erase(0, 1);
+	throw InvalidModelError("value exceeds width of field");
 
     return result;
 }
@@ -422,7 +436,8 @@ RecordWriter::write_comment(const std::string &value)
 class StringBuffer : public RecordWriter
 {
 public:
-    StringBuffer();
+    explicit StringBuffer();
+
     void write(RecordWriter &writer) const;
 
 
@@ -527,7 +542,7 @@ FastgenWriter::take_next_section_id()
     const SectionID result = m_next_section_id;
 
     if (result.first > max_group_id)
-	throw std::length_error("maximum Sections exceeded");
+	throw InvalidModelError("maximum Sections exceeded");
 
     if (++m_next_section_id.second > max_section_id) {
 	++m_next_section_id.first;
@@ -582,16 +597,16 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 
     if (type == bool_hole) {
 	if (++m_num_holes > max_bools)
-	    throw std::length_error("maximum HOLE records exceeded");
+	    throw InvalidModelError("maximum HOLE records exceeded");
 
 	record << "HOLE";
     } else if (type == bool_wall) {
 	if (++m_num_walls > max_bools)
-	    throw std::length_error("maximum WALL records exceeded");
+	    throw InvalidModelError("maximum WALL records exceeded");
 
 	record << "WALL";
     } else
-	throw std::logic_error("unknown Boolean type");
+	throw std::invalid_argument("unknown Boolean type");
 
     record << section_a.first << section_a.second;
     record << section_b.first << section_b.second;
@@ -608,7 +623,7 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 class GridManager
 {
 public:
-    GridManager();
+    explicit GridManager();
 
     // return a vector of grid IDs corresponding to the given points,
     // with no duplicate indices in the returned vector
@@ -633,7 +648,7 @@ bool
 GridManager::PointComparator::operator()(const Point &lhs,
 	const Point &rhs) const
 {
-    for (int i = 0; i < 3; ++i)
+    for (std::size_t i = 0; i < 3; ++i)
 	if (!NEAR_EQUAL(lhs[i], rhs[i], RT_LEN_TOL))
 	    return lhs[i] < rhs[i];
 
@@ -688,7 +703,7 @@ void
 GridManager::write(RecordWriter &writer) const
 {
     if (m_next_grid_id - 1 > max_grid_points)
-	throw std::length_error("maximum grid points exceeded");
+	throw InvalidModelError("maximum grid points exceeded");
 
     for (std::map<Point, std::vector<std::size_t>, PointComparator>::const_iterator
 	 it = m_grids.begin(); it != m_grids.end(); ++it)
@@ -708,8 +723,7 @@ class Section
 public:
     class SectionModeError;
 
-
-    Section();
+    explicit Section();
 
     bool empty() const;
 
@@ -767,7 +781,7 @@ private:
 class Section::SectionModeError : public std::logic_error
 {
 public:
-    SectionModeError(const std::string &message) :
+    explicit SectionModeError(const std::string &message) :
 	std::logic_error("Section mode inconsistency: " + message)
     {}
 };
@@ -1110,7 +1124,7 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
 
     std::vector<Point> points(8);
 
-    for (int i = 0; i < 8; ++i)
+    for (std::size_t i = 0; i < 8; ++i)
 	points.at(i) = Point(vpoints[i]);
 
     const std::vector<std::size_t> grids = m_grids.get_unique_grids(points);
@@ -1645,7 +1659,7 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 	    {0, 2, 3}
 	};
 
-	for (int i = 0; i < 12; ++i) {
+	for (std::size_t i = 0; i < 12; ++i) {
 	    const int * const face = &bot.faces[i * 3];
 
 	    if (face[0] != hex_faces[i][0] || face[1] != hex_faces[i][1]
@@ -1680,7 +1694,7 @@ get_chex1(Section &section, const rt_bot_internal &bot)
 
     fastf_t points[8][3];
 
-    for (int i = 0; i < 8; ++i)
+    for (std::size_t i = 0; i < 8; ++i)
 	VMOVE(points[i], &bot.vertices[i * 3]);
 
     section.write_hexahedron(points, hex_thickness, hex_grid_centered);
@@ -1787,7 +1801,7 @@ get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 // Identifies which half of a COMPSPLT a given region represents.
 // Assumes that `half_dir` represents a COMPSPLT-compatible halfspace.
 // Returns the partition type and the halfspace's matrix within the region.
-enum CompspltPartitionType {compsplt_partition_none, compsplt_partition_intersected, compsplt_partition_subtracted};
+enum CompspltPartitionType {partition_none, partition_intersected, partition_subtracted};
 typedef std::pair<CompspltPartitionType, Matrix> CompspltID;
 
 HIDDEN CompspltID
@@ -1799,7 +1813,7 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
     RT_CK_DIR(&half_dir);
 
     if (half_dir.d_minor_type != ID_HALF)
-	throw std::logic_error("identify_compsplt(): not a halfspace");
+	throw std::invalid_argument("identify_compsplt(): not a halfspace");
 
     DBInternal parent_region_internal(db, parent_region_dir);
     const rt_comb_internal &parent_region = *static_cast<rt_comb_internal *>
@@ -1811,16 +1825,16 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
     LeafMap::const_iterator found = leaves.find(&half_dir);
 
     if (found != leaves.end())
-	return CompspltID(compsplt_partition_intersected, found->second);
+	return CompspltID(partition_intersected, found->second);
 
     leaves.clear();
     get_subtracted(db, parent_region.tree, leaves);
     found = leaves.find(&half_dir);
 
     if (found != leaves.end())
-	return CompspltID(compsplt_partition_subtracted, found->second);
+	return CompspltID(partition_subtracted, found->second);
 
-    return CompspltID(compsplt_partition_none, Matrix(NULL));
+    return CompspltID(partition_none, Matrix(NULL));
 }
 
 
@@ -1898,8 +1912,8 @@ class FastgenConversion
 public:
     class RegionManager;
 
-    FastgenConversion(db_i &db, const bn_tol &tol,
-		      const std::set<const directory *> &facetize_regions);
+    explicit FastgenConversion(db_i &db, const bn_tol &tol,
+			       const std::set<const directory *> &facetize_regions);
     ~FastgenConversion();
 
     RegionManager &get_region(const directory &region_dir);
@@ -1930,7 +1944,8 @@ private:
 class FastgenConversion::RegionManager
 {
 public:
-    RegionManager(const db_i &db, const directory &region_dir, const bn_tol &tol);
+    explicit RegionManager(const db_i &db, const directory &region_dir,
+			   const bn_tol &tol);
     ~RegionManager();
 
     std::vector<FastgenWriter::SectionID> write(FastgenWriter &writer) const;
@@ -1971,7 +1986,11 @@ FastgenConversion::RegionManager::RegionManager(const db_i &db,
     m_enabled(true),
     m_compsplt(false, 0.0),
     m_sections()
-{}
+{
+    RT_CK_DBI(&db);
+    RT_CK_DIR(&m_region_dir);
+    BN_CK_TOL(&tol);
+}
 
 
 FastgenConversion::RegionManager::~RegionManager()
@@ -2133,7 +2152,7 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
     const CompspltID this_compsplt = identify_compsplt(data.m_db,
 				     *parent_region_dir, *DB_FULL_PATH_CUR_DIR(&half_path));
 
-    if (this_compsplt.first == compsplt_partition_none)
+    if (this_compsplt.first == partition_none)
 	return false;
 
     // find the other half
@@ -2150,8 +2169,7 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	    const CompspltID current = identify_compsplt(data.m_db, *region_dirs.ptr[i],
 				       *DB_FULL_PATH_CUR_DIR(&half_path));
 
-	    if (current.first != compsplt_partition_none
-		&& current.first != this_compsplt.first)
+	    if (current.first != partition_none && current.first != this_compsplt.first)
 		if (current.second.equal(this_compsplt.second, data.m_tol)) {
 		    other_half_dir = region_dirs.ptr[i];
 		    break;
@@ -2162,12 +2180,12 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
     if (!other_half_dir)
 	return false;
 
-    if (this_compsplt.first == compsplt_partition_intersected)
+    if (this_compsplt.first == partition_intersected)
 	data.get_region(*parent_region_dir).set_compsplt(half.eqn[3]);
-    else if (this_compsplt.first == compsplt_partition_subtracted)
+    else if (this_compsplt.first == partition_subtracted)
 	data.get_region(*parent_region_dir).disable();
     else
-	throw std::logic_error("unknown COMPSPLT partition type");
+	throw std::invalid_argument("unknown COMPSPLT partition type");
 
     return true;
 }
@@ -2191,9 +2209,15 @@ FastgenConversion::FastgenConversion(db_i &db, const bn_tol &tol,
 
     // create a RegionManager for all regions in the database
     try {
-	for (std::size_t i = 0; i < num_regions; ++i)
-	    m_regions[region_dirs.ptr[i]] = new RegionManager(m_db, *region_dirs.ptr[i],
-		    m_tol);
+	for (std::size_t i = 0; i < num_regions; ++i) {
+	    const std::pair<const directory *, RegionManager *>
+	    temp(region_dirs.ptr[i], new RegionManager(m_db, *region_dirs.ptr[i], m_tol));
+
+	    if (!m_regions.insert(temp).second) {
+		delete temp.second;
+		throw std::logic_error("RegionManager already exists");
+	    }
+	}
     } catch (...) {
 	for (std::map<const directory *, RegionManager *>::iterator it =
 		 m_regions.begin(); it != m_regions.end(); ++it)
@@ -2245,6 +2269,8 @@ FastgenConversion::~FastgenConversion()
 FastgenConversion::RegionManager &
 FastgenConversion::get_region(const directory &region_dir)
 {
+    RT_CK_DIR(&region_dir);
+
     return *m_regions.at(&region_dir);
 }
 
@@ -2258,7 +2284,7 @@ FastgenConversion::get_section(const db_full_path &path)
 
     try {
 	region_dir = &get_region_dir(path);
-    } catch (std::invalid_argument &) {
+    } catch (const std::invalid_argument &) {
 	region_dir = NULL;
     }
 
@@ -2399,7 +2425,8 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     for (BU_LIST_FOR(current_shell, shell, &nmg_region->s_hd)) {
 	NMG_CK_SHELL(current_shell);
 
-	rt_bot_internal * const bot = nmg_bot(current_shell, &data.m_tol);
+	rt_bot_internal * const bot = nmg_bot(current_shell, &RTG.rtg_vlfree,
+					      &data.m_tol);
 
 	// fill in an rt_db_internal with our new bot so we can free it
 	rt_db_internal internal;
@@ -2530,14 +2557,19 @@ HIDDEN int
 fastgen4_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	       const void *UNUSED(options_data), const char *dest_path)
 {
-    const std::set<const directory *> failed_regions =
-	do_conversion(*context->dbip, *gcv_options, dest_path);
+    try {
+	const std::set<const directory *> failed_regions =
+	    do_conversion(*context->dbip, *gcv_options, dest_path);
 
-    // facetize all regions that contain incompatible boolean operations
-    if (!failed_regions.empty())
-	if (!do_conversion(*context->dbip, *gcv_options, dest_path,
-			   failed_regions).empty())
-	    throw std::runtime_error("failed to convert all regions");
+	// facetize all regions that contain incompatible boolean operations
+	if (!failed_regions.empty())
+	    if (!do_conversion(*context->dbip, *gcv_options, dest_path,
+			       failed_regions).empty())
+		throw std::runtime_error("failed to convert all regions");
+    } catch (const InvalidModelError &exception) {
+	std::cerr << "invalid input model ('" << exception.what() << "')\n";
+	return 0;
+    }
 
     return 1;
 }

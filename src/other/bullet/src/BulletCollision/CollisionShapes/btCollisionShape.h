@@ -20,21 +20,35 @@ subject to the following restrictions:
 #include "LinearMath/btVector3.h"
 #include "LinearMath/btMatrix3x3.h"
 #include "BulletCollision/BroadphaseCollision/btBroadphaseProxy.h" //for the shape types
+
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 class btSerializer;
 
 
 ///The btCollisionShape class provides an interface for collision shapes that can be shared among btCollisionObjects.
-ATTRIBUTE_ALIGNED16(class) btCollisionShape
+ATTRIBUTE_ALIGNED16(class) BULLET_EXPORT btCollisionShape
 {
 protected:
 	int m_shapeType;
 	void* m_userPointer;
+	int m_userIndex;
 
 public:
 
 	BT_DECLARE_ALIGNED_ALLOCATOR();
 
-	btCollisionShape() : m_shapeType (INVALID_SHAPE_PROXYTYPE), m_userPointer(0)
+	btCollisionShape() : m_shapeType (INVALID_SHAPE_PROXYTYPE), m_userPointer(0), m_userIndex(-1)
 	{
 	}
 
@@ -130,6 +144,16 @@ public:
 	{
 		return m_userPointer;
 	}
+	void setUserIndex(int index)
+	{
+		m_userIndex = index;
+	}
+
+	int getUserIndex() const
+	{
+		return m_userIndex;
+	}
+
 
 	virtual	int	calculateSerializeBufferSize() const;
 

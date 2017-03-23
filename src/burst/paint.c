@@ -27,8 +27,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "common.h"
-
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"

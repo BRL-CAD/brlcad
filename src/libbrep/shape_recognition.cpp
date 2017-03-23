@@ -81,6 +81,7 @@ island_faces_characterize(struct subbrep_island_data *sb)
     return loops_planar;
 }
 
+
 int
 bbox_isect(struct subbrep_island_data *s, struct subbrep_island_data *c)
 {
@@ -99,6 +100,7 @@ bbox_isect(struct subbrep_island_data *s, struct subbrep_island_data *c)
 	return 1;
     }
 }
+
 
 /*
  * This is the point at which we characterize the relationships between
@@ -194,7 +196,6 @@ find_hierarchy(struct bu_vls *UNUSED(msgs), struct bu_ptbl *islands)
 }
 
 
-
 int
 shoal_filter_loop(int control_loop, int candidate_loop, struct subbrep_island_data *data)
 {
@@ -226,6 +227,7 @@ shoal_filter_loop(int control_loop, int candidate_loop, struct subbrep_island_da
 
     return 1;
 }
+
 
 int
 shoal_build(int **s_loops, int loop_index, struct subbrep_island_data *data)
@@ -269,7 +271,6 @@ shoal_build(int **s_loops, int loop_index, struct subbrep_island_data *data)
 }
 
 
-
 /* In order to represent complex shapes, it is necessary to identify
  * subsets of subbreps that can be represented as primitives.  This
  * function will identify such subsets, if possible.  If a subbrep
@@ -282,9 +283,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     int csg_fail = 0;
     std::set<int> loops;
     std::set<int> active;
-    std::set<int> fully_planar;
-    std::set<int> partly_planar;
-    std::set<int>::iterator l_it, e_it;
+    std::set<int>::iterator l_it;
 
     array_to_set(&loops, data->island_loops, data->island_loops_cnt);
     array_to_set(&active, data->island_loops, data->island_loops_cnt);
@@ -366,6 +365,7 @@ subbrep_split(struct bu_vls *msgs, struct subbrep_island_data *data)
     // non-self-intersecting loops for now...
     return 1;
 }
+
 
 struct bu_ptbl *
 brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
@@ -459,7 +459,7 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
 	// of fil loops - needed for processing.
 	int planar_fils = island_faces_characterize(sb);
 
-	// Get key based on loop indicies
+	// Get key based on loop indices
 	set_key(sb->key, sb->island_loops_cnt, sb->island_loops);
 
 	if (!planar_fils) {
@@ -543,7 +543,7 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
 
 bail:
     // Free memory
-    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++){
+    for (unsigned int i = 0; i < BU_PTBL_LEN(subbreps); i++) {
 	struct subbrep_island_data *obj = (struct subbrep_island_data *)BU_PTBL_GET(subbreps, i);
 	subbrep_island_free(obj);
 	BU_PUT(obj, struct subbrep_island_data);
@@ -552,7 +552,6 @@ bail:
     BU_PUT(subbreps, struct bu_ptbl);
     return NULL;
 }
-
 
 
 // Local Variables:

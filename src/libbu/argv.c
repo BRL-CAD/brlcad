@@ -23,10 +23,11 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/file.h"
+#include "bu/exit.h"
+
 
 size_t
 bu_argv_from_string(char *argv[], size_t lim, char *lp)
@@ -183,7 +184,7 @@ bu_argv_free(size_t argc, char *argv[])
 
 
 void
-bu_free_array(size_t argc, char *argv[], const char *str)
+bu_free_args(size_t argc, char *argv[], const char *str)
 {
     size_t count = 0;
 

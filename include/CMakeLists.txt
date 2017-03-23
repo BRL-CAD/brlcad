@@ -22,6 +22,7 @@ set(public_hdrs
   common.h
   cursor.h
   ged.h
+  pinttypes.h
   pstdint.h
   raytrace.h
   rtserver.h

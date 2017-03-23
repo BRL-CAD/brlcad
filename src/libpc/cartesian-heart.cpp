@@ -35,6 +35,8 @@
  *
  */
 
+#include "common.h"
+
 #include <gecode/driver.hh>
 
 #include <gecode/minimodel.hh>

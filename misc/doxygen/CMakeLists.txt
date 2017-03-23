@@ -28,6 +28,7 @@ set(DOX_LIBS
   libbu
   libbn
   libbg
+  libnmg
   libbrep
   libfft
   libicv

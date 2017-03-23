@@ -422,7 +422,7 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 		struct nmgregion *nmgr = BU_LIST_FIRST(nmgregion, &tr->tr_d.td_r->m_p->r_hd);
 		/* the bot temporary format may be unnecessary if we can walk
 		 * the nmg shells and generate soup from them directly. */
-		struct rt_bot_internal *bot = nmg_bot(BU_LIST_FIRST(shell, &nmgr->s_hd), tol);
+		struct rt_bot_internal *bot = nmg_bot(BU_LIST_FIRST(shell, &nmgr->s_hd), &RTG.rtg_vlfree, tol);
 
 		/* causes a crash.
 		   nmg_kr(nmgr);

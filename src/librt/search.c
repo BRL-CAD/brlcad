@@ -566,9 +566,16 @@ c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
 HIDDEN int
 f_regex(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
+    regex_t reg;
     int ret = 0;
-    ret = !(regexec(&plan->regexp_data, db_path_to_string(db_node->path), 0, NULL, 0));
+    if (plan->type == N_IREGEX) {
+	(void)regcomp(&reg, plan->regex_pattern, REG_NOSUB|REG_EXTENDED|REG_ICASE);
+    } else {
+	(void)regcomp(&reg, plan->regex_pattern, REG_NOSUB|REG_EXTENDED);
+    }
+    ret = !(regexec(&reg, db_path_to_string(db_node->path), 0, NULL, 0));
     if (!ret) db_node->matched_filters = 0;
+    regfree(&reg);
     return ret;
 }
 
@@ -585,15 +592,16 @@ c_regex_common(enum db_search_ntype type, char *regexp, int icase, struct db_pla
     } else {
 	rv = regcomp(&reg, regexp, REG_NOSUB|REG_EXTENDED);
     }
+    regfree(&reg);
+
     if (rv != 0) {
 	bu_log("ERROR: regular expression failed to compile: %s\n", regexp);
 	return BRLCAD_ERROR;
     }
 
     newplan = palloc(type, f_regex, tbl);
-    newplan->regexp_data = reg;
+    newplan->regex_pattern = regexp;
     (*resultplan) = newplan;
-    regfree(&reg);
 
     return BRLCAD_OK;
 }

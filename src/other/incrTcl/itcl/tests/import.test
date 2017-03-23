@@ -5,18 +5,14 @@
 #            Bell Labs Innovations for Lucent Technologies
 #            mmclennan@lucent.com
 #            http://www.tcltk.com/itcl
-#
-#      RCS:  $Id$
 # ----------------------------------------------------------------------
 #            Copyright (c) 1993-1998  Lucent Technologies, Inc.
 # ======================================================================
 # See the file "license.terms" for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2.1
-    namespace import -force ::tcltest::test
-}
+package require tcltest 2.1
+namespace import ::tcltest::test
 
 ::tcltest::loadTestedCommands
 
@@ -128,7 +124,7 @@ test import-2.3 {stubs can be autoloaded and imported links remain} {
     }
 } {{::test::foo1: 1 2 3 4} ::test::foo1 ::test::foo1 ::test::foo1 0}
 
-test import-2.3 {itcl::class handles stubs correctly} {
+test import-2.4 {itcl::class handles stubs correctly} {
     $interp eval {
         proc auto_load {cmd {namespace {}}} {
             itcl::class $cmd { }
@@ -143,7 +139,7 @@ test import-2.3 {itcl::class handles stubs correctly} {
     }
 } {x ::test::foo2 ::test::foo2 ::test::foo2 ::test::foo2 0}
 
-test import-2.3 {itcl::class will overwrite stubs in an existing namespace} {
+test import-2.5 {itcl::class will overwrite stubs in an existing namespace} {
     $interp eval {
         namespace eval test::buried { }
         itcl::import::stub create ::test::buried

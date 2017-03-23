@@ -5163,9 +5163,6 @@ x 					delete character
     <link linkend="d">d</link>
   </entry>
   <entry>
-    <link linkend="dall">dall</link>
-  </entry>
-  <entry>
     <link linkend="db">db</link>
   </entry>
 </row>
@@ -5248,9 +5245,6 @@ x 					delete character
     <link linkend="erase">erase</link>
   </entry>
   <entry>
-    <link linkend="erase_all">erase_all</link>
-  </entry>
-  <entry>
     <link linkend="ev">ev</link>
   </entry>
 </row>
@@ -5260,9 +5254,6 @@ x 					delete character
   </entry>
   <entry>
     <link linkend="expand">expand</link>
-  </entry>
-  <entry>
-    <link linkend="export_body">export_body</link>
   </entry>
   <entry>
     <link linkend="expand_comb">expand_comb</link>
@@ -5713,9 +5704,6 @@ x 					delete character
   </entry>
   <entry>
     <link linkend="vquery_ray">vquery_ray</link>
-  </entry>
-  <entry>
-    <link linkend="vrmgr">vrmgr</link>
   </entry>
   <entry>
     <link linkend="vrot">vrot</link>
@@ -7918,8 +7906,7 @@ x 					delete character
           explicitly displayed objects). Objects that are displayed as
           members of explicitly displayed combinations cannot be deleted
           from the display with this command (see
-          <link linkend="dall">dall</link> or
-          <link linkend="erase_all">erase_all</link>). Note that this
+          <link linkend="erase">erase -r</link>). Note that this
           has no effect on the <emphasis>BRL-CAD</emphasis> database
           itself. To actually remove objects from the database, use the
           <link linkend="kill">kill</link> command.
@@ -7945,36 +7932,6 @@ x 					delete character
   <para>
     <emphasis role="strong"></emphasis>
   </para>
-  <variablelist xml:id="dall">
-    <varlistentry>
-      <term>
-        dall <emphasis>&lt;objects</emphasis>&gt;
-      </term>
-      <listitem>
-        <para>
-          The <quote>dall</quote> command deletes the specified list of
-          objects from the <emphasis>mged</emphasis> display. This is a
-          synonym for the <link linkend="erase_all">erase_all</link>
-          command. This command will allow the user to delete objects
-          that have not been explicitly displayed (unlike the
-          <link linkend="d">d</link> command). Note that this has no
-          effect on the <emphasis>BRL-CAD</emphasis> database itself. To
-          actually remove objects from the database, use the
-          <link linkend="kill">kill</link> command.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; dall region1 shapea
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
   <para>
     – Delete <emphasis>region1</emphasis> and
     <emphasis>shapea</emphasis> from the <emphasis>mged</emphasis>
@@ -9301,8 +9258,7 @@ x 					delete character
           explicitly displayed objects). Objects that are displayed as
           members of explicitly displayed combinations cannot be deleted
           from the display with this command (see
-          <link linkend="dall">dall</link> or
-          <link linkend="erase_all">erase_all</link>). Note that this
+          <link linkend="erase">erase -r</link>). Note that this
           has no effect on the <emphasis>BRL-CAD</emphasis> database
           itself. To actually remove objects from the database, use the
           <link linkend="kill">kill</link> command.
@@ -9327,36 +9283,6 @@ x 					delete character
   <para>
     <emphasis role="strong"></emphasis>
   </para>
-  <variablelist xml:id="erase_all">
-    <varlistentry>
-      <term>
-        erase_all <emphasis>&lt;objects</emphasis>&gt;
-      </term>
-      <listitem>
-        <para>
-          The <quote>erase_all</quote> command deletes the specified
-          list of objects from the MGED display. This is a synonym for
-          the <link linkend="dall">dall</link> command. This command
-          will allow the user to delete objects that have not been
-          explicitly displayed (unlike the <link linkend="d">d</link> or
-          <link linkend="erase">erase</link> commands). Note that this
-          has no effect on the <emphasis>BRL-CAD</emphasis> database
-          itself. To actually remove objects from the database, use the
-          <link linkend="kill">kill</link> command.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; erase_all region1 shapea
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
   <para>
     – Delete <emphasis>region1</emphasis> and
     <emphasis>shapea</emphasis> from the MGED display.
@@ -9535,28 +9461,6 @@ x 					delete character
   </para>
   <para>
     <emphasis role="strong"></emphasis>
-  </para>
-  <para xml:id="export_body">
-    export_body object file
-  </para>
-  <para>
-    The <quote>export_body</quote> command is used to copy the contents
-    of the specified binary <emphasis>object</emphasis> into the
-    specified <emphasis>file</emphasis>. Currently, only binary objects
-    containing a uniform array of simple objects is supported.
-  </para>
-  <para>
-    Examples:
-  </para>
-  <para>
-    <literal></literal>
-  </para>
-  <para>
-    mged&gt; export_body bin_chars /home/fred/chars
-  </para>
-  <para>
-    – Copy the contents of <quote>bin_chars</quote> into the file
-    <quote>/home/fred/chars</quote>
   </para>
   <para xml:id="expand_comb">
     expand_comb <emphasis>prefix comb …</emphasis>
@@ -16732,50 +16636,6 @@ EOF
       </listitem>
     </varlistentry>
   </variablelist>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
-  <variablelist xml:id="vrmgr">
-    <varlistentry>
-      <term>
-        vrmgr <emphasis>host</emphasis> {<emphasis>master</emphasis> |
-        <emphasis>slave</emphasis> | <emphasis>overview</emphasis>}
-      </term>
-      <listitem>
-        <para>
-          The <quote>vrmgr</quote> command establishes a link between
-          the current MGED display and a <emphasis>vrmgr</emphasis>
-          process running on the specified <emphasis>host</emphasis>.
-          The <emphasis>vrmgr</emphasis> program is a manager for
-          virtual reality displays using MGED. The
-          <emphasis>vrmgr</emphasis> process must be started on
-          <emphasis>host</emphasis> prior to executing the
-          <emphasis>vrmgr</emphasis> command in MGED. The second command
-          line argument to the <emphasis>vrmgr</emphasis> command is the
-          role of the current MGED display. The
-          <emphasis>master</emphasis> display controls the viewing
-          parameters of itself and all the <emphasis>slave</emphasis>
-          displays. The <emphasis>overview</emphasis> display acts as an
-          observer of the entire virtual reality process.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; vrmgr host1.brlcad.org master
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – Set the current MGED display as the <emphasis>master</emphasis>
-    for the <emphasis>vrmgr</emphasis> process running on the host named
-    <emphasis>host1.brlcad.org.</emphasis>
-  </para>
   <para>
     <emphasis role="strong"></emphasis>
   </para>

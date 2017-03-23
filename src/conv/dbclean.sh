@@ -40,7 +40,7 @@ fi
 
 # Test to check whether the name of the input database is the same
 # as that of the output database.  If so, complain and abort to
-# prevent loosing the original database.
+# prevent losing the original database.
 
 if test $1 = $2
 then

@@ -660,8 +660,8 @@ main(int argc, char **argv)
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		NMG_debug = RTG.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		NMG_debug = nmg_debug;
 		break;
 	    case 'u':
 		units = bu_strdup(bu_optarg);
@@ -1024,14 +1024,14 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     }
 
     if (!is_light) {
-	nmg_triangulate_model(m, tol2);
+	nmg_triangulate_model(m, &RTG.rtg_vlfree, tol2);
 	fprintf(fp_out, "\t\t\t}\n");
 	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
 	fprintf(fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
-    nmg_vertex_tabulate(&verts, &m->magic);
+    nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
     if (!is_light) {
 	fprintf(fp_out, "\t\t\t\t\tpoint [");
     } else {
@@ -1284,7 +1284,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
@@ -1296,7 +1296,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug; /* restore mode */
+	nmg_debug = NMG_debug; /* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();

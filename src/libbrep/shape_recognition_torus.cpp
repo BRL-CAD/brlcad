@@ -59,6 +59,7 @@ subbrep_is_torus(struct subbrep_object_data *data, fastf_t torus_tol)
     return 1;
 }
 
+
 /* Return -1 if the torus normals are defining a negative volume,
  * 1 if it is positive, and 0 if there is some other problem */
 int
@@ -192,6 +193,7 @@ torus_csg(struct subbrep_object_data *data, fastf_t torus_tol)
 
     return -1;
 }
+
 
 // Local Variables:
 // tab-width: 8

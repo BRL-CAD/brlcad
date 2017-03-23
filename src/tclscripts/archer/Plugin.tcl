@@ -19,11 +19,6 @@
 #
 ###
 #
-# Author(s):
-#    Doug Howard
-#    Bob Parker
-#
-# Description:
 #    Structure to hold plugin registry.
 #
 ##############################################################

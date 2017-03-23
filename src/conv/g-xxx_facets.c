@@ -146,8 +146,8 @@ main(int argc, char **argv)
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		NMG_debug = RTG.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		NMG_debug = nmg_debug;
 		break;
 	    default:
 		print_usage(argv[0]);
@@ -244,7 +244,7 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
 
     /* Output triangles */
     if (verbose) {
@@ -261,15 +261,11 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
 	{
 	    struct loopuse *lu;
-	    /* vect_t facet_normal; */
 
 	    NMG_CK_FACEUSE(fu);
 
 	    if (fu->orientation != OT_SAME)
 		continue;
-
-	    /* Grab the face normal if needed */
-	    /* NMG_GET_FU_NORMAL(facet_normal, fu); */
 
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
 	    {
@@ -322,7 +318,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;	/* restore mode */
+	nmg_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -349,8 +345,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
@@ -362,7 +358,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;/* restore mode */
+	nmg_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();

@@ -145,7 +145,7 @@ main(int argc, char **argv)
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
 		break;
 	    default:
 		print_usage(argv[0]);
@@ -225,7 +225,7 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 	    struct shell *next_s;
 
 	    next_s = BU_LIST_PNEXT(shell, &s->l);
-	    if (nmg_simplify_shell(s)) {
+	    if (nmg_simplify_shell(s, &RTG.rtg_vlfree)) {
 		if (nmg_ks(s)) {
 		    /* we killed it all! */
 		    something_left = 0;
@@ -339,11 +339,12 @@ build_groups(struct rt_wdb *fpout)
 int
 euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 {
-    char str[81] = {0};
+#define STR_SZ 80
+    char str[STR_SZ+1] = {0};
     int reg_id = -1;
 
     /* skip first string in file (what is it??) */
-    if (fscanf(fpin, "%80s", str) == EOF) {
+    if (fscanf(fpin, CPP_SCAN(STR_SZ), str) == EOF) {
 	bu_log("ERROR: euclid-g: failed on first attempt to read input\n");
 	return 1;
     }
@@ -503,12 +504,12 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 
     if (debug)
 	bu_log("Calling nmg_vertex_fuse()\n");
-    (void)nmg_vertex_fuse(&m->magic, &tol);
+    (void)nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
 
     /* Break edges on vertices */
     if (debug)
 	bu_log("Calling nmg_break_e_on_v()\n");
-    (void)nmg_break_e_on_v(&m->magic, &tol);
+    (void)nmg_break_e_on_v(&m->magic, &RTG.rtg_vlfree, &tol);
 
     /* kill zero length edgeuses */
     if (nmg_kill_zero_length_edgeuses(m)) {
@@ -534,7 +535,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	    continue;
 
 	/* calculate plane for this faceuse */
-	if (nmg_calc_face_g(outfaceuses[i])) {
+	if (nmg_calc_face_g(outfaceuses[i], &RTG.rtg_vlfree)) {
 	    bu_log("nmg_calc_face_g failed\n");
 	    nmg_pr_fu_briefly(outfaceuses[i], "");
 	}
@@ -551,7 +552,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     /* Glue faceuses together. */
     if (debug)
 	bu_log("Glueing faces\n");
-    (void)nmg_edge_fuse(&m->magic, &tol);
+    (void)nmg_edge_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
 
     /* Compute "geometry" for model, region, and shell */
     if (debug)
@@ -561,7 +562,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     /* fix the normals */
     if (debug)
 	bu_log("Fix normals\n");
-    nmg_fix_normals(s, &tol);
+    nmg_fix_normals(s, &RTG.rtg_vlfree, &tol);
 
     if (RT_G_DEBUG&DEBUG_MEM_FULL)
 	bu_prmem("After fixing normals:\n");
@@ -593,7 +594,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     if (RT_G_DEBUG&DEBUG_MEM_FULL)
 	bu_prmem("Before nmg_make_faces_within_tol():\n");
 
-    nmg_make_faces_within_tol(s, &tol);
+    nmg_make_faces_within_tol(s, &RTG.rtg_vlfree, &tol);
 
     if (RT_G_DEBUG&DEBUG_MEM_FULL)
 	bu_prmem("After nmg_make_faces_within_tol():\n");
@@ -642,7 +643,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     }
 
     if (debug)
-	bu_log("%d vertices out of tolerance after fixing out of tolerance faces\n", nmg_ck_geometry(m, &tol));
+	bu_log("%d vertices out of tolerance after fixing out of tolerance faces\n", nmg_ck_geometry(m, &RTG.rtg_vlfree, &tol));
 
     nmg_s_join_touchingloops(s, &tol);
     nmg_s_split_touchingloops(s, &tol);

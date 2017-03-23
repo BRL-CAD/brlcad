@@ -186,7 +186,7 @@ extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int p
 /* Returns a bu_ptbl of all solids referenced by the display list */
 extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
-extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct solid *), struct solid *freesolid);
+extern void dl_add_path(struct display_list *gdlp, int dashflag, fastf_t transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct solid *), struct solid *freesolid);
 
 extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *), int skip_subtractions);
 extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
@@ -310,6 +310,8 @@ extern int _ged_cm_orientation(const int argc,
 			       const char **argv);
 extern int _ged_cm_set(const int argc,
 		       const char **argv);
+extern int _ged_cm_end(const int argc,
+		       const char **argv);
 extern int _ged_cm_null(const int argc,
 			const char **argv);
 
@@ -318,7 +320,8 @@ extern int _ged_cm_null(const int argc,
 extern void _ged_vls_col_pr4v(struct bu_vls *vls,
 			      struct directory **list_of_names,
 			      size_t num_in_list,
-			      int no_decorate);
+			      int no_decorate,
+			      int ssflag);
 extern struct directory ** _ged_getspace(struct db_i *dbip,
 					 size_t num_entries);
 

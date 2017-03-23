@@ -45,7 +45,6 @@
 
 #include "rt/tie.h"
 #include "bu/str.h"
-#include "bu/log.h"
 
 #include "adrt.h"
 
@@ -54,6 +53,7 @@
 
 #include "bio.h"
 
+#include "bu/log.h"
 #include "master.h"
 
 
@@ -506,9 +506,6 @@ int* tienet_master_listener(void *UNUSED(ptr))
 			    /* Append to select list */
 			    V_MAX(tienet_master_highest_fd, slave_socket);
 			}
-
-			/* Send some work */
-			/* tienet_master_send_work(sock); */
 		    }
 		} else {
 		    /* Make sure socket is still active on this recv */
@@ -757,7 +754,7 @@ void tienet_master_shutdown()
 	}
     }
 
-    printf("Total data transferred: %.1f MiB\n", (tfloat)tienet_master_transfer/(tfloat)(1024*1024));
+    printf("Total data transferred: %.1f MiB\n", (TFLOAT)tienet_master_transfer/(TFLOAT)(1024*1024));
 }
 
 

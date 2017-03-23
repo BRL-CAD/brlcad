@@ -141,8 +141,8 @@ parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *UNU
 {
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug nmg");
 
-    sscanf(argv[0], "%x", (unsigned int *)&RTG.NMG_debug);
-    NMG_debug = RTG.NMG_debug;
+    sscanf(argv[0], "%x", (unsigned int *)&nmg_debug);
+    NMG_debug = nmg_debug;
     return 1;
 }
 
@@ -304,17 +304,17 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
 
     /* list all vertices in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic);
+    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
 
     /* Get number of vertices */
     numverts = BU_PTBL_LEN(&verts);
 
     /* get list of vertexuse normals */
     if (do_normals)
-	nmg_vertexuse_normal_tabulate(&norms, &r->l.magic);
+	nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, &RTG.rtg_vlfree);
 
     /* BEGIN CHECK SECTION */
     /* Check vertices */
@@ -525,7 +525,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;	/* restore mode */
+	nmg_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -552,8 +552,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
@@ -565,7 +565,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;/* restore mode */
+	nmg_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();

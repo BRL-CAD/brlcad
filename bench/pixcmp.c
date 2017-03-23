@@ -206,7 +206,7 @@ main(int argc, char *argv[])
     stat(argv[1], &sf2);
 
     if (sf1.st_size != sf2.st_size) {
-	bu_exit(FILE_ERROR, "Different file sizes found: %s(%d) and %s(%d).  Cannot perform pixcmp.\n", argv[0], sf1.st_size, argv[1], sf2.st_size);
+	bu_exit(FILE_ERROR, "Different file sizes found: %s(%d) and %s(%d).  Cannot perform pixcmp.\n", argv[0], (int)sf1.st_size, argv[1], (int)sf2.st_size);
     }
 
     if (!print_bytes) {

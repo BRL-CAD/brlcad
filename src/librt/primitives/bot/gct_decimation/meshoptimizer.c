@@ -26,7 +26,7 @@
  */
 
 
-#if defined(__GNUC__) && (__GNUC__ == 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__clang__)
+#if defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__clang__) && !defined(__INTEL_COMPILER)
 #  pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 #if defined(__clang__)
@@ -41,7 +41,6 @@
 #include "auxiliary/cc.h"
 #include "auxiliary/mm.h"
 
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 

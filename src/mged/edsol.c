@@ -36,7 +36,6 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "rt/arb_edit.h"
-#include "rt/nurb.h"
 #include "wdb.h"
 #include "rt/db4.h"
 
@@ -1619,7 +1618,7 @@ nmg_ed(int arg)
 					    "nmg_ed tab[]");
 		    vbp = rt_vlblock_init();
 
-		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &mged_tol);
+		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &RTG.rtg_vlfree, &mged_tol);
 		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
 
 		    bn_vlblock_free(vbp);
@@ -4286,7 +4285,8 @@ sedit(void)
 	    {
 		struct rt_bot_internal *bot =
 		    (struct rt_bot_internal *)es_int.idb_ptr;
-		size_t face_no;
+		size_t face_no = 0;
+		int face_state = 0;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -4319,17 +4319,18 @@ sedit(void)
 		    if (!inpara)
 			break;
 
-		    face_no = (size_t)-1;
+		    face_state = -1;
 		    for (i=0; i < bot->num_faces; i++) {
 			if (bot_verts[0] == bot->faces[i*3] &&
 			    bot_verts[1] == bot->faces[i*3+1] &&
 			    bot_verts[2] == bot->faces[i*3+2])
 			{
 			    face_no = i;
+			    face_state = 0;
 			    break;
 			}
 		    }
-		    if (face_no == (size_t)-1) {
+		    if (face_state > -1) {
 			bu_log("Cannot find face with vertices %d %d %d!\n",
 			       V3ARGS(bot_verts));
 			break;
@@ -4395,7 +4396,8 @@ sedit(void)
 		    (struct rt_bot_internal *)es_int.idb_ptr;
 		char fmode[10];
 		const char *radio_result;
-		size_t face_no;
+		size_t face_no = 0;
+		int face_state = 0;
 		int ret_tcl = TCL_ERROR;
 
 		RT_BOT_CK_MAGIC(bot);
@@ -4416,27 +4418,28 @@ sedit(void)
 		    if (atoi(Tcl_GetStringResult(INTERP)))
 			break;
 
-		    face_no = (size_t)-2;
+		    face_state = -2;
 		} else {
 		    /* setting thickness for just one face */
-		    face_no = (size_t)-1;
+		    face_state = -1;
 		    for (i=0; i < bot->num_faces; i++) {
 			if (bot_verts[0] == bot->faces[i*3] &&
 			    bot_verts[1] == bot->faces[i*3+1] &&
 			    bot_verts[2] == bot->faces[i*3+2])
 			{
 			    face_no = i;
+			    face_state = 0;
 			    break;
 			}
 		    }
-		    if (face_no == (size_t)-1 || face_no == (size_t)-2) {
+		    if (face_state < 0) {
 			bu_log("Cannot find face with vertices %d %d %d!\n",
 			       V3ARGS(bot_verts));
 			break;
 		    }
 		}
 
-		if (face_no != (size_t)-1)
+		if (face_state > -1)
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, face_no)?1:0);
 		else
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
@@ -4455,7 +4458,7 @@ sedit(void)
 		}
 		radio_result = Tcl_GetVar(INTERP, "_bot_fmode_result", TCL_GLOBAL_ONLY);
 
-		if (face_no != (size_t)-1) {
+		if (face_state > -1) {
 		    if (atoi(radio_result))
 			BU_BITSET(bot->face_mode, face_no);
 		    else
@@ -5726,13 +5729,13 @@ sedit(void)
 		    nmg_face_g(fu, new_lu_pl);
 		}
 
-		(void)nmg_extrude_face(fu, extrude_vec, &mged_tol);
+		(void)nmg_extrude_face(fu, extrude_vec, &RTG.rtg_vlfree, &mged_tol);
 
-		nmg_fix_normals(fu->s_p, &mged_tol);
+		nmg_fix_normals(fu->s_p, &RTG.rtg_vlfree, &mged_tol);
 
 		m = nmg_find_model(&fu->l.magic);
 		nmg_rebound(m, &mged_tol);
-		(void)nmg_ck_geometry(m, &mged_tol);
+		(void)nmg_ck_geometry(m, &RTG.rtg_vlfree, &mged_tol);
 
 		es_eu = (struct edgeuse *)NULL;
 
@@ -7025,7 +7028,7 @@ sedit_mouse(const vect_t mousevec)
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
-						view_state->vs_gvp->gv_model2view, &tmp_tol)) == (struct edge *)NULL) {
+						view_state->vs_gvp->gv_model2view, &RTG.rtg_vlfree, &tmp_tol)) == (struct edge *)NULL) {
 		    Tcl_AppendResult(INTERP, "ECMD_NMG_EPICK: unable to find an edge\n",
 				     (char *)NULL);
 		    mged_print_result(TCL_ERROR);

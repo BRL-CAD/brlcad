@@ -23,9 +23,10 @@
 #include "bio.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
-#include "bu/log.h"
+#include "bu/exit.h"
 
-char hyphen[] = "hyphen";
+
+char hyphen[] = "-";
 
 int
 get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int **background, size_t* file_width, size_t* file_height)

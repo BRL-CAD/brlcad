@@ -2000,9 +2000,10 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
     bu_vls_sprintf(&str, "air%s.r", bu_vls_addr(&dimen));
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
-    if (usewheel != 0)
+    if (usewheel != 0) {
 	bu_vls_sprintf(&str, "wheel%s.r", bu_vls_addr(&dimen));
 	(void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
+    }
 
     mk_lcomb(gedp->ged_wdbp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);
 

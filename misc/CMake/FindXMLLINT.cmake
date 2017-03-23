@@ -36,11 +36,17 @@
 # - Find xmllint executable
 #
 #  The module defines the following variables:
-#  XSLTPROC_FOUND - true is xsltproc executable is found
-#  XSLTPROC_EXECUTABLE - the path to the xsltproc executable
+#  XMLLINT_FOUND - true is xmllint executable is found
+#  XMLLINT_EXECUTABLE - the path to the xmllint executable
 
 find_program(XMLLINT_EXECUTABLE xmllint DOC "path to the xmllint executable")
 mark_as_advanced(XMLLINT_EXECUTABLE)
+
+if(NOT XMLLINT_EXECUTABLE)
+  set(XMLLINT_FOUND 0)
+else(NOT XMLLINT_EXECUTABLE)
+  set(XMLLINT_FOUND 1)
+endif(NOT XMLLINT_EXECUTABLE)
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(XMLLINT DEFAULT_MSG XMLLINT_EXECUTABLE)

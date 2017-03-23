@@ -1,9 +1,11 @@
 # local includes
-include_directories(
+set(AP214_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/../step-g
+  ${OPENNURBS_INCLUDE_DIRS}
   )
+BRLCAD_INCLUDE_DIRS(AP214_INCLUDE_DIRS)
 
 set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap214e3/AP214E3_2010.exp)
 add_definitions(-DAP214e3)
@@ -230,7 +232,7 @@ set(ap214g_LIBS
   stepeditor
   stepdai
   stepcore
-  ${OPENNURBS_LIBRARY}
+  ${OPENNURBS_LIBRARIES}
   )
 list(APPEND ap214g_LIBS ${ap214g_LIBS})
 

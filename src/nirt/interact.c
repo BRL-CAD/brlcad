@@ -94,7 +94,7 @@ interact(int input_source, void *sPtr, struct rt_i *rtip)
     com_table *ctp;		/* command table pointer */
     int key_len;		/* the length of the key word */
     int in_cmt;			/* are we now within a comment? */
-    int more_on_line = 0;	/* are we withing a multi-command line? */
+    int more_on_line = 0;	/* are we within a multi-command line? */
 
 #define next_char(s)	(input_source == READING_FILE)		?	\
 			    fgetc((FILE *) s)			:       \

@@ -23,7 +23,6 @@
 #include <string.h>
 
 #include "bu/vls.h"
-#include "bu/log.h"
 
 
 static const char DQUOTE = '"';

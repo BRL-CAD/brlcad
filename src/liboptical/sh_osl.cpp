@@ -441,9 +441,6 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
      */
     struct partition *pp;
 
-    /* will serve as a pointer for the entry and exit hitpoints */
-    struct hit *hitp;
-
     /* will serve as a pointer to the solid primitive we hit */
     struct soltab *stp;
 

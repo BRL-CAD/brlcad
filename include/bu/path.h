@@ -96,21 +96,28 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  * A libbu re-implementation of basename() for cross-platform
  * compatibility.
  *
- * Given a string containing a hierarchical path, return a dynamic
- * string to the portion after the last path separator.
+ * Given a string containing a hierarchically delimited path (e.g.,
+ * /path/to/file), determine the file name portion after the last path
+ * separator.
  *
- * This function is similar if not identical to most basename() BSD
- * system function implementations; but that system function cannot be
- * used due to significantly inconsistent behavior across platforms.
+ * This function is similar to most basename() BSD system function
+ * implementations; but that system function cannot be used due to
+ * significantly inconsistent behavior across platforms, particularly
+ * with respect to memory allocation and threading behavior.
  *
  * This function always recognizes paths separated by a '/' (i.e.,
  * geometry paths) as well as whatever the native platform directory
  * separator may be.  It is assumed that all file and directory names
- * in the path will not contain a path separator, even if escaped.
+ * in the path do not contain a path separator.  That is, there is
+ * currently no support for escaped characters.
  *
- * It is the caller's responsibility to allocate basename with
- * enough memory to hold a string with length strlen(path), since
- * that is the maximum possible size of bu_basename's output.
+ * It is the caller's responsibility to provide a basename buffer with
+ * enough memory for a string with length at least strlen(path) + 1
+ * (for terminating nul) characters as that is the maximum possible
+ * basename size.  If the basename output argument is NULL, then a
+ * dynamic memory will be returned and the caller is responsible for
+ * releasing memory (via bu_free()), otherwise the caller-provided
+ * basename pointer is returned and managed by the caller accordingly.
  *
  * Examples of strings returned:
  *
@@ -129,7 +136,7 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  * ///           | /
  *
  */
-BU_EXPORT extern void bu_basename(char *basename, const char *path);
+BU_EXPORT extern char *bu_basename(const char *path, char *basename);
 
 /**
  * Normalize a path according to rules used for realpath, but

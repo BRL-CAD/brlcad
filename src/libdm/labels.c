@@ -28,7 +28,6 @@
 #include "raytrace.h"
 #include "nmg.h"
 #include "rt/geom.h"
-#include "rt/nurb.h"
 #include "rt/solid.h"
 #include "dm.h"
 #include "dm_private.h"

@@ -25,16 +25,20 @@ if(MSVC)
     )
 endif(MSVC)
 
+if(BRLCAD_ENABLE_TK)
+  BRLCAD_ADDEXEC(bombardier bombardier.c "libtclcad;libbu;${TK_LIBRARY};${TCL_LIBRARY}")
+  BRLCAD_ADDEXEC(plot3-dm plot3-dm.c "libdm;libbu;${TK_LIBRARY};${TCL_LIBRARY};${M_LIBRARY}")
+else(BRLCAD_ENABLE_TK)
+  CMAKEFILES(
+    bombardier.c
+    plot3-dm.c
+    )
+endif(BRLCAD_ENABLE_TK)
+
 if(BRLCAD_ENABLE_X11)
   BRLCAD_ADDEXEC(plot3-X plot3-X.c "libdm;libbu")
-  if(BRLCAD_ENABLE_TK)
-    BRLCAD_ADDEXEC(plot3-dm plot3-dm.c "libdm;libbu;${M_LIBRARY}")
-    BRLCAD_ADDEXEC(bombardier bombardier.c "libtclcad;libbu")
-  else(BRLCAD_ENABLE_TK)
-    CMAKEFILES(bombardier.c)
-  endif(BRLCAD_ENABLE_TK)
 else(BRLCAD_ENABLE_X11)
-  CMAKEFILES(plot3-X.c bombardier.c)
+  CMAKEFILES(plot3-X.c)
 endif(BRLCAD_ENABLE_X11)
 
 BRLCAD_ADDDATA(plot3-dm.c sample_applications)
@@ -77,7 +81,7 @@ BRLCAD_ADDEXEC(dpix-pix dpix-pix.c libbu)
 # a new admin file (used also for option handling testing)
 BRLCAD_ADDEXEC(admin-db "admin-db.cpp" "libbu;librt" NO_INSTALL)
 
-BRLCAD_ADDEXEC(fix_polysolids fix_polysolids.c "librt;libbu")
+BRLCAD_ADDEXEC(fix_polysolids fix_polysolids.c "librt;libnmg;libbu")
 BRLCAD_ADDEXEC(gencolor gencolor.c libbu)
 BRLCAD_ADDEXEC(hex hex.c libbu)
 

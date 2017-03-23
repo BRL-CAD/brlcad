@@ -177,10 +177,10 @@ rtcheck_vector_handler(ClientData clientData, int mask)
 
     /* Get vector output from rtcheck */
     if (feof(rtcp->fp)) {
-	Tcl_DeleteChannelHandler(rtcp->chan,
+	Tcl_DeleteChannelHandler((Tcl_Channel)rtcp->chan,
 				 rtcheck_vector_handler,
 				 (ClientData)rtcp);
-	Tcl_Close(rtcp->interp, rtcp->chan);
+	Tcl_Close(rtcp->interp, (Tcl_Channel)rtcp->chan);
 
 	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
 
@@ -213,13 +213,13 @@ rtcheck_output_handler(ClientData clientData, int mask)
     struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
 
     /* Get textual output from rtcheck */
-    if (Tcl_Eof(rtcop->chan) ||
+    if (Tcl_Eof((Tcl_Channel)rtcop->chan) ||
 	(!ReadFile(rtcop->fd, line, RT_MAXLINE, &count, 0))) {
 
-	Tcl_DeleteChannelHandler(rtcop->chan,
+	Tcl_DeleteChannelHandler((Tcl_Channel)rtcop->chan,
 				 rtcheck_output_handler,
 				 (ClientData)rtcop);
-	Tcl_Close(rtcop->interp, rtcop->chan);
+	Tcl_Close(rtcop->interp, (Tcl_Channel)rtcop->chan);
 
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
@@ -503,17 +503,17 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->gedp = gedp;
     rtcp->interp = (Tcl_Interp *)gedp->ged_interp;
 
-    rtcp->chan = Tcl_MakeFileChannel(pipe_iDup, TCL_READABLE);
-    Tcl_CreateChannelHandler(rtcp->chan, TCL_READABLE,
+    rtcp->chan = (void *)Tcl_MakeFileChannel(pipe_iDup, TCL_READABLE);
+    Tcl_CreateChannelHandler((Tcl_Channel)rtcp->chan, TCL_READABLE,
 			     rtcheck_vector_handler,
 			     (ClientData)rtcp);
 
     BU_GET(rtcop, struct rtcheck_output);
     rtcop->fd = pipe_eDup;
-    rtcop->chan = Tcl_MakeFileChannel(pipe_eDup, TCL_READABLE);
+    rtcop->chan = (void *)Tcl_MakeFileChannel(pipe_eDup, TCL_READABLE);
     rtcop->gedp = gedp;
     rtcop->interp = (Tcl_Interp *)gedp->ged_interp;
-    Tcl_CreateChannelHandler(rtcop->chan,
+    Tcl_CreateChannelHandler((Tcl_Channel)rtcop->chan,
 			     TCL_READABLE,
 			     rtcheck_output_handler,
 			     (ClientData)rtcop);

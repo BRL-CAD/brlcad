@@ -50,7 +50,6 @@
 #endif
 
 #include "bu/parallel.h"
-#include "bu/log.h"
 
 int
 parallel_set_affinity(int cpu)

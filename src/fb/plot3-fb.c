@@ -80,8 +80,8 @@
 #include "bu/color.h"
 #include "bu/cv.h"
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/parallel.h"
+#include "bu/exit.h"
 #include "fb.h"
 #include "bn/plot3.h"
 
@@ -1187,19 +1187,19 @@ DoFile(void)	/* returns vpl status code */
 		    goto spacend;
 		}
 
-		case 's':	/* space */
+		case 's': {
+		    /* space */
 		    if (debug)
-			fprintf(stderr, "space\n"); {
-			if (fread((char *)buf2,
-				  (int)sizeof buf2, 1, pfin
-				) != 1
-			    )
-			    return Foo(-11);
-			space.left  = sxt16((long)(buf2[1]<<8) | buf2[0]); /* x1 */
-			space.bottom= sxt16((long)(buf2[3]<<8) | buf2[2]); /* y1 */
-			space.right = sxt16((long)(buf2[5]<<8) | buf2[4]); /* x2 */
-			space.top   = sxt16((long)(buf2[7]<<8) | buf2[6]); /* y2 */
-		    }
+			fprintf(stderr, "space\n");
+
+		    if (fread((char *)buf2, (int)sizeof buf2, 1, pfin) != 1)
+			return Foo(-11);
+
+		    space.left  = sxt16((long)(buf2[1]<<8) | buf2[0]); /* x1 */
+		    space.bottom= sxt16((long)(buf2[3]<<8) | buf2[2]); /* y1 */
+		    space.right = sxt16((long)(buf2[5]<<8) | buf2[4]); /* x2 */
+		    space.top   = sxt16((long)(buf2[7]<<8) | buf2[6]); /* y2 */
+		}
 
 		spacend:
 		    delta = space.right - space.left;

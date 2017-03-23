@@ -1,11 +1,11 @@
-set(BRLMAN_INCLUDE_DIRS
+set(ARCHER_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${TCLCAD_INCLUDE_DIRS}
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_DIRS}
   )
-list(REMOVE_DUPLICATES BRLMAN_INCLUDE_DIRS)
-include_directories(${BRLMAN_INCLUDE_DIRS})
+list(REMOVE_DUPLICATES ARCHER_INCLUDE_DIRS)
+BRLCAD_INCLUDE_DIRS(ARCHER_INCLUDE_DIRS)
 
 BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer)
 
@@ -18,7 +18,7 @@ endif(CPP_DLL_DEFINES)
 # NOTE: Building "GUI" doesn't matter except on Windows, but on Windows archer
 # currently works only in graphical mode - might as well behave "nicely" there.
 # If/when we add MGED's ability to work in "classic" mode, Archer will have
-# to be built as a non-GUI application (or we'll have to build too executables)
+# to be built as a non-GUI application (or we'll have to build two executables)
 if(BRLCAD_ENABLE_TK)
   BRLCAD_ADDEXEC(archer archer.c "${archer_libs}" GUI)
   add_dependencies(archer archer_launch_tcl_cp)

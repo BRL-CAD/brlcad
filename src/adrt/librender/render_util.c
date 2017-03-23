@@ -34,7 +34,7 @@
 struct render_segment_s {
     adrt_mesh_t *mesh;
     uint8_t complete;
-    tfloat thickness;
+    TFLOAT thickness;
 };
 
 
@@ -51,7 +51,7 @@ void
 render_util_spall_vec(vect_t UNUSED(dir), fastf_t UNUSED(angle), int UNUSED(vec_num), vect_t *UNUSED(vec_list)) {
 #if 0
     TIE_3 vec;
-    tfloat radius, t;
+    TFLOAT radius, t;
     int i;
 
 
@@ -137,7 +137,7 @@ render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **data,
     shotline.segnum = 0;
     shotline.segind = 0;
 
-    tie_work(tie, ray, &id, shot_hit, &shotline);
+    TIE_WORK(tie, ray, &id, shot_hit, &shotline);
 
     /* result length */
     *dlen = 0;
@@ -168,8 +168,8 @@ render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **data,
 	*dlen += c;
 
 	/* thickness */
-	memcpy(&((char *)*data)[*dlen], &shotline.seglist[i].thickness, sizeof(tfloat));
-	*dlen += sizeof(tfloat);
+	memcpy(&((char *)*data)[*dlen], &shotline.seglist[i].thickness, sizeof(TFLOAT));
+	*dlen += sizeof(TFLOAT);
     }
 
     /* Free shotline data */
@@ -178,7 +178,7 @@ render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **data,
 
 
 void
-render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray), tfloat UNUSED(angle), void **UNUSED(data), int *UNUSED(dlen)) {
+render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray), TFLOAT UNUSED(angle), void **UNUSED(data), int *UNUSED(dlen)) {
 #if 0
     shotline_t shotline;
     struct tie_ray_s sray;
@@ -195,7 +195,7 @@ render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray),
     VSET(shotline.out.v, 0, 0, 0);
 
     /* Fire the center ray first */
-    tie_work(tie, ray, &id, shot_hit, &shotline);
+    TIE_WORK(tie, ray, &id, shot_hit, &shotline);
     in = shotline.in;
     out = shotline.out;
 
@@ -212,21 +212,21 @@ render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray),
     render_util_spall_vec(ray->dir, angle, 32, vec_list);
     for (i = 0; i < 32; i++) {
 	sray.dir = vec_list[i];
-	tie_work(tie, &sray, &id, shot_hit, &shotline);
+	TIE_WORK(tie, &sray, &id, shot_hit, &shotline);
     }
 
     /* Fire the 16 spall rays from the first in-hit at half angle */
     render_util_spall_vec(ray->dir, angle*0.5, 16, vec_list);
     for (i = 0; i < 16; i++) {
 	sray.dir = vec_list[i];
-	tie_work(tie, &sray, &id, shot_hit, &shotline);
+	TIE_WORK(tie, &sray, &id, shot_hit, &shotline);
     }
 
     /* Fire the 12 spall rays from the first in-hit at quarter angle */
     render_util_spall_vec(ray->dir, angle*0.25, 12, vec_list);
     for (i = 0; i < 12; i++) {
 	sray.dir = vec_list[i];
-	tie_work(tie, &sray, &id, shot_hit, &shotline);
+	TIE_WORK(tie, &sray, &id, shot_hit, &shotline);
     }
 
     bu_free(vec_list, "vec_list");
@@ -236,7 +236,7 @@ render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray),
 
     ind = 0;
 
-    *data = (void *)realloc(*data, 6*sizeof(tfloat) + sizeof(int));
+    *data = (void *)realloc(*data, 6*sizeof(TFLOAT) + sizeof(int));
 
     /* pack in hit */
     memcpy(&((char *)*data)[ind], &shotline.in, sizeof(TIE_3));

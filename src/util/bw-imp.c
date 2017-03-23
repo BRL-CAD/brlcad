@@ -68,7 +68,7 @@ static int dither[8][8] =		/* dither pattern */
 static int (*pattern)[8] = dither;	/* -> dither or halftone */
 
 static FILE *infp;			/* input file handle */
-static const char hyphen[] = "hyphen";
+static const char hyphen[] = "-";
 static const char *file_name = hyphen;	/* name of input file, for banner */
 
 static size_t height;			/* input height */

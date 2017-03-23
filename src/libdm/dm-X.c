@@ -141,12 +141,14 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 }
 
 
-HIDDEN void
+HIDDEN int
 X_reshape(struct dm_internal *dmp, int width, int height)
 {
     dmp->dm_height = height;
     dmp->dm_width = width;
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+
+    return 0;
 }
 
 
@@ -166,7 +168,7 @@ X_configureWin_guts(struct dm_internal *dmp, int force)
     if (!force &&
 	dmp->dm_height == xwa.height &&
 	dmp->dm_width == xwa.width)
-	return TCL_OK;
+	return BRLCAD_OK;
 
     X_reshape(dmp, xwa.width, xwa.height);
 
@@ -194,7 +196,7 @@ X_configureWin_guts(struct dm_internal *dmp, int force)
 	    if ((pubvars->fontstruct =
 		 XLoadQueryFont(pubvars->dpy, FONTBACK)) == NULL) {
 		bu_log("dm-X: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 
@@ -268,7 +270,7 @@ X_configureWin_guts(struct dm_internal *dmp, int force)
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -404,7 +406,7 @@ X_close(struct dm_internal *dmp)
     bu_free((void *)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
     bu_free((void *)dmp, "X_close: dmp");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -533,7 +535,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		  bu_vls_addr(&init_proc_vls),
 		  bu_vls_addr(&dmp->dm_pathName));
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&str);
 	(void)X_close(dmp);
 	return DM_NULL;
@@ -775,7 +777,7 @@ X_drawBegin(struct dm_internal *dmp)
 	      privars->gc,
 	      GCForeground, &gcv);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -798,7 +800,7 @@ X_drawEnd(struct dm_internal *dmp)
     /* Prevent lag between events and updates */
     XSync(pubvars->dpy, 0);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -825,7 +827,7 @@ X_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
     }
 
     MAT_COPY(privars->xmat, mat);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1131,7 +1133,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		      privars->gc, segbuf, nseg);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1146,12 +1148,12 @@ X_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), v
 	}
     } else {
 	if (!data) {
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    (void)callback_function(data);
 	}
     }
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1165,7 +1167,7 @@ X_normal(struct dm_internal *dmp)
     if (dmp->dm_debugLevel)
 	bu_log("X_normal()\n");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1200,7 +1202,7 @@ X_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, i
 		privars->gc,
 		sx, sy, str, strlen(str));
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1229,7 +1231,7 @@ X_drawLine2D(struct dm_internal *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fas
 	      privars->gc,
 	      sx1, sy1, sx2, sy2);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1244,9 +1246,9 @@ HIDDEN int
 X_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1270,7 +1272,7 @@ X_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 	       privars->pix,
 	       privars->gc, sx, sy);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1312,7 +1314,7 @@ X_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned
 	      privars->gc,
 	      GCForeground, &gcv);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1347,7 +1349,7 @@ X_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned
 	privars->bg =
 	    X_get_pixel(r, g, b, privars->pixels, CUBE_DIMENSION);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1376,7 +1378,7 @@ X_setLineAttr(struct dm_internal *dmp, int width, int style)
 		       privars->gc,
 		       width, linestyle, CapButt, JoinMiter);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1385,7 +1387,7 @@ X_debug(struct dm_internal *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1394,7 +1396,7 @@ X_logfile(struct dm_internal *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1411,7 +1413,7 @@ X_setWinBounds(struct dm_internal *dmp, fastf_t *w)
     dmp->dm_clipmax[1] = w[3];
     dmp->dm_clipmax[2] = w[5];
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1431,7 +1433,7 @@ X_setLight(struct dm_internal *dmp, int light_on)
 
     dmp->dm_light = light_on;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1443,7 +1445,7 @@ X_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 
     dmp->dm_zbuffer = zbuffer_on;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1476,7 +1478,7 @@ X_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 
     if (!ximage_p) {
 	bu_log("png: could not get XImage\n", (char *)NULL);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bytes_per_pixel = ximage_p->bytes_per_line / ximage_p->width;
@@ -1589,7 +1591,7 @@ X_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 	    blue_shift = blue_shift - (bpb - blue_bits);
     } else {
 	bu_log("png: %d bytes per pixel is not yet supported\n", bytes_per_pixel);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     rows = (unsigned char **)bu_calloc(ximage_p->height, sizeof(unsigned char *), "rows");
@@ -1653,12 +1655,12 @@ X_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 	    bu_free(idata, "image data");
 
 	    bu_log("png: not supported for this platform\n", (char *)NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
     bu_free(rows, "rows");
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 int

@@ -264,7 +264,6 @@ HmPutItem(HmWindow *win, HmItem *itemp, int flag)
     int width = win->width;
     int bitmap = flag & P_FORCE ?
 	~0 : win->dirty[row-win->menuy];
-    /*	~0 : win->dirty[HmENTRY+1];*/
     int bit = 1;
     int writemask = 0;
     if (bitmap == 0)

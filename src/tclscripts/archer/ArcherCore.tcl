@@ -1650,7 +1650,7 @@ namespace eval ArcherCore {
     set rtrans [lindex $rdata 1]
     set obj [file tail $obj]
 
-    foreach item [gedCmd report 0] {
+    foreach item [gedCmd solid_report 0] {
 	if {[lsearch [split $item /] $obj] != -1} {
 	    if { $rmode == $DISPLAY_MODE_HIDDEN } {
 		gedCmd draw -h $item
@@ -2185,8 +2185,6 @@ namespace eval ArcherCore {
 
     if {$target == ""} {
 	return
-    } else {
-	set mLastSelectedDir [file dirname $target]
     }
 
     if {[file exists $target]} {
@@ -2213,6 +2211,7 @@ namespace eval ArcherCore {
 	{"BRL-CAD Database" {".g" ".asc"}}
 	{"3dm (Rhino)" {".3dm"}}
 	{"FASTGEN 4" {".bdf" ".fas" ".fg" ".fg4"}}
+	{"OBJ" {".obj"}}
 	{"STEP" {".stp" ".step"}}
 	{"STL" {".stl"}}
 	{"All Files" {*}}
@@ -2225,8 +2224,6 @@ namespace eval ArcherCore {
 
     if {$input_target == ""} {
 	return
-    } else {
-	set mLastSelectedDir [file dirname $input_target]
     }
 
     set target [cadwidgets::geom_load $input_target 1]
@@ -5386,6 +5383,8 @@ namespace eval ArcherCore {
     gedCmd data_axes points {}
     gedCmd data_lines points {}
     gedCmd configure -primitiveLabels {}
+
+    set mLastSelectedDir [file dirname $target]
 
     return true
 }

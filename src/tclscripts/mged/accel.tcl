@@ -19,23 +19,8 @@
 #
 ###
 #
-# Author -
-#      Bob Hartley, SEAP
-#
-# Date-
-#      15 August 2000
-#
-# Description-
 #      Various accelerators for BRL-CAD.
 #
-# Modifications-
-#      TraNese Christy
-#        *- Changed proc names
-#        *- Added ability to accept variable number of args
-#        *- Added usage message
-#        *- Made the code more readable and efficient
-#
-
 
 #
 #                               R C C - C A P

@@ -483,11 +483,29 @@ if(NOT BRLCAD_IS_SUBBUILD)
   include(ProcessorCount)
   ProcessorCount(N)
   if(NOT N EQUAL 0)
-    set(JFLAG "-j${N}")
+    math(EXPR NC "${N} / 2")
+    if(${NC} GREATER 1)
+      set(JFLAG "-j${NC}")
+    else(${NC} GREATER 1)
+      set(JFLAG)
+    endif(${NC} GREATER 1)
   else(NOT N EQUAL 0)
     # Huh?  No j flag if we can't get a processor count
     set(JFLAG)
   endif(NOT N EQUAL 0)
+
+  if(CMAKE_CONFIGURATION_TYPES)
+    if(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIG>)
+    else(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIGURATION>)
+    endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  else(CMAKE_CONFIGURATION_TYPES)
+    if ("${CONFIG}" STREQUAL "")
+      set(CONFIG "\"\"")
+    endif ("${CONFIG}" STREQUAL "")
+  endif(CMAKE_CONFIGURATION_TYPES)
+
   add_custom_target(check
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
@@ -495,9 +513,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
     COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
-    COMMAND ${CMAKE_CTEST_COMMAND} -R \"benchmark\" --output-on-failure ${JFLAG}
-    COMMAND ${CMAKE_CTEST_COMMAND} -L \"Regression\" --output-on-failure ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -R \"benchmark\" --output-on-failure ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -L \"Regression\" --output-on-failure ${JFLAG}
     )
   set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
 endif(NOT BRLCAD_IS_SUBBUILD)
@@ -511,17 +529,28 @@ if(NOT BRLCAD_IS_SUBBUILD)
   include(ProcessorCount)
   ProcessorCount(N)
   if(NOT N EQUAL 0)
-    set(JFLAG "-j${N}")
+    math(EXPR NC "${N} / 2")
+    if(${NC} GREATER 1)
+      set(JFLAG "-j${NC}")
+    else(${NC} GREATER 1)
+      set(JFLAG)
+    endif(${NC} GREATER 1)
   else(NOT N EQUAL 0)
     # Huh?  No j flag if we can't get a processor count
     set(JFLAG)
   endif(NOT N EQUAL 0)
 
-  if(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    set(CONFIG $<CONFIG>)
-  else(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    set(CONFIG $<CONFIGURATION>)
-  endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  if(CMAKE_CONFIGURATION_TYPES)
+    if(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIG>)
+    else(${CMAKE_VERSION} VERSION_GREATER 2.99)
+      set(CONFIG $<CONFIGURATION>)
+    endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  else(CMAKE_CONFIGURATION_TYPES)
+    if ("${CONFIG}" STREQUAL "")
+      set(CONFIG "\"\"")
+    endif ("${CONFIG}" STREQUAL "")
+  endif(CMAKE_CONFIGURATION_TYPES)
 
   add_custom_target(unit
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
@@ -530,25 +559,127 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development\\).  All dependencies required"
     COMMAND ${CMAKE_COMMAND} -E echo "      by the tests are compiled automatically."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
     )
 
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
 
-  function(add_test test_name test_prog)
-    _add_test(${test_name} ${test_prog} ${ARGN})
-    if (NOT "${test_name}" STREQUAL "NAME")
-      if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" STREQUAL "benchmark")
-	add_dependencies(unit ${test_prog})
-	add_dependencies(check ${test_prog})
-      endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" STREQUAL "benchmark")
-    else (NOT "${test_name}" STREQUAL "NAME")
-      if (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress- AND NOT "${ARGV1}" MATCHES "benchmark")
-	add_dependencies(unit ${ARGV3})
-	add_dependencies(check ${ARGV3})
-      endif (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress- AND NOT "${ARGV1}" MATCHES "benchmark")
-    endif (NOT "${test_name}" STREQUAL "NAME")
-  endfunction(add_test)
+  # we wrap the CMake add_test() function in order to automatically
+  # set up test dependencies for the 'unit' and 'check' test targets.
+  #
+  # this function extravagantly tries to work around a bug in CMake
+  # where we cannot pass an empty string through this wrapper to
+  # _add_test()/add_test().  passed as a list (e.g., via ARGN, ARGV,
+  # or manually composed), the empty string is skipped(!).  passed as
+  # a string, it is all treated as command name with no arguments.
+  #
+  # manual workaround used here involves invoking _add_test() with all
+  # args individually recreated/specified (i.e., not as a list) as
+  # this preserves empty strings.  this approach means we cannot
+  # generalize and only support a limited variety of empty string
+  # arguments, but we do test and halt if someone unknowingly tries.
+  function(add_test NAME test_name COMMAND test_prog)
+
+    # find any occurrences of empty strings
+    set(idx 0)
+    set(matches)
+    foreach (ARG IN LISTS ARGV)
+      # need 'x' to avoid older cmake seeing "COMMAND" "STREQUAL" ""
+      if ("x${ARG}" STREQUAL "x")
+	list(APPEND matches ${idx})
+      endif ("x${ARG}" STREQUAL "x")
+      math(EXPR idx "${idx} + 1")
+    endforeach()
+
+    # make sure we don't exceed current support
+    list(LENGTH matches cnt)
+    if ("${cnt}" GREATER 1)
+      message(FATAL_ERROR "ERROR: encountered ${cnt} > 1 empty string being passed to add_test(${test_name}).  Expand support in the top-level CMakeLists.txt file (grep add_test) or pass fewer empty strings.")
+    endif ("${cnt}" GREATER 1)
+
+    # if there are empty strings, we need to manually recreate their calling
+    if ("${cnt}" GREATER 0)
+
+      list(GET matches 0 empty)
+      if ("${empty}" EQUAL 4)
+	foreach (i 1)
+	  if (ARGN)
+	    list(REMOVE_AT ARGN 0)
+	  endif (ARGN)
+	endforeach ()
+	_add_test(NAME ${test_name} COMMAND ${test_prog} "" ${ARGN})
+      elseif ("${empty}" EQUAL 5)
+	foreach (i 1 2)
+	  if (ARGN)
+	    list(REMOVE_AT ARGN 0)
+	  endif (ARGN)
+	endforeach ()
+	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} "" ${ARGN})
+      elseif ("${empty}" EQUAL 6)
+	foreach (i 1 2 3)
+	  if (ARGN)
+	    list(REMOVE_AT ARGN 0)
+	  endif (ARGN)
+	endforeach ()
+	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} "" ${ARGN})
+      elseif ("${empty}" EQUAL 7)
+	foreach (i 1 2 3 4)
+	  if (ARGN)
+	    list(REMOVE_AT ARGN 0)
+	  endif (ARGN)
+	endforeach ()
+	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} "" ${ARGN})
+      elseif ("${empty}" EQUAL 8)
+	foreach (i 1 2 3 4 5)
+	  if (ARGN)
+	    list(REMOVE_AT ARGN 0)
+	  endif (ARGN)
+	endforeach ()
+	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} "" ${ARGN})
+      elseif ("${empty}" EQUAL 9)
+	foreach (i 1 2 3 4 5 6)
+	  if (ARGN)
+	    list(REMOVE_AT ARGN 0)
+	  endif (ARGN)
+	endforeach ()
+	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} "" ${ARGN})
+      elseif ("${empty}" EQUAL 10)
+	foreach (i 1 2 3 4 5 6)
+	  if (ARGN)
+	    list(REMOVE_AT ARGN 0)
+	  endif (ARGN)
+	endforeach ()
+	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} "" ${ARGN})
+      elseif ("${empty}" EQUAL 11)
+	foreach (i 1 2 3 4 5 6)
+	  if (ARGN)
+	    list(REMOVE_AT ARGN 0)
+	  endif (ARGN)
+	endforeach ()
+	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} "" ${ARGN})
+
+
+	# ADD_EMPTY_HERE: insert support for addition argv positions
+	# as extra elseif tests here using the preceding pattern.  be
+	# sure to update the index in the following else clause fatal
+	# error message too.
+
+      else ("${empty}" EQUAL 4)
+	message(FATAL_ERROR "ERROR: encountered an empty string passed to add_test(${test_name}) as ARGV${empty} > ARGV9.  Expand support in the top-level CMakeLists.txt file (grep ADD_EMPTY_HERE).")
+      endif ("${empty}" EQUAL 4)
+
+    else ("${cnt}" GREATER 0)
+      # no empty strings, no worries
+      _add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGN})
+    endif ("${cnt}" GREATER 0)
+
+    # add test to unit and check targets
+    if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
+      add_dependencies(unit ${test_prog})
+      add_dependencies(check ${test_prog})
+    endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
+
+  endfunction(add_test NAME test_name COMMAND test_prog)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 
@@ -584,29 +715,45 @@ endif(_orig_lang)
 # generated packages, the resulting packages may behave badly when installed.
 # In particular, RPM packages may improperly reset permissions on core
 # directories such as /usr.
-macro(CHECK_UMASK umask_val status_var)
+function(check_umask umask_val status_var)
   string(REGEX REPLACE "[^x]" "" umask_x "${umask_val}")
   string(REGEX REPLACE "[^r]" "" umask_r "${umask_val}")
   string(LENGTH "${umask_r}" UMASK_HAVE_R)
-  set(${status_var} 0)
+  set(${status_var} 0 PARENT_SCOPE)
   if(UMASK_HAVE_R AND "${umask_x}" STREQUAL "xxx")
-    set(${status_var} 1)
+    set(${status_var} 1 PARENT_SCOPE)
   endif(UMASK_HAVE_R AND "${umask_x}" STREQUAL "xxx")
-endmacro(CHECK_UMASK)
-# Note - umask is not always an executable, so we can't use find_program
-# to determine whether the umask check is appropriate.
-IF(NOT WIN32)
-  exec_program(umask ARGS -S OUTPUT_VARIABLE umask_curr)
+endfunction(check_umask)
+
+# Note - umask is not always an executable, so find_program wont' necessarily
+# determine whether the umask check is appropriate.  If we don't find an
+# executable, follow up to see if we can use sh to get the info.
+find_program(UMASK_EXEC umask)
+mark_as_advanced(UMASK_EXEC)
+if(NOT UMASK_EXEC)
+  # If we don't have a umask cmd, see if sh -c "umask -S" works
+  execute_process(COMMAND sh -c "umask -S" OUTPUT_VARIABLE umask_out)
+  # Check if we've got something that looks like a umask output
+  if("${umask_out}" MATCHES "^u=.*g=.*o=.*")
+    set(UMASK_EXEC sh)
+    set(UMASK_EXEC_ARGS -c "umask -S")
+  endif("${umask_out}" MATCHES "^u=.*g=.*o=.*")
+else(NOT UMASK_EXEC)
+  set(UMASK_EXEC_ARGS -S)
+endif(NOT UMASK_EXEC)
+
+if(UMASK_EXEC)
+  execute_process(COMMAND ${UMASK_EXEC} ${UMASK_EXEC_ARGS} OUTPUT_VARIABLE umask_curr)
   string(STRIP "${umask_curr}" umask_curr)
-  CHECK_UMASK("${umask_curr}" UMASK_OK)
-  if (NOT UMASK_OK)
+  check_umask("${umask_curr}" UMASK_OK)
+  if(NOT UMASK_OK)
     message(" ")
     message(WARNING "umask is set to ${umask_curr} - this setting is not recommended if one of the goals of this build is to generate packages. Use 'umask 022' for improved package behavior.")
     if(SLEEP_EXEC)
       execute_process(COMMAND ${SLEEP_EXEC} 1)
     endif(SLEEP_EXEC)
-  endif (NOT UMASK_OK)
-ENDIF(NOT WIN32)
+  endif(NOT UMASK_OK)
+endif(UMASK_EXEC)
 
 #---------------------------------------------------------------------
 # Unfortunately, CMake doesn't give you variables with current day,
@@ -652,9 +799,14 @@ if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "De
 endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
 
 #---------------------------------------------------------------------
-# We want to check /usr/local by default, so add it
-set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
-set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
+# We want to check /usr/local by default, so add it if it exists
+if (IS_DIRECTORY /usr/local)
+  set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
+  if (IS_DIRECTORY /usr/local/include)
+    set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
+    include_directories(AFTER SYSTEM /usr/local/include)
+  endif (IS_DIRECTORY /usr/local/include)
+endif (IS_DIRECTORY /usr/local)
 
 #---------------------------------------------------------------------
 
@@ -1099,6 +1251,7 @@ if(BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_AQUA)
 
 # Enable features requiring Qt
+# TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
 find_package(Qt5Widgets QUIET)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
@@ -1560,8 +1713,21 @@ else()
   else("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     CHECK_C_FLAG("std=gnu89")
   endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  CHECK_CXX_FLAG("std=gnu++98")
+  CHECK_CXX_FLAG("std=gnu++11" VARS CXX11_FLAG)
+  if(NOT CXX11_FLAG)
+    CHECK_CXX_FLAG("std=gnu++0x" VARS CXX11_FLAG)
+    if(NOT CXX11_FLAG)
+      CHECK_CXX_FLAG("std=c++11" VARS CXX11_FLAG)
+      if(NOT CXX11_FLAG)
+	CHECK_CXX_FLAG("std=c++0x" VARS CXX11_FLAG)
+	if(NOT MSVC AND NOT CXX11_FLAG)
+	  message(WARNING "No working C++11 flag found.")
+	endif(NOT MSVC AND NOT CXX11_FLAG)
+      endif(NOT CXX11_FLAG)
+    endif(NOT CXX11_FLAG)
+  endif(NOT CXX11_FLAG)
 endif()
+
 # TODO - should be using this with MSVC, but it breaks the BUILD_SLEEP
 # try_compile below with errors that appear to be coming from Windows
 # headers??
@@ -1835,7 +2001,10 @@ endif(BRLCAD_ENABLE_X11)
 BRLCAD_CHECK_LIBRARY(M m cos)
 
 # uuid library
-BRLCAD_CHECK_LIBRARY(UUID uuid uuid_generate)
+find_package(UUID)
+if (UUID_FOUND)
+  BRLCAD_CHECK_LIBRARY(UUID uuid uuid_generate)
+endif (UUID_FOUND)
 
 # network socket library (linux, bsd)
 BRLCAD_CHECK_LIBRARY(SOCKET socket socket)
@@ -1976,8 +2145,9 @@ BRLCAD_INCLUDE_FILE(termios.h HAVE_TERMIOS_H)
 BRLCAD_INCLUDE_FILE(termlib.h HAVE_TERMLIB_H)
 BRLCAD_INCLUDE_FILE(tinfo.h HAVE_TINFO_H)
 BRLCAD_INCLUDE_FILE(ulocks.h HAVE_ULOCKS_H)
+BRLCAD_INCLUDE_FILE(uuid.h HAVE_UUID_H) # for uuid_generate() on BSD
 BRLCAD_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
-BRLCAD_INCLUDE_FILE(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac & Linux */
+BRLCAD_INCLUDE_FILE(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac & Linux
 BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
 
 # C++
@@ -2082,6 +2252,8 @@ BRLCAD_ALLOCA()
 
 BRLCAD_FUNCTION_EXISTS(XQueryExtension HAVE_XQUERYEXTENSION)
 BRLCAD_FUNCTION_EXISTS(_putenv_s HAVE__PUTENV_S)
+BRLCAD_FUNCTION_EXISTS(_splitpath HAVE__SPLITPATH)
+BRLCAD_FUNCTION_EXISTS(_strtoi64 HAVE__STRTOI64)
 BRLCAD_FUNCTION_EXISTS(alarm HAVE_ALARM)
 BRLCAD_FUNCTION_EXISTS(dlopen HAVE_DLOPEN)
 BRLCAD_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
@@ -2117,6 +2289,7 @@ BRLCAD_FUNCTION_EXISTS(strcasecmp HAVE_STRCASECMP)
 BRLCAD_FUNCTION_EXISTS(strdup HAVE_STRDUP)
 BRLCAD_FUNCTION_EXISTS(strlcat HAVE_STRLCAT)
 BRLCAD_FUNCTION_EXISTS(strlcpy HAVE_STRLCPY)
+BRLCAD_FUNCTION_EXISTS(strtoll HAVE_STRTOLL)
 BRLCAD_FUNCTION_EXISTS(strncasecmp HAVE_STRNCASECMP)
 BRLCAD_FUNCTION_EXISTS(sync HAVE_SYNC)
 BRLCAD_FUNCTION_EXISTS(sysconf HAVE_SYSCONF)
@@ -2368,9 +2541,9 @@ endif(MSVC)
 
 # Before we finalize, set some specific global linker flags
 if(MSVC)
-  set(CMAKE_EXE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
-  set(CMAKE_SHARED_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
-  set(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
 endif(MSVC)
 
 #-----------------------------------------------------------------------------
@@ -2461,21 +2634,31 @@ mark_as_advanced(BUILD_TESTING)
 
 # We've done the toplevel configure steps, now add the subdirectories
 macro(verbose_add_subdirectory root dir)
-  if(NOT EXISTS "${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev")
-    if(NOT "${root}" STREQUAL "")
-      message("-- Adding ${root}/${dir}...")
-    else(NOT "${root}" STREQUAL "")
-      message("-- Adding ${dir}...")
-    endif(NOT "${root}" STREQUAL "")
-  endif(NOT EXISTS "${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev")
-  add_subdirectory(${dir})
-  if(NOT EXISTS "${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev")
-    if(NOT "${root}" STREQUAL "")
-      message("-- Adding ${root}/${dir} - done")
-    else(NOT "${root}" STREQUAL "")
-      message("-- Adding ${dir} - done")
-    endif(NOT "${root}" STREQUAL "")
-  endif(NOT EXISTS "${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev")
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
+    if(NOT EXISTS "${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev")
+      if(NOT "${root}" STREQUAL "")
+	message("-- Adding ${root}/${dir}...")
+      else(NOT "${root}" STREQUAL "")
+	message("-- Adding ${dir}...")
+      endif(NOT "${root}" STREQUAL "")
+    endif(NOT EXISTS "${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev")
+    add_subdirectory(${dir})
+    if(NOT EXISTS "${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev")
+      if(NOT "${root}" STREQUAL "")
+	message("-- Adding ${root}/${dir} - done")
+      else(NOT "${root}" STREQUAL "")
+	message("-- Adding ${dir} - done")
+      endif(NOT "${root}" STREQUAL "")
+    endif(NOT EXISTS "${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev")
+  else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
+    if(NOT EXISTS "${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev")
+      if(NOT "${root}" STREQUAL "")
+	message("-- Addition of directory ${root}/${dir} requested, but not found on filesystem - skipping")
+      else(NOT "${root}" STREQUAL "")
+	message("-- Addition of directory ${dir} requested, but not found on filesystem - skipping")
+      endif(NOT "${root}" STREQUAL "")
+    endif(NOT EXISTS "${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev")
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
 endmacro()
 
 verbose_add_subdirectory("" src)
@@ -2649,7 +2832,6 @@ if(NOT BRLCAD_DISABLE_SUMMARY)
   include("${BRLCAD_CMAKE_DIR}/BRLCAD_Summary.cmake")
 endif(NOT BRLCAD_DISABLE_SUMMARY)
 
-
 # *******************************************************************
 # ***                      Timestamp Rules                        ***
 # *******************************************************************
@@ -2818,8 +3000,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   configure_file("${BRLCAD_CMAKE_DIR}/source_archive_setup.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake" @ONLY)
 
-  option(BRLCAD_VERSIONED_RPM_NAME "Incorporate BRL-CAD version into RPM package name" OFF)
-  mark_as_advanced(BRLCAD_VERSIONED_RPM_NAME)
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "BRL-CAD - a powerful cross-platform open source solid modeling system")
   set(CPACK_PACKAGE_VENDOR "BRL-CAD Development Team")
   set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README")
@@ -2827,65 +3007,67 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set(CPACK_PACKAGE_VERSION_MAJOR ${BRLCAD_VERSION_MAJOR})
   set(CPACK_PACKAGE_VERSION_MINOR ${BRLCAD_VERSION_MINOR})
   set(CPACK_PACKAGE_VERSION_PATCH ${BRLCAD_VERSION_PATCH})
-  if(BRLCAD_VERSIONED_RPM_NAME)
-    set(CPACK_RPM_PACKAGE_NAME "BRL-CAD_${BRLCAD_VERSION}")
-  endif(BRLCAD_VERSIONED_RPM_NAME)
 
-  if(UNIX)
-    set(CPACK_STRIP_FILES TRUE)
-  endif(UNIX)
+  # By default, we want debugging information
+  set(CPACK_STRIP_FILES FALSE)
 
-  if(UNIX)
+  # If we're not on Windows, set the install prefix and create
+  # TGZ and TBZ2 packages by default
+  if(NOT WIN32)
     set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-  endif(UNIX)
-
-  if(UNIX AND NOT APPLE)
     set(CPACK_GENERATOR TGZ TBZ2)
+  endif(NOT WIN32)
 
-    find_program(RPMBUILD_EXEC rpmbuild)
-    mark_as_advanced(RPMBUILD_EXEC)
-    if(RPMBUILD_EXEC)
-      # Since RPM packages present a particular problem with bad umask
-      # settings and RPM package building is enabled, raise the issue again
-      # with a longer wait time.
-      if (NOT UMASK_OK)
-	message(" ")
-	message(WARNING "umask is set to ${umask_curr} and RPM package building is enabled - this is not a 'standard' umask setting for BRL-CAD RPM packages.  Double check that these umask permissions will have the desired results when installed - RPM packages can impact permissions on system directories such as /usr\nIf the umask settings need to be changed, it is recommended that the build directory be cleared and cmake re-run after the umask setting has been changed.")
-	if(SLEEP_EXEC)
-	  execute_process(COMMAND ${SLEEP_EXEC} 5)
-	endif(SLEEP_EXEC)
-      endif (NOT UMASK_OK)
+  # If we have RPMBUILD and it's not explicitly disabled, assume we're making an RPM.
+  find_program(RPMBUILD_EXEC rpmbuild)
+  mark_as_advanced(RPMBUILD_EXEC)
+  if(RPMBUILD_EXEC AND NOT CPACK_RPM_SKIP)
 
-      set(CPACK_GENERATOR ${CPACK_GENERATOR} RPM)
-      set(CPACK_RPM_PACKAGE_LICENSE "LGPL 2.1")
-      set(CPACK_RPM_PACKAGE_GROUP "Applications/Engineering")
-      #set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}")
-      #if(EXISTS /etc/redhat-release)
-      #	file(READ /etc/redhat-release REDHAT_RELEASE)
-      #	string(REGEX MATCH "[0-9]+" REDHAT_VERSION ${REDHAT_RELEASE})
-      #	string(REGEX MATCH "Enterprise Linux" LINUX_DIST_TYPE ${REDHAT_RELEASE})
-      #	if(LINUX_DIST_TYPE)
-      #		set(LINUX_DIST_TYPE "el")
-      #	else(LINUX_DIST_TYPE)
-      #		set(LINUX_DIST_TYPE "rh")
-      #	endif(LINUX_DIST_TYPE)
-      #	set(CPACK_RPM_PACKAGE_RELEASE 1.${LINUX_DIST_TYPE}${REDHAT_VERSION})
-      #else(EXISTS /etc/redhat-release)
-      #	#set(CPACK_RPM_PACKAGE_RELEASE 2)
-      #endif(EXISTS /etc/redhat-release)
-    endif(RPMBUILD_EXEC)
+    # Build an RPM by default if we have the tool.  Out of the box, just
+    # build a "vanilla" RPM.  For situations where we want more detail
+    # and versioning of the RPM, set the variable CMAKE_RPM_VERSION
+    # to the numerical "version" of the RPM: 1, 2, etc..
+
+    # Since RPM packages present a particular problem with bad umask
+    # settings and RPM package building is enabled, raise the issue again
+    # with a longer wait time.
+    if (NOT UMASK_OK)
+      message(" ")
+      message(WARNING "umask is set to ${umask_curr} and RPM package building is enabled - this is not a 'standard' umask setting for BRL-CAD RPM packages.  Double check that these umask permissions will have the desired results when installed - RPM packages can impact permissions on system directories such as /usr\nIf the umask settings need to be changed, it is recommended that the build directory be cleared and cmake re-run after the umask setting has been changed.")
+      if(SLEEP_EXEC)
+	execute_process(COMMAND ${SLEEP_EXEC} 5)
+      endif(SLEEP_EXEC)
+    endif (NOT UMASK_OK)
+
+    set(CPACK_GENERATOR ${CPACK_GENERATOR} RPM)
+    set(CPACK_RPM_PACKAGE_LICENSE "LGPL 2.1")
+    set(CPACK_RPM_PACKAGE_GROUP "Applications/Engineering")
     set(CPACK_RPM_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
-    if(NOT CPACK_RPM_PACKAGE_RELEASE)
-      set(CPACK_RPM_PACKAGE_RELEASE 1)
-    endif(NOT CPACK_RPM_PACKAGE_RELEASE)
-    if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-      set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_x86_${CMAKE_SYSTEM_NAME}_${CPACK_RPM_PACKAGE_RELEASE}")
-    else(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-      set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_PROCESSOR}_${CMAKE_SYSTEM_NAME}_${CPACK_RPM_PACKAGE_RELEASE}")
-    endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-  else(UNIX AND NOT APPLE)
-    set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_PROCESSOR}")
-  endif(UNIX AND NOT APPLE)
+    if(CPACK_RPM_VERSION)
+      set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}")
+      # If we've got a Redhat release, include some info about the specific release in the name.
+      # Otherwise, just go generic.
+      if(EXISTS /etc/redhat-release)
+	file(READ /etc/redhat-release REDHAT_RELEASE)
+	string(REGEX MATCH "[0-9]+" REDHAT_VERSION ${REDHAT_RELEASE})
+	string(REGEX MATCH "Enterprise Linux" LINUX_DIST_TYPE ${REDHAT_RELEASE})
+	if(LINUX_DIST_TYPE)
+	  set(LINUX_DIST_TYPE "el")
+	else(LINUX_DIST_TYPE)
+	  set(LINUX_DIST_TYPE "rh")
+	endif(LINUX_DIST_TYPE)
+	set(CPACK_RPM_PACKAGE_RELEASE _${CPACK_RPM_VERSION}.${LINUX_DIST_TYPE}${REDHAT_VERSION})
+      else(EXISTS /etc/redhat-release)
+	set(CPACK_RPM_PACKAGE_RELEASE _${CPACK_RPM_VERSION})
+      endif(EXISTS /etc/redhat-release)
+    endif(CPACK_RPM_VERSION)
+  endif(RPMBUILD_EXEC AND NOT CPACK_RPM_SKIP)
+
+  if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+    set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_NAME}_x86${CPACK_RPM_PACKAGE_RELEASE}")
+  else(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+    set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}${CPACK_RPM_PACKAGE_RELEASE}")
+  endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
 
   if(WIN32)
     set(CPACK_GENERATOR NSIS)
@@ -2896,6 +3078,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     # sure there is at least one set of four (4) backslashes.
     set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
     set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\uninstall.ico")
+    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
     set(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
     set(CPACK_NSIS_MODIFY_PATH ON)
     if(BRLCAD_ENABLE_WIX)
@@ -2905,10 +3088,18 @@ if(NOT BRLCAD_IS_SUBBUILD)
       set(CPACK_WIX_UI_BANNER "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_banner.bmp")
       set(CPACK_WIX_UI_DIALOG "${CMAKE_SOURCE_DIR}/misc/wix/brlcad_dialog.bmp")
     endif(BRLCAD_ENABLE_WIX)
+    if(CMAKE_CL_64)
+      set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_win64")
+      set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME} ${CPACK_PACKAGE_VERSION} win64")
+      # Use the setting from http://public.kitware.com/pipermail/cmake/2013-June/055000.html to
+      # provide the correct default 64 bit directory with older CMake versions
+      set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
+    else(CMAKE_CL_64)
+      set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_win32")
+      set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME} ${CPACK_PACKAGE_VERSION} win32")
+      set(CPACK_NSIS_PACKAGE_NAME "BRL-CAD (32 Bit)")
+    endif(CMAKE_CL_64)
   endif(WIN32)
-  if(CMAKE_CL_64)
-    set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_x64")
-  endif(CMAKE_CL_64)
 
   set(CPACK_SOURCE_GENERATOR TGZ TBZ2 ZIP)
   set(CPACK_SOURCE_PACKAGE_FILE_NAME "brlcad-${BRLCAD_VERSION}")
@@ -2962,6 +3153,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
   CREATE_DISTCHECK(default_build_type "-DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  CREATE_DISTCHECK(no_strict "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_STRICT=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")
@@ -3001,6 +3193,18 @@ mark_as_advanced(CMAKE_C_COMPILER)
 
 set(CONFIG_FATAL_ERROR 0)
 
+function(DIFF_FILE filename)
+  file(READ "${BRLCAD_SOURCE_DIR}/${filename}" SRC_STR)
+  file(READ "${BRLCAD_BINARY_DIR}/${filename}.new" BIN_STR)
+  string(REGEX REPLACE "\r?\n" "" OLD_STR "${SRC_STR}")
+  string(REGEX REPLACE "\r?\n" "" NEW_STR "${BIN_STR}")
+  if(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
+    set(CONFIG_FATAL_ERROR 1 PARENT_SCOPE)
+    message("\n\"${BRLCAD_SOURCE_DIR}/${filename}\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/${filename}.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/${filename}\" with \"${BRLCAD_BINARY_DIR}/${filename}.new\"\n")
+  endif(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
+endfunction(DIFF_FILE filename)
+
+# Finalize and check INSTALL file
 file(READ "${BRLCAD_SOURCE_DIR}/INSTALL" SRC_INSTALL_STR)
 string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX "${SRC_INSTALL_STR}")
 file(WRITE "${BRLCAD_BINARY_DIR}/INSTALL.new" "${INSTALL_PREFIX}")
@@ -3011,29 +3215,15 @@ file(APPEND "${BRLCAD_BINARY_DIR}/INSTALL.new" "\n\n*** Note - Do not add or edi
    the toplevel CMakeLists.txt file and src/other/CMakeLists.txt - any changes
    should be made in those files.  The CMake configuration process will
    automatically re-generate INSTALL with the new descriptions and alias
-   information.\n")
-execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${BRLCAD_SOURCE_DIR}/INSTALL" "${BRLCAD_BINARY_DIR}/INSTALL.new"
-  RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
-  DIFF_ERROR)
-if(IS_DIFFERENT)
-  set(CONFIG_FATAL_ERROR 1)
-  message("\n\"${BRLCAD_SOURCE_DIR}/INSTALL\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/INSTALL\" with \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\n")
-endif(IS_DIFFERENT)
+   information.\n"
+   )
+DIFF_FILE(INSTALL)
 
 # Do the same thing for the configure shell script - finish it and check
 # for differences.
 file(READ "${BRLCAD_CMAKE_DIR}/configure_suffix.sh" CONFIG_SUFFIX)
 file(APPEND "${CMAKE_BINARY_DIR}/configure.new" "${CONFIG_SUFFIX}")
-# Compare
-execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
-  "${BRLCAD_SOURCE_DIR}/configure" "${BRLCAD_BINARY_DIR}/configure.new"
-  RESULT_VARIABLE IS_CONFIG_SH_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
-  DIFF_ERROR)
-if(IS_CONFIG_SH_DIFFERENT)
-  set(CONFIG_FATAL_ERROR 1)
-  message("\n\"${BRLCAD_SOURCE_DIR}/configure\" is out of date. An updated version has been generated at \"${BRLCAD_BINARY_DIR}/configure.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/configure\" with \"${BRLCAD_BINARY_DIR}/configure.new\"\n")
-endif(IS_CONFIG_SH_DIFFERENT)
+DIFF_FILE(configure)
 
 if(CONFIG_FATAL_ERROR)
   message(FATAL_ERROR "Configure haulted.")
@@ -3116,7 +3306,7 @@ add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   COMMAND false
   )
 set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
-_add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
+add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
 
 # Local Variables:
 # tab-width: 8

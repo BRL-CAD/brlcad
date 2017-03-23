@@ -49,6 +49,10 @@ if(NOT "@BRLCAD_BUNDLED_LIBS@" STREQUAL "BUNDLED")
   message(" ")
 endif(NOT "@BRLCAD_BUNDLED_LIBS@" STREQUAL "BUNDLED")
 
+if(EXISTS "@CMAKE_SOURCE_DIR@/src/testing")
+  message(FATAL_ERROR "\nThe directory @CMAKE_SOURCE_DIR@/src/testing is present.  Remove this directory from the source tree before proceeding with distcheck.")
+endif(EXISTS "@CMAKE_SOURCE_DIR@/src/testing")
+
 set(NOT_DISTCHECK_READY 0)
 set(CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@")
 

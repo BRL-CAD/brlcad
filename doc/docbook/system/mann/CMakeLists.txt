@@ -6,7 +6,6 @@ set(mann_EN
   Z.xml
   adc.xml
   ae.xml
-  alias-pix.xml
   all_sf.xml
   analyze.xml
   anim_cascade.xml
@@ -53,8 +52,8 @@ set(mann_EN
   cp.xml
   cpi.xml
   d.xml
-  dall.xml
   db.xml
+  dbfind.xml
   db_glob.xml
   dbconcat.xml
   dbupgrade.xml
@@ -82,26 +81,22 @@ set(mann_EN
   em.xml
   eqn.xml
   erase.xml
-  erase_all.xml
   ev.xml
   exists.xml
   exit.xml
   expand.xml
-  export_body.xml
   extrude.xml
   eye_pt.xml
   facedef.xml
   facetize.xml
-  find.xml
   fracture.xml
   g.xml
   garbage_collect.xml
-  gastank.xml
+  gdiff.xml
   gqa.xml
   gr.xml
   graph.xml
   gui.xml
-  handle.xml
   help.xml
   helpdevel.xml
   helplib.xml
@@ -133,6 +128,7 @@ set(mann_EN
   lt.xml
   make.xml
   make_pnts.xml
+  man.xml
   mater.xml
   matpick.xml
   memprint.xml
@@ -153,7 +149,6 @@ set(mann_EN
   pathlist.xml
   paths.xml
   permute.xml
-  picket_fence.xml
   plot.xml
   prcolor.xml
   prefix.xml
@@ -204,8 +199,9 @@ set(mann_EN
   sed.xml
   setview.xml
   shader.xml
-  shell.xml
+  shells.xml
   showmats.xml
+  simulate.xml
   size.xml
   solids.xml
   sph-part.xml
@@ -232,7 +228,6 @@ set(mann_EN
   vnirt.xml
   voxelize.xml
   vquery_ray.xml
-  vrmgr.xml
   vrot.xml
   wcodes.xml
   whatid.xml
@@ -240,9 +235,6 @@ set(mann_EN
   whichair.xml
   whichid.xml
   who.xml
-  window.xml
-  window_frame.xml
-  wire.xml
   wmater.xml
   x.xml
   xpush.xml

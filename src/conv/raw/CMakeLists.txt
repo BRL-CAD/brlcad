@@ -19,7 +19,7 @@ set(rawg_SRCS
   )
 BRLCAD_ADDEXEC(raw-g "${rawg_SRCS}" "libwdb;librt;libbu" NO_STRICT)
 
-BRLCAD_ADDEXEC(g-raw g-raw.c "librt;libgcv;libbu;${WINSOCK_LIB}")
+BRLCAD_ADDEXEC(g-raw g-raw.c "librt;libgcv;libnmg;libbu;${WINSOCK_LIB}")
 add_dependencies(g-raw libgcv_plugins)
 
 set(RAW_IGNORE_FILES

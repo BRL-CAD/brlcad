@@ -116,6 +116,15 @@ and new names should be listed for reference.  If an item is marked
 with a "'" (single quote), that means it was not documented and may be
 removed at any time.
 
+7.28
+----
+
+MGED commands
+	?devel, ?lib, aproposdevel, aproposlib, %, animmate, db_glob,
+	debugbu, debugdir, debuglib, debugmem, debugnmg, expand,
+	loadtk, match, memprint, preview, regdebug, regdef, rmats, rrt,
+	savekey, shaded_mode, sync
+	Removed as part of distillation effort [deprecated 7.28]
 
 7.26
 ----
@@ -163,7 +172,7 @@ infrared & shapefactor tools
 misc tools
 	fix_polysolids' : obsolete primitive
 	remapid : superseded by reid+remat
-	buffer : unnecesary network/stream buffering tool
+	buffer : unnecessary network/stream buffering tool
 	hex : superseded by hexdump
 	Removed as part of distillation effort [deprecated 7.26]
 include/bu/ptbl.h
@@ -246,8 +255,6 @@ include/raytrace.h librt
 	RT_FREE_TREE -> BU_PUT [deprecation 7.22]
 include/bu.h
 	bu_parse_mm() [deprecated 7.22]
-librtserver
-	becoming stand-alone project, removes optional java dependency [deprecated 7.22]
 mged
 	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
 
@@ -394,7 +401,7 @@ Dunn camera and Canon printer tools
 genptr_t/GENPTR_NULL
 	genptr_t -> void* [deprecated 7.16]
 include/bu.h
-	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
+	bu_argv0() -> bu_basename(bu_argv0_full_path(), NULL) [deprecated 7.16]
 include/dm_color.h
 	dm_color.h -> dm.h [deprecated 7.14]
 include/fb.h
@@ -424,7 +431,7 @@ mged
 SGI-specific tools
 	pl-sgi -> pl-fb [deprecated 7.16]
 src/gtools
-	g_[toolname] -> g[toolname] [deprecated 7.14]
+	g_diff, g_lint, g_qa, g_transfer -> gdiff, glint, gqa, gtransfer [deprecated 7.14]
 src/librt/cmd.c
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 any-png.sh
@@ -612,13 +619,19 @@ Included in following are various minimally impacting API changes that
 have been identified in chronological order.  As expressions are not
 extensively tested, use with caution.
 
-Unless noted otherwise, expressions are shown using Perl syntax and
-may need adjustment (particularly quoting of '(', ')', and '|'
-characters) for other environments.  Most expressions will apply with:
-	perl -0777 -pi -e 'EXPRESSION' FILE
+Unless noted otherwise, expressions are shown using Perl syntax (i.e.,
+the '(', ')', and '|' characters pertain to subexpression captures,
+escape with '\' to match literally.  Expressions should apply with:
 
-To apply them to an entire SVN checkout, the following pattern is useful:
+perl -0777 -pi -e 'EXPRESSION' FILE
+
+To apply an expression to an entire SVN checkout, the following
+pattern is useful:
+
 find . -type f -not -path "*.svn/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 'EXPRESSION' {} \;
+
+Our catalog of minimally impacting changes follows with the most
+recent changes listed at the bottom.
 
 6.0 (sed lines)
 ---
@@ -1210,3 +1223,91 @@ s/bu_dir_list/bu_file_list/g
 	bu_dir_list -> bu_file_list [7.25]
 s/BU_FNMATCH_NOMATCH/1/g
 	don't use an explicit define for the non-matching case [7.25]
+s/bu_basename\(([^\)]*)\)/bu_basename(\1, NULL)/g
+	pass NULL argument to get a dynamically allocated buffer back [7.25]
+
+7.28
+----
+s/bu_free_array/bu_free_args/g
+        fixed misleading name [7.26]
+s/(#[[:space:]]*include[[:space:]]+["<])bu\/rb\.h/\1bu\/redblack.h/g
+	clearer header name [7.26]
+s/rt_plot_vlblock/bn_plot_vlblock/g
+s/rt_vlist_to_uplot/bn_vlist_to_uplot/g
+        move vlist functions to libbn [7.26]
+s/rt_nurb_bezier/nmg_nurb_bezier/g
+s/rt_nurb_c_split/nmg_nurb_c_split/g
+s/rt_nurb_free_cnurb/nmg_nurb_free_cnurb/g
+s/rt_nurb_free_snurb/nmg_nurb_free_snurb/g
+s/rt_nurb_intersect/nmg_nurb_intersect/g
+s/rt_nurb_new_cnurb/nmg_nurb_new_cnurb/g
+s/rt_nurb_new_snurb/nmg_nurb_new_snurb/g
+s/rt_nurb_s_eval/nmg_nurb_s_eval/g
+s/rt_nurb_s_norm/nmg_nurb_s_norm/g
+s/rt_nurb_uv_hit/nmg_nurb_uv_hit/g
+s/rt_arc2d_to_cnurb/nmg_arc2d_to_cnurb/g
+s/rt_join_cnurbs/nmg_join_cnurbs/g
+s/rt_nurb_c_eval/nmg_nurb_c_eval/g
+s/rt_nurb_c_print/nmg_nurb_c_print/g
+s/rt_nurb_kvgen/nmg_nurb_kvgen/g
+s/rt_nurb_kvmerge/nmg_nurb_kvmerge/g
+s/rt_nurb_s_print/nmg_nurb_s_print/g
+s/rt_nurb_s_refine/nmg_nurb_s_refine/g
+s/rt_bez_check/nmg_bez_check/g
+s/rt_nurb_back_solve/nmg_nurb_back_solve/g
+s/rt_nurb_basis_eval/nmg_nurb_basis_eval/g
+s/rt_nurb_c_bound/nmg_nurb_c_bound/g
+s/rt_nurb_c_check/nmg_nurb_c_check/g
+s/rt_nurb_c_diff/nmg_nurb_c_diff/g
+s/rt_nurb_c_refine/nmg_nurb_c_refine/g
+s/rt_nurb_c_xsplit/nmg_nurb_c_xsplit/g
+s/rt_nurb_calc_oslo/nmg_nurb_calc_oslo/g
+s/rt_nurb_cinterp/nmg_nurb_cinterp/g
+s/rt_nurb_clean_cnurb/nmg_nurb_clean_cnurb/g
+s/rt_nurb_clip_srf/nmg_nurb_clip_srf/g
+s/rt_nurb_crv_copy/nmg_nurb_crv_copy/g
+s/rt_nurb_crv_flat/nmg_nurb_crv_flat/g
+s/rt_nurb_curvature/nmg_nurb_curvature/g
+s/rt_nurb_doolittle/nmg_nurb_doolittle/g
+s/rt_nurb_eval_crv/nmg_nurb_eval_crv/g
+s/rt_nurb_forw_solve/nmg_nurb_forw_solve/g
+s/rt_nurb_free_oslo/nmg_nurb_free_oslo/g
+s/rt_nurb_gen_knot_vector/nmg_nurb_gen_knot_vector/g
+s/rt_nurb_knot_index/nmg_nurb_knot_index/g
+s/rt_nurb_kvcheck/nmg_nurb_kvcheck/g
+s/rt_nurb_kvcopy/nmg_nurb_kvcopy/g
+s/rt_nurb_kvextract/nmg_nurb_kvextract/g
+s/rt_nurb_kvknot/nmg_nurb_kvknot/g
+s/rt_nurb_kvmult/nmg_nurb_kvmult/g
+s/rt_nurb_kvnorm/nmg_nurb_kvnorm/g
+s/rt_nurb_map_oslo/nmg_nurb_map_oslo/g
+s/rt_nurb_mesh_diff/nmg_nurb_mesh_diff/g
+s/rt_nurb_mk_poly/nmg_nurb_mk_poly/g
+s/rt_nurb_p_mat/nmg_nurb_p_mat/g
+s/rt_nurb_plot_cnurb/nmg_nurb_plot_cnurb/g
+s/rt_nurb_plot_snurb/nmg_nurb_plot_snurb/g
+s/rt_nurb_poly/nmg_nurb_poly/g
+s/rt_nurb_pr_crv/nmg_nurb_pr_crv/g
+s/rt_nurb_pr_kv/nmg_nurb_pr_kv/g
+s/rt_nurb_pr_mesh/nmg_nurb_pr_mesh/g
+s/rt_nurb_pr_oslo/nmg_nurb_pr_oslo/g
+s/rt_nurb_print_pt_type/nmg_nurb_print_pt_type/g
+s/rt_nurb_project_srf/nmg_nurb_project_srf/g
+s/rt_nurb_region_from_srf/nmg_nurb_region_from_srf/g
+s/rt_nurb_s_bound/nmg_nurb_s_bound/g
+s/rt_nurb_s_check/nmg_nurb_s_check/g
+s/rt_nurb_s_diff/nmg_nurb_s_diff/g
+s/rt_nurb_s_flat/nmg_nurb_s_flat/g
+s/rt_nurb_s_plot/nmg_nurb_s_plot/g
+s/rt_nurb_s_split/nmg_nurb_s_split/g
+s/rt_nurb_s_xsplit/nmg_nurb_s_xsplit/g
+s/rt_nurb_scopy/nmg_nurb_scopy/g
+s/rt_nurb_sinterp/nmg_nurb_sinterp/g
+s/rt_nurb_solve/nmg_nurb_solve/g
+s/rt_nurb_to_poly/nmg_nurb_to_poly/g
+        rename old nurbs functions intertwined with nmg to use nmg prefix [7.26]
+s/RTG.NMG_debug/nmg_debug/g
+	make nmg debug flag top level, like libbu's [7.26]
+s/BU_ASSERT(_[A-Z_]+)\(([^,]+|.*\(.*,.*\)),([^,]+|.*\(.*,.*\)),([^,]+|.*\(.*,.*\))\);/BU_ASSERT(\2\3\4);/g
+	consolidated BU_ASSERT_PTR, BU_ASSERT_LONG, BU_ASSERT_SIZE_T, BU_ASSERT_SSIZE_T, BU_ASSERT_DOUBLE [7.26]
+s/BU_FLSTR/CPP_FILELINE/g

@@ -153,7 +153,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	rt_init_resource(resp, resp->re_cpu, rtip);
 
 	/* Ensure that this CPU's resource structure is registered */
-	BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL);
+	BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
     }
 
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);
@@ -398,7 +398,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	    /* Weave these segments into partition list */
 	    rt_boolweave(&finished_segs, &waiting_segs, &InitialPart, ap);
 
-	    /* Evaluate regions upto box_end */
+	    /* Evaluate regions up to box_end */
 	    done = rt_boolfinal(&InitialPart, &FinalPart,
 				last_bool_start, ss.box_end, regionbits, ap, solidbits);
 	    last_bool_start = ss.box_end;

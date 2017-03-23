@@ -33,7 +33,7 @@
 
 #include "bu/getopt.h"
 #include "bu/log.h"
-#include "bu/rb.h"
+#include "bu/redblack.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"

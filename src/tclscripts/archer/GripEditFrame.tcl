@@ -19,10 +19,6 @@
 #
 ###
 #
-# Author(s):
-#    Bob Parker
-#
-# Description:
 #    The class for editing gripicles within Archer.
 #
 ##############################################################

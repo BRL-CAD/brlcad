@@ -545,7 +545,7 @@ qt_setLineAttr(dm *dmp, int width, int style)
 }
 
 
-HIDDEN void
+HIDDEN int
 qt_reshape(dm *dmp, int width, int height)
 {
     if (dmp->dm_debugLevel) {
@@ -556,6 +556,7 @@ qt_reshape(dm *dmp, int width, int height)
     dmp->dm_width = width;
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
+    return 0;
 }
 
 

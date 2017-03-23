@@ -81,7 +81,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    s_tmp = nmg_dup_shell(s, &trans_tbl, &gedp->ged_wdbp->wdb_tol);
+	    s_tmp = nmg_dup_shell(s, &trans_tbl, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 	    bu_free((void *)trans_tbl, "trans_tbl");
 
 	    m_tmp = nmg_mmr();

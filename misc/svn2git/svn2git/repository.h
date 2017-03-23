@@ -91,115 +91,59 @@ public:
     }
 };
 
-
 class Repository
 {
 public:
     class Transaction
     {
         Q_DISABLE_COPY(Transaction)
-        friend class Repository;
-
-        Repository *repository;
-        QByteArray branch;
-        QByteArray svnprefix;
-        QByteArray author;
-        QByteArray log;
-        uint datetime;
-        int revnum;
-
-        QVector<int> merges;
-
-        QStringList deletedFiles;
-        QByteArray modifiedFiles;
-
-        inline Transaction() {}
+    protected:
+        Transaction() {}
     public:
-        ~Transaction();
-        void commit();
+        virtual ~Transaction() {}
+        virtual void commit() = 0;
 
-        void setAuthor(const QByteArray &author);
-        void setDateTime(uint dt);
-        void setLog(const QByteArray &log);
+        virtual void setAuthor(const QByteArray &author) = 0;
+        virtual void setDateTime(uint dt) = 0;
+        virtual void setLog(const QByteArray &log) = 0;
 
-        void noteCopyFromBranch (const QString &prevbranch, int revFrom);
+        virtual void noteCopyFromBranch (const QString &prevbranch, int revFrom) = 0;
 
-        void deleteFile(const QString &path);
-        QIODevice *addFile(const QString &path, int mode, qint64 length);
+        virtual void deleteFile(const QString &path) = 0;
+        virtual QIODevice *addFile(const QString &path, int mode, qint64 length) = 0;
 
-        void commitNote(const QByteArray &noteText, bool append,
-                        const QByteArray &commit = QByteArray());
+        virtual void commitNote(const QByteArray &noteText, bool append,
+                                const QByteArray &commit = QByteArray()) = 0;
     };
-    Repository(const Rules::Repository &rule);
-    int setupIncremental(int &cutoff);
-    void restoreLog();
-    ~Repository();
+    virtual int setupIncremental(int &cutoff) = 0;
+    virtual void restoreLog() = 0;
+    virtual ~Repository() {}
 
-    void reloadBranches();
-    int createBranch(const QString &branch, int revnum,
-                     const QString &branchFrom, int revFrom);
-    int deleteBranch(const QString &branch, int revnum);
-    Repository::Transaction *newTransaction(const QString &branch, const QString &svnprefix, int revnum);
+    virtual void reloadBranches() = 0;
+    virtual int createBranch(const QString &branch, int revnum,
+                             const QString &branchFrom, int revFrom) = 0;
+    virtual int deleteBranch(const QString &branch, int revnum) = 0;
+    virtual Repository::Transaction *newTransaction(const QString &branch, const QString &svnprefix, int revnum) = 0;
 
-    void createAnnotatedTag(const QString &name, const QString &svnprefix, int revnum,
-                            const QByteArray &author, uint dt,
-                            const QByteArray &log);
-    void finalizeTags();
-    void commit();
+    virtual void createAnnotatedTag(const QString &name, const QString &svnprefix, int revnum,
+                                    const QByteArray &author, uint dt,
+                                    const QByteArray &log) = 0;
+    virtual void finalizeTags() = 0;
+    virtual void commit() = 0;
 
     static QByteArray formatMetadataMessage(const QByteArray &svnprefix, int revnum,
                                             const QByteArray &tag = QByteArray());
 
-    bool branchExists(const QString& branch) const;
-    const QByteArray branchNote(const QString& branch) const;
-    void setBranchNote(const QString& branch, const QByteArray& noteText);
+    virtual bool branchExists(const QString& branch) const = 0;
+    virtual const QByteArray branchNote(const QString& branch) const = 0;
+    virtual void setBranchNote(const QString& branch, const QByteArray& noteText) = 0;
 
-private:
-    struct Branch
-    {
-        int created;
-        QVector<int> commits;
-        QVector<int> marks;
-        QByteArray note;
-    };
-    struct AnnotatedTag
-    {
-        QString supportingRef;
-        QByteArray svnprefix;
-        QByteArray author;
-        QByteArray log;
-        uint dt;
-        int revnum;
-    };
+    virtual bool hasPrefix() const = 0;
 
-    QHash<QString, Branch> branches;
-    QHash<QString, AnnotatedTag> annotatedTags;
-    QString name;
-    QString prefix;
-    LoggingQProcess fastImport;
-    int commitCount;
-    int outstandingTransactions;
-    QByteArray deletedBranches;
-    QByteArray resetBranches;
-
-    /* starts at 0, and counts up.  */
-    int last_commit_mark;
-
-    /* starts at maxMark and counts down. Reset after each SVN revision */
-    int next_file_mark;
-
-    bool processHasStarted;
-
-    void startFastImport();
-    void closeFastImport();
-
-    // called when a transaction is deleted
-    void forgetTransaction(Transaction *t);
-
-    int resetBranch(const QString &branch, int revnum, int mark, const QByteArray &resetTo, const QByteArray &comment);
-    int markFrom(const QString &branchFrom, int branchRevNum, QByteArray &desc);
-
-    friend class ProcessCache;
-    Q_DISABLE_COPY(Repository)
+    virtual QString getName() const = 0;
+    virtual Repository *getEffectiveRepository() = 0;
 };
+
+Repository *createRepository(const Rules::Repository &rule, const QHash<QString, Repository *> &repositories);
+
 #endif

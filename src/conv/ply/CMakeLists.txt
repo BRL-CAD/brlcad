@@ -6,8 +6,8 @@ set(PLY_INCLUDE_DIRS
   )
 BRLCAD_INCLUDE_DIRS(PLY_INCLUDE_DIRS)
 
-BRLCAD_ADDEXEC(ply-g ply-g.c "${RPLY_LIBRARIES};librt;libbu;libwdb")
-BRLCAD_ADDEXEC(g-ply g-ply.c "${RPLY_LIBRARIES};librt;libbu")
+BRLCAD_ADDEXEC(ply-g ply-g.c "${RPLY_LIBRARIES};librt;libnmg;libbu;libwdb")
+BRLCAD_ADDEXEC(g-ply g-ply.c "${RPLY_LIBRARIES};librt;libnmg;libbu")
 
 if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET ply-g APPEND PROPERTY COMPILE_DEFINITIONS "RPLY_DLL_IMPORTS")

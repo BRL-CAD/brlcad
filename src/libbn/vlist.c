@@ -31,6 +31,7 @@
 #include "bu/list.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bn/plot3.h"
 #include "bn/vlist.h"
 
 int
@@ -464,6 +465,61 @@ bn_vlist_rpp(struct bu_list *vlists, struct bu_list *hd, const point_t minn, con
     BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_MOVE)
 	VSET(p, maxx[X], maxx[Y], maxx[Z]);
     BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
+}
+
+void
+bn_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
+{
+    size_t i;
+
+    BN_CK_VLBLOCK(vbp);
+
+    for (i=0; i < vbp->nused; i++) {
+	if (vbp->rgb[i] == 0) continue;
+	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
+	pl_color(fp,
+		(vbp->rgb[i]>>16) & 0xFF,
+		(vbp->rgb[i]>> 8) & 0xFF,
+		(vbp->rgb[i]) & 0xFF);
+	bn_vlist_to_uplot(fp, &(vbp->head[i]));
+    }
+}
+
+
+void
+bn_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
+{
+    register struct bn_vlist *vp;
+
+    for (BU_LIST_FOR(vp, bn_vlist, vhead)) {
+	register int i;
+	register int nused = vp->nused;
+	register const int *cmd = vp->cmd;
+	register point_t *pt = vp->pt;
+
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    switch (*cmd) {
+		case BN_VLIST_POLY_START:
+		case BN_VLIST_TRI_START:
+		    break;
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
+		    pdv_3move(fp, *pt);
+		    break;
+		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_POLY_END:
+		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
+		    pdv_3cont(fp, *pt);
+		    break;
+		default:
+		    bu_log("bn_vlist_to_uplot: unknown vlist cmd x%x\n",
+			    *cmd);
+	    }
+	}
+    }
 }
 
 /*

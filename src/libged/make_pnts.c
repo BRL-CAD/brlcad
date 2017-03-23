@@ -407,7 +407,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	    num_doubles_per_point = 10;
 	    break;
     }
-    BU_ASSERT_PTR(headPoint, !=, NULL);
+    BU_ASSERT(headPoint != NULL);
     pnts->point = headPoint;
 
     if ((fp=fopen(argv[2], "rb")) == NULL) {
@@ -449,7 +449,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* make sure we have something */
-	BU_ASSERT_PTR(point, !=, NULL);
+	BU_ASSERT(point != NULL);
 
 	while (!found_eof && !done_processing_format_string) {
 	    /* format_string_loop */

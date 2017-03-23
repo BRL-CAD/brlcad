@@ -154,71 +154,30 @@ macro(CXX_NO_STRICT cxx_srcslist)
 endmacro(CXX_NO_STRICT cxx_srcslist)
 
 # BRL-CAD style checking test
-macro(VALIDATE_STYLE srcslist targetname)
+function(VALIDATE_STYLE srcslist targetname)
   if(BRLCAD_STYLE_VALIDATE)
-    include("${BRLCAD_SOURCE_DIR}/misc/CMake/style/test_list.cmake")
-    make_directory("${CMAKE_CURRENT_BINARY_DIR}/validation")
+    set(fullpath_srcslist)
+    foreach(srcfile ${srcslist})
+      get_property(IGNORE_FILE SOURCE ${srcfile} PROPERTY EXTERNAL DEFINED)
+      message("${srcfile} external: ${IGNORE_FILE}")
+      if(NOT IGNORE_FILE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+	set(fullpath_srcslist ${fullpath_srcslist} "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+      endif(NOT IGNORE_FILE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+    endforeach(srcfile ${srcslist})
 
-    foreach(test_name ${BRLCAD_STYLE_TESTS})
-
-      # Clear dependency array
-      set(test_stamp_files)
-      set(test_valid_files)
-      set(test_src_files)
-
-      foreach(srcfile ${srcslist})
-
-	# Generated files won't conform to our style guidelines
-	get_property(IS_GENERATED SOURCE ${srcfile} PROPERTY GENERATED)
-
-	if(NOT IS_GENERATED)
-	  # Set up the test scripts and tie them to the object file output
-	  # produced by compiling this particular source file.  This hooks
-	  # in the "integrated" style checking
-	  get_filename_component(root_name ${srcfile} NAME_WE)
-	  string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-	  set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}_${test_name}")
-	  set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-	  set(stampfile_tmp "${stampfile}")
-	  configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/style/${test_name}.cmake.in" ${outfiles_root}.cmake @ONLY)
-	  add_custom_command(
-	    OUTPUT ${outfiles_root}.checked
-	    COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
-	    DEPENDS ${srcfile} ${${test_name}_test_deps}
-	    COMMENT "Validating style of ${srcfile}"
-	    )
-	  set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
-
-	  set(test_stamp_files ${test_stamp_files} ${outfiles_root}.checked)
-	  set(test_valid_files ${test_valid_files} ${outfiles_root}.valid)
-	  set(test_src_files ${test_src_files} ${srcfile})
-
-	endif(NOT IS_GENERATED)
-      endforeach(srcfile ${srcslist})
-
-      # Set up build targets that can be used to independently trigger the testing
-      configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/validate_checkstamp.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake" @ONLY)
-      add_custom_target(regress-${test_name}-${targetname}
-	${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake"
-	DEPENDS ${test_stamp_files}
+    if(fullpath_srcslist)
+      add_custom_command(
+	TARGET ${targetname} PRE_LINK
+	COMMAND "${ASTYLE_EXECUTABLE}" --report --options=${BRLCAD_SOURCE_DIR}/misc/astyle.opt ${fullpath_srcslist}
+	COMMENT "Checking formatting of ${targetname} srcs"
 	)
-      if(NOT TARGET regress-${test_name})
-	add_custom_target(regress-${test_name})
-      endif(NOT TARGET regress-${test_name})
-      add_dependencies(regress-${test_name} regress-${test_name}-${targetname})
-
-    endforeach(test_name ${BRLCAD_STYLE_TESTS})
-
-    # Set up build-integrated validation that is run automatically at compile time.
-    configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/validate_style.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake" @ONLY)
-    add_custom_command(
-      TARGET ${targetname} PRE_LINK
-      COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake"
-      COMMENT "Checking validation status of ${targetname} srcs"
-      )
+      if(TARGET astyle)
+	add_dependencies(${targetname} astyle)
+      endif(TARGET astyle)
+    endif(fullpath_srcslist)
 
   endif(BRLCAD_STYLE_VALIDATE)
-endmacro(VALIDATE_STYLE)
+endfunction(VALIDATE_STYLE)
 
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
@@ -227,7 +186,7 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
   string(TOUPPER "${execname}" EXECNAME_UPPER)
   if(${ARGC} GREATER 3)
-    CMAKE_PARSE_ARGUMENTS(${EXECNAME_UPPER} "NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
+    CMAKE_PARSE_ARGUMENTS(${EXECNAME_UPPER} "TEST;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
   endif(${ARGC} GREATER 3)
 
   # Go all C++ if the settings request it
@@ -247,11 +206,19 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
   # Set the FOLDER property.  If the target has supplied a folder, use
   # that as a subfolder
-  if("${${EXECNAME_UPPER}_FOLDER}" STREQUAL "")
+  set(SUBFOLDER "${${EXECNAME_UPPER}_FOLDER}")
+  if(${EXECNAME_UPPER}_NO_INSTALL AND "${SUBFOLDER}" STREQUAL "")
+    set(SUBFOLDER "Build Only")
+  endif(${EXECNAME_UPPER}_NO_INSTALL AND "${SUBFOLDER}" STREQUAL "")
+  if(${EXECNAME_UPPER}_TEST AND "${SUBFOLDER}" STREQUAL "")
+    set(SUBFOLDER "Test Programs")
+  endif(${EXECNAME_UPPER}_TEST AND "${SUBFOLDER}" STREQUAL "")
+
+  if("${SUBFOLDER}" STREQUAL "")
     set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables")
-  else("${${EXECNAME_UPPER}_FOLDER}" STREQUAL "")
-    set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables/${${EXECNAME_UPPER}_FOLDER}")
-  endif("${${EXECNAME_UPPER}_FOLDER}" STREQUAL "")
+  else("${SUBFOLDER}" STREQUAL "")
+    set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables/${SUBFOLDER}")
+  endif("${SUBFOLDER}" STREQUAL "")
 
   # In some situations (usually test executables) we want to be able
   # to force the executable to remain in the local compilation
@@ -260,7 +227,7 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   # If an executable isn't to be installed or needs to be installed
   # somewhere other than the default location, the NO_INSTALL argument
   # bypasses the standard install command call.
-  if(${EXECNAME_UPPER}_NO_INSTALL)
+  if(${EXECNAME_UPPER}_NO_INSTALL OR ${EXECNAME_UPPER}_TEST)
     # Unfortunately, we currently need Windows binaries in the same directories as their DLL libraries
     if(NOT WIN32)
       if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -272,9 +239,9 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif(NOT CMAKE_CONFIGURATION_TYPES)
     endif(NOT WIN32)
-  else(${EXECNAME_UPPER}_NO_INSTALL)
+  else(${EXECNAME_UPPER}_NO_INSTALL OR ${EXECNAME_UPPER}_TEST)
     install(TARGETS ${execname} DESTINATION ${BIN_DIR})
-  endif(${EXECNAME_UPPER}_NO_INSTALL)
+  endif(${EXECNAME_UPPER}_NO_INSTALL OR ${EXECNAME_UPPER}_TEST)
 
   # Use the list of libraries to be linked into this target to
   # accumulate the necessary definitions and compilation flags.
@@ -652,9 +619,9 @@ macro(BRLCAD_INCLUDE_DIRS DIR_LIST)
 	set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
 	set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
       endif(APPLE)
-      include_directories(SYSTEM ${inc_dir})
+      include_directories(AFTER SYSTEM ${inc_dir})
     else("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
-      include_directories(${inc_dir})
+      include_directories(BEFORE ${inc_dir})
     endif("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
   endforeach(inc_dir ${ALL_INCLUDES})
 
@@ -763,6 +730,15 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif(NOT CMAKE_CONFIGURATION_TYPES)
     endforeach(filename ${fullpath_datalist})
+
+    # check for and remove any dead symbolic links from a previous run
+    file(GLOB listing LIST_DIRECTORIES false "${CMAKE_BINARY_DIR}/${targetdir}/*")
+    foreach (filename ${listing})
+      if (NOT EXISTS ${filename})
+	message("Removing stale symbolic link ${filename}")
+	execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${filename})
+      endif (NOT EXISTS ${filename})
+    endforeach (filename ${listing})
 
     # The custom command is still necessary - since it depends on the original source files,
     # this will be the trigger that tells other commands depending on this data that

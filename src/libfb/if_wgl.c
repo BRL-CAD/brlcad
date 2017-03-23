@@ -255,7 +255,7 @@ HIDDEN struct modeflags {
       "Single buffer - else double buffer if possible" },
     { 'b',	MODE_11MASK, MODE_11COPY,
       "Fast pan and zoom using backbuffer copy - else normal " },
-    { 'D',	MODE_12DELAY_WRITES_TILL_FLUSH, MODE_12DELAY_WRITES_TILL_FLUSH,
+    { 'D',	MODE_12MASK, MODE_12DELAY_WRITES_TILL_FLUSH,
       "Don't update screen until fb_flush() is called.  (Double buffer sim)" },
     { 'z',	MODE_15MASK, MODE_15ZAP,
       "Zap (free) shared memory.  Can also be done with fbfree command" },
@@ -559,12 +559,11 @@ wgl_open(fb *ifp, const char *file, int width, int height)
 
     saveifp = ifp;
 
-
     /*
      * First, attempt to determine operating mode for this open, based
      * upon the "unit number" or flags.  file = "/dev/wgl###"
      */
-    mode = MODE_2LINGERING;
+    mode = MODE_2LINGERING | MODE_12DELAY_WRITES_TILL_FLUSH;
 
     if (file != NULL) {
 	const char *cp;
@@ -816,7 +815,6 @@ _wgl_open_existing(fb *ifp,
 	return -1;
 
     WGL(ifp)->dispp = dpy;
-    /* ifp->if_selfd = ConnectionNumber(WGL(ifp)->dispp); */
 
     WGL(ifp)->vip = vip;
     WGL(ifp)->glxc = glxc;
@@ -908,7 +906,6 @@ wgl_flush(fb *ifp)
 	/* unattach context for other threads to use, also flushes */
 	wglMakeCurrent(NULL, NULL);
     }
-    /* XFlush(WGL(ifp)->dispp); */
     glFlush();
     return 0;
 }
@@ -1739,7 +1736,6 @@ wgl_do_event(fb *ifp)
 HIDDEN void
 expose_callback(fb *ifp, int eventPtr)
 {
-    /* XWindowAttributes xwa; */
     struct wgl_clip *clp;
 
     if (CJDEBUG) fb_log("entering expose_callback()\n");

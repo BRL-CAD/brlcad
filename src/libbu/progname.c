@@ -34,7 +34,6 @@
 #include "bio.h"
 
 #include "bu/file.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/path.h"
@@ -103,7 +102,7 @@ bu_getprogname(void)
      */
     static char buffer[MAXPATHLEN] = {0};
     const char *name = bu_progname;
-    char *tmp_basename = NULL;
+    char tmp_basename[MAXPATHLEN] = {0};
 
 #ifdef HAVE_PROGRAM_INVOCATION_NAME
     /* GLIBC provides a way */
@@ -121,20 +120,17 @@ bu_getprogname(void)
 #endif
 
     /* want just the basename from paths, otherwise default result */
-    tmp_basename = (char *)bu_calloc(strlen(name), sizeof(char), "bu_getprogname tmp_basename");
-    bu_basename(tmp_basename, name);
+    bu_basename(name, tmp_basename);
     if (BU_STR_EQUAL(tmp_basename, ".") || BU_STR_EQUAL(tmp_basename, "/")) {
 	name = DEFAULT_PROGNAME;
     } else {
 	name = tmp_basename;
     }
 
-    /* stash for return since we need to free the basename */
+    /* stash for return */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     bu_strlcpy(buffer, name, MAXPATHLEN);
     bu_semaphore_release(BU_SEM_SYSCALL);
-
-    bu_free(tmp_basename, "tmp_basename free");
 
     return buffer;
 }

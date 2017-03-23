@@ -354,7 +354,7 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     bu_vls_free(&plan_string);
 
     /* release our db_ls path */
-    bu_free(all_paths, "free db_tops output");
+    bu_free(all_paths, "free db_ls top paths");
 
     /* check for entry last node in combs_outside of tree
      *    - if NO, add to quash region flag bu_ptbl list (uniq insert).  If yes, continue.
@@ -813,7 +813,7 @@ addmembers:
     /* flatten tree */
     if (comb->tree) {
 	actual_count = argc + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     }
 

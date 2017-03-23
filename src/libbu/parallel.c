@@ -322,19 +322,23 @@ bu_avail_cpus(void)
 
 /* this function provides book-keeping so that we give out unique
  * thread identifiers and for tracking a thread's parent context.
+ *
+ * it must be able to keep track of a maximum of MAX_PSW*MAX_PSW
+ * threads, where each primary thread kicks off at least as many
+ * secondary threads.
  */
 static struct parallel_info *
 parallel_mapping(parallel_action_t action, int id, size_t max)
 {
     /* container for keeping track of recursive invocation data, limits, current values */
-    static struct parallel_info mapping[MAX_PSW] = {{0,0,0,0,0}};
+    static struct parallel_info mapping[MAX_PSW*MAX_PSW] = {{0,0,0,0,0}};
     int got_cpu;
 
     switch (action) {
 	case PARALLEL_GET:
 	    if (id < 0) {
 		bu_semaphore_acquire(BU_SEM_THREAD);
-		for (got_cpu = 1; got_cpu < MAX_PSW; got_cpu++) {
+		for (got_cpu = 1; got_cpu < MAX_PSW*MAX_PSW; got_cpu++) {
 		    if (mapping[got_cpu].id == 0) {
 			mapping[got_cpu].id = got_cpu;
 			break;
@@ -342,8 +346,10 @@ parallel_mapping(parallel_action_t action, int id, size_t max)
 		}
 		bu_semaphore_release(BU_SEM_THREAD);
 
-		if (got_cpu >= MAX_PSW)
-		    bu_bomb("Compile-time parallelism limit reached.  Unable to track more threading.\n");
+		if (got_cpu >= MAX_PSW*MAX_PSW) {
+		    bu_log("Compile-time parallelism limit reached (%d >= %d).\n", got_cpu, MAX_PSW*MAX_PSW);
+		    bu_bomb("Unable to track threading.\n");
+		}
 
 		mapping[got_cpu].started = mapping[got_cpu].finished = 0;
 		mapping[got_cpu].parent = bu_parallel_id();

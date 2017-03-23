@@ -18,9 +18,6 @@
 # information.
 #
 ###
-#	O V E R L A P _ T O O L
-#
-#	Author: John Anderson
 #
 #	This provide a user interface for eliminating overlaps in the model.
 #	This does a very simple-minded fix (subtracting one region from
