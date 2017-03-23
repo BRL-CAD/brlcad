@@ -21,6 +21,20 @@ subject to the following restrictions:
 ///that is better portable and more predictable
 
 #include "btScalar.h"
+
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
+
 //#define BT_DEBUG_MEMORY_ALLOCATIONS 1
 #ifdef BT_DEBUG_MEMORY_ALLOCATIONS
 
@@ -30,13 +44,13 @@ subject to the following restrictions:
 #define btAlignedFree(ptr) \
 		btAlignedFreeInternal(ptr,__LINE__,__FILE__)
 
-void*	btAlignedAllocInternal	(size_t size, int alignment,int line,char* filename);
+BULLET_EXPORT void* btAlignedAllocInternal (size_t size, int alignment,int line,char* filename);
 
-void	btAlignedFreeInternal	(void* ptr,int line,char* filename);
+BULLET_EXPORT void btAlignedFreeInternal (void* ptr,int line,char* filename);
 
 #else
-	void*	btAlignedAllocInternal	(size_t size, int alignment);
-	void	btAlignedFreeInternal	(void* ptr);
+	BULLET_EXPORT void*	btAlignedAllocInternal	(size_t size, int alignment);
+	BULLET_EXPORT void	btAlignedFreeInternal	(void* ptr);
 
 	#define btAlignedAlloc(size,alignment) btAlignedAllocInternal(size,alignment)
 	#define btAlignedFree(ptr) btAlignedFreeInternal(ptr)

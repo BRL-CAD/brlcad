@@ -20,6 +20,19 @@ subject to the following restrictions:
 #include "LinearMath/btVector3.h"
 #include "LinearMath/btTransform.h"
 #include "btManifoldPoint.h"
+
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 class btCollisionObject;
 #include "LinearMath/btAlignedAllocator.h"
 
@@ -51,7 +64,7 @@ enum btContactManifoldTypes
 ///note that some pairs of objects might have more then one contact manifold.
 
 
-ATTRIBUTE_ALIGNED128( class) btPersistentManifold : public btTypedObject
+ATTRIBUTE_ALIGNED128( class) BULLET_EXPORT btPersistentManifold : public btTypedObject
 //ATTRIBUTE_ALIGNED16( class) btPersistentManifold : public btTypedObject
 {
 

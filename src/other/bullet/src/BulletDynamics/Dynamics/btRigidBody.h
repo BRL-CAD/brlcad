@@ -21,6 +21,18 @@ subject to the following restrictions:
 #include "BulletCollision/BroadphaseCollision/btBroadphaseProxy.h"
 #include "BulletCollision/CollisionDispatch/btCollisionObject.h"
 
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 class btCollisionShape;
 class btMotionState;
 class btTypedConstraint;
@@ -59,7 +71,7 @@ enum	btRigidBodyFlags
 ///- C) Kinematic objects, which are objects without mass, but the user can move them. There is on-way interaction, and Bullet calculates a velocity based on the timestep and previous and current world transform.
 ///Bullet automatically deactivates dynamic rigid bodies, when the velocity is below a threshold for a given time.
 ///Deactivated (sleeping) rigid bodies don't take any processing time, except a minor broadphase collision detection impact (to allow active objects to activate/wake up sleeping objects)
-class btRigidBody  : public btCollisionObject
+class BULLET_EXPORT btRigidBody  : public btCollisionObject
 {
 
 	btMatrix3x3	m_invInertiaTensorWorld;

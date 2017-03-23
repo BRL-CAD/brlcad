@@ -19,6 +19,18 @@ subject to the following restrictions:
 #include "LinearMath/btScalar.h"
 #include "LinearMath/btAlignedObjectArray.h"
 
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 struct btBroadphaseProxy;
 class btDispatcher;
 class btManifoldResult;
@@ -52,7 +64,7 @@ struct btCollisionAlgorithmConstructionInfo
 
 ///btCollisionAlgorithm is an collision interface that is compatible with the Broadphase and btDispatcher.
 ///It is persistent over frames
-class btCollisionAlgorithm
+class BULLET_EXPORT btCollisionAlgorithm
 {
 
 protected:
