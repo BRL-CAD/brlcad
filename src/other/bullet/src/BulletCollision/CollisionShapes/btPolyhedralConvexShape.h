@@ -18,11 +18,24 @@ subject to the following restrictions:
 
 #include "LinearMath/btMatrix3x3.h"
 #include "btConvexInternalShape.h"
+
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 class btConvexPolyhedron;
 
 
 ///The btPolyhedralConvexShape is an internal interface class for polyhedral convex shapes.
-ATTRIBUTE_ALIGNED16(class) btPolyhedralConvexShape : public btConvexInternalShape
+ATTRIBUTE_ALIGNED16(class) BULLET_EXPORT btPolyhedralConvexShape : public btConvexInternalShape
 {
 	
 

@@ -17,6 +17,19 @@ subject to the following restrictions:
 #define BT_DEFAULT_COLLISION_CONFIGURATION
 
 #include "btCollisionConfiguration.h"
+
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 class btVoronoiSimplexSolver;
 class btConvexPenetrationDepthSolver;
 
@@ -45,7 +58,7 @@ struct	btDefaultCollisionConstructionInfo
 ///btCollisionConfiguration allows to configure Bullet collision detection
 ///stack allocator, pool memory allocators
 ///@todo: describe the meaning
-class	btDefaultCollisionConfiguration : public btCollisionConfiguration
+class BULLET_EXPORT btDefaultCollisionConfiguration : public btCollisionConfiguration
 {
 
 protected:

@@ -24,6 +24,18 @@ subject to the following restrictions:
 #include "BulletCollision/BroadphaseCollision/btBroadphaseProxy.h"
 #include "LinearMath/btAlignedObjectArray.h"
 
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 class btIDebugDraw;
 class btOverlappingPairCache;
 class btPoolAllocator;
@@ -40,7 +52,7 @@ typedef void (*btNearCallback)(btBroadphasePair& collisionPair, btCollisionDispa
 
 ///btCollisionDispatcher supports algorithms that handle ConvexConvex and ConvexConcave collision pairs.
 ///Time of Impact, Closest Points and Penetration Depth.
-class btCollisionDispatcher : public btDispatcher
+class BULLET_EXPORT btCollisionDispatcher : public btDispatcher
 {
 
 protected:
