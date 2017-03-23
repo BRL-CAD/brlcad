@@ -632,7 +632,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     if (node_count > 0) {
 	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 0, &rt_uniresource) - rt_tree_array;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
 	actual_count = 0;

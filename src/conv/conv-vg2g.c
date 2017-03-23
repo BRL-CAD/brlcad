@@ -40,8 +40,8 @@
 
 #include "bu/file.h"
 #include "bu/malloc.h"
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/log.h"
 
 int
 main(int argc, char **argv)

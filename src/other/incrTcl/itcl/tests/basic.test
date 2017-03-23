@@ -5,18 +5,14 @@
 #            Bell Labs Innovations for Lucent Technologies
 #            mmclennan@lucent.com
 #            http://www.tcltk.com/itcl
-#
-#      RCS:  $Id$
 # ----------------------------------------------------------------------
 #            Copyright (c) 1993-1998  Lucent Technologies, Inc.
 # ======================================================================
 # See the file "license.terms" for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2.1
-    namespace import -force ::tcltest::test
-}
+package require tcltest 2.1
+namespace import ::tcltest::test
 
 ::tcltest::loadTestedCommands
 
@@ -133,6 +129,16 @@ test basic-1.19 {classes can be unicode} {
 test basic-1.20 {classes can be unicode} {
     \u6210bcd0 foo
 } bar
+test basic-1.21 {Bug 2e0e27de5f} -setup {
+    itcl::class Object {
+	public variable n {}
+	constructor {} {set n test} {}
+    }
+} -body {
+    Object foo
+} -cleanup {
+    itcl::delete class Object
+} -result foo
 
 # ----------------------------------------------------------------------
 #  #auto names
@@ -310,7 +316,7 @@ test basic-5.6a {variable accesses variables within namespace} {
     list [catch {test_globals::getval g1} msg] $msg
 } {0 global1}
 
-test basic-5.6a {variable accesses variables within namespace} {
+test basic-5.6b {variable accesses variables within namespace} {
     list [catch {test_globals::getval g2} msg] $msg
 } {0 global2}
 
@@ -402,6 +408,21 @@ test basic-6.7 {common variables can be unset} {
 test basic-6.8 {common variables can be redefined} {
     test_arrays0 do set undefined "scalar"
 } {scalar}
+
+test basic-7.0 {SF Bug 230} -setup {
+    itcl::class Dog {
+	method bark {}
+    }
+    itcl::body Dog::bark {} {
+	variable bite
+	set bite ouch
+    }
+} -body {
+    Dog fido
+    fido bark
+} -cleanup {
+    itcl::delete class Dog
+} -result ouch
 
 ::tcltest::cleanupTests
 return

@@ -27,6 +27,7 @@ Subcurve::Subcurve()
     m_children[0] = m_children[1] = NULL;
 }
 
+
 Subcurve::Subcurve(ON_Curve *curve)
 {
     m_curve = curve;
@@ -40,6 +41,7 @@ Subcurve::Subcurve(ON_Curve *curve)
     m_children[0] = m_children[1] = NULL;
 }
 
+
 Subcurve::Subcurve(const Subcurve &_scurve)
 {
     m_islinear = _scurve.m_islinear;
@@ -48,6 +50,7 @@ Subcurve::Subcurve(const Subcurve &_scurve)
     m_children[0] = m_children[1] = NULL;
     SetBBox(_scurve.m_node);
 }
+
 
 Subcurve::~Subcurve()
 {
@@ -58,6 +61,7 @@ Subcurve::~Subcurve()
     }
     delete m_curve;
 }
+
 
 int
 Subcurve::Split()
@@ -88,6 +92,7 @@ Subcurve::Split()
     return 0;
 }
 
+
 void
 Subcurve::GetBBox(ON_3dPoint &min, ON_3dPoint &max)
 {
@@ -95,11 +100,13 @@ Subcurve::GetBBox(ON_3dPoint &min, ON_3dPoint &max)
     max = m_node.m_max;
 }
 
+
 void
 Subcurve::SetBBox(const ON_BoundingBox &bbox)
 {
     m_node = bbox;
 }
+
 
 bool
 Subcurve::IsPointIn(const ON_3dPoint &pt, double tolerance /* = 0.0 */)
@@ -108,6 +115,7 @@ Subcurve::IsPointIn(const ON_3dPoint &pt, double tolerance /* = 0.0 */)
     ON_BoundingBox new_bbox(m_node.m_min - vtol, m_node.m_max + vtol);
     return new_bbox.IsPointIn(pt);
 }
+
 
 bool
 Subcurve::Intersect(const Subcurve &other,
@@ -123,6 +131,7 @@ Subcurve::Intersect(const Subcurve &other,
     }
     return ret;
 }
+
 
 // Local Variables:
 // tab-width: 8

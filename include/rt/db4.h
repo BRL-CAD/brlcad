@@ -119,25 +119,6 @@ struct ident {
 struct solidrec {
     char	s_id;		/* ID_SOLID */
     char	s_type;		/* GED primitive type */
-/* also TOR 	16	   toroid */
-#define GENTGC	18	/* supergeneralized TGC; internal form */
-#define GENELL	19	/* ready for drawing ELL:  V, A, B, C */
-#define GENARB8	20	/* generalized ARB8:  V, and 7 other vectors */
-#define	ARS	21	/* HACK arbitrary triangular-surfaced polyhedron */
-#define ARSCONT 22	/* HACK extension record type for ARS solid */
-#define HALFSPACE 24	/* half-space */
-#define SPLINE   25	/* HACK and trouble */
-#define RPC	26	/* Right Parabolic Cylinder */
-#define RHC	27	/* Right Parabolic Cylinder */
-#define EPA	28	/* Elliptical Paraboloid */
-#define EHY	29	/* Elliptical Hyperboloid */
-#define ETO	30	/* Elliptical Torus */
-#define GRP	31	/* Grip pseudo solid */
-#define SUPERELL 32     /* Superquadratic Ellipsoid */
-#define HYP	33	/* Hyperboloid of one sheet */
-#define JOINT	33	/* Joint primitive */
-    char	s_name[NAMESIZE];	/* unique name */
-    short	s_cgtype;		/* COMGEOM solid type */
 #define RPP	1	/* axis-aligned rectangular parallelepiped */
 #define BOX	2	/* arbitrary rectangular parallelepiped */
 #define RAW	3	/* right-angle wedge */
@@ -155,7 +136,24 @@ struct solidrec {
 #define TEC	15	/* truncated elliptic cone */
 #define TOR	16	/* toroid */
 #define TGC	17	/* truncated general cone */
+#define GENTGC	18	/* supergeneralized TGC; internal form */
+#define GENELL	19	/* ready for drawing ELL:  V, A, B, C */
+#define GENARB8	20	/* generalized ARB8:  V, and 7 other vectors */
+#define	ARS	21	/* HACK arbitrary triangular-surfaced polyhedron */
+#define ARSCONT 22	/* HACK extension record type for ARS solid */
 #define ELLG	23	/* comgeom version of GENELL ellipsoid */
+#define HALFSPACE 24	/* half-space */
+#define SPLINE  25	/* HACK and trouble */
+#define RPC	26	/* Right Parabolic Cylinder */
+#define RHC	27	/* Right Parabolic Cylinder */
+#define EPA	28	/* Elliptical Paraboloid */
+#define EHY	29	/* Elliptical Hyperboloid */
+#define ETO	30	/* Elliptical Torus */
+#define GRP	31	/* Grip pseudo solid */
+#define SUPERELL 32     /* Superquadratic Ellipsoid */
+#define HYP	33	/* Hyperboloid of one sheet */
+    char	s_name[NAMESIZE];	/* unique name */
+    short	s_cgtype;		/* COMGEOM solid type */
     dbfloat_t	s_values[24];		/* parameters */
 #define s_tgc_V	s_values[0]
 #define s_tgc_H	s_values[3]

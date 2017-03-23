@@ -1532,12 +1532,18 @@ main(int argc, char *argv[])
 
     } /* interactive */
 
+    /* XXX total hack that fixes a dm init issue on Mac OS X where the
+     * dm first opens filled with garbage.
+     */
+    dm_set_bg(dmp, 0, 0, 0);
+
     /* initialize a display manager */
     if (interactive && classic_mged) {
-	if (!attach)
+	if (!attach) {
 	    get_attached();
-	else
+	} else {
 	    attach_display_manager(INTERP, attach, dpy_string);
+	}
     }
 
     /* --- Now safe to process geometry. --- */
@@ -1676,7 +1682,8 @@ main(int argc, char *argv[])
 	/* This test stops optimizers from complaining about an
 	 * infinite loop.
 	 */
-	if ((rateflag = event_check(rateflag)) < 0) break;
+	if ((rateflag = event_check(rateflag)) < 0)
+	    break;
 
 	/*
 	 * Cause the control portion of the displaylist to be updated

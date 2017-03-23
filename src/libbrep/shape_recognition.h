@@ -16,21 +16,22 @@
 #define BREP_ELLIPSOIDAL_TOL 0.05
 #define BREP_TOROIDAL_TOL 0.05
 
-#define pout(p)  p.x << " " << p.y << " " << p.z
+#define pout(p) p.x << " " << p.y << " " << p.z
 
 void set_to_array(int **array, int *array_cnt, std::set<int> *set);
 void array_to_set(std::set<int> *set, int *array, int array_cnt);
 
 #define ON_VMOVE(on, bn) { \
-    on.x = bn[0]; \
-    on.y = bn[1]; \
-    on.z = bn[2]; \
-}
+	on.x = bn[0]; \
+	on.y = bn[1]; \
+	on.z = bn[2]; \
+    }
 #define BN_VMOVE(bn, on) { \
-    bn[0] = on.x; \
-    bn[1] = on.y; \
-    bn[2] = on.z; \
-}
+	bn[0] = on.x; \
+	bn[1] = on.y; \
+	bn[2] = on.z; \
+    }
+
 
 typedef enum {
     SURFACE_PLANE = 0,
@@ -105,8 +106,6 @@ int sph_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand);
 int negative_sphere(const ON_Brep *brep, int face_index, double cyl_tol);
 int sph_implicit_plane(const ON_Brep *brep, int ec, int *edges, ON_SimpleArray<ON_Plane> *sph_planes);
 int sph_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *sph_planes, int shoal_nonplanar_face);
-
-
 
 
 #endif /* SHAPE_RECOGNITION_H */

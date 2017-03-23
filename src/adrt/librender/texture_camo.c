@@ -43,7 +43,7 @@ void
 texture_camo_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
     struct texture_camo_s *td;
     vect_t p, pt;
-    tfloat sum1, sum2;
+    TFLOAT sum1, sum2;
 
 
     td = (struct texture_camo_s *)texture->data;

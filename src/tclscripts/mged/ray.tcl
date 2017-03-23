@@ -19,13 +19,6 @@
 #
 ###
 #
-#			R A Y . T C L
-#
-#  Authors -
-#	Mike J. Muuss
-#	Robert G. Parker
-#
-#  Description -
 #	Tcl routines that use LIBRT's Tcl interface.
 #
 

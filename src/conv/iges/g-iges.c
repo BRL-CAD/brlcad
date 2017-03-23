@@ -264,8 +264,8 @@ main(int argc, char *argv[])
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		NMG_debug = RTG.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		NMG_debug = nmg_debug;
 		break;
 	    case 'o':		/* Output file name. */
 		output_file = bu_optarg;
@@ -450,8 +450,8 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	result = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
+	result = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
@@ -467,7 +467,7 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;	/* restore mode */
+	nmg_debug = NMG_debug;	/* restore mode */
 
 	/* Release the tree memory & input regions */
 	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */

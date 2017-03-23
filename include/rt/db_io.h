@@ -26,9 +26,15 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/avs.h"
+#include "rt/db5.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS
+
+
+struct rt_db_internal; /* forward declaration */
+
 
 /* db_open.c */
 /**

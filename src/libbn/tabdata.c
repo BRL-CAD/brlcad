@@ -120,7 +120,6 @@ bn_tabdata_add(struct bn_tabdata *out, const struct bn_tabdata *in1, const struc
     i2 = in2->y;
     for (j = in1->ny; j > 0; j--)
 	*op++ = *i1++ + *i2++;
-    /* VADD2N( out->y, i1->y, i2->y, in1->ny ); */
 }
 
 void
@@ -146,7 +145,6 @@ bn_tabdata_mul(struct bn_tabdata *out, const struct bn_tabdata *in1, const struc
     i2 = in2->y;
     for (j = in1->ny; j > 0; j--)
 	*op++ = *i1++ * *i2++;
-    /* VELMUL2N( out->y, i1->y, i2->y, in1->ny ); */
 }
 
 void
@@ -174,7 +172,6 @@ bn_tabdata_mul3(struct bn_tabdata *out, const struct bn_tabdata *in1, const stru
     i3 = in3->y;
     for (j = in1->ny; j > 0; j--)
 	*op++ = *i1++ * *i2++ * *i3++;
-    /* VELMUL3N( out->y, i1->y, i2->y, i3->y, in1->ny ); */
 }
 
 void
@@ -250,7 +247,6 @@ bn_tabdata_scale(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
     i1 = in1->y;
     for (j = in1->ny; j > 0; j--)
 	*op++ = *i1++ * scale;
-    /* VSCALEN( out->y, in->y, scale ); */
 }
 
 void
@@ -266,7 +262,6 @@ bn_table_scale(struct bn_table *tabp, register double scale)
     op = tabp->x;
     for (j = tabp->nx+1; j > 0; j--)
 	*op++ *= scale;
-    /* VSCALEN( tabp->x, tabp->x, scale, tabp->nx+1 ); */
 }
 
 void
@@ -294,7 +289,6 @@ bn_tabdata_join1(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
     i2 = in2->y;
     for (j = in1->ny; j > 0; j--)
 	*op++ = *i1++ + scale * *i2++;
-    /* VJOIN1N( out->y, in1->y, scale, in2->y ); */
 }
 
 void
@@ -325,7 +319,6 @@ bn_tabdata_join2(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
     i3 = in3->y;
     for (j = in1->ny; j > 0; j--)
 	*op++ = *i1++ + scale2 * *i2++ + scale3 * *i3++;
-    /* VJOIN2N( out->y, in1->y, scale2, in2->y, scale3, in3->y ); */
 }
 
 void
@@ -353,7 +346,6 @@ bn_tabdata_blend2(struct bn_tabdata *out, register double scale1, const struct b
     i2 = in2->y;
     for (j = in1->ny; j > 0; j--)
 	*op++ = scale1 * *i1++ + scale2 * *i2++;
-    /* VBLEND2N( out->y, scale1, in1->y, scale2, in2->y ); */
 }
 
 void
@@ -385,7 +377,6 @@ bn_tabdata_blend3(struct bn_tabdata *out, register double scale1, const struct b
     i3 = in3->y;
     for (j = in1->ny; j > 0; j--)
 	*op++ = scale1 * *i1++ + scale2 * *i2++ + scale3 * *i3++;
-    /* VBLEND3N( out->y, scale1, in1->y, scale2, in2->y, scale3, in3->y ); */
 }
 
 double

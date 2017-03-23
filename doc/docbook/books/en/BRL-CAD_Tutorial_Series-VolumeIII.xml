@@ -2963,7 +2963,7 @@ comb comb_name u a - b + c
     <para>
       There are several ways to evaluate BRL-CAD geometry. These include
       (1) rendering the image using rt, (2) checking for overlaps using rtcheck
-      (or the lesser-known/used g_lint or MGED's overlap tool), and (3) checking
+      (or the lesser-known/used glint or MGED's overlap tool), and (3) checking
       for faulty material composition (e.g., densities) using rtweight.
     </para>
     <para>
@@ -2977,7 +2977,7 @@ comb comb_name u a - b + c
     </para>
     <para>
       As subcomponents are organized into assemblies and the complexity of the
-      geometry increases, it is then a good practice to use rtcheck (or g_lint
+      geometry increases, it is then a good practice to use rtcheck (or glint
       or the overlap tool) to help find any errors in the geometry and isolate
       any problems.
     </para>

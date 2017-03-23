@@ -2980,8 +2980,8 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
 	bu_printb("librtbu_debug", bu_debug, DEBUG_FORMAT);
 	bu_log("\n");
     }
-    if (RTG.NMG_debug) {
-	bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
+    if (nmg_debug) {
+	bu_printb("librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
 	bu_log("\n");
     }
 

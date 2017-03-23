@@ -8,8 +8,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) defs 1.44 96/10/08 17:26:58
 # ------------------------------------------------------------------
 # THIS SCRIPT IS NOW DEPRECATED!  It is kept for older Tcl
 # installations that don't have the "tcltest" package.

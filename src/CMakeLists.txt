@@ -37,6 +37,7 @@ set(level_1_dirs
   libbu
   libbn
   libbg
+  libnmg
   libbrep
   librt
   libwdb
@@ -160,10 +161,22 @@ endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 #    $<TARGET_OBJECTS:libicv_OBJECTS>
 #    $<TARGET_OBJECTS:libged_OBJECTS>
 #    )
-#  target_link_libraries(libbrlcad ${OPENNURBS_LIBRARY} ${TCL_LIBRARY})
+#  target_link_libraries(libbrlcad ${OPENNURBS_LIBRARIES} ${TCL_LIBRARY})
 #endif(${HIGHEST_TARGET_LEVEL} GREATER 1)
 
 CMAKEFILES(README external)
+
+# Add a convenience directory that is only added to the
+# build if it exists.  This directory is ignored by svn,
+# so it can be used for experimentation that needs to be
+# part of the build but the dev doesn't want to accidentally
+# commit.
+if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
+    add_subdirectory(testing)
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
+endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+
 
 # Local Variables:
 # tab-width: 8

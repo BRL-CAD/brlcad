@@ -146,13 +146,13 @@ typedef int (*bu_opt_arg_process_t)(struct bu_vls *msg, int argc, const char **a
  * first argument of the argv array - this macro encapsulates that into a
  * standard check.
  */
-#define BU_OPT_CHECK_ARGV0(_msg, _argc, _argv, _opt_name) \
+#define BU_OPT_CHECK_ARGV0(_msg, _argc, _argv, _opt_name) do {\
 if ((_argc) < 1 || !(_argv) || !(_argv)[0] || (_argv)[0][0] == '\0') { \
     if ((_msg)) { \
 	bu_vls_printf((_msg), "Error: missing required argument: %s\n", (_opt_name)); \
     } \
     return -1; \
-}
+} } while (0)
 
 /**
  * @brief
@@ -173,24 +173,24 @@ struct bu_opt_desc {
 #define BU_OPT_DESC_NULL {NULL, NULL, NULL, NULL, NULL, NULL}
 
 /** Macro for assigning values to bu_opt_desc array entries. */
-#define BU_OPT(_desc, _so, _lo, _ahelp, _aprocess, _var, _help) { \
+#define BU_OPT(_desc, _so, _lo, _ahelp, _aprocess, _var, _help) do { \
     (_desc).shortopt = _so; \
     (_desc).longopt = _lo; \
     (_desc).arg_helpstr = _ahelp; \
     (_desc).arg_process = _aprocess; \
     (_desc).set_var = (void *)_var;  \
     (_desc).help_string = _help; \
-}
+} while (0)
 
 /** Convenience macro for setting a bu_opt_desc struct to BU_OPT_DESC_NULL */
-#define BU_OPT_NULL(_desc) { \
+#define BU_OPT_NULL(_desc) do { \
     (_desc).shortopt = NULL; \
     (_desc).longopt = NULL; \
     (_desc).arg_helpstr = NULL; \
     (_desc).arg_process = NULL; \
     (_desc).set_var = NULL; \
     (_desc).help_string = NULL; \
-}
+} while (0)
 
 /**
  * Parse @p argv array using option descriptions.

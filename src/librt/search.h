@@ -119,7 +119,7 @@ struct db_plan_t {
 	char *_depth_data;		/* char pointer */
 	char *_node_data;		/* char pointer */
 	char *_type_data;
-	regex_t _regex_data;	/* compiled regexp */
+	char *_regex_pattern;		/* regexp pattern */
 	int _bool_data;
 	int _max_data;			/* tree depth */
 	int _min_data;			/* tree depth */
@@ -131,7 +131,7 @@ struct db_plan_t {
 #define c_data		p_un._c_data
 #define ci_data		p_un._ci_data
 #define path_data	p_un._path_data
-#define regexp_data 	p_un._regex_data
+#define regex_pattern 	p_un._regex_pattern
 #define attr_data	p_un._attr_data
 #define param_data	p_un._param_data
 #define depth_data	p_un._depth_data

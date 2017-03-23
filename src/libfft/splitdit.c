@@ -65,7 +65,6 @@ rfft(double *X, int N)
 
     /* other butterflies */
     n2 = 2;
-/*	for ( k = 2; k <= M; k++ ) {*/
     for ( k = 4; k <= N; k <<= 1 ) {
 	n2 *= 2;
 	n4 = n2/4;

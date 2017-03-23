@@ -180,7 +180,7 @@ tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 *triverts)
      *    this gives 3x3=9 more tests
      */
     TIE_3 v0, v1, v2, normal, e0, e1, e2, fe, p;
-    tfloat min, max, d, t, rad;
+    TFLOAT min, max, d, t, rad;
 
     /* move everything so that the boxcenter is in (0, 0, 0) */
     VSUB2(v0.v,  triverts[0].v,  (*center).v);
@@ -300,7 +300,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
      *****************************************/
     unsigned int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice = 0, split;
     unsigned int side[3][MAX_SLICES+MIN_SLICES][2], i, j, d, s, n, k, smax[3], smin, slice_num;
-    tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min = 0.0, d_max = 0.0;
+    TFLOAT coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min = 0.0, d_max = 0.0;
     struct tie_tri_s *tri;
     struct tie_geom_s *node_gd = (struct tie_geom_s *)(node->data);
     TIE_3 min, max;
@@ -312,7 +312,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
      * Calculate number of slices to use as a function of triangle density.
      * Setting slices as a function of relative node size does not work so well.
      */
-    /*  slice_num = MIN_SLICES + MAX_SLICES * ((tfloat)node_gd->tri_num / (tfloat)tie->tri_num); */
+    /*  slice_num = MIN_SLICES + MAX_SLICES * ((TFLOAT)node_gd->tri_num / (TFLOAT)tie->tri_num); */
     slice_num = 1*node_gd->tri_num > MAX_SLICES ? MAX_SLICES : 1*node_gd->tri_num;
 
     for (d = 0; d < 3; d++) {
@@ -354,7 +354,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 	    cmax[1] = max;
 
 	    /* construct slices so as not to use the boundaries as slices */
-	    coef[d][k] = ((tfloat)k / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+	    coef[d][k] = ((TFLOAT)k / (TFLOAT)(slice_num-1)) * (TFLOAT)(slice_num-2) / (TFLOAT)slice_num + (TFLOAT)1 / (TFLOAT)slice_num;
 	    cmax[0].v[d] = min.v[d]*(1.0-coef[d][k]) + max.v[d]*coef[d][k];
 	    cmin[1].v[d] = cmax[0].v[d];
 
@@ -438,7 +438,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 	active = 0;
 
 	for (k = 0; k < slice_num; k++) {
-	    if (slice[d][k] < (unsigned int)(MIN_DENSITY * (tfloat)smax[d])) {
+	    if (slice[d][k] < (unsigned int)(MIN_DENSITY * (TFLOAT)smax[d])) {
 		if (!active) {
 		    active = 1;
 		    beg = k;
@@ -483,17 +483,17 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
      * Lower triangle numbers means there is a higher probability that
      * triangles lack any sort of coherent structure.
      */
-    if ((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_gd->tri_num > 500) {
+    if ((TFLOAT)(gap[d][1] - gap[d][0]) / (TFLOAT)slice_num > MIN_SPAN && node_gd->tri_num > 500) {
 	int gap0 = gap[d][0] - slice_num/2;
 	int gap1 = gap[d][1] - slice_num/2;
 	split = d;
 	if (abs(gap0) < abs(gap1)) {
 	    /* choose gap[d][0] as splitting plane */
-	    split_coef = ((tfloat)gap[d][0] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+	    split_coef = ((TFLOAT)gap[d][0] / (TFLOAT)(slice_num-1)) * (TFLOAT)(slice_num-2) / (TFLOAT)slice_num + (TFLOAT)1 / (TFLOAT)slice_num;
 	    split_slice = gap[d][0];
 	} else {
 	    /* choose gap[d][1] as splitting plane */
-	    split_coef = ((tfloat)gap[d][1] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+	    split_coef = ((TFLOAT)gap[d][1] / (TFLOAT)(slice_num-1)) * (TFLOAT)(slice_num-2) / (TFLOAT)slice_num + (TFLOAT)1 / (TFLOAT)slice_num;
 	    split_slice = gap[d][1];
 	}
     } else {
@@ -737,7 +737,7 @@ TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
     VMOVE(tie->amax, tie->max);
     VSUB2(delta.v,  tie->max,  tie->min);
     MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
-#if defined(TIE_PRECISION) && defined(TIE_PRECISION_SINGLE) && TIE_PRECISION == TIE_PRECISION_SINGLE
+#if defined(TIE_PRECISION) && TIE_PRECISION == 0
     TIE_PREC *= 0.000000001;
 #else
     TIE_PREC *= 0.000000000001;

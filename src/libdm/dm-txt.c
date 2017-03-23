@@ -284,10 +284,11 @@ txt_endDList(dm *UNUSED(dmp))
 }
 
 
-HIDDEN void
+HIDDEN int
 txt_drawDList(unsigned int UNUSED(list))
 {
     bu_log("drawDList called\n");
+    return 0;
 }
 
 
@@ -315,10 +316,11 @@ txt_getDisplayImage(dm *UNUSED(dmp), unsigned char **UNUSED(image))
 }
 
 
-HIDDEN void
+HIDDEN int
 txt_reshape(dm *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
 {
     bu_log("reshape called\n");
+    return 0;
 }
 
 

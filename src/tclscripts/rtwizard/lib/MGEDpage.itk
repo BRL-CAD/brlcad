@@ -265,34 +265,19 @@ namespace eval RtWizard {
 	# mged window over its controls
 	#
 	itk_component add midFrame {
-	    panedwindow $cs.midFrame \
-		-relief flat
+	    ::iwidgets::panedwindow $cs.midFrame \
+	    -orient vertical \
+	    -thickness 8 \
+	    -sashborderwidth 1 \
+	    -sashcursor sb_h_double_arrow \
+	    -showhandle 0
 	} {
 	    usual
-	}
-
-
-	#
-	# Create a frame for the hierarchy widgets and controls
-	#
-	itk_component add hierFrame {
-	    frame $cs.hierFrame \
-		-relief flat
-	} {
-	    usual
-	}
-	$cs.midFrame add $cs.hierFrame
-
-	#
-	# Create a frame for the mged object and its controls
-	#
-	itk_component add mgedFrame {
-	    frame $cs.mgedFrame \
-		-relief flat
-	} {
-	    usual
-	}
-	$cs.midFrame add $cs.mgedFrame
+        }
+	set ::panedwin $itk_component(midFrame)
+	$itk_component(midFrame) add hierarchyView
+	set hparent [$itk_component(midFrame) childsite hierarchyView]
+	$itk_component(midFrame) add mgedView
 
 	#
 	# Note that the MGED object is produced separately.
@@ -306,7 +291,7 @@ namespace eval RtWizard {
 	# Create a frame to manage the controls
 	#
 	itk_component add conFrame {
-	    iwidgets::labeledframe $itk_component(hierFrame).conFrame \
+	    iwidgets::labeledframe $hparent.conFrame \
 		-background #666699 \
 		-relief groove \
 		-labeltext "View Controls"
@@ -333,31 +318,11 @@ namespace eval RtWizard {
 	    usual
 	}
 
-	#	# Previous
-	#	itk_component add prev {
-	#	    button $conFrameCS.prev \
-	    #		    -text "Previous" \
-	    #		    -width 8 \
-	    #		    -command "[itcl::code $this goPrev]"
-	#	} {
-	#	    usual
-	#	}
-
-	#	# Next
-	#	itk_component add next {
-	#	    button $conFrameCS.next \
-	    #		    -text Next \
-	    #		    -width 8 \
-	    #		    -command "[itcl::code $this goNext]"
-	#	} {
-	#	    usual
-	#	}
-
 	#
 	# Create the hierarchy browser
 	#
 	itk_component add hier {
-	    iwidgets::hierarchy $itk_component(hierFrame).#auto \
+	    iwidgets::hierarchy $hparent.#auto \
 		-querycommand  "[itcl::code $this getChildren] %n " \
 		-selectcommand "[itcl::code $this selectNode] %n %s " \
 		-alwaysquery 0 \
@@ -397,13 +362,17 @@ namespace eval RtWizard {
 	    -pady 3
 
 	pack $itk_component(hier) -expand 1 -fill both -anchor w
-
 	pack $itk_component(midFrame) -expand 1 -fill both
 	pack $itk_component(conFrame) -anchor s
 	pack $itk_component(helpPanel) -anchor s -fill x
 
 	eval itk_initialize $args
 
+	# Set initial width for hierarchy pane
+	if {![info exists ::gpane]} {
+	    set ::gpane [list 40 60]
+	}
+	$itk_component(midFrame) fraction [lindex $::gpane 0] [lindex $::gpane 1]
     }
 
     #
@@ -455,9 +424,13 @@ namespace eval RtWizard {
 	# Pack the mged object in _my_ mged frame
 	#
 	pack $::mgedObj \
-	    -in $itk_component(mgedFrame) \
+	    -in [$itk_component(midFrame) childsite mgedView] \
 	    -anchor e \
 	    -expand 1 -fill both
+
+
+	# set the pane to the global pane setting
+	$itk_component(midFrame) fraction [lindex $::gpane 0] [lindex $::gpane 1]
 
 	#
 	# Create menus - use the singleton
@@ -530,6 +503,13 @@ namespace eval RtWizard {
 	# Capture the current view
 	#
 	captureView
+
+	# Stash pane settings, as long as the width is greater
+	# than three pixels
+	set tgpane [$itk_component(midFrame) fraction]
+	if { [lindex $tgpane 0] > 3 } {
+	    set ::gpane $tgpane
+	}
 
 	#
 	# Unpack the mged object from my mgedFrame so that

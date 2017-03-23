@@ -789,14 +789,14 @@ nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, con
     }
 
     if (!is_light) {
-	nmg_triangulate_model(m, tol2);
+	nmg_triangulate_model(m, &RTG.rtg_vlfree, tol2);
 	fprintf(pstate->fp_out, "\t\t\t}\n");
 	fprintf(pstate->fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
 	fprintf(pstate->fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
-    nmg_vertex_tabulate(&verts, &m->magic);
+    nmg_vertex_tabulate(&verts, &m->magic, &RTG.rtg_vlfree);
     if (!is_light) {
 	fprintf(pstate->fp_out, "\t\t\t\t\tpoint [");
     } else {
@@ -1055,7 +1055,7 @@ vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree,
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
@@ -1067,7 +1067,7 @@ vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree,
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = pstate->nmg_debug; /* restore mode */
+	nmg_debug = pstate->nmg_debug; /* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -1227,7 +1227,7 @@ vrml_write(struct gcv_context *context, const struct gcv_opts *gcv_options, cons
     state.gcv_options = gcv_options;
     state.vrml_write_options = (struct vrml_write_options *)options_data;
     state.dbip = context->dbip;
-    state.nmg_debug = RTG.NMG_debug;
+    state.nmg_debug = nmg_debug;
 
     region_end_data.pstate = &state;
     region_end_data.pmp = &pm;

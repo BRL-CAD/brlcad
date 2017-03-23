@@ -888,7 +888,6 @@ log_Run(void)
 
     printf("View: %g azimuth, %g elevation\n", az, el);
 
-    /** mat_ae(model2hv, az, el); **/
     /* Formula from rt/do.c */
     bn_mat_angles(model2hv, 270.0+el, 0.0, 270.0-az);
     model2hv[15] = 25.4;		/* input is in inches */

@@ -31,7 +31,7 @@
 
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/log.h"
+#include "bu/exit.h"
 #include "vmath.h"
 #include "fb.h"
 
@@ -114,7 +114,7 @@ main(int argc, char **argv)
     fb *fbp;
 
     int x, y;
-    int xin, yin;		/* number of sceen output lines */
+    int xin, yin;		/* number of screen output lines */
 
     char usage[] = "Usage: fb-bw [-i] [-F framebuffer]\n\
 	[-X scr_xoff] [-Y scr_yoff]\n\

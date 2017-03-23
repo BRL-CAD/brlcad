@@ -67,6 +67,7 @@ cmp_regions(const void *a, const void *b, void *UNUSED(arg))
     return cmp;
 }
 
+
 /**
  * Sorts the region list according to the sort parameter (1 - 5) passed in.
  */
@@ -371,20 +372,42 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (find_duplicates_flag) {
-
+	int im = 0;
+	ignored_cnt = 0;
 	bu_sort((void *) regions, BU_PTBL_LEN(&results2), sizeof(struct region_record), cmp_regions, NULL);
 
-	for (i = 1;  i < BU_PTBL_LEN(&results2); i++) {
-	    int same;
-	    if (skip_special_duplicates_flag) {
-		same = !cmp_regions((void *)&(regions[i - 1]), (void *)&(regions[i]), NULL);
-	    } else {
-		same = !bu_strcmp(regions[i - 1].region_id, regions[i].region_id);
+	for(im = 0; im < (int)BU_PTBL_LEN(&results2); im++) {
+	    regions[im].ignore = 1;
+	}
+
+	im = 0;
+	while (im < (int)BU_PTBL_LEN(&results2)) {
+	    int jm = im + 1;
+	    while (jm < (int)BU_PTBL_LEN(&results2)) {
+		if (BU_STR_EQUAL(regions[im].region_id, regions[jm].region_id)) {
+		    if (skip_special_duplicates_flag) {
+			int ssd = 0;
+			ssd += BU_STR_EQUAL(regions[im].obj_parent, regions[jm].obj_parent);
+			ssd += BU_STR_EQUAL(regions[im].material_id, regions[jm].material_id);
+			ssd += BU_STR_EQUAL(regions[im].los, regions[jm].los);
+			if (ssd != 3) {
+			    /* Found match, skip criteria not satisfied - set ignore flags */
+			    regions[im].ignore = 0;
+			    regions[jm].ignore = 0;
+			}
+		    } else {
+			/* Found match - set ignore flags */
+			regions[im].ignore = 0;
+			regions[jm].ignore = 0;
+		    }
+		}
+		jm++;
 	    }
-	    if (same) {
-		regions[i].ignore = 1;
-		ignored_cnt++;
-	    }
+	    im++;
+	}
+
+	for(im = 0; im < (int)BU_PTBL_LEN(&results2); im++) {
+	    if (regions[im].ignore) ignored_cnt++;
 	}
 
 	if (ignored_cnt == BU_PTBL_LEN(&results2)) {
@@ -395,9 +418,11 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 		fclose(outfile);
 	    }
 	    bu_vls_printf(gedp->ged_result_str, "No duplicate region_id\n");
-	    bu_vls_printf(gedp->ged_result_str, "Done.\n");
+	    bu_vls_printf(gedp->ged_result_str, "Done.");
 	    bu_free(regions, "ged_lc");
 	    return GED_ERROR;
+	} else {
+	    goto print_results;
 	}
     }
 
@@ -432,7 +457,7 @@ print_results:
 		      obj_len_max, regions[i].obj_name,
 		      regions[i].obj_parent);
     }
-    bu_vls_printf(gedp->ged_result_str, "Done.\n");
+    bu_vls_printf(gedp->ged_result_str, "Done.");
 
     if (file_name) {
 	bu_vls_fwrite(outfile, output);

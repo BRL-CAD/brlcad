@@ -396,6 +396,198 @@ proc ::stl_build_cmd {} {
 }
 
 
+#################################################################
+#
+#                Wavefront OBJ specific logic
+#
+#################################################################
+
+proc obj_options {} {
+    set w [frame .[clock seconds]]
+    wm resizable . 800 600
+    wm title . "Wavefront OBJ File Importer options"
+
+    label $w.ofl -text "Output file"
+    entry $w.ofe -textvariable ::output_file -width 40 -bg white
+    grid $w.ofl  -column 0  -row 0  -sticky e
+    grid $w.ofe  -column 1 -columnspan 2  -row 0  -sticky news
+
+    label $w.mindisttoll -text "Distance Tolerance"
+    set ::min_dist_tol "0.05"
+    entry $w.mindisttole -textvariable ::min_dist_tol -bg white
+    grid $w.mindisttoll  -column 0  -row 1  -sticky e
+    grid $w.mindisttole  -column 1 -columnspan 2  -row 1  -sticky news
+
+    label $w.stlunitsl   -text "OBJ Units"
+    entry $w.stlunitse -textvariable ::input_file_units -bg white
+    grid $w.stlunitsl  -column 0  -row 2  -sticky e
+    grid $w.stlunitse  -column 1 -columnspan 2  -row 2  -sticky news
+
+    label $w.groupingl  -text "Select which OBJ face grouping is used to\ncreate BRL-CAD primitives"
+    set groupings {group material none object texture}
+    ttk::combobox $w.groupinge -textvariable ::obj_grouping -values $groupings
+    $w.groupinge set group
+    grid $w.groupingl  -column 0  -row 3  -sticky e
+    grid $w.groupinge  -column 1 -columnspan 2  -row 3  -sticky news
+
+    label $w.model  -text "Select the conversion mode"
+    set modes {"native bot" nmg "bot via nmg"}
+    ttk::combobox $w.modee -textvariable ::obj_mode -values $modes
+    $w.modee set "native bot"
+    grid $w.model  -column 0  -row 4  -sticky e
+    grid $w.modee  -column 1 -columnspan 2  -row 4  -sticky news
+
+    label $w.contl     -text "Continue processing if NMG conversion fails\n(fall back to BoT)"
+    checkbutton $w.conte -variable ::continue_nmg_bomb
+    grid $w.contl  -column 0  -row 5  -sticky e
+    grid $w.conte  -column 1 -row 5  -sticky news
+
+    label $w.typel  -text "Select the conversion type for BoTs that are\nnot closed solids"
+    set types {surface plate "plate nocos"}
+    ttk::combobox $w.typee -textvariable ::obj_type -values $types
+    $w.typee set "surface"
+    grid $w.typel  -column 0  -row 6  -sticky e
+    grid $w.typee  -column 1 -columnspan 2  -row 6  -sticky news
+
+    label $w.platethickl    -text "Plate Thickness (if converting to plate mode)"
+    entry $w.platethicke -textvariable ::plate_thickness -bg white
+    grid $w.platethickl  -column 0  -row 7  -sticky e
+    grid $w.platethicke  -column 1 -columnspan 2  -row 7  -sticky news
+
+    label $w.orientl  -text "Select the BoT triangle orientation mode"
+    set orients {unoriented ccw cw}
+    ttk::combobox $w.oriente -textvariable ::obj_orients -values $orients
+    $w.oriente set "unoriented"
+    grid $w.orientl  -column 0  -row 8  -sticky e
+    grid $w.oriente  -column 1 -columnspan 2  -row 8  -sticky news
+
+    label $w.vfusel     -text "Fuse vertices that are identical (+/- tol)\n(Warning - may significantly slow conversion)"
+    checkbutton $w.vfusee -variable ::vfuse
+    grid $w.vfusel  -column 0  -row 9  -sticky e
+    grid $w.vfusee  -column 1 -row 9  -sticky news
+
+    label $w.ignormsl     -text "Ignore normals defined in input file"
+    checkbutton $w.ignormse -variable ::ignore_norms
+    grid $w.ignormsl  -column 0  -row 10  -sticky e
+    grid $w.ignormse  -column 1 -row 10  -sticky news
+
+    label $w.debugl      -text "Print Debugging Info (0 = off, 2 = max)"
+    entry $w.debuge -textvariable ::debug_level -bg white
+    grid $w.debugl  -column 0  -row 11  -sticky e
+    grid $w.debuge  -column 1 -columnspan 2  -row 11  -sticky news
+
+    label $w.plotoverlayl      -text "Generate plot3 file of open edges"
+    checkbutton $w.plotoverlaye -variable ::open_edges_plot3
+    grid $w.plotoverlayl  -column 0  -row 12  -sticky e
+    grid $w.plotoverlaye  -column 1 -row 12  -sticky news
+
+    label $w.oll -text "Conversion Log file"
+    entry $w.ole -textvariable ::log_file -bg white
+    grid $w.oll  -column 0  -row 13  -sticky e
+    grid $w.ole  -column 1 -columnspan 2  -row 13  -sticky news
+
+    # Application buttons
+    button $w.ok     -text OK     -command {set done 1}
+    button $w.c      -text Clear  -command "set $w {}"
+    button $w.cancel -text Cancel -command "set $w {}; set ::cancel_process 1; set done 1"
+    grid $w.ok -column 0 -row 14 -sticky es
+    grid $w.c -column 1 -row 14 -sticky s
+    grid $w.cancel -column 2 -row 14 -sticky w
+
+    grid columnconfigure $w 1 -weight 1
+
+    pack $w -expand true -fill x
+    vwait done
+
+    destroy $w
+}
+
+# For obj-g, it's options first, then input file, then output file
+proc ::obj_build_cmd {} {
+    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] obj-g$::exe_ext]]]
+    if {[llength "$::debug_level"] > 0} {
+       append cmd " -d -v $::debug_level" { }
+    }
+    if {$::open_edges_plot3 == 1} {
+       append cmd " -p" { }
+    }
+    if {$::continue_nmg_bomb == 1} {
+       append cmd " -c" { }
+    }
+    if {$::ignore_norms == 1} {
+       append cmd " -i" { }
+    }
+    if {$::vfuse== 1} {
+       append cmd " -f" { }
+    }
+    if {[llength "$::min_dist_tol"] > 0} {
+       append cmd " -t $::min_dist_tol" { }
+    }
+    if {[llength "$::plate_thickness"] > 0} {
+       append cmd " -H $::plate_thickness" { }
+    }
+    if {[llength "$::obj_grouping"] > 0} {
+       if {"$::obj_grouping" == "group"} {
+          append cmd " -g g" { }
+       }
+       if {"$::obj_grouping" == "material"} {
+          append cmd " -g m" { }
+       }
+       if {"$::obj_grouping" == "none"} {
+          append cmd " -g n" { }
+       }
+       if {"$::obj_grouping" == "object"} {
+          append cmd " -g o" { }
+       }
+       if {"$::obj_grouping" == "texture"} {
+          append cmd " -g t" { }
+       }
+    }
+    if {[llength "$::obj_mode"] > 0} {
+       if {"$::obj_mode" == "native bot"} {
+          append cmd " -m b" { }
+       }
+       if {"$::obj_mode" == "nmg"} {
+          append cmd " -m n" { }
+       }
+       if {"$::obj_mode" == "bot via nmg"} {
+          append cmd " -m v" { }
+       }
+    }
+    if {[llength "$::obj_type"] > 0} {
+       if {"$::obj_type" == "surface"} {
+          append cmd " -o s" { }
+       }
+       if {"$::obj_type" == "plate"} {
+          append cmd " -o p" { }
+       }
+       if {"$::obj_type" == "plate nocos"} {
+          append cmd " -o n" { }
+       }
+    }
+    if {[llength "$::obj_orients"] > 0} {
+       if {"$::obj_orients" == "unoriented"} {
+          append cmd " -r 1" { }
+       }
+       if {"$::obj_orients" == "ccw"} {
+          append cmd " -r 2" { }
+       }
+       if {"$::obj_orients" == "cw"} {
+          append cmd " -r 3" { }
+       }
+
+    }
+    if {[llength "$::input_file_units"] > 0} {
+       append cmd " -u $::input_file_units" { }
+    }
+
+    append cmd " $::input_file" { }
+
+    append cmd " $::output_file" { }
+
+    set ::obj_cmd $cmd
+}
+
 proc gui_conversion { cmd logfile } {
 #close $::info_id
    package require tkcon
@@ -437,7 +629,7 @@ proc ::select_conv { } {
     ::ttk::combobox $w.conv_format \
         -state readonly \
         -textvariable ::conv_format \
-	-values {{BRL-CAD (.g)} {Rhino (.3dm)} {FASTGEN 4} {STEP} {STeroLithography (.stl)}}
+	-values {{BRL-CAD (.g)} {Rhino (.3dm)} {FASTGEN 4} {STEP} {STeroLithography (.stl)} {Wavefront OBJ (.obj)}}
     grid $w.conv_format  -column 0 -columnspan 2 -row 1  -sticky news
 
     # Application buttons
@@ -467,6 +659,9 @@ proc ::set_input_ext { } {
        }
        "STeroLithography (.stl)" {
 	   set ::input_ext ".stl"
+       }
+       "Wavefront OBJ (.obj)" {
+	   set ::input_ext ".obj"
        }
        "STEP" {
 	   set ::input_ext ".step"
@@ -521,6 +716,12 @@ proc ::conversion_config { } {
 
            if {$::cancel_process == 1} {exit 0}
            gui_conversion $::fast4_cmd $::log_file
+       }
+       ".obj" {
+   	::obj_options
+           ::obj_build_cmd
+           if {$::cancel_process == 1} {exit 0}
+           gui_conversion $::obj_cmd $::log_file
        }
        ".stl" {
    	::stl_options

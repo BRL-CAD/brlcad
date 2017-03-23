@@ -388,8 +388,6 @@ Convert_assy(char *line)
 			wmem->wm_mat[4*i+j] = mat_col[i];
 		}
 
-		/* convert this matrix to separate scale factor into element #15 */
-/*			scale = MAGNITUDE(&wmem->wm_mat[0]); */
 		scale = pow(bn_mat_det3(wmem->wm_mat), 1.0/3.0);
 		if (debug) {
 		    bn_mat_print(brlcad_name, wmem->wm_mat);
@@ -959,7 +957,7 @@ Rm_nulls(void)
 	    tree_list = (struct rt_tree_array *)bu_calloc(node_count,
 							  sizeof(struct rt_tree_array), "tree list");
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
-	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	    BU_ASSERT(actual_count == node_count);
 	} else {
 	    tree_list = (struct rt_tree_array *)NULL;
 	    actual_count = 0;

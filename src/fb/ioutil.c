@@ -40,11 +40,9 @@ HIDDEN void
 VMessage(const char *format, va_list ap)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *tmp_basename = (char *)bu_calloc(strlen(bu_getprogname()), sizeof(char), "VMessage tmp_basename");
+    char *tmp_basename = bu_basename(bu_getprogname(), NULL);
 
     bu_vls_printf(&str, format, ap);
-    bu_basename(tmp_basename, bu_getprogname());
-
     bu_log("%s: %s\n", tmp_basename, bu_vls_addr(&str));
 
     bu_vls_free(&str);

@@ -24,9 +24,10 @@
 
 #include "bu/getopt.h"
 #include "bu/list.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "bu/exit.h"
+#include "bu/log.h"
 
 #include "./tokens.h"
 
@@ -253,7 +254,7 @@ bubblesort(void)
 	    BU_LIST_INSERT(&a->l, &b->l);
 	    if (b->l.back != &head) {
 		a = (struct frame *)b->l.back;
-	    };
+	    }
 	} else {
 	    a=(struct frame *)a->l.forw;
 	}

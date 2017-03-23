@@ -311,6 +311,8 @@ set(archer_images
 
 BRLCAD_ADDDATA(archer_images tclscripts/archer/images)
 
+CMAKEFILES(License.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

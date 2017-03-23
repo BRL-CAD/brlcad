@@ -256,12 +256,20 @@ endmacro(BRLCAD_STRUCT_MEMBER)
 macro(BRLCAD_CHECK_LIBRARY targetname lname func)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
+
   if(NOT ${targetname}_LIBRARY)
     CHECK_LIBRARY_EXISTS(${lname} ${func} "" HAVE_${targetname}_${lname})
-    if(HAVE_${targetname}_${lname})
-      set(${targetname}_LIBRARY "${lname}")
-    endif(HAVE_${targetname}_${lname})
+  else(NOT ${targetname}_LIBRARY)
+    set(CMAKE_REQUIRED_LIBRARIES_TMP ${CMAKE_REQUIRED_LIBRARIES})
+    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${${targetname}_LIBRARY})
+    CHECK_FUNCTION_EXISTS(${func} HAVE_${targetname}_${lname})
+    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_TMP})
   endif(NOT ${targetname}_LIBRARY)
+
+  if(HAVE_${targetname}_${lname})
+    set(${targetname}_LIBRARY "${lname}")
+  endif(HAVE_${targetname}_${lname})
+
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_CHECK_LIBRARY lname func)
 

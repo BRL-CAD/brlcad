@@ -33,6 +33,7 @@
 
 #include "common.h"
 
+#include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 
@@ -40,6 +41,24 @@
 #define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
     (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))) \
     / (10.0 + sqrt(4.0 - 3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b)))))
+
+/* logic to ensure bboxes are not degenerate in any dimension - zero thickness
+ * bounding boxes will get missed by the raytracer */
+#define BBOX_NONDEGEN(min, max, dist) do {\
+    if (NEAR_EQUAL(min[X], max[X], dist)) { \
+	min[X] -= dist; \
+	max[X] += dist; \
+    } \
+    if (NEAR_EQUAL(min[Y], max[Y], dist)) { \
+	min[Y] -= dist; \
+	max[Y] += dist; \
+    } \
+    if (NEAR_EQUAL(min[Z], max[Z], dist)) { \
+	min[Z] -= dist; \
+	max[Z] += dist; \
+    } \
+} while (0)
+
 
 __BEGIN_DECLS
 
@@ -93,6 +112,62 @@ extern const union cutter *rt_advance_to_next_cell(struct rt_shootray_status *ss
 extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
 
+/* db_fullpath.c */
+
+/**
+ * Function to test whether a path has a cyclic entry in it.
+ *
+ * @param fp [i] Full path to test
+ * @param name [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
+ * @return 1 if the path is cyclic, 0 if it is not.
+ */
+extern int cyclic_path(const struct db_full_path *fp, const char *name);
+
+
+/* db_diff.c */
+
+/**
+ * Function to convert an ft_get list of parameters into an avs.
+ * @return 0 if the conversion succeeds, -1 if it does not.
+ */
+extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
+
+/* db_io.c */
+extern int db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset);
+
+/* db5_io.c */
+#define DB_SIZE_OBJ 0x1
+#define DB_SIZE_TREE_INSTANCED 0x2
+#define DB_SIZE_TREE_DEINSTANCED 0x4
+#define DB_SIZE_ATTR 0x8
+#define DB_SIZE_FORCE_RECALC 0x10
+/**
+ * Flag behavior: The OBJ, KEEP, and XPUSH flags tell db5_size to add the total
+ * from the object(s) calculations for that size value to the summed total.
+ * Specifying multiple flags from the OBJ/KEEP/XPUSH set will result in the
+ * smallest specified size being reported. If none of these flags are specified
+ * the default is DB_SIZE_OBJ
+ *
+ * The ATTR flag is optional and tells db5_size whether to report totals with
+ * or without the sizes of the attributes stored on the objects added in.  By
+ * default, attributes are not included in size calculations.
+ *
+ * The FORCE_RECALC flag is also optional and will result in a re-evaluation of
+ * the cached size information in the directory structures instead of using any
+ * cached information from previous db5_size evaluations. This flag should be
+ * supplied if the geometry information in the database has changed since the
+ * last db5_size call.
+ */
+extern RT_EXPORT long db5_size(struct db_i *dbip, struct directory *dp, int flags);
+
+/* FIXME: should have gone away with v6.  needed now to pass the minor_type down during read */
+extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
+
+
+/* primitive_util.c */
+
+extern void primitive_hitsort(struct hit h[], int nh);
+
 extern fastf_t primitive_get_absolute_tolerance(
 	const struct rt_tess_tol *ttol,
 	fastf_t rel_to_abs);
@@ -130,49 +205,6 @@ extern void plot_ellipse(
 	const vect_t a,
 	const vect_t b,
 	int num_points);
-
-
-/**
- * Evaluate a Bezier curve at a particular parameter value. Fill in
- * control points for resulting sub-curves if "Left" and "Right" are
- * non-null.
- */
-extern void bezier(point2d_t *V, int degree, double t, point2d_t *Left, point2d_t *Right, point2d_t eval_pt, point2d_t normal );
-
-/**
- * Given an equation in Bernstein-Bezier form, find all of the roots
- * in the interval [0, 1].  Return the number of roots found.
- */
-extern int bezier_roots(point2d_t *w, int degree, point2d_t **intercept, point2d_t **normal, point2d_t ray_start, point2d_t ray_dir, point2d_t ray_perp, int depth, fastf_t epsilon);
-
-/**
- * subdivide a 2D bezier curve at t=0.5
- */
-extern struct bezier_2d_list *bezier_subdivide(struct bezier_2d_list *bezier_hd, int degree, fastf_t epsilon, int depth);
-
-
-/* db_fullpath.c */
-
-/**
- * Function to test whether a path has a cyclic entry in it.
- *
- * @param fp [i] Full path to test
- * @param name [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
- * @return 1 if the path is cyclic, 0 if it is not.
- */
-extern int cyclic_path(const struct db_full_path *fp, const char *name);
-
-
-/* db_diff.c */
-
-/**
- * Function to convert an ft_get list of parameters into an avs.
- * @return 0 if the conversion succeeds, -1 if it does not.
- */
-extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
-
-
-/* primitive_util.c */
 
 extern int _rt_tcl_list_to_int_array(const char *list, int **array, int *array_len);
 extern int _rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len);

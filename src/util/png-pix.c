@@ -27,7 +27,6 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <zlib.h>
 #include <png.h>
 #include "bio.h"
 
@@ -88,6 +87,9 @@ main(int argc, char **argv)
 	    return 1;
 	}
     }
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (argc > ++bu_optind)
 	fprintf(stderr, "png-pix: excess argument(s) ignored\n");

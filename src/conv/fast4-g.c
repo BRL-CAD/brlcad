@@ -234,9 +234,6 @@ static char *facemode;	/* mode for each face */
 static int face_size=0;	/* actual length of above arrays */
 static int face_count=0;	/* number of faces in above arrays */
 
-/*static int *int_list;*/		/* Array of integers */
-/*static int int_list_count=0;*/	/* Number of ints in above array */
-/*static int int_list_length=0;*/	/* Length of int_list array */
 
 static point_t *grid_points = NULL;
 
@@ -2856,8 +2853,8 @@ main(int argc, char **argv)
 	bu_printb("librtbu_debug", bu_debug, DEBUG_FORMAT);
 	bu_log("\n");
     }
-    if (RTG.NMG_debug) {
-	bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
+    if (nmg_debug) {
+	bu_printb("librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
 	bu_log("\n");
     }
 

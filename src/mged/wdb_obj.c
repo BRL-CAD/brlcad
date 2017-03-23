@@ -272,7 +272,7 @@ wdb_append_rparen(struct bu_list *hp)
 
 
 HIDDEN int
-add_operator(Tcl_Interp *interp, struct bu_list *hp, char *ptr, short int *last_tok)
+wdb_add_operator(Tcl_Interp *interp, struct bu_list *hp, char *ptr, short int *last_tok)
 {
     char illegal[2];
     db_op_t op = db_str2op(ptr);
@@ -714,7 +714,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 
 	    if (last_tok == WDB_TOK_RPAREN) {
 		/* next token MUST be an operator */
-		if (add_operator(interp, &tok_hd.l, ptr, &last_tok) == TCL_ERROR) {
+		if (wdb_add_operator(interp, &tok_hd.l, ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
 		    return TCL_ERROR;
 		}
@@ -732,7 +732,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		ptr += name_len;
 	    } else if (last_tok == WDB_TOK_TREE) {
 		/* must be an operator */
-		if (add_operator(interp, &tok_hd.l, ptr, &last_tok) == TCL_ERROR) {
+		if (wdb_add_operator(interp, &tok_hd.l, ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
 		    return TCL_ERROR;
 		}
@@ -1399,7 +1399,7 @@ wdb_combadd(struct db_i *dbip,
     /* flatten tree */
     if (comb->tree) {
 	actual_count = 1 + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     }
 
@@ -2384,7 +2384,7 @@ wdb_get_cmd(struct rt_wdb *wdbp,
  * string.
  *
  *
- * NOTE: This is called directly by gdiff/g_diff.c
+ * NOTE: This function may be directly called by gdiff
  */
 int
 wdb_get_tcl(void *clientData,
@@ -3008,7 +3008,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
      * Once on the rti_resources list, rt_clean() will clean 'em up.
      */
     rt_init_resource(&resp, 0, rtip);
-    BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL);
+    BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, 0) != NULL);
 
     BU_ALLOC(ap, struct application);
     RT_APPLICATION_INIT(ap);
@@ -3231,7 +3231,7 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
     bu_vls_init(&shell_name);
     for (BU_LIST_FOR (r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR (s, shell, &r->s_hd)) {
-	    s_tmp = nmg_dup_shell(s, &trans_tbl, &wdbp->wdb_tol);
+	    s_tmp = nmg_dup_shell(s, &trans_tbl, &RTG.rtg_vlfree, &wdbp->wdb_tol);
 	    bu_free((void *)trans_tbl, "trans_tbl");
 
 	    m_tmp = nmg_mmr();
@@ -5866,7 +5866,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	    return TCL_ERROR;
 	}
 
-	failed = nmg_boolean(facetize_tree, nmg_model, &wdbp->wdb_tol, &rt_uniresource);
+	failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource);
 	BU_UNSETJUMP;
     } else
 	failed = 1;
@@ -5896,7 +5896,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	    nmg_model = (struct model *)NULL;
 	    return TCL_ERROR;
 	}
-	nmg_triangulate_model(nmg_model, &wdbp->wdb_tol);
+	nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol);
 	BU_UNSETJUMP;
     }
 
@@ -5909,7 +5909,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 
 	r = BU_LIST_FIRST(nmgregion, &nmg_model->r_hd);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
-	bot = (struct rt_bot_internal *)nmg_bot(s, &wdbp->wdb_tol);
+	bot = (struct rt_bot_internal *)nmg_bot(s, &RTG.rtg_vlfree, &wdbp->wdb_tol);
 	nmg_km(nmg_model);
 	nmg_model = (struct model *)NULL;
 
@@ -6470,7 +6470,7 @@ wdb_list_children(struct rt_wdb *wdbp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	    BU_ASSERT(actual_count == node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
@@ -6674,7 +6674,7 @@ wdb_print_node(struct rt_wdb *wdbp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	    BU_ASSERT(actual_count == node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
@@ -9242,7 +9242,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
     NMG_CK_MODEL(m);
 
     /* check that all faces are planar */
-    nmg_face_tabulate(&faces, &m->magic);
+    nmg_face_tabulate(&faces, &m->magic, &RTG.rtg_vlfree);
     for (BU_PTBL_FOR (fp, (struct face *), &faces)) {
 	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_ptbl_free(&faces);
@@ -9276,11 +9276,11 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
 	    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 	    s = BU_LIST_FIRST(shell, &r->s_hd);
-	    nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1);
+	    nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1, &RTG.rtg_vlfree);
 	    if (!nmg_kill_cracks(s)) {
-		(void) nmg_edge_fuse(&m->magic, &wdbp->wdb_tol);
-		(void) nmg_edge_g_fuse(&m->magic, &wdbp->wdb_tol);
-		(void) nmg_unbreak_region_edges(&r->l.magic);
+		(void) nmg_edge_fuse(&m->magic, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+		(void) nmg_edge_g_fuse(&m->magic, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+		(void) nmg_unbreak_region_edges(&r->l.magic, &RTG.rtg_vlfree);
 		if (nmg_to_arb(m, arb_int)) {
 		    new_intern.idb_ptr = (void *)(arb_int);
 		    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -9322,7 +9322,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
 	BU_ALLOC(poly_int, struct rt_pg_internal);
 
-	if (nmg_to_poly(m, poly_int, &wdbp->wdb_tol)) {
+	if (nmg_to_poly(m, poly_int, &RTG.rtg_vlfree, &wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (void *)(poly_int);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_POLY;
@@ -9466,7 +9466,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     NMG_CK_MODEL(m);
 
     /* check that all faces are planar */
-    nmg_face_tabulate(&faces, &m->magic);
+    nmg_face_tabulate(&faces, &m->magic, &RTG.rtg_vlfree);
     for (BU_PTBL_FOR (fp, (struct face *), &faces)) {
 	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_ptbl_free(&faces);
@@ -9478,9 +9478,9 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     bu_ptbl_free(&faces);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &wdbp->wdb_tol);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &wdbp->wdb_tol);
 
-    count = nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle);
+    count = nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
 
     dp = db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {

@@ -122,40 +122,65 @@ THIRD_PARTY(tinycthread TINYCTHREAD tinycthread tinycthread_DESCRIPTION ALIASES 
 SetTargetFolder(tinycthread "Third Party Libraries")
 SetTargetFolder(tinycthread-static "Third Party Libraries")
 
-# FreeType Libraries
-set(FREETYPE_NO_DIST 1)
-set(freetype_ALIASES ENABLE_FREETYPE)
-set(freetype_DESCRIPTION "
-Option for enabling and disabling compilation of the FreeType
-libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+# LZ4 compression/decompression library
+
+set(lz4_ALIASES ENABLE_LZ4)
+set(lz4_DESCRIPTION "
+Option for enabling and disabling compilation of the lz4 data
+compression library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
 ")
-THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
-if(BRLCAD_FREETYPE_BUILD)
-  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-  set(FREETYPE_INCLUDE_DIR_freetype2
-    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
-    CACHE STRING "FreeType freetype2 include dir" FORCE
-    )
-  set(FREETYPE_INCLUDE_DIR_ft2build
-    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
-    CACHE STRING "FreeType ft2build include dir" FORCE
-    )
-  set(FREETYPE_INCLUDE_DIRS
-    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
-    CACHE STRING "Directories containing FreeType headers." FORCE)
-  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
-  SetTargetFolder(freetype "Third Party Libraries")
-endif(BRLCAD_FREETYPE_BUILD)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftconfig.h")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftconfig.h-new")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftoption.h")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftoption.h-new")
-mark_as_advanced(FREETYPE_INCLUDE_DIRS)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
-mark_as_advanced(FREETYPE_LIBRARIES)
+THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ${lz4_ALIASES})
+if(BRLCAD_LZ4_BUILD)
+  set(LIBLZ4_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lz4" CACHE STRING "Directory containing lz4 headers." FORCE)
+  mark_as_advanced(LIBLZ4_INCLUDE_DIR)
+  SetTargetFolder(lz4 "Third Party Libraries")
+  SetTargetFolder(lz4-static "Third Party Libraries")
+endif(BRLCAD_LZ4_BUILD)
+
+
+# FreeType Libraries
+
+#set(freetype_ALIASES ENABLE_FREETYPE)
+#set(freetype_DESCRIPTION "
+#Option for enabling and disabling compilation of the FreeType
+#libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
+#the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+#version if BRLCAD_BUNDLED_LIBS is also AUTO.
+#")
+## We don't want the Freetype distribution build targets
+#set(FREETYPE_NO_DIST 1)
+#THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
+#if(BRLCAD_FREETYPE_BUILD)
+#  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
+#  set(FREETYPE_INCLUDE_DIR_freetype2
+#    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
+#    CACHE STRING "FreeType freetype2 include dir" FORCE
+#    )
+#  set(FREETYPE_INCLUDE_DIR_ft2build
+#    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
+#    CACHE STRING "FreeType ft2build include dir" FORCE
+#    )
+#  set(FREETYPE_INCLUDE_DIRS
+#    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
+#    CACHE STRING "Directories containing FreeType headers." FORCE)
+#  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
+#  SetTargetFolder(freetype "Third Party Libraries")
+#endif(BRLCAD_FREETYPE_BUILD)
+#if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+#  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
+#  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
+#endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
+#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
+#mark_as_advanced(FREETYPE_INCLUDE_DIRS)
+#mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
+#mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
+#mark_as_advanced(FREETYPE_LIBRARIES)
+CMAKEFILES(freetype)
 
 # --------------------------------------------------------------------
 # The incrtTcl subdirectory isn't directly referenced, but its
@@ -233,7 +258,12 @@ set(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" 
 mark_as_advanced(PNG_MAN_DIR)
 set(PNG_TESTS 0 CACHE STRING "Disable building png test executables" FORCE)
 mark_as_advanced(PNG_TESTS)
+set(ld-version-script OFF CACHE STRING "Disable linker script" FORCE)
+mark_as_advanced(ld-version-script)
+mark_as_advanced(PNG_PREFIX)
 mark_as_advanced(PNG_FRAMEWORK)
+mark_as_advanced(DFA_XTRA)
+mark_as_advanced(AWK)
 set(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
 set(png_ALIASES ENABLE_PNG)
 set(png_DESCRIPTION "
@@ -257,8 +287,9 @@ if(BRLCAD_PNG_BUILD)
   if("${M_LIBRARY}" MATCHES "NOTFOUND")
     unset(M_LIBRARY CACHE)
   endif("${M_LIBRARY}" MATCHES "NOTFOUND")
-  SetTargetFolder(png16 "Third Party Libraries")
-  SetTargetFolder(png16_static "Third Party Libraries")
+  SetTargetFolder(png "Third Party Libraries")
+  SetTargetFolder(png_static "Third Party Libraries")
+  SetTargetFolder(genfiles "Third Party Libraries")
 ELSE(BRLCAD_PNG_BUILD)
   # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
   # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
@@ -721,6 +752,12 @@ THIRD_PARTY(openNURBS OPENNURBS openNURBS opennurbs_DESCRIPTION ALIASES
   ${opennurbs_ALIASES} FLAGS NOSYS)
 SetTargetFolder(openNURBS "Third Party Libraries")
 SetTargetFolder(openNURBS-static "Third Party Libraries")
+if(BRLCAD_OPENNURBS_BUILD)
+  set(OPENNURBS_INCLUDE_DIRS "${OPENNURBS_INCLUDE_DIR};${ZLIB_INCLUDE_DIR}" CACHE STRING "Require opennurbs header includes" FORCE)
+  set(OPENNURBS_LIBRARIES "${OPENNURBS_LIBRARY};${ZLIB_LIBRARY}" CACHE STRING "Require opennurbs libraries" FORCE)
+  mark_as_advanced(OPENNURBS_INCLUDE_DIRS)
+  mark_as_advanced(OPENNURBS_LIBRARIES)
+endif(BRLCAD_OPENNURBS_BUILD)
 
 # Screened Poisson Reconstruction Library
 set(poissonrecon_ALIASES ENABLE_SPR)
@@ -957,28 +994,27 @@ distribution.  Default is AUTO, responsive to the toplevel
 BRLCAD_BUNDLED_LIBS option and testing first for a system version
 if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS BRLCAD_ENABLE_BULLET BRLCAD_LEVEL2 ALIASES ${Bullet_ALIASES})
+THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ${Bullet_ALIASES})
 if(BRLCAD_BULLET_BUILD)
   set(BULLET_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/bullet/src" CACHE STRING "Directory containing bullet headers." FORCE)
-  set(BULLET_LIBRARIES "BulletSoftBody;BulletCollision;BulletDynamics;LinearMath" CACHE STRING "Directory containing bullet headers." FORCE)
+  set(BULLET_LIBRARIES "bullet" CACHE STRING "BRL-CAD bullet lib." FORCE)
 endif(BRLCAD_BULLET_BUILD)
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
 # is code that will make use of it if it is available.  If that code
 # becomes sufficiently useful, Adaptagrams will be integrated.  In the
 # meantime, locate the find logic for that package here.
-
 # Adaptagrams library
-if(BRLCAD_LEVEL2)
-  find_package(ADAPTAGRAMS)
-  if(ADAPTAGRAMS_FOUND)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_ADAPTAGRAMS 1\n")
-  endif(ADAPTAGRAMS_FOUND)
-  set(ADAPTAGRAMS_LIBRARIES "${ADAPTAGRAMS_LIBRARIES}" CACHE STRING "Adaptagrams libs" FORCE) 
-  set(ADAPTAGRAMS_FOUND "${ADAPTAGRAMS_FOUND}" CACHE BOOL "Adaptagrams status" FORCE) 
-  mark_as_advanced(ADAPTAGRAMS_FOUND)
-  mark_as_advanced(ADAPTAGRAMS_LIBRARIES)
-endif(BRLCAD_LEVEL2)
+#if(BRLCAD_LEVEL2)
+# find_package(ADAPTAGRAMS)
+# if(ADAPTAGRAMS_FOUND)
+#   CONFIG_H_APPEND(BRLCAD "#define HAVE_ADAPTAGRAMS 1\n")
+# endif(ADAPTAGRAMS_FOUND)
+# set(ADAPTAGRAMS_LIBRARIES "${ADAPTAGRAMS_LIBRARIES}" CACHE STRING "Adaptagrams libs" FORCE)
+# set(ADAPTAGRAMS_FOUND "${ADAPTAGRAMS_FOUND}" CACHE BOOL "Adaptagrams status" FORCE)
+# mark_as_advanced(ADAPTAGRAMS_FOUND)
+# mark_as_advanced(ADAPTAGRAMS_LIBRARIES)
+#endif(BRLCAD_LEVEL2)
 
 # Poly2Tri CDT library
 add_subdirectory(poly2tri)

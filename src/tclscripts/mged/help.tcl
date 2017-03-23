@@ -348,7 +348,7 @@ set mged_help_data(whichid)	$helplib_data(wdb_whichid)
 set mged_help_data(which_shader)	{{Shader(s)}	{lists all combinations using the given shaders}}
 set mged_help_data(who)		$helplib_data(dgo_who)
 set mged_help_data(wmater)	{{filename comb(s)}	{write combination materials to filename}}
-set mged_help_data(x)		$helplib_data(dgo_report)
+set mged_help_data(x)		$helplib_data(dgo_solid_report)
 set mged_help_data(xpush)	$helplib_data(wdb_xpush)
 set mged_help_data(Z)		$helplib_data(dgo_zap)
 set mged_help_data(zoom)	$helplib_data(vo_zoom)

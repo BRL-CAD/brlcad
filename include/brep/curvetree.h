@@ -17,37 +17,49 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
+/** @{ */
+/** @file brep/curvetree.h */
 /** @addtogroup brep_curvetree
  *
  * @brief
  * Curve Tree.
  *
  */
+
 #ifndef BREP_CURVETREE_H
 #define BREP_CURVETREE_H
 
 #include "common.h"
-#include "brep/defines.h"
-#include "brep/brnode.h"
-
-/** @{ */
-/** @file brep/curvetree.h */
 
 #ifdef __cplusplus
+extern "C++" {
+#  include <map>
+}
+#endif
+
+#include "brep.h"
+
 
 __BEGIN_DECLS
 
+#ifdef __cplusplus
 extern "C++" {
+
     namespace brlcad {
 
 	/**
 	 * CurveTree declaration
 	 */
-	class BREP_EXPORT CurveTree {
+	class BREP_EXPORT CurveTree : public PooledObject<CurveTree> {
 	    public:
 		explicit CurveTree(const ON_BrepFace *face);
 		~CurveTree();
+
+		CurveTree(Deserializer &deserializer, const ON_BrepFace &face);
+		void serialize(Serializer &serializer) const;
+		std::vector<std::size_t> serialize_get_leaves_keys(const std::list<const BRNode *> &leaves) const;
+		std::list<const BRNode *> serialize_get_leaves(const std::size_t *keys, std::size_t num_keys) const;
+		void serialize_cleanup() const;
 
 		/**
 		 * Return just the leaves of the surface tree
@@ -58,6 +70,8 @@ extern "C++" {
 		void getLeavesRight(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 
 	    private:
+		friend class BBNode;
+
 		CurveTree(const CurveTree &source);
 		CurveTree &operator=(const CurveTree &source);
 
@@ -77,22 +91,30 @@ extern "C++" {
 
 		bool getHVTangents(const ON_Curve *curve, const ON_Interval &t, std::list<fastf_t> &list) const;
 		bool isLinear(const ON_Curve *curve, double min, double max) const;
-		BRNode *subdivideCurve(const ON_Curve *curve, int adj_face_index, double min, double max, bool innerTrim, int depth) const;
-		BRNode *curveBBox(const ON_Curve *curve, int adj_face_index, const ON_Interval &t, bool isLeaf, bool innerTrim, const ON_BoundingBox &bb) const;
-		BRNode *initialLoopBBox() const;
+		BRNode *subdivideCurve(const ON_Curve *curve, int trim_index, int adj_face_index, double min, double max, bool innerTrim, int depth) const;
+		BRNode *curveBBox(const ON_Curve *curve, int trim_index, int adj_face_index, const ON_Interval &t, bool isLeaf, bool innerTrim, const ON_BoundingBox &bb) const;
+		static ON_BoundingBox initialLoopBBox(const ON_BrepFace &face);
 
 		const ON_BrepFace * const m_face;
-		BRNode * const m_root;
-		std::list<const BRNode *> * const m_sortedX;
+		BRNode *m_root;
+
+
+		struct Stl : public PooledObject<Stl> {
+		    Stl() : m_sortedX() {}
+
+		    std::vector<const BRNode *> m_sortedX;
+		} * const m_stl;
+
+		mutable std::map<const BRNode *, std::size_t> *m_sortedX_indices;
 	};
 
-
     } /* namespace brlcad */
+
 } /* extern C++ */
 
 __END_DECLS
 
-#endif
+#endif /* __cplusplus */
 
 /** @} */
 

@@ -186,7 +186,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
     yMin = (int)((rtip->mdl_min)[1]);
     zMin = (int)((rtip->mdl_min)[2]);
 
-    BU_ASSERT_LONG(levelOfDetail, >, 0);
+    BU_ASSERT(levelOfDetail > 0);
     /* 1.0 / (levelOfDetail + 1) and effectiveDistance have to be used multiple times in the following loops */
     rayTraceDistance  = 1. / levelOfDetail;
     effectiveDistance = levelOfDetail * levelOfDetail * sizeVoxel[0];

@@ -32,6 +32,8 @@ install(FILES ${bn_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bn)
 
 CMAKEFILES(${bn_headers})
 
+CMAKEFILES(numgen.h)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

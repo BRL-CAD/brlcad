@@ -25,17 +25,14 @@
 #include <string.h> /* for memset */
 #include <map>
 
-extern "C" {
 #include "vmath.h"
 #include "bu/log.h"
 #include "bu/ptbl.h"
 #include "bn/mat.h"
 #include "analyze_private.h"
-}
 #include "raytrace.h"
-extern "C" {
 #include "analyze.h"
-}
+
 
 extern "C" void
 analyze_gen_worker(int cpu, void *ptr)

@@ -206,7 +206,7 @@ NODE::createNewNode(int nodetype, NODE *node)
 }
 
 //Creates a copy of source node as destination node
-//Uses by PROTO and DEF node to create instances of thier nodes
+//Uses by PROTO and DEF node to create instances of their nodes
 int
 NODE::copyNode(NODE *destnode, NODE *sourcenode)
 {

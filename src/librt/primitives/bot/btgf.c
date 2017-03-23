@@ -25,6 +25,9 @@
 
 #include "common.h"
 
+#ifdef TIE_PRECISION
+#  undef TIE_PRECISION
+#endif
 #define TIE_PRECISION 0
 
 #include "raytrace.h"
@@ -40,7 +43,7 @@ bottie_allocn_float(unsigned long long ntri)
 {
     struct tie_s *tie;
     BU_ALLOC(tie, struct tie_s);
-    tie_init(tie, ntri, TIE_KDTREE_FAST);
+    tie_init_single(tie, ntri, TIE_KDTREE_FAST);
     return (void *)tie;
 }
 
@@ -55,7 +58,7 @@ bottie_prep_float(struct soltab *stp,struct rt_bot_internal *bot, struct rt_i *U
 {
     struct tie_s *tie = (struct tie_s *)bot->tie;
 
-    tie_prep(tie);
+    tie_prep_single(tie);
     VMOVE(stp->st_min, tie->min);
     VMOVE(stp->st_max, tie->max);
     VMOVE(stp->st_center, tie->mid);

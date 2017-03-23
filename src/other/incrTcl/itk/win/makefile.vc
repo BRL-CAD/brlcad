@@ -5,7 +5,6 @@
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # 
 # Copyright (c) 1993-1998 Lucent Technologies, Inc.
-# RCS: $Id$
 #------------------------------------------------------------------------------
 #  Do not modify this file!
 #------------------------------------------------------------------------------
@@ -18,7 +17,7 @@ Please `cd` to its location first.
 !endif
 
 PROJECT	= itk
-!include "..\..\rules.vc"
+!include "rules.vc"
 
 
 !if $(TCLINSTALL)
@@ -77,7 +76,7 @@ ITKLIBNAME	= $(PROJECT)$(ITK_VERSION)80$(SUFX).$(EXT)
 ITCLIMPLIBNAME	= itcl$(ITCL_VERSION)80$(SUFX).lib
 !endif
 ITKLIB		= "$(OUT_DIR)\$(ITKLIBNAME)"
-ITCLIMPLIB	= "$(ITCLDIR)\win\Release\$(ITCLIMPLIBNAME)"
+ITCLIMPLIB	= "$(ITCLDIR)\win\$(BUILDDIRTOP)\$(ITCLIMPLIBNAME)"
 
 
 !if $(TCLINSTALL)
@@ -88,7 +87,7 @@ WISH		= "$(TCLDIR)\bin\wish$(TCL_VERSION)$(DBGX).exe"
 TCL_LIBRARY	= 
 TK_LIBRARY	= 
 !else
-TKSTUBLIB	= "$(TKDIR)\win\Release\tkstub$(TCL_VERSION).lib"
+TKSTUBLIB	= "$(TKDIR)\win\$(BUILDDIRTOP)\tkstub$(TCL_VERSION).lib"
 TKIMPLIB	= "$(TKDIR)\win\$(OUT_DIR)\tk$(TCL_VERSION)$(DBGX).lib"
 TKLIB		= "$(TKDIR)\win\$(OUT_DIR)\tk$(TCL_VERSION)$(DBGX).dll"
 WISH		= "$(TKDIR)\win\$(OUT_DIR)\wish$(TCL_VERSION)$(DBGX).exe"
@@ -99,7 +98,7 @@ ITCL_LIBRARY	= "$(ITCLDIR:\=/)/library"
 ITK_LIBRARY	= "$(ROOT)/library"
 
 ITCLSTUBLIBNAME	= itclstub$(ITCL_VERSION).lib
-ITCLSTUBLIB	= "$(ITCLDIR)\win\Release\$(ITCLSTUBLIBNAME)"
+ITCLSTUBLIB	= "$(ITCLDIR)\win\$(BUILDDIRTOP)\$(ITCLSTUBLIBNAME)"
 
 ### For Tcl 8.0
 !if !$(TCL_DOES_STUBS)
@@ -193,7 +192,7 @@ cdebug = -O2
 !endif
 
 # declarations common to all compiler options
-cflags = -nologo -c -W3 -YX -Fp$(TMP_DIR)^\
+cflags = -nologo -c -W3 -YX -D_USE_32BIT_TIME_T -Fp$(TMP_DIR)^\
 
 !if $(PENT_0F_ERRATA)
 cflags = $(cflags) -QI0f

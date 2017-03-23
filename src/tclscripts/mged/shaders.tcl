@@ -1266,7 +1266,7 @@ proc set_phong_values { shader_str id } {
     if { [llength $shader_str] > 1 } then {
 	set params [lindex $shader_str 1]
 	set shader_name [lindex $shader_str 0]
-	if { $shader_name != "plastic" && $shader_name != "glass" && $shader_name != "mirror" } {
+	if { $shader_name != "plastic" && $shader_name != "glass" && $shader_name != "mirror" && $shader_name != "phong" } {
 	    return
 	}
     } else {
@@ -2130,6 +2130,7 @@ proc stack_add { shader shade_var id childsite} {
     }
 
     switch $shader {
+	phong -
 	plastic {
 	    set_plastic_defaults "$id,stk_$index"
 	    set tmp_win [do_phong $shade_var $id,stk_$index]
@@ -2217,6 +2218,7 @@ proc stack_insert { index shader shade_var id } {
     set shader_params($id,stk_$index,shader_name) $shader
 
     switch $shader {
+	phong -
 	plastic {
 	    set_plastic_defaults "$id,stk_$index"
 	    set tmp_win [do_phong $shade_var $id,stk_$index]
@@ -2467,6 +2469,7 @@ proc env_select { shader shade_var id } {
     grid columnconfigure $shader_params($id,window).fr.env 0 -minsize 400
 
     switch $shader {
+	phong -
 	plastic {
 	    set_plastic_defaults "$id,env"
 	    set tmp_win [do_phong $shade_var $id,env]

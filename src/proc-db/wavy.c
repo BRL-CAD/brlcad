@@ -29,10 +29,10 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
+#include "bu/getopt.h"
+#include "nmg.h"		/* BRL-CAD Vector macros */
 #include "raytrace.h"
-#include "rt/nurb.h"		/* BRL-CAD Spline data structures */
 #include "wdb.h"
 
 
@@ -46,9 +46,9 @@ interpolate_data(fastf_t *grid)
 
     BU_ALLOC(srf, struct face_g_snurb);
 
-    rt_nurb_sinterp(srf, 4, grid, 10, 10);
-    rt_nurb_kvnorm(&srf->u);
-    rt_nurb_kvnorm(&srf->v);
+    nmg_nurb_sinterp(srf, 4, grid, 10, 10);
+    nmg_nurb_kvnorm(&srf->u);
+    nmg_nurb_kvnorm(&srf->v);
 
     surfs = (struct face_g_snurb **)bu_calloc(2, sizeof(struct face_g_snurb *), "surfaces");
     surfs[0] = srf;
