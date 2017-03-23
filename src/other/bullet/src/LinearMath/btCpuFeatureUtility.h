@@ -19,6 +19,18 @@
 #include <sys/sysctl.h> //for sysctlbyname
 #endif //BT_USE_NEON
 
+#ifndef LINEARMATH_EXPORT
+#  if defined(LINEARMATH_DLL_EXPORTS) && defined(LINEARMATH_DLL_IMPORTS)
+#    error "Only LINEARMATH_DLL_EXPORTS or LINEARMATH_DLL_IMPORTS can be defined, not both."
+#  elif defined(LINEARMATH_DLL_EXPORTS)
+#    define LINEARMATH_EXPORT __declspec(dllexport)
+#  elif defined(LINEARMATH_DLL_IMPORTS)
+#    define LINEARMATH_EXPORT __declspec(dllimport)
+#  else
+#    define LINEARMATH_EXPORT
+#  endif
+#endif
+
 ///Rudimentary btCpuFeatureUtility for CPU features: only report the features that Bullet actually uses (SSE4/FMA3, NEON_HPFP)
 ///We assume SSE2 in case BT_USE_SSE2 is defined in LinearMath/btScalar.h
 class btCpuFeatureUtility

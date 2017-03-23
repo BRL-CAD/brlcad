@@ -19,6 +19,18 @@ subject to the following restrictions:
 #include "btScalar.h"
 #include "btAlignedAllocator.h"
 
+#ifndef LINEARMATH_EXPORT
+#  if defined(LINEARMATH_DLL_EXPORTS) && defined(LINEARMATH_DLL_IMPORTS)
+#    error "Only LINEARMATH_DLL_EXPORTS or LINEARMATH_DLL_IMPORTS can be defined, not both."
+#  elif defined(LINEARMATH_DLL_EXPORTS)
+#    define LINEARMATH_EXPORT __declspec(dllexport)
+#  elif defined(LINEARMATH_DLL_IMPORTS)
+#    define LINEARMATH_EXPORT __declspec(dllimport)
+#  else
+#    define LINEARMATH_EXPORT
+#  endif
+#endif
+
 ///The btPoolAllocator class allows to efficiently allocate a large pool of objects, instead of dynamically allocating them separately.
 class btPoolAllocator
 {

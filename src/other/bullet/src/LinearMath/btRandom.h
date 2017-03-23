@@ -22,6 +22,18 @@ subject to the following restrictions:
 #include <limits.h>
 #include <mt19937.h>
 
+#ifndef LINEARMATH_EXPORT
+#  if defined(LINEARMATH_DLL_EXPORTS) && defined(LINEARMATH_DLL_IMPORTS)
+#    error "Only LINEARMATH_DLL_EXPORTS or LINEARMATH_DLL_IMPORTS can be defined, not both."
+#  elif defined(LINEARMATH_DLL_EXPORTS)
+#    define LINEARMATH_EXPORT __declspec(dllexport)
+#  elif defined(LINEARMATH_DLL_IMPORTS)
+#    define LINEARMATH_EXPORT __declspec(dllimport)
+#  else
+#    define LINEARMATH_EXPORT
+#  endif
+#endif
+
 #define GEN_RAND_MAX UINT_MAX
 
 SIMD_FORCE_INLINE void         GEN_srand(unsigned int seed) { init_genrand(seed); }
