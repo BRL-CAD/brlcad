@@ -97,8 +97,8 @@ get_aabb_overlap(const btRigidBody &body_a, const btRigidBody &body_b)
 }
 
 
-HIDDEN void
-free_xrays(xrays * const rays)
+void
+simulate_free_xrays(xrays * const rays)
 {
     if (!rays)
 	bu_bomb("missing argument");
@@ -187,7 +187,7 @@ calculate_contact_points(btManifoldResult &result,
     const db_full_path &body_b_path = static_cast<const simulate::RtMotionState *>
 				      (body_b.getMotionState())->get_path();
 
-    const simulate::AutoPtr<xrays, free_xrays> rays(get_rays(body_a, body_b,
+    const simulate::AutoPtr<xrays, simulate_free_xrays> rays(get_rays(body_a, body_b,
 	    grid_radius));
     const std::vector<std::pair<btVector3, btVector3> > overlaps =
 	rt_instance.get_overlaps(body_a_path, body_b_path, *rays.ptr);
