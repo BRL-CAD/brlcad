@@ -145,94 +145,6 @@ test_basic()
 
 
 HIDDEN bool
-test_tutorial()
-{
-    const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
-
-    if (!db.ptr)
-	bu_bomb("db_create_inmem() failed");
-
-    {
-	const point_t cube_min = { -1.0, -1.0, -1.0}, cube_max = {1.0, 1.0, 1.0};
-
-	if (mk_rpp(db.ptr->dbi_wdbp, "cube.s", cube_min, cube_max))
-	    bu_bomb("mk_rpp failed");
-
-	const point_t ground_min = { -15.0, -15.0, -1.0}, ground_max = {15.0, 15.0, 1.0};
-
-	if (mk_rpp(db.ptr->dbi_wdbp, "ground.s", ground_min, ground_max))
-	    bu_bomb("mk_rpp failed");
-    }
-
-    {
-	mat_t cube_matrix = MAT_INIT_IDN;
-	cube_matrix[MDZ] = 50.0;
-
-	wmember members;
-	BU_LIST_INIT(&members.l);
-	mk_addmember("cube.s", &members.l, cube_matrix, WMOP_UNION);
-
-	if (mk_comb(db.ptr->dbi_wdbp, "cube.r", &members.l, true, NULL, NULL, NULL, 0,
-		    0, 0, 0, false, false, false))
-	    bu_bomb("mk_comb() failed");
-    }
-
-    if (db5_update_attribute("cube.r", "simulate::angular_velocity",
-			     "<2.0, -1.0, 3.0>", db.ptr))
-	bu_bomb("db5_update_attribute() failed");
-
-    if (db5_update_attribute("cube.r", "simulate::type", "region", db.ptr))
-	bu_bomb("db5_update_attribute() failed");
-
-    if (mk_comb1(db.ptr->dbi_wdbp, "ground.r", "ground.s", true))
-	bu_bomb("mk_comb1() failed");
-
-    if (db5_update_attribute("ground.r", "simulate::type", "region", db.ptr))
-	bu_bomb("db5_update_attribute() failed");
-
-    if (db5_update_attribute("ground.r", "simulate::mass", "0.0", db.ptr))
-	bu_bomb("db5_update_attribute() failed");
-
-    {
-	wmember members;
-	BU_LIST_INIT(&members.l);
-	mk_addmember("cube.r", &members.l, NULL, WMOP_UNION);
-	mk_addmember("ground.r", &members.l, NULL, WMOP_UNION);
-
-	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
-		    0, 0, 0, false, false, false))
-	    bu_bomb("mk_comb() failed");
-    }
-
-    db_full_path path;
-    db_full_path_init(&path);
-    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
-
-    if (db_string_to_path(&path, db.ptr, "scene.c"))
-	bu_bomb("db_string_to_path() failed");
-
-    try {
-	simulate::Simulation(*db.ptr, path).step(10.0,
-		simulate::Simulation::debug_none);
-    } catch (const simulate::InvalidSimulationError &exception) {
-	bu_log("simulation failed: '%s'\n", exception.what());
-	return false;
-    }
-
-    {
-	const mat_t expected_cube_matrix = {
-	    0.9109535781920024, -0.0059109808515701431, -0.41246572538591258, 20.613749620650484,
-	    -0.41239798502422625, 0.010028961881171757, -0.91095202773134265, 45.735841753689698,
-	    0.0095237115924034603, 0.99993671739409096, 0.0066972536478696974, 1.6200142104360542,
-	    0.0, 0.0, 0.0, 1.0
-	};
-
-	return matrix_equal(*db.ptr, "/scene.c/cube.r", expected_cube_matrix);
-    }
-}
-
-
-HIDDEN bool
 test_matrices()
 {
     const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
@@ -323,9 +235,97 @@ test_matrices()
 
 
 HIDDEN bool
+test_tutorial()
+{
+    const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
+
+    if (!db.ptr)
+	bu_bomb("db_create_inmem() failed");
+
+    {
+	const point_t cube_min = { -1.0, -1.0, -1.0}, cube_max = {1.0, 1.0, 1.0};
+
+	if (mk_rpp(db.ptr->dbi_wdbp, "cube.s", cube_min, cube_max))
+	    bu_bomb("mk_rpp failed");
+
+	const point_t ground_min = { -15.0, -15.0, -1.0}, ground_max = {15.0, 15.0, 1.0};
+
+	if (mk_rpp(db.ptr->dbi_wdbp, "ground.s", ground_min, ground_max))
+	    bu_bomb("mk_rpp failed");
+    }
+
+    {
+	mat_t cube_matrix = MAT_INIT_IDN;
+	cube_matrix[MDZ] = 50.0;
+
+	wmember members;
+	BU_LIST_INIT(&members.l);
+	mk_addmember("cube.s", &members.l, cube_matrix, WMOP_UNION);
+
+	if (mk_comb(db.ptr->dbi_wdbp, "cube.r", &members.l, true, NULL, NULL, NULL, 0,
+		    0, 0, 0, false, false, false))
+	    bu_bomb("mk_comb() failed");
+    }
+
+    if (db5_update_attribute("cube.r", "simulate::angular_velocity",
+			     "<2.0, -1.0, 3.0>", db.ptr))
+	bu_bomb("db5_update_attribute() failed");
+
+    if (db5_update_attribute("cube.r", "simulate::type", "region", db.ptr))
+	bu_bomb("db5_update_attribute() failed");
+
+    if (mk_comb1(db.ptr->dbi_wdbp, "ground.r", "ground.s", true))
+	bu_bomb("mk_comb1() failed");
+
+    if (db5_update_attribute("ground.r", "simulate::type", "region", db.ptr))
+	bu_bomb("db5_update_attribute() failed");
+
+    if (db5_update_attribute("ground.r", "simulate::mass", "0.0", db.ptr))
+	bu_bomb("db5_update_attribute() failed");
+
+    {
+	wmember members;
+	BU_LIST_INIT(&members.l);
+	mk_addmember("cube.r", &members.l, NULL, WMOP_UNION);
+	mk_addmember("ground.r", &members.l, NULL, WMOP_UNION);
+
+	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
+		    0, 0, 0, false, false, false))
+	    bu_bomb("mk_comb() failed");
+    }
+
+    db_full_path path;
+    db_full_path_init(&path);
+    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+
+    if (db_string_to_path(&path, db.ptr, "scene.c"))
+	bu_bomb("db_string_to_path() failed");
+
+    try {
+	simulate::Simulation(*db.ptr, path).step(10.0,
+		simulate::Simulation::debug_none);
+    } catch (const simulate::InvalidSimulationError &exception) {
+	bu_log("simulation failed: '%s'\n", exception.what());
+	return false;
+    }
+
+    {
+	const mat_t expected_cube_matrix = {
+	    0.9109535781920024, -0.0059109808515701431, -0.41246572538591258, 20.613749620650484,
+	    -0.41239798502422625, 0.010028961881171757, -0.91095202773134265, 45.735841753689698,
+	    0.0095237115924034603, 0.99993671739409096, 0.0066972536478696974, 1.6200142104360542,
+	    0.0, 0.0, 0.0, 1.0
+	};
+
+	return matrix_equal(*db.ptr, "/scene.c/cube.r", expected_cube_matrix);
+    }
+}
+
+
+HIDDEN bool
 simulate_test()
 {
-    return test_basic() && test_tutorial() && test_matrices();
+    return test_basic() && test_matrices() && test_tutorial();
 }
 
 
