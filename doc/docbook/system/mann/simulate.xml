@@ -178,7 +178,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><emphasis remap="B" role="bold">simulate::grid_radius=x</term>
+	<term><emphasis remap="B" role="bold">simulate::grid_radius=x</emphasis></term>
 	<listitem>
 	  <para>
 	    Specify the number of rays along the radii of the circular grids of
