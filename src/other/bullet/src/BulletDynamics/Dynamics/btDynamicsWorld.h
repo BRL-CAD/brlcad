@@ -19,18 +19,6 @@ subject to the following restrictions:
 #include "BulletCollision/CollisionDispatch/btCollisionWorld.h"
 #include "BulletDynamics/ConstraintSolver/btContactSolverInfo.h"
 
-#ifndef BULLET_EXPORT
-#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
-#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
-#  elif defined(BULLET_DLL_EXPORTS)
-#    define BULLET_EXPORT __declspec(dllexport)
-#  elif defined(BULLET_DLL_IMPORTS)
-#    define BULLET_EXPORT __declspec(dllimport)
-#  else
-#    define BULLET_EXPORT
-#  endif
-#endif
-
 class btTypedConstraint;
 class btActionInterface;
 class btConstraintSolver;
@@ -50,7 +38,7 @@ enum btDynamicsWorldType
 };
 
 ///The btDynamicsWorld is the interface class for several dynamics implementation, basic, discrete, parallel, and continuous etc.
-class BULLET_EXPORT btDynamicsWorld : public btCollisionWorld
+class btDynamicsWorld : public btCollisionWorld
 {
 
 protected:

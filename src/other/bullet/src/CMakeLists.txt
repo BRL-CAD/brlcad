@@ -366,9 +366,13 @@ set(BULLET_HDRS
   btBulletDynamicsCommon.h
   )
 
-add_library(bullet ${BULLET_SRCS} ${BULLET_HDRS})
-set_target_properties(bullet PROPERTIES VERSION ${BULLET_VERSION})
-set_target_properties(bullet PROPERTIES SOVERSION ${BULLET_VERSION})
+if(MSVC)
+  add_library(bullet STATIC ${BULLET_SRCS} ${BULLET_HDRS})
+else(MSVC)
+  add_library(bullet ${BULLET_SRCS} ${BULLET_HDRS})
+  set_target_properties(bullet PROPERTIES VERSION ${BULLET_VERSION})
+  set_target_properties(bullet PROPERTIES SOVERSION ${BULLET_VERSION})
+endif(MSVC)
 install(TARGETS bullet
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}

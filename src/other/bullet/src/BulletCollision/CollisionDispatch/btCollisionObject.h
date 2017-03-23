@@ -16,18 +16,6 @@ subject to the following restrictions:
 #ifndef BT_COLLISION_OBJECT_H
 #define BT_COLLISION_OBJECT_H
 
-#ifndef BULLET_EXPORT
-#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
-#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
-#  elif defined(BULLET_DLL_EXPORTS)
-#    define BULLET_EXPORT __declspec(dllexport)
-#  elif defined(BULLET_DLL_IMPORTS)
-#    define BULLET_EXPORT __declspec(dllimport)
-#  else
-#    define BULLET_EXPORT
-#  endif
-#endif
-
 #include "LinearMath/btTransform.h"
 
 //island management, m_activationState1
@@ -58,7 +46,7 @@ typedef btAlignedObjectArray<class btCollisionObject*> btCollisionObjectArray;
 /// btCollisionObject can be used to manage collision detection objects. 
 /// btCollisionObject maintains all information that is needed for a collision detection: Shape, Transform and AABB proxy.
 /// They can be added to the btCollisionWorld.
-ATTRIBUTE_ALIGNED16(class) BULLET_EXPORT btCollisionObject
+ATTRIBUTE_ALIGNED16(class)	btCollisionObject
 {
 
 protected:

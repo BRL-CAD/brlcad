@@ -20,18 +20,6 @@ subject to the following restrictions:
 #include "btScalar.h" // has definitions like SIMD_FORCE_INLINE
 #include "btAlignedAllocator.h"
 
-#ifndef BULLET_EXPORT
-#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
-#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
-#  elif defined(BULLET_DLL_EXPORTS)
-#    define BULLET_EXPORT __declspec(dllexport)
-#  elif defined(BULLET_DLL_IMPORTS)
-#    define BULLET_EXPORT __declspec(dllimport)
-#  else
-#    define BULLET_EXPORT
-#  endif
-#endif
-
 ///If the platform doesn't support placement new, you can disable BT_USE_PLACEMENT_NEW
 ///then the btAlignedObjectArray doesn't support objects with virtual methods, and non-trivial constructors/destructors
 ///You can enable BT_USE_MEMCPY, then swapping elements in the array will use memcpy instead of operator=
@@ -62,7 +50,7 @@ subject to the following restrictions:
 ///It is developed to replace stl::vector to avoid portability issues, including STL alignment issues to add SIMD/SSE data
 template <typename T> 
 //template <class T> 
-class BULLET_EXPORT btAlignedObjectArray
+class btAlignedObjectArray
 {
 	btAlignedAllocator<T , 16>	m_allocator;
 

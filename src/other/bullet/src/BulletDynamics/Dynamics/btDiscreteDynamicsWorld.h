@@ -19,18 +19,6 @@ subject to the following restrictions:
 
 #include "btDynamicsWorld.h"
 
-#ifndef BULLET_EXPORT
-#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
-#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
-#  elif defined(BULLET_DLL_EXPORTS)
-#    define BULLET_EXPORT __declspec(dllexport)
-#  elif defined(BULLET_DLL_IMPORTS)
-#    define BULLET_EXPORT __declspec(dllimport)
-#  else
-#    define BULLET_EXPORT
-#  endif
-#endif
-
 class btDispatcher;
 class btOverlappingPairCache;
 class btConstraintSolver;
@@ -46,7 +34,7 @@ struct InplaceSolverIslandCallback;
 
 ///btDiscreteDynamicsWorld provides discrete rigid body simulation
 ///those classes replace the obsolete CcdPhysicsEnvironment/CcdPhysicsController
-ATTRIBUTE_ALIGNED16(class) BULLET_EXPORT btDiscreteDynamicsWorld : public btDynamicsWorld
+ATTRIBUTE_ALIGNED16(class) btDiscreteDynamicsWorld : public btDynamicsWorld
 {
 protected:
 	

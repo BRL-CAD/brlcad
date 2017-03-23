@@ -19,17 +19,6 @@ subject to the following restrictions:
 #include "btConvexShape.h"
 #include "LinearMath/btAabbUtil2.h"
 
-#ifndef BULLET_EXPORT
-#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
-#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
-#  elif defined(BULLET_DLL_EXPORTS)
-#    define BULLET_EXPORT __declspec(dllexport)
-#  elif defined(BULLET_DLL_IMPORTS)
-#    define BULLET_EXPORT __declspec(dllimport)
-#  else
-#    define BULLET_EXPORT
-#  endif
-#endif
 
 ///The btConvexInternalShape is an internal base class, shared by most convex shape implementations.
 ///The btConvexInternalShape uses a default collision margin set to CONVEX_DISTANCE_MARGIN.
@@ -37,7 +26,7 @@ subject to the following restrictions:
 ///Note that when creating small shapes (derived from btConvexInternalShape), 
 ///you need to make sure to set a smaller collision margin, using the 'setMargin' API
 ///There is a automatic mechanism 'setSafeMargin' used by btBoxShape and btCylinderShape
-ATTRIBUTE_ALIGNED16(class) BULLET_EXPORT btConvexInternalShape : public btConvexShape
+ATTRIBUTE_ALIGNED16(class) btConvexInternalShape : public btConvexShape
 {
 
 	protected:

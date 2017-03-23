@@ -15,19 +15,6 @@ subject to the following restrictions:
 
 #ifndef BT_DISPATCHER_H
 #define BT_DISPATCHER_H
-
-#ifndef BULLET_EXPORT
-#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
-#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
-#  elif defined(BULLET_DLL_EXPORTS)
-#    define BULLET_EXPORT __declspec(dllexport)
-#  elif defined(BULLET_DLL_IMPORTS)
-#    define BULLET_EXPORT __declspec(dllimport)
-#  else
-#    define BULLET_EXPORT
-#  endif
-#endif
-
 #include "LinearMath/btScalar.h"
 
 class btCollisionAlgorithm;
@@ -79,7 +66,7 @@ struct btDispatcherInfo
 
 ///The btDispatcher interface class can be used in combination with broadphase to dispatch calculations for overlapping pairs.
 ///For example for pairwise collision detection, calculating contact points stored in btPersistentManifold or user callbacks (game logic).
-class BULLET_EXPORT btDispatcher
+class btDispatcher
 {
 
 
