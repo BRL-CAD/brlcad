@@ -18,6 +18,18 @@ subject to the following restrictions:
 
 #include "LinearMath/btScalar.h"
 
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 class btPersistentManifold;
 class btRigidBody;
 class btCollisionObject;
@@ -37,7 +49,7 @@ enum btConstraintSolverType
 	BT_NNCG_SOLVER=4
 };
 
-class btConstraintSolver
+class BULLET_EXPORT btConstraintSolver
 {
 
 public:

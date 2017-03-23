@@ -27,6 +27,18 @@ subject to the following restrictions:
 #include <stdlib.h>//size_t for MSVC 6.0
 #include <float.h>
 
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 /* SVN $Revision$ on $Date$ from http://bullet.googlecode.com*/
 #define BT_BULLET_VERSION 284
 
@@ -741,7 +753,7 @@ SIMD_FORCE_INLINE btScalar btNormalizeAngle(btScalar angleInRadians)
 
 
 ///rudimentary class to provide type info
-struct btTypedObject
+struct BULLET_EXPORT btTypedObject
 {
 	btTypedObject(int objectType)
 		:m_objectType(objectType)

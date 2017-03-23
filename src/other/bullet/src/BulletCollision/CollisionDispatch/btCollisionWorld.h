@@ -72,6 +72,19 @@ subject to the following restrictions:
 #ifndef BT_COLLISION_WORLD_H
 #define BT_COLLISION_WORLD_H
 
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
+
 class btCollisionShape;
 class btConvexShape;
 class btBroadphaseInterface;
@@ -85,7 +98,7 @@ class btSerializer;
 #include "LinearMath/btAlignedObjectArray.h"
 
 ///CollisionWorld is interface and container for the collision detection
-class btCollisionWorld
+class BULLET_EXPORT btCollisionWorld
 {
 
 	

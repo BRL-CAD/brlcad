@@ -16,6 +16,18 @@ subject to the following restrictions:
 #ifndef BT_COLLISION_CONFIGURATION
 #define BT_COLLISION_CONFIGURATION
 
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 struct btCollisionAlgorithmCreateFunc;
 
 class btPoolAllocator;
@@ -23,7 +35,7 @@ class btPoolAllocator;
 ///btCollisionConfiguration allows to configure Bullet collision detection
 ///stack allocator size, default collision algorithms and persistent manifold pool size
 ///@todo: describe the meaning
-class	btCollisionConfiguration
+class BULLET_EXPORT btCollisionConfiguration
 {
 
 public:

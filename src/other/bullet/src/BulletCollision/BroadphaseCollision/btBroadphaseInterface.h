@@ -16,7 +16,17 @@ subject to the following restrictions:
 #ifndef		BT_BROADPHASE_INTERFACE_H
 #define 	BT_BROADPHASE_INTERFACE_H
 
-
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
 
 struct btDispatcherInfo;
 class btDispatcher;
@@ -48,7 +58,7 @@ struct	btBroadphaseRayCallback : public btBroadphaseAabbCallback
 ///The btBroadphaseInterface class provides an interface to detect aabb-overlapping object pairs.
 ///Some implementations for this broadphase interface include btAxisSweep3, bt32BitAxisSweep3 and btDbvtBroadphase.
 ///The actual overlapping pair management, storage, adding and removing of pairs is dealt by the btOverlappingPairCache class.
-class btBroadphaseInterface
+class BULLET_EXPORT btBroadphaseInterface
 {
 public:
 	virtual ~btBroadphaseInterface() {}

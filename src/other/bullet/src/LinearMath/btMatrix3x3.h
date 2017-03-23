@@ -20,6 +20,18 @@ subject to the following restrictions:
 #include "btQuaternion.h"
 #include <stdio.h>
 
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 #ifdef BT_USE_SSE
 //const __m128 ATTRIBUTE_ALIGNED16(v2220) = {2.0f, 2.0f, 2.0f, 0.0f};
 //const __m128 ATTRIBUTE_ALIGNED16(vMPPP) = {-0.0f, +0.0f, +0.0f, +0.0f};
@@ -45,7 +57,7 @@ const btSimdFloat4 ATTRIBUTE_ALIGNED16(v0010) = {0.0f, 0.0f, 1.0f, 0.0f};
 
 /**@brief The btMatrix3x3 class implements a 3x3 rotation matrix, to perform linear algebra in combination with btQuaternion, btTransform and btVector3.
 * Make sure to only include a pure orthogonal matrix without scaling. */
-ATTRIBUTE_ALIGNED16(class) btMatrix3x3 {
+ATTRIBUTE_ALIGNED16(class) BULLET_EXPORT btMatrix3x3 {
 
 	///Data storage for the matrix, each vector is a row of the matrix
 	btVector3 m_el[3];
