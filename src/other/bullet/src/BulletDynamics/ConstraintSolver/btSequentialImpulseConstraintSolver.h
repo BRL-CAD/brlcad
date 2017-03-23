@@ -16,6 +16,18 @@ subject to the following restrictions:
 #ifndef BT_SEQUENTIAL_IMPULSE_CONSTRAINT_SOLVER_H
 #define BT_SEQUENTIAL_IMPULSE_CONSTRAINT_SOLVER_H
 
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 class btIDebugDraw;
 class btPersistentManifold;
 class btDispatcher;
@@ -30,7 +42,7 @@ class btCollisionObject;
 typedef btSimdScalar(*btSingleConstraintRowSolver)(btSolverBody&, btSolverBody&, const btSolverConstraint&);
 
 ///The btSequentialImpulseConstraintSolver is a fast SIMD implementation of the Projected Gauss Seidel (iterative LCP) method.
-ATTRIBUTE_ALIGNED16(class) btSequentialImpulseConstraintSolver : public btConstraintSolver
+ATTRIBUTE_ALIGNED16(class) BULLET_EXPORT btSequentialImpulseConstraintSolver : public btConstraintSolver
 {
 protected:
 	btAlignedObjectArray<btSolverBody>      m_tmpSolverBodyPool;
