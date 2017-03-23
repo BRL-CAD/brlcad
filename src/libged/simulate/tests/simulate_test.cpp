@@ -21,7 +21,7 @@ matrix_equal(const db_i &db, const std::string &path,
 
     db_full_path full_path;
     db_full_path_init(&full_path);
-    simulate::AutoPtr<db_full_path, db_free_full_path> autofree_full_path(
+    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_full_path(
 	&full_path);
 
     if (db_string_to_path(&full_path, &db, path.c_str()))
@@ -45,7 +45,7 @@ matrix_equal(const db_i &db, const std::string &path,
 HIDDEN bool
 test_basic()
 {
-    simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
+    const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
 
     if (!db.ptr)
 	bu_bomb("db_create_inmem() failed");
@@ -115,8 +115,15 @@ test_basic()
 	    bu_bomb("db5_update_attribute() failed");
     }
 
+    db_full_path path;
+    db_full_path_init(&path);
+    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+
+    if (db_string_to_path(&path, db.ptr, "scene.c"))
+	bu_bomb("db_string_to_path() failed");
+
     try {
-	simulate::Simulation(*db.ptr, "scene.c").step(3.0,
+	simulate::Simulation(*db.ptr, path).step(3.0,
 		simulate::Simulation::debug_none);
     } catch (const simulate::InvalidSimulationError &exception) {
 	bu_log("simulation failed: '%s'\n", exception.what());
@@ -125,9 +132,9 @@ test_basic()
 
     {
 	const mat_t expected_falling_matrix = {
-	    -8.601763732025e-01, -3.622751595212e-02, -5.087041542726e-01, 1.267898491013e+01,
-	    -2.648488540913e-02, 9.993015440712e-01, -2.638166412216e-02, 2.841764865291e-01,
-	    5.093044817210e-01, -9.219920561365e-03, -8.605341136100e-01, -1.939468699647e+01,
+	    -0.8601763732025367, -0.036227515952117456, -0.50870415427255744, 12.678984910132268,
+	    -0.026484885409131961, 0.99930154407117733, -0.026381664122163178, 0.28417648652906946,
+	    0.50930448172096932, -0.0092199205613647701, -0.8605341136099528, -19.394686996467197,
 	    0.0, 0.0, 0.0, 1.0
 	};
 
@@ -138,9 +145,99 @@ test_basic()
 
 
 HIDDEN bool
+test_matrices()
+{
+    const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
+
+    if (!db.ptr)
+	bu_bomb("db_create_inmem() failed");
+
+    {
+	const point_t center = {0.0, 0.0, 10.0};
+
+	if (mk_sph(db.ptr->dbi_wdbp, "falling.s", center, 1.0))
+	    bu_bomb("mk_sph() failed");
+    }
+
+    {
+	const point_t center = {0.0, 0.0, 0.0};
+
+	if (mk_sph(db.ptr->dbi_wdbp, "ground.s", center, 5.0))
+	    bu_bomb("mk_sph() failed");
+    }
+
+    if (db5_update_attribute("ground.s", "simulate::mass", "0.0", db.ptr))
+	bu_bomb("db5_update_attribute() failed");
+
+    {
+	wmember members;
+	BU_LIST_INIT(&members.l);
+	mk_addmember("falling.s", &members.l, NULL, WMOP_UNION);
+
+	if (mk_comb(db.ptr->dbi_wdbp, "falling_solid.c", &members.l, false, NULL, NULL,
+		    NULL,
+		    0, 0, 0, 0, false, false, false))
+	    bu_bomb("mk_comb() failed");
+
+	if (db5_update_attribute("falling_solid.c", "simulate::type", "region", db.ptr))
+	    bu_bomb("db5_update_attribute() failed");
+
+	BU_LIST_INIT(&members.l);
+	mk_addmember("falling_solid.c", &members.l, NULL, WMOP_UNION);
+
+	if (mk_comb(db.ptr->dbi_wdbp, "falling.c", &members.l, false, NULL, NULL, NULL,
+		    0, 0, 0, 0, false, false, false))
+	    bu_bomb("mk_comb() failed");
+
+	mat_t falling_matrix = {
+	    1.879681598222e-01, 6.371933019316e-01, 7.474307104116e-01, -7.474307104116e+00,
+	    1.777804646915e-01, 7.263520916684e-01, -6.639327867359e-01, 6.639327867359e+00,
+	    -9.659513845256e-01, 2.576768031901e-01, 2.325054473825e-02, 9.767494552618e+00,
+	    0.0, 0.0, 0.0, 1.0
+	};
+
+	BU_LIST_INIT(&members.l);
+	mk_addmember("falling.c", &members.l, falling_matrix, WMOP_UNION);
+	mk_addmember("ground.s", &members.l, NULL, WMOP_UNION);
+
+	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
+		    0, 0, 0, false, false, false))
+	    bu_bomb("mk_comb() failed");
+    }
+
+    db_full_path path;
+    db_full_path_init(&path);
+    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+
+    if (db_string_to_path(&path, db.ptr, "scene.c"))
+	bu_bomb("db_string_to_path() failed");
+
+    try {
+	simulate::Simulation(*db.ptr, path).step(10.0,
+		simulate::Simulation::debug_none);
+    } catch (const simulate::InvalidSimulationError &exception) {
+	bu_log("simulation failed: '%s'\n", exception.what());
+	return false;
+    }
+
+    {
+	const mat_t expected_falling_matrix = {
+	    0.86933164646925964, 0.4453003990884265, 0.21440785283046893, -2.1362251762822551,
+	    -0.4083346425446982, 0.89154023532250259, -0.19600827116279843, 1.9722702501354501,
+	    -0.27843499801926619, 0.08284621363134631, 0.95687430852209765, -3.5969458076103624,
+	    0.0, 0.0, 0.0, 1.0
+	};
+
+	return matrix_equal(*db.ptr, "/scene.c/falling.c/falling_solid.c",
+			    expected_falling_matrix);
+    }
+}
+
+
+HIDDEN bool
 test_tutorial()
 {
-    simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
+    const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
 
     if (!db.ptr)
 	bu_bomb("db_create_inmem() failed");
@@ -197,8 +294,15 @@ test_tutorial()
 	    bu_bomb("mk_comb() failed");
     }
 
+    db_full_path path;
+    db_full_path_init(&path);
+    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+
+    if (db_string_to_path(&path, db.ptr, "scene.c"))
+	bu_bomb("db_string_to_path() failed");
+
     try {
-	simulate::Simulation(*db.ptr, "scene.c").step(10.0,
+	simulate::Simulation(*db.ptr, path).step(10.0,
 		simulate::Simulation::debug_none);
     } catch (const simulate::InvalidSimulationError &exception) {
 	bu_log("simulation failed: '%s'\n", exception.what());
@@ -207,9 +311,9 @@ test_tutorial()
 
     {
 	const mat_t expected_cube_matrix = {
-	    9.109535781920e-01, -5.910980851570e-03, -4.124657253859e-01, 2.061374962065e+01,
-	    -4.123979850242e-01, 1.002896188117e-02, -9.109520277313e-01, 4.573584175369e+01,
-	    9.523711592403e-03, 9.999367173941e-01, 6.697253647870e-03, 1.620014210436e+00,
+	    0.9109535781920024, -0.0059109808515701431, -0.41246572538591258, 20.613749620650484,
+	    -0.41239798502422625, 0.010028961881171757, -0.91095202773134265, 45.735841753689698,
+	    0.0095237115924034603, 0.99993671739409096, 0.0066972536478696974, 1.6200142104360542,
 	    0.0, 0.0, 0.0, 1.0
 	};
 
@@ -221,7 +325,7 @@ test_tutorial()
 HIDDEN bool
 simulate_test()
 {
-    return test_basic() && test_tutorial();
+    return test_basic() && test_matrices() && test_tutorial();
 }
 
 

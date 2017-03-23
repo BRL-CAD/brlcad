@@ -52,6 +52,15 @@ namespace
 const char * const attribute_prefix = "simulate::";
 
 
+HIDDEN std::string
+error_at(const std::string &message, const db_full_path &path)
+{
+    RT_CK_FULL_PATH(&path);
+
+    return message + " at '" + DB_FULL_PATH_CUR_DIR(&path)->d_namep + "'";
+}
+
+
 HIDDEN btRigidBody::btRigidBodyConstructionInfo
 get_rigid_body_construction_info(btMotionState &motion_state,
 				 btCollisionShape &collision_shape, const db_i &db, const btScalar mass)
@@ -69,16 +78,19 @@ get_rigid_body_construction_info(btMotionState &motion_state,
 
 
 HIDDEN std::pair<btVector3, btVector3>
-get_aabb(db_i &db, const std::string &path)
+get_aabb(db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
 
-    simulate::AutoPtr<rt_i, rt_free_rti> rti(rt_new_rti(&db));
+    const simulate::AutoPtr<rt_i, rt_free_rti> rti(rt_new_rti(&db));
 
     if (!rti.ptr)
 	bu_bomb("rt_new_rti() failed");
 
-    if (rt_gettree(rti.ptr, path.c_str()))
+    const simulate::AutoPtr<char> path_str(db_path_to_string(&path));
+
+    if (rt_gettree(rti.ptr, path_str.ptr))
 	bu_bomb("rt_gettree() failed");
 
     rt_prep_parallel(rti.ptr, 0);
@@ -125,17 +137,17 @@ get_aabb(db_i &db, const std::string &path)
     }
 
     if (!found_soltab)
-	throw simulate::InvalidSimulationError("no solids found in tree of '" + path +
-					       "'");
+	throw simulate::InvalidSimulationError(error_at("no solids found", path));
 
     return result;
 }
 
 
 HIDDEN btVector3
-get_center_of_mass(db_i &db, const std::string &path)
+get_center_of_mass(db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
 
     // TODO: not implemented; return the center of the AABB
 
@@ -166,27 +178,37 @@ deserialize_vector(const std::string &source)
 }
 
 
-HIDDEN btVector3
-get_simulation_parameters(const db_i &db, const std::string &path)
+struct SimulationParameters {
+    explicit SimulationParameters() :
+	m_gravity(0.0, 0.0, -9.80665),
+	m_grid_radius(10)
+    {}
+
+
+    static SimulationParameters get_simulation_parameters(const db_i &db,
+	    const db_full_path &path);
+
+
+    btVector3 m_gravity;
+    unsigned m_grid_radius;
+};
+
+
+SimulationParameters
+SimulationParameters::get_simulation_parameters(const db_i &db,
+	const db_full_path &path)
 {
     RT_CK_DBI(&db);
-
-    db_full_path full_path;
-    db_full_path_init(&full_path);
-    simulate::AutoPtr<db_full_path, db_free_full_path> autofree_full_path(
-	&full_path);
-
-    if (db_string_to_path(&full_path, &db, path.c_str()))
-	throw simulate::InvalidSimulationError("invalid path");
+    RT_CK_FULL_PATH(&path);
 
     bu_attribute_value_set avs;
     BU_AVS_INIT(&avs);
-    simulate::AutoPtr<bu_attribute_value_set, bu_avs_free> avs_autoptr(&avs);
+    const simulate::AutoPtr<bu_attribute_value_set, bu_avs_free> avs_autoptr(&avs);
 
-    if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(&full_path)))
+    if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(&path)))
 	bu_bomb("db5_get_attributes() failed");
 
-    btVector3 gravity(0.0, 0.0, -9.80665);
+    SimulationParameters result;
 
     for (std::size_t i = 0; i < avs.count; ++i)
 	if (!bu_strncmp(avs.avp[i].name, attribute_prefix, strlen(attribute_prefix))) {
@@ -194,14 +216,21 @@ get_simulation_parameters(const db_i &db, const std::string &path)
 	    const char * const value = avs.avp[i].value;
 
 	    if (!bu_strcmp(name, "gravity"))
-		gravity = deserialize_vector(value);
-	    else
-		throw simulate::InvalidSimulationError(std::string() +
-						       "invalid scene attribute '" +
-						       avs.avp[i].name + "' on '" + path + "'");
+		result.m_gravity = deserialize_vector(value);
+	    else if (!bu_strcmp(name, "grid_radius")) {
+		const long temp = simulate::lexical_cast<long>(value,
+				  error_at("invalid grid_radius", path));
+
+		if (temp < 0)
+		    throw simulate::InvalidSimulationError(error_at("invalid grid_radius", path));
+
+		result.m_grid_radius = temp;
+	    } else
+		throw simulate::InvalidSimulationError(error_at(std::string() +
+						       "invalid scene attribute '" + avs.avp[i].name + "'", path));
 	}
 
-    return gravity;
+    return result;
 }
 
 
@@ -221,11 +250,11 @@ public:
 			      btDiscreteDynamicsWorld &world);
 
     static std::vector<const Region *> get_regions(db_i &db,
-	    const std::string &root_path, btDiscreteDynamicsWorld &world);
+	    const db_full_path &path, btDiscreteDynamicsWorld &world);
 
 
 private:
-    explicit Region(db_i &db, const std::string &path,
+    explicit Region(db_i &db, const db_full_path &path,
 		    btDiscreteDynamicsWorld &world, const std::pair<btVector3, btVector3> &aabb,
 		    const btVector3 &center_of_mass, btScalar mass,
 		    const btVector3 &linear_velocity, const btVector3 &angular_velocity);
@@ -239,13 +268,11 @@ private:
 
 
 Simulation::Region *
-Simulation::Region::get_region(db_i &db, const db_full_path &full_path,
+Simulation::Region::get_region(db_i &db, const db_full_path &path,
 			       btDiscreteDynamicsWorld &world)
 {
     RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&full_path);
-
-    AutoPtr<char> path(db_path_to_string(&full_path));
+    RT_CK_FULL_PATH(&path);
 
     btScalar mass = 1.0;
     btVector3 linear_velocity(0.0, 0.0, 0.0);
@@ -253,9 +280,9 @@ Simulation::Region::get_region(db_i &db, const db_full_path &full_path,
     {
 	bu_attribute_value_set avs;
 	BU_AVS_INIT(&avs);
-	AutoPtr<bu_attribute_value_set, bu_avs_free> avs_autoptr(&avs);
+	const AutoPtr<bu_attribute_value_set, bu_avs_free> avs_autoptr(&avs);
 
-	if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(&full_path)))
+	if (db5_get_attributes(&db, &avs, DB_FULL_PATH_CUR_DIR(&path)))
 	    bu_bomb("db5_get_attributes() failed");
 
 	for (std::size_t i = 0; i < avs.count; ++i)
@@ -265,51 +292,42 @@ Simulation::Region::get_region(db_i &db, const db_full_path &full_path,
 
 		if (!bu_strcmp(name, "type")) {
 		    if (bu_strcmp(value, "region"))
-			throw InvalidSimulationError("invalid type");
+			throw InvalidSimulationError(error_at("invalid type", path));
 		} else if (!bu_strcmp(name, "mass")) {
-		    mass = lexical_cast<btScalar>(value,
-						  std::string() + "invalid mass on '" + path.ptr + "'");
+		    mass = lexical_cast<btScalar>(value, error_at("invalid mass", path));
 
 		    if (mass < 0.0)
-			throw InvalidSimulationError(std::string() + "invalid mass on '" + path.ptr +
-						     "'");
+			throw InvalidSimulationError(error_at("invalid mass", path));
 		} else if (!bu_strcmp(name, "linear_velocity")) {
 		    linear_velocity = deserialize_vector(value);
 		} else if (!bu_strcmp(name, "angular_velocity")) {
 		    angular_velocity = deserialize_vector(value);
 		} else
-		    throw InvalidSimulationError(std::string() + "invalid attribute '" +
-						 avs.avp[i].name + "' on '" + path.ptr + "'");
+		    throw InvalidSimulationError(error_at(std::string() + "invalid attribute '" +
+							  avs.avp[i].name + "'", path));
 	    }
     }
 
-    return new Region(db, path.ptr, world, get_aabb(db, path.ptr),
-		      get_center_of_mass(db, path.ptr), mass, linear_velocity, angular_velocity);
+    return new Region(db, path, world, get_aabb(db, path), get_center_of_mass(db,
+		      path), mass, linear_velocity, angular_velocity);
 }
 
 
 std::vector<const Simulation::Region *>
-Simulation::Region::get_regions(db_i &db, const std::string &root_path,
+Simulation::Region::get_regions(db_i &db, const db_full_path &path,
 				btDiscreteDynamicsWorld &world)
 {
     RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
 
     db_update_nref(&db, &rt_uniresource);
 
-    db_full_path full_path;
-    db_full_path_init(&full_path);
-    AutoPtr<db_full_path, db_free_full_path> autofree_full_path(&full_path);
-
-    if (db_string_to_path(&full_path, &db, root_path.c_str()))
-	throw InvalidSimulationError("invalid path");
-
     bu_ptbl found = BU_PTBL_INIT_ZERO;
-    AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
+    const AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
 
     if (0 > db_search(&found, DB_SEARCH_TREE,
 		      (std::string() + "-attr " + attribute_prefix + "type=region -below -attr " +
-		       attribute_prefix + "type=region").c_str(), full_path.fp_len, full_path.fp_names,
-		      &db))
+		       attribute_prefix + "type=region").c_str(), path.fp_len, path.fp_names, &db))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found))
@@ -319,8 +337,8 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
     if (0 > db_search(&found, DB_SEARCH_TREE,
 		      (std::string() + "-depth >0 -attr " + attribute_prefix + "* -not ( -attr " +
 		       attribute_prefix + "type=region -or ( -type shape -not -below -attr " +
-		       attribute_prefix + "type=region ) )").c_str(), full_path.fp_len,
-		      full_path.fp_names, &db))
+		       attribute_prefix + "type=region ) )").c_str(), path.fp_len,
+		      path.fp_names, &db))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found))
@@ -331,16 +349,17 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
     if (0 > db_search(&found, DB_SEARCH_TREE,
 		      (std::string() + "-attr " + attribute_prefix +
 		       "type=region -or -type shape -not -below -attr " + attribute_prefix +
-		       "type=region").c_str(), full_path.fp_len, full_path.fp_names, &db))
+		       "type=region").c_str(), path.fp_len, path.fp_names, &db))
 	bu_bomb("db_search() failed");
 
     if (!BU_PTBL_LEN(&found))
 	throw InvalidSimulationError("no regions found");
 
     std::vector<const Simulation::Region *> result;
-    db_full_path **entry;
 
     try {
+	db_full_path **entry;
+
 	for (BU_PTBL_FOR(entry, (db_full_path **), &found))
 	    result.push_back(get_region(db, **entry, world));
     } catch (...) {
@@ -355,14 +374,14 @@ Simulation::Region::get_regions(db_i &db, const std::string &root_path,
 }
 
 
-Simulation::Region::Region(db_i &db, const std::string &path,
+Simulation::Region::Region(db_i &db, const db_full_path &path,
 			   btDiscreteDynamicsWorld &world, const std::pair<btVector3, btVector3> &aabb,
 			   const btVector3 &center_of_mass, const btScalar mass,
 			   const btVector3 &linear_velocity, const btVector3 &angular_velocity) :
     m_region_handle(db, path),
     m_world(world),
     m_motion_state(db, path, center_of_mass),
-    m_collision_shape((aabb.second - aabb.first) / 2.0,
+    m_collision_shape(aabb.second - aabb.first,
 		      (aabb.first + aabb.second) / 2.0 - center_of_mass),
     m_rigid_body(get_rigid_body_construction_info(m_motion_state, m_collision_shape,
 		 db, mass))
@@ -380,7 +399,7 @@ Simulation::Region::~Region()
 }
 
 
-Simulation::Simulation(db_i &db, const std::string &path) :
+Simulation::Simulation(db_i &db, const db_full_path &path) :
     m_debug_draw(db),
     m_broadphase(),
     m_collision_config(),
@@ -391,15 +410,20 @@ Simulation::Simulation(db_i &db, const std::string &path) :
     m_regions(Region::get_regions(db, path, m_world)),
     m_rt_instance(db)
 {
+    RT_CK_DBI(&db);
+    RT_CK_FULL_PATH(&path);
+
+    const SimulationParameters parameters =
+	SimulationParameters::get_simulation_parameters(db, path);
+
     m_world.setDebugDrawer(&m_debug_draw);
+    m_world.setGravity(parameters.m_gravity);
 
     m_collision_dispatcher.registerCollisionCreateFunc(
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
-	new RtCollisionAlgorithm::CreateFunc(m_rt_instance, *m_world.getDebugDrawer()));
-
-    const btVector3 gravity = get_simulation_parameters(db, path);
-    m_world.setGravity(gravity);
+	new RtCollisionAlgorithm::CreateFunc(m_rt_instance, parameters.m_grid_radius,
+		*m_world.getDebugDrawer()));
 }
 
 

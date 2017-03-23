@@ -43,7 +43,8 @@ public:
     class CreateFunc : public btCollisionAlgorithmCreateFunc
     {
     public:
-	CreateFunc(const RtInstance &rt_instance, btIDebugDraw &debug_draw);
+	explicit CreateFunc(const RtInstance &rt_instance, unsigned grid_radius,
+			    btIDebugDraw &debug_draw);
 
 	virtual btCollisionAlgorithm *CreateCollisionAlgorithm(
 	    btCollisionAlgorithmConstructionInfo &cinfo,
@@ -53,6 +54,7 @@ public:
 
     private:
 	const RtInstance &m_rt_instance;
+	const unsigned m_grid_radius;
 	btIDebugDraw &m_debug_draw;
     };
 
@@ -62,7 +64,7 @@ public:
 				  const btCollisionObjectWrapper *body_a_wrap,
 				  const btCollisionObjectWrapper *body_b_wrap,
 				  const RtInstance &rt_instance,
-				  btIDebugDraw &debug_draw);
+				  unsigned grid_radius, btIDebugDraw &debug_draw);
     virtual ~RtCollisionAlgorithm();
 
     virtual void processCollision(const btCollisionObjectWrapper *body_a_wrap,
@@ -81,6 +83,7 @@ private:
     bool m_owns_manifold;
     btPersistentManifold *m_manifold;
     const RtInstance &m_rt_instance;
+    const unsigned m_grid_radius;
     btIDebugDraw &m_debug_draw;
 };
 

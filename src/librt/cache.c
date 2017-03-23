@@ -202,7 +202,7 @@ compress_external(struct bu_external *external)
     *(uint32_t *)buffer = htonl(external->ext_nbytes);
 
 #if USE_NEW_COMPRESSION
-    ret = LZ4_compress_fast((const char *)external->ext_buf, (char *)(buffer + SIZEOF_NETWORK_LONG), external->ext_nbytes, compressed_size, 1);
+    ret = LZ4_compress_default((const char *)external->ext_buf, (char *)(buffer + SIZEOF_NETWORK_LONG), external->ext_nbytes, compressed_size);
     if (ret != 0)
 	compressed = 1;
 #else

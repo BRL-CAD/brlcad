@@ -22,6 +22,18 @@ subject to the following restrictions:
 #include "btMinMax.h"
 #include "btAlignedAllocator.h"
 
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 #ifdef BT_USE_DOUBLE_PRECISION
 #define btVector3Data btVector3DoubleData
 #define btVector3DataName "btVector3DoubleData"
@@ -80,7 +92,7 @@ const int32x4_t ATTRIBUTE_ALIGNED16(btv3AbsMask) = (int32x4_t){0x7FFFFFFF, 0x7FF
  * It has an un-used w component to suit 16-byte alignment when btVector3 is stored in containers. This extra component can be used by derived classes (Quaternion?) or by user
  * Ideally, this class should be replaced by a platform optimized SIMD version that keeps the data in registers
  */
-ATTRIBUTE_ALIGNED16(class) btVector3
+ATTRIBUTE_ALIGNED16(class) BULLET_EXPORT btVector3
 {
 public:
 

@@ -77,8 +77,11 @@
 	      <varlistentry>
 		<term><emphasis remap="I">aabb</emphasis></term>
 		<listitem><para>
-		    Draw Bullet's perceived axis-aligned bounding boxes after
-		    the simulation step.
+		    Draw Bullet's axis-aligned bounding boxes after
+		    the simulation step. These can usually be regarded as
+		    indicating the "true" position of geometry. Any discrepancies
+		    may indicate that the <command>simulate</command> command is
+		    incorrectly applying the Bullet transformations.
 		</para></listitem>
 	      </varlistentry>
 
@@ -173,6 +176,19 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">simulate::grid_radius=x</emphasis></term>
+	<listitem>
+	  <para>
+	    Specify the number of rays along the radii of the circular grids of
+	    rays fired during collision detection. This attribute can only be
+	    applied to the topmost object under <replaceable>path</replaceable>.
+	    The default value is <literal>10</literal>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
     </variablelist>
 
   </refsection>

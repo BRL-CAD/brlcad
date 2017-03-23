@@ -35,7 +35,6 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#include <string>
 #include <vector>
 
 
@@ -46,10 +45,11 @@ namespace simulate
 class RtInstance
 {
 public:
-    RtInstance(db_i &db);
+    explicit RtInstance(db_i &db);
 
     std::vector<std::pair<btVector3, btVector3> > get_overlaps(
-	const std::string &path_a, const std::string &path_b, const xrays &rays) const;
+	const db_full_path &path_a, const db_full_path &path_b,
+	const xrays &rays) const;
 
 
 private:

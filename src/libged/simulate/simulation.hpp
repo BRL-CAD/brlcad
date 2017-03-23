@@ -36,22 +36,35 @@
 #include "rt/rt_instance.h"
 
 
+#ifndef GED_EXPORT
+#  if defined(GED_DLL_EXPORTS) && defined(GED_DLL_IMPORTS)
+#    error "Only GED_DLL_EXPORTS or GED_DLL_IMPORTS can be defined, not both."
+#  elif defined(GED_DLL_EXPORTS)
+#    define GED_EXPORT __declspec(dllexport)
+#  elif defined(GED_DLL_IMPORTS)
+#    define GED_EXPORT __declspec(dllimport)
+#  else
+#    define GED_EXPORT
+#  endif
+#endif
+
+
 namespace simulate
 {
 
 
-class Simulation
+class GED_EXPORT Simulation
 {
 public:
     enum DebugMode {
-	debug_none,
+	debug_none = 0,
 	debug_aabb = 1 << 0,
 	debug_contact = 1 << 1,
 	debug_ray = 1 << 2
     };
 
 
-    explicit Simulation(db_i &db, const std::string &path);
+    explicit Simulation(db_i &db, const db_full_path &path);
     ~Simulation();
 
     void step(fastf_t seconds, DebugMode debug_mode);

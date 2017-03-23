@@ -14,12 +14,13 @@ if [ $# -lt 1 ]; then
 fi
 
 db="$1"
-sz="512"
+sz="1024"
 pwd=`pwd`
 loop="loop"
 mged="mged"
 rtcheck="rtcheck"
-
+gqa="gqa"
+gqa_opts="-q -g1mm,1mm"
 
 echo ""
 echo "CHECKING FOR OVERLAPS"
@@ -48,7 +49,7 @@ else
     echo "Processing objects @ $sz:" $tops
 fi
 
-# count how many views (should be 16 views)
+# count how many views (should be 16 per object)
 total=0
 for obj in $tops ; do
     for az in `$loop 0 179 45` ; do
@@ -58,38 +59,41 @@ for obj in $tops ; do
     done
 done
 
-
 # check the views
 if ! $dry_run; then
     rm -f $OBJ.plot3
 fi
+
+# run rtcheck
 count=1
 for obj in $tops ; do
     OBJ=$JOB.$obj
     for az in `$loop 0 179 45` ; do
 	for el in `$loop 0 179 45` ; do
 	    echo "[$count/$total]"
-	    chmod -f 755 $OBJ.$az.$el.plot3
 	    if ! $dry_run; then
-		$rtcheck -o $OBJ.$az.$el.plot3 -s $sz -a $az -e $el $DB $obj 2> $OBJ.$az.$el
-		cat $OBJ.$az.$el.plot3 >> $OBJ.plot3
+		rm -f $OBJ.$az.$el.plot3
+		$rtcheck -o $OBJ.$az.$el.plot3 -s $sz -a $az -e $el $DB $obj 2> $OBJ.$az.$el.rtcheck.log
+		if test -f $OBJ.$az.$el.plot3 ; then
+		    chmod -f u+rw $OBJ.$az.$el.plot3
+		    cat $OBJ.$az.$el.plot3 >> $OBJ.plot3
+		fi
 	    fi
-	    chmod -f 755 $OBJ.$az.$el.plot3
 	    count="`expr $count + 1`"
 	done
     done
 done
 
 
-# parse out overlap line pairings
+# parse out rtcheck overlap line pairings
 rm -f $JOB.pairings
 for obj in $tops ; do
     OBJ=$JOB.$obj
     rm -f $OBJ.pairings
     for az in `$loop 0 179 45` ; do
 	for el in `$loop 0 179 45` ; do
-	    if ! [ -f $OBJ.$az.$el ]; then
-		echo "WARNING: $OBJ.$az.$el is MISSING"
+	    if ! [ -f $OBJ.$az.$el.rtcheck.log ]; then
+		echo "WARNING: $OBJ.$az.$el.rtcheck.log is MISSING"
 	    else
 		sed -n '/maximum depth/{
 		    s/[<>]//g
@@ -97,7 +101,7 @@ for obj in $tops ; do
 		    s/^[[:space:]]*//g
 		    s/mm[[:space:]]*$//g
 		    p
-		    }' $OBJ.$az.$el |
+		    }' $OBJ.$az.$el.rtcheck.log |
 		    cut -f 1,2,3,9 -d ' ' |
 		    awk '{if ($2 < $1) { tmp = $1; $1 = $2; $2 = tmp}; print $1, $2, $3 * $4}' >> $OBJ.pairings
 
@@ -105,6 +109,36 @@ for obj in $tops ; do
 	    fi
 	done
     done
+done
+
+
+# get a second opinion, run gqa
+for obj in $tops ; do
+    OBJ=$JOB.$obj
+    echo "[$obj]"
+    if ! $dry_run; then
+	$gqa -Ao $gqa_opts $DB $obj > $OBJ.gqa.log 2>&1
+    fi
+done
+
+
+# parse out gqa overlap line pairings
+for obj in $tops ; do
+    OBJ=$JOB.$obj
+    rm -f $OBJ.pairings
+    if ! [ -f $OBJ.gqa.log ]; then
+	echo "WARNING: $OBJ.gqa.log is MISSING"
+    else
+	sed -n '/dist:/{
+	        s/count://g
+	        s/dist://g
+	        s/mm @*$//g
+	        p
+	       }' $OBJ.gqa.log |
+	awk '{if ($2 < $1) { tmp = $1; $1 = $2; $2 = tmp}; print $1, $2, $3 * $4}' >> $OBJ.pairings
+
+	cat $OBJ.pairings >> $JOB.pairings
+    fi
 done
 
 
@@ -122,16 +156,32 @@ fi
 
 echo "Processing $linecount pairings"
 
+
+awkscript="{printf \"%.4f\", \$1 + (\$2 / $total)}"
 leftprev=""
 rightprev=""
 totalprev=0
+count=0
 printf "[."
 while read line ; do
     left=`echo $line | awk '{print $1}'`
     right=`echo $line | awk '{print $2}'`
     len=`echo $line | awk '{print $3}'`
 
-    printf "."
+    if test $linecount -gt 999 ; then
+	# print every 100 pairings
+	if test `expr $count % 100` -eq 0 ; then
+	    printf "."
+	fi
+    elif test $linecount -gt 99 ; then
+	# print every 10 pairings
+	if test `expr $count % 10` -eq 0 ; then
+	    printf "."
+	fi
+    else
+	# print every pairing
+	printf "."
+    fi
 
     # init on first pass
     if test "x$leftprev" = "x" && test "x$rightprev" = "x" ; then
@@ -148,8 +198,8 @@ $leftprev $rightprev $totalprev"
 	totalprev=0
     fi
 
-    totalprev="`echo $totalprev $len | awk '{printf "%.4f", $1 + ($2 / 16)}'`"
-
+    totalprev="`echo $totalprev $len | awk \"$awkscript\"`"
+    count="`expr $count + 1`"
 done <<EOF
 $lines
 EOF
@@ -173,38 +223,44 @@ if test "x$LINES" = "x" && test "x$leftprev" = "x" ; then
     cd $pwd
     exit
 else
-    echo "LINES=[$LINES]"
     overlapcnt=`echo "$LINES" | sort -k3 -n -r | wc -l`
 fi
 echo "Found $overlapcnt unique pairings"
 
 
-# check each pairing
-sz="`echo $sz | awk '{print $1 / 4}'`"
-count=1
-if ! $dry_run; then
-    rm -f $JOB.more.plot3
-fi
-while read overlap ; do
-    echo "Inspecting overlap [$count/$overlapcnt] @ $sz"
+# disable until something is using the more.plot3 files
+if `false` ; then
 
-    objs="`echo $overlap | awk '{print $1, $2}'`"
+    # check each pairing
+    sz="`echo $sz | awk '{print $1 / 4}'`"
+    count=1
+    if ! $dry_run; then
+	rm -f $JOB.more.plot3
+    fi
+    while read overlap ; do
+	echo "Inspecting overlap [$count/$overlapcnt] @ $sz"
 
-    for az in `$loop 0 179 45` ; do
-	for el in `$loop 0 179 45` ; do
-	    chmod -f 755 $JOB.$count.$az.$el.plot3
-	    if ! $dry_run; then
-		$rtcheck -o $JOB.$count.$az.$el.plot3 -s $sz -a $az -e $el $DB $objs 2> $JOB.$count.$az.$el
-		cat $JOB.$count.$az.$el.plot3 >> $JOB.more.plot3
-	    fi
-	    chmod -f 755 $JOB.$count.$az.$el.plot3
+	objs="`echo $overlap | awk '{print $1, $2}'`"
+
+	for az in `$loop 0 179 45` ; do
+	    for el in `$loop 0 179 45` ; do
+		if ! $dry_run; then
+		    rm -f $JOB.$count.$az.$el.plot3
+		    $rtcheck -o $JOB.$count.$az.$el.plot3 -s $sz -a $az -e $el $DB $objs 2> $JOB.$count.$az.$el
+		    if test -f $JOB.$count.$az.$el.plot3 ; then
+			chmod -f u+rw $JOB.$count.$az.$el.plot3
+			cat $JOB.$count.$az.$el.plot3 >> $JOB.more.plot3
+		    fi
+		fi
+	    done
 	done
-    done
 
-    count="`expr $count + 1`"
-done <<EOF
+	count="`expr $count + 1`"
+    done <<EOF
 `echo "$LINES" | sort -k3 -n -r`
 EOF
+
+fi
 
 
 # summarize the overlaps
@@ -214,6 +270,8 @@ cat $JOB.overlaps
 
 
 cd $pwd
+echo ""
+echo "Overlaps saved to $DIR/$JOB.overlaps"
 echo ""
 echo "Done."
 
