@@ -20,18 +20,6 @@ subject to the following restrictions:
 #include "btScalar.h" // has definitions like SIMD_FORCE_INLINE
 #include "btAlignedAllocator.h"
 
-#ifndef LINEARMATH_EXPORT
-#  if defined(LINEARMATH_DLL_EXPORTS) && defined(LINEARMATH_DLL_IMPORTS)
-#    error "Only LINEARMATH_DLL_EXPORTS or LINEARMATH_DLL_IMPORTS can be defined, not both."
-#  elif defined(LINEARMATH_DLL_EXPORTS)
-#    define LINEARMATH_EXPORT __declspec(dllexport)
-#  elif defined(LINEARMATH_DLL_IMPORTS)
-#    define LINEARMATH_EXPORT __declspec(dllimport)
-#  else
-#    define LINEARMATH_EXPORT
-#  endif
-#endif
-
 ///If the platform doesn't support placement new, you can disable BT_USE_PLACEMENT_NEW
 ///then the btAlignedObjectArray doesn't support objects with virtual methods, and non-trivial constructors/destructors
 ///You can enable BT_USE_MEMCPY, then swapping elements in the array will use memcpy instead of operator=

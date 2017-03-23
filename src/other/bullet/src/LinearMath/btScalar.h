@@ -27,19 +27,6 @@ subject to the following restrictions:
 #include <stdlib.h>//size_t for MSVC 6.0
 #include <float.h>
 
-#ifndef LINEARMATH_EXPORT
-#  if defined(LINEARMATH_DLL_EXPORTS) && defined(LINEARMATH_DLL_IMPORTS)
-#    error "Only LINEARMATH_DLL_EXPORTS or LINEARMATH_DLL_IMPORTS can be defined, not both."
-#  elif defined(LINEARMATH_DLL_EXPORTS)
-#    define LINEARMATH_EXPORT __declspec(dllexport)
-#  elif defined(LINEARMATH_DLL_IMPORTS)
-#    define LINEARMATH_EXPORT __declspec(dllimport)
-#  else
-#    define LINEARMATH_EXPORT
-#  endif
-#endif
-
-
 /* SVN $Revision$ on $Date$ from http://bullet.googlecode.com*/
 #define BT_BULLET_VERSION 284
 

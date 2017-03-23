@@ -17,20 +17,9 @@ subject to the following restrictions:
 #ifndef GRAHAM_SCAN_2D_CONVEX_HULL_H
 #define GRAHAM_SCAN_2D_CONVEX_HULL_H
 
+
 #include "btVector3.h"
 #include "btAlignedObjectArray.h"
-
-#ifndef LINEARMATH_EXPORT
-#  if defined(LINEARMATH_DLL_EXPORTS) && defined(LINEARMATH_DLL_IMPORTS)
-#    error "Only LINEARMATH_DLL_EXPORTS or LINEARMATH_DLL_IMPORTS can be defined, not both."
-#  elif defined(LINEARMATH_DLL_EXPORTS)
-#    define LINEARMATH_EXPORT __declspec(dllexport)
-#  elif defined(LINEARMATH_DLL_IMPORTS)
-#    define LINEARMATH_EXPORT __declspec(dllimport)
-#  else
-#    define LINEARMATH_EXPORT
-#  endif
-#endif
 
 struct GrahamVector3 : public btVector3
 {
