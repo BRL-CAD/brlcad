@@ -994,10 +994,10 @@ distribution.  Default is AUTO, responsive to the toplevel
 BRLCAD_BUNDLED_LIBS option and testing first for a system version
 if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS BRLCAD_ENABLE_BULLET BRLCAD_LEVEL2 ALIASES ${Bullet_ALIASES})
+THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ${Bullet_ALIASES})
 if(BRLCAD_BULLET_BUILD)
   set(BULLET_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/bullet/src" CACHE STRING "Directory containing bullet headers." FORCE)
-  set(BULLET_LIBRARIES "BulletSoftBody;BulletCollision;BulletDynamics;LinearMath" CACHE STRING "Directory containing bullet headers." FORCE)
+  set(BULLET_LIBRARIES "bullet" CACHE STRING "BRL-CAD bullet lib." FORCE)
 endif(BRLCAD_BULLET_BUILD)
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
