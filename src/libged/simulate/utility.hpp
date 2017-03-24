@@ -44,7 +44,8 @@ namespace simulate
 {
 
 
-const btScalar world_to_application = 1000.0;
+// Bullet units are meters; application units are millimeters
+static const btScalar world_to_application = 1.0e3;
 
 
 namespace detail
