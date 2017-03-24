@@ -40,3 +40,9 @@ The `simulate` code currently does *not* fire rays in parallel, although it
 should. Based on discussions, it may be best to provide parallel firing of rays
 within librt's `rt_shoot_rays()`, which already has a (disabled) experimental
 implementation.
+
+The implementation currently does not evaluate the center of mass of objects;
+instead, the center of objects' axis-aligned bounding boxes are used. It may
+be best to provide an API within libanalyze for evaluating the center of mass
+and moment of inertia of arbitrary geometry. In most cases the moment
+of inertia of an object can be approximated by that of its bounding box.
