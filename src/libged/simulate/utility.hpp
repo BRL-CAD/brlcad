@@ -37,9 +37,14 @@
 #include "bu/malloc.h"
 #include "rt/db_instance.h"
 
+#include <btBulletDynamicsCommon.h>
+
 
 namespace simulate
 {
+
+
+const btScalar world_to_application = 1000.0;
 
 
 namespace detail

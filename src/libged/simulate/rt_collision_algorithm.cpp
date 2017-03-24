@@ -124,7 +124,7 @@ generate_ray_grid(const btVector3 &center, const btScalar radius,
     xray &center_ray = result->ray;
     center_ray.magic = RT_RAY_MAGIC;
     center_ray.index = 0;
-    VMOVE(center_ray.r_pt, center);
+    VMOVE(center_ray.r_pt, center * simulate::world_to_application);
     VMOVE(center_ray.r_dir, normal);
 
     // calculate the 'up' vector
@@ -142,7 +142,10 @@ generate_ray_grid(const btVector3 &center, const btScalar radius,
     // NOTE: Bullet's collision tolerance is 4 units (4mm)
     const btScalar grid_size = radius / grid_radius;
 
-    rt_gen_circular_grid(result, &center_ray, radius, up_vect, grid_size);
+    rt_gen_circular_grid(result, &center_ray,
+			 radius * simulate::world_to_application,
+			 up_vect,
+			 grid_size * simulate::world_to_application);
     return result;
 }
 
@@ -199,7 +202,9 @@ calculate_contact_points(btManifoldResult &result,
     for (std::vector<std::pair<btVector3, btVector3> >::const_iterator it =
 	     overlaps.begin(); it != overlaps.end(); ++it) {
 	const btScalar depth = -(it->first - it->second).length();
-	result.addContactPoint(normal_world_on_b, it->second, depth);
+	result.addContactPoint(normal_world_on_b,
+			       it->second / simulate::world_to_application,
+			       depth / simulate::world_to_application);
     }
 
     if (debug_draw.getDebugMode() & btIDebugDraw::DBG_DrawFrames) {
@@ -209,7 +214,8 @@ calculate_contact_points(btManifoldResult &result,
 	    const btVector3 point(V3ARGS(entry->ray.r_pt));
 	    const btVector3 direction(V3ARGS(entry->ray.r_dir));
 
-	    debug_draw.drawLine(point, point + direction * 4.0,
+	    debug_draw.drawLine(point / simulate::world_to_application,
+				point / simulate::world_to_application + direction * 4.0,
 				debug_draw.getDefaultColors().m_contactPoint);
 	}
     }

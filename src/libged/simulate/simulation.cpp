@@ -139,6 +139,9 @@ get_aabb(db_i &db, const db_full_path &path)
     if (!found_soltab)
 	throw simulate::InvalidSimulationError(error_at("no solids found", path));
 
+    result.first /= simulate::world_to_application;
+    result.second /= simulate::world_to_application;
+
     return result;
 }
 

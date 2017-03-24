@@ -31,6 +31,7 @@
 
 
 #include "rt_debug_draw.hpp"
+#include "utility.hpp"
 
 #include "wdb.h"
 
@@ -125,8 +126,8 @@ RtDebugDraw::drawLine(const btVector3 &from, const btVector3 &to,
 		      const btVector3 &color)
 {
     const std::string name = make_name(m_db, "line");
-    const point_t from_pt = {V3ARGS(from)};
-    const vect_t height = {V3ARGS(to - from)};
+    const point_t from_pt = {V3ARGS(from * world_to_application)};
+    const vect_t height = {V3ARGS((to - from) * world_to_application)};
 
     if (mk_rcc(m_db.dbi_wdbp, name.c_str(), from_pt, height, 1.0e-8))
 	bu_bomb("mk_rcc() failed");
@@ -150,9 +151,10 @@ void RtDebugDraw::drawAabb(const btVector3 &from, const btVector3 &to,
 			   const btVector3 &color)
 {
     const std::string name = make_name(m_db, "aabb");
-    point_t min_pt = {V3ARGS(from)}, max_pt = {V3ARGS(from)};
-    VMIN(min_pt, to);
-    VMAX(max_pt, to);
+    point_t min_pt = {V3ARGS(from * world_to_application)};
+    point_t max_pt = {V3ARGS(from * world_to_application)};
+    VMIN(min_pt, to * world_to_application);
+    VMAX(max_pt, to * world_to_application);
 
     if (mk_rpp(m_db.dbi_wdbp, name.c_str(), min_pt, max_pt))
 	bu_bomb("mk_rpp() failed");
@@ -167,9 +169,10 @@ RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
 			      const int UNUSED(lifetime), const btVector3 &color)
 {
     const std::string name = make_name(m_db, "contact");
-    const point_t point_on_b_pt = {V3ARGS(point_on_b)};
+    const point_t point_on_b_pt = {V3ARGS(point_on_b * world_to_application)};
 
-    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt, distance / 10.0))
+    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt,
+	       (distance / 10.0) * world_to_application))
 	bu_bomb("mk_sph() failed");
 
     apply_color(m_db, name, color);
