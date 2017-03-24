@@ -180,7 +180,7 @@ deserialize_vector(const std::string &source)
 
 struct SimulationParameters {
     explicit SimulationParameters() :
-	m_gravity(0.0, 0.0, -9806.65),
+	m_gravity(0.0, 0.0, -9.80665),
 	m_grid_radius(10)
     {}
 

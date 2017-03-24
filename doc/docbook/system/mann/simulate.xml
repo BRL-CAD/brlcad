@@ -171,8 +171,8 @@
 	    Specify the acceleration due to gravity as a vector. This
 	    attribute can only be applied to the topmost object under
 	    <replaceable>path</replaceable>. The default gravity vector
-	    is <literal>&lt;0.0, 0.0, -9806.65&gt;</literal>, specifying an
-	    accleration of approximately -9.8 m/s/s along the z-axis.
+	    is <literal>&lt;0.0, 0.0, -9.80665&gt;</literal>, specifying an
+	    accleration of -9.8 mm/s/s along the z-axis.
 	  </para>
 	</listitem>
       </varlistentry>
