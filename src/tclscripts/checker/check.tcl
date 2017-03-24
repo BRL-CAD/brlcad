@@ -432,7 +432,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 	    set tag "odd"
 	}
 	$_ck insert {} end -id $count -text $count -values [list $count $left $right [format %.2f $size]] -tags "$tag"
-	if {$count % 100 == 0} {
+	if {$count % 500 == 0} {
 	    puts "."
 	    update
 	}
