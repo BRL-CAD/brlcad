@@ -72,7 +72,7 @@ get_normal_world_on_b(const btRigidBody &body_a, const btRigidBody &body_b)
 	if (!result.fuzzyZero())
 	    result.normalize();
 	else
-	    result = btVector3(0.0, 0.0, -1.0);
+	    result = btVector3(0.0, 0.0, 1.0);
     }
 
     return result;
