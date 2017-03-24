@@ -203,6 +203,10 @@ test_matrices()
 	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
 		    0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
+
+	if (db5_update_attribute("scene.c", "simulate::gravity", "<0.0, 0.0, -9.80665>",
+				 db.ptr))
+	    bu_bomb("db5_update_attribute() failed");
     }
 
     db_full_path path;
@@ -292,6 +296,10 @@ test_tutorial()
 	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
 		    0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
+
+	if (db5_update_attribute("scene.c", "simulate::gravity", "<0.0, 0.0, -9.80665>",
+				 db.ptr))
+	    bu_bomb("db5_update_attribute() failed");
     }
 
     db_full_path path;
