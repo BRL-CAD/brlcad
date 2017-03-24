@@ -1,7 +1,7 @@
 /*                    N M G _ M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,7 @@
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
-
+#include "rt/geom.h"
 
 /**
  * Given a pointer to an internal GED database object, mirror the
@@ -47,7 +46,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     point_t mirror_pt;
     fastf_t ang;
 
-    int i;
+    size_t i;
     struct nmgregion *r;
     struct shell *s;
     struct bu_ptbl table;
@@ -90,8 +89,8 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     mirmat[3 + Z*4] += mirror_pt[Z] * mirror_dir[Z];
 
     /* move every vertex */
-    nmg_vertex_tabulate(&table, &nmg->magic);
-    for (i=0; i<BU_PTBL_END(&table); i++) {
+    nmg_vertex_tabulate(&table, &nmg->magic, &RTG.rtg_vlfree);
+    for (i=0; i<BU_PTBL_LEN(&table); i++) {
 	point_t pt;
 
 	v = (struct vertex *)BU_PTBL_GET(&table, i);
@@ -103,8 +102,8 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
 
     bu_ptbl_reset(&table);
 
-    nmg_face_tabulate(&table, &nmg->magic);
-    for (i=0; i<BU_PTBL_END(&table); i++) {
+    nmg_face_tabulate(&table, &nmg->magic, &RTG.rtg_vlfree);
+    for (i=0; i<BU_PTBL_LEN(&table); i++) {
 	struct face *f;
 
 	f = (struct face *)BU_PTBL_GET(&table, i);
@@ -127,7 +126,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     }
 
 
-    for (i=0; i<BU_PTBL_END(&table); i++) {
+    for (i=0; i<BU_PTBL_LEN(&table); i++) {
 	struct face *f;
 	struct faceuse *fu;
 
@@ -144,7 +143,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
 	    return 2;
 	}
 
-	if (nmg_calc_face_g(fu)) {
+	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 	    bu_log("ERROR: Unable to calculate NMG faces for mirroring\n");
 	    bu_ptbl_free(&table);
 	    return 3;

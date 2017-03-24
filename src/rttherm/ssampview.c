@@ -1,7 +1,7 @@
 /*                     S S A M P V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,13 +29,15 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "spectrum.h"
+#include "tclcad.h"
 #include "fb.h"
 #include "tcl.h"
 #include "tk.h"
@@ -68,7 +70,7 @@ int nwave = 2;				/* Linked with TCL */
 char *datafile_basename = NULL;
 char spectrum_name[100];
 
-FBIO *fbp;
+fb *fbp;
 
 struct bn_tabdata *data;
 
@@ -320,7 +322,7 @@ getspectxy(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 int
 tcl_fb_cursor(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 {
-    FBIO *ifp;
+    fb *ifp;
     long mode, x, y;
 
     Tcl_ResetResult(interp);
@@ -336,7 +338,7 @@ tcl_fb_cursor(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 
     ifp = fbp;	/* XXX hack, ignore tcl arg. */
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
     if (fb_cursor(ifp, mode, x, y) < 0) {
 	Tcl_AppendResult(interp, "fb_cursor got error from library", (char *)NULL);
 	return TCL_ERROR;
@@ -351,7 +353,7 @@ tcl_fb_cursor(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 int
 tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 {
-    FBIO *ifp;
+    fb *ifp;
     long x, y;
     unsigned char pixel[4];
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -368,7 +370,7 @@ tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **arg
 
     ifp = fbp;	/* XXX hack, ignore tcl arg. */
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
     if (fb_read(ifp, x, y, pixel, 1) < 0) {
 	Tcl_AppendResult(interp, "fb_readpixel got error from library", (char *)NULL);
 	return TCL_ERROR;
@@ -568,6 +570,9 @@ main(int argc, char **argv)
 
     make_ntsc_xyz2rgb(xyz2rgb);
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
@@ -579,7 +584,7 @@ main(int argc, char **argv)
 
     first_command = "doit1 42";
 
-    if ((fbp = fb_open(NULL, width, height)) == FBIO_NULL) {
+    if ((fbp = fb_open(NULL, width, height)) == FB_NULL) {
 	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "Unable to open fb\n");
     }

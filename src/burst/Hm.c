@@ -1,7 +1,7 @@
 /*                            H M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,17 +28,14 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 #include <signal.h>
 
-#include "bio.h"
-#include "bu.h"
+#include "bu/file.h"
 
 #include "./Sc.h"
 #include "./Hm.h"
 #include "./Mm.h"
 #include "./extern.h"
-
 
 #define ErLog brst_log
 
@@ -87,7 +84,9 @@
 
 
 static int HmDirty = 0;
+#ifdef HAVE_TERMLIB
 static int HmMyxflag = 0;
+#endif
 static int HmPkgInit = 0;
 
 static HmWindow *windows = NULL;
@@ -265,7 +264,6 @@ HmPutItem(HmWindow *win, HmItem *itemp, int flag)
     int width = win->width;
     int bitmap = flag & P_FORCE ?
 	~0 : win->dirty[row-win->menuy];
-    /*	~0 : win->dirty[HmENTRY+1];*/
     int bit = 1;
     int writemask = 0;
     if (bitmap == 0)
@@ -671,6 +669,7 @@ HmRedraw(void)
 void
 HmTtySet(void)
 {
+#ifdef HAVE_TERMLIB
     set_Cbreak(HmTtyFd);
     clr_Echo(HmTtyFd);
     clr_Tabs(HmTtyFd);
@@ -682,8 +681,8 @@ HmTtySet(void)
 	(void) fflush(stdout);
     }
     return;
+#endif
 }
-
 
 /*
   void HmTtyReset(void)
@@ -693,6 +692,7 @@ HmTtySet(void)
 void
 HmTtyReset(void)
 {
+#ifdef HAVE_TERMLIB
     if (HmMyxflag) {
 	/* Send escape codes to pop old toggle settings. */
 	(void) fputs("\033[?1;3Z", stdout);
@@ -700,8 +700,8 @@ HmTtyReset(void)
     }
     reset_Tty(HmTtyFd);
     return;
+#endif
 }
-
 
 /*
   void HmInit(int x, int y, int maxvis)
@@ -713,8 +713,13 @@ HmTtyReset(void)
   true for success and false for failure to open "/dev/tty".
 */
 int
+#ifdef HAVE_TERMLIB
 HmInit(int x, int y, int maxvis)
+#else
+HmInit(int UNUSED(x), int UNUSED(y), int UNUSED(maxvis))
+#endif
 {
+#ifdef HAVE_TERMLIB
     if ((HmTtyFd = open("/dev/tty", O_RDONLY)) == (-1)
 	||	(HmTtyFp = fdopen(HmTtyFd, "r")) == NULL
 	) {
@@ -728,6 +733,9 @@ HmInit(int x, int y, int maxvis)
     HmMaxVis = maxvis;
 
     return 1;
+#else
+    return 0;
+#endif
 }
 
 

@@ -1,7 +1,7 @@
 /*                            H F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,18 +47,16 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
-#include <fcntl.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/cv.h"
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
@@ -182,7 +180,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 
     rt_db_free_internal(db_intern);
 
-    db_intern->idb_ptr = (genptr_t)dsp;
+    db_intern->idb_ptr = (void *)dsp;
     db_intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     db_intern->idb_type = ID_DSP;
     db_intern->idb_meth = &OBJ[ID_DSP];
@@ -299,7 +297,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_HF_CK_MAGIC(hip);
 
     BU_GET(hf, struct hf_specific);
-    stp->st_specific = (genptr_t) hf;
+    stp->st_specific = (void *) hf;
     /*
      * The stuff that is given to us.
      */
@@ -764,7 +762,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
     right *= hf->hf_file2mm;
     answer = (right-left)/xright*xx+left;
 
-    if (loc[Z]-SQRT_SMALL_FASTF < answer) {
+    if (loc[Z] - answer < SQRT_SMALL_FASTF) {
 	(*hp)->hit_magic = RT_HIT_MAGIC;
 	(*hp)->hit_dist = inout;
 	(*hp)->hit_surfno = plane;
@@ -1017,7 +1015,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	 * samples and the scaling factor is used.  Second, the math
 	 * is nice to us.  IF we are entering at the far end
 	 * (curloc[X] == Xlen || curloc[Y] == Ylen) then the result we
-	 * will get back is of the cell following this (out of bounds)
+	 * will get back is of the cell following this (out of bounds).
 	 * So we add a check for that problem.
 	 */
 	xCell = curloc[X]/xWidth;
@@ -1272,7 +1270,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	 * samples and the scaling factor is used.  Second, the math
 	 * is nice to us.  IF we are entering at the far end
 	 * (curloc[X] == Xlen || curloc[Y] == Ylen) then the result we
-	 * will get back is of the cell following this (out of bounds)
+	 * will get back is of the cell following this (out of bounds).
 	 * So we add a check for that problem.
 	 */
 	yCell = curloc[Y]/yWidth;
@@ -1962,12 +1960,12 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
     /* Process parameters found in .g file */
     bu_vls_strcpy(&str, rp->ss.ss_args);
-    if (bu_struct_parse(&str, rt_hf_parse, (char *)xip) < 0) {
+    if (bu_struct_parse(&str, rt_hf_parse, (char *)xip, NULL) < 0) {
 	bu_vls_free(&str);
     err1:
 	bu_free((char *)xip, "rt_hf_import4: xip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -2;
     }
     bu_vls_free(&str);
@@ -1989,7 +1987,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fclose(fp);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	if (bu_struct_parse(&str, rt_hf_cparse, (char *)xip) < 0) {
+	if (bu_struct_parse(&str, rt_hf_cparse, (char *)xip, NULL) < 0) {
 	    bu_log("rt_hf_import4() parse error in cfile input '%s'\n",
 		   bu_vls_addr(&str));
 	    bu_vls_free(&str);
@@ -2063,7 +2061,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	return 0;		/* OK */
     }
 
-    mp->apbuf = (genptr_t)bu_malloc(mp->apbuflen, "rt_hf_import4 apbuf[]");
+    mp->apbuf = (void *)bu_malloc(mp->apbuflen, "rt_hf_import4 apbuf[]");
     got = bu_cv_w_cookie(mp->apbuf, out_cookie, mp->apbuflen,
 			 mp->buf, in_cookie, count);
     if (got != count) {
@@ -2203,7 +2201,7 @@ rt_hf_ifree(struct rt_db_internal *ip)
     }
 
     bu_free((char *)xip, "hf ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 int
 rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)

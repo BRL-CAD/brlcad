@@ -1,7 +1,7 @@
 /*                       F B P O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,19 +28,18 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/str.h"
+#include "bu/exit.h"
+#include "vmath.h"
 #include "fb.h"
 #include "libtermio.h"
 
-FBIO *fbp;
 
-int JumpSpeed;		/* # pixels skiped with fast commands. */
+fb *fbp;
+
+int JumpSpeed;		/* # pixels skipped with fast commands. */
 
 RGBpixel curPix; 		/* Current pixel value */
 int curX, curY;		/* current position */
@@ -206,14 +205,8 @@ main(int argc, char **argv)
     clr_Echo(0);
 
     while (Run) {
-	if (curX < 0)
-	    curX = 0;
-	if (curX >= fb_getwidth(fbp))
-	    curX = fb_getwidth(fbp) -1;
-	if (curY < 0)
-	    curY = 0;
-	if (curY >= fb_getheight(fbp))
-	    curY = fb_getheight(fbp) -1;
+	CLAMP(curX, 0, fb_getwidth(fbp)-1);
+	CLAMP(curY, 0, fb_getheight(fbp)-1);
 
 	if (oldX != curX || oldY != curY) {
 	    /* get pixel value, move cursor */

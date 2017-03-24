@@ -1,7 +1,7 @@
 /*                    O B J _ P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,8 @@
 
 #include "common.h"
 
-#include "rtfunc.h"
+#include "raytrace.h"
+#include "rt/func.h"
 
 
 int
@@ -47,6 +48,33 @@ rt_obj_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return -4;
 
     return ft->ft_prep(stp, ip, rtip);
+}
+
+
+int
+rt_obj_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version)
+{
+    const struct rt_functab *ft;
+
+    if (!stp || !ip || !external || !version)
+	return -1;
+
+    RT_CK_SOLTAB(stp);
+    RT_CK_DB_INTERNAL(ip);
+    BU_CK_EXTERNAL(external);
+
+    if (stp->st_id < 0)
+	return -2;
+
+    ft = &OBJ[stp->st_id];
+
+    if (!ft)
+	return -3;
+
+    if (!ft->ft_prep_serialize)
+	return -4;
+
+    return ft->ft_prep_serialize(stp, ip, external, version);
 }
 
 

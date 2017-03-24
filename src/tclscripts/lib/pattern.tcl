@@ -1,7 +1,7 @@
 #                     P A T T E R N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,13 +19,9 @@
 #
 ###
 #
-#		P A T T E R N . T C L
-#
 #	procedures to build duplicates of objects in a specified pattern
 #
-# Author - John R. Anderson
-#
-#
+###
 #	C R E A T E _ N E W _ N A M E
 #
 # procedure to create a new unique name for an MGED database object.

@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,14 +25,13 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -57,7 +56,7 @@ mk_arbn(struct rt_wdb *filep, const char *name, size_t neqn, const plane_t *eqn)
     arbn->neqn = neqn;
     arbn->eqn = equations;
 
-    return wdb_export(filep, name, (genptr_t)arbn, ID_ARBN, mk_conv2mm);
+    return wdb_export(filep, name, (void *)arbn, ID_ARBN, mk_conv2mm);
 }
 
 

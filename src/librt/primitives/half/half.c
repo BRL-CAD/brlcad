@@ -1,7 +1,7 @@
 /*                          H A L F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,16 +40,15 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "nmg.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "../../librt_private.h"
 
@@ -83,7 +82,7 @@ rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * and a distance.
      */
     BU_GET(halfp, struct half_specific);
-    stp->st_specific = (genptr_t)halfp;
+    stp->st_specific = (void *)halfp;
 
     VMOVE(halfp->half_eqn, hip->eqn);
     halfp->half_eqn[W] = hip->eqn[W];
@@ -486,7 +485,7 @@ rt_hlf_xform(
 	RT_DB_INTERNAL_INIT(op);
 	BU_ALLOC(hop, struct rt_half_internal);
 	hop->magic = RT_HALF_INTERNAL_MAGIC;
-	op->idb_ptr = (genptr_t)hop;
+	op->idb_ptr = (void *)hop;
 	op->idb_meth = &OBJ[ID_HALF];
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_HALF;
@@ -641,7 +640,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_PLANE);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_PLANE);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -760,7 +759,7 @@ rt_hlf_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "hlf ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 

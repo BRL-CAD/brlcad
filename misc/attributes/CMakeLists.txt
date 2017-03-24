@@ -1,8 +1,13 @@
+add_definitions(
+  -DHAVE_CONFIG_H
+  -DBRLCADBUILD=1
+  )
+
 # locally used but not needed by users of the library
 include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BRLCAD_SOURCE_DIR}/src/librt
-  ${OPENNURBS_INCLUDE_DIR}
+  ${OPENNURBS_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   )

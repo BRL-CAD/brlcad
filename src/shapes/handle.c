@@ -1,7 +1,7 @@
 /*                        H A N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -65,7 +65,8 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26] = {0};	/* Mged file create. */
+#define NAME_LEN 256
+    char filemged[NAME_LEN+1] = {0};	/* Mged file create. */
     double hgt = 0.0;		/* Height of handle. */
     double len = 0.0;		/* Length of handle. */
     double r1 = 0.0;		/* Radius of tori & radius of cylinders. */
@@ -78,12 +79,12 @@ main(int argc, char **argv)
     vect_t norm;		/* Normal of torus. */
     double rad1, rad2;		/* r1 and r2 of torus. */
     char *temp;			/* Temporary character string. */
-    char temp1[16];		/* Temporary character string. */
+    char temp1[NAME_LEN];	/* Temporary character string. */
 
     char solnam[8];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numhan = 0;		/* Number of handles to be created (<=26). */
+    int numhan = 0;		/* Number of handles to be created. */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
@@ -120,21 +121,20 @@ main(int argc, char **argv)
 
 	/* Explain makings of handle. */
     	printusage();
-	printf("       Program continues running:\n\n");
 	(void)fflush(stdout);
 
 	/* Find name of mged file to create. */
-	printf("Enter the name of the mged file to be created ");
-	printf("(25 char max).\n\t");
+	printf("\nEnter the name of the mged file to be created ");
+	printf("(%d char max).\n\t", NAME_LEN);
 	(void)fflush(stdout);
-	ret = scanf("%26s", filemged);
+	ret = scanf(CPP_SCAN(NAME_LEN), filemged);
 	if (ret == 0)
 	    perror("scanf");
 	if (BU_STR_EQUAL(filemged, ""))
 	    bu_strlcpy(filemged, "handle.g", sizeof(filemged));
 
-	/* Find number of handles to create (<=26). */
-	printf("Enter number of handles to create (26 max).\n\t");
+	/* Find number of handles to create. */
+	printf("Enter number of handles to create (%d max).\n\t", NAME_LEN);
 	(void)fflush(stdout);
 	ret = scanf("%d", &numhan);
 	if (ret == 0) {
@@ -198,7 +198,7 @@ main(int argc, char **argv)
 		/* START # 6 */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 25)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    /* START # 7 */
 		    filemged[k] = temp[j];
 		    j++;
@@ -213,7 +213,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 15)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    /* START # 9 */
 		    temp1[k] = temp[j];
 		    j++;
@@ -229,7 +229,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 15)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    /* START # 11 */
 		    temp1[k] = temp[j];
 		    j++;
@@ -246,7 +246,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 3;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 15)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    /* START # 13 */
 		    temp1[k] = temp[j];
 		    j++;
@@ -261,8 +261,8 @@ main(int argc, char **argv)
 
     if (numhan < 1)
 	numhan = 1;
-    else if (numhan > 26)
-	numhan = 26;
+    else if (numhan > NAME_LEN)
+	numhan = NAME_LEN;
 
     /* Print out dimensions of the handle. */
     printf("\nmged file name:  %s\n", filemged);

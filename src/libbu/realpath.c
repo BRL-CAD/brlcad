@@ -1,7 +1,7 @@
 /*                       R E A L P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ bu_realpath(const char *path, char *resolved_path)
     if (!resolved_path)
 	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char), "resolved_path alloc");
 
-#if defined(HAVE_WORKING_REALPATH_FUNCTION)
+#if defined(HAVE_REALPATH)
     {
 	char *dirpath = NULL;
 	dirpath = realpath(path, resolved_path);

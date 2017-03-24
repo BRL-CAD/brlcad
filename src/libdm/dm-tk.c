@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,13 @@
 #include <limits.h>
 #include <string.h>
 
+/* FIXME: suboptimal, just picked the first mac-specific config symbol
+ * encountered to know when to turn on the AquaTk X bindings from Tk.
+ */
+#ifdef HAVE_MACH_THREAD_POLICY_H
+#  define MAC_OSX_TK 1
+#endif
+
 /* Even on a platform that has no real X, I should be able to use the
  * Xutil that comes with Tk
  */
@@ -53,16 +60,15 @@
 #  undef X_NOT_POSIX
 #endif
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
 #include "dm.h"
-#include "dm/dm-tk.h"
-#include "dm/dm-X.h"
-#include "dm/dm-Null.h"
+#include "dm-tk.h"
+#include "dm-X.h"
+#include "dm-Null.h"
 #include "dm/dm_xvars.h"
-#include "solid.h"
+#include "dm_private.h"
+#include "rt/solid.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
@@ -78,7 +84,7 @@ extern int vectorThreshold;	/* defined in libdm/tcl.c */
  * Gracefully release the display.
  */
 HIDDEN int
-tk_close(struct dm *dmp)
+tk_close(struct dm_internal *dmp)
 {
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct x_vars *)dmp->dm_vars.priv_vars)->gc)
@@ -91,7 +97,7 @@ tk_close(struct dm *dmp)
 
 	/*XXX Possibly need to free the colormap */
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
-	    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    Tk_FreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
 
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
@@ -106,7 +112,7 @@ tk_close(struct dm *dmp)
     bu_free(dmp->dm_vars.pub_vars, "tk_close: dm_tkvars");
     bu_free(dmp, "tk_close: dmp");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -115,7 +121,7 @@ tk_close(struct dm *dmp)
  * This white-washes the dm's pixmap with the background color.
  */
 HIDDEN int
-tk_drawBegin(struct dm *dmp)
+tk_drawBegin(struct dm_internal *dmp)
 {
     XGCValues gcv;
 
@@ -140,7 +146,7 @@ tk_drawBegin(struct dm *dmp)
 	      ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 	      GCForeground, &gcv);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -149,7 +155,7 @@ tk_drawBegin(struct dm *dmp)
  * This copies the pixmap into the window.
  */
 HIDDEN int
-tk_drawEnd(struct dm *dmp)
+tk_drawEnd(struct dm_internal *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_drawEnd()\n");
@@ -165,7 +171,7 @@ tk_drawEnd(struct dm *dmp)
     /* Prevent lag between events and updates */
     XSync(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, 0);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -177,7 +183,7 @@ tk_drawEnd(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+tk_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 {
     if (dmp->dm_debugLevel) {
 	bu_log("tk_loadMatrix()\n");
@@ -192,7 +198,7 @@ tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     }
 
     MAT_COPY(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, mat);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -202,7 +208,7 @@ tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  */
 
 HIDDEN int
-tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
+tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 {
     static vect_t spnt, lpnt, pnt;
     struct bn_vlist *tvp;
@@ -435,12 +441,12 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		      ((struct x_vars *)dmp->dm_vars.priv_vars)->gc, segbuf, nseg);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 int
-tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+tk_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -450,12 +456,12 @@ tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t 
 	}
     } else {
 	if (!data) {
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    (void)callback_function(data);
 	}
     }
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -464,12 +470,12 @@ tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t 
  * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
-tk_normal(struct dm *dmp)
+tk_normal(struct dm_internal *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_normal()\n");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -479,7 +485,7 @@ tk_normal(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+tk_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
 
@@ -509,12 +515,12 @@ tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size,
 		 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct,
 		 str, strlen(str), sx, sy);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-tk_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
+tk_drawLine2D(struct dm_internal *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
 {
     int sx1, sy1, sx2, sy2;
 
@@ -537,32 +543,32 @@ tk_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf
 	      ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 	      sx1, sy1, sx2, sy2);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-tk_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
+tk_drawLine3D(struct dm_internal *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
     if (!dmp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-tk_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
+tk_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || (npoints > 0 && !points))
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+tk_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 {
     int sx, sy;
 
@@ -579,12 +585,12 @@ tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 	       ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
 	       ((struct x_vars *)dmp->dm_vars.priv_vars)->gc, sx, sy);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+tk_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     XColor color;
 
@@ -592,7 +598,7 @@ tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 
     if (!dmp) {
 	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (dmp->dm_debugLevel)
@@ -613,12 +619,12 @@ tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 		   ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 		   ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+tk_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     XColor color;
 
@@ -626,7 +632,7 @@ tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 
     if (!dmp) {
 	bu_log("WARNING: NULL display (r/g/b==%d/%d/%d)\n", r, g, b);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (dmp->dm_debugLevel)
@@ -645,12 +651,12 @@ tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 		   Tk_GetColorByValue(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
 				      &color)->pixel);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-tk_setLineAttr(struct dm *dmp, int width, int style)
+tk_setLineAttr(struct dm_internal *dmp, int width, int style)
 {
     int linestyle;
 
@@ -672,31 +678,31 @@ tk_setLineAttr(struct dm *dmp, int width, int style)
 		       ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 		       width, linestyle, CapButt, JoinMiter);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 /* ARGSUSED */
 HIDDEN int
-tk_debug(struct dm *dmp, int lvl)
+tk_debug(struct dm_internal *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 HIDDEN int
-tk_logfile(struct dm *dmp, const char *filename)
+tk_logfile(struct dm_internal *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 
 HIDDEN int
-tk_setWinBounds(struct dm *dmp, fastf_t *w)
+tk_setWinBounds(struct dm_internal *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_setWinBounds()\n");
@@ -708,12 +714,12 @@ tk_setWinBounds(struct dm *dmp, fastf_t *w)
     dmp->dm_clipmax[1] = w[3];
     dmp->dm_clipmax[2] = w[5];
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-tk_configureWin_guts(struct dm *dmp, int force)
+tk_configureWin_guts(struct dm_internal *dmp, int force)
 {
     int h, w;
 
@@ -722,7 +728,7 @@ tk_configureWin_guts(struct dm *dmp, int force)
     w = Tk_Width(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 
     if (!force && dmp->dm_width==w && dmp->dm_height == h)
-	return TCL_OK;
+	return BRLCAD_OK;
 
     dmp->dm_width=w;
     dmp->dm_width=h;
@@ -757,7 +763,7 @@ tk_configureWin_guts(struct dm *dmp, int force)
 
 	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct == NULL) {
 		bu_log("dm-Tk: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontset = 1;
@@ -766,12 +772,12 @@ tk_configureWin_guts(struct dm *dmp, int force)
     /* XXX:  I removed the font-sizing routine from dm-X from here.  Something
        should be devised to replace it.  --TJM*/
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-tk_configureWin(struct dm *dmp, int force)
+tk_configureWin(struct dm_internal *dmp, int force)
 {
     /* don't force */
     return tk_configureWin_guts(dmp, force);
@@ -779,30 +785,37 @@ tk_configureWin(struct dm *dmp, int force)
 
 
 HIDDEN int
-tk_setLight(struct dm *dmp, int light_on)
+tk_setLight(struct dm_internal *dmp, int light_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_setLight:\n");
 
     dmp->dm_light = light_on;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-tk_setZBuffer(struct dm *dmp, int zbuffer_on)
+tk_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_setZBuffer:\n");
 
     dmp->dm_zbuffer = zbuffer_on;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
+struct bu_structparse Tk_vparse[] = {
+    {"%g",  1, "bound",         DM_O(dm_bound),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "useBound",      DM_O(dm_boundFlag),     dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         DM_O(dm_zclip),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "debug",         DM_O(dm_debugLevel),    dm_generic_hook, NULL, NULL},
+    {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
+};
 
-struct dm dm_tk = {
+struct dm_internal dm_tk = {
     tk_close,
     tk_drawBegin,
     tk_drawEnd,
@@ -835,9 +848,13 @@ struct dm dm_tk = {
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
+    null_openFb,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -856,6 +873,8 @@ struct dm dm_tk = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
+    NULL,
+    NULL,
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
@@ -873,11 +892,13 @@ struct dm dm_tk = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
+    Tk_vparse,
+    FB_NULL,
     0				/* Tcl interpreter */
 };
 
 
-struct dm *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
+struct dm_internal *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
 
 /* Display Manager package interface */
 
@@ -886,7 +907,7 @@ struct dm *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
  * Fire up the display manager, and the display processor.
  *
  */
-struct dm *
+struct dm_internal *
 tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
@@ -895,7 +916,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
-    struct dm *dmp = (struct dm *)NULL;
+    struct dm_internal *dmp = (struct dm_internal *)NULL;
     Tk_Window tkwin;
     Display *dpy = (Display *)NULL;
     XColor fg, bg;
@@ -907,7 +928,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp, struct dm_internal);
 
     *dmp = dm_tk; /* struct copy */
     dmp->dm_interp = interp;
@@ -988,7 +1009,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		  bu_vls_addr(&init_proc_vls),
 		  bu_vls_addr(&dmp->dm_pathName));
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&str);
 	(void)tk_close(dmp);
 

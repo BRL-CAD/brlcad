@@ -1,7 +1,7 @@
 /*                            P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,14 +29,13 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "../../librt_private.h"
@@ -123,7 +122,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    VMOVE(work[1], work[2]);
 	}
     }
-    if (stp->st_specific == (genptr_t)0) {
+    if (stp->st_specific == (void *)0) {
 	bu_log("pg(%s):  no faces\n", stp->st_name);
 	return -1;		/* BAD */
     }
@@ -193,7 +192,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
 
     /* Add this face onto the linked list for this solid */
     trip->tri_forw = (struct tri_specific *)stp->st_specific;
-    stp->st_specific = (genptr_t)trip;
+    stp->st_specific = (void *)trip;
     return 3;				/* OK */
 }
 
@@ -306,7 +305,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	return 0;		/* MISS */
 
     /* Sort hits, Near to Far */
-    rt_hitsort(hits, nhits);
+    primitive_hitsort(hits, nhits);
 
     /* Remove duplicate hits.
        We remove one of a pair of hits when they are
@@ -613,7 +612,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 	}
 
 	/* Associate face geometry */
-	if (nmg_calc_face_g(fu)) {
+	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 	    nmg_pr_fu_briefly(fu, "");
 	    bu_free((char *)verts, "pg_tess verts[]");
 	    bu_free((char *)vertp, "pg_tess vertp[]");
@@ -627,7 +626,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
     /* Polysolids are often built with incorrect face normals.
      * Don't depend on them here.
      */
-    nmg_fix_normals(s, tol);
+    nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
     bu_free((char *)verts, "pg_tess verts[]");
     bu_free((char *)vertp, "pg_tess vertp[]");
 
@@ -886,7 +885,7 @@ rt_pg_ifree(struct rt_db_internal *ip)
     pgp->magic = 0;			/* sanity */
     pgp->npoly = 0;
     bu_free((char *)pgp, "pg ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 int
 rt_pg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
@@ -937,11 +936,11 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     /* maximum possible vertices */
     max_pts = ip_pg->npoly * ip_pg->max_npts;
-    BU_ASSERT_SIZE_T(max_pts, >, 0);
+    BU_ASSERT(max_pts > 0);
 
     /* maximum possible triangular faces */
     max_tri = ip_pg->npoly * 3;
-    BU_ASSERT_SIZE_T(max_tri, >, 0);
+    BU_ASSERT(max_tri > 0);
 
     ip_bot->num_vertices = 0;
     ip_bot->num_faces = 0;

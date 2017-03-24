@@ -1,7 +1,7 @@
 /*                          W A V Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2014 United States Government as represented by
+ * Copyright (c) 1991-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,15 +29,15 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
-#include "nurb.h"		/* BRL-CAD Spline data structures */
+#include "bu/getopt.h"
+#include "nmg.h"		/* BRL-CAD Vector macros */
 #include "raytrace.h"
 #include "wdb.h"
 
 
 /* Interpolate the data using b-splines */
-struct face_g_snurb **
+static struct face_g_snurb **
 interpolate_data(fastf_t *grid)
 {
     struct face_g_snurb **surfs;
@@ -46,9 +46,9 @@ interpolate_data(fastf_t *grid)
 
     BU_ALLOC(srf, struct face_g_snurb);
 
-    rt_nurb_sinterp(srf, 4, grid, 10, 10);
-    rt_nurb_kvnorm(&srf->u);
-    rt_nurb_kvnorm(&srf->v);
+    nmg_nurb_sinterp(srf, 4, grid, 10, 10);
+    nmg_nurb_kvnorm(&srf->u);
+    nmg_nurb_kvnorm(&srf->v);
 
     surfs = (struct face_g_snurb **)bu_calloc(2, sizeof(struct face_g_snurb *), "surfaces");
     surfs[0] = srf;
@@ -57,11 +57,13 @@ interpolate_data(fastf_t *grid)
     return surfs;
 }
 
-void
+
+static void
 printusage()
 {
-	bu_log("Usage: wavy [-d] [-H hscale]\n");
+    bu_log("Usage: wavy [-d] [-H hscale]\n");
 }
+
 
 int
 main(int argc, char **argv)
@@ -86,14 +88,11 @@ main(int argc, char **argv)
 		break;
 	    default:
 		printusage();
-		bu_exit(1,NULL);
+		bu_exit(1, NULL);
 	}
     }
 
-    if (argc == 1) {
-    	printusage();
-    	bu_log("       Program continues running:\n");
-    }
+    bu_log("Writing out geometry to file [wavy.g] ...");
 
     outfp = wdb_fopen("wavy.g");
 
@@ -121,7 +120,8 @@ main(int argc, char **argv)
     mk_bspline(outfp, nurb_name, surfaces);
 
     wdb_close(outfp);
-    bu_log("Geometry saved to 'wavy.g'\n");
+
+    bu_log(" done.\n");
 
     return 0;
 }

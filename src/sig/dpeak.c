@@ -1,7 +1,7 @@
 /*                         D P E A K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,8 +31,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/exit.h"
 #include "vmath.h"
+
 
 struct peaks {
     int sample;

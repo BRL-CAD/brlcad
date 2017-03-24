@@ -1,7 +1,7 @@
 /*                     D B 5 _ A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,14 +27,13 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include "bio.h"
 
 
 #include "bu/parse.h"
 #include "vmath.h"
-#include "db5.h"
+#include "rt/db5.h"
 #include "raytrace.h"
 
 int
@@ -106,14 +105,14 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 	bu_log("db5_realloc(%s) dbip=%p, dp=%p, ext_nbytes=%ld\n",
 	       dp->d_namep, (void *)dbip, (void *)dp, ep->ext_nbytes);
 
-    BU_ASSERT_LONG(ep->ext_nbytes&7, ==, 0);
+    BU_ASSERT((ep->ext_nbytes&7) == 0);
 
     if (dp->d_addr != RT_DIR_PHONY_ADDR && ep->ext_nbytes == dp->d_len) {
 	if (RT_G_DEBUG&DEBUG_DB)
 	    bu_log("db5_realloc(%s) current allocation is exactly right.\n", dp->d_namep);
 	return 0;
     }
-    if (dp->d_addr == RT_DIR_PHONY_ADDR) BU_ASSERT_LONG(dp->d_len, ==, 0);
+    if (dp->d_addr == RT_DIR_PHONY_ADDR) BU_ASSERT(dp->d_len == 0);
 
     baseaddr = dp->d_addr;
     baselen = dp->d_len;
@@ -192,7 +191,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 	    if (RT_G_DEBUG&DEBUG_DB)
 		bu_log("db5_realloc(%s) obtained free block at %ld, len=%zu\n",
 		       dp->d_namep, mmp->m_addr, mmp->m_size);
-	    BU_ASSERT_LONG((size_t)mmp->m_size, >=, (size_t)ep->ext_nbytes);
+	    BU_ASSERT((size_t)mmp->m_size >= (size_t)ep->ext_nbytes);
 	    if ((size_t)mmp->m_size == (size_t)ep->ext_nbytes) {
 		/* No need to reformat, existing free object is perfect */
 		dp->d_addr = mmp->m_addr;

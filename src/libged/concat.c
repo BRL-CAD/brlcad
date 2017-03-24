@@ -1,7 +1,7 @@
 /*                         C O N C A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,10 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
-#include "rtgeom.h"
+#include "bu/getopt.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 
@@ -275,7 +275,7 @@ copy_object(struct ged *gedp,
 	new_name = input_dp->d_namep;
     }
     if ((new_dp = db_diradd(curr_dbip, new_name, RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
-			    (genptr_t)&input_dp->d_minor_type)) == RT_DIR_NULL) {
+			    (void *)&input_dp->d_minor_type)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
 		      new_name);
@@ -467,9 +467,14 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     db_close(newdbp);
 
     if (importColorTable) {
-	colorTab = bu_strdup(bu_avs_get(&g_avs, "regionid_colortable"));
-	db5_import_color_table(colorTab);
-	bu_free(colorTab, "colorTab");
+	if ((cp = bu_avs_get(&g_avs, "regionid_colortable")) != NULL) {
+	    colorTab = bu_strdup(cp);
+	    db5_import_color_table(colorTab);
+	    bu_free(colorTab, "colorTab");
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%s: no region color table "
+		    "was found in %s to import\n", commandName, oldfile);
+	}
     } else if (saveGlobalAttrs) {
 	bu_avs_remove(&g_avs, "regionid_colortable");
     }
@@ -481,6 +486,10 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 	    if (oldTitle) {
 		bu_free(oldTitle, "old title");
 	    }
+	} else {
+	    bu_vls_printf(gedp->ged_result_str,
+		    "%s: no title was found in %s to import\n", commandName,
+		    oldfile);
 	}
     } else if (saveGlobalAttrs) {
 	bu_avs_remove(&g_avs, "title");
@@ -497,6 +506,10 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 		gedp->ged_wdbp->dbip->dbi_local2base = dd;
 		gedp->ged_wdbp->dbip->dbi_base2local = 1 / dd;
 	    }
+	} else {
+	    bu_vls_printf(gedp->ged_result_str,
+		    "%s: no units were found in %s to import\n", commandName,
+		    oldfile);
 	}
     } else if (saveGlobalAttrs) {
 	bu_avs_remove(&g_avs, "units");
@@ -508,6 +521,9 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     }
 
     db_sync(gedp->ged_wdbp->dbip);	/* force changes to disk */
+
+    /* Update references. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
     /* Free the Hash tables */
     ptr = Tcl_FirstHashEntry(&name_tbl, &search);

@@ -1,7 +1,7 @@
 /*                       T E A _ N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,6 @@
 #include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"
-#include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -188,11 +187,7 @@ main(int argc, char **argv)
 	}
     }
 
-    if (argc == 1) {
-	fprintf(stderr,"Usage: %s [-d]\n", *argv);
-    	bu_log("       Program continues running:\n");
-    }
-
+    bu_log("Writing out geometry to file [tea_nmg.g] ...");
 
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
@@ -216,7 +211,7 @@ main(int argc, char **argv)
     }
 
     /* Connect up the coincident vertexuses and edges */
-    (void)nmg_model_fuse(m, &tol);
+    (void)nmg_model_fuse(m, &RTG.rtg_vlfree, &tol);
 
     /* write NMG to output file */
     (void)mk_nmg(outfp, tea_name, m);
@@ -224,15 +219,17 @@ main(int argc, char **argv)
 
     /* Make a vlist drawing of the model */
     BU_LIST_INIT(&vhead);
-    nmg_m_to_vlist(&vhead, m, 0);
+    nmg_m_to_vlist(&vhead, m, 0, &RTG.rtg_vlfree);
 
     /* Make a UNIX plot file from this vlist */
     if ((fp=fopen(uplot_name, "w")) == NULL) {
 	bu_log("Cannot open plot3 file: %s\n", uplot_name);
 	perror("teapot_nmg");
     } else {
-	rt_vlist_to_uplot(fp, &vhead);
+	bn_vlist_to_uplot(fp, &vhead);
     }
+
+    bu_log(" done.\n");
 
     return 0;
 }

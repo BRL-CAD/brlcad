@@ -1,7 +1,7 @@
 /*                    O S G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include "common.h"
 
 #include "ged.h"
-#include "solid.h"
+#include "rt/solid.h"
 #include <assert.h>
 
 #include <osg/Geode>
@@ -149,8 +149,8 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 void
 ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    register struct display_list *gdlp;
+    register struct display_list *next_gdlp;
     struct solid *sp;
     struct osg_stuff *osp = (struct osg_stuff *)osgData;
 
@@ -162,11 +162,11 @@ ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
 
     bu_log("before: max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
     bu_log("ged_osgLoadScene: enter\n");
-    gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    if (sp->s_hiddenLine) {
 		_osgLoadHiddenSolid(geode, sp);
 	    } else {

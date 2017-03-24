@@ -1,7 +1,7 @@
 /*                      P L O T 3 - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,11 +76,14 @@
 #include <signal.h>
 #include <string.h>
 #include <ctype.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
+#include "bu/exit.h"
 #include "fb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #define COMMA ','
 
@@ -310,7 +313,7 @@ static int sigs[] = {
 
 
 static FILE *pfin;		/* input file FIO block ptr */
-FBIO *fbp;			/* Current framebuffer */
+fb *fbp;			/* Current framebuffer */
 
 
 /*
@@ -515,7 +518,7 @@ get_strokes(void)
 /*
  * Take a value which is currently considered "unsigned" with 16 bits
  * of significance, and sign-extend it in a reasonably portable way.
- * We assume the machine is twos-compliment.
+ * We assume the machine is twos-complement.
  */
 long
 sxt16(long int v)
@@ -533,12 +536,11 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hdoOit:F:s:S:w:W:n:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "doOit:F:s:S:w:W:n:N:h?")) != -1) {
 	switch (c) {
 	    case 't':
 		line_thickness = atoi(bu_optarg);
-		if (line_thickness <= 0)
-		    line_thickness = 1;
+		V_MAX(line_thickness, 1);
 		break;
 	    case 'i':
 		immediate = 1;
@@ -554,9 +556,6 @@ get_args(int argc, char **argv)
 	    case 'F':
 		framebuffer = bu_optarg;
 		break;
-	    case 'h':
-		Nscanlines = Npixels = 1024;
-		break;
 	    case 'S':
 	    case 's':
 		Nscanlines = Npixels = atoi(bu_optarg);
@@ -569,7 +568,7 @@ get_args(int argc, char **argv)
 	    case 'n':
 		Nscanlines = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -598,8 +597,8 @@ get_args(int argc, char **argv)
 
 
 static char usage[] = "\
-Usage: plot3-fb [-h -d -o -i] [-t thickness] [-F framebuffer]\n\
-	[-S squaresize] [-W width] [-N height] [file.plot3]\n";
+Usage: plot3-fb [-d -O|o -i] [-t thickness] [-F framebuffer]\n\
+	[-S|s squaresize] [-W|w width] [-N|n height] [<] file.plot3\n";
 
 
 /*
@@ -765,10 +764,8 @@ GetCoords(coords *coop)
     coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
 
     /* limit right, top */
-    if (coop->x > XMAX)
-	coop->x = XMAX;
-    if (coop->y > YMAX)
-	coop->y = YMAX;
+    V_MIN(coop->x, XMAX);
+    V_MIN(coop->y, YMAX);
 
     if (debug)
 	fprintf(stderr, "Pixel: (%d, %d)\n", coop->x, coop->y);
@@ -818,10 +815,8 @@ int Get3DCoords(coords *coop)
     coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
 
     /* limit right, top */
-    if (coop->x > XMAX)
-	coop->x = XMAX;
-    if (coop->y > YMAX)
-	coop->y = YMAX;
+    V_MIN(coop->x, XMAX);
+    V_MIN(coop->y, YMAX);
 
     if (debug) {
 	fprintf(stderr, "Coord3: (%g, %g) ", out[0], out[1]);
@@ -857,10 +852,8 @@ GetDCoords(coords *coop)
     coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
 
     /* limit right, top */
-    if (coop->x > XMAX)
-	coop->x = XMAX;
-    if (coop->y > YMAX)
-	coop->y = YMAX;
+    V_MIN(coop->x, XMAX);
+    V_MIN(coop->y, YMAX);
 
     if (debug) {
 	fprintf(stderr, "Coord2: (%g, %g) ", out[0], out[1]);
@@ -876,11 +869,8 @@ GetDCoords(coords *coop)
 void
 edgelimit(coords *ppos)
 {
-    if (ppos->x >= Npixels)
-	ppos->x = Npixels -1;
-
-    if (ppos->y >= Nscanlines)
-	ppos->y = Nscanlines -1;
+    V_MIN(ppos->x, Npixels-1);
+    V_MIN(ppos->y, Nscanlines-1);
 }
 
 
@@ -1197,25 +1187,24 @@ DoFile(void)	/* returns vpl status code */
 		    goto spacend;
 		}
 
-		case 's':	/* space */
+		case 's': {
+		    /* space */
 		    if (debug)
-			fprintf(stderr, "space\n"); {
-			if (fread((char *)buf2,
-				  (int)sizeof buf2, 1, pfin
-				) != 1
-			    )
-			    return Foo(-11);
-			space.left  = sxt16((long)(buf2[1]<<8) | buf2[0]); /* x1 */
-			space.bottom= sxt16((long)(buf2[3]<<8) | buf2[2]); /* y1 */
-			space.right = sxt16((long)(buf2[5]<<8) | buf2[4]); /* x2 */
-			space.top   = sxt16((long)(buf2[7]<<8) | buf2[6]); /* y2 */
-		    }
+			fprintf(stderr, "space\n");
+
+		    if (fread((char *)buf2, (int)sizeof buf2, 1, pfin) != 1)
+			return Foo(-11);
+
+		    space.left  = sxt16((long)(buf2[1]<<8) | buf2[0]); /* x1 */
+		    space.bottom= sxt16((long)(buf2[3]<<8) | buf2[2]); /* y1 */
+		    space.right = sxt16((long)(buf2[5]<<8) | buf2[4]); /* x2 */
+		    space.top   = sxt16((long)(buf2[7]<<8) | buf2[6]); /* y2 */
+		}
 
 		spacend:
 		    delta = space.right - space.left;
 		    deltao2 = space.top - space.bottom;
-		    if (deltao2 > delta)
-			delta = deltao2;
+		    V_MAX(delta, deltao2);
 		    if (delta <= 0) {
 			fprintf(stderr, "plot3-fb: delta = %g, bad space()\n", delta);
 			return Foo(-42);
@@ -1362,7 +1351,7 @@ main(int argc, char **argv)
     }
 
     /* Open frame buffer, adapt to slightly smaller ones */
-    if ((fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FBIO_NULL) {
+    if ((fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FB_NULL) {
 	fprintf(stderr, "plot3-fb: fb_open failed\n");
 	bu_exit(1, NULL);
     }

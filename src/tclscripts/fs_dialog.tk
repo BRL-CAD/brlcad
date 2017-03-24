@@ -1,7 +1,7 @@
 #                    F S _ D I A L O G . T K
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,10 +18,6 @@
 # information.
 #
 ###
-#
-#  F S _ D I A L O G
-#
-#  Author	Lee A. Butler
 #
 #  A file selection dialog, which is not unlike the one present in netscape.
 #  Uses straight Tcl/Tk with no extensions, and no bitmaps

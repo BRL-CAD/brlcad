@@ -1,7 +1,7 @@
 /*                       S O U P . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,10 +24,11 @@
  *
  */
 
-#ifndef  LIBGCV_SOUP_H
-#define  LIBGCV_SOUP_H
+#ifndef LIBGCV_SOUP_H
+#define LIBGCV_SOUP_H
 
 #include "common.h"
+#include "gcv/defines.h"
 
 /* hijack the top four bits of mode. For these operations, the mode should
  * necessarily be 0x02 */
@@ -46,21 +47,22 @@ struct face_s {
     uint32_t foo;
 };
 
+
 struct soup_s {
     uint32_t magic;
     struct face_s *faces;
     unsigned long int nfaces, maxfaces;
 };
 
+
 __BEGIN_DECLS
 
 GCV_EXPORT int soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn_tol *tol);
 GCV_EXPORT int split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], struct face_s *opp_face, const struct bn_tol *tol);
 GCV_EXPORT int split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol);
-GCV_EXPORT int gcv_tri_tri_intersect_with_isectline(struct soup_s *left, struct soup_s *right, struct face_s *lf, struct face_s *rf, int *coplanar, point_t *isectpt, const struct bn_tol *tol);
 GCV_EXPORT union tree *compose(union tree *left_tree, union tree *right_tree, unsigned long int face_status1, unsigned long int face_status2, unsigned long int face_status3);
-GCV_EXPORT union tree *invert(union tree *tree);
-GCV_EXPORT union tree *evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+union tree *invert(union tree *tree);
+union tree *evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
 
 __END_DECLS
 

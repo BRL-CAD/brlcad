@@ -1,7 +1,7 @@
 /*                         E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 
 #include "bu/getopt.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 #include "ged.h"
 #include "./ged_private.h"
@@ -477,7 +477,7 @@ struct edit_arg {
  */
 
 /* argument types */
-#define EDIT_FROM			0x01 /* a/k/a keypoint */
+#define EDIT_FROM			0x01 /* aka keypoint */
 #define EDIT_TO				0x02
 #define EDIT_TARGET_OBJ			0x04 /* obj to operate on */
 
@@ -696,7 +696,7 @@ edit_arg_free_inner(struct edit_arg *arg)
 {
     if (arg->object) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path*)NULL;
     }
     if (arg->vector) {
@@ -799,7 +799,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 			    &rt_uniresource, GED_ERROR);
 	comb_i = (struct rt_comb_internal *)intern.idb_ptr;
 	leaf = db_find_named_leaf(comb_i->tree, d_next->d_namep);
-	BU_ASSERT_PTR(leaf, !=, TREE_NULL); /* path is validated */
+	BU_ASSERT(leaf != TREE_NULL); /* path is validated */
 	if (leaf->tr_l.tl_mat) {
 	    MAT_DELTAS_GET(leaf_deltas, leaf->tr_l.tl_mat);
 	    VADD2(*coord, *coord, leaf_deltas);
@@ -817,7 +817,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	    return GED_ERROR;
     } else {
 	BU_ASSERT(d->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
-	if (_ged_get_obj_bounds(gedp, 1, (const char **)&d->d_namep, 1,
+	if (ged_get_obj_bounds(gedp, 1, (const char **)&d->d_namep, 1,
 				rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
     }
@@ -880,7 +880,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
 
     if (!coord) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_full_path");
+	bu_free((void *)arg->object, "db_full_path");
 	arg->object = (struct db_full_path *)NULL;
     }
 
@@ -1002,7 +1002,7 @@ edit_cmd_sduplicate(union edit_cmd *const dest,
     int i = 0;
 
     /* never try to duplicate dissimilar command types */
-    BU_ASSERT_PTR(dest->cmd, ==, src->cmd);
+    BU_ASSERT(dest->cmd == src->cmd);
 
     src_head = src->cmd->get_arg_head(src, i);
     do {
@@ -1029,7 +1029,7 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
     vect_t src_v = VINIT_ZERO; /* where omitted points draw from */
-    vect_t *kp_v = (vect_t *)NULL; /* 'from' point, a/k/a keypoint */
+    vect_t *kp_v = (vect_t *)NULL; /* 'from' point, aka keypoint */
     vect_t *to_v = (vect_t *)NULL; /* 'to' point */
     int i = 0;
 
@@ -1378,7 +1378,7 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
 
 	/* path is already validated */
-	BU_ASSERT_PTR(leaf_to_modify, !=, TREE_NULL);
+	BU_ASSERT(leaf_to_modify != TREE_NULL);
 	if (!leaf_to_modify->tr_l.tl_mat) {
 	    leaf_to_modify->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t),
 							    "mat_t block for edit_translate()");
@@ -1402,7 +1402,7 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 				 &gtd, rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
 	if (!(d_to_modify->d_flags & RT_DIR_SOLID) &&
-	    (_ged_get_obj_bounds(gedp, 1, (const char **)&d_to_modify->d_namep,
+	    (ged_get_obj_bounds(gedp, 1, (const char **)&d_to_modify->d_namep,
 				 1, rpp_min, rpp_max) == GED_ERROR))
 	    return GED_ERROR;
 
@@ -1459,11 +1459,11 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
     const int noisy = (flags & GED_ERROR); /* side with verbosity */
     struct edit_arg *cur_arg = cmd->cmd_line.args;
 
-    BU_ASSERT_PTR(cur_arg, !=, (struct edit_arg *)NULL);
+    BU_ASSERT(cur_arg != (struct edit_arg *)NULL);
 
     if (cur_arg->type & EDIT_FROM) {
 	/* if there isn't an EDIT_TO, this func shouldn't be called */
-	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
+	BU_ASSERT(cur_arg->next != (struct edit_arg *)NULL);
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
@@ -1478,7 +1478,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	/* If there isn't an EDIT_TARGET_OBJECT, this func shouldn't
 	 * be called.
 	 */
-	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
+	BU_ASSERT(cur_arg->next != (struct edit_arg *)NULL);
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
@@ -1874,7 +1874,7 @@ convert_obj:
     if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
 			  str)) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL;
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "one of the objects in"
@@ -1883,7 +1883,7 @@ convert_obj:
     }
     if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
 	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_string_to_path");
+	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL;
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"

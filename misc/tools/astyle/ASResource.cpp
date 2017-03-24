@@ -1,36 +1,21 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *   ASResource.cpp
- *
- *   Copyright (C) 2006-2013 by Jim Pattee <jimp03@email.com>
- *   Copyright (C) 1998-2002 by Tal Davidson
- *   <http://www.gnu.org/licenses/lgpl-3.0.html>
- *
- *   This file is a part of Artistic Style - an indentation and
- *   reformatting tool for C, C++, C# and Java source files.
- *   <http://astyle.sourceforge.net>
- *
- *   Artistic Style is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU Lesser General Public License as published
- *   by the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
- *
- *   Artistic Style is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU Lesser General Public License for more details.
- *
- *   You should have received a copy of the GNU Lesser General Public License
- *   along with Artistic Style.  If not, see <http://www.gnu.org/licenses/>.
- *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- */
+// ASResource.cpp
+// Copyright (c) 2016 by Jim Pattee <jimp03@email.com>.
+// This code is licensed under the MIT License.
+// License.txt describes the conditions under which this software may be distributed.
+
+//-----------------------------------------------------------------------------
+// headers
+//-----------------------------------------------------------------------------
 
 #include "astyle.h"
 #include <algorithm>
 
+//-----------------------------------------------------------------------------
+// astyle namespace
+//-----------------------------------------------------------------------------
 
 namespace astyle {
-
+//
 const string ASResource::AS_IF = string("if");
 const string ASResource::AS_ELSE = string("else");
 const string ASResource::AS_FOR = string("for");
@@ -41,11 +26,15 @@ const string ASResource::AS_CASE = string("case");
 const string ASResource::AS_DEFAULT = string("default");
 const string ASResource::AS_CLASS = string("class");
 const string ASResource::AS_VOLATILE = string("volatile");
+const string ASResource::AS_INTERRUPT = string("interrupt");
+const string ASResource::AS_NOEXCEPT = string("noexcept");
+const string ASResource::AS_AUTORELEASEPOOL = string("autoreleasepool");
 const string ASResource::AS_STRUCT = string("struct");
 const string ASResource::AS_UNION = string("union");
 const string ASResource::AS_INTERFACE = string("interface");
-const string ASResource::AS_SELECTOR = string("selector");
 const string ASResource::AS_NAMESPACE = string("namespace");
+const string ASResource::AS_END = string("end");
+const string ASResource::AS_SELECTOR = string("selector");
 const string ASResource::AS_EXTERN = string("extern");
 const string ASResource::AS_ENUM = string("enum");
 const string ASResource::AS_PUBLIC = string("public");
@@ -59,6 +48,7 @@ const string ASResource::AS_TRY = string("try");
 const string ASResource::AS_CATCH = string("catch");
 const string ASResource::AS_THROW = string("throw");
 const string ASResource::AS_FINALLY = string("finally");
+const string ASResource::AS_USING = string("using");
 const string ASResource::_AS_TRY = string("__try");
 const string ASResource::_AS_FINALLY = string("__finally");
 const string ASResource::_AS_EXCEPT = string("__except");
@@ -67,6 +57,7 @@ const string ASResource::AS_CONST = string("const");
 const string ASResource::AS_SEALED = string("sealed");
 const string ASResource::AS_OVERRIDE = string("override");
 const string ASResource::AS_WHERE = string("where");
+const string ASResource::AS_LET = string("let");
 const string ASResource::AS_NEW = string("new");
 
 const string ASResource::AS_ASM = string("asm");
@@ -122,7 +113,7 @@ const string ASResource::AS_LAMBDA = string("=>");            // C# lambda expre
 const string ASResource::AS_ARROW = string("->");
 const string ASResource::AS_AND = string("&&");
 const string ASResource::AS_OR = string("||");
-const string ASResource::AS_COLON_COLON = string("::");
+const string ASResource::AS_SCOPE_RESOLUTION = string("::");
 
 const string ASResource::AS_PLUS = string("+");
 const string ASResource::AS_MINUS = string("-");
@@ -141,6 +132,9 @@ const string ASResource::AS_COLON = string(":");
 const string ASResource::AS_COMMA = string(",");
 const string ASResource::AS_SEMICOLON = string(";");
 
+const string ASResource::AS_QFOREACH = string("Q_FOREACH");
+const string ASResource::AS_QFOREVER = string("Q_FOREVER");
+const string ASResource::AS_FOREVER = string("forever");
 const string ASResource::AS_FOREACH = string("foreach");
 const string ASResource::AS_LOCK = string("lock");
 const string ASResource::AS_UNSAFE = string("unsafe");
@@ -165,7 +159,7 @@ const string ASResource::AS_NS_HANDLER = string("NS_HANDLER");
  * Compares the length of the value of pointers in the vectors.
  * The LONGEST strings will be first in the vector.
  *
- * @params the string pointers to be compared.
+ * @param a and b, the string pointers to be compared.
  */
 bool sortOnLength(const string* a, const string* b)
 {
@@ -176,7 +170,7 @@ bool sortOnLength(const string* a, const string* b)
  * Sort comparison function.
  * Compares the value of pointers in the vectors.
  *
- * @params the string pointers to be compared.
+ * @param a and b, the string pointers to be compared.
  */
 bool sortOnName(const string* a, const string* b)
 {
@@ -244,6 +238,10 @@ void ASResource::buildHeaders(vector<const string*>* headers, int fileType, bool
 	headers->push_back(&AS_DEFAULT);
 	headers->push_back(&AS_TRY);
 	headers->push_back(&AS_CATCH);
+	headers->push_back(&AS_QFOREACH);		// QT
+	headers->push_back(&AS_QFOREVER);		// QT
+	headers->push_back(&AS_FOREACH);		// QT & C#
+	headers->push_back(&AS_FOREVER);		// Qt & Boost
 
 	if (fileType == C_TYPE)
 	{
@@ -260,13 +258,13 @@ void ASResource::buildHeaders(vector<const string*>* headers, int fileType, bool
 	if (fileType == SHARP_TYPE)
 	{
 		headers->push_back(&AS_FINALLY);
-		headers->push_back(&AS_FOREACH);
 		headers->push_back(&AS_LOCK);
 		headers->push_back(&AS_FIXED);
 		headers->push_back(&AS_GET);
 		headers->push_back(&AS_SET);
 		headers->push_back(&AS_ADD);
 		headers->push_back(&AS_REMOVE);
+		headers->push_back(&AS_USING);
 	}
 
 	if (beautifier)
@@ -295,6 +293,34 @@ void ASResource::buildIndentableHeaders(vector<const string*>* indentableHeaders
 	indentableHeaders->push_back(&AS_RETURN);
 
 	sort(indentableHeaders->begin(), indentableHeaders->end(), sortOnName);
+}
+
+/**
+* Build the vector of indentable macros pairs.
+* Initialized by ASFormatter, used by ONLY ASEnhancer.cpp
+*
+* @param indentableMacros       a reference to the vector to be built.
+*/
+void ASResource::buildIndentableMacros(vector<const pair<const string, const string>* >* indentableMacros)
+{
+	typedef pair<const string, const string> macro_pair;
+
+	// the pairs must be retained in memory
+	static const macro_pair macros[] =
+	{
+		// wxWidgets
+		macro_pair("BEGIN_EVENT_TABLE", "END_EVENT_TABLE"),
+		macro_pair("wxBEGIN_EVENT_TABLE", "wxEND_EVENT_TABLE"),
+		// MFC
+		macro_pair("BEGIN_DISPATCH_MAP", "END_DISPATCH_MAP"),
+		macro_pair("BEGIN_EVENT_MAP", "END_EVENT_MAP"),
+		macro_pair("BEGIN_MESSAGE_MAP", "END_MESSAGE_MAP"),
+		macro_pair("BEGIN_PROPPAGEIDS", "END_PROPPAGEIDS"),
+	};
+
+	size_t elements = sizeof(macros) / sizeof(macros[0]);
+	for (size_t i = 0; i < elements; i++)
+		indentableMacros->push_back(&macros[i]);
 }
 
 /**
@@ -338,6 +364,8 @@ void ASResource::buildNonParenHeaders(vector<const string*>* nonParenHeaders, in
 	nonParenHeaders->push_back(&AS_CATCH);		// can be paren or non-paren
 	nonParenHeaders->push_back(&AS_CASE);		// can be paren or non-paren
 	nonParenHeaders->push_back(&AS_DEFAULT);
+	nonParenHeaders->push_back(&AS_QFOREVER);	// QT
+	nonParenHeaders->push_back(&AS_FOREVER);	// Boost
 
 	if (fileType == C_TYPE)
 	{
@@ -407,7 +435,7 @@ void ASResource::buildOperators(vector<const string*>* operators, int fileType)
 	operators->push_back(&AS_ARROW);
 	operators->push_back(&AS_AND);
 	operators->push_back(&AS_OR);
-	operators->push_back(&AS_COLON_COLON);
+	operators->push_back(&AS_SCOPE_RESOLUTION);
 	operators->push_back(&AS_PLUS);
 	operators->push_back(&AS_MINUS);
 	operators->push_back(&AS_MULT);
@@ -477,8 +505,11 @@ void ASResource::buildPreCommandHeaders(vector<const string*>* preCommandHeaders
 	{
 		preCommandHeaders->push_back(&AS_CONST);
 		preCommandHeaders->push_back(&AS_VOLATILE);
-		preCommandHeaders->push_back(&AS_SEALED);		// Visual C only
-		preCommandHeaders->push_back(&AS_OVERRIDE);		// Visual C only
+		preCommandHeaders->push_back(&AS_INTERRUPT);
+		preCommandHeaders->push_back(&AS_NOEXCEPT);
+		preCommandHeaders->push_back(&AS_OVERRIDE);
+		preCommandHeaders->push_back(&AS_SEALED);			// Visual C only
+		preCommandHeaders->push_back(&AS_AUTORELEASEPOOL);	// Obj-C only
 	}
 
 	if (fileType == JAVA_TYPE)
@@ -529,7 +560,7 @@ void ASResource::buildPreDefinitionHeaders(vector<const string*>* preDefinitionH
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // check if a specific line position contains a keyword.
-bool ASBase::findKeyword(const string &line, int i, const string &keyword) const
+bool ASBase::findKeyword(const string& line, int i, const string& keyword) const
 {
 	assert(isCharPotentialHeader(line, i));
 	// check the word
@@ -545,7 +576,7 @@ bool ASBase::findKeyword(const string &line, int i, const string &keyword) const
 	if (isLegalNameChar(line[wordEnd]))
 		return false;
 	// is not a keyword if part of a definition
-	const char peekChar = peekNextChar(line, wordEnd - 1);
+	const char peekChar = peekNextChar(line, (int)wordEnd - 1);
 	if (peekChar == ',' || peekChar == ')')
 		return false;
 	return true;
@@ -553,7 +584,7 @@ bool ASBase::findKeyword(const string &line, int i, const string &keyword) const
 
 // get the current word on a line
 // index must point to the beginning of the word
-string ASBase::getCurrentWord(const string &line, size_t index) const
+string ASBase::getCurrentWord(const string& line, size_t index) const
 {
 	assert(isCharPotentialHeader(line, index));
 	size_t lineLength = line.length();
@@ -564,6 +595,73 @@ string ASBase::getCurrentWord(const string &line, size_t index) const
 			break;
 	}
 	return line.substr(index, i - index);
+}
+
+// check if a specific character can be used in a legal variable/method/class name
+bool ASBase::isLegalNameChar(char ch) const
+{
+	if (isWhiteSpace(ch)) return false;
+	if ((unsigned) ch > 127) return false;
+	return (isalnum((unsigned char) ch)
+	        || ch == '.' || ch == '_'
+	        || (isJavaStyle() && ch == '$')
+	        || (isSharpStyle() && ch == '@'));  // may be used as a prefix
+}
+
+// check if a specific character can be part of a header
+bool ASBase::isCharPotentialHeader(const string& line, size_t i) const
+{
+	assert(!isWhiteSpace(line[i]));
+	char prevCh = ' ';
+	if (i > 0) prevCh = line[i - 1];
+	if (!isLegalNameChar(prevCh) && isLegalNameChar(line[i]))
+		return true;
+	return false;
+}
+
+// check if a specific character can be part of an operator
+bool ASBase::isCharPotentialOperator(char ch) const
+{
+	assert(!isWhiteSpace(ch));
+	if ((unsigned) ch > 127) return false;
+	return (ispunct((unsigned char) ch)
+	        && ch != '{' && ch != '}'
+	        && ch != '(' && ch != ')'
+	        && ch != '[' && ch != ']'
+	        && ch != ';' && ch != ','
+	        && ch != '#' && ch != '\\'
+	        && ch != '\'' && ch != '\"');
+}
+
+// check if a specific character is a digit
+// NOTE: Visual C isdigit() gives assert error if char > 256
+bool ASBase::isDigit(char ch) const
+{
+	return (ch >= '0' && ch <= '9');
+}
+
+// check if a specific character is a digit separator
+bool ASBase::isDigitSeparator(const string& line, int i) const
+{
+	assert(line[i] == '\'');
+	// casting to (unsigned char) eliminates negative characters
+	// will get a "Debug Assertion Failed" if not cast
+	bool foundDigitSeparator = i > 0
+	                           && isxdigit((unsigned char) line[i - 1])
+	                           && i < (int) line.length() - 1
+	                           && isxdigit((unsigned char) line[i + 1]);
+	return foundDigitSeparator;
+}
+
+// peek at the next unread character.
+char ASBase::peekNextChar(const string& line, int i) const
+{
+	char ch = ' ';
+	size_t peekNum = line.find_first_not_of(" \t", i + 1);
+	if (peekNum == string::npos)
+		return ch;
+	ch = line[peekNum];
+	return ch;
 }
 
 }   // end namespace astyle

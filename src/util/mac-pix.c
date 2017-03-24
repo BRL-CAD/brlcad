@@ -1,7 +1,7 @@
 /*                       M A C - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,8 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/exit.h"
 
 
 #define MAC_HEIGHT 576	/* input height (y), in bits */
@@ -62,16 +63,16 @@ unsigned char black[3*2048];
 
 int file_height = MAC_HEIGHT;	/* generally constant */
 int file_width = MAC_WIDTH;
-int file_xoff;
-int file_yoff;
+int file_xoff = 0;
+int file_yoff = 0;
 int scr_width = 1024;	/* If this and scr_height are later found to be zero,
 			 * they assume the values of file_width and file_height .
 			 */
 int scr_height = 1024;
-int scr_xoff;
-int scr_yoff;
+int scr_xoff = 0;
+int scr_yoff = 0;
 
-int bwflag;
+int bwflag = 0;
 char hyphen[] = "-";
 char *file_name;
 FILE *infp;
@@ -81,7 +82,8 @@ Usage: mac-pix [-c -l -b]\n\
 	[-s squareMacsize] [-w Mac_width] [-n Mac_height]\n\
 	[-x Mac_xoff] [-y Mac_yoff] [-X outp_xoff] [-Y outp_yoff]\n\
 	[-S squareoutpsize] [-W outp_width] [-N outp_height]\n\
-	[-C r/g/b] [file.mac]\n";
+	[-C r/g/b] [file.mac]\n\
+       (standard output must be redirected)\n";
 
 int
 get_args(int argc, char **argv)
@@ -112,11 +114,17 @@ get_args(int argc, char **argv)
 	    case 'n':
 		file_height = atoi(bu_optarg);
 		break;
+	    case 'N':
+		scr_height = atoi(bu_optarg);
+		break;
 	    case 'x':
 		file_xoff = atoi(bu_optarg);
 		break;
 	    case 'X':
 		scr_xoff += atoi(bu_optarg);
+		break;
+	    case 'y':
+		file_yoff = atoi(bu_optarg);
 		break;
 	    case 'Y':
 		scr_yoff += atoi(bu_optarg);
@@ -126,12 +134,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'W':
 		scr_width = atoi(bu_optarg);
-		break;
-	    case 'N':
-		scr_height = atoi(bu_optarg);
-		break;
-	    case 'y':
-		file_yoff = atoi(bu_optarg);
 		break;
 	    case 'C':
 		{

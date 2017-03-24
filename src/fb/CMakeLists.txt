@@ -4,14 +4,11 @@ set(FBBIN_INCLUDE_DIRS
   ${BN_INCLUDE_DIRS}
   ${PKG_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
-  ${ORLE_INCLUDE_DIRS}
   ${TERMINFO_INCLUDE_DIRS}
   ${UTAHRLE_INCLUDE_DIR}
   ${PNG_INCLUDE_DIR}
-  ${ZLIB_INCLUDE_DIR}
   )
-BRLCAD_SORT_INCLUDE_DIRS(FBBIN_INCLUDE_DIRS)
-include_directories(${FBBIN_INCLUDE_DIRS})
+BRLCAD_INCLUDE_DIRS(FBBIN_INCLUDE_DIRS)
 
 if(MSVC)
   add_definitions(-DIF_WGL)
@@ -22,7 +19,6 @@ BRLCAD_ADDEXEC(cmap-fb cmap-fb.c libfb)
 BRLCAD_ADDEXEC(fb-bw fb-bw.c libfb)
 BRLCAD_ADDEXEC(fb-cmap fb-cmap.c libfb)
 BRLCAD_ADDEXEC(fb-fb fb-fb.c libfb)
-BRLCAD_ADDEXEC(fb-orle "fb-orle.c;cmap-crunch.c" "libfb;liborle")
 BRLCAD_ADDEXEC(fb-pix "fb-pix.c;cmap-crunch.c" libfb)
 BRLCAD_ADDEXEC(fb-png "fb-png.c;cmap-crunch.c" "libfb;${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(fb-rle "fb-rle.c;cmap-crunch.c" "libfb;${UTAHRLE_LIBRARY}")
@@ -39,7 +35,6 @@ BRLCAD_ADDEXEC(fbfade "fbfade.c;ioutil.c" libfb)
 BRLCAD_ADDEXEC(fbframe fbframe.c libfb)
 BRLCAD_ADDEXEC(fbfree fbfree.c libfb)
 BRLCAD_ADDEXEC(fbgamma fbgamma.c "libfb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(fbgammamod fbgammamod.c "libfb;${M_LIBRARY}")
 BRLCAD_ADDEXEC(fbgrid fbgrid.c libfb)
 BRLCAD_ADDEXEC(fbhelp fbhelp.c libfb)
 BRLCAD_ADDEXEC(fblabel fblabel.c libfb)
@@ -54,7 +49,6 @@ if(HAVE_TERMLIB)
 endif(HAVE_TERMLIB)
 BRLCAD_ADDEXEC(gif-fb "gif-fb.c;ioutil.c" libfb)
 BRLCAD_ADDEXEC(gif2fb gif2fb.c libfb)
-BRLCAD_ADDEXEC(orle-fb orle-fb.c "libfb;liborle")
 BRLCAD_ADDEXEC(pix-fb pix-fb.c libfb)
 BRLCAD_ADDEXEC(pixautosize pixautosize.c libfb)
 BRLCAD_ADDEXEC(pixflip-fb pixflip-fb.c libfb)
@@ -71,7 +65,9 @@ endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb;libbn")
 
-add_subdirectory(tests)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+  add_subdirectory(tests)
+endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 
 # Local Variables:

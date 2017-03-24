@@ -1,7 +1,7 @@
 /*                         P T B L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,12 +18,6 @@
  * information.
  */
 
-/** @defgroup container Data Containers */
-/**   @defgroup ptbl Pointer Tables */
-
-/** @file ptbl.h
- *
- */
 #ifndef BU_PTBL_H
 #define BU_PTBL_H
 
@@ -38,13 +32,9 @@
 
 __BEGIN_DECLS
 
-/* ptbl.c */
-/** @addtogroup ptbl */
-/** @{ */
-/** @file libbu/ptbl.c
+/** @addtogroup bu_ptbl
  *
- * Support for generalized "pointer tables"
- *
+ * @brief
  * Support for generalized "pointer tables", kept compactly in a
  * dynamic array.
  *
@@ -54,6 +44,8 @@ __BEGIN_DECLS
  * for) are passed as a "pointer to long".
  *
  */
+/** @{ */
+/** @file bu/ptbl.h*/
 
 
 /**
@@ -101,14 +93,17 @@ typedef struct bu_ptbl bu_ptbl_t;
 /*
  * For those routines that have to "peek" into the ptbl a little bit.
  */
-#define BU_PTBL_BASEADDR(ptbl)	((ptbl)->buffer)
-#define BU_PTBL_LASTADDR(ptbl)	((ptbl)->buffer + (ptbl)->end - 1)
-#define BU_PTBL_END(ptbl)	((ptbl)->end)
-#define BU_PTBL_LEN(ptbl)	((size_t)(ptbl)->end)
-#define BU_PTBL_GET(ptbl, i)	((ptbl)->buffer[(i)])
+#define BU_PTBL_LEN(ptbl)		(((uintptr_t)(ptbl) != (uintptr_t)NULL)?(size_t)(ptbl)->end:0)
+#define BU_PTBL_TEST(ptbl)		(((uintptr_t)(ptbl) != (uintptr_t)NULL)?(ptbl)->l.magic == BU_PTBL_MAGIC:0)
+#define BU_PTBL_GET(ptbl, i)		((ptbl)->buffer[(i)])
 #define BU_PTBL_SET(ptbl, i, val)	((ptbl)->buffer[(i)] = (long*)(val))
-#define BU_PTBL_TEST(ptbl)	((ptbl)->l.magic == BU_PTBL_MAGIC)
-#define BU_PTBL_CLEAR_I(_ptbl, _i) ((_ptbl)->buffer[(_i)] = (long *)0)
+
+/** DEPRECATED */
+#define BU_PTBL_END(ptbl)	((ptbl)->end)
+/** DEPRECATED */
+#define BU_PTBL_BASEADDR(ptbl)	(((uintptr_t)(ptbl) != (uintptr_t)NULL)?(ptbl)->buffer:NULL)
+/** DEPRECATED */
+#define BU_PTBL_LASTADDR(ptbl)	(((uintptr_t)(ptbl) != (uintptr_t)NULL)?(ptbl)->buffer + (ptbl)->end - 1:NULL)
 
 /**
  * A handy way to visit all the elements of the table is:
@@ -235,10 +230,9 @@ BU_EXPORT extern void bu_pr_ptbl(const char *title,
 				 int verbose);
 
 /**
- * truncate a bu_ptbl
+ * truncate a bu_ptbl to the specified size.
  */
-BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl,
-				    int end);
+BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl, size_t end);
 
 /** @} */
 

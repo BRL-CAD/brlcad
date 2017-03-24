@@ -1,7 +1,7 @@
 /*                        E D I T I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,11 +32,9 @@
 #  include <sys/types.h>
 #endif
 
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
+#include "bresource.h"
 
-#include "bio.h"
+#include "bu/path.h"
 #include "ged.h"
 
 #define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
@@ -150,8 +148,7 @@ _ged_editit(char *editstring, const char *filename)
 	} else {
 	    bu_log("Invoking [%s %s]\n\n", editor, file);
 	}
-	editor_basename = (char *)bu_calloc(strlen(editor), sizeof(char), "_ged_editit editor_basename");
-	bu_basename(editor_basename, editor);
+	editor_basename = bu_basename(editor, NULL);
 	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", editor_basename, bu_getprogname());
 	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
 	    bu_vls_putc(&sep, '*');
@@ -202,9 +199,7 @@ _ged_editit(char *editstring, const char *filename)
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
-	    char *editor_basename;
-	    editor_basename = (char *)bu_calloc(strlen(editor), sizeof(char), "_ged_editit editor_basename");
-	    bu_basename(editor_basename, editor);
+	    char *editor_basename = bu_basename(editor, NULL);
 	    if (BU_STR_EQUAL(editor_basename, "TextEdit")) {
 		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
 		close(fileno(stdout));
@@ -245,7 +240,7 @@ _ged_editit(char *editstring, const char *filename)
 #endif
 
     if (editstring != NULL)
-	bu_free((genptr_t)avtmp, "ged_editit: avtmp");
+	bu_free((void *)avtmp, "ged_editit: avtmp");
 
     return 1;
 }

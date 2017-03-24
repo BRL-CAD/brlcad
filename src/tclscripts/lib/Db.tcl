@@ -1,7 +1,7 @@
 #                          D B . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2014 United States Government as represented by
+# Copyright (c) 1998-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -75,7 +75,6 @@
 	method ls {args}
 	method lt {args}
 	method make {args}
-	method make_bb {name args}
 	method make_name {args}
 	method match {args}
 	method mater {args}
@@ -477,10 +476,6 @@
     eval $db make $args
 }
 
-::itcl::body Db::make_bb {name args} {
-    eval $db make_bb $name $args
-}
-
 ::itcl::body Db::make_name {args} {
     eval $db make_name $args
 }
@@ -602,7 +597,6 @@
     $help add ls	{{[-a -c -r -s]} {table of contents}}
     $help add lt	{{object} {return first level tree as list of operator/member pairs}}
     $help add make	{{-t | object type} {make an object/primitive of the specified type}}
-    $help add make_bb	{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
     $help add match	{{exp} {returns all database objects matching the given expression}}
     $help add mater	{{region shader R G B inherit} {modify region's material information}}
     $help add mirror	{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}
@@ -645,7 +639,7 @@
     $help add whichair	{{air_codes(s)} {lists all regions with given air code}}
     $help add whichid	{{[-s] ident(s)} {lists all regions with given ident code}}
     $help add wmater	{{file comb1 [comb2 ...]} {write material properties to a file for the specified combinations}}
-    $help add xpush	{{object} {Experimental Push Command}}
+    $help add xpush	{{object} {push matrices onto primitives, creating copies as needed}}
 }
 
 # Local Variables:

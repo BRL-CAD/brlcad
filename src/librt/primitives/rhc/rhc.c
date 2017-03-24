@@ -1,7 +1,7 @@
 /*                           R H C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -162,16 +162,15 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "../../librt_private.h"
@@ -300,7 +299,7 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &OBJ[ID_RHC];
 
     BU_GET(rhc, struct rhc_specific);
-    stp->st_specific = (genptr_t)rhc;
+    stp->st_specific = (void *)rhc;
     rhc->rhc_b = mag_b;
     rhc->rhc_rsq = magsq_r;
     rhc->rhc_c = xip->rhc_c;
@@ -1312,7 +1311,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Front face topology.  Verts are considered to go CCW */
     outfaceuses[0] = nmg_cface(s, vfront, n);
 
-    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic);
+    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic, &RTG.rtg_vlfree);
 
     /* Back face topology.  Verts must go in opposite dir (CW) */
     outfaceuses[1] = nmg_cface(s, vtemp, n);
@@ -1321,7 +1320,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	vback[i] = vtemp[n - 1 - i];
     }
 
-    (void)nmg_mark_edges_real(&outfaceuses[1]->l.magic);
+    (void)nmg_mark_edges_real(&outfaceuses[1]->l.magic, &RTG.rtg_vlfree);
 
     /* Duplicate [0] as [n] to handle loop end condition, below */
     vfront[n] = vfront[0];
@@ -1339,7 +1338,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	outfaceuses[2 + i] = nmg_cface(s, vertlist, 4);
     }
 
-    (void)nmg_mark_edges_real(&outfaceuses[n + 1]->l.magic);
+    (void)nmg_mark_edges_real(&outfaceuses[n + 1]->l.magic,&RTG.rtg_vlfree);
 
     for (i = 0; i < n; i++) {
 	NMG_CK_VERTEX(vfront[i]);
@@ -1415,7 +1414,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, n + 2, tol);
+    nmg_gluefaces(outfaceuses, n + 2, &RTG.rtg_vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
@@ -1567,7 +1566,7 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
 
     BU_CK_EXTERNAL(ep);
-    BU_ASSERT_LONG(ep->ext_nbytes, == , SIZEOF_NETWORK_DOUBLE * 11);
+    BU_ASSERT(ep->ext_nbytes ==  SIZEOF_NETWORK_DOUBLE * 11);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1710,7 +1709,7 @@ rt_rhc_ifree(struct rt_db_internal *ip)
     xip->rhc_magic = 0;		/* sanity */
 
     bu_free((char *)xip, "rhc ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -1794,7 +1793,7 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     magB = MAGNITUDE(rip->rhc_B);
     height = MAGNITUDE(rip->rhc_H);
     a = (rip->rhc_r * b) / sqrt(magB * (2.0 * rip->rhc_c + magB));
-    sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + b * b);
+    sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + a * a);
     integralArea = (b / a) * ((2.0 * rip->rhc_r * sqrt_ra) / 2.0 + ((a * a) / 2.0) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
     A = 2.0 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
 
@@ -1811,6 +1810,35 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     *area = 2.0 * A + 2.0 * rip->rhc_r * height + arclen * height;
 }
+
+
+/**
+ * Computer volume of a right hyperbolic cylinder
+ */
+void
+rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct rt_rhc_internal *rip;
+    fastf_t A, integralArea, a, b, magB, sqrt_ra, height;
+    if (volume == NULL || ip == NULL) {
+	return;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    rip = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(rip);
+
+    b = rip->rhc_c;
+    magB = MAGNITUDE(rip->rhc_B);
+    height = MAGNITUDE(rip->rhc_H);
+    a = (rip->rhc_r * b) / sqrt(magB * (2.0 * rip->rhc_c + magB));
+    sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + a * a);
+    integralArea = (b / a) * ((2.0 * rip->rhc_r * sqrt_ra) / 2.0 + ((a * a) / 2.0) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
+    A = 2.0 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
+
+    *volume = A * height;
+}
+
 
 /**
  * Computes centroid of a right hyperbolic cylinder
@@ -1843,7 +1871,7 @@ rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 	low = a;
 	high = xf;
 
-	while (abs(high - low) > epsilon) {
+	while (fabs(high - low) > epsilon) {
 	    guess = (high + low) / 2.0;
 	    sqrt_ga = sqrt((guess * guess) - (a * a));
 	    guessArea = (b / a) * ((guess * sqrt_ga) - ((a * a) * log(sqrt_ga + guess)) - ((a * a) * log(guess)));

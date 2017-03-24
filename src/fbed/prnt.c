@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,6 @@ void prnt_Status(void), prnt_Usage(void);
 void prnt_Prompt(const char *msg);
 void prnt_Macro(char *bufp);
 void prnt_Rect2D(const char *str, Rect2D *rectp);
-/**void prnt_FBC();**/
 
 void
 prnt_Status(void)

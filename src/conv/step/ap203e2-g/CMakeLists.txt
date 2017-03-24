@@ -1,9 +1,10 @@
-# local includes
-include_directories(
+set(AP203_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/../step-g
+  ${OPENNURBS_INCLUDE_DIRS}
   )
+BRLCAD_INCLUDE_DIRS(AP203_INCLUDE_DIRS)
 
 set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203e2/ap203e2_mim_lf.exp)
 add_definitions(-DAP203e2)
@@ -230,7 +231,7 @@ set(ap203e2g_LIBS
   stepeditor
   stepdai
   stepcore
-  ${OPENNURBS_LIBRARY}
+  ${OPENNURBS_LIBRARIES}
   )
 list(APPEND ap203e2g_LIBS ${ap203e2g_LIBS})
 

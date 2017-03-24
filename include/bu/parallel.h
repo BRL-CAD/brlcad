@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,12 +18,10 @@
  * information.
  */
 
-/**  @defgroup parallel  Parallel Processing */
-/**   @defgroup thread Multithreading */
-
-/** @file parallel.h
- *
- */
+/** @ingroup parallel */
+/** @{ */
+/** @file include/bu/parallel.h */
+/** @} */
 #ifndef BU_PARALLEL_H
 #define BU_PARALLEL_H
 
@@ -35,7 +33,10 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup thread */
+/** @addtogroup bu_thread
+ * @brief
+ * Thread based parallelism routines.
+ */
 /** @{ */
 
 /**
@@ -47,8 +48,8 @@ __BEGIN_DECLS
  */
 #define MAX_PSW 1024
 
-/** @file libbu/parallel.c
- *
+/**
+ * @brief
  * subroutine to determine if we are multi-threaded
  *
  * This subroutine is separated off from parallel.c so that bu_bomb()
@@ -59,40 +60,37 @@ __BEGIN_DECLS
  */
 
 /**
- * A clean way for bu_bomb() to tell if this is a parallel
- * application.  If bu_parallel() is active, this routine will return
- * non-zero.
+ * This routine is DEPRECATED, do not use it.  If you need a means to
+ * determine when an application is running bu_parallel(), please
+ * report this to our developers.
+ *
+ * Previously, this was a library-stateful way for bu_bomb() to tell
+ * if a parallel application is running.  This routine now simply
+ * returns zero all the time, which permits BU_SETJUMP() error
+ * handling during bu_bomb().
  */
-BU_EXPORT extern int bu_is_parallel(void);
-
-/**
- * Used by bu_bomb() to help terminate parallel threads,
- * without dragging in the whole parallel library if it isn't being used.
- */
-BU_EXPORT extern void bu_kill_parallel(void);
+DEPRECATED BU_EXPORT extern int bu_is_parallel(void);
 
 /**
  * returns the CPU number of the current bu_parallel() invoked thread.
  */
 BU_EXPORT extern int bu_parallel_id(void);
 
-/** @file libbu/kill.c
- *
+/**
+ * @brief
  * terminate a given process.
- *
  */
 
 /**
- * terminate a given process.
+ * terminate a given process and any children.
  *
  * returns truthfully whether the process could be killed.
  */
 BU_EXPORT extern int bu_terminate(int process);
 
-/** @file libbu/process.c
- *
+/**
+ * @brief
  * process management routines
- *
  */
 
 /**
@@ -100,8 +98,8 @@ BU_EXPORT extern int bu_terminate(int process);
  */
 BU_EXPORT extern int bu_process_id(void);
 
-/** @file libbu/parallel.c
- *
+/**
+ * @brief
  * routines for parallel processing
  *
  * Machine-specific routines for portable parallel processing.
@@ -121,27 +119,78 @@ BU_EXPORT extern void bu_nice_set(int newnice);
  */
 BU_EXPORT extern size_t bu_avail_cpus(void);
 
+
 /**
- * Create 'ncpu' copies of function 'func' all running in parallel,
- * with private stack areas.  Locking and work dispatching are handled
- * by 'func' using a "self-dispatching" paradigm.
+ * Create parallel threads of execution.
  *
- * 'func' is called with one parameter, its thread number.  Threads
- * are given increasing numbers, starting with zero.  Processes may
- * also call bu_parallel_id() to obtain their thread number.
+ * This function creates (at most) 'ncpu' copies of function 'func'
+ * all running in parallel, passing 'data' to each invocation.
+ * Specifying ncpu=0 will specify automatic parallelization, invoking
+ * parallel threads as cores become available.  This is particularly
+ * useful during recursive invocations where the ncpu core count is
+ * limited by the parent context.
  *
- * Threads created with bu_parallel() automatically set CPU affinity
- * where available for improved performance.  This behavior can be
- * disabled at runtime by setting the LIBBU_AFFINITY environment
- * variable to 0.
+ * Locking and work dispatching are handled by 'func' using a
+ * "self-dispatching" paradigm.  This means you must manually protect
+ * shared data structures, e.g., via BU_SEMAPHORE_ACQUIRE().
+ * Lock-free execution is often possible by creating data containers
+ * with MAX_PSW elements as bu_parallel will never execute more than
+ * that many threads of execution.
+ *
+ * All invocations of the specified 'func' callback function are
+ * passed two parameters: 1) it's assigned thread number and 2) a
+ * shared 'data' pointer for application use.  Threads are assigned
+ * increasing numbers, starting with zero.  Processes may also call
+ * bu_parallel_id() to obtain their thread number.
+ *
+ * Threads created with bu_parallel() may specify utilization of
+ * affinity locking to keep threads on a given physical CPU core.
+ * This behavior can be enabled at runtime by setting the environment
+ * variable LIBBU_AFFINITY=1.  Note that this option may increase or
+ * even decrease performance, particularly on platforms with advanced
+ * scheduling, so testing is recommended.
  *
  * This function will not return control until all invocations of the
  * subroutine are finished.
- */
-BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu, genptr_t arg);
-
-/** @file libbu/semaphore.c
  *
+ * In following is a working stand-alone example demonstrating how to
+ * call the bu_parallel() interface.
+
+@code
+void shoot_cells_in_series(int width, int height) {
+  int i, j;
+  for (i=0; i<height; i++)
+    for (j=0; j<width; j++)
+      printf("Shooting cell (%d, %d) on CPU %d\n", i, j, bu_parallel_id());
+}
+
+void shoot_row_per_thread(int cpu, void *mydata) {
+  int i, j, width;
+  width = *(int *)mydata;
+  for (i=0; i<width; i++)
+    printf("Shooting cell (%d, %d) on CPU %d\n", i, cpu, bu_parallel_id());
+}
+
+void shoot_cells_in_parallel(int width, int height) {
+  bu_parallel(shoot_row_per_thread, height, &width);
+  // we don't reach here until all threads complete
+}
+
+int main(int ac, char *av[]) {
+  int width = 4, height = 4;
+  printf("\nShooting cells one at a time, 4x4 grid:\n");
+  shoot_cells_in_series(width, height);
+  printf("\nShooting cells in parallel with 4 threads, one per row:\n");
+  shoot_cells_in_parallel(width, height);
+  return 0;
+}
+@endcode
+ */
+BU_EXPORT extern void bu_parallel(void (*func)(int func_cpu_id, void *func_data), size_t ncpu, void *data);
+
+
+/**
+ * @brief
  * semaphore implementation
  *
  * Machine-specific routines for parallel processing.  Primarily for
@@ -172,11 +221,12 @@ BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu
  * pass through, and non-zero when re-entered via a longjmp() from
  * bu_bomb().  This is only safe to use in non-parallel applications.
  */
-#define BU_SETJUMP setjmp((bu_setjmp_valid=1, bu_jmpbuf))
-#define BU_UNSETJUMP (bu_setjmp_valid=0)
+#define BU_SETJUMP setjmp((bu_setjmp_valid[bu_parallel_id()]=1, bu_jmpbuf[bu_parallel_id()]))
+#define BU_UNSETJUMP (bu_setjmp_valid[bu_parallel_id()]=0)
+
 /* These are global because BU_SETJUMP must be macro.  Please don't touch. */
-BU_EXPORT extern int bu_setjmp_valid;           /* !0 = bu_jmpbuf is valid */
-BU_EXPORT extern jmp_buf bu_jmpbuf;                     /* for BU_SETJUMP() */
+BU_EXPORT extern int bu_setjmp_valid[MAX_PSW]; /* !0 = bu_jmpbuf is valid */
+BU_EXPORT extern jmp_buf bu_jmpbuf[MAX_PSW];   /* for BU_SETJUMP() */
 
 
 /**
@@ -194,12 +244,6 @@ BU_EXPORT extern void bu_semaphore_init(unsigned int nsemaphores);
  * Release all initialized semaphores and any associated memory.
  */
 BU_EXPORT extern void bu_semaphore_free(void);
-
-/**
- * Prepare 'nsemaphores' independent critical section semaphores.  Die
- * on error.
- */
-BU_EXPORT extern void bu_semaphore_reinit(unsigned int nsemaphores);
 
 BU_EXPORT extern void bu_semaphore_acquire(unsigned int i);
 

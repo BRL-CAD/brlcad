@@ -1,7 +1,7 @@
 #                    E D I T M E N U . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,14 +19,8 @@
 #
 ###
 #
-#			E D I T M E N U . T C L
-#
 #	TCL macros for MGED(1) to specify a solid/obj_path for editing
 #	from among those currently being displayed.
-#
-#	Authors -
-#		Paul Tanenbaum
-#		Robert Parker
 #
 
 if ![info exists mged_default(display)] {

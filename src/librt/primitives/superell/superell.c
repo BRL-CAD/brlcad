@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,9 +23,8 @@
  *
  * Intersect a ray with a Superquadratic Ellipsoid.
  *
- * NOTICE: this primitive is incomplete and should be considered
- * experimental.  This primitive will exhibit several
- * instabilities in the existing root solver method.
+ * NOTICE: This primitive will exhibit several instabilities in the
+ * existing root solver with certain <n,e> value pairings.
  *
  */
 /** @} */
@@ -33,16 +32,15 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "../../librt_private.h"
@@ -314,7 +312,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     /* Solid is OK, compute constant terms now */
 
     BU_GET(superell, struct superell_specific);
-    stp->st_specific = (genptr_t)superell;
+    stp->st_specific = (void *)superell;
 
     superell->superell_n = eip->n;
     superell->superell_e = eip->e;
@@ -872,7 +870,7 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 2));
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 2));
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUPERELL;
@@ -1020,7 +1018,7 @@ rt_superell_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "superell ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 

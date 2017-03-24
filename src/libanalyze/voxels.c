@@ -1,7 +1,7 @@
 /*                    V O X E L S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@
 #include "raytrace.h"		/* librt interface definitions */
 
 #include "analyze.h"
-#include "bu.h"
 
 
 /**
@@ -145,7 +144,7 @@ hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg *UN
  * voxelize function takes raytrace instance and user parameters as inputs
  */
 void
-voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*create_boxes)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData)
+voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*create_boxes)(void *callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), void *callBackData)
 {
     struct rayInfo voxelHits;
     int            numVoxel[3];
@@ -187,7 +186,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
     yMin = (int)((rtip->mdl_min)[1]);
     zMin = (int)((rtip->mdl_min)[2]);
 
-    BU_ASSERT_LONG(levelOfDetail, >, 0);
+    BU_ASSERT(levelOfDetail > 0);
     /* 1.0 / (levelOfDetail + 1) and effectiveDistance have to be used multiple times in the following loops */
     rayTraceDistance  = 1. / levelOfDetail;
     effectiveDistance = levelOfDetail * levelOfDetail * sizeVoxel[0];
@@ -221,7 +220,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 
 	    /* output results via a call-back supplied by user*/
 	    for (k = 0; k < numVoxel[0]; ++k) {
-		if(voxelHits.regionList[k].regionName == NULL)
+		if (voxelHits.regionList[k].regionName == NULL)
 		    /* an air voxel */
 		    create_boxes(callBackData, k, j, i, NULL, 0.);
 		else {

@@ -1,7 +1,7 @@
 /*                      S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,16 +34,15 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #define RT_SUBMODEL_O(m) bu_offsetof(struct rt_submodel_internal, m)
@@ -211,16 +210,14 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     rt_prep_parallel(sub_rtip, 1);
 
     /* Ensure bu_ptbl rti_resources is full size.  Ptrs will be null */
-    if (BU_PTBL_LEN(&sub_rtip->rti_resources) < sub_rtip->rti_resources.blen) {
-	BU_PTBL_END(&sub_rtip->rti_resources) = sub_rtip->rti_resources.blen;
-    }
+    bu_ptbl_trunc(&sub_rtip->rti_resources, sub_rtip->rti_resources.blen);
 
     if (RT_G_DEBUG) rt_pr_cut_info(sub_rtip, stp->st_name);
 
  done:
     BU_GET(submodel, struct submodel_specific);
     submodel->magic = RT_SUBMODEL_SPECIFIC_MAGIC;
-    stp->st_specific = (genptr_t)submodel;
+    stp->st_specific = (void *)submodel;
 
     MAT_COPY(submodel->subm2m, sip->root2leaf);
     bn_mat_inv(submodel->m2subm, sip->root2leaf);
@@ -262,8 +259,8 @@ rt_submodel_print(const struct soltab *stp)
     /* Loop through submodel's solid table printing them too. */
     RT_VISIT_ALL_SOLTABS_START(stp, submodel->rtip) {
 	rt_pr_soltab(stp);
-    } RT_VISIT_ALL_SOLTABS_END
-	  bu_log_indent_delta(-4);
+    } RT_VISIT_ALL_SOLTABS_END;
+    bu_log_indent_delta(-4);
 }
 
 
@@ -347,7 +344,7 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 	MAT4XSCALOR(up_segp->seg_out.hit_dist, submodel->subm2m, outseg->seg_out.hit_dist);
 	up_segp->seg_out.hit_dist -= gp->delta;
 
-	BU_ASSERT_DOUBLE(up_segp->seg_in.hit_dist, <=, up_segp->seg_out.hit_dist);
+	BU_ASSERT(up_segp->seg_in.hit_dist <= up_segp->seg_out.hit_dist);
 
 	/* Link to ray in upper model, not submodel */
 	up_segp->seg_in.hit_rayp = &up_ap->a_ray;
@@ -450,7 +447,7 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     int code;
     struct bu_ptbl *restbl;
     struct resource *resp;
-    int cpu;
+    size_t cpu;
 
     RT_CK_SOLTAB(stp);
     RT_CK_RTI(ap->a_rt_i);
@@ -464,7 +461,7 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     sub_ap.a_rt_i = submodel->rtip;
     sub_ap.a_hit = rt_submodel_a_hit;
     sub_ap.a_miss = rt_submodel_a_miss;
-    sub_ap.a_uptr = (genptr_t)&gb;
+    sub_ap.a_uptr = (void *)&gb;
     sub_ap.a_purpose = "rt_submodel_shot";
 
     /* Ensure even # of accurate hits, for building good partitions */
@@ -480,7 +477,7 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
      */
     restbl = &submodel->rtip->rti_resources;	/* a ptbl */
     cpu = ap->a_resource->re_cpu;
-    BU_ASSERT_LONG(cpu, <, BU_PTBL_END(restbl));
+    BU_ASSERT(cpu < BU_PTBL_LEN(restbl));
     if ((resp = (struct resource *)BU_PTBL_GET(restbl, cpu)) == NULL) {
 	/* First ray for this cpu for this submodel, alloc up */
 	BU_ALLOC(resp, struct resource);
@@ -633,7 +630,7 @@ struct goodies {
  * This routine should be generally exported for other uses.
  */
 HIDDEN union tree *
-rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     union tree *curtree;
     struct goodies *gp;
@@ -645,17 +642,15 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
     RT_CK_RESOURCE(tsp->ts_resp);
 
     gp = (struct goodies *)tsp->ts_m;	/* hack */
-    if (gp) RT_CK_DBI(gp->dbip);
-
-    /* NON-PARALLEL access to vlist pointed to by vheadp is not semaphored */
-    if (bu_is_parallel()) bu_bomb("rt_submodel_wireframe_leaf() non-parallel code\n");
+    if (gp)
+	RT_CK_DBI(gp->dbip);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
 	bu_log("rt_submodel_wireframe_leaf(%s) path=%s\n",
 	       ip->idb_meth->ft_name, sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     }
 
     ret = -1;
@@ -739,7 +734,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 		       0,			/* take all regions */
 		       NULL,			/* rt_submodel_wireframe_region_end */
 		       rt_submodel_wireframe_leaf,
-		       (genptr_t)NULL);
+		       (void *)NULL);
 
     if (ret < 0) bu_log("rt_submodel_plot() db_walk_tree(%s) failure\n", bu_vls_addr(&sip->treetop));
     if (bu_vls_strlen(&sip->file) != 0)
@@ -805,12 +800,12 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     bu_vls_strcpy(&str, rp->ss.ss_args);
 
-    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip) < 0) {
+    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip, NULL) < 0) {
 	bu_vls_free(&str);
     fail:
 	bu_free((char *)sip, "rt_submodel_import4: sip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -2;
     }
     bu_vls_free(&str);
@@ -881,19 +876,21 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
-    sip->dbip = dbip;
-
+    BU_VLS_INIT(&sip->file);
+    BU_VLS_INIT(&sip->treetop);
+    sip->meth = 0;
     if (mat == NULL) mat = bn_mat_identity;
     MAT_COPY(sip->root2leaf, mat);
+    sip->dbip = dbip;
 
     bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
 
-    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip) < 0) {
+    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip, NULL) < 0) {
 	bu_vls_free(&str);
     fail:
 	bu_free((char *)sip, "rt_submodel_import4: sip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -2;
     }
     bu_vls_free(&str);
@@ -974,9 +971,11 @@ rt_submodel_ifree(struct rt_db_internal *ip)
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
     sip->magic = 0;			/* sanity */
-
-    bu_free((genptr_t)sip, "submodel ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    bu_vls_free(&sip->file);
+    bu_vls_free(&sip->treetop);
+    sip->dbip = DBI_NULL;
+    bu_free((void *)sip, "submodel ifree");
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

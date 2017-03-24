@@ -2,7 +2,7 @@
  *
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -191,7 +191,7 @@ Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(
      * access */
     ((STEPentity *)op3d)->ResetAttributes();
     STEPattribute * attr = ((STEPentity *)op3d)->NextAttribute();
-    while( attr != 0 ) {
+    while ( attr != 0 ) {
 	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
 	if (!bu_strcmp(attr->Name(), "description")) attr->StrToVal("''");
 	attr = ((STEPentity *)op3d)->NextAttribute();
@@ -227,7 +227,6 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
     point_t origin, outorig;
     vect_t x_axis, y_axis, z_axis;
     vect_t outx, outy, outz;
-    fastf_t xm, ym, zm;
     VSET(origin, 0, 0, 0);
     VSET(x_axis, 1, 0, 0);
     VSET(y_axis, 0, 1, 0);
@@ -236,9 +235,6 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
     MAT4X3VEC(outx, curr_matrix, x_axis);
     MAT4X3VEC(outy, curr_matrix, y_axis);
     MAT4X3VEC(outz, curr_matrix, z_axis);
-    xm = MAGNITUDE(outx);
-    ym = MAGNITUDE(outy);
-    zm = MAGNITUDE(outz);
     VUNITIZE(outx);
     VUNITIZE(outy);
     VUNITIZE(outz);
@@ -313,7 +309,7 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	    child_shape = sc->solid_to_step_shape->find(curr_dp)->second;
 	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
 	matp_t curr_matrix = curr_node->tr_l.tl_mat;
-	if(curr_matrix) {
+	if (curr_matrix) {
 	    //bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
 	    //bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
 	    //bn_mat_print(curr_dp->d_namep, curr_matrix);

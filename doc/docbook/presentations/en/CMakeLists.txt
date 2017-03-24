@@ -1,24 +1,23 @@
-set(en_pres_ignore_files
-  README.txt
-  )
-CMAKEFILES(${en_pres_ignore_files})
-
-set(docbook_presentations_EN
+set(presentations_EN
   intro-to-tcltk.xml
   brlcad-app-devel.xml
+  Introduction-to-tcltk.xml
+  Introduction-brlcad-app-devel.xml
   )
 
-set(docbook_presentations_EN_IMAGES
+set(presentations_EN_IMAGES
   images/copy-sph-part-left.png
+  images/brlcad_app_devel.png
+  images/intro_tcl_tk.png
   images/copy-sph-part-right.png
   images/mged-defaults.png
   images/special-character-interpretation.png
   images/tk-based-gui-for-mged.png
   )
-ADD_DOC(docbook_presentations_EN_IMAGES html/presentations/en/images)
+ADD_DOC(presentations_EN_IMAGES html/presentations/en/images)
+ADD_DOCBOOK("HTML;PHP;PPT;PDF" presentations_EN presentations/en presentations_EN_IMAGES_cp)
 
-DOCBOOK_TO_HTML(presentation docbook_presentations_EN html/presentations/en docbook_presentations_EN_IMAGES_cp)
-DOCBOOK_TO_PDF(presentation docbook_presentations_EN pdf/presentations/en docbook_presentations_EN_IMAGES_cp)
+CMAKEFILES(README.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -30,7 +30,7 @@ c     Isolate solid type code
       ity = int(work)
       hold = work-ity
 c     New line added per Bob Strausser (Survice Engineering):
-      if( ity.eq.4 ) ity = 8
+      if ( ity.eq.4 ) ity = 8
 
 c     Isolate thickness / radius value (1/100's inch)
 

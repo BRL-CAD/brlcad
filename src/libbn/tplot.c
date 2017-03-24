@@ -1,7 +1,7 @@
 /*                         T P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,13 +22,12 @@
 /** @file libbn/tplot.c
  *
  * @brief
- *	This routine is designed to simplify the creation of
- *  X, Y plots for user.
+ * This routine is designed to simplify the creation of X, Y plots for user.
  *
  *			George W. Hartwig, Jr.
  *				16 March 1979
  *
- *	This routine is designed to simplify the creation of
+ * This routine is designed to simplify the creation of
  * X, Y plots for user. The user need only furnish this program with
  * the data arrays to be plotted, the lengths of the respective
  * axis, titles for the axis, and the point on the page corresponding
@@ -54,7 +53,7 @@
 
 /* interface headers */
 #include "vmath.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 #define TIC		100
@@ -137,7 +136,7 @@ double tp_ipow (double x, int n)
  *   tp_fixsc(x, npts, size, xs, xmin, xmax, dx)
  *   where
  *
- * @param	x[]	the data array to be scaled
+ * @param	x	the data array to be scaled
  * @param	npts	the number of elements in x[]
  * @param	size	the length into which x[] is supposed to be fitted
  * 			(in inches)
@@ -165,16 +164,13 @@ tp_fixsc(float *x,
     txmi=txma=x[0];
     i = 0;
     while ( i <= npts ) {
-	if ( x[i] < txmi)
-	    txmi = x[i];
-	if ( x[i] > txma)
-	    txma = x[i];
+	V_MIN(txmi, x[i]);
+	V_MAX(txma, x[i]);
 	i++;
     }
 
     diff = txma - txmi;
-    if ( diff < .000001f )
-	diff = .000001f;
+    V_MAX(diff, 0.000001f);
 
     tp_sep (diff, &coef, &ex);
     if ( coef < 2.0f )

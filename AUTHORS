@@ -37,7 +37,7 @@ contributor credits are organized into the following general
 categories depending on the level and type of involvement:
 
   * Mathematical, Algorithmic, and Geometric Support
-  * Documentation and Website Contributors
+  * Documentation, Artwork, and Website Contributors
   * Code Contributors
   * Special Thanks
 
@@ -268,8 +268,8 @@ Weaver, Stephanie 'Rain'  **
 ARL Student Hire / Bridgewater College
 
 
-DOCUMENTATION AND WEBSITE CONTRIBUTORS
---------------------------------------
+DOCUMENTATION, ARTWORK, AND WEBSITE CONTRIBUTORS
+------------------------------------------------
 
 Weaver, Earl P.
 1980
@@ -279,6 +279,7 @@ Schueler, Betty J.
 
 Edwards, Eric
 SURVICE Engineering, Inc.
+Open Source (Doc Camp)
 
 Kregel, Dwayne
 SURVICE Engineering, Inc.
@@ -333,6 +334,56 @@ Open Source (GCI)
 Perez, Alex
 2012 November
 Open Source (GCI)
+
+Singh, Harmanpreet
+nicknames harmanpreet
+2013 October
+Open Source (Doc Camp)
+
+Kamga, Isaac
+nicknames Izak, iiizzzaaakkk
+2013 October
+Open Source (Doc Camp)
+
+Check, Nyah
+nicknames Ch3ck
+2013 October
+Open Source (Doc Camp)
+
+Scott Nesbitt
+2013 October
+Open Source (Doc Camp)
+
+Wood, David
+2013 November
+Open Source (GCI)
+
+Agarwal, Yatharth
+2013 November
+Open Source (GCI)
+
+McDonald, Rob
+2013 November
+Open Source
+
+Tannous, Marc
+2014 December
+Open Source (GCI)
+
+Chiplunkar, Shardul
+nicknames microchip, shardulc
+2014 December
+Open Source (GCI)
+
+Juvekar, Mandar
+nicknames mandarj
+2014 December
+Open Source (GCI)
+
+Sofat, Hitesh
+nicknames sofat
+2015 June
+Open Source (GSoC)
 
 
 CODE CONTRIBUTIONS
@@ -462,7 +513,9 @@ nicknames mjgillich mgillich
 U.S. Army Research Laboratory
 
 Howard, Doug
+nicknames dhoward
 SURVICE Engineering, Inc.
+2006 April
 
 Silva, Prasad Prometheus
 nicknames prasad_silva
@@ -516,7 +569,7 @@ nicknames homovulgaris, madant
 Open Source (GSoC)
 
 Saunders, Benjamin
-nicknames Ralith
+nicknames Ralith, ralith
 2008 July
 Open Source
 
@@ -555,6 +608,10 @@ Open Source (GSoC)
 Jain, Sachin
 2011 April
 Open Source
+
+Gerstner, Nick
+2011 May
+SURVICE Engineering, Inc.
 
 Easterbrook, Zach
 nicknames lainiwakurax
@@ -686,12 +743,12 @@ nicknames avneetkhalsa
 Open Source (GSoC)
 
 Daga, Mohit
-nicknames zero_level
+nicknames zero_level, mohitdaga
 2013 June
 Open Source (GSoC)
 
 Kamga, Isaac
-nicknames Izak
+nicknames Izak, iiizzzaaakkk
 2013 July
 Open Source (GSoC)
 
@@ -703,12 +760,13 @@ Open Source (GSoC)
 Huff, Emory
 nicknames hknoll
 2013 July
-U.S. Army Research Laboratory (SEAP)
+ARL Student Hire
 
 Engbert, Jonathan
 nicknames ejno
 2013 July
 Open Source
+ARL Student Hire / University of Maryland, Baltimore County
 
 Andrew
 2013 November
@@ -719,6 +777,7 @@ Schulte, Johannes
 Open Source (GCI)
 
 Amidon, Peter
+nicknames peter-sa, Andromeda Galaxy
 2013 November
 Open Source (GCI)
 
@@ -734,6 +793,68 @@ Open Source (GCI)
 nicknames huskmate13
 2014 January
 Open Source
+
+Granroth, Gustave
+2014 May
+Open Source
+
+Jain, Rishub
+2014 July
+ARL Student Hire
+
+Roberts, Mitchell
+2014 July
+ARL Student Hire
+
+Bayes, Matthew
+nicknames klinger4077
+2014 July
+ARL Student Hire / University of Maryland College Park
+
+Mirea, Ștefan-Gabriel
+2014 October
+Open Source
+
+Krishna
+2015 January
+Open Source (GCI)
+
+Konrad, Djimeli
+2015 February
+Open Source
+
+Alexandre da Silva Costa, Vasco
+nicknames vasco_costa
+2015 April
+Open Source (GSoC)
+
+Thakkar, Kalpit
+nicknames dracarys983
+2015 May
+Open Source (GSoC)
+
+Ilinca, Andrei
+nicknames andrei_il
+2015 June
+Open Source (GSoC)
+
+Sofat, Hitesh
+nicknames sofat
+2015 June
+Open Source (GSoC)
+
+Hollister, Brad
+nicknames bhollister
+2015 July
+Open Source (GSoC)
+
+Hanji, Param
+2016 March
+Open Source (GSoC)
+
+Gao, Tianyue
+2016 December
+Open Source (GCI)
 
 
 SPECIAL THANKS
@@ -866,7 +987,7 @@ Thomas, Balbir
 Open Source
 
 Remenak, Daniel T.
-nicknames DTRemenak, Erroneous
+nicknames DTRemenak, Erroneous, dtremenak
 2005 July
 California Institute of Technology
 Open Source
@@ -1025,6 +1146,25 @@ Hyams, Daniel
 nicknames dhyams
 2014 February
 Open Source
+
+Reddy, Raj
+nicknames raj12lnm
+2014 May
+Open Source
+
+Malhotra, Shivoam
+nicknames shiv05
+2015 March
+Open Source
+
+Chepkwony, Benson
+nicknames bchepkwny
+2015 December
+Open Source
+
+Sagarwal
+2017 January
+Open Source (GCI)
 
 
 CORPORATE AND ORGANIZATION SUPPORT

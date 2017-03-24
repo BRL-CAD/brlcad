@@ -1,7 +1,7 @@
 /*                           L O G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ static struct bu_hook_list log_hook_list = {
 	&log_hook_list.l
     },
     NULL,
-    GENPTR_NULL
+    ((void *)0)
 };
 
 static int log_first_time = 1;
@@ -66,20 +66,20 @@ bu_log_indent_vls(struct bu_vls *v)
 
 
 void
-bu_log_add_hook(bu_hook_t func, genptr_t clientdata)
+bu_log_add_hook(bu_hook_t func, void *clientdata)
 {
     bu_hook_add(&log_hook_list, func, clientdata);
 }
 
 
 void
-bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
+bu_log_delete_hook(bu_hook_t func, void *clientdata)
 {
     bu_hook_delete(&log_hook_list, func, clientdata);
 }
 
 HIDDEN void
-log_call_hooks(genptr_t buf)
+log_call_hooks(void *buf)
 {
 
     log_hooks_called = 1;
@@ -184,7 +184,6 @@ bu_log(const char *fmt, ...)
     }
 
     va_start(ap, fmt);
-
     if (log_indent_level > 0) {
 	struct bu_vls newfmt = BU_VLS_INIT_ZERO;
 
@@ -194,7 +193,6 @@ bu_log(const char *fmt, ...)
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
-
     va_end(ap);
 
     if (BU_LIST_IS_EMPTY(&(log_hook_list.l)) || log_hooks_called) {
@@ -259,6 +257,7 @@ bu_flog(FILE *fp, const char *fmt, ...)
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
+    va_end(ap);
 
     if (BU_LIST_IS_EMPTY(&(log_hook_list.l)) || log_hooks_called) {
 	size_t ret;
@@ -277,8 +276,6 @@ bu_flog(FILE *fp, const char *fmt, ...)
     } else {
 	log_call_hooks(bu_vls_addr(&output));
     }
-
-    va_end(ap);
 
     bu_vls_free(&output);
 }

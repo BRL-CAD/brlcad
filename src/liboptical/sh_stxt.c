@@ -1,7 +1,7 @@
 /*                       S H _ S T X T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,15 +37,15 @@
 #include "optical.h"
 
 
-HIDDEN int stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int brick_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN int mbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN int rbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void stxt_print(register struct region *rp, genptr_t dp);
-HIDDEN void stxt_free(genptr_t cp);
+HIDDEN int stxt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int brick_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN int mbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN int rbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void stxt_print(register struct region *rp, void *dp);
+HIDDEN void stxt_free(void *cp);
 
 /* local sp_hook function */
-HIDDEN void stxt_transp_hook(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void stxt_transp_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 #define STX_NAME_LEN 128
 struct stxt_specific {
@@ -92,7 +92,8 @@ HIDDEN void
 stxt_transp_hook(const struct bu_structparse *ptab,
 		 const char *name,
 		 void *cp,
-		 const char *UNUSED(value))
+		 const char *UNUSED(value),
+		 void *UNUSED(data))
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)cp;
@@ -117,17 +118,15 @@ stxt_read(register struct stxt_specific *stp)
     register FILE *fp;
     register int i;
     char name[256];
-    int frame, ln;
-    int rd, rdd;
+    int frame = 0;
+    int ln = 0;
+    int rd = 0;
+    int rdd = 0;
 
     /*** MEMORY HOG ***/
     stp->stx_pixels = (char *)bu_malloc(
 	stp->stx_w * stp->stx_n * stp->stx_d * 3,
 	stp->stx_file);
-
-    ln = 0;
-    rdd = 0;
-    rd = 0;
 
     /* LOOP: through list of basename.n files */
     for (frame = 0; frame <= stp->stx_d-1; frame++) {
@@ -161,7 +160,7 @@ stxt_read(register struct stxt_specific *stp)
 
 
 HIDDEN int
-stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+stxt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 /* New since 4.4 release */
 {
     register struct stxt_specific *stp;
@@ -178,7 +177,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 	return -1;
 
     /** Get input values **/
-    if (bu_struct_parse(matparm, stxt_parse, (char *)stp) < 0) {
+    if (bu_struct_parse(matparm, stxt_parse, (char *)stp, NULL) < 0) {
 	BU_PUT(stp, struct stxt_specific);
 	return -1;
     }
@@ -200,7 +199,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 
 
 HIDDEN void
-stxt_free(genptr_t cp)
+stxt_free(void *cp)
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)cp;
@@ -214,14 +213,14 @@ stxt_free(genptr_t cp)
 
 
 HIDDEN void
-stxt_print(register struct region *rp, genptr_t dp)
+stxt_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, stxt_parse, (char *)dp);
 }
 
 
 HIDDEN int
-brick_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
+brick_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)dp;
@@ -314,7 +313,7 @@ brick_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp),
  * Use region RPP to bound solid texture (rbound).
  */
 HIDDEN int
-rbound_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
+rbound_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)dp;
@@ -383,7 +382,7 @@ rbound_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp)
  * Use model RPP as solid texture bounds.  (mbound).
  */
 HIDDEN int
-mbound_render(struct application *ap, const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
+mbound_render(struct application *ap, const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)dp;

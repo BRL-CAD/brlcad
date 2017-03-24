@@ -1,7 +1,7 @@
 /*                       R E V O L V E . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2014 United States Government as represented by
+ * Copyright (c) 2012-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/parse.h"
 #include "bn.h"
 
 

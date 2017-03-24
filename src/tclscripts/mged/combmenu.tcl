@@ -1,7 +1,7 @@
 #                    C O M B M E N U . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,14 +19,9 @@
 #
 ###
 #
-#	Author -
-#		Robert G. Parker
-#
-#	Description -
-#		Tcl routines to specify a combination for editing
-#		from among all combinations in the database or from
-#		among those currently being displayed.
-#
+# Tcl routines to specify a combination for editing from among all
+# combinations in the database or from among those currently being
+# displayed.
 #
 
 if ![info exists mged_default(display)] {

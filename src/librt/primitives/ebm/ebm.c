@@ -1,7 +1,7 @@
 /*                           E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,21 +30,20 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include "bio.h"
 
-#include "tcl.h"
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "../fixpt.h"
+#include "../../librt_private.h"
 
 
 struct rt_ebm_specific {
@@ -558,11 +557,11 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT_IDN(eip->mat);
 
     bu_vls_strcpy(&str, rp->ss.ss_args);
-    if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip) < 0) {
+    if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip, NULL) < 0) {
 	bu_vls_free(&str);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -2;
     }
     bu_vls_free(&str);
@@ -575,7 +574,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 			(char *)eip);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -1;
     }
 
@@ -591,7 +590,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bu_free((char *)eip, "rt_ebm_import4: eip");
     fail:
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -1;
     }
     eip->mp = mp;
@@ -615,7 +614,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bu_semaphore_release(RT_SEM_MODEL);
 	    return 0;
 	}
-	mp->apbuf = (genptr_t)bu_calloc(
+	mp->apbuf = (void *)bu_calloc(
 	    1, nbytes, "rt_ebm_import4 bitmap");
 	mp->apbuflen = nbytes;
 
@@ -700,11 +699,11 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT_IDN(eip->mat);
 
     bu_vls_strcpy(&str, (const char *)ep->ext_buf);
-    if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip) < 0) {
+    if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip, NULL) < 0) {
 	bu_vls_free(&str);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -2;
     }
     bu_vls_free(&str);
@@ -717,7 +716,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 			(char *)eip);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -1;
     }
 
@@ -733,7 +732,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bu_free((char *)eip, "rt_ebm_import4: eip");
     fail:
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -1;
     }
     eip->mp = mp;
@@ -757,7 +756,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bu_semaphore_release(RT_SEM_MODEL);
 	    return 0;
 	}
-	mp->apbuf = (genptr_t)bu_calloc(
+	mp->apbuf = (void *)bu_calloc(
 	    1, nbytes, "rt_ebm_import4 bitmap");
 	mp->apbuflen = nbytes;
 
@@ -870,7 +869,7 @@ rt_ebm_ifree(struct rt_db_internal *ip)
     eip->magic = 0;			/* sanity */
     eip->mp = (struct bu_mapped_file *)0;
     bu_free((char *)eip, "ebm ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
     ip->idb_type = ID_NULL;		/* sanity */
 }
 
@@ -936,7 +935,7 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VSET(norm, 0, 0, 1);
     MAT3X3VEC(ebmp->ebm_znorm, eip->mat, norm);
 
-    stp->st_specific = (genptr_t)ebmp;
+    stp->st_specific = (void *)ebmp;
 
     /* Find bounding RPP of rotated local RPP */
     rt_ebm_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol);
@@ -1516,7 +1515,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* all faces should merge into one */
-    nmg_shell_coplanar_face_merge(s, tol, 1);
+    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
 
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
     NMG_CK_FACEUSE(fu);
@@ -1524,11 +1523,11 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     VSET(h, 0.0, 0.0, eip->tallness);
     MAT4X3VEC(height, eip->mat, h);
 
-    nmg_extrude_face(fu, height, tol);
+    nmg_extrude_face(fu, height, &RTG.rtg_vlfree,tol);
 
     nmg_region_a(*r, tol);
 
-    (void)nmg_mark_edges_real(&s->l.magic);
+    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
 
     bu_free((char *)vertp, "rt_ebm_tess: vertp");
     bu_free((char *)loop_verts, "rt_ebm_tess: loop_verts");
@@ -1637,11 +1636,8 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    int len = 16;
 	    fastf_t array[16];
 	    fastf_t *ar_ptr;
-
-	    /*XXX needs list_to_fastf_array function */
 	    ar_ptr = array;
-
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) != len) {
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &ar_ptr, &len) != len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coefficients for matrix\n");
 		return BRLCAD_ERROR;
 	    }
@@ -1664,7 +1660,7 @@ rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 
     bu_vls_printf(logstr, "F %%s W %%d N %%d H %%f M { %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f }");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 
 }
 
@@ -1685,7 +1681,7 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_meth = ftp;
     BU_ALLOC(ebm, struct rt_ebm_internal);
 
-    intern->idb_ptr = (genptr_t)ebm;
+    intern->idb_ptr = (void *)ebm;
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
     MAT_IDN(ebm->mat);
     ebm->tallness = 1.0;

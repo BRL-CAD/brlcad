@@ -1,7 +1,7 @@
 /*                         D E C O M P O S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "./ged_private.h"
 
@@ -113,14 +112,14 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 	    long **trans_tbl;
 
 	    /* duplicate shell */
-	    tmp_s = (struct shell *)nmg_dup_shell(s, &trans_tbl, &gedp->ged_wdbp->wdb_tol);
+	    tmp_s = (struct shell *)nmg_dup_shell(s, &trans_tbl, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 	    bu_free((char *)trans_tbl, "trans_tbl");
 
 	    /* move duplicate to temp region */
 	    (void) nmg_mv_shell_to_region(tmp_s, tmp_r);
 
 	    /* decompose this shell */
-	    (void) nmg_decompose_shell(tmp_s, &gedp->ged_wdbp->wdb_tol);
+	    (void) nmg_decompose_shell(tmp_s, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 
 	    /* move each decomposed shell to yet another region */
 	    decomp_s = BU_LIST_FIRST(shell, &tmp_r->s_hd);
@@ -139,11 +138,11 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		kill_s = BU_LIST_FIRST(shell, &decomp_r->s_hd);
 		(void)nmg_ks(kill_s);
 		nmg_shell_a(decomp_s, &gedp->ged_wdbp->wdb_tol);
-		new_s = (struct shell *)nmg_dup_shell(decomp_s, &trans_tbl, &gedp->ged_wdbp->wdb_tol);
+		new_s = (struct shell *)nmg_dup_shell(decomp_s, &trans_tbl, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 		(void)nmg_mv_shell_to_region(new_s, decomp_r);
 
 		/* move this region to a different model */
-		new_m = (struct model *)nmg_mk_model_from_region(decomp_r, 1);
+		new_m = (struct model *)nmg_mk_model_from_region(decomp_r, 1, &RTG.rtg_vlfree);
 		(void)nmg_rebound(new_m, &gedp->ged_wdbp->wdb_tol);
 
 		/* create name for this shell */
@@ -171,9 +170,9 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		new_intern.idb_type = ID_NMG;
 		new_intern.idb_meth = &OBJ[ID_NMG];
-		new_intern.idb_ptr = (genptr_t)new_m;
+		new_intern.idb_ptr = (void *)new_m;
 
-		new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&solid_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+		new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&solid_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 		if (new_dp == RT_DIR_NULL) {
 		    bu_vls_free(&solid_name);
 		    bu_vls_printf(gedp->ged_result_str, "%s: Database alloc error, aborting", argv[0]);

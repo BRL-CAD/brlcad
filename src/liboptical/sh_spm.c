@@ -1,7 +1,7 @@
 /*                        S H _ S P M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,9 +30,9 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bn/spm.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "spm.h"
 #include "optical.h"
 
 
@@ -53,10 +53,10 @@ struct bu_structparse spm_parse[] = {
 };
 
 
-HIDDEN int spm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int spm_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void spm_print(register struct region *rp, genptr_t dp);
-HIDDEN void spm_mfree(genptr_t cp);
+HIDDEN int spm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int spm_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void spm_print(register struct region *rp, void *dp);
+HIDDEN void spm_mfree(void *cp);
 
 struct mfuncs spm_mfuncs[] = {
     {MF_MAGIC,	"spm",		0,		MFI_UV,		0,     spm_setup,	spm_render,	spm_print,	spm_mfree },
@@ -69,7 +69,7 @@ struct mfuncs spm_mfuncs[] = {
  * return a pointer to the relevant pixel.
  */
 HIDDEN int
-spm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
+spm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     register struct spm_specific *spp =
 	(struct spm_specific *)dp;
@@ -90,7 +90,7 @@ spm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), s
 
 
 HIDDEN void
-spm_mfree(genptr_t cp)
+spm_mfree(void *cp)
 {
     struct spm_specific *spm;
 
@@ -109,7 +109,7 @@ spm_mfree(genptr_t cp)
  * >0 success
  */
 HIDDEN int
-spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -122,7 +122,7 @@ spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
 
     spp->sp_file[0] = '\0';
     spp->sp_w = -1;
-    if (bu_struct_parse(matparm, spm_parse, (char *)spp) < 0) {
+    if (bu_struct_parse(matparm, spm_parse, (char *)spp, NULL) < 0) {
 	BU_PUT(spp, struct spm_specific);
 	return -1;
     }
@@ -135,13 +135,13 @@ spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
 	goto fail;
     return 1;
 fail:
-    spm_mfree((genptr_t)spp);
+    spm_mfree((void *)spp);
     return -1;
 }
 
 
 HIDDEN void
-spm_print(register struct region *rp, genptr_t dp)
+spm_print(register struct region *rp, void *dp)
 {
     struct spm_specific *spm;
 

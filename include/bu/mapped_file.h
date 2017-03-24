@@ -1,7 +1,7 @@
 /*                    M A P P E D _ F I L E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file mapped_file.h
- *
- */
 #ifndef BU_MAPPED_FILE_H
 #define BU_MAPPED_FILE_H
 
@@ -35,13 +32,12 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup mf */
-/** @{ */
-/** @file libbu/mappedfile.c
+/** @addtogroup bu_mf
  *
+ * @brief
  * Routines for sharing large read-only data files.
  *
- * Routines for sharing large read-only data files like height fields,
+ * Typical use cases include height fields,
  * bit map solids, texture maps, etc.  Uses memory mapped files where
  * available.
  *
@@ -59,8 +55,11 @@ __BEGIN_DECLS
  *
  */
 
+/** @{ */
+/** @file bu/mapped_file.h */
+
 /**
- * @struct bu_mapped_file bu.h
+ * @struct bu_mapped_file bu/mapped_file.h
  *
  * Structure for opening a mapped file.
  *
@@ -82,11 +81,11 @@ __BEGIN_DECLS
 struct bu_mapped_file {
     struct bu_list l;
     char *name;		/**< bu_strdup() of file name */
-    genptr_t buf;	/**< In-memory copy of file (may be mmapped)  */
+    void *buf;	/**< In-memory copy of file (may be mmapped)  */
     size_t buflen;	/**< # bytes in 'buf'  */
     int is_mapped;	/**< 1=mmap() used, 0=bu_malloc/fread */
     char *appl;		/**< bu_strdup() of tag for application using 'apbuf'  */
-    genptr_t apbuf;	/**< opt: application-specific buffer */
+    void *apbuf;	/**< opt: application-specific buffer */
     size_t apbuflen;	/**< opt: application-specific buflen */
     time_t modtime;	/**< date stamp, in case file is modified */
     int uses;		/**< # ptrs to this struct handed out */

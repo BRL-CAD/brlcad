@@ -2,13 +2,14 @@
 # if GED command stuff is pushed into the actual subdirs, the autoconf vs cmake
 # verification (sh/cmakecheck.sh) will fail on dist-hook.  For now, just
 # handle it as part of libged
-if(BULLET_FOUND)
+if(BULLET_LIBRARIES)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${BULLET_LIBRARIES})
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
-  # The Bullet headers introduce a lot of shadow warnings - don't stop the
-  # build because of them
-  set(NO_STRICT_CXX_SETTING "NO_STRICT_CXX")
-endif(BULLET_FOUND)
+  add_definitions(-DHAVE_BULLET=1)
+  if(CPP_DLL_DEFINES)
+    add_definitions(-DBULLET_DLL_IMPORTS)
+  endif(CPP_DLL_DEFINES)
+endif(BULLET_LIBRARIES)
 
 if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${ADAPTAGRAMS_LIBRARIES})
@@ -51,7 +52,6 @@ set(LIBGED_SOURCES
   cat.c
   cc.c
   center.c
-  clip.c
   clone.c
   coil.c
   color.c
@@ -75,8 +75,8 @@ set(LIBGED_SOURCES
   debugnmg.c
   decompose.c
   delay.c
-  dg_obj.c
   dir2ae.c
+  display_list.c
   draw.c
   draw_calc.cpp
   dump.c
@@ -100,6 +100,7 @@ set(LIBGED_SOURCES
   facedef.c
   facetize.c
   fb2pix.c
+  fbclear.c
   find.c
   form.c
   fracture.c
@@ -114,12 +115,14 @@ set(LIBGED_SOURCES
   get_solid_kp.c
   get_type.c
   glob.c
-  globals.c
+  gdiff.c
   gqa.c
   grid.c
   grid2model_lu.c
   grid2view_lu.c
   group.c
+  heal.c
+  help/help.cpp
   hide.c
   how.c
   human.c
@@ -130,6 +133,7 @@ set(LIBGED_SOURCES
   isize.c
   item.c
   joint.c
+  joint2.c
   keep.c
   keypoint.c
   kill.c
@@ -137,6 +141,7 @@ set(LIBGED_SOURCES
   killrefs.c
   killtree.c
   label.c
+  lc.c
   list.c
   loadview.c
   lod.c
@@ -146,7 +151,6 @@ set(LIBGED_SOURCES
   lt.c
   m2v_point.c
   make.c
-  make_bb.c
   make_name.c
   make_pnts.c
   match.c
@@ -161,9 +165,16 @@ set(LIBGED_SOURCES
   move_arb_face.c
   mrot.c
   nirt.c
+  nmg.c
+  nmg_make_v.c
+  nmg_mm.c
+  nmg_cmface.c
   nmg_collapse.c
   nmg_fix_normals.c
   nmg_simplify.c
+  nmg_kill_v.c
+  nmg_kill_f.c
+  nmg_move_v.c
   ocenter.c
   open.c
   orient.c
@@ -177,12 +188,11 @@ set(LIBGED_SOURCES
   perspective.c
   pix2fb.c
   plot.c
-  polybinout.c
   pmat.c
   pmodel2view.c
   png.c
+  png2fb.c
   polyclip.cpp
-  pov.c
   prcolor.c
   prefix.c
   preview.c
@@ -205,7 +215,6 @@ set(LIBGED_SOURCES
   regdef.c
   region.c
   remove.c
-  report.c
   rfarb.c
   rmap.c
   rmat.c
@@ -248,14 +257,19 @@ set(LIBGED_SOURCES
   shaded_mode.c
   shader.c
   shells.c
+  shape_recognition.cpp
   showmats.c
-  simulate/simphysics.cpp
-  simulate/simulate.c
-  simulate/simcollisionalgo.cpp
-  simulate/simutils.c
-  simulate/simrt.c
+  simulate/ged_command.cpp
+  simulate/rt_collision_algorithm.cpp
+  simulate/rt_collision_shape.cpp
+  simulate/rt_debug_draw.cpp
+  simulate/rt_instance.cpp
+  simulate/rt_motion_state.cpp
+  simulate/simulation.cpp
+  simulate/utility.cpp
   size.c
   slew.c
+  solid_report.c
   solids_on_ray.c
   sphgroup.c
   summary.c
@@ -288,13 +302,7 @@ set(LIBGED_SOURCES
   vrot.c
   vutil.c
   wcodes.c
-  wdb_comb_std.c
   wdb_importFg4Section.c
-  wdb_nirt.c
-  wdb_obj.c
-  wdb_qray.c
-  wdb_track.c
-  wdb_vdraw.c
   whatid.c
   which.c
   which_shader.c
@@ -312,8 +320,10 @@ set(GED_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${ANALYZE_INCLUDE_DIRS}
+  ${BG_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
+  ${NMG_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
   )
@@ -333,19 +343,23 @@ if(CPP_DLL_DEFINES)
   add_definitions(-DCLIPPER_DLL_IMPORTS)
 endif(CPP_DLL_DEFINES)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" ${NO_STRICT_CXX_SETTING})
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+add_subdirectory(simulate/tests)
 
 set(ged_ignore_files
   TODO
   ged_private.h
   joint.h
   qray.h
-  simulate/simcollisionalgo.h
-  simulate/simrt.h
-  simulate/simulate.h
-  simulate/simutils.h
-  wdb_qray.h
+  simulate/rt_collision_algorithm.hpp
+  simulate/rt_collision_shape.hpp
+  simulate/rt_debug_draw.hpp
+  simulate/rt_motion_state.hpp
+  simulate/rt_instance.hpp
+  simulate/simulation.hpp
+  simulate/utility.hpp
   osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})

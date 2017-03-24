@@ -1,0 +1,18 @@
+Fastgen4 exporter known limitations:
+    1. Does not treat toplevel objects as separate regions
+           - Causes db/goliath.g to exceed FASTGEN's maximum number of GRID
+             entries per SECTION
+    2. Does not support writing the HOLE object
+           - Support for HOLE would allow deprecated CCONE1 objects to be
+             replaced automatically even if they can't be represented by a CCONE2
+           - Note: It is a FASTGEN requirement that objects subtracted using HOLE
+             records be completely enclosed within the containing object
+    3. Proper use of Plate/Volume SECTION modes
+
+
+Design:
+    Facetization is required when geometry can not be directly represented by the
+    FASTGEN format:
+        - Primitives or Boolean operations that can't be represented
+        - Regions containing two or more objects that require different modes
+          (Plate/Volume) for the SECTION

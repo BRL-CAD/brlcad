@@ -1,7 +1,7 @@
 /*                        S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #if defined(HAVE_SYS_TYPES_H)
 #  include <sys/types.h>
@@ -34,12 +33,11 @@
 #if defined(HAVE_SYS_TIME_H)
 #  include <sys/time.h>
 #endif
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/color.h"
 #include "fb.h"
-#include "fbmsg.h"
+#include "vmath.h"
 #include "pkg.h"
 
 
@@ -49,7 +47,7 @@
  * These are the only symbols intended for export to LIBFB users.
  */
 
-FBIO *fb_server_fbp = FBIO_NULL;
+fb *fb_server_fbp = FB_NULL;
 fd_set *fb_server_select_list;
 int *fb_server_max_fd = (int *)NULL;
 int fb_server_got_fb_free = 0;	/* !0 => we have received an fb_free */
@@ -92,7 +90,7 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
     width = pkg_glong(&buf[0*NET_LONG_LEN]);
     height = pkg_glong(&buf[1*NET_LONG_LEN]);
 
-    if (fb_server_fbp == FBIO_NULL) {
+    if (fb_server_fbp == FB_NULL) {
 	/* Attempt to open new framebuffer */
 	if (strlen(&buf[8]) == 0)
 	    fb_server_fbp = fb_open(NULL, width, height);
@@ -102,24 +100,22 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 	/* Use existing framebuffer */
     }
 
-    if (fb_server_fbp == FBIO_NULL) {
+    if (fb_server_fbp == FB_NULL) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], -1);	/* ret */
 	(void)pkg_plong(&rbuf[1*NET_LONG_LEN], 0);
 	(void)pkg_plong(&rbuf[2*NET_LONG_LEN], 0);
 	(void)pkg_plong(&rbuf[3*NET_LONG_LEN], 0);
 	(void)pkg_plong(&rbuf[4*NET_LONG_LEN], 0);
     } else {
+	int selfd = 0;
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], 0);	/* ret */
-	(void)pkg_plong(&rbuf[1*NET_LONG_LEN], fb_server_fbp->if_max_width);
-	(void)pkg_plong(&rbuf[2*NET_LONG_LEN], fb_server_fbp->if_max_height);
-	(void)pkg_plong(&rbuf[3*NET_LONG_LEN], fb_server_fbp->if_width);
-	(void)pkg_plong(&rbuf[4*NET_LONG_LEN], fb_server_fbp->if_height);
-	if (fb_server_fbp->if_selfd > 0 && fb_server_select_list) {
-	    FD_SET(fb_server_fbp->if_selfd, fb_server_select_list);
-	    if (fb_server_max_fd != NULL &&
-		fb_server_fbp->if_selfd > *fb_server_max_fd)
-		*fb_server_max_fd = fb_server_fbp->if_selfd;
-	}
+	(void)pkg_plong(&rbuf[1*NET_LONG_LEN], fb_get_max_width(fb_server_fbp));
+	(void)pkg_plong(&rbuf[2*NET_LONG_LEN], fb_get_max_height(fb_server_fbp));
+	(void)pkg_plong(&rbuf[3*NET_LONG_LEN], fb_getwidth(fb_server_fbp));
+	(void)pkg_plong(&rbuf[4*NET_LONG_LEN], fb_getheight(fb_server_fbp));
+	selfd = fb_set_fd(fb_server_fbp, fb_server_select_list);
+	if (fb_server_max_fd != NULL && selfd > *fb_server_max_fd)
+	    *fb_server_max_fd = selfd;
     }
 
     want = 5*NET_LONG_LEN;
@@ -142,11 +138,9 @@ fb_server_fb_close(struct pkg_conn *pcp, char *buf)
 	(void)fb_flush(fb_server_fbp);
 	(void)pkg_plong(&rbuf[0], 0);		/* return success */
     } else {
-	if (fb_server_fbp->if_selfd > 0 && fb_server_select_list) {
-	    FD_CLR(fb_server_fbp->if_selfd, fb_server_select_list);
-	}
+	(void)fb_clear_fd(fb_server_fbp, fb_server_select_list);
 	(void)pkg_plong(&rbuf[0], fb_close(fb_server_fbp));
-	fb_server_fbp = FBIO_NULL;
+	fb_server_fbp = FB_NULL;
     }
     /* Don't check for errors, SGI linger mode or other events
      * may have already closed down all the file descriptors.
@@ -176,7 +170,7 @@ fb_server_fb_free(struct pkg_conn *pcp, char *buf)
 	(void)pkg_plong(&rbuf[0], -1);
     } else {
 	(void)pkg_plong(&rbuf[0], fb_free(fb_server_fbp));
-	fb_server_fbp = FBIO_NULL;
+	fb_server_fbp = FB_NULL;
     }
 
     if (pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)
@@ -227,8 +221,8 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 	if (scanbuf != NULL)
 	    free((char *)scanbuf);
 	buflen = num*sizeof(RGBpixel);
-	if (buflen < 1024*sizeof(RGBpixel))
-	    buflen = 1024*sizeof(RGBpixel);
+	V_MAX(buflen, 1024*sizeof(RGBpixel));
+
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_read: malloc failed!");
 	    if (buf) (void)free(buf);
@@ -238,7 +232,8 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
     }
 
     ret = fb_read(fb_server_fbp, x, y, scanbuf, num);
-    if (ret < 0) ret = 0;		/* map error indications */
+    V_MAX(ret, 0);		/* map error indications */
+
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret*sizeof(RGBpixel), pcp);
     if (buf) (void)free(buf);
@@ -297,8 +292,8 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 	if (scanbuf != NULL)
 	    free((char *)scanbuf);
 	buflen = num*sizeof(RGBpixel);
-	if (buflen < 1024*sizeof(RGBpixel))
-	    buflen = 1024*sizeof(RGBpixel);
+	V_MAX(buflen, 1024*sizeof(RGBpixel));
+
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_read: malloc failed!");
 	    if (buf) (void)free(buf);
@@ -308,7 +303,8 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
     }
 
     ret = fb_readrect(fb_server_fbp, xmin, ymin, width, height, scanbuf);
-    if (ret < 0) ret = 0;		/* map error indications */
+    V_MAX(ret, 0);		/* map error indications */
+
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret*sizeof(RGBpixel), pcp);
     if (buf) (void)free(buf);
@@ -370,8 +366,8 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 	if (scanbuf != NULL)
 	    free((char *)scanbuf);
 	buflen = num;
-	if (buflen < 1024)
-	    buflen = 1024;
+	V_MAX(buflen, 1024);
+
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_bwreadrect: malloc failed!");
 	    if (buf) (void)free(buf);
@@ -381,7 +377,8 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
     }
 
     ret = fb_bwreadrect(fb_server_fbp, xmin, ymin, width, height, scanbuf);
-    if (ret < 0) ret = 0;		/* map error indications */
+    V_MAX(ret, 0);		/* map error indications */
+
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret, pcp);
     if (buf) (void)free(buf);

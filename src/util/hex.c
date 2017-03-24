@@ -1,7 +1,7 @@
 /*                            H E X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,10 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/str.h"
+#include "bu/exit.h"
 
 
 /* declarations to support use of bu_getopt() system call */
@@ -131,6 +134,9 @@ main(int ac, char **av)
     FILE *fd;
     char *eos;
     off_t newoffset;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command. It has been superseded by hexdump.\n\n");
+    sleep(1);
 
     progname = *av;
 

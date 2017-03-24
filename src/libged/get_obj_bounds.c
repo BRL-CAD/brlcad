@@ -1,7 +1,7 @@
 /*                         G E T _ O B J _ B O U N D S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,15 +27,15 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
+#include "bu/str.h"
 #include "ged.h"
 
 #include "./ged_private.h"
 
 
 int
-_ged_get_obj_bounds(struct ged *gedp,
+ged_get_obj_bounds(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
 		    int use_air,
@@ -183,7 +183,7 @@ get_objpath_mat(struct ged *gedp,
 	char *av0;
 	gtdp->gtd_objpos = 0;
 
-	av0 = strdup(argv[0]);
+	av0 = bu_strdup(argv[0]);
 	tok = strtok(av0, "/");
 	while (tok) {
 	    if ((gtdp->gtd_obj[gtdp->gtd_objpos++] =
@@ -211,7 +211,7 @@ get_objpath_mat(struct ged *gedp,
     }
 
     MAT_IDN(gtdp->gtd_xform);
-    _ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp, 1);
+    ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp, 1);
 
     return GED_OK;
 }

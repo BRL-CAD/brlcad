@@ -1,7 +1,7 @@
 #                  S H A D E R E D I T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2014 United States Government as represented by
+# Copyright (c) 2006-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,10 +19,6 @@
 #
 ###
 #
-# Author(s):
-#    Bob Parker
-#
-# Description:
 #    The class for editing shader parameters within Archer.
 #
 ##############################################################
@@ -86,6 +82,7 @@
 	}
 
 	common SHADER_TYPES {
+	    phong
 	    plastic
 	    mirror
 	    glass
@@ -1104,6 +1101,7 @@
 	-command [::itcl::code $this delete_shader "stk_$index"]
 
     switch -- $stype {
+	phong -
 	plastic {
 	    build_plastic $parent stk_$index
 	    set addspec [list plastic {}]
@@ -1371,6 +1369,7 @@
     set stackParams(env_$index,name) $stype
 
     switch -- $stype {
+	phong -
 	plastic {
 	    build_plastic $parent env_$index
 	    set addspec [list plastic {}]
@@ -1781,6 +1780,9 @@
 #
 ::itcl::body ShaderEdit::changeShader {} {
     switch -- $shaderSpec {
+	"Phong" {
+	    set stype plastic
+	}
 	"Plastic" {
 	    set stype plastic
 	}
@@ -2345,6 +2347,7 @@
 	    -command [::itcl::code $this delete_shader "stk_$index"]
 
 	switch -- $stype {
+	    phong -
 	    plastic {
 		build_plastic $parent stk_$index
 		updateForm_plastic $subspec stk_$index
@@ -2433,6 +2436,7 @@
     set stackParams(env_$index,name) $stype
 
     switch -- $stype {
+	phong -
 	plastic {
 	    build_plastic $parent env_$index
 	    updateForm_plastic $subspec env_$index

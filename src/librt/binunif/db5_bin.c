@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,23 +29,19 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h> /* for ntohl/htonl */
-#endif
 #include "bio.h"
+#include "bnetwork.h"
 
 
 #include "bu/cv.h"
 #include "bu/parse.h"
 #include "vmath.h"
-#include "db5.h"
-#include "rtgeom.h"
+#include "rt/db5.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
 
 
 /* size of each element (in bytes) for the different BINUNIF types */
@@ -132,7 +128,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
     /*
      * There's no particular size to expect
      *
-     * BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4);
+     * BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 3*4);
      */
 
     RT_CK_DB_INTERNAL(ip);
@@ -178,7 +174,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 	    out_cookie = bu_cv_cookie("hus");
 	    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
 		gotten =
-		    bu_cv_w_cookie((genptr_t)bip->u.uint8, out_cookie,
+		    bu_cv_w_cookie((void *)bip->u.uint8, out_cookie,
 				   ep->ext_nbytes,
 				   ep->ext_buf, in_cookie, bip->count);
 		if (gotten != bip->count) {
@@ -282,7 +278,7 @@ rt_binunif_export5(struct bu_external		*ep,
 		gotten =
 		    bu_cv_w_cookie(ep->ext_buf, out_cookie,
 				   ep->ext_nbytes,
-				   (genptr_t) bip->u.uint8, in_cookie,
+				   (void *) bip->u.uint8, in_cookie,
 				   bip->count);
 
 		if (gotten != bip->count) {
@@ -378,7 +374,7 @@ rt_binunif_describe(struct bu_vls *str,
 void
 rt_binunif_free(struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
-    bu_free((genptr_t) bip->u.uint8, "binunif free uint8");
+    bu_free((void *) bip->u.uint8, "binunif free uint8");
     bu_free(bip, "binunif free");
     bip = NULL; /* sanity */
 }
@@ -396,9 +392,9 @@ rt_binunif_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
     RT_CK_BINUNIF(bip);
-    bu_free((genptr_t) bip->u.uint8, "binunif ifree");
+    bu_free((void *) bip->u.uint8, "binunif ifree");
     bu_free(ip->idb_ptr, "binunif ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
@@ -445,7 +441,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 	rt_binunif_dump(bip);
 
     if (RT_G_DEBUG & DEBUG_VOL)
-	bu_log("cmd_export_body() thinks bip->count=%zu\n",
+	bu_log("rt_retrieve_binunif thinks bip->count=%zu\n",
 	       bip->count);
 
     switch (bip->type) {
@@ -506,7 +502,7 @@ rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_meth = ftp;
     BU_ALLOC(bip, struct rt_binunif_internal);
 
-    intern->idb_ptr = (genptr_t) bip;
+    intern->idb_ptr = (void *) bip;
     bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
     bip->type = DB5_MINORTYPE_BINU_8BITINT;
     bip->count = 0;
@@ -669,52 +665,54 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 		intern->idb_type = new_type;
 	    }
 	} else if (BU_STR_EQUAL(argv[0], "D")) {
-	    Tcl_Obj *obj, *list, **obj_array;
 	    int list_len;
+	    const char **obj_array;
 	    unsigned char *buf, *d;
-	    char *s;
+	    const char *s;
 	    int hexlen;
 	    unsigned int h;
 
-	    obj = Tcl_NewStringObj(argv[1], -1);
-	    list = Tcl_NewListObj(0, NULL);
-	    Tcl_ListObjAppendList(brlcad_interp, list, obj);
-	    (void)Tcl_ListObjGetElements(brlcad_interp, list, &list_len, &obj_array);
+	    /* split initial list */
+	    if (bu_argv_from_tcl_list(argv[1], &list_len, (const char ***)&obj_array) != 0) {
+		return -1;
+	    }
 
 	    hexlen = 0;
 	    for (i = 0; i < (size_t)list_len; i++) {
-		hexlen += Tcl_GetCharLength(obj_array[i]);
+		hexlen += strlen(obj_array[i]);
 	    }
 
 	    if (hexlen % 2) {
 		bu_vls_printf(logstr, "Hex form of binary data must have an even number of hex digits");
+		bu_free((char *)obj_array, "obj array");
 		return BRLCAD_ERROR;
 	    }
 
 	    buf = (unsigned char *)bu_malloc(hexlen / 2, "tcladjust binary data");
 	    d = buf;
 	    for (i = 0; i < (size_t)list_len; i++) {
-		s = Tcl_GetString(obj_array[i]);
+		s = obj_array[i];
 		while (*s) {
 		    sscanf(s, "%2x", &h);
 		    *d++ = h;
 		    s += 2;
 		}
 	    }
-	    Tcl_DecrRefCount(list);
 
 	    if (bip->u.uint8) {
 		bu_free(bip->u.uint8, "binary data");
 	    }
 	    bip->u.uint8 = buf;
 	    bip->count = hexlen / 2 / binu_sizes[bip->type];
+
+	    bu_free((char *)obj_array, "obj array");
 	}
 
 	argc -= 2;
 	argv += 2;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 /*

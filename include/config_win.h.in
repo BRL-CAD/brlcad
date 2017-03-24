@@ -1,7 +1,7 @@
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,16 +74,11 @@
 #define HAVE_GL_GL_H		1
 #define HAVE_IO_H		1
 #define HAVE_MEMORY_H		1
-#define HAVE_MEMSET		1
 #define HAVE_OFF_T		1
 #define HAVE_PROCESS_H  	1
 #define HAVE_PUTENV     	1
 #define HAVE_REGEX_H		1
 #define HAVE_SIG_T		1
-#define HAVE_STRCHR		1
-#define HAVE_STRDUP		1
-#define HAVE_STRDUP_DECL	1
-#define HAVE_STRTOK		1
 #define HAVE_SYS_STAT_H		1
 #define HAVE_SYS_TYPES_H	1
 #define HAVE_TIME		1
@@ -97,6 +92,12 @@
 
 #define YY_NO_UNISTD_H		1
 #define YYTOKENTYPE		1
+
+/* it we're compiling c++ sources, there's a possibility that we'll be
+ * including libc++ headers (e.g., iostream) where these underscore IO
+ * function hacks become counterproductive.
+ */
+#ifndef __cplusplus
 
 /*
  * functions declared in io.h
@@ -116,23 +117,33 @@
 /* #define mktemp _mktemp */
 #define open _open
 #define unlink _unlink
-/* why not just #define pipe _pipe? */
+
+/* io.h's _pipe func takes different args */
 #define pipe(_FD) (_pipe((_FD), 256, _O_TEXT))
+
 #define read _read
 #define setmode _setmode
 /* #define tell _tell */
+#define tzset _tzset
 #define umask _umask
 #define write _write
+
+#endif /* __cplusplus */
 
 /*
  * other functions declared elsewhere (many in stdio.h)
  */
 
 #define nextafter _nextafter
-#define nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)
-#define nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
-#define	isnan _isnan
-#define isinf(x) (!_finite(x))
+
+/* FIXME: this will be wildly wrong for any values far from 1.0 */
+#cmakedefine nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)
+
+/* FIXME: this will be wildly wrong for any values far from 1.0 */
+#cmakedefine nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
+
+#cmakedefine isnan _isnan
+#cmakedefine isinf(x) (!_finite(x))
 #cmakedefine asinh(x) (log(x + sqrt(x * x + 1)))
 #define execvp _execvp
 #define fdopen _fdopen
@@ -143,8 +154,6 @@
 #define pclose _pclose
 #define popen _popen
 #define putenv _putenv
-#define snprintf _snprintf
-#define snprintf _snprintf
 #define sopen _sopen
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
@@ -152,6 +161,10 @@
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
 #define getcwd _getcwd
+
+#if !defined(HAVE_STRTOLL) && defined(HAVE__STRTOI64)
+#  define strtoll _strtoi64
+#endif
 
 /* set up stat */
 #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
@@ -174,7 +187,7 @@
 #   define lseek _lseek
 #endif
 
-#define fmax __max
+#cmakedefine fmax __max
 #define ioctl ioctlsocket
 
 #define SHARED_PTR_BOOST	1
@@ -295,8 +308,7 @@ typedef int mode_t;
 
 #define fork() -1
 #define getprogname() _pgmptr
-#define rint(_X) (floor((_X) + 0.5))
-#define lrint(_X) (long int)(floor((_X) + 0.5))
+#cmakedefine rint(_X) (floor((_X) + 0.5))
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
 
 #ifndef __cplusplus

@@ -1,7 +1,7 @@
 /*                           H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,10 +40,10 @@
 /* interface headers */
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "../../librt_private.h"
 
@@ -197,7 +197,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &OBJ[ID_HYP];
 
     hyp =  hyp_internal_to_specific(hyp_ip);
-    stp->st_specific = (genptr_t)hyp;
+    stp->st_specific = (void *)hyp;
 
     /* calculate bounding sphere */
     VMOVE(stp->st_center, hyp->hyp_V);
@@ -543,7 +543,7 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	* (atan2(-hitp->hit_vpriv[X] * hyp->hyp_r2, hitp->hit_vpriv[Y] * hyp->hyp_r1) + M_PI);
 
     /* v ranges (0, 1) on each plate */
-    switch(hitp->hit_surfno) {
+    switch (hitp->hit_surfno) {
 	case HYP_NORM_BODY:
 	    /* v = (z + Hmag) / (2*Hmag) */
 	    uvp->uv_v = (hitp->hit_vpriv[Z] + hyp->hyp_Hmag) / (2.0 * hyp->hyp_Hmag);
@@ -700,10 +700,12 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime;
     fastf_t **ellipses = NULL;
     fastf_t theta_new;
-    int *pts_dbl, face, i, j, nseg;
-    int jj, nell;
-    mat_t invRoS;
-    mat_t SoR;
+    int *pts_dbl;
+    int idx;
+    size_t face, i, j, nseg;
+    size_t jj, nell;
+    mat_t invRoS = MAT_INIT_IDN;
+    mat_t SoR = MAT_INIT_IDN;
     struct rt_hyp_internal *iip;
     struct hyp_specific *xip;
     struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
@@ -716,9 +718,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex ***vells = (struct vertex ***)NULL;
     vect_t A, Au, B, Bu, Hu, V;
     struct bu_ptbl vert_tab;
-
-    MAT_ZERO(invRoS);
-    MAT_ZERO(SoR);
 
     RT_CK_DB_INTERNAL(ip);
     iip = (struct rt_hyp_internal *)ip->idb_ptr;
@@ -917,18 +916,17 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     vells = (struct vertex ***)
 	bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
     j = nseg;
-    for (i = nell-1; i >= 0; i--) {
-	vells[i] = (struct vertex **)
-	    bu_malloc(j*sizeof(struct vertex *), "vertex []");
+    for (i = 0; i < nell; i++) {
+	vells[i] = (struct vertex **)bu_malloc(j*sizeof(struct vertex *), "vertex []");
 	if (i && pts_dbl[i])
-	    j /= 2;
+	    j /=2;
     }
 
     /* top face of hyp */
     for (i = 0; i < nseg; i++)
 	vells[nell-1][i] = (struct vertex *)NULL;
     face = 0;
-    BU_ASSERT_PTR(outfaceuses, !=, NULL);
+    BU_ASSERT(outfaceuses != NULL);
     if ((outfaceuses[face++] = nmg_cface(s, vells[nell-1], nseg)) == 0) {
 	bu_log("rt_hyp_tess() failure, top face\n");
 	goto fail;
@@ -958,12 +956,12 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* connect ellipses with triangles */
 
-    for (i = nell-2; i >= 0; i--) {
+    for (idx = nell-2; idx >= 0; idx--) {
 	/* skip top ellipse */
 	int bottom, top;
 
-	top = i + 1;
-	bottom = i;
+	top = idx + 1;
+	bottom = idx;
 	if (pts_dbl[top])
 	    nseg /= 2;	/* # segs in 'bottom' ellipse */
 	vertp[0] = (struct vertex *)0;
@@ -1047,7 +1045,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     for (i = 0; i < nseg; i++)
 	vells[0][i] = (struct vertex *)NULL;
 
-    BU_ASSERT_PTR(outfaceuses, !=, NULL);
+    BU_ASSERT(outfaceuses != NULL);
     if ((outfaceuses[face++] = nmg_cface(s, vells[0], nseg)) == 0) {
 	bu_log("rt_hyp_tess() failure, top face\n");
 	goto fail;
@@ -1090,13 +1088,13 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, face, tol);
+    nmg_gluefaces(outfaceuses, face, &RTG.rtg_vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1);
+    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
 
     /* free mem */
     if (outfaceuses)
@@ -1113,8 +1111,8 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_free((char *)vells, "vertex [][]");
 
     /* Assign vertexuse normals */
-    nmg_vertex_tabulate(&vert_tab, &s->l.magic);
-    for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
+    nmg_vertex_tabulate(&vert_tab, &s->l.magic, &RTG.rtg_vlfree);
+    for (i = 0; i < BU_PTBL_LEN(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
 	struct vertex_g *vg;
@@ -1195,7 +1193,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3 * 4);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 3 * 4);
 
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1335,7 +1333,7 @@ rt_hyp_ifree(struct rt_db_internal *ip)
     hyp_ip->hyp_magic = 0;			/* sanity */
 
     bu_free((char *)hyp_ip, "hyp ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

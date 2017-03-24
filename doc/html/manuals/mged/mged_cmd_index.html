@@ -110,8 +110,6 @@
 <FONT SIZE=2><P></FONT><A HREF="#cpi"><FONT SIZE=2>cpi</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#d"><FONT SIZE=2>d</FONT></A></TD>
-<TD WIDTH="22%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#dall"><FONT SIZE=2>dall</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#db"><FONT SIZE=2>db</FONT></A></TD>
 </TR>
@@ -165,8 +163,6 @@
 <FONT SIZE=2><P></FONT><A HREF="#em"><FONT SIZE=2>em</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#erase"><FONT SIZE=2>erase</FONT></A></TD>
-<TD WIDTH="22%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#erase_all"><FONT SIZE=2>erase_all</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#ev"><FONT SIZE=2>ev</FONT></A></TD>
 </TR>
@@ -174,8 +170,6 @@
 <FONT SIZE=2><P></FONT><A HREF="#exit"><FONT SIZE=2>exit</FONT></A></TD>
 <TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#expand"><FONT SIZE=2>expand</FONT></A></TD>
-<TD WIDTH="20%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#export_body"><FONT SIZE=2>export_body</FONT></A></TD>
 <TD WIDTH="22%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#expand_comb"><FONT SIZE=2>expand_comb</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
@@ -200,6 +194,8 @@
 <FONT SIZE=2><P></FONT><A HREF="#garbage_collect"><FONT SIZE=2>garbage_collect</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#gui"><FONT SIZE=2>gui</FONT></A></TD>
+<TD WIDTH="20%" VALIGN="MIDDLE">
+<FONT SIZE=2><P></FONT><A HREF="#heal"><FONT SIZE=2>heal</FONT></A></TD>
 <TD WIDTH="22%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#help"><FONT SIZE=2>help</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
@@ -260,9 +256,7 @@
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#make"><FONT SIZE=2>make</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#make_bb"><FONT SIZE=2>make_bb</FONT></A></TD>
-<TD WIDTH="19%" VALIGN="MIDDLE">
+<TR><TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#mater"><FONT SIZE=2>mater</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#matpick"><FONT SIZE=2>matpick</FONT></A></TD>
@@ -309,15 +303,9 @@
 <TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#permute"><FONT SIZE=2>permute</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#pl"><FONT SIZE=2>pl</FONT></A></TD>
-<TD WIDTH="22%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#plot"><FONT SIZE=2>plot</FONT></A></TD>
-<TD WIDTH="21%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#polybinout"><FONT SIZE=2>polybinout</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#pov"><FONT SIZE=2>pov</FONT></A></TD>
-<TD WIDTH="19%" VALIGN="MIDDLE">
+<TR><TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#prcolor"><FONT SIZE=2>prcolor</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#prefix"><FONT SIZE=2>prefix</FONT></A></TD>
@@ -475,9 +463,6 @@
 <FONT SIZE=2><P></FONT><A HREF="#vnirt"><FONT SIZE=2>vnirt</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#vquery_ray"><FONT SIZE=2>vquery_ray</FONT></A></TD>
-<TD WIDTH="22%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#vrmgr"><FONT SIZE=2>vrmgr</FONT></A></TD>
-<TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#vrot"><FONT SIZE=2>vrot</FONT></A></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="MIDDLE">
@@ -841,7 +826,7 @@
 -- Create a toplevel window named .t. </P>
 <P><BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>attach -t 0 -S 800 -n .t.ogl ogl</B> <BR>
--- Open a 800x800 OpenGl display window named .t.ogl that is not a top-level window.</P>
+-- Open a 800x800 OpenGL display window named .t.ogl that is not a top-level window.</P>
 <P><BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>button .t.dismiss -text Dismiss -command "release .t.ogl; destroy .t"</B> <BR>
 -- Create a button to dismiss the display manager etc. </P>
@@ -1100,20 +1085,12 @@
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="d"></A>d</B> <I>&lt;objects</I>&gt;</DT>
-<DD>The &quot;d&quot; command deletes the specified list of objects from the <I>mged</I> display.  This is a synonym for the <A HREF="#erase">erase</A> command.  Only objects that have been explicitly displayed may be deleted with the &quot;d&quot; command (use the <A HREF="#who">who</A> command to see a list of explicitly displayed objects).  Objects that are displayed as members of explicitly displayed combinations cannot be deleted from the display with this command (see <A HREF="#dall">dall</A> or <A HREF="#erase_all">erase_all</A>).  Note that this has no effect on the <I>BRL-CAD</I> database itself. To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
+<DD>The &quot;d&quot; command deletes the specified list of objects from the <I>mged</I> display.  This is a synonym for the <A HREF="#erase">erase</A> command.  Only objects that have been explicitly displayed may be deleted with the &quot;d&quot; command (use the <A HREF="#who">who</A> command to see a list of explicitly displayed objects).  Objects that are displayed as members of explicitly displayed combinations cannot be deleted from the display with this command (see <A HREF="#erase">erase -r</A>).  Note that this has no effect on the <I>BRL-CAD</I> database itself. To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>d region1 shapea</DD>
 </DL>
 </B><FONT SIZE=2><P>-- Delete <I>region1</I> and <I>shapea</I> from the <I>mged</I> display. </P>
 
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="dall"></A>dall</B> <I>&lt;objects</I>&gt;</DT>
-<DD>The &quot;dall&quot; command deletes the specified list of objects from the <I>mged</I> display.  This is a synonym for the <A HREF="#erase_all">erase_all</A> command.  This command will allow the user to delete objects that have not been explicitly displayed (unlike the <A HREF="#d">d</A> command).  Note that this has no effect on the <I>BRL-CAD</I> database itself.  To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>dall region1 shapea</DD>
-</DL>
-</B><FONT SIZE=2><P>-- Delete <I>region1</I> and <I>shapea</I> from the <I>mged</I> display. </P>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="db"></A>db</B> <I>command</I> [<I>args...</I>]</DT>
@@ -1474,17 +1451,9 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <DD><HR ALIGN="RIGHT"></DD></DIR>
 
 <B><DT>erase</B> <I>&lt;objects</I>&gt;</DT>
-<DD>The &quot;erase&quot; command deletes the specified list of objects from the MGED<I> </I>display.  This is a synonym for the <A HREF="#d">d</A> command.  Only objects that have been explicitly displayed may be deleted with the &quot;erase&quot; command (use the <A HREF="#who">who</A> command to see a list of explicitly displayed objects).  Objects that are displayed as members of explicitly displayed combinations cannot be deleted from the display with this command (see <A HREF="#dall">dall</A> or <A HREF="#erase_all">erase_all</A>).  Note that this has no effect on the <I>BRL-CAD</I> database itself.  To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
+<DD>The &quot;erase&quot; command deletes the specified list of objects from the MGED<I> </I>display.  This is a synonym for the <A HREF="#d">d</A> command.  Only objects that have been explicitly displayed may be deleted with the &quot;erase&quot; command (use the <A HREF="#who">who</A> command to see a list of explicitly displayed objects).  Objects that are displayed as members of explicitly displayed combinations cannot be deleted from the display with this command (see <A HREF="#erase">erase -r</A>).  Note that this has no effect on the <I>BRL-CAD</I> database itself.  To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>erase region1 shapea</DD>
-</DL>
-</B><FONT SIZE=2><P>-- Delete <I>region1</I> and <I>shapea</I> from the MGED display. </P>
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="erase_all"></A>erase_all</B> <I>&lt;objects</I>&gt;</DT>
-<DD>The &quot;erase_all&quot; command deletes the specified list of objects from the MGED display. This is a synonym for the <A HREF="#dall">dall</A> command.  This command will allow the user to delete objects that have not been explicitly displayed (unlike the <A HREF="#d">d</A> or <A HREF="#erase">erase</A> commands).  Note that this has no effect on the <I>BRL-CAD</I> database itself. To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>erase_all region1 shapea</DD>
 </DL>
 </B><FONT SIZE=2><P>-- Delete <I>region1</I> and <I>shapea</I> from the MGED display. </P>
 <P><HR ALIGN="RIGHT"></P>
@@ -1502,7 +1471,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <I><LI>t</I> -- Perform CSG-to-tNURBS conversion (still under development). </LI>
 <I><LI>v</I> -- Shade using per-vertex normals, when present. </LI>
 <I><LI>u</I> -- Draw </FONT><A HREF="#NMG"><FONT SIZE=2>NMG</FONT></A><FONT SIZE=2> edgeuses (for debugging). </LI>
-<I><LI>S</I> -- Draw tNURBs with trimming curves only, no surfaces. </LI>
+<I><LI>S</I> -- Draw tNURBS with trimming curves only, no surfaces. </LI>
 <I><LI>T</I> -- Do not triangulate after evaluating the Boolean (may produce unexpected results if not used with the <I>w</I> option). </LI>
 <I><LI>P</I># -- Use # processors in parallel. Default=1. </LI>
 <I><LI>r</I> -- Draw all objects in red. Useful for examining objects colored black. </LI>
@@ -1536,13 +1505,6 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Display a list of all database object names that end in &quot;.r&quot;. </P>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="export_body"></A>export_body <I>object file </DT>
-</B></I><DD>The &quot;export_body&quot; command is used to copy the contents of the specified binary <I>object</I> into the specified <I>file</I>.  Currently, only binary objects containing a uniform array of simple objects is supported. </DD>
-<DT></DT>
-<FONT SIZE=4><DD>Examples: </DD>
-</FONT><TT><DD>mged&gt;</TT> <B>export_body bin_chars /home/fred/chars</DD>
-</B><DD>-- Copy the contents of &quot;bin_chars&quot; into the file &quot;/home/fred/chars&quot;</DD>
-<DT><HR ALIGN="RIGHT"></DT>
 <DT><b><a name="expand_comb"></a>expand_comb <i>prefix comb ...</i></DT>
 <DD>The <i>expand_comb</i> will create a new combination object <i>prefix</i>.
 For each Boolean node in the original tree of the combination a new
@@ -1753,6 +1715,16 @@ foo.r_xpand/R
 <FONT SIZE=2><P>Print the help message.</FONT></TD>
 </TR>
 </TABLE>
+
+<FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
+</FONT><B><DL>
+<DT><A NAME="heal"></A>heal</B> [<I>command</I>]</DT>
+<DD><P>The &quot;heal&quot; command takes in the bot as input along with the tolerances. As of now, it takes the tolerance only for zippering. </P>
+
+<P>The healing essentially comprises only of zippering now, but more features will be added later on. The algorithm cannot support non-manifold meshes (those containing singular vertices or edges). The bots need not be oriented, the algorithm takes care of that. </P></DD>
+<FONT SIZE=4><DT>Examples:</DT>
+</FONT><TT><DD>mged&gt;</TT> <B>heal samplebot.s 47.3</DD>
+</DL>
 
 <FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
@@ -2166,16 +2138,6 @@ foo.r_xpand/R
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="make_bb"></A>make_bb</B> [-u] <I>new_shape_name</I> &lt;<I>objects|paths</I>&gt;</DT>
-<DD>The &quot;make_bb&quot; (make bounding box) command builds a single axis-aligned rectangular parallelepiped (RPP) that will contain the <I>objects</I> and <I>paths</I> specified.  The <I>paths</I> will include any transformation matrices that accumulate from <A HREF="#COMBINATION">combinations</A> along the path.  The <A HREF="#listeval">listeval</A> command may be used to see the effect of transformation matrices along a path.  The optional -u argument indicates that regions which have the <i>air</i> flag set should be retained, not discarded as is the default.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>make_bb new_bb shapea group1/region3</DD>
-</DL><DIR>
-
-</B><FONT SIZE=2><P>-- Create an RPP named <I>new_bb</I> that is large enough to contain <I>shapea</I> and <I>group1/region3.</I> </P></DIR>
-
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
 <DT><A NAME="mater"></A>mater</B> <I>combination</I> [<I>shader_parameters</I>[<I>RGB</I> [<I>inheritance</I>]]]</DT>
 <DD>The &quot;mater&quot; command assigns <A HREF="#SHADER">shader</A> parameters, <A HREF="#RGB">RGB</A> color, and <A HREF="#INHERITANCE">inheritance</A> to an existing combination.  The information may be included on the command line; otherwise the user will be prompted for it.  Some available shaders are:</DD>
 </DL>
@@ -2390,22 +2352,12 @@ foo.r_xpand/R
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="permute"></A>permute</B> <I>tuple</DT>
-</I><DD>The &quot;permute&quot; command permutes the vertex labels for the face of an <A HREF="#ARB">ARB</A> shape that is currently being edited.  The <I>tuple</I> indicates which face is affected and also indicates the desired result.  The tuple is formed by concating the list of vertex numbers for the face in the order desired such that the first vertex listed will become vertex number one (and therefore the default <A HREF="#keypoint">keypoint</A>).  Only a sufficient number of vertices to disambiguate need be included in the tuple.  Note that this has no effect on the geometry of the <I>ARB</I>, but may affect any texture mapping involving this shape.</DD>
+</I><DD>The &quot;permute&quot; command permutes the vertex labels for the face of an <A HREF="#ARB">ARB</A> shape that is currently being edited.  The <I>tuple</I> indicates which face is affected and also indicates the desired result.  The tuple is formed by concatting the list of vertex numbers for the face in the order desired such that the first vertex listed will become vertex number one (and therefore the default <A HREF="#keypoint">keypoint</A>).  Only a sufficient number of vertices to disambiguate need be included in the tuple.  Note that this has no effect on the geometry of the <I>ARB</I>, but may affect any texture mapping involving this shape.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>permute 321</DD>
 </DL><DIR>
 
 </B><FONT SIZE=2><P>-- Rearrange the vertices of the currently edited <I>ARB</I> such that vertex #3 becomes vertex #1, vertex #2 remains #2, and vertex #1 becomes #3. </P></DIR>
-
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="pl"></A>pl</B> [<I>-float</I>] [<I>-zclip</I>] [<I>-2d</I>] [<I>-grid</I>] <I>out_file</I> | &quot;|&quot; <I>filter</DT>
-</I><DD>The &quot;pl&quot; command creates a UNIX plot of the current MGED display.  If an <I>output_file</I> is specified, the plot is stored in that file.  If a <I>filter</I> is specified, the output is sent to that <I>filter</I>.  The <I>-float</I> option requests a plot file with real numbers rather than integers.  The <I>-zclip</I> option requests that the plot be clipped to the viewing cube in the Z-direction.  The <I>-2d</I> option requests a two-dimensional plot (the default is 3D). The <I>-grid</I> option is intended to include a grid in the plot, but is currently not implemented.  This command uses the <I>dm-plot</I> display manager.  The <A HREF="#plot">plot</A> command performs the same function, but does not use the <I>dm-plot</I> display manager.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>pl -float | pldebug</DD>
-</DL><DIR>
-
-</B><FONT SIZE=2><P>-- Create a UNIX plot of the current MGED display and pipe the results to the <I>pldebug</I> command.</P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
@@ -2417,15 +2369,6 @@ foo.r_xpand/R
 
 </B><FONT SIZE=2><P>-- Create a UNIX plot of the current MGED display and pipe the results to the <I>pldebug</I> command. </P></DIR>
 
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="polybinout"></A>polybinout</B> <I>file</DT>
-</I><DD>Store vlist polygons into polygon file (experimental).</DD>
-</DL>
-<FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="pov"></A>pov</B> <I>args</DT>
-</I><DD>Set the point-of-view (experimental).</DD>
 </DL>
 <FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
@@ -3547,15 +3490,6 @@ All textual arguments may be abbreviated by their first letter. </P>
 <DT><A NAME="vquery_ray"></A>vquery_ray</B> <I>x y</DT>
 </I><DD>Same as <A HREF="#vnirt">vnirt</A>.</DD>
 </DL>
-<FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="vrmgr"></A>vrmgr</B> <I>host</I> {<I>master</I> | <I>slave</I> | <I>overview</I>}</DT>
-<DD>The &quot;vrmgr&quot; command establishes a link between the current MGED display and a <I>vrmgr</I> process running on the specified <I>host</I>.  The <I>vrmgr</I> program is a manager for virtual reality displays using MGED.  The <I>vrmgr</I> process must be started on <I>host</I> prior to executing the <I>vrmgr</I> command in MGED.  The second command line argument to the <I>vrmgr</I> command is the role of the current MGED display.  The <I>master</I> display controls the viewing parameters of itself and all the <I>slave</I> displays.  The <I>overview</I> display acts as an observer of the entire virtual reality process.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>vrmgr host1.brlcad.org master</DD>
-</DL><DIR>
-
-</B><FONT SIZE=2><P>-- Set the current MGED display as the <I>master</I> for the <I>vrmgr</I> process running on the host named <I>host1.brlcad.org.</I> </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>

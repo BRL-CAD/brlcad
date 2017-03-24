@@ -1,7 +1,7 @@
 /*                 Factory.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,7 +63,6 @@ void Factory::Print()
 {
     FACTORYMAP &methodmap = GetMap();
 
-    FACTORYMAP::iterator i;
     std::cout << "Map size: " << methodmap.size() << std::endl;
 
     for (FACTORYMAP::iterator ii = methodmap.begin(); ii != methodmap.end(); ++ii) {

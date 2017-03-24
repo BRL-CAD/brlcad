@@ -1,7 +1,7 @@
 /*                        G I F - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,9 +70,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "bio.h"
+#include <limits.h>
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/exit.h"
+#include "vmath.h"
 #include "fb.h"
 
 
@@ -89,7 +94,7 @@ static int image = 0;		/* # of image to display (0 => all) */
 static char *gif_file = NULL;	/* GIF file name */
 static FILE *gfp = NULL;		/* GIF input stream handle */
 static char *fb_file = NULL;	/* frame buffer name */
-static FBIO *fbp = FBIO_NULL;	/* frame buffer handle */
+static fb *fbp = FB_NULL;	/* frame buffer handle */
 static int ht;			/* virtual frame buffer height */
 static int width, height;		/* overall "screen" size */
 static int write_width;		/* used width of screen, <= width */
@@ -97,7 +102,7 @@ static int left, top, right, bottom;	/* image boundary */
 static bool_t M_bit;			/* set if color map provided */
 static bool_t I_bit;			/* set if image interlaced */
 static int cr;			/* # bits of color resolution */
-static int cr_mask;		/* mask to strip all but high cr bits */
+static unsigned cr_mask;		/* mask to strip all but high cr bits */
 static int g_pixel;		/* global # bits/pixel in image */
 static int pixel;			/* local # bits/pixel in image */
 static int background;		/* color index of screen background */
@@ -112,7 +117,7 @@ static RGBpixel *cmap;			/* bu_malloc()ed local color map */
 
 /* in ioutil.c */
 void Message(const char *format, ...);
-void Fatal(FBIO *fbiop, const char *format, ...);
+void Fatal(fb *fbiop, const char *format, ...);
 
 
 static void
@@ -133,15 +138,15 @@ Skip(void)					/* skip over raster data */
     if ((c = getc(gfp)) == EOF)
 	Fatal(fbp, "Error reading code size");
 
-    while ((c = getc(gfp)) != 0)
+    while ((c = getc(gfp)) != 0) {
 	if (c == EOF) {
 	    Fatal(fbp, "Error reading block byte count");
 	}
 	do {
 	    if (getc(gfp) == EOF)
 		Fatal(fbp, "Error reading data byte");
-	}
-	while (--c > 0);
+	} while (--c > 0);
+    }
 }
 
 
@@ -303,8 +308,9 @@ Expand(int c)
 
     PutPixel(k = c);		/* first atom in string */
 
-    while (bp > exp_buffer)
+    while (bp > exp_buffer) {
 	PutPixel((int)*--bp);
+    }
 }
 
 
@@ -350,7 +356,7 @@ LZW(void)
     next_code = compress_code;	/* empty chain-code table */
     w = -1;				/* we use -1 for "nil" */
 
-    while ((c = GetCode()) != eoi_code)
+    while ((c = GetCode()) != eoi_code) {
 	if (c == clear_code) {
 	    /* Reinitialize LZW parameters. */
 
@@ -370,8 +376,10 @@ LZW(void)
 
 		Expand(w);	/* sets `k' */
 		PutPixel(k);
-	    } else		/* normal case */
+	    } else {
+		/* normal case */
 		Expand(c);	/* sets `k' */
+	    }
 
 	    if (w >= 0 && next_code < 1 << 12) {
 		table[next_code].pfx = w;
@@ -386,16 +394,18 @@ LZW(void)
 
 	    w = c;
 	}
+    }
 
     /* EOI code encountered. */
 
     if (bytecnt > 0) {
 	Message("Warning: unused raster data present");
 
-	do
-	    if ((c = getc(gfp)) == EOF)
+	do {
+	    if ((c = getc(gfp)) == EOF) {
 		Fatal(fbp, "Error reading extra raster data");
-	while (--bytecnt > 0);
+	    }
+	} while (--bytecnt > 0);
     }
 
     /* Strange data format in the GIF spec! */
@@ -461,7 +471,7 @@ main(int argc, char **argv)
 
     	errors = argc == 1 && isatty(fileno(stdin));
 
-	while ((c = bu_getopt(argc, argv, OPTSTR)) != -1)
+	while ((c = bu_getopt(argc, argv, OPTSTR)) != -1) {
 	    switch (c) {
 		default:	/* '?': invalid option */
 		    errors = 1;
@@ -490,6 +500,7 @@ main(int argc, char **argv)
 		    do_zoom = 1;
 		    break;
 	    }
+	}
 
 	if (errors)
 	    Fatal(fbp, USAGE);
@@ -569,23 +580,14 @@ main(int argc, char **argv)
 
 	width = desc[1] << 8 | desc[0];
 	height = desc[3] << 8 | desc[2];
-	if (width < 0)
-	    width = 0;
-	else if (width > INT_MAX-1)
-	    width = INT_MAX-1;
-	if (height < 0)
-	    height = 0;
-	else if (height > INT_MAX-1)
-	    height = INT_MAX-1;
+	CLAMP(width, 0, INT_MAX-1);
+	CLAMP(height, 0, INT_MAX-1);
 
 	M_bit = (desc[4] & 0x80) != 0;
 	cr = (desc[4] >> 4 & 0x07) + 1;
 	g_pixel = (desc[4] & 0x07) + 1;
 	background = desc[5];
-	if (background < 0)
-	    background = 0;
-	else if (background > CHAR_MAX)
-	    background = CHAR_MAX;
+	CLAMP(background, 0, CHAR_MAX);
 
 	if (verbose) {
 	    Message("screen %dx%d", width, height);
@@ -633,7 +635,7 @@ main(int argc, char **argv)
 	if (cr == 8)
 	    cr_mask = ~0;	/* shift by 0 can tickle compiler bug */
 	else
-	    cr_mask = ~0 << (8 - cr);
+	    cr_mask = ~(unsigned)0 << (8 - cr);
 
 	expand = 255.0 / (double)(0xFF & cr_mask);
 
@@ -664,7 +666,7 @@ main(int argc, char **argv)
 
     pixbuf = (unsigned char *)bu_malloc(width * sizeof(RGBpixel), "pixbuf");
 
-    if ((fbp = fb_open(fb_file, width, height)) == FBIO_NULL) {
+    if ((fbp = fb_open(fb_file, width, height)) == FB_NULL) {
 	Fatal(fbp, "Couldn't open frame buffer");
     }
 
@@ -681,11 +683,11 @@ main(int argc, char **argv)
 	    Message("Frame buffer (%dx%d) larger than GIF screen", wt, ht);
 
 	write_width = width;
-	if (write_width > wt) write_width = wt;
+	V_MIN(write_width, wt);
 
 	zoom = fb_getwidth(fbp)/width;
-	if (fb_getheight(fbp)/height < zoom)
-	    zoom = fb_getheight(fbp)/height;
+	V_MIN(zoom, fb_getheight(fbp)/height);
+
 	if (do_zoom && zoom > 1) {
 	    (void)fb_view(fbp, width/2, height/2,
 			  zoom, zoom);
@@ -732,11 +734,11 @@ main(int argc, char **argv)
 		   also "screen clear", but they're impractical. */
 
 		if (fb_close(fbp) == -1) {
-		    fbp = FBIO_NULL;	/* avoid second try */
+		    fbp = FB_NULL;	/* avoid second try */
 		    Fatal(fbp, "Error closing frame buffer");
 		}
 
-		fbp = FBIO_NULL;
+		fbp = FB_NULL;
 
 		if (image > 0)
 		    Fatal(fbp, "Specified image not found");

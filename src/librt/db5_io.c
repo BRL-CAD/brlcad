@@ -1,7 +1,7 @@
 /*                        D B 5 _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,18 +30,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "bin.h"
-
+#include "bnetwork.h"
 
 #include "bu/endian.h"
 #include "bu/parse.h"
 #include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db5.h"
+#include "rt/db5.h"
 #include "raytrace.h"
-#include "mater.h"
-
+#include "librt_private.h"
 
 int
 db5_header_is_valid(const unsigned char *hp)
@@ -447,7 +445,7 @@ db5_export_object3(
 	namelen = (long)strlen(name) + 1;	/* includes null */
 	if (namelen > 1) {
 	    n_width = db5_select_length_encoding(namelen);
-	    need += namelen + db5_enc_len[n_width];
+	    need += namelen + DB5_ENC_LEN(n_width);
 	} else {
 	    name = NULL;
 	    namelen = 0;
@@ -460,7 +458,7 @@ db5_export_object3(
 	BU_CK_EXTERNAL(attrib);
 	if (attrib->ext_nbytes > 0) {
 	    a_width = db5_select_length_encoding(attrib->ext_nbytes);
-	    need += attrib->ext_nbytes + db5_enc_len[a_width];
+	    need += attrib->ext_nbytes + DB5_ENC_LEN(a_width);
 	} else {
 	    attrib = NULL;
 	    a_width = 0;
@@ -472,7 +470,7 @@ db5_export_object3(
 	BU_CK_EXTERNAL(body);
 	if (body->ext_nbytes > 0) {
 	    b_width = db5_select_length_encoding(body->ext_nbytes);
-	    need += body->ext_nbytes + db5_enc_len[b_width];
+	    need += body->ext_nbytes + DB5_ENC_LEN(b_width);
 	} else {
 	    body = NULL;
 	    b_width = 0;
@@ -537,7 +535,7 @@ db5_export_object3(
 	 * followed by no bytes (for an empty value), followed by a NULL value termination,
 	 * followed by a NULL attribute-value termination. Minimum is 4 bytes
 	 */
-	BU_ASSERT_PTR(attrib->ext_nbytes, >=, 4);
+	BU_ASSERT(attrib->ext_nbytes >= 4);
 	cp = db5_encode_length(cp, attrib->ext_nbytes, a_width);
 	memcpy(cp, attrib->ext_buf, attrib->ext_nbytes);
 	cp += attrib->ext_nbytes;
@@ -559,14 +557,14 @@ db5_export_object3(
 
     /* Verify multiple of 8 */
     togo = cp - ((unsigned char *)out->ext_buf);
-    BU_ASSERT_LONG(togo&7, ==, 0);
+    BU_ASSERT((togo&7) == 0);
 
     /* Finally, go back to the header and write the actual object length */
     cp = ((unsigned char *)out->ext_buf) + sizeof(struct db5_ondisk_header);
     (void)db5_encode_length(cp, togo>>3, h_width);
 
     out->ext_nbytes = togo;
-    BU_ASSERT_LONG(out->ext_nbytes, >=, 8);
+    BU_ASSERT(out->ext_nbytes >= 8);
 }
 
 void
@@ -578,8 +576,8 @@ db5_make_free_object_hdr(struct bu_external *ep, size_t length)
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_SIZE_T(length, >=, 8);
-    BU_ASSERT_SIZE_T(length&7, ==, 0);
+    BU_ASSERT(length >= 8);
+    BU_ASSERT((length&7) == 0);
 
     /* Reserve enough space to hold any free header, even w/64-bit len */
     ep->ext_nbytes = 8+8;
@@ -607,8 +605,8 @@ db5_make_free_object(struct bu_external *ep, size_t length)
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_SIZE_T(length, >=, 8);
-    BU_ASSERT_SIZE_T(length&7, ==, 0);
+    BU_ASSERT(length >= 8);
+    BU_ASSERT((length&7) == 0);
 
     ep->ext_buf = (uint8_t *)bu_calloc(1, length, "db5_make_free_object");
     ep->ext_nbytes = length;
@@ -713,7 +711,7 @@ db_wrap_v5_external(struct bu_external *ep, const char *name)
 	       name);
 	return -1;
     }
-    BU_ASSERT_LONG(raw.h_dli, ==, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT);
+    BU_ASSERT(raw.h_dli == DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT);
 
     /* See if name needs to be changed */
     if (raw.name.ext_buf == NULL || !BU_STR_EQUAL(name, (const char *)raw.name.ext_buf)) {
@@ -757,7 +755,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 	return -1;
     }
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     /* First, change the name. */
     if (db_wrap_v5_external(ep, dp->d_namep) < 0) {
@@ -773,7 +771,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 	    return -5;
 	}
     }
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, dp->d_len);
+    BU_ASSERT(ep->ext_nbytes == dp->d_len);
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy(dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes);
@@ -799,7 +797,7 @@ rt_db_put_internal5(
     RT_CK_DIR(dp);
     RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     if (resp)
 	RT_CK_RESOURCE(resp);
@@ -818,7 +816,7 @@ rt_db_put_internal5(
 	    goto fail;
 	}
     }
-    BU_ASSERT_LONG(ext.ext_nbytes, ==, dp->d_len);
+    BU_ASSERT(ext.ext_nbytes == dp->d_len);
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy(dp->d_un.ptr, ext.ext_buf, ext.ext_nbytes);
@@ -839,9 +837,6 @@ fail:
     return -2;		/* FAIL */
 }
 
-
-/* FIXME: should have gone away with v6.  needed now to pass the minor_type down during read */
-extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
 
 /**
  * Given an object in external form, convert it to internal form.  The
@@ -875,7 +870,7 @@ rt_db_external5_to_internal5(
 	resp = &rt_uniresource;
     }
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     if (db5_get_raw_internal_ptr(&raw, ep->ext_buf) == NULL) {
 	bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
@@ -931,7 +926,7 @@ rt_db_external5_to_internal5(
 	    return -1;
     }
 
-    /* ip has already been initialized, and should not be re-inited */
+    /* ip has already been initialized, and should not be re-initialized */
     ret = -1;
     if (id == ID_BINUNIF) {
 	/* FIXME: binunif export needs to write out minor_type so
@@ -974,7 +969,7 @@ rt_db_get_internal5(
 	RT_CK_RESOURCE(resp);
     }
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -2;		/* FAIL */
@@ -1013,7 +1008,7 @@ db5_put_color_table(struct db_i *dbip)
     int ret;
 
     RT_CK_DBI(dbip);
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     db5_export_color_table(&str, dbip);
 
@@ -1057,7 +1052,6 @@ db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, 
     bu_free_external(&ext);
     return 0;
 }
-
 
 /** @} */
 /*

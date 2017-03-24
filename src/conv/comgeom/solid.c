@@ -1,7 +1,7 @@
 /*                         S O L I D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bu.h"
 
 
 /* defined in read.c */

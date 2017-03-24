@@ -38,8 +38,6 @@
  *           Bell Labs Innovations for Lucent Technologies
  *           mmclennan@lucent.com
  *           http://www.tcltk.com/itcl
- *
- *     RCS:  $Id$
  * ========================================================================
  *           Copyright (c) 1993-1998  Lucent Technologies, Inc.
  * ------------------------------------------------------------------------
@@ -48,14 +46,6 @@
  */
 #ifndef ITCLINT_H
 #define ITCLINT_H
-
- /* included so we avoid tcl's compat headers */ 	 
-
-#if defined(_WIN32) && !defined(__CYGWIN__) 	 
-#  include <fcntl.h> 	 
-#  include <io.h> 	 
-#endif 	 
-#include "common.h"
 
 #include "tclInt.h"
 #include "itcl.h"
@@ -69,14 +59,17 @@
  * Handle hiding of errorLine in 8.6
  */
 #if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
-#define ERRORLINE(interp) ((interp)->errorLine)
-#else
-#define ERRORLINE(interp) (Tcl_GetErrorLine(interp))
+#define Tcl_GetErrorLine(interp) ((interp)->errorLine)
 #endif
 
 #define ITCL_TCL_PRE_8_5 (TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 5)
 
+#define ItclCallFrame CallFrame
+
 #if !ITCL_TCL_PRE_8_5
+
+#define Itcl_CallFrame Tcl_CallFrame
+
 #if defined(USE_TCL_STUBS)
 
 /*
@@ -124,13 +117,6 @@
 	(tclIntStubsPtr->tcl_GetCommandFullName)
 #endif /* use stubs */
 
-/*
- * Use 8.5+ CallFrame
- */
-
-#define ItclCallFrame CallFrame
-#define Itcl_CallFrame Tcl_CallFrame
-
 #define ItclInitVarFlags(varPtr) \
     (varPtr)->flags = 0
 
@@ -153,41 +139,21 @@
 
 #else /* Compiling on Tcl8.x, x<5 */ 
 
-/*
- * Redefine CallFrame to account for extra ClientData in 8.5.
- * Make sure that standard CallFrame comes first.
- */
-
-typedef struct ItclCallFrame {
-    Namespace *nsPtr;
-    int isProcCallFrame;
-    int objc;
-    Tcl_Obj *CONST *objv;
-    struct CallFrame *callerPtr;
-    struct CallFrame *callerVarPtr;
-    int level;
-    Proc *procPtr;
-    Tcl_HashTable *varTablePtr;
-    int numCompiledLocals;
-    Var* compiledLocals;
-    ClientData clientData;
-    struct localCache *localCachePtr;
-} ItclCallFrame;
-
 typedef struct Itcl_CallFrame {
     Tcl_Namespace *nsPtr;
     int dummy1;
     int dummy2;
-    char *dummy3;
-    char *dummy4;
-    char *dummy5;
+    void *dummy3;
+    void *dummy4;
+    void *dummy5;
     int dummy6;
-    char *dummy7;
-    char *dummy8;
+    void *dummy7;
+    void *dummy8;
     int dummy9;
-    char *dummy10;
-    char *dummy11;
-    char *dummy12;
+    void *dummy10;
+    void *dummy11;
+    void *dummy12;
+    void *dummy13;
 } Itcl_CallFrame;
 
 /*
@@ -287,23 +253,6 @@ MODULE_SCOPE Var * ItclVarHashCreateVar (TclVarHashTable * tablePtr,
 
 #define ItclVarHashFindVar(tablePtr, key) \
     ItclVarHashCreateVar((tablePtr), (key), NULL)
-
-
-/*
- * Some backward compatability adjustments.
- */
-
-#if TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION == 0
-#   define Tcl_GetString(obj)	Tcl_GetStringFromObj((obj), NULL)
-#   define TCL_DECLARE_MUTEX(mutexVar)
-#   define Tcl_MutexLock(mutexVar)
-#   define Tcl_MutexUnlock(mutexVar)
-#   define Tcl_Panic panic
-#endif
-
-#define TCL_DOES_STUBS \
-    (TCL_MAJOR_VERSION > 8 || TCL_MAJOR_VERSION == 8 && (TCL_MINOR_VERSION > 1 || \
-    (TCL_MINOR_VERSION == 1 && TCL_RELEASE_LEVEL == TCL_FINAL_RELEASE)))
 
 
 /*
@@ -484,7 +433,7 @@ typedef struct ItclVarLookup {
  */
 typedef struct ItclContext {
     ItclClass *classDefn;     /* class definition */
-    ItclCallFrame frame;      /* call frame for object context */
+    Itcl_CallFrame frame;      /* call frame for object context */
     Var *compiledLocals;      /* points to storage for compiled locals */
     Var localStorage[20];     /* default storage for compiled locals */
 } ItclContext;
@@ -496,9 +445,6 @@ typedef struct ItclContext {
 
 extern int itclCompatFlags;
 
-#define ITCL_COMPAT_USECMDFLAGS 0x0001	/* Tcl8.4a1 introduced a different Command
-					 * structure, and we need to adapt
-					 * dynamically */
 #define ITCL_COMPAT_USE_ISTATE_API 0x2  /* Tcl 8.5a2 added interp state APIs */
 
 #include "itclIntDecls.h"

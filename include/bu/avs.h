@@ -1,7 +1,7 @@
 /*                         A V S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,10 @@
 
 #include <stddef.h> /* for size_t */
 
+#if defined(USE_BINARY_ATTRIBUTES)
+#  include "bson.h"
+#endif
+
 #include "bu/defines.h"
 #include "bu/magic.h"
 #include "bu/vls.h"
@@ -32,12 +36,14 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup avs */
-/** @{ */
-/** @file libbu/avs.c
+/** @addtogroup bu_avs
  *
+ * @brief
  * Routines to manage attribute/value sets.
  */
+/** @{ */
+/** @file bu/avs.h */
+
 
 /** for attr and avs use.
  */
@@ -84,8 +90,8 @@ struct bu_attribute_value_set {
     uint32_t magic;
     size_t count;                        /**< # valid entries in avp */
     size_t max;                          /**< # allocated slots in avp */
-    genptr_t readonly_min;
-    genptr_t readonly_max;
+    void *readonly_min;
+    void *readonly_max;
     struct bu_attribute_value_pair *avp; /**< array[max] */
 };
 typedef struct bu_attribute_value_set bu_avs_t;
@@ -149,10 +155,9 @@ typedef struct bu_attribute_value_set bu_avs_t;
  */
 #define AVS_IS_FREEABLE(_avsp, _p)	\
     ((_avsp)->readonly_max == NULL \
-     || (const_genptr_t)(_p) < (_avsp)->readonly_min \
-     || (const_genptr_t)(_p) > (_avsp)->readonly_max)
+     || (const void *)(_p) < (_avsp)->readonly_min \
+     || (const void *)(_p) > (_avsp)->readonly_max)
 
-/** @} */
 
 /**
  * Initialize avs with storage for len entries.

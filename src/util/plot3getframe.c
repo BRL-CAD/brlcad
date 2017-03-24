@@ -1,7 +1,7 @@
 /*                 P L O T 3 G E T F R A M E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,8 +30,8 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/str.h"
+#include "bu/log.h"
 
 #define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */

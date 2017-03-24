@@ -1,7 +1,7 @@
 /*                      V I E W A R E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,13 +37,11 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
 
-
-extern int npsw;			/* number of worker PSWs to run */
 
 extern int rpt_overlap;
 
@@ -1081,7 +1079,7 @@ view_end(struct application *ap)
 		}
 	    }
 	    bu_free(cell, "view_end area free");
-	    cell = (genptr_t)NULL;
+	    cell = (void *)NULL;
 	}
     }
 
@@ -1104,8 +1102,8 @@ view_2init(struct application *ap, char *UNUSED(framename))
     /* initial empty parent assembly */
     struct area *assembly;
 
-    /* cell_width and cell_height are global variables */
-    cell_area = cell_width * cell_height;
+    /* cell_width, cell_height, and hypersample are global variables */
+    cell_area = cell_width * cell_height / (hypersample + 1);
 
     /* create first parent-area record */
     BU_ALLOC(assembly, struct area);
@@ -1164,7 +1162,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	cell->group_presented_hit_z_sum = 0.0;
 
 	/* place new region-area record into current region record */
-	rp->reg_udata = (genptr_t)cell;
+	rp->reg_udata = (void *)cell;
     }
 
     bu_semaphore_release(RT_SEM_RESULTS);

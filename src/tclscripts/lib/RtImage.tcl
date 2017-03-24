@@ -1,7 +1,7 @@
 #                          R T I M A G E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2014 United States Government as represented by
+# Copyright (c) 1998-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -25,12 +25,29 @@
 
 package provide cadwidgets::RtImage 1.0
 
+proc ::pid_wait { pid } {
+    if {$::tcl_platform(platform) == "windows"} {
+	set task_cmd [auto_execok tasklist]
+	set task_args [list $task_cmd /FI "PID eq $pid" /FI {STATUS eq running} "/NH"]
+	set task_list "$pid"
+	while {[string match "*$pid*" $task_list]} {
+	    catch {eval exec $task_args} task_list
+	    after 50
+	}
+    } else {
+	while {![catch {exec kill -0 $pid} pid_results]} {
+	    after 50
+	}
+    }
+}
+
 namespace eval cadwidgets {
+
 proc rtimage {rtimage_dict} {
     global tcl_platform
     global env
     set necessary_vars [list _dbfile _port _w _n _viewsize _orientation \
-    _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma]
+    _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _benchmark_mode]
     set necessary_lists [list _color_objects _ghost_objects _edge_objects]
 
     # It's the responsibility of the calling function
@@ -64,30 +81,31 @@ proc rtimage {rtimage_dict} {
     }
 
     set pid [pid]
-    set tgi [file join $dir $pid\_ghost.pix]
-    set tfci [file join $dir $pid\_fc.pix]
-    set tgfci [file join $dir $pid\_ghostfc.pix]
-    set tmi [file join $dir $pid\_merge.pix]
-    set tmi2 [file join $dir $pid\_merge2.pix]
-    set tbw [file join $dir $pid\_bw.bw]
-    set tmod [file join $dir $pid\_bwmod.bw]
-    set tbwpix [file join $dir $pid\_bwpix.pix]
+    set tgi [list [file join $dir $pid\_ghost.pix] ]
+    set tfci [list [file join $dir $pid\_fc.pix] ]
+    set tgfci [list [file join $dir $pid\_ghostfc.pix] ]
+    set tmi [list [file join $dir $pid\_merge.pix] ]
+    set tmi2 [list [file join $dir $pid\_merge2.pix] ]
+    set tbw [list [file join $dir $pid\_bw.bw] ]
+    set tmod [list [file join $dir $pid\_bwmod.bw] ]
+    set tbwpix [list [file join $dir $pid\_bwpix.pix] ]
 
     set binpath [bu_brlcad_root "bin"]
 
     if {[llength $_color_objects]} {
 	set have_color_objects 1
-	set cmd [list [file join $binpath rt] -w $_w -n $_n \
-		     -F $_port \
-		     -V $ar \
-		     -R \
-		     -A 0.9 \
-		     -p $_perspective \
-		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     -c [list viewsize $_viewsize] \
-		     -c [eval list orientation $_orientation] \
-		     -c [eval list eye_pt $_eye_pt] \
-		     $_dbfile]
+
+	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
+	    -F $_port \
+	    -V $ar \
+	    -R \
+	    -A 0.9 \
+	    -p $_perspective \
+	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
+	    "-c {viewsize $_viewsize}" \
+	    "-c {orientation $_orientation}" \
+	    "-c {eye_pt $_eye_pt}" \
+	    [list $_dbfile]]
 
 	foreach obj $_color_objects {
 	    lappend cmd $obj
@@ -96,7 +114,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the color insert
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $_log_file} curr_pid
 
 	# Look for color objects that also get edges
 	if {[llength $_edge_objects] && [llength $_ecolor] == 3} {
@@ -123,22 +141,21 @@ proc rtimage {rtimage_dict} {
 		}
 
 		if {[llength $ce_objects]} {
-		    set coMode "-c {set ov=1}"
 		    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 
-		    set cmd [concat [file join $binpath rtedge] -w $_w -n $_n \
-				 -F $_port \
+		    set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n $_benchmark_mode \
+		                 -F $_port \
 				 -V $ar \
 				 -R \
 				 -A 0.9 \
 				 -p $_perspective \
-				 -c [list $fgMode] \
-				 -c [list $bgMode] \
-				 $coMode \
-				 -c [list [list viewsize $_viewsize]] \
-				 -c [list [eval list orientation $_orientation]] \
-				 -c [list [eval list eye_pt $_eye_pt]] \
-				 $_dbfile]
+				 "-c {$fgMode}" \
+				 "-c {$bgMode}" \
+				 "-c {set ov=1}" \
+				 "-c {viewsize $_viewsize}" \
+				 "-c {orientation $_orientation}" \
+				 "-c {eye_pt $_eye_pt}" \
+				 [list $_dbfile]]
 
 		    foreach obj $ce_objects {
 			lappend cmd $obj
@@ -148,8 +165,7 @@ proc rtimage {rtimage_dict} {
 		#
 		# Run rtedge to generate the full-color with edges
 		#
-		catch {eval exec $cmd}
-
+		catch {eval exec $cmd >& $_log_file} curr_pid
 	    }
 	}
 
@@ -157,7 +173,7 @@ proc rtimage {rtimage_dict} {
 	set have_color_objects 0
 
 	# Put a blank image into the framebuffer
-	catch {exec [file join $binpath fbclear] -F $_port [lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
+	catch {exec [list [file join $binpath fbclear]] -F $_port [lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
     }
 
     set occlude_objects [lsort -unique [concat $_color_objects $_ghost_objects]]
@@ -168,17 +184,17 @@ proc rtimage {rtimage_dict} {
 	catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
 
 	set have_ghost_objects 1
-	set cmd [list [file join $binpath rt] -w $_w -n $_n \
-		     -o $tgi \
+	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
+	             -o $tgi \
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
 		     -p $_perspective \
 		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     -c [list viewsize $_viewsize] \
-		     -c [eval list orientation $_orientation] \
-		     -c [eval list eye_pt $_eye_pt] \
-		     $_dbfile]
+		     "-c {viewsize $_viewsize}" \
+		     "-c {orientation $_orientation}" \
+		     "-c {eye_pt $_eye_pt}" \
+		     [list $_dbfile]]
 
 	foreach obj $_ghost_objects {
 	    lappend cmd $obj
@@ -187,19 +203,19 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $_log_file} curr_pid
 
-	set cmd [list [file join $binpath rt] -w $_w -n $_n \
-		     -o $tgfci \
+	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
+	             -o $tgfci \
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
 		     -p $_perspective \
 		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     -c [list viewsize $_viewsize] \
-		     -c [eval list orientation $_orientation] \
-		     -c [eval list eye_pt $_eye_pt] \
-		     $_dbfile]
+		     "-c {viewsize $_viewsize}" \
+		     "-c {orientation $_orientation}" \
+		     "-c {eye_pt $_eye_pt}" \
+		     [list $_dbfile]]
 
 	foreach obj $occlude_objects {
 	    lappend cmd $obj
@@ -208,7 +224,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $_log_file} curr_pid
 
 	#
 	# Convert to ghost image
@@ -249,24 +265,22 @@ proc rtimage {rtimage_dict} {
 	    set coMode "-c {set om=$_occmode} -c {set oo=\\\"$occlude_objects\\\"}"
 	    set bgMode [list set bg=[lindex $_necolor 0],[lindex $_necolor 1],[lindex $_necolor 2]]
 	} else {
-	    set coMode "-c {set ov=1}"
+	    set coMode ""
 	    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 	}
 
-	set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n \
-		     -F $_port \
+	set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n $_benchmark_mode \
+	             -F $_port \
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
 		     -p $_perspective \
-		     -c [list $fgMode] \
-		     -c [list $bgMode] \
-		     $coMode \
-		     -c [list [list viewsize $_viewsize]] \
-		     -c [list [eval list orientation $_orientation]] \
-		     -c [list [eval list eye_pt $_eye_pt]] \
+		     "-c {$fgMode}" \
+		     "-c {$bgMode}" $coMode \
+	             "-c {viewsize $_viewsize}" \
+		     "-c {orientation $_orientation}" \
+		     "-c {eye_pt $_eye_pt}" \
 		     [list $_dbfile]]
-
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
 	}
@@ -274,7 +288,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Run rtedge to generate the full-color version of the ghost image
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $_log_file} curr_pid
     }
 
     catch {file delete -force $tgi}
@@ -285,7 +299,11 @@ proc rtimage {rtimage_dict} {
     catch {file delete -force $tbw}
     catch {file delete -force $tmod}
     catch {file delete -force $tbwpix}
+
+#end proc rtimage
 }
+
+#end namespace cadwidgets
 }
 
 

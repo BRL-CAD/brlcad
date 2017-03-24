@@ -1,7 +1,7 @@
 /*                           N M G . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,14 +26,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -49,7 +47,7 @@ mk_nmg(struct rt_wdb *filep, const char *name, struct model *m)
      * the geometry.
      */
 
-    return wdb_export(filep, name, (genptr_t)m, ID_NMG, mk_conv2mm);
+    return wdb_export(filep, name, (void *)m, ID_NMG, mk_conv2mm);
 }
 
 
@@ -58,14 +56,14 @@ mk_bot_from_nmg(struct rt_wdb *ofp, const char *name, struct shell *s)
 {
     struct rt_bot_internal *botp;
 
-    botp = nmg_bot(s, &ofp->wdb_tol);
+    botp = nmg_bot(s, &RTG.rtg_vlfree, &ofp->wdb_tol);
 
     /* FIXME: wdb_export is documented as always free'ing the entity
      * passed to it.  that means this routine needs to make a copy of
      * the geometry.
      */
 
-    return wdb_export(ofp, name, (genptr_t)botp, ID_BOT, mk_conv2mm);
+    return wdb_export(ofp, name, (void *)botp, ID_BOT, mk_conv2mm);
 }
 
 

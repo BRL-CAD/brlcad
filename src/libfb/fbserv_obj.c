@@ -1,7 +1,7 @@
 /*                    F B S E R V _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file fbserv_obj.c
  *
@@ -42,18 +42,15 @@
 #  include <netinet/in.h>		/* For htonl(), etc. */
 #endif
 #include <tcl.h>
-#include "bio.h"
 
-#include "bu.h"
-#include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
 
-#include "fbmsg.h"
-#include "fbserv_obj.h"
+#include "fb.h"
+#include "fb_private.h"
 
 
-static FBIO *curr_fbp;		/* current framebuffer pointer */
+static fb *curr_fbp;		/* current framebuffer pointer */
 
 
 /*
@@ -123,7 +120,7 @@ existing_client_handler(ClientData clientData, int UNUSED(mask))
 	    bu_log("pkg_process error encountered (2)\n");
     }
 
-    if (fbsp->fbs_callback != (void (*)(genptr_t))FBS_CALLBACK_NULL) {
+    if (fbsp->fbs_callback != (void (*)(void *))FBS_CALLBACK_NULL) {
 	/* need to cast func pointer explicitly to get the function call */
 	void (*cfp)(void *);
 	cfp = (void (*)(void *))fbsp->fbs_callback;

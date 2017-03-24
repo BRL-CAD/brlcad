@@ -1,7 +1,7 @@
 /*                    M E T A B A L L _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,17 +44,15 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
-#include "db.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
 #include "wdb.h"
 
 #include "metaball.h"
@@ -93,7 +91,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     finalstep /= (fastf_t)1e5;
 
     radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);
-    if(radius < 0) {	/* no control points */
+    if (radius < 0) {	/* no control points */
 	bu_log("Attempting to tessellate metaball with no control points");
 	return -1;
     }
@@ -134,7 +132,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		    int rval;
 
 		    /* compute the edge values (if needed) */
-#define MEH(a,b,c) if(!(pv&(1<<b)&&pv&(1<<c))) { \
+#define MEH(a,b,c) if (!(pv&(1<<b)&&pv&(1<<c))) { \
     rt_metaball_find_intersection(edges+a, mb, (const point_t *)(p+b), (const point_t *)(p+c), mtol, finalstep); \
 }
 
@@ -157,17 +155,17 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
 		    rval = nmg_mc_realize_cube(s, pv, (point_t *)edges, tol);
 		    numtri += rval;
-		    if(rval < 0) {
+		    if (rval < 0) {
 			bu_log("Error attempting to realize a cube O.o\n");
 			return rval;
 		    }
 		}
 	    }
 
-    nmg_mark_edges_real(&s->l.magic);
+    nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
     nmg_region_a(*r, tol);
 
-    nmg_model_fuse(m, tol);
+    nmg_model_fuse(m, &RTG.rtg_vlfree, tol);
 
     rt_get_timer(&times, NULL);
     bu_log("metaball tessellate (%d triangles): %s\n", numtri, bu_vls_addr(&times));

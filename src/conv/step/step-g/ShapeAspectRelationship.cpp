@@ -1,7 +1,7 @@
 /*                 ShapeAspectRelationship.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -100,25 +100,31 @@ bool ShapeAspectRelationship::Load(STEPWrapper *sw, SDAI_Application_instance *s
     name = step->getStringAttribute(sse, "name");
     description = step->getStringAttribute(sse, "description");
 
-	if (relating_shape_aspect == NULL) {
-		SDAI_Application_instance *entity = step->getEntityAttribute(sse,"relating_shape_aspect");
-		if (entity) { //this attribute is optional
-			relating_shape_aspect = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, entity));
-		} else {
-			std::cout << CLASSNAME << ":Error loading attribute 'relating_shape_aspect'." << std::endl;
-			return false;
-		}
+    if (relating_shape_aspect == NULL) {
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"relating_shape_aspect");
+	if (entity) { //this attribute is optional
+	    relating_shape_aspect = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, entity));
 	}
+	if (!entity || !relating_shape_aspect) {
+	    std::cout << CLASSNAME << ":Error loading attribute 'relating_shape_aspect'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
+	    return false;
+	}
+    }
 
-	if (related_shape_aspect == NULL) {
-		SDAI_Application_instance *entity = step->getEntityAttribute(sse,"related_shape_aspect");
-		if (entity) { //this attribute is optional
-			related_shape_aspect = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, entity));
-		} else {
-			std::cout << CLASSNAME << ":Error loading attribute 'related_shape_aspect'." << std::endl;
-			return false;
-		}
+    if (related_shape_aspect == NULL) {
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"related_shape_aspect");
+	if (entity) { //this attribute is optional
+	    related_shape_aspect = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, entity));
 	}
+	if (!entity || !related_shape_aspect) {
+	    std::cout << CLASSNAME << ":Error loading attribute 'related_shape_aspect'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
+	    return false;
+	}
+    }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

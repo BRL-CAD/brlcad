@@ -1,5 +1,5 @@
 			    BRL-CAD
-			 Release 7.24.2
+			 Release 7.26.2
 		       http://brlcad.org/
 
 BRL-CAD is a powerful cross-platform open source combinatorial
@@ -31,7 +31,7 @@ TABLE OF CONTENTS
 
 
 GETTING STARTED
-----------------
+---------------
 
 This README file exists only to provide you a brief roadmap to the
 contents of the BRL-CAD distribution.
@@ -132,7 +132,7 @@ comparing the results of the benchmark tests in more detail.
 COMMUNICATION
 -------------
 
-You are invited to participate in the InterNet (a/k/a "ARPANET")
+You are invited to participate in the InterNet (aka "ARPANET")
 electronic mailing list on the BRL-CAD software.  There are various
 BRL-CAD mailing lists available on the project website at
 http://sourceforge.net/mail/?group_id=105292 including three

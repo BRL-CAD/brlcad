@@ -1,3 +1,8 @@
+# Define high level features of BRL-CAD
+DOXYGEN_FEATURE("Portability Library" DESCRIPTION "Portability layer that makes sure basic low level system functionality is present across all platforms via a uniform API.")
+DOXYGEN_FEATURE("Solid Raytracing" DESCRIPTION "Ray/geometry intersection calculations that report not just first surface hits but in/out pairs of hits to support the characterization of closed geometric volumes.")
+
+
 # Minimal directories required for any BRL-CAD functionality
 
 # Define some common definitions here that are used
@@ -31,46 +36,30 @@ endif(MSVC)
 set(level_1_dirs
   libbu
   libbn
-  libsysv
+  libbg
+  libnmg
   libbrep
   librt
+  libwdb
   )
 
 # Level 2 directories are the remainder of BRL-CAD's libraries.  Setting
 # the BRLCAD_ENABLE_TARGETS level to 2 will enable all libraries but no
 # programs.
 
-# The interaction of MSVC and Boost looks problematic -
-# since we're not using libpc at the moment, conditionalize
-if(NOT MSVC)
-  set(LIBPC_DIR libpc)
-else(NOT MSVC)
-  CMAKEFILES(libpc)
-endif(NOT MSVC)
-
-# Only add librtserver if it's enabled
-if(BRLCAD_ENABLE_RTSERVER)
-  set(LIBRTSERVER_DIR librtserver)
-else(BRLCAD_ENABLE_RTSERVER)
-  CMAKEFILES(librtserver)
-endif(BRLCAD_ENABLE_RTSERVER)
-
 set(level_2_dirs
   libpkg
   libfb
-  libwdb
   libgcv
   libanalyze
   libged
   liboptical
-  liborle
   libcursor
   libdm
   libfft
   libicv
   libmultispectral
-  ${LIBPC_DIR}
-  ${LIBRTSERVER_DIR}
+  libpc
   libtclcad
   libtermio
   )
@@ -89,7 +78,6 @@ set(level_3_dirs
   brlman
   burst
   bwish
-  canon
   conv
   fb
   fbed
@@ -105,7 +93,6 @@ set(level_3_dirs
   sig
   tab
   util
-  vfont
   ${non_win32_dirs}
   # tclscripts must come before applications like
   # mged and archer that need the scripts in place to
@@ -114,6 +101,7 @@ set(level_3_dirs
   # as dependencies for the targets in these directories
   tclscripts
   adrt
+  rtwizard
   archer
   mged
   )
@@ -173,10 +161,22 @@ endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 #    $<TARGET_OBJECTS:libicv_OBJECTS>
 #    $<TARGET_OBJECTS:libged_OBJECTS>
 #    )
-#  target_link_libraries(libbrlcad ${OPENNURBS_LIBRARY} ${TCL_LIBRARY})
+#  target_link_libraries(libbrlcad ${OPENNURBS_LIBRARIES} ${TCL_LIBRARY})
 #endif(${HIGHEST_TARGET_LEVEL} GREATER 1)
 
 CMAKEFILES(README external)
+
+# Add a convenience directory that is only added to the
+# build if it exists.  This directory is ignored by svn,
+# so it can be used for experimentation that needs to be
+# part of the build but the dev doesn't want to accidentally
+# commit.
+if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
+    add_subdirectory(testing)
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
+endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+
 
 # Local Variables:
 # tab-width: 8

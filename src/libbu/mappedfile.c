@@ -1,7 +1,7 @@
 /*                    M A P P E D F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -338,15 +338,15 @@ fail:
 void
 bu_close_mapped_file(struct bu_mapped_file *mp)
 {
-    BU_CK_MAPPED_FILE(mp);
-
-    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
-	bu_pr_mapped_file("close:uses--", mp);
-
     if (UNLIKELY(!mp)) {
 	bu_log("bu_close_mapped_file() called with null pointer\n");
 	return;
     }
+
+    BU_CK_MAPPED_FILE(mp);
+
+    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
+	bu_pr_mapped_file("close:uses--", mp);
 
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
     --mp->uses;
@@ -357,6 +357,9 @@ bu_close_mapped_file(struct bu_mapped_file *mp)
 void
 bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
 {
+    if (UNLIKELY(!mp))
+	return;
+
     BU_CK_MAPPED_FILE(mp);
 
     bu_log("%p mapped_file %s %p len=%ld mapped=%d, uses=%d %s\n",
@@ -393,7 +396,7 @@ bu_free_mapped_files(int verbose)
 	/* If application pointed mp->apbuf at mp->buf, break that
 	 * association so we don't double-free the buffer.
 	 */
-	if (mp->apbuf == mp->buf)  mp->apbuf = (genptr_t)NULL;
+	if (mp->apbuf == mp->buf)  mp->apbuf = (void *)NULL;
 
 #ifdef HAVE_SYS_MMAN_H
 	if (mp->is_mapped) {
@@ -411,13 +414,13 @@ bu_free_mapped_files(int verbose)
 	{
 	    bu_free(mp->buf, "bu_mapped_file.buf[]");
 	}
-	mp->buf = (genptr_t)NULL;		/* sanity */
-	bu_free((genptr_t)mp->name, "bu_mapped_file.name");
+	mp->buf = (void *)NULL;		/* sanity */
+	bu_free((void *)mp->name, "bu_mapped_file.name");
 
 	if (mp->appl)
-	    bu_free((genptr_t)mp->appl, "bu_mapped_file.appl");
+	    bu_free((void *)mp->appl, "bu_mapped_file.appl");
 
-	bu_free((genptr_t)mp, "struct bu_mapped_file");
+	bu_free((void *)mp, "struct bu_mapped_file");
     }
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 }
@@ -433,8 +436,8 @@ bu_open_mapped_file_with_path(char *const *path, const char *name, const char *a
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *ret;
 
-    BU_ASSERT_PTR(name, !=, NULL);
-    BU_ASSERT_PTR(pathp, !=, NULL);
+    BU_ASSERT(name != NULL);
+    BU_ASSERT(pathp != NULL);
 
     /* Do not resort to path for a rooted filename */
     if (name[0] == '/')

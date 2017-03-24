@@ -1,7 +1,7 @@
 /*                        S H _ A I R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ static struct air_specific air_defaults = {
 #define SHDR_O(m) bu_offsetof(struct air_specific, m)
 
 /* local sp_hook function */
-static void dpm_hook(const struct bu_structparse *, const char *name, void *, const char *);
+static void dpm_hook(const struct bu_structparse *, const char *name, void *, const char *, void *);
 
 struct bu_structparse air_parse[] = {
     {"%g",  1, "dpm",		SHDR_O(d_p_mm),		dpm_hook, NULL, NULL },
@@ -69,13 +69,13 @@ struct bu_structparse air_parse[] = {
 };
 
 
-HIDDEN int air_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int airtest_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN int air_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN int emist_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN int tmist_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void air_print(register struct region *rp, genptr_t dp);
-HIDDEN void air_free(genptr_t cp);
+HIDDEN int air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int airtest_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN int air_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN int emist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN int tmist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void air_print(register struct region *rp, void *dp);
+HIDDEN void air_free(void *cp);
 
 struct mfuncs air_mfuncs[] = {
     {MF_MAGIC,	"airtest",	0,		MFI_HIT, MFF_PROC,
@@ -101,7 +101,8 @@ static void
 dpm_hook(const struct bu_structparse *UNUSED(sdp),
 	 const char *UNUSED(name),
 	 void *base,
-	 const char *UNUSED(value))
+	 const char *UNUSED(value),
+	 void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -119,7 +120,7 @@ dpm_hook(const struct bu_structparse *UNUSED(sdp),
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-air_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
+air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 /* pointer to reg_udata in *rp */
 /* New since 4.4 release */
 {
@@ -144,7 +145,7 @@ air_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     }
 
     if (rdebug&RDEBUG_SHADE) bu_log("\"%s\"\n", bu_vls_addr(matparm));
-    if (bu_struct_parse(matparm, air_parse, (char *)air_sp) < 0)
+    if (bu_struct_parse(matparm, air_parse, (char *)air_sp, NULL) < 0)
 	return -1;
 
     if (rdebug&RDEBUG_SHADE) air_print(rp, (char *)air_sp);
@@ -154,14 +155,14 @@ air_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 
 
 HIDDEN void
-air_print(register struct region *rp, genptr_t dp)
+air_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, air_parse, (const char *)dp);
 }
 
 
 HIDDEN void
-air_free(genptr_t cp)
+air_free(void *cp)
 {
     if (rdebug&RDEBUG_SHADE)
 	bu_log("air_free(%s:%d)\n", __FILE__, __LINE__);
@@ -174,7 +175,7 @@ air_free(genptr_t cp)
  * once for each hit point to be shaded.
  */
 int
-airtest_render(struct application *ap, const struct partition *pp, struct shadework *UNUSED(swp), genptr_t dp)
+airtest_render(struct application *ap, const struct partition *pp, struct shadework *UNUSED(swp), void *dp)
 {
     register struct air_specific *air_sp =
 	(struct air_specific *)dp;
@@ -205,7 +206,7 @@ airtest_render(struct application *ap, const struct partition *pp, struct shadew
  * transmission = e^(-Tau)
  */
 int
-air_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+air_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct air_specific *air_sp =
 	(struct air_specific *)dp;
@@ -286,7 +287,7 @@ tmist_miss(register struct application *UNUSED(ap))
  * once for each hit point to be shaded.
  */
 int
-tmist_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+tmist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct air_specific *air_sp =
 	(struct air_specific *)dp;
@@ -334,7 +335,7 @@ tmist_render(struct application *ap, const struct partition *pp, struct shadewor
 	my_ap.a_miss = tmist_miss;
 	my_ap.a_logoverlap = ap->a_logoverlap;
 	my_ap.a_onehit = 0;
-	my_ap.a_uptr = (genptr_t)air_sp;
+	my_ap.a_uptr = (void *)air_sp;
 	rt_shootray(&my_ap);
 
 	/* XXX check my_ap.a_dist for distance to ground */
@@ -374,7 +375,7 @@ tmist_render(struct application *ap, const struct partition *pp, struct shadewor
  * once for each hit point to be shaded.
  */
 int
-emist_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+emist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct air_specific *air_sp =
 	(struct air_specific *)dp;
@@ -440,7 +441,7 @@ emist_render(struct application *ap, const struct partition *pp, struct shadewor
  * once for each hit point to be shaded.
  */
 int
-emist_fbm_render(struct application *ap, const struct partition *pp, struct shadework *UNUSED(swp), genptr_t UNUSED(dp))
+emist_fbm_render(struct application *ap, const struct partition *pp, struct shadework *UNUSED(swp), void *UNUSED(dp))
 {
     point_t in_pt, out_pt;
     vect_t dist_v;

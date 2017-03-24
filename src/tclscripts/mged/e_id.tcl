@@ -1,7 +1,7 @@
 #                        E _ I D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,12 +19,9 @@
 #
 ###
 #
-#				E _ I D
-#
 #	TCL macro for MGED(1) to edit all objects w/ specified ident numbers
 #
 #	Usage -  'e_id ident[-ident] ...'
-#	Author - Paul Tanenbaum
 #
 #	Grab the output of MGED's 'whichid' command, and use it to construct
 #	an invocation of its 'e' command to display exactly the objects with

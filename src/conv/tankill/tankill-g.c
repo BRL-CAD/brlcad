@@ -1,7 +1,7 @@
 /*                     T A N K I L L - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -188,8 +188,8 @@ main(int argc, char **argv)
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
-		bu_printb( "librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT );
+		sscanf( bu_optarg, "%x", (unsigned int *)&nmg_debug );
+		bu_printb( "librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    case 'k': /* keep component codes of 1001 */
@@ -341,7 +341,7 @@ main(int argc, char **argv)
 		NMG_CK_FACEUSE( fu );
 		if ( fu->orientation == OT_SAME )
 		{
-		    if ( nmg_calc_face_g( fu ) )
+		    if ( nmg_calc_face_g( fu, &RTG.rtg_vlfree ) )
 			bu_log( "Failed to calculate plane eqn\n" );
 
 		    /* save the face in a table */
@@ -364,7 +364,7 @@ main(int argc, char **argv)
 	nmg_break_long_edges( s, &tol );
 
 	/* glue all the faces together */
-	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_END( &faces ), &tol );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_LEN( &faces ), &RTG.rtg_vlfree, &tol );
 
 	/* re-initialize the face list */
 	bu_ptbl_reset( &faces );
@@ -375,7 +375,7 @@ main(int argc, char **argv)
 	/* fix the normals */
 	s = BU_LIST_FIRST( shell, &r->s_hd );
 
-	nmg_fix_normals( s, &tol );
+	nmg_fix_normals( s, &RTG.rtg_vlfree, &tol );
 
 	/* make a name for this solid */
 	sprintf( name, "s.%d.%d", comp_code, Add_solid( comp_code ) );

@@ -1,7 +1,7 @@
 /*                            I F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,12 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
+#include "bu/avs.h"
+#include "bu/malloc.h"
+#include "bu/path.h"
+#include "bu/vls.h"
 
 #include "./nirt.h"
 #include "./usrfmt.h"
@@ -139,7 +144,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 
 	ValTab[VTI_PATH_NAME].value.sval = part->pt_regionp->reg_name;
 	ValTab[VTI_REG_NAME].value.sval = (char *)bu_calloc(strlen(regionPN), sizeof(char), "if_hit sval");
-	bu_basename((char *)ValTab[VTI_REG_NAME].value.sval, regionPN);
+	bu_basename(regionPN, (char *)ValTab[VTI_REG_NAME].value.sval);
 	ValTab[VTI_REG_ID].value.ival = part->pt_regionp->reg_regionid;
 	ValTab[VTI_SURF_NUM_IN].value.ival = part->pt_inhit->hit_surfno;
 	ValTab[VTI_SURF_NUM_OUT].value.ival = part->pt_outhit->hit_surfno;
@@ -167,8 +172,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 		    bu_vls_strcat(&claimant_list, " ");
 		bu_strlcpy(tmpcp, (*rpp)->reg_name, sizeof(tmpcp));
 
-		base = (char *)bu_calloc(strlen(tmpcp), sizeof(char), "if_hit base");
-		bu_basename(base, tmpcp);
+		base = bu_basename(tmpcp, NULL);
 		bu_vls_strcat(&claimant_list, base);
 		bu_free(base, "bu_basename");
 	    }
@@ -200,7 +204,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 
 	if (need_to_free) {
 	    bu_vls_free(&claimant_list);
-	    bu_free((genptr_t)ValTab[VTI_CLAIMANT_LISTN].value.sval, "returned by bu_vls_strdup");
+	    bu_free((void *)ValTab[VTI_CLAIMANT_LISTN].value.sval, "returned by bu_vls_strdup");
 	    need_to_free = 0;
 	}
 
@@ -213,9 +217,9 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 	    char *copy_ovlp_reg2 = bu_strdup(ovp->reg2->reg_name);
 
 	    ValTab[VTI_OV_REG1_NAME].value.sval = (char *)bu_calloc(strlen(copy_ovlp_reg1), sizeof(char), "if_hit sval2");
-	    bu_basename((char *)ValTab[VTI_OV_REG1_NAME].value.sval, copy_ovlp_reg1);
+	    bu_basename(copy_ovlp_reg1, (char *)ValTab[VTI_OV_REG1_NAME].value.sval);
 	    ValTab[VTI_OV_REG2_NAME].value.sval = (char *)bu_calloc(strlen(copy_ovlp_reg2), sizeof(char), "if_hit sval3");
-	    bu_basename((char *)ValTab[VTI_OV_REG2_NAME].value.sval, copy_ovlp_reg2);
+	    bu_basename(copy_ovlp_reg2, (char *)ValTab[VTI_OV_REG2_NAME].value.sval);
 #endif
 	    ValTab[VTI_OV_REG1_ID].value.ival = ovp->reg1->reg_regionid;
 	    ValTab[VTI_OV_REG2_ID].value.ival = ovp->reg2->reg_regionid;
@@ -235,8 +239,8 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 	    report(FMT_OVLP);
 
 #ifndef NIRT_OVLP_PATH
-	    bu_free((genptr_t)copy_ovlp_reg1, "copy_ovlp_reg1");
-	    bu_free((genptr_t)copy_ovlp_reg2, "copy_ovlp_reg2");
+	    bu_free((void *)copy_ovlp_reg1, "copy_ovlp_reg1");
+	    bu_free((void *)copy_ovlp_reg2, "copy_ovlp_reg2");
 #endif
 
 	    del_ovlp(ovp);

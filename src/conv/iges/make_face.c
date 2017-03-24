@@ -1,7 +1,7 @@
 /*                     M A K E _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -166,7 +166,7 @@ Make_planar_face(struct shell *s, int entityno, int face_orient)
 	dist = DIST_PT_PLANE(outside_pt, pl);
 	VJOIN1(outside_pt, outside_pt, -dist, pl);
 
-	if (nmg_class_pt_lu_except(outside_pt, lu, (struct edge *)NULL, &tol) != NMG_CLASS_AoutB) {
+	if (nmg_class_pt_lu_except(outside_pt, lu, (struct edge *)NULL, &RTG.rtg_vlfree, &tol) != NMG_CLASS_AoutB) {
 	    nmg_reverse_face(fu);
 	    if (fu->orientation != OT_SAME) {
 		fu = fu->fumate_p;

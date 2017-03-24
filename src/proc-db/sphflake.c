@@ -1,7 +1,7 @@
 /*                      S P H F L A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,8 +30,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -136,8 +136,11 @@ int main(int argc, char **argv)
     params_t params;
 
     int inter = 0;
-    char fileName[MAX_INPUT_LENGTH];
+    char fileName[MAX_INPUT_LENGTH] = {0};
     int depth = DEFAULT_MAXDEPTH;
+
+    memset(fileName, 0, MAX_INPUT_LENGTH);
+    bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
 
     while ((optc = bu_getopt(argc, argv, "iIDd:f:F:h?")) != -1) {
 	switch (optc) {
@@ -165,16 +168,10 @@ int main(int argc, char **argv)
 		bu_exit(0, NULL);
 	}
     }
-    if (bu_optind <= 1) {
-	usage(argv[0]);
-	fprintf(stderr,"Using all default parameters.\n");
-	fprintf(stderr,"       Program continues running:\n");
-	memset(fileName, 0, MAX_INPUT_LENGTH);
-	bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
-	inter = 0;
-    }
 
     initializeInfo(&params, inter, fileName, depth);
+
+    bu_log("Writing out geometry to file [%s] ...", params.fileName);
 
     /* now open a file for outputting the database */
     fp = wdb_fopen(params.fileName);
@@ -200,6 +197,8 @@ int main(int argc, char **argv)
     wdb_close(fp);
     bu_free(wmemberArray, "free wmemberArray");
     bu_free(params.matArray, "free matArray");
+
+    bu_log(" done.\n");
 
     return 0;
 }

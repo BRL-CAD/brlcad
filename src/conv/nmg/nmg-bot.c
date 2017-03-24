@@ -1,7 +1,7 @@
 /*                       N M G - B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,11 +32,10 @@
 #include <ctype.h>
 
 #include "vmath.h"
-#include "db.h"
-#include "bu.h"
+#include "rt/db4.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 
@@ -86,6 +85,9 @@ main(int argc, char **argv)
 {
     struct directory *dp;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (argc != 3 && argc != 4) {
 	bu_exit(1, "Usage:\n\t%s [-v] input.g output.g\n", argv[0]);
     }
@@ -98,8 +100,6 @@ main(int argc, char **argv)
 	    bu_exit(1, "Usage:\n\t%s [-v] input.g output.g\n", argv[0]);
 	}
     }
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     dbip = db_open(argv[argc-2], DB_OPEN_READONLY);
     if (dbip == DBI_NULL) {

@@ -1,7 +1,7 @@
 /*                         R E M R T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,11 +46,8 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* sometimes includes <time.h> */
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bselect.h"
-#include "bio.h"
+#include "bresource.h"
+#include "bsocket.h"
 
 /* FIXME: is this basically FD_COPY()? */
 #ifndef FD_MOVE
@@ -58,7 +55,8 @@
 					       if (FD_ISSET(_i, b)) FD_SET(_i, a); else FD_CLR(_i, a); }
 #endif
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -71,13 +69,16 @@
 #include "../rt/rtuif.h"
 #include "./protocol.h"
 #include "./ihost.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 #ifndef HAVE_VFORK
-#  define vfork fork
+#  ifdef HAVE_FORK
+#    define vfork fork
+#  else
+#    define vfork() -1
+#  endif
 #endif
-
 
 #define TARDY_SERVER_INTERVAL	(9*60)		/* max seconds of silence */
 #define N_SERVER_ASSIGNMENTS	3		/* desired # of assignments */
@@ -201,7 +202,7 @@ struct servers {
 } servers[MAXSERVERS];
 
 
-FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
+fb *fbp = FB_NULL;		/* Current framebuffer ptr */
 int cur_fbwidth;		/* current fb width */
 int fbwidth;			/* fb width - S command */
 int fbheight;			/* fb height - S command */
@@ -317,7 +318,6 @@ extern size_t height;
 
 /* variables shared with do.c */
 extern int matflag;
-extern int interactive;
 extern int benchmark;
 extern int rt_verbosity;
 extern char *outputfile;		/* output file name */
@@ -725,7 +725,7 @@ read_rc_file(void)
 static double
 tvdiff(struct timeval *t1, struct timeval *t0)
 {
-    return((t1->tv_sec - t0->tv_sec) +
+    return ((t1->tv_sec - t0->tv_sec) +
 	   (t1->tv_usec - t0->tv_usec) / 1000000.);
 }
 
@@ -791,7 +791,6 @@ prep_frame(struct frame *fr)
 	    rt_dist_tol, rt_perp_tol
 	);
     bu_vls_strcat(&fr->fr_cmd, buf);
-    if (interactive) bu_vls_strcat(&fr->fr_cmd, " -I");
     if (benchmark) bu_vls_strcat(&fr->fr_cmd, " -B");
     if (!EQUAL(aspect, 1.0)) {
 	sprintf(buf, " -V%g", aspect);
@@ -1145,7 +1144,7 @@ init_fb(const char *name)
 {
     size_t xx, yy;
 
-    if (fbp != FBIO_NULL) fb_close(fbp);
+    if (fbp != FB_NULL) fb_close(fbp);
 
     xx = fbwidth;
     yy = fbheight;
@@ -1158,7 +1157,7 @@ init_fb(const char *name)
 	xx <<= 1;
     while (yy < height)
 	yy <<= 1;
-    if ((fbp = fb_open(name?name:framebuffer, xx, yy)) == FBIO_NULL) {
+    if ((fbp = fb_open(name?name:framebuffer, xx, yy)) == FB_NULL) {
 	bu_log("fb_open %zu, %zu failed\n", xx, yy);
 	return -1;
     }
@@ -1177,7 +1176,7 @@ size_display(struct frame *fr)
     CHECK_FRAME(fr);
     if (cur_fbwidth == fr->fr_width)
 	return;
-    if (fbp == FBIO_NULL)
+    if (fbp == FB_NULL)
 	return;
     if (fr->fr_width > fb_getwidth(fbp)) {
 	bu_log("Warning:  fb not big enough for %d pixels, display truncated\n", fr->fr_width);
@@ -1209,7 +1208,7 @@ repaint_fb(struct frame *fr)
     int w;
     int cnt;
 
-    if (fbp == FBIO_NULL) return;
+    if (fbp == FB_NULL) return;
     CHECK_FRAME(fr);
     size_display(fr);
 
@@ -1663,9 +1662,6 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
      */
     /* Base new assignment on desired result rate & measured speed */
     lump = assignment_time() * sp->sr_w_elapsed;
-
-    /* If for an interactive demo, limit assignment to 1 scanline */
-    if (interactive && lump > fr->fr_width) lump = fr->fr_width;
 
     /* If each frame has a dedicated server, make lumps big */
     if (work_allocate_method == OPT_MOVIE) {
@@ -2301,7 +2297,7 @@ cd_attach(const int argc, const char **argv)
 	name = argv[1];
     }
     if (init_fb(name) < 0) return -1;
-    if (fbp == FBIO_NULL) return -1;
+    if (fbp == FB_NULL) return -1;
     if ((fr = FrameHead.fr_forw) == &FrameHead) return -1;
     CHECK_FRAME(fr);
 
@@ -2313,8 +2309,8 @@ cd_attach(const int argc, const char **argv)
 static int
 cd_release(const int UNUSED(argc), const char **UNUSED(argv))
 {
-    if (fbp != FBIO_NULL) fb_close(fbp);
-    fbp = FBIO_NULL;
+    if (fbp != FB_NULL) fb_close(fbp);
+    fbp = FB_NULL;
     return 0;
 }
 
@@ -2379,7 +2375,6 @@ cd_stat(const int UNUSED(argc), const char **UNUSED(argv))
     s = stamp();
 
     /* Print work assignments */
-    if (interactive) bu_log("%s Interactive mode\n", s);
     bu_log("%s Worker assignment interval=%d seconds:\n",
 	   s, assignment_time());
     bu_log("   Server   Last  Last   Average  Cur   Machine\n");
@@ -2439,8 +2434,8 @@ cd_status(const int UNUSED(argc), const char **UNUSED(argv))
 	       s, file_fullname, object_list);
     }
 
-    if (fbp != FBIO_NULL)
-	bu_log("%s Framebuffer is %s\n", s, fbp->if_name);
+    if (fbp != FB_NULL)
+	bu_log("%s Framebuffer is %s\n", s, fb_get_name(fbp));
     else
 	bu_log("%s No framebuffer\n", s);
     if (outputfile)
@@ -2489,7 +2484,7 @@ cd_status(const int UNUSED(argc), const char **UNUSED(argv))
 static int
 cd_clear(const int UNUSED(argc), const char **UNUSED(argv))
 {
-    if (fbp == FBIO_NULL) return -1;
+    if (fbp == FB_NULL) return -1;
     fb_clear(fbp, PIXEL_NULL);
     cur_fbwidth = 0;
     return 0;
@@ -3163,9 +3158,9 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 
     /* Consider the next assignment to have been sent "now" */
     (void)gettimeofday(&sp->sr_sendtime, (struct timezone *)0);
-    bu_struct_wrap_buf(&ext, (genptr_t) buf);
+    bu_struct_wrap_buf(&ext, (void *) buf);
 
-    cnt = bu_struct_import((genptr_t)&info, desc_line_info, &ext);
+    cnt = bu_struct_import((void *)&info, desc_line_info, &ext, NULL);
     if (cnt < 0) {
 	bu_log("bu_struct_import error, %zu\n", cnt);
 	drop_server(sp, "bu_struct_import error");
@@ -3267,7 +3262,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     }
 
     /* If display attached, also draw it */
-    if (fbp != FBIO_NULL) {
+    if (fbp != FB_NULL) {
 	write_fb((unsigned char *)buf + ext.ext_nbytes, fr,
 		 info.li_startpix, info.li_endpix+1);
     }
@@ -3608,7 +3603,6 @@ main(int argc, char *argv[])
 	    fprintf(stderr, "remrt:  bad arg list\n");
 	    bu_exit(1, NULL);
 	}
-	if (interactive) work_allocate_method = OPT_FRAME;
 
 	/* take note of database name and treetops */
 	if (bu_optind+2 > argc) {

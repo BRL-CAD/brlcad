@@ -1,7 +1,7 @@
 /*                         I N P U T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,19 +27,23 @@
 
 #include "common.h"
 
+#ifndef HAVE_WINDOWS_H
+
 /* system headers */
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <limits.h> /* for CHAR_MAX */
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 
 #include "bio.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 /* interface headers */
 #include "tcl.h"
-#include "bu.h"
 #include "libtermio.h"
 
 
@@ -148,7 +152,7 @@ processChar(char ch)
     static int bracketed = 0;
     static int freshline = 1;
 
-    if(ch == '\0')
+    if (ch == '\0')
 	return;
 
     /* ANSI arrow keys */
@@ -559,6 +563,7 @@ insert_beep(void)
     bu_log("%c", 7);
 }
 
+#endif /* HAVE_WINDOWS_H */
 
 /*
  * Local Variables:

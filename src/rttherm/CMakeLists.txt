@@ -5,11 +5,13 @@ set(RTTHERM_INCLUDE_DIRS
   ${MULTISPECTRAL_INCLUDE_DIRS}
   ${OPTICAL_INCLUDE_DIRS}
   )
-LIST(REMOVE_DUPLICATES RTTHERM_INCLUDE_DIRS)
-include_directories(${RTTHERM_INCLUDE_DIRS})
+list(REMOVE_DUPLICATES RTTHERM_INCLUDE_DIRS)
+BRLCAD_INCLUDE_DIRS(RTTHERM_INCLUDE_DIRS)
 
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-  BRLCAD_ADDEXEC(ssampview "spectrum.c;ssampview.c" "libfb;libmultispectral;${TCL_TK_LIBRARY};${X11_LIBRARIES}")
+  BRLCAD_ADDEXEC(ssampview "spectrum.c;ssampview.c" "libtclcad;libfb;libmultispectral;${TCL_TK_LIBRARY};${X11_LIBRARIES}")
+else(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
+  CMAKEFILES(ssampview.c)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
 BRLCAD_ADDEXEC(rttherm "spectrum.c;viewtherm.c" "libfb;libged;librttherm;libmultispectral")

@@ -1,7 +1,7 @@
 /*                  O R I E N T _ L O O P S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr)
 	if (lu == lptr->lu)
 	    continue;
 
-	if (nmg_classify_lu_lu(lu, lptr->lu, &tol) == NMG_CLASS_AinB) {
+	if (nmg_classify_lu_lu(lu, lptr->lu, &RTG.rtg_vlfree, &tol) == NMG_CLASS_AinB) {
 
 	    if (lptr->inner_loops == (struct loop_list *)NULL) {
 		BU_ALLOC(lptr->inner_loops, struct loop_list);
@@ -74,7 +74,7 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr)
 	prev = (struct loop_list *)NULL;
 	while (inner1) {
 	    if (inner->lu != inner1->lu) {
-		if (nmg_classify_lu_lu(inner1->lu, inner->lu, &tol) == NMG_CLASS_AinB) {
+		if (nmg_classify_lu_lu(inner1->lu, inner->lu, &RTG.rtg_vlfree, &tol) == NMG_CLASS_AinB) {
 		    struct loop_list *tmp;
 
 		    /* inner1->lu is inside inner->lu,
@@ -138,7 +138,7 @@ Orient_face_loops(struct faceuse *fu)
 	for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
 	    if (lu1 == lu)
 		continue;
-	    if (nmg_classify_lu_lu(lu, lu1, &tol) == NMG_CLASS_AinB) {
+	    if (nmg_classify_lu_lu(lu, lu1, &RTG.rtg_vlfree, &tol) == NMG_CLASS_AinB) {
 		outer = 0;
 		break;
 	    }

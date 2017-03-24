@@ -1,7 +1,7 @@
 /*                     C O N V A S S E M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,8 @@ struct solid_list
 void
 Convassem()
 {
-    int i, j, k, comblen, conv = 0, totass = 0;
+    size_t i;
+    int j, k, comblen, conv = 0, totass = 0;
     struct solid_list *root, *ptr, *ptr_tmp;
     struct wmember head, *wmem;
     int no_of_assoc = 0;

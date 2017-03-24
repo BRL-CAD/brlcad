@@ -1,7 +1,7 @@
 /*                          T U B E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,8 +32,7 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "bu.h"
-#include "nurb.h"
+#include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -133,8 +132,6 @@ main(int argc, char **argv)
 	    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
 		bu_exit(1,NULL);
     	}
-	else if (argc == 1)
-	    bu_log("       Program continues running:\n");
     }
 
     BU_LIST_INIT(&head.l);
@@ -166,9 +163,9 @@ main(int argc, char **argv)
 #endif
     fprintf(stderr, "inner radius=%gmm, outer radius=%gmm\n", iradius, oradius);
 
-    length = 187. * inches2mm;
+    length = 187.0 * inches2mm;
 #ifdef never
-    spacing = 100.;			/* mm per sample */
+    spacing = 100.0;			/* mm per sample */
     nsamples = ceil(length/spacing);
     fprintf(stderr, "length=%gmm, spacing=%gmm\n", length, spacing);
     fprintf(stderr, "nframes=%d\n", nframes);
@@ -267,11 +264,10 @@ build_spline(char *name, int npts, double radius)
      * The V direction is down the first column,
      * and has NROWS+order[V] positions.
      */
-    bp = rt_nurb_new_snurb(3,	4,		/* u, v order */
+    bp = nmg_nurb_new_snurb(3,	4,		/* u, v order */
 			   N_CIRCLE_KNOTS,	npts+6,		/* u, v knot vector size */
 			   npts+2,		NCOLS,		/* nrows, ncols */
-			   RT_NURB_MAKE_PT_TYPE(4, 2, 1),
-			   &rt_uniresource);
+			   RT_NURB_MAKE_PT_TYPE(4, 2, 1));
 
     /* Build the U knots */
     for (i=0; i<N_CIRCLE_KNOTS; i++)
@@ -336,7 +332,7 @@ build_spline(char *name, int npts, double radius)
 	mk_bspline(outfp, name, surfp);
     }
 
-    rt_nurb_free_snurb(bp, &rt_uniresource);
+    nmg_nurb_free_snurb(bp);
 }
 
 
@@ -438,7 +434,7 @@ read_frame(FILE *fp)
 	    EXAGERATION / (0.02 * inches2mm);
     }
 /* Extrapolate data for the right side -- end of muzzle */
-    if(nsamples < 2) {
+    if (nsamples < 2) {
 	bu_log("Insufficient number of samples for extrapolation. Aborting\n");
 	return -1;
     }

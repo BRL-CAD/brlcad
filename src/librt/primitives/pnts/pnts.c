@@ -1,7 +1,7 @@
 /*                          P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,14 +26,14 @@
 #include "common.h"
 
 /* system headers */
-#include "bin.h"
+#include "bnetwork.h"
 
 /* common headers */
 #include "bu/cv.h"
 #include "bn.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "vmath.h"
 
 
@@ -689,7 +689,7 @@ rt_pnts_ifree(struct rt_db_internal *internal)
 
     /* free the internal container */
     bu_free(internal->idb_ptr, "pnts ifree");
-    internal->idb_ptr = GENPTR_NULL; /* sanity */
+    internal->idb_ptr = ((void *)0); /* sanity */
 }
 
 

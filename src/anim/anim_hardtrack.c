@@ -1,7 +1,7 @@
 /*                A N I M _ H A R D T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,9 +33,13 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/exit.h"
+#include "bu/log.h"
 #include "bn.h"
-#include "anim.h"
+#include "bn/anim.h"
 
 
 #define OPT_STR "b:d:f:i:l:pr:w:sg:m:ch?"
@@ -89,7 +93,7 @@ struct rlink {
 /* variables describing track geometry - used by main, trackprep, get_link */
 struct all *x;
 struct rlink *r;	/* reverse of initial locations of links */
-int num_links, num_wheels;
+size_t num_links, num_wheels;
 fastf_t track_y, tracklen;
 
 /* variables set by get_args */
@@ -120,7 +124,7 @@ usage(void)
 int
 get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 {
-    int i;
+    size_t i;
     vect_t temp;
     while (dist >= tracklen) /*periodicize*/
 	dist -= tracklen;
@@ -131,7 +135,7 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	    VSCALE(temp, (x[i].t.dir), dist);
 	    VADD2(pos, x[i].t.pos1, temp);
 	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
-	    return 2*i;
+	    return (int)2*i;
 	}
 	if ((dist -= x[i].w.rad*x[i].w.arc) < 0) {
 	    *angle_p = dist/x[i].w.rad;
@@ -140,7 +144,7 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	    pos[1] = x[i].w.pos[1];
 	    pos[2] = x[i].w.pos[2] + x[i].w.rad*sin(*angle_p);
 	    *angle_p -= M_PI_2; /*angle of clockwise tangent to circle*/
-	    return 2*i+1;
+	    return (int)2*i+1;
 	}
     }
     return -1;
@@ -203,7 +207,7 @@ get_args(int argc, char **argv)
 		print_wheel = 1;
 		break;
 	    case 'l':
-		sscanf(bu_optarg, "%d", &num_links);
+		bu_sscanf(bu_optarg, "%zd", &num_links);
 		link_nindex = bu_optind;
 		bu_optind += 1;
 		print_link = 1;
@@ -245,7 +249,7 @@ get_args(int argc, char **argv)
 int
 track_prep(void)
 {
-    int i;
+    size_t i;
     fastf_t phi, costheta, arc_angle;
     fastf_t link_angle = 0.0;
     vect_t difference, link_cent = VINIT_ZERO;
@@ -324,7 +328,7 @@ main(int argc, char *argv[])
     int count = 0;
     int frame = 0;
     int go = 0;
-    int i = 0;
+    size_t i = 0;
     int last_frame = 0;
     int val = 0;
     mat_t mat_v = MAT_INIT_IDN;
@@ -345,9 +349,14 @@ main(int argc, char *argv[])
     vect_t zero = VINIT_ZERO;
 
     init_dist = radius= 0.0;
-    first_frame = num_wheels = steer = axes = cent = links_placed = num_links = 0;
+    first_frame = steer = axes = cent = links_placed = (int)0;
+    num_wheels = num_links = (size_t)0;
+
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();
@@ -498,10 +507,10 @@ main(int argc, char *argv[])
 		last_frame = 1;
 	    }
 	    if (print_link) {
-		for (count=0;count<num_links;count++) {
-		    (void) get_link(position, &y_rot, distance+tracklen*count/num_links+init_dist);
-		    anim_y_p_r2mat(wmat, 0.0, y_rot+r[count].ang, 0.0);
-		    anim_add_trans(wmat, position, r[count].pos);
+		for (i=0; i<num_links; i++) {
+		    (void) get_link(position, &y_rot, distance+tracklen*i/num_links+init_dist);
+		    anim_y_p_r2mat(wmat, 0.0, y_rot+r[i].ang, 0.0);
+		    anim_add_trans(wmat, position, r[i].pos);
 		    if ((axes || cent) && links_placed) {
 			/* link moved from vehicle coords */
 			bn_mat_mul(mat_x, wmat, m_rev_axes);
@@ -512,28 +521,28 @@ main(int argc, char *argv[])
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
 		    if (print_mode==TRACK_ANIM) {
-			printf("anim %s.%d matrix %s\n", *(argv+link_nindex), count, link_cmd);
+			printf("anim %s.%d matrix %s\n", *(argv+link_nindex), (int)i, link_cmd);
 			anim_mat_printf(stdout, wmat, "%.10g ", "\n", ";\n");
 		    } else if (print_mode==TRACK_ARCED) {
-			printf("arced %s.%d matrix %s ", *(argv+link_nindex), count, link_cmd);
+			printf("arced %s.%d matrix %s ", *(argv+link_nindex), (int)i, link_cmd);
 			anim_mat_printf(stdout, wmat, "%.10g ", "", "\n");
 		    }
 		}
 	    }
 	    if (print_wheel) {
-		for (count = 0;count<num_wheels;count++) {
-		    anim_y_p_r2mat(wmat, 0.0, -distance/x[count].w.rad, 0.0);
-		    VREVERSE(temp, x[count].w.pos);
-		    anim_add_trans(wmat, x[count].w.pos, temp);
+		for (i = 0; i<num_wheels; i++) {
+		    anim_y_p_r2mat(wmat, 0.0, -distance/x[i].w.rad, 0.0);
+		    VREVERSE(temp, x[i].w.pos);
+		    anim_add_trans(wmat, x[i].w.pos, temp);
 		    if (axes || cent) {
 			bn_mat_mul(mat_x, wmat, m_rev_axes);
 			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
 		    if (print_mode==TRACK_ANIM) {
-			printf("anim %s.%d matrix %s\n", *(argv+wheel_nindex), count, wheel_cmd);
+			printf("anim %s.%d matrix %s\n", *(argv+wheel_nindex), (int)i, wheel_cmd);
 			anim_mat_printf(stdout, wmat, "%.10g ", "\n", ";\n");
 		    } else if (print_mode==TRACK_ARCED) {
-			printf("arced %s.%d matrix %s ", *(argv+wheel_nindex), count, wheel_cmd);
+			printf("arced %s.%d matrix %s ", *(argv+wheel_nindex), (int)i, wheel_cmd);
 			anim_mat_printf(stdout, wmat, "%.10g ", "", "\n");
 		    }
 		}

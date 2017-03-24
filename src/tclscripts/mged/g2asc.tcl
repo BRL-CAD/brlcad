@@ -1,7 +1,7 @@
 #                       G 2 A S C . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,11 +19,7 @@
 #
 ###
 #
-#			G 2 A S C . T C L
-#
 #	Tool for saving the current database to an ascii file.
-#
-#	Author - Robert G. Parker
 #
 
 proc init_g2asc { id } {

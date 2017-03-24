@@ -1,7 +1,7 @@
 /*                         Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,11 +20,7 @@
 
 #include "common.h"
 
-#include "bio.h"
-
-
 #include "ged.h"
-
 
 HIDDEN int
 zoom(struct ged *gedp, double sf)
@@ -75,14 +71,14 @@ zoom_load(struct ged *gedp)
     extern const struct ged_cmd *zoom_cmd(void);
 
     const struct ged_cmd *cmd = zoom_cmd();
-    return gedp->add(cmd);
+    return gedp->add(gedp, cmd);
 }
 
 
 HIDDEN void
 zoom_unload(struct ged *gedp)
 {
-    gedp->del("zoom");
+    gedp->del(gedp, "zoom");
 }
 
 

@@ -1,7 +1,7 @@
-/*                    F B _ `gG E N E R I C . C
+/*                    F B _ G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,30 +33,301 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <png.h>
 
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
 #endif
 
+#include "bsocket.h"
 #include "bio.h"
 
 #include "bu/color.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "bu/log.h"
+#include "bu/exit.h"
 
+#include "vmath.h"
+#include "fb_private.h"
 #include "fb.h"
 
+/**
+ * First element of list is default device when no name given
+ */
+static
+fb *_if_list[] = {
+#ifdef IF_OSGL
+    &osgl_interface,
+#endif
+#ifdef IF_WGL
+    &wgl_interface,
+#endif
+#ifdef IF_OGL
+    &ogl_interface,
+#endif
+#ifdef IF_X
+    &X24_interface,
+#endif
+#ifdef IF_TK
+    &tk_interface,
+#endif
+#ifdef IF_QT
+    &qt_interface,
+#endif
+    &debug_interface,
+/* never get any of the following by default */
+    &stk_interface,
+    &memory_interface,
+    &null_interface,
+    (fb *) 0
+};
 
-extern int X24_close_existing(FBIO *ifp);
-extern int ogl_close_existing(FBIO *ifp);
-extern int wgl_close_existing(FBIO *ifp);
+fb *fb_get()
+{
+    struct fb_internal *new_fb = FB_NULL;
+    BU_GET(new_fb, struct fb_internal);
+    new_fb->if_name = NULL;
+    return new_fb;
+}
+
+void fb_put(fb *ifp)
+{
+    if (ifp != FB_NULL)
+	BU_PUT(ifp, struct fb_internal);
+}
+
+void fb_set_interface(fb *ifp, const char *interface_type)
+{
+    int i = 0;
+    if (!ifp) return;
+    while (_if_list[i] != FB_NULL) {
+	if (bu_strncmp(interface_type, _if_list[i]->if_name+5, strlen(interface_type)) == 0) {
+	    /* found it, copy its struct in */
+	    *ifp = *(_if_list[i]);
+	    return;
+	} else {
+	    i++;
+	}
+    }
+}
+
+struct fb_platform_specific *
+fb_get_platform_specific(uint32_t magic)
+{
+    int i = 0;
+    if (!magic) return NULL;
+    while (_if_list[i] != FB_NULL) {
+	if (magic == _if_list[i]->type_magic) {
+	    /* found it, get its specific struct */
+	    return (*(_if_list[i])).if_existing_get(magic);
+	} else {
+	    i++;
+	}
+    }
+    return NULL;
+}
+
+void
+fb_put_platform_specific(struct fb_platform_specific *fb_p)
+{
+    int i = 0;
+    if (!fb_p) return;
+    while (_if_list[i] != FB_NULL) {
+	if (fb_p->magic == _if_list[i]->type_magic) {
+	    /* found it, clear its specific struct */
+	    (*(_if_list[i])).if_existing_put(fb_p);
+	    return;
+	} else {
+	    i++;
+	}
+    }
+    return;
+}
+
+fb *
+fb_open_existing(const char *file, int width, int height, struct fb_platform_specific *fb_p)
+{
+    fb *ifp = (fb *) calloc(sizeof(fb), 1);
+    fb_set_interface(ifp, file);
+    fb_set_magic(ifp, FB_MAGIC);
+    ifp->if_open_existing(ifp, width, height, fb_p);
+    return ifp;
+}
+
+int
+fb_refresh(fb *ifp, int x, int y, int w, int h)
+{
+    return ifp->if_refresh(ifp, x, y, w, h);
+}
+
+int
+fb_configure_window(fb *ifp, int width, int height)
+{
+    /* unknown/unset framebuffer */
+    if (!ifp || !ifp->if_configure_window || width < 0 || height < 0) {
+	return 0;
+    }
+    return ifp->if_configure_window(ifp, width, height);
+}
+
+void fb_set_name(fb *ifp, const char *name)
+{
+    if (!ifp) return;
+    ifp->if_name = (char *)bu_malloc((unsigned)strlen(name)+1, "if_name");
+    bu_strlcpy(ifp->if_name, name, strlen(name)+1);
+}
+
+char *fb_get_name(fb *ifp)
+{
+    if (!ifp) return NULL;
+    return ifp->if_name;
+}
+
+long fb_get_pagebuffer_pixel_size(fb *ifp)
+{
+    if (!ifp) return 0;
+    return ifp->if_ppixels;
+}
+
+int fb_is_set_fd(fb *ifp, fd_set *infds)
+{
+    if (!ifp) return 0;
+    if (!infds) return 0;
+    if (!ifp->if_selfd) return 0;
+    if (ifp->if_selfd <= 0) return 0;
+    return FD_ISSET(ifp->if_selfd, infds);
+}
+
+int fb_set_fd(fb *ifp, fd_set *select_list)
+{
+    if (!ifp) return 0;
+    if (!select_list) return 0;
+    if (!ifp->if_selfd) return 0;
+    if (ifp->if_selfd <= 0) return 0;
+    FD_SET(ifp->if_selfd, select_list);
+    return ifp->if_selfd;
+}
+
+int fb_clear_fd(fb *ifp, fd_set *list)
+{
+    if (!ifp) return 0;
+    if (!list) return 0;
+    if (!ifp->if_selfd) return 0;
+    if (ifp->if_selfd <= 0) return 0;
+    FD_CLR(ifp->if_selfd, list);
+    return ifp->if_selfd;
+}
+
+void fb_set_magic(fb *ifp, uint32_t magic)
+{
+    ifp->if_magic = magic;
+}
+
+
+char *fb_gettype(fb *ifp)
+{
+    return ifp->if_type;
+}
+
+int fb_getwidth(fb *ifp)
+{
+    return ifp->if_width;
+}
+int fb_getheight(fb *ifp)
+{
+    return ifp->if_height;
+}
+
+int fb_get_max_width(fb *ifp)
+{
+    return ifp->if_max_width;
+}
+int fb_get_max_height(fb *ifp)
+{
+    return ifp->if_max_height;
+}
+
+
+int fb_poll(fb *ifp)
+{
+    return (*ifp->if_poll)(ifp);
+}
+
+long fb_poll_rate(fb *ifp)
+{
+    return ifp->if_poll_refresh_rate;
+}
+
+int fb_help(fb *ifp)
+{
+    return (*ifp->if_help)(ifp);
+}
+int fb_free(fb *ifp)
+{
+    return (*ifp->if_free)(ifp);
+}
+int fb_clear(fb *ifp, unsigned char *pp)
+{
+    return (*ifp->if_clear)(ifp, pp);
+}
+ssize_t fb_read(fb *ifp, int x, int y, unsigned char *pp, size_t count)
+{
+    return (*ifp->if_read)(ifp, x, y, pp, count);
+}
+ssize_t fb_write(fb *ifp, int x, int y, const unsigned char *pp, size_t count)
+{
+    return (*ifp->if_write)(ifp, x, y, pp, count);
+}
+int fb_rmap(fb *ifp, ColorMap *cmap)
+{
+    return (*ifp->if_rmap)(ifp, cmap);
+}
+int fb_wmap(fb *ifp, const ColorMap *cmap)
+{
+    return (*ifp->if_wmap)(ifp, cmap);
+}
+int fb_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+{
+    return (*ifp->if_view)(ifp, xcenter, ycenter, xzoom, yzoom);
+}
+int fb_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+{
+    return (*ifp->if_getview)(ifp, xcenter, ycenter, xzoom, yzoom);
+}
+int fb_setcursor(fb *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo)
+{
+    return (*ifp->if_setcursor)(ifp, bits, xb, yb, xo, yo);
+}
+int fb_cursor(fb *ifp, int mode, int x, int y)
+{
+    return (*ifp->if_cursor)(ifp, mode, x, y);
+}
+int fb_getcursor(fb *ifp, int *mode, int *x, int *y)
+{
+    return (*ifp->if_getcursor)(ifp, mode, x, y);
+}
+int fb_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+{
+    return (*ifp->if_readrect)(ifp, xmin, ymin, width, height, pp);
+}
+int fb_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+{
+    return (*ifp->if_writerect)(ifp, xmin, ymin, width, height, pp);
+}
+int fb_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+{
+    return (*ifp->if_bwreadrect)(ifp, xmin, ymin, width, height, pp);
+}
+int fb_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+{
+    return (*ifp->if_bwwriterect)(ifp, xmin, ymin, width, height, pp);
+}
 
 
 #define Malloc_Bomb(_bytes_)					\
     fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",	\
 	   __FILE__, __LINE__, _bytes_)
-
 
 /**
  * True if the non-null string s is all digits
@@ -85,12 +356,12 @@ int _fb_disk_enable = 1;
 
 
 /**
- * Filler for FBIO function slots not used by a particular device
+ * Filler for fb function slots not used by a particular device
  */
-int fb_null(FBIO *ifp)
+int fb_null(fb *ifp)
 {
     if (ifp) {
-	FB_CK_FBIO(ifp);
+	FB_CK_FB(ifp);
     }
 
     return 0;
@@ -100,57 +371,30 @@ int fb_null(FBIO *ifp)
 /**
  * Used by if_*.c routines that don't have programmable cursor patterns.
  */
-int fb_null_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+int fb_null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     if (ifp) {
-	FB_CK_FBIO(ifp);
+	FB_CK_FB(ifp);
     }
 
     return 0;
 }
 
 
-/**
- * First element of list is default device when no name given
- */
-static
-FBIO *_if_list[] = {
-#ifdef IF_WGL
-    &wgl_interface,
-#endif
-#ifdef IF_OGL
-    &ogl_interface,
-#endif
-#ifdef IF_X
-    &X24_interface,
-    &X_interface,
-#endif
-#ifdef IF_TK
-    &tk_interface,
-#endif
 
-    &debug_interface,
-/* never get any of the following by default */
-    &stk_interface,
-    &memory_interface,
-    &null_interface,
-    (FBIO *) 0
-};
-
-
-FBIO *
+fb *
 fb_open(const char *file, int width, int height)
 {
-    register FBIO *ifp;
+    register fb *ifp;
     int i;
 
     if (width < 0 || height < 0)
-	return FBIO_NULL;
+	return FB_NULL;
 
-    ifp = (FBIO *) calloc(sizeof(FBIO), 1);
-    if (ifp == FBIO_NULL) {
-	Malloc_Bomb(sizeof(FBIO));
-	return FBIO_NULL;
+    ifp = (fb *) calloc(sizeof(fb), 1);
+    if (ifp == FB_NULL) {
+	Malloc_Bomb(sizeof(fb));
+	return FB_NULL;
     }
     if (file == NULL || *file == '\0') {
 	/* No name given, check environment variable first.	*/
@@ -172,7 +416,7 @@ fb_open(const char *file, int width, int height)
      * device array.  If we don't find it assume it's a file.
      */
     i = 0;
-    while (_if_list[i] != (FBIO *)NULL) {
+    while (_if_list[i] != (fb *)NULL) {
 	if (bu_strncmp(file, _if_list[i]->if_name,
 		    strlen(_if_list[i]->if_name)) == 0) {
 	    /* found it, copy its struct in */
@@ -187,7 +431,7 @@ fb_open(const char *file, int width, int height)
     if (bu_strncmp(file, "/dev/", 5) == 0) {
 	fb_log("fb_open: no such device \"%s\".\n", file);
 	free((void *) ifp);
-	return FBIO_NULL;
+	return FB_NULL;
     }
 
 #ifdef IF_REMOTE
@@ -204,7 +448,7 @@ fb_open(const char *file, int width, int height)
     } else {
 	fb_log("fb_open: no such device \"%s\".\n", file);
 	free((void *) ifp);
-	return FBIO_NULL;
+	return FB_NULL;
     }
 
 found_interface:
@@ -213,7 +457,7 @@ found_interface:
     if (ifp->if_name == (char *)NULL) {
 	Malloc_Bomb(strlen(file) + 1);
 	free((void *) ifp);
-	return FBIO_NULL;
+	return FB_NULL;
     }
     bu_strlcpy(ifp->if_name, file, strlen(file)+1);
 
@@ -226,18 +470,18 @@ found_interface:
 	ifp->if_magic = 0;		/* sanity */
 	free((void *) ifp->if_name);
 	free((void *) ifp);
-	return FBIO_NULL;
+	return FB_NULL;
     }
     return ifp;
 }
 
 
 int
-fb_close(FBIO *ifp)
+fb_close(fb *ifp)
 {
     int i;
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
     fb_flush(ifp);
     if ((i=(*ifp->if_close)(ifp)) <= -1) {
 	fb_log("fb_close: can not close device \"%s\", ret=%d.\n",
@@ -253,102 +497,26 @@ fb_close(FBIO *ifp)
 
 
 int
-fb_close_existing(FBIO *ifp)
+fb_close_existing(fb *ifp)
 {
+    int status = 0;
     if (!ifp)
 	return 0;
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     fb_flush(ifp);
 
     /* FIXME: these should be callbacks, not listed directly */
 
-#ifdef IF_X
-    {
-	if (BU_STR_EQUIV(ifp->if_name, X24_interface.if_name)) {
-	    int status = -1;
-	    if ((status = X24_close_existing(ifp)) <= -1) {
-		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
-		return BRLCAD_ERROR;
-	    }
-	    if (ifp->if_pbase != PIXEL_NULL) {
-		free((void *)ifp->if_pbase);
-	    }
-	    free((void *)ifp->if_name);
-	    free((void *)ifp);
-	    return BRLCAD_OK;
-	}
+    status = ifp->if_close_existing(ifp);
+
+    if (status  <= -1) {
+	fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
+	return BRLCAD_ERROR;
     }
-#endif  /* IF_X */
-
-#ifdef IF_WGL
-    {
-	if (BU_STR_EQUIV(ifp->if_name, wgl_interface.if_name)) {
-	    int status = -1;
-	    if ((status = wgl_close_existing(ifp)) <= -1) {
-		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
-		return BRLCAD_ERROR;
-	    }
-	    if (ifp->if_pbase != PIXEL_NULL)
-		free((void *)ifp->if_pbase);
-	    free((void *)ifp->if_name);
-	    free((void *)ifp);
-	    return BRLCAD_OK;
-	}
-    }
-#endif  /* IF_WGL */
-
-#ifdef IF_OGL
-    {
-	if (BU_STR_EQUIV(ifp->if_name, ogl_interface.if_name)) {
-	    int status = -1;
-	    if ((status = ogl_close_existing(ifp)) <= -1) {
-		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
-		return BRLCAD_ERROR;
-	    }
-	    if (ifp->if_pbase != PIXEL_NULL)
-		free((void *)ifp->if_pbase);
-	    free((void *)ifp->if_name);
-	    free((void *)ifp);
-	    return BRLCAD_OK;
-	}
-    }
-#endif  /* IF_OGL */
-
-#ifdef IF_RTGL
-    {
-	if (BU_STR_EQUIV(ifp->if_name, ogl_interface.if_name)) {
-	    int status = -1;
-	    if ((status = ogl_close_existing(ifp)) <= -1) {
-		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
-		return BRLCAD_ERROR;
-	    }
-	    if (ifp->if_pbase != PIXEL_NULL)
-		free((void *)ifp->if_pbase);
-	    free((void *)ifp->if_name);
-	    free((void *)ifp);
-	    return BRLCAD_OK;
-	}
-    }
-#endif  /* IF_RTGL */
-
-#ifdef IF_TK
-    {
-	if (BU_STR_EQUIV(ifp->if_name, tk_interface.if_name)) {
-	    /* may need to close_existing here at some point */
-	    if (ifp->if_pbase != PIXEL_NULL)
-		free((void *)ifp->if_pbase);
-	    free((void *)ifp->if_name);
-	    free((void *)ifp);
-	    return BRLCAD_OK;
-	}
-    }
-#endif  /* IF_TK */
-
-    fb_log("fb_close_existing: cannot close device\nifp: %s\n", ifp->if_name);
-
-    return BRLCAD_ERROR;
+    fb_put(ifp);
+    return BRLCAD_OK;
 }
 
 
@@ -362,7 +530,7 @@ fb_genhelp(void)
     int i;
 
     i = 0;
-    while (_if_list[i] != (FBIO *)NULL) {
+    while (_if_list[i] != (fb *)NULL) {
 	fb_log("%-12s  %s\n",
 	       _if_list[i]->if_name,
 	       _if_list[i]->if_type);
@@ -432,7 +600,7 @@ fb_cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *cmap)
 }
 
 int
-fb_write_fp(FBIO *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result)
+fb_write_fp(fb *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result)
 {
     unsigned char *scanline;	/* 1 scanline pixel buffer */
     int scanbytes;		/* # of bytes of scanline */
@@ -487,7 +655,7 @@ fb_write_fp(FBIO *ifp, FILE *fp, int req_width, int req_height, int crunch, int 
 	}
     }
 
-    bu_free((genptr_t)scanline, "fb_write_to_pix_fp(): scanline");
+    bu_free((void *)scanline, "fb_write_to_pix_fp(): scanline");
     return BRLCAD_OK;
 }
 
@@ -517,7 +685,7 @@ fb_skip_bytes(int fd, off_t num, int fileinput, int scanbytes, unsigned char *sc
 
 
 int
-fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *UNUSED(result))
+fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *UNUSED(result))
 {
     int y;
     int xout, yout, n, m, xstart, xskip;
@@ -683,6 +851,260 @@ fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, in
 	}
     }
     free(scanline);
+    return BRLCAD_OK;
+}
+
+
+static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
+
+int
+fb_read_png(fb *ifp, FILE *fp_in, int file_xoff, int file_yoff, int scr_xoff, int scr_yoff, int clear, int zoom, int inverse, int one_line_only, int multiple_lines, int verbose, int header_only, double def_screen_gamma, struct bu_vls *result)
+{
+    int y;
+    int i;
+    int xout, yout, m, xstart;
+    png_structp png_p;
+    png_infop info_p;
+    char header[8];
+    int bit_depth;
+    int color_type;
+    png_color_16p input_backgrd;
+    double gammaval=1.0;
+    int file_width, file_height;
+    unsigned char *image;
+    unsigned char **scanline;	/* 1 scanline pixel buffer */
+    int scanbytes;		/* # of bytes of scanline */
+    int scanpix;		/* # of pixels of scanline */
+    int scr_width;
+    int scr_height;
+
+    if (fread(header, 8, 1, fp_in) != 1) {
+	bu_vls_printf(result, "png-fb: ERROR: Failed while reading file header!!!\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (png_sig_cmp((png_bytep)header, 0, 8)) {
+	bu_vls_printf(result,  "png-fb: This is not a PNG file!!!\n");
+	return BRLCAD_ERROR;
+    }
+
+    png_p = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png_p) {
+	bu_vls_printf(result,  "png-fb: png_create_read_struct() failed!!\n");
+	return BRLCAD_ERROR;
+    }
+
+    info_p = png_create_info_struct(png_p);
+    if (!info_p) {
+	bu_vls_printf(result,  "png-fb: png_create_info_struct() failed!!\n");
+	return BRLCAD_ERROR;
+    }
+
+    png_init_io(png_p, fp_in);
+
+    png_set_sig_bytes(png_p, 8);
+
+    png_read_info(png_p, info_p);
+
+    color_type = png_get_color_type(png_p, info_p);
+
+    png_set_expand(png_p);
+    bit_depth = png_get_bit_depth(png_p, info_p);
+    if (bit_depth == 16)
+	png_set_strip_16(png_p);
+
+    if (color_type == PNG_COLOR_TYPE_GRAY ||
+	color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+	png_set_gray_to_rgb(png_p);
+
+    file_width = png_get_image_width(png_p, info_p);
+    file_height = png_get_image_height(png_p, info_p);
+
+    if (verbose) {
+	switch (color_type) {
+	    case PNG_COLOR_TYPE_GRAY:
+		bu_vls_printf(result, "color type: b/w (bit depth=%d)\n", bit_depth);
+		break;
+	    case PNG_COLOR_TYPE_GRAY_ALPHA:
+		bu_vls_printf(result, "color type: b/w with alpha channel (bit depth=%d)\n", bit_depth);
+		break;
+	    case PNG_COLOR_TYPE_PALETTE:
+		bu_vls_printf(result, "color type: color palette (bit depth=%d)\n", bit_depth);
+		break;
+	    case PNG_COLOR_TYPE_RGB:
+		bu_vls_printf(result, "color type: RGB (bit depth=%d)\n", bit_depth);
+		break;
+	    case PNG_COLOR_TYPE_RGB_ALPHA:
+		bu_vls_printf(result, "color type: RGB with alpha channel (bit depth=%d)\n", bit_depth);
+		break;
+	    default:
+		bu_vls_printf(result, "Unrecognized color type (bit depth=%d)\n", bit_depth);
+		break;
+	}
+	bu_vls_printf(result, "Image size: %d X %d\n", file_width, file_height);
+    }
+
+    if (header_only) {
+	bu_vls_printf(result, "WIDTH=%d HEIGHT=%d\n", file_width, file_height);
+	return BRLCAD_OK;
+    }
+
+    if (png_get_bKGD(png_p, info_p, &input_backgrd)) {
+	if (verbose && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
+			color_type == PNG_COLOR_TYPE_RGB_ALPHA))
+	    bu_vls_printf(result, "background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue);
+	png_set_background(png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0);
+    } else
+	png_set_background(png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0);
+
+    if (!png_get_gAMA(png_p, info_p, &gammaval))
+	gammaval = 0.5;
+    png_set_gamma(png_p, def_screen_gamma, gammaval);
+    if (verbose)
+	bu_vls_printf(result, "file gamma: %f, additional screen gamma: %f\n",
+		      gammaval, def_screen_gamma);
+
+    if (verbose) {
+	if (png_get_interlace_type(png_p, info_p) == PNG_INTERLACE_NONE)
+	    bu_vls_printf(result, "not interlaced\n");
+	else
+	    bu_vls_printf(result, "interlaced\n");
+    }
+
+    png_read_update_info(png_p, info_p);
+
+    /* allocate memory for image */
+    image = (unsigned char *)bu_calloc(1, file_width*file_height*3, "image");
+
+    /* create rows array */
+    scanline = (unsigned char **)bu_calloc(file_height, sizeof(unsigned char *), "scanline");
+    for (i=0; i<file_height; i++)
+	scanline[i] = image+(i*file_width*3);
+
+    png_read_image(png_p, scanline);
+
+    if (verbose) {
+	png_timep mod_time;
+	png_textp text;
+	int num_text;
+
+	png_read_end(png_p, info_p);
+	if (png_get_text(png_p, info_p, &text, &num_text)) {
+	    for (i=0; i<num_text; i++)
+		bu_vls_printf(result, "%s: %s\n", text[i].key, text[i].text);
+	}
+	if (png_get_tIME(png_p, info_p, &mod_time))
+	    bu_vls_printf(result, "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
+			  mod_time->year, mod_time->hour, mod_time->minute, mod_time->second);
+    }
+
+    /* Get the screen size we were given */
+    scr_width = fb_getwidth(ifp);
+    scr_height = fb_getheight(ifp);
+
+    /* compute number of pixels to be output to screen */
+    if (scr_xoff < 0) {
+	xout = scr_width + scr_xoff;
+	xstart = 0;
+    } else {
+	xout = scr_width - scr_xoff;
+	xstart = scr_xoff;
+    }
+
+    if (xout < 0) {
+	bu_free(image, "image");
+	bu_free(scanline, "scanline");
+	return BRLCAD_OK;
+    }
+    V_MIN(xout, (file_width-file_xoff));
+    scanpix = xout;				/* # pixels on scanline */
+
+    if (inverse)
+	scr_yoff = (-scr_yoff);
+
+    yout = scr_height - scr_yoff;
+    if (yout < 0) {
+	bu_free(image, "image");
+	bu_free(scanline, "scanline");
+	return BRLCAD_OK;
+    }
+    V_MIN(yout, (file_height-file_yoff));
+
+    /* Only in the simplest case use multi-line writes */
+    if (!one_line_only && multiple_lines > 0 && !inverse && !zoom &&
+	xout == file_width && file_xoff == 0 &&
+	file_width <= scr_width) {
+	scanpix *= multiple_lines;
+    }
+
+    scanbytes = scanpix * sizeof(RGBpixel);
+
+    if (clear) {
+	fb_clear(ifp, PIXEL_NULL);
+    }
+    if (zoom) {
+	/* Zoom in, and center the display.  Use square zoom. */
+	int newzoom;
+	newzoom = scr_width/xout;
+	V_MIN(newzoom, scr_height/yout);
+
+	if (inverse) {
+	    fb_view(ifp,
+		    scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),
+		    newzoom, newzoom);
+	} else {
+	    fb_view(ifp,
+		    scr_xoff+xout/2, scr_yoff+yout/2,
+		    newzoom, newzoom);
+	}
+    }
+
+    if (multiple_lines) {
+	/* Bottom to top with multi-line reads & writes */
+	int height=file_height;
+	for (y = scr_yoff; y < scr_yoff + yout; y += multiple_lines) {
+	    /* Don't over-write */
+	    if (y + height > scr_yoff + yout)
+		height = scr_yoff + yout - y;
+	    if (height <= 0) break;
+	    m = fb_writerect(ifp, scr_xoff, y,
+			     file_width, height,
+			     scanline[file_yoff++]);
+	    if (m != file_width*height) {
+		bu_vls_printf(result,
+			      "png-fb: fb_writerect(x=%d, y=%d, w=%d, h=%d) failure, ret=%d, s/b=%d\n",
+			      scr_xoff, y,
+			      file_width, height, m, scanbytes);
+	    }
+	}
+    } else if (!inverse) {
+	/* Normal way -- bottom to top */
+	int line=file_height-file_yoff-1;
+	for (y = scr_yoff; y < scr_yoff + yout; y++) {
+	    m = fb_write(ifp, xstart, y, scanline[line--]+(3*file_xoff), xout);
+	    if (m != xout) {
+		bu_vls_printf(result,
+			      "png-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
+			      scr_xoff, y, xout,
+			      m, xout);
+	    }
+	}
+    } else {
+	/* Inverse -- top to bottom */
+	int line=file_height-file_yoff-1;
+	for (y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y--) {
+	    m = fb_write(ifp, xstart, y, scanline[line--]+(3*file_xoff), xout);
+	    if (m != xout) {
+		bu_vls_printf(result,
+			      "png-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
+			      scr_xoff, y, xout,
+			      m, xout);
+	    }
+	}
+    }
+
+    bu_free(image, "image");
+    bu_free(scanline, "scanline");
     return BRLCAD_OK;
 }
 

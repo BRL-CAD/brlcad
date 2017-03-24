@@ -1,7 +1,7 @@
 /*                       R L E _ A R G S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,10 +20,13 @@
 
 #include "./rle_args.h"
 
-#include "bu.h"
 #include "bio.h"
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/exit.h"
 
-char hyphen[] = "hyphen";
+
+char hyphen[] = "-";
 
 int
 get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int **background, size_t* file_width, size_t* file_height)

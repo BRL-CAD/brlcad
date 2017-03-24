@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United  States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,9 +37,16 @@
 #include <ctype.h>
 #include <signal.h>
 #include <math.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/endian.h"
+#include "bu/getopt.h"
+#include "bu/bitv.h"
+#include "bu/debug.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
+#include "bu/vls.h"
+#include "bu/version.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -48,7 +55,7 @@
 /* private */
 #include "./rtuif.h"
 #include "./ext.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 extern void application_init(void);
@@ -57,7 +64,7 @@ extern const char title[];
 
 
 /***** Variables shared with viewing model *** */
-FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
+fb		*fbp = FB_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
 struct icv_image *bif = NULL;
 mat_t		view2model;
@@ -70,7 +77,7 @@ vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern size_t	incr_nlevel;		/* number of levels */
-extern int	npsw;			/* number of worker PSWs to run */
+
 /***** end variables shared with worker() *****/
 
 /***** variables shared with do.c *****/
@@ -87,7 +94,6 @@ extern int	desiredframe;		/* frame to start at */
 extern int	curframe;		/* current frame number,
 					 * also shared with view.c */
 extern char	*outputfile;		/* name of base of output file */
-extern int	interactive;		/* human is watching results */
 /***** end variables shared with do.c *****/
 
 
@@ -96,8 +102,6 @@ extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 extern char	*framebuffer;		/* desired framebuffer */
 
 extern struct command_tab	rt_cmdtab[];
-
-extern struct resource	resource[];	/* from opt.c */
 
 int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
 
@@ -116,11 +120,11 @@ siginfo_handler(int UNUSED(arg))
 
 
 void
-memory_summary(void)
+memory_summary(long num_free_calls)
 {
     if (rt_verbosity & VERBOSE_STATS)  {
 	long	mdelta = bu_n_malloc - n_malloc;
-	long	fdelta = bu_n_free - n_free;
+	long	fdelta = num_free_calls - n_free;
 	fprintf(stderr,
 		"Additional #malloc=%ld, #free=%ld, #realloc=%ld (%ld retained)\n",
 		mdelta,
@@ -129,7 +133,7 @@ memory_summary(void)
 		mdelta - fdelta);
     }
     n_malloc = bu_n_malloc;
-    n_free = bu_n_free;
+    n_free = num_free_calls;
     n_realloc = bu_n_realloc;
 }
 
@@ -140,6 +144,7 @@ int main(int argc, const char **argv)
     char idbuf[2048] = {0};			/* First ID record info */
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
+    long n_free_calls = 0;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -230,9 +235,9 @@ int main(int argc, const char **argv)
 	size_t x = height;
 	if (x < width) x = width;
 	incr_nlevel = 1;
-	while ((size_t)(1 << incr_nlevel) < x )
+	while ((size_t)(1ULL << incr_nlevel) < x )
 	    incr_nlevel++;
-	height = width = 1 << incr_nlevel;
+	height = width = 1ULL << incr_nlevel;
 	if (rt_verbosity & VERBOSE_INCREMENTAL)
 	    fprintf(stderr,
 		    "incremental resolution, nlevels = %lu, width=%lu\n",
@@ -246,10 +251,12 @@ int main(int argc, const char **argv)
     npsw = 1;			/* force serial */
 #endif
 
-    if (npsw < 0) {
-	/* Negative number means "all but" npsw */
-	npsw = bu_avail_cpus() + npsw;
-    }
+    /* parsing the user value needs separation from the set value,
+     * probably handled better during global elimination. --CSM */
+/*     if (npsw < 0) { */
+/* 	/\* Negative number means "all but" npsw *\/ */
+/* 	npsw = bu_avail_cpus() + npsw; */
+/*     } */
 
 
     /* allow debug builds to go higher than the max */
@@ -262,13 +269,10 @@ int main(int argc, const char **argv)
     if (npsw > 1) {
 	RTG.rtg_parallel = 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
-	    fprintf(stderr, "Planning to run with %d processors\n", npsw );
+	    fprintf(stderr, "Planning to run with %lu processors\n", (unsigned long)npsw );
     } else {
 	RTG.rtg_parallel = 0;
     }
-
-    /* Initialize parallel processor support */
-    bu_semaphore_init( RT_SEM_LAST );
 
     /*
      *  Do not use bu_log() or bu_malloc() before this point!
@@ -288,10 +292,6 @@ int main(int argc, const char **argv)
 	bu_log("\n");
     }
 
-    /* We need this to run rt_dirbuild */
-    rt_init_resource(&rt_uniresource, MAX_PSW, NULL);
-    bn_rand_init(rt_uniresource.re_randptr, 0);
-
     title_file = argv[bu_optind];
     title_obj = argv[bu_optind+1];
     nobjs = argc - bu_optind - 1;
@@ -301,6 +301,25 @@ int main(int argc, const char **argv)
 	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
 	return 1;
     }
+
+#ifdef USE_OPENCL
+     if (opencl_mode) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+
+	 bu_vls_strcat(&str, "\ncompiling OpenCL programs... ");
+	 bu_log("%s\n", bu_vls_addr(&str));
+	 bu_vls_free(&str);
+
+	 rt_prep_timer();
+
+	 clt_init();
+
+	 (void)rt_get_timer(&times, NULL);
+	 if (rt_verbosity & VERBOSE_STATS)
+	     bu_log("OCLINIT: %s\n", bu_vls_addr(&times));
+	 bu_vls_free(&times);
+     }
+#endif
 
     /* Echo back the command line arguments as given, in 3 Tcl commands */
     if (rt_verbosity & VERBOSE_MODELTITLE) {
@@ -334,7 +353,7 @@ int main(int argc, const char **argv)
     if (rt_verbosity & VERBOSE_STATS)
 	bu_log("DIRBUILD: %s\n", bu_vls_addr(&times));
     bu_vls_free(&times);
-    memory_summary();
+    memory_summary(n_free_calls);
 
     /* Copy values from command line options into rtip */
     rtip->rti_space_partition = space_partition;
@@ -377,15 +396,17 @@ int main(int argc, const char **argv)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fbp = fb_open(framebuffer, xx, yy);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	if (fbp == FBIO_NULL) {
+	if (fbp == FB_NULL) {
 	    fprintf(stderr, "rt:  can't open frame buffer\n");
 	    return 12;
 	}
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	/* If fb came out smaller than requested, do less work */
-	if ((size_t)fb_getwidth(fbp) < width)  width = fb_getwidth(fbp);
-	if ((size_t)fb_getheight(fbp) < height) height = fb_getheight(fbp);
+	if ((size_t)fb_getwidth(fbp) < width)
+	    width = fb_getwidth(fbp);
+	if ((size_t)fb_getheight(fbp) < height)
+	    height = fb_getheight(fbp);
 
 	/* If the fb is lots bigger (>= 2X), zoom up & center */
 	if (width > 0 && height > 0) {
@@ -398,8 +419,12 @@ int main(int argc, const char **argv)
 	(void)fb_view(fbp, width/2, height/2,
 		      zoom, zoom);
 	bu_semaphore_release(BU_SEM_SYSCALL);
+
+#ifdef USE_OPENCL
+        clt_connect_fb(fbp);
+#endif
     }
-    if ((outputfile == (char *)0) && (fbp == FBIO_NULL)) {
+    if ((outputfile == (char *)0) && (fbp == FB_NULL)) {
 	/* If not going to framebuffer, or to a file, then use stdout */
 	if (outfp == NULL) outfp = stdout;
 	/* output_is_binary is changed by view_init, as appropriate */
@@ -413,11 +438,11 @@ int main(int argc, const char **argv)
      *  Initialize all the per-CPU memory resources.
      *  The number of processors can change at runtime, init them all.
      */
+    memset(resource, 0, sizeof(resource));
     for (i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&resource[i], i, rtip);
-	bn_rand_init(resource[i].re_randptr, i);
     }
-    memory_summary();
+    memory_summary(n_free_calls);
 
 #ifdef SIGUSR1
     (void)signal(SIGUSR1, siginfo_handler);
@@ -436,7 +461,7 @@ int main(int argc, const char **argv)
 	frame_retval = do_frame(curframe);
 	if (frame_retval != 0) {
 	    /* Release the framebuffer, if any */
-	    if (fbp != FBIO_NULL) {
+	    if (fbp != FB_NULL) {
 		fb_close(fbp);
 	    }
 
@@ -458,6 +483,7 @@ int main(int argc, const char **argv)
 		fprintf(stderr, "cmd: %s\n", buf);
 	    ret = rt_do_cmd( rtip, buf, rt_cmdtab);
 	    bu_free( buf, "rt_read_cmd command buffer");
+	    n_free_calls++;
 	    if (ret < 0)
 		break;
 	}
@@ -469,7 +495,7 @@ int main(int argc, const char **argv)
     }
 
     /* Release the framebuffer, if any */
-    if (fbp != FBIO_NULL) {
+    if (fbp != FB_NULL) {
 	fb_close(fbp);
     }
 

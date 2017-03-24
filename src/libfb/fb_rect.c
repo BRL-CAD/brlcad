@@ -1,7 +1,7 @@
 /*                       F B _ R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file fb_rect.c
  *
@@ -32,6 +32,7 @@
 #include <stdio.h>
 
 #include "bu/color.h"
+#include "fb_private.h"
 #include "fb.h"
 
 
@@ -40,7 +41,7 @@
  * particular display does not handle it.
  */
 int
-fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+fb_sim_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     register int y;
     register int tot;
@@ -73,7 +74,7 @@ fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned c
  * Clipping to the screen may reduce the total if caller was sloppy.
  */
 int
-fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+fb_sim_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int y;
     register int tot;
@@ -97,7 +98,7 @@ fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const uns
 
 #define SIMBUF_SIZE (24*1024)
 int
-fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+fb_sim_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     register int y;
     register int tot;
@@ -127,7 +128,7 @@ fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned
 
 
 int
-fb_sim_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+fb_sim_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int y;
     register int tot;

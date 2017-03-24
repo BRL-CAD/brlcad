@@ -1,7 +1,7 @@
 /*                 ContextDependentShapeRepresentation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,13 +77,24 @@ ContextDependentShapeRepresentation::GetRepresentationRelationshipRep_1()
 {
     if (!representation_relation.empty()) {
 	LIST_OF_REPRESENTATION_RELATIONSHIPS::iterator irr;
-	for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
-	    if ( (dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr) == NULL) &&
-		    (dynamic_cast<ShapeRepresentationRelationship *>(*irr) == NULL) &&
-		    (dynamic_cast<RepresentationRelationship *>(*irr) != NULL) ) {
-		RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
+	if (representation_relation.size() == 1) { // just have an SSR
+	    irr = representation_relation.begin();
+	    if (irr != representation_relation.end()) {
+		if (dynamic_cast<ShapeRepresentationRelationship *>(*irr) != NULL) {
+		    RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
 
-		return rr->GetRepresentationRelationshipRep_1();
+		    return rr->GetRepresentationRelationshipRep_1();
+		}
+	    }
+	} else {
+	    for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
+		if ( (dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr) == NULL) &&
+			(dynamic_cast<ShapeRepresentationRelationship *>(*irr) == NULL) &&
+			(dynamic_cast<RepresentationRelationship *>(*irr) != NULL) ) {
+		    RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
+
+		    return rr->GetRepresentationRelationshipRep_1();
+		}
 	    }
 	}
     }
@@ -95,13 +106,24 @@ ContextDependentShapeRepresentation::GetRepresentationRelationshipRep_2()
 {
     if (!representation_relation.empty()) {
 	LIST_OF_REPRESENTATION_RELATIONSHIPS::iterator irr;
-	for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
-	    if ( (dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr) == NULL) &&
-		    (dynamic_cast<ShapeRepresentationRelationship *>(*irr) == NULL) &&
-		    (dynamic_cast<RepresentationRelationship *>(*irr) != NULL) ) {
-		RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
+	if (representation_relation.size() == 1) { // just have an SSR
+	    irr = representation_relation.begin();
+	    if (irr != representation_relation.end()) {
+		if (dynamic_cast<ShapeRepresentationRelationship *>(*irr) != NULL) {
+		    RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
 
-		return rr->GetRepresentationRelationshipRep_2();
+		    return rr->GetRepresentationRelationshipRep_2();
+		}
+	    }
+	} else {
+	    for (irr = representation_relation.begin(); irr != representation_relation.end(); ++irr) {
+		if ( (dynamic_cast<RepresentationRelationshipWithTransformation*>(*irr) == NULL) &&
+			(dynamic_cast<ShapeRepresentationRelationship *>(*irr) == NULL) &&
+			(dynamic_cast<RepresentationRelationship *>(*irr) != NULL) ) {
+		    RepresentationRelationship *rr = dynamic_cast<RepresentationRelationship *>(*irr);
+
+		    return rr->GetRepresentationRelationshipRep_2();
+		}
 	    }
 	}
     }
@@ -185,6 +207,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 		    representation_relation.push_back(aRRWT);
 		    if (!aRRWT->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading RepresentationRelationshipWithTransformation" << std::endl;
+			sw->entity_status[id] = STEP_LOAD_ERROR;
 			return false;
 		    }
 		}
@@ -196,6 +219,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 		    representation_relation.push_back(aSRR);
 		    if (!aSRR->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading ShapeRepresentationRelationship" << std::endl;
+			sw->entity_status[id] = STEP_LOAD_ERROR;
 			return false;
 		    }
 		}
@@ -207,6 +231,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 		    representation_relation.push_back(aRR);
 		    if (!aRR->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading RepresentationRelationship" << std::endl;
+			sw->entity_status[id] = STEP_LOAD_ERROR;
 			return false;
 		    }
 		}
@@ -216,6 +241,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 		    representation_relation.push_back(aSRR);
 		} else {
 		    std::cout << CLASSNAME << ":Error loading ShapeRepresentationRelationship" << std::endl;
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
 		    return false;
 		}
 	    }
@@ -229,9 +255,12 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 	    represented_product_relation = dynamic_cast<ProductDefinitionShape *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'represented_product_relation'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

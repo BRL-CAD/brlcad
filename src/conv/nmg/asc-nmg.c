@@ -1,7 +1,7 @@
 /*                       A S C - N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,16 +28,15 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 
 #include "bio.h"
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name);
@@ -65,8 +64,7 @@ main(int argc, char **argv)
     }
 
     if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
-    	usage();
-	bu_log("       Program continues running:\n");
+	usage();
     }
 
     bu_setprogname(argv[0]);
@@ -163,11 +161,11 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 	nmg_face_g( fu, pl );
 
     if (!NEAR_ZERO(MAGNITUDE(Ext), 0.001))
-	nmg_extrude_face(BU_LIST_FIRST(faceuse, &s->fu_hd), Ext, &tol);
+	nmg_extrude_face(BU_LIST_FIRST(faceuse, &s->fu_hd), Ext, &RTG.rtg_vlfree, &tol);
 
     nmg_region_a(r, &tol);	/* Calculate geometry for region and shell. */
 
-    nmg_fix_normals( s, &tol ); /* insure that faces have outward pointing normals */
+    nmg_fix_normals( s, &RTG.rtg_vlfree, &tol ); /* insure that faces have outward pointing normals */
 
     create_brlcad_db(fpout, m, reg_name, grp_name);
 
@@ -176,7 +174,7 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 
 /*
  *	Convert an ascii description of an nmg to an actual nmg.
- *	(This should be done with lex and yacc.)
+ *	(This should be done with perplex and lemon.)
  */
 static void
 descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
@@ -185,8 +183,8 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
     /* Extrusion vector. */
 {
 #define MAXV	10000
-
-    char token[80] = {0};	/* Token read from ascii nmg file. */
+#define TOKEN_LEN 80
+    char token[TOKEN_LEN+1] = {0};	/* Token read from ascii nmg file. */
     double x, y, z;	/* Coordinates of a vertex. */
     int	dir = OT_NONE;	/* Direction of face. */
     int	i,
@@ -206,11 +204,11 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 	verts[i] = NULL;
     }
 
-    status = fscanf(fp, "%80s", token);	/* Get 1st token. */
+    status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);	/* Get 1st token. */
     do {
 	switch (token[0]) {
 	    case 'e':		/* Extrude face. */
-		status = fscanf(fp, "%80s", token);
+		status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 		switch (token[0]) {
 		    case '0':
 		    case '1':
@@ -232,7 +230,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 			VSET(Ext, x, y, z);
 
 			/* Get token for next trip through loop. */
-			status = fscanf(fp, "%80s", token);
+			status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 			break;
 		}
 		break;
@@ -261,7 +259,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 			    nmg_jv(verts[-lu_verts[i]], cur_loop[i]);
 		    n = 0;
 		}
-		status = fscanf(fp, "%80s", token);
+		status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 
 		switch (token[0]) {
 		    case 'h':	/* Is it cw or ccw? */
@@ -270,7 +268,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 			else
 			    bu_exit(EXIT_FAILURE, "descr_to_nmg: expected \"hole\"\n");
 			/* Get token for next trip through loop. */
-			status = fscanf(fp, "%80s", token);
+			status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 			break;
 
 		    default:
@@ -283,11 +281,11 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 		if (token[1] == '\0')
 		    bu_exit(EXIT_FAILURE, "descr_to_nmg: vertices must be numbered.\n");
 		vert_num = atoi(token+1);
-		if(vert_num < 0 || vert_num >= MAXV) {
+		if (vert_num < 0 || vert_num >= MAXV) {
 		    bu_log("Vertex number out of bounds: %d\nAborting\n", vert_num);
 		    return;
 		}
-		status = fscanf(fp, "%80s", token);
+		status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 		switch (token[0]) {
 		    case '0':
 		    case '1':
@@ -315,7 +313,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 			if (++n > MAXV)
 			    bu_exit(EXIT_FAILURE, "descr_to_nmg: too many points in loop\n");
 			/* Get token for next trip through loop. */
-			status = fscanf(fp, "%80s", token);
+			status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 			break;
 
 		    default:

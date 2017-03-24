@@ -1,7 +1,7 @@
 /*             S U R F A C E I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,25 +30,6 @@
 
 
 #define SI_MIN(a, b) (((a) > (b)) ? (a) : (b))
-
-
-/**
- * ClosestValue
- *
- * @brief returns the value that is closest to the given value but in
- * the given interval
- */
-double
-ClosestValue(double value, ON_Interval interval)
-{
-    if (interval.Includes(value, true)) {
-	return value;
-    } else if (value < interval.Min()) {
-	return interval.Min();
-    } else {
-	return interval.Max();
-    }
-}
 
 
 /**
@@ -139,9 +120,9 @@ void
 SplitTrim(ON_BrepTrim *trim, double t)
 {
     ON_Curve *left, *right;
-    bool rv = trim->Split(t, left, right);
+    ON_BOOL32 rv = trim->Split(t, left, right);
 
-    if (rv) {
+    if (rv != 0) {
 	int lefti = trim->Brep()->AddTrimCurve(left);
 	int righti = trim->Brep()->AddTrimCurve(right);
 	trim->Loop()->m_ti.Remove(trim->m_trim_index);
@@ -200,33 +181,6 @@ Curve_Compare_start(ON_Curve *const *a, ON_Curve *const *b)
     ON_3dVector A = ON_2dVector((*a)->PointAtStart().x, (*a)->PointAtStart().y);
     ON_3dVector B = ON_2dVector((*b)->PointAtStart().x, (*b)->PointAtStart().y);
 
-    if (V2NEAR_EQUAL(A, B, 1e-9)) {
-	return 0;
-    } else if (A.x < B.x) {
-	return -1;
-    } else if (A.x > B.x) {
-	return 1;
-    } else if (A.y < B.y) {
-	return -1;
-    } else if (A.y > B.y) {
-	return 1;
-    }
-
-    /* we should have already done this... but just in case */
-    return 0;
-}
-
-
-/**
- * Curve_Compare_end
- *
- * @brief Compares the end points of the curve profiles
- */
-int
-Curve_Compare_end(const ON_Curve **a, const ON_Curve **b)
-{
-    ON_3dVector A = ON_2dVector((*a)->PointAtEnd().x, (*a)->PointAtEnd().y);
-    ON_3dVector B = ON_2dVector((*b)->PointAtEnd().x, (*b)->PointAtEnd().y);
     if (V2NEAR_EQUAL(A, B, 1e-9)) {
 	return 0;
     } else if (A.x < B.x) {
@@ -711,12 +665,12 @@ GetStartPointsInternal(
     } else {
 	ON_Surface *N1, *S1, *N2, *S2, *Parts1[4], *Parts2[4]; /* = {SW, SE, NW, NE} */
 
-	assert(surf1->Split(0, surf1->Domain(0).Mid(), S1, N1));
-	assert(surf2->Split(0, surf2->Domain(0).Mid(), S2, N2));
-	assert(S1->Split(1, S1->Domain(1).Mid(), Parts1[0], Parts1[1]));
-	assert(N1->Split(1, N1->Domain(1).Mid(), Parts1[2], Parts1[3]));
-	assert(S2->Split(1, S2->Domain(1).Mid(), Parts2[0], Parts2[1]));
-	assert(N2->Split(1, N2->Domain(1).Mid(), Parts2[2], Parts2[3]));
+	surf1->Split(0, surf1->Domain(0).Mid(), S1, N1);
+	surf2->Split(0, surf2->Domain(0).Mid(), S2, N2);
+	S1->Split(1, S1->Domain(1).Mid(), Parts1[0], Parts1[1]);
+	N1->Split(1, N1->Domain(1).Mid(), Parts1[2], Parts1[3]);
+	S2->Split(1, S2->Domain(1).Mid(), Parts2[0], Parts2[1]);
+	N2->Split(1, N2->Domain(1).Mid(), Parts2[2], Parts2[3]);
 
 	int i, j;
 	return_value = false;
@@ -1042,101 +996,6 @@ MakeTwistedCubeFaces2(ON_Brep& brep)
 			GH, -1,
 			FG, -1);
 }
-
-
-ON_Brep*
-MakeTwistedSquare1(ON_TextLog& error_log)
-{
-    ON_3dPoint point[8] = {
-	ON_3dPoint(1.0,  1.0, 1.0), // Point A
-	ON_3dPoint(-1.0, -1.0, 1.0), // Point B
-	ON_3dPoint(-1.0, -1.0, -1.0), // Point C
-	ON_3dPoint(1.0, 1.0, -1.0), // Point D
-    };
-
-    ON_Brep* brep = new ON_Brep();
-
-    // create eight vertices located at the eight points
-    for (int i = 0; i < 4; i++) {
-	ON_BrepVertex& v = brep->NewVertex(point[i]);
-	v.m_tolerance = 0.0;
-	// this example uses exact tolerance... reference
-	// ON_BrepVertex for definition of non-exact data
-    }
-
-    // create 3d curve geometry - the orientations are arbitrarily
-    // chosen so that the end vertices are in alphabetical order
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[A], point[B])); // AB
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[B], point[C])); // BC
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[C], point[D])); // CD
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[A], point[D])); // AD
-
-    // create the 12 edges the connect the corners
-    MakeTwistedCubeEdges1(*brep);
-
-    // create the 3d surface geometry. the orientations are arbitrary so
-    // some normals point into the cube and other point out... not sure why
-    brep->m_S.Append(TwistedCubeSideSurface(point[A], point[B], point[C], point[D]));
-
-    // create the faces
-    MakeTwistedCubeFaces1(*brep);
-
-    if (brep && !brep->IsValid()) {
-	error_log.Print("Twisted cube b-rep is not valid!\n");
-	delete brep;
-	brep = NULL;
-    }
-
-    return brep;
-}
-
-
-ON_Brep*
-MakeTwistedSquare2(ON_TextLog& error_log)
-{
-    ON_3dPoint point[8] = {
-	ON_3dPoint(1.0, -1.0, 1.0), // Point E
-	ON_3dPoint(-1.0, 1.0, 1.0), // Point F
-	ON_3dPoint(-1.0, -1.0, 1.0), // Point G
-	ON_3dPoint(1.0, -1.0, -1.0), // Point H
-    };
-
-    ON_Brep* brep = new ON_Brep();
-
-    // create eight vertices located at the eight points
-    for (int i = 0; i < 4; i++) {
-	ON_BrepVertex& v = brep->NewVertex(point[i]);
-	v.m_tolerance = 0.0;
-	// this example uses exact tolerance... reference
-	// ON_BrepVertex for definition of non-exact data
-    }
-
-    // create 3d curve geometry - the orientations are arbitrarily
-    // chosen so that the end vertices are in alphabetical order
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[E], point[F])); // EF
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[F], point[G])); // FG
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[G], point[si::H])); // GH
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[E], point[si::H])); // EH
-
-    // create the 12 edges the connect the corners
-    MakeTwistedCubeEdges2(*brep);
-
-    // create the 3d surface geometry. the orientations are arbitrary so
-    // some normals point into the cube and other point out... not sure why
-    brep->m_S.Append(TwistedCubeSideSurface(point[E], point[F], point[G], point[si::H]));
-
-    // create the faces
-    MakeTwistedCubeFaces2(*brep);
-
-    if (brep && !brep->IsValid()) {
-	error_log.Print("Twisted cube b-rep is not valid!\n");
-	delete brep;
-	brep = NULL;
-    }
-
-    return brep;
-}
-
 
 int
 main()

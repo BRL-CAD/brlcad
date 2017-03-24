@@ -1,7 +1,7 @@
 /*                         N O I S E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,11 +37,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "bu/log.h"
+
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/exit.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/noise.h"
+#include "bn/rand.h"
 
 
 /**
@@ -78,9 +80,7 @@ filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 
     for (i=0; i < 3; i++) {
 	/* assure values are positive */
-	if (src[i] < 0) dst[i] = -src[i];
-	else dst[i] = src[i];
-
+	dst[i] = fabs(src[i]);
 
 	/* fold space */
 	while (dst[i] > max || dst[i]<0) {
@@ -129,9 +129,7 @@ static double RTable[MAXSIZE];
 struct str_ht {
     uint32_t magic;
     char hashTableValid;
-    uint32_t *hashTableMagic1;
     uint32_t *hashTable;
-    uint32_t *hashTableMagic2;
     uint32_t magic_end;
 };
 
@@ -146,12 +144,6 @@ static struct str_ht ht;
 #define CK_HT() {							\
 	BU_CKMAG(&ht.magic, MAGIC_STRHT1, "struct str_ht ht 1");	\
 	BU_CKMAG(&ht.magic_end, MAGIC_STRHT2, "struct str_ht ht 2");	\
-	BU_CKMAG(ht.hashTableMagic1, MAGIC_TAB1, "hashTable Magic 1");	\
-	BU_CKMAG(ht.hashTableMagic2, MAGIC_TAB2, "hashTable Magic 2");	\
-	if (ht.hashTable != &ht.hashTableMagic1[1])			\
-	    bu_bomb("ht.hashTable changed rel ht.hashTableMagic1");	\
-	if (ht.hashTableMagic2 != &ht.hashTable[TABLE_SIZE])		\
-	    bu_bomb("ht.hashTable changed rel ht.hashTableMagic2");	\
     }
 
 
@@ -185,14 +177,7 @@ bn_noise_init(void)
 
     BN_RANDSEED(rndtabi, (BN_RAND_TABSIZE-1));
 
-    /* alloc table size plus two magic numbers */
-    ht.hashTableMagic1 = (uint32_t *) bu_calloc(1, 2*sizeof(uint32_t) + TABLE_SIZE*sizeof(uint32_t), "noise hashTable");
-
-    ht.hashTable = &ht.hashTableMagic1[1];
-    ht.hashTableMagic2 = &ht.hashTable[TABLE_SIZE];
-
-    *ht.hashTableMagic1 = (uint32_t)MAGIC_TAB1;
-    *ht.hashTableMagic2 = (uint32_t)MAGIC_TAB2;
+    ht.hashTable = (uint32_t *)bu_calloc(1, (TABLE_SIZE*sizeof(uint32_t)), "noise hashTable");
 
     ht.magic_end = (uint32_t)MAGIC_STRHT2;
     ht.magic = (uint32_t)MAGIC_STRHT1;
@@ -687,11 +672,9 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 double
 bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
 {
-    double frequency = 1.0;
     struct fbm_spec *ep;
-    double result, weight, noise_signal, *spec_wgts;
+    double result, *spec_wgts;
     point_t pt;
-    int i;
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
@@ -709,19 +692,29 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
     offset = 1.0;
 
     result = (bn_noise_perlin(pt) + offset) * spec_wgts[0];
-    weight = result;
 
-    for (i=1; i < octaves; i++) {
-	PSCALE(pt, lacunarity);
+#if 0
+    /* TODO - the code below doesn't contribute to the result - what
+     * should it be doing? */
+    {
+	double weight = result;
+	double noise_signal;
+	double frequency = 1.0;
+	int i;
 
-	if (weight > 1.0) weight = 1.0;
+	for (i=1; i < octaves; i++) {
+	    PSCALE(pt, lacunarity);
 
-	noise_signal = (bn_noise_perlin(pt) + offset) * spec_wgts[i];
+	    V_MIN(weight, 1.0);
 
-	noise_signal += fabs(bn_noise_perlin(pt)) * pow(frequency, -h_val);
-	frequency *= lacunarity;
-	PSCALE(pt, lacunarity);
+	    noise_signal = (bn_noise_perlin(pt) + offset) * spec_wgts[i];
+
+	    noise_signal += fabs(bn_noise_perlin(pt)) * pow(frequency, -h_val);
+	    frequency *= lacunarity;
+	    PSCALE(pt, lacunarity);
+	}
     }
+#endif
     return result;
 }
 

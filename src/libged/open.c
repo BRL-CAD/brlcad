@@ -1,7 +1,7 @@
 /*                         O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
 
@@ -56,7 +55,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 	char *av[2];
 	struct db_i *old_dbip = gedp->ged_wdbp->dbip;
 	struct mater *old_materp = rt_material_head();
-        struct mater *new_materp;
+	struct mater *new_materp;
 
 	rt_new_material_head(MATER_NULL);
 
@@ -71,7 +70,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 	new_materp = rt_material_head();
 
 	gedp->ged_wdbp->dbip = old_dbip;
-        rt_new_material_head(old_materp);
+	rt_new_material_head(old_materp);
 
 	av[0] = "zap";
 	av[1] = (char *)0;

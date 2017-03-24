@@ -1,7 +1,7 @@
 #            M O D E L A X E S C O N T R O L . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,13 +19,6 @@
 #
 ###
 #
-# Author -
-#	 Bob Parker
-#
-# Source -
-#	 Survice Engineering Co. (www.survice.com)
-#
-# Description -
 #        This is a control panel for setting an Mged widget's
 #        model axes attributes.
 #

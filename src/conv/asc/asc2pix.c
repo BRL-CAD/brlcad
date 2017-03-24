@@ -1,7 +1,7 @@
 /*                       A S C 2 P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -82,8 +81,10 @@ main(void)
 	/* get a valid hex char in i */
 	do {
 	    a = getchar();
-	    if (a == EOF || a < 0 || a > 255)
-		goto OUT;
+	    if (a == EOF || a < 0 || a > 255) {
+		fflush(stdout);
+		return 0;
+	    }
 	} while ((i = lmap[a]) < 0);
 
 	/* get the next hex char */
@@ -102,10 +103,9 @@ main(void)
 	putc((i | b), stdout);
     }
 
- OUT:
-
     fflush(stdout);
-    exit(0);
+
+    return 0;
 }
 
 /*

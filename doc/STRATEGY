@@ -1,0 +1,323 @@
+					 # -*- mode: org; coding: utf-8; -*- #
+# This is an Emacs org-mode file.  Keybindings: http://orgmode.org/orgcard.txt
+
+# +TAGS: { UX : U u } { Complex : C c }
+# +TAGS: { Comms : P p } { Market : M m }
+
+BRL-CAD Development Strategy
+
+This is a living document that defines and aims to help maintain a
+consistent develpment strategy for addressing BRL-CAD requirements.
+It recognizes areas of strategic importance, outlines projects to
+bolster those areas, and identifies specific actionable objectives.
+
+
+* Strategic Areas
+
+  This section itemizes areas of strategic importance which coincide
+  closely with areas of categoric deficiency.  For each area, we
+  outline general activities that could strengthen them.  From these
+  areas, we conceive strategic projects and their associated tasks.
+
+** AREA 1: UX                                                            :UX:
+*** deploying Archer/MGED -cns                                          :p:C:
+*** UI simplification -s                                                  :C:
+*** undo / fault tolerance -n
+*** prototype Qt -c                                                       :p:
+*** UI design / clarification -j                                        :P:C:
+*** interaction / integration -j                                          :M:
+*** editing constraints, snapping, reuse existing coordinates
+*** bug reporting / feature requests                                      :P:
+*** portability                                                           :p:
+
+** AREA 2: Complexity                                               :Complex:
+*** command / tool reduction -cjns                                        :U:
+*** API code reduce / simplification / modularity -cjs                    :U:
+*** searchability / info -n                                             :U:p:
+*** discoverability / documentation (UP)                                :U:P:
+*** UI design / clarity (UP)
+*** restructure of file hierarchy
+*** continuous integration
+
+** AREA 3: Communications                                             :Comms:
+*** website -cjns                                                         :C:
+*** doc integration, website -cjns                                        :C:
+*** new content (audience / customer profiles), website                   :C:
+*** comms (meeting / promoting our successes / PRB / announcements)   :U:C:M:
+*** CRM / IRC                                                           :U:C:
+*** leverage existing capability
+
+** AREA 4: Marketability                                             :Market:
+   
+   FIXME: these need to be sorted and ranked
+
+*** conversion: import, processing, export -s                           :P:U:
+*** geometry analysis performance (interactive ray tracing / opencl)      :U:
+*** 3D printing / polygonal export / gcode -s                           :P:U:
+*** industrial design: blueprinting, dimensioning, annotations          :P:U:
+*** geometry preparation (killing overlaps, hierarchy, V&V)             :U:C:
+*** visuals: advanced rendering, animation, simulation                  :P:U:
+
+* Strategic Projects
+
+  This section itemizes projects conceived to address BRL-CAD's
+  principal strategic areas.  Each project focuses on one or more
+  strategic areas devising measurable tasks that support the
+  particular objective.
+
+
+** PROJECT: Deploy Archer/MGED Beta (14)
+
+*** interactivity / blocking indicators - ALPHA (3)
+**** TODO multithreaded command execution (2)
+**** TODO interface busy indicator (1)
+
+*** command cleanup - ALPHA (3)
+**** TODO inventory + mapping + time (1)
+**** TODO design UI / commands (2)
+**** TODO sit with users to discuss command migration (0)
+
+*** feature parity - ALPHA (2)
+**** TODO review/finish edit keypointing (oed parity) (1)
+**** TODO GUI matrix editing (1)
+    
+*** announcements + migration plan - BETA+ (4)
+**** TODO write + publish strategy map and migration plan (1)
+**** TODO preliminary discussion with users, discuss tcl scripts (0)
+**** TODO archer manual page (1)
+**** TODO install basic version of new website (1)
+**** TODO sit down review with users (1)
+
+*** searchable docs - ALPHA (2)
+**** TODO command line searching of doc content, apropos (2)
+
+
+** PROJECT: Deploy Merged Archer/MGED Final (16)
+
+*** usability parity - BETA (4)
+**** TODO classic console mode (1)
+**** TODO map from old to new, publish summary (1)
+**** TODO reverse .g tempfile backup, edit live (1)
+**** TODO graphical query ray (1)
+
+*** undo - BETA (2)
+**** TODO implement libbu filesystem info (1)
+**** TODO re-enable undo with fs awareness (1)
+
+*** bug reporting / feedback / metrics - BETA (3)
+**** TODO reliable backtrace (1)
+**** TODO hook/enable bombardier (1)
+**** TODO track metrics (archer commands, tips, docs) (1)
+
+*** QA acceptance - BETA (3)
+**** TODO define acceptance tasks (1)
+**** TODO run regression w/ archer (1)
+**** TODO make wiki procedural web scripts work (1)
+
+*** announcements + migration plan - BETA+ (3)
+**** TODO review + update tutorials and docs (2)
+**** TODO create + give presentation (1)
+
+*** searchable docs - FINAL (1)
+**** TODO web publishing + searching of docs (1)
+
+
+** PROJECT: Distilling BRL-CAD (11)
+
+*** revisit scope (vision, mission) (3)
+**** TODO communicate intent and updates (1)
+**** TODO develop high-level project roadmap (1)
+**** TODO connect features to markets (1)
+
+*** develop command roadmap (4)
+**** TODO inventory of command-line commands, decide keep/refactor/kill (1)
+**** TODO communicate command-line changes (0)
+**** TODO develop command categorization (1)
+**** TODO take inventory of ged commands, decide keep/refactor/kill (1)
+**** TODO communicate ged command changes (0)
+**** TODO assess and mitigate deployment risks (1)
+
+*** integrate docs (4)
+**** TODO plan what to do with html+troff docs (0)
+**** TODO stub new docs where missing (1)
+**** TODO consolidate docs, one guide per interface (2)
+**** TODO kill obsolete docs (0)
+**** TODO migrate e-mail and release notes to web (1)
+
+
+** PROJECT: Website Renovation (10)
+
+*** improve website usability (1)
+**** TODO set up platform-detected downloads on main page (0)
+**** TODO publish project vitality/stats (openhub integration) (0)
+**** TODO restore search interface (1)
+
+*** publish docbook docs (3)
+**** TODO instantiate / set up sofat's doc interface (1)
+**** TODO design pdf stylesheet (1)
+**** TODO integrate docs onto website (html+pdf) (1)
+
+*** publish use cases (3)
+**** TODO post 3+ customer profiles (1)
+**** TODO post top-10 feature highlights (1)
+**** TODO identify alternatives and their highlight mappings (1)
+**** TODO post comparison table with 2+ alternatives (0)
+
+*** set up developer corner (3)
+**** TODO ensure buildbot is setup and running handsfree (1)
+**** TODO update buildbot stylesheet to fit theme (0)
+**** TODO post nightly builds (0)
+**** TODO set up cron job to maintain CI and doc updates (1)
+**** TODO announce dev corner to brlcad-devel/brlcad-news (0)
+**** TODO buildbot <-> cdash/lcov/coverity/gccfarm/swamp integration (1)
+
+
+** PROJECT: Deploy GCV (9)
+
+*** 3dm "round-tripping" (2)
+**** TODO integrate existing importer (0)
+**** TODO NURBS export support (1)
+**** TODO document entity support (1)
+
+*** documentation (3)
+**** TODO convert jon's write-up to docbook (0)
+**** TODO integrate jon's plugin examples (1)
+**** TODO write and publish plugin API policy (1)
+**** TODO write and publish GCV feature profile on website (1)
+
+*** CLI usability (2)
+**** TODO design usage / synopsis (1)
+**** TODO provide logging/debugging interface (0)
+**** TODO integrate bot_dump into gcv (1)
+
+*** robust deployment (2)
+**** TODO convert tlib via automated testing (1)
+**** TODO automate extraction of sources from checkout (0)
+**** TODO integrate gcv into mged/archer (0)
+**** TODO troubleshoot JASP export memory issue (1)
+
+
+** PROJECT: Performant Pipeline (15)
+
+*** coherent Boolean evaluation (3)
+**** TODO preliminary OpenCL conversion (1)
+**** TODO eliminate branching (1)
+**** TODO V&V with specific test cases (1)
+
+*** audit ray dispatching (3)
+**** TODO define ray bundling API (1)
+**** TODO audit librt ray API, consolidate (1)
+
+*** implement bundled ray dispatch (2)
+**** TODO integrate Costa's GSoC work (1)
+**** TODO propagate bundle through spatial partition (1)
+**** TODO convert rt* to new bundled API (1)
+
+*** on-demand NURBS tree-build (4)
+**** TODO formulate a design / approach (1)
+**** TODO dynamic tree build with minimal malloc (2)
+**** TODO profile and validate results (1)
+
+*** coherent NURBS evaluation (1)
+**** TODO review 2006 paper (0)
+**** TODO convert openNURBS surface evaluation to OpenCL (1)
+
+*** performant raytrace image display (2)
+**** TODO optimize libdb/libfb to remove bottleneck (1)
+**** TODO update archer for interactive tracing display (1)
+
+
+** PROJECT: Raytrace Prep Caching (10)
+
+*** implement LIBBU data caching (3)
+**** TODO document libbu data caching API (1)
+**** TODO create data caching test cases (1)
+**** TODO implement libbu data caching (1)
+
+*** implment LIBRT object caching (4)
+**** TODO serialize BoT prep data to cache (1)
+**** TODO serialize NURBS prep data to cache (1)
+**** TODO serialize tess/plot data to cache (2)
+
+*** update tools to utilize the cache (3)
+**** TODO update rt* to use prep cache (1)
+**** TODO update mged/archer to use tess/plot cache (1)
+**** TODO document the prep cache interface (1)
+
+
+** PROJECT: Progressive Geometry Display (11)
+
+*** asynchronous geometry display (4)
+**** TODO modify display loop to run in separate thread (2)
+**** TODO update draw command to dispatch (2)
+
+*** ray trace display manager (4)
+**** TODO review rtgl code (1)
+**** TODO design incremental loading architecture (1)
+**** TODO implement incremental ray tracing (2)
+
+*** point cloud hashing (3)
+**** TODO design LoD point cloud storage approach (1)
+**** TODO calculate LoD point cloud utility metric (1)
+**** TODO implement LoD point cloud loading (3)
+
+
+** TEMPLATE: Project Title
+
+   Here is an example project that summarizes the taxonomy and
+   structure of a strategic project.  A project should be scoped to
+   less than 4 months of full-time uninterrupted effort.  A project
+   must have at least 1 objective.
+
+*** objective
+
+    Objectives should be simple with identifiable completion criteria.
+    An objective should be achievable in 4 weeks or less with larger
+    objectives divided into separate smaller chunks.  Each objective
+    must have at least 1 task.
+
+**** TODO task
+
+     A task is actionable work that should take someone 4 weeks or
+     less of full-time uninterrupted effort, estimated in weeks, with
+     0 for tasks less than 2 days.
+
+
+* Strategic Strengths
+** project
+*** open source
+*** cross-platform
+*** free software
+*** 30-years of development
+*** massive investment
+*** extensive API
+*** extensive documentation
+** code
+*** extensively modular
+*** scalability
+*** embeddable
+*** efficient workflow
+*** flexible workflow
+*** DoD-accreddited
+*** integrated into MUVES, AJEM, COVART
+** modeling
+*** hybrid representation system
+*** wide variety of supported entities
+*** csg, nurbs, triangles, volumes, point clouds
+*** scriptable geometry
+*** procedural geometry
+*** geometry conversion
+*** geometry editing
+** analysis
+*** geometry v&v
+*** geometry preparation
+*** joint articulation system
+*** physics simulation system
+*** ray tracing performance
+*** analytic ray tracing
+*** solid ray tracing
+*** geometry visualization
+
+# Local Variables:
+# mode: org
+# End:

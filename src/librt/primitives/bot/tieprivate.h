@@ -1,7 +1,7 @@
 /*                       T I E P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,8 +50,8 @@ struct tie_geom_s {
 
 struct tie_stack_s {
     struct tie_kdtree_s *node; /* 4-bytes or 8-bytes */
-    tfloat near; /* 4-bytes or 8-bytes */
-    tfloat far; /* 4-bytes or 8-bytes */
+    TFLOAT near; /* 4-bytes or 8-bytes */
+    TFLOAT far; /* 4-bytes or 8-bytes */
 };
 
 #ifdef __cplusplus

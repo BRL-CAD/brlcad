@@ -1,7 +1,7 @@
 /*                     B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@
 /* system headers */
 #include <signal.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
@@ -39,7 +38,7 @@
 #ifdef HAVE_PROCESS_H
 #  include <process.h>
 #endif
-#include "bselect.h"
+#include "bsocket.h"
 #include "bio.h"
 
 /* common headers */
@@ -175,11 +174,15 @@ backtrace(char * const *args, int fd)
 	perror("write [set backtrace past-main on] failed");
     } else if (write(input[1], "bt full\n", 8) != 8) {
 	perror("write [bt full] failed");
+    } else if (write(input[1], "thread apply all bt full\n", 25) != 25) {
+	perror("write [thread apply all bt full] failed");
     }
-    /* can add additional gdb commands here. Output will contain
-     * everything up to the "Detaching from process" statement from
-     * quit.
+
+    /* Can add additional gdb commands above here.  Output will
+     * contain everything up to the "Detaching from process" statement
+     * from the quit command below.
      */
+
     if (write(input[1], "quit\n", 5) != 5) {
 	perror("write [quit] failed");
     }

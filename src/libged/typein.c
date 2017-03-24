@@ -1,7 +1,7 @@
 /*                        T Y P E I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
@@ -589,6 +588,40 @@ static char *p_hrt[] = {
     "Enter distance to cusps: "
 };
 
+static char *p_joint[] = {
+    "Enter X, Y, Z of the joint location: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector1: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector2: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter joint value: ",
+    "Reference Path 1: ",
+    "Reference Path 2: "
+};
+
+static char *p_datum[] = {
+    "Enter a datum type ([point|line|plane]): ",
+    "Enter X, Y, Z for the datum point: ", /* 1 == point prompts */
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z for a point on the datum line: ", /* 4 == line prompts */
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of the datum line direction vector: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z for a point on the datum plane: ", /* 10 == line prompts */
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z for the datum plane direction vector: ",
+    "Enter Y: ",
+    "Enter Z: ",
+};
+
 
 /**
  * helper function that infers a boolean value from a given string
@@ -685,7 +718,7 @@ binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	    bu_log("Unrecognized minor type (%c)\n", *cmd_argvs[3]);
 	    return GED_ERROR;
     }
-    if (rt_mk_binunif (gedp->ged_wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]))) {
+    if (rt_mk_binunif(gedp->ged_wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]))) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to create binary object %s from file %s\n",
 		      name, cmd_argvs[4]);
@@ -709,7 +742,7 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EBM;
     intern->idb_meth = &OBJ[ID_EBM];
-    intern->idb_ptr = (genptr_t)ebm;
+    intern->idb_ptr = (void *)ebm;
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
 
     bu_strlcpy(ebm->file, cmd_argvs[3], RT_EBM_NAME_LEN);
@@ -735,7 +768,7 @@ submodel_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_inter
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_SUBMODEL;
     intern->idb_meth = &OBJ[ID_SUBMODEL];
-    intern->idb_ptr = (genptr_t)sip;
+    intern->idb_ptr = (void *)sip;
     sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 
     bu_vls_init(&sip->treetop);
@@ -760,7 +793,8 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
     intern->idb_meth = &OBJ[ID_DSP];
-    intern->idb_ptr = (genptr_t)dsp;
+    intern->idb_ptr = (void *)dsp;
+
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
     bu_vls_init(&dsp->dsp_name);
@@ -769,14 +803,20 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     dsp->dsp_xcnt = atoi(cmd_argvs[4]);
     dsp->dsp_ycnt = atoi(cmd_argvs[5]);
     dsp->dsp_smooth = atoi(cmd_argvs[6]);
+    dsp->dsp_cuttype = DSP_CUT_DIR_ULlr;
+
     MAT_IDN(dsp->dsp_stom);
 
-    dsp->dsp_stom[0] = dsp->dsp_stom[5] =
-	atof(cmd_argvs[7]) * gedp->ged_wdbp->dbip->dbi_local2base;
-
+    dsp->dsp_stom[0] = dsp->dsp_stom[5] = atof(cmd_argvs[7]) * gedp->ged_wdbp->dbip->dbi_local2base;
     dsp->dsp_stom[10] = atof(cmd_argvs[8]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
+
+    dsp->dsp_buf = NULL;
+    dsp->dsp_mp = NULL;
+    dsp->dsp_bip = NULL;
+
+    dsp->dsp_datasrc = RT_DSP_SRC_FILE;
 
     return GED_OK;
 }
@@ -796,15 +836,9 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
     intern->idb_meth = &OBJ[ID_DSP];
-    intern->idb_ptr = (genptr_t)dsp;
-    dsp->magic = RT_DSP_INTERNAL_MAGIC;
+    intern->idb_ptr = (void *)dsp;
 
-    if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
-	dsp->dsp_datasrc = RT_DSP_SRC_FILE;
-    else if (*cmd_argvs[3] == 'O' || *cmd_argvs[3] == 'o')
-	dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
-    else
-	return GED_ERROR;
+    dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
     bu_vls_init(&dsp->dsp_name);
     bu_vls_strcpy(&dsp->dsp_name, cmd_argvs[4]);
@@ -812,6 +846,7 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     dsp->dsp_xcnt = atoi(cmd_argvs[5]);
     dsp->dsp_ycnt = atoi(cmd_argvs[6]);
     dsp->dsp_smooth = atoi(cmd_argvs[7]);
+
     switch (*cmd_argvs[8]) {
 	case 'a':	/* adaptive */
 	case 'A':
@@ -830,13 +865,21 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     }
 
     MAT_IDN(dsp->dsp_stom);
-
-    dsp->dsp_stom[0] = dsp->dsp_stom[5] =
-	atof(cmd_argvs[9]) * gedp->ged_wdbp->dbip->dbi_local2base;
-
+    dsp->dsp_stom[0] = dsp->dsp_stom[5] = atof(cmd_argvs[9]) * gedp->ged_wdbp->dbip->dbi_local2base;
     dsp->dsp_stom[10] = atof(cmd_argvs[10]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
+
+    dsp->dsp_buf = NULL;
+    dsp->dsp_mp = NULL;
+    dsp->dsp_bip = NULL;
+
+    if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
+	dsp->dsp_datasrc = RT_DSP_SRC_FILE;
+    else if (*cmd_argvs[3] == 'O' || *cmd_argvs[3] == 'o')
+	dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
+    else
+	return GED_ERROR;
 
     return GED_OK;
 }
@@ -855,7 +898,7 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_HF;
     intern->idb_meth = &OBJ[ID_HF];
-    intern->idb_ptr = (genptr_t)hf;
+    intern->idb_ptr = (void *)hf;
     hf->magic = RT_HF_INTERNAL_MAGIC;
 
     bu_strlcpy(hf->cfile, cmd_argvs[3], sizeof(hf->cfile));
@@ -915,7 +958,7 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_VOL;
     intern->idb_meth = &OBJ[ID_VOL];
-    intern->idb_ptr = (genptr_t)vol;
+    intern->idb_ptr = (void *)vol;
     vol->magic = RT_VOL_INTERNAL_MAGIC;
 
     bu_strlcpy(vol->file, cmd_argvs[3], sizeof(vol->file));
@@ -996,7 +1039,7 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     intern->idb_meth = &OBJ[ID_BOT];
 
     BU_ALLOC(bot, struct rt_bot_internal);
-    intern->idb_ptr = (genptr_t)bot;
+    intern->idb_ptr = (void *)bot;
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->num_vertices = num_verts;
     bot->num_faces = num_faces;
@@ -1168,7 +1211,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     if (vals_present > 1) {
 	num_curves = atoi(argv[4]);
 	if (num_curves < 3) {
-	    bu_vls_printf(gedp->ged_result_str, "points per waterline must be >= 3\n");
+	    bu_vls_printf(gedp->ged_result_str, "number of waterlines must be >= 3\n");
 	    intern->idb_meth = &OBJ[ID_ARS];
 	    return GED_ERROR;
 	}
@@ -2437,7 +2480,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
      * MORE points than the value in the num_points field if it's all on one
      * line. Is that a bug, or a feature?
      */
-    for (i = 6; i < argc; i += 4) {
+    for (i = 6; i + 3 < argc; i += 4) {
 	struct wdb_metaballpt *metaballpt;
 
 	BU_ALLOC(metaballpt, struct wdb_metaballpt);
@@ -2455,7 +2498,8 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 
 
 static int
-pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt) {
+pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+{
     unsigned long i;
     unsigned long numPoints;
     long readPoints;
@@ -2481,7 +2525,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     }
 
     /* if points are in a file */
-    if ((BU_STR_EQUAL(argv[3], "yes")) || (BU_STR_EQUAL(argv[3], "y"))) {
+    if (bu_str_true(argv[3])) {
 
 	/* prompt for point file path and name */
 	if (argc < 5) {
@@ -2834,7 +2878,7 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
     hip = (struct rt_hrt_internal *)intern->idb_ptr;
     hip->hrt_magic = RT_HRT_INTERNAL_MAGIC;
 
-    for(i = 0; i < n - 1; i++) {
+    for (i = 0; i < n - 1; i++) {
 	vals[i] = atof(cmd_argv[3 + i]) * gedp->ged_wdbp->dbip->dbi_local2base;
     }
     vals[12] = atof(cmd_argv[3 + 12]);
@@ -2847,6 +2891,201 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
 
     return GED_OK;
 }
+
+/*
+ * reads joint parameters from keyboard
+ *
+ * returns 0 if successfully read
+ * returns 1 if unsuccessful read
+ */
+static int
+joint_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
+{
+    fastf_t vals[10];
+    int i, n;
+    struct rt_joint_internal *jip;
+    n = 10;
+
+    intern->idb_type = ID_JOINT;
+    intern->idb_meth = &OBJ[ID_JOINT];
+    intern->idb_ptr = bu_malloc(sizeof(struct rt_joint_internal), "rt_joint_internal");
+    jip = (struct rt_joint_internal *)intern->idb_ptr;
+    jip->magic = RT_JOINT_INTERNAL_MAGIC;
+
+    for (i = 0; i < n - 1; i++) {
+	vals[i] = atof(cmd_argv[3 + i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    }
+    vals[n-1] = atof(cmd_argv[3 + n - 1]);
+
+    VMOVE(jip->location, &vals[0]);
+    VMOVE(jip->vector1, &vals[3]);
+    VMOVE(jip->vector2, &vals[6]);
+    jip->value = vals[9];
+    bu_vls_init(&jip->reference_path_1);
+    bu_vls_strcpy(&jip->reference_path_1, cmd_argv[3 + n]);
+    bu_vls_init(&jip->reference_path_2);
+    bu_vls_strcpy(&jip->reference_path_2, cmd_argv[3 + n + 1]);
+
+    return GED_OK;
+}
+
+
+/*
+ * reads datum parameters from keyboard
+ *
+ * returns 0 if successfully read
+ * 1 if unsuccessfully read
+ */
+static int
+datum_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+{
+    struct rt_datum_internal *datums;
+    struct rt_datum_internal *prev;
+    size_t num_points = 0;
+    size_t num_lines = 0;
+    size_t num_planes = 0;
+    size_t count;
+    size_t idx;
+
+#define ARGS_START_AT  3
+#define ARGS_PER_POINT 3
+#define ARGS_PER_LINE  6
+#define ARGS_PER_PLANE 6
+
+    if (argc == 3) {
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[0]);
+	return GED_MORE;
+    }
+
+    /* first pass, make sure we have all args */
+#if 0
+/*
+idx 0  1       2     3     4 5 6 7    8 9  10 11 12 13 14     15 16 17 18 19 20
+    in mydatum datum point 0 0 0 line 1 1  1  0  0  1  plane  0  0  0  0  0  1
+argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
+*/
+#endif
+
+    for (idx = ARGS_START_AT; (size_t)argc > idx; idx = ARGS_START_AT + num_points*(ARGS_PER_POINT+1) + num_lines*(ARGS_PER_LINE+1) + num_planes*(ARGS_PER_PLANE+1)) {
+	idx++;
+	if (BU_STR_EQUIV(argv[idx-1], "point")) {
+	    if ((size_t)argc-idx < ARGS_PER_POINT) {
+		/* idx into the next query prompt (== 1) for datum points */
+		bu_vls_printf(gedp->ged_result_str, "%s", prompt[1+argc-idx]);
+		return GED_MORE;
+	    }
+
+	    for (count = 0; count < ARGS_PER_POINT; count++) {
+		double val;
+		char *endptr = NULL;
+		val = strtod(argv[idx+count], &endptr);
+		if (ZERO(val) && endptr == argv[idx+count]) {
+		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum point value (%s) encountered, expecting a number\n", argv[idx+count]);
+		    return GED_ERROR;
+		}
+	    }
+	    num_points++;
+	} else if (BU_STR_EQUIV(argv[idx-1], "line")) {
+	    if ((size_t)argc-idx < ARGS_PER_LINE) {
+		/* idx into the next query prompt (== 4) for datum lines */
+		bu_vls_printf(gedp->ged_result_str, "%s", prompt[4+argc-idx]);
+		return GED_MORE;
+	    }
+
+	    for (count = 0; count < ARGS_PER_LINE; count++) {
+		double val;
+		char *endptr = NULL;
+		val = strtod(argv[idx+count], &endptr);
+		if (ZERO(val) && endptr == argv[idx+count]) {
+		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum line value (%s) encountered, expecting a number\n", argv[idx+count]);
+		    return GED_ERROR;
+		}
+	    }
+	    num_lines++;
+	} else if (BU_STR_EQUIV(argv[idx-1], "plane")) {
+	    if ((size_t)argc-idx < ARGS_PER_PLANE) {
+		/* idx into the next query prompt (== 10) for datum planes */
+		bu_vls_printf(gedp->ged_result_str, "%s", prompt[10+argc-idx]);
+		return GED_MORE;
+	    }
+
+	    for (count = 0; count < ARGS_PER_PLANE; count++) {
+		double val;
+		char *endptr = NULL;
+		val = strtod(argv[idx+count], &endptr);
+		if (ZERO(val) && endptr == argv[idx+count]) {
+		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum plane value (%s) encountered, expecting a number\n", argv[idx+count]);
+		    return GED_ERROR;
+		}
+	    }
+	    num_planes++;
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: Unknown datum type (%s) encountered, expecting 'point', 'line', or 'plane'\n", argv[idx-1]);
+	    return GED_ERROR;
+	}
+    }
+
+    /* second pass, allocate and process with confidence */
+
+    datums = NULL; /* must allocate individually as we free individually */
+    for (count = 0, idx = ARGS_START_AT, prev = NULL; count < num_points + num_lines + num_planes; count++) {
+	/* more than necessary but sufficiently robust to changes */
+	double vals[ARGS_PER_POINT + ARGS_PER_LINE + ARGS_PER_PLANE] = {0.0};
+
+	struct rt_datum_internal *datum = (struct rt_datum_internal *)bu_calloc(1, sizeof(struct rt_datum_internal), "alloc datum");
+	if (!datums)
+	    datums = datum; /* and so it begins */
+
+	if (BU_STR_EQUIV(argv[idx], "point")) {
+	    vals[X] = strtod(argv[idx+1], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Y] = strtod(argv[idx+2], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Z] = strtod(argv[idx+3], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    VMOVE(datum->pnt, vals);
+	    VSETALL(datum->dir, 0.0);
+	    datum->w = 0.0;
+	    idx += ARGS_PER_POINT;
+	} else if (BU_STR_EQUIV(argv[idx], "line")) {
+	    vals[X] = strtod(argv[idx+1], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Y] = strtod(argv[idx+2], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Z] = strtod(argv[idx+3], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[X] = strtod(argv[idx+4], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Y] = strtod(argv[idx+5], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Z] = strtod(argv[idx+6], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    VMOVE(datum->pnt, vals);
+	    VMOVE(datum->dir, vals+3);
+	    datum->w = 0.0;
+	    idx += ARGS_PER_LINE;
+	} else if (BU_STR_EQUIV(argv[idx], "plane")) {
+	    vals[X] = strtod(argv[idx+1], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Y] = strtod(argv[idx+2], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Z] = strtod(argv[idx+3], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[X] = strtod(argv[idx+4], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Y] = strtod(argv[idx+5], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Z] = strtod(argv[idx+6], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    VMOVE(datum->pnt, vals);
+	    VMOVE(datum->dir, vals+3);
+	    datum->w = 1.0;
+	    idx += ARGS_PER_PLANE;
+	}
+	idx++; /* next datum label */
+
+	datum->magic = RT_DATUM_INTERNAL_MAGIC;
+	if (prev) {
+	    prev->next = datum;
+	}
+	prev = datum;
+    }
+
+    intern->idb_ptr = datums;
+    intern->idb_meth = &OBJ[ID_DATUM];
+    intern->idb_type = ID_DATUM;
+
+    /* Set a default color for datum objects */
+    bu_avs_add(&intern->idb_avs, "color", "255/255/0");
+
+    return GED_OK;
+}
+
 
 int
 ged_in(struct ged *gedp, int argc, const char *argv[])
@@ -2900,7 +3139,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[2], "arbn")) {
 	switch (arbn_in(gedp, argc, argv, &internal, &p_arbn[0])) {
 	    case GED_ERROR:
-		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, ARBN not made!\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, arbn not made!\n", argv[0]);
 		rt_db_free_internal(&internal);
 		return GED_ERROR;
 	    case GED_MORE:
@@ -2910,7 +3149,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[2], "bot")) {
 	switch (bot_in(gedp, argc, argv, &internal, &p_bot[0])) {
 	    case GED_ERROR:
-		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, BOT not made!\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, bot not made!\n", argv[0]);
 		rt_db_free_internal(&internal);
 		return GED_ERROR;
 	    case GED_MORE:
@@ -3109,6 +3348,10 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	nvals = 3*4 + 1;
 	menu = p_hrt;
 	fn_in = hrt_in;
+    }else if (BU_STR_EQUAL(argv[2], "joint")) {
+	nvals = 3*3 + 1 + 2;
+	menu = p_joint;
+	fn_in = joint_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:
@@ -3119,6 +3362,16 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	}
 
+	goto do_new_update;
+    } else if (BU_STR_EQUAL(argv[2], "datum")) {
+	switch (datum_in(gedp, argc, argv, &internal, &p_datum[0])) {
+	    case GED_ERROR:
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, datum not made!\n", argv[0]);
+		rt_db_free_internal(&internal);
+		return GED_ERROR;
+	    case GED_MORE:
+		return GED_MORE;
+	}
 	goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "cline") ||
 	       BU_STR_EQUAL(argv[2], "grip") ||
@@ -3153,7 +3406,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 do_new_update:
     /* The function may have already written via LIBWDB */
     if (internal.idb_ptr != NULL) {
-	dp=db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type);
+	dp=db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type);
 	if (dp == RT_DIR_NULL) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(gedp->ged_result_str, "%s: Cannot add '%s' to directory\n", argv[0], name);

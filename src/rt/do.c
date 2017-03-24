@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2014 United States Government as represented by
+ * Copyright (c) 1987-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
@@ -39,11 +38,13 @@
 #  include <sys/stat.h>
 #endif
 
-#include "bio.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
+#include "bu/mime.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "bu.h"
 #include "icv.h"
 
 #include "./rtuif.h"
@@ -57,7 +58,7 @@ extern mat_t model2view;
 /***** end of sharing with viewing model *****/
 
 extern void grid_setup(void);
-extern void worker(int cpu, genptr_t arg);
+extern void worker(int cpu, void *arg);
 
 /***** variables shared with opt.c *****/
 extern int	orientflag;		/* 1 means orientation has been set */
@@ -68,10 +69,6 @@ extern char *string_pix_start;	/* string spec of starting pixel */
 extern char *string_pix_end;	/* string spec of ending pixel */
 extern int finalframe;		/* frame to halt at */
 /***** end variables shared with rt.c *****/
-
-/***** variables shared with viewg3.c *****/
-struct bu_vls ray_data_file = BU_VLS_INIT_ZERO;  /* file name for ray data output */
-/***** end variables shared with viewg3.c *****/
 
 /***** variables for frame buffer black pixel rendering *****/
 unsigned char *pixmap = NULL; /* Pixel Map for rerendering of black pixels */
@@ -93,19 +90,20 @@ int
 old_frame(FILE *fp)
 {
     register int i;
-    char number[128];
+#define NUMBER_LEN 128
+    char number[NUMBER_LEN+1];
 
     /* Visible part is from -1 to +1 in view space */
-    if (fscanf(fp, "%128s", number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
     viewsize = atof(number);
-    if (fscanf(fp, "%128s", number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
     eye_model[X] = atof(number);
-    if (fscanf(fp, "%128s", number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
     eye_model[Y] = atof(number);
-    if (fscanf(fp, "%128s", number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
     eye_model[Z] = atof(number);
     for (i = 0; i < 16; i++) {
-	if (fscanf(fp, "%128s", number) != 1)
+	if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
 	    return -1;
 	Viewrotscale[i] = atof(number);
     }
@@ -397,7 +395,7 @@ int cm_closedb(const int UNUSED(argc), const char **UNUSED(argv))
     db_close(APP.a_rt_i->rti_dbip);
     APP.a_rt_i->rti_dbip = DBI_NULL;
 
-    bu_free((genptr_t)APP.a_rt_i, "struct rt_i");
+    bu_free((void *)APP.a_rt_i, "struct rt_i");
     APP.a_rt_i = RTI_NULL;
 
     bu_prmem("After _closedb");
@@ -423,12 +421,10 @@ struct bu_structparse set_parse[] = {
      * not known at compile-time.  they would needed to be added to
      * set_parse() during runtime initialization.
      */
-    {"%d",	1, "rt_bot_mintie",		bu_byteoffset(rt_bot_mintie),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "rt_bot_minpieces",		bu_byteoffset(rt_bot_minpieces),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "rt_bot_tri_per_piece",	bu_byteoffset(rt_bot_tri_per_piece),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "rt_cline_radius",		bu_byteoffset(rt_cline_radius),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 #endif
-    {"%V",	1, "ray_data_file",		bu_byteoffset(ray_data_file),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     /* daisy-chain to additional app-specific parameters */
     {"%p",	1, "Application-Specific Parameters", bu_byteoffset(view_parse[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,						BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
@@ -449,7 +445,7 @@ int cm_set(const int argc, const char **argv)
     }
 
     bu_vls_from_argv(&str, argc-1, (const char **)argv+1);
-    if (bu_struct_parse(&str, set_parse, (char *)0) < 0) {
+    if (bu_struct_parse(&str, set_parse, (char *)0, NULL) < 0) {
 	bu_vls_free(&str);
 	return -1;
     }
@@ -507,6 +503,148 @@ def_tree(register struct rt_i *rtip)
 }
 
 
+
+/*********************************************************************************/
+#ifdef USE_OPENCL
+/* from opt.c */
+extern double haze[3];
+extern double airdensity;
+
+
+static unsigned int clt_mode;           /* Active render buffers */
+static uint8_t clt_o[3];		/* Sub buffer offsets in bytes: {CLT_COLOR, CLT_DEPTH, MAX} */
+
+static fb *clt_fbp = FB_NULL;
+
+
+void
+clt_connect_fb(fb *fbp)
+{
+    clt_fbp = fbp;
+}
+
+void
+clt_view_init(unsigned int mode)
+{
+    uint8_t o[3];
+    int i;
+
+    clt_mode = mode;
+
+    o[0] = (mode & CLT_COLOR) ? 3 : 0;	/* uchar rgb[3] */
+    o[1] = (mode & CLT_DEPTH) ? 8 : 0;  /* double depth */
+    o[2] = 0;
+
+    clt_o[0] = 0;
+    for (i=1; i<3; i++) {
+	clt_o[i] = o[i-1] + clt_o[i-1];
+    }
+}
+
+void
+clt_run(int cur_pixel, int last_pixel)
+{
+    int ibackground[3];      /* integer 0..255 version */
+    int inonbackground[3];   /* integer non-background */
+    const double gamma_corr = 0.0;
+
+    int npix, a_x, a_y, i;
+    uint8_t *pixels, *pixelp;
+    size_t cpu = 0;
+    struct application a;
+
+    ssize_t size;
+    ssize_t count;
+
+    npix = last_pixel-cur_pixel+1;
+    size = npix * clt_o[2];
+
+    a_y = (int)(cur_pixel/width);
+    a_x = (int)(cur_pixel - (a_y * width));
+
+    /* Obtain fresh copy of global application struct */
+    a = APP;
+    a.a_resource = &resource[cpu];
+    a.a_level = 0;
+
+
+    if (lightmodel == 2)
+        VSETALL(background, 0);
+
+    /* Create integer version of background color */
+    inonbackground[0] = ibackground[0] = background[0] * 255.0 + 0.5;
+    inonbackground[1] = ibackground[1] = background[1] * 255.0 + 0.5;
+    inonbackground[2] = ibackground[2] = background[2] * 255.0 + 0.5;
+
+    /*
+     * If a non-background pixel comes out the same color as the
+     * background, modify it slightly, to permit compositing.  Perturb
+     * the background color channel with the largest intensity.
+     */
+    if (inonbackground[0] > inonbackground[1]) {
+        if (inonbackground[0] > inonbackground[2]) i = 0;
+        else i = 2;
+    } else {
+        if (inonbackground[1] > inonbackground[2]) i = 1;
+        else i = 2;
+    }
+    if (inonbackground[i] < 127) inonbackground[i]++;
+    else inonbackground[i]--;
+
+
+    pixels = (uint8_t*)bu_calloc(size, sizeof(uint8_t), "image buffer");
+
+    clt_frame(pixels, clt_o, cur_pixel, last_pixel, width,
+              ibackground, inonbackground,
+	      airdensity, haze, gamma_corr, view2model, cell_width,
+              cell_height, aspect, lightmodel);
+
+    pixelp = pixels + cur_pixel*clt_o[2];
+
+    if (clt_fbp != FB_NULL) {
+        bu_semaphore_acquire(BU_SEM_SYSCALL);
+        count = fb_write(clt_fbp, a_x, a_y, pixelp, npix);
+        bu_semaphore_release(BU_SEM_SYSCALL);
+        if (count < npix)
+            bu_exit(EXIT_FAILURE, "pixel fb_write error");
+    }
+    if (outfp) {
+        bu_semaphore_acquire(BU_SEM_SYSCALL);
+        if (bu_fseek(outfp, cur_pixel*clt_o[2], 0) != 0)
+            fprintf(stderr, "fseek error\n");
+        if (fwrite(pixelp, size, 1, outfp) != 1)
+            bu_exit(EXIT_FAILURE, "pixel fwrite error");
+        bu_semaphore_release(BU_SEM_SYSCALL);
+    }
+    if (bif) {
+        int span = width*clt_o[2];
+
+        BU_ASSERT(a_x == 0);
+        while (pixelp < pixels+size) {
+            icv_writeline(bif, a_y++, pixelp, ICV_DATA_UCHAR);
+            pixelp += span;
+        }
+    }
+    bu_free(pixels, "image buffer");
+
+    bu_log("sub_grid_mode: %d, fullfloat_mode: %d, hypersample: %d, jitter: %d\n"
+	   "prism: %d, perspective: %e, stereo: %d\n",
+	   sub_grid_mode, fullfloat_mode, hypersample, jitter & JITTER_CELL,
+	   a.a_rt_i->rti_prismtrace, rt_perspective, stereo);
+
+    /* Tally up the statistics */
+    for (cpu=0; cpu < npsw; cpu++) {
+	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
+	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+	    continue;
+	}
+	rt_add_res_stats(APP.a_rt_i, &resource[cpu]);
+    }
+    bu_log("SHOT: opencl\n");
+}
+#endif
+
+
 /**
  * This is a separate function primarily as a service to REMRT.
  */
@@ -528,6 +666,18 @@ do_prep(struct rt_i *rtip)
 	if (rt_verbosity & VERBOSE_STATS)
 	    bu_log("PREP: %s\n", bu_vls_addr(&times));
 	bu_vls_free(&times);
+
+#ifdef USE_OPENCL
+	if (opencl_mode) {
+	    rt_prep_timer();
+	    clt_prep(rtip);
+
+	    (void)rt_get_timer(&times, NULL);
+	    if (rt_verbosity & VERBOSE_STATS)
+		bu_log("OCLPREP: %s\n", bu_vls_addr(&times));
+	    bu_vls_free(&times);
+	}
+#endif
     }
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {
@@ -556,7 +706,6 @@ do_frame(int framenumber)
     double utime = 0.0;			/* CPU time used */
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
     double wallclock = 0.0;		/* # seconds of wall clock time */
-    int npix = 0;			/* # of pixel values to be done */
     vect_t work, temp;
     quat_t quat;
 
@@ -639,7 +788,7 @@ do_frame(int framenumber)
     /* Process -b and ??? options now, for this frame */
     if (pix_start == -1) {
 	pix_start = 0;
-	pix_end = height * width - 1;
+	pix_end = (int)(height * width - 1);
     }
     if (string_pix_start) {
 	int xx, yy;
@@ -651,7 +800,7 @@ do_frame(int framenumber)
 	yy = atoi(cp);
 	bu_log("only pixel %d %d\n", xx, yy);
 	if (xx * yy >= 0) {
-	    pix_start = yy * width + xx;
+	    pix_start = (int)(yy * width + xx);
 	    pix_end = pix_start;
 	}
     }
@@ -665,24 +814,13 @@ do_frame(int framenumber)
 	yy = atoi(cp);
 	bu_log("ending pixel %d %d\n", xx, yy);
 	if (xx * yy >= 0) {
-	    pix_end = yy * width + xx;
+	    pix_end = (int)(yy * width + xx);
 	}
     }
 
     /* Allocate data for pixel map for rerendering of black pixels */
     if (pixmap == NULL) {
 	pixmap = (unsigned char*)bu_calloc(sizeof(RGBpixel), width*height, "pixmap allocate");
-    }
-
-    /*
-     * If this image is unlikely to be for debugging,
-     * be gentle to the machine.
-     */
-    if (!interactive) {
-	if (npix > 512*512)
-	    bu_nice_set(14);
-	else if (npix > 256*256)
-	    bu_nice_set(10);
     }
 
     /*
@@ -759,6 +897,7 @@ do_frame(int framenumber)
 
 	/* Ordinary case for creating output file */
 	if (outfp == NULL) {
+#ifndef RT_TXT_OUTPUT
 	    /* FIXME: in the case of rtxray, this is wrong.  it writes
 	     * out a bw image so depth should be just 1, not 3.
 	     */
@@ -769,6 +908,14 @@ do_frame(int framenumber)
 		if (matflag) return 0;	/* OK */
 		return -1;			/* Bad */
 	    }
+#else
+	    outfp = fopen(framename, "w");
+	    if (outfp == NULL) {
+		perror(framename);
+		if (matflag) return 0;	/* OK */
+		return -1;			/* Bad */
+	    }
+#endif
 	}
 
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
@@ -778,6 +925,18 @@ do_frame(int framenumber)
 
     /* initialize lighting, may update pix_start */
     view_2init(&APP, framename);
+
+#ifdef USE_OPENCL
+    if (opencl_mode) {
+        unsigned int mode = 0;
+
+                            mode |= CLT_COLOR;
+        if (rpt_dist)       mode |= CLT_DEPTH;
+        if (full_incr_mode) mode |= CLT_ACCUM;
+
+        clt_view_init(mode);
+    }
+#endif
 
     /* Just while doing the ray-tracing */
     if (R_DEBUG&RDEBUG_RTMEM)
@@ -802,6 +961,16 @@ do_frame(int framenumber)
      */
     rt_prep_timer();
 
+#ifdef USE_OPENCL
+    if (opencl_mode) {
+	clt_run(pix_start, pix_end);
+
+	/* Reset values to full size, for next frame (if any) */
+	pix_start = 0;
+	pix_end = (int)(height*width - 1);
+    }
+    else
+#endif
     if (incr_mode) {
 	for (incr_level = 1; incr_level <= incr_nlevel; incr_level++) {
 	    if (incr_level > 1)
@@ -812,7 +981,7 @@ do_frame(int framenumber)
     }
     else if (full_incr_mode) {
 	/* Multiple frame buffer mode */
-	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples;
+	for (full_incr_sample = 1; full_incr_sample <= full_incr_nsamples;
 	    full_incr_sample++) {
 	    if (full_incr_sample > 1) /* first sample was already initialized */
 		view_2init(&APP, framename);
@@ -824,7 +993,7 @@ do_frame(int framenumber)
 
 	/* Reset values to full size, for next frame (if any) */
 	pix_start = 0;
-	pix_end = height*width - 1;
+	pix_end = (int)(height*width - 1);
     }
     utime = rt_get_timer(&times, &wallclock);
 
@@ -843,8 +1012,8 @@ do_frame(int framenumber)
      * CPU time, regardless of the number of CPUs.
      */
     if (npsw > 1) {
-	int avail_cpus;
-	int ncpus;
+	size_t avail_cpus;
+	size_t ncpus;
 
 	avail_cpus = bu_avail_cpus();
 	if (npsw > avail_cpus) {
@@ -894,7 +1063,7 @@ do_frame(int framenumber)
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
     if (bif != NULL) {
-	icv_write(bif, framename, ICV_IMAGE_AUTO);
+	icv_write(bif, framename, BU_MIME_IMAGE_AUTO);
 	icv_destroy(bif);
 	bif = NULL;
     }
@@ -1010,7 +1179,7 @@ void
 res_pr(void)
 {
     register struct resource *res;
-    register int i;
+    register size_t i;
 
     bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];

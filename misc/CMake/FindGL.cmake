@@ -1,7 +1,7 @@
 #                    F I N D G L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2001-2014 United States Government as represented by
+# Copyright (c) 2001-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -111,25 +111,26 @@
 #=============================================================================
 
 if(WIN32)
-  if(CYGWIN)
 
-    find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h )
+  if(CYGWIN)
 
     find_library(OPENGL_gl_LIBRARY opengl32 )
 
     find_library(OPENGL_glu_LIBRARY glu32 )
 
-  else (CYGWIN)
-
-    if(BORLAND)
-      set(OPENGL_gl_LIBRARY import32 CACHE STRING "OpenGL library for win32")
-      set(OPENGL_glu_LIBRARY import32 CACHE STRING "GLU library for win32")
-    else(BORLAND)
-      set(OPENGL_gl_LIBRARY opengl32 CACHE STRING "OpenGL library for win32")
-      set(OPENGL_glu_LIBRARY glu32 CACHE STRING "GLU library for win32")
-    endif(BORLAND)
+    find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h )
 
   endif(CYGWIN)
+
+  if(BORLAND)
+    set(OPENGL_gl_LIBRARY import32 CACHE STRING "OpenGL library for win32")
+    set(OPENGL_glu_LIBRARY import32 CACHE STRING "GLU library for win32")
+  endif(BORLAND)
+
+  if (NOT CYGWIN AND NOT BORLAND)
+    set(OPENGL_gl_LIBRARY opengl32 CACHE STRING "OpenGL library for win32")
+    set(OPENGL_glu_LIBRARY glu32 CACHE STRING "GLU library for win32")
+  endif (NOT CYGWIN AND NOT BORLAND)
 
 else (WIN32)
 
@@ -154,6 +155,7 @@ else (WIN32)
     /usr/openwin/share/include
     /usr/openwin/include
     /usr/pkg/xorg/include
+    /opt/X11/include
     /opt/graphics/OpenGL/include
     )
   # Handle HP-UX cases where we only want to find OpenGL in either hpux64
@@ -181,6 +183,7 @@ else (WIN32)
     /usr/X11R6/lib
     /usr/shlib
     /usr/openwin/lib
+    /opt/X11/lib
     /opt/graphics/OpenGL/lib
     /usr/pkg/xorg/lib
     ${HPUX_IA_OPENGL_LIB_PATH}
@@ -196,6 +199,7 @@ else (WIN32)
     find_path(OPENGL_INCLUDE_DIR_GL OpenGL/gl.h DOC "Include for OpenGL on OSX")
   else(OPENGL_USE_AQUA)
     # If we're on Apple and not using Aqua, we don't want frameworks
+    set(CMAKE_FIND_FRAMEWORK_CACHED "${CMAKE_FIND_FRAMEWORK}")
     set(CMAKE_FIND_FRAMEWORK "NEVER")
 
     find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h        ${OPENGL_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
@@ -218,6 +222,8 @@ else (WIN32)
     endif(OPENGL_gl_LIBRARY)
 
     find_library(OPENGL_glu_LIBRARY NAMES GLU MesaGLU PATHS ${OPENGL_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+
+    set(CMAKE_FIND_FRAMEWORK "${CMAKE_FIND_FRAMEWORK_CACHED}")
   endif(OPENGL_USE_AQUA)
 
 endif(WIN32)

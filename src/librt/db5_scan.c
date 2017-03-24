@@ -1,7 +1,7 @@
 /*                      D B 5 _ S C A N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include "bu/parse.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db5.h"
+#include "rt/db5.h"
 #include "raytrace.h"
 
 
@@ -37,8 +37,8 @@ db5_scan(
     struct db_i *dbip,
     void (*handler)(struct db_i *,
 		    const struct db5_raw_internal *,
-		    off_t addr, genptr_t client_data),
-    genptr_t client_data)
+		    off_t addr, void *client_data),
+    void *client_data)
 {
     unsigned char header[8];
     struct db5_raw_internal raw;
@@ -76,7 +76,7 @@ db5_scan(
 	    addr += (off_t)raw.object_length;
 	}
 	dbip->dbi_eof = addr;
-	BU_ASSERT_LONG(dbip->dbi_eof, ==, (off_t)dbip->dbi_mf->buflen);
+	BU_ASSERT(dbip->dbi_eof == (off_t)dbip->dbi_mf->buflen);
     } else {
 	/* In a totally portable way, read the database with stdio */
 	rewind(dbip->dbi_fp);
@@ -188,7 +188,7 @@ struct directory *
 db5_diradd(struct db_i *dbip,
 	   const struct db5_raw_internal *rip,
 	   off_t laddr,
-	   genptr_t client_data)
+	   void *client_data)
 {
     struct directory **headp;
     register struct directory *dp;
@@ -273,7 +273,7 @@ db5_diradd_handler(
     struct db_i *dbip,
     const struct db5_raw_internal *rip,
     off_t laddr,
-    genptr_t client_data)	/* unused client_data from db5_scan() */
+    void *client_data)	/* unused client_data from db5_scan() */
 {
     RT_CK_DBI(dbip);
 
@@ -396,7 +396,7 @@ db_dirbuild(struct db_i *dbip)
     } else if (version == 4) {
 	/* things used to be pretty simple with v4 */
 
-	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, genptr_t))db_diradd, 1, NULL) < 0) {
+	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, void *))db_diradd, 1, NULL) < 0) {
 	    return -1;
 	}
 

@@ -1,7 +1,7 @@
 /*                        D M - R T G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,16 +50,17 @@
 
 #undef VMIN		/* is used in vmath.h, too */
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm/dm-rtgl.h"
+#include "dm-rtgl.h"
 #include "dm/dm_xvars.h"
-#include "solid.h"
+#include "fb.h"
+#include "fb/fb_ogl.h"
+#include "rt/solid.h"
 
-#include "./dm_util.h"
+#include "./dm_private.h"
 
 #define VIEWFACTOR (1.0/(*dmp->dm_vp))
 #define VIEWSIZE (2.0*(*dmp->dm_vp))
@@ -76,89 +77,17 @@ extern int vectorThreshold;	/* defined in libdm/tcl.c */
 #endif
 
 static int rtgl_actively_drawing;
-HIDDEN XVisualInfo *rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin);
+HIDDEN XVisualInfo *rtgl_choose_visual(dm *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
 
-struct dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
+dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
 
 HIDDEN_DM_FUNCTION_PROTOTYPES(rtgl)
 
-struct dm dm_rtgl = {
-    rtgl_close,
-    rtgl_drawBegin,
-    rtgl_drawEnd,
-    rtgl_normal,
-    rtgl_loadMatrix,
-    null_loadPMatrix,
-    rtgl_drawString2D,
-    rtgl_drawLine2D,
-    rtgl_drawLine3D,
-    rtgl_drawLines3D,
-    rtgl_drawPoint2D,
-    rtgl_drawPoint3D,
-    rtgl_drawPoints3D,
-    rtgl_drawVList,
-    rtgl_drawVList,
-    rtgl_draw,
-    rtgl_setFGColor,
-    rtgl_setBGColor,
-    rtgl_setLineAttr,
-    rtgl_configureWin,
-    rtgl_setWinBounds,
-    rtgl_setLight,
-    rtgl_setTransparency,
-    rtgl_setDepthMask,
-    rtgl_setZBuffer,
-    rtgl_debug,
-    rtgl_beginDList,
-    rtgl_endDList,
-    rtgl_drawDList,
-    rtgl_freeDLists,
-    rtgl_genDLists,
-    null_getDisplayImage,	/* display to image function */
-    null_reshape,
-    null_makeCurrent,
-    0,
-    1,				/* has displaylist */
-    0,                          /* no stereo by default */
-    1.0,			/* zoom-in limit, */
-    1,				/* bound flag */
-    "rtgl",
-    "X Windows with OpenGL graphics",
-    DM_TYPE_RTGL,
-    1,
-    0,
-    0,
-    0, /* bytes per pixel */
-    0, /* bits per channel */
-    0,
-    0,
-    1.0, /* aspect ratio */
-    0,
-    {0, 0},
-    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
-    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
-    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
-    {0, 0, 0},			/* bg color */
-    {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN}, /* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX}, /* clipmax */
-    0,				/* no debugging */
-    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
-    1,				/* depth buffer is writable */
-    1,				/* zbuffer */
-    0,				/* no zclipping */
-    0,                          /* clear back buffer after drawing and swap */
-    0,                          /* not overriding the auto font size */
-    0				/* Tcl interpreter */
-};
 
 
 static fastf_t default_viewscale = 1000.0;
@@ -213,7 +142,7 @@ freeJobList(struct jobList *jobs)
 
 
 void
-rtgl_fogHint(struct dm *dmp, int fastfog)
+rtgl_fogHint(dm *dmp, int fastfog)
 {
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
@@ -224,7 +153,7 @@ rtgl_fogHint(struct dm *dmp, int fastfog)
  * Fire up the display manager, and the display processor.
  *
  */
-struct dm *
+dm *
 rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
@@ -241,7 +170,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     Display *tmp_dpy = (Display *)NULL;
-    struct dm *dmp = (struct dm *)NULL;
+    dm *dmp = (dm *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     int screen_number = -1;
 
@@ -249,7 +178,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp, struct dm_internal);
 
     *dmp = dm_rtgl; /* struct copy */
     dmp->dm_interp = interp;
@@ -396,7 +325,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 		  bu_vls_addr(&init_proc_vls),
 		  bu_vls_addr(&dmp->dm_pathName));
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
 	(void)rtgl_close(dmp);
@@ -571,16 +500,16 @@ Done:
 
 
 int
-rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
+rtgl_share_dlist(dm *dmp1, dm *dmp2)
 {
     GLfloat backgnd[4];
     GLfloat vf;
     GLXContext old_glxContext;
 
-    if (dmp1 == (struct dm *)NULL)
-	return TCL_ERROR;
+    if (dmp1 == (dm *)NULL)
+	return BRLCAD_ERROR;
 
-    if (dmp2 == (struct dm *)NULL) {
+    if (dmp2 == (dm *)NULL) {
 	/* create a new graphics context for dmp1 with private display lists */
 
 	old_glxContext = ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->glxc;
@@ -592,7 +521,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    bu_log("rtgl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (!glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy,
@@ -601,7 +530,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    bu_log("rtgl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* display list (fontOffset + char) will display a given ASCII char */
@@ -609,7 +538,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    bu_log("dm-rtgl: Can't make display lists for font.\nUsing old context\n.");
 	    ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* This is the applications display list offset */
@@ -673,7 +602,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    bu_log("rtgl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    ((struct rtgl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (!glXMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy,
@@ -682,7 +611,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    bu_log("rtgl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct rtgl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	((struct rtgl_vars *)dmp2->dm_vars.priv_vars)->fontOffset = ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->fontOffset;
@@ -732,7 +661,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glXDestroyContext(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy, old_glxContext);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -740,7 +669,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
  * Gracefully release the display.
  */
 HIDDEN int
-rtgl_close(struct dm *dmp)
+rtgl_close(dm *dmp)
 {
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc) {
@@ -787,7 +716,7 @@ rtgl_close(struct dm *dmp)
     rtgljob.currItem = NULL;
     rtgljob.currJob = NULL;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -816,7 +745,7 @@ rtgl_stashTree(struct rtglJobs *job, char *tree)
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
-rtgl_drawBegin(struct dm *dmp)
+rtgl_drawBegin(dm *dmp)
 {
     GLfloat fogdepth;
 
@@ -833,7 +762,7 @@ rtgl_drawBegin(struct dm *dmp)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_drawBegin: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* clear back buffer */
@@ -867,12 +796,12 @@ rtgl_drawBegin(struct dm *dmp)
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_drawEnd(struct dm *dmp)
+rtgl_drawEnd(dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_drawEnd\n");
@@ -913,7 +842,7 @@ rtgl_drawEnd(struct dm *dmp)
     }
 
     rtgl_actively_drawing = 0;
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -924,7 +853,7 @@ double startScale = 1;
  * many calls to rtgl_draw().
  */
 HIDDEN int
-rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+rtgl_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
 {
     mat_t newm;
 
@@ -1047,7 +976,7 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     /* transpose to OpenGL format before applying view */
     glMultTransposeMatrixd(newm);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1200,123 +1129,6 @@ ignoreMiss(struct application *app)
 {
     RT_CK_APPLICATION(app);
     return 0;
-}
-
-
-HIDDEN double
-jitter(double range)
-{
-    if (rand() % 2)
-	return fmod(rand(), range);
-
-    return (-1 *(fmod(rand(), range)));
-}
-
-
-HIDDEN void
-randShots(fastf_t *center, fastf_t radius, int flag)
-{
-    int i, j;
-    vect_t view, dir;
-    point_t pt;
-    view[2] = 0;
-
-    glDisable(GL_LIGHTING);
-
-    for (i = 0; i < 360; i += 1) {
-	for (j = 0; j < 90; j += 1) {
-	    view[0] = i;
-	    view[1] = j;
-
-	    /* use view vector for direction */
-	    bn_vec_aed(dir, view[0]*DEG2RAD, view[1]*DEG2RAD, radius);
-	    VADD2(dir, dir, center);
-	    VMOVE(app.a_ray.r_pt, dir);
-
-	    /* use opposite sphere point for origin */
-	    VSUB2(pt, dir, center);
-	    VREVERSE(pt, pt);
-	    VADD2(pt, pt, center);
-
-	    /* jitter point */
-	    VMOVE(app.a_ray.r_dir, pt);
-
-	    if (flag) {
-		/* shoot ray */
-		rt_shootray(&app);
-	    }
-
-	    if (!flag) {
-		glPointSize(5);
-		glBegin(GL_POINTS);
-		glColor3d(0.0, 1.0, 0.0);
-		glVertex3dv(pt);
-		glColor3d(1.0, 0.0, 0.0);
-		glVertex3dv(dir);
-		glEnd();
-
-		glColor4d(0.0, 0.0, 1.0, .1);
-		glBegin(GL_LINES);
-		glVertex3dv(pt);
-		glVertex3dv(dir);
-		glEnd();
-	    }
-	}
-    }
-
-    glEnable(GL_LIGHTING);
-}
-
-
-HIDDEN void
-swapItems(struct bu_list *a, struct bu_list *b)
-{
-    struct bu_list temp;
-
-    if (a->forw == b) {
-	/* a immediately followed by b */
-
-	/* fix surrounding links */
-	a->back->forw = b;
-	b->forw->back = a;
-
-	/* fix a and b links */
-	a->forw = b->forw;
-	b->back = a->back;
-	a->back = b;
-	b->forw = a;
-    } else if (b->forw == a) {
-	/* b immediately followed by a */
-
-	/* fix surrounding links */
-	b->back->forw = a;
-	a->forw->back = b;
-
-	/* fix a and b links */
-	b->forw = a->forw;
-	a->back = b->back;
-	b->back = a;
-	a->forw = b;
-    } else {
-	/* general case */
-
-	/* fix surrounding links */
-	a->back->forw = b;
-	a->forw->back = b;
-
-	b->back->forw = a;
-	b->forw->back = a;
-
-	/* switch a and b links */
-	temp.forw = a->forw;
-	temp.back = a->back;
-
-	a->forw = b->forw;
-	a->back = b->back;
-
-	b->forw = temp.forw;
-	b->back = temp.back;
-    }
 }
 
 
@@ -1529,6 +1341,8 @@ drawPoints(float *view, int pointSize)
 	for (BU_LIST_FOR (rtgljob.currItem, ptInfoList, head)) {
 	    used = rtgljob.currItem->used;
 
+	    /* might want to disable for performance */
+	    glEnable(GL_POINT_SMOOTH);
 	    glBegin(GL_POINTS);
 	    for (i = 0; i < used; i += 3) {
 
@@ -1558,7 +1372,7 @@ double maxSpan;
 time_t start = 0;
 
 HIDDEN int
-rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
+rtgl_drawVList(dm *dmp, struct bn_vlist *UNUSED(vp))
 {
     size_t i, j, new, numNew, maxPixels, viewSize;
     vect_t span;
@@ -1577,19 +1391,19 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
     struct ged *gedp = RTGL_GEDP;
 
     if (gedp == GED_NULL)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     /* get database instance */
     dbip = gedp->ged_wdbp->dbip;
 
     if (dbip == DBI_NULL)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     /* get new ray trace instance */
     rtip = rt_new_rti(dbip);
 
     if (rtip == RTI_NULL)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     /* get view dimension information */
     if (dmp->dm_height > dmp->dm_width) {
@@ -1680,7 +1494,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	maxSpan = 0.0;
 	numShot = rtgljob.numJobs = 0;
 
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* look for new trees in need of ray tracing */
@@ -1731,7 +1545,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	if (new) {
 	    /* will ray trace new tree*/
 	    if (rt_gettree(rtip, currTree) < 0)
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 
 	    /* add new tree to list of displayed */
 	    numNew++;
@@ -1777,7 +1591,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 		if (new) {
 		    /* will ray trace new tree*/
 		    if (rt_gettree(rtip, currTree) < 0)
-			return TCL_ERROR;
+			return BRLCAD_ERROR;
 
 		    /* add new tree to list of displayed */
 		    numNew++;
@@ -1901,12 +1715,12 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 
     rtgljob.calls++;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+rtgl_draw(dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1916,12 +1730,12 @@ rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_
 	}
     } else {
 	if (!data) {
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    vp = callback_function(data);
 	}
     }
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1930,7 +1744,7 @@ rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_
  * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
-rtgl_normal(struct dm *dmp)
+rtgl_normal(dm *dmp)
 {
 
     if (dmp->dm_debugLevel)
@@ -1950,7 +1764,7 @@ rtgl_normal(struct dm *dmp)
 	    glDisable(GL_LIGHTING);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1959,10 +1773,10 @@ rtgl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-rtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+rtgl_drawString2D(dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     if (!dmp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_drawString2D()\n");
@@ -1975,12 +1789,12 @@ rtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
     glListBase(((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
     glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
+rtgl_drawLine2D(dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
 
     return drawLine2D(dmp, x1, y1, x2, y2, "rtgl_drawLine2D()\n");
@@ -1988,81 +1802,84 @@ rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 
 
 HIDDEN int
-rtgl_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
+rtgl_drawLine3D(dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
     if (!dmp)
-	return TCL_ERROR;
-    return TCL_OK;
+	return BRLCAD_ERROR;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
+rtgl_drawLines3D(dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
-	return TCL_ERROR;
-    return TCL_OK;
+	return BRLCAD_ERROR;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+rtgl_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
 {
     if (dmp->dm_debugLevel) {
 	bu_log("rtgl_drawPoint2D():\n");
 	bu_log("\tdmp: %lu\tx - %lf\ty - %lf\n", (unsigned long)dmp, x, y);
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_drawPoint3D(struct dm *dmp, point_t point)
+rtgl_drawPoint3D(dm *dmp, point_t point)
 {
     if (!dmp || !point)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp->dm_debugLevel) {
 	bu_log("rtgl_drawPoint3D():\n");
 	bu_log("\tdmp: %llu\tpt - %lf %lf %lf\n", (unsigned long long)dmp, V3ARGS(point));
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex3dv(point);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
+rtgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
 {
     register int i;
 
     if (!dmp || npoints < 0 || !points)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp->dm_debugLevel) {
 	bu_log("rtgl_drawPoint3D():\n");
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     for (i = 0; i < npoints; ++i)
 	glVertex3dv(points[i]);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+rtgl_setFGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setFGColor()\n");
@@ -2108,12 +1925,12 @@ rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+rtgl_setBGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setBGColor()\n");
@@ -2131,7 +1948,7 @@ rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 			    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	    bu_log("rtgl_setBGColor: Couldn't make context current\n");
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -2143,12 +1960,12 @@ rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_setLineAttr(struct dm *dmp, int width, int style)
+rtgl_setLineAttr(dm *dmp, int width, int style)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setLineAttr()\n");
@@ -2163,22 +1980,22 @@ rtgl_setLineAttr(struct dm *dmp, int width, int style)
     else
 	glDisable(GL_LINE_STIPPLE);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 /* ARGSUSED */
 HIDDEN int
-rtgl_debug(struct dm *dmp, int lvl)
+rtgl_debug(dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_setWinBounds(struct dm *dmp, fastf_t *w)
+rtgl_setWinBounds(dm *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setWinBounds()\n");
@@ -2195,7 +2012,7 @@ rtgl_setWinBounds(struct dm *dmp, fastf_t *w)
     else
 	dmp->dm_bound = GED_MAX / dmp->dm_clipmax[2];
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2204,7 +2021,7 @@ rtgl_setWinBounds(struct dm *dmp, fastf_t *w)
  * OpenGL
  */
 HIDDEN XVisualInfo *
-rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
+rtgl_choose_visual(dm *dmp, Tk_Window tkwin)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
 #define NGOOD 256
@@ -2355,7 +2172,7 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
  * also change font size if necessary
  */
 HIDDEN int
-rtgl_configureWin_guts(struct dm *dmp, int force)
+rtgl_configureWin_guts(dm *dmp, int force)
 {
     GLint mm;
     XWindowAttributes xwa;
@@ -2368,7 +2185,7 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_configureWin_guts: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     XGetWindowAttributes(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -2378,7 +2195,7 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
     if (!force &&
 	dmp->dm_height == xwa.height &&
 	dmp->dm_width == xwa.width)
-	return TCL_OK;
+	return BRLCAD_OK;
 
     dmp->dm_height = xwa.height;
     dmp->dm_width = xwa.width;
@@ -2419,7 +2236,7 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
 		 XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				FONTBACK)) == NULL) {
 		bu_log("rtgl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 	glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
@@ -2487,19 +2304,19 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_configureWin(struct dm *dmp, int force)
+rtgl_configureWin(dm *dmp, int force)
 {
     return rtgl_configureWin_guts(dmp, force);
 }
 
 
 HIDDEN int
-rtgl_setLight(struct dm *dmp, int lighting_on)
+rtgl_setLight(dm *dmp, int lighting_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setLight()\n");
@@ -2511,7 +2328,7 @@ rtgl_setLight(struct dm *dmp, int lighting_on)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_setLight: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!dmp->dm_light) {
@@ -2531,12 +2348,12 @@ rtgl_setLight(struct dm *dmp, int lighting_on)
 	glEnable(GL_LIGHT0);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_setTransparency(struct dm *dmp,
+rtgl_setTransparency(dm *dmp,
 		     int transparency_on)
 {
     if (dmp->dm_debugLevel)
@@ -2549,7 +2366,7 @@ rtgl_setTransparency(struct dm *dmp,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_setTransparency: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (transparency_on) {
@@ -2561,12 +2378,12 @@ rtgl_setTransparency(struct dm *dmp,
 	glDisable(GL_BLEND);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_setDepthMask(struct dm *dmp,
+rtgl_setDepthMask(dm *dmp,
 		  int enable) {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setDepthMask()\n");
@@ -2577,7 +2394,7 @@ rtgl_setDepthMask(struct dm *dmp,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_setDepthMask: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (enable)
@@ -2585,12 +2402,12 @@ rtgl_setDepthMask(struct dm *dmp,
     else
 	glDepthMask(GL_FALSE);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 HIDDEN int
-rtgl_setZBuffer(struct dm *dmp, int zbuffer_on)
+rtgl_setZBuffer(dm *dmp, int zbuffer_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setZBuffer:\n");
@@ -2602,7 +2419,7 @@ rtgl_setZBuffer(struct dm *dmp, int zbuffer_on)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_setZBuffer: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf == 0) {
@@ -2617,12 +2434,12 @@ rtgl_setZBuffer(struct dm *dmp, int zbuffer_on)
 	glDisable(GL_DEPTH_TEST);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 int
-rtgl_beginDList(struct dm *dmp, unsigned int list)
+rtgl_beginDList(dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_beginDList()\n");
@@ -2631,34 +2448,35 @@ rtgl_beginDList(struct dm *dmp, unsigned int list)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_beginDList: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     glNewList((GLuint)list, GL_COMPILE);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 int
-rtgl_endDList(struct dm *dmp)
+rtgl_endDList(dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_endDList()\n");
 
     glEndList();
-    return TCL_OK;
-}
-
-
-void
-rtgl_drawDList(struct dm *dmp, unsigned int list)
-{
-    glCallList((GLuint)list);
+    return BRLCAD_OK;
 }
 
 
 int
-rtgl_freeDLists(struct dm *dmp, unsigned int list, int range)
+rtgl_drawDList(dm *dmp, unsigned int list)
+{
+    glCallList((GLuint)list);
+    return BRLCAD_OK;
+}
+
+
+int
+rtgl_freeDLists(dm *dmp, unsigned int list, int range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_freeDLists()\n");
@@ -2667,16 +2485,16 @@ rtgl_freeDLists(struct dm *dmp, unsigned int list, int range)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_freeDLists: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     glDeleteLists((GLuint)list, (GLsizei)range);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 int
-rtgl_genDLists(struct dm *dmp, size_t range)
+rtgl_genDLists(dm *dmp, size_t range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_freeDLists()\n");
@@ -2685,11 +2503,116 @@ rtgl_genDLists(struct dm *dmp, size_t range)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_freeDLists: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return glGenLists((GLsizei)range);
 }
+
+int
+rtgl_openFb(struct dm_internal *dmp)
+{
+    struct fb_platform_specific *fb_ps;
+    struct ogl_fb_info *ofb_ps;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct ogl_vars *privars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
+
+    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
+    ofb_ps = (struct ogl_fb_info *)fb_ps->data;
+    ofb_ps->dpy = pubvars->dpy;
+    ofb_ps->win = pubvars->win;
+    ofb_ps->cmap = pubvars->cmap;
+    ofb_ps->vip = pubvars->vip;
+    ofb_ps->glxc = privars->glxc;
+    ofb_ps->double_buffer = mvars->doublebuffer;
+
+    ofb_ps->soft_cmap = 0;
+    dmp->fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    fb_put_platform_specific(fb_ps);
+    return 0;
+}
+
+dm dm_rtgl = {
+    rtgl_close,
+    rtgl_drawBegin,
+    rtgl_drawEnd,
+    rtgl_normal,
+    rtgl_loadMatrix,
+    null_loadPMatrix,
+    rtgl_drawString2D,
+    rtgl_drawLine2D,
+    rtgl_drawLine3D,
+    rtgl_drawLines3D,
+    rtgl_drawPoint2D,
+    rtgl_drawPoint3D,
+    rtgl_drawPoints3D,
+    rtgl_drawVList,
+    rtgl_drawVList,
+    rtgl_draw,
+    rtgl_setFGColor,
+    rtgl_setBGColor,
+    rtgl_setLineAttr,
+    rtgl_configureWin,
+    rtgl_setWinBounds,
+    rtgl_setLight,
+    rtgl_setTransparency,
+    rtgl_setDepthMask,
+    rtgl_setZBuffer,
+    rtgl_debug,
+    rtgl_beginDList,
+    rtgl_endDList,
+    rtgl_drawDList,
+    rtgl_freeDLists,
+    rtgl_genDLists,
+    NULL,
+    null_getDisplayImage,	/* display to image function */
+    null_reshape,
+    null_makeCurrent,
+    rtgl_openFb,
+    NULL,
+    NULL,
+    0,
+    1,				/* has displaylist */
+    0,                          /* no stereo by default */
+    1.0,			/* zoom-in limit, */
+    1,				/* bound flag */
+    "rtgl",
+    "X Windows with OpenGL graphics",
+    DM_TYPE_RTGL,
+    1,
+    0,
+    0,
+    0, /* bytes per pixel */
+    0, /* bits per channel */
+    0,
+    0,
+    1.0, /* aspect ratio */
+    0,
+    {0, 0},
+    NULL,
+    NULL,
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
+    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* fg color */
+    {GED_MIN, GED_MIN, GED_MIN}, /* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX}, /* clipmax */
+    0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
+    0,				/* no perspective */
+    0,				/* no lighting */
+    0,				/* no transparency */
+    1,				/* depth buffer is writable */
+    1,				/* zbuffer */
+    0,				/* no zclipping */
+    0,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
+    BU_STRUCTPARSE_NULL,
+    FB_NULL,
+    0				/* Tcl interpreter */
+};
 
 
 #endif /* DM_RTGL */

@@ -1,7 +1,7 @@
 /*                    B O O L E A N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,48 +52,62 @@ bu_str_true(const char *str)
 	return 0;
     }
 
-    /* starts with 'n', [nN]* looks like 'no' */
-    if (newstr[0] == 'n' || newstr[0] == 'N') {
+    /* case-insensitive "no" */
+    if (BU_STR_EQUIV(newstr, "n") || BU_STR_EQUIV(newstr, "no")) {
 	bu_vls_free(&vls);
 	return 0;
     }
 
-    /* exactly "0" */
-    if (BU_STR_EQUAL(newstr, "0")) {
+    /* case-insensitive "false" */
+    if (BU_STR_EQUIV(newstr, "false")) {
 	bu_vls_free(&vls);
 	return 0;
     }
 
-    /* variant of "0" (e.g., 000) */
+    /* case-insensitive "off" */
+    if (BU_STR_EQUIV(newstr, "off")) {
+	bu_vls_free(&vls);
+	return 0;
+    }
+
+    /* any variant of "0" (e.g., 000) */
+    errno = 0;
     val = strtol(newstr, &endptr, 10);
-    if (val == 0 && errno != EINVAL && *endptr == '\0') {
+    if (val == 0 && !errno && *endptr == '\0') {
 	bu_vls_free(&vls);
 	return 0;
     }
 
-    /* exactly "(null)" */
-    if (BU_STR_EQUAL(newstr, "(null)")) {
+    /* case-insensitive "(null)" */
+    if (BU_STR_EQUIV(newstr, "(null)")) {
 	bu_vls_free(&vls);
 	return 0;
     }
 
     /* true value from here on out */
 
-    /* starts with 'y', [yY]* looks like 'yes' */
-    if (newstr[0] == 'y' || newstr[0] == 'Y') {
+    /* case-insensitive "yes" */
+    if (BU_STR_EQUIV(newstr, "y") || BU_STR_EQUIV(newstr, "yes")) {
 	bu_vls_free(&vls);
 	return 1;
     }
 
-    /* exactly "1" */
-    if (BU_STR_EQUAL(newstr, "1")) {
+    /* case-insensitive "true" */
+    if (BU_STR_EQUIV(newstr, "true")) {
+	bu_vls_free(&vls);
+	return 1;
+    }
+
+    /* case-insensitive "on" */
+    if (BU_STR_EQUIV(newstr, "on")) {
 	bu_vls_free(&vls);
 	return 1;
     }
 
     /* variant of "1" (e.g., 001) */
+    errno = 0;
     val = strtol(newstr, &endptr, 10);
-    if (val == 1 && errno != EINVAL && *endptr == '\0') {
+    if (val == 1 && !errno && *endptr == '\0') {
 	bu_vls_free(&vls);
 	return 1;
     }
@@ -103,9 +117,7 @@ bu_str_true(const char *str)
     bu_vls_free(&vls);
 
     /* anything else */
-    if ((int)val > 1)
-	return (int)val;
-    return 2;
+    return (int)val;
 }
 
 

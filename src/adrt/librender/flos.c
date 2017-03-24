@@ -1,7 +1,7 @@
 /*                        F L O S . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,17 +21,13 @@
  *
  */
 
-#ifndef TIE_PRECISION
-# define TIE_PRECISION 0
-#endif
-
 #include "adrt_struct.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu/malloc.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 
 
 struct render_flos_s {
@@ -53,7 +49,7 @@ render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 
     rd = (struct render_flos_s *)render->data;
 
-    if (tie_work(tie, ray, &id, render_hit, NULL) != NULL) {
+    if (TIE_WORK(tie, ray, &id, render_hit, NULL) != NULL) {
 	VSET(*pixel, 0.0, 0.5, 0.0);
     } else
 	return;
@@ -67,7 +63,7 @@ render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
     VSUB2(ray->dir, id.pos, rd->frag_pos);
     VUNITIZE(ray->dir);
 
-    if (tie_work(tie, ray, &tid, render_hit, NULL)) {
+    if (TIE_WORK(tie, ray, &tid, render_hit, NULL)) {
 	if (fabs (id.pos[0] - tid.pos[0]) < TIE_PREC
 	    && fabs (id.pos[1] - tid.pos[1]) < TIE_PREC
 	    && fabs (id.pos[2] - tid.pos[2]) < TIE_PREC)
@@ -86,7 +82,7 @@ render_flos_init(render_t *render, const char *frag_pos)
     struct render_flos_s *d;
     double scan[3];
 
-    if(frag_pos == NULL)
+    if (frag_pos == NULL)
 	return -1;
 
     render->work = render_flos_work;

@@ -1,7 +1,7 @@
 /*                         M O D E L 2 V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "./ged_private.h"
 
@@ -50,7 +49,7 @@ ged_model2view(struct ged *gedp, int argc, const char *argv[])
 
     /* get the model2view matrix */
     if (argc == 1) {
-	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_model2view);
+	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_model2view, 1);
 	return GED_OK;
     }
 
@@ -64,7 +63,7 @@ ged_model2view(struct ged *gedp, int argc, const char *argv[])
     }
 
     MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
-    bn_encode_vect(gedp->ged_result_str, view_pt);
+    bn_encode_vect(gedp->ged_result_str, view_pt, 1);
 
     return GED_OK;
 }

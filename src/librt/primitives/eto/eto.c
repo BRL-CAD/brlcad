@@ -1,7 +1,7 @@
 /*                           E T O . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2014 United States Government as represented by
+ * Copyright (c) 1992-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,16 +28,15 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "../../librt_private.h"
@@ -151,6 +150,45 @@ const struct bu_structparse rt_eto_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_eto_specific {
+    cl_double eto_V[3];        /* Vector to center of eto */
+    cl_double eto_r;       /* radius of revolution */
+    cl_double eto_rc;      /* semi-major axis of ellipse */
+    cl_double eto_rd;      /* semi-minor axis of ellipse */
+    cl_double eto_R[16];       /* Rot(vect) */
+    cl_double eto_invR[16];    /* invRot(vect') */
+    cl_double eu, ev, fu, fv;
+};
+
+size_t
+clt_eto_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct eto_specific *eto =
+        (struct eto_specific *)stp->st_specific;
+    struct clt_eto_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_eto_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->eto_V, eto->eto_V);
+    MAT_COPY(args->eto_R, eto->eto_R);
+    MAT_COPY(args->eto_invR, eto->eto_invR);
+    args->eto_r = eto->eto_r;
+    args->eto_rc = eto->eto_rc;
+    args->eto_rd = eto->eto_rd;
+    args->eu = eto->eu;
+    args->ev = eto->ev;
+    args->fu = eto->fu;
+    args->fv = eto->fv;
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
+
 /**
  * Calculate bounding RPP of elliptical torus
  */
@@ -236,7 +274,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* Solid is OK, compute constant terms now */
     BU_GET(eto, struct eto_specific);
-    stp->st_specific = (genptr_t)eto;
+    stp->st_specific = (void *)eto;
 
     eto->eto_r = tip->eto_r;
     eto->eto_rd = tip->eto_rd;
@@ -1404,7 +1442,7 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 11);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 11);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1534,7 +1572,7 @@ rt_eto_ifree(struct rt_db_internal *ip)
     RT_ETO_CK_MAGIC(tip);
 
     bu_free((char *)tip, "eto ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

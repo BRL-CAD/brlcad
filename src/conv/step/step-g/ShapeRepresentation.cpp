@@ -1,7 +1,7 @@
 /*                 ShapeRepresentation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,9 +68,11 @@ ShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Representation::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading baseclass Representation." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

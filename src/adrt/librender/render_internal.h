@@ -1,7 +1,7 @@
 /*               R E N D E R _ I N T E R N A L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 #ifndef ADRT_LIBRENDER_RENDER_INTERNAL_H
 #define ADRT_LIBRENDER_RENDER_INTERNAL_H
 
-#include "tie.h"
+#include "rt/tie.h"
 
 #ifndef RENDER_EXPORT
 #  if defined(RENDER_DLL_EXPORTS) && defined(RENDER_DLL_IMPORTS)
@@ -55,8 +55,6 @@
 
 #define RENDER_MAX_DEPTH	24
 
-
-#define RENDER_SHADER(name) RENDER_EXPORT extern int render_##name##_init(render_t *, const char *)
 
 struct render_s;
 typedef void render_work_t(struct render_s *render, struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel);

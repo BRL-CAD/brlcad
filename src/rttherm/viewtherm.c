@@ -1,7 +1,7 @@
 /*                     V I E W T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2014 United States Government as represented by
+ * Copyright (c) 1996-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,20 +44,22 @@
 #endif
 
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/parse.h"
+#include "bu/parallel.h"
+#include "bu/malloc.h"
 #include "spectrum.h"
-#include "shadefuncs.h"
-#include "shadework.h"
-#include "plot3.h"
-#include "light.h"
+#include "optical/shadefuncs.h"
+#include "optical/shadework.h"
+#include "bn/plot3.h"
+#include "optical/light.h"
 
 /* private */
 #include "../rt/rtuif.h"
 #include "../rt/ext.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 extern int viewshade(struct application *app,
@@ -103,7 +105,7 @@ usage(const char *argv0)
 }
 
 
-extern FBIO *fbp;		/* Framebuffer handle */
+extern fb *fbp;		/* Framebuffer handle */
 
 extern int max_bounces;		/* from refract.c */
 extern int max_ireflect;	/* from refract.c */
@@ -241,7 +243,7 @@ view_pixel(struct application *app)
 	    bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
     }
 #ifdef MSWISS
-    if (fbp != FBIO_NULL) {
+    if (fbp != FB_NULL) {
 	/* MSWISS -- real-time multi-spectral case */
 	unsigned char obuf[4096];
 	int i;
@@ -453,7 +455,7 @@ hit_nothing(struct application *app)
 
 	bn_tabdata_copy(app->a_spectrum, u.sw.msw_color);
 	app->a_user = 1;		/* Signal view_pixel:  HIT */
-	app->a_uptr = (genptr_t)&env_region;
+	app->a_uptr = (void *)&env_region;
 	return 1;
     }
 
@@ -485,7 +487,7 @@ colorview(struct application *app, struct partition *PartHeadp, struct seg *UNUS
 	return 0;
     }
     hitp = pp->pt_inhit;
-    app->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
+    app->a_uptr = (void *)pp->pt_regionp;	/* note which region was shaded */
 
     if (rdebug&RDEBUG_HITS) {
 	bu_log("colorview: lvl=%d coloring %s\n",

@@ -1,7 +1,7 @@
 /*                         P U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,28 +28,27 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 
-#include "bn.h"
 #include "bu/cmd.h"
+#include "bu/getopt.h"
+#include "bn.h"
 
 #include "./ged_private.h"
-
 
 
 void
 pull_comb(struct db_i *dbip,
 	  struct directory *dp,
-	  genptr_t mp);
+	  void *mp);
 
 
 /* This restores the matrix transformation at a combination by taking leaf matrix transformations, inverting
  * and storing the changes at the combinations.
  */
 static void
-pull_comb_mat(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t mp, genptr_t UNUSED(usr_ptr2),
-	      genptr_t UNUSED(usr_ptr3), genptr_t UNUSED(usr_ptr4))
+pull_comb_mat(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *mp, void *UNUSED(usr_ptr2),
+	      void *UNUSED(usr_ptr3), void *UNUSED(usr_ptr4))
 {
     struct directory *dp;
     mat_t inv_mat;
@@ -85,7 +84,7 @@ pull_comb_mat(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
 void
 pull_comb(struct db_i *dbip,
 	  struct directory *dp,
-	  genptr_t mp)
+	  void *mp)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -114,7 +113,7 @@ pull_comb(struct db_i *dbip,
 
     if (comb->tree) {
 	db_tree_funcleaf(dbip, comb, comb->tree, pull_comb_mat,
-			 &m, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+			 &m, (void *)NULL, (void *)NULL, (void *)NULL);
 
 	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	    bu_log("Cannot write modified combination (%s) to database\n", dp->d_namep);
@@ -125,7 +124,7 @@ pull_comb(struct db_i *dbip,
 
 
 /* routine takes the maximum and minimum points from the AABB and determines the translation matrix
- * which moves the centrepoint to the origin and moves the primitive by the its inverse
+ * which moves the centrepoint to the origin and moves the primitive by its inverse
  * before pulling the translation.
  */
 void
@@ -139,7 +138,7 @@ translate(matp_t matrix, mat_t tm, point_t min, point_t max)
      * following this algorithm: cen[i] = bbx_min[i] + bbx_max[i]) / 2.0
      */
     VADD2(c_pt, max, min);
-    VSCALE(c_pt, c_pt, 1/2);
+    VSCALE(c_pt, c_pt, 0.5);
 
     /* translates the centrepoint to the origin. and computes the inverse of this transformation which will be applied to the primitive */
     VREVERSE(t_vec, c_pt);
@@ -162,30 +161,27 @@ translate(matp_t matrix, mat_t tm, point_t min, point_t max)
  *        would be needed for further purposes.
  */
 static void
-pull_leaf(struct db_i *dbip, struct directory *dp, genptr_t mp)
+pull_leaf(struct db_i *dbip, struct directory *dp, void *mp)
 {
     struct rt_db_internal intern;
     struct bn_tol tol;
-    struct resource *resp;
     point_t min;             /* minimum point of bbox */
     point_t max;             /* maximum point of bbox */
     matp_t mat = (matp_t)mp; /* current transformation matrix */
     mat_t matrix, invXform;
 
     BN_TOL_INIT(&tol); /* initializes the tolerance */
-    resp = &rt_uniresource;
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     if (mat == NULL) {
 	mat = (matp_t)bu_malloc(sizeof(mat_t), "cur_mat");
-        MAT_IDN(mat);
+	MAT_IDN(mat);
     }
 
     if (!(dp->d_flags & RT_DIR_SOLID))
-        return;
+	return;
     if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
-        bu_vls_printf((struct bu_vls *)mp, "Database read error, aborting\n");
-        return;
+	bu_vls_printf((struct bu_vls *)mp, "Database read error, aborting\n");
+	return;
     }
 
     MAT_IDN(mat);
@@ -202,7 +198,7 @@ pull_leaf(struct db_i *dbip, struct directory *dp, genptr_t mp)
     translate(mat,matrix, min, max);
     bn_mat_inverse(invXform, matrix);/* computes the inverse of transformation matrix. */
 
-    (intern.idb_meth)->ft_xform(&intern, invXform, &intern, 0, dbip, resp);/* restores the primitive */
+    (intern.idb_meth)->ft_xform(&intern, invXform, &intern, 0, dbip, &rt_uniresource);/* restores the primitive */
 
     return;
 }
@@ -212,13 +208,9 @@ int
 ged_pull(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    struct resource *resp;
     mat_t mat;
     int c;
     static const char *usage = "object";
-
-    resp = &rt_uniresource;
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -268,7 +260,7 @@ ged_pull(struct ged *gedp, int argc, const char *argv[])
      * right to the the head of the tree pulling objects.
      * All new changes are immediately written to database
      */
-    db_functree(gedp->ged_wdbp->dbip, dp, pull_comb, pull_leaf, resp, &mat);
+    db_functree(gedp->ged_wdbp->dbip, dp, pull_comb, pull_leaf, &rt_uniresource, &mat);
 
    return  GED_OK;
 }

@@ -1,7 +1,7 @@
 /*                          B O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,16 +20,21 @@
 
 #include "common.h"
 
+/* inteface header */
+#include "bu/exit.h"
+
+/* system headers */
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
 #include "bio.h"
 
+/* implementation headers */
 #include "bu/debug.h"
 #include "bu/file.h"
-#include "bu/log.h"
 #include "bu/parallel.h"
+
 
 /**
  * list of callbacks to call during bu_bomb.
@@ -41,7 +46,7 @@ struct bu_hook_list bomb_hook_list = {
 	&bomb_hook_list.l
     },
     NULL,
-    GENPTR_NULL
+    ((void *)0)
 };
 
 
@@ -81,7 +86,7 @@ bu_bomb_failsafe_init(void)
 
 
 void
-bu_bomb_add_hook(bu_hook_t func, genptr_t clientdata)
+bu_bomb_add_hook(bu_hook_t func, void *clientdata)
 {
     bu_hook_add(&bomb_hook_list, func, clientdata);
 }
@@ -107,18 +112,13 @@ bu_bomb(const char *str)
 
     /* MGED would like to be able to additional logging, do callbacks. */
     if (BU_LIST_NON_EMPTY(&bomb_hook_list.l)) {
-	bu_hook_call(&bomb_hook_list, (genptr_t)str);
+	bu_hook_call(&bomb_hook_list, (void *)str);
     }
 
-    if (bu_setjmp_valid) {
+    if (bu_setjmp_valid[bu_parallel_id()]) {
 	/* Application is catching fatal errors */
-	if (bu_is_parallel()) {
-	    fprintf(stderr, "bu_bomb(): in parallel mode, could not longjmp up to application handler\n");
-	} else {
-	    /* Application is non-parallel, so this is safe */
-	    longjmp(bu_jmpbuf, 1);
-	    /* NOTREACHED */
-	}
+	longjmp(bu_jmpbuf[bu_parallel_id()], 1);
+	/* NOTREACHED */
     }
 
 #ifdef HAVE_UNISTD_H
@@ -172,9 +172,6 @@ bu_bomb(const char *str)
     }
 #endif
 
-    /* If in parallel mode, try to signal the leader to die. */
-    bu_kill_parallel();
-
     /* try to save a core dump */
     if (UNLIKELY(bu_debug & BU_DEBUG_COREDUMP)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -207,9 +204,10 @@ bu_exit(int status, const char *fmt, ...)
 	struct bu_vls message = BU_VLS_INIT_ZERO;
 
 	va_start(ap, fmt);
-
 	bu_vls_vprintf(&message, fmt, ap);
+	va_end(ap);
 
+	/* don't dump a backtrace, etc. */
 	if (!BU_SETJUMP) {
 	    bu_bomb(bu_vls_addr(&message));
 	}

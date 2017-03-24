@@ -1,7 +1,7 @@
 /*                      D B _ A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,12 +27,11 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include "bio.h"
 
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 
@@ -189,7 +188,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
     if (dbip->dbi_read_only)
 	return -1;
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 4);
+    BU_ASSERT(dbip->dbi_version == 4);
 
     if (dp->d_len < start)
 	return -1;
@@ -217,11 +216,11 @@ db_alloc_directory_block(struct resource *resp)
     RT_CK_RESOURCE(resp);
     BU_CK_PTBL(&resp->re_directory_blocks);
 
-    BU_ASSERT_PTR(resp->re_directory_hd, ==, NULL);
+    BU_ASSERT(resp->re_directory_hd == NULL);
 
     /* Get a BIG block */
     bytes = (size_t)bu_malloc_len_roundup(1024*sizeof(struct directory));
-    dp = (struct directory *)bu_calloc(1, bytes, "re_directory_blocks from db_alloc_directory_block() " BU_FLSTR);
+    dp = (struct directory *)bu_calloc(1, bytes, "re_directory_blocks from db_alloc_directory_block() " CPP_FILELINE);
 
     /* Record storage for later */
     bu_ptbl_ins(&resp->re_directory_blocks, (long *)dp);

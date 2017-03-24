@@ -22,8 +22,6 @@
  *           Bell Labs Innovations for Lucent Technologies
  *           mmclennan@lucent.com
  *           http://www.tcltk.com/itcl
- *
- *     RCS:  $Id$
  * ========================================================================
  *           Copyright (c) 1993-1998  Lucent Technologies, Inc.
  * ------------------------------------------------------------------------
@@ -89,7 +87,7 @@ Itcl_CreateClass(interp, path, info, rPtr)
      *  We'll just replace the namespace data below with the
      *  proper class data.
      */
-    classNs = Tcl_FindNamespace(interp, (CONST84 char *)path,
+    classNs = Tcl_FindNamespace(interp, path,
 	    (Tcl_Namespace*)NULL, /* flags */ 0);
 
     if (classNs != NULL && Itcl_IsClassNamespace(classNs)) {
@@ -105,7 +103,7 @@ Itcl_CreateClass(interp, path, info, rPtr)
      *  usual Tcl commands from being clobbered when a programmer
      *  makes a bogus call like "class info".
      */
-    cmd = Tcl_FindCommand(interp, (CONST84 char *)path,
+    cmd = Tcl_FindCommand(interp, path,
 	    (Tcl_Namespace*)NULL, /* flags */ TCL_NAMESPACE_ONLY);
 
     if (cmd != NULL && !Itcl_IsStub(cmd)) {
@@ -181,7 +179,7 @@ Itcl_CreateClass(interp, path, info, rPtr)
     Itcl_PreserveData((ClientData)cdPtr);
 
     if (classNs == NULL) {
-        classNs = Tcl_CreateNamespace(interp, (CONST84 char *)path,
+        classNs = Tcl_CreateNamespace(interp, path,
             (ClientData)cdPtr, ItclDestroyClassNamesp);
     }
     else {
@@ -735,7 +733,7 @@ Itcl_FindClassNamespace(interp, path)
      *  see if it's the current namespace, and try the global
      *  namespace as well.
      */
-    classNs = Tcl_FindNamespace(interp, (CONST84 char *)path,
+    classNs = Tcl_FindNamespace(interp, path,
 	    (Tcl_Namespace*)NULL, /* flags */ 0);
 
     if ( !classNs && contextNs->parentPtr != NULL &&
@@ -938,7 +936,6 @@ Itcl_ClassCmdResolver(interp, name, context, flags, rPtr)
     Tcl_HashEntry *entry;
     ItclMemberFunc *mfunc;
     Command *cmdPtr;
-    int isCmdDeleted;
 
     /*
      *  If the command is a member function, and if it is
@@ -986,29 +983,7 @@ Itcl_ClassCmdResolver(interp, name, context, flags, rPtr)
      */
     cmdPtr = (Command*)mfunc->accessCmd;
     
-    /*
-     * The following #if is needed so itcl can be compiled with
-     * all versions of Tcl.  The integer "deleted" was renamed to
-     * "flags" in tcl8.4a2.  This #if is also found in itcl_ensemble.c .
-     * We're using a runtime check with itclCompatFlags to adjust for
-     * the behavior of this change, too.
-     *
-     */
-#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 4)
-#   define CMD_IS_DELETED 0x1  /* If someone ever changes this from tcl.h,
-				* we must change our logic here, too */
-	isCmdDeleted = (!cmdPtr ||
-		(itclCompatFlags & ITCL_COMPAT_USECMDFLAGS ?
-		(cmdPtr->deleted & CMD_IS_DELETED) :
-		cmdPtr->deleted));
-#else
-	isCmdDeleted = (!cmdPtr ||
-		(itclCompatFlags & ITCL_COMPAT_USECMDFLAGS ?
-		(cmdPtr->flags & CMD_IS_DELETED) :
-		cmdPtr->flags));
-#endif
-
-    if (isCmdDeleted) {
+    if (!cmdPtr || cmdPtr->flags & CMD_IS_DELETED) {
 	mfunc->accessCmd = NULL;
 
 	if ((flags & TCL_LEAVE_ERR_MSG) != 0) {
@@ -1073,10 +1048,9 @@ Itcl_ClassVarResolver(interp, name, context, flags, rPtr)
 
     /*
      *  See if this is a formal parameter in the current proc scope.
-     *  If so, that variable has precedence.  Look it up and return
-     *  it here.  This duplicates some of the functionality of
-     *  TclLookupVar, but we return it here (instead of returning
-     *  TCL_CONTINUE) to avoid looking it up again later.
+     *  If so, that variable has precedence, and we do not want to 
+     *  override Tcl's normal resolution of the local var.  We return
+     *  TCL_CONTINUE to let Tcl take control back.
      */
     if (varFramePtr && varFramePtr->isProcCallFrame
         && strstr(name,"::") == NULL) {
@@ -1099,8 +1073,7 @@ Itcl_ClassVarResolver(interp, name, context, flags, rPtr)
                     if ((name[0] == localName[0])
                             && (nameLen == localPtr->nameLength)
                             && (strcmp(name, localName) == 0)) {
-                        *rPtr = (Tcl_Var)localVarPtr;
-                        return TCL_OK;
+			return TCL_CONTINUE;
                     }
                 }
                 ItclNextLocal(localVarPtr);
@@ -1116,7 +1089,7 @@ Itcl_ClassVarResolver(interp, name, context, flags, rPtr)
         if (varFramePtr->varTablePtr != NULL) {
 	    *rPtr = (Tcl_Var) ItclVarHashFindVar(varFramePtr->varTablePtr, name);
 	    if (*rPtr) {
-                return TCL_OK;
+		return TCL_CONTINUE;
             }
         }
     }
@@ -1170,6 +1143,9 @@ Itcl_ClassVarResolver(interp, name, context, flags, rPtr)
         if (entry) {
             vlookup = (ItclVarLookup*)Tcl_GetHashValue(entry);
         }
+    }
+    if (vlookup->var.index >= contextObj->dataSize) {
+	return TCL_CONTINUE;
     }
     *rPtr = (Tcl_Var)contextObj->data[vlookup->var.index];
     return TCL_OK;
@@ -1683,7 +1659,7 @@ Itcl_GetCommonVar(interp, name, contextClass)
                  contextClass->namesp, /*isProcCallFrame*/ 0);
 
     if (result == TCL_OK) {
-        val = Tcl_GetVar2(interp, (CONST84 char *)name, (char*)NULL, 0);
+        val = Tcl_GetVar2(interp, name, (char*)NULL, 0);
         Tcl_PopCallFrame(interp);
     }
     return val;

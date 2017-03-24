@@ -1,7 +1,7 @@
 /*                         B U R S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,10 +28,17 @@
 #include <stdio.h>
 #include <signal.h>
 
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/str.h"
+#include "bu/exit.h"
+#include "bu/log.h"
+
 #include "./burst.h"
 #include "./trie.h"
 #include "./ascii.h"
 #include "./extern.h"
+
 
 #ifndef SIGCLD
 #  define SIGCLD SIGCHLD
@@ -97,14 +104,12 @@ setupSigs(void)
 		    (void) signal(i,  norml_sig);
 		}
 		break;
-	    case SIGCHLD :
-		break; /* leave SIGCLD alone */
+#ifdef SIGPIPE
 	    case SIGPIPE :
 		(void) signal(i, SIG_IGN);
 		break;
-	    case SIGQUIT :
-		break;
-	    case SIGTSTP :
+#endif
+	    default:
 		break;
 	}
     return;
@@ -116,14 +121,14 @@ setupSigs(void)
 
   Parse program command line.
 */
-
-static const char optstring[] = "bpPh?";
-
 static int
 parsArgv(int argc, char **argv)
 {
+    const char optstring[] = "bpPh?";
+
     int c;
-/* Parse options.						*/
+
+    /* Parse options.						*/
     while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    case 'b' :
@@ -214,12 +219,17 @@ main(int argc, char *argv[])
     assert(armorids.i_next == NULL);
     assert(critids.i_next == NULL);
 
-    if (! isatty(0) || ! tty)
+    if (! isatty(0) || ! tty) {
 	readBatchInput(stdin);
-    if (tty)
-	(void) HmHit(mainhmenu);
-    exitCleanly(EXIT_SUCCESS);
-
+    } else {
+#ifdef HAVE_TERMLIB
+	if (tty)
+	    (void) HmHit(mainhmenu);
+	exitCleanly(EXIT_SUCCESS);
+#else
+	bu_exit(EXIT_FAILURE, "Error: This version of burst was not compiled with interactive menu support.  To process a batch file, use the -b option.\n");
+#endif
+    }
     /* not reached */
     return EXIT_SUCCESS;
 }

@@ -64,7 +64,7 @@ void PrintEntity( STEPentity * ent ) {
     ent->ResetAttributes();    // start us walking at the top of the list
 
     STEPattribute * attr = ent->NextAttribute();
-    while( attr != 0 ) {
+    while ( attr != 0 ) {
         const AttrDescriptor * attrDesc = attr->aDesc;
         cout << "     " << attrDesc->Name() << "[" << attrDesc->TypeName() << "]\n";
         attr = ent->NextAttribute();
@@ -117,7 +117,7 @@ int main() {
     // "Loop" through the schema, building one of each entity type.
 
     const EntityDescriptor * ent;  // needs to be declared const...
-    for( int i = 0; i < num_ents; i++ ) {
+    for ( int i = 0; i < num_ents; i++ ) {
         ent = registry->NextEntity();
 
         // Build object, using its name, through the registry

@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file search.h
- *
+/** @addtogroup db_search
+ * @brief
  * Functionality for searching .g files
  */
+/** @{ */
+/** @file include/rt/search.h */
 
 #ifndef RT_SEARCH_H
 #define RT_SEARCH_H
@@ -34,70 +34,124 @@
 
 #include "rt/defines.h"
 
+__BEGIN_DECLS
+
 /**
- * Programmatic interface to the find-command style search functionality
- * available in librt for databases.  These functions search the
- * database using a supplied list of filter criteria and return either
- * db_full_path instances or directory pointers (depending on the function).
- * Both types of returns use a bu_ptbl container to hold the set of results.
+ * @brief Search for objects in a geometry database using filters
  *
- * Design notes:
+ * The db_search function is a programmatic find-style interface that
+ * lets you search for objects in a geometry database.  This function
+ * searches the database using a supplied list of filter criteria.
  *
- * * As long as struct db_i retains its pointer back to its parent rt_wdb
- *   structure, and dbip is a parameter in rt_wdb, only one of the two is
- *   needed as a parameter and either will work.  Probably go with rt_wdb,
- *   since it isn't tagged as private within the data structure definition,
- *   but on the other hand some ways db_i would be preferable since it
- *   would allow the search functions to break out cleanly into a
- *   hypothetical libgio/libdb that is separate from the raytracing.
- *   Unfortunately, the need to get to the internal form of some of the
- *   primitives means we do need rt_wdb available for now.  If the ways
- *   search currently is accessing rt_wdb could be avoided with a future
- *   improvement/redesign, then db_i and using the private link to rt_wdb
- *   is justified.  Need to discuss before this API is finalized.
+ * The function returns a count of objects matching the filter
+ * criteria and can provide the resulting matches in binary format as
+ * either db_full_path or directory objects depending on the flags
+ * (i.e., depending on whether this is a flat or hierarchical search).
  *
- * * Plan strings are the most intuitive way for humans to spell out a search
- *   pattern - db_search_formplan becomes a behind-the-scenes function that
- *   the user then doesn't have to worry about.  Only counterargument would
- *   be re-using plans already built from a string, and the slight overhead
- *   of rebuilding the plan from a string for repeated search calls isn't
- *   sufficient justification for the added API complexity without hard
- *   evidence that complexity is needed.
+ * There are a LOT of filter possibilities.  See the search(n) manual
+ * page for details.
  *
- * * Offer simple function calls for the common cases of one path and an
- *   array of paths, and for both input cases support returning either
- *   a db_full_path set or a unique directory pointer set via table.  This
- *   should cover the most common programmatic situations, while still
- *   allowing commands enough flexibility to do what they need to (see,
- *   for example, combining results from search sets (multiple arrays
- *   of paths) in libged's search result consolidation.)
+ * @param[out] results is a bu_ptbl holding either db_full_path or
+ * directory pointers.
  *
- * * Need to add a plan option for dealing with hidden geometry during the search,
- *   maybe -nohide or something like that...  The traversal by default shouldn't
- *   traverse down anything hidden, but we should be able to override that at user request.
+ * @param flags is a bit field for setting various search options.
  *
- * WARNING:  THESE FUNCTIONS ARE STILL IN DEVELOPMENT - IT IS NOT YET
- * ASSUMED THAT THE SEARCH API IS IN ITS FINAL FORM - DO NOT DEPEND ON IT
- * REMAINING THE SAME UNTIL THIS WARNING IS REMOVED
+ * @param filter is a string defining search filters to be used.
+ *
+ * @param path_c is the count of directory paths to be searched.
+ *
+ * @param path_v is one or more directory paths to be searched.  If
+ * path_v itself is NULL, all top-level objects are searched
+ *
+ * @param dbip The database instance pointer corresponding to the
+ * current geometry database.
+ *
+ * @return Negative return values indicate a problem with the search,
+ * and non-negative values indicate a successful search.  Non-negative
+ * values correspond with the number of objects found.
+ *
+ * @retval -2 Return code when db_search is called with a NULL dbip.
+ * @retval -1 Return code when the plan search string is invalid.
+ * @retval 0  Return code when the search completed successfully but no matches were found.
+ * @retval >0 Return code when the search completed successfully and matched one or more objects.
+ *
+ * The following example assumes a database instance pointer (dbip) is
+ * available and ready to use.
+ *
+ @code
+  size_t i = 0;
+  struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+  const char *plan = "-name *.s -or -below -type region";
+  int matches = db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET , plan, 0, NULL, dbip);
+  for (i = 0; matches > 0 && i < BU_PTBL_LEN(&results); i++) {
+      char *path_str = db_path_to_string((struct db_full_path *)BU_PTBL_GET(&results, i));
+      bu_log("%s\n", path_str);
+      bu_free(path_str, "free db_fullpath_to_string allocation");
+  }
+  db_search_free(&results);
+ @endcode
+ *
+ * Note:
+ * Be aware that if you are using db_search to filter pre-built lists of paths,
+ * you need to check that your generated path list is NOT empty before calling
+ * db_search.  If you accidentally send an empty path list into db_search,
+ * it will assume you wanted a tops list, which has a good chance of returning
+ * unwanted results.
  *
  */
+RT_EXPORT extern int db_search(struct bu_ptbl *results,
+                               int flags,
+                               const char *filter,
+                               int path_c,
+                               struct directory **path_v,
+                               struct db_i *dbip
+);
+
+/* These are the possible search flags. */
 #define DB_SEARCH_TREE             0x0   /**< @brief Do a hierarchy-aware search.  This is the default. */
 #define DB_SEARCH_FLAT             0x1   /**< @brief Do a flat search without hierarchy */
 #define DB_SEARCH_HIDDEN           0x2   /**< @brief Search using hidden objects */
 #define DB_SEARCH_RETURN_UNIQ_DP   0x4   /**< @brief Return the set of unique directory pointers instead of full paths */
 #define DB_SEARCH_QUIET            0x8   /**< @brief Silence all warnings */
-RT_EXPORT extern int db_search(struct bu_ptbl *results,
-                               const char *plan_string,
-                               int path_cnt,
-                               struct directory **paths,
-                               struct rt_wdb *wdbp,
-                               int s_flags);
 
 /**
- * Properly free the tables returned by db_search
+ * Properly free the table contents returned by db_search.  The bu_ptbl
+ * itself, if not put on the stack, will need to be freed by the same
+ * calling function that allocated it.
  */
-RT_EXPORT extern void db_free_search_tbl(struct bu_ptbl *search_results);
+RT_EXPORT extern void db_search_free(struct bu_ptbl *search_results);
 
+
+/* db_ls.c */
+/**
+ * db_ls takes a database instance pointer and assembles a directory
+ * pointer array of objects in the database according to a set of
+ * flags.  An optional pattern can be supplied for match filtering
+ * via globbing rules (see bu_fnmatch).  If pattern is NULL, filtering
+ * is performed using only the flags.
+ *
+ * The caller is responsible for freeing the array.
+ *
+ * Returns -
+ * integer count of objects in dpv
+ * struct directory ** array of objects in dpv via argument
+ *
+ */
+RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
+                              int flags,
+                              const char *pattern,
+                              struct directory ***dpv);
+
+/* These are the possible listing flags. */
+#define DB_LS_PRIM         0x1    /**< @brief filter for primitives (solids)*/
+#define DB_LS_COMB         0x2    /**< @brief filter for combinations */
+#define DB_LS_REGION       0x4    /**< @brief filter for regions */
+#define DB_LS_HIDDEN       0x8    /**< @brief include hidden objects in results */
+#define DB_LS_NON_GEOM     0x10   /**< @brief filter for non-geometry objects */
+#define DB_LS_TOPS         0x20   /**< @brief filter for objects un-referenced by other objects */
+/* TODO - implement this flag
+#define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
+                                              globbing rules (default) */
 
 
 /***************************************************************
@@ -114,18 +168,21 @@ struct db_full_path_list {
 DEPRECATED RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
 DEPRECATED RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
 DEPRECATED RT_EXPORT extern void *db_search_formplan(char **argv,
-					  struct db_i *dbip,
-					  struct rt_wdb *wdbp);
+						     struct db_i *dbip);
 DEPRECATED RT_EXPORT extern void db_search_freeplan(void **plan);
 DEPRECATED RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
-								struct db_full_path_list *path_list,
-								struct db_i *dbip,
-								struct rt_wdb *wdbp);
+									   struct db_full_path_list *path_list,
+									   struct db_i *dbip);
 DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
-							  struct db_full_path_list *path_list,
-							  struct db_i *dbip,
-							  struct rt_wdb *wdbp);
+								     struct db_full_path_list *path_list,
+								     struct db_i *dbip);
+/* DEPRECATED: Use db_ls() instead of this function. */
+DEPRECATED RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
+                                         struct db_i *dbip,
+                                         const char *pattern);
 
+
+__END_DECLS
 
 #endif /* RT_SEARCH_H*/
 /** @} */

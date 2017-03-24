@@ -1,7 +1,7 @@
 #                       A P P L Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,11 +19,7 @@
 #
 ###
 #
-#			A P P L Y . T C L
-#
 #	Procedures to apply commands to one or more display managers.
-#
-#	Author - Robert G. Parker
 #
 
 proc mged_apply { id cmd } {

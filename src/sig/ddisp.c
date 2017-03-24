@@ -1,7 +1,7 @@
 /*                         D D I S P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,12 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "bio.h"
 
 #include "bu/color.h"
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/exit.h"
 #include "fb.h"
+
 
 #define MAXPTS 4096
 
@@ -41,7 +41,7 @@
 
 
 static void
-lineout(FBIO *fbp, double *dat, int n)
+lineout(fb *fbp, double *dat, int n)
 {
     static int y = 0;
     int i, value;
@@ -68,7 +68,7 @@ lineout(FBIO *fbp, double *dat, int n)
  * +/- 1.0 in, becomes +/- 128 from center Y.
  */
 static void
-disp_inten(FBIO *fbp, double *buf, int size)
+disp_inten(fb *fbp, double *buf, int size)
 {
     int x, y;
     RGBpixel color;
@@ -95,7 +95,7 @@ disp_inten(FBIO *fbp, double *buf, int size)
  * +/- 1.0 in, becomes +/- 128 from center Y.
  */
 static void
-disp_bars(FBIO *fbp, double *buf, int size)
+disp_bars(fb *fbp, double *buf, int size)
 {
     int x, y;
     RGBpixel color;
@@ -138,7 +138,7 @@ main(int argc, char **argv)
 {
     static const char usage[] = "Usage: ddisp [-v -b -p -c -H] [width (512)] < inputfile\n";
 
-    FBIO *fbp = NULL;
+    fb *fbp = NULL;
     double buf[MAXPTS];
 
     int n, L;
@@ -174,7 +174,7 @@ main(int argc, char **argv)
 	argv++;
     }
 
-    if ((fbp = fb_open(NULL, fbsize, fbsize)) == FBIO_NULL) {
+    if ((fbp = fb_open(NULL, fbsize, fbsize)) == FB_NULL) {
 	bu_exit(2, "Unable to open framebuffer\n");
     }
 

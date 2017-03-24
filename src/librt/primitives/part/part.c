@@ -1,7 +1,7 @@
 /*                          P A R T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -180,15 +180,14 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "nmg.h"
 #include "../../librt_private.h"
@@ -220,6 +219,53 @@ const struct bu_structparse rt_part_parse[] = {
     { "%f", 1, "r_h", bu_offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
+#ifdef USE_OPENCL
+
+/* largest data members first */
+struct clt_part_specific {
+    cl_double part_V[3];
+    cl_double part_H[3];
+    cl_double part_vrad;
+    cl_double part_hrad;
+    /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
+    cl_int part_type;		/**< @brief sphere, cylinder, cone */
+    cl_double part_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double part_invRoS[16];	/* invRot(Scale(vect)) */
+    cl_double part_vrad_prime;
+    cl_double part_hrad_prime;
+    /* For the "equivalent cone" */
+    cl_double part_v_hdist;	/* dist of base plate on unit cone */
+    cl_double part_h_hdist;
+};
+
+
+size_t
+clt_part_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct part_specific *part =
+        (struct part_specific *)stp->st_specific;
+    struct clt_part_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_part_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->part_V, part->part_int.part_V);
+    VMOVE(args->part_H, part->part_int.part_H);
+    args->part_vrad = part->part_int.part_vrad;
+    args->part_hrad = part->part_int.part_hrad;
+    args->part_type = part->part_int.part_type;
+
+    MAT_COPY(args->part_SoR, part->part_SoR);
+    MAT_COPY(args->part_invRoS, part->part_invRoS);
+    args->part_vrad_prime = part->part_vrad_prime;
+    args->part_hrad_prime = part->part_hrad_prime;
+    args->part_v_hdist = part->part_v_hdist;
+    args->part_h_hdist = part->part_h_hdist;
+    return size;
+}
+
+#endif /* USE_OPENCL */
 
 /**
  * Compute the bounding RPP for a particle
@@ -294,11 +340,11 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_PART_CK_MAGIC(pip);
 
     BU_GET(part, struct part_specific);
-    stp->st_specific = (genptr_t)part;
+    stp->st_specific = (void *)part;
     part->part_int = *pip;			/* struct copy */
     pip = &part->part_int;
 
-    if(rt_part_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
+    if (rt_part_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     if (pip->part_type == RT_PARTICLE_TYPE_SPHERE) {
 	/* Compute bounding sphere*/
@@ -709,7 +755,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	 * Do this by sorting the intersections,
 	 * and using the minimum and maximum values.
 	 */
-	rt_hitsort(hits, hitp - &hits[0]);
+	primitive_hitsort(hits, hitp - &hits[0]);
 
 	/* [0] is minimum, make [1] be maximum (hitp is +1 off end) */
 	hits[1] = hitp[-1];	/* struct copy */
@@ -878,7 +924,7 @@ rt_part_free(register struct soltab *stp)
 	(struct part_specific *)stp->st_specific;
 
     BU_PUT(part, struct part_specific);
-    stp->st_specific = GENPTR_NULL;
+    stp->st_specific = ((void *)0);
 }
 
 
@@ -1553,7 +1599,7 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 8);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 8);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1737,7 +1783,7 @@ rt_part_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "particle ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
@@ -1793,6 +1839,43 @@ rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     }
 }
 
+
+void
+rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    fastf_t vrad, hrad, mag_h, nm, dm, c_frst, cv_hem, ch_hem;
+    vect_t hvec, hvec_n;
+    point_t vpt, fcent, hhcent, cvcent;
+    struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
+    int idx;
+    RT_PART_CK_MAGIC(pip);
+
+    vrad = pip->part_vrad;
+    hrad = pip->part_hrad;
+    VSET(hvec,pip->part_H[0], pip->part_H[1], pip->part_H[2]);
+    VSET(hvec_n,pip->part_H[0], pip->part_H[1], pip->part_H[2]);
+    VUNITIZE(hvec_n);
+    VSET(vpt,pip->part_V[0], pip->part_V[1], pip->part_V[2]);
+    mag_h = MAGNITUDE(hvec);
+
+    /* conical frustum centroid, see http://mathworld.wolfram.com/ConicalFrustum.html */
+    nm = mag_h * (hrad * hrad + 2.0 * hrad * vrad + 3.0 * vrad * vrad);
+    dm = 4.0 * (hrad * hrad + hrad * vrad + vrad * vrad);
+    c_frst = nm / dm;
+
+    /* hemisphere centroids, see http://mathworld.wolfram.com/Hemisphere.html */
+    cv_hem = -3.0 * vrad / 8.0;
+    ch_hem =  3.0 * hrad / 8.0;
+
+    /* find frustum and hemisphere centroids separately, weight points */
+    for (idx=0; idx < 3; idx++) {
+        fcent[idx]  = (hvec_n[idx] * c_frst + vpt[idx]) / 3.0;
+        hhcent[idx] = (hvec_n[idx] * ch_hem + vpt[idx]) / 3.0;
+        cvcent[idx] = (hvec_n[idx] * cv_hem + vpt[idx] + hvec[idx]) / 3.0;
+    }
+
+    VADD3(*cent, fcent, hhcent, cvcent);
+}
 
 /*
  * Local Variables:

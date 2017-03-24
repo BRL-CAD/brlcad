@@ -1,7 +1,7 @@
 #             C O M P I L E R F L A G S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,8 @@ include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(CMakeParseArguments)
 
+set(CMAKE_BUILD_TYPES DEBUG RELEASE)
+
 # Debugging function to print all current flags
 function(PRINT_BUILD_FLAGS)
   message("Current Build Flags (${ARGV0}):\n")
@@ -45,49 +47,52 @@ function(PRINT_BUILD_FLAGS)
   message("CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
   message("CMAKE_SHARED_LINKER_FLAGS: ${CMAKE_SHARED_LINKER_FLAGS}")
   message("CMAKE_EXE_LINKER_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
-  set(BUILD_TYPES DEBUG RELEASE ${CMAKE_CONFIGURATION_TYPES})
-  foreach(BTYPE ${BUILD_TYPES})
+  foreach(BTYPE ${CMAKE_BUILD_TYPES})
     message(" ")
-    string(TOUPPER "${BTYPE}" BTYPE_UPPER)
-    message("CMAKE_C_FLAGS_${BTYPE_UPPER}: ${CMAKE_C_FLAGS_${BTYPE_UPPER}}")
-    message("CMAKE_CXX_FLAGS_${BTYPE_UPPER}: ${CMAKE_CXX_FLAGS_${BTYPE_UPPER}}")
-    message("CMAKE_SHARED_LINKER_FLAGS_${BTYPE_UPPER}: ${CMAKE_SHARED_LINKER_FLAGS_${BTYPE_UPPER}}")
-    message("CMAKE_EXE_LINKER_FLAGS_${BTYPE_UPPER}: ${CMAKE_EXE_LINKER_FLAGS_${BTYPE_UPPER}}")
-  endforeach(BTYPE ${BUILD_TYPES})
+    message("CMAKE_C_FLAGS_${BTYPE}: ${CMAKE_C_FLAGS_${BTYPE}}")
+    message("CMAKE_CXX_FLAGS_${BTYPE}: ${CMAKE_CXX_FLAGS_${BTYPE}}")
+    message("CMAKE_SHARED_LINKER_FLAGS_${BTYPE}: ${CMAKE_SHARED_LINKER_FLAGS_${BTYPE}}")
+    message("CMAKE_EXE_LINKER_FLAGS_${BTYPE}: ${CMAKE_EXE_LINKER_FLAGS_${BTYPE}}")
+  endforeach(BTYPE ${CMAKE_BUILD_TYPES})
   message(" ")
 endfunction(PRINT_BUILD_FLAGS)
 
 # Cache current values of CMake build variables
-macro(CACHE_BUILD_FLAGS)
-  set(CMAKE_C_FLAGS_CACHED "${CMAKE_C_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
-  set(CMAKE_CXX_FLAGS_CACHED "${CMAKE_CXX_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
-  set(CMAKE_SHARED_LINKER_FLAGS_CACHED "${CMAKE_SHARED_LINKER_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
-  set(CMAKE_EXE_LINKER_FLAGS_CACHED "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
-  set(BUILD_TYPES DEBUG RELEASE ${CMAKE_CONFIGURATION_TYPES})
-  foreach(BTYPE ${BUILD_TYPES})
-    string(TOUPPER "${BTYPE}" BTYPE_UPPER)
-    set(CMAKE_C_FLAGS_${BTYPE_UPPER}_CACHED "${CMAKE_C_FLAGS_${BTYPE_UPPER}}" CACHE STRING "Cached build flag value" FORCE)
-    set(CMAKE_CXX_FLAGS_${BTYPE_UPPER}_CACHED "${CMAKE_CXX_FLAGS_${BTYPE_UPPER}}" CACHE STRING "Cached build flag value" FORCE)
-    set(CMAKE_SHARED_LINKER_FLAGS_${BTYPE_UPPER}_CACHED "${CMAKE_SHARED_LINKER_FLAGS_${BTYPE_UPPER}}" CACHE STRING "Cached build flag value" FORCE)
-    set(CMAKE_EXE_LINKER_FLAGS_${BTYPE_UPPER}_CACHED "${CMAKE_EXE_LINKER_FLAGS_${BTYPE_UPPER}}" CACHE STRING "Cached build flag value" FORCE)
-  endforeach(BTYPE ${BUILD_TYPES})
-  set(CMAKE_BUILD_FLAGS_CACHED TRUE CACHE BOOL "Have cached build flag values" FORCE)
+macro(CACHE_BUILD_FLAGS suffix)
+  set(CMAKE_C_FLAGS_CACHED${suffix} "${CMAKE_C_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
+  set(CMAKE_CXX_FLAGS_CACHED${suffix} "${CMAKE_CXX_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
+  set(CMAKE_SHARED_LINKER_FLAGS_CACHED${suffix} "${CMAKE_SHARED_LINKER_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
+  set(CMAKE_EXE_LINKER_FLAGS_CACHED${suffix} "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
+  mark_as_advanced(CMAKE_C_FLAGS_CACHED${suffix})
+  mark_as_advanced(CMAKE_CXX_FLAGS_CACHED${suffix})
+  mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS_CACHED${suffix})
+  mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_CACHED${suffix})
+  foreach(BTYPE ${CMAKE_BUILD_TYPES})
+    set(CMAKE_C_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_C_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
+    set(CMAKE_CXX_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_CXX_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
+    set(CMAKE_SHARED_LINKER_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_SHARED_LINKER_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
+    set(CMAKE_EXE_LINKER_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_EXE_LINKER_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
+    mark_as_advanced(CMAKE_C_FLAGS_${BTYPE}_CACHED${suffix})
+    mark_as_advanced(CMAKE_CXX_FLAGS_${BTYPE}_CACHED${suffix})
+    mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS_${BTYPE}_CACHED${suffix})
+    mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_${BTYPE}_CACHED${suffix})
+  endforeach(BTYPE ${CMAKE_BUILD_TYPES})
+  set(CMAKE_BUILD_FLAGS_CACHED${suffix} TRUE CACHE BOOL "Have cached build flag values" FORCE)
+  mark_as_advanced(CMAKE_BUILD_FLAGS_CACHED${suffix})
 endmacro(CACHE_BUILD_FLAGS)
 
 # Restore cached values of CMake build variables
-macro(RESTORE_CACHED_BUILD_FLAGS)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_CACHED}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_CACHED}")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS_CACHED}")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS_CACHED}")
-  set(BUILD_TYPES DEBUG RELEASE ${CMAKE_CONFIGURATION_TYPES_CACHED})
-  foreach(BTYPE ${BUILD_TYPES})
-    string(TOUPPER "${BTYPE}" BTYPE_UPPER)
-    set(CMAKE_C_FLAGS_${BTYPE_UPPER} "${CMAKE_C_FLAGS_${BTYPE_UPPER}_CACHED}")
-    set(CMAKE_CXX_FLAGS_${BTYPE_UPPER} "${CMAKE_CXX_FLAGS_${BTYPE_UPPER}_CACHED}")
-    set(CMAKE_SHARED_LINKER_FLAGS_${BTYPE_UPPER} "${CMAKE_SHARED_LINKER_FLAGS_${BTYPE_UPPER}_CACHED}")
-    set(CMAKE_EXE_LINKER_FLAGS_${BTYPE_UPPER} "${CMAKE_EXE_LINKER_FLAGS_${BTYPE_UPPER}_CACHED}")
-  endforeach(BTYPE ${BUILD_TYPES})
+macro(RESTORE_CACHED_BUILD_FLAGS suffix)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
+  foreach(BTYPE ${CMAKE_BUILD_TYPES})
+    set(CMAKE_C_FLAGS_${BTYPE} "${CMAKE_C_FLAGS_${BTYPE}_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
+    set(CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
+    set(CMAKE_SHARED_LINKER_FLAGS_${BTYPE} "${CMAKE_SHARED_LINKER_FLAGS_${BTYPE}_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
+    set(CMAKE_EXE_LINKER_FLAGS_${BTYPE} "${CMAKE_EXE_LINKER_FLAGS_${BTYPE}_CACHED${suffix}}" CACHE STRING "Restored build flag value" FORCE)
+  endforeach(BTYPE ${CMAKE_BUILD_TYPES})
 endmacro(RESTORE_CACHED_BUILD_FLAGS)
 
 # Clear all currently defined CMake compiler and linker flags
@@ -96,20 +101,21 @@ endmacro(RESTORE_CACHED_BUILD_FLAGS)
 # rely on CMake to specify Windows compilation flags - until
 # that changes, we can't afford to strip flags out on MSVC
 macro(CLEAR_BUILD_FLAGS)
+  set(BUILD_FLAGS_TO_CLEAR
+    CMAKE_C_FLAGS
+    CMAKE_CXX_FLAGS
+    CMAKE_SHARED_LINKER_FLAGS
+    CMAKE_EXE_LINKER_FLAGS
+    )
   if (NOT MSVC)
-    set(CMAKE_C_FLAGS "")
-    set(CMAKE_CXX_FLAGS "")
-    set(CMAKE_SHARED_LINKER_FLAGS "")
-    set(CMAKE_EXE_LINKER_FLAGS "")
-
-    set(BUILD_TYPES DEBUG RELEASE ${CMAKE_CONFIGURATION_TYPES_CACHED})
-    foreach(BTYPE ${BUILD_TYPES})
-      string(TOUPPER "${BTYPE}" BTYPE_UPPER)
-      set(CMAKE_C_FLAGS_${BTYPE_UPPER} "")
-      set(CMAKE_CXX_FLAGS_${BTYPE_UPPER} "")
-      set(CMAKE_SHARED_LINKER_FLAGS_${BTYPE_UPPER} "")
-      set(CMAKE_EXE_LINKER_FLAGS_${BTYPE_UPPER} "")
-    endforeach(BTYPE ${BUILD_TYPES})
+    foreach(bflag ${BUILD_FLAGS_TO_CLEAR})
+      set(${bflag} "")
+      unset(${bflag} CACHE)
+      foreach(BTYPE ${CMAKE_BUILD_TYPES})
+	set(${bflag}_${BTYPE} "")
+	unset(${bflag}_${BTYPE} CACHE)
+      endforeach(BTYPE ${CMAKE_BUILD_TYPES})
+    endforeach(bflag ${BUILD_FLAGS_TO_CLEAR})
 
     set(CMAKE_C_FLAGS "$ENV{CFLAGS}")
     set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS}")
@@ -267,6 +273,61 @@ endmacro(CHECK_C_FLAG)
 macro(CHECK_CXX_FLAG)
   CHECK_FLAG(CXX ${ARGN})
 endmacro(CHECK_CXX_FLAG)
+
+
+# Disable any compilation warning flags currently set
+macro(DISABLE_WARNINGS)
+
+  # borland-style
+  if (NOT NOWARN_CFLAG)
+    CHECK_C_FLAG("w-" VARS NOWARN_CFLAG)
+  endif (NOT NOWARN_CFLAG)
+  if (NOT NOWARN_CXXFLAG)
+    CHECK_CXX_FLAG("w-" VARS NOWARN_CXXFLAG)
+  endif (NOT NOWARN_CXXFLAG)
+
+  # msvc-style (must test before gcc's -w test)
+  if (NOT NOWARN_CFLAG)
+    CHECK_C_FLAG("W0" VARS NOWARN_CFLAG)
+
+    if (NOWARN_CFLAG)
+      # replace msvc-style warning level C flags, disable with W0
+      string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+      foreach(BTYPE ${CMAKE_BUILD_TYPES})
+	string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS_${BTYPE} "${CMAKE_C_FLAGS_${BTYPE}}")
+      endforeach(BTYPE ${CMAKE_BUILD_TYPES})
+    endif (NOWARN_CFLAG)
+  endif (NOT NOWARN_CFLAG)
+
+  if (NOT NOWARN_CXXFLAG)
+    CHECK_CXX_FLAG("W0" VARS NOWARN_CXXFLAG)
+
+    if (NOWARN_CXXFLAG)
+      # replace msvc-style warning level C++ flags, disable with W0
+      string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+      foreach(BTYPE ${CMAKE_BUILD_TYPES})
+	string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}}")
+      endforeach(BTYPE ${CMAKE_BUILD_TYPES})
+    endif (NOWARN_CXXFLAG)
+  endif (NOT NOWARN_CXXFLAG)
+
+  # gcc/llvm-style
+  if (NOT NOWARN_CFLAG)
+    CHECK_C_FLAG("w" VARS NOWARN_CFLAG)
+  endif (NOT NOWARN_CFLAG)
+  if (NOT NOWARN_CXXFLAG)
+    CHECK_CXX_FLAG("w" VARS NOWARN_CXXFLAG)
+  endif (NOT NOWARN_CXXFLAG)
+
+  # turn off warnings in the current scope
+  if (NOWARN_CFLAG)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${NOWARN_CFLAG}")
+  endif (NOWARN_CFLAG)
+  if (NOWARN_CXXFLAG)
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${NOWARN_CXXFLAG}")
+  endif (NOWARN_CXXFLAG)
+
+endmacro(DISABLE_WARNINGS)
 
 
 # Local Variables:

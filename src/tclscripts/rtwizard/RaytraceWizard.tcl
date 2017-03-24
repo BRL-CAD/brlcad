@@ -1,7 +1,7 @@
 #               R A Y T R A C E W I Z A R D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -90,6 +90,13 @@ namespace eval RaytraceWizard {
     #
     proc main { args } {
 
+	# As of now we haven't drawn anything
+	set ::first_draw 1
+
+	# Initial BoT drawing LoD limit arbitrarily set to this
+	# display threshold (# of faces in BoT)
+	set ::bot_threshold 1000
+
 	#
 	# Create the Feedback
 	#
@@ -107,6 +114,8 @@ namespace eval RaytraceWizard {
 	#
 	set w [ RtWizard::Wizard .\#auto ]
 	$fb inform "Wizard megawidget created" 5
+
+	wm title . "RtWizard"
 
 	#
 	# Add the first set of pages to the wizard.

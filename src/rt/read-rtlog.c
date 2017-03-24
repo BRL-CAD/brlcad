@@ -1,7 +1,7 @@
 /*                    R E A D - R T L O G . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2014 United States Government as represented by
+ * Copyright (c) 1991-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "bu.h"
 #include "raytrace.h"
 
 #define BUFF_LEN 256
@@ -61,7 +60,8 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
     char *ret;			/* return code for fgets */
     char string[BUFF_LEN];	/* temporary buffer */
     char *arg_ptr;		/* place holder */
-    char forget_it[9];		/* "azimuth" catcher, then forget */
+#define FORGET_IT_LEN 9
+    char forget_it[FORGET_IT_LEN+1];	/* "azimuth" catcher, then forget */
     int i;			/* reusable counter */
     int num;			/* return code for sscanf */
     int seen_view;		/* these are flags.  */
@@ -184,7 +184,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	 */
 
 	if (BU_STR_EQUAL(string, "View")) {
-	    num = sscanf(arg_ptr, "%lf %9s %lf", &scan[X], forget_it, &scan[Y]);
+	    num = sscanf(arg_ptr, "%lf " CPP_SCAN(FORGET_IT_LEN) " %lf", &scan[X], forget_it, &scan[Y]);
 	    /* double to fastf_t */
 	    azimuth = scan[X];
 	    elevation = scan[Y];

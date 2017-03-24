@@ -21,7 +21,7 @@ data:		horizontal coordinate of shotline in grid plane (Y')
 
 record type:	3
 description:	information about component intersected by shotline
-format:		'3',1x,f8.2,1x,f7.3,1x,f7.2,1x,i4,2(1x,f8.2),1x,i2,2(1x,f7.2)
+format:		'3',1x,f8.2,1x,f7.3,1x,f7.2,1x,i5,2(1x,f8.2),1x,i2,2(1x,f7.2)
 data:		X'-coordinate of intersection with component
 		sine of fallback angle of component exit normal
 		rotation angle in degrees of exit normal
@@ -55,7 +55,7 @@ data:		horizontal coordinate of shotline in grid plane (Y')
 record type:	3
 description:	information about component intersected by shotline
 ICD reference:	Line Number 3, Figure 20.
-format:		'3',2(1x,f8.2),1x,i4,1x,i2,1x,f7.3,1x,f7.2,1x,f7.3
+format:		'3',2(1x,f8.2),1x,i5,1x,i2,1x,f7.3,1x,f7.2,1x,f7.3
 data:		X'-coordinate of intersection with component
 		line-of-sight thickness of component
 		component code number
@@ -75,7 +75,7 @@ data:		ray azimuth angle WRT shotline in radians
 record type:	5
 description:	information about component intersected by burst ray
 ICD reference:	Line Number 20, Figure 20.
-format:		'5',1x,f10.3,2(1x,f9.3),2(1x,i4),1x,f6.3
+format:		'5',1x,f10.3,2(1x,f9.3),1x,i4,1x,i5,1x,f6.3
 data:		distance to first contact with component from burst point
 		line-of-sight thickness of component
 		normal thickness of component

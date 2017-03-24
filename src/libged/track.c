@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,15 +35,13 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
 
 
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "ged.h"
@@ -160,7 +158,7 @@ crregion(struct bu_vls *log_str,
  *
  */
 int
-_ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[])
+ged_track2(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[])
 {
     fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
     char *solname = NULL;
@@ -553,18 +551,18 @@ _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[])
     mat_default = mat;
     los_default = los;
 
-    bu_free((genptr_t)solname, "solid name");
-    bu_free((genptr_t)regname, "region name");
-    bu_free((genptr_t)grpname, "group name");
-    bu_free((genptr_t)sol.s_name, "sol.s_name");
+    bu_free((void *)solname, "solid name");
+    bu_free((void *)regname, "region name");
+    bu_free((void *)grpname, "group name");
+    bu_free((void *)sol.s_name, "sol.s_name");
 
     return edit_result;
 
 end:
-    bu_free((genptr_t)solname, "solid name");
-    bu_free((genptr_t)regname, "region name");
-    bu_free((genptr_t)grpname, "group name");
-    bu_free((genptr_t)sol.s_name, "sol.s_name");
+    bu_free((void *)solname, "solid name");
+    bu_free((void *)regname, "region name");
+    bu_free((void *)grpname, "group name");
+    bu_free((void *)sol.s_name, "sol.s_name");
 
     return edit_result;
 }
@@ -598,7 +596,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    return _ged_track(gedp->ged_result_str, gedp->ged_wdbp, argv);
+    return ged_track2(gedp->ged_result_str, gedp->ged_wdbp, argv);
 }
 
 static int
@@ -637,7 +635,7 @@ wrobj(struct bu_vls *log_str,
 	    for (i = 1; i < 8; i++)
 		VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0]);
 
-	    intern.idb_ptr = (genptr_t)arb;
+	    intern.idb_ptr = (void *)arb;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_ARB8;
 	    intern.idb_meth = &OBJ[ID_ARB8];
@@ -657,7 +655,7 @@ wrobj(struct bu_vls *log_str,
 	    VMOVE(tgc->c, &sol.s_values[12]);
 	    VMOVE(tgc->d, &sol.s_values[15]);
 
-	    intern.idb_ptr = (genptr_t)tgc;
+	    intern.idb_ptr = (void *)tgc;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_TGC;
 	    intern.idb_meth = &OBJ[ID_TGC];
@@ -668,7 +666,7 @@ wrobj(struct bu_vls *log_str,
 	    return GED_ERROR;
     }
 
-    if ((tdp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+    if ((tdp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(log_str, "Cannot add '%s' to directory, aborting\n", name);
 	return GED_ERROR;
@@ -1004,7 +1002,7 @@ track_mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	actual_count = (struct rt_tree_array *)db_flatten_tree(
 	    tree_list, comb->tree, OP_UNION,
 	    1, &rt_uniresource) - tree_list;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     } else {
 	actual_count = 0;
@@ -1041,7 +1039,7 @@ track_mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	    tp->tr_l.tl_mat = (matp_t)NULL;
 	}
     }
-    BU_ASSERT_SIZE_T(node_count, ==, actual_count + (size_t)new_nodes);
+    BU_ASSERT(node_count == actual_count + (size_t)new_nodes);
 
     /* rebuild the tree with GIFT semantics */
     comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
@@ -1163,7 +1161,7 @@ track_mk_comb(
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_ptr = (genptr_t)comb;
+	intern.idb_ptr = (void *)comb;
 	intern.idb_meth = &OBJ[ID_COMBINATION];
 
 	fresh_combination = 1;

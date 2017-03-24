@@ -1,7 +1,7 @@
 /*                           T G C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,18 +32,16 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
 
 #include "../../librt_private.h"
 
@@ -81,8 +79,8 @@ void rt_pt_sort(register fastf_t *t, int npts);
 #define MAX_RATIO 10.0	/* maximum allowed height-to-width ration for triangles */
 #define RAT  M_SQRT1_2
 
-#define OUT 0
-#define IN 1
+#define T_OUT 0
+#define T_IN 1
 
 /* hit_surfno is set to one of these */
 #define TGC_NORM_BODY (1)	/* compute normal */
@@ -148,6 +146,43 @@ static const fastf_t nmg_uv_unitcircle[27] = {
     1.0,   .5,  1.0
 };
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_tgc_specific {
+    cl_double tgc_V[3];             /* Vector to center of base of TGC */
+    cl_double tgc_CdAm1;            /* (C/A - 1) */
+    cl_double tgc_DdBm1;            /* (D/B - 1) */
+    cl_double tgc_AAdCC;            /* (|A|**2)/(|C|**2) */
+    cl_double tgc_BBdDD;            /* (|B|**2)/(|D|**2) */
+    cl_double tgc_N[3];             /* normal at 'top' of cone */
+    cl_double tgc_ScShR[16];        /* Scale(Shear(Rot(vect))) */
+    cl_double tgc_invRtShSc[16];    /* invRot(trnShear(Scale(vect))) */
+    cl_char tgc_AD_CB;              /* boolean:  A*D == C*B */
+};
+
+size_t
+clt_tgc_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct tgc_specific *tgc =
+        (struct tgc_specific *)stp->st_specific;
+    struct clt_tgc_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_tgc_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->tgc_V, tgc->tgc_V);
+    args->tgc_CdAm1 = tgc->tgc_CdAm1;
+    args->tgc_DdBm1 = tgc->tgc_DdBm1;
+    args->tgc_AAdCC = tgc->tgc_AAdCC;
+    args->tgc_BBdDD = tgc->tgc_BBdDD;
+    VMOVE(args->tgc_N, tgc->tgc_N);
+    MAT_COPY(args->tgc_ScShR, tgc->tgc_ScShR);
+    MAT_COPY(args->tgc_invRtShSc, tgc->tgc_invRtShSc);
+    args->tgc_AD_CB = tgc->tgc_AD_CB;
+    return size;
+}
+
+#endif /* USE_OPENCL */
 
 /**
  * Compute the bounding RPP for a truncated general cone
@@ -324,7 +359,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* solid is OK, compute constant terms, etc. */
     BU_GET(tgc, struct tgc_specific);
-    stp->st_specific = (genptr_t)tgc;
+    stp->st_specific = (void *)tgc;
 
     VMOVE(tgc->tgc_V, tip->v);
     tgc->tgc_A = mag_a;
@@ -771,6 +806,9 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	/* Here, 'npts' is number of points being returned */
 	if (npts != 0 && npts != 2 && npts != 4 && npts > 0) {
+	    /* prevent overflow, compile sanity */
+	    if (npts > 6)
+		npts = 6;
 	    bu_log("tgc:  reduced %d to %d roots\n", nroots, npts);
 	    bn_pr_roots(stp->st_name, val, nroots);
 	} else if (nroots < 0) {
@@ -1068,7 +1106,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	/* A vector is unitized (tgc->tgc_A == 1.0) */
 	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CdAm1) + 1.0;
 
-	/* (void) bn_poly_mul(&Rsqr, &R, &R); inline expands to: */
+	/* (void) bn_poly_mul(&Rsqr, &R, &R); manual expansion: */
 	Rsqr.dgr = 2;
 	Rsqr.cf[0] = R.cf[0] * R.cf[0];
 	Rsqr.cf[1] = R.cf[0] * R.cf[1] * 2;
@@ -1081,7 +1119,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 */
 	if (tgc->tgc_AD_CB) {
 	    /* (void) bn_poly_add(&sum, &Xsqr, &Ysqr); and */
-	    /* (void) bn_poly_sub(&C, &sum, &Rsqr); inline expand to */
+	    /* (void) bn_poly_sub(&C, &sum, &Rsqr); manual expansion: */
 	    C[ix].dgr = 2;
 	    C[ix].cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
 	    C[ix].cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
@@ -1094,13 +1132,13 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    /* B vector is unitized (tgc->tgc_B == 1.0) */
 	    Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DdBm1) + 1.0;
 
-	    /* (void) bn_poly_mul(&Qsqr, &Q, &Q); inline expands to */
+	    /* (void) bn_poly_mul(&Qsqr, &Q, &Q); manual expansion: */
 	    Qsqr.dgr = 2;
 	    Qsqr.cf[0] = Q.cf[0] * Q.cf[0];
 	    Qsqr.cf[1] = Q.cf[0] * Q.cf[1] * 2;
 	    Qsqr.cf[2] = Q.cf[1] * Q.cf[1];
 
-	    /* (void) bn_poly_mul(&T1, &Qsqr, &Xsqr); inline expands to */
+	    /* (void) bn_poly_mul(&T1, &Qsqr, &Xsqr); manual expansion: */
 	    C[ix].dgr = 4;
 	    C[ix].cf[0] = Qsqr.cf[0] * Xsqr.cf[0];
 	    C[ix].cf[1] = Qsqr.cf[0] * Xsqr.cf[1] +
@@ -1113,7 +1151,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    C[ix].cf[4] = Qsqr.cf[2] * Xsqr.cf[2];
 
 	    /* (void) bn_poly_mul(&T2, &Rsqr, &Ysqr); and */
-	    /* (void) bn_poly_add(&sum, &T1, &T2); inline expand to */
+	    /* (void) bn_poly_add(&sum, &T1, &T2); manual expansion: */
 	    C[ix].cf[0] += Rsqr.cf[0] * Ysqr.cf[0];
 	    C[ix].cf[1] += Rsqr.cf[0] * Ysqr.cf[1] +
 		Rsqr.cf[1] * Ysqr.cf[0];
@@ -1125,7 +1163,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    C[ix].cf[4] += Rsqr.cf[2] * Ysqr.cf[2];
 
 	    /* (void) bn_poly_mul(&T3, &Rsqr, &Qsqr); and */
-	    /* (void) bn_poly_sub(&C, &sum, &T3); inline expand to */
+	    /* (void) bn_poly_sub(&C, &sum, &T3); manual expansion: */
 	    C[ix].cf[0] -= Rsqr.cf[0] * Qsqr.cf[0];
 	    C[ix].cf[1] -= Rsqr.cf[0] * Qsqr.cf[1] +
 		Rsqr.cf[1] * Qsqr.cf[0];
@@ -1228,15 +1266,15 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    /* Height vector is unitized (tgc->tgc_sH == 1.0) */
 	    if (zval < 1.0 && zval > 0.0) {
 		if (++intersect == 2) {
-		    pt[IN] = k[i];
+		    pt[T_IN] = k[i];
 		}  else
-		    pt[OUT] = k[i];
+		    pt[T_OUT] = k[i];
 	    }
 	}
 	/* Reuse C to hold values of intersect and k. */
 	C[ix].dgr = intersect;
-	C[ix].cf[OUT] = pt[OUT];
-	C[ix].cf[IN]  = pt[IN];
+	C[ix].cf[T_OUT] = pt[T_OUT];
+	C[ix].cf[T_IN]  = pt[T_IN];
     }
 
     /* for each ray/cone pair */
@@ -1245,8 +1283,8 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 
 	tgc = (struct tgc_specific *)stp[ix]->st_specific;
 	intersect = C[ix].dgr;
-	pt[OUT] = C[ix].cf[OUT];
-	pt[IN]  = C[ix].cf[IN];
+	pt[T_OUT] = C[ix].cf[T_OUT];
+	pt[T_IN]  = C[ix].cf[T_IN];
 	/* segp[ix].seg_out.hit_normal holds pprime */
 	VMOVE(pprime, segp[ix].seg_out.hit_normal);
 	/* segp[ix].seg_in.hit_normal holds dprime */
@@ -1256,19 +1294,19 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    /* If two between-plane intersections exist, they are
 	     * the hit points for the ray.
 	     */
-	    segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
+	    segp[ix].seg_in.hit_dist = pt[T_IN] * t_scale;
 	    segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
-	    VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[IN], dprime);
+	    VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[T_IN], dprime);
 
-	    segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
+	    segp[ix].seg_out.hit_dist = pt[T_OUT] * t_scale;
 	    segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
-	    VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime);
+	    VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[T_OUT], dprime);
 	} else if (intersect == 1) {
 	    int nflag;
 	    /*
-	     * If only one between-plane intersection exists (pt[OUT]),
+	     * If only one between-plane intersection exists (pt[T_OUT]),
 	     * then the other intersection must be on
-	     * one of the planar surfaces (pt[IN]).
+	     * one of the planar surfaces (pt[T_IN]).
 	     *
 	     * Find which surface it lies on by calculating the
 	     * X and Y values of the line as it intersects each
@@ -1293,10 +1331,10 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC, tgc->tgc_BBdDD);
 
 	    if (alf1 <= 1.0) {
-		pt[IN] = b;
+		pt[T_IN] = b;
 		nflag = TGC_NORM_BOT; /* copy reverse normal */
 	    } else if (alf2 <= 1.0) {
-		pt[IN] = t;
+		pt[T_IN] = t;
 		nflag = TGC_NORM_TOP;	/* copy normal */
 	    } else {
 		/* intersection apparently invalid */
@@ -1304,22 +1342,22 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		continue;
 	    }
 
-	    /* pt[OUT] on skin, pt[IN] on end */
-	    if (pt[OUT] >= pt[IN]) {
-		segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
+	    /* pt[T_OUT] on skin, pt[T_IN] on end */
+	    if (pt[T_OUT] >= pt[T_IN]) {
+		segp[ix].seg_in.hit_dist = pt[T_IN] * t_scale;
 		segp[ix].seg_in.hit_surfno = nflag;
 
-		segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
+		segp[ix].seg_out.hit_dist = pt[T_OUT] * t_scale;
 		segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
 		/* transform-space vector needed for normal */
-		VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime);
+		VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[T_OUT], dprime);
 	    } else {
-		segp[ix].seg_in.hit_dist = pt[OUT] * t_scale;
+		segp[ix].seg_in.hit_dist = pt[T_OUT] * t_scale;
 		/* transform-space vector needed for normal */
 		segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
-		VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[OUT], dprime);
+		VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[T_OUT], dprime);
 
-		segp[ix].seg_out.hit_dist = pt[IN] * t_scale;
+		segp[ix].seg_out.hit_dist = pt[T_IN] * t_scale;
 		segp[ix].seg_out.hit_surfno = nflag;
 	    }
 	} else {
@@ -1661,7 +1699,7 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*6);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*6);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1816,7 +1854,7 @@ rt_tgc_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "tgc ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 struct ellipse {
@@ -2156,8 +2194,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t rel, absolute, norm;	/* interpreted tolerances */
     fastf_t alpha_tol;	/* final tolerance for ellipse parameter */
     fastf_t abs_tol;	/* handle invalid ttol->abs */
-    int nells;		/* total number of ellipses */
-    int nsegs;		/* number of vertices/ellipse */
+    size_t nells;		/* total number of ellipses */
+    size_t nsegs;		/* number of vertices/ellipse */
     vect_t *A;		/* array of A vectors for ellipses */
     vect_t *B;		/* array of B vectors for ellipses */
     fastf_t *factors;	/* array of ellipse locations along height vector */
@@ -2169,7 +2207,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct bu_ptbl faces;		/* table of faceuses for nmg_gluefaces */
     struct vertex **v[3];		/* array for making triangular faces */
 
-    int i;
+    size_t i;
 
     VSETALL(unit_a, 0);
     VSETALL(unit_b, 0);
@@ -2319,7 +2357,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fastf_t ang;
 	fastf_t sin_ang, cos_ang, cos_m_1_sq, sin_sq;
 	fastf_t len_A, len_B, len_C, len_D;
-	int bot_ell=0, top_ell=1;
+	size_t bot_ell=0;
+	size_t top_ell=1;
 	int reversed=0;
 
 	nells = 2;
@@ -2492,7 +2531,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* calculate geometry for points */
     for (i=0; i<nells; i++) {
 	fastf_t h_factor;
-	int j;
+	size_t j;
 
 	h_factor = factors[i];
 	for (j=0; j<nsegs; j++) {
@@ -2525,7 +2564,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* make sure no edges will be created with length < tol->dist */
     for (i=0; i<nells; i++) {
-	int j;
+	size_t j;
 	point_t curr_pt;
 	vect_t edge_vect;
 
@@ -2557,14 +2596,14 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_ptbl_init(&faces, 64, " &faces ");
     /* Make bottom face */
     if (a > 0.0 && b > 0.0) {
-	for (i=nsegs-1; i>=0; i--) {
+	for (i=nsegs; i>0; i--) {
 	    /* reverse order to get outward normal */
-	    if (!pts[0][i].dont_use)
-		bu_ptbl_ins(&verts, (long *)&pts[0][i].v);
+	    if (!pts[0][i-1].dont_use)
+		bu_ptbl_ins(&verts, (long *)&pts[0][i-1].v);
 	}
 
-	if (BU_PTBL_END(&verts) > 2) {
-	    fu_base = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_END(&verts));
+	if (BU_PTBL_LEN(&verts) > 2) {
+	    fu_base = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_LEN(&verts));
 	    bu_ptbl_ins(&faces, (long *)fu_base);
 	} else
 	    fu_base = (struct faceuse *)NULL;
@@ -2580,8 +2619,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		bu_ptbl_ins(&verts, (long *)&pts[nells-1][i].v);
 	}
 
-	if (BU_PTBL_END(&verts) > 2) {
-	    fu_top = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_END(&verts));
+	if (BU_PTBL_LEN(&verts) > 2) {
+	    fu_top = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_LEN(&verts));
 	    bu_ptbl_ins(&faces, (long *)fu_top);
 	} else
 	    fu_top = (struct faceuse *)NULL;
@@ -2593,14 +2632,14 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Make triangular faces */
     for (i=0; i<nells-1; i++) {
-	int j;
+	size_t j;
 	struct vertex **curr_top;
 	struct vertex **curr_bot;
 
 	curr_bot = &pts[i][0].v;
 	curr_top = &pts[i+1][0].v;
 	for (j=0; j<nsegs; j++) {
-	    int k;
+	    size_t k;
 
 	    k = j+1;
 	    if (k == nsegs)
@@ -2637,7 +2676,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Assign geometry */
     for (i=0; i<nells; i++) {
-	int j;
+	size_t j;
 
 	for (j=0; j<nsegs; j++) {
 	    point_t pt_geom;
@@ -2672,11 +2711,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate face plane equations */
-    for (i=0; i<BU_PTBL_END(&faces); i++) {
+    for (i=0; i<BU_PTBL_LEN(&faces); i++) {
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACEUSE(fu);
 
-	if (nmg_calc_face_g(fu)) {
+	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 	    bu_log("rt_tess_tgc: failed to calculate plane equation\n");
 	    nmg_pr_fu_briefly(fu, "");
 	    return -1;
@@ -2686,7 +2725,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Calculate vertexuse normals */
     for (i=0; i<nells; i++) {
-	int j, k;
+	size_t j, k;
 
 	k = i + 1;
 	if (k == nells)
@@ -2793,7 +2832,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_region_a(*r, tol);
 
     /* glue faces together */
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
     bu_ptbl_free(&faces);
 
     return 0;
@@ -3065,11 +3104,11 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 
 
     if (!flip) {
-	rt_nurb_s_eval(fu->f_p->g.snurb_p,
+	nmg_nurb_s_eval(fu->f_p->g.snurb_p,
 		       nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point);
 	nmg_vertex_gv(eu->vu_p->v_p, point);
     } else {
-	rt_nurb_s_eval(fu->f_p->g.snurb_p,
+	nmg_nurb_s_eval(fu->f_p->g.snurb_p,
 		       nmg_uv_unitcircle[12], nmg_uv_unitcircle[13], point);
 	nmg_vertex_gv(eu->vu_p->v_p, point);
     }
@@ -3187,7 +3226,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 
     /* March around the fu's loop assigning uv parameter values */
 
-    rt_nurb_s_eval(fg, 0.0, 0.0, hvect);
+    nmg_nurb_s_eval(fg, 0.0, 0.0, hvect);
     HDIVIDE(point, hvect);
     nmg_vertex_gv(eu->vu_p->v_p, point);	/* 0, 0 vertex */
 
@@ -3208,7 +3247,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
     VSET(uvw, 0, 1, 0);
     nmg_vertexuse_a_cnurb(eu->eumate_p->vu_p, uvw);
 
-    rt_nurb_s_eval(fg, 1., 1., hvect);
+    nmg_nurb_s_eval(fg, 1., 1., hvect);
     HDIVIDE(point, hvect);
     nmg_vertex_gv(eu->vu_p->v_p, point);		/* 4, 1 vertex */
 

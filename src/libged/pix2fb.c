@@ -1,7 +1,7 @@
 /*                        P I X 2 F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,11 +36,9 @@
 #ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
 #endif
-#include "bio.h"
 
 #include "bu/getopt.h"
 #include "fb.h"
-#include "fbserv_obj.h"
 
 #include "pkg.h"
 #include "ged.h"
@@ -80,7 +78,7 @@ get_args(int argc, char **argv)
     int c;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "1m:ahiczF:p:s:w:n:x:y:X:Y:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "1m:aiczF:p:s:w:n:x:y:X:Y:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case '1':
 		one_line_only = 1;
@@ -90,12 +88,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_height = file_width = 1024;
-		scr_height = scr_width = 1024;
-		autosize = 0;
 		break;
 	    case 'i':
 		inverse = 1;
@@ -144,7 +136,7 @@ get_args(int argc, char **argv)
 		pause_sec=atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -154,6 +146,7 @@ get_args(int argc, char **argv)
 	    return 0;
 	file_name = "-";
 	infd = 0;
+	setmode(infd, O_BINARY);
     } else {
 	file_name = argv[bu_optind];
 	if ((infd = open(file_name, 0)) < 0) {

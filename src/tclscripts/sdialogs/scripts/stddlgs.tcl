@@ -1,7 +1,7 @@
 #                     S T D D L G S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2014 United States Government as represented by
+# Copyright (c) 2006-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,13 +19,7 @@
 #
 ###
 #
-# DESCRIPTION
 #    General dialogs.
-#
-# AUTHOR
-#    Keith Bowman
-#    Doug Howard
-#    Bob Parker
 #
 ##############################################################
 

@@ -1,7 +1,7 @@
 /*                         B O T _ S P L I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,9 +28,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
-#include "rtgeom.h"	/* for rt_bot_split (in raytrace.h) */
+#include "bu/path.h"
+#include "rt/geom.h"	/* for rt_bot_split (in raytrace.h) */
 #include "./ged_private.h"
 
 
@@ -63,8 +63,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
     for (i = 1; i < argc; ++i) {
 	struct rt_bot_list *headRblp = NULL;
 	/* Skip past any path elements */
-	char *obj = (char *)bu_calloc(strlen(argv[i]), sizeof(char), "ged_bot_split obj");
-	bu_basename(obj, argv[i]);
+	char *obj = bu_basename(argv[i], NULL);
 
 	if (BU_STR_EQUAL(obj, ".")) {
 	    /* malformed path, lookup using exactly what was provided */
@@ -117,12 +116,12 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 		bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		bot_intern.idb_type = ID_BOT;
 		bot_intern.idb_meth = &OBJ[ID_BOT];
-		bot_intern.idb_ptr = (genptr_t)rblp->bot;
+		bot_intern.idb_ptr = (void *)rblp->bot;
 
 		/* Save new bot name for later use */
 		bu_vls_printf(&new_bots, "%s ", bu_vls_addr(gedp->ged_result_str));
 
-		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
+		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&bot_intern.idb_type);
 		if (dp == RT_DIR_NULL) {
 		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);

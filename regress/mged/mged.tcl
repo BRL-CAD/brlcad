@@ -1,7 +1,7 @@
 #                         M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -148,7 +148,7 @@ add_test arb mged
 add_test comb mged
 add_test g mged
 add_test r mged
-add_test make_bb mged
+add_test bb mged
 add_test cp mged
 add_test cpi mged
 add_test mv mged
@@ -167,7 +167,6 @@ add_test draw mged
 add_test erase mged
 add_test Z mged
 add_test B mged
-add_test dall mged
 add_test hide mged
 add_test unhide mged
 

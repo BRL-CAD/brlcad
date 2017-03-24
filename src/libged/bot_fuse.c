@@ -1,7 +1,7 @@
 /*                         B O T _ F U S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,12 +28,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "bu/getopt.h"
 #include "bu/parallel.h"
-#include "rtgeom.h"
-#include "plot3.h"
+#include "rt/geom.h"
+#include "bn/plot3.h"
 
 #include "./ged_private.h"
 
@@ -65,14 +64,14 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 
     if (out_type == 1) {
 	vbp = rt_vlblock_init();
-	vhead = rt_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
+	vhead = bn_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
     }
 
     bu_ptbl_init(&faces, 64, "faces buffer");
-    nmg_face_tabulate(&faces, magic_p);
+    nmg_face_tabulate(&faces, magic_p, &RTG.rtg_vlfree);
 
     cnt = 0;
-    for (i = 0; i < (size_t)BU_PTBL_END(&faces) ; i++) {
+    for (i = 0; i < (size_t)BU_PTBL_LEN(&faces) ; i++) {
 	fp = (struct face *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACE(fp);
 	fu = fu1 = fp->fu_p;
@@ -127,8 +126,8 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 
     if (out_type == 1) {
 	/* Add overlay */
-	_ged_cvt_vlblock_to_solids(gedp, vbp, (char *)name, 0);
-	rt_vlblock_free(vbp);
+	_ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
+	bn_vlblock_free(vbp);
 	bu_log("Showing open edges...\n");
     } else if (out_type == 2) {
 	if (plotfp) {
@@ -235,13 +234,13 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
 
     /* Step 1 -- the vertices. */
     bu_log("%s: running nmg_vertex_fuse\n", argv[0]);
-    count = nmg_vertex_fuse(&m->magic, tol);
+    count = nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, tol);
     total += count;
     bu_log("%s: %s, %d vertex fused\n", argv[0], argv[i+1], count);
 
     /* Step 1.5 -- break edges on vertices, before fusing edges */
     bu_log("%s: running nmg_break_e_on_v\n", argv[0]);
-    count = nmg_break_e_on_v(&m->magic, tol);
+    count = nmg_break_e_on_v(&m->magic, &RTG.rtg_vlfree, tol);
     total += count;
     bu_log("%s: %s, %d broke 'e' on 'v'\n", argv[0], argv[i+1], count);
 
@@ -257,19 +256,19 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
 
 	for (BU_LIST_FOR(r2, nmgregion, &m->r_hd)) {
 	    for (BU_LIST_FOR(s, shell, &r2->s_hd))
-		nmg_make_faces_within_tol(s, tol);
+		nmg_make_faces_within_tol(s, &RTG.rtg_vlfree, tol);
 	}
     }
 
     /* Step 2 -- the face geometry */
     bu_log("%s: running nmg_model_face_fuse\n", argv[0]);
-    count = nmg_model_face_fuse(m, tol);
+    count = nmg_model_face_fuse(m, &RTG.rtg_vlfree, tol);
     total += count;
     bu_log("%s: %s, %d faces fused\n", argv[0], argv[i+1], count);
 
     /* Step 3 -- edges */
     bu_log("%s: running nmg_edge_fuse\n", argv[0]);
-    count = nmg_edge_fuse(&m->magic, tol);
+    count = nmg_edge_fuse(&m->magic, &RTG.rtg_vlfree, tol);
     total += count;
 
     bu_log("%s: %s, %d edges fused\n", argv[0], argv[i+1], count);
@@ -280,7 +279,7 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
 	/* try */
 
 	/* convert the nmg model back into a bot */
-	bot = nmg_bot(BU_LIST_FIRST(shell, &r->s_hd), tol);
+	bot = nmg_bot(BU_LIST_FIRST(shell, &r->s_hd), &RTG.rtg_vlfree, tol);
 
 	bu_vls_sprintf(&name_prefix, "open_edges.%s", argv[i]);
 	bu_log("%s: running show_dangling_edges\n", argv[0]);
@@ -301,9 +300,9 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
     intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern2.idb_type = ID_BOT;
     intern2.idb_meth = &OBJ[ID_BOT];
-    intern2.idb_ptr = (genptr_t)bot;
+    intern2.idb_ptr = (void *)bot;
 
-    GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern2.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern2.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern2, &rt_uniresource, GED_ERROR);
 
     bu_log("%s: Created new BOT (%s)\n", argv[0], argv[i]);

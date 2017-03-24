@@ -1,7 +1,7 @@
 #               B R L C A D _ U T I L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 #-----------------------------------------------------------------------------
 # Pretty-printing macro that generates a box around a string and prints the
 # resulting message.
-macro(BOX_PRINT input_string border_string)
+function(BOX_PRINT input_string border_string)
   string(LENGTH ${input_string} MESSAGE_LENGTH)
   string(LENGTH ${border_string} SEPARATOR_STRING_LENGTH)
   while(${MESSAGE_LENGTH} GREATER ${SEPARATOR_STRING_LENGTH})
@@ -46,32 +46,7 @@ macro(BOX_PRINT input_string border_string)
   message("${SEPARATOR_STRING}")
   message("${input_string}")
   message("${SEPARATOR_STRING}")
-endmacro()
-
-#-----------------------------------------------------------------------------
-# For situations like file copying, where we sometimes need to autogenerate
-# target names, it is important to make sure we can avoid generating absurdly
-# long names.  To do this, we run candidate names through a length filter
-# and use their MD5 hash if they are too long.
-macro(BRLCAD_TARGET_NAME input_string outputvar)
-  string(REGEX REPLACE "/" "_" targetstr ${input_string})
-  string(REGEX REPLACE "\\." "_" targetstr ${targetstr})
-  string(LENGTH "${targetstr}" STRLEN)
-  # If the input string is longer than 30 characters, generate a
-  # shorter string using the md5 hash.  It will be cryptic but
-  # the odds are very good it'll be a unique target name
-  # and the string will be short enough, which is what we need.
-  if ("${STRLEN}" GREATER 30)
-    file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS "${targetstr}")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS OUTPUT_VARIABLE targetname)
-    string(REPLACE " ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS" "" targetname "${targetname}")
-    string(STRIP "${targetname}" targetname)
-    file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS)
-    set(${outpvar} ${targetname})
-  else ("${STRLEN}" GREATER 30)
-    set(${outputvar} "${targetstr}")
-  endif ("${STRLEN}" GREATER 30)
-endmacro(BRLCAD_TARGET_NAME)
+endfunction()
 
 
 #-----------------------------------------------------------------------------
@@ -88,19 +63,40 @@ macro(NORMALIZE_FILE_LIST inlist targetvar fullpath_targetvar)
   # First, figure out whether we have list contents or a list name
   set(havevarname 0)
   foreach(maybefilename ${inlist})
-    if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
       set(havevarname 1)
-    endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
+    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
   endforeach(maybefilename ${${targetvar}})
 
   # Put the list contents in the targetvar variable and
   # generate a target name.
   if(NOT havevarname)
+
     set(${targetvar} "${inlist}")
-    BRLCAD_TARGET_NAME("${inlist}" targetname)
+
+    # Initial clean-up
+    string(REGEX REPLACE " " "_" targetstr "${inlist}")
+    string(REGEX REPLACE "/" "_" targetstr "${targetstr}")
+    string(REGEX REPLACE "\\." "_" targetstr "${targetstr}")
+
+    # For situations like file copying, where we sometimes need to autogenerate
+    # target names, it is important to make sure we can avoid generating absurdly
+    # long names.  To do this, we run candidate names through a length filter
+    # and use their MD5 hash if they are longer than 30 characters.
+    # It's cryptic but the odds are very good the result will be a unique
+    # target name and the string will be short enough, which is what we need.
+    string(LENGTH "${targetstr}" STRLEN)
+    if ("${STRLEN}" GREATER 30)
+      string(MD5 targetname "${targetstr}")
+    else ("${STRLEN}" GREATER 30)
+      set(targetname "${targetstr}")
+    endif ("${STRLEN}" GREATER 30)
+
   else(NOT havevarname)
+
     set(${targetvar} "${${inlist}}")
     set(targetname "${inlist}")
+
   endif(NOT havevarname)
 
   # Mark the inputs as files to ignore in distcheck
@@ -164,7 +160,7 @@ endmacro(BRLCAD_GET_DIR_LIST_CONTENTS)
 # The routine below does the check without using regex matching, in order to
 # handle path names that contain characters that would be interpreted as active
 # in a regex string.
-macro(IS_SUBPATH in_candidate_subpath in_full_path result_var)
+function(IS_SUBPATH in_candidate_subpath in_full_path result_var)
   # Convert paths to lists of directories - regex based
   # matching won't work reliably, so instead look at each
   # element compared to its corresponding element in the
@@ -180,7 +176,7 @@ macro(IS_SUBPATH in_candidate_subpath in_full_path result_var)
   string(LENGTH "${full_path}" FULL_LENGTH)
   string(LENGTH "${candidate_subpath}" SUB_LENGTH)
   if("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
-    set(${result_var} 0)
+    set(${result_var} 0 PARENT_SCOPE)
   else("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
     # OK, maybe it's a subpath - time to actually check
     string(REPLACE "/" ";" full_path_list "${full_path}")
@@ -198,17 +194,17 @@ macro(IS_SUBPATH in_candidate_subpath in_full_path result_var)
     endwhile(NOT found_difference AND candidate_subpath_list)
     # Now we know - report the result
     if(NOT found_difference)
-      set(${result_var} 1)
+      set(${result_var} 1 PARENT_SCOPE)
     else(NOT found_difference)
-      set(${result_var} 0)
+      set(${result_var} 0 PARENT_SCOPE)
     endif(NOT found_difference)
   endif("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
-endmacro(IS_SUBPATH)
+endfunction(IS_SUBPATH)
 
 #-----------------------------------------------------------------------------
 # Determine whether a list of source files contains all C, all C++, or
 # mixed source types.
-macro(SRCS_LANG sourceslist resultvar targetname)
+function(SRCS_LANG sourceslist resultvar targetname)
   # Check whether we have a mixed C/C++ library or just a single language.
   # If the former, different compilation flag management is needed.
   set(has_C 0)
@@ -229,16 +225,28 @@ macro(SRCS_LANG sourceslist resultvar targetname)
       message("WARNING - file ${srcfile} listed in the ${targetname} sources list does not appear to be a C or C++ file.")
     endif(NOT file_language)
   endforeach(srcfile ${sourceslist})
-  set(${resultvar} "UNKNOWN")
+  set(${resultvar} "UNKNOWN" PARENT_SCOPE)
   if(has_C AND has_CXX)
-    set(${resultvar} "MIXED")
+    set(${resultvar} "MIXED" PARENT_SCOPE)
   elseif(has_C AND NOT has_CXX)
-    set(${resultvar} "C")
+    set(${resultvar} "C" PARENT_SCOPE)
   elseif(NOT has_C AND has_CXX)
-    set(${resultvar} "CXX")
+    set(${resultvar} "CXX" PARENT_SCOPE)
   endif(has_C AND has_CXX)
-endmacro(SRCS_LANG)
+endfunction(SRCS_LANG)
 
+#---------------------------------------------------------------------------
+# Add dependencies to a target, but only if they are defined as targets in
+# CMake
+function(ADD_TARGET_DEPS tname)
+  if(TARGET ${tname})
+    foreach(target ${ARGN})
+      if(TARGET ${target})
+	add_dependencies(${tname} ${target})
+      endif(TARGET ${target})
+    endforeach(target ${ARGN})
+  endif(TARGET ${tname})
+endfunction(ADD_TARGET_DEPS tname)
 
 # Local Variables:
 # tab-width: 8

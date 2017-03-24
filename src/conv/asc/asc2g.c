@@ -1,7 +1,7 @@
 /*                         A S C 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,18 +31,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "bio.h"
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/cv.h"
+#include "bu/debug.h"
+#include "bu/vls.h"
+#include "bu/units.h"
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "tclcad.h"
 
 
@@ -100,17 +102,6 @@ nxt_spc(char *cp)
 	cp++;
     }
     return cp;
-}
-
-
-int
-ngran(int nfloat)
-{
-    int gran;
-    /* Round up */
-    gran = nfloat + ((sizeof(union record)-1) / sizeof(float));
-    gran = (gran * sizeof(float)) / sizeof(union record);
-    return gran;
 }
 
 
@@ -184,11 +175,6 @@ strsolbld(void)
     type = strtok_r(NULL, delim, &saveptr);
     name = strtok_r(NULL, delim, &saveptr);
     args = strtok_r(NULL, end_delim, &saveptr);
-#elif defined(HAVE_STRSEP)
-    (void)strsep(&buf2, delim);		/* skip stringsolid_id */
-    type = strsep(&buf2, delim);
-    name = strsep(&buf2, delim);
-    args = strsep(&buf2, end_delim);
 #else
     (void)strtok(buf2, delim);		/* skip stringsolid_id */
     type = strtok(NULL, delim);
@@ -202,7 +188,7 @@ strsolbld(void)
 	BU_ALLOC(dsp, struct rt_dsp_internal);
 	bu_vls_init(&dsp->dsp_name);
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, OBJ[ID_DSP].ft_parsetab, (char *)dsp) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_DSP].ft_parsetab, (char *)dsp, NULL) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("dsp");
@@ -211,7 +197,7 @@ strsolbld(void)
 	    goto out;
 	}
 	dsp->magic = RT_DSP_INTERNAL_MAGIC;
-	if (wdb_export(ofp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm) < 0) {
+	if (wdb_export(ofp, name, (void *)dsp, ID_DSP, mk_conv2mm) < 0) {
 	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
 		   name, type, args);
 	    goto out;
@@ -225,7 +211,7 @@ strsolbld(void)
 	MAT_IDN(ebm->mat);
 
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, OBJ[ID_EBM].ft_parsetab, (char *)ebm) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_EBM].ft_parsetab, (char *)ebm, NULL) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("ebm");
@@ -234,7 +220,7 @@ strsolbld(void)
 	    return;
 	}
 	ebm->magic = RT_EBM_INTERNAL_MAGIC;
-	if (wdb_export(ofp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm) < 0) {
+	if (wdb_export(ofp, name, (void *)ebm, ID_EBM, mk_conv2mm) < 0) {
 	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
 		   name, type, args);
 	    goto out;
@@ -247,7 +233,7 @@ strsolbld(void)
 	MAT_IDN(vol->mat);
 
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, OBJ[ID_VOL].ft_parsetab, (char *)vol) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_VOL].ft_parsetab, (char *)vol, NULL) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("vol");
@@ -256,7 +242,7 @@ strsolbld(void)
 	    return;
 	}
 	vol->magic = RT_VOL_INTERNAL_MAGIC;
-	if (wdb_export(ofp, name, (genptr_t)vol, ID_VOL, mk_conv2mm) < 0) {
+	if (wdb_export(ofp, name, (void *)vol, ID_VOL, mk_conv2mm) < 0) {
 	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
 		   name, type, args);
 	    goto out;
@@ -314,7 +300,6 @@ sktbld(void)
 	bu_exit(-1, "Unexpected EOF while reading sketch (%s) data\n", name);
 
     verts = (point2d_t *)bu_calloc(vert_count, sizeof(point2d_t), "verts");
-    cp = buf;
     ptr = strtok(buf, " ");
     if (!ptr)
 	bu_exit(1, "ERROR: no vertices for sketch (%s)\n", name);
@@ -339,7 +324,7 @@ sktbld(void)
     crv = &skt->curve;
     crv->count = seg_count;
 
-    crv->segment = (genptr_t *)bu_calloc(crv->count, sizeof(genptr_t), "segments");
+    crv->segment = (void **)bu_calloc(crv->count, sizeof(void *), "segments");
     crv->reverse = (int *)bu_calloc(crv->count, sizeof(int), "reverse");
     for (j=0; j<crv->count; j++) {
 	double radius;
@@ -472,7 +457,7 @@ nmgbld(void)
     ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26*SIZEOF_NETWORK_LONG + 128 * granules;
     ext.ext_buf = (uint8_t *)bu_malloc(ext.ext_nbytes, "nmg ext_buf");
     *(uint32_t *)ext.ext_buf = htonl(version);
-    BU_ASSERT_LONG(version, ==, 1);	/* DISK_MODEL_VERSION */
+    BU_ASSERT(version == 1);	/* DISK_MODEL_VERSION */
 
     /* Get next line of input with the 26 counts on it */
     if (bu_fgets(buf, BUFSIZE, ifp) == (char *)0)
@@ -581,7 +566,7 @@ solbld(void)
 	    VUNITIZE(n);
 
 	    /* Prevent illegal torii from floating point fuzz */
-	    if (rad2 > rad1) rad2 = rad1;
+	    V_MIN(rad2, rad1);
 
 	    mk_tor(ofp, NAME, center, n, rad1, rad2);
 	    break;
@@ -754,11 +739,13 @@ int
 combbld(void)
 {
     struct bu_list head;
-    char *cp;
-    char *np;
-    int temp_nflag, temp_pflag;
+    char *cp = NULL;
+    char *np = NULL;
+    /* indicators for optional fields */
+    int temp_nflag = 0;
+    int temp_pflag = 0;
 
-    char override;
+    char override = 0;
     char reg_flags;	/* region flag */
     int is_reg;
     short regionid;
@@ -772,9 +759,6 @@ combbld(void)
 
     /* Set all flags initially. */
     BU_LIST_INIT(&head);
-
-    override = 0;
-    temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
 
     cp = buf;
     cp++;			/* ID_COMB */
@@ -1070,7 +1054,7 @@ polyhbld(void)
 	if (bu_fgets(buf, BUFSIZE, ifp) == NULL) break;
 	if (buf[0] != ID_P_DATA) break;	/* 'Q' */
     }
-    BU_ASSERT_LONG(nlines, >, 0);
+    BU_ASSERT(nlines > 0);
 
     /* Allocate storage for the faces */
     BU_ALLOC(pg, struct rt_pg_internal);
@@ -1099,7 +1083,7 @@ polyhbld(void)
 	cp = nxt_spc(cp);		/* skip the space */
 
 	fp->npts = (char)atoi(cp);
-	if (fp->npts > pg->max_npts) pg->max_npts = fp->npts;
+	CLAMP(pg->max_npts, fp->npts, pg->npoly * 3);
 
 	for (i = 0; i < 5*3; i++) {
 	    cp = nxt_spc(cp);
@@ -1155,7 +1139,6 @@ materbld(void)
     cp++;			/* skip ID_MATERIAL */
     cp = nxt_spc(cp);		/* skip the space */
 
-    /* flags = (char)atoi(cp); */
     cp = nxt_spc(cp);
     low = (short)atoi(cp);
     cp = nxt_spc(cp);
@@ -1472,7 +1455,7 @@ bracecnt(char *line)
     int cnt = 0;
 
     start = line;
-    while(*start != '\0') {
+    while (*start != '\0') {
 	if (*start == '{') {
 	    cnt++;
 	} else if (*start == '}') {
@@ -1518,7 +1501,7 @@ gettclblock(struct bu_vls *line, FILE *fp)
 		escapedcr = 0;
 	    }
 	}
-	ret = bu_vls_strlen(line);
+	ret = (int)bu_vls_strlen(line);
     }
     bu_vls_free(&tmp);
 
@@ -1553,16 +1536,14 @@ main(int argc, char *argv[])
 	bu_exit(1, "asc2g: can't open files.");
     }
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     bu_vls_extend(&line, SIZE);
     bu_vls_strcpy(&str_title, "title");
     bu_vls_strcpy(&str_put, "put ");
 
     while (isComment) {
 	char *str;
-	int charIndex;
-	int len;
+	size_t charIndex;
+	size_t len;
 	bu_vls_trunc(&line, 0);
 	if (bu_vls_gets(&line, ifp) < 0) {
 	    fclose(ifp); ifp = NULL;

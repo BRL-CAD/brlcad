@@ -1,0 +1,168 @@
+#     S O U R C E _ A R C H I V E _ S E T U P . C M A K E . I N
+#
+# BRL-CAD
+#
+# Copyright (c) 2011-2016 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Need to recursively go down the directories to get a full list.
+# Easier to use a function, so maintain the directory list in
+# a global property
+function(FIND_ALL_DIRS seed_dir)
+  file(GLOB dir_contents "${seed_dir}/*")
+  foreach(content_file ${dir_contents})
+    if(IS_DIRECTORY "${content_file}")
+      get_property(ALL_DIRS_LIST GLOBAL PROPERTY ALL_DIRS_LIST)
+      list(FIND ALL_DIRS_LIST "${content_file}" IN_LIST)
+      if("${IN_LIST}" STREQUAL "-1")
+	set_property(GLOBAL APPEND PROPERTY ALL_DIRS_LIST "${content_file}")
+	FIND_ALL_DIRS(${content_file})
+      endif("${IN_LIST}" STREQUAL "-1")
+    endif(IS_DIRECTORY "${content_file}")
+  endforeach(content_file ${dir_contents})
+endfunction(FIND_ALL_DIRS)
+
+if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
+  file(GLOB_RECURSE pre_existing_files "@CMAKE_BINARY_DIR@/source_archive_contents/*")
+  file(STRINGS "@CMAKE_BINARY_DIR@/cmakefiles.cmake" source_tree_files)
+  file(STRINGS "@CMAKE_BINARY_DIR@/cmakedirs.cmake" ignored_dirctories)
+  if(EXISTS "@CMAKE_BINARY_DIR@/cpack_ignore.cmake")
+    file(STRINGS "@CMAKE_BINARY_DIR@/cpack_ignore.cmake" ignored_src_files)
+  endif(EXISTS "@CMAKE_BINARY_DIR@/cpack_ignore.cmake")
+
+  message("Preparing file list...")
+
+  # Remove duplicates and scrub directories out of source_tree_files
+  list(REMOVE_DUPLICATES source_tree_files)
+  foreach(ITEM ${source_tree_files})
+    if(IS_DIRECTORY ${ITEM})
+      list(REMOVE_ITEM source_tree_files ${ITEM})
+    endif(IS_DIRECTORY ${ITEM})
+  endforeach(ITEM ${source_tree_files})
+
+  # Collect all files from ignored directories
+  set(dir_filelist)
+  foreach(ITEM ${ignored_dirctories})
+    file(GLOB_RECURSE dir_files "${ITEM}/*")
+    foreach(DITEM ${dir_files})
+      if(NOT IS_DIRECTORY ${DITEM} AND NOT "${DITEM}" MATCHES ".svn/")
+	list(APPEND dir_filelist ${DITEM})
+      endif(NOT IS_DIRECTORY ${DITEM} AND NOT "${DITEM}" MATCHES ".svn/")
+    endforeach(DITEM ${dir_files})
+  endforeach(ITEM ${ignored_dirctories})
+
+
+  if(ignored_src_files)
+    message("Removing ignored files...")
+  endif(ignored_src_files)
+
+  # If we have a list of files to ignore from repo-verify, build it
+  # into full paths
+  set(ignored_srcs_full)
+  foreach(ITEM ${ignored_src_files})
+    list(APPEND ignored_srcs_full "@CMAKE_SOURCE_DIR@/${ITEM}")
+  endforeach(ITEM ${ignored_src_files})
+
+  # Remove the ignored files from the globbed file list, which is where
+  # they might have crept in
+  if(ignored_srcs_full)
+    list(REMOVE_ITEM dir_filelist ${ignored_srcs_full})
+  endif(ignored_srcs_full)
+
+  # Combine the source lists into the final list
+  set(final_list ${source_tree_files} ${dir_filelist})
+
+  # Do the actual copy
+  message("Copying files...")
+  set(processed_files)
+  set(processed 0)
+  list(LENGTH final_list file_count)
+  foreach(source_file ${final_list})
+    string(REPLACE "@CMAKE_SOURCE_DIR@/" "@CMAKE_BINARY_DIR@/source_archive_contents/" outfile "${source_file}")
+    if(EXISTS ${outfile})
+      if("${source_file}" IS_NEWER_THAN ${outfile})
+	execute_process(COMMAND "@CMAKE_COMMAND@" -E copy ${source_file} ${outfile})
+      endif("${source_file}" IS_NEWER_THAN ${outfile})
+    else(EXISTS ${outfile})
+      execute_process(COMMAND "@CMAKE_COMMAND@" -E copy ${source_file} ${outfile})
+    endif(EXISTS ${outfile})
+    list(APPEND processed_files "${outfile}")
+    math(EXPR processed "${processed} + 1")
+    math(EXPR skip_msg  "${processed} % 1000")
+    if(${skip_msg} EQUAL 0)
+      message("${processed} of ${file_count} files copied.")
+    endif(${skip_msg} EQUAL 0)
+  endforeach(source_file ${final_list})
+
+  # Remove anything already in the destination dir that should no longer be there
+  message("Removing any leftover files from previous runs...")
+  list(REMOVE_ITEM pre_existing_files ${processed_files})
+  foreach(extra_file ${pre_existing_files})
+    execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f ${extra_file})
+  endforeach(extra_file ${pre_existing_files})
+
+  # Scrub any empty directories the above may have introduced
+  file(GLOB remaining_files "@CMAKE_BINARY_DIR@/source_archive_contents")
+  foreach(candidate ${remaining_files})
+    if(IS_DIRECTORY "${candidate}")
+      set_property(GLOBAL APPEND PROPERTY ALL_DIRS_LIST "${candidate}")
+    endif(IS_DIRECTORY "${candidate}")
+    get_property(ALL_DIRS_LIST_TOP GLOBAL PROPERTY ALL_DIRS_LIST)
+    foreach(dir ${ALL_DIRS_LIST_TOP})
+      FIND_ALL_DIRS(${dir})
+    endforeach(dir ${ALL_DIRS_LIST_TOP})
+  endforeach(candidate ${remaining_files})
+  set(HAVE_EMPTY_DIRS 1)
+  while(HAVE_EMPTY_DIRS)
+    set(HAVE_EMPTY_DIRS 0)
+    get_property(ALL_DIRS_LIST GLOBAL PROPERTY ALL_DIRS_LIST)
+    foreach(candidate ${ALL_DIRS_LIST})
+      set(dir_contents)
+      file(GLOB dir_contents "${candidate}/*")
+      if(NOT dir_contents)
+	list(REMOVE_ITEM ALL_DIRS_LIST "${candidate}")
+	set_property(GLOBAL PROPERTY ALL_DIRS_LIST "${ALL_DIRS_LIST}")
+	file(REMOVE_RECURSE "${candidate}")
+	set(HAVE_EMPTY_DIRS 1)
+      endif(NOT dir_contents)
+    endforeach(candidate ${dir_list})
+  endwhile(HAVE_EMPTY_DIRS)
+
+
+endif(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

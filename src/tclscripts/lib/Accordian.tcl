@@ -1,7 +1,7 @@
 #                      A C C O R D I A N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
 #   This widget has two modes: single selection and multiple selection, which is
 #   different from tabs which operate only in a single selection mode.
 
+package provide cadwidgets::Accordian 1.0
 
 ::itcl::class cadwidgets::Accordian {
     inherit ::itk::Widget

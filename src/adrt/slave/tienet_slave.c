@@ -1,7 +1,7 @@
 /*                  T I E N E T _ S L A V E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2014 United States Government as represented by
+ * Copyright (c) 2002-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,16 +34,15 @@
 #include <netdb.h>
 #include <string.h>
 
+#include <zlib.h>
+
 #include "bio.h"
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "tienet.h"
 
 #include "tienet_slave.h"
 
-#if TN_COMPRESSION
-# include <zlib.h>
-#endif
 
 
 void	tienet_slave_worker(int port, char *host);
@@ -96,18 +95,14 @@ void tienet_slave_worker(int port, char *host) {
     short op;
     uint32_t size;
     int slave_socket;
-#if TN_COMPRESSION
     tienet_buffer_t buffer_comp;
     unsigned long dest_len;
-#endif
 
 
     /* Initialize res_buf to NULL for realloc'ing */
     TIENET_BUFFER_INIT(result);
     TIENET_BUFFER_INIT(buffer);
-#if TN_COMPRESSION
     TIENET_BUFFER_INIT(buffer_comp);
-#endif
 
     if (gethostbyname(host)) {
 	h = gethostbyname(host)[0];
@@ -193,7 +188,7 @@ void tienet_slave_worker(int port, char *host) {
 	    TCOPY(uint32_t, &result.ind, 0, buffer.data, buffer.ind);
 	    buffer.ind += sizeof(uint32_t);
 
-#if TN_COMPRESSION
+#if defined(ADRT_USE_COMPRESSION) && ADRT_USE_COMPRESSION
 	    /* Compress the result buffer */
 	    TIENET_BUFFER_SIZE(buffer_comp, result.ind+32);
 
@@ -219,9 +214,7 @@ void tienet_slave_worker(int port, char *host) {
 
     TIENET_BUFFER_FREE(result);
     TIENET_BUFFER_FREE(buffer);
-#if TN_COMPRESSION
     TIENET_BUFFER_FREE(buffer_comp);
-#endif
 }
 
 /*

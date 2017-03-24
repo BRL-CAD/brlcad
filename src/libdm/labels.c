@@ -1,7 +1,7 @@
 /*                          L A B E L S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,21 +19,18 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
-#include <stdio.h>
 #include <math.h>
 
 #include "vmath.h"
-#include "bu.h"
 #include "bn.h"
-#include "db.h"
-#include "mater.h"
+#include "rt/db4.h"
+#include "raytrace.h"
 #include "nmg.h"
-#include "rtgeom.h"
-#include "nurb.h"
-#include "solid.h"
+#include "rt/geom.h"
+#include "rt/solid.h"
 #include "dm.h"
+#include "dm_private.h"
 
 /*
  * Put labels on the vertices of the currently edited solid.
@@ -542,12 +539,12 @@ dm_label_primitive(struct rt_wdb *wdbp,
 
 
 int
-dm_draw_labels(struct dm *dmp,
+dm_draw_labels(dm *dmp,
 	       struct rt_wdb *wdbp,
 	       const char *name,
 	       mat_t viewmat,
 	       int *labelsColor,
-	       int (*LabelsHook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData),
+	       int (*LabelsHook)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData),
 	       ClientData labelsHookClientdata)
 {
 #define MAX_PL 8+1
@@ -558,7 +555,7 @@ dm_draw_labels(struct dm *dmp,
     struct db_tree_state ts;
     struct db_full_path path;
 
-    if (LabelsHook != (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0)
+    if (LabelsHook != (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0)
 	return LabelsHook(dmp, wdbp, name,
 			  viewmat, labelsColor,
 			  labelsHookClientdata);
@@ -587,7 +584,7 @@ dm_draw_labels(struct dm *dmp,
 
     dm_label_primitive(wdbp, pl, MAX_PL, viewmat, &intern);
 
-    DM_SET_FGCOLOR(dmp,
+    dm_set_fg(dmp,
 		   (unsigned char)labelsColor[0],
 		   (unsigned char)labelsColor[1],
 		   (unsigned char)labelsColor[2],
@@ -597,7 +594,7 @@ dm_draw_labels(struct dm *dmp,
 	if (pl[i].str[0] == '\0')
 	    break;
 
-	DM_DRAW_STRING_2D(dmp, pl[i].str,
+	dm_draw_string_2d(dmp, pl[i].str,
 			  (((int)(pl[i].pt[X]*GED_MAX))+15)*INV_GED,
 			  (((int)(pl[i].pt[Y]*GED_MAX))+15)*INV_GED, 0, 1);
     }

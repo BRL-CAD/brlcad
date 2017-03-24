@@ -1,7 +1,7 @@
 /*                       R E M A P I D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,9 +36,11 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/redblack.h"
+#include "bu/vls.h"
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -55,7 +57,7 @@ struct remapid_file {
     int file_needline;	/* time to grab another line? */
     int file_linenm;
     int file_comment;	/* the comment character */
-    int file_buflen;	/* length of intact buffer */
+    size_t file_buflen;	/* length of intact buffer */
 };
 typedef struct remapid_file REMAPID_FILE;
 #define REMAPID_FILE_MAGIC 0x6275666c
@@ -71,7 +73,7 @@ extern REMAPID_FILE bu_iob[1];
  * XXX - The following initialization of bu_stdin is essentially
  * an inline version of remapid_fopen() and bu_vls_init().  As
  * such, it depends heavily on the definitions of struct
- * remapid_file and struct bu_vls in ../h/bu.h
+ * remapid_file and struct bu_vls
  */
 char dmy_eos = '\0';
 REMAPID_FILE bu_iob[1] = {
@@ -106,7 +108,7 @@ remapid_fopen(char *fname, char *type)
     bfp->file_needline = 1;
     bfp->file_linenm = 0;
     bfp->file_comment = '#';
-    bfp->file_buflen = -1;
+    bfp->file_buflen = 0;
 
     return bfp;
 }
@@ -130,7 +132,7 @@ remapid_fclose(REMAPID_FILE *bfp)
 	bfp->file_name = (char *) 0;
 	bfp->file_bp = (char *) 0;
 	bu_vls_free(&(bfp->file_buf));
-	bu_free((genptr_t) bfp, "remapid_file struct");
+	bu_free((void *) bfp, "remapid_file struct");
     }
     return close_status;
 }
@@ -168,7 +170,7 @@ remapid_fgetc(REMAPID_FILE *bfp)
 	    continue;
 
 	if (strip_comments) {
-	    bfp->file_buflen = -1;
+	    bfp->file_buflen = 0;
 	    for (cp = bfp->file_bp; *cp != '\0'; ++cp)
 		if (*cp == comment_char) {
 		    bfp->file_buflen = (bfp->file_buf).vls_len;
@@ -193,21 +195,23 @@ remapid_file_err(REMAPID_FILE *bfp, char *text1, char *text2, ssize_t cursor_pos
 {
     char *cp;
     int buflen;
-    int i;
-    int stripped_length;
+    size_t i;
+    size_t stripped_length;
 
     BU_CK_FILE(bfp);
 
     /*
      * Show any trailing comments
      */
-    if ((buflen = bfp->file_buflen) > -1) {
+    buflen = bfp->file_buflen;
+    if (buflen > 0) {
 	stripped_length = (bfp->file_buf).vls_len;
 	*(bu_vls_addr(&(bfp->file_buf)) + stripped_length) =
 	    bfp->file_comment;
 	(bfp->file_buf).vls_len = buflen;
-    } else
-	stripped_length = -1;
+    } else {
+	stripped_length = 0;
+    }
 
     /*
      * Print out the first line of the error message
@@ -225,7 +229,7 @@ remapid_file_err(REMAPID_FILE *bfp, char *text1, char *text2, ssize_t cursor_pos
 	&& ((size_t)cursor_pos < bu_vls_strlen(&(bfp->file_buf))))
     {
 	cp = bu_vls_addr(&(bfp->file_buf));
-	for (i = 0; i < cursor_pos; ++i)
+	for (i = 0; i < (size_t)cursor_pos; ++i)
 	    if (*cp++ == '\t')
 		bu_log("\t");
 	    else
@@ -236,8 +240,7 @@ remapid_file_err(REMAPID_FILE *bfp, char *text1, char *text2, ssize_t cursor_pos
     /*
      * Hide the comments again
      */
-    if (stripped_length > -1)
-	bu_vls_trunc(&(bfp->file_buf), stripped_length);
+    bu_vls_trunc(&(bfp->file_buf), stripped_length);
 }
 
 
@@ -405,7 +408,7 @@ void
 free_curr_id(struct curr_id *cip)
 {
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
-    bu_free((genptr_t) cip, "curr_id");
+    bu_free((void *) cip, "curr_id");
 }
 
 
@@ -471,9 +474,9 @@ void
 free_remap_reg(struct remap_reg *rp)
 {
     BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
-    bu_free((genptr_t) rp->rr_name, "region name");
-    bu_free((genptr_t) rp->rr_ip, "rt_db_internal");
-    bu_free((genptr_t) rp, "remap_reg");
+    bu_free((void *) rp->rr_name, "region name");
+    bu_free((void *) rp->rr_ip, "rt_db_internal");
+    bu_free((void *) rp, "remap_reg");
 }
 
 
@@ -719,7 +722,7 @@ write_assignment(void *v, int UNUSED(depth))
 }
 
 
-HIDDEN void
+static void
 tankill_reassign(char *db_name)
 {
     FILE *fd_in;
@@ -798,6 +801,9 @@ main(int argc, char **argv)
 
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.  It is considered superseded by reid+remat\n\n");
+    sleep(1);
+
     while ((ch = bu_getopt(argc, argv, "gth?")) != -1)
 	switch (ch) {
 	    case 'g':
@@ -820,8 +826,6 @@ main(int argc, char **argv)
 	default:
 	    print_usage();
     }
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /*
      * Open database and specification file, as necessary

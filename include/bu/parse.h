@@ -1,7 +1,7 @@
 /*                      P A R S E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file parse.h
- *
- */
 #ifndef BU_PARSE_H
 #define BU_PARSE_H
 
@@ -34,17 +31,22 @@
 
 __BEGIN_DECLS
 
-/*----------------------------------------------------------------------*/
-/* parse.c */
-/** @addtogroup parse */
-/** @{ */
-/*
- * Structure parse/print
+/** @addtogroup bu_parse
  *
+ * @brief
  * Definitions and data structures needed for routines that assign
  * values to elements of arbitrary data structures, the layout of
  * which is described by tables of "bu_structparse" structures.
+ *
+ * parse.c defines routines to assign values to elements of arbitrary structures.  The
+ * layout of a structure to be processed is described by a structure
+ * of type "bu_structparse", giving element names, element formats, an
+ * offset from the beginning of the structure, and a pointer to an
+ * optional "hooked" function that is called whenever that structure
+ * element is changed.
  */
+/** @{ */
+/** @file bu/parse.h */
 
 /**
  * The general problem of word-addressed hardware where (int *) and
@@ -142,14 +144,28 @@ struct bu_structparse {
     void (*sp_hook)(const struct bu_structparse *,
 		    const char *,
 		    void *,
-		    const char *);	/**< Optional hooked function, or indir ptr */
+		    const char *,
+		    void *);	/**< Optional hooked function, or indir ptr */
     const char *sp_desc;		/**< description of element */
     void *sp_default;		       /**< ptr to default value */
 };
 typedef struct bu_structparse bu_structparse_t;
 #define BU_STRUCTPARSE_NULL ((struct bu_structparse *)0)
 
-#define BU_STRUCTPARSE_FUNC_NULL ((void(*)(const struct bu_structparse *, const char *, void *, const char *))0)
+#define BU_STRUCTPARSE_FUNC_NULL ((void(*)(const struct bu_structparse *, const char *, void *, const char *, void *))0)
+
+/* There are situations (such as the usage pattern in libdm)
+ * where applications may want to associate structparse
+ * functions with variables but not set up a full structparse
+ * table. */
+struct bu_structparse_map {
+    const char *sp_name;
+    void (*sp_hook)(const struct bu_structparse *,
+		    const char *,
+		    void *,
+		    const char *,
+		    void *);	/**< Optional hooked function, or indir ptr */
+};
 
 /**
  * assert the integrity of a bu_structparse struct.
@@ -212,18 +228,30 @@ typedef struct bu_external bu_external_t;
 /**
  * initializes a bu_external struct without allocating any memory.
  */
-#define BU_EXTERNAL_INIT(_p) { \
+#if defined(USE_BINARY_ATTRIBUTES)
+  #define BU_EXTERNAL_INIT(_p) { \
+	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
+	(_p)->ext_nbytes = 0; \
+	(_p)->widcode = 0; \
+	(_p)->ext_buf = NULL; \
+    }
+#else
+  #define BU_EXTERNAL_INIT(_p) { \
 	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
 	(_p)->ext_nbytes = 0; \
 	(_p)->ext_buf = NULL; \
     }
+#endif
 
 /**
  * macro suitable for declaration statement initialization of a
  * bu_external struct. does not allocate memory.
  */
-#define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, NULL }
-
+#if defined(USE_BINARY_ATTRIBUTES)
+  #define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, 0, NULL }
+#else
+  #define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, NULL }
+#endif
 /**
  * returns truthfully whether a bu_external struct has been
  * initialized.  is not reliable unless the struct has been
@@ -231,17 +259,7 @@ typedef struct bu_external bu_external_t;
  */
 #define BU_EXTERNAL_IS_INITIALIZED(_p) (((struct bu_external *)(_p) != BU_EXTERNAL_NULL) && (_p)->ext_magic == BU_EXTERNAL_MAGIC)
 
-/** @file libbu/parse.c
- *
- * routines for parsing arbitrary structures
- *
- * Routines to assign values to elements of arbitrary structures.  The
- * layout of a structure to be processed is described by a structure
- * of type "bu_structparse", giving element names, element formats, an
- * offset from the beginning of the structure, and a pointer to an
- * optional "hooked" function that is called whenever that structure
- * element is changed.
- */
+/** @brief routines for parsing arbitrary structures */
 
 /**
  * ASCII to struct elements.
@@ -254,7 +272,8 @@ typedef struct bu_external bu_external_t;
  */
 BU_EXPORT extern int bu_struct_parse(const struct bu_vls *in_vls,
 				     const struct bu_structparse *desc,
-				     const char *base);
+				     const char *base,
+				     void *data);
 
 /**
  * struct elements to ASCII.
@@ -269,7 +288,7 @@ BU_EXPORT extern void bu_struct_print(const char *title,
  * copies ext data to base
  */
 BU_EXPORT extern int bu_struct_export(struct bu_external *ext,
-				      const genptr_t base,
+				      const void *base,
 				      const struct bu_structparse *imp);
 
 /**
@@ -277,9 +296,10 @@ BU_EXPORT extern int bu_struct_export(struct bu_external *ext,
  *
  * copies ext data to base
  */
-BU_EXPORT extern int bu_struct_import(genptr_t base,
+BU_EXPORT extern int bu_struct_import(void *base,
 				      const struct bu_structparse *imp,
-				      const struct bu_external *ext);
+				      const struct bu_external *ext,
+				      void *data);
 
 /**
  * Put a structure in external form to a stdio file.  All formatting
@@ -308,7 +328,7 @@ BU_EXPORT extern size_t bu_struct_get(struct bu_external *ext,
  * bu_external structure, suitable for passing to bu_struct_import().
  */
 BU_EXPORT extern void bu_struct_wrap_buf(struct bu_external *ext,
-					 genptr_t buf);
+					 void *buf);
 
 /**
  * This differs from bu_struct_print in that this output is less
@@ -421,6 +441,7 @@ BU_EXPORT extern void bu_structparse_get_terse_form(struct bu_vls *logstr,
  * @param argv - contains the keyword-value pairs
  * @param desc - structure description
  * @param base - base addr of users struct
+ * @param data - user data to be passed to the sp_hook function
  *
  * @retval BRLCAD_OK if successful,
  * @retval BRLCAD_ERROR on failure
@@ -429,7 +450,8 @@ BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 					 int argc,
 					 const char **argv,
 					 const struct bu_structparse *desc,
-					 char *base);
+					 char *base,
+					 void *data);
 
 /**
  * Skip the separator(s) (i.e. whitespace and open-braces)
@@ -440,33 +462,6 @@ BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 	while (*(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
 			  *(_cp) == '\t' || *(_cp) == '{'))  ++(_cp); \
     }
-
-
-/** @file libbu/booleanize.c
- *
- * routines for parsing boolean values from strings
- */
-
-/**
- * Returns truthfully if a given input string represents an
- * "affirmative string".
- *
- * Input values that are null, empty, begin with the letter 'n', or
- * are 0-valued return as false.  Any other input value returns as
- * true.  Strings that strongly indicate true return as 1, other
- * values still return as true but may be a value greater than 1.
- */
-BU_EXPORT extern int bu_str_true(const char *str);
-
-/**
- * Returns truthfully if a given input string represents a
- * "negative string".
- *
- * Input values that are null, empty, begin with the letter 'n', or
- * are 0-valued return as true.  Any other input value returns as
- * false.
- */
-BU_EXPORT extern int bu_str_false(const char *str);
 
 
 /** @} */

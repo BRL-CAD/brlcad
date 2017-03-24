@@ -1,32 +1,40 @@
 set(bu_headers
   avs.h
   bitv.h
-  bu_tcl.h
   cmd.h
   color.h
   cv.h
   debug.h
   defines.h
   endian.h
+  env.h
+  exit.h
   file.h
   getopt.h
   hash.h
   hist.h
+  hook.h
   list.h
   log.h
   magic.h
   malloc.h
   mapped_file.h
+  namegen.h
+  observer.h
+  opt.h
   parallel.h
   parse.h
+  path.h
   ptbl.h
-  rb.h
+  redblack.h
   simd.h
   sort.h
   str.h
   time.h
   units.h
-  vfont-if.h
+  uuid.h
+  version.h
+  vfont.h
   vlb.h
   vls.h
   )

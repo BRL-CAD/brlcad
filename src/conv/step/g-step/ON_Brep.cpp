@@ -1,7 +1,7 @@
 /*                     O N _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -107,7 +107,7 @@ Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, ON_Brep_Info_AP203 *info)
 	    // add the edge
 	    oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
 	    info->oriented_edges.push_back(new_oriented_edge);
-	    i = info->oriented_edges.size() - 1;
+	    i = (int)info->oriented_edges.size() - 1;
 	    e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
 	}
     }
@@ -123,8 +123,6 @@ void
 Populate_Instance_List(ON_Brep_Info_AP203 *info)
 {
     std::vector<STEPentity *>::iterator v_it;
-    std::map<int, std::pair<STEPentity *, STEPentity *> >::iterator c_it;
-    std::map<int, STEPentity * >::iterator mpt_it;
 
     /* Topology */
 
@@ -134,64 +132,64 @@ Populate_Instance_List(ON_Brep_Info_AP203 *info)
     info->instance_list->Append((STEPentity *)(info->closed_shell), completeSE);
 
     // Faces
-    for(v_it = info->faces.begin(); v_it != info->faces.end(); ++v_it) {
+    for (v_it = info->faces.begin(); v_it != info->faces.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // inner_bounds
-    for(v_it = info->inner_bounds.begin(); v_it != info->inner_bounds.end(); ++v_it) {
+    for (v_it = info->inner_bounds.begin(); v_it != info->inner_bounds.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // outer_bounds
-    for(v_it = info->outer_bounds.begin(); v_it != info->outer_bounds.end(); ++v_it) {
+    for (v_it = info->outer_bounds.begin(); v_it != info->outer_bounds.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // edge_loops
-    for(v_it = info->edge_loops.begin(); v_it != info->edge_loops.end(); ++v_it) {
+    for (v_it = info->edge_loops.begin(); v_it != info->edge_loops.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // oriented_edges
-    for(v_it = info->oriented_edges.begin(); v_it != info->oriented_edges.end(); ++v_it) {
+    for (v_it = info->oriented_edges.begin(); v_it != info->oriented_edges.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // edge_curves
-    for(v_it = info->edge_curves.begin(); v_it != info->edge_curves.end(); ++v_it) {
+    for (v_it = info->edge_curves.begin(); v_it != info->edge_curves.end(); ++v_it) {
 	if (*v_it) info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // vertex_pnts
-    for(v_it = info->vertex_pnts.begin(); v_it != info->vertex_pnts.end(); ++v_it) {
+    for (v_it = info->vertex_pnts.begin(); v_it != info->vertex_pnts.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     /* Geometry */
 
     // surfaces
-    for(v_it = info->surfaces.begin(); v_it != info->surfaces.end(); ++v_it) {
+    for (v_it = info->surfaces.begin(); v_it != info->surfaces.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // three_dimensional_curves
-    for(v_it = info->three_dimensional_curves.begin(); v_it != info->three_dimensional_curves.end(); ++v_it) {
+    for (v_it = info->three_dimensional_curves.begin(); v_it != info->three_dimensional_curves.end(); ++v_it) {
 	if (*v_it) info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // directions
-    for(v_it = info->directions.begin(); v_it != info->directions.end(); ++v_it) {
+    for (v_it = info->directions.begin(); v_it != info->directions.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // vectors
-    for(v_it = info->vectors.begin(); v_it != info->vectors.end(); ++v_it) {
+    for (v_it = info->vectors.begin(); v_it != info->vectors.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     // cartesian_pnts
-    for(v_it = info->cartesian_pnts.begin(); v_it != info->cartesian_pnts.end(); ++v_it) {
+    for (v_it = info->cartesian_pnts.begin(); v_it != info->cartesian_pnts.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
@@ -201,7 +199,7 @@ Populate_Instance_List(ON_Brep_Info_AP203 *info)
 
 //TODO - technically, we'll have to create a full set of STEP
 //objects for the empty brep to be "valid" - currently, the Closed_Shell
-//will warn about invalidity on import.  Not sure if its worth it.
+//will warn about invalidity on import.  Not sure if it's worth it.
 void
 STEP_Empty_BRep(struct directory *dp, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product, STEPentity **brep_manifold)
 {
@@ -432,15 +430,15 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPent
 	     * surface composites do not offer a hook that is compatible with the C++
 	     * surface_form_ method.*/
 	    /*
-	    if(rev_surface->IsPlanar()) {
+	    if (rev_surface->IsPlanar()) {
 	    }
-	    if(rev_surface->IsSphere()) {
+	    if (rev_surface->IsSphere()) {
 	    }
-	    if(rev_surface->IsCylinder()) {
+	    if (rev_surface->IsCylinder()) {
 	    }
-	    if(rev_surface->IsCone()) {
+	    if (rev_surface->IsCone()) {
 	    }
-	    if(rev_surface->IsTorus()) {
+	    if (rev_surface->IsTorus()) {
 	    }*/
 	    /* If none of the other conditions are satisfied, by definition we still have
 	     * a surface of revolution...*/

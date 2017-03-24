@@ -1,7 +1,7 @@
 /*                         D B _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 
@@ -48,8 +48,8 @@
  * 0 OK
  * -1 FAILURE
  */
-HIDDEN int
-db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
+int
+db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset)
 /* byte count */
 /* byte offset from start of file */
 {
@@ -123,7 +123,7 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
     if (db_read(dbip, (char *)where,
 		dp->d_len * sizeof(union record),
 		dp->d_addr) < 0) {
-	bu_free((genptr_t)where, "db_getmrec record[]");
+	bu_free((void *)where, "db_getmrec record[]");
 	return (union record *)0;	/* VERY BAD */
     }
     return where;
@@ -167,7 +167,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 
 
 int
-db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
+db_write(struct db_i *dbip, const void *addr, size_t count, off_t offset)
 {
     register size_t got;
 

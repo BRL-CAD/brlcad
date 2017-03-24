@@ -1,7 +1,7 @@
 /*                         E X I S T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
 
@@ -154,7 +153,7 @@ struct exists_data {
     struct ged *gedp;
     int no_op;
 };
-
+#define EXISTS_DATA_INIT_ZERO {NULL, NULL, NULL, NULL, 0}
 
 static int oexpr(enum token, struct exists_data *);
 static int aexpr(enum token, struct exists_data *);
@@ -446,10 +445,10 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 {
 /* struct directory *dp;*/
     static const char *usage = "object";
-    struct exists_data ed;
+    struct exists_data ed = EXISTS_DATA_INIT_ZERO;
     struct bu_vls message = BU_VLS_INIT_ZERO;
     int result;
-    char **argv = bu_dup_argv(argc, argv_orig);
+    char **argv = bu_argv_dup(argc, argv_orig);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);

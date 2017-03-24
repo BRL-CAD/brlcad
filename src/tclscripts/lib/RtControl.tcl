@@ -1,7 +1,7 @@
 #                   R T C O N T R O L . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2014 United States Government as represented by
+# Copyright (c) 1998-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -478,14 +478,7 @@
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
-    set cooked_dest [get_cooked_dest]
-
-    set fbclear [file join [bu_brlcad_root "bin"] fbclear]
-    set result [catch {eval exec "\"$fbclear\"" -F $cooked_dest $rtColor &} rt_error]
-
-    if {$result} {
-	error $rt_error
-    }
+    $itk_option(-mged) fbclear $rtColor
 }
 
 ::itcl::body RtControl::raytrace {} {

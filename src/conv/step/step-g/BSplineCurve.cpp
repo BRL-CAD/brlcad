@@ -1,7 +1,7 @@
 /*                 BSplineCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,6 +80,7 @@ BSplineCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!BoundedCurve::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -99,6 +100,7 @@ BSplineCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'control_points_list'." << std::endl;
 		l->clear();
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		delete l;
 		return false;
 	    }
@@ -111,9 +113,9 @@ BSplineCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     self_intersect = step->getLogicalAttribute(sse, "self_intersect");
     degree = step->getIntegerAttribute(sse, "degree");
     curve_form = (B_spline_curve_form)step->getEnumAttribute(sse, "curve_form");
-    if (curve_form > B_spline_curve_form_unset) {
-	curve_form = B_spline_curve_form_unset;
-    }
+    V_MIN(curve_form, B_spline_curve_form_unset);
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return retValue;
 }

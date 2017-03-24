@@ -1,7 +1,7 @@
 /*                 B R E P _ S I M P L E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,23 +51,12 @@
 
 #include "common.h"
 
-/* without OBJ_BREP, this entire procedural example is disabled */
-#ifdef OBJ_BREP
-
 #include "twistedcube.h"
 
 #include "bio.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
-
-#ifdef __cplusplus
-}
-#endif
 
 
 /* Prevent enum conflict with vmath.h */
@@ -258,9 +247,9 @@ main(int argc, char** argv)
     	printusage();
     	return 0;
     }
-    if (argc >= 1) {
+    if (argc > 1) {
     	printusage();
-    	fprintf(stderr,"       Program continues running (will create file brep_simple.g):\n");
+	return 1;
     }
 
     ON::Begin();
@@ -306,19 +295,6 @@ main(int argc, char** argv)
     return 0;
 }
 
-
-#else /* !OBJ_BREP */
-
-int
-main(int argc, char *argv[])
-{
-    printf("ERROR: Boundary Representation object support is not available with\n"
-	   "       this compilation of BRL-CAD.\n");
-    return 1;
-}
-
-
-#endif /* OBJ_BREP */
 
 /*
  * Local Variables:

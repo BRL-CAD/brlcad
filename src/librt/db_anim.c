@@ -1,7 +1,7 @@
 /*                       D B _ A N I M . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2014 United States Government as represented by
+ * Copyright (c) 1987-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
@@ -150,7 +149,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		break;
 	    }
 	    if (anp->an_u.anu_p.anp_op == RT_ANP_REPLACE) {
-		if (materp->ma_shader) bu_free((genptr_t)materp->ma_shader, "ma_shader");
+		if (materp->ma_shader) bu_free((void *)materp->ma_shader, "ma_shader");
 		materp->ma_shader = bu_vls_strdup(&anp->an_u.anu_p.anp_shader);
 	    } else if (anp->an_u.anu_p.anp_op == RT_ANP_APPEND) {
 		struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -158,7 +157,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		bu_vls_strcpy(&str, materp->ma_shader);
 		bu_vls_putc(&str, ' ');
 		bu_vls_vlscat(&str, &anp->an_u.anu_p.anp_shader);
-		if (materp->ma_shader) bu_free((genptr_t)materp->ma_shader, "ma_shader");
+		if (materp->ma_shader) bu_free((void *)materp->ma_shader, "ma_shader");
 		materp->ma_shader = bu_vls_strgrab(&str);
 		/* bu_vls_free(&str) is done by bu_vls_strgrab() */
 	    } else

@@ -1,7 +1,7 @@
 /*                        S H _ P R J . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,11 +38,10 @@
 #include <sys/stat.h>
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 #define prj_MAGIC 0x70726a00	/* "prj" */
@@ -98,7 +97,8 @@ HIDDEN void
 img_source_hook(const struct bu_structparse *UNUSED(sdp),
 		const char *sp_name,
 		void *base,
-		const char *UNUSED(value))
+		const char *UNUSED(value),
+		void *UNUSED(data))
 {
     struct img_specific *imageSpecific = (struct img_specific *)base;
     if (bu_strncmp(sp_name, "file", 4) == 0) {
@@ -209,7 +209,8 @@ HIDDEN void
 persp_hook(const struct bu_structparse *UNUSED(sdp),
 	   const char *UNUSED(name),
 	   void *base,
-	   const char *value)
+	   const char *value,
+	   void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -239,7 +240,8 @@ HIDDEN void
 dimen_hook(const struct bu_structparse *sdp,
 	   const char *UNUSED(name),
 	   void *base,
-	   const char *value)
+	   const char *value,
+	   void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -277,7 +279,8 @@ static void
 orient_hook(const struct bu_structparse *UNUSED(sdp),
 	    const char *UNUSED(name),
 	    void *base,
-	    const char *UNUSED(value))
+	    const char *UNUSED(value),
+	    void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -408,10 +411,10 @@ struct bu_structparse img_print_tab[] = {
 };
 
 
-HIDDEN int prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void prj_print(register struct region *rp, genptr_t dp);
-HIDDEN void prj_free(genptr_t cp);
+HIDDEN int prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void prj_print(register struct region *rp, void *dp);
+HIDDEN void prj_free(void *cp);
 
 /**
  * The "mfuncs" structure defines the external interface to the shader.
@@ -437,7 +440,7 @@ struct mfuncs prj_mfuncs[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 /* pointer to reg_udata in *rp */
 /* New since 4.4 release */
 {
@@ -514,7 +517,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     prj_sp->prj_images.i_datasrc = IMG_SRC_AUTO;
 
     if (bu_struct_parse(&parameter_data, img_parse_tab,
-			(char *)&prj_sp->prj_images) < 0) {
+			(char *)&prj_sp->prj_images, NULL) < 0) {
 	bu_log("ERROR: Unable to properly parse projection shader parameters\n");
 	return -1;
     }
@@ -572,7 +575,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 
 
 HIDDEN void
-prj_print(register struct region *rp, genptr_t dp)
+prj_print(register struct region *rp, void *dp)
 {
     struct prj_specific *prj_sp = (struct prj_specific *)dp;
     struct img_specific *img_sp;
@@ -584,7 +587,7 @@ prj_print(register struct region *rp, genptr_t dp)
 
 
 HIDDEN void
-prj_free(genptr_t cp)
+prj_free(void *cp)
 {
     struct prj_specific *prj_sp = (struct prj_specific *)cp;
 
@@ -687,7 +690,7 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
  * structure.
  */
 int
-prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 /* defined in material.h */
 /* ptr to the shader-specific struct */
 {

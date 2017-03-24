@@ -1,7 +1,7 @@
 /*                       S H _ F L A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,15 +51,15 @@
 #include "optical.h"
 
 
-HIDDEN int flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void flat_print(register struct region *rp, genptr_t dp);
-HIDDEN void flat_free(genptr_t cp);
+HIDDEN int flat_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void flat_print(register struct region *rp, void *dp);
+HIDDEN void flat_free(void *cp);
 
 /* local sp_hook functions */
 /* these are two helper functions to process input color and transparency values */
-void normalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *);
-void singleNormalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *);
+void normalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
+void singleNormalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /*
  * the shader specific structure contains all variables which are unique
@@ -139,7 +139,8 @@ void
 normalizedInput_hook(const struct bu_structparse *sdp,
 		     const char *UNUSED(name),
 		     void *base,
-		     const char *UNUSED(value))
+		     const char *UNUSED(value),
+		     void *UNUSED(data))
 {
     register double *p = (double *)((char *)base + sdp->sp_offset);
     size_t i;
@@ -176,12 +177,13 @@ void
 singleNormalizedInput_hook(const struct bu_structparse *sdp,
 			   const char *name,
 			   void *base,
-			   const char *value)
+			   const char *value,
+			   void *data)
 {
 
     register double *p = (double *)((char *)base + sdp->sp_offset);
 
-    normalizedInput_hook(sdp, name, base, value);
+    normalizedInput_hook(sdp, name, base, value, data);
 
     /* copy the first value into the next two locations */
     *(p+1) = *p;
@@ -195,7 +197,7 @@ singleNormalizedInput_hook(const struct bu_structparse *sdp,
  * default values are set.  Then any user-given values override.
  */
 HIDDEN int
-flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+flat_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
 
     register struct flat_specific *flat_sp;
@@ -228,7 +230,7 @@ flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     }
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, flat_parse_tab, (char *)flat_sp) < 0)
+    if (bu_struct_parse(matparm, flat_parse_tab, (char *)flat_sp, NULL) < 0)
 	return -1;
 
     if (rdebug&RDEBUG_SHADE) {
@@ -251,7 +253,7 @@ flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
  * one we are shading and blend accordingly with the flat color.
  */
 int
-flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
 
     register struct flat_specific *flat_sp = (struct flat_specific *)dp;
@@ -293,14 +295,14 @@ flat_render(struct application *ap, const struct partition *pp, struct shadework
 
 
 HIDDEN void
-flat_print(register struct region *rp, genptr_t dp)
+flat_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, flat_parse_tab, (char *)dp);
 }
 
 
 HIDDEN void
-flat_free(genptr_t cp)
+flat_free(void *cp)
 {
     BU_PUT(cp, struct flat_specific);
 }

@@ -1,7 +1,7 @@
 /*              D Y N A M I C _ G E O M E T R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2014 United States Government as represented by
+ * Copyright (c) 2003-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,12 +54,10 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -80,7 +78,7 @@ make_hole(struct rt_wdb *wdbp,		/* database to be modified */
     struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
     int i, base_len, count=0;
 
-    RT_CHECK_WDB(wdbp);
+    RT_CK_WDB(wdbp);
 
     /* make sure we are only making holes in combinations, they do not
      * have to be regions

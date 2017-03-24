@@ -1,7 +1,7 @@
 #                B U I L D _ R E G I O N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2000-2014 United States Government as represented by
+# Copyright (c) 2000-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -42,9 +42,6 @@
 #	contains the unioned objects.
 #	When a new region is created, its properties are determined by the current "regdef" settings, and
 #	the regdef ident number is incremented.
-#
-#	Author:
-#		John R. Anderson
 #
 
 proc build_region { args } {

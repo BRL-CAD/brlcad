@@ -1,7 +1,7 @@
 #                        M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2014 United States Government as represented by
+# Copyright (c) 1998-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -97,7 +97,6 @@ option add *Mged.height 400 widgetDefault
 	method ls {args}
 	method lt {args}
 	method make {args}
-	method make_bb {name args}
 	method make_name {args}
 	method match {args}
 	method mater {args}
@@ -121,7 +120,6 @@ option add *Mged.height 400 widgetDefault
 	method push {args}
 	method put {args}
 	method r {args}
-	method report {args}
 	method rm {args}
 	method rmap {args}
 	method rmater {args}
@@ -134,6 +132,7 @@ option add *Mged.height 400 widgetDefault
 	method shareDb {_db}
 	method shells {args}
 	method showmats {args}
+	method solid_report {args}
 	method summary {args}
 	method title {args}
 	method tol {args}
@@ -545,10 +544,6 @@ option add *Mged.height 400 widgetDefault
     }
 }
 
-::itcl::body Mged::make_bb {name args} {
-    eval $db make_bb $name $args
-}
-
 ::itcl::body Mged::make_name {args} {
     eval $db make_name $args
 }
@@ -716,8 +711,8 @@ option add *Mged.height 400 widgetDefault
     eval $db r $args
 }
 
-::itcl::body Mged::report {args} {
-    eval $db report $args
+::itcl::body Mged::solid_report {args} {
+    eval $db solid_report $args
 }
 
 ::itcl::body Mged::attachObservers {} {

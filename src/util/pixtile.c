@@ -1,7 +1,7 @@
 /*                       P I X T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,12 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/exit.h"
+#include "bu/log.h"
 
 
 int file_width = 64;	/* width of input sub-images in pixels (64) */
@@ -42,7 +47,7 @@ char *base_name;		/* basename of input file(s) */
 int framenumber = 0;	/* starting frame number (default is 0) */
 
 char usage[] = "\
-Usage: pixtile [-h] [-s squareinsize] [-w file_width] [-n file_height]\n\
+Usage: pixtile [-s squareinsize] [-w file_width] [-n file_height]\n\
 	[-S squareoutsize] [-W out_width] [-N out_height]\n\
 	[-o startframe] basename [file2 ... fileN] >file.pix\n";
 
@@ -52,12 +57,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hs:w:n:S:W:N:o:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:o:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		scr_height = scr_width = 1024;
-		break;
 	    case 's':
 		/* square input file size */
 		file_height = file_width = atoi(bu_optarg);
@@ -80,8 +81,8 @@ get_args(int argc, char **argv)
 	    case 'o':
 		framenumber = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
-		return 0;	/* Bad */
+	    default:		/* '?''h' */
+		return 0;	/* Bad, other than option '?' or 'h' */
 	}
     }
 

@@ -1,7 +1,7 @@
 /*                         R T S R V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
-#  include <sys/resource.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
@@ -42,17 +41,14 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bselect.h"
-#include "bio.h"
+#include "bresource.h"
+#include "bsocket.h"
 
 #ifdef VMIN
 #  undef VMIN
 #endif
 
-#include "bu.h"
+#include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -74,7 +70,7 @@ struct pkg_queue {
 };
 
 /***** Variables shared with viewing model *** */
-FBIO *fbp = FBIO_NULL;	/* Framebuffer handle */
+fb *fbp = FB_NULL;	/* Framebuffer handle */
 FILE *outfp = NULL;		/* optional pixel output file */
 mat_t view2model;
 mat_t model2view;
@@ -92,7 +88,7 @@ vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 /***** end variables shared with worker() *****/
 
-/* Variables shared within mainline pieces */
+/* Variables shared elsewhere */
 extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 extern int	rdebug;			/* RT program debugging (not library) */
@@ -239,14 +235,8 @@ main(int argc, char **argv)
 	setpgrp();
 #endif
 
-	/*
-	 *  Unless controller process has specifically said
-	 *  that this is an interactive session, e.g., for a demo,
-	 *  drop to the lowest sensible priority.
-	 */
-	if (!interactive)  {
-	    bu_nice_set(19);		/* lowest priority */
-	}
+	/* Drop to the lowest sensible priority. */
+	bu_nice_set(19);
 
 	/* Close off the world */
 	fclose(stdin);
@@ -296,17 +286,9 @@ main(int argc, char **argv)
 	RTG.rtg_parallel = 1;
     } else
 	RTG.rtg_parallel = 0;
-    bu_semaphore_init(RT_SEM_LAST);
 
     bu_log("using %d of %d cpus\n",
 	   npsw, avail_cpus);
-
-    /*
-     *  Initialize the non-parallel memory resource.
-     *  The parallel guys are initialized after the rt_dirbuild().
-     */
-    rt_init_resource(&rt_uniresource, MAX_PSW, NULL);
-    bn_rand_init(rt_uniresource.re_randptr, MAX_PSW);
 
     BU_LIST_INIT(&WorkHead);
 
@@ -461,9 +443,9 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
      *  Initialize all the per-CPU memory resources.
      *  Go for the max, as TCL interface may change npsw as we run.
      */
+    memset(resource, 0, sizeof(resource));
     for (n=0; n < MAX_PSW; n++)  {
 	rt_init_resource(&resource[n], n, rtip);
-	bn_rand_init(resource[n].re_randptr, n);
     }
 
     if (pkg_send(MSG_DIRBUILD_REPLY,
@@ -579,10 +561,13 @@ ph_options(struct pkg_conn *UNUSED(pc), char *buf)
     process_cmd(buf);
 
     /* Just in case command processed was "opt -P" */
-    if (npsw < 0)  {
-	/* Negative number means "all but #" available */
-	npsw = avail_cpus - npsw;
-    }
+    /* need to decouple parsing of user args from the npsw processor
+     * thread count being used, which should be an unsigned/size_t
+     * type. -- CSM */
+/*     if (npsw < 0)  { */
+/* 	/\* Negative number means "all but #" available *\/ */
+/* 	npsw = avail_cpus - npsw; */
+/*     } */
 
     /* basic bounds sanity */
     if (npsw > MAX_PSW)
@@ -709,7 +694,7 @@ ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
     info.li_cpusec = rt_read_timer((char *)0, 0);
     info.li_percent = 42.0;	/* for now */
 
-    if (!bu_struct_export(&ext, (genptr_t)&info, desc_line_info))
+    if (!bu_struct_export(&ext, (void *)&info, desc_line_info))
 	bu_exit(98, "ph_lines: bu_struct_export failure\n");
 
     if (debug)  {
@@ -793,12 +778,10 @@ bu_log(const char *fmt, ...)
 }
 
 
-/*
- *  Replacement for the LIBBU routine of the same name.
+/* override libbu's bu_bomb() function.
+ *
+ * FIXME: should register a bu_bomb() handler instead of this hack.
  */
-int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
-jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
-
 void
 bu_bomb(const char *str)
 {
@@ -817,6 +800,7 @@ bu_bomb(const char *str)
     bu_exit(12, NULL);
 }
 
+
 void
 ph_unexp(struct pkg_conn *pc, char *buf)
 {
@@ -833,6 +817,7 @@ ph_unexp(struct pkg_conn *pc, char *buf)
     (void)free(buf);
 }
 
+
 void
 ph_end(struct pkg_conn *UNUSED(pc), char *UNUSED(buf))
 {
@@ -841,12 +826,14 @@ ph_end(struct pkg_conn *UNUSED(pc), char *UNUSED(buf))
     bu_exit(0, NULL);
 }
 
+
 void
 ph_print(struct pkg_conn *UNUSED(pc), char *buf)
 {
     fprintf(stderr, "msg: %s\n", buf);
     (void)free(buf);
 }
+
 
 /* Stub for do.c */
 void

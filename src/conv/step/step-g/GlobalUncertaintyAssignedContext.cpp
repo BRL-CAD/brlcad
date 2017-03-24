@@ -1,7 +1,7 @@
 /*                 GlobalUncertaintyAssignedContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,6 +63,7 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instanc
     // load base class attributes
     if (!RepresentationContext::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -82,6 +83,7 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instanc
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'uncertainty'." << std::endl;
 		l->clear();
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		delete l;
 		return false;
 	    }
@@ -89,6 +91,7 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instanc
 	l->clear();
 	delete l;
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

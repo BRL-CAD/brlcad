@@ -1,7 +1,7 @@
 /*                       D B _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2014 United States Government as represented by
+ * Copyright (c) 1996-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,6 @@
 #include "common.h"
 
 #include <limits.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
@@ -45,8 +44,7 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
-#include "mater.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 #include "../librt_private.h"
@@ -210,22 +208,22 @@ rt_comb_import4(
 
     for (j = 0; j < node_count; j++) {
 	if (rp[j+1].u_id != ID_MEMB) {
-	    bu_free((genptr_t)rt_tree_array, "rt_comb_import4: rt_tree_array");
+	    bu_free((void *)rt_tree_array, "rt_comb_import4: rt_tree_array");
 	    bu_log("rt_comb_import4(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id);
 	    return -1;
 	}
 
 	switch (rp[j+1].M.m_relation) {
-	    case '+':
+	    case DB_OP_INTERSECT:
 		rt_tree_array[j].tl_op = OP_INTERSECT;
 		break;
-	    case '-':
+	    case DB_OP_SUBTRACT:
 		rt_tree_array[j].tl_op = OP_SUBTRACT;
 		break;
 	    default:
 		bu_log("rt_comb_import4() unknown op=x%x, assuming UNION\n", rp[j+1].M.m_relation);
 		/* Fall through */
-	    case 'u':
+	    case DB_OP_UNION:
 		rt_tree_array[j].tl_op = OP_UNION;
 		break;
 	}
@@ -302,7 +300,7 @@ rt_comb_import4(
 
     comb->tree = tree;
 
-    ip->idb_ptr = (genptr_t)comb;
+    ip->idb_ptr = (void *)comb;
 
     switch (rp[0].c.c_flags) {
 	case DBV4_NON_REGION_NULL:
@@ -389,7 +387,7 @@ rt_comb_import4(
     if (comb->region_flag)
 	bu_vls_printf(&comb->material, "gift%ld", comb->GIFTmater);
 
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
 
     return 0;
 }
@@ -438,7 +436,7 @@ rt_comb_export4(
 	/* Convert tree into array form */
 	actual_count = db_flatten_tree(rt_tree_array, comb->tree,
 				       OP_UNION, 1, resp) - rt_tree_array;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
@@ -460,13 +458,13 @@ rt_comb_export4(
 	rp[j+1].u_id = ID_MEMB;
 	switch (rt_tree_array[j].tl_op) {
 	    case OP_INTERSECT:
-		rp[j+1].M.m_relation = '+';
+		rp[j+1].M.m_relation = DB_OP_INTERSECT;
 		break;
 	    case OP_SUBTRACT:
-		rp[j+1].M.m_relation = '-';
+		rp[j+1].M.m_relation = DB_OP_SUBTRACT;
 		break;
 	    case OP_UNION:
-		rp[j+1].M.m_relation = 'u';
+		rp[j+1].M.m_relation = DB_OP_UNION;
 		break;
 	    default:
 		bu_bomb("rt_comb_export4() corrupt rt_tree_array");
@@ -623,18 +621,18 @@ db_tree_flatten_describe(
 	union tree *itp = rt_tree_array[i].tl_tree;
 
 	RT_CK_TREE(itp);
-	BU_ASSERT_LONG(itp->tr_op, ==, OP_DB_LEAF);
-	BU_ASSERT_PTR(itp->tr_l.tl_name, !=, NULL);
+	BU_ASSERT(itp->tr_op == OP_DB_LEAF);
+	BU_ASSERT(itp->tr_l.tl_name != NULL);
 
 	switch (rt_tree_array[i].tl_op) {
 	    case OP_INTERSECT:
-		op = '+';
+		op = DB_OP_INTERSECT;
 		break;
 	    case OP_SUBTRACT:
-		op = '-';
+		op = DB_OP_SUBTRACT;
 		break;
 	    case OP_UNION:
-		op = 'u';
+		op = DB_OP_UNION;
 		break;
 	    default:
 		bu_bomb("db_tree_flatten_describe() corrupt rt_tree_array");
@@ -671,7 +669,7 @@ db_tree_flatten_describe(
 	bu_vls_printf(vls, "\n");
     }
 
-    if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
+    if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
     db_free_tree(ntp, resp);
 }
 
@@ -733,15 +731,15 @@ db_tree_describe(
 	    /* This node is known to be a binary op */
 	case OP_UNION:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
-	    bu_vls_strcat(vls, "u ");
+	    bu_vls_printf(vls, "%c ", DB_OP_UNION);
 	    goto bin;
 	case OP_INTERSECT:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
-	    bu_vls_strcat(vls, "+ ");
+	    bu_vls_printf(vls, "%c ", DB_OP_INTERSECT);
 	    goto bin;
 	case OP_SUBTRACT:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
-	    bu_vls_strcat(vls, "- ");
+	    bu_vls_printf(vls, "%c ", DB_OP_SUBTRACT);
 	    goto bin;
 	case OP_XOR:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
@@ -853,9 +851,9 @@ rt_comb_ifree(struct rt_db_internal *ip)
 	/* If tree hasn't been stolen, release it */
 	db_free_tree(comb->tree, &rt_uniresource);
 	RT_FREE_COMB_INTERNAL(comb);
-	bu_free((genptr_t)comb, "comb ifree");
+	bu_free((void *)comb, "comb ifree");
     }
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -1025,7 +1023,7 @@ db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource
 
     RT_CK_RESOURCE(resp);
 
-    BU_ASSERT_SIZE_T(subtreecount, <, LONG_MAX);
+    BU_ASSERT(subtreecount < LONG_MAX);
     treecount = (long)subtreecount;
 
     /*
@@ -1136,11 +1134,11 @@ db_comb_mvall(struct directory *dp, struct db_i *dbip, const char *old_name, con
 		changed = 1;
 	    }
 
-	    if (BU_PTBL_END(stack) < 1) {
+	    if (BU_PTBL_LEN(stack) < 1) {
 		done = 1;
 		break;
 	    }
-	    comb_leaf = (union tree *)BU_PTBL_GET(stack, BU_PTBL_END(stack)-1);
+	    comb_leaf = (union tree *)BU_PTBL_GET(stack, BU_PTBL_LEN(stack)-1);
 	    if (comb_leaf->tr_op != OP_DB_LEAF) {
 		bu_ptbl_rm(stack, (long *)comb_leaf);
 		comb_leaf = comb_leaf->tr_b.tb_right;
@@ -1159,6 +1157,132 @@ db_comb_mvall(struct directory *dp, struct db_i *dbip, const char *old_name, con
 
     /* success */
     return 1;
+}
+
+HIDDEN void
+_db_comb_find_invalid(int *inv_cnt, struct db_i *dbip, union tree *tp)
+{
+    if (!tp) return;
+
+    RT_CHECK_DBI(dbip);
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+        case OP_UNION:
+        case OP_INTERSECT:
+        case OP_SUBTRACT:
+        case OP_XOR:
+            _db_comb_find_invalid(inv_cnt, dbip, tp->tr_b.tb_right);
+        case OP_NOT:
+        case OP_GUARD:
+        case OP_XNOP:
+            _db_comb_find_invalid(inv_cnt, dbip, tp->tr_b.tb_left);
+            break;
+	case OP_DB_LEAF:
+	    if (db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL) {
+		(*inv_cnt) = (*inv_cnt) + 1;
+            }
+	    break;
+	default:
+	    bu_log("_db_comb_get_children: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("_db_comb_get_children\n");
+    }
+}
+
+
+HIDDEN void
+_db_comb_get_children(struct directory **children, int *curr_ind, int curr_bool, struct db_i *dbip, union tree *tp, int *bool_ops, matp_t *mats)
+{
+   struct directory *dp;
+   int bool_op = curr_bool;
+
+    if (!tp)
+        return;
+
+    RT_CHECK_DBI(dbip);
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+        case OP_UNION:
+        case OP_INTERSECT:
+        case OP_SUBTRACT:
+        case OP_XOR:
+	    bool_op = tp->tr_op;
+            _db_comb_get_children(children, curr_ind, bool_op, dbip, tp->tr_b.tb_right, bool_ops, mats);
+        case OP_NOT:
+        case OP_GUARD:
+        case OP_XNOP:
+            _db_comb_get_children(children, curr_ind, bool_op, dbip, tp->tr_b.tb_left, bool_ops, mats);
+            break;
+        case OP_DB_LEAF:
+            if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+                return;
+            } else {
+                /* List the child, if it isn't hidden */
+                if (!(dp->d_flags & RT_DIR_HIDDEN)) {
+		    if (children) {
+			children[*curr_ind] = dp;
+		    }
+		    if (bool_ops) {
+			bool_ops[*curr_ind] = bool_op;
+		    }
+		    if (mats) {
+			if (!mats[*curr_ind]) mats[*curr_ind] = (matp_t)bu_calloc(1, sizeof(mat_t), "mat copy");
+			if (tp->tr_l.tl_mat) {
+			    MAT_COPY(mats[*curr_ind], tp->tr_l.tl_mat);
+			} else {
+			    MAT_IDN(mats[*curr_ind]);
+			}
+		    }
+		    (*curr_ind) = (*curr_ind) - 1;
+		}
+                break;
+            }
+
+        default:
+            bu_log("_db_comb_get_children: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("_db_comb_get_children\n");
+    }
+}
+
+int
+db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb, struct directory ***children, int **bool_ops, matp_t **mats)
+{
+    int dp_index = 0;
+    int node_count = 0;
+    int *bops = NULL;
+    matp_t *ms = NULL;
+    int invalid_cnt = 0;
+
+    RT_CK_DBI(dbip);
+    RT_CK_COMB(comb);
+
+    node_count = db_tree_nleaves(comb->tree);
+    if (!node_count) return 0;
+
+    _db_comb_find_invalid(&invalid_cnt, dbip, comb->tree);
+
+    node_count = node_count - invalid_cnt;
+
+    if (children) {
+	if (!*children) (*children) = (struct directory **)bu_calloc(node_count + 1, sizeof(struct directory *), "directory array");
+    }
+    if (bool_ops) {
+	if (!*bool_ops) (*bool_ops) = (int *)bu_calloc(node_count + 1, sizeof(int), "bool ops");
+	bops = (*bool_ops);
+	bops[node_count] = 0;
+    }
+    if (mats) {
+	if (!*mats) (*mats) = (matp_t *)bu_calloc(node_count + 1, sizeof(matp_t), "pointers to matrices");
+	ms = (*mats);
+	ms[node_count] = NULL;
+    }
+
+    dp_index = node_count - 1;
+    _db_comb_get_children(*children, &dp_index, OP_UNION, dbip, comb->tree, bops, ms);
+
+    (*children)[node_count] = RT_DIR_NULL;
+    return node_count;
 }
 
 /** @} */

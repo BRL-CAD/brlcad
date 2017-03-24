@@ -1,9 +1,4 @@
 #include "common.h"
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
 #include "bio.h"
 
 int main(void) {

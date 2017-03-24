@@ -1,7 +1,7 @@
 /*                           V O L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
@@ -38,9 +37,9 @@
 
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "../fixpt.h"
@@ -440,7 +439,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     VSETALL(vip->cellsize, 1);
 
     bu_vls_strcpy(&str, rp->ss.ss_args);
-    if (bu_struct_parse(&str, rt_vol_parse, (char *)vip) < 0) {
+    if (bu_struct_parse(&str, rt_vol_parse, (char *)vip, NULL) < 0) {
 	bu_vls_free(&str);
 	return -2;
     }
@@ -574,7 +573,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     VSETALL(vip->cellsize, 1);
 
     bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
-    if (bu_struct_parse(&str, rt_vol_parse, (char *)vip) < 0) {
+    if (bu_struct_parse(&str, rt_vol_parse, (char *)vip, NULL) < 0) {
 	bu_vls_free(&str);
 	return -2;
     }
@@ -729,7 +728,7 @@ rt_vol_ifree(struct rt_db_internal *ip)
     vip->magic = 0;			/* sanity */
     vip->map = (unsigned char *)0;
     bu_free((char *)vip, "vol ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -794,7 +793,7 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VSET(norm, 0, 0, 1);
     MAT3X3VEC(volp->vol_znorm, vip->mat, norm);
 
-    stp->st_specific = (genptr_t)volp;
+    stp->st_specific = (void *)volp;
 
     /* Find bounding RPP of rotated local RPP */
     if (rt_vol_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
@@ -1255,10 +1254,10 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_region_a(r_tmp, tol);
 
     /* fuse model */
-    nmg_model_fuse(m_tmp, tol);
+    nmg_model_fuse(m_tmp, &RTG.rtg_vlfree, tol);
 
     /* simplify shell */
-    nmg_shell_coplanar_face_merge(s, tol, 1);
+    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
 
     /* kill snakes */
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -1270,12 +1269,12 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    continue;
 
 	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
-	    (void)nmg_kill_snakes(lu);
+	    (void)nmg_kill_snakes(lu,&RTG.rtg_vlfree);
     }
 
-    (void)nmg_unbreak_region_edges((uint32_t *)(&s->l));
+    (void)nmg_unbreak_region_edges((uint32_t *)(&s->l),&RTG.rtg_vlfree);
 
-    (void)nmg_mark_edges_real((uint32_t *)&s->l);
+    (void)nmg_mark_edges_real((uint32_t *)&s->l,&RTG.rtg_vlfree);
 
     nmg_merge_models(m, m_tmp);
     *r = r_tmp;

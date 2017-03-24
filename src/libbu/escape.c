@@ -1,7 +1,7 @@
 /*                        E S C A P E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,10 +22,11 @@
 
 #include <string.h>
 
-#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/vls.h"
+#include "bu/exit.h"
+
 
 static int
 expand_expression(const char *expression, struct bu_vls *vp)

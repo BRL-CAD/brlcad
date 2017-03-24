@@ -1,7 +1,7 @@
 /*                    D B _ C O R R U P T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./librt_private.h"
 
@@ -41,7 +41,7 @@ struct counter {
 
 
 static int
-db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t size, int UNUSED(type), genptr_t data)
+db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t size, int UNUSED(type), void *data)
 {
     struct counter *cnt = (struct counter *)data;
     struct bu_external ext;

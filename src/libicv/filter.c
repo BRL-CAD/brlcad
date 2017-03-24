@@ -1,7 +1,7 @@
 /*                        F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,8 @@
  * images are taken care.
  */
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "icv.h"
 
 #include "vmath.h"
@@ -170,11 +171,11 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
     double c_val;
     double *out_data, *in_data, *data_p;
     double offset = 0;
-    int k_dim = KERN_DEFAULT, k_dim_half, k_dim_half_ceil;
-    long int size;
-    long int h, w, k, i;
-    long int widthstep;
-    long int index, n_index; /**< index is the index of the pixel in
+    size_t k_dim = KERN_DEFAULT, k_dim_half, k_dim_half_ceil;
+    size_t size;
+    size_t h, w, k, i;
+    size_t widthstep;
+    size_t index, n_index; /**< index is the index of the pixel in
 			      * out image and n_index corresponds to
 			      * the nearby pixel in input image
 			      */
@@ -199,7 +200,6 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
     /* Replaces data pointer in place */
     img->data = out_data = (double*)bu_malloc(size*sizeof(double), "icv_filter : out_image_data");
 
-    index = -1;
     /* Kernel Dimension is always considered to be odd*/
     k_dim_half = k_dim/2*img->channels;
     k_dim_half_ceil = (k_dim - k_dim/2)*img->channels;
@@ -212,14 +212,14 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 	    c_val = 0;
 	    kern_p = kern;
 
-	    for (k = -k_dim/2; k<=k_dim/2; k++) {
-		n_index = index + k*widthstep;
+	    for (k = 0; k <= k_dim; k++) {
+		n_index = index + (k-(k_dim/2))*widthstep;
 		data_p = in_data + n_index;
 		for (i = 0; i<=k_dim; i++) {
 		    /* Ensures that the arguments are given a zero value for
 		     * out of bound pixels. Thus behaves similar to zero padding
 		     */
-		    if (n_index >= 0 && n_index < size) {
+		    if (n_index < size) {
 			c_val += (*kern_p++)*(*data_p);
 			data_p += img->channels;
 			/* Ensures out bound in image */
@@ -250,11 +250,11 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
     double *old_data, *curr_data, *new_data;
     double *old_data_p, *curr_data_p, *new_data_p;
     double offset = 0;
-    int k_dim = KERN_DEFAULT;
-    long int size;
-    long int s, k, i;
-    long int widthstep;
-    long int index, n_index; /**< index is the index of the pixel in
+    size_t k_dim = KERN_DEFAULT;
+    size_t size;
+    size_t s, k, i;
+    size_t widthstep;
+    size_t index, n_index; /**< index is the index of the pixel in
 			      * out image and n_index corresponds to
 			      * the nearby pixel in input image
 			      */
@@ -288,23 +288,22 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
 
     out_data = out_img->data;
 
-    index = -1;
+    index = 0;
 
     for (s = 0; s <= size; s++) {
-	index++;
 	c_val = 0;
 	kern_old = kern;
 	kern_curr = kern + k_dim*k_dim-1;
 	kern_new = kern + 2*k_dim*k_dim-1;
-	for (k = -k_dim/2; k<=k_dim/2; k++) {
-	    n_index = index + k*widthstep;
+	for (k = 0; k <= k_dim; k++) {
+	    n_index = index + (k-(k_dim/2))*widthstep;
 	    old_data_p = old_data + n_index;
 	    curr_data_p = curr_data + n_index;
 	    new_data_p = new_data + n_index;
 	    for (i = 0; i<=k_dim; i++) {
 		/* Ensures that the arguments are given a zero value for
 		   out of bound pixels. Thus behaves similar to zero padding */
-		if (n_index >= 0 && n_index < size) {
+		if (n_index < size) {
 		    c_val += (*kern_old++)*(*old_data_p);
 		    c_val += (*kern_curr++)*(*curr_data_p);
 		    c_val += (*kern_new++)*(*new_data_p);
@@ -315,6 +314,7 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
 		}
 	    }
 	}
+	index++;
 	*out_data++ = c_val + offset;
     }
     return 0;

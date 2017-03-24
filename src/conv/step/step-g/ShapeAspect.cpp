@@ -1,7 +1,7 @@
 /*                 ShapeAspect.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -104,11 +104,15 @@ bool ShapeAspect::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "of_shape");
 	if (entity) { //this attribute is optional
 	    of_shape = dynamic_cast<ProductDefinitionShape *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !of_shape) {
 	    std::cout << CLASSNAME << ":Error loading attribute 'of_shape'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

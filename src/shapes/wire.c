@@ -1,7 +1,7 @@
 /*                          W I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -43,13 +43,13 @@
 #define MAXWIRESEG 100
 
 static const char usage[]   = "Usage: wire [interactive questions...]\n";
-static const char purpose[] = "generate a wire of up to 100 segments";
 
 int
 main(int argc, char *argv[])
 {
     struct rt_wdb *fpw;			/* File to be created. */
-    char filemged[26] = {0};		/* Mged file name. */
+#define NAME_LEN 256
+    char filemged[NAME_LEN+1] = {0};		/* Mged file name. */
     double numseg = -1.0;		/* Number of segments. */
     double scanseg;
     double strtpt[MAXWIRESEG][3];	/* Start point of segment. */
@@ -74,12 +74,13 @@ main(int argc, char *argv[])
 
     int i;				/* Loop counters. */
     double r;				/* Temporary variables. */
-    char temp[10];			/* Temporary char string. */
-    char temp1[10];			/* Temporary char string. */
+    char temp[NAME_LEN+1];		/* Temporary char string. */
+    char temp1[NAME_LEN+1];		/* Temporary char string. */
     int ret;
 
+    bu_log(usage);
     if (argc > 1 && argv)
-	bu_exit(1, usage);
+	bu_exit(1, NULL);
 
     /* Set up solid, region, & group names. */
     solcyl[0] = 's';
@@ -144,9 +145,9 @@ main(int argc, char *argv[])
     solsub2[7] = '\0';
 
     /* Find name of mged file to be created. */
-    printf("Enter mged file name (25 char max).\n\t");
+    printf("Enter mged file name (%d char max).\n\t", NAME_LEN);
     (void)fflush(stdout);
-    ret = scanf("%26s", filemged);
+    ret = scanf(CPP_SCAN(NAME_LEN), filemged);
     if (ret == 0)
 	perror("scanf");
 

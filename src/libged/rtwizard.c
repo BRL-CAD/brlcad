@@ -1,7 +1,7 @@
 /*                         R T W I Z A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,15 +32,11 @@
 #  include <sys/types.h>
 #endif
 
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-
-#include "bio.h"
+#include "bresource.h"
 
 #include "tcl.h"
 #include "bu/cmd.h"
-#include "solid.h"
+
 
 #include "./ged_private.h"
 
@@ -198,14 +194,14 @@ _ged_run_rtwizard(struct ged *gedp)
     run_rtp->hProcess = pi.hProcess;
     run_rtp->pid = pi.dwProcessId;
     run_rtp->aborted=0;
-    run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
+    run_rtp->chan = (void *)Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
 
     /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
-    Tcl_CreateChannelHandler(run_rtp->chan,
+    Tcl_CreateChannelHandler((Tcl_Channel)run_rtp->chan,
 			     TCL_READABLE,
 			     _ged_rt_output_handler,
 			     (ClientData)drcdp);
@@ -230,7 +226,6 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls eye_vls = BU_VLS_INIT_ZERO;
 
     const char *bin;
-    char rt[256] = {0};
     char rtscript[256] = {0};
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -242,20 +237,18 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (gedp->ged_gvp->gv_perspective > 0)
-	/* btclsh rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
 	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2;
     else
-	/* btclsh rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
 	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2;
 
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
-	snprintf(rt, 256, "%s/btclsh", bin);
 	snprintf(rtscript, 256, "%s/rtwizard", bin);
     } else {
-	snprintf(rt, 256, "btclsh");
 	snprintf(rtscript, 256, "rtwizard");
     }
 
@@ -267,7 +260,6 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&eye_vls, "%.15e %.15e %.15e", V3ARGS(eye_model));
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    *vp++ = rt;
     *vp++ = rtscript;
     *vp++ = "--no-gui";
     *vp++ = "--viewsize";

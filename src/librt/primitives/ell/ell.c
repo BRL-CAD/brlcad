@@ -1,7 +1,7 @@
 /*                           E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,18 +28,16 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
 
 #include "../../librt_private.h"
 
@@ -165,6 +163,33 @@ struct ell_specific {
 
 
 #define ELL_NULL ((struct ell_specific *)0)
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_ell_specific {
+    cl_double ell_V[3];         /* Vector to center of ellipsoid */
+    cl_double ell_SoR[16];      /* Scale(Rot(vect)) */
+    cl_double ell_invRSSR[16];  /* invRot(Scale(Scale(Rot(vect)))) */
+};
+
+size_t
+clt_ell_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct ell_specific *ell =
+        (struct ell_specific *)stp->st_specific;
+    struct clt_ell_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_ell_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->ell_V, ell->ell_V);
+    MAT_COPY(args->ell_SoR, ell->ell_SoR);
+    MAT_COPY(args->ell_invRSSR, ell->ell_invRSSR);
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
 
 /**
  * Compute the bounding RPP for an ellipsoid
@@ -317,7 +342,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* Solid is OK, compute constant terms now */
     BU_GET(ell, struct ell_specific);
-    stp->st_specific = (genptr_t)ell;
+    stp->st_specific = (void *)ell;
 
     VMOVE(ell->ell_V, eip->v);
 
@@ -1325,7 +1350,7 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ELL;
@@ -1465,7 +1490,7 @@ rt_ell_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "ell ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
@@ -1816,7 +1841,7 @@ ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 	/* split segment */
 	return ell_angle(mpt, a, b, dtol, ntol);
     } else
-	return(acos(VDOT(p0, p1)
+	return (acos(VDOT(p0, p1)
 		    / (MAGNITUDE(p0) * MAGNITUDE(p1))));
 }
 

@@ -1,7 +1,7 @@
 /*                    V I E W W E I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "db.h"  /* FIXME: Yes, I know I shouldn't be peeking, put I
+#include "rt/db4.h"  /* FIXME: Yes, I know I shouldn't be peeking, put I
 		    am only looking to see what units we prefer... */
 
 #include "./rtuif.h"
@@ -114,7 +114,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 {
     struct partition *pp;
     register struct xray *rp = &ap->a_ray;
-    genptr_t addp;
+    void *addp;
     int part_count = 0;
 
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
@@ -138,7 +138,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	BU_ALLOC(dp, struct datapoint);
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	addp = reg->reg_udata;
-	reg->reg_udata = (genptr_t)dp;
+	reg->reg_udata = (void *)dp;
 	dp->next = (struct datapoint *)addp;
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -154,7 +154,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 
 	{
 	    /* precompute partition size */
-	    const fastf_t partition_volume = depth * cell_height * cell_width;
+	    const fastf_t partition_volume = depth * cell_height * cell_width / (hypersample + 1);
 
 	    /* convert reg_los percentage to factor */
 	    const fastf_t los_factor = (fastf_t)reg->reg_los * 0.01;
@@ -220,7 +220,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	    outfp = fopen(outputfile, "w");
     }
 
-    /* initialize all possibile material types to a negative value.
+    /* initialize all possible material types to a negative value.
      * (Do this even for density[0], which is used for material types
      * for which we have no density information.)
      */
@@ -235,10 +235,10 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
     /* densityfile is global to this file and will be used later (and then freed) */
     densityfile = (char *)bu_calloc((unsigned int)i, sizeof(char), "densityfile");
 
-    snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
+    snprintf(densityfile, i, "%s%c%s", curdir, BU_DIR_SEPARATOR, DENSITY_FILE);
 
     if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
-	snprintf(densityfile, i, "%s/%s", homedir, DENSITY_FILE);
+	snprintf(densityfile, i, "%s%c%s", homedir, BU_DIR_SEPARATOR, DENSITY_FILE);
 	if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
 	    bu_log("Unable to load density file \"%s\" for reading\n", densityfile);
 	    perror(densityfile);
@@ -305,7 +305,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
     register struct rt_i *rtip = ap->a_rt_i;
 
     for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
-	rp->reg_udata = (genptr_t)NULL;
+	rp->reg_udata = (void *)NULL;
     }
 }
 
@@ -456,7 +456,7 @@ view_end(struct application *ap)
 	    *ptr = weight;
 	    /* FIXME: shouldn't the existing reg_udata be bu_free'd first (see previous loop) */
 	    /* FIXME: isn't the region list a "shared resource"? if so, can we use reg_udata so cavalierly? */
-	    rp->reg_udata = (genptr_t)ptr;
+	    rp->reg_udata = (void *)ptr;
 	}
 
 	/* make room for a zero ID number and an "end ID " so we can

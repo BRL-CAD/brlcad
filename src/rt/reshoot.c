@@ -1,7 +1,7 @@
 /*                       R E S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -81,7 +81,10 @@
 #include <stddef.h>
 
 #include "vmath.h"		/* vector math macros */
-#include "bu.h"
+#include "bu/list.h"
+#include "bu/parse.h"
+#include "bu/vls.h"
+#include "bu/log.h"
 #include "raytrace.h"		/* librt interface definitions */
 
 #include "./rtuif.h"
@@ -101,7 +104,6 @@ struct shot {
 };
 
 /**
- * @struct shot_sp
  * The parse table for a struct shot
  */
 static const struct bu_structparse shot_sp[] = {
@@ -180,7 +182,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	 */
 	bu_vls_trunc(&v, 0);
 	bu_vls_printf(&v, "val=%g", pp->pt_inhit->hit_dist);
-	if (bu_struct_parse(&v, val_sp, (const char *)&vs) < 0) {
+	if (bu_struct_parse(&v, val_sp, (const char *)&vs, NULL) < 0) {
 	  bu_log("Warning - bu_struct_parse failure in reshoot.c, function hit\n");
 	}
 
@@ -191,7 +193,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
 	bu_vls_trunc(&v, 0);
 	bu_vls_printf(&v, "val=%g", pp->pt_outhit->hit_dist);
-	if (bu_struct_parse(&v, val_sp, (const char *)&vs) < 0) {
+	if (bu_struct_parse(&v, val_sp, (const char *)&vs, NULL) < 0) {
 	  bu_log("Warning - bu_struct_parse failure in reshoot.c, function hit\n");
 	}
 
@@ -280,7 +282,7 @@ do_shot(struct shot *sh, struct application *ap)
 
     VMOVE(ap->a_ray.r_pt, sh->pt);
     VMOVE(ap->a_ray.r_dir, sh->dir);
-    ap->a_uptr = (genptr_t)sh;
+    ap->a_uptr = (void *)sh;
 
     ap->a_hit = hit;
     ap->a_miss = miss;
@@ -367,7 +369,7 @@ main(int argc, char **argv)
 		    status |= do_shot(&sh, &ap);
 		}
 
-		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
+		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh, NULL)) {
 		    bu_exit(EXIT_FAILURE, "error parsing pt");
 		}
 
@@ -375,7 +377,7 @@ main(int argc, char **argv)
 	    }
 	    case 'D' :
 	    {
-		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
+		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh, NULL)) {
 		    bu_exit(EXIT_FAILURE, "error parsing dir");
 		}
 		break;
@@ -389,7 +391,7 @@ main(int argc, char **argv)
 		BU_VLS_INIT(&rh->in_primitive);
 		BU_VLS_INIT(&rh->out_primitive);
 
-		if (bu_struct_parse(&buf, reg_sp, (const char *)rh)) {
+		if (bu_struct_parse(&buf, reg_sp, (const char *)rh, NULL)) {
 		    bu_log("Error parsing region %s\nSkipping to next line\n",
 			   bu_vls_addr(&buf));
 		}

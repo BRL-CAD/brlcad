@@ -1,7 +1,7 @@
 /*                 BRLCADWrapper.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ int BRLCADWrapper::sol_reg_cnt = 0;
 
 
 BRLCADWrapper::BRLCADWrapper()
-    : outfp(NULL), dbip(NULL)
+    : outfp(NULL), dbip(NULL), dry_run(false)
 {
 }
 
@@ -52,6 +52,9 @@ bool
 BRLCADWrapper::load(std::string &flnm)
 {
 
+    if (dry_run)
+	return true;
+
     /* open brlcad instance */
     if ((dbip = db_open(flnm.c_str(), DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_log("Cannot open input file (%s)\n", flnm.c_str());
@@ -61,6 +64,7 @@ BRLCADWrapper::load(std::string &flnm)
 	bu_log("ERROR: db_dirbuild failed: (%s)\n", flnm.c_str());
 	return false;
     }
+    db_update_nref(dbip, &rt_uniresource);
 
     return true;
 }
@@ -70,6 +74,9 @@ bool
 BRLCADWrapper::OpenFile(std::string &flnm)
 {
     //TODO: need to check to make sure we aren't overwriting
+
+    if (dry_run)
+	return true;
 
     /* open brlcad instance */
     if ((outfp = wdb_fopen(flnm.c_str())) == NULL) {
@@ -89,6 +96,9 @@ BRLCADWrapper::OpenFile(std::string &flnm)
 bool
 BRLCADWrapper::WriteHeader()
 {
+    if (dry_run)
+	return true;
+
     db5_update_attribute("_GLOBAL", "HEADERINFO", "test header attributes", outfp->dbip);
     db5_update_attribute("_GLOBAL", "HEADERCLASS", "test header classification", outfp->dbip);
     db5_update_attribute("_GLOBAL", "HEADERAPPROVED", "test header approval", outfp->dbip);
@@ -99,6 +109,9 @@ BRLCADWrapper::WriteHeader()
 bool
 BRLCADWrapper::WriteSphere(double *center, double radius)
 {
+    if (dry_run)
+	return true;
+
     point_t pnt;
     center[X] = 0.0;
     center[Y] = 0.0;
@@ -108,11 +121,70 @@ BRLCADWrapper::WriteSphere(double *center, double radius)
     return true;
 }
 
+
+/* This simple routine will replace diacritic characters(code >= 192) from the extended
+ * ASCII set with a specific mapping from the standard ASCII set. This code was copied
+ * and modified from a solution provided on stackoverflow.com at:
+ *     (http://stackoverflow.com/questions/14094621/)
+ */
+std::string
+BRLCADWrapper::ReplaceAccented( std::string &str ) {
+    std::string retStr = "";
+    const char *p = str.c_str();
+    while ( (*p)!=0 ) {
+        const char*
+        //   "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ"
+        tr = "AAAAAAECEEEEIIIIDNOOOOOx0UUUUYPsaaaaaaeceeeeiiiiOnooooo/0uuuuypy";
+        unsigned char ch = (*p);
+        if ( ch >=192 ) {
+            retStr += tr[ ch-192 ];
+        } else {
+            retStr += *p;
+        }
+        ++p;
+    }
+    return retStr;
+}
+
+
+/*
+ * Simplifying names for better behavior under our Tcl based tools. This routine
+ * replaces spaces and non-alphanumeric characters with underscores. It also replaces
+ * ASCII extended characters representing diacritics (code >= 192)  with specific
+ * mapped ASCII characters below ASCII code 128.
+ */
+std::string
+BRLCADWrapper::CleanBRLCADName(std::string &inname)
+{
+    std::string retStr = "";
+    std::string name = ReplaceAccented(inname);
+    unsigned char *cp;
+
+    for (cp = (unsigned char *)name.c_str(); *cp != '\0'; ++cp) {
+	if (*cp == '\'') {
+	    // remove non-printable
+	    continue;
+	}
+	if (*cp == ' ') {
+	    // replace spaces with underscores
+	    retStr += '_';
+	} else {
+	    if (!isalpha(*cp) && !isdigit(*cp)) {
+		// replace non-alphanumeric characters with underscore
+		retStr += '_';
+	    } else {
+		retStr += *cp;
+	    }
+	}
+    }
+
+    return retStr;
+}
+
+
 std::string
 BRLCADWrapper::GetBRLCADName(std::string &name)
 {
-    std::ostringstream str;
-    std::string strcnt;
     struct bu_vls obj_name = BU_VLS_INIT_ZERO;
     int len = 0;
     char *cp,*tp;
@@ -125,10 +197,25 @@ BRLCADWrapper::GetBRLCADName(std::string &name)
 	    else
 		break;
 	}
-	bu_vls_putc(&obj_name, *cp);
+	if (*cp == '\'') {
+	    // remove single quotes
+	    continue;
+	}
+	if (*cp == ' ') {
+	    // simply replace spaces with underscores
+	    bu_vls_putc(&obj_name, '_');
+	} else {
+	    bu_vls_putc(&obj_name, *cp);
+	}
     }
     bu_vls_putc(&obj_name, '\0');
+
     tp = (char *)((*cp == '\0') ? "" : cp + 1);
+
+    /* TODO - We don't have db_lookup in a dry run */
+    if (dry_run) {
+	return bu_vls_addr(&obj_name);
+    }
 
     do {
 	bu_vls_trunc(&obj_name, len);
@@ -167,6 +254,10 @@ bool
 BRLCADWrapper::WriteCombs()
 {
     MAP_OF_BU_LIST_HEADS::iterator i = heads.begin();
+
+    if (dry_run)
+	return true;
+
     while (i != heads.end()) {
 	std::string combname = (*i).first;
 	struct bu_list *head = (*i++).second;
@@ -201,10 +292,10 @@ BRLCADWrapper::getRandomColor(unsigned char *rgb)
 bool
 BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat)
 {
-    std::ostringstream str;
-    std::string strcnt;
     std::string sol = name + ".s";
     std::string reg = name;
+    if (dry_run)
+	return true;
 
     mk_brep(outfp, sol.c_str(), brep);
     unsigned char rgb[] = {200, 180, 180};
@@ -232,6 +323,8 @@ BRLCADWrapper::GetDBIP()
 bool
 BRLCADWrapper::Close()
 {
+    if (dry_run)
+	return true;
 
     if (outfp) {
 	wdb_close(outfp);

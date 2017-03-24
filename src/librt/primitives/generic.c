@@ -1,7 +1,7 @@
 /*                       G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup librt */
 /** @{ */
 /** @file primitives/generic.c
  *
@@ -227,7 +227,7 @@ rt_generic_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	return BRLCAD_ERROR;
     }
 
-    return bu_structparse_argv(logstr, argc, argv, ftp->ft_parsetab, (char *)intern->idb_ptr);
+    return bu_structparse_argv(logstr, argc, argv, ftp->ft_parsetab, (char *)intern->idb_ptr, NULL);
 }
 
 

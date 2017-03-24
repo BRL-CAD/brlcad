@@ -1,7 +1,7 @@
 /*                    P O P U L A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -113,7 +113,6 @@ pop_spawn (struct population *p)
 	  r1 = r2 = 2.5;
 	*/
 	for (j = 0; j < 6; j++) {
-	    /* VSETALL(p1, -10+pop_rand()*10); */
 	    p1[0] = -10*pop_rand()*10;
 	    p1[1] = -10*pop_rand()*10;
 	    p1[2] = -10*pop_rand()*10;
@@ -285,7 +284,7 @@ pop_find_nodes(	union tree *tp)
 
 
 void
-pop_mutate(int type, genptr_t ptr)
+pop_mutate(int type, void *ptr)
 {
     int i;
     switch (type) {
@@ -367,7 +366,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 
 
 	    /* write child to new database */
-	    if ((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL)
+	    if ((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (void *)&dp->d_minor_type)) == RT_DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new object to the database");
 	    if (rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
 		bu_exit(EXIT_FAILURE, "Failed to write new individual to database");
@@ -443,7 +442,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    BU_LIST_INIT(&node->l);
 	    chosen_node = NULL;
 
-	    do{
+	    do {
 		num_nodes = 0;
 		crossover_parent = &parent1->tree;
 		crossover_node = (int)(pop_rand() * db_count_tree_nodes(parent1->tree, 0));
@@ -454,8 +453,10 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 
 		crossover_op = crossover_point->tr_op;
-#define MASK (OP_UNION | OP_XOR | OP_SUBTRACT|OP_INTERSECT)
-		if (crossover_op & MASK)crossover_op = MASK;
+
+		if (crossover_op & (OP_UNION | OP_XOR | OP_SUBTRACT| OP_INTERSECT))
+		    crossover_op = (OP_UNION | OP_XOR | OP_SUBTRACT| OP_INTERSECT);
+
 		crossover_node = db_count_tree_nodes(crossover_point, 0);
 		if (pop_find_nodes(parent2->tree) == crossover_node) {
 		    BU_ALLOC(add, struct node);
@@ -473,7 +474,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 			}
 		    }
 		}
-	    }while(chosen_node == NULL);
+	    } while (chosen_node == NULL);
 
 
 	    /* cross trees */
@@ -495,7 +496,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    pop_functree(dbi_p, dbi_c, parent2->tree, resp, child2_id);
 
 
-	    if ((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL)
+	    if ((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (void *)&dp->d_minor_type)) == RT_DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
 	    if (rt_db_put_internal(dp, dbi_c, &in2, resp) < 0)
 		bu_exit(EXIT_FAILURE, "Database write failure");
@@ -526,7 +527,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     }
 
 
-    if ((dp=db_diradd(dbi_c, child1_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL) {
+    if ((dp=db_diradd(dbi_c, child1_id, -1, 0, dp->d_flags, (void *)&dp->d_minor_type)) == RT_DIR_NULL) {
 	bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
     }
     if (rt_db_put_internal(dp, dbi_c,  &in1, resp) < 0)

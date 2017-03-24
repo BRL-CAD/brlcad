@@ -1,7 +1,7 @@
 /*                     B O T - B L D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,9 +30,10 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "nmg.h"
-#include "rtgeom.h"
-#include "bu.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -390,7 +391,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 
 
 int
-r_start(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, const struct rt_comb_internal *UNUSED(combp), genptr_t client_data)
+r_start(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, const struct rt_comb_internal *UNUSED(combp), void *client_data)
 {
     if (debug&DEBUG_NAMES) {
 	size_t i;
@@ -410,7 +411,7 @@ r_start(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, co
 
 
 union tree *
-r_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, union tree * curtree, genptr_t client_data)
+r_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, union tree * curtree, void *client_data)
 {
     if (debug&DEBUG_NAMES) {
 	size_t i;
@@ -475,7 +476,7 @@ void add_bots(struct rt_bot_internal *bot_dest,
 
 
 union tree *
-l_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, struct rt_db_internal * ip, genptr_t client_data)
+l_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, struct rt_db_internal * ip, void *client_data)
 {
     struct rt_bot_internal *bot;
 

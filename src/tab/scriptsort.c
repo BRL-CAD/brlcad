@@ -22,7 +22,12 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/list.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/exit.h"
+#include "bu/log.h"
 
 #include "./tokens.h"
 
@@ -249,7 +254,7 @@ bubblesort(void)
 	    BU_LIST_INSERT(&a->l, &b->l);
 	    if (b->l.back != &head) {
 		a = (struct frame *)b->l.back;
-	    };
+	    }
 	} else {
 	    a=(struct frame *)a->l.forw;
 	}
@@ -321,6 +326,9 @@ main(int argc, char *argv[])
     struct frame *newframe, *lp;
 
     int base, count;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (!get_args(argc, argv)) {
 	return 1;

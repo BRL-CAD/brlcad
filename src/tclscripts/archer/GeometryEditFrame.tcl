@@ -1,7 +1,7 @@
 #           G E O M E T R Y E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2014 United States Government as represented by
+# Copyright (c) 2002-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,10 +19,6 @@
 #
 ###
 #
-# Author(s):
-#    Bob Parker
-#
-# Description:
 #    The super class for editing geometry within Archer.
 #
 ##############################################################
@@ -70,6 +66,8 @@
 	method childsite {{site upper}}
 
 	method initGeometry {gdata}
+	method checkpointGeometry {}
+	method revertGeometry {}
 	method updateGeometry {}
 	method createGeometry {obj}
 
@@ -294,6 +292,12 @@
     if {$itk_option(-geometryChangedCallback) != ""} {
 	catch {eval $itk_option(-geometryChangedCallback)}
     }
+}
+
+::itcl::body GeometryEditFrame::checkpointGeometry {} {
+}
+
+::itcl::body GeometryEditFrame::revertGeometry {} {
 }
 
 ::itcl::body GeometryEditFrame::createGeometry {obj} {

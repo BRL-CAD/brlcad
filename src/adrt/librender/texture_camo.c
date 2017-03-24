@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C A M O . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2014 United States Government as represented by
+ * Copyright (c) 2002-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ void
 texture_camo_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
     struct texture_camo_s *td;
     vect_t p, pt;
-    tfloat sum1, sum2;
+    TFLOAT sum1, sum2;
 
 
     td = (struct texture_camo_s *)texture->data;

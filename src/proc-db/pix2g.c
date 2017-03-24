@@ -1,7 +1,7 @@
 /*                         P I X 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,11 +29,10 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 
@@ -72,7 +71,7 @@ void usage(void)
 }
 
 
-void computeScanline(int UNUSED(pid), genptr_t UNUSED(arg)) {
+void computeScanline(int UNUSED(pid), void *UNUSED(arg)) {
     int i=0;
     /* working pixel component value */
     unsigned char *value = (unsigned char *)image->buf;
@@ -241,14 +240,6 @@ main(int ac, char *av[])
 
     if (ncpu > 1)
 	bu_log("Found %d cpu\'s!  Sweet.\n", ncpu);
-
-    /* the first critical section semaphore is for coordinating work, the
-     * second for writing out the final record and cleaning up.
-     */
-    /* XXX must use RT_SEM_LAST if we plan on calling bu_parallel since the
-     * semaphore count is held in a global
-     */
-    bu_semaphore_init(P2G_INIT_COUNT);
 
     bu_log("Writing database...\n");
 

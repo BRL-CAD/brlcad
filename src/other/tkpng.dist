@@ -1,8 +1,6 @@
 SET(tkpng_ignore_files
-ChangeLog
 README
 license.terms
 pkgIndex.tcl.in
 CMake
-Makefile.am
 )

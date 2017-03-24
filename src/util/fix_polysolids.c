@@ -1,7 +1,7 @@
 /*                F I X _ P O L Y S O L I D S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2014 United States Government as represented by
+ * Copyright (c) 1995-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,11 +55,11 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
+#include "bu/getopt.h"
 #include "bn.h"
-#include "bu.h"
 
 int
 main(int argc, char *argv[])
@@ -86,6 +86,9 @@ main(int argc, char *argv[])
     struct bu_ptbl faces;
     int done=0;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     /* XXX These need to be improved */
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
@@ -111,7 +114,7 @@ main(int argc, char *argv[])
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", &debug);
-		RTG.NMG_debug = debug;
+		nmg_debug = debug;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
@@ -169,7 +172,7 @@ main(int argc, char *argv[])
 			eu = BU_LIST_NEXT(edgeuse, &eu->l);
 		    }
 
-		    if (nmg_calc_face_g(fu)) {
+		    if (nmg_calc_face_g(fu, &RTG.rtg_vlfree)) {
 			bu_log("\tEliminating degenerate face\n");
 			nmg_kfu(fu);
 		    } else {
@@ -178,9 +181,9 @@ main(int argc, char *argv[])
 		}
 		nmg_rebound(m, &tol);
 		(void)nmg_break_long_edges(s, &tol);
-		(void)nmg_vertex_fuse(&m->magic, &tol);
-		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), &tol);
-		nmg_fix_normals(s, &tol);
+		(void)nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
+		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, &tol);
+		nmg_fix_normals(s, &RTG.rtg_vlfree, &tol);
 
 		break;
 	    default:

@@ -1,7 +1,7 @@
 /*                           A V S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -79,17 +79,22 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 {
     struct bu_attribute_value_pair *app;
 
-    BU_CK_AVS(avsp);
+    /* no work? */
+    if (!avsp && !name)
+	return 0;
 
+    /* no source is okay even though nothing is added */
     if (UNLIKELY(!name)) {
-	bu_log("WARNING: bu_avs_add() received a null attribute name\n");
 	return 0;
     }
-
+    /* empty is unexpected, but not a reason to halt */
     if (UNLIKELY(strlen(name) == 0)) {
 	bu_log("WARNING: bu_avs_add() received an attribute name with zero length\n");
 	return 0;
     }
+
+    /* no target is not okay */
+    BU_CK_AVS(avsp);
 
     /* does this attribute already exist? */
     if (avsp->count) {
@@ -99,9 +104,9 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 
 	    /* found a match, replace it fully */
 	    if (app->name && AVS_IS_FREEABLE(avsp, app->name))
-		bu_free((genptr_t)app->name, "app->name");
+		bu_free((void *)app->name, "app->name");
 	    if (app->value && AVS_IS_FREEABLE(avsp, app->value))
-		bu_free((genptr_t)app->value, "app->value");
+		bu_free((void *)app->value, "app->value");
 	    app->name = bu_strdup(name);
 	    if (value) {
 		app->value = bu_strdup(value);
@@ -128,11 +133,16 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 
     /* add the new attribute */
     app = &avsp->avp[avsp->count++];
-    app->name = bu_strdup(name);
-    if (value) {
-	app->value = bu_strdup(value);
-    } else {
-	app->value = (char *)NULL;
+    /* FIXME: returning 0 when app is null causes crashing problems
+     * (observed in comgeom-g, probably in others - need to understand
+     * why. */
+    if (app) {
+	app->name = bu_strdup(name);
+	if (value) {
+	    app->value = bu_strdup(value);
+	} else {
+	    app->value = (char *)NULL;
+	}
     }
     return 2;
 }
@@ -208,10 +218,10 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 	if (!BU_STR_EQUAL(app->name, name))
 	    continue;
 	if (app->name && AVS_IS_FREEABLE(avsp, app->name))
-	    bu_free((genptr_t)app->name, "app->name");
+	    bu_free((void *)app->name, "app->name");
 	app->name = NULL;	/* sanity */
 	if (app->value && AVS_IS_FREEABLE(avsp, app->value))
-	    bu_free((genptr_t)app->value, "app->value");
+	    bu_free((void *)app->value, "app->value");
 	app->value = NULL;	/* sanity */
 
 	/* Move last one down to replace it */
@@ -242,18 +252,18 @@ bu_avs_free(struct bu_attribute_value_set *avsp)
     if (avsp->count) {
 	for (BU_AVS_FOR(app, avsp)) {
 	    if (app->name && AVS_IS_FREEABLE(avsp, app->name)) {
-		bu_free((genptr_t)app->name, "app->name");
+		bu_free((void *)app->name, "app->name");
 	    }
 	    app->name = NULL;	/* sanity */
 	    if (app->value && AVS_IS_FREEABLE(avsp, app->value)) {
-		bu_free((genptr_t)app->value, "app->value");
+		bu_free((void *)app->value, "app->value");
 	    }
 	    app->value = NULL;	/* sanity */
 	}
 	avsp->count = 0;
     }
     if (LIKELY(avsp->avp != NULL)) {
-	bu_free((genptr_t)avsp->avp, "bu_avs_free avsp->avp");
+	bu_free((void *)avsp->avp, "bu_avs_free avsp->avp");
 	avsp->avp = NULL; /* sanity */
 	avsp->max = 0;
     }

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixrect1'>
+<refmeta>
+    <refentrytitle>PIXRECT
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pixrect</refname>
+<refpurpose>extract a rectangle from a color pix file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixrect</command>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>height</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>out_squaresize</replaceable></arg>
+    <arg choice='opt'>-W <replaceable>out_width</replaceable></arg>
+    <arg choice='opt'>-N <replaceable>out_height</replaceable></arg>
+    <arg choice='opt'>-x <replaceable>xorig</replaceable></arg>
+    <arg choice='opt'>-y <replaceable>yorig</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>out_file.pix</replaceable></arg>
+    <arg choice='plain'><replaceable>file.pix</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
+    <arg choice='opt'><replaceable>out_file.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>pixrect</command>
+extracts a rectangular region from a colored
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file. The default input image size is 512x512.
+The x,y coordinates of the origin (the default xorig=0, yorig=0 corresponds to the
+lower left corner) are passed as
+command line arguments.</para>
+
+<para>The
+<option>-w </option><replaceable>file_width</replaceable>
+flag specifies the width of each scanline in the input file, in pixels.
+<option>-W </option><replaceable>scr_width</replaceable>
+does the same for the display device.</para>
+
+<para>The
+<option>-n </option><replaceable>file_height</replaceable>
+and
+<option>-N </option><replaceable>scr_height</replaceable>
+flags specifies the height in scanlines of the input file or display device
+respectively.</para>
+
+<para><option>-s </option><replaceable>squarefilesize</replaceable>
+and
+<option>-S </option><replaceable>squarescrsize</replaceable>
+set both the height and width to the size given (for input file and display device respectively).</para>
+
+<para><option>-o </option><replaceable>out_file.pix</replaceable> is a way of specifying output
+file name.</para>
+
+<para>This utility supports redirected input/output images.
+</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2016 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>

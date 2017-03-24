@@ -324,13 +324,13 @@ To visualize the exact position taken by the aim point
 in the example (output channels 3, 4, 5), a UNIX-plot file
 of that trajectory can be created with:
 <PRE>
-   cut -f5,6,7 table.final | xyz-pl > aim.pl
+   cut -f5,6,7 table.final | xyz-plot3 > aim.pl
 
-   cut -f1,5,6,7 table.final | txyz-pl > aim.pl
+   cut -f1,5,6,7 table.final | xyz-plot3 > aim.pl
 </PRE>
 Similarly, the position of the main object can be viewed with
 <PRE>
-   cut -f2,3,4 table.final | xyz-pl > obj.pl
+   cut -f2,3,4 table.final | xyz-plot3 > obj.pl
 </PRE>
 <I>tabinterp</I>
 uses 0-based column numbering, while
@@ -377,7 +377,7 @@ of existing scientific analysis programs, and extracting the
 few gems of data buried in the heaps of "printout".
 <H2>SEE ALSO</H2>
 <P>
-tabsub(1), xyz-pl(1), txyz-pl(1), cut(1), paste(1), rt(1), mged(1)
+tabsub(1), xyz-plot3(1), cut(1), paste(1), rt(1), mged(1)
 <H2>DIAGNOSTICS</H2>
 <P>
 In its present form, the program is a bit verbose, reporting
@@ -761,7 +761,7 @@ Then, these commands would be given:
 <I>mged (1)</I>
 will process each frame as fast as it can, and update the screen.
 <H2>SEE ALSO</H2>
-tabinterp(1), xyz-pl(1), txyz-pl(1), cut(1), paste(1), rt(1), mged(1)
+tabinterp(1), xyz-plot3(1), cut(1), paste(1), rt(1), mged(1)
 <H2>BUGS</H2>
 There is presently a compiled-in
 limit of 1023 channels in the input table.

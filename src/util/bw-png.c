@@ -1,7 +1,7 @@
 /*                        B W - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,15 +27,19 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <zlib.h>
 #include <png.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/exit.h"
 #include "bn.h"
 #include "fb.h"
 
+
+#define BYTESPERPIXEL 1
+#define ROWSIZE (file_width * BYTESPERPIXEL)
+#define SIZE (file_height * ROWSIZE)
 
 static long int file_width = 512;		/* default input width */
 static long int file_height = 512;		/* default input height */
@@ -44,13 +48,7 @@ static int fileinput = 0;			/* file of pipe on input? */
 static char *file_name;
 static FILE *infp;
 
-#define BYTESPERPIXEL 1
-
-#define ROWSIZE (file_width * BYTESPERPIXEL)
-#define SIZE (file_height * ROWSIZE)
-
-static char usage[] = "\
-Usage: bw-png [-a] [-w file_width] [-n file_height]\n\
+static char usage[] = "Usage: bw-png [-a] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [file.bw]\n";
 
 int
@@ -77,7 +75,7 @@ get_args(int argc, char **argv)
 		autosize = 0;
 		break;
 
-	    default:		/* '?' */
+	    default: /* 'h' '?' */
 		return 0;
 	}
     }
@@ -153,7 +151,7 @@ main(int argc, char **argv)
 
     png_init_io(png_p, stdout);
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
-    png_set_compression_level(png_p, Z_BEST_COMPRESSION);
+    png_set_compression_level(png_p, 9);
     png_set_IHDR(png_p, info_p, file_width, file_height, 8,
 		 PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
 		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);

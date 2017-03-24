@@ -92,7 +92,9 @@ bu_vls_vlscat
 
 db5_get_attributes
 db5_header_is_valid
+db5_replace_attributes
 db5_update_attribute
+db5_update_attributes
 
 db_ck_v4gift_tree
 db_close

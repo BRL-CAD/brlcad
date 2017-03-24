@@ -1,7 +1,7 @@
 /*                       S H _ C O O K . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,10 +32,9 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
+#include "optical/light.h"
 
 
 /* from view.c */
@@ -75,12 +74,12 @@ struct bu_structparse cook_parse[] = {
 };
 
 
-HIDDEN int cook_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int cmirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int cglass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int cook_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void cook_print(register struct region *rp, genptr_t dp);
-HIDDEN void cook_free(genptr_t cp);
+HIDDEN int cook_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int cmirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int cglass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int cook_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void cook_print(register struct region *rp, void *dp);
+HIDDEN void cook_free(void *cp);
 HIDDEN double fresnel(double c, double n);
 HIDDEN double beckmann(double a, double m2);
 
@@ -109,7 +108,7 @@ struct mfuncs cook_mfuncs[] = {
  * there.
  */
 HIDDEN int
-cook_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+cook_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct cook_specific *pp;
 
@@ -137,7 +136,7 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     pp->rd[1] = fresnel(0.0, pp->n[1]) * M_1_PI;
     pp->rd[2] = fresnel(0.0, pp->n[2]) * M_1_PI;
 
-    if (bu_struct_parse(matparm, cook_parse, (char *)pp) < 0) {
+    if (bu_struct_parse(matparm, cook_parse, (char *)pp, NULL) < 0) {
 	BU_PUT(pp, struct cook_specific);
 	return -1;
     }
@@ -150,7 +149,7 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 
 
 HIDDEN int
-cmirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+cmirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -177,7 +176,7 @@ cmirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp,
     pp->rd[1] = fresnel(0.0, pp->n[1]) * M_1_PI;
     pp->rd[2] = fresnel(0.0, pp->n[2]) * M_1_PI;
 
-    if (bu_struct_parse(matparm, cook_parse, (char *)pp) < 0)
+    if (bu_struct_parse(matparm, cook_parse, (char *)pp, NULL) < 0)
 	return -1;
 
     pp->m2 = (pp->m < 0.001) ? 0.0001 : pp->m * pp->m;
@@ -188,7 +187,7 @@ cmirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp,
 
 
 HIDDEN int
-cglass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+cglass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -215,7 +214,7 @@ cglass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     pp->rd[1] = fresnel(0.0, pp->n[1]) * M_1_PI;
     pp->rd[2] = fresnel(0.0, pp->n[2]) * M_1_PI;
 
-    if (bu_struct_parse(matparm, cook_parse, (char *)pp) < 0)
+    if (bu_struct_parse(matparm, cook_parse, (char *)pp, NULL) < 0)
 	return -1;
 
     pp->m2 = (pp->m < 0.001) ? 0.0001 : pp->m * pp->m;
@@ -226,14 +225,14 @@ cglass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 
 
 HIDDEN void
-cook_print(register struct region *rp, genptr_t dp)
+cook_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, cook_parse, (char *)dp);
 }
 
 
 HIDDEN void
-cook_free(genptr_t cp)
+cook_free(void *cp)
 {
     BU_PUT(cp, struct cook_specific);
 }
@@ -251,7 +250,7 @@ cook_free(genptr_t cp)
  * This is "a good approx for theta < ~70 degrees."
  */
 HIDDEN int
-cook_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+cook_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct light_specific *lp;
     register fastf_t *intensity, *to_light;

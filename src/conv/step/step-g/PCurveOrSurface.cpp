@@ -1,7 +1,7 @@
 /*                 PCurveOrSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,7 +70,7 @@ PCurveOrSurface::~PCurveOrSurface()
 }
 
 bool
-PCurveOrSurface::Load(STEPWrapper *sw, SDAI_Select *sse)
+PCurveOrSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
 
@@ -85,6 +85,8 @@ PCurveOrSurface::Load(STEPWrapper *sw, SDAI_Select *sse)
 	SdaiSurface *s = *v;
 	surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, (SDAI_Application_instance *)s)); //CreateSurfaceObject(sw,(SDAI_Application_instance*)s));
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

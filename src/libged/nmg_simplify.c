@@ -1,7 +1,7 @@
 /*                         N M G _ S I M P L I F Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,9 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 
@@ -54,7 +53,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     int success = 0;
     int shell_count=0;
     int ret = GED_ERROR;
-    long i;
+    size_t i;
 
     static const char *usage = "[arb|tgc|poly] new_prim nmg_prim";
 
@@ -129,9 +128,9 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     NMG_CK_MODEL(m);
 
     /* check that all faces are planar */
-    nmg_face_tabulate(&faces, &m->magic);
+    nmg_face_tabulate(&faces, &m->magic, &RTG.rtg_vlfree);
 
-    for (i = 0 ; i < BU_PTBL_END(&faces) ; i++) {
+    for (i = 0 ; i < BU_PTBL_LEN(&faces) ; i++) {
 	fp = (struct face *)BU_PTBL_GET(&faces, i);
 	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_ptbl_free(&faces);
@@ -166,15 +165,15 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&new_intern);
 	BU_ALLOC(arb_int, struct rt_arb_internal);
 
-	new_intern.idb_ptr = (genptr_t)(arb_int);
+	new_intern.idb_ptr = (void *)(arb_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_ARB8;
 	new_intern.idb_meth = &OBJ[ID_ARB8];
 
 	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
-	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 0);
-	nmg_simplify_shell(s);
+	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 0, &RTG.rtg_vlfree);
+	nmg_simplify_shell(s, &RTG.rtg_vlfree);
 
 	if (nmg_to_arb(m, arb_int)) {
 	    success = 1;
@@ -196,7 +195,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&new_intern);
 	BU_ALLOC(tgc_int, struct rt_tgc_internal);
 
-	new_intern.idb_ptr = (genptr_t)(tgc_int);
+	new_intern.idb_ptr = (void *)(tgc_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_TGC;
 	new_intern.idb_meth = &OBJ[ID_TGC];
@@ -221,12 +220,12 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&new_intern);
 	BU_ALLOC(poly_int, struct rt_pg_internal);
 
-	new_intern.idb_ptr = (genptr_t)(poly_int);
+	new_intern.idb_ptr = (void *)(poly_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_POLY;
 	new_intern.idb_meth = &OBJ[ID_POLY];
 
-	if (nmg_to_poly(m, poly_int, &gedp->ged_wdbp->wdb_tol)) {
+	if (nmg_to_poly(m, poly_int, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;
 	    ret = GED_OK;
 	    goto out1;
@@ -256,7 +255,7 @@ out1:
 		"Single vertexuse in shell of %s has been ignored in conversion\n", nmg_name);
 
     dp = db_diradd(gedp->ged_wdbp->dbip, new_name,
-	RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);

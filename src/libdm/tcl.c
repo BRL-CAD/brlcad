@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,9 +26,7 @@
 #include "common.h"
 
 #include <math.h>
-#include "bio.h"
 #include "tcl.h"
-#include "bu.h"
 #include "vmath.h"
 #include "dm.h"
 #include "bu/cmd.h"
@@ -59,7 +57,7 @@ dm_validXType_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib dm_validXType");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(&vls, "%d", dm_validXType(argv[1], argv[2]));
@@ -70,7 +68,7 @@ dm_validXType_tcl(void *clientData, int argc, const char **argv)
     bu_vls_free(&vls);
 
     Tcl_SetObjResult(interp, obj);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -88,7 +86,7 @@ dm_bestXType_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib dm_bestXType");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     obj = Tcl_GetObjResult(interp);
@@ -99,9 +97,9 @@ dm_bestXType_tcl(void *clientData, int argc, const char **argv)
     if (best_dm) {
 	Tcl_AppendStringsToObj(obj, best_dm, (char *)NULL);
 	Tcl_SetObjResult(interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -151,7 +149,7 @@ Dm_Init(void *interpreter)
 
     Tcl_PkgProvide(interp,  "Dm", brlcad_version());
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 

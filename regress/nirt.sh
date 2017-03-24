@@ -2,7 +2,7 @@
 #                       N I R T . S H
 # BRL-CAD
 #
-# Copyright (c) 2012-2014 United States Government as represented by
+# Copyright (c) 2012-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -113,12 +113,17 @@ echo "*** Test 10 - air regions ***" >> nirt.out
 $NIRT -v -H 0 -b -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
 $NIRT -v -H 0 -b -u 0 -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
 $NIRT -v -H 0 -b -u 1 -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
+echo "*** Test 11 - parsing with spaces before semicolon, Patch #314 ***" >> nirt.out
+$NIRT -v -H 0 -e "xyz 0.5 1.5 0.5; dir 0 -1 0; s; q" nirt.g center_cube.r >> nirt.out 2>> nirt.log
+$NIRT -v -H 0 -e "xyz 0.5 1.5 0.5 ; dir 0 -1 0; s; q;" nirt.g center_cube.r >> nirt.out 2>> nirt.log
 
 
 
 cat >> nirt.ref <<EOF
 NIRT Program Output:
 *** Test 1 - shot command ***
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -133,6 +138,8 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
 center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
 *** Test 2 - xyz command ***
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -148,6 +155,8 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
 center_cube.r        (   1.0000    0.0000    0.5000)   2.0000   0.0000 
 Quitting...
 *** Test 3 - backout command ***
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -167,6 +176,8 @@ left_and_right_cubes.r (   3.0000    0.0000    0.0000)   2.0000   0.0000
 left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
 *** Test 4 - backout/xyz interaction ***
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -193,6 +204,8 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
 left_and_right_cubes.r (  -1.0000    0.0000    0.8000)   2.0000   0.0000 
 Quitting...
 *** Test 5 - dir command***
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -216,6 +229,8 @@ Direction (x y z) = (0.00000000 0.00000000 1.00000000)  (az el) = (0.00000000 -9
 You missed the target
 Quitting...
 *** Test 6 - reporting of overlaps ***
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -238,6 +253,8 @@ center_overlap.r     (   0.0000    0.0000    1.0000)   2.0000   0.0000
 OVERLAP: 'all_cubes.r' and 'center_overlap.r' xyz_in=(0 0 1) los=2
 Quitting...
 *** Test 7 - output formatting ***
+Output format: csv (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -257,6 +274,8 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 "left_cube.r","/left_cube.r",1002,-1.000000,0.000000,0.000000,-1.000000,-3.000000,0.000000,0.000000,-3.000000,2.000000,2.000000,0.000000,0.000000,0,1
 
 Quitting...
+Output format: csv-gap (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -276,6 +295,8 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 "left_cube.r","/left_cube.r",1002,-1.000000,0.000000,0.000000,-1.000000,-3.000000,0.000000,0.000000,-3.000000,2.000000,2.000000,0.000000,0.000000,0,1
 
 Quitting...
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -291,6 +312,8 @@ right_cube.r         (   3.0000    0.0000    0.0000)   2.0000   0.0000
 center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000 
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
+Output format: entryexit (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -306,6 +329,8 @@ right_cube.r         (   3.0000    0.0000    0.0000) (   1.0000    0.0000    0.0
 center_cube.r        (   1.0000    0.0000    0.0000) (  -1.0000    0.0000    0.0000)   0.0000 
 left_cube.r          (  -1.0000    0.0000    0.0000) (  -3.0000    0.0000    0.0000)   0.0000 
 Quitting...
+Output format: gap1 (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -321,6 +346,8 @@ right_cube.r         (   3.0000    0.0000    0.0000)   2.0000   0.0000
 center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000 
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
+Output format: gap2 (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -337,6 +364,8 @@ center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
 *** Test 8 - attribute reporting ***
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -369,6 +398,8 @@ right_cube_color.r   (   3.0000    0.0000    0.0000)   2.0000   0.0000 color=0/0
 center_cube_color.r  (   1.0000    0.0000    0.0000)   2.0000   0.0000 color=0/255/0 region=R 
 left_cube_color.r    (  -1.0000    0.0000    0.0000)   2.0000   0.0000 color=255/0/0 region=R 
 Quitting...
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -386,6 +417,8 @@ center_cube_color.r  (   1.0000    0.0000    0.0000)   2.0000   0.0000 color=0/2
 left_cube_color.r    (  -1.0000    0.0000    0.0000)   2.0000   0.0000 color=255/0/0 
 Quitting...
 *** Test 9 - units ***
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -413,6 +446,8 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
 center_cube.r        (   0.0033    0.0000    0.0000)   0.0066   0.0000 
 Quitting...
 *** Test 10 - air regions ***
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -426,6 +461,8 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -439,6 +476,8 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
 Building the directory...
 Get trees...
@@ -452,6 +491,37 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 center_cube_air      (   1.0000    0.0000    0.0000)   2.0000   0.0000 
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
+Quitting...
+*** Test 11 - parsing with spaces before semicolon, Patch #314 ***
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
+Database file:  'nirt.g'
+Building the directory...
+Get trees...
+Prepping the geometry...
+Object 'center_cube.r' processed
+Database title: 'NIRT example database'
+Database units: 'mm'
+model_min = (-1, -1, -1)    model_max = (1, 1, 1)
+Origin (x y z) = (0.50000000 1.50000000 0.50000000)  (h v d) = (1.5000 0.5000 0.5000)
+Direction (x y z) = (0.00000000 -1.00000000 0.00000000)  (az el) = (90.00000000 -0.00000000)
+    Region Name               Entry (x y z)              LOS  Obliq_in Attrib
+center_cube.r        (   0.5000    1.0000    0.5000)   2.0000   0.0000 
+Quitting...
+Output format: default (specify -L option for descriptive listing)
+Formats available: csv-gap csv default entryexit gap1 gap2 (specify via -f option)
+Database file:  'nirt.g'
+Building the directory...
+Get trees...
+Prepping the geometry...
+Object 'center_cube.r' processed
+Database title: 'NIRT example database'
+Database units: 'mm'
+model_min = (-1, -1, -1)    model_max = (1, 1, 1)
+Origin (x y z) = (0.50000000 1.50000000 0.50000000)  (h v d) = (1.5000 0.5000 0.5000)
+Direction (x y z) = (0.00000000 -1.00000000 0.00000000)  (az el) = (90.00000000 -0.00000000)
+    Region Name               Entry (x y z)              LOS  Obliq_in Attrib
+center_cube.r        (   0.5000    1.0000    0.5000)   2.0000   0.0000 
 Quitting...
 EOF
 

@@ -1,7 +1,7 @@
 /*                         D X F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,19 +29,20 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include "bio.h"
 
 /* interface headers */
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
+#include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "nurb.h"
 
 /* private headers */
 #include "./dxf.h"
@@ -198,16 +199,16 @@ static int polyline_vert_indices_max = 0;
 
 static point_t pts[4];
 
-#define UNKNOWN_ENTITY	0
-#define POLYLINE_VERTEX		1
+#define UNKNOWN_ENTITY 0
+#define POLYLINE_VERTEX 1
 
 static int invisible = 0;
 
 #define ERROR_FLAG	-999
 #define EOF_FLAG	-998
 
-#define TOL_SQ	0.00001
-#define MAX_LINE_SIZE	2050
+#define TOL_SQ 0.00001
+#define MAX_LINE_SIZE 2050
 char line[MAX_LINE_SIZE];
 
 static char *usage="Usage: dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf output_file.g\n";
@@ -646,9 +647,7 @@ process_blocks_code(int code)
 	case 5:		/* block handle */
 	    if (curr_block && BU_STR_EMPTY(curr_block->handle)) {
 		len = strlen(line);
-		if (len > 16) {
-		    len = 16;
-		}
+		V_MIN(len, 16);
 		bu_strlcpy(curr_block->handle, line, len);
 	    }
 	    break;
@@ -1275,7 +1274,8 @@ process_solid_entities_code(int code)
 	case 23:
 	case 33:
 	    vert_no = code % 10;
-	    if (vert_no > last_vert_no) last_vert_no = vert_no;
+	    V_MAX(last_vert_no, vert_no);
+
 	    coord = code / 10 - 1;
 	    solid_pt[vert_no][coord] = atof(line) * units_conv[units] * scale_factor;
 	    if (verbose) {
@@ -1800,10 +1800,10 @@ process_circle_entities_code(int code)
  * \~ - blank space
  * \f - TrueType font
  * \F - .SHX font
- * 	    ex:
- *		Hello \fArial;World
- *	    or:
- *		Hello {\fArial;World}
+ * ex:
+ * Hello \fArial;World
+ * or:
+ * Hello {\fArial;World}
  */
 
 int
@@ -1857,9 +1857,8 @@ convertSecretCodes(char *c, char *cp, int *maxLineLen)
 		    *cp++ = '\n';
 		    c += 2;
 		    lineCount++;
-		    if (lineLen > *maxLineLen) {
-			*maxLineLen = lineLen;
-		    }
+		    V_MAX(*maxLineLen, lineLen);
+
 		    lineLen = 0;
 		    break;
 		case 'A':
@@ -1885,9 +1884,7 @@ convertSecretCodes(char *c, char *cp, int *maxLineLen)
 	lineCount++;
     }
 
-    if (lineLen > *maxLineLen) {
-	*maxLineLen = lineLen;
-    }
+    V_MAX(*maxLineLen, lineLen);
 
     return lineCount;
 }
@@ -2457,18 +2454,14 @@ process_text_attrib_entities_code(int code)
 static int
 process_dimension_entities_code(int code)
 {
-    /* static point_t def_pt={0.0, 0.0, 0.0}; */
     static char *block_name=NULL;
     static struct state_data *new_state=NULL;
     struct block_list *blk;
-    /* int coord; */
 
     switch (code) {
 	case 10:
 	case 20:
 	case 30:
-	    /* coord = (code / 10) - 1; */
-	    /* def_pt[coord] = atof(line) * units_conv[units] * scale_factor; */
 	    break;
 	case 8:		/* layer name */
 	    if (curr_layer_name) {
@@ -2522,9 +2515,7 @@ process_dimension_entities_code(int code)
 		    }
 		    layers[curr_layer]->dimension_count++;
 		}
-	    }
-	    else
-	    {
+	    } else {
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		process_entities_code[curr_state->sub_state](code);
 	    }
@@ -2611,9 +2602,8 @@ process_arc_entities_code(int code)
 		bu_log("arc has %d segs\n", num_segs);
 	    }
 
-	    if (num_segs < 1) {
-		num_segs = 1;
-	    }
+	    V_MAX(num_segs, 1);
+
 	    VSET(circle_pts[0], radius * cos(start_angle), radius * sin(start_angle), 0.0);
 	    for (i=1; i<num_segs; i++) {
 		circle_pts[i][X] = circle_pts[i-1][X]*cos_delta - circle_pts[i-1][Y]*sin_delta;
@@ -2728,8 +2718,6 @@ process_spline_entities_code(int code)
 	case 220:
 	case 230:
 	    coord = code / 10 - 21;
-	    /* normal, unhandled */
-	    /* normal[coord] = atof(line) * units_conv[units] * scale_factor; */
 	    break;
 	case 70:
 	    flag = atoi(line);
@@ -2764,16 +2752,10 @@ process_spline_entities_code(int code)
 	    }
 	    break;
 	case 42:
-	    /* unhandled */
-	    /* knotTol = atof(line) * units_conv[units] * scale_factor; */
 	    break;
 	case 43:
-	    /* unhandled */
-	    /* ctlPtTol = atof(line) * units_conv[units] * scale_factor; */
 	    break;
 	case 44:
-	    /* unhandled */
-	    /* fitPtTol = atof(line) * units_conv[units] * scale_factor; */
 	    break;
 	case 12:
 	case 22:
@@ -2830,7 +2812,7 @@ process_spline_entities_code(int code)
 		ncoords = 3;
 		pt_type = RT_NURB_MAKE_PT_TYPE(ncoords, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
 	    }
-	    crv = rt_nurb_new_cnurb(degree+1, numCtlPts+degree+1, numCtlPts, pt_type);
+	    crv = nmg_nurb_new_cnurb(degree+1, numCtlPts+degree+1, numCtlPts, pt_type);
 
 	    for (i = 0; i < numKnots; i++) {
 		crv->k.knots[i] = knots[i];
@@ -2849,7 +2831,7 @@ process_spline_entities_code(int code)
 	    startParam = knots[0];
 	    stopParam = knots[numKnots-1];
 	    paramDelta = (stopParam - startParam) / (double)splineSegs;
-	    rt_nurb_c_eval(crv, startParam, pt);
+	    nmg_nurb_c_eval(crv, startParam, pt);
 	    for (i = 0; i < splineSegs; i++) {
 		fastf_t param = startParam + paramDelta * (i+1);
 		eu = nmg_me(v1, v2, layers[curr_layer]->s);
@@ -2857,7 +2839,7 @@ process_spline_entities_code(int code)
 		if (i == 0) {
 		    nmg_vertex_gv(v1, pt);
 		}
-		rt_nurb_c_eval(crv, param, pt);
+		nmg_nurb_c_eval(crv, param, pt);
 		v2 = eu->eumate_p->vu_p->v_p;
 		nmg_vertex_gv(v2, pt);
 
@@ -2865,7 +2847,7 @@ process_spline_entities_code(int code)
 		v2 = NULL;
 	    }
 
-	    rt_nurb_free_cnurb(crv);
+	    nmg_nurb_free_cnurb(crv);
 
 	    if (knots != NULL) bu_free(knots, "spline knots");
 	    if (weights != NULL) bu_free(weights, "spline weights");
@@ -3049,7 +3031,7 @@ nmg_wire_edges_to_sketch(struct model *m)
 	    eu1 = NULL;
 	    for (BU_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
 		struct line_seg * lseg;
-		if(eu == eu1) {
+		if (eu == eu1) {
 		    continue;
 		} else {
 		    eu1 = eu->eumate_p;
@@ -3060,7 +3042,7 @@ nmg_wire_edges_to_sketch(struct model *m)
 		lseg->start = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
 		v = eu->eumate_p->vu_p->v_p;
 		lseg->end = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
-		if(verbose) {
+		if (verbose) {
 		    bu_log("making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
 			   lseg->start, V3ARGS(&vr->the_array[lseg->start]),
 			   lseg->end, V3ARGS(&vr->the_array[lseg->end]));
@@ -3076,16 +3058,16 @@ nmg_wire_edges_to_sketch(struct model *m)
     }
     skt->vert_count = vr->curr_vert;
     skt->verts = (point2d_t *)bu_malloc(skt->vert_count * sizeof(point2d_t), "skt->verts");
-    for(idx = 0 ; idx < vr->curr_vert ; idx++) {
+    for (idx = 0 ; idx < vr->curr_vert ; idx++) {
 	skt->verts[idx][0] = vr->the_array[idx*3];
 	skt->verts[idx][1] = vr->the_array[idx*3 + 1];
     }
     skt->curve.count = BU_PTBL_LEN(&segs);
     skt->curve.reverse = (int *)bu_realloc(skt->curve.reverse, skt->curve.count * sizeof (int), "curve segment reverse");
     memset(skt->curve.reverse, 0, skt->curve.count * sizeof (int));
-    skt->curve.segment = (void **)bu_realloc(skt->curve.segment, skt->curve.count * sizeof (genptr_t), "curve segments");
+    skt->curve.segment = (void **)bu_realloc(skt->curve.segment, skt->curve.count * sizeof (void *), "curve segments");
     for (idx = 0; idx < BU_PTBL_LEN(&segs); idx++) {
-	genptr_t ptr = BU_PTBL_GET(&segs, idx);
+	void *ptr = BU_PTBL_GET(&segs, idx);
 	skt->curve.segment[idx] = ptr;
     }
 
@@ -3159,10 +3141,8 @@ main(int argc, char *argv[])
 
     /* get command line arguments */
     scale_factor = 1.0;
-    while ((c = bu_getopt(argc, argv, "cdvt:s:h?")) != -1)
-    {
-	switch (c)
-	{
+    while ((c = bu_getopt(argc, argv, "cdvt:s:h?")) != -1) {
+	switch (c) {
 	    case 's':	/* scale factor */
 		scale_factor = atof(bu_optarg);
 		if (scale_factor < SQRT_SMALL_FASTF) {
@@ -3296,12 +3276,14 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&head_all);
     for (i = 0; i < next_layer; i++) {
 	struct bu_list head;
-	int j;
+	size_t j;
 
 	BU_LIST_INIT(&head);
 
-	if (layers[i]->color_number < 0) layers[i]->color_number = 7;
-	if (layers[i]->curr_tri || BU_PTBL_END(&layers[i]->solids) || layers[i]->m) {
+	if (layers[i]->color_number < 0)
+	    layers[i]->color_number = 7;
+
+	if (layers[i]->curr_tri || BU_PTBL_LEN(&layers[i]->solids) || layers[i]->m) {
 	    bu_log("LAYER: %s, color = %d (%d %d %d)\n", layers[i]->name, layers[i]->color_number, V3ARGS(&rgb[layers[i]->color_number*3]));
 	}
 
@@ -3316,9 +3298,8 @@ main(int argc, char *argv[])
 	    }
 	}
 
-	for (j = 0; j < BU_PTBL_END(&layers[i]->solids); j++) {
-	    (void)mk_addmember((char *)BU_PTBL_GET(&layers[i]->solids, j), &head,
-			       NULL, WMOP_UNION);
+	for (j = 0; j < BU_PTBL_LEN(&layers[i]->solids); j++) {
+	    (void)mk_addmember((char *)BU_PTBL_GET(&layers[i]->solids, j), &head, NULL, WMOP_UNION);
 	    bu_free((char *)BU_PTBL_GET(&layers[i]->solids, j), "solid_name");
 	}
 
@@ -3328,7 +3309,7 @@ main(int argc, char *argv[])
 
 	    sprintf(name, "sketch.%d", i);
 	    skt = nmg_wire_edges_to_sketch(layers[i]->m);
-	    if(skt != NULL) {
+	    if (skt != NULL) {
 		mk_sketch(out_fp, name, skt);
 		(void) mk_addmember(name, &head, NULL, WMOP_UNION);
 		rt_curve_free(&skt->curve);

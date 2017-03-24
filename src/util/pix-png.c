@@ -1,7 +1,7 @@
 /*                       P I X - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,12 +33,13 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#include <zlib.h>
 #include <png.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -47,6 +48,8 @@
 #define ROWSIZE (file_width * BYTESPERPIXEL)
 #define SIZE (file_height * ROWSIZE)
 
+size_t file_width = 512; /* default input width */
+size_t file_height = 512; /* default input height */
 static int autosize = 0;			/* !0 to autosize input */
 static int fileinput = 0;			/* file of pipe on input? */
 static char *file_name = (char *)NULL;
@@ -93,7 +96,7 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 		break;
 	    }
 
-	    default: /* help */
+	    default: /* 'h' '?' */
 		return 0;
 	}
     }
@@ -144,7 +147,7 @@ write_png(FILE *outfp, unsigned char **scanlines, long int width, long int heigh
 
     png_init_io(png_p, outfp);
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
-    png_set_compression_level(png_p, Z_BEST_COMPRESSION);
+    png_set_compression_level(png_p, 9);
     png_set_IHDR(png_p, info_p, width, height, 8,
 		 PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
@@ -187,9 +190,6 @@ main(int argc, char *argv[])
     FILE *infp = (FILE *)NULL;
     FILE *outfp = (FILE *)NULL;
 
-    size_t file_width = 512; /* default input width */
-    size_t file_height = 512; /* default input height */
-
     char usage[] = "Usage: pix-png [-a] [-w file_width] [-n file_height] [-g gamma]\n\
 	[-s square_file_size] [-o file.png] [file.pix] [> file.png]\n";
 
@@ -203,7 +203,8 @@ main(int argc, char *argv[])
     outfp = stdout;
 
     if (!get_args(argc, argv, &file_width, &file_height, &infp, &outfp)) {
-	bu_exit(1, "%s\n", usage);
+	(void)fputs(usage, stderr);
+	bu_exit(1, NULL);
     }
 
     /* autosize input? */

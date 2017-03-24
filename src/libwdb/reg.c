@@ -1,7 +1,7 @@
 /*                           R E G . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2014 United States Government as represented by
+ * Copyright (c) 1987-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,12 +29,10 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -131,7 +129,7 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
     if (comb->tree) {
 	/* Release storage for non-leaf nodes, steal leaves */
 	actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     } else {
 	actual_count = 0;
@@ -168,7 +166,7 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	    tp->tr_l.tl_mat = (matp_t)NULL;
 	}
     }
-    BU_ASSERT_SIZE_T(node_count, ==, actual_count + (size_t)new_nodes);
+    BU_ASSERT(node_count == actual_count + (size_t)new_nodes);
 
     /* rebuild the tree with GIFT semantics */
     comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
@@ -186,7 +184,16 @@ mk_addmember(
     mat_t mat,
     int op)
 {
-    struct wmember *wp;
+    struct wmember *wp = WMEMBER_NULL;
+
+    /* If we can't append it to anything, we can't add it. */
+    if (!headp) return WMEMBER_NULL;
+
+    /* Empty names aren't very useful and can produce lots of weird errors. */
+    if (!name || strlen(name) == 0) {
+	bu_log("mk_addmember() cannot make a member with an empty name\n");
+	return WMEMBER_NULL;
+    }
 
     BU_ALLOC(wp, struct wmember);
     wp->l.magic = WMEMBER_MAGIC;
@@ -267,7 +274,7 @@ mk_comb(
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_ptr = (genptr_t)comb;
+	intern.idb_ptr = (void *)comb;
 	intern.idb_meth = &OBJ[ID_COMBINATION];
 
 	fresh_combination = 1;

@@ -1,7 +1,7 @@
 /*                 ProductDefinitionRelationship.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -110,8 +110,10 @@ bool ProductDefinitionRelationship::Load(STEPWrapper *sw, SDAI_Application_insta
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "relating_product_definition");
 	if (entity) { //this attribute is optional
 	    relating_product_definition = dynamic_cast<ProductDefinition *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !relating_product_definition) {
 	    std::cout << CLASSNAME << ":Error loading attribute 'relating_product_definition'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -120,11 +122,15 @@ bool ProductDefinitionRelationship::Load(STEPWrapper *sw, SDAI_Application_insta
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "related_product_definition");
 	if (entity) { //this attribute is optional
 	    related_product_definition = dynamic_cast<ProductDefinition *>(Factory::CreateObject(sw, entity));
-	} else {
+	}
+	if (!entity || !related_product_definition) {
 	    std::cout << CLASSNAME << ":Error loading attribute 'related_product_definition'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

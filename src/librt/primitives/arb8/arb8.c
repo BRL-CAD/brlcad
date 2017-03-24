@@ -1,7 +1,7 @@
 /*                          A R B 8 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@
 /** @{ */
 /** @file primitives/arb8/arb8.c
  *
- * Intersect a ray with an Arbitrary Regular Polyhedron with as many
- * as 8 vertices.
+ * Intersect a ray with an Arbitrary Polyhedron with as many as 8
+ * vertices.
  *
  * An ARB is a convex volume bounded by 4 (pyramid), 5 (wedge), or 6
  * (box) planes.  This analysis depends on the properties of objects
@@ -48,7 +48,6 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
@@ -59,10 +58,10 @@
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
+#include "rt/arb_edit.h"
 #include "raytrace.h"
-#include "nurb.h"
 
 #include "../../librt_private.h"
 
@@ -157,7 +156,7 @@ const struct bu_structparse rt_arb_parse[] = {
 };
 
 
-short local_arb6_edge_vertex_mapping[10][2] = {
+const short local_arb6_edge_vertex_mapping[10][2] = {
     {0, 1},	/* edge 12 */
     {1, 2},	/* edge 23 */
     {2, 3},	/* edge 34 */
@@ -171,7 +170,7 @@ short local_arb6_edge_vertex_mapping[10][2] = {
 };
 
 
-short local_arb4_edge_vertex_mapping[6][2] = {
+const short local_arb4_edge_vertex_mapping[6][2] = {
     {0, 1},	/* edge 12 */
     {1, 2},	/* edge 23 */
     {2, 0},	/* edge 31 */
@@ -179,6 +178,35 @@ short local_arb4_edge_vertex_mapping[6][2] = {
     {1, 4},	/* edge 24 */
     {2, 4},	/* edge 34 */
 };
+
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_arb_specific {
+    cl_double arb_peqns[4*6];
+    cl_int arb_nmfaces;
+};
+
+size_t
+clt_arb_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct arb_specific *arb =
+        (struct arb_specific *)stp->st_specific;
+    struct clt_arb_specific *args;
+
+    const struct aface *afp;
+    cl_int j;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_arb_specific*)bu_pool_alloc(pool, 1, size);
+
+    for (afp = &arb->arb_face[j=0]; j < 6; j++, afp++) {
+        HMOVE(args->arb_peqns+4*j, afp->peqn);
+    }
+    args->arb_nmfaces = arb->arb_nmfaces;
+    return size;
+}
+#endif /* USE_OPENCL */
 
 
 /* rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
@@ -712,7 +740,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 		sizeof(struct arb_specific) +
 		sizeof(struct aface) * (pa.pa_faces - 4),
 		"arb_specific");
-	    stp->st_specific = (genptr_t)arbp;
+	    stp->st_specific = (void *)arbp;
 	}
 	arbp->arb_nmfaces = pa.pa_faces;
 	memcpy((char *)arbp->arb_face, (char *)pa.pa_face,
@@ -1080,7 +1108,8 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		   stp->st_specific, (void *)arbp->arb_opt);
 	    return;
 	}
-	if (RT_G_DEBUG&DEBUG_SOLIDS) rt_pr_soltab(stp);
+	if (RT_G_DEBUG&DEBUG_SOLIDS)
+	    rt_pr_soltab(stp);
     }
 
     ofp = &arbp->arb_opt[hitp->hit_surfno];
@@ -1291,7 +1320,7 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*8);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 3*8);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARB8;
@@ -1459,7 +1488,7 @@ rt_arb_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
     bu_free(ip->idb_ptr, "arb ifree");
-    ip->idb_ptr = (genptr_t)NULL;
+    ip->idb_ptr = (void *)NULL;
 }
 
 
@@ -1540,13 +1569,13 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Mark edges as real */
-    (void)nmg_mark_edges_real(&s->l.magic);
+    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* Some arbs may not be within tolerance, so triangulate faces where needed */
-    nmg_make_faces_within_tol(s, tol);
+    nmg_make_faces_within_tol(s, &RTG.rtg_vlfree, tol);
 
     return 0;
 }
@@ -1721,7 +1750,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 
     /* Mark edges as real */
-    (void)nmg_mark_edges_real(&s->l.magic);
+    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
@@ -1768,20 +1797,23 @@ int
 rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol *tol)
 {
     register int i;
+    const short arb8_evm[12][2] = arb8_edge_vertex_mapping;
+    const short arb7_evm[12][2] = arb7_edge_vertex_mapping;
+    const short arb5_evm[9][2] = arb5_edge_vertex_mapping;
 
     switch (cgtype) {
 	case ARB8:
 	    for (i = 0; i < 12; ++i) {
-		if (VNEAR_EQUAL(arb->pt[arb8_edge_vertex_mapping[i][0]],
-				arb->pt[arb8_edge_vertex_mapping[i][1]],
+		if (VNEAR_EQUAL(arb->pt[arb8_evm[i][0]],
+				arb->pt[arb8_evm[i][1]],
 				tol->dist))
 		    return -1;
 	    }
 	    break;
 	case ARB7:
 	    for (i = 0; i < 11; ++i) {
-		if (VNEAR_EQUAL(arb->pt[arb7_edge_vertex_mapping[i][0]],
-				arb->pt[arb7_edge_vertex_mapping[i][1]],
+		if (VNEAR_EQUAL(arb->pt[arb7_evm[i][0]],
+				arb->pt[arb7_evm[i][1]],
 				tol->dist))
 		    return -1;
 	    }
@@ -1796,8 +1828,8 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 	    break;
 	case ARB5:
 	    for (i = 0; i < 8; ++i) {
-		if (VNEAR_EQUAL(arb->pt[arb5_edge_vertex_mapping[i][0]],
-				arb->pt[arb5_edge_vertex_mapping[i][1]],
+		if (VNEAR_EQUAL(arb->pt[arb5_evm[i][0]],
+				arb->pt[arb5_evm[i][1]],
 				tol->dist))
 		    return -1;
 	    }
@@ -1873,17 +1905,18 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 {
     register int i, p1, p2, p3;
     int type = cgtype - ARB4; /* ARB4 at location 0, ARB5 at 1, etc. */
+    const int arb_faces[5][24] = rt_arb_faces;
 
     RT_ARB_CK_MAGIC(arb);
     BN_CK_TOL(tol);
 
     for (i = 0; i < 6; i++) {
-	if (rt_arb_faces[type][i*4] == -1)
+	if (arb_faces[type][i*4] == -1)
 	    break;	/* faces are done */
 
-	p1 = rt_arb_faces[type][i*4];
-	p2 = rt_arb_faces[type][i*4+1];
-	p3 = rt_arb_faces[type][i*4+2];
+	p1 = arb_faces[type][i*4];
+	p2 = arb_faces[type][i*4+1];
+	p3 = arb_faces[type][i*4+2];
 
 	if (bn_mk_plane_3pts(planes[i],
 			     arb->pt[p1],
@@ -1891,7 +1924,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 			     arb->pt[p3],
 			     tol) < 0) {
 	    bu_vls_printf(error_msg_ret, "%d %d%d%d%d (bad face)\n",
-			  i+1, p1+1, p2+1, p3+1, rt_arb_faces[type][i*4+3]+1);
+			  i+1, p1+1, p2+1, p3+1, arb_faces[type][i*4+3]+1);
 	    return -1;
 	}
     }
@@ -1993,11 +2026,16 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    const struct bn_tol *tol)
 {
     int pt1 = 0, pt2 = 0, bp1, bp2, newp, p1, p2, p3;
-    short *edptr;		/* pointer to arb edit array */
-    short *final;		/* location of points to redo */
+    const short *edptr;		/* pointer to arb edit array */
+    const short *final;		/* location of points to redo */
     int i;
     const int *iptr;
     int edit_class = RT_ARB_EDIT_EDGE;
+    const short earb8[12][18] = earb8_edit_array;
+    const short earb7[12][18] = earb7_edit_array;
+    const short earb6[10][18] = earb6_edit_array;
+    const short earb5[9][18] = earb5_edit_array;
+    const short earb4[5][18] = earb4_edit_array;
 
     RT_ARB_CK_MAGIC(arb);
 
@@ -2130,11 +2168,12 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 
     if (newp == 8) {
 	/* special...redo next planes using pts defined in faces */
+	const int arb_faces[5][24] = rt_arb_faces;
 	for (i = 0; i < 3; i++) {
 	    if ((newp = *edptr++) == -1)
 		break;
 
-	    iptr = &rt_arb_faces[arb_type-4][4*newp];
+	    iptr = &arb_faces[arb_type-4][4*newp];
 	    p1 = *iptr++;
 	    p2 = *iptr++;
 	    p3 = *iptr++;
@@ -2213,6 +2252,61 @@ rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 
 
 /**
+ * compute surface area of an arb8 by dividing it into
+ * it's component faces and summing the face areas.
+ */
+void
+rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    const int arb_faces[5][24] = rt_arb_faces;
+    int i, a, b, c, type;
+    vect_t b_a, c_a, area_;
+    plane_t plane;
+    struct bn_tol tmp_tol, tol;
+    struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(aip);
+
+    /* set up tolerance for rt_arb_std_type */
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-5;
+    tol.para = 1 - tol.perp;
+
+    type = rt_arb_std_type(ip, &tol) - 4;
+
+    /* tol struct needed for bn_mk_plane_3pts,
+     * can't be passed to the function since it
+     * must fit into the rt_functab interface */
+    tmp_tol.magic = BN_TOL_MAGIC;
+    tmp_tol.dist = RT_LEN_TOL;
+    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+
+    for (i = 0; i < 6; i++) {
+	if (arb_faces[type][i*4] == -1)
+	    break;	/* faces are done */
+
+	/* a, b, c = face of the GENARB8 */
+	a = arb_faces[type][i*4];
+	b = arb_faces[type][i*4+1];
+	c = arb_faces[type][i*4+2];
+
+	/* create a plane from a, b, c */
+	if (bn_mk_plane_3pts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
+	    continue;
+	}
+
+	/* calculate area of the face */
+	VSUB2(b_a, aip->pt[b], aip->pt[a]);
+	VSUB2(c_a, aip->pt[c], aip->pt[a]);
+	VCROSS(area_, b_a, c_a);
+
+	*area += MAGNITUDE(area_);
+    }
+}
+
+
+/**
  * compute volume of an arb8 by dividing it into
  * 6 arb4 and summing the volumes.
  */
@@ -2263,12 +2357,16 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 
 
 int
-rt_arb_get_edge_list(const struct rt_db_internal *ip, short (*edge_list[])[2])
+rt_arb_get_edge_list(const struct rt_db_internal *ip, const short (*edge_list[])[2])
 {
     size_t edge_count = 0;
     int arb_type;
     struct bn_tol tmp_tol;
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
+    const short arb8_evm[12][2] = arb8_edge_vertex_mapping;
+    const short arb7_evm[12][2] = arb7_edge_vertex_mapping;
+    const short arb5_evm[9][2] = arb5_edge_vertex_mapping;
+    const short arb4_evm[5][2] = arb4_edge_vertex_mapping;
 
     RT_ARB_CK_MAGIC(aip);
 
@@ -2285,12 +2383,12 @@ rt_arb_get_edge_list(const struct rt_db_internal *ip, short (*edge_list[])[2])
     switch (arb_type) {
 	case ARB8:
 	    edge_count = 12;
-	    (*edge_list) = arb8_edge_vertex_mapping;
+	    (*edge_list) = arb8_evm;
 
 	    break;
 	case ARB7:
 	    edge_count = 12;
-	    (*edge_list) = arb7_edge_vertex_mapping;
+	    (*edge_list) = arb7_evm;
 
 	    break;
 	case ARB6:
@@ -2300,12 +2398,12 @@ rt_arb_get_edge_list(const struct rt_db_internal *ip, short (*edge_list[])[2])
 	    break;
 	case ARB5:
 	    edge_count = 9;
-	    (*edge_list) = arb5_edge_vertex_mapping;
+	    (*edge_list) = arb5_evm;
 
 	    break;
 	case ARB4:
 	    edge_count = 5;
-	    (*edge_list) = arb4_edge_vertex_mapping;
+	    (*edge_list) = arb4_evm;
 
 	    break;
 	default:
@@ -2327,7 +2425,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 {
     int i;
     fastf_t dist=MAX_FASTF, tmp_dist;
-    short (*edge_list)[2] = {0};
+    const short (*edge_list)[2] = {0};
     int edge_count = 0;
     struct bn_tol tol;
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;

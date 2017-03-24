@@ -1,7 +1,7 @@
 /*                         D E B U G N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "./ged_private.h"
 
@@ -55,13 +54,13 @@ ged_debugnmg(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\n");
     } else {
 	/* set librt's NMG debug bit vector */
-	if (sscanf(argv[1], "%x", (unsigned int *)&RTG.NMG_debug) != 1) {
+	if (sscanf(argv[1], "%x", (unsigned int *)&nmg_debug) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
     }
 
-    bu_vls_printb(gedp->ged_result_str, "librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
+    bu_vls_printb(gedp->ged_result_str, "librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
     return GED_OK;

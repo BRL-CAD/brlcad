@@ -1,7 +1,7 @@
 /*                 ConnectedFaceSet.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,6 +59,7 @@ ConnectedFaceSet::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!TopologicalRepresentationItem::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -73,18 +74,27 @@ ConnectedFaceSet::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		Face *aAF = dynamic_cast<Face *>(Factory::CreateObject(sw, entity)); //CreateSurfaceObject(sw,entity));
-
-		cfs_faces.push_back(aAF);
+		if (aAF) {
+		    cfs_faces.push_back(aAF);
+		} else {
+		    l->clear();
+		    delete l;
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
+		    return false;
+		}
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'cfs_faces'." << std::endl;
 		l->clear();
 		delete l;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	}
 	l->clear();
 	delete l;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }
@@ -131,6 +141,10 @@ ConnectedFaceSet::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
+#ifdef _DEBUG_TESTING_
+  static int _face_cnt_ = 0;
+#endif
+
 bool
 ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 {
@@ -142,8 +156,10 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
     LIST_OF_FACES::iterator i;
     int facecnt = 0;
     for (i = cfs_faces.begin(); i != cfs_faces.end(); ++i) {
-#ifdef PRINT_DEBUG
-	if (facecnt == 44) {
+#ifdef _DEBUG_TESTING_
+	if (facecnt != _face_cnt_) {
+	    facecnt++;
+	    continue;
 	    std::cerr << "We're here." << std::endl;
 	}
 #endif

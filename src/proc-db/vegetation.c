@@ -1,7 +1,7 @@
 /*                    V E G E T A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -199,7 +199,7 @@ findIntersectors(const growthSegment_t * const segment, const structure_t * cons
     for (i=0; i < structure->subStructureCount; i++) {
 	segList = findIntersectors(segment, structure->subStructure[i], exemptList);
 
-	if(segList == NULL) {
+	if (segList == NULL) {
 	    bu_log("segList is null?\n");
 	    return NULL;
 	}

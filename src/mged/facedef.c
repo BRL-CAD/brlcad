@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,14 +24,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <signal.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "./mged.h"
 #include "./sedit.h"
@@ -87,10 +84,8 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     struct rt_arb_internal *arb;
     struct rt_arb_internal *arbo;
     plane_t planes[6];
-    int status = TCL_OK;
-    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-
-    RT_DB_INTERNAL_INIT(&intern);
+    int status;
+    struct bu_vls error_msg;
 
     if (argc < 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -105,6 +100,10 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	(void)signal(SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
+
+    status = TCL_OK;
+    BU_VLS_INIT(&error_msg);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (STATE != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "Facedef: must be in solid edit mode\n", (char *)NULL);
@@ -379,7 +378,7 @@ get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
 static void
 get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 {
-    fastf_t rota, fb;
+    fastf_t rota, fb_a;
     short int i, temp;
     point_t pt;
 
@@ -387,12 +386,12 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 	return;
 
     rota= atof(argv[0]) * DEG2RAD;
-    fb  = atof(argv[1]) * DEG2RAD;
+    fb_a  = atof(argv[1]) * DEG2RAD;
 
     /* calculate normal vector (length=1) from rot, fb */
-    plane[0] = cos(fb) * cos(rota);
-    plane[1] = cos(fb) * sin(rota);
-    plane[2] = sin(fb);
+    plane[0] = cos(fb_a) * cos(rota);
+    plane[1] = cos(fb_a) * sin(rota);
+    plane[2] = sin(fb_a);
 
     if (argv[2][0] == 'v') {
 	/* vertex given */

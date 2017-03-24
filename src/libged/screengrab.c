@@ -1,7 +1,7 @@
 /*                         S C R E E N G R A B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -96,7 +96,7 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     /* create image file */
 
-   if ((bif = icv_create(width, height, ICV_COLOR_SPACE_RGB)) == NULL) {
+    if ((bif = icv_create(width, height, ICV_COLOR_SPACE_RGB)) == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: could not create icv_image write structure.", argv[1]);
 	return GED_ERROR;
     }
@@ -105,6 +105,13 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     gedp->ged_dm_get_display_image(gedp, &idata);
 
+    if (!idata) {
+	bu_vls_printf(gedp->ged_result_str, "%s: display manager did not return image data.", argv[1]);
+	if (bif != NULL) icv_destroy(bif);
+	bu_free(rows, "rows");
+	return GED_ERROR;
+    }
+
     for (i = 0; i < height; ++i) {
 	rows[i] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
 	/* TODO : Add double type data to maintain resolution */
@@ -112,7 +119,7 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (bif != NULL) {
-	icv_write(bif, argv[1], ICV_IMAGE_AUTO);
+	icv_write(bif, argv[1], BU_MIME_IMAGE_AUTO);
 	icv_destroy(bif);
 	bif = NULL;
     }

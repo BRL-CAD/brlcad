@@ -1,7 +1,7 @@
 /*                        F B L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,9 +30,11 @@
 
 #include <stdlib.h>
 #include <ctype.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/exit.h"
+#include "vmath.h"
 #include "fb.h"
 #include "pkg.h"
 
@@ -57,7 +59,7 @@ struct stroke {
 }; /* rasterization descriptor */
 
 static char *framebuffer = NULL;
-FBIO *fbp;			/* Current framebuffer */
+fb *fbp;			/* Current framebuffer */
 
 static int screen_width = 512;	/* default input width */
 static int screen_height = 512;	/* default input height */
@@ -81,11 +83,8 @@ Usage: fbline [-c ] [-F framebuffer]\n\
 void
 edgelimit(struct coords *ppos)
 {
-    if (ppos->x >= screen_width)
-	ppos->x = screen_width -1;
-
-    if (ppos->y >= screen_height)
-	ppos->y = screen_height -1;
+    V_MIN(ppos->x, screen_width-1);
+    V_MIN(ppos->y, screen_height-1);
 }
 
 

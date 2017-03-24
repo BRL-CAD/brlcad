@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,9 +21,11 @@
  *
  * Ray Tracing program, lighting model manager.
  *
- * Output is either interactive to a frame buffer, or written in a
- * file.  The output format is a .PIX file (a byte stream of R, G, B
- * as u_char's).
+ * Output is either interactively displayed in a frame buffer, written
+ * out to a file, or both.  The default output format is a .PIX file
+ * (a byte stream of R, G, B as u_char's), but will automatically
+ * write out other file formats based on the provided file extension
+ * (e.g., .PNG).
  *
  * The extern "lightmodel" selects which one is being used:
  * 0 Full lighting model (default)
@@ -49,11 +51,11 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "mater.h"
 #include "icv.h"
 #include "raytrace.h"
+#include "bu/cv.h"
 #include "fb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "photonmap.h"
 #include "scanline.h"
 
@@ -76,18 +78,59 @@ usage(const char *argv0)
     bu_log(" -w # -n #	Grid size width (w) and height (n) in pixels\n");
     bu_log(" -a # -e #	Azimuth (a) and elevation (e) in degrees\n");
     bu_log(" -V #		View (pixel) aspect ratio (width/height)\n");
-    bu_log(" -p #		Perspective angle, degrees side to side\n");
+    bu_log(" -p #		Perspective angle, degrees side to side (0 <= # < 180)\n");
     bu_log(" -P #		Set number of processors\n");
-    bu_log(" -T #/#		Tolerance: distance/angular\n");
-    bu_log(" -l #		Set lighting model rendering style\n");
+    bu_log(" -T # or -T #,# or -T #/#\n");
+    bu_log("		Tolerance: distance or distance,angular or distance/angular\n");
+    bu_log(" -l #		Set lighting model rendering style (default is 0)\n");
     bu_log(" -U #		Use air if # is greater than 0\n");
     bu_log(" -x #		librt debug flags\n");
     bu_log(" -N #		NMG debug flags\n");
     bu_log(" -X #		rt debug flags\n");
+#ifdef USE_OPENCL
+    bu_log(" -z # 		Use OpenCL ray-trace engine: no/default (0), yes (1)\n");
+#endif
+    bu_log(" -. #		Select factor in NUgrid algorithm (default is 1.5)\n");
+    bu_log(" -, #		Selection of which space partitioning algorithm to use\n");
+    bu_log(" -@ #		Set limit to each dimension of the nugrid\n");
+    bu_log(" -b \"# #\"	Specify X and Y pixel coordinates (need quotes) for single ray to be fired, for debugging\n");
+    bu_log(" -c script_command\n");
+    bu_log("		Supply, on command line, command which can appear in -M command script\n");
+    bu_log(" -d #		Set flag for reporting of pixel distances\n");
+    bu_log(" -f #		Set expected playback rate in frames-per-second (default is 30)\n");
+    bu_log(" -g #		Set grid cell width, in millimeters\n");
+    bu_log(" -m density,r,g,b\n");
+    bu_log("		Provide parameters for an exponential shading (default r,g,b is 0.8,0.9,0.99)\n");
+    bu_log(" -i		Enable incremental mode processing\n");
+    bu_log(" -j xmin,xmax,ymin,ymax\n");
+    bu_log("		Enable processing of sub-rectangle\n");
+    bu_log(" -k xdir,ydir,zdir,dist\n");
+    bu_log("		Enable use of a cutting plane\n");
+    bu_log(" -l #		Select lighting model (default is 0)\n");
+    bu_log(" -t		Reverse the order of grid traversal (default is not to do that)\n");
+    bu_log(" -u units	Specify the units (or use \"model\" for the local model's units)\n");
+    bu_log(" -v #		Set the verbosity bit vector flags\n");
+    bu_log(" -A #		Set the ambient light intensity\n");
+    bu_log(" -B		Turn on the \"benchmark\" flag (default is off)\n");
+    bu_log(" -C #/#/#	Set the background color to the RGB value #/#/#\n");
+    bu_log(" -D #		Specify the starting frame number (ending frame number is specified via -K #)\n");
+    bu_log(" -E #           Set the distance from eye point to center of the model RPP (default is sqrt(2))\n");
+    bu_log(" -F framebuffer	Cause output to be sent to the indicated framebuffer\n");
+    bu_log(" -G #		Set grid cell height, in millimeters\n");
+    bu_log(" -H #		Set number of extra rays to fire\n");
+    bu_log(" -J #		Set a bit vector for \"jitter\"\n");
+    bu_log(" -K #		Specify the ending frame number (starting frame number is specified via -D #)\n");
+    bu_log(" -O model.pix	Output .pix format file, double precision format\n");
+    bu_log(" -Q x,y		Select pixel ray for query with debugging; compute other pixels without debugging\n");
+    bu_log(" -S		Enable stereo viewing (off by default)\n");
+    bu_log(" -W		Set background image color to white (default is black)\n");
+    bu_log(" -! #		Turn on the libbu(3) library debugging flags\n");
+    bu_log(" -+ t		Specify that output is NOT binary (default is that it is); -+ is otherwise not\n");
+    bu_log("		implemented\n");
 }
 
 
-extern FBIO *fbp;			/* Framebuffer handle */
+extern fb *fbp;			/* Framebuffer handle */
 
 extern int curframe;		/* from main.c */
 extern fastf_t frame_delta_t;		/* from main.c */
@@ -118,7 +161,7 @@ extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 void free_scanlines(int, struct scanline *);
 struct scanline* alloc_scanlines(int);
 extern fastf_t** timeTable_init(int x, int y);
-extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *efbp);
+extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *efbp);
 
 static int buf_mode=0;
 #define BUFMODE_UNBUF     1	/* No output buffering */
@@ -156,6 +199,7 @@ int a_onehit = -1;
  */
 static int overlay = 0;
 
+
 /* Viewing module specific "set" variables:
  *
  * Note: The actual byte offsets will get set at run time in
@@ -169,7 +213,7 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "bounces", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ireflect", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "a_onehit", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", ELEMENTS_PER_VECT, "background", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", ELEMENTS_PER_VECT, "background", 0, color_hook, NULL, NULL},
     {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ambSamples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -319,9 +363,7 @@ view_pixel(struct application *ap)
 		p[2] = b;
 
 		if (bif != NULL) {
-		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    icv_writepixel(bif, ap->a_x, ap->a_y, ap->a_color);
-		    bu_semaphore_release(BU_SEM_SYSCALL);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    if (bu_fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
@@ -334,11 +376,11 @@ view_pixel(struct application *ap)
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		}
 
-		if (fbp != FBIO_NULL) {
+		if (fbp != FB_NULL) {
 		    /* Framebuffer output */
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    npix = fb_write(fbp, ap->a_x, ap->a_y,
-				    (unsigned char *)p, 1);
+				    (const unsigned char *)p, 1);
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		    if (npix < 1)
 			bu_exit(EXIT_FAILURE, "pixel fb_write error");
@@ -521,7 +563,7 @@ view_pixel(struct application *ap)
 		long spread;
 		size_t npix = 0;
 
-		if (fbp == FBIO_NULL)
+		if (fbp == FB_NULL)
 		    bu_exit(EXIT_FAILURE, "Incremental rendering with no framebuffer?");
 
 		spread = (1<<(incr_nlevel-incr_level))-1;
@@ -550,7 +592,7 @@ view_pixel(struct application *ap)
 	case BUFMODE_ACC:
 	case BUFMODE_SCANLINE:
 	case BUFMODE_DYNAMIC:
-	    if (fbp != FBIO_NULL) {
+	    if (fbp != FB_NULL) {
 		size_t npix;
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (sub_grid_mode) {
@@ -572,9 +614,7 @@ view_pixel(struct application *ap)
 	    }
 	    if (bif != NULL) {
 		/* TODO : Add double type data to maintain resolution */
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		icv_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf, ICV_DATA_UCHAR);
-		bu_semaphore_release(BU_SEM_SYSCALL);
 	    } else if (outfp != NULL) {
 		size_t count;
 
@@ -831,7 +871,7 @@ static int hit_nothing(struct application *ap)
 
 	VMOVE(ap->a_color, u.sw.sw_color);
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
-	ap->a_uptr = (genptr_t)&env_region;
+	ap->a_uptr = (void *)&env_region;
 	return 1;
     }
 
@@ -1015,7 +1055,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	 * sliver less than 0.05mm thick will be skipped (0.05 is a
 	 * SWAG).
 	 */
-	if ((genptr_t)pp->pt_regionp == ap->a_uptr &&
+	if ((void *)pp->pt_regionp == ap->a_uptr &&
 	    pp->pt_forw != PartHeadp &&
 	    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist < 0.05)
 	    pp = pp->pt_forw;
@@ -1077,7 +1117,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     hitp = pp->pt_inhit;
     RT_CK_HIT(hitp);
     RT_CK_RAY(hitp->hit_rayp);
-    ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
+    ap->a_uptr = (void *)pp->pt_regionp;	/* note which region was shaded */
 
     if (R_DEBUG&RDEBUG_HITS) {
 	bu_log("colorview: lvl=%d coloring %s\n",
@@ -1505,7 +1545,7 @@ extern int cur_pixel;		/* current pixel number, 0..last_pixel */
 extern int last_pixel;		/* last pixel number */
 
 void
-reproject_worker(int UNUSED(cpu), genptr_t UNUSED(arg))
+reproject_worker(int UNUSED(cpu), void *UNUSED(arg))
 {
     int pixel_start;
     int pixelnum;
@@ -1672,7 +1712,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
     switch (buf_mode) {
 	case BUFMODE_UNBUF:
-	    bu_log("Single pixel I/O, unbuffered\n");
+	    bu_log("Mode: Single pixel I/O, unbuffered\n");
 	    break;
 	case BUFMODE_FULLFLOAT:
 	    if (!curr_float_frame) {
@@ -1742,11 +1782,11 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    break;
 
 	case BUFMODE_SCANLINE:
-	    bu_log("Low overhead scanline-per-CPU buffering\n");
+	    bu_log("Mode: scanline-per-CPU buffering\n");
 	    /* Fall through... */
 	case BUFMODE_DYNAMIC:
 	    if ((buf_mode == BUFMODE_DYNAMIC) && (rt_verbosity & VERBOSE_OUTPUTFILE)) {
-		bu_log("Dynamic scanline buffering\n");
+		bu_log("Mode: dynamic scanline buffering\n");
 	    }
 
 	    if (sub_grid_mode) {
@@ -1761,10 +1801,10 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	case BUFMODE_ACC:
 	    for (i=0; i<height; i++)
 		scanline[i].sl_left = width;
-	    bu_log("Multiple-sample, average buffering\n");
+	    bu_log("Mode: Multiple-sample, average buffering\n");
 	    break;
 	default:
-	    bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
+	    bu_exit(EXIT_FAILURE, "ERROR: bad buffering mode (%d), try -i", buf_mode);
     }
 
     /* This is where we do Preparations for each Lighting Model if it

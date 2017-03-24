@@ -1,7 +1,7 @@
 /*                      R E A D T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ Readtree(mat_t *matp)
 	    RT_TREE_INIT(ptr);
 	    ptr->tr_l.tl_op = OP_DB_LEAF;
 	    k = ((-op)-1)/2;
-	    if (k < 0 || k >= totentities) {
+	    if (k < 0 || (size_t)k >= totentities) {
 		bu_log("Readtree(): pointer in tree is out of bounds (%d)\n", -op);
 		return (union tree *)NULL;
 	    }

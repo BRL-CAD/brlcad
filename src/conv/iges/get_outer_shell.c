@@ -1,7 +1,7 @@
 /*               G E T _ O U T E R _ S H E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ Get_outer_shell(struct nmgregion *r, int entityno)
 	    face_count++;
     }
 
-    nmg_gluefaces(fu, face_count, &tol);
+    nmg_gluefaces(fu, face_count, &RTG.rtg_vlfree, &tol);
 
     bu_free((char *)fu, "Get_outer_shell: faceuse list");
     bu_free((char *)face_de, "Get_outer_shell: face DE's");

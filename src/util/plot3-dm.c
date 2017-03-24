@@ -1,7 +1,7 @@
 /*                      P L O T 3 - D M . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2014 United States Government as represented by
+ * Copyright (c) 1999-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,13 +38,12 @@
 #include "tk.h"
 
 #include "vmath.h"
-#include "db.h"
+#include "bu/getopt.h"
+
+#include "rt/db4.h"
 #include "raytrace.h"
-#include "bu.h"
 #include "bn.h"
 #include "dm.h"
-#include "dm/dm-X.h"
-
 
 struct cmdtab {
     char *ct_name;
@@ -59,7 +58,7 @@ struct cmdtab {
 #define APP_SCALE 180.0 / 512.0
 
 Tcl_Interp *INTERP;
-struct dm *dmp;
+dm *dmp;
 mat_t toViewcenter;
 mat_t Viewrot;
 mat_t model2view;
@@ -89,7 +88,7 @@ int dm_type = DM_TYPE_X;
  * Gets the output from bu_log and appends it to clientdata vls.
  */
 static int
-output_catch(genptr_t clientdata, genptr_t str)
+output_catch(void *clientdata, void *str)
 {
     struct bu_vls *vp = (struct bu_vls *)clientdata;
     int len;
@@ -110,7 +109,7 @@ output_catch(genptr_t clientdata, genptr_t str)
 void
 start_catching_output(struct bu_vls *vp)
 {
-    bu_log_add_hook(output_catch, (genptr_t)vp);
+    bu_log_add_hook(output_catch, (void *)vp);
 }
 
 
@@ -120,7 +119,7 @@ start_catching_output(struct bu_vls *vp)
 void
 stop_catching_output(struct bu_vls *vp)
 {
-    bu_log_delete_hook(output_catch, (genptr_t)vp);
+    bu_log_delete_hook(output_catch, (void *)vp);
 }
 
 
@@ -129,7 +128,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "t:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "t:h?")) != -1) {
 	switch (c) {
 	    case 't':
 		switch (*bu_optarg) {
@@ -144,7 +143,7 @@ get_args(int argc, char **argv)
 			break;
 		}
 		break;
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -167,8 +166,8 @@ refresh() {
     size_t i;
     struct plot_list *plp;
 
-    DM_DRAW_BEGIN(dmp);
-    DM_LOADMATRIX(dmp, model2view, 0);
+    dm_draw_begin(dmp);
+    dm_loadmatrix(dmp, model2view, 0);
 
     for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
 	if (plp->pl_draw)
@@ -177,14 +176,14 @@ refresh() {
 		    long rgb;
 
 		    rgb = plp->pl_vbp->rgb[i];
-		    DM_SET_FGCOLOR(dmp, (rgb>>16) & 0xFF, (rgb>>8) & 0xFF, rgb & 0xFF, 0, (fastf_t)0.0);
+		    dm_set_fg(dmp, (rgb>>16) & 0xFF, (rgb>>8) & 0xFF, rgb & 0xFF, 0, (fastf_t)0.0);
 		}
-		DM_DRAW_VLIST(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i]);
+		dm_draw_vlist(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i]);
 	    }
     }
 
-    DM_NORMAL(dmp);
-    DM_DRAW_END(dmp);
+    dm_normal(dmp);
+    dm_draw_end(dmp);
 }
 
 
@@ -364,12 +363,13 @@ X_doEvent(ClientData UNUSED(clientData), XEvent *eventPtr)
 		break;
 	    case MOUSE_MODE_TRANSLATE:
 		{
+		    int width, height;
 		    vect_t vdiff;
 
-		    vdiff[X] = (mx - omx) /
-			(fastf_t)dmp->dm_width * 2.0;
-		    vdiff[Y] = (omy - my) /
-			(fastf_t)dmp->dm_height * 2.0;
+		    width = dm_get_width(dmp);
+		    height = dm_get_height(dmp);
+		    vdiff[X] = (mx - omx) / width * 2.0;
+		    vdiff[Y] = (omy - my) / height * 2.0;
 		    vdiff[Z] = 0.0;
 
 		    (void)islewview(vdiff);
@@ -381,9 +381,9 @@ X_doEvent(ClientData UNUSED(clientData), XEvent *eventPtr)
 	    case MOUSE_MODE_ZOOM:
 		{
 		    double val;
+		    int height = dm_get_height(dmp);
 
-		    val = 1.0 + (omy - my) /
-			(fastf_t)dmp->dm_height;
+		    val = 1.0 + (omy - my) / height;
 
 		    zoom(INTERP, val);
 		    new_mats();
@@ -604,7 +604,7 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
 	    /* found object with same name */
 	    if (BU_STR_EQUAL(bu_vls_addr(&plp->pl_name), bnp)) {
-		rt_vlblock_free(plp->pl_vbp);
+		bn_vlblock_free(plp->pl_vbp);
 		goto up_to_vl;
 	    }
 	}
@@ -731,8 +731,8 @@ cmd_closepl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
 	    if (BU_STR_EQUAL(argv[i], bu_vls_addr(&plp->pl_name))) {
 		BU_LIST_DEQUEUE(&plp->l);
 		bu_vls_free(&plp->pl_name);
-		rt_vlblock_free(plp->pl_vbp);
-		bu_free((genptr_t)plp, "cmd_closepl");
+		bn_vlblock_free(plp->pl_vbp);
+		bu_free((void *)plp, "cmd_closepl");
 		break;
 	    }
 	}
@@ -983,7 +983,7 @@ static int
 cmd_exit(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char **UNUSED(argv))
 {
     if (dmp != DM_NULL)
-	DM_CLOSE(dmp);
+	dm_close(dmp);
 
     bu_exit (0, NULL);
 
@@ -1052,7 +1052,7 @@ X_dmInit()
     }
 
     Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_X);
-    DM_SET_WIN_BOUNDS(dmp, windowbounds);
+    dm_set_win_bounds(dmp, windowbounds);
 
     return TCL_OK;
 }
@@ -1078,7 +1078,7 @@ Ogl_dmInit()
     }
 
     Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_OGL);
-    DM_SET_WIN_BOUNDS(dmp, windowbounds);
+    dm_set_win_bounds(dmp, windowbounds);
 
     return TCL_OK;
 }

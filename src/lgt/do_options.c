@@ -1,7 +1,7 @@
 /*                    D O _ O P T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,9 @@
 #  include <unistd.h>
 #endif
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/file.h"
 #include "fb.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -956,23 +958,19 @@ f_Cursor_Module()
 		    break;
 		case JDOWN :
 		    y -= JUMP;
-		    if (y < 0)
-			y = 0;
+		    V_MAX(y, 0);
 		    break;
 		case JUP :
 		    y += JUMP;
-		    if (y > grid_sz - 1)
-			y = (grid_sz - 1);
+		    V_MIN(y, grid_sz - 1);
 		    break;
 		case JLEFT :
 		    x -= JUMP;
-		    if (x < 0)
-			x = 0;
+		    V_MAX(x, 0);
 		    break;
 		case JRIGHT :
 		    x += JUMP;
-		    if (x > grid_sz - 1)
-			x = (grid_sz - 1);
+		    V_MIN(x, grid_sz - 1);
 		    break;
 		case CENTER :
 		    cx = x;
@@ -987,7 +985,7 @@ f_Cursor_Module()
 		    (void) fb_window(fbiop, cx, cy);
 		    break;
 		case IN :
-		    if (zoom <= fbiop->if_width/2) {
+		    if (zoom <= fb_getwidth(fbiop)/2) {
 			zoom *= 2;
 			cx = x;
 			cy = y;
@@ -1207,14 +1205,14 @@ f_Animate()
 	    return -1;
 	(void) signal(SIGINT, abort_RT);
 	for (frame_no = 0; ! user_interrupt; frame_no++) {
-	    FBIO *movie_fbiop;
+	    fb *movie_fbiop;
 	    int y;
 	    if (frame_no == noframes)
 		frame_no = 0;
 	    (void) sprintf(suffixptr, ".%04d", frame_no);
 	    if (!bu_file_exists(movie_file, NULL))
 		continue;
-	    if ((movie_fbiop = fb_open(movie_file, grid_sz, grid_sz)) == FBIO_NULL) {
+	    if ((movie_fbiop = fb_open(movie_file, grid_sz, grid_sz)) == FB_NULL) {
 		(void) signal(SIGINT, norml_sig);
 		close_Output_Device(0);
 		return -1;
@@ -1359,7 +1357,7 @@ f_Wrt_Fb(char **args)
 {
     int y;
     static char save_fb_file[MAX_LN] = { 0 };
-    FBIO *save_fbiop;
+    fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(save_fb_file, args[1], MAX_LN);
     else
@@ -1382,7 +1380,7 @@ f_Wrt_Fb(char **args)
 	return -1;
     prnt_Event("Saving image...");
     if ((save_fbiop =
-	 fb_open(save_fb_file, grid_sz, grid_sz))== FBIO_NULL) {
+	 fb_open(save_fb_file, grid_sz, grid_sz))== FB_NULL) {
 	close_Output_Device(0);
 	return -1;
     }
@@ -1421,7 +1419,7 @@ f_Rd_Fb(char **args)
 {
     int y;
     static char save_fb_file[MAX_LN] = { 0 };
-    FBIO *save_fbiop;
+    fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(save_fb_file, args[1], MAX_LN);
     else
@@ -1443,7 +1441,7 @@ f_Rd_Fb(char **args)
 	return -1;
     prnt_Event("Reading saved image...");
     if ((save_fbiop =
-	 fb_open(save_fb_file, grid_sz, grid_sz)) == FBIO_NULL) {
+	 fb_open(save_fb_file, grid_sz, grid_sz)) == FB_NULL) {
 	close_Output_Device(0);
 	return -1;
     }
@@ -1985,8 +1983,7 @@ static int
 f_Parallel(char **args)
 {
     int maxpsw = bu_avail_cpus();
-    if (maxpsw > MAX_PSW)
-	maxpsw = MAX_PSW;
+    CLAMP(maxpsw, 0, MAX_PSW);
 
     if (maxpsw == 1) {
 	RTG.rtg_parallel = 0;
@@ -2010,8 +2007,6 @@ f_Parallel(char **args)
 	RTG.rtg_parallel = 1;
     else
 	RTG.rtg_parallel = 0;
-
-    bu_semaphore_init(RT_SEM_LAST);
 
     return 1;
 }
@@ -2212,10 +2207,10 @@ f_Background(char **args)
 		);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
 		&& sscanf(input_ln,
-			       "%d %d %d",
-			       &background[0],
-			       &background[1],
-			       &background[2]
+			  "%d %d %d",
+			  &background[0],
+			  &background[1],
+			  &background[2]
 		    ) != 3)
 		return -1;
 	} else
@@ -2491,9 +2486,9 @@ f_IR_Noise(char **args)
 
 
 /*
-   Apply saved view output by MGED(1B) "saveview" and "svkey" commands.
-   Some of this code was originally written by Mike J. Muuss for
-   his RT(1B) ray-tracing front-end.
+  Apply saved view output by MGED(1B) "saveview" and "svkey" commands.
+  Some of this code was originally written by Mike J. Muuss for
+  his RT(1B) ray-tracing front-end.
 */
 /*ARGSUSED*/
 static int
@@ -2763,7 +2758,7 @@ f_Grid_X_Pos(char **args)
 {
     if (args != NULL && args[1] != NULL && args[2] != NULL
 	&& (sscanf(args[1], "%d", &grid_x_org) != 1
-		 || sscanf(args[2], "%d", &grid_x_fin) != 1
+	    || sscanf(args[2], "%d", &grid_x_fin) != 1
 	    )
 	)
     {
@@ -2801,7 +2796,7 @@ f_Grid_Y_Pos(char **args)
 {
     if (args != NULL && args[1] != NULL && args[2] != NULL
 	&& (sscanf(args[1], "%d", &grid_y_org) != 1
-		 || sscanf(args[2], "%d", &grid_y_fin) != 1
+	    || sscanf(args[2], "%d", &grid_y_fin) != 1
 	    )
 	)
     {
@@ -2871,14 +2866,14 @@ exec_start :
 	    if (get_Input(input_ln, BUFSIZ, "Command line : ") == NULL
 		|| (args[0] = strtok(input_ln, " \t")) == NULL
 		) {
-		if(stashed_args)
+		if (stashed_args)
 		    free(stashed_args);
 		return -1;
 	    }
 	    for (i = 1; args[i-1] != NULL; ++i)
 		args[i] = strtok((char *) NULL, " \t");
 	} else {
-	    if(stashed_args)
+	    if (stashed_args)
 		free(stashed_args);
 	    return -1;
 	}
@@ -2913,7 +2908,7 @@ exec_start :
 	}
 	(void) f_Redraw();
     }
-    if(stashed_args)
+    if (stashed_args)
 	free(stashed_args);
     return 1;
 }
@@ -3392,7 +3387,7 @@ pars_Argv(int argc, char **argv)
 	   != EOF
 	)
     {
-    	if(bu_optopt == '?') c='h';
+    	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'h' :
 		return 0;
@@ -3508,7 +3503,7 @@ key_Frame(void)
 
 
 /*
-   Get a line of input.
+  Get a line of input.
 */
 char *
 get_Input(char *inbuf, int bufsz, char *msg)

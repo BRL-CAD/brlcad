@@ -1,7 +1,7 @@
 /*                        S H _ T O O N . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
+#include "optical/light.h"
 
 
 #define TOON_MAGIC 0x746F6F6E    /* make this a unique number for each shader */
@@ -75,10 +75,10 @@ struct bu_structparse toon_parse_tab[] = {
 };
 
 
-HIDDEN int toon_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int toon_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void toon_print(register struct region *rp, genptr_t dp);
-HIDDEN void toon_free(genptr_t cp);
+HIDDEN int toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int toon_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void toon_print(register struct region *rp, void *dp);
+HIDDEN void toon_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -108,7 +108,7 @@ struct mfuncs toon_mfuncs[] = {
  * -1 failure
  */
 HIDDEN int
-toon_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -133,7 +133,7 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     memcpy(toon_sp, &toon_defaults, sizeof(struct toon_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, toon_parse_tab, (char *)toon_sp) < 0)
+    if (bu_struct_parse(matparm, toon_parse_tab, (char *)toon_sp, NULL) < 0)
 	return -1;
 
     if (rdebug&RDEBUG_SHADE) {
@@ -145,14 +145,14 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 
 
 HIDDEN void
-toon_print(register struct region *rp, genptr_t dp)
+toon_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, toon_print_tab, (char *)dp);
 }
 
 
 HIDDEN void
-toon_free(genptr_t cp)
+toon_free(void *cp)
 {
     BU_PUT(cp, struct toon_specific);
 }
@@ -164,7 +164,7 @@ toon_free(genptr_t cp)
  * structure.
  */
 int
-toon_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+toon_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     int i;
     struct toon_specific *toon_sp = (struct toon_specific *)dp;

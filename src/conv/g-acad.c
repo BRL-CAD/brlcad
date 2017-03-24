@@ -1,7 +1,7 @@
 /*                        G - A C A D . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2014 United States Government as represented by
+ * Copyright (c) 1996-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
@@ -101,15 +101,15 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
 
 
     /* list all vertices in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic);
+    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
 
     /* Get number of vertices */
 
-    numverts = BU_PTBL_END (&verts);
+    numverts = BU_PTBL_LEN (&verts);
 
 /* BEGIN CHECK SECTION */
 
@@ -279,7 +279,7 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 
 	printf("Attempting to process region %s\n", db_path_to_string(pathp));
 	fflush(stdout);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 	if (ret_tree != curtree) {
 	    db_free_tree(curtree, &rt_uniresource);
 	}
@@ -300,7 +300,7 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;	/* restore mode */
+	nmg_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -331,7 +331,7 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
  * This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree *ret_tree = NULL;
     struct bu_list vhead;
@@ -424,7 +424,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 		/* Sometimes the NMG library adds debugging bits when
 		 * it detects an internal error, before bombing out.
 		 */
-		RTG.NMG_debug = NMG_debug;	/* restore mode */
+		nmg_debug = NMG_debug;	/* restore mode */
 
 		/* Release any intersector 2d tables */
 		nmg_isect2d_final_cleanup();
@@ -499,12 +499,10 @@ main(int argc, char **argv)
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     the_model = nmg_mm();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
@@ -541,8 +539,8 @@ main(int argc, char **argv)
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		NMG_debug = RTG.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		NMG_debug = nmg_debug;
 		break;
 	    case 'e':		/* Error file name. */
 		error_file = bu_optarg;
@@ -628,7 +626,7 @@ main(int argc, char **argv)
 			0,			/* take all regions */
 			do_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)NULL);	/* in librt/nmg_bool.c */
+			(void *)NULL);	/* in librt/nmg_bool.c */
 
     percent = 0;
     if (regions_tried>0) {

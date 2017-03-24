@@ -1,7 +1,7 @@
 /*                     G - T A N K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
@@ -40,30 +39,32 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
-extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static const char usage[] = "Usage:\n\
-	%s [-v] [-xX lvl] [-P dummy_arg] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code]\n\
-	[-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n";
-static const char usage2[] = "\
-		v - verbose\n\
-		x - librt debug level\n\
-		X - NMG debug level\n\
-		P - enable core dumps (dummy argument is currently-disabled # of processors)\n\
-		a - absolute tolerance for tessellation\n\
-		r - relative tolerance for tessellation\n\
-		n - surface normal tolerance for tessellation\n\
-		s - surroundings code to use in tankill file\n\
-		i - assign new idents sequentially and output ident list\n\
-		o - TANKILL output file\n";
+/* usage string length is longer than ISO C90 compilers are required
+ * to support, hence it is split into two parts
+ */
+static const char usage[] =
+    "[-v] [-xX lvl] [-P dummy_arg] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code]\n"
+    "\t[-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n";
+static const char usage2[] =
+    "\t\tv - verbose\n"
+    "\t\tx - librt debug level\n"
+    "\t\tX - NMG debug level\n"
+    "\t\tP - enable core dumps (dummy argument is currently-disabled # of processors)\n"
+    "\t\ta - absolute tolerance for tessellation\n"
+    "\t\tr - relative tolerance for tessellation\n"
+    "\t\tn - surface normal tolerance for tessellation\n"
+    "\t\ts - surroundings code to use in tankill file\n"
+    "\t\ti - assign new idents sequentially and output ident list\n"
+    "\t\to - TANKILL output file\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-/* static int	ncpu = 1; */		/* Number of processors */
 static int	surr_code = 1000;	/* Surroundings code */
 static int	curr_id;		/* Current region ident code */
 static int	id_counter;		/* Ident counter */
@@ -110,7 +111,7 @@ insert_id(int id)
 
 /* routine used in tree walker to select regions with the current ident number */
 static int
-select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     if ( tsp->ts_regionid == curr_id )
 	return 0;
@@ -120,7 +121,7 @@ select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp
 
 /* routine used in tree walker to collect region ident numbers */
 static int
-get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     insert_id( tsp->ts_regionid );
     return -1;
@@ -128,7 +129,7 @@ get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), 
 
 /* stubs to warn of the unexpected */
 static union tree *
-region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
+region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *UNUSED(curtree), void *UNUSED(client_data))
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -138,7 +139,7 @@ region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp,
 }
 
 static union tree *
-leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *UNUSED(ip), genptr_t UNUSED(client_data))
+leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *UNUSED(ip), void *UNUSED(client_data))
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -156,7 +157,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
     struct shell *s;
     struct bu_ptbl vertices;	/* vertex list in TANKILL order */
     long *flags;			/* array to insure that no loops are missed */
-    int i;
+    size_t i;
 
     NMG_CK_REGION( r );
     m = r->m_p;
@@ -181,7 +182,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	}
     }
     /* Now triangulate the entire model */
-    nmg_triangulate_model( m, &tol );
+    nmg_triangulate_model( m, &RTG.rtg_vlfree, &tol );
 
     /* Need a flag array to insure that no loops are missed */
     flags = (long *)bu_calloc( m->maxindex, sizeof( long ), "g-tankill: flags" );
@@ -328,7 +329,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 		}
 
 		/* repeat the last vertex */
-		bu_ptbl_ins( &vertices, BU_PTBL_GET( &vertices, BU_PTBL_END( &vertices ) - 1 ) );
+		bu_ptbl_ins( &vertices, BU_PTBL_GET( &vertices, BU_PTBL_LEN( &vertices ) - 1 ) );
 
 		/* put first vertex of next loop on list twice */
 		lu = next_lu;
@@ -352,11 +353,11 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	/* Now write the data out */
 	if ( fp_id )	/* Use id count instead of actual id */
 	    fprintf( fp_out, "%lu %d %d           " ,
-		     (unsigned long)BU_PTBL_END( &vertices ), id_counter, surr_code );
+		     (unsigned long)BU_PTBL_LEN( &vertices ), id_counter, surr_code );
 	else
 	    fprintf( fp_out, "%lu %d %d           " ,
-		     (unsigned long)BU_PTBL_END( &vertices ), tsp->ts_regionid, surr_code );
-	for ( i=0; i<BU_PTBL_END( &vertices ); i++ )
+		     (unsigned long)BU_PTBL_LEN( &vertices ), tsp->ts_regionid, surr_code );
+	for ( i=0; i<BU_PTBL_LEN( &vertices ); i++ )
 	{
 	    struct vertex *v;
 
@@ -366,7 +367,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	    else
 		fprintf( fp_out, " %.3f %.3f %.3f", V3ARGS( v->vg_p->coord ) );
 	}
-	if ( (BU_PTBL_END( &vertices )-2)%4 != 0 )
+	if ( (BU_PTBL_LEN( &vertices )-2)%4 != 0 )
 	    fprintf( fp_out, "\n" );
 
 	/* clear the vertices list for the next shell */
@@ -390,18 +391,19 @@ outt:	bu_free( (char *)flags, "g-tankill: flags" );
 
 
 static void
-printusage(const char *arg) {
-	fprintf(stderr,usage,arg);
-	bu_exit(1, usage2);
+printusage(const char *progname) {
+    bu_exit(1, "Usage:\n%s %s\n%s", progname, usage, usage2);
 }
 
 int
 main(int argc, char **argv)
 {
-
     int		j;
     int	c;
     double		percent;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
@@ -430,8 +432,6 @@ main(int argc, char **argv)
 	/* WTF: This value is specific to the Bradley */
 	nmg_eue_dist = 2.0;
     }
-
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
@@ -462,15 +462,14 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-/*			ncpu = atoi( bu_optarg ); */
 		bu_debug = BU_DEBUG_COREDUMP;	/* to get core dumps */
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
-		NMG_debug = RTG.NMG_debug;
+		sscanf( bu_optarg, "%x", (unsigned int *)&nmg_debug );
+		NMG_debug = nmg_debug;
 		break;
 	    default:
 		printusage(argv[0]);
@@ -521,7 +520,7 @@ main(int argc, char **argv)
 		       get_reg_id,			/* put id in table */
 		       region_stub,			/* do nothing */
 		       leaf_stub,
-		       (genptr_t)NULL );			/* do nothing */
+		       (void *)NULL );			/* do nothing */
 
     /* TANKILL only allows up to 2000 distinct component codes */
     if ( ident_count > 2000 )
@@ -555,7 +554,7 @@ main(int argc, char **argv)
 			   select_region,			/* selects regions with curr_id */
 			   do_region_end,			/* calls Write_tankill_region */
 			   nmg_booltree_leaf_tess,
-			   (genptr_t)NULL);	/* in librt/nmg_bool.c */
+			   (void *)NULL);	/* in librt/nmg_bool.c */
     }
 
     percent = 0;
@@ -594,7 +593,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;	/* restore mode */
+	nmg_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -615,14 +614,14 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if ( !BU_SETJUMP ) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
 	/* catch */
@@ -634,7 +633,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;/* restore mode */
+	nmg_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -663,7 +662,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;

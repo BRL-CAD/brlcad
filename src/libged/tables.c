@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@
 #endif
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "bu/units.h"
 #include "./ged_private.h"
@@ -158,7 +157,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
     /* flatten tree */
     actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list,
 							   comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
-    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+    BU_ASSERT(actual_count == node_count);
 
     if (dp->d_flags & RT_DIR_REGION) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -191,13 +190,13 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 
 	    switch (tree_list[i].tl_op) {
 		case OP_UNION:
-		    op = 'u';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_SUBTRACT:
-		    op = '-';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_INTERSECT:
-		    op = '+';
+		    op = DB_OP_INTERSECT;
 		    break;
 		default:
 		    bu_log("unrecognized operation in region %s\n", dp->d_namep);
@@ -259,7 +258,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	int cur_length;
 
 	bu_ptbl_ins(cur_path, (long *)dp);
-	cur_length = BU_PTBL_END(cur_path);
+	cur_length = BU_PTBL_LEN(cur_path);
 
 	for (i = 0; i < actual_count; i++) {
 	    struct directory *nextdp;

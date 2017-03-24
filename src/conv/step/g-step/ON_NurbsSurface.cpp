@@ -1,7 +1,7 @@
 /*            O N _ N U R B S S U R F A C E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -207,7 +207,7 @@ ON_NurbsSurfaceCV_Finalize_GenericAggregates(ON_Brep_Info_AP203 *info)
     std::map<STEPentity*, std::vector<std::vector<STEPentity *> > >::iterator scv_it;
     std::vector<std::vector<STEPentity *> >::iterator outer_it;
     std::vector<STEPentity *>::iterator inner_it;
-    for(scv_it = info->surface_cv.begin(); scv_it != info->surface_cv.end(); ++scv_it) {
+    for (scv_it = info->surface_cv.begin(); scv_it != info->surface_cv.end(); ++scv_it) {
 	GenericAggregate *control_pnts_lists = info->surf_genagg.find(scv_it->first)->second;
 	for (outer_it = scv_it->second.begin(); outer_it != scv_it->second.end(); ++outer_it) {
 	    std::ostringstream ss;

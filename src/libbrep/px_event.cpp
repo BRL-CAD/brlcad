@@ -1,7 +1,7 @@
 /*                  P X _ E V E N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,8 +28,9 @@
 
 ON_PX_EVENT::ON_PX_EVENT()
 {
-    memset(this,0,sizeof(*this));
+    memset(this, 0, sizeof(*this));
 }
+
 
 int
 ON_PX_EVENT::Compare(const ON_PX_EVENT* a, const ON_PX_EVENT* b)
@@ -43,6 +44,7 @@ ON_PX_EVENT::Compare(const ON_PX_EVENT* a, const ON_PX_EVENT* b)
 
     return a->m_Mid < b->m_Mid;
 }
+
 
 bool
 ON_PX_EVENT::IsValid(ON_TextLog*,
@@ -58,6 +60,7 @@ ON_PX_EVENT::IsValid(ON_TextLog*,
     // Implement later.
     return true;
 }
+
 
 void
 ON_PX_EVENT::Dump(ON_TextLog& text_log) const
@@ -129,6 +132,7 @@ ON_PX_EVENT::Dump(ON_TextLog& text_log) const
 
     text_log.PopIndent();
 }
+
 
 // Local Variables:
 // tab-width: 8

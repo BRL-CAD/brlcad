@@ -1,7 +1,7 @@
 /*                    B T G . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,16 +23,20 @@
  *
  */
 
+#ifdef TIE_PRECISION
+#  undef TIE_PRECISION
+#endif
 #define TIE_PRECISION 1
 
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
-#include "bot.h"
-#include "tie.h"
+#include "rt/geom.h"
+#include "rt/primitives/bot.h"
+#include "rt/tie.h"
 
 #include "btg.h"
+#include "../../librt_private.h"
 
 #include "tie.c"
 #include "tie_kdtree.c"
@@ -47,7 +51,7 @@ bottie_allocn_double(unsigned long long ntri)
 {
     struct tie_s *tie;
     BU_ALLOC(tie, struct tie_s);
-    tie_init1(tie, ntri, TIE_KDTREE_FAST);
+    tie_init_double(tie, ntri, TIE_KDTREE_FAST);
     return tie;
 }
 
@@ -56,11 +60,11 @@ bottie_push_double(void *vtie, TIE_3 **tri, unsigned int ntri, void *u, unsigned
 {
     struct tie_s *tie = (struct tie_s *)vtie;
 
-    tie_push1(tie, tri, ntri, u, pstride);
+    tie_push_double(tie, tri, ntri, u, pstride);
 }
 
 int
-bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *UNUSED(rtip))
+bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *rtip)
 {
     struct tie_s *tie;
     struct bot_specific *bot;
@@ -70,7 +74,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     RT_BOT_CK_MAGIC(bot_ip);
 
     BU_GET(bot, struct bot_specific);
-    stp->st_specific = (genptr_t)bot;
+    stp->st_specific = (void *)bot;
     bot->bot_mode = bot_ip->mode;
     bot->bot_orientation = bot_ip->orientation;
     bot->bot_flags = bot_ip->bot_flags;
@@ -97,11 +101,11 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     }
 
     if ((tribuf = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3 * bot_ip->num_faces, "triangle tribuffer")) == NULL) {
-	tie_free(tie);
+	tie_free_double(tie);
 	return -1;
     }
     if ((tribufp = (TIE_3 **)bu_malloc(sizeof(TIE_3*) * 3 * bot_ip->num_faces, "triangle tribuffer pointer")) == NULL) {
-	tie_free(tie);
+	tie_free_double(tie);
 	bu_free(tribuf, "tribuf");
 	return -1;
     }
@@ -117,15 +121,19 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
      *                 void *,
      *                 unsigned int);
      */
-    tie_push1((struct tie_s *)bot_ip->tie, tribufp, bot_ip->num_faces, bot, 0);
+    tie_push_double((struct tie_s *)bot_ip->tie, tribufp, bot_ip->num_faces, bot, 0);
 
     bu_free(tribuf, "tribuffer");
     bu_free(tribufp, "tribufp");
 
-    tie_prep1((struct tie_s *)bot->tie);
+    tie_prep_double((struct tie_s *)bot->tie);
 
     VMOVE(stp->st_min, tie->amin);
     VMOVE(stp->st_max, tie->amax);
+
+    /* zero thickness will get missed by the raytracer */
+    BBOX_NONDEGEN(stp->st_min, stp->st_max, rtip->rti_tol.dist);
+
     VMOVE(stp->st_center, tie->mid);
     stp->st_aradius = tie->radius;
     stp->st_bradius = tie->radius;
@@ -215,7 +223,7 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     VMOVE(ray.dir, rp->r_dir);
     ray.depth = ray.kdtree_depth = 0;
 
-    tie_work1(tie, &ray, &id, hitfunc, &hitdata);
+    tie_work_double(tie, &ray, &id, hitfunc, &hitdata);
 
     /* use hitfunc to build the hit list */
     if (hitdata.nhits == 0)
@@ -235,7 +243,7 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
 void
 bottie_free_double(void *vtie)
 {
-    tie_free((struct tie_s *)vtie);
+    tie_free_double((struct tie_s *)vtie);
 }
 
 /*

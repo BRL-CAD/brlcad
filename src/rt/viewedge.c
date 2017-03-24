@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2014 United States Government as represented by
+ * Copyright (c) 2001-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -92,7 +92,10 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "bu.h"
+#include "bu/parse.h"
+#include "bu/parallel.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 #include "icv.h"
 
 #include "./rtuif.h"
@@ -109,7 +112,7 @@
 #endif
 
 
-extern FBIO *fbp;	/* Framebuffer handle */
+extern fb *fbp;	/* Framebuffer handle */
 extern fastf_t viewsize;
 extern int lightmodel;
 extern size_t width, height;
@@ -151,6 +154,7 @@ fastf_t max_dist = -1;
 fastf_t maxangle;
 
 typedef int color[3];
+fastf_t float_fgcolor[3] = {1.0, 1.0, 1.0};
 color fgcolor = {255, 255, 255};
 color bgcolor = {0, 0, 0};
 
@@ -234,34 +238,34 @@ struct application **occlusion_apps;
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"%d", 1, "detect_regions", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "dr", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "detect_distance", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "dd", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "detect_normals", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "dn", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "detect_ids", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "di", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 3, "foreground", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 3, "fg", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 3, "background", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 3, "bg", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "overlay", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "ov", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "blend", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "bl", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "region_color", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "rc", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%V", 1, "occlusion_objects", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%V", 1, "oo", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "om", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "max_dist", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "md", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "antialias", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "aa", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "both_sides", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "bs", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_regions", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dr", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_distance", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dd", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_normals", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dn", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_ids", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "di", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "foreground", 0, color_hook, NULL, NULL},
+    {"%f", 3, "fg", 0, color_hook, NULL, NULL},
+    {"%f", 3, "background", 0, color_hook, NULL, NULL},
+    {"%f", 3, "bg", 0, color_hook, NULL, NULL},
+    {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "blend", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "bl", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "region_color", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "rc", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "occlusion_objects", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "oo", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "occlusion_mode", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "om", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "max_dist", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "md", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "antialias", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "aa", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "both_sides", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "bs", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -281,15 +285,51 @@ usage(const char *argv0)
     bu_log(" -w # -n #	Grid size width (w) and height (n) in pixels\n");
     bu_log(" -a # -e #	Azimuth (a) and elevation (e) in degrees\n");
     bu_log(" -V #		View (pixel) aspect ratio (width/height)\n");
-    bu_log(" -p #		Perspective angle, degrees side to side\n");
+    bu_log(" -p #		Perspective angle, degrees side to side (0 <= # < 180)\n");
     bu_log(" -P #		Set number of processors\n");
-    bu_log(" -T #/#		Tolerance: distance/angular\n");
-    bu_log(" -l #		Set lighting model rendering style\n");
+    bu_log(" -T # or -T #,# or -T #/#\n");
+    bu_log("		Tolerance: distance or distance,angular or distance/angular\n");
+    bu_log(" -l #		Set lighting model rendering style (default is 0)\n");
     bu_log(" -U #		Use air if # is greater than 0\n");
     bu_log(" -x #		librt debug flags\n");
     bu_log(" -N #		NMG debug flags\n");
     bu_log(" -X #		rt debug flags\n");
+    bu_log(" -. #		Select factor in NUgrid algorithm (default is 1.5)\n");
+    bu_log(" -, #		Selection of which space partitioning algorithm to use\n");
+    bu_log(" -@ #		Set limit to each dimension of the nugrid\n");
+    bu_log(" -b \"# #\"	Specify X and Y pixel coordinates (need quotes) for single ray to be fired, for debugging\n");
     bu_log(" -c		Auxiliary commands (see man page)\n");
+    bu_log(" -d #		Set flag for reporting of pixel distances\n");
+    bu_log(" -f #		Set expected playback rate in frames-per-second (default is 30)\n");
+    bu_log(" -g #		Set grid cell width, in millimeters\n");
+    bu_log(" -m density,r,g,b\n");
+    bu_log("		Provide parameters for an exponential shading (default r,g,b is 0.8,0.9,0.99)\n");
+    bu_log(" -i		Enable incremental mode processing\n");
+    bu_log(" -j xmin,xmax,ymin,ymax\n");
+    bu_log("		Enable processing of sub-rectangle\n");
+    bu_log(" -k xdir,ydir,zdir,dist\n");
+    bu_log("		Enable use of a cutting plane\n");
+    bu_log(" -l #		Select lighting model (default is 0)\n");
+    bu_log(" -t		Reverse the order of grid traversal (default is not to do that)\n");
+    bu_log(" -u units	Specify the units (or use \"model\" for the local model's units)\n");
+    bu_log(" -v #		Set the verbosity bit vector flags\n");
+    bu_log(" -A #		Set the ambient light intensity\n");
+    bu_log(" -B		Turn on the \"benchmark\" flag (default is off)\n");
+    bu_log(" -C #/#/#	Set the background color to the RGB value #/#/#\n");
+    bu_log(" -D #		Specify the starting frame number (ending frame number is specified via -K #)\n");
+    bu_log(" -E #           Set the distance from eye point to center of the model RPP (default is sqrt(2))\n");
+    bu_log(" -F framebuffer	Cause output to be sent to the indicated framebuffer\n");
+    bu_log(" -G #		Set grid cell height, in millimeters\n");
+    bu_log(" -H #		Set number of extra rays to fire\n");
+    bu_log(" -J #		Set a bit vector for \"jitter\"\n");
+    bu_log(" -K #		Specify the ending frame number (starting frame number is specified via -D #)\n");
+    bu_log(" -O model.pix	Output .pix format file, double precision format\n");
+    bu_log(" -Q x,y		Select pixel ray for query with debugging; compute other pixels without debugging\n");
+    bu_log(" -S		Enable stereo viewing (off by default)\n");
+    bu_log(" -W		Set background image color to white (default is black)\n");
+    bu_log(" -! #		Turn on the libbu(3) library debugging flags\n");
+    bu_log(" -+ t		Specify that output is NOT binary (default is that it is); -+ is otherwise not\n");
+    bu_log("		implemented\n");
 }
 
 
@@ -314,8 +354,14 @@ static int occlusion_miss(struct application *ap)
 
 static int occludes(struct application *ap, struct cell *here)
 {
-    int cpu = ap->a_resource->re_cpu;
+    int cpu;
     int oc_hit = 0;
+
+    if (ap->a_resource->re_cpu > 0)
+	cpu = ap->a_resource->re_cpu - 1;
+    else
+	cpu = ap->a_resource->re_cpu;
+
     /*
      * Test the hit distance on the second geometry.  If the second
      * geometry is closer, do not color pixel
@@ -427,18 +473,19 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
      */
     if (bu_vls_strlen(&occlusion_objects) != 0) {
 	struct db_i *dbip;
-	int nObjs;
+	size_t nObjs;
+	int split_argc;
 	const char **objs;
-	int i;
+	size_t i;
 
 	bu_log("rtedge: loading occlusion geometry from %s.\n", file);
 
-	if (Tcl_SplitList(NULL, bu_vls_addr(&occlusion_objects), &nObjs,
-			  &objs) == TCL_ERROR) {
+	if (bu_argv_from_tcl_list(bu_vls_addr(&occlusion_objects), &split_argc, &objs) == TCL_ERROR) {
 	    bu_log("rtedge: occlusion list = %s\n",
 		   bu_vls_addr(&occlusion_objects));
 	    bu_exit(EXIT_FAILURE, "rtedge: could not parse occlusion objects list.\n");
 	}
+	nObjs = split_argc;
 
 	for (i=0; i<nObjs; ++i) {
 	    bu_log("rtedge: occlusion object %d = %s\n", i, objs[i]);
@@ -461,9 +508,9 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 
 	occlusion_rtip = rt_new_rti(dbip); /* clones dbip */
 
+	memset(occlusion_resources, 0, sizeof(occlusion_resources));
 	for (i=0; i < MAX_PSW; i++) {
 	    rt_init_resource(&occlusion_resources[i], i, occlusion_rtip);
-	    bn_rand_init(occlusion_resources[i].re_randptr, i);
 	}
 
 	db_close(dbip);			 /* releases original dbip */
@@ -473,6 +520,8 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 		bu_log("rtedge: gettree failed for %s\n", objs[i]);
 	    else
 		bu_log("rtedge: got tree for object %d = %s\n", i, objs[i]);
+
+	bu_free((char *)objs, "free occlusion objs array");
 
 	bu_log("rtedge: occlusion rt_gettrees done.\n");
 
@@ -525,20 +574,27 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	bu_exit(EXIT_FAILURE, "rtedge: occlusion mode set, but no objects were specified.\n");
     }
 
+    bgcolor[0] = background[0] * 255.0 + 0.5;
+    bgcolor[1] = background[1] * 255.0 + 0.5;
+    bgcolor[2] = background[2] * 255.0 + 0.5;
+    fgcolor[0] = float_fgcolor[0] * 255.0 + 0.5;
+    fgcolor[1] = float_fgcolor[1] * 255.0 + 0.5;
+    fgcolor[2] = float_fgcolor[2] * 255.0 + 0.5;
+
     /* if non-default/inverted background was requested, swap the
      * foreground and background colors.
      */
     if (!default_background) {
-	color tmp;
-	tmp[RED] = fgcolor[RED];
-	tmp[GRN] = fgcolor[GRN];
-	tmp[BLU] = fgcolor[BLU];
+	int tmp;
+	tmp = fgcolor[RED];
 	fgcolor[RED] = bgcolor[RED];
+	bgcolor[RED] = tmp;
+	tmp = fgcolor[GRN];
 	fgcolor[GRN] = bgcolor[GRN];
+	bgcolor[GRN] = tmp;
+	tmp = fgcolor[BLU];
 	fgcolor[BLU] = bgcolor[BLU];
-	bgcolor[RED] = tmp[RED];
-	bgcolor[GRN] = tmp[GRN];
-	bgcolor[BLU] = tmp[BLU];
+	bgcolor[BLU] = tmp;
     }
 
     if (minus_o && (overlay || blend)) {
@@ -573,7 +629,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 void
 view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
-    int i;
+    size_t i;
 
     /*
      * Per_processor_chuck specifies the number of pixels rendered per
@@ -653,8 +709,13 @@ void view_pixel(struct application *UNUSED(ap))
 void
 view_eol(struct application *ap)
 {
-    int cpu = ap->a_resource->re_cpu;
+    int cpu;
     int i;
+
+    if (ap->a_resource->re_cpu > 0)
+	cpu = ap->a_resource->re_cpu - 1;
+    else
+	cpu = ap->a_resource->re_cpu;
 
     if (overlay) {
 	/*
@@ -671,7 +732,6 @@ view_eol(struct application *ap)
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	    }
 	}
-	return;
     } else if (blend) {
 	/*
 	 * Blend mode.
@@ -795,10 +855,9 @@ view_eol(struct application *ap)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fb_write(fbp, 0, ap->a_y, blendline[cpu], per_processor_chunk);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	return;
     } /* end blend */
 
-    if (fbp != FBIO_NULL) {
+    else if (fbp != FB_NULL) {
 	/*
 	 * Simple whole scanline write to a framebuffer.
 	 */
@@ -806,16 +865,16 @@ view_eol(struct application *ap)
 	fb_write(fbp, 0, ap->a_y, scanline[cpu], per_processor_chunk);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
-    if (outputfile != NULL) {
+
+    else if (bif != NULL) {
 	/*
-	 * Write to a file.
+	 * Write to an icv_image_t.
 	 */
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	/* TODO : Add double type data to maintain resolution */
 	icv_writeline(bif, ap->a_y, scanline[cpu],  ICV_DATA_UCHAR);
-	bu_semaphore_release(BU_SEM_SYSCALL);
     }
-    if (fbp == FBIO_NULL && outputfile == NULL)
+
+    else
 	bu_log("rtedge: strange, no end of line actions taken.\n");
 
     return;
@@ -944,7 +1003,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
     aaap.a_logoverlap = ap->a_logoverlap;
 
     /* Above Left */
-    aaap.a_uptr = (genptr_t)AL;
+    aaap.a_uptr = (void *)AL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -955,7 +1014,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Above Right */
-    aaap.a_uptr = (genptr_t)AR;
+    aaap.a_uptr = (void *)AR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -966,7 +1025,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Top Left */
-    aaap.a_uptr = (genptr_t)TL;
+    aaap.a_uptr = (void *)TL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -977,7 +1036,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Upper Left */
-    aaap.a_uptr = (genptr_t)UL;
+    aaap.a_uptr = (void *)UL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -988,7 +1047,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Upper Right */
-    aaap.a_uptr = (genptr_t)UR;
+    aaap.a_uptr = (void *)UR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -999,7 +1058,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Top Right */
-    aaap.a_uptr = (genptr_t)TR;
+    aaap.a_uptr = (void *)TR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1010,7 +1069,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Bottom Left */
-    aaap.a_uptr = (genptr_t)BL;
+    aaap.a_uptr = (void *)BL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1021,7 +1080,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Lower Left */
-    aaap.a_uptr = (genptr_t)LL;
+    aaap.a_uptr = (void *)LL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1032,7 +1091,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Lower Right */
-    aaap.a_uptr = (genptr_t)LR;
+    aaap.a_uptr = (void *)LR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1043,7 +1102,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Bottom Right */
-    aaap.a_uptr = (genptr_t)BR;
+    aaap.a_uptr = (void *)BR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1054,7 +1113,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Debajo Left */
-    aaap.a_uptr = (genptr_t)DL;
+    aaap.a_uptr = (void *)DL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1065,7 +1124,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Debajo Right */
-    aaap.a_uptr = (genptr_t)DR;
+    aaap.a_uptr = (void *)DR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1218,7 +1277,10 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     memset(&below, 0, sizeof(struct cell));
     memset(&left, 0, sizeof(struct cell));
 
-    cpu = ap->a_resource->re_cpu;
+    if (ap->a_resource->re_cpu > 0)
+	cpu = ap->a_resource->re_cpu - 1;
+    else
+	cpu = ap->a_resource->re_cpu;
 
     if (PartHeadp == NULL || segp == NULL) {
 	/* The main shotline missed.  pack the application struct
@@ -1259,7 +1321,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 
     VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* below */
     VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-    a2.a_uptr = (genptr_t)&below;
+    a2.a_uptr = (void *)&below;
     rt_shootray(&a2);
 
     if (ap->a_x == 0) {
@@ -1271,7 +1333,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 	 */
 	VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* left */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&left;
+	a2.a_uptr = (void *)&left;
 	rt_shootray(&a2);
     } else {
 	left.c_ishit = saved[cpu]->c_ishit;
@@ -1286,12 +1348,12 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     if (both_sides) {
 	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* above */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&above;
+	a2.a_uptr = (void *)&above;
 	rt_shootray(&a2);
 
 	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* right */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&right;
+	a2.a_uptr = (void *)&right;
 	rt_shootray(&a2);
     }
 
@@ -1380,6 +1442,36 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 
 void application_init(void) {
     bu_vls_trunc(&occlusion_objects, 0);
+
+    /* Set the byte offsets at run time */
+    view_parse[ 0].sp_offset = bu_byteoffset(detect_regions);
+    view_parse[ 1].sp_offset = bu_byteoffset(detect_regions);
+    view_parse[ 2].sp_offset = bu_byteoffset(detect_distance);
+    view_parse[ 3].sp_offset = bu_byteoffset(detect_distance);
+    view_parse[ 4].sp_offset = bu_byteoffset(detect_normals);
+    view_parse[ 5].sp_offset = bu_byteoffset(detect_normals);
+    view_parse[ 6].sp_offset = bu_byteoffset(detect_ids);
+    view_parse[ 7].sp_offset = bu_byteoffset(detect_ids);
+    view_parse[ 8].sp_offset = bu_byteoffset(float_fgcolor[0]);
+    view_parse[ 9].sp_offset = bu_byteoffset(float_fgcolor[0]);
+    view_parse[10].sp_offset = bu_byteoffset(background[0]);
+    view_parse[11].sp_offset = bu_byteoffset(background[0]);
+    view_parse[12].sp_offset = bu_byteoffset(overlay);
+    view_parse[13].sp_offset = bu_byteoffset(overlay);
+    view_parse[14].sp_offset = bu_byteoffset(blend);
+    view_parse[15].sp_offset = bu_byteoffset(blend);
+    view_parse[16].sp_offset = bu_byteoffset(region_colors);
+    view_parse[17].sp_offset = bu_byteoffset(region_colors);
+    view_parse[18].sp_offset = bu_byteoffset(occlusion_objects);
+    view_parse[19].sp_offset = bu_byteoffset(occlusion_objects);
+    view_parse[20].sp_offset = bu_byteoffset(occlusion_mode);
+    view_parse[21].sp_offset = bu_byteoffset(occlusion_mode);
+    view_parse[22].sp_offset = bu_byteoffset(max_dist);
+    view_parse[23].sp_offset = bu_byteoffset(max_dist);
+    view_parse[24].sp_offset = bu_byteoffset(antialias);
+    view_parse[25].sp_offset = bu_byteoffset(antialias);
+    view_parse[26].sp_offset = bu_byteoffset(both_sides);
+    view_parse[27].sp_offset = bu_byteoffset(both_sides);
 }
 
 

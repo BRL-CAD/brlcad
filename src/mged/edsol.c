@@ -1,7 +1,7 @@
 /*                         E D S O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,23 +24,20 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "rtgeom.h"
-#include "dg.h"
-#include "nurb.h"
+#include "rt/geom.h"
+#include "raytrace.h"
+#include "rt/arb_edit.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -738,6 +735,11 @@ set_e_axes_pos(int both)
 {
     int i;
     struct dm_list *dmlp;
+    const short earb8[12][18] = earb8_edit_array;
+    const short earb7[12][18] = earb7_edit_array;
+    const short earb6[10][18] = earb6_edit_array;
+    const short earb5[9][18] = earb5_edit_array;
+    const int local_arb_faces[5][24] = rt_arb_faces;
 
     update_views = 1;
     switch (es_int.idb_type) {
@@ -788,19 +790,19 @@ set_e_axes_pos(int both)
 		    case ECMD_ARB_MOVE_FACE:
 			switch (es_type) {
 			    case ARB4:
-				i = rt_arb_faces[0][es_menu * 4];
+				i = local_arb_faces[0][es_menu * 4];
 				break;
 			    case ARB5:
-				i = rt_arb_faces[1][es_menu * 4];
+				i = local_arb_faces[1][es_menu * 4];
 				break;
 			    case ARB6:
-				i = rt_arb_faces[2][es_menu * 4];
+				i = local_arb_faces[2][es_menu * 4];
 				break;
 			    case ARB7:
-				i = rt_arb_faces[3][es_menu * 4];
+				i = local_arb_faces[3][es_menu * 4];
 				break;
 			    case ARB8:
-				i = rt_arb_faces[4][es_menu * 4];
+				i = local_arb_faces[4][es_menu * 4];
 				break;
 			    default:
 				i = 0;
@@ -1616,11 +1618,11 @@ nmg_ed(int arg)
 					    "nmg_ed tab[]");
 		    vbp = rt_vlblock_init();
 
-		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &mged_tol);
+		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &RTG.rtg_vlfree, &mged_tol);
 		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
 
-		    rt_vlblock_free(vbp);
-		    bu_free((genptr_t)tab, "nmg_ed tab[]");
+		    bn_vlblock_free(vbp);
+		    bu_free((void *)tab, "nmg_ed tab[]");
 		}
 		view_state->vs_flag = 1;
 	    }
@@ -2338,6 +2340,16 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		}
 		break;
 	    }
+	case ID_DATUM:
+	    {
+		struct rt_datum_internal *datum = (struct rt_datum_internal *)ip->idb_ptr;
+		RT_DATUM_CK_MAGIC(datum);
+
+		/* Default */
+		VMOVE(mpt, datum->pnt);
+		*strp = "V";
+		break;
+	    }
 	case ID_NMG:
 	    {
 		struct vertex *v;
@@ -2545,7 +2557,7 @@ init_sedit(void)
     }
 
     /* Save aggregate path matrix */
-    pathHmat(illump, es_mat, illump->s_fullpath.fp_len-2);
+    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -2620,8 +2632,8 @@ init_sedit_vars(void)
 void
 replot_editing_solid(void)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     mat_t mat;
     struct solid *sp;
     struct directory *illdp;
@@ -2632,13 +2644,13 @@ replot_editing_solid(void)
 
     illdp = LAST_SOLID(illump);
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    if (LAST_SOLID(sp) == illdp) {
-		pathHmat(sp, mat, sp->s_fullpath.fp_len-2);
+		(void)db_path_to_mat(dbip, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
 		(void)replot_modified_solid(sp, &es_int, mat);
 	    }
 	}
@@ -2771,7 +2783,7 @@ get_rotation_vertex(void)
 
     bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  bu_vls_addr(&dName), bu_vls_addr(&str), arb_vertices[type][loc]);
+		  bu_vls_addr(dName), bu_vls_addr(&str), arb_vertices[type][loc]);
 
     while (!valid) {
 	if (Tcl_Eval(INTERP, bu_vls_addr(&cmd)) != TCL_OK) {
@@ -2812,13 +2824,15 @@ get_file_name(char *str)
 	    *ptr2++ = *ptr1++;
 	*ptr2 = '\0';
 	Tcl_SetVar(INTERP, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
-	bu_free((genptr_t)dir, "get_file_name: directory string");
+	bu_free((void *)dir, "get_file_name: directory string");
     }
 
-    bu_vls_printf(&cmd,
-		  "getFile %s %s {{{All Files} {*}}} {Get File}",
-		  bu_vls_addr(&pathName),
-		  bu_vls_addr(&varname_vls));
+    if (dm_get_pathname(dmp)) {
+	bu_vls_printf(&cmd,
+		"getFile %s %s {{{All Files} {*}}} {Get File}",
+		bu_vls_addr(dm_get_pathname(dmp)),
+		bu_vls_addr(&varname_vls));
+    }
     bu_vls_free(&varname_vls);
 
     if (Tcl_Eval(INTERP, bu_vls_addr(&cmd))) {
@@ -4206,17 +4220,19 @@ sedit(void)
 		    (struct rt_bot_internal *)es_int.idb_ptr;
 		const char *radio_result;
 		char mode[10];
-		int ret_tcl;
+		int ret_tcl = TCL_ERROR;
 		int old_mode;
 
 		RT_BOT_CK_MAGIC(bot);
 		old_mode = bot->mode;
 		sprintf(mode, " %d", old_mode - 1);
-		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_mode_radio ",
-				      bu_vls_addr(&pathName), " _bot_mode_result",
-				      " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
-				      " { surface volume plate plate/nocosine }",
-				      " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
+		if (dm_get_pathname(dmp)) {
+		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_mode_radio ",
+			    bu_vls_addr(dm_get_pathname(dmp)), " _bot_mode_result",
+			    " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
+			    " { surface volume plate plate/nocosine }",
+			    " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
+		}
 		if (ret_tcl != TCL_OK) {
 		    Tcl_AppendResult(INTERP, "Mode selection failed!\n", (char *)NULL);
 		    break;
@@ -4246,15 +4262,17 @@ sedit(void)
 		    (struct rt_bot_internal *)es_int.idb_ptr;
 		const char *radio_result;
 		char orient[10];
-		int ret_tcl;
+		int ret_tcl = TCL_ERROR;
 
 		RT_BOT_CK_MAGIC(bot);
 		sprintf(orient, " %d", bot->orientation - 1);
-		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_orient_radio ",
-				      bu_vls_addr(&pathName), " _bot_orient_result",
-				      " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
-				      " { none right-hand-rule left-hand-rule }",
-				      " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
+		if (dm_get_pathname(dmp)) {
+		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_orient_radio ",
+			    bu_vls_addr(dm_get_pathname(dmp)), " _bot_orient_result",
+			    " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
+			    " { none right-hand-rule left-hand-rule }",
+			    " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
+		}
 		if (ret_tcl != TCL_OK) {
 		    Tcl_AppendResult(INTERP, "Face orientation selection failed!\n", (char *)NULL);
 		    break;
@@ -4267,7 +4285,8 @@ sedit(void)
 	    {
 		struct rt_bot_internal *bot =
 		    (struct rt_bot_internal *)es_int.idb_ptr;
-		size_t face_no;
+		size_t face_no = 0;
+		int face_state = 0;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -4300,17 +4319,18 @@ sedit(void)
 		    if (!inpara)
 			break;
 
-		    face_no = (size_t)-1;
+		    face_state = -1;
 		    for (i=0; i < bot->num_faces; i++) {
 			if (bot_verts[0] == bot->faces[i*3] &&
 			    bot_verts[1] == bot->faces[i*3+1] &&
 			    bot_verts[2] == bot->faces[i*3+2])
 			{
 			    face_no = i;
+			    face_state = 0;
 			    break;
 			}
 		    }
-		    if (face_no == (size_t)-1) {
+		    if (face_state > -1) {
 			bu_log("Cannot find face with vertices %d %d %d!\n",
 			       V3ARGS(bot_verts));
 			break;
@@ -4322,7 +4342,7 @@ sedit(void)
 	    break;
 	case ECMD_BOT_FLAGS:
 	    {
-		int ret_tcl;
+		int ret_tcl = TCL_ERROR;
 		const char *dialog_result;
 		char cur_settings[11];
 		struct rt_bot_internal *bot =
@@ -4339,17 +4359,19 @@ sedit(void)
 		    cur_settings[5] = '1';
 		}
 
-		ret_tcl = Tcl_VarEval(INTERP,
-				      "cad_list_buts",
-				      " .bot_list_flags ",
-				      bu_vls_addr(&pathName),
-				      " _bot_flags_result ",
-				      cur_settings,
-				      " \"BOT Flags\"",
-				      " \"Select the desired flags\"",
-				      " { {Use vertex normals} {Use single precision ray-tracing} }",
-				      " { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use single precision to save memory} } ",
-				      (char *)NULL);
+		if (dm_get_pathname(dmp)) {
+		    ret_tcl = Tcl_VarEval(INTERP,
+			    "cad_list_buts",
+			    " .bot_list_flags ",
+			    bu_vls_addr(dm_get_pathname(dmp)),
+			    " _bot_flags_result ",
+			    cur_settings,
+			    " \"BOT Flags\"",
+			    " \"Select the desired flags\"",
+			    " { {Use vertex normals} {Use single precision ray-tracing} }",
+			    " { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use single precision to save memory} } ",
+			    (char *)NULL);
+		}
 		if (ret_tcl != TCL_OK) {
 		    bu_log("ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(INTERP));
 		    break;
@@ -4374,8 +4396,9 @@ sedit(void)
 		    (struct rt_bot_internal *)es_int.idb_ptr;
 		char fmode[10];
 		const char *radio_result;
-		size_t face_no;
-		int ret_tcl;
+		size_t face_no = 0;
+		int face_state = 0;
+		int ret_tcl = TCL_ERROR;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -4395,44 +4418,47 @@ sedit(void)
 		    if (atoi(Tcl_GetStringResult(INTERP)))
 			break;
 
-		    face_no = (size_t)-2;
+		    face_state = -2;
 		} else {
 		    /* setting thickness for just one face */
-		    face_no = (size_t)-1;
+		    face_state = -1;
 		    for (i=0; i < bot->num_faces; i++) {
 			if (bot_verts[0] == bot->faces[i*3] &&
 			    bot_verts[1] == bot->faces[i*3+1] &&
 			    bot_verts[2] == bot->faces[i*3+2])
 			{
 			    face_no = i;
+			    face_state = 0;
 			    break;
 			}
 		    }
-		    if (face_no == (size_t)-1 || face_no == (size_t)-2) {
+		    if (face_state < 0) {
 			bu_log("Cannot find face with vertices %d %d %d!\n",
 			       V3ARGS(bot_verts));
 			break;
 		    }
 		}
 
-		if (face_no != (size_t)-1)
+		if (face_state > -1)
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, face_no)?1:0);
 		else
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
 
-		ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(&pathName),
-				      " _bot_fmode_result ", "\"BOT Face Mode\"",
-				      " \"Select the desired face mode\"", fmode,
-				      " { {Thickness centered about hit point} {Thickness appended to hit point} }",
-				      " { {This selection will place the plate thickness centered about the hit point} {This selection will place the plate thickness rayward of the hit point} } ",
-				      (char *)NULL);
+		if (dm_get_pathname(dmp)) {
+		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(dmp)),
+			    " _bot_fmode_result ", "\"BOT Face Mode\"",
+			    " \"Select the desired face mode\"", fmode,
+			    " { {Thickness centered about hit point} {Thickness appended to hit point} }",
+			    " { {This selection will place the plate thickness centered about the hit point} {This selection will place the plate thickness rayward of the hit point} } ",
+			    (char *)NULL);
+		}
 		if (ret_tcl != TCL_OK) {
 		    bu_log("ERROR: cad_radio: %s\n", Tcl_GetStringResult(INTERP));
 		    break;
 		}
 		radio_result = Tcl_GetVar(INTERP, "_bot_fmode_result", TCL_GLOBAL_ONLY);
 
-		if (face_no != (size_t)-1) {
+		if (face_state > -1) {
 		    if (atoi(radio_result))
 			BU_BITSET(bot->face_mode, face_no);
 		    else
@@ -4541,7 +4567,7 @@ sedit(void)
 		    RT_DB_INTERNAL_INIT(&tmp_ip);
 		    tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    tmp_ip.idb_type = ID_SKETCH;
-		    tmp_ip.idb_ptr = (genptr_t)extr->skt;
+		    tmp_ip.idb_ptr = (void *)extr->skt;
 		    tmp_ip.idb_meth = &OBJ[ID_SKETCH];
 		    rt_db_free_internal(&tmp_ip);
 		}
@@ -4689,7 +4715,7 @@ sedit(void)
 	    if (inpara) {
 		static mat_t invsolr;
 		static vect_t tempvec;
-		static float rota, fb;
+		static float rota, fb_a;
 
 		/*
 		 * Keyboard parameters in degrees.
@@ -4734,12 +4760,12 @@ sedit(void)
 		} else if (inpara == 2) {
 		    /* 2 parameters:  rot, fb were given */
 		    rota= es_para[0] * DEG2RAD;
-		    fb  = es_para[1] * DEG2RAD;
+		    fb_a  = es_para[1] * DEG2RAD;
 
 		    /* calculate normal vector (length = 1) from rot, fb */
-		    es_peqn[es_menu][0] = cos(fb) * cos(rota);
-		    es_peqn[es_menu][1] = cos(fb) * sin(rota);
-		    es_peqn[es_menu][2] = sin(fb);
+		    es_peqn[es_menu][0] = cos(fb_a) * cos(rota);
+		    es_peqn[es_menu][1] = cos(fb_a) * sin(rota);
+		    es_peqn[es_menu][2] = sin(fb_a);
 		} else {
 		    Tcl_AppendResult(INTERP, "Must be < rot fb | xdeg ydeg zdeg >\n",
 				     (char *)NULL);
@@ -5703,13 +5729,13 @@ sedit(void)
 		    nmg_face_g(fu, new_lu_pl);
 		}
 
-		(void)nmg_extrude_face(fu, extrude_vec, &mged_tol);
+		(void)nmg_extrude_face(fu, extrude_vec, &RTG.rtg_vlfree, &mged_tol);
 
-		nmg_fix_normals(fu->s_p, &mged_tol);
+		nmg_fix_normals(fu->s_p, &RTG.rtg_vlfree, &mged_tol);
 
 		m = nmg_find_model(&fu->l.magic);
 		nmg_rebound(m, &mged_tol);
-		(void)nmg_ck_geometry(m, &mged_tol);
+		(void)nmg_ck_geometry(m, &RTG.rtg_vlfree, &mged_tol);
 
 		es_eu = (struct edgeuse *)NULL;
 
@@ -6066,8 +6092,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->ncurves++;
@@ -6108,8 +6134,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->pts_per_curve++;
@@ -6154,8 +6180,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->ncurves--;
@@ -6210,8 +6236,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->pts_per_curve--;
@@ -7002,7 +7028,7 @@ sedit_mouse(const vect_t mousevec)
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
-						view_state->vs_gvp->gv_model2view, &tmp_tol)) == (struct edge *)NULL) {
+						view_state->vs_gvp->gv_model2view, &RTG.rtg_vlfree, &tmp_tol)) == (struct edge *)NULL) {
 		    Tcl_AppendResult(INTERP, "ECMD_NMG_EPICK: unable to find an edge\n",
 				     (char *)NULL);
 		    mged_print_result(TCL_ERROR);
@@ -7355,7 +7381,7 @@ init_oedit_guts(void)
     }
 
     /* Save aggregate path matrix */
-    pathHmat(illump, es_mat, illump->s_fullpath.fp_len-2);
+    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -7418,8 +7444,8 @@ void oedit_reject(void);
 static void
 oedit_apply(int continue_editing)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
     /* matrices used to accept editing done from a depth
      * >= 2 from the top of the illuminated path
@@ -7445,7 +7471,7 @@ oedit_apply(int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    pathHmat(illump, topm, ipathpos-2);
+	    (void)db_path_to_mat(dbip, &illump->s_fullpath, topm, ipathpos-1, &rt_uniresource);
 
 	    bn_mat_inv(inv_topm, topm);
 
@@ -7467,11 +7493,11 @@ oedit_apply(int continue_editing)
     modelchanges[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    if (sp->s_iflag == DOWN)
 		continue;
 	    (void)replot_original_solid(sp);
@@ -7489,8 +7515,8 @@ oedit_apply(int continue_editing)
 void
 oedit_accept(void)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct solid *sp;
 
     if (dbip == DBI_NULL)
@@ -7499,11 +7525,11 @@ oedit_accept(void)
     if (dbip->dbi_read_only) {
 	oedit_reject();
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 		if (sp->s_iflag == DOWN)
 		    continue;
 		(void)replot_original_solid(sp);
@@ -7744,15 +7770,15 @@ sedit_reject(void)
 
     /* Restore the original solid everywhere */
     {
-	struct ged_display_list *gdlp;
-	struct ged_display_list *next_gdlp;
+	struct display_list *gdlp;
+	struct display_list *next_gdlp;
 	struct solid *sp;
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 		if (LAST_SOLID(sp) == LAST_SOLID(illump))
 		    (void)replot_original_solid(sp);
 	    }
@@ -8944,7 +8970,7 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	int ret;
 	struct bu_vls vlog = BU_VLS_INIT_ZERO;
 
-	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)es_int.idb_ptr);
+	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)es_int.idb_ptr, NULL);
 	Tcl_AppendResult(interp, bu_vls_addr(&vlog), (char *)NULL);
 	bu_vls_free(&vlog);
 	if (ret != BRLCAD_OK)
@@ -9116,7 +9142,7 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
 
     /* Save aggregate path matrix */
     MAT_IDN(es_mat);
-    pathHmat(illump, es_mat, illump->s_fullpath.fp_len-2);
+    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);

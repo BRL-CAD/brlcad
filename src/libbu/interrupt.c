@@ -1,7 +1,7 @@
 /*                     I N T E R R U P T . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,8 @@
 
 #include "bu/file.h"
 #include "bu/log.h"
+#include "bu/exit.h"
+
 
 /* wrap for hack above */
 #if !defined(C99_POSIX_USE_BSD)

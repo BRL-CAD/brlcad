@@ -1,7 +1,7 @@
 /*                        T A B I N T E R P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -516,7 +517,7 @@ linear_interpolate(struct chan *chp, fastf_t *times)
     int i;		/* input time index */
 
     if (chp->c_ilen < 2) {
-	bu_log("lienar_interpolate:  need at least 2 points\n");
+	bu_log("linear_interpolate:  need at least 2 points\n");
 	return;
     }
 
@@ -752,7 +753,7 @@ spline(struct chan *chp, fastf_t *times)
     double a;
     int end;
     double corr;
-    double konst = 0.0;		/* derriv. at endpts, non-periodic */
+    double konst = 0.0;		/* deriv. at endpts, non-periodic */
     double *diag = (double *)0;
     double *rrr = (double *)0;
     int i;
@@ -1147,6 +1148,9 @@ main(int argc, char *argv[])
 {
     char *buf;
     int ret;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     get_args(argc, argv);
     /*

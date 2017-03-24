@@ -1,7 +1,7 @@
 /*                       P I X H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #include "bu/color.h"
 #include "bu/log.h"
@@ -44,7 +43,7 @@ long bin_g[256];
 long bin_b[256];
 int verbose = 0;
 
-FBIO *fbp;
+fb *fbp;
 
 static long max;
 static double scalefactor;

@@ -1,7 +1,7 @@
 #                     A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2014 United States Government as represented by
+# Copyright (c) 2002-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -44,55 +44,32 @@ namespace eval Archer {
 	set pluginsdir [file join [bu_brlcad_data "src"] archer plugins]
     }
 
-    if {[file exists [file join $pluginsdir Core]]} {
-	set savePwd [pwd]
-	cd [file join $pluginsdir Core]
-	catch {
-	    foreach filename [lsort [glob -nocomplain *]] {
-		if [file isfile $filename] {
-		    set ext [file extension $filename]
-		    switch -exact -- $ext {
-			".tcl" -
-			".itk" -
-			".itcl" {
-			    source $filename
-			}
-			".sh" {
-			    # silently ignore
-			}
-			default {
-			    # silently ignore
-			}
-		    }
-		}
-	    }
-	}
-	cd $savePwd
-    }
-    if {[file exists [file join $pluginsdir Commands]]} {
-	set savePwd [pwd]
-	cd [file join $pluginsdir Commands]
-	catch {
-	    foreach filename [lsort [glob -nocomplain *]] {
-		if [file isfile $filename] {
-		    set ext [file extension $filename]
-		    switch -exact -- $ext {
-			".tcl" -
-			".itk" -
-			".itcl" {
-			    source $filename
-			}
-			".sh" {
-			    # silently ignore
-			}
-			default {
-			    # silently ignore
+    foreach plugin_type {Core Commands} {
+	if {[file exists [file join $pluginsdir $plugin_type]]} {
+	    set savePwd [pwd]
+	    cd [file join $pluginsdir $plugin_type]
+	    catch {
+		foreach filename [lsort [glob -nocomplain *]] {
+		    if [file isfile $filename] {
+			set ext [file extension $filename]
+			switch -exact -- $ext {
+			    ".tcl" -
+			    ".itk" -
+			    ".itcl" {
+				source $filename
+			    }
+			    ".sh" {
+				# silently ignore
+			    }
+			    default {
+				# silently ignore
+			    }
 			}
 		    }
 		}
 	    }
+	    cd $savePwd
 	}
-	cd $savePwd
     }
 }
 
@@ -212,6 +189,10 @@ package provide Archer 1.0
 	variable wizardXmlCallbacks ""
 	variable mBotFixAllFlag 0
 	variable mNumSelectedBotPts 0
+	variable mOverrideBinding false
+	variable mSaveDefaultBindingMode 0
+	variable mControlDown false
+	variable mShiftDown false
 
 	# plugin list
 	variable mWizardClass ""
@@ -255,6 +236,9 @@ package provide Archer 1.0
 	method doAboutArcher {}
 	method doarcherHelp {}
 	method handleMap {}
+	method handleBindingModeChange {_name1 _name2 _op}
+	method overrideBindingMode {_mode}
+	method updateOverrideBindingMode {_keysym}
 	method handleDisplayEscape {_dm}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
@@ -323,6 +307,7 @@ package provide Archer 1.0
 	method buildEpaEditView {}
 	method buildEtoEditView {}
 	method buildExtrudeEditView {}
+	method buildJointEditView {}
 	method buildGripEditView {}
 	method buildHalfEditView {}
 	method buildHypEditView {}
@@ -343,6 +328,7 @@ package provide Archer 1.0
 	method buildTorusEditView {}
 	method buildInvalidObjEditView {}
 
+	method clearViewPanel {}
 	method initArb4EditView {_odata}
 	method initArb5EditView {_odata}
 	method initArb6EditView {_odata}
@@ -356,6 +342,7 @@ package provide Archer 1.0
 	method initEpaEditView {_odata}
 	method initEtoEditView {_odata}
 	method initExtrudeEditView {_odata}
+	method initJointEditView {_odata}
 	method initGripEditView {_odata}
 	method initHalfEditView {_odata}
 	method initHypEditView {_odata}
@@ -391,19 +378,20 @@ package provide Archer 1.0
 	method updateWizardMenu {}
 
 	# Preferences Section
-	method applyDisplayPreferences {}
-	method applyDisplayPreferencesIfDiff {}
-	method applyGeneralPreferences {}
-	method applyGeneralPreferencesIfDiff {}
-	method applyGridPreferences {}
-	method applyGridPreferencesIfDiff {}
-	method applyGroundPlanePreferencesIfDiff {}
-	method applyModelAxesPreferences {}
-	method applyModelAxesPreferencesIfDiff {}
-	method applyPreferences {}
-	method applyPreferencesIfDiff {}
-	method applyViewAxesPreferences {}
-	method applyViewAxesPreferencesIfDiff {}
+	method applyCurrentDisplaySettings {}
+	method applyPreferenceDisplaySettings {}
+	method applyCurrentGeneralSettings {}
+	method applyPreferenceGeneralSettings {}
+	method applyCurrentGridSettings {}
+	method applyPreferenceGridSettings {}
+	method applyPreferenceGroundPlaneSettings {}
+	method applyCurrentModelAxesSettings {}
+	method applyPreferenceModelAxesSettings {}
+	method applyCurrentViewAxesPosition {}
+	method applyCurrentViewAxesSettings {}
+	method applyPreferenceViewAxesSettings {}
+	method applyCurrentSettings {}
+	method applyPreferenceSettings {}
 	method cancelPreferences {}
 	method doPreferences {}
 	method readPreferences {}
@@ -428,6 +416,7 @@ package provide Archer 1.0
 	method createEpa {_name}
 	method createEto {_name}
 	method createExtrude {_name}
+	method createJoint {_name}
 	method createGrip {_name}
 	method createHalf {_name}
 	method createHyp {_name}
@@ -484,6 +473,8 @@ package provide Archer 1.0
 	buildSelectTransparencyDialog
 	buildSelectGroupDialog
 
+	trace add variable mDefaultBindingMode write [::itcl::code $this handleBindingModeChange]
+
 	# set initial toggle variables
 	set mVPaneToggle3 $mVPaneFraction3
 	set mVPaneToggle5 $mVPaneFraction5
@@ -531,10 +522,11 @@ package provide Archer 1.0
 
     if {!$mViewOnly} {
 	pushPerspectiveSettings
-	pushZClipSettings
+	updateZClipPlanesFromSettings
     }
 
     gedCmd dlist_on $mDisplayListMode
+    gedCmd configure -hideSubtractions $mHideSubtractions
 
     if {$mWireframeMode} {
 	gedCmd lod on
@@ -1102,7 +1094,7 @@ package provide Archer 1.0
 	set execpath [file dirname [file normalize $argv0]]
 
 	if {$tcl_platform(platform) == "windows"} {
-	    set rtwizname [file join $execpath rtwizard.bat]
+	    set rtwizname [file join $execpath rtwizard.exe]
 	} else {
 	    set rtwizname [file join $execpath rtwizard]
 	}
@@ -1716,7 +1708,8 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::Load {_target} {
-    SetWaitCursor $this
+    global tcl_platform
+
     if {$mNeedSave} {
 	askToSave
     }
@@ -1730,48 +1723,7 @@ package provide Archer 1.0
     }
     set mActiveEditDialogs {}
 
-    set mTarget $_target
-    set mDbType "BRL-CAD"
-    set mCopyObj ""
-    set mCombWarningList ""
-
-    if {![catch {$mTarget ls}]} {
-	set mDbShared 1
-	set mDbReadOnly 1
-    } elseif {[file exists $mTarget]} {
-	if {[file writable $mTarget]} {
-	    set mDbReadOnly 0
-	} else {
-	    set mDbReadOnly 1
-	}
-    } else {
-	set mDbReadOnly 0
-    }
-
-    if {$mDbNoCopy || $mDbReadOnly} {
-	set mTargetOldCopy $mTargetCopy
-	set mTargetCopy ""
-    } else {
-	createTargetCopy
-    }
-
-    # Load MGED database
-    if {[info exists itk_component(ged)]} {
-	if {$mDbShared} {
-	    $itk_component(ged) sharedGed $mTarget
-	} elseif {$mDbNoCopy || $mDbReadOnly} {
-	    $itk_component(ged) open $mTarget
-	} else {
-	    $itk_component(ged) open $mTargetCopy
-	}
-
-	if {$mAllowDataClear} {
-	    gedCmd data_axes points {}
-	    gedCmd data_lines points {}
-	}
-
-	gedCmd configure -primitiveLabels {}
-    } else {
+    if {![OpenTarget $_target]} {
 	initGed
 
 	grid forget $itk_component(canvas)
@@ -1783,66 +1735,70 @@ package provide Archer 1.0
 	}
     }
 
+    SetWaitCursor $this
     $itk_component(ged) refresh_off
 
-    set mDbTitle [$itk_component(ged) title]
-    set mDbUnits [$itk_component(ged) units -s]
-    set mPrevObjViewMode $OBJ_ATTR_VIEW_MODE
-    set mPrevSelectedObjPath ""
-    set mPrevSelectedObj ""
-    set mSelectedObjPath ""
-    set mSelectedObj ""
-    set mSelectedObjType ""
-    set mColorObjects ""
-    set mGhostObjects ""
-    set mEdgeObjects ""
+    catch {
+	set mDbTitle [$itk_component(ged) title]
+	set mDbUnits [$itk_component(ged) units -s]
+	set mPrevObjViewMode $OBJ_ATTR_VIEW_MODE
+	set mPrevSelectedObjPath ""
+	set mPrevSelectedObj ""
+	set mSelectedObjPath ""
+	set mSelectedObj ""
+	set mSelectedObjType ""
+	set mColorObjects ""
+	set mGhostObjects ""
+	set mEdgeObjects ""
 
-    if {!$mViewOnly} {
-	initDbAttrView $mTarget
+	if {!$mViewOnly} {
+	    initDbAttrView $mTarget
 
-	set mTreeMode $TREE_MODE_TREE
-	set mPrevTreeMode $TREE_MODE_TREE
-	set mPrevTreeMode2 $TREE_MODE_COLOR_OBJECTS
-	toggleTreeView
+	    set mTreeMode $TREE_MODE_TREE
+	    set mPrevTreeMode $TREE_MODE_TREE
+	    set mPrevTreeMode2 $TREE_MODE_COLOR_OBJECTS
+	    toggleTreeView
 
-	applyPreferences
-	doLighting
-	updateWizardMenu
-	updateUtilityMenu
-	deleteTargetOldCopy
+	    applyCurrentSettings
+	    doLighting
+	    updateWizardMenu
+	    updateUtilityMenu
+	    deleteTargetOldCopy
 
-	updateCreationButtons 1
-	#	updateRaytraceButtons 1
+	    updateCreationButtons 1
+	    #	updateRaytraceButtons 1
 
-	buildGroundPlane
-	showGroundPlane
-    } else {
-	applyPreferences
-	doLighting
+	    buildGroundPlane
+	    showGroundPlane
+	} else {
+	    applyCurrentSettings
+	    doLighting
+	}
+
+	# update the units combobox in the General tab of the preferences panel
+	set utypes {}
+	foreach utype [split [$itk_component(ged) units -t] , ] {
+	    lappend utypes [string trim $utype]
+	}
+	$itk_component(unitsCB) configure \
+	    -values $utypes \
+	    -state readonly
+
+	# refresh tree contents
+	rebuildTree
+
+	if {$mBindingMode == "Default"} {
+	    set mDefaultBindingMode $VIEW_ROTATE_MODE
+	    beginViewRotate
+	}
+
+	set mSavedCenter ""
+	set mSavedViewEyePt ""
+	set mSavedSize ""
+
+	$itk_component(ged) edit_motion_delta_callback_all [::itcl::code $this editMotionDeltaCallback]
     }
 
-    # update the units combobox in the General tab of the preferences panel
-    set utypes {}
-    foreach utype [split [$itk_component(ged) units -t] , ] {
-	lappend utypes [string trim $utype]
-    }
-    $itk_component(unitsCB) configure \
-	-values $utypes \
-	-state readonly
-
-    # refresh tree contents
-    rebuildTree
-
-    if {$mBindingMode == "Default"} {
-	set mDefaultBindingMode $VIEW_ROTATE_MODE
-	beginViewRotate
-    }
-
-    set mSavedCenter ""
-    set mSavedViewEyePt ""
-    set mSavedSize ""
-
-    $itk_component(ged) edit_motion_delta_callback_all [::itcl::code $this editMotionDeltaCallback]
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all
     SetNormalCursor $this
@@ -1873,6 +1829,8 @@ package provide Archer 1.0
 	set mGridAnchor "$X $Y $Z"
 	set mGridRh [expr {$sf * $mGridRh}]
 	set mGridRv [expr {$sf * $mGridRv}]
+	set mGridRhPref $mGridRh
+	set mGridRvPref $mGridRv
 
 	if {[info exists itk_component(sketchView)]} {
 	    $itk_component(sketchView) configure -units $mDbUnits
@@ -2088,20 +2046,19 @@ package provide Archer 1.0
 
     switch -- $mDefaultBindingMode \
 	$OBJECT_ROTATE_MODE {
-	    beginObjRotate
+	    $itk_component(primaryToolbar) component edit_rotate invoke
 	} \
 	$OBJECT_TRANSLATE_MODE {
-	    beginObjTranslate
+	    $itk_component(primaryToolbar) component edit_translate invoke
 	} \
 	$OBJECT_SCALE_MODE {
-	    beginObjScale
+	    $itk_component(primaryToolbar) component edit_scale invoke
 	} \
 	$OBJECT_CENTER_MODE {
 	    if {$saved_mode == $OBJECT_TRANSLATE_MODE} {
-		set mDefaultBindingMode $saved_mode
-		beginObjTranslate
+		$itk_component(primaryToolbar) component edit_translate invoke
 	    } else {
-		beginObjCenter
+		$itk_component(primaryToolbar) component edit_center invoke
 	    }
 	}
 }
@@ -2191,25 +2148,13 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::compSelectCallback {_mstring} {
-    switch -- $mCompSelectMode \
-	$COMP_SELECT_LIST_MODE - \
-	$COMP_SELECT_LIST_PARTIAL_MODE {
-	    putString $_mstring
-	} \
-	$COMP_SELECT_GROUP_ADD_MODE - \
-	$COMP_SELECT_GROUP_ADD_PARTIAL_MODE {
-	    compSelectGroupAdd $_mstring
-	} \
-	$COMP_SELECT_GROUP_REMOVE_MODE - \
-	$COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE {
-	    compSelectGroupRemove $_mstring
-	} \
-	$COMP_SELECT_BOT_POINTS_MODE {
-	    if {[info exists itk_component(botView)]} {
-		catch {$itk_component(botView) selectBotPts $_mstring} msg
-	    }
+    if {$mCompSelectMode == $COMP_SELECT_BOT_POINTS_MODE} {
+	if {[info exists itk_component(botView)]} {
+	    catch {$itk_component(botView) selectBotPts $_mstring} msg
 	}
-
+    } else {
+	ArcherCore::compSelectCallback $_mstring
+    }
     $itk_component(ged) rect dim 0 0
 }
 
@@ -2258,7 +2203,9 @@ package provide Archer 1.0
     if {$mCompSelectMode != $COMP_SELECT_LIST_MODE &&
 	$mCompSelectMode != $COMP_SELECT_LIST_PARTIAL_MODE &&
 	$mCompSelectMode != $COMP_SELECT_BOT_POINTS_MODE} {
-	doSelectGroup
+	if {!$mOverrideBinding} {
+	    doSelectGroup
+	}
     }
 
     $itk_component(ged) clear_view_rect_callback_list
@@ -2310,6 +2257,49 @@ package provide Archer 1.0
 		bind $win <3> \
 		    "[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(menubar) component display-menu] %X %Y]; break"
 	    }
+	}
+    }
+
+    # This bit of code introduces a performance penalty when using the shift-grips --
+    # noticed when manipulating the view while displaying a fairly large geometry.
+    if {0} {
+	# only append bindings once
+	if {[string match "*BindingMode*" [bind $itk_interior <KeyRelease-Control_L>]] == 0} {
+	    bind $itk_interior <Control_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
+
+	    bind $itk_interior <Control_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
+
+	    bind $itk_interior <Shift_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
+
+	    bind $itk_interior <Shift_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
+
+	    bind $itk_interior <Control-Shift_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+
+	    bind $itk_interior <Control-Shift_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+
+	    bind $itk_interior <Shift-Control_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+
+	    bind $itk_interior <Shift-Control_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+
+	    bind $itk_interior <KeyRelease-Control_L> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
+
+	    bind $itk_interior <KeyRelease-Control_R> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
+
+	    bind $itk_interior <KeyRelease-Shift_L> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
+
+	    bind $itk_interior <KeyRelease-Shift_R> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
 	}
     }
 
@@ -2547,7 +2537,7 @@ proc Archer::get_html_data {helpfile} {
 
 proc Archer::get_html_man_data {cmdname} {
     global archer_help_data
-    set help_fd [open [file join [bu_brlcad_data "doc/html"] mann en $cmdname.html]]
+    set help_fd [open [file join [bu_brlcad_data "doc/html"] mann $cmdname.html]]
     set archer_help_data [read $help_fd]
     close $help_fd
 }
@@ -2719,7 +2709,7 @@ proc title_node_handler {node} {
 	    -to 100.0 \
 	    -resolution 0.01 \
 	    -variable [::itcl::scope mZClipFrontPref] \
-	    -command [::itcl::code $this updateZClipPlanes]
+	    -command [::itcl::code $this updateZClipPlanesFromPreferences]
     }
 
     itk_component add zclipBackL {
@@ -2735,7 +2725,7 @@ proc title_node_handler {node} {
 	    -to 100.0 \
 	    -resolution 0.01 \
 	    -variable [::itcl::scope mZClipBackPref] \
-	    -command [::itcl::code $this updateZClipPlanes]
+	    -command [::itcl::code $this updateZClipPlanesFromPreferences]
     }
 
     itk_component add zclipBackMaxL {
@@ -2849,6 +2839,12 @@ proc title_node_handler {node} {
 	    -value $DISPLAY_MODE_SHADED_ALL \
 	    -variable [::itcl::scope mDefaultDisplayModePref]
     } {}
+    itk_component add displayModeShadedEvalRB {
+	::ttk::radiobutton $itk_component(displayModeF).displayModeShadedEvalRB \
+	    -text "Shaded (Evaluated)" \
+	    -value $DISPLAY_MODE_SHADED_EVAL \
+	    -variable [::itcl::scope mDefaultDisplayModePref]
+    } {}
     itk_component add displayModeHiddenRB {
 	::ttk::radiobutton $itk_component(displayModeF).displayModeHiddenRB \
 	    -text "Hidden" \
@@ -2860,6 +2856,11 @@ proc title_node_handler {node} {
 	::ttk::checkbutton $parent.dlistModeCB \
 	    -text "Use Display Lists" \
 	    -variable [::itcl::scope mDisplayListModePref]
+    } {}
+    itk_component add hideSubCB {
+	::ttk::checkbutton $parent.hideSubCB \
+	    -text "Hide Subtractions" \
+	    -variable [::itcl::scope mHideSubtractionsPref]
     } {}
     itk_component add wireframeModeCB {
 	::ttk::checkbutton $parent.wireframeModeCB \
@@ -2881,6 +2882,8 @@ proc title_node_handler {node} {
     grid $itk_component(displayModeWireRB) -row $i -sticky nsew
     incr i
     grid $itk_component(displayModeShadedRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(displayModeShadedEvalRB) -row $i -sticky nsew
     incr i
     grid $itk_component(displayModeHiddenRB) -row $i -sticky nsew
 
@@ -2909,6 +2912,8 @@ proc title_node_handler {node} {
     grid $itk_component(dlistModeCB) -columnspan 2 -column 0 -row $i -sticky sw
     grid rowconfigure $parent $i -weight 1
     grid columnconfigure $parent 1 -weight 1
+    incr i
+    grid $itk_component(hideSubCB) -columnspan 2 -column 0 -row $i -sticky sw
     incr i
     grid $itk_component(wireframeModeCB) -columnspan 2 -column 0 -row $i -sticky sw
 
@@ -3042,19 +3047,6 @@ proc title_node_handler {node} {
 	"Comp Select Mode:" \
 	$COMP_SELECT_MODE_NAMES
 
-    itk_component add rtbotmintieL {
-	::ttk::label $itk_component(generalF).rtbotmintieL \
-	    -anchor e \
-	    -text "rt_bot_mintie"
-    } {}
-    itk_component add rtbotmintieE {
-	::ttk::entry $itk_component(generalF).rtbotmintieE \
-	    -width 12 \
-	    -textvariable [::itcl::scope mRtBotMintiePref] \
-	    -validate key \
-	    -validatecommand {::cadwidgets::Ged::validateDigit %P}
-    } {}
-
     itk_component add maxcombmembL {
 	::ttk::label $itk_component(generalF).maxcombmembL \
 	    -anchor e \
@@ -3156,9 +3148,6 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(selGroupModeL) -column 0 -row $i -sticky e
     grid $itk_component(selGroupModeF) -column 1 -row $i -sticky ew
-    incr i
-    grid $itk_component(rtbotmintieL) -column 0 -row $i -sticky e
-    grid $itk_component(rtbotmintieE) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(maxcombmembL) -column 0 -row $i -sticky e
     grid $itk_component(maxcombmembE) -column 1 -row $i -sticky ew
@@ -3461,7 +3450,7 @@ proc title_node_handler {node} {
     buildarcherHelp
 
     # Build manual browser
-    ManBrowser $itk_interior.archerMan -parentName Archer
+    ManBrowser $itk_interior.archerMan -useToC 1 -defaultDir n -parentName Archer
     $itk_interior.archerMan center
 
     if {0} {
@@ -3551,8 +3540,7 @@ proc title_node_handler {node} {
 	size \
 	mModelAxesSizePref \
 	"Size:" \
-	{Small Medium Large X-Large \
-	     "View (1x)" "View (2x)" "View (4x)" "View (8x)"}
+	[lsort -command compareModelAxesSizes [array names mModelAxesSizeValues]]
 
     #    itk_component add modelAxesPositionL {
     #	::label $itk_component(modelAxesF).positionL \
@@ -3835,7 +3823,7 @@ proc title_node_handler {node} {
     $itk_component(preferencesDialog) buttonconfigure 1 \
 	-borderwidth 1 \
 	-pady 0 \
-	-command [::itcl::code $this applyPreferencesIfDiff]
+	-command [::itcl::code $this applyPreferenceSettings]
     set b2_cmd [$itk_component(preferencesDialog) buttoncget 2 -command]
     $itk_component(preferencesDialog) buttonconfigure 2 \
 	-borderwidth 1 \
@@ -3921,6 +3909,9 @@ proc title_node_handler {node} {
 	-label "Save" \
 	-command [::itcl::code $this askToSave] \
 	-state disabled
+    $itk_component(${_prefix}filemenu) add command \
+	-label "Export..." \
+	-command [::itcl::code $this exportDb]
     $itk_component(${_prefix}filemenu) add command \
 	-label "Revert" \
 	-command [::itcl::code $this askToRevert] \
@@ -4185,7 +4176,7 @@ proc title_node_handler {node} {
 	size \
 	mViewAxesSizePref \
 	"Size:" \
-	{Small Medium Large X-Large}
+	[lsort -command compareViewAxesSizes [array names mViewAxesSizeValues]]
 
     buildComboBox $itk_component(viewAxesF) \
 	viewAxesPosition \
@@ -4281,6 +4272,67 @@ proc title_node_handler {node} {
     }
 
     $editView clearEditState 0 1
+}
+
+::itcl::body Archer::handleBindingModeChange {_name1 _name2 _op} {
+    switch $mDefaultBindingMode \
+	$OBJECT_ROTATE_MODE - \
+	$OBJECT_TRANSLATE_MODE - \
+	$OBJECT_SCALE_MODE - \
+	$OBJECT_CENTER_MODE {
+	    $itk_component(ged) configure -cursor "hand1"
+	} \
+	default {
+	    $itk_component(ged) configure -cursor "arrow"
+	}
+
+}
+
+::itcl::body Archer::overrideBindingMode {_mode} {
+    if {!$mOverrideBinding} {
+	set mSaveDefaultBindingMode $mDefaultBindingMode
+	set mOverrideBinding true
+    }
+    setDefaultBindingMode $_mode
+
+    switch $_mode \
+	$VIEW_ROTATE_MODE {
+	    set mControlDown true
+	} \
+	$VIEW_TRANSLATE_MODE {
+	    set mShiftDown true
+	} \
+	$VIEW_SCALE_MODE {
+	    set mControlDown true
+	    set mShiftDown true
+	}
+}
+
+::itcl::body Archer::updateOverrideBindingMode {_keysym} {
+    switch $_keysym {
+	"Control_L" -
+	"Control_R" {
+	    set mControlDown false
+	}
+	"Shift_L" -
+	"Shift_R" {
+	    set mShiftDown false
+	}
+    }
+    if {$mOverrideBinding} {
+	if {$mControlDown} {
+	    if {$mShiftDown} {
+		setDefaultBindingMode $VIEW_SCALE_MODE
+	    } else {
+		setDefaultBindingMode $VIEW_ROTATE_MODE
+	    }
+	} elseif {$mShiftDown} {
+	    setDefaultBindingMode $VIEW_TRANSLATE_MODE
+	} else {
+	    setDefaultBindingMode $mSaveDefaultBindingMode
+	    set mOverrideBinding false
+	}
+    }
 }
 
 ::itcl::body Archer::launchDisplayMenuBegin {_dm _m _x _y} {
@@ -4450,7 +4502,7 @@ proc title_node_handler {node} {
 		    append cmd " $item"
 		}
 	    } else {
-		set cmd "otranslate $pobj $dx $dy $dz"
+		set cmd "gedWrapper otranslate 0 0 1 0 $pobj $dx $dy $dz"
 		set rflag 0
 	    }
 	}
@@ -5187,6 +5239,9 @@ proc title_node_handler {node} {
 	-image $mImage_extrudeLabeled \
 	-command [::itcl::code $this createObj extrude]
     $itk_component(primitiveMenu) add command \
+	-label joint \
+	-command [::itcl::code $this createObj joint]
+    $itk_component(primitiveMenu) add command \
 	-image $mImage_halfLabeled \
 	-command [::itcl::code $this createObj half]
     $itk_component(primitiveMenu) add command \
@@ -5448,6 +5503,8 @@ proc title_node_handler {node} {
     $itk_component(menubar) menuconfigure .file.save \
 	-command [::itcl::code $this askToSave] \
 	-state disabled
+    $itk_component(menubar) menuconfigure .file.export \
+	-command [::itcl::code $this exportDb]
     $itk_component(menubar) menuconfigure .file.revert \
 	-command [::itcl::code $this askToRevert] \
 	-state disabled
@@ -5488,26 +5545,7 @@ proc title_node_handler {node} {
 		    -helpstr "Set display background to Navy"
 	    }
 
-	    cascade standard -label "Standard Views" -menu {
-		command front -label "Front" \
-		    -helpstr "Set view to front"
-		command rear -label "Rear" \
-		    -helpstr "Set view to rear"
-		command port -label "Port" \
-		    -helpstr "Set view to port/left"
-		command starboard -label "Starboard" \
-		    -helpstr "Set view to starboard/right"
-		command top -label "Top" \
-		    -helpstr "Set view to top"
-		command bottom -label "Bottom" \
-		    -helpstr "Set view to bottom"
-		separator sep0
-		command 35, 25 -label "35, 25" \
-		    -helpstr "Set view to az=35, el=25"
-		command 45, 45 -label "45, 45" \
-		    -helpstr "Set view to az=45, el=45"
-	    }
-
+	    cascade standard -label "Standard Views" -menu $mStandardViewsMenuCommands
 	    command clear -label "Clear" \
 		-helpstr "Clear the display"
 	    command refresh -label "Refresh" \
@@ -6307,6 +6345,13 @@ proc title_node_handler {node} {
 
 	    return $itk_component(extrudeView)
 	}
+	"joint" {
+	    if {![info exists itk_component(jointView)]} {
+		buildJointEditView
+	    }
+
+	    return $itk_component(jointView)
+	}
 	"grip" {
 	    if {![info exists itk_component(gripView)]} {
 		buildGripEditView
@@ -6414,8 +6459,9 @@ proc title_node_handler {node} {
 	return
     }
 
-    # The brep primitive type does not yet support "get"
-    if {$mSelectedObjType == "brep"} {
+    # The brep primitive type does not yet support "get".
+    # Running get on bot is slow, and so is deferred until later.
+    if {$mSelectedObjType == "brep" || $mSelectedObjType == "bot"} {
 	set odata ""
     } else {
 	set odata [lrange [gedCmd get $mSelectedObj] 1 end]
@@ -6432,10 +6478,8 @@ proc title_node_handler {node} {
 	set GeometryEditFrame::mEditPCommand ""
     }
 
-    if {$mAllowDataClear} {
-	gedCmd data_axes points {}
-	gedCmd data_lines points {}
-    }
+    gedCmd data_axes points {}
+    gedCmd data_lines points {}
 
     set editView [getEditView]
     if {$editView == ""} {
@@ -6567,6 +6611,9 @@ proc title_node_handler {node} {
 	    } else {
 		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
 	    }
+	} elseif {$mSelectedObjType == "joint"} {
+	    bind $win <1> "$itk_component(ged) mouse_joint_select $obj %x %y; break"
+	    continue
 	} else {
 	    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
 	}
@@ -6899,6 +6946,15 @@ proc title_node_handler {node} {
     set parent $itk_component(objEditView)
     itk_component add extrudeView {
 	ExtrudeEditFrame $parent.extrudeview \
+	    -units "mm"
+    } {}
+}
+
+
+::itcl::body Archer::buildJointEditView {} {
+    set parent $itk_component(objEditView)
+    itk_component add jointView {
+	JointEditFrame $parent.jointview \
 	    -units "mm"
     } {}
 }
@@ -7442,11 +7498,7 @@ proc title_node_handler {node} {
 	-fill both
 }
 
-
-::itcl::body Archer::initDbAttrView {name} {
-    set mObjViewMode $OBJ_EDIT_VIEW_MODE
-    set mPrevObjViewMode $OBJ_EDIT_VIEW_MODE
-
+::itcl::body Archer::clearViewPanel {} {
     catch {pack forget $itk_component(dbAttrView)}
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
@@ -7464,6 +7516,13 @@ proc title_node_handler {node} {
 	set mWizardTop ""
 	set mWizardState ""
     }
+}
+
+::itcl::body Archer::initDbAttrView {name} {
+    set mObjViewMode $OBJ_EDIT_VIEW_MODE
+    set mPrevObjViewMode $OBJ_EDIT_VIEW_MODE
+
+    clearViewPanel
 
     set mDbName $name
     set mPrevObjViewMode $OBJ_ATTR_VIEW_MODE
@@ -7569,6 +7628,23 @@ proc title_node_handler {node} {
 }
 
 
+::itcl::body Archer::initJointEditView {odata} {
+    $itk_component(jointView) configure \
+	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
+	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
+	-mged $itk_component(ged) \
+	-labelFont $mFontText \
+	-boldLabelFont $mFontTextBold \
+	-entryFont $mFontText
+    $itk_component(jointView) initGeometry $odata
+
+    pack $itk_component(jointView) \
+	-expand yes \
+	-fill both
+}
+
+
 ::itcl::body Archer::initGripEditView {odata} {
     $itk_component(gripView) configure \
 	-geometryObject $mSelectedObj \
@@ -7646,23 +7722,7 @@ proc title_node_handler {node} {
 
     set mPrevObjViewMode $mObjViewMode
 
-    catch {pack forget $itk_component(dbAttrView)}
-    catch {pack forget $itk_component(objViewToolbar)}
-    catch {pack forget $itk_component(objAttrView)}
-    catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objRtImageView)}
-    catch {pack forget $itk_component(objToolView)}
-    catch {pack forget $itk_component(noWizard)}
-    set mNoWizardActive 0
-
-    # delete the previous wizard instance
-    if {$mWizardClass != ""} {
-	::destroy $itk_component($mWizardClass)
-	::destroy $itk_component(wizardUpdate)
-	set mWizardClass ""
-	set mWizardTop ""
-	set mWizardState ""
-    }
+    clearViewPanel
 
     $itk_component(objAttrText) configure \
 	-state normal
@@ -7703,24 +7763,7 @@ proc title_node_handler {node} {
 
     set mPrevObjViewMode $mObjViewMode
 
-    catch {pack forget $itk_component(dbAttrView)}
-    catch {pack forget $itk_component(objViewToolbar)}
-    catch {pack forget $itk_component(objAttrView)}
-    catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objRtImageView)}
-    catch {pack forget $itk_component(objToolView)}
-    catch {pack forget $itk_component(noWizard)}
-    set mNoWizardActive 0
-
-
-    # delete the previous wizard instance
-    if {$mWizardClass != ""} {
-	::destroy $itk_component($mWizardClass)
-	::destroy $itk_component(wizardUpdate)
-	set mWizardClass ""
-	set mWizardTop ""
-	set mWizardState ""
-    }
+    clearViewPanel
 
     if {[catch {$itk_component(ged) attr get $mSelectedObj WizardTop} mWizardTop]} {
 	set mWizardTop ""
@@ -7762,23 +7805,7 @@ proc title_node_handler {node} {
 
     set mPrevObjViewMode $mObjViewMode
 
-    catch {pack forget $itk_component(dbAttrView)}
-    catch {pack forget $itk_component(objViewToolbar)}
-    catch {pack forget $itk_component(objAttrView)}
-    catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objRtImageView)}
-    catch {pack forget $itk_component(objToolView)}
-    catch {pack forget $itk_component(noWizard)}
-    set mNoWizardActive 0
-
-    # delete the previous wizard instance
-    if {$mWizardClass != ""} {
-	::destroy $itk_component($mWizardClass)
-	::destroy $itk_component(wizardUpdate)
-	set mWizardClass ""
-	set mWizardTop ""
-	set mWizardState ""
-    }
+    clearViewPanel
 
     pack $itk_component(objViewToolbar) -expand no -fill both -anchor n
     pack $itk_component(objRtImageView) -expand yes -fill both -anchor n
@@ -7797,23 +7824,7 @@ proc title_node_handler {node} {
 
     set mPrevObjViewMode $mObjViewMode
 
-    catch {pack forget $itk_component(dbAttrView)}
-    catch {pack forget $itk_component(objViewToolbar)}
-    catch {pack forget $itk_component(objAttrView)}
-    catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objRtImageView)}
-    catch {pack forget $itk_component(objToolView)}
-    catch {pack forget $itk_component(noWizard)}
-    set mNoWizardActive 0
-
-    # delete the previous wizard instance
-    if {$mWizardClass != ""} {
-	::destroy $itk_component($mWizardClass)
-	::destroy $itk_component(wizardUpdate)
-	set mWizardClass ""
-	set mWizardTop ""
-	set mWizardState ""
-    }
+    clearViewPanel
 
     pack $itk_component(objViewToolbar) -expand no -fill both -anchor n
     pack $itk_component(objToolView) -expand yes -fill both -anchor n
@@ -8477,12 +8488,12 @@ proc title_node_handler {node} {
 
 ################################### Preferences Section ###################################
 
-::itcl::body Archer::applyDisplayPreferences {} {
+::itcl::body Archer::applyCurrentDisplaySettings {} {
     updateDisplaySettings
 }
 
 
-::itcl::body Archer::applyDisplayPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceDisplaySettings {} {
     set rflag 0
     set wflag 0
     $itk_component(ged) refresh_off
@@ -8494,12 +8505,7 @@ proc title_node_handler {node} {
 
 	# Set things back the way they were before
 	# calling the preferences dialog.
-	set mZClipBackMaxPref $mZClipBackMax
-	set mZClipFrontMaxPref $mZClipFrontMax
-	set mZClipBackPref $mZClipBack
-	set mZClipFrontPref $mZClipFront
-
-	updateZClipPlanes 0
+	updateZClipPlanesFromSettings
 	set rflag 1
     } elseif {$mZClipBackMaxPref != $mZClipBackMax ||
 	$mZClipFrontMaxPref != $mZClipFrontMax ||
@@ -8511,7 +8517,7 @@ proc title_node_handler {node} {
 	set mZClipBack $mZClipBackPref
 	set mZClipFront $mZClipFrontPref
 
-	updateZClipPlanes 0
+	updateZClipPlanesFromSettings
 	set rflag 1
     }
 
@@ -8537,6 +8543,12 @@ proc title_node_handler {node} {
 	set rflag 1
     }
 
+    if {$mHideSubtractionsPref != $mHideSubtractions} {
+	set mHideSubtractions $mHideSubtractionsPref
+	gedCmd configure -hideSubtractions $mHideSubtractions
+	set wflag 1
+    }
+
     if {$mWireframeModePref != $mWireframeMode} {
 	set mWireframeMode $mWireframeModePref
 
@@ -8558,7 +8570,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyGeneralPreferences {} {
+::itcl::body Archer::applyCurrentGeneralSettings {} {
     switch -- $mBindingMode {
 	"Default" {
 	    initDefaultBindings
@@ -8586,7 +8598,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyGeneralPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceGeneralSettings {} {
     if {$mBindingModePref != $mBindingMode} {
 	set mBindingMode $mBindingModePref
 	switch -- $mBindingMode {
@@ -8721,10 +8733,6 @@ proc title_node_handler {node} {
 	units $mDbUnits
     }
 
-    if {$mRtBotMintiePref != $mRtBotMintie} {
-	set mRtBotMintie $mRtBotMintiePref
-    }
-
     if {$mCompSelectGroupPref != $mCompSelectGroup} {
 	set mCompSelectGroup $mCompSelectGroupPref
     }
@@ -8737,7 +8745,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyGridPreferences {} {
+::itcl::body Archer::applyCurrentGridSettings {} {
     eval gedCmd grid anchor $mGridAnchor
     eval gedCmd grid color [getRgbColor $mGridColor]
     gedCmd grid mrh $mGridMrh
@@ -8747,7 +8755,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyGridPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceGridSettings {} {
     set X [lindex $mGridAnchor 0]
     set Y [lindex $mGridAnchor 1]
     set Z [lindex $mGridAnchor 2]
@@ -8785,7 +8793,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyGroundPlanePreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceGroundPlaneSettings {} {
     if {$mGroundPlaneSize != $mGroundPlaneSizePref ||
 	$mGroundPlaneInterval != $mGroundPlaneIntervalPref ||
 	$mGroundPlaneMajorColor != $mGroundPlaneMajorColorPref ||
@@ -8802,34 +8810,8 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyModelAxesPreferences {} {
-    switch -- $mModelAxesSize {
-	"Small" {
-	    gedCmd configure -modelAxesSize 0.2
-	}
-	"Medium" {
-	    gedCmd configure -modelAxesSize 0.4
-	}
-	"Large" {
-	    gedCmd configure -modelAxesSize 0.8
-	}
-	"X-Large" {
-	    gedCmd configure -modelAxesSize 1.6
-	}
-	"View (1x)" {
-	    gedCmd configure -modelAxesSize 2.0
-	}
-	"View (2x)" {
-	    gedCmd configure -modelAxesSize 4.0
-	}
-	"View (4x)" {
-	    gedCmd configure -modelAxesSize 8.0
-	}
-	"View (8x)" {
-	    gedCmd configure -modelAxesSize 16.0
-	}
-    }
-
+::itcl::body Archer::applyCurrentModelAxesSettings {} {
+    gedCmd configure -modelAxesSize $mModelAxesSizeValues($mModelAxesSize)
     gedCmd configure -modelAxesPosition $mModelAxesPosition
     gedCmd configure -modelAxesLineWidth $mModelAxesLineWidth
     gedCmd configure -modelAxesColor $mModelAxesColor
@@ -8845,36 +8827,11 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyModelAxesPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceModelAxesSettings {} {
     if {$mModelAxesSizePref != $mModelAxesSize} {
 	set mModelAxesSize $mModelAxesSizePref
 
-	switch -- $mModelAxesSize {
-	    "Small" {
-		gedCmd configure -modelAxesSize 0.2
-	    }
-	    "Medium" {
-		gedCmd configure -modelAxesSize 0.4
-	    }
-	    "Large" {
-		gedCmd configure -modelAxesSize 0.8
-	    }
-	    "X-Large" {
-		gedCmd configure -modelAxesSize 1.6
-	    }
-	    "View (1x)" {
-		gedCmd configure -modelAxesSize 2.0
-	    }
-	    "View (2x)" {
-		gedCmd configure -modelAxesSize 4.0
-	    }
-	    "View (4x)" {
-		gedCmd configure -modelAxesSize 8.0
-	    }
-	    "View (8x)" {
-		gedCmd configure -modelAxesSize 16.0
-	    }
-	}
+	gedCmd configure -modelAxesSize $mModelAxesSizeValues($mModelAxesSize)
     }
 
     set X [lindex $mModelAxesPosition 0]
@@ -8936,30 +8893,30 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyPreferences {} {
+::itcl::body Archer::applyCurrentSettings {} {
     $itk_component(ged) refresh_off
 
     # Apply preferences to the cad widget.
-    applyDisplayPreferences
-    applyGeneralPreferences
-    applyGridPreferences
-    applyModelAxesPreferences
-    applyViewAxesPreferences
+    applyCurrentDisplaySettings
+    applyCurrentGeneralSettings
+    applyCurrentGridSettings
+    applyCurrentModelAxesSettings
+    applyCurrentViewAxesSettings
 
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh
 }
 
 
-::itcl::body Archer::applyPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceSettings {} {
     gedCmd refresh_off
 
-    applyDisplayPreferencesIfDiff
-    applyGeneralPreferencesIfDiff
-    applyGridPreferencesIfDiff
-    applyGroundPlanePreferencesIfDiff
-    applyModelAxesPreferencesIfDiff
-    applyViewAxesPreferencesIfDiff
+    applyPreferenceDisplaySettings
+    applyPreferenceGeneralSettings
+    applyPreferenceGridSettings
+    applyPreferenceGroundPlaneSettings
+    applyPreferenceModelAxesSettings
+    applyPreferenceViewAxesSettings
 
     ::update
 
@@ -8967,28 +8924,8 @@ proc title_node_handler {node} {
     gedCmd refresh
 }
 
-
-::itcl::body Archer::applyViewAxesPreferences {} {
-    # sanity
-    set offset 0.0
-    switch -- $mViewAxesSize {
-	"Small" {
-	    set offset 0.85
-	    gedCmd configure -viewAxesSize 0.2
-	}
-	"Medium" {
-	    set offset 0.75
-	    gedCmd configure -viewAxesSize 0.4
-	}
-	"Large" {
-	    set offset 0.55
-	    gedCmd configure -viewAxesSize 0.8
-	}
-	"X-Large" {
-	    set offset 0.0
-	    gedCmd configure -viewAxesSize 1.6
-	}
-    }
+::itcl::body Archer::applyCurrentViewAxesPosition {} {
+    set offset $mViewAxesSizeOffsets($mViewAxesSize)
 
     switch -- $mViewAxesPosition {
 	default -
@@ -9008,6 +8945,11 @@ proc title_node_handler {node} {
 	    gedCmd configure -viewAxesPosition "$offset -$offset 0"
 	}
     }
+}
+
+::itcl::body Archer::applyCurrentViewAxesSettings {} {
+    gedCmd configure -viewAxesSize $mViewAxesSizeValues($mViewAxesSize)
+    applyCurrentViewAxesPosition
 
     if {$mViewAxesColor == "Triple"} {
 	gedCmd configure -viewAxesTripleColor 1
@@ -9021,95 +8963,22 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::applyViewAxesPreferencesIfDiff {} {
+::itcl::body Archer::applyPreferenceViewAxesSettings {} {
 
     set positionNotSet 1
     if {$mViewAxesSizePref != $mViewAxesSize} {
 	set mViewAxesSize $mViewAxesSizePref
 
-	# sanity
-	set offset 0.0
-	switch -- $mViewAxesSize {
-	    "Small" {
-		set offset 0.85
-		gedCmd configure -viewAxesSize 0.2
-	    }
-	    "Medium" {
-		set offset 0.75
-		gedCmd configure -viewAxesSize 0.4
-	    }
-	    "Large" {
-		set offset 0.55
-		gedCmd configure -viewAxesSize 0.8
-	    }
-	    "X-Large" {
-		set offset 0.0
-		gedCmd configure -viewAxesSize 1.6
-	    }
-	}
+	gedCmd configure -viewAxesSize $mViewAxesSizeValues($mViewAxesSize)
 
 	set positionNotSet 0
 	set mViewAxesPosition $mViewAxesPositionPref
-
-	switch -- $mViewAxesPosition {
-	    default -
-	    "Center" {
-		gedCmd configure -viewAxesPosition {0 0 0}
-	    }
-	    "Upper Left" {
-		gedCmd configure -viewAxesPosition "-$offset $offset 0"
-	    }
-	    "Upper Right" {
-		gedCmd configure -viewAxesPosition "$offset $offset 0"
-	    }
-	    "Lower Left" {
-		gedCmd configure -viewAxesPosition "-$offset -$offset 0"
-	    }
-	    "Lower Right" {
-		gedCmd configure -viewAxesPosition "$offset -$offset 0"
-	    }
-	}
+	applyCurrentViewAxesPosition
     }
 
-    if {$positionNotSet &&
-	$mViewAxesPositionPref != $mViewAxesPosition} {
+    if {$positionNotSet && $mViewAxesPositionPref != $mViewAxesPosition} {
 	set mViewAxesPosition $mViewAxesPositionPref
-
-	# sanity
-	set offset 0.0
-	switch -- $mViewAxesSize {
-	    "Small" {
-		set offset 0.85
-	    }
-	    "Medium" {
-		set offset 0.75
-	    }
-	    "Large" {
-		set offset 0.55
-	    }
-	    "X-Large" {
-		set offset 0.0
-	    }
-	}
-
-	switch -- $mViewAxesPosition {
-	    default -
-	    "Center" {
-		gedCmd configure -viewAxesPosition {0 0 0}
-	    }
-	    "Upper Left" {
-		gedCmd configure -viewAxesPosition "-$offset $offset 0"
-	    }
-	    "Upper Right" {
-		gedCmd configure -viewAxesPosition "$offset $offset 0"
-	    }
-	    "Lower Left" {
-		gedCmd configure -viewAxesPosition "-$offset -$offset 0"
-	    }
-	    "Lower Right" {
-		gedCmd configure -viewAxesPosition "$offset -$offset 0"
-	    }
-	}
+	applyCurrentViewAxesPosition
     }
 
     if {$mViewAxesLineWidthPref != $mViewAxesLineWidth} {
@@ -9137,13 +9006,8 @@ proc title_node_handler {node} {
 	$mZClipBackPref != $mZClipBack ||
 	$mZClipFrontPref != $mZClipFront} {
 
-	set mZClipBackMaxPref $mZClipBackMax
-	set mZClipFrontMaxPref $mZClipFrontMax
-	set mZClipBackPref $mZClipBack
-	set mZClipFrontPref $mZClipFront
-
-	updateZClipPlanes 0
-	set rflag 1
+       updateZClipPlanesFromSettings
+       set rflag 1
     }
 
     if {$mLightingModePref != $mLightingMode} {
@@ -9184,7 +9048,6 @@ proc title_node_handler {node} {
     set mEnableAffectedNodeHighlightPref $mEnableAffectedNodeHighlight
     set mSeparateCommandWindowPref $mSeparateCommandWindow
     set mDbUnits [gedCmd units -s]
-    set mRtBotMintiePref $mRtBotMintie
     set mCompSelectGroupPref $mCompSelectGroup
     set mMaxCombMembersShownPref $mMaxCombMembersShown
 
@@ -9236,12 +9099,13 @@ proc title_node_handler {node} {
     set mLightingModePref $mLightingMode
     set mDefaultDisplayModePref $mDefaultDisplayMode
     set mDisplayListModePref $mDisplayListMode
+    set mHideSubtractionsPref $mHideSubtractions
     set mWireframeModePref $mWireframeMode
 
     $itk_component(preferencesDialog) center [namespace tail $this]
     ::update
     if {[$itk_component(preferencesDialog) activate]} {
-	applyPreferencesIfDiff
+	applyPreferenceSettings
 	$itk_component(ged) refresh_all
     }
 }
@@ -9271,11 +9135,6 @@ proc title_node_handler {node} {
 	foreach line $lines {
 	    catch {eval $line}
 	}
-    }
-
-    if {[info exists env(LIBRT_BOT_MINTIE)]} {
-	# triggers a set of librt's global tcl variable (i.e., rt_bot_mintie) via ArcherCore::watchVar{}
-	set mRtBotMintie $env(LIBRT_BOT_MINTIE)
     }
 
     # This feature has been disabled.
@@ -9361,7 +9220,6 @@ proc title_node_handler {node} {
     puts $_pfile "set mEnableListViewAllAffected $mEnableListViewAllAffected"
     puts $_pfile "set mEnableAffectedNodeHighlight $mEnableAffectedNodeHighlight"
     puts $_pfile "set mSeparateCommandWindow $mSeparateCommandWindow"
-    puts $_pfile "set mRtBotMintie $mRtBotMintie"
     puts $_pfile "set mCompSelectGroup $mCompSelectGroup"
     puts $_pfile "set mCompSelectMode $mCompSelectMode"
     puts $_pfile "set mMaxCombMembersShown $mMaxCombMembersShown"
@@ -9398,7 +9256,6 @@ proc title_node_handler {node} {
     puts $_pfile "set mModelAxesTickColor \"$mModelAxesTickColor\""
     puts $_pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
 
-    puts $_pfile "set mLastSelectedDir \"$mLastSelectedDir\""
     puts $_pfile "set mPerspective $mPerspective"
     puts $_pfile "set mZClipBackMax $mZClipBackMax"
     puts $_pfile "set mZClipFrontMax $mZClipFrontMax"
@@ -9407,6 +9264,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mLightingMode $mLightingMode"
     puts $_pfile "set mDefaultDisplayMode $mDefaultDisplayMode"
     puts $_pfile "set mDisplayListMode $mDisplayListMode"
+    puts $_pfile "set mHideSubtractions $mHideSubtractions"
     puts $_pfile "set mWireframeMode $mWireframeMode"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
@@ -9537,6 +9395,10 @@ proc title_node_handler {node} {
 
 	    #	    set name [gedCmd make_name "extrude."]
 	    #	    createExtrude $name
+	}
+	"joint" {
+	    set name [gedCmd make_name "joint."]
+	    vmake $name joint
 	}
 	"grip" {
 	    set name [gedCmd make_name "grip."]
@@ -9760,6 +9622,19 @@ proc title_node_handler {node} {
 	    -mged $itk_component(ged)
     }
     $itk_component(extrudeView) createGeometry $name
+}
+
+
+::itcl::body Archer::createJoint {name} {
+    #XXX Not ready yet
+    return
+
+    if {![info exists itk_component(jointView)]} {
+	buildJointEditView
+	$itk_component(jointView) configure \
+	    -mged $itk_component(ged)
+    }
+    $itk_component(jointView) createGeometry $name
 }
 
 

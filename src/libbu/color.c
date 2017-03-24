@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+#include <errno.h>
 #include "bio.h"
 
 #include "bu/color.h"
@@ -124,7 +125,7 @@ bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
     fastf_t hue, sat, val;
     fastf_t hue_frac;
     fastf_t p, q, t;
-    int hue_int;
+    long int hue_int;
 
     hue = hsv[HUE];
     sat = hsv[SAT];
@@ -215,6 +216,45 @@ bu_str_to_rgb(char *str, unsigned char *rgb)
     return 1;
 }
 
+int
+bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb)
+{
+    unsigned int r, g, b;
+    if (UNLIKELY(!cp || !rgb)) {
+	return 0;
+    }
+    r = (unsigned int)cp->buc_rgb[RED];
+    g = (unsigned int)cp->buc_rgb[GRN];
+    b = (unsigned int)cp->buc_rgb[BLU];
+
+    rgb[0] = (unsigned char)r;
+    rgb[1] = (unsigned char)g;
+    rgb[2] = (unsigned char)b;
+
+    return 1;
+}
+
+
+int
+bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb)
+{
+    unsigned int r, g, b;
+    if (UNLIKELY(!cp || !rgb)) {
+	return 0;
+    }
+
+    r = (unsigned int)rgb[RED];
+    g = (unsigned int)rgb[GRN];
+    b = (unsigned int)rgb[BLU];
+
+
+    cp->buc_rgb[RED] = (fastf_t)r;
+    cp->buc_rgb[GRN] = (fastf_t)g;
+    cp->buc_rgb[BLU] = (fastf_t)b;
+
+    return 1;
+}
+
 
 int
 bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb)
@@ -244,6 +284,77 @@ bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb)
 
     return 1;
 }
+
+
+int
+bu_color_from_str(struct bu_color *color, const char *str)
+{
+    size_t i;
+    char separator = '\0';
+    int mode = 0;
+
+    BU_COLOR_INIT(color);
+
+    /* determine the format - 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
+    for (mode = 0; mode <= 2; ++mode) {
+	const char * const allowed_separators = "/,";
+	const char *endptr;
+	float result;
+
+	errno = 0;
+
+	switch (mode) {
+	    case 0: /*RGB*/
+		result = strtol(str, (char **)&endptr, 10);
+		break;
+
+	    case 1: /*FLOAT*/
+		result = strtod(str, (char **)&endptr);
+		break;
+
+	    case 2:
+		return 0;
+	}
+
+	if (!((NEAR_ZERO(result, 0.0) && errno) || endptr == str
+		    || !strchr(allowed_separators, *endptr))) {
+	    separator = *endptr;
+	    break;
+	}
+    }
+
+    /* 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
+    for (i = 0; i < 3; ++i) {
+	const char expected_char = i == 2 ? '\0' : separator;
+	const char *endptr;
+
+	errno = 0;
+
+	switch (mode) {
+	    case 0: /*RGB*/
+		color->buc_rgb[i] = strtol(str, (char **)&endptr, 10) / 255.0;
+		break;
+
+	    case 1: /*FLOAT*/
+		color->buc_rgb[i] = strtod(str, (char **)&endptr);
+		break;
+
+	    case 2: /*UNKNOWN*/
+		bu_bomb("error");
+	}
+
+	if ((NEAR_ZERO(color->buc_rgb[i], 0.0) && errno) || endptr == str || *endptr != expected_char
+		|| !(0.0 <= color->buc_rgb[i] && color->buc_rgb[i] <= 1.0)) {
+	    VSETALL(color->buc_rgb, 0.0);
+	    return 0;
+	}
+
+	str = endptr + 1;
+    }
+
+    return 1;
+}
+
 
 /*
  * Local Variables:

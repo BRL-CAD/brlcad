@@ -1,7 +1,7 @@
 /*                      C O N S T R A I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 
 
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "pc.h"
 #include "raytrace.h"
 
@@ -62,9 +62,9 @@ rt_constraint_ifree(struct rt_db_internal *ip)
     if (constraint) {
 	constraint->magic = 0;			/* sanity */
 	bu_vls_free(&constraint->expression);
-	bu_free((genptr_t)constraint, "constraint ifree");
+	bu_free((void *)constraint, "constraint ifree");
     }
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

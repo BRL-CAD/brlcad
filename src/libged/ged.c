@@ -1,7 +1,7 @@
 /*                       G E D . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,21 +34,19 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bio.h"
 
 
 #include "bu/sort.h"
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "plot3.h"
-#include "mater.h"
-#include "solid.h"
+#include "bn/plot3.h"
+
+#include "rt/solid.h"
 
 #include "./ged_private.h"
 #include "./qray.h"
@@ -85,52 +83,57 @@ ged_close(struct ged *gedp)
     ged_free(gedp);
 }
 
-static int
-free_selection_set_entry(struct bu_hash_entry *entry, void *UNUSED(arg))
+static void
+free_selection_set(struct bu_hash_tbl *t)
 {
     int i;
     struct rt_selection_set *selection_set;
     struct bu_ptbl *selections;
+    struct bu_hash_entry *entry = bu_hash_next(t, NULL);
     void (*free_selection)(struct rt_selection *);
 
-    selection_set = (struct rt_selection_set *)bu_get_hash_value(entry);
-    selections = &selection_set->selections;
-    free_selection = selection_set->free_selection;
+    while (entry) {
+	selection_set = (struct rt_selection_set *)bu_hash_value(entry, NULL);
+	selections = &selection_set->selections;
+	free_selection = selection_set->free_selection;
 
-    /* free all selection objects and containing items */
-    for (i = BU_PTBL_LEN(selections) - 1; i >= 0; --i) {
-	long *s = BU_PTBL_GET(selections, i);
-	free_selection((struct rt_selection *)s);
-	bu_ptbl_rm(selections, s);
+	/* free all selection objects and containing items */
+	for (i = BU_PTBL_LEN(selections) - 1; i >= 0; --i) {
+	    long *s = BU_PTBL_GET(selections, i);
+	    free_selection((struct rt_selection *)s);
+	    bu_ptbl_rm(selections, s);
+	}
+	bu_ptbl_free(selections);
+	BU_FREE(selection_set, struct rt_selection_set);
+    	/* Get next entry */
+	entry = bu_hash_next(t, entry);
     }
-    bu_ptbl_free(selections);
-    BU_FREE(selection_set, struct rt_selection_set);
-
-    return 0;
 }
 
-static int
-free_object_selections(struct bu_hash_entry *entry, void *UNUSED(arg))
+static void
+free_object_selections(struct bu_hash_tbl *t)
 {
     struct rt_object_selections *obj_selections;
+    struct bu_hash_entry *entry = bu_hash_next(t, NULL);
 
-    obj_selections = (struct rt_object_selections *)bu_get_hash_value(entry);
-
-    /* free entries - one set for each kind of selection */
-    bu_hash_tbl_traverse(obj_selections->sets, free_selection_set_entry, NULL);
-
-    /* free table itself */
-    bu_hash_tbl_free(obj_selections->sets);
-
-    /* free object */
-    bu_free(obj_selections, "ged selections entry");
-
-    return 0;
+    while (entry) {
+	obj_selections = (struct rt_object_selections *)bu_hash_value(entry, NULL);
+	/* free entries */
+	free_selection_set(obj_selections->sets);
+	/* free table itself */
+	bu_hash_destroy(obj_selections->sets);
+	/* free object */
+	bu_free(obj_selections, "ged selections entry");
+	/* Get next entry */
+	entry = bu_hash_next(t, entry);
+    }
 }
 
 void
 ged_free(struct ged *gedp)
 {
+    struct solid *sp;
+
     if (gedp == GED_NULL)
 	return;
 
@@ -150,19 +153,80 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_log, struct bu_vls);
     }
 
+    if (gedp->ged_results) {
+	ged_results_free(gedp->ged_results);
+	BU_PUT(gedp->ged_results, struct ged_results);
+    }
+
     if (gedp->ged_result_str) {
 	bu_vls_free(gedp->ged_result_str);
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
-    bu_hash_tbl_traverse(gedp->ged_selections, free_object_selections, NULL);
-    bu_hash_tbl_free(gedp->ged_selections);
+    {
+	struct solid *nsp;
+	sp = BU_LIST_NEXT(solid, &gedp->freesolid->l);
+	while (BU_LIST_NOT_HEAD(sp, &gedp->freesolid->l)) {
+	    nsp = BU_LIST_PNEXT(solid, sp);
+	    BU_LIST_DEQUEUE(&((sp)->l));
+	    FREE_SOLID(sp, &gedp->freesolid->l);
+	    sp = nsp;
+	}
+    }
+    BU_PUT(gedp->freesolid, struct solid);
+
+    free_object_selections(gedp->ged_selections);
+    bu_hash_destroy(gedp->ged_selections);
+}
+
+
+HIDDEN int
+cmds_add(struct ged *gedp, const struct ged_cmd *cmd)
+{
+    struct ged_cmd *copy;
+    BU_GET(copy, struct ged_cmd);
+    memcpy(copy, cmd, sizeof(struct ged_cmd));
+    BU_LIST_INIT_MAGIC(&(copy->l), GED_CMD_MAGIC);
+    BU_LIST_PUSH(&(gedp->cmds->l), copy);
+    return 0;
+}
+
+
+HIDDEN int
+cmds_del(struct ged *gedp, const char *name)
+{
+    struct ged_cmd *cmd;
+    for (BU_LIST_FOR(cmd, ged_cmd, &(gedp->cmds->l))) {
+	if (BU_STR_EQUIV(cmd->name, name)) {
+	    BU_LIST_POP(ged_cmd, &(gedp->cmds->l), cmd);
+	    BU_PUT(cmd, struct ged_cmd);
+	    break;
+	}
+    }
+
+    return 0;
+}
+
+
+HIDDEN int
+cmds_run(struct ged *gedp, int ac, char *av[])
+{
+    struct ged_cmd *cmd;
+    for (BU_LIST_FOR(cmd, ged_cmd, &(gedp->cmds->l))) {
+	if (BU_STR_EQUIV(cmd->name, av[0])) {
+	    return cmd->exec(gedp, ac, (const char **)av);
+	}
+    }
+
+    return 0;
 }
 
 
 void
 ged_init(struct ged *gedp)
 {
+    struct solid *freesolid;
+
     if (gedp == GED_NULL)
 	return;
 
@@ -172,6 +236,10 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);
 
+    BU_GET(gedp->ged_results, struct ged_results);
+    (void)_ged_results_init(gedp->ged_results);
+
+    /* For now, we're keeping the string... will go once no one uses it */
     BU_GET(gedp->ged_result_str, struct bu_vls);
     bu_vls_init(gedp->ged_result_str);
 
@@ -182,16 +250,16 @@ ged_init(struct ged *gedp)
     BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
     BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
 
-    /* yuck */
-    if (!BU_LIST_IS_INITIALIZED(&_FreeSolid.l)) {
-	BU_LIST_INIT(&_FreeSolid.l);
-    }
-
-    gedp->ged_gdp->gd_freeSolids = &_FreeSolid;
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
 
-    gedp->ged_selections = bu_hash_tbl_create(0);
+    gedp->ged_selections = bu_hash_create(32);
+
+    /* init the solid list */
+    BU_GET(freesolid, struct solid);
+    BU_LIST_INIT(&freesolid->l);
+    gedp->freesolid = freesolid;
+    gedp->ged_gdp->gd_freeSolids = freesolid;
 
     /* (in)sanity */
     gedp->ged_gvp = NULL;
@@ -203,11 +271,17 @@ ged_init(struct ged *gedp)
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
 
+    /* set up our command registration container */
+    BU_GET(gedp->cmds, struct ged_cmd);
+    BU_LIST_INIT(&(gedp->cmds->l));
+    gedp->add = &cmds_add;
+    gedp->del = &cmds_del;
+    gedp->run = &cmds_run;
 }
 
 
 void
-ged_view_init(struct ged_view *gvp)
+ged_view_init(struct bview *gvp)
 {
     if (gvp == GED_VIEW_NULL)
 	return;
@@ -227,50 +301,50 @@ ged_view_init(struct ged_view *gvp)
     gvp->gv_rscale = 0.4;
     gvp->gv_sscale = 2.0;
 
-    gvp->gv_adc.gas_a1 = 45.0;
-    gvp->gv_adc.gas_a2 = 45.0;
-    VSET(gvp->gv_adc.gas_line_color, 255, 255, 0);
-    VSET(gvp->gv_adc.gas_tick_color, 255, 255, 255);
+    gvp->gv_adc.a1 = 45.0;
+    gvp->gv_adc.a2 = 45.0;
+    VSET(gvp->gv_adc.line_color, 255, 255, 0);
+    VSET(gvp->gv_adc.tick_color, 255, 255, 255);
 
-    VSET(gvp->gv_grid.ggs_anchor, 0.0, 0.0, 0.0);
-    gvp->gv_grid.ggs_res_h = 1.0;
-    gvp->gv_grid.ggs_res_v = 1.0;
-    gvp->gv_grid.ggs_res_major_h = 5;
-    gvp->gv_grid.ggs_res_major_v = 5;
-    VSET(gvp->gv_grid.ggs_color, 255, 255, 255);
+    VSET(gvp->gv_grid.anchor, 0.0, 0.0, 0.0);
+    gvp->gv_grid.res_h = 1.0;
+    gvp->gv_grid.res_v = 1.0;
+    gvp->gv_grid.res_major_h = 5;
+    gvp->gv_grid.res_major_v = 5;
+    VSET(gvp->gv_grid.color, 255, 255, 255);
 
-    gvp->gv_rect.grs_draw = 0;
-    gvp->gv_rect.grs_pos[0] = 128;
-    gvp->gv_rect.grs_pos[1] = 128;
-    gvp->gv_rect.grs_dim[0] = 256;
-    gvp->gv_rect.grs_dim[1] = 256;
-    VSET(gvp->gv_rect.grs_color, 255, 255, 255);
+    gvp->gv_rect.draw = 0;
+    gvp->gv_rect.pos[0] = 128;
+    gvp->gv_rect.pos[1] = 128;
+    gvp->gv_rect.dim[0] = 256;
+    gvp->gv_rect.dim[1] = 256;
+    VSET(gvp->gv_rect.color, 255, 255, 255);
 
-    gvp->gv_view_axes.gas_draw = 0;
-    VSET(gvp->gv_view_axes.gas_axes_pos, 0.85, -0.85, 0.0);
-    gvp->gv_view_axes.gas_axes_size = 0.2;
-    gvp->gv_view_axes.gas_line_width = 0;
-    gvp->gv_view_axes.gas_pos_only = 1;
-    VSET(gvp->gv_view_axes.gas_axes_color, 255, 255, 255);
-    VSET(gvp->gv_view_axes.gas_label_color, 255, 255, 0);
-    gvp->gv_view_axes.gas_triple_color = 1;
+    gvp->gv_view_axes.draw = 0;
+    VSET(gvp->gv_view_axes.axes_pos, 0.85, -0.85, 0.0);
+    gvp->gv_view_axes.axes_size = 0.2;
+    gvp->gv_view_axes.line_width = 0;
+    gvp->gv_view_axes.pos_only = 1;
+    VSET(gvp->gv_view_axes.axes_color, 255, 255, 255);
+    VSET(gvp->gv_view_axes.label_color, 255, 255, 0);
+    gvp->gv_view_axes.triple_color = 1;
 
-    gvp->gv_model_axes.gas_draw = 0;
-    VSET(gvp->gv_model_axes.gas_axes_pos, 0.0, 0.0, 0.0);
-    gvp->gv_model_axes.gas_axes_size = 2.0;
-    gvp->gv_model_axes.gas_line_width = 0;
-    gvp->gv_model_axes.gas_pos_only = 0;
-    VSET(gvp->gv_model_axes.gas_axes_color, 255, 255, 255);
-    VSET(gvp->gv_model_axes.gas_label_color, 255, 255, 0);
-    gvp->gv_model_axes.gas_triple_color = 0;
-    gvp->gv_model_axes.gas_tick_enabled = 1;
-    gvp->gv_model_axes.gas_tick_length = 4;
-    gvp->gv_model_axes.gas_tick_major_length = 8;
-    gvp->gv_model_axes.gas_tick_interval = 100;
-    gvp->gv_model_axes.gas_ticks_per_major = 10;
-    gvp->gv_model_axes.gas_tick_threshold = 8;
-    VSET(gvp->gv_model_axes.gas_tick_color, 255, 255, 0);
-    VSET(gvp->gv_model_axes.gas_tick_major_color, 255, 0, 0);
+    gvp->gv_model_axes.draw = 0;
+    VSET(gvp->gv_model_axes.axes_pos, 0.0, 0.0, 0.0);
+    gvp->gv_model_axes.axes_size = 2.0;
+    gvp->gv_model_axes.line_width = 0;
+    gvp->gv_model_axes.pos_only = 0;
+    VSET(gvp->gv_model_axes.axes_color, 255, 255, 255);
+    VSET(gvp->gv_model_axes.label_color, 255, 255, 0);
+    gvp->gv_model_axes.triple_color = 0;
+    gvp->gv_model_axes.tick_enabled = 1;
+    gvp->gv_model_axes.tick_length = 4;
+    gvp->gv_model_axes.tick_major_length = 8;
+    gvp->gv_model_axes.tick_interval = 100;
+    gvp->gv_model_axes.ticks_per_major = 10;
+    gvp->gv_model_axes.tick_threshold = 8;
+    VSET(gvp->gv_model_axes.tick_color, 255, 255, 0);
+    VSET(gvp->gv_model_axes.tick_major_color, 255, 0, 0);
 
     gvp->gv_center_dot.gos_draw = 0;
     VSET(gvp->gv_center_dot.gos_line_color, 255, 255, 0);
@@ -565,7 +639,7 @@ _ged_print_node(struct ged *gedp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	    BU_ASSERT(actual_count == node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
@@ -577,20 +651,20 @@ _ged_print_node(struct ged *gedp,
 
 	    switch (rt_tree_array[i].tl_op) {
 		case OP_UNION:
-		    op = 'u';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_INTERSECT:
-		    op = '+';
+		    op = DB_OP_INTERSECT;
 		    break;
 		case OP_SUBTRACT:
-		    op = '-';
+		    op = DB_OP_SUBTRACT;
 		    break;
 		default:
 		    op = '?';
 		    break;
 	    }
 
-	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		size_t j;
 
 		for (j = 0; j < pathpos+1; j++)

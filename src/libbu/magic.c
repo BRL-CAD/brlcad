@@ -1,7 +1,7 @@
 /*                         M A G I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ bu_identify_magic(register uint32_t magic)
 	case RT_ARS_INTERNAL_MAGIC:
 	    return "rt_ars_internal";
 	case RT_BINUNIF_INTERNAL_MAGIC:
-	    return "rt_binuf_internal";
+	    return "rt_binunif_internal";
 	case RT_BOT_INTERNAL_MAGIC:
 	    return "rt_bot_internal";
 	case RT_BREP_INTERNAL_MAGIC:

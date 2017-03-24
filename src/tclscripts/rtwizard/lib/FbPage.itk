@@ -1,7 +1,7 @@
 #                      F B P A G E . I T K
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@ package require Iwidgets
 
 namespace eval RtWizard {
 
-    package require FrameBufferDialog 1.0
     package provide FbPage 1.0
 
     #
@@ -129,10 +128,8 @@ namespace eval RtWizard {
 	    #
 	    # variables
 	    #
-	    common sizes { 256 480 512 640 768 1024 1200 1600 2048 }
 	    common topSpot 8
 	    variable rbvar
-	    variable fbFile
 
 	    variable width
 	    variable height
@@ -230,8 +227,8 @@ namespace eval RtWizard {
 	    keep -textbackground
 	}
 
-	set widthIndex 5
-	updateWidth
+	$itk_component(width) clear
+	$itk_component(width) insert 0 -1
 
 	itk_component add height {
 	    iwidgets::spinint $szCs.height \
@@ -244,8 +241,8 @@ namespace eval RtWizard {
 	    keep -textbackground
 	}
 
-	set heightIndex 5
-	updateHeight
+	$itk_component(height) clear
+	$itk_component(height) insert 0 -1
 
 	#
 	# Build the contents of the right-hand-size
@@ -281,14 +278,7 @@ namespace eval RtWizard {
 	itk_component add fileName {
 	    iwidgets::entryfield $devCs.fileName \
 		-labeltext "File:" -width 48 \
-		-textvariable [::itcl::scope fbFile]
-	} {
-	    usual
-	}
-
-	itk_component add fsd {
-	    iwidgets::fileselectiondialog .fsd \
-		-modality application
+		-textvariable ::RtWizard::wizard_state(output_filename)
 	} {
 	    usual
 	}
@@ -379,9 +369,14 @@ namespace eval RtWizard {
     # when this page is selected.
     #
     ::itcl::body FbPage::onSelect {} {
-	#
-	# Nothing yet!
-	#
+	if { [$itk_component(width) get] <= 0 || [$itk_component(height) get] <= 0 } {
+	    if { [winfo width $::mgedObj] > 3 && [winfo height $::mgedObj] > 3 } {
+		$itk_component(width) clear
+		$itk_component(width) insert 0 [winfo width $::mgedObj]
+		$itk_component(height) clear
+		$itk_component(height) insert 0 [winfo height $::mgedObj]
+	    }
+	}
     }
 
     #
@@ -390,9 +385,12 @@ namespace eval RtWizard {
     # Cleans up when the page is deselected
     #
     ::itcl::body FbPage::onDeselect {} {
-	#
-	# Nothing yet!
-	#
+	if { [$itk_component(width) get] == [winfo width $::mgedObj] || [$itk_component(height) get] == [winfo height $::mgedObj] } {
+	    $itk_component(width) clear
+	    $itk_component(width) insert 0 0
+	    $itk_component(height) clear
+	    $itk_component(height) insert 0 0
+	}
     }
 
     #
@@ -412,14 +410,22 @@ namespace eval RtWizard {
     # getWidth - returns the current width
     #
     ::itcl::body FbPage::getWidth {} {
-	return [$itk_component(width) get]
+	if { [$itk_component(width) get] <= 0 || [$itk_component(height) get] <= 0 } {
+	    return [winfo width $::mgedObj]
+	} else {
+	    return [$itk_component(width) get]
+	}
     }
 
     #
     # getHeight - returns the current height
     #
     ::itcl::body FbPage::getHeight {} {
-	return [$itk_component(height) get]
+	if { [$itk_component(width) get] <= 0 || [$itk_component(height) get] <= 0 } {
+	    return [winfo height $::mgedObj]
+	} else {
+	    return [$itk_component(height) get]
+	}
     }
 
     #
@@ -434,7 +440,7 @@ namespace eval RtWizard {
 	#
 	set mode [$itk_component(radBox) get]
 	if { [string match $mode "toFile"] && \
-		 [string length $fbFile] > 0 && \
+		 [string length $::RtWizard::wizard_state(output_filename)] > 0 && \
 		 [string match $screenOnly "false"] } {
 	    # Will be generating a file - need in-memory fb
 	    set port 0
@@ -443,7 +449,13 @@ namespace eval RtWizard {
 		incr port
 	    }
 	    catch {exec [file join [bu_brlcad_root bin] fbserv] -w $width -n $height $port /dev/mem &} pid
-	    return "$port $pid $fbFile"
+	    # Give the fbserv time to fire up
+	    after 1000
+	    exec [file join [bu_brlcad_root bin] fbclear] -F $port 0 0 0
+
+	    set ::RtWizard::wizard_state(fbserv_port) $port
+	    set ::RtWizard::wizard_state(pid) $pid
+	    return "$port $pid"
 	}
 	set binpath [bu_brlcad_root "bin"]
 	#
@@ -454,6 +466,9 @@ namespace eval RtWizard {
 	#
 	#
 	#
+	# TODO - need to be able to do something more
+	# intelligent here based on what devices are
+	# available in BRL-CAD...
 	if {$tcl_platform(platform) == "windows"} {
 	    set fbType "/dev/wglsp"
 	} else {
@@ -475,6 +490,8 @@ namespace eval RtWizard {
 	exec "$binpath/fbclear" -F $port 0 0 0
 	set lastPort $port
 
+	set ::RtWizard::wizard_state(fbserv_port) $port
+
 	return "$port"
     }
 
@@ -485,6 +502,24 @@ namespace eval RtWizard {
     # onOK - called when the OK button is called
     #
     ::itcl::body FbPage::onOK {} {
+	set tmpwidth [ lindex $sizes $widthIndex ]
+	set tmpheight [ lindex $sizes $heightIndex ]
+	if { $tmpwidth > 0 && $tmpheight > 0 } {
+	    $itk_component(width) clear
+	    $itk_component(width) insert 0 [ lindex $sizes $widthIndex ]
+	    $itk_component(height) clear
+	    $itk_component(height) insert 0 [ lindex $sizes $heightIndex ]
+	} else {
+	    if { [winfo width $::mgedObj] > 3 && [winfo height $::mgedObj] > 3 } {
+		if { $tmpwidth != [winfo width $::mgedObj] || $tmpheight != [winfo height $::mgedObj] } {
+		    $itk_component(width) clear
+		    $itk_component(width) insert 0 [winfo width $::mgedObj]
+		    $itk_component(height) clear
+		    $itk_component(height) insert 0 [winfo height $::mgedObj]
+		}
+	    }
+	}
+
 	$::wizardInstance select intro
     }
 
@@ -501,8 +536,8 @@ namespace eval RtWizard {
     # selectFbFile - called when the "browse" fb file is specified
     #
     ::itcl::body FbPage::selectFbFile { } {
-	$itk_component(fsd) activate
-	set fbFile [$itk_component(fsd) get]
+	set of [tk_getSaveFile -initialfile rtwizard.png]
+	set ::RtWizard::wizard_state(output_filename) $of
     }
 
     #

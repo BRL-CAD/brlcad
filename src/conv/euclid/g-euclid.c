@@ -1,7 +1,7 @@
 /*                      G - E U C L I D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
@@ -39,41 +38,42 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
-extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 static void
 usage(const char *argv0)
 {
     bu_log("Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_CPUs] [-o out_file] brlcad_db.g object(s)\n",
-	argv0);
+	   argv0);
     bu_exit(1, NULL);
 }
 
-static int	NMG_debug = 0;		/* saved arg of -X, for longjmp handling */
-static int	verbose;
-static int	curr_id;		/* Current region ident code */
-static int	face_count;		/* Count of faces output for a region id */
-static int	ncpu = 1;
-static char	*out_file = NULL;	/* Output filename */
-static FILE	*fp_out;		/* Output file pointer */
-static int	*idents;		/* Array of region ident numbers */
-static int	ident_count = 0;	/* Number of idents in above array */
-static int	ident_length = 0;	/* Length of idents array */
-#define		IDENT_BLOCK	256	/* Number of idents array slots to allocate */
 
-static struct db_i		*dbip;
-static struct rt_tess_tol	ttol;
-static struct bn_tol		tol;
-static struct model		*the_model;
+static int NMG_debug = 0;		/* saved arg of -X, for longjmp handling */
+static int verbose;
+static int curr_id;		/* Current region ident code */
+static int face_count;		/* Count of faces output for a region id */
+static int ncpu = 1;
+static char *out_file = NULL;	/* Output filename */
+static FILE *fp_out;		/* Output file pointer */
+static int *idents;		/* Array of region ident numbers */
+static int ident_count = 0;	/* Number of idents in above array */
+static int ident_length = 0;	/* Length of idents array */
+#define IDENT_BLOCK 256	/* Number of idents array slots to allocate */
 
-static struct db_tree_state	tree_state;	/* includes tol & model */
+static struct db_i *dbip;
+static struct rt_tess_tol ttol;
+static struct bn_tol tol;
+static struct model *the_model;
 
-static int	regions_tried = 0;
-static int	regions_converted = 0;
-static int	regions_written = 0;
+static struct db_tree_state tree_state;	/* includes tol & model */
+
+static int regions_tried = 0;
+static int regions_converted = 0;
+static int regions_written = 0;
 
 struct facets
 {
@@ -137,7 +137,7 @@ insert_id(int id)
 
 
 static int
-select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     if (verbose)
 	bu_log("select_region: curr_id = %d, tsp->ts_regionid = %d\n", curr_id, tsp->ts_regionid);
@@ -150,7 +150,7 @@ select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp
 
 
 static int
-get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     if (verbose)
 	bu_log("get_reg_id: Adding id %d to list\n", tsp->ts_regionid);
@@ -160,7 +160,7 @@ get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), 
 
 
 static union tree *
-region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
+region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), void *UNUSED(client_data))
 {
     bu_exit(1, "ERROR; region stub called, this shouldn't happen\n");
     return (union tree *)NULL; /* just to keep the compilers happy */
@@ -168,7 +168,7 @@ region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED
 
 
 static union tree *
-leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *UNUSED(ip), genptr_t UNUSED(client_data))
+leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *UNUSED(ip), void *UNUSED(client_data))
 {
     bu_exit(1, "ERROR: leaf stub called, this shouldn't happen\n");
     return (union tree *)NULL; /* just to keep the compilers happy */
@@ -201,15 +201,14 @@ Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regi
     fprintf(fp_out, "%10d%3d     0.    1%5d", regionid, facet_type, vertex_count);
 
     vertex_count = 0;
-    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd))
-    {
+    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	struct vertex *v;
 	int i;
 
 	NMG_CK_EDGEUSE(eu);
 	v = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v);
-/*		fprintf(fp_out, "%10d%8f%8f%8f", ++vertex_count, V3ARGS(v->vg_p->coord)); */
+/* fprintf(fp_out, "%10d%8f%8f%8f", ++vertex_count, V3ARGS(v->vg_p->coord)); */
 	vertex_count++;
 	fprintf(fp_out, "%10d", vertex_count);
 
@@ -224,7 +223,7 @@ Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regi
 }
 
 
-/*	Routine to write an nmgregion in the Euclid "decoded" format */
+/* Routine to write an nmgregion in the Euclid "decoded" format */
 static void
 Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 {
@@ -242,15 +241,12 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 	nmg_region_a(r, &tol);
 
     /* Check if region extents are beyond the limitations of the format */
-    for (i=X; i<ELEMENTS_PER_POINT; i++)
-    {
-	if (r->ra_p->min_pt[i] < (-999999.0))
-	{
+    for (i=X; i<ELEMENTS_PER_POINT; i++) {
+	if (r->ra_p->min_pt[i] < (-999999.0)) {
 	    bu_log("g-euclid: Coordinates too large (%g) for Euclid format\n", r->ra_p->min_pt[i]);
 	    return;
 	}
-	if (r->ra_p->max_pt[i] > 9999999.0)
-	{
+	if (r->ra_p->max_pt[i] > 9999999.0) {
 	    bu_log("g-euclid: Coordinates too large (%g) for Euclid format\n", r->ra_p->max_pt[i]);
 	    return;
 	}
@@ -346,7 +342,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 			    continue;
 
 			nmg_class = nmg_classify_lu_lu(faces[loop1].lu,
-						   faces[loop2].lu, &tol);
+						       faces[loop2].lu, &RTG.rtg_vlfree, &tol);
 
 			if (nmg_class != NMG_CLASS_AinB)
 			    continue;
@@ -370,7 +366,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 				    continue;
 
 				if (nmg_classify_lu_lu(faces[i].lu,
-						       faces[loop2].lu, &tol)) {
+						       faces[loop2].lu, &RTG.rtg_vlfree, &tol)) {
 				    if (faces[i].facet_type != (-2))
 					continue;
 
@@ -452,9 +448,12 @@ outt:
 int
 main(int argc, char **argv)
 {
-    int	i, j;
-    int	c;
+    int i, j;
+    int c;
     double percent;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -479,8 +478,6 @@ main(int argc, char **argv)
     tree_state.ts_m = &the_model;
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* For visualization purposes, in the debug plot files */
     {
@@ -516,8 +513,8 @@ main(int argc, char **argv)
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		NMG_debug = RTG.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		NMG_debug = nmg_debug;
 		break;
 	    default:
 		usage(argv[0]);
@@ -557,7 +554,7 @@ main(int argc, char **argv)
 		       get_reg_id,			/* put id in table */
 		       region_stub,
 		       leaf_stub,
-		       (genptr_t)NULL);
+		       (void *)NULL);
 
     /* Process regions in ident order */
     curr_id = 0;
@@ -589,7 +586,7 @@ main(int argc, char **argv)
 			   select_region,
 			   do_region_end,
 			   nmg_booltree_leaf_tess,
-			   (genptr_t)NULL);	/* in librt/nmg_bool.c */
+			   (void *)NULL);	/* in librt/nmg_bool.c */
 
 	nmg_km(the_model);
     }
@@ -616,26 +613,26 @@ main(int argc, char **argv)
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
-    } else  {
+    } else {
 	/* catch */
-	char *name = db_path_to_string( pathp );
+	char *name = db_path_to_string(pathp);
 
 	/* Error, bail out */
-	bu_log( "conversion of %s FAILED!\n", name );
+	bu_log("conversion of %s FAILED!\n", name);
 
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;/* restore mode */
+	nmg_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -644,13 +641,13 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
 
 	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
 	    nmg_km(*tsp->ts_m);
 	} else {
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 	}
 
-	bu_free( name, "db_path_to_string" );
+	bu_free(name, "db_path_to_string");
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
     } BU_UNSETJUMP;/* Relinquish the protection */
@@ -660,16 +657,16 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- *  Called from db_walk_tree().
+ * Called from db_walk_tree().
  *
- *  This routine must be prepared to run in parallel.
+ * This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
-    struct nmgregion	*r;
-    struct bu_list	vhead;
-    union tree		*ret_tree;
+    struct nmgregion *r;
+    struct bu_list vhead;
+    union tree *ret_tree;
 
     if (verbose)
 	bu_log("do_region_end: regionid = %d\n", tsp->ts_regionid);
@@ -681,7 +678,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     BU_LIST_INIT(&vhead);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
-	char	*sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
 	       regions_tried,
 	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
@@ -740,10 +737,10 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     }
 
     /*
-     *  Dispose of original tree, so that all associated dynamic
-     *  memory is released now, not at the end of all regions.
-     *  A return of TREE_NULL from this routine signals an error,
-     *  so we need to cons up an OP_NOP node to return.
+     * Dispose of original tree, so that all associated dynamic
+     * memory is released now, not at the end of all regions.
+     * A return of TREE_NULL from this routine signals an error,
+     * so we need to cons up an OP_NOP node to return.
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 

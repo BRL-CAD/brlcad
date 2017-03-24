@@ -1,7 +1,7 @@
 /*                      I N T E R A C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/log.h"
 
 #include "./nirt.h"
 #include "./usrfmt.h"
@@ -94,7 +94,7 @@ interact(int input_source, void *sPtr, struct rt_i *rtip)
     com_table *ctp;		/* command table pointer */
     int key_len;		/* the length of the key word */
     int in_cmt;			/* are we now within a comment? */
-    int more_on_line = 0;	/* are we withing a multi-command line? */
+    int more_on_line = 0;	/* are we within a multi-command line? */
 
 #define next_char(s)	(input_source == READING_FILE)		?	\
 			    fgetc((FILE *) s)			:       \

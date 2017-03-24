@@ -1,7 +1,7 @@
 /*                          N I R T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@
 #define DEBUG_FMT	"\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
 
 /** STRING FOR USE WITH GETOPT(3) */
-#define OPT_STRING      "A:bB:Ee:f:H:LMO:su:vx:X:h?"
+#define OPT_STRING      "A:bB:e:Ef:H:LMO:sT:u:vx:X:h?"
 
 #define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__)
 
@@ -118,7 +118,6 @@ extern void attrib_print(void);
 extern void az_el(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern void backout(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern void bot_minpieces(char *buffer, com_table *ctp, struct rt_i *rtip);
-extern void bot_mintie(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern int check_conv_spec(outitem *oip);
 extern void default_ospec(void);
 extern void dir2ae(void);

@@ -1,7 +1,7 @@
 /*                        M A K E _ P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,11 +28,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "bu/sort.h"
 #include "bu/units.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
@@ -408,7 +407,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	    num_doubles_per_point = 10;
 	    break;
     }
-    BU_ASSERT_PTR(headPoint, !=, NULL);
+    BU_ASSERT(headPoint != NULL);
     pnts->point = headPoint;
 
     if ((fp=fopen(argv[2], "rb")) == NULL) {
@@ -450,7 +449,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* make sure we have something */
-	BU_ASSERT_PTR(point, !=, NULL);
+	BU_ASSERT(point != NULL);
 
 	while (!found_eof && !done_processing_format_string) {
 	    /* format_string_loop */
@@ -670,7 +669,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
     pnts->count = numPoints;
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     bu_vls_free(&format_string);

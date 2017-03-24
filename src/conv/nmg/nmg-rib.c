@@ -1,7 +1,7 @@
 /*                       N M G - R I B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "ht";
+char *options = "th?";
 
 char *progname = "(noname)";
 int triangulate = 0;
@@ -72,14 +72,16 @@ parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+    	if (bu_optopt == '?')
+    	    c='h';
 	switch (c) {
-	    case 't'	: triangulate = !triangulate; break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+	    case 't'	:
+		triangulate = !triangulate; break;
+	    case 'h'	: usage(""); break;
+	    default	: usage("Bad flag specified\n"); break;
 	}
-
+    }
     return bu_optind;
 }
 
@@ -141,7 +143,7 @@ nmg_to_rib(struct model *m)
 
 
     if (triangulate)
-	nmg_triangulate_model(m, &tol);
+	nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
 	for (BU_LIST_FOR(s, shell, &r->s_hd))
@@ -166,7 +168,8 @@ nmg_to_rib(struct model *m)
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(int ac, char **av)
+int
+main(int ac, char **av)
 {
     int arg_index;
     struct rt_db_internal ip;
@@ -174,12 +177,13 @@ int main(int ac, char **av)
     struct db_i *dbip;
     mat_t my_mat;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     /* parse command flags, and make sure there are arguments
      * left over for processing.
      */
     if ((arg_index = parse_args(ac, av)) >= ac) usage("No extra args specified\n");
-
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* open the database */
     if ((dbip = db_open(av[arg_index], DB_OPEN_READONLY)) == DBI_NULL) {

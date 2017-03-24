@@ -1,7 +1,7 @@
 /*                          C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include "bio.h"
@@ -52,7 +51,7 @@
 #include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db5.h"
+#include "rt/db5.h"
 #include "raytrace.h"
 
 
@@ -79,7 +78,7 @@ struct db_tree_counter_state {
  * holding the matrix subscripts.  The caller is responsible for
  * correcting by saying:
  *
- * tcsp->leafbytes -= tcsp->n_leaf * (8 - db5_enc_len[wid]);
+ * tcsp->leafbytes -= tcsp->n_leaf * (8 - DB5_ENC_LEN(wid));
  */
 size_t
 db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
@@ -183,7 +182,7 @@ rt_comb_v5_serialize(
 		mi = (ssize_t)-1;
 	    }
 
-	    BU_ASSERT_SSIZE_T(mi, <, (ssize_t)ssp->nmat);
+	    BU_ASSERT(mi < (ssize_t)ssp->nmat);
 
 	    /* there should be a better way than casting
 	     * 'mi' from ssize_t to size_t
@@ -304,15 +303,15 @@ rt_comb_export5(
      * 'wid'.  Ignore the slight chance that a smaller 'wid' might now
      * be possible.
      */
-    tcs.leafbytes -= tcs.n_leaf * (8 - db5_enc_len[wid]);
+    tcs.leafbytes -= tcs.n_leaf * (8 - DB5_ENC_LEN(wid));
 
     /* Second pass -- determine amount of on-disk storage needed */
     need =  1 +			/* width code */
-	db5_enc_len[wid] + 	/* size for nmatrices */
-	db5_enc_len[wid] +	/* size for nleaves */
-	db5_enc_len[wid] +	/* size for leafbytes */
-	db5_enc_len[wid] +	/* size for len of RPN */
-	db5_enc_len[wid] +	/* size for max_stack_depth */
+	DB5_ENC_LEN(wid) + 	/* size for nmatrices */
+	DB5_ENC_LEN(wid) +	/* size for nleaves */
+	DB5_ENC_LEN(wid) +	/* size for leafbytes */
+	DB5_ENC_LEN(wid) +	/* size for len of RPN */
+	DB5_ENC_LEN(wid) +	/* size for max_stack_depth */
 	tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) +	/* sizeof matrix array */
 	tcs.leafbytes +		/* size for leaf nodes */
 	rpn_len;		/* storage for RPN expression */
@@ -355,11 +354,11 @@ rt_comb_export5(
     if (comb->tree)
 	rt_comb_v5_serialize(comb->tree, &ss);
 
-    BU_ASSERT_SIZE_T(ss.mat_num, ==, tcs.n_mat);
-    BU_ASSERT_PTR(ss.matp, ==, cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE));
-    BU_ASSERT_PTR(ss.leafp, ==, leafp_end);
+    BU_ASSERT(ss.mat_num == tcs.n_mat);
+    BU_ASSERT(ss.matp == cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE));
+    BU_ASSERT(ss.leafp == leafp_end);
     if (rpn_len)
-	BU_ASSERT_PTR(ss.exprp, <=, ((unsigned char *)ep->ext_buf) + ep->ext_nbytes);
+	BU_ASSERT(ss.exprp <= ((unsigned char *)ep->ext_buf) + ep->ext_nbytes);
 
     /* Encode all the other stuff as attributes. */
     /* WARNING:  We remove const from the ip pointer!!! */
@@ -479,7 +478,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     BU_ALLOC(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
 
-    ip->idb_ptr = (genptr_t)comb;
+    ip->idb_ptr = (void *)comb;
 
     cp = ep->ext_buf;
     wid = *cp++;
@@ -530,7 +529,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		double scanmat[16];
 
 		/* Unpack indicated matrix mi */
-		BU_ASSERT_SIZE_T(mi, <, nmat);
+		BU_ASSERT(mi < nmat);
 
 		/* read matrix */
 		bu_cv_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
@@ -609,7 +608,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	    tbl1 = tmp;
 	    bu_ptbl_trunc(tbl2, 0);
 	}
-	BU_ASSERT_PTR(leafp, ==, leafp_end);
+	BU_ASSERT(leafp == leafp_end);
 	goto finish;
     }
 
@@ -653,7 +652,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		    double scanmat[16];
 
 		    /* Unpack indicated matrix mi */
-		    BU_ASSERT_SIZE_T(mi, <, nmat);
+		    BU_ASSERT(mi < nmat);
 
 		    /* read matrix */
 		    bu_cv_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
@@ -715,10 +714,10 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	/* Push this node on the stack */
 	*sp++ = tp;
     }
-    BU_ASSERT_PTR(leafp, ==, leafp_end);
+    BU_ASSERT(leafp == leafp_end);
 
     /* There should only be one thing left on the stack, the result */
-    BU_ASSERT_PTR(sp, ==, &stack[1]);
+    BU_ASSERT(sp == &stack[1]);
 
     comb->tree = stack[0];
     RT_CK_TREE(comb->tree);
@@ -853,34 +852,34 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	}
 	itemlwr[i] = '\0';
 
-	if (BU_STR_EQUAL(itemlwr, "region")) {
+	if (BU_STR_EQUIV(itemlwr, "region")) {
 	    snprintf(buf, 128, "%s", comb->region_flag ? "yes" : "no");
-	} else if (BU_STR_EQUAL(itemlwr, "id")) {
+	} else if (BU_STR_EQUIV(itemlwr, "id")) {
 	    if (!comb->region_flag) goto not_region;
 	    snprintf(buf, 128, "%ld", comb->region_id);
-	} else if (BU_STR_EQUAL(itemlwr, "air")) {
+	} else if (BU_STR_EQUIV(itemlwr, "air")) {
 	    if (!comb->region_flag) goto not_region;
 	    snprintf(buf, 128, "%ld", comb->aircode);
-	} else if (BU_STR_EQUAL(itemlwr, "los")) {
+	} else if (BU_STR_EQUIV(itemlwr, "los")) {
 	    if (!comb->region_flag) goto not_region;
 	    snprintf(buf, 128, "%ld", comb->los);
-	} else if (BU_STR_EQUAL(itemlwr, "giftmater")) {
+	} else if (BU_STR_EQUIV(itemlwr, "giftmater")) {
 	    if (!comb->region_flag) goto not_region;
 	    snprintf(buf, 128, "%ld", comb->GIFTmater);
-	} else if (BU_STR_EQUAL(itemlwr, "rgb")) {
+	} else if (BU_STR_EQUIV(itemlwr, "rgb")) {
 	    if (comb->rgb_valid)
 		snprintf(buf, 128, "%d %d %d", V3ARGS(comb->rgb));
 	    else
 		snprintf(buf, 128, "invalid");
-	} else if (BU_STR_EQUAL(itemlwr, "shader")) {
+	} else if (BU_STR_EQUIV(itemlwr, "shader")) {
 	    bu_vls_printf(logstr, "%s", bu_vls_addr(&comb->shader));
 	    return BRLCAD_OK;
-	} else if (BU_STR_EQUAL(itemlwr, "material")) {
+	} else if (BU_STR_EQUIV(itemlwr, "material")) {
 	    bu_vls_printf(logstr, "%s", bu_vls_addr(&comb->material));
 	    return BRLCAD_OK;
-	} else if (BU_STR_EQUAL(itemlwr, "inherit")) {
+	} else if (BU_STR_EQUIV(itemlwr, "inherit")) {
 	    snprintf(buf, 128, "%s", comb->inherit ? "yes" : "no");
-	} else if (BU_STR_EQUAL(itemlwr, "tree")) {
+	} else if (BU_STR_EQUIV(itemlwr, "tree")) {
 	    db_tree_list(logstr, comb->tree);
 	    return BRLCAD_OK;
 	} else {
@@ -923,12 +922,12 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	}
 	buf[i] = '\0';
 
-	if (BU_STR_EQUAL(buf, "region")) {
-	    if (BU_STR_EQUAL(argv[1], "none")) {
+	if (BU_STR_EQUIV(buf, "region")) {
+	    if (BU_STR_EQUIV(argv[1], "none")) {
 		comb->region_flag = 0;
-	    } else if (BU_STR_EQUAL(argv[1], "no")) {
+	    } else if (bu_str_false(argv[1])) {
 		comb->region_flag = 0;
-	    } else if (BU_STR_EQUAL(argv[1], "yes")) {
+	    } else if (bu_str_true(argv[1])) {
 		comb->region_flag = 1;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
@@ -939,45 +938,45 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
 		comb->region_flag = (char)i;
 	    }
-	} else if (BU_STR_EQUAL(buf, "temp")) {
+	} else if (BU_STR_EQUIV(buf, "temp")) {
 	    if (!comb->region_flag) goto not_region;
-	    if (BU_STR_EQUAL(argv[1], "none")) {
+	    if (BU_STR_EQUIV(argv[1], "none")) {
 		comb->temperature = 0.0;
 	    } else {
 		if (sscanf(argv[1], "%lf", &d) != 1)
 		    return BRLCAD_ERROR;
 		comb->temperature = (float)d;
 	    }
-	} else if (BU_STR_EQUAL(buf, "id")) {
+	} else if (BU_STR_EQUIV(buf, "id")) {
 	    if (!comb->region_flag) goto not_region;
-	    if (BU_STR_EQUAL(argv[1], "none")) {
+	    if (BU_STR_EQUIV(argv[1], "none")) {
 		comb->region_id = 0;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
 		    return BRLCAD_ERROR;
 		comb->region_id = i;
 	    }
-	} else if (BU_STR_EQUAL(buf, "air")) {
+	} else if (BU_STR_EQUIV(buf, "air")) {
 	    if (!comb->region_flag) goto not_region;
-	    if (BU_STR_EQUAL(argv[1], "none")) {
+	    if (BU_STR_EQUIV(argv[1], "none")) {
 		comb->aircode = 0;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
 		    return BRLCAD_ERROR;
 		comb->aircode = i;
 	    }
-	} else if (BU_STR_EQUAL(buf, "los")) {
+	} else if (BU_STR_EQUIV(buf, "los")) {
 	    if (!comb->region_flag) goto not_region;
-	    if (BU_STR_EQUAL(argv[1], "none")) {
+	    if (BU_STR_EQUIV(argv[1], "none")) {
 		comb->los = 0;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
 		    return BRLCAD_ERROR;
 		comb->los = i;
 	    }
-	} else if (BU_STR_EQUAL(buf, "giftmater")) {
+	} else if (BU_STR_EQUIV(buf, "giftmater")) {
 	    if (!comb->region_flag) goto not_region;
-	    if (BU_STR_EQUAL(argv[1], "none")) {
+	    if (BU_STR_EQUIV(argv[1], "none")) {
 		comb->GIFTmater = 0;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
@@ -985,7 +984,7 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		comb->GIFTmater = i;
 	    }
 	} else if (db5_standardize_attribute(buf) == ATTR_COLOR) {
-	    if (BU_STR_EQUAL(argv[1], "invalid") || BU_STR_EQUAL(argv[1], "none")) {
+	    if (BU_STR_EQUIV(argv[1], "invalid") || BU_STR_EQUIV(argv[1], "none")) {
 		comb->rgb[0] = comb->rgb[1] =
 		    comb->rgb[2] = 0;
 		comb->rgb_valid = 0;
@@ -1002,25 +1001,25 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		comb->rgb[2] = (unsigned char)b;
 		comb->rgb_valid = 1;
 	    }
-	} else if (BU_STR_EQUAL(buf, "shader")) {
+	} else if (BU_STR_EQUIV(buf, "shader")) {
 	    bu_vls_trunc(&comb->shader, 0);
-	    if (!BU_STR_EQUAL(argv[1], "none")) {
+	    if (!BU_STR_EQUIV(argv[1], "none")) {
 		bu_vls_strcat(&comb->shader, argv[1]);
 		/* Leading spaces boggle the combination exporter */
 		bu_vls_trimspace(&comb->shader);
 	    }
-	} else if (BU_STR_EQUAL(buf, "material")) {
+	} else if (BU_STR_EQUIV(buf, "material")) {
 	    bu_vls_trunc(&comb->material, 0);
-	    if (!BU_STR_EQUAL(argv[1], "none")) {
+	    if (!BU_STR_EQUIV(argv[1], "none")) {
 		bu_vls_strcat(&comb->material, argv[1]);
 		bu_vls_trimspace(&comb->material);
 	    }
-	} else if (BU_STR_EQUAL(buf, "inherit")) {
-	    if (BU_STR_EQUAL(argv[1], "none")) {
+	} else if (BU_STR_EQUIV(buf, "inherit")) {
+	    if (BU_STR_EQUIV(argv[1], "none")) {
 		comb->inherit = 0;
-	    } else if (BU_STR_EQUAL(argv[1], "no")) {
+	    } else if (bu_str_false(argv[1])) {
 		comb->inherit = 0;
-	    } else if (BU_STR_EQUAL(argv[1], "yes")) {
+	    } else if (bu_str_true(argv[1])) {
 		comb->inherit = 1;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
@@ -1031,10 +1030,10 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
 		comb->inherit = (char)i;
 	    }
-	} else if (BU_STR_EQUAL(buf, "tree")) {
+	} else if (BU_STR_EQUIV(buf, "tree")) {
 	    union tree *newtree;
 
-	    if (*argv[1] == '\0' || BU_STR_EQUAL(argv[1], "none")) {
+	    if (*argv[1] == '\0' || BU_STR_EQUIV(argv[1], "none")) {
 		db_free_tree(comb->tree, &rt_uniresource);
 		comb->tree = TREE_NULL;
 	    } else {

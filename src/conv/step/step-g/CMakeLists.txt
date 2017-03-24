@@ -1,8 +1,9 @@
-# local includes
-include_directories(
+set(AP203_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${OPENNURBS_INCLUDE_DIRS}
   )
+BRLCAD_INCLUDE_DIRS(AP203_INCLUDE_DIRS)
 
 set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
 add_definitions(-DAP203)
@@ -87,8 +88,11 @@ set(stepg_SOURCES
   Factory.cpp
   FoundedItem.cpp
   FunctionallyDefinedTransformation.cpp
+  GeometricallyBoundedSurfaceShapeRepresentation.cpp
   GeometricRepresentationContext.cpp
   GeometricRepresentationItem.cpp
+  GeometricSet.cpp
+  GeometricSetSelect.cpp
   GlobalUncertaintyAssignedContext.cpp
   GlobalUnitAssignedContext.cpp
   Hyperbola.cpp
@@ -120,8 +124,9 @@ set(stepg_SOURCES
   OffsetCurve3D.cpp
   OffsetSurface.cpp
   OpenNurbsInterfaces.cpp
-  OrientedEdge.cpp
   OrientedClosedShell.cpp
+  OrientedEdge.cpp
+  OrientedFace.cpp
   PCurve.cpp
   PCurveOrSurface.cpp
   Parabola.cpp
@@ -148,6 +153,7 @@ set(stepg_SOURCES
   ProductDefinitionRelationship.cpp
   ProductDefinitionShape.cpp
   ProductDefinitionUsage.cpp
+  ProductDefinitionWithAssociatedDocuments.cpp
   ProductRelatedProductCategory.cpp
   PropertyDefinition.cpp
   PropertyDefinitionRepresentation.cpp
@@ -298,8 +304,11 @@ set(stepg_HDRS
   Factory.h
   FoundedItem.h
   FunctionallyDefinedTransformation.h
+  GeometricallyBoundedSurfaceShapeRepresentation.h
   GeometricRepresentationContext.h
   GeometricRepresentationItem.h
+  GeometricSet.h
+  GeometricSetSelect.h
   GlobalUncertaintyAssignedContext.h
   GlobalUnitAssignedContext.h
   Hyperbola.h
@@ -330,8 +339,9 @@ set(stepg_HDRS
   OffsetCurve2D.h
   OffsetCurve3D.h
   OffsetSurface.h
-  OrientedEdge.h
   OrientedClosedShell.h
+  OrientedEdge.h
+  OrientedFace.h
   PCurve.h
   PCurveOrSurface.h
   Parabola.h
@@ -358,6 +368,7 @@ set(stepg_HDRS
   ProductDefinitionRelationship.h
   ProductDefinitionShape.h
   ProductDefinitionUsage.h
+  ProductDefinitionWithAssociatedDocuments.h
   ProductRelatedProductCategory.h
   PropertyDefinition.h
   PropertyDefinitionRepresentation.h
@@ -444,12 +455,13 @@ set(stepg_LIBS
   stepeditor
   stepdai
   stepcore
-  ${OPENNURBS_LIBRARY}
+  ${OPENNURBS_LIBRARIES}
   )
 list(APPEND stepg_LIBS ${stepg_LIBS})
 
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
 add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
+set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
 
 if(MSVC)
   set(stepg_IMPORTS

@@ -15,14 +15,66 @@ on-going issues.
 Recent Bugs
 -----------
 
+* screengrab on windows crashes
+
+* Recursive submodel predictably goes infinite, need stack-based
+  db_walk_tree(): mged> in submodel submodel submodel grid test.g
+
+* running rt -s20 -F file.pix ... does not result in an 20x20 image
+  being written out.  it ends up being 512x512.
+
+* running rt -C255/0/0 -o file.pix ... does not result in the
+  background color getting used.  It does work with -F file.pix, going
+  through libfb instead of libicv.
+
+* ogl display manager and framebuffer are creating windows with
+  transparent backgrounds (the glClear color is not being drawn) on
+  Linux.  Presumably a driver-related issue, alpha channel, or expose
+  event issue.  Inspecting further, it may be related to environments
+  where shmget() fails (or is requested via /dev/oglp) and we get
+  private memory -- looks like private memory is not initialized
+  (observed on Mac 10.6, Windows, and Ubuntu Linux using 7.26).
+
+* rtedge's overlay mode appears to be generating different results on
+  Windows and Linux for the m35 steering wheel (rtwizard rendering
+  mode D.)
+
+* pixdiff on Windows is reporting no differences with a pair of files
+  that pixcmp can see differences in.
+
+* fblabel seems quite busted, at least talking to a /dev/X fbserv, in
+  that it only draws the first character and eventually displays
+  rem_read() failures when run in -d debug mode.
+
+* rtedge doesn't refresh a /dev/X fbserv (presumably double-buffered)
+  after doing an overlay render.  it does draw, though, as confirmed
+  by a forced fb-fb refresh.
+
+* pixborder doesn't account for an edge case where the right edge of
+  an image is expected to be colored (except for one pixel on the top
+  edge).  Example:
+
+  pixborder -b "255 0 0" -t "255 255 255" < pix/moss.pix | pix-fb
+
+* report that attempting to change units on a read-only file in MGED
+  will not change the units in the file but changes them in MGED,
+  resulting in problems with nirt missing geometry it shouldn't miss.
+
+* typing 'comb -f -r assembly_name' shuts down mged with the error:
+  ERROR: bad pointer 0000000000B4CA50: s/b bu_external(x768dbbd0), was bu_vls(x89333bbb), file ..\..\..\brlcad_src\src\libbu\parse.c, line 2443"
+  And on the mged command line:
+  rt_db_cvt_to_external5 expecting non-NULL name parameter
+  wdb_export((null)): solid export failure
+
+* report of mged command history not working with the down arrow key
+  in 7.25.0 (on Windows, unknown on other platforms).  Up arrow works
+  fine.
+
+* wgl framebuffer is not lingering on windows (regardless of using
+  wgll or default) when it should
+
 * nirt -e "xyz val val val" doesn't work due to the space after the -e
   and how the nirt/rt commands parse quoted args.
-
-* probably related, there is a big parsing difference between nirt
-  with "xyz 1.0 2.0 3.0; dir 0 -1 0;" and "xyz 1. 2. 3. ; dir 0 -1
-  0;".  note the intentional space.  problem observed is that center
-  point ended up being "0.0 2.0 0.0" with there clearly being a
-  parsing error depending on where the semicolon was positioned.
 
 * calling "attr set obj key value" should always result in key getting
   set to value, no matter what, as it is the lowest-level attribute
@@ -35,14 +87,6 @@ Recent Bugs
 
 * report of g-iges crashing (on Windows) when exporting a 1.2MB BoT
   mesh (presumably imported via stl-g).  worked for smaller models.
-
-* ogl display manager and framebuffer are creating windows with
-  transparent backgrounds (the glClear color is not being drawn) on
-  Linux.  Presumably a driver-related issue, alpha channel, or expose
-  event issue.  Inspecting further, it may be related to environments
-  where shmget() fails (or is requested via /dev/oglp) and we get
-  private memory -- looks like private memory is not initialized
-  (observed on Mac 10.6).
 
 * autoview [scale] isn't updating the wireframe when opening a
   database, drawing geometry, then running autoview.  the status bar
@@ -81,11 +125,6 @@ Recent Bugs
 * idents command is reporting a bogus region count in the region
   output table listing (first column).
 
-* yacc 1.9 will not output a header if a path is given to the -o
-  option.  yacc should be run from the binary directory instead of the
-  source directory so that the command may be simply yacc -d -o
-  points_parse.c ${CMAKE_SOURCE_DIRECTORY}/points_parse.y
-
 * src/librt/primitives/bot/g_bot_include.c:rt_bot_bbox() routine isn't
   calculating the bbox correctly
 
@@ -119,8 +158,8 @@ Recent Bugs
 * bu_log() with a width specifier does not align like printf().
   Example: bu_log("%24s", str);
 
-* report that keep sometimes results in a .g file with unknown units
-  dbconcat also is reported to set the units to unknown if concating
+* report that "keep" sometimes results in a .g file with unknown units;
+  dbconcat also is reported to set the units to unknown if concatting
   a file with unknown units.
 
 * infinite loop in rt_find_backing_dist() raytracing a BoT (without
@@ -309,9 +348,10 @@ Recent Bugs
 
 * File->Export seems to not work on Windows
 
-* xpush fails to properly create a hierarchy leaving some as top-level
-  objects and killing other existing objects resulting in dangling
-  references.
+* xpush fails to properly create a hierarchy killing existing objects
+  resulting in dangling references. This may have been fixed by
+  r69256, but a model that exposes the issue has to be tested to be
+  sure.
 
 * mged on Mac OS X will crash on an X11 call if compiled against
   system Tcl/Tk (at least on 10.4 linking against 8.4), see TODO
@@ -519,6 +559,12 @@ Recent Bugs
 * rtweight chokes on a .density file that has less than 3 values per
   line (infinite loop).  also gives infinite areas when presented with
   an empty .density file.
+
+* rtarea gives incorrect areas when using -H hypersample flag
+
+* rtweight/gqa volumes seem wrong with simple sphere test case, with
+  values consistently and quickly converging less than the actual
+  volume regardless of the grid size.
 
 * setting src/librt/db5_io.c's AVS_ADD off in db5_import_attributes
   causes bad things to happen and it really shouldn't.

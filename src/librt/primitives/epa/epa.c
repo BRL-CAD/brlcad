@@ -1,7 +1,7 @@
 /*                           E P A . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -147,16 +147,15 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "../../librt_private.h"
@@ -184,6 +183,36 @@ const struct bu_structparse rt_epa_parse[] = {
     { "%f", 1, "r_2", bu_offsetof(struct rt_epa_internal, epa_r2),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_epa_specific {
+    cl_double epa_V[3];     /* vector to epa origin */
+    cl_double epa_Hunit[3]; /* unit H vector */
+    cl_double epa_SoR[16];  /* Scale(Rot(vect)) */
+    cl_double epa_invRoS[16];   /* invRot(Scale(vect)) */
+};
+
+size_t
+clt_epa_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct epa_specific *epa =
+        (struct epa_specific *)stp->st_specific;
+    struct clt_epa_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_epa_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->epa_V, epa->epa_V);
+    VMOVE(args->epa_Hunit, epa->epa_Hunit);
+    MAT_COPY(args->epa_SoR, epa->epa_SoR);
+    MAT_COPY(args->epa_invRoS, epa->epa_invRoS);
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
 
 /**
  * Create a bounding RPP for an epa
@@ -284,7 +313,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &OBJ[ID_EPA];
 
     BU_GET(epa, struct epa_specific);
-    stp->st_specific = (genptr_t)epa;
+    stp->st_specific = (void *)epa;
 
     epa->epa_h = mag_h;
     epa->epa_inv_r1sq = 1 / (r1 * r1);
@@ -1392,7 +1421,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Mark the edges of this face as real, this is the only real edge */
-    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic);
+    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic, &RTG.rtg_vlfree);
 
     /* connect ellipses with triangles */
     for (i = nell-2; i >= 0; i--) {
@@ -1546,13 +1575,13 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, face, tol);
+    nmg_gluefaces(outfaceuses, face, &RTG.rtg_vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1);
+    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
 
     /* free mem */
     bu_free((char *)outfaceuses, "faceuse []");
@@ -1726,7 +1755,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 11);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 11);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1876,7 +1905,7 @@ rt_epa_ifree(struct rt_db_internal *ip)
     xip->epa_magic = 0;		/* sanity */
 
     bu_free((char *)xip, "epa ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

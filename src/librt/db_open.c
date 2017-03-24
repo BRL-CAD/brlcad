@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,11 +41,11 @@
 #include "bio.h"
 
 #include "bu/parallel.h"
+#include "bu/path.h"
 #include "vmath.h"
+#include "rt/db4.h"
 #include "raytrace.h"
-#include "db.h"
 #include "wdb.h"
-#include "mater.h"
 
 
 #ifndef SEEK_SET
@@ -104,7 +104,7 @@ db_open(const char *name, const char *mode)
 	dbip->dbi_mf = mfp;
 	dbip->dbi_eof = (off_t)mfp->buflen;
 	dbip->dbi_inmem = mfp->buf;
-	dbip->dbi_mf->apbuf = (genptr_t)dbip;
+	dbip->dbi_mf->apbuf = (void *)dbip;
 
 	/* Do this too, so we can seek around on the file */
 	if ((dbip->dbi_fp = fopen(name, "rb")) == NULL) {
@@ -161,7 +161,7 @@ db_open(const char *name, const char *mode)
     if (argv[1][0] != '/') {
 	struct bu_vls fullpath = BU_VLS_INIT_ZERO;
 
-	bu_free((genptr_t)argv[1], "db_open: argv[1]");
+	bu_free((void *)argv[1], "db_open: argv[1]");
 	argv[1] = getcwd((char *)NULL, (size_t)MAXPATHLEN);
 
 	/* Something went wrong and we didn't get the CWD. So,
@@ -177,8 +177,8 @@ db_open(const char *name, const char *mode)
 		fclose(dbip->dbi_fp);
 	    }
 
-	    bu_free((genptr_t)argv[0], "db_open: argv[0]");
-	    bu_free((genptr_t)argv, "db_open: argv");
+	    bu_free((void *)argv[0], "db_open: argv[0]");
+	    bu_free((void *)argv, "db_open: argv");
 	    bu_free((char *)dbip, "struct db_i");
 
 	    return DBI_NULL;
@@ -373,7 +373,7 @@ db_close(register struct db_i *dbip)
     }
 
     if (dbip->dbi_filepath != NULL) {
-	bu_free_argv(2, dbip->dbi_filepath);
+	bu_argv_free(2, dbip->dbi_filepath);
 	dbip->dbi_filepath = NULL; /* sanity */
     }
 

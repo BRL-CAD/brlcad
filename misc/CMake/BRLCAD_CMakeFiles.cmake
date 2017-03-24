@@ -1,7 +1,7 @@
 #          B R L C A D _ C M A K E F I L E S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -65,20 +65,20 @@ macro(CMAKEFILES)
       # make sure the file is there.  Normally attempting to ignore
       # a non-existent file is a fatal error, but these keywords
       # don't necessarily refer to files.
-      set(TARGET_FLAGS SHARED STATIC OBJECT WIN32 UNKNOWN IMPORTED MODULE)
+      set(TARGET_FLAGS SHARED STATIC OBJECT WIN32 UNKNOWN IMPORTED MODULE INTERFACE)
       foreach(TARGET_FLAG ${TARGET_FLAGS})
 	if("${TARGET_FLAG}" STREQUAL "${ITEM}")
-	  if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM})
+	  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
             set(CMAKEFILES_DO_TEST 0)
-	  endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM})
+	  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 	endif("${TARGET_FLAG}" STREQUAL "${ITEM}")
       endforeach(TARGET_FLAG ${TARGET_FLAGS})
       set(FUZZY_TARGET_FLAGS TARGET_OBJECTS)
       foreach(TARGET_FLAG ${FUZZY_TARGET_FLAGS})
 	if("${ITEM}" MATCHES "${TARGET_FLAG}")
-	  if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM})
+	  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
             set(CMAKEFILES_DO_TEST 0)
-	  endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM})
+	  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 	endif("${ITEM}" MATCHES "${TARGET_FLAG}")
       endforeach(TARGET_FLAG ${FUZZY_TARGET_FLAGS})
 
@@ -98,7 +98,7 @@ macro(CMAKEFILES)
 	    if("${SUBPATH_TEST}" STREQUAL "0")
 	      IS_SUBPATH("${CMAKE_SOURCE_DIR}" "${ITEM_PATH}" SUBPATH_TEST)
 	      if("${SUBPATH_TEST}" STREQUAL "1")
-	        message(FATAL_ERROR "${ITEM} is listed in ${CMAKE_CURRENT_SOURCE_DIR} using its absolute path.  Please specify the location of this file using a relative path.")
+	        message(FATAL_ERROR "${ITEM} is listed in \"${CMAKE_CURRENT_SOURCE_DIR}\" using its absolute path.  Please specify the location of this file using a relative path.")
 	      endif("${SUBPATH_TEST}" STREQUAL "1")
 	    endif("${SUBPATH_TEST}" STREQUAL "0")
 	  endif(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
@@ -108,7 +108,7 @@ macro(CMAKEFILES)
 	  get_filename_component(ITEM_ABS_PATH "${ITEM_PATH}" ABSOLUTE)
 	  if(NOT "${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
 	    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	      message(FATAL_ERROR "Attempting to ignore non-existent file ${ITEM}, in directory ${CMAKE_CURRENT_SOURCE_DIR}")
+	      message(FATAL_ERROR "Attempting to ignore non-existent file ${ITEM}, in directory \"${CMAKE_CURRENT_SOURCE_DIR}\"")
 	    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 	    # Append files and directories to their respective lists.
 	    if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
@@ -134,7 +134,7 @@ macro(CMAKEFILES)
 	else(NOT "${ITEM_PATH}" STREQUAL "")
 	  # The easy case - no path specified, so assume the current source directory.
 	  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	    message(FATAL_ERROR "Attempting to ignore non-existent file ${ITEM}, in directory ${CMAKE_CURRENT_SOURCE_DIR}")
+	    message(FATAL_ERROR "Attempting to ignore non-existent file ${ITEM}, in directory \"${CMAKE_CURRENT_SOURCE_DIR}\"")
 	  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 	  if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 	    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM_NAME}")

@@ -1,7 +1,7 @@
 /*                       P N G - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,13 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <zlib.h>
 #include <png.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 
 
@@ -86,6 +87,9 @@ main(int argc, char **argv)
 	    return 1;
 	}
     }
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (argc > ++bu_optind)
 	fprintf(stderr, "png-pix: excess argument(s) ignored\n");

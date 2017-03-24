@@ -1,7 +1,7 @@
 /*                         K E E P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,10 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
-#include "rtgeom.h"
+#include "bu/getopt.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 
@@ -45,7 +45,7 @@ struct keep_node_data {
  * Write each node encountered exactly once.
  */
 HIDDEN void
-node_write(struct db_i *dbip, struct directory *dp, genptr_t ptr)
+node_write(struct db_i *dbip, struct directory *dp, void *ptr)
 {
     struct keep_node_data *kndp = (struct keep_node_data *)ptr;
     struct rt_db_internal intern;
@@ -186,7 +186,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 	keepfp = wdb_fopen_v(argv[0], db_version(gedp->ged_wdbp->dbip));
 
 	if (keepfp == NULL) {
-	    perror(argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s command was unable to create file '%s'\n", cmd, argv[0]);
 	    return GED_ERROR;
 	}
     }
@@ -215,10 +215,10 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 
 	if (!flag_R) {
 	    /* recursively keep objects */
-	    db_functree(gedp->ged_wdbp->dbip, dp, node_write, node_write, &rt_uniresource, (genptr_t)&knd);
+	    db_functree(gedp->ged_wdbp->dbip, dp, node_write, node_write, &rt_uniresource, (void *)&knd);
 	} else {
 	    /* keep just this object */
-	    node_write(gedp->ged_wdbp->dbip, dp, (genptr_t)&knd);
+	    node_write(gedp->ged_wdbp->dbip, dp, (void *)&knd);
 	}
     }
 

@@ -1,7 +1,7 @@
 /*                       F I T N E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,13 +39,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <limits.h>                     /* home of INT_MAX a/k/a MAXINT */
+#include <limits.h>                     /* home of INT_MAX aka MAXINT */
 
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
-#include "rtgeom.h"
+#include "bn/plot3.h"
+#include "rt/geom.h"
 
 #include "fitness.h"
 
@@ -139,12 +140,17 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     bu_semaphore_acquire(SEM_DIFF);
 
     while (pp != partHeadp && mp != fstate->ray[ap->a_user]) {
-	if (status & STATUS_PP)	xp = pp->pt_outhit->hit_dist;
-	else			xp = pp->pt_inhit->hit_dist;
-	if (status & STATUS_MP)	yp = mp->outhit_dist;
-	else			yp = mp->inhit_dist;
-	if (xp < 0) xp = 0;
-	if (yp < 0) yp = 0;
+	if (status & STATUS_PP)
+	    xp = pp->pt_outhit->hit_dist;
+	else
+	    xp = pp->pt_inhit->hit_dist;
+	if (status & STATUS_MP)
+	    yp = mp->outhit_dist;
+	else
+	    yp = mp->inhit_dist;
+
+	V_MAX(xp, 0);
+	V_MAX(yp, 0);
 
 	if (status==STATUS_EMPTY) {
 	    if (NEAR_EQUAL(xp, yp, 1.0e-5)) {
@@ -297,7 +303,7 @@ get_next_row(struct fitness_state *fstate)
  * raytraces an object in parallel and stores or compares it to source
  */
 void
-rt_worker(int UNUSED(cpu), genptr_t g)
+rt_worker(int UNUSED(cpu), void *g)
 {
     struct application ap;
     struct fitness_state *fstate = (struct fitness_state *)g;
@@ -366,19 +372,11 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     if (rt_gettree(fstate->rtip, obj) < 0)
 	bu_exit(EXIT_FAILURE, "rt_gettree failed");
 
-    /*
-      for (i = 0; i < fstate->max_cpus; i++) {
-      rt_init_resource(&fstate->resource[i], i, fstate->rtip);
-      bn_rand_init(fstate->resource[i].re_randptr, i);
-      }
-    */
-
     /* stash bounding box and if comparing to source
      * calculate the difference between the bounding boxes */
     if (fstate->capture) {
 	VMOVE(fstate->min, fstate->rtip->mdl_min);
 	VMOVE(fstate->max, fstate->rtip->mdl_max);
-/*	z_max = fstate->rtip->mdl_max[Z];*/
     }
     /*else {
      * instead of storing min and max, just compute
@@ -405,7 +403,6 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     */
 
 
-    /*rt_prep_parallel(fstate->rtip, fstate->ncpu)o;*/
 
     rt_prep(fstate->rtip);
     if (fstate->capture) {
@@ -441,12 +438,12 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	/* scale fitness to the unon of the sources and individual's bounding boxes */
 	/* FIXME: sloppy
 	   fastf_t tmp = (diff[X]/fstate->gridSpacing[X]-1) * (diff[Y]/fstate->gridSpacing[Y] * diff[Z] - 1);
-	   if (tmp < 0) tmp = 0;*/
+	   V_MAX(tmp, 0);
+	*/
     }
 
 
-    rt_worker(0, (genptr_t)fstate);
-    /*bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);*/
+    rt_worker(0, (void *)fstate);
 
     /* normalize fitness if we aren't just saving the source */
     if (!fstate->capture) {
@@ -487,10 +484,6 @@ fit_prep(struct fitness_state *fstate, int rows, int cols)
     fstate->res[X] = rows;
     fstate->res[Y] = cols;
     fstate->ray = NULL;
-
-    bu_semaphore_init(TOTAL_SEMAPHORES);
-    rt_init_resource(&rt_uniresource, fstate->max_cpus, NULL);
-    bn_rand_init(rt_uniresource.re_randptr, 0);
 }
 
 
@@ -501,7 +494,6 @@ void
 fit_clean(struct fitness_state *fstate)
 {
     free_rays(fstate);
-    /* bu_semaphore_free(); */
 }
 
 

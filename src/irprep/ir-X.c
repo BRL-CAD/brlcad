@@ -1,7 +1,7 @@
 /*                          I R - X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,19 +34,24 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
-#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include "bu.h"
+#include "bu/exit.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "vmath.h"
 
 
 #define MAXFIL 26		/* Maximum number of char in file name.  */
 #define MAXPIX 512		/* Maximum number of pixels is (512*512).  */
-#define MAXARR 12000		/* Maximum number of pixels that are the
+#define MAXARR 65536		/* Maximum number of pixels that are the
 				 * same color.  */
 #define MAXCOL 128		/* Maximum number of colors.  */
 #define EXTRA 1			/* For colors where there are a lot of
@@ -64,7 +69,7 @@ struct colstr
 
 
 int
-main(void)
+main (int argc, char **argv)
 {
     /* Variables used for XWindow.  */
     Display *my_display;		/* Display unit.  */
@@ -112,8 +117,26 @@ main(void)
     char file_pix[MAXFIL];	/* Pix file name.  */
     unsigned char c;		/* Used to write pix file.  */
     int ret;
+    int ch;
 
-    struct colstr array[MAXCOL + EXTRA];	/* Array for color information.  */
+    struct colstr *array = NULL;	/* Array for color information.  */
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
+    bu_opterr = 0;
+    while ((ch = bu_getopt(argc, argv, "h?")) != -1)
+    {	if (bu_optopt == '?') ch = 'h';
+	switch (ch) {
+	    case 'h':
+		fprintf(stderr,"ir-X is interactive; sample session in 'man' page\n");
+		bu_exit(1,NULL);
+	    default:
+		break;
+	}
+    }
+
+    array = (struct colstr *)bu_calloc(MAXCOL + EXTRA, sizeof(struct colstr), "allocate colstr array");
 
     /* Get file name to be read.  */
     printf("Enter name of file to be read (%d char max).\n\t", MAXFIL);
@@ -382,8 +405,8 @@ main(void)
 		min = pixval[j][i];
 		max = pixval[j][i];
 	    }
-	    if (min > pixval[j][i]) min = pixval[j][i];
-	    if (max < pixval[j][i]) max = pixval[j][i];
+	    V_MIN(min, pixval[j][i]);
+	    V_MAX(max, pixval[j][i]);
 	}
     }
 
@@ -654,11 +677,15 @@ main(void)
 			(void)fflush(stdout);
 		    }					/* END # 1.  */
 
+		    bu_free(array, "free colstr array");
 		    return 0;
 		}
 		break;
 	}
     }
+
+    bu_free(array, "free colstr array");
+    return 0;
 }
 
 

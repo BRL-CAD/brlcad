@@ -1,7 +1,7 @@
 /*                         P L A N E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,9 @@
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/mat.h"
+#include "bn/plane.h"
+#include "bn/tol.h"
 
 #define UNIT_SQ_TOL 1.0e-13
 
@@ -87,8 +89,8 @@ bn_pt2_pt2_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
     vect_t diff;
 
     BN_CK_TOL(tol);
-    VSUB2_2D(diff, b, a);
-    if (MAGSQ_2D(diff) < tol->dist_sq) return 1;
+    V2SUB2(diff, b, a);
+    if (MAG2SQ(diff) < tol->dist_sq) return 1;
     return 0;
 }
 
@@ -466,10 +468,7 @@ bn_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fas
 	/* intersect or closest approach between a and b */
 	outside_segment = 0;
 	dist[1] = dist[1]/len_ab;
-	if (dist[1] < 0.0)
-	    dist[1] = 0.0;
-	if (dist[1] > 1.0)
-	    dist[1] = 1.0;
+	CLAMP(dist[1], 0.0, 1.0);
     } else {
 	outside_segment = 1;
 	dist[1] = dist[1]/len_ab;
@@ -784,7 +783,7 @@ bn_isect_line2_lseg2(fastf_t *dist,
      * sure that C is a non-zero vector, (i.e., that A and B are
      * distinct).
      */
-    if ((ctol = MAGSQ_2D(c)) <= tol->dist_sq) {
+    if ((ctol = MAG2SQ(c)) <= tol->dist_sq) {
 	ret = -4;		/* points A and B are not distinct */
 	goto out;
     }
@@ -794,7 +793,7 @@ bn_isect_line2_lseg2(fastf_t *dist,
      * tolerance of the line.  If so, then the line segment AC is ON
      * the line.
      */
-    VADD2_2D(b, a, c);
+    V2ADD2(b, a, c);
     if (bn_distsq_line2_point2(p, d, a) <= tol->dist_sq  &&
 	(ctol=bn_distsq_line2_point2(p, d, b)) <= tol->dist_sq) {
 	if (bu_debug & BU_DEBUG_MATH) {
@@ -817,7 +816,7 @@ bn_isect_line2_lseg2(fastf_t *dist,
 	fastf_t dtol;
 	/* Lines are collinear */
 	/* If P within tol of either endpoint (0, 1), make exact. */
-	dtol = tol->dist / sqrt(MAGSQ_2D(d));
+	dtol = tol->dist / sqrt(MAG2SQ(d));
 	if (bu_debug & BU_DEBUG_MATH) {
 	    bu_log("bn_isect_line2_lseg2() dtol=%g, dist[0]=%g, dist[1]=%g\n",
 		   dtol, dist[0], dist[1]);
@@ -843,8 +842,8 @@ bn_isect_line2_lseg2(fastf_t *dist,
 	point_t hit_pt;
 	point_t hit2;
 
-	VJOIN1_2D(hit_pt, p, dist[0], d);
-	VJOIN1_2D(hit2, a, dist[1], c);
+	V2JOIN1(hit_pt, p, dist[0], d);
+	V2JOIN1(hit2, a, dist[1], c);
 	/* Check both hit point value calculations */
 	if (bn_pt2_pt2_equal(a, hit_pt, tol) ||
 	    bn_pt2_pt2_equal(a, hit2, tol)) {
@@ -958,12 +957,12 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
 	int nogood = 0;
 	/* Lines are collinear */
 	/* If P within tol of either endpoint (0, 1), make exact. */
-	ptol = tol->dist / sqrt(MAGSQ_2D(pdir));
+	ptol = tol->dist / sqrt(MAG2SQ(pdir));
 	if (bu_debug & BU_DEBUG_MATH) {
 	    bu_log("ptol=%g\n", ptol);
 	}
 
- 	if (NEAR_ZERO(dist[0], ptol))
+	if (NEAR_ZERO(dist[0], ptol))
 	    dist[0] = 0.0;
 	else if (NEAR_EQUAL(dist[0], 1.0, ptol))
 	    dist[0] = 1.0;
@@ -984,14 +983,14 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
     }
     /* Lines intersect */
     /* If within tolerance of an endpoint (0, 1), make exact. */
-    ptol = tol->dist / sqrt(MAGSQ_2D(pdir));
+    ptol = tol->dist / sqrt(MAG2SQ(pdir));
 
     if (NEAR_ZERO(dist[0], ptol))
 	dist[0] = 0;
     else if (NEAR_EQUAL(dist[0], 1.0, ptol))
 	dist[0] = 1;
 
-    qtol = tol->dist / sqrt(MAGSQ_2D(qdir));
+    qtol = tol->dist / sqrt(MAG2SQ(qdir));
     if (NEAR_ZERO(dist[1], ptol))
 	dist[1] = 0;
     else if (NEAR_EQUAL(dist[1], 1.0, ptol))
@@ -1460,6 +1459,7 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 
 	dist1 = fabs(dist1); /* sanity */
 	VSCALE(isect_pt, d_unit, dist1);
+	VADD2(isect_pt, isect_pt, p);
 	VSUB2(a_to_isect_pt, isect_pt, a);
 	VSUB2(b_to_isect_pt, isect_pt, b);
 
@@ -1580,11 +1580,11 @@ bn_dist_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
     vect_t f;
     register fastf_t FdotD;
 
-    VSUB2_2D(f, pt, a);
-    if ((FdotD = sqrt(MAGSQ_2D(dir))) <= SMALL_FASTF)
+    V2SUB2(f, pt, a);
+    if ((FdotD = sqrt(MAG2SQ(dir))) <= SMALL_FASTF)
 	return 0.0;
-    FdotD = VDOT_2D(f, dir) / FdotD;
-    if ((FdotD = VDOT_2D(f, f) - FdotD * FdotD) <= SMALL_FASTF)
+    FdotD = V2DOT(f, dir) / FdotD;
+    if ((FdotD = V2DOT(f, f) - FdotD * FdotD) <= SMALL_FASTF)
 	return 0.0;
     return sqrt(FdotD);
 }
@@ -1596,11 +1596,11 @@ bn_distsq_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
     vect_t f;
     register fastf_t FdotD;
 
-    VSUB2_2D(f, pt, a);
-    if ((FdotD = sqrt(MAGSQ_2D(dir))) <= SMALL_FASTF)
+    V2SUB2(f, pt, a);
+    if ((FdotD = sqrt(MAG2SQ(dir))) <= SMALL_FASTF)
 	return 0.0;
-    FdotD = VDOT_2D(f, dir) / FdotD;
-    if ((FdotD = VDOT_2D(f, f) - FdotD * FdotD) <= SMALL_FASTF)
+    FdotD = V2DOT(f, dir) / FdotD;
+    if ((FdotD = V2DOT(f, f) - FdotD * FdotD) <= SMALL_FASTF)
 	return 0.0;
     return FdotD;
 }
@@ -1687,6 +1687,7 @@ bn_isect_pt_lseg(fastf_t *dist,
  * @param a is line start point
  * @param b is line end point
  * @param p is line intersect point
+ * @param tol contains the tolerances used for calculations
  */
 int
 bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
@@ -1700,17 +1701,17 @@ bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fast
 
     BN_CK_TOL(tol);
 
-    VSUB2_2D(AtoP, p, a);
-    if (MAGSQ_2D(AtoP) < tol->dist_sq)
+    V2SUB2(AtoP, p, a);
+    if (MAG2SQ(AtoP) < tol->dist_sq)
 	return 1;	/* P at A */
 
-    VSUB2_2D(BtoP, p, b);
-    if (MAGSQ_2D(BtoP) < tol->dist_sq)
+    V2SUB2(BtoP, p, b);
+    if (MAG2SQ(BtoP) < tol->dist_sq)
 	return 2;	/* P at B */
 
-    VSUB2_2D(AtoB, b, a);
-    VMOVE_2D(ABunit, AtoB);
-    distsq = MAGSQ_2D(ABunit);
+    V2SUB2(AtoB, b, a);
+    V2MOVE(ABunit, AtoB);
+    distsq = MAG2SQ(ABunit);
     if (distsq < tol->dist_sq) {
 	if (bu_debug & BU_DEBUG_MATH) {
 	    bu_log("distsq A=%g\n", distsq);
@@ -1718,7 +1719,7 @@ bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fast
 	return -1;	/* A equals B, and P isn't there */
     }
     distsq = 1/sqrt(distsq);
-    VSCALE_2D(ABunit, ABunit, distsq);
+    V2SCALE(ABunit, ABunit, distsq);
 
     /* Similar to bn_dist_line_pt, except we never actually have to do
      * the sqrt that the other routine does.
@@ -1727,10 +1728,10 @@ bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fast
     /* find dist as a function of ABunit, actually the projection of
      * AtoP onto ABunit
      */
-    APprABunit = VDOT_2D(AtoP, ABunit);
+    APprABunit = V2DOT(AtoP, ABunit);
 
     /* because of pythgorean theorem ... */
-    distsq = MAGSQ_2D(AtoP) - APprABunit * APprABunit;
+    distsq = MAG2SQ(AtoP) - APprABunit * APprABunit;
     if (distsq > tol->dist_sq) {
 	if (bu_debug & BU_DEBUG_MATH) {
 	    V2PRINT("ABunit", ABunit);
@@ -1740,7 +1741,7 @@ bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fast
     }
 
     /* Distance from the point to the line is within tolerance. */
-    *dist = VDOT_2D(AtoP, AtoB) / MAGSQ_2D(AtoB);
+    *dist = V2DOT(AtoP, AtoB) / MAG2SQ(AtoB);
 
     if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
 	return -2;
@@ -2022,8 +2023,8 @@ bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_
 
 
     /* Check proximity to endpoint A */
-    VSUB2_2D(PtoA, p, a);
-    if ((P_A_sq = MAGSQ_2D(PtoA)) < tol->dist_sq) {
+    V2SUB2(PtoA, p, a);
+    if ((P_A_sq = MAG2SQ(PtoA)) < tol->dist_sq) {
 	/* P is within the tol->dist radius circle around A */
 	V2MOVE(pca, a);
 	if (bu_debug & BU_DEBUG_MATH) bu_log("  at A\n");
@@ -2032,8 +2033,8 @@ bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_
     }
 
     /* Check proximity to endpoint B */
-    VSUB2_2D(PtoB, p, b);
-    if ((P_B_sq = MAGSQ_2D(PtoB)) < tol->dist_sq) {
+    V2SUB2(PtoB, p, b);
+    if ((P_B_sq = MAG2SQ(PtoB)) < tol->dist_sq) {
 	/* P is within the tol->dist radius circle around B */
 	V2MOVE(pca, b);
 	if (bu_debug & BU_DEBUG_MATH) bu_log("  at B\n");
@@ -2041,13 +2042,13 @@ bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_
 	return 2;
     }
 
-    VSUB2_2D(AtoB, b, a);
-    B_A = sqrt(MAGSQ_2D(AtoB));
+    V2SUB2(AtoB, b, a);
+    B_A = sqrt(MAG2SQ(AtoB));
 
     /* compute distance (in actual units) along line to PROJECTION of
      * point p onto the line: point pca
      */
-    t = VDOT_2D(PtoA, AtoB) / B_A;
+    t = V2DOT(PtoA, AtoB) / B_A;
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_dist_pt3_lseg3() B_A=%g, t=%g\n",
 	       B_A, t);
@@ -2216,8 +2217,8 @@ bn_dist_pt2_along_line2(const fastf_t *p, const fastf_t *d, const fastf_t *x)
     vect_t x_p;
     double ret;
 
-    VSUB2_2D(x_p, x, p);
-    ret = VDOT_2D(x_p, d);
+    V2SUB2(x_p, x, p);
+    ret = V2DOT(x_p, d);
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_dist_pt2_along_line2() p=(%g, %g), d=(%g, %g), x=(%g, %g) ret=%g\n",
 	       V2ARGS(p),
@@ -2481,26 +2482,30 @@ bn_isect_lseg_rpp(fastf_t *a,
 
     for (i=0; i < 3; i++, pt++, dir++, max++, min++) {
 	if (*dir < -SQRT_SMALL_FASTF) {
-	    if ((sv = (*min - *pt) / *dir) < 0.0)
+	    sv = (*min - *pt) / *dir;
+	    if (sv < 0.0)
 		return 0;	/* MISS */
-	    if (maxdist > sv)
-		maxdist = sv;
-	    if (mindist < (st = (*max - *pt) / *dir))
-		mindist = st;
+
+	    st = (*max - *pt) / *dir;
+	    V_MAX(mindist, st);
+	    V_MIN(maxdist, sv);
+
 	}  else if (*dir > SQRT_SMALL_FASTF) {
-	    if ((st = (*max - *pt) / *dir) < 0.0)
+	    st = (*max - *pt) / *dir;
+	    if (st < 0.0)
 		return 0;	/* MISS */
-	    if (maxdist > st)
-		maxdist = st;
-	    if (mindist < ((sv = (*min - *pt) / *dir)))
-		mindist = sv;
+
+	    sv = (*min - *pt) / *dir;
+	    V_MAX(mindist, sv);
+	    V_MIN(maxdist, st);
+
 	} else {
 	    /* If direction component along this axis is NEAR 0,
 	     * (i.e., this ray is aligned with this axis), merely
 	     * check against the boundaries.
 	     */
 	    if ((*min > *pt) || (*max < *pt))
-		return 0;	/* MISS */;
+		return 0;	/* MISS */
 	}
     }
     if (mindist >= maxdist)
@@ -2513,10 +2518,8 @@ bn_isect_lseg_rpp(fastf_t *a,
 	return 1;	/* HIT within box, no clipping needed */
 
     /* Don't grow one end of a contained segment */
-    if (mindist < 0)
-	mindist = 0;
-    if (maxdist > 1)
-	maxdist = 1;
+    V_MAX(mindist, 0);
+    V_MIN(maxdist, 1);
 
     /* Compute actual intercept points */
     VJOIN1(b, a, maxdist, diff);		/* b must go first */

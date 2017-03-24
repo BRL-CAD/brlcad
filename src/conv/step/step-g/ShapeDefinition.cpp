@@ -1,7 +1,7 @@
 /*                 ShapeDefinition.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ ShapeDefinition::GetProductDefinitionRelationship() {
 }
 */
 bool
-ShapeDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
+ShapeDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
 
     if (definition == NULL) {
@@ -76,14 +76,17 @@ ShapeDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
 	    SdaiProduct_definition_shape *pds = *v;
 	    type = ShapeDefinition::PRODUCT_DEFINITION_SHAPE;
 	    definition = dynamic_cast<ProductDefinitionShape *>(Factory::CreateObject(sw, (SDAI_Application_instance *)pds));
+	    if (!definition) return false;
 	} else if (v->IsShape_aspect()) {
 	    SdaiShape_aspect *sa = *v;
 	    type = ShapeDefinition::SHAPE_ASPECT;
 	    definition = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sa));
+	    if (!definition) return false;
 	} else if (v->IsShape_aspect_relationship()) {
 	    SdaiShape_aspect_relationship *sar = *v;
 	    type = ShapeDefinition::SHAPE_ASPECT_RELATIONSHIP;
 	    definition = dynamic_cast<ShapeAspectRelationship *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sar));
+	    if (!definition) return false;
 	} else {
 	    type = ShapeDefinition::UNKNOWN;
 	    definition = NULL;

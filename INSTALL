@@ -1,8 +1,6 @@
 The Installation Guide to BRL-CAD
 =================================
 
-Please read this document if you are interested in installing BRL-CAD.
-
 This document covers the basics of installing BRL-CAD from either a
 source or binary distribution.  Please see the 'Reporting Problems'
 section if you run into any trouble installing BRL-CAD.
@@ -450,27 +448,6 @@ permissions).
 Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
 
 
---- BRLCAD_REGEX ---
-
-Option for enabling and disabling compilation of the Regular
-Expression Library provided with BRL-CAD's source distribution.
-Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
-and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_REGEX
-
-
---- BRLCAD_ZLIB ---
-
-Option for enabling and disabling compilation of the zlib library
-provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
-
-
 --- BRLCAD_LEMON ---
 
 Option for enabling and disabling compilation of the lemon parser
@@ -502,6 +479,17 @@ AUTO.  perplex requires a working re2c.
 Aliases:  ENABLE_PERPLEX
 
 
+--- BRLCAD_ASTYLE ---
+
+Option for enabling and disabling compilation of the Artistic Style
+(astyle) utility provided with BRL-CAD's source distribution.  Default is
+AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_ASTYLE
+
+
 --- BRLCAD_XSLTPROC ---
 
 Option for enabling and disabling compilation of the xsltproc XML
@@ -525,6 +513,48 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_XMLLINT
 
 
+--- BRLCAD_REGEX ---
+
+Option for enabling and disabling compilation of the Regular
+Expression Library provided with BRL-CAD's source distribution.
+Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
+and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+
+Aliases:  ENABLE_REGEX
+
+
+--- BRLCAD_ZLIB ---
+
+Option for enabling and disabling compilation of the zlib library
+provided with BRL-CAD's source distribution.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
+
+
+--- BRLCAD_TINYCTHREAD ---
+
+Option for enabling and disabling compilation of the tinycthread library
+provided with BRL-CAD's source distribution.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_TINYCTHREAD
+
+
+--- BRLCAD_LZ4 ---
+
+Option for enabling and disabling compilation of the lz4 data
+compression library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+
+Aliases:  ENABLE_LZ4
+
+
 --- BRLCAD_TERMLIB ---
 
 Option for enabling and disabling compilation of the termlib library
@@ -535,6 +565,16 @@ AUTO. (Except when building with Visual Studio, where it is
 disabled. Windows does not support the termlib API.)
 
 Aliases:  ENABLE_TERMLIB
+
+
+--- BRLCAD_NETPBM ---
+
+Option for enabling and disabling compilation of the netpbm library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_NETPBM
 
 
 --- BRLCAD_PNG ---
@@ -671,6 +711,16 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_OPENNURBS
 
 
+--- BRLCAD_SPR ---
+
+Option for enabling and disabling compilation of the PoissonRecon library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_SPR
+
+
 --- BRLCAD_SC ---
 
 Option for enabling and disabling compilation of the NIST Step Class
@@ -692,6 +742,16 @@ AUTO.
 Aliases:  ENABLE_VDS
 
 
+--- BRLCAD_OSG ---
+
+Option for enabling and disabling compilation of the OpenSceneGraph
+libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_OPENSCENEGRAPH
+
+
 --- BRLCAD_GDIAM ---
 
 Option for enabling and disabling compilation of the libgdiam approximate
@@ -703,15 +763,15 @@ AUTO.
 Aliases:  ENABLE_GDIAM
 
 
---- BRLCAD_ASTYLE ---
+--- BRLCAD_BULLET ---
 
-Option for enabling and disabling compilation of the Artistic Style
-(astyle) utility provided with BRL-CAD's source distribution.  Default is
-AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+Option for enabling and disabling compilation of the Bullet Realtime
+Physics Simulation Libraries provided with BRL-CAD's source
+distribution.  Default is AUTO, responsive to the toplevel
+BRLCAD_BUNDLED_LIBS option and testing first for a system version
+if BRLCAD_BUNDLED_LIBS is also AUTO.
 
-Aliases:  ENABLE_ASTYLE
+Aliases:  ENABLE_BULLET
 
 
 

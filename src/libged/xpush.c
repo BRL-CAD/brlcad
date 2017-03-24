@@ -1,7 +1,7 @@
 /*                         X P U S H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
 
@@ -43,7 +42,7 @@ struct object_use
 
 
 static void
-increment_uses(struct db_i *UNUSED(db_ip), struct directory *dp, genptr_t UNUSED(ptr))
+increment_uses(struct db_i *UNUSED(db_ip), struct directory *dp, void *UNUSED(ptr))
 {
     RT_CK_DIR(dp);
 
@@ -52,7 +51,7 @@ increment_uses(struct db_i *UNUSED(db_ip), struct directory *dp, genptr_t UNUSED
 
 
 static void
-increment_nrefs(struct db_i *UNUSED(db_ip), struct directory *dp, genptr_t UNUSED(ptr))
+increment_nrefs(struct db_i *UNUSED(db_ip), struct directory *dp, void *UNUSED(ptr))
 {
     RT_CK_DIR(dp);
 
@@ -66,19 +65,34 @@ Free_uses(struct db_i *dbip)
     int i;
 
     for (i = 0; i <RT_DBNHASH; i++) {
-	struct directory *dp;
+	struct directory *dp, *nextdp;
 	struct object_use *use;
 
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL;) {
+	    nextdp = dp->d_forw;
+
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB))) {
+		dp = nextdp;
 		continue;
+	    }
 
 	    while (BU_LIST_NON_EMPTY(&dp->d_use_hd)) {
 		use = BU_LIST_FIRST(object_use, &dp->d_use_hd);
 		if (!use->used) {
+		    if (UNLIKELY(use->dp == nextdp)) {
+			/* Handle the incredibly unlikely case where
+			 * the name of a use of the original dp not
+			 * only hashes to the same bin, but is the
+			 * very next item in it, meaning that nextdp
+			 * would be invalid on the next iteration
+			 * (leading us to iterate over the directory
+			 * free list and skip the rest of this bin).
+			 */
+			nextdp = use->dp->d_forw;
+		    }
 		    if (use->dp->d_un.file_offset >= 0) {
 			/* was written to disk */
-			if(db_delete(dbip, use->dp) != 0)
+			if (db_delete(dbip, use->dp) != 0)
 			    bu_log("Free_uses: db_delete failure!\n");
 		    }
 		    if (db_dirdelete(dbip, use->dp) < 0) {
@@ -86,9 +100,9 @@ Free_uses(struct db_i *dbip)
 		    }
 		}
 		BU_LIST_DEQUEUE(&use->l);
-		bu_free((genptr_t)use, "Free_uses: use");
+		bu_free((void *)use, "Free_uses: use");
 	    }
-
+	    dp = nextdp;
 	}
     }
 
@@ -98,7 +112,7 @@ Free_uses(struct db_i *dbip)
 static void
 Make_new_name(struct db_i *dbip,
 	      struct directory *dp,
-	      genptr_t ptr)
+	      void *ptr)
 {
     struct object_use *use;
     int use_no;
@@ -175,7 +189,7 @@ Make_new_name(struct db_i *dbip,
 	    }
 
 	    /* Add new name to directory */
-	    use->dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&dp->d_minor_type);
+	    use->dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, dp->d_flags, (void *)&dp->d_minor_type);
 	    if (use->dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "\nAn error has occurred while adding a new object to the database.\n"); \
 		return;
@@ -194,7 +208,7 @@ Make_new_name(struct db_i *dbip,
 static struct directory *Copy_object(struct ged *gedp, struct directory *dp, mat_t xform);
 
 static void
-Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
+Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
     struct directory *dp;
     struct directory *dp_new;
@@ -338,7 +352,7 @@ Copy_comb(struct ged *gedp,
     /* copy members */
     if (comb->tree)
 	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_copy_membs,
-			 (genptr_t)xform, (genptr_t)gedp, (genptr_t)0, (genptr_t)NULL);
+			 (void *)xform, (void *)gedp, (void *)0, (void *)NULL);
 
     /* Get a use of this object */
     found = RT_DIR_NULL;
@@ -387,7 +401,7 @@ Copy_object(struct ged *gedp,
 
 
 static void
-Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
+Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *UNUSED(user_ptr1), void *UNUSED(user_ptr2), void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
     struct directory *dp;
 
@@ -403,7 +417,7 @@ Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree
 
 static struct directory *Copy_object(struct ged *gedp, struct directory *dp, fastf_t *xform);
 
-static void Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3, genptr_t UNUSED(user_ptr4));
+static void Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4));
 
 
 int
@@ -414,7 +428,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal *comb;
     struct bu_ptbl tops;
     mat_t xform;
-    int i;
+    size_t i;
     static const char *usage = "object";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -478,7 +492,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    if (comb->tree)
 		db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_ref_incr,
-				 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+				 (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL);
 	    rt_db_free_internal(&intern);
 	}
     }
@@ -513,7 +527,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* accurately count references in entire model */
-    for (i = 0; i < BU_PTBL_END(&tops); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&tops); i++) {
 	struct directory *dp;
 
 	dp = (struct directory *)BU_PTBL_GET(&tops, i);
@@ -524,7 +538,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     bu_ptbl_free(&tops);
 
     /* Make new names */
-    db_functree(gedp->ged_wdbp->dbip, old_dp, Make_new_name, Make_new_name, &rt_uniresource, (genptr_t)gedp);
+    db_functree(gedp->ged_wdbp->dbip, old_dp, Make_new_name, Make_new_name, &rt_uniresource, (void *)gedp);
 
     MAT_IDN(xform);
 
@@ -543,7 +557,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_copy_membs,
-		     (genptr_t)xform, (genptr_t)gedp, (genptr_t)0, (genptr_t)NULL);
+		     (void *)xform, (void *)gedp, (void *)0, (void *)NULL);
 
     if (rt_db_put_internal(old_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal failed for %s\n", old_dp->d_namep);

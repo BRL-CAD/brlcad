@@ -2,7 +2,7 @@ if(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
   add_subdirectory(win32-msvc)
 endif(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
 
-set(prefix ${CMAKE_INSTALL_PREFIX})
+set(prefix "${CMAKE_INSTALL_PREFIX}")
 set(exec_prefix "\${prefix}")
 set(libdir "\${exec_prefix}/lib")
 set(includedir "\${prefix}/include")
@@ -12,6 +12,7 @@ set(datadir "\${datarootdir}")
 add_subdirectory(pkgconfig)
 add_subdirectory(perl)
 add_subdirectory(attributes)
+add_subdirectory(opencl-raytracer-tests)
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
   configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/misc/brlcad-config @ONLY)
@@ -44,41 +45,22 @@ set(density_DATAFILES
   )
 BRLCAD_ADDDATA(density_DATAFILES data)
 
+BRLCAD_ADDDATA(profont/ProFont.ttf fonts)
+
 BRLCAD_ADDDATA(nsis/brlcad.ico icons)
 BRLCAD_ADDDATA(nsis/archer.ico icons)
 
 if(DOXYGEN_FOUND)
-  configure_file(doxygen/Doxyfile.in ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile @ONLY)
-  add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
-    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-    )
-  add_custom_target(dox     DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
-  add_custom_target(doxygen DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
-
-  configure_file(doxygen/DoxyfileLibs.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs @ONLY)
-  configure_file(doxygen/DoxyfileLibs-defaults.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs-defaults @ONLY)
-  add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output_libs/html/index.html
-    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-    )
-  add_custom_target(libdox DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output_libs/html/index.html)
-
+  add_subdirectory(doxygen)
+else(DOXYGEN_FOUND)
+  set(misc_ignore_files doxygen)
 endif(DOXYGEN_FOUND)
 
 set(misc_ignore_files
+  ${misc_ignore_files}
+  Bullet_Box_Chain_Demo.cpp
   CMake
   Description.txt
-  doxygen/Doxyfile.in
-  doxygen/doxygen_intro.h
-  doxygen/doxygen_structure_libbu.h
-  doxygen/doxygen_structure_libbn.h
-  doxygen/doxygen_structure
-  doxygen/DoxyfileLibs.in
-  doxygen/DoxyfileLibs-defaults.in
-  doxygen/doxygen_structure_libs.txt
   Makefile.defs
   archlinux
   astyle.opt
@@ -86,14 +68,24 @@ set(misc_ignore_files
   batch-indent-region.el
   brlcad-config.in
   brlcad.spec.in
+  clang-static-analyzer-run.sh
+  d-bindings
   debian
   flawfinder
   jove.emacs
   macosx
+  mime.types
+  mime_cad.types
   nsis
+  osl_shaders
+  profont/LICENSE
+  profont/profont-IIx-charmap.png
+  profont/profont_IIx_readme.pdf
+  profont/readme.txt
   svn2git
+  uncpowerplant2g.sh
   win32-msvc
-  osg_changes.patch
+  wix
   )
 CMAKEFILES(${misc_ignore_files})
 

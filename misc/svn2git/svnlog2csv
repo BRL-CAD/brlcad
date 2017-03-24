@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+
+# Slight tweak of script from http://stackoverflow.com/questions/2695795/exporting-subversion-log-to-csv
+
+import csv
+import subprocess
+import sys
+import xml.etree.cElementTree as etree
+import codecs
+
+log_text = subprocess.Popen(['cat', 'brlcad_full_log.xml'] + sys.argv[1:], stdout=subprocess.PIPE).communicate()[0]
+log_xml = etree.XML(log_text)
+
+csv_writer = csv.writer(sys.stdout)
+
+for child in log_xml.getchildren():
+        csv_writer.writerow([
+                child.attrib['revision'],
+                child.findtext('date'),
+                child.findtext('author'),
+                child.findtext('msg').encode("utf-8").replace("\n", "").rstrip(),
+        ])#!/usr/bin/env python

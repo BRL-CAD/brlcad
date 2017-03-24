@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,14 +24,12 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <signal.h>
 
-#include "bio.h"
 
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "ged_private.h"
 
@@ -123,17 +121,17 @@ get_3pts(struct ged *gedp, fastf_t *plane, const char *argv[], const struct bn_t
 static void
 get_rotfb(struct ged *gedp, fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 {
-    fastf_t rota, fb;
+    fastf_t rota, fb_a;
     short int i, temp;
     point_t pt;
 
     rota= atof(argv[0]) * DEG2RAD;
-    fb  = atof(argv[1]) * DEG2RAD;
+    fb_a  = atof(argv[1]) * DEG2RAD;
 
     /* calculate normal vector (length=1) from rot, fb */
-    plane[0] = cos(fb) * cos(rota);
-    plane[1] = cos(fb) * sin(rota);
-    plane[2] = sin(fb);
+    plane[0] = cos(fb_a) * cos(rota);
+    plane[1] = cos(fb_a) * sin(rota);
+    plane[2] = sin(fb_a);
 
     if (argv[2][0] == 'v') {
 	/* vertex given */

@@ -1,7 +1,7 @@
 /*                          Q R A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,8 +41,6 @@
 #define DG_QRAY_FORMAT_NULL "fmt r \"\"; fmt h \"\"; fmt p \"\"; fmt m \"\"; fmt o \"\"; fmt f \"\"; fmt g \"\""
 
 #define DG_INV_GED 0.00048828125
-#define DG_GED_MAX 2047.0
-#define DG_GED_MIN -2048.0
 
 struct qray_fmt_data {
     char type;

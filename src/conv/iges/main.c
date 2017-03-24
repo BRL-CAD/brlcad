@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,13 +30,14 @@
 /* private */
 #include "./iges_struct.h"
 #include "./iges_types.h"
-#include "brlcad_version.h"
+#include "brlcad_ident.h"
 
 
 int do_projection = 1;
 char eor, eof, card[256];
 fastf_t scale, inv_scale, conv_factor;
-int units, counter, pstart, dstart, totentities, dirarraylen;
+int units, counter, pstart, dstart;
+size_t totentities, dirarraylen;
 FILE *fd;
 struct rt_wdb *fdout;
 char brlcad_file[256];
@@ -176,7 +177,7 @@ main(int argc, char *argv [])
 		    bu_debug |= BU_DEBUG_MEM_CHECK;
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
 		break;
 	    default:
 		usage(argv[0]);

@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ typedef struct
 }
 Panel;
 
-extern FBIO *fbp;
+extern fb *fbp;
 extern RGBpixel *menu_addr;
 extern RGBpixel paint;
 extern Point cursor_pos;
@@ -85,7 +85,7 @@ extern int tty_fd;
 extern int zoom_factor;
 extern int LI, CO;
 
-extern struct vfont font;
+extern struct vfont_file font;
 
 extern Func_Tab	*get_Func_Name(char* inbuf, size_t bufsz, const char* msg);
 extern RGBpixel *get_Fb_Panel(Rect2D *rectp);

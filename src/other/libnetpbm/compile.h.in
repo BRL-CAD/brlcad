@@ -1,0 +1,2 @@
+#define COMPILE_TIME "@TIME_STAMP@"
+#define COMPILED_BY "BRL-CAD"
