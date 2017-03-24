@@ -681,7 +681,7 @@ body GeometryChecker::changeMarkOnOverlap {id tag_cmd} {
 	$_status configure -text "$_count overlaps"
     }
     if {$_markedCount > 0} {
-	$_status configure -text "[$_status configure -text] ($_markedCount marked resolved)"
+	$_status configure -text "[$_status cget -text] ($_markedCount marked resolved)"
     }
 }
 
