@@ -44,7 +44,7 @@ HIDDEN bool
 bullet_dimensions_valid(const btVector3 &extents)
 {
     const std::pair<btScalar, btScalar> bullet_limits(0.05, 10.0);
-    const unsigned tolerance_factor = 10;
+    const unsigned tolerance_factor = 100;
 
     const std::pair<btScalar, btScalar> bounds(
 	bullet_limits.first / tolerance_factor,
