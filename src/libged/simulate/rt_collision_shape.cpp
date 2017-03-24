@@ -31,8 +31,38 @@
 
 
 #include "rt_collision_shape.hpp"
+#include "utility.hpp"
 
 #include "bu/log.h"
+
+
+namespace
+{
+
+
+HIDDEN bool
+bullet_dimensions_valid(const btVector3 &extents)
+{
+    const std::pair<btScalar, btScalar> bullet_limits(0.05, 10.0);
+    const unsigned tolerance_factor = 10;
+
+    const std::pair<btScalar, btScalar> bounds(
+	bullet_limits.first / tolerance_factor,
+	bullet_limits.second * tolerance_factor);
+
+    if (extents.getX() < bounds.first || extents.getY() < bounds.first
+	|| extents.getZ() < bounds.first)
+	return false;
+
+    if (extents.getX() > bounds.second || extents.getY() > bounds.second
+	|| extents.getZ() > bounds.second)
+	return false;
+
+    return true;
+}
+
+
+}
 
 
 namespace simulate
@@ -40,22 +70,24 @@ namespace simulate
 
 
 RtCollisionShape::RtCollisionShape(const btVector3 &aabb_extents,
-				   const btVector3 &aabb_center_height) :
+				   const btVector3 &aabb_center_height,
+				   const std::string &name) :
     m_aabb_center_height(aabb_center_height),
+    m_name(name),
     m_box_shape(aabb_extents / 2.0)
 {
     m_shapeType = RT_COLLISION_SHAPE_TYPE;
 
-    for (std::size_t i = 0; i < 3; ++i)
-	if (aabb_extents[i] < 0.0)
-	    bu_bomb("invalid argument");
+    if (!bullet_dimensions_valid(aabb_extents))
+	throw InvalidSimulationError("dimensions are too extreme for Bullet at '"
+				     + m_name + "'");
 }
 
 
 const char *
 RtCollisionShape::getName() const
 {
-    return "RtCollisionShape";
+    return m_name.c_str();
 }
 
 

@@ -382,7 +382,8 @@ Simulation::Region::Region(db_i &db, const db_full_path &path,
     m_world(world),
     m_motion_state(db, path, center_of_mass),
     m_collision_shape(aabb.second - aabb.first,
-		      (aabb.first + aabb.second) / 2.0 - center_of_mass),
+		      (aabb.first + aabb.second) / 2.0 - center_of_mass,
+		      DB_FULL_PATH_CUR_DIR(&path)->d_namep),
     m_rigid_body(get_rigid_body_construction_info(m_motion_state, m_collision_shape,
 		 db, mass))
 {
