@@ -1,8 +1,8 @@
 #include "common.h"
 
-#include "simulation.hpp"
-#include "utility.hpp"
+#include "../utility.hpp"
 
+#include "ged/analyze.h"
 #include "wdb.h"
 
 
@@ -45,15 +45,15 @@ matrix_equal(const db_i &db, const std::string &path,
 HIDDEN bool
 test_basic()
 {
-    const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
-
-    if (!db.ptr)
-	bu_bomb("db_create_inmem() failed");
+    ged ged_instance;
+    const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
+    ged_init(&ged_instance);
+    ged_instance.ged_wdbp = db_create_inmem()->dbi_wdbp;
 
     {
 	const point_t center = {10.0, -3.0, 7.0};
 
-	if (mk_sph(db.ptr->dbi_wdbp, "sphere.s", center, 1.0))
+	if (mk_sph(ged_instance.ged_wdbp, "sphere.s", center, 1.0))
 	    bu_bomb("mk_sph() failed");
     }
 
@@ -61,10 +61,11 @@ test_basic()
 	const point_t min = { -1.0, -4.0, -3.0};
 	const point_t max = {6.0, 3.0, 5.0};
 
-	if (mk_rpp(db.ptr->dbi_wdbp, "base.s", min, max))
+	if (mk_rpp(ged_instance.ged_wdbp, "base.s", min, max))
 	    bu_bomb("mk_rcc() failed");
 
-	if (db5_update_attribute("base.s", "simulate::mass", "0.0", db.ptr))
+	if (db5_update_attribute("base.s", "simulate::mass", "0.0",
+				 ged_instance.ged_wdbp->dbip))
 	    bu_bomb("db5_update_attribute() failed");
     }
 
@@ -95,40 +96,31 @@ test_basic()
 	mk_addmember("sphere.s", &members.l, sphere1_matrix, WMOP_UNION);
 	mk_addmember("sphere.s", &members.l, sphere2_matrix, WMOP_UNION);
 
-	if (mk_comb(db.ptr->dbi_wdbp, "falling.c", &members.l, false, NULL, NULL, NULL,
-		    0, 0, 0, 0, false, false, false))
+	if (mk_comb(ged_instance.ged_wdbp, "falling.c", &members.l, false, NULL, NULL,
+		    NULL, 0, 0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
 
-	if (db5_update_attribute("falling.c", "simulate::type", "region", db.ptr))
+	if (db5_update_attribute("falling.c", "simulate::type", "region",
+				 ged_instance.ged_wdbp->dbip))
 	    bu_bomb("db5_update_attribute() failed");
 
 	BU_LIST_INIT(&members.l);
 	mk_addmember("base.s", &members.l, base_matrix, WMOP_UNION);
 	mk_addmember("falling.c", &members.l, NULL, WMOP_UNION);
 
-	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
-		    0, 0, 0, false, false, false))
+	if (mk_comb(ged_instance.ged_wdbp, "scene.c", &members.l, false, NULL, NULL,
+		    NULL, 0, 0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
 
 	if (db5_update_attribute("scene.c", "simulate::gravity", "<0.0, 0.0, -9.8>",
-				 db.ptr))
+				 ged_instance.ged_wdbp->dbip))
 	    bu_bomb("db5_update_attribute() failed");
     }
 
-    db_full_path path;
-    db_full_path_init(&path);
-    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+    const char *argv[] = {"simulate", "scene.c", "3.0"};
 
-    if (db_string_to_path(&path, db.ptr, "scene.c"))
-	bu_bomb("db_string_to_path() failed");
-
-    try {
-	simulate::Simulation(*db.ptr, path).step(3.0,
-		simulate::Simulation::debug_none);
-    } catch (const simulate::InvalidSimulationError &exception) {
-	bu_log("simulation failed: '%s'\n", exception.what());
-	return false;
-    }
+    if (ged_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+	bu_bomb("ged_simulate() failed");
 
     {
 	const mat_t expected_falling_matrix = {
@@ -138,8 +130,10 @@ test_basic()
 	    0.0, 0.0, 0.0, 1.0
 	};
 
-	return matrix_equal(*db.ptr, "/scene.c/base.s", base_matrix)
-	       && matrix_equal(*db.ptr, "/scene.c/falling.c", expected_falling_matrix);
+	return matrix_equal(*ged_instance.ged_wdbp->dbip, "/scene.c/base.s",
+			    base_matrix)
+	       && matrix_equal(*ged_instance.ged_wdbp->dbip, "/scene.c/falling.c",
+			       expected_falling_matrix);
     }
 }
 
@@ -147,26 +141,27 @@ test_basic()
 HIDDEN bool
 test_matrices()
 {
-    const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
-
-    if (!db.ptr)
-	bu_bomb("db_create_inmem() failed");
+    ged ged_instance;
+    const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
+    ged_init(&ged_instance);
+    ged_instance.ged_wdbp = db_create_inmem()->dbi_wdbp;
 
     {
 	const point_t center = {0.0, 0.0, 10.0};
 
-	if (mk_sph(db.ptr->dbi_wdbp, "falling.s", center, 1.0))
+	if (mk_sph(ged_instance.ged_wdbp, "falling.s", center, 1.0))
 	    bu_bomb("mk_sph() failed");
     }
 
     {
 	const point_t center = {0.0, 0.0, 0.0};
 
-	if (mk_sph(db.ptr->dbi_wdbp, "ground.s", center, 5.0))
+	if (mk_sph(ged_instance.ged_wdbp, "ground.s", center, 5.0))
 	    bu_bomb("mk_sph() failed");
     }
 
-    if (db5_update_attribute("ground.s", "simulate::mass", "0.0", db.ptr))
+    if (db5_update_attribute("ground.s", "simulate::mass", "0.0",
+			     ged_instance.ged_wdbp->dbip))
 	bu_bomb("db5_update_attribute() failed");
 
     {
@@ -174,19 +169,19 @@ test_matrices()
 	BU_LIST_INIT(&members.l);
 	mk_addmember("falling.s", &members.l, NULL, WMOP_UNION);
 
-	if (mk_comb(db.ptr->dbi_wdbp, "falling_solid.c", &members.l, false, NULL, NULL,
-		    NULL,
-		    0, 0, 0, 0, false, false, false))
+	if (mk_comb(ged_instance.ged_wdbp, "falling_solid.c", &members.l, false, NULL,
+		    NULL, NULL, 0, 0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
 
-	if (db5_update_attribute("falling_solid.c", "simulate::type", "region", db.ptr))
+	if (db5_update_attribute("falling_solid.c", "simulate::type", "region",
+				 ged_instance.ged_wdbp->dbip))
 	    bu_bomb("db5_update_attribute() failed");
 
 	BU_LIST_INIT(&members.l);
 	mk_addmember("falling_solid.c", &members.l, NULL, WMOP_UNION);
 
-	if (mk_comb(db.ptr->dbi_wdbp, "falling.c", &members.l, false, NULL, NULL, NULL,
-		    0, 0, 0, 0, false, false, false))
+	if (mk_comb(ged_instance.ged_wdbp, "falling.c", &members.l, false, NULL, NULL,
+		    NULL, 0, 0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
 
 	mat_t falling_matrix = {
@@ -200,57 +195,45 @@ test_matrices()
 	mk_addmember("falling.c", &members.l, falling_matrix, WMOP_UNION);
 	mk_addmember("ground.s", &members.l, NULL, WMOP_UNION);
 
-	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
-		    0, 0, 0, false, false, false))
+	if (mk_comb(ged_instance.ged_wdbp, "scene.c", &members.l, false, NULL, NULL,
+		    NULL, 0, 0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
     }
 
-    db_full_path path;
-    db_full_path_init(&path);
-    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+    const char *argv[] = {"simulate", "scene.c", "3.0"};
 
-    if (db_string_to_path(&path, db.ptr, "scene.c"))
-	bu_bomb("db_string_to_path() failed");
+    if (ged_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+	bu_bomb("ged_simulate() failed");
 
-    try {
-	simulate::Simulation(*db.ptr, path).step(10.0,
-		simulate::Simulation::debug_none);
-    } catch (const simulate::InvalidSimulationError &exception) {
-	bu_log("simulation failed: '%s'\n", exception.what());
-	return false;
-    }
+    const mat_t expected_falling_matrix = {
+	0.86933164646925964, 0.4453003990884265, 0.21440785283046893, -2.1362251762822551,
+	-0.4083346425446982, 0.89154023532250259, -0.19600827116279843, 1.9722702501354501,
+	-0.27843499801926619, 0.08284621363134631, 0.95687430852209765, -3.5969458076103624,
+	0.0, 0.0, 0.0, 1.0
+    };
 
-    {
-	const mat_t expected_falling_matrix = {
-	    0.86933164646925964, 0.4453003990884265, 0.21440785283046893, -2.1362251762822551,
-	    -0.4083346425446982, 0.89154023532250259, -0.19600827116279843, 1.9722702501354501,
-	    -0.27843499801926619, 0.08284621363134631, 0.95687430852209765, -3.5969458076103624,
-	    0.0, 0.0, 0.0, 1.0
-	};
-
-	return matrix_equal(*db.ptr, "/scene.c/falling.c/falling_solid.c",
-			    expected_falling_matrix);
-    }
+    return matrix_equal(*ged_instance.ged_wdbp->dbip,
+			"/scene.c/falling.c/falling_solid.c", expected_falling_matrix);
 }
 
 
 HIDDEN bool
 test_tutorial()
 {
-    const simulate::AutoPtr<db_i, db_close> db(db_create_inmem());
-
-    if (!db.ptr)
-	bu_bomb("db_create_inmem() failed");
+    ged ged_instance;
+    const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
+    ged_init(&ged_instance);
+    ged_instance.ged_wdbp = db_create_inmem()->dbi_wdbp;
 
     {
 	const point_t cube_min = { -1.0, -1.0, -1.0}, cube_max = {1.0, 1.0, 1.0};
 
-	if (mk_rpp(db.ptr->dbi_wdbp, "cube.s", cube_min, cube_max))
+	if (mk_rpp(ged_instance.ged_wdbp, "cube.s", cube_min, cube_max))
 	    bu_bomb("mk_rpp failed");
 
 	const point_t ground_min = { -15.0, -15.0, -1.0}, ground_max = {15.0, 15.0, 1.0};
 
-	if (mk_rpp(db.ptr->dbi_wdbp, "ground.s", ground_min, ground_max))
+	if (mk_rpp(ged_instance.ged_wdbp, "ground.s", ground_min, ground_max))
 	    bu_bomb("mk_rpp failed");
     }
 
@@ -262,25 +245,28 @@ test_tutorial()
 	BU_LIST_INIT(&members.l);
 	mk_addmember("cube.s", &members.l, cube_matrix, WMOP_UNION);
 
-	if (mk_comb(db.ptr->dbi_wdbp, "cube.r", &members.l, true, NULL, NULL, NULL, 0,
-		    0, 0, 0, false, false, false))
+	if (mk_comb(ged_instance.ged_wdbp, "cube.r", &members.l, true, NULL, NULL, NULL,
+		    0, 0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
     }
 
     if (db5_update_attribute("cube.r", "simulate::angular_velocity",
-			     "<2.0, -1.0, 3.0>", db.ptr))
+			     "<2.0, -1.0, 3.0>", ged_instance.ged_wdbp->dbip))
 	bu_bomb("db5_update_attribute() failed");
 
-    if (db5_update_attribute("cube.r", "simulate::type", "region", db.ptr))
+    if (db5_update_attribute("cube.r", "simulate::type", "region",
+			     ged_instance.ged_wdbp->dbip))
 	bu_bomb("db5_update_attribute() failed");
 
-    if (mk_comb1(db.ptr->dbi_wdbp, "ground.r", "ground.s", true))
+    if (mk_comb1(ged_instance.ged_wdbp, "ground.r", "ground.s", true))
 	bu_bomb("mk_comb1() failed");
 
-    if (db5_update_attribute("ground.r", "simulate::type", "region", db.ptr))
+    if (db5_update_attribute("ground.r", "simulate::type", "region",
+			     ged_instance.ged_wdbp->dbip))
 	bu_bomb("db5_update_attribute() failed");
 
-    if (db5_update_attribute("ground.r", "simulate::mass", "0.0", db.ptr))
+    if (db5_update_attribute("ground.r", "simulate::mass", "0.0",
+			     ged_instance.ged_wdbp->dbip))
 	bu_bomb("db5_update_attribute() failed");
 
     {
@@ -289,25 +275,15 @@ test_tutorial()
 	mk_addmember("cube.r", &members.l, NULL, WMOP_UNION);
 	mk_addmember("ground.r", &members.l, NULL, WMOP_UNION);
 
-	if (mk_comb(db.ptr->dbi_wdbp, "scene.c", &members.l, false, NULL, NULL, NULL, 0,
-		    0, 0, 0, false, false, false))
+	if (mk_comb(ged_instance.ged_wdbp, "scene.c", &members.l, false, NULL, NULL,
+		    NULL, 0, 0, 0, 0, false, false, false))
 	    bu_bomb("mk_comb() failed");
     }
 
-    db_full_path path;
-    db_full_path_init(&path);
-    const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
+    const char *argv[] = {"simulate", "scene.c", "10.0"};
 
-    if (db_string_to_path(&path, db.ptr, "scene.c"))
-	bu_bomb("db_string_to_path() failed");
-
-    try {
-	simulate::Simulation(*db.ptr, path).step(10.0,
-		simulate::Simulation::debug_none);
-    } catch (const simulate::InvalidSimulationError &exception) {
-	bu_log("simulation failed: '%s'\n", exception.what());
-	return false;
-    }
+    if (ged_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+	bu_bomb("ged_simulate() failed");
 
     {
 	const mat_t expected_cube_matrix = {
@@ -317,7 +293,8 @@ test_tutorial()
 	    0.0, 0.0, 0.0, 1.0
 	};
 
-	return matrix_equal(*db.ptr, "/scene.c/cube.r", expected_cube_matrix);
+	return matrix_equal(*ged_instance.ged_wdbp->dbip, "/scene.c/cube.r",
+			    expected_cube_matrix);
     }
 }
 

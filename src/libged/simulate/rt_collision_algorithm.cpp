@@ -161,6 +161,9 @@ get_rays(const btRigidBody &body_a, const btRigidBody &body_b,
     const btScalar radius = (aabb_overlap.second - aabb_overlap.first).length() /
 			    2.0;
 
+    if (NEAR_ZERO(radius, RT_LEN_TOL))
+	bu_bomb("zero radius");
+
     // step back from the overlap center, along the normal by `radius`,
     // to ensure that rays start from outside of the overlap region
     const btVector3 center = (aabb_overlap.first + aabb_overlap.second) / 2.0 -
