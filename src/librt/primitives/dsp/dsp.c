@@ -210,25 +210,52 @@ static const vect_t dsp_pl[BBOX_PLANES] = {
 };
 
 
-/**
- * This function computes the DSP mtos matrix from the stom matrix
- * whenever the stom matrix is parsed using a bu_structparse.
- */
 HIDDEN void
-hook_mtos_from_stom(
-    const struct bu_structparse *sp,
-    const char *sp_name,
-    void *base,
-    const char *UNUSED(p),
-    void *UNUSED(data))
+hook_verify(const struct bu_structparse *sp,
+	    const char *sp_name,
+	    void *base,
+	    const char *UNUSED(p),
+	    void *UNUSED(data))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
-    if (!sp) return;
-    if (!sp_name) return;
-    if (!base) return;
+    if (!sp || !sp_name || !base) return;
 
-    bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
+    if (BU_STR_EQUAL(sp_name, "src")) {
+	switch (dsp_ip->dsp_datasrc) {
+	    case RT_DSP_SRC_V4_FILE:
+	    case RT_DSP_SRC_FILE:
+	    case RT_DSP_SRC_OBJ:
+		break;
+	    default:
+		bu_log("Error in DSP data source field s/b one of [%c%c%c]\n",
+		       RT_DSP_SRC_V4_FILE,
+		       RT_DSP_SRC_FILE,
+		       RT_DSP_SRC_OBJ);
+		break;
+	}
+
+    } else if (BU_STR_EQUAL(sp_name, "w")) {
+	if (dsp_ip->dsp_xcnt == 0)
+	    bu_log("Error in DSP width dimension (0)\n");
+    } else if (BU_STR_EQUAL(sp_name, "n")) {
+	if (dsp_ip->dsp_ycnt == 0)
+	    bu_log("Error in DSP width dimension (0)\n");
+    } else if (BU_STR_EQUAL(sp_name, "cut")) {
+	switch (dsp_ip->dsp_cuttype) {
+	    case DSP_CUT_DIR_ADAPT:
+	    case DSP_CUT_DIR_llUR:
+	    case DSP_CUT_DIR_ULlr:
+		break;
+	    default:
+		bu_log("Error in DSP cut type: %c s/b one of [%c%c%c]\n",
+		       dsp_ip->dsp_cuttype,
+		       DSP_CUT_DIR_ADAPT,
+		       DSP_CUT_DIR_llUR,
+		       DSP_CUT_DIR_ULlr);
+		break;
+	}
+    }
 }
 
 
@@ -246,32 +273,36 @@ hook_file(
     if (!sp_name) return;
     if (!base) return;
 
-    dsp_ip->dsp_datasrc = RT_DSP_SRC_V4_FILE;
+    dsp_ip->dsp_datasrc = RT_DSP_SRC_FILE;
     dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
 }
 
 
 #define DSP_O(m) bu_offsetof(struct rt_dsp_internal, m)
 
+
 /** only used when editing a v4 database */
-const struct bu_structparse rt_dsp_parse[] = {
+const struct bu_structparse dsp_v4_parse[] = {
     {"%V",	1, "file", DSP_O(dsp_name), hook_file, NULL, NULL },
-    {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",     16, "stom", DSP_O(dsp_stom), hook_mtos_from_stom, NULL, NULL },
-    {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
-
-
-/** only used when editing a v4 database */
-const struct bu_structparse rt_dsp_ptab[] = {
-    {"%V",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",     16, "stom", DSP_O(dsp_stom), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+
+/* only used on v5 database */
+const struct bu_structparse rt_dsp_parse[] = {
+    {"%V",  1, "file", DSP_O(dsp_name), hook_file, NULL, NULL },
+    {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify, NULL, NULL },
+    {"%d",  1, "w",  DSP_O(dsp_xcnt), hook_verify, NULL, NULL },
+    {"%d",  1, "n",  DSP_O(dsp_ycnt), hook_verify, NULL, NULL },
+    {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c",  1, "cut", DSP_O(dsp_cuttype), hook_verify, NULL, NULL },
+    {"%f", 16, "stom", DSP_O(dsp_stom), hook_verify, NULL, NULL },
+    {"",    0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -563,8 +594,6 @@ dsp_print_v5(struct bu_vls *vls,
 
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
-	    bu_vls_printf(vls, "  Error Error Error");
-	    break;
 	case RT_DSP_SRC_FILE:
 	    bu_vls_printf(vls, "  file");
 	    break;
@@ -572,7 +601,7 @@ dsp_print_v5(struct bu_vls *vls,
 	    bu_vls_printf(vls, "  obj");
 	    break;
 	default:
-	    bu_vls_printf(vls, "unk src type'%c'", dsp_ip->dsp_datasrc);
+	    bu_vls_printf(vls, "unknown DSP data source type '%c'", dsp_ip->dsp_datasrc);
 	    break;
     }
 
@@ -3541,8 +3570,8 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     RT_DSP_CK_MAGIC(dsp_ip);
 
     switch (dsp_ip->dsp_datasrc) {
-	case RT_DSP_SRC_FILE:
 	case RT_DSP_SRC_V4_FILE:
+	case RT_DSP_SRC_FILE:
 	    if (!dsp_ip->dsp_mp) {
 		bu_log("WARNING: Cannot find data file for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
@@ -4174,8 +4203,8 @@ dsp_get_data(struct rt_dsp_internal *dsp_ip, const mat_t mat, const struct db_i 
     p = bu_vls_addr(&dsp_ip->dsp_name);
 
     switch (dsp_ip->dsp_datasrc) {
-	case RT_DSP_SRC_FILE:
 	case RT_DSP_SRC_V4_FILE:
+	case RT_DSP_SRC_FILE:
 	    /* Retrieve the data from an external file */
 	    if (RT_G_DEBUG & DEBUG_HF)
 		bu_log("getting data from file \"%s\"\n", p);
@@ -4283,7 +4312,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     if (RT_G_DEBUG & DEBUG_HF) {
 	bu_vls_trunc(&str, 0);
-	bu_vls_struct_print(&str, rt_dsp_ptab, (char *)dsp_ip);
+	bu_vls_struct_print(&str, dsp_v4_parse, (char *)dsp_ip);
 	bu_log("  imported as(%s)\n", bu_vls_addr(&str));
 
     }
@@ -4329,7 +4358,7 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
      */
     dsp.dsp_stom[15] *= local2mm;
 
-    bu_vls_struct_print(&str, rt_dsp_ptab, (char *)&dsp);
+    bu_vls_struct_print(&str, dsp_v4_parse, (char *)&dsp);
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_export4_v4(%s)\n", bu_vls_addr(&str));
 
@@ -4638,68 +4667,6 @@ rt_dsp_ifree(struct rt_db_internal *ip)
 }
 
 
-HIDDEN void
-hook_verify(const struct bu_structparse *sp,
-	    const char *sp_name,
-	    void *base,
-	    const char *UNUSED(p),
-	    void *UNUSED(data))
-{
-    struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
-
-    if (!sp || !sp_name || !base) return;
-
-    if (BU_STR_EQUAL(sp_name, "src")) {
-	switch (dsp_ip->dsp_datasrc) {
-	    case RT_DSP_SRC_V4_FILE:
-	    case RT_DSP_SRC_FILE:
-	    case RT_DSP_SRC_OBJ:
-		break;
-	    default:
-		bu_log("Error in DSP data source field s/b one of [%c%c%c]\n",
-		       RT_DSP_SRC_V4_FILE,
-		       RT_DSP_SRC_FILE,
-		       RT_DSP_SRC_OBJ);
-		break;
-	}
-
-    } else if (BU_STR_EQUAL(sp_name, "w")) {
-	if (dsp_ip->dsp_xcnt == 0)
-	    bu_log("Error in DSP width dimension (0)\n");
-    } else if (BU_STR_EQUAL(sp_name, "n")) {
-	if (dsp_ip->dsp_ycnt == 0)
-	    bu_log("Error in DSP width dimension (0)\n");
-    } else if (BU_STR_EQUAL(sp_name, "cut")) {
-	switch (dsp_ip->dsp_cuttype) {
-	    case DSP_CUT_DIR_ADAPT:
-	    case DSP_CUT_DIR_llUR:
-	    case DSP_CUT_DIR_ULlr:
-		break;
-	    default:
-		bu_log("Error in DSP cut type: %c s/b one of [%c%c%c]\n",
-		       dsp_ip->dsp_cuttype,
-		       DSP_CUT_DIR_ADAPT,
-		       DSP_CUT_DIR_llUR,
-		       DSP_CUT_DIR_ULlr);
-		break;
-	}
-    }
-}
-
-
-const struct bu_structparse fake_dsp_printab[] = {
-    {"%V",  1, "file", DSP_O(dsp_name), hook_file, NULL, NULL },
-    {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify, NULL, NULL },
-    {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",  1, "w",  DSP_O(dsp_xcnt), hook_verify, NULL, NULL },
-    {"%d",  1, "n",  DSP_O(dsp_ycnt), hook_verify, NULL, NULL },
-    {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%c",  1, "cut", DSP_O(dsp_cuttype), hook_verify, NULL, NULL },
-    {"%f", 16, "stom", DSP_O(dsp_stom), hook_verify, NULL, NULL },
-    {"",    0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
-
-
 /**
  * This is the generic routine to be listed in OBJ[].ft_get for
  * those solid types which are fully described by their ft_parsetab
@@ -4730,11 +4697,11 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 
 	switch (dsp_ip->dsp_datasrc) {
 	    case RT_DSP_SRC_V4_FILE:
-		sp = rt_dsp_ptab;
+		sp = dsp_v4_parse;
 		break;
 	    case RT_DSP_SRC_FILE:
 	    case RT_DSP_SRC_OBJ:
-		sp = fake_dsp_printab;
+		sp = rt_dsp_parse;
 		break;
 	}
 
@@ -4750,11 +4717,11 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
-	    sp = rt_dsp_ptab;
+	    sp = dsp_v4_parse;
 	    break;
 	case RT_DSP_SRC_FILE:
 	case RT_DSP_SRC_OBJ:
-	    sp = fake_dsp_printab;
+	    sp = rt_dsp_parse;
 	    break;
     }
 
@@ -4787,11 +4754,11 @@ rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
-	    sp = rt_dsp_ptab;
+	    sp = dsp_v4_parse;
 	    break;
 	case RT_DSP_SRC_FILE:
 	case RT_DSP_SRC_OBJ:
-	    sp = fake_dsp_printab;
+	    sp = rt_dsp_parse;
 	    break;
     }
 

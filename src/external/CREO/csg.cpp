@@ -23,7 +23,7 @@
 
 #include "common.h"
 #include "creo-brl.h"
-
+#if 0
 /* global variables for dimension visits */
 static double radius=0.0, diameter=0.0, distance1=0.0, distance2=0.0;
 static int got_diameter=0, got_distance1=0;
@@ -693,7 +693,7 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
 
     return ret;
 }
-
+#endif
 /*
  * Local Variables:
  * mode: C

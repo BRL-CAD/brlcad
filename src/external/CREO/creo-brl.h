@@ -27,6 +27,12 @@
 #include "common.h"
 
 #include <set>
+#include <map>
+#include <vector>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
 
 #ifndef _WSTUDIO_DEFINED
 # define _WSTUDIO_DEFINED
@@ -45,6 +51,7 @@ extern "C" {
 #include <ProMessage.h>
 #include <ProMode.h>
 #include <ProNotify.h>
+#include <ProParameter.h>
 #include <ProPart.h>
 #include <ProSkeleton.h>
 #include <ProSolid.h>
@@ -88,10 +95,19 @@ extern "C" {
 #define NUM_FEAT_TYPES 314
 #define FEAT_TYPE_OFFSET 910
 
+#define MSG_FAIL 0
+#define MSG_OK 1
+#define MSG_DEBUG 2
 
 struct StrCmp {
     bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {
 	return (bu_strcmp(bu_vls_addr(str1), bu_vls_addr(str2)) < 0);
+    }
+};
+
+struct CharCmp {
+    bool operator()(char *str1, char *str2) const {
+	return (bu_strcmp(str1, str2) < 0);
     }
 };
 
@@ -117,72 +133,56 @@ struct empty_parts {
 };
 
 struct creo_conv_info {
-    ProBool do_facets_only;	/* flag to indicate no CSG should be done */
-    ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
-    ProBool do_elims;	/* flag to indicate that small features are to be eliminated */
+    /* Region ID */
+    long int reg_id;	/* region ident number (incremented with each part) */
 
-    int reg_id;	/* region ident number (incremented with each part) */
-
-    FILE *outfp;		/* output file */
+    /* File settings */
     FILE *logger;			/* log file */
     int logger_type;
+    int curr_msg_type;
+    int print_to_console;
 
+    /* units - model */
     double creo_to_brl_conv;	/* inches to mm */
     double local_tol;	/* tolerance in Pro/E units */
     double local_tol_sq;	/* tolerance squared */
 
-
+    /* facetization settings */
+    ProBool do_facets_only;	/* flag to indicate no CSG should be done */
+    ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
+    ProBool do_elims;		/* flag to indicate that small features are to be eliminated */
     double max_error;	/* (mm) maximum allowable error in facetized approximation */
     double min_error;	/* (mm) maximum allowable error in facetized approximation */
     double tol_dist;	/* (mm) minimum distance between two distinct vertices */
     double max_angle_cntrl;	/* max angle control for tessellation ( 0.0 - 1.0 ) */
     double min_angle_cntrl;	/* min angle control for tessellation ( 0.0 - 1.0 ) */
-    int max_to_min_steps;	/* number of steps between max and min */
+    long int max_to_min_steps;	/* number of steps between max and min */
     double error_increment;
     double angle_increment;
 
+    /* csg settings */
     double min_hole_diameter; /* if > 0.0, all holes features smaller than this will be deleted */
     double min_chamfer_dim;   /* if > 0.0, all chamfers with both dimensions less
          			  * than this value will be deleted */
     double min_round_radius;  /* if > 0.0, all rounds with radius less than this
          			  * value will be deleted */
 
-    int *feat_ids_to_delete; /* list of hole features to delete */
-    int feat_id_len;		/* number of available slots in the above array */
-    int feat_id_count;		/* number of hole features actually in the above list */
+    /* ------ Internal ------ */
+    struct db_i *dbip;		/* output database */
+    struct rt_wdb *wdbp;
 
-    struct bu_hash_tbl *name_hash;
-
-    struct vert_root *vert_tree_root;	/* structure for storing and searching on vertices */
-    struct vert_root *norm_tree_root;	/* structure for storing and searching on normals */
-
-    ProTriangle *part_tris;	/* list of triangles for current part */
-    int max_tri;			/* number of triangles currently malloced */
-    int curr_tri;			/* number of triangles currently being used */
-    int *part_norms;		/* list of indices into normals (matches part_tris) */
-
-    int obj_type_count[NUM_OBJ_TYPES];
-    char *obj_type[NUM_OBJ_TYPES];
-    int feat_type_count[NUM_FEAT_TYPES];
-    char *feat_type[NUM_FEAT_TYPES];
-
-    struct csg_ops *csg_root;
-    struct empty_parts *empty_parts_root;
-
-    int hole_no;   /* hole counter for unique names */
-
-    std::set<wchar_t *, WStrCmp> *done_list_part;	/* list of parts already done */
-    std::set<wchar_t *, WStrCmp> *done_list_asm;	/* list of assemblies already done */
-    std::set<struct bu_vls *, StrCmp> *brlcad_names;	/* BRL-CAD names in use */
-
-    ProCharName curr_part_name;	/* current part name */
-    ProCharName curr_asm_name;	/* current assembly name */
-    ProFeattype curr_feat_type;	/* current feature type */
+    std::set<wchar_t *, WStrCmp> *parts;	/* list of all parts in CREO hierarchy */
+    std::set<wchar_t *, WStrCmp> *assems;	/* list of all assemblies in CREO hierarchy */
+    std::map<wchar_t *, int, WStrCmp> *assem_child_cnts; /* number of solid children in a given assembly */
+    std::set<wchar_t *, WStrCmp> *empty;	/* list of all parts and assemblies in CREO that have no shape */
+    std::map<wchar_t *, struct bu_vls *, WStrCmp> *name_map;  /* CREO names to BRL-CAD names */
+    std::set<struct bu_vls *, StrCmp> *brlcad_names; /* set of active .g object names */
+    std::vector<char *> *model_parameters;     /* model parameters to use when generating .g names */
 };
 
-struct feature_data {
+struct adata {
     struct creo_conv_info *cinfo;
-    ProMdl model;
+    void *data;
 };
 
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);
@@ -193,10 +193,16 @@ extern "C" void free_csg_ops(struct creo_conv_info *);
 
 extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
 extern "C" char *get_brlcad_name(struct creo_conv_info *cinfo, char *part_name);
-extern "C" struct bu_hash_tbl *create_name_hash(struct creo_conv_info *cinfo, FILE *name_fd);
+extern "C" void find_empty_assemblies(struct creo_conv_info *);
 extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
 extern "C" int output_part(struct creo_conv_info *, ProMdl model);
+extern "C" ProError assembly_gather(ProFeature *, ProError, ProAppData);
+extern "C" ProError assembly_filter(ProFeature *, ProAppData *);
 
+extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
+
+extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
+extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 
 extern "C" ProError ShowMsg();
 

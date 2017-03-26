@@ -33,9 +33,10 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->reg_id = 1000;
 
     /* File settings */
-    cinfo->outfp=NULL;
-    cinfo->logger=NULL;
+    cinfo->logger = (FILE *)NULL;
     cinfo->logger_type=LOGGER_TYPE_NONE;
+    cinfo->curr_msg_type = MSG_DEBUG;
+    cinfo->print_to_console=1;
 
     /* units - model */
     cinfo->creo_to_brl_conv = 25.4; /* inches to mm */
@@ -57,509 +58,117 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->min_chamfer_dim=0.0;
     cinfo->min_round_radius=0.0;
 
-    /* features */
-    cinfo->feat_ids_to_delete=NULL;
-    cinfo->feat_id_len=0;
-    cinfo->feat_id_count=0;
+    cinfo->parts = new std::set<wchar_t *, WStrCmp>;
+    cinfo->assems = new std::set<wchar_t *, WStrCmp>;
+    cinfo->assem_child_cnts = new std::map<wchar_t *, int, WStrCmp>;
+    cinfo->empty = new std::set<wchar_t *, WStrCmp>;
+    cinfo->name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
+    cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
+    cinfo->model_parameters = new std::vector<char *>;
 
-    /* current part triangles */
-    cinfo->part_tris=NULL;
-    cinfo->max_tri=0;
-    cinfo->curr_tri=0;
-    cinfo->part_norms=NULL;
-
-    cinfo->hole_no=0;
-    cinfo->csg_root=NULL;
-    cinfo->empty_parts_root=NULL;
-
-	cinfo->done_list_part = new std::set<wchar_t *, WStrCmp>;
-	cinfo->done_list_asm = new std::set<wchar_t *, WStrCmp>;
-	cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
-
-
-    for ( i=0; i<NUM_OBJ_TYPES; i++ ) {
-	cinfo->obj_type_count[i] = 0;
-	cinfo->obj_type[i] = NULL;
-    }
-
-    for ( i=0; i<NUM_FEAT_TYPES; i++ ) {
-	cinfo->feat_type_count[i] = 0;
-	cinfo->feat_type[i] = NULL;
-    }
-
-    cinfo->obj_type[0] = "PRO_TYPE_UNUSED";
-    cinfo->obj_type[1] = "PRO_ASSEMBLY";
-    cinfo->obj_type[2] = "PRO_PART";
-    cinfo->obj_type[3] = "PRO_FEATURE";
-    cinfo->obj_type[4] = "PRO_DRAWING";
-    cinfo->obj_type[5] = "PRO_SURFACE";
-    cinfo->obj_type[6] = "PRO_EDGE";
-    cinfo->obj_type[7] = "PRO_3DSECTION";
-    cinfo->obj_type[8] = "PRO_DIMENSION";
-    cinfo->obj_type[11] = "PRO_2DSECTION";
-    cinfo->obj_type[12] = "PRO_PAT_MEMBER";
-    cinfo->obj_type[13] = "PRO_PAT_LEADER";
-    cinfo->obj_type[19] = "PRO_LAYOUT";
-    cinfo->obj_type[21] = "PRO_AXIS";
-    cinfo->obj_type[25] = "PRO_CSYS";
-    cinfo->obj_type[28] = "PRO_REF_DIMENSION";
-    cinfo->obj_type[32] = "PRO_GTOL";
-    cinfo->obj_type[33] = "PRO_DWGFORM";
-    cinfo->obj_type[34] = "PRO_SUB_ASSEMBLY";
-    cinfo->obj_type[37] = "PRO_MFG";
-    cinfo->obj_type[57] = "PRO_QUILT";
-    cinfo->obj_type[62] = "PRO_CURVE";
-    cinfo->obj_type[66] = "PRO_POINT";
-    cinfo->obj_type[68] = "PRO_NOTE";
-    cinfo->obj_type[69] = "PRO_IPAR_NOTE";
-    cinfo->obj_type[71] = "PRO_EDGE_START";
-    cinfo->obj_type[72] = "PRO_EDGE_END";
-    cinfo->obj_type[74] = "PRO_CRV_START";
-    cinfo->obj_type[75] = "PRO_CRV_END";
-    cinfo->obj_type[76] = "PRO_SYMBOL_INSTANCE";
-    cinfo->obj_type[77] = "PRO_DRAFT_ENTITY";
-    cinfo->obj_type[79] = "PRO_DRAFT_DATUM";
-    cinfo->obj_type[83] = "PRO_DRAFT_GROUP";
-    cinfo->obj_type[84] = "PRO_DRAW_TABLE";
-    cinfo->obj_type[92] = "PRO_VIEW";
-    cinfo->obj_type[96] = "PRO_CABLE";
-    cinfo->obj_type[105] = "PRO_REPORT";
-    cinfo->obj_type[116] = "PRO_MARKUP";
-    cinfo->obj_type[117] = "PRO_LAYER";
-    cinfo->obj_type[121] = "PRO_DIAGRAM";
-    cinfo->obj_type[133] = "PRO_SKETCH_ENTITY";
-    cinfo->obj_type[144] = "PRO_DATUM_TEXT";
-    cinfo->obj_type[145] = "PRO_ENTITY_TEXT";
-    cinfo->obj_type[147] = "PRO_DRAW_TABLE_CELL";
-    cinfo->obj_type[176] = "PRO_DATUM_PLANE";
-    cinfo->obj_type[180] = "PRO_COMP_CRV";
-    cinfo->obj_type[211] = "PRO_BND_TABLE";
-    cinfo->obj_type[240] = "PRO_PARAMETER";
-    cinfo->obj_type[305] = "PRO_DIAGRAM_OBJECT";
-    cinfo->obj_type[308] = "PRO_DIAGRAM_WIRE";
-    cinfo->obj_type[309] = "PRO_SIMP_REP";
-    cinfo->obj_type[371] = "PRO_WELD_PARAMS";
-    cinfo->obj_type[377] = "PRO_SNAP_LINE";
-    cinfo->obj_type[385] = "PRO_EXTOBJ";
-    cinfo->obj_type[500] = "PRO_EXPLD_STATE";
-    cinfo->obj_type[504] = "PRO_CABLE_LOCATION";
-    cinfo->obj_type[533] = "PRO_RELSET";
-    cinfo->obj_type[555] = "PRO_ANALYSIS";
-    cinfo->obj_type[556] = "PRO_SURF_CRV";
-    cinfo->obj_type[625] = "PRO_LOG_SRF";
-    cinfo->obj_type[622] = "PRO_SOLID_GEOMETRY";
-    cinfo->obj_type[626] = "PRO_LOG_EDG";
-    cinfo->obj_type[627] = "PRO_DESKTOP";
-    cinfo->obj_type[628] = "PRO_SYMBOL_DEFINITION";
-
-    cinfo->feat_type[0] = "PRO_FEAT_FIRST_FEAT";
-    cinfo->feat_type[911 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HOLE";
-    cinfo->feat_type[912 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHAFT";
-    cinfo->feat_type[913 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ROUND";
-    cinfo->feat_type[914 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CHAMFER";
-    cinfo->feat_type[915 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLOT";
-    cinfo->feat_type[916 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT";
-    cinfo->feat_type[917 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PROTRUSION";
-    cinfo->feat_type[918 - FEAT_TYPE_OFFSET] = "PRO_FEAT_NECK";
-    cinfo->feat_type[919 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLANGE";
-    cinfo->feat_type[920 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIB";
-    cinfo->feat_type[921 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EAR";
-    cinfo->feat_type[922 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DOME";
-    cinfo->feat_type[923 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM";
-    cinfo->feat_type[924 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LOC_PUSH";
-    cinfo->feat_type[925 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF";
-    cinfo->feat_type[926 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_AXIS";
-    cinfo->feat_type[927 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRAFT";
-    cinfo->feat_type[928 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHELL";
-    cinfo->feat_type[929 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DOME2";
-    cinfo->feat_type[930 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CORN_CHAMF";
-    cinfo->feat_type[931 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_POINT";
-    cinfo->feat_type[932 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IMPORT";
-    cinfo->feat_type[932 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IGES";
-    cinfo->feat_type[933 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COSMETIC";
-    cinfo->feat_type[934 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ETCH";
-    cinfo->feat_type[935 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MERGE";
-    cinfo->feat_type[936 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MOLD";
-    cinfo->feat_type[937 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SAW";
-    cinfo->feat_type[938 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TURN";
-    cinfo->feat_type[939 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MILL";
-    cinfo->feat_type[940 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRILL";
-    cinfo->feat_type[941 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OFFSET";
-    cinfo->feat_type[942 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_SURF";
-    cinfo->feat_type[943 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REPLACE_SURF";
-    cinfo->feat_type[944 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GROOVE";
-    cinfo->feat_type[945 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE";
-    cinfo->feat_type[946 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_QUILT";
-    cinfo->feat_type[947 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSEM_CUT";
-    cinfo->feat_type[948 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_THREAD";
-    cinfo->feat_type[949 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CURVE";
-    cinfo->feat_type[950 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SRF_MDL";
-    cinfo->feat_type[952 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WALL";
-    cinfo->feat_type[953 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEND";
-    cinfo->feat_type[954 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UNBEND";
-    cinfo->feat_type[955 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT_SMT";
-    cinfo->feat_type[956 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FORM";
-    cinfo->feat_type[957 - FEAT_TYPE_OFFSET] = "PRO_FEAT_THICKEN";
-    cinfo->feat_type[958 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEND_BACK";
-    cinfo->feat_type[959 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_NOTCH";
-    cinfo->feat_type[960 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_PUNCH";
-    cinfo->feat_type[961 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INT_UDF";
-    cinfo->feat_type[962 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPLIT_SURF";
-    cinfo->feat_type[963 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GRAPH";
-    cinfo->feat_type[964 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_PUNCH";
-    cinfo->feat_type[965 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_CUT";
-    cinfo->feat_type[966 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLATTEN";
-    cinfo->feat_type[967 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SET";
-    cinfo->feat_type[968 - FEAT_TYPE_OFFSET] = "PRO_FEAT_VDA";
-    cinfo->feat_type[969 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_FORM";
-    cinfo->feat_type[970 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_PUNCH_PNT";
-    cinfo->feat_type[971 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LIP";
-    cinfo->feat_type[972 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MANUAL";
-    cinfo->feat_type[973 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_GATHER";
-    cinfo->feat_type[974 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_TRIM";
-    cinfo->feat_type[975 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_USEVOL";
-    cinfo->feat_type[976 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LOCATION";
-    cinfo->feat_type[977 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE_SEGM";
-    cinfo->feat_type[978 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE";
-    cinfo->feat_type[979 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CSYS";
-    cinfo->feat_type[980 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CHANNEL";
-    cinfo->feat_type[937 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WIRE_EDM";
-    cinfo->feat_type[981 - FEAT_TYPE_OFFSET] = "PRO_FEAT_AREA_NIBBLE";
-    cinfo->feat_type[982 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PATCH";
-    cinfo->feat_type[983 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PLY";
-    cinfo->feat_type[984 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CORE";
-    cinfo->feat_type[985 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXTRACT";
-    cinfo->feat_type[986 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_REFINE";
-    cinfo->feat_type[987 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SILH_TRIM";
-    cinfo->feat_type[988 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPLIT";
-    cinfo->feat_type[989 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXTEND";
-    cinfo->feat_type[990 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SOLIDIFY";
-    cinfo->feat_type[991 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INTERSECT";
-    cinfo->feat_type[992 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ATTACH";
-    cinfo->feat_type[993 - FEAT_TYPE_OFFSET] = "PRO_FEAT_XSEC";
-    cinfo->feat_type[994 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_ZONE";
-    cinfo->feat_type[995 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_CLAMP";
-    cinfo->feat_type[996 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRL_GRP";
-    cinfo->feat_type[997 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ISEGM";
-    cinfo->feat_type[998 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE_COSM";
-    cinfo->feat_type[999 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPOOL";
-    cinfo->feat_type[1000 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COMPONENT";
-    cinfo->feat_type[1001 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_MERGE";
-    cinfo->feat_type[1002 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FIXSETUP";
-    cinfo->feat_type[1002 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SETUP";
-    cinfo->feat_type[1003 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLAT_PAT";
-    cinfo->feat_type[1004 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CONT_MAP";
-    cinfo->feat_type[1005 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXP_RATIO";
-    cinfo->feat_type[1006 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIP";
-    cinfo->feat_type[1007 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OPERATION";
-    cinfo->feat_type[1008 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WORKCELL";
-    cinfo->feat_type[1009 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT_MOTION";
-    cinfo->feat_type[1013 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BLD_PATH";
-    cinfo->feat_type[1013 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUSTOMIZE";
-    cinfo->feat_type[1014 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_SKETCH";
-    cinfo->feat_type[1015 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_EDGE";
-    cinfo->feat_type[1016 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_CURVE";
-    cinfo->feat_type[1017 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_SURF";
-    cinfo->feat_type[1018 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MAT_REMOVAL";
-    cinfo->feat_type[1019 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TORUS";
-    cinfo->feat_type[1020 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_SET_START";
-    cinfo->feat_type[1021 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_PNT_PNT";
-    cinfo->feat_type[1022 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_EXT";
-    cinfo->feat_type[1023 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_TRIM";
-    cinfo->feat_type[1024 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_FOLL";
-    cinfo->feat_type[1025 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_JOIN";
-    cinfo->feat_type[1026 - FEAT_TYPE_OFFSET] = "PRO_FEAT_AUXILIARY";
-    cinfo->feat_type[1027 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_LINE";
-    cinfo->feat_type[1028 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LINE_STOCK";
-    cinfo->feat_type[1029 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLD_PIPE ";
-    cinfo->feat_type[1030 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BULK_OBJECT";
-    cinfo->feat_type[1031 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHRINKAGE  ";
-    cinfo->feat_type[1032 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_JOINT ";
-    cinfo->feat_type[1033 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_BRANCH ";
-    cinfo->feat_type[1034 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_TWO_CNTR";
-    cinfo->feat_type[1035 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SUBHARNESS";
-    cinfo->feat_type[1036 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_OPTIMIZE";
-    cinfo->feat_type[1037 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DECLARE";
-    cinfo->feat_type[1038 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_POPULATE";
-    cinfo->feat_type[1039 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OPER_COMP";
-    cinfo->feat_type[1040 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MEASURE";
-    cinfo->feat_type[1041 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRAFT_LINE";
-    cinfo->feat_type[1042 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REMOVE_SURFS";
-    cinfo->feat_type[1043 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_CABLE";
-    cinfo->feat_type[1046 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ATTACH_VOLUME";
-    cinfo->feat_type[1047 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BLD_OPERATION";
-    cinfo->feat_type[1048 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_WRK_REG";
-    cinfo->feat_type[1049 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPINAL_BEND";
-    cinfo->feat_type[1050 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TWIST";
-    cinfo->feat_type[1051 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FREE_FORM";
-    cinfo->feat_type[1052 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ZONE";
-    cinfo->feat_type[1053 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELDING_ROD";
-    cinfo->feat_type[1054 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_FILLET";
-    cinfo->feat_type[1055 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_GROOVE";
-    cinfo->feat_type[1056 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_PLUG_SLOT";
-    cinfo->feat_type[1057 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_SPOT";
-    cinfo->feat_type[1058 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_SHEAR";
-    cinfo->feat_type[1059 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PATH_SEGM";
-    cinfo->feat_type[1060 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_SEGM";
-    cinfo->feat_type[1059 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_PATH";
-    cinfo->feat_type[1060 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_EXTEND";
-    cinfo->feat_type[1061 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASMCUT_COPY";
-    cinfo->feat_type[1062 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DEFORM_AREA";
-    cinfo->feat_type[1063 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_SOLID";
-    cinfo->feat_type[1064 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLAT_RIBBON_SEGM";
-    cinfo->feat_type[1065 - FEAT_TYPE_OFFSET] = "PRO_FEAT_POSITION_FOLD";
-    cinfo->feat_type[1066 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPRING_BACK";
-    cinfo->feat_type[1067 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEAM_SECTION";
-    cinfo->feat_type[1068 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHRINK_DIM";
-    cinfo->feat_type[1070 - FEAT_TYPE_OFFSET] = "PRO_FEAT_THREAD";
-    cinfo->feat_type[1071 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CONVERSION";
-    cinfo->feat_type[1072 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_MEASSTEP";
-    cinfo->feat_type[1073 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_CONSTR";
-    cinfo->feat_type[1074 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_VERIFY";
-    cinfo->feat_type[1075 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_SCAN_SET";
-    cinfo->feat_type[1076 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_FIT";
-    cinfo->feat_type[1077 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_DEVIATION";
-    cinfo->feat_type[1078 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_ZONE";
-    cinfo->feat_type[1079 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CLAMP";
-    cinfo->feat_type[1080 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PROCESS_STEP";
-    cinfo->feat_type[1081 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EDGE_BEND";
-    cinfo->feat_type[1082 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_PROF";
-    cinfo->feat_type[1083 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXPLODE_LINE";
-    cinfo->feat_type[1084 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GEOM_COPY";
-    cinfo->feat_type[1085 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ANALYSIS";
-    cinfo->feat_type[1086 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WATER_LINE";
-    cinfo->feat_type[1087 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_RMDT";
-    cinfo->feat_type[1088 - FEAT_TYPE_OFFSET] = "PRO_FEAT_VOL_SPLIT";
-    cinfo->feat_type[1089 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WLD_EDG_PREP";
-    cinfo->feat_type[1090 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_OFFSET";
-    cinfo->feat_type[1091 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_MATREM";
-    cinfo->feat_type[1092 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_COSMETIC";
-    cinfo->feat_type[1093 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_APPROACH";
-    cinfo->feat_type[1094 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_SLOT";
-    cinfo->feat_type[1095 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_SHAPE";
-    cinfo->feat_type[1096 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IPM_QUILT";
-    cinfo->feat_type[1097 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRVD";
-    cinfo->feat_type[1098 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CRN_REL";
-    cinfo->feat_type[1101 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLDBEND";
-    cinfo->feat_type[1102 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLATQLT ";
-    cinfo->feat_type[1103 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_TURN ";
-    cinfo->feat_type[1104 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GROUP_HEAD";
-    cinfo->feat_type[1211 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_PLATE";
-    cinfo->feat_type[1212 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_HOLE  ";
-    cinfo->feat_type[1213 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_CUTOUT";
-    cinfo->feat_type[1214 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_STIFFENER";
-    cinfo->feat_type[1215 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BEAM";
-    cinfo->feat_type[1216 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_ENDCUT";
-    cinfo->feat_type[1217 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_WLD_FLANGE";
-    cinfo->feat_type[1218 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_COLLAR";
-    cinfo->feat_type[1219 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_DRAW";
-    cinfo->feat_type[1220 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BRACKET";
-    cinfo->feat_type[1221 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_FOLDED_FLG";
-    cinfo->feat_type[1222 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BLOCK";
-    cinfo->feat_type[1223 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BLOCK_DEF";
-    cinfo->feat_type[1105 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FR_SYS";
-    cinfo->feat_type[1106 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_COMPT";
-    cinfo->feat_type[1107 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REFERENCE";
-    cinfo->feat_type[1108 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHELL_EXP";
-    cinfo->feat_type[1109 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FREEFORM";
-    cinfo->feat_type[1110 - FEAT_TYPE_OFFSET] = "PRO_FEAT_KERNEL ";
-    cinfo->feat_type[1111 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_PROCESS";
-    cinfo->feat_type[1112 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_REP_TMP";
-    cinfo->feat_type[1113 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INSULATION";
-    cinfo->feat_type[1114 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLD_PIP_INSUL";
-    cinfo->feat_type[1115 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_EXTRACT";
-    cinfo->feat_type[1116 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSY_MERGE";
-    cinfo->feat_type[1117 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DS_OPTIMIZE";
-    cinfo->feat_type[1118 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COMP_INTERFACE";
-    cinfo->feat_type[1119 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OLE";
-    cinfo->feat_type[1120 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TERMINATOR";
-    cinfo->feat_type[1121 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WLD_NOTCH";
-    cinfo->feat_type[1122 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSY_WLD_NOTCH";
 }
 
 extern "C" void
 creo_conv_info_free(struct creo_conv_info *cinfo)
 {
 
-    /* name_hash */
-    if ( cinfo->name_hash ) {
-	struct bu_hash_entry *entry;
-	struct bu_hash_record rec;
-
-
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "freeing name hash\n" );
-	}
-
-	entry = bu_hash_tbl_first(cinfo->name_hash, &rec);
-	while (entry) {
-	    bu_free(bu_get_hash_value(entry), "hash entry" );
-	    entry = bu_hash_tbl_next(&rec);
-	}
-	bu_hash_tbl_free(cinfo->name_hash);
-	cinfo->name_hash = (struct bu_hash_tbl *)NULL;
+    std::set<wchar_t *, WStrCmp>::iterator d_it;
+    for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
+	bu_free(*d_it, "free wchar str copy");
+    }
+    for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
+	bu_free(*d_it, "free wchar str copy");
     }
 
-    if (cinfo->done_list_part->size() > 0 ) {
-	std::set<wchar_t *, WStrCmp>::iterator d_it;
-	for (d_it = cinfo->done_list_part->begin(); d_it != cinfo->done_list_part->end(); d_it++) {
-	    bu_free(*d_it, "free wchar str copy");
-	}
+    std::set<struct bu_vls *, StrCmp>::iterator s_it;
+    for (s_it = cinfo->brlcad_names->begin(); s_it != cinfo->brlcad_names->end(); s_it++) {
+	struct bu_vls *v = *s_it;
+	bu_vls_free(v);
+	BU_PUT(v, struct bu_vls);
     }
 
-    if (cinfo->done_list_asm->size() > 0 ) {
-	std::set<wchar_t *, WStrCmp>::iterator d_it;
-	for (d_it = cinfo->done_list_asm->begin(); d_it != cinfo->done_list_asm->end(); d_it++) {
-	    bu_free(*d_it, "free wchar str copy");
-	}
-    }
+    delete cinfo->parts;
+    delete cinfo->assems;
+    delete cinfo->assem_child_cnts;
+    delete cinfo->empty; /* entries in empty were freed in parts and assems */
+    delete cinfo->brlcad_names;
+    delete cinfo->name_map; /* entries in name_map were freed in brlcad_names */
 
-    if (cinfo->part_tris) {
-	bu_free((char *)cinfo->part_tris, "part triangles" );
-	cinfo->part_tris = NULL;
-    }
-
-    if (cinfo->part_norms) {
-	bu_free((char *)cinfo->part_norms, "part normals" );
-	cinfo->part_norms = NULL;
-    }
-
-    free_vert_tree(cinfo->vert_tree_root);
-    cinfo->vert_tree_root = NULL;
-    free_vert_tree(cinfo->norm_tree_root);
-    cinfo->norm_tree_root = NULL;
-
-    /* empty parts */
-    if (cinfo->empty_parts_root) {
-	struct empty_parts *ptr, *prev;
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "Free empty parts list\n" );
-	}
-
-	ptr = cinfo->empty_parts_root;
-	while ( ptr ) {
-	    prev = ptr;
-	    ptr = ptr->next;
-	    bu_free(prev->name, "empty part node name" );
-	    bu_free(prev, "empty part node" );
-	}
-
-	cinfo->empty_parts_root = NULL;
-
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "Free empty parts list done\n" );
-	}
-    }
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Closing output file\n" );
-    }
-
-    fclose(cinfo->outfp);
-
-#if 0
-    if ( brlcad_names.size() > 0 ) {
-	std::set<struct bu_vls *, StrCmp>::iterator s_it;
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "freeing names\n" );
-	}
-	for (s_it = brlcad_names.begin(); s_it != brlcad_names.end(); s_it++) {
-	    struct bu_vls *v = *s_it;
-	    bu_vls_free(v);
-	    BU_PUT(v, struct bu_vls);
-	}
-    }
-#endif
-
-    if ( cinfo->logger_type != LOGGER_TYPE_NONE ) {
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL )
-	    fprintf( cinfo->logger, "Closing logger file\n" );
-	fclose( cinfo->logger );
-	cinfo->logger = (FILE *)NULL;
-	cinfo->logger_type = LOGGER_TYPE_NONE;
-    }
+    if (cinfo->logger) fclose(cinfo->logger);
+    wdb_close(cinfo->wdbp);
 
     /* Finally, clear the container */
     BU_PUT(cinfo, struct creo_conv_info);
 }
 
+extern "C" void
+output_parts(struct creo_conv_info *cinfo)
+{
+    wchar_t wname[10000];
+    char name[10000];
+    std::set<wchar_t *, WStrCmp>::iterator d_it;
+    for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
+	ProMdl m;
+	if (ProMdlnameInit(*d_it, PRO_MDLFILE_PART, &m) != PRO_TK_NO_ERROR) return;
+	if (ProMdlNameGet(m, wname) != PRO_TK_NO_ERROR) return;
+	(void)ProWstringToString(name, wname);
+	bu_log("Processing part %s\n", name);
+	//int solid_part = output_part(cinfo, m);
+	//if (!solid_part) cinfo->empty->insert(*d_it);
+    }
+}
+
+extern "C" void
+output_assems(struct creo_conv_info *cinfo)
+{
+    wchar_t wname[10000];
+    char name[10000];
+    std::set<wchar_t *, WStrCmp>::iterator d_it;
+    for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
+	ProMdl parent;
+	ProMdlnameInit(*d_it, PRO_MDLFILE_ASSEMBLY, &parent);
+	if (ProMdlNameGet(parent, wname) != PRO_TK_NO_ERROR) return;
+	(void)ProWstringToString(name, wname);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing assembly %s\n", name);
+	output_assembly(cinfo, parent);
+    }
+}
 
 /* routine to output the top level object that is currently displayed in Pro/E */
 extern "C" void
 output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType type )
 {
-    ProName name;
-    ProFileName msgfil;
-    ProCharName top_level;
-    ProCharLine astr;
-    char buffer[1024] = {0};
+    wchar_t wname[10000];
+    char name[10000];
+    wchar_t *wname_saved;
 
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-
-    /* get its name */
-    if ( ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) {
-	(void)ProMessageDisplay(msgfil, "USER_ERROR",
-		"Could not get name for part!!" );
-	ProMessageClear();
-	fprintf( stderr, "Could not get name for part" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	bu_strlcpy( cinfo->curr_part_name, "noname", PRO_NAME_SIZE );
-    } else {
-	(void)ProWstringToString( cinfo->curr_part_name, name );
-    }
+    /* get object name */
+    if (ProMdlNameGet( model, wname ) != PRO_TK_NO_ERROR ) return;
+    (void)ProWstringToString(name, wname);
 
     /* save name */
-    bu_strlcpy( top_level, cinfo->curr_part_name, sizeof(top_level) );
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Output top level object (%s)\n", top_level );
-    }
+    wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
+    wcsncpy(wname_saved, wname, wcslen(wname)+1);
 
     /* output the object */
     if ( type == PRO_MDL_PART ) {
 	/* tessellate part and output triangles */
-	output_part(cinfo, model);
+	cinfo->parts->insert(wname_saved);
+	output_parts(cinfo);
     } else if ( type == PRO_MDL_ASSEMBLY ) {
 	/* visit all members of assembly */
-	output_assembly(cinfo, model);
+	cinfo->assems->insert(wname_saved);
+	ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, (ProAppData)cinfo);
+	output_parts(cinfo);
+	find_empty_assemblies(cinfo);
+	output_assems(cinfo);
     } else {
-	snprintf( astr, sizeof(astr), "Object %s is neither PART nor ASSEMBLY, skipping",
-		cinfo->curr_part_name );
-	(void)ProMessageDisplay(msgfil, "USER_WARNING", astr );
-	ProMessageClear();
-	fprintf( stderr, "%s\n", astr );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	bu_log("Object %s is neither PART nor ASSEMBLY, skipping", name);
     }
 
-    if ( type == PRO_MDL_ASSEMBLY ) {
-	snprintf(buffer, 1024, "put $topname comb region no tree {l %s.c {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(cinfo, top_level) );
-    } else {
-	snprintf(buffer, 1024, "put $topname comb region no tree {l %s {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(cinfo, top_level) );
-    }
-
-    /* make a top level combination named "top", if there is not
-     * already one.  if one does already exist, try "top.#" where
-     * "#" is the first available number.  this combination
-     * contains the xform to rotate the model into BRL-CAD
-     * standard orientation.
-     */
-    fprintf(cinfo->outfp,
-	    "set topname \"top\"\n"
-	    "if { ! [catch {get $topname} ret] } {\n"
-	    "  set num 0\n"
-	    "  while { $num < 1000 } {\n"
-	    "    set topname \"top.$num\"\n"
-	    "    if { [catch {get $name} ret ] } {\n"
-	    "      break\n"
-	    "    }\n"
-	    "    incr num\n"
-	    "  }\n"
-	    "}\n"
-	    "if { [catch {get $topname} ret] } {\n"
-	    "  %s\n"
-	    "}\n",
-	    buffer
-	   );
+    /* TODO - Make a final toplevel comb with the file name to hold the orientation matrix */
+    /* xform to rotate the model into standard BRL-CAD orientation */
+    /*0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1*/
 }
 
 
@@ -573,15 +182,9 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProLine tmp_line;
     ProCharLine astr;
     ProFileName msgfil;
-    wchar_t *w_output_file;
-    wchar_t *w_name_file;
-    wchar_t *tmp_str;
-    char output_file[128];
-    char name_file[128];
-    char log_file[128];
+	wchar_t *tmp_str;
     int n_selected_names;
     char **selected_names;
-    char logger_type_str[128];
     int ret_status=0;
 
     /* This replaces the global variables used in the original Pro/E converter */
@@ -590,248 +193,35 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     ProStringToWstring( tmp_line, "Not processing" );
     status = ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
-    }
-#if 0
-    status = ProUIDialogActivate( "creo_brl", &ret_status );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
-		status );
-	fprintf( stderr, "\t dialog returned %d\n", ret_status );
-    }
-#endif
-    /* get logger type */
-    status = ProUIRadiogroupSelectednamesGet( "creo_brl", "log_file_type_rg", &n_selected_names, &selected_names );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get log file type\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-    sprintf(logger_type_str,"%s", selected_names[0]);
-    ProStringarrayFree(selected_names, n_selected_names);
 
-    /* get the name of the log file */
-    status = ProUIInputpanelValueGet( "creo_brl", "log_file", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get log file name\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-    ProWstringToString( log_file, tmp_str );
-    ProWstringFree( tmp_str );
+    /********************/
+    /*  Set up logging  */
+    /********************/
+    {
+	char log_file[128];
+	char logger_type_str[128];
 
-    /* get the name of the output file */
-    status = ProUIInputpanelValueGet( "creo_brl", "output_file", &w_output_file );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get output file name\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-    ProWstringToString( output_file, w_output_file );
-    ProWstringFree( w_output_file );
-
-    /* get the name of the part number to part name mapping file */
-    status = ProUIInputpanelValueGet( "creo_brl", "name_file", &w_name_file );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get name of part number to part name mapping file\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-    ProWstringToString( name_file, w_name_file );
-    ProWstringFree( w_name_file );
-
-    /* get starting ident */
-    status = ProUIInputpanelValueGet( "creo_brl", "starting_ident", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get starting ident\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->reg_id = atoi( astr );
-    V_MAX(cinfo->reg_id, 1);
-
-    /* get max error */
-    status = ProUIInputpanelValueGet( "creo_brl", "max_error", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get max tesellation error\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->max_error = atof( astr );
-
-    /* get min error */
-    status = ProUIInputpanelValueGet( "creo_brl", "min_error", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get min tesellation error\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->min_error = atof( astr );
-
-    V_MAX(cinfo->max_error, cinfo->min_error);
-
-    /* get the max angle control */
-    status = ProUIInputpanelValueGet( "creo_brl", "max_angle_ctrl", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get angle control\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->max_angle_cntrl = atof( astr );
-
-    /* get the min angle control */
-    status = ProUIInputpanelValueGet( "creo_brl", "min_angle_ctrl", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get angle control\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->min_angle_cntrl = atof( astr );
-
-    V_MAX(cinfo->max_angle_cntrl, cinfo->min_angle_cntrl);
-
-    /* get the max to min steps */
-    status = ProUIInputpanelValueGet( "creo_brl", "isteps", &tmp_str );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get max to min steps\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
-    ProWstringToString( astr, tmp_str );
-    ProWstringFree( tmp_str );
-    cinfo->max_to_min_steps = atoi( astr );
-    if (cinfo->max_to_min_steps <= 0) {
-	cinfo->max_to_min_steps = 0;
-	cinfo->error_increment = 0;
-	cinfo->angle_increment = 0;
-    } else {
-	if (ZERO((cinfo->max_error - cinfo->min_error)))
-	    cinfo->error_increment = 0;
-	else
-	    cinfo->error_increment = (cinfo->max_error - cinfo->min_error) / (double)cinfo->max_to_min_steps;
-
-	if (ZERO((cinfo->max_angle_cntrl - cinfo->min_angle_cntrl)))
-	    cinfo->angle_increment = 0;
-	else
-	    cinfo->angle_increment = (cinfo->max_angle_cntrl - cinfo->min_angle_cntrl) / (double)cinfo->max_to_min_steps;
-
-	if (cinfo->error_increment == 0 && cinfo->angle_increment == 0)
-	    cinfo->max_to_min_steps = 0;
-    }
-
-    /* check if user wants to do any CSG */
-    status = ProUICheckbuttonGetState( "creo_brl", "facets_only", &cinfo->do_facets_only );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get checkbutton setting (facetize only)\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
-    /* check if user wants to eliminate small features */
-    status = ProUICheckbuttonGetState( "creo_brl", "elim_small", &cinfo->do_elims );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get checkbutton setting (eliminate small features)\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
-    /* check if user wants surface normals in the BOT's */
-    status = ProUICheckbuttonGetState( "creo_brl", "get_normals", &cinfo->get_normals );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get checkbutton setting (extract surface normals)\n" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
-    if ( cinfo->do_elims ) {
-
-	/* get the minimum hole diameter */
-	status = ProUIInputpanelValueGet( "creo_brl", "min_hole", &tmp_str );
+	/* get the name of the log file */
+	status = ProUIInputpanelValueGet( "creo_brl", "log_file", &tmp_str );
 	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get minimum hole diameter\n" );
-	    ProUIDialogDestroy( "creo_brl" );
+	    fprintf(stderr, "Failed to get log file name\n");
+	    creo_conv_info_free(cinfo);
+	    ProUIDialogDestroy("creo_brl");
 	    return;
 	}
-
-	ProWstringToString( astr, tmp_str );
-	ProWstringFree( tmp_str );
-	cinfo->min_hole_diameter = atof( astr );
-	V_MAX(cinfo->min_hole_diameter, 0.0);
-
-	/* get the minimum chamfer dimension */
-	status = ProUIInputpanelValueGet( "creo_brl", "min_chamfer", &tmp_str );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get minimum chamfer dimension\n" );
-	    ProUIDialogDestroy( "creo_brl" );
-	    return;
-	}
-
-	ProWstringToString( astr, tmp_str );
-	ProWstringFree( tmp_str );
-	cinfo->min_chamfer_dim = atof( astr );
-	V_MAX(cinfo->min_chamfer_dim, 0.0);
-
-	/* get the minimum round radius */
-	status = ProUIInputpanelValueGet( "creo_brl", "min_round", &tmp_str );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get minimum round radius\n" );
-	    ProUIDialogDestroy( "creo_brl" );
-	    return;
-	}
-
-	ProWstringToString( astr, tmp_str );
-	ProWstringFree( tmp_str );
-	cinfo->min_round_radius = atof( astr );
-
-	V_MAX(cinfo->min_round_radius, 0.0);
-
-    } else {
-	cinfo->min_hole_diameter = 0.0;
-	cinfo->min_round_radius = 0.0;
-	cinfo->min_chamfer_dim = 0.0;
-    }
-
-    /* open output file */
-    if ( (cinfo->outfp=fopen( output_file, "wb" ) ) == NULL ) {
-	(void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open output file" );
-	ProMessageClear();
-	fprintf( stderr, "Cannot open output file\n" );
-	perror( "\t" );
-	ProUIDialogDestroy( "creo_brl" );
-	return;
-    }
-
-    /* open log file, if a name was provided */
-    if ( strlen( log_file ) > 0 ) {
-	if ( BU_STR_EQUAL( log_file, "stderr" ) ) {
-	    cinfo->logger = stderr;
-	} else if ( (cinfo->logger=fopen( log_file, "wb" ) ) == NULL ) {
-	    (void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open log file" );
-	    ProMessageClear();
-	    fprintf( stderr, "Cannot open log file\n" );
-	    perror( "\t" );
-	    ProUIDialogDestroy( "creo_brl" );
-	    return;
-	}
+	ProWstringToString(log_file, tmp_str);
+	ProWstringFree(tmp_str);
 
 	/* Set logger type */
+	status = ProUIRadiogroupSelectednamesGet( "creo_brl", "log_file_type_rg", &n_selected_names, &selected_names );
+	if (status != PRO_TK_NO_ERROR) {
+	    fprintf( stderr, "Failed to get log file type\n" );
+	    creo_conv_info_free(cinfo);
+	    ProUIDialogDestroy("creo_brl");
+	    return;
+	}
+	sprintf(logger_type_str,"%s", selected_names[0]);
+	ProStringarrayFree(selected_names, n_selected_names);
 	if (BU_STR_EQUAL("Failure", logger_type_str))
 	    cinfo->logger_type = LOGGER_TYPE_FAILURE;
 	else if (BU_STR_EQUAL("Success", logger_type_str))
@@ -840,125 +230,294 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    cinfo->logger_type = LOGGER_TYPE_FAILURE_OR_SUCCESS;
 	else
 	    cinfo->logger_type = LOGGER_TYPE_ALL;
-    } else {
-	cinfo->logger = (FILE *)NULL;
-	cinfo->logger_type = LOGGER_TYPE_NONE;
+
+	/* open log file, if a name was provided */
+	if (strlen(log_file) > 0) {
+	    if ((cinfo->logger=fopen(log_file, "wb")) == NULL) {
+		(void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open log file");
+		ProMessageClear();
+		fprintf(stderr, "Cannot open log file\n");
+		perror("\t");
+		creo_conv_info_free(cinfo);
+		ProUIDialogDestroy("creo_brl");
+		return;
+	    }
+	} else {
+	    cinfo->logger = (FILE *)NULL;
+	}
     }
 
-    /* open part name mapper file, if a name was provided */
-    if ( strlen( name_file ) > 0 ) {
-	FILE *name_fd;
-
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "Opening part name map file (%s)\n", name_file );
+    /**************************/
+    /* Set up the output file */
+    /**************************/
+    {
+	/* Get string from dialog */
+	char output_file[128];
+	wchar_t *w_output_file;
+	status = ProUIInputpanelValueGet("creo_brl", "output_file", &w_output_file);
+	if ( status != PRO_TK_NO_ERROR ) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get output file name\n");
+	    creo_conv_info_free(cinfo);
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
 	}
+	ProWstringToString(output_file, w_output_file);
+	ProWstringFree(w_output_file);
 
-	if ( (name_fd=fopen( name_file, "rb" ) ) == NULL ) {
+	/* Safety check - don't overwrite a pre-existing file */
+	if (bu_file_exists(output_file, NULL)) {
+	    /* TODO - wrap this up into a creo msg dialog function of some kind... */
 	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-	    int dialog_return=0;
 	    wchar_t w_error_msg[512];
-
-	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( cinfo->logger, "Failed to open part name map file (%s)\n", name_file );
-		fprintf( cinfo->logger, "%s\n", strerror( errno ) );
-	    }
-
-	    (void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open part name file" );
-	    ProMessageClear();
-	    fprintf( stderr, "Cannot open part name file\n" );
-	    perror( name_file );
-	    status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to create error dialog (%d)\n", status );
-	    }
-	    (void)ProUIPushbuttonActivateActionSet( "creo_brl_gen_error",
-		    "ok_button",
-		    kill_gen_error_dialog, NULL );
-	    bu_vls_printf( &error_msg, "\n\tCannot open part name file (%s)\n\t",
-		    name_file );
-	    bu_vls_strcat( &error_msg, strerror( errno ) );
+		int dialog_return;
+	    bu_vls_printf( &error_msg, "Cannot create file %s - file already exists.\n", output_file );
 	    ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
+	    status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
+	    (void)ProUIPushbuttonActivateActionSet( "creo_brl_gen_error", "ok_button", kill_gen_error_dialog, NULL );
 	    status = ProUITextareaValueSet( "creo_brl_gen_error", "error_message", w_error_msg );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to set message for error dialog (%d)\n", status );
-	    }
-	    bu_vls_free( &error_msg );
 	    status = ProUIDialogActivate( "creo_brl_gen_error", &dialog_return );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to activate error dialog (%d)\n", status );
-	    }
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
 	}
 
-	/* create a hash table of part numbers to part names */
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "Creating name hash\n" );
+	/* open output file */
+	if ( (cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL ) {
+	    creo_log(cinfo, MSG_FAIL, status, "Cannot open output file.\n");
+	    creo_conv_info_free(cinfo);
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
+	}
+	cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
+    }
+
+    /***********************************************************************************/
+    /* Read a user supplied list of model parameters in which to look for naming info. */
+    /***********************************************************************************/
+    {
+	/* Get string from dialog */
+	char param_file[128];
+	wchar_t *w_param_file;
+	status = ProUIInputpanelValueGet("creo_brl", "name_file", &w_param_file);
+	if ( status != PRO_TK_NO_ERROR ) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get name of model parameter specification file.\n");
+	    creo_conv_info_free(cinfo);
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
+	}
+	ProWstringToString(param_file, w_param_file);
+	ProWstringFree(w_param_file);
+
+	if (strlen(param_file) > 0) {
+	    /* Parse the file contents into a list of parameter keys */
+	    std::ifstream pfile(param_file);
+	    std::string line;
+	    if (!pfile) {
+		creo_log(cinfo, MSG_FAIL, status, "Cannot read parameter keys file.\n");
+		creo_conv_info_free(cinfo);
+		ProUIDialogDestroy( "creo_brl" );
+		return;
+	    }
+	    while (std::getline(pfile, line)) {
+		std::string pkey;
+		std::istringstream ls(line);
+		while (std::getline(ls, pkey, ',')) {
+		    /* Scrub leading and trailing whitespace */
+		    size_t startpos = pkey.find_first_not_of(" \t\n\v\f\r");
+		    if (std::string::npos != startpos) {
+			pkey = pkey.substr(startpos);
+		    }
+		    size_t endpos = pkey.find_last_not_of(" \t\n\v\f\r");
+		    if (std::string::npos != endpos) {
+			pkey = pkey.substr(0 ,endpos+1);
+		    }
+		    if (pkey.length() > 0) {
+			creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Found model parameter naming key: %s.\n", pkey.c_str());
+			cinfo->model_parameters->push_back(bu_strdup(pkey.c_str()));
+		    }
+		}
+	    }
+	}
+    }
+
+    /* get starting ident */
+    if ((status = ProUIInputpanelValueGet("creo_brl", "starting_ident", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get starting ident.\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    } else {
+	cinfo->reg_id = wstr_to_long(cinfo, tmp_str);
+	V_MAX(cinfo->reg_id, 1);
+	ProWstringFree(tmp_str);
+    }
+
+
+    /* get max error */
+    if ((status = ProUIInputpanelValueGet("creo_brl", "max_error", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get max tessellation error.\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    } else {
+	cinfo->max_error = wstr_to_double(cinfo, tmp_str);
+	ProWstringFree(tmp_str);
+    }
+
+
+    /* get min error */
+    if ((status = ProUIInputpanelValueGet("creo_brl", "min_error", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get min tessellation error.\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    } else {
+	cinfo->min_error = wstr_to_double(cinfo, tmp_str);
+	ProWstringFree(tmp_str);
+	V_MAX(cinfo->max_error, cinfo->min_error);
+    }
+
+
+    /* get the max angle control */
+    if ((status = ProUIInputpanelValueGet("creo_brl", "max_angle_ctrl", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get max angle control.\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    } else {
+	cinfo->max_angle_cntrl = wstr_to_double(cinfo, tmp_str);
+	ProWstringFree(tmp_str);
+    }
+
+
+    /* get the min angle control */
+    if ((status = ProUIInputpanelValueGet("creo_brl", "min_angle_ctrl", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get min angle control.\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    } else {
+	cinfo->min_angle_cntrl = wstr_to_double(cinfo, tmp_str);
+	ProWstringFree(tmp_str);
+	V_MAX(cinfo->max_angle_cntrl, cinfo->min_angle_cntrl);
+    }
+
+    /* get the max to min steps */
+    if ((status = ProUIInputpanelValueGet("creo_brl", "isteps", &tmp_str)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get max to min steps.\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    } else {
+	cinfo->max_to_min_steps = wstr_to_long(cinfo, tmp_str);
+	ProWstringFree(tmp_str);
+	if (cinfo->max_to_min_steps <= 0) {
+	    cinfo->max_to_min_steps = 0;
+	} else {
+	    cinfo->error_increment = (ZERO((cinfo->max_error - cinfo->min_error))) ? 0 : cinfo->error_increment = (cinfo->max_error - cinfo->min_error) / (double)cinfo->max_to_min_steps;
+	    cinfo->angle_increment = (ZERO((cinfo->max_angle_cntrl - cinfo->min_angle_cntrl))) ? 0 : (cinfo->max_angle_cntrl - cinfo->min_angle_cntrl) / (double)cinfo->max_to_min_steps;
+	    if (ZERO(cinfo->error_increment) && ZERO(cinfo->angle_increment)) cinfo->max_to_min_steps = 0;
+	}
+    }
+
+    /* check if user wants to do any CSG */
+    if ((status = ProUICheckbuttonGetState("creo_brl", "facets_only", &cinfo->do_facets_only)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get checkbutton setting (facetize only).\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    }
+
+    /* TODO - add a setting to use CREO part ID as basis for object ID, rather than querying properties */
+
+    /* check if user wants to eliminate small features */
+    if ((status = ProUICheckbuttonGetState("creo_brl", "elim_small", &cinfo->do_elims)) != PRO_TK_NO_ERROR ) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get checkbutton setting (eliminate small features).\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    }
+
+    /* check if user wants surface normals in the BOT's */
+    if ((status = ProUICheckbuttonGetState("creo_brl", "get_normals", &cinfo->get_normals)) != PRO_TK_NO_ERROR ) {
+	creo_log(cinfo, MSG_FAIL, status, "Failed to get checkbutton setting (extract surface normals).\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    }
+
+    if (cinfo->do_elims) {
+
+	/* get the minimum hole diameter */
+	if ((status = ProUIInputpanelValueGet("creo_brl", "min_hole", &tmp_str)) != PRO_TK_NO_ERROR) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get minimum hole diameter.\n");
+	    creo_conv_info_free(cinfo);
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
+	} else {
+	    cinfo->min_hole_diameter = wstr_to_double(cinfo, tmp_str);
+	    V_MAX(cinfo->min_hole_diameter, 0.0);
+	    ProWstringFree(tmp_str);
 	}
 
-	ProStringToWstring( tmp_line, "Processing part name file" );
-	status = ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
-	}
-	status = ProUIDialogActivate( "creo_brl", &ret_status );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
-		    status );
-	    fprintf( stderr, "\t dialog returned %d\n", ret_status );
+	/* get the minimum chamfer dimension */
+	if ((status = ProUIInputpanelValueGet("creo_brl", "min_chamfer", &tmp_str)) != PRO_TK_NO_ERROR) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get minimum chamfer diameter.\n");
+	    creo_conv_info_free(cinfo);
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
+	} else {
+	    cinfo->min_chamfer_dim = wstr_to_double(cinfo, tmp_str);
+	    V_MAX(cinfo->min_chamfer_dim, 0.0);
+	    ProWstringFree(tmp_str);
 	}
 
-	cinfo->name_hash = create_name_hash(cinfo, name_fd );
-	fclose( name_fd );
+	/* get the minimum round radius */
+	if ((status = ProUIInputpanelValueGet("creo_brl", "min_round", &tmp_str)) != PRO_TK_NO_ERROR) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get minimum round radius.\n");
+	    creo_conv_info_free(cinfo);
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
+	} else {
+	    cinfo->min_round_radius = wstr_to_double(cinfo, tmp_str);
+	    V_MAX(cinfo->min_round_radius, 0.0);
+	    ProWstringFree(tmp_str);
+	}
 
     } else {
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "No name hash used\n" );
-	}
-	/* create an empty hash table */
-	cinfo->name_hash = bu_hash_create( 512 );
+	cinfo->min_hole_diameter = 0.0;
+	cinfo->min_round_radius = 0.0;
+	cinfo->min_chamfer_dim = 0.0;
     }
 
     /* get the currently displayed model in Pro/E */
-    status = ProMdlCurrentGet( &model );
-    if ( status == PRO_TK_BAD_CONTEXT ) {
-	(void)ProMessageDisplay(msgfil, "USER_NO_MODEL" );
-	ProMessageClear();
-	fprintf( stderr, "No model is displayed!!\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	ProUIDialogDestroy( "creo_brl" );
+    if ((status = ProMdlCurrentGet(&model)) == PRO_TK_BAD_CONTEXT ) {
+	creo_log(cinfo, MSG_FAIL, status, "No model is displayed!!\n");
 	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
 
     /* get its type */
-    status = ProMdlTypeGet( model, &type );
-    if ( status == PRO_TK_BAD_INPUTS ) {
-	(void)ProMessageDisplay(msgfil, "USER_NO_TYPE" );
-	ProMessageClear();
-	fprintf( stderr, "Cannot get type of current model\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	ProUIDialogDestroy( "creo_brl" );
+    if ((status = ProMdlTypeGet(model, &type)) == PRO_TK_BAD_INPUTS) {
+	creo_log(cinfo, MSG_FAIL, status, "Cannot get type of current model!!\n");
 	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
 
     /* can only do parts and assemblies, no drawings, etc. */
     if ( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
-	(void)ProMessageDisplay(msgfil, "USER_TYPE_NOT_SOLID" );
-	ProMessageClear();
-	fprintf( stderr, "Current model is not a solid object\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	ProUIDialogDestroy( "creo_brl" );
+	creo_log(cinfo, MSG_FAIL, status, "Current model is not a solid object.\n");
 	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
 
+    /* TODO -verify this is working correctly */
     ProUnitsystem us;
     ProUnititem lmu;
     ProUnititem mmu;
     ProUnitConversion conv;
-
     ProMdlPrincipalunitsystemGet(model, &us);
     ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu);
     ProUnitInit(model, L"mm", &mmu);
@@ -969,27 +528,10 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     cinfo->local_tol = cinfo->tol_dist / cinfo->creo_to_brl_conv;
     cinfo->local_tol_sq = cinfo->local_tol * cinfo->local_tol;
 
-    cinfo->vert_tree_root = create_vert_tree();
-    cinfo->norm_tree_root = create_vert_tree();
-
     /* output the top level object
      * this will recurse through the entire model
      */
     output_top_level_object(cinfo, model, type );
-
-    /* kill any references to empty parts */
-    struct empty_parts *ptr = cinfo->empty_parts_root;
-    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Adding code to remove empty parts:\n" );
-    }
-    while ( ptr ) {
-	if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf( cinfo->logger, "\t%s\n", ptr->name );
-	}
-	fprintf( cinfo->outfp, "set combs [dbfind %s]\n", ptr->name );
-	fprintf( cinfo->outfp, "foreach comb $combs {\n\tcatch {rm $comb %s}\n}\n", ptr->name );
-	ptr = ptr->next;
-    }
 
     /* let user know we are done */
     ProStringToWstring( tmp_line, "Conversion complete" );
@@ -1005,125 +547,92 @@ extern "C" void
 elim_small_activate( char *dialog_name, char *button_name, ProAppData data )
 {
     ProBoolean state;
-    ProError status;
 
-    status = ProUICheckbuttonGetState( dialog_name, button_name, &state );
-    if ( status != PRO_TK_NO_ERROR ) {
+    if (ProUICheckbuttonGetState( dialog_name, button_name, &state) != PRO_TK_NO_ERROR) {
 	fprintf( stderr, "checkbutton activate routine: failed to get state\n" );
 	return;
     }
 
-    if ( state ) {
-	status = ProUIInputpanelEditable( dialog_name, "min_hole" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to activate \"minimum hole diameter\"\n" );
+    if (state) {
+	if (ProUIInputpanelEditable(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to activate \"minimum hole diameter\"\n");
 	    return;
 	}
-	status = ProUIInputpanelEditable( dialog_name, "min_chamfer" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to activate \"minimum chamfer dimension\"\n" );
+	if (ProUIInputpanelEditable(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to activate \"minimum chamfer dimension\"\n");
 	    return;
 	}
-	status = ProUIInputpanelEditable( dialog_name, "min_round" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to activate \"minimum round radius\"\n" );
+	if (ProUIInputpanelEditable(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to activate \"minimum round radius\"\n");
 	    return;
 	}
     } else {
-	status = ProUIInputpanelReadOnly( dialog_name, "min_hole" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to de-activate \"minimum hole diameter\"\n" );
+	if (ProUIInputpanelReadOnly(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to de-activate \"minimum hole diameter\"\n");
 	    return;
 	}
-	status = ProUIInputpanelReadOnly( dialog_name, "min_chamfer" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to de-activate \"minimum chamfer dimension\"\n" );
+	if (ProUIInputpanelReadOnly(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to de-activate \"minimum chamfer dimension\"\n");
 	    return;
 	}
-	status = ProUIInputpanelReadOnly( dialog_name, "min_round" );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to de-activate \"minimum round radius\"\n" );
+	if (ProUIInputpanelReadOnly(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
+	    fprintf(stderr, "Failed to de-activate \"minimum round radius\"\n");
 	    return;
 	}
     }
 }
 
 extern "C" void
-do_quit( char *dialog, char *compnent, ProAppData appdata )
+do_quit(char *dialog, char *compnent, ProAppData appdata)
 {
-    ProUIDialogDestroy( "creo_brl" );
+    ProUIDialogDestroy("creo_brl");
 }
 
 /* driver routine for converting CREO to BRL-CAD */
 extern "C" int
-creo_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
+creo_brl(uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data)
 {
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     ProFileName msgfil;
-    ProError status;
     int ret_status=0;
+    int destroy_dialog = 0;
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-
     ProMessageDisplay(msgfil, "USER_INFO", "Launching creo_brl...");
 
     /* use UI dialog */
-    status = ProUIDialogCreate( "creo_brl", "creo_brl" );
-    if ( status != PRO_TK_NO_ERROR ) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "Failed to create dialog box for creo-brl, error = %d\n", status );
-	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return 0;
+    if (ProUIDialogCreate("creo_brl", "creo_brl") != PRO_TK_NO_ERROR) {
+	bu_vls_printf(&vls, "Failed to create dialog box for creo-brl\n");
+	goto print_msg;
     }
 
-    status = ProUICheckbuttonActivateActionSet( "creo_brl", "elim_small", elim_small_activate, NULL );
-    if ( status != PRO_TK_NO_ERROR ) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "Failed to set action for \"eliminate small features\" checkbutton, error = %d\n", status );
-	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return 0;
+    if (ProUICheckbuttonActivateActionSet("creo_brl", "elim_small", elim_small_activate, NULL) != PRO_TK_NO_ERROR) {
+	bu_vls_printf(&vls, "Failed to set action for \"eliminate small features\" checkbutton\n");
+	goto print_msg;
     }
 
-    status = ProUIPushbuttonActivateActionSet( "creo_brl", "doit", doit, NULL );
-    if ( status != PRO_TK_NO_ERROR ) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "Failed to set action for 'Go' button\n" );
-	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	ProUIDialogDestroy( "creo_brl" );
-	bu_vls_free(&vls);
-	return 0;
+    if (ProUIPushbuttonActivateActionSet("creo_brl", "doit", doit, NULL) != PRO_TK_NO_ERROR) {
+	bu_vls_printf(&vls, "Failed to set action for 'Go' button\n");
+	destroy_dialog = 1;
+	goto print_msg;
     }
 
-    status = ProUIPushbuttonActivateActionSet( "creo_brl", "quit", do_quit, NULL );
-    if ( status != PRO_TK_NO_ERROR ) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "Failed to set action for 'Quit' button\n" );
-	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	ProUIDialogDestroy( "creo_brl" );
-	bu_vls_free(&vls);
-	return 0;
+    if (ProUIPushbuttonActivateActionSet("creo_brl", "quit", do_quit, NULL) != PRO_TK_NO_ERROR) {
+	bu_vls_printf(&vls, "Failed to set action for 'Quit' button\n");
+	destroy_dialog = 1;
+	goto print_msg;
     }
 
-    status = ProUIDialogActivate( "creo_brl", &ret_status );
-    if ( status != PRO_TK_NO_ERROR ) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "Error in creo-brl Dialog, error = %d\n",
-		status );
-	bu_vls_printf(&vls, "\t dialog returned %d\n", ret_status );
-	ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+    if (ProUIDialogActivate("creo_brl", &ret_status) != PRO_TK_NO_ERROR) {
+	bu_vls_printf(&vls, "Error in creo-brl Dialog: dialog returned %d\n", ret_status);
     }
 
+print_msg:
+    ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
+    if (destroy_dialog) ProUIDialogDestroy("creo_brl");
+    bu_vls_free(&vls);
     return 0;
 }
-
-
 
 /* this routine determines whether the "creo-brl" menu item in Pro/E
  * should be displayed as available or greyed out
@@ -1149,8 +658,7 @@ extern "C" int user_initialize()
     /* Pro/E says always check the size of w_char */
     status = ProWcharSizeVerify (sizeof (wchar_t), &i);
     if ( status != PRO_TK_NO_ERROR || (i != sizeof (wchar_t)) ) {
-	sprintf(astr, "ERROR wchar_t Incorrect size (%d). Should be: %d",
-		sizeof(wchar_t), i );
+	sprintf(astr, "ERROR wchar_t Incorrect size (%d). Should be: %d", sizeof(wchar_t), i );
 	status = ProMessageDisplay(msgfil, "USER_ERROR", astr);
 	printf("%s\n", astr);
 	ProStringToWstring(errbuf, astr);
@@ -1159,8 +667,7 @@ extern "C" int user_initialize()
     }
 
     /* add a command that calls our creo-brl routine */
-    status = ProCmdActionAdd( "CREO-BRL", (uiCmdCmdActFn)creo_brl, uiProe2ndImmediate,
-	    creo_brl_access, PRO_B_FALSE, PRO_B_FALSE, &cmd_id );
+    status = ProCmdActionAdd( "CREO-BRL", (uiCmdCmdActFn)creo_brl, uiProe2ndImmediate, creo_brl_access, PRO_B_FALSE, PRO_B_FALSE, &cmd_id );
     if ( status != PRO_TK_NO_ERROR ) {
 	sprintf( astr, "Failed to add creo-brl action" );
 	fprintf( stderr, "%s\n", astr);
@@ -1171,8 +678,7 @@ extern "C" int user_initialize()
     }
 
     /* add a menu item that runs the new command */
-    status = ProMenubarmenuPushbuttonAdd( "File", "CREO-BRL", "CREO-BRL", "CREO-BRL-HELP",
-	    "File.psh_exit", PRO_B_FALSE, cmd_id, msgfil );
+    status = ProMenubarmenuPushbuttonAdd( "File", "CREO-BRL", "CREO-BRL", "CREO-BRL-HELP", "File.psh_exit", PRO_B_FALSE, cmd_id, msgfil );
     if ( status != PRO_TK_NO_ERROR ) {
 	sprintf( astr, "Failed to add creo-brl menu button" );
 	fprintf( stderr, "%s\n", astr);
