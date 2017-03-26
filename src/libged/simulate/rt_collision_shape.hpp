@@ -32,6 +32,8 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include <string>
+
 
 namespace simulate
 {
@@ -44,8 +46,9 @@ public:
 
     // `aabb_center_height` is the vector from the center of mass to
     // the center of the AABB
-    explicit RtCollisionShape(const btVector3 &aabb_half_extents,
-			      const btVector3 &aabb_center_height);
+    explicit RtCollisionShape(const btVector3 &aabb_extents,
+			      const btVector3 &aabb_center_height,
+			      const std::string &name);
 
     virtual const char *getName() const;
     virtual void getAabb(const btTransform &transform, btVector3 &dest_aabb_min,
@@ -60,10 +63,9 @@ public:
 
 
 private:
-    const btVector3 m_aabb_half_extents;
     const btVector3 m_aabb_center_height;
-    btVector3 m_local_scaling;
-    btScalar m_collision_margin;
+    const std::string m_name;
+    btBoxShape m_box_shape;
 };
 
 

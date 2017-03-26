@@ -548,7 +548,7 @@ math for portability and performance reasons.  When floating point
 comparisons are necessary, use the NEAR_EQUAL and NEAR_ZERO macros
 with a specified tolerance or the EQUAL and ZERO macros where a
 tolerance is indeterminate (all the macros are available by including
-bn.h, part of libbn).  Examples:
+vmath.h).  Examples:
 
   For known tolerances:
 

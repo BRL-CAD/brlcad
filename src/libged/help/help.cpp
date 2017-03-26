@@ -235,7 +235,7 @@ int
 ged_help(struct ged *gedp, int argc, const char *argv[])
 {
     char *dir;
-    char **entries;
+    char **entries = NULL;
     size_t count;
 
     /* initialize result */

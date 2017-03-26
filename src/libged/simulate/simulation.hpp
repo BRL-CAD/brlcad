@@ -44,14 +44,14 @@ class Simulation
 {
 public:
     enum DebugMode {
-	debug_none,
+	debug_none = 0,
 	debug_aabb = 1 << 0,
 	debug_contact = 1 << 1,
 	debug_ray = 1 << 2
     };
 
 
-    explicit Simulation(db_i &db, const std::string &path);
+    explicit Simulation(db_i &db, const db_full_path &path);
     ~Simulation();
 
     void step(fastf_t seconds, DebugMode debug_mode);

@@ -31,9 +31,12 @@
 
 
 #include "rt_debug_draw.hpp"
+#include "utility.hpp"
 
 #include "wdb.h"
 
+#include <ctime>
+#include <limits>
 #include <sstream>
 
 
@@ -42,15 +45,23 @@ namespace
 
 
 HIDDEN std::string
-make_name(const std::string &base)
+make_name(const db_i &db, const std::string &base)
 {
+    RT_CK_DBI(&db);
+
     const char * const prefix = "RtDebugDraw::";
 
     std::ostringstream stream;
     stream.exceptions(std::ostream::failbit | std::ostream::badbit);
 
-    stream << prefix << base << static_cast<std::size_t>(drand48() * 1.0e5 + 0.5) <<
-	   ".s";
+    unsigned long object_number = static_cast<unsigned long>
+				  (drand48() * std::numeric_limits<unsigned long>::max() + 0.5);
+
+    do {
+	stream.str("");
+	stream << prefix << base << object_number++ << ".s";
+    } while (db_lookup(&db, stream.str().c_str(), false));
+
     return stream.str();
 }
 
@@ -94,6 +105,8 @@ RtDebugDraw::RtDebugDraw(db_i &db) :
     RT_CK_WDB(m_db.dbi_wdbp);
 
     m_default_colors.m_aabb = btVector3(0.0, 0.75, 0.0);
+
+    srand48(std::time(NULL)); // for `make_name()`
 }
 
 
@@ -112,9 +125,9 @@ void
 RtDebugDraw::drawLine(const btVector3 &from, const btVector3 &to,
 		      const btVector3 &color)
 {
-    const std::string name = make_name("line");
-    const point_t from_pt = {V3ARGS(from)};
-    const vect_t height = {V3ARGS(to - from)};
+    const std::string name = make_name(m_db, "line");
+    const point_t from_pt = {V3ARGS(from * world_to_application)};
+    const vect_t height = {V3ARGS((to - from) * world_to_application)};
 
     if (mk_rcc(m_db.dbi_wdbp, name.c_str(), from_pt, height, 1.0e-8))
 	bu_bomb("mk_rcc() failed");
@@ -137,10 +150,11 @@ RtDebugDraw::draw3dText(const btVector3 &UNUSED(location),
 void RtDebugDraw::drawAabb(const btVector3 &from, const btVector3 &to,
 			   const btVector3 &color)
 {
-    const std::string name = make_name("aabb");
-    point_t min_pt = {V3ARGS(from)}, max_pt = {V3ARGS(from)};
-    VMIN(min_pt, to);
-    VMAX(max_pt, to);
+    const std::string name = make_name(m_db, "aabb");
+    point_t min_pt = {V3ARGS(from * world_to_application)};
+    point_t max_pt = {V3ARGS(from * world_to_application)};
+    VMIN(min_pt, to * world_to_application);
+    VMAX(max_pt, to * world_to_application);
 
     if (mk_rpp(m_db.dbi_wdbp, name.c_str(), min_pt, max_pt))
 	bu_bomb("mk_rpp() failed");
@@ -154,10 +168,11 @@ RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
 			      const btVector3 &normal_world_on_b, const btScalar distance,
 			      const int UNUSED(lifetime), const btVector3 &color)
 {
-    const std::string name = make_name("contact");
-    const point_t point_on_b_pt = {V3ARGS(point_on_b)};
+    const std::string name = make_name(m_db, "contact");
+    const point_t point_on_b_pt = {V3ARGS(point_on_b * world_to_application)};
 
-    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt, distance / 10.0))
+    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt,
+	       (distance / 10.0) * world_to_application))
 	bu_bomb("mk_sph() failed");
 
     apply_color(m_db, name, color);

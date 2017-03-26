@@ -72,6 +72,7 @@ catch {delete class GeometryChecker} error
 	variable _abort
 
 	variable _count
+	variable _markedCount 0
 
 	variable _arrowUp
 	variable _arrowDown
@@ -82,6 +83,7 @@ catch {delete class GeometryChecker} error
 	variable _colorEven
 	variable _colorMarked
 
+	variable _doingSubtraction
 	variable _subLeftCommand
 	variable _subRightCommand
 	variable _drawLeftCommand
@@ -100,6 +102,10 @@ catch {delete class GeometryChecker} error
 	method abortCommands {}
 
 	method writeMarks {}
+
+	method subtractItemRightFromLeft {left right} {}
+	method subtractItemLeftFromRight {left right} {}
+	method subtractSelectionRightFromLeft {args} {}
 
 	method changeMarkOnOverlap {id tag_cmd}
 	method markOverlap {id}
@@ -137,15 +143,17 @@ body GeometryChecker::handleCheckListSelect {} {
 	}
     }
 
-    if {$found_marked} {
-	$itk_component(buttonLeft) state disabled
-	$itk_component(buttonRight) state disabled
-    } else {
-	$itk_component(buttonLeft) state !disabled
-	$itk_component(buttonRight) state !disabled
-    }
+    if {! $_doingSubtraction} {
+	if {$found_marked} {
+	    $itk_component(buttonLeft) state disabled
+	    $itk_component(buttonRight) state disabled
+	} else {
+	    $itk_component(buttonLeft) state !disabled
+	    $itk_component(buttonRight) state !disabled
+	}
 
-    $this display
+	$this display
+    }
 }
 
 ###########
@@ -155,6 +163,7 @@ body GeometryChecker::handleCheckListSelect {} {
 ::itcl::body GeometryChecker::constructor {args} {
 
     set _abort false
+    set _doingSubtraction false
     set _drew {}
 
     set _subLeftCommand "puts subtract the left"
@@ -431,7 +440,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 	    set tag "odd"
 	}
 	$_ck insert {} end -id $count -text $count -values [list $count $left $right [format %.2f $size]] -tags "$tag"
-	if {$count % 100 == 0} {
+	if {$count % 500 == 0} {
 	    puts "."
 	    update
 	}
@@ -455,6 +464,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     close $ovfile
 
     # read and apply saved marks
+    set _markedCount 0
     set mark_file [file join $_ol_dir "${_ol_prefix}.marked"]
     if {[file exists $mark_file]} {
 	set mfile [open $mark_file "r"]
@@ -467,6 +477,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 		    [$_ck set $item "Right"] == [lindex $line 1]} \
 		{
 		    $_ck tag add "marked" $item
+		    incr _markedCount
 		}
 	    }
 	}
@@ -474,10 +485,14 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 
     $this sortBy {*}$_lastSort
 
+    # update status text
     if {$count == 1} {
 	$_status configure -text "$count overlap"
     } else {
 	$_status configure -text "$count overlaps"
+    }
+    if {$_markedCount > 0} {
+	$_status configure -text "[$_status cget -text] ($_markedCount marked resolved)"
     }
 }
 
@@ -615,6 +630,7 @@ body GeometryChecker::writeMarks {} {
     set tmp_mark_file "${mark_file}.tmp"
 
     set marked_items [$_ck tag has "marked"]
+    set _markedCount [llength $marked_items]
 
     # write temp mark file
     set tmp_chan [open $tmp_mark_file "w"]
@@ -654,6 +670,7 @@ body GeometryChecker::writeMarks {} {
 
 body GeometryChecker::changeMarkOnOverlap {id tag_cmd} {
     $_ck tag $tag_cmd "marked" $id
+    $this writeMarks
 
     # remove id from selection set
     set sset [$_ck selection]
@@ -664,16 +681,24 @@ body GeometryChecker::changeMarkOnOverlap {id tag_cmd} {
 
     # move marked to bottom of checklist
     $this sortBy {*}$_lastSort
+
+    # update status text
+    if {$_count == 1} {
+	$_status configure -text "$_count overlap"
+    } else {
+	$_status configure -text "$_count overlaps"
+    }
+    if {$_markedCount > 0} {
+	$_status configure -text "[$_status cget -text] ($_markedCount marked resolved)"
+    }
 }
 
 body GeometryChecker::markOverlap {id} {
     $this changeMarkOnOverlap $id "add"
-    $this writeMarks
 }
 
 body GeometryChecker::unmarkOverlap {id} {
     $this changeMarkOnOverlap $id "remove"
-    $this writeMarks
 }
 
 body GeometryChecker::changeMarkOnSelection {tag_cmd} {
@@ -693,6 +718,16 @@ body GeometryChecker::changeMarkOnSelection {tag_cmd} {
 
     # move marked to bottom of checklist
     $this sortBy {*}$_lastSort
+
+    # update status text
+    if {$_count == 1} {
+	$_status configure -text "$_count overlap"
+    } else {
+	$_status configure -text "$_count overlaps"
+    }
+    if {$_markedCount > 0} {
+	$_status configure -text "[$_status cget -text] ($_markedCount marked resolved)"
+    }
 }
 
 body GeometryChecker::markSelection {} {
@@ -703,21 +738,73 @@ body GeometryChecker::unmarkSelection {} {
     $this changeMarkOnSelection "remove"
 }
 
+body GeometryChecker::subtractItemRightFromLeft {left right} {
+    set _commandText "Subtracting ($right) from ($left)"
+    $_overlapCallback $left $right $forceSubtract
+}
+
+body GeometryChecker::subtractItemLeftFromRight {left right} {
+    set _commandText "Subtracting ($left) from ($right)"
+    $_overlapCallback $right $left $forceSubtract
+}
+
+body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
+    # disable drawing in response to selection change (which happens
+    # as completed items are marked)
+    set _doingSubtraction true
+
+    # prevent any other commands from being initiated
+    $itk_component(progressButton) state disabled
+    $itk_component(buttonLeft) state disabled
+    $itk_component(buttonRight) state disabled
+
+    # scroll to end of checklist so we can see the successful
+    # subtractions as they move to the bottom of the list
+    $_ck see [lindex [$_ck children {}] end]
+    update
+
+    set subCmd "subtractItemRightFromLeft"
+    if {$swap} {
+	set subCmd "subtractItemLeftFromRight"
+    }
+
+    # stop in-progress draw
+    $this abortCommands
+
+    set sset [$_ck selection]
+
+    set count 0
+    set total [llength $sset]
+    set _progressValue 1 ;# indicate drawing initiated
+
+    foreach item $sset {
+	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+
+	    if {![catch {$this $subCmd $left $right} err]} {
+		$this markOverlap $id
+	    } else {
+		puts "$err"
+	    }
+	    incr count
+	    set _progressValue [expr $count / [expr $total + 1.0] * 100]
+	    update
+	}
+    }
+    set _commandText ""
+    set _progressValue 0
+    $itk_component(progressButton) state !disabled
+    $itk_component(buttonLeft) state !disabled
+    $itk_component(buttonRight) state !disabled
+    set _doingSubtraction false
+}
+
 # subLeft
 #
 # subtract the currently selected left nodes from the right ones
 #
 body GeometryChecker::subLeft {} {
-    set sset [$_ck selection]
-    foreach item $sset {
-	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    if {![catch {$_overlapCallback $right $left $forceSubtract} err]} {
-		$this markOverlap $id
-	    } else {
-		puts "$err"
-	    }
-	}
-    }
+    set swap true
+    $this subtractSelectionRightFromLeft $swap
 }
 
 # subRight
@@ -725,16 +812,7 @@ body GeometryChecker::subLeft {} {
 # subtract the currently selected right nodes from the left ones
 #
 body GeometryChecker::subRight {} {
-    set sset [$_ck selection]
-    foreach item $sset {
-	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    if {![catch {$_overlapCallback $left $right $forceSubtract} err]} {
-		$this markOverlap $id
-	    } else {
-		puts "$err"
-	    }
-	}
-    }
+    $this subtractSelectionRightFromLeft
 }
 
 # display
@@ -929,7 +1007,6 @@ proc subtractRightFromLeft {left right {forceSubtract false}} {
 
     # search /left -bool u -type shape to find positives
     # adjust each shape's parent to subtract right from all u members
-    puts "Subtracting $rightsub in $right from unioned solids of $left."
     foreach { solid } [search $left -bool u -type shape] {
 	set solidparent [file tail [file dirname $solid]]
 	set tree [get $solidparent tree]
