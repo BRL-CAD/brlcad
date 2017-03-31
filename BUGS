@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* dsp does not facetize correctly with zero elevation areas in the
+  data - need robustness improvements
+
 * dsp primitives specifying data using Windows style file paths
   don't work.
 
