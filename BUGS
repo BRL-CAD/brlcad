@@ -15,6 +15,13 @@ on-going issues.
 Recent Bugs
 -----------
 
+* dsp primitives specifying data using Windows style file paths
+  don't work.
+
+* attempting to create a dsp using a binary object caused a crash on
+  Linux - need to figure out if this was caused by feeding it the wrong
+  kind of binary object or some other error...
+
 * screengrab on windows does not work
 
 * Recursive submodel predictably goes infinite, need stack-based
