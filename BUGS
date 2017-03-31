@@ -15,7 +15,7 @@ on-going issues.
 Recent Bugs
 -----------
 
-* screengrab on windows crashes
+* screengrab on windows does not work
 
 * Recursive submodel predictably goes infinite, need stack-based
   db_walk_tree(): mged> in submodel submodel submodel grid test.g
