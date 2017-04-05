@@ -25,9 +25,8 @@
 #include "creo-brl.h"
 #include <string.h>
 
-/* this routine is a filter for the feature visit routine
- * selects only "component" items (should be only parts and assemblies)
- */
+/* Filter for the feature visit routine that selects only "component" items
+ * (should be only parts and assemblies) */
 extern "C" ProError
 assembly_filter(ProFeature *feat, ProAppData *data)
 {
@@ -38,8 +37,11 @@ assembly_filter(ProFeature *feat, ProAppData *data)
     return PRO_TK_NO_ERROR;
 }
 
-/* routine that is called by feature visit for each assembly member
- * the "app_data" is the head of the assembly info for this assembly
+/* Logic that builds up the sets of assemblies and parts.  Doing a feature
+ * visit for all top level objects will result in a recursive walk of the
+ * hierarchy that adds all active objects into one of the converter lists.
+ *
+ * The "app_data" pointer holds the creo_conv_info container. 
  */
 extern "C" ProError
 assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
@@ -84,6 +86,7 @@ assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
     return PRO_TK_NO_ERROR;
 }
 
+/* Callback function used only for find_empty_assemblies */
 extern "C" static ProError
 assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
 {
@@ -98,7 +101,9 @@ assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
     return PRO_TK_NO_ERROR;
 }
 
-/* run this only *after* output_parts - need that information */
+/* Run this only *after* output_parts - that is where empty "part" objects will
+ * be identified.  Without knowing which parts are empty, we can't know if a
+ * combination of parts is empty. */
 extern "C" void
 find_empty_assemblies(struct creo_conv_info *cinfo)
 {
@@ -129,9 +134,54 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
     }
 }
 
+    /* Get the transformation matrix to apply to a member (feat) of a comb.
+     * this call is creating a path from the assembly to this particular member
+     * (assembly/member)
+     */
+
 extern "C" static ProError
-assembly_entry_matrix(ProMdl parent, ProFeature *entry)
+assembly_entry_matrix(ProMdl parent, ProFeature *feat)
 {
+    if(!feat) return PRO_TK_GENERAL_ERROR;
+
+    /* Get strings in case we need to log */
+    ProMdlType type;
+    wchar_t wpname[100000];
+    char pname[100000];
+    wchar_t wcname[100000];
+    char cname[100000];
+    ProMdlMdlNameGet(parent, &type, wpname);
+    (void)ProWstringToString(pname, wpname);
+    ProAsmcompMdlNameGet(feat, &type, wcname);
+    (void)ProWstringToString(cname, wcname);
+
+    /* Find the matrix */
+    ProAsmcomppath comp_path;
+    ProMatrix xform;
+    ProIdTable id_table;
+    id_table[0] = feat->id;
+    /* create the path */
+    status = ProAsmcomppathInit((ProSolid)parent, id_table, 1, &comp_path );
+    if ( status != PRO_TK_NO_ERROR ) {
+	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "   Failed to get path from %s to %s, aborting\n", pname, cname);
+	return status;
+    }
+    /* accumulate the xform matrix along the path created above */
+    status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
+    if ( status != PRO_TK_NO_ERROR ) {
+	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "   Failed to get transformation matrix %s/%s, aborting\n", pname, cname);
+	return status;
+    }
+
+    /* xform matrix */
+    for ( i=0; i<4; i++ ) {
+	for ( j=0; j<4; j++ ) {
+	    // TODO - Are we assigning it to the comb here?
+	    brlcad_xform[i][j] = xform[i][j];
+	}
+    }
+
+    return PRO_TK_NO_ERROR;
 }
 
 extern "C" static ProError

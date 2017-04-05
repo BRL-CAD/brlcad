@@ -180,6 +180,7 @@ struct creo_conv_info {
     std::vector<char *> *model_parameters;     /* model parameters to use when generating .g names */
 };
 
+/* Generic container used when we need to pass around something in addition to creo_conv_info */
 struct adata {
     struct creo_conv_info *cinfo;
     void *data;
