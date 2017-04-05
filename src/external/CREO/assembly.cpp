@@ -140,9 +140,9 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
      */
 
 extern "C" static ProError
-assembly_entry_matrix(ProMdl parent, ProFeature *feat)
+assembly_entry_matrix(ProMdl parent, ProFeature *feat, mat_t *mat)
 {
-    if(!feat) return PRO_TK_GENERAL_ERROR;
+    if(!feat || !mat) return PRO_TK_GENERAL_ERROR;
 
     /* Get strings in case we need to log */
     ProMdlType type;
@@ -176,8 +176,7 @@ assembly_entry_matrix(ProMdl parent, ProFeature *feat)
     /* xform matrix */
     for ( i=0; i<4; i++ ) {
 	for ( j=0; j<4; j++ ) {
-	    // TODO - Are we assigning it to the comb here?
-	    brlcad_xform[i][j] = xform[i][j];
+	    (*mat)[i][j] = xform[i][j];
 	}
     }
 
@@ -193,15 +192,24 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     wchar_t wname[10000];
     char name[10000];
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+    mat_t xform;
+    MAT_IDN(xform);
 
+    /* Get name of current member */
     if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
     (void)ProWstringToString(name, wname);
 
-    /* TODO: BRL-CAD name foo based on name - put result in entry_name */
+    /* TODO - check for empty objects and skip them */
 
-    //(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, 'u');
+    /* Get matrix relative to current parent */
+    if ((lstatus = assembly_entry_matrix(cinfo->curr_parent, feat, &xform)) != PRO_TK_NO_ERROR ) return lstatus;
+
+    /* TODO: BRL-CAD name foo based on name - put result in entry_name as this will be how BRL-CAD keys the object */
+
+    (void)mk_addmember(bu_vls_addr(&entry_name), &(cinfo->wcmb->l), xform, WMOP_UNION);
 }
 
+/* Only run this *after* find_empty_assemblies has been run */
 extern "C" static ProError
 assembly_write(ProMdl model, ProError status, ProAppData app_data)
 {
@@ -210,16 +218,18 @@ assembly_write(ProMdl model, ProError status, ProAppData app_data)
     wchar_t wname[10000];
     char name[10000];
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+    BU_LIST_INIT(&wcomb.l);
 
     /* Initial comb setup */
     ProMdlMdlnameGet(model, wname);
     (void)ProWstringToString(name, wname);
+    cinfo->curr_parent = model;
+    cinfo->wcmb = &wcomb;
+
+    /* Add children */
+    ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)assembly_filter, app_data);
 
     /* TODO: BRL-CAD name foo based on name - put result in comb_name */
-
-    BU_LIST_INIT(&wcomb.l);
-
-    ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)assembly_filter, app_data);
 
     mk_lcomb(cinfo->wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
 

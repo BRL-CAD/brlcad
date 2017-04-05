@@ -170,6 +170,8 @@ struct creo_conv_info {
     /* ------ Internal ------ */
     struct db_i *dbip;		/* output database */
     struct rt_wdb *wdbp;
+    ProMdl curr_parent;
+    struct wmember *wcmb;
 
     std::set<wchar_t *, WStrCmp> *parts;	/* list of all parts in CREO hierarchy */
     std::set<wchar_t *, WStrCmp> *assems;	/* list of all assemblies in CREO hierarchy */
