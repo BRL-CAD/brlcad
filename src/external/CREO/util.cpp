@@ -234,15 +234,22 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
     char *param_name = NULL;
     long count = 0;
     long have_name = 0;
-    std::set<struct bu_vls *, StrCmp>::iterator n_it;
+    std::set<wchar_t *, WStrCmp> s_it;
+    std::map<wchar_t *, struct bu_vls *, WStrCmp>::iterator n_it;
 
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( cinfo->logger, "create_unique_name( %s )\n", name );
+	fprintf( cinfo->logger, "get_brlcad_name( %s )\n", name );
     }
 
+    /* If it's not a part or assembly, don't fool with it */
+    if (type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART) return NULL;
+
     /* If we already have a name, return that */
-    n_it = cinfo->brlcad_names->find(name);
-    if (n_it != cinfo->brlcad_names->end()) return *n_it;
+    n_it = cinfo->name_map->find(name);
+    if (n_it != cinfo->brlcad_names->end()) {
+	gname = n_it.second;
+	return gname;
+    }
     BU_GET(gname, struct bu_vls);
     bu_vls_init(gname);
 
@@ -284,7 +291,18 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
 	    }
 	}
     }
+    /* We want to point to a stable wchar_t string pointer for this name, so find that first - don't
+     * assume all callers will be using the parts/assems copies. */
+    s_it = cinfo->parts->find(name);
+    if (s_it == cinfo->parts->end()) s_it = cinfo->assems->find(name);
+    if (s_it == cinfo->assems->end()) {
+	/* ??? not a part or assembly we've seen, but got through filters ??? */
+	bu_vls_free(gname);
+	BU_PUT(gname, struct bu_vls);
+	return NULL;
+    }
     cinfo->brlcad_names->insert(gname);
+    cinfo->name_map->insert(std::pair<wchar_t *, struct bu_vls *>(*s_it, gname));
 
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( cinfo->logger, "\tnew name for %s is %s\n", name, bu_vls_addr(gname) );
