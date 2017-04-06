@@ -234,14 +234,15 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
     char *param_name = NULL;
     long count = 0;
     long have_name = 0;
+    std::set<struct bu_vls *, StrCmp>::iterator n_it;
 
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( cinfo->logger, "create_unique_name( %s )\n", name );
     }
 
     /* If we already have a name, return that */
-    gname = cinfo->brlcad_names->find(name);
-    if (gname) return gname;
+    n_it = cinfo->brlcad_names->find(name);
+    if (n_it != cinfo->brlcad_names->end()) return *n_it;
     BU_GET(gname, struct bu_vls);
     bu_vls_init(gname);
 
