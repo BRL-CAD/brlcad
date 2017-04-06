@@ -240,39 +240,6 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
 
 }
 
-extern "C" static ProError
-creo_attribute_val(const char **val, const char *key, ProMdl m)
-{
-    wchar_t wkey[CREO_NAME_MAX];
-    wchar_t wval[CREO_NAME_MAX];
-    char cval[CREO_NAME_MAX];
-    char *fval = NULL;
-    ProError pstatus;
-    ProModelitem mitm;
-    ProParameter param;
-    ProParamvalueType ptype;
-    ProParamvalue pval;
-
-    ProWstringToString(wkey, key);
-    ProMdlToModelitem(m, &mitm);
-    pstatus = ProParameterInit(&mitm, wkey, &param);
-    /* TODO - if param not found, return */
-    ProParameterValueGet(param, &pval);
-    ProParamvalueTypeGet(&pval, &ptype);
-    switch (ptype) {
-	case PRO_PARAM_STRING:
-	    ProParamvalueValueGet(&pval, ptype, wval);
-	    ProWstringToString(cval, wval);
-	    fval = bu_strdup(cval);
-	    break;
-	default:
-	    break;
-    }
-
-    *val = fval;
-    return PRO_TK_NO_ERROR;
-}
-
 /* Only run this *after* find_empty_assemblies has been run */
 extern "C" static ProError
 assembly_write(ProMdl model, ProError status, ProAppData app_data)

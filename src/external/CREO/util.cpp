@@ -167,7 +167,7 @@ struct pparam_data {
     char *val;
 }
 
-extern "C" ProError getval(ProParameter *param, ProError status, ProAppData app_data)
+extern "C" ProError regex_key(ProParameter *param, ProError status, ProAppData app_data)
 {
     ProError lstatus;
     char pname[CREO_NAME_MAX];
@@ -199,6 +199,41 @@ extern "C" ProError getval(ProParameter *param, ProError status, ProAppData app_
 }
 
 
+extern "C" ProError
+creo_attribute_val(const char **val, const char *key, ProMdl m)
+{
+    wchar_t wkey[CREO_NAME_MAX];
+    wchar_t wval[CREO_NAME_MAX];
+    char cval[CREO_NAME_MAX];
+    char *fval = NULL;
+    ProError pstatus;
+    ProModelitem mitm;
+    ProParameter param;
+    ProParamvalueType ptype;
+    ProParamvalue pval;
+
+    ProWstringToString(wkey, key);
+    ProMdlToModelitem(m, &mitm);
+    pstatus = ProParameterInit(&mitm, wkey, &param);
+    /* TODO - if param not found, return */
+    ProParameterValueGet(param, &pval);
+    ProParamvalueTypeGet(&pval, &ptype);
+    switch (ptype) {
+	case PRO_PARAM_STRING:
+	    ProParamvalueValueGet(&pval, ptype, wval);
+	    ProWstringToString(cval, wval);
+	    fval = bu_strdup(cval);
+	    break;
+	default:
+	    break;
+    }
+
+    *val = fval;
+    return PRO_TK_NO_ERROR;
+}
+
+
+
 extern "C" char *
 creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
 {
@@ -212,10 +247,17 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
     if (ProMdlnameInit(creo_name, type, &m) != PRO_TK_NO_ERROR) return NULL;
     if (ProMdlToModelitem(model, &itm) != PRO_TK_NO_ERROR) return NULL;
     for (int i = 0; int i < cinfo->model_parameters->size(); i++) {
+	pdata.key = cinfo->model_parameters[i];
+	/* first, try a direct lookup */
+	creo_attribute_val(&pdata.val, pdata.key, model);
+	/* If that didn't work, and it looks like we have regex characters,
+	 * try a regex match */
 	if (!pdata.val) {
-	    pdata.key = cinfo->model_parameters[i];
-	    ProParameterVisit(&itm,  NULL, getval, (ProAppData)&pdata);
-	} else {
+	    int not_alnum = 0;
+	    for (int j = 0; j < strlen(pdata.key); j++) alnum += isalnum(pdata.key[j]);
+	    if (not_alnum) ProParameterVisit(&itm,  NULL, regex_key, (ProAppData)&pdata);
+	}
+	if (pdata.val) {
 	    /* Have key - we're done here */
 	    val = pdata.val;
 	    break;
@@ -223,6 +265,7 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
     }
     return val;
 }
+
 
 
 /* create a unique BRL-CAD object name from a possibly illegal name */

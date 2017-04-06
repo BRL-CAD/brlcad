@@ -202,6 +202,7 @@ extern "C" void do_quit(char *dialog, char *compnent, ProAppData appdata);
 extern "C" void free_csg_ops(struct creo_conv_info *);
 
 extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
+extern "C" ProError creo_attribute_val(const char **val, const char *key, ProMdl m);
 extern "C" char *get_brlcad_name(struct creo_conv_info *cinfo, char *part_name);
 extern "C" void find_empty_assemblies(struct creo_conv_info *);
 extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
