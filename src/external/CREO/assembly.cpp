@@ -214,14 +214,12 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     ProMdlType type;
     struct bu_vls *entry_name;
     wchar_t wname[CREO_NAME_MAX];
-    char name[CREO_NAME_MAX];
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
     mat_t xform;
     MAT_IDN(xform);
 
     /* Get name of current member */
     if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
-    (void)ProWstringToString(name, wname);
 
     /* Skip this member if the object it refers to is empty */
     if (creo->empty->find(wname) != creo->empty->end()) return PRO_TK_NO_ERROR;
@@ -244,25 +242,27 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
 extern "C" static ProError
 assembly_write(ProMdl model, ProError status, ProAppData app_data)
 {
-    struct wmember wcomb;
-    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
+    struct bu_vls *comb_name;
     wchar_t wname[CREO_NAME_MAX];
-    char name[CREO_NAME_MAX];
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+
+    /* We'll need to assemble the list of children */
+    struct wmember wcomb;
     BU_LIST_INIT(&wcomb.l);
 
     /* Initial comb setup */
     ProMdlMdlnameGet(model, wname);
-    (void)ProWstringToString(name, wname);
     cinfo->curr_parent = model;
     cinfo->wcmb = &wcomb;
 
     /* Add children */
     ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)assembly_filter, app_data);
 
-    /* TODO: BRL-CAD name foo based on name - put result in comb_name */
+    /* Get BRL-CAD name */
+    comb_name = get_brlcad_name(cinfo, wname, type);
 
-    mk_lcomb(cinfo->wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+    /* Data sufficient - write the comb */
+    mk_lcomb(cinfo->wdbp, bu_vls_addr(comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
 
     /* Set attributes, if the CREO object has any of the ones the user listed as of interest */
     for (int i = 0; int i < cinfo->attrs->size(); i++) {
