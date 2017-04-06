@@ -95,6 +95,9 @@ extern "C" {
 #define NUM_FEAT_TYPES 314
 #define FEAT_TYPE_OFFSET 910
 
+#define CREO_NAME_MAX 100000
+#define CREO_MSG_MAX 100000
+
 #define MSG_FAIL 0
 #define MSG_OK 1
 #define MSG_DEBUG 2

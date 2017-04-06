@@ -71,7 +71,7 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, ProError status, const char
 
     /* Can't do nested variable argument functions, so printf the message here */
     va_list ap;
-    char msg[100000];
+    char msg[CREO_MSG_MAX];
     va_start(ap, fmt);
     vsprintf(msg, fmt, ap);
     va_end(ap);
@@ -170,9 +170,9 @@ struct pparam_data {
 extern "C" ProError getkey(ProParameter *param, ProError status, ProAppData app_data)
 {
     ProError lstatus;
-    char pname[100000];
-    char val[100000];
-    wchar_t wval[10000];
+    char pname[CREO_NAME_MAX];
+    char val[CREO_NAME_MAX];
+    wchar_t wval[CREO_NAME_MAX];
     ProParamvalue pval;
     ProParamvalueType ptype;
     regex_t reg;

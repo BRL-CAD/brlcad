@@ -105,8 +105,8 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 extern "C" void
 output_parts(struct creo_conv_info *cinfo)
 {
-    wchar_t wname[10000];
-    char name[10000];
+    wchar_t wname[CREO_NAME_MAX];
+    char name[CREO_NAME_MAX];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
 	ProMdl m;
@@ -122,8 +122,8 @@ output_parts(struct creo_conv_info *cinfo)
 extern "C" void
 output_assems(struct creo_conv_info *cinfo)
 {
-    wchar_t wname[10000];
-    char name[10000];
+    wchar_t wname[CREO_NAME_MAX];
+    char name[CREO_NAME_MAX];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
 	ProMdl parent;
@@ -139,8 +139,8 @@ output_assems(struct creo_conv_info *cinfo)
 extern "C" void
 output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType type )
 {
-    wchar_t wname[10000];
-    char name[10000];
+    wchar_t wname[CREO_NAME_MAX];
+    char name[CREO_NAME_MAX];
     wchar_t *wname_saved;
 
     /* get object name */

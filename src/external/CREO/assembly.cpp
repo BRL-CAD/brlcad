@@ -49,8 +49,8 @@ assembly_gather( ProFeature *feat, ProError status, ProAppData app_data )
     ProError loc_status;
     ProMdl model;
     ProMdlType type;
-    wchar_t wname[10000];
-    char name[10000];
+    wchar_t wname[CREO_NAME_MAX];
+    char name[CREO_NAME_MAX];
     wchar_t *wname_saved;
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
 
@@ -92,7 +92,7 @@ assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
 {
     ProError lstatus;
     ProMdlType type;
-    wchar_t wname[10000];
+    wchar_t wname[CREO_NAME_MAX];
     struct adata *ada = (struct adata *)app_data;
     struct creo_conv_info *cinfo = ada->cinfo;
     int *has_shape = (int *)ada->data;
@@ -134,6 +134,28 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
     }
 }
 
+
+/* routine to check if xform is an identity */
+extern "C" int
+is_non_identity( ProMatrix xform )
+{
+    int i, j;
+
+    for ( i=0; i<4; i++ ) {
+	for ( j=0; j<4; j++ ) {
+	    if ( i == j ) {
+		if ( xform[i][j] != 1.0 )
+		    return 1;
+	    } else {
+		if ( xform[i][j] != 0.0 )
+		    return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /* Get the transformation matrix to apply to a member (feat) of a comb.
  * this call is creating a path from the assembly to this particular member
  * (assembly/member)
@@ -145,10 +167,10 @@ assembly_entry_matrix(ProMdl parent, ProFeature *feat, mat_t *mat)
 
     /* Get strings in case we need to log */
     ProMdlType type;
-    wchar_t wpname[100000];
-    char pname[100000];
-    wchar_t wcname[100000];
-    char cname[100000];
+    wchar_t wpname[CREO_NAME_MAX];
+    char pname[CREO_NAME_MAX];
+    wchar_t wcname[CREO_NAME_MAX];
+    char cname[CREO_NAME_MAX];
     ProMdlMdlNameGet(parent, &type, wpname);
     (void)ProWstringToString(pname, wpname);
     ProAsmcompMdlNameGet(feat, &type, wcname);
@@ -172,14 +194,17 @@ assembly_entry_matrix(ProMdl parent, ProFeature *feat, mat_t *mat)
 	return status;
     }
 
-    /* xform matrix */
-    for ( i=0; i<4; i++ ) {
-	for ( j=0; j<4; j++ ) {
-	    (*mat)[i][j] = xform[i][j];
+    if (is_non_identity(xform)) {
+	/* copy xform matrix */
+	for ( i=0; i<4; i++ ) {
+	    for ( j=0; j<4; j++ ) {
+		(*mat)[i][j] = xform[i][j];
+	    }
 	}
+	return PRO_TK_NO_ERROR;
     }
 
-    return PRO_TK_NO_ERROR;
+    return PRO_TK_GENERAL_ERROR;
 }
 
 extern "C" static ProError
@@ -188,8 +213,8 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     ProError lstatus;
     ProMdlType type;
     struct bu_vls entry_name = BU_VLS_INIT_ZERO;
-    wchar_t wname[10000];
-    char name[10000];
+    wchar_t wname[CREO_NAME_MAX];
+    char name[CREO_NAME_MAX];
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
     mat_t xform;
     MAT_IDN(xform);
@@ -198,22 +223,28 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
     (void)ProWstringToString(name, wname);
 
-    /* TODO - check for empty objects and skip them */
-
-    /* Get matrix relative to current parent */
-    if ((lstatus = assembly_entry_matrix(cinfo->curr_parent, feat, &xform)) != PRO_TK_NO_ERROR ) return lstatus;
+    /* Skip this member if the object it refers to is empty */
+    if (creo->empty->find(wname) != creo->empty->end()) return PRO_TK_NO_ERROR;
 
     /* TODO: BRL-CAD name foo based on name - put result in entry_name as this will be how BRL-CAD keys the object */
 
-    (void)mk_addmember(bu_vls_addr(&entry_name), &(cinfo->wcmb->l), xform, WMOP_UNION);
+    /* Get matrix relative to current parent */
+    if ((lstatus = assembly_entry_matrix(cinfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
+	(void)mk_addmember(bu_vls_addr(&entry_name), &(cinfo->wcmb->l), xform, WMOP_UNION);
+    } else {
+	(void)mk_addmember(bu_vls_addr(&entry_name), &(cinfo->wcmb->l), NULL, WMOP_UNION);
+    }
+
+    return PRO_TK_NO_ERROR;
+
 }
 
 extern "C" static ProError
 creo_attribute_val(const char **val, const char *key, ProMdl m)
 {
-    wchar_t wkey[100000];
-    wchar_t wval[100000];
-    char cval[100000];
+    wchar_t wkey[CREO_NAME_MAX];
+    wchar_t wval[CREO_NAME_MAX];
+    char cval[CREO_NAME_MAX];
     char *fval = NULL;
     ProError pstatus;
     ProModelitem mitm;
@@ -247,8 +278,8 @@ assembly_write(ProMdl model, ProError status, ProAppData app_data)
 {
     struct wmember wcomb;
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
-    wchar_t wname[10000];
-    char name[10000];
+    wchar_t wname[CREO_NAME_MAX];
+    char name[CREO_NAME_MAX];
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
     BU_LIST_INIT(&wcomb.l);
 
@@ -291,7 +322,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
     ProAsmcomppath comp_path;
     ProMatrix xform;
     ProMdlType type;
-    wchar_t name[10000];
+    wchar_t name[CREO_NAME_MAX];
     ProCharLine astr;
     ProFileName msgfil;
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
@@ -430,35 +461,15 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 
 
 
-/* routine to check if xform is an identity */
-extern "C" int
-is_non_identity( ProMatrix xform )
-{
-    int i, j;
-
-    for ( i=0; i<4; i++ ) {
-	for ( j=0; j<4; j++ ) {
-	    if ( i == j ) {
-		if ( xform[i][j] != 1.0 )
-		    return 1;
-	    } else {
-		if ( xform[i][j] != 0.0 )
-		    return 1;
-	    }
-	}
-    }
-
-    return 0;
-}
 
 ProError VisitParam(ProParameter *param, ProError status, ProAppData app_data)
 {
     ProError lstatus;
-    char pname[100000];
+    char pname[CREO_NAME_MAX];
     ProParamvalue pval;
     ProParamvalueType ptype;
-    wchar_t wval[10000];
-    char val[100000];
+    wchar_t wval[CREO_NAME_MAX];
+    char val[CREO_NAME_MAX];
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
     ProWstringToString(pname, param->id);
     lstatus = ProParameterValueGet(param, &pval);
