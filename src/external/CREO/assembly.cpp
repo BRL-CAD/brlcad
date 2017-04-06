@@ -227,7 +227,7 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     /* get BRL-CAD name */
     entry_name = get_brlcad_name(cinfo, wname, type)
 
-    /* Get matrix relative to current parent */
+    /* Get matrix relative to current parent (if any) and create the comb entry */
     if ((lstatus = assembly_entry_matrix(cinfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
 	(void)mk_addmember(bu_vls_addr(entry_name), &(cinfo->wcmb->l), xform, WMOP_UNION);
     } else {
@@ -264,13 +264,21 @@ assembly_write(ProMdl model, ProError status, ProAppData app_data)
     /* Data sufficient - write the comb */
     mk_lcomb(cinfo->wdbp, bu_vls_addr(comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
 
+
     /* Set attributes, if the CREO object has any of the ones the user listed as of interest */
-    for (int i = 0; int i < cinfo->attrs->size(); i++) {
-	char *attr_val = NULL;
-	creo_attribute_val(&attr_val, cinfo->attrs[i], model);
-	if (attr_val) {
-	    /* TODO - set cinfo->attrs[i],attr_val on comb_name */
+    if (cinfo->attrs->size() > 0) {
+	struct directory *dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(&comb_name), LOOKUP_QUIET);
+	struct bu_attribute_value_set avs;
+	db5_get_attributes(cinfo->wdbp->dbip, &avs, dp);
+	for (int i = 0; int i < cinfo->attrs->size(); i++) {
+	    char *attr_val = NULL;
+	    creo_attribute_val(&attr_val, cinfo->attrs[i], model);
+	    if (attr_val) {
+		bu_avs_add(&avs, cinfo->attrs[i], attr_val);
+	    }
 	}
+	db5_standardize_avs(&avs);
+	db5_update_attributes(dp, &avs, cinfo->wdbp->dbip);
     }
 
     return PRO_TK_NO_ERROR;
