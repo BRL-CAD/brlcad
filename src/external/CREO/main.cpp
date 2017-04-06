@@ -135,7 +135,10 @@ output_assems(struct creo_conv_info *cinfo)
     }
 }
 
-/* routine to output the top level object that is currently displayed in Pro/E */
+/*
+ * Routine to output the top level object that is currently displayed in CREO.
+ * This is the real beginning of the processing code - doit collects user
+ * settings and calls this function. */
 extern "C" void
 output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType type )
 {
@@ -151,13 +154,15 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
     wcsncpy(wname_saved, wname, wcslen(wname)+1);
 
-    /* output the object */
+    /* There are two possibilities - either we have a hierarchy, in which case we
+     * need to walk it and collect the objects to process, or we have a single part
+     * which we can process directly. */
     if ( type == PRO_MDL_PART ) {
-	/* tessellate part and output triangles */
+	/* One part only */
 	cinfo->parts->insert(wname_saved);
 	output_parts(cinfo);
     } else if ( type == PRO_MDL_ASSEMBLY ) {
-	/* visit all members of assembly */
+	/* Walk the hierarchy and process all necessary assemblies and parts */
 	cinfo->assems->insert(wname_saved);
 	ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, (ProAppData)cinfo);
 	output_parts(cinfo);
@@ -167,9 +172,16 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	bu_log("Object %s is neither PART nor ASSEMBLY, skipping", name);
     }
 
-    /* TODO - Make a final toplevel comb with the file name to hold the orientation matrix */
-    /* xform to rotate the model into standard BRL-CAD orientation */
-    /*0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1*/
+    /* Make a final toplevel comb with the file name to hold the orientation matrix */
+    struct bu_vls *comb_name;
+    struct wmember wcomb;
+    BU_LIST_INIT(&wcomb.l);
+    mat_t m;
+    bn_decode_mat(m, "0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1");
+    comb_name = get_brlcad_name(cinfo, wname, type);
+    (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
+    /* TODO - set up name based on file */
+    mk_lcomb(cinfo->wdbp, "creo", &wcomb, 0, NULL, NULL, NULL, 0);
 }
 
 
