@@ -644,6 +644,13 @@ creo_brl_access( uiCmdAccessMode access_mode )
     return ACCESS_AVAILABLE;
 }
 
+/********************************************************************************
+ * IMPORTANT - the names of the next two functions - user_initialize and
+ * user_terminate - are dictated by the CREO API.  These are the hooks that tie
+ * the rest of the code into the CREO system.  Both are *required* to be
+ * present, even if the user_terminate function doesn't do any actual work.
+ ********************************************************************************/
+
 extern "C" int user_initialize()
 {
     ProError status;
@@ -688,6 +695,7 @@ extern "C" int user_initialize()
 	return -1;
     }
 
+    /* TODO - this is a test, but may want to convert it into a "loaded successfully" dialog */
     ShowMsg();
 
     /* let user know we are here */
