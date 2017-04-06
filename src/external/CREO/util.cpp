@@ -167,7 +167,7 @@ struct pparam_data {
     char *val;
 }
 
-extern "C" ProError getkey(ProParameter *param, ProError status, ProAppData app_data)
+extern "C" ProError getval(ProParameter *param, ProError status, ProAppData app_data)
 {
     ProError lstatus;
     char pname[CREO_NAME_MAX];
@@ -205,6 +205,7 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
     struct pparam_data pdata;
     pdata.cinfo = cinfo;
     pdata.val = NULL;
+    char *val = NULL;
 
     ProModelitem itm;
     ProMdl model;
@@ -213,10 +214,14 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
     for (int i = 0; int i < cinfo->model_parameters->size(); i++) {
 	if (!pdata.val) {
 	    pdata.key = cinfo->model_parameters[i];
-	    ProParameterVisit(&itm,  NULL, getkey, (ProAppData)&pdata);
+	    ProParameterVisit(&itm,  NULL, getval, (ProAppData)&pdata);
+	} else {
+	    /* Have key - we're done here */
+	    val = pdata.val;
+	    break;
 	}
     }
-    return pdata.val;
+    return val;
 }
 
 
@@ -225,7 +230,7 @@ extern "C" struct bu_vls *
 get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
 {
     struct bu_vls gname_root = BU_VLS_INIT_ZERO;
-    struct bu_vls *gname;
+    struct bu_vls *gname = NULL;
     char *param_name = NULL;
     long count = 0;
     long have_name = 0;
@@ -233,6 +238,10 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( cinfo->logger, "create_unique_name( %s )\n", name );
     }
+
+    /* If we already have a name, return that */
+    gname = cinfo->brlcad_names->find(name);
+    if (gname) return gname;
     BU_GET(gname, struct bu_vls);
     bu_vls_init(gname);
 
@@ -265,7 +274,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
 	    (void)bu_namegen(gname, NULL, NULL);
 	    count++;
 	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(tmp_name) );
+		fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(gname) );
 	    }
 	    if (count == LONG_MAX) {
 		bu_vls_free(gname);
@@ -274,10 +283,10 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
 	    }
 	}
     }
-    cinfo->brlcad_names->insert(tmp_name);
+    cinfo->brlcad_names->insert(gname);
 
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( cinfo->logger, "\tnew name for %s is %s\n", name, bu_vls_addr(tmp_name) );
+	fprintf( cinfo->logger, "\tnew name for %s is %s\n", name, bu_vls_addr(gname) );
     }
 
     return gname;

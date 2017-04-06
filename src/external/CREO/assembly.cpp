@@ -212,7 +212,7 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
 {
     ProError lstatus;
     ProMdlType type;
-    struct bu_vls entry_name = BU_VLS_INIT_ZERO;
+    struct bu_vls *entry_name;
     wchar_t wname[CREO_NAME_MAX];
     char name[CREO_NAME_MAX];
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
@@ -226,13 +226,14 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     /* Skip this member if the object it refers to is empty */
     if (creo->empty->find(wname) != creo->empty->end()) return PRO_TK_NO_ERROR;
 
-    /* TODO: BRL-CAD name foo based on name - put result in entry_name as this will be how BRL-CAD keys the object */
+    /* get BRL-CAD name */
+    entry_name = get_brlcad_name(cinfo, wname, type)
 
     /* Get matrix relative to current parent */
     if ((lstatus = assembly_entry_matrix(cinfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
-	(void)mk_addmember(bu_vls_addr(&entry_name), &(cinfo->wcmb->l), xform, WMOP_UNION);
+	(void)mk_addmember(bu_vls_addr(entry_name), &(cinfo->wcmb->l), xform, WMOP_UNION);
     } else {
-	(void)mk_addmember(bu_vls_addr(&entry_name), &(cinfo->wcmb->l), NULL, WMOP_UNION);
+	(void)mk_addmember(bu_vls_addr(entry_name), &(cinfo->wcmb->l), NULL, WMOP_UNION);
     }
 
     return PRO_TK_NO_ERROR;
