@@ -253,9 +253,9 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
 	/* If that didn't work, and it looks like we have regex characters,
 	 * try a regex match */
 	if (!pdata.val) {
-	    int not_alnum = 0;
-	    for (int j = 0; j < strlen(pdata.key); j++) alnum += isalnum(pdata.key[j]);
-	    if (not_alnum) ProParameterVisit(&itm,  NULL, regex_key, (ProAppData)&pdata);
+	    int non_alnum = 0;
+	    for (int j = 0; j < strlen(pdata.key); j++) alnum += !isalnum(pdata.key[j]);
+	    if (non_alnum) ProParameterVisit(&itm,  NULL, regex_key, (ProAppData)&pdata);
 	}
 	if (pdata.val) {
 	    /* Have key - we're done here */
