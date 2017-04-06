@@ -210,7 +210,7 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
     ProMdl model;
     if (ProMdlnameInit(creo_name, type, &m) != PRO_TK_NO_ERROR) return NULL;
     if (ProMdlToModelitem(model, &itm) != PRO_TK_NO_ERROR) return NULL;
-    for (int i = 0; int i < cinfo->model_parameters; i++) {
+    for (int i = 0; int i < cinfo->model_parameters->size(); i++) {
 	if (!pdata.val) {
 	    pdata.key = cinfo->model_parameters[i];
 	    ProParameterVisit(&itm,  NULL, getkey, (ProAppData)&pdata);

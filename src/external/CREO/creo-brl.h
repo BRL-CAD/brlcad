@@ -183,6 +183,7 @@ struct creo_conv_info {
     std::map<wchar_t *, struct bu_vls *, WStrCmp> *name_map;  /* CREO names to BRL-CAD names */
     std::set<struct bu_vls *, StrCmp> *brlcad_names; /* set of active .g object names */
     std::vector<char *> *model_parameters;     /* model parameters to use when generating .g names */
+    std::vector<char *> *attrs;     	/* attributes to preserve when transferring objects */
 };
 
 /* Generic container used when we need to pass around something in addition to creo_conv_info */

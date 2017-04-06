@@ -134,11 +134,10 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
     }
 }
 
-    /* Get the transformation matrix to apply to a member (feat) of a comb.
-     * this call is creating a path from the assembly to this particular member
-     * (assembly/member)
-     */
-
+/* Get the transformation matrix to apply to a member (feat) of a comb.
+ * this call is creating a path from the assembly to this particular member
+ * (assembly/member)
+ */
 extern "C" static ProError
 assembly_entry_matrix(ProMdl parent, ProFeature *feat, mat_t *mat)
 {
@@ -209,6 +208,39 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     (void)mk_addmember(bu_vls_addr(&entry_name), &(cinfo->wcmb->l), xform, WMOP_UNION);
 }
 
+extern "C" static ProError
+creo_attribute_val(const char **val, const char *key, ProMdl m)
+{
+    wchar_t wkey[100000];
+    wchar_t wval[100000];
+    char cval[100000];
+    char *fval = NULL;
+    ProError pstatus;
+    ProModelitem mitm;
+    ProParameter param;
+    ProParamvalueType ptype;
+    ProParamvalue pval;
+
+    ProWstringToString(wkey, key);
+    ProMdlToModelitem(m, &mitm);
+    pstatus = ProParameterInit(&mitm, wkey, &param);
+    /* TODO - if param not found, return */
+    ProParameterValueGet(param, &pval);
+    ProParamvalueTypeGet(&pval, &ptype);
+    switch (ptype) {
+	case PRO_PARAM_STRING:
+	    ProParamvalueValueGet(&pval, ptype, wval);
+	    ProWstringToString(cval, wval);
+	    fval = bu_strdup(cval);
+	    break;
+	default:
+	    break;
+    }
+
+    *val = fval;
+    return PRO_TK_NO_ERROR;
+}
+
 /* Only run this *after* find_empty_assemblies has been run */
 extern "C" static ProError
 assembly_write(ProMdl model, ProError status, ProAppData app_data)
@@ -232,6 +264,15 @@ assembly_write(ProMdl model, ProError status, ProAppData app_data)
     /* TODO: BRL-CAD name foo based on name - put result in comb_name */
 
     mk_lcomb(cinfo->wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+
+    /* Set attributes, if the CREO object has any of the ones the user listed as of interest */
+    for (int i = 0; int i < cinfo->attrs->size(); i++) {
+	char *attr_val = NULL;
+	creo_attribute_val(&attr_val, cinfo->attrs[i], model);
+	if (attr_val) {
+	    /* TODO - set cinfo->attrs[i],attr_val on comb_name */
+	}
+    }
 
     return PRO_TK_NO_ERROR;
 }

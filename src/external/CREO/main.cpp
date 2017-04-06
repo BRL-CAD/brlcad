@@ -65,6 +65,7 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
     cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
     cinfo->model_parameters = new std::vector<char *>;
+    cinfo->attrs = new std::vector<char *>;
 
 }
 
@@ -333,6 +334,55 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		    if (pkey.length() > 0) {
 			creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Found model parameter naming key: %s.\n", pkey.c_str());
 			cinfo->model_parameters->push_back(bu_strdup(pkey.c_str()));
+		    }
+		}
+	    }
+	}
+    }
+
+    /***********************************************************************************/
+    /* Read a user supplied list of model attributes to convert over to the .g file. */
+    /***********************************************************************************/
+    {
+	/* Get string from dialog */
+	char attr_file[128];
+	wchar_t *w_attr_file;
+	status = ProUIInputpanelValueGet("creo_brl", "attr_file", &w_attr_file);
+	if ( status != PRO_TK_NO_ERROR ) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get name of attribute list file.\n");
+	    creo_conv_info_free(cinfo);
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
+	}
+	ProWstringToString(attr_file, w_attr_file);
+	ProWstringFree(w_attr_file);
+
+	if (strlen(attr_file) > 0) {
+	    /* Parse the file contents into a list of parameter keys */
+	    std::ifstream pfile(attr_file);
+	    std::string line;
+	    if (!pfile) {
+		creo_log(cinfo, MSG_FAIL, status, "Cannot read attribute list file.\n");
+		creo_conv_info_free(cinfo);
+		ProUIDialogDestroy( "creo_brl" );
+		return;
+	    }
+	    while (std::getline(pfile, line)) {
+		std::string pkey;
+		std::istringstream ls(line);
+		while (std::getline(ls, pkey, ',')) {
+		    /* Scrub leading and trailing whitespace */
+		    size_t startpos = pkey.find_first_not_of(" \t\n\v\f\r");
+		    if (std::string::npos != startpos) {
+			pkey = pkey.substr(startpos);
+		    }
+		    size_t endpos = pkey.find_last_not_of(" \t\n\v\f\r");
+		    if (std::string::npos != endpos) {
+			pkey = pkey.substr(0 ,endpos+1);
+		    }
+		    if (pkey.length() > 0) {
+			creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Found attribute key: %s.\n", pkey.c_str());
+			cinfo->attrs->push_back(bu_strdup(pkey.c_str()));
 		    }
 		}
 	    }
