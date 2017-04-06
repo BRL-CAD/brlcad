@@ -321,7 +321,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
     if (!num_vertices || !num_faces)
 	return;
 
-    unsigned char orientation;
+    unsigned char orientation = RT_BOT_UNORIENTED;
 
     switch (mesh.SolidOrientation()) {
 	case 0:
