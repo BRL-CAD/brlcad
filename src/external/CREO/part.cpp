@@ -24,7 +24,13 @@
 #include "common.h"
 #include "creo-brl.h"
 
-#if 0
+/* Part processing container */
+struct part_conv_info {
+    struct creo_conv_info *cinfo; /* global state */
+    std::set<int> *suppressed_features; /* list of features to suppress when generating output. */
+    std::vector<struct directory *> *subtractions; /* objects to subtract from primary shape. */
+};
+
 /* routine to check for bad triangles
  * only checks for triangles with duplicate vertices
  */
@@ -33,104 +39,38 @@ bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3 )
 {
     double dist;
     double coord;
-    int i;
 
-    if ( v1 == v2 || v2 == v3 || v1 == v3 )
-	return 1;
+    if (v1 == v2 || v2 == v3 || v1 == v3) return 1;
 
     dist = 0;
-    for ( i=0; i<3; i++ ) {
+    for (int i = 0; i < 3; i++) {
 	coord = cinfo->vert_tree_root->the_array[v1*3+i] - cinfo->vert_tree_root->the_array[v2*3+i];
 	dist += coord * coord;
     }
-    dist = sqrt( dist );
-    if ( dist < cinfo->local_tol ) {
-	return 1;
-    }
+    dist = sqrt(dist);
+    if (dist < cinfo->local_tol) return 1;
 
     dist = 0;
-    for ( i=0; i<3; i++ ) {
+    for (int i = 0; i < 3; i++) {
 	coord = cinfo->vert_tree_root->the_array[v2*3+i] - cinfo->vert_tree_root->the_array[v3*3+i];
 	dist += coord * coord;
     }
-    dist = sqrt( dist );
-    if ( dist < cinfo->local_tol ) {
-	return 1;
-    }
+    dist = sqrt(dist);
+    if (dist < cinfo->local_tol) return 1;
 
     dist = 0;
-    for ( i=0; i<3; i++ ) {
+    for (int i=0; i<3; i++ ) {
 	coord = cinfo->vert_tree_root->the_array[v1*3+i] - cinfo->vert_tree_root->the_array[v3*3+i];
 	dist += coord * coord;
     }
-    dist = sqrt( dist );
-    if ( dist < cinfo->local_tol ) {
-	return 1;
-    }
+    dist = sqrt(dist);
+    if (dist < cinfo->local_tol) return 1;
 
     return 0;
 }
 
-extern "C" void
-add_to_empty_list(struct creo_conv_info *cinfo,  char *name )
-{
-    struct empty_parts *ptr;
-    int found=0;
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Adding %s to list of empty parts\n", name );
-    }
-
-    if ( cinfo->empty_parts_root == NULL ) {
-	BU_ALLOC(cinfo->empty_parts_root, struct empty_parts);
-	ptr = cinfo->empty_parts_root;
-    } else {
-	ptr = cinfo->empty_parts_root;
-	while ( !found && ptr->next ) {
-	    if ( BU_STR_EQUAL( name, ptr->name ) ) {
-		found = 1;
-		break;
-	    }
-	    ptr = ptr->next;
-	}
-	if ( !found ) {
-	    BU_ALLOC(ptr->next, struct empty_parts);
-	    ptr = ptr->next;
-	}
-    }
-
-    ptr->next = NULL;
-    ptr->name = (char *)bu_strdup( name );
-}
-
-
-extern "C" void
-add_to_done_part(struct creo_conv_info *cinfo,  wchar_t *name )
-{
-    ProCharLine astr;
-    wchar_t *name_copy;
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Added %s to list of done parts\n", ProWstringToString( astr, name ) );
-    }
-
-    if (cinfo->done_list_part->find(name) == cinfo->done_list_part->end()) {
-	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
-		"part name for done list" );
-	wcsncpy( name_copy, name, wcslen(name)+1 );
-	cinfo->done_list_part->insert(name_copy);
-    }
-}
-
-extern "C" int
-already_done_part(struct creo_conv_info *cinfo,  wchar_t *name )
-{
-    if (cinfo->done_list_part->find(name) != cinfo->done_list_part->end()) {
-	return 1;
-    }
-    return 0;
-}
-
+/* If we have a CREO modeling feature that adds material, it can impact
+ * the decision on which conversion methods are practical */
 extern "C" int
 feat_adds_material( ProFeattype feat_type )
 {
@@ -167,6 +107,21 @@ feat_adds_material( ProFeattype feat_type )
     return 0;
 }
 
+extern "C" char *feat_status_to_str(ProFeatStatus feat_stat)
+{
+    static char *feat_status[]={
+	"PRO_FEAT_ACTIVE",
+	"PRO_FEAT_INACTIVE",
+	"PRO_FEAT_FAMTAB_SUPPRESSED",
+	"PRO_FEAT_SIMP_REP_SUPPRESSED",
+	"PRO_FEAT_PROG_SUPPRESSED",
+	"PRO_FEAT_SUPPRESSED",
+	"PRO_FEAT_UNREGENERATED"
+    };
+    return feat_status[feat_stat];
+}
+
+#if 1
 extern "C" void
 remove_holes_from_id_list(struct creo_conv_info *cinfo,  ProMdl model )
 {
@@ -181,36 +136,12 @@ remove_holes_from_id_list(struct creo_conv_info *cinfo,  ProMdl model )
 
     free_csg_ops(cinfo);             /* these are only holes */
     for ( i=0; i < cinfo->feat_id_count; i++ ) {
-	status = ProFeatureInit( ProMdlToSolid(model),
-		cinfo->feat_ids_to_delete[i],
-		&feat );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get handle for id %d\n",
-		    cinfo->feat_ids_to_delete[i] );
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf(cinfo->logger, "Failed to get handle for id %d\n",
-			cinfo->feat_ids_to_delete[i] );
-	    }
-	}
+	status = ProFeatureInit( ProMdlToSolid(model), cinfo->feat_ids_to_delete[i], &feat );
 	status = ProFeatureTypeGet( &feat, &type );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get feature type for id %d\n",
-		    cinfo->feat_ids_to_delete[i] );
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf(cinfo->logger, "Failed to get feature type for id %d\n",
-			cinfo->feat_ids_to_delete[i] );
-	    }
-	}
 	if ( type == PRO_FEAT_HOLE ) {
 	    /* remove this from the list */
-	    int j;
-
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf(cinfo->logger, "\tRemoving feature id %d from deletion list\n",
-			cinfo->feat_ids_to_delete[i] );
-	    }
 	    cinfo->feat_id_count--;
-	    for ( j=i; j<cinfo->feat_id_count; j++ ) {
+	    for (int j=i; j<cinfo->feat_id_count; j++ ) {
 		cinfo->feat_ids_to_delete[j] = cinfo->feat_ids_to_delete[j+1];
 	    }
 	    i--;
@@ -230,7 +161,6 @@ feature_filter( ProFeature *feat, ProAppData data )
     ProMdl model = fdata->model;
 
     if ( (ret=ProFeatureTypeGet( feat, &cinfo->curr_feat_type )) != PRO_TK_NO_ERROR ) {
-
 	fprintf( stderr, "ProFeatureTypeGet Failed for %s!!\n", cinfo->curr_part_name );
 	return ret;
     }
@@ -360,19 +290,6 @@ add_triangle(struct creo_conv_info *cinfo, int v1, int v2, int v3 )
 }
 
 
-extern "C" char *feat_status_to_str(ProFeatStatus feat_stat)
-{
-    static char *feat_status[]={
-	"PRO_FEAT_ACTIVE",
-	"PRO_FEAT_INACTIVE",
-	"PRO_FEAT_FAMTAB_SUPPRESSED",
-	"PRO_FEAT_SIMP_REP_SUPPRESSED",
-	"PRO_FEAT_PROG_SUPPRESSED",
-	"PRO_FEAT_SUPPRESSED",
-	"PRO_FEAT_UNREGENERATED"
-    };
-    return feat_status[feat_stat];
-}
 
 extern "C" void
 build_tree(struct creo_conv_info *cinfo,  char *sol_name, struct bu_vls *tree )
@@ -407,8 +324,8 @@ build_tree(struct creo_conv_info *cinfo,  char *sol_name, struct bu_vls *tree )
 
 
 /* routine to output a part as a BRL-CAD region with one BOT solid
- * The region will have the name from Pro/E.
- * The solid will have the same name with "s." prefix.
+ * The region will have the name from Pro/E with a .r suffix.
+ * The solid will have the same name with ".bot" prefix.
  *
  *	returns:
  *		0 - OK
@@ -439,15 +356,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
-    /* if this part has already been output, do not do it again */
-    if ( ProMdlNameGet( model, part_name ) != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get name for a part\n" );
-	return 1;
-    }
-
-    if ( already_done_part(cinfo, part_name ) )
-	return 0;
-
     if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf(cinfo->logger, "Processing %s:\n", ProWstringToString( astr, part_name ) );
     }
@@ -458,40 +366,18 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     /* let user know we are doing something */
 
     status = ProUILabelTextSet( "creo_brl", "curr_proc", part_name );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
-	return 1;
-    }
-#if 0
-    status = ProUIDialogActivate( "creo_brl", &ret_status );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
-		status );
-	fprintf( stderr, "\t dialog returned %d\n", ret_status );
-    }
-#endif
+
     if ( !cinfo->do_facets_only || cinfo->do_elims ) {
 	struct feature_data fdata;
 	fdata.cinfo = cinfo;
 	fdata.model = model;
 	free_csg_ops(cinfo);
-	ProSolidFeatVisit( ProMdlToSolid(model), do_feature_visit,
-		feature_filter, (ProAppData)&fdata);
+	ProSolidFeatVisit( ProMdlToSolid(model), do_feature_visit, feature_filter, (ProAppData)&fdata);
 
 	if ( cinfo->feat_id_count ) {
 	    int i;
 
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf(cinfo->logger, "suppressing %d features of %s:\n",
-			cinfo->feat_id_count, cinfo->curr_part_name );
-		for ( i=0; i<cinfo->feat_id_count; i++ ) {
-		    fprintf(cinfo->logger, "\t%d\n", cinfo->feat_ids_to_delete[i] );
-		}
-	    }
-	    fprintf( stderr, "suppressing %d features\n", cinfo->feat_id_count );
-	    ret = ProFeatureSuppress( ProMdlToSolid(model),
-		    cinfo->feat_ids_to_delete, cinfo->feat_id_count,
-		    NULL, 0 );
+	    ret = ProFeatureSuppress( ProMdlToSolid(model), cinfo->feat_ids_to_delete, cinfo->feat_id_count, NULL, 0 );
 	    if ( ret != PRO_TK_NO_ERROR ) {
 		ProFeatureResumeOptions resume_opts[1];
 		ProFeatStatus feat_stat;
@@ -499,70 +385,24 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
 		resume_opts[0] = PRO_FEAT_RESUME_INCLUDE_PARENTS;
 
-		if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		    fprintf(cinfo->logger, "Failed to suppress features!!!\n" );
-		}
-		fprintf( stderr, "Failed to delete %d features from %s\n",
-			cinfo->feat_id_count, cinfo->curr_part_name );
+		if (cinfo->logger_type == LOGGER_TYPE_ALL ) { fprintf(cinfo->logger, "Failed to suppress features!!!\n" ); }
 
 		for ( i=0; i<cinfo->feat_id_count; i++ ) {
-		    status = ProFeatureInit( ProMdlToSolid(model),
-			    cinfo->feat_ids_to_delete[i],
-			    &feat );
-		    if ( status != PRO_TK_NO_ERROR ) {
-			fprintf( stderr, "Failed to get handle for id %d\n",
-				cinfo->feat_ids_to_delete[i] );
-			if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-			    fprintf(cinfo->logger, "Failed to get handle for id %d\n",
-				    cinfo->feat_ids_to_delete[i] );
-			}
-		    } else {
-			status = ProFeatureStatusGet( &feat, &feat_stat );
-			if ( status != PRO_TK_NO_ERROR ) {
-			    fprintf( stderr,
-				    "Failed to get status for feature %d\n",
-				    cinfo->feat_ids_to_delete[i] );
-			    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-				fprintf(cinfo->logger,
-					"Failed to get status for feature %d\n",
-					cinfo->feat_ids_to_delete[i] );
-			    }
-			} else {
-			    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-				if ( feat_stat < 0 ) {
-				    fprintf(cinfo->logger,
-					    "invalid feature (%d)\n",
-					    cinfo->feat_ids_to_delete[i] );
-				} else {
-				    fprintf(cinfo->logger, "feat %d status = %s\n",
-					    cinfo->feat_ids_to_delete[i],
-					    feat_status_to_str(feat_stat) );
-				}
-			    }
-			    if ( feat_stat == PRO_FEAT_SUPPRESSED ) {
+		    if (ProFeatureInit( ProMdlToSolid(model), cinfo->feat_ids_to_delete[i], &feat) == PRO_TK_NO_ERROR) {
+			if (ProFeatureStatusGet(&feat, &feat_stat) == PRO_TK_NO_ERROR && feat_stat == PRO_FEAT_SUPPRESSED ) {
 				/* unsuppress this one */
 				if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-				    fprintf(cinfo->logger,
-					    "Unsuppressing feature %d\n",
-					    cinfo->feat_ids_to_delete[i] );
+				    fprintf(cinfo->logger, "Unsuppressing feature %d\n", cinfo->feat_ids_to_delete[i] );
 				}
-				status = ProFeatureResume( ProMdlToSolid(model),
-					&cinfo->feat_ids_to_delete[i],
-					1, resume_opts, 1 );
+				status = ProFeatureResume( ProMdlToSolid(model), &cinfo->feat_ids_to_delete[i],	1, resume_opts, 1 );
 				if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
 				    if ( status == PRO_TK_NO_ERROR ) {
-					fprintf(cinfo->logger,
-						"\tfeature id %d unsuppressed\n",
-						cinfo->feat_ids_to_delete[i] );
+					fprintf(cinfo->logger,"\tfeature id %d unsuppressed\n",	cinfo->feat_ids_to_delete[i] );
 				    } else if ( status == PRO_TK_SUPP_PARENTS ) {
-					fprintf(cinfo->logger,
-						"\tsuppressed parents for feature %d not found\n",
-						cinfo->feat_ids_to_delete[i] );
+					fprintf(cinfo->logger,"\tsuppressed parents for feature %d not found\n",cinfo->feat_ids_to_delete[i] );
 
 				    } else {
-					fprintf(cinfo->logger,
-						"\tfeature id %d unsuppression failed\n",
-						cinfo->feat_ids_to_delete[i] );
+					fprintf(cinfo->logger,"\tfeature id %d unsuppression failed\n",cinfo->feat_ids_to_delete[i] );
 				    }
 				}
 			    }
@@ -621,6 +461,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	/* TODO - a failed part probably should not be considered an empty part - put a bbox in instead if we can get one with an attribute denoting failure,
+	 * or if even that fails *some* object with the requisite info, because the conversion shouldn't be ignore it. */
 	add_to_empty_list(cinfo, get_brlcad_name(cinfo, cinfo->curr_part_name ) );
 	ret = 1;
     } else if ( !tess ) {
@@ -633,6 +475,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	/* This is a legit empty solid, list it as such */
 	add_to_empty_list(cinfo, get_brlcad_name(cinfo, cinfo->curr_part_name ) );
 	ret = 2;
     } else {
@@ -660,6 +503,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    ProMessageClear();
 	    fprintf( stderr, "%s\n", astr );
 	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	    /* This is (probably?) a legit empty solid, list it as such */
 	    add_to_empty_list( cinfo, get_brlcad_name(cinfo, cinfo->curr_part_name ) );
 	    ret = 2;
 	} else {
