@@ -135,6 +135,56 @@ output_assems(struct creo_conv_info *cinfo)
     }
 }
 
+
+/* Logic that builds up the sets of assemblies and parts.  Doing a feature
+ * visit for all top level objects will result in a recursive walk of the
+ * hierarchy that adds all active objects into one of the converter lists.
+ *
+ * The "app_data" pointer holds the creo_conv_info container. 
+ */
+extern "C" ProError
+objects_gather( ProFeature *feat, ProError status, ProAppData app_data )
+{
+    ProError loc_status;
+    ProMdl model;
+    ProMdlType type;
+    wchar_t wname[CREO_NAME_MAX];
+    char name[CREO_NAME_MAX];
+    wchar_t *wname_saved;
+    struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+
+    /* Get feature name */
+    if ((loc_status = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return creo_log(cinfo, MSG_FAIL, loc_status, "Failure getting name");
+    (void)ProWstringToString(name, wname);
+
+    /* get the model for this member */
+    if ((loc_status = ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, loc_status, "%s: failure getting model", name);
+
+    /* get its type (part or assembly are the only ones that should make it here) */
+    if ((loc_status = ProMdlTypeGet(model, &type)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, loc_status, "%s: failure getting type", name);
+
+    /* log this member */
+    switch ( type ) {
+	case PRO_MDL_ASSEMBLY:
+	    if (cinfo->assems->find(wname) == cinfo->assems->end()) {
+		wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
+		wcsncpy(wname_saved, wname, wcslen(wname)+1);
+		cinfo->assems->insert(wname_saved);
+		return ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)component_filter, app_data);
+	    }
+	    break;
+	case PRO_MDL_PART:
+	    if (cinfo->parts->find(wname) == cinfo->parts->end()) {
+		wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
+		wcsncpy(wname_saved, wname, wcslen(wname)+1);
+		cinfo->parts->insert(wname_saved);
+	    }
+	    break;
+    }
+
+    return PRO_TK_NO_ERROR;
+}
+
 /*
  * Routine to output the top level object that is currently displayed in CREO.
  * This is the real beginning of the processing code - doit collects user
@@ -164,7 +214,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     } else if ( type == PRO_MDL_ASSEMBLY ) {
 	/* Walk the hierarchy and process all necessary assemblies and parts */
 	cinfo->assems->insert(wname_saved);
-	ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, (ProAppData)cinfo);
+	ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, (ProAppData)cinfo);
 	output_parts(cinfo);
 	find_empty_assemblies(cinfo);
 	output_assems(cinfo);

@@ -207,8 +207,7 @@ extern "C" char *get_brlcad_name(struct creo_conv_info *cinfo, char *part_name);
 extern "C" void find_empty_assemblies(struct creo_conv_info *);
 extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
 extern "C" int output_part(struct creo_conv_info *, ProMdl model);
-extern "C" ProError assembly_gather(ProFeature *, ProError, ProAppData);
-extern "C" ProError assembly_filter(ProFeature *, ProAppData *);
+extern "C" ProError component_filter(ProFeature *, ProAppData *);
 
 extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
 

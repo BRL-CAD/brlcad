@@ -354,6 +354,18 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
     return gname;
 }
 
+/* Filter for the feature visit routine that selects only "component" items
+ * (should be only parts and assemblies) */
+extern "C" ProError
+component_filter(ProFeature *feat, ProAppData *data)
+{
+    ProFeattype type;
+    ProFeatStatus feat_stat;
+    if (ProFeatureTypeGet(feat, &type) != PRO_TK_NO_ERROR || type != PRO_FEAT_COMPONENT) return PRO_TK_CONTINUE;
+    if (ProFeatureStatusGet(feat, &feat_stat) != PRO_TK_NO_ERROR || feat_stat != PRO_FEAT_ACTIVE) return PRO_TK_CONTINUE;
+    return PRO_TK_NO_ERROR;
+}
+
 /* Test function */
 ProError ShowMsg()
 {
