@@ -25,6 +25,12 @@
 #include "creo-brl.h"
 #include <string.h>
 
+/* Assembly processing container */
+struct assem_conv_info {
+    struct creo_conv_info *cinfo; /* global state */
+    ProMdl curr_parent;
+    struct wmember *wcmb;
+};
 
 /* Callback function used only for find_empty_assemblies */
 extern "C" static ProError
@@ -163,7 +169,7 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     ProMdlType type;
     struct bu_vls *entry_name;
     wchar_t wname[CREO_NAME_MAX];
-    struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+    struct assem_conv_info *ainfo = (struct assem_conv_info *)app_data;
     mat_t xform;
     MAT_IDN(xform);
 
@@ -174,13 +180,13 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     if (creo->empty->find(wname) != creo->empty->end()) return PRO_TK_NO_ERROR;
 
     /* get BRL-CAD name */
-    entry_name = get_brlcad_name(cinfo, wname, type)
+    entry_name = get_brlcad_name(ainfo->cinfo, wname, type)
 
     /* Get matrix relative to current parent (if any) and create the comb entry */
-    if ((lstatus = assembly_entry_matrix(cinfo, cinfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
-	(void)mk_addmember(bu_vls_addr(entry_name), &(cinfo->wcmb->l), xform, WMOP_UNION);
+    if ((lstatus = assembly_entry_matrix(ainfo->cinfo, ainfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
+	(void)mk_addmember(bu_vls_addr(entry_name), &(ainfo->wcmb->l), xform, WMOP_UNION);
     } else {
-	(void)mk_addmember(bu_vls_addr(entry_name), &(cinfo->wcmb->l), NULL, WMOP_UNION);
+	(void)mk_addmember(bu_vls_addr(entry_name), &(ainfo->wcmb->l), NULL, WMOP_UNION);
     }
 
     return PRO_TK_NO_ERROR;
@@ -194,7 +200,9 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     ProBoolean is_exploded = false;
     struct bu_vls *comb_name;
     wchar_t wname[CREO_NAME_MAX];
-    struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+    struct assem_conv_info *ainfo;
+    BU_GET(ainfo, struct assem_conv_info);
+    ainfo->cinfo = cinfo;
 
     /* Check for exploded assembly - TODO, will this work?  Seemed to be a
      * problem... Do we really need to change this for conversion? */
@@ -212,11 +220,11 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Processing assembly %s:\n", buffer);
     }
-    cinfo->curr_parent = model;
-    cinfo->wcmb = &wcomb;
+    ainfo->curr_parent = model;
+    ainfo->wcmb = &wcomb;
 
     /* Add children */
-    ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, app_data);
+    ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
 
     /* Get BRL-CAD name */
     comb_name = get_brlcad_name(cinfo, wname, type);
@@ -242,7 +250,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     struct bu_vls mpval = BU_VLS_INIT_ZERO;
     if (ProSolidMassPropertyGet(ProMdlToSolid(model), NULL, &mass_prop) == PRO_TK_NO_ERROR) {
 	if (mass_prop.density > 0.0) {
-	    bu_vls_sprintf(&mpval, "%g", mass_prop.density)
+	    bu_vls_sprintf(&mpval, "%g", mass_prop.density);
 	    bu_avs_add(&avs, "density", bu_vls_addr(&mpval));
 	}
 	if (mass_prop.mass > 0.0) {
@@ -251,8 +259,8 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 	}
 
 	if (mass_prop.volume > 0.0) {
-	    bu_vls_sprintf(&mpval, "%g", mass_prop.volume)
-		bu_avs_add(&avs, "volume", bu_vls_addr(&mpval));
+	    bu_vls_sprintf(&mpval, "%g", mass_prop.volume);
+	    bu_avs_add(&avs, "volume", bu_vls_addr(&mpval));
 	}
     }
 
@@ -260,6 +268,8 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     db5_standardize_avs(&avs);
     db5_update_attributes(dp, &avs, cinfo->wdbp->dbip);
 
+    /* Free local container */
+    BU_PUT(ainfo, struct assem_conv_info);
     return PRO_TK_NO_ERROR;
 }
 

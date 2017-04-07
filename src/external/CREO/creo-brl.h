@@ -173,12 +173,6 @@ struct creo_conv_info {
     /* ------ Internal ------ */
     struct db_i *dbip;		/* output database */
     struct rt_wdb *wdbp;
-    /* Note - these next two are a temporary cheat in that they're not global,
-     * but part of local processing - properly handled, these should be wrapped
-     * into a container struct with creo_conv_info at the local level...*/
-    ProMdl curr_parent;
-    struct wmember *wcmb;
-
     std::set<wchar_t *, WStrCmp> *parts;	/* list of all parts in CREO hierarchy */
     std::set<wchar_t *, WStrCmp> *assems;	/* list of all assemblies in CREO hierarchy */
     std::map<wchar_t *, int, WStrCmp> *assem_child_cnts; /* number of solid children in a given assembly */
