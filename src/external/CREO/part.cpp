@@ -566,7 +566,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
 	    /* actually output the part */
 	    /* first the BOT solid with a made-up name */
-	    brl_name = get_brlcad_name(cinfo, cinfo->curr_part_name );
+	    brl_name = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot");
 	    sol_name = (char *)bu_malloc( strlen( brl_name ) + 3, "aol_name" );
 	    snprintf( sol_name, strlen(brl_name)+3, "s.%s", brl_name );
 	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {

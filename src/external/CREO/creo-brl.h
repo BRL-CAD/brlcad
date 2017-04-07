@@ -200,7 +200,7 @@ extern "C" int output_part(struct creo_conv_info *, ProMdl model);
 extern "C" ProError component_filter(ProFeature *, ProAppData *);
 extern "C" ProError creo_attribute_val(const char **val, const char *key, ProMdl m);
 extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
-extern "C" char *get_brlcad_name(struct creo_conv_info *cinfo, char *part_name);
+extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *, wchar_t *, ProType type, const char *);
 extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);

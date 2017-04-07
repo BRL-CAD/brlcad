@@ -270,7 +270,7 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
 
 /* create a unique BRL-CAD object name from a possibly illegal name */
 extern "C" struct bu_vls *
-get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
+get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const char *suffix)
 {
     struct bu_vls gname_root = BU_VLS_INIT_ZERO;
     struct bu_vls *gname = NULL;
@@ -320,7 +320,8 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
     /* create a unique name */
     if (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
 	bu_vls_sprintf(gname, "%s-1", bu_vls_addr(&gname_root));
-	if (type != PRO_MDL_ASSEMBLY) {bu_vls_printf(gname, ".s");}
+	if (suffix) {bu_vls_printf(gname, ".%s", suffix);}
+	if (type != PRO_MDL_ASSEMBLY && !suffix) {bu_vls_printf(gname, ".s");}
 	while (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
 	    (void)bu_namegen(gname, NULL, NULL);
 	    count++;

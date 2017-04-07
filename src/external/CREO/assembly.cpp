@@ -180,7 +180,7 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     if (creo->empty->find(wname) != creo->empty->end()) return PRO_TK_NO_ERROR;
 
     /* get BRL-CAD name */
-    entry_name = get_brlcad_name(ainfo->cinfo, wname, type)
+    entry_name = get_brlcad_name(ainfo->cinfo, wname, type, NULL)
 
     /* Get matrix relative to current parent (if any) and create the comb entry */
     if ((lstatus = assembly_entry_matrix(ainfo->cinfo, ainfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
@@ -227,7 +227,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
 
     /* Get BRL-CAD name */
-    comb_name = get_brlcad_name(cinfo, wname, type);
+    comb_name = get_brlcad_name(cinfo, wname, type, NULL);
 
     /* Data sufficient - write the comb */
     mk_lcomb(cinfo->wdbp, bu_vls_addr(comb_name), &wcomb, 0, NULL, NULL, NULL, 0);

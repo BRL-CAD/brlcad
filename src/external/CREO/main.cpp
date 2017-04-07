@@ -228,7 +228,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     BU_LIST_INIT(&wcomb.l);
     mat_t m;
     bn_decode_mat(m, "0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1");
-    comb_name = get_brlcad_name(cinfo, wname, type);
+    comb_name = get_brlcad_name(cinfo, wname, type, NULL);
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
     /* TODO - set up name based on file */
     mk_lcomb(cinfo->wdbp, "creo", &wcomb, 0, NULL, NULL, NULL, 0);
