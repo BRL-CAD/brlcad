@@ -195,24 +195,28 @@ struct adata {
     void *data;
 };
 
+/* assembly */
+extern "C" void find_empty_assemblies(struct creo_conv_info *);
+extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
+
+/* part */
+extern "C" int output_part(struct creo_conv_info *, ProMdl model);
+
+/* util */
+extern "C" ProError component_filter(ProFeature *, ProAppData *);
+extern "C" ProError creo_attribute_val(const char **val, const char *key, ProMdl m);
+extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
+extern "C" char *get_brlcad_name(struct creo_conv_info *cinfo, char *part_name);
+extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
+extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);
 extern "C" void kill_gen_error_dialog(char *dialog, char *component, ProAppData appdata);
 
-extern "C" void do_quit(char *dialog, char *compnent, ProAppData appdata);
+/* csg */
+extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
 extern "C" void free_csg_ops(struct creo_conv_info *);
 
-extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
-extern "C" ProError creo_attribute_val(const char **val, const char *key, ProMdl m);
-extern "C" char *get_brlcad_name(struct creo_conv_info *cinfo, char *part_name);
-extern "C" void find_empty_assemblies(struct creo_conv_info *);
-extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
-extern "C" int output_part(struct creo_conv_info *, ProMdl model);
-extern "C" ProError component_filter(ProFeature *, ProAppData *);
 
-extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
-
-extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
-extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 
 extern "C" ProError ShowMsg();
 
