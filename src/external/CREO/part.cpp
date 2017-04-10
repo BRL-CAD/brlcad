@@ -27,7 +27,7 @@
 /* Part processing container */
 struct part_conv_info {
     struct creo_conv_info *cinfo; /* global state */
-    std::set<int> *suppressed_features; /* list of features to suppress when generating output. */
+    std::vector<int> *suppressed_features; /* list of features to suppress when generating output. */
     std::vector<struct directory *> *subtractions; /* objects to subtract from primary shape. */
 };
 
@@ -322,6 +322,39 @@ build_tree(struct creo_conv_info *cinfo,  char *sol_name, struct bu_vls *tree )
     }
 }
 
+extern "C" void
+unsuppress_features(struct part_conv_info *pinfo)
+{
+    ProFeatureResumeOptions resume_opts[1];
+    ProFeatStatus feat_stat;
+    ProFeature feat;
+    resume_opts[0] = PRO_FEAT_RESUME_INCLUDE_PARENTS;
+
+    for (int i=0; i < pinfo->suppressed_features->size(); i++) {
+	if (ProFeatureInit(ProMdlToSolid(model), pinfo->suppressed_features[i], &feat) == PRO_TK_NO_ERROR) {
+	    if (ProFeatureStatusGet(&feat, &feat_stat) == PRO_TK_NO_ERROR && feat_stat == PRO_FEAT_SUPPRESSED ) {
+
+		/* unsuppress this one */
+		creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Unsuppressing feature %d\n", pinfo->suppressed_features[i]);
+		int status = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features[i], 1, resume_opts, 1);
+
+		/* Tell the user what happened */
+		switch (status) {
+		    case PRO_TK_NO_ERROR:
+			creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "\tFeature %d unsuppressed\n", pinfo->suppressed_features[i]);
+			break;
+		    case PRO_TK_SUPP_PARENTS:
+			creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "\tSuppressed parents for feature %d not found\n", pinfo->suppressed_features[i] );
+			break;
+		    default:
+			creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "\tfeature id %d unsuppression failed\n", pinfo->suppressed_features[i] );
+			break;
+		}
+
+	    }
+	}
+    }
+}
 
 /* routine to output a part as a BRL-CAD region with one BOT solid
  * The region will have the name from Pro/E with a .r suffix.
@@ -335,6 +368,16 @@ build_tree(struct creo_conv_info *cinfo,  char *sol_name, struct bu_vls *tree )
 extern "C" int
 output_part(struct creo_conv_info *cinfo, ProMdl model)
 {
+    wchar_t wname[CREO_NAME_MAX];
+    char pname[CREO_NAME_MAX];
+
+    struct part_conv_info *pinfo;
+    BU_GET(pinfo, struct part_conv_info);
+    pinfo->cinfo = cinfo;
+    pinfo->suppressed_features = new std::vector<int>;
+    pinfo->subtractions = new std::vector<struct directory *>;
+
+/*
     ProName part_name;
     ProModelitem mitm;
     ProSurfaceAppearanceProps aprops;
@@ -353,128 +396,78 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     double curr_error;
     double curr_angle;
     register int i;
+*/
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Processing %s:\n", ProWstringToString( astr, part_name ) );
-    }
+    ProMdlMdlnameGet(model, wname);
+    ProMdlTypeGet(model, &type);
 
-    if ( ProMdlTypeGet( model, &type ) != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get part type\n" );
-    }
-    /* let user know we are doing something */
+    ProWstringToString(pname, wname);
+    creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Processing %s:\n", pname);
 
-    status = ProUILabelTextSet( "creo_brl", "curr_proc", part_name );
+    ProUILabelTextSet("creo_brl", "curr_proc", pname);
 
-    if ( !cinfo->do_facets_only || cinfo->do_elims ) {
-	struct feature_data fdata;
-	fdata.cinfo = cinfo;
-	fdata.model = model;
-	free_csg_ops(cinfo);
-	ProSolidFeatVisit( ProMdlToSolid(model), do_feature_visit, feature_filter, (ProAppData)&fdata);
+    /* Collect info about things that might be eliminated */
+    if (cinfo->do_elims) {
 
-	if ( cinfo->feat_id_count ) {
-	    int i;
+	/* Apply user supplied criteria to see if we have anything to suppress */
+	ProSolidFeatVisit(ProMdlToSolid(model), do_feature_visit, feature_filter, (ProAppData)pinfo);
 
-	    ret = ProFeatureSuppress( ProMdlToSolid(model), cinfo->feat_ids_to_delete, cinfo->feat_id_count, NULL, 0 );
-	    if ( ret != PRO_TK_NO_ERROR ) {
-		ProFeatureResumeOptions resume_opts[1];
-		ProFeatStatus feat_stat;
-		ProFeature feat;
-
-		resume_opts[0] = PRO_FEAT_RESUME_INCLUDE_PARENTS;
-
-		if (cinfo->logger_type == LOGGER_TYPE_ALL ) { fprintf(cinfo->logger, "Failed to suppress features!!!\n" ); }
-
-		for ( i=0; i<cinfo->feat_id_count; i++ ) {
-		    if (ProFeatureInit( ProMdlToSolid(model), cinfo->feat_ids_to_delete[i], &feat) == PRO_TK_NO_ERROR) {
-			if (ProFeatureStatusGet(&feat, &feat_stat) == PRO_TK_NO_ERROR && feat_stat == PRO_FEAT_SUPPRESSED ) {
-				/* unsuppress this one */
-				if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-				    fprintf(cinfo->logger, "Unsuppressing feature %d\n", cinfo->feat_ids_to_delete[i] );
-				}
-				status = ProFeatureResume( ProMdlToSolid(model), &cinfo->feat_ids_to_delete[i],	1, resume_opts, 1 );
-				if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-				    if ( status == PRO_TK_NO_ERROR ) {
-					fprintf(cinfo->logger,"\tfeature id %d unsuppressed\n",	cinfo->feat_ids_to_delete[i] );
-				    } else if ( status == PRO_TK_SUPP_PARENTS ) {
-					fprintf(cinfo->logger,"\tsuppressed parents for feature %d not found\n",cinfo->feat_ids_to_delete[i] );
-
-				    } else {
-					fprintf(cinfo->logger,"\tfeature id %d unsuppression failed\n",cinfo->feat_ids_to_delete[i] );
-				    }
-				}
-			    }
-			}
-		    }
-		}
-
-		cinfo->feat_id_count = 0;
-		free_csg_ops(cinfo);
+	/* If we've got anything to suppress, go ahead and do it. */
+	if (pinfo->suppressed_features->size() > 0) {
+	    int ret = ProFeatureSuppress(ProMdlToSolid(model), &(pinfo->suppressed_features[0]), pinfo->suppressed_features->size(), NULL, 0 );
+	    /* If something went wrong, need to undo just the suppressions we added */
+	    if (ret != PRO_TK_NO_ERROR) {
+		creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to suppress features!!!\n");
+		unsuppress_features(pinfo);
 	    } else {
-		fprintf( stderr, "features suppressed!!\n" );
+		creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Features suppressed... continuing with conversion\n");
 	    }
 	}
     }
 
-    /* can get bounding box of a solid using "ProSolidOutlineGet"
+    /* If we've been told to do CSG conversions, apply logic for finding and replacing holes */
+    /* TODO - split up feature suppression and hole collection into distinct routines */
+
+    /* TODO - can get bounding box of a solid using "ProSolidOutlineGet"
      * may want to use this to implement relative facetization tolerance
      */
 
+
+
+
     /* tessellate part */
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Tessellate part (%s)\n", cinfo->curr_part_name );
-    }
+    creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Tessellate part (%s)\n", cinfo->curr_part_name);
 
     /* Going from coarse to fine tessellation */
-    for (i = 0; i <= cinfo->max_to_min_steps; ++i) {
+    for (int i = 0; i <= cinfo->max_to_min_steps; ++i) {
 	curr_error = cinfo->max_error - (i * cinfo->error_increment);
 	curr_angle = cinfo->min_angle_cntrl + (i * cinfo->angle_increment);
 
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "max_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
-	    fprintf(cinfo->logger, "max_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
-	    fprintf(cinfo->logger, "curr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
-	    fprintf(cinfo->logger, "Trying to tessellate %s using:  tessellation error - %g, angle - %g\n", cinfo->curr_part_name, curr_error, curr_angle);
-	}
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "\tTessellating %s using:  error - %g, angle - %g\n", cinfo->curr_part_name, curr_error, curr_angle);
 
-	status = ProPartTessellate( ProMdlToPart(model), curr_error/cinfo->creo_to_brl_conv,
-		curr_angle, PRO_B_TRUE, &tess  );
+	status = ProPartTessellate(ProMdlToPart(model), curr_error/cinfo->creo_to_brl_conv, curr_angle, PRO_B_TRUE, &tess);
+	if (status == PRO_TK_NO_ERROR) break;
 
-	if ( status == PRO_TK_NO_ERROR )
-	    break;
-
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ||cinfo->logger_type == LOGGER_TYPE_FAILURE ||cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
-	    fprintf(cinfo->logger, "Failed to tessellate %s using:  tessellation error - %g, angle - %g\n", cinfo->curr_part_name, curr_error, curr_angle);
-	}
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Failed to tessellate %s using:  error - %g, angle - %g\n", cinfo->curr_part_name, curr_error, curr_angle);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tcurr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
     }
 
     if ( status != PRO_TK_NO_ERROR ) {
 	/* Failed!!! */
+	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to tessellate %s!!!\n", cinfo->curr_part_name );
 
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ||cinfo->logger_type == LOGGER_TYPE_FAILURE ||cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
-	    fprintf(cinfo->logger, "Failed to tessellate %s!!!\n", cinfo->curr_part_name );
-	}
-	snprintf( astr, sizeof(astr), "Failed to tessellate part (%s)", cinfo->curr_part_name);
-	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
-	ProMessageClear();
-	fprintf( stderr, "%s\n", astr );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	/* TODO - a failed part probably should not be considered an empty part - put a bbox in instead if we can get one with an attribute denoting failure,
 	 * or if even that fails *some* object with the requisite info, because the conversion shouldn't be ignore it. */
 	add_to_empty_list(cinfo, get_brlcad_name(cinfo, cinfo->curr_part_name ) );
 	ret = 1;
     } else if ( !tess ) {
 	/* not a failure, just an empty part */
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ||cinfo->logger_type == LOGGER_TYPE_SUCCESS ||cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
-	    fprintf(cinfo->logger, "Empty part. (%s) has no surfaces!!!\n", cinfo->curr_part_name );
-	}
-	snprintf( astr, sizeof(astr), "%s has no surfaces, ignoring", cinfo->curr_part_name );
-	(void)ProMessageDisplay(msgfil, "USER_WARNING", astr );
-	ProMessageClear();
-	fprintf( stderr, "%s\n", astr );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Empty part. (%s) has no surfaces!!!\n", cinfo->curr_part_name );
+
 	/* This is a legit empty solid, list it as such */
 	add_to_empty_list(cinfo, get_brlcad_name(cinfo, cinfo->curr_part_name ) );
 	ret = 2;
@@ -482,10 +475,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	/* output the triangles */
 	int surface_count;
 
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ||cinfo->logger_type == LOGGER_TYPE_SUCCESS ||cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
-	    fprintf(cinfo->logger, "Successfully tessellated %s using: tessellation error - %g, angle - %g!!!\n",
-		    cinfo->curr_part_name, curr_error, curr_angle );
-	}
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Successfully tessellated %s using: tessellation error - %g, angle - %g!!!\n", cinfo->curr_part_name, curr_error, curr_angle );
 
 	status = ProArraySizeGet( (ProArray)tess, &surface_count );
 	if ( status != PRO_TK_NO_ERROR ) {
@@ -769,6 +759,10 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	fprintf( stderr, "features unsuppressed!!\n" );
 	cinfo->feat_id_count = 0;
     }
+
+    delete pinfo->suppressed_features;
+    delete pinfo->subtractions;
+    BU_GET(pinfo, struct part_conv_info);
 
     return ret;
 }
