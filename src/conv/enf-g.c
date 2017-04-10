@@ -62,7 +62,7 @@ static int name_not_converted=0;
 static int indent_level=0;
 static int indent_delta=4;
 
-static struct vert_root *tree_root;
+static struct bn_vert_root *tree_root;
 
 #define DO_INDENT { int _i; \
 	for (_i=0; _i<indent_level; _i++) {\
@@ -383,7 +383,7 @@ Part_import(int id_start)
     int tri[3];
     int corner_index=-1;
 
-    clean_vert_tree(tree_root);
+    bn_clean_vert_tree(tree_root);
 
     VSETALL(rgb, 128);
 
@@ -448,7 +448,7 @@ Part_import(int id_start)
 		v[i] = atof(ptr);
 		ptr = strtok((char *)NULL, " \t");
 	    }
-	    tri[++corner_index] = Add_vert(V3ARGS(v), tree_root, local_tol_sq);
+	    tri[++corner_index] = bn_add_vert(V3ARGS(v), tree_root, local_tol_sq);
 	    if (corner_index == 2) {
 		if (!bad_triangle(tri, tree_root->the_array)) {
 		    add_triangle(tri);
@@ -674,7 +674,7 @@ main(int argc, char *argv[])
 	create_name_hash(fd_parts);
     }
 
-    tree_root = create_vert_tree();
+    tree_root = bn_create_vert_tree();
 
     /* finally, start processing the input */
     while (bu_fgets(line, MAX_LINE_SIZE, fd_in)) {

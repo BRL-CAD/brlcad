@@ -508,8 +508,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    struct bu_vls tree = BU_VLS_INIT_ZERO;
 
 	    cinfo->curr_tri = 0;
-	    clean_vert_tree(cinfo->vert_tree_root);
-	    clean_vert_tree(cinfo->norm_tree_root);
+	    bn_clean_vert_tree(cinfo->vert_tree_root);
+	    bn_clean_vert_tree(cinfo->norm_tree_root);
 
 	    /* add all vertices and triangles to our lists */
 	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
@@ -519,13 +519,13 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 		for ( i=0; i<tess[surfno].n_facets; i++ ) {
 		    /* grab the triangle */
 		    vert_no = tess[surfno].facets[i][0];
-		    v1 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    v1 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			    tess[surfno].vertices[vert_no][2], cinfo->vert_tree_root, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][1];
-		    v2 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    v2 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			    tess[surfno].vertices[vert_no][2], cinfo->vert_tree_root, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][2];
-		    v3 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    v3 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			    tess[surfno].vertices[vert_no][2], cinfo->vert_tree_root, cinfo->local_tol_sq );
 		    if ( bad_triangle(cinfo, v1, v2, v3 ) ) {
 			continue;
@@ -539,15 +539,15 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 		    /* grab the surface normals */
 		    vert_no = tess[surfno].facets[i][0];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n1 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n1 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], cinfo->norm_tree_root, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][1];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n2 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n2 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], cinfo->norm_tree_root, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][2];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n3 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n3 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], cinfo->norm_tree_root, cinfo->local_tol_sq );
 
 		    add_triangle_and_normal(cinfo, v1, v2, v3, n1, n2, n3 );

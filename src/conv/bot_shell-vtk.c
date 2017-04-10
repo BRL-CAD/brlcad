@@ -73,7 +73,7 @@ static char *output_file;
 static FILE *fd_out;
 static struct rt_i *rtip;
 static struct bn_tol tol;
-static struct vert_root *verts;
+static struct bn_vert_root *verts;
 static long *faces = NULL;
 static long max_faces = 0;
 static long num_faces = 0;
@@ -200,9 +200,9 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
 
 	/* add this vertex to the vertex tree */
 	if (use_normals) {
-	    face[0] = Add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
+	    face[0] = bn_add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
 	} else {
-	    face[0] = Add_vert(x, y, z, verts, tol.dist_sq);
+	    face[0] = bn_add_vert(x, y, z, verts, tol.dist_sq);
 	}
 	if (debug) {
 	    bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
@@ -225,9 +225,9 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
 
 	/* add this vertex to the vertex tree */
 	if (use_normals) {
-	    face[1] = Add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
+	    face[1] = bn_add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
 	} else {
-	    face[1] = Add_vert(x, y, z, verts, tol.dist_sq);
+	    face[1] = bn_add_vert(x, y, z, verts, tol.dist_sq);
 	}
 	if (debug) {
 	    bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
@@ -250,9 +250,9 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
 
 	/* add this vertex to the vertex tree */
 	if (use_normals) {
-	    face[2] = Add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
+	    face[2] = bn_add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
 	} else {
-	    face[2] = Add_vert(x, y, z, verts, tol.dist_sq);
+	    face[2] = bn_add_vert(x, y, z, verts, tol.dist_sq);
 	}
 	if (debug) {
 	    bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
@@ -314,9 +314,9 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
 
     /* add this vertex to the vertex tree */
     if (use_normals) {
-	face[0] = Add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
+	face[0] = bn_add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
     } else {
-	face[0] = Add_vert(x, y, z, verts, tol.dist_sq);
+	face[0] = bn_add_vert(x, y, z, verts, tol.dist_sq);
     }
     if (debug) {
 	bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
@@ -339,9 +339,9 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
 
     /* add this vertex to the vertex tree */
     if (use_normals) {
-	face[1] = Add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
+	face[1] = bn_add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
     } else {
-	face[1] = Add_vert(x, y, z, verts, tol.dist_sq);
+	face[1] = bn_add_vert(x, y, z, verts, tol.dist_sq);
     }
     if (debug) {
 	bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
@@ -364,9 +364,9 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
 
     /* add this vertex to the vertex tree */
     if (use_normals) {
-	face[2] = Add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
+	face[2] = bn_add_vert_and_norm(x, y, z, nx, ny, nz, verts, tol.dist_sq);
     } else {
-	face[2] = Add_vert(x, y, z, verts, tol.dist_sq);
+	face[2] = bn_add_vert(x, y, z, verts, tol.dist_sq);
     }
     if (debug) {
 	bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
@@ -473,9 +473,9 @@ main(int argc, char *argv[])
 
     /* create vertex tree */
     if (use_normals) {
-	verts = create_vert_tree_w_norms();
+	verts = bn_create_vert_tree_w_norms();
     } else {
-	verts = create_vert_tree();
+	verts = bn_create_vert_tree();
     }
 
     if (!ZERO(cell_size)) {

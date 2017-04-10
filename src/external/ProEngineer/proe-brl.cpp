@@ -117,8 +117,8 @@ static struct bu_hash_tbl *name_hash;
 
 static int reg_id = 1000;	/* region ident number (incremented with each part) */
 
-static struct vert_root *vert_tree_root;	/* structure for storing and searching on vertices */
-static struct vert_root *norm_tree_root;	/* structure for storing and searching on normals */
+static struct bn_vert_root *vert_tree_root;	/* structure for storing and searching on vertices */
+static struct bn_vert_root *norm_tree_root;	/* structure for storing and searching on normals */
 
 static ProTriangle *part_tris=NULL;	/* list of triangles for current part */
 static int max_tri=0;			/* number of triangles currently malloced */
@@ -2034,8 +2034,8 @@ output_part( ProMdl model )
 	    struct bu_vls tree = BU_VLS_INIT_ZERO;
 
 	    curr_tri = 0;
-	    clean_vert_tree(vert_tree_root);
-	    clean_vert_tree(norm_tree_root);
+	    bn_clean_vert_tree(vert_tree_root);
+	    bn_clean_vert_tree(norm_tree_root);
 
 	    /* add all vertices and triangles to our lists */
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
@@ -2045,13 +2045,13 @@ output_part( ProMdl model )
 		for ( i=0; i<tess[surfno].n_facets; i++ ) {
 		    /* grab the triangle */
 		    vert_no = tess[surfno].facets[i][0];
-		    v1 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    v1 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			    tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
 		    vert_no = tess[surfno].facets[i][1];
-		    v2 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    v2 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			    tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
 		    vert_no = tess[surfno].facets[i][2];
-		    v3 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    v3 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			    tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
 		    if ( bad_triangle( v1, v2, v3 ) ) {
 			continue;
@@ -2065,15 +2065,15 @@ output_part( ProMdl model )
 		    /* grab the surface normals */
 		    vert_no = tess[surfno].facets[i][0];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n1 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n1 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
 		    vert_no = tess[surfno].facets[i][1];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n2 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n2 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
 		    vert_no = tess[surfno].facets[i][2];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n3 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n3 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
 
 		    add_triangle_and_normal( v1, v2, v3, n1, n2, n3 );
@@ -3330,8 +3330,8 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     local_tol = tol_dist / proe_to_brl_conv;
     local_tol_sq = local_tol * local_tol;
 
-    vert_tree_root = create_vert_tree();
-    norm_tree_root = create_vert_tree();
+    vert_tree_root = bn_create_vert_tree();
+    norm_tree_root = bn_create_vert_tree();
 
     /* output the top level object
      * this will recurse through the entire model
@@ -3370,9 +3370,9 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	part_norms = NULL;
     }
 
-    free_vert_tree( vert_tree_root );
+    bn_free_vert_tree( vert_tree_root );
     vert_tree_root = NULL;
-    free_vert_tree( norm_tree_root );
+    bn_free_vert_tree( norm_tree_root );
     norm_tree_root = NULL;
 
     max_tri = 0;

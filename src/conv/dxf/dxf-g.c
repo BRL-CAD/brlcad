@@ -79,7 +79,7 @@ static int color_by_layer = 0;		/* flag, if set, colors are set by layer */
 struct layer {
     char *name;			/* layer name */
     int color_number;		/* color */
-    struct vert_root *vert_tree_root; /* root of vertex tree */
+    struct bn_vert_root *vert_tree_root; /* root of vertex tree */
     int *part_tris;			/* list of triangles for current part */
     size_t max_tri;			/* number of triangles currently malloced */
     size_t curr_tri;			/* number of triangles currently being used */
@@ -330,7 +330,7 @@ get_layer()
 	     curr_state->sub_state == POLYLINE_VERTEX_ENTITY_STATE)) {
 	    layers[curr_layer]->vert_tree_root = layers[old_layer]->vert_tree_root;
 	} else {
-	    layers[curr_layer]->vert_tree_root = create_vert_tree();
+	    layers[curr_layer]->vert_tree_root = bn_create_vert_tree();
 	}
 	layers[curr_layer]->color_number = curr_color;
 	bu_ptbl_init(&layers[curr_layer]->solids, 8, "layers[curr_layer]->solids");
@@ -780,7 +780,7 @@ process_entities_polyline_vertex_code(int code)
 		}
 		VSET(tmp_pt1, x, y, z);
 		MAT4X3PNT(tmp_pt2, curr_state->xform, tmp_pt1);
-		polyline_vert_indices[polyline_vert_indices_count++] = Add_vert(tmp_pt2[X], tmp_pt2[Y], tmp_pt2[Z],
+		polyline_vert_indices[polyline_vert_indices_count++] = bn_add_vert(tmp_pt2[X], tmp_pt2[Y], tmp_pt2[Z],
 										layers[curr_layer]->vert_tree_root,
 										tol_sq);
 		if (verbose) {
@@ -2929,7 +2929,7 @@ process_3dface_entities_code(int code)
 		point_t tmp_pt1;
 		MAT4X3PNT(tmp_pt1, curr_state->xform, pts[vert_no]);
 		VMOVE(pts[vert_no], tmp_pt1);
-		face[vert_no] = Add_vert(V3ARGS(pts[vert_no]),
+		face[vert_no] = bn_add_vert(V3ARGS(pts[vert_no]),
 					 layers[curr_layer]->vert_tree_root,
 					 tol_sq);
 	    }
@@ -3011,7 +3011,7 @@ nmg_wire_edges_to_sketch(struct model *m)
     struct shell *s;
     struct edgeuse *eu;
     struct vertex *v;
-    struct vert_root *vr;
+    struct bn_vert_root *vr;
     size_t idx;
 
     BU_ALLOC(skt, struct rt_sketch_internal);
@@ -3020,7 +3020,7 @@ nmg_wire_edges_to_sketch(struct model *m)
     VSET(skt->u_vec, 1.0, 0.0, 0.0);
     VSET(skt->v_vec, 0.0, 1.0, 0.0);
 
-    vr = create_vert_tree();
+    vr = bn_create_vert_tree();
     bu_ptbl_init(&segs, 64, "segs for sketch");
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
@@ -3039,9 +3039,9 @@ nmg_wire_edges_to_sketch(struct model *m)
 		BU_ALLOC(lseg, struct line_seg);
 		lseg->magic = CURVE_LSEG_MAGIC;
 		v = eu->vu_p->v_p;
-		lseg->start = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
+		lseg->start = bn_add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
 		v = eu->eumate_p->vu_p->v_p;
-		lseg->end = Add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
+		lseg->end = bn_add_vert(V3ARGS(v->vg_p->coord), vr, tol_sq);
 		if (verbose) {
 		    bu_log("making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
 			   lseg->start, V3ARGS(&vr->the_array[lseg->start]),
@@ -3071,7 +3071,7 @@ nmg_wire_edges_to_sketch(struct model *m)
 	skt->curve.segment[idx] = ptr;
     }
 
-    free_vert_tree(vr);
+    bn_free_vert_tree(vr);
     bu_ptbl_free(&segs);
 
     return skt;
@@ -3263,7 +3263,7 @@ main(int argc, char *argv[])
     }
     layers[0]->name = bu_strdup("noname");
     layers[0]->color_number = 7;	/* default white */
-    layers[0]->vert_tree_root = create_vert_tree();
+    layers[0]->vert_tree_root = bn_create_vert_tree();
     bu_ptbl_init(&layers[0]->solids, 8, "layers[curr_layer]->solids");
 
     curr_color = layers[0]->color_number;

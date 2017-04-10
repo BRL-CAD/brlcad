@@ -46,7 +46,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-static struct vert_root *tree_root;
+static struct bn_vert_root *tree_root;
 static struct wmember all_head;
 static char *input_file;	/* name of the input file */
 static char *brlcad_file;	/* name of output file */
@@ -289,7 +289,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 		    x *= conv_factor;
 		    y *= conv_factor;
 		    z *= conv_factor;
-		    tmp_face[vert_no++] = Add_vert(x, y, z, tree_root, tol.dist_sq);
+		    tmp_face[vert_no++] = bn_add_vert(x, y, z, tree_root, tol.dist_sq);
 		} else {
 		    bu_log("Unrecognized line: %s\n", line1);
 		}
@@ -341,7 +341,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
     mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree_root->curr_vert, bot_fcurr,
 	   tree_root->the_array, bot_faces, NULL, NULL);
-    clean_vert_tree(tree_root);
+    bn_clean_vert_tree(tree_root);
 
     if (face_count && !solid_in_region) {
 	(void)mk_addmember(bu_vls_addr(&solid_name), &head.l, NULL, WMOP_UNION);
@@ -441,11 +441,11 @@ Convert_part_binary()
 
 	VMOVE(normal, flts);
 	VSCALE(pt, &flts[3], conv_factor);
-	tmp_face[0] = Add_vert(V3ARGS(pt), tree_root, tol.dist_sq);
+	tmp_face[0] = bn_add_vert(V3ARGS(pt), tree_root, tol.dist_sq);
 	VSCALE(pt, &flts[6], conv_factor);
-	tmp_face[1] = Add_vert(V3ARGS(pt), tree_root, tol.dist_sq);
+	tmp_face[1] = bn_add_vert(V3ARGS(pt), tree_root, tol.dist_sq);
 	VSCALE(pt, &flts[9], conv_factor);
-	tmp_face[2] = Add_vert(V3ARGS(pt), tree_root, tol.dist_sq);
+	tmp_face[2] = bn_add_vert(V3ARGS(pt), tree_root, tol.dist_sq);
 
 	/* check for degenerate faces */
 	if (tmp_face[0] == tmp_face[1]) {
@@ -489,7 +489,7 @@ Convert_part_binary()
 
     mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
 	   tree_root->curr_vert, bot_fcurr, tree_root->the_array, bot_faces, NULL, NULL);
-    clean_vert_tree(tree_root);
+    bn_clean_vert_tree(tree_root);
 
     BU_LIST_INIT(&head.l);
     if (face_count) {
@@ -656,7 +656,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&all_head.l);
 
     /* create a tree structure to hold the input vertices */
-    tree_root = create_vert_tree();
+    tree_root = bn_create_vert_tree();
 
     Convert_input();
 

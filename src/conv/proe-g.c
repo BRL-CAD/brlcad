@@ -81,7 +81,7 @@ static unsigned int obj_count=0; /* Count of parts converted for "stl-g" convers
 static int *bot_faces=NULL;	 /* array of ints (indices into vert_tree_root->the_array array) three per face */
 static int bot_fsize=0;		/* current size of the bot_faces array */
 static int bot_fcurr=0;		/* current bot face */
-static struct vert_root *vert_tree_root;	/* binary search tree for vertices */
+static struct bn_vert_root *vert_tree_root;	/* binary search tree for vertices */
 
 /* Size of blocks of faces to malloc */
 #define BOT_FBLOCK 128
@@ -616,7 +616,7 @@ Convert_part(char *line)
     VSETALL(part_min, INFINITY);
     VSETALL(part_max, -INFINITY);
 
-    clean_vert_tree(vert_tree_root);
+    bn_clean_vert_tree(vert_tree_root);
 
     start = (-1);
     /* skip leading blanks */
@@ -760,7 +760,7 @@ Convert_part(char *line)
 
 			bu_log("\t(%g %g %g)\n", x, y, z);
 		    }
-		    tmp_face[vert_no++] = Add_vert(x, y, z, vert_tree_root, tol.dist_sq);
+		    tmp_face[vert_no++] = bn_add_vert(x, y, z, vert_tree_root, tol.dist_sq);
 		    VMINMAX(part_min, part_max, &vert_tree_root->the_array[tmp_face[vert_no-1]*3]);
 		} else
 		    bu_log("Unrecognized line: %s\n", line1);
@@ -1052,7 +1052,7 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    vert_tree_root = create_vert_tree();
+    vert_tree_root = bn_create_vert_tree();
 
     bu_ptbl_init(&null_parts, 64, " &null_parts");
 

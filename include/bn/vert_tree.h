@@ -47,7 +47,7 @@ __BEGIN_DECLS
  * packaging structure
  * holds all the required info for a single vertex tree
  */
-struct vert_root {
+struct bn_vert_root {
     uint32_t magic;
     int tree_type;		/**< @brief vertices or vertices with normals */
     union vert_tree *the_tree;	/**< @brief the actual vertex tree */
@@ -70,7 +70,7 @@ struct vert_root {
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct vert_root *create_vert_tree(void);
+BN_EXPORT extern struct bn_vert_root *bn_create_vert_tree(void);
 
 /**
  *@brief
@@ -78,13 +78,13 @@ BN_EXPORT extern struct vert_root *create_vert_tree(void);
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct vert_root *create_vert_tree_w_norms(void);
+BN_EXPORT extern struct bn_vert_root *bn_create_vert_tree_w_norms(void);
 
 /**
  *@brief
  *	Routine to free a vertex tree and all associated dynamic memory
  */
-BN_EXPORT extern void free_vert_tree(struct vert_root *tree_root);
+BN_EXPORT extern void bn_free_vert_tree(struct bn_vert_root *tree_root);
 
 /**
  *@brief
@@ -92,10 +92,10 @@ BN_EXPORT extern void free_vert_tree(struct vert_root *tree_root);
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex is stored
  */
-BN_EXPORT extern size_t Add_vert(double x,
+BN_EXPORT extern size_t bn_add_vert(double x,
 				 double y,
 				 double z,
-				 struct vert_root *tree_root,
+				 struct bn_vert_root *tree_root,
 				 fastf_t local_tol_sq);
 
 /**
@@ -104,13 +104,13 @@ BN_EXPORT extern size_t Add_vert(double x,
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex and normal is stored
  */
-BN_EXPORT extern size_t Add_vert_and_norm(double x,
+BN_EXPORT extern size_t bn_add_vert_and_norm(double x,
 					  double y,
 					  double z,
 					  double nx,
 					  double ny,
 					  double nz,
-					  struct vert_root *tree_root,
+					  struct bn_vert_root *tree_root,
 					  fastf_t local_tol_sq);
 
 /**
@@ -118,7 +118,7 @@ BN_EXPORT extern size_t Add_vert_and_norm(double x,
  *	Routine to free the binary search tree and reset the current number of vertices.
  *	The vertex array is left untouched, for re-use later.
  */
-BN_EXPORT extern void clean_vert_tree(struct vert_root *tree_root);
+BN_EXPORT extern void bn_clean_vert_tree(struct bn_vert_root *tree_root);
 
 
 __END_DECLS
