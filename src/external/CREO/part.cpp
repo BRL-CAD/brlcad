@@ -415,7 +415,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	ProSolidFeatVisit(ProMdlToSolid(model), do_feature_visit, feature_filter, (ProAppData)pinfo);
 
 	/* If we've got anything to suppress, go ahead and do it. */
-	if (pinfo->suppressed_features->size() > 0) {
+	if (!pinfo->suppressed_features->empty()) {
 	    int ret = ProFeatureSuppress(ProMdlToSolid(model), &(pinfo->suppressed_features[0]), pinfo->suppressed_features->size(), NULL, 0 );
 	    /* If something went wrong, need to undo just the suppressions we added */
 	    if (ret != PRO_TK_NO_ERROR) {
