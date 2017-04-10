@@ -56,12 +56,10 @@ struct bn_vert_tree {
     size_t max_vert;		/**< @brief the current maximum capacity of the array */
 };
 
-#define TREE_TYPE_VERTS 1
-#define TREE_TYPE_VERTS_AND_NORMS 2
+#define BN_VERT_TREE_TYPE_VERTS 1
+#define BN_VERT_TREE_TYPE_VERTS_AND_NORMS 2
 
-#define VERT_BLOCK 512			/**< @brief number of vertices to malloc per call when building the array */
-
-#define BN_CK_VERT_TREE(_p) BU_CKMAG(_p, VERT_TREE_MAGIC, "vert_tree")
+#define BN_CK_VERT_TREE(_p) BU_CKMAG(_p, BN_VERT_TREE_MAGIC, "vert_tree")
 
 
 /**

@@ -45,6 +45,9 @@
 #include "bn/vert_tree.h"
 
 
+#define VERT_BLOCK 512 /**< @brief number of vertices to malloc per call when building the array */
+
+
 /**
  * Structure to make vertex searching fast.
  *
@@ -82,8 +85,8 @@ bn_create_vert_tree(void)
     struct bn_vert_tree *tree;
 
     BU_ALLOC(tree, struct bn_vert_tree);
-    tree->magic = VERT_TREE_MAGIC;
-    tree->tree_type = TREE_TYPE_VERTS;
+    tree->magic = BN_VERT_TREE_MAGIC;
+    tree->tree_type = BN_VERT_TREE_TYPE_VERTS;
     tree->the_tree = (union vert_tree *)NULL;
     tree->curr_vert = 0;
     tree->max_vert = VERT_BLOCK;
@@ -98,8 +101,8 @@ bn_create_vert_tree_w_norms(void)
     struct bn_vert_tree *tree;
 
     BU_ALLOC(tree, struct bn_vert_tree);
-    tree->magic = VERT_TREE_MAGIC;
-    tree->tree_type = TREE_TYPE_VERTS_AND_NORMS;
+    tree->magic = BN_VERT_TREE_MAGIC;
+    tree->tree_type = BN_VERT_TREE_TYPE_VERTS_AND_NORMS;
     tree->the_tree = (union vert_tree *)NULL;
     tree->curr_vert = 0;
     tree->max_vert = VERT_BLOCK;
@@ -186,7 +189,7 @@ bn_add_vert( double x, double y, double z, struct bn_vert_tree *vert_root, fastf
 
     BN_CK_VERT_TREE( vert_root );
 
-    if ( vert_root->tree_type != TREE_TYPE_VERTS ) {
+    if ( vert_root->tree_type != BN_VERT_TREE_TYPE_VERTS ) {
 	bu_bomb( "Error: bn_add_vert() called for a tree containing vertices and normals\n" );
     }
 
@@ -306,7 +309,7 @@ bn_add_vert_and_norm( double x, double y, double z, double nx, double ny, double
 
     BN_CK_VERT_TREE( vert_root );
 
-    if ( vert_root->tree_type != TREE_TYPE_VERTS_AND_NORMS ) {
+    if ( vert_root->tree_type != BN_VERT_TREE_TYPE_VERTS_AND_NORMS ) {
 	bu_bomb( "Error: bn_add_vert_and_norm() called for a tree containing just vertices\n" );
     }
 
