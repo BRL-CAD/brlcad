@@ -28,8 +28,18 @@
 struct part_conv_info {
     struct creo_conv_info *cinfo; /* global state */
     int csg_holes_supported;
+    ProMdl model;
     std::vector<int> *suppressed_features; /* list of features to suppress when generating output. */
     std::vector<struct directory *> *subtractions; /* objects to subtract from primary shape. */
+
+    /* feature processing parameters */
+    ProFeattype type;
+    double radius;
+    double diameter;
+    double distance1;
+    double distance2;
+    int got_diameter;
+    int got_distance1;
 };
 
 /* routine to check for bad triangles
@@ -128,23 +138,114 @@ extern "C" char *feat_status_to_str(ProFeatStatus feat_stat)
 extern "C" ProError
 feature_filter( ProFeature *feat, ProAppData data )
 {
-    ProFeattype type;
     ProError ret;
     struct part_conv_info *pinfo = (struct part_conv_info *)data;
 
-    if ((ret=ProFeatureTypeGet(feat, &type)) != PRO_TK_NO_ERROR) return ret;
+    if ((ret=ProFeatureTypeGet(feat, &pinfo->type)) != PRO_TK_NO_ERROR) return ret;
 
     /* handle holes, chamfers, and rounds only */
-    if (type == PRO_FEAT_HOLE || type == PRO_FEAT_CHAMFER || type == PRO_FEAT_ROUND) {
+    if (pinfo->type == PRO_FEAT_HOLE || pinfo->type == PRO_FEAT_CHAMFER || pinfo->type == PRO_FEAT_ROUND) {
 	return PRO_TK_NO_ERROR;
     }
 
     /* if we encounter a protrusion (or any feature that adds material) after a hole,
      * we cannot convert previous holes to CSG */
-    if (feat_adds_material(type)) pinfo->csg_holes_supported = 0;
+    if (feat_adds_material(pinfo->type)) pinfo->csg_holes_supported = 0;
 
     /* skip everything else */
     return PRO_TK_CONTINUE;
+}
+
+extern "C" ProError
+dimension_filter(ProDimension *dim, ProAppData data) {
+    return PRO_TK_NO_ERROR;
+}
+
+extern "C" ProError
+check_dimension( ProDimension *dim, ProError status, ProAppData data )
+{
+    ProDimensiontype dim_type;
+    ProError ret;
+    double tmp;
+    struct part_conv_info *pinfo = (struct part_conv_info *)data;
+
+    if ((ret=ProDimensionTypeGet(dim, &dim_type)) != PRO_TK_NO_ERROR) return ret;
+
+    switch (dim_type) {
+	case PRODIMTYPE_RADIUS:
+	    if ((ret=ProDimensionValueGet(dim, &pinfo->radius)) != PRO_TK_NO_ERROR) return ret;
+	    pinfo->diameter = 2.0 * radius;
+	    pinfo->got_diameter = 1;
+	    break;
+	case PRODIMTYPE_DIAMETER:
+	    if ((ret=ProDimensionValueGet(dim, &pinfo->diameter)) != PRO_TK_NO_ERROR) return ret;
+	    pinfo->radius = pinfo->diameter / 2.0;
+	    pinfo->got_diameter = 1;
+	    break;
+	case PRODIMTYPE_LINEAR:
+	    if ((ret=ProDimensionValueGet(dim, &tmp)) != PRO_TK_NO_ERROR) return ret;
+	    if (pinfo->got_distance1) {
+		pinfo->distance2 = tmp;
+	    } else {
+		pinfo->got_distance1 = 1;
+		pinfo->distance1 = tmp;
+	    }
+	    break;
+    }
+    return PRO_TK_NO_ERROR;
+}
+
+extern "C" ProError
+do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
+{
+    ProError ret;
+    ProElement elem_tree;
+    ProElempath elem_path=NULL;
+    struct part_conv_info *pinfo = (struct part_conv_info *)data;
+    ProMdl model = pinfo->model;
+
+    if ( (ret=ProFeatureElemtreeCreate( feat, &elem_tree ) ) == PRO_TK_NO_ERROR ) {
+	if ( (ret=ProElemtreeElementVisit( elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)model) ) != PRO_TK_NO_ERROR ) {
+	    fprintf( stderr, "Element visit failed for feature (%d) of %s\n", feat->id, cinfo->curr_part_name );
+	    if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {fprintf( stderr, "Error freeing element tree\n" );}
+	    return ret;
+	}
+	if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
+	    fprintf( stderr, "Error freeing element tree\n" );
+	}
+    }
+
+    pinfo->radius = 0.0;
+    pinfo->diameter = 0.0;
+    pinfo->distance1 = 0.0;
+    pinfo->distance2 = 0.0;
+    pinfo->got_diameter = 0;
+    pinfo->got_distance1 = 0;
+
+    if ((ret=ProFeatureDimensionVisit(feat, check_dimension, dimension_filter, (ProAppData)pinfo)) != PRO_TK_NO_ERROR) return ret;
+
+    switch (pinfo->type) {
+	case PRO_FEAT_HOLE:
+	    /* need more info to recreate holes - TODO - make necessary solids in these routines and write them to the .g file */
+	    if ((ret=ProFeatureGeomitemVisit(feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)pinfo) ) != PRO_TK_NO_ERROR) return ret;
+	    /* TODO - do we still want to suppress even if we're not subtracting?? */
+	    if ( Subtract_hole(cinfo) )
+		Add_to_feature_delete_list( cinfo, feat->id );
+	    pinfo->suppressed_features->push_back(feat->id);
+	    break;
+	case PRO_FEAT_ROUND:
+	    if (got_diameter && radius < cinfo->min_round_radius) pinfo->suppressed_features->push_back(feat->id);
+	    break;
+	case PRO_FEAT_CHAMFER:
+	    if ( got_distance1 && distance1 < cinfo->min_chamfer_dim &&
+		    distance2 < cinfo->min_chamfer_dim ) {
+		pinfo->suppressed_features->push_back(feat->id);
+	    }
+	    break;
+    }
+
+
+    return ret;
 }
 
 
@@ -205,6 +306,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     BU_GET(pinfo, struct part_conv_info);
     pinfo->cinfo = cinfo;
     pinfo->csg_holes_supported = 1;
+    pinfo->model = model;
     pinfo->suppressed_features = new std::vector<int>;
     pinfo->subtractions = new std::vector<struct directory *>;
 
