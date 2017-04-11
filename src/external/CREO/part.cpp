@@ -500,24 +500,22 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
     /* calculate mass properties */
     if (ProSolidMassPropertyGet(ProMdlToSolid(model), NULL, &mass_prop) == PRO_TK_NO_ERROR) {
+	struct bu_vls vstr = BU_VLS_INIT_ZERO;
 	if (!got_density && mass_prop.density > 0.0) {
-	    struct bu_vls vstr = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&vstr, "%g", mass_prop.density);
 	    bu_avs_add("density", bu_vls_addr(&vstr));
-	    bu_vls_free(&vstr);
 	}
 	if (mass_prop.mass > 0.0) {
 	    struct bu_vls vstr = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&vstr, "%g", mass_prop.mass);
 	    bu_avs_add("mass", bu_vls_addr(&vstr));
-	    bu_vls_free(&vstr);
 	}
 	if (mass_prop.volume > 0.0) {
 	    struct bu_vls vstr = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&vstr, "%g", mass_prop.volume);
 	    bu_avs_add("volume", bu_vls_addr(&vstr));
-	    bu_vls_free(&vstr);
 	}
+	bu_vls_free(&vstr);
     }
 
     /* Update attributes stored on disk */
