@@ -23,7 +23,7 @@
 
 #include "common.h"
 #include "creo-brl.h"
-#if 0
+
 /* global variables for dimension visits */
 static double radius=0.0, diameter=0.0, distance1=0.0, distance2=0.0;
 static int got_diameter=0, got_distance1=0;
@@ -44,51 +44,6 @@ static Pro3dPnt end1, end2;             /* axis endpoints for holes */
 static int hole_no=0;	/* hole counter for unique names */
 static char *tgc_format="tgc V {%.25G %.25G %.25G} H {%.25G %.25G %.25G} A {%.25G %.25G %.25G} B {%.25G %.25G %.25G} C {%.25G %.25G %.25G} D {%.25G %.25G %.25G}\n";
 
-extern "C" void
-Add_to_feature_delete_list(struct creo_conv_info *cinfo, int id )
-{
-    if ( cinfo->feat_id_count >= cinfo->feat_id_len ) {
-	cinfo->feat_id_len += FEAT_ID_BLOCK;
-	cinfo->feat_ids_to_delete = (int *)bu_realloc( (char *)cinfo->feat_ids_to_delete,
-		cinfo->feat_id_len * sizeof( int ),
-		"feature ids to delete");
-
-    }
-    cinfo->feat_ids_to_delete[cinfo->feat_id_count++] = id;
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Adding feature %d to list of features to delete (list length = %d)\n",
-		id, cinfo->feat_id_count );
-    }
-}
-
-extern "C" ProError
-geomitem_visit( ProGeomitem *item, ProError status, ProAppData data )
-{
-    ProGeomitemdata *geom;
-    ProCurvedata *crv;
-    ProError ret;
-
-    if ( (ret=ProGeomitemdataGet( item, &geom )) != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get geomitem for type %d\n",
-		item->type );
-	return ret;
-    }
-
-    crv = PRO_CURVE_DATA( geom );
-    if ( (ret=ProLinedataGet( crv, end1, end2 ) ) != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get line data for axis\n" );
-	return ret;
-    }
-
-    return PRO_TK_NO_ERROR;
-}
-
-extern "C" ProError
-geomitem_filter( ProGeomitem *item, ProAppData data )
-{
-    return PRO_TK_NO_ERROR;
-}
 
 extern "C" ProError
 hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data )
@@ -329,11 +284,6 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
     return PRO_TK_NO_ERROR;
 }
 
-extern "C" ProError
-hole_elem_filter( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data )
-{
-    return PRO_TK_NO_ERROR;
-}
 
 /* Subtract_hole()
  *	routine to create TGC primitives to make holes
@@ -343,7 +293,7 @@ hole_elem_filter( ProElement elem_tree, ProElement elem, ProElempath elem_path, 
  *		1 - delete this hole feature before tessellating
  */
 extern "C" int
-Subtract_hole(struct creo_conv_info *cinfo)
+subtract_hole(struct part_conv_info *pinfo)
 {
     struct csg_ops *csg;
     vect_t a, b, c, d, h;
@@ -572,119 +522,6 @@ Subtract_hole(struct creo_conv_info *cinfo)
     return 1;
 }
 
-extern "C" ProError
-dimension_filter( ProDimension *dim, ProAppData data ) {
-        return PRO_TK_NO_ERROR;
-}
-
-extern "C" ProError
-check_dimension( ProDimension *dim, ProError status, ProAppData data )
-{
-    ProDimensiontype dim_type;
-    ProError ret;
-    double tmp;
-    struct feature_data *fdata = (struct feature_data *)data;
-    struct creo_conv_info *cinfo = fdata->cinfo;
-
-    if ( (ret=ProDimensionTypeGet( dim, &dim_type ) ) != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "ProDimensionTypeGet Failed for %s\n", cinfo->curr_part_name );
-	return ret;
-    }
-
-    switch ( dim_type ) {
-	case PRODIMTYPE_RADIUS:
-	    if ( (ret=ProDimensionValueGet( dim, &radius ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "ProDimensionValueGet Failed for %s\n", cinfo->curr_part_name );
-		return ret;
-	    }
-	    diameter = 2.0 * radius;
-	    got_diameter = 1;
-	    break;
-	case PRODIMTYPE_DIAMETER:
-	    if ( (ret=ProDimensionValueGet( dim, &diameter ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "ProDimensionValueGet Failed for %s\n", cinfo->curr_part_name );
-		return ret;
-	    }
-	    radius = diameter / 2.0;
-	    got_diameter = 1;
-	    break;
-	case PRODIMTYPE_LINEAR:
-	    if ( (ret=ProDimensionValueGet( dim, &tmp ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "ProDimensionValueGet Failed for %s\n", cinfo->curr_part_name );
-		return ret;
-	    }
-	    if ( got_distance1 ) {
-		distance2 = tmp;
-	    } else {
-		got_distance1 = 1;
-		distance1 = tmp;
-	    }
-	    break;
-    }
-
-    return PRO_TK_NO_ERROR;
-}
-
-
-extern "C" ProError
-do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
-{
-    ProError ret;
-    ProElement elem_tree;
-    ProElempath elem_path=NULL;
-    struct feature_data *fdata = (struct feature_data *)data;
-    struct creo_conv_info *cinfo = fdata->cinfo;
-    ProMdl model = fdata->model;
-
-    if ( (ret=ProFeatureElemtreeCreate( feat, &elem_tree ) ) == PRO_TK_NO_ERROR ) {
-	if ( (ret=ProElemtreeElementVisit( elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)model) ) != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Element visit failed for feature (%d) of %s\n", feat->id, cinfo->curr_part_name );
-	    if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {fprintf( stderr, "Error freeing element tree\n" );}
-	    return ret;
-	}
-	if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Error freeing element tree\n" );
-	}
-    }
-
-    radius = 0.0;
-    diameter = 0.0;
-    distance1 = 0.0;
-    distance2 = 0.0;
-    got_diameter = 0;
-    got_distance1 = 0;
-
-    if ( (ret=ProFeatureDimensionVisit( feat, check_dimension, dimension_filter, (ProAppData)fdata) ) != PRO_TK_NO_ERROR ) {
-	return ret;
-    }
-
-    if ( cinfo->curr_feat_type == PRO_FEAT_HOLE ) {
-	/* need more info to recreate holes */
-	if ( (ret=ProFeatureGeomitemVisit( feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)model) ) != PRO_TK_NO_ERROR ) return ret;
-    }
-
-    switch ( cinfo->curr_feat_type ) {
-	case PRO_FEAT_HOLE:
-	    if ( Subtract_hole(cinfo) )
-		Add_to_feature_delete_list( cinfo, feat->id );
-	    break;
-	case PRO_FEAT_ROUND:
-	    if ( got_diameter && radius < cinfo->min_round_radius ) {
-		Add_to_feature_delete_list( cinfo, feat->id );
-	    }
-	    break;
-	case PRO_FEAT_CHAMFER:
-	    if ( got_distance1 && distance1 < cinfo->min_chamfer_dim &&
-		    distance2 < cinfo->min_chamfer_dim ) {
-		Add_to_feature_delete_list( cinfo, feat->id );
-	    }
-	    break;
-    }
-
-
-    return ret;
-}
-#endif
 /*
  * Local Variables:
  * mode: C

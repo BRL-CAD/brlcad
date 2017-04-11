@@ -24,23 +24,16 @@
 #include "common.h"
 #include "creo-brl.h"
 
-/* Part processing container */
-struct part_conv_info {
-    struct creo_conv_info *cinfo; /* global state */
-    int csg_holes_supported;
-    ProMdl model;
-    std::vector<int> *suppressed_features; /* list of features to suppress when generating output. */
-    std::vector<struct directory *> *subtractions; /* objects to subtract from primary shape. */
+extern "C" ProError
+hole_elem_filter( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data )
+{
+    return PRO_TK_NO_ERROR;
+}
 
-    /* feature processing parameters */
-    ProFeattype type;
-    double radius;
-    double diameter;
-    double distance1;
-    double distance2;
-    int got_diameter;
-    int got_distance1;
-};
+extern "C" ProError
+generic_filter(ProDimension *dim, ProAppData data) {
+    return PRO_TK_NO_ERROR;
+}
 
 /* routine to check for bad triangles
  * only checks for triangles with duplicate vertices
@@ -156,10 +149,6 @@ feature_filter( ProFeature *feat, ProAppData data )
     return PRO_TK_CONTINUE;
 }
 
-extern "C" ProError
-dimension_filter(ProDimension *dim, ProAppData data) {
-    return PRO_TK_NO_ERROR;
-}
 
 extern "C" ProError
 check_dimension( ProDimension *dim, ProError status, ProAppData data )
@@ -196,6 +185,20 @@ check_dimension( ProDimension *dim, ProError status, ProAppData data )
 }
 
 extern "C" ProError
+geomitem_visit(ProGeomitem *item, ProError status, ProAppData data)
+{
+    ProGeomitemdata *geom;
+    ProCurvedata *crv;
+    ProError ret;
+
+    if ((ret=ProGeomitemdataGet(item, &geom)) != PRO_TK_NO_ERROR) return ret;
+    crv = PRO_CURVE_DATA(geom);
+    if ((ret=ProLinedataGet(crv, end1, end2)) != PRO_TK_NO_ERROR) return ret;
+    return PRO_TK_NO_ERROR;
+}
+
+
+extern "C" ProError
 do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
 {
     ProError ret;
@@ -222,16 +225,15 @@ do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
     pinfo->got_diameter = 0;
     pinfo->got_distance1 = 0;
 
-    if ((ret=ProFeatureDimensionVisit(feat, check_dimension, dimension_filter, (ProAppData)pinfo)) != PRO_TK_NO_ERROR) return ret;
+    if ((ret=ProFeatureDimensionVisit(feat, check_dimension, generic_filter, (ProAppData)pinfo)) != PRO_TK_NO_ERROR) return ret;
 
     switch (pinfo->type) {
 	case PRO_FEAT_HOLE:
 	    /* need more info to recreate holes - TODO - make necessary solids in these routines and write them to the .g file */
-	    if ((ret=ProFeatureGeomitemVisit(feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)pinfo) ) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret=ProFeatureGeomitemVisit(feat, PRO_AXIS, geomitem_visit, generic_filter, (ProAppData)pinfo) ) != PRO_TK_NO_ERROR) return ret;
 	    /* TODO - do we still want to suppress even if we're not subtracting?? */
 	    if ( Subtract_hole(cinfo) )
-		Add_to_feature_delete_list( cinfo, feat->id );
-	    pinfo->suppressed_features->push_back(feat->id);
+		pinfo->suppressed_features->push_back(feat->id);
 	    break;
 	case PRO_FEAT_ROUND:
 	    if (got_diameter && radius < cinfo->min_round_radius) pinfo->suppressed_features->push_back(feat->id);

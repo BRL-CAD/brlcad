@@ -183,6 +183,24 @@ struct creo_conv_info {
     std::vector<char *> *attrs;     	/* attributes to preserve when transferring objects */
 };
 
+/* Part processing container */
+struct part_conv_info {
+    struct creo_conv_info *cinfo; /* global state */
+    int csg_holes_supported;
+    ProMdl model;
+    std::vector<int> *suppressed_features; /* list of features to suppress when generating output. */
+    std::vector<struct directory *> *subtractions; /* objects to subtract from primary shape. */
+
+    /* feature processing parameters */
+    ProFeattype type;
+    double radius;
+    double diameter;
+    double distance1;
+    double distance2;
+    int got_diameter;
+    int got_distance1;
+};
+
 /* Generic container used when we need to pass around something in addition to creo_conv_info */
 struct adata {
     struct creo_conv_info *cinfo;
@@ -207,9 +225,8 @@ extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appd
 extern "C" void kill_gen_error_dialog(char *dialog, char *component, ProAppData appdata);
 
 /* csg */
-extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
-extern "C" void free_csg_ops(struct creo_conv_info *);
-
+extern "C" ProError hole_elem_visit(ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data);
+extern "C" int subtract_hole(struct part_conv_info *pinfo);
 
 
 extern "C" ProError ShowMsg();
