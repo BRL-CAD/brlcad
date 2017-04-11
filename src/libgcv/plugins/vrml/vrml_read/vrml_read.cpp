@@ -52,9 +52,9 @@ void get3vec(float *p);
 
 using namespace std;
 
-static struct bn_vert_root *tree_root;
+static struct bn_vert_tree *tree;
 static struct wmember all_head;
-static int *bot_faces=NULL;	 /* array of ints (indices into tree_root->the_array array) three per face */
+static int *bot_faces=NULL;	 /* array of ints (indices into tree->the_array array) three per face */
 static int bot_fcurr=0;		/* current bot face */
 static double *allvert = NULL;
 static int vertsize;
@@ -111,7 +111,7 @@ Convert_input(NODE *node)
 	    y = allvert[vert_no*3+1];
 	    z = allvert[vert_no*3+2];
 
-	    tmp_face[vert_no%3] = bn_add_vert(x, y, z, tree_root, 0.0);
+	    tmp_face[vert_no%3] = bn_add_vert(x, y, z, tree, 0.0);
 
 	    if (((vert_no+1)%3 == 0) && (vert_no != 0) ) {
 		if (Check_degenerate(tmp_face)) {
@@ -125,9 +125,9 @@ Convert_input(NODE *node)
 	    objnumb--;
 	    return;
 	}
-	mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree_root->curr_vert, bot_fcurr,
-	tree_root->the_array, bot_faces, NULL, NULL);
-	bn_clean_vert_tree(tree_root);
+	mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree->curr_vert, bot_fcurr,
+	tree->the_array, bot_faces, NULL, NULL);
+	bn_clean_vert_tree(tree);
     }else if (node->nnodetype == NODE_CONE) {
 	mk_tgc(fd_out,bu_vls_addr(&solid_name), &allvert[0], &allvert[3], &allvert[6], &allvert[9], &allvert[12], &allvert[15]);
     }else if (node->nnodetype == NODE_BOX) {
@@ -251,7 +251,7 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     BU_LIST_INIT(&all_head.l);
     /* create a tree structure to hold the input vertices */
-    tree_root = bn_create_vert_tree();
+    tree = bn_create_vert_tree();
 
     Parse_input(childlist);
     fclose(fd_in);

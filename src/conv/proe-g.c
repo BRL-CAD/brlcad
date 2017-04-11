@@ -81,7 +81,7 @@ static unsigned int obj_count=0; /* Count of parts converted for "stl-g" convers
 static int *bot_faces=NULL;	 /* array of ints (indices into vert_tree_root->the_array array) three per face */
 static int bot_fsize=0;		/* current size of the bot_faces array */
 static int bot_fcurr=0;		/* current bot face */
-static struct bn_vert_root *vert_tree_root;	/* binary search tree for vertices */
+static struct bn_vert_tree *vert_tree;	/* binary search tree for vertices */
 
 /* Size of blocks of faces to malloc */
 #define BOT_FBLOCK 128
@@ -616,7 +616,7 @@ Convert_part(char *line)
     VSETALL(part_min, INFINITY);
     VSETALL(part_max, -INFINITY);
 
-    bn_clean_vert_tree(vert_tree_root);
+    bn_clean_vert_tree(vert_tree);
 
     start = (-1);
     /* skip leading blanks */
@@ -756,12 +756,12 @@ Convert_part(char *line)
 
 			bu_log("Non-triangular loop:\n");
 			for (n=0; n<3; n++)
-			    bu_log("\t(%g %g %g)\n", V3ARGS(&vert_tree_root->the_array[tmp_face[n]]));
+			    bu_log("\t(%g %g %g)\n", V3ARGS(&vert_tree->the_array[tmp_face[n]]));
 
 			bu_log("\t(%g %g %g)\n", x, y, z);
 		    }
-		    tmp_face[vert_no++] = bn_add_vert(x, y, z, vert_tree_root, tol.dist_sq);
-		    VMINMAX(part_min, part_max, &vert_tree_root->the_array[tmp_face[vert_no-1]*3]);
+		    tmp_face[vert_no++] = bn_add_vert(x, y, z, vert_tree, tol.dist_sq);
+		    VMINMAX(part_min, part_max, &vert_tree->the_array[tmp_face[vert_no-1]*3]);
 		} else
 		    bu_log("Unrecognized line: %s\n", line1);
 	    }
@@ -787,7 +787,7 @@ Convert_part(char *line)
 
 		bu_log("Making Face:\n");
 		for (n=0; n<3; n++)
-		    bu_log("\tvertex #%d: (%g %g %g)\n", tmp_face[n], V3ARGS(&vert_tree_root->the_array[3*tmp_face[n]]));
+		    bu_log("\tvertex #%d: (%g %g %g)\n", tmp_face[n], V3ARGS(&vert_tree->the_array[3*tmp_face[n]]));
 		VPRINT(" normal", normal);
 	    }
 
@@ -826,8 +826,8 @@ Convert_part(char *line)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
     }
 
-    mk_bot(fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree_root->curr_vert, bot_fcurr,
-	   vert_tree_root->the_array, bot_faces, NULL, NULL);
+    mk_bot(fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree->curr_vert, bot_fcurr,
+	   vert_tree->the_array, bot_faces, NULL, NULL);
 
     if (face_count && !solid_in_region) {
 	wmem = mk_addmember(solid_name, &head.l, NULL, WMOP_UNION);
@@ -1052,7 +1052,7 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    vert_tree_root = bn_create_vert_tree();
+    vert_tree = bn_create_vert_tree();
 
     bu_ptbl_init(&null_parts, 64, " &null_parts");
 

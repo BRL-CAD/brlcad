@@ -150,8 +150,8 @@ struct obj_list {
 };
 
 static struct obj_list *brlcad_objs_root=NULL;
-static struct bn_vert_root *vert_tree_root;
-static struct bn_vert_root *norm_tree_root;
+static struct bn_vert_tree *vert_tree;
+static struct bn_vert_tree *norm_tree;
 
 static int indent_delta=4;
 
@@ -266,7 +266,7 @@ bad_triangle( int v1, int v2, int v3 )
 
     dist = 0;
     for ( i=0; i<3; i++ ) {
-	coord = vert_tree_root->the_array[v1*3 + i] - vert_tree_root->the_array[v2*3 + i];
+	coord = vert_tree->the_array[v1*3 + i] - vert_tree->the_array[v2*3 + i];
 	dist += coord * coord;
     }
     dist = sqrt( dist );
@@ -276,7 +276,7 @@ bad_triangle( int v1, int v2, int v3 )
 
     dist = 0;
     for ( i=0; i<3; i++ ) {
-	coord = vert_tree_root->the_array[v2*3 + i] - vert_tree_root->the_array[v3*3 + i];
+	coord = vert_tree->the_array[v2*3 + i] - vert_tree->the_array[v3*3 + i];
 	dist += coord * coord;
     }
     dist = sqrt( dist );
@@ -286,7 +286,7 @@ bad_triangle( int v1, int v2, int v3 )
 
     dist = 0;
     for ( i=0; i<3; i++ ) {
-	coord = vert_tree_root->the_array[v1*3 + i] - vert_tree_root->the_array[v3*3 + i];
+	coord = vert_tree->the_array[v1*3 + i] - vert_tree->the_array[v3*3 + i];
 	dist += coord * coord;
     }
     dist = sqrt( dist );
@@ -4427,11 +4427,11 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 		VSCALE(v[vn], v[vn], units_conv);
 	    }
 	    MAT4X3PNT( xformed_pt, curr_xform, v[vn] );
-	    vindex[vn] = bn_add_vert( xformed_pt[0], xformed_pt[1], xformed_pt[2], vert_tree_root, tol_dist_sq );
+	    vindex[vn] = bn_add_vert( xformed_pt[0], xformed_pt[1], xformed_pt[2], vert_tree, tol_dist_sq );
 
 	    if ( use_normals ) {
 		MAT4X3VEC( xformed_pt, curr_xform, normals[vn] );
-		nindex[vn] = bn_add_vert( xformed_pt[0], xformed_pt[1], xformed_pt[2], norm_tree_root, tol_dist_sq );
+		nindex[vn] = bn_add_vert( xformed_pt[0], xformed_pt[1], xformed_pt[2], norm_tree, tol_dist_sq );
 	    }
 	}
 	if ( !bad_triangle( vindex[0], vindex[1], vindex[2] ) ) {
@@ -4442,30 +4442,30 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 	}
     }
 
-    if ( curr_tri > 0 && vert_tree_root->curr_vert > 0 ) {
+    if ( curr_tri > 0 && vert_tree->curr_vert > 0 ) {
 	prim_no++;
 	bu_vls_printf( &name_vls, "s.%d", prim_no );
 
 	solid_name = create_unique_brlcad_name( &name_vls );
 	bu_vls_free( &name_vls );
 
-	if ( use_normals && norm_tree_root->curr_vert > 0 ) {
+	if ( use_normals && norm_tree->curr_vert > 0 ) {
 	    if ( mk_bot_w_normals( wdb_fd, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED,
 				   RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
-				   vert_tree_root->curr_vert, curr_tri, vert_tree_root->the_array, part_tris,
-				   (fastf_t *)NULL, (struct bu_bitv *)NULL, norm_tree_root->curr_vert,
-				   norm_tree_root->the_array, part_norms  ) ) {
+				   vert_tree->curr_vert, curr_tri, vert_tree->the_array, part_tris,
+				   (fastf_t *)NULL, (struct bu_bitv *)NULL, norm_tree->curr_vert,
+				   norm_tree->the_array, part_norms  ) ) {
 		bu_log( "ERROR: Failed to create BOT (%s)\n", solid_name );
 	    }
 	} else {
-	    if ( mk_bot( wdb_fd, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree_root->curr_vert, curr_tri,
-			 vert_tree_root->the_array, part_tris, (fastf_t *)NULL, (struct bu_bitv *)NULL ) ) {
+	    if ( mk_bot( wdb_fd, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree->curr_vert, curr_tri,
+			 vert_tree->the_array, part_tris, (fastf_t *)NULL, (struct bu_bitv *)NULL ) ) {
 		bu_log( "ERROR: Failed to create BOT (%s)\n", solid_name );
 	    }
 	}
 
-	bn_clean_vert_tree( vert_tree_root );
-	bn_clean_vert_tree( norm_tree_root );
+	bn_clean_vert_tree( vert_tree );
+	bn_clean_vert_tree( norm_tree );
 	curr_tri = 0;
 	curr_norm = 0;
 
@@ -4519,8 +4519,8 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 	    return solid_name;
 	}
     } else {
-	bn_clean_vert_tree( vert_tree_root );
-	bn_clean_vert_tree( norm_tree_root );
+	bn_clean_vert_tree( vert_tree );
+	bn_clean_vert_tree( norm_tree );
 	curr_tri = 0;
 	curr_norm = 0;
 
@@ -5355,8 +5355,8 @@ main(int ac, char *av[])
 	bu_exit(1, usage, av[0]);
     }
 
-    vert_tree_root = bn_create_vert_tree();
-    norm_tree_root = bn_create_vert_tree();
+    vert_tree = bn_create_vert_tree();
+    norm_tree = bn_create_vert_tree();
 
     if ( ac > i+1 ) {
 	subparts = (char **)bu_calloc( ac - i + 1, sizeof(char *), "subparts" );

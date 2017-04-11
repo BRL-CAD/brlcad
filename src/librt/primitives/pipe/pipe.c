@@ -3204,7 +3204,7 @@ tesselate_pipe_bend(
 {
     struct vertex **new_outer_loop = NULL;
     struct vertex **new_inner_loop = NULL;
-    struct bn_vert_root *vertex_tree = NULL;
+    struct bn_vert_tree *vertex_tree = NULL;
     struct vertex **vertex_array = NULL;
     fastf_t bend_radius;
     fastf_t bend_angle;

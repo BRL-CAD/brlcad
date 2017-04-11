@@ -62,7 +62,7 @@ static int name_not_converted=0;
 static int indent_level=0;
 static int indent_delta=4;
 
-static struct bn_vert_root *tree_root;
+static struct bn_vert_tree *tree;
 
 #define DO_INDENT { int _i; \
 	for (_i=0; _i<indent_level; _i++) {\
@@ -383,7 +383,7 @@ Part_import(int id_start)
     int tri[3];
     int corner_index=-1;
 
-    bn_clean_vert_tree(tree_root);
+    bn_clean_vert_tree(tree);
 
     VSETALL(rgb, 128);
 
@@ -448,9 +448,9 @@ Part_import(int id_start)
 		v[i] = atof(ptr);
 		ptr = strtok((char *)NULL, " \t");
 	    }
-	    tri[++corner_index] = bn_add_vert(V3ARGS(v), tree_root, local_tol_sq);
+	    tri[++corner_index] = bn_add_vert(V3ARGS(v), tree, local_tol_sq);
 	    if (corner_index == 2) {
-		if (!bad_triangle(tri, tree_root->the_array)) {
+		if (!bad_triangle(tri, tree->the_array)) {
 		    add_triangle(tri);
 		}
 	    }
@@ -470,7 +470,7 @@ Part_import(int id_start)
 
 	/* write this part to database, first make a primitive solid */
 	if (mk_bot(fd_out, part->brlcad_solid, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
-		   tree_root->curr_vert, curr_tri, tree_root->the_array, part_tris, NULL, NULL))
+		   tree->curr_vert, curr_tri, tree->the_array, part_tris, NULL, NULL))
 	    bu_exit(1, "%s: Failed to write primitive %s (%s) to database\n", progname, part->brlcad_solid, part->obj_name);
 	if (verbose) {
 	    DO_INDENT;
@@ -674,7 +674,7 @@ main(int argc, char *argv[])
 	create_name_hash(fd_parts);
     }
 
-    tree_root = bn_create_vert_tree();
+    tree = bn_create_vert_tree();
 
     /* finally, start processing the input */
     while (bu_fgets(line, MAX_LINE_SIZE, fd_in)) {

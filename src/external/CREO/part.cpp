@@ -35,7 +35,7 @@ struct part_conv_info {
  * only checks for triangles with duplicate vertices
  */
 extern "C" int
-bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3, struct bn_vert_root *vtr)
+bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3, struct bn_vert_tree *tree)
 {
     double dist;
     double coord;
@@ -44,7 +44,7 @@ bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3, struct bn_ve
 
     dist = 0;
     for (int i = 0; i < 3; i++) {
-	coord = vtr->the_array[v1*3+i] - vtr->the_array[v2*3+i];
+	coord = tree->the_array[v1*3+i] - tree->the_array[v2*3+i];
 	dist += coord * coord;
     }
     dist = sqrt(dist);
@@ -52,7 +52,7 @@ bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3, struct bn_ve
 
     dist = 0;
     for (int i = 0; i < 3; i++) {
-	coord = vtr->the_array[v2*3+i] - vtr->the_array[v3*3+i];
+	coord = tree->the_array[v2*3+i] - tree->the_array[v3*3+i];
 	dist += coord * coord;
     }
     dist = sqrt(dist);
@@ -60,7 +60,7 @@ bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3, struct bn_ve
 
     dist = 0;
     for (int i=0; i<3; i++ ) {
-	coord = vtr->the_array[v1*3+i] - vtr->the_array[v3*3+i];
+	coord = tree->the_array[v1*3+i] - tree->the_array[v3*3+i];
 	dist += coord * coord;
     }
     dist = sqrt(dist);
@@ -506,8 +506,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    ProMaterialProps material_props;
 	    int got_density;
 	    struct bu_vls tree = BU_VLS_INIT_ZERO;
-	    struct bn_vert_root *vert_tree_root = bn_create_vert_tree();;
-	    struct bn_vert_root *norm_tree_root = bn_create_vert_tree();
+	    struct bn_vert_tree *vert_tree = bn_create_vert_tree();;
+	    struct bn_vert_tree *norm_tree = bn_create_vert_tree();
 
 	    cinfo->curr_tri = 0;
 
@@ -520,14 +520,14 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 		    /* grab the triangle */
 		    vert_no = tess[surfno].facets[i][0];
 		    v1 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-			    tess[surfno].vertices[vert_no][2], vert_tree_root, cinfo->local_tol_sq );
+			    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][1];
 		    v2 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-			    tess[surfno].vertices[vert_no][2], vert_tree_root, cinfo->local_tol_sq );
+			    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][2];
 		    v3 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-			    tess[surfno].vertices[vert_no][2], vert_tree_root, cinfo->local_tol_sq );
-		    if ( bad_triangle(cinfo, v1, v2, v3, vert_tree_root) ) {
+			    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
+		    if ( bad_triangle(cinfo, v1, v2, v3, vert_tree) ) {
 			continue;
 		    }
 
@@ -540,15 +540,15 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 		    vert_no = tess[surfno].facets[i][0];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
 		    n1 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			    tess[surfno].normals[vert_no][2], norm_tree_root, cinfo->local_tol_sq );
+			    tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][1];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
 		    n2 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			    tess[surfno].normals[vert_no][2], norm_tree_root, cinfo->local_tol_sq );
+			    tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][2];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
 		    n3 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			    tess[surfno].normals[vert_no][2], norm_tree_root, cinfo->local_tol_sq );
+			    tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
 
 		    add_triangle_and_normal(cinfo, v1, v2, v3, n1, n2, n3 );
 		}
@@ -566,11 +566,11 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
 	    fprintf( cinfo->outfp, "put {%s} bot mode volume orient no V { ", sol_name );
 
-	    for ( i=0; i < cinfo->vert_tree_root->curr_vert; i++ ) {
+	    for ( i=0; i < cinfo->vert_tree->curr_vert; i++ ) {
 		fprintf( cinfo->outfp, " {%.12e %.12e %.12e}",
-			vert_tree_root->the_array[i*3] * cinfo->creo_to_brl_conv,
-			vert_tree_root->the_array[i*3+1] * cinfo->creo_to_brl_conv,
-			vert_tree_root->the_array[i*3+2] * cinfo->creo_to_brl_conv );
+			vert_tree->the_array[i*3] * cinfo->creo_to_brl_conv,
+			vert_tree->the_array[i*3+1] * cinfo->creo_to_brl_conv,
+			vert_tree->the_array[i*3+2] * cinfo->creo_to_brl_conv );
 	    }
 	    fprintf( cinfo->outfp, " } F {" );
 	    for ( i=0; i < cinfo->curr_tri; i++ ) {
@@ -584,11 +584,11 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 			    cinfo->curr_part_name );
 		}
 		fprintf( cinfo->outfp, " } flags { has_normals use_normals } N {" );
-		for ( i=0; i<cinfo->norm_tree_root->curr_vert; i++ ) {
+		for ( i=0; i<cinfo->norm_tree->curr_vert; i++ ) {
 		    fprintf( cinfo->outfp, " {%.12e %.12e %.12e}",
-			    norm_tree_root->the_array[i*3] * cinfo->creo_to_brl_conv,
-			    norm_tree_root->the_array[i*3+1] * cinfo->creo_to_brl_conv,
-			    norm_tree_root->the_array[i*3+2] * cinfo->creo_to_brl_conv );
+			    norm_tree->the_array[i*3] * cinfo->creo_to_brl_conv,
+			    norm_tree->the_array[i*3+1] * cinfo->creo_to_brl_conv,
+			    norm_tree->the_array[i*3+2] * cinfo->creo_to_brl_conv );
 		}
 		fprintf( cinfo->outfp, " } fn {" );
 		for ( i=0; i < cinfo->curr_tri; i++ ) {
@@ -599,8 +599,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    fprintf( cinfo->outfp, " }\n" );
 
 	    /* Free trees */
-	    bn_free_vert_tree(vert_tree_root);
-	    bn_free_vert_tree(norm_tree_root);
+	    bn_free_vert_tree(vert_tree);
+	    bn_free_vert_tree(norm_tree);
 
 	    /* Set the CREO_NAME attributes for the solid/primitive */
 	    fprintf( cinfo->outfp, "attr set {%s} %s %s\n", sol_name, CREO_NAME_ATTR, cinfo->curr_part_name );

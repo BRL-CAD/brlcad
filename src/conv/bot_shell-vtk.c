@@ -73,7 +73,7 @@ static char *output_file;
 static FILE *fd_out;
 static struct rt_i *rtip;
 static struct bn_tol tol;
-static struct bn_vert_root *verts;
+static struct bn_vert_tree *verts;
 static long *faces = NULL;
 static long max_faces = 0;
 static long num_faces = 0;
