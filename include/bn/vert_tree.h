@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bn_vtree
+/** @addtogroup bn_vert_tree
  *
  * @brief
  * Vertex tree support
@@ -68,7 +68,7 @@ struct bn_vert_tree {
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct bn_vert_tree *bn_create_vert_tree(void);
+BN_EXPORT extern struct bn_vert_tree *bn_vert_tree_create(void);
 
 /**
  *@brief
@@ -76,13 +76,13 @@ BN_EXPORT extern struct bn_vert_tree *bn_create_vert_tree(void);
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct bn_vert_tree *bn_create_vert_tree_w_norms(void);
+BN_EXPORT extern struct bn_vert_tree *bn_vert_tree_create_w_norms(void);
 
 /**
  *@brief
  *	Routine to free a vertex tree and all associated dynamic memory
  */
-BN_EXPORT extern void bn_free_vert_tree(struct bn_vert_tree *tree_root);
+BN_EXPORT extern void bn_vert_tree_destroy(struct bn_vert_tree *tree);
 
 /**
  *@brief
@@ -90,11 +90,11 @@ BN_EXPORT extern void bn_free_vert_tree(struct bn_vert_tree *tree_root);
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex is stored
  */
-BN_EXPORT extern size_t bn_add_vert(double x,
-				 double y,
-				 double z,
-				 struct bn_vert_tree *tree_root,
-				 fastf_t local_tol_sq);
+BN_EXPORT extern size_t bn_vert_tree_add(struct bn_vert_tree *tree,
+					 double x,
+					 double y,
+					 double z,
+					 fastf_t local_tol_sq);
 
 /**
  *@brief
@@ -102,21 +102,21 @@ BN_EXPORT extern size_t bn_add_vert(double x,
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex and normal is stored
  */
-BN_EXPORT extern size_t bn_add_vert_and_norm(double x,
-					  double y,
-					  double z,
-					  double nx,
-					  double ny,
-					  double nz,
-					  struct bn_vert_tree *tree_root,
-					  fastf_t local_tol_sq);
+BN_EXPORT extern size_t bn_vert_tree_add_w_norm(struct bn_vert_tree *tree,
+						double x,
+						double y,
+						double z,
+						double nx,
+						double ny,
+						double nz,
+						fastf_t local_tol_sq);
 
 /**
  *@brief
  *	Routine to free the binary search tree and reset the current number of vertices.
  *	The vertex array is left untouched, for re-use later.
  */
-BN_EXPORT extern void bn_clean_vert_tree(struct bn_vert_tree *tree_root);
+BN_EXPORT extern void bn_vert_tree_clean(struct bn_vert_tree *tree);
 
 
 __END_DECLS

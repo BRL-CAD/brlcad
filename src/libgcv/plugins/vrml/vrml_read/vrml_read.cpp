@@ -111,7 +111,7 @@ Convert_input(NODE *node)
 	    y = allvert[vert_no*3+1];
 	    z = allvert[vert_no*3+2];
 
-	    tmp_face[vert_no%3] = bn_add_vert(x, y, z, tree, 0.0);
+	    tmp_face[vert_no%3] = bn_vert_tree_add( tree,x, y, z, 0.0);
 
 	    if (((vert_no+1)%3 == 0) && (vert_no != 0) ) {
 		if (Check_degenerate(tmp_face)) {
@@ -127,7 +127,7 @@ Convert_input(NODE *node)
 	}
 	mk_bot(fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree->curr_vert, bot_fcurr,
 	tree->the_array, bot_faces, NULL, NULL);
-	bn_clean_vert_tree(tree);
+	bn_vert_tree_clean(tree);
     }else if (node->nnodetype == NODE_CONE) {
 	mk_tgc(fd_out,bu_vls_addr(&solid_name), &allvert[0], &allvert[3], &allvert[6], &allvert[9], &allvert[12], &allvert[15]);
     }else if (node->nnodetype == NODE_BOX) {
@@ -251,7 +251,7 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     BU_LIST_INIT(&all_head.l);
     /* create a tree structure to hold the input vertices */
-    tree = bn_create_vert_tree();
+    tree = bn_vert_tree_create();
 
     Parse_input(childlist);
     fclose(fd_in);

@@ -506,8 +506,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    ProMaterialProps material_props;
 	    int got_density;
 	    struct bu_vls tree = BU_VLS_INIT_ZERO;
-	    struct bn_vert_tree *vert_tree = bn_create_vert_tree();;
-	    struct bn_vert_tree *norm_tree = bn_create_vert_tree();
+	    struct bn_vert_tree *vert_tree = bn_vert_tree_create();;
+	    struct bn_vert_tree *norm_tree = bn_vert_tree_create();
 
 	    cinfo->curr_tri = 0;
 
@@ -519,13 +519,13 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 		for ( i=0; i<tess[surfno].n_facets; i++ ) {
 		    /* grab the triangle */
 		    vert_no = tess[surfno].facets[i][0];
-		    v1 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    v1 = bn_vert_tree_add( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][1];
-		    v2 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    v2 = bn_vert_tree_add( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][2];
-		    v3 = bn_add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    v3 = bn_vert_tree_add( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
 		    if ( bad_triangle(cinfo, v1, v2, v3, vert_tree) ) {
 			continue;
@@ -539,15 +539,15 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 		    /* grab the surface normals */
 		    vert_no = tess[surfno].facets[i][0];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n1 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n1 = bn_vert_tree_add( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][1];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n2 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n2 = bn_vert_tree_add( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[i][2];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n3 = bn_add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n3 = bn_vert_tree_add( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
 
 		    add_triangle_and_normal(cinfo, v1, v2, v3, n1, n2, n3 );
@@ -599,8 +599,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    fprintf( cinfo->outfp, " }\n" );
 
 	    /* Free trees */
-	    bn_free_vert_tree(vert_tree);
-	    bn_free_vert_tree(norm_tree);
+	    bn_vert_tree_destroy(vert_tree);
+	    bn_vert_tree_destroy(norm_tree);
 
 	    /* Set the CREO_NAME attributes for the solid/primitive */
 	    fprintf( cinfo->outfp, "attr set {%s} %s %s\n", sol_name, CREO_NAME_ATTR, cinfo->curr_part_name );

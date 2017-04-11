@@ -4427,11 +4427,11 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 		VSCALE(v[vn], v[vn], units_conv);
 	    }
 	    MAT4X3PNT( xformed_pt, curr_xform, v[vn] );
-	    vindex[vn] = bn_add_vert( xformed_pt[0], xformed_pt[1], xformed_pt[2], vert_tree, tol_dist_sq );
+	    vindex[vn] = bn_vert_tree_add( vert_tree, xformed_pt[0], xformed_pt[1], xformed_pt[2], tol_dist_sq );
 
 	    if ( use_normals ) {
 		MAT4X3VEC( xformed_pt, curr_xform, normals[vn] );
-		nindex[vn] = bn_add_vert( xformed_pt[0], xformed_pt[1], xformed_pt[2], norm_tree, tol_dist_sq );
+		nindex[vn] = bn_vert_tree_add( norm_tree, xformed_pt[0], xformed_pt[1], xformed_pt[2], tol_dist_sq );
 	    }
 	}
 	if ( !bad_triangle( vindex[0], vindex[1], vindex[2] ) ) {
@@ -4464,8 +4464,8 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 	    }
 	}
 
-	bn_clean_vert_tree( vert_tree );
-	bn_clean_vert_tree( norm_tree );
+	bn_vert_tree_clean( vert_tree );
+	bn_vert_tree_clean( norm_tree );
 	curr_tri = 0;
 	curr_norm = 0;
 
@@ -4519,8 +4519,8 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 	    return solid_name;
 	}
     } else {
-	bn_clean_vert_tree( vert_tree );
-	bn_clean_vert_tree( norm_tree );
+	bn_vert_tree_clean( vert_tree );
+	bn_vert_tree_clean( norm_tree );
 	curr_tri = 0;
 	curr_norm = 0;
 
@@ -5355,8 +5355,8 @@ main(int ac, char *av[])
 	bu_exit(1, usage, av[0]);
     }
 
-    vert_tree = bn_create_vert_tree();
-    norm_tree = bn_create_vert_tree();
+    vert_tree = bn_vert_tree_create();
+    norm_tree = bn_vert_tree_create();
 
     if ( ac > i+1 ) {
 	subparts = (char **)bu_calloc( ac - i + 1, sizeof(char *), "subparts" );

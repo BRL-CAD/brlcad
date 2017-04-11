@@ -383,7 +383,7 @@ Part_import(int id_start)
     int tri[3];
     int corner_index=-1;
 
-    bn_clean_vert_tree(tree);
+    bn_vert_tree_clean(tree);
 
     VSETALL(rgb, 128);
 
@@ -448,7 +448,7 @@ Part_import(int id_start)
 		v[i] = atof(ptr);
 		ptr = strtok((char *)NULL, " \t");
 	    }
-	    tri[++corner_index] = bn_add_vert(V3ARGS(v), tree, local_tol_sq);
+	    tri[++corner_index] = bn_vert_tree_add(tree, V3ARGS(v), local_tol_sq);
 	    if (corner_index == 2) {
 		if (!bad_triangle(tri, tree->the_array)) {
 		    add_triangle(tri);
@@ -674,7 +674,7 @@ main(int argc, char *argv[])
 	create_name_hash(fd_parts);
     }
 
-    tree = bn_create_vert_tree();
+    tree = bn_vert_tree_create();
 
     /* finally, start processing the input */
     while (bu_fgets(line, MAX_LINE_SIZE, fd_in)) {

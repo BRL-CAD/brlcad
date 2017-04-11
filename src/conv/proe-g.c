@@ -616,7 +616,7 @@ Convert_part(char *line)
     VSETALL(part_min, INFINITY);
     VSETALL(part_max, -INFINITY);
 
-    bn_clean_vert_tree(vert_tree);
+    bn_vert_tree_clean(vert_tree);
 
     start = (-1);
     /* skip leading blanks */
@@ -760,7 +760,7 @@ Convert_part(char *line)
 
 			bu_log("\t(%g %g %g)\n", x, y, z);
 		    }
-		    tmp_face[vert_no++] = bn_add_vert(x, y, z, vert_tree, tol.dist_sq);
+		    tmp_face[vert_no++] = bn_vert_tree_add( vert_tree,x, y, z, tol.dist_sq);
 		    VMINMAX(part_min, part_max, &vert_tree->the_array[tmp_face[vert_no-1]*3]);
 		} else
 		    bu_log("Unrecognized line: %s\n", line1);
@@ -1052,7 +1052,7 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    vert_tree = bn_create_vert_tree();
+    vert_tree = bn_vert_tree_create();
 
     bu_ptbl_init(&null_parts, 64, " &null_parts");
 

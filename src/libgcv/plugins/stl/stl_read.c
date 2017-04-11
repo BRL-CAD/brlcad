@@ -277,7 +277,7 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 		    x *= pstate->gcv_options->scale_factor;
 		    y *= pstate->gcv_options->scale_factor;
 		    z *= pstate->gcv_options->scale_factor;
-		    tmp_face[vert_no++] = bn_add_vert(x, y, z, pstate->tree, pstate->gcv_options->calculational_tolerance.dist_sq);
+		    tmp_face[vert_no++] = bn_vert_tree_add( pstate->tree,x, y, z, pstate->gcv_options->calculational_tolerance.dist_sq);
 		} else {
 		    bu_log("Unrecognized line: %s\n", line1);
 		}
@@ -329,7 +329,7 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 
     mk_bot(pstate->fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, pstate->tree->curr_vert, pstate->bot_fcurr,
 	   pstate->tree->the_array, pstate->bot_faces, NULL, NULL);
-    bn_clean_vert_tree(pstate->tree);
+    bn_vert_tree_clean(pstate->tree);
 
     if (face_count && !solid_in_region) {
 	(void)mk_addmember(bu_vls_addr(&solid_name), &head.l, NULL, WMOP_UNION);
@@ -423,11 +423,11 @@ Convert_part_binary(struct conversion_state *pstate)
 
 	VMOVE(normal, flts);
 	VSCALE(pt, &flts[3], pstate->gcv_options->scale_factor);
-	tmp_face[0] = bn_add_vert(V3ARGS(pt), pstate->tree, pstate->gcv_options->calculational_tolerance.dist_sq);
+	tmp_face[0] = bn_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
 	VSCALE(pt, &flts[6], pstate->gcv_options->scale_factor);
-	tmp_face[1] = bn_add_vert(V3ARGS(pt), pstate->tree, pstate->gcv_options->calculational_tolerance.dist_sq);
+	tmp_face[1] = bn_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
 	VSCALE(pt, &flts[9], pstate->gcv_options->scale_factor);
-	tmp_face[2] = bn_add_vert(V3ARGS(pt), pstate->tree, pstate->gcv_options->calculational_tolerance.dist_sq);
+	tmp_face[2] = bn_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
 
 	/* check for degenerate faces */
 	if (tmp_face[0] == tmp_face[1]) {
@@ -471,7 +471,7 @@ Convert_part_binary(struct conversion_state *pstate)
 
     mk_bot(pstate->fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
 	   pstate->tree->curr_vert, pstate->bot_fcurr, pstate->tree->the_array, pstate->bot_faces, NULL, NULL);
-    bn_clean_vert_tree(pstate->tree);
+    bn_vert_tree_clean(pstate->tree);
 
     BU_LIST_INIT(&head.l);
     if (face_count) {
@@ -602,7 +602,7 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     BU_LIST_INIT(&state.all_head.l);
 
     /* create a tree structure to hold the input vertices */
-    state.tree = bn_create_vert_tree();
+    state.tree = bn_vert_tree_create();
 
     Convert_input(&state);
 
