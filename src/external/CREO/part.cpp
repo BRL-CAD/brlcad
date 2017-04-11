@@ -121,7 +121,6 @@ extern "C" char *feat_status_to_str(ProFeatStatus feat_stat)
     return feat_status[feat_stat];
 }
 
-#if 1
 extern "C" void
 remove_holes_from_id_list(struct creo_conv_info *cinfo,  ProMdl model )
 {
@@ -435,12 +434,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
      */
 
 
-
-
-    /* tessellate part */
+    /* Tessellate part, going from coarse to fine tessellation */
     creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Tessellate part (%s)\n", cinfo->curr_part_name);
-
-    /* Going from coarse to fine tessellation */
     for (int i = 0; i <= cinfo->max_to_min_steps; ++i) {
 	curr_error = cinfo->max_error - (i * cinfo->error_increment);
 	curr_angle = cinfo->min_angle_cntrl + (i * cinfo->angle_increment);
@@ -455,6 +450,9 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
 	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tcurr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
     }
+
+
+    /* Tessellation loop complete - deal with the results */
 
     if ( status != PRO_TK_NO_ERROR ) {
 	/* Failed!!! */
@@ -712,56 +710,31 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     ProPartTessellationFree( &tess );
     tess = NULL;
 
-    /* add this part to the list of objects already output */
-    add_to_done_part(cinfo, part_name );
-
     /* unsuppress anything we suppressed */
-    if ( cinfo->feat_id_count ) {
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "Unsuppressing %d features\n", cinfo->feat_id_count );
-	}
-	fprintf( stderr, "Unsuppressing %d features\n", cinfo->feat_id_count );
-	if ( (ret=ProFeatureResume( ProMdlToSolid(model),
-			cinfo->feat_ids_to_delete, cinfo->feat_id_count,
-			NULL, 0 )) != PRO_TK_NO_ERROR) {
-
-	    fprintf( stderr, "Failed to unsuppress %d features from %s\n",
-		    cinfo->feat_id_count, cinfo->curr_part_name );
+    if (cinfo->do_elims && !pinfo->suppressed_features->empty()) {
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Unsuppressing %d features\n", pinfo->suppressed_features->size());
+	ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features[0], pinfo->suppressed_features->size(), NULL, 0);
+	if (ret != PRO_TK_NO_ERROR) {
+	    creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to unsuppress features.\n");
 
 	    /* use UI dialog */
-	    status = ProUIDialogCreate( "creo_brl_error", "creo_brl_error" );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to create dialog box for creo-brl, error = %d\n", status );
-		return 0;
-	    }
-	    snprintf( err_mess, 512,
-		    "During the conversion %d features of part %s\n"
-		    "were suppressed. After the conversion was complete, an\n"
-		    "attempt was made to unsuppress these same features.\n"
-		    "The unsuppression failed, so these features are still\n"
-		    "suppressed. Please exit Pro/E without saving any\n"
-		    "changes so that this problem will not persist.", cinfo->feat_id_count, cinfo->curr_part_name );
+	    if (ProUIDialogCreate("creo_brl_error", "creo_brl_error") == PRO_TK_NO_ERROR) {
+		snprintf( err_mess, 512,
+			"During the conversion %d features of part %s\n"
+			"were suppressed. After the conversion was complete, an\n"
+			"attempt was made to unsuppress these same features.\n"
+			"The unsuppression failed, so these features are still\n"
+			"suppressed. Please exit CREO without saving any\n"
+			"changes so that this problem will not persist.", pinfo->suppressed_features->size(), cinfo->curr_part_name );
 
-	    (void)ProStringToWstring( werr_mess, err_mess );
-	    status = ProUITextareaValueSet( "creo_brl_error", "the_message", werr_mess );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to create dialog box for creo-brl, error = %d\n", status );
-		return 0;
+		(void)ProStringToWstring( werr_mess, err_mess );
+		if (ProUITextareaValueSet("creo_brl_error", "the_message", werr_mess) == PRO_TK_NO_ERROR) {
+		    (void)ProUIPushbuttonActivateActionSet( "creo_brl_error", "ok", kill_error_dialog, NULL );
+		}
 	    }
-	    (void)ProUIPushbuttonActivateActionSet( "creo_brl_error", "ok", kill_error_dialog, NULL );
-#if 0
-	    status = ProUIDialogActivate( "creo_brl_error", &ret_status );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Error in creo-brl error Dialog, error = %d\n",
-			status );
-		fprintf( stderr, "\t dialog returned %d\n", ret_status );
-	    }
-#endif
-	    cinfo->feat_id_count = 0;
 	    return 0;
 	}
-	fprintf( stderr, "features unsuppressed!!\n" );
-	cinfo->feat_id_count = 0;
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Successfully unsuppressed features.\n");
     }
 
     delete pinfo->suppressed_features;
@@ -770,8 +743,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
     return ret;
 }
-
-#endif
 
 /*
  * Local Variables:
