@@ -564,49 +564,38 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     /* TODO - add any subtraction solids created by the hole handling */
 
 
-    /* Make the region comb - TODO - can add rgb color, shader, args, etc. here, probably should... */
-    mk_lcomb(cinfo->wdbp, bu_vls_addr(rname), &wcomb, 1, NULL, NULL, NULL, 0);
-
-    /* get the surface properties for the part */
-
+    /* Get the surface properties from the part and output the region comb */
+    struct bu_vls shader_args = BU_VLS_INIT_ZERO;
+    struct bu_color color;
+    fastf_t rgbflts[3];
+    unsigned char rgb[3];
     ProModelitem mitm;
     ProSurfaceAppearanceProps aprops;
     ProMdlToModelitem(model, &mitm);
-    ProError aerr = ProSurfaceAppearancepropsGet(&mitm, &aprops);
-    if (aerr  == PRO_TK_NOT_EXIST ) {
-	/* no surface properties */
-	fprintf( cinfo->outfp,
-		"put {%s} comb region yes id %d los 100 GIFTmater 1 tree %s\n",
-		get_brlcad_name(cinfo, pname ), cinfo->reg_id, bu_vls_addr( &tree) );
-    } else if ( aerr == PRO_TK_NO_ERROR ) {
-	/* use the colors, ... that was set in Pro/E */
-	fprintf( cinfo->outfp,
-		"put {%s} comb region yes id %d los 100 GIFTmater 1 rgb {%d %d %d} shader {plastic {",
-		get_brlcad_name(cinfo, pname ),
-		cinfo->reg_id,
-		(int)(aprops.color_rgb[0]*255.0),
-		(int)(aprops.color_rgb[1]*255.0),
-		(int)(aprops.color_rgb[2]*255.0) );
-	if ( aprops.transparency != 0.0 ) {
-	    fprintf( cinfo->outfp, " tr %g", aprops.transparency );
-	}
-	if ( aprops.shininess != 1.0 ) {
-	    fprintf( cinfo->outfp, " sh %d", (int)(aprops.shininess * 18 + 2.0) );
-	}
-	if ( aprops.diffuse != 0.3 ) {
-	    fprintf( cinfo->outfp, " di %g", aprops.diffuse );
-	}
-	if ( aprops.highlite != 0.7 ) {
-	    fprintf( cinfo->outfp, " sp %g", aprops.highlite );
-	}
-	fprintf( cinfo->outfp, "} }" );
-	fprintf( cinfo->outfp, " tree %s\n", bu_vls_addr( &tree ) );
+    if (ProSurfaceAppearancepropsGet(&mitm, &aprops) == PRO_TK_NO_ERROR) {
+	/* use the colors, ... that were set in CREO */
+	rgbflts[0] = aprops.color_rgb[0]*255.0;
+	rgbflts[1] = aprops.color_rgb[1]*255.0;
+	rgbflts[2] = aprops.color_rgb[2]*255.0;
+	bu_color_from_rgb_floats(&color, rgbflts);
+	bu_color_to_rgb_chars(&color, rgb);
+
+	/* shader args */
+	bu_vls_sprintf(&shader_args, "{");
+	if (aprops.transparency != 0.0) bu_vls_sprintf(&shader_args, " tr %g", aprops.transparency);
+	if (aprops.shininess != 1.0) bu_vls_sprintf(&shader_args, " sh %d", (int)(aprops.shininess * 18 + 2.0));
+	if (aprops.diffuse != 0.3) bu_vls_sprintf(&shader_args, " di %g", aprops.diffuse);
+	if (aprops.highlite != 0.7 )bu_vls_sprintf(&shader_args, " sp %g", aprops.highlite);
+	bu_vls_sprintf(&shader_args, "}");
+
+	/* Make the region comb - TODO - can add rgb color, shader, args, etc. here, probably should... */
+	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb, 1,
+		"plastic", bu_vls_addr(&shader_args), (const unsigned char *)rgb,
+		cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     } else {
 	/* something is wrong, but just ignore the missing properties */
-	fprintf( stderr, "Error getting surface properties for %s\n",
-		pname );
-	fprintf( cinfo->outfp, "put {%s} comb region yes id %d los 100 GIFTmater 1 tree %s\n",
-		get_brlcad_name(cinfo, pname ), cinfo->reg_id, bu_vls_addr( &tree ) );
+	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Error getting surface properties for %s\n",	pname);
+	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb, 1, NULL, NULL, NULL, cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     }
 
 
