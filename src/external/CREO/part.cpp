@@ -185,143 +185,6 @@ feature_filter( ProFeature *feat, ProAppData data )
 
 
 extern "C" void
-output_csg_prims(struct creo_conv_info *cinfo)
-{
-    struct csg_ops *ptr;
-
-    ptr = cinfo->csg_root;
-
-    while ( ptr ) {
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "Creating primitive: %s %s\n",
-		    bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
-	}
-
-	fprintf( cinfo->outfp, "put {%s} %s", bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
-	ptr = ptr->next;
-    }
-}
-
-/* routine to free the list of CSG operations */
-extern "C" void
-free_csg_ops(struct creo_conv_info *cinfo)
-{
-    struct csg_ops *ptr1, *ptr2;
-
-    ptr1 = cinfo->csg_root;
-
-    while ( ptr1 ) {
-	ptr2 = ptr1->next;
-	bu_vls_free( &ptr1->name );
-	bu_vls_free( &ptr1->dbput );
-	bu_free( ptr1, "csg op" );
-	ptr1 = ptr2;
-    }
-
-    cinfo->csg_root = NULL;
-}
-
-
-/* routine to add a new triangle and its normals to the current part */
-extern "C" void
-add_triangle_and_normal(struct creo_conv_info *cinfo, int v1, int v2, int v3, int n1, int n2, int n3 )
-{
-    ProFileName msgfil;
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-
-    if ( cinfo->curr_tri >= cinfo->max_tri ) {
-	/* allocate more memory for triangles and normals */
-	cinfo->max_tri += TRI_BLOCK;
-	cinfo->part_tris = (ProTriangle *)bu_realloc( cinfo->part_tris, sizeof( ProTriangle ) * cinfo->max_tri,
-		"part triangles");
-	if ( !cinfo->part_tris ) {
-	    (void)ProMessageDisplay(msgfil, "USER_ERROR",
-		    "Failed to allocate memory for part triangles" );
-	    fprintf( stderr, "Failed to allocate memory for part triangles\n" );
-	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	    bu_exit( 1, NULL );
-	}
-	cinfo->part_norms = (int *)bu_realloc( cinfo->part_norms, sizeof( int ) * cinfo->max_tri * 3,
-		"part normals");
-    }
-
-    /* fill in triangle info */
-    cinfo->part_tris[cinfo->curr_tri][0] = v1;
-    cinfo->part_tris[cinfo->curr_tri][1] = v2;
-    cinfo->part_tris[cinfo->curr_tri][2] = v3;
-
-    cinfo->part_norms[cinfo->curr_tri*3]     = n1;
-    cinfo->part_norms[cinfo->curr_tri*3 + 1] = n2;
-    cinfo->part_norms[cinfo->curr_tri*3 + 2] = n3;
-
-    /* increment count */
-    cinfo->curr_tri++;
-}
-
-
-/* routine to add a new triangle to the current part */
-extern "C" void
-add_triangle(struct creo_conv_info *cinfo, int v1, int v2, int v3 )
-{
-    ProFileName msgfil;
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-    if ( cinfo->curr_tri >= cinfo->max_tri ) {
-	/* allocate more memory for triangles */
-	cinfo->max_tri += TRI_BLOCK;
-	cinfo->part_tris = (ProTriangle *)bu_realloc(cinfo->part_tris, sizeof( ProTriangle ) * cinfo->max_tri,
-		"part triangles");
-	if ( !cinfo->part_tris ) {
-	    (void)ProMessageDisplay(msgfil, "USER_ERROR",
-		    "Failed to allocate memory for part triangles" );
-	    fprintf( stderr, "Failed to allocate memory for part triangles\n" );
-	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	    bu_exit( 1, NULL );
-	}
-    }
-
-    /* fill in triangle info */
-    cinfo->part_tris[cinfo->curr_tri][0] = v1;
-    cinfo->part_tris[cinfo->curr_tri][1] = v2;
-    cinfo->part_tris[cinfo->curr_tri][2] = v3;
-
-    /* increment count */
-    cinfo->curr_tri++;
-}
-
-
-
-extern "C" void
-build_tree(struct creo_conv_info *cinfo,  char *sol_name, struct bu_vls *tree )
-{
-    struct csg_ops *ptr;
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Building CSG tree for %s\n", sol_name );
-    }
-    ptr = cinfo->csg_root;
-    while ( ptr ) {
-	bu_vls_printf( tree, "{%c ", ptr->op );
-	ptr = ptr->next;
-    }
-
-    bu_vls_strcat( tree, "{ l {" );
-    bu_vls_strcat( tree, sol_name );
-    bu_vls_strcat( tree, "} }" );
-    ptr = cinfo->csg_root;
-    while ( ptr ) {
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "Adding %c %s\n", ptr->op, bu_vls_addr( &ptr->name ) );
-	}
-	bu_vls_printf( tree, " {l {%s}}}", bu_vls_addr( &ptr->name ) );
-	ptr = ptr->next;
-    }
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Final tree: %s\n", bu_vls_addr( tree ) );
-    }
-}
-
-extern "C" void
 unsuppress_features(struct part_conv_info *pinfo)
 {
     ProFeatureResumeOptions resume_opts[1];
@@ -582,11 +445,11 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
 	/* shader args */
 	bu_vls_sprintf(&shader_args, "{");
-	if (aprops.transparency != 0.0) bu_vls_sprintf(&shader_args, " tr %g", aprops.transparency);
-	if (aprops.shininess != 1.0) bu_vls_sprintf(&shader_args, " sh %d", (int)(aprops.shininess * 18 + 2.0));
-	if (aprops.diffuse != 0.3) bu_vls_sprintf(&shader_args, " di %g", aprops.diffuse);
-	if (aprops.highlite != 0.7 )bu_vls_sprintf(&shader_args, " sp %g", aprops.highlite);
-	bu_vls_sprintf(&shader_args, "}");
+	if (aprops.transparency != 0.0) bu_vls_printf(&shader_args, " tr %g", aprops.transparency);
+	if (aprops.shininess != 1.0) bu_vls_printf(&shader_args, " sh %d", (int)(aprops.shininess * 18 + 2.0));
+	if (aprops.diffuse != 0.3) bu_vls_printf(&shader_args, " di %g", aprops.diffuse);
+	if (aprops.highlite != 0.7 )bu_vls_printf(&shader_args, " sp %g", aprops.highlite);
+	bu_vls_printf(&shader_args, "}");
 
 	/* Make the region comb - TODO - can add rgb color, shader, args, etc. here, probably should... */
 	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb, 1,
@@ -599,57 +462,67 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     }
 
 
-    /* TODO - there is common logic here with the assembly - should consolidate to util */
+    /* Set the CREO_NAME attribute for the solid/primitive */
+    struct directory *sdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(sname), LOOKUP_QUIET);
+    struct bu_attribute_value_set s_avs;
+    db5_get_attributes(cinfo->wdbp->dbip, &s_avs, sdp);
+    bu_avs_add(&s_avs, "CREO_NAME", pname);
+    db5_standardize_avs(&s_avs);
+    db5_update_attributes(sdp, &s_avs, cinfo->wdbp->dbip);
 
-    /* Set the CREO_NAME attributes for the solid/primitive */
-    fprintf( cinfo->outfp, "attr set {%s} %s %s\n", sol_name, CREO_NAME_ATTR, pname );
+    /* Set the CREO attributes for the region */
+    struct directory *rdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(rname), LOOKUP_QUIET);
+    struct bu_attribute_value_set r_avs;
+    db5_get_attributes(cinfo->wdbp->dbip, &r_avs, rdp);
 
-    /* Set the CREO_NAME attributes for the region */
-    fprintf( cinfo->outfp, "attr set {%s} %s %s\n", get_brlcad_name(cinfo, pname ), CREO_NAME_ATTR, pname );
+    bu_avs_add(&r_avs, "CREO_NAME", pname);
 
     /* if the part has a material, add it as an attribute */
-
     ProName material;
     ProMassProperty mass_prop;
     ProMaterialProps material_props;
     int got_density = 0;
-    status = ProPartMaterialNameGet( ProMdlToPart(model), material );
-    if ( status == PRO_TK_NO_ERROR ) {
-	fprintf( cinfo->outfp, "attr set {%s} material_name {%s}\n",
-		get_brlcad_name(cinfo, pname ),
-		ProWstringToString( str, material ) );
+    status = ;
+    if (ProPartMaterialNameGet(ProMdlToPart(model), material) == PRO_TK_NO_ERROR ) {
+	char str[CREO_NAME_MAX];
+	ProWstringToString(str, material);
+	bu_avs_add("material_name", str);
 
 	/* get the density for this material */
-	status = ProPartMaterialdataGet( ProMdlToPart(model), material, &material_props );
-	if ( status == PRO_TK_NO_ERROR ) {
+	if (ProPartMaterialdataGet( ProMdlToPart(model), material, &material_props) == PRO_TK_NO_ERROR) {
 	    got_density = 1;
-	    fprintf( cinfo->outfp, "attr set {%s} density %g\n",
-		    get_brlcad_name(cinfo, pname ),
-		    material_props.mass_density );
+	    struct bu_vls mdstr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&mdstr, "%g", material_props.mass_density);
+	    bu_avs_add("density", bu_vls_addr(&mdstr));
+	    bu_vls_free(&mdstr);
 	}
     }
 
     /* calculate mass properties */
-    status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
-    if ( status == PRO_TK_NO_ERROR ) {
-	if ( !got_density ) {
-	    if ( mass_prop.density > 0.0 ) {
-		fprintf( cinfo->outfp, "attr set {%s} density %g\n",
-			get_brlcad_name(cinfo, pname ),
-			mass_prop.density );
-	    }
+    if (ProSolidMassPropertyGet(ProMdlToSolid(model), NULL, &mass_prop) == PRO_TK_NO_ERROR) {
+	if (!got_density && mass_prop.density > 0.0) {
+	    struct bu_vls vstr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&vstr, "%g", mass_prop.density);
+	    bu_avs_add("density", bu_vls_addr(&vstr));
+	    bu_vls_free(&vstr);
 	}
-	if ( mass_prop.mass > 0.0 ) {
-	    fprintf( cinfo->outfp, "attr set {%s} mass %g\n",
-		    get_brlcad_name(cinfo, pname ),
-		    mass_prop.mass );
+	if (mass_prop.mass > 0.0) {
+	    struct bu_vls vstr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&vstr, "%g", mass_prop.mass);
+	    bu_avs_add("mass", bu_vls_addr(&vstr));
+	    bu_vls_free(&vstr);
 	}
-	if ( mass_prop.volume > 0.0 ) {
-	    fprintf( cinfo->outfp, "attr set {%s} volume %g\n",
-		    get_brlcad_name(cinfo, pname ),
-		    mass_prop.volume );
+	if (mass_prop.volume > 0.0) {
+	    struct bu_vls vstr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&vstr, "%g", mass_prop.volume);
+	    bu_avs_add("volume", bu_vls_addr(&vstr));
+	    bu_vls_free(&vstr);
 	}
     }
+
+    /* Update attributes stored on disk */
+    db5_standardize_avs(&s_avs);
+    db5_update_attributes(sdp, &s_avs, cinfo->wdbp->dbip);
 
     /* increment the region id */
     cinfo->reg_id++;

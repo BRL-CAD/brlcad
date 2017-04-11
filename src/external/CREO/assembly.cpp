@@ -242,6 +242,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 	    creo_attribute_val(&attr_val, cinfo->attrs[i], model);
 	    if (attr_val) {
 		bu_avs_add(&avs, cinfo->attrs[i], attr_val);
+		bu_free(attr_val, "value string");
 	    }
 	}
     }
