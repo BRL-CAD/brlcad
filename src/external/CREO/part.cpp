@@ -27,6 +27,7 @@
 /* Part processing container */
 struct part_conv_info {
     struct creo_conv_info *cinfo; /* global state */
+    int csg_holes_supported;
     std::vector<int> *suppressed_features; /* list of features to suppress when generating output. */
     std::vector<struct directory *> *subtractions; /* objects to subtract from primary shape. */
 };
@@ -121,63 +122,26 @@ extern "C" char *feat_status_to_str(ProFeatStatus feat_stat)
     return feat_status[feat_stat];
 }
 
-extern "C" void
-remove_holes_from_id_list(struct creo_conv_info *cinfo,  ProMdl model )
-{
-    int i;
-    ProFeature feat;
-    ProError status;
-    ProFeattype type;
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Removing any holes from CSG list and from features to delete\n" );
-    }
-
-    free_csg_ops(cinfo);             /* these are only holes */
-    for ( i=0; i < cinfo->feat_id_count; i++ ) {
-	status = ProFeatureInit( ProMdlToSolid(model), cinfo->feat_ids_to_delete[i], &feat );
-	status = ProFeatureTypeGet( &feat, &type );
-	if ( type == PRO_FEAT_HOLE ) {
-	    /* remove this from the list */
-	    cinfo->feat_id_count--;
-	    for (int j=i; j<cinfo->feat_id_count; j++ ) {
-		cinfo->feat_ids_to_delete[j] = cinfo->feat_ids_to_delete[j+1];
-	    }
-	    i--;
-	}
-    }
-}
-
 /* this routine filters out which features should be visited by the feature visit initiated in
  * the output_part() routine.
  */
 extern "C" ProError
 feature_filter( ProFeature *feat, ProAppData data )
 {
+    ProFeattype type;
     ProError ret;
-    struct feature_data *fdata = (struct feature_data *)data;
-    struct creo_conv_info *cinfo = fdata->cinfo;
-    ProMdl model = fdata->model;
+    struct part_conv_info *pinfo = (struct part_conv_info *)data;
 
-    if ( (ret=ProFeatureTypeGet( feat, &cinfo->curr_feat_type )) != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "ProFeatureTypeGet Failed for %s!!\n", cinfo->curr_part_name );
-	return ret;
-    }
+    if ((ret=ProFeatureTypeGet(feat, &type)) != PRO_TK_NO_ERROR) return ret;
 
     /* handle holes, chamfers, and rounds only */
-    if ( cinfo->curr_feat_type == PRO_FEAT_HOLE ||
-	    cinfo->curr_feat_type == PRO_FEAT_CHAMFER ||
-	    cinfo->curr_feat_type == PRO_FEAT_ROUND ) {
+    if (type == PRO_FEAT_HOLE || type == PRO_FEAT_CHAMFER || type == PRO_FEAT_ROUND) {
 	return PRO_TK_NO_ERROR;
     }
 
     /* if we encounter a protrusion (or any feature that adds material) after a hole,
-     * we cannot convert previous holes to CSG
-     */
-    if ( feat_adds_material( cinfo->curr_feat_type ) ) {
-	/* any holes must be removed from the list */
-	remove_holes_from_id_list(cinfo, model );
-    }
+     * we cannot convert previous holes to CSG */
+    if (feat_adds_material(type)) pinfo->csg_holes_supported = 0;
 
     /* skip everything else */
     return PRO_TK_CONTINUE;
@@ -240,6 +204,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     struct part_conv_info *pinfo;
     BU_GET(pinfo, struct part_conv_info);
     pinfo->cinfo = cinfo;
+    pinfo->csg_holes_supported = 1;
     pinfo->suppressed_features = new std::vector<int>;
     pinfo->subtractions = new std::vector<struct directory *>;
 
