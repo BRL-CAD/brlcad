@@ -24,34 +24,41 @@
 #include "common.h"
 #include "creo-brl.h"
 
-/* global variables for dimension visits */
-static double radius=0.0, diameter=0.0, distance1=0.0, distance2=0.0;
-static int got_diameter=0, got_distance1=0;
-static int hole_type;
-static int add_cbore;
-static int add_csink;
-static int hole_depth_type;
-
-static double cb_depth=0.0;             /* counter-bore depth */
-static double cb_diam=0.0;              /* counter-bore diam */
-static double cs_diam=0.0;              /* counter-sink diam */
-static double cs_angle=0.0;             /* counter-sink angle */
-static double hole_diam=0.0;            /* drilled hle diameter */
-static double hole_depth=0.0;           /* drilled hole depth */
-static double drill_angle=0.0;          /* drill tip angle */
 #define MIN_RADIUS      1.0e-7          /* BRL-CAD does not allow tgc's with zero radius */
-static Pro3dPnt end1, end2;             /* axis endpoints for holes */
-static int hole_no=0;	/* hole counter for unique names */
 static char *tgc_format="tgc V {%.25G %.25G %.25G} H {%.25G %.25G %.25G} A {%.25G %.25G %.25G} B {%.25G %.25G %.25G} C {%.25G %.25G %.25G} D {%.25G %.25G %.25G}\n";
 
+/* Information needed to replace holes with CSG */
+struct hole_info {
+    double radius;
+    double diameter;
+    int hole_type;
+    int add_cbore;
+    int add_csink;
+    int hole_depth_type;
+    double cb_depth;             /* counter-bore depth */
+    double cb_diam;              /* counter-bore diam */
+    double cs_diam;              /* counter-sink diam */
+    double cs_angle;             /* counter-sink angle */
+    double hole_diam;            /* drilled hle diameter */
+    double hole_depth;           /* drilled hole depth */
+    double drill_angle;          /* drill tip angle */
+    Pro3dPnt end1, end2;         /* axis endpoints for holes */
+};
 
 extern "C" ProError
-hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data )
+hole_elem_filter( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data )
+{
+        return PRO_TK_NO_ERROR;
+}
+
+extern "C" ProError
+hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data)
 {
     ProError ret;
     ProElemId elem_id;
     ProValue val_junk;
     ProValueData val;
+    struct hole_info *hinfo = (struct hole_info *)data;
 
     if ( (ret=ProElementIdGet( elem, &elem_id ) ) != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get element id!!!\n" );
@@ -68,7 +75,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    add_cbore = val.v.i;
+	    hinfo->add_cbore = val.v.i;
 	    break;
 	case PRO_E_HLE_ADD_CSINK:
 	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
@@ -79,7 +86,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    add_csink = val.v.i;
+	    hinfo->add_csink = val.v.i;
 	    break;
 	case PRO_E_DIAMETER:
 	    /* diameter of straight hole */
@@ -91,7 +98,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    hole_diam = val.v.d;
+	    hinfo->hole_diam = val.v.d;
 	    break;
 	case PRO_E_HLE_HOLEDIAM:
 	    /* diameter of main portion of standard drilled hole */
@@ -103,7 +110,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    hole_diam = val.v.d;
+	    hinfo->hole_diam = val.v.d;
 	    break;
 	case PRO_E_HLE_CBOREDEPTH:
 	    /* depth of counterbore */
@@ -115,7 +122,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    cb_depth = val.v.d;
+	    hinfo->cb_depth = val.v.d;
 	    break;
 	case PRO_E_HLE_CBOREDIAM:
 	    /* diameter of counterbore */
@@ -127,7 +134,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    cb_diam = val.v.d;
+	    hinfo->cb_diam = val.v.d;
 	    break;
 	case PRO_E_HLE_CSINKANGLE:
 	    /* angle of countersink (degrees ) */
@@ -139,7 +146,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    cs_angle = val.v.d;
+	    hinfo->cs_angle = val.v.d;
 	    break;
 	case PRO_E_HLE_CSINKDIAM:
 	    /* diameter of countersink */
@@ -151,7 +158,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    cs_diam = val.v.d;
+	    hinfo->cs_diam = val.v.d;
 	    break;
 	case PRO_E_HLE_DRILLDEPTH:
 	    /* overall depth of standard drilled hole without drill tip */
@@ -163,7 +170,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    hole_depth = val.v.d;
+	    hinfo->hole_depth = val.v.d;
 	    break;
 	case PRO_E_HLE_DRILLANGLE:
 	    /* drill tip angle (degrees) */
@@ -175,7 +182,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    drill_angle = val.v.d;
+	    hinfo->drill_angle = val.v.d;
 	    break;
 	case PRO_E_HLE_DEPTH:
 	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
@@ -186,7 +193,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    hole_depth_type = val.v.i;
+	    hinfo->hole_depth_type = val.v.i;
 	    break;
 	case PRO_E_HLE_TYPE_NEW:
 	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
@@ -197,7 +204,7 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 		fprintf( stderr, "Failed to get value data\n" );
 		return ret;
 	    }
-	    hole_type = val.v.i;
+	    hinfo->hole_type = val.v.i;
 	    break;
 	case PRO_E_HLE_STAN_TYPE:
 	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
@@ -285,6 +292,26 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 }
 
 
+extern "C" ProError
+geomitem_filter(ProDimension *dim, ProAppData data) {
+        return PRO_TK_NO_ERROR;
+}
+
+extern "C" ProError
+geomitem_visit(ProGeomitem *item, ProError status, ProAppData data)
+{
+    ProGeomitemdata *geom;
+    ProCurvedata *crv;
+    ProError ret;
+
+    if ((ret=ProGeomitemdataGet(item, &geom)) != PRO_TK_NO_ERROR) return ret;
+    crv = PRO_CURVE_DATA(geom);
+    if ((ret=ProLinedataGet(crv, end1, end2)) != PRO_TK_NO_ERROR) return ret;
+    return PRO_TK_NO_ERROR;
+}
+
+
+
 /* Subtract_hole()
  *	routine to create TGC primitives to make holes
  *
@@ -295,48 +322,65 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 extern "C" int
 subtract_hole(struct part_conv_info *pinfo)
 {
-    struct csg_ops *csg;
+    ProElement elem_tree;
+    ProElempath elem_path=NULL;
+
+    struct bu_vls hname = BU_VLS_INIT_ZERO;
     vect_t a, b, c, d, h;
 
-    if ( cinfo->do_facets_only ) {
-	if ( diameter < cinfo->min_hole_diameter )
+    if ( pinfo->cinfo->do_facets_only ) {
+	if ( pinfo->diameter < cinfo->min_hole_diameter )
 	    return 1;
 	else
 	    return 0;
     }
+
+    /* TODO - restructure for easier memory cleanup */
+    struct hole_info *hinfo;
+    BU_GET(hinfo, struct hole_info);
+    hinfo->feat = pinfo->feat;
+    hinfo->feat = feat;
+    hinfo->radius = pinfo->radius;
+    hinfo->diameter = pinfo->diameter;
+
+    /* Do a more detailed characterization of the hole elements */
+    if ( (ret=ProFeatureElemtreeCreate(hinfo->feat, &elem_tree ) ) == PRO_TK_NO_ERROR ) {
+	if ( (ret=ProElemtreeElementVisit( elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)hinfo) ) != PRO_TK_NO_ERROR ) {
+	    fprintf( stderr, "Element visit failed for feature (%d) of %s\n", feat->id, pinfo->cinfo->curr_part_name );
+	    if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {fprintf( stderr, "Error freeing element tree\n" );}
+	    BU_PUT(hinfo, struct hole_info);
+	    return ret;
+	}
+	if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
+	    fprintf( stderr, "Error freeing element tree\n" );
+	}
+    }
+
+    /* need more info to recreate holes - TODO - make necessary solids in these routines and write them to the .g file */
+    if ((ret=ProFeatureGeomitemVisit(feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)pinfo) ) != PRO_TK_NO_ERROR) return ret;
 
     if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf(cinfo->logger, "Doing a CSG hole subtraction\n" );
     }
 
     /* make a replacement hole using CSG */
-    if ( hole_type == PRO_HLE_NEW_TYPE_STRAIGHT ) {
+    if ( hinfo->hole_type == PRO_HLE_NEW_TYPE_STRAIGHT ) {
 	/* plain old straight hole */
 
-	if ( diameter < cinfo->min_hole_diameter )
+	if ( hinfo->diameter < cinfo->min_hole_diameter )
 	    return 1;
-	if ( !cinfo->csg_root ) {
-	    BU_ALLOC(cinfo->csg_root, struct csg_ops);
-	    csg = cinfo->csg_root;
-	    csg->next = NULL;
-	} else {
-	    BU_ALLOC(csg, struct csg_ops);
-	    csg->next = cinfo->csg_root;
-	    cinfo->csg_root = csg;
-	}
-	bu_vls_init( &csg->name );
-	bu_vls_init( &csg->dbput );
 
 	csg->op = '-';
-	hole_no++;
-	bu_vls_printf( &csg->name, "hole.%d ", hole_no );
+	/* TODO - do this naming right */
+	bu_vls_printf(&hname, "hole.%d ", hole_no );
+
 	VSUB2( h, end1, end2 );
 	bn_vec_ortho( a, h );
 	VCROSS( b, a, h );
 	VUNITIZE( b );
 	VSCALE( end2, end2, cinfo->creo_to_brl_conv );
-	VSCALE( a, a, radius*cinfo->creo_to_brl_conv );
-	VSCALE( b, b, radius*cinfo->creo_to_brl_conv );
+	VSCALE( a, a, pinfo->radius*cinfo->creo_to_brl_conv );
+	VSCALE( b, b, pinfo->radius*cinfo->creo_to_brl_conv );
 	VSCALE( h, h, cinfo->creo_to_brl_conv );
 	bu_vls_printf( &csg->dbput, tgc_format,
 		V3ARGS( end2 ),
@@ -345,7 +389,7 @@ subtract_hole(struct part_conv_info *pinfo)
 		V3ARGS( b ),
 		V3ARGS( a ),
 		V3ARGS( b ) );
-    } else if ( hole_type == PRO_HLE_NEW_TYPE_STANDARD ) {
+    } else if ( pinfo->hole_type == PRO_HLE_NEW_TYPE_STANDARD ) {
 	/* drilled hole with possible countersink and counterbore */
 	point_t start;
 	vect_t dir;
@@ -362,7 +406,7 @@ subtract_hole(struct part_conv_info *pinfo)
 	VMOVE( start, end2 );
 	VSCALE( start, start, cinfo->creo_to_brl_conv );
 
-	if ( add_cbore == PRO_HLE_ADD_CBORE ) {
+	if ( pinfo->add_cbore == PRO_HLE_ADD_CBORE ) {
 
 	    if ( !cinfo->csg_root ) {
 		BU_ALLOC(cinfo->csg_root, struct csg_ops);
@@ -398,7 +442,7 @@ subtract_hole(struct part_conv_info *pinfo)
 	    cb_diam = 0.0;
 	    cb_depth = 0.0;
 	}
-	if ( add_csink == PRO_HLE_ADD_CSINK ) {
+	if ( pinfo->add_csink == PRO_HLE_ADD_CSINK ) {
 	    double cs_depth;
 	    double cs_radius=cs_diam / 2.0;
 
@@ -516,6 +560,7 @@ subtract_hole(struct part_conv_info *pinfo)
 	}
     } else {
 	fprintf( stderr, "Unrecognized hole type\n" );
+
 	return 0;
     }
 

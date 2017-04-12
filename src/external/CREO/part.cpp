@@ -25,12 +25,6 @@
 #include "creo-brl.h"
 
 extern "C" ProError
-hole_elem_filter( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data )
-{
-    return PRO_TK_NO_ERROR;
-}
-
-extern "C" ProError
 generic_filter(ProDimension *dim, ProAppData data) {
     return PRO_TK_NO_ERROR;
 }
@@ -185,20 +179,6 @@ check_dimension( ProDimension *dim, ProError status, ProAppData data )
 }
 
 extern "C" ProError
-geomitem_visit(ProGeomitem *item, ProError status, ProAppData data)
-{
-    ProGeomitemdata *geom;
-    ProCurvedata *crv;
-    ProError ret;
-
-    if ((ret=ProGeomitemdataGet(item, &geom)) != PRO_TK_NO_ERROR) return ret;
-    crv = PRO_CURVE_DATA(geom);
-    if ((ret=ProLinedataGet(crv, end1, end2)) != PRO_TK_NO_ERROR) return ret;
-    return PRO_TK_NO_ERROR;
-}
-
-
-extern "C" ProError
 do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
 {
     ProError ret;
@@ -207,17 +187,7 @@ do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
     struct part_conv_info *pinfo = (struct part_conv_info *)data;
     ProMdl model = pinfo->model;
 
-    if ( (ret=ProFeatureElemtreeCreate( feat, &elem_tree ) ) == PRO_TK_NO_ERROR ) {
-	if ( (ret=ProElemtreeElementVisit( elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)model) ) != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Element visit failed for feature (%d) of %s\n", feat->id, cinfo->curr_part_name );
-	    if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {fprintf( stderr, "Error freeing element tree\n" );}
-	    return ret;
-	}
-	if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Error freeing element tree\n" );
-	}
-    }
-
+    pinfo->feat = feat;
     pinfo->radius = 0.0;
     pinfo->diameter = 0.0;
     pinfo->distance1 = 0.0;
@@ -227,23 +197,36 @@ do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
 
     if ((ret=ProFeatureDimensionVisit(feat, check_dimension, generic_filter, (ProAppData)pinfo)) != PRO_TK_NO_ERROR) return ret;
 
-    switch (pinfo->type) {
-	case PRO_FEAT_HOLE:
-	    /* need more info to recreate holes - TODO - make necessary solids in these routines and write them to the .g file */
-	    if ((ret=ProFeatureGeomitemVisit(feat, PRO_AXIS, geomitem_visit, generic_filter, (ProAppData)pinfo) ) != PRO_TK_NO_ERROR) return ret;
-	    /* TODO - do we still want to suppress even if we're not subtracting?? */
-	    if ( Subtract_hole(cinfo) )
-		pinfo->suppressed_features->push_back(feat->id);
-	    break;
-	case PRO_FEAT_ROUND:
-	    if (got_diameter && radius < cinfo->min_round_radius) pinfo->suppressed_features->push_back(feat->id);
-	    break;
-	case PRO_FEAT_CHAMFER:
-	    if ( got_distance1 && distance1 < cinfo->min_chamfer_dim &&
-		    distance2 < cinfo->min_chamfer_dim ) {
-		pinfo->suppressed_features->push_back(feat->id);
-	    }
-	    break;
+    if (pinfo->type ==  PRO_FEAT_HOLE) {
+
+	/* If the hole can be suppressed, do that */
+	if (pinfo->diameter < cinfo->min_hole_diameter) {
+	    pinfo->suppressed_features->push_back(feat->id);
+	    return ret;
+	}
+
+	/* If the hole is too large to suppress and we're not doing any CSG, we're done - it's up to the facetizer. */
+	if (pinfo->cinfo->do_facets_only && pinfo->diameter > cinfo->min_hole_diameter) return ret;
+
+	/* If we can consider CSG, look into hole replacement */
+	if (!pinfo->cinfo->do_facets_only) {
+	    if (subtract_hole(pinfo)) pinfo->suppressed_features->push_back(feat->id);
+
+	    return ret;
+	}
+    }
+
+    if (pinfo->type == PRO_FEAT_ROUND) {
+	if (got_diameter && radius < cinfo->min_round_radius) pinfo->suppressed_features->push_back(feat->id);
+	return ret;
+    }
+
+    if (pinfo->type == PRO_FEAT_CHAMFER) {
+	if ( got_distance1 && distance1 < cinfo->min_chamfer_dim &&
+		distance2 < cinfo->min_chamfer_dim ) {
+	    pinfo->suppressed_features->push_back(feat->id);
+	}
+	return ret;
     }
 
 

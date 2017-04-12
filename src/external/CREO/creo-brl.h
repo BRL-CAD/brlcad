@@ -191,7 +191,8 @@ struct part_conv_info {
     std::vector<int> *suppressed_features; /* list of features to suppress when generating output. */
     std::vector<struct directory *> *subtractions; /* objects to subtract from primary shape. */
 
-    /* feature processing parameters */
+    /* generic feature suppression processing parameters */
+    ProFeature *feat;
     ProFeattype type;
     double radius;
     double diameter;
@@ -225,7 +226,6 @@ extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appd
 extern "C" void kill_gen_error_dialog(char *dialog, char *component, ProAppData appdata);
 
 /* csg */
-extern "C" ProError hole_elem_visit(ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data);
 extern "C" int subtract_hole(struct part_conv_info *pinfo);
 
 
