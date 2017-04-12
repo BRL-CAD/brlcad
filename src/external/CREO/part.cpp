@@ -185,7 +185,6 @@ do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
     ProElement elem_tree;
     ProElempath elem_path=NULL;
     struct part_conv_info *pinfo = (struct part_conv_info *)data;
-    ProMdl model = pinfo->model;
 
     pinfo->feat = feat;
     pinfo->radius = 0.0;
@@ -206,21 +205,22 @@ do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
 	}
 
 	/* If the hole is too large to suppress and we're not doing any CSG, we're done - it's up to the facetizer. */
-	if (pinfo->cinfo->do_facets_only && pinfo->diameter > cinfo->min_hole_diameter) return ret;
+	if (pinfo->cinfo->do_facets_only) return ret;
 
 	/* If we can consider CSG, look into hole replacement */
-	if (!pinfo->cinfo->do_facets_only) {
-	    if (subtract_hole(pinfo)) pinfo->suppressed_features->push_back(feat->id);
+	if (subtract_hole(pinfo)) pinfo->suppressed_features->push_back(feat->id);
 
-	    return ret;
-	}
+	return ret;
     }
 
+    /* With rounds, suppress any with radius below user specified value */
     if (pinfo->type == PRO_FEAT_ROUND) {
 	if (got_diameter && radius < cinfo->min_round_radius) pinfo->suppressed_features->push_back(feat->id);
 	return ret;
     }
 
+    /* With chamfers, suppress any where both distances (if retrieved) or the
+     * single distance are below the user specified value */
     if (pinfo->type == PRO_FEAT_CHAMFER) {
 	if ( got_distance1 && distance1 < cinfo->min_chamfer_dim &&
 		distance2 < cinfo->min_chamfer_dim ) {
@@ -228,7 +228,6 @@ do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
 	}
 	return ret;
     }
-
 
     return ret;
 }
