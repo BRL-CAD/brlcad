@@ -25,10 +25,11 @@
 #include "creo-brl.h"
 
 #define MIN_RADIUS      1.0e-7          /* BRL-CAD does not allow tgc's with zero radius */
-static char *tgc_format="tgc V {%.25G %.25G %.25G} H {%.25G %.25G %.25G} A {%.25G %.25G %.25G} B {%.25G %.25G %.25G} C {%.25G %.25G %.25G} D {%.25G %.25G %.25G}\n";
+const char *tgc_format="tgc V {%.25G %.25G %.25G} H {%.25G %.25G %.25G} A {%.25G %.25G %.25G} B {%.25G %.25G %.25G} C {%.25G %.25G %.25G} D {%.25G %.25G %.25G}\n";
 
 /* Information needed to replace holes with CSG */
 struct hole_info {
+    ProFeature *feat;
     double radius;
     double diameter;
     int hole_type;
@@ -46,13 +47,13 @@ struct hole_info {
 };
 
 extern "C" ProError
-hole_elem_filter( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data )
+hole_elem_filter(ProElement UNUSED(elem_tree), ProElement UNUSED(elem), ProElempath UNUSED(elem_path), ProAppData UNUSED(data))
 {
-        return PRO_TK_NO_ERROR;
+    return PRO_TK_NO_ERROR;
 }
 
 extern "C" ProError
-hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data)
+hole_elem_visit(ProElement UNUSED(elem_tree), ProElement elem, ProElempath UNUSED(elem_path), ProAppData data)
 {
     ProError ret;
     ProElemId elem_id;
@@ -293,24 +294,23 @@ hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, P
 
 
 extern "C" ProError
-geomitem_filter(ProDimension *dim, ProAppData data) {
-        return PRO_TK_NO_ERROR;
+geomitem_filter(ProDimension *UNUSED(dim), ProAppData UNUSED(data)) {
+    return PRO_TK_NO_ERROR;
 }
 
 extern "C" ProError
-geomitem_visit(ProGeomitem *item, ProError status, ProAppData data)
+geomitem_visit(ProGeomitem *item, ProError UNUSED(status), ProAppData data)
 {
     ProGeomitemdata *geom;
     ProCurvedata *crv;
     ProError ret;
+    struct hole_info *hinfo = (struct hole_info *)data;
 
     if ((ret=ProGeomitemdataGet(item, &geom)) != PRO_TK_NO_ERROR) return ret;
     crv = PRO_CURVE_DATA(geom);
-    if ((ret=ProLinedataGet(crv, end1, end2)) != PRO_TK_NO_ERROR) return ret;
+    if ((ret=ProLinedataGet(crv, hinfo->end1, hinfo->end2)) != PRO_TK_NO_ERROR) return ret;
     return PRO_TK_NO_ERROR;
 }
-
-
 
 /* Subtract_hole()
  *	routine to create TGC primitives to make holes
@@ -322,8 +322,11 @@ geomitem_visit(ProGeomitem *item, ProError status, ProAppData data)
 extern "C" int
 subtract_hole(struct part_conv_info *pinfo)
 {
+    ProError ret;
     ProElement elem_tree;
     ProElempath elem_path=NULL;
+    struct creo_conv_info *cinfo = pinfo->cinfo;
+    int hole_no = 1; /* TODO - do this right */
 
     struct bu_vls hname = BU_VLS_INIT_ZERO;
     vect_t a, b, c, d, h;
@@ -339,14 +342,12 @@ subtract_hole(struct part_conv_info *pinfo)
     struct hole_info *hinfo;
     BU_GET(hinfo, struct hole_info);
     hinfo->feat = pinfo->feat;
-    hinfo->feat = feat;
     hinfo->radius = pinfo->radius;
     hinfo->diameter = pinfo->diameter;
 
     /* Do a more detailed characterization of the hole elements */
     if ( (ret=ProFeatureElemtreeCreate(hinfo->feat, &elem_tree ) ) == PRO_TK_NO_ERROR ) {
 	if ( (ret=ProElemtreeElementVisit( elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)hinfo) ) != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Element visit failed for feature (%d) of %s\n", feat->id, pinfo->cinfo->curr_part_name );
 	    if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {fprintf( stderr, "Error freeing element tree\n" );}
 	    BU_PUT(hinfo, struct hole_info);
 	    return ret;
@@ -357,7 +358,7 @@ subtract_hole(struct part_conv_info *pinfo)
     }
 
     /* need more info to recreate holes - TODO - make necessary solids in these routines and write them to the .g file */
-    if ((ret=ProFeatureGeomitemVisit(feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)pinfo) ) != PRO_TK_NO_ERROR) return ret;
+    if ((ret=ProFeatureGeomitemVisit(pinfo->feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)pinfo) ) != PRO_TK_NO_ERROR) return ret;
 
     if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
 	fprintf(cinfo->logger, "Doing a CSG hole subtraction\n" );
@@ -370,44 +371,46 @@ subtract_hole(struct part_conv_info *pinfo)
 	if ( hinfo->diameter < cinfo->min_hole_diameter )
 	    return 1;
 
-	csg->op = '-';
 	/* TODO - do this naming right */
 	bu_vls_printf(&hname, "hole.%d ", hole_no );
 
-	VSUB2( h, end1, end2 );
+	VSUB2( h, hinfo->end1, hinfo->end2 );
 	bn_vec_ortho( a, h );
 	VCROSS( b, a, h );
 	VUNITIZE( b );
-	VSCALE( end2, end2, cinfo->creo_to_brl_conv );
+	VSCALE( hinfo->end2, hinfo->end2, cinfo->creo_to_brl_conv );
 	VSCALE( a, a, pinfo->radius*cinfo->creo_to_brl_conv );
 	VSCALE( b, b, pinfo->radius*cinfo->creo_to_brl_conv );
 	VSCALE( h, h, cinfo->creo_to_brl_conv );
+#if 0
 	bu_vls_printf( &csg->dbput, tgc_format,
-		V3ARGS( end2 ),
+		V3ARGS( hinfo->end2 ),
 		V3ARGS( h ),
 		V3ARGS( a ),
 		V3ARGS( b ),
 		V3ARGS( a ),
 		V3ARGS( b ) );
-    } else if ( pinfo->hole_type == PRO_HLE_NEW_TYPE_STANDARD ) {
+#endif
+    } else if ( hinfo->hole_type == PRO_HLE_NEW_TYPE_STANDARD ) {
 	/* drilled hole with possible countersink and counterbore */
 	point_t start;
 	vect_t dir;
 	double cb_radius;
 	double accum_depth=0.0;
-	double hole_radius=hole_diam / 2.0;
+	double hole_radius=hinfo->hole_diam / 2.0;
 
-	if ( hole_diam < cinfo->min_hole_diameter )
+	if ( hinfo->hole_diam < cinfo->min_hole_diameter )
 	    return 1;
 
-	VSUB2( dir, end1, end2 );
+	VSUB2( dir, hinfo->end1, hinfo->end2 );
 	VUNITIZE( dir );
 
-	VMOVE( start, end2 );
+	VMOVE( start, hinfo->end2 );
 	VSCALE( start, start, cinfo->creo_to_brl_conv );
 
-	if ( pinfo->add_cbore == PRO_HLE_ADD_CBORE ) {
+	if ( hinfo->add_cbore == PRO_HLE_ADD_CBORE ) {
 
+#if 0
 	    if ( !cinfo->csg_root ) {
 		BU_ALLOC(cinfo->csg_root, struct csg_ops);
 		csg = cinfo->csg_root;
@@ -421,15 +424,17 @@ subtract_hole(struct part_conv_info *pinfo)
 	    bu_vls_init( &csg->dbput );
 
 	    csg->op = '-';
+#endif
 	    hole_no++;
-	    bu_vls_printf( &csg->name, "hole.%d ", hole_no );
+	    //bu_vls_printf( &csg->name, "hole.%d ", hole_no );
 	    bn_vec_ortho( a, dir );
 	    VCROSS( b, a, dir );
 	    VUNITIZE( b );
-	    cb_radius = cb_diam * cinfo->creo_to_brl_conv / 2.0;
+	    cb_radius = hinfo->cb_diam * cinfo->creo_to_brl_conv / 2.0;
 	    VSCALE( a, a, cb_radius );
 	    VSCALE( b, b, cb_radius );
-	    VSCALE( h, dir, cb_depth * cinfo->creo_to_brl_conv );
+	    VSCALE( h, dir, hinfo->cb_depth * cinfo->creo_to_brl_conv );
+#if 0
 	    bu_vls_printf( &csg->dbput, tgc_format,
 		    V3ARGS( start ),
 		    V3ARGS( h ),
@@ -437,15 +442,16 @@ subtract_hole(struct part_conv_info *pinfo)
 		    V3ARGS( b ),
 		    V3ARGS( a ),
 		    V3ARGS( b ) );
+#endif
 	    VADD2( start, start, h );
-	    accum_depth += cb_depth;
-	    cb_diam = 0.0;
-	    cb_depth = 0.0;
+	    accum_depth += hinfo->cb_depth;
+	    hinfo->cb_diam = 0.0;
+	    hinfo->cb_depth = 0.0;
 	}
-	if ( pinfo->add_csink == PRO_HLE_ADD_CSINK ) {
+	if ( hinfo->add_csink == PRO_HLE_ADD_CSINK ) {
 	    double cs_depth;
-	    double cs_radius=cs_diam / 2.0;
-
+	    double cs_radius = hinfo->cs_diam / 2.0;
+#if 0
 	    if ( !cinfo->csg_root ) {
 		BU_ALLOC(cinfo->csg_root, struct csg_ops);
 		csg = cinfo->csg_root;
@@ -459,9 +465,10 @@ subtract_hole(struct part_conv_info *pinfo)
 	    bu_vls_init( &csg->dbput );
 
 	    csg->op = '-';
+#endif
 	    hole_no++;
-	    bu_vls_printf( &csg->name, "hole.%d ", hole_no );
-	    cs_depth = (cs_diam - hole_diam) / (2.0 * tan( cs_angle * M_PI / 360.0 ) );
+	    //bu_vls_printf( &csg->name, "hole.%d ", hole_no );
+	    cs_depth = (hinfo->cs_diam - hinfo->hole_diam) / (2.0 * tan(hinfo->cs_angle * M_PI / 360.0 ) );
 	    bn_vec_ortho( a, dir );
 	    VCROSS( b, a, dir );
 	    VUNITIZE( b );
@@ -470,8 +477,9 @@ subtract_hole(struct part_conv_info *pinfo)
 	    VSCALE( h, dir, cs_depth * cinfo->creo_to_brl_conv );
 	    VSCALE( a, a, cs_radius * cinfo->creo_to_brl_conv );
 	    VSCALE( b, b, cs_radius * cinfo->creo_to_brl_conv );
-	    VSCALE( c, c, hole_diam * cinfo->creo_to_brl_conv / 2.0 );
-	    VSCALE( d, d, hole_diam * cinfo->creo_to_brl_conv / 2.0 );
+	    VSCALE( c, c, hinfo->hole_diam * cinfo->creo_to_brl_conv / 2.0 );
+	    VSCALE( d, d, hinfo->hole_diam * cinfo->creo_to_brl_conv / 2.0 );
+#if 0
 	    bu_vls_printf( &csg->dbput, tgc_format,
 		    V3ARGS( start ),
 		    V3ARGS( h ),
@@ -479,12 +487,13 @@ subtract_hole(struct part_conv_info *pinfo)
 		    V3ARGS( b ),
 		    V3ARGS( c ),
 		    V3ARGS( d ) );
+#endif
 	    VADD2( start, start, h );
 	    accum_depth += cs_depth;
-	    cs_diam = 0.0;
-	    cs_angle = 0.0;
+	    hinfo->cs_diam = 0.0;
+	    hinfo->cs_angle = 0.0;
 	}
-
+#if 0
 	if ( !cinfo->csg_root ) {
 	    BU_ALLOC(cinfo->csg_root, struct csg_ops);
 	    csg = cinfo->csg_root;
@@ -498,8 +507,9 @@ subtract_hole(struct part_conv_info *pinfo)
 	bu_vls_init( &csg->dbput );
 
 	csg->op = '-';
+#endif
 	hole_no++;
-	bu_vls_printf( &csg->name, "hole.%d ", hole_no );
+	//bu_vls_printf( &csg->name, "hole.%d ", hole_no );
 	bn_vec_ortho( a, dir );
 	VCROSS( b, a, dir );
 	VUNITIZE( b );
@@ -509,7 +519,8 @@ subtract_hole(struct part_conv_info *pinfo)
 	VSCALE( b, b, hole_radius * cinfo->creo_to_brl_conv );
 	VSCALE( c, c, hole_radius * cinfo->creo_to_brl_conv );
 	VSCALE( d, d, hole_radius * cinfo->creo_to_brl_conv );
-	VSCALE( h, dir, (hole_depth - accum_depth) * cinfo->creo_to_brl_conv );
+	VSCALE( h, dir, (hinfo->hole_depth - accum_depth) * cinfo->creo_to_brl_conv );
+#if 0
 	bu_vls_printf( &csg->dbput, tgc_format,
 		V3ARGS( start ),
 		V3ARGS( h ),
@@ -517,12 +528,13 @@ subtract_hole(struct part_conv_info *pinfo)
 		V3ARGS( b ),
 		V3ARGS( c ),
 		V3ARGS( d ) );
+#endif
 	VADD2( start, start, h );
-	hole_diam = 0.0;
-	hole_depth = 0.0;
-	if ( hole_depth_type == PRO_HLE_STD_VAR_DEPTH ) {
+	hinfo->hole_diam = 0.0;
+	hinfo->hole_depth = 0.0;
+	if ( hinfo->hole_depth_type == PRO_HLE_STD_VAR_DEPTH ) {
 	    double tip_depth;
-
+#if 0
 	    if ( !cinfo->csg_root ) {
 		BU_ALLOC(cinfo->csg_root, struct csg_ops);
 		csg = cinfo->csg_root;
@@ -536,19 +548,21 @@ subtract_hole(struct part_conv_info *pinfo)
 	    bu_vls_init( &csg->dbput );
 
 	    csg->op = '-';
+#endif
 	    hole_no++;
-	    bu_vls_printf( &csg->name, "hole.%d ", hole_no );
+	    //bu_vls_printf( &csg->name, "hole.%d ", hole_no );
 	    bn_vec_ortho( a, dir );
 	    VCROSS( b, a, dir );
 	    VUNITIZE( b );
 	    VMOVE( c, a );
 	    VMOVE( d, b );
-	    tip_depth = (hole_radius - MIN_RADIUS) / tan( drill_angle * M_PI / 360.0 );
+	    tip_depth = (hole_radius - MIN_RADIUS) / tan( hinfo->drill_angle * M_PI / 360.0 );
 	    VSCALE( h, dir, tip_depth * cinfo->creo_to_brl_conv );
 	    VSCALE( a, a, hole_radius * cinfo->creo_to_brl_conv );
 	    VSCALE( b, b, hole_radius * cinfo->creo_to_brl_conv );
 	    VSCALE( c, c, MIN_RADIUS );
 	    VSCALE( d, d, MIN_RADIUS );
+#if 0
 	    bu_vls_printf( &csg->dbput, tgc_format,
 		    V3ARGS( start ),
 		    V3ARGS( h ),
@@ -556,7 +570,8 @@ subtract_hole(struct part_conv_info *pinfo)
 		    V3ARGS( b ),
 		    V3ARGS( c ),
 		    V3ARGS( d ) );
-	    drill_angle = 0.0;
+#endif
+	    hinfo->drill_angle = 0.0;
 	}
     } else {
 	fprintf( stderr, "Unrecognized hole type\n" );
