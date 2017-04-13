@@ -25,7 +25,7 @@
 #include "creo-brl.h"
 
 extern "C" ProError
-generic_filter(ProDimension *dim, ProAppData data) {
+generic_filter(ProDimension *UNUSED(dim), ProAppData UNUSED(data)) {
     return PRO_TK_NO_ERROR;
 }
 
@@ -105,9 +105,9 @@ feat_adds_material( ProFeattype feat_type )
     return 0;
 }
 
-extern "C" char *feat_status_to_str(ProFeatStatus feat_stat)
+extern "C" const char *feat_status_to_str(ProFeatStatus feat_stat)
 {
-    static char *feat_status[]={
+    static const char *feat_status[]={
 	"PRO_FEAT_ACTIVE",
 	"PRO_FEAT_INACTIVE",
 	"PRO_FEAT_FAMTAB_SUPPRESSED",
@@ -145,7 +145,7 @@ feature_filter( ProFeature *feat, ProAppData data )
 
 
 extern "C" ProError
-check_dimension( ProDimension *dim, ProError status, ProAppData data )
+check_dimension( ProDimension *dim, ProError UNUSED(status), ProAppData data )
 {
     ProDimensiontype dim_type;
     ProError ret;
@@ -157,7 +157,7 @@ check_dimension( ProDimension *dim, ProError status, ProAppData data )
     switch (dim_type) {
 	case PRODIMTYPE_RADIUS:
 	    if ((ret=ProDimensionValueGet(dim, &pinfo->radius)) != PRO_TK_NO_ERROR) return ret;
-	    pinfo->diameter = 2.0 * radius;
+	    pinfo->diameter = 2.0 * pinfo->radius;
 	    pinfo->got_diameter = 1;
 	    break;
 	case PRODIMTYPE_DIAMETER:
@@ -179,11 +179,9 @@ check_dimension( ProDimension *dim, ProError status, ProAppData data )
 }
 
 extern "C" ProError
-do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
+do_feature_visit(ProFeature *feat, ProError UNUSED(status), ProAppData data)
 {
     ProError ret;
-    ProElement elem_tree;
-    ProElempath elem_path=NULL;
     struct part_conv_info *pinfo = (struct part_conv_info *)data;
 
     pinfo->feat = feat;
@@ -199,7 +197,7 @@ do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
     if (pinfo->type ==  PRO_FEAT_HOLE) {
 
 	/* If the hole can be suppressed, do that */
-	if (pinfo->diameter < cinfo->min_hole_diameter) {
+	if (pinfo->diameter < pinfo->cinfo->min_hole_diameter) {
 	    pinfo->suppressed_features->push_back(feat->id);
 	    return ret;
 	}
@@ -215,15 +213,15 @@ do_feature_visit(ProFeature *feat, ProError status, ProAppData data)
 
     /* With rounds, suppress any with radius below user specified value */
     if (pinfo->type == PRO_FEAT_ROUND) {
-	if (got_diameter && radius < cinfo->min_round_radius) pinfo->suppressed_features->push_back(feat->id);
+	if (pinfo->got_diameter && pinfo->radius < pinfo->cinfo->min_round_radius) pinfo->suppressed_features->push_back(feat->id);
 	return ret;
     }
 
     /* With chamfers, suppress any where both distances (if retrieved) or the
      * single distance are below the user specified value */
     if (pinfo->type == PRO_FEAT_CHAMFER) {
-	if ( got_distance1 && distance1 < cinfo->min_chamfer_dim &&
-		distance2 < cinfo->min_chamfer_dim ) {
+	if ( pinfo->got_distance1 && pinfo->distance1 < pinfo->cinfo->min_chamfer_dim &&
+		pinfo->distance2 < pinfo->cinfo->min_chamfer_dim ) {
 	    pinfo->suppressed_features->push_back(feat->id);
 	}
 	return ret;
@@ -241,24 +239,24 @@ unsuppress_features(struct part_conv_info *pinfo)
     ProFeature feat;
     resume_opts[0] = PRO_FEAT_RESUME_INCLUDE_PARENTS;
 
-    for (int i=0; i < pinfo->suppressed_features->size(); i++) {
-	if (ProFeatureInit(ProMdlToSolid(model), pinfo->suppressed_features[i], &feat) == PRO_TK_NO_ERROR) {
+    for (unsigned int i=0; i < pinfo->suppressed_features->size(); i++) {
+	if (ProFeatureInit(ProMdlToSolid(pinfo->model), pinfo->suppressed_features->at(i), &feat) == PRO_TK_NO_ERROR) {
 	    if (ProFeatureStatusGet(&feat, &feat_stat) == PRO_TK_NO_ERROR && feat_stat == PRO_FEAT_SUPPRESSED ) {
 
 		/* unsuppress this one */
-		creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Unsuppressing feature %d\n", pinfo->suppressed_features[i]);
-		int status = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features[i], 1, resume_opts, 1);
+		creo_log(pinfo->cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Unsuppressing feature %d\n", pinfo->suppressed_features->at(i));
+		int status = ProFeatureResume(ProMdlToSolid(pinfo->model), &(pinfo->suppressed_features->at(i)), 1, resume_opts, 1);
 
 		/* Tell the user what happened */
 		switch (status) {
 		    case PRO_TK_NO_ERROR:
-			creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "\tFeature %d unsuppressed\n", pinfo->suppressed_features[i]);
+			creo_log(pinfo->cinfo, MSG_OK, PRO_TK_NO_ERROR, "\tFeature %d unsuppressed\n", pinfo->suppressed_features->at(i));
 			break;
 		    case PRO_TK_SUPP_PARENTS:
-			creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "\tSuppressed parents for feature %d not found\n", pinfo->suppressed_features[i] );
+			creo_log(pinfo->cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "\tSuppressed parents for feature %d not found\n", pinfo->suppressed_features->at(i) );
 			break;
 		    default:
-			creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "\tfeature id %d unsuppression failed\n", pinfo->suppressed_features[i] );
+			creo_log(pinfo->cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "\tfeature id %d unsuppression failed\n", pinfo->suppressed_features->at(i) );
 			break;
 		}
 
@@ -276,9 +274,10 @@ unsuppress_features(struct part_conv_info *pinfo)
  *		1 - Failure
  *		2 - empty part, nothing output
  */
-extern "C" int
+extern "C" ProError
 output_part(struct creo_conv_info *cinfo, ProMdl model)
 {
+    ProError ret;
     wchar_t wname[CREO_NAME_MAX];
     char pname[CREO_NAME_MAX];
     ProMdlType type;
@@ -304,7 +303,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     wchar_t werr_mess[512];
 */
 
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
+    ProStringToWstring(msgfil, (char *)CREO_BRL_MSG_FILE);
 
     ProMdlMdlnameGet(model, wname);
     ProMdlTypeGet(model, &type);
@@ -322,7 +321,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
 	/* If we've got anything to suppress, go ahead and do it. */
 	if (!pinfo->suppressed_features->empty()) {
-	    int ret = ProFeatureSuppress(ProMdlToSolid(model), &(pinfo->suppressed_features[0]), pinfo->suppressed_features->size(), NULL, 0 );
+	    ret = ProFeatureSuppress(ProMdlToSolid(model), &(pinfo->suppressed_features->at(0)), pinfo->suppressed_features->size(), NULL, 0 );
 	    /* If something went wrong, need to undo just the suppressions we added */
 	    if (ret != PRO_TK_NO_ERROR) {
 		creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to suppress features!!!\n");
