@@ -283,9 +283,9 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     ProMdlType type;
     ProError status;
     ProSurfaceTessellationData *tess=NULL;
-    ProFileName msgfil;
+    ProFileName msgfil = {0};
 
-    ProName material;
+    wchar_t material[CREO_NAME_MAX];
     ProMassProperty mass_prop;
     ProMaterialProps material_props;
     int got_density = 0;
@@ -338,8 +338,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     int ret=0;
     int ret_status=0;
 */
-
-    ProStringToWstring(msgfil, (char *)CREO_BRL_MSG_FILE);
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
     ProMdlMdlnameGet(model, wname);
     ProMdlTypeGet(model, &type);
@@ -427,7 +426,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	(void)ProMessageDisplay(msgfil, "USER_ERROR", "Failed to get array size" );
 	ProMessageClear();
 	fprintf( stderr, "Failed to get array size\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	(void)ProWindowRefresh(PRO_VALUE_UNUSED);
 	ret = 1;
 	goto cleanup;
     }
@@ -518,10 +517,10 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
 	/* shader args */
 	bu_vls_sprintf(&shader_args, "{");
-	if (aprops.transparency != 0.0) bu_vls_printf(&shader_args, " tr %g", aprops.transparency);
-	if (aprops.shininess != 1.0) bu_vls_printf(&shader_args, " sh %d", (int)(aprops.shininess * 18 + 2.0));
-	if (aprops.diffuse != 0.3) bu_vls_printf(&shader_args, " di %g", aprops.diffuse);
-	if (aprops.highlite != 0.7 )bu_vls_printf(&shader_args, " sp %g", aprops.highlite);
+	if (!NEAR_ZERO(aprops.transparency, SMALL_FASTF)) bu_vls_printf(&shader_args, " tr %g", aprops.transparency);
+	if (!NEAR_EQUAL(aprops.shininess, 1.0, SMALL_FASTF)) bu_vls_printf(&shader_args, " sh %d", (int)(aprops.shininess * 18 + 2.0));
+	if (!NEAR_EQUAL(aprops.diffuse, 0.3, SMALL_FASTF)) bu_vls_printf(&shader_args, " di %g", aprops.diffuse);
+	if (!NEAR_EQUAL(aprops.highlite, 0.7, SMALL_FASTF)) bu_vls_printf(&shader_args, " sp %g", aprops.highlite);
 	bu_vls_printf(&shader_args, "}");
 
 	/* Make the region comb - TODO - can add rgb color, shader, args, etc. here, probably should... */
@@ -585,9 +584,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
     /* increment the region id */
     cinfo->reg_id++;
-
-    /* free the tree */
-    bu_vls_free(&tree);
 
 cleanup:
     /* free the tessellation memory */
