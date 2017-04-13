@@ -424,14 +424,14 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    int vert_no;
 	    /* grab the triangle */
 	    vert_no = tess[surfno].facets[i][0];
-	    v1 = bn_vert_tree_add( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-		    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
+	    v1 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
 	    vert_no = tess[surfno].facets[i][1];
-	    v2 = bn_vert_tree_add( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-		    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
+	    v2 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
 	    vert_no = tess[surfno].facets[i][2];
-	    v3 = bn_vert_tree_add( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-		    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
+	    v3 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
 
 	    if (bad_triangle(cinfo, v1, v2, v3, vert_tree)) continue;
 
@@ -444,16 +444,16 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 		int n1, n2, n3;
 		vert_no = tess[surfno].facets[i][0];
 		VUNITIZE( tess[surfno].normals[vert_no] );
-		n1 = bn_vert_tree_add( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
+		n1 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
 		vert_no = tess[surfno].facets[i][1];
 		VUNITIZE( tess[surfno].normals[vert_no] );
-		n2 = bn_vert_tree_add( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
+		n2 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
 		vert_no = tess[surfno].facets[i][2];
 		VUNITIZE( tess[surfno].normals[vert_no] );
-		n3 = bn_vert_tree_add( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
+		n3 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
 
 		face_normals.push_back(n1);
 		face_normals.push_back(n2);
