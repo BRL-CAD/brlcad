@@ -33,8 +33,8 @@ struct assem_conv_info {
 };
 
 /* Callback function used only for find_empty_assemblies */
-extern "C" static ProError
-assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
+extern "C" ProError
+assembly_check_empty( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 {
     ProError lstatus;
     ProMdlType type;
@@ -90,10 +90,10 @@ is_non_identity( ProMatrix xform )
     for ( i=0; i<4; i++ ) {
 	for ( j=0; j<4; j++ ) {
 	    if ( i == j ) {
-		if ( xform[i][j] != 1.0 )
+		if ( !NEAR_EQUAL(xform[i][j], 1.0, SMALL_FASTF) )
 		    return 1;
 	    } else {
-		if ( xform[i][j] != 0.0 )
+		if ( !NEAR_EQUAL(xform[i][j], 0.0, SMALL_FASTF) )
 		    return 1;
 	    }
 	}
@@ -106,7 +106,7 @@ is_non_identity( ProMatrix xform )
  * this call is creating a path from the assembly to this particular member
  * (assembly/member)
  */
-extern "C" static ProError
+extern "C" ProError
 assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *feat, mat_t *mat)
 {
     if(!feat || !mat) return PRO_TK_GENERAL_ERROR;
@@ -177,7 +177,7 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
 
     /* Skip this member if the object it refers to is empty */
-    if (creo->empty->find(wname) != creo->empty->end()) return PRO_TK_NO_ERROR;
+    if (ainfo->cinfo->empty->find(wname) != creo->empty->end()) return PRO_TK_NO_ERROR;
 
     /* get BRL-CAD name */
     entry_name = get_brlcad_name(ainfo->cinfo, wname, type, NULL)
