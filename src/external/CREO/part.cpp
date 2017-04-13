@@ -285,6 +285,44 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     ProSurfaceTessellationData *tess=NULL;
     ProFileName msgfil;
 
+    ProName material;
+    ProMassProperty mass_prop;
+    ProMaterialProps material_props;
+    int got_density = 0;
+
+    struct directory *rdp;
+    struct directory *sdp;
+    struct bu_attribute_value_set r_avs;
+    struct bu_attribute_value_set s_avs;
+    char str[CREO_NAME_MAX];
+
+    struct bu_vls vstr = BU_VLS_INIT_ZERO;
+
+    struct bu_vls shader_args = BU_VLS_INIT_ZERO;
+    struct bu_color color;
+    fastf_t rgbflts[3];
+    unsigned char rgb[3];
+    ProModelitem mitm;
+    ProSurfaceAppearanceProps aprops;
+
+    struct wmember wcomb;
+    struct bu_vls *rname;
+    struct bu_vls *sname;
+    struct bn_vert_tree *vert_tree;
+    struct bn_vert_tree *norm_tree;
+    std::vector<int> faces;
+    std::vector<int> face_normals;
+
+    int v1, v2, v3;
+    int n1, n2, n3;
+    int vert_no;
+
+
+    struct bu_vls mdstr = BU_VLS_INIT_ZERO;
+
+    char err_mess[512];
+    wchar_t werr_mess[512];
+
     struct part_conv_info *pinfo;
     BU_GET(pinfo, struct part_conv_info);
     pinfo->cinfo = cinfo;
@@ -299,8 +337,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     char str[PRO_NAME_SIZE + 1];
     int ret=0;
     int ret_status=0;
-    char err_mess[512];
-    wchar_t werr_mess[512];
 */
 
     ProStringToWstring(msgfil, (char *)CREO_BRL_MSG_FILE);
@@ -370,7 +406,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	 * - put a bbox in instead if we can get one with an attribute denoting
 	 *   failure, or if even that fails *some* object with the requisite
 	 *   info, because the conversion shouldn't be ignore it. */
-	add_to_empty_list(cinfo, get_brlcad_name(cinfo, pname));
+	cinfo->empty->insert(wname);
 	ret = 1;
 	goto cleanup;
     }
@@ -379,7 +415,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Empty part. (%s) has no surfaces!!!\n", pname );
 
 	/* This is a legit empty solid, list it as such */
-	add_to_empty_list(cinfo, get_brlcad_name(cinfo, pname ) );
+	cinfo->empty->insert(wname);
 	ret = 2;
 	goto cleanup;
     }
@@ -398,7 +434,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     if ( surface_count < 1 ) {
 	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Part %s has no surfaces - skipping.\n", pname );
 	/* This is (probably?) a legit empty solid, list it as such */
-	add_to_empty_list( cinfo, get_brlcad_name(cinfo, pname ) );
+	cinfo->empty->insert(wname);
 	ret = 2;
 	goto cleanup;
     }
@@ -407,21 +443,16 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
     /* We've got a part - the output for a part is a parent region and the solid underneath it. */
 
-    struct wmember wcomb;
     BU_LIST_INIT(&wcomb.l);
-    struct bu_vls *rname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "r");
-    struct bu_vls *sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot");
-    struct bn_vert_tree *vert_tree = bn_vert_tree_create();
-    struct bn_vert_tree *norm_tree = bn_vert_tree_create();
-    std::vector<int> faces;
-    std::vector<int> face_normals;
+    rname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "r");
+    sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot");
+    vert_tree = bn_vert_tree_create();
+    norm_tree = bn_vert_tree_create();
 
     creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing surfaces of part %s\n", pname );
 
     for (int surfno=0; surfno < surface_count; surfno++ ) {
 	for (int i=0; i < tess[surfno].n_facets; i++ ) {
-	    int v1, v2, v3;
-	    int vert_no;
 	    /* grab the triangle */
 	    vert_no = tess[surfno].facets[i][0];
 	    v1 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
@@ -441,7 +472,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
 	    /* grab the surface normals */
 	    if (cinfo->get_normals) {
-		int n1, n2, n3;
 		vert_no = tess[surfno].facets[i][0];
 		VUNITIZE( tess[surfno].normals[vert_no] );
 		n1 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
@@ -464,11 +494,11 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
     /* TODO - make sure we have non-zero faces (and if needed, face_normals) vectors */
 
-    /* Output the solid */
+    /* Output the solid - TODO - what is the correct ordering??? initial guess is CCW, but that is a complete guess */
     if (cinfo->get_normals) {
-	mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, ?, NULL, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
+	mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, RT_BOT_CCW, NULL, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
     } else {
-	mk_bot(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, ?, NULL, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL);
+	mk_bot(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, RT_BOT_CCW, NULL, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL);
     }
 
     /* Add the solid to the region comb */
@@ -476,14 +506,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
     /* TODO - add any subtraction solids created by the hole handling */
 
-
     /* Get the surface properties from the part and output the region comb */
-    struct bu_vls shader_args = BU_VLS_INIT_ZERO;
-    struct bu_color color;
-    fastf_t rgbflts[3];
-    unsigned char rgb[3];
-    ProModelitem mitm;
-    ProSurfaceAppearanceProps aprops;
     ProMdlToModelitem(model, &mitm);
     if (ProSurfaceAppearancepropsGet(&mitm, &aprops) == PRO_TK_NO_ERROR) {
 	/* use the colors, ... that were set in CREO */
@@ -502,68 +525,56 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	bu_vls_printf(&shader_args, "}");
 
 	/* Make the region comb - TODO - can add rgb color, shader, args, etc. here, probably should... */
-	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb, 1,
+	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb.l, 1,
 		"plastic", bu_vls_addr(&shader_args), (const unsigned char *)rgb,
 		cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     } else {
 	/* something is wrong, but just ignore the missing properties */
 	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Error getting surface properties for %s\n",	pname);
-	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb, 1, NULL, NULL, NULL, cinfo->reg_id, 0, 0, 0, 0, 0, 0);
+	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb.l, 1, NULL, NULL, NULL, cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     }
 
 
     /* Set the CREO_NAME attribute for the solid/primitive */
-    struct directory *sdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(sname), LOOKUP_QUIET);
-    struct bu_attribute_value_set s_avs;
+    sdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(sname), LOOKUP_QUIET);
     db5_get_attributes(cinfo->wdbp->dbip, &s_avs, sdp);
     bu_avs_add(&s_avs, "CREO_NAME", pname);
     db5_standardize_avs(&s_avs);
     db5_update_attributes(sdp, &s_avs, cinfo->wdbp->dbip);
 
     /* Set the CREO attributes for the region */
-    struct directory *rdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(rname), LOOKUP_QUIET);
-    struct bu_attribute_value_set r_avs;
+    rdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(rname), LOOKUP_QUIET);
     db5_get_attributes(cinfo->wdbp->dbip, &r_avs, rdp);
 
     bu_avs_add(&r_avs, "CREO_NAME", pname);
 
     /* if the part has a material, add it as an attribute */
-    ProName material;
-    ProMassProperty mass_prop;
-    ProMaterialProps material_props;
-    int got_density = 0;
-    status = ;
     if (ProPartMaterialNameGet(ProMdlToPart(model), material) == PRO_TK_NO_ERROR ) {
-	char str[CREO_NAME_MAX];
 	ProWstringToString(str, material);
-	bu_avs_add("material_name", str);
+	bu_avs_add(&r_avs, "material_name", str);
 
 	/* get the density for this material */
 	if (ProPartMaterialdataGet( ProMdlToPart(model), material, &material_props) == PRO_TK_NO_ERROR) {
 	    got_density = 1;
-	    struct bu_vls mdstr = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&mdstr, "%g", material_props.mass_density);
-	    bu_avs_add("density", bu_vls_addr(&mdstr));
+	    bu_avs_add(&r_avs, "density", bu_vls_addr(&mdstr));
 	    bu_vls_free(&mdstr);
 	}
     }
 
     /* calculate mass properties */
     if (ProSolidMassPropertyGet(ProMdlToSolid(model), NULL, &mass_prop) == PRO_TK_NO_ERROR) {
-	struct bu_vls vstr = BU_VLS_INIT_ZERO;
 	if (!got_density && mass_prop.density > 0.0) {
 	    bu_vls_sprintf(&vstr, "%g", mass_prop.density);
-	    bu_avs_add("density", bu_vls_addr(&vstr));
+	    bu_avs_add(&r_avs, "density", bu_vls_addr(&vstr));
 	}
 	if (mass_prop.mass > 0.0) {
-	    struct bu_vls vstr = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&vstr, "%g", mass_prop.mass);
-	    bu_avs_add("mass", bu_vls_addr(&vstr));
+	    bu_avs_add(&r_avs, "mass", bu_vls_addr(&vstr));
 	}
 	if (mass_prop.volume > 0.0) {
-	    struct bu_vls vstr = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&vstr, "%g", mass_prop.volume);
-	    bu_avs_add("volume", bu_vls_addr(&vstr));
+	    bu_avs_add(&r_avs, "volume", bu_vls_addr(&vstr));
 	}
 	bu_vls_free(&vstr);
     }
@@ -576,7 +587,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     cinfo->reg_id++;
 
     /* free the tree */
-    bu_vls_free( &tree );
+    bu_vls_free(&tree);
 
 cleanup:
     /* free the tessellation memory */
@@ -590,7 +601,7 @@ cleanup:
     /* unsuppress anything we suppressed */
     if (cinfo->do_elims && !pinfo->suppressed_features->empty()) {
 	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Unsuppressing %d features\n", pinfo->suppressed_features->size());
-	ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features[0], pinfo->suppressed_features->size(), NULL, 0);
+	ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features->at(0), pinfo->suppressed_features->size(), NULL, 0);
 	if (ret != PRO_TK_NO_ERROR) {
 	    creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to unsuppress features.\n");
 
@@ -602,7 +613,7 @@ cleanup:
 			"attempt was made to unsuppress these same features.\n"
 			"The unsuppression failed, so these features are still\n"
 			"suppressed. Please exit CREO without saving any\n"
-			"changes so that this problem will not persist.", pinfo->suppressed_features->size(), pname );
+			"changes so that this problem will not persist.", (int)pinfo->suppressed_features->size(), pname );
 
 		(void)ProStringToWstring( werr_mess, err_mess );
 		if (ProUITextareaValueSet("creo_brl_error", "the_message", werr_mess) == PRO_TK_NO_ERROR) {
