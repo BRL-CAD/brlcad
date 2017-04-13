@@ -37,6 +37,9 @@
 #ifndef _WSTUDIO_DEFINED
 # define _WSTUDIO_DEFINED
 #endif
+
+#ifndef TEST_BUILD
+
 extern "C" {
 #include <ProToolkit.h>
 #include <ProArray.h>
@@ -69,7 +72,15 @@ extern "C" {
 #include <ProWindows.h>
 #include <PtApplsUnicodeUtils.h>
 #include <pd_proto.h>
+}
 
+#else
+extern "C" {
+#include "shim.h"
+}
+#endif
+
+extern "C" {
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
@@ -210,14 +221,14 @@ struct adata {
 
 /* assembly */
 extern "C" void find_empty_assemblies(struct creo_conv_info *);
-extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
+extern "C" ProError output_assembly(struct creo_conv_info *, ProMdl model);
 
 /* part */
-extern "C" int output_part(struct creo_conv_info *, ProMdl model);
+extern "C" ProError output_part(struct creo_conv_info *, ProMdl model);
 
 /* util */
 extern "C" ProError component_filter(ProFeature *, ProAppData *);
-extern "C" ProError creo_attribute_val(const char **val, const char *key, ProMdl m);
+extern "C" ProError creo_attribute_val(char **val, const char *key, ProMdl m);
 extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
 extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *, wchar_t *, ProType type, const char *);
 extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);

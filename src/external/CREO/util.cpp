@@ -200,7 +200,7 @@ extern "C" ProError regex_key(ProParameter *param, ProError status, ProAppData a
 
 
 extern "C" ProError
-creo_attribute_val(const char **val, const char *key, ProMdl m)
+creo_attribute_val(char **val, const char *key, ProMdl m)
 {
     wchar_t wkey[CREO_NAME_MAX];
     wchar_t wval[CREO_NAME_MAX];

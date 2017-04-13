@@ -112,6 +112,7 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     if(!feat || !mat) return PRO_TK_GENERAL_ERROR;
 
     /* Get strings in case we need to log */
+    ProError status;
     ProMdlType type;
     wchar_t wpname[CREO_NAME_MAX];
     char pname[CREO_NAME_MAX];
@@ -162,8 +163,8 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     return PRO_TK_GENERAL_ERROR;
 }
 
-extern "C" static ProError
-assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
+extern "C" ProError
+assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
 {
     ProError lstatus;
     ProMdlType type;
@@ -177,10 +178,10 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
 
     /* Skip this member if the object it refers to is empty */
-    if (ainfo->cinfo->empty->find(wname) != creo->empty->end()) return PRO_TK_NO_ERROR;
+    if (ainfo->cinfo->empty->find(wname) != ainfo->cinfo->empty->end()) return PRO_TK_NO_ERROR;
 
     /* get BRL-CAD name */
-    entry_name = get_brlcad_name(ainfo->cinfo, wname, type, NULL)
+    entry_name = get_brlcad_name(ainfo->cinfo, wname, type, NULL);
 
     /* Get matrix relative to current parent (if any) and create the comb entry */
     if ((lstatus = assembly_entry_matrix(ainfo->cinfo, ainfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
@@ -194,7 +195,7 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
 }
 
 /* Only run this *after* find_empty_assemblies has been run */
-extern "C" static ProError
+extern "C" ProError
 output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 {
     ProBoolean is_exploded = false;
@@ -227,21 +228,22 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
 
     /* Get BRL-CAD name */
-    comb_name = get_brlcad_name(cinfo, wname, type, NULL);
+    comb_name = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL);
 
     /* Data sufficient - write the comb */
     mk_lcomb(cinfo->wdbp, bu_vls_addr(comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
 
     /* Set attributes, if the CREO object has any of the ones the user listed as of interest */
-    struct directory *dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(&comb_name), LOOKUP_QUIET);
+    struct directory *dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(comb_name), LOOKUP_QUIET);
     struct bu_attribute_value_set avs;
     db5_get_attributes(cinfo->wdbp->dbip, &avs, dp);
     if (cinfo->attrs->size() > 0) {
-	for (int i = 0; int i < cinfo->attrs->size(); i++) {
+	for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
 	    char *attr_val = NULL;
-	    creo_attribute_val(&attr_val, cinfo->attrs[i], model);
+	    const char *arg = cinfo->attrs->at(i);
+	    creo_attribute_val(&attr_val, arg, model);
 	    if (attr_val) {
-		bu_avs_add(&avs, cinfo->attrs[i], attr_val);
+		bu_avs_add(&avs, arg, attr_val);
 		bu_free(attr_val, "value string");
 	    }
 	}
@@ -255,8 +257,8 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 	    bu_avs_add(&avs, "density", bu_vls_addr(&mpval));
 	}
 	if (mass_prop.mass > 0.0) {
-	    bu_vls_sprintf(&mpval, "%g", mass_prop.mass)
-		bu_avs_add(&avs, "mass", bu_vls_addr(&mpval));
+	    bu_vls_sprintf(&mpval, "%g", mass_prop.mass);
+	    bu_avs_add(&avs, "mass", bu_vls_addr(&mpval));
 	}
 
 	if (mass_prop.volume > 0.0) {
