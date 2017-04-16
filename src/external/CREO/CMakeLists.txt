@@ -243,7 +243,7 @@ include_directories(
   "${CREO_PTK_APPLS_INCDIR}"
   )
 
-endif(NOT DEFINED BRLCAD_EXTERNAL_BUILD)
+endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 set(creo_brl_srcs
   assembly.cpp
@@ -253,7 +253,7 @@ set(creo_brl_srcs
   util.cpp
   )
 
-if(NOT DEFINED BRLCAD_EXTERNAL_BUILD)
+if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Primary (DLL) version of plugin
   # Note that for successful running of the DLL version of this plugin,
   # the BRL-CAD dlls need to be present in Common Files/${CREO_OS_VERSION}/obj.  Also,
@@ -329,6 +329,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     ${CMAKE_CURRENT_BINARY_DIR}/../../../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS
+    "${ZLIB_INCLUDE_DIR}"
     )
 
   add_definitions(-DTEST_BUILD)
