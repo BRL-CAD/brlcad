@@ -85,6 +85,18 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 	BU_PUT(v, struct bu_vls);
     }
 
+
+    for (unsigned int i = 0; i < cinfo->model_parameters->size(); i++) {
+	char *str = cinfo->model_parameters->at(i);
+	bu_free(str, "free model param string");
+    }
+
+
+    for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
+	char *str = cinfo->attrs->at(i);
+	bu_free(str, "free attrs string");
+    }
+
     delete cinfo->parts;
     delete cinfo->assems;
     delete cinfo->empty; /* entries in empty were freed in parts and assems */
