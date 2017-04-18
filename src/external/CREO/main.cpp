@@ -27,8 +27,6 @@
 extern "C" void
 creo_conv_info_init(struct creo_conv_info *cinfo)
 {
-    int i;
-
     /* Region ID */
     cinfo->reg_id = 1000;
 
@@ -170,7 +168,7 @@ objects_gather( ProFeature *feat, ProError status, ProAppData app_data )
 		wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
 		wcsncpy(wname_saved, wname, wcslen(wname)+1);
 		cinfo->assems->insert(wname_saved);
-		return ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)component_filter, app_data);
+		return ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, app_data);
 	    }
 	    break;
 	case PRO_MDL_PART:
@@ -237,7 +235,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 
 
 extern "C" void
-doit( char *dialog, char *compnent, ProAppData appdata )
+doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 {
     ProError status;
     ProMdl model;
@@ -245,7 +243,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProLine tmp_line;
     ProCharLine astr;
     ProFileName msgfil;
-	wchar_t *tmp_str;
+    wchar_t *tmp_str;
     int n_selected_names;
     char **selected_names;
     int ret_status=0;
@@ -656,7 +654,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 
 extern "C" void
-elim_small_activate( char *dialog_name, char *button_name, ProAppData data )
+elim_small_activate(char *dialog_name, char *button_name, ProAppData UNUSED(data))
 {
     ProBoolean state;
 
@@ -695,7 +693,7 @@ elim_small_activate( char *dialog_name, char *button_name, ProAppData data )
 }
 
 extern "C" void
-do_quit(char *dialog, char *compnent, ProAppData appdata)
+do_quit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 {
     ProUIDialogDestroy("creo_brl");
 }
@@ -706,7 +704,6 @@ creo_brl(uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     ProFileName msgfil;
-    int ret_status=0;
     int destroy_dialog = 0;
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);

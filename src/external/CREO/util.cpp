@@ -91,7 +91,7 @@ wstr_to_long(struct creo_conv_info *cinfo, wchar_t *tmp_str)
 {
     long int ret;
     char *endptr = NULL;
-    ProCharLine astr;
+    char astr[CREO_MSG_MAX];
     ProWstringToString(astr, tmp_str);
     errno = 0;
     ret = strtol(astr, &endptr, 0);
@@ -108,7 +108,7 @@ wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
 {
     double ret;
     char *endptr = NULL;
-    ProCharLine astr;
+    char astr[CREO_MSG_MAX];
     ProWstringToString(astr, tmp_str);
     errno = 0;
     ret = strtod(astr, &endptr);
@@ -121,13 +121,13 @@ wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
 }
 
 extern "C" void
-kill_error_dialog( char *dialog, char *component, ProAppData appdata )
+kill_error_dialog(char *UNUSED(dialog), char *UNUSED(component), ProAppData UNUSED(appdata))
 {
     (void)ProUIDialogDestroy( "creo_brl_error" );
 }
 
 extern "C" void
-kill_gen_error_dialog( char *dialog, char *component, ProAppData appdata )
+kill_gen_error_dialog(char *UNUSED(dialog), char *UNUSED(component), ProAppData UNUSED(appdata))
 {
     (void)ProUIDialogDestroy( "creo_brl_gen_error" );
 }
@@ -165,11 +165,10 @@ struct pparam_data {
     struct creo_conv_info *cinfo;
     char *key;
     char *val;
-}
+};
 
-extern "C" ProError regex_key(ProParameter *param, ProError status, ProAppData app_data)
+extern "C" ProError regex_key(ProParameter *param, ProError UNUSED(status), ProAppData app_data)
 {
-    ProError lstatus;
     char pname[CREO_NAME_MAX];
     char val[CREO_NAME_MAX];
     wchar_t wval[CREO_NAME_MAX];
@@ -177,11 +176,10 @@ extern "C" ProError regex_key(ProParameter *param, ProError status, ProAppData a
     ProParamvalueType ptype;
     regex_t reg;
     struct pparam_data *pdata = (struct pparam_data *)app_data;
-    struct creo_conv_info *cinfo = pdata->cinfo;
     if (pdata->val) return PRO_TK_NO_ERROR;
     ProWstringToString(pname, param->id);
     (void)regcomp(&reg, pdata->key, REG_NOSUB|REG_EXTENDED);
-    if (!(regexec(&reg, db_path_to_string(db_node->path), 0, NULL, 0))) {
+    if (!(regexec(&reg, pname, 0, NULL, 0))) {
 	regfree(&reg);
        	return PRO_TK_CONTINUE;
     }
@@ -212,7 +210,7 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
     ProParamvalueType ptype;
     ProParamvalue pval;
 
-    ProWstringToString(wkey, key);
+    ProStringToWstring(wkey, key);
     ProMdlToModelitem(m, &mitm);
     pstatus = ProParameterInit(&mitm, wkey, &param);
     /* TODO - if param not found, return */
@@ -244,17 +242,17 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
 
     ProModelitem itm;
     ProMdl model;
-    if (ProMdlnameInit(creo_name, type, &m) != PRO_TK_NO_ERROR) return NULL;
+    if (ProMdlnameInit(creo_name, type, &model) != PRO_TK_NO_ERROR) return NULL;
     if (ProMdlToModelitem(model, &itm) != PRO_TK_NO_ERROR) return NULL;
-    for (int i = 0; int i < cinfo->model_parameters->size(); i++) {
-	pdata.key = cinfo->model_parameters[i];
+    for (unsigned int i = 0; i < cinfo->model_parameters->size(); i++) {
+	pdata.key = cinfo->model_parameters->at(i);
 	/* first, try a direct lookup */
 	creo_attribute_val(&pdata.val, pdata.key, model);
 	/* If that didn't work, and it looks like we have regex characters,
 	 * try a regex match */
 	if (!pdata.val) {
 	    int non_alnum = 0;
-	    for (int j = 0; j < strlen(pdata.key); j++) alnum += !isalnum(pdata.key[j]);
+	    for (unsigned int j = 0; j < strlen(pdata.key); j++) non_alnum += !isalnum(pdata.key[j]);
 	    if (non_alnum) ProParameterVisit(&itm,  NULL, regex_key, (ProAppData)&pdata);
 	}
 	if (pdata.val) {
@@ -276,21 +274,16 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const
     struct bu_vls *gname = NULL;
     char *param_name = NULL;
     long count = 0;
-    long have_name = 0;
-    std::set<wchar_t *, WStrCmp> s_it;
+    wchar_t *stable = NULL;
     std::map<wchar_t *, struct bu_vls *, WStrCmp>::iterator n_it;
-
-    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( cinfo->logger, "get_brlcad_name( %s )\n", name );
-    }
 
     /* If it's not a part or assembly, don't fool with it */
     if (type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART) return NULL;
 
     /* If we already have a name, return that */
     n_it = cinfo->name_map->find(name);
-    if (n_it != cinfo->brlcad_names->end()) {
-	gname = n_it.second;
+    if (n_it != cinfo->name_map->end()) {
+	gname = n_it->second;
 	return gname;
     }
     BU_GET(gname, struct bu_vls);
@@ -337,19 +330,21 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const
     }
     /* We want to point to a stable wchar_t string pointer for this name, so find that first - don't
      * assume all callers will be using the parts/assems copies. */
-    s_it = cinfo->parts->find(name);
-    if (s_it == cinfo->parts->end()) s_it = cinfo->assems->find(name);
-    if (s_it == cinfo->assems->end()) {
+    if (cinfo->parts->find(name) != cinfo->parts->end()) stable = *(cinfo->parts->find(name));
+    if (!stable && cinfo->assems->find(name) != cinfo->parts->end()) stable = *(cinfo->assems->find(name));
+    if (!stable) {
 	/* ??? not a part or assembly we've seen, but got through filters ??? */
 	bu_vls_free(gname);
 	BU_PUT(gname, struct bu_vls);
 	return NULL;
     }
     cinfo->brlcad_names->insert(gname);
-    cinfo->name_map->insert(std::pair<wchar_t *, struct bu_vls *>(*s_it, gname));
+    cinfo->name_map->insert(std::pair<wchar_t *, struct bu_vls *>(stable, gname));
 
-    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( cinfo->logger, "\tnew name for %s is %s\n", name, bu_vls_addr(gname) );
+    if (cinfo->logger_type == LOGGER_TYPE_ALL) {
+	char astr[CREO_NAME_MAX];
+	ProWstringToString(astr, name);
+	fprintf( cinfo->logger, "\tnew name for %s is %s\n", astr, bu_vls_addr(gname) );
     }
 
     return gname;
