@@ -27,6 +27,10 @@
 extern "C" void
 creo_conv_info_init(struct creo_conv_info *cinfo)
 {
+    /* Output file */
+    BU_GET(cinfo->output_file, struct bu_vls);
+    bu_vls_init(cinfo->output_file);
+
     /* Region ID */
     cinfo->reg_id = 1000;
 
@@ -69,6 +73,9 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
 extern "C" void
 creo_conv_info_free(struct creo_conv_info *cinfo)
 {
+
+    bu_vls_free(cinfo->output_file);
+    BU_PUT(cinfo->output_file, struct bu_vls);
 
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
@@ -229,7 +236,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	bu_log("Object %s is neither PART nor ASSEMBLY, skipping", name);
     }
 
-    /* Make a final toplevel comb with the file name to hold the orientation matrix */
+    /* Make a final toplevel comb based on the file name to hold the orientation matrix */
     struct bu_vls *comb_name;
     struct wmember wcomb;
     BU_LIST_INIT(&wcomb.l);
@@ -237,8 +244,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     bn_decode_mat(m, "0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1");
     comb_name = get_brlcad_name(cinfo, wname, type, NULL);
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
-    /* TODO - set up name based on file */
-    mk_lcomb(cinfo->wdbp, "creo", &wcomb, 0, NULL, NULL, NULL, 0);
+    mk_lcomb(cinfo->wdbp, bu_vls_addr(cinfo->output_file), &wcomb, 0, NULL, NULL, NULL, 0);
 }
 
 
@@ -356,6 +362,9 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	    return;
 	}
 	cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
+
+	/* Store the filename for later use */
+	bu_vls_sprintf(cinfo->output_file, "%s", output_file);
     }
 
     /***********************************************************************************/

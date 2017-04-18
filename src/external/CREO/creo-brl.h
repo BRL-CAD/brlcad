@@ -147,6 +147,9 @@ struct empty_parts {
 };
 
 struct creo_conv_info {
+    /* Output file */
+    struct bu_vls *output_file;
+
     /* Region ID */
     long int reg_id;	/* region ident number (incremented with each part) */
 
