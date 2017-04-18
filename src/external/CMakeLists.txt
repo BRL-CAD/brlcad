@@ -1,6 +1,10 @@
-if(DEFINED BRLCAD_BUILDTEST_EXTERNALS)
-  add_subdirectory(CREO)
-endif(DEFINED BRLCAD_BUILDTEST_EXTERNALS)
+# This setting tells the subdirectory CMake logic to
+# build using the integrated logic, rather than the
+# stand-along build logic used for the primary product
+# builds.
+set(BRLCAD_BUILDTEST_EXTERNALS 1)
+
+add_subdirectory(CREO)
 
 CMAKEFILES(README CREO Cubit ProEngineer Unigraphics)
 

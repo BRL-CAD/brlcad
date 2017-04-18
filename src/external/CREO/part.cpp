@@ -346,7 +346,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     ProWstringToString(pname, wname);
     creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Processing %s:\n", pname);
 
-    ProUILabelTextSet("creo_brl", "curr_proc", pname);
+    ProUILabelTextSet("creo_brl", "curr_proc", wname);
 
     /* Collect info about things that might be eliminated */
     if (cinfo->do_elims) {
@@ -495,9 +495,9 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
     /* Output the solid - TODO - what is the correct ordering??? initial guess is CCW, but that is a complete guess */
     if (cinfo->get_normals) {
-	mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, RT_BOT_CCW, NULL, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
+	mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, RT_BOT_CCW, 0, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
     } else {
-	mk_bot(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, RT_BOT_CCW, NULL, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL);
+	mk_bot(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, RT_BOT_CCW, 0, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL);
     }
 
     /* Add the solid to the region comb */

@@ -213,8 +213,9 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
     ProStringToWstring(wkey, key);
     ProMdlToModelitem(m, &mitm);
     pstatus = ProParameterInit(&mitm, wkey, &param);
-    /* TODO - if param not found, return */
-    ProParameterValueGet(param, &pval);
+    /* if param not found, return */
+    if (pstatus != PRO_TK_NO_ERROR) return PRO_TK_CONTINUE;
+    ProParameterValueGet(&param, &pval);
     ProParamvalueTypeGet(&pval, &ptype);
     switch (ptype) {
 	case PRO_PARAM_STRING:
@@ -353,7 +354,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const
 /* Filter for the feature visit routine that selects only "component" items
  * (should be only parts and assemblies) */
 extern "C" ProError
-component_filter(ProFeature *feat, ProAppData *data)
+component_filter(ProFeature *feat, ProAppData *UNUSED(data))
 {
     ProFeattype type;
     ProFeatStatus feat_stat;

@@ -141,7 +141,7 @@ output_assems(struct creo_conv_info *cinfo)
  * The "app_data" pointer holds the creo_conv_info container. 
  */
 extern "C" ProError
-objects_gather( ProFeature *feat, ProError status, ProAppData app_data )
+objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 {
     ProError loc_status;
     ProMdl model;
@@ -240,19 +240,17 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     ProError status;
     ProMdl model;
     ProMdlType type;
-    ProLine tmp_line;
-    ProCharLine astr;
-    ProFileName msgfil;
+    ProLine tmp_line = NULL;
+    ProFileName msgfil = NULL;
     wchar_t *tmp_str;
     int n_selected_names;
     char **selected_names;
-    int ret_status=0;
 
     /* This replaces the global variables used in the original Pro/E converter */
     struct creo_conv_info *cinfo = new creo_conv_info;
     creo_conv_info_init(cinfo);
 
-    ProStringToWstring( tmp_line, "Not processing" );
+    ProStringToWstring(tmp_line, "Not processing" );
     status = ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
 
     /********************/
@@ -523,7 +521,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	if (cinfo->max_to_min_steps <= 0) {
 	    cinfo->max_to_min_steps = 0;
 	} else {
-	    cinfo->error_increment = (ZERO((cinfo->max_error - cinfo->min_error))) ? 0 : cinfo->error_increment = (cinfo->max_error - cinfo->min_error) / (double)cinfo->max_to_min_steps;
+	    cinfo->error_increment = (ZERO((cinfo->max_error - cinfo->min_error))) ? 0 : (cinfo->max_error - cinfo->min_error) / (double)cinfo->max_to_min_steps;
 	    cinfo->angle_increment = (ZERO((cinfo->max_angle_cntrl - cinfo->min_angle_cntrl))) ? 0 : (cinfo->max_angle_cntrl - cinfo->min_angle_cntrl) / (double)cinfo->max_to_min_steps;
 	    if (ZERO(cinfo->error_increment) && ZERO(cinfo->angle_increment)) cinfo->max_to_min_steps = 0;
 	}
@@ -700,11 +698,12 @@ do_quit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata)
 
 /* driver routine for converting CREO to BRL-CAD */
 extern "C" int
-creo_brl(uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data)
+creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p_push_cmd_data))
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    ProFileName msgfil;
+    ProFileName msgfil = NULL;
     int destroy_dialog = 0;
+    ProError ret_status;
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
     ProMessageDisplay(msgfil, "USER_INFO", "Launching creo_brl...");
@@ -746,8 +745,8 @@ print_msg:
 /* this routine determines whether the "creo-brl" menu item in Pro/E
  * should be displayed as available or greyed out
  */
-extern "C" static uiCmdAccessState
-creo_brl_access( uiCmdAccessMode access_mode )
+extern "C" uiCmdAccessState
+creo_brl_access(uiCmdAccessMode UNUSED(access_mode))
 {
     /* doing the correct checks appears to be unreliable */
     return ACCESS_AVAILABLE;
@@ -763,8 +762,8 @@ creo_brl_access( uiCmdAccessMode access_mode )
 extern "C" int user_initialize()
 {
     ProError status;
-    ProCharLine astr;
-    ProFileName msgfil;
+    ProCharLine astr = NULL;
+    ProFileName msgfil = NULL;
     int i;
     uiCmdCmdId cmd_id;
     wchar_t errbuf[80];
@@ -774,7 +773,7 @@ extern "C" int user_initialize()
     /* Pro/E says always check the size of w_char */
     status = ProWcharSizeVerify (sizeof (wchar_t), &i);
     if ( status != PRO_TK_NO_ERROR || (i != sizeof (wchar_t)) ) {
-	sprintf(astr, "ERROR wchar_t Incorrect size (%d). Should be: %d", sizeof(wchar_t), i );
+	sprintf(astr, "ERROR wchar_t Incorrect size (%d). Should be: %d", (int)sizeof(wchar_t), i );
 	status = ProMessageDisplay(msgfil, "USER_ERROR", astr);
 	printf("%s\n", astr);
 	ProStringToWstring(errbuf, astr);
@@ -808,8 +807,8 @@ extern "C" int user_initialize()
     ShowMsg();
 
     /* let user know we are here */
-    ProMessageDisplay( msgfil, "OK" );
-    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
+    /*ProMessageDisplay( msgfil, "OK" );
+    (void)ProWindowRefresh( PRO_VALUE_UNUSED );*/
 
     return 0;
 }
