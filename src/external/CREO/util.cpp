@@ -363,14 +363,18 @@ component_filter(ProFeature *feat, ProAppData *UNUSED(data))
     return PRO_TK_NO_ERROR;
 }
 
-/* Test function */
-ProError ShowMsg()
+/* Throw a message up in a dialog */
+ProError PopupMsg(const char *title, const char *msg)
 {
+    wchar_t wtitle[CREO_NAME_MAX];
+    wchar_t wmsg[CREO_MSG_MAX];
     ProUIMessageButton* button;
     ProUIMessageButton bresult;
     ProArrayAlloc(1, sizeof(ProUIMessageButton), 1, (ProArray*)&button);
     button[0] = PRO_UI_MESSAGE_OK;
-    ProUIMessageDialogDisplay(PROUIMESSAGE_INFO, L"Hello World", L"Hello world!", button, PRO_UI_MESSAGE_OK, &bresult);
+    ProStringToWstring(wtitle, title);
+    ProStringToWstring(wmsg, msg);
+    ProUIMessageDialogDisplay(PROUIMESSAGE_INFO, wtitle, wmsg, button, PRO_UI_MESSAGE_OK, &bresult);
     ProArrayFree((ProArray*)&button);
     return PRO_TK_NO_ERROR;
 }

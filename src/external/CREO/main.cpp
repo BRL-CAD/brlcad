@@ -822,7 +822,7 @@ extern "C" int user_initialize()
     }
 
     /* TODO - this is a test, but may want to convert it into a "loaded successfully" dialog */
-    ShowMsg();
+    PopupMsg("Hello world", "Hello world");
 
     /* let user know we are here */
     //ProMessageDisplay( msgfil, "OK" );

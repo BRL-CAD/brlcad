@@ -107,7 +107,7 @@ extern "C" {
 #define FEAT_TYPE_OFFSET 910
 
 #define CREO_NAME_MAX 100000
-#define CREO_MSG_MAX 100000
+#define CREO_MSG_MAX 1000000
 
 #define MSG_FAIL 0
 #define MSG_OK 1
@@ -237,12 +237,12 @@ extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);
 extern "C" void kill_gen_error_dialog(char *dialog, char *component, ProAppData appdata);
+extern "C" ProError PopupMsg(const char *, const char *);
 
 /* csg */
 extern "C" int subtract_hole(struct part_conv_info *pinfo);
 
 
-extern "C" ProError ShowMsg();
 
 #endif /*CREO_BRL_H*/
 
