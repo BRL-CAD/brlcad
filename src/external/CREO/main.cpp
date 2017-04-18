@@ -821,12 +821,9 @@ extern "C" int user_initialize()
 	return -1;
     }
 
-    /* TODO - this is a test, but may want to convert it into a "loaded successfully" dialog */
-    PopupMsg("Hello world", "Hello world");
 
     /* let user know we are here */
-    //ProMessageDisplay( msgfil, "OK" );
-    //(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+    PopupMsg("Plugin Successfully Loaded", "The CREO to BRL-CAD converter plugin Version 0.2 was successfully loaded.");
 
     return 0;
 }
