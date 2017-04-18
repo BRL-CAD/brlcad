@@ -58,7 +58,6 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
 
     cinfo->parts = new std::set<wchar_t *, WStrCmp>;
     cinfo->assems = new std::set<wchar_t *, WStrCmp>;
-    cinfo->assem_child_cnts = new std::map<wchar_t *, int, WStrCmp>;
     cinfo->empty = new std::set<wchar_t *, WStrCmp>;
     cinfo->name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
     cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
@@ -88,7 +87,6 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 
     delete cinfo->parts;
     delete cinfo->assems;
-    delete cinfo->assem_child_cnts;
     delete cinfo->empty; /* entries in empty were freed in parts and assems */
     delete cinfo->brlcad_names;
     delete cinfo->name_map; /* entries in name_map were freed in brlcad_names */
