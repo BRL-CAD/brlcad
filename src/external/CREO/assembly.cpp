@@ -237,6 +237,9 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     struct directory *dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(comb_name), LOOKUP_QUIET);
     struct bu_attribute_value_set avs;
     db5_get_attributes(cinfo->wdbp->dbip, &avs, dp);
+
+    /* TODO - write the object ID or param name as an attribute - whichever isn't in current use */
+
     if (cinfo->attrs->size() > 0) {
 	for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
 	    char *attr_val = NULL;
