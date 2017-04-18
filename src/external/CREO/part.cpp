@@ -277,7 +277,7 @@ unsuppress_features(struct part_conv_info *pinfo)
 extern "C" ProError
 output_part(struct creo_conv_info *cinfo, ProMdl model)
 {
-    ProError ret;
+    ProError ret = PRO_TK_NO_ERROR;
     wchar_t wname[CREO_NAME_MAX];
     char pname[CREO_NAME_MAX];
     ProMdlType type;
@@ -331,13 +331,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     pinfo->suppressed_features = new std::vector<int>;
     pinfo->subtractions = new std::vector<struct directory *>;
 
-/*
-    char *brl_name=NULL;
-    char *sol_name=NULL;
-    char str[PRO_NAME_SIZE + 1];
-    int ret=0;
-    int ret_status=0;
-*/
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
     ProMdlMdlnameGet(model, wname);
@@ -406,7 +399,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	 *   failure, or if even that fails *some* object with the requisite
 	 *   info, because the conversion shouldn't be ignore it. */
 	cinfo->empty->insert(wname);
-	ret = 1;
+	ret = status;
 	goto cleanup;
     }
     if (!tess) {
@@ -415,7 +408,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
 	/* This is a legit empty solid, list it as such */
 	cinfo->empty->insert(wname);
-	ret = 2;
+	ret = status;
 	goto cleanup;
     }
 
@@ -427,14 +420,14 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	ProMessageClear();
 	fprintf( stderr, "Failed to get array size\n" );
 	(void)ProWindowRefresh(PRO_VALUE_UNUSED);
-	ret = 1;
+	ret = status;
 	goto cleanup;
     }
     if ( surface_count < 1 ) {
 	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Part %s has no surfaces - skipping.\n", pname );
 	/* This is (probably?) a legit empty solid, list it as such */
 	cinfo->empty->insert(wname);
-	ret = 2;
+	ret = status;
 	goto cleanup;
     }
 
@@ -616,7 +609,7 @@ cleanup:
 		    (void)ProUIPushbuttonActivateActionSet( "creo_brl_error", "ok", kill_error_dialog, NULL );
 		}
 	    }
-	    return 0;
+	    return ret;
 	}
 	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Successfully unsuppressed features.\n");
     }
