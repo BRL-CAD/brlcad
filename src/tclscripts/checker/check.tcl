@@ -89,6 +89,7 @@ catch {delete class GeometryChecker} error
 	variable _drawLeftCommand
 	variable _drawRightCommand
 
+	variable _displayFinished
 	variable _drew
 
 	variable _whoCallback
@@ -117,6 +118,8 @@ catch {delete class GeometryChecker} error
 
 	method handleProgressButton {}
 	method handleCheckListSelect {}
+
+	method updateDisplayFinished {}
     }
 }
 
@@ -152,6 +155,7 @@ body GeometryChecker::handleCheckListSelect {} {
 	    $itk_component(buttonRight) state !disabled
 	}
 
+	$this abortCommands
 	$this display
     }
 }
@@ -815,12 +819,25 @@ body GeometryChecker::subRight {} {
     $this subtractSelectionRightFromLeft
 }
 
+# updateDisplayFinished
+#
+# try to run a newer display call to invalidate the current one
+body GeometryChecker::updateDisplayFinished {} {
+    # try to run newer display call
+    update
+
+    # _displayFinished true if a display call ran to completion
+    # during update, false otherwise
+    return $_displayFinished
+}
+
 # display
 #
 # draw the currently selected geometry
 #
 body GeometryChecker::display {} {
 
+    set _displayFinished false
     set sset [$_ck selection]
 
     # get list of what we intend to draw
@@ -831,29 +848,24 @@ body GeometryChecker::display {} {
 	}
     }
 
-    # erase anything we drew previously that we don't still need
-    foreach obj $_drew {
-	if {[lsearch -exact $drawing $obj] == -1} {
-	    $_eraseCallback $obj
-	}
-    }
-
     # draw them again
-    set done false
+    set endDraw false
     set count 0
     set total [llength $drawing]
     set _progressValue 1 ;# indicate drawing initiated
     set _progressButtonInvoked false
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-            # TODO: pack forget, pack after on button?
-
 	    set _commandText "Drawing $left"
-	    update
+
+	    if {[$this updateDisplayFinished]} {
+		break
+	    }
 
 	    if {$total > 2 && $count == 0} {
                 # If we're drawing multiple overlaps, give user a
 		# chance to abort before the first draw.
+		set _abort false
 		lappend _afterCommands [after 3000 \
 		    "if {! \[set \"[scope _progressButtonInvoked]\"\]} { \
 		        [code $_leftDrawCallback $left]; \
@@ -865,10 +877,11 @@ body GeometryChecker::display {} {
 		# _commandText is set by one of:
 		#  - the above after command
 		#  - handleProgressButton
-		#  - destructor (also sets _abort)
+		#  - handleCheckListSelect and destructor
+		#    - via abortCommands (also sets _abort)
 		vwait [scope _commandText]
-		if {$_abort} {
-		    set done true
+		if {$_abort || $_displayFinished} {
+		    set endDraw true
 		    break
 		}
 	    } elseif {! $_progressButtonInvoked} {
@@ -880,25 +893,56 @@ body GeometryChecker::display {} {
 		set _progressValue [expr $count / [expr $total + 1.0] * 100]
 
 		set _commandText "Drawing $right"
-		update
+
+		if {[$this updateDisplayFinished]} {
+		    break
+		}
 
 		$_rightDrawCallback $right
 
 		incr count
 		set _progressValue [expr $count / [expr $total + 1.0] * 100]
-		update
+
+		if {[$this updateDisplayFinished]} {
+		    break
+		}
 	    } else {
-		set done true
+		set endDraw true
 		break
 	    }
 	}
-	if {$done} {
+	if {$endDraw || $_displayFinished} {
 	    break
 	}
     }
     set _commandText ""
     set _progressValue 0
-    set _drew $drawing
+    if {! $_displayFinished} {
+	# erase anything we drew previously that we don't still need
+	set erased 0
+	foreach obj $_drew {
+	    if {[lsearch -exact $drawing $obj] == -1} {
+		$_eraseCallback $obj
+		incr erased
+	    }
+	}
+
+        # count objects drawn by user
+	set userObjs 0
+	foreach obj [who] {
+	    if {[lsearch -exact $drawing $obj] == -1} {
+		incr userObjs
+	    }
+	}
+
+        # if we erased everything previously drawn, resize view
+	if {$userObjs == 0 && [llength $_drew] == $erased} {
+	    autoview
+	}
+
+	set _drew $drawing
+	set _displayFinished true
+    }
 }
 
 
