@@ -338,7 +338,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	    /* TODO - wrap this up into a creo msg dialog function of some kind... */
 	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 	    wchar_t w_error_msg[512];
-		int dialog_return;
+	    int dialog_return;
 	    bu_vls_printf( &error_msg, "Cannot create file %s - file already exists.\n", output_file );
 	    ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
 	    status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
@@ -817,8 +817,8 @@ extern "C" int user_initialize()
     ShowMsg();
 
     /* let user know we are here */
-    /*ProMessageDisplay( msgfil, "OK" );
-    (void)ProWindowRefresh( PRO_VALUE_UNUSED );*/
+    //ProMessageDisplay( msgfil, "OK" );
+    //(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 
     return 0;
 }
