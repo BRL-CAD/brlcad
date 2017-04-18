@@ -270,9 +270,9 @@ unsuppress_features(struct part_conv_info *pinfo)
  * The solid will have the same name with ".bot" prefix.
  *
  *	returns:
- *		0 - OK
- *		1 - Failure
- *		2 - empty part, nothing output
+ *		PRO_TK_NO_ERROR - OK
+ *		PRO_TK_NOT_EXIST - Object not solid
+ *		other ProError returns - error
  */
 extern "C" ProError
 output_part(struct creo_conv_info *cinfo, ProMdl model)
