@@ -22,6 +22,8 @@
 		(RadioGroup	log_file_type_rg)
 		(Label		name_file_l)
 		(InputPanel	name_file)
+		(Label		attr_file_l)
+		(InputPanel	attr_file)
 		(Label		curr_proc_l)
 		(Label		curr_proc)
 		(CheckButton	facets_only)
@@ -58,7 +60,11 @@
 		(name_file_l.Label		"Part Name File: ")
 		(name_file_l.AttachRight	True)
 		(name_file.Value		"")
-		(name_file.HelpText		"Enter the name of a part number to part name mapping file (optional)")
+		(name_file.HelpText		"Enter the name of a file listing CREO attributes to use when generating BRL-CAD object names (optional)")
+		(attr_file_l.Label		"Part Name File: ")
+		(attr_file_l.AttachRight	True)
+		(attr_file.Value		"")
+		(attr_file.HelpText		"Enter the name of a file listing CREO attributes to preserve in the BRL-CD .g file (optional)")
 		(log_file_type_l.Label		"Output Log File Type: ")
 		(log_file_type_l.AttachRight	True)
 		(log_file_type_rg.Names		"Failure"
@@ -153,7 +159,7 @@
 		(.Label				"Pro/E to BRL-CAD Converter")
 		(.Layout
 			(Grid (Rows 1 1 1 1 1 1 1) (Cols 1)
-				(Grid (Rows 1 1 1 1 1 1 1 1 1 1) (Cols 1 1)
+				(Grid (Rows 1 1 1 1 1 1 1 1 1 1 1) (Cols 1 1)
 					output_file_l
 					output_file
 					log_file_type_l
@@ -162,6 +168,8 @@
 					log_file
 					name_file_l
 					name_file
+					attr_file_l
+					attr_file
 					starting_ident_l
 					starting_ident
 					max_error_l
