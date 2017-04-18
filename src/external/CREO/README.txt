@@ -3,10 +3,6 @@ format.  It will require CREO 3 to run, and to build it requires CREO 3 with
 the development toolkits installed and proper licenses available, as well as a
 BRL-CAD install built with the same compiler as that used to build CREO.
 
-The CMake superstructure manages files and creates the installer, but it is
-the nmake file (creo-brl-nmake.in) the contains the core of the compilation
-logic.
-
 Misc Notes:
 
 When installing CREO 3, the development libraries are *not* part of the
