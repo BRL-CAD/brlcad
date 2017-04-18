@@ -47,9 +47,9 @@ assembly_check_empty( ProFeature *feat, ProError UNUSED(status), ProAppData app_
     return PRO_TK_NO_ERROR;
 }
 
-/* Run this only *after* output_parts - that is where empty "part" objects will
- * be identified.  Without knowing which parts are empty, we can't know if a
- * combination of parts is empty. */
+/* Run this only *after* output_parts - that is where empty "assembly" objects will
+ * be identified.  Without knowing which parts are empty, we can't know if an
+ * assembly of parts is empty. */
 extern "C" void
 find_empty_assemblies(struct creo_conv_info *cinfo)
 {
