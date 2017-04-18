@@ -830,10 +830,16 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
 
     /*
-     * Eliminate side cylinder hits beyond the end ellipses
+     * Eliminate side cylinder hits beyond the end ellipses.
+     *
+     * NOTE: Checking npts <= MAX_TGC_HITS-2 is redundant/stupid but
+     * needed to quell a gcc 4.8.0 to 6.2.1 "-O3 -Warray-bounds" bug
+     * where it thinks hit_type[] and k[] will be exceeded.  If this
+     * check causes a problem with other lintian systems, we'll need
+     * some different solution.
      */
     i = 0;
-    while (i < npts) {
+    while (i < npts && npts <= MAX_TGC_HITS-2) {
 	zval = k[i]*dprime[Z] + pprime[Z];
 	/* Height vector is unitized (tgc->tgc_sH == 1.0) */
 	if (zval >= 1.0 || zval <= 0.0) {
