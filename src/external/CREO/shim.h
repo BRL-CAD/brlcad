@@ -75,11 +75,12 @@
 #define PRO_TK_CONTINUE				67
 #define PRO_TK_GENERAL_ERROR			68
 #define PRO_TK_NO_ERROR				69
-#define PRO_TK_SUPP_PARENTS			70
-#define PRO_UI_MESSAGE_OK			71
-#define PRO_UNITTYPE_LENGTH			72
-#define PRO_VALUE_UNUSED			73
-#define uiProe2ndImmediate                      74
+#define PRO_TK_NOT_EXIST			70
+#define PRO_TK_SUPP_PARENTS			71
+#define PRO_UI_MESSAGE_OK			72
+#define PRO_UNITTYPE_LENGTH			73
+#define PRO_VALUE_UNUSED			74
+#define uiProe2ndImmediate                      75
 
 typedef bool ProBool;
 typedef bool ProBoolean;

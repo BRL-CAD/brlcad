@@ -121,9 +121,8 @@ output_parts(struct creo_conv_info *cinfo)
 	if (ProMdlnameInit(*d_it, PRO_MDLFILE_PART, &m) != PRO_TK_NO_ERROR) return;
 	if (ProMdlNameGet(m, wname) != PRO_TK_NO_ERROR) return;
 	(void)ProWstringToString(name, wname);
-	bu_log("Processing part %s\n", name);
-	//int solid_part = output_part(cinfo, m);
-	//if (!solid_part) cinfo->empty->insert(*d_it);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing part %s\n", name);
+	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
 }
 

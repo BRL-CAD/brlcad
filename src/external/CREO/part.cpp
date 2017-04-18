@@ -408,7 +408,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
 	/* This is a legit empty solid, list it as such */
 	cinfo->empty->insert(wname);
-	ret = status;
+	ret = PRO_TK_NOT_EXIST;
 	goto cleanup;
     }
 
@@ -427,7 +427,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Part %s has no surfaces - skipping.\n", pname );
 	/* This is (probably?) a legit empty solid, list it as such */
 	cinfo->empty->insert(wname);
-	ret = status;
+	ret = PRO_TK_NOT_EXIST;
 	goto cleanup;
     }
 
