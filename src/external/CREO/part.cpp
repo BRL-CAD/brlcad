@@ -499,7 +499,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
     /* Add any subtraction solids created by the hole handling */
     for (unsigned int i = 0; i < pinfo->subtractions->size(); i++) {
-	(void)mk_addmember(dp->d_namep, &wcomb.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember(pinfo->subtractions->at(i)->d_namep, &wcomb.l, NULL, WMOP_SUBTRACT);
     }
 
     /* Get the surface properties from the part and output the region comb */
