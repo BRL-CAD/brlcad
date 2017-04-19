@@ -265,9 +265,146 @@ unsuppress_features(struct part_conv_info *pinfo)
     }
 }
 
+extern "C" ProError
+tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname, int have_bbox)
+{
+    ProSurfaceTessellationData *tess = NULL;
+    ProError status = PRO_TK_NO_ERROR;
+
+    wchar_t wname[CREO_NAME_MAX];
+    char pname[CREO_NAME_MAX];
+
+    struct bn_vert_tree *vert_tree;
+    struct bn_vert_tree *norm_tree;
+    std::vector<int> faces;
+    std::vector<int> face_normals;
+
+    int v1, v2, v3;
+    int n1, n2, n3;
+    int vert_no;
+    int surface_count;
+
+    double curr_error;
+    double curr_angle;
+
+    vert_tree = bn_vert_tree_create();
+    norm_tree = bn_vert_tree_create();
+
+    ProMdlMdlnameGet(model, wname);
+    ProWstringToString(pname, wname);
+
+    creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Tessellate part (%s)\n", pname);
+
+    /* Tessellate part, going from coarse to fine tessellation */
+    for (int i = 0; i <= cinfo->max_to_min_steps; ++i) {
+	curr_error = cinfo->max_error - (i * cinfo->error_increment);
+	curr_angle = cinfo->min_angle_cntrl + (i * cinfo->angle_increment);
+
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "\tTessellating %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
+
+	status = ProPartTessellate(ProMdlToPart(model), curr_error/cinfo->creo_to_brl_conv, curr_angle, PRO_B_TRUE, &tess);
+	if (status == PRO_TK_NO_ERROR) break;
+
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Failed to tessellate %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tcurr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
+    }
+
+
+    if (status != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to tessellate %s!!!\n", pname );
+	goto tess_cleanup;
+    }
+
+    if (!tess) {
+	status = (have_bbox) ? PRO_TK_GENERAL_ERROR : PRO_TK_NOT_EXIST;
+	goto tess_cleanup;
+    }
+
+
+    /* We got through the initial tests - how many surfaces do we have? */
+    status = ProArraySizeGet( (ProArray)tess, &surface_count );
+    if (status != PRO_TK_NO_ERROR) goto tess_cleanup;
+    if ( surface_count < 1 ) {
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Part %s has no surfaces - skipping.\n", pname );
+	cinfo->empty->insert(wname);
+	status = PRO_TK_NOT_EXIST;
+	goto tess_cleanup;
+    }
+
+    creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Successfully tessellated %s using: tessellation error - %g, angle - %g!!!\n", pname, curr_error, curr_angle );
+
+    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing surfaces of part %s\n", pname );
+
+    for (int surfno=0; surfno < surface_count; surfno++ ) {
+	for (int i=0; i < tess[surfno].n_facets; i++ ) {
+	    /* grab the triangle */
+	    vert_no = tess[surfno].facets[i][0];
+	    v1 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
+	    vert_no = tess[surfno].facets[i][1];
+	    v2 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
+	    vert_no = tess[surfno].facets[i][2];
+	    v3 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
+
+	    if (bad_triangle(cinfo, v1, v2, v3, vert_tree)) continue;
+
+	    faces.push_back(v1);
+	    faces.push_back(v2);
+	    faces.push_back(v3);
+
+	    /* grab the surface normals */
+	    if (cinfo->get_normals) {
+		vert_no = tess[surfno].facets[i][0];
+		VUNITIZE( tess[surfno].normals[vert_no] );
+		n1 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
+		vert_no = tess[surfno].facets[i][1];
+		VUNITIZE( tess[surfno].normals[vert_no] );
+		n2 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
+		vert_no = tess[surfno].facets[i][2];
+		VUNITIZE( tess[surfno].normals[vert_no] );
+		n3 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
+
+		face_normals.push_back(n1);
+		face_normals.push_back(n2);
+		face_normals.push_back(n3);
+	    }
+	}
+    }
+
+    /* TODO - make sure we have non-zero faces (and if needed, face_normals) vectors */
+
+    /* Output the solid - TODO - what is the correct ordering??? initial guess is CCW, but that is a complete guess */
+    *sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot", NG_NPARAM);
+    if (cinfo->get_normals) {
+	mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(*sname), RT_BOT_SOLID, RT_BOT_CCW, 0, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
+    } else {
+	mk_bot(cinfo->wdbp, bu_vls_addr(*sname), RT_BOT_SOLID, RT_BOT_CCW, 0, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL);
+    }
+
+tess_cleanup:
+
+    /* free the tessellation memory */
+    ProPartTessellationFree( &tess );
+    tess = NULL;
+
+    /* Free trees */
+    bn_vert_tree_destroy(vert_tree);
+    bn_vert_tree_destroy(norm_tree);
+
+    return status;
+}
+
+
 /* routine to output a part as a BRL-CAD region with one BOT solid
  * The region will have the name from Pro/E with a .r suffix.
- * The solid will have the same name with ".bot" prefix.
+w* The solid will have the same name with ".bot" prefix.
  *
  *	returns:
  *		PRO_TK_NO_ERROR - OK
@@ -282,7 +419,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     char pname[CREO_NAME_MAX];
     ProMdlType type;
     ProError status;
-    ProSurfaceTessellationData *tess=NULL;
     ProFileName msgfil = {0};
 
     wchar_t material[CREO_NAME_MAX];
@@ -309,14 +445,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     struct bu_vls *rname;
     struct bu_vls *sname;
     struct bu_vls *creo_id;
-    struct bn_vert_tree *vert_tree;
-    struct bn_vert_tree *norm_tree;
-    std::vector<int> faces;
-    std::vector<int> face_normals;
-
-    int v1, v2, v3;
-    int n1, n2, n3;
-    int vert_no;
 
     ProWVerstamp cstamp;
     char *verstr;
@@ -376,35 +504,15 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
      */
     if (ProSolidOutlineGet(ProMdlToSolid(model), bboxpnts) != PRO_TK_NO_ERROR) have_bbox = 0;
 
+    /* Tessellate */
+    status = tessellate_part(cinfo, model, &sname, have_bbox);
 
-    /* Tessellate part, going from coarse to fine tessellation */
-    double curr_error;
-    double curr_angle;
-    creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Tessellate part (%s)\n", pname);
-    for (int i = 0; i <= cinfo->max_to_min_steps; ++i) {
-	curr_error = cinfo->max_error - (i * cinfo->error_increment);
-	curr_angle = cinfo->min_angle_cntrl + (i * cinfo->angle_increment);
-
-	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "\tTessellating %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
-
-	status = ProPartTessellate(ProMdlToPart(model), curr_error/cinfo->creo_to_brl_conv, curr_angle, PRO_B_TRUE, &tess);
-	if (status == PRO_TK_NO_ERROR) break;
-
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Failed to tessellate %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tcurr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
-    }
-
-
-    /* Tessellation loop complete - deal with the results */
-
-    if (status != PRO_TK_NO_ERROR) {
+    /* Deal with the solid conversion results */
+    if (status != PRO_TK_NO_ERROR && status != PRO_TK_NOT_EXIST) {
 	/* Failed!!! */
-	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to tessellate %s!!!\n", pname );
-
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Empty part: (%s)   Could not convert solid .\n", pname);
 	if (have_bbox) {
-	    /* A failed tessellation with a bounding box indicates a problem - rather than
+	    /* A failed solid conversion with a bounding box indicates a problem - rather than
 	     * ignore it, put the bbox in the .g file as a placeholder. */
 	    failed_solid = 1;
 	    sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "rpp", NG_NPARAM);
@@ -417,103 +525,26 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    mk_rpp(cinfo->wdbp, bu_vls_addr(sname), rmin, rmax);
 	    goto have_part;
 	} else {
-	    creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Empty part. (%s) could not be tessellated and has no bounding box.\n", pname);
 	    cinfo->empty->insert(wname);
-	    ret = PRO_TK_NOT_EXIST;
+	    ret = status;
 	    goto cleanup;
 	}
     }
-    if (!tess) {
+    if (status == PRO_TK_NOT_EXIST) {
 	/* not a failure, just an empty part */
-	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Empty part. (%s) has no surfaces!!!\n", pname );
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Empty part. (%s)\n", pname );
 
 	/* This is a legit empty solid, list it as such */
 	cinfo->empty->insert(wname);
-	ret = PRO_TK_NOT_EXIST;
-	goto cleanup;
-    }
-
-    /* We got through the initial tests - how many surfaces do we have? */
-    int surface_count;
-    status = ProArraySizeGet( (ProArray)tess, &surface_count );
-    if ( status != PRO_TK_NO_ERROR ) {
-	(void)ProMessageDisplay(msgfil, "USER_ERROR", "Failed to get array size" );
-	ProMessageClear();
-	fprintf( stderr, "Failed to get array size\n" );
-	(void)ProWindowRefresh(PRO_VALUE_UNUSED);
 	ret = status;
 	goto cleanup;
     }
-    if ( surface_count < 1 ) {
-	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Part %s has no surfaces - skipping.\n", pname );
-	/* This is (probably?) a legit empty solid, list it as such */
-	cinfo->empty->insert(wname);
-	ret = PRO_TK_NOT_EXIST;
-	goto cleanup;
-    }
-
-    creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Successfully tessellated %s using: tessellation error - %g, angle - %g!!!\n", pname, curr_error, curr_angle );
 
     /* We've got a part - the output for a part is a parent region and the solid underneath it. */
 have_part:
     BU_LIST_INIT(&wcomb.l);
     rname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "r", NG_DEFAULT);
-    sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot", NG_NPARAM);
-    vert_tree = bn_vert_tree_create();
-    norm_tree = bn_vert_tree_create();
-
-    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing surfaces of part %s\n", pname );
-
-    for (int surfno=0; surfno < surface_count; surfno++ ) {
-	for (int i=0; i < tess[surfno].n_facets; i++ ) {
-	    /* grab the triangle */
-	    vert_no = tess[surfno].facets[i][0];
-	    v1 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
-	    vert_no = tess[surfno].facets[i][1];
-	    v2 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
-	    vert_no = tess[surfno].facets[i][2];
-	    v3 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
-
-	    if (bad_triangle(cinfo, v1, v2, v3, vert_tree)) continue;
-
-	    faces.push_back(v1);
-	    faces.push_back(v2);
-	    faces.push_back(v3);
-
-	    /* grab the surface normals */
-	    if (cinfo->get_normals) {
-		vert_no = tess[surfno].facets[i][0];
-		VUNITIZE( tess[surfno].normals[vert_no] );
-		n1 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
-		vert_no = tess[surfno].facets[i][1];
-		VUNITIZE( tess[surfno].normals[vert_no] );
-		n2 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
-		vert_no = tess[surfno].facets[i][2];
-		VUNITIZE( tess[surfno].normals[vert_no] );
-		n3 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
-
-		face_normals.push_back(n1);
-		face_normals.push_back(n2);
-		face_normals.push_back(n3);
-	    }
-	}
-    }
-
-    /* TODO - make sure we have non-zero faces (and if needed, face_normals) vectors */
-
-    /* Output the solid - TODO - what is the correct ordering??? initial guess is CCW, but that is a complete guess */
-    if (cinfo->get_normals) {
-	mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, RT_BOT_CCW, 0, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
-    } else {
-	mk_bot(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, RT_BOT_CCW, 0, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL);
-    }
-
+ 
     /* Add the solid to the region comb */
     (void)mk_addmember(bu_vls_addr(sname), &wcomb.l, NULL, WMOP_UNION);
 
@@ -612,13 +643,6 @@ have_part:
     cinfo->reg_id++;
 
 cleanup:
-    /* free the tessellation memory */
-    ProPartTessellationFree( &tess );
-    tess = NULL;
-
-    /* Free trees */
-    bn_vert_tree_destroy(vert_tree);
-    bn_vert_tree_destroy(norm_tree);
 
     /* unsuppress anything we suppressed */
     if (cinfo->do_elims && !pinfo->suppressed_features->empty()) {
