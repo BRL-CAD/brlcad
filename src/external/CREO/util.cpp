@@ -210,7 +210,7 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
     ProParamvalueType ptype;
     ProParamvalue pval;
 
-    ProStringToWstring(wkey, key);
+    ProStringToWstring(wkey, (char *)key);
     ProMdlToModelitem(m, &mitm);
     pstatus = ProParameterInit(&mitm, wkey, &param);
     /* if param not found, return */
@@ -234,7 +234,7 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
 
 
 extern "C" char *
-creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
+creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProMdlType type)
 {
     struct pparam_data pdata;
     pdata.cinfo = cinfo;
@@ -243,7 +243,13 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
 
     ProModelitem itm;
     ProMdl model;
-    if (ProMdlnameInit(creo_name, type, &model) != PRO_TK_NO_ERROR) return NULL;
+	if (type == PRO_MDL_PART) {
+        if (ProMdlnameInit(creo_name, PRO_MDLFILE_PART, &model) != PRO_TK_NO_ERROR) return NULL;
+	} else if (type == PRO_MDL_ASSEMBLY) {
+		if (ProMdlnameInit(creo_name, PRO_MDLFILE_ASSEMBLY, &model) != PRO_TK_NO_ERROR) return NULL;
+	} else {
+		return NULL;
+	}
     if (ProMdlToModelitem(model, &itm) != PRO_TK_NO_ERROR) return NULL;
     for (unsigned int i = 0; i < cinfo->model_parameters->size(); i++) {
 	pdata.key = cinfo->model_parameters->at(i);
@@ -269,7 +275,7 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
 
 /* create a unique BRL-CAD object name from a possibly illegal name */
 extern "C" struct bu_vls *
-get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const char *suffix, int flags)
+get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProMdlType type, const char *suffix, int flags)
 {
     struct bu_vls gname_root = BU_VLS_INIT_ZERO;
     struct bu_vls *gname = NULL;
@@ -401,8 +407,8 @@ ProError PopupMsg(const char *title, const char *msg)
     ProUIMessageButton bresult;
     ProArrayAlloc(1, sizeof(ProUIMessageButton), 1, (ProArray*)&button);
     button[0] = PRO_UI_MESSAGE_OK;
-    ProStringToWstring(wtitle, title);
-    ProStringToWstring(wmsg, msg);
+    ProStringToWstring(wtitle, (char *)title);
+    ProStringToWstring(wmsg, (char *)msg);
     ProUIMessageDialogDisplay(PROUIMESSAGE_INFO, wtitle, wmsg, button, PRO_UI_MESSAGE_OK, &bresult);
     ProArrayFree((ProArray*)&button);
     return PRO_TK_NO_ERROR;

@@ -118,7 +118,7 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     char pname[CREO_NAME_MAX];
     wchar_t wcname[CREO_NAME_MAX];
     char cname[CREO_NAME_MAX];
-    ProMdlMdlNameGet(parent, &type, wpname);
+    ProMdlNameGet(parent, wpname);
     (void)ProWstringToString(pname, wpname);
     ProAsmcompMdlNameGet(feat, &type, wcname);
     (void)ProWstringToString(cname, wcname);
@@ -165,7 +165,7 @@ extern "C" ProError
 assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
 {
     ProError lstatus;
-    ProMdlType type;
+    ProMdlType mtype;
     struct bu_vls *entry_name;
     wchar_t wname[CREO_NAME_MAX];
     struct assem_conv_info *ainfo = (struct assem_conv_info *)app_data;
@@ -173,13 +173,13 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
     MAT_IDN(xform);
 
     /* Get name of current member */
-    if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
+    if ((lstatus = ProAsmcompMdlNameGet(feat, &mtype, wname)) != PRO_TK_NO_ERROR ) return lstatus;
 
     /* Skip this member if the object it refers to is empty */
     if (ainfo->cinfo->empty->find(wname) != ainfo->cinfo->empty->end()) return PRO_TK_NO_ERROR;
 
     /* get BRL-CAD name */
-    entry_name = get_brlcad_name(ainfo->cinfo, wname, type, NULL, 0);
+    entry_name = get_brlcad_name(ainfo->cinfo, wname, mtype, NULL, 0);
 
     /* Get matrix relative to current parent (if any) and create the comb entry */
     if ((lstatus = assembly_entry_matrix(ainfo->cinfo, ainfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
@@ -196,7 +196,7 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
 extern "C" ProError
 output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 {
-    ProBoolean is_exploded = false;
+    ProBoolean is_exploded = PRO_B_FALSE;
     struct bu_vls *comb_name;
     struct bu_vls *obj_name;
     wchar_t wname[CREO_NAME_MAX];

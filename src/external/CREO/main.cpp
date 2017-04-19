@@ -333,8 +333,8 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     ProError status;
     ProMdl model;
     ProMdlType type;
-    ProLine tmp_line = NULL;
-    ProFileName msgfil = NULL;
+	ProLine tmp_line = {'\0'};
+    ProFileName msgfil = {'\0'};
     wchar_t *tmp_str;
     int n_selected_names;
     char **selected_names;
@@ -788,9 +788,9 @@ extern "C" int
 creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p_push_cmd_data))
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    ProFileName msgfil = NULL;
+    ProFileName msgfil = {'\0'};
     int destroy_dialog = 0;
-    ProError ret_status;
+    int ret_status;
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
     ProMessageDisplay(msgfil, "USER_INFO", "Launching creo_brl...");
@@ -849,8 +849,8 @@ creo_brl_access(uiCmdAccessMode UNUSED(access_mode))
 extern "C" int user_initialize()
 {
     ProError status;
-    ProCharLine astr = NULL;
-    ProFileName msgfil = NULL;
+    ProCharLine astr = {'\0'};
+    ProFileName msgfil = {'\0'};
     int i;
     uiCmdCmdId cmd_id;
     wchar_t errbuf[80];

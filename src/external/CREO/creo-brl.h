@@ -88,7 +88,6 @@ extern "C" {
 #include "raytrace.h"
 }
 
-
 #define CREO_BRL_MSG_FILE "creo-brl-msg.txt"
 
 #define LOGGER_TYPE_NONE -1
@@ -239,7 +238,7 @@ extern "C" ProError output_part(struct creo_conv_info *, ProMdl model);
 extern "C" ProError component_filter(ProFeature *, ProAppData *);
 extern "C" ProError creo_attribute_val(char **val, const char *key, ProMdl m);
 extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
-extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *, wchar_t *, ProType type, const char *, int);
+extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *, wchar_t *, ProMdlType type, const char *, int);
 extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);

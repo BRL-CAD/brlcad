@@ -212,7 +212,6 @@ int ProWcharSizeVerify(size_t,int*);
 int ProWindowRefresh(int);
 int ProWstringFree(wchar_t*);
 void ProAssemblyUnexplode(void*);
-void ProMdlMdlNameGet(void*,int*,wchar_t*);
 void ProMdlMdlnameGet(void*,wchar_t*);
 void ProMdlPrincipalunitsystemGet(void*,void**);
 void ProMessageClear();
