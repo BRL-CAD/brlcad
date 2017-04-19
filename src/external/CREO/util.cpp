@@ -295,7 +295,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const
 
     /* Fall back on the CREO name, if we don't get a param name */
     if (!param_name) {
-	char val[100000];
+	char val[CREO_NAME_MAX];
 	ProWstringToString(val, name);
 	bu_vls_sprintf(&gname_root, "%s", val);
     } else {

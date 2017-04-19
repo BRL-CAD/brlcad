@@ -516,7 +516,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	if (!NEAR_EQUAL(aprops.highlite, 0.7, SMALL_FASTF)) bu_vls_printf(&shader_args, " sp %g", aprops.highlite);
 	bu_vls_printf(&shader_args, "}");
 
-	/* Make the region comb - TODO - can add rgb color, shader, args, etc. here, probably should... */
+	/* Make the region comb */
 	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb.l, 1,
 		"plastic", bu_vls_addr(&shader_args), (const unsigned char *)rgb,
 		cinfo->reg_id, 0, 0, 0, 0, 0, 0);
@@ -526,6 +526,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb.l, 1, NULL, NULL, NULL, cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     }
 
+    /* TODO - handle region id incrementing... easy if we don't care about thread safe... */
 
     /* Set the CREO_NAME attribute for the solid/primitive */
     sdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(sname), LOOKUP_QUIET);
