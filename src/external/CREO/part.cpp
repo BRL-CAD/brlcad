@@ -362,7 +362,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     }
 
     /* If we've been told to do CSG conversions, apply logic for finding and replacing holes */
-    /* TODO - split up feature suppression and hole collection into distinct routines */
+
 
     /* TODO - can get bounding box of a solid using "ProSolidOutlineGet"
      * may want to use this to implement relative facetization tolerance
@@ -497,7 +497,10 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     /* Add the solid to the region comb */
     (void)mk_addmember(bu_vls_addr(sname), &wcomb.l, NULL, WMOP_UNION);
 
-    /* TODO - add any subtraction solids created by the hole handling */
+    /* Add any subtraction solids created by the hole handling */
+    for (unsigned int i = 0; i < pinfo->subtractions->size(); i++) {
+	(void)mk_addmember(dp->d_namep, &wcomb.l, NULL, WMOP_SUBTRACT);
+    }
 
     /* Get the surface properties from the part and output the region comb */
     ProMdlToModelitem(model, &mitm);
@@ -526,8 +529,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Error getting surface properties for %s\n",	pname);
 	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb.l, 1, NULL, NULL, NULL, cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     }
-
-    /* TODO - handle region id incrementing... easy if we don't care about thread safe... */
 
     /* Set the CREO_NAME attribute for the solid/primitive */
     creo_id = get_brlcad_name(cinfo, wname, PRO_MDL_PART, NULL, NG_OBJID);
@@ -577,7 +578,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     db5_standardize_avs(&s_avs);
     db5_update_attributes(sdp, &s_avs, cinfo->wdbp->dbip);
 
-    /* increment the region id */
+    /* increment the region id - this is a concern if we move to multithreaded generation... */
     cinfo->reg_id++;
 
 cleanup:

@@ -142,8 +142,6 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     }
 
     /*** Write the matrix to BRL-CAD form ***/
-    /* TODO - digest this to avoid the string bit.  Doing this for expedience to
-     * use the original CREO plugin logic. */
     if (is_non_identity(xform)) {
 	struct bu_vls mstr = BU_VLS_INIT_ZERO;
 	for (int j=0; j<4; j++) {

@@ -66,7 +66,7 @@ int creo_logging_opts(void *data, void *vstr){
 
 extern "C" ProError
 creo_log(struct creo_conv_info *cinfo, int msg_type, ProError status, const char *fmt, ...) {
-    /* TODO - need creo specific semaphore lock for this if it's going to be used
+    /* NOTE - need creo specific semaphore lock for this if it's going to be used
      * in multi-threading situations... - probably can't use libbu's logging safely */
 
     /* Can't do nested variable argument functions, so printf the message here */
