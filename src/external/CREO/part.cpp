@@ -308,6 +308,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     struct wmember wcomb;
     struct bu_vls *rname;
     struct bu_vls *sname;
+    struct bu_vls *creo_id;
     struct bn_vert_tree *vert_tree;
     struct bn_vert_tree *norm_tree;
     std::vector<int> faces;
@@ -436,8 +437,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     /* We've got a part - the output for a part is a parent region and the solid underneath it. */
 
     BU_LIST_INIT(&wcomb.l);
-    rname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "r");
-    sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot");
+    rname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "r", NG_DEFAULT);
+    sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot", NG_NPARAM);
     vert_tree = bn_vert_tree_create();
     norm_tree = bn_vert_tree_create();
 
@@ -529,17 +530,17 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     /* TODO - handle region id incrementing... easy if we don't care about thread safe... */
 
     /* Set the CREO_NAME attribute for the solid/primitive */
+    creo_id = get_brlcad_name(cinfo, wname, PRO_MDL_PART, NULL, NG_OBJID);
     sdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(sname), LOOKUP_QUIET);
     db5_get_attributes(cinfo->wdbp->dbip, &s_avs, sdp);
-    bu_avs_add(&s_avs, "CREO_NAME", pname);
+    bu_avs_add(&s_avs, "CREO_NAME", bu_vls_addr(creo_id));
     db5_standardize_avs(&s_avs);
     db5_update_attributes(sdp, &s_avs, cinfo->wdbp->dbip);
 
     /* Set the CREO attributes for the region */
     rdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(rname), LOOKUP_QUIET);
     db5_get_attributes(cinfo->wdbp->dbip, &r_avs, rdp);
-
-    bu_avs_add(&r_avs, "CREO_NAME", pname);
+    bu_avs_add(&r_avs, "CREO_NAME", bu_vls_addr(creo_id));
 
     /* if the part has a material, add it as an attribute */
     if (ProPartMaterialNameGet(ProMdlToPart(model), material) == PRO_TK_NO_ERROR ) {

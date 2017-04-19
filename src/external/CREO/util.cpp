@@ -269,7 +269,7 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
 
 /* create a unique BRL-CAD object name from a possibly illegal name */
 extern "C" struct bu_vls *
-get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const char *suffix)
+get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const char *suffix, int flags)
 {
     struct bu_vls gname_root = BU_VLS_INIT_ZERO;
     struct bu_vls *gname = NULL;
@@ -282,16 +282,26 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const
     if (type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART) return NULL;
 
     /* If we already have a name, return that */
-    n_it = cinfo->name_map->find(name);
-    if (n_it != cinfo->name_map->end()) {
-	gname = n_it->second;
-	return gname;
+    if (!(flags & NG_OBJID)) {
+	n_it = cinfo->name_map->find(name);
+	if (n_it != cinfo->name_map->end()) {
+	    gname = n_it->second;
+	    return gname;
+	}
+    } else {
+	n_it = cinfo->creo_id_map->find(name);
+	if (n_it != cinfo->creo_id_map->end()) {
+	    gname = n_it->second;
+	    return gname;
+	}
     }
     BU_GET(gname, struct bu_vls);
     bu_vls_init(gname);
 
     /* First try the parameters, if the user specified any */
-    param_name = creo_param_name(cinfo, name, type);
+    if (!(flags & NG_OBJID) && !(flags & NG_NPARAM)) {
+	param_name = creo_param_name(cinfo, name, type);
+    }
 
     /* Fall back on the CREO name, if we don't get a param name */
     if (!param_name) {
@@ -308,24 +318,38 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const
     make_legal(bu_vls_addr(&gname_root));
     bu_vls_sprintf(gname, "%s", bu_vls_addr(&gname_root));
 
-    /* Provide a suffix for solids */
-    if (type != PRO_MDL_ASSEMBLY) {bu_vls_printf(gname, ".s");}
-
     /* create a unique name */
-    if (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
-	bu_vls_sprintf(gname, "%s-1", bu_vls_addr(&gname_root));
-	if (suffix) {bu_vls_printf(gname, ".%s", suffix);}
-	if (type != PRO_MDL_ASSEMBLY && !suffix) {bu_vls_printf(gname, ".s");}
-	while (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
-	    (void)bu_namegen(gname, NULL, NULL);
-	    count++;
-	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(gname) );
+    if (!(flags & NG_OBJID)) {
+	if (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
+	    bu_vls_sprintf(gname, "%s-1", bu_vls_addr(&gname_root));
+	    if (suffix) {bu_vls_printf(gname, ".%s", suffix);}
+	    while (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
+		(void)bu_namegen(gname, NULL, NULL);
+		count++;
+		if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+		    fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(gname) );
+		}
+		if (count == LONG_MAX) {
+		    bu_vls_free(gname);
+		    BU_PUT(gname, struct bu_vls);
+		    return NULL;
+		}
 	    }
-	    if (count == LONG_MAX) {
-		bu_vls_free(gname);
-		BU_PUT(gname, struct bu_vls);
-		return NULL;
+	}
+    } else {
+	if (cinfo->creo_ids->find(gname) != cinfo->creo_ids->end()) {
+	    bu_vls_sprintf(gname, "%s-1", bu_vls_addr(&gname_root));
+	    while (cinfo->creo_ids->find(gname) != cinfo->creo_ids->end()) {
+		(void)bu_namegen(gname, NULL, NULL);
+		count++;
+		if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
+		    fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(gname) );
+		}
+		if (count == LONG_MAX) {
+		    bu_vls_free(gname);
+		    BU_PUT(gname, struct bu_vls);
+		    return NULL;
+		}
 	    }
 	}
     }
@@ -339,13 +363,18 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const
 	BU_PUT(gname, struct bu_vls);
 	return NULL;
     }
-    cinfo->brlcad_names->insert(gname);
-    cinfo->name_map->insert(std::pair<wchar_t *, struct bu_vls *>(stable, gname));
+    if (flags & NG_OBJID) {
+	cinfo->creo_ids->insert(gname);
+	cinfo->creo_id_map->insert(std::pair<wchar_t *, struct bu_vls *>(stable, gname));
+    } else {
+	cinfo->brlcad_names->insert(gname);
+	cinfo->name_map->insert(std::pair<wchar_t *, struct bu_vls *>(stable, gname));
+    }
 
-    if (cinfo->logger_type == LOGGER_TYPE_ALL) {
+    if (!(flags & NG_OBJID) && cinfo->logger_type == LOGGER_TYPE_ALL) {
 	char astr[CREO_NAME_MAX];
 	ProWstringToString(astr, name);
-	fprintf( cinfo->logger, "\tnew name for %s is %s\n", astr, bu_vls_addr(gname) );
+	fprintf( cinfo->logger, "\tname for %s is %s\n", astr, bu_vls_addr(gname) );
     }
 
     return gname;

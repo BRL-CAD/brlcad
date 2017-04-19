@@ -181,7 +181,7 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
     if (ainfo->cinfo->empty->find(wname) != ainfo->cinfo->empty->end()) return PRO_TK_NO_ERROR;
 
     /* get BRL-CAD name */
-    entry_name = get_brlcad_name(ainfo->cinfo, wname, type, NULL);
+    entry_name = get_brlcad_name(ainfo->cinfo, wname, type, NULL, 0);
 
     /* Get matrix relative to current parent (if any) and create the comb entry */
     if ((lstatus = assembly_entry_matrix(ainfo->cinfo, ainfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
@@ -200,6 +200,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 {
     ProBoolean is_exploded = false;
     struct bu_vls *comb_name;
+    struct bu_vls *obj_name;
     wchar_t wname[CREO_NAME_MAX];
     struct assem_conv_info *ainfo;
     BU_GET(ainfo, struct assem_conv_info);
@@ -228,7 +229,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
 
     /* Get BRL-CAD name */
-    comb_name = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL);
+    comb_name = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL, 0);
 
     /* Data sufficient - write the comb */
     mk_lcomb(cinfo->wdbp, bu_vls_addr(comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
@@ -238,8 +239,13 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     struct bu_attribute_value_set avs;
     db5_get_attributes(cinfo->wdbp->dbip, &avs, dp);
 
-    /* TODO - write the object ID or param name as an attribute - whichever isn't in current use */
+    /* Write the object ID as an attribute, if it isn't already being used as the object name */
+    obj_name = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL, NG_OBJID);
+    if (!BU_STR_EQUAL(bu_vls_addr(obj_name), bu_vls_addr(comb_name))) {
+	bu_avs_add(&avs, "CREO_NAME", bu_vls_addr(obj_name));
+    }
 
+    /* If we have a user supplied list of attributes to save, do it */
     if (cinfo->attrs->size() > 0) {
 	for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
 	    char *attr_val = NULL;

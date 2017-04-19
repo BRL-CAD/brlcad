@@ -113,6 +113,11 @@ extern "C" {
 #define MSG_OK 1
 #define MSG_DEBUG 2
 
+/* Name generation flags */
+#define NG_DEFAULT 0x0 /* Default */
+#define NG_OBJID 0x1   /* Return CREO id as a bu_vls, rather than the BRL-CAD name */
+#define NG_NPARAM 0x2   /* Generate the BRL-CAD name using the CREO name */
+
 struct StrCmp {
     bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {
 	return (bu_strcmp(bu_vls_addr(str1), bu_vls_addr(str2)) < 0);
@@ -191,7 +196,9 @@ struct creo_conv_info {
     std::set<wchar_t *, WStrCmp> *assems;	/* list of all assemblies in CREO hierarchy */
     std::set<wchar_t *, WStrCmp> *empty;	/* list of all parts and assemblies in CREO that have no shape */
     std::map<wchar_t *, struct bu_vls *, WStrCmp> *name_map;  /* CREO names to BRL-CAD names */
+    std::map<wchar_t *, struct bu_vls *, WStrCmp> *creo_id_map;  /* wchar CREO names to char versions */
     std::set<struct bu_vls *, StrCmp> *brlcad_names; /* set of active .g object names */
+    std::set<struct bu_vls *, StrCmp> *creo_ids; /* set of creo id strings */
     std::vector<char *> *model_parameters;     /* model parameters to use when generating .g names */
     std::vector<char *> *attrs;     	/* attributes to preserve when transferring objects */
 };
@@ -232,7 +239,7 @@ extern "C" ProError output_part(struct creo_conv_info *, ProMdl model);
 extern "C" ProError component_filter(ProFeature *, ProAppData *);
 extern "C" ProError creo_attribute_val(char **val, const char *key, ProMdl m);
 extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
-extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *, wchar_t *, ProType type, const char *);
+extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *, wchar_t *, ProType type, const char *, int);
 extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);
