@@ -318,6 +318,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     int n1, n2, n3;
     int vert_no;
 
+    ProWVerstamp cstamp;
+    char *verstr;
 
     struct bu_vls mdstr = BU_VLS_INIT_ZERO;
 
@@ -542,6 +544,13 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     rdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(rname), LOOKUP_QUIET);
     db5_get_attributes(cinfo->wdbp->dbip, &r_avs, rdp);
     bu_avs_add(&r_avs, "CREO_NAME", bu_vls_addr(creo_id));
+
+    if (ProMdlVerstampGet(model, &cstamp) == PRO_TK_NO_ERROR) {
+    	if (ProVerstampStringGet(cstamp, &verstr) == PRO_TK_NO_ERROR) {
+	    bu_avs_add(&r_avs, "CREO_VERSION_STAMP", verstr);
+	}
+	ProVerstampStringFree(&verstr);
+    }
 
     /* if the part has a material, add it as an attribute */
     if (ProPartMaterialNameGet(ProMdlToPart(model), material) == PRO_TK_NO_ERROR ) {

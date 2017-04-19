@@ -134,9 +134,50 @@ output_parts(struct creo_conv_info *cinfo)
     char name[CREO_NAME_MAX];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
+	struct bu_vls *rname;
+	struct directory *rdp;
 	ProMdl m;
+	ProWVerstamp cstamp, gstamp;
 	if (ProMdlnameInit(*d_it, PRO_MDLFILE_PART, &m) != PRO_TK_NO_ERROR) return;
 	if (ProMdlNameGet(m, wname) != PRO_TK_NO_ERROR) return;
+
+	/* If the part a) exists in the .g file already and b) has the same CREO
+	 * version stamp as the part in the current CREO file, we don't need
+	 * to re-export it to the .g file */
+	rname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "r", NG_DEFAULT);
+	rdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(rname), LOOKUP_QUIET);
+	if (rdp != RT_DIR_NULL && ProMdlVerstampGet(m, &cstamp) == PRO_TK_NO_ERROR) {
+	    const char *vs = NULL;
+	    struct bu_attribute_value_set r_avs;
+	    db5_get_attributes(cinfo->wdbp->dbip, &r_avs, rdp);
+	    vs = bu_avs_get(&r_avs, "CREO_VERSION_STAMP");
+	    if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR && ProVerstampEqual(cstamp, gstamp) == PRO_B_TRUE) {
+		/* The .g object was created from the same version of the
+		 * object that exists currently in the CREO file - skip */
+		continue;
+	    } else {
+		/* kill the existing object (region and child solid) - it's out of sync with CREO */
+		struct directory **children = NULL;
+		struct rt_db_internal in;
+		if (rt_db_get_internal(&in, rdp, cinfo->wdbp->dbip, NULL, &rt_uniresource) >= 0) {
+		    struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
+		    int ccnt = db_comb_children(cinfo->wdbp->dbip, comb, &children, NULL, NULL);
+		    if (ccnt > 0) {
+			for (int i = 0; i < ccnt; i++) {
+			    db_delete(cinfo->wdbp->dbip, children[i]);
+			    db_dirdelete(cinfo->wdbp->dbip, children[i]);
+			}
+		    }
+		}
+		rt_db_free_internal(&in);
+		bu_free(children, "free child list");
+		db_delete(cinfo->wdbp->dbip, rdp);
+		db_dirdelete(cinfo->wdbp->dbip, rdp);
+		db_update_nref(cinfo->wdbp->dbip, &rt_uniresource);
+	    }
+	}
+
+	/* All set - process the part */
 	(void)ProWstringToString(name, wname);
 	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing part %s\n", name);
 	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
@@ -150,9 +191,36 @@ output_assems(struct creo_conv_info *cinfo)
     char name[CREO_NAME_MAX];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
+	struct bu_vls *aname;
+	struct directory *adp;
 	ProMdl parent;
+	ProWVerstamp cstamp, gstamp;
 	ProMdlnameInit(*d_it, PRO_MDLFILE_ASSEMBLY, &parent);
 	if (ProMdlNameGet(parent, wname) != PRO_TK_NO_ERROR) return;
+
+	/* If the part a) exists in the .g file already and b) has the same CREO
+	 * version stamp as the part in the current CREO file, we don't need
+	 * to re-export it to the .g file */
+	aname = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL, NG_DEFAULT);
+	adp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(aname), LOOKUP_QUIET);
+	if (adp != RT_DIR_NULL && ProMdlVerstampGet(parent, &cstamp) == PRO_TK_NO_ERROR) {
+	    const char *vs = NULL;
+	    struct bu_attribute_value_set a_avs;
+	    db5_get_attributes(cinfo->wdbp->dbip, &a_avs, adp);
+	    vs = bu_avs_get(&a_avs, "CREO_VERSION_STAMP");
+	    if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR && ProVerstampEqual(cstamp, gstamp) == PRO_B_TRUE) {
+		/* The .g object was created from the same version of the
+		 * object that exists currently in the CREO file - skip */
+		continue;
+	    } else {
+		/* kill the existing object - it's out of sync with CREO */
+		db_delete(cinfo->wdbp->dbip, adp);
+		db_dirdelete(cinfo->wdbp->dbip, adp);
+		db_update_nref(cinfo->wdbp->dbip, &rt_uniresource);
+	    }
+	}
+
+	/* All set - process the assembly */
 	(void)ProWstringToString(name, wname);
 	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing assembly %s\n", name);
 	output_assembly(cinfo, parent);
@@ -348,30 +416,23 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	ProWstringToString(output_file, w_output_file);
 	ProWstringFree(w_output_file);
 
-	/* Safety check - don't overwrite a pre-existing file */
+	/* If there is a pre-existing file, open it - it may be we only have to
+	 * update some items in it. */
 	if (bu_file_exists(output_file, NULL)) {
-	    /* TODO - wrap this up into a creo msg dialog function of some kind... */
-	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-	    wchar_t w_error_msg[512];
-	    int dialog_return;
-	    bu_vls_printf( &error_msg, "Cannot create file %s - file already exists.\n", output_file );
-	    ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
-	    status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
-	    (void)ProUIPushbuttonActivateActionSet( "creo_brl_gen_error", "ok_button", kill_gen_error_dialog, NULL );
-	    status = ProUITextareaValueSet( "creo_brl_gen_error", "error_message", w_error_msg );
-	    status = ProUIDialogActivate( "creo_brl_gen_error", &dialog_return );
-	    ProUIDialogDestroy( "creo_brl" );
-	    return;
-	}
+	    cinfo->dbip = db_open(output_file, DB_OPEN_READWRITE);
+	    cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
+	    creo_log(cinfo, MSG_OK, status, "Note: %s exists - opening to update.\n", output_file);
+	} else {
 
-	/* open output file */
-	if ( (cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL ) {
-	    creo_log(cinfo, MSG_FAIL, status, "Cannot open output file.\n");
-	    creo_conv_info_free(cinfo);
-	    ProUIDialogDestroy( "creo_brl" );
-	    return;
+	    /* open output file */
+	    if ( (cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL ) {
+		creo_log(cinfo, MSG_FAIL, status, "Cannot open output file.\n");
+		creo_conv_info_free(cinfo);
+		ProUIDialogDestroy( "creo_brl" );
+		return;
+	    }
+	    cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
 	}
-	cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
 
 	/* Store the filename for later use */
 	bu_vls_sprintf(cinfo->output_file, "%s", output_file);

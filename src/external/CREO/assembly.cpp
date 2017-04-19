@@ -243,6 +243,16 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 	bu_avs_add(&avs, "CREO_NAME", bu_vls_addr(obj_name));
     }
 
+    ProWVerstamp cstamp;
+    if (ProMdlVerstampGet(model, &cstamp) == PRO_TK_NO_ERROR) {
+	char *vstr;
+	if (ProVerstampStringGet(cstamp, &vstr) == PRO_TK_NO_ERROR) {
+	    bu_avs_add(&avs, "CREO_VERSION_STAMP", vstr);
+	}
+	ProVerstampStringFree(&vstr);
+    }
+
+
     /* If we have a user supplied list of attributes to save, do it */
     if (cinfo->attrs->size() > 0) {
 	for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
