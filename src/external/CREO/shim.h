@@ -188,6 +188,7 @@ int ProPartMaterialdataGet(void*,wchar_t*,ProMaterialProps*);
 int ProPartTessellate(void*,double,double,bool,ProSurfaceTessellationData**);
 int ProSolidFeatVisit(void*,int (*)(ProFeature*,int,void*),int (*)(ProFeature*,void*),void*);
 int ProSolidMassPropertyGet(void*,void*,ProMassProperty*);
+int ProSolidOutlineGet(void*, Pro3dPnt*);
 int ProStringarrayFree(char**,int);
 int ProStringVerstampGet(void*, void**);
 int ProSurfaceAppearancepropsGet(void**,ProSurfaceAppearanceProps*);

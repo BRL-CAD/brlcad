@@ -326,6 +326,11 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     char err_mess[512];
     wchar_t werr_mess[512];
 
+    Pro3dPnt bboxpnts[2];
+    int have_bbox = 1;
+    point_t rmin, rmax;
+    int failed_solid = 0;
+
     struct part_conv_info *pinfo;
     BU_GET(pinfo, struct part_conv_info);
     pinfo->cinfo = cinfo;
@@ -366,9 +371,10 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     /* If we've been told to do CSG conversions, apply logic for finding and replacing holes */
 
 
-    /* TODO - can get bounding box of a solid using "ProSolidOutlineGet"
-     * may want to use this to implement relative facetization tolerance
+    /* Get bounding box of a solid using "ProSolidOutlineGet"
+     * TODO - may want to use this to implement relative facetization tolerance...
      */
+    if (ProSolidOutlineGet(ProMdlToSolid(model), bboxpnts) != PRO_TK_NO_ERROR) have_bbox = 0;
 
 
     /* Tessellate part, going from coarse to fine tessellation */
@@ -397,13 +403,25 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	/* Failed!!! */
 	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to tessellate %s!!!\n", pname );
 
-	/* TODO - a failed part probably should not be considered an empty part
-	 * - put a bbox in instead if we can get one with an attribute denoting
-	 *   failure, or if even that fails *some* object with the requisite
-	 *   info, because the conversion shouldn't be ignore it. */
-	cinfo->empty->insert(wname);
-	ret = status;
-	goto cleanup;
+	if (have_bbox) {
+	    /* A failed tessellation with a bounding box indicates a problem - rather than
+	     * ignore it, put the bbox in the .g file as a placeholder. */
+	    failed_solid = 1;
+	    sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "rpp", NG_NPARAM);
+	    rmin[0] = bboxpnts[0][0];
+	    rmin[1] = bboxpnts[0][1];
+	    rmin[2] = bboxpnts[0][2];
+	    rmax[0] = bboxpnts[1][0];
+	    rmax[1] = bboxpnts[1][1];
+	    rmax[2] = bboxpnts[1][2];
+	    mk_rpp(cinfo->wdbp, bu_vls_addr(sname), rmin, rmax);
+	    goto have_part;
+	} else {
+	    creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Empty part. (%s) could not be tessellated and has no bounding box.\n", pname);
+	    cinfo->empty->insert(wname);
+	    ret = PRO_TK_NOT_EXIST;
+	    goto cleanup;
+	}
     }
     if (!tess) {
 	/* not a failure, just an empty part */
@@ -437,7 +455,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Successfully tessellated %s using: tessellation error - %g, angle - %g!!!\n", pname, curr_error, curr_angle );
 
     /* We've got a part - the output for a part is a parent region and the solid underneath it. */
-
+have_part:
     BU_LIST_INIT(&wcomb.l);
     rname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "r", NG_DEFAULT);
     sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot", NG_NPARAM);
@@ -537,6 +555,9 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     sdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(sname), LOOKUP_QUIET);
     db5_get_attributes(cinfo->wdbp->dbip, &s_avs, sdp);
     bu_avs_add(&s_avs, "CREO_NAME", bu_vls_addr(creo_id));
+    if (failed_solid) {
+	bu_avs_add(&s_avs, "SOLID_STATUS", "FAILED");
+    }
     db5_standardize_avs(&s_avs);
     db5_update_attributes(sdp, &s_avs, cinfo->wdbp->dbip);
 
