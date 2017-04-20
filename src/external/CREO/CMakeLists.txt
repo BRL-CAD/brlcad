@@ -326,9 +326,9 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   include_directories(
-    ${CMAKE_CURRENT_BINARY_DIR}/../../../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS
+    "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
     "${ZLIB_INCLUDE_DIR}"
     "${REGEX_INCLUDE_DIR}"
     )
@@ -337,6 +337,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   add_definitions(-DTEST_BUILD)
   add_library(creo-g ${creo_brl_srcs})
   target_link_libraries(creo-g librt libbrep libbg libnmg libbn libbu)
+  set_target_properties(creo-g PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
