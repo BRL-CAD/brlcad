@@ -381,7 +381,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     /* TODO - make sure we have non-zero faces (and if needed, face_normals) vectors */
 
     /* Output the solid - TODO - what is the correct ordering??? does CCW always work? - TODO shouldn't be using NG_OBJID here... */
-    *sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot", NG_OBJID);
+    *sname = get_brlcad_name(cinfo, wname, "bot", N_SOLID);
     if (cinfo->get_normals) {
 	mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(*sname), RT_BOT_SOLID, RT_BOT_CCW, 0, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
     } else {
@@ -515,7 +515,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    /* A failed solid conversion with a bounding box indicates a problem - rather than
 	     * ignore it, put the bbox in the .g file as a placeholder. */
 	    failed_solid = 1;
-	    sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "rpp", NG_NPARAM);
+	    sname = get_brlcad_name(cinfo, wname, "rpp", N_SOLID);
 	    rmin[0] = bboxpnts[0][0];
 	    rmin[1] = bboxpnts[0][1];
 	    rmin[2] = bboxpnts[0][2];
@@ -543,7 +543,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     /* We've got a part - the output for a part is a parent region and the solid underneath it. */
 have_part:
     BU_LIST_INIT(&wcomb.l);
-    rname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "r", NG_DEFAULT);
+    rname = get_brlcad_name(cinfo, wname, "r", N_REGION);
  
     /* Add the solid to the region comb */
     (void)mk_addmember(bu_vls_addr(sname), &wcomb.l, NULL, WMOP_UNION);
@@ -582,7 +582,7 @@ have_part:
     }
 
     /* Set the CREO_NAME attribute for the solid/primitive */
-    creo_id = get_brlcad_name(cinfo, wname, PRO_MDL_PART, NULL, NG_OBJID);
+    creo_id = get_brlcad_name(cinfo, wname, NULL, N_CREO);
     sdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(sname), LOOKUP_QUIET);
     db5_get_attributes(cinfo->wdbp->dbip, &s_avs, sdp);
     bu_avs_add(&s_avs, "CREO_NAME", bu_vls_addr(creo_id));

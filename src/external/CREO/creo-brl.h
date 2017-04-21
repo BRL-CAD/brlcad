@@ -112,11 +112,6 @@ extern "C" {
 #define MSG_OK 1
 #define MSG_DEBUG 2
 
-/* Name generation flags */
-#define NG_DEFAULT 0x0 /* Default */
-#define NG_OBJID 0x1   /* Return CREO id as a bu_vls, rather than the BRL-CAD name */
-#define NG_NPARAM 0x2   /* Generate the BRL-CAD name using the CREO name */
-
 struct StrCmp {
     bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {
 	return (bu_strcmp(bu_vls_addr(str1), bu_vls_addr(str2)) < 0);
@@ -194,10 +189,12 @@ struct creo_conv_info {
     std::set<wchar_t *, WStrCmp> *parts;	/* list of all parts in CREO hierarchy */
     std::set<wchar_t *, WStrCmp> *assems;	/* list of all assemblies in CREO hierarchy */
     std::set<wchar_t *, WStrCmp> *empty;	/* list of all parts and assemblies in CREO that have no shape */
-    std::map<wchar_t *, struct bu_vls *, WStrCmp> *name_map;  /* CREO names to BRL-CAD names */
-    std::map<wchar_t *, struct bu_vls *, WStrCmp> *creo_id_map;  /* wchar CREO names to char versions */
+    std::map<wchar_t *, struct bu_vls *, WStrCmp> *region_name_map;  /* CREO names to BRL-CAD region names */
+    std::map<wchar_t *, struct bu_vls *, WStrCmp> *assem_name_map;  /* CREO names to BRL-CAD assembly names */
+    std::map<wchar_t *, struct bu_vls *, WStrCmp> *solid_name_map;  /* CREO names to BRL-CAD solid names */
+    std::map<wchar_t *, struct bu_vls *, WStrCmp> *creo_name_map;  /* wchar CREO names to char versions */
     std::set<struct bu_vls *, StrCmp> *brlcad_names; /* set of active .g object names */
-    std::set<struct bu_vls *, StrCmp> *creo_ids; /* set of creo id strings */
+    std::set<struct bu_vls *, StrCmp> *creo_names; /* set of active creo id strings */
     std::vector<char *> *model_parameters;     /* model parameters to use when generating .g names */
     std::vector<char *> *attrs;     	/* attributes to preserve when transferring objects */
 };
@@ -238,12 +235,25 @@ extern "C" ProError output_part(struct creo_conv_info *, ProMdl model);
 extern "C" ProError component_filter(ProFeature *, ProAppData *);
 extern "C" ProError creo_attribute_val(char **val, const char *key, ProMdl m);
 extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
-extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *, wchar_t *, ProMdlType type, const char *, int);
 extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);
 extern "C" void kill_gen_error_dialog(char *dialog, char *component, ProAppData appdata);
 extern "C" ProError PopupMsg(const char *, const char *);
+
+/* This function is highly important - it is responsible for all name
+ * generation, translation and clean-up in the converter.  A CREO name may map
+ * to up to three distinct objects in BRL-CAD - a solid, which will will have a
+ * name based off of the name in CREO, a region, which may generate a "human
+ * readable" name using parameters on the CREO object, and an assembly which
+ * may also have a "human readable" form.  There is also the char mapping of
+ * the wchar_t CREO name, which may or may not correspond to any of the object
+ * names. */
+#define N_REGION 1 /* Default - generate a unique, human readable name and append the specified suffix */
+#define N_ASSEM 2 /* Default - generate a unique, human readable name and append the specified suffix */
+#define N_SOLID 3 /* Default - generate a unique, human readable name and append the specified suffix */
+#define N_CREO 4 /* return char mapping of CREO name.   */
+extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *cname, const char *suffix, int flag);
 
 /* csg */
 extern "C" int subtract_hole(struct part_conv_info *pinfo);

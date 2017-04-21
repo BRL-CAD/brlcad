@@ -179,7 +179,11 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
     if (ainfo->cinfo->empty->find(wname) != ainfo->cinfo->empty->end()) return PRO_TK_NO_ERROR;
 
     /* get BRL-CAD name */
-    entry_name = get_brlcad_name(ainfo->cinfo, wname, mtype, NULL, 0);
+    if (ainfo->cinfo->parts->find(wname) != ainfo->cinfo->parts->end()) {
+	entry_name = get_brlcad_name(ainfo->cinfo, wname, "r", N_REGION);
+    } else {
+	entry_name = get_brlcad_name(ainfo->cinfo, wname, NULL, N_ASSEM);
+    }
 
     /* Get matrix relative to current parent (if any) and create the comb entry */
     if ((lstatus = assembly_entry_matrix(ainfo->cinfo, ainfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
@@ -203,9 +207,8 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     BU_GET(ainfo, struct assem_conv_info);
     ainfo->cinfo = cinfo;
 
-    /* Check for exploded assembly.  TODO - this is causing a crash,
-	   can't enable. */
-	//ProBoolean is_exploded = PRO_B_FALSE;
+    /* Check for exploded assembly.  TODO - this is causing a crash, can't enable??? */
+    //ProBoolean is_exploded = PRO_B_FALSE;
     //ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded);
     //if (is_exploded) ProAssemblyUnexplode(*(ProAssembly *)model);
 
@@ -227,7 +230,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
 
     /* Get BRL-CAD name */
-    comb_name = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL, 0);
+    comb_name = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
 
     /* Data sufficient - write the comb */
     mk_lcomb(cinfo->wdbp, bu_vls_addr(comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
@@ -238,7 +241,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     db5_get_attributes(cinfo->wdbp->dbip, &avs, dp);
 
     /* Write the object ID as an attribute, if it isn't already being used as the object name */
-    obj_name = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL, NG_OBJID);
+    obj_name = get_brlcad_name(cinfo, wname, NULL, N_CREO);
     if (!BU_STR_EQUAL(bu_vls_addr(obj_name), bu_vls_addr(comb_name))) {
 	bu_avs_add(&avs, "CREO_NAME", bu_vls_addr(obj_name));
     }

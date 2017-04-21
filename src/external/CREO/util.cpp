@@ -234,7 +234,7 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
 
 
 extern "C" char *
-creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProMdlType type)
+creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, int flags)
 {
     struct pparam_data pdata;
     pdata.cinfo = cinfo;
@@ -243,13 +243,13 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProMdlType typ
 
     ProModelitem itm;
     ProMdl model;
-	if (type == PRO_MDL_PART) {
-        if (ProMdlnameInit(creo_name, PRO_MDLFILE_PART, &model) != PRO_TK_NO_ERROR) return NULL;
-	} else if (type == PRO_MDL_ASSEMBLY) {
-		if (ProMdlnameInit(creo_name, PRO_MDLFILE_ASSEMBLY, &model) != PRO_TK_NO_ERROR) return NULL;
-	} else {
-		return NULL;
-	}
+    if (flags == N_REGION) {
+	if (ProMdlnameInit(creo_name, PRO_MDLFILE_PART, &model) != PRO_TK_NO_ERROR) return NULL;
+    } else if (flags == N_ASSEM) {
+	if (ProMdlnameInit(creo_name, PRO_MDLFILE_ASSEMBLY, &model) != PRO_TK_NO_ERROR) return NULL;
+    } else {
+	return NULL;
+    }
     if (ProMdlToModelitem(model, &itm) != PRO_TK_NO_ERROR) return NULL;
     for (unsigned int i = 0; i < cinfo->model_parameters->size(); i++) {
 	pdata.key = cinfo->model_parameters->at(i);
@@ -275,7 +275,7 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProMdlType typ
 
 /* create a unique BRL-CAD object name from a possibly illegal name */
 extern "C" struct bu_vls *
-get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProMdlType type, const char *suffix, int flags)
+get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix, int flag)
 {
     struct bu_vls gname_root = BU_VLS_INIT_ZERO;
     struct bu_vls *gname = NULL;
@@ -283,39 +283,60 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProMdlType type, co
     long count = 0;
     wchar_t *stable = NULL;
     std::map<wchar_t *, struct bu_vls *, WStrCmp>::iterator n_it;
+    std::map<wchar_t *, struct bu_vls *, WStrCmp> *nmap;
+    std::set<struct bu_vls *, StrCmp> *nset = cinfo->brlcad_names;
+    char astr[CREO_NAME_MAX];
+    ProWstringToString(astr, name);
 
-    /* If it's not a part or assembly, don't fool with it */
-    if (type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART) return NULL;
+    /* If we don't have a valid type, we don't know what to do */
+    if (flag < N_REGION && flag > N_CREO) return NULL;
 
-    /* If we already have a name, return that */
-    if (!(flags & NG_OBJID)) {
-	n_it = cinfo->name_map->find(name);
-	if (n_it != cinfo->name_map->end()) {
-	    gname = n_it->second;
-	    return gname;
-	}
-    } else {
-	n_it = cinfo->creo_id_map->find(name);
-	if (n_it != cinfo->creo_id_map->end()) {
-	    gname = n_it->second;
-	    return gname;
-	}
+    /* Set up */
+    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Generating name for %s...\n", astr);
+
+    if (flag == N_REGION) {
+	nmap = cinfo->region_name_map;
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t name type: region\n");
     }
+    if (flag == N_ASSEM) {
+	nmap = cinfo->assem_name_map;
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t name type: assembly\n");
+    }
+    if (flag == N_SOLID) {
+	nmap = cinfo->solid_name_map;
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t name type: solid\n");
+    }
+    if (flag == N_CREO) {
+	nmap = cinfo->creo_name_map;
+	nset = cinfo->creo_names;
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t name type: CREO name\n");
+    }
+
+    /* If we've already got something, return it. */
+    n_it = nmap->find(name);
+    if (n_it != nmap->end()) {
+	gname = n_it->second;
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "name \"%s\" already exists\n", bu_vls_addr(gname));
+	return gname;
+    }
+
+    /* Nope - start generating */
     BU_GET(gname, struct bu_vls);
     bu_vls_init(gname);
 
-    /* First try the parameters, if the user specified any */
-    if (!(flags & NG_OBJID) && !(flags & NG_NPARAM)) {
-	param_name = creo_param_name(cinfo, name, type);
+    /* First try the parameters, if the user specified any and if the name type
+     * requested can use parameters */
+    if (!(flag == N_CREO) && !(flag == N_SOLID)) {
+	param_name = creo_param_name(cinfo, name, flag);
+	bu_vls_sprintf(&gname_root, "%s", param_name);
     }
 
-    /* Fall back on the CREO name, if we don't get a param name */
+    /* If we don't already have a name, use the CREO name */
     if (!param_name) {
 	char val[CREO_NAME_MAX];
 	ProWstringToString(val, name);
 	bu_vls_sprintf(&gname_root, "%s", val);
     } else {
-	bu_vls_sprintf(&gname_root, "%s", param_name);
 	bu_free(param_name, "free original param name");
     }
 
@@ -323,44 +344,25 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProMdlType type, co
     lower_case(bu_vls_addr(&gname_root));
     make_legal(bu_vls_addr(&gname_root));
     bu_vls_sprintf(gname, "%s", bu_vls_addr(&gname_root));
-	// TODO - need to rethink the name routine a bit.  Need unique mdl to root name mapping, but multiple possible suffixes
-	if (suffix) bu_vls_printf(gname, ".%s", suffix);
+    if (suffix) bu_vls_printf(gname, ".%s", suffix);
 
     /* create a unique name */
-    if (!(flags & NG_OBJID)) {
-	if (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
-	    bu_vls_sprintf(gname, "%s-1", bu_vls_addr(&gname_root));
-	    if (suffix) {bu_vls_printf(gname, ".%s", suffix);}
-	    while (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
-		(void)bu_namegen(gname, NULL, NULL);
-		count++;
-		if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		    fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(gname) );
-		}
-		if (count == LONG_MAX) {
-		    bu_vls_free(gname);
-		    BU_PUT(gname, struct bu_vls);
-		    return NULL;
-		}
-	    }
-	}
-    } else {
-	if (cinfo->creo_ids->find(gname) != cinfo->creo_ids->end()) {
-	    bu_vls_sprintf(gname, "%s-1", bu_vls_addr(&gname_root));
-	    while (cinfo->creo_ids->find(gname) != cinfo->creo_ids->end()) {
-		(void)bu_namegen(gname, NULL, NULL);
-		count++;
-		if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		    fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(gname) );
-		}
-		if (count == LONG_MAX) {
-		    bu_vls_free(gname);
-		    BU_PUT(gname, struct bu_vls);
-		    return NULL;
-		}
+    if (nset->find(gname) != nset->end()) {
+	bu_vls_sprintf(gname, "%s-1", bu_vls_addr(&gname_root));
+	if (suffix) {bu_vls_printf(gname, ".%s", suffix);}
+	while (nset->find(gname) != nset->end()) {
+	    (void)bu_namegen(gname, NULL, NULL);
+	    count++;
+	    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t trying name : %s\n", bu_vls_addr(gname));
+	    if (count == LONG_MAX) {
+		bu_vls_free(gname);
+		BU_PUT(gname, struct bu_vls);
+		creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "%s name generation FAILED.\n", astr);
+		return NULL;
 	    }
 	}
     }
+
     /* We want to point to a stable wchar_t string pointer for this name, so find that first - don't
      * assume all callers will be using the parts/assems copies. */
     if (cinfo->parts->find(name) != cinfo->parts->end()) stable = *(cinfo->parts->find(name));
@@ -369,21 +371,13 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProMdlType type, co
 	/* ??? not a part or assembly we've seen, but got through filters ??? */
 	bu_vls_free(gname);
 	BU_PUT(gname, struct bu_vls);
+	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "%s name generation FAILED.\n", astr);
 	return NULL;
     }
-    if (flags & NG_OBJID) {
-	cinfo->creo_ids->insert(gname);
-	cinfo->creo_id_map->insert(std::pair<wchar_t *, struct bu_vls *>(stable, gname));
-    } else {
-	cinfo->brlcad_names->insert(gname);
-	cinfo->name_map->insert(std::pair<wchar_t *, struct bu_vls *>(stable, gname));
-    }
+    nset->insert(gname);
+    nmap->insert(std::pair<wchar_t *, struct bu_vls *>(stable, gname));
 
-    if (!(flags & NG_OBJID) && cinfo->logger_type == LOGGER_TYPE_ALL) {
-	char astr[CREO_NAME_MAX];
-	ProWstringToString(astr, name);
-	fprintf( cinfo->logger, "\tname for %s is %s\n", astr, bu_vls_addr(gname) );
-    }
+    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "name \"%s\" succeeded\n", bu_vls_addr(gname));
 
     return gname;
 }

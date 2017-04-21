@@ -63,10 +63,12 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->parts = new std::set<wchar_t *, WStrCmp>;
     cinfo->assems = new std::set<wchar_t *, WStrCmp>;
     cinfo->empty = new std::set<wchar_t *, WStrCmp>;
-    cinfo->name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
-    cinfo->creo_id_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
+    cinfo->region_name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
+    cinfo->assem_name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
+    cinfo->solid_name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
+    cinfo->creo_name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
     cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
-    cinfo->creo_ids = new std::set<struct bu_vls *, StrCmp>;
+    cinfo->creo_names = new std::set<struct bu_vls *, StrCmp>;
     cinfo->model_parameters = new std::vector<char *>;
     cinfo->attrs = new std::vector<char *>;
 
@@ -93,10 +95,8 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 	bu_vls_free(v);
 	BU_PUT(v, struct bu_vls);
     }
-
-    std::map<wchar_t *,struct bu_vls *, WStrCmp>::iterator w_it;
-    for (w_it = cinfo->creo_id_map->begin(); w_it != cinfo->creo_id_map->end(); w_it++) {
-	struct bu_vls *v = w_it->second;
+    for (s_it = cinfo->creo_names->begin(); s_it != cinfo->creo_names->end(); s_it++) {
+	struct bu_vls *v = *s_it;
 	bu_vls_free(v);
 	BU_PUT(v, struct bu_vls);
     }
@@ -116,9 +116,11 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
     delete cinfo->assems;
     delete cinfo->empty; /* entries in empty were freed in parts and assems */
     delete cinfo->brlcad_names;
-    delete cinfo->name_map; /* entries in name_map were freed in brlcad_names */
-    delete cinfo->creo_id_map;
-    delete cinfo->creo_ids;
+    delete cinfo->region_name_map; /* entries in name_map were freed in brlcad_names */
+    delete cinfo->assem_name_map; /* entries in name_map were freed in brlcad_names */
+    delete cinfo->solid_name_map; /* entries in name_map were freed in brlcad_names */
+    delete cinfo->creo_name_map;
+    delete cinfo->creo_names;
 
     if (cinfo->logger) fclose(cinfo->logger);
     wdb_close(cinfo->wdbp);
@@ -144,7 +146,7 @@ output_parts(struct creo_conv_info *cinfo)
 	/* If the part a) exists in the .g file already and b) has the same CREO
 	 * version stamp as the part in the current CREO file, we don't need
 	 * to re-export it to the .g file */
-	rname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "r", NG_DEFAULT);
+	rname = get_brlcad_name(cinfo, wname, "r", N_REGION);
 	rdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(rname), LOOKUP_QUIET);
 	if (rdp != RT_DIR_NULL && ProMdlVerstampGet(m, &cstamp) == PRO_TK_NO_ERROR) {
 	    const char *vs = NULL;
@@ -201,7 +203,7 @@ output_assems(struct creo_conv_info *cinfo)
 	/* If the part a) exists in the .g file already and b) has the same CREO
 	 * version stamp as the part in the current CREO file, we don't need
 	 * to re-export it to the .g file */
-	aname = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL, NG_DEFAULT);
+	aname = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
 	adp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(aname), LOOKUP_QUIET);
 	if (adp != RT_DIR_NULL && ProMdlVerstampGet(parent, &cstamp) == PRO_TK_NO_ERROR) {
 	    const char *vs = NULL;
@@ -320,7 +322,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     BU_LIST_INIT(&wcomb.l);
     mat_t m;
     bn_decode_mat(m, "0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1");
-    comb_name = get_brlcad_name(cinfo, wname, type, NULL, NG_DEFAULT);
+    comb_name = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
     mk_lcomb(cinfo->wdbp, bu_vls_addr(cinfo->output_file), &wcomb, 0, NULL, NULL, NULL, 0);
 }
