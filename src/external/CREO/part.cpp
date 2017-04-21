@@ -353,8 +353,8 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	    if (bad_triangle(cinfo, v1, v2, v3, vert_tree)) continue;
 
 	    faces.push_back(v1);
-	    faces.push_back(v2);
 	    faces.push_back(v3);
+	    faces.push_back(v2);
 
 	    /* grab the surface normals */
 	    if (cinfo->get_normals) {
@@ -372,16 +372,16 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
 
 		face_normals.push_back(n1);
-		face_normals.push_back(n2);
 		face_normals.push_back(n3);
+		face_normals.push_back(n2);
 	    }
 	}
     }
 
     /* TODO - make sure we have non-zero faces (and if needed, face_normals) vectors */
 
-    /* Output the solid - TODO - what is the correct ordering??? initial guess is CCW, but that is a complete guess */
-    *sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot", NG_NPARAM);
+    /* Output the solid - TODO - what is the correct ordering??? does CCW always work? - TODO shouldn't be using NG_OBJID here... */
+    *sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot", NG_OBJID);
     if (cinfo->get_normals) {
 	mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(*sname), RT_BOT_SOLID, RT_BOT_CCW, 0, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
     } else {
@@ -636,8 +636,8 @@ have_part:
     }
 
     /* Update attributes stored on disk */
-    db5_standardize_avs(&s_avs);
-    db5_update_attributes(sdp, &s_avs, cinfo->wdbp->dbip);
+    db5_standardize_avs(&r_avs);
+    db5_update_attributes(rdp, &r_avs, cinfo->wdbp->dbip);
 
     /* increment the region id - this is a concern if we move to multithreaded generation... */
     cinfo->reg_id++;

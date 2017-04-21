@@ -323,6 +323,8 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProMdlType type, co
     lower_case(bu_vls_addr(&gname_root));
     make_legal(bu_vls_addr(&gname_root));
     bu_vls_sprintf(gname, "%s", bu_vls_addr(&gname_root));
+	// TODO - need to rethink the name routine a bit.  Need unique mdl to root name mapping, but multiple possible suffixes
+	if (suffix) bu_vls_printf(gname, ".%s", suffix);
 
     /* create a unique name */
     if (!(flags & NG_OBJID)) {

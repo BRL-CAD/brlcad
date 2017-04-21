@@ -196,7 +196,6 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
 extern "C" ProError
 output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 {
-    ProBoolean is_exploded = PRO_B_FALSE;
     struct bu_vls *comb_name;
     struct bu_vls *obj_name;
     wchar_t wname[CREO_NAME_MAX];
@@ -204,10 +203,11 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     BU_GET(ainfo, struct assem_conv_info);
     ainfo->cinfo = cinfo;
 
-    /* Check for exploded assembly - TODO, will this work?  Seemed to be a
-     * problem... Do we really need to change this for conversion? */
-    ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded);
-    if (is_exploded) ProAssemblyUnexplode(*(ProAssembly *)model);
+    /* Check for exploded assembly.  TODO - this is causing a crash,
+	   can't enable. */
+	//ProBoolean is_exploded = PRO_B_FALSE;
+    //ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded);
+    //if (is_exploded) ProAssemblyUnexplode(*(ProAssembly *)model);
 
     /* We'll need to assemble the list of children */
     struct wmember wcomb;
