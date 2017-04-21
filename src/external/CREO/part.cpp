@@ -266,6 +266,34 @@ unsuppress_features(struct part_conv_info *pinfo)
 }
 
 extern "C" ProError
+opennurbs_part(struct creo_conv_info *UNUSED(cinfo), ProMdl UNUSED(model), struct bu_vls **UNUSED(sname), int UNUSED(have_bbox))
+{
+    ProError ret = PRO_TK_NO_ERROR;
+    /*
+     * Things to investigate:
+     *
+     * ProFeatureElemtreeExtract()
+     *  PRO_E_SRF_TRIM_TYPE
+     *   PRO_SURF_TRIM_USE_CRV
+
+     * ProSldsurfaceShellsAndVoidsFind
+     * ProSolidFeatVisit + ProFeatureVisibilityGet
+     * ProSolidSurfaceVisit
+     * ProSurfaceContourVisit
+     * ProContourEdgeVisit
+     * ProContourTraversalGet
+     * ProEdgeDirGet
+     * ProEdgeNeighborsGet
+     * ProGeomitemdata
+     * ProSurfaceToNURBS()
+     * ProEdgeToNURBS()
+     * ProCurveToNURBS()
+     */
+    return ret;
+}
+
+
+extern "C" ProError
 tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname, int have_bbox)
 {
     ProSurfaceTessellationData *tess = NULL;
@@ -501,6 +529,9 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
      * TODO - may want to use this to implement relative facetization tolerance...
      */
     if (ProSolidOutlineGet(ProMdlToSolid(model), bboxpnts) != PRO_TK_NO_ERROR) have_bbox = 0;
+
+    /* TODO - support an option to convert to ON_Brep */
+    status = opennurbs_part(cinfo, model, &sname, have_bbox);
 
     /* Tessellate */
     status = tessellate_part(cinfo, model, &sname, have_bbox);
