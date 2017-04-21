@@ -121,19 +121,6 @@ wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
 }
 
 extern "C" void
-kill_error_dialog(char *UNUSED(dialog), char *UNUSED(component), ProAppData UNUSED(appdata))
-{
-    (void)ProUIDialogDestroy( "creo_brl_error" );
-}
-
-extern "C" void
-kill_gen_error_dialog(char *UNUSED(dialog), char *UNUSED(component), ProAppData UNUSED(appdata))
-{
-    (void)ProUIDialogDestroy( "creo_brl_gen_error" );
-}
-
-
-extern "C" void
 lower_case( char *name )
 {
     unsigned char *c;

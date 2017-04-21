@@ -237,8 +237,6 @@ extern "C" ProError creo_attribute_val(char **val, const char *key, ProMdl m);
 extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
 extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
-extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);
-extern "C" void kill_gen_error_dialog(char *dialog, char *component, ProAppData appdata);
 extern "C" ProError PopupMsg(const char *, const char *);
 
 /* This function is highly important - it is responsible for all name

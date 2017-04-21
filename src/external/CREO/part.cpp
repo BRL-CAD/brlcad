@@ -450,9 +450,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     char *verstr;
 
     struct bu_vls mdstr = BU_VLS_INIT_ZERO;
-
-    char err_mess[512];
-    wchar_t werr_mess[512];
+    struct bu_vls errmsg = BU_VLS_INIT_ZERO;
 
     Pro3dPnt bboxpnts[2];
     int have_bbox = 1;
@@ -652,20 +650,9 @@ cleanup:
 	    creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to unsuppress features.\n");
 
 	    /* use UI dialog */
-	    if (ProUIDialogCreate("creo_brl_error", "creo_brl_error") == PRO_TK_NO_ERROR) {
-		snprintf( err_mess, 512,
-			"During the conversion %d features of part %s\n"
-			"were suppressed. After the conversion was complete, an\n"
-			"attempt was made to unsuppress these same features.\n"
-			"The unsuppression failed, so these features are still\n"
-			"suppressed. Please exit CREO without saving any\n"
-			"changes so that this problem will not persist.", (int)pinfo->suppressed_features->size(), pname );
-
-		(void)ProStringToWstring( werr_mess, err_mess );
-		if (ProUITextareaValueSet("creo_brl_error", "the_message", werr_mess) == PRO_TK_NO_ERROR) {
-		    (void)ProUIPushbuttonActivateActionSet( "creo_brl_error", "ok", kill_error_dialog, NULL );
-		}
-	    }
+	    bu_vls_sprintf(&errmsg, "During the conversion %d features of part %s\nwere suppressed. After the conversion was complete, an\nattempt was made to unsuppress these same features.\nThe unsuppression failed, so these features are still\nsuppressed. Please exit CREO without saving any\nchanges so that this problem will not persist.", (int)pinfo->suppressed_features->size(), pname);
+	    PopupMsg("Warning - Restoration Failure", bu_vls_addr(&errmsg));
+	    bu_vls_free(&errmsg);
 	    return ret;
 	}
 	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Successfully unsuppressed features.\n");
