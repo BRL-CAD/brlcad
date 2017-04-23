@@ -351,7 +351,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     bn_decode_mat(m, "0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1");
     comb_name = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
-    mk_lcomb(cinfo->wdbp, bu_vls_addr(cinfo->output_file), &wcomb, 0, NULL, NULL, NULL, 0);
+    mk_lcomb(cinfo->wdbp, "all.g", &wcomb, 0, NULL, NULL, NULL, 0);
 }
 
 
