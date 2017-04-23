@@ -278,6 +278,15 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     /* If we don't have a valid type, we don't know what to do */
     if (flag < N_REGION && flag > N_CREO) return NULL;
 
+	/* If the name isn't in either the parts or assemblies sets, it's
+	 * not an active part of the conversion */
+	if (cinfo->parts->find(name) != cinfo->parts->end()) stable = *(cinfo->parts->find(name));
+    if (!stable && cinfo->assems->find(name) != cinfo->assems->end()) stable = *(cinfo->assems->find(name));
+	if (!stable) {
+		creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "%s - no stable version of name found???.\n", astr);
+		return NULL;
+	}
+
     /* Set up */
     creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Generating name for %s...\n", astr);
 
@@ -350,17 +359,8 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
 	}
     }
 
-    /* We want to point to a stable wchar_t string pointer for this name, so find that first - don't
+    /* Use the stable wchar_t string pointer for this name - don't
      * assume all callers will be using the parts/assems copies. */
-    if (cinfo->parts->find(name) != cinfo->parts->end()) stable = *(cinfo->parts->find(name));
-    if (!stable && cinfo->assems->find(name) != cinfo->assems->end()) stable = *(cinfo->assems->find(name));
-    if (!stable) {
-	/* ??? not a part or assembly we've seen, but got through filters ??? */
-	bu_vls_free(gname);
-	BU_PUT(gname, struct bu_vls);
-	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "%s name generation FAILED.\n", astr);
-	return NULL;
-    }
     nset->insert(gname);
     nmap->insert(std::pair<wchar_t *, struct bu_vls *>(stable, gname));
 

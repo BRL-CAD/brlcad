@@ -173,18 +173,28 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
     MAT_IDN(xform);
 
     /* Get name of current member */
-    if ((lstatus = ProAsmcompMdlNameGet(feat, &mtype, wname)) != PRO_TK_NO_ERROR ) return lstatus;
+    if ((lstatus = ProAsmcompMdlNameGet(feat, &mtype, wname)) != PRO_TK_NO_ERROR ) return PRO_TK_NO_ERROR;
 
     /* Skip this member if the object it refers to is empty */
     if (ainfo->cinfo->empty->find(wname) != ainfo->cinfo->empty->end()) return PRO_TK_NO_ERROR;
 
     /* get BRL-CAD name */
-    if (ainfo->cinfo->parts->find(wname) != ainfo->cinfo->parts->end()) {
-	entry_name = get_brlcad_name(ainfo->cinfo, wname, "r", N_REGION);
-    } else {
-	entry_name = get_brlcad_name(ainfo->cinfo, wname, NULL, N_ASSEM);
+	switch (mtype) {
+    	case PRO_MDL_PART:
+			entry_name = get_brlcad_name(ainfo->cinfo, wname, "r", N_REGION);
+			break;
+		case PRO_MDL_ASSEMBLY:
+			entry_name = get_brlcad_name(ainfo->cinfo, wname, NULL, N_ASSEM);
+			break;
+		default:
+			return PRO_TK_NO_ERROR;
+			break;
     }
 
+	/* In case the name routine failed for whatever reason, don't call mk_addmember - all we'll get
+	 * is a crash.  Just keep going. */
+	if (!entry_name) return PRO_TK_NO_ERROR;
+	
     /* Get matrix relative to current parent (if any) and create the comb entry */
     if ((lstatus = assembly_entry_matrix(ainfo->cinfo, ainfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
 	(void)mk_addmember(bu_vls_addr(entry_name), &(ainfo->wcmb->l), xform, WMOP_UNION);

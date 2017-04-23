@@ -132,7 +132,6 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 #define GUIMSG(wmsg, cmsg) { \
     (void)ProStringToWstring(wmsg, cmsg); \
     (void)ProUILabelTextSet( "creo_brl", "curr_proc", wmsg); \
-	(void)ProUIDialogActivate("creo_brl", NULL);\
 }
 
 extern "C" void
@@ -271,13 +270,14 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 
     /* Get feature name */
     if ((loc_status = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return creo_log(cinfo, MSG_FAIL, loc_status, "Failure getting name");
+
     (void)ProWstringToString(name, wname);
 
     /* get the model for this member */
-    if ((loc_status = ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, loc_status, "%s: failure getting model", name);
+    if ((loc_status = ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "%s: failure getting model", name);
 
     /* get its type (part or assembly are the only ones that should make it here) */
-    if ((loc_status = ProMdlTypeGet(model, &type)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, loc_status, "%s: failure getting type", name);
+    if ((loc_status = ProMdlTypeGet(model, &type)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "%s: failure getting type", name);
 
     /* log this member */
     switch ( type ) {
@@ -295,6 +295,9 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 		wcsncpy(wname_saved, wname, wcslen(wname)+1);
 		cinfo->parts->insert(wname_saved);
 	    }
+		break;
+	default:
+		return PRO_TK_NO_ERROR;
 	    break;
     }
 

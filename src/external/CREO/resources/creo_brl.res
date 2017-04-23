@@ -156,7 +156,7 @@
 		(.StartLocation			3)
 		(.Resizeable			True)
 		(.DialogStyle			6)
-		(.Label				"Pro/E to BRL-CAD Converter")
+		(.Label				"CREO to BRL-CAD Converter")
 		(.Layout
 			(Grid (Rows 1 1 1 1 1 1 1) (Cols 1)
 				(Grid (Rows 1 1 1 1 1 1 1 1 1 1 1) (Cols 1 1)
