@@ -353,7 +353,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     /* We want to point to a stable wchar_t string pointer for this name, so find that first - don't
      * assume all callers will be using the parts/assems copies. */
     if (cinfo->parts->find(name) != cinfo->parts->end()) stable = *(cinfo->parts->find(name));
-    if (!stable && cinfo->assems->find(name) != cinfo->parts->end()) stable = *(cinfo->assems->find(name));
+    if (!stable && cinfo->assems->find(name) != cinfo->assems->end()) stable = *(cinfo->assems->find(name));
     if (!stable) {
 	/* ??? not a part or assembly we've seen, but got through filters ??? */
 	bu_vls_free(gname);
