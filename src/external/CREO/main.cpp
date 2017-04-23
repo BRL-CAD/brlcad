@@ -335,7 +335,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     ProError status;
     ProMdl model;
     ProMdlType type;
-	ProLine tmp_line = {'\0'};
+    ProLine tmp_line = {'\0'};
     ProFileName msgfil = {'\0'};
     wchar_t *tmp_str;
     int n_selected_names;
@@ -820,6 +820,25 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
 	goto print_msg;
     }
 
+    /* We should be able to do better than the hard coded default for the filename... */
+    ProMdl model;
+    if (ProMdlCurrentGet(&model) != PRO_TK_BAD_CONTEXT) {
+	wchar_t wname[CREO_NAME_MAX];
+	if (ProMdlNameGet(model, wname) == PRO_TK_NO_ERROR) {
+	    struct bu_vls nroot = BU_VLS_INIT_ZERO;
+	    char name[CREO_NAME_MAX];
+	    (void)ProWstringToString(name, wname);
+	    if (bu_path_component(&nroot, name, BU_PATH_BASENAME_EXTLESS)) {
+		wchar_t wgout[CREO_NAME_MAX];
+		bu_vls_printf(&nroot, ".g");
+		(void)ProStringToWstring(wgout, bu_vls_addr(&nroot));
+		ProUIInputpanelValueSet("creo_brl", "output_file", wgout);
+		bu_vls_free(&nroot);
+	    }
+	}
+    }
+
+    /* TODO - does this come before or after updating the output file value - does it matter? */
     if (ProUIDialogActivate("creo_brl", &ret_status) != PRO_TK_NO_ERROR) {
 	bu_vls_printf(&vls, "Error in creo-brl Dialog: dialog returned %d\n", ret_status);
     }

@@ -200,6 +200,7 @@ extern "C" int ProUIDialogDestroy(const char *);
 extern "C" int ProUIInputpanelEditable(char*,const char*);
 extern "C" int ProUIInputpanelReadOnly(char*,const char*);
 extern "C" int ProUIInputpanelValueGet(const char *,const char *,wchar_t**);
+extern "C" int ProUIInputpanelValueSet(const char *,const char *,wchar_t*);
 extern "C" int ProUILabelTextSet(const char *,const char *,wchar_t *);
 extern "C" int ProUIPushbuttonActivateActionSet(const char *,const char *,void (*)(char*,char *,void*),void*);
 extern "C" int ProUIRadiogroupSelectednamesGet(const char*,const char*,int*,char***);

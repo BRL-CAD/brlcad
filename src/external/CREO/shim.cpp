@@ -63,6 +63,7 @@ extern "C" int ProUIDialogDestroy(const char *) {return 0;}
 extern "C" int ProUIInputpanelEditable(char*,const char*) {return 0;}
 extern "C" int ProUIInputpanelReadOnly(char*,const char*) {return 0;}
 extern "C" int ProUIInputpanelValueGet(const char *,const char *,wchar_t**) {return 0;}
+extern "C" int ProUIInputpanelValueSet(const char *,const char *,wchar_t*) {return 0;}
 extern "C" int ProUILabelTextSet(const char *,const char *,wchar_t *) {return 0;}
 extern "C" int ProUIPushbuttonActivateActionSet(const char *,const char *,void (*)(char*,char *,void*),void*) {return 0;}
 extern "C" int ProUIRadiogroupSelectednamesGet(const char*,const char*,int*,char***) {return 0;}
