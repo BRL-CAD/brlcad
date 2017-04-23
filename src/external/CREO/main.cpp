@@ -132,6 +132,7 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 #define GUIMSG(wmsg, cmsg) { \
     (void)ProStringToWstring(wmsg, cmsg); \
     (void)ProUILabelTextSet( "creo_brl", "curr_proc", wmsg); \
+	(void)ProUIDialogActivate("creo_brl", NULL);\
 }
 
 extern "C" void
@@ -191,7 +192,7 @@ output_parts(struct creo_conv_info *cinfo)
 	/* All set - process the part */
 	(void)ProWstringToString(name, wname);
 	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing part %s (%d of %d)\n", name, cnt++, cinfo->assems->size());
-	bu_vls_sprintf(&msg, "Part %d of %d (%s)", cnt, cinfo->assems->size(), name);
+	bu_vls_sprintf(&msg, "Part %d of %d (%s)", cnt, cinfo->parts->size(), name);
 	GUIMSG(wmsg, bu_vls_addr(&msg));
 	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
