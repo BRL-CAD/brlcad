@@ -129,12 +129,21 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
     BU_PUT(cinfo, struct creo_conv_info);
 }
 
+#define GUIMSG(wmsg, cmsg) { \
+    (void)ProStringToWstring(wmsg, cmsg); \
+    (void)ProUILabelTextSet( "creo_brl", "curr_proc", wmsg); \
+}
+
 extern "C" void
 output_parts(struct creo_conv_info *cinfo)
 {
     wchar_t wname[CREO_NAME_MAX];
     char name[CREO_NAME_MAX];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
+    int cnt = 0;
+    ProLine wmsg = {'\0'};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
 	struct bu_vls *rname;
 	struct directory *rdp;
@@ -181,9 +190,13 @@ output_parts(struct creo_conv_info *cinfo)
 
 	/* All set - process the part */
 	(void)ProWstringToString(name, wname);
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing part %s\n", name);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing part %s (%d of %d)\n", name, cnt++, cinfo->assems->size());
+	bu_vls_sprintf(&msg, "Part %d of %d (%s)", cnt, cinfo->assems->size(), name);
+	GUIMSG(wmsg, bu_vls_addr(&msg));
 	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
+
+    bu_vls_free(&msg);
 }
 
 extern "C" void
@@ -192,6 +205,10 @@ output_assems(struct creo_conv_info *cinfo)
     wchar_t wname[CREO_NAME_MAX];
     char name[CREO_NAME_MAX];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
+    int cnt = 0;
+    ProLine wmsg = {'\0'};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
 	struct bu_vls *aname;
 	struct directory *adp;
@@ -224,9 +241,13 @@ output_assems(struct creo_conv_info *cinfo)
 
 	/* All set - process the assembly */
 	(void)ProWstringToString(name, wname);
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing assembly %s\n", name);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing assembly %s (%d of %d)\n", name, cnt++, cinfo->assems->size());
+	bu_vls_sprintf(&msg, "Assembly %d of %d (%s)", cnt, cinfo->assems->size(), name);
+	GUIMSG(wmsg, bu_vls_addr(&msg));
 	output_assembly(cinfo, parent);
     }
+
+    bu_vls_free(&msg);
 }
 
 
@@ -293,6 +314,12 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     /* get object name */
     if (ProMdlNameGet( model, wname ) != PRO_TK_NO_ERROR ) return;
     (void)ProWstringToString(name, wname);
+
+    ProLine wmsg = {'\0'};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&msg, "Processing %s", name);
+    GUIMSG(wmsg, bu_vls_addr(&msg));
+    bu_vls_free(&msg);
 
     /* save name */
     wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
