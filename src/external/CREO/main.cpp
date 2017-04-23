@@ -310,6 +310,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     wchar_t wname[CREO_NAME_MAX];
     char name[CREO_NAME_MAX];
     wchar_t *wname_saved;
+    struct directory *tdp = RT_DIR_NULL;
 
     /* get object name */
     if (ProMdlNameGet( model, wname ) != PRO_TK_NO_ERROR ) return;
@@ -345,13 +346,30 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 
     /* Make a final toplevel comb based on the file name to hold the orientation matrix */
     struct bu_vls *comb_name;
+    struct bu_vls top_name = BU_VLS_INIT_ZERO;
     struct wmember wcomb;
     BU_LIST_INIT(&wcomb.l);
     mat_t m;
     bn_decode_mat(m, "0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1");
     comb_name = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
-    mk_lcomb(cinfo->wdbp, "all.g", &wcomb, 0, NULL, NULL, NULL, 0);
+
+    /* Guarantee we have a non-colliding top level name */
+    bu_vls_sprintf(&top_name, "all.g");
+    tdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(&top_name), LOOKUP_QUIET);
+    if (tdp != RT_DIR_NULL) {bu_vls_sprintf(&top_name, "all-1.g");
+	long count = 1;
+	tdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(&top_name), LOOKUP_QUIET);
+	while (tdp != RT_DIR_NULL) {
+	    (void)bu_namegen(&top_name, NULL, NULL);
+	    if (count == LONG_MAX) {
+		creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "top level name gen failed\n");
+		break;
+	    }
+	}
+    }
+    if (tdp == RT_DIR_NULL) mk_lcomb(cinfo->wdbp, bu_vls_addr(&top_name), &wcomb, 0, NULL, NULL, NULL, 0);
+    bu_vls_free(&top_name);
 }
 
 
