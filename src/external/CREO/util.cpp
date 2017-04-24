@@ -70,7 +70,7 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
      * in multi-threading situations... - probably can't use libbu's logging safely */
 
     /* CREO gui */
-    ProFileName msgfil = {'\0'};
+    ProFileName msgfil = NULL;
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
     /* Can't do nested variable argument functions, so printf the message here */

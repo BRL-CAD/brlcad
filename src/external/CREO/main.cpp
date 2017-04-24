@@ -376,7 +376,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     ProError status;
     ProMdl model;
     ProMdlType type;
-    ProLine tmp_line = {'\0'};
+    ProLine tmp_line = NULL;
     wchar_t *tmp_str;
     int n_selected_names;
     char **selected_names;
@@ -926,7 +926,7 @@ extern "C" int user_initialize()
     }
 
     /* add a menu item that runs the new command */
-    ProFileName msgfil = {'\0'};
+    ProFileName msgfil = NULL;
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
     status = ProMenubarmenuPushbuttonAdd( "File", "CREO-BRL", "CREO-BRL", "CREO-BRL-HELP", "File.psh_exit", PRO_B_FALSE, cmd_id, msgfil );
     if ( status != PRO_TK_NO_ERROR ) {
