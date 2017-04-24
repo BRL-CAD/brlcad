@@ -69,6 +69,10 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
     /* NOTE - need creo specific semaphore lock for this if it's going to be used
      * in multi-threading situations... - probably can't use libbu's logging safely */
 
+    /* CREO gui */
+    ProFileName msgfil = {'\0'};
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
+
     /* Can't do nested variable argument functions, so printf the message here */
     va_list ap;
     char msg[CREO_MSG_MAX];
@@ -77,32 +81,17 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
     va_end(ap);
 
     /* Set the type and hooks, then call libbu */
-    if (cinfo) {
+    if (cinfo && msg_type != MSG_STATUS) {
 	cinfo->curr_msg_type = msg_type;
 	bu_log_add_hook(creo_logging_opts, (void *)cinfo);
 	bu_log("%s", msg);
 	bu_log_delete_hook(creo_logging_opts, (void *)cinfo);
     }
 
-    /* CREO gui */
-    ProFileName msgfil = {'\0'};
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-
-    switch (msg_type) {
-	case MSG_FAIL:
-	    ProMessageDisplay(msgfil, "USER_ERROR", msg);
-	    break;
-	case MSG_OK:
-	    ProMessageDisplay(msgfil, "USER_INFO", msg);
-	    break;
-	case MSG_STATUS:
-	    ProMessageDisplay(msgfil, "USER_INFO", msg);
-	    break;
-	default:
-	    break;
+    if (msg_type == MSG_STATUS) {
+	ProMessageDisplay(msgfil, "USER_INFO", msg);
+	(void)ProWindowRefresh(PRO_VALUE_UNUSED);
     }
-    (void)ProWindowRefresh(PRO_VALUE_UNUSED);
-
 }
 
 

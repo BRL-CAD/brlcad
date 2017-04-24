@@ -252,7 +252,6 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 
     /* Get feature name */
     if ((loc_status = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) {
-	creo_log(cinfo, MSG_FAIL, "Failure getting name");
 	return loc_status;
     }
 
@@ -337,7 +336,8 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	find_empty_assemblies(cinfo);
 	output_assems(cinfo);
     } else {
-	creo_log(cinfo, MSG_OK, "Object %s is neither PART nor ASSEMBLY, skipping", name);
+	creo_log(cinfo, MSG_OK, "Top level object %s is neither PART nor ASSEMBLY, skipping", name);
+	return;
     }
 
     /* Make a final toplevel comb based on the file name to hold the orientation matrix */
@@ -359,7 +359,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	while (tdp != RT_DIR_NULL) {
 	    (void)bu_namegen(&top_name, NULL, NULL);
 	    if (count == LONG_MAX) {
-		creo_log(cinfo, MSG_FAIL, "top level name gen failed\n");
+		creo_log(cinfo, MSG_FAIL, "%s: top level name gen failed\n", cinfo->output_file);
 		break;
 	    }
 	}
@@ -458,14 +458,18 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	/* If there is a pre-existing file, open it - it may be we only have to
 	 * update some items in it. */
 	if (bu_file_exists(output_file, NULL)) {
-	    cinfo->dbip = db_open(output_file, DB_OPEN_READWRITE);
-	    cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
-	    creo_log(cinfo, MSG_OK, "Note: %s exists - opening to update.\n", output_file);
+	    if ((cinfo->dbip = db_open(output_file, DB_OPEN_READWRITE)) != DBI_NULL) {
+		cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
+		creo_log(cinfo, MSG_OK, "Note: %s exists - opening to update.\n", output_file);
+	    } else {
+		creo_log(cinfo, MSG_FAIL, "Cannot open existing file: \n", output_file);
+		return;
+	    }
 	} else {
 
 	    /* open output file */
-	    if ( (cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL ) {
-		creo_log(cinfo, MSG_FAIL, "Cannot open output file.\n");
+	    if ((cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL) {
+		creo_log(cinfo, MSG_FAIL, "Cannot open output file: %s.\n", output_file);
 		creo_conv_info_free(cinfo);
 		ProUIDialogDestroy( "creo_brl" );
 		return;
@@ -789,28 +793,28 @@ elim_small_activate(char *dialog_name, char *button_name, ProAppData UNUSED(data
 
     if (state) {
 	if (ProUIInputpanelEditable(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
-	    fprintf(stderr, "Failed to activate \"minimum hole diameter\"\n");
+	    creo_log(NULL, MSG_STATUS, "Failed to activate \"minimum hole diameter\"");
 	    return;
 	}
 	if (ProUIInputpanelEditable(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
-	    fprintf(stderr, "Failed to activate \"minimum chamfer dimension\"\n");
+	    creo_log(NULL, MSG_STATUS, "Failed to activate \"minimum chamfer dimension\"");
 	    return;
 	}
 	if (ProUIInputpanelEditable(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
-	    fprintf(stderr, "Failed to activate \"minimum round radius\"\n");
+	    creo_log(NULL, MSG_STATUS, "Failed to activate \"minimum round radius\"");
 	    return;
 	}
     } else {
 	if (ProUIInputpanelReadOnly(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
-	    fprintf(stderr, "Failed to de-activate \"minimum hole diameter\"\n");
+	    creo_log(NULL, MSG_STATUS, "Failed to de-activate \"minimum hole diameter\"");
 	    return;
 	}
 	if (ProUIInputpanelReadOnly(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
-	    fprintf(stderr, "Failed to de-activate \"minimum chamfer dimension\"\n");
+	    creo_log(NULL, MSG_STATUS, "Failed to de-activate \"minimum chamfer dimension\"");
 	    return;
 	}
 	if (ProUIInputpanelReadOnly(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
-	    fprintf(stderr, "Failed to de-activate \"minimum round radius\"\n");
+	    creo_log(NULL, MSG_STATUS, "Failed to de-activate \"minimum round radius\"");
 	    return;
 	}
     }

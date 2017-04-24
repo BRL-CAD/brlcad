@@ -131,13 +131,13 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     /* create the path */
     status = ProAsmcomppathInit((ProSolid)parent, id_table, 1, &comp_path );
     if ( status != PRO_TK_NO_ERROR ) {
-	creo_log(cinfo, MSG_FAIL, "   Failed to get path from %s to %s, aborting\n", pname, cname);
+	creo_log(cinfo, MSG_FAIL, "%s: failed to get path from %s to %s, aborting\n", pname, pname, cname);
 	return status;
     }
     /* accumulate the xform matrix along the path created above */
     status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
     if ( status != PRO_TK_NO_ERROR ) {
-	creo_log(cinfo, MSG_FAIL, "   Failed to get transformation matrix %s/%s, aborting\n", pname, cname);
+	creo_log(cinfo, MSG_FAIL, "%s: failed to get transformation matrix %s/%s, aborting\n", pname, pname, cname);
 	return status;
     }
 
@@ -235,17 +235,15 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     BU_LIST_INIT(&wcomb.l);
 
     /* Initial comb setup */
-    char buffer[CREO_NAME_MAX];
+    char cname[CREO_NAME_MAX];
     ProMdlMdlnameGet(model, wname);
-    ProWstringToString(buffer, wname);
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	creo_log(cinfo, MSG_OK, "Processing assembly %s:\n", buffer);
-    }
+    ProWstringToString(cname, wname);
     ainfo->curr_parent = model;
     ainfo->wcmb = &wcomb;
 
     /* Add children */
-    ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
+    ProSolidFeatVisit(ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
+    creo_log(cinfo, MSG_DEBUG, "%s: All children of assembly visited.\n", cname);
 
     /* Get BRL-CAD name */
     comb_name = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
@@ -309,6 +307,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     db5_standardize_avs(&avs);
     db5_update_attributes(dp, &avs, cinfo->wdbp->dbip);
 
+    creo_log(cinfo, MSG_DEBUG, "%s: assembly conversion done.\n", cname);
     /* Free local container */
     BU_PUT(ainfo, struct assem_conv_info);
     return PRO_TK_NO_ERROR;

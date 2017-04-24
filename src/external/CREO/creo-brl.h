@@ -112,7 +112,7 @@ extern "C" {
 #define MSG_FAIL 0
 #define MSG_OK 1
 #define MSG_DEBUG 2
-#define MSG_STATUS 3
+#define MSG_STATUS 3 /* output for creo msg window only */
 
 struct StrCmp {
     bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {

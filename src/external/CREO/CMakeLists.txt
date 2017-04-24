@@ -10,7 +10,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   endif(COMMAND CMAKE_POLICY)
 
   # Set CMake project name
-  project(CREO2G)
+  project(CREO2BRL)
 
   # Tweak compiler flags - we *must* use /MT for this to work
   set(flaglists
@@ -279,12 +279,12 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     # getting into situations where the .exe converter plugin works but the DLL
     # does not.  Note that this is also identified as a possible issue in the
     # CREO dev documentation.
-    add_executable(creo-g ${creo_brl_srcs})
-    target_link_libraries(creo-g ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
+    add_executable(creo-brl-exe ${creo_brl_srcs})
+    target_link_libraries(creo-brl-exe ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
       set(DAT_STARTUP "spawn")
-      set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-g.exe")
+      set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-exe.exe")
       set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
       configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-debug.dat @ONLY)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
@@ -310,7 +310,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   add_custom_target(UNLOCK
     COMMAND "${CREO_PTK_UNLOCKER}" ${CMAKE_CURRENT_BINARY_DIR}/$(Configuration)/creo-brl.dll
-    DEPENDS CREO-G
+    DEPENDS creo-brl
     COMMENT "Unlocking CREO-G dll..."
     )
 
@@ -341,24 +341,24 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   set(creo_brl_srcs ${creo_brl_srcs} shim.cpp)
   add_definitions(-DTEST_BUILD)
-  add_library(creo-g ${creo_brl_srcs})
-  target_link_libraries(creo-g librt libwdb libbrep libbg libnmg libbn libbu)
-  set_target_properties(creo-g PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
+  add_library(creo-brl ${creo_brl_srcs})
+  target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbn libbu)
+  set_target_properties(creo-brl PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
   if(CPP_DLL_DEFINES)
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "BN_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "NMG_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "BG_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "BREP_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "RT_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "WDB_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
-    set_property(TARGET creo-g APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BN_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "NMG_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BG_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BREP_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "RT_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "WDB_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
   endif(CPP_DLL_DEFINES)
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
