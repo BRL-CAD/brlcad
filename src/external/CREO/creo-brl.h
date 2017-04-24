@@ -84,6 +84,7 @@ extern "C" {
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
+#include "bg.h"
 #include "wdb.h"
 #include "raytrace.h"
 }

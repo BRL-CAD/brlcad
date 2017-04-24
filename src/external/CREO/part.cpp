@@ -368,6 +368,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 {
     ProSurfaceTessellationData *tess = NULL;
     ProError status = PRO_TK_NO_ERROR;
+    int success = 0;
 
     wchar_t wname[CREO_NAME_MAX];
     char pname[CREO_NAME_MAX];
@@ -385,9 +386,6 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     double curr_error;
     double curr_angle;
 
-    vert_tree = bn_vert_tree_create();
-    norm_tree = bn_vert_tree_create();
-
     ProMdlMdlnameGet(model, wname);
     ProWstringToString(pname, wname);
 
@@ -398,83 +396,108 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	curr_error = cinfo->max_error - (i * cinfo->error_increment);
 	curr_angle = cinfo->min_angle_cntrl + (i * cinfo->angle_increment);
 
+	vert_tree = bn_vert_tree_create();
+	norm_tree = bn_vert_tree_create();
+
 	creo_log(cinfo, MSG_OK, "\tTessellating %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
 
 	status = ProPartTessellate(ProMdlToPart(model), curr_error/cinfo->creo_to_brl_conv, curr_angle, PRO_B_TRUE, &tess);
-	if (status == PRO_TK_NO_ERROR) break;
+	if (status != PRO_TK_NO_ERROR) {
+	    creo_log(cinfo, MSG_DEBUG, "Failed to tessellate %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
+	    creo_log(cinfo, MSG_DEBUG, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
+	    creo_log(cinfo, MSG_DEBUG, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
+	    creo_log(cinfo, MSG_DEBUG, "\tcurr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
+	    continue;
+	}
 
-	creo_log(cinfo, MSG_DEBUG, "Failed to tessellate %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
-	creo_log(cinfo, MSG_DEBUG, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
-	creo_log(cinfo, MSG_DEBUG, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
-	creo_log(cinfo, MSG_DEBUG, "\tcurr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
+
+	/* We got through the initial tests - how many surfaces do we have? */
+	status = ProArraySizeGet( (ProArray)tess, &surface_count );
+	if (status != PRO_TK_NO_ERROR) goto tess_cleanup;
+	if ( surface_count < 1 ) {
+
+	    /* free the tessellation memory */
+	    ProPartTessellationFree( &tess );
+	    tess = NULL;
+
+	    /* Free trees */
+	    bn_vert_tree_destroy(vert_tree);
+	    bn_vert_tree_destroy(norm_tree);
+
+	    status = PRO_TK_NOT_EXIST;
+	    goto tess_cleanup;
+	}
+
+
+	for (int surfno=0; surfno < surface_count; surfno++ ) {
+	    for (int j=0; j < tess[surfno].n_facets; j++ ) {
+		/* grab the triangle */
+		vert_no = tess[surfno].facets[j][0];
+		v1 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+			tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
+		vert_no = tess[surfno].facets[j][1];
+		v2 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+			tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
+		vert_no = tess[surfno].facets[j][2];
+		v3 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+			tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
+
+		if (bad_triangle(cinfo, v1, v2, v3, vert_tree)) continue;
+
+		faces.push_back(v1);
+		faces.push_back(v3);
+		faces.push_back(v2);
+
+		/* grab the surface normals */
+		if (cinfo->get_normals) {
+		    vert_no = tess[surfno].facets[j][0];
+		    VUNITIZE( tess[surfno].normals[vert_no] );
+		    n1 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			    tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
+		    vert_no = tess[surfno].facets[j][1];
+		    VUNITIZE( tess[surfno].normals[vert_no] );
+		    n2 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			    tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
+		    vert_no = tess[surfno].facets[j][2];
+		    VUNITIZE( tess[surfno].normals[vert_no] );
+		    n3 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			    tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
+
+		    face_normals.push_back(n1);
+		    face_normals.push_back(n3);
+		    face_normals.push_back(n2);
+		}
+	    }
+	}
+
+	/* If it's not solid, start over... */
+	if (!bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0])) {
+
+	    /* free the tessellation memory */
+	    ProPartTessellationFree( &tess );
+	    tess = NULL;
+
+	    /* Free trees */
+	    bn_vert_tree_destroy(vert_tree);
+	    bn_vert_tree_destroy(norm_tree);
+
+	    creo_log(cinfo, MSG_DEBUG, "Tessellate %s using error - %g, angle - %g failed solidity test\n", pname, curr_error, curr_angle);
+
+	} else {
+	    success = 1;
+	    break;
+	}
     }
 
-
-    if (status != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, "Failed to tessellate %s!!!\n", pname );
-	goto tess_cleanup;
-    }
-
-    if (!tess) {
+    if (!success) {
 	status = (have_bbox) ? PRO_TK_GENERAL_ERROR : PRO_TK_NOT_EXIST;
-	goto tess_cleanup;
-    }
-
-
-    /* We got through the initial tests - how many surfaces do we have? */
-    status = ProArraySizeGet( (ProArray)tess, &surface_count );
-    if (status != PRO_TK_NO_ERROR) goto tess_cleanup;
-    if ( surface_count < 1 ) {
-	creo_log(cinfo, MSG_OK, "Part %s has no surfaces - skipping.\n", pname );
-	cinfo->empty->insert(wname);
-	status = PRO_TK_NOT_EXIST;
+	if (PRO_TK_NOT_EXIST) {
+	    cinfo->empty->insert(wname);
+	}
 	goto tess_cleanup;
     }
 
     creo_log(cinfo, MSG_OK, "Successfully tessellated %s using: tessellation error - %g, angle - %g!!!\n", pname, curr_error, curr_angle );
-
-    creo_log(cinfo, MSG_DEBUG, "Processing surfaces of part %s\n", pname );
-
-    for (int surfno=0; surfno < surface_count; surfno++ ) {
-	for (int i=0; i < tess[surfno].n_facets; i++ ) {
-	    /* grab the triangle */
-	    vert_no = tess[surfno].facets[i][0];
-	    v1 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
-	    vert_no = tess[surfno].facets[i][1];
-	    v2 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
-	    vert_no = tess[surfno].facets[i][2];
-	    v3 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-		    tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
-
-	    if (bad_triangle(cinfo, v1, v2, v3, vert_tree)) continue;
-
-	    faces.push_back(v1);
-	    faces.push_back(v3);
-	    faces.push_back(v2);
-
-	    /* grab the surface normals */
-	    if (cinfo->get_normals) {
-		vert_no = tess[surfno].facets[i][0];
-		VUNITIZE( tess[surfno].normals[vert_no] );
-		n1 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
-		vert_no = tess[surfno].facets[i][1];
-		VUNITIZE( tess[surfno].normals[vert_no] );
-		n2 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
-		vert_no = tess[surfno].facets[i][2];
-		VUNITIZE( tess[surfno].normals[vert_no] );
-		n3 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
-
-		face_normals.push_back(n1);
-		face_normals.push_back(n3);
-		face_normals.push_back(n2);
-	    }
-	}
-    }
 
     /* TODO - make sure we have non-zero faces (and if needed, face_normals) vectors */
 

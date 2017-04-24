@@ -10,6 +10,8 @@
  /**   @defgroup tri_ray Triangle/Ray Intersection Tests */
 /**   @ingroup tri */
  /**   @defgroup tri_tri Triangle/Triangle Intersection Tests */
+/**   @ingroup tri */
+ /**   @defgroup trimesh Triangle Mesh Algorithms */
  /** @ingroup libbg */
  /**  @defgroup polygon Polygons */
  /** @ingroup libbg */
