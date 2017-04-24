@@ -931,13 +931,6 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		break;
 	    }
 	}
-
-	/* perhaps we barely grazed, treat it as a hit. */
-	if (npts == 1) {
-	    hit_type[1] = hit_type[0];
-	    k[1] = k[0] + SMALL_FASTF;
-	    npts++;
-	}
     }
 
     if (npts != 0 && npts != 2 && npts != 4) {
