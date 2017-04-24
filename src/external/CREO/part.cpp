@@ -332,7 +332,7 @@ extern "C" ProError
 opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname, int UNUSED(have_bbox))
 {
     ProError ret = PRO_TK_NO_ERROR;
-    ProSolid psol = ProMdlToSolid(model);
+    //ProSolid psol = ProMdlToSolid(model);
     ON_Brep *nbrep = ON_Brep::New();
     wchar_t wname[CREO_NAME_MAX];
     ProMdlMdlnameGet(model, wname);
