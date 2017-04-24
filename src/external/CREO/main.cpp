@@ -244,6 +244,7 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
     ProError loc_status;
     ProMdl model;
     ProMdlType type;
+    ProBoolean is_skel = PRO_B_FALSE;
     wchar_t wname[CREO_NAME_MAX];
     char name[CREO_NAME_MAX];
     wchar_t *wname_saved;
@@ -266,6 +267,13 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
     /* get its type (part or assembly are the only ones that should make it here) */
     if ((loc_status = ProMdlTypeGet(model, &type)) != PRO_TK_NO_ERROR) {
 	creo_log(cinfo, MSG_FAIL, "%s: failure getting type", name);
+	return PRO_TK_NO_ERROR;
+    }
+
+    /* If this is a skeleton, we're done */
+    ProMdlIsSkeleton(model, &is_skel);
+    if (is_skel) {
+	creo_log(cinfo, MSG_FAIL, "%s: is skeleton, skipping", name);
 	return PRO_TK_NO_ERROR;
     }
 

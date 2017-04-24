@@ -166,6 +166,8 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
 {
     ProError lstatus;
     ProMdlType mtype;
+    ProMdl model;
+    ProBoolean is_skel = PRO_B_FALSE;
     struct bu_vls *entry_name;
     wchar_t wname[CREO_NAME_MAX];
     struct assem_conv_info *ainfo = (struct assem_conv_info *)app_data;
@@ -177,6 +179,12 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
 
     /* Skip this member if the object it refers to is empty */
     if (ainfo->cinfo->empty->find(wname) != ainfo->cinfo->empty->end()) return PRO_TK_NO_ERROR;
+
+    /* If this is a skeleton, skip */
+    if ((ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) {
+	ProMdlIsSkeleton(model, &is_skel);
+	if (is_skel) return PRO_TK_NO_ERROR;
+    }
 
     /* get BRL-CAD name */
     switch (mtype) {

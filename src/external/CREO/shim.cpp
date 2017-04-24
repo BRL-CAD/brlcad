@@ -80,6 +80,7 @@ extern "C" void ProMdlMdlNameGet(void*,int*,wchar_t*) {}
 extern "C" void ProMdlMdlnameGet(void*,wchar_t*) {}
 extern "C" void ProMdlPrincipalunitsystemGet(void*,void**) {}
 extern "C" void ProMessageClear() {}
+extern "C" void ProMdlIsSkeleton(void*, bool*) {}
 extern "C" void ProPartTessellationFree(ProSurfaceTessellationData**) {}
 extern "C" void ProStringToWstring(wchar_t*,const char*) {}
 extern "C" void ProUIMessageDialogDisplay(int,const wchar_t *,const wchar_t *,ProUIMessageButton*,int,ProUIMessageButton*) {}
