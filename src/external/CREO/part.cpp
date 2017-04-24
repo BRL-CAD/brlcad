@@ -265,10 +265,81 @@ unsuppress_features(struct part_conv_info *pinfo)
     }
 }
 
+#if 0
 extern "C" ProError
-opennurbs_part(struct creo_conv_info *UNUSED(cinfo), ProMdl UNUSED(model), struct bu_vls **UNUSED(sname), int UNUSED(have_bbox))
+surface_filter(ProSurface s, ProAppData app_data) {
+    return PRO_TK_NO_ERROR;
+}
+
+extern "C" ProError
+surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
+    int s_id;
+    ProSurfacedata *ndata;
+    ProSrftype s_type;
+    ProUvParam uvmin, uvmax;
+    ProSurfaceOrient s_orient;
+    ProSurfaceshapedata s_shape;
+    ON_Brep *nbrep = (ON_Brep *)app_data;
+    ProSurfaceToNURBS(s, &ndata);
+    ProSurfacedataGet(ndata, &s_type, uvmin, uvmax, &s_orient, &s_shape, &s_id);
+    if (s_type == PRO_SRF_B_SPL) {
+	int degree[2];
+	double *up_array = NULL;
+	double *vp_array = NULL;
+	double *w_array = NULL;
+	ProVector *cntl_pnts;
+	int ucnt, vcnt, ccnt;
+	ProBsplinesrfdataGet(&s_shape, degree, &up_array, &vp_array, &w_array, &cntl_pnts, &ucnt, &vcnt, &ccnt); 
+	int ucvmax = ucnt - degree[0] - 2;
+	int vcvmax = vcnt - degree[1] - 2;
+
+	ON_NurbsSurface *ns = ON_NurbsSurface::New();
+	ns->m_dim = (degree[0] > degree[1]) ? degree[0] : degree[1];
+	ns->m_order[0] = degree[0] + 1;
+	ns->m_order[1] = degree[1] + 1;
+	ns->m_knot[0] = up_array;
+	ns->m_knot[1] = vp_array;
+	ns->m_is_rat = (w_array) ? 1 : 0;
+	if (ns->m_is_rat) {
+	    for (int i = 0; i < ucvmax; i++) {
+		for (int j = 0; j < vcvmax; j++) {
+		    ON_4dPoint cv;
+		    cv[0] = cntl_pnts[i*j+j][0];
+		    cv[1] = cntl_pnts[i*j+j][1];
+		    cv[2] = cntl_pnts[i*j+j][2];
+		    cv[3] = w_array[i];
+		    ns->SetCV(i,j,cv);
+		}
+	    }
+	} else {
+	    for (int i = 0; i < ucvmax; i++) {
+		for (int j = 0; j < vcvmax; j++) {
+		    ON_3dPoint cv;
+		    cv[0] = cntl_pnts[i*j+j][0];
+		    cv[1] = cntl_pnts[i*j+j][1];
+		    cv[2] = cntl_pnts[i*j+j][2];
+		    ns->SetCV(i,j,cv);
+		}
+	    }
+	}
+	nbrep->AddSurface(ns);
+    }
+    return PRO_TK_NO_ERROR;
+}
+#endif
+
+extern "C" ProError
+opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname, int UNUSED(have_bbox))
 {
     ProError ret = PRO_TK_NO_ERROR;
+    ProSolid psol = ProMdlToSolid(model);
+    ON_Brep *nbrep = ON_Brep::New();
+    wchar_t wname[CREO_NAME_MAX];
+    ProMdlMdlnameGet(model, wname);
+    //ProSolidSurfaceVisit(psol, surface_process, surface_filter, (ProAppData)nbrep);
+    /* Output the solid */
+    *sname = get_brlcad_name(cinfo, wname, "brep", N_SOLID);
+    mk_brep(cinfo->wdbp, bu_vls_addr(*sname), nbrep);
     /*
      * Things to investigate:
      *
@@ -531,7 +602,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     if (ProSolidOutlineGet(ProMdlToSolid(model), bboxpnts) != PRO_TK_NO_ERROR) have_bbox = 0;
 
     /* TODO - support an option to convert to ON_Brep */
-    status = opennurbs_part(cinfo, model, &sname, have_bbox);
+    //status = opennurbs_part(cinfo, model, &sname, have_bbox);
 
     /* Tessellate */
     status = tessellate_part(cinfo, model, &sname, have_bbox);
