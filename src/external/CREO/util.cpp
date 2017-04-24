@@ -116,9 +116,9 @@ wstr_to_long(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     errno = 0;
     ret = strtol(astr, &endptr, 0);
     if (endptr != NULL && strlen(endptr) > 0) {
-        /* Had some invalid character in the input, fail */
-        creo_log(cinfo, MSG_FAIL, "Invalid string specifier for int: %s\n", astr);
-        return -1;
+	/* Had some invalid character in the input, fail */
+	creo_log(cinfo, MSG_FAIL, "Invalid string specifier for int: %s\n", astr);
+	return -1;
     }
     return ret;
 }
@@ -133,9 +133,9 @@ wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     errno = 0;
     ret = strtod(astr, &endptr);
     if (endptr != NULL && strlen(endptr) > 0) {
-        /* Had some invalid character in the input, fail */
-        creo_log(cinfo, MSG_FAIL, "Invalid string specifier for double: %s\n", astr);
-        return -1.0;
+	/* Had some invalid character in the input, fail */
+	creo_log(cinfo, MSG_FAIL, "Invalid string specifier for double: %s\n", astr);
+	return -1.0;
     }
     return ret;
 }
@@ -188,7 +188,7 @@ extern "C" ProError regex_key(ProParameter *param, ProError UNUSED(status), ProA
     (void)regcomp(&reg, pdata->key, REG_NOSUB|REG_EXTENDED);
     if (!(regexec(&reg, pname, 0, NULL, 0))) {
 	regfree(&reg);
-       	return PRO_TK_CONTINUE;
+	return PRO_TK_CONTINUE;
     }
     regfree(&reg);
     if (ProParameterValueGet(param, &pval) != PRO_TK_NO_ERROR) return PRO_TK_CONTINUE;

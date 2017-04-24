@@ -285,9 +285,9 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 		wcsncpy(wname_saved, wname, wcslen(wname)+1);
 		cinfo->parts->insert(wname_saved);
 	    }
-		break;
+	    break;
 	default:
-		return PRO_TK_NO_ERROR;
+	    return PRO_TK_NO_ERROR;
 	    break;
     }
 

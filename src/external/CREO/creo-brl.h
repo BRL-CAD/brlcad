@@ -180,9 +180,9 @@ struct creo_conv_info {
     /* csg settings */
     double min_hole_diameter; /* if > 0.0, all holes features smaller than this will be deleted */
     double min_chamfer_dim;   /* if > 0.0, all chamfers with both dimensions less
-         			  * than this value will be deleted */
+			       * than this value will be deleted */
     double min_round_radius;  /* if > 0.0, all rounds with radius less than this
-         			  * value will be deleted */
+			       * value will be deleted */
 
     /* ------ Internal ------ */
     struct db_i *dbip;		/* output database */

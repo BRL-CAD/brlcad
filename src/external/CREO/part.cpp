@@ -235,32 +235,31 @@ extern "C" void
 unsuppress_features(struct part_conv_info *pinfo)
 {
     ProFeatureResumeOptions resume_opts[1];
-    ProFeatStatus feat_stat;
-    ProFeature feat;
     resume_opts[0] = PRO_FEAT_RESUME_INCLUDE_PARENTS;
 
     for (unsigned int i=0; i < pinfo->suppressed_features->size(); i++) {
-	if (ProFeatureInit(ProMdlToSolid(pinfo->model), pinfo->suppressed_features->at(i), &feat) == PRO_TK_NO_ERROR) {
-	    if (ProFeatureStatusGet(&feat, &feat_stat) == PRO_TK_NO_ERROR && feat_stat == PRO_FEAT_SUPPRESSED ) {
+	ProFeature feat;
+	ProFeatStatus feat_stat;
 
-		/* unsuppress this one */
-		creo_log(pinfo->cinfo, MSG_FAIL, "Unsuppressing feature %d\n", pinfo->suppressed_features->at(i));
-		int status = ProFeatureResume(ProMdlToSolid(pinfo->model), &(pinfo->suppressed_features->at(i)), 1, resume_opts, 1);
+	if (ProFeatureInit(ProMdlToSolid(pinfo->model), pinfo->suppressed_features->at(i), &feat) != PRO_TK_NO_ERROR) continue;
+	if (ProFeatureStatusGet(&feat, &feat_stat) != PRO_TK_NO_ERROR) continue;
+	if (feat_stat != PRO_FEAT_SUPPRESSED ) continue;
 
-		/* Tell the user what happened */
-		switch (status) {
-		    case PRO_TK_NO_ERROR:
-			creo_log(pinfo->cinfo, MSG_OK, "\tFeature %d unsuppressed\n", pinfo->suppressed_features->at(i));
-			break;
-		    case PRO_TK_SUPP_PARENTS:
-			creo_log(pinfo->cinfo, MSG_FAIL, "\tSuppressed parents for feature %d not found\n", pinfo->suppressed_features->at(i) );
-			break;
-		    default:
-			creo_log(pinfo->cinfo, MSG_FAIL, "\tfeature id %d unsuppression failed\n", pinfo->suppressed_features->at(i) );
-			break;
-		}
+	/* unsuppress this one */
+	creo_log(pinfo->cinfo, MSG_STATUS, "Unsuppressing feature %d\n", pinfo->suppressed_features->at(i));
+	int status = ProFeatureResume(ProMdlToSolid(pinfo->model), &(pinfo->suppressed_features->at(i)), 1, resume_opts, 1);
 
-	    }
+	/* Tell the user what happened */
+	switch (status) {
+	    case PRO_TK_NO_ERROR:
+		creo_log(pinfo->cinfo, MSG_STATUS, "\tFeature %d unsuppressed\n", pinfo->suppressed_features->at(i));
+		break;
+	    case PRO_TK_SUPP_PARENTS:
+		creo_log(pinfo->cinfo, MSG_FAIL, "\tSuppressed parents for feature %d not found\n", pinfo->suppressed_features->at(i) );
+		break;
+	    default:
+		creo_log(pinfo->cinfo, MSG_FAIL, "\tfeature id %d unsuppression failed\n", pinfo->suppressed_features->at(i) );
+		break;
 	}
     }
 }
@@ -503,7 +502,7 @@ tess_cleanup:
 
 /* routine to output a part as a BRL-CAD region with one BOT solid
  * The region will have the name from Pro/E with a .r suffix.
-w* The solid will have the same name with ".bot" prefix.
+ w* The solid will have the same name with ".bot" prefix.
  *
  *	returns:
  *		PRO_TK_NO_ERROR - OK
@@ -644,7 +643,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 have_part:
     BU_LIST_INIT(&wcomb.l);
     rname = get_brlcad_name(cinfo, wname, "r", N_REGION);
- 
+
     /* Add the solid to the region comb */
     (void)mk_addmember(bu_vls_addr(sname), &wcomb.l, NULL, WMOP_UNION);
 
@@ -698,7 +697,7 @@ have_part:
     bu_avs_add(&r_avs, "CREO_NAME", bu_vls_addr(creo_id));
 
     if (ProMdlVerstampGet(model, &cstamp) == PRO_TK_NO_ERROR) {
-    	if (ProVerstampStringGet(cstamp, &verstr) == PRO_TK_NO_ERROR) {
+	if (ProVerstampStringGet(cstamp, &verstr) == PRO_TK_NO_ERROR) {
 	    bu_avs_add(&r_avs, "CREO_VERSION_STAMP", verstr);
 	}
 	ProVerstampStringFree(&verstr);
