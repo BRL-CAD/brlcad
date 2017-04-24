@@ -131,13 +131,13 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     /* create the path */
     status = ProAsmcomppathInit((ProSolid)parent, id_table, 1, &comp_path );
     if ( status != PRO_TK_NO_ERROR ) {
-	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "   Failed to get path from %s to %s, aborting\n", pname, cname);
+	creo_log(cinfo, MSG_FAIL, "   Failed to get path from %s to %s, aborting\n", pname, cname);
 	return status;
     }
     /* accumulate the xform matrix along the path created above */
     status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
     if ( status != PRO_TK_NO_ERROR ) {
-	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "   Failed to get transformation matrix %s/%s, aborting\n", pname, cname);
+	creo_log(cinfo, MSG_FAIL, "   Failed to get transformation matrix %s/%s, aborting\n", pname, cname);
 	return status;
     }
 
@@ -231,7 +231,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     ProMdlMdlnameGet(model, wname);
     ProWstringToString(buffer, wname);
     if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Processing assembly %s:\n", buffer);
+	creo_log(cinfo, MSG_OK, "Processing assembly %s:\n", buffer);
     }
     ainfo->curr_parent = model;
     ainfo->wcmb = &wcomb;

@@ -64,8 +64,8 @@ int creo_logging_opts(void *data, void *vstr){
     return 0;
 }
 
-extern "C" ProError
-creo_log(struct creo_conv_info *cinfo, int msg_type, ProError status, const char *fmt, ...) {
+extern "C" void
+creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
     /* NOTE - need creo specific semaphore lock for this if it's going to be used
      * in multi-threading situations... - probably can't use libbu's logging safely */
 
@@ -77,12 +77,32 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, ProError status, const char
     va_end(ap);
 
     /* Set the type and hooks, then call libbu */
-    cinfo->curr_msg_type = msg_type;
-    bu_log_add_hook(creo_logging_opts, (void *)cinfo);
-    bu_log("%s", msg);
-    bu_log_delete_hook(creo_logging_opts, (void *)cinfo);
+    if (cinfo) {
+	cinfo->curr_msg_type = msg_type;
+	bu_log_add_hook(creo_logging_opts, (void *)cinfo);
+	bu_log("%s", msg);
+	bu_log_delete_hook(creo_logging_opts, (void *)cinfo);
+    }
 
-    return status;
+    /* CREO gui */
+    ProFileName msgfil = {'\0'};
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
+
+    switch (msg_type) {
+	case MSG_FAIL:
+	    ProMessageDisplay(msgfil, "USER_ERROR", msg);
+	    break;
+	case MSG_OK:
+	    ProMessageDisplay(msgfil, "USER_INFO", msg);
+	    break;
+	case MSG_STATUS:
+	    ProMessageDisplay(msgfil, "USER_INFO", msg);
+	    break;
+	default:
+	    break;
+    }
+    (void)ProWindowRefresh(PRO_VALUE_UNUSED);
+
 }
 
 
@@ -97,7 +117,7 @@ wstr_to_long(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     ret = strtol(astr, &endptr, 0);
     if (endptr != NULL && strlen(endptr) > 0) {
         /* Had some invalid character in the input, fail */
-        creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Invalid string specifier for int: %s\n", astr);
+        creo_log(cinfo, MSG_FAIL, "Invalid string specifier for int: %s\n", astr);
         return -1;
     }
     return ret;
@@ -114,7 +134,7 @@ wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     ret = strtod(astr, &endptr);
     if (endptr != NULL && strlen(endptr) > 0) {
         /* Had some invalid character in the input, fail */
-        creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Invalid string specifier for double: %s\n", astr);
+        creo_log(cinfo, MSG_FAIL, "Invalid string specifier for double: %s\n", astr);
         return -1.0;
     }
     return ret;
@@ -278,41 +298,41 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     /* If we don't have a valid type, we don't know what to do */
     if (flag < N_REGION && flag > N_CREO) return NULL;
 
-	/* If the name isn't in either the parts or assemblies sets, it's
-	 * not an active part of the conversion */
-	if (cinfo->parts->find(name) != cinfo->parts->end()) stable = *(cinfo->parts->find(name));
+    /* If the name isn't in either the parts or assemblies sets, it's
+     * not an active part of the conversion */
+    if (cinfo->parts->find(name) != cinfo->parts->end()) stable = *(cinfo->parts->find(name));
     if (!stable && cinfo->assems->find(name) != cinfo->assems->end()) stable = *(cinfo->assems->find(name));
-	if (!stable) {
-		creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "%s - no stable version of name found???.\n", astr);
-		return NULL;
-	}
+    if (!stable) {
+	creo_log(cinfo, MSG_DEBUG, "%s - no stable version of name found???.\n", astr);
+	return NULL;
+    }
 
     /* Set up */
-    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Generating name for %s...\n", astr);
+    creo_log(cinfo, MSG_DEBUG, "Generating name for %s...\n", astr);
 
     if (flag == N_REGION) {
 	nmap = cinfo->region_name_map;
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t name type: region\n");
+	creo_log(cinfo, MSG_DEBUG, "\t name type: region\n");
     }
     if (flag == N_ASSEM) {
 	nmap = cinfo->assem_name_map;
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t name type: assembly\n");
+	creo_log(cinfo, MSG_DEBUG, "\t name type: assembly\n");
     }
     if (flag == N_SOLID) {
 	nmap = cinfo->solid_name_map;
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t name type: solid\n");
+	creo_log(cinfo, MSG_DEBUG, "\t name type: solid\n");
     }
     if (flag == N_CREO) {
 	nmap = cinfo->creo_name_map;
 	nset = cinfo->creo_names;
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t name type: CREO name\n");
+	creo_log(cinfo, MSG_DEBUG, "\t name type: CREO name\n");
     }
 
     /* If we've already got something, return it. */
     n_it = nmap->find(name);
     if (n_it != nmap->end()) {
 	gname = n_it->second;
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "name \"%s\" already exists\n", bu_vls_addr(gname));
+	creo_log(cinfo, MSG_DEBUG, "name \"%s\" already exists\n", bu_vls_addr(gname));
 	return gname;
     }
 
@@ -349,11 +369,11 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
 	while (nset->find(gname) != nset->end()) {
 	    (void)bu_namegen(gname, NULL, NULL);
 	    count++;
-	    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\t trying name : %s\n", bu_vls_addr(gname));
+	    creo_log(cinfo, MSG_DEBUG, "\t trying name : %s\n", bu_vls_addr(gname));
 	    if (count == LONG_MAX) {
 		bu_vls_free(gname);
 		BU_PUT(gname, struct bu_vls);
-		creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "%s name generation FAILED.\n", astr);
+		creo_log(cinfo, MSG_FAIL, "%s name generation FAILED.\n", astr);
 		return NULL;
 	    }
 	}
@@ -364,7 +384,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     nset->insert(gname);
     nmap->insert(std::pair<wchar_t *, struct bu_vls *>(stable, gname));
 
-    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "name \"%s\" succeeded\n", bu_vls_addr(gname));
+    creo_log(cinfo, MSG_DEBUG, "name \"%s\" succeeded\n", bu_vls_addr(gname));
 
     return gname;
 }

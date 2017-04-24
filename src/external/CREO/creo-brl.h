@@ -111,6 +111,7 @@ extern "C" {
 #define MSG_FAIL 0
 #define MSG_OK 1
 #define MSG_DEBUG 2
+#define MSG_STATUS 3
 
 struct StrCmp {
     bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {
@@ -234,7 +235,7 @@ extern "C" ProError output_part(struct creo_conv_info *, ProMdl model);
 /* util */
 extern "C" ProError component_filter(ProFeature *, ProAppData *);
 extern "C" ProError creo_attribute_val(char **val, const char *key, ProMdl m);
-extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
+extern "C" void creo_log(struct creo_conv_info *, int, const char *, ...);
 extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
 extern "C" ProError PopupMsg(const char *, const char *);

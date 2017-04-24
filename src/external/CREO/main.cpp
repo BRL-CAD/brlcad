@@ -129,22 +129,14 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
     BU_PUT(cinfo, struct creo_conv_info);
 }
 
-#define GUIMSG(wmsg, cmsg) { \
-    (void)ProStringToWstring(wmsg, cmsg); \
-    (void)ProUILabelTextSet( "creo_brl", "curr_proc", wmsg); \
-}
-
 extern "C" void
 output_parts(struct creo_conv_info *cinfo)
 {
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     int cnt = 0;
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
 	wchar_t wname[CREO_NAME_MAX];
 	char name[CREO_NAME_MAX];
-	ProLine wmsg = {'\0'};
 	struct bu_vls *rname;
 	struct directory *rdp;
 	ProMdl m;
@@ -190,13 +182,9 @@ output_parts(struct creo_conv_info *cinfo)
 
 	/* All set - process the part */
 	(void)ProWstringToString(name, wname);
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing part %s (%d of %d)\n", name, cnt++, cinfo->assems->size());
-	bu_vls_sprintf(&msg, "Part %d of %d (%s)", cnt, cinfo->parts->size(), name);
-	GUIMSG(wmsg, bu_vls_addr(&msg));
+	creo_log(cinfo, MSG_STATUS, "Processing part %s (%d of %d)\n", name, cnt++, cinfo->assems->size());
 	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
-
-    bu_vls_free(&msg);
 }
 
 extern "C" void
@@ -204,12 +192,9 @@ output_assems(struct creo_conv_info *cinfo)
 {
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     int cnt = 0;
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
 	wchar_t wname[CREO_NAME_MAX];
 	char name[CREO_NAME_MAX];
-	ProLine wmsg = {'\0'};
 	struct bu_vls *aname;
 	struct directory *adp;
 	ProMdl parent;
@@ -241,13 +226,9 @@ output_assems(struct creo_conv_info *cinfo)
 
 	/* All set - process the assembly */
 	(void)ProWstringToString(name, wname);
-	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing assembly %s (%d of %d)\n", name, cnt++, cinfo->assems->size());
-	bu_vls_sprintf(&msg, "Assembly %d of %d (%s)", cnt, cinfo->assems->size(), name);
-	GUIMSG(wmsg, bu_vls_addr(&msg));
+	creo_log(cinfo, MSG_STATUS, "Processing assembly %s (%d of %d)\n", name, cnt++, cinfo->assems->size());
 	output_assembly(cinfo, parent);
     }
-
-    bu_vls_free(&msg);
 }
 
 
@@ -269,15 +250,24 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
 
     /* Get feature name */
-    if ((loc_status = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return creo_log(cinfo, MSG_FAIL, loc_status, "Failure getting name");
+    if ((loc_status = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) {
+	creo_log(cinfo, MSG_FAIL, "Failure getting name");
+	return loc_status;
+    }
 
     (void)ProWstringToString(name, wname);
 
     /* get the model for this member */
-    if ((loc_status = ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "%s: failure getting model", name);
+    if ((loc_status = ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, "%s: failure getting model", name);
+	return PRO_TK_NO_ERROR;
+    }
 
     /* get its type (part or assembly are the only ones that should make it here) */
-    if ((loc_status = ProMdlTypeGet(model, &type)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "%s: failure getting type", name);
+    if ((loc_status = ProMdlTypeGet(model, &type)) != PRO_TK_NO_ERROR) {
+	creo_log(cinfo, MSG_FAIL, "%s: failure getting type", name);
+	return PRO_TK_NO_ERROR;
+    }
 
     /* log this member */
     switch ( type ) {
@@ -320,12 +310,6 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     if (ProMdlNameGet( model, wname ) != PRO_TK_NO_ERROR ) return;
     (void)ProWstringToString(name, wname);
 
-    ProLine wmsg = {'\0'};
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&msg, "Processing %s", name);
-    GUIMSG(wmsg, bu_vls_addr(&msg));
-    bu_vls_free(&msg);
-
     /* save name */
     wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
     wcsncpy(wname_saved, wname, wcslen(wname)+1);
@@ -345,7 +329,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	find_empty_assemblies(cinfo);
 	output_assems(cinfo);
     } else {
-	bu_log("Object %s is neither PART nor ASSEMBLY, skipping", name);
+	creo_log(cinfo, MSG_OK, "Object %s is neither PART nor ASSEMBLY, skipping", name);
     }
 
     /* Make a final toplevel comb based on the file name to hold the orientation matrix */
@@ -367,7 +351,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	while (tdp != RT_DIR_NULL) {
 	    (void)bu_namegen(&top_name, NULL, NULL);
 	    if (count == LONG_MAX) {
-		creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "top level name gen failed\n");
+		creo_log(cinfo, MSG_FAIL, "top level name gen failed\n");
 		break;
 	    }
 	}
@@ -385,7 +369,6 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     ProMdl model;
     ProMdlType type;
     ProLine tmp_line = {'\0'};
-    ProFileName msgfil = {'\0'};
     wchar_t *tmp_str;
     int n_selected_names;
     char **selected_names;
@@ -437,10 +420,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	/* open log file, if a name was provided */
 	if (strlen(log_file) > 0) {
 	    if ((cinfo->logger=fopen(log_file, "wb")) == NULL) {
-		(void)ProMessageDisplay(msgfil, "USER_ERROR", "Cannot open log file");
-		ProMessageClear();
-		fprintf(stderr, "Cannot open log file\n");
-		perror("\t");
+		creo_log(cinfo, MSG_FAIL, "Cannot open log file");
 		creo_conv_info_free(cinfo);
 		ProUIDialogDestroy("creo_brl");
 		return;
@@ -459,7 +439,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	wchar_t *w_output_file;
 	status = ProUIInputpanelValueGet("creo_brl", "output_file", &w_output_file);
 	if ( status != PRO_TK_NO_ERROR ) {
-	    creo_log(cinfo, MSG_FAIL, status, "Failed to get output file name\n");
+	    creo_log(cinfo, MSG_FAIL, "Failed to get output file name\n");
 	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
@@ -472,12 +452,12 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	if (bu_file_exists(output_file, NULL)) {
 	    cinfo->dbip = db_open(output_file, DB_OPEN_READWRITE);
 	    cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
-	    creo_log(cinfo, MSG_OK, status, "Note: %s exists - opening to update.\n", output_file);
+	    creo_log(cinfo, MSG_OK, "Note: %s exists - opening to update.\n", output_file);
 	} else {
 
 	    /* open output file */
 	    if ( (cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL ) {
-		creo_log(cinfo, MSG_FAIL, status, "Cannot open output file.\n");
+		creo_log(cinfo, MSG_FAIL, "Cannot open output file.\n");
 		creo_conv_info_free(cinfo);
 		ProUIDialogDestroy( "creo_brl" );
 		return;
@@ -498,7 +478,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	wchar_t *w_param_file;
 	status = ProUIInputpanelValueGet("creo_brl", "name_file", &w_param_file);
 	if ( status != PRO_TK_NO_ERROR ) {
-	    creo_log(cinfo, MSG_FAIL, status, "Failed to get name of model parameter specification file.\n");
+	    creo_log(cinfo, MSG_FAIL, "Failed to get name of model parameter specification file.\n");
 	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
@@ -511,7 +491,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	    std::ifstream pfile(param_file);
 	    std::string line;
 	    if (!pfile) {
-		creo_log(cinfo, MSG_FAIL, status, "Cannot read parameter keys file.\n");
+		creo_log(cinfo, MSG_FAIL, "Cannot read parameter keys file.\n");
 		creo_conv_info_free(cinfo);
 		ProUIDialogDestroy( "creo_brl" );
 		return;
@@ -530,7 +510,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 			pkey = pkey.substr(0 ,endpos+1);
 		    }
 		    if (pkey.length() > 0) {
-			creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Found model parameter naming key: %s.\n", pkey.c_str());
+			creo_log(cinfo, MSG_DEBUG, "Found model parameter naming key: %s.\n", pkey.c_str());
 			cinfo->model_parameters->push_back(bu_strdup(pkey.c_str()));
 		    }
 		}
@@ -547,7 +527,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	wchar_t *w_attr_file;
 	status = ProUIInputpanelValueGet("creo_brl", "attr_file", &w_attr_file);
 	if ( status != PRO_TK_NO_ERROR ) {
-	    creo_log(cinfo, MSG_FAIL, status, "Failed to get name of attribute list file.\n");
+	    creo_log(cinfo, MSG_FAIL, "Failed to get name of attribute list file.\n");
 	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
@@ -560,7 +540,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	    std::ifstream pfile(attr_file);
 	    std::string line;
 	    if (!pfile) {
-		creo_log(cinfo, MSG_FAIL, status, "Cannot read attribute list file.\n");
+		creo_log(cinfo, MSG_FAIL, "Cannot read attribute list file.\n");
 		creo_conv_info_free(cinfo);
 		ProUIDialogDestroy( "creo_brl" );
 		return;
@@ -579,7 +559,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 			pkey = pkey.substr(0 ,endpos+1);
 		    }
 		    if (pkey.length() > 0) {
-			creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Found attribute key: %s.\n", pkey.c_str());
+			creo_log(cinfo, MSG_DEBUG, "Found attribute key: %s.\n", pkey.c_str());
 			cinfo->attrs->push_back(bu_strdup(pkey.c_str()));
 		    }
 		}
@@ -589,7 +569,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* get starting ident */
     if ((status = ProUIInputpanelValueGet("creo_brl", "starting_ident", &tmp_str)) != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, status, "Failed to get starting ident.\n");
+	creo_log(cinfo, MSG_FAIL, "Failed to get starting ident.\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -602,7 +582,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* get max error */
     if ((status = ProUIInputpanelValueGet("creo_brl", "max_error", &tmp_str)) != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, status, "Failed to get max tessellation error.\n");
+	creo_log(cinfo, MSG_FAIL, "Failed to get max tessellation error.\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -614,7 +594,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* get min error */
     if ((status = ProUIInputpanelValueGet("creo_brl", "min_error", &tmp_str)) != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, status, "Failed to get min tessellation error.\n");
+	creo_log(cinfo, MSG_FAIL, "Failed to get min tessellation error.\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -627,7 +607,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* get the max angle control */
     if ((status = ProUIInputpanelValueGet("creo_brl", "max_angle_ctrl", &tmp_str)) != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, status, "Failed to get max angle control.\n");
+	creo_log(cinfo, MSG_FAIL, "Failed to get max angle control.\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -639,7 +619,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* get the min angle control */
     if ((status = ProUIInputpanelValueGet("creo_brl", "min_angle_ctrl", &tmp_str)) != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, status, "Failed to get min angle control.\n");
+	creo_log(cinfo, MSG_FAIL, "Failed to get min angle control.\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -651,7 +631,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* get the max to min steps */
     if ((status = ProUIInputpanelValueGet("creo_brl", "isteps", &tmp_str)) != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, status, "Failed to get max to min steps.\n");
+	creo_log(cinfo, MSG_FAIL, "Failed to get max to min steps.\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -669,7 +649,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* check if user wants to do any CSG */
     if ((status = ProUICheckbuttonGetState("creo_brl", "facets_only", &cinfo->do_facets_only)) != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, status, "Failed to get checkbutton setting (facetize only).\n");
+	creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (facetize only).\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -677,7 +657,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* check if user wants to eliminate small features */
     if ((status = ProUICheckbuttonGetState("creo_brl", "elim_small", &cinfo->do_elims)) != PRO_TK_NO_ERROR ) {
-	creo_log(cinfo, MSG_FAIL, status, "Failed to get checkbutton setting (eliminate small features).\n");
+	creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (eliminate small features).\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -685,7 +665,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* check if user wants surface normals in the BOT's */
     if ((status = ProUICheckbuttonGetState("creo_brl", "get_normals", &cinfo->get_normals)) != PRO_TK_NO_ERROR ) {
-	creo_log(cinfo, MSG_FAIL, status, "Failed to get checkbutton setting (extract surface normals).\n");
+	creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (extract surface normals).\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -695,7 +675,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
 	/* get the minimum hole diameter */
 	if ((status = ProUIInputpanelValueGet("creo_brl", "min_hole", &tmp_str)) != PRO_TK_NO_ERROR) {
-	    creo_log(cinfo, MSG_FAIL, status, "Failed to get minimum hole diameter.\n");
+	    creo_log(cinfo, MSG_FAIL, "Failed to get minimum hole diameter.\n");
 	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
@@ -707,7 +687,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
 	/* get the minimum chamfer dimension */
 	if ((status = ProUIInputpanelValueGet("creo_brl", "min_chamfer", &tmp_str)) != PRO_TK_NO_ERROR) {
-	    creo_log(cinfo, MSG_FAIL, status, "Failed to get minimum chamfer diameter.\n");
+	    creo_log(cinfo, MSG_FAIL, "Failed to get minimum chamfer diameter.\n");
 	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
@@ -719,7 +699,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
 	/* get the minimum round radius */
 	if ((status = ProUIInputpanelValueGet("creo_brl", "min_round", &tmp_str)) != PRO_TK_NO_ERROR) {
-	    creo_log(cinfo, MSG_FAIL, status, "Failed to get minimum round radius.\n");
+	    creo_log(cinfo, MSG_FAIL, "Failed to get minimum round radius.\n");
 	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
@@ -737,7 +717,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* get the currently displayed model in Pro/E */
     if ((status = ProMdlCurrentGet(&model)) == PRO_TK_BAD_CONTEXT ) {
-	creo_log(cinfo, MSG_FAIL, status, "No model is displayed!!\n");
+	creo_log(cinfo, MSG_FAIL, "No model is displayed!!\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -745,7 +725,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* get its type */
     if ((status = ProMdlTypeGet(model, &type)) == PRO_TK_BAD_INPUTS) {
-	creo_log(cinfo, MSG_FAIL, status, "Cannot get type of current model!!\n");
+	creo_log(cinfo, MSG_FAIL, "Cannot get type of current model!!\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -753,7 +733,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     /* can only do parts and assemblies, no drawings, etc. */
     if ( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
-	creo_log(cinfo, MSG_FAIL, status, "Current model is not a solid object.\n");
+	creo_log(cinfo, MSG_FAIL, "Current model is not a solid object.\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -839,12 +819,10 @@ extern "C" int
 creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p_push_cmd_data))
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    ProFileName msgfil = {'\0'};
     int destroy_dialog = 0;
     int ret_status;
 
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-    ProMessageDisplay(msgfil, "USER_INFO", "Launching creo_brl...");
+    creo_log(NULL, MSG_STATUS, "Launching creo_brl...");
 
     /* use UI dialog */
     if (ProUIDialogCreate("creo_brl", "creo_brl") != PRO_TK_NO_ERROR) {
@@ -887,15 +865,14 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
 	}
     }
 
-    /* TODO - does this come before or after updating the output file value - does it matter? */
     if (ProUIDialogActivate("creo_brl", &ret_status) != PRO_TK_NO_ERROR) {
 	bu_vls_printf(&vls, "Error in creo-brl Dialog: dialog returned %d\n", ret_status);
     }
 
 print_msg:
-    ProMessageDisplay(msgfil, "USER_INFO", bu_vls_addr(&vls));
-    if (destroy_dialog) ProUIDialogDestroy("creo_brl");
+    if (bu_vls_strlen(&vls) > 0) creo_log(NULL, MSG_FAIL, bu_vls_addr(&vls));
     bu_vls_free(&vls);
+    if (destroy_dialog) ProUIDialogDestroy("creo_brl");
     return 0;
 }
 
@@ -919,44 +896,29 @@ creo_brl_access(uiCmdAccessMode UNUSED(access_mode))
 extern "C" int user_initialize()
 {
     ProError status;
-    ProCharLine astr = {'\0'};
-    ProFileName msgfil = {'\0'};
     int i;
     uiCmdCmdId cmd_id;
-    wchar_t errbuf[80];
-
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
     /* Pro/E says always check the size of w_char */
     status = ProWcharSizeVerify (sizeof (wchar_t), &i);
     if ( status != PRO_TK_NO_ERROR || (i != sizeof (wchar_t)) ) {
-	sprintf(astr, "ERROR wchar_t Incorrect size (%d). Should be: %d", (int)sizeof(wchar_t), i );
-	status = ProMessageDisplay(msgfil, "USER_ERROR", astr);
-	printf("%s\n", astr);
-	ProStringToWstring(errbuf, astr);
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	creo_log(NULL, MSG_FAIL, "ERROR wchar_t Incorrect size (%d). Should be: %d", (int)sizeof(wchar_t), i );
 	return -1;
     }
 
     /* add a command that calls our creo-brl routine */
     status = ProCmdActionAdd( "CREO-BRL", (uiCmdCmdActFn)creo_brl, uiProe2ndImmediate, creo_brl_access, PRO_B_FALSE, PRO_B_FALSE, &cmd_id );
     if ( status != PRO_TK_NO_ERROR ) {
-	sprintf( astr, "Failed to add creo-brl action" );
-	fprintf( stderr, "%s\n", astr);
-	ProMessageDisplay(msgfil, "USER_ERROR", astr);
-	ProStringToWstring(errbuf, astr);
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	creo_log(NULL, MSG_FAIL, "Failed to add creo-brl action" );
 	return -1;
     }
 
     /* add a menu item that runs the new command */
+    ProFileName msgfil = {'\0'};
+    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
     status = ProMenubarmenuPushbuttonAdd( "File", "CREO-BRL", "CREO-BRL", "CREO-BRL-HELP", "File.psh_exit", PRO_B_FALSE, cmd_id, msgfil );
     if ( status != PRO_TK_NO_ERROR ) {
-	sprintf( astr, "Failed to add creo-brl menu button" );
-	fprintf( stderr, "%s\n", astr);
-	ProMessageDisplay(msgfil, "USER_ERROR", astr);
-	ProStringToWstring(errbuf, astr);
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	creo_log(NULL, MSG_FAIL, "Failed to add creo-brl menu button" );
 	return -1;
     }
 
@@ -969,6 +931,7 @@ extern "C" int user_initialize()
 
 extern "C" void user_terminate()
 {
+    ProMessageClear();
 }
 
 /*
