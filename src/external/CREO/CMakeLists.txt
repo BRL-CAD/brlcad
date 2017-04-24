@@ -234,14 +234,14 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   endif(brlcadlibs_notinstalled)
 
 
-# Set the relevant include directories
-include_directories(
-  "${BRLCAD_ROOT_DIR}/include/brlcad"
-  "${BRLCAD_ROOT_DIR}/include"
-  "${BRLCAD_ROOT_DIR}/include/openNURBS"
-  "${CREO_PTK_INCDIR}"
-  "${CREO_PTK_APPLS_INCDIR}"
-  )
+  # Set the relevant include directories
+  include_directories(
+    "${BRLCAD_ROOT_DIR}/include/brlcad"
+    "${BRLCAD_ROOT_DIR}/include"
+    "${BRLCAD_ROOT_DIR}/include/openNURBS"
+    "${CREO_PTK_INCDIR}"
+    "${CREO_PTK_APPLS_INCDIR}"
+    )
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
@@ -273,16 +273,22 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat @ONLY)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/${CREO_DAT_DIR}")
 
-  # Debugging executable version of plugin
-  add_executable(creo-g ${creo_brl_srcs})
-  target_link_libraries(creo-g ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    set(DAT_STARTUP "spawn")
-    set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-g.exe")
-    set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
-    configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-debug.dat @ONLY)
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  if(DEFINED CREO_EXEC_PLUGIN)
+    # Debugging executable version of plugin - only use this if necessary.  For
+    # normal debugging, it is preferable to use the DLL in order to avoid
+    # getting into situations where the .exe converter plugin works but the DLL
+    # does not.  Note that this is also identified as a possible issue in the
+    # CREO dev documentation.
+    add_executable(creo-g ${creo_brl_srcs})
+    target_link_libraries(creo-g ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${BRLCAD_STATIC_LIBS})
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      set(DAT_STARTUP "spawn")
+      set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-g.exe")
+      set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
+      configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-debug.dat @ONLY)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(DEFINED CREO_EXEC_PLUGIN)
 
   # Install the resource files
   file(GLOB RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res)
