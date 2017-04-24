@@ -120,8 +120,8 @@ typedef void* ProUnititem;
 typedef void* ProUnitsystem;
 typedef void* ProValue;
 typedef void* ProWVerstamp;
-typedef wchar_t* ProFileName;
-typedef wchar_t* ProLine;
+typedef wchar_t ProFileName[1];
+typedef wchar_t ProLine[1];
 
 /* Definitions where we need to provide internal structure
  * (because our code is accessing it) */
