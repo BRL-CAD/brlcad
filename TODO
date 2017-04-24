@@ -56,6 +56,11 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* try to come up with a way we can report the number of times
+  the configuration step has been run and changed something
+  without triggering almost a full rebuild.  Maybe have the
+  bits that need to report it pull from a file in bu_brlcad_data?
+
 * make sure TIE can raytrace all of the various BoT modes
 
 * turn on Bullet code (simulate command) unconditionally
