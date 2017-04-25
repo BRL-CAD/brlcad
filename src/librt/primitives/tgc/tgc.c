@@ -811,14 +811,17 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    /* shouldn't be possible, but ensure no overflow */
 	    npts = MAX_TGC_HITS-2;
 	} else if (npts <= 0) {
-	    static int reported=0;
-	    bu_log("Root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
-	    if (!reported) {
-		VPRINT("while shooting from:\t", rp->r_pt);
-		VPRINT("while shooting at:\t", rp->r_dir);
-		bu_log("Additional TGC convergence failure detail will be suppressed.\n");
-		reported=1;
+	    static size_t reported = 0;
+
+	    if (reported < 10) {
+		bu_log("Root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+		/* these are printed in 'mm' regardless of local units */
+		VPRINT("\tshooting point (units mm): ", rp->r_pt);
+		VPRINT("\tshooting direction:        ", rp->r_dir);
+	    } else if (reported == 10) {
+		bu_log("Too many convergence failures.  Suppressing further TGC root finder reports.\n");
 	    }
+	    reported++;
 	}
     }
 
@@ -935,19 +938,19 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     if (npts != 0 && npts != 2 && npts != 4) {
 	static size_t tgc_msgs = 0;
-	/* these are printed in 'mm' regardless of local units */
-
-	if (tgc_msgs++ < 10) {
-	    bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n", stp->st_name, npts);
-	    bu_log("\tray: pt = (%g %g %g), dir = (%g %g %g), units in mm\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
+	if (tgc_msgs < 10) {
+	    bu_log("Root solver reported %d intersections != {0, 2, 4} on %s\n", npts, stp->st_name);
+	    /* these are printed in 'mm' regardless of local units */
+	    VPRINT("\tshooting point (units mm): ", rp->r_pt);
+	    VPRINT("\tshooting direction:        ", rp->r_dir);
 	    for (i = 0; i < npts; i++) {
 		bu_log("\t%g", k[i]*t_scale);
 	    }
 	    bu_log("\n");
 	} else if (tgc_msgs == 10) {
-	    bu_log("Too many grazing intersections encountered.  Further TGC reporting suppressed.\n");
-	    tgc_msgs++;
+	    bu_log("Too many grazings.  Suppressing further TGC odd hit reports.\n");
 	}
+	tgc_msgs++;
 
 	return 0;			/* No hit */
     }
@@ -1215,14 +1218,17 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		bu_log("tgc:  reduced %d to %d roots\n", nroots, npts);
 		bn_pr_roots("tgc", val, nroots);
 	    } else if (nroots < 0) {
-		static int reported=0;
-		bu_log("The root solver failed to converge on a solution for %s\n", stp[ix]->st_dp->d_namep);
-		if (!reported) {
-		    VPRINT("while shooting from:\t", rp[ix]->r_pt);
-		    VPRINT("while shooting at:\t", rp[ix]->r_dir);
-		    bu_log("Additional truncated general cone convergence failure details will be suppressed.\n");
-		    reported=1;
+		static size_t reported = 0;
+
+		if (reported < 10) {
+		    bu_log("Root solver failed to converge on a solution for %s\n", stp[ix]->st_dp->d_namep);
+		    /* these are printed in 'mm' regardless of local units */
+		    VPRINT("\tshooting point (units mm): ", rp[ix]->r_pt);
+		    VPRINT("\tshooting direction:        ", rp[ix]->r_dir);
+		} else if (reported == 10) {
+		    bu_log("Too many convergence failures.  Suppressing further TGC root finder reports.\n");
 		}
+		reported++;
 	    }
 	}
 
