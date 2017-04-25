@@ -88,7 +88,7 @@ void rt_pt_sort(register fastf_t *t, int npts);
 #define TGC_NORM_BOT (3)	/* copy reverse tgc_N */
 
 #define RT_TGC_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-#define VEXCHANGE(a, b, tmp) { VMOVE(tmp, a); VMOVE(a, b); VMOVE(b, tmp); }
+
 #define ALPHA(x, y, c, d)	((x)*(x)*(c) + (y)*(y)*(d))
 
 /* determines the class of tgc given vector magnitudes a, b, c, d */
@@ -301,8 +301,8 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	 */
 	VADD2(tip->v, tip->v, tip->h);
 	VREVERSE(tip->h, tip->h);
-	VEXCHANGE(tip->a, tip->c, work);
-	VEXCHANGE(tip->b, tip->d, work);
+	VSWAP(tip->a, tip->c);
+	VSWAP(tip->b, tip->d);
 	bu_log("NOTE: tgc(%s): degenerate end exchanged\n", stp->st_name);
     }
 
