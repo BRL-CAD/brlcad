@@ -71,7 +71,7 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, ProError status, const char
 
     /* Can't do nested variable argument functions, so printf the message here */
     va_list ap;
-    char msg[100000];
+    char msg[CREO_MSG_MAX];
     va_start(ap, fmt);
     vsprintf(msg, fmt, ap);
     va_end(ap);
@@ -167,12 +167,12 @@ struct pparam_data {
     char *val;
 }
 
-extern "C" ProError getkey(ProParameter *param, ProError status, ProAppData app_data)
+extern "C" ProError regex_key(ProParameter *param, ProError status, ProAppData app_data)
 {
     ProError lstatus;
-    char pname[100000];
-    char val[100000];
-    wchar_t wval[10000];
+    char pname[CREO_NAME_MAX];
+    char val[CREO_NAME_MAX];
+    wchar_t wval[CREO_NAME_MAX];
     ProParamvalue pval;
     ProParamvalueType ptype;
     regex_t reg;
@@ -199,39 +199,99 @@ extern "C" ProError getkey(ProParameter *param, ProError status, ProAppData app_
 }
 
 
+extern "C" ProError
+creo_attribute_val(const char **val, const char *key, ProMdl m)
+{
+    wchar_t wkey[CREO_NAME_MAX];
+    wchar_t wval[CREO_NAME_MAX];
+    char cval[CREO_NAME_MAX];
+    char *fval = NULL;
+    ProError pstatus;
+    ProModelitem mitm;
+    ProParameter param;
+    ProParamvalueType ptype;
+    ProParamvalue pval;
+
+    ProWstringToString(wkey, key);
+    ProMdlToModelitem(m, &mitm);
+    pstatus = ProParameterInit(&mitm, wkey, &param);
+    /* TODO - if param not found, return */
+    ProParameterValueGet(param, &pval);
+    ProParamvalueTypeGet(&pval, &ptype);
+    switch (ptype) {
+	case PRO_PARAM_STRING:
+	    ProParamvalueValueGet(&pval, ptype, wval);
+	    ProWstringToString(cval, wval);
+	    fval = bu_strdup(cval);
+	    break;
+	default:
+	    break;
+    }
+
+    *val = fval;
+    return PRO_TK_NO_ERROR;
+}
+
+
+
 extern "C" char *
 creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, ProType type)
 {
     struct pparam_data pdata;
     pdata.cinfo = cinfo;
     pdata.val = NULL;
+    char *val = NULL;
 
     ProModelitem itm;
     ProMdl model;
     if (ProMdlnameInit(creo_name, type, &m) != PRO_TK_NO_ERROR) return NULL;
     if (ProMdlToModelitem(model, &itm) != PRO_TK_NO_ERROR) return NULL;
-    for (int i = 0; int i < cinfo->model_parameters; i++) {
+    for (int i = 0; int i < cinfo->model_parameters->size(); i++) {
+	pdata.key = cinfo->model_parameters[i];
+	/* first, try a direct lookup */
+	creo_attribute_val(&pdata.val, pdata.key, model);
+	/* If that didn't work, and it looks like we have regex characters,
+	 * try a regex match */
 	if (!pdata.val) {
-	    pdata.key = cinfo->model_parameters[i];
-	    ProParameterVisit(&itm,  NULL, getkey, (ProAppData)&pdata);
+	    int non_alnum = 0;
+	    for (int j = 0; j < strlen(pdata.key); j++) alnum += !isalnum(pdata.key[j]);
+	    if (non_alnum) ProParameterVisit(&itm,  NULL, regex_key, (ProAppData)&pdata);
+	}
+	if (pdata.val) {
+	    /* Have key - we're done here */
+	    val = pdata.val;
+	    break;
 	}
     }
-    return pdata.val;
+    return val;
 }
+
 
 
 /* create a unique BRL-CAD object name from a possibly illegal name */
 extern "C" struct bu_vls *
-get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
+get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type, const char *suffix)
 {
     struct bu_vls gname_root = BU_VLS_INIT_ZERO;
-    struct bu_vls *gname;
+    struct bu_vls *gname = NULL;
     char *param_name = NULL;
     long count = 0;
     long have_name = 0;
+    std::set<wchar_t *, WStrCmp> s_it;
+    std::map<wchar_t *, struct bu_vls *, WStrCmp>::iterator n_it;
 
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( cinfo->logger, "create_unique_name( %s )\n", name );
+	fprintf( cinfo->logger, "get_brlcad_name( %s )\n", name );
+    }
+
+    /* If it's not a part or assembly, don't fool with it */
+    if (type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART) return NULL;
+
+    /* If we already have a name, return that */
+    n_it = cinfo->name_map->find(name);
+    if (n_it != cinfo->brlcad_names->end()) {
+	gname = n_it.second;
+	return gname;
     }
     BU_GET(gname, struct bu_vls);
     bu_vls_init(gname);
@@ -260,12 +320,13 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
     /* create a unique name */
     if (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
 	bu_vls_sprintf(gname, "%s-1", bu_vls_addr(&gname_root));
-	if (type != PRO_MDL_ASSEMBLY) {bu_vls_printf(gname, ".s");}
+	if (suffix) {bu_vls_printf(gname, ".%s", suffix);}
+	if (type != PRO_MDL_ASSEMBLY && !suffix) {bu_vls_printf(gname, ".s");}
 	while (cinfo->brlcad_names->find(gname) != cinfo->brlcad_names->end()) {
 	    (void)bu_namegen(gname, NULL, NULL);
 	    count++;
 	    if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(tmp_name) );
+		fprintf( cinfo->logger, "\tTrying %s\n", bu_vls_addr(gname) );
 	    }
 	    if (count == LONG_MAX) {
 		bu_vls_free(gname);
@@ -274,13 +335,36 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, ProType type)
 	    }
 	}
     }
-    cinfo->brlcad_names->insert(tmp_name);
+    /* We want to point to a stable wchar_t string pointer for this name, so find that first - don't
+     * assume all callers will be using the parts/assems copies. */
+    s_it = cinfo->parts->find(name);
+    if (s_it == cinfo->parts->end()) s_it = cinfo->assems->find(name);
+    if (s_it == cinfo->assems->end()) {
+	/* ??? not a part or assembly we've seen, but got through filters ??? */
+	bu_vls_free(gname);
+	BU_PUT(gname, struct bu_vls);
+	return NULL;
+    }
+    cinfo->brlcad_names->insert(gname);
+    cinfo->name_map->insert(std::pair<wchar_t *, struct bu_vls *>(*s_it, gname));
 
     if ( cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( cinfo->logger, "\tnew name for %s is %s\n", name, bu_vls_addr(tmp_name) );
+	fprintf( cinfo->logger, "\tnew name for %s is %s\n", name, bu_vls_addr(gname) );
     }
 
     return gname;
+}
+
+/* Filter for the feature visit routine that selects only "component" items
+ * (should be only parts and assemblies) */
+extern "C" ProError
+component_filter(ProFeature *feat, ProAppData *data)
+{
+    ProFeattype type;
+    ProFeatStatus feat_stat;
+    if (ProFeatureTypeGet(feat, &type) != PRO_TK_NO_ERROR || type != PRO_FEAT_COMPONENT) return PRO_TK_CONTINUE;
+    if (ProFeatureStatusGet(feat, &feat_stat) != PRO_TK_NO_ERROR || feat_stat != PRO_FEAT_ACTIVE) return PRO_TK_CONTINUE;
+    return PRO_TK_NO_ERROR;
 }
 
 /* Test function */

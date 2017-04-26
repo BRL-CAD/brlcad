@@ -65,6 +65,7 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
     cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
     cinfo->model_parameters = new std::vector<char *>;
+    cinfo->attrs = new std::vector<char *>;
 
 }
 
@@ -104,8 +105,8 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 extern "C" void
 output_parts(struct creo_conv_info *cinfo)
 {
-    wchar_t wname[10000];
-    char name[10000];
+    wchar_t wname[CREO_NAME_MAX];
+    char name[CREO_NAME_MAX];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
 	ProMdl m;
@@ -121,8 +122,8 @@ output_parts(struct creo_conv_info *cinfo)
 extern "C" void
 output_assems(struct creo_conv_info *cinfo)
 {
-    wchar_t wname[10000];
-    char name[10000];
+    wchar_t wname[CREO_NAME_MAX];
+    char name[CREO_NAME_MAX];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
 	ProMdl parent;
@@ -134,12 +135,65 @@ output_assems(struct creo_conv_info *cinfo)
     }
 }
 
-/* routine to output the top level object that is currently displayed in Pro/E */
+
+/* Logic that builds up the sets of assemblies and parts.  Doing a feature
+ * visit for all top level objects will result in a recursive walk of the
+ * hierarchy that adds all active objects into one of the converter lists.
+ *
+ * The "app_data" pointer holds the creo_conv_info container. 
+ */
+extern "C" ProError
+objects_gather( ProFeature *feat, ProError status, ProAppData app_data )
+{
+    ProError loc_status;
+    ProMdl model;
+    ProMdlType type;
+    wchar_t wname[CREO_NAME_MAX];
+    char name[CREO_NAME_MAX];
+    wchar_t *wname_saved;
+    struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
+
+    /* Get feature name */
+    if ((loc_status = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return creo_log(cinfo, MSG_FAIL, loc_status, "Failure getting name");
+    (void)ProWstringToString(name, wname);
+
+    /* get the model for this member */
+    if ((loc_status = ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, loc_status, "%s: failure getting model", name);
+
+    /* get its type (part or assembly are the only ones that should make it here) */
+    if ((loc_status = ProMdlTypeGet(model, &type)) != PRO_TK_NO_ERROR) return creo_log(cinfo, MSG_FAIL, loc_status, "%s: failure getting type", name);
+
+    /* log this member */
+    switch ( type ) {
+	case PRO_MDL_ASSEMBLY:
+	    if (cinfo->assems->find(wname) == cinfo->assems->end()) {
+		wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
+		wcsncpy(wname_saved, wname, wcslen(wname)+1);
+		cinfo->assems->insert(wname_saved);
+		return ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)component_filter, app_data);
+	    }
+	    break;
+	case PRO_MDL_PART:
+	    if (cinfo->parts->find(wname) == cinfo->parts->end()) {
+		wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
+		wcsncpy(wname_saved, wname, wcslen(wname)+1);
+		cinfo->parts->insert(wname_saved);
+	    }
+	    break;
+    }
+
+    return PRO_TK_NO_ERROR;
+}
+
+/*
+ * Routine to output the top level object that is currently displayed in CREO.
+ * This is the real beginning of the processing code - doit collects user
+ * settings and calls this function. */
 extern "C" void
 output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType type )
 {
-    wchar_t wname[10000];
-    char name[10000];
+    wchar_t wname[CREO_NAME_MAX];
+    char name[CREO_NAME_MAX];
     wchar_t *wname_saved;
 
     /* get object name */
@@ -150,15 +204,17 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
     wcsncpy(wname_saved, wname, wcslen(wname)+1);
 
-    /* output the object */
+    /* There are two possibilities - either we have a hierarchy, in which case we
+     * need to walk it and collect the objects to process, or we have a single part
+     * which we can process directly. */
     if ( type == PRO_MDL_PART ) {
-	/* tessellate part and output triangles */
+	/* One part only */
 	cinfo->parts->insert(wname_saved);
 	output_parts(cinfo);
     } else if ( type == PRO_MDL_ASSEMBLY ) {
-	/* visit all members of assembly */
+	/* Walk the hierarchy and process all necessary assemblies and parts */
 	cinfo->assems->insert(wname_saved);
-	ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)assembly_filter, (ProAppData)cinfo);
+	ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, (ProAppData)cinfo);
 	output_parts(cinfo);
 	find_empty_assemblies(cinfo);
 	output_assems(cinfo);
@@ -166,9 +222,16 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	bu_log("Object %s is neither PART nor ASSEMBLY, skipping", name);
     }
 
-    /* TODO - Make a final toplevel comb with the file name to hold the orientation matrix */
-    /* xform to rotate the model into standard BRL-CAD orientation */
-    /*0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1*/
+    /* Make a final toplevel comb with the file name to hold the orientation matrix */
+    struct bu_vls *comb_name;
+    struct wmember wcomb;
+    BU_LIST_INIT(&wcomb.l);
+    mat_t m;
+    bn_decode_mat(m, "0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1");
+    comb_name = get_brlcad_name(cinfo, wname, type, NULL);
+    (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
+    /* TODO - set up name based on file */
+    mk_lcomb(cinfo->wdbp, "creo", &wcomb, 0, NULL, NULL, NULL, 0);
 }
 
 
@@ -333,6 +396,55 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		    if (pkey.length() > 0) {
 			creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Found model parameter naming key: %s.\n", pkey.c_str());
 			cinfo->model_parameters->push_back(bu_strdup(pkey.c_str()));
+		    }
+		}
+	    }
+	}
+    }
+
+    /***********************************************************************************/
+    /* Read a user supplied list of model attributes to convert over to the .g file. */
+    /***********************************************************************************/
+    {
+	/* Get string from dialog */
+	char attr_file[128];
+	wchar_t *w_attr_file;
+	status = ProUIInputpanelValueGet("creo_brl", "attr_file", &w_attr_file);
+	if ( status != PRO_TK_NO_ERROR ) {
+	    creo_log(cinfo, MSG_FAIL, status, "Failed to get name of attribute list file.\n");
+	    creo_conv_info_free(cinfo);
+	    ProUIDialogDestroy( "creo_brl" );
+	    return;
+	}
+	ProWstringToString(attr_file, w_attr_file);
+	ProWstringFree(w_attr_file);
+
+	if (strlen(attr_file) > 0) {
+	    /* Parse the file contents into a list of parameter keys */
+	    std::ifstream pfile(attr_file);
+	    std::string line;
+	    if (!pfile) {
+		creo_log(cinfo, MSG_FAIL, status, "Cannot read attribute list file.\n");
+		creo_conv_info_free(cinfo);
+		ProUIDialogDestroy( "creo_brl" );
+		return;
+	    }
+	    while (std::getline(pfile, line)) {
+		std::string pkey;
+		std::istringstream ls(line);
+		while (std::getline(ls, pkey, ',')) {
+		    /* Scrub leading and trailing whitespace */
+		    size_t startpos = pkey.find_first_not_of(" \t\n\v\f\r");
+		    if (std::string::npos != startpos) {
+			pkey = pkey.substr(startpos);
+		    }
+		    size_t endpos = pkey.find_last_not_of(" \t\n\v\f\r");
+		    if (std::string::npos != endpos) {
+			pkey = pkey.substr(0 ,endpos+1);
+		    }
+		    if (pkey.length() > 0) {
+			creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Found attribute key: %s.\n", pkey.c_str());
+			cinfo->attrs->push_back(bu_strdup(pkey.c_str()));
 		    }
 		}
 	    }
@@ -644,6 +756,13 @@ creo_brl_access( uiCmdAccessMode access_mode )
     return ACCESS_AVAILABLE;
 }
 
+/********************************************************************************
+ * IMPORTANT - the names of the next two functions - user_initialize and
+ * user_terminate - are dictated by the CREO API.  These are the hooks that tie
+ * the rest of the code into the CREO system.  Both are *required* to be
+ * present, even if the user_terminate function doesn't do any actual work.
+ ********************************************************************************/
+
 extern "C" int user_initialize()
 {
     ProError status;
@@ -688,6 +807,7 @@ extern "C" int user_initialize()
 	return -1;
     }
 
+    /* TODO - this is a test, but may want to convert it into a "loaded successfully" dialog */
     ShowMsg();
 
     /* let user know we are here */

@@ -90,6 +90,8 @@ rt_in_rpp(const double3 pt,
 #define ID_REC          7       /**< @brief Right Elliptical Cylinder [TGC special] */
 #define ID_SPH          10      /**< @brief Sphere */
 #define ID_PARTICLE     16      /**< @brief Particle system solid */
+#define ID_RPC          17      /**< @brief Right Parabolic Cylinder [TGC special] */
+#define ID_RHC          18      /**< @brief Right Hyperbolic Cylinder [TGC special] */
 #define ID_EPA          19      /**< @brief Elliptical Paraboloid */
 #define ID_EHY          20      /**< @brief Elliptical Hyperboloid  */
 #define ID_ETO          21      /**< @brief Elliptical Torus  */
@@ -111,6 +113,8 @@ inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const
     case ID_BOT:	return bot_shot(res, r_pt, r_dir, idx, args);
     case ID_EPA:	return epa_shot(res, r_pt, r_dir, idx, args);
     case ID_ETO:	return eto_shot(res, r_pt, r_dir, idx, args);
+    case ID_RHC:	return rhc_shot(res, r_pt, r_dir, idx, args);
+    case ID_RPC:	return rpc_shot(res, r_pt, r_dir, idx, args);
     default:		return 0;
     };
 }
@@ -130,6 +134,8 @@ inline void norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, cons
     case ID_BOT:	bot_norm(hitp, r_pt, r_dir, args);	break;
     case ID_EPA:	epa_norm(hitp, r_pt, r_dir, args);	break;
     case ID_ETO:	eto_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_RHC:	rhc_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_RPC:	rpc_norm(hitp, r_pt, r_dir, args);	break;
     default:							break;
     };
 }

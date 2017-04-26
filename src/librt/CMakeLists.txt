@@ -279,6 +279,8 @@ set(librt_ignored_files
   primitives/sph/sph_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
+  primitives/rhc/rhc_shot.cl
+  primitives/rpc/rpc_shot.cl
   primitives/xxx/xxx.h
   search.h
   subd_test_bot.asc
@@ -309,6 +311,8 @@ set(CL_FILES
   primitives/rec/rec_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
+  primitives/rhc/rhc_shot.cl
+  primitives/rpc/rpc_shot.cl
   )
 
 BRLCAD_ADDDATA(nurb_example.c sample_applications)

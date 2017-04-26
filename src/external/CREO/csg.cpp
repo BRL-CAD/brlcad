@@ -637,14 +637,9 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
     ProMdl model = fdata->model;
 
     if ( (ret=ProFeatureElemtreeCreate( feat, &elem_tree ) ) == PRO_TK_NO_ERROR ) {
-	if ( (ret=ProElemtreeElementVisit( elem_tree, elem_path,
-			hole_elem_filter, hole_elem_visit,
-			(ProAppData)model) ) != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Element visit failed for feature (%d) of %s\n",
-		    feat->id, cinfo->curr_part_name );
-	    if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Error freeing element tree\n" );
-	    }
+	if ( (ret=ProElemtreeElementVisit( elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)model) ) != PRO_TK_NO_ERROR ) {
+	    fprintf( stderr, "Element visit failed for feature (%d) of %s\n", feat->id, cinfo->curr_part_name );
+	    if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {fprintf( stderr, "Error freeing element tree\n" );}
 	    return ret;
 	}
 	if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
@@ -659,17 +654,13 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
     got_diameter = 0;
     got_distance1 = 0;
 
-    if ( (ret=ProFeatureDimensionVisit( feat, check_dimension, dimension_filter, (ProAppData)fdata) ) !=
-	    PRO_TK_NO_ERROR ) {
+    if ( (ret=ProFeatureDimensionVisit( feat, check_dimension, dimension_filter, (ProAppData)fdata) ) != PRO_TK_NO_ERROR ) {
 	return ret;
     }
 
     if ( cinfo->curr_feat_type == PRO_FEAT_HOLE ) {
 	/* need more info to recreate holes */
-	if ( (ret=ProFeatureGeomitemVisit( feat, PRO_AXIS, geomitem_visit,
-			geomitem_filter, (ProAppData)model) ) != PRO_TK_NO_ERROR ) {
-	    return ret;
-	}
+	if ( (ret=ProFeatureGeomitemVisit( feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)model) ) != PRO_TK_NO_ERROR ) return ret;
     }
 
     switch ( cinfo->curr_feat_type ) {

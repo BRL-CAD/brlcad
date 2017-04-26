@@ -95,6 +95,9 @@ extern "C" {
 #define NUM_FEAT_TYPES 314
 #define FEAT_TYPE_OFFSET 910
 
+#define CREO_NAME_MAX 100000
+#define CREO_MSG_MAX 100000
+
 #define MSG_FAIL 0
 #define MSG_OK 1
 #define MSG_DEBUG 2
@@ -170,7 +173,6 @@ struct creo_conv_info {
     /* ------ Internal ------ */
     struct db_i *dbip;		/* output database */
     struct rt_wdb *wdbp;
-
     std::set<wchar_t *, WStrCmp> *parts;	/* list of all parts in CREO hierarchy */
     std::set<wchar_t *, WStrCmp> *assems;	/* list of all assemblies in CREO hierarchy */
     std::map<wchar_t *, int, WStrCmp> *assem_child_cnts; /* number of solid children in a given assembly */
@@ -178,31 +180,37 @@ struct creo_conv_info {
     std::map<wchar_t *, struct bu_vls *, WStrCmp> *name_map;  /* CREO names to BRL-CAD names */
     std::set<struct bu_vls *, StrCmp> *brlcad_names; /* set of active .g object names */
     std::vector<char *> *model_parameters;     /* model parameters to use when generating .g names */
+    std::vector<char *> *attrs;     	/* attributes to preserve when transferring objects */
 };
 
+/* Generic container used when we need to pass around something in addition to creo_conv_info */
 struct adata {
     struct creo_conv_info *cinfo;
     void *data;
 };
 
+/* assembly */
+extern "C" void find_empty_assemblies(struct creo_conv_info *);
+extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
+
+/* part */
+extern "C" int output_part(struct creo_conv_info *, ProMdl model);
+
+/* util */
+extern "C" ProError component_filter(ProFeature *, ProAppData *);
+extern "C" ProError creo_attribute_val(const char **val, const char *key, ProMdl m);
+extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
+extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *, wchar_t *, ProType type, const char *);
+extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
+extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);
 extern "C" void kill_gen_error_dialog(char *dialog, char *component, ProAppData appdata);
 
-extern "C" void do_quit(char *dialog, char *compnent, ProAppData appdata);
+/* csg */
+extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
 extern "C" void free_csg_ops(struct creo_conv_info *);
 
-extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
-extern "C" char *get_brlcad_name(struct creo_conv_info *cinfo, char *part_name);
-extern "C" void find_empty_assemblies(struct creo_conv_info *);
-extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
-extern "C" int output_part(struct creo_conv_info *, ProMdl model);
-extern "C" ProError assembly_gather(ProFeature *, ProError, ProAppData);
-extern "C" ProError assembly_filter(ProFeature *, ProAppData *);
 
-extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
-
-extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
-extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 
 extern "C" ProError ShowMsg();
 

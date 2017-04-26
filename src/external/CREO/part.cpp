@@ -24,113 +24,53 @@
 #include "common.h"
 #include "creo-brl.h"
 
-#if 0
+/* Part processing container */
+struct part_conv_info {
+    struct creo_conv_info *cinfo; /* global state */
+    std::vector<int> *suppressed_features; /* list of features to suppress when generating output. */
+    std::vector<struct directory *> *subtractions; /* objects to subtract from primary shape. */
+};
+
 /* routine to check for bad triangles
  * only checks for triangles with duplicate vertices
  */
 extern "C" int
-bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3 )
+bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3, struct bn_vert_tree *tree)
 {
     double dist;
     double coord;
-    int i;
 
-    if ( v1 == v2 || v2 == v3 || v1 == v3 )
-	return 1;
+    if (v1 == v2 || v2 == v3 || v1 == v3) return 1;
 
     dist = 0;
-    for ( i=0; i<3; i++ ) {
-	coord = cinfo->vert_tree_root->the_array[v1*3+i] - cinfo->vert_tree_root->the_array[v2*3+i];
+    for (int i = 0; i < 3; i++) {
+	coord = tree->the_array[v1*3+i] - tree->the_array[v2*3+i];
 	dist += coord * coord;
     }
-    dist = sqrt( dist );
-    if ( dist < cinfo->local_tol ) {
-	return 1;
-    }
+    dist = sqrt(dist);
+    if (dist < cinfo->local_tol) return 1;
 
     dist = 0;
-    for ( i=0; i<3; i++ ) {
-	coord = cinfo->vert_tree_root->the_array[v2*3+i] - cinfo->vert_tree_root->the_array[v3*3+i];
+    for (int i = 0; i < 3; i++) {
+	coord = tree->the_array[v2*3+i] - tree->the_array[v3*3+i];
 	dist += coord * coord;
     }
-    dist = sqrt( dist );
-    if ( dist < cinfo->local_tol ) {
-	return 1;
-    }
+    dist = sqrt(dist);
+    if (dist < cinfo->local_tol) return 1;
 
     dist = 0;
-    for ( i=0; i<3; i++ ) {
-	coord = cinfo->vert_tree_root->the_array[v1*3+i] - cinfo->vert_tree_root->the_array[v3*3+i];
+    for (int i=0; i<3; i++ ) {
+	coord = tree->the_array[v1*3+i] - tree->the_array[v3*3+i];
 	dist += coord * coord;
     }
-    dist = sqrt( dist );
-    if ( dist < cinfo->local_tol ) {
-	return 1;
-    }
+    dist = sqrt(dist);
+    if (dist < cinfo->local_tol) return 1;
 
     return 0;
 }
 
-extern "C" void
-add_to_empty_list(struct creo_conv_info *cinfo,  char *name )
-{
-    struct empty_parts *ptr;
-    int found=0;
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Adding %s to list of empty parts\n", name );
-    }
-
-    if ( cinfo->empty_parts_root == NULL ) {
-	BU_ALLOC(cinfo->empty_parts_root, struct empty_parts);
-	ptr = cinfo->empty_parts_root;
-    } else {
-	ptr = cinfo->empty_parts_root;
-	while ( !found && ptr->next ) {
-	    if ( BU_STR_EQUAL( name, ptr->name ) ) {
-		found = 1;
-		break;
-	    }
-	    ptr = ptr->next;
-	}
-	if ( !found ) {
-	    BU_ALLOC(ptr->next, struct empty_parts);
-	    ptr = ptr->next;
-	}
-    }
-
-    ptr->next = NULL;
-    ptr->name = (char *)bu_strdup( name );
-}
-
-
-extern "C" void
-add_to_done_part(struct creo_conv_info *cinfo,  wchar_t *name )
-{
-    ProCharLine astr;
-    wchar_t *name_copy;
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Added %s to list of done parts\n", ProWstringToString( astr, name ) );
-    }
-
-    if (cinfo->done_list_part->find(name) == cinfo->done_list_part->end()) {
-	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
-		"part name for done list" );
-	wcsncpy( name_copy, name, wcslen(name)+1 );
-	cinfo->done_list_part->insert(name_copy);
-    }
-}
-
-extern "C" int
-already_done_part(struct creo_conv_info *cinfo,  wchar_t *name )
-{
-    if (cinfo->done_list_part->find(name) != cinfo->done_list_part->end()) {
-	return 1;
-    }
-    return 0;
-}
-
+/* If we have a CREO modeling feature that adds material, it can impact
+ * the decision on which conversion methods are practical */
 extern "C" int
 feat_adds_material( ProFeattype feat_type )
 {
@@ -167,6 +107,20 @@ feat_adds_material( ProFeattype feat_type )
     return 0;
 }
 
+extern "C" char *feat_status_to_str(ProFeatStatus feat_stat)
+{
+    static char *feat_status[]={
+	"PRO_FEAT_ACTIVE",
+	"PRO_FEAT_INACTIVE",
+	"PRO_FEAT_FAMTAB_SUPPRESSED",
+	"PRO_FEAT_SIMP_REP_SUPPRESSED",
+	"PRO_FEAT_PROG_SUPPRESSED",
+	"PRO_FEAT_SUPPRESSED",
+	"PRO_FEAT_UNREGENERATED"
+    };
+    return feat_status[feat_stat];
+}
+
 extern "C" void
 remove_holes_from_id_list(struct creo_conv_info *cinfo,  ProMdl model )
 {
@@ -181,36 +135,12 @@ remove_holes_from_id_list(struct creo_conv_info *cinfo,  ProMdl model )
 
     free_csg_ops(cinfo);             /* these are only holes */
     for ( i=0; i < cinfo->feat_id_count; i++ ) {
-	status = ProFeatureInit( ProMdlToSolid(model),
-		cinfo->feat_ids_to_delete[i],
-		&feat );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get handle for id %d\n",
-		    cinfo->feat_ids_to_delete[i] );
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf(cinfo->logger, "Failed to get handle for id %d\n",
-			cinfo->feat_ids_to_delete[i] );
-	    }
-	}
+	status = ProFeatureInit( ProMdlToSolid(model), cinfo->feat_ids_to_delete[i], &feat );
 	status = ProFeatureTypeGet( &feat, &type );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Failed to get feature type for id %d\n",
-		    cinfo->feat_ids_to_delete[i] );
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf(cinfo->logger, "Failed to get feature type for id %d\n",
-			cinfo->feat_ids_to_delete[i] );
-	    }
-	}
 	if ( type == PRO_FEAT_HOLE ) {
 	    /* remove this from the list */
-	    int j;
-
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf(cinfo->logger, "\tRemoving feature id %d from deletion list\n",
-			cinfo->feat_ids_to_delete[i] );
-	    }
 	    cinfo->feat_id_count--;
-	    for ( j=i; j<cinfo->feat_id_count; j++ ) {
+	    for (int j=i; j<cinfo->feat_id_count; j++ ) {
 		cinfo->feat_ids_to_delete[j] = cinfo->feat_ids_to_delete[j+1];
 	    }
 	    i--;
@@ -230,7 +160,6 @@ feature_filter( ProFeature *feat, ProAppData data )
     ProMdl model = fdata->model;
 
     if ( (ret=ProFeatureTypeGet( feat, &cinfo->curr_feat_type )) != PRO_TK_NO_ERROR ) {
-
 	fprintf( stderr, "ProFeatureTypeGet Failed for %s!!\n", cinfo->curr_part_name );
 	return ret;
     }
@@ -256,159 +185,42 @@ feature_filter( ProFeature *feat, ProAppData data )
 
 
 extern "C" void
-output_csg_prims(struct creo_conv_info *cinfo)
+unsuppress_features(struct part_conv_info *pinfo)
 {
-    struct csg_ops *ptr;
+    ProFeatureResumeOptions resume_opts[1];
+    ProFeatStatus feat_stat;
+    ProFeature feat;
+    resume_opts[0] = PRO_FEAT_RESUME_INCLUDE_PARENTS;
 
-    ptr = cinfo->csg_root;
+    for (int i=0; i < pinfo->suppressed_features->size(); i++) {
+	if (ProFeatureInit(ProMdlToSolid(model), pinfo->suppressed_features[i], &feat) == PRO_TK_NO_ERROR) {
+	    if (ProFeatureStatusGet(&feat, &feat_stat) == PRO_TK_NO_ERROR && feat_stat == PRO_FEAT_SUPPRESSED ) {
 
-    while ( ptr ) {
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "Creating primitive: %s %s\n",
-		    bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
-	}
+		/* unsuppress this one */
+		creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Unsuppressing feature %d\n", pinfo->suppressed_features[i]);
+		int status = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features[i], 1, resume_opts, 1);
 
-	fprintf( cinfo->outfp, "put {%s} %s", bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
-	ptr = ptr->next;
-    }
-}
+		/* Tell the user what happened */
+		switch (status) {
+		    case PRO_TK_NO_ERROR:
+			creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "\tFeature %d unsuppressed\n", pinfo->suppressed_features[i]);
+			break;
+		    case PRO_TK_SUPP_PARENTS:
+			creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "\tSuppressed parents for feature %d not found\n", pinfo->suppressed_features[i] );
+			break;
+		    default:
+			creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "\tfeature id %d unsuppression failed\n", pinfo->suppressed_features[i] );
+			break;
+		}
 
-/* routine to free the list of CSG operations */
-extern "C" void
-free_csg_ops(struct creo_conv_info *cinfo)
-{
-    struct csg_ops *ptr1, *ptr2;
-
-    ptr1 = cinfo->csg_root;
-
-    while ( ptr1 ) {
-	ptr2 = ptr1->next;
-	bu_vls_free( &ptr1->name );
-	bu_vls_free( &ptr1->dbput );
-	bu_free( ptr1, "csg op" );
-	ptr1 = ptr2;
-    }
-
-    cinfo->csg_root = NULL;
-}
-
-
-/* routine to add a new triangle and its normals to the current part */
-extern "C" void
-add_triangle_and_normal(struct creo_conv_info *cinfo, int v1, int v2, int v3, int n1, int n2, int n3 )
-{
-    ProFileName msgfil;
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-
-    if ( cinfo->curr_tri >= cinfo->max_tri ) {
-	/* allocate more memory for triangles and normals */
-	cinfo->max_tri += TRI_BLOCK;
-	cinfo->part_tris = (ProTriangle *)bu_realloc( cinfo->part_tris, sizeof( ProTriangle ) * cinfo->max_tri,
-		"part triangles");
-	if ( !cinfo->part_tris ) {
-	    (void)ProMessageDisplay(msgfil, "USER_ERROR",
-		    "Failed to allocate memory for part triangles" );
-	    fprintf( stderr, "Failed to allocate memory for part triangles\n" );
-	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	    bu_exit( 1, NULL );
-	}
-	cinfo->part_norms = (int *)bu_realloc( cinfo->part_norms, sizeof( int ) * cinfo->max_tri * 3,
-		"part normals");
-    }
-
-    /* fill in triangle info */
-    cinfo->part_tris[cinfo->curr_tri][0] = v1;
-    cinfo->part_tris[cinfo->curr_tri][1] = v2;
-    cinfo->part_tris[cinfo->curr_tri][2] = v3;
-
-    cinfo->part_norms[cinfo->curr_tri*3]     = n1;
-    cinfo->part_norms[cinfo->curr_tri*3 + 1] = n2;
-    cinfo->part_norms[cinfo->curr_tri*3 + 2] = n3;
-
-    /* increment count */
-    cinfo->curr_tri++;
-}
-
-
-/* routine to add a new triangle to the current part */
-extern "C" void
-add_triangle(struct creo_conv_info *cinfo, int v1, int v2, int v3 )
-{
-    ProFileName msgfil;
-    ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
-    if ( cinfo->curr_tri >= cinfo->max_tri ) {
-	/* allocate more memory for triangles */
-	cinfo->max_tri += TRI_BLOCK;
-	cinfo->part_tris = (ProTriangle *)bu_realloc(cinfo->part_tris, sizeof( ProTriangle ) * cinfo->max_tri,
-		"part triangles");
-	if ( !cinfo->part_tris ) {
-	    (void)ProMessageDisplay(msgfil, "USER_ERROR",
-		    "Failed to allocate memory for part triangles" );
-	    fprintf( stderr, "Failed to allocate memory for part triangles\n" );
-	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	    bu_exit( 1, NULL );
+	    }
 	}
     }
-
-    /* fill in triangle info */
-    cinfo->part_tris[cinfo->curr_tri][0] = v1;
-    cinfo->part_tris[cinfo->curr_tri][1] = v2;
-    cinfo->part_tris[cinfo->curr_tri][2] = v3;
-
-    /* increment count */
-    cinfo->curr_tri++;
 }
-
-
-extern "C" char *feat_status_to_str(ProFeatStatus feat_stat)
-{
-    static char *feat_status[]={
-	"PRO_FEAT_ACTIVE",
-	"PRO_FEAT_INACTIVE",
-	"PRO_FEAT_FAMTAB_SUPPRESSED",
-	"PRO_FEAT_SIMP_REP_SUPPRESSED",
-	"PRO_FEAT_PROG_SUPPRESSED",
-	"PRO_FEAT_SUPPRESSED",
-	"PRO_FEAT_UNREGENERATED"
-    };
-    return feat_status[feat_stat];
-}
-
-extern "C" void
-build_tree(struct creo_conv_info *cinfo,  char *sol_name, struct bu_vls *tree )
-{
-    struct csg_ops *ptr;
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Building CSG tree for %s\n", sol_name );
-    }
-    ptr = cinfo->csg_root;
-    while ( ptr ) {
-	bu_vls_printf( tree, "{%c ", ptr->op );
-	ptr = ptr->next;
-    }
-
-    bu_vls_strcat( tree, "{ l {" );
-    bu_vls_strcat( tree, sol_name );
-    bu_vls_strcat( tree, "} }" );
-    ptr = cinfo->csg_root;
-    while ( ptr ) {
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "Adding %c %s\n", ptr->op, bu_vls_addr( &ptr->name ) );
-	}
-	bu_vls_printf( tree, " {l {%s}}}", bu_vls_addr( &ptr->name ) );
-	ptr = ptr->next;
-    }
-
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Final tree: %s\n", bu_vls_addr( tree ) );
-    }
-}
-
 
 /* routine to output a part as a BRL-CAD region with one BOT solid
- * The region will have the name from Pro/E.
- * The solid will have the same name with "s." prefix.
+ * The region will have the name from Pro/E with a .r suffix.
+ * The solid will have the same name with ".bot" prefix.
  *
  *	returns:
  *		0 - OK
@@ -418,518 +230,346 @@ build_tree(struct creo_conv_info *cinfo,  char *sol_name, struct bu_vls *tree )
 extern "C" int
 output_part(struct creo_conv_info *cinfo, ProMdl model)
 {
-    ProName part_name;
-    ProModelitem mitm;
-    ProSurfaceAppearanceProps aprops;
+    wchar_t wname[CREO_NAME_MAX];
+    char pname[CREO_NAME_MAX];
+    ProMdlType type;
+    ProError status;
+    ProSurfaceTessellationData *tess=NULL;
+    ProFileName msgfil;
+
+    struct part_conv_info *pinfo;
+    BU_GET(pinfo, struct part_conv_info);
+    pinfo->cinfo = cinfo;
+    pinfo->suppressed_features = new std::vector<int>;
+    pinfo->subtractions = new std::vector<struct directory *>;
+
+/*
     char *brl_name=NULL;
     char *sol_name=NULL;
-    ProSurfaceTessellationData *tess=NULL;
-    ProError status;
-    ProMdlType type;
-    ProFileName msgfil;
-    ProCharLine astr;
     char str[PRO_NAME_SIZE + 1];
     int ret=0;
     int ret_status=0;
     char err_mess[512];
     wchar_t werr_mess[512];
-    double curr_error;
-    double curr_angle;
-    register int i;
+*/
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
 
-    /* if this part has already been output, do not do it again */
-    if ( ProMdlNameGet( model, part_name ) != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get name for a part\n" );
-	return 1;
-    }
+    ProMdlMdlnameGet(model, wname);
+    ProMdlTypeGet(model, &type);
 
-    if ( already_done_part(cinfo, part_name ) )
-	return 0;
+    ProWstringToString(pname, wname);
+    creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Processing %s:\n", pname);
 
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Processing %s:\n", ProWstringToString( astr, part_name ) );
-    }
+    ProUILabelTextSet("creo_brl", "curr_proc", pname);
 
-    if ( ProMdlTypeGet( model, &type ) != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get part type\n" );
-    }
-    /* let user know we are doing something */
+    /* Collect info about things that might be eliminated */
+    if (cinfo->do_elims) {
 
-    status = ProUILabelTextSet( "creo_brl", "curr_proc", part_name );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
-	return 1;
-    }
-#if 0
-    status = ProUIDialogActivate( "creo_brl", &ret_status );
-    if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Error in creo-brl Dialog, error = %d\n",
-		status );
-	fprintf( stderr, "\t dialog returned %d\n", ret_status );
-    }
-#endif
-    if ( !cinfo->do_facets_only || cinfo->do_elims ) {
-	struct feature_data fdata;
-	fdata.cinfo = cinfo;
-	fdata.model = model;
-	free_csg_ops(cinfo);
-	ProSolidFeatVisit( ProMdlToSolid(model), do_feature_visit,
-		feature_filter, (ProAppData)&fdata);
+	/* Apply user supplied criteria to see if we have anything to suppress */
+	ProSolidFeatVisit(ProMdlToSolid(model), do_feature_visit, feature_filter, (ProAppData)pinfo);
 
-	if ( cinfo->feat_id_count ) {
-	    int i;
-
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf(cinfo->logger, "suppressing %d features of %s:\n",
-			cinfo->feat_id_count, cinfo->curr_part_name );
-		for ( i=0; i<cinfo->feat_id_count; i++ ) {
-		    fprintf(cinfo->logger, "\t%d\n", cinfo->feat_ids_to_delete[i] );
-		}
-	    }
-	    fprintf( stderr, "suppressing %d features\n", cinfo->feat_id_count );
-	    ret = ProFeatureSuppress( ProMdlToSolid(model),
-		    cinfo->feat_ids_to_delete, cinfo->feat_id_count,
-		    NULL, 0 );
-	    if ( ret != PRO_TK_NO_ERROR ) {
-		ProFeatureResumeOptions resume_opts[1];
-		ProFeatStatus feat_stat;
-		ProFeature feat;
-
-		resume_opts[0] = PRO_FEAT_RESUME_INCLUDE_PARENTS;
-
-		if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		    fprintf(cinfo->logger, "Failed to suppress features!!!\n" );
-		}
-		fprintf( stderr, "Failed to delete %d features from %s\n",
-			cinfo->feat_id_count, cinfo->curr_part_name );
-
-		for ( i=0; i<cinfo->feat_id_count; i++ ) {
-		    status = ProFeatureInit( ProMdlToSolid(model),
-			    cinfo->feat_ids_to_delete[i],
-			    &feat );
-		    if ( status != PRO_TK_NO_ERROR ) {
-			fprintf( stderr, "Failed to get handle for id %d\n",
-				cinfo->feat_ids_to_delete[i] );
-			if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-			    fprintf(cinfo->logger, "Failed to get handle for id %d\n",
-				    cinfo->feat_ids_to_delete[i] );
-			}
-		    } else {
-			status = ProFeatureStatusGet( &feat, &feat_stat );
-			if ( status != PRO_TK_NO_ERROR ) {
-			    fprintf( stderr,
-				    "Failed to get status for feature %d\n",
-				    cinfo->feat_ids_to_delete[i] );
-			    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-				fprintf(cinfo->logger,
-					"Failed to get status for feature %d\n",
-					cinfo->feat_ids_to_delete[i] );
-			    }
-			} else {
-			    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-				if ( feat_stat < 0 ) {
-				    fprintf(cinfo->logger,
-					    "invalid feature (%d)\n",
-					    cinfo->feat_ids_to_delete[i] );
-				} else {
-				    fprintf(cinfo->logger, "feat %d status = %s\n",
-					    cinfo->feat_ids_to_delete[i],
-					    feat_status_to_str(feat_stat) );
-				}
-			    }
-			    if ( feat_stat == PRO_FEAT_SUPPRESSED ) {
-				/* unsuppress this one */
-				if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-				    fprintf(cinfo->logger,
-					    "Unsuppressing feature %d\n",
-					    cinfo->feat_ids_to_delete[i] );
-				}
-				status = ProFeatureResume( ProMdlToSolid(model),
-					&cinfo->feat_ids_to_delete[i],
-					1, resume_opts, 1 );
-				if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-				    if ( status == PRO_TK_NO_ERROR ) {
-					fprintf(cinfo->logger,
-						"\tfeature id %d unsuppressed\n",
-						cinfo->feat_ids_to_delete[i] );
-				    } else if ( status == PRO_TK_SUPP_PARENTS ) {
-					fprintf(cinfo->logger,
-						"\tsuppressed parents for feature %d not found\n",
-						cinfo->feat_ids_to_delete[i] );
-
-				    } else {
-					fprintf(cinfo->logger,
-						"\tfeature id %d unsuppression failed\n",
-						cinfo->feat_ids_to_delete[i] );
-				    }
-				}
-			    }
-			}
-		    }
-		}
-
-		cinfo->feat_id_count = 0;
-		free_csg_ops(cinfo);
+	/* If we've got anything to suppress, go ahead and do it. */
+	if (!pinfo->suppressed_features->empty()) {
+	    int ret = ProFeatureSuppress(ProMdlToSolid(model), &(pinfo->suppressed_features[0]), pinfo->suppressed_features->size(), NULL, 0 );
+	    /* If something went wrong, need to undo just the suppressions we added */
+	    if (ret != PRO_TK_NO_ERROR) {
+		creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to suppress features!!!\n");
+		unsuppress_features(pinfo);
 	    } else {
-		fprintf( stderr, "features suppressed!!\n" );
+		creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Features suppressed... continuing with conversion\n");
 	    }
 	}
     }
 
-    /* can get bounding box of a solid using "ProSolidOutlineGet"
+    /* If we've been told to do CSG conversions, apply logic for finding and replacing holes */
+    /* TODO - split up feature suppression and hole collection into distinct routines */
+
+    /* TODO - can get bounding box of a solid using "ProSolidOutlineGet"
      * may want to use this to implement relative facetization tolerance
      */
 
-    /* tessellate part */
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Tessellate part (%s)\n", cinfo->curr_part_name );
-    }
 
-    /* Going from coarse to fine tessellation */
-    for (i = 0; i <= cinfo->max_to_min_steps; ++i) {
+    /* Tessellate part, going from coarse to fine tessellation */
+    double curr_error;
+    double curr_angle;
+    creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Tessellate part (%s)\n", pname);
+    for (int i = 0; i <= cinfo->max_to_min_steps; ++i) {
 	curr_error = cinfo->max_error - (i * cinfo->error_increment);
 	curr_angle = cinfo->min_angle_cntrl + (i * cinfo->angle_increment);
 
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "max_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
-	    fprintf(cinfo->logger, "max_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
-	    fprintf(cinfo->logger, "curr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
-	    fprintf(cinfo->logger, "Trying to tessellate %s using:  tessellation error - %g, angle - %g\n", cinfo->curr_part_name, curr_error, curr_angle);
-	}
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "\tTessellating %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
 
-	status = ProPartTessellate( ProMdlToPart(model), curr_error/cinfo->creo_to_brl_conv,
-		curr_angle, PRO_B_TRUE, &tess  );
+	status = ProPartTessellate(ProMdlToPart(model), curr_error/cinfo->creo_to_brl_conv, curr_angle, PRO_B_TRUE, &tess);
+	if (status == PRO_TK_NO_ERROR) break;
 
-	if ( status == PRO_TK_NO_ERROR )
-	    break;
-
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ||cinfo->logger_type == LOGGER_TYPE_FAILURE ||cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
-	    fprintf(cinfo->logger, "Failed to tessellate %s using:  tessellation error - %g, angle - %g\n", cinfo->curr_part_name, curr_error, curr_angle);
-	}
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Failed to tessellate %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "\tcurr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
     }
 
-    if ( status != PRO_TK_NO_ERROR ) {
+
+    /* Tessellation loop complete - deal with the results */
+
+    if (status != PRO_TK_NO_ERROR) {
 	/* Failed!!! */
+	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to tessellate %s!!!\n", pname );
 
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ||cinfo->logger_type == LOGGER_TYPE_FAILURE ||cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
-	    fprintf(cinfo->logger, "Failed to tessellate %s!!!\n", cinfo->curr_part_name );
-	}
-	snprintf( astr, sizeof(astr), "Failed to tessellate part (%s)", cinfo->curr_part_name);
-	(void)ProMessageDisplay(msgfil, "USER_ERROR", astr );
-	ProMessageClear();
-	fprintf( stderr, "%s\n", astr );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	add_to_empty_list(cinfo, get_brlcad_name(cinfo, cinfo->curr_part_name ) );
+	/* TODO - a failed part probably should not be considered an empty part
+	 * - put a bbox in instead if we can get one with an attribute denoting
+	 *   failure, or if even that fails *some* object with the requisite
+	 *   info, because the conversion shouldn't be ignore it. */
+	add_to_empty_list(cinfo, get_brlcad_name(cinfo, pname));
 	ret = 1;
-    } else if ( !tess ) {
+	goto cleanup;
+    }
+    if (!tess) {
 	/* not a failure, just an empty part */
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ||cinfo->logger_type == LOGGER_TYPE_SUCCESS ||cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
-	    fprintf(cinfo->logger, "Empty part. (%s) has no surfaces!!!\n", cinfo->curr_part_name );
-	}
-	snprintf( astr, sizeof(astr), "%s has no surfaces, ignoring", cinfo->curr_part_name );
-	(void)ProMessageDisplay(msgfil, "USER_WARNING", astr );
-	ProMessageClear();
-	fprintf( stderr, "%s\n", astr );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	add_to_empty_list(cinfo, get_brlcad_name(cinfo, cinfo->curr_part_name ) );
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Empty part. (%s) has no surfaces!!!\n", pname );
+
+	/* This is a legit empty solid, list it as such */
+	add_to_empty_list(cinfo, get_brlcad_name(cinfo, pname ) );
 	ret = 2;
-    } else {
-	/* output the triangles */
-	int surface_count;
+	goto cleanup;
+    }
 
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ||cinfo->logger_type == LOGGER_TYPE_SUCCESS ||cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
-	    fprintf(cinfo->logger, "Successfully tessellated %s using: tessellation error - %g, angle - %g!!!\n",
-		    cinfo->curr_part_name, curr_error, curr_angle );
-	}
+    /* We got through the initial tests - how many surfaces do we have? */
+    int surface_count;
+    status = ProArraySizeGet( (ProArray)tess, &surface_count );
+    if ( status != PRO_TK_NO_ERROR ) {
+	(void)ProMessageDisplay(msgfil, "USER_ERROR", "Failed to get array size" );
+	ProMessageClear();
+	fprintf( stderr, "Failed to get array size\n" );
+	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	ret = 1;
+	goto cleanup;
+    }
+    if ( surface_count < 1 ) {
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Part %s has no surfaces - skipping.\n", pname );
+	/* This is (probably?) a legit empty solid, list it as such */
+	add_to_empty_list( cinfo, get_brlcad_name(cinfo, pname ) );
+	ret = 2;
+	goto cleanup;
+    }
 
-	status = ProArraySizeGet( (ProArray)tess, &surface_count );
-	if ( status != PRO_TK_NO_ERROR ) {
-	    (void)ProMessageDisplay(msgfil, "USER_ERROR", "Failed to get array size" );
-	    ProMessageClear();
-	    fprintf( stderr, "Failed to get array size\n" );
-	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	    ret = 1;
-	} else if ( surface_count < 1 ) {
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ||cinfo->logger_type == LOGGER_TYPE_SUCCESS ||cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
-		fprintf(cinfo->logger, "Empty part. (%s) has no surfaces!!!\n", cinfo->curr_part_name );
-	    }
-	    snprintf( astr, sizeof(astr), "%s has no surfaces, ignoring", cinfo->curr_part_name );
-	    (void)ProMessageDisplay(msgfil, "USER_WARNING", astr );
-	    ProMessageClear();
-	    fprintf( stderr, "%s\n", astr );
-	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	    add_to_empty_list( cinfo, get_brlcad_name(cinfo, cinfo->curr_part_name ) );
-	    ret = 2;
-	} else {
-	    int i;
-	    int v1, v2, v3, n1, n2, n3;
-	    int surfno;
+    creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Successfully tessellated %s using: tessellation error - %g, angle - %g!!!\n", pname, curr_error, curr_angle );
+
+    /* We've got a part - the output for a part is a parent region and the solid underneath it. */
+
+    struct wmember wcomb;
+    BU_LIST_INIT(&wcomb.l);
+    struct bu_vls *rname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "r");
+    struct bu_vls *sname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "bot");
+    struct bn_vert_tree *vert_tree = bn_vert_tree_create();
+    struct bn_vert_tree *norm_tree = bn_vert_tree_create();
+    std::vector<int> faces;
+    std::vector<int> face_normals;
+
+    creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing surfaces of part %s\n", pname );
+
+    for (int surfno=0; surfno < surface_count; surfno++ ) {
+	for (int i=0; i < tess[surfno].n_facets; i++ ) {
+	    int v1, v2, v3;
 	    int vert_no;
-	    ProName material;
-	    ProMassProperty mass_prop;
-	    ProMaterialProps material_props;
-	    int got_density;
-	    struct bu_vls tree = BU_VLS_INIT_ZERO;
+	    /* grab the triangle */
+	    vert_no = tess[surfno].facets[i][0];
+	    v1 = bn_vert_tree_add( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
+	    vert_no = tess[surfno].facets[i][1];
+	    v2 = bn_vert_tree_add( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
+	    vert_no = tess[surfno].facets[i][2];
+	    v3 = bn_vert_tree_add( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		    tess[surfno].vertices[vert_no][2], vert_tree, cinfo->local_tol_sq );
 
-	    cinfo->curr_tri = 0;
-	    clean_vert_tree(cinfo->vert_tree_root);
-	    clean_vert_tree(cinfo->norm_tree_root);
+	    if (bad_triangle(cinfo, v1, v2, v3, vert_tree)) continue;
 
-	    /* add all vertices and triangles to our lists */
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf(cinfo->logger, "Processing surfaces of part %s\n", cinfo->curr_part_name );
+	    faces.push_back(v1);
+	    faces.push_back(v2);
+	    faces.push_back(v3);
+
+	    /* grab the surface normals */
+	    if (cinfo->get_normals) {
+		int n1, n2, n3;
+		vert_no = tess[surfno].facets[i][0];
+		VUNITIZE( tess[surfno].normals[vert_no] );
+		n1 = bn_vert_tree_add( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
+		vert_no = tess[surfno].facets[i][1];
+		VUNITIZE( tess[surfno].normals[vert_no] );
+		n2 = bn_vert_tree_add( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
+		vert_no = tess[surfno].facets[i][2];
+		VUNITIZE( tess[surfno].normals[vert_no] );
+		n3 = bn_vert_tree_add( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+			tess[surfno].normals[vert_no][2], norm_tree, cinfo->local_tol_sq );
+
+		face_normals.push_back(n1);
+		face_normals.push_back(n2);
+		face_normals.push_back(n3);
 	    }
-	    for ( surfno=0; surfno<surface_count; surfno++ ) {
-		for ( i=0; i<tess[surfno].n_facets; i++ ) {
-		    /* grab the triangle */
-		    vert_no = tess[surfno].facets[i][0];
-		    v1 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-			    tess[surfno].vertices[vert_no][2], cinfo->vert_tree_root, cinfo->local_tol_sq );
-		    vert_no = tess[surfno].facets[i][1];
-		    v2 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-			    tess[surfno].vertices[vert_no][2], cinfo->vert_tree_root, cinfo->local_tol_sq );
-		    vert_no = tess[surfno].facets[i][2];
-		    v3 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-			    tess[surfno].vertices[vert_no][2], cinfo->vert_tree_root, cinfo->local_tol_sq );
-		    if ( bad_triangle(cinfo, v1, v2, v3 ) ) {
-			continue;
-		    }
-
-		    if ( !cinfo->get_normals ) {
-			add_triangle(cinfo, v1, v2, v3 );
-			continue;
-		    }
-
-		    /* grab the surface normals */
-		    vert_no = tess[surfno].facets[i][0];
-		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n1 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			    tess[surfno].normals[vert_no][2], cinfo->norm_tree_root, cinfo->local_tol_sq );
-		    vert_no = tess[surfno].facets[i][1];
-		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n2 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			    tess[surfno].normals[vert_no][2], cinfo->norm_tree_root, cinfo->local_tol_sq );
-		    vert_no = tess[surfno].facets[i][2];
-		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n3 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-			    tess[surfno].normals[vert_no][2], cinfo->norm_tree_root, cinfo->local_tol_sq );
-
-		    add_triangle_and_normal(cinfo, v1, v2, v3, n1, n2, n3 );
-		}
-	    }
-
-	    /* actually output the part */
-	    /* first the BOT solid with a made-up name */
-	    brl_name = get_brlcad_name(cinfo, cinfo->curr_part_name );
-	    sol_name = (char *)bu_malloc( strlen( brl_name ) + 3, "aol_name" );
-	    snprintf( sol_name, strlen(brl_name)+3, "s.%s", brl_name );
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf(cinfo->logger, "Creating bot primitive (%s) for part %s\n",
-			sol_name, brl_name );
-	    }
-
-	    fprintf( cinfo->outfp, "put {%s} bot mode volume orient no V { ", sol_name );
-
-	    for ( i=0; i < cinfo->vert_tree_root->curr_vert; i++ ) {
-		fprintf( cinfo->outfp, " {%.12e %.12e %.12e}",
-			cinfo->vert_tree_root->the_array[i*3] * cinfo->creo_to_brl_conv,
-			cinfo->vert_tree_root->the_array[i*3+1] * cinfo->creo_to_brl_conv,
-			cinfo->vert_tree_root->the_array[i*3+2] * cinfo->creo_to_brl_conv );
-	    }
-	    fprintf( cinfo->outfp, " } F {" );
-	    for ( i=0; i < cinfo->curr_tri; i++ ) {
-		/* Proe orders things using left-hand rule, so reverse the order */
-		fprintf( cinfo->outfp, " {%d %d %d}", cinfo->part_tris[i][2],
-			cinfo->part_tris[i][1], cinfo->part_tris[i][0] );
-	    }
-	    if ( cinfo->get_normals ) {
-		if (cinfo->logger ) {
-		    fprintf(cinfo->logger, "Getting vertex normals for part %s\n",
-			    cinfo->curr_part_name );
-		}
-		fprintf( cinfo->outfp, " } flags { has_normals use_normals } N {" );
-		for ( i=0; i<cinfo->norm_tree_root->curr_vert; i++ ) {
-		    fprintf( cinfo->outfp, " {%.12e %.12e %.12e}",
-			    cinfo->norm_tree_root->the_array[i*3] * cinfo->creo_to_brl_conv,
-			    cinfo->norm_tree_root->the_array[i*3+1] * cinfo->creo_to_brl_conv,
-			    cinfo->norm_tree_root->the_array[i*3+2] * cinfo->creo_to_brl_conv );
-		}
-		fprintf( cinfo->outfp, " } fn {" );
-		for ( i=0; i < cinfo->curr_tri; i++ ) {
-		    fprintf( cinfo->outfp, " {%d %d %d}", cinfo->part_norms[i*3],
-			    cinfo->part_norms[i*3+1], cinfo->part_norms[i*3+2] );
-		}
-	    }
-	    fprintf( cinfo->outfp, " }\n" );
-
-	    /* Set the CREO_NAME attributes for the solid/primitive */
-	    fprintf( cinfo->outfp, "attr set {%s} %s %s\n", sol_name, CREO_NAME_ATTR, cinfo->curr_part_name );
-
-	    /* build the tree for this region */
-	    build_tree(cinfo, sol_name, &tree );
-	    bu_free( sol_name, "sol_name" );
-	    output_csg_prims(cinfo);
-
-	    /* get the surface properties for the part
-	     * and create a region using the actual part name
-	     */
-	    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-		fprintf(cinfo->logger, "Creating region for part %s\n", cinfo->curr_part_name );
-	    }
-
-
-	    ProMdlToModelitem(model, &mitm);
-	    ProError aerr = ProSurfaceAppearancepropsGet(&mitm, &aprops);
-	    if (aerr  == PRO_TK_NOT_EXIST ) {
-		/* no surface properties */
-		fprintf( cinfo->outfp,
-			"put {%s} comb region yes id %d los 100 GIFTmater 1 tree %s\n",
-			get_brlcad_name(cinfo, cinfo->curr_part_name ), cinfo->reg_id, bu_vls_addr( &tree) );
-	    } else if ( aerr == PRO_TK_NO_ERROR ) {
-		/* use the colors, ... that was set in Pro/E */
-		fprintf( cinfo->outfp,
-			"put {%s} comb region yes id %d los 100 GIFTmater 1 rgb {%d %d %d} shader {plastic {",
-			get_brlcad_name(cinfo, cinfo->curr_part_name ),
-			cinfo->reg_id,
-			(int)(aprops.color_rgb[0]*255.0),
-			(int)(aprops.color_rgb[1]*255.0),
-			(int)(aprops.color_rgb[2]*255.0) );
-		if ( aprops.transparency != 0.0 ) {
-		    fprintf( cinfo->outfp, " tr %g", aprops.transparency );
-		}
-		if ( aprops.shininess != 1.0 ) {
-		    fprintf( cinfo->outfp, " sh %d", (int)(aprops.shininess * 18 + 2.0) );
-		}
-		if ( aprops.diffuse != 0.3 ) {
-		    fprintf( cinfo->outfp, " di %g", aprops.diffuse );
-		}
-		if ( aprops.highlite != 0.7 ) {
-		    fprintf( cinfo->outfp, " sp %g", aprops.highlite );
-		}
-		fprintf( cinfo->outfp, "} }" );
-		fprintf( cinfo->outfp, " tree %s\n", bu_vls_addr( &tree ) );
-	    } else {
-		/* something is wrong, but just ignore the missing properties */
-		fprintf( stderr, "Error getting surface properties for %s\n",
-			cinfo->curr_part_name );
-		fprintf( cinfo->outfp, "put {%s} comb region yes id %d los 100 GIFTmater 1 tree %s\n",
-			get_brlcad_name(cinfo, cinfo->curr_part_name ), cinfo->reg_id, bu_vls_addr( &tree ) );
-	    }
-
-	    /* Set the CREO_NAME attributes for the region */
-	    fprintf( cinfo->outfp, "attr set {%s} %s %s\n", get_brlcad_name(cinfo, cinfo->curr_part_name ), CREO_NAME_ATTR, cinfo->curr_part_name );
-
-	    /* if the part has a material, add it as an attribute */
-	    got_density = 0;
-	    status = ProPartMaterialNameGet( ProMdlToPart(model), material );
-	    if ( status == PRO_TK_NO_ERROR ) {
-		fprintf( cinfo->outfp, "attr set {%s} material_name {%s}\n",
-			get_brlcad_name(cinfo, cinfo->curr_part_name ),
-			ProWstringToString( str, material ) );
-
-		/* get the density for this material */
-		status = ProPartMaterialdataGet( ProMdlToPart(model), material, &material_props );
-		if ( status == PRO_TK_NO_ERROR ) {
-		    got_density = 1;
-		    fprintf( cinfo->outfp, "attr set {%s} density %g\n",
-			    get_brlcad_name(cinfo, cinfo->curr_part_name ),
-			    material_props.mass_density );
-		}
-	    }
-
-	    /* calculate mass properties */
-	    status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
-	    if ( status == PRO_TK_NO_ERROR ) {
-		if ( !got_density ) {
-		    if ( mass_prop.density > 0.0 ) {
-			fprintf( cinfo->outfp, "attr set {%s} density %g\n",
-				get_brlcad_name(cinfo, cinfo->curr_part_name ),
-				mass_prop.density );
-		    }
-		}
-		if ( mass_prop.mass > 0.0 ) {
-		    fprintf( cinfo->outfp, "attr set {%s} mass %g\n",
-			    get_brlcad_name(cinfo, cinfo->curr_part_name ),
-			    mass_prop.mass );
-		}
-		if ( mass_prop.volume > 0.0 ) {
-		    fprintf( cinfo->outfp, "attr set {%s} volume %g\n",
-			    get_brlcad_name(cinfo, cinfo->curr_part_name ),
-			    mass_prop.volume );
-		}
-	    }
-
-	    /* increment the region id */
-	    cinfo->reg_id++;
-
-	    /* free the tree */
-	    bu_vls_free( &tree );
 	}
     }
 
+    /* TODO - make sure we have non-zero faces (and if needed, face_normals) vectors */
 
+    /* Output the solid */
+    if (cinfo->get_normals) {
+	mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, ?, NULL, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
+    } else {
+	mk_bot(cinfo->wdbp, bu_vls_addr(sname), RT_BOT_SOLID, ?, NULL, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL);
+    }
+
+    /* Add the solid to the region comb */
+    (void)mk_addmember(bu_vls_addr(sname), &wcomb.l, NULL, WMOP_UNION);
+
+    /* TODO - add any subtraction solids created by the hole handling */
+
+
+    /* Get the surface properties from the part and output the region comb */
+    struct bu_vls shader_args = BU_VLS_INIT_ZERO;
+    struct bu_color color;
+    fastf_t rgbflts[3];
+    unsigned char rgb[3];
+    ProModelitem mitm;
+    ProSurfaceAppearanceProps aprops;
+    ProMdlToModelitem(model, &mitm);
+    if (ProSurfaceAppearancepropsGet(&mitm, &aprops) == PRO_TK_NO_ERROR) {
+	/* use the colors, ... that were set in CREO */
+	rgbflts[0] = aprops.color_rgb[0]*255.0;
+	rgbflts[1] = aprops.color_rgb[1]*255.0;
+	rgbflts[2] = aprops.color_rgb[2]*255.0;
+	bu_color_from_rgb_floats(&color, rgbflts);
+	bu_color_to_rgb_chars(&color, rgb);
+
+	/* shader args */
+	bu_vls_sprintf(&shader_args, "{");
+	if (aprops.transparency != 0.0) bu_vls_printf(&shader_args, " tr %g", aprops.transparency);
+	if (aprops.shininess != 1.0) bu_vls_printf(&shader_args, " sh %d", (int)(aprops.shininess * 18 + 2.0));
+	if (aprops.diffuse != 0.3) bu_vls_printf(&shader_args, " di %g", aprops.diffuse);
+	if (aprops.highlite != 0.7 )bu_vls_printf(&shader_args, " sp %g", aprops.highlite);
+	bu_vls_printf(&shader_args, "}");
+
+	/* Make the region comb - TODO - can add rgb color, shader, args, etc. here, probably should... */
+	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb, 1,
+		"plastic", bu_vls_addr(&shader_args), (const unsigned char *)rgb,
+		cinfo->reg_id, 0, 0, 0, 0, 0, 0);
+    } else {
+	/* something is wrong, but just ignore the missing properties */
+	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Error getting surface properties for %s\n",	pname);
+	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb, 1, NULL, NULL, NULL, cinfo->reg_id, 0, 0, 0, 0, 0, 0);
+    }
+
+
+    /* Set the CREO_NAME attribute for the solid/primitive */
+    struct directory *sdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(sname), LOOKUP_QUIET);
+    struct bu_attribute_value_set s_avs;
+    db5_get_attributes(cinfo->wdbp->dbip, &s_avs, sdp);
+    bu_avs_add(&s_avs, "CREO_NAME", pname);
+    db5_standardize_avs(&s_avs);
+    db5_update_attributes(sdp, &s_avs, cinfo->wdbp->dbip);
+
+    /* Set the CREO attributes for the region */
+    struct directory *rdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(rname), LOOKUP_QUIET);
+    struct bu_attribute_value_set r_avs;
+    db5_get_attributes(cinfo->wdbp->dbip, &r_avs, rdp);
+
+    bu_avs_add(&r_avs, "CREO_NAME", pname);
+
+    /* if the part has a material, add it as an attribute */
+    ProName material;
+    ProMassProperty mass_prop;
+    ProMaterialProps material_props;
+    int got_density = 0;
+    status = ;
+    if (ProPartMaterialNameGet(ProMdlToPart(model), material) == PRO_TK_NO_ERROR ) {
+	char str[CREO_NAME_MAX];
+	ProWstringToString(str, material);
+	bu_avs_add("material_name", str);
+
+	/* get the density for this material */
+	if (ProPartMaterialdataGet( ProMdlToPart(model), material, &material_props) == PRO_TK_NO_ERROR) {
+	    got_density = 1;
+	    struct bu_vls mdstr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&mdstr, "%g", material_props.mass_density);
+	    bu_avs_add("density", bu_vls_addr(&mdstr));
+	    bu_vls_free(&mdstr);
+	}
+    }
+
+    /* calculate mass properties */
+    if (ProSolidMassPropertyGet(ProMdlToSolid(model), NULL, &mass_prop) == PRO_TK_NO_ERROR) {
+	struct bu_vls vstr = BU_VLS_INIT_ZERO;
+	if (!got_density && mass_prop.density > 0.0) {
+	    bu_vls_sprintf(&vstr, "%g", mass_prop.density);
+	    bu_avs_add("density", bu_vls_addr(&vstr));
+	}
+	if (mass_prop.mass > 0.0) {
+	    struct bu_vls vstr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&vstr, "%g", mass_prop.mass);
+	    bu_avs_add("mass", bu_vls_addr(&vstr));
+	}
+	if (mass_prop.volume > 0.0) {
+	    struct bu_vls vstr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&vstr, "%g", mass_prop.volume);
+	    bu_avs_add("volume", bu_vls_addr(&vstr));
+	}
+	bu_vls_free(&vstr);
+    }
+
+    /* Update attributes stored on disk */
+    db5_standardize_avs(&s_avs);
+    db5_update_attributes(sdp, &s_avs, cinfo->wdbp->dbip);
+
+    /* increment the region id */
+    cinfo->reg_id++;
+
+    /* free the tree */
+    bu_vls_free( &tree );
+
+cleanup:
     /* free the tessellation memory */
     ProPartTessellationFree( &tess );
     tess = NULL;
 
-    /* add this part to the list of objects already output */
-    add_to_done_part(cinfo, part_name );
+    /* Free trees */
+    bn_vert_tree_destroy(vert_tree);
+    bn_vert_tree_destroy(norm_tree);
 
     /* unsuppress anything we suppressed */
-    if ( cinfo->feat_id_count ) {
-	if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	    fprintf(cinfo->logger, "Unsuppressing %d features\n", cinfo->feat_id_count );
-	}
-	fprintf( stderr, "Unsuppressing %d features\n", cinfo->feat_id_count );
-	if ( (ret=ProFeatureResume( ProMdlToSolid(model),
-			cinfo->feat_ids_to_delete, cinfo->feat_id_count,
-			NULL, 0 )) != PRO_TK_NO_ERROR) {
-
-	    fprintf( stderr, "Failed to unsuppress %d features from %s\n",
-		    cinfo->feat_id_count, cinfo->curr_part_name );
+    if (cinfo->do_elims && !pinfo->suppressed_features->empty()) {
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Unsuppressing %d features\n", pinfo->suppressed_features->size());
+	ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features[0], pinfo->suppressed_features->size(), NULL, 0);
+	if (ret != PRO_TK_NO_ERROR) {
+	    creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "Failed to unsuppress features.\n");
 
 	    /* use UI dialog */
-	    status = ProUIDialogCreate( "creo_brl_error", "creo_brl_error" );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to create dialog box for creo-brl, error = %d\n", status );
-		return 0;
-	    }
-	    snprintf( err_mess, 512,
-		    "During the conversion %d features of part %s\n"
-		    "were suppressed. After the conversion was complete, an\n"
-		    "attempt was made to unsuppress these same features.\n"
-		    "The unsuppression failed, so these features are still\n"
-		    "suppressed. Please exit Pro/E without saving any\n"
-		    "changes so that this problem will not persist.", cinfo->feat_id_count, cinfo->curr_part_name );
+	    if (ProUIDialogCreate("creo_brl_error", "creo_brl_error") == PRO_TK_NO_ERROR) {
+		snprintf( err_mess, 512,
+			"During the conversion %d features of part %s\n"
+			"were suppressed. After the conversion was complete, an\n"
+			"attempt was made to unsuppress these same features.\n"
+			"The unsuppression failed, so these features are still\n"
+			"suppressed. Please exit CREO without saving any\n"
+			"changes so that this problem will not persist.", pinfo->suppressed_features->size(), pname );
 
-	    (void)ProStringToWstring( werr_mess, err_mess );
-	    status = ProUITextareaValueSet( "creo_brl_error", "the_message", werr_mess );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to create dialog box for creo-brl, error = %d\n", status );
-		return 0;
+		(void)ProStringToWstring( werr_mess, err_mess );
+		if (ProUITextareaValueSet("creo_brl_error", "the_message", werr_mess) == PRO_TK_NO_ERROR) {
+		    (void)ProUIPushbuttonActivateActionSet( "creo_brl_error", "ok", kill_error_dialog, NULL );
+		}
 	    }
-	    (void)ProUIPushbuttonActivateActionSet( "creo_brl_error", "ok", kill_error_dialog, NULL );
-#if 0
-	    status = ProUIDialogActivate( "creo_brl_error", &ret_status );
-	    if ( status != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Error in creo-brl error Dialog, error = %d\n",
-			status );
-		fprintf( stderr, "\t dialog returned %d\n", ret_status );
-	    }
-#endif
-	    cinfo->feat_id_count = 0;
 	    return 0;
 	}
-	fprintf( stderr, "features unsuppressed!!\n" );
-	cinfo->feat_id_count = 0;
+	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Successfully unsuppressed features.\n");
     }
+
+    delete pinfo->suppressed_features;
+    delete pinfo->subtractions;
+    BU_GET(pinfo, struct part_conv_info);
 
     return ret;
 }
-
-#endif
 
 /*
  * Local Variables:

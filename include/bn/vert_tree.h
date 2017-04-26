@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bn_vtree
+/** @addtogroup bn_vert_tree
  *
  * @brief
  * Vertex tree support
@@ -47,7 +47,7 @@ __BEGIN_DECLS
  * packaging structure
  * holds all the required info for a single vertex tree
  */
-struct vert_root {
+struct bn_vert_tree {
     uint32_t magic;
     int tree_type;		/**< @brief vertices or vertices with normals */
     union vert_tree *the_tree;	/**< @brief the actual vertex tree */
@@ -56,12 +56,10 @@ struct vert_root {
     size_t max_vert;		/**< @brief the current maximum capacity of the array */
 };
 
-#define TREE_TYPE_VERTS 1
-#define TREE_TYPE_VERTS_AND_NORMS 2
+#define BN_VERT_TREE_TYPE_VERTS 1
+#define BN_VERT_TREE_TYPE_VERTS_AND_NORMS 2
 
-#define VERT_BLOCK 512			/**< @brief number of vertices to malloc per call when building the array */
-
-#define BN_CK_VERT_TREE(_p) BU_CKMAG(_p, VERT_TREE_MAGIC, "vert_tree")
+#define BN_CK_VERT_TREE(_p) BU_CKMAG(_p, BN_VERT_TREE_MAGIC, "vert_tree")
 
 
 /**
@@ -70,7 +68,7 @@ struct vert_root {
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct vert_root *create_vert_tree(void);
+BN_EXPORT extern struct bn_vert_tree *bn_vert_tree_create(void);
 
 /**
  *@brief
@@ -78,13 +76,13 @@ BN_EXPORT extern struct vert_root *create_vert_tree(void);
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct vert_root *create_vert_tree_w_norms(void);
+BN_EXPORT extern struct bn_vert_tree *bn_vert_tree_create_w_norms(void);
 
 /**
  *@brief
  *	Routine to free a vertex tree and all associated dynamic memory
  */
-BN_EXPORT extern void free_vert_tree(struct vert_root *tree_root);
+BN_EXPORT extern void bn_vert_tree_destroy(struct bn_vert_tree *tree);
 
 /**
  *@brief
@@ -92,11 +90,11 @@ BN_EXPORT extern void free_vert_tree(struct vert_root *tree_root);
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex is stored
  */
-BN_EXPORT extern size_t Add_vert(double x,
-				 double y,
-				 double z,
-				 struct vert_root *tree_root,
-				 fastf_t local_tol_sq);
+BN_EXPORT extern size_t bn_vert_tree_add(struct bn_vert_tree *tree,
+					 double x,
+					 double y,
+					 double z,
+					 fastf_t local_tol_sq);
 
 /**
  *@brief
@@ -104,21 +102,21 @@ BN_EXPORT extern size_t Add_vert(double x,
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex and normal is stored
  */
-BN_EXPORT extern size_t Add_vert_and_norm(double x,
-					  double y,
-					  double z,
-					  double nx,
-					  double ny,
-					  double nz,
-					  struct vert_root *tree_root,
-					  fastf_t local_tol_sq);
+BN_EXPORT extern size_t bn_vert_tree_add_w_norm(struct bn_vert_tree *tree,
+						double x,
+						double y,
+						double z,
+						double nx,
+						double ny,
+						double nz,
+						fastf_t local_tol_sq);
 
 /**
  *@brief
  *	Routine to free the binary search tree and reset the current number of vertices.
  *	The vertex array is left untouched, for re-use later.
  */
-BN_EXPORT extern void clean_vert_tree(struct vert_root *tree_root);
+BN_EXPORT extern void bn_vert_tree_clean(struct bn_vert_tree *tree);
 
 
 __END_DECLS

@@ -15,7 +15,17 @@ on-going issues.
 Recent Bugs
 -----------
 
-* screengrab on windows crashes
+* dsp does not facetize correctly with zero elevation areas in the
+  data - need robustness improvements
+
+* dsp primitives specifying data using Windows style file paths
+  don't work.
+
+* attempting to create a dsp using a binary object caused a crash on
+  Linux - need to figure out if this was caused by feeding it the wrong
+  kind of binary object or some other error...
+
+* screengrab on windows does not work
 
 * Recursive submodel predictably goes infinite, need stack-based
   db_walk_tree(): mged> in submodel submodel submodel grid test.g

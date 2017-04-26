@@ -1081,10 +1081,9 @@ read_dem(
      * required sub_elements contain values.
      */
     if (validate_dem_record(buf, 1, type_a) == BRLCAD_ERROR) {
-	bu_log("The DEM file did not validate, failed on logical record type 'A'.\n");
-	fclose(fp);
-	fclose(fp2);
-	return BRLCAD_ERROR;
+ 	bu_log("ERROR: The DEM file does not validate, failed on logical record type 'A'.\n");
+	bu_log("       This means you're probably trying to convert an unsupported DEM file.\n");
+	bu_log("       Continuing regardless...\n");
     }
 
     /* read quantity of b type records from a record */
@@ -1190,12 +1189,11 @@ read_dem(
 	/* Validates all 'B' record header sub_elements can be read
 	 * and all required sub_elements contain values.
 	 */
-	if (validate_dem_record(buf, 1, type_b) == BRLCAD_ERROR) {
-	    bu_log("The DEM file did not validate, failed on logical record type 'B' number '%ld'.\n", curr_b_record);
-	    fclose(fp);
-	    fclose(fp2);
-	    return BRLCAD_ERROR;
-	}
+ 	if (validate_dem_record(buf, 1, type_b) == BRLCAD_ERROR) {
+ 	    bu_log("ERROR: The DEM file did not validate, failed on logical record type 'B' number '%ld'.\n", curr_b_record);
+	    bu_log("       This means you're probably trying to convert an unsupported DEM file.\n");
+	    bu_log("       Continuing regardless...\n");
+ 	}
 
 	/* Saves the number of elevations in the previous b record */
 	tot_elevations_in_previous_b_record = tot_elevations_in_curr_b_record;
@@ -1230,24 +1228,22 @@ read_dem(
 	 */
 	if (curr_b_record > 1) {
 	    if (!EQUAL(datum_elevation_in_curr_b_record, datum_elevation_in_previous_b_record)) {
-		bu_log("Datum elevation in 'B' record number '%ld' does not match previous 'B' record datum elevations.\n",
+		bu_log("ERROR: Datum elevation in 'B' record number '%ld' does not match previous 'B' record datum elevations.\n",
 		       curr_b_record);
-		bu_log("Datum elevation in current b record is: %g\n", datum_elevation_in_curr_b_record);
-		bu_log("Datum elevation in previous b record is: %g\n", datum_elevation_in_previous_b_record);
-		bu_log("This condition is unsupported, import can not continue.\n");
-		fclose(fp);
-		fclose(fp2);
-		return BRLCAD_ERROR;
+		bu_log("       Datum elevation in current b record is: %g\n", datum_elevation_in_curr_b_record);
+		bu_log("       Datum elevation in previous b record is: %g\n", datum_elevation_in_previous_b_record);
+		bu_log("       This means you're probably trying to convert an unsupported DEM file.\n");
+		bu_log("       This condition is unsupported, conversion will not be successful.\n");
+		bu_log("       Continuing regardless...\n");
 	    }
 	    if (tot_elevations_in_curr_b_record != tot_elevations_in_previous_b_record) {
-		bu_log("Number of elevations in 'B' record number '%ld' does not match previous 'B' record number of elevations.\n",
+		bu_log("ERROR: Number of elevations in 'B' record number '%ld' does not match previous 'B' record number of elevations.\n",
 		       curr_b_record);
-		bu_log("The number of elevations in the current b record is: %ld\n", tot_elevations_in_curr_b_record);
-		bu_log("The number of elevations in the previous b record is: %ld\n", tot_elevations_in_previous_b_record);
-		bu_log("This condition is unsupported, import can not continue.\n");
-		fclose(fp);
-		fclose(fp2);
-		return BRLCAD_ERROR;
+		bu_log("       The number of elevations in the current b record is: %ld\n", tot_elevations_in_curr_b_record);
+		bu_log("       The number of elevations in the previous b record is: %ld\n", tot_elevations_in_previous_b_record);
+		bu_log("       This means you're probably trying to convert an unsupported DEM file.\n");
+		bu_log("       This condition is unsupported, conversion will not be successful.\n");
+		bu_log("       Continuing regardless...\n");
 	    }
 	}
 
