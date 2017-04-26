@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "bg/chull.h"
+#include "bg/trimesh.h"
 #include "rt/geom.h"
 #include "wdb.h"
 #include "./ged_private.h"
@@ -72,6 +73,9 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     if (bu_strncmp(sub, "chull", len) == 0) {
 	primitive = argv[2];
     }
+    if (bu_strncmp(sub, "solid", len) == 0) {
+	primitive = argv[2];
+    }
     if (primitive == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
 	return GED_ERROR;
@@ -83,6 +87,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!", cmd, primitive);
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
@@ -110,6 +115,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    }
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a valid argument!", sub, arg);
+	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
     }
@@ -124,18 +130,44 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	/* must be wanting help */
 	if (argc < 4) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
 
 	retval = bg_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)bot->vertices, (int)bot->num_vertices);
 
-	if (retval != 3) return GED_ERROR;
+	if (retval != 3) {
+	    rt_db_free_internal(&intern);
+	    return GED_ERROR;
+	}
 
 	retval = mk_bot(gedp->ged_wdbp, argv[3], RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
 
-	if (retval) return GED_ERROR;
+	if (retval) {
+	    rt_db_free_internal(&intern);
+	    return GED_ERROR;
+	}
+    }
+    if (bu_strncmp(sub, "solid", len) == 0) {
+	int is_solid = 0;
+
+	/* must be wanting help */
+	if (argc != 3) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	    rt_db_free_internal(&intern);
+	    return GED_ERROR;
+	}
+
+	is_solid = bg_trimesh_solid(bot->num_vertices, bot->num_faces, bot->vertices, bot->faces);
+	bu_vls_printf(gedp->ged_result_str, "%d", is_solid);
+
+	rt_db_free_internal(&intern);
+
+	return GED_OK;
     }
 
+
+    rt_db_free_internal(&intern);
     return GED_OK;
 }
 

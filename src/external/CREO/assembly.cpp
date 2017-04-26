@@ -118,7 +118,7 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     char pname[CREO_NAME_MAX];
     wchar_t wcname[CREO_NAME_MAX];
     char cname[CREO_NAME_MAX];
-    ProMdlMdlNameGet(parent, &type, wpname);
+    ProMdlNameGet(parent, wpname);
     (void)ProWstringToString(pname, wpname);
     ProAsmcompMdlNameGet(feat, &type, wcname);
     (void)ProWstringToString(cname, wcname);
@@ -131,13 +131,13 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     /* create the path */
     status = ProAsmcomppathInit((ProSolid)parent, id_table, 1, &comp_path );
     if ( status != PRO_TK_NO_ERROR ) {
-	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "   Failed to get path from %s to %s, aborting\n", pname, cname);
+	creo_log(cinfo, MSG_FAIL, "%s: failed to get path from %s to %s, aborting\n", pname, pname, cname);
 	return status;
     }
     /* accumulate the xform matrix along the path created above */
     status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
     if ( status != PRO_TK_NO_ERROR ) {
-	creo_log(cinfo, MSG_FAIL, PRO_TK_NO_ERROR, "   Failed to get transformation matrix %s/%s, aborting\n", pname, cname);
+	creo_log(cinfo, MSG_FAIL, "%s: failed to get transformation matrix %s/%s, aborting\n", pname, pname, cname);
 	return status;
     }
 
@@ -165,7 +165,9 @@ extern "C" ProError
 assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
 {
     ProError lstatus;
-    ProMdlType type;
+    ProMdlType mtype;
+    ProMdl model;
+    ProBoolean is_skel = PRO_B_FALSE;
     struct bu_vls *entry_name;
     wchar_t wname[CREO_NAME_MAX];
     struct assem_conv_info *ainfo = (struct assem_conv_info *)app_data;
@@ -173,13 +175,33 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
     MAT_IDN(xform);
 
     /* Get name of current member */
-    if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
+    if ((lstatus = ProAsmcompMdlNameGet(feat, &mtype, wname)) != PRO_TK_NO_ERROR ) return PRO_TK_NO_ERROR;
 
     /* Skip this member if the object it refers to is empty */
     if (ainfo->cinfo->empty->find(wname) != ainfo->cinfo->empty->end()) return PRO_TK_NO_ERROR;
 
+    /* If this is a skeleton, skip */
+    if ((ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) {
+	ProMdlIsSkeleton(model, &is_skel);
+	if (is_skel) return PRO_TK_NO_ERROR;
+    }
+
     /* get BRL-CAD name */
-    entry_name = get_brlcad_name(ainfo->cinfo, wname, type, NULL, 0);
+    switch (mtype) {
+	case PRO_MDL_PART:
+	    entry_name = get_brlcad_name(ainfo->cinfo, wname, "r", N_REGION);
+	    break;
+	case PRO_MDL_ASSEMBLY:
+	    entry_name = get_brlcad_name(ainfo->cinfo, wname, NULL, N_ASSEM);
+	    break;
+	default:
+	    return PRO_TK_NO_ERROR;
+	    break;
+    }
+
+    /* In case the name routine failed for whatever reason, don't call mk_addmember - all we'll get
+     * is a crash.  Just keep going. */
+    if (!entry_name) return PRO_TK_NO_ERROR;
 
     /* Get matrix relative to current parent (if any) and create the comb entry */
     if ((lstatus = assembly_entry_matrix(ainfo->cinfo, ainfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
@@ -196,7 +218,6 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
 extern "C" ProError
 output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 {
-    ProBoolean is_exploded = false;
     struct bu_vls *comb_name;
     struct bu_vls *obj_name;
     wchar_t wname[CREO_NAME_MAX];
@@ -204,30 +225,28 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     BU_GET(ainfo, struct assem_conv_info);
     ainfo->cinfo = cinfo;
 
-    /* Check for exploded assembly - TODO, will this work?  Seemed to be a
-     * problem... Do we really need to change this for conversion? */
-    ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded);
-    if (is_exploded) ProAssemblyUnexplode(*(ProAssembly *)model);
+    /* Check for exploded assembly.  TODO - this is causing a crash, can't enable??? */
+    //ProBoolean is_exploded = PRO_B_FALSE;
+    //ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded);
+    //if (is_exploded) ProAssemblyUnexplode(*(ProAssembly *)model);
 
     /* We'll need to assemble the list of children */
     struct wmember wcomb;
     BU_LIST_INIT(&wcomb.l);
 
     /* Initial comb setup */
-    char buffer[CREO_NAME_MAX];
+    char cname[CREO_NAME_MAX];
     ProMdlMdlnameGet(model, wname);
-    ProWstringToString(buffer, wname);
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	creo_log(cinfo, MSG_OK, PRO_TK_NO_ERROR, "Processing assembly %s:\n", buffer);
-    }
+    ProWstringToString(cname, wname);
     ainfo->curr_parent = model;
     ainfo->wcmb = &wcomb;
 
     /* Add children */
-    ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
+    ProSolidFeatVisit(ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
+    creo_log(cinfo, MSG_DEBUG, "%s: All children of assembly visited.\n", cname);
 
     /* Get BRL-CAD name */
-    comb_name = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL, 0);
+    comb_name = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
 
     /* Data sufficient - write the comb */
     mk_lcomb(cinfo->wdbp, bu_vls_addr(comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
@@ -238,7 +257,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     db5_get_attributes(cinfo->wdbp->dbip, &avs, dp);
 
     /* Write the object ID as an attribute, if it isn't already being used as the object name */
-    obj_name = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL, NG_OBJID);
+    obj_name = get_brlcad_name(cinfo, wname, NULL, N_CREO);
     if (!BU_STR_EQUAL(bu_vls_addr(obj_name), bu_vls_addr(comb_name))) {
 	bu_avs_add(&avs, "CREO_NAME", bu_vls_addr(obj_name));
     }
@@ -288,6 +307,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     db5_standardize_avs(&avs);
     db5_update_attributes(dp, &avs, cinfo->wdbp->dbip);
 
+    creo_log(cinfo, MSG_DEBUG, "%s: assembly conversion done.\n", cname);
     /* Free local container */
     BU_PUT(ainfo, struct assem_conv_info);
     return PRO_TK_NO_ERROR;

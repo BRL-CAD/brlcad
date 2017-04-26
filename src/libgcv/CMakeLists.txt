@@ -18,7 +18,6 @@ set(LIBGCV_PLUGINS_DIRECTORY "libgcv_plugins")
 add_subdirectory(plugins)
 
 set(LIBGCV_SOURCES
-  bot_solidity.c
   bottess.c
   facetize.c
   gcv.c

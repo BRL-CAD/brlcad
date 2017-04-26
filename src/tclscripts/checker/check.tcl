@@ -41,7 +41,7 @@ catch {delete class GeometryChecker} error
     destructor {}
 
     public {
-	variable forceSubtract false {}
+	variable subtractFirst false {}
 
 	method loadOverlaps { args } {}
 	method sortBy { col direction } {}
@@ -744,12 +744,12 @@ body GeometryChecker::unmarkSelection {} {
 
 body GeometryChecker::subtractItemRightFromLeft {left right} {
     set _commandText "Subtracting ($right) from ($left)"
-    $_overlapCallback $left $right $forceSubtract
+    $_overlapCallback $left $right $subtractFirst
 }
 
 body GeometryChecker::subtractItemLeftFromRight {left right} {
     set _commandText "Subtracting ($left) from ($right)"
-    $_overlapCallback $right $left $forceSubtract
+    $_overlapCallback $right $left $subtractFirst
 }
 
 body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
@@ -997,7 +997,7 @@ proc treeReplaceLeafWithSub {tree leaf sub} {
     return [list $op $newleft $newright]
 }
 
-proc subtractRightFromLeft {left right {forceSubtract false}} {
+proc subtractRightFromLeft {left right {subtractFirst false}} {
     if [ catch { opendb } dbname ] {
 	puts ""
 	puts "ERROR: no database seems to be open"
@@ -1024,8 +1024,8 @@ proc subtractRightFromLeft {left right {forceSubtract false}} {
 	return -code 1
     }
 
-    if {$forceSubtract} {
-        # if always subtracting, we'll choose the first unioned solid in right
+    if {$subtractFirst} {
+	# assume the first unioned solid in right is the part that overlaps
 	set solids [search $right -type shape -bool u]
     } else {
 	# simplify right to solid, or report error
@@ -1049,14 +1049,24 @@ proc subtractRightFromLeft {left right {forceSubtract false}} {
 	return -code 1
     }
 
-    # search /left -bool u -type shape to find positives
-    # adjust each shape's parent to subtract right from all u members
-    foreach { solid } [search $left -bool u -type shape] {
+    if {$subtractFirst} {
+	# assume the first unioned shape in left is the part that overlaps
+	set solid [lindex [search $left -bool u -type shape] 0]
 	set solidparent [file tail [file dirname $solid]]
 	set tree [get $solidparent tree]
 	set leaf [file tail $solid]
 	set newtree [treeReplaceLeafWithSub $tree $leaf $rightsub]
 	adjust $solidparent tree $newtree
+    } else {
+	# search /left -bool u -type shape to find positives
+	# adjust each shape's parent to subtract right from all u members
+	foreach { solid } [search $left -bool u -type shape] {
+	    set solidparent [file tail [file dirname $solid]]
+	    set tree [get $solidparent tree]
+	    set leaf [file tail $solid]
+	    set newtree [treeReplaceLeafWithSub $tree $leaf $rightsub]
+	    adjust $solidparent tree $newtree
+	}
     }
     return
 }
@@ -1101,16 +1111,16 @@ proc check {{args}} {
     set filename ""
 
     set usage false
-    set force false
+    set firstFlag false
     if {[llength $args] == 1} {
 	if {[lindex $args 0] == "-F"} {
-	    set force true
+	    set firstFlag true
 	} else {
 	    set filename $args
 	}
     } elseif {[llength $args] == 2} {
 	if {[lindex $args 0] == "-F"} {
-	    set force true
+	    set firstFlag true
 	    set filename [lindex $args 1]
 	} else {
 	    set usage true
@@ -1124,10 +1134,12 @@ proc check {{args}} {
 	return -code 1
     }
 
-    if {$force} {
-	puts "WARNING: Running with -F means regions containing multiple solids will be"
-	puts "         subtracted as the first unioned solid found in the region. This may"
-	puts "         cause the wrong volume to be subtracted."
+    if {$firstFlag} {
+	puts "WARNING: Running with -F means check will assume that only the first unioned"
+	puts "         solid in a region is responsible for any overlap. When subtracting"
+	puts "         region A from overlapping region B, the first unioned solid in A will"
+	puts "         be subtracted from the first unioned solid in B. This may cause the"
+	puts "         wrong volume to be subtracted, leaving the overlap unresolved."
 	puts ""
     }
 
@@ -1143,7 +1155,7 @@ proc check {{args}} {
     set checkerWindow [toplevel $parent.checker]
     set checker [GeometryChecker $checkerWindow.ck]
 
-    $checker configure -forceSubtract $force
+    $checker configure -subtractFirst $firstFlag
     $checker registerWhoCallback [code who]
     $checker registerDrawCallbacks [code drawLeft] [code drawRight]
     $checker registerEraseCallback [code erase]

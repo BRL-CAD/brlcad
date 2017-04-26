@@ -2685,7 +2685,9 @@ endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL 
 
 #---------------------------------------------------------------------
 # Record compile-time information we may want to report at run-time.
-# Generate the include/conf files.
+
+# Make sure we have the target dir
+file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data")
 
 # COUNT - Count how many times the configuration has changed.  Currently
 # we are detecting a configuration change by looking at the previous version
@@ -2695,31 +2697,24 @@ endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL 
 # the internal CMake variable list is too noisy so at the moment this looks
 # like the best alternative we have.
 
-if(EXISTS "${BRLCAD_BINARY_DIR}/include/conf/COUNT")
-  include("${BRLCAD_CMAKE_DIR}/DiffCache.cmake")
-  DIFF_CACHE_file()
-  if(INCREMENT_COUNT_FILE)
-    file(READ "${BRLCAD_BINARY_DIR}/include/conf/COUNT" buildCounter_raw)
-    string(STRIP ${buildCounter_raw} buildCounter)
-    math(EXPR buildCounter "${buildCounter} + 1")
-    file(WRITE "${BRLCAD_BINARY_DIR}/include/conf/COUNT" "${buildCounter}\n")
-  endif(INCREMENT_COUNT_FILE)
-else(EXISTS "${BRLCAD_BINARY_DIR}/include/conf/COUNT")
+set(BRLCAD_CNT_FILE "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_COUNT")
+if(EXISTS "${BRLCAD_CNT_FILE}")
+  file(READ "${BRLCAD_CNT_FILE}" buildCounter_raw)
+  string(STRIP ${buildCounter_raw} buildCounter)
+  math(EXPR buildCounter "${buildCounter} + 1")
+  file(WRITE "${BRLCAD_CNT_FILE}" "${buildCounter}\n")
+else(EXISTS "${BRLCAD_CNT_FILE}")
   set(buildCounter 0)
-  file(WRITE "${BRLCAD_BINARY_DIR}/include/conf/COUNT" "${buildCounter}\n")
-endif(EXISTS "${BRLCAD_BINARY_DIR}/include/conf/COUNT")
-DISTCLEAN("${BRLCAD_BINARY_DIR}/include/conf/COUNT")
+  file(WRITE "${BRLCAD_CNT_FILE}" "${buildCounter}\n")
+endif(EXISTS "${BRLCAD_CNT_FILE}")
+install(FILES "${BRLCAD_CNT_FILE}" DESTINATION ${DATA_DIR}/data)
+DISTCLEAN("${BRLCAD_CNT_FILE}")
 
-# DATE - Increment this when we increment the COUNT, to avoid triggering
-# excessive relinking (an RFC2822 timestamp changes every second).
+# DATE - RFC2822 timestamp
 file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
 string(STRIP ${DATESTAMP} DATESTAMP)
-if(INCREMENT_COUNT_FILE OR NOT EXISTS "${BRLCAD_BINARY_DIR}/include/conf/DATE")
-  file(WRITE "${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp" "\"${DATESTAMP}\"\n")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp" "${BRLCAD_BINARY_DIR}/include/conf/DATE")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E remove "${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp")
-endif(INCREMENT_COUNT_FILE OR NOT EXISTS "${BRLCAD_BINARY_DIR}/include/conf/DATE")
-DISTCLEAN("${BRLCAD_BINARY_DIR}/include/conf/DATE")
+file(WRITE "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_DATE" "${DATESTAMP}\n")
+DISTCLEAN("${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_DATE")
 
 # HOST
 configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/report_hostname.c.in" "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c")
@@ -2737,10 +2732,11 @@ else(NOT MSVC)
     CMAKE_FLAGS "-DLINK_LIBRARIES:STRING=ws2_32.lib")
 endif(NOT MSVC)
 # Let CMake give us the proper newline character(s) for the current platform
-file(APPEND "${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp" "\n")
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp" "${BRLCAD_BINARY_DIR}/include/conf/HOST")
-execute_process(COMMAND ${CMAKE_COMMAND} -E remove "${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp")
-DISTCLEAN("${BRLCAD_BINARY_DIR}/include/conf/HOST")
+file(APPEND "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_HOST" "\n")
+file(READ "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_HOST"  BRLCAD_COMPILE_HOST)
+string(STRIP ${BRLCAD_COMPILE_HOST} BRLCAD_COMPILE_HOST)
+file(WRITE "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_HOST"  "${BRLCAD_COMPILE_HOST}")
+DISTCLEAN("${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_HOST")
 
 # USER
 configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/report_username.c.in" "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c")
@@ -2749,42 +2745,14 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
   "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c"
   OUTPUT_VARIABLE COMPILEMESSAGES)
 # Let CMake give us the proper newline character(s) for the current platform
-file(APPEND "${BRLCAD_BINARY_DIR}/include/conf/USER.tmp" "\n")
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/conf/USER.tmp" "${BRLCAD_BINARY_DIR}/include/conf/USER")
-execute_process(COMMAND ${CMAKE_COMMAND} -E remove "${BRLCAD_BINARY_DIR}/include/conf/USER.tmp")
-DISTCLEAN("${BRLCAD_BINARY_DIR}/include/conf/USER")
-
-
-# Write out version and compilation information
-
-file(READ "${BRLCAD_BINARY_DIR}/include/conf/DATE"  BRLCAD_COMPILE_DATE)
-file(READ "${BRLCAD_BINARY_DIR}/include/conf/HOST"  BRLCAD_COMPILE_HOST)
-file(READ "${BRLCAD_BINARY_DIR}/include/conf/USER"  BRLCAD_COMPILE_USER)
-file(READ "${BRLCAD_BINARY_DIR}/include/conf/COUNT"  BRLCAD_COMPILE_COUNT)
-
-string(STRIP ${BRLCAD_COMPILE_DATE} BRLCAD_COMPILE_DATE)
-string(STRIP ${BRLCAD_COMPILE_HOST} BRLCAD_COMPILE_HOST)
+file(APPEND "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_USER" "\n")
+file(READ "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_USER"  BRLCAD_COMPILE_USER)
 string(STRIP ${BRLCAD_COMPILE_USER} BRLCAD_COMPILE_USER)
-string(STRIP ${BRLCAD_COMPILE_COUNT} BRLCAD_COMPILE_COUNT)
+file(WRITE "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_USER"  "${BRLCAD_COMPILE_USER}")
+DISTCLEAN("${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_USER")
 
-if(NOT BRLCAD_COMPILE_DATE)
-  set(BRLCAD_COMPILE_DATE "\"date_unknown\"")
-endif(NOT BRLCAD_COMPILE_DATE)
-if(NOT BRLCAD_COMPILE_HOST)
-  set(BRLCAD_COMPILE_HOST "\"host_unknown\"")
-endif(NOT BRLCAD_COMPILE_HOST)
-if(NOT BRLCAD_COMPILE_USER)
-  set(BRLCAD_COMPILE_USER "\"user_unknown\"")
-endif(NOT BRLCAD_COMPILE_USER)
-if("${BRLCAD_COMPILE_COUNT}" STREQUAL "")
-  set(BRLCAD_COMPILE_COUNT -1)
-endif("${BRLCAD_COMPILE_COUNT}" STREQUAL "")
 
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_DATE ${BRLCAD_COMPILE_DATE}\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_HOST ${BRLCAD_COMPILE_HOST}\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_USER ${BRLCAD_COMPILE_USER}\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_COUNT ${BRLCAD_COMPILE_COUNT}\n")
-
+#---------------------------------------------------------------------
 # If we're building on Windows with MSVC, use config_win.h file
 if(MSVC)
   CONFIG_H_APPEND(BRLCAD "#include \"config_win.h\"\n")

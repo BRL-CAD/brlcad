@@ -88,26 +88,26 @@ void rt_pt_sort(register fastf_t *t, int npts);
 #define TGC_NORM_BOT (3)	/* copy reverse tgc_N */
 
 #define RT_TGC_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-#define VEXCHANGE(a, b, tmp) { VMOVE(tmp, a); VMOVE(a, b); VMOVE(b, tmp); }
+
 #define ALPHA(x, y, c, d)	((x)*(x)*(c) + (y)*(y)*(d))
 
 /* determines the class of tgc given vector magnitudes a, b, c, d */
 #define GET_TGC_TYPE(type, a, b, c, d) \
-{ \
-    if (EQUAL((a), (b)) && EQUAL((c), (d))) { \
-	if (EQUAL((a), (c))) { \
-	    (type) = RCC; \
+    { \
+	if (EQUAL((a), (b)) && EQUAL((c), (d))) { \
+	    if (EQUAL((a), (c))) { \
+		(type) = RCC; \
+	    } else { \
+		(type) = TRC; \
+	    } \
 	} else { \
-	    (type) = TRC; \
+	    if (EQUAL((a), (c)) && EQUAL((b), (d))) { \
+		(type) = REC; \
+	    } else { \
+		(type) = TEC; \
+	    } \
 	} \
-    } else { \
-	if (EQUAL((a), (c)) && EQUAL((b), (d))) { \
-	    (type) = REC; \
-	} else { \
-	    (type) = TEC; \
-	} \
-    } \
-}
+    }
 
 
 const struct bu_structparse rt_tgc_parse[] = {
@@ -146,6 +146,7 @@ static const fastf_t nmg_uv_unitcircle[27] = {
     1.0,   .5,  1.0
 };
 
+
 #ifdef USE_OPENCL
 /* largest data members first */
 struct clt_tgc_specific {
@@ -159,6 +160,7 @@ struct clt_tgc_specific {
     cl_double tgc_invRtShSc[16];    /* invRot(trnShear(Scale(vect))) */
     cl_char tgc_AD_CB;              /* boolean:  A*D == C*B */
 };
+
 
 size_t
 clt_tgc_pack(struct bu_pool *pool, struct soltab *stp)
@@ -181,6 +183,7 @@ clt_tgc_pack(struct bu_pool *pool, struct soltab *stp)
     args->tgc_AD_CB = tgc->tgc_AD_CB;
     return size;
 }
+
 
 #endif /* USE_OPENCL */
 
@@ -301,8 +304,8 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	 */
 	VADD2(tip->v, tip->v, tip->h);
 	VREVERSE(tip->h, tip->h);
-	VEXCHANGE(tip->a, tip->c, work);
-	VEXCHANGE(tip->b, tip->d, work);
+	VSWAP(tip->a, tip->c);
+	VSWAP(tip->b, tip->d);
 	bu_log("NOTE: tgc(%s): degenerate end exchanged\n", stp->st_name);
     }
 
@@ -588,7 +591,7 @@ rt_tgc_print(register const struct soltab *stp)
  * Y = Dy*t + Py,
  * Z = Dz*t + Pz.
  *
- * First, convert the line to the coordinate system of a "stan- dard"
+ * First, convert the line to the coordinate system of a "standard"
  * cone.  This is a cone whose base lies in the X-Y plane, and whose H
  * (now H') vector is lined up with the Z axis.
  *
@@ -609,9 +612,8 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 #define MAX_TGC_HITS 4+2 /* 4 on side cylinder, 1 per end ellipse */
     fastf_t k[MAX_TGC_HITS] = {0};
     int hit_type[MAX_TGC_HITS] = {0};
-    fastf_t t, b, zval, dir;
+    fastf_t t, zval, dir;
     fastf_t t_scale;
-    fastf_t alf1, alf2;
     int npts;
     int intersect;
     vect_t cor_pprime;	/* corrected P prime */
@@ -791,16 +793,15 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 */
 	nroots = rt_poly_roots(&C, val, stp->st_dp->d_namep);
 
-	/* Only real roots indicate an intersection in real space.
+	/* Retain real roots, ignore the rest.
 	 *
 	 * If the imaginary part is zero or sufficiently close, then
 	 * we pretend it's real since it could be a root solver or
-	 * floating point artifact.  zero tolerance of 1e-2 is nearly
-	 * arbitrary.  we just need something more loose than the root
-	 * solver (which arbitrarily tests imaginary against 1e-5).
+	 * floating point artifact.  we use rt_poly_root's internal
+	 * tolerance of 1e-5.
 	 */
 	for (l=0, npts=0; l < nroots; l++) {
-	    if (NEAR_ZERO(val[l].im, 1e-2)) {
+	    if (NEAR_ZERO(val[l].im, RT_ROOT_TOL)) {
 		hit_type[npts] = TGC_NORM_BODY;
 		k[npts++] = val[l].re;
 	    }
@@ -810,15 +811,18 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	if (npts > MAX_TGC_HITS-2) {
 	    /* shouldn't be possible, but ensure no overflow */
 	    npts = MAX_TGC_HITS-2;
-	} else if (npts <= 0) {
-	    static int reported=0;
-	    bu_log("Root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
-	    if (!reported) {
-		VPRINT("while shooting from:\t", rp->r_pt);
-		VPRINT("while shooting at:\t", rp->r_dir);
-		bu_log("Additional TGC convergence failure detail will be suppressed.\n");
-		reported=1;
+	} else if (npts < 0) {
+	    static size_t reported = 0;
+
+	    if (reported < 10) {
+		bu_log("Root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+		/* these are printed in 'mm' regardless of local units */
+		VPRINT("\tshooting point (units mm): ", rp->r_pt);
+		VPRINT("\tshooting direction:        ", rp->r_dir);
+	    } else if (reported == 10) {
+		bu_log("Too many convergence failures.  Suppressing further TGC root finder reports.\n");
 	    }
+	    reported++;
 	}
     }
 
@@ -831,29 +835,31 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     /*
      * Eliminate side cylinder hits beyond the end ellipses.
-     *
-     * NOTE: Checking npts <= MAX_TGC_HITS-2 is redundant/stupid but
-     * needed to quell a gcc 4.8.0 to 6.2.1 "-O3 -Warray-bounds" bug
-     * where it thinks hit_type[] and k[] will be exceeded.  If this
-     * check causes a problem with other lintian systems, we'll need
-     * some different solution.
      */
-    i = 0;
-    while (i < npts && npts <= MAX_TGC_HITS-2) {
-	zval = k[i]*dprime[Z] + pprime[Z];
-	/* Height vector is unitized (tgc->tgc_sH == 1.0) */
-	if (zval >= 1.0 || zval <= 0.0) {
-	    int j;
-	    /* drop this hit, shift hits down */
-	    j = i;
-	    while (j < npts-1) {
-		hit_type[j] = hit_type[j+1];
-		k[j] = k[j+1];
+    {
+	int skiplist[MAX_TGC_HITS] = {0};
+	int j;
+	i = 0;
+	/* mark baddies */
+	while (i < npts) {
+	    zval = k[i]*dprime[Z] + pprime[Z];
+	    /* Height vector is unitized (tgc->tgc_sH == 1.0) */
+	    if (zval >= 1.0 || zval <= 0.0) {
+		skiplist[i] = 1;
+	    }
+	    i++;
+	}
+	/* keep goodies */
+	i = j = 0;
+	while (i < npts) {
+	    if (!skiplist[i]) {
+		k[j] = k[i];
+		hit_type[j] = hit_type[i];
 		j++;
 	    }
-	    npts--;
+	    i++;
 	}
-	i++;
+	npts = j;
     }
 
     /*
@@ -861,6 +867,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      */
     dir = VDOT(tgc->tgc_N, rp->r_dir);
     if (!ZERO(dprime[Z]) && !NEAR_ZERO(dir, RT_DOT_TOL)) {
+	fastf_t alf1, alf2, b;
 	b = (-pprime[Z])/dprime[Z];
 	/* Height vector is unitized (tgc->tgc_sH == 1.0) */
 	t = (1.0 - pprime[Z])/dprime[Z];
@@ -909,16 +916,24 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     /* Now, k[0] > k[npts-1] */
 
     /* we expect and need an even number of hits */
-    if (npts != 0 && npts != 2 && npts != 4) {
-	/* perhaps we got two hits on an edge.  check for duplicate
-	 * hit distances that we can collapse to one.
+    if (npts == 1) {
+	/* assume we grazed so close, we missed a cap/edge */
+	hit_type[1] = hit_type[0];
+	k[1] = k[0] + SMALL_FASTF;
+	npts++;
+    } else if (npts % 2) {
+	int rectified = 0;
+
+	/* perhaps we got two hits on an edge.  check for
+	 * duplicate hit distances that we can collapse to one.
 	 */
 	for (i=npts-1; i>0; i--) {
 	    fastf_t diff;
 
-	    diff = k[i-1] - k[i];	/* non-negative due to sorting */
+	    diff = k[i-1] - k[i];
+	    /* should be non-negative due to sorting */
 	    if (diff < ap->a_rt_i->rti_tol.dist) {
-		/* remove this duplicate hit */
+		/* remove this duplicate */
 		int j;
 
 		npts--;
@@ -927,36 +942,31 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		    k[j] = k[j+1];
 		}
 
-		/* now have even number of hits */
+		/* now have an even number */
+		rectified = 1;
 		break;
 	    }
 	}
 
-	/* perhaps we barely grazed, treat it as a hit. */
-	if (npts == 1) {
-	    hit_type[1] = hit_type[0];
-	    k[1] = k[0] + SMALL_FASTF;
-	    npts++;
-	}
-    }
-
-    if (npts != 0 && npts != 2 && npts != 4) {
-	static size_t tgc_msgs = 0;
-	/* these are printed in 'mm' regardless of local units */
-
-	if (tgc_msgs++ < 10) {
-	    bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n", stp->st_name, npts);
-	    bu_log("\tray: pt = (%g %g %g), dir = (%g %g %g), units in mm\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
-	    for (i = 0; i < npts; i++) {
-		bu_log("\t%g", k[i]*t_scale);
+	/* still odd? */
+	if (!rectified) {
+	    static size_t tgc_msgs = 0;
+	    if (tgc_msgs < 10) {
+		bu_log("Root solver reported %d intersections != {0, 2, 4} on %s\n", npts, stp->st_name);
+		/* these are printed in 'mm' regardless of local units */
+		VPRINT("\tshooting point (units mm): ", rp->r_pt);
+		VPRINT("\tshooting direction:        ", rp->r_dir);
+		for (i = 0; i < npts; i++) {
+		    bu_log("\t%g", k[i]*t_scale);
+		}
+		bu_log("\n");
+	    } else if (tgc_msgs == 10) {
+		bu_log("Too many grazings.  Suppressing further TGC odd hit reports.\n");
 	    }
-	    bu_log("\n");
-	} else if (tgc_msgs == 10) {
-	    bu_log("Too many grazing intersections encountered.  Further TGC reporting suppressed.\n");
 	    tgc_msgs++;
-	}
 
-	return 0;			/* No hit */
+	    return 0;			/* No hit */
+	}
     }
 
     intersect = 0;
@@ -990,6 +1000,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	intersect++;
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
+
 
     return intersect;
 }
@@ -1222,14 +1233,17 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		bu_log("tgc:  reduced %d to %d roots\n", nroots, npts);
 		bn_pr_roots("tgc", val, nroots);
 	    } else if (nroots < 0) {
-		static int reported=0;
-		bu_log("The root solver failed to converge on a solution for %s\n", stp[ix]->st_dp->d_namep);
-		if (!reported) {
-		    VPRINT("while shooting from:\t", rp[ix]->r_pt);
-		    VPRINT("while shooting at:\t", rp[ix]->r_dir);
-		    bu_log("Additional truncated general cone convergence failure details will be suppressed.\n");
-		    reported=1;
+		static size_t reported = 0;
+
+		if (reported < 10) {
+		    bu_log("Root solver failed to converge on a solution for %s\n", stp[ix]->st_dp->d_namep);
+		    /* these are printed in 'mm' regardless of local units */
+		    VPRINT("\tshooting point (units mm): ", rp[ix]->r_pt);
+		    VPRINT("\tshooting direction:        ", rp[ix]->r_dir);
+		} else if (reported == 10) {
+		    bu_log("Too many convergence failures.  Suppressing further TGC root finder reports.\n");
 		}
+		reported++;
 	    }
 	}
 
@@ -1863,6 +1877,7 @@ rt_tgc_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);
 }
 
+
 struct ellipse {
     point_t center;
     vect_t axis_a;
@@ -1872,10 +1887,10 @@ struct ellipse {
 
 static void
 draw_lines_between_rec_ellipses(
-	struct bu_list *vhead,
-	struct ellipse ellipse1,
-	vect_t h,
-	int num_lines)
+    struct bu_list *vhead,
+    struct ellipse ellipse1,
+    vect_t h,
+    int num_lines)
 {
     int i;
     point_t ellipse1_point, ellipse2_point;
@@ -1883,7 +1898,7 @@ draw_lines_between_rec_ellipses(
 
     for (i = 0; i < num_lines; ++i) {
 	ellipse_point_at_radian(ellipse1_point, ellipse1.center,
-		ellipse1.axis_a, ellipse1.axis_b, i * radian_step);
+				ellipse1.axis_a, ellipse1.axis_b, i * radian_step);
 	VADD2(ellipse2_point, ellipse1_point, h);
 
 	RT_ADD_VLIST(vhead, ellipse1_point, BN_VLIST_LINE_MOVE);
@@ -1891,12 +1906,13 @@ draw_lines_between_rec_ellipses(
     }
 }
 
+
 static void
 draw_lines_between_ellipses(
-	struct bu_list *vhead,
-	struct ellipse ellipse1,
-	struct ellipse ellipse2,
-	int num_lines)
+    struct bu_list *vhead,
+    struct ellipse ellipse1,
+    struct ellipse ellipse2,
+    int num_lines)
 {
     int i;
     point_t ellipse1_point, ellipse2_point;
@@ -1904,14 +1920,15 @@ draw_lines_between_ellipses(
 
     for (i = 0; i < num_lines; ++i) {
 	ellipse_point_at_radian(ellipse1_point, ellipse1.center,
-		ellipse1.axis_a, ellipse1.axis_b, i * radian_step);
+				ellipse1.axis_a, ellipse1.axis_b, i * radian_step);
 	ellipse_point_at_radian(ellipse2_point, ellipse2.center,
-		ellipse2.axis_a, ellipse2.axis_b, i * radian_step);
+				ellipse2.axis_a, ellipse2.axis_b, i * radian_step);
 
 	RT_ADD_VLIST(vhead, ellipse1_point, BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead, ellipse2_point, BN_VLIST_LINE_DRAW);
     }
 }
+
 
 static int
 tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_info *info)
@@ -1935,6 +1952,7 @@ tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_inf
     return avg_circumference / info->point_spacing;
 }
 
+
 static fastf_t
 ramanujan_approx_circumference(fastf_t major_len, fastf_t minor_len)
 {
@@ -1942,6 +1960,7 @@ ramanujan_approx_circumference(fastf_t major_len, fastf_t minor_len)
 
     return M_PI * (3.0 * (a + b) - sqrt(10.0 * a * b + 3.0 * (a * a + b * b)));
 }
+
 
 static int
 tgc_connecting_lines(
@@ -1961,6 +1980,7 @@ tgc_connecting_lines(
 
     return avg_circumference / info->curve_spacing;
 }
+
 
 int
 rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
@@ -2009,13 +2029,13 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	fastf_t radian, radian_step;
 
 	pts = (point_t *)bu_malloc(sizeof(point_t) * points_per_ellipse,
-		"tgc points");
+				   "tgc points");
 
 	radian_step = M_2PI / points_per_ellipse;
 
 	/* calculate and plot first ellipse */
 	ellipse_point_at_radian(pts[0], tip->v, tip->a, tip->b,
-		radian_step * (points_per_ellipse - 1));
+				radian_step * (points_per_ellipse - 1));
 	RT_ADD_VLIST(info->vhead, pts[0], BN_VLIST_LINE_MOVE);
 
 	radian = 0;
@@ -2039,7 +2059,7 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	bu_free(pts, "tgc points");
 
 	draw_lines_between_rec_ellipses(info->vhead, ellipse1, tip->h,
-		connecting_lines);
+					connecting_lines);
     } else {
 	plot_ellipse(info->vhead, ellipse1.center, ellipse1.axis_a, ellipse1.axis_b,
 		     points_per_ellipse);
@@ -2048,11 +2068,12 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 		     points_per_ellipse);
 
 	draw_lines_between_ellipses(info->vhead, ellipse1, ellipse2,
-		connecting_lines);
+				    connecting_lines);
     }
 
     return 0;
 }
+
 
 int
 rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
@@ -2493,8 +2514,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		if (top_ell == nells - 1 && new_ratio < 0.5)
 		    new_ratio = 0.5;
 	    } else {
-		/* no MAX??? */
-		bu_log("rt_tgc_tess: Should never get here!!\n");
+		/* no MAX? */
 		bu_bomb("rt_tgc_tess: Should never get here!!\n");
 	    }
 
@@ -2721,7 +2741,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACEUSE(fu);
 
-	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	if (nmg_calc_face_g(fu, &RTG.rtg_vlfree)) {
 	    bu_log("rt_tess_tgc: failed to calculate plane equation\n");
 	    nmg_pr_fu_briefly(fu, "");
 	    return -1;
@@ -3111,11 +3131,11 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 
     if (!flip) {
 	nmg_nurb_s_eval(fu->f_p->g.snurb_p,
-		       nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point);
+			nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point);
 	nmg_vertex_gv(eu->vu_p->v_p, point);
     } else {
 	nmg_nurb_s_eval(fu->f_p->g.snurb_p,
-		       nmg_uv_unitcircle[12], nmg_uv_unitcircle[13], point);
+			nmg_uv_unitcircle[12], nmg_uv_unitcircle[13], point);
 	nmg_vertex_gv(eu->vu_p->v_p, point);
     }
 
@@ -3305,23 +3325,24 @@ rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
     GET_TGC_TYPE(tgc_type, mag_a, mag_b, mag_c, mag_d);
 
     switch (tgc_type) {
-    case RCC:
-    case REC:
-	*vol = M_PI * mag_h * mag_a * mag_b;
-	break;
-    case TRC:
-	/* TRC could fall through, but this formula avoids a sqrt and
-	* so will probably be more accurate */
-	*vol = M_PI * mag_h * (mag_a * mag_a + mag_c * mag_c + mag_a * mag_c) / 3.0;
-	break;
-    case TEC:
-	*vol = M_PI * mag_h * (mag_a * mag_b + mag_c * mag_d + sqrt(mag_a * mag_b * mag_c * mag_d)) / 3.0;
-	break;
-    default:
-	/* never reached */
-	bu_log("rt_tgc_volume(): cannot find volume\n");
+	case RCC:
+	case REC:
+	    *vol = M_PI * mag_h * mag_a * mag_b;
+	    break;
+	case TRC:
+	    /* TRC could fall through, but this formula avoids a sqrt and
+	     * so will probably be more accurate */
+	    *vol = M_PI * mag_h * (mag_a * mag_a + mag_c * mag_c + mag_a * mag_c) / 3.0;
+	    break;
+	case TEC:
+	    *vol = M_PI * mag_h * (mag_a * mag_b + mag_c * mag_d + sqrt(mag_a * mag_b * mag_c * mag_d)) / 3.0;
+	    break;
+	default:
+	    /* never reached */
+	    bu_log("rt_tgc_volume(): cannot find volume\n");
     }
 }
+
 
 void
 rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
@@ -3347,21 +3368,21 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     GET_TGC_TYPE(tgc_type, mag_a, mag_b, mag_c, mag_d);
 
     switch (tgc_type) {
-    case RCC:
-	*area = M_2PI * mag_a * (mag_a + mag_h);
-	break;
-    case TRC:
-	*area = M_PI * ((mag_a + mag_c) * sqrt((mag_a - mag_c) * (mag_a - mag_c) + magsq_h) + magsq_a + magsq_c);
-	break;
-    case REC:
-	area_base = M_PI * mag_a * mag_b;
-	/* approximation */
-	c = ELL_CIRCUMFERENCE(mag_a, mag_b);
-	*area = c * mag_h + 2.0 * area_base;
-	break;
-    case TEC:
-    default:
-	bu_log("rt_tgc_surf_area(): cannot find surface area\n");
+	case RCC:
+	    *area = M_2PI * mag_a * (mag_a + mag_h);
+	    break;
+	case TRC:
+	    *area = M_PI * ((mag_a + mag_c) * sqrt((mag_a - mag_c) * (mag_a - mag_c) + magsq_h) + magsq_a + magsq_c);
+	    break;
+	case REC:
+	    area_base = M_PI * mag_a * mag_b;
+	    /* approximation */
+	    c = ELL_CIRCUMFERENCE(mag_a, mag_b);
+	    *area = c * mag_h + 2.0 * area_base;
+	    break;
+	case TEC:
+	default:
+	    bu_log("rt_tgc_surf_area(): cannot find surface area\n");
     }
 }
 
@@ -3387,20 +3408,20 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
     GET_TGC_TYPE(tgc_type, mag_a, mag_b, mag_c, mag_d);
 
     switch (tgc_type) {
-    case RCC:
-    case REC:
-	scalar = 0.5;
-	VJOIN1(*cent, tip->v, scalar, tip->h);
-	break;
-    case TRC:
-	scalar = 0.25 * (magsq_a + 2.0 * mag_a * mag_c + 3.0 * magsq_c) /
-	    (magsq_a + mag_a * mag_c + magsq_c);
-	VJOIN1(*cent, tip->v, scalar, tip->h);
-	break;
-    case TEC:
-	/* need to confirm formula */
-    default:
-	bu_log("rt_tgc_centroid(): cannot find centroid\n");
+	case RCC:
+	case REC:
+	    scalar = 0.5;
+	    VJOIN1(*cent, tip->v, scalar, tip->h);
+	    break;
+	case TRC:
+	    scalar = 0.25 * (magsq_a + 2.0 * mag_a * mag_c + 3.0 * magsq_c) /
+		(magsq_a + mag_a * mag_c + magsq_c);
+	    VJOIN1(*cent, tip->v, scalar, tip->h);
+	    break;
+	case TEC:
+	    /* need to confirm formula */
+	default:
+	    bu_log("rt_tgc_centroid(): cannot find centroid\n");
     }
 }
 

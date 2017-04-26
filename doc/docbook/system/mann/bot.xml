@@ -21,43 +21,49 @@
       <arg rep="norepeat">options</arg>
     </cmdsynopsis>
     <variablelist>
-	    <varlistentry><term></term><listitem>
-			    <cmdsynopsis sepchar=" ">
-				    <command>get</command>
-				    <group choice="req" rep="norepeat">
-					    <arg choice="plain">faces</arg>
-					    <arg choice="plain">minEdge</arg>
-					    <arg choice="plain">maxEdge</arg>
-					    <arg choice="plain">orientation</arg>
-					    <arg choice="plain">type</arg>
-					    <arg choice="plain">vertices</arg>
-				    </group>
-				    <arg choice="req" rep="norepeat">input_bot</arg>
-			    </cmdsynopsis>
-	    </listitem></varlistentry>
-	    <varlistentry><term></term><listitem>
-			    <cmdsynopsis sepchar=" ">
-				    <command>chull</command>
-				    <arg choice="req" rep="norepeat">input_bot</arg>
-				    <arg choice="req" rep="norepeat">output_bot</arg>
-			    </cmdsynopsis>
-	    </listitem></varlistentry>
+      <varlistentry><term></term><listitem>
+      <cmdsynopsis sepchar=" ">
+	<command>get</command>
+	<group choice="req" rep="norepeat">
+	  <arg choice="plain">faces</arg>
+	  <arg choice="plain">minEdge</arg>
+	  <arg choice="plain">maxEdge</arg>
+	  <arg choice="plain">orientation</arg>
+	  <arg choice="plain">type</arg>
+	  <arg choice="plain">vertices</arg>
+	</group>
+	<arg choice="req" rep="norepeat">input_bot</arg>
+      </cmdsynopsis>
+      </listitem></varlistentry>
+      <varlistentry><term></term><listitem>
+      <cmdsynopsis sepchar=" ">
+	<command>chull</command>
+	<arg choice="req" rep="norepeat">input_bot</arg>
+	<arg choice="req" rep="norepeat">output_bot</arg>
+      </cmdsynopsis>
+      </listitem></varlistentry>
+            <varlistentry><term></term><listitem>
+      <cmdsynopsis sepchar=" ">
+	<command>solid</command>
+	<arg choice="req" rep="norepeat">input_bot</arg>
+      </cmdsynopsis>
+      </listitem></varlistentry>
     </variablelist>
   </refsynopsisdiv>
 
   <refsection xml:id="description"><title>DESCRIPTION</title>
-	  <para>The <command>bot</command> command.</para>
+  <para>The <command>bot</command> command.</para>
   </refsection>
 
   <refsection xml:id="author"><title>AUTHOR</title>
-    <para>BRL-CAD Team</para>
+  <para>BRL-CAD Team</para>
   </refsection>
 
   <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
-    <para>
-      Reports of bugs or problems should be submitted via electronic
-      mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
-    </para>
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+  </para>
   </refsection>
 </refentry>

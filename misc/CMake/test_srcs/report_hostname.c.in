@@ -17,7 +17,7 @@
 int
 main(void)
 {
-    FILE *outfp = fopen("${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp", "w");
+    FILE *outfp = fopen("${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_HOST", "w");
     if (!outfp) {
 	return -1;
     }
@@ -33,12 +33,12 @@ main(void)
   #endif
     ret = gethostname(hostname, MAX_HOSTNAME);
     if (ret != GETHOSTNAME_ERROR)
-	fprintf(outfp, "\"%s\"", hostname);
+	fprintf(outfp, "%s", hostname);
     else
-	fprintf(outfp, "\"unknown\"");
+	fprintf(outfp, "unknown");
 }
 #else
-    fprintf(outfp, "\"unknown\"");
+    fprintf(outfp, "unknown");
 #endif
     fclose(outfp);
     return 0;
