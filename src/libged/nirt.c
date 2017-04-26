@@ -49,6 +49,9 @@
 
 /**
  * Invoke nirt with the current view & stuff
+ *
+ * NOTE: invoked through mged, nirt is currently set up to fire THREE
+ *       rays in order to get partition and overlap information.
  */
 int
 ged_nirt(struct ged *gedp, int argc, const char *argv[])
@@ -154,19 +157,19 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_NULL;
 
-	/* first ray ---- returns partitions */
+	/* set up partition reporting */
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_P;
 
-	/* ray start, direction, and 's' command */
+	/* first ray: start, direction, and 's' command */
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&p_vls);
 
-	/* second ray ---- returns overlaps */
+	/* set up overlap formatting */
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_O;
 
-	/* ray start, direction, and 's' command */
+	/* second ray: start, direction, and 's' command */
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&p_vls);
 
@@ -234,6 +237,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = bu_vls_addr(&gedp->ged_gdp->gd_qray_script);
     }
 
+    /* third ray: start, direction, and 's' command */
     *vp++ = "-e";
     *vp++ = bu_vls_addr(&p_vls);
 
