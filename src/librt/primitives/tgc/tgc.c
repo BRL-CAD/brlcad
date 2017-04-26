@@ -793,16 +793,15 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 */
 	nroots = rt_poly_roots(&C, val, stp->st_dp->d_namep);
 
-	/* Only real roots indicate an intersection in real space.
+	/* Retain real roots, ignore the rest.
 	 *
 	 * If the imaginary part is zero or sufficiently close, then
 	 * we pretend it's real since it could be a root solver or
-	 * floating point artifact.  zero tolerance of 1e-2 is nearly
-	 * arbitrary.  we just need something more loose than the root
-	 * solver (which arbitrarily tests imaginary against 1e-5).
+	 * floating point artifact.  we use rt_poly_root's internal
+	 * tolerance of 1e-5.
 	 */
 	for (l=0, npts=0; l < nroots; l++) {
-	    if (NEAR_ZERO(val[l].im, 1e-2)) {
+	    if (NEAR_ZERO(val[l].im, RT_ROOT_TOL)) {
 		hit_type[npts] = TGC_NORM_BODY;
 		k[npts++] = val[l].re;
 	    }
