@@ -2515,8 +2515,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		if (top_ell == nells - 1 && new_ratio < 0.5)
 		    new_ratio = 0.5;
 	    } else {
-		/* no MAX??? */
-		bu_log("rt_tgc_tess: Should never get here!!\n");
+		/* no MAX? */
 		bu_bomb("rt_tgc_tess: Should never get here!!\n");
 	    }
 
