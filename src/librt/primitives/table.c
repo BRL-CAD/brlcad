@@ -1114,7 +1114,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ehy_bbox),
 	NULL, /* volume */
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ehy_surf_area),
-	NULL, /* centroid */
+	RTFUNCTAB_FUNC_CENTROID_CAST(rt_ehy_centroid),
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
 	NULL, /* evaluate_selection */

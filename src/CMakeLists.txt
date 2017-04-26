@@ -93,6 +93,7 @@ set(level_3_dirs
   sig
   tab
   util
+  external
   ${non_win32_dirs}
   # tclscripts must come before applications like
   # mged and archer that need the scripts in place to
@@ -164,7 +165,7 @@ endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 #  target_link_libraries(libbrlcad ${OPENNURBS_LIBRARIES} ${TCL_LIBRARY})
 #endif(${HIGHEST_TARGET_LEVEL} GREATER 1)
 
-CMAKEFILES(README external)
+CMAKEFILES(README)
 
 # Add a convenience directory that is only added to the
 # build if it exists.  This directory is ignored by svn,

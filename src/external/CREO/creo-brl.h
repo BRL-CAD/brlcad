@@ -37,6 +37,9 @@
 #ifndef _WSTUDIO_DEFINED
 # define _WSTUDIO_DEFINED
 #endif
+
+#ifndef TEST_BUILD
+
 extern "C" {
 #include <ProToolkit.h>
 #include <ProArray.h>
@@ -69,7 +72,15 @@ extern "C" {
 #include <ProWindows.h>
 #include <PtApplsUnicodeUtils.h>
 #include <pd_proto.h>
+}
 
+#else
+extern "C" {
+#include "shim.h"
+}
+#endif
+
+extern "C" {
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
@@ -96,11 +107,16 @@ extern "C" {
 #define FEAT_TYPE_OFFSET 910
 
 #define CREO_NAME_MAX 100000
-#define CREO_MSG_MAX 100000
+#define CREO_MSG_MAX 1000000
 
 #define MSG_FAIL 0
 #define MSG_OK 1
 #define MSG_DEBUG 2
+
+/* Name generation flags */
+#define NG_DEFAULT 0x0 /* Default */
+#define NG_OBJID 0x1   /* Return CREO id as a bu_vls, rather than the BRL-CAD name */
+#define NG_NPARAM 0x2   /* Generate the BRL-CAD name using the CREO name */
 
 struct StrCmp {
     bool operator()(struct bu_vls *str1, struct bu_vls *str2) const {
@@ -136,6 +152,9 @@ struct empty_parts {
 };
 
 struct creo_conv_info {
+    /* Output file */
+    struct bu_vls *output_file;
+
     /* Region ID */
     long int reg_id;	/* region ident number (incremented with each part) */
 
@@ -175,12 +194,32 @@ struct creo_conv_info {
     struct rt_wdb *wdbp;
     std::set<wchar_t *, WStrCmp> *parts;	/* list of all parts in CREO hierarchy */
     std::set<wchar_t *, WStrCmp> *assems;	/* list of all assemblies in CREO hierarchy */
-    std::map<wchar_t *, int, WStrCmp> *assem_child_cnts; /* number of solid children in a given assembly */
     std::set<wchar_t *, WStrCmp> *empty;	/* list of all parts and assemblies in CREO that have no shape */
     std::map<wchar_t *, struct bu_vls *, WStrCmp> *name_map;  /* CREO names to BRL-CAD names */
+    std::map<wchar_t *, struct bu_vls *, WStrCmp> *creo_id_map;  /* wchar CREO names to char versions */
     std::set<struct bu_vls *, StrCmp> *brlcad_names; /* set of active .g object names */
+    std::set<struct bu_vls *, StrCmp> *creo_ids; /* set of creo id strings */
     std::vector<char *> *model_parameters;     /* model parameters to use when generating .g names */
     std::vector<char *> *attrs;     	/* attributes to preserve when transferring objects */
+};
+
+/* Part processing container */
+struct part_conv_info {
+    struct creo_conv_info *cinfo; /* global state */
+    int csg_holes_supported;
+    ProMdl model;
+    std::vector<int> *suppressed_features; /* list of features to suppress when generating output. */
+    std::vector<struct directory *> *subtractions; /* objects to subtract from primary shape. */
+
+    /* generic feature suppression processing parameters */
+    ProFeature *feat;
+    ProFeattype type;
+    double radius;
+    double diameter;
+    double distance1;
+    double distance2;
+    int got_diameter;
+    int got_distance1;
 };
 
 /* Generic container used when we need to pass around something in addition to creo_conv_info */
@@ -191,28 +230,26 @@ struct adata {
 
 /* assembly */
 extern "C" void find_empty_assemblies(struct creo_conv_info *);
-extern "C" void output_assembly(struct creo_conv_info *, ProMdl model);
+extern "C" ProError output_assembly(struct creo_conv_info *, ProMdl model);
 
 /* part */
-extern "C" int output_part(struct creo_conv_info *, ProMdl model);
+extern "C" ProError output_part(struct creo_conv_info *, ProMdl model);
 
 /* util */
 extern "C" ProError component_filter(ProFeature *, ProAppData *);
-extern "C" ProError creo_attribute_val(const char **val, const char *key, ProMdl m);
+extern "C" ProError creo_attribute_val(char **val, const char *key, ProMdl m);
 extern "C" ProError creo_log(struct creo_conv_info *, int, ProError, const char *, ...);
-extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *, wchar_t *, ProType type, const char *);
+extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *, wchar_t *, ProType type, const char *, int);
 extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
 extern "C" void kill_error_dialog(char *dialog, char *component, ProAppData appdata);
 extern "C" void kill_gen_error_dialog(char *dialog, char *component, ProAppData appdata);
+extern "C" ProError PopupMsg(const char *, const char *);
 
 /* csg */
-extern "C" ProError do_feature_visit(ProFeature *feat, ProError status, ProAppData data);
-extern "C" void free_csg_ops(struct creo_conv_info *);
+extern "C" int subtract_hole(struct part_conv_info *pinfo);
 
 
-
-extern "C" ProError ShowMsg();
 
 #endif /*CREO_BRL_H*/
 

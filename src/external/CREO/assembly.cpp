@@ -33,8 +33,8 @@ struct assem_conv_info {
 };
 
 /* Callback function used only for find_empty_assemblies */
-extern "C" static ProError
-assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
+extern "C" ProError
+assembly_check_empty( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 {
     ProError lstatus;
     ProMdlType type;
@@ -47,9 +47,9 @@ assembly_check_empty( ProFeature *feat, ProError status, ProAppData app_data )
     return PRO_TK_NO_ERROR;
 }
 
-/* Run this only *after* output_parts - that is where empty "part" objects will
- * be identified.  Without knowing which parts are empty, we can't know if a
- * combination of parts is empty. */
+/* Run this only *after* output_parts - that is where empty "assembly" objects will
+ * be identified.  Without knowing which parts are empty, we can't know if an
+ * assembly of parts is empty. */
 extern "C" void
 find_empty_assemblies(struct creo_conv_info *cinfo)
 {
@@ -90,10 +90,10 @@ is_non_identity( ProMatrix xform )
     for ( i=0; i<4; i++ ) {
 	for ( j=0; j<4; j++ ) {
 	    if ( i == j ) {
-		if ( xform[i][j] != 1.0 )
+		if ( !NEAR_EQUAL(xform[i][j], 1.0, SMALL_FASTF) )
 		    return 1;
 	    } else {
-		if ( xform[i][j] != 0.0 )
+		if ( !NEAR_EQUAL(xform[i][j], 0.0, SMALL_FASTF) )
 		    return 1;
 	    }
 	}
@@ -106,12 +106,13 @@ is_non_identity( ProMatrix xform )
  * this call is creating a path from the assembly to this particular member
  * (assembly/member)
  */
-extern "C" static ProError
+extern "C" ProError
 assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *feat, mat_t *mat)
 {
     if(!feat || !mat) return PRO_TK_GENERAL_ERROR;
 
     /* Get strings in case we need to log */
+    ProError status;
     ProMdlType type;
     wchar_t wpname[CREO_NAME_MAX];
     char pname[CREO_NAME_MAX];
@@ -141,8 +142,6 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     }
 
     /*** Write the matrix to BRL-CAD form ***/
-    /* TODO - digest this to avoid the string bit.  Doing this for expedience to
-     * use the original CREO plugin logic. */
     if (is_non_identity(xform)) {
 	struct bu_vls mstr = BU_VLS_INIT_ZERO;
 	for (int j=0; j<4; j++) {
@@ -162,8 +161,8 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     return PRO_TK_GENERAL_ERROR;
 }
 
-extern "C" static ProError
-assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
+extern "C" ProError
+assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
 {
     ProError lstatus;
     ProMdlType type;
@@ -177,10 +176,10 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
     if ((lstatus = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) return lstatus;
 
     /* Skip this member if the object it refers to is empty */
-    if (creo->empty->find(wname) != creo->empty->end()) return PRO_TK_NO_ERROR;
+    if (ainfo->cinfo->empty->find(wname) != ainfo->cinfo->empty->end()) return PRO_TK_NO_ERROR;
 
     /* get BRL-CAD name */
-    entry_name = get_brlcad_name(ainfo->cinfo, wname, type, NULL)
+    entry_name = get_brlcad_name(ainfo->cinfo, wname, type, NULL, 0);
 
     /* Get matrix relative to current parent (if any) and create the comb entry */
     if ((lstatus = assembly_entry_matrix(ainfo->cinfo, ainfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR ) {
@@ -194,11 +193,12 @@ assembly_write_entry(ProFeature *feat, ProError status, ProAppData app_data)
 }
 
 /* Only run this *after* find_empty_assemblies has been run */
-extern "C" static ProError
+extern "C" ProError
 output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 {
     ProBoolean is_exploded = false;
     struct bu_vls *comb_name;
+    struct bu_vls *obj_name;
     wchar_t wname[CREO_NAME_MAX];
     struct assem_conv_info *ainfo;
     BU_GET(ainfo, struct assem_conv_info);
@@ -227,21 +227,40 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     ProSolidFeatVisit( ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
 
     /* Get BRL-CAD name */
-    comb_name = get_brlcad_name(cinfo, wname, type, NULL);
+    comb_name = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL, 0);
 
     /* Data sufficient - write the comb */
     mk_lcomb(cinfo->wdbp, bu_vls_addr(comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
 
     /* Set attributes, if the CREO object has any of the ones the user listed as of interest */
-    struct directory *dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(&comb_name), LOOKUP_QUIET);
+    struct directory *dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(comb_name), LOOKUP_QUIET);
     struct bu_attribute_value_set avs;
     db5_get_attributes(cinfo->wdbp->dbip, &avs, dp);
+
+    /* Write the object ID as an attribute, if it isn't already being used as the object name */
+    obj_name = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL, NG_OBJID);
+    if (!BU_STR_EQUAL(bu_vls_addr(obj_name), bu_vls_addr(comb_name))) {
+	bu_avs_add(&avs, "CREO_NAME", bu_vls_addr(obj_name));
+    }
+
+    ProWVerstamp cstamp;
+    if (ProMdlVerstampGet(model, &cstamp) == PRO_TK_NO_ERROR) {
+	char *vstr;
+	if (ProVerstampStringGet(cstamp, &vstr) == PRO_TK_NO_ERROR) {
+	    bu_avs_add(&avs, "CREO_VERSION_STAMP", vstr);
+	}
+	ProVerstampStringFree(&vstr);
+    }
+
+
+    /* If we have a user supplied list of attributes to save, do it */
     if (cinfo->attrs->size() > 0) {
-	for (int i = 0; int i < cinfo->attrs->size(); i++) {
+	for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
 	    char *attr_val = NULL;
-	    creo_attribute_val(&attr_val, cinfo->attrs[i], model);
+	    const char *arg = cinfo->attrs->at(i);
+	    creo_attribute_val(&attr_val, arg, model);
 	    if (attr_val) {
-		bu_avs_add(&avs, cinfo->attrs[i], attr_val);
+		bu_avs_add(&avs, arg, attr_val);
 		bu_free(attr_val, "value string");
 	    }
 	}
@@ -255,8 +274,8 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 	    bu_avs_add(&avs, "density", bu_vls_addr(&mpval));
 	}
 	if (mass_prop.mass > 0.0) {
-	    bu_vls_sprintf(&mpval, "%g", mass_prop.mass)
-		bu_avs_add(&avs, "mass", bu_vls_addr(&mpval));
+	    bu_vls_sprintf(&mpval, "%g", mass_prop.mass);
+	    bu_avs_add(&avs, "mass", bu_vls_addr(&mpval));
 	}
 
 	if (mass_prop.volume > 0.0) {

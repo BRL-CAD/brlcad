@@ -27,7 +27,9 @@
 extern "C" void
 creo_conv_info_init(struct creo_conv_info *cinfo)
 {
-    int i;
+    /* Output file */
+    BU_GET(cinfo->output_file, struct bu_vls);
+    bu_vls_init(cinfo->output_file);
 
     /* Region ID */
     cinfo->reg_id = 1000;
@@ -60,10 +62,11 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
 
     cinfo->parts = new std::set<wchar_t *, WStrCmp>;
     cinfo->assems = new std::set<wchar_t *, WStrCmp>;
-    cinfo->assem_child_cnts = new std::map<wchar_t *, int, WStrCmp>;
     cinfo->empty = new std::set<wchar_t *, WStrCmp>;
     cinfo->name_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
+    cinfo->creo_id_map = new std::map<wchar_t *, struct bu_vls *, WStrCmp>;
     cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
+    cinfo->creo_ids = new std::set<struct bu_vls *, StrCmp>;
     cinfo->model_parameters = new std::vector<char *>;
     cinfo->attrs = new std::vector<char *>;
 
@@ -72,6 +75,9 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
 extern "C" void
 creo_conv_info_free(struct creo_conv_info *cinfo)
 {
+
+    bu_vls_free(cinfo->output_file);
+    BU_PUT(cinfo->output_file, struct bu_vls);
 
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
@@ -88,12 +94,31 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 	BU_PUT(v, struct bu_vls);
     }
 
+    std::map<wchar_t *,struct bu_vls *, WStrCmp>::iterator w_it;
+    for (w_it = cinfo->creo_id_map->begin(); w_it != cinfo->creo_id_map->end(); w_it++) {
+	struct bu_vls *v = w_it->second;
+	bu_vls_free(v);
+	BU_PUT(v, struct bu_vls);
+    }
+
+    for (unsigned int i = 0; i < cinfo->model_parameters->size(); i++) {
+	char *str = cinfo->model_parameters->at(i);
+	bu_free(str, "free model param string");
+    }
+
+
+    for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
+	char *str = cinfo->attrs->at(i);
+	bu_free(str, "free attrs string");
+    }
+
     delete cinfo->parts;
     delete cinfo->assems;
-    delete cinfo->assem_child_cnts;
     delete cinfo->empty; /* entries in empty were freed in parts and assems */
     delete cinfo->brlcad_names;
     delete cinfo->name_map; /* entries in name_map were freed in brlcad_names */
+    delete cinfo->creo_id_map;
+    delete cinfo->creo_ids;
 
     if (cinfo->logger) fclose(cinfo->logger);
     wdb_close(cinfo->wdbp);
@@ -109,13 +134,53 @@ output_parts(struct creo_conv_info *cinfo)
     char name[CREO_NAME_MAX];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
+	struct bu_vls *rname;
+	struct directory *rdp;
 	ProMdl m;
+	ProWVerstamp cstamp, gstamp;
 	if (ProMdlnameInit(*d_it, PRO_MDLFILE_PART, &m) != PRO_TK_NO_ERROR) return;
 	if (ProMdlNameGet(m, wname) != PRO_TK_NO_ERROR) return;
+
+	/* If the part a) exists in the .g file already and b) has the same CREO
+	 * version stamp as the part in the current CREO file, we don't need
+	 * to re-export it to the .g file */
+	rname = get_brlcad_name(cinfo, wname, PRO_MDL_PART, "r", NG_DEFAULT);
+	rdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(rname), LOOKUP_QUIET);
+	if (rdp != RT_DIR_NULL && ProMdlVerstampGet(m, &cstamp) == PRO_TK_NO_ERROR) {
+	    const char *vs = NULL;
+	    struct bu_attribute_value_set r_avs;
+	    db5_get_attributes(cinfo->wdbp->dbip, &r_avs, rdp);
+	    vs = bu_avs_get(&r_avs, "CREO_VERSION_STAMP");
+	    if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR && ProVerstampEqual(cstamp, gstamp) == PRO_B_TRUE) {
+		/* The .g object was created from the same version of the
+		 * object that exists currently in the CREO file - skip */
+		continue;
+	    } else {
+		/* kill the existing object (region and child solid) - it's out of sync with CREO */
+		struct directory **children = NULL;
+		struct rt_db_internal in;
+		if (rt_db_get_internal(&in, rdp, cinfo->wdbp->dbip, NULL, &rt_uniresource) >= 0) {
+		    struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
+		    int ccnt = db_comb_children(cinfo->wdbp->dbip, comb, &children, NULL, NULL);
+		    if (ccnt > 0) {
+			for (int i = 0; i < ccnt; i++) {
+			    db_delete(cinfo->wdbp->dbip, children[i]);
+			    db_dirdelete(cinfo->wdbp->dbip, children[i]);
+			}
+		    }
+		}
+		rt_db_free_internal(&in);
+		bu_free(children, "free child list");
+		db_delete(cinfo->wdbp->dbip, rdp);
+		db_dirdelete(cinfo->wdbp->dbip, rdp);
+		db_update_nref(cinfo->wdbp->dbip, &rt_uniresource);
+	    }
+	}
+
+	/* All set - process the part */
 	(void)ProWstringToString(name, wname);
-	bu_log("Processing part %s\n", name);
-	//int solid_part = output_part(cinfo, m);
-	//if (!solid_part) cinfo->empty->insert(*d_it);
+	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing part %s\n", name);
+	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
 }
 
@@ -126,9 +191,36 @@ output_assems(struct creo_conv_info *cinfo)
     char name[CREO_NAME_MAX];
     std::set<wchar_t *, WStrCmp>::iterator d_it;
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
+	struct bu_vls *aname;
+	struct directory *adp;
 	ProMdl parent;
+	ProWVerstamp cstamp, gstamp;
 	ProMdlnameInit(*d_it, PRO_MDLFILE_ASSEMBLY, &parent);
 	if (ProMdlNameGet(parent, wname) != PRO_TK_NO_ERROR) return;
+
+	/* If the part a) exists in the .g file already and b) has the same CREO
+	 * version stamp as the part in the current CREO file, we don't need
+	 * to re-export it to the .g file */
+	aname = get_brlcad_name(cinfo, wname, PRO_MDL_ASSEMBLY, NULL, NG_DEFAULT);
+	adp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(aname), LOOKUP_QUIET);
+	if (adp != RT_DIR_NULL && ProMdlVerstampGet(parent, &cstamp) == PRO_TK_NO_ERROR) {
+	    const char *vs = NULL;
+	    struct bu_attribute_value_set a_avs;
+	    db5_get_attributes(cinfo->wdbp->dbip, &a_avs, adp);
+	    vs = bu_avs_get(&a_avs, "CREO_VERSION_STAMP");
+	    if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR && ProVerstampEqual(cstamp, gstamp) == PRO_B_TRUE) {
+		/* The .g object was created from the same version of the
+		 * object that exists currently in the CREO file - skip */
+		continue;
+	    } else {
+		/* kill the existing object - it's out of sync with CREO */
+		db_delete(cinfo->wdbp->dbip, adp);
+		db_dirdelete(cinfo->wdbp->dbip, adp);
+		db_update_nref(cinfo->wdbp->dbip, &rt_uniresource);
+	    }
+	}
+
+	/* All set - process the assembly */
 	(void)ProWstringToString(name, wname);
 	creo_log(cinfo, MSG_DEBUG, PRO_TK_NO_ERROR, "Processing assembly %s\n", name);
 	output_assembly(cinfo, parent);
@@ -143,7 +235,7 @@ output_assems(struct creo_conv_info *cinfo)
  * The "app_data" pointer holds the creo_conv_info container. 
  */
 extern "C" ProError
-objects_gather( ProFeature *feat, ProError status, ProAppData app_data )
+objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 {
     ProError loc_status;
     ProMdl model;
@@ -170,7 +262,7 @@ objects_gather( ProFeature *feat, ProError status, ProAppData app_data )
 		wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
 		wcsncpy(wname_saved, wname, wcslen(wname)+1);
 		cinfo->assems->insert(wname_saved);
-		return ProSolidFeatVisit(ProMdlToPart(model), assembly_gather, (ProFeatureFilterAction)component_filter, app_data);
+		return ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, app_data);
 	    }
 	    break;
 	case PRO_MDL_PART:
@@ -222,39 +314,36 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	bu_log("Object %s is neither PART nor ASSEMBLY, skipping", name);
     }
 
-    /* Make a final toplevel comb with the file name to hold the orientation matrix */
+    /* Make a final toplevel comb based on the file name to hold the orientation matrix */
     struct bu_vls *comb_name;
     struct wmember wcomb;
     BU_LIST_INIT(&wcomb.l);
     mat_t m;
     bn_decode_mat(m, "0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1");
-    comb_name = get_brlcad_name(cinfo, wname, type, NULL);
+    comb_name = get_brlcad_name(cinfo, wname, type, NULL, NG_DEFAULT);
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
-    /* TODO - set up name based on file */
-    mk_lcomb(cinfo->wdbp, "creo", &wcomb, 0, NULL, NULL, NULL, 0);
+    mk_lcomb(cinfo->wdbp, bu_vls_addr(cinfo->output_file), &wcomb, 0, NULL, NULL, NULL, 0);
 }
 
 
 
 extern "C" void
-doit( char *dialog, char *compnent, ProAppData appdata )
+doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 {
     ProError status;
     ProMdl model;
     ProMdlType type;
-    ProLine tmp_line;
-    ProCharLine astr;
-    ProFileName msgfil;
-	wchar_t *tmp_str;
+    ProLine tmp_line = NULL;
+    ProFileName msgfil = NULL;
+    wchar_t *tmp_str;
     int n_selected_names;
     char **selected_names;
-    int ret_status=0;
 
     /* This replaces the global variables used in the original Pro/E converter */
     struct creo_conv_info *cinfo = new creo_conv_info;
     creo_conv_info_init(cinfo);
 
-    ProStringToWstring( tmp_line, "Not processing" );
+    ProStringToWstring(tmp_line, "Not processing" );
     status = ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
 
     /********************/
@@ -327,30 +416,26 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProWstringToString(output_file, w_output_file);
 	ProWstringFree(w_output_file);
 
-	/* Safety check - don't overwrite a pre-existing file */
+	/* If there is a pre-existing file, open it - it may be we only have to
+	 * update some items in it. */
 	if (bu_file_exists(output_file, NULL)) {
-	    /* TODO - wrap this up into a creo msg dialog function of some kind... */
-	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
-	    wchar_t w_error_msg[512];
-		int dialog_return;
-	    bu_vls_printf( &error_msg, "Cannot create file %s - file already exists.\n", output_file );
-	    ProStringToWstring( w_error_msg, bu_vls_addr( &error_msg ) );
-	    status = ProUIDialogCreate( "creo_brl_gen_error", "creo_brl_gen_error" );
-	    (void)ProUIPushbuttonActivateActionSet( "creo_brl_gen_error", "ok_button", kill_gen_error_dialog, NULL );
-	    status = ProUITextareaValueSet( "creo_brl_gen_error", "error_message", w_error_msg );
-	    status = ProUIDialogActivate( "creo_brl_gen_error", &dialog_return );
-	    ProUIDialogDestroy( "creo_brl" );
-	    return;
+	    cinfo->dbip = db_open(output_file, DB_OPEN_READWRITE);
+	    cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
+	    creo_log(cinfo, MSG_OK, status, "Note: %s exists - opening to update.\n", output_file);
+	} else {
+
+	    /* open output file */
+	    if ( (cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL ) {
+		creo_log(cinfo, MSG_FAIL, status, "Cannot open output file.\n");
+		creo_conv_info_free(cinfo);
+		ProUIDialogDestroy( "creo_brl" );
+		return;
+	    }
+	    cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
 	}
 
-	/* open output file */
-	if ( (cinfo->dbip = db_create(output_file, 5) ) == DBI_NULL ) {
-	    creo_log(cinfo, MSG_FAIL, status, "Cannot open output file.\n");
-	    creo_conv_info_free(cinfo);
-	    ProUIDialogDestroy( "creo_brl" );
-	    return;
-	}
-	cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
+	/* Store the filename for later use */
+	bu_vls_sprintf(cinfo->output_file, "%s", output_file);
     }
 
     /***********************************************************************************/
@@ -525,7 +610,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	if (cinfo->max_to_min_steps <= 0) {
 	    cinfo->max_to_min_steps = 0;
 	} else {
-	    cinfo->error_increment = (ZERO((cinfo->max_error - cinfo->min_error))) ? 0 : cinfo->error_increment = (cinfo->max_error - cinfo->min_error) / (double)cinfo->max_to_min_steps;
+	    cinfo->error_increment = (ZERO((cinfo->max_error - cinfo->min_error))) ? 0 : (cinfo->max_error - cinfo->min_error) / (double)cinfo->max_to_min_steps;
 	    cinfo->angle_increment = (ZERO((cinfo->max_angle_cntrl - cinfo->min_angle_cntrl))) ? 0 : (cinfo->max_angle_cntrl - cinfo->min_angle_cntrl) / (double)cinfo->max_to_min_steps;
 	    if (ZERO(cinfo->error_increment) && ZERO(cinfo->angle_increment)) cinfo->max_to_min_steps = 0;
 	}
@@ -538,8 +623,6 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProUIDialogDestroy( "creo_brl" );
 	return;
     }
-
-    /* TODO - add a setting to use CREO part ID as basis for object ID, rather than querying properties */
 
     /* check if user wants to eliminate small features */
     if ((status = ProUICheckbuttonGetState("creo_brl", "elim_small", &cinfo->do_elims)) != PRO_TK_NO_ERROR ) {
@@ -656,7 +739,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
 
 extern "C" void
-elim_small_activate( char *dialog_name, char *button_name, ProAppData data )
+elim_small_activate(char *dialog_name, char *button_name, ProAppData UNUSED(data))
 {
     ProBoolean state;
 
@@ -695,19 +778,19 @@ elim_small_activate( char *dialog_name, char *button_name, ProAppData data )
 }
 
 extern "C" void
-do_quit(char *dialog, char *compnent, ProAppData appdata)
+do_quit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 {
     ProUIDialogDestroy("creo_brl");
 }
 
 /* driver routine for converting CREO to BRL-CAD */
 extern "C" int
-creo_brl(uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data)
+creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p_push_cmd_data))
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    ProFileName msgfil;
-    int ret_status=0;
+    ProFileName msgfil = NULL;
     int destroy_dialog = 0;
+    ProError ret_status;
 
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
     ProMessageDisplay(msgfil, "USER_INFO", "Launching creo_brl...");
@@ -749,8 +832,8 @@ print_msg:
 /* this routine determines whether the "creo-brl" menu item in Pro/E
  * should be displayed as available or greyed out
  */
-extern "C" static uiCmdAccessState
-creo_brl_access( uiCmdAccessMode access_mode )
+extern "C" uiCmdAccessState
+creo_brl_access(uiCmdAccessMode UNUSED(access_mode))
 {
     /* doing the correct checks appears to be unreliable */
     return ACCESS_AVAILABLE;
@@ -766,8 +849,8 @@ creo_brl_access( uiCmdAccessMode access_mode )
 extern "C" int user_initialize()
 {
     ProError status;
-    ProCharLine astr;
-    ProFileName msgfil;
+    ProCharLine astr = NULL;
+    ProFileName msgfil = NULL;
     int i;
     uiCmdCmdId cmd_id;
     wchar_t errbuf[80];
@@ -777,7 +860,7 @@ extern "C" int user_initialize()
     /* Pro/E says always check the size of w_char */
     status = ProWcharSizeVerify (sizeof (wchar_t), &i);
     if ( status != PRO_TK_NO_ERROR || (i != sizeof (wchar_t)) ) {
-	sprintf(astr, "ERROR wchar_t Incorrect size (%d). Should be: %d", sizeof(wchar_t), i );
+	sprintf(astr, "ERROR wchar_t Incorrect size (%d). Should be: %d", (int)sizeof(wchar_t), i );
 	status = ProMessageDisplay(msgfil, "USER_ERROR", astr);
 	printf("%s\n", astr);
 	ProStringToWstring(errbuf, astr);
@@ -807,12 +890,9 @@ extern "C" int user_initialize()
 	return -1;
     }
 
-    /* TODO - this is a test, but may want to convert it into a "loaded successfully" dialog */
-    ShowMsg();
 
     /* let user know we are here */
-    ProMessageDisplay( msgfil, "OK" );
-    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
+    PopupMsg("Plugin Successfully Loaded", "The CREO to BRL-CAD converter plugin Version 0.2 was successfully loaded.");
 
     return 0;
 }
