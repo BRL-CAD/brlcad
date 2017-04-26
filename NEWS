@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* reduced 'shade_inputs' flipped normal reporting - Sean Morrison
 * numerous 'simulate' command enhancements and fixes - Jon Engbert
 * fixed rtweight .density file loading on Windows - Cliff Yapp
 * fixed dsp handling of invalid uniform binary objects - Sean Morrison
