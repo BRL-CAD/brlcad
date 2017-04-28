@@ -46,7 +46,7 @@ typedef enum {
     BRLCAD_VERSION
 } brlcad_info_t;
 
-BU_EXPORT int brlcad_get_version(brlcad_version_t vt);
+BU_EXPORT int brlcad_version(brlcad_version_t vt);
 
 BU_EXPORT const char *brlcad_info(brlcad_info_t infot);
 
