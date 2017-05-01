@@ -148,7 +148,7 @@ make_legal( char *name )
 
     c = (unsigned char *)name;
     while ( *c ) {
-	if ( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' ) {
+	if ( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' || *c == '-' ) {
 	    *c = '_';
 	} else if ( *c > '~' ) {
 	    *c = '_';
