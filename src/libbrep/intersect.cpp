@@ -688,7 +688,7 @@ HIDDEN bool
 newton_pci(double &t, const ON_3dPoint &pointA, const ON_Curve &curveB, double tol)
 {
     ON_3dPoint closest_point = curveB.PointAt(t);
-    double dist = closest_point.DistanceTo(pointA);
+    double dist;
 
     // Use Newton-Raphson method with the starting point from linear
     // approximation.
@@ -837,7 +837,7 @@ HIDDEN bool
 newton_psi(double &u, double &v, const ON_3dPoint &pointA, const ON_Surface &surfB, double tol)
 {
     ON_3dPoint closest_point = surfB.PointAt(u, v);
-    double dist = closest_point.DistanceTo(pointA);
+    double dist;
 
     // Use Newton-Raphson method to get an accurate point of PSI.
     // We actually calculate the closest point on the surface to that point.
