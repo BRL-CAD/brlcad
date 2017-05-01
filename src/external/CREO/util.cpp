@@ -52,7 +52,10 @@ int creo_logging_opts(void *data, void *vstr){
 	    (cinfo->curr_msg_type != MSG_DEBUG && cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) ||
 	    (cinfo->logger_type == LOGGER_TYPE_ALL)
        ) {
-	if (cinfo->logger) fprintf(cinfo->logger, "%s", bu_vls_addr(&msg));
+	if (cinfo->logger) {
+		fprintf(cinfo->logger, "%s", bu_vls_addr(&msg));
+		fflush(cinfo->logger);
+	}
 	if (cinfo->print_to_console) {
 	    if (LIKELY(stderr != NULL)) {
 		fprintf(stderr, "%s", bu_vls_addr(&msg));

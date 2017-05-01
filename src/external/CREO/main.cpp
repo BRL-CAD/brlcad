@@ -126,7 +126,7 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
     wdb_close(cinfo->wdbp);
 
     /* Finally, clear the container */
-    BU_PUT(cinfo, struct creo_conv_info);
+    //BU_PUT(cinfo, struct creo_conv_info);
 }
 
 extern "C" void
@@ -252,27 +252,28 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 
     /* Get feature name */
     if ((loc_status = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) {
-	return loc_status;
+	creo_log(cinfo, MSG_FAIL, "%s: failure getting name of child\n", name);
+	return PRO_TK_NO_ERROR;
     }
 
     (void)ProWstringToString(name, wname);
 
     /* get the model for this member */
     if ((loc_status = ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, "%s: failure getting model", name);
+	creo_log(cinfo, MSG_FAIL, "%s: failure getting model\n", name);
 	return PRO_TK_NO_ERROR;
     }
 
     /* get its type (part or assembly are the only ones that should make it here) */
     if ((loc_status = ProMdlTypeGet(model, &type)) != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, "%s: failure getting type", name);
+	creo_log(cinfo, MSG_FAIL, "%s: failure getting type\n", name);
 	return PRO_TK_NO_ERROR;
     }
 
     /* If this is a skeleton, we're done */
     ProMdlIsSkeleton(model, &is_skel);
     if (is_skel) {
-	creo_log(cinfo, MSG_FAIL, "%s: is skeleton, skipping", name);
+	creo_log(cinfo, MSG_FAIL, "%s: is skeleton, skipping\n", name);
 	return PRO_TK_NO_ERROR;
     }
 
@@ -283,7 +284,8 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 		wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
 		wcsncpy(wname_saved, wname, wcslen(wname)+1);
 		cinfo->assems->insert(wname_saved);
-		return ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, app_data);
+		creo_log(cinfo, MSG_DEBUG, "walking into %s\n", name);
+		ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, app_data);
 	    }
 	    break;
 	case PRO_MDL_PART:
@@ -294,6 +296,7 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 	    }
 	    break;
 	default:
+		creo_log(cinfo, MSG_DEBUG, "%s: is neither an assembly or a part, skipping\n", name);
 	    return PRO_TK_NO_ERROR;
 	    break;
     }
