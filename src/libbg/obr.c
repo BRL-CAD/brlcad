@@ -107,7 +107,8 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
     V2MOVE(*p1, min);
     V2MOVE(*p2, max);
     /* If the bbox is nearly a point, return 0 */
-    if (NEAR_ZERO(max[0] - min[0], BN_TOL_DIST) && NEAR_ZERO(max[1] - min[1], BN_TOL_DIST)) return 0;
+    if (NEAR_ZERO(max[0] - min[0], BN_TOL_DIST) && NEAR_ZERO(max[1] - min[1], BN_TOL_DIST))
+	return 0;
 
     /* Test if the point set is (nearly) a line */
 
@@ -145,7 +146,8 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
 	V2MOVE(curr_pnt, pnts[i]);
 	VSET(curr_pnt_3D, curr_pnt[0], curr_pnt[1], 0.0);
 	/* If we're off the line, it's 2D. */
-	if (bn_dist_pt2_lseg2(&dist_sq, pca, A_3D, B_3D, curr_pnt_3D, &tol) > 2) return 2;
+	if (bn_dist_pt2_lseg2(&dist_sq, pca, A_3D, B_3D, curr_pnt_3D, &tol) > 2)
+	    return 2;
     }
     /* If we've got a line, make sure p1 and p2 are the extreme points */
     V2MOVE(*p1, A);
@@ -483,8 +485,10 @@ bg_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, in
     V2SET(*u, 0.0, 0.0);
     V2SET(*v, 0.0, 0.0);
 
-    if (!pnts) return -1;
-    if (pnt_cnt <= 0) return -1;
+    if (!pnts)
+	return -1;
+    if (pnt_cnt <= 0)
+	return -1;
 
     (void)bg_obr_calc(pnts, pnt_cnt, &obr);
 
@@ -514,7 +518,8 @@ bg_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
     point_t tmp3d;
     const point2d_t *const_points_tmp;
 
-    if (!pnts || pnt_cnt <= 0) return -1;
+    if (!pnts || pnt_cnt <= 0)
+	return -1;
 
     points_obr = (point2d_t *)bu_calloc(3 + 1, sizeof(point2d_t), "points_2d");
     points_obr_3d = (point_t *)bu_calloc(3 + 1, sizeof(point_t), "points_3d");
@@ -523,7 +528,7 @@ bg_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
     ret += coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, pnts, pnt_cnt);
     ret += coplanar_3d_to_2d(&points_tmp, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, pnts, pnt_cnt);
     if (ret)
-	return 0;
+	return -2;
 
     const_points_tmp = (const point2d_t *)points_tmp;
     ret = bg_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, const_points_tmp, pnt_cnt);
@@ -534,6 +539,8 @@ bg_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
     V2ADD2(points_obr[2], obr_2d_v2, obr_2d_center);
 
     ret = coplanar_2d_to_3d(&points_obr_3d, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)points_obr, 3);
+    if (ret)
+	return -3;
 
     VMOVE(*center, points_obr_3d[0]);
 
