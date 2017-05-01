@@ -353,7 +353,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
 
     /* create a unique name */
     if (nset->find(gname) != nset->end()) {
-	bu_vls_sprintf(gname, "%s-1", bu_vls_addr(&gname_root));
+	bu_vls_sprintf(gname, "%s_1", bu_vls_addr(&gname_root));
 	if (suffix) {bu_vls_printf(gname, ".%s", suffix);}
 	while (nset->find(gname) != nset->end()) {
 	    (void)bu_namegen(gname, NULL, NULL);
