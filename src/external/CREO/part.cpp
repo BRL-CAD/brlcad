@@ -512,7 +512,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     /* TODO - make sure we have non-zero faces (and if needed, face_normals) vectors */
 
     /* Output the solid - TODO - what is the correct ordering??? does CCW always work? - TODO shouldn't be using NG_OBJID here... */
-    *sname = get_brlcad_name(cinfo, wname, "bot", N_SOLID);
+    *sname = get_brlcad_name(cinfo, wname, "s", N_SOLID);
     if (cinfo->get_normals) {
 	mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(*sname), RT_BOT_SOLID, RT_BOT_CCW, 0, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
     } else {
