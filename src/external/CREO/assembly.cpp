@@ -181,7 +181,7 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
     if (ainfo->cinfo->empty->find(wname) != ainfo->cinfo->empty->end()) return PRO_TK_NO_ERROR;
 
     /* If this is a skeleton, skip */
-    if ((ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) {
+    if ((ProAsmcompMdlGet(feat, &model)) == PRO_TK_NO_ERROR) {
 	ProMdlIsSkeleton(model, &is_skel);
 	if (is_skel) return PRO_TK_NO_ERROR;
     }
