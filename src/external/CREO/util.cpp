@@ -25,48 +25,6 @@
 #include <regex.h>
 #include "creo-brl.h"
 
-int creo_logging_opts(void *data, void *vstr){
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-    struct creo_conv_info *cinfo = (struct creo_conv_info *)data;
-    const char *str = (const char *)vstr;
-
-    if (cinfo->logger_type == LOGGER_TYPE_NONE) return 0;
-
-    switch (cinfo->curr_msg_type) {
-	case MSG_FAIL:
-	    bu_vls_sprintf(&msg, "FAILURE: %s", str);
-	    break;
-	case MSG_OK:
-	    bu_vls_sprintf(&msg, "SUCCESS: %s", str);
-	    break;
-	case MSG_DEBUG:
-	    bu_vls_sprintf(&msg, "DEBUG:   %s", str);
-	    break;
-	default:
-	    bu_vls_sprintf(&msg, "%s", str);
-	    break;
-    }
-
-    if ( (cinfo->curr_msg_type == MSG_FAIL && cinfo->logger_type != LOGGER_TYPE_SUCCESS) ||
-	    (cinfo->curr_msg_type == MSG_OK && cinfo->logger_type != LOGGER_TYPE_FAILURE) ||
-	    (cinfo->curr_msg_type != MSG_DEBUG && cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) ||
-	    (cinfo->logger_type == LOGGER_TYPE_ALL)
-       ) {
-	if (cinfo->logger) {
-		fprintf(cinfo->logger, "%s", bu_vls_addr(&msg));
-		fflush(cinfo->logger);
-	}
-	if (cinfo->print_to_console) {
-	    if (LIKELY(stderr != NULL)) {
-		fprintf(stderr, "%s", bu_vls_addr(&msg));
-		fflush(stderr);
-	    }
-	}
-    }
-    bu_vls_free(&msg);
-    return 0;
-}
-
 extern "C" void
 creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
     /* NOTE - need creo specific semaphore lock for this if it's going to be used
@@ -86,9 +44,36 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
     /* Set the type and hooks, then call libbu */
     if (cinfo && msg_type != MSG_STATUS) {
 	cinfo->curr_msg_type = msg_type;
-	bu_log_add_hook(creo_logging_opts, (void *)cinfo);
-	bu_log("%s", msg);
-	bu_log_delete_hook(creo_logging_opts, (void *)cinfo);
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+
+    if (cinfo->logger_type == LOGGER_TYPE_NONE) return;
+
+    switch (cinfo->curr_msg_type) {
+	case MSG_FAIL:
+		bu_vls_sprintf(&msg, "FAILURE: %s", msg);
+	    break;
+	case MSG_OK:
+	    bu_vls_sprintf(&msg, "SUCCESS: %s", msg);
+	    break;
+	case MSG_DEBUG:
+	    bu_vls_sprintf(&msg, "DEBUG:   %s", msg);
+	    break;
+	default:
+	    bu_vls_sprintf(&msg, "%s", msg);
+	    break;
+    }
+
+    if ( (cinfo->curr_msg_type == MSG_FAIL && cinfo->logger_type != LOGGER_TYPE_SUCCESS) ||
+	    (cinfo->curr_msg_type == MSG_OK && cinfo->logger_type != LOGGER_TYPE_FAILURE) ||
+	    (cinfo->curr_msg_type != MSG_DEBUG && cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) ||
+	    (cinfo->logger_type == LOGGER_TYPE_ALL)
+       ) {
+	if (cinfo->logger) {
+		fprintf(cinfo->logger, "%s", bu_vls_addr(&msg));
+		fflush(cinfo->logger);
+	}
+    }
+    bu_vls_free(&msg);
     }
 
     if (msg_type == MSG_STATUS) {
