@@ -489,7 +489,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /***********************************************************************************/
     {
 	/* Get string from dialog */
-	char param_file[128];
+	char param_file[MAXPATHLEN];
 	wchar_t *w_param_file;
 	status = ProUIInputpanelValueGet("creo_brl", "name_file", &w_param_file);
 	if ( status != PRO_TK_NO_ERROR ) {
@@ -500,10 +500,9 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	}
 	ProWstringToString(param_file, w_param_file);
 	ProWstringFree(w_param_file);
-
-	if (strlen(param_file) > 0) {
+	if (bu_file_exists(param_file, NULL)) {
 	    /* Parse the file contents into a list of parameter keys */
-	    std::ifstream pfile(param_file);
+		std::ifstream pfile(param_file, std::ifstream::in);
 	    std::string line;
 	    if (!pfile) {
 		creo_log(cinfo, MSG_FAIL, "Cannot read parameter keys file.\n");
@@ -538,7 +537,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /***********************************************************************************/
     {
 	/* Get string from dialog */
-	char attr_file[128];
+	char attr_file[MAXPATHLEN];
 	wchar_t *w_attr_file;
 	status = ProUIInputpanelValueGet("creo_brl", "attr_file", &w_attr_file);
 	if ( status != PRO_TK_NO_ERROR ) {
@@ -550,9 +549,9 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	ProWstringToString(attr_file, w_attr_file);
 	ProWstringFree(w_attr_file);
 
-	if (strlen(attr_file) > 0) {
+	if (bu_file_exists(attr_file, NULL)) {
 	    /* Parse the file contents into a list of parameter keys */
-	    std::ifstream pfile(attr_file);
+	    std::ifstream pfile(attr_file, std::ifstream::in);
 	    std::string line;
 	    if (!pfile) {
 		creo_log(cinfo, MSG_FAIL, "Cannot read attribute list file.\n");
@@ -879,6 +878,12 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
 	    }
 	}
     }
+
+#if 0
+	/* Rather than files, (or in addition to?) should probably allow users to input lists directly... to do so, need to increase char limit */
+	ProUIInputpanelMaxlenSet("creo_brl", "name_file", 100000);
+	ProUIInputpanelMaxlenSet("creo_brl", "attr_file", 100000);
+#endif
 
     if (ProUIDialogActivate("creo_brl", &ret_status) != PRO_TK_NO_ERROR) {
 	bu_vls_printf(&vls, "Error in creo-brl Dialog: dialog returned %d\n", ret_status);
