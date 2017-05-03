@@ -71,6 +71,7 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->creo_names = new std::set<struct bu_vls *, StrCmp>;
     cinfo->model_parameters = new std::vector<char *>;
     cinfo->attrs = new std::vector<char *>;
+	cinfo->warn_feature_unsuppress = 0;
 
 }
 
@@ -793,6 +794,12 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     ProStringToWstring( tmp_line, "Conversion complete" );
     ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
 
+	if (cinfo->warn_feature_unsuppress) {
+		struct bu_vls errmsg = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&errmsg, "During the conversion, one or more parts had features suppressed. After the conversion was complete, an\nattempt was made to unsuppress these same features.\nOne or more unsuppression operations failed, so some features are still\nsuppressed. Please exit CREO without saving any\nchanges so that this problem will not persist.");
+	    PopupMsg("Warning - Restoration Failure", bu_vls_addr(&errmsg));
+	    bu_vls_free(&errmsg);
+	}
     creo_conv_info_free(cinfo);
     return;
 }

@@ -200,6 +200,7 @@ struct creo_conv_info {
     std::set<struct bu_vls *, StrCmp> *creo_names; /* set of active creo id strings */
     std::vector<char *> *model_parameters;     /* model parameters to use when generating .g names */
     std::vector<char *> *attrs;     	/* attributes to preserve when transferring objects */
+	int warn_feature_unsuppress;        /* flag to determine if we need to warn the user feature unsuppression failed */
 };
 
 /* Part processing container */

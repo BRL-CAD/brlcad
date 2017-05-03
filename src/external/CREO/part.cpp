@@ -778,11 +778,7 @@ cleanup:
 	ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features->at(0), pinfo->suppressed_features->size(), NULL, 0);
 	if (ret != PRO_TK_NO_ERROR) {
 	    creo_log(cinfo, MSG_FAIL, "%s: failed to unsuppress features.\n", pname);
-
-	    /* use UI dialog */
-	    bu_vls_sprintf(&errmsg, "During the conversion %d features of part %s\nwere suppressed. After the conversion was complete, an\nattempt was made to unsuppress these same features.\nThe unsuppression failed, so these features are still\nsuppressed. Please exit CREO without saving any\nchanges so that this problem will not persist.", (int)pinfo->suppressed_features->size(), pname);
-	    PopupMsg("Warning - Restoration Failure", bu_vls_addr(&errmsg));
-	    bu_vls_free(&errmsg);
+		cinfo->warn_feature_unsuppress = 1;
 	    return ret;
 	}
 	creo_log(cinfo, MSG_STATUS, "Successfully unsuppressed features.");
