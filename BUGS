@@ -18,6 +18,8 @@ Recent Bugs
 * get_regions tcl command doesn't respond well to situations where
   child object names in combs have dashes (the "-" character) in
   names.  It tries to interpret the dash as an argument delimiter.
+  Looks like this may be only in situations where the "-" is the
+  lead character and on Windows?  Been hard to reproduce...
 
 * dsp does not facetize correctly with zero elevation areas in the
   data - need robustness improvements
