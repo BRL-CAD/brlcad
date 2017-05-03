@@ -219,6 +219,7 @@ extern "C" void ProMessageClear();
 extern "C" void ProMdlIsSkeleton(void*, bool*);
 extern "C" void ProPartTessellationFree(ProSurfaceTessellationData**);
 extern "C" void ProStringToWstring(wchar_t*,const char*);
+extern "C" void ProUIInputpanelMaxlenSet(const char*,const char*,int);
 extern "C" void ProUIMessageDialogDisplay(int,const wchar_t *,const wchar_t *,ProUIMessageButton*,int,ProUIMessageButton*);
 extern "C" void ProUnitConversionGet(void**,ProUnitConversion*,void**);
 extern "C" void ProUnitInit(void*,const wchar_t *,void**);

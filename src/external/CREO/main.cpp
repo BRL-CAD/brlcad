@@ -38,7 +38,6 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->logger = (FILE *)NULL;
     cinfo->logger_type=LOGGER_TYPE_NONE;
     cinfo->curr_msg_type = MSG_DEBUG;
-    cinfo->print_to_console=1;
 
     /* units - model */
     cinfo->creo_to_brl_conv = 25.4; /* inches to mm */
@@ -879,11 +878,9 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
 	}
     }
 
-#if 0
-	/* Rather than files, (or in addition to?) should probably allow users to input lists directly... to do so, need to increase char limit */
-	ProUIInputpanelMaxlenSet("creo_brl", "name_file", 100000);
-	ProUIInputpanelMaxlenSet("creo_brl", "attr_file", 100000);
-#endif
+    /* Rather than files, (or in addition to?) should probably allow users to input lists directly... to do so, need to increase char limit */
+    ProUIInputpanelMaxlenSet("creo_brl", "name_file", 100000);
+    ProUIInputpanelMaxlenSet("creo_brl", "attr_file", 100000);
 
     if (ProUIDialogActivate("creo_brl", &ret_status) != PRO_TK_NO_ERROR) {
 	bu_vls_printf(&vls, "Error in creo-brl Dialog: dialog returned %d\n", ret_status);

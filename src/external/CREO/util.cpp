@@ -41,44 +41,43 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
     vsprintf(msg, fmt, ap);
     va_end(ap);
 
-    /* Set the type and hooks, then call libbu */
-    if (cinfo && msg_type != MSG_STATUS) {
-	cinfo->curr_msg_type = msg_type;
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-
-    if (cinfo->logger_type == LOGGER_TYPE_NONE) return;
-
-    switch (cinfo->curr_msg_type) {
-	case MSG_FAIL:
-		bu_vls_sprintf(&msg, "FAILURE: %s", msg);
-	    break;
-	case MSG_OK:
-	    bu_vls_sprintf(&msg, "SUCCESS: %s", msg);
-	    break;
-	case MSG_DEBUG:
-	    bu_vls_sprintf(&msg, "DEBUG:   %s", msg);
-	    break;
-	default:
-	    bu_vls_sprintf(&msg, "%s", msg);
-	    break;
-    }
-
-    if ( (cinfo->curr_msg_type == MSG_FAIL && cinfo->logger_type != LOGGER_TYPE_SUCCESS) ||
-	    (cinfo->curr_msg_type == MSG_OK && cinfo->logger_type != LOGGER_TYPE_FAILURE) ||
-	    (cinfo->curr_msg_type != MSG_DEBUG && cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) ||
-	    (cinfo->logger_type == LOGGER_TYPE_ALL)
-       ) {
-	if (cinfo->logger) {
-		fprintf(cinfo->logger, "%s", bu_vls_addr(&msg));
-		fflush(cinfo->logger);
-	}
-    }
-    bu_vls_free(&msg);
-    }
-
     if (msg_type == MSG_STATUS) {
 	ProMessageDisplay(msgfil, "USER_INFO", msg);
 	(void)ProWindowRefresh(PRO_VALUE_UNUSED);
+	return;
+    }
+
+    /* if we're logging and not reporting status, do it */
+    if (cinfo && cinfo->logger && msg_type != MSG_STATUS) {
+	cinfo->curr_msg_type = msg_type;
+	struct bu_vls vmsg = BU_VLS_INIT_ZERO;
+
+	if (cinfo->logger_type == LOGGER_TYPE_NONE) return;
+
+	switch (cinfo->curr_msg_type) {
+	    case MSG_FAIL:
+		bu_vls_sprintf(&vmsg, "FAILURE: %s", msg);
+		break;
+	    case MSG_OK:
+		bu_vls_sprintf(&vmsg, "SUCCESS: %s", msg);
+		break;
+	    case MSG_DEBUG:
+		bu_vls_sprintf(&vmsg, "DEBUG:   %s", msg);
+		break;
+	    default:
+		bu_vls_sprintf(&vmsg, "%s", msg);
+		break;
+	}
+
+	if ( (cinfo->curr_msg_type == MSG_FAIL && cinfo->logger_type != LOGGER_TYPE_SUCCESS) ||
+		(cinfo->curr_msg_type == MSG_OK && cinfo->logger_type != LOGGER_TYPE_FAILURE) ||
+		(cinfo->curr_msg_type != MSG_DEBUG && cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) ||
+		(cinfo->logger_type == LOGGER_TYPE_ALL)
+	   ) {
+	    fprintf(cinfo->logger, "%s", bu_vls_addr(&vmsg));
+	    fflush(cinfo->logger);
+	}
+	bu_vls_free(&vmsg);
     }
 }
 

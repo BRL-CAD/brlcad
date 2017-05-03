@@ -158,7 +158,6 @@ struct creo_conv_info {
     FILE *logger;			/* log file */
     int logger_type;
     int curr_msg_type;
-    int print_to_console;
 
     /* units - model */
     double creo_to_brl_conv;	/* inches to mm */
