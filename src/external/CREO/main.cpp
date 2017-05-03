@@ -877,20 +877,30 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
 	goto print_msg;
     }
 
-    /* We should be able to do better than the hard coded default for the filename... */
     ProMdl model;
     if (ProMdlCurrentGet(&model) != PRO_TK_BAD_CONTEXT) {
 	wchar_t wname[CREO_NAME_MAX];
 	if (ProMdlNameGet(model, wname) == PRO_TK_NO_ERROR) {
-	    struct bu_vls nroot = BU_VLS_INIT_ZERO;
+	    struct bu_vls groot = BU_VLS_INIT_ZERO;
+	    struct bu_vls lroot = BU_VLS_INIT_ZERO;
 	    char name[CREO_NAME_MAX];
 	    (void)ProWstringToString(name, wname);
-	    if (bu_path_component(&nroot, name, BU_PATH_BASENAME_EXTLESS)) {
+	    /* Supply a sensible default for the .g file... */
+	    if (bu_path_component(&groot, name, BU_PATH_BASENAME_EXTLESS)) {
 		wchar_t wgout[CREO_NAME_MAX];
-		bu_vls_printf(&nroot, ".g");
-		(void)ProStringToWstring(wgout, bu_vls_addr(&nroot));
+		bu_vls_printf(&groot, ".g");
+		(void)ProStringToWstring(wgout, bu_vls_addr(&lroot));
 		ProUIInputpanelValueSet("creo_brl", "output_file", wgout);
-		bu_vls_free(&nroot);
+		bu_vls_free(&groot);
+	    }
+	    /* suggest a default log file... */
+	    if (bu_path_component(&lroot, name, BU_PATH_BASENAME_EXTLESS)) {
+		/* Supply a sensible default for the .g file... */
+		wchar_t wgout[CREO_NAME_MAX];
+		bu_vls_printf(&lroot, "-log.txt");
+		(void)ProStringToWstring(wgout, bu_vls_addr(&lroot));
+		ProUIInputpanelValueSet("creo_brl", "log_file", wgout);
+		bu_vls_free(&lroot);
 	    }
 	}
     }
