@@ -169,6 +169,7 @@ struct creo_conv_info {
     ProBool check_solidity;	/* flag to control testing BoTs for solidity */
     ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
     ProBool do_elims;		/* flag to indicate that small features are to be eliminated */
+    ProBool debug_bboxes;	/* flag to indicate that bboxes should be written for parts that didn't convert */
     double max_error;	/* (mm) maximum allowable error in facetized approximation */
     double min_error;	/* (mm) maximum allowable error in facetized approximation */
     double tol_dist;	/* (mm) minimum distance between two distinct vertices */

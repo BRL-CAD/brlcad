@@ -369,7 +369,7 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
 
 
 extern "C" ProError
-tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname, int have_bbox)
+tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname)
 {
     ProSurfaceTessellationData *tess = NULL;
     ProError status = PRO_TK_NO_ERROR;
@@ -475,11 +475,12 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	    }
 	}
 
-	/* If it's not solid and we're testing solidity, start over... */
-	/* TODO - should we be doing this always and just warning for solids that aren't? */
-	if (cinfo->check_solidity) {
-	    if (!bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0])) {
+	/* Check solidity */
+	int bot_is_solid = bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0]);
 
+	/* If it's not solid and we're testing solidity, keep trying... */
+	if (!bot_is_solid) {
+	    if (cinfo->check_solidity) {
 		/* free the tessellation memory */
 		ProPartTessellationFree( &tess );
 		tess = NULL;
@@ -488,9 +489,10 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 		bn_vert_tree_destroy(vert_tree);
 		bn_vert_tree_destroy(norm_tree);
 
-		creo_log(cinfo, MSG_DEBUG, "%s tessellation using error - %g, angle - %g failed solidity test\n", pname, curr_error, curr_angle);
+		creo_log(cinfo, MSG_DEBUG, "%s tessellation using error - %g, angle - %g failed solidity test, trying next level...\n", pname, curr_error, curr_angle);
 
 	    } else {
+		creo_log(cinfo, MSG_FAIL, "%s tessellation failed solidity test, but solidity requirement is not enabled... continuing...\n", pname, curr_error, curr_angle);
 		success = 1;
 		break;
 	    }
@@ -501,20 +503,18 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     }
 
     if (!success) {
-	status = (have_bbox) ? PRO_TK_GENERAL_ERROR : PRO_TK_NOT_EXIST;
-	if (PRO_TK_NOT_EXIST) {
-	    cinfo->empty->insert(wname);
-	} else {
-	    creo_log(cinfo, MSG_FAIL, "%s: tessellation failed\n", pname);
-	}
+	status = PRO_TK_NOT_EXIST;
+	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed\n", pname);
 	goto tess_cleanup;
+    } else {
+	status = PRO_TK_NO_ERROR;
     }
 
     creo_log(cinfo, MSG_OK, "%s: successfully tessellated with tessellation error: %g and angle: %g!!!\n", pname, curr_error, curr_angle);
 
     /* TODO - make sure we have non-zero faces (and if needed, face_normals) vectors */
 
-    /* Output the solid - TODO - what is the correct ordering??? does CCW always work? - TODO shouldn't be using NG_OBJID here... */
+    /* Output the solid - TODO - what is the correct ordering??? does CCW always work? */
     *sname = get_brlcad_name(cinfo, wname, "s", N_SOLID);
     if (cinfo->get_normals) {
 	mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(*sname), RT_BOT_SOLID, RT_BOT_CCW, 0, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
@@ -639,14 +639,13 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     //status = opennurbs_part(cinfo, model, &sname, have_bbox);
 
     /* Tessellate */
-    status = tessellate_part(cinfo, model, &sname, have_bbox);
+    status = tessellate_part(cinfo, model, &sname);
 
     /* Deal with the solid conversion results */
-    if (status != PRO_TK_NO_ERROR && status != PRO_TK_NOT_EXIST) {
+    if (status == PRO_TK_NOT_EXIST) {
 	/* Failed!!! */
-	creo_log(cinfo, MSG_FAIL, "%s is empty, could not convert to solid.\n", pname);
-#if 0
-	if (have_bbox) {
+	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed.\n", pname);
+	if (cinfo->debug_bboxes) {
 	    /* A failed solid conversion with a bounding box indicates a problem - rather than
 	     * ignore it, put the bbox in the .g file as a placeholder. */
 	    point_t rmin, rmax;
@@ -659,26 +658,16 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    rmax[1] = bboxpnts[1][1];
 	    rmax[2] = bboxpnts[1][2];
 	    mk_rpp(cinfo->wdbp, bu_vls_addr(sname), rmin, rmax);
+	    creo_log(cinfo, MSG_DEBUG, "%s: writing bounding box as placeholder.\n", pname);
 	    goto have_part;
 	} else {
-#endif
 	    cinfo->empty->insert(wname);
 	    ret = status;
 	    goto cleanup;
-#if 0
 	}
-#endif
-    }
-    if (status == PRO_TK_NOT_EXIST) {
-	/* not a failure, just an empty part */
-	creo_log(cinfo, MSG_OK, "%s appears to be empty - skipping\n", pname );
-
-	/* This is a legit empty solid, list it as such */
-	cinfo->empty->insert(wname);
-	ret = status;
-	goto cleanup;
     }
 
+have_part:
     /* We've got a part - the output for a part is a parent region and the solid underneath it. */
 //have_part:
     BU_LIST_INIT(&wcomb.l);

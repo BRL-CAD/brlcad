@@ -693,6 +693,14 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	return;
     }
 
+    /* check if user wants to test solidity */
+    if ((status = ProUICheckbuttonGetState("creo_brl", "debug_bboxes", &cinfo->debug_bboxes)) != PRO_TK_NO_ERROR ) {
+	creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (debugging bboxes).\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    }
+
     if (cinfo->do_elims) {
 
 	/* get the minimum hole diameter */
