@@ -20,10 +20,10 @@
 		(CheckButton	log_other)
 		(Label		log_file_type_l)
 		(RadioGroup	log_file_type_rg)
-		(Label		name_file_l)
-		(InputPanel	name_file)
-		(Label		attr_file_l)
-		(InputPanel	attr_file)
+		(Label		attr_rename_l)
+		(InputPanel	attr_rename)
+		(Label		attr_save_l)
+		(InputPanel	attr_save)
 		(Label		curr_proc_l)
 		(Label		curr_proc)
 		(CheckButton	facets_only)
@@ -57,14 +57,14 @@
 		(separator5.BottomOffset	4)
 		(separator6.TopOffset		4)
 		(separator6.BottomOffset	4)
-		(name_file_l.Label		"Nameing File: ")
-		(name_file_l.AttachRight	True)
-		(name_file.Value		"")
-		(name_file.HelpText		"Enter the name of a file listing CREO attributes to use when generating BRL-CAD object names (optional)")
-		(attr_file_l.Label		"Atrributes File: ")
-		(attr_file_l.AttachRight	True)
-		(attr_file.Value		"")
-		(attr_file.HelpText		"Enter the name of a file listing CREO attributes to preserve in the BRL-CD .g file (optional)")
+		(attr_rename_l.Label		"Renaming attrs: ")
+		(attr_rename_l.AttachRight	True)
+		(attr_rename.Value		"")
+		(attr_rename.HelpText		"Enter a comma separated list of CREO attributes to use when generating BRL-CAD object names (optional)")
+		(attr_save_l.Label		"Attrs to save: ")
+		(attr_save_l.AttachRight	True)
+		(attr_save.Value		"")
+		(attr_save.HelpText		"Enter a comma separated list of CREO attributes to preserve in the BRL-CD .g file (optional)")
 		(log_file_type_l.Label		"Output Log File Type: ")
 		(log_file_type_l.AttachRight	True)
 		(log_file_type_rg.Names		"Failure"
@@ -166,10 +166,10 @@
 					log_file_type_rg
 					log_file_l
 					log_file
-					name_file_l
-					name_file
-					attr_file_l
-					attr_file
+					attr_rename_l
+					attr_rename
+					attr_save_l
+					attr_save
 					starting_ident_l
 					starting_ident
 					max_error_l

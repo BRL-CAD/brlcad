@@ -489,18 +489,20 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /***********************************************************************************/
     {
 	/* Get string from dialog */
-	char param_file[MAXPATHLEN];
-	wchar_t *w_param_file;
-	status = ProUIInputpanelValueGet("creo_brl", "name_file", &w_param_file);
+	char attr_rename[MAXPATHLEN];
+	wchar_t *w_attr_rename;
+	status = ProUIInputpanelValueGet("creo_brl", "attr_rename", &w_attr_rename);
 	if ( status != PRO_TK_NO_ERROR ) {
 	    creo_log(cinfo, MSG_FAIL, "Failed to get name of model parameter specification file.\n");
 	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
 	}
-	ProWstringToString(param_file, w_param_file);
-	if (strlen(param_file) > 0) {
-		std::string pfilestr(param_file);
+	ProWstringToString(attr_rename, w_attr_rename);
+	ProWstringFree(w_attr_rename);
+
+	if (strlen(attr_rename) > 0) {
+		std::string pfilestr(attr_rename);
 	    std::istringstream ss(pfilestr);
 	    std::string line;
 	    while (std::getline(ss, line)) {
@@ -523,7 +525,6 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 		}
 	    }
 	}
-	ProWstringFree(w_param_file);
     }
 
     /***********************************************************************************/
@@ -531,21 +532,21 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /***********************************************************************************/
     {
 	/* Get string from dialog */
-	char attr_file[MAXPATHLEN];
-	wchar_t *w_attr_file;
-	status = ProUIInputpanelValueGet("creo_brl", "attr_file", &w_attr_file);
+	char attr_save[MAXPATHLEN];
+	wchar_t *w_attr_save;
+	status = ProUIInputpanelValueGet("creo_brl", "attr_save", &w_attr_save);
 	if ( status != PRO_TK_NO_ERROR ) {
 	    creo_log(cinfo, MSG_FAIL, "Failed to get name of attribute list file.\n");
 	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
 	}
-	ProWstringToString(attr_file, w_attr_file);
-	ProWstringFree(w_attr_file);
+	ProWstringToString(attr_save, w_attr_save);
+	ProWstringFree(w_attr_save);
 
-	if (strlen(attr_file) > 0) {
+	if (strlen(attr_save) > 0) {
 	    /* Parse the file contents into a list of parameter keys */
-		std::string afilestr(attr_file);
+	    std::string afilestr(attr_save);
 	    std::istringstream ss(afilestr);
 	    std::string line;
 	    while (std::getline(ss, line)) {
@@ -869,8 +870,8 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
     }
 
     /* Rather than files, (or in addition to?) should probably allow users to input lists directly... to do so, need to increase char limit */
-    ProUIInputpanelMaxlenSet("creo_brl", "name_file", MAXPATHLEN - 1);
-    ProUIInputpanelMaxlenSet("creo_brl", "attr_file", MAXPATHLEN - 1);
+    ProUIInputpanelMaxlenSet("creo_brl", "attr_rename", MAXPATHLEN - 1);
+    ProUIInputpanelMaxlenSet("creo_brl", "attr_save", MAXPATHLEN - 1);
 
     if (ProUIDialogActivate("creo_brl", &ret_status) != PRO_TK_NO_ERROR) {
 	bu_vls_printf(&vls, "Error in creo-brl Dialog: dialog returned %d\n", ret_status);
