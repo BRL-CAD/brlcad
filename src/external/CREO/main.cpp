@@ -489,6 +489,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     {
 	/* Get string from dialog */
 	char param_file[MAXPATHLEN];
+	char ptmp_file[MAXPATHLEN];
 	wchar_t *w_param_file;
 	status = ProUIInputpanelValueGet("creo_brl", "name_file", &w_param_file);
 	if ( status != PRO_TK_NO_ERROR ) {
@@ -498,10 +499,20 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	    return;
 	}
 	ProWstringToString(param_file, w_param_file);
-	ProWstringFree(w_param_file);
-	if (bu_file_exists(param_file, NULL)) {
+	if (strlen(param_file) > 0) {
+	    char *pf = param_file;
+	    if (!bu_file_exists(param_file, NULL)) {
+		/* We have content but no file - assume the input dialog *is* the content
+		 * and use a temp file */
+		FILE *tmpfp;
+		tmpfp = bu_temp_file((char *)&ptmp_file, MAXPATHLEN);
+		fprintf(tmpfp, "%s", param_file);
+		fflush(tmpfp);
+		fclose(tmpfp);
+		pf = ptmp_file;
+	    }
 	    /* Parse the file contents into a list of parameter keys */
-		std::ifstream pfile(param_file, std::ifstream::in);
+	    std::ifstream pfile(pf, std::ifstream::in);
 	    std::string line;
 	    if (!pfile) {
 		creo_log(cinfo, MSG_FAIL, "Cannot read parameter keys file.\n");
@@ -529,6 +540,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 		}
 	    }
 	}
+	ProWstringFree(w_param_file);
     }
 
     /***********************************************************************************/
@@ -537,6 +549,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     {
 	/* Get string from dialog */
 	char attr_file[MAXPATHLEN];
+	char atmp_file[MAXPATHLEN];
 	wchar_t *w_attr_file;
 	status = ProUIInputpanelValueGet("creo_brl", "attr_file", &w_attr_file);
 	if ( status != PRO_TK_NO_ERROR ) {
@@ -548,9 +561,20 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	ProWstringToString(attr_file, w_attr_file);
 	ProWstringFree(w_attr_file);
 
-	if (bu_file_exists(attr_file, NULL)) {
+	if (strlen(attr_file) > 0) {
+	    char *af = attr_file;
+	    if (!bu_file_exists(attr_file, NULL)) {
+		/* We have content but no file - assume the input dialog *is* the content
+		 * and use a temp file */
+		FILE *tmpfp;
+		tmpfp = bu_temp_file((char *)&atmp_file, MAXPATHLEN);
+		fprintf(tmpfp, "%s", attr_file);
+		fflush(tmpfp);
+		fclose(tmpfp);
+		af = atmp_file;
+	    }
 	    /* Parse the file contents into a list of parameter keys */
-	    std::ifstream pfile(attr_file, std::ifstream::in);
+	    std::ifstream pfile(af, std::ifstream::in);
 	    std::string line;
 	    if (!pfile) {
 		creo_log(cinfo, MSG_FAIL, "Cannot read attribute list file.\n");
@@ -879,8 +903,8 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
     }
 
     /* Rather than files, (or in addition to?) should probably allow users to input lists directly... to do so, need to increase char limit */
-    ProUIInputpanelMaxlenSet("creo_brl", "name_file", 100000);
-    ProUIInputpanelMaxlenSet("creo_brl", "attr_file", 100000);
+    ProUIInputpanelMaxlenSet("creo_brl", "name_file", MAXPATHLEN - 1);
+    ProUIInputpanelMaxlenSet("creo_brl", "attr_file", MAXPATHLEN - 1);
 
     if (ProUIDialogActivate("creo_brl", &ret_status) != PRO_TK_NO_ERROR) {
 	bu_vls_printf(&vls, "Error in creo-brl Dialog: dialog returned %d\n", ret_status);
