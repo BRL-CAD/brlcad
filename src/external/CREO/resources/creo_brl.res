@@ -59,11 +59,11 @@
 		(separator5.BottomOffset	4)
 		(separator6.TopOffset		4)
 		(separator6.BottomOffset	4)
-		(attr_rename_l.Label		"Renaming attrs: ")
+		(attr_rename_l.Label		"Attributes used for name generation: ")
 		(attr_rename_l.AttachRight	True)
 		(attr_rename.Value		"")
 		(attr_rename.HelpText		"Enter a comma separated list of CREO attributes to use when generating BRL-CAD object names (optional)")
-		(attr_save_l.Label		"Attrs to save: ")
+		(attr_save_l.Label		"Attributes to preserve in .g file: ")
 		(attr_save_l.AttachRight	True)
 		(attr_save.Value		"")
 		(attr_save.HelpText		"Enter a comma separated list of CREO attributes to preserve in the BRL-CD .g file (optional)")
@@ -125,9 +125,10 @@
 		(facets_only.HelpText		"Select this to produce a faceted approximation for each region with no CSG")
 		(facets_only.Set		True)
 		(facets_only.AttachLeft		True)
-		(check_solidity.Label		"Test BoT solidity")
-		(check_solidity.HelpText	"Select this to test BoTs for solidity (no unmated edges) and reject those that don't pass")
+		(check_solidity.Label		"Reject BoT tessellations unless they pass the solidity test")
+		(check_solidity.HelpText	"Select this to reject BoTs that fail the solidity test (no unmated edges)")
 		(check_solidity.Set		False)
+		(check_solidity.AttachLeft	True)
 		(elim_small.Label		"Ignore small features")
 		(elim_small.HelpText		"Select this to ignore holes, rounds, and chamfers smaller than the specified minimums")
 		(elim_small.Set			False)
@@ -135,9 +136,10 @@
 		(get_normals.Set		False)
 		(get_normals.HelpText		"Select this to save surface normals in BoTs (raytracing looks smoother)")
 		(get_normals.AttachLeft		True)
-		(debug_bboxes.Label		"Use BBox for failure")
+		(debug_bboxes.Label		"If a part fails to tessellate, use its bounding box instead")
 		(debug_bboxes.HelpText		"Select this to create a bounding box solid from the CREO part bounding box to serve as a placeholder if the part conversion fails.  This is primarily a debugging tool, but it can also be used to avoid skipping combs due to all children being missing.")
 		(debug_bboxes.Set		False)
+		(debug_bboxes.AttachLeft	True)
 		(min_hole_l.Label		"Minimum hole diameter (mm): ")
 		(min_hole_l.AttachRight		True)
 		(min_hole.InputType		3)
@@ -166,7 +168,7 @@
 		(.DialogStyle			6)
 		(.Label				"CREO to BRL-CAD Converter")
 		(.Layout
-			(Grid (Rows 1 1 1 1 1 1 1) (Cols 1)
+			(Grid (Rows 1 1 1 1 1 1 1 1 1) (Cols 1)
 				(Grid (Rows 1 1 1 1 1 1 1 1 1 1 1) (Cols 1 1)
 					output_file_l
 					output_file
@@ -194,6 +196,8 @@
 				separator1
 				facets_only
 				get_normals
+				check_solidity
+				debug_bboxes
 				separator3
 				elim_small
 				(Grid (Rows 1 1 1 1 1 1) (Cols 1 1)

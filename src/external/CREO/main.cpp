@@ -375,9 +375,9 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     std::set<wchar_t *, WStrCmp>::iterator e_it;
     if (cinfo->empty->size() > 0) creo_log(cinfo, MSG_FAIL, "The following objects failed to convert:\n");
     for (e_it = cinfo->empty->begin(); e_it != cinfo->empty->end(); e_it++) {
-	char ename[MAXPATHLEN];
-	ProWstringToString(ename, *e_it);
-	creo_log(cinfo, MSG_FAIL, "%s\n", ename);
+	//char ename[MAXPATHLEN];
+	//ProWstringToString(ename, *e_it);
+	//creo_log(cinfo, MSG_FAIL, "%s\n", ename);
     }
 
 }
