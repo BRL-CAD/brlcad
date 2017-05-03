@@ -272,7 +272,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     ProWstringToString(astr, name);
 
     /* If we don't have a valid type, we don't know what to do */
-    if (flag < N_REGION && flag > N_CREO) return NULL;
+    if (flag < N_REGION || flag > N_CREO) return NULL;
 
     /* If the name isn't in either the parts or assemblies sets, it's
      * not an active part of the conversion */
