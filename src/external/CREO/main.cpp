@@ -667,6 +667,14 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	return;
     }
 
+    /* check if user wants to test solidity */
+    if ((status = ProUICheckbuttonGetState("creo_brl", "check_solidity", &cinfo->check_solidity)) != PRO_TK_NO_ERROR ) {
+	creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (check solidity).\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    }
+
     /* check if user wants surface normals in the BOT's */
     if ((status = ProUICheckbuttonGetState("creo_brl", "get_normals", &cinfo->get_normals)) != PRO_TK_NO_ERROR ) {
 	creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (extract surface normals).\n");

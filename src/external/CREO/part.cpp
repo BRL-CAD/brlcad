@@ -474,27 +474,30 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 		}
 	    }
 	}
-	success = 1;
-	break;
-#if 0
-	/* If it's not solid, start over... */
-	if (!bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0])) {
 
-	    /* free the tessellation memory */
-	    ProPartTessellationFree( &tess );
-	    tess = NULL;
+	/* If it's not solid and we're testing solidity, start over... */
+	/* TODO - should we be doing this always and just warning for solids that aren't? */
+	if (cinfo->check_solidity) {
+	    if (!bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0])) {
 
-	    /* Free trees */
-	    bn_vert_tree_destroy(vert_tree);
-	    bn_vert_tree_destroy(norm_tree);
+		/* free the tessellation memory */
+		ProPartTessellationFree( &tess );
+		tess = NULL;
 
-	    creo_log(cinfo, MSG_DEBUG, "%s tessellation using error - %g, angle - %g failed solidity test\n", pname, curr_error, curr_angle);
+		/* Free trees */
+		bn_vert_tree_destroy(vert_tree);
+		bn_vert_tree_destroy(norm_tree);
 
+		creo_log(cinfo, MSG_DEBUG, "%s tessellation using error - %g, angle - %g failed solidity test\n", pname, curr_error, curr_angle);
+
+	    } else {
+		success = 1;
+		break;
+	    }
 	} else {
 	    success = 1;
 	    break;
 	}
-#endif
     }
 
     if (!success) {
