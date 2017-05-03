@@ -896,7 +896,7 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
 	    if (bu_path_component(&groot, name, BU_PATH_BASENAME_EXTLESS)) {
 		wchar_t wgout[CREO_NAME_MAX];
 		bu_vls_printf(&groot, ".g");
-		(void)ProStringToWstring(wgout, bu_vls_addr(&lroot));
+		(void)ProStringToWstring(wgout, bu_vls_addr(&groot));
 		ProUIInputpanelValueSet("creo_brl", "output_file", wgout);
 		bu_vls_free(&groot);
 	    }
