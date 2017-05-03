@@ -490,7 +490,6 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     {
 	/* Get string from dialog */
 	char param_file[MAXPATHLEN];
-	char ptmp_file[MAXPATHLEN];
 	wchar_t *w_param_file;
 	status = ProUIInputpanelValueGet("creo_brl", "name_file", &w_param_file);
 	if ( status != PRO_TK_NO_ERROR ) {
@@ -533,7 +532,6 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     {
 	/* Get string from dialog */
 	char attr_file[MAXPATHLEN];
-	char atmp_file[MAXPATHLEN];
 	wchar_t *w_attr_file;
 	status = ProUIInputpanelValueGet("creo_brl", "attr_file", &w_attr_file);
 	if ( status != PRO_TK_NO_ERROR ) {
