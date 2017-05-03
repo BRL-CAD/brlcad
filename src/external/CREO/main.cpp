@@ -22,6 +22,7 @@
  */
 
 #include "common.h"
+#include <sstream>
 #include "creo-brl.h"
 
 extern "C" void
@@ -500,27 +501,10 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	}
 	ProWstringToString(param_file, w_param_file);
 	if (strlen(param_file) > 0) {
-	    char *pf = param_file;
-	    if (!bu_file_exists(param_file, NULL)) {
-		/* We have content but no file - assume the input dialog *is* the content
-		 * and use a temp file */
-		FILE *tmpfp;
-		tmpfp = bu_temp_file((char *)&ptmp_file, MAXPATHLEN);
-		fprintf(tmpfp, "%s", param_file);
-		fflush(tmpfp);
-		fclose(tmpfp);
-		pf = ptmp_file;
-	    }
-	    /* Parse the file contents into a list of parameter keys */
-	    std::ifstream pfile(pf, std::ifstream::in);
+		std::string pfilestr(param_file);
+	    std::istringstream ss(pfilestr);
 	    std::string line;
-	    if (!pfile) {
-		creo_log(cinfo, MSG_FAIL, "Cannot read parameter keys file.\n");
-		creo_conv_info_free(cinfo);
-		ProUIDialogDestroy( "creo_brl" );
-		return;
-	    }
-	    while (std::getline(pfile, line)) {
+	    while (std::getline(ss, line)) {
 		std::string pkey;
 		std::istringstream ls(line);
 		while (std::getline(ls, pkey, ',')) {
@@ -562,27 +546,11 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	ProWstringFree(w_attr_file);
 
 	if (strlen(attr_file) > 0) {
-	    char *af = attr_file;
-	    if (!bu_file_exists(attr_file, NULL)) {
-		/* We have content but no file - assume the input dialog *is* the content
-		 * and use a temp file */
-		FILE *tmpfp;
-		tmpfp = bu_temp_file((char *)&atmp_file, MAXPATHLEN);
-		fprintf(tmpfp, "%s", attr_file);
-		fflush(tmpfp);
-		fclose(tmpfp);
-		af = atmp_file;
-	    }
 	    /* Parse the file contents into a list of parameter keys */
-	    std::ifstream pfile(af, std::ifstream::in);
+		std::string afilestr(attr_file);
+	    std::istringstream ss(afilestr);
 	    std::string line;
-	    if (!pfile) {
-		creo_log(cinfo, MSG_FAIL, "Cannot read attribute list file.\n");
-		creo_conv_info_free(cinfo);
-		ProUIDialogDestroy( "creo_brl" );
-		return;
-	    }
-	    while (std::getline(pfile, line)) {
+	    while (std::getline(ss, line)) {
 		std::string pkey;
 		std::istringstream ls(line);
 		while (std::getline(ls, pkey, ',')) {
