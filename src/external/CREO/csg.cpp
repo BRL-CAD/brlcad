@@ -25,7 +25,6 @@
 #include "creo-brl.h"
 
 #define MIN_RADIUS      1.0e-7          /* BRL-CAD does not allow tgc's with zero radius */
-const char *tgc_format="tgc V {%.25G %.25G %.25G} H {%.25G %.25G %.25G} A {%.25G %.25G %.25G} B {%.25G %.25G %.25G} C {%.25G %.25G %.25G} D {%.25G %.25G %.25G}\n";
 
 /* Information needed to replace holes with CSG */
 struct hole_info {
@@ -61,231 +60,108 @@ hole_elem_visit(ProElement UNUSED(elem_tree), ProElement elem, ProElempath UNUSE
     ProValueData val;
     struct hole_info *hinfo = (struct hole_info *)data;
 
-    if ( (ret=ProElementIdGet( elem, &elem_id ) ) != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to get element id!!!\n" );
-	return ret;
-    }
+    if ((ret = ProElementIdGet(elem, &elem_id)) != PRO_TK_NO_ERROR) return ret;
 
-    switch ( elem_id ) {
+    switch (elem_id) {
 	case PRO_E_HLE_ADD_CBORE:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->add_cbore = val.v.i;
 	    break;
 	case PRO_E_HLE_ADD_CSINK:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->add_csink = val.v.i;
 	    break;
 	case PRO_E_DIAMETER:
 	    /* diameter of straight hole */
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->hole_diam = val.v.d;
 	    break;
 	case PRO_E_HLE_HOLEDIAM:
 	    /* diameter of main portion of standard drilled hole */
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->hole_diam = val.v.d;
 	    break;
 	case PRO_E_HLE_CBOREDEPTH:
 	    /* depth of counterbore */
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->cb_depth = val.v.d;
 	    break;
 	case PRO_E_HLE_CBOREDIAM:
 	    /* diameter of counterbore */
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->cb_diam = val.v.d;
 	    break;
 	case PRO_E_HLE_CSINKANGLE:
-	    /* angle of countersink (degrees ) */
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    /* angle of countersink (degrees) */
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->cs_angle = val.v.d;
 	    break;
 	case PRO_E_HLE_CSINKDIAM:
 	    /* diameter of countersink */
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->cs_diam = val.v.d;
 	    break;
 	case PRO_E_HLE_DRILLDEPTH:
 	    /* overall depth of standard drilled hole without drill tip */
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->hole_depth = val.v.d;
 	    break;
 	case PRO_E_HLE_DRILLANGLE:
 	    /* drill tip angle (degrees) */
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->drill_angle = val.v.d;
 	    break;
 	case PRO_E_HLE_DEPTH:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->hole_depth_type = val.v.i;
 	    break;
 	case PRO_E_HLE_TYPE_NEW:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    hinfo->hole_type = val.v.i;
 	    break;
 	case PRO_E_HLE_STAN_TYPE:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    break;
 	case PRO_E_STD_EDGE_CHAMF_DIM1:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    break;
 	case PRO_E_STD_EDGE_CHAMF_DIM2:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    break;
 	case PRO_E_STD_EDGE_CHAMF_ANGLE:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    break;
 	case PRO_E_STD_EDGE_CHAMF_DIM:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    break;
 	case PRO_E_STD_EDGE_CHAMF_SCHEME:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    break;
 	case PRO_E_EXT_DEPTH_FROM_VALUE:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    break;
 	case PRO_E_EXT_DEPTH_TO_VALUE:
-	    if ( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value\n" );
-		return ret;
-	    }
-	    if ( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "Failed to get value data\n" );
-		return ret;
-	    }
+	    if ((ret = ProElementValueGet(elem, &val_junk)) != PRO_TK_NO_ERROR) return ret;
+	    if ((ret = ProValueDataGet(val_junk, &val)) != PRO_TK_NO_ERROR) return ret;
 	    break;
     }
 
@@ -312,6 +188,33 @@ geomitem_visit(ProGeomitem *item, ProError UNUSED(status), ProAppData data)
     return PRO_TK_NO_ERROR;
 }
 
+extern "C" struct bu_vls *
+tgc_hole_name(struct creo_conv_info *cinfo, wchar_t *wname, const char *suffix)
+{
+    struct directory *dp;
+    char pname[CREO_NAME_MAX];
+    struct bu_vls *cname;
+    struct bu_vls *hname;
+    long count = 0;
+    BU_GET(hname, struct bu_vls);
+    bu_vls_init(hname);
+    cname = get_brlcad_name(cinfo, wname, NULL, N_CREO);
+    bu_vls_sprintf(hname, "%s_hole_0.%s", bu_vls_addr(cname), suffix);
+    while ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) {
+	(void)bu_namegen(hname, NULL, NULL);
+	count++;
+	creo_log(cinfo, MSG_DEBUG, "\t trying hole name : %s\n", bu_vls_addr(hname));
+	if (count == LONG_MAX) {
+	    bu_vls_free(hname);
+	    BU_PUT(hname, struct bu_vls);
+	    ProWstringToString(pname, wname);
+	    creo_log(cinfo, MSG_FAIL, "%s: hole name generation FAILED.\n", pname);
+	    return NULL;
+	}
+    }
+    return hname;
+}
+
 /* Subtract_hole()
  *	routine to create TGC primitives to make holes
  *
@@ -322,23 +225,19 @@ geomitem_visit(ProGeomitem *item, ProError UNUSED(status), ProAppData data)
 extern "C" int
 subtract_hole(struct part_conv_info *pinfo)
 {
+    wchar_t wname[CREO_NAME_MAX];
+    struct bu_vls *hname;
     ProError ret;
     ProElement elem_tree;
     ProElempath elem_path=NULL;
     struct creo_conv_info *cinfo = pinfo->cinfo;
-    int hole_no = 1; /* TODO - do this right */
-
-    struct bu_vls hname = BU_VLS_INIT_ZERO;
+    struct directory *dp = RT_DIR_NULL;
     vect_t a, b, c, d, h;
 
-    if ( pinfo->cinfo->do_facets_only ) {
-	if ( pinfo->diameter < cinfo->min_hole_diameter )
-	    return 1;
-	else
-	    return 0;
+    if (pinfo->cinfo->do_facets_only) {
+	return (pinfo->diameter < cinfo->min_hole_diameter) ? 1 : 0;
     }
 
-    /* TODO - restructure for easier memory cleanup */
     struct hole_info *hinfo;
     BU_GET(hinfo, struct hole_info);
     hinfo->feat = pinfo->feat;
@@ -346,34 +245,25 @@ subtract_hole(struct part_conv_info *pinfo)
     hinfo->diameter = pinfo->diameter;
 
     /* Do a more detailed characterization of the hole elements */
-    if ( (ret=ProFeatureElemtreeCreate(hinfo->feat, &elem_tree ) ) == PRO_TK_NO_ERROR ) {
-	if ( (ret=ProElemtreeElementVisit( elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)hinfo) ) != PRO_TK_NO_ERROR ) {
+    if ((ret=ProFeatureElemtreeCreate(hinfo->feat, &elem_tree )) == PRO_TK_NO_ERROR ) {
+	if ((ret=ProElemtreeElementVisit( elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)hinfo)) != PRO_TK_NO_ERROR ) {
 	    if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {fprintf( stderr, "Error freeing element tree\n" );}
 	    BU_PUT(hinfo, struct hole_info);
 	    return ret;
 	}
-	if ( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
-	    fprintf( stderr, "Error freeing element tree\n" );
-	}
+	ProElementFree(&elem_tree);
     }
 
-    /* need more info to recreate holes - TODO - make necessary solids in these routines and write them to the .g file */
-    if ((ret=ProFeatureGeomitemVisit(pinfo->feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)pinfo) ) != PRO_TK_NO_ERROR) return ret;
+    /* need more info to recreate holes */
+    if ((ret=ProFeatureGeomitemVisit(pinfo->feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)pinfo)) != PRO_TK_NO_ERROR) return ret;
 
-    if (cinfo->logger_type == LOGGER_TYPE_ALL ) {
-	fprintf(cinfo->logger, "Doing a CSG hole subtraction\n" );
-    }
+    /* Will need parent object name for naming */
+    ProMdlMdlnameGet(pinfo->model, wname);
 
     /* make a replacement hole using CSG */
     if ( hinfo->hole_type == PRO_HLE_NEW_TYPE_STRAIGHT ) {
 	/* plain old straight hole */
-
-	if ( hinfo->diameter < cinfo->min_hole_diameter )
-	    return 1;
-
-	/* TODO - do this naming right */
-	bu_vls_printf(&hname, "hole.%d ", hole_no );
-
+	if (hinfo->diameter < cinfo->min_hole_diameter) return 1;
 	VSUB2( h, hinfo->end1, hinfo->end2 );
 	bn_vec_ortho( a, h );
 	VCROSS( b, a, h );
@@ -382,15 +272,11 @@ subtract_hole(struct part_conv_info *pinfo)
 	VSCALE( a, a, pinfo->radius*cinfo->creo_to_brl_conv );
 	VSCALE( b, b, pinfo->radius*cinfo->creo_to_brl_conv );
 	VSCALE( h, h, cinfo->creo_to_brl_conv );
-#if 0
-	bu_vls_printf( &csg->dbput, tgc_format,
-		V3ARGS( hinfo->end2 ),
-		V3ARGS( h ),
-		V3ARGS( a ),
-		V3ARGS( b ),
-		V3ARGS( a ),
-		V3ARGS( b ) );
-#endif
+	hname = tgc_hole_name(cinfo, wname, "s");
+	mk_tgc(cinfo->wdbp, bu_vls_addr(hname), hinfo->end2, h, a, b, a, b);
+	if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) pinfo->subtractions->push_back(dp);
+	bu_vls_free(hname);
+	BU_PUT(hname, struct bu_vls);
     } else if ( hinfo->hole_type == PRO_HLE_NEW_TYPE_STANDARD ) {
 	/* drilled hole with possible countersink and counterbore */
 	point_t start;
@@ -399,8 +285,7 @@ subtract_hole(struct part_conv_info *pinfo)
 	double accum_depth=0.0;
 	double hole_radius=hinfo->hole_diam / 2.0;
 
-	if ( hinfo->hole_diam < cinfo->min_hole_diameter )
-	    return 1;
+	if (hinfo->hole_diam < cinfo->min_hole_diameter) return 1;
 
 	VSUB2( dir, hinfo->end1, hinfo->end2 );
 	VUNITIZE( dir );
@@ -409,24 +294,6 @@ subtract_hole(struct part_conv_info *pinfo)
 	VSCALE( start, start, cinfo->creo_to_brl_conv );
 
 	if ( hinfo->add_cbore == PRO_HLE_ADD_CBORE ) {
-
-#if 0
-	    if ( !cinfo->csg_root ) {
-		BU_ALLOC(cinfo->csg_root, struct csg_ops);
-		csg = cinfo->csg_root;
-		csg->next = NULL;
-	    } else {
-		BU_ALLOC(csg, struct csg_ops);
-		csg->next = cinfo->csg_root;
-		cinfo->csg_root = csg;
-	    }
-	    bu_vls_init( &csg->name );
-	    bu_vls_init( &csg->dbput );
-
-	    csg->op = '-';
-#endif
-	    hole_no++;
-	    //bu_vls_printf( &csg->name, "hole.%d ", hole_no );
 	    bn_vec_ortho( a, dir );
 	    VCROSS( b, a, dir );
 	    VUNITIZE( b );
@@ -434,15 +301,12 @@ subtract_hole(struct part_conv_info *pinfo)
 	    VSCALE( a, a, cb_radius );
 	    VSCALE( b, b, cb_radius );
 	    VSCALE( h, dir, hinfo->cb_depth * cinfo->creo_to_brl_conv );
-#if 0
-	    bu_vls_printf( &csg->dbput, tgc_format,
-		    V3ARGS( start ),
-		    V3ARGS( h ),
-		    V3ARGS( a ),
-		    V3ARGS( b ),
-		    V3ARGS( a ),
-		    V3ARGS( b ) );
-#endif
+	    hname = tgc_hole_name(cinfo, wname, "s");
+	    mk_tgc(cinfo->wdbp, bu_vls_addr(hname), start, h, a, b, a, b);
+	    if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) pinfo->subtractions->push_back(dp);
+	    bu_vls_free(hname);
+	    BU_PUT(hname, struct bu_vls);
+
 	    VADD2( start, start, h );
 	    accum_depth += hinfo->cb_depth;
 	    hinfo->cb_diam = 0.0;
@@ -451,24 +315,7 @@ subtract_hole(struct part_conv_info *pinfo)
 	if ( hinfo->add_csink == PRO_HLE_ADD_CSINK ) {
 	    double cs_depth;
 	    double cs_radius = hinfo->cs_diam / 2.0;
-#if 0
-	    if ( !cinfo->csg_root ) {
-		BU_ALLOC(cinfo->csg_root, struct csg_ops);
-		csg = cinfo->csg_root;
-		csg->next = NULL;
-	    } else {
-		BU_ALLOC(csg, struct csg_ops);
-		csg->next = cinfo->csg_root;
-		cinfo->csg_root = csg;
-	    }
-	    bu_vls_init( &csg->name );
-	    bu_vls_init( &csg->dbput );
-
-	    csg->op = '-';
-#endif
-	    hole_no++;
-	    //bu_vls_printf( &csg->name, "hole.%d ", hole_no );
-	    cs_depth = (hinfo->cs_diam - hinfo->hole_diam) / (2.0 * tan(hinfo->cs_angle * M_PI / 360.0 ) );
+	    cs_depth = (hinfo->cs_diam - hinfo->hole_diam) / (2.0 * tan(hinfo->cs_angle * M_PI / 360.0 ));
 	    bn_vec_ortho( a, dir );
 	    VCROSS( b, a, dir );
 	    VUNITIZE( b );
@@ -479,37 +326,17 @@ subtract_hole(struct part_conv_info *pinfo)
 	    VSCALE( b, b, cs_radius * cinfo->creo_to_brl_conv );
 	    VSCALE( c, c, hinfo->hole_diam * cinfo->creo_to_brl_conv / 2.0 );
 	    VSCALE( d, d, hinfo->hole_diam * cinfo->creo_to_brl_conv / 2.0 );
-#if 0
-	    bu_vls_printf( &csg->dbput, tgc_format,
-		    V3ARGS( start ),
-		    V3ARGS( h ),
-		    V3ARGS( a ),
-		    V3ARGS( b ),
-		    V3ARGS( c ),
-		    V3ARGS( d ) );
-#endif
+	    hname = tgc_hole_name(cinfo, wname, "s");
+	    mk_tgc(cinfo->wdbp, bu_vls_addr(hname), start, h, a, b, c, d);
+	    if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) pinfo->subtractions->push_back(dp);
+	    bu_vls_free(hname);
+	    BU_PUT(hname, struct bu_vls);
+
 	    VADD2( start, start, h );
 	    accum_depth += cs_depth;
 	    hinfo->cs_diam = 0.0;
 	    hinfo->cs_angle = 0.0;
 	}
-#if 0
-	if ( !cinfo->csg_root ) {
-	    BU_ALLOC(cinfo->csg_root, struct csg_ops);
-	    csg = cinfo->csg_root;
-	    csg->next = NULL;
-	} else {
-	    BU_ALLOC(csg, struct csg_ops);
-	    csg->next = cinfo->csg_root;
-	    cinfo->csg_root = csg;
-	}
-	bu_vls_init( &csg->name );
-	bu_vls_init( &csg->dbput );
-
-	csg->op = '-';
-#endif
-	hole_no++;
-	//bu_vls_printf( &csg->name, "hole.%d ", hole_no );
 	bn_vec_ortho( a, dir );
 	VCROSS( b, a, dir );
 	VUNITIZE( b );
@@ -520,37 +347,18 @@ subtract_hole(struct part_conv_info *pinfo)
 	VSCALE( c, c, hole_radius * cinfo->creo_to_brl_conv );
 	VSCALE( d, d, hole_radius * cinfo->creo_to_brl_conv );
 	VSCALE( h, dir, (hinfo->hole_depth - accum_depth) * cinfo->creo_to_brl_conv );
-#if 0
-	bu_vls_printf( &csg->dbput, tgc_format,
-		V3ARGS( start ),
-		V3ARGS( h ),
-		V3ARGS( a ),
-		V3ARGS( b ),
-		V3ARGS( c ),
-		V3ARGS( d ) );
-#endif
+	hname = tgc_hole_name(cinfo, wname, "s");
+	mk_tgc(cinfo->wdbp, bu_vls_addr(hname), start, h, a, b, c, d);
+	if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) pinfo->subtractions->push_back(dp);
+	bu_vls_free(hname);
+	BU_PUT(hname, struct bu_vls);
+
 	VADD2( start, start, h );
 	hinfo->hole_diam = 0.0;
 	hinfo->hole_depth = 0.0;
+
 	if ( hinfo->hole_depth_type == PRO_HLE_STD_VAR_DEPTH ) {
 	    double tip_depth;
-#if 0
-	    if ( !cinfo->csg_root ) {
-		BU_ALLOC(cinfo->csg_root, struct csg_ops);
-		csg = cinfo->csg_root;
-		csg->next = NULL;
-	    } else {
-		BU_ALLOC(csg, struct csg_ops);
-		csg->next = cinfo->csg_root;
-		cinfo->csg_root = csg;
-	    }
-	    bu_vls_init( &csg->name );
-	    bu_vls_init( &csg->dbput );
-
-	    csg->op = '-';
-#endif
-	    hole_no++;
-	    //bu_vls_printf( &csg->name, "hole.%d ", hole_no );
 	    bn_vec_ortho( a, dir );
 	    VCROSS( b, a, dir );
 	    VUNITIZE( b );
@@ -562,23 +370,23 @@ subtract_hole(struct part_conv_info *pinfo)
 	    VSCALE( b, b, hole_radius * cinfo->creo_to_brl_conv );
 	    VSCALE( c, c, MIN_RADIUS );
 	    VSCALE( d, d, MIN_RADIUS );
-#if 0
-	    bu_vls_printf( &csg->dbput, tgc_format,
-		    V3ARGS( start ),
-		    V3ARGS( h ),
-		    V3ARGS( a ),
-		    V3ARGS( b ),
-		    V3ARGS( c ),
-		    V3ARGS( d ) );
-#endif
+	    hname = tgc_hole_name(cinfo, wname, "s");
+	    mk_tgc(cinfo->wdbp, bu_vls_addr(hname), start, h, a, b, c, d);
+	    if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) pinfo->subtractions->push_back(dp);
+	    bu_vls_free(hname);
+	    BU_PUT(hname, struct bu_vls);
+
 	    hinfo->drill_angle = 0.0;
 	}
     } else {
-	fprintf( stderr, "Unrecognized hole type\n" );
-
+	char pname[CREO_NAME_MAX];
+	ProWstringToString(pname, wname);
+	creo_log(cinfo, MSG_DEBUG, "%s: unrecognized hole type\n", pname);
+	BU_PUT(hinfo, struct hole_info);
 	return 0;
     }
 
+    BU_PUT(hinfo, struct hole_info);
     return 1;
 }
 
