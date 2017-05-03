@@ -584,7 +584,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     char *verstr;
 
     struct bu_vls mdstr = BU_VLS_INIT_ZERO;
-    struct bu_vls errmsg = BU_VLS_INIT_ZERO;
 
     Pro3dPnt bboxpnts[2];
     int have_bbox = 1;
