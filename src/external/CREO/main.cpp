@@ -348,10 +348,14 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     struct bu_vls *comb_name;
     struct bu_vls top_name = BU_VLS_INIT_ZERO;
     struct wmember wcomb;
+	struct directory *dp;
     BU_LIST_INIT(&wcomb.l);
     mat_t m;
     bn_decode_mat(m, "0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1");
     comb_name = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
+	if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(comb_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
+    comb_name = get_brlcad_name(cinfo, wname, NULL, N_REGION);
+	}
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
 
     /* Guarantee we have a non-colliding top level name */
@@ -883,6 +887,10 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
 	destroy_dialog = 1;
 	goto print_msg;
     }
+
+	/* File names may get longer than the default... */
+	ProUIInputpanelMaxlenSet("creo_brl", "output_file", MAXPATHLEN - 1);
+	ProUIInputpanelMaxlenSet("creo_brl", "log_file", MAXPATHLEN - 1);
 
     ProMdl model;
     if (ProMdlCurrentGet(&model) != PRO_TK_BAD_CONTEXT) {
