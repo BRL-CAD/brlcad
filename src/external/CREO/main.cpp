@@ -369,6 +369,16 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     }
     if (tdp == RT_DIR_NULL) mk_lcomb(cinfo->wdbp, bu_vls_addr(&top_name), &wcomb, 0, NULL, NULL, NULL, 0);
     bu_vls_free(&top_name);
+
+    /* Report empty objects */
+    std::set<wchar_t *, WStrCmp>::iterator e_it;
+    if (cinfo->empty->size() > 0) creo_log(cinfo, MSG_FAIL, "The following objects failed to convert:\n");
+    for (e_it = cinfo->empty->begin(); e_it != cinfo->empty->end(); e_it++) {
+	char ename[MAXPATHLEN];
+	ProWstringToString(ename, *e_it);
+	creo_log(cinfo, MSG_FAIL, "%s\n", ename);
+    }
+
 }
 
 
@@ -395,8 +405,8 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /*  Set up logging  */
     /********************/
     {
-	char log_file[128];
-	char logger_type_str[128];
+	char log_file[MAXPATHLEN];
+	char logger_type_str[MAXPATHLEN];
 
 	/* get the name of the log file */
 	status = ProUIInputpanelValueGet( "creo_brl", "log_file", &tmp_str );
