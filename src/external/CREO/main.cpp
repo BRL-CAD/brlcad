@@ -338,6 +338,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, (ProAppData)cinfo);
 	output_parts(cinfo);
 	find_empty_assemblies(cinfo);
+	(void)ProWindowRefresh(PRO_VALUE_UNUSED);
 	output_assems(cinfo);
     } else {
 	creo_log(cinfo, MSG_OK, "Top level object %s is neither PART nor ASSEMBLY, skipping", name);

@@ -43,7 +43,6 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
 
     if (msg_type == MSG_STATUS) {
 	ProMessageDisplay(msgfil, "USER_INFO", msg);
-	(void)ProWindowRefresh(PRO_VALUE_UNUSED);
 	return;
     }
 
@@ -135,7 +134,7 @@ make_legal( char *name )
 
     c = (unsigned char *)name;
     while ( *c ) {
-		if ( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' || *c == '-' || *c == '#' || *c == '+' || *c == '\\' || *c == '{' || *c == '}' || *c == '*' ) {
+		if ( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' || *c == '-' || *c == '#' || *c == '+' || *c == '\\' || *c == '{' || *c == '}' || *c == '*' || *c == ',' ) {
 	    *c = '_';
 	} else if ( *c > '~' ) {
 	    *c = '_';
@@ -204,7 +203,7 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
 	case PRO_PARAM_STRING:
 	    ProParamvalueValueGet(&pval, ptype, wval);
 	    ProWstringToString(cval, wval);
-	    fval = bu_strdup(cval);
+	    if (strlen(cval) > 0) fval = bu_strdup(cval);
 	    break;
 	default:
 	    break;
@@ -246,9 +245,16 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, int flags)
 	    if (non_alnum) ProParameterVisit(&itm,  NULL, regex_key, (ProAppData)&pdata);
 	}
 	if (pdata.val && strlen(pdata.val) > 0) {
-	    /* Have key - we're done here */
+	    int is_al = 0;
+	    for (unsigned int j = 0; j < strlen(pdata.val); j++) is_al += isalpha(pdata.val[j]);
+		if (is_al > 0) {
+		/* Have key - we're done here */
 	    val = pdata.val;
 	    break;
+		} else {
+			/* not good enough - keep trying */
+			pdata.val = NULL;
+		}
 	} else {
 		pdata.val = NULL;
 	}
@@ -338,6 +344,10 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     lower_case(bu_vls_addr(&gname_root));
     make_legal(bu_vls_addr(&gname_root));
     bu_vls_sprintf(gname, "%s", bu_vls_addr(&gname_root));
+
+	/* if we don't have something by now, go with unknown */
+	if (!bu_vls_strlen(gname)) bu_vls_sprintf(gname, "unknown");
+
     if (suffix) bu_vls_printf(gname, ".%s", suffix);
 
     /* create a unique name */
