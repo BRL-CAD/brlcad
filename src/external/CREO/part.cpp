@@ -408,10 +408,10 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 
 	status = ProPartTessellate(ProMdlToPart(model), curr_error/cinfo->creo_to_brl_conv, curr_angle, PRO_B_TRUE, &tess);
 	if (status != PRO_TK_NO_ERROR) {
-	      creo_log(cinfo, MSG_DEBUG, "%s: failed to tessellate using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
-	//    creo_log(cinfo, MSG_DEBUG, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
-	//    creo_log(cinfo, MSG_DEBUG, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
-	//    creo_log(cinfo, MSG_DEBUG, "\tcurr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
+	    creo_log(cinfo, MSG_DEBUG, "%s: failed to tessellate using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
+	    //    creo_log(cinfo, MSG_DEBUG, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
+	    //    creo_log(cinfo, MSG_DEBUG, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
+	    //    creo_log(cinfo, MSG_DEBUG, "\tcurr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
 	    continue;
 	}
 
@@ -663,7 +663,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
 have_part:
     /* We've got a part - the output for a part is a parent region and the solid underneath it. */
-//have_part:
+    //have_part:
     BU_LIST_INIT(&wcomb.l);
     rname = get_brlcad_name(cinfo, wname, "r", N_REGION);
 
@@ -772,7 +772,7 @@ cleanup:
 	ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features->at(0), pinfo->suppressed_features->size(), NULL, 0);
 	if (ret != PRO_TK_NO_ERROR) {
 	    creo_log(cinfo, MSG_FAIL, "%s: failed to unsuppress features.\n", pname);
-		cinfo->warn_feature_unsuppress = 1;
+	    cinfo->warn_feature_unsuppress = 1;
 	    return ret;
 	}
 	creo_log(cinfo, MSG_STATUS, "Successfully unsuppressed features.");

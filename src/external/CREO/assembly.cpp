@@ -72,10 +72,9 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
 		    ProSolidFeatVisit(ProMdlToPart(model), assembly_check_empty, (ProFeatureFilterAction)component_filter, (ProAppData)ada);
 		    if (!has_shape) {
 			cinfo->empty->insert(*d_it);
-	char ename[MAXPATHLEN];
-	ProWstringToString(ename, *d_it);
-	creo_log(cinfo, MSG_FAIL, "all contents of assembly %s are empty, skipping\n", ename);
-    
+			char ename[MAXPATHLEN];
+			ProWstringToString(ename, *d_it);
+			creo_log(cinfo, MSG_FAIL, "all contents of assembly %s are empty, skipping\n", ename);
 			steady_state = 0;
 		    }
 		}
