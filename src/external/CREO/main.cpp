@@ -134,7 +134,7 @@ extern "C" void
 output_parts(struct creo_conv_info *cinfo)
 {
     std::set<wchar_t *, WStrCmp>::iterator d_it;
-    int cnt = 0;
+    int cnt = 1;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
 	wchar_t wname[CREO_NAME_MAX];
 	struct bu_vls *rname;
@@ -182,7 +182,7 @@ output_parts(struct creo_conv_info *cinfo)
 	}
 
 	/* All set - process the part */
-	creo_log(cinfo, MSG_STATUS, "Processing part %d of %d\n", cnt++, cinfo->parts->size());
+	creo_log(cinfo, MSG_STATUS, "Processing part %d of %d", cnt++, cinfo->parts->size());
 	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
 }
@@ -191,7 +191,7 @@ extern "C" void
 output_assems(struct creo_conv_info *cinfo)
 {
     std::set<wchar_t *, WStrCmp>::iterator d_it;
-    int cnt = 0;
+    int cnt = 1;
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
 	wchar_t wname[CREO_NAME_MAX];
 	struct bu_vls *aname;
@@ -228,7 +228,7 @@ output_assems(struct creo_conv_info *cinfo)
 	if (cinfo->empty->find(wname) != cinfo->empty->end()) continue;
 
 	/* All set - process the assembly */
-	creo_log(cinfo, MSG_STATUS, "Processing assembly %d of %d\n", cnt++, cinfo->assems->size());
+	creo_log(cinfo, MSG_STATUS, "Processing assembly %d of %d", cnt++, cinfo->assems->size());
 	output_assembly(cinfo, parent);
     }
 }
@@ -376,15 +376,6 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     }
     if (tdp == RT_DIR_NULL) mk_lcomb(cinfo->wdbp, bu_vls_addr(&top_name), &wcomb, 0, NULL, NULL, NULL, 0);
     bu_vls_free(&top_name);
-
-    /* Report empty objects */
-    std::set<wchar_t *, WStrCmp>::iterator e_it;
-    if (cinfo->empty->size() > 0) creo_log(cinfo, MSG_FAIL, "The following objects failed to convert:\n");
-    for (e_it = cinfo->empty->begin(); e_it != cinfo->empty->end(); e_it++) {
-	//char ename[MAXPATHLEN];
-	//ProWstringToString(ename, *e_it);
-	//creo_log(cinfo, MSG_FAIL, "%s\n", ename);
-    }
 
 }
 
@@ -799,6 +790,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /* let user know we are done */
     ProStringToWstring( tmp_line, "Conversion complete" );
     ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
+	ProMessageClear();
 
 	if (cinfo->warn_feature_unsuppress) {
 		struct bu_vls errmsg = BU_VLS_INIT_ZERO;
@@ -985,7 +977,7 @@ extern "C" int user_initialize()
 
 
     /* let user know we are here */
-    PopupMsg("Plugin Successfully Loaded", "The CREO to BRL-CAD converter plugin Version 0.2 was successfully loaded.");
+    //PopupMsg("Plugin Successfully Loaded", "The CREO to BRL-CAD converter plugin Version 0.2 was successfully loaded.");
 
     return 0;
 }

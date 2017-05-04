@@ -605,8 +605,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     ProWstringToString(pname, wname);
     creo_log(cinfo, MSG_OK, "Processing %s:\n", pname);
 
-    ProUILabelTextSet("creo_brl", "curr_proc", wname);
-
     /* Collect info about things that might be eliminated */
     if (cinfo->do_elims) {
 
@@ -625,9 +623,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    }
 	}
     }
-
-    /* If we've been told to do CSG conversions, apply logic for finding and replacing holes */
-
 
     /* Get bounding box of a solid using "ProSolidOutlineGet"
      * TODO - may want to use this to implement relative facetization tolerance...
@@ -704,7 +699,7 @@ have_part:
 		cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     } else {
 	/* something is wrong, but just ignore the missing properties */
-	creo_log(cinfo, MSG_FAIL, "Error getting surface properties for %s\n",	pname);
+	creo_log(cinfo, MSG_DEBUG, "Error getting surface properties for %s\n",	pname);
 	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb.l, 1, NULL, NULL, NULL, cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     }
 

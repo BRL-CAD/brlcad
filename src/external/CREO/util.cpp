@@ -42,6 +42,7 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
     va_end(ap);
 
     if (msg_type == MSG_STATUS) {
+		ProMessageClear();
 	ProMessageDisplay(msgfil, "USER_INFO", msg);
 	return;
     }
