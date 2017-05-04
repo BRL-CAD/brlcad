@@ -76,6 +76,9 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     if (bu_strncmp(sub, "solid", len) == 0) {
 	primitive = argv[2];
     }
+    if (bu_strncmp(sub, "solid_vis", len) == 0) {
+	primitive = argv[2];
+    }
     if (primitive == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
 	return GED_ERROR;
@@ -158,7 +161,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	is_solid = bg_trimesh_solid(bot->num_vertices, bot->num_faces, bot->vertices, bot->faces);
+	is_solid = !bg_trimesh_solid(bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, NULL);
 	bu_vls_printf(gedp->ged_result_str, "%d", is_solid);
 
 	rt_db_free_internal(&intern);
@@ -166,6 +169,56 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
+    if (bu_strncmp(sub, "solid_vis", len) == 0) {
+	int not_solid = 0;
+	int *edges = NULL;
+
+	/* must be wanting help */
+	if (argc != 3) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	    rt_db_free_internal(&intern);
+	    return GED_ERROR;
+	}
+
+	not_solid = bg_trimesh_solid(bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, &edges);
+	if (!not_solid) {
+	    bu_vls_printf(gedp->ged_result_str, "1");
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "0");
+	}
+
+	if (not_solid && edges) {
+	    int curr_edge = 0;
+	    struct bu_list *vhead;
+	    point_t a, b;
+	    struct bn_vlblock *vbp;
+	    struct bu_list local_vlist;
+	    BU_LIST_INIT(&local_vlist);
+	    vbp = bn_vlblock_init(&local_vlist, 32);
+
+	    /* Clear any previous visual */
+	    if (db_lookup(gedp->ged_wdbp->dbip, "badedge_visualff", LOOKUP_QUIET) != RT_DIR_NULL)
+		dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, "badedge_visualff", 1, gedp->freesolid);
+
+	    for (curr_edge = 0; curr_edge < not_solid; curr_edge++) {
+		int p1 = edges[curr_edge*2];
+		int p2 = edges[curr_edge*2+1];
+		VSET(a, bot->vertices[p1*3], bot->vertices[p1*3+1], bot->vertices[p1*3+2]);
+		VSET(b, bot->vertices[p2*3], bot->vertices[p2*3+1], bot->vertices[p2*3+2]);
+		vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
+		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+	    }
+
+	    _ged_cvt_vlblock_to_solids(gedp, vbp, "badedge_visualff", 0);
+	    bn_vlist_cleanup(&local_vlist);
+	    bn_vlblock_free(vbp);
+	}
+	bu_free(edges, "free edge info array");
+	rt_db_free_internal(&intern);
+
+	return GED_OK;
+    }
 
     rt_db_free_internal(&intern);
     return GED_OK;
