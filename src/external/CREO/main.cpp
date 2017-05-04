@@ -182,7 +182,7 @@ output_parts(struct creo_conv_info *cinfo)
 	}
 
 	/* All set - process the part */
-	creo_log(cinfo, MSG_STATUS, "Processing part %d of %d (%s)\n", cnt++, cinfo->parts->size());
+	creo_log(cinfo, MSG_STATUS, "Processing part %d of %d\n", cnt++, cinfo->parts->size());
 	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
 }
@@ -228,7 +228,7 @@ output_assems(struct creo_conv_info *cinfo)
 	if (cinfo->empty->find(wname) != cinfo->empty->end()) continue;
 
 	/* All set - process the assembly */
-	creo_log(cinfo, MSG_STATUS, "Processing assembly %d of %d (%s)\n", cnt++, cinfo->assems->size());
+	creo_log(cinfo, MSG_STATUS, "Processing assembly %d of %d\n", cnt++, cinfo->assems->size());
 	output_assembly(cinfo, parent);
     }
 }
