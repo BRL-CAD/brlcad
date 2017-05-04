@@ -16,10 +16,37 @@ fi
 db="$1"
 sz="1024"
 pwd=`pwd`
-loop="loop"
-mged="mged"
-rtcheck="rtcheck"
-gqa="gqa"
+
+find_cmd() {
+    local cmd="$1"
+    local ocmd="$1"
+
+    # if not in path, try alternative
+    if ! which "$cmd" >/dev/null 2>&1; then
+	cmd="/usr/brlcad/bin/$cmd"
+    fi
+
+    # if still not found, report error
+    which "$cmd" >/dev/null 2>&1
+    ret=$?
+
+    if [ $ret -ne 0 ]; then
+	echo "Error: couldn't find \"$ocmd\" command." >&2
+    fi
+
+    echo "$cmd"
+    return "$ret"
+}
+
+for cmd in loop mged rtcheck gqa; do
+    find_cmd "$cmd" >/dev/null || exit 1
+done
+
+loop="$(find_cmd loop)"
+mged="$(find_cmd mged)"
+rtcheck="$(find_cmd rtcheck)"
+gqa="$(find_cmd gqa)"
+
 gqa_opts="-q -g1mm,1mm"
 
 echo ""
