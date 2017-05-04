@@ -135,7 +135,7 @@ make_legal( char *name )
 
     c = (unsigned char *)name;
     while ( *c ) {
-	if ( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' || *c == '-' ) {
+		if ( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' || *c == '-' || *c == '#' || *c == '+' || *c == '\\' || *c == '{' || *c == '}' || *c == '*' ) {
 	    *c = '_';
 	} else if ( *c > '~' ) {
 	    *c = '_';
@@ -245,10 +245,12 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, int flags)
 	    for (unsigned int j = 0; j < strlen(pdata.key); j++) non_alnum += !isalnum(pdata.key[j]);
 	    if (non_alnum) ProParameterVisit(&itm,  NULL, regex_key, (ProAppData)&pdata);
 	}
-	if (pdata.val) {
+	if (pdata.val && strlen(pdata.val) > 0) {
 	    /* Have key - we're done here */
 	    val = pdata.val;
 	    break;
+	} else {
+		pdata.val = NULL;
 	}
     }
     return val;
