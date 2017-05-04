@@ -20,6 +20,7 @@ pwd=`pwd`
 find_cmd() {
     local cmd="$1"
     local ocmd="$1"
+    local ret
 
     # if not in path, try alternative
     if ! which "$cmd" >/dev/null 2>&1; then
