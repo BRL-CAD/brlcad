@@ -183,7 +183,7 @@ output_parts(struct creo_conv_info *cinfo)
 
 	/* All set - process the part */
 	(void)ProWstringToString(name, wname);
-	creo_log(cinfo, MSG_STATUS, "Processing part %s (%d of %d)\n", name, cnt++, cinfo->assems->size());
+	creo_log(cinfo, MSG_STATUS, "Processing part %s (%d of %d)\n", name, cnt++, cinfo->parts->size());
 	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
 }
