@@ -147,7 +147,6 @@ extern "C" void
 collapse_underscores( struct bu_vls *name )
 {
 	struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
-	int pos = 0;
     unsigned char *c;
 
     c = (unsigned char *)bu_vls_addr(name);
