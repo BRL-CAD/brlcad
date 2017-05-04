@@ -137,7 +137,6 @@ output_parts(struct creo_conv_info *cinfo)
     int cnt = 0;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
 	wchar_t wname[CREO_NAME_MAX];
-	char name[CREO_NAME_MAX];
 	struct bu_vls *rname;
 	struct directory *rdp;
 	ProMdl m;
@@ -158,6 +157,7 @@ output_parts(struct creo_conv_info *cinfo)
 	    if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR && ProVerstampEqual(cstamp, gstamp) == PRO_B_TRUE) {
 		/* The .g object was created from the same version of the
 		 * object that exists currently in the CREO file - skip */
+		creo_log(cinfo, MSG_OK, "%s exists and is current - skipping\n", bu_vls_addr(rname));
 		continue;
 	    } else {
 		/* kill the existing object (region and child solid) - it's out of sync with CREO */
@@ -182,8 +182,7 @@ output_parts(struct creo_conv_info *cinfo)
 	}
 
 	/* All set - process the part */
-	(void)ProWstringToString(name, wname);
-	creo_log(cinfo, MSG_STATUS, "Processing part %s (%d of %d)\n", name, cnt++, cinfo->parts->size());
+	creo_log(cinfo, MSG_STATUS, "Processing part %d of %d (%s)\n", cnt++, cinfo->parts->size());
 	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
 }
@@ -195,14 +194,13 @@ output_assems(struct creo_conv_info *cinfo)
     int cnt = 0;
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
 	wchar_t wname[CREO_NAME_MAX];
-	char name[CREO_NAME_MAX];
 	struct bu_vls *aname;
 	struct directory *adp;
 	ProMdl parent;
 	ProWVerstamp cstamp, gstamp;
 	ProMdlnameInit(*d_it, PRO_MDLFILE_ASSEMBLY, &parent);
-	if (ProMdlNameGet(parent, wname) != PRO_TK_NO_ERROR) return;
-
+	if (ProMdlNameGet(parent, wname) != PRO_TK_NO_ERROR) continue;
+	
 	/* If the part a) exists in the .g file already and b) has the same CREO
 	 * version stamp as the part in the current CREO file, we don't need
 	 * to re-export it to the .g file */
@@ -216,6 +214,7 @@ output_assems(struct creo_conv_info *cinfo)
 	    if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR && ProVerstampEqual(cstamp, gstamp) == PRO_B_TRUE) {
 		/* The .g object was created from the same version of the
 		 * object that exists currently in the CREO file - skip */
+		creo_log(cinfo, MSG_OK, "%s exists and is current - skipping\n", bu_vls_addr(aname));
 		continue;
 	    } else {
 		/* kill the existing object - it's out of sync with CREO */
@@ -224,10 +223,12 @@ output_assems(struct creo_conv_info *cinfo)
 		db_update_nref(cinfo->wdbp->dbip, &rt_uniresource);
 	    }
 	}
+	
+	/* Skip if we've determined this one is empty */
+	if (cinfo->empty->find(wname) != cinfo->empty->end()) continue;
 
 	/* All set - process the assembly */
-	(void)ProWstringToString(name, wname);
-	creo_log(cinfo, MSG_STATUS, "Processing assembly %s (%d of %d)\n", name, cnt++, cinfo->assems->size());
+	creo_log(cinfo, MSG_STATUS, "Processing assembly %d of %d (%s)\n", cnt++, cinfo->assems->size());
 	output_assembly(cinfo, parent);
     }
 }

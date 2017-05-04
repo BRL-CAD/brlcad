@@ -134,13 +134,41 @@ make_legal( char *name )
 
     c = (unsigned char *)name;
     while ( *c ) {
-		if ( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' || *c == '-' || *c == '#' || *c == '+' || *c == '\\' || *c == '{' || *c == '}' || *c == '*' || *c == ',' || *c == '(' || *c == ')' ) {
-	    *c = '_';
-	} else if ( *c > '~' ) {
-	    *c = '_';
-	}
-	c++;
+		int replace = 1;
+		if (isalnum(*c)) replace = 0;
+		if (*c == '.') replace = 0;
+		if (replace) *c = '_';
+		c++;
     }
+}
+
+extern "C" void
+collapse_underscores( struct bu_vls *name )
+{
+	struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+	int pos = 0;
+    unsigned char *c;
+
+    c = (unsigned char *)bu_vls_addr(name);
+
+	/* Don't copy leading underscores */
+	while (*c == '_') c++;
+
+	/* Don't copy two underscores in a row, and don't copy an underscore at the end of the string */
+    while ( *c ) {
+		unsigned char *curr = c;
+		c++;
+		if (!(*curr == '_' && *c == '_') && !(*curr == '_' && !*c)) {
+			bu_vls_putc(&tmpstr, *curr);
+		}
+    }
+
+	/* Only replace if we have something left - otherwise,
+	   leave original unchanged */
+	if (bu_vls_strlen(&tmpstr) > 0) {
+		bu_vls_sprintf(name, "%s", bu_vls_addr(&tmpstr));
+	}
+	bu_vls_free(&tmpstr);
 }
 
 struct pparam_data {
@@ -343,6 +371,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     /* scrub */
     lower_case(bu_vls_addr(&gname_root));
     make_legal(bu_vls_addr(&gname_root));
+	collapse_underscores(&gname_root);
     bu_vls_sprintf(gname, "%s", bu_vls_addr(&gname_root));
 
 	/* if we don't have something by now, go with unknown */
