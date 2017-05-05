@@ -293,20 +293,47 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
 	double *w_array = NULL;
 	ProVector *cntl_pnts;
 	int ucnt, vcnt, ccnt;
-	ProBsplinesrfdataGet(&s_shape, degree, &up_array, &vp_array, &w_array, &cntl_pnts, &ucnt, &vcnt, &ccnt); 
+	if (ProBsplinesrfdataGet(&s_shape, degree, &up_array, &vp_array, &w_array, &cntl_pnts, &ucnt, &vcnt, &ccnt) == PRO_TK_NO_ERROR) {
 	int ucvmax = ucnt - degree[0] - 2;
 	int vcvmax = vcnt - degree[1] - 2;
 
-	ON_NurbsSurface *ns = ON_NurbsSurface::New();
-	ns->m_dim = (degree[0] > degree[1]) ? degree[0] : degree[1];
-	ns->m_order[0] = degree[0] + 1;
-	ns->m_order[1] = degree[1] + 1;
-	ns->m_knot[0] = up_array;
-	ns->m_knot[1] = vp_array;
-	ns->m_is_rat = (w_array) ? 1 : 0;
+	ON_NurbsSurface *ns = ON_NurbsSurface::New(3, (w_array) ? 1 : 0, degree[0]+1, degree[1]+1, ucvmax+1, vcvmax+1);
+
+	// knot index (>= 0 and < Order + CV_count - 2)
+    // generate u-knots
+    int n = ucvmax+1;
+    int p = degree[0];
+    int m = n + p - 1;
+    for (int i = 0; i < p; i++) {
+	ns->SetKnot(0, i, 0.0);
+    }
+    for (int j = 1; j < n - p; j++) {
+	double x = (double)j / (double)(n - p);
+	int knot_index = j + p - 1;
+	ns->SetKnot(0, knot_index, x);
+    }
+    for (int i = m - p; i < m; i++) {
+	ns->SetKnot(0, i, 1.0);
+    }
+    // generate v-knots
+    n = vcvmax+1;
+    p = degree[1];
+    m = n + p - 1;
+    for (int i = 0; i < p; i++) {
+	ns->SetKnot(1, i, 0.0);
+    }
+    for (int j = 1; j < n - p; j++) {
+	double x = (double)j / (double)(n - p);
+	int knot_index = j + p - 1;
+	ns->SetKnot(1, knot_index, x);
+    }
+    for (int i = m - p; i < m; i++) {
+	ns->SetKnot(1, i, 1.0);
+    }
+
 	if (ns->m_is_rat) {
-	    for (int i = 0; i < ucvmax; i++) {
-		for (int j = 0; j < vcvmax; j++) {
+	    for (int i = 0; i <= ucvmax; i++) {
+		for (int j = 0; j <= vcvmax; j++) {
 		    ON_4dPoint cv;
 		    cv[0] = cntl_pnts[i*j+j][0];
 		    cv[1] = cntl_pnts[i*j+j][1];
@@ -316,8 +343,8 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
 		}
 	    }
 	} else {
-	    for (int i = 0; i < ucvmax; i++) {
-		for (int j = 0; j < vcvmax; j++) {
+	    for (int i = 0; i <= ucvmax; i++) {
+		for (int j = 0; j <= vcvmax; j++) {
 		    ON_3dPoint cv;
 		    cv[0] = cntl_pnts[i*j+j][0];
 		    cv[1] = cntl_pnts[i*j+j][1];
@@ -328,19 +355,20 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
 	}
 	nbrep->AddSurface(ns);
     }
+	}
     return PRO_TK_NO_ERROR;
 }
 #endif
 
 extern "C" ProError
-opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname, int UNUSED(have_bbox))
+opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname)
 {
     ProError ret = PRO_TK_NO_ERROR;
-    //ProSolid psol = ProMdlToSolid(model);
+    ProSolid psol = ProMdlToSolid(model);
     ON_Brep *nbrep = ON_Brep::New();
     wchar_t wname[CREO_NAME_MAX];
     ProMdlMdlnameGet(model, wname);
-    //ProSolidSurfaceVisit(psol, surface_process, surface_filter, (ProAppData)nbrep);
+    ProSolidSurfaceVisit(psol, surface_process, surface_filter, (ProAppData)nbrep);
     /* Output the solid */
     *sname = get_brlcad_name(cinfo, wname, "brep", N_SOLID);
     mk_brep(cinfo->wdbp, bu_vls_addr(*sname), nbrep);
@@ -630,7 +658,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     if (ProSolidOutlineGet(ProMdlToSolid(model), bboxpnts) != PRO_TK_NO_ERROR) have_bbox = 0;
 
     /* TODO - support an option to convert to ON_Brep */
-    //status = opennurbs_part(cinfo, model, &sname, have_bbox);
+    //status = opennurbs_part(cinfo, model, &sname);
 
     /* Tessellate */
     status = tessellate_part(cinfo, model, &sname);
