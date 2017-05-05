@@ -270,6 +270,37 @@ unsuppress_features(struct part_conv_info *pinfo)
 }
 
 #if 0
+
+/* TODO - will probably need maps from CREO data items to ON data items here... */
+struct brep_data {
+    ON_Brep *brep;
+    ProSurface s;
+};
+
+
+extern "C" ProError
+edge_filter(ProEdge e, ProAppData app_data) {
+    return PRO_TK_NO_ERROR;
+}
+
+extern "C" ProError
+edge_process(ProEdge e, ProError status, ProAppData app_data) {
+	return PRO_TK_NO_ERROR;
+}
+
+extern "C" ProError
+contour_filter(ProContour c, ProAppData app_data) {
+    return PRO_TK_NO_ERROR;
+}
+
+extern "C" ProError
+contour_process(ProContour c, ProError UNUSED(status), ProAppData app_data) {
+	struct brep_data *bdata = (struct brep_data *)app_data;
+	ProSurface s = bdata->s;
+	ProContourEdgeVisit(s, c, edge_process, edge_filter, app_data);
+	return PRO_TK_NO_ERROR;
+}
+
 extern "C" ProError
 surface_filter(ProSurface s, ProAppData app_data) {
     return PRO_TK_NO_ERROR;
@@ -283,7 +314,8 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
     ProUvParam uvmin, uvmax;
     ProSurfaceOrient s_orient;
     ProSurfaceshapedata s_shape;
-    ON_Brep *nbrep = (ON_Brep *)app_data;
+    struct brep_data *bdata = (struct brep_data *)app_data;
+    ON_Brep *nbrep = bdata->brep;
     ProSurfaceToNURBS(s, &ndata);
     ProSurfacedataGet(ndata, &s_type, uvmin, uvmax, &s_orient, &s_shape, &s_id);
     if (s_type == PRO_SRF_B_SPL) {
@@ -294,81 +326,89 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
 	ProVector *cntl_pnts;
 	int ucnt, vcnt, ccnt;
 	if (ProBsplinesrfdataGet(&s_shape, degree, &up_array, &vp_array, &w_array, &cntl_pnts, &ucnt, &vcnt, &ccnt) == PRO_TK_NO_ERROR) {
-	int ucvmax = ucnt - degree[0] - 2;
-	int vcvmax = vcnt - degree[1] - 2;
+	    int ucvmax = ucnt - degree[0] - 2;
+	    int vcvmax = vcnt - degree[1] - 2;
 
-	ON_NurbsSurface *ns = ON_NurbsSurface::New(3, (w_array) ? 1 : 0, degree[0]+1, degree[1]+1, ucvmax+1, vcvmax+1);
+	    ON_NurbsSurface *ns = ON_NurbsSurface::New(3, (w_array) ? 1 : 0, degree[0]+1, degree[1]+1, ucvmax+1, vcvmax+1);
 
-	// knot index (>= 0 and < Order + CV_count - 2)
-    // generate u-knots
-    int n = ucvmax+1;
-    int p = degree[0];
-    int m = n + p - 1;
-    for (int i = 0; i < p; i++) {
-	ns->SetKnot(0, i, 0.0);
-    }
-    for (int j = 1; j < n - p; j++) {
-	double x = (double)j / (double)(n - p);
-	int knot_index = j + p - 1;
-	ns->SetKnot(0, knot_index, x);
-    }
-    for (int i = m - p; i < m; i++) {
-	ns->SetKnot(0, i, 1.0);
-    }
-    // generate v-knots
-    n = vcvmax+1;
-    p = degree[1];
-    m = n + p - 1;
-    for (int i = 0; i < p; i++) {
-	ns->SetKnot(1, i, 0.0);
-    }
-    for (int j = 1; j < n - p; j++) {
-	double x = (double)j / (double)(n - p);
-	int knot_index = j + p - 1;
-	ns->SetKnot(1, knot_index, x);
-    }
-    for (int i = m - p; i < m; i++) {
-	ns->SetKnot(1, i, 1.0);
-    }
+	    // knot index (>= 0 and < Order + CV_count - 2)
+	    // generate u-knots
+	    int n = ucvmax+1;
+	    int p = degree[0];
+	    int m = n + p - 1;
+	    for (int i = 0; i < p; i++) {
+		ns->SetKnot(0, i, 0.0);
+	    }
+	    for (int j = 1; j < n - p; j++) {
+		double x = (double)j / (double)(n - p);
+		int knot_index = j + p - 1;
+		ns->SetKnot(0, knot_index, x);
+	    }
+	    for (int i = m - p; i < m; i++) {
+		ns->SetKnot(0, i, 1.0);
+	    }
+	    // generate v-knots
+	    n = vcvmax+1;
+	    p = degree[1];
+	    m = n + p - 1;
+	    for (int i = 0; i < p; i++) {
+		ns->SetKnot(1, i, 0.0);
+	    }
+	    for (int j = 1; j < n - p; j++) {
+		double x = (double)j / (double)(n - p);
+		int knot_index = j + p - 1;
+		ns->SetKnot(1, knot_index, x);
+	    }
+	    for (int i = m - p; i < m; i++) {
+		ns->SetKnot(1, i, 1.0);
+	    }
 
-	if (ns->m_is_rat) {
-	    for (int i = 0; i <= ucvmax; i++) {
-		for (int j = 0; j <= vcvmax; j++) {
-		    ON_4dPoint cv;
-		    cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
-		    cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
-		    cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
-		    cv[3] = w_array[i];
-		    ns->SetCV(i,j,cv);
+	    if (ns->m_is_rat) {
+		for (int i = 0; i <= ucvmax; i++) {
+		    for (int j = 0; j <= vcvmax; j++) {
+			ON_4dPoint cv;
+			cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
+			cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
+			cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
+			cv[3] = w_array[i];
+			ns->SetCV(i,j,cv);
+		    }
+		}
+	    } else {
+		for (int i = 0; i <= ucvmax; i++) {
+		    for (int j = 0; j <= vcvmax; j++) {
+			ON_3dPoint cv;
+			cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
+			cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
+			cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
+			ns->SetCV(i,j,cv);
+		    }
 		}
 	    }
-	} else {
-	    for (int i = 0; i <= ucvmax; i++) {
-		for (int j = 0; j <= vcvmax; j++) {
-		    ON_3dPoint cv;
-		    cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
-		    cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
-		    cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
-		    ns->SetCV(i,j,cv);
-		}
-	    }
+	    nbrep->AddSurface(ns);
 	}
-	nbrep->AddSurface(ns);
+
+	ProSurfaceContourVisit(s, contour_process, contour_filter, app_data);
     }
-	}
+
     return PRO_TK_NO_ERROR;
 }
-#endif
+
+
+
 
 extern "C" ProError
 opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname)
 {
     ProError ret = PRO_TK_NO_ERROR;
-    //ProSolid psol = ProMdlToSolid(model);
+    ProSolid psol = ProMdlToSolid(model);
     ON_Brep *nbrep = ON_Brep::New();
+    struct brep_data bdata;
+    bdata.brep = nbrep;
     wchar_t wname[CREO_NAME_MAX];
     ProMdlMdlnameGet(model, wname);
-    //ProSolidSurfaceVisit(psol, surface_process, surface_filter, (ProAppData)nbrep);
+    ProSolidSurfaceVisit(psol, surface_process, surface_filter, (ProAppData)&bdata);
+
     /* Output the solid */
     *sname = get_brlcad_name(cinfo, wname, "brep", N_SOLID);
     mk_brep(cinfo->wdbp, bu_vls_addr(*sname), nbrep);
@@ -394,7 +434,7 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
      */
     return ret;
 }
-
+#endif
 
 extern "C" ProError
 tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname)
@@ -504,7 +544,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	}
 
 	/* Check solidity */
-	int bot_is_solid = !bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0],NULL);
+	int bot_is_solid = !bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL);
 
 	/* If it's not solid and we're testing solidity, keep trying... */
 	if (!bot_is_solid) {
