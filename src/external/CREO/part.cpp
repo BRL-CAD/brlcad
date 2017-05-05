@@ -273,6 +273,11 @@ unsuppress_features(struct part_conv_info *pinfo)
 struct brep_data {
     ON_Brep *brep;
     ProSurface s;
+    int curr_loop_id;
+    std::map<int,int> *cs_to_onf;
+    std::map<int,int> *ce_to_one;
+    std::map<int,int> *cc3d_to_on3dc;
+    std::map<int,int> *cc2d_to_on2dc;
 };
 
 
@@ -281,17 +286,23 @@ edge_filter(ProEdge UNUSED(e), ProAppData UNUSED(app_data)) {
     return PRO_TK_NO_ERROR;
 }
 
+// ProEdge appears to correspond to the ON_BrepEdge.
 extern "C" ProError
-edge_process(ProEdge UNUSED(e), ProError UNUSED(status), ProAppData UNUSED(app_data)) {
-	// ProEdge appears to correspond to the ON Edge.  pro_edge_data 
-	// has edge directions, information about joined surface ids,
-	// a 3d curve, and the two uv curves.
+edge_process(ProEdge UNUSED(e), ProError UNUSED(status), ProAppData app_data) {
+    int current_surf_id;
+    struct brep_data *bdata = (struct brep_data *)app_data;
+    ProSurface s = bdata->s;
+    ProSurfaceIdGet(s, &current_surf_id);
+    //ON_BrepLoop &nl = bdata->brep->m_L[bdata->curr_loop_id];
 
-	// it looks like the general scheme will be to interate over
-	// the surfaces, then iterate over the surface contours, and
-	// for each surface contour iterate over its edges, building up
-	// and tracking converted data for all of the various types.
-	return PRO_TK_NO_ERROR;
+    // TODO - there appears to be no way to get at ProEdgedata from an
+    // existing edge???  If that's the case, and we're limited to
+    // the ProEdgeToNURBS() capability, then we may have to use the
+    // step-g routines for creating our own trimming curves (arrgh!)
+    //ProGeomitemdata *edata;
+    //ProEdgeDataGet(e, &edata);
+
+    return PRO_TK_NO_ERROR;
 }
 
 extern "C" ProError
@@ -299,19 +310,26 @@ contour_filter(ProContour UNUSED(c), ProAppData UNUSED(app_data)) {
     return PRO_TK_NO_ERROR;
 }
 
+// Contours appear to correspond to Loops in OpenNURBS.
 extern "C" ProError
 contour_process(ProContour c, ProError UNUSED(status), ProAppData app_data) {
-	struct brep_data *bdata = (struct brep_data *)app_data;
-	ProSurface s = bdata->s;
-	ProContourEdgeVisit(s, c, edge_process, edge_filter, app_data);
+    struct brep_data *bdata = (struct brep_data *)app_data;
+    int creo_id = -1;
+    int f_id = -1;
+    ProSurface s = bdata->s;
+    ProSurfaceIdGet(s, &creo_id);
+    if (bdata->cs_to_onf->find(creo_id) != bdata->cs_to_onf->end()) f_id = bdata->cs_to_onf->find(creo_id)->second;
+    if (f_id == -1) return PRO_TK_GENERAL_ERROR;
+    ON_BrepLoop &nl = bdata->brep->NewLoop(ON_BrepLoop::outer, bdata->brep->m_F[f_id]);
+    bdata->curr_loop_id = nl.m_loop_index;
+    // Does ProContourTraversal indicate inner vs outer loop?
+    ProContourTraversal tv;
+    ProContourTraversalGet(c, &tv);
+    if (tv == PRO_CONTOUR_TRAV_INTERNAL) nl.m_type = ON_BrepLoop::inner;
 
-	// Contours appear to correspond to Loops on ON.  ProContourTraversal may
-	// indicate inner or outer loop, if not ProContainingContourFind should be
-	// able to determine which loop is the outer one.  ON does not support nested
-	// "trimming of trimming loops" to create positive area, so we might need to
-	// detect that situation if CREO allows it...
+    ProContourEdgeVisit(s, c, edge_process, edge_filter, app_data);
 
-	return PRO_TK_NO_ERROR;
+    return PRO_TK_NO_ERROR;
 }
 
 extern "C" ProError
@@ -321,7 +339,7 @@ surface_filter(ProSurface UNUSED(s), ProAppData UNUSED(app_data)) {
 
 extern "C" ProError
 surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
-    int s_id;
+    int c_id;
     ProSurfacedata *ndata;
     ProSrftype s_type;
     ProUvParam uvmin = {DBL_MAX,DBL_MAX};
@@ -330,82 +348,86 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
     ProSurfaceshapedata s_shape;
     struct brep_data *bdata = (struct brep_data *)app_data;
     ON_Brep *nbrep = bdata->brep;
-    ProSurfaceToNURBS(s, &ndata);
-    ProSurfacedataGet(ndata, &s_type, uvmin, uvmax, &s_orient, &s_shape, &s_id);
-    if (s_type == PRO_SRF_B_SPL) {
-	int degree[2];
-	double *up_array = NULL;
-	double *vp_array = NULL;
-	double *w_array = NULL;
-	ProVector *cntl_pnts;
-	int ucnt, vcnt, ccnt;
-	if (ProBsplinesrfdataGet(&s_shape, degree, &up_array, &vp_array, &w_array, &cntl_pnts, &ucnt, &vcnt, &ccnt) == PRO_TK_NO_ERROR) {
-	    int ucvmax = ucnt - degree[0] - 2;
-	    int vcvmax = vcnt - degree[1] - 2;
+    ProSurfaceIdGet(s, &c_id);
+    if (bdata->cs_to_onf->find(c_id) == bdata->cs_to_onf->end()) {
+	int s_id;
+	ProSurfaceToNURBS(s, &ndata);
+	ProSurfacedataGet(ndata, &s_type, uvmin, uvmax, &s_orient, &s_shape, &s_id);
+	if (s_type == PRO_SRF_B_SPL) {
+	    int degree[2];
+	    double *up_array = NULL;
+	    double *vp_array = NULL;
+	    double *w_array = NULL;
+	    ProVector *cntl_pnts;
+	    int ucnt, vcnt, ccnt;
+	    if (ProBsplinesrfdataGet(&s_shape, degree, &up_array, &vp_array, &w_array, &cntl_pnts, &ucnt, &vcnt, &ccnt) == PRO_TK_NO_ERROR) {
+		int ucvmax = ucnt - degree[0] - 2;
+		int vcvmax = vcnt - degree[1] - 2;
 
-	    ON_NurbsSurface *ns = ON_NurbsSurface::New(3, (w_array) ? 1 : 0, degree[0]+1, degree[1]+1, ucvmax+1, vcvmax+1);
+		ON_NurbsSurface *ns = ON_NurbsSurface::New(3, (w_array) ? 1 : 0, degree[0]+1, degree[1]+1, ucvmax+1, vcvmax+1);
 
-	    // knot index (>= 0 and < Order + CV_count - 2)
-	    // generate u-knots
-	    int n = ucvmax+1;
-	    int p = degree[0];
-	    int m = n + p - 1;
-	    for (int i = 0; i < p; i++) {
-		ns->SetKnot(0, i, 0.0);
-	    }
-	    for (int j = 1; j < n - p; j++) {
-		double x = (double)j / (double)(n - p);
-		int knot_index = j + p - 1;
-		ns->SetKnot(0, knot_index, x);
-	    }
-	    for (int i = m - p; i < m; i++) {
-		ns->SetKnot(0, i, 1.0);
-	    }
-	    // generate v-knots
-	    n = vcvmax+1;
-	    p = degree[1];
-	    m = n + p - 1;
-	    for (int i = 0; i < p; i++) {
-		ns->SetKnot(1, i, 0.0);
-	    }
-	    for (int j = 1; j < n - p; j++) {
-		double x = (double)j / (double)(n - p);
-		int knot_index = j + p - 1;
-		ns->SetKnot(1, knot_index, x);
-	    }
-	    for (int i = m - p; i < m; i++) {
-		ns->SetKnot(1, i, 1.0);
-	    }
+		// knot index (>= 0 and < Order + CV_count - 2)
+		// generate u-knots
+		int n = ucvmax+1;
+		int p = degree[0];
+		int m = n + p - 1;
+		for (int i = 0; i < p; i++) {
+		    ns->SetKnot(0, i, 0.0);
+		}
+		for (int j = 1; j < n - p; j++) {
+		    double x = (double)j / (double)(n - p);
+		    int knot_index = j + p - 1;
+		    ns->SetKnot(0, knot_index, x);
+		}
+		for (int i = m - p; i < m; i++) {
+		    ns->SetKnot(0, i, 1.0);
+		}
+		// generate v-knots
+		n = vcvmax+1;
+		p = degree[1];
+		m = n + p - 1;
+		for (int i = 0; i < p; i++) {
+		    ns->SetKnot(1, i, 0.0);
+		}
+		for (int j = 1; j < n - p; j++) {
+		    double x = (double)j / (double)(n - p);
+		    int knot_index = j + p - 1;
+		    ns->SetKnot(1, knot_index, x);
+		}
+		for (int i = m - p; i < m; i++) {
+		    ns->SetKnot(1, i, 1.0);
+		}
 
-	    if (ns->m_is_rat) {
-		for (int i = 0; i <= ucvmax; i++) {
-		    for (int j = 0; j <= vcvmax; j++) {
-			ON_4dPoint cv;
-			cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
-			cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
-			cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
-			cv[3] = w_array[i];
-			ns->SetCV(i,j,cv);
+		if (ns->m_is_rat) {
+		    for (int i = 0; i <= ucvmax; i++) {
+			for (int j = 0; j <= vcvmax; j++) {
+			    ON_4dPoint cv;
+			    cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
+			    cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
+			    cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
+			    cv[3] = w_array[i];
+			    ns->SetCV(i,j,cv);
+			}
+		    }
+		} else {
+		    for (int i = 0; i <= ucvmax; i++) {
+			for (int j = 0; j <= vcvmax; j++) {
+			    ON_3dPoint cv;
+			    cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
+			    cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
+			    cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
+			    ns->SetCV(i,j,cv);
+			}
 		    }
 		}
-	    } else {
-		for (int i = 0; i <= ucvmax; i++) {
-		    for (int j = 0; j <= vcvmax; j++) {
-			ON_3dPoint cv;
-			cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
-			cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
-			cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
-			ns->SetCV(i,j,cv);
-		    }
-		}
+		int n_id = nbrep->AddSurface(ns);
+		ON_BrepFace &nface = nbrep->NewFace(n_id);
+		(*bdata->cs_to_onf)[c_id] = nface.m_face_index;
+		if (s_orient == PRO_SURF_ORIENT_IN) nbrep->FlipFace(nface);
 	    }
-	    nbrep->AddSurface(ns);
-		int creo_id;
-		ProSurfaceIdGet(s, &creo_id);
-	    // TODO - map the ProSurfaceIdGet id from CREO to the ON surface number in a std::map - this will be critical for reproducing data connectivity.
+
+	    ProSurfaceContourVisit(s, contour_process, contour_filter, app_data);
 	}
-
-	ProSurfaceContourVisit(s, contour_process, contour_filter, app_data);
     }
 
     return PRO_TK_NO_ERROR;
@@ -420,6 +442,11 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
     ON_Brep *nbrep = ON_Brep::New();
     struct brep_data bdata;
     bdata.brep = nbrep;
+    bdata.cs_to_onf = new std::map<int,int>;
+    bdata.ce_to_one = new std::map<int,int>;
+    bdata.cc3d_to_on3dc = new std::map<int,int>;
+    bdata.cc2d_to_on2dc = new std::map<int,int>;
+
     wchar_t wname[CREO_NAME_MAX];
     ProMdlMdlnameGet(model, wname);
     ProSolidSurfaceVisit(psol, surface_process, surface_filter, (ProAppData)&bdata);
@@ -447,6 +474,12 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
      * ProEdgeToNURBS()
      * ProCurveToNURBS()
      */
+
+    delete bdata.cs_to_onf;
+    delete bdata.ce_to_one;
+    delete bdata.cc3d_to_on3dc;
+    delete bdata.cc2d_to_on2dc;
+
     return ret;
 }
 

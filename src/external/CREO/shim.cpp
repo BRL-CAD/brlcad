@@ -78,6 +78,7 @@ extern "C" int ProWindowRefresh(int) {return 0;}
 extern "C" int ProWstringFree(wchar_t*) {return 0;}
 extern "C" void ProAssemblyUnexplode(void*) {}
 extern "C" void ProContourEdgeVisit(void*,void*,int(*)(void*,int,void*),int(*)(void*,void*),void*) {}
+extern "C" void ProContourTraversalGet(void*,int*) {}
 extern "C" void ProMdlMdlNameGet(void*,int*,wchar_t*) {}
 extern "C" void ProMdlMdlnameGet(void*,wchar_t*) {}
 extern "C" void ProMdlPrincipalunitsystemGet(void*,void**) {}
