@@ -285,6 +285,14 @@ edge_filter(ProEdge e, ProAppData app_data) {
 
 extern "C" ProError
 edge_process(ProEdge e, ProError status, ProAppData app_data) {
+	// ProEdge appears to correspond to the ON Edge.  pro_edge_data 
+	// has edge directions, information about joined surface ids,
+	// a 3d curve, and the two uv curves.
+
+	// it looks like the general scheme will be to interate over
+	// the surfaces, then iterate over the surface contours, and
+	// for each surface contour iterate over its edges, building up
+	// and tracking converted data for all of the various types.
 	return PRO_TK_NO_ERROR;
 }
 
@@ -298,6 +306,13 @@ contour_process(ProContour c, ProError UNUSED(status), ProAppData app_data) {
 	struct brep_data *bdata = (struct brep_data *)app_data;
 	ProSurface s = bdata->s;
 	ProContourEdgeVisit(s, c, edge_process, edge_filter, app_data);
+
+	// Contours appear to correspond to Loops on ON.  ProContourTraversal may
+	// indicate inner or outer loop, if not ProContainingContourFind should be
+	// able to determine which loop is the outer one.  ON does not support nested
+	// "trimming of trimming loops" to create positive area, so we might need to
+	// detect that situation if CREO allows it...
+
 	return PRO_TK_NO_ERROR;
 }
 
@@ -386,6 +401,9 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
 		}
 	    }
 	    nbrep->AddSurface(ns);
+		int creo_id;
+		ProSurfaceIdGet(s, &creo_id);
+	    // TODO - map the ProSurfaceIdGet id from CREO to the ON surface number in a std::map - this will be critical for reproducing data connectivity.
 	}
 
 	ProSurfaceContourVisit(s, contour_process, contour_filter, app_data);
