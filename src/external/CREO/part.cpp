@@ -335,9 +335,9 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
 	    for (int i = 0; i <= ucvmax; i++) {
 		for (int j = 0; j <= vcvmax; j++) {
 		    ON_4dPoint cv;
-		    cv[0] = cntl_pnts[i*j+j][0];
-		    cv[1] = cntl_pnts[i*j+j][1];
-		    cv[2] = cntl_pnts[i*j+j][2];
+		    cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
+		    cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
+		    cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
 		    cv[3] = w_array[i];
 		    ns->SetCV(i,j,cv);
 		}
@@ -346,9 +346,9 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
 	    for (int i = 0; i <= ucvmax; i++) {
 		for (int j = 0; j <= vcvmax; j++) {
 		    ON_3dPoint cv;
-		    cv[0] = cntl_pnts[i*j+j][0];
-		    cv[1] = cntl_pnts[i*j+j][1];
-		    cv[2] = cntl_pnts[i*j+j][2];
+		    cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
+		    cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
+		    cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
 		    ns->SetCV(i,j,cv);
 		}
 	    }
@@ -364,11 +364,11 @@ extern "C" ProError
 opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname)
 {
     ProError ret = PRO_TK_NO_ERROR;
-    ProSolid psol = ProMdlToSolid(model);
+    //ProSolid psol = ProMdlToSolid(model);
     ON_Brep *nbrep = ON_Brep::New();
     wchar_t wname[CREO_NAME_MAX];
     ProMdlMdlnameGet(model, wname);
-    ProSolidSurfaceVisit(psol, surface_process, surface_filter, (ProAppData)nbrep);
+    //ProSolidSurfaceVisit(psol, surface_process, surface_filter, (ProAppData)nbrep);
     /* Output the solid */
     *sname = get_brlcad_name(cinfo, wname, "brep", N_SOLID);
     mk_brep(cinfo->wdbp, bu_vls_addr(*sname), nbrep);
@@ -504,7 +504,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	}
 
 	/* Check solidity */
-	int bot_is_solid = !bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL);
+	int bot_is_solid = !bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0],NULL);
 
 	/* If it's not solid and we're testing solidity, keep trying... */
 	if (!bot_is_solid) {
