@@ -70,17 +70,18 @@
 #define PRO_MDL_ASSEMBLY			62
 #define PRO_MDL_PART				63
 #define PRO_PARAM_STRING			64
-#define PRO_TK_BAD_CONTEXT			65
-#define PRO_TK_BAD_INPUTS			66
-#define PRO_TK_CONTINUE				67
-#define PRO_TK_GENERAL_ERROR			68
-#define PRO_TK_NO_ERROR				69
-#define PRO_TK_NOT_EXIST			70
-#define PRO_TK_SUPP_PARENTS			71
-#define PRO_UI_MESSAGE_OK			72
-#define PRO_UNITTYPE_LENGTH			73
-#define PRO_VALUE_UNUSED			74
-#define uiProe2ndImmediate                      75
+#define PRO_SRF_B_SPL				65
+#define PRO_TK_BAD_CONTEXT			66
+#define PRO_TK_BAD_INPUTS			67
+#define PRO_TK_CONTINUE				68
+#define PRO_TK_GENERAL_ERROR			69
+#define PRO_TK_NO_ERROR				70
+#define PRO_TK_NOT_EXIST			71
+#define PRO_TK_SUPP_PARENTS			72
+#define PRO_UI_MESSAGE_OK			73
+#define PRO_UNITTYPE_LENGTH			74
+#define PRO_VALUE_UNUSED			75
+#define uiProe2ndImmediate                      76
 
 typedef bool ProBool;
 typedef bool ProBoolean;
@@ -95,6 +96,8 @@ typedef int ProFeatureResumeOptions;
 typedef int ProMdlType;
 typedef int ProParamvalueType;
 typedef int ProParamvalueValue;
+typedef int ProSrftype;
+typedef int ProSurfaceOrient;
 typedef int ProType;
 typedef int ProUIMessageButton;
 typedef int uiCmdAccessMode;
@@ -105,8 +108,10 @@ typedef void* ProAppData;
 typedef void* ProArray;
 typedef void* ProAsmcomppath;
 typedef void* ProAssembly;
+typedef void* ProContour;
 typedef void* ProCurvedata;
 typedef void* ProDimension;
+typedef void* ProEdge;
 typedef void* ProElement;
 typedef void* ProElempath;
 typedef void* ProGeomitem;
@@ -116,6 +121,9 @@ typedef void* ProModelitem;
 typedef void* ProParamvalue;
 typedef void* ProPart;
 typedef void* ProSolid;
+typedef void* ProSurface;
+typedef void* ProSurfacedata;
+typedef void* ProSurfaceshapedata;
 typedef void* ProUnititem;
 typedef void* ProUnitsystem;
 typedef void* ProValue;
@@ -126,6 +134,8 @@ typedef wchar_t ProLine[1];
 /* Definitions where we need to provide internal structure
  * (because our code is accessing it) */
 typedef double Pro3dPnt[3];
+typedef double ProVector[3];
+typedef double ProUvParam[2];
 typedef double ProMatrix[4][4];
 typedef int ProIdTable[2];
 typedef int __internal_facetset[3];
@@ -153,6 +163,7 @@ extern "C" int ProAsmcompMdlNameGet(ProFeature*,int*,wchar_t*);
 extern "C" int ProAsmcomppathInit(void*,ProIdTable,int,void**);
 extern "C" int ProAsmcomppathTrfGet(void**,bool,ProMatrix);
 extern "C" int ProAssemblyIsExploded(void*,bool*);
+extern "C" int ProBsplinesrfdataGet(void**,int[2],double**,double**,double**,ProVector**,int*,int*,int*);
 extern "C" int ProCmdActionAdd(const char*,int(*)(int,int*,void*),int,int(*)(int),bool,bool,int*);
 extern "C" int ProDimensionTypeGet(void**,int*);
 extern "C" int ProDimensionValueGet(void**,double *);
@@ -213,12 +224,18 @@ extern "C" int ProWcharSizeVerify(size_t,int*);
 extern "C" int ProWindowRefresh(int);
 extern "C" int ProWstringFree(wchar_t*);
 extern "C" void ProAssemblyUnexplode(void*);
+extern "C" void ProContourEdgeVisit(void*,void*,int(*)(void*,int,void*),int(*)(void*,void*),void*);
 extern "C" void ProMdlMdlnameGet(void*,wchar_t*);
 extern "C" void ProMdlPrincipalunitsystemGet(void*,void**);
 extern "C" void ProMessageClear();
 extern "C" void ProMdlIsSkeleton(void*, bool*);
 extern "C" void ProPartTessellationFree(ProSurfaceTessellationData**);
+extern "C" void ProSolidSurfaceVisit(void*,int(*)(void*,int,void*),int(*)(void*,void*),void*);
 extern "C" void ProStringToWstring(wchar_t*,const char*);
+extern "C" void ProSurfaceContourVisit(void*,int(*)(void*,int,void*),int(*)(void*,void*), void*);
+extern "C" void ProSurfacedataGet(void*,int*,double*,double*,int*,void**,int*);
+extern "C" void ProSurfaceIdGet(void*,int*);
+extern "C" void ProSurfaceToNURBS(void*,void***);
 extern "C" void ProUIInputpanelMaxlenSet(const char*,const char*,int);
 extern "C" void ProUIMessageDialogDisplay(int,const wchar_t *,const wchar_t *,ProUIMessageButton*,int,ProUIMessageButton*);
 extern "C" void ProUnitConversionGet(void**,ProUnitConversion*,void**);

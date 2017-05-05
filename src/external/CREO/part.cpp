@@ -269,8 +269,6 @@ unsuppress_features(struct part_conv_info *pinfo)
     }
 }
 
-#if 0
-
 /* TODO - will probably need maps from CREO data items to ON data items here... */
 struct brep_data {
     ON_Brep *brep;
@@ -279,12 +277,12 @@ struct brep_data {
 
 
 extern "C" ProError
-edge_filter(ProEdge e, ProAppData app_data) {
+edge_filter(ProEdge UNUSED(e), ProAppData UNUSED(app_data)) {
     return PRO_TK_NO_ERROR;
 }
 
 extern "C" ProError
-edge_process(ProEdge e, ProError status, ProAppData app_data) {
+edge_process(ProEdge UNUSED(e), ProError UNUSED(status), ProAppData UNUSED(app_data)) {
 	// ProEdge appears to correspond to the ON Edge.  pro_edge_data 
 	// has edge directions, information about joined surface ids,
 	// a 3d curve, and the two uv curves.
@@ -297,7 +295,7 @@ edge_process(ProEdge e, ProError status, ProAppData app_data) {
 }
 
 extern "C" ProError
-contour_filter(ProContour c, ProAppData app_data) {
+contour_filter(ProContour UNUSED(c), ProAppData UNUSED(app_data)) {
     return PRO_TK_NO_ERROR;
 }
 
@@ -317,7 +315,7 @@ contour_process(ProContour c, ProError UNUSED(status), ProAppData app_data) {
 }
 
 extern "C" ProError
-surface_filter(ProSurface s, ProAppData app_data) {
+surface_filter(ProSurface UNUSED(s), ProAppData UNUSED(app_data)) {
     return PRO_TK_NO_ERROR;
 }
 
@@ -326,7 +324,8 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
     int s_id;
     ProSurfacedata *ndata;
     ProSrftype s_type;
-    ProUvParam uvmin, uvmax;
+    ProUvParam uvmin = {DBL_MAX,DBL_MAX};
+    ProUvParam uvmax = {DBL_MIN,DBL_MIN};
     ProSurfaceOrient s_orient;
     ProSurfaceshapedata s_shape;
     struct brep_data *bdata = (struct brep_data *)app_data;
@@ -413,8 +412,6 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
 }
 
 
-
-
 extern "C" ProError
 opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname)
 {
@@ -452,7 +449,6 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
      */
     return ret;
 }
-#endif
 
 extern "C" ProError
 tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname)

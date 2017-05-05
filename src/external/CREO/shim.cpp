@@ -16,6 +16,7 @@ extern "C" int ProAsmcompMdlNameGet(ProFeature*,int*,wchar_t*) {return 0;}
 extern "C" int ProAsmcomppathInit(void*,ProIdTable,int,void**) {return 0;}
 extern "C" int ProAsmcomppathTrfGet(void**,bool,ProMatrix) {return 0;}
 extern "C" int ProAssemblyIsExploded(void*,bool*) {return 0;}
+extern "C" int ProBsplinesrfdataGet(void**,int[2],double**,double**,double**,ProVector**,int*,int*,int*) {return 0;}
 extern "C" int ProCmdActionAdd(const char*,int(*)(int,int*,void*),int,int(*)(int),bool,bool,int*) {return 0;}
 extern "C" int ProDimensionTypeGet(void**,int*) {return 0;}
 extern "C" int ProDimensionValueGet(void**,double *) {return 0;}
@@ -76,13 +77,19 @@ extern "C" int ProWcharSizeVerify(size_t,int*) {return 0;}
 extern "C" int ProWindowRefresh(int) {return 0;}
 extern "C" int ProWstringFree(wchar_t*) {return 0;}
 extern "C" void ProAssemblyUnexplode(void*) {}
+extern "C" void ProContourEdgeVisit(void*,void*,int(*)(void*,int,void*),int(*)(void*,void*),void*) {}
 extern "C" void ProMdlMdlNameGet(void*,int*,wchar_t*) {}
 extern "C" void ProMdlMdlnameGet(void*,wchar_t*) {}
 extern "C" void ProMdlPrincipalunitsystemGet(void*,void**) {}
 extern "C" void ProMessageClear() {}
 extern "C" void ProMdlIsSkeleton(void*, bool*) {}
 extern "C" void ProPartTessellationFree(ProSurfaceTessellationData**) {}
+extern "C" void ProSolidSurfaceVisit(void*,int(*)(void*,int,void*),int(*)(void*,void*),void*) {}
 extern "C" void ProStringToWstring(wchar_t*,const char*) {}
+extern "C" void ProSurfaceContourVisit(void*,int(*)(void*,int,void*),int(*)(void*,void*), void*) {}
+extern "C" void ProSurfacedataGet(void*,int*,double*,double*,int*,void**,int*) {}
+extern "C" void ProSurfaceIdGet(void*,int*) {}
+extern "C" void ProSurfaceToNURBS(void*,void***) {}
 extern "C" void ProUIInputpanelMaxlenSet(const char*,const char*,int) {}
 extern "C" void ProUIMessageDialogDisplay(int,const wchar_t *,const wchar_t *,ProUIMessageButton*,int,ProUIMessageButton*) {}
 extern "C" void ProUnitConversionGet(void**,ProUnitConversion*,void**) {}
