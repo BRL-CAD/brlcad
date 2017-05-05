@@ -639,7 +639,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     if (status == PRO_TK_NOT_EXIST) {
 	/* Failed!!! */
 	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed.\n", pname);
-	if (cinfo->debug_bboxes) {
+	if (cinfo->debug_bboxes && have_bbox) {
 	    /* A failed solid conversion with a bounding box indicates a problem - rather than
 	     * ignore it, put the bbox in the .g file as a placeholder. */
 	    point_t rmin, rmax;
