@@ -625,9 +625,19 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	status = PRO_TK_NO_ERROR;
     }
 
-    creo_log(cinfo, MSG_OK, "%s: successfully tessellated with tessellation error: %g and angle: %g!!!\n", pname, curr_error, curr_angle);
+    /* make sure we have non-zero faces (and if needed, face_normals) vectors */
+    if (faces.size() == 0 || !vert_tree->curr_vert) {
+	status = PRO_TK_NOT_EXIST;
+	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed\n", pname);
+	goto tess_cleanup;
+    }
+    if (cinfo->get_normals && face_normals.size() == 0) {
+	status = PRO_TK_NOT_EXIST;
+	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed\n", pname);
+	goto tess_cleanup;
+    }
 
-    /* TODO - make sure we have non-zero faces (and if needed, face_normals) vectors */
+    creo_log(cinfo, MSG_OK, "%s: successfully tessellated with tessellation error: %g and angle: %g!!!\n", pname, curr_error, curr_angle);
 
     /* Output the solid - TODO - what is the correct ordering??? does CCW always work? */
     *sname = get_brlcad_name(cinfo, wname, "s", N_SOLID);
