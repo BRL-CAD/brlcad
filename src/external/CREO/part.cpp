@@ -493,8 +493,8 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     wchar_t wname[CREO_NAME_MAX];
     char pname[CREO_NAME_MAX];
 
-    struct bn_vert_tree *vert_tree;
-    struct bn_vert_tree *norm_tree;
+    struct bn_vert_tree *vert_tree = NULL;
+    struct bn_vert_tree *norm_tree = NULL;
     std::vector<int> faces;
     std::vector<int> face_normals;
 
