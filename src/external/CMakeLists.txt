@@ -5,6 +5,7 @@
 set(BRLCAD_BUILDTEST_EXTERNALS 1)
 
 add_subdirectory(CREO)
+add_subdirectory(Cubit)
 
 CMAKEFILES(README CREO Cubit Unigraphics)
 
