@@ -42,6 +42,7 @@
 #include "bio.h"
 
 // CGM headers
+#ifndef TEST_BUILD
 #include "NoAcisQueryEngine.hpp"
 #include "NoAcisModifyEngine.hpp"
 #include "GeometryQueryTool.hpp"
@@ -54,6 +55,9 @@
 #include "RefEntityName.hpp"
 #include "CubitAttrib.hpp"
 #include "CubitAttribManager.hpp"
+#else
+#include "shim.h"
+#endif
 
 // interface headers
 #include "vmath.h"
@@ -76,8 +80,6 @@ const int DEBUG_STATS = 2;
 
 const long debug = 1;
 int verbose = 0;
-
-static db_i *dbip;
 
 static rt_tess_tol ttol;   /* tessellation tolerance in mm */
 static bn_tol tol;    /* calculation tolerance */
@@ -126,7 +128,7 @@ infix_to_postfix(std::string str)
     std::ostringstream ostr;
     char c;
 
-    for (int i = 0; i < strlen(str.c_str()); i++) {
+    for (unsigned int i = 0; i < strlen(str.c_str()); i++) {
 	c = str[i];
 	if (c == '(') {
 	    s.push(c);
@@ -328,10 +330,10 @@ describe_tree(tree *tree, bu_vls *str)
  *
  */
 static int
-region_start (db_tree_state *tsp,
+region_start (db_tree_state *UNUSED(tsp),
 	      const db_full_path *pathp,
 	      const rt_comb_internal *combp,
-	      void *client_data)
+	      void *UNUSED(client_data))
 {
     directory *dp;
     bu_vls str = BU_VLS_INIT_ZERO;
@@ -382,10 +384,10 @@ region_start (db_tree_state *tsp,
  *
  */
 static tree *
-region_end (db_tree_state *tsp,
+region_end (db_tree_state *UNUSED(tsp),
 	    const db_full_path *pathp,
 	    tree *curtree,
-	    void *client_data)
+	    void *UNUSED(client_data))
 {
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -400,7 +402,7 @@ region_end (db_tree_state *tsp,
 /* routine to output the facetted NMG representation of a BRL-CAD region */
 static bool
 make_bot(nmgregion *r,
-	 model *m,
+	 model *UNUSED(m),
 	 shell *s)
 {
     // Create the geometry modify and query tool
@@ -518,7 +520,7 @@ static tree *
 primitive_func(db_tree_state *tsp,
 	       const db_full_path *pathp,
 	       rt_db_internal *ip,
-	       void *client_data)
+	       void *UNUSED(client_data))
 {
     const double NEARZERO = 0.0001;
 
@@ -535,9 +537,9 @@ primitive_func(db_tree_state *tsp,
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
     if (debug&DEBUG_NAMES) {
-	char *name = db_path_to_string(pathp);
-	bu_log("leaf_func    %s\n", name);
-	bu_free(name, "region_end name");
+	char *cname = db_path_to_string(pathp);
+	bu_log("leaf_func    %s\n", cname);
+	bu_free(cname, "region_end name");
     }
 
     /* handle each type of primitive (see h/rtgeom.h) */
@@ -597,7 +599,6 @@ primitive_func(db_tree_state *tsp,
 		    fastf_t maxb, ma, mb, mc, md, mh;
 		    vect_t axb;
 
-		    CubitVector bbc[8];  // bounding box corners
 		    CubitVector center_of_base;
 
 		    rt_tgc_internal *tgc = (rt_tgc_internal *)ip->idb_ptr;
@@ -712,8 +713,6 @@ primitive_func(db_tree_state *tsp,
 			    gqt->translate(gqt->get_last_body(), ell_v);
 			}
 		    } else {
-			vect_t unitv;
-			double angles[5];
 			CubitVector rot_axis;
 
 			CubitVector ell_a(V3ARGS(ell->a));
@@ -769,8 +768,6 @@ primitive_func(db_tree_state *tsp,
 
 	    case ID_BOT:	/* Bag O' Triangles */
 		{
-		    rt_bot_internal *bot = (rt_bot_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
@@ -782,8 +779,6 @@ primitive_func(db_tree_state *tsp,
 		    /* series of curves
 		     * each with the same number of points
 		     */
-		    rt_ars_internal *ars = (rt_ars_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
@@ -791,8 +786,6 @@ primitive_func(db_tree_state *tsp,
 	    case ID_HALF:
 		{
 		    /* half universe defined by a plane */
-		    rt_half_internal *half = (rt_half_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
@@ -800,8 +793,6 @@ primitive_func(db_tree_state *tsp,
 	    case ID_POLY:
 		{
 		    /* polygons (up to 5 vertices per) */
-		    rt_pg_internal *pg = (rt_pg_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
@@ -809,16 +800,14 @@ primitive_func(db_tree_state *tsp,
 	    case ID_BSPLINE:
 		{
 		    /* NURB surfaces */
-		    rt_nurb_internal *nurb = (rt_nurb_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
 		}
 	    case ID_NMG:
 		{
-		    nmgregion *r;
-		    shell *s;
+		    nmgregion *r = NULL;
+		    shell *s = NULL;
 
 		    /* N-manifold geometry */
 		    model *m = (model *)ip->idb_ptr;
@@ -826,7 +815,7 @@ primitive_func(db_tree_state *tsp,
 		    NMG_CK_MODEL(m);
 
 		    /* walk the nmg to convert it to triangular facets */
-		    nmg_triangulate_model(m, tsp->ts_tol);
+		    nmg_triangulate_model(m, NULL, tsp->ts_tol);
 
 		    if (make_bot(r, m, s)) {
 			g_body_cnt++;
@@ -840,8 +829,6 @@ primitive_func(db_tree_state *tsp,
 		}
 	    case ID_ARBN:
 		{
-		    rt_arbn_internal *arbn = (rt_arbn_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
@@ -852,8 +839,6 @@ primitive_func(db_tree_state *tsp,
 		    /* Displacement map (terrain primitive) */
 		    /* normally used for terrain only */
 		    /* the DSP primitive may reference an external file */
-		    rt_dsp_internal *dsp = (rt_dsp_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
@@ -862,8 +847,6 @@ primitive_func(db_tree_state *tsp,
 		{
 		    /* height field (terrain primitive) */
 		    /* the HF primitive references an external file */
-		    rt_hf_internal *hf = (rt_hf_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
@@ -874,8 +857,6 @@ primitive_func(db_tree_state *tsp,
 		{
 		    /* extruded bit-map */
 		    /* the EBM primitive references an external file */
-		    rt_ebm_internal *ebm = (rt_ebm_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
@@ -883,72 +864,54 @@ primitive_func(db_tree_state *tsp,
 	    case ID_VOL:
 		{
 		    /* the VOL primitive references an external file */
-		    rt_vol_internal *vol = (rt_vol_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
 		}
 	    case ID_PIPE:
 		{
-		    rt_pipe_internal *pipe = (rt_pipe_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
 		}
 	    case ID_PARTICLE:
 		{
-		    rt_part_internal *part = (rt_part_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
 		}
 	    case ID_RPC:
 		{
-		    rt_rpc_internal *rpc = (rt_rpc_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
 		}
 	    case ID_RHC:
 		{
-		    rt_rhc_internal *rhc = (rt_rhc_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
 		}
 	    case ID_EPA:
 		{
-		    rt_epa_internal *epa = (rt_epa_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
 		}
 	    case ID_EHY:
 		{
-		    rt_ehy_internal *ehy = (rt_ehy_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
 		}
 	    case ID_ETO:
 		{
-		    rt_eto_internal *eto = (rt_eto_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
 		}
 	    case ID_GRIP:
 		{
-		    rt_grip_internal *grip = (rt_grip_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
@@ -956,8 +919,6 @@ primitive_func(db_tree_state *tsp,
 
 	    case ID_SKETCH:
 		{
-		    rt_sketch_internal *sketch = (rt_sketch_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
@@ -967,8 +928,6 @@ primitive_func(db_tree_state *tsp,
 		    /* note that an extrusion references a sketch, make sure you convert
 		     * the sketch also
 		     */
-		    rt_extrude_internal *extrude = (rt_extrude_internal *)ip->idb_ptr;
-
 		    goto TESS_CASE;
 
 		    break;
@@ -981,9 +940,9 @@ primitive_func(db_tree_state *tsp,
 		    /* This section is for primitives which cannot be directly represented in the
 		     * format we are going to.  So we convert it to triangles
 		     */
-		    nmgregion *r;
+		    nmgregion *r = NULL;
 		    model *m = nmg_mm();
-		    shell *s;
+		    shell *s = NULL;
 
 		    NMG_CK_MODEL(m);
 
@@ -993,7 +952,7 @@ primitive_func(db_tree_state *tsp,
 
 		    //bu_log("triangulate %d\n", ip->idb_minor_type);
 		    /* walk the nmg to convert it to triangular facets */
-		    nmg_triangulate_model(m, tsp->ts_tol);
+		    nmg_triangulate_model(m, NULL, tsp->ts_tol);
 
 		    if (make_bot(r, m, s)) {
 			g_body_cnt++;
@@ -1016,8 +975,6 @@ primitive_func(db_tree_state *tsp,
 		    /* not actually a primitive, just a block of storage for data
 		     * a uniform array of chars, ints, floats, doubles, ...
 		     */
-		    rt_binunif_internal *bin = (rt_binunif_internal *)ip->idb_ptr;
-
 		    printf("Found a binary object (%s)\n\n", dp->d_namep);
 		    break;
 		}
@@ -1030,11 +987,12 @@ primitive_func(db_tree_state *tsp,
     return (tree *) NULL;
 }
 
-
+// Defined but not used (??)
+#if 0
 /* routine to output the facetted NMG representation of a BRL-CAD region */
 static void
 output_triangles(nmgregion *r,
-		 model *m,
+		 model *UNUSED(m),
 		 shell *s)
 {
     vertex *v;
@@ -1077,6 +1035,7 @@ output_triangles(nmgregion *r,
 	}
     }
 }
+#endif
 
 
 tree *
@@ -1139,7 +1098,7 @@ booltree_evaluate(tree *tp, resource *resp)
     if (tl->tr_op != OP_DB_LEAF) bu_exit(2, "booltree_evaluate() bad left tree\n");
     if (tr->tr_op != OP_DB_LEAF) bu_exit(2, "booltree_evaluate() bad right tree\n");
 
-    bu_log(" {%s} %c {%s}\n", tl->tr_d.td_name, opr, tr->tr_d.td_name);
+    bu_log(" {%s} %c {%s}\n", tl->tr_d.td_name, op, tr->tr_d.td_name);
     std::cout << "******" << tl->tr_d.td_name << " " << (char)op << " " << tr->tr_d.td_name << "***********" << std::endl;
 
     /* Build string of result name */
@@ -1166,8 +1125,6 @@ main(int argc, char *argv[])
 	int info;
     } user_data;
 
-    int i;
-    register int c;
     char idbuf[132];
 
     int arg_count;
@@ -1255,8 +1212,7 @@ main(int argc, char *argv[])
     /* Walk the trees named on the command line
      * outputting combinations and primitives
      */
-    int walk_tree_status;
-    for (i = bu_optind ; i < argc ; i++) {
+    for (int i = bu_optind ; i < argc ; i++) {
 	struct directory *dp;
 
 	dp = db_lookup(rtip->rti_dbip, argv[i], LOOKUP_QUIET);
@@ -1274,7 +1230,6 @@ main(int argc, char *argv[])
     // *************************************************************************************
 
     // Make bodies list.
-    DLIList<Body*> all_bodies, old_bodies, new_bodies, tools_bodies;
     Body* tool_body;
 
     // Export geometry
@@ -1284,9 +1239,8 @@ main(int argc, char *argv[])
 
     std::cout << "*** CSG DEBUG BEGIN ***" << std::endl;
     DLIList<Body*> all_region_bodies, region_bodies, from_bodies;
-    Body* region_body;
 
-    for (int i=0; i < g_CsgBoolExp.size(); i++) {
+    for (unsigned int i=0; i < g_CsgBoolExp.size(); i++) {
 	std::cout << " R" << i << " = " << g_CsgBoolExp[i] << ": " << get_body_id(g_CsgBoolExp[i]) << std::endl;
 
 	int body_id = get_body_id(g_CsgBoolExp[i]);
@@ -1305,7 +1259,7 @@ main(int argc, char *argv[])
 
 	    std::cout << "DEBUG " << csgTokens.size() << std::endl;
 
-	    for (int j = 0; j < csgTokens.size(); j++) {
+	    for (unsigned int j = 0; j < csgTokens.size(); j++) {
 		std::cout <<" T" << j << " = " << csgTokens[j] << ": " << get_body_id(csgTokens[j]) << std::endl;
 
 		if (get_body_id(csgTokens[j]) >= 0) {
