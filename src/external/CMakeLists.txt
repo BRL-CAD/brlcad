@@ -4,10 +4,10 @@
 # builds.
 set(BRLCAD_BUILDTEST_EXTERNALS 1)
 
-add_subdirectory(CREO)
+add_subdirectory(Creo)
 add_subdirectory(Cubit)
 
-CMAKEFILES(README CREO Cubit Unigraphics)
+CMAKEFILES(README Unigraphics)
 
 # Local Variables:
 # tab-width: 8
