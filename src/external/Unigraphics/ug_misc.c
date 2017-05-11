@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#ifndef TEST_BUILD
 #include <uf.h>
 #include <uf_ui.h>
 #include <uf_disp.h>
@@ -33,9 +34,13 @@
 #include <uf_object_types.h>
 #include <uf_facet.h>
 #include <uf_modl.h>
+#else
+#include "shim.h"
+#endif
 #include <tcl.h>
 
 
+#include "bu/exit.h"
 #include "./log.h"
 #include "./ug_misc.h"
 #include "./conv.h"
@@ -51,7 +56,7 @@ tag_t ask_cset_of_unloaded_children(tag_t part, tag_t part_occ)
     int   i;
     tag_t instance;
     char  part_fspec[MAX_FSPEC_SIZE+1];
-    logical no_children = false;
+    logical no_children = 0;
 
     if (UF_func(UF_ASSEM_create_cset(part, "UNLOADED_CHILDREN", &cset))) {
 	return NULL_TAG;
