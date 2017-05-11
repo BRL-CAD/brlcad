@@ -430,15 +430,11 @@ make_bot(nmgregion *r,
 
 	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	    loopuse *lu;
-	    vect_t facet_normal;
 
 	    NMG_CK_FACEUSE(fu);
 
 	    if (fu->orientation != OT_SAME)
 		continue;
-
-	    /* Grab the face normal if needed */
-	    NMG_GET_FU_NORMAL(facet_normal, fu);
 
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		edgeuse *eu;
@@ -1189,8 +1185,6 @@ main(int argc, char *argv[])
     CubitString version = gqt->get_engine_version_string();
     std::cout << "ACIS Engine: " << version << std::endl;
 
-    CubitStatus status;
-
     /* Open BRL-CAD database */
     /* Scan all the records in the database and build a directory */
     rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
@@ -1323,7 +1317,7 @@ main(int argc, char *argv[])
 
     // Export geometry
     if (size != 0) {
-	status = gqt->export_solid_model(parent_entities, output_file, ACIS_SAT, size, version);
+	(void)gqt->export_solid_model(parent_entities, output_file, ACIS_SAT, size, version);
     } else {
 	usage("No geometry to convert.\n");
     }
