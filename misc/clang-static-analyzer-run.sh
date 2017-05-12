@@ -66,6 +66,7 @@ cleantest libbu
 cleantest libpkg
 cleantest libbn
 failingtest libbg
+failingtest libnmg
 failingtest libbrep
 failingtest librt
 cleantest libwdb
