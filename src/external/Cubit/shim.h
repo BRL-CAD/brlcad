@@ -48,7 +48,7 @@ template<class X> class DLIList
 };
 
 template <class X> inline void DLIList<X>::clean_out() {}
-template <class X> inline void DLIList<X>::append(const_reference new_item) {}
+template <class X> inline void DLIList<X>::append(const_reference) {}
 template <class X> inline X DLIList<X>::pop() { return NULL; }
 template <class X> inline int DLIList<X>::size() { return 0; }
 template <class X> inline typename DLIList<X>::const_reference DLIList<X>::operator[](int ind) const { return v[ind]; }
