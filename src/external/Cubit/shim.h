@@ -1,7 +1,9 @@
-/* This file is provided as a compilation stub to ensure ongoing build testing
- * of the g-sat converter.  Various bits were copied from the LGPL CGM sources
- * at https://bitbucket.org/fathomteam/cgm and some were further simplified
- * (since this is intended only for build testing, not for running.)
+/*
+ * This file is provided as a compilation stub to ensure ongoing build testing
+ * of the g-sat converter.  The logic below is intended only for as a minimal
+ * shim for build testing and will not produce a functional binary.  Nor is it
+ * intended or guaranteed to match Cubit beyond the minimum needed for compilation,
+ * so it is not suitable as a reference or guide to the Cubit API.
  */
 
 #include "common.h"
@@ -9,35 +11,22 @@
 #include <vector>
 #include <string>
 
-/* Stubbing the CubitVector got a bit tricky, so just snarf in a trimmed
- * down and BRL-CAD-ified version of the original file */
-#include "shim_cv.hpp"
-
-#define CUBIT_FAILURE 0
-#define CUBIT_TRUE 1
-#define STRAIGHT_CURVE_TYPE 1
-#define PLANE_SURFACE_TYPE 1
 #define CubitString std::string
+#define CAST_LIST_TO_PARENT(classOneList, classTwoList) { }
+
+#define CUBIT_FAILURE 		0
+#define CUBIT_TRUE 		1
+#define PLANE_SURFACE_TYPE 	2
+#define STRAIGHT_CURVE_TYPE 	3
 
 typedef int CubitStatus;
 
-#define CAST_LIST_TO_PARENT(classOneList, classTwoList) { }
-
-
-template<typename T>
-struct vector_const_reference_type {
-    typedef typename std::vector<T>::const_reference type;
-};
-
-template<>
-struct vector_const_reference_type<bool> {
-    typedef bool type;
-};
-
+template<typename T> struct vcr_t {typedef typename std::vector<T>::const_reference type;};
+template<>struct vcr_t<bool> {typedef bool type;};
 template<class X> class DLIList
 {
     public:
-	typedef typename vector_const_reference_type<X>::type const_reference;
+	typedef typename vcr_t<X>::type const_reference;
 	void append(const_reference new_item);
 	const_reference operator[](int index) const;
 	void clean_out();
@@ -54,14 +43,30 @@ template <class X> inline int DLIList<X>::size() { return 0; }
 template <class X> inline typename DLIList<X>::const_reference DLIList<X>::operator[](int ind) const { return v[ind]; }
 template <class X> inline DLIList<X>& DLIList<X>::operator+=(const DLIList<X> &) { return *this; }
 
+class CubitVector {
+    public:
+	CubitVector();
+	CubitVector(const double, const double, const double);
+	void set(const double, const double, const double);
+	double interior_angle(const CubitVector &) const;
+	friend CubitVector operator/(const CubitVector &v, const double);
+	friend CubitVector operator*(const CubitVector &v, const CubitVector &);
+	friend CubitVector operator+(const CubitVector &v, const CubitVector &);
+};
+CubitVector::CubitVector() {}
+CubitVector::CubitVector(const double,const double,const double){}
+void CubitVector::set(const double, const double, const double){}
+double CubitVector::interior_angle(const CubitVector &) const {return 0.0;}
+CubitVector operator/(const CubitVector &v, const double){return v;}
+CubitVector operator*(const CubitVector &v, const CubitVector &){return v;}
+CubitVector operator+(const CubitVector &v, const CubitVector &){return v;}
+
 class RefVertex {};
 class RefFace {};
 class RefEdge {};
 class RefEntity {};
-class Body {
-    public:
-	int size();
-};
+
+class Body { public: int size(); };
 int Body::size() { return 0; }
 
 class GeometryModifyTool {
@@ -115,49 +120,23 @@ CubitStatus GeometryQueryTool::export_solid_model(DLIList<RefEntity*>&, const ch
 const char *GeometryQueryTool::get_engine_version_string() { return NULL; }
 Body *GeometryQueryTool::get_body(int) { return NULL; }
 
-class AcisQueryEngine
-{
-    public:
-	static void instance();
-};
-void AcisQueryEngine::instance() { return; }
+class AcisQueryEngine { public:	static void instance(); };
+void AcisQueryEngine::instance() {}
 
-class AcisModifyEngine
-{
-    public:
-	static void instance();
-};
-void AcisModifyEngine::instance() { return; }
+class AcisModifyEngine { public: static void instance(); };
+void AcisModifyEngine::instance() {}
 
-
-class AppUtil
-{
-    public:
-	static AppUtil* instance();
-	void startup(int&, char**&);
-};
+class AppUtil { public:	static AppUtil* instance(); void startup(int&, char**&); };
 AppUtil* AppUtil::instance() { return NULL; }
-void AppUtil::startup(int&, char**&) { return; }
+void AppUtil::startup(int&, char**&) {}
 
-class CubitAttribManager
-{
-    public:
-	void auto_flag(bool);
+class CubitAttribManager { public: void auto_flag(bool); };
+void CubitAttribManager::auto_flag(bool) {}
 
-};
-void CubitAttribManager::auto_flag(bool) { return; }
-
-class CGMApp
-{
-    public:
-	static CGMApp* instance();
-	void startup(int&, char**&);
-	void shutdown();
-	CubitAttribManager* attrib_manager();
-};
+class CGMApp { public:static CGMApp* instance(); void startup(int&, char**&); void shutdown(); CubitAttribManager* attrib_manager();};
 CGMApp* CGMApp::instance() { return NULL; }
-void CGMApp::startup(int&, char**&) { return; }
-void CGMApp::shutdown() { return; }
+void CGMApp::startup(int&, char**&) {}
+void CGMApp::shutdown() {}
 CubitAttribManager* CGMApp::attrib_manager() { return NULL; }
 
 // Local Variables:
