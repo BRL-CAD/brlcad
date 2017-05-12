@@ -1822,12 +1822,17 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
     double tmp;
     double loc_orig[3];
     double location[3], dir1[3], dir2[3];
-    fastf_t Radius, Tip_angle, Depth;
+    fastf_t Radius = 0.0;
+    fastf_t Tip_angle = 0.0;
+    fastf_t Depth = 0.0;
     vect_t dir, height;
     point_t base;
     char *solid_name;
-    fastf_t CB_depth, CB_radius;
-    fastf_t CS_radius, CS_angle, CS_depth;
+    fastf_t CB_depth = 0.0;
+    fastf_t CB_radius = 0.0;
+    fastf_t CS_radius = 0.0;
+    fastf_t CS_angle = 0.0;
+    fastf_t CS_depth = 0.0;
 
     UF_func( UF_MODL_ask_feat_location( feat_tag, loc_orig ) );
     VSCALE( location, loc_orig, units_conv );
@@ -3610,7 +3615,10 @@ do_groove( int groove_type,
     double location[3], dir1[3], dir2[3];
     point_t base;
     vect_t dirx;
-    fastf_t groove_width, groove_radius, ball_radius, corner_radius;
+    fastf_t groove_width = 0.0;
+    fastf_t groove_radius = 0.0;
+    fastf_t ball_radius = 0.0;
+    fastf_t corner_radius = 0.0;
     int i, j;
     uf_list_p_t face_list;
     int num_faces;
@@ -4157,7 +4165,8 @@ convert_a_feature( tag_t feat_tag,
 	if ( min_chamfer <= 0.0 ) {
 	    failed = 1;
 	} else {
-	    double offset1, offset2;
+	    double offset1 = 0.0;
+	    double offset2 = 0.0;
 
 	    get_chamfer_offsets( feat_tag, part_name, units_conv, &offset1, &offset2 );
 	    if ( offset1 >= min_chamfer || offset2 >= min_chamfer ) {
@@ -4764,7 +4773,7 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
 char *
 convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv )
 {
-    tag_t ref_tag;
+    tag_t ref_tag = NULL_TAG;
     char ref_set_name[REFSET_NAME_LEN];
     double origin[3];
     double matrix[9];
@@ -4781,7 +4790,8 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
     int found_refset=0;
     int num_refsets=0;
     char **def_ref_sets;
-    struct refset_list *ref_root=NULL, *ref_ptr;
+    struct refset_list *ref_root = NULL;
+    struct refset_list *ref_ptr = NULL;
     struct UF_OBJ_disp_props_s disp_props;
     int do_entire_part=0;
 
@@ -5337,7 +5347,7 @@ main(int ac, char *av[])
 {
     tag_t displayed_part = NULL_TAG;
     char part_name[PART_NAME_LEN];		/* name of current part */
-    tag_t ugpart;
+    tag_t ugpart = NULL_TAG;
     tag_t cset=0;
     int i, j;
     char *comp_name;

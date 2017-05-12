@@ -101,7 +101,7 @@ Add_lists(uf_list_p_t dest, uf_list_p_t src)
 const char *feature_sign(tag_t feat)
 {
     UF_FEATURE_SIGN sign;
-    char *p;
+    char *p = NULL;
 
     /* XXX For certain classes of feature, this might be handy.
      * This is just here as a memory-jogger.  If the feature is
