@@ -362,7 +362,16 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   endif(CPP_DLL_DEFINES)
 
   # Distcheck file list
-  CMAKEFILES(README.txt cmake_uninstall.cmake.in creo-brl.dat.in creo-brl.h resources shim.h)
+  set(creo_dist_files
+    README.txt
+    cmake_uninstall.cmake.in
+    creo-brl.dat.in
+    creo-brl.h
+    resources/creo-brl-msg.txt
+    resources/creo_brl.res
+    shim.h
+    )
+CMAKEFILES(${creo_dist_files})
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
