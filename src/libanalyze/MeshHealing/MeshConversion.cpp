@@ -288,6 +288,9 @@ PolygonalMesh::splitFace(int face_id, DCEL_Vertex *vertex_on_edge, DCEL_Vertex *
 	    break;
     }
 
+    /* Don't keep trying if we didn't get our starting edges */
+    if (!start_edge1 || !start_edge2) return;
+
     start_edge1->next->previous = start_edge1;
     start_edge2->previous->next = start_edge2;
 
