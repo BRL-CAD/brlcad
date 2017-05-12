@@ -44,6 +44,9 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
   endif(CPP_DLL_DEFINES)
 
+  # Distcheck file list
+  CMAKEFILES(conv.h log.h shim.h ug-g.1 ug_misc.h)
+
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 # Local Variables:

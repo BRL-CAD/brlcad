@@ -361,6 +361,9 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
   endif(CPP_DLL_DEFINES)
 
+  # Distcheck file list
+  CMAKEFILES(README.txt cmake_uninstall.cmake.in creo-brl.dat.in creo-brl.h resources shim.h)
+
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 # Local Variables:
