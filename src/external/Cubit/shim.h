@@ -44,7 +44,15 @@ template<class X> class DLIList
 	int size();
 	X pop();
 	DLIList<X>& operator+=(const DLIList<X>& from);
+	std::vector<X> v;
 };
+
+template <class X> inline void DLIList<X>::clean_out() {}
+template <class X> inline void DLIList<X>::append(const_reference new_item) {}
+template <class X> inline X DLIList<X>::pop() { return NULL; }
+template <class X> inline int DLIList<X>::size() { return 0; }
+template <class X> inline typename DLIList<X>::const_reference DLIList<X>::operator[](int ind) const { return v[ind]; }
+template <class X> inline DLIList<X>& DLIList<X>::operator+=(const DLIList<X> &) { return *this; }
 
 class RefVertex {};
 class RefFace {};
@@ -54,6 +62,7 @@ class Body {
     public:
 	int size();
 };
+int Body::size() { return 0; }
 
 class GeometryModifyTool {
     public:
@@ -71,6 +80,19 @@ class GeometryModifyTool {
 	CubitStatus subtract(Body*,DLIList<Body*> &,DLIList<Body*> &,bool);
 	CubitStatus unite(DLIList<Body*> &,DLIList<Body*> &,bool);
 };
+GeometryModifyTool* GeometryModifyTool::instance(void *) { return NULL; }
+RefVertex* GeometryModifyTool::make_RefVertex(const CubitVector &UNUSED(c)) const { return NULL; }
+RefEdge* GeometryModifyTool::make_RefEdge(int, RefVertex *, RefVertex *) const { return NULL; }
+RefFace* GeometryModifyTool::make_RefFace(int, DLIList<RefEdge*>&) const { return NULL; }
+CubitStatus GeometryModifyTool::create_solid_bodies_from_surfs(DLIList<RefFace*> &, DLIList<Body*> &) const { return 0; }
+CubitStatus GeometryModifyTool::regularize_body(Body *, Body *&) { return 0; }
+Body* GeometryModifyTool::brick(double, double, double) { return NULL; }
+Body* GeometryModifyTool::torus(double, double) { return NULL; }
+Body* GeometryModifyTool::cylinder(double, double, double, double) { return NULL; }
+Body* GeometryModifyTool::sphere(double) { return NULL; }
+CubitStatus GeometryModifyTool::intersect(Body*, DLIList<Body*> &, DLIList<Body*> &, int) { return 0; }
+CubitStatus GeometryModifyTool::subtract(Body*, DLIList<Body*> &, DLIList<Body*> &, bool) { return 0; }
+CubitStatus GeometryModifyTool::unite(DLIList<Body*> &, DLIList<Body*> &, bool) { return 0; }
 
 class GeometryQueryTool
 {
@@ -84,19 +106,28 @@ class GeometryQueryTool
 	const char *get_engine_version_string();
 	Body *get_body(int);
 };
+GeometryQueryTool* GeometryQueryTool::instance(void *) { return NULL; }
+Body *GeometryQueryTool::get_last_body() { return NULL; }
+CubitStatus GeometryQueryTool::translate(Body*, const CubitVector&) { return 0; }
+CubitStatus GeometryQueryTool::rotate(Body*, const CubitVector&, double) { return 0; }
+CubitStatus GeometryQueryTool::scale(Body*, const CubitVector&, bool) { return 0; }
+CubitStatus GeometryQueryTool::export_solid_model(DLIList<RefEntity*>&, const char*, const char*, int, const CubitString &) { return 0; }
+const char *GeometryQueryTool::get_engine_version_string() { return NULL; }
+Body *GeometryQueryTool::get_body(int) { return NULL; }
 
 class AcisQueryEngine
 {
     public:
 	static void instance();
 };
+void AcisQueryEngine::instance() { return; }
 
 class AcisModifyEngine
 {
     public:
 	static void instance();
 };
-
+void AcisModifyEngine::instance() { return; }
 
 
 class AppUtil
@@ -105,6 +136,8 @@ class AppUtil
 	static AppUtil* instance();
 	void startup(int&, char**&);
 };
+AppUtil* AppUtil::instance() { return NULL; }
+void AppUtil::startup(int&, char**&) { return; }
 
 class CubitAttribManager
 {
@@ -112,6 +145,7 @@ class CubitAttribManager
 	void auto_flag(bool);
 
 };
+void CubitAttribManager::auto_flag(bool) { return; }
 
 class CGMApp
 {
@@ -121,6 +155,10 @@ class CGMApp
 	void shutdown();
 	CubitAttribManager* attrib_manager();
 };
+CGMApp* CGMApp::instance() { return NULL; }
+void CGMApp::startup(int&, char**&) { return; }
+void CGMApp::shutdown() { return; }
+CubitAttribManager* CGMApp::attrib_manager() { return NULL; }
 
 // Local Variables:
 // tab-width: 8
