@@ -302,7 +302,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     long count = 0;
     wchar_t *stable = NULL;
     std::map<wchar_t *, struct bu_vls *, WStrCmp>::iterator n_it;
-    std::map<wchar_t *, struct bu_vls *, WStrCmp> *nmap;
+    std::map<wchar_t *, struct bu_vls *, WStrCmp> *nmap = NULL;
     std::set<struct bu_vls *, StrCmp> *nset = cinfo->brlcad_names;
     char astr[CREO_NAME_MAX];
     ProWstringToString(astr, name);
@@ -339,6 +339,9 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
 	nset = cinfo->creo_names;
 	creo_log(cinfo, MSG_DEBUG, "\t name type: CREO name\n");
     }
+
+    /* If we somehow don't have a map, bail */
+    if (!nmap) return NULL;
 
     /* If we've already got something, return it. */
     n_it = nmap->find(name);
