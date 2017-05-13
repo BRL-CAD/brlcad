@@ -91,10 +91,10 @@ extern "C" int UF_SKET_ask_sketch_info(tag_t, UF_SKET_info_t*){return 0;}
 extern "C" int UF_WAVE_ask_link_mirror_data(tag_t, int, tag_t*, tag_t*, tag_t*, tag_t*){return 0;}
 extern "C" int UF_free_string_array(int,char**){return 0;}
 extern "C" int UF_get_fail_message(int, char*){return 0;}
-extern "C" tag_t UF_ASSEM_ask_child_of_instance(tag_t){return NULL;}
-extern "C" tag_t UF_ASSEM_ask_inst_of_part_occ(tag_t){return NULL;}
-extern "C" tag_t UF_ASSEM_ask_root_part_occ(tag_t){return NULL;}
-extern "C" tag_t UF_PART_ask_display_part(){return NULL;}
+extern "C" tag_t UF_ASSEM_ask_child_of_instance(tag_t){return NULL_TAG;}
+extern "C" tag_t UF_ASSEM_ask_inst_of_part_occ(tag_t){return NULL_TAG;}
+extern "C" tag_t UF_ASSEM_ask_root_part_occ(tag_t){return NULL_TAG;}
+extern "C" tag_t UF_PART_ask_display_part(){return NULL_TAG;}
 extern "C" void UF_PART_close(tag_t, int, int){}
 extern "C" void UF_initialize(){}
 extern "C" void UF_terminate(){}
