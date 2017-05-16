@@ -639,8 +639,15 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 
     creo_log(cinfo, MSG_OK, "%s: successfully tessellated with tessellation error: %g and angle: %g!!!\n", pname, curr_error, curr_angle);
 
+	
+    // Use the part units for conversion - warn if it's different from the top level. 
+    double factor = cinfo->creo_to_brl_conv;
+    ProError ustatus = creo_model_units(&factor, model);
+    if (ustatus == PRO_TK_NO_ERROR && !NEAR_EQUAL(factor, cinfo->creo_to_brl_conv, SMALL_FASTF)) {
+	creo_log(cinfo, MSG_DEBUG, "%s: Using part units for conversion, not global units.\n", pname);
+    }
 	for (int i = 0; i < vert_tree->curr_vert * 3; i++) {
-		vert_tree->the_array[i] = vert_tree->the_array[i] * cinfo->creo_to_brl_conv;
+		vert_tree->the_array[i] = vert_tree->the_array[i] * factor;
 	}
 
     /* Output the solid - TODO - what is the correct ordering??? does CCW always work? */
@@ -734,9 +741,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     ProWstringToString(pname, wname);
     creo_log(cinfo, MSG_OK, "Processing %s:\n", pname);
 
-	// TODO - check if part's notion of units doesn't match global, and handle - probably need to update units checking to return
-	// an error case and handle that too...
-	//double factor = creo_model_units(model);
 
     /* Collect info about things that might be eliminated */
     if (cinfo->do_elims) {

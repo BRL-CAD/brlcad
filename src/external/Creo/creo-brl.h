@@ -241,7 +241,7 @@ extern "C" ProError creo_attribute_val(char **val, const char *key, ProMdl m);
 extern "C" void creo_log(struct creo_conv_info *, int, const char *, ...);
 extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
-extern "C" double creo_model_units(ProMdl);
+extern "C" ProError creo_model_units(double *,ProMdl);
 extern "C" ProError PopupMsg(const char *, const char *);
 extern "C" wchar_t* stable_wchar(struct creo_conv_info *, wchar_t *);
 
