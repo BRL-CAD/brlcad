@@ -116,6 +116,20 @@ wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     return ret;
 }
 
+extern "C" double
+creo_model_units(ProMdl mdl)
+{
+	ProUnitsystem us;
+    ProUnititem lmu;
+    ProUnititem mmu;
+    ProUnitConversion conv;
+    ProMdlPrincipalunitsystemGet(mdl, &us);
+    ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu);
+    ProUnitInit(mdl, L"mm", &mmu);
+	ProUnitConversionCalculate(&lmu, &mmu, &conv);
+    return conv.scale;
+}
+
 extern "C" void
 lower_case( char *name )
 {

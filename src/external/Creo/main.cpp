@@ -768,15 +768,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     }
 
     /* TODO -verify this is working correctly */
-    ProUnitsystem us;
-    ProUnititem lmu;
-    ProUnititem mmu;
-    ProUnitConversion conv;
-    ProMdlPrincipalunitsystemGet(model, &us);
-    ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu);
-    ProUnitInit(model, L"mm", &mmu);
-    ProUnitConversionGet(&lmu, &conv, &mmu);
-    cinfo->creo_to_brl_conv = conv.scale;
+    cinfo->creo_to_brl_conv = creo_model_units(model);
 
     /* adjust tolerance for Pro/E units */
     cinfo->local_tol = cinfo->tol_dist / cinfo->creo_to_brl_conv;
