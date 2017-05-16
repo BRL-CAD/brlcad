@@ -788,7 +788,14 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    creo_log(cinfo, MSG_DEBUG, "%s: writing bounding box as placeholder.\n", pname);
 	    goto have_part;
 	} else {
-	    cinfo->empty->insert(wname);
+		wchar_t *stable = NULL;
+		if (cinfo->parts->find(wname) != cinfo->parts->end()) stable = *(cinfo->parts->find(wname));
+        if (!stable && cinfo->assems->find(wname) != cinfo->assems->end()) stable = *(cinfo->assems->find(wname));
+        if (!stable) {
+	        creo_log(cinfo, MSG_DEBUG, "%s - no stable version of name found???.\n", pname);
+        } else {
+	        cinfo->empty->insert(stable);
+	    }
 	    ret = status;
 	    goto cleanup;
 	}

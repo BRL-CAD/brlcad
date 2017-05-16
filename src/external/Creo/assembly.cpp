@@ -71,11 +71,18 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
 		if (cinfo->empty->find(*d_it) == cinfo->empty->end()) {
 		    ProSolidFeatVisit(ProMdlToPart(model), assembly_check_empty, (ProFeatureFilterAction)component_filter, (ProAppData)ada);
 		    if (!has_shape) {
-			cinfo->empty->insert(*d_it);
+			wchar_t *stable = NULL;
 			char ename[MAXPATHLEN];
 			ProWstringToString(ename, *d_it);
-			creo_log(cinfo, MSG_FAIL, "all contents of assembly %s are empty, skipping\n", ename);
-			steady_state = 0;
+			if (cinfo->parts->find(*d_it) != cinfo->parts->end()) stable = *(cinfo->parts->find(*d_it));
+			if (!stable && cinfo->assems->find(*d_it) != cinfo->assems->end()) stable = *(cinfo->assems->find(*d_it));
+			if (!stable) {
+			    creo_log(cinfo, MSG_DEBUG, "%s - is empty assembly, but no stable version of name found???.\n", ename);
+			} else {
+			    creo_log(cinfo, MSG_FAIL, "all contents of assembly %s are empty, skipping\n", ename);
+			    cinfo->empty->insert(stable);
+			    steady_state = 0;
+			}
 		    }
 		}
 	    }
