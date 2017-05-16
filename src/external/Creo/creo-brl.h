@@ -243,6 +243,7 @@ extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
 extern "C" double creo_model_units(ProMdl);
 extern "C" ProError PopupMsg(const char *, const char *);
+extern "C" wchar_t* stable_wchar(struct creo_conv_info *, wchar_t *);
 
 /* This function is highly important - it is responsible for all name
  * generation, translation and clean-up in the converter.  A CREO name may map
