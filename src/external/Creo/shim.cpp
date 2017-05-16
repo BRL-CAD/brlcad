@@ -93,7 +93,7 @@ extern "C" void ProSurfaceIdGet(void*,int*) {}
 extern "C" void ProSurfaceToNURBS(void*,void***) {}
 extern "C" void ProUIInputpanelMaxlenSet(const char*,const char*,int) {}
 extern "C" void ProUIMessageDialogDisplay(int,const wchar_t *,const wchar_t *,ProUIMessageButton*,int,ProUIMessageButton*) {}
-extern "C" void ProUnitConversionGet(void**,ProUnitConversion*,void**) {}
+extern "C" void ProUnitConversionCalculate(void**,void**,ProUnitConversion*) {}
 extern "C" void ProUnitInit(void*,const wchar_t *,void**) {}
 extern "C" void ProUnitsystemUnitGet(void**,int,void**) {}
 extern "C" void ProWstringToString(char*,wchar_t*) {}
