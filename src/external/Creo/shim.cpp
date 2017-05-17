@@ -36,6 +36,7 @@ extern "C" int ProGeomitemdataGet(void**,void***) {return 0;}
 extern "C" int ProLinedataGet(void**,Pro3dPnt,Pro3dPnt) {return 0;}
 extern "C" int ProMdlCurrentGet(void**) {return 0;}
 extern "C" int ProMdlNameGet(void*,wchar_t*) {return 0;}
+extern "C" int ProMdlPrincipalunitsystemGet(void*,void**) {return 0;}
 extern "C" int ProMdlToModelitem(void*,void**) {return 0;}
 extern "C" int ProMdlTypeGet(void*,int*) {return 0;}
 extern "C" int ProMdlVerstampGet(void*, void**) {return 0;}
@@ -53,8 +54,8 @@ extern "C" int ProPartTessellate(void*,double,double,bool,ProSurfaceTessellation
 extern "C" int ProSolidFeatVisit(void*,int (*)(ProFeature*,int,void*),int (*)(ProFeature*,void*),void*) {return 0;}
 extern "C" int ProSolidMassPropertyGet(void*,void*,ProMassProperty*) {return 0;}
 extern "C" int ProSolidOutlineGet(void*, Pro3dPnt*) {return 0;}
-extern "C" int ProStringarrayFree(char**,int) {return 0;}
 extern "C" int ProStringVerstampGet(void*, void**) {return 0;}
+extern "C" int ProStringarrayFree(char**,int) {return 0;}
 extern "C" int ProSurfaceAppearancepropsGet(void**,ProSurfaceAppearanceProps*) {return 0;}
 extern "C" int ProUICheckbuttonActivateActionSet(const char*,const char*,void(*)(char*,char*,void*),void*) {return 0;}
 extern "C" int ProUICheckbuttonGetState(const char*,const char*,bool*) {return 0;}
@@ -69,33 +70,32 @@ extern "C" int ProUILabelTextSet(const char *,const char *,wchar_t *) {return 0;
 extern "C" int ProUIPushbuttonActivateActionSet(const char *,const char *,void (*)(char*,char *,void*),void*) {return 0;}
 extern "C" int ProUIRadiogroupSelectednamesGet(const char*,const char*,int*,char***) {return 0;}
 extern "C" int ProUITextareaValueSet(const char *,const char *,wchar_t*) {return 0;}
+extern "C" int ProUnitConversionCalculate(void**,void**,ProUnitConversion*) {return 0;}
+extern "C" int ProUnitsystemUnitGet(void**,int,void**) {return 0;}
 extern "C" int ProValueDataGet(void*,ProValueData*) {return 0;}
 extern "C" int ProVerstampEqual(void*, void*) {return 0;}
-extern "C" int ProVerstampStringGet(void*, char**) {return 0;}
 extern "C" int ProVerstampStringFree(char**) {return 0;}
+extern "C" int ProVerstampStringGet(void*, char**) {return 0;}
 extern "C" int ProWcharSizeVerify(size_t,int*) {return 0;}
 extern "C" int ProWindowRefresh(int) {return 0;}
 extern "C" int ProWstringFree(wchar_t*) {return 0;}
 extern "C" void ProAssemblyUnexplode(void*) {}
 extern "C" void ProContourEdgeVisit(void*,void*,int(*)(void*,int,void*),int(*)(void*,void*),void*) {}
 extern "C" void ProContourTraversalGet(void*,int*) {}
+extern "C" void ProMdlIsSkeleton(void*, bool*) {}
 extern "C" void ProMdlMdlNameGet(void*,int*,wchar_t*) {}
 extern "C" void ProMdlMdlnameGet(void*,wchar_t*) {}
-extern "C" void ProMdlPrincipalunitsystemGet(void*,void**) {}
 extern "C" void ProMessageClear() {}
-extern "C" void ProMdlIsSkeleton(void*, bool*) {}
 extern "C" void ProPartTessellationFree(ProSurfaceTessellationData**) {}
 extern "C" void ProSolidSurfaceVisit(void*,int(*)(void*,int,void*),int(*)(void*,void*),void*) {}
 extern "C" void ProStringToWstring(wchar_t*,const char*) {}
 extern "C" void ProSurfaceContourVisit(void*,int(*)(void*,int,void*),int(*)(void*,void*), void*) {}
-extern "C" void ProSurfacedataGet(void*,int*,double*,double*,int*,void**,int*) {}
 extern "C" void ProSurfaceIdGet(void*,int*) {}
 extern "C" void ProSurfaceToNURBS(void*,void***) {}
+extern "C" void ProSurfacedataGet(void*,int*,double*,double*,int*,void**,int*) {}
 extern "C" void ProUIInputpanelMaxlenSet(const char*,const char*,int) {}
 extern "C" void ProUIMessageDialogDisplay(int,const wchar_t *,const wchar_t *,ProUIMessageButton*,int,ProUIMessageButton*) {}
-extern "C" void ProUnitConversionCalculate(void**,void**,ProUnitConversion*) {}
 extern "C" void ProUnitInit(void*,const wchar_t *,void**) {}
-extern "C" void ProUnitsystemUnitGet(void**,int,void**) {}
 extern "C" void ProWstringToString(char*,wchar_t*) {}
 extern "C" void* ProMdlToPart(void*v) {return v;}
 extern "C" void* ProMdlToSolid(void*v) {return v;}

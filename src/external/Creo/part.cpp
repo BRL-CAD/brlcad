@@ -505,6 +505,8 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 
     double curr_error;
     double curr_angle;
+    double factor = cinfo->creo_to_brl_conv;
+    ProError ustatus = creo_model_units(&factor, model);
 
     ProMdlMdlnameGet(model, wname);
     ProWstringToString(pname, wname);
@@ -639,16 +641,15 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 
     creo_log(cinfo, MSG_OK, "%s: successfully tessellated with tessellation error: %g and angle: %g!!!\n", pname, curr_error, curr_angle);
 
-	
+
     // Use the part units for conversion - warn if it's different from the top level. 
-    double factor = cinfo->creo_to_brl_conv;
-    ProError ustatus = creo_model_units(&factor, model);
     if (ustatus == PRO_TK_NO_ERROR && !NEAR_EQUAL(factor, cinfo->creo_to_brl_conv, SMALL_FASTF)) {
 	creo_log(cinfo, MSG_DEBUG, "%s: Using part units for conversion, not global units.\n", pname);
     }
-	for (int i = 0; i < vert_tree->curr_vert * 3; i++) {
-		vert_tree->the_array[i] = vert_tree->the_array[i] * factor;
-	}
+
+    for (unsigned int i = 0; i < vert_tree->curr_vert * 3; i++) {
+	vert_tree->the_array[i] = vert_tree->the_array[i] * factor;
+    }
 
     /* Output the solid - TODO - what is the correct ordering??? does CCW always work? */
     *sname = get_brlcad_name(cinfo, wname, "s", N_SOLID);
