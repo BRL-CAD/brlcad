@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* upgraded libpng to version 1.6.29 - Cliff Yapp
+* upgraded zlib to version 1.2.11 - Cliff Yapp
 * reduced 'shade_inputs' flipped normal reporting - Sean Morrison
 * numerous 'simulate' command enhancements and fixes - Jon Engbert
 * fixed rtweight .density file loading on Windows - Cliff Yapp
@@ -40,9 +42,7 @@ changes made.  See document footer for additional details.
 * improved rtwizard window sizing and "RtWizard" titling - Cliff Yapp
 * brep command attaches .brep suffix instead of _brep - Sean Morrison
 * changed ogl & wgl framebuffer delayed write behavior - Sean Morrison
-* upgraded libpng to version 1.6.23 - Cliff Yapp
 * upgraded freetype to version 2.6.5 - Cliff Yapp
-* upgraded zlib to version 1.2.8 - Cliff Yapp
 * fix rtedge foreground/background color options - Jon Engbert
 * support rt -C colors specified as 0-255 or 0.0-1.0 - Jon Engbert
 * fixed xpush bug leaving stray top-level objects - Nick Reed

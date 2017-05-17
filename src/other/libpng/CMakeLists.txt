@@ -5,6 +5,7 @@
 # Revised by Roger Lowman, 2009-2010
 # Revised by Clifford Yapp, 2011-2012
 # Revised by Roger Leigh, 2016
+# Revised by Andreas Franek, 2016
 
 # This code is released under the libpng license.
 # For conditions of distribution and use, see the disclaimer
@@ -38,13 +39,13 @@ enable_testing()
 
 set(PNGLIB_MAJOR 1)
 set(PNGLIB_MINOR 6)
-set(PNGLIB_RELEASE 23)
+set(PNGLIB_RELEASE 29)
 set(PNGLIB_NAME libpng${PNGLIB_MAJOR}${PNGLIB_MINOR})
 set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_RELEASE})
 
 # needed packages
-find_package(ZLIB REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIR})
+  find_package(ZLIB REQUIRED)
+  include_directories(${ZLIB_INCLUDE_DIR})
 
 if(NOT WIN32)
   find_library(M_LIBRARY
@@ -148,8 +149,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(NOT AWK)
   # No awk available to generate sources; use pre-built pnglibconf.h
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.h.prebuilt
-               ${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.h.prebuilt
+                 ${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h)
   add_custom_target(genfiles) # Dummy
 else()
   include(CMakeParseArguments)
@@ -459,7 +460,7 @@ function(png_add_test)
 
   if (NOT _PAT_NAME)
     message(FATAL_ERROR "Invalid arguments.  png_add_test requires name.")
-endif()
+  endif()
   if (NOT _PAT_COMMAND)
     message(FATAL_ERROR "Invalid arguments.  png_add_test requires command.")
   endif()
@@ -552,7 +553,7 @@ endif(NOT WIN32 OR CYGWIN OR MINGW)
 # SET UP LINKS
 if(PNG_SHARED)
   set_target_properties(png PROPERTIES
-#   VERSION 16.${PNGLIB_RELEASE}.1.6.23
+#   VERSION 16.${PNGLIB_RELEASE}.1.6.29
     VERSION 16.${PNGLIB_RELEASE}.0
     SOVERSION 16
     CLEAN_DIRECT_OUTPUT 1)
