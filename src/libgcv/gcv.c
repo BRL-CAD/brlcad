@@ -25,12 +25,21 @@
 
 
 #include "common.h"
-
-#include "gcv/api.h"
-
-#include "bu/debug.h"
-
 #include <string.h>
+
+#include "vmath.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "rt/db5.h"
+#include "rt/db_instance.h"
+#include "rt/db_io.h"
+#include "rt/wdb.h"
+#include "rt/search.h"
+#include "rt/global.h"
+#include "gcv/api.h"
 
 
 HIDDEN int
