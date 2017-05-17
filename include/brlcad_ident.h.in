@@ -46,22 +46,22 @@
 /**
  * Compilation date, updated every time a build pass occurs.
  */
-static const char *BRLCAD_DATE = BRLCAD_COMPILE_DATE;
+static const char *BRLCAD_DATE = @BRLCAD_COMPILE_DATE@;
 
 /**
  * Compilation host, updated every time a build pass occurs.
  */
-static const char *BRLCAD_HOST = BRLCAD_COMPILE_HOST;
+static const char *BRLCAD_HOST = "@BRLCAD_COMPILE_HOST@";
 
 /**
  * Compilation user, updated every time a build pass occurs.
  */
-static const char *BRLCAD_USER = BRLCAD_COMPILE_USER;
+static const char *BRLCAD_USER = "@BRLCAD_COMPILE_USER@";
 
 /**
  * Compilation count, updated every time a build pass occurs.
  */
-static const int BRLCAD_COUNT = BRLCAD_COMPILE_COUNT;
+static const int BRLCAD_COUNT = @BRLCAD_COMPILE_COUNT@;
 
 
 /**
