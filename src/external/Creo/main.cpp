@@ -768,8 +768,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     }
 
     /* TODO -verify this is working correctly */
-    cinfo->creo_to_brl_conv = 1;
-	creo_model_units(&(cinfo->creo_to_brl_conv), model);
+    creo_model_units(&(cinfo->creo_to_brl_conv), model);
 
     /* adjust tolerance for Pro/E units */
     cinfo->local_tol = cinfo->tol_dist / cinfo->creo_to_brl_conv;
