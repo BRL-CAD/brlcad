@@ -3103,6 +3103,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   CMAKEFILES(${toplevel_ignore_files})
 
   # Handle some toplevel distclean listings
+  DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeCache.txt")
   DISTCLEAN("${CMAKE_BINARY_DIR}/cmakefiles.cmake")
   DISTCLEAN("${CMAKE_BINARY_DIR}/cmakedirs.cmake")
   DISTCLEAN("${CMAKE_BINARY_DIR}/cmake_install.cmake")
