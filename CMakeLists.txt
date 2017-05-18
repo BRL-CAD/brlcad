@@ -2760,7 +2760,7 @@ endif(MSVC)
 # Generate the windows specific file, if needed
 if(WIN32)
   if(EXISTS "${BRLCAD_BINARY_DIR}/include/config_win.h")
-    configure_file(${CONFIG_H_FILE} "${BRLCAD_BINARY_DIR}/include/config_win.h.tmp")
+    configure_file("${BRLCAD_SOURCE_DIR}/include/config_win.h.in" "${BRLCAD_BINARY_DIR}/include/config_win.h.tmp")
     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/config_win.h.tmp" "${BRLCAD_BINARY_DIR}/include/config_win.h")
   else(EXISTS "${BRLCAD_BINARY_DIR}/include/config_win.h")
     configure_file("${BRLCAD_SOURCE_DIR}/include/config_win.h.in" "${BRLCAD_BINARY_DIR}/include/config_win.h")
