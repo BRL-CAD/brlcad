@@ -160,7 +160,7 @@ for obj in $tops ; do
 	sed -n '/dist:/{
 	        s/count://g
 	        s/dist://g
-	        s/mm @*$//g
+	        s/mm @.*$//g
 	        p
 	       }' $OBJ.gqa.log |
 	awk '{if ($2 < $1) { tmp = $1; $1 = $2; $2 = tmp}; print $1, $2, $3 * $4}' >> $OBJ.pairings
