@@ -125,10 +125,10 @@ creo_model_units(double *scale, ProMdl mdl)
     ProUnititem mmu;
     ProUnitConversion conv;
 	if (!scale) return status;
-    if ((status == ProMdlPrincipalunitsystemGet(mdl, &us)) != PRO_TK_NO_ERROR) return status;
-    if ((status == ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu)) != PRO_TK_NO_ERROR) return status;
+    if ((status = ProMdlPrincipalunitsystemGet(mdl, &us)) != PRO_TK_NO_ERROR) return status;
+    if ((status = ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu)) != PRO_TK_NO_ERROR) return status;
     ProUnitInit(mdl, L"mm", &mmu);
-	if ((status == ProUnitConversionCalculate(&lmu, &mmu, &conv)) != PRO_TK_NO_ERROR) return status;
+	if ((status = ProUnitConversionCalculate(&lmu, &mmu, &conv)) != PRO_TK_NO_ERROR) return status;
 	(*scale) = conv.scale;
     return PRO_TK_NO_ERROR;
 }
