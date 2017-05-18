@@ -190,13 +190,11 @@ CMAKEFILES(incrTcl)
 # libtermlib Library Only on WIN32 will the combination of the build
 # search tests and libtermlib fail to find a valid term, so set
 # variables accordingly
-if(NOT WIN32)
-  set(HAVE_TERMLIB ON CACHE BOOL "Have some termlib" FORCE)
-ELSE(NOT WIN32)
-  set(BRLCAD_TERMLIB_BUILD "System" CACHE STRING "Disable libtermlib build on WIN32." FORCE)
-  mark_as_advanced(BRLCAD_TERMLIB_BUILD)
+if(WIN32)
   set(HAVE_TERMLIB OFF CACHE BOOL "Have some termlib" FORCE)
-endif(NOT WIN32)
+else(WIN32)
+  set(HAVE_TERMLIB ON CACHE BOOL "Have some termlib" FORCE)
+endif(WIN32)
 mark_as_advanced(HAVE_TERMLIB)
 
 set(termlib_ALIASES ENABLE_TERMLIB)
@@ -212,7 +210,6 @@ THIRD_PARTY(libtermlib TERMLIB termlib termlib_DESCRIPTION REQUIRED_VARS HAVE_TE
   BRLCAD_LEVEL2 ALIASES ${termlib_ALIASES})
 if(BRLCAD_TERMLIB_BUILD)
   set(HAVE_TERMCAP_H ON CACHE BOOL "src/other termlib is on" FORCE)
-  CONFIG_H_APPEND(BRLCAD "#undef HAVE_TERMCAP_H\n#cmakedefine HAVE_TERMCAP_H 1\n")
   mark_as_advanced(HAVE_TERMCAP_H)
 endif(BRLCAD_TERMLIB_BUILD)
 
