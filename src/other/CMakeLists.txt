@@ -497,6 +497,14 @@ if(BRLCAD_TK_BUILD)
   elseif(UNIX)
     set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
   endif(WIN32)
+  # If we're building our own libpng, that tends to conflict with fontconfig,
+  # which is needed for Tk's freefype enabled build.  So when we do build
+  # libpng we need to disable the Tk freetype support to allow reliable
+  # building, at least until we can provide our own fontconfig as well as
+  # our own freetype...
+  if(BRLCAD_PNG_BUILD)
+    set(TK_DISABLE_XFT 1)
+  endif(BRLCAD_PNG_BUILD)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_TK_H 1\n")
   mark_as_advanced(TK-ENABLE_FREETYPE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/Makefile")

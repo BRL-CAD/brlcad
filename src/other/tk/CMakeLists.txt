@@ -333,17 +333,21 @@ CMAKE_DEPENDENT_OPTION(TK_ENABLE_XSS "Use XScreenSaver" ON "TK_SYSTEM_GRAPHICS S
 #--------------------------------------------------------------------
 #       Check for freetype / fontconfig / Xft support.
 #--------------------------------------------------------------------
-IF(NOT WIN32)
-  find_package(Freetype)
-  find_package(Fontconfig)
-  IF(NOT FREETYPE_FOUND)
-    SET(FREETYPE_LIBRARIES "")
-  ENDIF(NOT FREETYPE_FOUND)
-  IF(NOT FONTCONFIG_FOUND)
-    SET(FONTCONFIG_LIBRARIES "")
-  ENDIF(NOT FONTCONFIG_FOUND)
-ENDIF(NOT WIN32)
-CMAKE_DEPENDENT_OPTION(TK_ENABLE_XFT "Use freetype/fontconfig/xft" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;FREETYPE_FOUND;FONTCONFIG_FOUND;X11_Xft_FOUND" OFF)
+if(NOT TK_DISABLE_XFT)
+  IF(NOT WIN32)
+    find_package(Freetype)
+    find_package(Fontconfig)
+    IF(NOT FREETYPE_FOUND)
+      SET(FREETYPE_LIBRARIES "")
+    ENDIF(NOT FREETYPE_FOUND)
+    IF(NOT FONTCONFIG_FOUND)
+      SET(FONTCONFIG_LIBRARIES "")
+    ENDIF(NOT FONTCONFIG_FOUND)
+  ENDIF(NOT WIN32)
+  CMAKE_DEPENDENT_OPTION(TK_ENABLE_XFT "Use freetype/fontconfig/xft" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;FREETYPE_FOUND;FONTCONFIG_FOUND;X11_Xft_FOUND" OFF)
+else(NOT TK_DISABLE_XFT)
+  set(TK_ENABLE_XFT OFF)
+endif(NOT TK_DISABLE_XFT)
 
 #----------------------------------------------------------------------------
 # signed/unsigned char - does the Tcl code still need this? See
