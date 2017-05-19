@@ -284,6 +284,13 @@ if(BRLCAD_PNG_BUILD)
   if("${M_LIBRARY}" MATCHES "NOTFOUND")
     unset(M_LIBRARY CACHE)
   endif("${M_LIBRARY}" MATCHES "NOTFOUND")
+
+  # If we enable XFT support Tk when building our own libpng, the linking of
+  # freetype and fontconfig often pulls in the system libpng anyway, which
+  # causes conflicts.  Make sure, if we do have to build Tk, that we don't try
+  # enabling XFT.
+  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
+
   SetTargetFolder(png "Third Party Libraries")
   SetTargetFolder(png_static "Third Party Libraries")
   SetTargetFolder(genfiles "Third Party Libraries")
@@ -502,9 +509,6 @@ if(BRLCAD_TK_BUILD)
   # libpng we need to disable the Tk freetype support to allow reliable
   # building, at least until we can provide our own fontconfig as well as
   # our own freetype...
-  if(BRLCAD_PNG_BUILD)
-    set(TK_DISABLE_XFT 1)
-  endif(BRLCAD_PNG_BUILD)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_TK_H 1\n")
   mark_as_advanced(TK-ENABLE_FREETYPE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/Makefile")
