@@ -1535,7 +1535,10 @@ main(int argc, char *argv[])
     /* XXX total hack that fixes a dm init issue on Mac OS X where the
      * dm first opens filled with garbage.
      */
-    dm_set_bg(dmp, 0, 0, 0);
+    {
+	unsigned char *dm_bg = dm_get_bg(dmp);
+	dm_set_bg(dmp, dm_bg[0], dm_bg[1], dm_bg[2]);
+    }
 
     /* initialize a display manager */
     if (interactive && classic_mged) {
@@ -2891,6 +2894,9 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     Tcl_ResetResult(interpreter);
     Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
     bu_vls_free(&msg);
+
+    /* Update the background colors now that we have a file open */
+    cs_set_bg(NULL, NULL, NULL, NULL, NULL);
 
     return TCL_OK;
 }
