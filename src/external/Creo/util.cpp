@@ -52,7 +52,8 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
 	cinfo->curr_msg_type = msg_type;
 	struct bu_vls vmsg = BU_VLS_INIT_ZERO;
 
-	if (cinfo->logger_type == LOGGER_TYPE_NONE) return;
+	if (cinfo->logger_type == LOGGER_TYPE_NONE)
+	    return;
 
 	switch (cinfo->curr_msg_type) {
 	    case MSG_FAIL:
@@ -124,11 +125,24 @@ creo_model_units(double *scale, ProMdl mdl)
     ProUnititem lmu;
     ProUnititem mmu;
     ProUnitConversion conv;
-    if (!scale) return status;
-    if ((status = ProMdlPrincipalunitsystemGet(mdl, &us)) != PRO_TK_NO_ERROR) return status;
-    if ((status = ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu)) != PRO_TK_NO_ERROR) return status;
+
+    if (!scale)
+	return status;
+
+    status = ProMdlPrincipalunitsystemGet(mdl, &us);
+    if (status != PRO_TK_NO_ERROR)
+	return status;
+
+    status = ProUnitsystemUnitGet(&us, PRO_UNITTYPE_LENGTH, &lmu);
+    if (status != PRO_TK_NO_ERROR)
+	return status;
+
     ProUnitInit(mdl, L"mm", &mmu);
-    if ((status = ProUnitConversionCalculate(&lmu, &mmu, &conv)) != PRO_TK_NO_ERROR) return status;
+
+    status = ProUnitConversionCalculate(&lmu, &mmu, &conv);
+    if (status != PRO_TK_NO_ERROR)
+	return status;
+
     (*scale) = conv.scale;
     return PRO_TK_NO_ERROR;
 }
@@ -203,7 +217,9 @@ extern "C" ProError regex_key(ProParameter *param, ProError UNUSED(status), ProA
     ProParamvalueType ptype;
     regex_t reg;
     struct pparam_data *pdata = (struct pparam_data *)app_data;
-    if (pdata->val) return PRO_TK_NO_ERROR;
+    if (pdata->val)
+	return PRO_TK_NO_ERROR;
+
     ProWstringToString(pname, param->id);
     (void)regcomp(&reg, pdata->key, REG_NOSUB|REG_EXTENDED);
     if (!(regexec(&reg, pname, 0, NULL, 0))) {
@@ -211,15 +227,23 @@ extern "C" ProError regex_key(ProParameter *param, ProError UNUSED(status), ProA
 	return PRO_TK_CONTINUE;
     }
     regfree(&reg);
-    if (ProParameterValueGet(param, &pval) != PRO_TK_NO_ERROR) return PRO_TK_CONTINUE;
-    if (ProParamvalueTypeGet(&pval, &ptype) != PRO_TK_NO_ERROR) return PRO_TK_CONTINUE;
+
+    if (ProParameterValueGet(param, &pval) != PRO_TK_NO_ERROR)
+	return PRO_TK_CONTINUE;
+
+    if (ProParamvalueTypeGet(&pval, &ptype) != PRO_TK_NO_ERROR)
+	return PRO_TK_CONTINUE;
+
     if (ptype == PRO_PARAM_STRING) {
-	if (ProParamvalueValueGet(&pval, ptype, wval) != PRO_TK_NO_ERROR) return PRO_TK_CONTINUE;
+	if (ProParamvalueValueGet(&pval, ptype, wval) != PRO_TK_NO_ERROR)
+	    return PRO_TK_CONTINUE;
+
 	ProWstringToString(val, wval);
 	if (strlen(val) > 0) {
 	    pdata->val = bu_strdup(val);
 	}
     }
+
     return PRO_TK_NO_ERROR;
 }
 
@@ -240,8 +264,11 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
     ProStringToWstring(wkey, (char *)key);
     ProMdlToModelitem(m, &mitm);
     pstatus = ProParameterInit(&mitm, wkey, &param);
+
     /* if param not found, return */
-    if (pstatus != PRO_TK_NO_ERROR) return PRO_TK_CONTINUE;
+    if (pstatus != PRO_TK_NO_ERROR)
+	return PRO_TK_CONTINUE;
+
     ProParameterValueGet(&param, &pval);
     ProParamvalueTypeGet(&pval, &ptype);
     switch (ptype) {
@@ -270,14 +297,20 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, int flags)
 
     ProModelitem itm;
     ProMdl model;
+
     if (flags == N_REGION) {
-	if (ProMdlnameInit(creo_name, PRO_MDLFILE_PART, &model) != PRO_TK_NO_ERROR) return NULL;
+	if (ProMdlnameInit(creo_name, PRO_MDLFILE_PART, &model) != PRO_TK_NO_ERROR)
+	    return NULL;
     } else if (flags == N_ASSEM) {
-	if (ProMdlnameInit(creo_name, PRO_MDLFILE_ASSEMBLY, &model) != PRO_TK_NO_ERROR) return NULL;
+	if (ProMdlnameInit(creo_name, PRO_MDLFILE_ASSEMBLY, &model) != PRO_TK_NO_ERROR)
+	    return NULL;
     } else {
 	return NULL;
     }
-    if (ProMdlToModelitem(model, &itm) != PRO_TK_NO_ERROR) return NULL;
+
+    if (ProMdlToModelitem(model, &itm) != PRO_TK_NO_ERROR)
+	return NULL;
+
     for (unsigned int i = 0; i < cinfo->model_parameters->size(); i++) {
 	pdata.key = cinfo->model_parameters->at(i);
 	/* first, try a direct lookup */
@@ -312,8 +345,13 @@ extern "C" wchar_t *
 stable_wchar(struct creo_conv_info *cinfo, wchar_t *wc)
 {
     wchar_t *stable = NULL;
-    if (cinfo->parts->find(wc) != cinfo->parts->end()) stable = *(cinfo->parts->find(wc));
-    if (!stable && cinfo->assems->find(wc) != cinfo->assems->end()) stable = *(cinfo->assems->find(wc));
+
+    if (cinfo->parts->find(wc) != cinfo->parts->end())
+	stable = *(cinfo->parts->find(wc));
+
+    if (!stable && cinfo->assems->find(wc) != cinfo->assems->end())
+	stable = *(cinfo->assems->find(wc));
+
     return stable;
 }
 
@@ -330,10 +368,12 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     std::map<wchar_t *, struct bu_vls *, WStrCmp> *nmap = NULL;
     std::set<struct bu_vls *, StrCmp> *nset = cinfo->brlcad_names;
     char astr[CREO_NAME_MAX];
+
     ProWstringToString(astr, name);
 
     /* If we don't have a valid type, we don't know what to do */
-    if (flag < N_REGION || flag > N_CREO) return NULL;
+    if (flag < N_REGION || flag > N_CREO)
+	return NULL;
 
     /* If the name isn't in either the parts or assemblies sets, it's
      * not an active part of the conversion */
@@ -439,8 +479,12 @@ component_filter(ProFeature *feat, ProAppData *UNUSED(data))
 {
     ProFeattype type;
     ProFeatStatus feat_stat;
-    if (ProFeatureTypeGet(feat, &type) != PRO_TK_NO_ERROR || type != PRO_FEAT_COMPONENT) return PRO_TK_CONTINUE;
-    if (ProFeatureStatusGet(feat, &feat_stat) != PRO_TK_NO_ERROR || feat_stat != PRO_FEAT_ACTIVE) return PRO_TK_CONTINUE;
+
+    if (ProFeatureTypeGet(feat, &type) != PRO_TK_NO_ERROR || type != PRO_FEAT_COMPONENT)
+	return PRO_TK_CONTINUE;
+    if (ProFeatureStatusGet(feat, &feat_stat) != PRO_TK_NO_ERROR || feat_stat != PRO_FEAT_ACTIVE)
+	return PRO_TK_CONTINUE;
+
     return PRO_TK_NO_ERROR;
 }
 
@@ -451,15 +495,16 @@ ProError PopupMsg(const char *title, const char *msg)
     wchar_t wmsg[CREO_MSG_MAX];
     ProUIMessageButton* button;
     ProUIMessageButton bresult;
+
     ProArrayAlloc(1, sizeof(ProUIMessageButton), 1, (ProArray*)&button);
     button[0] = PRO_UI_MESSAGE_OK;
     ProStringToWstring(wtitle, (char *)title);
     ProStringToWstring(wmsg, (char *)msg);
     ProUIMessageDialogDisplay(PROUIMESSAGE_INFO, wtitle, wmsg, button, PRO_UI_MESSAGE_OK, &bresult);
     ProArrayFree((ProArray*)&button);
+
     return PRO_TK_NO_ERROR;
 }
-
 
 
 /*
