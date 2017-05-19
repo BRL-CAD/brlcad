@@ -290,6 +290,7 @@ if(BRLCAD_PNG_BUILD)
   # causes conflicts.  Make sure, if we do have to build Tk, that we don't try
   # enabling XFT.
   set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
+  mark_as_advanced(TK_DISABLE_XFT)
 
   SetTargetFolder(png "Third Party Libraries")
   SetTargetFolder(png_static "Third Party Libraries")
