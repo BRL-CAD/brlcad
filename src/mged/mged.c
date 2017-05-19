@@ -1537,7 +1537,11 @@ main(int argc, char *argv[])
      */
     {
 	unsigned char *dm_bg = dm_get_bg(dmp);
-	dm_set_bg(dmp, dm_bg[0], dm_bg[1], dm_bg[2]);
+	if (dm_bg) {
+	    dm_set_bg(dmp, dm_bg[0], dm_bg[1], dm_bg[2]);
+	} else {
+	    dm_set_bg(dmp, 0, 0, 0);
+	}
     }
 
     /* initialize a display manager */
