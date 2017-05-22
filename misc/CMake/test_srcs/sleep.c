@@ -1,4 +1,3 @@
-#include "common.h"
 #include "bio.h"
 
 #ifdef _WIN32
