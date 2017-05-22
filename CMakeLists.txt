@@ -2312,7 +2312,7 @@ if (HAVE_DAEMON)
   check_c_source_compiles("#include <stdlib.h>\nint main() { (void)daemon; return 0; }" HAVE_WORKING_DAEMON_FUNCTION)
 endif (HAVE_DAEMON)
 
-# ntohll and htonll maybe harder to spot - do some extra tests
+# ntohll and htonll may be harder to spot - do some extra tests
 if("${HAVE_NTOHLL}" STREQUAL "")
   CHECK_SYMBOL_EXISTS(ntohll "sys/_endian.h" HAVE_NTOHLL_SYS__ENDIAN)
   if(HAVE_NTOHLL_SYS__ENDIAN AND CONFIG_H_FILE)
