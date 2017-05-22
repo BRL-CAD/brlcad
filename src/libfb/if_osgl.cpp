@@ -41,9 +41,11 @@
 
 #include <osg/GLExtensions>
 
-#include "fb/fb_osgl.h"
-#include "fb_private.h"
 
+#include "fb/fb_osgl.h"
+extern "C" {
+#include "fb_private.h"
+}
 
 #define CJDEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
