@@ -347,6 +347,8 @@ if(NOT TK_DISABLE_XFT)
   CMAKE_DEPENDENT_OPTION(TK_ENABLE_XFT "Use freetype/fontconfig/xft" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;FREETYPE_FOUND;FONTCONFIG_FOUND;X11_Xft_FOUND" OFF)
 else(NOT TK_DISABLE_XFT)
   set(TK_ENABLE_XFT OFF)
+  set(FREETYPE_LIBRARIES "")
+  set(FONTCONFIG_LIBRARIES "")
 endif(NOT TK_DISABLE_XFT)
 
 #----------------------------------------------------------------------------
@@ -744,11 +746,13 @@ IF(X11_Xscreensaver_INCLUDE_PATH)
 ENDIF(X11_Xscreensaver_INCLUDE_PATH)
 
 include_directories(
-  ${TCL_INCLUDE_DIRS}	
+  ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
-  ${FREETYPE_INCLUDE_DIRS}
   ${TK_X11_INCLUDE_DIRS}
   )
+if(TK_ENABLE_XFT)
+  include_directories(${FREETYPE_INCLUDE_DIRS})
+endif(TK_ENABLE_XFT)
 
 SET(X11_TK_LIBS "")
 IF(X11_X11_LIB)
@@ -757,9 +761,9 @@ ENDIF(X11_X11_LIB)
 IF(X11_Xext_LIB)
   SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xext_LIB})
 ENDIF(X11_Xext_LIB)
-IF(X11_Xft_LIB)
+if(X11_Xft_LIB AND TK_ENABLE_XFT)
   SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xft_LIB})
-ENDIF(X11_Xft_LIB)
+endif(X11_Xft_LIB AND TK_ENABLE_XFT)
 IF(X11_Xrender_LIB)
   SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xrender_LIB})
 ENDIF(X11_Xrender_LIB)
@@ -791,7 +795,6 @@ SET_PROPERTY(TARGET tkstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 IF(MINGW)
   set(TK_MINGW_LIBS comctl32 m dinput8 dxguid dxerr8 user32 gdi32 winmm imm32 ole32 oleaut32 shell32 version uuid)
 ENDIF(MINGW)
-
 add_library(tk ${TK_SRCS})
 IF(WIN32)
   target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB} ${X11_TK_LIBS} ${TK_MINGW_LIBS})
