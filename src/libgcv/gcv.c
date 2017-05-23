@@ -121,10 +121,14 @@ _gcv_filter_register(struct bu_ptbl *filter_table,
 
 	case GCV_FILTER_READ:
 	case GCV_FILTER_WRITE:
+	    /* One mime_type isn't going to cut it for things
+	     * like GDAL or the asset import library... need to
+	     * rethink this */
+#if 0
 	    if (filter->mime_type == BU_MIME_MODEL_AUTO
 		|| filter->mime_type == BU_MIME_MODEL_UNKNOWN)
 		bu_bomb("invalid mime_type");
-
+#endif
 	    break;
 
 	default:
