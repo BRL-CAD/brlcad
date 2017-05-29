@@ -43,7 +43,7 @@
  *    Phd Thesis, Yale, 1978.
  *
  * Godfried T. Toussaint, "Solving geometric problems with the rotating
- * calipers," Proceedings of IEEE MELECON'83, Athens, Greece, May 1983.
+ * calipers, " Proceedings of IEEE MELECON'83, Athens, Greece, May 1983.
  *
  * This is a translation of the Geometric Tools MinBox2 implementation:
  * http://www.geometrictools.com/LibMathematics/Containment/Wm5ContMinBox2.cpp
@@ -107,7 +107,8 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
     V2MOVE(*p1, min);
     V2MOVE(*p2, max);
     /* If the bbox is nearly a point, return 0 */
-    if (NEAR_ZERO(max[0] - min[0], BN_TOL_DIST) && NEAR_ZERO(max[1] - min[1], BN_TOL_DIST)) return 0;
+    if (NEAR_ZERO(max[0] - min[0], BN_TOL_DIST) && NEAR_ZERO(max[1] - min[1], BN_TOL_DIST))
+	return 0;
 
     /* Test if the point set is (nearly) a line */
 
@@ -119,13 +120,15 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
 	V2MOVE(B, min_x_pt);
     }
 #define MAXDIST_AB(_minpt, _maxpt) { \
-    fastf_t md_dist = DIST_PT2_PT2(_minpt, _maxpt); \
-    if (md_dist > dmax) { \
-	dmax = md_dist; \
-	V2MOVE(A, _minpt); \
-	V2MOVE(B, _maxpt); \
-    } \
-}
+	fastf_t md_dist = DIST_PT2_PT2(_minpt, _maxpt); \
+	if (md_dist > dmax) { \
+	    dmax = md_dist; \
+	    V2MOVE(A, _minpt); \
+	    V2MOVE(B, _maxpt); \
+	} \
+    }
+
+
     MAXDIST_AB(min_x_pt, max_x_pt);
     MAXDIST_AB(min_x_pt, max_y_pt);
     MAXDIST_AB(min_y_pt, max_x_pt);
@@ -143,13 +146,15 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
 	V2MOVE(curr_pnt, pnts[i]);
 	VSET(curr_pnt_3D, curr_pnt[0], curr_pnt[1], 0.0);
 	/* If we're off the line, it's 2D. */
-	if (bn_dist_pt2_lseg2(&dist_sq, pca, A_3D, B_3D, curr_pnt_3D, &tol) > 2) return 2;
+	if (bn_dist_pt2_lseg2(&dist_sq, pca, A_3D, B_3D, curr_pnt_3D, &tol) > 2)
+	    return 2;
     }
     /* If we've got a line, make sure p1 and p2 are the extreme points */
     V2MOVE(*p1, A);
     V2MOVE(*p2, B);
     return 1;
 }
+
 
 struct obr_vals {
     fastf_t area;
@@ -159,6 +164,7 @@ struct obr_vals {
     fastf_t extent1;
     point2d_t center;
 };
+
 
 /* The oriented bounding rectangle must be calculated from the points and 2D vectors provided by
  * the rotating calipers, and the smallest resultant area tracked.  Those functions are handled
@@ -185,7 +191,7 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
 	obr->extent0 = extent0;
 	obr->extent1 = extent1;
 	/* Note: translated the following to vmath.h routines...
-	mMinBox.Center = left_pnt + U*extent0 + V*(extent1 - V.Dot(left_bottom_diff));*/
+	   mMinBox.Center = left_pnt + U*extent0 + V*(extent1 - V.Dot(left_bottom_diff));*/
 	V2SUB2(left_bottom_diff, left_pnt, bottom_pnt);
 	V2SCALE(U, u, extent0);
 	V2SCALE(V, v, extent1 - V2DOT(v, left_bottom_diff));
@@ -193,6 +199,7 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
 	V2SCALE(V, v, extent1);
     }
 }
+
 
 /* Three consecutive collinear points will cause a problem (as per a comment in the original code)
  * Consequently, we're going to have to build the convex hull for all non-trivial inputs in order to
@@ -257,214 +264,216 @@ bg_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 	    /*   V[B][1] <= V[i][1] for all i and V[(B+1)%N][1] > V[B][1]        */
 	    /*   V[T][1] >= V[i][1] for all i and V[(T+1)%N][1] < V[T][1]        */
 	    {
-	    fastf_t xmin = hull_pnts[0][0];
-	    fastf_t xmax = xmin;
-	    fastf_t ymin = hull_pnts[0][1];
-	    fastf_t ymax = ymin;
-	    int LIndex = 0;
-	    int RIndex = 0;
-	    int BIndex = 0;
-	    int TIndex = 0;
-	    for (i = 1; i < hull_pnt_cnt; ++i) {
-		if (hull_pnts[i][0] <= xmin) {
-		    xmin = hull_pnts[i][0];
-		    LIndex = i;
-		}
-		if (hull_pnts[i][0] >= xmax) {
-		    xmax = hull_pnts[i][0];
-		    RIndex = i;
-		}
-
-		if (hull_pnts[i][1] <= ymin) {
-		    ymin = hull_pnts[i][1];
-		    BIndex = i;
-		}
-		if (hull_pnts[i][1] >= ymax) {
-		    ymax = hull_pnts[i][1];
-		    TIndex = i;
-		}
-	    }
-
-	    /* Apply wrap-around tests to ensure the constraints mentioned above are satisfied.*/
-	    if ((LIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][0] <= xmin)) {
-		xmin = hull_pnts[0][0];
-		LIndex = 0;
-	    }
-
-	    if ((RIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][0] >= xmax)) {
-		xmax = hull_pnts[0][0];
-		RIndex = 0;
-	    }
-
-	    if ((BIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][1] <= ymin)) {
-		ymin = hull_pnts[0][1];
-		BIndex = 0;
-	    }
-
-	    if ((TIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][1] >= ymax)) {
-		ymax = hull_pnts[0][1];
-		TIndex = 0;
-	    }
-
-	    /* initialize with AABB */
-	    obr->center[0] = 0.5 * (xmin + xmax);
-	    obr->center[1] = 0.5 * (ymin + ymax);
-	    V2SET(obr->u, obr->center[0], 0);
-	    V2UNITIZE(obr->u);
-	    V2SET(obr->v, -obr->u[1], obr->u[0]);
-	    V2UNITIZE(obr->v);
-	    obr->extent0 = 0.5 * (xmax - xmin);
-	    obr->extent1 = 0.5 * (ymax - ymin);
-	    obr->area = obr->extent0 * obr->extent1 * 4;
-
-	    /* 3. The rotating calipers algorithm */
-	    done = 0;
-	    V2SET(u, 1, 0);
-
-	    while (!done) {
-		/* Determine the edge that forms the smallest angle with the current
-		   box edges. */
-		int flag = F_NONE;
+		fastf_t xmin = hull_pnts[0][0];
+		fastf_t xmax = xmin;
+		fastf_t ymin = hull_pnts[0][1];
+		fastf_t ymax = ymin;
+		int LIndex = 0;
+		int RIndex = 0;
+		int BIndex = 0;
+		int TIndex = 0;
 		fastf_t maxDot = 0.0;
-		fastf_t dot = 0.0;
-		vect2d_t t, tmp;
-		V2MOVE(t, u);
 
+		for (i = 1; i < hull_pnt_cnt; ++i) {
+		    if (hull_pnts[i][0] <= xmin) {
+			xmin = hull_pnts[i][0];
+			LIndex = i;
+		    }
+		    if (hull_pnts[i][0] >= xmax) {
+			xmax = hull_pnts[i][0];
+			RIndex = i;
+		    }
 
-		dot = V2DOT(t, edge_unit_vects[BIndex]);
-		/*bu_log("t: %f, %f\n", t[0], t[1]);
-		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[BIndex][0], edge_unit_vects[BIndex][1]);
-		bu_log("b_dot: %f\n", dot);*/
-		if (dot > maxDot) {
-		    maxDot = dot;
-		    flag = F_BOTTOM;
+		    if (hull_pnts[i][1] <= ymin) {
+			ymin = hull_pnts[i][1];
+			BIndex = i;
+		    }
+		    if (hull_pnts[i][1] >= ymax) {
+			ymax = hull_pnts[i][1];
+			TIndex = i;
+		    }
 		}
 
-		V2SET(t, -u[1], u[0]);
-		dot = V2DOT(t, edge_unit_vects[RIndex]);
-		/*bu_log("t: %f, %f\n", t[0], t[1]);
-		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[RIndex][0], edge_unit_vects[RIndex][1]);
-		bu_log("r_dot: %f\n", dot);*/
-		if (dot > maxDot) {
-		    maxDot = dot;
-		    flag = F_RIGHT;
+		/* Apply wrap-around tests to ensure the constraints mentioned above are satisfied.*/
+		if ((LIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][0] <= xmin)) {
+		    xmin = hull_pnts[0][0];
+		    LIndex = 0;
 		}
 
-		V2SET(tmp, -t[1], t[0]);
-		V2MOVE(t, tmp);
-		dot = V2DOT(t, edge_unit_vects[TIndex]);
-		/*bu_log("t: %f, %f\n", t[0], t[1]);
-		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[TIndex][0], edge_unit_vects[TIndex][1]);
-		bu_log("t_dot: %f\n", dot);*/
-		if (dot > maxDot) {
-		    maxDot = dot;
-		    flag = F_TOP;
+		if ((RIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][0] >= xmax)) {
+		    xmax = hull_pnts[0][0];
+		    RIndex = 0;
 		}
 
-		V2SET(tmp, -t[1], t[0]);
-		V2MOVE(t, tmp);
-		dot = V2DOT(t, edge_unit_vects[LIndex]);
-		/*bu_log("t: %f, %f\n", t[0], t[1]);
-		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[LIndex][0], edge_unit_vects[LIndex][1]);
-		bu_log("l_dot: %f\n", dot);*/
-		if (dot > maxDot) {
-		    maxDot = dot;
-		    flag = F_LEFT;
+		if ((BIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][1] <= ymin)) {
+		    ymin = hull_pnts[0][1];
+		    BIndex = 0;
 		}
 
-		switch (flag) {
-		    case F_BOTTOM:
-			if (visited[BIndex]) {
-			    done = 1;
-			} else {
-			    /* Compute box axes with E[B] as an edge.*/
-			    V2MOVE(t, edge_unit_vects[BIndex]);
-			    V2MOVE(u, t);
-			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				      hull_pnts[BIndex], hull_pnts[TIndex], u);
+		if ((TIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][1] >= ymax)) {
+		    ymax = hull_pnts[0][1];
+		    TIndex = 0;
+		}
 
-			    /* Mark edge visited and rotate the calipers. */
-			    visited[BIndex] = 1;
-			    if ((BIndex + 1) == hull_pnt_cnt) {
-				BIndex = 0;
+		/* initialize with AABB */
+		obr->center[0] = 0.5 * (xmin + xmax);
+		obr->center[1] = 0.5 * (ymin + ymax);
+		V2SET(obr->u, obr->center[0], 0);
+		V2UNITIZE(obr->u);
+		V2SET(obr->v, -obr->u[1], obr->u[0]);
+		V2UNITIZE(obr->v);
+		obr->extent0 = 0.5 * (xmax - xmin);
+		obr->extent1 = 0.5 * (ymax - ymin);
+		obr->area = obr->extent0 * obr->extent1 * 4;
+
+		/* 3. The rotating calipers algorithm */
+		done = 0;
+		V2SET(u, 1, 0);
+
+		while (!done) {
+		    /* Determine the edge that forms the smallest angle with the current
+		       box edges. */
+		    int flag = F_NONE;
+		    fastf_t dot = 0.0;
+		    vect2d_t t, tmp;
+		    V2MOVE(t, u);
+		    maxDot = 0.0;
+
+		    dot = V2DOT(t, edge_unit_vects[BIndex]);
+		    /*bu_log("t: %f, %f\n", t[0], t[1]);
+		      bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[BIndex][0], edge_unit_vects[BIndex][1]);
+		      bu_log("b_dot: %f\n", dot);*/
+		    if (dot > maxDot) {
+			maxDot = dot;
+			flag = F_BOTTOM;
+		    }
+
+		    V2SET(t, -u[1], u[0]);
+		    dot = V2DOT(t, edge_unit_vects[RIndex]);
+		    /*bu_log("t: %f, %f\n", t[0], t[1]);
+		      bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[RIndex][0], edge_unit_vects[RIndex][1]);
+		      bu_log("r_dot: %f\n", dot);*/
+		    if (dot > maxDot) {
+			maxDot = dot;
+			flag = F_RIGHT;
+		    }
+
+		    V2SET(tmp, -t[1], t[0]);
+		    V2MOVE(t, tmp);
+		    dot = V2DOT(t, edge_unit_vects[TIndex]);
+		    /*bu_log("t: %f, %f\n", t[0], t[1]);
+		      bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[TIndex][0], edge_unit_vects[TIndex][1]);
+		      bu_log("t_dot: %f\n", dot);*/
+		    if (dot > maxDot) {
+			maxDot = dot;
+			flag = F_TOP;
+		    }
+
+		    V2SET(tmp, -t[1], t[0]);
+		    V2MOVE(t, tmp);
+		    dot = V2DOT(t, edge_unit_vects[LIndex]);
+		    /*bu_log("t: %f, %f\n", t[0], t[1]);
+		      bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[LIndex][0], edge_unit_vects[LIndex][1]);
+		      bu_log("l_dot: %f\n", dot);*/
+		    if (dot > maxDot) {
+			maxDot = dot;
+			flag = F_LEFT;
+		    }
+
+		    switch (flag) {
+			case F_BOTTOM:
+			    if (visited[BIndex]) {
+				done = 1;
 			    } else {
-				BIndex = BIndex + 1;
-			    }
-			}
-			break;
-		    case F_RIGHT:
-			if (visited[RIndex]) {
-			    done = 1;
-			} else {
-			    /* Compute box axes with E[R] as an edge. */
-			    V2MOVE(t, edge_unit_vects[RIndex]);
-			    V2SET(u, t[1], -t[0]);
-			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				      hull_pnts[BIndex], hull_pnts[TIndex], u);
+				/* Compute box axes with E[B] as an edge.*/
+				V2MOVE(t, edge_unit_vects[BIndex]);
+				V2MOVE(u, t);
+				UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
+					  hull_pnts[BIndex], hull_pnts[TIndex], u);
 
-			    /* Mark edge visited and rotate the calipers. */
-			    visited[RIndex] = 1;
-			    if ((RIndex + 1) == hull_pnt_cnt) {
-				RIndex = 0;
+				/* Mark edge visited and rotate the calipers. */
+				visited[BIndex] = 1;
+				if ((BIndex + 1) == hull_pnt_cnt) {
+				    BIndex = 0;
+				} else {
+				    BIndex = BIndex + 1;
+				}
+			    }
+			    break;
+			case F_RIGHT:
+			    if (visited[RIndex]) {
+				done = 1;
 			    } else {
-				RIndex = RIndex + 1;
-			    }
-			}
-			break;
-		    case F_TOP:
-			if (visited[TIndex]) {
-			    done = 1;
-			} else {
-			    /* Compute box axes with E[T] as an edge. */
-			    V2MOVE(t, edge_unit_vects[TIndex]);
-			    V2SCALE(t, t, -1);
-			    V2MOVE(u, t);
-			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				      hull_pnts[BIndex], hull_pnts[TIndex], u);
+				/* Compute box axes with E[R] as an edge. */
+				V2MOVE(t, edge_unit_vects[RIndex]);
+				V2SET(u, t[1], -t[0]);
+				UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
+					  hull_pnts[BIndex], hull_pnts[TIndex], u);
 
-			    /* Mark edge visited and rotate the calipers. */
-			    visited[TIndex] = 1;
-			    if ((TIndex + 1) == hull_pnt_cnt) {
-				TIndex = 0;
+				/* Mark edge visited and rotate the calipers. */
+				visited[RIndex] = 1;
+				if ((RIndex + 1) == hull_pnt_cnt) {
+				    RIndex = 0;
+				} else {
+				    RIndex = RIndex + 1;
+				}
+			    }
+			    break;
+			case F_TOP:
+			    if (visited[TIndex]) {
+				done = 1;
 			    } else {
-				TIndex = TIndex + 1;
+				/* Compute box axes with E[T] as an edge. */
+				V2MOVE(t, edge_unit_vects[TIndex]);
+				V2SCALE(t, t, -1);
+				V2MOVE(u, t);
+				UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
+					  hull_pnts[BIndex], hull_pnts[TIndex], u);
+
+				/* Mark edge visited and rotate the calipers. */
+				visited[TIndex] = 1;
+				if ((TIndex + 1) == hull_pnt_cnt) {
+				    TIndex = 0;
+				} else {
+				    TIndex = TIndex + 1;
+				}
+
 			    }
-
-			}
-			break;
-		    case F_LEFT:
-			if (visited[LIndex]) {
-			    done = 1;
-			} else {
-			    /* Compute box axes with E[L] as an edge. */
-			    V2MOVE(t, edge_unit_vects[LIndex]);
-			    V2SET(u, -t[1], t[0]);
-			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				      hull_pnts[BIndex], hull_pnts[TIndex], u);
-
-			    /* Mark edge visited and rotate the calipers. */
-			    visited[LIndex] = 1;
-			    if ((LIndex + 1) == hull_pnt_cnt) {
-				LIndex = 0;
+			    break;
+			case F_LEFT:
+			    if (visited[LIndex]) {
+				done = 1;
 			    } else {
-				LIndex = LIndex + 1;
-			    }
+				/* Compute box axes with E[L] as an edge. */
+				V2MOVE(t, edge_unit_vects[LIndex]);
+				V2SET(u, -t[1], t[0]);
+				UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
+					  hull_pnts[BIndex], hull_pnts[TIndex], u);
 
-			}
-			break;
-		    case F_NONE:
-			/* The polygon is a rectangle. */
-			done = 1;
-			break;
+				/* Mark edge visited and rotate the calipers. */
+				visited[LIndex] = 1;
+				if ((LIndex + 1) == hull_pnt_cnt) {
+				    LIndex = 0;
+				} else {
+				    LIndex = LIndex + 1;
+				}
+
+			    }
+			    break;
+			case F_NONE:
+			    /* The polygon is a rectangle. */
+			    done = 1;
+			    break;
+		    }
 		}
-	    }
-	    bu_free(visited, "free visited");
-	    bu_free(edge_unit_vects, "free visited");
-	    bu_free(hull_pnts, "free visited");
+		bu_free(visited, "free visited");
+		bu_free(edge_unit_vects, "free visited");
+		bu_free(hull_pnts, "free visited");
 	    }
     }
     return dim;
 }
+
 
 int
 bg_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, int pnt_cnt)
@@ -476,8 +485,10 @@ bg_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, in
     V2SET(*u, 0.0, 0.0);
     V2SET(*v, 0.0, 0.0);
 
-    if (!pnts) return -1;
-    if (pnt_cnt <= 0) return -1;
+    if (!pnts)
+	return -1;
+    if (pnt_cnt <= 0)
+	return -1;
 
     (void)bg_obr_calc(pnts, pnt_cnt, &obr);
 
@@ -491,6 +502,7 @@ bg_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, in
 
     return 0;
 }
+
 
 int
 bg_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts, int pnt_cnt)
@@ -506,7 +518,8 @@ bg_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
     point_t tmp3d;
     const point2d_t *const_points_tmp;
 
-    if (!pnts || pnt_cnt <= 0) return -1;
+    if (!pnts || pnt_cnt <= 0)
+	return -1;
 
     points_obr = (point2d_t *)bu_calloc(3 + 1, sizeof(point2d_t), "points_2d");
     points_obr_3d = (point_t *)bu_calloc(3 + 1, sizeof(point_t), "points_3d");
@@ -515,7 +528,7 @@ bg_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
     ret += coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, pnts, pnt_cnt);
     ret += coplanar_3d_to_2d(&points_tmp, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, pnts, pnt_cnt);
     if (ret)
-	return 0;
+	return -2;
 
     const_points_tmp = (const point2d_t *)points_tmp;
     ret = bg_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, const_points_tmp, pnt_cnt);
@@ -526,6 +539,8 @@ bg_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
     V2ADD2(points_obr[2], obr_2d_v2, obr_2d_center);
 
     ret = coplanar_2d_to_3d(&points_obr_3d, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)points_obr, 3);
+    if (ret)
+	return -3;
 
     VMOVE(*center, points_obr_3d[0]);
 
@@ -542,6 +557,7 @@ bg_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
 
     return 0;
 }
+
 
 /*
  * Local Variables:

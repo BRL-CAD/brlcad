@@ -25,45 +25,6 @@
 #include <regex.h>
 #include "creo-brl.h"
 
-int creo_logging_opts(void *data, void *vstr){
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-    struct creo_conv_info *cinfo = (struct creo_conv_info *)data;
-    const char *str = (const char *)vstr;
-
-    if (cinfo->logger_type == LOGGER_TYPE_NONE) return 0;
-
-    switch (cinfo->curr_msg_type) {
-	case MSG_FAIL:
-	    bu_vls_sprintf(&msg, "FAILURE: %s", str);
-	    break;
-	case MSG_OK:
-	    bu_vls_sprintf(&msg, "SUCCESS: %s", str);
-	    break;
-	case MSG_DEBUG:
-	    bu_vls_sprintf(&msg, "DEBUG:   %s", str);
-	    break;
-	default:
-	    bu_vls_sprintf(&msg, "%s", str);
-	    break;
-    }
-
-    if ( (cinfo->curr_msg_type == MSG_FAIL && cinfo->logger_type != LOGGER_TYPE_SUCCESS) ||
-	    (cinfo->curr_msg_type == MSG_OK && cinfo->logger_type != LOGGER_TYPE_FAILURE) ||
-	    (cinfo->curr_msg_type != MSG_DEBUG && cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) ||
-	    (cinfo->logger_type == LOGGER_TYPE_ALL)
-       ) {
-	if (cinfo->logger) fprintf(cinfo->logger, "%s", bu_vls_addr(&msg));
-	if (cinfo->print_to_console) {
-	    if (LIKELY(stderr != NULL)) {
-		fprintf(stderr, "%s", bu_vls_addr(&msg));
-		fflush(stderr);
-	    }
-	}
-    }
-    bu_vls_free(&msg);
-    return 0;
-}
-
 extern "C" void
 creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
     /* NOTE - need creo specific semaphore lock for this if it's going to be used
@@ -80,17 +41,42 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
     vsprintf(msg, fmt, ap);
     va_end(ap);
 
-    /* Set the type and hooks, then call libbu */
-    if (cinfo && msg_type != MSG_STATUS) {
-	cinfo->curr_msg_type = msg_type;
-	bu_log_add_hook(creo_logging_opts, (void *)cinfo);
-	bu_log("%s", msg);
-	bu_log_delete_hook(creo_logging_opts, (void *)cinfo);
-    }
-
     if (msg_type == MSG_STATUS) {
 	ProMessageDisplay(msgfil, "USER_INFO", msg);
-	(void)ProWindowRefresh(PRO_VALUE_UNUSED);
+	return;
+    }
+
+    /* if we're logging and not reporting status, do it */
+    if (cinfo && cinfo->logger && msg_type != MSG_STATUS) {
+	cinfo->curr_msg_type = msg_type;
+	struct bu_vls vmsg = BU_VLS_INIT_ZERO;
+
+	if (cinfo->logger_type == LOGGER_TYPE_NONE) return;
+
+	switch (cinfo->curr_msg_type) {
+	    case MSG_FAIL:
+		bu_vls_sprintf(&vmsg, "FAILURE: %s", msg);
+		break;
+	    case MSG_OK:
+		bu_vls_sprintf(&vmsg, "SUCCESS: %s", msg);
+		break;
+	    case MSG_DEBUG:
+		bu_vls_sprintf(&vmsg, "DEBUG:   %s", msg);
+		break;
+	    default:
+		bu_vls_sprintf(&vmsg, "%s", msg);
+		break;
+	}
+
+	if ( (cinfo->curr_msg_type == MSG_FAIL && cinfo->logger_type != LOGGER_TYPE_SUCCESS) ||
+		(cinfo->curr_msg_type == MSG_OK && cinfo->logger_type != LOGGER_TYPE_FAILURE) ||
+		(cinfo->curr_msg_type != MSG_DEBUG && cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) ||
+		(cinfo->logger_type == LOGGER_TYPE_ALL)
+	   ) {
+	    fprintf(cinfo->logger, "%s", bu_vls_addr(&vmsg));
+	    fflush(cinfo->logger);
+	}
+	bu_vls_free(&vmsg);
     }
 }
 
@@ -148,7 +134,7 @@ make_legal( char *name )
 
     c = (unsigned char *)name;
     while ( *c ) {
-	if ( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' ) {
+		if ( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' || *c == '-' || *c == '#' || *c == '+' || *c == '\\' || *c == '{' || *c == '}' || *c == '*' || *c == ',' ) {
 	    *c = '_';
 	} else if ( *c > '~' ) {
 	    *c = '_';
@@ -217,7 +203,7 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
 	case PRO_PARAM_STRING:
 	    ProParamvalueValueGet(&pval, ptype, wval);
 	    ProWstringToString(cval, wval);
-	    fval = bu_strdup(cval);
+	    if (strlen(cval) > 0) fval = bu_strdup(cval);
 	    break;
 	default:
 	    break;
@@ -258,10 +244,19 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, int flags)
 	    for (unsigned int j = 0; j < strlen(pdata.key); j++) non_alnum += !isalnum(pdata.key[j]);
 	    if (non_alnum) ProParameterVisit(&itm,  NULL, regex_key, (ProAppData)&pdata);
 	}
-	if (pdata.val) {
-	    /* Have key - we're done here */
+	if (pdata.val && strlen(pdata.val) > 0) {
+	    int is_al = 0;
+	    for (unsigned int j = 0; j < strlen(pdata.val); j++) is_al += isalpha(pdata.val[j]);
+		if (is_al > 0) {
+		/* Have key - we're done here */
 	    val = pdata.val;
 	    break;
+		} else {
+			/* not good enough - keep trying */
+			pdata.val = NULL;
+		}
+	} else {
+		pdata.val = NULL;
 	}
     }
     return val;
@@ -285,7 +280,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     ProWstringToString(astr, name);
 
     /* If we don't have a valid type, we don't know what to do */
-    if (flag < N_REGION && flag > N_CREO) return NULL;
+    if (flag < N_REGION || flag > N_CREO) return NULL;
 
     /* If the name isn't in either the parts or assemblies sets, it's
      * not an active part of the conversion */
@@ -349,11 +344,15 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     lower_case(bu_vls_addr(&gname_root));
     make_legal(bu_vls_addr(&gname_root));
     bu_vls_sprintf(gname, "%s", bu_vls_addr(&gname_root));
+
+	/* if we don't have something by now, go with unknown */
+	if (!bu_vls_strlen(gname)) bu_vls_sprintf(gname, "unknown");
+
     if (suffix) bu_vls_printf(gname, ".%s", suffix);
 
     /* create a unique name */
     if (nset->find(gname) != nset->end()) {
-	bu_vls_sprintf(gname, "%s-1", bu_vls_addr(&gname_root));
+	bu_vls_sprintf(gname, "%s_1", bu_vls_addr(&gname_root));
 	if (suffix) {bu_vls_printf(gname, ".%s", suffix);}
 	while (nset->find(gname) != nset->end()) {
 	    (void)bu_namegen(gname, NULL, NULL);

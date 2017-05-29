@@ -39,11 +39,10 @@
 #include <string.h>
 
 #include "brlcad_version.h"
-#include "bu/file.h"
 
 
 /* Compilation Settings */
-#if 0
+
 /**
  * Compilation date, updated every time a build pass occurs.
  */
@@ -63,70 +62,7 @@ static const char *BRLCAD_USER = BRLCAD_COMPILE_USER;
  * Compilation count, updated every time a build pass occurs.
  */
 static const int BRLCAD_COUNT = BRLCAD_COMPILE_COUNT;
-#endif
 
-typedef enum {
-    BRLCAD_BUILD_DATE,
-    BRLCAD_BUILD_HOST,
-    BRLCAD_BUILD_USER,
-    BRLCAD_BUILD_COUNT
-} brlcad_info_t;
-
-static const char *
-brlcad_info(brlcad_info_t info)
-{
-    static char data[MAXPATHLEN] = {'\0'};
-    static char host[MAXPATHLEN] = {'\0'};
-    static char user[MAXPATHLEN] = {'\0'};
-    static char count[MAXPATHLEN] = {'\0'};
-    const char *dpath;
-    FILE *fp;
-    struct bu_vls fdata = BU_VLS_INIT_ZERO;
-    switch (info) {
-	case BRLCAD_BUILD_DATE:
-	    if (data[0] == '\0') {
-		dpath = bu_brlcad_data("data/BRLCAD_BUILD_DATE", 1);
-		if (!dpath || ((fp = fopen(dpath, "r")) == NULL)) return NULL;
-		if (bu_vls_gets(&fdata, fp) <= 0) return NULL;
-		snprintf(data, MAXPATHLEN, "%s", bu_vls_addr(&fdata));
-		bu_vls_free(&fdata);
-	    }
-	    return data;
-	    break;
-	case BRLCAD_BUILD_HOST:
-	    if (host[0] == '\0') {
-		dpath = bu_brlcad_data("data/BRLCAD_BUILD_HOST", 1);
-		if (!dpath || ((fp = fopen(dpath, "r")) == NULL)) return NULL;
-		if (bu_vls_gets(&fdata, fp) <= 0) return NULL;
-		snprintf(host, MAXPATHLEN, "%s", bu_vls_addr(&fdata));
-		bu_vls_free(&fdata);
-	    }
-	    return host;
-	    break;
-	case BRLCAD_BUILD_USER:
-	    if (user[0] == '\0') {
-		dpath = bu_brlcad_data("data/BRLCAD_BUILD_USER", 1);
-		if (!dpath || ((fp = fopen(dpath, "r")) == NULL)) return NULL;
-		if (bu_vls_gets(&fdata, fp) <= 0) return NULL;
-		snprintf(user, MAXPATHLEN, "%s", bu_vls_addr(&fdata));
-		bu_vls_free(&fdata);
-	    }
-	    return user;
-	    break;
-	case BRLCAD_BUILD_COUNT:
-	    if (count[0] == '\0') {
-		dpath = bu_brlcad_data("data/BRLCAD_BUILD_COUNT", 1);
-		if (!dpath || ((fp = fopen(dpath, "r")) == NULL)) return NULL;
-		if (bu_vls_gets(&fdata, fp) <= 0) return NULL;
-		snprintf(count, MAXPATHLEN, "%s", bu_vls_addr(&fdata));
-		bu_vls_free(&fdata);
-	    }
-	    return count;
-	    break;
-	default:
-	    return NULL;
-    }
-}
 
 /**
  * Provides the release identifier details along with basic
@@ -149,15 +85,14 @@ brlcad_ident(const char *title)
     /* compile info */
     isize = strlen(ident);
     snprintf(ident + isize, 1024 - isize,
-	     "    %s, Compilation %s\n"
+	     "    %s, Compilation %d\n"
 	     "    %s@%s\n",
-	     brlcad_info(BRLCAD_BUILD_DATE), brlcad_info(BRLCAD_BUILD_COUNT),
-	     brlcad_info(BRLCAD_BUILD_USER), brlcad_info(BRLCAD_BUILD_HOST)
+	     BRLCAD_DATE, BRLCAD_COUNT,
+	     BRLCAD_USER, BRLCAD_HOST
 	);
 
     return ident;
 }
-
 
 
 #endif /* BRLCAD_IDENT_H */

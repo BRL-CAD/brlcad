@@ -193,6 +193,7 @@ XEventProxy::Event(void)
     return event;
 }
 
+
 ON_Curve *
 sub_curve(const ON_Curve *in, double a, double b)
 {
@@ -258,6 +259,7 @@ sub_curve(const ON_Curve *in, double a, double b)
     }
     return a_to_b;
 }
+
 
 ON_Surface *
 sub_surface(const ON_Surface *in, int dir, double a, double b)
@@ -410,14 +412,14 @@ build_surface_root(const ON_Surface *surf, const ON_Interval *u_domain, const ON
     if (root.m_surf) {
 	ON_BoundingBox surf_bbox;
 	int ret = root.m_surf->GetBoundingBox(surf_bbox.m_min,
-		surf_bbox.m_max);
+					      surf_bbox.m_max);
 	if (!ret) {
 	    vect_t corners_min = VINIT_ZERO;
 	    vect_t corners_max = VINIT_ZERO;
 	    for (int i = 0; i < 2; ++i) {
 		for (int j = 0; j < 2; ++j) {
 		    ON_3dPoint corner = root.m_surf->PointAt(root.m_u.m_t[i],
-			    root.m_v.m_t[i]);
+							     root.m_v.m_t[i]);
 		    VMINMAX(corners_min, corners_max, corner);
 		}
 	    }
@@ -664,7 +666,7 @@ HIDDEN bool
 newton_pci(double &t, const ON_3dPoint &pointA, const ON_Curve &curveB, double tol)
 {
     ON_3dPoint closest_point = curveB.PointAt(t);
-    double dist = closest_point.DistanceTo(pointA);
+    double dist;
 
     // Use Newton-Raphson method with the starting point from linear
     // approximation.
@@ -813,7 +815,7 @@ HIDDEN bool
 newton_psi(double &u, double &v, const ON_3dPoint &pointA, const ON_Surface &surfB, double tol)
 {
     ON_3dPoint closest_point = surfB.PointAt(u, v);
-    double dist = closest_point.DistanceTo(pointA);
+    double dist;
 
     // Use Newton-Raphson method to get an accurate point of PSI.
     // We actually calculate the closest point on the surface to that point.
@@ -1071,6 +1073,7 @@ tolerance_2d_from_3d(
     return tol_2d;
 }
 
+
 static double
 minimum_distance(const ON_Line &lineA, const ON_Line &lineB, double isect_tol)
 {
@@ -1084,10 +1087,11 @@ minimum_distance(const ON_Line &lineA, const ON_Line &lineB, double isect_tol)
 	double d4 = lineA.to.DistanceTo(lineB.to);
 
 	min_dist = std::min(min_dist, std::min(d1, std::min(d2,
-			std::min(d3, d4))));
+							    std::min(d3, d4))));
     }
     return min_dist;
 }
+
 
 // For two lines known to be parallel and within distance tolerance,
 // find the point/overlap intersection parameters.
@@ -1134,6 +1138,7 @@ intersect_overlapping_lines(
     }
     return 2;
 }
+
 
 int
 ON_Intersect(const ON_Curve *curveA,
@@ -1285,7 +1290,7 @@ ON_Intersect(const ON_Curve *curveA,
 		if (min_dist < isect_tol) {
 		    double t_a1, t_a2, t_b1, t_b2;
 		    int ret = intersect_overlapping_lines(
-			    t_a1, t_a2, t_b1, t_b2, lineA, lineB, t1_tol);
+			t_a1, t_a2, t_b1, t_b2, lineA, lineB, t1_tol);
 
 		    if (ret == 1) {
 			// point intersection
@@ -1612,6 +1617,7 @@ tolerance_2d_from_3d(
     return tol_2d;
 }
 
+
 static void
 boundary_t_to_uv(
     double &surf_u,
@@ -1639,6 +1645,7 @@ boundary_t_to_uv(
 	    break;
     }
 }
+
 
 int
 ON_Intersect(const ON_Curve *curveA,
@@ -1713,7 +1720,7 @@ ON_Intersect(const ON_Curve *curveA,
 
     // adjust the tolerance from 3D scale to respective 2D scales
     double t_tol = tolerance_2d_from_3d(isect_tol, rootA, curveA,
-	    curveA_domain);
+					curveA_domain);
 
     double u_tol = isect_tol;
     double diagonal_3d = rootB->m_surf->BoundingBox().Diagonal().Length();
@@ -1822,8 +1829,8 @@ ON_Intersect(const ON_Curve *curveA,
 				if (min_dist < isect_tol) {
 				    double t_a1, t_a2, t_b1, t_b2;
 				    int ret = intersect_overlapping_lines(
-					    t_a1, t_a2, t_b1, t_b2, line,
-					    boundary[j], t_tol);
+					t_a1, t_a2, t_b1, t_b2, line,
+					boundary[j], t_tol);
 
 				    event.m_type = ON_X_EVENT::csx_point;
 				    event.m_A[0] = line.PointAt(t_a1);
@@ -1913,7 +1920,7 @@ ON_Intersect(const ON_Curve *curveA,
 			    // convert from the boxes' domain to the whole surface's domain
 			    double surf_u = 0.0, surf_v = 0.0;
 			    boundary_t_to_uv(surf_u, surf_v, i->second,
-				    boundary_index[j], boundary_t[j]);
+					     boundary_index[j], boundary_t[j]);
 
 			    event.m_A[intersections] = line_pt;
 			    event.m_B[intersections] = surfaceB->PointAt(surf_u, surf_v);
@@ -2839,6 +2846,7 @@ is_uvA_completely_inside_overlap(
     return inside_overlap;
 }
 
+
 HIDDEN ON_2dPoint
 point_xy_or_yx(double x, double y, bool swap)
 {
@@ -2848,6 +2856,7 @@ point_xy_or_yx(double x, double y, bool swap)
     }
     return pt;
 }
+
 
 struct SurfaceKnot {
     double c;
@@ -2872,17 +2881,19 @@ struct SurfaceKnot {
     }
 };
 
+
 struct KnotIsocurveSource {
     bool is_surfA;
     const ON_Surface *surf;
     SurfaceKnot knot;
 
     KnotIsocurveSource(bool iso_surfA, const ON_Surface *iso_surf,
-	    SurfaceKnot iso_knot)
+		       SurfaceKnot iso_knot)
 	: is_surfA(iso_surfA), surf(iso_surf), knot(iso_knot)
     {
     }
 };
+
 
 struct OverlapIsocurve {
     KnotIsocurveSource src;
@@ -2891,7 +2902,7 @@ struct OverlapIsocurve {
     ON_2dPoint overlap_uv[2];
 
     OverlapIsocurve(KnotIsocurveSource iso_src, const ON_Curve *iso_curve,
-	    double ol_start, double ol_end)
+		    double ol_start, double ol_end)
 	: src(iso_src), curve(iso_curve)
     {
 	overlap_t[0] = ol_start;
@@ -2903,11 +2914,13 @@ struct OverlapIsocurve {
     }
 };
 
+
 enum {
     INSIDE_OVERLAP,
     ON_OVERLAP_BOUNDARY,
     OUTSIDE_OVERLAP
 };
+
 
 HIDDEN int
 isocurve_surface_overlap_location(
@@ -2945,6 +2958,7 @@ isocurve_surface_overlap_location(
     return ON_OVERLAP_BOUNDARY;
 }
 
+
 HIDDEN bool
 is_curve_on_overlap_boundary(
     OverlapIsocurve iso,
@@ -2964,6 +2978,7 @@ is_curve_on_overlap_boundary(
     }
     return ret;
 }
+
 
 ON_ClassArray<ON_3dPointArray>
 get_overlap_intersection_parameters(
@@ -3125,7 +3140,7 @@ split_overlaps_at_intersections(
 	    ON_Curve *subcurveA = NULL;
 	    try {
 		subcurveA = sub_curve(overlaps[i]->m_curveA,
-			params[i][start].y, params[i][j].y);
+				      params[i][start].y, params[i][j].y);
 	    } catch (InvalidInterval &) {
 		continue;
 	    }
@@ -3292,6 +3307,7 @@ join_continuous_ppair_to_polyline(ON_SimpleArray<int> *polyline, const PointPair
     return false;
 }
 
+
 HIDDEN std::vector<double>
 get_knots(const ON_Surface *surf, int dir)
 {
@@ -3308,6 +3324,7 @@ get_knots(const ON_Surface *surf, int dir)
 
     return out;
 }
+
 
 // get surface knots in given direction that can be boundaries of
 // Bezier patches
@@ -3330,6 +3347,7 @@ get_bezier_knots(
     return bezier_knots;
 }
 
+
 HIDDEN void
 append_overlap_segments(
     ON_SimpleArray<OverlapSegment *> &overlaps,
@@ -3340,7 +3358,7 @@ append_overlap_segments(
     OverlapSegment *seg = new OverlapSegment;
     try {
 	seg->m_curve3d = sub_curve(iso.curve, iso.overlap_t[0],
-		iso.overlap_t[1]);
+				   iso.overlap_t[1]);
     } catch (InvalidInterval &e) {
 	bu_log("%s", e.what());
 	delete seg;
@@ -3377,6 +3395,7 @@ append_overlap_segments(
     }
 }
 
+
 HIDDEN void
 append_csx_event_points(
     ON_3dPointArray &curveA_3d,
@@ -3395,6 +3414,7 @@ append_csx_event_points(
 	}
     }
 }
+
 
 // Make a transverse or tangent ssx curve event from matching 3d and surface
 // A/B curves.
@@ -3462,6 +3482,7 @@ set_ssx_event_from_curves(
     return status;
 }
 
+
 // Find curves that contain the boundaries of overlap regions.
 //
 // The portion of a NURBS surface inside a span defined by two pairs
@@ -3486,19 +3507,19 @@ set_ssx_event_from_curves(
 // http://libgen.org/scimag1/10.1016/S0010-4485%252896%252900099-1.pdf
 HIDDEN void
 find_overlap_boundary_curves(
-	ON_SimpleArray<OverlapSegment *> &overlaps,
-	ON_ClassArray<ON_SSX_EVENT> &csx_events,
-	ON_3dPointArray &isocurve_3d,
-	ON_2dPointArray &isocurveA_2d,
-	ON_2dPointArray &isocurveB_2d,
-	const ON_Surface *surfA,
-	const ON_Surface *surfB,
-	Subsurface *treeA,
-	Subsurface *treeB,
-	double isect_tol,
-	double isect_tolA,
-	double isect_tolB,
-	double overlap_tol)
+    ON_SimpleArray<OverlapSegment *> &overlaps,
+    ON_ClassArray<ON_SSX_EVENT> &csx_events,
+    ON_3dPointArray &isocurve_3d,
+    ON_2dPointArray &isocurveA_2d,
+    ON_2dPointArray &isocurveB_2d,
+    const ON_Surface *surfA,
+    const ON_Surface *surfB,
+    Subsurface *treeA,
+    Subsurface *treeB,
+    double isect_tol,
+    double isect_tolA,
+    double isect_tolB,
+    double overlap_tol)
 {
     for (int i = 0; i < 4; i++) {
 	bool is_surfA_iso = i < 2;
@@ -3522,12 +3543,12 @@ find_overlap_boundary_curves(
 	for (size_t j = 0; j < surf1_bezier_knots.size(); ++j) {
 	    SurfaceKnot surf1_knot(knot_dir, surf1_bezier_knots, j);
 	    ON_Curve *surf1_isocurve = surf1->IsoCurve(surf1_knot.dir,
-		    surf1_knot.c);
+						       surf1_knot.c);
 
 	    ON_SimpleArray<ON_X_EVENT> events;
 	    ON_CurveArray overlap2d;
 	    ON_Intersect(surf1_isocurve, surf2, events, isect_tol,
-		    overlap_tol, 0, 0, 0, &overlap2d);
+			 overlap_tol, 0, 0, 0, &overlap2d);
 
 	    dplot->IsoCSX(events, surf1_isocurve, is_surfA_iso);
 	    dplot->WriteLog();
@@ -3539,7 +3560,7 @@ find_overlap_boundary_curves(
 
 		KnotIsocurveSource iso_src(is_surfA_iso, surf1, surf1_knot);
 		OverlapIsocurve iso(iso_src, surf1_isocurve, event.m_a[0],
-			event.m_a[1]);
+				    event.m_a[1]);
 
 		isocurve1_2d.Append(iso.overlap_uv[0]);
 
@@ -3548,11 +3569,11 @@ find_overlap_boundary_curves(
 
 		    bool curve_on_overlap_boundary =
 			is_curve_on_overlap_boundary(iso, surf1, surf2, tree2,
-				isect_tol, isect_tol1);
+						     isect_tol, isect_tol1);
 
 		    if (curve_on_overlap_boundary) {
 			append_overlap_segments(overlaps, iso, overlap2d[k],
-				surf1);
+						surf1);
 		    } else {
 			// the intersection isn't part of a
 			// surface-surface overlap, but we want it all
@@ -3590,6 +3611,7 @@ find_overlap_boundary_curves(
 	}
     }
 }
+
 
 // Algorithm Overview
 //
@@ -3745,8 +3767,8 @@ ON_Intersect(const ON_Surface *surfA,
     ON_ClassArray<ON_SSX_EVENT> csx_events;
 
     find_overlap_boundary_curves(overlaps, csx_events, tmp_curvept, tmp_curve_uvA,
-	    tmp_curve_uvB, surfA, surfB, treeA, treeB, isect_tol, isect_tolA,
-	    isect_tolB, overlap_tol);
+				 tmp_curve_uvB, surfA, surfB, treeA, treeB, isect_tol, isect_tolA,
+				 isect_tolB, overlap_tol);
 
     split_overlaps_at_intersections(overlaps, surfA, surfB, treeA, treeB,
 				    isect_tol, isect_tolA, isect_tolB);
@@ -3808,12 +3830,12 @@ ON_Intersect(const ON_Surface *surfA,
 		ON_SSX_EVENT event;
 
 		int ret = set_ssx_event_from_curves(event,
-			overlaps[i]->m_curve3d, overlaps[i]->m_curveA,
-			overlaps[i]->m_curveB, surfA, surfB);
+						    overlaps[i]->m_curve3d, overlaps[i]->m_curveA,
+						    overlaps[i]->m_curveB, surfA, surfB);
 
 		if (ret != 0) {
 		    bu_log("warning: reverse failed. The direction of %d "
-			    "might be wrong.\n", x.Count() - original_count);
+			   "might be wrong.\n", x.Count() - original_count);
 		}
 
 		x.Append(event);
@@ -4456,11 +4478,11 @@ ON_Intersect(const ON_Surface *surfA,
 	ON_SSX_EVENT event;
 
        	int ret = set_ssx_event_from_curves(event, intersect3d[i],
-		intersect_uvA[i], intersect_uvB[i], surfA, surfB);
+					    intersect_uvA[i], intersect_uvB[i], surfA, surfB);
 
 	if (ret != 0) {
 	    bu_log("warning: reverse failed. The direction of %d might be "
-		    "wrong.\n", x.Count() - original_count);
+		   "wrong.\n", x.Count() - original_count);
 	}
 
 	x.Append(event);

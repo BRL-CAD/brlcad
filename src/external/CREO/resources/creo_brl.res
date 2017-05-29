@@ -20,15 +20,17 @@
 		(CheckButton	log_other)
 		(Label		log_file_type_l)
 		(RadioGroup	log_file_type_rg)
-		(Label		name_file_l)
-		(InputPanel	name_file)
-		(Label		attr_file_l)
-		(InputPanel	attr_file)
+		(Label		attr_rename_l)
+		(InputPanel	attr_rename)
+		(Label		attr_save_l)
+		(InputPanel	attr_save)
 		(Label		curr_proc_l)
 		(Label		curr_proc)
 		(CheckButton	facets_only)
+		(CheckButton	check_solidity)
 		(CheckButton	elim_small)
 		(CheckButton	get_normals)
+		(CheckButton	debug_bboxes)
 		(Label		min_hole_l)
 		(InputPanel	min_hole)
 		(Label		min_chamfer_l)
@@ -57,14 +59,14 @@
 		(separator5.BottomOffset	4)
 		(separator6.TopOffset		4)
 		(separator6.BottomOffset	4)
-		(name_file_l.Label		"Nameing File: ")
-		(name_file_l.AttachRight	True)
-		(name_file.Value		"")
-		(name_file.HelpText		"Enter the name of a file listing CREO attributes to use when generating BRL-CAD object names (optional)")
-		(attr_file_l.Label		"Atrributes File: ")
-		(attr_file_l.AttachRight	True)
-		(attr_file.Value		"")
-		(attr_file.HelpText		"Enter the name of a file listing CREO attributes to preserve in the BRL-CD .g file (optional)")
+		(attr_rename_l.Label		"Attributes used for name generation: ")
+		(attr_rename_l.AttachRight	True)
+		(attr_rename.Value		"")
+		(attr_rename.HelpText		"Enter a comma separated list of CREO attributes to use when generating BRL-CAD object names (optional)")
+		(attr_save_l.Label		"Attributes to preserve in .g file: ")
+		(attr_save_l.AttachRight	True)
+		(attr_save.Value		"")
+		(attr_save.HelpText		"Enter a comma separated list of CREO attributes to preserve in the BRL-CD .g file (optional)")
 		(log_file_type_l.Label		"Output Log File Type: ")
 		(log_file_type_l.AttachRight	True)
 		(log_file_type_rg.Names		"Failure"
@@ -123,6 +125,10 @@
 		(facets_only.HelpText		"Select this to produce a faceted approximation for each region with no CSG")
 		(facets_only.Set		True)
 		(facets_only.AttachLeft		True)
+		(check_solidity.Label		"Reject BoT tessellations unless they pass the solidity test")
+		(check_solidity.HelpText	"Select this to reject BoTs that fail the solidity test (no unmated edges)")
+		(check_solidity.Set		False)
+		(check_solidity.AttachLeft	True)
 		(elim_small.Label		"Ignore small features")
 		(elim_small.HelpText		"Select this to ignore holes, rounds, and chamfers smaller than the specified minimums")
 		(elim_small.Set			False)
@@ -130,6 +136,10 @@
 		(get_normals.Set		False)
 		(get_normals.HelpText		"Select this to save surface normals in BoTs (raytracing looks smoother)")
 		(get_normals.AttachLeft		True)
+		(debug_bboxes.Label		"If a part fails to tessellate, use its bounding box instead")
+		(debug_bboxes.HelpText		"Select this to create a bounding box solid from the CREO part bounding box to serve as a placeholder if the part conversion fails.  This is primarily a debugging tool, but it can also be used to avoid skipping combs due to all children being missing.")
+		(debug_bboxes.Set		False)
+		(debug_bboxes.AttachLeft	True)
 		(min_hole_l.Label		"Minimum hole diameter (mm): ")
 		(min_hole_l.AttachRight		True)
 		(min_hole.InputType		3)
@@ -158,7 +168,7 @@
 		(.DialogStyle			6)
 		(.Label				"CREO to BRL-CAD Converter")
 		(.Layout
-			(Grid (Rows 1 1 1 1 1 1 1) (Cols 1)
+			(Grid (Rows 1 1 1 1 1 1 1 1 1) (Cols 1)
 				(Grid (Rows 1 1 1 1 1 1 1 1 1 1 1) (Cols 1 1)
 					output_file_l
 					output_file
@@ -166,10 +176,10 @@
 					log_file_type_rg
 					log_file_l
 					log_file
-					name_file_l
-					name_file
-					attr_file_l
-					attr_file
+					attr_rename_l
+					attr_rename
+					attr_save_l
+					attr_save
 					starting_ident_l
 					starting_ident
 					max_error_l
@@ -186,6 +196,8 @@
 				separator1
 				facets_only
 				get_normals
+				check_solidity
+				debug_bboxes
 				separator3
 				elim_small
 				(Grid (Rows 1 1 1 1 1 1) (Cols 1 1)

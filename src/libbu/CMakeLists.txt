@@ -145,6 +145,7 @@ set(bu_ignore_files
   vls_vprintf.h
   TODO.binary_attributes
   uce-dirent.h
+  version.c
   y2038/LICENSE
   y2038/README.txt
   y2038/time64.h

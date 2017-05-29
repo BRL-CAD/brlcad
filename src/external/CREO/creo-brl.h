@@ -158,7 +158,6 @@ struct creo_conv_info {
     FILE *logger;			/* log file */
     int logger_type;
     int curr_msg_type;
-    int print_to_console;
 
     /* units - model */
     double creo_to_brl_conv;	/* inches to mm */
@@ -167,8 +166,10 @@ struct creo_conv_info {
 
     /* facetization settings */
     ProBool do_facets_only;	/* flag to indicate no CSG should be done */
+    ProBool check_solidity;	/* flag to control testing BoTs for solidity */
     ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
     ProBool do_elims;		/* flag to indicate that small features are to be eliminated */
+    ProBool debug_bboxes;	/* flag to indicate that bboxes should be written for parts that didn't convert */
     double max_error;	/* (mm) maximum allowable error in facetized approximation */
     double min_error;	/* (mm) maximum allowable error in facetized approximation */
     double tol_dist;	/* (mm) minimum distance between two distinct vertices */
@@ -199,6 +200,7 @@ struct creo_conv_info {
     std::set<struct bu_vls *, StrCmp> *creo_names; /* set of active creo id strings */
     std::vector<char *> *model_parameters;     /* model parameters to use when generating .g names */
     std::vector<char *> *attrs;     	/* attributes to preserve when transferring objects */
+	int warn_feature_unsuppress;        /* flag to determine if we need to warn the user feature unsuppression failed */
 };
 
 /* Part processing container */

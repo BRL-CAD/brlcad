@@ -22,6 +22,7 @@
  */
 
 #include "common.h"
+#include <sstream>
 #include "creo-brl.h"
 
 extern "C" void
@@ -38,7 +39,6 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->logger = (FILE *)NULL;
     cinfo->logger_type=LOGGER_TYPE_NONE;
     cinfo->curr_msg_type = MSG_DEBUG;
-    cinfo->print_to_console=1;
 
     /* units - model */
     cinfo->creo_to_brl_conv = 25.4; /* inches to mm */
@@ -71,6 +71,7 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->creo_names = new std::set<struct bu_vls *, StrCmp>;
     cinfo->model_parameters = new std::vector<char *>;
     cinfo->attrs = new std::vector<char *>;
+	cinfo->warn_feature_unsuppress = 0;
 
 }
 
@@ -126,7 +127,7 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
     wdb_close(cinfo->wdbp);
 
     /* Finally, clear the container */
-    BU_PUT(cinfo, struct creo_conv_info);
+    //BU_PUT(cinfo, struct creo_conv_info);
 }
 
 extern "C" void
@@ -182,7 +183,7 @@ output_parts(struct creo_conv_info *cinfo)
 
 	/* All set - process the part */
 	(void)ProWstringToString(name, wname);
-	creo_log(cinfo, MSG_STATUS, "Processing part %s (%d of %d)\n", name, cnt++, cinfo->assems->size());
+	creo_log(cinfo, MSG_STATUS, "Processing part %s (%d of %d)\n", name, cnt++, cinfo->parts->size());
 	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
 }
@@ -252,27 +253,28 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 
     /* Get feature name */
     if ((loc_status = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR ) {
-	return loc_status;
+	creo_log(cinfo, MSG_FAIL, "%s: failure getting name of child\n", name);
+	return PRO_TK_NO_ERROR;
     }
 
     (void)ProWstringToString(name, wname);
 
     /* get the model for this member */
     if ((loc_status = ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, "%s: failure getting model", name);
+	creo_log(cinfo, MSG_FAIL, "%s: failure getting model\n", name);
 	return PRO_TK_NO_ERROR;
     }
 
     /* get its type (part or assembly are the only ones that should make it here) */
     if ((loc_status = ProMdlTypeGet(model, &type)) != PRO_TK_NO_ERROR) {
-	creo_log(cinfo, MSG_FAIL, "%s: failure getting type", name);
+	creo_log(cinfo, MSG_FAIL, "%s: failure getting type\n", name);
 	return PRO_TK_NO_ERROR;
     }
 
     /* If this is a skeleton, we're done */
     ProMdlIsSkeleton(model, &is_skel);
     if (is_skel) {
-	creo_log(cinfo, MSG_FAIL, "%s: is skeleton, skipping", name);
+	creo_log(cinfo, MSG_FAIL, "%s: is skeleton, skipping\n", name);
 	return PRO_TK_NO_ERROR;
     }
 
@@ -283,7 +285,8 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 		wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
 		wcsncpy(wname_saved, wname, wcslen(wname)+1);
 		cinfo->assems->insert(wname_saved);
-		return ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, app_data);
+		creo_log(cinfo, MSG_DEBUG, "walking into %s\n", name);
+		ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, app_data);
 	    }
 	    break;
 	case PRO_MDL_PART:
@@ -294,6 +297,7 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 	    }
 	    break;
 	default:
+		creo_log(cinfo, MSG_DEBUG, "%s: is neither an assembly or a part, skipping\n", name);
 	    return PRO_TK_NO_ERROR;
 	    break;
     }
@@ -334,6 +338,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, (ProAppData)cinfo);
 	output_parts(cinfo);
 	find_empty_assemblies(cinfo);
+	(void)ProWindowRefresh(PRO_VALUE_UNUSED);
 	output_assems(cinfo);
     } else {
 	creo_log(cinfo, MSG_OK, "Top level object %s is neither PART nor ASSEMBLY, skipping", name);
@@ -344,10 +349,14 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     struct bu_vls *comb_name;
     struct bu_vls top_name = BU_VLS_INIT_ZERO;
     struct wmember wcomb;
+	struct directory *dp;
     BU_LIST_INIT(&wcomb.l);
     mat_t m;
     bn_decode_mat(m, "0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1");
     comb_name = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
+	if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(comb_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
+    comb_name = get_brlcad_name(cinfo, wname, NULL, N_REGION);
+	}
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
 
     /* Guarantee we have a non-colliding top level name */
@@ -366,6 +375,16 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     }
     if (tdp == RT_DIR_NULL) mk_lcomb(cinfo->wdbp, bu_vls_addr(&top_name), &wcomb, 0, NULL, NULL, NULL, 0);
     bu_vls_free(&top_name);
+
+    /* Report empty objects */
+    std::set<wchar_t *, WStrCmp>::iterator e_it;
+    if (cinfo->empty->size() > 0) creo_log(cinfo, MSG_FAIL, "The following objects failed to convert:\n");
+    for (e_it = cinfo->empty->begin(); e_it != cinfo->empty->end(); e_it++) {
+	//char ename[MAXPATHLEN];
+	//ProWstringToString(ename, *e_it);
+	//creo_log(cinfo, MSG_FAIL, "%s\n", ename);
+    }
+
 }
 
 
@@ -392,8 +411,8 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /*  Set up logging  */
     /********************/
     {
-	char log_file[128];
-	char logger_type_str[128];
+	char log_file[MAXPATHLEN];
+	char logger_type_str[MAXPATHLEN];
 
 	/* get the name of the log file */
 	status = ProUIInputpanelValueGet( "creo_brl", "log_file", &tmp_str );
@@ -486,29 +505,23 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /***********************************************************************************/
     {
 	/* Get string from dialog */
-	char param_file[128];
-	wchar_t *w_param_file;
-	status = ProUIInputpanelValueGet("creo_brl", "name_file", &w_param_file);
+	char attr_rename[MAXPATHLEN];
+	wchar_t *w_attr_rename;
+	status = ProUIInputpanelValueGet("creo_brl", "attr_rename", &w_attr_rename);
 	if ( status != PRO_TK_NO_ERROR ) {
 	    creo_log(cinfo, MSG_FAIL, "Failed to get name of model parameter specification file.\n");
 	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
 	}
-	ProWstringToString(param_file, w_param_file);
-	ProWstringFree(w_param_file);
+	ProWstringToString(attr_rename, w_attr_rename);
+	ProWstringFree(w_attr_rename);
 
-	if (strlen(param_file) > 0) {
-	    /* Parse the file contents into a list of parameter keys */
-	    std::ifstream pfile(param_file);
+	if (strlen(attr_rename) > 0) {
+		std::string pfilestr(attr_rename);
+	    std::istringstream ss(pfilestr);
 	    std::string line;
-	    if (!pfile) {
-		creo_log(cinfo, MSG_FAIL, "Cannot read parameter keys file.\n");
-		creo_conv_info_free(cinfo);
-		ProUIDialogDestroy( "creo_brl" );
-		return;
-	    }
-	    while (std::getline(pfile, line)) {
+	    while (std::getline(ss, line)) {
 		std::string pkey;
 		std::istringstream ls(line);
 		while (std::getline(ls, pkey, ',')) {
@@ -535,29 +548,24 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /***********************************************************************************/
     {
 	/* Get string from dialog */
-	char attr_file[128];
-	wchar_t *w_attr_file;
-	status = ProUIInputpanelValueGet("creo_brl", "attr_file", &w_attr_file);
+	char attr_save[MAXPATHLEN];
+	wchar_t *w_attr_save;
+	status = ProUIInputpanelValueGet("creo_brl", "attr_save", &w_attr_save);
 	if ( status != PRO_TK_NO_ERROR ) {
 	    creo_log(cinfo, MSG_FAIL, "Failed to get name of attribute list file.\n");
 	    creo_conv_info_free(cinfo);
 	    ProUIDialogDestroy( "creo_brl" );
 	    return;
 	}
-	ProWstringToString(attr_file, w_attr_file);
-	ProWstringFree(w_attr_file);
+	ProWstringToString(attr_save, w_attr_save);
+	ProWstringFree(w_attr_save);
 
-	if (strlen(attr_file) > 0) {
+	if (strlen(attr_save) > 0) {
 	    /* Parse the file contents into a list of parameter keys */
-	    std::ifstream pfile(attr_file);
+	    std::string afilestr(attr_save);
+	    std::istringstream ss(afilestr);
 	    std::string line;
-	    if (!pfile) {
-		creo_log(cinfo, MSG_FAIL, "Cannot read attribute list file.\n");
-		creo_conv_info_free(cinfo);
-		ProUIDialogDestroy( "creo_brl" );
-		return;
-	    }
-	    while (std::getline(pfile, line)) {
+	    while (std::getline(ss, line)) {
 		std::string pkey;
 		std::istringstream ls(line);
 		while (std::getline(ls, pkey, ',')) {
@@ -675,9 +683,25 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	return;
     }
 
+    /* check if user wants to test solidity */
+    if ((status = ProUICheckbuttonGetState("creo_brl", "check_solidity", &cinfo->check_solidity)) != PRO_TK_NO_ERROR ) {
+	creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (check solidity).\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    }
+
     /* check if user wants surface normals in the BOT's */
     if ((status = ProUICheckbuttonGetState("creo_brl", "get_normals", &cinfo->get_normals)) != PRO_TK_NO_ERROR ) {
 	creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (extract surface normals).\n");
+	creo_conv_info_free(cinfo);
+	ProUIDialogDestroy( "creo_brl" );
+	return;
+    }
+
+    /* check if user wants to test solidity */
+    if ((status = ProUICheckbuttonGetState("creo_brl", "debug_bboxes", &cinfo->debug_bboxes)) != PRO_TK_NO_ERROR ) {
+	creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (debugging bboxes).\n");
 	creo_conv_info_free(cinfo);
 	ProUIDialogDestroy( "creo_brl" );
 	return;
@@ -775,6 +799,12 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     ProStringToWstring( tmp_line, "Conversion complete" );
     ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
 
+	if (cinfo->warn_feature_unsuppress) {
+		struct bu_vls errmsg = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&errmsg, "During the conversion, one or more parts had features suppressed. After the conversion was complete, an\nattempt was made to unsuppress these same features.\nOne or more unsuppression operations failed, so some features are still\nsuppressed. Please exit CREO without saving any\nchanges so that this problem will not persist.");
+	    PopupMsg("Warning - Restoration Failure", bu_vls_addr(&errmsg));
+	    bu_vls_free(&errmsg);
+	}
     creo_conv_info_free(cinfo);
     return;
 }
@@ -859,23 +889,41 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
 	goto print_msg;
     }
 
-    /* We should be able to do better than the hard coded default for the filename... */
+	/* File names may get longer than the default... */
+	ProUIInputpanelMaxlenSet("creo_brl", "output_file", MAXPATHLEN - 1);
+	ProUIInputpanelMaxlenSet("creo_brl", "log_file", MAXPATHLEN - 1);
+
     ProMdl model;
     if (ProMdlCurrentGet(&model) != PRO_TK_BAD_CONTEXT) {
 	wchar_t wname[CREO_NAME_MAX];
 	if (ProMdlNameGet(model, wname) == PRO_TK_NO_ERROR) {
-	    struct bu_vls nroot = BU_VLS_INIT_ZERO;
+	    struct bu_vls groot = BU_VLS_INIT_ZERO;
+	    struct bu_vls lroot = BU_VLS_INIT_ZERO;
 	    char name[CREO_NAME_MAX];
 	    (void)ProWstringToString(name, wname);
-	    if (bu_path_component(&nroot, name, BU_PATH_BASENAME_EXTLESS)) {
+	    /* Supply a sensible default for the .g file... */
+	    if (bu_path_component(&groot, name, BU_PATH_BASENAME_EXTLESS)) {
 		wchar_t wgout[CREO_NAME_MAX];
-		bu_vls_printf(&nroot, ".g");
-		(void)ProStringToWstring(wgout, bu_vls_addr(&nroot));
+		bu_vls_printf(&groot, ".g");
+		(void)ProStringToWstring(wgout, bu_vls_addr(&groot));
 		ProUIInputpanelValueSet("creo_brl", "output_file", wgout);
-		bu_vls_free(&nroot);
+		bu_vls_free(&groot);
+	    }
+	    /* suggest a default log file... */
+	    if (bu_path_component(&lroot, name, BU_PATH_BASENAME_EXTLESS)) {
+		/* Supply a sensible default for the .g file... */
+		wchar_t wgout[CREO_NAME_MAX];
+		bu_vls_printf(&lroot, "-log.txt");
+		(void)ProStringToWstring(wgout, bu_vls_addr(&lroot));
+		ProUIInputpanelValueSet("creo_brl", "log_file", wgout);
+		bu_vls_free(&lroot);
 	    }
 	}
     }
+
+    /* Rather than files, (or in addition to?) should probably allow users to input lists directly... to do so, need to increase char limit */
+    ProUIInputpanelMaxlenSet("creo_brl", "attr_rename", MAXPATHLEN - 1);
+    ProUIInputpanelMaxlenSet("creo_brl", "attr_save", MAXPATHLEN - 1);
 
     if (ProUIDialogActivate("creo_brl", &ret_status) != PRO_TK_NO_ERROR) {
 	bu_vls_printf(&vls, "Error in creo-brl Dialog: dialog returned %d\n", ret_status);
