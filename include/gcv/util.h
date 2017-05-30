@@ -31,7 +31,8 @@
 
 #include "gcv/defines.h"
 
-#include "raytrace.h"
+#include "rt/geom.h"
+#include "rt/tree.h"
 
 
 __BEGIN_DECLS

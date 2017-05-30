@@ -17,7 +17,7 @@
 int
 main(void)
 {
-    FILE *outfp = fopen("${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_HOST", "w");
+    FILE *outfp = fopen("@BRLCAD_HOSTNAME_FILE@", "w");
     if (!outfp) {
 	return -1;
     }

@@ -76,7 +76,6 @@
 const int NUM_OF_CPUS_TO_USE = 1;
 
 const int DEBUG_NAMES = 1;
-const int DEBUG_STATS = 2;
 
 const long debug = 1;
 int verbose = 0;
@@ -323,10 +322,8 @@ describe_tree(tree *tree, bu_vls *str)
  * @brief This routine is called when a region is first encountered in the
  * hierarchy when processing a tree
  *
- * @param tsp tree state (for parsing the tree)
  * @param pathp A listing of all the nodes traversed to get to this node in the database
  * @param combp the combination record for this region
- * @param client_data pointer that was passed as last argument to db_walk_tree()
  *
  */
 static int
@@ -370,11 +367,6 @@ region_start (db_tree_state *UNUSED(tsp),
 
 /**
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
- *
- * @param tsp
- * @param pathp
- * @param curtree
- * @param client_data
  *
  * @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
  * clean up the data in the tree * that is returned

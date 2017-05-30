@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include "raytrace.h"
 #include "gcv/api.h"
 
 

@@ -354,8 +354,7 @@ body GeometryChecker::handleCheckListSelect {} {
 body GeometryChecker::loadOverlaps {{filename ""}} {
 
     if {[catch {opendb} db_path]} {
-	puts "ERROR: no database seems to be open"
-	return -code 1
+	return -code error "no database seems to be open"
     }
 
     if {$filename == ""} {
@@ -370,13 +369,11 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     }
 
     if {$filename == ""} {
-	puts "ERROR: No overlap file was specified. None was found in the current directory."
-	return -code 1
+	return -code error "No overlap file was specified. None was found in the current directory."
     }
 
     if {$filename == "" || ![file exists $filename]} {
-	puts "ERROR: unable to open $filename"
-	return -code 1
+	return -code error "unable to open $filename"
     }
     set _ol_prefix "ck.[file tail $db_path]"
     set _ol_dir [file dirname $filename]
@@ -999,19 +996,13 @@ proc treeReplaceLeafWithSub {tree leaf sub} {
 
 proc subtractRightFromLeft {left right {subtractFirst false}} {
     if [ catch { opendb } dbname ] {
-	puts ""
-	puts "ERROR: no database seems to be open"
-	return -code 1
+	return -code error "no database seems to be open"
     }
     if [ exists $left ] {
-	puts ""
-	puts "ERROR: unable to find $left"
-	return -code 1
+	return -code error "unable to find $left"
     }
     if [ exists $right ] {
-	puts ""
-	puts "ERROR: unable to find $right"
-	return -code 1
+	return -code error "unable to find $right"
     }
     if { $left eq $right } {
 	puts ""
@@ -1021,7 +1012,7 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
 	puts ""
 	puts "There is probably a duplicate $rightreg in $leftcomb"
 	puts "You will need to resolve it manually."
-	return -code 1
+	return -code error
     }
 
     if {$subtractFirst} {
@@ -1036,7 +1027,7 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
 	    puts "ERROR: $right"
 	    puts "       This regions isn't reducible to a single solid. Refusing to subtract a"
 	    puts "       comb. Run check command with -F option to override."
-	    return -code 1
+	    return -code error
 	}
     }
     set rightsub [string trim [file tail [lindex $solids 0]]]
@@ -1044,9 +1035,9 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
     # if left already contains right, report error
     if {[llength [search $left -name $rightsub]] > 0} {
 	puts ""
-	puts "WARNING: attempting to subtract $rightsub from $left again"
-	puts "         An attempted manual resolution may already exist."
-	return -code 1
+	puts "ERROR: attempting to subtract $rightsub from $left again"
+	puts "       An attempted manual resolution may already exist."
+	return -code error
     }
 
     if {$subtractFirst} {
@@ -1074,9 +1065,7 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
 
 proc drawLeft {path} {
     if [ catch { opendb } dbname ] {
-	puts ""
-	puts "ERROR: no database seems to be open"
-	return
+	return -code 1 "no database seems to be open"
     }
     if [ exists $path ] {
 	puts ""
@@ -1090,9 +1079,7 @@ proc drawLeft {path} {
 
 proc drawRight {path} {
     if [ catch { opendb } dbname ] {
-	puts ""
-	puts "ERROR: no database seems to be open"
-	return
+	return -code error "no database seems to be open"
     }
     if [ exists $path ] {
 	puts ""
@@ -1130,17 +1117,7 @@ proc check {{args}} {
     }
 
     if {$usage} {
-	puts {Usage: check [-F] [overlaps_file]}
-	return -code 1
-    }
-
-    if {$firstFlag} {
-	puts "WARNING: Running with -F means check will assume that only the first unioned"
-	puts "         solid in a region is responsible for any overlap. When subtracting"
-	puts "         region A from overlapping region B, the first unioned solid in A will"
-	puts "         be subtracted from the first unioned solid in B. This may cause the"
-	puts "         wrong volume to be subtracted, leaving the overlap unresolved."
-	puts ""
+	return -code error {Usage: check [-F] [overlaps_file]}
     }
 
     if {[winfo exists $parent.checker]} {
@@ -1148,8 +1125,7 @@ proc check {{args}} {
     }
 
     if {[catch {opendb} db_path]} {
-	puts "ERROR: no database seems to be open"
-	return
+	return -code 1 "no database seems to be open"
     }
 
     set checkerWindow [toplevel $parent.checker]
@@ -1161,11 +1137,20 @@ proc check {{args}} {
     $checker registerEraseCallback [code erase]
     $checker registerOverlapCallback [code subtractRightFromLeft]
 
-    if {[catch {$checker loadOverlaps $filename}]} {
+    if {[catch {$checker loadOverlaps $filename} result]} {
 	wm withdraw $checkerWindow
 	update
 	destroy $checkerWindow
-	return
+	return -code error $result
+    }
+
+    if {$firstFlag} {
+	puts "WARNING: Running with -F means check will assume that only the first unioned"
+	puts "         solid in a region is responsible for any overlap. When subtracting"
+	puts "         region A from overlapping region B, the first unioned solid in A will"
+	puts "         be subtracted from the first unioned solid in B. This may cause the"
+	puts "         wrong volume to be subtracted, leaving the overlap unresolved."
+	puts ""
     }
 
     wm title $checkerWindow "Geometry Checker"

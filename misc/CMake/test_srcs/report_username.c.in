@@ -10,7 +10,7 @@
 int main(void) {
   FILE *outfp = NULL;
   char *name = getenv(USERVAR);
-  outfp = fopen("${BRLCAD_BINARY_DIR}/${DATA_DIR}/data/BRLCAD_BUILD_USER", "w");
+  outfp = fopen("@BRLCAD_USERNAME_FILE@", "w");
   if (!name)
     name = "unknown";
   printf("user name: %s\n", name);
