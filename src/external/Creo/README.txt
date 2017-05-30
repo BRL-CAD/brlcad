@@ -20,11 +20,10 @@ To avoid needing to unlock the dll after each build for testing, you need to
 set up your CREO instance to load the toolkit.  See
 https://www.ptcusercommunity.com/thread/121253
 
-BRL-CAD's DLL files must be placed in the appropriate locations within the
-CREO hierarchy so the parametric.exe executable can find them, even when
-testing a development build - even if the dll files from BRL-CAD are located
-in the same directory as the creo-brl.dll file, they will not be located
-and the plugin will fail to load (without any log message indicating why.)
-The .exe version will run, but if the goal is to test the dll the BRL-CAD
-libs *must* first be in position (see other docs for details.)
+BRL-CAD's DLL files must be placed in the appropriate locations within the CREO
+hierarchy so the CREO executable can find them, even when testing a development
+build - even if the dll files from BRL-CAD are located in the same directory as
+the creo-brl.dll file, they will not be located and the plugin will fail to
+load (without any log message indicating why.) The BRL-CAD libs *must* first be
+in position (see other docs for details.)
 

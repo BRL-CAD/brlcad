@@ -28,18 +28,22 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>
-#include <libexc.h>
 #include <math.h>
 #include <string.h>
+#include <ctype.h>
+#include <tcl.h>
 #include "bio.h"
 
 #include "rt/db4.h"
 #include "vmath.h"
+#include "bu.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
+#ifndef TEST_BUILD
+#include <libexc.h>
 #include <uf.h>
 #include <uf_ui.h>
 #include <uf_disp.h>
@@ -56,6 +60,9 @@
 #include <uf_eval.h>
 #include <uf_sket.h>
 #include <uf_error.h>
+#else
+#include "shim.h"
+#endif
 
 #include "./conv.h"
 #include "./ug_misc.h"
@@ -176,8 +183,8 @@ add_to_obj_list( char *name )
     struct obj_list *ptr;
 
     BU_ALLOC(ptr, struct obj_list);
-    fprintf( stderr, "In add_to_obj_list(%s), &ptr = x%x, name=x%x, brlcad_objs_root = x%x, ptr = x%x\n",
-	     name, &ptr, name, brlcad_objs_root, ptr );
+    /*fprintf( stderr, "In add_to_obj_list(%s), &ptr = x%x, name=x%x, brlcad_objs_root = x%x, ptr = x%x\n",
+	     name, &ptr, name, brlcad_objs_root, ptr );*/
     ptr->next = brlcad_objs_root;
     brlcad_objs_root = ptr;
 
@@ -825,7 +832,7 @@ get_exp_value( char *want, int n_exps, tag_t *exps, char **descs, double *value 
 
 
 static void
-get_chamfer_offsets( tag_t feat_tag, char *part_name, double units_conv, double *offset1, double *offset2 )
+get_chamfer_offsets( tag_t feat_tag, char *UNUSED(part_name), double units_conv, double *offset1, double *offset2 )
 {
     int n_exps;
     tag_t *exps;
@@ -1043,18 +1050,18 @@ get_cone_data( tag_t feat_tag, int n_exps, tag_t *exps, char **descs, double uni
 static int
 add_sketch_vert( double pt[3], struct rt_sketch_internal *skt, int *verts_alloced, double tol_sq )
 {
-    int i;
+    unsigned int i;
     point2d_t diff;
 
     for ( i=0; i<skt->vert_count; i++ ) {
 
 	V2SUB2( diff, pt, skt->verts[i] );
 	if ( MAG2SQ( diff ) < tol_sq ) {
-	    return i;
+	    return (int)i;
 	}
     }
 
-    if ( skt->vert_count >= *verts_alloced ) {
+    if ( (int)skt->vert_count >= *verts_alloced ) {
 	*verts_alloced += VERT_ALLOC_BLOCK;
 	bu_log( "Allocating %d vertices\n", *verts_alloced );
 	skt->verts = (point2d_t *)bu_realloc( skt->verts, *verts_alloced*sizeof(point2d_t ), "skt->verts" );
@@ -1067,9 +1074,9 @@ add_sketch_vert( double pt[3], struct rt_sketch_internal *skt, int *verts_alloce
 }
 
 static char *
-conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_name, unsigned char *rgb, const mat_t curr_xform,
-		double units_conv, int make_region, int num_exp, tag_t *exps, char **descs,
-		int n_guide_curves, tag_t *guide_curves, int n_profile_curves, tag_t *profile_curves, double tol_dist )
+conv_extrusion( tag_t feat_tag, char *part_name, char *UNUSED(refset_name), char *UNUSED(inst_name), unsigned char *UNUSED(rgb), const mat_t curr_xform,
+		double units_conv, int UNUSED(make_region), int num_exp, tag_t *exps, char **descs,
+		int UNUSED(n_guide_curves), tag_t *UNUSED(guide_curves), int UNUSED(n_profile_curves), tag_t *UNUSED(profile_curves), double l_tol_dist )
 {
     char *sketch_name;
     char *solid_name;
@@ -1097,7 +1104,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
     point_t extrude_base, tmp_pt;
     vect_t extrude_vect, extrude_uvec, extrude_vvec;
     double arc_angle_m_2pi;
-    double tol_sq=tol_dist*tol_dist;
+    double tol_sq=l_tol_dist*l_tol_dist;
     double *z_coords;
     double tmp;
     char skt_name[31];
@@ -1159,7 +1166,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
     }
     taper_angle = tmp * DEG2RAD;
 
-    if ( taper_angle != 0.0 ) {
+    if ( !ZERO(taper_angle) ) {
 	bu_log( "Cannot handle tapered extrusions yet\n" );
 	UF_free( curves );
 	return (char *)NULL;
@@ -1221,7 +1228,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 
     BU_ALLOC(skt, struct rt_sketch_internal);
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
-    skt->curve.seg_count = seg_count;
+    skt->curve.count = seg_count;
     skt->curve.reverse = (int *)bu_calloc( seg_count, sizeof( int ), "sketch reverse flags" );
     skt->curve.segment = (void **)bu_calloc( seg_count, sizeof( void *), "sketch segment pointers" );
     skt->vert_count = 0;
@@ -1271,7 +1278,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    intern.idb_meth = &OBJ[ID_SKETCH];
 	    intern.idb_ptr = (void *)skt;
 	    bu_avs_init_empty( &intern.idb_avs );
-	    intern.idb_meth->ft_ifree( &intern, NULL );
+	    intern.idb_meth->ft_ifree( &intern );
 	    UF_MODL_delete_list( &sketch_list );
 	    UF_free( curves );
 	    return (char *)NULL;
@@ -1310,7 +1317,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    intern.idb_meth = &OBJ[ID_SKETCH];
 		    intern.idb_ptr = (void *)skt;
 		    bu_avs_init_empty( &intern.idb_avs );
-		    intern.idb_meth->ft_ifree( &intern, NULL );
+		    intern.idb_meth->ft_ifree( &intern );
 		    UF_MODL_delete_list( &sketch_list );
 		    UF_free( curves );
 		    return (char *)NULL;
@@ -1383,7 +1390,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    intern.idb_meth = &OBJ[ID_SKETCH];
 		    intern.idb_ptr = (void *)skt;
 		    bu_avs_init_empty( &intern.idb_avs );
-		    intern.idb_meth->ft_ifree( &intern, NULL );
+		    intern.idb_meth->ft_ifree( &intern );
 		    UF_MODL_delete_list( &sketch_list );
 		    UF_free( curves );
 		    return (char *)NULL;
@@ -1405,7 +1412,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		intern.idb_meth = &OBJ[ID_SKETCH];
 		intern.idb_ptr = (void *)skt;
 		bu_avs_init_empty( &intern.idb_avs );
-		intern.idb_meth->ft_ifree( &intern, NULL );
+		intern.idb_meth->ft_ifree( &intern );
 		UF_MODL_delete_list( &sketch_list );
 		UF_free( curves );
 		return (char *)NULL;
@@ -1437,13 +1444,13 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    intern.idb_meth = &OBJ[ID_SKETCH];
 	    intern.idb_ptr = (void *)skt;
 	    bu_avs_init_empty( &intern.idb_avs );
-	    intern.idb_meth->ft_ifree( &intern, NULL );
+	    intern.idb_meth->ft_ifree( &intern );
 	    return (char *)NULL;
 	}
 
     }
 
-    if ( z_coords[0] != 0.0 ) {
+    if ( !ZERO(z_coords[0]) ) {
 	point_t pt;
 
 	bu_log( "z-coord = %g\n", z_coords[0] );
@@ -1453,7 +1460,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	MAT4X3PNT( skt->V, curr_xform, pt );
     }
 
-    rt_curve_order_segment( &skt->curve );
+    rt_curve_order_segments( &skt->curve );
 
     bu_vls_strcat( &sketch_vls, skt_name );
     sketch_name = create_unique_brlcad_name( &sketch_vls );
@@ -1478,7 +1485,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	intern.idb_meth = &OBJ[ID_SKETCH];
 	intern.idb_ptr = (void *)skt;
 	bu_avs_init_empty( &intern.idb_avs );
-	intern.idb_meth->ft_ifree( &intern, NULL );
+	intern.idb_meth->ft_ifree( &intern );
 	return (char *)NULL;
     }
     add_to_obj_list( sketch_name );
@@ -1742,7 +1749,7 @@ get_thru_faces_length( tag_t feat_tag,
     }
 
     V_MIN(min_len, min_exit);
-    V_MIN(min_len, max_extr);
+    V_MIN(min_len, max_entr);
 
     V_MAX(max_len, min_exit);
     V_MAX(max_len, max_entr);
@@ -1785,7 +1792,7 @@ get_thru_faces_length( tag_t feat_tag,
 	}
 
 	V_MIN(min_len, min_exit);
-	V_MIN(min_len, max_extr);
+	V_MIN(min_len, max_entr);
 
 	V_MAX(max_len, min_exit);
 	V_MAX(max_len, max_entr);
@@ -1815,12 +1822,17 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
     double tmp;
     double loc_orig[3];
     double location[3], dir1[3], dir2[3];
-    fastf_t Radius, Tip_angle, Depth;
+    fastf_t Radius = 0.0;
+    fastf_t Tip_angle = 0.0;
+    fastf_t Depth = 0.0;
     vect_t dir, height;
     point_t base;
     char *solid_name;
-    fastf_t CB_depth, CB_radius;
-    fastf_t CS_radius, CS_angle, CS_depth;
+    fastf_t CB_depth = 0.0;
+    fastf_t CB_radius = 0.0;
+    fastf_t CS_radius = 0.0;
+    fastf_t CS_angle = 0.0;
+    fastf_t CS_depth = 0.0;
 
     UF_func( UF_MODL_ask_feat_location( feat_tag, loc_orig ) );
     VSCALE( location, loc_orig, units_conv );
@@ -3603,7 +3615,10 @@ do_groove( int groove_type,
     double location[3], dir1[3], dir2[3];
     point_t base;
     vect_t dirx;
-    fastf_t groove_width, groove_radius, ball_radius, corner_radius;
+    fastf_t groove_width = 0.0;
+    fastf_t groove_radius = 0.0;
+    fastf_t ball_radius = 0.0;
+    fastf_t corner_radius = 0.0;
     int i, j;
     uf_list_p_t face_list;
     int num_faces;
@@ -3701,7 +3716,7 @@ do_groove( int groove_type,
 	    }
 	    UF_MODL_delete_list( &edge_list );
 	}
-	if ( face_type == UF_MODL_CYLINDRICAL_FACE |
+	if ( face_type == UF_MODL_CYLINDRICAL_FACE ||
 	     (face_type == UF_MODL_TOROIDAL_FACE && groove_type == BALL_END_GROOVE ) ) {
 	    double uv_minmax[4], param[2];
 	    double pnt[3], u1[3], v1[3], u2[3], v2[3], norm[3], curvature[2];
@@ -4150,7 +4165,8 @@ convert_a_feature( tag_t feat_tag,
 	if ( min_chamfer <= 0.0 ) {
 	    failed = 1;
 	} else {
-	    double offset1, offset2;
+	    double offset1 = 0.0;
+	    double offset2 = 0.0;
 
 	    get_chamfer_offsets( feat_tag, part_name, units_conv, &offset1, &offset2 );
 	    if ( offset1 >= min_chamfer || offset2 >= min_chamfer ) {
@@ -4203,7 +4219,7 @@ conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *inst_n
     double rgb_double[3];
     int color_count;
     int is_suppressed;
-    unsigned char *rgb;
+    unsigned char *rgb = NULL;
     int feat_num;
     int i;
     struct wmember head;
@@ -4358,8 +4374,8 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 	if (facet_params.max_facet_edges != MAX_VERT_PER_FACET ||
 	    facet_params.number_storage_type != UF_FACET_TYPE_DOUBLE ||
 	    !facet_params.specify_surface_tolerance ||
-	    facet_params.surface_dist_tolerance != surf_tol ||
-	    facet_params.surface_angular_tolerance != ang_tol) {
+	    !EQUAL(facet_params.surface_dist_tolerance, surf_tol) ||
+	    !EQUAL(facet_params.surface_angular_tolerance, ang_tol)) {
 
 	    facet_params.number_storage_type = UF_FACET_TYPE_DOUBLE;
 	    facet_params.max_facet_edges = MAX_VERT_PER_FACET;
@@ -4423,7 +4439,7 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 	for (vn=0; vn < vert_count; vn++) {
 	    point_t xformed_pt;
 
-	    if (units_conv != 1.0) {
+	    if (!EQUAL(units_conv, 1.0)) {
 		VSCALE(v[vn], v[vn], units_conv);
 	    }
 	    MAT4X3PNT( xformed_pt, curr_xform, v[vn] );
@@ -4708,7 +4724,7 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
     }
 
     /* recurse to sub-levels (if any) */
-    while (comp_obj_tag = UF_ASSEM_cycle_inst_of_part(node, comp_obj_tag) ) {
+    while ((comp_obj_tag = UF_ASSEM_cycle_inst_of_part(node, comp_obj_tag))) {
 
 	if (comp_obj_tag == NULL_TAG) break;
 
@@ -4757,7 +4773,7 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
 char *
 convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv )
 {
-    tag_t ref_tag;
+    tag_t ref_tag = NULL_TAG;
     char ref_set_name[REFSET_NAME_LEN];
     double origin[3];
     double matrix[9];
@@ -4774,7 +4790,8 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
     int found_refset=0;
     int num_refsets=0;
     char **def_ref_sets;
-    struct refset_list *ref_root=NULL, *ref_ptr;
+    struct refset_list *ref_root = NULL;
+    struct refset_list *ref_ptr = NULL;
     struct UF_OBJ_disp_props_s disp_props;
     int do_entire_part=0;
 
@@ -5223,7 +5240,7 @@ do_suppressions( tag_t node )
 
     /* recurse to sub-levels (if any) */
     comp_obj_tag = NULL_TAG;
-    while (comp_obj_tag = UF_ASSEM_cycle_inst_of_part(node, comp_obj_tag) ) {
+    while ((comp_obj_tag = UF_ASSEM_cycle_inst_of_part(node, comp_obj_tag))) {
 
 	if (comp_obj_tag == NULL_TAG) break;
 
@@ -5261,7 +5278,7 @@ get_it_all_loaded( tag_t node )
     }
 
     comp_obj_tag = NULL_TAG;
-    while (comp_obj_tag = UF_ASSEM_cycle_inst_of_part(node, comp_obj_tag) ) {
+    while ((comp_obj_tag = UF_ASSEM_cycle_inst_of_part(node, comp_obj_tag))) {
 
 	if (comp_obj_tag == NULL_TAG) break;
 
@@ -5282,6 +5299,7 @@ get_it_all_loaded( tag_t node )
     }
 }
 
+static const char *usage="Usage: %s [-d level] [-i starting_ident_number] [-n part_no_to_part_name_mapping_file] [-t surface_tolerance] [-a surface_normal_tolerance] [-R use_refset_name] [-c min_chamfer] [-r min_round] [-f] [-s] [-u] -o output_file.g part_filename [subpart1 subpart2 ...]\n";
 
 int
 parse_args(int ac, char *av[])
@@ -5324,14 +5342,12 @@ parse_args(int ac, char *av[])
     return bu_optind;
 }
 
-static const char *usage="Usage: %s [-d level] [-i starting_ident_number] [-n part_no_to_part_name_mapping_file] [-t surface_tolerance] [-a surface_normal_tolerance] [-R use_refset_name] [-c min_chamfer] [-r min_round] [-f] [-s] [-u] -o output_file.g part_filename [subpart1 subpart2 ...]\n";
-
 int
 main(int ac, char *av[])
 {
     tag_t displayed_part = NULL_TAG;
     char part_name[PART_NAME_LEN];		/* name of current part */
-    tag_t ugpart;
+    tag_t ugpart = NULL_TAG;
     tag_t cset=0;
     int i, j;
     char *comp_name;
@@ -5397,14 +5413,14 @@ main(int ac, char *av[])
     /* start up UG interface */
     UF_initialize();
 
-    signal( SIGBUS, abort );
+    /*signal( SIGBUS, abort );*/
 
     /* process part listed on command line */
     printf("file %s\n", av[i]);
 
     /* open part */
     if ( UF_PART_is_loaded( av[i] ) != 1 ) {
-	ugpart = open_part(av[i]);
+	ugpart = open_part(av[i], 0);
 	bu_log( "opened: %s\n", av[i] );
     }
 
@@ -5473,7 +5489,6 @@ main(int ac, char *av[])
 	bu_free( comp_name, "comp_name" );
     }
 
- bailout:
     if (cset) unload_sub_parts(cset);
     if (ugpart) UF_PART_close(ugpart, 1, 1);
 

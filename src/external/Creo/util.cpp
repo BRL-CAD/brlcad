@@ -42,6 +42,7 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
     va_end(ap);
 
     if (msg_type == MSG_STATUS) {
+	ProMessageClear();
 	ProMessageDisplay(msgfil, "USER_INFO", msg);
 	return;
     }
@@ -134,13 +135,40 @@ make_legal( char *name )
 
     c = (unsigned char *)name;
     while ( *c ) {
-		if ( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' || *c == '-' || *c == '#' || *c == '+' || *c == '\\' || *c == '{' || *c == '}' || *c == '*' || *c == ',' ) {
-	    *c = '_';
-	} else if ( *c > '~' ) {
-	    *c = '_';
-	}
+	int replace = 1;
+	if (isalnum(*c)) replace = 0;
+	if (*c == '.') replace = 0;
+	if (replace) *c = '_';
 	c++;
     }
+}
+
+extern "C" void
+collapse_underscores( struct bu_vls *name )
+{
+    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+    unsigned char *c;
+
+    c = (unsigned char *)bu_vls_addr(name);
+
+    /* Don't copy leading underscores */
+    while (*c == '_') c++;
+
+    /* Don't copy two underscores in a row, and don't copy an underscore at the end of the string */
+    while ( *c ) {
+	unsigned char *curr = c;
+	c++;
+	if (!(*curr == '_' && *c == '_') && !(*curr == '_' && !*c)) {
+	    bu_vls_putc(&tmpstr, *curr);
+	}
+    }
+
+    /* Only replace if we have something left - otherwise,
+       leave original unchanged */
+    if (bu_vls_strlen(&tmpstr) > 0) {
+	bu_vls_sprintf(name, "%s", bu_vls_addr(&tmpstr));
+    }
+    bu_vls_free(&tmpstr);
 }
 
 struct pparam_data {
@@ -247,16 +275,16 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, int flags)
 	if (pdata.val && strlen(pdata.val) > 0) {
 	    int is_al = 0;
 	    for (unsigned int j = 0; j < strlen(pdata.val); j++) is_al += isalpha(pdata.val[j]);
-		if (is_al > 0) {
+	    if (is_al > 0) {
 		/* Have key - we're done here */
-	    val = pdata.val;
-	    break;
-		} else {
-			/* not good enough - keep trying */
-			pdata.val = NULL;
-		}
-	} else {
+		val = pdata.val;
+		break;
+	    } else {
+		/* not good enough - keep trying */
 		pdata.val = NULL;
+	    }
+	} else {
+	    pdata.val = NULL;
 	}
     }
     return val;
@@ -274,7 +302,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     long count = 0;
     wchar_t *stable = NULL;
     std::map<wchar_t *, struct bu_vls *, WStrCmp>::iterator n_it;
-    std::map<wchar_t *, struct bu_vls *, WStrCmp> *nmap;
+    std::map<wchar_t *, struct bu_vls *, WStrCmp> *nmap = NULL;
     std::set<struct bu_vls *, StrCmp> *nset = cinfo->brlcad_names;
     char astr[CREO_NAME_MAX];
     ProWstringToString(astr, name);
@@ -312,6 +340,9 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
 	creo_log(cinfo, MSG_DEBUG, "\t name type: CREO name\n");
     }
 
+    /* If we somehow don't have a map, bail */
+    if (!nmap) return NULL;
+
     /* If we've already got something, return it. */
     n_it = nmap->find(name);
     if (n_it != nmap->end()) {
@@ -343,10 +374,11 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     /* scrub */
     lower_case(bu_vls_addr(&gname_root));
     make_legal(bu_vls_addr(&gname_root));
+    collapse_underscores(&gname_root);
     bu_vls_sprintf(gname, "%s", bu_vls_addr(&gname_root));
 
-	/* if we don't have something by now, go with unknown */
-	if (!bu_vls_strlen(gname)) bu_vls_sprintf(gname, "unknown");
+    /* if we don't have something by now, go with unknown */
+    if (!bu_vls_strlen(gname)) bu_vls_sprintf(gname, "unknown");
 
     if (suffix) bu_vls_printf(gname, ".%s", suffix);
 

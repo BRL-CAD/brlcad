@@ -88,42 +88,92 @@ _trimesh_generate_edge_list(size_t fcnt, int *f)
 }
 
 int
-bg_trimesh_solid(size_t vcnt, size_t fcnt, fastf_t *v, int *f)
+bg_trimesh_solid(size_t vcnt, size_t fcnt, fastf_t *v, int *f, int **bedges)
 {
     size_t num_edges;
     struct trimesh_halfedge *edge_list;
     size_t i;
+    int not_solid = 0;
+    int pos = 0;
 
-    if (!vcnt || !v || !fcnt || !f) return 0;
+    if (!vcnt || !v || !fcnt || !f) return 1;
 
     num_edges = 3 * fcnt;
 
-    if (fcnt < 4 || vcnt < 4 || num_edges % 2) return 0;
 
-    if (!(edge_list = _trimesh_generate_edge_list(fcnt, f))) return 0;
+    if (fcnt < 4 || vcnt < 4) return 1;
+    if (!bedges && num_edges % 2) return 1;
+
+    if (!(edge_list = _trimesh_generate_edge_list(fcnt, f))) return 1;
 
     for (i = 0; i + 1 < num_edges; i += 2) {
 	/* each edge must have two half-edges */
 	if (!TRIMESH_EDGE_EQUAL(edge_list[i], edge_list[i + 1])) {
-	    bu_free(edge_list, "edge_list");
-	    return 0;
+	    if (!bedges) {
+		bu_free(edge_list, "edge_list");
+		return 1;
+	    } else {
+		not_solid++;
+		continue;
+	    }
 	}
-
 	/* adjacent half-edges must be compatibly oriented */
 	if (edge_list[i].flipped == edge_list[i + 1].flipped) {
-	    bu_free(edge_list, "edge_list");
-	    return 0;
+	    if (!bedges) {
+		bu_free(edge_list, "edge_list");
+		return 1;
+	    } else {
+		not_solid++;
+		continue;
+	    }
 	}
-
 	/* only two half-edges may share an edge */
 	if (i + 2 < num_edges && TRIMESH_EDGE_EQUAL(edge_list[i], edge_list[i + 2])) {
-	    bu_free(edge_list, "edge_list");
-	    return 0;
+	    if (!bedges) {
+		bu_free(edge_list, "edge_list");
+		return 1;
+	    } else {
+		not_solid++;
+		continue;
+	    }
+	}
+    }
+
+    /* If we either aren't tracking edges or we didn't have any problems, we're done */
+    if (!bedges || !not_solid) {
+	bu_free(edge_list, "edge_list");
+	return 0;
+    }
+
+    /* If we got here, we're interesting in knowing what the problems are */
+    *bedges = (int *)bu_calloc(not_solid*2 + 1, sizeof(int), "bad edge pnt indices");
+
+    for (i = 0; i + 1 < num_edges; i += 2) {
+	/* each edge must have two half-edges */
+	if (!TRIMESH_EDGE_EQUAL(edge_list[i], edge_list[i + 1])) {
+	    (*bedges)[pos] = edge_list[i].va;
+	    (*bedges)[pos+1] = edge_list[i].vb;
+	    pos = pos + 2;
+	    continue;
+	}
+	/* adjacent half-edges must be compatibly oriented */
+	if (edge_list[i].flipped == edge_list[i + 1].flipped) {
+	    (*bedges)[pos] = edge_list[i].va;
+	    (*bedges)[pos+1] = edge_list[i].vb;
+	    pos = pos + 2;
+	    continue;
+	}
+	/* only two half-edges may share an edge */
+	if (i + 2 < num_edges && TRIMESH_EDGE_EQUAL(edge_list[i], edge_list[i + 2])) {
+	    (*bedges)[pos] = edge_list[i].va;
+	    (*bedges)[pos+1] = edge_list[i].vb;
+	    pos = pos + 2;
+	    continue;
 	}
     }
 
     bu_free(edge_list, "edge_list");
-    return 1;
+    return not_solid;
 }
 
 int

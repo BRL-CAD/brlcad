@@ -71,7 +71,7 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->creo_names = new std::set<struct bu_vls *, StrCmp>;
     cinfo->model_parameters = new std::vector<char *>;
     cinfo->attrs = new std::vector<char *>;
-	cinfo->warn_feature_unsuppress = 0;
+    cinfo->warn_feature_unsuppress = 0;
 
 }
 
@@ -134,10 +134,9 @@ extern "C" void
 output_parts(struct creo_conv_info *cinfo)
 {
     std::set<wchar_t *, WStrCmp>::iterator d_it;
-    int cnt = 0;
+    int cnt = 1;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
 	wchar_t wname[CREO_NAME_MAX];
-	char name[CREO_NAME_MAX];
 	struct bu_vls *rname;
 	struct directory *rdp;
 	ProMdl m;
@@ -158,6 +157,7 @@ output_parts(struct creo_conv_info *cinfo)
 	    if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR && ProVerstampEqual(cstamp, gstamp) == PRO_B_TRUE) {
 		/* The .g object was created from the same version of the
 		 * object that exists currently in the CREO file - skip */
+		creo_log(cinfo, MSG_OK, "%s exists and is current - skipping\n", bu_vls_addr(rname));
 		continue;
 	    } else {
 		/* kill the existing object (region and child solid) - it's out of sync with CREO */
@@ -182,8 +182,7 @@ output_parts(struct creo_conv_info *cinfo)
 	}
 
 	/* All set - process the part */
-	(void)ProWstringToString(name, wname);
-	creo_log(cinfo, MSG_STATUS, "Processing part %s (%d of %d)\n", name, cnt++, cinfo->parts->size());
+	creo_log(cinfo, MSG_STATUS, "Processing part %d of %d", cnt++, cinfo->parts->size());
 	if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
 }
@@ -192,16 +191,15 @@ extern "C" void
 output_assems(struct creo_conv_info *cinfo)
 {
     std::set<wchar_t *, WStrCmp>::iterator d_it;
-    int cnt = 0;
+    int cnt = 1;
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
 	wchar_t wname[CREO_NAME_MAX];
-	char name[CREO_NAME_MAX];
 	struct bu_vls *aname;
 	struct directory *adp;
 	ProMdl parent;
 	ProWVerstamp cstamp, gstamp;
 	ProMdlnameInit(*d_it, PRO_MDLFILE_ASSEMBLY, &parent);
-	if (ProMdlNameGet(parent, wname) != PRO_TK_NO_ERROR) return;
+	if (ProMdlNameGet(parent, wname) != PRO_TK_NO_ERROR) continue;
 
 	/* If the part a) exists in the .g file already and b) has the same CREO
 	 * version stamp as the part in the current CREO file, we don't need
@@ -216,6 +214,7 @@ output_assems(struct creo_conv_info *cinfo)
 	    if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR && ProVerstampEqual(cstamp, gstamp) == PRO_B_TRUE) {
 		/* The .g object was created from the same version of the
 		 * object that exists currently in the CREO file - skip */
+		creo_log(cinfo, MSG_OK, "%s exists and is current - skipping\n", bu_vls_addr(aname));
 		continue;
 	    } else {
 		/* kill the existing object - it's out of sync with CREO */
@@ -225,9 +224,11 @@ output_assems(struct creo_conv_info *cinfo)
 	    }
 	}
 
+	/* Skip if we've determined this one is empty */
+	if (cinfo->empty->find(wname) != cinfo->empty->end()) continue;
+
 	/* All set - process the assembly */
-	(void)ProWstringToString(name, wname);
-	creo_log(cinfo, MSG_STATUS, "Processing assembly %s (%d of %d)\n", name, cnt++, cinfo->assems->size());
+	creo_log(cinfo, MSG_STATUS, "Processing assembly %d of %d", cnt++, cinfo->assems->size());
 	output_assembly(cinfo, parent);
     }
 }
@@ -297,7 +298,7 @@ objects_gather( ProFeature *feat, ProError UNUSED(status), ProAppData app_data )
 	    }
 	    break;
 	default:
-		creo_log(cinfo, MSG_DEBUG, "%s: is neither an assembly or a part, skipping\n", name);
+	    creo_log(cinfo, MSG_DEBUG, "%s: is neither an assembly or a part, skipping\n", name);
 	    return PRO_TK_NO_ERROR;
 	    break;
     }
@@ -349,14 +350,14 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     struct bu_vls *comb_name;
     struct bu_vls top_name = BU_VLS_INIT_ZERO;
     struct wmember wcomb;
-	struct directory *dp;
+    struct directory *dp;
     BU_LIST_INIT(&wcomb.l);
     mat_t m;
     bn_decode_mat(m, "0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1");
     comb_name = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
-	if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(comb_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
-    comb_name = get_brlcad_name(cinfo, wname, NULL, N_REGION);
-	}
+    if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(comb_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
+	comb_name = get_brlcad_name(cinfo, wname, NULL, N_REGION);
+    }
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
 
     /* Guarantee we have a non-colliding top level name */
@@ -375,15 +376,6 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     }
     if (tdp == RT_DIR_NULL) mk_lcomb(cinfo->wdbp, bu_vls_addr(&top_name), &wcomb, 0, NULL, NULL, NULL, 0);
     bu_vls_free(&top_name);
-
-    /* Report empty objects */
-    std::set<wchar_t *, WStrCmp>::iterator e_it;
-    if (cinfo->empty->size() > 0) creo_log(cinfo, MSG_FAIL, "The following objects failed to convert:\n");
-    for (e_it = cinfo->empty->begin(); e_it != cinfo->empty->end(); e_it++) {
-	//char ename[MAXPATHLEN];
-	//ProWstringToString(ename, *e_it);
-	//creo_log(cinfo, MSG_FAIL, "%s\n", ename);
-    }
 
 }
 
@@ -518,7 +510,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 	ProWstringFree(w_attr_rename);
 
 	if (strlen(attr_rename) > 0) {
-		std::string pfilestr(attr_rename);
+	    std::string pfilestr(attr_rename);
 	    std::istringstream ss(pfilestr);
 	    std::string line;
 	    while (std::getline(ss, line)) {
@@ -798,13 +790,14 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /* let user know we are done */
     ProStringToWstring( tmp_line, "Conversion complete" );
     ProUILabelTextSet( "creo_brl", "curr_proc", tmp_line );
+    ProMessageClear();
 
-	if (cinfo->warn_feature_unsuppress) {
-		struct bu_vls errmsg = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&errmsg, "During the conversion, one or more parts had features suppressed. After the conversion was complete, an\nattempt was made to unsuppress these same features.\nOne or more unsuppression operations failed, so some features are still\nsuppressed. Please exit CREO without saving any\nchanges so that this problem will not persist.");
-	    PopupMsg("Warning - Restoration Failure", bu_vls_addr(&errmsg));
-	    bu_vls_free(&errmsg);
-	}
+    if (cinfo->warn_feature_unsuppress) {
+	struct bu_vls errmsg = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&errmsg, "During the conversion, one or more parts had features suppressed. After the conversion was complete, an\nattempt was made to unsuppress these same features.\nOne or more unsuppression operations failed, so some features are still\nsuppressed. Please exit CREO without saving any\nchanges so that this problem will not persist.");
+	PopupMsg("Warning - Restoration Failure", bu_vls_addr(&errmsg));
+	bu_vls_free(&errmsg);
+    }
     creo_conv_info_free(cinfo);
     return;
 }
@@ -889,9 +882,9 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
 	goto print_msg;
     }
 
-	/* File names may get longer than the default... */
-	ProUIInputpanelMaxlenSet("creo_brl", "output_file", MAXPATHLEN - 1);
-	ProUIInputpanelMaxlenSet("creo_brl", "log_file", MAXPATHLEN - 1);
+    /* File names may get longer than the default... */
+    ProUIInputpanelMaxlenSet("creo_brl", "output_file", MAXPATHLEN - 1);
+    ProUIInputpanelMaxlenSet("creo_brl", "log_file", MAXPATHLEN - 1);
 
     ProMdl model;
     if (ProMdlCurrentGet(&model) != PRO_TK_BAD_CONTEXT) {
@@ -984,7 +977,7 @@ extern "C" int user_initialize()
 
 
     /* let user know we are here */
-    PopupMsg("Plugin Successfully Loaded", "The CREO to BRL-CAD converter plugin Version 0.2 was successfully loaded.");
+    //PopupMsg("Plugin Successfully Loaded", "The CREO to BRL-CAD converter plugin Version 0.2 was successfully loaded.");
 
     return 0;
 }

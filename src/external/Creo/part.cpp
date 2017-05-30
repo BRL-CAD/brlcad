@@ -269,78 +269,188 @@ unsuppress_features(struct part_conv_info *pinfo)
     }
 }
 
-#if 0
+/* TODO - will probably need maps from CREO data items to ON data items here... */
+struct brep_data {
+    ON_Brep *brep;
+    ProSurface s;
+    int curr_loop_id;
+    std::map<int,int> *cs_to_onf;
+    std::map<int,int> *ce_to_one;
+    std::map<int,int> *cc3d_to_on3dc;
+    std::map<int,int> *cc2d_to_on2dc;
+};
+
+
 extern "C" ProError
-surface_filter(ProSurface s, ProAppData app_data) {
+edge_filter(ProEdge UNUSED(e), ProAppData UNUSED(app_data)) {
+    return PRO_TK_NO_ERROR;
+}
+
+// ProEdge appears to correspond to the ON_BrepEdge.
+extern "C" ProError
+edge_process(ProEdge UNUSED(e), ProError UNUSED(status), ProAppData app_data) {
+    int current_surf_id;
+    struct brep_data *bdata = (struct brep_data *)app_data;
+    ProSurface s = bdata->s;
+    ProSurfaceIdGet(s, &current_surf_id);
+    //ON_BrepLoop &nl = bdata->brep->m_L[bdata->curr_loop_id];
+
+    // TODO - there appears to be no way to get at ProEdgedata from an
+    // existing edge???  If that's the case, and we're limited to
+    // the ProEdgeToNURBS() capability, then we may have to use the
+    // step-g routines for creating our own trimming curves (arrgh!)
+    //ProGeomitemdata *edata;
+    //ProEdgeDataGet(e, &edata);
+
+    return PRO_TK_NO_ERROR;
+}
+
+extern "C" ProError
+contour_filter(ProContour UNUSED(c), ProAppData UNUSED(app_data)) {
+    return PRO_TK_NO_ERROR;
+}
+
+// Contours appear to correspond to Loops in OpenNURBS.
+extern "C" ProError
+contour_process(ProContour c, ProError UNUSED(status), ProAppData app_data) {
+    struct brep_data *bdata = (struct brep_data *)app_data;
+    int creo_id = -1;
+    int f_id = -1;
+    ProSurface s = bdata->s;
+    ProSurfaceIdGet(s, &creo_id);
+    if (bdata->cs_to_onf->find(creo_id) != bdata->cs_to_onf->end()) f_id = bdata->cs_to_onf->find(creo_id)->second;
+    if (f_id == -1) return PRO_TK_GENERAL_ERROR;
+    ON_BrepLoop &nl = bdata->brep->NewLoop(ON_BrepLoop::outer, bdata->brep->m_F[f_id]);
+    bdata->curr_loop_id = nl.m_loop_index;
+    // Does ProContourTraversal indicate inner vs outer loop?
+    ProContourTraversal tv;
+    ProContourTraversalGet(c, &tv);
+    if (tv == PRO_CONTOUR_TRAV_INTERNAL) nl.m_type = ON_BrepLoop::inner;
+
+    ProContourEdgeVisit(s, c, edge_process, edge_filter, app_data);
+
+    return PRO_TK_NO_ERROR;
+}
+
+extern "C" ProError
+surface_filter(ProSurface UNUSED(s), ProAppData UNUSED(app_data)) {
     return PRO_TK_NO_ERROR;
 }
 
 extern "C" ProError
 surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
-    int s_id;
+    int c_id;
     ProSurfacedata *ndata;
     ProSrftype s_type;
-    ProUvParam uvmin, uvmax;
+    ProUvParam uvmin = {DBL_MAX,DBL_MAX};
+    ProUvParam uvmax = {DBL_MIN,DBL_MIN};
     ProSurfaceOrient s_orient;
     ProSurfaceshapedata s_shape;
-    ON_Brep *nbrep = (ON_Brep *)app_data;
-    ProSurfaceToNURBS(s, &ndata);
-    ProSurfacedataGet(ndata, &s_type, uvmin, uvmax, &s_orient, &s_shape, &s_id);
-    if (s_type == PRO_SRF_B_SPL) {
-	int degree[2];
-	double *up_array = NULL;
-	double *vp_array = NULL;
-	double *w_array = NULL;
-	ProVector *cntl_pnts;
-	int ucnt, vcnt, ccnt;
-	ProBsplinesrfdataGet(&s_shape, degree, &up_array, &vp_array, &w_array, &cntl_pnts, &ucnt, &vcnt, &ccnt); 
-	int ucvmax = ucnt - degree[0] - 2;
-	int vcvmax = vcnt - degree[1] - 2;
+    struct brep_data *bdata = (struct brep_data *)app_data;
+    ON_Brep *nbrep = bdata->brep;
+    ProSurfaceIdGet(s, &c_id);
+    if (bdata->cs_to_onf->find(c_id) == bdata->cs_to_onf->end()) {
+	int s_id;
+	ProSurfaceToNURBS(s, &ndata);
+	ProSurfacedataGet(ndata, &s_type, uvmin, uvmax, &s_orient, &s_shape, &s_id);
+	if (s_type == PRO_SRF_B_SPL) {
+	    int degree[2];
+	    double *up_array = NULL;
+	    double *vp_array = NULL;
+	    double *w_array = NULL;
+	    ProVector *cntl_pnts;
+	    int ucnt, vcnt, ccnt;
+	    if (ProBsplinesrfdataGet(&s_shape, degree, &up_array, &vp_array, &w_array, &cntl_pnts, &ucnt, &vcnt, &ccnt) == PRO_TK_NO_ERROR) {
+		int ucvmax = ucnt - degree[0] - 2;
+		int vcvmax = vcnt - degree[1] - 2;
 
-	ON_NurbsSurface *ns = ON_NurbsSurface::New();
-	ns->m_dim = (degree[0] > degree[1]) ? degree[0] : degree[1];
-	ns->m_order[0] = degree[0] + 1;
-	ns->m_order[1] = degree[1] + 1;
-	ns->m_knot[0] = up_array;
-	ns->m_knot[1] = vp_array;
-	ns->m_is_rat = (w_array) ? 1 : 0;
-	if (ns->m_is_rat) {
-	    for (int i = 0; i < ucvmax; i++) {
-		for (int j = 0; j < vcvmax; j++) {
-		    ON_4dPoint cv;
-		    cv[0] = cntl_pnts[i*j+j][0];
-		    cv[1] = cntl_pnts[i*j+j][1];
-		    cv[2] = cntl_pnts[i*j+j][2];
-		    cv[3] = w_array[i];
-		    ns->SetCV(i,j,cv);
+		ON_NurbsSurface *ns = ON_NurbsSurface::New(3, (w_array) ? 1 : 0, degree[0]+1, degree[1]+1, ucvmax+1, vcvmax+1);
+
+		// knot index (>= 0 and < Order + CV_count - 2)
+		// generate u-knots
+		int n = ucvmax+1;
+		int p = degree[0];
+		int m = n + p - 1;
+		for (int i = 0; i < p; i++) {
+		    ns->SetKnot(0, i, 0.0);
 		}
-	    }
-	} else {
-	    for (int i = 0; i < ucvmax; i++) {
-		for (int j = 0; j < vcvmax; j++) {
-		    ON_3dPoint cv;
-		    cv[0] = cntl_pnts[i*j+j][0];
-		    cv[1] = cntl_pnts[i*j+j][1];
-		    cv[2] = cntl_pnts[i*j+j][2];
-		    ns->SetCV(i,j,cv);
+		for (int j = 1; j < n - p; j++) {
+		    double x = (double)j / (double)(n - p);
+		    int knot_index = j + p - 1;
+		    ns->SetKnot(0, knot_index, x);
 		}
+		for (int i = m - p; i < m; i++) {
+		    ns->SetKnot(0, i, 1.0);
+		}
+		// generate v-knots
+		n = vcvmax+1;
+		p = degree[1];
+		m = n + p - 1;
+		for (int i = 0; i < p; i++) {
+		    ns->SetKnot(1, i, 0.0);
+		}
+		for (int j = 1; j < n - p; j++) {
+		    double x = (double)j / (double)(n - p);
+		    int knot_index = j + p - 1;
+		    ns->SetKnot(1, knot_index, x);
+		}
+		for (int i = m - p; i < m; i++) {
+		    ns->SetKnot(1, i, 1.0);
+		}
+
+		if (ns->m_is_rat) {
+		    for (int i = 0; i <= ucvmax; i++) {
+			for (int j = 0; j <= vcvmax; j++) {
+			    ON_4dPoint cv;
+			    cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
+			    cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
+			    cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
+			    cv[3] = w_array[i];
+			    ns->SetCV(i,j,cv);
+			}
+		    }
+		} else {
+		    for (int i = 0; i <= ucvmax; i++) {
+			for (int j = 0; j <= vcvmax; j++) {
+			    ON_3dPoint cv;
+			    cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
+			    cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
+			    cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
+			    ns->SetCV(i,j,cv);
+			}
+		    }
+		}
+		int n_id = nbrep->AddSurface(ns);
+		ON_BrepFace &nface = nbrep->NewFace(n_id);
+		(*bdata->cs_to_onf)[c_id] = nface.m_face_index;
+		if (s_orient == PRO_SURF_ORIENT_IN) nbrep->FlipFace(nface);
 	    }
+
+	    ProSurfaceContourVisit(s, contour_process, contour_filter, app_data);
 	}
-	nbrep->AddSurface(ns);
     }
+
     return PRO_TK_NO_ERROR;
 }
-#endif
+
 
 extern "C" ProError
-opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname, int UNUSED(have_bbox))
+opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname)
 {
     ProError ret = PRO_TK_NO_ERROR;
-    //ProSolid psol = ProMdlToSolid(model);
+    ProSolid psol = ProMdlToSolid(model);
     ON_Brep *nbrep = ON_Brep::New();
+    struct brep_data bdata;
+    bdata.brep = nbrep;
+    bdata.cs_to_onf = new std::map<int,int>;
+    bdata.ce_to_one = new std::map<int,int>;
+    bdata.cc3d_to_on3dc = new std::map<int,int>;
+    bdata.cc2d_to_on2dc = new std::map<int,int>;
+
     wchar_t wname[CREO_NAME_MAX];
     ProMdlMdlnameGet(model, wname);
-    //ProSolidSurfaceVisit(psol, surface_process, surface_filter, (ProAppData)nbrep);
+    ProSolidSurfaceVisit(psol, surface_process, surface_filter, (ProAppData)&bdata);
+
     /* Output the solid */
     *sname = get_brlcad_name(cinfo, wname, "brep", N_SOLID);
     mk_brep(cinfo->wdbp, bu_vls_addr(*sname), nbrep);
@@ -364,9 +474,14 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
      * ProEdgeToNURBS()
      * ProCurveToNURBS()
      */
+
+    delete bdata.cs_to_onf;
+    delete bdata.ce_to_one;
+    delete bdata.cc3d_to_on3dc;
+    delete bdata.cc2d_to_on2dc;
+
     return ret;
 }
-
 
 extern "C" ProError
 tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname)
@@ -378,8 +493,8 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     wchar_t wname[CREO_NAME_MAX];
     char pname[CREO_NAME_MAX];
 
-    struct bn_vert_tree *vert_tree;
-    struct bn_vert_tree *norm_tree;
+    struct bn_vert_tree *vert_tree = NULL;
+    struct bn_vert_tree *norm_tree = NULL;
     std::vector<int> faces;
     std::vector<int> face_normals;
 
@@ -408,10 +523,10 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 
 	status = ProPartTessellate(ProMdlToPart(model), curr_error/cinfo->creo_to_brl_conv, curr_angle, PRO_B_TRUE, &tess);
 	if (status != PRO_TK_NO_ERROR) {
-	      creo_log(cinfo, MSG_DEBUG, "%s: failed to tessellate using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
-	//    creo_log(cinfo, MSG_DEBUG, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
-	//    creo_log(cinfo, MSG_DEBUG, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
-	//    creo_log(cinfo, MSG_DEBUG, "\tcurr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
+	    creo_log(cinfo, MSG_DEBUG, "%s: failed to tessellate using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
+	    //    creo_log(cinfo, MSG_DEBUG, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
+	    //    creo_log(cinfo, MSG_DEBUG, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
+	    //    creo_log(cinfo, MSG_DEBUG, "\tcurr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
 	    continue;
 	}
 
@@ -476,7 +591,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	}
 
 	/* Check solidity */
-	int bot_is_solid = bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0]);
+	int bot_is_solid = !bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL);
 
 	/* If it's not solid and we're testing solidity, keep trying... */
 	if (!bot_is_solid) {
@@ -510,9 +625,19 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	status = PRO_TK_NO_ERROR;
     }
 
-    creo_log(cinfo, MSG_OK, "%s: successfully tessellated with tessellation error: %g and angle: %g!!!\n", pname, curr_error, curr_angle);
+    /* make sure we have non-zero faces (and if needed, face_normals) vectors */
+    if (faces.size() == 0 || !vert_tree->curr_vert) {
+	status = PRO_TK_NOT_EXIST;
+	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed\n", pname);
+	goto tess_cleanup;
+    }
+    if (cinfo->get_normals && face_normals.size() == 0) {
+	status = PRO_TK_NOT_EXIST;
+	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed\n", pname);
+	goto tess_cleanup;
+    }
 
-    /* TODO - make sure we have non-zero faces (and if needed, face_normals) vectors */
+    creo_log(cinfo, MSG_OK, "%s: successfully tessellated with tessellation error: %g and angle: %g!!!\n", pname, curr_error, curr_angle);
 
     /* Output the solid - TODO - what is the correct ordering??? does CCW always work? */
     *sname = get_brlcad_name(cinfo, wname, "s", N_SOLID);
@@ -605,8 +730,6 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     ProWstringToString(pname, wname);
     creo_log(cinfo, MSG_OK, "Processing %s:\n", pname);
 
-    ProUILabelTextSet("creo_brl", "curr_proc", wname);
-
     /* Collect info about things that might be eliminated */
     if (cinfo->do_elims) {
 
@@ -626,16 +749,13 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	}
     }
 
-    /* If we've been told to do CSG conversions, apply logic for finding and replacing holes */
-
-
     /* Get bounding box of a solid using "ProSolidOutlineGet"
      * TODO - may want to use this to implement relative facetization tolerance...
      */
     if (ProSolidOutlineGet(ProMdlToSolid(model), bboxpnts) != PRO_TK_NO_ERROR) have_bbox = 0;
 
     /* TODO - support an option to convert to ON_Brep */
-    //status = opennurbs_part(cinfo, model, &sname, have_bbox);
+    //status = opennurbs_part(cinfo, model, &sname);
 
     /* Tessellate */
     status = tessellate_part(cinfo, model, &sname);
@@ -644,7 +764,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     if (status == PRO_TK_NOT_EXIST) {
 	/* Failed!!! */
 	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed.\n", pname);
-	if (cinfo->debug_bboxes) {
+	if (cinfo->debug_bboxes && have_bbox) {
 	    /* A failed solid conversion with a bounding box indicates a problem - rather than
 	     * ignore it, put the bbox in the .g file as a placeholder. */
 	    point_t rmin, rmax;
@@ -668,7 +788,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 
 have_part:
     /* We've got a part - the output for a part is a parent region and the solid underneath it. */
-//have_part:
+    //have_part:
     BU_LIST_INIT(&wcomb.l);
     rname = get_brlcad_name(cinfo, wname, "r", N_REGION);
 
@@ -704,7 +824,7 @@ have_part:
 		cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     } else {
 	/* something is wrong, but just ignore the missing properties */
-	creo_log(cinfo, MSG_FAIL, "Error getting surface properties for %s\n",	pname);
+	creo_log(cinfo, MSG_DEBUG, "Error getting surface properties for %s\n",	pname);
 	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb.l, 1, NULL, NULL, NULL, cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     }
 
@@ -777,7 +897,7 @@ cleanup:
 	ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features->at(0), pinfo->suppressed_features->size(), NULL, 0);
 	if (ret != PRO_TK_NO_ERROR) {
 	    creo_log(cinfo, MSG_FAIL, "%s: failed to unsuppress features.\n", pname);
-		cinfo->warn_feature_unsuppress = 1;
+	    cinfo->warn_feature_unsuppress = 1;
 	    return ret;
 	}
 	creo_log(cinfo, MSG_STATUS, "Successfully unsuppressed features.");
