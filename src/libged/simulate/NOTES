@@ -1,0 +1,48 @@
+# Notes on the Simulate command #
+
+The `simulate_test` program produces identical results across the two
+64-bit Linux system and single 64-bit BSD system I've tested it on
+(using varying versions of gcc and clang). Useful testing on Windows is not
+currently possible due to apparent linkage-related issues within Bullet
+producing various runtime errors.
+
+I am uncertain as to whether Bullet is guaranteed to produce identical
+results across platforms.
+
+BRL-CAD defines `fastf_t` as double-precision floating point, while Bullet
+by default defines `btScalar` as single-precision. We should define the macro
+`BT_USE_DOUBLE_PRECISION` in our build system so that both types are
+double-precision. This should mitigate some potential numerical issues.
+
+In some cases, the librt ray tracer produces large quantities of textual
+output. This can significantly slow down the simulation. The cases which
+have been noticed are:
+  - A combination nested within a region contains material information that
+    is ignored.
+  - A region is nested within another region. See note.
+
+Note: the simulate command toggles region flags where necessary in order to
+ensure that the user's "regions" (solids or objects with attribute
+`simulate::type=region`) correspond to librt regions during the ray trace.
+This is done by ensuring that these objects are the *top-level* regions; however,
+at this time the `TemporaryRegionHandle` class ignores regions that may be
+*below* these objects in the hierarchy. These lower-level nested regions do not
+affect the simulation results, but do result in a large amount of textual output.
+
+Internally, the code uses SI units, as assumed by Bullet. Because BRL-CAD's
+internal units are millimeters, conversions are done at any interface between
+the `simulate` state and a BRL-CAD object. All of these instances can be found by
+looking up references to the `world_to_application` constant in the `simulate`
+namespace.
+
+The firing of rays is the most time-consuming portion of a simulation, by far.
+The `simulate` code currently does *not* fire rays in parallel, although it
+should. Based on discussions, it may be best to provide parallel firing of rays
+within librt's `rt_shoot_rays()`, which already has a (disabled) experimental
+implementation.
+
+The implementation currently does not evaluate the center of mass of objects;
+instead, the center of objects' axis-aligned bounding boxes are used. It may
+be best to provide an API within libanalyze for evaluating the center of mass
+and moment of inertia of arbitrary geometry. In most cases the moment
+of inertia of an object can be approximated by that of its bounding box.

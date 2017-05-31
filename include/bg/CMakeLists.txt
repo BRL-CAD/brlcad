@@ -1,10 +1,11 @@
 set(bg_headers
-  defines.h
   chull.h
+  defines.h
   obr.h
   polygon.h
   tri_ray.h
   tri_tri.h
+  trimesh.h
   )
 
 install(FILES ${bg_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bg)

@@ -191,6 +191,39 @@ struct rhc_specific {
     fastf_t rhc_rsq;	/* r * r */
 };
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_rhc_specific {
+    cl_double rhc_V[3];		/* Vector to center of base of cylinder */
+    cl_double rhc_Bunit[3];	/* unit B vector */
+    cl_double rhc_Hunit[3];	/* unit H vector */
+    cl_double rhc_Runit[3];	/* unit vector, B x H */
+    cl_double rhc_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double rhc_invRoS[16];	/* invRot(Scale(vect)) */
+    cl_double rhc_cprime;	/* c / |B| */
+};
+ 
+size_t
+clt_rhc_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct rhc_specific *rhc =
+        (struct rhc_specific *)stp->st_specific;
+    struct clt_rhc_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_rhc_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->rhc_V, rhc->rhc_V);
+    VMOVE(args->rhc_Bunit, rhc->rhc_Bunit);
+    VMOVE(args->rhc_Hunit, rhc->rhc_Hunit);
+    VMOVE(args->rhc_Runit, rhc->rhc_Runit);
+    MAT_COPY(args->rhc_SoR, rhc->rhc_SoR);
+    MAT_COPY(args->rhc_invRoS, rhc->rhc_invRoS);
+    args->rhc_cprime = rhc->rhc_cprime;
+    return size;
+}
+
+#endif /* USE_OPENCL */
 
 const struct bu_structparse rt_rhc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_rhc_internal, rhc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

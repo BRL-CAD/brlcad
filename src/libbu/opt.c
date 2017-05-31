@@ -856,7 +856,7 @@ bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     }
 
     /* If the long fits inside an int, we're OK */
-    if (l <= INT_MAX || l >= -INT_MAX) {
+    if (l <= INT_MAX && l >= -INT_MAX) {
 	i = (int)l;
     } else {
 	/* Too big or too small, fail */

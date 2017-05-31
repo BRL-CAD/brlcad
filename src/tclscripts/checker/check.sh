@@ -16,10 +16,38 @@ fi
 db="$1"
 sz="1024"
 pwd=`pwd`
-loop="loop"
-mged="mged"
-rtcheck="rtcheck"
-gqa="gqa"
+
+find_cmd() {
+    local cmd="$1"
+    local ocmd="$1"
+    local ret
+
+    # if not in path, try alternative
+    if ! which "$cmd" >/dev/null 2>&1; then
+	cmd="/usr/brlcad/bin/$cmd"
+    fi
+
+    # if still not found, report error
+    which "$cmd" >/dev/null 2>&1
+    ret=$?
+
+    if [ $ret -ne 0 ]; then
+	echo "Error: couldn't find \"$ocmd\" command." >&2
+    fi
+
+    echo "$cmd"
+    return "$ret"
+}
+
+for cmd in loop mged rtcheck gqa; do
+    find_cmd "$cmd" >/dev/null || exit 1
+done
+
+loop="$(find_cmd loop)"
+mged="$(find_cmd mged)"
+rtcheck="$(find_cmd rtcheck)"
+gqa="$(find_cmd gqa)"
+
 gqa_opts="-q -g1mm,1mm"
 
 echo ""
@@ -132,7 +160,7 @@ for obj in $tops ; do
 	sed -n '/dist:/{
 	        s/count://g
 	        s/dist://g
-	        s/mm @*$//g
+	        s/mm @.*$//g
 	        p
 	       }' $OBJ.gqa.log |
 	awk '{if ($2 < $1) { tmp = $1; $1 = $2; $2 = tmp}; print $1, $2, $3 * $4}' >> $OBJ.pairings

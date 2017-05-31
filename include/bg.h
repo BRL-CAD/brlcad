@@ -55,6 +55,7 @@
 #include "bg/polygon.h"
 #include "bg/tri_ray.h"
 #include "bg/tri_tri.h"
+#include "bg/trimesh.h"
 
 #endif /* BG_H */
 

@@ -33,7 +33,11 @@ set(obj_ignore_files
 
 CMAKEFILES(${obj_ignore_files})
 
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/wfobj/WFOBJ_PARSER_obj_grammar/obj_grammar.yy)
+DISTCLEAN(
+  ${CMAKE_CURRENT_BINARY_DIR}/wfobj/WFOBJ_PARSER_obj_grammar/obj_grammar.yy
+  ${CMAKE_CURRENT_BINARY_DIR}/wfobj/WFOBJ_PARSER_SO_obj_grammar/obj_grammar.yy
+  ${CMAKE_CURRENT_BINARY_DIR}/wfobj/WFOBJ_PARSER_STATIC_obj_grammar/obj_grammar.yy
+  )
 
 # Local Variables:
 # tab-width: 8

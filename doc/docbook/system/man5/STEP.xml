@@ -81,7 +81,7 @@
       a schema file to store information, and newer schemas are also available in an XML form in addition to EXPRESS.)
     </para>
     <para>
-      A number of <link xlink:href="http://www.steptools.com/support/stdev_docs/express/step_irs/">other</link> low level parts and higher level Application Interpreted Constructs (AICs) form the foundation
+	    A number of <link xlink:href="https://en.wikipedia.org/wiki/List_of_STEP_%28ISO_10303%29_parts#AIC_-_Application_interpreted_constructs">other</link> low level parts and higher level Application Interpreted Constructs (AICs) form the foundation
       on which the more complete "high level" parts are defined.  This separation is performed mainly to allow
       maximal sharing and compatibility between different high level parts that need the same lower level foundations.
     </para>
@@ -104,23 +104,23 @@
 	  <tbody>
 	    <row>
 	      <entry>AP203</entry>
-	      <entry><link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=20597">Configuration controlled 3D designs of mechanical parts and assemblies</link></entry>
-	      <entry>Most recent version is 10303-203:1994 with additions and corrections as follows.  The original document was subsequently revised by one amendment<link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=34177">10303-203:1994/Amd 1:2000 </link> and three corrections: <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=26904">10303-203:1994/Cor 1:1996 </link>, <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=30943">10303-203:1994/Cor 2:1998 </link>, and <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=40190">10303-203:1994/Cor 3:2004 </link> </entry>
+	      <entry><link xlink:href="https://www.iso.org/standard/20597.html">Configuration controlled 3D designs of mechanical parts and assemblies</link></entry>
+	      <entry>Most recent version is 10303-203:1994 with additions and corrections as follows:  the original document was subsequently revised by one amendment <link xlink:href="https://www.iso.org/standard/34177.html">10303-203:1994/Amd 1:2000 </link> and three corrections: <link xlink:href="https://www.iso.org/standard/26904.html">10303-203:1994/Cor 1:1996 </link>, <link xlink:href="https://www.iso.org/standard/30943.html">10303-203:1994/Cor 2:1998 </link>, and <link xlink:href="https://www.iso.org/standard/40190.html">10303-203:1994/Cor 3:2004 </link>. <link xlink:href="https://www.iso.org/standard/39522.html">10303-203:2005</link> is considered a revision to this standard.</entry>
 	    </row>
 	    <row>
 	      <entry>AP203e2</entry>
-	      <entry> <link xlink:href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=44305">Configuration controlled 3D designs of mechanical parts and assemblies</link></entry>
-	      <entry>Most recent version is 10303-203:2011.  Revises <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=39522">10303-203:2005</link>, which is listed as a modular version that is harmonized with ISO 10303-2014.</entry>
+	      <entry> <link xlink:href="https://www.iso.org/standard/44305.html">Configuration controlled 3D designs of mechanical parts and assemblies</link></entry>
+	      <entry>Most recent version is 10303-203:2011.  Revises <link xlink:href="https://www.iso.org/standard/39522.html">10303-203:2005</link>, which is listed as a modular version that is harmonized with ISO 10303-214.  <link xlink:href="https://www.iso.org/standard/57620.html">10303-242:2014</link> is considered a revision to this standard.</entry>
 	    </row>
 	    <row>
 	      <entry>AP214</entry>
-	      <entry> <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=43669">Core data for automotive mechanical design processes</link></entry>
-	      <entry>Most recent version is 10303-214:2010. Two earlier versions exist: <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=38727">10303-214:2003</link> and <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=23643">10303-214:2001</link></entry>
+	      <entry> <link xlink:href="https://www.iso.org/standard/43669.html">Core data for automotive mechanical design processes</link></entry>
+	      <entry>Most recent version is 10303-214:2010 (a.k.a AP214e3). Two earlier versions exist: <link xlink:href="https://www.iso.org/standard/38727.html">10303-214:2003</link> and <link xlink:href="https://www.iso.org/standard/23643.html">10303-214:2001</link>. <link xlink:href="https://www.iso.org/standard/57620.html">10303-242:2014</link> is considered a revision to this standard.</entry>
 	    </row>
 	    <row>
 	      <entry>AP242</entry>
-	      <entry><link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=57620">Managed model-based 3D engineering</link></entry>
-	      <entry>Most recent version is 242:2014.  This standard is intended to consolidate and replace AP203e2 and AP214.</entry>
+	      <entry><link xlink:href="https://www.iso.org/standard/57620.html">Managed model-based 3D engineering</link></entry>
+	      <entry>Most recent version is 10303-242:2014. This standard is intended to consolidate and replace AP203e2 and AP214. One correction has been published: <link xlink:href="https://www.iso.org/standard/72059.html">10303-242:2014/Cor 1:2016</link>.</entry>
 	    </row>
 	  </tbody>
 	</tgroup>
@@ -148,10 +148,10 @@
       The standards define the structure of the schemas, but in general when it comes to the nuts and bolts of implementing a practical importer and exporter more resources are needed.  Below are links to some implementation resources:
     </para>
     <para>
-      PDES, Inc. Industry consortium <link xlink:href="http://www.steptools.com/support/stdev_docs/express/ap203/recprac203v8.pdf">Recommended Practices for AP203</link>, April 1998
+	    PDES, Inc. Industry consortium <link xlink:href="http://www.oasis-open.org/committees/download.php/11728/recprac8.pdf">Recommended Practices for AP203</link>, April 1998
     </para>
     <para>
-      PDM Implementer Forum, <link xlink:href="http://www.steptools.com/support/stdev_docs/express/pdm/pdmug_release4_3.pdf">Usage Guide for the STEP PDM Schema V1.2 Release 4.3</link>, January 2002.
+	    PDM Implementer Forum, <link xlink:href="http://www.cax-if.org/documents/pdmug_release4_3.pdf">Usage Guide for the STEP PDM Schema V1.2 Release 4.3</link>, January 2002.
     </para>
     <para>
       CAx Implementer Forum Recommended Practices: <link xlink:href="https://www.cax-if.org/joint_testing_info.html#recpracs"></link>

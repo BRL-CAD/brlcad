@@ -39,15 +39,15 @@
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 2.8)
 if(COMMAND CMAKE_POLICY)
-	CMAKE_POLICY(SET CMP0003 NEW)
-	if("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-		CMAKE_POLICY(SET CMP0026 OLD)
-		CMAKE_POLICY(SET CMP0048 OLD)
-	endif("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	if("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-		CMAKE_POLICY(SET CMP0053 OLD)
-		CMAKE_POLICY(SET CMP0054 NEW)
-	endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+  CMAKE_POLICY(SET CMP0003 NEW)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+    CMAKE_POLICY(SET CMP0026 OLD)
+    CMAKE_POLICY(SET CMP0048 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+    CMAKE_POLICY(SET CMP0053 OLD)
+    CMAKE_POLICY(SET CMP0054 NEW)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
@@ -270,17 +270,23 @@ CMAKE_DEPENDENT_OPTION(TK_ENABLE_XSS "Use XScreenSaver" ON "TK_SYSTEM_GRAPHICS S
 #--------------------------------------------------------------------
 #       Check for freetype / fontconfig / Xft support.
 #--------------------------------------------------------------------
-IF(NOT WIN32)
-  find_package(Freetype)
-  find_package(Fontconfig)
-  IF(NOT FREETYPE_FOUND)
-    SET(FREETYPE_LIBRARIES "")
-  ENDIF(NOT FREETYPE_FOUND)
-  IF(NOT FONTCONFIG_FOUND)
-    SET(FONTCONFIG_LIBRARIES "")
-  ENDIF(NOT FONTCONFIG_FOUND)
-ENDIF(NOT WIN32)
-CMAKE_DEPENDENT_OPTION(TK_ENABLE_XFT "Use freetype/fontconfig/xft" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;FREETYPE_FOUND;FONTCONFIG_FOUND;X11_Xft_FOUND" OFF)
+if(NOT TK_DISABLE_XFT)
+  IF(NOT WIN32)
+    find_package(Freetype)
+    find_package(Fontconfig)
+    IF(NOT FREETYPE_FOUND)
+      SET(FREETYPE_LIBRARIES "")
+    ENDIF(NOT FREETYPE_FOUND)
+    IF(NOT FONTCONFIG_FOUND)
+      SET(FONTCONFIG_LIBRARIES "")
+    ENDIF(NOT FONTCONFIG_FOUND)
+  ENDIF(NOT WIN32)
+  CMAKE_DEPENDENT_OPTION(TK_ENABLE_XFT "Use freetype/fontconfig/xft" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;FREETYPE_FOUND;FONTCONFIG_FOUND;X11_Xft_FOUND" OFF)
+else(NOT TK_DISABLE_XFT)
+  set(TK_ENABLE_XFT OFF)
+  set(FREETYPE_LIBRARIES "")
+  set(FONTCONFIG_LIBRARIES "")
+endif(NOT TK_DISABLE_XFT)
 
 #----------------------------------------------------------------------------
 # signed/unsigned char - does the Tcl code still need this? See
@@ -685,20 +691,22 @@ add_definitions(-DXKEYCODETOKEYSYM_IS_DEPRECATED=1)
 
 include_directories(
 	${TCL_INCLUDE_PATH}
-	${TK_INCLUDE_PATH}
-	${FREETYPE_INCLUDE_DIRS}
-	${TK_X11_INCLUDE_DIRS}
-	)
+  ${TK_INCLUDE_PATH}
+  ${TK_X11_INCLUDE_DIRS}
+  )
+if(TK_ENABLE_XFT)
+  include_directories(${FREETYPE_INCLUDE_DIRS})
+endif(TK_ENABLE_XFT)
 
 SET(X11_TK_LIBS ${X11_X11_LIB} ${X11_Xext_LIB})
 IF(TK_ENABLE_XSS AND X11_Xscreensaver_LIB)
-	SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xscreensaver_LIB})
+  SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xscreensaver_LIB})
 ENDIF(TK_ENABLE_XSS AND X11_Xscreensaver_LIB)
-IF(X11_Xft_LIB)
+IF(X11_Xft_LIB AND TK_ENABLE_XFT)
   SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xft_LIB})
   add_definitions(-DHAVE_LIBXFT=1)
   add_definitions(-DHAVE_XFT=1)
-ENDIF(X11_Xft_LIB)
+ENDIF(X11_Xft_LIB AND TK_ENABLE_XFT)
 IF(X11_Xrender_LIB)
   SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xrender_LIB})
 ENDIF(X11_Xrender_LIB)
@@ -787,3 +795,11 @@ IF(NOT WIN32)
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   INSTALL(FILES unix/tkAppInit.c DESTINATION lib/tk${TK_VERSION})
 ENDIF(NOT WIN32)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

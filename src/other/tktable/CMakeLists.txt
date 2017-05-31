@@ -88,7 +88,6 @@ endif(NOT MAN_DIR)
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way
 add_definitions(-DSTDC_HEADERS=1)
-add_definitions(-DCMAKE_HEADERS=1)
 
 # building tkhtml
 add_definitions(-DBUILD_tktable)

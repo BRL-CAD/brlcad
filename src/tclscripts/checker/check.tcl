@@ -41,7 +41,7 @@ catch {delete class GeometryChecker} error
     destructor {}
 
     public {
-	variable forceSubtract false {}
+	variable subtractFirst false {}
 
 	method loadOverlaps { args } {}
 	method sortBy { col direction } {}
@@ -83,11 +83,13 @@ catch {delete class GeometryChecker} error
 	variable _colorEven
 	variable _colorMarked
 
+	variable _doingSubtraction
 	variable _subLeftCommand
 	variable _subRightCommand
 	variable _drawLeftCommand
 	variable _drawRightCommand
 
+	variable _displayFinished
 	variable _drew
 
 	variable _whoCallback
@@ -102,6 +104,10 @@ catch {delete class GeometryChecker} error
 
 	method writeMarks {}
 
+	method subtractItemRightFromLeft {left right} {}
+	method subtractItemLeftFromRight {left right} {}
+	method subtractSelectionRightFromLeft {args} {}
+
 	method changeMarkOnOverlap {id tag_cmd}
 	method markOverlap {id}
 	method unmarkOverlap {id}
@@ -112,6 +118,8 @@ catch {delete class GeometryChecker} error
 
 	method handleProgressButton {}
 	method handleCheckListSelect {}
+
+	method updateDisplayFinished {}
     }
 }
 
@@ -138,15 +146,18 @@ body GeometryChecker::handleCheckListSelect {} {
 	}
     }
 
-    if {$found_marked} {
-	$itk_component(buttonLeft) state disabled
-	$itk_component(buttonRight) state disabled
-    } else {
-	$itk_component(buttonLeft) state !disabled
-	$itk_component(buttonRight) state !disabled
-    }
+    if {! $_doingSubtraction} {
+	if {$found_marked} {
+	    $itk_component(buttonLeft) state disabled
+	    $itk_component(buttonRight) state disabled
+	} else {
+	    $itk_component(buttonLeft) state !disabled
+	    $itk_component(buttonRight) state !disabled
+	}
 
-    $this display
+	$this abortCommands
+	$this display
+    }
 }
 
 ###########
@@ -156,6 +167,7 @@ body GeometryChecker::handleCheckListSelect {} {
 ::itcl::body GeometryChecker::constructor {args} {
 
     set _abort false
+    set _doingSubtraction false
     set _drew {}
 
     set _subLeftCommand "puts subtract the left"
@@ -342,8 +354,7 @@ body GeometryChecker::handleCheckListSelect {} {
 body GeometryChecker::loadOverlaps {{filename ""}} {
 
     if {[catch {opendb} db_path]} {
-	puts "ERROR: no database seems to be open"
-	return -code 1
+	return -code error "no database seems to be open"
     }
 
     if {$filename == ""} {
@@ -358,13 +369,11 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     }
 
     if {$filename == ""} {
-	puts "ERROR: No overlap file was specified. None was found in the current directory."
-	return -code 1
+	return -code error "No overlap file was specified. None was found in the current directory."
     }
 
     if {$filename == "" || ![file exists $filename]} {
-	puts "ERROR: unable to open $filename"
-	return -code 1
+	return -code error "unable to open $filename"
     }
     set _ol_prefix "ck.[file tail $db_path]"
     set _ol_dir [file dirname $filename]
@@ -432,7 +441,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 	    set tag "odd"
 	}
 	$_ck insert {} end -id $count -text $count -values [list $count $left $right [format %.2f $size]] -tags "$tag"
-	if {$count % 100 == 0} {
+	if {$count % 500 == 0} {
 	    puts "."
 	    update
 	}
@@ -681,7 +690,7 @@ body GeometryChecker::changeMarkOnOverlap {id tag_cmd} {
 	$_status configure -text "$_count overlaps"
     }
     if {$_markedCount > 0} {
-	$_status configure -text "[$_status configure -text] ($_markedCount marked resolved)"
+	$_status configure -text "[$_status cget -text] ($_markedCount marked resolved)"
     }
 }
 
@@ -730,21 +739,73 @@ body GeometryChecker::unmarkSelection {} {
     $this changeMarkOnSelection "remove"
 }
 
+body GeometryChecker::subtractItemRightFromLeft {left right} {
+    set _commandText "Subtracting ($right) from ($left)"
+    $_overlapCallback $left $right $subtractFirst
+}
+
+body GeometryChecker::subtractItemLeftFromRight {left right} {
+    set _commandText "Subtracting ($left) from ($right)"
+    $_overlapCallback $right $left $subtractFirst
+}
+
+body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
+    # disable drawing in response to selection change (which happens
+    # as completed items are marked)
+    set _doingSubtraction true
+
+    # prevent any other commands from being initiated
+    $itk_component(progressButton) state disabled
+    $itk_component(buttonLeft) state disabled
+    $itk_component(buttonRight) state disabled
+
+    # scroll to end of checklist so we can see the successful
+    # subtractions as they move to the bottom of the list
+    $_ck see [lindex [$_ck children {}] end]
+    update
+
+    set subCmd "subtractItemRightFromLeft"
+    if {$swap} {
+	set subCmd "subtractItemLeftFromRight"
+    }
+
+    # stop in-progress draw
+    $this abortCommands
+
+    set sset [$_ck selection]
+
+    set count 0
+    set total [llength $sset]
+    set _progressValue 1 ;# indicate drawing initiated
+
+    foreach item $sset {
+	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+
+	    if {![catch {$this $subCmd $left $right} err]} {
+		$this markOverlap $id
+	    } else {
+		puts "$err"
+	    }
+	    incr count
+	    set _progressValue [expr $count / [expr $total + 1.0] * 100]
+	    update
+	}
+    }
+    set _commandText ""
+    set _progressValue 0
+    $itk_component(progressButton) state !disabled
+    $itk_component(buttonLeft) state !disabled
+    $itk_component(buttonRight) state !disabled
+    set _doingSubtraction false
+}
+
 # subLeft
 #
 # subtract the currently selected left nodes from the right ones
 #
 body GeometryChecker::subLeft {} {
-    set sset [$_ck selection]
-    foreach item $sset {
-	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    if {![catch {$_overlapCallback $right $left $forceSubtract} err]} {
-		$this markOverlap $id
-	    } else {
-		puts "$err"
-	    }
-	}
-    }
+    set swap true
+    $this subtractSelectionRightFromLeft $swap
 }
 
 # subRight
@@ -752,16 +813,19 @@ body GeometryChecker::subLeft {} {
 # subtract the currently selected right nodes from the left ones
 #
 body GeometryChecker::subRight {} {
-    set sset [$_ck selection]
-    foreach item $sset {
-	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    if {![catch {$_overlapCallback $left $right $forceSubtract} err]} {
-		$this markOverlap $id
-	    } else {
-		puts "$err"
-	    }
-	}
-    }
+    $this subtractSelectionRightFromLeft
+}
+
+# updateDisplayFinished
+#
+# try to run a newer display call to invalidate the current one
+body GeometryChecker::updateDisplayFinished {} {
+    # try to run newer display call
+    update
+
+    # _displayFinished true if a display call ran to completion
+    # during update, false otherwise
+    return $_displayFinished
 }
 
 # display
@@ -770,6 +834,7 @@ body GeometryChecker::subRight {} {
 #
 body GeometryChecker::display {} {
 
+    set _displayFinished false
     set sset [$_ck selection]
 
     # get list of what we intend to draw
@@ -780,29 +845,24 @@ body GeometryChecker::display {} {
 	}
     }
 
-    # erase anything we drew previously that we don't still need
-    foreach obj $_drew {
-	if {[lsearch -exact $drawing $obj] == -1} {
-	    $_eraseCallback $obj
-	}
-    }
-
     # draw them again
-    set done false
+    set endDraw false
     set count 0
     set total [llength $drawing]
     set _progressValue 1 ;# indicate drawing initiated
     set _progressButtonInvoked false
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-            # TODO: pack forget, pack after on button?
-
 	    set _commandText "Drawing $left"
-	    update
+
+	    if {[$this updateDisplayFinished]} {
+		break
+	    }
 
 	    if {$total > 2 && $count == 0} {
                 # If we're drawing multiple overlaps, give user a
 		# chance to abort before the first draw.
+		set _abort false
 		lappend _afterCommands [after 3000 \
 		    "if {! \[set \"[scope _progressButtonInvoked]\"\]} { \
 		        [code $_leftDrawCallback $left]; \
@@ -814,10 +874,11 @@ body GeometryChecker::display {} {
 		# _commandText is set by one of:
 		#  - the above after command
 		#  - handleProgressButton
-		#  - destructor (also sets _abort)
+		#  - handleCheckListSelect and destructor
+		#    - via abortCommands (also sets _abort)
 		vwait [scope _commandText]
-		if {$_abort} {
-		    set done true
+		if {$_abort || $_displayFinished} {
+		    set endDraw true
 		    break
 		}
 	    } elseif {! $_progressButtonInvoked} {
@@ -829,25 +890,56 @@ body GeometryChecker::display {} {
 		set _progressValue [expr $count / [expr $total + 1.0] * 100]
 
 		set _commandText "Drawing $right"
-		update
+
+		if {[$this updateDisplayFinished]} {
+		    break
+		}
 
 		$_rightDrawCallback $right
 
 		incr count
 		set _progressValue [expr $count / [expr $total + 1.0] * 100]
-		update
+
+		if {[$this updateDisplayFinished]} {
+		    break
+		}
 	    } else {
-		set done true
+		set endDraw true
 		break
 	    }
 	}
-	if {$done} {
+	if {$endDraw || $_displayFinished} {
 	    break
 	}
     }
     set _commandText ""
     set _progressValue 0
-    set _drew $drawing
+    if {! $_displayFinished} {
+	# erase anything we drew previously that we don't still need
+	set erased 0
+	foreach obj $_drew {
+	    if {[lsearch -exact $drawing $obj] == -1} {
+		$_eraseCallback $obj
+		incr erased
+	    }
+	}
+
+        # count objects drawn by user
+	set userObjs 0
+	foreach obj [who] {
+	    if {[lsearch -exact $drawing $obj] == -1} {
+		incr userObjs
+	    }
+	}
+
+        # if we erased everything previously drawn, resize view
+	if {$userObjs == 0 && [llength $_drew] == $erased} {
+	    autoview
+	}
+
+	set _drew $drawing
+	set _displayFinished true
+    }
 }
 
 
@@ -902,21 +994,15 @@ proc treeReplaceLeafWithSub {tree leaf sub} {
     return [list $op $newleft $newright]
 }
 
-proc subtractRightFromLeft {left right {forceSubtract false}} {
+proc subtractRightFromLeft {left right {subtractFirst false}} {
     if [ catch { opendb } dbname ] {
-	puts ""
-	puts "ERROR: no database seems to be open"
-	return -code 1
+	return -code error "no database seems to be open"
     }
     if [ exists $left ] {
-	puts ""
-	puts "ERROR: unable to find $left"
-	return -code 1
+	return -code error "unable to find $left"
     }
     if [ exists $right ] {
-	puts ""
-	puts "ERROR: unable to find $right"
-	return -code 1
+	return -code error "unable to find $right"
     }
     if { $left eq $right } {
 	puts ""
@@ -926,11 +1012,11 @@ proc subtractRightFromLeft {left right {forceSubtract false}} {
 	puts ""
 	puts "There is probably a duplicate $rightreg in $leftcomb"
 	puts "You will need to resolve it manually."
-	return -code 1
+	return -code error
     }
 
-    if {$forceSubtract} {
-        # if always subtracting, we'll choose the first unioned solid in right
+    if {$subtractFirst} {
+	# assume the first unioned solid in right is the part that overlaps
 	set solids [search $right -type shape -bool u]
     } else {
 	# simplify right to solid, or report error
@@ -941,7 +1027,7 @@ proc subtractRightFromLeft {left right {forceSubtract false}} {
 	    puts "ERROR: $right"
 	    puts "       This regions isn't reducible to a single solid. Refusing to subtract a"
 	    puts "       comb. Run check command with -F option to override."
-	    return -code 1
+	    return -code error
 	}
     }
     set rightsub [string trim [file tail [lindex $solids 0]]]
@@ -949,20 +1035,29 @@ proc subtractRightFromLeft {left right {forceSubtract false}} {
     # if left already contains right, report error
     if {[llength [search $left -name $rightsub]] > 0} {
 	puts ""
-	puts "WARNING: attempting to subtract $rightsub from $left again"
-	puts "         An attempted manual resolution may already exist."
-	return -code 1
+	puts "ERROR: attempting to subtract $rightsub from $left again"
+	puts "       An attempted manual resolution may already exist."
+	return -code error
     }
 
-    # search /left -bool u -type shape to find positives
-    # adjust each shape's parent to subtract right from all u members
-    puts "Subtracting $rightsub in $right from unioned solids of $left."
-    foreach { solid } [search $left -bool u -type shape] {
+    if {$subtractFirst} {
+	# assume the first unioned shape in left is the part that overlaps
+	set solid [lindex [search $left -bool u -type shape] 0]
 	set solidparent [file tail [file dirname $solid]]
 	set tree [get $solidparent tree]
 	set leaf [file tail $solid]
 	set newtree [treeReplaceLeafWithSub $tree $leaf $rightsub]
 	adjust $solidparent tree $newtree
+    } else {
+	# search /left -bool u -type shape to find positives
+	# adjust each shape's parent to subtract right from all u members
+	foreach { solid } [search $left -bool u -type shape] {
+	    set solidparent [file tail [file dirname $solid]]
+	    set tree [get $solidparent tree]
+	    set leaf [file tail $solid]
+	    set newtree [treeReplaceLeafWithSub $tree $leaf $rightsub]
+	    adjust $solidparent tree $newtree
+	}
     }
     return
 }
@@ -970,9 +1065,7 @@ proc subtractRightFromLeft {left right {forceSubtract false}} {
 
 proc drawLeft {path} {
     if [ catch { opendb } dbname ] {
-	puts ""
-	puts "ERROR: no database seems to be open"
-	return
+	return -code 1 "no database seems to be open"
     }
     if [ exists $path ] {
 	puts ""
@@ -986,9 +1079,7 @@ proc drawLeft {path} {
 
 proc drawRight {path} {
     if [ catch { opendb } dbname ] {
-	puts ""
-	puts "ERROR: no database seems to be open"
-	return
+	return -code error "no database seems to be open"
     }
     if [ exists $path ] {
 	puts ""
@@ -1007,16 +1098,16 @@ proc check {{args}} {
     set filename ""
 
     set usage false
-    set force false
+    set firstFlag false
     if {[llength $args] == 1} {
 	if {[lindex $args 0] == "-F"} {
-	    set force true
+	    set firstFlag true
 	} else {
 	    set filename $args
 	}
     } elseif {[llength $args] == 2} {
 	if {[lindex $args 0] == "-F"} {
-	    set force true
+	    set firstFlag true
 	    set filename [lindex $args 1]
 	} else {
 	    set usage true
@@ -1026,15 +1117,7 @@ proc check {{args}} {
     }
 
     if {$usage} {
-	puts {Usage: check [-F] [overlaps_file]}
-	return -code 1
-    }
-
-    if {$force} {
-	puts "WARNING: Running with -F means regions containing multiple solids will be"
-	puts "         subtracted as the first unioned solid found in the region. This may"
-	puts "         cause the wrong volume to be subtracted."
-	puts ""
+	return -code error {Usage: check [-F] [overlaps_file]}
     }
 
     if {[winfo exists $parent.checker]} {
@@ -1042,24 +1125,32 @@ proc check {{args}} {
     }
 
     if {[catch {opendb} db_path]} {
-	puts "ERROR: no database seems to be open"
-	return
+	return -code 1 "no database seems to be open"
     }
 
     set checkerWindow [toplevel $parent.checker]
     set checker [GeometryChecker $checkerWindow.ck]
 
-    $checker configure -forceSubtract $force
+    $checker configure -subtractFirst $firstFlag
     $checker registerWhoCallback [code who]
     $checker registerDrawCallbacks [code drawLeft] [code drawRight]
     $checker registerEraseCallback [code erase]
     $checker registerOverlapCallback [code subtractRightFromLeft]
 
-    if {[catch {$checker loadOverlaps $filename}]} {
+    if {[catch {$checker loadOverlaps $filename} result]} {
 	wm withdraw $checkerWindow
 	update
 	destroy $checkerWindow
-	return
+	return -code error $result
+    }
+
+    if {$firstFlag} {
+	puts "WARNING: Running with -F means check will assume that only the first unioned"
+	puts "         solid in a region is responsible for any overlap. When subtracting"
+	puts "         region A from overlapping region B, the first unioned solid in A will"
+	puts "         be subtracted from the first unioned solid in B. This may cause the"
+	puts "         wrong volume to be subtracted, leaving the overlap unresolved."
+	puts ""
     }
 
     wm title $checkerWindow "Geometry Checker"

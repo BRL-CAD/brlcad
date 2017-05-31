@@ -27,11 +27,15 @@
 #define GCV_API_H
 
 #include "common.h"
+#include "vmath.h"
 
-#include "gcv/defines.h"
-
+#include "bu/avs.h"
 #include "bu/opt.h"
-#include "raytrace.h"
+#include "bu/mime.h"
+#include "bn/tol.h"
+#include "rt/defines.h"
+#include "rt/tol.h"
+#include "gcv/defines.h"
 
 __BEGIN_DECLS
 

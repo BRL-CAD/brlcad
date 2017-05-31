@@ -48,7 +48,7 @@ bt_transform_to_matrix(const btTransform &transform, fastf_t * const matrix)
 	bu_bomb("missing argument");
 
     MAT_IDN(matrix);
-    MAT_DELTAS_VEC(matrix, transform.getOrigin());
+    MAT_DELTAS_VEC(matrix, transform.getOrigin() * simulate::world_to_application);
     VMOVE(&matrix[0], transform.getBasis()[0]);
     VMOVE(&matrix[4], transform.getBasis()[1]);
     VMOVE(&matrix[8], transform.getBasis()[2]);

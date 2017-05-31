@@ -58,7 +58,6 @@ endif(WIN32)
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
 set(noinst_HEADERS
-  brlcad_ident.h
   brlcad_version.h
   )
 CMAKEFILES(${noinst_HEADERS})
@@ -81,6 +80,7 @@ CMAKEFILES(${noinst_HEADERS})
 #endif(inc_error)
 
 set(include_misc
+  brlcad_ident.h.in
   conf
   config_win.h.in
   )
