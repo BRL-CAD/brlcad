@@ -28,6 +28,7 @@
 #include "common.h"
 
 #include "bu/parallel.h"
+#include "rt/rt_instance.h"
 #include "gcv.h"
 
 

@@ -111,7 +111,7 @@ _bu_namegen_next(struct bu_vls *next_incr, const char *incr_state, const char *i
 	    bu_vls_printf(next_incr, "%ld", state_val);
 	}
     }
-    return 0;
+    return ret;
 }
 
 int

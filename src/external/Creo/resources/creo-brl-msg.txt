@@ -1,0 +1,21 @@
+%CE USER_ERROR
+%0s
+#
+#
+%CW USER_WARNING
+%0s
+#
+#
+%CI USER_INFO
+%0s
+#
+#
+
+CREO-BRL
+CREO-BRL
+#
+#
+CREO-BRL-HELP
+Convert the currently displayed model, or select a file to convert, or restart
+#
+#

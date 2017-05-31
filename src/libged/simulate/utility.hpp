@@ -34,11 +34,18 @@
 #include <stdexcept>
 #include <vector>
 
+#include "bu/malloc.h"
 #include "rt/db_instance.h"
+
+#include <btBulletDynamicsCommon.h>
 
 
 namespace simulate
 {
+
+
+// Bullet units are meters; application units are millimeters
+static const btScalar world_to_application = 1.0e3;
 
 
 namespace detail

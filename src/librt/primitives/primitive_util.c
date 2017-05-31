@@ -627,6 +627,8 @@ clt_init(void)
             "rec_shot.cl",
             "tgc_shot.cl",
             "tor_shot.cl",
+            "rhc_shot.cl",
+            "rpc_shot.cl",
 
             "rt.cl",
         };
@@ -689,6 +691,8 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
 	case ID_BOT:		size = clt_bot_pack(pool, stp);	break;
 	case ID_EPA:		size = clt_epa_pack(pool, stp);	break;
 	case ID_ETO:		size = clt_eto_pack(pool, stp); break;
+	case ID_RHC:		size = clt_rhc_pack(pool, stp); break;
+	case ID_RPC:		size = clt_rpc_pack(pool, stp); break;
 	default:		size = 0;			break;
     }
     return size;

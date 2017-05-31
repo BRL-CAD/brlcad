@@ -1,28 +1,26 @@
-Contained in this directory are codes that are written to work with
-and/or link against external packages.  These codes are often written
-as plugins, modules, or libraries to to some external package and
-generally may not even attempt to compile if the optional codes are
-not enabled during configure.  Even after being enabled, some manual
-setup may be required so that these codes may find requisite external
-headers or libraries that are needed for compilation.
+Contained in this directory are codes that are written to work with and/or link
+against external packages.  These codes are often written as plugins, modules,
+or libraries to to some external package and will not be built as working
+binaries in the standard BRL-CAD build.  They *are* built, but only to ensure
+that they remain current with BRL-CAD's own APIs.  See specific notes below for
+about what is required to build working versions.
 
 Contents
 --------
 
 Cubit
-	This code is a CUBIT translator that will read a given BRL-CAD
-geometry file and convert the included 3D geometry to a CUBIT readable
-representation (.sat).  This code utilizes the CUBIT's CGM API and must be
-linked against CUBIT's CGM libraries and the ACIS CAD kernel.
+	This code is a CUBIT translator that will read a given BRL-CAD geometry
+file and convert the included 3D geometry to a CUBIT readable representation
+(.sat).  This code utilizes the CUBIT's CGM API and must be linked against
+CUBIT's CGM libraries and the ACIS CAD kernel.
 
-ProEngineer
-	This code is a Pro/Engineer exporter plugin module intended to
-be used directly within the Pro/Engineer environment (e.g. Wildfire).
-Compilation of this code requires Pro/Toolkit, a separately licensed
-module from PTC.
+Creo
+	This code is a PTC Creo Parametric exporter plugin module intended to
+be used directly within the Parametric environment.  Working compilation of
+this code requires Pro/Toolkit, a separately licensed module from PTC.
 
 Unigraphics
-	This code is a Unigraphics (now called NX) importer that will
-parse a given Unigraphics geometry file and convert the included 3D
-geometry to a BRL-CAD representation.  This code utilizes the UGOPEN
-API and must be linked against the UGOPEN libraries.
+	This code is a Unigraphics (now called NX) importer that will parse a
+given Unigraphics geometry file and convert the included 3D geometry to a
+BRL-CAD representation.  This code utilizes the UGOPEN API and must be linked
+against the UGOPEN libraries.

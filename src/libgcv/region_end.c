@@ -26,6 +26,8 @@
 #include "common.h"
 
 #include "bu/parallel.h"
+#include "rt/wdb.h"
+#include "rt/global.h"
 #include "gcv.h"
 
 

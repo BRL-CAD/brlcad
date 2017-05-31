@@ -51,7 +51,7 @@
  /** @ingroup libbn */
  /**  @defgroup bn_tol Tolerances */
  /** @ingroup libbn */
- /**  @defgroup bn_vtree Vertex Trees */
+ /**  @defgroup bn_vert_tree Vertex Trees */
  /** @ingroup libbn */
  /**  @defgroup bn_wavelet Wavelets */
  /** @ingroup libbn */

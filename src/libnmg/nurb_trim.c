@@ -186,9 +186,6 @@ rt_nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
     coords = RT_NURB_EXTRACT_COORDS(trim->pt_type);
     rat = RT_NURB_IS_PT_RATIONAL(trim->pt_type);
 
-    u2 = 0.0;
-    v2 = 0.0;
-
     if (rat) {
 	u2 = ptr[0]/ptr[2] - u; u2 *= u2;
 	v2 = ptr[1]/ptr[2] - v; v2 *= v2;
@@ -202,9 +199,6 @@ rt_nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	return TRIM_ON;
 
     ptr = trim->ctl_points + coords * (trim->c_size -1);
-
-    u2 = 0.0;
-    v2 = 0.0;
 
     if (rat) {
 	u2 = ptr[0]/ptr[2] - u; u2 *= u2;
