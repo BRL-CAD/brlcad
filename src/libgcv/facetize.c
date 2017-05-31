@@ -25,8 +25,14 @@
 
 #include "common.h"
 
+#include "bu/parallel.h"
 #include "gcv/util.h"
-
+#include "rt/db5.h"
+#include "rt/db_internal.h"
+#include "rt/wdb.h"
+#include "rt/global.h"
+#include "rt/primitives/bot.h"
+#include "rt/functab.h"
 
 HIDDEN union tree *
 _gcv_facetize_region_end(struct db_tree_state *tree_state,

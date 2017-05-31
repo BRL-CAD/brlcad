@@ -1,0 +1,8 @@
+name creo-brl
+startup @DAT_STARTUP@
+allow_stop TRUE
+exec_file @DAT_EXEC_FILE@
+text_dir @DAT_TEXT_DIR@
+description CREO to BRL-CAD
+end
+

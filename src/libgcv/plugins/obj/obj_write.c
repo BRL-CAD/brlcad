@@ -28,12 +28,12 @@
 
 #include "common.h"
 
-#include "gcv/api.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
+#include "raytrace.h"
+#include "gcv/api.h"
 
 #define V3ARGS_SCALE(v, factor)       (v)[X] * (factor), (v)[Y] * (factor), (v)[Z] * (factor)
 

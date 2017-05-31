@@ -154,24 +154,20 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 #endif
 	    /* Check to make sure normals are OK */
 	    f = VDOT(ap->a_ray.r_dir, swp->sw_hit.hit_normal);
-	    if (f > 0.0 &&
+	    if (f > RT_DOT_TOL &&
 		!BN_VECT_ARE_PERP(f, &(ap->a_rt_i->rti_tol))) {
-		static int counter = 0;
 		static int reported = 0;
 
-		if (counter < 100 || (R_DEBUG&RDEBUG_SHADE)) {
+		if (reported < 100 || (R_DEBUG&RDEBUG_SHADE)) {
 		    bu_log("shade_inputs(%s) flip N xy=%d, %d %s surf=%d dot=%g\n",
 			   pp->pt_inseg->seg_stp->st_name,
 			   ap->a_x, ap->a_y,
 			   OBJ[pp->pt_inseg->seg_stp->st_id].ft_name,
 			   swp->sw_hit.hit_surfno, f);
-		} else if (counter > 100) {
-		    if (!reported) {
-			reported=1;
-			bu_log("shade_inputs(%s) flipped normals detected, additional reporting suppressed\n", pp->pt_inseg->seg_stp->st_name);
-		    }
+		} else if (reported == 100) {
+		    bu_log("Too many flipped normals.  Suppressing further reporting.\n", pp->pt_inseg->seg_stp->st_name);
 		}
-		counter++;
+		reported++;
 
 		if (R_DEBUG&RDEBUG_SHADE) {
 		    VPRINT("Dir ", ap->a_ray.r_dir);

@@ -129,7 +129,7 @@ struct internal_convex_hull {
 void
 nmg_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *max)
 {
-    struct internal_convex_hull ch[20]; /* max order is 10 */
+    struct internal_convex_hull ch[20] = {{0.0, 0.0, 0.0}}; /* max order is 10 */
     register fastf_t * mp1;
     fastf_t * p1, *p2, *p3, *p4;	/* corner points of the mesh */
     fastf_t v1[2], v2[2], v3[2];	/* vectors from corners */

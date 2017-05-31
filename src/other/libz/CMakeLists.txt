@@ -8,7 +8,7 @@ endif(COMMAND CMAKE_POLICY)
 
 project(zlib C)
 
-set(VERSION "1.2.8")
+set(VERSION "1.2.11")
 
 if(NOT DEFINED BUILD_SHARED_LIBS)
     option(BUILD_SHARED_LIBS "Build a shared library form of zlib" ON)
@@ -144,11 +144,11 @@ if(MINGW)
 
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj
                        COMMAND ${CMAKE_RC_COMPILER}
-			    -D GCC_WINDRES
-			    -I ${CMAKE_CURRENT_SOURCE_DIR}
-			    -I ${CMAKE_CURRENT_BINARY_DIR}
-			    -o ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj
-			    -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zlib1.rc)
+                            -D GCC_WINDRES
+                            -I ${CMAKE_CURRENT_SOURCE_DIR}
+                            -I ${CMAKE_CURRENT_BINARY_DIR}
+                            -o ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj
+                            -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zlib1.rc)
     set(ZLIB_SRCS ${ZLIB_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj)
 else(MINGW)
     set(ZLIB_SRCS ${ZLIB_SRCS} win32/zlib1.rc)
@@ -190,7 +190,7 @@ if(UNIX)
 elseif(BUILD_SHARED_LIBS AND WIN32)
     # Creates zlib1.dll when building shared library version
 	 if(BUILD_SHARED_LIBS)
-		 set_target_properties(zlib PROPERTIES SUFFIX "1.dll")
+    set_target_properties(zlib PROPERTIES SUFFIX "1.dll")
 	 endif(BUILD_SHARED_LIBS)
 endif()
 

@@ -1417,11 +1417,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Print vector name and components on stderr. */
 #define V2PRINT(a, b)	\
-	fprintf(stderr, "%s (%g, %g)\n", a, V2ARGS(b));
+	fprintf(stderr, "%s (%.6f, %.6g)\n", a, V2ARGS(b));
 #define VPRINT(a, b)	\
-	fprintf(stderr, "%s (%g, %g, %g)\n", a, V3ARGS(b));
+	fprintf(stderr, "%s (%.6f, %.6f, %.6f)\n", a, V3ARGS(b));
 #define HPRINT(a, b)	\
-	fprintf(stderr, "%s (%g, %g, %g, %g)\n", a, V4ARGS(b));
+	fprintf(stderr, "%s (%.6f, %.6f, %.6f, %.6f)\n", a, V4ARGS(b));
 
 /**
  * @brief Included below are integer clamped versions of the previous

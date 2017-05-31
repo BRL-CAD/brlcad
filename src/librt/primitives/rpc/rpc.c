@@ -186,6 +186,38 @@ struct rpc_specific {
     mat_t rpc_invRoS;	/* invRot(Scale(vect)) */
 };
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_rpc_specific {
+    cl_double rpc_V[3];		/* vector to rpc origin */
+    cl_double rpc_Bunit[3];	/* unit B vector */
+    cl_double rpc_Hunit[3];	/* unit H vector */
+    cl_double rpc_Runit[3];	/* unit vector, B x H */
+    cl_double rpc_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double rpc_invRoS[16];	/* invRot(Scale(vect)) */
+};
+ 
+size_t
+clt_rpc_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct rpc_specific *rpc =
+    (struct rpc_specific *)stp->st_specific;
+    struct clt_rpc_specific *args;
+    
+    const size_t size = sizeof(*args);
+    args = (struct clt_rpc_specific*)bu_pool_alloc(pool, 1, size);
+    
+    VMOVE(args->rpc_V, rpc->rpc_V);
+    VMOVE(args->rpc_Bunit, rpc->rpc_Bunit);
+    VMOVE(args->rpc_Hunit, rpc->rpc_Hunit);
+    VMOVE(args->rpc_Runit, rpc->rpc_Runit);
+    MAT_COPY(args->rpc_SoR, rpc->rpc_SoR);
+    MAT_COPY(args->rpc_invRoS, rpc->rpc_invRoS);
+    
+    return size;
+}
+
+#endif /* USE_OPENCL */
 
 const struct bu_structparse rt_rpc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_rpc_internal, rpc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

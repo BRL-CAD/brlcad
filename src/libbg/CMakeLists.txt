@@ -14,6 +14,7 @@ set(LIBBG_SOURCES
   polygon.c
   tri_ray.c
   tri_tri.c
+  trimesh.c
   util.c
   )
 
