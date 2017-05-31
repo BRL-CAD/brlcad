@@ -99,6 +99,8 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
 
   # Combine the source lists into the final list
   set(final_list ${source_tree_files} ${dir_filelist})
+  list(SORT final_list)
+  list(REMOVE_DUPLICATES final_list)
 
   # Do the actual copy
   message("Copying files...")

@@ -360,6 +360,7 @@ set(ged_ignore_files
   simulate/rt_instance.hpp
   simulate/simulation.hpp
   simulate/utility.hpp
+  simulate/NOTES
   osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})

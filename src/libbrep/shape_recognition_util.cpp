@@ -144,50 +144,73 @@ subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
 void
 subbrep_island_free(struct subbrep_island_data *obj)
 {
-    if (!obj) return;
+    if (!obj)
+	return;
 
     obj->brep = NULL;
-    if (obj->local_brep) delete obj->local_brep;
-    obj->local_brep = NULL;
+    if (obj->local_brep) {
+	delete obj->local_brep;
+	obj->local_brep = NULL;
+    }
 
     delete obj->bbox;
 
-    subbrep_shoal_free(obj->nucleus);
-    if (obj->nucleus) BU_PUT(obj->nucleus, struct csg_obj_params);
-    obj->nucleus = NULL;
+    if (obj->nucleus) {
+	subbrep_shoal_free(obj->nucleus);
+	BU_PUT(obj->nucleus, struct csg_obj_params);
+	obj->nucleus = NULL;
+    }
 
-    bu_vls_free(obj->key);
-    BU_PUT(obj->key, struct bu_vls);
-    obj->key = NULL;
+    if (obj->key) {
+	bu_vls_free(obj->key);
+	BU_PUT(obj->key, struct bu_vls);
+	obj->key = NULL;
+    }
 
     for (unsigned int i = 0; i < BU_PTBL_LEN(obj->island_children); i++) {
 	struct subbrep_shoal_data *cobj = (struct subbrep_shoal_data *)BU_PTBL_GET(obj->island_children, i);
-	subbrep_shoal_free(cobj);
-	BU_PUT(cobj, struct subbrep_shoal_data);
+	if (cobj) {
+	    subbrep_shoal_free(cobj);
+	    BU_PUT(cobj, struct subbrep_shoal_data);
+	}
     }
-    bu_ptbl_free(obj->island_children);
-    BU_PUT(obj->island_children, struct bu_ptbl);
-    obj->island_children = NULL;
+    if (obj->island_children) {
+	bu_ptbl_free(obj->island_children);
+	BU_PUT(obj->island_children, struct bu_ptbl);
+	obj->island_children = NULL;
+    }
 
     /* Anything in here will be freed elsewhere */
     if (obj->subtractions) {
 	bu_ptbl_free(obj->subtractions);
 	BU_PUT(obj->subtractions, struct bu_ptbl);
+	obj->subtractions = NULL;
     }
-    obj->subtractions = NULL;
 
-    if (obj->island_faces) bu_free(obj->island_faces, "obj faces");
-    obj->island_faces = NULL;
-    if (obj->island_loops) bu_free(obj->island_loops, "obj loops");
-    obj->island_loops = NULL;
-    if (obj->fol) bu_free(obj->fol, "obj fol");
-    obj->fol = NULL;
-    if (obj->fil) bu_free(obj->fil, "obj fil");
-    obj->fil = NULL;
-    if (obj->null_verts) bu_free(obj->null_verts, "ignore verts");
-    obj->null_verts = NULL;
-    if (obj->null_edges) bu_free(obj->null_edges, "ignore edges");
-    obj->null_edges = NULL;
+    if (obj->island_faces) {
+	bu_free(obj->island_faces, "obj faces");
+	obj->island_faces = NULL;
+    }
+    if (obj->island_loops) {
+	bu_free(obj->island_loops, "obj loops");
+	obj->island_loops = NULL;
+    }
+    if (obj->fol) {
+	bu_free(obj->fol, "obj fol");
+	obj->fol = NULL;
+    }
+    if (obj->fil) {
+	bu_free(obj->fil, "obj fil");
+	obj->fil = NULL;
+    }
+    if (obj->null_verts) {
+	bu_free(obj->null_verts, "ignore verts");
+	obj->null_verts = NULL;
+    }
+    if (obj->null_edges) {
+	bu_free(obj->null_edges, "ignore edges");
+	obj->null_edges = NULL;
+    }
 }
 
 

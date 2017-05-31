@@ -2009,6 +2009,43 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
+/**
+ * The centroid lies along ehy_H due to symmetry.
+ * Initially the distance of the centroid from the apex is found. The
+ * coordinates of the points at this distance along the unit vector
+ * gives the centroid of the elliptical hyperboloid of two sheets.
+ * Formula taken from: https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
+ */
+void
+rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_ehy_internal *eip;
+    fastf_t a, b, h, area, dist, pwr, dist_C;
+    vect_t h_vec, unit_vec;
+    point_t apex;
+    RT_CK_DB_INTERNAL(ip);
+    eip =  (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(eip);
+
+    a = eip->ehy_c;
+    h = MAGNITUDE(eip->ehy_H);
+    b = (eip->ehy_r1 * a) / sqrt(h * h - 2 * a * h);
+
+    VMOVE(h_vec, eip->ehy_H);
+    VMOVE(apex, eip->ehy_V);
+    VSCALE(unit_vec, h_vec, (1 / h));
+
+    rt_ehy_surf_area( &area, ip);
+    pwr = pow(h * h + 2 * a * h, 3);
+    if(pwr < 0)
+	bu_log("invalid parameters.\n");
+    dist = ((2 * b) * sqrt(pwr)) / (3 * area * a);
+    dist_C = dist - a;
+
+    VJOIN1(*cent, apex, dist_C, unit_vec);
+}
+
+
 /** @} */
 /*
  * Local Variables:

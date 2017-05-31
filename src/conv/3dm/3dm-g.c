@@ -26,7 +26,11 @@
 
 #include "common.h"
 
+#include "bu/exit.h"
+#include "bu/file.h"
 #include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "gcv/api.h"
 
 

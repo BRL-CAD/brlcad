@@ -198,7 +198,7 @@ fastf_t
 nmg_nurb_crv_flat(fastf_t *crv, int size, int pt_type)
 {
     point_t p1, p2;
-    vect_t ln;
+    vect_t ln = VINIT_ZERO;
     int i;
     fastf_t dist;
     fastf_t max_dist;

@@ -121,28 +121,27 @@ package require cadwidgets::Accordian 1.0
 # Selects page in ToC & loads into HTML browser; used for command line calls
 #
 ::itcl::body ManBrowser::select {pageName} {
-
+    set result False
+    if {[info exists pages]} {
     # Select the requested man page
-    set rootName [file rootname [file tail $pageName]]
-    set idx [lsearch -sorted -exact $pages($current_section) $rootName]
+	set rootName [file rootname [file tail $pageName]]
+	set idx [lsearch -sorted -exact $pages($current_section) $rootName]
 
-    if {$idx != -1} {
-	set result True
-	set toc $itk_component(manpagelistbox)
+	if {$idx != -1} {
+	    set result True
+	    set toc $itk_component(manpagelistbox)
 
-	# Deselect previous selection
-	$toc selection clear 0 [$toc index end]
+	    # Deselect previous selection
+	    $toc selection clear 0 [$toc index end]
 
-	# Select pageName in table of contents
-	$toc selection set $idx
-	$toc activate $idx
-	$toc see $idx
+	    # Select pageName in table of contents
+	    $toc selection set $idx
+	    $toc activate $idx
+	    $toc see $idx
 
-	loadPage $pageName
-    } else {
-	set result False
+	    loadPage $pageName
+	}
     }
-
     return $result
 }
 
@@ -250,7 +249,9 @@ package require cadwidgets::Accordian 1.0
     if {[file exists [file join $path Introduction.html]]} {
 	loadPage Introduction
     } else {
-	loadPage [lindex $pages($current_section) 0]
+	if {[info exists pages]} {
+	    loadPage [lindex $pages($current_section) 0]
+	}
     }
 
     if {$itk_option(-useToC)} {
@@ -291,8 +292,10 @@ package require cadwidgets::Accordian 1.0
 
     $itk_component(manpagelistbox) selection clear 0 [$itk_component(manpagelistbox) index end]
     $itk_component(manpagelistbox) delete 0 [$itk_component(manpagelistbox) size]
-    foreach pg $pages($current_section) {
-	$itk_component(manpagelistbox) insert end $pg
+    if {[info exists pages]} {
+	foreach pg $pages($current_section) {
+	    $itk_component(manpagelistbox) insert end $pg
+	}
     }
     grid $itk_component(manpagelistbox) $itk_component(toc_scrollbar) -sticky nsew -in $childsite
 

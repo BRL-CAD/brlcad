@@ -88,6 +88,7 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY_EXECUTABLE(re2c re2c "BRLCAD_LEVEL2" re2c_ALIASES re2c_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/Makefile)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/re2cParse_parser/parser.yy)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/re2cParse_bootstrap_parser/parser.yy)
 SetTargetFolder(re2c "Compilation Utilities")
 SetTargetFolder(re2c_bootstrap "Compilation Utilities")
 # Make sure we load FindRE2C.cmake to be able to define RE2C targets.
