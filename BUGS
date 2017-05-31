@@ -15,7 +15,23 @@ on-going issues.
 Recent Bugs
 -----------
 
-* screengrab on windows crashes
+* get_regions tcl command doesn't respond well to situations where
+  child object names in combs have dashes (the "-" character) in
+  names.  It tries to interpret the dash as an argument delimiter.
+  Looks like this may be only in situations where the "-" is the
+  lead character and on Windows?  Been hard to reproduce...
+
+* dsp does not facetize correctly with zero elevation areas in the
+  data - need robustness improvements
+
+* dsp primitives specifying data using Windows style file paths
+  don't work.
+
+* attempting to create a dsp using a binary object caused a crash on
+  Linux - need to figure out if this was caused by feeding it the wrong
+  kind of binary object or some other error...
+
+* screengrab on windows does not work
 
 * Recursive submodel predictably goes infinite, need stack-based
   db_walk_tree(): mged> in submodel submodel submodel grid test.g
@@ -469,9 +485,6 @@ Recent Bugs
 
 * triangulation of some pipe in toyjeep.g fails (rather reliably) on
   some given bend.  fails in nmg_triangulate model().
-
-* tgc reports one hit errors though hit point has 0,0,0 direction
-  implying that maybe the point was supposedly deleted.
 
 * rtedge is not respecting the -c"set" options.  needs to give some
   indication that they were parsed too since it ignores unrecognized

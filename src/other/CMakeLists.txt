@@ -144,43 +144,51 @@ endif(BRLCAD_LZ4_BUILD)
 
 # FreeType Libraries
 
-#set(freetype_ALIASES ENABLE_FREETYPE)
-#set(freetype_DESCRIPTION "
-#Option for enabling and disabling compilation of the FreeType
-#libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
-#the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-#version if BRLCAD_BUNDLED_LIBS is also AUTO.
-#")
-## We don't want the Freetype distribution build targets
-#set(FREETYPE_NO_DIST 1)
-#THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
-#if(BRLCAD_FREETYPE_BUILD)
-#  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-#  set(FREETYPE_INCLUDE_DIR_freetype2
-#    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
-#    CACHE STRING "FreeType freetype2 include dir" FORCE
-#    )
-#  set(FREETYPE_INCLUDE_DIR_ft2build
-#    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
-#    CACHE STRING "FreeType ft2build include dir" FORCE
-#    )
-#  set(FREETYPE_INCLUDE_DIRS
-#    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
-#    CACHE STRING "Directories containing FreeType headers." FORCE)
-#  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
-#  SetTargetFolder(freetype "Third Party Libraries")
-#endif(BRLCAD_FREETYPE_BUILD)
-#if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-#  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
-#  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
-#endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
-#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
-#mark_as_advanced(FREETYPE_INCLUDE_DIRS)
-#mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
-#mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
-#mark_as_advanced(FREETYPE_LIBRARIES)
-CMAKEFILES(freetype)
+set(freetype_ALIASES ENABLE_FREETYPE)
+set(freetype_DESCRIPTION "
+Option for enabling and disabling compilation of the FreeType
+libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+# We don't want the Freetype distribution build targets
+set(FREETYPE_NO_DIST 1)
+THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} REQUIRED_VARS "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" FIND_NAME Freetype)
+if(BRLCAD_FREETYPE_BUILD)
+  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
+  set(FREETYPE_INCLUDE_DIR_freetype2
+    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
+    CACHE STRING "FreeType freetype2 include dir" FORCE
+    )
+  set(FREETYPE_INCLUDE_DIR_ft2build
+    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
+    CACHE STRING "FreeType ft2build include dir" FORCE
+    )
+  set(FREETYPE_INCLUDE_DIRS
+    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
+    CACHE STRING "Directories containing FreeType headers." FORCE)
+  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
+  SetTargetFolder(freetype "Third Party Libraries")
+
+  # If we enable XFT support Tk when building our own freetype, XFT often pulls
+  # in conflicting system libs anyway, which causes conflicts.  Make sure, if
+  # we do have to build Tk, that we don't try enabling XFT.
+  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
+  mark_as_advanced(TK_DISABLE_XFT)
+
+else(BRLCAD_FREETYPE_BUILD)
+  CMAKEFILES(freetype)
+endif(BRLCAD_FREETYPE_BUILD)
+if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
+endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
+mark_as_advanced(FREETYPE_INCLUDE_DIRS)
+mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
+mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
+mark_as_advanced(FREETYPE_LIBRARIES)
 
 # --------------------------------------------------------------------
 # The incrtTcl subdirectory isn't directly referenced, but its
@@ -190,13 +198,11 @@ CMAKEFILES(incrTcl)
 # libtermlib Library Only on WIN32 will the combination of the build
 # search tests and libtermlib fail to find a valid term, so set
 # variables accordingly
-if(NOT WIN32)
-  set(HAVE_TERMLIB ON CACHE BOOL "Have some termlib" FORCE)
-ELSE(NOT WIN32)
-  set(BRLCAD_TERMLIB_BUILD "System" CACHE STRING "Disable libtermlib build on WIN32." FORCE)
-  mark_as_advanced(BRLCAD_TERMLIB_BUILD)
+if(WIN32)
   set(HAVE_TERMLIB OFF CACHE BOOL "Have some termlib" FORCE)
-endif(NOT WIN32)
+else(WIN32)
+  set(HAVE_TERMLIB ON CACHE BOOL "Have some termlib" FORCE)
+endif(WIN32)
 mark_as_advanced(HAVE_TERMLIB)
 
 set(termlib_ALIASES ENABLE_TERMLIB)
@@ -212,7 +218,6 @@ THIRD_PARTY(libtermlib TERMLIB termlib termlib_DESCRIPTION REQUIRED_VARS HAVE_TE
   BRLCAD_LEVEL2 ALIASES ${termlib_ALIASES})
 if(BRLCAD_TERMLIB_BUILD)
   set(HAVE_TERMCAP_H ON CACHE BOOL "src/other termlib is on" FORCE)
-  CONFIG_H_APPEND(BRLCAD "#undef HAVE_TERMCAP_H\n#cmakedefine HAVE_TERMCAP_H 1\n")
   mark_as_advanced(HAVE_TERMCAP_H)
 endif(BRLCAD_TERMLIB_BUILD)
 
@@ -287,6 +292,14 @@ if(BRLCAD_PNG_BUILD)
   if("${M_LIBRARY}" MATCHES "NOTFOUND")
     unset(M_LIBRARY CACHE)
   endif("${M_LIBRARY}" MATCHES "NOTFOUND")
+
+  # If we enable XFT support Tk when building our own libpng, the linking of
+  # freetype and fontconfig often pulls in the system libpng anyway, which
+  # causes conflicts.  Make sure, if we do have to build Tk, that we don't try
+  # enabling XFT.
+  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
+  mark_as_advanced(TK_DISABLE_XFT)
+
   SetTargetFolder(png "Third Party Libraries")
   SetTargetFolder(png_static "Third Party Libraries")
   SetTargetFolder(genfiles "Third Party Libraries")
@@ -500,6 +513,11 @@ if(BRLCAD_TK_BUILD)
   elseif(UNIX)
     set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
   endif(WIN32)
+  # If we're building our own libpng, that tends to conflict with fontconfig,
+  # which is needed for Tk's freefype enabled build.  So when we do build
+  # libpng we need to disable the Tk freetype support to allow reliable
+  # building, at least until we can provide our own fontconfig as well as
+  # our own freetype...
   CONFIG_H_APPEND(BRLCAD "#define HAVE_TK_H 1\n")
   mark_as_advanced(TK-ENABLE_FREETYPE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/Makefile")
@@ -994,10 +1012,11 @@ distribution.  Default is AUTO, responsive to the toplevel
 BRLCAD_BUNDLED_LIBS option and testing first for a system version
 if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ${Bullet_ALIASES})
+THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS BRLCAD_ENABLE_BULLET BRLCAD_LEVEL2 ALIASES ${Bullet_ALIASES})
 if(BRLCAD_BULLET_BUILD)
   set(BULLET_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/bullet/src" CACHE STRING "Directory containing bullet headers." FORCE)
   set(BULLET_LIBRARIES "bullet" CACHE STRING "BRL-CAD bullet lib." FORCE)
+  SetTargetFolder(bullet "Third Party Libraries")
 endif(BRLCAD_BULLET_BUILD)
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there

@@ -27,6 +27,7 @@
 #include "common.h"
 
 #include "bu/path.h"
+#include "bg/trimesh.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
 #include "wdb.h"
@@ -321,7 +322,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
     if (!num_vertices || !num_faces)
 	return;
 
-    unsigned char orientation;
+    unsigned char orientation = RT_BOT_UNORIENTED;
 
     switch (mesh.SolidOrientation()) {
 	case 0:
@@ -366,7 +367,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 	bot.num_faces = num_faces;
 	bot.vertices = &vertices.at(0);
 	bot.faces = &faces.at(0);
-	mode = gcv_bot_is_solid(&bot) ? RT_BOT_SOLID : RT_BOT_PLATE;
+	mode = bg_trimesh_solid(bot.num_vertices, bot.num_faces, bot.vertices, bot.faces, NULL) ? RT_BOT_PLATE : RT_BOT_SOLID;
     }
 
     std::vector<fastf_t> thicknesses;

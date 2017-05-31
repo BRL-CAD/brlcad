@@ -26,9 +26,6 @@
 
 #include "common.h"
 
-#include "gcv/api.h"
-#include "gcv/util.h"
-
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -37,6 +34,9 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "raytrace.h"
+#include "gcv/api.h"
+#include "gcv/util.h"
 
 namespace
 {

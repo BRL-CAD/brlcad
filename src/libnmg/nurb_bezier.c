@@ -315,10 +315,10 @@ bezier_roots(
 	*Right;                 /* control polygons */
     int left_count,             /* Solution count from */
 	right_count;            /* children */
-    point2d_t *left_t,          /* Solutions from kids */
-	*right_t;
-    point2d_t *left_n,		/* normals from kids */
-	*right_n;
+    point2d_t *left_t = NULL;   /* Solutions from kids */
+    point2d_t *right_t = NULL;  /* Solutions from kids */
+    point2d_t *left_n = NULL;	/* normals from kids */
+    point2d_t *right_n = NULL;  /* normals from kids */
     int total_count;
     point2d_t eval_pt;
 
@@ -548,14 +548,12 @@ nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv)
     fastf_t knot_min, knot_max;
     int i;
     struct edge_g_cnurb *crv1, *crv_copy;
-    int done;
 
     /* make a copy of original curve */
     crv_copy = nmg_nurb_crv_copy(crv);
 
     /* split curve at each knot value */
-    done = 0;
-    while (!done) {
+    while (1) {
 	fastf_t split;
 
 	knot_min = crv_copy->k.knots[0];
@@ -570,8 +568,8 @@ nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv)
 	}
 
 	if (ZERO(split - MAX_FASTF)) {
-	    done = 1;
 	    BU_LIST_APPEND(clist, &crv_copy->l);
+	    /* DONE */
 	    break;
 	}
 

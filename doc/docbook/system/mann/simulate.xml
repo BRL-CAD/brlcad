@@ -38,12 +38,6 @@
       as separate physical objects by default. If a combination has the
       attribute <literal>simulate::type=region</literal>, all primitives below it
       in the hierarchy are regarded as one physical object.
-
-      <emphasis remap="B" role="bold">NOTE:</emphasis>
-      Issues with the implementation of the internal RtMotionState class can
-      result in incorrect application of matrix transformations. This can be
-      worked around by using the <command>xpush</command> command on the scene path
-      before running the <command>simulate</command> command.
     </para>
 
     <para>
@@ -53,12 +47,11 @@
     </para>
 
     <para>
-      The units are nominally in meters and seconds, but other units can be
-      used dependent on the scaling of the duration, of the forces, and of the
-      objects within the scene. Note that Bullet is primarily designed for
-      objects of sizes between approximately 0.05 and 10.0 units, with a
-      collision tolerance of 0.004 units; hence, resizing to these scales may
-      produce the best results where possible.
+      All values are specified in units of meters, kilograms, and seconds.
+      Note that Bullet is primarily designed for objects of sizes between
+      approximately 0.05 and 10.0 meters, with a collision tolerance of 0.004
+      meters; hence, using <command>simulate</command> on a model that is
+      significantly different from this scale may give worse results.
     </para>
 
   </refsection>

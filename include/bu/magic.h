@@ -82,6 +82,7 @@ __BEGIN_DECLS
 #define BN_TABLE_MAGIC			0x53706374 /**< Spct */
 #define BN_TOL_MAGIC			0x98c734bb /**< ??4? */
 #define BN_UNIF_MAGIC			0x00be7460 /**< ??t` => 12481632 */
+#define BN_VERT_TREE_MAGIC		0x56455254 /**< VERT */
 #define BN_VLBLOCK_MAGIC		0x981bd112 /**< ???? */
 #define BN_VLIST_MAGIC			0x98237474 /**< ?\#tt */
 
@@ -220,7 +221,6 @@ __BEGIN_DECLS
 #define PT_MAGIC			0x87687681 /**< ?hv? */
 #define RESOURCE_MAGIC			0x83651835 /**< ?e?5 */
 #define RTI_MAGIC			0x99101658 /**< ???X */
-#define VERT_TREE_MAGIC			0x56455254 /**< VERT */
 #define WDB_METABALLPT_MAGIC		0x6d627074 /**< mbpt */
 #define WDB_PIPESEG_MAGIC		0x9723ffef /**< ?\#?? */
 #define WMEMBER_MAGIC			0x43128912 /**< C??? */

@@ -56,8 +56,8 @@ nmg_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv
 {
     register fastf_t *t_p;
     register const fastf_t *tau_p;
-    fastf_t ah[20];
-    fastf_t newknots[20];			/* new knots */
+    fastf_t ah[20] = {0.0};
+    fastf_t newknots[20] = {0.0};	/* new knots */
     register int j;			/* d(j), j = 0 : # of new ctl points */
     int mu,				/* mu:  tau[mu] <= t[j] < tau[mu+1]*/
 	muprim,

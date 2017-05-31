@@ -51,7 +51,7 @@ main(int argc, char **argv)
     } magline, yelline, cyaline;
 
     struct {
-	char red, green, blue;
+	unsigned char red, green, blue;
     } out;
 
     FILE *magfp, *yelfp, *cyafp;

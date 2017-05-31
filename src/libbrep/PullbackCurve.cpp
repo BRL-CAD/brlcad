@@ -1732,7 +1732,7 @@ bool trim_GetClosestPoint3dFirstOrder(
     bool rc = false;
     const ON_Surface *surf = trim.SurfaceOf();
 
-    double t0 = interval->Mid();
+    double t0;
     ON_3dPoint p3d;
     ON_3dPoint p0;
     ON_3dVector ds, dt, dss, dst, dtt;

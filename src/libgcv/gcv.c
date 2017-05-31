@@ -25,12 +25,21 @@
 
 
 #include "common.h"
-
-#include "gcv/api.h"
-
-#include "bu/debug.h"
-
 #include <string.h>
+
+#include "vmath.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "rt/db5.h"
+#include "rt/db_instance.h"
+#include "rt/db_io.h"
+#include "rt/wdb.h"
+#include "rt/search.h"
+#include "rt/global.h"
+#include "gcv/api.h"
 
 
 HIDDEN int
@@ -112,10 +121,14 @@ _gcv_filter_register(struct bu_ptbl *filter_table,
 
 	case GCV_FILTER_READ:
 	case GCV_FILTER_WRITE:
+	    /* One mime_type isn't going to cut it for things
+	     * like GDAL or the asset import library... need to
+	     * rethink this */
+#if 0
 	    if (filter->mime_type == BU_MIME_MODEL_AUTO
 		|| filter->mime_type == BU_MIME_MODEL_UNKNOWN)
 		bu_bomb("invalid mime_type");
-
+#endif
 	    break;
 
 	default:

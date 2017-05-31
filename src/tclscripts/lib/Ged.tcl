@@ -846,6 +846,7 @@ package provide cadwidgets::Ged 1.0
 	proc rgb_to_tk {_r _g _b}
 	proc tk_to_rgb {_tkcolor}
 	proc validateDigit {_d}
+	proc validateNonZeroDigit {_d}
 	proc validateDigitMax {_d _max}
 	proc validateDouble {_d}
 	proc validateRgb {_rgb}
@@ -5224,11 +5225,7 @@ package provide cadwidgets::Ged 1.0
 	    set label [lindex $labels $dindex]
 	    set point [lindex $label 1]
 	} elseif {$dtype == "data_polygons"} {
-	    set polygons [$mGed data_polygons $itk_component($_pane) polygons]
-	    set i [lindex $dindex 0]
-	    set j [lindex $dindex 1]
-	    set k [lindex $dindex 2]
-	    set point [lindex [lindex [lindex $polygons $i] $j] $k]
+	    set point [lindex $pdata 2]
 	} else {
 	    set points [$mGed $dtype $itk_component($_pane) points]
 	    set point [lindex $points $dindex]
@@ -5918,6 +5915,14 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::validateDigit {_d} {
     if {[string is digit $_d]} {
+	return 1
+    }
+
+    return 0
+}
+
+::itcl::body cadwidgets::Ged::validateNonZeroDigit {_d} {
+    if {[string is digit $_d] && $_d > 0} {
 	return 1
     }
 
