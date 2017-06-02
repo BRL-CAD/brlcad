@@ -57,11 +57,9 @@ main(){};
 		")
 		CHECK_C_SOURCE_COMPILES("${HEADER_SRC}" ${var}_USABLE)
 	ENDIF(${var})
-	IF(NOT ${var} OR NOT ${var}_USABLE)
-		add_definitions(-DNO_${var}=1)
-	ELSE(NOT ${var} OR NOT ${var}_USABLE)
+	IF(${var} OR ${var}_USABLE)
 		add_definitions(-D${var}=1)
-	ENDIF(NOT ${var} OR NOT ${var}_USABLE)
+	ENDIF(${var} OR ${var}_USABLE)
 ENDMACRO(TCL_CHECK_INCLUDE_FILE_USABILITY filename var)
 
 # Wrapper for function testing
@@ -82,7 +80,6 @@ MACRO(TCL_CHECK_TYPE_SIZE typename var)
    SET(CHECK_EXTRA_INCLUDE_FILES)
    IF(${var}_T)
       add_definitions(-D${var}_T=1)
-      add_definitions(-DSIZEOF${var}=${${var}_T})
    ENDIF(${var}_T)
 ENDMACRO(TCL_CHECK_TYPE_SIZE)
 
