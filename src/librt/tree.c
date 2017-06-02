@@ -772,9 +772,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	}
 
 	data.tbl = tbl;
-
-	if (!(data.cache = rt_cache_open()))
-	    bu_bomb("rt_cache_open() failed");
+	data.cache = rt_cache_open();
 
 	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
 			 &tree_state,
