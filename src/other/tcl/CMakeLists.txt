@@ -426,8 +426,8 @@ SC_TIME_HANDLER()
 # Check for stat structure files and blkcnt_t
 #---------------------------------------------------------------------------
 
-TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blocks sys/stat.h	STRUCT_HAS_ST_BLOCKS)
-TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blksize sys/stat.h STRUCT_HAS_ST_BLKSIZE)
+TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blocks sys/stat.h	STRUCT_STAT_ST_BLOCKS)
+TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blksize sys/stat.h STRUCT_STAT_ST_BLKSIZE)
 CHECK_TYPE_SIZE(blkcnt_t HAVE_BLKCNT_T)
 IF(HAVE_BLKCNT_T)
   ADD_TCL_CFLAG(HAVE_BLKCNT_T)
