@@ -20,8 +20,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * add regression test for directional light sources
 
-* update astyle
-
 * bundle primary rays in rt front end into postage stamps, shoot via
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
