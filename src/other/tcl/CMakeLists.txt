@@ -426,8 +426,8 @@ SC_TIME_HANDLER()
 # Check for stat structure files and blkcnt_t
 #---------------------------------------------------------------------------
 
-TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blocks sys/stat.h	STRUCT_STAT_ST_BLOCKS)
-TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blksize sys/stat.h STRUCT_STAT_ST_BLKSIZE)
+TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blocks sys/stat.h HAVE_STRUCT_STAT_ST_BLOCKS)
+TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blksize sys/stat.h HAVE_STRUCT_STAT_ST_BLKSIZE)
 CHECK_TYPE_SIZE(blkcnt_t HAVE_BLKCNT_T)
 IF(HAVE_BLKCNT_T)
   ADD_TCL_CFLAG(HAVE_BLKCNT_T)
@@ -491,14 +491,14 @@ SC_TCL_CHECK_BROKEN_FUNC(
 #       Check for various typedefs and provide substitutes if
 #       they don't exist.
 #--------------------------------------------------------------------
-TCL_CHECK_TYPE_SIZE(mode_t MODE)
-TCL_CHECK_TYPE_SIZE(pid_t PID)
-TCL_CHECK_TYPE_SIZE(size_t SIZE)
-TCL_CHECK_TYPE_SIZE(uid_t UID)
+TCL_CHECK_TYPE_SIZE(mode_t HAVE_MODE)
+TCL_CHECK_TYPE_SIZE(pid_t HAVE_PID)
+TCL_CHECK_TYPE_SIZE(size_t HAVE_SIZE)
+TCL_CHECK_TYPE_SIZE(uid_t HAVE_UID)
 # The following tests may need to be more elaborate to function properly
-TCL_CHECK_TYPE_SIZE(socklen_t SOCKLEN sys/types.h sys/socket.h)
-TCL_CHECK_TYPE_SIZE(intptr_t INTPTR)
-TCL_CHECK_TYPE_SIZE(uintptr_t UINTPTR)
+TCL_CHECK_TYPE_SIZE(socklen_t HAVE_SOCKLEN sys/types.h sys/socket.h)
+TCL_CHECK_TYPE_SIZE(intptr_t HAVE_INTPTR)
+TCL_CHECK_TYPE_SIZE(uintptr_t HAVE_UINTPTR)
 
 IF(NOT HAVE_OPENDIR)
   ADD_TCL_CFLAG(USE_DIRENT2_H)
@@ -623,11 +623,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   TCL_CHECK_FUNCTION_EXISTS(getattrlist HAVE_GETATTRLIST)
   TCL_CHECK_INCLUDE_FILE(copyfile.h HAVE_COPYFILE_H)
   TCL_CHECK_FUNCTION_EXISTS(copyfile HAVE_COPYFILE)
-  IF(${CoreFoundation_LIBRARIES})
-    TCL_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
-    TCL_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
-    TCL_CHECK_FUNCTION_EXISTS(pthread_atfork HAVE_PTHREAD_ATFORK)
-  ENDIF(${CoreFoundation_LIBRARIES})
+  TCL_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
+  TCL_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
   ADD_TCL_CFLAG(USE_VFORK)
   add_definitions(-DTCL_DEFAULT_ENCODING="utf-8")
   ADD_TCL_CFLAG(TCL_LOAD_FROM_MEMORY)
@@ -760,7 +757,7 @@ ENDIF(HAVE_AVAILABILITYMACROS_H)
 
 CHECK_COMPILER_SUPPORTS_HIDDEN_D()
 
-TCL_CHECK_INCLUDE_FILE_USABILITY(sys/modem.h SYS_MODEM_H)
+TCL_CHECK_INCLUDE_FILE_USABILITY(sys/modem.h HAVE_SYS_MODEM_H)
 
 
 CHECK_FD_SET_IN_TYPES_D()
