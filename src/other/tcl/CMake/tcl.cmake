@@ -592,6 +592,22 @@ ENDMACRO(SC_TCL_LINK_LIBS)
 # Detect and set up 64-bit compiling here.  LOTS of TODO here
 #--------------------------------------------------------------------
 MACRO(SC_TCL_64BIT_FLAGS)
+	# See if we should use long anyway.  Note that we substitute
+	# in the type that is our current guess (long long) for a
+	# 64-bit type inside this check program.
+	SET(LONG_SRC "
+int main () {
+    switch (0) {
+        case 1: case (sizeof(long long)==sizeof(long)): ;
+    }
+return 0;
+}
+   ")
+	CHECK_C_SOURCE_COMPILES("${LONG_SRC}" LONG_NOT_LONG_LONG)
+	IF(NOT LONG_NOT_LONG_LONG)
+		add_definitions(-DTCL_WIDE_INT_IS_LONG=1)
+	ENDIF(NOT LONG_NOT_LONG_LONG)
+
 	IF(NOT CMAKE_SIZEOF_VOID_P)
 		MESSAGE(WARNING "CMAKE_SIZEOF_VOID_P is not defined - assuming 32-bit platform")
 		SET(CMAKE_SIZEOF_VOID_P 4)
