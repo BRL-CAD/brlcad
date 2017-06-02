@@ -2535,19 +2535,21 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
-# For Windows, we need some dlls to be redistributed with the
-# installer
 if(MSVC)
   # By default, do not warn when built on machines using only VS Express
   # From: http://www.cmake.org/pipermail/cmake/2011-May/044166.html
   if(NOT DEFINED CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS)
     set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS ON)
   endif()
+  # For Windows, we need some dlls to be redistributed with the installer.
   include(InstallRequiredSystemLibraries)
-endif(MSVC)
 
-# Before we finalize, set some specific global linker flags
-if(MSVC)
+  # For portability with older Windows versions - remove this once we are no
+  # longer worried about Windows versions older than Windows 7/Windows 2008 R2
+  # https://blogs.msdn.microsoft.com/vcblog/2009/08/27/windows-sdk-v7-0v7-0a-incompatibility-workaround/
+  add_definitions(-DPSAPI_VERSION=1)
+
+  # Before we finalize, set some specific global linker flags
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
