@@ -174,7 +174,8 @@ endif(NOT TK_DISABLE_MANPAGES)
 # between various platforms or pertain to specific OS definitions
 add_definitions(-DPACKAGE_NAME="tk")
 add_definitions(-DPACKAGE_TARNAME="tk")
-add_definitions(-DPACKAGE_VERSION="${TK_PATCH_LEVEL}")
+add_definitions(-DPACKAGE_VERSION="${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}")
+add_definitions(-DPACKAGE_STRING="tk ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}")
 add_definitions(-DPACKAGE_BUGREPORT="")
 add_definitions(-DSTDC_HEADERS=1)
 
@@ -186,6 +187,11 @@ add_definitions(-DBUILD_tk)
 ADD_TCL_CFLAG(STDC_HEADERS)
 # Get the SHLIB extension from CMake
 add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+#--------------------------------------------------------------------
+# Supply substitutes for missing POSIX header files.
+#--------------------------------------------------------------------
+SC_MISSING_POSIX_HEADERS()
 
 #----------------------------------------------------------------------------
 # Define some platform specific flags
