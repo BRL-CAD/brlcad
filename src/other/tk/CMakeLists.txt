@@ -270,6 +270,8 @@ TCL_CHECK_TYPE_SIZE(socklen_t HAVE_SOCKLEN sys/types.h sys/socket.h)
 TCL_CHECK_TYPE_SIZE(intptr_t HAVE_INTPTR)
 TCL_CHECK_TYPE_SIZE(uintptr_t HAVE_UINTPTR)
 
+TCL_CHECK_STRUCT_HAS_MEMBER("struct passwd" pw_gecos pwd.h HAVE_PW_GECOS)
+
 IF(NOT HAVE_OPENDIR)
   ADD_TCL_CFLAG(USE_DIRENT2_H)
 ENDIF(NOT HAVE_OPENDIR)
@@ -356,6 +358,25 @@ else(NOT TK_DISABLE_XFT)
   set(FREETYPE_LIBRARIES "")
   set(FONTCONFIG_LIBRARIES "")
 endif(NOT TK_DISABLE_XFT)
+
+
+#--------------------------------------------------------------------
+#	Check for XkbKeycodeToKeysym.
+#--------------------------------------------------------------------
+
+if (NOT TK_ENABLE_AQUA)
+  SET(CMAKE_REQUIRED_INCLUDES ${X11_INCLUDE_DIR})
+  SET(CMAKE_REQUIRED_LIBRARIES ${X11_X11_LIB})
+  CHECK_INCLUDE_FILE(X11/XKBlib.h HAVE_X11_XKBLIB_H)
+  if (HAVE_X11_XKBLIB_H)
+    CHECK_C_SOURCE_COMPILES("#include <X11/XKBlib.h>\nint main() { void *ptr = (void*)&XkbKeycodeToKeysym; return 0;}" HAVE_XKBKEYCODETOKEYSYM)
+    if (HAVE_XKBKEYCODETOKEYSYM)
+      add_definitions(-DHAVE_XKBKEYCODETOKEYSYM=1)
+    endif (HAVE_XKBKEYCODETOKEYSYM)
+  endif (HAVE_X11_XKBLIB_H)
+  SET(CMAKE_REQUIRED_INCLUDES "")
+  SET(CMAKE_REQUIRED_LIBRARIES "")
+endif (NOT TK_ENABLE_AQUA)
 
 #----------------------------------------------------------------------------
 # signed/unsigned char - does the Tcl code still need this? See
