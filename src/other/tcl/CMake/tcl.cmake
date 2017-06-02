@@ -10,6 +10,8 @@ INCLUDE(CheckTypeSize)
 INCLUDE(CheckLibraryExists)
 INCLUDE(CheckStructHasMember)
 INCLUDE(CheckCSourceCompiles)
+INCLUDE(CheckPrototypeExists)
+INCLUDE(CheckCSourceRuns)
 INCLUDE(CheckCSourceRuns)
 
 INCLUDE(ac_std_funcs)
@@ -35,19 +37,17 @@ MACRO(CHECK_C_FLAG flag)
 ENDMACRO()
 
 MACRO(TCL_CHECK_INCLUDE_FILE_USABILITY filename var)
-	CHECK_INCLUDE_FILE(${filename} HAVE_${var})
-	IF(HAVE_${var})
+	CHECK_INCLUDE_FILE(${filename} ${var})
+	IF(${var})
 		SET(HEADER_SRC "
 #include <${filename}>
 main(){};
 		")
 		CHECK_C_SOURCE_COMPILES("${HEADER_SRC}" ${var}_USABLE)
-	ENDIF(HAVE_${var})
-	IF(NOT HAVE_${var} OR NOT ${var}_USABLE)
-		add_definitions(-DNO_${var}=1)
-	ELSE(NOT HAVE_${var} OR NOT ${var}_USABLE)
-		add_definitions(-DHAVE_${var}=1)
-	ENDIF(NOT HAVE_${var} OR NOT ${var}_USABLE)
+	ENDIF(${var})
+	IF(${var} OR ${var}_USABLE)
+		add_definitions(-D${var}=1)
+	ENDIF(${var} OR ${var}_USABLE)
 ENDMACRO(TCL_CHECK_INCLUDE_FILE_USABILITY filename var)
 
 # Wrapper for function testing
@@ -64,20 +64,19 @@ MACRO(TCL_CHECK_TYPE_SIZE typename var)
       SET(headers ${headers} ${arg})
    ENDFOREACH(arg ${ARGN})
    SET(CHECK_EXTRA_INCLUDE_FILES ${headers})
-   CHECK_TYPE_SIZE(${typename} HAVE_${var}_T)
+   CHECK_TYPE_SIZE(${typename} ${var}_T)
    SET(CHECK_EXTRA_INCLUDE_FILES)
-   IF(HAVE_${var}_T)
-      add_definitions(-DHAVE_${var}_T=1)
-      add_definitions(-DSIZEOF${var}=${HAVE_${var}_T})
-   ENDIF(HAVE_${var}_T)
+   IF(${var}_T)
+      add_definitions(-D${var}_T=1)
+   ENDIF(${var}_T)
 ENDMACRO(TCL_CHECK_TYPE_SIZE)
 
 # Check for a member of a structure
 MACRO(TCL_CHECK_STRUCT_HAS_MEMBER structname member header var)
-   CHECK_STRUCT_HAS_MEMBER(${structname} ${member} ${header} HAVE_${var})
-   IF(HAVE_${var})
-      add_definitions(-DHAVE_${var}=1)
-   ENDIF(HAVE_${var})
+   CHECK_STRUCT_HAS_MEMBER(${structname} ${member} ${header} ${var})
+   IF(${var})
+      add_definitions(-D${var}=1)
+   ENDIF(${var})
 ENDMACRO(TCL_CHECK_STRUCT_HAS_MEMBER)
 
 #--------------------------------------------------------------------
@@ -90,8 +89,8 @@ ENDMACRO(TCL_CHECK_STRUCT_HAS_MEMBER)
 #
 #--------------------------------------------------------------------
 MACRO(SC_TIME_HANDLER)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(sys/time.h SYS_TIME_H)
-	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_zone time.h STRUCT_TM_TM_ZONE)
+	TCL_CHECK_INCLUDE_FILE_USABILITY(sys/time.h HAVE_SYS_TIME_H)
+	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_zone time.h HAVE_STRUCT_TM_TM_ZONE)
 	IF(HAVE_STRUCT_TM_TM_ZONE)
 		add_definitions(-DHAVE_TM_ZONE=1)
 	ELSE(HAVE_STRUCT_TM_TM_ZONE)
@@ -111,8 +110,8 @@ return 0;
 	TCL_CHECK_FUNCTION_EXISTS(gmtime_r HAVE_GMTIME_R)
 	TCL_CHECK_FUNCTION_EXISTS(localtime_r HAVE_LOCALTIME_R)
 	TCL_CHECK_FUNCTION_EXISTS(mktime HAVE_MKTIME)
-	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_tzadj time.h TM_TZADJ)
-	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_gmtoff time.h TM_GMTOFF)
+	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_tzadj time.h HAVE_TM_TZADJ)
+	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 	SET(TZONE_SRC_1 "
 #include <time.h>
 int main () {
@@ -199,7 +198,7 @@ MACRO(SC_TCL_LINK_LIBS)
 	ENDIF(TCL_LINK_LIBS)
 	MARK_AS_ADVANCED(TCL_LINK_LIBS)
 
-	TCL_CHECK_INCLUDE_FILE_USABILITY(net/errno.h NET_ERRNO_H)
+	TCL_CHECK_INCLUDE_FILE_USABILITY(net/errno.h HAVE_NET_ERRNO_H)
 	CHECK_FUNCTION_EXISTS(connect HAVE_CONNECT)
 	IF(NOT HAVE_CONNECT)
 		CHECK_FUNCTION_EXISTS(setsockopt HAVE_SETSOCKOPT)
@@ -236,6 +235,22 @@ ENDMACRO(SC_TCL_LINK_LIBS)
 # Detect and set up 64-bit compiling here.  LOTS of TODO here
 #--------------------------------------------------------------------
 MACRO(SC_TCL_64BIT_FLAGS)
+	# See if we should use long anyway.  Note that we substitute
+	# in the type that is our current guess (long long) for a
+	# 64-bit type inside this check program.
+	SET(LONG_SRC "
+int main () {
+    switch (0) {
+        case 1: case (sizeof(long long)==sizeof(long)): ;
+    }
+return 0;
+}
+   ")
+	CHECK_C_SOURCE_COMPILES("${LONG_SRC}" LONG_NOT_LONG_LONG)
+	IF(NOT LONG_NOT_LONG_LONG)
+		add_definitions(-DTCL_WIDE_INT_IS_LONG=1)
+	ENDIF(NOT LONG_NOT_LONG_LONG)
+
 	IF(NOT CMAKE_SIZEOF_VOID_P)
 		MESSAGE(WARNING "CMAKE_SIZEOF_VOID_P is not defined - assuming 32-bit platform")
 		SET(CMAKE_SIZEOF_VOID_P 4)
