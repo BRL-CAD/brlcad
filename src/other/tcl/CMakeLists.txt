@@ -265,10 +265,10 @@ SC_TCL_64BIT_FLAGS()
 # Add options for optimized and debug compile options - replaces 
 # SC_ENABLE_SYMBOLS
 #----------------------------------------------------------------------------
-OPTION(TCL_OPTIMIZED "Built optimized Tcl" ON)
+OPTION(TCL_OPTIMIZED "Build optimized Tcl" ON)
 IF(TCL_OPTIMIZED)
   ADD_TCL_CFLAG(TCL_CFG_OPTIMIZED)
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O2")
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG=1 -O2")
 ENDIF(TCL_OPTIMIZED)
 
 OPTION(TCL_DEBUG "Enable Debugging" ON)
