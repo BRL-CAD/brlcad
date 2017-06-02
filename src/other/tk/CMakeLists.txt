@@ -337,6 +337,10 @@ ENDIF(NOT WIN32)
 #--------------------------------------------------------------------
 INCLUDE(CMakeDependentOption)
 CMAKE_DEPENDENT_OPTION(TK_ENABLE_XSS "Use XScreenSaver" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;${X11_Xscreensaver_LIB}" OFF)
+# FIXME: assumes if it's enabled that we have it
+if (TK_ENABLE_XSS)
+  add_definitions(-DHAVE_XSS=1)
+endif (TK_ENABLE_XSS)
 
 #--------------------------------------------------------------------
 #       Check for freetype / fontconfig / Xft support.
@@ -489,6 +493,27 @@ add_definitions(-DTK_LAYOUT_WITH_BASE_CHUNKS=0)
 add_definitions(-DTK_DRAW_IN_CONTEXT=0)
 add_definitions(-DTILE_07_COMPAT=0)
 add_definitions(-DDEBUG_FONTSEL=0)
+
+# from unix/Makefile.in:
+# Tk does not used deprecated Tcl constructs so it should
+# compile fine with -DTCL_NO_DEPRECATED. To remove its own
+# set of deprecated code uncomment the second line.
+add_definitions(-DTCL_NO_DEPRECATED)
+
+
+#----------------------------------------------------------------------------
+# Add options for optimized and debug compile options - replaces 
+# SC_ENABLE_SYMBOLS
+#----------------------------------------------------------------------------
+IF(TCL_OPTIMIZED)
+  ADD_TCL_CFLAG(TCL_CFG_OPTIMIZED)
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG=1 -O2")
+ENDIF(TCL_OPTIMIZED)
+
+
+#----------------------------------------------------------------------------
+# GET TO WORK COMPILING
+#----------------------------------------------------------------------------
 
 ADD_SUBDIRECTORY(library)
 
