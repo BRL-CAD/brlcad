@@ -40,7 +40,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
 
-* reinstate 'stat' and search -size, see r67636 through r67646
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -82,6 +81,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* reinstate 'stat' and search -size, see r67636 through r67646
 
 * update dem-g to not use full paths for dsp primitive data locations -
   should default to embedding the data in the .g file as a binary object,
