@@ -18,6 +18,12 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* TBD
+
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
 * add regression test for BoT ray tracing
 
 * add regression test for directional light sources
@@ -41,11 +47,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
-
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
 
 * try to come up with a way we can report the number of times
   the configuration step has been run and changed something
