@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* add regression test for BoT ray tracing
+
 * add regression test for directional light sources
 
 * bundle primary rays in rt front end into postage stamps, shoot via
