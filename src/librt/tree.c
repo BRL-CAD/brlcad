@@ -32,7 +32,9 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-#include "./cache.h"
+#ifdef CACHE_ENABLED
+#  include "./cache.h"
+#endif
 
 
 #define ACQUIRE_SEMAPHORE_TREE(_hash) switch ((_hash)&03) {	\
@@ -126,7 +128,9 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
 struct rt_gettree_data
 {
     struct bu_hash_tbl *tbl;
+#ifdef CACHE_ENABLED
     struct rt_cache *cache;
+#endif
 };
 
 
@@ -521,7 +525,11 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
      * that is OK, as long as idb_ptr is set to null.  Note that the
      * prep routine may have changed st_id.
      */
+#ifdef CACHE_ENABLED
     ret = rt_cache_prep(data->cache, stp, ip);
+#else
+    ret = rt_obj_prep(stp, ip, stp->st_rtip);
+#endif
 
     if (ret) {
 	int hash;
@@ -772,7 +780,9 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	}
 
 	data.tbl = tbl;
+#ifdef CACHE_ENABLED
 	data.cache = rt_cache_open();
+#endif
 
 	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
 			 &tree_state,
@@ -781,7 +791,9 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 			 _rt_gettree_leaf, (void *)&data);
 	bu_avs_free(&tree_state.ts_attrs);
 
+#ifdef CACHE_ENABLED
 	rt_cache_close(data.cache);
+#endif
     }
 
     /* DEBUG:  Ensure that all region trees are valid */
