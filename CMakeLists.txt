@@ -994,7 +994,6 @@ if(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
 else(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
   set(CMAKE_WORD_SIZE "${BRLCAD_WORD_SIZE}")
 endif(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
-CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
 
 # Enable/disable 64-bit build settings for MSVC, which is apparently
 # determined at the CMake generator level - need to override other
@@ -1010,6 +1009,7 @@ if(MSVC)
     endif(NOT ${CMAKE_WORD_SIZE} MATCHES "64BIT")
     add_definitions("-D_WIN64")
   else(CMAKE_CL_64)
+    set(CMAKE_SIZEOF_VOID_P 4)
     if(NOT ${CMAKE_WORD_SIZE} MATCHES "32BIT")
       set(CMAKE_WORD_SIZE "32BIT")
       if(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
@@ -1025,6 +1025,8 @@ if (APPLE)
     set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
   endif (${CMAKE_WORD_SIZE} MATCHES "32BIT")
 endif (APPLE)
+
+CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
 
 # Based on what we are doing, we may need to constrain our search paths
 #
