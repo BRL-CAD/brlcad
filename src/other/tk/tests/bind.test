@@ -6,8 +6,6 @@
 # Copyright (c) 1994-1995 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -25,6 +23,14 @@ proc setup {} {
     pack .b.f
     focus -force .b.f
     foreach p [event info] {event delete $p}    
+    update
+}
+proc setup2 {} {
+    catch {destroy .b.e}
+    entry .b.e
+    pack .b.e
+    focus -force .b.e
+    foreach p [event info] {event delete $p}
     update
 }
 setup
@@ -1567,6 +1573,42 @@ test bind-16.44 {ExpandPercents procedure} {
     event gen .b.f <Gravity>
     set x
 } {?? ??}
+test bind-16.45 {ExpandPercents procedure} -setup {
+    set savedBind(Entry) [bind Entry <Key>]
+    set savedBind(All) [bind all <Key>]
+
+    setup2
+
+    bind .b.e <Key> {set x "%M"}
+    bind Entry <Key> {set y "%M"}
+    bind all <Key> {set z "%M"}
+} -body {
+    set x none; set y none; set z none
+    event gen .b.e <Key-a>
+    list $x $y $z
+} -cleanup {
+    bind all <Key> $savedBind(All)
+    bind Entry <Key> $savedBind(Entry)
+    unset savedBind
+} -result {0 1 2}
+test bind-16.46 {ExpandPercents procedure} -setup {
+    set savedBind(Entry) [bind Entry <Key>]
+    set savedBind(All) [bind all <Key>]
+
+    setup2
+
+    bind all <Key> {set z "%M"}
+    bind Entry <Key> {set y "%M"}
+    bind .b.e <Key> {set x "%M"}
+} -body {
+    set x none; set y none; set z none
+    event gen .b.e <Key-a>
+    list $x $y $z
+} -cleanup {
+    bind Entry <Key> $savedBind(Entry)
+    bind all <Key> $savedBind(All)
+    unset savedBind
+} -result {0 1 2}
 
 
 test bind-17.1 {event command} {
@@ -1981,9 +2023,9 @@ test bind-22.10 {HandleEventGenerate} {
     setup
     bind .b.f <Key> {set x "%s %K"}
     set x {}
-    event gen .b.f <Control-Key-1>
+    event gen .b.f <Control-Key-space>
     set x
-} {4 1}
+} {4 space}
 test bind-22.11 {HandleEventGenerate} {
     setup
     bind .b.f <<Paste>> {set x "%s"}

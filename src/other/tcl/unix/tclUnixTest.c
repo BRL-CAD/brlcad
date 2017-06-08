@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -55,7 +53,7 @@ static Pipe testPipes[MAX_PIPES];
  * The stuff below is used by the testalarm and testgotsig ommands.
  */
 
-static char *gotsig = "0";
+static const char *gotsig = "0";
 
 /*
  * Forward declarations of functions defined later in this file:
@@ -68,6 +66,8 @@ static int		TestfilewaitCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, CONST char **argv);
 static int		TestfindexecutableCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, CONST char **argv);
+static int		TestforkObjCmd(ClientData dummy,
+			    Tcl_Interp *interp, int objc, Tcl_Obj *CONST *argv);
 static int		TestgetopenfileCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, CONST char **argv);
 static int		TestgetdefencdirCmd(ClientData dummy,
@@ -111,6 +111,8 @@ TclplatformtestInit(
     Tcl_CreateCommand(interp, "testfilewait", TestfilewaitCmd,
             (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testfindexecutable", TestfindexecutableCmd,
+            (ClientData) 0, NULL);
+    Tcl_CreateObjCommand(interp, "testfork", TestforkObjCmd,
             (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testgetopenfile", TestgetopenfileCmd,
             (ClientData) 0, NULL);
@@ -533,6 +535,51 @@ TestsetdefencdirCmd(
     }
 
     Tcl_SetDefaultEncodingDir(argv[1]);
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestforkObjCmd --
+ *
+ *	This function implements the "testfork" command. It is used to
+ *	fork the Tcl process for specific test cases.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestforkObjCmd(
+    ClientData clientData,	/* Not used. */
+    Tcl_Interp *interp,		/* Current interpreter. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *CONST *objv)		/* Argument strings. */
+{
+    pid_t pid;
+
+    if (objc != 1) {
+        Tcl_WrongNumArgs(interp, 1, objv, "");
+        return TCL_ERROR;
+    }
+    pid = fork();
+    if (pid == -1) {
+        Tcl_AppendResult(interp,
+                "Cannot fork", NULL);
+        return TCL_ERROR;
+    }
+    /* Only needed when pthread_atfork is not present,
+     * should not hurt otherwise. */
+    if (pid==0) {
+	Tcl_InitNotifier();
+    }
+    Tcl_SetObjResult(interp, Tcl_NewIntObj(pid));
     return TCL_OK;
 }
 

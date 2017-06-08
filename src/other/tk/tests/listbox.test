@@ -5,8 +5,6 @@
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -2159,6 +2157,56 @@ test listbox-29.1 {listbox selection behavior, -state disabled} {
     .l selection set 3
     lappend out [.l selection includes 2] [.l curselection]
 } {1 1 2}
+
+test listbox-30.1 {Bug 3607326} -setup {
+    destroy .l
+    unset -nocomplain a
+} -body {
+    array set a {}
+    listbox .l -listvariable a
+} -cleanup {
+    destroy .l
+    unset -nocomplain a
+} -result * -match glob -returnCodes error
+
+test listbox-31.1 {<<ListboxSelect>> event} -setup {
+    destroy .l
+    unset -nocomplain res
+} -body {
+    pack [listbox .l -state normal]
+    update
+    bind .l <<ListboxSelect>> {lappend res [%W curselection]}
+    .l insert end a b c
+    focus -force .l
+    event generate .l <1> -x 5 -y 5  ; # <<ListboxSelect>> fires
+    .l configure -state disabled
+    focus -force .l
+    event generate .l <Control-Home> ; # <<ListboxSelect>> does NOT fire
+    .l configure -state normal
+    focus -force .l
+    event generate .l <Control-End>  ; # <<ListboxSelect>> fires
+    .l selection clear 0 end         ; # <<ListboxSelect>> does NOT fire
+    .l selection set 1 1             ; # <<ListboxSelect>> does NOT fire
+    lappend res [.l curselection]
+} -cleanup {
+    destroy .l
+    unset -nocomplain res
+} -result {0 2 1}
+
+test listbox-31.2 {<<ListboxSelect>> event on lost selection} -setup {
+    destroy .l
+} -body {
+    pack [listbox .l -exportselection true]
+    update
+    bind .l <<ListboxSelect>> {lappend res [list [selection own] [%W curselection]]}
+    .l insert end a b c
+    focus -force .l
+    event generate .l <1> -x 5 -y 5  ; # <<ListboxSelect>> fires
+    selection clear                  ; # <<ListboxSelect>> fires again
+    set res
+} -cleanup {
+    destroy .l
+} -result {{.l 0} {{} {}}}
 
 resetGridInfo
 deleteWindows

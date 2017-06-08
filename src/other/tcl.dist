@@ -1,5 +1,4 @@
 SET(tcl_ignore_files
-Makefile.am
 CMake
 ChangeLog
 ChangeLog.1999
@@ -9,6 +8,8 @@ ChangeLog.2002
 ChangeLog.2003
 ChangeLog.2004
 ChangeLog.2005
+ChangeLog.2007
+ChangeLog.2008
 README
 changes
 compat
@@ -68,12 +69,11 @@ macosx/Tclsh-Info.plist.in
 macosx/configure
 macosx/configure.ac
 macosx/license.terms
+macosx/tclMacOSXBundle.c
 macosx/tclMacOSXFCmd.c;
 macosx/tclMacOSXNotify.c;
-macosx/tclMacOSXBundle.c
 tests
 tools
-unix
 unix/Makefile.in
 unix/README
 unix/aclocal.m4
@@ -83,6 +83,8 @@ unix/install-sh
 unix/installManPage
 unix/ldAix
 unix/tcl.m4
+unix/tcl.pc.in
+unix/tcl.spec
 unix/tclConfig.h.in
 unix/tclConfig.sh.in
 unix/tclLoadAix.c

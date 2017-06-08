@@ -12,8 +12,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -307,6 +305,11 @@ test set-old-7.18 {unset command, -nocomplain (no abbreviation)} {
     catch {unset -nocomp}
     list [info exists -nocomp] [catch {unset -nocomp}]
 } {0 1}
+test set-old-7.19 {unset command, both switches} {
+    set -- val
+    list [info exists --] [catch {unset -nocomplain --}] [info exists --]\
+	[catch {unset -nocomplain -- --}] [info exists --]
+} {1 0 1 0 0}
 
 # Array command.
 

@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH event n 8.3 Tk "Tk Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -320,6 +318,10 @@ been pressed in combination with the Alt key. The usual response to
 this is to either focus into the widget (or some related widget) or to
 invoke the widget.
 .TP
+\fB<<Invoke>>\fR
+This can be sent to some widgets (e.g. button, listbox, menu) as an
+alternative to <space>.
+.TP
 \fB<<ListboxSelect>>\fR
 This is sent to a listbox when the set of selected item(s) in the
 listbox is updated.
@@ -335,6 +337,9 @@ changed.
 \fB<<Selection>>\fR
 This is sent to a text widget when the selection in the widget is
 changed.
+.TP
+\fB<<ThemeChanged>>\fR
+This is sent to a text widget when the ttk (Tile) theme changed.
 .TP
 \fB<<TraverseIn>>\fR
 This is sent to a widget when the focus enters the widget because of a
@@ -419,7 +424,7 @@ the physical event.
 .PP
 Bindings on a virtual event may be created before the virtual event exists.
 Indeed, the virtual event never actually needs to be defined, for instance,
-on platforms where the specific virtual event would meaningless or
+on platforms where the specific virtual event would be meaningless or
 ungeneratable.
 .PP
 When a definition of a virtual event changes at run time, all windows

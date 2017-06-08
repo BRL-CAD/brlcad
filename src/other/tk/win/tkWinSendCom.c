@@ -17,8 +17,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -374,7 +372,6 @@ Async(
     UINT *puArgErr)
 {
     HRESULT hr = S_OK;
-    int result = TCL_OK;
     VARIANT vCmd;
 
     VariantInit(&vCmd);
@@ -391,7 +388,7 @@ Async(
 	if (obj->interp) {
 	    Tcl_Obj *scriptPtr = Tcl_NewUnicodeObj(vCmd.bstrVal,
 		    (int)SysStringLen(vCmd.bstrVal));
-	    result = TkWinSend_QueueCommand(obj->interp, scriptPtr);
+	    TkWinSend_QueueCommand(obj->interp, scriptPtr);
 	}
     }
 

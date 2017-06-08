@@ -11,18 +11,24 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TK
 #define _TK
 
 #include <tcl.h>
-#if (TCL_MAJOR_VERSION != 8) || (TCL_MINOR_VERSION != 5)
-#	error Tk 8.5 must be compiled with tcl.h from Tcl 8.5
+#if (TCL_MAJOR_VERSION != 8) || (TCL_MINOR_VERSION < 5)
+#	error Tk 8.5 must be compiled with tcl.h from Tcl 8.5 or better
 #endif
 
+#ifndef _ANSI_ARGS_
+#   ifndef NO_PROTOTYPES
+#	define _ANSI_ARGS_(x)	x
+#   else
+#	define _ANSI_ARGS_(x)	()
+#   endif
+#endif
+
 /*
  * For C++ compilers, use extern "C"
  */
@@ -35,7 +41,7 @@ extern "C" {
  * When version numbers change here, you must also go into the following files
  * and update the version numbers:
  *
- * library/tk.tcl	(2 LOC patch)
+ * library/tk.tcl	(1 LOC patch)
  * unix/configure.in	(2 LOC Major, 2 LOC minor, 1 LOC patch)
  * win/configure.in	(as above)
  * README		(sections 0 and 1)
@@ -53,10 +59,10 @@ extern "C" {
 #define TK_MAJOR_VERSION	8
 #define TK_MINOR_VERSION	5
 #define TK_RELEASE_LEVEL	TCL_FINAL_RELEASE
-#define TK_RELEASE_SERIAL	9
+#define TK_RELEASE_SERIAL	19
 
 #define TK_VERSION		"8.5"
-#define TK_PATCH_LEVEL		"8.5.9"
+#define TK_PATCH_LEVEL		"8.5.19"
 
 /*
  * A special definition used to allow this header file to be included from
@@ -71,11 +77,9 @@ extern "C" {
 #ifndef RC_INVOKED
 
 #ifndef _XLIB_H
-#   if defined(MAC_OSX_TK)
-#	include <X11/Xlib.h>
+#   include <X11/Xlib.h>
+#   ifdef MAC_OSX_TK
 #	include <X11/X.h>
-#   else
-#	include <X11/Xlib.h>
 #   endif
 #endif
 #ifdef __STDC__
@@ -83,24 +87,20 @@ extern "C" {
 #endif
 
 #ifdef BUILD_tk
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLEXPORT
+#undef TCL_STORAGE_CLASS
+#define TCL_STORAGE_CLASS	DLLEXPORT
 #endif
-
+
 /*
+ *----------------------------------------------------------------------
+ *
  * Decide whether or not to use input methods.
  */
 
 #ifdef XNQueryInputStyle
 #define TK_USE_INPUT_METHODS
 #endif
-
-/* quell shadow warnings */
-#ifdef index
-#  undef index
-#endif
-#define index tcl_scoped_index
-
+
 /*
  * Dummy types that are used by clients:
  */
@@ -126,8 +126,10 @@ typedef struct Tk_StyledElement_ *Tk_StyledElement;
  */
 
 typedef const char *Tk_Uid;
-
+
 /*
+ *----------------------------------------------------------------------
+ *
  * The enum below defines the valid types for Tk configuration options as
  * implemented by Tk_InitOptions, Tk_SetOptions, etc.
  */
@@ -225,7 +227,7 @@ typedef void (Tk_CustomOptionFreeProc) _ANSI_ARGS_((ClientData clientData,
 	Tk_Window tkwin, char *internalPtr));
 
 typedef struct Tk_ObjCustomOption {
-    const char *name; /* Name of the custom option. */
+    const char *name;		/* Name of the custom option. */
     Tk_CustomOptionSetProc *setProc;
 				/* Function to use to set a record's option
 				 * value from a Tcl_Obj */
@@ -301,7 +303,7 @@ typedef struct Tk_SavedOptions {
 				 * old values in a single structure. NULL
 				 * means no more structures. */
 } Tk_SavedOptions;
-
+
 /*
  * Structure used to describe application-specific configuration options:
  * indicates procedures to call to parse an option and to return a text string
@@ -400,7 +402,7 @@ typedef enum {
 #define TK_CONFIG_OPTION_SPECIFIED      (1 << 4)
 #define TK_CONFIG_USER_BIT		0x100
 #endif /* __NO_OLD_CONFIG */
-
+
 /*
  * Structure used to specify how to handle argv options.
  */
@@ -444,7 +446,7 @@ typedef struct {
 #define TK_ARGV_NO_LEFTOVERS		0x2
 #define TK_ARGV_NO_ABBREV		0x4
 #define TK_ARGV_DONT_SKIP_FIRST_ARG	0x8
-
+
 /*
  * Enumerated type for describing actions to be taken in response to a
  * restrictProc established by Tk_RestrictEvents.
@@ -502,7 +504,7 @@ typedef enum {
     TK_ANCHOR_S, TK_ANCHOR_SW, TK_ANCHOR_W, TK_ANCHOR_NW,
     TK_ANCHOR_CENTER
 } Tk_Anchor;
-
+
 /*
  * Enumerated type for describing a style of justification:
  */
@@ -546,7 +548,7 @@ typedef struct Tk_FontMetrics {
 
 #define TK_IGNORE_TABS		8
 #define TK_IGNORE_NEWLINES	16
-
+
 /*
  * Widget class procedures used to implement platform specific widget
  * behavior.
@@ -590,7 +592,7 @@ typedef struct Tk_ClassProcs {
 #define Tk_GetClassProc(procs, which) \
     (((procs) == NULL) ? NULL : \
     (((procs)->size <= Tk_Offset(Tk_ClassProcs, which)) ? NULL:(procs)->which))
-
+
 /*
  * Each geometry manager (the packer, the placer, etc.) is represented by a
  * structure of the following form, which indicates procedures to invoke in
@@ -624,13 +626,13 @@ typedef struct Tk_GeomMgr {
 #define TK_SCROLL_PAGES		2
 #define TK_SCROLL_UNITS		3
 #define TK_SCROLL_ERROR		4
-
+
 /*
- *---------------------------------------------------------------------------
+ *----------------------------------------------------------------------
  *
  * Extensions to the X event set
  *
- *---------------------------------------------------------------------------
+ *----------------------------------------------------------------------
  */
 
 #define VirtualEvent	    (MappingNotify + 1)
@@ -689,12 +691,12 @@ typedef XActivateDeactivateEvent XActivateEvent;
 typedef XActivateDeactivateEvent XDeactivateEvent;
 
 /*
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  *
  * Macros for querying Tk_Window structures. See the manual entries for
  * documentation.
  *
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  */
 
 #define Tk_Display(tkwin)	(((Tk_FakeWin *) (tkwin))->display)
@@ -891,11 +893,11 @@ typedef struct Tk_FakeWin {
 #define TK_WM_MANAGEABLE	0x80000
 
 /*
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  *
  * Procedure prototypes and structures used for defining new canvas items:
  *
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  */
 
 typedef enum {
@@ -1132,7 +1134,7 @@ typedef struct Tk_CanvasTextInfo {
 				 * should be displayed in focusItemPtr.
 				 * Read-only to items.*/
 } Tk_CanvasTextInfo;
-
+
 /*
  * Structures used for Dashing and Outline.
  */
@@ -1188,11 +1190,11 @@ typedef struct Tk_Outline {
 } Tk_Outline;
 
 /*
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  *
  * Procedure prototypes and structures used for managing images:
  *
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  */
 
 typedef struct Tk_ImageType Tk_ImageType;
@@ -1255,13 +1257,13 @@ struct Tk_ImageType {
 				 * manager. */
     char *reserved;		/* reserved for future expansion */
 };
-
+
 /*
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  *
  * Additional definitions used to manage images of type "photo".
  *
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  */
 
 /*
@@ -1371,18 +1373,13 @@ struct Tk_PhotoImageFormat {
 				 * currently known. Filled in by Tk, not by
 				 * image format handler. */
 };
-
-#ifdef USE_OLD_IMAGE
-#define Tk_CreateImageType Tk_CreateOldImageType
-#define Tk_CreatePhotoImageFormat Tk_CreateOldPhotoImageFormat
-#endif
 
 /*
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  *
  * Procedure prototypes and structures used for managing styles:
  *
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  */
 
 /*
@@ -1446,13 +1443,13 @@ typedef struct Tk_ElementSpec {
 #define TK_ELEMENT_STATE_PRESSED        1<<3
 
 /*
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  *
  * The definitions below provide backward compatibility for functions and
  * types related to event handling that used to be in Tk but have moved to
  * Tcl.
  *
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  */
 
 #define TK_READABLE		TCL_READABLE
@@ -1499,21 +1496,18 @@ EXTERN const char *	Tk_PkgInitStubsCheck _ANSI_ARGS_((Tcl_Interp *interp,
 			    const char *version, int exact));
 
 #ifndef USE_TK_STUBS
-
 #define Tk_InitStubs(interp, version, exact) \
     Tk_PkgInitStubsCheck(interp, version, exact)
-
-#endif
+#endif /* USE_TK_STUBS */
 
 #define Tk_InitImageArgs(interp, argc, argv) /**/
-
 
 /*
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  *
  * Additional procedure types defined by Tk.
  *
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  */
 
 typedef int (Tk_ErrorProc) _ANSI_ARGS_((ClientData clientData,
@@ -1531,18 +1525,27 @@ typedef Tk_RestrictAction (Tk_RestrictProc) _ANSI_ARGS_((
 	ClientData clientData, XEvent *eventPtr));
 typedef int (Tk_SelectionProc) _ANSI_ARGS_((ClientData clientData,
 	int offset, char *buffer, int maxBytes));
-
+
 /*
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  *
- * Platform independant exported procedures and variables.
+ * Platform independent exported procedures and variables.
  *
- *--------------------------------------------------------------
+ *----------------------------------------------------------------------
  */
 
 #include "tkDecls.h"
+
+#ifdef USE_OLD_IMAGE
+#undef Tk_CreateImageType
+#define Tk_CreateImageType		Tk_CreateOldImageType
+#undef Tk_CreatePhotoImageFormat
+#define Tk_CreatePhotoImageFormat	Tk_CreateOldPhotoImageFormat
+#endif /* USE_OLD_IMAGE */
 
 /*
+ *----------------------------------------------------------------------
+ *
  * Allow users to say that they don't want to alter their source to add extra
  * arguments to Tk_PhotoPutBlock() et al; DO NOT DEFINE THIS WHEN BUILDING TK.
  *
@@ -1582,11 +1585,7 @@ typedef int (Tk_SelectionProc) _ANSI_ARGS_((ClientData clientData,
 #   endif
 #   define Tk_PhotoSetSize		Tk_PhotoSetSize_Panic
 #endif /* USE_PANIC_ON_PHOTO_ALLOC_FAILURE */
-
-/*
- * Tcl commands exported by Tk:
- */
-
+
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
 
@@ -1595,9 +1594,6 @@ typedef int (Tk_SelectionProc) _ANSI_ARGS_((ClientData clientData,
 /*
  * end block for C++
  */
-
-/* quell shadow warnings */
-#undef index
 
 #ifdef __cplusplus
 }

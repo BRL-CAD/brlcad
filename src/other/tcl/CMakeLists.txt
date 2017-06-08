@@ -317,10 +317,6 @@ IF(NOT HAVE_GETCWD)
     ADD_TCL_CFLAG(USEGETWD)
   ENDIF(NOT HAVE_GETWD)
 ENDIF(NOT HAVE_GETCWD)
-TCL_CHECK_FUNCTION_EXISTS(hypot HAVE_HYPOT)
-IF(NOT HAVE_HYPOT)
-  SET(COMPAT_SRCS ${COMPAT_SRCS} compat/hypot.c)
-ENDIF()
 TCL_CHECK_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
 IF(NOT HAVE_MKSTEMP)
   SET(COMPAT_SRCS ${COMPAT_SRCS} compat/mkstemp.c)
@@ -875,8 +871,6 @@ SET(TCL_STUB_SRCS
   )
 
 SET(TCL_TOMMATH_SRCS
-  libtommath/bncore.c
-  libtommath/bn_reverse.c
   libtommath/bn_fast_s_mp_mul_digs.c
   libtommath/bn_fast_s_mp_sqr.c
   libtommath/bn_mp_add.c
@@ -888,13 +882,14 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_cmp.c
   libtommath/bn_mp_cmp_d.c
   libtommath/bn_mp_cmp_mag.c
+  libtommath/bn_mp_cnt_lsb.c
   libtommath/bn_mp_copy.c
   libtommath/bn_mp_count_bits.c
   libtommath/bn_mp_div.c
-  libtommath/bn_mp_div_d.c
   libtommath/bn_mp_div_2.c
   libtommath/bn_mp_div_2d.c
   libtommath/bn_mp_div_3.c
+  libtommath/bn_mp_div_d.c
   libtommath/bn_mp_exch.c
   libtommath/bn_mp_expt_d.c
   libtommath/bn_mp_grow.c
@@ -902,6 +897,7 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_init_copy.c
   libtommath/bn_mp_init_multi.c
   libtommath/bn_mp_init_set.c
+  libtommath/bn_mp_init_set_int.c
   libtommath/bn_mp_init_size.c
   libtommath/bn_mp_karatsuba_mul.c
   libtommath/bn_mp_karatsuba_sqr.c
@@ -919,6 +915,7 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_read_radix.c
   libtommath/bn_mp_rshd.c
   libtommath/bn_mp_set.c
+  libtommath/bn_mp_set_int.c
   libtommath/bn_mp_shrink.c
   libtommath/bn_mp_sqr.c
   libtommath/bn_mp_sqrt.c
@@ -932,10 +929,12 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_unsigned_bin_size.c
   libtommath/bn_mp_xor.c
   libtommath/bn_mp_zero.c
+  libtommath/bn_reverse.c
   libtommath/bn_s_mp_add.c
   libtommath/bn_s_mp_mul_digs.c
   libtommath/bn_s_mp_sqr.c
   libtommath/bn_s_mp_sub.c
+  libtommath/bncore.c
   )
 
 SET(TCL_OSX_SRCS

@@ -16,8 +16,6 @@
  * Author: Paul Mackerras (paulus@cs.anu.edu.au),
  *	   Department of Computer Science,
  *	   Australian National University.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -25,6 +23,8 @@
 
 #ifdef __WIN32__
 #include "tkWinInt.h"
+#elif defined(__CYGWIN__)
+#include "tkUnixInt.h"
 #endif
 
 /*
@@ -276,7 +276,7 @@ struct SubcommandOptions {
  * of the OPT_* constants above.
  */
 
-static char *optionNames[] = {
+static const char *const optionNames[] = {
     "-background",
     "-compositingrule",
     "-format",
@@ -1162,7 +1162,7 @@ ImgPhotoCmd(
 		    }
 		}
 
-		if (!XParseColor(Tk_Display(tkwin), Tk_Colormap(tkwin),
+		if (!TkParseColor(Tk_Display(tkwin), Tk_Colormap(tkwin),
 			colorString, &color)) {
 		    Tcl_AppendResult(interp, "can't parse color \"",
 			    colorString, "\"", NULL);
@@ -1632,7 +1632,8 @@ ParseSubcommandOptions(
 {
     int index, c, bit, currentBit, length;
     int values[4], numValues, maxValues, argIndex;
-    char *option, **listPtr;
+    char *option;
+    const char *const *listPtr;
 
     for (index = *optIndexPtr; index < objc; *optIndexPtr = ++index) {
 	/*
@@ -2453,7 +2454,11 @@ ImgPhotoGet(
     }
     XFree((char *) visInfoPtr);
 
-    sprintf(buf, ((mono) ? "%d": "%d/%d/%d"), nRed, nGreen, nBlue);
+    if (mono) {
+	sprintf(buf, "%d", nRed);
+    } else {
+	sprintf(buf, "%d/%d/%d", nRed, nGreen, nBlue);
+    }
     instancePtr->defaultPalette = Tk_GetUid(buf);
 
     /*
@@ -2793,7 +2798,8 @@ ImgPhotoDisplay(
 		(unsigned int)width, (unsigned int)height, AllPlanes, ZPixmap);
 	if (bgImg == NULL) {
 	    Tk_DeleteErrorHandler(handler);
-	    return;
+	    /* We failed to get the image so draw without blending alpha. It's the best we can do */
+	    goto fallBack;
 	}
 
 	ImgPhotoBlendComplexAlpha(bgImg, instancePtr, imageX, imageY, width,
@@ -2816,6 +2822,7 @@ ImgPhotoDisplay(
 	 * origin appropriately, and use it when drawing the image.
 	 */
 
+    fallBack:
 	TkSetRegion(display, instancePtr->gc,
 		instancePtr->masterPtr->validRegion);
 	XSetClipOrigin(display, instancePtr->gc, drawableX - imageX,
@@ -4389,7 +4396,7 @@ Tk_PhotoPutBlock(
 
     /*
      * Copy the data into our local 32-bit/pixel array. If we can do it with a
-     * single memcpy, we do.
+     * single memmove, we do.
      */
 
     destLinePtr = masterPtr->pix32 + (y * masterPtr->width + x) * 4;
@@ -4397,7 +4404,7 @@ Tk_PhotoPutBlock(
 
     /*
      * Test to see if we can do the whole write in a single copy. This test is
-     * probably too restrictive. We should also be able to do a memcpy if
+     * probably too restrictive. We should also be able to do a memmove if
      * pixelSize == 3 and alphaOffset == 0. Maybe other cases too.
      */
 
@@ -4407,7 +4414,7 @@ Tk_PhotoPutBlock(
 	    && ((height == 1) || ((x == 0) && (width == masterPtr->width)
 		&& (blockPtr->pitch == pitch)))
 	    && (compRule == TK_PHOTO_COMPOSITE_SET)) {
-	memcpy(destLinePtr, blockPtr->pixelPtr + blockPtr->offset[0],
+	memmove(destLinePtr, blockPtr->pixelPtr + blockPtr->offset[0],
 		(size_t) (height * width * 4));
 
 	/*
@@ -5646,10 +5653,7 @@ ImgGetPhoto(
 	}
     }
     if (!alphaOffset) {
-	blockPtr->pixelPtr--;
-	blockPtr->offset[0]++;
-	blockPtr->offset[1]++;
-	blockPtr->offset[2]++;
+	blockPtr->offset[3]= -1; /* Tell caller alpha need not be read */
     }
     greenOffset = blockPtr->offset[1] - blockPtr->offset[0];
     blueOffset = blockPtr->offset[2] - blockPtr->offset[0];
@@ -5763,9 +5767,11 @@ ImgGetPhoto(
 	if (newPixelSize>2) {
 	    blockPtr->offset[1]= 1;
 	    blockPtr->offset[2]= 2;
+	    blockPtr->offset[3]= 3;
 	} else {
 	    blockPtr->offset[1]= 0;
 	    blockPtr->offset[2]= 0;
+	    blockPtr->offset[3]= 1;
 	}
 	return data;
     }

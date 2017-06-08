@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "default.h"
@@ -213,7 +211,7 @@ enum state {
     STATE_DISABLED, STATE_NORMAL
 };
 
-static char *stateStrings[] = {
+static const char *const stateStrings[] = {
     "disabled", "normal", NULL
 };
 
@@ -221,7 +219,7 @@ enum activeStyle {
     ACTIVE_STYLE_DOTBOX, ACTIVE_STYLE_NONE, ACTIVE_STYLE_UNDERLINE
 };
 
-static char *activeStyleStrings[] = {
+static const char *const activeStyleStrings[] = {
     "dotbox", "none", "underline", NULL
 };
 
@@ -280,7 +278,7 @@ static const Tk_OptionSpec optionSpecs[] = {
 	 Tk_Offset(Listbox, selBorderWidth), 0, 0, 0},
     {TK_OPTION_COLOR, "-selectforeground", "selectForeground", "Background",
 	 DEF_LISTBOX_SELECT_FG_COLOR, -1, Tk_Offset(Listbox, selFgColorPtr),
-	 TK_CONFIG_NULL_OK, (ClientData) DEF_LISTBOX_SELECT_FG_MONO, 0},
+	 TK_OPTION_NULL_OK, (ClientData) DEF_LISTBOX_SELECT_FG_MONO, 0},
     {TK_OPTION_STRING, "-selectmode", "selectMode", "SelectMode",
 	 DEF_LISTBOX_SELECT_MODE, -1, Tk_Offset(Listbox, selectMode),
 	 TK_OPTION_NULL_OK, 0, 0},
@@ -381,7 +379,7 @@ enum indices {
 static void		ChangeListboxOffset(Listbox *listPtr, int offset);
 static void		ChangeListboxView(Listbox *listPtr, int index);
 static int		ConfigureListbox(Tcl_Interp *interp, Listbox *listPtr,
-			    int objc, Tcl_Obj *const objv[], int flags);
+			    int objc, Tcl_Obj *const objv[]);
 static int		ConfigureListboxItem(Tcl_Interp *interp,
 			    Listbox *listPtr, ItemAttr *attrs, int objc,
 			    Tcl_Obj *const objv[], int index);
@@ -403,6 +401,7 @@ static void		ListboxEventProc(ClientData clientData,
 static int		ListboxFetchSelection(ClientData clientData,
 			    int offset, char *buffer, int maxBytes);
 static void		ListboxLostSelection(ClientData clientData);
+static void		GenerateListboxSelectEvent(Listbox *listPtr);
 static void		EventuallyRedrawRange(Listbox *listPtr,
 			    int first, int last);
 static void		ListboxScanTo(Listbox *listPtr, int x, int y);
@@ -565,7 +564,7 @@ Tk_ListboxObjCmd(
 	return TCL_ERROR;
     }
 
-    if (ConfigureListbox(interp, listPtr, objc-2, objv+2, 0) != TCL_OK) {
+    if (ConfigureListbox(interp, listPtr, objc-2, objv+2) != TCL_OK) {
 	Tk_DestroyWindow(listPtr->tkwin);
 	return TCL_ERROR;
     }
@@ -701,7 +700,7 @@ ListboxWidgetObjCmd(
 		result = TCL_OK;
 	    }
 	} else {
-	    result = ConfigureListbox(interp, listPtr, objc-2, objv+2, 0);
+	    result = ConfigureListbox(interp, listPtr, objc-2, objv+2);
 	}
 	break;
     }
@@ -1545,8 +1544,7 @@ ConfigureListbox(
     register Listbox *listPtr,	/* Information about widget; may or may not
 				 * already have values for some fields. */
     int objc,			/* Number of valid entries in argv. */
-    Tcl_Obj *const objv[],	/* Arguments. */
-    int flags)			/* Flags to pass to Tk_ConfigureWidget. */
+    Tcl_Obj *const objv[])	/* Arguments. */
 {
     Tk_SavedOptions savedOptions;
     Tcl_Obj *oldListObj = NULL;
@@ -1632,9 +1630,6 @@ ConfigureListbox(
 		if (Tcl_SetVar2Ex(interp, listPtr->listVarName, NULL,
 			listVarObj, TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG)
 			== NULL) {
-		    if (oldListObj == NULL) {
-			Tcl_DecrRefCount(listVarObj);
-		    }
 		    continue;
 		}
 	    }
@@ -3182,7 +3177,41 @@ ListboxLostSelection(
 
     if ((listPtr->exportSelection) && (listPtr->nElements > 0)) {
 	ListboxSelect(listPtr, 0, listPtr->nElements-1, 0);
+        GenerateListboxSelectEvent(listPtr);
     }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * GenerateListboxSelectEvent --
+ *
+ *	Send an event that the listbox selection was updated. This is
+ *	equivalent to event generate $listboxWidget <<ListboxSelect>>
+ *
+ * Results:
+ *	None
+ *
+ * Side effects:
+ *	Any side effect possible, depending on bindings to this event.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+GenerateListboxSelectEvent(
+    Listbox *listPtr)		/* Information about widget. */
+{
+    union {XEvent general; XVirtualEvent virtual;} event;
+
+    memset(&event, 0, sizeof(event));
+    event.general.xany.type = VirtualEvent;
+    event.general.xany.serial = NextRequest(Tk_Display(listPtr->tkwin));
+    event.general.xany.send_event = False;
+    event.general.xany.window = Tk_WindowId(listPtr->tkwin);
+    event.general.xany.display = Tk_Display(listPtr->tkwin);
+    event.virtual.name = Tk_GetUid("ListboxSelect");
+    Tk_HandleEvent(&event.general);
 }
 
 /*

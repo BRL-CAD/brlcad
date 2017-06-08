@@ -4,8 +4,6 @@
 # Copyright (c) 1995-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -756,8 +754,13 @@ test menu-3.41 {MenuWidgetCmd procedure, "index" option} {
     catch {destroy .m1}
     menu .m1
     .m1 add command -label "test"
-    list [catch {.m1 index "test"} msg] $msg [destroy .m1]
-} {0 1 {}}
+    .m1 add command -label "3"
+    .m1 add command -label "another label"
+    .m1 add command -label "end"
+    .m1 add command -label "3a"
+    .m1 add command -label "final entry"
+    list [.m1 index "test"] [.m1 index "3"] [.m1 index "3a"] [.m1 index "end"] [destroy .m1]
+} {1 3 5 6 {}}
 test menu-3.42 {MenuWidgetCmd procedure, "insert" option} {
     catch {destroy .m1}
     menu .m1
@@ -2562,6 +2565,15 @@ test menu-36.1 {menu -underline string overruns Bug 1599877} {} {
     update
     tk::TraverseToMenu . "e"
 } {}
+
+test menu-37.1 {menubar menues cannot be posted - bug 2160206} {} {
+    # On Linux the following used to panic
+    # It now returns an error (on all platforms)
+    catch {destroy .m}
+    menu .m -type menubar
+    list [catch ".m post 1 1" msg] $msg
+} {1 {a menubar menu cannot be posted}}
+
 
 # cleanup
 deleteWindows

@@ -5,8 +5,6 @@
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -780,6 +778,14 @@ test entry-6.11 {EntryComputeGeometry procedure} win {
     [expr 8+5*[font measure {helvetica 12} .]] \
     [expr 8+5*[font measure {helvetica 12} X]] \
     [expr 8+[font measure {helvetica 12} 12345]]]
+test entry-6.12 {EntryComputeGeometry procedure} {fonts} {
+    catch {destroy .e}
+    entry .e -font $fixed -bd 2 -relief raised -width 20
+    pack .e
+    .e insert end "012\t456\t"
+    update
+    list [.e index @81] [.e index @82] [.e index @116] [.e index @117]
+} {6 7 7 8}
 
 catch {destroy .e}
 entry .e -width 10 -font $fixed -textvariable contents -xscrollcommand scroll
@@ -1615,12 +1621,31 @@ test entry-22.1 {lost namespaced textvar} {
     namespace eval test { variable foo {a b} }
     entry .e -textvariable ::test::foo
     namespace delete test
-    .e insert end "more stuff"
-    .e delete 5 end
-    catch {set ::test::foo} result
-    list [.e get] [.e cget -textvar] $result
+    catch {.e insert end "more stuff"} result1
+    catch {.e delete 5 end} result2
+    catch {set ::test::foo} result3
+    list [.e get] [.e cget -textvar] $result1 $result2 $result3
 } [list "a bmo" ::test::foo \
+	{can't set "::test::foo": parent namespace doesn't exist} \
+	{can't set "::test::foo": parent namespace doesn't exist} \
 	{can't read "::test::foo": no such variable}]
+
+test entry-23.1 {error in trace proc attached to the textvariable} {
+    destroy .e
+    trace variable myvar w traceit
+    proc traceit args {error "Intentional error here!"}
+    entry .e -textvariable myvar
+    catch {.e insert end mystring} result1
+    catch {.e delete 0} result2
+    list $result1 $result2
+} [list {can't set "myvar": Intentional error here!} \
+    {can't set "myvar": Intentional error here!}]
+
+test entry-24.1 {textvariable lives in a non-existing namespace} {
+    destroy .e
+    catch {entry .e -textvariable thisnsdoesntexist::myvar} result1
+    set result1
+} {can't trace "thisnsdoesntexist::myvar": parent namespace doesn't exist}
 
 destroy .e
 

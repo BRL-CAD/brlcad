@@ -1,6 +1,4 @@
 #
-# $Id$
-#
 # Bindings for TNotebook widget
 #
 

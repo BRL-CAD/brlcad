@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Tag tables.  3/4-baked, work in progress.
  *
  * Copyright (C) 2005, Joe English.  Freely redistributable.

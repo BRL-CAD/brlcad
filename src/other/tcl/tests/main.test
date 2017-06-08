@@ -1,6 +1,4 @@
 # This file contains a collection of tests for generic/tclMain.c.
-#
-# RCS: @(#) $Id$
 
 if {[catch {package require tcltest 2.0.2}]} {
     puts stderr "Skipping tests in [info script]. tcltest 2.0.2 required."
@@ -139,7 +137,7 @@ namespace eval ::tcl::test::main {
 	set script [makeFile {} script]
 	file delete $script
 	set f [open $script w]
-	fconfigure $f -encoding utf-8
+	chan configure $f -encoding utf-8
 	puts $f {puts [list $argv0 $argv $tcl_interactive]}
 	puts -nonewline $f {puts [string equal \u20ac }
 	puts $f "\u20ac]"
@@ -160,7 +158,7 @@ namespace eval ::tcl::test::main {
 	set script [makeFile {} script]
 	file delete $script
 	set f [open $script w]
-	fconfigure $f -encoding utf-8
+	chan configure $f -encoding utf-8
 	puts $f {puts [list $argv0 $argv $tcl_interactive]}
 	puts -nonewline $f {puts [string equal \u20ac }
 	puts $f "\u20ac]"
@@ -181,7 +179,7 @@ namespace eval ::tcl::test::main {
 	set script [makeFile {} script]
 	file delete $script
 	set f [open $script w]
-	fconfigure $f -encoding utf-8
+	chan configure $f -encoding utf-8
 	puts $f {puts [list $argv0 $argv $tcl_interactive]}
 	puts -nonewline $f {puts [string equal \u20ac }
 	puts $f "\u20ac]"
@@ -602,7 +600,7 @@ namespace eval ::tcl::test::main {
 	catch {set f [open "|[list [interpreter]]" w+]}
     } -body {
 	type $f {
-	    fconfigure stdin -blocking 0
+	    chan configure stdin -blocking 0
 	    puts SUCCESS
 	}
 	list [catch {gets $f} line] $line
@@ -616,19 +614,19 @@ namespace eval ::tcl::test::main {
 	exec
     } -setup {
 	catch {set f [open "|[list [interpreter]]" w+]}
-	catch {fconfigure $f -blocking 0}
+	catch {chan configure $f -blocking 0}
     } -body {
-	type $f "fconfigure stdin -eofchar \\032
+	type $f "chan configure stdin -eofchar \\032
 	    if 1 \{\n\032"
 	variable wait
-	fileevent $f readable \
+	chan event $f readable \
 		[list set [namespace which -variable wait] "child exit"]
 	set id [after 2000 [list set [namespace which -variable wait] timeout]]
 	vwait [namespace which -variable wait]
 	after cancel $id
 	set wait
     } -cleanup {
-	if {[string equal timeout $wait] && [testConstraint unix]} {
+	if {$wait eq "timeout" && [testConstraint unix]} {
 	    exec kill [pid $f]
 	}
 	close $f
@@ -641,17 +639,17 @@ namespace eval ::tcl::test::main {
     } -setup {
 	set cmd {makeFile "if 1 \{" script}
 	catch {set f [open "|[list [interpreter]] < [list [eval $cmd]]" r]}
-	catch {fconfigure $f -blocking 0}
+	catch {chan configure $f -blocking 0}
     } -body {
 	variable wait
-	fileevent $f readable \
+	chan event $f readable \
 		[list set [namespace which -variable wait] "child exit"]
 	set id [after 2000 [list set [namespace which -variable wait] timeout]]
 	vwait [namespace which -variable wait]
 	after cancel $id
 	set wait
     } -cleanup {
-	if {[string equal timeout $wait] && [testConstraint unix]} {
+	if {$wait eq "timeout" && [testConstraint unix]} {
 	    exec kill [pid $f]
 	}
 	close $f
@@ -758,7 +756,7 @@ namespace eval ::tcl::test::main {
 	exec Tcltest
     } -setup {
 	catch {set f [open "|[list [interpreter]]" w+]}
-	catch {fconfigure $f -blocking 0}
+	catch {chan configure $f -blocking 0}
     } -body {
 	type $f "testsetmainloop
 	         after 2000 testexitmainloop
@@ -993,7 +991,7 @@ namespace eval ::tcl::test::main {
     } -body {
 	exec [interpreter] << {
 		testsetmainloop
-		fconfigure stdin -blocking 0
+		chan configure stdin -blocking 0
 		testexitmainloop
 	} >& result
 	set f [open result]

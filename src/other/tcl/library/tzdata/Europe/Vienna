@@ -1,8 +1,8 @@
 # created by tools/tclZIC.tcl - do not edit
 
 set TZData(:Europe/Vienna) {
-    {-9223372036854775808 3920 0 LMT}
-    {-2422055120 3600 0 CET}
+    {-9223372036854775808 3921 0 LMT}
+    {-2422055121 3600 0 CET}
     {-1693706400 7200 1 CEST}
     {-1680483600 3600 0 CET}
     {-1663455600 7200 1 CEST}

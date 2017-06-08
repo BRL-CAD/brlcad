@@ -1,7 +1,3 @@
-#
-# $Id$
-#
-
 package require Tk 8.5
 package require tcltest ; namespace import -force tcltest::*
 loadTestedCommands
@@ -471,6 +467,27 @@ test notebook-1817596-3 "insert/configure" -body {
     list [.nb tabs] [.nb tab 0 -text] [.nb tab 1 -text] [.nb tab 2 -text]
 
 } -result [list [list .nb.l2 .nb.l0 .nb.l1] L2 L0 L1] -cleanup { destroy .nb }
+
+test notebook-readd-1 "add same widget twice" -body {
+    pack [ttk::notebook .nb]
+    .nb add [ttk::button .nb.b1] -text "Button"
+    .nb add .nb.b1
+    .nb tabs
+} -result [list .nb.b1] -cleanup { destroy .nb }
+
+test notebook-readd-2 "add same widget twice, with options" -body {
+    pack [ttk::notebook .nb]
+    .nb add [ttk::button .nb.b1] -text "Tab label"
+    .nb add .nb.b1 -text "Changed tab label"
+    .nb tabs
+} -result [list .nb.b1] -cleanup { destroy .nb }
+
+test notebook-readd-3 "insert same widget twice, with options" -body {
+    pack [ttk::notebook .nb]
+    .nb insert end [ttk::button .nb.b1] -text "Tab label"
+    .nb insert end .nb.b1 -text "Changed tab label"
+    .nb tabs
+} -result [list .nb.b1] -cleanup { destroy .nb }
 
 
 # See #1343984

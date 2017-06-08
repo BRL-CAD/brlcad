@@ -11,33 +11,12 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
 #ifdef HAVE_COREFOUNDATION	/* Traditional unix select-based notifier is
 				 * in tclUnixNotfy.c */
-/* Ew.  Incompatibility between newer gcc versions
- * in Macports and assumptions made by Apple headers.
- * http://gcc.gnu.org/bugzilla/show_bug.cgi?id=44981
- * Fake it by pretending to be gcc 4.0 when __APPLE_CC__
- * is less than or equal to 5600 - we'll see what that 
- * breaks, but it at least builds.
- */
-# if defined(__APPLE_CC__)
-#   if !(__APPLE_CC__ > 5600)
-#     define GNUC_MINOR_TMP __GNUC_MINOR__
-#     undef __GNUC_MINOR__
-#     define __GNUC_MINOR__ 0
-#     include <CoreFoundation/CoreFoundation.h>
-#     undef __GNUC_MINOR__
-#     define __GNUC_MINOR__ GNUC_MINOR_TMP
-#   else
-#     include <CoreFoundation/CoreFoundation.h>
-#   endif
-# endif
-
+#include <CoreFoundation/CoreFoundation.h>
 #include <pthread.h>
 
 /* #define TCL_MAC_DEBUG_NOTIFIER 1 */
@@ -1398,7 +1377,8 @@ UpdateWaitingListAndServiceEvents(
 	if (tsdPtr->runLoopTimer && !tsdPtr->runLoopServicingEvents &&
 		(tsdPtr->runLoopNestingLevel > 1 || !tsdPtr->runLoopRunning)) {
 	    tsdPtr->runLoopServicingEvents = 1;
-	    while (Tcl_ServiceAll() && tsdPtr->waitTime == 0) {}
+           /* This call seems to simply force event processing through and prevents hangups that have long been observed with Tk-Cocoa.  */
+	    Tcl_ServiceAll();
 	    tsdPtr->runLoopServicingEvents = 0;
 	}
 	break;
@@ -1532,7 +1512,7 @@ Tcl_Sleep(
 		Tcl_Panic("Tcl_Sleep: CFRunLoop finished");
 		break;
 	    case kCFRunLoopRunStopped:
-		TclMacOSXNotifierDbgMsg("CFRunLoop stopped", NULL);
+		TclMacOSXNotifierDbgMsg("CFRunLoop stopped");
 		waitTime = waitEnd - CFAbsoluteTimeGetCurrent();
 		break;
 	    case kCFRunLoopRunTimedOut:

@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 /*
@@ -50,7 +48,7 @@
  */
 
 typedef struct TkOption {
-    CONST Tk_OptionSpec *specPtr;
+    const Tk_OptionSpec *specPtr;
 				/* The original spec from the template passed
 				 * to Tk_CreateOptionTable.*/
     Tk_Uid dbNameUID;	 	/* The Uid form of the option database
@@ -123,7 +121,7 @@ static Tcl_Obj *	GetConfigList(char *recordPtr,
 			    Option *optionPtr, Tk_Window tkwin);
 static Tcl_Obj *	GetObjectForOption(char *recordPtr,
 			    Option *optionPtr, Tk_Window tkwin);
-static Option *		GetOption(CONST char *name, OptionTable *tablePtr);
+static Option *		GetOption(const char *name, OptionTable *tablePtr);
 static Option *		GetOptionFromObj(Tcl_Interp *interp,
 			    Tcl_Obj *objPtr, OptionTable *tablePtr);
 static int		ObjectIsEmpty(Tcl_Obj *objPtr);
@@ -166,7 +164,7 @@ Tk_OptionTable
 Tk_CreateOptionTable(
     Tcl_Interp *interp,		/* Interpreter associated with the application
 				 * in which this table will be used. */
-    CONST Tk_OptionSpec *templatePtr)
+    const Tk_OptionSpec *templatePtr)
 				/* Static information about the configuration
 				 * options. */
 {
@@ -174,7 +172,7 @@ Tk_CreateOptionTable(
     Tcl_HashEntry *hashEntryPtr;
     int newEntry;
     OptionTable *tablePtr;
-    CONST Tk_OptionSpec *specPtr, *specPtr2;
+    const Tk_OptionSpec *specPtr, *specPtr2;
     Option *optionPtr;
     int numOptions, i;
 
@@ -634,7 +632,7 @@ DoObjConfig(
     Tk_SavedOption internal;	/* Used to save the old internal
 				 * representation of the value if
 				 * savedOptionPtr is NULL. */
-    CONST Tk_OptionSpec *specPtr;
+    const Tk_OptionSpec *specPtr;
     int nullOK;
 
     /*
@@ -735,7 +733,7 @@ DoObjConfig(
 	int newValue;
 
 	if (Tcl_GetIndexFromObj(interp, valuePtr,
-		(CONST char **) optionPtr->specPtr->clientData,
+		(const char **) optionPtr->specPtr->clientData,
 		optionPtr->specPtr->optionName+1, 0, &newValue) != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -1030,13 +1028,13 @@ ObjectIsEmpty(
 
 static Option *
 GetOption(
-    CONST char *name,		/* String balue to be looked up in the option
+    const char *name,		/* String balue to be looked up in the option
 				 * table. */
     OptionTable *tablePtr)	/* Table in which to look up name. */
 {
     Option *bestPtr, *optionPtr;
     OptionTable *tablePtr2;
-    CONST char *p1, *p2;
+    const char *p1, *p2;
     int count;
 
     /*
@@ -1184,9 +1182,9 @@ GetOptionFromObj(
  *----------------------------------------------------------------------
  */
 
-CONST Tk_OptionSpec *
+const Tk_OptionSpec *
 TkGetOptionSpec(
-    CONST char *name,		/* String value to be looked up. */
+    const char *name,		/* String value to be looked up. */
     Tk_OptionTable optionTable)	/* Table in which to look up name. */
 {
     Option *optionPtr;
@@ -1262,7 +1260,7 @@ Tk_SetOptions(
     char *recordPtr,	    	/* The record to configure. */
     Tk_OptionTable optionTable,	/* Describes valid options. */
     int objc,			/* The number of elements in objv. */
-    Tcl_Obj *CONST objv[],	/* Contains one or more name-value pairs. */
+    Tcl_Obj *const objv[],	/* Contains one or more name-value pairs. */
     Tk_Window tkwin,		/* Window associated with the thing being
 				 * configured; needed for some options (such
 				 * as colors). */
@@ -1385,7 +1383,7 @@ Tk_RestoreSavedOptions(
 				 * record. */
     char *internalPtr;		/* Points to internal value of option in
 				 * record. */
-    CONST Tk_OptionSpec *specPtr;
+    const Tk_OptionSpec *specPtr;
 
     /*
      * Be sure to restore the options in the opposite order they were set.
@@ -1575,7 +1573,7 @@ Tk_FreeConfigOptions(
     int count;
     Tcl_Obj **oldPtrPtr, *oldPtr;
     char *oldInternalPtr;
-    CONST Tk_OptionSpec *specPtr;
+    const Tk_OptionSpec *specPtr;
 
     for (tablePtr = (OptionTable *) optionTable; tablePtr != NULL;
 	    tablePtr = tablePtr->nextPtr) {

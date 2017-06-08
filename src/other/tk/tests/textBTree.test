@@ -7,8 +7,6 @@
 # Copyright (c) 1994 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -666,6 +664,16 @@ test btree-14.1 {check tag presence} {
     .t tag add x 141.3
     .t tag names 141.1
 } {x y z}
+test btree-14.2 {TkTextIsElided} {
+    .t delete 1.0 end
+    .t tag config hidden -elide 1
+    .t insert end "Line1\nLine2\nLine3\n"
+    .t tag add hidden 2.0 3.0
+    .t tag add sel 1.2 3.2
+    # next line used to panic because of "Bad tag priority being toggled on"
+    # (see bug [382da038c9])
+    .t index "2.0 - 1 display line linestart"
+} {1.0}
 
 test btree-15.1 {rebalance with empty node} {
     catch {destroy .t}
