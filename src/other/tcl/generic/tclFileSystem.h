@@ -8,53 +8,12 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TCLFILESYSTEM
 #define _TCLFILESYSTEM
 
 #include "tcl.h"
-
-/*
- * struct FilesystemRecord --
- *
- * A filesystem record is used to keep track of each filesystem currently
- * registered with the core, in a linked list. Pointers to these structures
- * are also kept by each "path" Tcl_Obj, and we must retain a refCount on the
- * number of such references.
- */
-
-typedef struct FilesystemRecord {
-    ClientData clientData;	/* Client specific data for the new filesystem
-				 * (can be NULL) */
-    Tcl_Filesystem *fsPtr;	/* Pointer to filesystem dispatch table. */
-    int fileRefCount;		/* How many Tcl_Obj's use this filesystem. */
-    struct FilesystemRecord *nextPtr;
-				/* The next filesystem registered to Tcl, or
-				 * NULL if no more. */
-    struct FilesystemRecord *prevPtr;
-				/* The previous filesystem registered to Tcl,
-				 * or NULL if no more. */
-} FilesystemRecord;
-
-/*
- * This structure holds per-thread private copy of the current directory
- * maintained by the global cwdPathPtr. This structure holds per-thread
- * private copies of some global data. This way we avoid most of the
- * synchronization calls which boosts performance, at cost of having to update
- * this information each time the corresponding epoch counter changes.
- */
-
-typedef struct ThreadSpecificData {
-    int initialized;
-    int cwdPathEpoch;
-    int filesystemEpoch;
-    Tcl_Obj *cwdPathPtr;
-    ClientData cwdClientData;
-    FilesystemRecord *filesystemList;
-} ThreadSpecificData;
 
 /*
  * The internal TclFS API provides routines for handling and manipulating
@@ -64,31 +23,23 @@ typedef struct ThreadSpecificData {
  */
 
 MODULE_SCOPE int	TclFSCwdPointerEquals(Tcl_Obj **pathPtrPtr);
-MODULE_SCOPE int	TclFSMakePathFromNormalized(Tcl_Interp *interp,
-			    Tcl_Obj *pathPtr, ClientData clientData);
 MODULE_SCOPE int	TclFSNormalizeToUniquePath(Tcl_Interp *interp,
-			    Tcl_Obj *pathPtr, int startAt,
-			    ClientData *clientDataPtr);
+			    Tcl_Obj *pathPtr, int startAt);
 MODULE_SCOPE Tcl_Obj *	TclFSMakePathRelative(Tcl_Interp *interp,
 			    Tcl_Obj *pathPtr, Tcl_Obj *cwdPtr);
-MODULE_SCOPE Tcl_Obj *	TclFSInternalToNormalized(
-			    Tcl_Filesystem *fromFilesystem,
-			    ClientData clientData,
-			    FilesystemRecord **fsRecPtrPtr);
 MODULE_SCOPE int	TclFSEnsureEpochOk(Tcl_Obj *pathPtr,
 			    Tcl_Filesystem **fsPtrPtr);
 MODULE_SCOPE void	TclFSSetPathDetails(Tcl_Obj *pathPtr,
-			    FilesystemRecord *fsRecPtr,
-			    ClientData clientData);
+			    Tcl_Filesystem *fsPtr, ClientData clientData);
 MODULE_SCOPE Tcl_Obj *	TclFSNormalizeAbsolutePath(Tcl_Interp *interp,
-			    Tcl_Obj *pathPtr, ClientData *clientDataPtr);
+			    Tcl_Obj *pathPtr);
+MODULE_SCOPE int	TclFSEpoch(void);
 
 /*
  * Private shared variables for use by tclIOUtil.c and tclPathObj.c
  */
 
 MODULE_SCOPE Tcl_Filesystem tclNativeFilesystem;
-MODULE_SCOPE Tcl_ThreadDataKey tclFsDataKey;
 
 /*
  * Private shared functions for use by tclIOUtil.c, tclPathObj.c and

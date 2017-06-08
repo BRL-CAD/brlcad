@@ -65,7 +65,6 @@ static const char usage2[] =
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-/* static int	ncpu = 1; */		/* Number of processors */
 static int	surr_code = 1000;	/* Surroundings code */
 static int	curr_id;		/* Current region ident code */
 static int	id_counter;		/* Ident counter */
@@ -183,7 +182,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	}
     }
     /* Now triangulate the entire model */
-    nmg_triangulate_model( m, &tol );
+    nmg_triangulate_model( m, &RTG.rtg_vlfree, &tol );
 
     /* Need a flag array to insure that no loops are missed */
     flags = (long *)bu_calloc( m->maxindex, sizeof( long ), "g-tankill: flags" );
@@ -463,15 +462,14 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-/*			ncpu = atoi( bu_optarg ); */
 		bu_debug = BU_DEBUG_COREDUMP;	/* to get core dumps */
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
-		NMG_debug = RTG.NMG_debug;
+		sscanf( bu_optarg, "%x", (unsigned int *)&nmg_debug );
+		NMG_debug = nmg_debug;
 		break;
 	    default:
 		printusage(argv[0]);
@@ -595,7 +593,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;	/* restore mode */
+	nmg_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -622,8 +620,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if ( !BU_SETJUMP ) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
 	/* catch */
@@ -635,7 +633,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;/* restore mode */
+	nmg_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();

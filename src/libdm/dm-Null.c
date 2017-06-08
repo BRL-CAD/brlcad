@@ -235,9 +235,10 @@ null_endDList(struct dm_internal *UNUSED(dmp))
 }
 
 
-void
+int
 null_drawDList(unsigned int UNUSED(list))
 {
+    return 0;
 }
 
 
@@ -262,9 +263,10 @@ null_getDisplayImage(struct dm_internal *UNUSED(dmp), unsigned char **UNUSED(ima
 }
 
 
-void
+int
 null_reshape(struct dm_internal *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
 {
+    return 0;
 }
 
 

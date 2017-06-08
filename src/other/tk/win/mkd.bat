@@ -1,5 +1,4 @@
 @echo off
-rem RCS: @(#) $Id$
 
 if exist %1\nul goto end
 
@@ -9,6 +8,5 @@ if errorlevel 1 goto end
 echo Created directory %1
 
 :end
-
 
 

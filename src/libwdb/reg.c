@@ -129,7 +129,7 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
     if (comb->tree) {
 	/* Release storage for non-leaf nodes, steal leaves */
 	actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     } else {
 	actual_count = 0;
@@ -166,7 +166,7 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	    tp->tr_l.tl_mat = (matp_t)NULL;
 	}
     }
-    BU_ASSERT_SIZE_T(node_count, ==, actual_count + (size_t)new_nodes);
+    BU_ASSERT(node_count == actual_count + (size_t)new_nodes);
 
     /* rebuild the tree with GIFT semantics */
     comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);

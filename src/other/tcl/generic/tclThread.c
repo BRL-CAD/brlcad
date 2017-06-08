@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -26,7 +24,7 @@
 typedef struct {
     int num;		/* Number of objects remembered */
     int max;		/* Max size of the array */
-    char **list;	/* List of pointers */
+    void **list;	/* List of pointers */
 } SyncObjRecord;
 
 static SyncObjRecord keyRecord = {0, 0, NULL};
@@ -37,8 +35,8 @@ static SyncObjRecord condRecord = {0, 0, NULL};
  * Prototypes of functions used only in this file.
  */
 
-static void		ForgetSyncObject(char *objPtr, SyncObjRecord *recPtr);
-static void		RememberSyncObject(char *objPtr,
+static void		ForgetSyncObject(void *objPtr, SyncObjRecord *recPtr);
+static void		RememberSyncObject(void *objPtr,
 			    SyncObjRecord *recPtr);
 
 /*
@@ -96,7 +94,7 @@ Tcl_GetThreadData(
 	result = ckalloc((size_t) size);
 	memset(result, 0, (size_t) size);
 	*keyPtr = (Tcl_ThreadDataKey)result;
-	RememberSyncObject((char *) keyPtr, &keyRecord);
+	RememberSyncObject(keyPtr, &keyRecord);
     }
     result = * (void **) keyPtr;
 #endif /* TCL_THREADS */
@@ -155,10 +153,10 @@ TclThreadDataKeyGet(
 
 static void
 RememberSyncObject(
-    char *objPtr,		/* Pointer to sync object */
+    void *objPtr,		/* Pointer to sync object */
     SyncObjRecord *recPtr)	/* Record of sync objects */
 {
-    char **newList;
+    void **newList;
     int i, j;
 
 
@@ -180,7 +178,7 @@ RememberSyncObject(
 
     if (recPtr->num >= recPtr->max) {
 	recPtr->max += 8;
-	newList = (char **) ckalloc(recPtr->max * sizeof(char *));
+	newList = (void **) ckalloc(recPtr->max * sizeof(char *));
 	for (i=0,j=0 ; i<recPtr->num ; i++) {
 	    if (recPtr->list[i] != NULL) {
 		newList[j++] = recPtr->list[i];
@@ -216,7 +214,7 @@ RememberSyncObject(
 
 static void
 ForgetSyncObject(
-    char *objPtr,		/* Pointer to sync object */
+    void *objPtr,		/* Pointer to sync object */
     SyncObjRecord *recPtr)	/* Record of sync objects */
 {
     int i;
@@ -250,7 +248,7 @@ void
 TclRememberMutex(
     Tcl_Mutex *mutexPtr)
 {
-    RememberSyncObject((char *)mutexPtr, &mutexRecord);
+    RememberSyncObject(mutexPtr, &mutexRecord);
 }
 
 /*
@@ -278,7 +276,7 @@ Tcl_MutexFinalize(
     TclpFinalizeMutex(mutexPtr);
 #endif
     TclpMasterLock();
-    ForgetSyncObject((char *) mutexPtr, &mutexRecord);
+    ForgetSyncObject(mutexPtr, &mutexRecord);
     TclpMasterUnlock();
 }
 
@@ -303,7 +301,7 @@ void
 TclRememberCondition(
     Tcl_Condition *condPtr)
 {
-    RememberSyncObject((char *) condPtr, &condRecord);
+    RememberSyncObject(condPtr, &condRecord);
 }
 
 /*
@@ -331,7 +329,7 @@ Tcl_ConditionFinalize(
     TclpFinalizeCondition(condPtr);
 #endif
     TclpMasterLock();
-    ForgetSyncObject((char *) condPtr, &condRecord);
+    ForgetSyncObject(condPtr, &condRecord);
     TclpMasterUnlock();
 }
 
@@ -340,8 +338,9 @@ Tcl_ConditionFinalize(
  *
  * TclFinalizeThreadData --
  *
- *	This function cleans up the thread-local storage. This is called once
- *	for each thread.
+ *	This function cleans up the thread-local storage. Secondary, it cleans
+ *	thread alloc cache.
+ *	This is called once for each thread before thread exits.
  *
  * Results:
  *	None.
@@ -356,6 +355,9 @@ void
 TclFinalizeThreadData(void)
 {
     TclpFinalizeThreadDataThread();
+#if defined(TCL_THREADS) && defined(USE_THREAD_ALLOC)
+    TclFinalizeThreadAllocThread();
+#endif
 }
 
 /*

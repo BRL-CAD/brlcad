@@ -53,7 +53,3 @@ int mp_init_multi(mp_int *mp, ...)
 }
 
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

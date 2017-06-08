@@ -38,7 +38,7 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 
     BU_CK_EXTERNAL(ap);
 
-    BU_ASSERT_LONG(ap->ext_nbytes, >=, 4);
+    BU_ASSERT(ap->ext_nbytes >= 4);
 
     /* First pass -- count number of attributes */
     cp = (const char *)ap->ext_buf;
@@ -65,16 +65,16 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	size_t abinlen;
 	cp += 2; /* We are now at the first byte of the first binary attribute... */
 	while (cp != ep) {
-	    ++bcount
+	    ++bcount;
 	    cp += strlen(cp)+1;	/* name */
 	    /* The next value is an unsigned integer of variable width
 	     * (a_width: DB5HDR_WIDTHCODE_x) so how do we get its
 	     * width?  We now have a new member of struct bu_external:
-	     * 'unsigned char intwid'.  Note that the integer
+	     * 'unsigned char widcode'.  Note that the integer
 	     * is in network order and must be properly decoded for
 	     * the local architecture.
 	     */
-	    cp += db5_decode_length(&abinlen, cp, ap->intwid);
+	    cp += db5_decode_length(&abinlen, (const unsigned char*)cp, ap->widcode);
 	    /* account for the abinlen bytes */
 	    cp += abinlen;
 	}
@@ -85,10 +85,10 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	++cp;
     }
     /* Ensure we're exactly at the end */
-    BU_ASSERT_PTR(cp, ==, ep);
+    BU_ASSERT(cp == ep);
 #else
     /* Ensure we're exactly at the end */
-    BU_ASSERT_PTR(cp+1, ==, ep);
+    BU_ASSERT(cp+1 == ep);
 #endif
 
     /* not really needed for AVS_ADD since bu_avs_add will
@@ -122,10 +122,9 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	while (cp != ep) {
 	    const char *name = cp;  /* name */
 	    cp += strlen(cp)+1;	/* name */
-	    cp += db5_decode_length(&abinlen, cp, ap->intwid);
+	    cp += db5_decode_length(&abinlen, (const unsigned char*)cp, ap->widcode);
 	    /* now decode for the abinlen bytes */
-	    decode_binary_attribute(const size_t len, const char *cp)
-	    decod
+	    decode_binary_attribute(abinlen, (const unsigned char*)cp);
 	    cp += abinlen;
 	}
 	/* now cp should be at the end */
@@ -134,13 +133,13 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	++cp;
     }
     /* Ensure we're exactly at the end */
-    BU_ASSERT_PTR(cp, ==, ep);
+    BU_ASSERT(cp == ep);
 #else
-    BU_ASSERT_PTR(cp+1, ==, ep);
+    BU_ASSERT(cp+1 == ep);
 #endif
 
-    BU_ASSERT_LONG(avs->count, <=, avs->max);
-    BU_ASSERT_LONG((size_t)avs->count, ==, (size_t)count);
+    BU_ASSERT(avs->count <= avs->max);
+    BU_ASSERT((size_t)avs->count == (size_t)count);
 
     if (bu_debug & BU_DEBUG_AVS) {
 	bu_avs_print(avs, "db5_import_attributes");
@@ -215,7 +214,7 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
 
     /* sanity check */
     need = cp - ((char *)ext->ext_buf);
-    BU_ASSERT_LONG(need, ==, ext->ext_nbytes);
+    BU_ASSERT(need == ext->ext_nbytes);
 }
 
 
@@ -244,7 +243,7 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
 	return -1;
     }
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -2;		/* FAIL */
@@ -307,7 +306,7 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 	return -1;
     }
 
-    BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
+    BU_ASSERT(dbip->dbi_version == 5);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -2;		/* FAIL */
@@ -491,7 +490,7 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
 
 #if defined(USE_BINARY_ATTRIBUTES)
 void
-decode_binary_attribute(const size_t len, const char *cp)
+decode_binary_attribute(const size_t len, const unsigned char *cp)
 {
 }
 #endif

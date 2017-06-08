@@ -1,7 +1,7 @@
 /*                 R T _ I N S T A N C E . H P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2014-2017 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,43 +19,41 @@
  */
 /** @file rt_instance.hpp
  *
- * Brief description
+ * Manage rt instances.
  *
  */
 
 
-#ifndef RT_INSTANCE_H
-#define RT_INSTANCE_H
+#ifndef SIMULATE_RT_INSTANCE_H
+#define SIMULATE_RT_INSTANCE_H
 
 
-#include "raytrace.h"
+#include "common.h"
+
+#include "rt/db_instance.h"
+#include "rt/xray.h"
+
+#include <btBulletDynamicsCommon.h>
+
+#include <vector>
 
 
 namespace simulate
 {
 
 
-class TreeUpdater
+class RtInstance
 {
 public:
-    TreeUpdater(db_i &db_instance, directory &vdirectory);
-    ~TreeUpdater();
+    explicit RtInstance(db_i &db);
 
-    void mark_modified();
-    tree *get_tree();
-    rt_i &get_rt_instance() const;
+    std::vector<std::pair<btVector3, btVector3> > get_overlaps(
+	const db_full_path &path_a, const db_full_path &path_b,
+	const xrays &rays) const;
 
 
 private:
-    TreeUpdater(const TreeUpdater &source);
-    TreeUpdater &operator=(const TreeUpdater &source);
-
-    db_i &m_db_instance;
-    directory &m_directory;
-    rt_db_internal m_comb_internal;
-
-    mutable bool m_is_modified;
-    mutable rt_i *m_rt_instance;
+    db_i &m_db;
 };
 
 

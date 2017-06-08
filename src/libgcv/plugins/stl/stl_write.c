@@ -200,7 +200,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	fprintf(pstate->fp, "solid %s\n", (region_name+1));
 
     /* triangulate model */
-    nmg_triangulate_model(m, &pstate->gcv_options->calculational_tolerance);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &pstate->gcv_options->calculational_tolerance);
 
     /* Check triangles */
     for (BU_LIST_FOR (s, shell, &r->s_hd))
@@ -255,14 +255,13 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
-		    if (!pstate->stl_write_options->binary)
+		    if (!pstate->stl_write_options->binary) {
 			fprintf(pstate->fp, "      vertex ");
-			if (!pstate->stl_write_options->binary) {
-			    fprintf(pstate->fp, "%f %f %f\n", V3ARGS_SCALE(v->vg_p->coord, pstate->gcv_options->scale_factor));
-			} else {
-			    VSET_SCALE(flt_ptr, v->vg_p->coord, pstate->gcv_options->scale_factor);
-			    flt_ptr += 3;
-			}
+			fprintf(pstate->fp, "%f %f %f\n", V3ARGS_SCALE(v->vg_p->coord, pstate->gcv_options->scale_factor));
+		    } else {
+			VSET_SCALE(flt_ptr, v->vg_p->coord, pstate->gcv_options->scale_factor);
+			flt_ptr += 3;
+		    }
 		}
 		if (vert_count > 3)
 		{

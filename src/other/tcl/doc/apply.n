@@ -2,8 +2,8 @@
 '\" Copyright (c) 2006 Miguel Sofer
 '\" Copyright (c) 2006 Donal K. Fellows
 '\"
-.so man.macros
 .TH apply n "" Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME

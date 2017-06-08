@@ -434,7 +434,7 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	nmg_vertex_gv(vertl[0], edges[vi[0]]);
 	nmg_vertex_gv(vertl[1], edges[vi[1]]);
 	nmg_vertex_gv(vertl[2], edges[vi[2]]);
-	if (nmg_calc_face_g(fu)) {
+	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 	    /* this flips out and spins. */
 	    bu_log("Face calc failed\n");
 	    nmg_kfu(fu);
@@ -570,7 +570,7 @@ rt_nmg_mc_pew(struct shell *s, struct whack *primp[4], struct application *a, fa
 	} else {
 	    /* if we know we're intersecting the surface, walk slow. */
 	    if (NEAR_ZERO(last_b+VOODOO, tol->dist))
-		bu_log("teh fux? lastb = %g\n", last_b);
+		bu_log("what? lastb = %g\n", last_b);
 	    b = last_b + step;
 	}
 
@@ -771,10 +771,10 @@ nmg_triangulate_model_mc(struct model *m, const struct bn_tol *tol)
     NMG_CK_MODEL(m);
     nmg_vmodel(m);
 
-    if (RTG.NMG_debug & DEBUG_TRI)
+    if (nmg_debug & DEBUG_TRI)
 	bu_log("Triangulating NMG\n");
 
-    if (RTG.NMG_debug & DEBUG_TRI)
+    if (nmg_debug & DEBUG_TRI)
 	bu_log("Triangulation completed\n");
 }
 

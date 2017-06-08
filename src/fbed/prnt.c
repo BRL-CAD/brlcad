@@ -64,7 +64,6 @@ void prnt_Status(void), prnt_Usage(void);
 void prnt_Prompt(const char *msg);
 void prnt_Macro(char *bufp);
 void prnt_Rect2D(const char *str, Rect2D *rectp);
-/**void prnt_FBC();**/
 
 void
 prnt_Status(void)

@@ -61,7 +61,7 @@ typedef struct bu_color bu_color_t;
 #define BU_CK_COLOR(_c) BU_CKMAG(_c, BU_COLOR_MAGIC, "bu_color")
 
 /**
- * initializes a bu_bitv struct without allocating any memory.
+ * initializes a bu_color struct without allocating any memory.
  */
 #define BU_COLOR_INIT(_c) { \
 	(_c)->buc_magic = BU_COLOR_MAGIC; \
@@ -138,6 +138,7 @@ BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb)
 BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb);
 BU_EXPORT extern int bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb);
+BU_EXPORT extern int bu_color_from_str(struct bu_color *cp, const char *str);
 
 /* UNIMPLEMENTED
  *

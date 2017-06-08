@@ -1,4 +1,3 @@
-// RCS: @(#) $Id$
 //
 //  Base resources needed by Tk whether it's a DLL or a static library.
 //
@@ -27,12 +26,12 @@ FONT 8, "Helv"
 BEGIN
     LTEXT           "Directory &name:",-1,8,6,118,9
     EDITTEXT        edt10,8,26,144,12, WS_TABSTOP | ES_AUTOHSCROLL
-    LISTBOX         lst2,8,40,144,64,LBS_SORT | LBS_OWNERDRAWFIXED | 
-                    LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | 
+    LISTBOX         lst2,8,40,144,64,LBS_SORT | LBS_OWNERDRAWFIXED |
+                    LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT |
                     LBS_DISABLENOSCROLL | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Dri&ves:",stc4,8,106,92,9
-    COMBOBOX        cmb2,8,115,144,68,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | 
-                    CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | 
+    COMBOBOX        cmb2,8,115,144,68,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED |
+                    CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER |
                     WS_VSCROLL | WS_TABSTOP
     DEFPUSHBUTTON   "OK",1,160,6,50,14,WS_GROUP
     PUSHBUTTON      "Cancel",2,160,24,50,14,WS_GROUP
@@ -43,8 +42,8 @@ BEGIN
     LTEXT           "a",stc3,9,143,114,15
     EDITTEXT        edt1,7,158,135,20,NOT WS_TABSTOP
     LISTBOX         lst1,8,205,134,42,LBS_NOINTEGRALHEIGHT
-    COMBOBOX        cmb1,8,253,135,21,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | 
-                    CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | 
+    COMBOBOX        cmb1,8,253,135,21,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED |
+                    CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER |
                     WS_VSCROLL
 
 END
@@ -138,5 +137,4 @@ ur_angle                CURSOR  DISCARDABLE     "cursor94.cur"
 watch                   CURSOR  DISCARDABLE     "cursor96.cur"
 xterm                   CURSOR  DISCARDABLE     "cursor98.cur"
 none                    CURSOR  DISCARDABLE     "cursor9a.cur"
-
 

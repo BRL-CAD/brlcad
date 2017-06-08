@@ -1,6 +1,6 @@
 // ASResource.cpp
 // Copyright (c) 2016 by Jim Pattee <jimp03@email.com>.
-// Licensed under the MIT license.
+// This code is licensed under the MIT License.
 // License.txt describes the conditions under which this software may be distributed.
 
 //-----------------------------------------------------------------------------
@@ -576,7 +576,7 @@ bool ASBase::findKeyword(const string& line, int i, const string& keyword) const
 	if (isLegalNameChar(line[wordEnd]))
 		return false;
 	// is not a keyword if part of a definition
-	const char peekChar = peekNextChar(line, wordEnd - 1);
+	const char peekChar = peekNextChar(line, (int)wordEnd - 1);
 	if (peekChar == ',' || peekChar == ')')
 		return false;
 	return true;

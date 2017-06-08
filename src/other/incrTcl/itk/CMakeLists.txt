@@ -171,6 +171,8 @@ add_definitions(-DBUILD_itk)
 #--------------------------------------------------------------------
 add_definitions(-DTCL_THREADS=1)
 
+add_definitions(-D_USE_32BIT_TIME_T=0)
+
 MACRO(TCL_CHECK_INCLUDE_FILE filename var)
   CHECK_INCLUDE_FILE(${filename} ${var})
   IF(${var})
@@ -237,7 +239,6 @@ ELSE(WIN32)
 ENDIF(WIN32)
 SET_TARGET_PROPERTIES(itk PROPERTIES VERSION ${ITK_VERSION} SOVERSION ${ITK_VERSION_MAJOR})
 SET_TARGET_PROPERTIES(itk PROPERTIES PREFIX "lib")
-install(TARGETS itk DESTINATION ${LIB_DIR})
 install(TARGETS itk
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}

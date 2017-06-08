@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclWinInt.h"
@@ -103,6 +101,10 @@ static TclInitProcessGlobalValueProc	InitializeDefaultLibraryDir;
 static ProcessGlobalValue defaultLibraryDir =
 	{0, 0, NULL, NULL, InitializeDefaultLibraryDir, NULL, NULL};
 
+static TclInitProcessGlobalValueProc	InitializeSourceLibraryDir;
+static ProcessGlobalValue sourceLibraryDir =
+	{0, 0, NULL, NULL, InitializeSourceLibraryDir, NULL, NULL};
+
 static void		AppendEnvironment(Tcl_Obj *listPtr, CONST char *lib);
 static int		ToUtf(CONST WCHAR *wSrc, char *dst);
 
@@ -111,8 +113,8 @@ static int		ToUtf(CONST WCHAR *wSrc, char *dst);
  *
  * TclpInitPlatform --
  *
- *	Initialize all the platform-dependant things like signals and
- *	floating-point error handling.
+ *	Initialize all the platform-dependant things like signals,
+ *	floating-point error handling and sockets.
  *
  *	Called at process initialization time.
  *
@@ -128,20 +130,16 @@ static int		ToUtf(CONST WCHAR *wSrc, char *dst);
 void
 TclpInitPlatform(void)
 {
+    WSADATA wsaData;
+    WORD wVersionRequested = MAKEWORD(2, 2);
+
     tclPlatform = TCL_PLATFORM_WINDOWS;
 
-    /*
-     * The following code stops Windows 3.X and Windows NT 3.51 from
-     * automatically putting up Sharing Violation dialogs, e.g, when someone
-     * tries to access a file that is locked or a drive with no disk in it.
-     * Tcl already returns the appropriate error to the caller, and they can
-     * decide to put up their own dialog in response to that failure.
-     *
-     * Under 95 and NT 4.0, this is a NOOP because the system doesn't
-     * automatically put up dialogs when the above operations fail.
-     */
-
-    SetErrorMode(SetErrorMode(0) | SEM_FAILCRITICALERRORS);
+	/*
+	 * Initialize the winsock library. On Windows XP and higher this
+	 * can never fail.
+	 */
+	WSAStartup(wVersionRequested, &wsaData);
 
 #ifdef STATIC_BUILD
     /*
@@ -177,7 +175,7 @@ TclpInitLibraryPath(
     int *lengthPtr,
     Tcl_Encoding *encodingPtr)
 {
-#define LIBRARY_SIZE	    32
+#define LIBRARY_SIZE	    64
     Tcl_Obj *pathPtr;
     char installLib[LIBRARY_SIZE];
     char *bytes;
@@ -207,6 +205,13 @@ TclpInitLibraryPath(
 
     Tcl_ListObjAppendElement(NULL, pathPtr,
 	    TclGetProcessGlobalValue(&defaultLibraryDir));
+
+    /*
+     * Look for the library in its source checkout location.
+     */
+
+    Tcl_ListObjAppendElement(NULL, pathPtr,
+	    TclGetProcessGlobalValue(&sourceLibraryDir));
 
     *encodingPtr = NULL;
     bytes = Tcl_GetStringFromObj(pathPtr, lengthPtr);
@@ -357,6 +362,57 @@ InitializeDefaultLibraryDir(
     TclWinNoBackslash(name);
     sprintf(end + 1, "lib/tcl%s", TCL_VERSION);
     *lengthPtr = strlen(name);
+    *valuePtr = ckalloc(*lengthPtr + 1);
+    *encodingPtr = NULL;
+    memcpy(*valuePtr, name, (size_t) *lengthPtr + 1);
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * InitializeSourceLibraryDir --
+ *
+ *	Locate the Tcl script library default location relative to the
+ *	location of the Tcl DLL as it exists in the build output directory
+ *	associated with the source checkout.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+static void
+InitializeSourceLibraryDir(
+    char **valuePtr,
+    int *lengthPtr,
+    Tcl_Encoding *encodingPtr)
+{
+    HMODULE hModule = TclWinGetTclInstance();
+    WCHAR wName[MAX_PATH + LIBRARY_SIZE];
+    char name[(MAX_PATH + LIBRARY_SIZE) * TCL_UTF_MAX];
+    char *end, *p;
+
+    if (GetModuleFileNameW(hModule, wName, MAX_PATH) == 0) {
+	GetModuleFileNameA(hModule, name, MAX_PATH);
+    } else {
+	ToUtf(wName, name);
+    }
+
+    end = strrchr(name, '\\');
+    *end = '\0';
+    p = strrchr(name, '\\');
+    if (p != NULL) {
+	end = p;
+    }
+    *end = '\\';
+
+    TclWinNoBackslash(name);
+    sprintf(end + 1, "../library");
+    *lengthPtr = strlen(name);
     *valuePtr = ckalloc((unsigned int) *lengthPtr + 1);
     *encodingPtr = NULL;
     memcpy(*valuePtr, name, (size_t) *lengthPtr + 1);
@@ -499,9 +555,12 @@ TclpSetVariables(
 {
     CONST char *ptr;
     char buffer[TCL_INTEGER_SPACE * 2];
-    SYSTEM_INFO sysInfo, *sysInfoPtr = &sysInfo;
-    OemId *oemId;
-    OSVERSIONINFOA osInfo;
+    union {
+	SYSTEM_INFO info;
+	OemId oemId;
+    } sys;
+    static OSVERSIONINFOW osInfo;
+    static int osInfoInitialized = 0;
     Tcl_DString ds;
     WCHAR szUserName[UNLEN+1];
     DWORD cchUserNameLen = UNLEN;
@@ -509,11 +568,20 @@ TclpSetVariables(
     Tcl_SetVar2Ex(interp, "tclDefaultLibrary", NULL,
 	    TclGetProcessGlobalValue(&defaultLibraryDir), TCL_GLOBAL_ONLY);
 
-    osInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-    GetVersionExA(&osInfo);
-
-    oemId = (OemId *) sysInfoPtr;
-    GetSystemInfo(&sysInfo);
+    if (!osInfoInitialized) {
+	HANDLE handle = LoadLibraryW(L"NTDLL");
+	int(__stdcall *getversion)(void *) =
+		(int(__stdcall *)(void *)) GetProcAddress(handle, "RtlGetVersion");
+	osInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
+	if (!getversion || getversion(&osInfo)) {
+	    GetVersionExW(&osInfo);
+	}
+	if (handle) {
+		FreeLibrary(handle);
+	}
+	osInfoInitialized = 1;
+    }
+    GetSystemInfo(&sys.info);
 
     /*
      * Define the tcl_platform array.
@@ -527,13 +595,13 @@ TclpSetVariables(
     }
     wsprintfA(buffer, "%d.%d", osInfo.dwMajorVersion, osInfo.dwMinorVersion);
     Tcl_SetVar2(interp, "tcl_platform", "osVersion", buffer, TCL_GLOBAL_ONLY);
-    if (oemId->wProcessorArchitecture < NUMPROCESSORS) {
+    if (sys.oemId.wProcessorArchitecture < NUMPROCESSORS) {
 	Tcl_SetVar2(interp, "tcl_platform", "machine",
-		processors[oemId->wProcessorArchitecture],
+		processors[sys.oemId.wProcessorArchitecture],
 		TCL_GLOBAL_ONLY);
     }
 
-#ifdef _DEBUG
+#ifndef NDEBUG
     /*
      * The existence of the "debug" element of the tcl_platform array
      * indicates that this particular Tcl shell has been compiled with debug

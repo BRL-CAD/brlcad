@@ -22,8 +22,6 @@
  *           Bell Labs Innovations for Lucent Technologies
  *           mmclennan@lucent.com
  *           http://www.tcltk.com/itcl
- *
- *     RCS:  $Id$
  * ========================================================================
  *           Copyright (c) 1993-1998  Lucent Technologies, Inc.
  * ------------------------------------------------------------------------
@@ -42,6 +40,7 @@ static int ItclParseConfig _ANSI_ARGS_((Tcl_Interp *interp,
 static int ItclHandleConfig _ANSI_ARGS_((Tcl_Interp *interp,
     int argc, ItclVarDefn **vars, char **vals, ItclObject *contextObj));
 
+static void ItclReleaseMethod (ClientData cdata);
 
 /*
  * ------------------------------------------------------------------------
@@ -322,8 +321,8 @@ Itcl_CreateMethod(interp, cdefn, name, arglist, body)
     name = Tcl_DStringValue(&buffer);
 
     Itcl_PreserveData((ClientData)mfunc);
-    mfunc->accessCmd = Tcl_CreateObjCommand(interp, (CONST84 char *)name,
-	Itcl_ExecMethod, (ClientData)mfunc, Itcl_ReleaseData);
+    mfunc->accessCmd = Tcl_CreateObjCommand(interp, name,
+	Itcl_ExecMethod, (ClientData)mfunc, ItclReleaseMethod);
 
     Tcl_DStringFree(&buffer);
     return TCL_OK;
@@ -387,8 +386,8 @@ Itcl_CreateProc(interp, cdefn, name, arglist, body)
     name = Tcl_DStringValue(&buffer);
 
     Itcl_PreserveData((ClientData)mfunc);
-    mfunc->accessCmd = Tcl_CreateObjCommand(interp, (CONST84 char *)name,
-	Itcl_ExecProc, (ClientData)mfunc, Itcl_ReleaseData);
+    mfunc->accessCmd = Tcl_CreateObjCommand(interp, name,
+	Itcl_ExecProc, (ClientData)mfunc, ItclReleaseMethod);
 
     Tcl_DStringFree(&buffer);
     return TCL_OK;
@@ -655,9 +654,9 @@ Itcl_CreateMemberCode(interp, cdefn, arglist, body, mcodePtr)
     procPtr->cmdPtr->nsPtr = (Namespace*)cdefn->namesp;
 
     if (body) {
-        procPtr->bodyPtr = Tcl_NewStringObj((CONST84 char *)body, -1);
+        procPtr->bodyPtr = Tcl_NewStringObj(body, -1);
     } else {
-        procPtr->bodyPtr = Tcl_NewStringObj((CONST84 char *)"", -1);
+        procPtr->bodyPtr = Tcl_NewStringObj("", -1);
         mcode->flags |= ITCL_IMPLEMENT_NONE;
     }
     Tcl_IncrRefCount(procPtr->bodyPtr);
@@ -842,9 +841,19 @@ Itcl_GetMemberCode(interp, member)
      */
     if ((mcode->flags & ITCL_IMPLEMENT_TCL) != 0) {
 
+	/*
+	 * UGLY UGLY UGLY hackery to accommodate changing Tcl
+	 * internals in Tcl 8.6.
+	 */
+	int saveNumArgs = mcode->procPtr->numArgs;
+
+	mcode->procPtr->numArgs = mcode->procPtr->numCompiledLocals;
+
         result = TclProcCompileProc(interp, mcode->procPtr,
             mcode->procPtr->bodyPtr, (Namespace*)member->classDefn->namesp,
             "body for", member->fullname);
+
+	mcode->procPtr->numArgs = saveNumArgs;
 
         if (result != TCL_OK) {
             return result;
@@ -980,8 +989,8 @@ Itcl_EvalMemberCode(interp, mfunc, member, contextObj, objc, objv)
             interp, objc, objv);
     }
     else if ((mcode->flags & ITCL_IMPLEMENT_ARGCMD) != 0) {
-        char **argv;
-        argv = (char**)ckalloc( (unsigned)(objc*sizeof(char*)) );
+        CONST char **argv;
+        argv = (CONST char**)ckalloc( (unsigned)(objc*sizeof(char*)) );
         for (i=0; i < objc; i++) {
             argv[i] = Tcl_GetStringFromObj(objv[i], (int*)NULL);
         }
@@ -1049,14 +1058,14 @@ Itcl_CreateArgList(interp, decl, argcPtr, argPtr)
     int status = TCL_OK;  /* assume that this will succeed */
 
     int i, argc, fargc;
-    char **argv, **fargv;
+    CONST char **argv, **fargv;
     CompiledLocal *localPtr, *last;
 
     *argPtr = last = NULL;
     *argcPtr = 0;
 
     if (decl) {
-        if (Tcl_SplitList(interp, (CONST84 char *)decl, &argc, &argv)
+        if (Tcl_SplitList(interp, decl, &argc, &argv)
 		!= TCL_OK) {
             return TCL_ERROR;
         }
@@ -1157,7 +1166,7 @@ Itcl_CreateArg(name, init)
     localPtr->resolveInfo = NULL;
 
     if (init != NULL) {
-        localPtr->defValuePtr = Tcl_NewStringObj((CONST84 char *)init, -1);
+        localPtr->defValuePtr = Tcl_NewStringObj(init, -1);
         Tcl_IncrRefCount(localPtr->defValuePtr);
     } else {
         localPtr->defValuePtr = NULL;
@@ -1592,7 +1601,7 @@ Itcl_PushContext(interp, member, contextClass, contextObj, contextPtr)
     ItclObject *contextObj;   /* object context, or NULL */
     ItclContext *contextPtr;  /* storage space for class/object context */
 {
-    ItclCallFrame *framePtr = &contextPtr->frame;
+    ItclCallFrame *framePtr = (ItclCallFrame *) &contextPtr->frame;
 
     int result, localCt, newEntry;
     ItclMemberCode *mcode;
@@ -1824,7 +1833,7 @@ Itcl_AssignArgs(interp, objc, objv, mfunc)
     int result = TCL_OK;
 
     int defargc;
-    char **defargv = NULL;
+    CONST char **defargv = NULL;
     Tcl_Obj **defobjv = NULL;
     int configc = 0;
     ItclVarDefn **configVars = NULL;
@@ -2074,6 +2083,22 @@ argErrors:
     return result;
 }
 
+/*
+ * ------------------------------------------------------------------------
+ *  ItclReleaseMethod()
+ *
+ *  Nulls the reference to the Tcl access command when it went away,
+ *  preventing us from leaving behind a dangling pointer for the resolver
+ *  to promote into bytecode, leading to double-free and heap corruption.
+ * ------------------------------------------------------------------------
+ */
+
+static void ItclReleaseMethod (ClientData cdata)
+{
+  ItclMemberFunc *mfunc = (ItclMemberFunc*) cdata;
+  mfunc->accessCmd = NULL;
+  Itcl_ReleaseData (cdata);
+}
 
 /*
  * ------------------------------------------------------------------------
@@ -2501,7 +2526,7 @@ Itcl_ReportFuncErrors(interp, mfunc, contextObj, result)
 
             if ((mfunc->member->code->flags & ITCL_IMPLEMENT_TCL) != 0) {
                 Tcl_AppendToObj(objPtr, "body line ", -1);
-                sprintf(num, "%d", ERRORLINE(iPtr));
+                sprintf(num, "%d", Tcl_GetErrorLine((Tcl_Interp *)iPtr));
                 Tcl_AppendToObj(objPtr, num, -1);
                 Tcl_AppendToObj(objPtr, ")", -1);
             } else {

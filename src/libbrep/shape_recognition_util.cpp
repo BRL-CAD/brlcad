@@ -10,14 +10,18 @@
 #include "brep.h"
 #include "shape_recognition.h"
 
+#define COMMA ','
+
+
 void
 set_key(struct bu_vls *key, int k_cnt, int *k_array)
 {
     for (int i = 0; i < k_cnt; i++) {
 	bu_vls_printf(key, "%d", k_array[i]);
-	if (i != k_cnt - 1) bu_vls_printf(key, ",");
+	if (i != k_cnt - 1) bu_vls_printf(key, "%c", COMMA);
     }
 }
+
 
 void
 set_to_array(int **array, int *array_cnt, std::set<int> *set)
@@ -34,6 +38,7 @@ set_to_array(int **array, int *array_cnt, std::set<int> *set)
 	}
     }
 }
+
 
 void
 array_to_set(std::set<int> *set, int *array, int array_cnt)
@@ -57,13 +62,14 @@ csg_object_params_init(struct csg_object_params *csg, struct subbrep_shoal_data 
     csg->csg_verts = NULL;
 }
 
+
 void
 csg_object_params_free(struct csg_object_params *csg)
 {
     if (!csg) return;
     if (csg->planes) bu_free(csg->planes, "free planes");
-    if (csg->csg_faces) bu_free(csg->csg_faces , "free faces");
-    if (csg->csg_verts) bu_free(csg->csg_verts , "free verts");
+    if (csg->csg_faces) bu_free(csg->csg_faces, "free faces");
+    if (csg->csg_verts) bu_free(csg->csg_verts, "free verts");
 }
 
 
@@ -73,11 +79,12 @@ subbrep_shoal_init(struct subbrep_shoal_data *data, struct subbrep_island_data *
     data->i = i;
     BU_GET(data->params, struct csg_object_params);
     csg_object_params_init(data->params, data);
-    BU_GET(data->shoal_children , struct bu_ptbl);
+    BU_GET(data->shoal_children, struct bu_ptbl);
     bu_ptbl_init(data->shoal_children, 8, "sub_params table");
     data->shoal_loops = NULL;
     data->shoal_loops_cnt = 0;
 }
+
 
 void
 subbrep_shoal_free(struct subbrep_shoal_data *data)
@@ -95,6 +102,7 @@ subbrep_shoal_free(struct subbrep_shoal_data *data)
     BU_PUT(data->shoal_children, struct bu_ptbl);
     if (data->shoal_loops) bu_free(data->shoal_loops, "free loop array");
 }
+
 
 void
 subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
@@ -132,54 +140,79 @@ subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
     obj->null_edges = NULL;
 }
 
+
 void
 subbrep_island_free(struct subbrep_island_data *obj)
 {
-    if (!obj) return;
+    if (!obj)
+	return;
 
     obj->brep = NULL;
-    if (obj->local_brep) delete obj->local_brep;
-    obj->local_brep = NULL;
+    if (obj->local_brep) {
+	delete obj->local_brep;
+	obj->local_brep = NULL;
+    }
 
     delete obj->bbox;
 
-    subbrep_shoal_free(obj->nucleus);
-    if (obj->nucleus) BU_PUT(obj->nucleus, struct csg_obj_params);
-    obj->nucleus = NULL;
-
-    bu_vls_free(obj->key);
-    BU_PUT(obj->key, struct bu_vls);
-    obj->key = NULL;
-
-    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->island_children); i++){
-	struct subbrep_shoal_data *cobj = (struct subbrep_shoal_data *)BU_PTBL_GET(obj->island_children, i);
-	subbrep_shoal_free(cobj);
-	BU_PUT(cobj, struct subbrep_shoal_data);
+    if (obj->nucleus) {
+	subbrep_shoal_free(obj->nucleus);
+	BU_PUT(obj->nucleus, struct csg_obj_params);
+	obj->nucleus = NULL;
     }
-    bu_ptbl_free(obj->island_children);
-    BU_PUT(obj->island_children, struct bu_ptbl);
-    obj->island_children = NULL;
+
+    if (obj->key) {
+	bu_vls_free(obj->key);
+	BU_PUT(obj->key, struct bu_vls);
+	obj->key = NULL;
+    }
+
+    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->island_children); i++) {
+	struct subbrep_shoal_data *cobj = (struct subbrep_shoal_data *)BU_PTBL_GET(obj->island_children, i);
+	if (cobj) {
+	    subbrep_shoal_free(cobj);
+	    BU_PUT(cobj, struct subbrep_shoal_data);
+	}
+    }
+    if (obj->island_children) {
+	bu_ptbl_free(obj->island_children);
+	BU_PUT(obj->island_children, struct bu_ptbl);
+	obj->island_children = NULL;
+    }
 
     /* Anything in here will be freed elsewhere */
     if (obj->subtractions) {
 	bu_ptbl_free(obj->subtractions);
 	BU_PUT(obj->subtractions, struct bu_ptbl);
+	obj->subtractions = NULL;
     }
-    obj->subtractions = NULL;
 
-    if (obj->island_faces) bu_free(obj->island_faces, "obj faces");
-    obj->island_faces = NULL;
-    if (obj->island_loops) bu_free(obj->island_loops, "obj loops");
-    obj->island_loops = NULL;
-    if (obj->fol) bu_free(obj->fol, "obj fol");
-    obj->fol = NULL;
-    if (obj->fil) bu_free(obj->fil, "obj fil");
-    obj->fil = NULL;
-    if (obj->null_verts) bu_free(obj->null_verts, "ignore verts");
-    obj->null_verts = NULL;
-    if (obj->null_edges) bu_free(obj->null_edges, "ignore edges");
-    obj->null_edges = NULL;
+    if (obj->island_faces) {
+	bu_free(obj->island_faces, "obj faces");
+	obj->island_faces = NULL;
+    }
+    if (obj->island_loops) {
+	bu_free(obj->island_loops, "obj loops");
+	obj->island_loops = NULL;
+    }
+    if (obj->fol) {
+	bu_free(obj->fol, "obj fol");
+	obj->fol = NULL;
+    }
+    if (obj->fil) {
+	bu_free(obj->fil, "obj fil");
+	obj->fil = NULL;
+    }
+    if (obj->null_verts) {
+	bu_free(obj->null_verts, "ignore verts");
+	obj->null_verts = NULL;
+    }
+    if (obj->null_edges) {
+	bu_free(obj->null_edges, "ignore edges");
+	obj->null_edges = NULL;
+    }
 }
+
 
 /* Geometry utilities */
 
@@ -193,6 +226,7 @@ ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
     max->y = -ON_DBL_MAX;
     max->z = -ON_DBL_MAX;
 }
+
 
 #define LN_DOTP_TOL 0.000001
 ON_3dPoint
@@ -222,6 +256,7 @@ ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane)
     result = d*l + l0;
     return result;
 }
+
 
 surface_t
 GetSurfaceType(const ON_Surface *orig_surface)
@@ -323,6 +358,7 @@ subbrep_highest_order_face(struct subbrep_island_data *data)
     return hofo;
 }
 
+
 void
 subbrep_bbox(struct subbrep_island_data *obj)
 {
@@ -392,7 +428,6 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
 
     // Collecte midpoints from all edges in the island
     ON_3dPointArray mid_points;
-    std::set<int> verts;
     for (int i = 0; i < data->island_loops_cnt; i++) {
 	const ON_BrepLoop *loop = &(brep->m_L[data->island_loops[i]]);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
@@ -440,7 +475,6 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
     // points of the surfaces included in the island via their outer loops.
     if (!pos_cnt && !neg_cnt) {
 	for (int i = 0; i < data->fil_cnt; i++) {
-	    std::set<int> active_loops;
 	    // Get face with inner loop
 	    const ON_BrepFace *face = &(brep->m_F[data->fil[i]]);
 	    const ON_Surface *surf = face->SurfaceOf();
@@ -480,6 +514,7 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
     return 0;
 }
 
+
 int
 subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
 {
@@ -496,7 +531,6 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
     std::map<int, int> edge_map;
     std::map<int, int> vertex_map;
     std::map<int, int> c3_map;
-    std::map<int, int> trim_map;
 
     std::set<int> faces;
     std::set<int> fil;
@@ -565,7 +599,7 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
 
 		// Edge
 		if (edge_map.find(edge->m_edge_index) == edge_map.end()) {
-		    ON_BrepEdge& new_edge = nbrep->NewEdge(nbrep->m_V[v0i], nbrep->m_V[v1i], c3i, NULL ,0);
+		    ON_BrepEdge& new_edge = nbrep->NewEdge(nbrep->m_V[v0i], nbrep->m_V[v1i], c3i, NULL, 0);
 		    edge_map[edge->m_edge_index] = new_edge.m_edge_index;
 		}
 		nedge = &(nbrep->m_E[edge_map[edge->m_edge_index]]);
@@ -647,6 +681,7 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
     return 1;
 }
 
+
 // Tikz LaTeX output from B-Rep wireframes
 int
 ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
@@ -699,7 +734,7 @@ ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
 		bu_vls_printf(&output, "\\draw[%s] plot [smooth] coordinates {", bu_vls_addr(&color));
 		for (int si = 0; si < poly.Count(); si++) {
 		    ON_3dPoint p = poly[si];
-		    bu_vls_printf(&output, "(%f,%f,%f) ", p.x, p.y, p.z);
+		    bu_vls_printf(&output, "(%f, %f, %f) ", p.x, p.y, p.z);
 		}
 		bu_vls_printf(&output, "};\n", bu_vls_addr(&color));
 	    }
@@ -714,7 +749,6 @@ ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
     bu_vls_free(&prefix);
     return 1;
 }
-
 
 
 // Local Variables:

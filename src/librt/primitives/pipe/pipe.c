@@ -1725,7 +1725,7 @@ rt_pipe_shot(
     }
 
     /* sort the hits */
-    rt_hitsort(hits, total_hits);
+    primitive_hitsort(hits, total_hits);
 
     /* eliminate duplicate hits */
     rt_pipe_elim_dups(hits, &total_hits, rp, stp);
@@ -2484,7 +2484,7 @@ tesselate_pipe_start(
 	nmg_vertex_gv(vu->v_p, pipept->pp_coord);
     }
 
-    if (nmg_calc_face_g(fu)) {
+    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 	bu_bomb("tesselate_pipe_start: nmg_calc_face_g failed\n");
     }
 
@@ -2580,7 +2580,7 @@ tesselate_pipe_linear(
 
 	    if (fu_prev) {
 		nmg_vertex_gv(new_outer_loop[i], pt);
-		if (nmg_calc_face_g(fu_prev)) {
+		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		} else {
@@ -2638,7 +2638,7 @@ tesselate_pipe_linear(
 		nmg_vertex_gv(new_outer_loop[i], pt);
 	    }
 
-	    if (nmg_calc_face_g(fu)) {
+	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -2691,7 +2691,7 @@ tesselate_pipe_linear(
 		continue;
 	    }
 	    if (i == arc_segs - 1) {
-		if (nmg_calc_face_g(fu_prev)) {
+		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		}
@@ -2730,7 +2730,7 @@ tesselate_pipe_linear(
 		VUNITIZE(norms[j]);
 	    }
 
-	    if (nmg_calc_face_g(fu)) {
+	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -2818,7 +2818,7 @@ tesselate_pipe_linear(
 	    if (!new_outer_loop[j]->vg_p) {
 		nmg_vertex_gv(new_outer_loop[j], pt_next);
 	    }
-	    if (nmg_calc_face_g(fu)) {
+	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -2892,7 +2892,7 @@ tesselate_pipe_linear(
 
 	    if (fu_prev) {
 		nmg_vertex_gv(new_inner_loop[i], pt);
-		if (nmg_calc_face_g(fu_prev)) {
+		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		} else {
@@ -2950,7 +2950,7 @@ tesselate_pipe_linear(
 		nmg_vertex_gv(new_inner_loop[i], pt);
 	    }
 
-	    if (nmg_calc_face_g(fu)) {
+	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3008,7 +3008,7 @@ tesselate_pipe_linear(
 		continue;
 	    }
 	    if (i == arc_segs - 1) {
-		if (nmg_calc_face_g(fu_prev)) {
+		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		}
@@ -3050,7 +3050,7 @@ tesselate_pipe_linear(
 		VREVERSE(norms[j], norms[j]);
 	    }
 
-	    if (nmg_calc_face_g(fu)) {
+	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3138,7 +3138,7 @@ tesselate_pipe_linear(
 	    if (!new_inner_loop[j]->vg_p) {
 		nmg_vertex_gv(new_inner_loop[j], pt_next);
 	    }
-	    if (nmg_calc_face_g(fu)) {
+	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3204,7 +3204,7 @@ tesselate_pipe_bend(
 {
     struct vertex **new_outer_loop = NULL;
     struct vertex **new_inner_loop = NULL;
-    struct vert_root *vertex_tree = NULL;
+    struct bn_vert_tree *vertex_tree = NULL;
     struct vertex **vertex_array = NULL;
     fastf_t bend_radius;
     fastf_t bend_angle;
@@ -3230,7 +3230,7 @@ tesselate_pipe_bend(
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
     RT_CK_TESS_TOL(ttol);
-    vertex_tree = create_vert_tree();
+    vertex_tree = bn_vert_tree_create();
 
     VMOVE(r1, start_r1);
     VMOVE(r2, start_r2);
@@ -3280,7 +3280,7 @@ tesselate_pipe_bend(
     for (i = 0 ; i < arc_segs ; i++) {
 	struct vertex *v = (*outer_loop)[i];
 	struct vertex_g *vg = v->vg_p;
-	j = Add_vert(vg->coord[X], vg->coord[Y], vg->coord[Z], vertex_tree, tol->dist_sq);
+	j = bn_vert_tree_add( vertex_tree,vg->coord[X], vg->coord[Y], vg->coord[Z], tol->dist_sq);
 	vertex_array[j] = v;
     }
 
@@ -3317,7 +3317,7 @@ tesselate_pipe_bend(
 	    }
 
 	    VJOIN2(pt, center, x, r1, y, r2);
-	    k = Add_vert(pt[X], pt[Y], pt[Z], vertex_tree, tol->dist_sq);
+	    k = bn_vert_tree_add( vertex_tree,pt[X], pt[Y], pt[Z], tol->dist_sq);
 
 	    verts[0] = &(*outer_loop)[j];
 	    verts[1] = &(*outer_loop)[i];
@@ -3331,7 +3331,7 @@ tesselate_pipe_bend(
 		if (!new_outer_loop[i]->vg_p) {
 		    nmg_vertex_gv(new_outer_loop[i], pt);
 		}
-		if (nmg_calc_face_g(fu)) {
+		if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 		    bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu);
 		} else {
@@ -3387,7 +3387,7 @@ tesselate_pipe_bend(
 	    y = ynew;
 
 	    VJOIN2(pt, center, x, r1, y, r2);
-	    k = Add_vert(pt[X], pt[Y], pt[Z], vertex_tree, tol->dist_sq);
+	    k = bn_vert_tree_add( vertex_tree,pt[X], pt[Y], pt[Z], tol->dist_sq);
 
 	    verts[1] = verts[2];
 	    verts[2] = &new_outer_loop[j];
@@ -3400,7 +3400,7 @@ tesselate_pipe_bend(
 		if (!(*verts[2])->vg_p) {
 		    nmg_vertex_gv(*verts[2], pt);
 		}
-		if (nmg_calc_face_g(fu)) {
+		if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 		    bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu);
 		} else {
@@ -3457,7 +3457,7 @@ tesselate_pipe_bend(
     }
 
     /* release resources, sanity */
-    free_vert_tree(vertex_tree);
+    bn_vert_tree_destroy(vertex_tree);
     bu_free((char *)vertex_array, "vertex array in pipe.c");
     vertex_tree = NULL;
     vertex_array = NULL;
@@ -3510,7 +3510,7 @@ tesselate_pipe_bend(
 	    if (!new_inner_loop[i]->vg_p) {
 		nmg_vertex_gv(new_inner_loop[i], pt);
 	    }
-	    if (nmg_calc_face_g(fu)) {
+	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 		bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3570,7 +3570,7 @@ tesselate_pipe_bend(
 	    if (!(*verts[2])->vg_p) {
 		nmg_vertex_gv(*verts[2], pt);
 	    }
-	    if (nmg_calc_face_g(fu)) {
+	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 		bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3652,7 +3652,7 @@ tesselate_pipe_end(
 	return;
     }
     fu = fu->fumate_p;
-    if (nmg_calc_face_g(fu)) {
+    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 	bu_log("tesselate_pipe_end: nmg_calc_face_g failed\n");
 	nmg_kfu(fu);
 	return;
@@ -3889,7 +3889,7 @@ rt_pipe_tess(
     bu_free((char *)inner_loop, "rt_pipe_tess: inner_loop");
 
     nmg_rebound(m, tol);
-    nmg_edge_fuse(&s->l.magic, tol);
+    nmg_edge_fuse(&s->l.magic, &RTG.rtg_vlfree, tol);
 
     return 0;
 }
@@ -4080,7 +4080,7 @@ rt_pipe_import5(
     double_count = pipe_count * 6;
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
     total_count = 4 + byte_count;
-    BU_ASSERT_LONG(ep->ext_nbytes, == , total_count);
+    BU_ASSERT(ep->ext_nbytes ==  total_count);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;

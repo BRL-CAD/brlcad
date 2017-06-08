@@ -40,8 +40,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/exit.h"
 
 
 #define IBUFSIZE 3*1024		/* Max read size in rgb pixels */

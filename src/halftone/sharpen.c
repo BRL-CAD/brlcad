@@ -57,7 +57,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "bu/log.h"
+#include "bu/exit.h"
 #include "vmath.h"
 
 

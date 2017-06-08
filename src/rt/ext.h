@@ -149,6 +149,8 @@ extern void clt_run(int cur_pixel, int last_pixel);
 
 /* opt.c */
 extern int get_args(int argc, const char *argv[]);
+extern void color_hook(const struct bu_structparse *sp, const char *name, void *base, const char *value, void *data);
+
 
 /* view.c */
 extern void usage(const char *argv0);

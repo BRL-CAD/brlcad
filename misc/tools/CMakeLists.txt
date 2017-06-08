@@ -36,7 +36,6 @@ foreach(ITEM ${dlists})
   CMAKEFILES(${dlist})
 endforeach(ITEM ${dlists})
 
-
 # For those wanting to use a system version of the LEMON parser
 # generator from sqlite, remember that the presence of /usr/bin/lemon
 # is not enough.  LEMON needs a template file, lempar.c, and by
@@ -70,6 +69,7 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY_EXECUTABLE(lemon lemon "BRLCAD_LEVEL2" lemon_ALIASES lemon_DESCRIPTION)
 if("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUNDLED")
   set(LEMON_TEMPLATE "${BRLCAD_SOURCE_DIR}/misc/tools/lemon/lempar.c" CACHE STRING "Lemon template file" FORCE)
+  set(LEMON_EXECUTABLE_TARGET "lemon" CACHE STRING "lemon target" FORCE)
 endif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUNDLED")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/lemon/Makefile)
 # Make sure we load FindLEMON.cmake to be able to define LEMON targets.
@@ -88,6 +88,7 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY_EXECUTABLE(re2c re2c "BRLCAD_LEVEL2" re2c_ALIASES re2c_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/Makefile)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/re2cParse_parser/parser.yy)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/re2cParse_bootstrap_parser/parser.yy)
 SetTargetFolder(re2c "Compilation Utilities")
 SetTargetFolder(re2c_bootstrap "Compilation Utilities")
 # Make sure we load FindRE2C.cmake to be able to define RE2C targets.

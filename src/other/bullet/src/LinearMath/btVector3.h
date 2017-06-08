@@ -22,6 +22,18 @@ subject to the following restrictions:
 #include "btMinMax.h"
 #include "btAlignedAllocator.h"
 
+#ifndef BULLET_EXPORT
+#  if defined(BULLET_DLL_EXPORTS) && defined(BULLET_DLL_IMPORTS)
+#    error "Only BULLET_DLL_EXPORTS or BULLET_DLL_IMPORTS can be defined, not both."
+#  elif defined(BULLET_DLL_EXPORTS)
+#    define BULLET_EXPORT __declspec(dllexport)
+#  elif defined(BULLET_DLL_IMPORTS)
+#    define BULLET_EXPORT __declspec(dllimport)
+#  else
+#    define BULLET_EXPORT
+#  endif
+#endif
+
 #ifdef BT_USE_DOUBLE_PRECISION
 #define btVector3Data btVector3DoubleData
 #define btVector3DataName "btVector3DoubleData"
@@ -80,7 +92,7 @@ const int32x4_t ATTRIBUTE_ALIGNED16(btv3AbsMask) = (int32x4_t){0x7FFFFFFF, 0x7FF
  * It has an un-used w component to suit 16-byte alignment when btVector3 is stored in containers. This extra component can be used by derived classes (Quaternion?) or by user
  * Ideally, this class should be replaced by a platform optimized SIMD version that keeps the data in registers
  */
-ATTRIBUTE_ALIGNED16(class) btVector3
+ATTRIBUTE_ALIGNED16(class) BULLET_EXPORT btVector3
 {
 public:
 
@@ -297,7 +309,7 @@ public:
 	SIMD_FORCE_INLINE btVector3& normalize() 
 	{
 		
-		btAssert(length() != btScalar(0));
+		btAssert(!fuzzyZero());
 
 #if defined(BT_USE_SSE_IN_API) && defined (BT_USE_SSE)		
         // dot product first
@@ -501,10 +513,10 @@ public:
 		__m128 tmp3 = _mm_add_ps(r0,r1);
 		mVec128 = tmp3;
 #elif defined(BT_USE_NEON)
-		mVec128 = vsubq_f32(v1.mVec128, v0.mVec128);
-		mVec128 = vmulq_n_f32(mVec128, rt);
-		mVec128 = vaddq_f32(mVec128, v0.mVec128);
-#else	
+		float32x4_t vl = vsubq_f32(v1.mVec128, v0.mVec128);
+		vl = vmulq_n_f32(vl, rt);
+		mVec128 = vaddq_f32(vl, v0.mVec128);
+#else
 		btScalar s = btScalar(1.0) - rt;
 		m_floats[0] = s * v0.m_floats[0] + rt * v1.m_floats[0];
 		m_floats[1] = s * v0.m_floats[1] + rt * v1.m_floats[1];
@@ -685,9 +697,10 @@ public:
 		return m_floats[0] == btScalar(0) && m_floats[1] == btScalar(0) && m_floats[2] == btScalar(0);
 	}
 
+
 	SIMD_FORCE_INLINE bool fuzzyZero() const 
 	{
-		return length2() < SIMD_EPSILON;
+		return length2() < SIMD_EPSILON*SIMD_EPSILON;
 	}
 
 	SIMD_FORCE_INLINE	void	serialize(struct	btVector3Data& dataOut) const;
@@ -950,9 +963,9 @@ SIMD_FORCE_INLINE btScalar btVector3::distance(const btVector3& v) const
 
 SIMD_FORCE_INLINE btVector3 btVector3::normalized() const
 {
-	btVector3 norm = *this;
+	btVector3 nrm = *this;
 
-	return norm.normalize();
+	return nrm.normalize();
 } 
 
 SIMD_FORCE_INLINE btVector3 btVector3::rotate( const btVector3& wAxis, const btScalar _angle ) const
@@ -1010,21 +1023,21 @@ SIMD_FORCE_INLINE   long    btVector3::maxDot( const btVector3 *array, long arra
     if( array_count < scalar_cutoff )	
 #endif
     {
-        btScalar maxDot = -SIMD_INFINITY;
+        btScalar maxDot1 = -SIMD_INFINITY;
         int i = 0;
         int ptIndex = -1;
         for( i = 0; i < array_count; i++ )
         {
             btScalar dot = array[i].dot(*this);
             
-            if( dot > maxDot )
+            if( dot > maxDot1 )
             {
-                maxDot = dot;
+                maxDot1 = dot;
                 ptIndex = i;
             }
         }
         
-        dotOut = maxDot;
+        dotOut = maxDot1;
         return ptIndex;
     }
 #if (defined BT_USE_SSE && defined BT_USE_SIMD_VECTOR3 && defined BT_USE_SSE_IN_API) || defined (BT_USE_NEON)

@@ -19,11 +19,7 @@
 #
 ###
 #
-#			A P P L Y . T C L
-#
 #	Procedures to apply commands to one or more display managers.
-#
-#	Author - Robert G. Parker
 #
 
 proc mged_apply { id cmd } {

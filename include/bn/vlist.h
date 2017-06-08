@@ -22,6 +22,7 @@
 #define BN_VLIST_H
 
 #include "common.h"
+#include <stdio.h> /* for FILE */
 #include "vmath.h"
 #include "bu/magic.h"
 #include "bu/list.h"
@@ -278,6 +279,20 @@ BN_EXPORT extern struct bu_list *bn_vlblock_find(struct bn_vlblock *vbp,
 
 BN_EXPORT void bn_vlist_rpp(struct bu_list *vlists, struct bu_list *hd, const point_t minn, const point_t maxx);
 
+/**
+ * Output a bn_vlblock object in extended UNIX-plot format, including
+ * color.
+ */
+BN_EXPORT extern void bn_plot_vlblock(FILE *fp,
+                                      const struct bn_vlblock *vbp);
+
+/**
+ * Output a vlist as an extended 3-D floating point UNIX-Plot file.
+ * You provide the file.  Uses libplot3 routines to create the
+ * UNIX-Plot output.
+ */
+BN_EXPORT extern void bn_vlist_to_uplot(FILE *fp,
+                                        const struct bu_list *vhead);
 
 /** @} */
 

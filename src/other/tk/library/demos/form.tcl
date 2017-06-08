@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a simple form with a bunch
 # of entry widgets.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

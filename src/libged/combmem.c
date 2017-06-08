@@ -389,8 +389,8 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	char op = '\0';
 
 	RT_CK_TREE(itp);
-	BU_ASSERT_LONG(itp->tr_op, ==, OP_DB_LEAF);
-	BU_ASSERT_PTR(itp->tr_l.tl_name, !=, NULL);
+	BU_ASSERT(itp->tr_op == OP_DB_LEAF);
+	BU_ASSERT(itp->tr_l.tl_name != NULL);
 
 	switch (rt_tree_array[i].tl_op) {
 	    case OP_INTERSECT:

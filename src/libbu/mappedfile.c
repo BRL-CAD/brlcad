@@ -436,8 +436,8 @@ bu_open_mapped_file_with_path(char *const *path, const char *name, const char *a
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *ret;
 
-    BU_ASSERT_PTR(name, !=, NULL);
-    BU_ASSERT_PTR(pathp, !=, NULL);
+    BU_ASSERT(name != NULL);
+    BU_ASSERT(pathp != NULL);
 
     /* Do not resort to path for a rooted filename */
     if (name[0] == '/')

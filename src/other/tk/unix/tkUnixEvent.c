@@ -8,12 +8,15 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkUnixInt.h"
 #include <signal.h>
+#ifdef HAVE_XKBKEYCODETOKEYSYM
+#  include <X11/XKBlib.h>
+#else
+#  define XkbOpenDisplay(D,V,E,M,m,R) ((V),(E),(M),(m),(R),(NULL))
+#endif
 
 /*
  * The following static indicates whether this module has been initialized in
@@ -118,7 +121,33 @@ TkpOpenDisplay(
     CONST char *displayNameStr)
 {
     TkDisplay *dispPtr;
-    Display *display = XOpenDisplay(displayNameStr);
+    Display *display;
+    int event = 0;
+    int error = 0;
+    int major = 1;
+    int minor = 0;
+    int reason = 0;
+    unsigned int use_xkb = 0;
+
+    /*
+    ** Bug [3607830]: Before using Xkb, it must be initialized and confirmed
+    **                that the serve supports it.  The XkbOpenDisplay call
+    **                will perform this check and return NULL if the extension
+    **                is not supported.
+    **
+    ** Work around un-const-ified Xkb headers using (char *) cast.
+    */
+    display = XkbOpenDisplay((char *)displayNameStr, &event, &error, &major,
+	    &minor, &reason);
+
+    if (display == NULL) {
+	/*fprintf(stderr,"event=%d error=%d major=%d minor=%d reason=%d\nDisabling xkb\n",
+	event, error, major, minor, reason);*/
+	display  = XOpenDisplay(displayNameStr);
+    } else {
+	use_xkb = TK_DISPLAY_USE_XKB;
+	/*fprintf(stderr, "Using xkb %d.%d\n", major, minor);*/
+    }
 
     if (display == NULL) {
 	return NULL;
@@ -126,6 +155,7 @@ TkpOpenDisplay(
     dispPtr = (TkDisplay *) ckalloc(sizeof(TkDisplay));
     memset(dispPtr, 0, sizeof(TkDisplay));
     dispPtr->display = display;
+    dispPtr->flags |= use_xkb;
 #ifdef TK_USE_INPUT_METHODS
     OpenIM(dispPtr);
 #endif
@@ -318,6 +348,7 @@ TransferXEventsToTcl(
 	if (event.type == KeyPress || event.type == KeyRelease) {
 	    event.k.charValuePtr = NULL;
 	    event.k.charValueLen = 0;
+	    event.k.keysym = NoSymbol;
 
 	    /*
 	     * Force the calling of the input method engine now. The results

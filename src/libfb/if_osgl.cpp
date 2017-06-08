@@ -38,12 +38,14 @@
 #ifdef IF_OSGL
 
 #include "common.h"
+
+#include <osg/GLExtensions>
+
+
+#include "fb/fb_osgl.h"
 extern "C" {
 #include "fb_private.h"
 }
-#include "fb/fb_osgl.h"
-
-#include <osg/GLExtensions>
 
 #define CJDEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0

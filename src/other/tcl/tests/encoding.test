@@ -7,8 +7,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2
 
@@ -588,6 +586,14 @@ file delete {*}[glob -directory [temporaryDirectory] *.chars *.tcltestout]
 
 # EscapeFreeProc, GetTableEncoding, unilen
 # are fully tested by the rest of this file
+
+test encoding-27.1 {encoding dirs basic behavior} -returnCodes error -body {
+    encoding dirs ? ?
+} -result {wrong # args: should be "encoding dirs ?dirList?"}
+test encoding-27.2 {encoding dirs basic behavior} -returnCodes error -body {
+    encoding dirs "\{not a list"
+} -result "expected directory list but got \"\{not a list\""
+
 }
 runtests
 

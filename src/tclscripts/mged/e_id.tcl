@@ -19,12 +19,9 @@
 #
 ###
 #
-#				E _ I D
-#
 #	TCL macro for MGED(1) to edit all objects w/ specified ident numbers
 #
 #	Usage -  'e_id ident[-ident] ...'
-#	Author - Paul Tanenbaum
 #
 #	Grab the output of MGED's 'whichid' command, and use it to construct
 #	an invocation of its 'e' command to display exactly the objects with

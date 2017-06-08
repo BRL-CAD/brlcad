@@ -92,8 +92,8 @@
       are combined using boolean operations to form regions of homogeneous material.
     </para>
     <para>
-      The database is organized as a <emphasis>directed acyclic graph</emphasis> (DAG), which
-      comprises
+      The database is organized as a <emphasis>directed acyclic graph</emphasis> (DAG), which is
+      comprised of:
 
       <itemizedlist>
 	<listitem>
@@ -107,7 +107,7 @@
 	  </para>
 	</listitem>
 	<listitem>
-	  <para><emphasis>arcs</emphasis> - contain boolean operators and 4x4 homogeneous transformation matrices.</para>
+	  <para><emphasis>arcs</emphasis> - containing boolean operators and 4x4 homogeneous transformation matrices.</para>
 	</listitem>
       </itemizedlist>
     </para>
@@ -1598,14 +1598,6 @@
 	this will simply be: <literallayout class="normal">aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL</literallayout>
 	where NULL represents a byte with all bits zero. The NULL in
 	place of anameN+1 signals the end of the ASCII attribute data.
-      </para>
-
-      <para>
-	PROPOSED: A second type of attribute has an ASCII key but a binary value.
-        Such attributes follow the ASCII-valued ones after the double NULLs:
-	<literallayout class="normal">anameN+1 NULL uintN &lt;uintN  binary bytes&gt; [...0 or more binary attribute pairs]</literallayout>
-        where, for each binary attribute pair, the uintN is of size AWid and is
-        the length of the binary value for its ASCII key.
       </para>
 
       <para>

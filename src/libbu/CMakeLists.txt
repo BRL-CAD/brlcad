@@ -2,11 +2,21 @@
 set(BU_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
-  ${TCL_INCLUDE_DIRS}
   )
 
+if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+  set(BU_INCLUDE_DIRS ${BU_INCLUDE_DIRS} ${BSON_INCLUDE_DIR})
+endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+
 # locally used but not needed by users of the library
-set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+set(BU_LOCAL_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/y2038
+  ${REGEX_INCLUDE_DIR}
+  )
+if (${UUID_INCLUDE_DIR})
+  set(BU_LOCAL_INCLUDE_DIRS ${BU_LOCAL_INCLUDE_DIRS} ${UUID_INCLUDE_DIR})
+endif (${UUID_INCLUDE_DIR})
 
 BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 
@@ -23,6 +33,12 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 
 # We do want to install the mime header
 install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
+
+# Year 2038+ support lib
+BRLCAD_ADDLIB(y2038 "y2038/time64.c" "")
+if(CPP_DLL_DEFINES)
+  set_property(TARGET y2038 APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_EXPORTS")
+endif(CPP_DLL_DEFINES)
 
 set(LIBBU_SOURCES
   affinity.c
@@ -73,6 +89,7 @@ set(LIBBU_SOURCES
   mappedfile.c
   ${BU_MIME_C_FILE}
   mread.c
+  namegen.c
   observer.c
   opt.c
   parallel.c
@@ -82,16 +99,7 @@ set(LIBBU_SOURCES
   process.c
   progname.c
   ptbl.c
-  rb_create.c
-  rb_delete.c
-  rb_diag.c
-  rb_extreme.c
-  rb_free.c
-  rb_insert.c
-  rb_order_stats.c
-  rb_rotate.c
-  rb_search.c
-  rb_walk.c
+  redblack.c
   realpath.c
   semaphore.c
   sha1.c
@@ -114,7 +122,7 @@ set(LIBBU_SOURCES
   xdr.c
   )
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${UUID_LIBRARY};${M_LIBRARY};y2038")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY};y2038")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
   set_property(TARGET libbu APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_IMPORTS")
@@ -123,19 +131,25 @@ endif(CPP_DLL_DEFINES)
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
 
-add_subdirectory(tests)
-add_subdirectory(y2038)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+  add_subdirectory(tests)
+endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 set(bu_ignore_files
   bitv.h
   charclass.h
   mime.cmake
   parallel.h
-  rb.h
   sha1.h
-  uce-dirent.h
   vfont.h
   vls_vprintf.h
+  TODO.binary_attributes
+  uce-dirent.h
+  y2038/LICENSE
+  y2038/README.txt
+  y2038/time64.h
+  y2038/time64_config.h
+  y2038/time64_limits.h
   )
 CMAKEFILES(${bu_ignore_files})
 

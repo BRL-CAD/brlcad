@@ -19,12 +19,6 @@
 #
 ###
 #
-#			L I S T . T C L
-#
-#  Author -
-#	Robert G. Parker
-#
-#  Description -
 #	Tcl routines for utilizing Tcl's listbox.
 #
 

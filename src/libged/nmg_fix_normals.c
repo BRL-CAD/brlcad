@@ -88,7 +88,7 @@ ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
     /* hum, here we go */
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
 	for (BU_LIST_FOR(s, shell, &r->s_hd))
-	    nmg_fix_normals(s, &tol);
+	    nmg_fix_normals(s, &RTG.rtg_vlfree, &tol);
 
     return GED_OK;
 }

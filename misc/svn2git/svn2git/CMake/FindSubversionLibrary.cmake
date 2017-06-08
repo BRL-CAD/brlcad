@@ -1,8 +1,8 @@
 # - Try to find subversion libraries
 #
-#  This macro uses the following variables as preference for searching the
+#  This macro uses the following variables as preference for seraching the
 #  headers and includes:
-#  SUBVERSION_INSTALL_PATH - root directory where subversion is installed (usually /usr)
+#  SUBVERSION_INSTALL_PATH - root directory where subversion is installed (ususally /usr)
 #  APR_CONFIG_PATH - path where apr-config or apr-1-config are located
 #  APU_CONFIG_PATH - path where apu-config or apu-1-config are located
 #
@@ -10,6 +10,13 @@
 #  SUBVERSION_FOUND - system has subversion libraries
 #  SUBVERSION_INCLUDE_DIRS - the include directories to link to subversion
 #  SUBVERSION_LIBRARIES - The libraries needed to link to subversion
+#  Copyright (c) 2009      Lambert CLARA <lambert.clara@yahoo.fr>
+#  Copyright (c) 2009      Bernhard Rosenkraenzer <ber@arklinux.org>
+#  Copyright (c) 2007-2009 Andreas Pakulat <apaku@gmx.de>
+#
+#  Redistribution AND use is allowed according to the terms of the New
+#  BSD license.
+#  For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
 IF(SUBVERSION_INCLUDE_DIRS AND SUBVERSION_LIBRARIES)
     # Already in cache, be silent
@@ -90,7 +97,7 @@ IF (NOT WIN32)
             ENDIF(${_ARG} MATCHES "^-l")
          ENDFOREACH(_ARG)
     ENDIF(NOT APR_CONFIG)
-
+    
     IF(NOT APU_CONFIG)
         MESSAGE(STATUS "no apu-config found, subversion support will be disabled")
         SET(SUBVERSION_FOUND false)
@@ -118,22 +125,22 @@ IF (NOT WIN32)
         ENDFOREACH(_ARG)
     ENDIF(NOT APU_CONFIG)
 ELSE (NOT WIN32)
-#search libraries for Windows
+#search libaries for Windows
 #this needs more work
 
-# search for paths
+# search for pathes
 
     MACRO(FIND_SUB_INC targetvar libname pathadd)
       IF (SUBVERSION_INSTALL_PATH)
           FIND_PATH(${targetvar} ${libname}
               PATHS
               ${SUBVERSION_INSTALL_PATH}/include${pathadd}
-              "$ENV{ProgramFiles}/Subversion/include"${pathadd}
+              "$ENV{ProgramFiles}/Subversion/include${pathadd}"
           )
       ELSE(SUBVERSION_INSTALL_PATH)
           FIND_LIBRARY(${targetvar} ${libname}
               PATHS
-              "$ENV{ProgramFiles}/Subversion/include"${pathadd}
+              "$ENV{ProgramFiles}/Subversion/include${pathadd}"
           )
       ENDIF(SUBVERSION_INSTALL_PATH)
     ENDMACRO(FIND_SUB_INC)
@@ -143,12 +150,12 @@ ELSE (NOT WIN32)
           FIND_LIBRARY(${targetvar} ${libname}
               PATHS
               ${SUBVERSION_INSTALL_PATH}/lib
-              "$ENV{ProgramFiles}/Subversion/lib
+              "$ENV{ProgramFiles}/Subversion/lib"
           )
       ELSE(SUBVERSION_INSTALL_PATH)
           FIND_LIBRARY(${targetvar} ${libname}
               PATHS
-              "$ENV{ProgramFiles}/Subversion/lib
+              "$ENV{ProgramFiles}/Subversion/lib"
           )
       ENDIF(SUBVERSION_INSTALL_PATH)
     ENDMACRO(FIND_SUB_LIB)
@@ -454,4 +461,3 @@ MARK_AS_ADVANCED(
 
 
 #kate: space-indent on; indent-width 2; tab-width: 2; replace-tabs on; auto-insert-doxygen on
-

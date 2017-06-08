@@ -100,7 +100,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 
     // Now, any non-linear edge that isn't degenerate should be supplying a
     // plane.  (We don't currently handle non-planar edges like those from a
-    // sphere subtracted from a cylinder.)  Liner curves are saved - they need
+    // sphere subtracted from a cylinder.) Liner curves are saved - they need
     // special interpretation for cylinders and cones (spheres shouldn't have
     // any.)
     ON_SimpleArray<ON_Plane> non_linear_edge_planes;
@@ -298,7 +298,6 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
     if (need_arbn == -1) return 0;
 
 
-
     if (!need_arbn) {
 	//bu_log("Perfect implicit found in %s\n", bu_vls_addr(data->i->key));
 	return 1;
@@ -356,7 +355,7 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	sub_param->plane_cnt = arbn_planes.Count();
 	for (int i = 0; i < arbn_planes.Count(); i++) {
 	    ON_Plane p = arbn_planes[i];
-	    double d = p.DistanceTo(ON_3dPoint(0,0,0));
+	    double d = p.DistanceTo(ON_3dPoint(0, 0, 0));
 	    sub_param->planes[i][0] = p.Normal().x;
 	    sub_param->planes[i][1] = p.Normal().y;
 	    sub_param->planes[i][2] = p.Normal().z;

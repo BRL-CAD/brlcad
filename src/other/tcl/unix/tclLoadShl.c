@@ -9,20 +9,9 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include <dl.h>
-
-/*
- * On some HP machines, dl.h defines EXTERN; remove that definition.
- */
-
-#ifdef EXTERN
-#   undef EXTERN
-#endif
-
 #include "tclInt.h"
 
 /*

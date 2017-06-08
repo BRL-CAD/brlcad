@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH ttk::spinbox n 8.5.9 Tk "Tk Themed Widget"
+.so man.macros
 .BS
 .SH NAME
 ttk::spinbox \- Selecting text field widget
@@ -79,6 +77,11 @@ Set the spinbox string to \fIvalue\fR. If a \fI\-format\fR option has
 been configured then this format will be applied. If formatting fails
 or is not set or the \fI\-values\fR option has been used then the value
 is set directly.
+.SH "VIRTUAL EVENTS"
+.PP
+The spinbox widget generates a \fB<<Increment>>\fR virtual event when
+the user presses <Up>, and a \fB<<Decrement>>\fR virtual event when the
+user presses <Down>.
 .SH "SEE ALSO"
 ttk::widget(n), ttk::entry(n), spinbox(n)
 .SH KEYWORDS

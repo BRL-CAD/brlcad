@@ -1163,8 +1163,8 @@
 			fileEncoding = 5;
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.c.h;
-			name = regex.h;
-			path = ../generic/regex.h;
+			name = regextcl.h;
+			path = ../generic/regextcl.h;
 			refType = 2;
 			sourceTree = SOURCE_ROOT;
 		};

@@ -12,8 +12,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -178,6 +176,11 @@ test proc-3.6 {TclObjInterpProc, proper quoting of proc name, Bug 942757} {
     proc {a b  c} {x} {info commands 3m}
     list [catch {{a b  c}} msg] $msg
 } {1 {wrong # args: should be "{a b  c} x"}}
+
+test proc-3.7 {TclObjInterpProc, wrong num args, Bug 3366265} {
+    proc {} {x} {}
+    list [catch {{}} msg] $msg
+} {1 {wrong # args: should be "{} x"}}
 
 catch {namespace delete {*}[namespace children :: test_ns_*]}
 catch {rename p ""}
@@ -388,6 +391,14 @@ test proc-7.3 {Returning loop exception from redefined cmd: Bug 729692} {
     set res
 } {0 4}
 
+test proc-7.4 {Proc struct outlives its interp: Bug 3532959} {
+    set lambda x
+    lappend lambda {set a 1}
+    interp create slave
+    slave eval [list apply $lambda foo]
+    interp delete slave
+    unset lambda
+} {}
 
 
 # cleanup

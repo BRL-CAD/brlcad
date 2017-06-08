@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a simple canvas that can be
 # scrolled in two dimensions.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

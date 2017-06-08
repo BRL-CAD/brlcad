@@ -8,6 +8,7 @@ set(G_BENCHMARK_MODELS
 )
 
 set(G_SAMPLE_MODELS
+  aet.asc
   axis.asc
   boolean-ops.asc
   castle.asc
@@ -92,6 +93,7 @@ if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
    BRLCAD_ADDDATA(terra.dsp db)
 endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 CMAKEFILES(
+  aet.rt
   cornell.rt
   cube.rt
   db.php

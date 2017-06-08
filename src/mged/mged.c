@@ -1532,12 +1532,25 @@ main(int argc, char *argv[])
 
     } /* interactive */
 
+    /* XXX total hack that fixes a dm init issue on Mac OS X where the
+     * dm first opens filled with garbage.
+     */
+    {
+	unsigned char *dm_bg = dm_get_bg(dmp);
+	if (dm_bg) {
+	    dm_set_bg(dmp, dm_bg[0], dm_bg[1], dm_bg[2]);
+	} else {
+	    dm_set_bg(dmp, 0, 0, 0);
+	}
+    }
+
     /* initialize a display manager */
     if (interactive && classic_mged) {
-	if (!attach)
+	if (!attach) {
 	    get_attached();
-	else
+	} else {
 	    attach_display_manager(INTERP, attach, dpy_string);
+	}
     }
 
     /* --- Now safe to process geometry. --- */
@@ -1676,7 +1689,8 @@ main(int argc, char *argv[])
 	/* This test stops optimizers from complaining about an
 	 * infinite loop.
 	 */
-	if ((rateflag = event_check(rateflag)) < 0) break;
+	if ((rateflag = event_check(rateflag)) < 0)
+	    break;
 
 	/*
 	 * Cause the control portion of the displaylist to be updated
@@ -2884,6 +2898,9 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     Tcl_ResetResult(interpreter);
     Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
     bu_vls_free(&msg);
+
+    /* Update the background colors now that we have a file open */
+    cs_set_bg(NULL, NULL, NULL, NULL, NULL);
 
     return TCL_OK;
 }

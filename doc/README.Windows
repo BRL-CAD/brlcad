@@ -43,9 +43,15 @@ BRL-CAD on Windows will generate over 800 of them) and a large list of
 targets will appear.  To build everything look for a target named
 ALL_BUILD.  Start compiling that target.
 
-Once compilation is successfully complete, you may want to produce an
-NSIS installer.  If so, locate a target named PACKAGE and run it.  The
-end result should be an .exe file capable of installing BRL-CAD.
+Once compilation is successfully complete, you can find the compiled
+executables in a 'bin' directory in your build directory.  For
+example, mged.exe would be in brlcad-svn-trunk\.build\Debug\bin if
+brlcad-svn-trunk\.build is the build directory specified to CMake and
+CMAKE_BUILD_TYPE was set to Debug.
+
+You may want to produce an NSIS installer.  If so, locate a target 
+named PACKAGE and run it.  The end result should be an .exe file 
+capable of installing BRL-CAD.
 
 MINGW (WORK IN PROGRESS - THIS DOES NOT YET WORK!!!)
 -----

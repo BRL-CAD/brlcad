@@ -5,8 +5,6 @@
 # Copyright (c) 1996-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -487,8 +485,8 @@ test canvText-17.1 {TextToPostscript procedure} {
     .c itemconfig test -font $font -text "00000000" -width [expr 3*$ax]
     .c itemconfig test -anchor n -fill black
     set x [.c postscript]
-    set x [string range $x [string first "/Courier-Oblique" $x] end]
-} "/Courier-Oblique findfont [font actual $font -size] scalefont ISOEncode setfont
+    set x [string range $x [string first "findfont " $x] end]
+} "findfont [font actual $font -size] scalefont ISOEncode setfont
 0.000 0.000 0.000 setrgbcolor AdjustColor
 100 200 \[
 \[(000)\]
@@ -503,7 +501,7 @@ end
 %%EOF
 "
 
-test canvText-18.1 {bug fix 2525, find enclosed on text with newlines} {
+test canvText-18.1 {bug fix 2525, find enclosed on text with newlines} -body {
     catch {destroy .c}
     canvas .c
     pack .c
@@ -515,7 +513,9 @@ test canvText-18.1 {bug fix 2525, find enclosed on text with newlines} {
     incr y2
     update
     .c find enclosed 99 99 [expr $x2 + $i] [expr $y2 + 1]
-} 1
+} -cleanup {
+    unset -nocomplain bbox x2 y2
+} -result 1
 
 test canvText-19.1 {patch 1006286, leading space caused wrap under Win32} {
     catch {destroy .c}

@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -1524,8 +1522,8 @@ FreeFontObjProc(
 	fontPtr->objRefCount--;
 	if ((fontPtr->resourceRefCount == 0) && (fontPtr->objRefCount == 0)) {
 	    ckfree((char *) fontPtr);
-	    objPtr->internalRep.twoPtrValue.ptr1 = NULL;
 	}
+	objPtr->internalRep.twoPtrValue.ptr1 = NULL;
     }
 }
 
@@ -2071,14 +2069,14 @@ Tk_ComputeTextLayout(
 		NewChunk(&layoutPtr, &maxChunks, start, 1, curX, newX,
 			baseline)->numDisplayChars = -1;
 		start++;
+		curX = newX;
+		flags &= ~TK_AT_LEAST_ONE;
 		if ((start < end) &&
 			((wrapLength <= 0) || (newX <= wrapLength))) {
 		    /*
 		     * More chars can still fit on this line.
 		     */
 
-		    curX = newX;
-		    flags &= ~TK_AT_LEAST_ONE;
 		    continue;
 		}
 	    } else {
@@ -3017,7 +3015,6 @@ ConfigAttributesObj(
 
     for (i = 0; i < objc; i += 2) {
 	optionPtr = objv[i];
-	valuePtr = objv[i + 1];
 
 	if (Tcl_GetIndexFromObj(interp, optionPtr, fontOpt, "option", 1,
 		&index) != TCL_OK) {
@@ -3036,6 +3033,7 @@ ConfigAttributesObj(
 	    }
 	    return TCL_ERROR;
 	}
+	valuePtr = objv[i + 1];
 
 	switch (index) {
 	case FONT_FAMILY:

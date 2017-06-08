@@ -186,6 +186,38 @@ struct rpc_specific {
     mat_t rpc_invRoS;	/* invRot(Scale(vect)) */
 };
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_rpc_specific {
+    cl_double rpc_V[3];		/* vector to rpc origin */
+    cl_double rpc_Bunit[3];	/* unit B vector */
+    cl_double rpc_Hunit[3];	/* unit H vector */
+    cl_double rpc_Runit[3];	/* unit vector, B x H */
+    cl_double rpc_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double rpc_invRoS[16];	/* invRot(Scale(vect)) */
+};
+ 
+size_t
+clt_rpc_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct rpc_specific *rpc =
+    (struct rpc_specific *)stp->st_specific;
+    struct clt_rpc_specific *args;
+    
+    const size_t size = sizeof(*args);
+    args = (struct clt_rpc_specific*)bu_pool_alloc(pool, 1, size);
+    
+    VMOVE(args->rpc_V, rpc->rpc_V);
+    VMOVE(args->rpc_Bunit, rpc->rpc_Bunit);
+    VMOVE(args->rpc_Hunit, rpc->rpc_Hunit);
+    VMOVE(args->rpc_Runit, rpc->rpc_Runit);
+    MAT_COPY(args->rpc_SoR, rpc->rpc_SoR);
+    MAT_COPY(args->rpc_invRoS, rpc->rpc_invRoS);
+    
+    return size;
+}
+
+#endif /* USE_OPENCL */
 
 const struct bu_structparse rt_rpc_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_rpc_internal, rpc_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -1178,12 +1210,12 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Front face topology.  Verts are considered to go CCW */
     outfaceuses[0] = nmg_cface(s, vfront, n);
 
-    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic);
+    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic,&RTG.rtg_vlfree);
 
     /* Back face topology.  Verts must go in opposite dir (CW) */
     outfaceuses[1] = nmg_cface(s, vtemp, n);
 
-    (void)nmg_mark_edges_real(&outfaceuses[1]->l.magic);
+    (void)nmg_mark_edges_real(&outfaceuses[1]->l.magic,&RTG.rtg_vlfree);
 
     for (i=0; i<n; i++) vback[i] = vtemp[n-1-i];
 
@@ -1203,7 +1235,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	outfaceuses[2+i] = nmg_cface(s, vertlist, 4);
     }
 
-    (void)nmg_mark_edges_real(&outfaceuses[n+1]->l.magic);
+    (void)nmg_mark_edges_real(&outfaceuses[n+1]->l.magic,&RTG.rtg_vlfree);
 
     for (i=0; i<n; i++) {
 	NMG_CK_VERTEX(vfront[i]);
@@ -1277,7 +1309,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, n+2, tol);
+    nmg_gluefaces(outfaceuses, n+2, &RTG.rtg_vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
@@ -1423,7 +1455,7 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 10);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 10);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;

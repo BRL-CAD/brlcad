@@ -25,12 +25,21 @@
 
 
 #include "common.h"
-
-#include "gcv/api.h"
-
-#include "bu/debug.h"
-
 #include <string.h>
+
+#include "vmath.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "rt/db5.h"
+#include "rt/db_instance.h"
+#include "rt/db_io.h"
+#include "rt/wdb.h"
+#include "rt/search.h"
+#include "rt/global.h"
+#include "gcv/api.h"
 
 
 HIDDEN int
@@ -112,10 +121,14 @@ _gcv_filter_register(struct bu_ptbl *filter_table,
 
 	case GCV_FILTER_READ:
 	case GCV_FILTER_WRITE:
+	    /* One mime_type isn't going to cut it for things
+	     * like GDAL or the asset import library... need to
+	     * rethink this */
+#if 0
 	    if (filter->mime_type == BU_MIME_MODEL_AUTO
 		|| filter->mime_type == BU_MIME_MODEL_UNKNOWN)
 		bu_bomb("invalid mime_type");
-
+#endif
 	    break;
 
 	default:
@@ -264,6 +277,7 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 {
     void *info_val;
     const struct gcv_plugin *(*plugin_info)();
+    const struct gcv_plugin *plugin;
     const struct gcv_filter * const *current;
     void *dl_handle;
 
@@ -290,12 +304,14 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	bu_bomb("could not find 'gcv_plugin_info' symbol in plugin");
     }
 
-    if (!plugin_info()->filters) {
+    plugin = plugin_info();
+
+    if (!plugin || !plugin->filters) {
 	bu_log("invalid gcv_plugin in '%s'\n", path);
 	bu_bomb("invalid gcv_plugin");
     }
 
-    for (current = plugin_info()->filters; *current; ++current)
+    for (current = plugin->filters; *current; ++current)
 	_gcv_filter_register(filter_table, *current);
 }
 
@@ -418,7 +434,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 {
     const int bu_debug_orig = bu_debug;
     const uint32_t rt_debug_orig = RTG.debug;
-    const uint32_t nmg_debug_orig = RTG.NMG_debug;
+    const uint32_t nmg_debug_orig = nmg_debug;
     int dbi_read_only_orig;
 
     int result;
@@ -460,7 +476,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 
     bu_debug |= gcv_options->bu_debug_flag;
     RTG.debug |= gcv_options->rt_debug_flag;
-    RTG.NMG_debug |= gcv_options->nmg_debug_flag;
+    nmg_debug |= gcv_options->nmg_debug_flag;
 
     dbi_read_only_orig = context->dbip->dbi_read_only;
 
@@ -490,7 +506,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 
     bu_debug = bu_debug_orig;
     RTG.debug = rt_debug_orig;
-    RTG.NMG_debug = nmg_debug_orig;
+    nmg_debug = nmg_debug_orig;
     context->dbip->dbi_read_only = dbi_read_only_orig;
 
     _gcv_filter_options_free(filter, options_data);

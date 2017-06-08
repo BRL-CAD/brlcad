@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -287,6 +285,7 @@ TkTextSetMark(
 
 	if (markPtr == textPtr->insertMarkPtr) {
 	    TkTextIndex index, index2;
+            int nblines;
 
 	    TkTextMarkSegToIndex(textPtr, textPtr->insertMarkPtr, &index);
 	    TkTextIndexForwChars(NULL,&index, 1, &index2, COUNT_INDICES);
@@ -297,8 +296,17 @@ TkTextSetMark(
 	     */
 
 	    TkTextChanged(NULL, textPtr, &index, &index2);
-	    if (TkBTreeLinesTo(textPtr, indexPtr->linePtr) ==
-		    TkBTreeNumLines(textPtr->sharedTextPtr->tree, textPtr))  {
+
+            /*
+             * The number of lines in the widget is zero if and only if it is
+             * a partial peer with -startline == -endline, i.e. an empty
+             * peer. In this case the mark shall be set exactly at the given
+             * index, and not one character backwards (bug 3487407).
+             */
+
+	    nblines = TkBTreeNumLines(textPtr->sharedTextPtr->tree, textPtr);
+	    if ((TkBTreeLinesTo(textPtr, indexPtr->linePtr) == nblines)
+		    && (nblines > 0))  {
 		TkTextIndexBackChars(NULL,indexPtr, 1, &insertIndex,
 			COUNT_INDICES);
 		indexPtr = &insertIndex;
@@ -387,9 +395,15 @@ TkTextMarkSegToIndex(
  *
  * Results:
  *	The return value is TCL_OK if "name" exists as a mark in the text
- *	widget. In this case *indexPtr is filled in with the next segment
- *	whose after the mark whose size is non-zero. TCL_ERROR is returned if
- *	the mark doesn't exist in the text widget.
+ *	widget and is located within its -starline/-endline range. In this
+ *	case *indexPtr is filled in with the next segment who is after the
+ *	mark whose size is non-zero. TCL_ERROR is returned if the mark
+ *	doesn't exist in the text widget, or if it is out of its -starline/
+ *	-endline range. In this latter case *indexPtr still contains valid
+ *	information, in particular TkTextMarkNameToIndex called with the
+ *	"insert" or "current" mark name may return TCL_ERROR, but *indexPtr
+ *	contains the correct index of this mark before -startline or after
+ *	-endline.
  *
  * Side effects:
  *	None.
@@ -404,6 +418,8 @@ TkTextMarkNameToIndex(
     TkTextIndex *indexPtr)	/* Index information gets stored here. */
 {
     TkTextSegment *segPtr;
+    TkTextIndex index;
+    int start, end;
 
     if (textPtr == NULL) {
         return TCL_ERROR;
@@ -422,6 +438,29 @@ TkTextMarkNameToIndex(
 	segPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
     }
     TkTextMarkSegToIndex(textPtr, segPtr, indexPtr);
+
+    /* If indexPtr refers to somewhere outside the -startline/-endline
+     * range limits of the widget, error out since the mark indeed is not
+     * reachable from this text widget (it may be reachable from a peer)
+     * (bug 1630271).
+     */
+
+    if (textPtr->start != NULL) {
+	start = TkBTreeLinesTo(NULL, textPtr->start);
+	TkTextMakeByteIndex(textPtr->sharedTextPtr->tree, NULL, start, 0,
+		&index);
+	if (TkTextIndexCmp(indexPtr, &index) < 0) {
+	    return TCL_ERROR;
+	}
+    }
+    if (textPtr->end != NULL) {
+	end = TkBTreeLinesTo(NULL, textPtr->end);
+	TkTextMakeByteIndex(textPtr->sharedTextPtr->tree, NULL, end, 0,
+		&index);
+	if (TkTextIndexCmp(indexPtr, &index) > 0) {
+	    return TCL_ERROR;
+	}
+    }
     return TCL_OK;
 }
 
@@ -783,11 +822,17 @@ MarkFindNext(
 		    Tcl_SetResult(interp, "current", TCL_STATIC);
 		} else if (segPtr == textPtr->insertMarkPtr) {
 		    Tcl_SetResult(interp, "insert", TCL_STATIC);
-		} else if (segPtr->body.mark.textPtr != textPtr) {
+		} else if (segPtr->body.mark.hPtr == NULL) {
 		    /*
 		     * Ignore widget-specific marks for the other widgets.
-		     */
-
+                     * This is either an insert or a current mark
+                     * (markPtr->body.mark.hPtr actually receives NULL
+                     * for these marks in TkTextSetMark).
+                     * The insert and current marks for textPtr having
+                     * already been tested above, the current segment is
+                     * an insert or current mark from a peer of textPtr,
+                     * which we don't want to return.
+                     */
 		    continue;
 		} else {
 		    Tcl_SetResult(interp,
@@ -870,7 +915,7 @@ MarkFindPrev(
     while (1) {
 	/*
 	 * segPtr points just past the first possible candidate, or at the
-	 * begining of the line.
+	 * beginning of the line.
 	 */
 
 	for (prevPtr = NULL, seg2Ptr = index.linePtr->segPtr;
@@ -878,26 +923,43 @@ MarkFindPrev(
 		seg2Ptr = seg2Ptr->nextPtr) {
 	    if (seg2Ptr->typePtr == &tkTextRightMarkType ||
 		    seg2Ptr->typePtr == &tkTextLeftMarkType) {
+	        if (seg2Ptr->body.mark.hPtr == NULL) {
+                    if (seg2Ptr != textPtr->currentMarkPtr &&
+                            seg2Ptr != textPtr->insertMarkPtr) {
+	                /*
+                         * This is an insert or current mark from a
+                         * peer of textPtr.
+                         */
+                        continue;
+                    }
+	        }
 		prevPtr = seg2Ptr;
 	    }
 	}
 	if (prevPtr != NULL) {
 	    if (prevPtr == textPtr->currentMarkPtr) {
 		Tcl_SetResult(interp, "current", TCL_STATIC);
+	        return TCL_OK;
 	    } else if (prevPtr == textPtr->insertMarkPtr) {
 		Tcl_SetResult(interp, "insert", TCL_STATIC);
-	    } else if (prevPtr->body.mark.textPtr != textPtr) {
+	        return TCL_OK;
+	    } else if (prevPtr->body.mark.hPtr == NULL) {
 		/*
 		 * Ignore widget-specific marks for the other widgets.
-		 */
-
-		continue;
+                 * This is either an insert or a current mark
+                 * (markPtr->body.mark.hPtr actually receives NULL
+                 * for these marks in TkTextSetMark).
+                 * The insert and current marks for textPtr having
+                 * already been tested above, the current segment is
+                 * an insert or current mark from a peer of textPtr,
+                 * which we don't want to return.
+                 */
 	    } else {
 		Tcl_SetResult(interp,
 			Tcl_GetHashKey(&textPtr->sharedTextPtr->markTable,
 			prevPtr->body.mark.hPtr), TCL_STATIC);
+	        return TCL_OK;
 	    }
-	    return TCL_OK;
 	}
 	index.linePtr = TkBTreePreviousLine(textPtr, index.linePtr);
 	if (index.linePtr == NULL) {

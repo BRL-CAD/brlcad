@@ -120,7 +120,6 @@ option add *Mged.height 400 widgetDefault
 	method push {args}
 	method put {args}
 	method r {args}
-	method report {args}
 	method rm {args}
 	method rmap {args}
 	method rmater {args}
@@ -133,6 +132,7 @@ option add *Mged.height 400 widgetDefault
 	method shareDb {_db}
 	method shells {args}
 	method showmats {args}
+	method solid_report {args}
 	method summary {args}
 	method title {args}
 	method tol {args}
@@ -711,8 +711,8 @@ option add *Mged.height 400 widgetDefault
     eval $db r $args
 }
 
-::itcl::body Mged::report {args} {
-    eval $db report $args
+::itcl::body Mged::solid_report {args} {
+    eval $db solid_report $args
 }
 
 ::itcl::body Mged::attachObservers {} {

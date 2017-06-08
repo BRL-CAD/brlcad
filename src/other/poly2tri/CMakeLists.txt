@@ -47,9 +47,6 @@ set(LIBP2T_SOURCES
   poly2tri/sweep/sweep_context.cc
   poly2tri/sweep/sweep.cc
   )
-set(LIBP2T_TEST_SOURCES
-  testbed/main.cc
-  )
 
 if(NOT LIB_DIR)
   set(LIB_DIR lib)
@@ -99,18 +96,6 @@ endif(BUILD_STATIC_LIBS)
 if(WIN32)
   set_target_properties(${P2T_LIB_NAME} PROPERTIES DEFINE_SYMBOL P2T_BUILD_DLL)
 endif()
-
-##if(P2T_TESTS)
-##  if(P2T_STATIC)
-##    add_executable(p2t-test ${LIBP2T_TEST_SOURCES})
-##    target_link_libraries(p2t-test ${P2T_LIB_NAME_STATIC})
-##    add_test(p2t-test ./p2t-test ${CMAKE_CURRENT_SOURCE_DIR}/DATA/bird.dat)
-##  else()
-##    add_executable(p2t-test ${LIBP2T_TEST_SOURCES})
-##    target_link_libraries(p2t-test ${P2T_LIB_NAME})
-##    add_test(p2t-test ./p2t-test ${CMAKE_CURRENT_SOURCE_DIR}/DATA/bird.dat)
-##  endif()
-##endif()
 
 install(FILES poly2tri/poly2tri.h DESTINATION include/poly2tri)
 install(FILES poly2tri/common/shapes.h DESTINATION include/poly2tri/common)

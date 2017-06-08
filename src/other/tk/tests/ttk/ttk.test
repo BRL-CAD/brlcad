@@ -6,6 +6,14 @@ loadTestedCommands
 proc skip args {}
 proc ok {} { return }
 
+variable widgetClasses {
+    button checkbutton radiobutton menubutton label entry
+    frame labelframe scrollbar
+    notebook progressbar combobox separator
+    panedwindow treeview sizegrip
+    scale
+}
+
 proc bgerror {error} {
     variable bgerror $error
     variable bgerrorInfo $::errorInfo
@@ -62,10 +70,7 @@ test ttk-6.6 "Bad color spec in styles" -body {
 } -result {unknown color name "badColor"}
 
 test ttk-6.7 "Basic destruction test" -body {
-    foreach widget {
-	button checkbutton radiobutton sizegrip separator notebook
-	progressbar panedwindow scrollbar
-    } {
+    foreach widget $widgetClasses {
 	ttk::$widget .w
 	pack .w
 	destroy .w
@@ -196,6 +201,38 @@ test ttk-2.7 "instate scripts, true" -body {
     .t instate !disabled { set x 1 }
     set x
 } -result 1
+
+test ttk-2.8 "bug 3223850: button state disabled during click" -setup {
+    destroy .b
+    set ttk28 {}
+    pack [ttk::button .b -command {set ::ttk28 failed}]
+} -body { 
+    bind .b <ButtonPress-1> {after 0 {.b configure -state disabled}}
+    after 1 {event generate .b <ButtonPress-1>}
+    after 20 {event generate .b <ButtonRelease-1>}
+    set aid [after 100 {set ::ttk28 [.b instate {disabled !pressed}]}]
+    vwait ::ttk28
+    after cancel $aid
+    set ttk28
+} -cleanup {
+    destroy .b
+    unset -nocomplain ttk28 aid
+} -result 1
+
+foreach wc $widgetClasses {
+    test ttk-coreoptions-$wc "$wc has all core options" -body {
+	ttk::$wc .w
+	foreach option {
+	    -class
+	    -style
+	    -cursor
+	    -takefocus
+	} {
+	    .w cget $option
+	}
+	destroy .w
+    }
+}
 
 # misc. error detection
 test ttk-3.0 "Bad option" -body {
@@ -538,6 +575,33 @@ test ttk-14.3 "-textvariable in nonexistant namespace" -body {
 } -returnCodes 1 -result {can't trace *: parent namespace doesn't exist} \
   -match glob -cleanup { destroy .tw }
 
+test ttk-15.1 {Bug 3062331} -setup {
+    destroy .b
+} -body {
+    set Y {}
+    ttk::button .b -textvariable Y
+    trace variable Y u "destroy .b; #"
+    unset Y
+} -cleanup {
+    destroy .b
+} -result {}
+
+test ttk-15.2 {Bug 3341056} -setup {
+    proc foo {} {
+	destroy .lf
+	ttk::labelframe .lf
+	ttk::checkbutton .lf.cb -text xxx
+    }
+} -body {
+    ttk::button .b -text xxx -command foo
+    .b invoke
+    .b invoke
+    .lf.cb invoke
+    destroy .b
+} -cleanup {
+    rename foo {}
+    destroy .lf
+} -result {}
 
 ## Test ensemble processing:
 #

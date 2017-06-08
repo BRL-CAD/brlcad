@@ -781,7 +781,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACEUSE(fu);
 
-	if (nmg_calc_face_g(fu)) {
+	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
 	    bu_log("rt_tess_cline: failed to calculate plane equation\n");
 	    nmg_pr_fu_briefly(fu, "");
 	    return -1;
@@ -899,7 +899,7 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 8);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 8);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;

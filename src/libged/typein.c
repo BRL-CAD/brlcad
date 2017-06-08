@@ -718,7 +718,7 @@ binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	    bu_log("Unrecognized minor type (%c)\n", *cmd_argvs[3]);
 	    return GED_ERROR;
     }
-    if (rt_mk_binunif (gedp->ged_wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]))) {
+    if (rt_mk_binunif(gedp->ged_wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]))) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to create binary object %s from file %s\n",
 		      name, cmd_argvs[4]);
@@ -2525,7 +2525,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     }
 
     /* if points are in a file */
-    if ((BU_STR_EQUAL(argv[3], "yes")) || (BU_STR_EQUAL(argv[3], "y"))) {
+    if (bu_str_true(argv[3])) {
 
 	/* prompt for point file path and name */
 	if (argc < 5) {

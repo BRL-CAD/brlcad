@@ -46,8 +46,10 @@ if(CPACK_INSTALLED_DIRECTORIES)
   endif(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENERATOR MATCHES "TBZ2" )
 endif(CPACK_INSTALLED_DIRECTORIES)
 
-# Null out the install prefix regardless
-set(CPACK_PACKAGING_INSTALL_PREFIX "")
+# Null out the install prefix, unless we're working on an RPM
+if(NOT CPACK_GENERATOR MATCHES "RPM")
+  set(CPACK_PACKAGING_INSTALL_PREFIX "")
+endif(NOT CPACK_GENERATOR MATCHES "RPM")
 
 # Local Variables:
 # tab-width: 8

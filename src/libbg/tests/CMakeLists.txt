@@ -35,27 +35,27 @@
 
 #  ************ obr.c tests *************
 
-BRLCAD_ADDEXEC(bg_obr obr.c "libbg;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(bg_obr obr.c "libbg;libbn;libbu" TEST)
 
 #add_test(NAME bg_obr_simple			COMMAND bg_obr) # Default points
 
 
 #  ************ polygon.c tests ***********
-BRLCAD_ADDEXEC(bg_polygon_triangulate polygon_triangulate.c "libbg;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(bg_polygon_triangulate polygon_triangulate.c "libbg;libbn;libbu" TEST)
 
 add_test(NAME bg_polygon_triangulate	    COMMAND bg_polygon_triangulate)
 
 
 #  ************ chull.c tests ***********
 # 2D Convex Hull tests
-BRLCAD_ADDEXEC(bg_chull chull.c "libbg;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(bg_chull chull.c "libbg;libbn;libbu" TEST)
 CMAKEFILES(chull_test003_bot.asc)
 CMAKEFILES(chull_test004_bot.asc)
 
 #  ************ chull3d.cpp tests ***********
 
 # 3D Convex Hull tests
-BRLCAD_ADDEXEC(bg_chull3d chull3d.c "libbg;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(bg_chull3d chull3d.c "libbg;libbn;libbu" TEST)
 
 
 
@@ -70,7 +70,7 @@ BRLCAD_ADDEXEC(bg_chull3d chull3d.c "libbg;libbn;libbu" NO_INSTALL)
 # flag tells the function whether or not to require non-zero area for an
 # overlap in coplanar cases.
 
-BRLCAD_ADDEXEC(bg_tri_tri_isect_coplanar tri_tri_isect_coplanar.c "libbg;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(bg_tri_tri_isect_coplanar tri_tri_isect_coplanar.c "libbg;libbn;libbu" TEST)
 
 # TODO - need some tests with floating point vertices that are down around the EPSILON threshold - that's
 # where the NEAR_ZERO components of the bg_tri_tri_isect_coplanar logic become important.
@@ -91,7 +91,7 @@ add_test(NAME bg_tri_tri_isect_coplanar_full_area   COMMAND bg_tri_tri_isect_cop
 # where P and Q are the two triangles in question.  An individual point
 # is three integer or floating point numbers separated by commas.
 
-BRLCAD_ADDEXEC(bg_tri_tri_isect tri_tri_isect.c "libbg;libbn;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(bg_tri_tri_isect tri_tri_isect.c "libbg;libbn;libbu" TEST)
 
 # Test coplanar triangles
 add_test(NAME bg_tri_tri_isect_cp_null   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0)

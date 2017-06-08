@@ -1261,7 +1261,7 @@ db_ck_tree(const union tree *tp)
 	case OP_NOP:
 	    break;
 	case OP_DB_LEAF:
-	    BU_ASSERT_PTR(tp->tr_l.tl_name, !=, NULL);
+	    BU_ASSERT(tp->tr_l.tl_name != NULL);
 	    break;
 	case OP_SOLID:
 	    if (tp->tr_a.tu_stp)

@@ -64,7 +64,7 @@ nextWord(char *inputstring, char *nextwd)
 	    case '#':
 		do {
 		    strptr++;
-		} while ((*strptr) != '\n' && (*strptr) != '\r' && (*strptr) != EOF);
+		} while ((*strptr) != '\n' && (*strptr) != '\r' && (*strptr) != '\0');
 		break;
 	    default:
 		if ((*strptr) == '\0' ) {

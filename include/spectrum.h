@@ -53,7 +53,7 @@
  *
  * The intervals need not be uniformly spaced; it is acceptable to
  * increase wavelength sampling density around "important" frequencies.
- * This will undoubtably complicate certain functions.
+ * This will undoubtedly complicate certain functions.
  *
  * By convention, wavelength is stored in nanometers as an integer,
  * and power is stored in Watts.

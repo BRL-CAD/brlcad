@@ -9,8 +9,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2.1
@@ -31,7 +29,7 @@ test interp-1.1 {options for interp command} {
 } {1 {wrong # args: should be "interp cmd ?arg ...?"}}
 test interp-1.2 {options for interp command} {
     list [catch {interp frobox} msg] $msg
-} {1 {bad option "frobox": must be alias, aliases, bgerror, create, delete, eval, exists, expose, hide, hidden, issafe, invokehidden, limit, marktrusted, recursionlimit, slaves, share, target, or transfer}}
+} {1 {bad option "frobox": must be alias, aliases, bgerror, create, debug, delete, eval, exists, expose, hide, hidden, issafe, invokehidden, limit, marktrusted, recursionlimit, slaves, share, target, or transfer}}
 test interp-1.3 {options for interp command} {
     interp delete
 } ""
@@ -49,13 +47,13 @@ test interp-1.6 {options for interp command} {
 } {1 {wrong # args: should be "interp slaves ?path?"}}
 test interp-1.7 {options for interp command} {
     list [catch {interp hello} msg] $msg
-} {1 {bad option "hello": must be alias, aliases, bgerror, create, delete, eval, exists, expose, hide, hidden, issafe, invokehidden, limit, marktrusted, recursionlimit, slaves, share, target, or transfer}}
+} {1 {bad option "hello": must be alias, aliases, bgerror, create, debug, delete, eval, exists, expose, hide, hidden, issafe, invokehidden, limit, marktrusted, recursionlimit, slaves, share, target, or transfer}}
 test interp-1.8 {options for interp command} {
     list [catch {interp -froboz} msg] $msg
-} {1 {bad option "-froboz": must be alias, aliases, bgerror, create, delete, eval, exists, expose, hide, hidden, issafe, invokehidden, limit, marktrusted, recursionlimit, slaves, share, target, or transfer}}
+} {1 {bad option "-froboz": must be alias, aliases, bgerror, create, debug, delete, eval, exists, expose, hide, hidden, issafe, invokehidden, limit, marktrusted, recursionlimit, slaves, share, target, or transfer}}
 test interp-1.9 {options for interp command} {
     list [catch {interp -froboz -safe} msg] $msg
-} {1 {bad option "-froboz": must be alias, aliases, bgerror, create, delete, eval, exists, expose, hide, hidden, issafe, invokehidden, limit, marktrusted, recursionlimit, slaves, share, target, or transfer}} 
+} {1 {bad option "-froboz": must be alias, aliases, bgerror, create, debug, delete, eval, exists, expose, hide, hidden, issafe, invokehidden, limit, marktrusted, recursionlimit, slaves, share, target, or transfer}} 
 test interp-1.10 {options for interp command} {
     list [catch {interp target} msg] $msg
 } {1 {wrong # args: should be "interp target path alias"}}
@@ -3431,6 +3429,13 @@ test interp-35.22 {interp time limits normalize milliseconds} -body {
 } -cleanup {
     interp delete $i
 } -result {2 500}
+# Bug 3398794
+test interp-35.23 {interp command limits can't touch current interp} -body {
+    interp limit {} commands -value 10
+} -returnCodes error -result {limits on current interpreter inaccessible}
+test interp-35.24 {interp time limits can't touch current interp} -body {
+    interp limit {} time -seconds 2
+} -returnCodes error -result {limits on current interpreter inaccessible}
 
 test interp-36.1 {interp bgerror syntax} -body {
     interp bgerror
@@ -3502,6 +3507,49 @@ test interp-37.1 {safe interps and min() and max(): Bug 2895741} -setup {
     unset result
     interp delete a
 } -result {26 26}
+
+test interp-38.1 {interp debug one-way switch} -setup {
+    catch {interp delete a}
+    interp create a
+    interp debug a -frame 1
+} -body {
+    # TIP #3xx interp debug frame is a one-way switch
+    interp debug a -frame 0
+} -cleanup {
+    interp delete a
+} -result {1}
+test interp-38.2 {interp debug env var} -setup {
+    catch {interp delete a}
+    set ::env(TCL_INTERP_DEBUG_FRAME) 1
+    interp create a
+} -body {
+    interp debug a
+} -cleanup {
+    unset ::env(TCL_INTERP_DEBUG_FRAME)
+    interp delete a
+} -result {-frame 1}
+test interp-38.3 {interp debug wrong args} -body {
+    interp debug
+} -returnCodes {
+    error
+} -result {wrong # args: should be "interp debug path ?-frame ?bool??"}
+test interp-38.4 {interp debug basic setup} -body {
+    interp debug {}
+} -result {-frame 0}
+test interp-38.5 {interp debug basic setup} -body {
+    interp debug {} -f
+} -result {0}
+test interp-38.6 {interp debug basic setup} -body {
+    interp debug -frames
+} -returnCodes error -result {could not find interpreter "-frames"}
+test interp-38.7 {interp debug basic setup} -body {
+    interp debug {} -frames
+} -returnCodes error -result {bad debug option "-frames": must be -frame}
+test interp-38.8 {interp debug basic setup} -body {
+    interp debug {} -frame 0 bogus
+} -returnCodes {
+    error
+} -result {wrong # args: should be "interp debug path ?-frame ?bool??"}
 
 # cleanup
 foreach i [interp slaves] {

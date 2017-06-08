@@ -27,6 +27,7 @@
 #define RT_XRAY_H
 
 #include "common.h"
+#include "bu/list.h"
 #include "vmath.h"
 
 __BEGIN_DECLS

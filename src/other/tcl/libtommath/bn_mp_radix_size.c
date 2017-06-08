@@ -81,8 +81,3 @@ int mp_radix_size (mp_int * a, int radix, int *size)
 }
 
 #endif
-
-/* $Source$ */
-/* Tom's revision is 1.4 */
-/* $Revision$ */
-/* $Date$ */

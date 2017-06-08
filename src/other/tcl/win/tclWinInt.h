@@ -7,14 +7,29 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TCLWININT
 #define _TCLWININT
 
 #include "tclInt.h"
+
+#ifdef HAVE_NO_SEH
+/*
+ * Unlike Borland and Microsoft, we don't register exception handlers by
+ * pushing registration records onto the runtime stack. Instead, we register
+ * them by creating an TCLEXCEPTION_REGISTRATION within the activation record.
+ */
+
+typedef struct TCLEXCEPTION_REGISTRATION {
+    struct TCLEXCEPTION_REGISTRATION *link;
+    EXCEPTION_DISPOSITION (*handler)(
+	    struct _EXCEPTION_RECORD*, void*, struct _CONTEXT*, void*);
+    void *ebp;
+    void *esp;
+    int status;
+} TCLEXCEPTION_REGISTRATION;
+#endif
 
 /*
  * The following specifies how much stack space TclpCheckStackSpace()
@@ -35,6 +50,12 @@
 #endif
 #ifndef VER_PLATFORM_WIN32_CE
 #define VER_PLATFORM_WIN32_CE 3
+#endif
+
+#ifdef _WIN64
+#         define TCL_I_MODIFIER        "I"
+#else
+#         define TCL_I_MODIFIER        ""
 #endif
 
 /*
@@ -166,7 +187,7 @@ MODULE_SCOPE Tcl_Channel TclWinOpenFileChannel(HANDLE handle, char *channelName,
 MODULE_SCOPE Tcl_Channel TclWinOpenSerialChannel(HANDLE handle,
 			    char *channelName, int permissions);
 MODULE_SCOPE void	TclWinResetInterfaceEncodings();
-MODULE_SCOPE HANDLE	TclWinSerialReopen(HANDLE handle, CONST TCHAR *name,
+MODULE_SCOPE HANDLE	TclWinSerialOpen(HANDLE handle, CONST TCHAR *name,
 			    DWORD access);
 MODULE_SCOPE int	TclWinSymLinkCopyDirectory(CONST TCHAR* LinkOriginal,
 			    CONST TCHAR* LinkCopy);

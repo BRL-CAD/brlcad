@@ -9,8 +9,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 # Running socket tests with a remote server:
 # ------------------------------------------
@@ -68,6 +66,10 @@ namespace import -force ::tcltest::*
 # Some tests require the testthread and exec commands
 testConstraint testthread [llength [info commands testthread]]
 testConstraint exec [llength [info commands exec]]
+
+# Produce a random port number in the Dynamic/Private range
+# from 49152 through 65535.
+proc randport {} { expr {int(rand()*16383+49152)} }
 
 # If remoteServerIP or remoteServerPort are not set, check in the
 # environment variables for externally set values.
@@ -575,7 +577,86 @@ test socket-2.11 {detecting new data} {socket} {
     close $sock
     set result
 } {a:one b: c:two}
-
+test socket-2.12 {} {socket stdio} {
+    file delete $path(script)
+    set f [open $path(script) w]
+    puts $f {
+	set server [socket -server accept_client 0]
+	puts [lindex [chan configure $server -sockname] 2]
+	proc accept_client { client host port } {
+	    chan configure $client -blocking  0 -buffering line
+	    write_line $client
+	}
+	proc write_line client {
+	    if { [catch { chan puts $client [string repeat . 720000]}] } {
+		puts [catch {chan close $client}]
+	    } else {
+		puts signal1
+		after 0 write_line $client
+	    }
+	}
+	chan event stdin readable {set forever now}
+	vwait forever
+	exit
+    }
+    close $f
+    set f [open "|[list [interpreter] $path(script)]" r+]
+    gets $f port
+    set sock [socket 127.0.0.1 $port]
+    chan event $sock readable [list read_lines $sock $f]
+    proc read_lines { sock pipe } {
+	gets $pipe
+	chan close $sock
+	chan event $pipe readable [list readpipe $pipe]
+    }
+    proc readpipe {pipe} {
+	while {![string is integer [set ::done [gets $pipe]]]} {}
+    }
+    vwait ::done
+    close $f
+    set ::done
+} 0
+test socket-2.13 {Bug 1758a0b603} {socket stdio} {
+    file delete $path(script)
+    set f [open $path(script) w]
+    puts $f {
+	set server [socket -server accept 0]
+	puts [lindex [chan configure $server -sockname] 2]
+	proc accept { client host port } {
+	    chan configure $client -blocking  0 -buffering line -buffersize 1
+	    puts $client [string repeat . 720000]
+	    puts ready
+	    chan event $client writable [list setup $client]
+	}
+	proc setup client {
+	    chan event $client writable {set forever write}
+	    after 5 {set forever timeout}
+	}
+	vwait forever
+	puts $forever
+    }
+    close $f
+    set pipe [open |[list [interpreter] $path(script)] r]
+    gets $pipe port
+    set sock [socket localhost $port]
+    chan configure $sock -blocking  0 -buffering line
+    chan event $sock readable [list read_lines $sock $pipe ]
+    proc read_lines { sock pipe } {
+	gets $pipe
+	gets $sock line
+	after idle [list stop $sock $pipe]
+	chan event $sock readable {}
+    }
+    proc stop {sock pipe} {
+	variable done
+	close $sock
+	set done [gets $pipe]
+    }
+    variable done
+    vwait [namespace which -variable done]
+    close $pipe
+    set done
+} write
 
 test socket-3.1 {socket conflict} {socket stdio} {
     file delete $path(script)
@@ -1685,6 +1766,37 @@ if {[string match sock* $commandSocket] == 1} {
 }
 catch {close $commandSocket}
 catch {close $remoteProcChan}
+test socket-14.13 {testing writable event when quick failure} -constraints {socket win supported_inet} -body {
+    # Test for bug 336441ed59 where a quick background fail was ignored
+    
+    # Test only for windows as socket -async 255.255.255.255 fails
+    # directly on unix
+    
+    # The following connect should fail very quickly
+    set a1 [after 2000 {set x timeout}]
+    set s [socket -async 255.255.255.255 43434]
+    fileevent $s writable {set x writable}
+    vwait x
+    set x
+} -cleanup {
+    catch {close $s}
+    after cancel $a1
+} -result writable
+
+test socket-14.14 {testing fileevent readable on failed async socket connect} -constraints [list socket] -body {
+    # Test for bug 581937ab1e
+    
+    set a1 [after 5000 {set x timeout}]
+    # This connect should fail
+    set s [socket -async localhost [randport]]
+    fileevent $s readable {set x readable}
+    vwait x
+    set x
+} -cleanup {
+    catch {close $s}
+    after cancel $a1
+} -result readable
+
 ::tcltest::cleanupTests
 flush stdout
 return

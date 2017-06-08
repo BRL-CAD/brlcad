@@ -15,8 +15,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 /*
@@ -76,7 +74,7 @@ TkInitXId(
     TkDisplay *dispPtr)		/* Tk's information about the display. */
 {
     dispPtr->idStackPtr = NULL;
-    dispPtr->defaultAllocProc = (XID (*) _ANSI_ARGS_((Display *display)))
+    dispPtr->defaultAllocProc = (XID (*) (Display *display))
 	    dispPtr->display->resource_alloc;
     dispPtr->display->resource_alloc = AllocXId;
     dispPtr->windowStackPtr = NULL;
@@ -588,13 +586,23 @@ TkpScanWindowId(
     CONST char *string,
     Window *idPtr)
 {
-    int value;
+    int code;
+    Tcl_Obj obj;
 
-    if (Tcl_GetInt(interp, string, &value) != TCL_OK) {
-	return TCL_ERROR;
+    obj.refCount = 1;
+    obj.bytes = (char *) string;	/* DANGER?! */
+    obj.length = strlen(string);
+    obj.typePtr = NULL;
+
+    code = Tcl_GetLongFromObj(interp, &obj, (long *)idPtr);
+
+    if (obj.refCount > 1) {
+	Tcl_Panic("invalid sharing of Tcl_Obj on C stack");
     }
-    *idPtr = (Window) value;
-    return TCL_OK;
+    if (obj.typePtr && obj.typePtr->freeIntRepProc) {
+	obj.typePtr->freeIntRepProc(&obj);
+    }
+    return code;
 }
 
 /*

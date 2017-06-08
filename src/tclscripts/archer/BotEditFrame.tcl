@@ -20,10 +20,6 @@
 #
 ###
 #
-# Author:
-#    Bob Parker
-#
-# Description:
 #    The class for editing bots within Archer.
 #
 

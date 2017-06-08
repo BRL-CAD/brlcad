@@ -1,6 +1,6 @@
 // astyle_main.cpp
 // Copyright (c) 2016 by Jim Pattee <jimp03@email.com>.
-// Licensed under the MIT license.
+// This code is licensed under the MIT License.
 // License.txt describes the conditions under which this software may be distributed.
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -82,10 +82,10 @@ namespace astyle {
 	ostream* _err = &cerr;           // direct error messages to cerr
 	#ifdef _WIN32
 		char g_fileSeparator = '\\';     // Windows file separator
-		bool g_isCaseSensitive = false;  // Windows IS case sensitive
+		bool g_isCaseSensitive = false;  // Windows IS NOT case sensitive
 	#else
 		char g_fileSeparator = '/';      // Linux file separator
-		bool g_isCaseSensitive = true;   // Linux IS NOT case sensitive
+		bool g_isCaseSensitive = true;   // Linux IS case sensitive
 	#endif	// _WIN32
 #endif	// ASTYLE_LIB
 
@@ -111,7 +111,6 @@ ASStreamIterator<T>::ASStreamIterator(T* in)
 	eolWindows = 0;
 	eolLinux = 0;
 	eolMacOld = 0;
-	outputEOL[0] = '\0';
 	peekStart = 0;
 	prevLineDeleted = false;
 	checkForEmptyLine = false;
@@ -213,14 +212,14 @@ string ASStreamIterator<T>::nextLine(bool emptyLineWasDeleted)
 	if (eolWindows >= eolLinux)
 	{
 		if (eolWindows >= eolMacOld)
-			strcpy(outputEOL, "\r\n");  // Windows (CR+LF)
+			outputEOL = "\r\n";     // Windows (CR+LF)
 		else
-			strcpy(outputEOL, "\r");    // MacOld (CR)
+			outputEOL = "\r";       // MacOld (CR)
 	}
 	else if (eolLinux >= eolMacOld)
-		strcpy(outputEOL, "\n");		// Linux (LF)
+		outputEOL = "\n";           // Linux (LF)
 	else
-		strcpy(outputEOL, "\r");		// MacOld (CR)
+		outputEOL = "\r";           // MacOld (CR)
 
 	return buffer;
 }
@@ -330,7 +329,7 @@ void ASConsole::convertLineEnds(ostringstream& out, int lineEnd)
 	assert(lineEnd == LINEEND_WINDOWS || lineEnd == LINEEND_LINUX || lineEnd == LINEEND_MACOLD);
 	const string& inStr = out.str();	// avoids strange looking syntax
 	string outStr;						// the converted output
-	int inLength = inStr.length();
+	int inLength = (int)inStr.length();
 	for (int pos = 0; pos < inLength; pos++)
 	{
 		if (inStr[pos] == '\r')
@@ -411,11 +410,11 @@ void ASConsole::convertLineEnds(ostringstream& out, int lineEnd)
 void ASConsole::correctMixedLineEnds(ostringstream& out)
 {
 	LineEndFormat lineEndFormat = LINEEND_DEFAULT;
-	if (strcmp(outputEOL, "\r\n") == 0)
+	if (outputEOL == "\r\n")
 		lineEndFormat = LINEEND_WINDOWS;
-	if (strcmp(outputEOL, "\n") == 0)
+	if (outputEOL == "\n")
 		lineEndFormat = LINEEND_LINUX;
-	if (strcmp(outputEOL, "\r") == 0)
+	if (outputEOL == "\r")
 		lineEndFormat = LINEEND_MACOLD;
 	convertLineEnds(out, lineEndFormat);
 }
@@ -574,6 +573,10 @@ void ASConsole::formatFile(const string& fileName_)
 				filesAreIdentical = false;
 			streamIterator.checkForEmptyLine = false;
 		}
+
+		// If we're doing a report run, we can stop as soon as we know
+		// there is a change.
+		if (isReport && !filesAreIdentical) break;
 	}
 	// correct for mixed line ends
 	if (lineEndsMixed)
@@ -592,6 +595,7 @@ void ASConsole::formatFile(const string& fileName_)
 	// if file has changed, write the new file
 	if (!filesAreIdentical || streamIterator.getLineEndChange(lineEndFormat))
 	{
+		Changed_Count++;
 		if (!isDryRun)
 			writeFile(fileName_, encoding, out);
 		printMsg(_("Formatted  %s\n"), displayName);
@@ -599,12 +603,12 @@ void ASConsole::formatFile(const string& fileName_)
 	}
 	else
 	{
-		if (!isFormattedOnly)
+		if (!isFormattedOnly && !isReport)
 			printMsg(_("Unchanged  %s\n"), displayName);
 		filesUnchanged++;
 	}
 
-	assert(formatter.getChecksumDiff() == 0);
+	if (!isReport) assert(formatter.getChecksumDiff() == 0);
 }
 
 // build a vector of argv options
@@ -658,6 +662,12 @@ bool ASConsole::getIgnoreExcludeErrorsDisplay() const
 // for unit testing
 bool ASConsole::getIsDryRun() const
 { return isDryRun; }
+
+bool ASConsole::getIsReport() const
+{ return isReport; }
+
+int ASConsole::getChangedCount () const
+{ return Changed_Count; }
 
 // for unit testing
 bool ASConsole::getIsFormattedOnly() const
@@ -720,18 +730,18 @@ void ASConsole::initializeOutputEOL(LineEndFormat lineEndFormat)
 	       || lineEndFormat == LINEEND_LINUX
 	       || lineEndFormat == LINEEND_MACOLD);
 
-	outputEOL[0] = '\0';		// current line end
-	prevEOL[0] = '\0';			// previous line end
+	outputEOL.clear();			// current line end
+	prevEOL.clear();			// previous line end
 	lineEndsMixed = false;		// output has mixed line ends, LINEEND_DEFAULT only
 
 	if (lineEndFormat == LINEEND_WINDOWS)
-		strcpy(outputEOL, "\r\n");
+		outputEOL = "\r\n";
 	else if (lineEndFormat == LINEEND_LINUX)
-		strcpy(outputEOL, "\n");
+		outputEOL = "\n";
 	else if (lineEndFormat == LINEEND_MACOLD)
-		strcpy(outputEOL, "\r");
+		outputEOL = "\r";
 	else
-		outputEOL[0] = '\0';
+		outputEOL.clear();
 }
 
 FileEncoding ASConsole::readFile(const string& fileName_, stringstream& in) const
@@ -797,6 +807,9 @@ void ASConsole::setIsRecursive(bool state)
 void ASConsole::setIsDryRun(bool state)
 { isDryRun = state; }
 
+void ASConsole::setIsReport(bool state)
+{ isReport = state; }
+
 void ASConsole::setIsVerbose(bool state)
 { isVerbose = state; }
 
@@ -813,24 +826,24 @@ void ASConsole::setPreserveDate(bool state)
 { preserveDate = state; }
 
 // set outputEOL variable
-void ASConsole::setOutputEOL(LineEndFormat lineEndFormat, const char* currentEOL)
+void ASConsole::setOutputEOL(LineEndFormat lineEndFormat, const string& currentEOL)
 {
 	if (lineEndFormat == LINEEND_DEFAULT)
 	{
-		strcpy(outputEOL, currentEOL);
-		if (strlen(prevEOL) == 0)
-			strcpy(prevEOL, outputEOL);
-		if (strcmp(prevEOL, outputEOL) != 0)
+		outputEOL = currentEOL;
+		if (prevEOL.empty())
+			prevEOL = outputEOL;
+		if (prevEOL != outputEOL)
 		{
 			lineEndsMixed = true;
 			filesAreIdentical = false;
-			strcpy(prevEOL, outputEOL);
+			prevEOL = outputEOL;
 		}
 	}
 	else
 	{
-		strcpy(prevEOL, currentEOL);
-		if (strcmp(prevEOL, outputEOL) != 0)
+		prevEOL = currentEOL;
+		if (prevEOL != outputEOL)
 			filesAreIdentical = false;
 	}
 }
@@ -1384,7 +1397,7 @@ void ASConsole::getFilePaths(string& filePath)
 	bool excludeErr = false;
 	for (size_t ix = 0; ix < excludeHitsVector.size(); ix++)
 	{
-		if (excludeHitsVector[ix] == false)
+		if (!excludeHitsVector[ix])
 		{
 			excludeErr = true;
 			if (!ignoreExcludeErrorsDisplay)
@@ -1981,7 +1994,7 @@ void ASConsole::processOptions(vector<string>& argvOptions)
 		{
 			optionsFileName = getParam(arg, "--options=");
 			optionsFileRequired = true;
-			if (optionsFileName.compare("") == 0)
+			if (optionsFileName.empty())
 				setOptionsFileName(" ");
 		}
 		else if ( isOption(arg, "-h")
@@ -2023,31 +2036,31 @@ void ASConsole::processOptions(vector<string>& argvOptions)
 	// get options file path and name
 	if (shouldParseOptionsFile)
 	{
-		if (optionsFileName.compare("") == 0)
+		if (optionsFileName.empty())
 		{
 			char* env = getenv("ARTISTIC_STYLE_OPTIONS");
 			if (env != NULL)
 				setOptionsFileName(env);
 		}
-		if (optionsFileName.compare("") == 0)
+		if (optionsFileName.empty())
 		{
 			char* env = getenv("HOME");
 			if (env != NULL)
 				setOptionsFileName(string(env) + "/.astylerc");
 		}
-		if (optionsFileName.compare("") == 0)
+		if (optionsFileName.empty())
 		{
 			char* env = getenv("USERPROFILE");
 			if (env != NULL)
 				setOptionsFileName(string(env) + "/astylerc");
 		}
-		if (optionsFileName.compare("") != 0)
+		if (!optionsFileName.empty())
 			standardizePath(optionsFileName);
 	}
 
 	// create the options file vector and parse the options for errors
 	ASOptions options(formatter);
-	if (optionsFileName.compare("") != 0)
+	if (!optionsFileName.empty())
 	{
 		ifstream optionsIn(optionsFileName.c_str());
 		if (optionsIn)
@@ -2210,7 +2223,13 @@ void ASConsole::printVerboseHeader() const
 	ptr = localtime(&lt);
 	strftime(str, 20, "%x", ptr);
 	// print the header
-	printf("Artistic Style %s     %s\n", g_version, str);
+	// 60 is the length of the separator in printSeparatingLine()
+	string header = "Artistic Style " + string(g_version);
+	size_t numSpaces = 60 - header.length() - strlen(str);
+	header.append(numSpaces, ' ');
+	header.append(str);
+	header.append("\n");
+	printf("%s", header.c_str());
 	// print options file
 	if (!optionsFileName.empty())
 		printf(_("Using default options file %s\n"), optionsFileName.c_str());
@@ -2494,7 +2513,7 @@ utf16_t* ASLibrary::convertUtf8ToUtf16(const char* utf8In, fpAlloc fpMemoryAlloc
 	bool isBigEndian = utf8_16.getBigEndian();
 	// return size is in number of CHARs, not utf16_t
 	size_t utf16Size = (utf8_16.Utf16LengthFromUtf8(data, dataSize) + sizeof(utf16_t));
-	char* utf16Out = fpMemoryAlloc(utf16Size);
+	char* utf16Out = fpMemoryAlloc((long)utf16Size);
 	if (utf16Out == NULL)
 		return NULL;
 #ifdef NDEBUG
@@ -3128,6 +3147,11 @@ void ASOptions::parseOption(const string& arg, const string& errorInfo)
 	{
 		g_console->setIsDryRun(true);
 	}
+	else if (isOption(arg, "report"))
+	{
+		g_console->setIsDryRun(true);
+		g_console->setIsReport(true);
+	}
 	else if ( isOption(arg, "Z", "preserve-date") )
 	{
 		g_console->setPreserveDate(true);
@@ -3619,14 +3643,25 @@ char* STDCALL javaMemoryAlloc(unsigned long memoryNeeded)
 	char* buffer = new(nothrow) char[memoryNeeded];
 	return buffer;
 }
+
 #endif	// ASTYLE_JNI
 
 //----------------------------------------------------------------------------
-// Entry point for AStyleMainUtf16 library builds
+// ASTYLE_LIB functions for library builds
 //----------------------------------------------------------------------------
 
 #ifdef ASTYLE_LIB
 
+//----------------------------------------------------------------------------
+// ASTYLE_LIB entry point for AStyleMainUtf16 library builds
+//----------------------------------------------------------------------------
+/*
+* IMPORTANT Visual C DLL linker for WIN32 must have the additional options:
+*           /EXPORT:AStyleMain=_AStyleMain@16
+*           /EXPORT:AStyleMainUtf16=_AStyleMainUtf16@16
+*           /EXPORT:AStyleGetVersion=_AStyleGetVersion@0
+* No /EXPORT is required for x64
+*/
 extern "C" EXPORT utf16_t* STDCALL AStyleMainUtf16(const utf16_t* pSourceIn,	// the source to be formatted
                                                    const utf16_t* pOptions,		// AStyle options
                                                    fpError fpErrorHandler,		// error handler function
@@ -3669,8 +3704,10 @@ extern "C" EXPORT utf16_t* STDCALL AStyleMainUtf16(const utf16_t* pSourceIn,	// 
 // ASTYLE_LIB entry point for library builds
 //----------------------------------------------------------------------------
 /*
- * IMPORTANT VC DLL linker for WIN32 must have the parameter  /EXPORT:AStyleMain=_AStyleMain@16
- *                                                            /EXPORT:AStyleGetVersion=_AStyleGetVersion@0
+ * IMPORTANT Visual C DLL linker for WIN32 must have the additional options:
+ *           /EXPORT:AStyleMain=_AStyleMain@16
+ *           /EXPORT:AStyleMainUtf16=_AStyleMainUtf16@16
+ *           /EXPORT:AStyleGetVersion=_AStyleGetVersion@0
  * No /EXPORT is required for x64
  */
 extern "C" EXPORT char* STDCALL AStyleMain(const char* pSourceIn,		// the source to be formatted
@@ -3730,8 +3767,8 @@ extern "C" EXPORT char* STDCALL AStyleMain(const char* pSourceIn,		// the source
 		}
 	}
 
-	unsigned long textSizeOut = out.str().length();
-	char* pTextOut = fpMemoryAlloc(textSizeOut + 1);     // call memory allocation function
+	size_t textSizeOut = out.str().length();
+	char* pTextOut = fpMemoryAlloc((long)textSizeOut + 1);     // call memory allocation function
 	if (pTextOut == NULL)
 	{
 		fpErrorHandler(120, "Allocation failure on output.");
@@ -3765,6 +3802,7 @@ extern "C" EXPORT const char* STDCALL AStyleGetVersion(void)
 
 int main(int argc, char** argv)
 {
+	int ret = EXIT_SUCCESS;
 	// create objects
 	ASFormatter formatter;
 	g_console = new ASConsole(formatter);
@@ -3779,14 +3817,19 @@ int main(int argc, char** argv)
 	if (g_console->fileNameVectorIsEmpty())
 	{
 		g_console->formatCinToCout();
+		// Since we can't know how many files we processed on cin,
+		// just report success
 		return EXIT_SUCCESS;
 	}
 
 	// process entries in the fileNameVector
 	g_console->processFiles();
 
+	if (g_console->getIsReport()) {
+		ret = g_console->getChangedCount();
+	}
 	delete g_console;
-	return EXIT_SUCCESS;
+	return ret;
 }
 
 #endif	// ASTYLE_LIB

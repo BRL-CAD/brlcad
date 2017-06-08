@@ -35,7 +35,7 @@
 #
 ###
 # A simple script to generate an Emacs Org mode file whose headings
-# match the specified file system heirarchy.
+# match the specified file system hierarchy.
 ###
 
 if (($# != 1)); then

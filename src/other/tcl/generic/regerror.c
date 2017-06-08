@@ -35,7 +35,7 @@
  * Unknown-error explanation.
  */
 
-static char unk[] = "*** unknown regex error code 0x%x ***";
+static const char unk[] = "*** unknown regex error code 0x%x ***";
 
 /*
  * Struct to map among codes, code names, and explanations.

@@ -1569,7 +1569,7 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 1));
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 1));
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HRT;

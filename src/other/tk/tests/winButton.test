@@ -7,8 +7,6 @@
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -31,7 +29,9 @@ radiobutton .r -text Radiobutton
 pack .l .b .c .r
 update
 
-test winbutton-1.1 {TkpComputeButtonGeometry procedure} {testImageType win} {
+test winbutton-1.1 {TkpComputeButtonGeometry procedure} {testImageType win nonPortable} {
+    # nonPortable because of [3e3e25f483]: on Win7 first started with a high DPI screen
+    # the smallest size (i.e. 8) is not available for "MS Sans Serif" font
     deleteWindows
     image create test image1
     image1 changed 0 0 0 0 60 40
@@ -48,7 +48,9 @@ test winbutton-1.1 {TkpComputeButtonGeometry procedure} {testImageType win} {
 	    [winfo reqwidth .b3] [winfo reqheight .b3] \
 	    [winfo reqwidth .b4] [winfo reqheight .b4]
 } {68 48 70 50 90 52 90 52}
-test winbutton-1.2 {TkpComputeButtonGeometry procedure} win {
+test winbutton-1.2 {TkpComputeButtonGeometry procedure} {win nonPortable} {
+    # nonPortable because of [3e3e25f483]: on Win7 first started with a high DPI screen
+    # the smallest size (i.e. 8) is not available for "MS Sans Serif" font
     deleteWindows
     label .b1 -bitmap question -bd 3 -padx 0 -pady 2
     button .b2 -bitmap question -bd 3 -padx 0 -pady 2

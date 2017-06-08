@@ -48,7 +48,7 @@
  * 0 OK
  * -1 FAILURE
  */
-HIDDEN int
+int
 db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset)
 /* byte count */
 /* byte offset from start of file */

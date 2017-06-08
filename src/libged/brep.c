@@ -416,14 +416,14 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc == 2) {
 	    /* brep obj */
-	    bu_vls_sprintf(&bname, "%s_brep", solid_name);
-	    bu_vls_sprintf(&suffix, "_brep");
+	    bu_vls_sprintf(&bname, "%s.brep", solid_name);
+	    bu_vls_sprintf(&suffix, ".brep");
 	} else if (BU_STR_EQUAL(argv[2], "--no-evaluation")) {
 	    no_evaluation = 1;
 	    if (argc == 3) {
 		/* brep obj --no-evaluation */
-		bu_vls_sprintf(&bname, "%s_brep", solid_name);
-		bu_vls_sprintf(&suffix, "_brep");
+		bu_vls_sprintf(&bname, "%s.brep", solid_name);
+		bu_vls_sprintf(&suffix, ".brep");
 	    } else if (argc == 4) {
 		/* brep obj --no-evaluation suffix */
 		bu_vls_sprintf(&bname, argv[3]);

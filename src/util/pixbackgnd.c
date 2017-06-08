@@ -34,8 +34,8 @@
 
 #include "vmath.h"
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/exit.h"
 
 
 double RGB[3] = {128, 128, 128};	/* r, g, b */

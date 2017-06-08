@@ -9,8 +9,6 @@
 # Copyright (c) 1997 by Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv

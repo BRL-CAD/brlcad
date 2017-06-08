@@ -1,8 +1,6 @@
 # This file creates a screen to exercise Postscript generation
 # for bitmaps in canvases.  It is part of the Tk visual test suite,
 # which is invoked via the "visual" script.
-#
-# RCS: @(#) $Id$
 
 catch {destroy .t}
 toplevel .t

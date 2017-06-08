@@ -37,6 +37,7 @@
 file(GLOB bench_files RELATIVE "@BRLCAD_BINARY_DIR@/bench" "@BRLCAD_BINARY_DIR@/bench/*")
 if("${bench_files}" MATCHES "pix" OR "${bench_files}" MATCHES "log")
   execute_process(COMMAND "../@BIN_DIR@/benchmark" clobber WORKING_DIRECTORY "@BRLCAD_BINARY_DIR@/bench")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E remove -f "@BRLCAD_BINARY_DIR@/bench/summary")
 endif("${bench_files}" MATCHES "pix" OR "${bench_files}" MATCHES "log")
 
 # Clear out the files the BRL-CAD build told us to clear

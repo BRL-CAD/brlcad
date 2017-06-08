@@ -50,7 +50,7 @@
 	method nirt {args}
 	method observer {args}
 	method overlay {args}
-	method report {args}
+	method solid_report {args}
 	method qray {args}
 	method rt {args}
 	method rtabort {args}
@@ -165,8 +165,8 @@
     eval $dg overlay $args
 }
 
-::itcl::body Drawable::report {args} {
-    eval $dg report $args
+::itcl::body Drawable::solid_report {args} {
+    eval $dg solid_report $args
 }
 
 ::itcl::body Drawable::qray {args} {
@@ -254,7 +254,6 @@
     $help add nirt		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
     $help add overlay		{{file.plot3 [name]} {overlay the specified 2D/3D UNIX plot file}}
     $help add qray		{{subcommand}	{get/set query_ray characteristics}}
-    $help add report		{{[lvl]} {print solid table & vector list}}
     $help add rt		{{[options] [-- objects]} {do raytrace of view or specified objects}}
     $help add rtabort		{{} {abort the associated raytraces}}
     $help add rtcheck		{{[options]} {check for overlaps in current view}}
@@ -262,6 +261,7 @@
     $help add rtedge		{{[options] [-- objects]} {do raytrace of view or specified objects yielding only edges}}
     $help add rtweight		{{[options] [-- objects]} {calculate weight of specified objects}}
     $help add shaded_mode	{{[0|1|2]}	{get/set shaded mode}}
+    $help add solid_report	{{[lvl]} {print solid table & vector list}}
     $help add vdraw		{{write|insert|delete|read|length|show [args]} {vector drawing (cnuzman)}}
     $help add who		{{[r(eal)|p(hony)|b(oth)]} {list the top-level objects currently being displayed}}
     $help add zap		{{} {clear screen}}

@@ -7,8 +7,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -396,6 +394,15 @@ test cmdIL-4.34 {SortCompare procedure, -ascii option with -nocase option} {
 test cmdIL-4.35 {SortCompare procedure, -ascii option with -nocase option} {
     lsort -ascii -nocase {d E c B a D35 d300 100 20}
 } {100 20 a B c d d300 D35 E}
+test cmdIL-4.36 {SortCompare procedure, UTF-8 with -nocase option} {
+    scan [lsort -ascii -nocase [list \u101 \u100]] %c%c%c
+} {257 32 256}
+test cmdIL-4.37 {SortCompare procedure, UTF-8 with -nocase option} {
+    scan [lsort -ascii -nocase [list a\u0000a a]] %c%c%c%c%c
+} {97 32 97 0 97}
+test cmdIL-4.38 {SortCompare procedure, UTF-8 with -nocase option} {
+    scan [lsort -ascii -nocase [list a a\u0000a]] %c%c%c%c%c
+} {97 32 97 0 97}
 
 test cmdIL-5.1 {lsort with list style index} {
     lsort -ascii -decreasing -index {0 1} {
@@ -770,6 +777,16 @@ test cmdIL-7.8 {lreverse command - shared intrep [Bug 1675044]} -setup {
     unset -nocomplain x y
     rename K {}
 } -result 1
+
+# This belongs in info test, but adding tests there breaks tests
+# that compute source file line numbers.
+test info-20.6 {Bug 3587651} -setup {
+    namespace eval my {namespace eval tcl {namespace eval mathfunc {
+        proc demo x {return 42}
+    }}}} -body {    namespace eval my {expr {"demo" in [info functions]}}} -cleanup {
+    namespace delete my
+} -result 1
+
 
 # cleanup
 ::tcltest::cleanupTests

@@ -43,9 +43,6 @@
 #	When a new region is created, its properties are determined by the current "regdef" settings, and
 #	the regdef ident number is incremented.
 #
-#	Author:
-#		John R. Anderson
-#
 
 proc build_region { args } {
     set usage "Usage:\n\tbuild_region \[-a region_num\] tag start_num end_num"
