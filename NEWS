@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* upgraded Tcl/Tk from 8.5.9 to 8.5.19 - Sean Morrison
 * fixed background color setting in MGED - Cliff Yapp
 * upgraded libpng to version 1.6.29 - Cliff Yapp
 * upgraded zlib to version 1.2.11 - Cliff Yapp
