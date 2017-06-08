@@ -171,6 +171,8 @@ add_definitions(-DBUILD_itk)
 #--------------------------------------------------------------------
 add_definitions(-DTCL_THREADS=1)
 
+add_definitions(-D_USE_32BIT_TIME_T=0)
+
 MACRO(TCL_CHECK_INCLUDE_FILE filename var)
   CHECK_INCLUDE_FILE(${filename} ${var})
   IF(${var})
