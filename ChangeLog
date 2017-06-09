@@ -1,3 +1,9 @@
+2017-06-09 00:00  starseeker
+
+	* [r69905] src/other/incrTcl/itk/CMakeLists.txt:
+	  Had this backwards - it's not a value set, it's a define, and
+	  it's 32bit that needs it. fix
+
 2017-06-08 22:33  starseeker
 
 	* [r69901] ChangeLog:
