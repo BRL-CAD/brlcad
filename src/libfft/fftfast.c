@@ -232,15 +232,12 @@ butterflies(int numpoints, int inverse, COMPLEX *dat)
 		 * We do all this with pointers now.
 		 */
 
-		/*cmult(&w, &dat[node2], &temp);*/
 		temp.re = w.re*node2->re - w.im*node2->im;
 		temp.im = w.im*node2->re + w.re*node2->im;
 
-		/*csub(&dat[node1], &temp, &dat[node2]);*/
 		node2->re = node1->re - temp.re;
 		node2->im = node1->im - temp.im;
 
-		/*cadd(&dat[node1], &temp, &dat[node1]);*/
 		node1->re += temp.re;
 		node1->im += temp.im;
 	    }
@@ -257,7 +254,6 @@ butterflies(int numpoints, int inverse, COMPLEX *dat)
      */
     if (inverse > 0) {
 	for (node1 = &dat[0]; node1 < &dat[numpoints]; node1++) {
-	    /* cdiv(&dat[i], &const, &dat[i]); */
 	    node1->re /= (double)numpoints;
 	    node1->im /= (double)numpoints;
 	}

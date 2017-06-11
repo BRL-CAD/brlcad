@@ -64,8 +64,6 @@ static struct db_tree_state	tree_state;	/* includes tol & model */
 static int	regions_tried = 0;
 static int	regions_converted = 0;
 
-/* extern struct mater* rt_material_head; */
-
 static void
 print_usage(const char *progname)
 {
@@ -81,7 +79,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 
     } else {
 	/* catch */
@@ -96,7 +94,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;	/* restore mode */
+	nmg_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -165,7 +163,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if (ret_tree) {
 	r = ret_tree->tr_d.td_r;
 	if (do_bots && r) {
-	    bot = nmg_bot(BU_LIST_FIRST(shell, &r->s_hd), tsp->ts_tol);
+	    bot = nmg_bot(BU_LIST_FIRST(shell, &r->s_hd), &RTG.rtg_vlfree, tsp->ts_tol);
 	}
     } else {
 	if (verbose) {
@@ -350,7 +348,7 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
 						       sizeof(struct rt_tree_array), "tree list");
 	actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list,
 								comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
     }
     else {
 	tree_list = (struct rt_tree_array *)NULL;
@@ -483,9 +481,9 @@ main(int argc, char **argv)
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		NMG_debug = RTG.NMG_debug;
-		bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		NMG_debug = nmg_debug;
+		bu_printb("librt nmg_debug", nmg_debug, NMG_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    default:

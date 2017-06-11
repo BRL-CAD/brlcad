@@ -1,4 +1,3 @@
-// RCS: @(#) $Id$
 //
 // Version Resource Script
 //
@@ -73,4 +72,3 @@ END
 #define CREATEPROCESS_MANIFEST_RESOURCE_ID 1
 #endif
 CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "wish.exe.manifest"
-

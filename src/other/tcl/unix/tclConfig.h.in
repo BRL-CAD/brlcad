@@ -19,8 +19,8 @@
 /* Define to 1 if the system has the type `blkcnt_t'. */
 #undef HAVE_BLKCNT_T
 
-/* Do we have BSDgettimeofday()? */
-#undef HAVE_BSDGETTIMEOFDAY
+/* Defined when compiler supports casting to union type. */
+#undef HAVE_CAST_TO_UNION
 
 /* Define to 1 if you have the `chflags' function. */
 #undef HAVE_CHFLAGS
@@ -33,6 +33,9 @@
 
 /* Do we have access to Darwin CoreFoundation.framework? */
 #undef HAVE_COREFOUNDATION
+
+/* Is the cpuid instruction usable? */
+#undef HAVE_CPUID
 
 /* Do we have fts functions? */
 #undef HAVE_FTS
@@ -256,6 +259,9 @@
 /* Default libtommath precision. */
 #undef MP_PREC
 
+/* Is no debugging enabled? */
+#undef NDEBUG
+
 /* Is Darwin CoreFoundation unavailable for 64-bit? */
 #undef NO_COREFOUNDATION_64
 
@@ -339,9 +345,6 @@
 
 /* What encoding should be used for embedded configuration info? */
 #undef TCL_CFGVAL_ENCODING
-
-/* Is debugging enabled? */
-#undef TCL_CFG_DEBUG
 
 /* Is this a 64-bit build? */
 #undef TCL_CFG_DO64BIT

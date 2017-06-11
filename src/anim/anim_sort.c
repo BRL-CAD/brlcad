@@ -35,8 +35,8 @@
 
 #include "bu/getopt.h"
 #include "bu/file.h"
-#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/log.h"
 
 
 #define OPT_STR "cih?"

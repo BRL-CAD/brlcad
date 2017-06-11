@@ -150,9 +150,6 @@ struct Combination {
     struct Member {
 	Member(directory &dir, int operation, const fastf_t *matrix);
 
-	bool operator==(const Member &other) const;
-	bool operator!=(const Member &other) const;
-
 	directory *m_dir;
 	int m_operation;
 	mat_t m_matrix;
@@ -161,7 +158,6 @@ struct Combination {
 
     Combination();
     Combination(db_i &db, directory &dir);
-    Combination(const Combination &source);
     Combination &operator=(const Combination &source);
 
     bool is_unions() const;
@@ -295,26 +291,6 @@ Combination::Member::Member(directory &dir, int operation,
 }
 
 
-bool
-Combination::Member::operator==(const Member &other) const
-{
-    if (m_dir != other.m_dir || m_operation != other.m_operation)
-	return false;
-
-    bn_tol tol;
-    BN_TOL_INIT(&tol);
-    rt_tol_default(&tol);
-    return bn_mat_is_equal(m_matrix, other.m_matrix, &tol);
-}
-
-
-bool
-Combination::Member::operator!=(const Member &other) const
-{
-    return !operator==(other);
-}
-
-
 Combination::Combination() :
     m_db(NULL),
     m_dir(NULL),
@@ -346,7 +322,7 @@ Combination::Combination(db_i &db, directory &dir) :
 				     sizeof(rt_tree_array), "tree list"));
     const std::size_t actual_count = (struct rt_tree_array *)db_flatten_tree(
 					 tree_list.ptr, comb.tree, OP_UNION, false, &rt_uniresource) - tree_list.ptr;
-    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+    BU_ASSERT(actual_count == node_count);
 
     for (std::size_t i = 0; i < node_count; ++i) {
 	struct directory * const member_dir = db_lookup(&db,
@@ -368,14 +344,6 @@ Combination::Combination(db_i &db, directory &dir) :
     for (std::size_t i = 0; i < avs.count; ++i)
 	m_attributes[avs.avp[i].name] = avs.avp[i].value;
 }
-
-
-Combination::Combination(const Combination &source) :
-    m_db(source.m_db),
-    m_dir(source.m_dir),
-    m_members(source.m_members),
-    m_attributes(source.m_attributes)
-{}
 
 
 Combination &

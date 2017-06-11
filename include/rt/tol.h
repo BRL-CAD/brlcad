@@ -70,11 +70,14 @@ __BEGIN_DECLS
  *
  * RT_PCOEF_TOL is a tolerance on polynomial coefficients to prevent
  * the root finder from having heartburn.
+ *
+ * RT_ROOT_TOL is the tolerance on the imaginary component of complex
+ * roots, for determining whether a root is sufficiently near zero.
  */
 #define RT_LEN_TOL      (1.0e-8)
 #define RT_DOT_TOL      (0.001)
 #define RT_PCOEF_TOL    (1.0e-10)
-
+#define RT_ROOT_TOL     (1.0e-5)
 
 /**
  * Tessellation (geometric) tolerances, different beasts than the

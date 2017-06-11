@@ -1,5 +1,4 @@
 SET(tk_ignore_files
-Makefile.am
 CMake
 ChangeLog
 ChangeLog.2002
@@ -12,7 +11,6 @@ doc
 generic/README
 generic/default.h
 generic/ks_names.h
-generic/prolog.ps
 generic/tk.decls
 generic/tk.h
 generic/tk3d.h
@@ -55,7 +53,7 @@ library
 license.terms
 macosx
 tests
-unix
+unix/configure
 unix/Makefile.in
 unix/README
 unix/aclocal.m4
@@ -64,6 +62,8 @@ unix/install-sh
 unix/installManPage
 unix/license.terms
 unix/tcl.m4
+unix/tk.pc.in
+unix/tk.spec
 unix/tkConfig.h.in
 unix/tkConfig.sh.in
 unix/tkUnixDefault.h

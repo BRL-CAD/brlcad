@@ -29,9 +29,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/log.h"
 #include "bu/file.h"
 #include "bu/str.h"
+#include "bu/exit.h"
+
 
 static void
 usage(const char *argv0) {
@@ -50,7 +51,7 @@ main(int argc, char **argv)
     } magline, yelline, cyaline;
 
     struct {
-	char red, green, blue;
+	unsigned char red, green, blue;
     } out;
 
     FILE *magfp, *yelfp, *cyafp;

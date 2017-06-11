@@ -186,7 +186,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 	keepfp = wdb_fopen_v(argv[0], db_version(gedp->ged_wdbp->dbip));
 
 	if (keepfp == NULL) {
-	    perror(argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s command was unable to create file '%s'\n", cmd, argv[0]);
 	    return GED_ERROR;
 	}
     }

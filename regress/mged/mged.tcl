@@ -167,7 +167,6 @@ add_test draw mged
 add_test erase mged
 add_test Z mged
 add_test B mged
-add_test dall mged
 add_test hide mged
 add_test unhide mged
 

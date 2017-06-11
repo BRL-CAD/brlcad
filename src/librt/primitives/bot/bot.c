@@ -50,10 +50,7 @@
 /* private implementation headers */
 #include "./btg.h"	/* for the bottie_ functions */
 #include "./bot_edge.h"
-
-
-#define GLUE(_a, _b) _a ## _b
-#define XGLUE(_a, _b) GLUE(_a, _b)
+#include "../../librt_private.h"
 
 
 #define MAXHITS 128
@@ -157,6 +154,8 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
         for (idx=0; idx<bip->num_faces; idx++) {
             size_t i0, i1, i2;
 
+	    i0 = i1 = i2 = bip->num_vertices;
+
 	    switch (bip->orientation) {
 	    case RT_BOT_CW:
 		i0 = bip->faces[idx*3];
@@ -180,11 +179,12 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
                 bu_free(bot->clt_triangles, "bot triangles");
                 bot->clt_triangles = NULL;
                 return -1;
-            }
-            VMOVE(bot->clt_triangles[idx].v0, &bip->vertices[i0*3]);
-            VMOVE(bot->clt_triangles[idx].v1, &bip->vertices[i1*3]);
-            VMOVE(bot->clt_triangles[idx].v2, &bip->vertices[i2*3]);
-            bot->clt_triangles[idx].surfno = idx;
+            } else {
+		VMOVE(bot->clt_triangles[idx].v0, &bip->vertices[i0*3]);
+		VMOVE(bot->clt_triangles[idx].v1, &bip->vertices[i1*3]);
+		VMOVE(bot->clt_triangles[idx].v2, &bip->vertices[i2*3]);
+		bot->clt_triangles[idx].surfno = idx;
+	    }
         }
     } else {
         bot->clt_triangles = NULL;
@@ -198,6 +198,8 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
 
         for (idx=0; idx<bip->num_face_normals; idx++) {
             size_t i0, i1, i2;
+
+	    i0 = i1 = i2 = bip->num_normals;
 
 	    switch (bip->orientation) {
 	    case RT_BOT_CW:
@@ -222,10 +224,11 @@ clt_bot_prep(struct soltab *stp, struct rt_bot_internal *bip, struct rt_i *rtip)
                 bu_free(bot->clt_normals, "bot normals");
                 bot->clt_normals = NULL;
                 return -1;
-            }
-            VMOVE(&bot->clt_normals[idx*9+0], &bip->normals[i0*3]);
-            VMOVE(&bot->clt_normals[idx*9+3], &bip->normals[i1*3]);
-            VMOVE(&bot->clt_normals[idx*9+6], &bip->normals[i2*3]);
+            } else {
+		VMOVE(&bot->clt_normals[idx*9+0], &bip->normals[i0*3]);
+		VMOVE(&bot->clt_normals[idx*9+3], &bip->normals[i1*3]);
+		VMOVE(&bot->clt_normals[idx*9+6], &bip->normals[i2*3]);
+	    }
         }
     } else {
     	bot->clt_normals = NULL;
@@ -639,7 +642,7 @@ rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct appl
     RT_CK_HTBL(&psp->htab);
 
     /* Sort hits, Near to Far */
-    rt_hitsort(psp->htab.hits, psp->htab.end);
+    primitive_hitsort(psp->htab.hits, psp->htab.end);
 
     /* build sebgents */
     (void)rt_bot_makesegs(psp->htab.hits, psp->htab.end, psp->stp, &ap->a_ray, ap, seghead, psp);
@@ -1123,7 +1126,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	if (!(*corners[2])->vg_p)
 	    nmg_vertex_gv(*(corners[2]), pt[2]);
 
-	if (nmg_calc_face_g(fu))
+	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree))
 	    nmg_kfu(fu);
 	else if (bot_ip->mode == RT_BOT_SURFACE) {
 	    struct vertex **tmp;
@@ -1134,18 +1137,18 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL)
 		bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
 	    else
-		nmg_calc_face_g(fu);
+		nmg_calc_face_g(fu,&RTG.rtg_vlfree);
 	}
     }
 
     bu_free(verts, "rt_bot_tess *verts[]");
 
-    nmg_mark_edges_real(&s->l.magic);
+    nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
 
     nmg_region_a(*r, tol);
 
     if (bot_ip->mode == RT_BOT_SOLID && bot_ip->orientation == RT_BOT_UNORIENTED)
-	nmg_fix_normals(s, tol);
+	nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
 
     return 0;
 }
@@ -3344,7 +3347,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
 
 /* bu_log("increasing %i from capacity %ld given next is %ld\n", slot, bin_capacity[slot], bin_todonext[slot]); */
 
-	    BU_ASSERT_LONG(bin_capacity[slot], <, LONG_MAX / 2);
+	    BU_ASSERT(bin_capacity[slot] < LONG_MAX / 2);
 
 	    bin[slot] = bu_realloc(bin[slot], bin_capacity[slot] * 2 * sizeof(int), "increase vertices bin");
 	    bin_capacity[slot] *= 2;

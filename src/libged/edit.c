@@ -799,7 +799,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 			    &rt_uniresource, GED_ERROR);
 	comb_i = (struct rt_comb_internal *)intern.idb_ptr;
 	leaf = db_find_named_leaf(comb_i->tree, d_next->d_namep);
-	BU_ASSERT_PTR(leaf, !=, TREE_NULL); /* path is validated */
+	BU_ASSERT(leaf != TREE_NULL); /* path is validated */
 	if (leaf->tr_l.tl_mat) {
 	    MAT_DELTAS_GET(leaf_deltas, leaf->tr_l.tl_mat);
 	    VADD2(*coord, *coord, leaf_deltas);
@@ -1002,7 +1002,7 @@ edit_cmd_sduplicate(union edit_cmd *const dest,
     int i = 0;
 
     /* never try to duplicate dissimilar command types */
-    BU_ASSERT_PTR(dest->cmd, ==, src->cmd);
+    BU_ASSERT(dest->cmd == src->cmd);
 
     src_head = src->cmd->get_arg_head(src, i);
     do {
@@ -1378,7 +1378,7 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
 
 	/* path is already validated */
-	BU_ASSERT_PTR(leaf_to_modify, !=, TREE_NULL);
+	BU_ASSERT(leaf_to_modify != TREE_NULL);
 	if (!leaf_to_modify->tr_l.tl_mat) {
 	    leaf_to_modify->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t),
 							    "mat_t block for edit_translate()");
@@ -1459,11 +1459,11 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
     const int noisy = (flags & GED_ERROR); /* side with verbosity */
     struct edit_arg *cur_arg = cmd->cmd_line.args;
 
-    BU_ASSERT_PTR(cur_arg, !=, (struct edit_arg *)NULL);
+    BU_ASSERT(cur_arg != (struct edit_arg *)NULL);
 
     if (cur_arg->type & EDIT_FROM) {
 	/* if there isn't an EDIT_TO, this func shouldn't be called */
-	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
+	BU_ASSERT(cur_arg->next != (struct edit_arg *)NULL);
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
@@ -1478,7 +1478,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	/* If there isn't an EDIT_TARGET_OBJECT, this func shouldn't
 	 * be called.
 	 */
-	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
+	BU_ASSERT(cur_arg->next != (struct edit_arg *)NULL);
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')

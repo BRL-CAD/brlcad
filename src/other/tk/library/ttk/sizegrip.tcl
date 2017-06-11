@@ -1,6 +1,4 @@
 #
-# $Id$
-#
 # Sizegrip widget bindings.
 #
 # Dragging a sizegrip widget resizes the containing toplevel.

@@ -19,11 +19,7 @@
 #
 ###
 #
-#		A P P L Y _ M A T . T C L
-#
 # Procedures to apply matrices to objects in MGED
-#
-# Author - John R. Anderson
 #
 
 #

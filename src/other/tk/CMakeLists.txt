@@ -86,9 +86,12 @@ set(BUILD_STATIC_LIBS ON)
 # version numbers
 SET(TK_VERSION_MAJOR 8)
 SET(TK_VERSION_MINOR 5)
-SET(TK_PATCH_LEVEL 8.5.9)
+SET(TK_VERSION_PATCH 19)
+SET(TK_PATCH_LEVEL ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}.${TK_VERSION_PATCH})
 
 SET(TK_VERSION "${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}")
+SET(TK_WIN_VERSION "${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}.${TK_VERSION_PATCH}")
+SET(MACHINE "${CMAKE_SYSTEM_PROCESSOR}")
 
 # For Windows, we need the Resource Compiler language
 IF(WIN32)
@@ -174,7 +177,8 @@ endif(NOT TK_DISABLE_MANPAGES)
 # between various platforms or pertain to specific OS definitions
 add_definitions(-DPACKAGE_NAME="tk")
 add_definitions(-DPACKAGE_TARNAME="tk")
-add_definitions(-DPACKAGE_VERSION="${TK_PATCH_LEVEL}")
+add_definitions(-DPACKAGE_VERSION="${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}")
+add_definitions(-DPACKAGE_STRING="tk ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}")
 add_definitions(-DPACKAGE_BUGREPORT="")
 add_definitions(-DSTDC_HEADERS=1)
 
@@ -186,6 +190,11 @@ add_definitions(-DBUILD_tk)
 ADD_TCL_CFLAG(STDC_HEADERS)
 # Get the SHLIB extension from CMake
 add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+#--------------------------------------------------------------------
+# Supply substitutes for missing POSIX header files.
+#--------------------------------------------------------------------
+SC_MISSING_POSIX_HEADERS()
 
 #----------------------------------------------------------------------------
 # Define some platform specific flags
@@ -255,14 +264,16 @@ SC_TIME_HANDLER()
 #       Check for various typedefs and provide substitutes if
 #       they don't exist.
 #--------------------------------------------------------------------
-TCL_CHECK_TYPE_SIZE(mode_t MODE)
-TCL_CHECK_TYPE_SIZE(pid_t PID)
-TCL_CHECK_TYPE_SIZE(size_t SIZE)
-TCL_CHECK_TYPE_SIZE(uid_t UID)
+TCL_CHECK_TYPE_SIZE(mode_t HAVE_MODE)
+TCL_CHECK_TYPE_SIZE(pid_t HAVE_PID)
+TCL_CHECK_TYPE_SIZE(size_t HAVE_SIZE)
+TCL_CHECK_TYPE_SIZE(uid_t HAVE_UID)
 # The following tests may need to be more elaborate to function properly
-TCL_CHECK_TYPE_SIZE(socklen_t SOCKLEN sys/types.h sys/socket.h)
-TCL_CHECK_TYPE_SIZE(intptr_t INTPTR)
-TCL_CHECK_TYPE_SIZE(uintptr_t UINTPTR)
+TCL_CHECK_TYPE_SIZE(socklen_t HAVE_SOCKLEN sys/types.h sys/socket.h)
+TCL_CHECK_TYPE_SIZE(intptr_t HAVE_INTPTR)
+TCL_CHECK_TYPE_SIZE(uintptr_t HAVE_UINTPTR)
+
+TCL_CHECK_STRUCT_HAS_MEMBER("struct passwd" pw_gecos pwd.h HAVE_PW_GECOS)
 
 IF(NOT HAVE_OPENDIR)
   ADD_TCL_CFLAG(USE_DIRENT2_H)
@@ -329,21 +340,50 @@ ENDIF(NOT WIN32)
 #--------------------------------------------------------------------
 INCLUDE(CMakeDependentOption)
 CMAKE_DEPENDENT_OPTION(TK_ENABLE_XSS "Use XScreenSaver" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;${X11_Xscreensaver_LIB}" OFF)
+# FIXME: assumes if it's enabled that we have it
+if (TK_ENABLE_XSS)
+  add_definitions(-DHAVE_XSS=1)
+endif (TK_ENABLE_XSS)
 
 #--------------------------------------------------------------------
 #       Check for freetype / fontconfig / Xft support.
 #--------------------------------------------------------------------
-IF(NOT WIN32)
-  find_package(Freetype)
-  find_package(Fontconfig)
-  IF(NOT FREETYPE_FOUND)
-    SET(FREETYPE_LIBRARIES "")
-  ENDIF(NOT FREETYPE_FOUND)
-  IF(NOT FONTCONFIG_FOUND)
-    SET(FONTCONFIG_LIBRARIES "")
-  ENDIF(NOT FONTCONFIG_FOUND)
-ENDIF(NOT WIN32)
-CMAKE_DEPENDENT_OPTION(TK_ENABLE_XFT "Use freetype/fontconfig/xft" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;FREETYPE_FOUND;FONTCONFIG_FOUND;X11_Xft_FOUND" OFF)
+if(NOT TK_DISABLE_XFT)
+  IF(NOT WIN32)
+    find_package(Freetype)
+    find_package(Fontconfig)
+    IF(NOT FREETYPE_FOUND)
+      SET(FREETYPE_LIBRARIES "")
+    ENDIF(NOT FREETYPE_FOUND)
+    IF(NOT FONTCONFIG_FOUND)
+      SET(FONTCONFIG_LIBRARIES "")
+    ENDIF(NOT FONTCONFIG_FOUND)
+  ENDIF(NOT WIN32)
+  CMAKE_DEPENDENT_OPTION(TK_ENABLE_XFT "Use freetype/fontconfig/xft" ON "TK_SYSTEM_GRAPHICS STREQUAL x11;FREETYPE_FOUND;FONTCONFIG_FOUND;X11_Xft_FOUND" OFF)
+else(NOT TK_DISABLE_XFT)
+  set(TK_ENABLE_XFT OFF)
+  set(FREETYPE_LIBRARIES "")
+  set(FONTCONFIG_LIBRARIES "")
+endif(NOT TK_DISABLE_XFT)
+
+
+#--------------------------------------------------------------------
+#	Check for XkbKeycodeToKeysym.
+#--------------------------------------------------------------------
+
+if (NOT TK_ENABLE_AQUA)
+  SET(CMAKE_REQUIRED_INCLUDES ${X11_INCLUDE_DIR})
+  SET(CMAKE_REQUIRED_LIBRARIES ${X11_X11_LIB})
+  CHECK_INCLUDE_FILE(X11/XKBlib.h HAVE_X11_XKBLIB_H)
+  if (HAVE_X11_XKBLIB_H)
+    CHECK_C_SOURCE_COMPILES("#include <X11/XKBlib.h>\nint main() { void *ptr = (void*)&XkbKeycodeToKeysym; return 0;}" HAVE_XKBKEYCODETOKEYSYM)
+    if (HAVE_XKBKEYCODETOKEYSYM)
+      add_definitions(-DHAVE_XKBKEYCODETOKEYSYM=1)
+    endif (HAVE_XKBKEYCODETOKEYSYM)
+  endif (HAVE_X11_XKBLIB_H)
+  SET(CMAKE_REQUIRED_INCLUDES "")
+  SET(CMAKE_REQUIRED_LIBRARIES "")
+endif (NOT TK_ENABLE_AQUA)
 
 #----------------------------------------------------------------------------
 # signed/unsigned char - does the Tcl code still need this? See
@@ -391,16 +431,22 @@ TCL_CHECK_INCLUDE_FILE(strings.h HAVE_STRINGS_H)
 TCL_CHECK_INCLUDE_FILE(inttypes.h HAVE_INTTYPES_H)
 TCL_CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
 TCL_CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
+TCL_CHECK_INCLUDE_FILE(AvailabilityMacros.h HAVE_AVAILABILITYMACROS_H)
+IF(HAVE_AVAILABILITYMACROS_H)
+  add_definitions(-DHAVE_AVAILABILITYMACROS_H=1)
+ENDIF(HAVE_AVAILABILITYMACROS_H)
+
+CHECK_COMPILER_SUPPORTS_HIDDEN_D()
+IF(COMPILER_SUPPORTS_HIDDEN AND NOT MSVC)
+  add_definitions(-DMODULE_SCOPE=extern\ __attribute__\(\(__visibility__\("hidden"\)\)\))
+ENDIF(COMPILER_SUPPORTS_HIDDEN AND NOT MSVC)
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   TCL_CHECK_FUNCTION_EXISTS(getattrlist HAVE_GETATTRLIST)
   TCL_CHECK_INCLUDE_FILE(copyfile.h HAVE_COPYFILE_H)
   TCL_CHECK_FUNCTION_EXISTS(copyfile HAVE_COPYFILE)
-  IF(${CoreFoundation_LIBRARIES})
-    TCL_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
-    TCL_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
-    TCL_CHECK_FUNCTION_EXISTS(pthread_atfork HAVE_PTHREAD_ATFORK)
-  ENDIF(${CoreFoundation_LIBRARIES})
+  TCL_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
+  TCL_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
   ADD_TCL_CFLAG(USE_VFORK)
   add_definitions(-DTCL_DEFAULT_ENCODING="utf-8")
   ADD_TCL_CFLAG(TCL_LOAD_FROM_MEMORY)
@@ -450,6 +496,27 @@ add_definitions(-DTK_LAYOUT_WITH_BASE_CHUNKS=0)
 add_definitions(-DTK_DRAW_IN_CONTEXT=0)
 add_definitions(-DTILE_07_COMPAT=0)
 add_definitions(-DDEBUG_FONTSEL=0)
+
+# from unix/Makefile.in:
+# Tk does not used deprecated Tcl constructs so it should
+# compile fine with -DTCL_NO_DEPRECATED. To remove its own
+# set of deprecated code uncomment the second line.
+add_definitions(-DTCL_NO_DEPRECATED)
+
+
+#----------------------------------------------------------------------------
+# Add options for optimized and debug compile options - replaces 
+# SC_ENABLE_SYMBOLS
+#----------------------------------------------------------------------------
+IF(TCL_OPTIMIZED)
+  ADD_TCL_CFLAG(TCL_CFG_OPTIMIZED)
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG=1 -O2")
+ENDIF(TCL_OPTIMIZED)
+
+
+#----------------------------------------------------------------------------
+# GET TO WORK COMPILING
+#----------------------------------------------------------------------------
 
 ADD_SUBDIRECTORY(library)
 
@@ -650,7 +717,7 @@ SET(TK_AQUA_SRCS
   xlib/xutil.c
   )
 
-
+configure_file(win/wish.exe.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/wish.exe.manifest @ONLY)
 SET(TK_WIN_SRCS
   xlib/xcolors.c
   xlib/xdraw.c
@@ -740,11 +807,13 @@ IF(X11_Xscreensaver_INCLUDE_PATH)
 ENDIF(X11_Xscreensaver_INCLUDE_PATH)
 
 include_directories(
-  ${TCL_INCLUDE_DIRS}	
+  ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
-  ${FREETYPE_INCLUDE_DIRS}
   ${TK_X11_INCLUDE_DIRS}
   )
+if(TK_ENABLE_XFT)
+  include_directories(${FREETYPE_INCLUDE_DIRS})
+endif(TK_ENABLE_XFT)
 
 SET(X11_TK_LIBS "")
 IF(X11_X11_LIB)
@@ -753,9 +822,9 @@ ENDIF(X11_X11_LIB)
 IF(X11_Xext_LIB)
   SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xext_LIB})
 ENDIF(X11_Xext_LIB)
-IF(X11_Xft_LIB)
+if(X11_Xft_LIB AND TK_ENABLE_XFT)
   SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xft_LIB})
-ENDIF(X11_Xft_LIB)
+endif(X11_Xft_LIB AND TK_ENABLE_XFT)
 IF(X11_Xrender_LIB)
   SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xrender_LIB})
 ENDIF(X11_Xrender_LIB)
@@ -787,7 +856,6 @@ SET_PROPERTY(TARGET tkstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 IF(MINGW)
   set(TK_MINGW_LIBS comctl32 m dinput8 dxguid dxerr8 user32 gdi32 winmm imm32 ole32 oleaut32 shell32 version uuid)
 ENDIF(MINGW)
-
 add_library(tk ${TK_SRCS})
 IF(WIN32)
   target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB} ${X11_TK_LIBS} ${TK_MINGW_LIBS})
@@ -825,17 +893,6 @@ ELSE(WIN32)
 ENDIF(WIN32)
 SET_TARGET_PROPERTIES(wish PROPERTIES VERSION ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
 install(TARGETS wish DESTINATION bin)
-
-if(CMAKE_CONFIGURATION_TYPES)
-   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-     FILE(COPY generic/prolog.ps DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/tk${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
-   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-else(CMAKE_CONFIGURATION_TYPES)
-   FILE(COPY generic/prolog.ps DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/tk${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
-endif(CMAKE_CONFIGURATION_TYPES)
-
-INSTALL(FILES generic/prolog.ps DESTINATION lib/tk${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
 
 IF(NOT WIN32)
   FILE(COPY unix/tkAppInit.c DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/tk${TK_PATCH_LEVEL})

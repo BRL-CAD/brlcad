@@ -9,8 +9,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -2358,6 +2356,24 @@ test binary-63.4 {NaN} ieeeFloatingPoint {
     binary scan [binary format q {NaN( 3123456789aBc)}] w w
     format 0x%016lx [expr {$w & 0xfff3ffffffffffff}]
 } 0x7ff3123456789abc
+
+# Make sure TclParseNumber() rejects invalid nan-hex formats [Bug 3402540]
+test binary-63.5 {NaN} -constraints ieeeFloatingPoint -body {
+    binary format q Nan(
+} -returnCodes error -match glob -result {expected floating-point number*}
+test binary-63.6 {NaN} -constraints ieeeFloatingPoint -body {
+    binary format q Nan()
+} -returnCodes error -match glob -result {expected floating-point number*}
+test binary-63.7 {NaN} -constraints ieeeFloatingPoint -body {
+    binary format q Nan(g)
+} -returnCodes error -match glob -result {expected floating-point number*}
+test binary-63.8 {NaN} -constraints ieeeFloatingPoint -body {
+    binary format q Nan(1,2)
+} -returnCodes error -match glob -result {expected floating-point number*}
+test binary-63.9 {NaN} -constraints ieeeFloatingPoint -body {
+    binary format q Nan(1234567890abcd)
+} -returnCodes error -match glob -result {expected floating-point number*}
+
 test binary-64.1 {NaN} \
     -constraints ieeeFloatingPoint \
     -body {

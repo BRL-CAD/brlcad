@@ -213,7 +213,7 @@ set_layout(_ged_dag_data *dag, bool has_parent, unsigned long int parent_id, uns
     position_node(dag, has_parent, parent, child, level, maxX_level);
     dag->router->processTransaction();
 
-    if (children.size() == 0) {
+    if (children.empty()) {
 	return;
     } else {
 	has_parent = true;
@@ -361,7 +361,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
     if (node_count > 0) {
 	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 1, &rt_uniresource) - rt_tree_array;
-	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	BU_ASSERT(actual_count == node_count);
 	comb->tree = TREE_NULL;
     } else {
 	actual_count = 0;

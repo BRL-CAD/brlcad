@@ -31,9 +31,6 @@
 
 __BEGIN_DECLS
 
-#define TIE_SINGLE_PRECISION 0
-#define TIE_DOUBLE_PRECISION 1
-
 #ifndef RT_EXPORT
 #  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
 #    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
@@ -48,12 +45,11 @@ __BEGIN_DECLS
 
 /*
  * define which precision to use, 0 is 'float' and 1 is 'double'.
- * Default to double precision to protect those not familiar.
  * Horrible macros wrap functions and values to build a library
  * capable of doing either without recompilation.
  */
 #ifndef TIE_PRECISION
-# define TIE_PRECISION TIE_SINGLE_PRECISION
+#  define TIE_PRECISION 1
 #endif
 
 #define TIE_CHECK_DEGENERATE	1
@@ -62,14 +58,14 @@ __BEGIN_DECLS
 #define TIE_KDTREE_OPTIMAL	0x1
 
 /* Type to use for floating precision */
-#if TIE_PRECISION == TIE_SINGLE_PRECISION
-typedef float tfloat;
-# define TIE_VAL(x) x##0
-#elif TIE_PRECISION == TIE_DOUBLE_PRECISION
-typedef double tfloat;
-# define TIE_VAL(x) x##1
+#if TIE_PRECISION == 0
+typedef float TFLOAT;
+#  define TIE_VAL(x) CPP_GLUE(x, _single)
+#elif TIE_PRECISION == 1
+typedef double TFLOAT;
+#  define TIE_VAL(x) CPP_GLUE(x, _double)
 #else
-# error "Unknown precision"
+#  error "Unknown precision"
 #endif
 
 
@@ -78,7 +74,7 @@ typedef double tfloat;
 	*(_t *)&((uint8_t *)_tv)[_ti] = *(_t *)&((uint8_t *)_fv)[_fi]; }
 
 typedef struct TIE_3_s {
-    tfloat v[3];	/* 12-bytes or 24-bytes */
+    TFLOAT v[3];	/* 12-bytes or 24-bytes */
 } TIE_3;
 
 struct tie_ray_s {
@@ -103,7 +99,7 @@ struct tie_tri_s {
 			 * Data[1] = Normal,
 			 * Data[2] = DotProduct, VectorU, VectorV
 			 */
-    tfloat v[2];	/* 8-bytes or 16-bytes */
+    TFLOAT v[2];	/* 8-bytes or 16-bytes */
     void *ptr;		/* 4-bytes or 8-bytes */
     uint32_t b;		/* 4-bytes (way more than we need, but helps keep alignment) */
 };
@@ -129,28 +125,24 @@ struct tie_s {
     fastf_t radius;
 };
 
-RT_EXPORT extern void TIE_VAL(tie_kdtree_free)(struct tie_s *tie);
-RT_EXPORT extern void TIE_VAL(tie_kdtree_prep)(struct tie_s *tie);
+RT_EXPORT extern int tie_check_degenerate;
 RT_EXPORT extern fastf_t TIE_PREC;
 
-/* compatibility macros */
-#define tie_kdtree_free TIE_VAL(tie_kdtree_free)
-#define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
+#define TIE_INIT TIE_VAL(tie_init)
+#define TIE_FREE TIE_VAL(tie_free)
+#define TIE_PREP TIE_VAL(tie_prep)
+#define TIE_WORK TIE_VAL(tie_work)
+#define TIE_PUSH TIE_VAL(tie_push)
+#define TIE_KDTREE_PREP TIE_VAL(tie_kdtree_prep)
+#define TIE_KDTREE_FREE TIE_VAL(tie_kdtree_free)
 
-RT_EXPORT extern int tie_check_degenerate;
-
-RT_EXPORT extern void TIE_VAL(tie_init)(struct tie_s *tie, unsigned int tri_num, unsigned int kdmethod);
-RT_EXPORT extern void TIE_VAL(tie_free)(struct tie_s *tie);
-RT_EXPORT extern void TIE_VAL(tie_prep)(struct tie_s *tie);
-RT_EXPORT extern void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id, void *(*hitfunc)(struct tie_ray_s*, struct tie_id_s*, struct tie_tri_s*, void *ptr), void *ptr);
-RT_EXPORT extern void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride);
-
-/* backwards compatible macros */
-#define tie_init TIE_VAL(tie_init)
-#define tie_free TIE_VAL(tie_free)
-#define tie_prep TIE_VAL(tie_prep)
-#define tie_work TIE_VAL(tie_work)
-#define tie_push TIE_VAL(tie_push)
+RT_EXPORT extern void TIE_INIT(struct tie_s *tie, unsigned int tri_num, unsigned int kdmethod);
+RT_EXPORT extern void TIE_FREE(struct tie_s *tie);
+RT_EXPORT extern void TIE_PREP(struct tie_s *tie);
+RT_EXPORT extern void*TIE_WORK(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id, void *(*hitfunc)(struct tie_ray_s*, struct tie_id_s*, struct tie_tri_s*, void *ptr), void *ptr);
+RT_EXPORT extern void TIE_PUSH(struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride);
+RT_EXPORT extern void TIE_KDTREE_FREE(struct tie_s *tie);
+RT_EXPORT extern void TIE_KDTREE_PREP(struct tie_s *tie);
 
 __END_DECLS
 

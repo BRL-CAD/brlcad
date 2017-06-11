@@ -10,8 +10,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -673,6 +671,67 @@ test regexp-22.1 {Bug 1810038} {
 test regexp-22.2 {regexp compile and backrefs, Bug 1857126} {
     regexp -- {([bc])\1} bb
 } 1
+test regexp-22.3 {Bug 3604074} {
+    # This will hang in interps where the bug is not fixed
+    regexp ((((((((a)*)*)*)*)*)*)*)* a
+} 1
+test regexp-22.4 {Bug 3606139} -setup {
+    interp alias {} a {} string repeat a
+} -body {
+    # This crashes in interps where the bug is not fixed
+    regexp [join [list [a 160]([a 55])[a 668]([a 55])[a 669]([a 55]) \
+	[a 668]([a 55])[a 649]([a 55])[a 668]([a 55])[a 668]([a 55]) \
+	[a 672]([a 55])[a 669]([a 55])[a 671]([a 55])[a 671]([a 55]) \
+	[a 672]([a 55])[a 652]([a 55])[a 672]([a 55])[a 671]([a 55]) \
+	[a 671]([a 55])[a 671]([a 55])[a 653]([a 55])[a 672]([a 55]) \
+	[a 653]([a 55])[a 672]([a 55])[a 672]([a 55])[a 652]([a 55]) \
+	[a 671]([a 55])[a 652]([a 55])[a 652]([a 55])[a 672]([a 55]) \
+	[a 672]([a 55])[a 672]([a 55])[a 653]([a 55])[a 671]([a 55]) \
+	[a 669]([a 55])[a 649]([a 55])[a 668]([a 55])[a 668]([a 55]) \
+	[a 668]([a 55])[a 650]([a 55])[a 650]([a 55])[a 672]([a 55]) \
+	[a 669]([a 55])[a 669]([a 55])[a 668]([a 55])[a 668]([a 55]) \
+	[a 668]([a 55])[a 669]([a 55])[a 672]([a 55])[a 669]([a 55]) \
+	[a 669]([a 55])[a 669]([a 55])[a 669]([a 55])[a 672]([a 55]) \
+	[a 670]([a 55])[a 671]([a 55])[a 672]([a 55])[a 672]([a 55]) \
+	[a 671]([a 55])[a 671]([a 55])[a 672]([a 55])[a 669]([a 55]) \
+	[a 668]([a 55])[a 668]([a 55])[a 669]([a 55])[a 668]([a 55]) \
+	[a 669]([a 55])[a 668]([a 55])[a 669]([a 55])[a 669]([a 55]) \
+	[a 668]([a 55])[a 668]([a 55])[a 669]([a 55])[a 668]([a 55]) \
+	[a 669]([a 55])[a 669]([a 55])[a 669]([a 55])[a 669]([a 55]) \
+	[a 668]([a 55])[a 669]([a 55])[a 672]([a 55])[a 669]([a 55]) \
+	[a 669]([a 55])[a 669]([a 55])[a 669]([a 55])[a 668]([a 55]) \
+	[a 669]([a 55])[a 669]([a 55])[a 668]([a 55])[a 668]([a 55]) \
+	[a 668]([a 55])[a 669]([a 55])[a 668]([a 55])[a 669]([a 55]) \
+	[a 672]([a 55])[a 669]([a 55])[a 669]([a 55])[a 710]([a 55]) \
+	[a 668]([a 55])[a 669]([a 55])[a 668]([a 55])[a 669]([a 55]) \
+	[a 668]([a 55])[a 669]([a 55])[a 668]([a 55])[a 668]([a 55]) \
+	[a 668]([a 55])[a 668]([a 55])[a 668]([a 55])[a 669]([a 55]) \
+	[a 672]([a 55])[a 669]([a 55])[a 669]([a 55])[a 668]([a 55]) \
+	[a 669]([a 55])[a 669]([a 55])[a 668]([a 55])[a 668]([a 55]) \
+	[a 668]([a 55])[a 668]([a 55])[a 668]([a 55])[a 668]([a 55]) \
+	[a 667]([a 55])[a 668]([a 55])[a 669]([a 55])[a 668]([a 55]) \
+	[a 671]([a 55])[a 669]([a 55])[a 668]([a 55])[a 669]([a 55]) \
+	[a 669]([a 55])[a 669]([a 55])[a 668]([a 55])[a 669]([a 55]) \
+	[a 668]([a 55])[a 710]([a 55])[a 668]([a 55])[a 668]([a 55]) \
+	[a 668]([a 55])[a 668]([a 55])[a 668]([a 55])[a 511]] {}] a
+} -cleanup {
+    rename a {}
+} -returnCodes 1 -result {couldn't compile regular expression pattern: nfa has too many states}
+test regexp-22.5 {Bug 3610026} -setup {
+    set e {}
+    set cp 99
+    while {$cp < 32864} {
+	append e [format %c [incr cp]]
+    }
+} -body {
+    regexp -about $e
+} -cleanup {
+    unset -nocomplain e cp
+} -returnCodes error  -match glob -result {*too many colors*}
+test regexp-22.6 {Bug 6585b21ca8} {
+    expr {[regexp {(\w).*?\1} Programmer m] ? $m : "<NONE>"}
+} rogr
+
 
 test regexp-23.1 {regexp -all and -line} {
     set string ""

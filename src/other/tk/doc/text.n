@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH text n 8.5 Tk "Tk Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -42,8 +40,9 @@ should be drawn as a character-sized rectangular block.  If false
 .VE 8.5
 .OP \-endline endLine EndLine
 .VS 8.5
-Specifies an integer line index representing the last line of the
-underlying textual data store that should be contained in the widget.
+Specifies an integer line index representing the line of the underlying
+textual data store that should be just after the last line contained in
+the widget.
 This allows a text widget to reflect only a portion of a larger piece
 of text.   Instead of an integer, the empty string can be provided to
 this configuration option, which will configure the widget to end
@@ -737,6 +736,7 @@ and any widget may be used as an embedded window (subject to the
 usual rules for geometry management, which require the text window
 to be the parent of the embedded window or a descendant of its
 parent).
+.PP
 The embedded window's position on the screen will be updated as the
 text is modified or scrolled, and it will be mapped and unmapped as
 it moves into and out of the visible area of the text widget.
@@ -753,6 +753,17 @@ the window is destroyed.
 .VS 8.5
 Similarly if the text widget as a whole is deleted, then the window is
 destroyed.
+.VE 8.5
+.PP
+.VS 8.5
+Eliding an embedded window immediately after scheduling it for creation
+via \fIpathName \fBwindow create \fIindex \fB-create\fR will prevent it
+from being effectively created.
+Uneliding an elided embedded window scheduled for creation via
+\fIpathName \fBwindow create \fIindex \fB-create\fR will automatically
+trigger the associated creation script.
+After destroying an elided embedded window, the latter won't get
+automatically recreated.
 .VE 8.5
 .PP
 When an embedded window is added to a text widget with the
@@ -825,6 +836,7 @@ at a particular point in  the text.
 There may be any number of embedded images in a text widget,
 and a particular image may be embedded in multiple places in the same
 text widget.
+.PP
 The embedded image's position on the screen will be updated as the
 text is modified or scrolled.
 Each embedded image occupies one
@@ -837,6 +849,17 @@ its position in the widget's index space, or the name it is assigned
 when the image is inserted into the text widget with \fIpathName \fBimage create\fR.
 If the range of text containing the embedded image is deleted then
 that copy of the image is removed from the screen.
+.PP
+.VS 8.5
+Eliding an embedded image immediately after scheduling it for creation
+via \fIpathName \fBimage create \fIindex \fB-create\fR will prevent it
+from being effectively created.
+Uneliding an elided embedded image scheduled for creation via
+\fIpathName \fBimage create \fIindex \fB-create\fR will automatically
+trigger the associated creation script.
+After destroying an elided embedded image, the latter won't get
+automatically recreated.
+.VE 8.5
 .PP
 When an embedded image is added to a text widget with the \fIpathName \fBimage
 create\fR widget command, a name unique to this instance of the image
@@ -1104,12 +1127,12 @@ each counting option given.  Valid counting options are \fB\-chars\fR,
 \fB\-displaychars\fR, \fB\-displayindices\fR, \fB\-displaylines\fR,
 \fB\-indices\fR, \fB\-lines\fR, \fB\-xpixels\fR and \fB\-ypixels\fR. The
 default value, if no option is specified, is \fB\-indices\fR. There is an
-additional possible option \fB\-update\fR which is a modifier.  If given,
-then all subsequent options ensure that any possible out of date
-information is recalculated.  This currently only has any effect for the
-\fI\-ypixels\fR count (which, if \fB\-update\fR is not given, will use the text
-widget's current cached value for each line).  The count options are
-interpreted as follows:
+additional possible option \fB\-update\fR which is a modifier. If given (and
+if the text widget is managed by a geometry manager), then all subsequent
+options ensure that any possible out of date information is recalculated. 
+This currently only has any effect for the \fI\-ypixels\fR count (which, if
+\fB\-update\fR is not given, will use the text widget's current cached value
+for each line).  The count options are interpreted as follows:
 .RS
 .IP \fB\-chars\fR
 count all characters, whether elided or not.  Do not count
@@ -1232,8 +1255,8 @@ information about marks, tags, and embedded windows.
 If \fIindex2\fR is not specified, then it defaults to
 one character past \fIindex1\fR.  The information is returned
 in the following format:
-.LP
 .RS
+.LP
 \fIkey1 value1 index1 key2 value2 index2\fR ...
 .LP
 The possible \fIkey\fR values are \fBtext\fR, \fBmark\fR,
@@ -1871,7 +1894,7 @@ This command returns an empty string.
 \fIpathName \fBwindow \fIoption \fR?\fIarg arg ...\fR?
 This command is used to manipulate embedded windows.
 The behavior of the command depends on the \fIoption\fR argument
-that follows the \fBtag\fR argument.
+that follows the \fBwindow\fR argument.
 The following forms of the command are currently supported:
 .RS
 .TP
@@ -2199,9 +2222,8 @@ after copying it to the clipboard.
 Control-t reverses the order of the two characters to the right of
 the insertion cursor.
 .IP [32]
-Control-z (and Control-underscore on UNIX when \fBtk_strictMotif\fR is
-true) undoes the last edit action if the \fB\-undo\fR option is true.
-Does nothing otherwise.
+Control-z (undoes the last edit action if the \fB\-undo\fR option is
+true. Does nothing otherwise.
 .IP [33]
 Control-Z (or Control-y on Windows) reapplies the last undone edit
 action if the \fB\-undo\fR option is true. Does nothing otherwise.
@@ -2294,8 +2316,8 @@ match, the text widget will return the wrong result.  In practice this is
 a rare problem, but it can occur, for example:
 .CS
 pack [text .t]
-\.t insert 1.0 "aaaa\enbbbb\encccc\enbbbb\enaaaa\en"
-\.t search \-regexp \-\- {(a+|b+\enc+\enb+)+\ena+} 1.0
+\&.t insert 1.0 "aaaa\enbbbb\encccc\enbbbb\enaaaa\en"
+\&.t search \-regexp \-\- {(a+|b+\enc+\enb+)+\ena+} 1.0
 .CE
 will not find a match when one exists of 19
 characters starting from the first
@@ -2312,8 +2334,8 @@ possible match which might cover large portions of the widget.
 For example:
 .CS
 pack [text .t]
-\.t insert 1.0 "aaaa\enbbbb\enbbbb\enbbbb\enbbbb\\n"
-\.t search \-regexp \-backward \-\- {b+\en|a+\en(b+\en)+} end
+\&.t insert 1.0 "aaaa\enbbbb\enbbbb\enbbbb\enbbbb\\n"
+\&.t search \-regexp \-backward \-\- {b+\en|a+\en(b+\en)+} end
 .CE
 matches at
 .QW 5.0

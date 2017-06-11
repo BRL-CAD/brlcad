@@ -19,12 +19,6 @@
 #
 ###
 #
-#			I L L U M . T C L
-#
-#	Author -
-#		Robert G. Parker
-#
-#	Description -
 #		Tcl routines to illuminate solids/objects/matrices.
 #
 

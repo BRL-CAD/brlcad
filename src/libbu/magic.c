@@ -86,6 +86,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "bn_tol";
 	case BN_UNIF_MAGIC:
 	    return "bn_unif";
+	case BN_VERT_TREE_MAGIC:
+	    return "bn_vert_tree";
 	case BN_VLBLOCK_MAGIC:
 	    return "bn_vlblock";
 	case BN_VLIST_MAGIC:
@@ -101,7 +103,7 @@ bu_identify_magic(register uint32_t magic)
 	case RT_ARS_INTERNAL_MAGIC:
 	    return "rt_ars_internal";
 	case RT_BINUNIF_INTERNAL_MAGIC:
-	    return "rt_binuf_internal";
+	    return "rt_binunif_internal";
 	case RT_BOT_INTERNAL_MAGIC:
 	    return "rt_bot_internal";
 	case RT_BREP_INTERNAL_MAGIC:
@@ -306,8 +308,6 @@ bu_identify_magic(register uint32_t magic)
 	    return "librt resource";
 	case RTI_MAGIC:
 	    return "rt_i";
-	case VERT_TREE_MAGIC:
-	    return "vert_tree";
 	case WDB_METABALLPT_MAGIC:
 	    return "wdb metaball pt";
 	case WDB_PIPESEG_MAGIC:

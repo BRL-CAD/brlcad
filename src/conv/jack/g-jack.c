@@ -201,7 +201,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
     map = (int *)bu_calloc(r->m_p->maxindex, sizeof(int), "Jack vert map");
 
     /* Built list of vertex structs */
-    nmg_vertex_tabulate(&vtab, &r->l.magic);
+    nmg_vertex_tabulate(&vtab, &r->l.magic, &RTG.rtg_vlfree);
 
     /* FIXME: What to do if 0 vertices?  */
 
@@ -237,8 +237,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else  {
 	/* catch */
@@ -250,7 +250,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	RTG.NMG_debug = NMG_debug;/* restore mode */
+	nmg_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -385,10 +385,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 			  (int)(tsp->ts_mater.ma_color[0] * 255),
 			  (int)(tsp->ts_mater.ma_color[1] * 255),
 			  (int)(tsp->ts_mater.ma_color[2] * 255));
-		/* nmg_pl_r(fp, r); */
 		BU_LIST_INIT(&vhead);
-		nmg_r_to_vlist(&vhead, r, 0);
-		rt_vlist_to_uplot(fp, &vhead);
+		nmg_r_to_vlist(&vhead, r, 0, &RTG.rtg_vlfree);
+		bn_vlist_to_uplot(fp, &vhead);
 		fclose(fp);
 		RT_FREE_VLIST(&vhead);
 		if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
@@ -495,8 +494,8 @@ main(int argc, char **argv)
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
-		NMG_debug = RTG.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		NMG_debug = nmg_debug;
 		break;
 	    default:
 		print_usage(argv[0]);

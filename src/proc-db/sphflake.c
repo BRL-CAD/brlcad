@@ -136,8 +136,11 @@ int main(int argc, char **argv)
     params_t params;
 
     int inter = 0;
-    char fileName[MAX_INPUT_LENGTH];
+    char fileName[MAX_INPUT_LENGTH] = {0};
     int depth = DEFAULT_MAXDEPTH;
+
+    memset(fileName, 0, MAX_INPUT_LENGTH);
+    bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
 
     while ((optc = bu_getopt(argc, argv, "iIDd:f:F:h?")) != -1) {
 	switch (optc) {
@@ -165,16 +168,10 @@ int main(int argc, char **argv)
 		bu_exit(0, NULL);
 	}
     }
-    if (bu_optind <= 1) {
-	fprintf(stderr,"Using all default parameters.\n");
-	memset(fileName, 0, MAX_INPUT_LENGTH);
-	bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
-	inter = 0;
-    }
-
-    bu_log("Writing out geometry to file [%s] ...", fileName);
 
     initializeInfo(&params, inter, fileName, depth);
+
+    bu_log("Writing out geometry to file [%s] ...", params.fileName);
 
     /* now open a file for outputting the database */
     fp = wdb_fopen(params.fileName);

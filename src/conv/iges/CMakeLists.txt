@@ -20,7 +20,7 @@ endif(MSVC)
 #    n_iges.cpp
 #    n_main.cpp
 #)
-#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARY} ${WIN32LIBS} ${M_LIBRARY})
+#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARIES} ${WIN32LIBS} ${M_LIBRARY})
 #install(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 set(iges-g_SRCS
@@ -93,9 +93,9 @@ set(iges-g_SRCS
   usage.c
   wedge.c
   )
-BRLCAD_ADDEXEC(iges-g "${iges-g_SRCS}" "libwdb;librt;libbn;libbu;${M_LIBRARY}")
+BRLCAD_ADDEXEC(iges-g "${iges-g_SRCS}" "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(g-iges "g-iges.c;iges.c" "librt;libbu;${M_LIBRARY}")
+BRLCAD_ADDEXEC(g-iges "g-iges.c;iges.c" "librt;libnmg;libbu;${M_LIBRARY}")
 
 set(iges_ignore_files
   BrepHandler.cpp

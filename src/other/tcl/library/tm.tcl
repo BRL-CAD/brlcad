@@ -58,7 +58,7 @@ namespace eval ::tcl::tm {
     # Export the public API
 
     namespace export path
-    namespace ensemble create -command path -subcommand {add remove list}
+    namespace ensemble create -command path -subcommands {add remove list}
 }
 
 # ::tcl::tm::path implementations --
@@ -191,7 +191,7 @@ proc ::tcl::tm::list {} {
 
 proc ::tcl::tm::UnknownHandler {original name args} {
     # Import the list of paths to search for packages in module form.
-    # Import the pattern used to check package names in detail.  
+    # Import the pattern used to check package names in detail.
 
     variable paths
     variable pkgpattern
@@ -248,6 +248,15 @@ proc ::tcl::tm::UnknownHandler {original name args} {
 			continue
 		    }
 
+		    if {[package ifneeded $pkgname $pkgversion] ne {}} {
+			# There's already a provide script registered for
+			# this version of this package.  Since all units of
+			# code claiming to be the same version of the same
+			# package ought to be identical, just stick with
+			# the one we already have.
+			continue
+		    }
+
 		    # We have found a candidate, generate a "provide
 		    # script" for it, and remember it.  Note that we
 		    # are using ::list to do this; locally [list]
@@ -273,10 +282,8 @@ proc ::tcl::tm::UnknownHandler {original name args} {
 		    # the regular package search to complete the
 		    # processing.
 
-		    if {
-			($pkgname eq $name) &&
-			[package vsatisfies $pkgversion {*}$args]
-		    } then {
+		    if {($pkgname eq $name)
+			    && [package vsatisfies $pkgversion {*}$args]} {
 			set satisfied 1
 			# We do not abort the loop, and keep adding
 			# provide scripts for every candidate in the
@@ -359,7 +366,7 @@ proc ::tcl::tm::Defaults {} {
 #	Calls 'path add' to paths to the list of module search paths.
 
 proc ::tcl::tm::roots {paths} {
-    foreach {major minor} [split [info tclversion] .] break
+    lassign [split [package present Tcl] .] major minor
     foreach pa $paths {
 	set p [file join $pa tcl$major]
 	for {set n $minor} {$n >= 0} {incr n -1} {

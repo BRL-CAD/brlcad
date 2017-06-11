@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"	/* Internal definitions for Tcl. */
@@ -152,6 +150,7 @@ typedef struct TcpState {
     int fd;			/* The socket itself. */
     int flags;			/* ORed combination of the bitfields defined
 				 * below. */
+    int interest;		/* Events types of interest. */
     Tcl_TcpAcceptProc *acceptProc;
 				/* Proc to call on accept. */
     ClientData acceptProcData;	/* The data for the accept proc. */
@@ -250,6 +249,7 @@ static int		TtySetOptionProc(ClientData instanceData,
 static int		WaitForConnect(TcpState *statePtr, int *errorCodePtr);
 static Tcl_Channel	MakeTcpClientChannelMode(ClientData tcpSocket,
 			    int mode);
+static void		WrapNotify(ClientData clientData, int mask);
 
 /*
  * This structure describes the channel type structure for file based IO:
@@ -1065,7 +1065,7 @@ TtyGetOptionProc(
 #   define TtyGetBaud(speed)	((int) (speed))
 #else /* !DIRECT_BAUD */
 
-static struct {int baud; unsigned long speed;} speeds[] = {
+static CONST struct {int baud; unsigned long speed;} speeds[] = {
 #ifdef B0
     {0, B0},
 #endif
@@ -1152,6 +1152,39 @@ static struct {int baud; unsigned long speed;} speeds[] = {
 #endif
 #ifdef B460800
     {460800, B460800},
+#endif
+#ifdef B500000
+    {500000, B500000},
+#endif
+#ifdef B576000
+    {576000, B576000},
+#endif
+#ifdef B921600
+    {921600, B921600},
+#endif
+#ifdef B1000000
+    {1000000, B1000000},
+#endif
+#ifdef B1152000
+    {1152000, B1152000},
+#endif
+#ifdef B1500000
+    {1500000,B1500000},
+#endif
+#ifdef B2000000
+    {2000000, B2000000},
+#endif
+#ifdef B2500000
+    {2500000,B2500000},
+#endif
+#ifdef B3000000
+    {3000000,B3000000},
+#endif
+#ifdef B3500000
+    {3500000,B3500000},
+#endif
+#ifdef B4000000
+    {4000000,B4000000},
 #endif
     {-1, 0}
 };
@@ -1647,6 +1680,11 @@ TclpOpenFileChannel(
 
     native = Tcl_FSGetNativePath(pathPtr);
     if (native == NULL) {
+	if (interp != (Tcl_Interp *) NULL) {
+	    Tcl_AppendResult(interp, "couldn't open \"",
+	    TclGetString(pathPtr), "\": filename is invalid on this platform",
+	    NULL);
+	}
 	return NULL;
     }
 
@@ -2143,7 +2181,7 @@ TcpGetOptionProc(
 		 * We don't want to resolve INADDR_ANY; it can sometimes cause
 		 * problems (and never has a name).
 		 */
-                
+
                 hostEntPtr = NULL;
             } else {
                 hostEntPtr = TclpGetHostByAddr(		/* INTL: Native. */
@@ -2200,6 +2238,35 @@ TcpGetOptionProc(
  */
 
 static void
+WrapNotify(
+    ClientData clientData,
+    int mask)
+{
+    TcpState *statePtr = (TcpState *) clientData;
+    int newmask = mask & statePtr->interest;
+
+    if (newmask == 0) {
+	/*
+	 * There was no overlap between the states the channel is
+	 * interested in notifications for, and the states that are
+	 * reported present on the file descriptor by select().  The
+	 * only way that can happen is when the channel is interested
+	 * in a writable condition, and only a readable state is reported
+	 * present (see TcpWatchProc() below).  In that case, signal back
+	 * to the caller the writable state, which is really an error
+	 * condition.  As an extra check on that assumption, check for
+	 * a non-zero value of errno before reporting an artificial
+	 * writable state.
+	 */
+	if (errno == 0) {
+	    return;
+	}
+	newmask = TCL_WRITABLE;
+    }
+    Tcl_NotifyChannel(statePtr->channel, newmask);
+}
+
+static void
 TcpWatchProc(
     ClientData instanceData,	/* The socket state. */
     int mask)			/* Events of interest; an OR-ed combination of
@@ -2216,9 +2283,30 @@ TcpWatchProc(
 
     if (!statePtr->acceptProc) {
 	if (mask) {
-	    Tcl_CreateFileHandler(statePtr->fd, mask,
-		    (Tcl_FileProc *) Tcl_NotifyChannel,
-		    (ClientData) statePtr->channel);
+
+	    /*
+	     * Whether it is a bug or feature or otherwise, it is a fact
+	     * of life that on at least some Linux kernels select() fails
+	     * to report that a socket file descriptor is writable when
+	     * the other end of the socket is closed.  This is in contrast
+	     * to the guarantees Tcl makes that its channels become
+	     * writable and fire writable events on an error conditon.
+	     * This has caused a leak of file descriptors in a state of
+	     * background flushing.  See Tcl ticket 1758a0b603.
+	     *
+	     * As a workaround, when our caller indicates an interest in
+	     * writable notifications, we must tell the notifier built
+	     * around select() that we are interested in the readable state
+	     * of the file descriptor as well, as that is the only reliable
+	     * means to get notified of error conditions.  Then it is the
+	     * task of WrapNotify() above to untangle the meaning of these
+	     * channel states and report the chan events as best it can.
+	     * We save a copy of the mask passed in to assist with that.
+	     */
+
+	    statePtr->interest = mask;
+	    Tcl_CreateFileHandler(statePtr->fd, mask|TCL_READABLE,
+		    (Tcl_FileProc *) WrapNotify, (ClientData) statePtr);
 	} else {
 	    Tcl_DeleteFileHandler(statePtr->fd);
 	}
@@ -2406,6 +2494,7 @@ CreateSocket(
     if (asyncConnect) {
 	statePtr->flags = TCP_ASYNC_CONNECT;
     }
+    statePtr->interest = 0;
     statePtr->fd = sock;
 
     return statePtr;
@@ -2677,6 +2766,7 @@ MakeTcpClientChannelMode(
     statePtr = (TcpState *) ckalloc((unsigned) sizeof(TcpState));
     statePtr->fd = PTR2INT(sock);
     statePtr->flags = 0;
+    statePtr->interest = 0;
     statePtr->acceptProc = NULL;
     statePtr->acceptProcData = NULL;
 
@@ -2794,6 +2884,7 @@ TcpAccept(
     newSockState = (TcpState *) ckalloc((unsigned) sizeof(TcpState));
 
     newSockState->flags = 0;
+    newSockState->interest = 0;
     newSockState->fd = newsock;
     newSockState->acceptProc = NULL;
     newSockState->acceptProcData = NULL;
@@ -2836,7 +2927,7 @@ TclpGetDefaultStdChannel(
     Tcl_Channel channel = NULL;
     int fd = 0;			/* Initializations needed to prevent */
     int mode = 0;		/* compiler warning (used before set). */
-    char *bufMode = NULL;
+    const char *bufMode = NULL;
 
     /*
      * Some #def's to make the code a little clearer!
@@ -3125,7 +3216,7 @@ TclUnixWaitForFile(
 	    if (FD_ISSET(fd, &writableMask))  {
 		SET_BITS(result, TCL_WRITABLE);
 	    }
-	    if (FD_ISSET(fd, &exceptionalMask)) { 
+	    if (FD_ISSET(fd, &exceptionalMask)) {
 		SET_BITS(result, TCL_EXCEPTION);
 	    }
 	    result &= mask;

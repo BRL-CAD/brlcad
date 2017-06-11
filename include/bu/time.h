@@ -41,7 +41,17 @@ __BEGIN_DECLS
 /** @file bu/time.h */
 
 /**
- * Return microsecond accuracy time information.
+ * Returns a microsecond-accurate wall-clock time counter.
+ *
+ * Example use:
+@code
+int64_t start = bu_gettime();
+do_some_work_here();
+int64_t elapsed = bu_gettime() - start;
+int seconds = elapsed / 1000000LL;
+printf("time: %02d\n", seconds);
+@endcode
+ *
  */
 BU_EXPORT extern int64_t bu_gettime(void);
 

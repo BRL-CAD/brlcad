@@ -18,16 +18,52 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* TBD
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* f_dbopen in MGED doesn't seem to be reporting failure
+  if a non-.g file is fed to opendb.  That doesn't seem
+  right... shouldn't the open process completely fail
+  if the file isn't a valid .g?
+
+* add regression test for BoT ray tracing
+
+* add regression test for directional light sources
+
+* bundle primary rays in rt front end into postage stamps, shoot via
+  rt_shootrays(), modify to pass all rays down through the spatial
+  partitioning simultaneously
+
+* create a catalog of all possible entity types.  including distinct
+  parameterizations with sufficient variety that conveys the object's
+  parameterization options (e.g. ell as sphere, flat disc, long spike,
+  etc.).  this is necessarily defined per object type and possibly
+  programmable.  see src/proc-db/csgbrep.cpp for a basic start.
+
+  create a BRL-CAD .g with all possible object types embedded.
+  integrate into testing.
+
+* create a catalog of all possible/distinct/useful shader settings.
+  see regress/shaders.sh for a basic start.
+
+* readd support for vrml v1 to g-vrml so that users can select whether
+  they want v2 (default) or previous v1 output format via a
+  command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
+
+* try to come up with a way we can report the number of times
+  the configuration step has been run and changed something
+  without triggering almost a full rebuild.  Maybe have the
+  bits that need to report it pull from a file in bu_brlcad_data?
+
+* make sure TIE can raytrace all of the various BoT modes
+
+* turn on Bullet code (simulate command) unconditionally
+
 * metaball in command input needs sanity checks and better
   validation.
-
-* brep compilation must not be optional
-
-* update astyle
 
 * integrate gen-registered-attributes-html output into website
 
@@ -39,42 +75,50 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
   -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
 
-* bu_*_argv -> bu_argv_*
+* OpenCL for enhanced performance boolweave sorting
 
-* obsd stack crashers
+* create boolweave+boolfinal unit tests to validate weaving behavior
+  and performance.
 
-* rt moss.g facetize rt bot bug
+* make sure we can run db_dirbuild() multiple times without creating
+  duplicate entries.
 
-* invoke graphical with console, play nicely
+* heap unit test needs to actually compare performance against system
+  allocation, not just do some work
+
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* reinstate 'stat' and search -size, see r67636 through r67646
+
+* update dem-g to not use full paths for dsp primitive data locations -
+  should default to embedding the data in the .g file as a binary object,
+  with an option for a relative path if the user explicitly requests
+  it.  Full paths make for non-portable .g files and should only exist 
+  if the user explicitly manipulates the dsp to create such a path.
+
+* define geometry URL and VFS behavior
+
+* change _mged_ command prefix to a simple '.' prefix to hide/protect
+  the built-in commands.
 
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
 
-* reinstate 'stat' and search -size, see r67636 through r67646
-
-* turn on Bullet code (simulate command) unconditionally
-
-* create a BRL-CAD .g with all possible object types embedded.  The
-  csgbrep command is a good starting point, but only about half of
-  them.
-
-* bundle primary rays in rt front end into postage stamps, shoot via
-  rt_shootrays(), modify to pass all rays down through the spatial
-  partitioning simultaneously
-
-* resolve bot bin sort optimization crash, disabled during release
-
-* closing the graphics window brings down X11 on Mac due to a bad
-  context.  fix or revert recent close window behavior.
-
 * havoc.g s.nos5g reliably exhibits the grazing edge bug where only
   one hit point is being returned.  to reproduce:
   e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
 
+* obsd stack crashers
 
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
+* closing the graphics window brings down X11 on Mac due to a bad
+  context.  fix or revert recent close window behavior.
+
+* resolve bot bin sort optimization crash, disabled during release
+
+* rt moss.g facetize rt bot bug
 
 * evaluate OpenMesh (http://www.openmesh.org) and OpenFlipper
   (http://www.openflipper.org) for smoothing, decimation, and
@@ -91,11 +135,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   account and colors set correctly.
 
 * implement unit tests for bu dirent / stat API
-
-* OpenCL for enhanced performance boolweave sorting
-
-* create boolweave+boolfinal unit tests to validate weaving behavior
-  and performance.
 
 * convert src/util/terrain.c to src/shapes/terrain.c writing out the
   datafile to a binunif along with a referencing dsp.  perhaps add
@@ -129,34 +168,23 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * Need to rethink libbu hash API - ideally should be much simpler and
   expose much less to the user.
 
-* consider whether the file introspection capabilities of libmagic
-  (https://github.com/file/file) should be hooked into the libbu
-  mime type system to support more robust file type identification
-  beyond that offered by file extension + context.  In principle
-  we want the most powerful capability we can get, but there are
-  some not-entirely-trivial design issues involved.
+* The current libbu mime API needs to be retired in favor of something
+  more powerful.  It was a mistake to use enums generated from the
+  mime types - they are static, cannot be enriched at runtime (say,
+  by icv plugins) and the separation of the context from the type
+  itself (image/png -> BU_MIME_IMAGE and BU_MIME_IMAGE_PNG for example)
+  is both cumbersome and unnecessary.  Instead, grab a subset of the
+  capabilities of libmagic (https://github.com/file/file) and define
+  a new libbu mime/data-typing subsystem that is runtime populated by
+  a default set of pseudo-libmagic style file definitions (may want
+  to adjust their format slightly, to require a mime type for each
+  entry, and we need an way to define entries where we don't (yet)
+  know how to inspect the file contents to identify them...)
 
-  - Do we want to use file introspection to replace the "context"
-    mechanism we're currently using to disambiguate file extensions?
-
-  - Is it practical to define enough "magic" for the file types we
-    will be interested in?  (the current "cad" entry just has a
-    few autodesk formats - would need considerable expansion.)
-
-  - How should we return the "human readable" string libmagic provides,
-    particularly in the context of bu_path_component - the mime type
-    is currently returned as a string.
-
-  - libmagic is capable of greater fidelity than the basic file
-    extension based mime types - should we define custom mime types
-    to allow that refinement?  e.g. MIME_MODEL_STEP if we don't know
-    what step version, and MIME_MODEL_STEP_AP203 if libmagic ids the
-    file as a particular version?  There are many situations where
-    this capability could be very useful, but we would have to
-    rethink how we are currently defining our mime types.  Ideally
-    we would want to generate specific mimes from the magic definition
-    files, but we would have to make sure all the magic files we
-    use for BRL-CAD provide mimes for all entires.
+  This approach will let us define the types that are of interest to
+  BRL-CAD, while also letting plugins "educate" the system to support
+  processing of formats the base system (and the "standard" mime type
+  lists) know nothing about.
 
 * investigate merging functionality from the sig tools into libicv
   and removing the tools themselves.  Also, need some documentation
@@ -277,15 +305,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * Document a CLI feature list (prioritized).
 
-* create a catalog of all possible entity types.  including distinct
-  parameterizations with sufficient variety that conveys the object's
-  parameterization options (e.g. ell as sphere, flat disc, long spike,
-  etc.).  this is necessarily defined per object type and possibly
-  programmable.  see src/proc-db/csgbrep.cpp for a basic start.
-
-* create a catalog of all possible/distinct/useful shader settings.
-  see regress/shaders.sh for a basic start.
-
 * high-performance VOL for medical data visualization.  consider
   leveraging OpenVDB, PCL, Paraview/VTK, etc.
 
@@ -354,12 +373,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
   logic layout using if/else.
-
-* heap unit test needs to actually compare performance against system
-  allocation, not just do some work
-
-* make sure we can run db_dirbuild() multiple times without creating
-  duplicate entries.
 
 * re-do the sh/enumerate.sh script for CMake
 
@@ -561,9 +574,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   is causing ipathpos to get incremented to a number larger than the
   number of objects in the full path it's supposed to be referencing.
 
-* change _mged_ command prefix to a simple '.' prefix to hide/protect
-  the built-in commands.
-
 * refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
 
 * refactor rt_functab accessors to go through an api call or calls so
@@ -733,9 +743,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   for the faces and face_normals members
 
 * fix the "(type)(size_t)val" hacks (using ints like ptrs, etc.)
-
-* Mac OS X mouse input binding problem seems to be back with rotations
-  stalling during interactive use.
 
 * pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
   .bw input files.  cause is due to tool assuming input is rgb triplets
@@ -916,10 +923,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * refactor mged's signal handling to make it possible to safely
   interrupt long-running commands
-
-* readd support for vrml v1 to g-vrml so that users can select whether
-  they want v2 (default) or previous v1 output format via a
-  command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
 
 * make Mac OS X universal binaries actually work.
 
@@ -1356,7 +1359,9 @@ LIBGED
   optionally list everything
 
 * improve performance of these commands that seem to have exponential
-  cost: bot_split, killtree
+  cost: bot_split, killtree, and
+  make s sph; make a arb8; sed a; e a; tra 0 0 500; r hemi u s - a; tol norm 1 ; facetize hemi.bot hemi
+  # compared to tol norm 2, # triangles is up ~20% but facetize is >200%
 
 * translate lc command to libged (discovered in Feb. 2015 to have already
   been done -- need information regarding when this was done and committed).
@@ -1828,7 +1833,6 @@ The following binaries are not yet available on Windows.  The reason
 is identified in parentheses.
 
 bombardier (possibly just a problem with the build logic)
-burst      (TERMLIB)
 enigma     (not ported)
 fbcolor    (TERMLIB)
 fbed       (TERMLIB)
@@ -1854,6 +1858,9 @@ missing on Windows due to needing lex.
 
 CONVERTERS
 ----------
+
+* add gcv support for the Microstation file format (DGN), probably
+  leveraging http://dgnlib.maptools.org/ (MIT-licensed)
 
 * integrate the submitted x3d-g (Web3D, VRML successor) importer
   (pending patch on sf)
@@ -2077,6 +2084,9 @@ being rtgl specific.
 Provide a generic mechanism in MGED run loop to hook in features like
 point cloud rendering, instead of hard-coding it.
 
+* consider utilizing something like moodycamel::ConcurrentQueue for
+  handling ray dispatch: https://github.com/cameron314/concurrentqueue
+
 
 LIBPC
 -----
@@ -2262,7 +2272,6 @@ DOCUMENTATION
 
     archer
     bombardier
-    brlman
     damdf
     dauto
     dauto2

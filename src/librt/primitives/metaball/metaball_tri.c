@@ -49,11 +49,10 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "rt/db4.h"
 #include "nmg.h"
+#include "rt/db4.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "rt/nurb.h"
 #include "wdb.h"
 
 #include "metaball.h"
@@ -163,10 +162,10 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		}
 	    }
 
-    nmg_mark_edges_real(&s->l.magic);
+    nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
     nmg_region_a(*r, tol);
 
-    nmg_model_fuse(m, tol);
+    nmg_model_fuse(m, &RTG.rtg_vlfree, tol);
 
     rt_get_timer(&times, NULL);
     bu_log("metaball tessellate (%d triangles): %s\n", numtri, bu_vls_addr(&times));

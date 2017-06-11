@@ -4,8 +4,7 @@ set(BREP_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
-  ${OPENNURBS_INCLUDE_DIR}
-  ${ZLIB_INCLUDE_DIR}
+  ${OPENNURBS_INCLUDE_DIRS}
   )
 
 # locally used but not needed by users of the library
@@ -56,14 +55,13 @@ set(libbrep_DEFINES "")
 
 # Set libbrep compile definitions
 get_property(libbrep_DEFINES GLOBAL PROPERTY libbrep_DEFINES)
-list(APPEND libbrep_DEFINES "OBJ_BREP=1")
 if(CPP_DLL_DEFINES)
   list(APPEND libbrep_DLL_DEFINES "ON_DLL_IMPORTS")
   set_property(GLOBAL PROPERTY libbrep_DLL_DEFINES "${libbrep_DLL_DEFINES}")
 endif(CPP_DLL_DEFINES)
 set_property(GLOBAL PROPERTY libbrep_DEFINES "${libbrep_DEFINES}")
 
-BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
@@ -71,7 +69,9 @@ BRLCAD_ADDEXEC(test_point_intersect test_point_intersect.cpp "libbrep" NO_STRICT
 
 BRLCAD_ADDEXEC(test_curve_intersect test_curve_intersect.cpp "libbrep" NO_STRICT NO_INSTALL)
 
-add_subdirectory(tests)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+  add_subdirectory(tests)
+endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 # Local Variables:
 # tab-width: 8

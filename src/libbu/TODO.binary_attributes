@@ -1,0 +1,159 @@
+binary-attributes
+========================
+
+To turn on the use of binary attributes define the CMake option:
+
+  -DBRLCAD_ENABLE_BINARY_ATTRIBUTES=ON
+
+external code added:
+-------------------
+
+BSON
+  specification:           http://bsonspec.org/spec.html
+  libbson source:          https://github.com/mongodb/libbson
+  current release tarball: https://github.com/mongodb/libbson/releases/
+                             libbson-1.3.0-beta0.tar.gz
+  converter: libbson has tools included to convert BSON to/from JSON 
+
+Scheme
+------
+
+The BRL-CAD V5 database seems to allow an arbitrary binary chunk
+following the ASCII attributes.  The idea is to define the total
+attribute chunk length to include any desired binary objects.  The
+read or write (RW) of the ASCII attributes stops with the char* RW of
+a double NULL which should be a sufficient stop RW mark. Then, any
+difference in length read versus attribute chunk length is the length
+of a chunk of binary attributes (BAs) which we will define as a BSON
+collection of BSON documents (??? check BSON terminology).  At that
+point we use libbson to RW the BAs.
+
+As a minimum, a BA must have an ASCII key and a binary value.
+Following the BSON specification, the user can add other objects in
+the BA if desired.
+
+The user interface relies on AVS handling which will have to also
+handle the BAs (that appears to be doable).  Our best practice should
+encourage (maybe require?) a BA to have a short ASCII comment.
+
+We will need appropriate functions to convert BAs to/from AVS
+objects. In the course of developing the BA capability we will add a
+file IO scheme for users to manipulate the BAs.
+
+User interface (mged)
+---------------------
+
+Current attr usage
+******************
+
+mged> attr
+Usage: attr {[-c sep_char] set|get|show|rm|append|sort|list} object [key [value] ... ]
+
+Proposed attr usage
+*******************
+
+mged> attr
+Usage: attr {[-c sep_char][-b] set|get|show|rm|append|sort|list} object [key [value] ... ]
+
+Where the '-b', indicating a binary attribute (BA), works with 'get'
+and 'set' only (and ignored for the other commands).
+ 
+Note that 'set' and 'get' for binary attributes require an external
+file name (which must must be a valid JSON file for 'set') and must
+NOT exist for 'get'.  The 'append' command will NOT work for a BA.
+
+The 'show', 'sort', and 'list' commands will show for BAs their key
+followed by followed by '(binary)' followed by their comment string,
+if it exists (we should make that mandatory I believe).  The 'rm'
+command will remove the BA referenced by the key.
+
+The BAs will have both a key and a comment, and it is an error to try
+to add a BA with a key the same as an existing key.
+
+Tentative JSON format of a BA
+----------------------------- 
+
+(See http://www.json.org/ for the JSON specification.)
+
+Functions needed
+----------------
+
+  JSON BA to/from in-memory AVS
+    see current functions:
+
+  AVS BA to/from on-disk attribute body
+    see current functions:
+
+  ...
+
+Macro definitions needed
+------------------------
+
+Data structures needed
+----------------------
+
+Other notes
+-----------
+Files affected:
+
+  ./include/bu/parse.h
+  ./include/bu/avs.h
+  ./src/librt/db5_io.c
+  ./src/librt/attributes.c
+
+Features to be implemented and other considerations:
+
+  + add a binary attribute using similar syntax as a string attribute
+  + a binary attribute should have an optional description field
+  + implement auto update of an object's ctime (creation time) and
+    mtime (last modification)
+  + mtime and ctime should be 64-bit integers (based on Unix time and
+    epoch) (int64_t; see src/libbu/y2038/time64_config.h)
+  + binary attributes should be able to be entered from or output to a
+    file
+
+A db admin tool:
+
+  ./src/util/db-admin-tool.cpp
+
+On-disk format of a binary attribute [following the (char*)NULL
+(char*)NULL end of the normal attributes]:
+
+While I believe we can use the existing AVS attribute section for BAs,
+I believe in the future we ought to create a separate object structure
+section for binary attributes, especially if we use a more compact
+binary representation such as CBOR.
+
+The following describes the current V5 db:
+
+  BRL_CAD_g_format_V5.xml
+
+The following describes the proposed V6 db with the binary attributes:
+
+  BRL_CAD_g_format_V6.xml
+ 
+
+Possible tests:
+
+1. Simple TGM
+   + create a single-object TGM
+   + copy the TGM to a new file (TGM2)
+   + add multiple binary attributes to TGM2
+   + add a file to TGM2
+   + use the admin-db tool to check TGM2
+   + export the file; check that it is the same as was imported
+   + delete the added binary attributes from TGM2
+   + run cmp on TGM and TGM2 to see they are the same
+
+2. Complex TGM
+   + select a complex TGM in the db directory as a test subject
+   + copy the TGM to a new file (TGM2)
+   + add multiple binary attributes to TGM2
+   + add a file to TGM2
+   + use the admin-db tool to check TGM2
+   + export the file; check that it is the same as was imported
+   + delete the added binary attributes from TGM2
+   + run cmp on TGM and TGM2 to see they are the same
+
+See the TODO file, sections "ATTRIBUTES" and "THESE BREAK PROTOCOL OR
+ARE BACKWARDS-INCOMPATIBLE" for more official information.

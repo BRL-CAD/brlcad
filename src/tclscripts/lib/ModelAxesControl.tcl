@@ -19,13 +19,6 @@
 #
 ###
 #
-# Author -
-#	 Bob Parker
-#
-# Source -
-#	 Survice Engineering Co. (www.survice.com)
-#
-# Description -
 #        This is a control panel for setting an Mged widget's
 #        model axes attributes.
 #

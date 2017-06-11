@@ -37,7 +37,7 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/rb.h"
+#include "bu/redblack.h"
 #include "bu/vls.h"
 #include "bn.h"
 #include "rt/db4.h"

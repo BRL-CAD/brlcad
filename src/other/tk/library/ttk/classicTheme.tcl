@@ -1,6 +1,4 @@
 #
-# $Id$
-#
 # "classic" Tk theme.
 #
 # Implements Tk's traditional Motif-like look and feel.

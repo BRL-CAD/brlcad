@@ -54,21 +54,11 @@
 #include "bio.h"
 #include "bu/log.h"
 
-/* without OBJ_BREP, this entire procedural example is disabled */
-#ifdef OBJ_BREP
-
 #include "twistedcube.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
 
-#ifdef __cplusplus
-}
-#endif
 
 /* Prevent enum conflict with vmath.h */
 namespace  {
@@ -304,20 +294,6 @@ main(int argc, char** argv)
     return 0;
 }
 
-#else /* !OBJ_BREP */
-
-#include "bu/log.h"
-
-int
-main(int UNUSED(argc), char *UNUSED(argv[]))
-{
-    bu_log("ERROR: Boundary Representation object support is not available with\n"
-	   "       this compilation of BRL-CAD.\n");
-    return 1;
-}
-
-
-#endif /* OBJ_BREP */
 
 /*
  * Local Variables:

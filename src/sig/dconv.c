@@ -38,8 +38,7 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu/log.h"
-
+#include "bu/exit.h"
 #include "fft.h"
 
 

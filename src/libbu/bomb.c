@@ -20,16 +20,21 @@
 
 #include "common.h"
 
+/* inteface header */
+#include "bu/exit.h"
+
+/* system headers */
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
 #include "bio.h"
 
+/* implementation headers */
 #include "bu/debug.h"
 #include "bu/file.h"
-#include "bu/log.h"
 #include "bu/parallel.h"
+
 
 /**
  * list of callbacks to call during bu_bomb.
@@ -199,8 +204,8 @@ bu_exit(int status, const char *fmt, ...)
 	struct bu_vls message = BU_VLS_INIT_ZERO;
 
 	va_start(ap, fmt);
-
 	bu_vls_vprintf(&message, fmt, ap);
+	va_end(ap);
 
 	/* don't dump a backtrace, etc. */
 	if (!BU_SETJUMP) {

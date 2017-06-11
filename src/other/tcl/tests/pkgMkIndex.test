@@ -7,13 +7,9 @@
 #
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
-    namespace import -force ::tcltest::*
-}
+package require tcltest 2
+namespace import ::tcltest::*
 
 set fullPkgPath [makeDirectory pkg]
 
@@ -48,7 +44,7 @@ proc pkgtest::parseArgs { args } {
 	set a [lindex $args $iarg]
 	if {[regexp {^-} $a]} {
 	    lappend options $a
-	    if {[string compare -load $a] == 0} {
+	    if {$a eq "-load"} {
 		incr iarg
 		lappend options [lindex $args $iarg]
 	    }
@@ -84,7 +80,7 @@ proc pkgtest::parseIndex { filePath } {
 	$slave eval {
 	    rename package package_original
 	    proc package { args } {
-		if {[string compare [lindex $args 0] ifneeded] == 0} {
+		if {[lindex $args 0] eq "ifneeded"} {
 		    set pkg [lindex $args 1]
 		    set ver [lindex $args 2]
 		    set ::PKGS($pkg:$ver) [lindex $args 3]
@@ -114,9 +110,9 @@ proc pkgtest::parseIndex { filePath } {
 	foreach k [lsort [array names P]] {
 	    lappend PKGS $k $P($k)
 	}
-    } err]} {
-	set ei $::errorInfo
-	set ec $::errorCode
+    } err opts]} {
+	set ei [dict get $opts -errorinfo]
+	set ec [dict get $opts -errorcode]
 
 	catch {interp delete $slave}
 

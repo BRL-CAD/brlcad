@@ -1614,7 +1614,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (2*3+2));
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * (2*3+2));
 
     RT_CK_DB_INTERNAL(ip);
 

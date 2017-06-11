@@ -5,8 +5,6 @@
 # Copyright (c) 1994 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -21,7 +19,8 @@ pack append . .t {top expand fill}
 update
 .t debug on
 wm geometry . {}
-  
+.t peer create .pt
+
 # The statements below reset the main window;  it's needed if the window
 # manager is mwm to make mwm forget about a previous minimum size setting.
 
@@ -137,6 +136,47 @@ test textMark-6.1 {TkTextMarkSegToIndex} haveCourier12 {
     .t mark set d 1.4
     list [.t index a] [.t index b] [.t index c ] [.t index d]
 } {1.2 1.2 1.2 1.4}
+test textMark-6.2 {TkTextMarkNameToIndex, with mark outside -startline/-endline range - bug 1630271} -body {
+  .t mark set insert 1.0
+  .t configure -startline 2
+  set res [list [.t index insert] [.t index insert-1c] [.t get insert]]
+  .t mark set insert end
+  .t configure -endline 4
+  lappend res [.t index insert]
+} -cleanup {
+  .t configure -startline {} -endline {}
+} -result {1.0 1.0 a 2.5}
+test textMark-6.3 {TkTextMarkNameToIndex, with mark outside -startline/-endline range - bug 1630271} -body {
+  .t mark set mymark 1.0
+  .t configure -startline 2
+  list [catch {.t index mymark} msg] $msg
+} -cleanup {
+  .t configure -startline {} -endline {}
+  .t mark unset mymark
+} -result {1 {bad text index "mymark"}}
+test textMark-6.4 {TkTextMarkNameToIndex, with mark outside -startline/-endline range - bug 1630271} -body {
+  .t mark set mymark 1.0
+  .t configure -startline 2
+  set res [list [catch {.t index mymark} msg] $msg]
+  lappend res [.pt index mymark]
+  .t configure -startline {}
+  .pt configure -startline 4
+  lappend res [.t index mymark]
+  lappend res [catch {.pt index mymark} msg] $msg
+  lappend res [.t get mymark]
+  lappend res [catch {.pt get mymark} msg] $msg
+} -cleanup {
+  .t configure -startline {} -endline {}
+  .pt configure -startline {} -endline {}
+  .t mark unset mymark
+} -result {1 {bad text index "mymark"} 1.0 1.0 1 {bad text index "mymark"} L 1 {bad text index "mymark"}}
+test textMark-6.5 {insert and current marks in an empty peer - bug 3487407} -body {
+  .t mark set insert 1.0
+  .t configure -start 5 -end 5
+  set res [.t index insert]
+} -cleanup {
+  .t configure -startline {} -endline {}
+} -result {1.0}
 
 catch {eval {.t mark unset} [.t mark names]}
 test textMark-7.1 {MarkFindNext - invalid mark name} haveCourier12 {
@@ -177,47 +217,77 @@ test textMark-7.8 {MarkFindNext - no next mark} haveCourier12 {
     .t mark set insert 3.0
     .t mark next insert
 } {}
-test textMark-8.1 {MarkFindPrev - invalid mark name} haveCourier12 {
+test textMark-7.9 {MarkFindNext - mark set in a text widget and retrieved from a peer} -setup {
+    .t mark unset {*}[.t mark names]
+} -body {
+    .t mark set mymark 1.0
+    lsort [list [.pt mark next 1.0] [.pt mark next mymark] [.pt mark next insert]]
+} -result {current insert mymark}
+
+test textMark-8.1 {MarkFindPrev - invalid mark name} -constraints haveCourier12 -setup {
+    .t mark unset {*}[.t mark names]
+} -body {
     catch {.t mark prev bogus} x
     set x
-} {bad text index "bogus"}
-test textMark-8.2 {MarkFindPrev - marks at same location} haveCourier12 {
+} -result {bad text index "bogus"}
+test textMark-8.2 {MarkFindPrev - marks at same location} -constraints haveCourier12 -setup {
+    .t mark unset {*}[.t mark names]
+} -body {
     .t mark set insert 2.0
     .t mark set current 2.0
     .t mark prev insert
-} {current}
-test textMark-8.3 {MarkFindPrev - numerical starting mark} haveCourier12 {
+} -result {current}
+test textMark-8.3 {MarkFindPrev - numerical starting mark} -constraints haveCourier12 -setup {
+    .t mark unset {*}[.t mark names]
+} -body {
     .t mark set current 1.0
     .t mark set insert 1.0
     .t mark prev 1.1
-} {current}
-test textMark-8.4 {MarkFindPrev - mark on the same line} haveCourier12 {
+} -result {current}
+test textMark-8.4 {MarkFindPrev - mark on the same line} -setup {
+    .t mark unset {*}[.t mark names]
+} -body {
     .t mark set current 1.0
     .t mark set insert 1.1
     .t mark prev insert
-} {current}
-test textMark-8.5 {MarkFindPrev - mark on the previous line} haveCourier12 {
+} -result {current}
+test textMark-8.5 {MarkFindPrev - mark on the previous line} -setup {
+    .t mark unset {*}[.t mark names]
+} -body {
     .t mark set current 1.end
     .t mark set insert 2.0
     .t mark prev insert
-} {current}
-test textMark-8.6 {MarkFindPrev - mark far away} haveCourier12 {
+} -result {current}
+test textMark-8.6 {MarkFindPrev - mark far away} -constraints haveCourier12 -setup {
+    .t mark unset {*}[.t mark names]
+} -body {
     .t mark set current 1.2
     .t mark set insert 7.0
     .t mark prev insert
-} {current}
-test textMark-8.7 {MarkFindPrev - mark on top of end} haveCourier12 {
+} -result {current}
+test textMark-8.7 {MarkFindPrev - mark on top of end} -constraints haveCourier12 -setup {
+    .t mark unset {*}[.t mark names]
+} -body {
     .t mark set insert 3.0
     .t mark set current end
     .t mark prev end
-} {insert}
-test textMark-8.8 {MarkFindPrev - no previous mark} haveCourier12 {
+} -result {insert}
+test textMark-8.8 {MarkFindPrev - no previous mark} -constraints haveCourier12 -setup {
+    .t mark unset {*}[.t mark names]
+} -body {
     .t mark set current 1.0
     .t mark set insert 3.0
     .t mark prev current
-} {}
+} -result {}
+test textMark-8.9 {MarkFindPrev - mark set in a text widget and retrieved from a peer} -setup {
+    .t mark unset {*}[.t mark names]
+} -body {
+    .t mark set mymark 1.0
+    lsort [list [.pt mark prev end] [.pt mark prev current] [.pt mark prev insert]]
+} -result {current insert mymark}
 
 catch {destroy .t}
+catch {destroy .pt}
 
 # cleanup
 cleanupTests

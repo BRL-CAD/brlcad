@@ -1,5 +1,4 @@
 @echo off
-rem RCS: @(#) $Id$
 
 if not exist %1\nul goto end
 
@@ -19,4 +18,3 @@ if errorlevel 1 goto end
 echo Deleted directory %1
 
 :end
-

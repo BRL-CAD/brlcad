@@ -31,14 +31,15 @@
 
 #include "bu/color.h"
 #include "bu/str.h"
-#include "bu/log.h"
+#include "bu/exit.h"
 #include "vmath.h"
 #include "fb.h"
 #include "libtermio.h"
 
+
 fb *fbp;
 
-int JumpSpeed;		/* # pixels skiped with fast commands. */
+int JumpSpeed;		/* # pixels skipped with fast commands. */
 
 RGBpixel curPix; 		/* Current pixel value */
 int curX, curY;		/* current position */

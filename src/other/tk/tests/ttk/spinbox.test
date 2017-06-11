@@ -143,8 +143,8 @@ test spinbox-1.8.4 "-validate option: " -setup {
     .sb configure -validate all -validatecommand {lappend ::spinbox_test %P}
     pack .sb
     .sb set 50
-    focus .sb
-    after 100 {set ::spinbox_wait 1} ; vwait ::spinbox_wait
+    focus -force .sb
+    after 500 {set ::spinbox_wait 1} ; vwait ::spinbox_wait
     set ::spinbox_test
 } -cleanup {
     destroy .sb

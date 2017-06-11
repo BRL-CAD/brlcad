@@ -31,7 +31,8 @@
 
 #include "gcv/defines.h"
 
-#include "raytrace.h"
+#include "rt/geom.h"
+#include "rt/tree.h"
 
 
 __BEGIN_DECLS
@@ -47,7 +48,7 @@ struct rt_bot_internal *gcv_facetize(struct db_i *db, const struct db_full_path 
  * Topological test for determining whether the given BoT satisfies
  * the conditions for solidity.
  *
- * Equivalent to bot_is_closed_fan() && bot_is_orientable()
+ * Equivalent to gcv_bot_is_closed_fan() && gcv_bot_is_orientable()
  */
 GCV_EXPORT extern int gcv_bot_is_solid(const struct rt_bot_internal *bot);
 

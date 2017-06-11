@@ -9,8 +9,6 @@
 # Copyright (c) 2000 Ajuba Solutions.
 # Copyright (c) 2000 Andreas Kupries.
 # All rights reserved.
-# 
-# RCS: @(#) $Id$
 
 if {[catch {package require tcltest 2.1}]} {
     puts stderr "Skipping tests in [info script].  tcltest 2.1 required."
@@ -161,8 +159,8 @@ proc fevent {fdelay idelay blocks script data} {
 
     #puts stdout ">>>>>" ; flush stdout
 
-    uplevel #0 set sock $sk
-    set res [uplevel #0 $script]
+    uplevel 1 set sock $sk
+    set res [uplevel 1 $script]
 
     catch {close $sk}
     return $res
@@ -242,6 +240,36 @@ proc id_fulltrail {var op data} {
 
     lappend trail [list $op $data $res]
     return $res
+}
+
+proc id_torture {chan op data} {
+    switch -- $op {
+	create/write -
+	create/read  -
+	delete/write -
+	delete/read  -
+	clear_read   {;#ignore}
+	flush/write -
+	flush/read  {}
+	write       {
+	    global level
+	    if {$level} {
+		return
+	    }
+	    incr level
+	    testchannel unstack $chan
+	    testchannel transform $chan \
+		-command [namespace code [list id_torture $chan]]
+	    return $data
+	}
+	read        {
+	    testchannel unstack $chan
+	    testchannel transform $chan \
+		-command [namespace code [list id_torture $chan]]
+	    return $data
+	}
+	query/maxRead {return -1}
+    }
 }
 
 proc counter {var op data} {
@@ -364,6 +392,10 @@ proc audit_ops {var -attach channel} {
 
 proc audit_flow {var -attach channel} {
     testchannel transform $channel -command [namespace code [list id_fulltrail $var]]
+}
+
+proc torture {-attach channel} {
+    testchannel transform $channel -command [namespace code [list id_torture $channel]]
 }
 
 proc stopafter {var n -attach channel} {
@@ -520,6 +552,7 @@ query/maxRead
 read
 query/maxRead
 flush/read
+query/maxRead
 delete/read
 --------
 create/write
@@ -572,6 +605,7 @@ read {
 }
 query/maxRead {} -1
 flush/read {} {}
+query/maxRead {} -1
 delete/read {} *ignored*
 --------
 create/write {} *ignored*
@@ -626,6 +660,7 @@ read {%^&*()_+-=
 }
 query/maxRead {} -1
 flush/read {} {}
+query/maxRead {} -1
 write %^&*()_+-= %^&*()_+-=
 write {
 } {
@@ -634,9 +669,27 @@ delete/read {} *ignored*
 flush/write {} {}
 delete/write {} *ignored*}
 
+test iogt-2.4 {basic I/O, mixed trail} {testchannel} {
+    set fh [open $path(dummy) r]
+    torture -attach $fh
+    chan configure $fh -buffersize 2
+    set x [read $fh]
+    testchannel unstack $fh
+    close   $fh
+    set x
+} {}
+test iogt-2.5 {basic I/O, mixed trail} {testchannel} {
+    set ::level 0
+    set fh [open $path(dummyout) w]
+    torture -attach $fh
+    puts -nonewline $fh abcdef
+    flush $fh
+    testchannel unstack $fh
+    close   $fh
+} {}
 
 test iogt-3.0 {Tcl_Channel valid after stack/unstack, fevent handling} \
-	{testchannel unknownFailure} {
+	{testchannel knownBug} {
     # This test to check the validity of aquired Tcl_Channel references is
     # not possible because even a backgrounded fcopy will immediately start
     # to copy data, without waiting for the event loop. This is done only in
@@ -653,6 +706,7 @@ test iogt-3.0 {Tcl_Channel valid after stack/unstack, fevent handling} \
     set fin  [open $path(dummy) r]
 
     fevent 1000 500 {20 20 20 10 1 1} {
+	variable copy
 	close $fin
 
 	set          fout [open dummyout w]
@@ -690,7 +744,7 @@ test iogt-3.0 {Tcl_Channel valid after stack/unstack, fevent handling} \
 } {1 {create/write create/read write flush/write flush/read delete/write delete/read}}
 
 
-test iogt-4.0 {fileevent readable, after transform} {testchannel unknownFailure} {
+test iogt-4.0 {fileevent readable, after transform} {testchannel knownBug} {
     set fin  [open $path(dummy) r]
     set data [read $fin]
     close $fin
@@ -720,10 +774,11 @@ test iogt-4.0 {fileevent readable, after transform} {testchannel unknownFailure}
     }
 
     fevent 1000 500 {20 20 20 10 1} {
+	variable stop
 	audit_flow trail   -attach $sock
 	rblocks_t  rbuf trail 23 -attach $sock
 
-	fileevent $sock readable [list Get $sock]
+	fileevent $sock readable [namespace code [list Get $sock]]
 
 	flush $sock ; # now, or fcopy will error us out
 	# But the 1 second delay should be enough to
@@ -821,7 +876,7 @@ delete/write {} *ignored*
 delete/read {} *ignored*}  ; # catch unescaped quote "
 
 
-test iogt-5.0 {EOF simulation} {testchannel unknownFailure} {
+test iogt-5.0 {EOF simulation} {testchannel knownBug} {
     set fin  [open $path(dummy)    r]
     set fout [open $path(dummyout) w]
 
@@ -918,6 +973,15 @@ test iogt-6.0 {Push back} testchannel {
 } {xxx}
 
 test iogt-6.1 {Push back and up} {testchannel knownBug} {
+
+    # This test demonstrates the bug/misfeature in the stacked
+    # channel implementation that data can be discarded if it is
+    # read into the buffers of one channel in the stack, and then
+    # that channel is popped before anything above it reads.
+    #
+    # This bug can be worked around by always setting -buffersize
+    # to 1, but who wants to do that?
+
     set f [open $path(dummy) r]
 
     # contents of dummy = "abcdefghi..."
@@ -932,6 +996,78 @@ test iogt-6.1 {Push back and up} {testchannel knownBug} {
     set res
 } {xxxghi}
 
+# Driver for a base channel that emits several short "files"
+# with each terminated by a fleeting EOF
+    proc driver {cmd args} {
+        variable buffer
+        variable index
+        set chan [lindex $args 0]
+        switch -- $cmd {
+            initialize {
+                set index($chan) 0
+                set buffer($chan) .....
+                return {initialize finalize watch read}
+            }
+            finalize {
+                if {![info exists index($chan)]} {return}
+                unset index($chan) buffer($chan)
+                return
+            }
+            watch {}
+            read {
+                set n [lindex $args 1]
+                if {![info exists index($chan)]} {
+                    driver initialize $chan
+                }
+                set new [expr {$index($chan) + $n}]
+                set result [string range $buffer($chan) $index($chan) $new-1]
+                set index($chan) $new
+                if {[string length $result] == 0} {
+                    driver finalize $chan
+                }
+                return $result
+            }
+        }
+    }
+
+test iogt-7.0 {Handle fleeting EOF} -constraints {testchannel} -body {
+    set chan [chan create read [namespace which driver]]
+    identity -attach $chan
+    list [eof $chan] [read $chan] [eof $chan] [read $chan 0] [eof $chan] \
+        [read $chan] [eof $chan]
+} -cleanup {
+    close $chan
+} -result {0 ..... 1 {} 0 ..... 1}
+
+proc delay {op data} {
+    variable store
+    switch -- $op {
+	create/write -	create/read  -
+	delete/write -	delete/read  -
+	flush/write -	write -
+	clear_read   {;#ignore}
+	flush/read  -
+	read        {
+	    if {![info exists store]} {set store {}}
+	    set reply $store
+	    set store $data
+	    return $reply
+	}
+	query/maxRead {return -1}
+    }
+}
+
+test iogt-7.1 {Handle fleeting EOF} -constraints {testchannel} -body {
+    set chan [chan create read [namespace which driver]]
+    testchannel transform $chan -command [namespace code delay]
+    list [eof $chan] [read $chan] [eof $chan] [read $chan 0] [eof $chan] \
+        [read $chan] [eof $chan]
+} -cleanup {
+    close $chan
+} -result {0 ..... 1 {} 0 ..... 1}
+
+rename delay {}
+rename driver {}
 
 # cleanup
 foreach file [list dummy dummyout __echo_srv__.tcl] {

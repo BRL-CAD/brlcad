@@ -71,14 +71,14 @@ zoom_load(struct ged *gedp)
     extern const struct ged_cmd *zoom_cmd(void);
 
     const struct ged_cmd *cmd = zoom_cmd();
-    return gedp->add(cmd);
+    return gedp->add(gedp, cmd);
 }
 
 
 HIDDEN void
 zoom_unload(struct ged *gedp)
 {
-    gedp->del("zoom");
+    gedp->del(gedp, "zoom");
 }
 
 

@@ -10,8 +10,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -538,7 +536,7 @@ test switch-11.6 {-matchvar unwritable} {
 
 test switch-12.1 {regexp matching with -indexvar} {
     switch -regexp -indexvar x -- abc {.(.). {set x}}
-} {{0 3} {1 2}}
+} {{0 2} {1 1}}
 test switch-12.2 {regexp matching with -indexvar} {
     set x GOOD
     switch -regexp -indexvar x -- abc {.(.).. {list $x z}}
@@ -546,7 +544,7 @@ test switch-12.2 {regexp matching with -indexvar} {
 } GOOD
 test switch-12.3 {regexp matching with -indexvar} {
     switch -regexp -indexvar x -- "a b c" {.(.). {set x}}
-} {{0 3} {1 2}}
+} {{0 2} {1 1}}
 test switch-12.4 {regexp matching with -indexvar} {
     set x BAD
     switch -regexp -indexvar x -- "a b c" {
@@ -562,22 +560,32 @@ test switch-12.6 {-indexvar unwritable} {
     set x {}
     list [catch {switch -regexp -indexvar x(x) -- abc . {set x}} msg] $x $msg
 } {1 {} {can't set "x(x)": variable isn't array}}
+test switch-12.7 {[Bug 3106532] -indexvar should be directly usable with [string range]} {
+    set str abcdef
+    switch -regexp -indexvar x -- $str ^... {string range $str {*}[lindex $x 0]}
+} abc
+test switch-12.8 {-indexvar and matched empty strings} {
+    switch -regexp -indexvar x -- abcdef ^...(x?) {return $x}
+} {{0 2} {3 2}}
+test switch-12.9 {-indexvar and unmatched strings} {
+    switch -regexp -indexvar x -- abcdef ^...(x)? {return $x}
+} {{0 2} {-1 -1}}
 
 test switch-13.1 {-indexvar -matchvar combinations} {
     switch -regexp -indexvar x -matchvar y abc {
 	. {list $x $y}
     }
-} {{{0 1}} a}
+} {{{0 0}} a}
 test switch-13.2 {-indexvar -matchvar combinations} {
     switch -regexp -indexvar x -matchvar y abc {
 	.$ {list $x $y}
     }
-} {{{2 3}} c}
+} {{{2 2}} c}
 test switch-13.3 {-indexvar -matchvar combinations} {
     switch -regexp -indexvar x -matchvar y abc {
 	(.)(.)(.) {list $x $y}
     }
-} {{{0 3} {0 1} {1 2} {2 3}} {abc a b c}}
+} {{{0 2} {0 0} {1 1} {2 2}} {abc a b c}}
 test switch-13.4 {-indexvar -matchvar combinations} {
     set x -
     set y -
@@ -599,7 +607,7 @@ test switch-13.6 {-indexvar -matchvar combinations} {
     list [catch {
 	switch -regexp -indexvar x -matchvar y(y) abc {. {list $x $y}}
     } msg] $x $y $msg
-} {1 {{0 1}} - {can't set "y(y)": variable isn't array}}
+} {1 {{0 0}} - {can't set "y(y)": variable isn't array}}
 
 test switch-14.1 {-regexp -- compilation [Bug 1854399]} {
     switch -regexp -- 0 {

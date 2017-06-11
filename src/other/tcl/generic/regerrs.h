@@ -17,3 +17,4 @@
 { REG_MIXED,	"REG_MIXED",	"character widths of regex and string differ" },
 { REG_BADOPT,	"REG_BADOPT",	"invalid embedded option" },
 { REG_ETOOBIG,	"REG_ETOOBIG",	"nfa has too many states" },
+{ REG_ECOLORS,	"REG_ECOLORS",	"too many colors" },

@@ -329,7 +329,7 @@ main(int argc, char **argv)
 	    }
 	}
 
-	(void)nmg_vertex_fuse(&m->magic, &tol);
+	(void)nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
 
 	/* calculate plane equations for faces */
 	NMG_CK_SHELL(s);
@@ -376,12 +376,12 @@ main(int argc, char **argv)
 
 	if (BU_PTBL_LEN(&faces)) {
 	    /* glue faces together */
-	    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &tol);
+	    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, &tol);
 
 	    nmg_rebound(m, &tol);
-	    nmg_fix_normals(s, &tol);
+	    nmg_fix_normals(s, &RTG.rtg_vlfree, &tol);
 
-	    nmg_shell_coplanar_face_merge(s, &tol, 1);
+	    nmg_shell_coplanar_face_merge(s, &tol, 1, &RTG.rtg_vlfree);
 
 	    nmg_rebound(m, &tol);
 

@@ -1,6 +1,5 @@
 /*
  * This file is generated from $(INCLUDESRC)/keysymdef.h.  Do not edit.
- * RCS: $Id$ 
  */
 { "BackSpace", 0xFF08 },
 { "Tab", 0xFF09 },

@@ -1414,7 +1414,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     for (i = 0; i < nseg; i++)
 	vells[nell-1][i] = (struct vertex *)NULL;
     face = 0;
-    BU_ASSERT_PTR(outfaceuses, !=, NULL);
+    BU_ASSERT(outfaceuses != NULL);
     if ((outfaceuses[face++] = nmg_cface(s, vells[nell-1], nseg)) == 0) {
 	bu_log("rt_ehy_tess() failure, top face\n");
 	goto fail;
@@ -1560,13 +1560,13 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, face, tol);
+    nmg_gluefaces(outfaceuses, face, &RTG.rtg_vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1);
+    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
 
     /* free mem */
     bu_free((char *)outfaceuses, "faceuse []");
@@ -1578,7 +1578,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)vells, "vertex [][]");
 
     /* Assign vertexuse normals */
-    nmg_vertex_tabulate(&vert_tab, &s->l.magic);
+    nmg_vertex_tabulate(&vert_tab, &s->l.magic, &RTG.rtg_vlfree);
     for (i = 0; i < BU_PTBL_LEN(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
@@ -1781,7 +1781,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 3*4);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -2006,6 +2006,43 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     sqrt_rb = sqrt(eip->ehy_r1 * eip->ehy_r1 + b * b);
     integralArea = (a / b) * ((eip->ehy_r1 * sqrt_rb) + ((b * b / 2) * (log(sqrt_rb + eip->ehy_r1) - log(sqrt_rb - eip->ehy_r1))));
     *area = 2 * eip->ehy_r1 * (a + h) - integralArea;
+}
+
+
+/**
+ * The centroid lies along ehy_H due to symmetry.
+ * Initially the distance of the centroid from the apex is found. The
+ * coordinates of the points at this distance along the unit vector
+ * gives the centroid of the elliptical hyperboloid of two sheets.
+ * Formula taken from: https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
+ */
+void
+rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_ehy_internal *eip;
+    fastf_t a, b, h, area, dist, pwr, dist_C;
+    vect_t h_vec, unit_vec;
+    point_t apex;
+    RT_CK_DB_INTERNAL(ip);
+    eip =  (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(eip);
+
+    a = eip->ehy_c;
+    h = MAGNITUDE(eip->ehy_H);
+    b = (eip->ehy_r1 * a) / sqrt(h * h - 2 * a * h);
+
+    VMOVE(h_vec, eip->ehy_H);
+    VMOVE(apex, eip->ehy_V);
+    VSCALE(unit_vec, h_vec, (1 / h));
+
+    rt_ehy_surf_area( &area, ip);
+    pwr = pow(h * h + 2 * a * h, 3);
+    if(pwr < 0)
+	bu_log("invalid parameters.\n");
+    dist = ((2 * b) * sqrt(pwr)) / (3 * area * a);
+    dist_C = dist - a;
+
+    VJOIN1(*cent, apex, dist_C, unit_vec);
 }
 
 

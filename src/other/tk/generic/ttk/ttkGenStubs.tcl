@@ -7,12 +7,10 @@
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
-# $Id$
 #
 # SOURCE: tcl/tools/genStubs.tcl, revision 1.20
 #
-# CHANGES: 
+# CHANGES:
 #	+ Remove xxx_TCL_DECLARED #ifdeffery
 #	+ Use application-defined storage class specifier instead of "EXTERN"
 #	+ Add "epoch" and "revision" fields to stubs table record
@@ -20,7 +18,7 @@
 #	+ Second argument to "declare" is used as a status guard
 #	  instead of a platform guard.
 #	+ Use void (*reserved$i)(void) = 0 instead of void *reserved$i = NULL
-#	  for unused stub entries, in case pointer-to-function and 
+#	  for unused stub entries, in case pointer-to-function and
 #	  pointer-to-object are different sizes.
 #	+ Allow trailing semicolon in function declarations
 #	+ stubs table is const-qualified
@@ -32,7 +30,7 @@ namespace eval genStubs {
     # libraryName --
     #
     #	The name of the entire library.  This value is used to compute
-    #	the USE_*_STUBS macro, the name of the init file, and others.
+    #	the USE_*_STUBS macro and the name of the init file.
 
     variable libraryName "UNKNOWN"
 
@@ -183,12 +181,21 @@ proc genStubs::hooks {names} {
 #	decl		The C function declaration, or {} for an undefined
 #			entry.
 #
-proc genStubs::declare {index status decl} {
+proc genStubs::declare {args} {
     variable stubs
     variable curName
     variable revision
 
     incr revision
+    if {[llength $args] == 2} {
+	lassign $args index decl
+	set status current
+    } elseif {[llength $args] == 3} {
+	lassign $args index status decl
+    } else {
+	puts stderr "wrong # args: declare $args"
+	return
+    }
 
     # Check for duplicate declarations, then add the declaration and
     # bump the lastNum counter if necessary.
@@ -196,6 +203,7 @@ proc genStubs::declare {index status decl} {
     if {[info exists stubs($curName,decl,$index)]} {
 	puts stderr "Duplicate entry: $index"
     }
+    regsub -all const $decl CONST decl
     regsub -all "\[ \t\n\]+" [string trim $decl] " " decl
     set decl [parseDecl $decl]
 
@@ -205,7 +213,25 @@ proc genStubs::declare {index status decl} {
     if {$index > $stubs($curName,lastNum)} {
 	set stubs($curName,lastNum) $index
     }
+    return
+}
 
+# genStubs::export --
+#
+#	This function is used in the declarations file to declare a symbol
+#	that is exported from the library but is not in the stubs table.
+#
+# Arguments:
+#	decl		The C function declaration, or {} for an undefined
+#			entry.
+#
+# Results:
+#	None.
+
+proc genStubs::export {args} {
+    if {[llength $args] != 1} {
+	puts stderr "wrong # args: export $args"
+    }
     return
 }
 
@@ -229,6 +255,7 @@ proc genStubs::rewriteFile {file text} {
     }
     set in [open ${file} r]
     set out [open ${file}.new w]
+    fconfigure $out -translation lf
 
     while {![eof $in]} {
 	set line [gets $in]
@@ -270,7 +297,7 @@ proc genStubs::addPlatformGuard {plat text} {
 	}
 	unix {
 	    return "#if !defined(__WIN32__) /* UNIX */\n${text}#endif /* UNIX */\n"
-	}		    
+	}
 	macosx {
 	    return "#ifdef MAC_OSX_TCL\n${text}#endif /* MAC_OSX_TCL */\n"
 	}
@@ -400,10 +427,12 @@ proc genStubs::parseArg {arg} {
 
 proc genStubs::makeDecl {name decl index} {
     variable scspec
-
     lassign $decl rtype fname args
 
     append text "/* $index */\n"
+    if {$rtype != "void"} {
+	regsub -all void $rtype VOID rtype
+    }
     set line "$scspec $rtype"
     set count [expr {2 - ([string length $line] / 8)}]
     append line [string range "\t\t\t" 0 $count]
@@ -420,9 +449,10 @@ proc genStubs::makeDecl {name decl index} {
     }
     append line $fname
 
+    regsub -all void $args VOID args
     set arg1 [lindex $args 0]
     switch -exact $arg1 {
-	void {
+	VOID {
 	    append line "(void)"
 	}
 	TCL_VARARGS {
@@ -517,15 +547,19 @@ proc genStubs::makeSlot {name decl index} {
     append lfname [string range $fname 1 end]
 
     set text "    "
+    if {$rtype != "void"} {
+	regsub -all void $rtype VOID rtype
+    }
     if {$args == ""} {
 	append text $rtype " *" $lfname "; /* $index */\n"
 	return $text
     }
     append text $rtype " (*" $lfname ") "
 
+    regsub -all void $args VOID args
     set arg1 [lindex $args 0]
     switch -exact $arg1 {
-	void {
+	VOID {
 	    append text "(void)"
 	}
 	TCL_VARARGS {
@@ -600,7 +634,7 @@ proc genStubs::makeInit {name decl index} {
 # Results:
 #	None.
 
-proc genStubs::forAllStubs {name slotProc guardProc textVar 
+proc genStubs::forAllStubs {name slotProc guardProc textVar
     	{skipString {"/* Slot $i is reserved */\n"}}} {
     variable stubs
     upvar $textVar text
@@ -624,7 +658,7 @@ proc genStubs::addGuard {status text} {
     set upName [string toupper $libraryName]
 
     switch -- $status {
-	current	{ 
+	current	{
 	    # No change
 	}
 	deprecated {
@@ -637,7 +671,7 @@ proc genStubs::addGuard {status text} {
 	    puts stderr "Unrecognized status code $status"
 	}
     }
-    return $text 
+    return $text
 }
 
 proc genStubs::ifdeffed {macro text} {
@@ -713,6 +747,8 @@ proc genStubs::emitHeader {name} {
     append text "#define ${CAPName}_STUBS_EPOCH $epoch\n"
     append text "#define ${CAPName}_STUBS_REVISION $revision\n"
 
+    append text "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n"
+
     emitDeclarations $name text
 
     if {[info exists hooks($name)]} {
@@ -734,8 +770,7 @@ proc genStubs::emitHeader {name} {
 
     append text "} ${capName}Stubs;\n\n"
 
-    append text "#ifdef __cplusplus\nextern \"C\" {\n#endif\n"
-    append text "extern const ${capName}Stubs *${name}StubsPtr;\n"
+    append text "extern const ${capName}Stubs *${name}StubsPtr;\n\n"
     append text "#ifdef __cplusplus\n}\n#endif\n"
 
     emitMacros $name text
@@ -760,10 +795,9 @@ proc genStubs::emitInit {name textVar} {
     variable interfaces
     variable epoch
     variable revision
-
     upvar $textVar text
-    set root 1
 
+    set root 1
     set capName [string toupper [string index $name 0]]
     append capName [string range $name 1 end]
     set CAPName [string toupper $name]

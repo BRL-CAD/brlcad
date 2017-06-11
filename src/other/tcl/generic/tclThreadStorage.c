@@ -7,8 +7,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -137,7 +135,7 @@ AllocThreadStorageEntry(
     hPtr = (Tcl_HashEntry *) TclpSysAlloc(sizeof(Tcl_HashEntry), 0);
     hPtr->key.oneWordValue = keyPtr;
     hPtr->clientData = NULL;
-    
+
     return hPtr;
 }
 
@@ -172,7 +170,7 @@ FreeThreadStorageEntry(
  * ThreadStorageGetHashTable --
  *
  *	This procedure returns a hash table pointer to be used for thread
- *	storage for the specified thread. 
+ *	storage for the specified thread.
  *
  * Results:
  *	A hash table pointer for the specified thread, or NULL if the hash
@@ -184,8 +182,8 @@ FreeThreadStorageEntry(
  *
  * Thread safety:
  *	This function assumes that integer operations are safe (atomic)
- *	on all (currently) supported Tcl platforms.  Hence there are 
- * 	places where shared integer arithmetic is done w/o protective locks.    
+ *	on all (currently) supported Tcl platforms.  Hence there are
+ * 	places where shared integer arithmetic is done w/o protective locks.
  *
  *----------------------------------------------------------------------
  */
@@ -207,12 +205,12 @@ ThreadStorageGetHashTable(
      * Thread safety: threadStorageCache is accessed w/o locks in order to
      * avoid serialization of all threads at this hot-spot. It is safe to
      * do this here because (threadStorageCache[index].id != id) test below
-     * should be atomic on all (currently) supported platforms and there 
+     * should be atomic on all (currently) supported platforms and there
      * are no devastatig side effects of the test.
      *
      * Note Valgrind users: this place will show up as a race-condition in
      * helgrind-tool output. To silence this warnings, define VALGRIND
-     * symbol at compilation time. 
+     * symbol at compilation time.
      */
 
 #if !defined(VALGRIND)

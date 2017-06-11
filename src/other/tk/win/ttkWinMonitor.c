@@ -1,6 +1,3 @@
-/* $Id$
- */
-
 #ifdef _MSC_VER
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -95,7 +92,7 @@ CreateThemeMonitorWindow(HINSTANCE hinst, Tcl_Interp *interp)
 	hwnd = CreateWindow( name, title, WS_OVERLAPPEDWINDOW,
 	    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 	    NULL, NULL, hinst, NULL );
-	SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG)interp);
+	SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)interp);
 	ShowWindow(hwnd, SW_HIDE);
 	UpdateWindow(hwnd);
     }

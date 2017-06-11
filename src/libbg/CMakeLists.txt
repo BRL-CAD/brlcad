@@ -14,15 +14,18 @@ set(LIBBG_SOURCES
   polygon.c
   tri_ray.c
   tri_tri.c
+  trimesh.c
   util.c
   )
 
 BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" libbn libbu)
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-add_subdirectory(tests)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+  add_subdirectory(tests)
+endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
-CMAKEFILES(bg_private.h)
+CMAKEFILES(bg_private.h pointgen.c)
 
 # Local Variables:
 # tab-width: 8

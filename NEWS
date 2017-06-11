@@ -9,6 +9,46 @@ first and are grouped by release.  Each release also includes optional
 descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
+----------------------------------------------------------------------
+--- 2016-07-XX  Release 7.26.2                                     ---
+----------------------------------------------------------------------
+
+* upgraded Tcl/Tk from 8.5.9 to 8.5.19 - Sean Morrison
+* fixed background color setting in MGED - Cliff Yapp
+* upgraded libpng to version 1.6.29 - Cliff Yapp
+* upgraded zlib to version 1.2.11 - Cliff Yapp
+* reduced 'shade_inputs' flipped normal reporting - Sean Morrison
+* numerous 'simulate' command enhancements and fixes - Jon Engbert
+* fixed rtweight .density file loading on Windows - Cliff Yapp
+* fixed dsp handling of invalid uniform binary objects - Sean Morrison
+* fixed brlman problem with viewing benchmark man page - Cliff Yapp
+* fixed name of dbfind man page (was listed as 'find') - Cliff Yapp
+* added -H option to ls for human readable size reporting - Cliff Yapp
+* added -S option to ls command for size based sorting - Cliff Yapp
+* improved 'loadview' command view script handling - Sean Morrison
+* fixed TIE raytracing for zero thickness BoTs - Cliff Yapp
+* added Wavefront OBJ File->Open GUI support in Archer - Cliff Yapp
+* fixed attr show error printing large attribute values - Cliff Yapp
+* fixed rt support for lights created prior to rel 6.0 - Sean Morrison
+* fixed infinite loop bug in when using shadow lights - Sean Morrison
+* removed man pages: erase_all, export_body, vrmgr, dall - Cliff Yapp
+* added manual pages for the 'brlman' and 'man' commands - Cliff Yapp
+* improved gdiff default grid spacing and tolerancing - Cliff Yapp
+* updated brlman to support browsing all page categories - Cliff Yapp
+* added support for .rtwizardrc configuration file - Cliff Yapp
+* renamed MGED gdiff grid spacing -t option to -g - Cliff Yapp
+* updated MGED gdiff default drawing options to -l -r - Cliff Yapp
+* removed MGED gdiff -R option, now default behavior - Cliff Yapp
+* replaced obsolete 'g_diff' manual page with 'gdiff' - Cliff Yapp
+* improved 'keep' error message when file is not created - Cliff Yapp
+* improved rtwizard window sizing and "RtWizard" titling - Cliff Yapp
+* brep command attaches .brep suffix instead of _brep - Sean Morrison
+* changed ogl & wgl framebuffer delayed write behavior - Sean Morrison
+* upgraded freetype to version 2.6.5 - Cliff Yapp
+* fix rtedge foreground/background color options - Jon Engbert
+* support rt -C colors specified as 0-255 or 0.0-1.0 - Jon Engbert
+* fixed xpush bug leaving stray top-level objects - Nick Reed
+
 
 ----------------------------------------------------------------------
 --- 2016-08-08  Release 7.26.0                                     ---

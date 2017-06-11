@@ -22,9 +22,7 @@
  * RCS: @(#) $Id$
  */
 
-#ifdef CMAKE_HEADERS
-#  include "tktable_cfg.h"
-#endif
+#include "tktable_cfg.h"
 #include "tkTable.h"
 
 #ifdef DEBUG

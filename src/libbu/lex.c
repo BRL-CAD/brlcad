@@ -23,9 +23,12 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include "bu/log.h"
+
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "bu/vls.h"
+#include "bu/log.h"
+
 
 static int bu_lex_reading_comment = 0;
 

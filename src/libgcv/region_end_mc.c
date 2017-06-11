@@ -28,6 +28,7 @@
 #include "common.h"
 
 #include "bu/parallel.h"
+#include "rt/rt_instance.h"
 #include "gcv.h"
 
 
@@ -88,7 +89,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     /* Sometimes the NMG library adds debugging bits when it detects
      * an internal error, before bombing.  Stash.
      */
-    NMG_debug_state = RTG.NMG_debug;
+    NMG_debug_state = nmg_debug;
 
     m = nmg_mmr();
     r = nmg_mrsv(m);

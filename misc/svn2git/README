@@ -1,8 +1,10 @@
-Uses the svn2git code from:  https://www.gitorious.org/svn2git or build the local copy in misc/svn2git/svn2git
+Uses the svn2git code from: https://github.com/svn-all-fast-export/svn2git or build the local copy in misc/svn2git/svn2git
 
 rsync -av svn.code.sf.net::p/brlcad/code .
 
-./svn2git/svn-all-fast-export --add-metadata-notes --identity-map account-map --rules rules code
+./svn-all-fast-export --add-metadata-notes --identity-map account-map --rules rules code
+
+TODO: investigate --svn-branches flag - do we want to use it?
 
 For tags, if you've used the supplied rules file, follow this post's approach:
 http://blog.smartbear.com/software-quality/migrating-from-subversion-to-git-lessons-learned/

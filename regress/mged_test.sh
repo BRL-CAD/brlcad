@@ -351,28 +351,6 @@ erase draw_comb_shape.s
 EOF
 
 #
-#	D A L L / E R A S E _ A L L
-#
-cat > dall.mged_regress << EOF
-in dall1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
-in dall2.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
-comb dall1.c u dall1.s
-comb dall2.c u dall1.s
-comb dall3.c u dall1.s u dall2.s
-comb dall4.c u dall2.s
-Z
-e dall1.s dall2.s dall1.c dall2.c dall3.c dall4.c
-who
-dall dall1.s
-who
-Z
-e dall1.s dall2.s dall1.c dall2.c dall3.c dall4.c
-who
-erase_all dall1.s
-who
-EOF
-
-#
 #                 E R A S E
 #
 # Test erase with combinations
@@ -1458,7 +1436,6 @@ cat draw.mged_regress >> mged.mged_regress
 cat erase.mged_regress >> mged.mged_regress
 cat Z.mged_regress >> mged.mged_regress
 cat B.mged_regress >> mged.mged_regress
-cat dall.mged_regress >> mged.mged_regress
 cat hide.mged_regress >> mged.mged_regress
 cat unhide.mged_regress >> mged.mged_regress
 

@@ -63,7 +63,6 @@ void Factory::Print()
 {
     FACTORYMAP &methodmap = GetMap();
 
-    FACTORYMAP::iterator i;
     std::cout << "Map size: " << methodmap.size() << std::endl;
 
     for (FACTORYMAP::iterator ii = methodmap.begin(); ii != methodmap.end(); ++ii) {

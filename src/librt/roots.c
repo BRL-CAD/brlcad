@@ -158,7 +158,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	 * anything smaller than 1.0e-5 is too sensitive and causes
 	 * eto off-by-many differences.
 	 */
-	if (diff > (b - diff) * 1.0e-5)
+	if (diff > (b - diff) * RT_ROOT_TOL)
 	    continue;
 
 	return i;			/* OK */
@@ -220,7 +220,7 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
 	    er = tr;
 	    ei = ti;
 	}
-	if (fabs(er) > 1.0e-5 || fabs(ei) > 1.0e-5)
+	if (fabs(er) > RT_ROOT_TOL || fabs(ei) > RT_ROOT_TOL)
 	    return 1;	/* FAIL */
     }
     /* Evaluating polynomial for all Z values gives zero */
@@ -320,7 +320,7 @@ rt_poly_roots(register bn_poly_t *eqn,	/* equation to be solved */
 	if ((rt_poly_findroot(eqn, &roots[n], name)) < 0)
 	    return n;	/* return those we found, anyways */
 
-	if (fabs(roots[n].im) > 1.0e-5* fabs(roots[n].re)) {
+	if (fabs(roots[n].im) > RT_ROOT_TOL * fabs(roots[n].re)) {
 	    /* If root is complex, its complex conjugate is
 	     * also a root since complex roots come in con-
 	     * jugate pairs when all coefficients are real.

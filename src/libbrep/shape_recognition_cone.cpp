@@ -6,7 +6,6 @@
 #include <map>
 #include <limits>
 
-#include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
 #include "shape_recognition.h"
@@ -45,7 +44,6 @@ cone_validate_face(const ON_BrepFace *forig, const ON_BrepFace *fcand)
 
     return 1;
 }
-
 
 
 /* Return -1 if the cone face is pointing in toward the axis,
@@ -260,7 +258,6 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
 	(*cone_planes).Append(ON_Plane(arbmid + v2, cone.CircleAt(cone.height - hdelta).Plane().yaxis));
 	(*cone_planes).Append(ON_Plane(arbmid - v2, -1 * cone.CircleAt(cone.height - hdelta).Plane().yaxis));
     }
-
 
 
     return need_arbn;

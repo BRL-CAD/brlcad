@@ -70,7 +70,7 @@ __BEGIN_DECLS
 #define BU_RB_NODE_MAGIC		0x72626e6f /**< rbno */
 #define BU_RB_PKG_MAGIC			0x7262706b /**< rbpk */
 #define BU_RB_TREE_MAGIC		0x72627472 /**< rbtr */
-#define BU_VLB_MAGIC                    0x5f564c42 /**< _VLB */
+#define BU_VLB_MAGIC			0x5f564c42 /**< _VLB */
 #define BU_VLS_MAGIC			0x89333bbb /**< ?3;? */
 
 /* libbn */
@@ -82,6 +82,7 @@ __BEGIN_DECLS
 #define BN_TABLE_MAGIC			0x53706374 /**< Spct */
 #define BN_TOL_MAGIC			0x98c734bb /**< ??4? */
 #define BN_UNIF_MAGIC			0x00be7460 /**< ??t` => 12481632 */
+#define BN_VERT_TREE_MAGIC		0x56455254 /**< VERT */
 #define BN_VLBLOCK_MAGIC		0x981bd112 /**< ???? */
 #define BN_VLIST_MAGIC			0x98237474 /**< ?\#tt */
 
@@ -189,18 +190,18 @@ __BEGIN_DECLS
 /* fb */
 
 #define FB_MAGIC			0xfbfb00fb /**< ???? */
-#define FB_WGL_MAGIC    0x574f4642 /**< WOFB */
-#define FB_OGL_MAGIC    0x584f4642 /**< XOFB */
-#define FB_X24_MAGIC    0x58324642 /**< X2FB */
-#define FB_TK_MAGIC     0x544b4642 /**< TKFB */
-#define FB_QT_MAGIC     0x51544642 /**< QTFB */
-#define FB_DEBUG_MAGIC  0x44424642 /**< DBFB */
-#define FB_DISK_MAGIC   0x44494642 /**< STFB */
-#define FB_STK_MAGIC    0x53544642 /**< STFB */
-#define FB_MEMORY_MAGIC 0x4d454642 /**< MEFB */
-#define FB_REMOTE_MAGIC 0x524d4642 /**< MEFB */
-#define FB_NULL_MAGIC   0x4e554642 /**< NUFB */
-#define FB_OSGL_MAGIC   0x4f474642 /**< OGFB */
+#define FB_WGL_MAGIC			0x574f4642 /**< WOFB */
+#define FB_OGL_MAGIC			0x584f4642 /**< XOFB */
+#define FB_X24_MAGIC			0x58324642 /**< X2FB */
+#define FB_TK_MAGIC			0x544b4642 /**< TKFB */
+#define FB_QT_MAGIC			0x51544642 /**< QTFB */
+#define FB_DEBUG_MAGIC			0x44424642 /**< DBFB */
+#define FB_DISK_MAGIC			0x44494642 /**< STFB */
+#define FB_STK_MAGIC			0x53544642 /**< STFB */
+#define FB_MEMORY_MAGIC			0x4d454642 /**< MEFB */
+#define FB_REMOTE_MAGIC			0x524d4642 /**< MEFB */
+#define FB_NULL_MAGIC			0x4e554642 /**< NUFB */
+#define FB_OSGL_MAGIC			0x4f474642 /**< OGFB */
 
 /* misc */
 
@@ -220,11 +221,10 @@ __BEGIN_DECLS
 #define PT_MAGIC			0x87687681 /**< ?hv? */
 #define RESOURCE_MAGIC			0x83651835 /**< ?e?5 */
 #define RTI_MAGIC			0x99101658 /**< ???X */
-#define VERT_TREE_MAGIC			0x56455254 /**< VERT */
 #define WDB_METABALLPT_MAGIC		0x6d627074 /**< mbpt */
 #define WDB_PIPESEG_MAGIC		0x9723ffef /**< ?\#?? */
 #define WMEMBER_MAGIC			0x43128912 /**< C??? */
-#define ICV_IMAGE_MAGIC		0x6269666d /**< bifm */
+#define ICV_IMAGE_MAGIC			0x6269666d /**< bifm */
 
 /** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */
 
@@ -235,19 +235,20 @@ __BEGIN_DECLS
 #ifdef NO_BOMBING_MACROS
 #  define BU_CKMAG(_ptr, _magic, _str) (void)(_ptr)
 #else
-#  define BU_CKMAG(_ptr, _magic, _str) { \
-        const uintptr_t _ptrval = (const uintptr_t)(_ptr); \
-        if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
-            bu_badmagic((const uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
+#  define BU_CKMAG(_ptr, _magic, _str) do { \
+        if (UNLIKELY(((const uintptr_t)(_ptr) == 0) || ((const uintptr_t)(_ptr) & (sizeof((const uintptr_t)(_ptr))-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+            bu_badmagic((const uint32_t *)(_ptr), (uint32_t)(_magic), _str, __FILE__, __LINE__); \
         } \
-    }
+    } while (0)
 #endif
 
 
 /**
- *  Support routine for BU_CKMAG macro.
+ * This function is called when there is something wrong with a
+ * pointer.  It's primarily a support routine for BU_CKMAG macro, but
+ * may be used elsewhere.  This function never returns.
  */
-BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line) _BU_ATTR_NORETURN;
+BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line) _BU_ATTR_ANALYZE_NORETURN _BU_ATTR_NORETURN;
 
 
 /** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */

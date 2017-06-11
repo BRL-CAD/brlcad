@@ -30,6 +30,28 @@
 #include "../librt_private.h"
 #include "optical/plastic.h"
 
+
+/**
+ * Sort an array of hits into ascending order.
+ */
+void
+primitive_hitsort(register struct hit *h, register int nh)
+{
+    register int i, j;
+    struct hit temp;
+
+    for (i = 0; i < nh-1; i++) {
+	for (j = i + 1; j < nh; j++) {
+	    if (h[i].hit_dist <= h[j].hit_dist)
+		continue;
+	    temp = h[j];                /* struct copy */
+	    h[j] = h[i];                /* struct copy */
+	    h[i] = temp;                /* struct copy */
+	}
+    }
+}
+
+
 /**
  * If only the absolute tolerance is valid (positive), it is returned.
  *
@@ -601,9 +623,12 @@ clt_init(void)
             "epa_shot.cl",
             "eto_shot.cl",
             "sph_shot.cl",
+	    "part_shot.cl",
             "rec_shot.cl",
             "tgc_shot.cl",
             "tor_shot.cl",
+            "rhc_shot.cl",
+            "rpc_shot.cl",
 
             "rt.cl",
         };
@@ -654,18 +679,21 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
     size_t size;
 
     switch (stp->st_id) {
-	case ID_TOR:    size = clt_tor_pack(pool, stp);	break;
-	case ID_TGC:    size = clt_tgc_pack(pool, stp);	break;
-	case ID_ELL:    size = clt_ell_pack(pool, stp);	break;
-	case ID_ARB8:   size = clt_arb_pack(pool, stp);	break;
-	case ID_REC:    size = clt_rec_pack(pool, stp);	break;
-	case ID_SPH:    size = clt_sph_pack(pool, stp);	break;
-	case ID_EHY:    size = clt_ehy_pack(pool, stp);	break;
+	case ID_TOR:		size = clt_tor_pack(pool, stp);	break;
+	case ID_TGC:		size = clt_tgc_pack(pool, stp);	break;
+	case ID_ELL:		size = clt_ell_pack(pool, stp);	break;
+	case ID_ARB8:		size = clt_arb_pack(pool, stp);	break;
+	case ID_REC:		size = clt_rec_pack(pool, stp);	break;
+	case ID_SPH:		size = clt_sph_pack(pool, stp);	break;
+	case ID_PARTICLE:	size = clt_part_pack(pool, stp);break;
+	case ID_EHY:		size = clt_ehy_pack(pool, stp);	break;
 	case ID_ARS:
-	case ID_BOT:    size = clt_bot_pack(pool, stp);	break;
-	case ID_EPA:    size = clt_epa_pack(pool, stp);	break;
-	case ID_ETO:    size = clt_eto_pack(pool, stp); break;
-	default:	size = 0;			break;
+	case ID_BOT:		size = clt_bot_pack(pool, stp);	break;
+	case ID_EPA:		size = clt_epa_pack(pool, stp);	break;
+	case ID_ETO:		size = clt_eto_pack(pool, stp); break;
+	case ID_RHC:		size = clt_rhc_pack(pool, stp); break;
+	case ID_RPC:		size = clt_rpc_pack(pool, stp); break;
+	default:		size = 0;			break;
     }
     return size;
 }

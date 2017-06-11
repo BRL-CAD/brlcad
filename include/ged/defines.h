@@ -29,6 +29,7 @@
 #define GED_DEFINES_H
 
 #include "common.h"
+#include "bio.h"
 #include "bu/hash.h"
 #include "bu/list.h"
 #include "bu/vls.h"
@@ -117,12 +118,9 @@ struct ged_run_rt {
     HANDLE fd;
     HANDLE hProcess;
     DWORD pid;
-
-#  ifdef TCL_OK
-    Tcl_Channel chan;
-#  else
-    void *chan;
-#  endif
+    void *chan; /* FIXME: uses communication channel instead of file
+		 * descriptor to get output from rt.
+		 */
 #else
     int fd;
     int pid;
@@ -226,9 +224,10 @@ struct ged {
 
     /* FOR LIBGED INTERNAL USE */
     struct ged_cmd *cmds;
-    int (*add)(const struct ged_cmd *cmd);
-    int (*del)(const char *name);
-    int (*run)(int ac, char *av[]);
+    int (*add)(struct ged *gedp, const struct ged_cmd *cmd);
+    int (*del)(struct ged *gedp, const char *name);
+    int (*run)(struct ged *gedp, int ac, char *av[]);
+
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
 
     /* Interface to LIBDM */

@@ -61,63 +61,6 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
     bn_vlist_import(&RTG.rtg_vlfree, hp, namevls, buf);
 }
 
-
-void
-rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
-{
-    size_t i;
-
-    BN_CK_VLBLOCK(vbp);
-
-    for (i=0; i < vbp->nused; i++) {
-	if (vbp->rgb[i] == 0) continue;
-	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
-	pl_color(fp,
-		 (vbp->rgb[i]>>16) & 0xFF,
-		 (vbp->rgb[i]>> 8) & 0xFF,
-		 (vbp->rgb[i]) & 0xFF);
-	rt_vlist_to_uplot(fp, &(vbp->head[i]));
-    }
-}
-
-
-void
-rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
-{
-    register struct bn_vlist *vp;
-
-    for (BU_LIST_FOR(vp, bn_vlist, vhead)) {
-	register int i;
-	register int nused = vp->nused;
-	register const int *cmd = vp->cmd;
-	register point_t *pt = vp->pt;
-
-	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    switch (*cmd) {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_TRI_START:
-		    break;
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_TRI_MOVE:
-		    pdv_3move(fp, *pt);
-		    break;
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_TRI_DRAW:
-		case BN_VLIST_TRI_END:
-		    pdv_3cont(fp, *pt);
-		    break;
-		default:
-		    bu_log("rt_vlist_to_uplot: unknown vlist cmd x%x\n",
-			   *cmd);
-	    }
-	}
-    }
-}
-
-
 #define TBAD	0 /* no such command */
 #define TNONE	1 /* no arguments */
 #define TSHORT	2 /* Vax 16-bit short */

@@ -37,9 +37,12 @@
 #
 # The following variables are set:
 #
-#  OPENNURBS_INCLUDE_DIRS   - where to find zlib.h, etc.
-#  OPENNURBS_LIBRARIES      - List of libraries when using zlib.
-#  OPENNURBS_FOUND          - True if zlib found.
+#  OPENNURBS_INCLUDE_DIRS   - where to find opennurbs.h, etc.
+#  OPENNURBS_LIBRARIES      - List of libraries when using openNURBS
+#  OPENNURBS_FOUND          - True if openNURBS found.
+
+#  OpenNURBS requires zlib
+find_package(ZLIB)
 
 find_path(OPENNURBS_INCLUDE_DIR opennurbs.h)
 find_library(OPENNURBS_LIBRARY NAMES opennurbs openNURBS OpenNURBS)
@@ -47,9 +50,10 @@ find_library(OPENNURBS_LIBRARY NAMES opennurbs openNURBS OpenNURBS)
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(OPENNURBS DEFAULT_MSG OPENNURBS_LIBRARY OPENNURBS_INCLUDE_DIR)
 
-IF (OPENNURBS_FOUND)
-  set(OPENNURBS_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIR})
-  set(OPENNURBS_LIBRARIES    ${OPENNURBS_LIBRARY})
+if(OPENNURBS_FOUND)
+  set(OPENNURBS_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR})
+  list(REMOVE_DUPLICATES OPENNURBS_INCLUDE_DIR)
+  set(OPENNURBS_LIBRARIES    ${OPENNURBS_LIBRARY} ${ZLIB_LIBRARY})
 endif()
 # Local Variables:
 # tab-width: 8

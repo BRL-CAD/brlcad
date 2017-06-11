@@ -12,8 +12,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -524,7 +522,7 @@ TestindexobjCmd(
 	}
 
 	Tcl_GetIndexFromObj(NULL, objv[1], tablePtr, "token", 0, &index);
-	indexRep = (struct IndexRep *) objv[1]->internalRep.otherValuePtr;
+	indexRep = (struct IndexRep *) objv[1]->internalRep.twoPtrValue.ptr1;
 	indexRep->index = index2;
 	result = Tcl_GetIndexFromObj(NULL, objv[1],
 		tablePtr, "token", 0, &index);
@@ -561,7 +559,7 @@ TestindexobjCmd(
 
     if ( objv[3]->typePtr != NULL
 	 && !strcmp( "index", objv[3]->typePtr->name ) ) {
-	indexRep = (struct IndexRep *) objv[3]->internalRep.otherValuePtr;
+	indexRep = (struct IndexRep *) objv[3]->internalRep.twoPtrValue.ptr1;
 	if (indexRep->tablePtr == (VOID *) argv) {
 	    objv[3]->typePtr->freeIntRepProc(objv[3]);
 	    objv[3]->typePtr = NULL;
@@ -927,6 +925,17 @@ TestobjCmd(
         }
         SetVarToObj(destIndex, varPtr[varIndex]);
 	Tcl_SetObjResult(interp, varPtr[destIndex]);
+    } else if (strcmp(subCmd, "bug3598580") == 0) {
+	Tcl_Obj *listObjPtr, *elemObjPtr;
+	if (objc != 2) {
+	    goto wrongNumArgs;
+	}
+	elemObjPtr = Tcl_NewIntObj(123);
+	listObjPtr = Tcl_NewListObj(1, &elemObjPtr);
+	/* Replace the single list element through itself, nonsense but legal. */
+	Tcl_ListObjReplace(interp, listObjPtr, 0, 1, 1, &elemObjPtr);
+	Tcl_SetObjResult(interp, listObjPtr);
+	return TCL_OK;
      } else if (strcmp(subCmd, "convert") == 0) {
         char *typeName;
         if (objc != 4) {
@@ -1202,7 +1211,7 @@ TeststringobjCmd(
 	    }
 	    if (varPtr[varIndex] != NULL) {
 		strPtr = (TestString *)
-		    (varPtr[varIndex])->internalRep.otherValuePtr;
+		    (varPtr[varIndex])->internalRep.twoPtrValue.ptr1;
 		length = (int) strPtr->allocated;
 	    } else {
 		length = -1;
@@ -1255,7 +1264,7 @@ TeststringobjCmd(
 	    }
 	    if (varPtr[varIndex] != NULL) {
 		strPtr = (TestString *)
-		    (varPtr[varIndex])->internalRep.otherValuePtr;
+		    (varPtr[varIndex])->internalRep.twoPtrValue.ptr1;
 		length = (int) strPtr->uallocated;
 	    } else {
 		length = -1;

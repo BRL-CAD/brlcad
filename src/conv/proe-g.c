@@ -81,7 +81,7 @@ static unsigned int obj_count=0; /* Count of parts converted for "stl-g" convers
 static int *bot_faces=NULL;	 /* array of ints (indices into vert_tree_root->the_array array) three per face */
 static int bot_fsize=0;		/* current size of the bot_faces array */
 static int bot_fcurr=0;		/* current bot face */
-static struct vert_root *vert_tree_root;	/* binary search tree for vertices */
+static struct bn_vert_tree *vert_tree;	/* binary search tree for vertices */
 
 /* Size of blocks of faces to malloc */
 #define BOT_FBLOCK 128
@@ -388,8 +388,6 @@ Convert_assy(char *line)
 			wmem->wm_mat[4*i+j] = mat_col[i];
 		}
 
-		/* convert this matrix to separate scale factor into element #15 */
-/*			scale = MAGNITUDE(&wmem->wm_mat[0]); */
 		scale = pow(bn_mat_det3(wmem->wm_mat), 1.0/3.0);
 		if (debug) {
 		    bn_mat_print(brlcad_name, wmem->wm_mat);
@@ -618,7 +616,7 @@ Convert_part(char *line)
     VSETALL(part_min, INFINITY);
     VSETALL(part_max, -INFINITY);
 
-    clean_vert_tree(vert_tree_root);
+    bn_vert_tree_clean(vert_tree);
 
     start = (-1);
     /* skip leading blanks */
@@ -758,12 +756,12 @@ Convert_part(char *line)
 
 			bu_log("Non-triangular loop:\n");
 			for (n=0; n<3; n++)
-			    bu_log("\t(%g %g %g)\n", V3ARGS(&vert_tree_root->the_array[tmp_face[n]]));
+			    bu_log("\t(%g %g %g)\n", V3ARGS(&vert_tree->the_array[tmp_face[n]]));
 
 			bu_log("\t(%g %g %g)\n", x, y, z);
 		    }
-		    tmp_face[vert_no++] = Add_vert(x, y, z, vert_tree_root, tol.dist_sq);
-		    VMINMAX(part_min, part_max, &vert_tree_root->the_array[tmp_face[vert_no-1]*3]);
+		    tmp_face[vert_no++] = bn_vert_tree_add( vert_tree,x, y, z, tol.dist_sq);
+		    VMINMAX(part_min, part_max, &vert_tree->the_array[tmp_face[vert_no-1]*3]);
 		} else
 		    bu_log("Unrecognized line: %s\n", line1);
 	    }
@@ -789,7 +787,7 @@ Convert_part(char *line)
 
 		bu_log("Making Face:\n");
 		for (n=0; n<3; n++)
-		    bu_log("\tvertex #%d: (%g %g %g)\n", tmp_face[n], V3ARGS(&vert_tree_root->the_array[3*tmp_face[n]]));
+		    bu_log("\tvertex #%d: (%g %g %g)\n", tmp_face[n], V3ARGS(&vert_tree->the_array[3*tmp_face[n]]));
 		VPRINT(" normal", normal);
 	    }
 
@@ -828,8 +826,8 @@ Convert_part(char *line)
 	    bu_log("\t%d faces were degenerate\n", degenerate_count);
     }
 
-    mk_bot(fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree_root->curr_vert, bot_fcurr,
-	   vert_tree_root->the_array, bot_faces, NULL, NULL);
+    mk_bot(fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree->curr_vert, bot_fcurr,
+	   vert_tree->the_array, bot_faces, NULL, NULL);
 
     if (face_count && !solid_in_region) {
 	wmem = mk_addmember(solid_name, &head.l, NULL, WMOP_UNION);
@@ -959,7 +957,7 @@ Rm_nulls(void)
 	    tree_list = (struct rt_tree_array *)bu_calloc(node_count,
 							  sizeof(struct rt_tree_array), "tree list");
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
-	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	    BU_ASSERT(actual_count == node_count);
 	} else {
 	    tree_list = (struct rt_tree_array *)NULL;
 	    actual_count = 0;
@@ -1054,7 +1052,7 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    vert_tree_root = create_vert_tree();
+    vert_tree = bn_vert_tree_create();
 
     bu_ptbl_init(&null_parts, 64, " &null_parts");
 

@@ -25,8 +25,14 @@
 
 #include "common.h"
 
+#include "bu/parallel.h"
 #include "gcv/util.h"
-
+#include "rt/db5.h"
+#include "rt/db_internal.h"
+#include "rt/wdb.h"
+#include "rt/global.h"
+#include "rt/primitives/bot.h"
+#include "rt/functab.h"
 
 HIDDEN union tree *
 _gcv_facetize_region_end(struct db_tree_state *tree_state,
@@ -172,7 +178,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     /* Now, evaluate the boolean tree into ONE region */
     if (!BU_SETJUMP) {
 	/* try */
-	if (nmg_boolean(facetize_tree, nmg_model, tol, &rt_uniresource)) {
+	if (nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, tol, &rt_uniresource)) {
 	    BU_UNSETJUMP;
 	    return _gcv_facetize_cleanup(nmg_model, facetize_tree);
 	}
@@ -201,11 +207,11 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	    if (!BU_SETJUMP) {
 		/* try */
 		if (!result)
-		    result = nmg_bot(current_shell, tol);
+		    result = nmg_bot(current_shell, &RTG.rtg_vlfree, tol);
 		else {
 		    struct rt_bot_internal *bots[2];
 		    bots[0] = result;
-		    bots[1] = nmg_bot(current_shell, tol);
+		    bots[1] = nmg_bot(current_shell, &RTG.rtg_vlfree, tol);
 		    result = rt_bot_merge(sizeof(bots) / sizeof(bots[0]),
 					  (const struct rt_bot_internal * const *)bots);
 		    _gcv_facetize_free_bot(bots[0]);

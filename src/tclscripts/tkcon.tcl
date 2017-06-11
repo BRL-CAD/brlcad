@@ -222,7 +222,7 @@ proc ::tkcon::Init {args} {
 	protocol	exit
 	showOnStartup	1
 	slaveprocs	{
-	    alias tkcon_clear dir dump echo idebug lremove
+	    alias tkcon_clear tdir dump echo idebug lremove
 	    tkcon_puts tkcon_gets observe observe_var unalias which what
 	}
 	RCS		{RCS: @(#) $Id$}
@@ -331,11 +331,11 @@ proc ::tkcon::Init {args} {
     }
 
     if {![info exists ::tcl_pkgPath]} {
-	set dir [file join [file dirname [info nameofexec]] lib]
+	set tdir [file join [file dirname [info nameofexec]] lib]
 	if {[llength [info commands @scope]]} {
-	    set dir [file join $dir itcl]
+	    set tdir [file join $tdir itcl]
 	}
-	catch {source [file join $dir pkgIndex.tcl]}
+	catch {source [file join $tdir pkgIndex.tcl]}
     }
     catch {tclPkgUnknown dummy-name dummy-version}
 
@@ -542,7 +542,7 @@ proc ::tkcon::InitSlave {slave {slaveargs {}} {slaveargv0 {}}} {
     }
     foreach cmd $PRIV(slaveprocs) { $slave eval [dump proc $cmd] }
     foreach cmd $PRIV(slavealias) { $slave alias $cmd $cmd }
-    interp alias $slave ::ls $slave ::dir -full
+    interp alias $slave ::ls $slave ::tdir -full
     interp alias $slave ::puts $slave ::tkcon_puts
     if {[llength [info commands ::tcl::chan::puts]]} {
 	interp alias $slave ::tcl::chan::puts $slave ::tkcon_puts
@@ -619,7 +619,7 @@ proc ::tkcon::InitInterp {name type} {
 	}
 	## Catch in case it's a 7.4 (no 'interp alias') interp
 	EvalAttached {
-	    catch {interp alias {} ::ls {} ::dir -full}
+	    catch {interp alias {} ::ls {} ::tdir -full}
 	    if {[catch {interp alias {} ::puts {} ::tkcon_puts}]} {
 		catch {rename ::tkcon_puts ::puts}
 	    } elseif {[llength [info commands ::tcl::chan::puts]]} {
@@ -773,9 +773,9 @@ proc ::tkcon::locate_xdg_icon {name} {
     if {[file isdirectory ~/.local/share]} {
         set dirs [linsert $dirs 0 ~/.local/share]
     }
-    foreach dir $dirs {
+    foreach tdir $dirs {
         foreach path [list icons icons/hicolor/48x48/apps] {
-            set path [file join $dir $path $name]
+            set path [file join $tdir $path $name]
             if {[file exists $path]} {
                 return $path
             }
@@ -4720,14 +4720,14 @@ proc what {str {autoload 0}} {
     return $types
 }
 
-## dir - directory list
+## tdir - directory list
 # ARGS:	args	- names/glob patterns of directories to list
 # OPTS:	-all	- list hidden files as well (Unix dot files)
 #	-long	- list in full format "permissions size date filename"
 #	-full	- displays / after directories and link paths for links
 # Returns:	a directory listing
 ##
-proc dir {args} {
+proc tdir {args} {
     array set s {
 	all 0 full 0 long 0
 	0 --- 1 --x 2 -w- 3 -wx 4 r-- 5 r-x 6 rw- 7 rwx
@@ -4747,7 +4747,7 @@ proc dir {args} {
     set sep [string trim [file join . .] .]
     if {![llength $args]} { set args [list [pwd]] }
     if {$::tcl_version >= 8.3} {
-	# Newer glob args allow safer dir processing.  The user may still
+	# Newer glob args allow safer tdir processing.  The user may still
 	# want glob chars, but really only for file matching.
 	foreach arg $args {
 	    if {[file isdirectory $arg]} {
@@ -4759,9 +4759,9 @@ proc dir {args} {
 			    [glob -nocomplain -directory $arg *]]]
 		}
 	    } else {
-		set dir [file dirname $arg]
-		lappend out [list $dir$sep [lsort \
-			[glob -nocomplain -directory $dir [file tail $arg]]]]
+		set tdir [file dirname $arg]
+		lappend out [list $tdir$sep [lsort \
+			[glob -nocomplain -directory $tdir [file tail $arg]]]]
 	    }
 	}
     } else {
@@ -4849,7 +4849,7 @@ proc dir {args} {
     }
     return [string trimright $res]
 }
-interp alias {} ::ls {} ::dir -full
+interp alias {} ::ls {} ::tdir -full
 
 ## lremove - remove items from a list
 # OPTS:
@@ -5762,12 +5762,12 @@ proc ::tkcon::ExpandPathname str {
     if {[catch {EvalAttached [list cd [file dirname $str]]} err]} {
 	return -code error $err
     }
-    set dir [file tail $str]
+    set tdir [file tail $str]
     ## Check to see if it was known to be a directory and keep the trailing
     ## slash if so (file tail cuts it off)
-    if {[string match */ $str]} { append dir / }
+    if {[string match */ $str]} { append tdir / }
     # Create a safely glob-able name
-    regsub -all {([][])} $dir {\\\1} safedir
+    regsub -all {([][])} $tdir {\\\1} safedir
     if {[catch {lsort [EvalAttached [list glob $safedir*]]} m]} {
 	set match {}
     } else {
@@ -5776,13 +5776,13 @@ proc ::tkcon::ExpandPathname str {
 	    if {[string match windows $tcl_platform(platform)]} {
 		## Windows is screwy because it's case insensitive
 		set tmp [ExpandBestMatch [string tolower $m] \
-			[string tolower $dir]]
+			[string tolower $tdir]]
 		## Don't change case if we haven't changed the word
-		if {[string length $dir]==[string length $tmp]} {
-		    set tmp $dir
+		if {[string length $tdir]==[string length $tmp]} {
+		    set tmp $tdir
 		}
 	    } else {
-		set tmp [ExpandBestMatch $m $dir]
+		set tmp [ExpandBestMatch $m $tdir]
 	    }
 	    if {[string match */* $str]} {
 		set tmp [string trimright [file dirname $str] /]/$tmp

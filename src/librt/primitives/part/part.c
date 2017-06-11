@@ -220,6 +220,53 @@ const struct bu_structparse rt_part_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+#ifdef USE_OPENCL
+
+/* largest data members first */
+struct clt_part_specific {
+    cl_double part_V[3];
+    cl_double part_H[3];
+    cl_double part_vrad;
+    cl_double part_hrad;
+    /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
+    cl_int part_type;		/**< @brief sphere, cylinder, cone */
+    cl_double part_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double part_invRoS[16];	/* invRot(Scale(vect)) */
+    cl_double part_vrad_prime;
+    cl_double part_hrad_prime;
+    /* For the "equivalent cone" */
+    cl_double part_v_hdist;	/* dist of base plate on unit cone */
+    cl_double part_h_hdist;
+};
+
+
+size_t
+clt_part_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct part_specific *part =
+        (struct part_specific *)stp->st_specific;
+    struct clt_part_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_part_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->part_V, part->part_int.part_V);
+    VMOVE(args->part_H, part->part_int.part_H);
+    args->part_vrad = part->part_int.part_vrad;
+    args->part_hrad = part->part_int.part_hrad;
+    args->part_type = part->part_int.part_type;
+
+    MAT_COPY(args->part_SoR, part->part_SoR);
+    MAT_COPY(args->part_invRoS, part->part_invRoS);
+    args->part_vrad_prime = part->part_vrad_prime;
+    args->part_hrad_prime = part->part_hrad_prime;
+    args->part_v_hdist = part->part_v_hdist;
+    args->part_h_hdist = part->part_h_hdist;
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
 /**
  * Compute the bounding RPP for a particle
  */
@@ -708,7 +755,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	 * Do this by sorting the intersections,
 	 * and using the minimum and maximum values.
 	 */
-	rt_hitsort(hits, hitp - &hits[0]);
+	primitive_hitsort(hits, hitp - &hits[0]);
 
 	/* [0] is minimum, make [1] be maximum (hitp is +1 off end) */
 	hits[1] = hitp[-1];	/* struct copy */
@@ -1552,7 +1599,7 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 8);
+    BU_ASSERT(ep->ext_nbytes == SIZEOF_NETWORK_DOUBLE * 8);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;

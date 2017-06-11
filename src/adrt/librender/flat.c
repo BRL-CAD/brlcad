@@ -37,7 +37,7 @@ render_flat_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *
     struct tie_id_s id;
     adrt_mesh_t *mesh;
 
-    if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
+    if ((mesh = (adrt_mesh_t *)TIE_WORK(tie, ray, &id, render_hit, NULL))) {
 	VMOVE(*pixel, mesh->attributes->color.v);
 	if (mesh->texture)
 	    mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);

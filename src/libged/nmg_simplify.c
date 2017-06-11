@@ -128,7 +128,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     NMG_CK_MODEL(m);
 
     /* check that all faces are planar */
-    nmg_face_tabulate(&faces, &m->magic);
+    nmg_face_tabulate(&faces, &m->magic, &RTG.rtg_vlfree);
 
     for (i = 0 ; i < BU_PTBL_LEN(&faces) ; i++) {
 	fp = (struct face *)BU_PTBL_GET(&faces, i);
@@ -172,8 +172,8 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 
 	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
-	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 0);
-	nmg_simplify_shell(s);
+	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 0, &RTG.rtg_vlfree);
+	nmg_simplify_shell(s, &RTG.rtg_vlfree);
 
 	if (nmg_to_arb(m, arb_int)) {
 	    success = 1;
@@ -225,7 +225,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_type = ID_POLY;
 	new_intern.idb_meth = &OBJ[ID_POLY];
 
-	if (nmg_to_poly(m, poly_int, &gedp->ged_wdbp->wdb_tol)) {
+	if (nmg_to_poly(m, poly_int, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;
 	    ret = GED_OK;
 	    goto out1;

@@ -68,7 +68,6 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/t
 
 add_definitions(
   -DSTDC_HEADERS=1
-  -DCMAKE_HEADERS=1
   )
 
 add_library(Tktable SHARED ${TKTABLE_SRCS})

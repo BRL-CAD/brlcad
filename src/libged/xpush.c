@@ -65,16 +65,31 @@ Free_uses(struct db_i *dbip)
     int i;
 
     for (i = 0; i <RT_DBNHASH; i++) {
-	struct directory *dp;
+	struct directory *dp, *nextdp;
 	struct object_use *use;
 
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL;) {
+	    nextdp = dp->d_forw;
+
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB))) {
+		dp = nextdp;
 		continue;
+	    }
 
 	    while (BU_LIST_NON_EMPTY(&dp->d_use_hd)) {
 		use = BU_LIST_FIRST(object_use, &dp->d_use_hd);
 		if (!use->used) {
+		    if (UNLIKELY(use->dp == nextdp)) {
+			/* Handle the incredibly unlikely case where
+			 * the name of a use of the original dp not
+			 * only hashes to the same bin, but is the
+			 * very next item in it, meaning that nextdp
+			 * would be invalid on the next iteration
+			 * (leading us to iterate over the directory
+			 * free list and skip the rest of this bin).
+			 */
+			nextdp = use->dp->d_forw;
+		    }
 		    if (use->dp->d_un.file_offset >= 0) {
 			/* was written to disk */
 			if (db_delete(dbip, use->dp) != 0)
@@ -87,7 +102,7 @@ Free_uses(struct db_i *dbip)
 		BU_LIST_DEQUEUE(&use->l);
 		bu_free((void *)use, "Free_uses: use");
 	    }
-
+	    dp = nextdp;
 	}
     }
 

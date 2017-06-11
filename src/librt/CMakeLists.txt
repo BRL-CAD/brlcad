@@ -4,10 +4,11 @@ set(RT_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
+  ${BG_INCLUDE_DIRS}
+  ${NMG_INCLUDE_DIRS}
   ${BREP_INCLUDE_DIRS}
   ${P2T_INCLUDE_DIR}
-  ${OPENNURBS_INCLUDE_DIR}
-  ${ZLIB_INCLUDE_DIR}
+  ${OPENNURBS_INCLUDE_DIRS}
   )
 
 if(BRLCAD_ENABLE_OPENCL)
@@ -22,6 +23,7 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${VDS_INCLUDE_DIR}
   ${GDIAM_INCLUDE_DIR}
   ${TINYCTHREAD_INCLUDE_DIR}
+  ${LZ4_INCLUDE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -29,11 +31,11 @@ BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
 set(LIBRT_SOURCES
   attributes.c
   bbox.c
-  bezier.c
   binunif/binunif.c
   binunif/db5_bin.c
   bool.c
   bundle.c
+  cache.c
   cmd.c
   comb/comb.c
   comb/comb_brep.cpp
@@ -45,6 +47,7 @@ set(LIBRT_SOURCES
   db5_attr.c
   db5_attr_registry.cpp
   db5_io.c
+  db5_size.cpp
   db5_scan.c
   db5_types.c
   db_alloc.c
@@ -72,8 +75,6 @@ set(LIBRT_SOURCES
   memalloc.c
   mkbundle.c
   op.c
-  oslo_calc.c
-  oslo_map.c
   pr.c
   prep.c
   primitives/arb8/arb8.c
@@ -107,31 +108,8 @@ set(LIBRT_SOURCES
   primitives/brep/brep.cpp
   primitives/brep/brep_debug.cpp
   primitives/bspline/bspline.cpp
+  primitives/bspline/bspline_brep.cpp
   primitives/bspline/bspline_mirror.c
-  primitives/bspline/nurb_basis.c
-  primitives/bspline/nurb_bezier.c
-  primitives/bspline/nurb_bound.c
-  primitives/bspline/nurb_brep.cpp
-  primitives/bspline/nurb_c2.c
-  primitives/bspline/nurb_copy.c
-  primitives/bspline/nurb_diff.c
-  primitives/bspline/nurb_eval.c
-  primitives/bspline/nurb_flat.c
-  primitives/bspline/nurb_interp.c
-  primitives/bspline/nurb_knot.c
-  primitives/bspline/nurb_norm.c
-  primitives/bspline/nurb_plot.c
-  primitives/bspline/nurb_poly.c
-  primitives/bspline/nurb_ray.c
-  primitives/bspline/nurb_refine.c
-  primitives/bspline/nurb_reverse.c
-  primitives/bspline/nurb_solve.c
-  primitives/bspline/nurb_split.c
-  primitives/bspline/nurb_tess.c
-  primitives/bspline/nurb_trim.c
-  primitives/bspline/nurb_trim_util.c
-  primitives/bspline/nurb_util.c
-  primitives/bspline/nurb_xsplit.c
   primitives/cline/cline.c
   primitives/cline/cline_brep.cpp
   primitives/datum/datum.c
@@ -175,32 +153,9 @@ set(LIBRT_SOURCES
   primitives/metaball/metaball_tri.c
   primitives/mirror.c
   primitives/nmg/nmg.c
-  primitives/nmg/nmg_bool.c
-  primitives/nmg/nmg_ck.c
   primitives/nmg/nmg_brep.cpp
-  primitives/nmg/nmg_class.c
-  primitives/nmg/nmg_copy.c
-  primitives/nmg/nmg_eval.c
-  primitives/nmg/nmg_extrude.c
-  primitives/nmg/nmg_fcut.c
-  primitives/nmg/nmg_fuse.c
-  primitives/nmg/nmg_index.c
-  primitives/nmg/nmg_info.c
-  primitives/nmg/nmg_inter.c
-  primitives/nmg/nmg_manif.c
-  primitives/nmg/nmg_mesh.c
   primitives/nmg/nmg_mirror.c
-  primitives/nmg/nmg_misc.c
-  primitives/nmg/nmg_mk.c
-  primitives/nmg/nmg_mod.c
-  primitives/nmg/nmg_plot.c
-  primitives/nmg/nmg_pr.c
-  primitives/nmg/nmg_pt_fu.c
-  primitives/nmg/nmg_rt_isect.c
-  primitives/nmg/nmg_rt_segs.c
-  primitives/nmg/nmg_tri.c
   primitives/nmg/nmg_tri_mc.c
-  primitives/nmg/nmg_visit.c
   primitives/obj_adjust.c
   primitives/obj_curve.c
   primitives/obj_describe.c
@@ -281,6 +236,7 @@ set(LIBRT_SOURCES
   )
 
 set(librt_ignored_files
+  cache.h
   columnparse.c
   librt_private.h
   prcomb.c
@@ -314,7 +270,7 @@ set(librt_ignored_files
   primitives/eto/eto_shot.cl
   primitives/fixpt.h
   primitives/metaball/metaball.h
-  primitives/nmg/nmg_junk.c
+  primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
   primitives/revolve/revolve.h
   primitives/rt.cl
@@ -323,6 +279,8 @@ set(librt_ignored_files
   primitives/sph/sph_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
+  primitives/rhc/rhc_shot.cl
+  primitives/rpc/rpc_shot.cl
   primitives/xxx/xxx.h
   search.h
   subd_test_bot.asc
@@ -349,9 +307,12 @@ set(CL_FILES
   primitives/epa/epa_shot.cl
   primitives/eto/eto_shot.cl
   primitives/sph/sph_shot.cl
+  primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
+  primitives/rhc/rhc_shot.cl
+  primitives/rpc/rpc_shot.cl
   )
 
 BRLCAD_ADDDATA(nurb_example.c sample_applications)
@@ -372,16 +333,17 @@ if(BRLCAD_ENABLE_SPR)
   set(SPR_LIB libSPR)
 endif(BRLCAD_ENABLE_SPR)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libbg;libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${ZLIB_LIBRARY};${TINYCTHREAD_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libnmg;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${TINYCTHREAD_LIBRARY};${LZ4_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
-SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
-  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
-  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
-  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
-  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
-  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "SPR_DLL_IMPORTS")
-  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
+  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
+  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
+  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
+  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
+  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "SPR_DLL_IMPORTS")
+  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
+  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
 endif(CPP_DLL_DEFINES)
 
 # The following is build code for test applications used during
@@ -398,7 +360,9 @@ endif(CPP_DLL_DEFINES)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 
-add_subdirectory(tests)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+  add_subdirectory(tests)
+endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 # Local Variables:
 # tab-width: 8

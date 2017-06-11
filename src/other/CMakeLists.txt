@@ -122,7 +122,28 @@ THIRD_PARTY(tinycthread TINYCTHREAD tinycthread tinycthread_DESCRIPTION ALIASES 
 SetTargetFolder(tinycthread "Third Party Libraries")
 SetTargetFolder(tinycthread-static "Third Party Libraries")
 
+
+# LZ4 compression/decompression library
+
+set(lz4_ALIASES ENABLE_LZ4)
+set(lz4_DESCRIPTION "
+Option for enabling and disabling compilation of the lz4 data
+compression library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ${lz4_ALIASES})
+if(BRLCAD_LZ4_BUILD)
+  set(LIBLZ4_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lz4" CACHE STRING "Directory containing lz4 headers." FORCE)
+  mark_as_advanced(LIBLZ4_INCLUDE_DIR)
+  SetTargetFolder(lz4 "Third Party Libraries")
+  SetTargetFolder(lz4-static "Third Party Libraries")
+endif(BRLCAD_LZ4_BUILD)
+
+
 # FreeType Libraries
+
 set(freetype_ALIASES ENABLE_FREETYPE)
 set(freetype_DESCRIPTION "
 Option for enabling and disabling compilation of the FreeType
@@ -130,7 +151,9 @@ libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
 the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
+# We don't want the Freetype distribution build targets
+set(FREETYPE_NO_DIST 1)
+THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} REQUIRED_VARS "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" FIND_NAME Freetype)
 if(BRLCAD_FREETYPE_BUILD)
   set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
   set(FREETYPE_INCLUDE_DIR_freetype2
@@ -146,9 +169,22 @@ if(BRLCAD_FREETYPE_BUILD)
     CACHE STRING "Directories containing FreeType headers." FORCE)
   set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
   SetTargetFolder(freetype "Third Party Libraries")
+
+  # If we enable XFT support Tk when building our own freetype, XFT often pulls
+  # in conflicting system libs anyway, which causes conflicts.  Make sure, if
+  # we do have to build Tk, that we don't try enabling XFT.
+  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
+  mark_as_advanced(TK_DISABLE_XFT)
+
+else(BRLCAD_FREETYPE_BUILD)
+  CMAKEFILES(freetype)
 endif(BRLCAD_FREETYPE_BUILD)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/ftconfig.h")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype2/ftconfig.h")
+if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
+endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
 mark_as_advanced(FREETYPE_INCLUDE_DIRS)
 mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
 mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
@@ -159,19 +195,14 @@ mark_as_advanced(FREETYPE_LIBRARIES)
 # subdirectories are used - mark incrTcl as ignored
 CMAKEFILES(incrTcl)
 
-# Ignore the osl subdir
-CMAKEFILES(osl)
-
 # libtermlib Library Only on WIN32 will the combination of the build
 # search tests and libtermlib fail to find a valid term, so set
 # variables accordingly
-if(NOT WIN32)
-  set(HAVE_TERMLIB ON CACHE BOOL "Have some termlib" FORCE)
-ELSE(NOT WIN32)
-  set(BRLCAD_TERMLIB_BUILD "System" CACHE STRING "Disable libtermlib build on WIN32." FORCE)
-  mark_as_advanced(BRLCAD_TERMLIB_BUILD)
+if(WIN32)
   set(HAVE_TERMLIB OFF CACHE BOOL "Have some termlib" FORCE)
-endif(NOT WIN32)
+else(WIN32)
+  set(HAVE_TERMLIB ON CACHE BOOL "Have some termlib" FORCE)
+endif(WIN32)
 mark_as_advanced(HAVE_TERMLIB)
 
 set(termlib_ALIASES ENABLE_TERMLIB)
@@ -187,7 +218,6 @@ THIRD_PARTY(libtermlib TERMLIB termlib termlib_DESCRIPTION REQUIRED_VARS HAVE_TE
   BRLCAD_LEVEL2 ALIASES ${termlib_ALIASES})
 if(BRLCAD_TERMLIB_BUILD)
   set(HAVE_TERMCAP_H ON CACHE BOOL "src/other termlib is on" FORCE)
-  CONFIG_H_APPEND(BRLCAD "#undef HAVE_TERMCAP_H\n#cmakedefine HAVE_TERMCAP_H 1\n")
   mark_as_advanced(HAVE_TERMCAP_H)
 endif(BRLCAD_TERMLIB_BUILD)
 
@@ -233,7 +263,12 @@ set(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" 
 mark_as_advanced(PNG_MAN_DIR)
 set(PNG_TESTS 0 CACHE STRING "Disable building png test executables" FORCE)
 mark_as_advanced(PNG_TESTS)
+set(ld-version-script OFF CACHE STRING "Disable linker script" FORCE)
+mark_as_advanced(ld-version-script)
+mark_as_advanced(PNG_PREFIX)
 mark_as_advanced(PNG_FRAMEWORK)
+mark_as_advanced(DFA_XTRA)
+mark_as_advanced(AWK)
 set(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
 set(png_ALIASES ENABLE_PNG)
 set(png_DESCRIPTION "
@@ -248,11 +283,8 @@ AUTO.
 # once we know what PNG_LIB_NAME is.
 THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ${png_ALIASES})
 if(BRLCAD_PNG_BUILD)
-  # PNG_LIB_NAME doesn't automatically propagate to toplevel due to
-  # scoping of CMake variables - use get_directory_property to recover
-  # the value (which is later put in the CACHE)
 
-  get_directory_property(PNG_LIBRARY DIRECTORY libpng DEFINITION PNG_LIB_NAME)
+  set(PNG_LIBRARY png CACHE STRING "PNG_LIBRARY" FORCE)
 
   # On Haiku the find_library call sets this variable directly, which is not
   # how we handle things elsewhere in BRL-CAD - unset the variable in that
@@ -260,8 +292,17 @@ if(BRLCAD_PNG_BUILD)
   if("${M_LIBRARY}" MATCHES "NOTFOUND")
     unset(M_LIBRARY CACHE)
   endif("${M_LIBRARY}" MATCHES "NOTFOUND")
-  SetTargetFolder(png16 "Third Party Libraries")
-  SetTargetFolder(png16_static "Third Party Libraries")
+
+  # If we enable XFT support Tk when building our own libpng, the linking of
+  # freetype and fontconfig often pulls in the system libpng anyway, which
+  # causes conflicts.  Make sure, if we do have to build Tk, that we don't try
+  # enabling XFT.
+  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
+  mark_as_advanced(TK_DISABLE_XFT)
+
+  SetTargetFolder(png "Third Party Libraries")
+  SetTargetFolder(png_static "Third Party Libraries")
+  SetTargetFolder(genfiles "Third Party Libraries")
 ELSE(BRLCAD_PNG_BUILD)
   # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
   # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
@@ -299,6 +340,7 @@ mark_as_advanced(uname_executable)
 # and the include directory for utahrle are different, so override the
 # macro's setting of UTAHRLE_INCLUDE_DIR here.
 
+set(UTAHRLE_HAVE_COMMON_H 1)
 set(utahrle_ALIASES ENABLE_UTAHRLE)
 set(utahrle_DESCRIPTION "
 Option for enabling and disabling compilation of the Utah Raster
@@ -471,6 +513,11 @@ if(BRLCAD_TK_BUILD)
   elseif(UNIX)
     set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
   endif(WIN32)
+  # If we're building our own libpng, that tends to conflict with fontconfig,
+  # which is needed for Tk's freefype enabled build.  So when we do build
+  # libpng we need to disable the Tk freetype support to allow reliable
+  # building, at least until we can provide our own fontconfig as well as
+  # our own freetype...
   CONFIG_H_APPEND(BRLCAD "#define HAVE_TK_H 1\n")
   mark_as_advanced(TK-ENABLE_FREETYPE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/Makefile")
@@ -480,7 +527,7 @@ if(BRLCAD_TK_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/library/Makefile")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/pkgIndex.tcl")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5.9")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5.19")
 ELSE(BRLCAD_TK_BUILD)
   if(BRLCAD_ENABLE_TK)
     BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
@@ -723,6 +770,12 @@ THIRD_PARTY(openNURBS OPENNURBS openNURBS opennurbs_DESCRIPTION ALIASES
   ${opennurbs_ALIASES} FLAGS NOSYS)
 SetTargetFolder(openNURBS "Third Party Libraries")
 SetTargetFolder(openNURBS-static "Third Party Libraries")
+if(BRLCAD_OPENNURBS_BUILD)
+  set(OPENNURBS_INCLUDE_DIRS "${OPENNURBS_INCLUDE_DIR};${ZLIB_INCLUDE_DIR}" CACHE STRING "Require opennurbs header includes" FORCE)
+  set(OPENNURBS_LIBRARIES "${OPENNURBS_LIBRARY};${ZLIB_LIBRARY}" CACHE STRING "Require opennurbs libraries" FORCE)
+  mark_as_advanced(OPENNURBS_INCLUDE_DIRS)
+  mark_as_advanced(OPENNURBS_LIBRARIES)
+endif(BRLCAD_OPENNURBS_BUILD)
 
 # Screened Poisson Reconstruction Library
 set(poissonrecon_ALIASES ENABLE_SPR)
@@ -740,6 +793,26 @@ if(BRLCAD_SPR_BUILD)
   SetTargetFolder(libSPR "Third Party Libraries")
   SetTargetFolder(libSPR-static "Third Party Libraries")
 endif(BRLCAD_SPR_BUILD)
+
+if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+#=== LIBBSON ==================================================
+# Libbson needed for binary attributes, always use this local version
+set(libbson_ALIASES ENABLE_BSON)
+set(libbson_DESCRIPTION "
+Option for enabling and disabling compilation of the Libbson library
+provided with BRL-CAD's source code.  Default is BUNDLED, using
+the included other/src version.
+")
+THIRD_PARTY(libbson BSON Libbson libbson_DESCRIPTION ALIASES
+  ${libbson_ALIASES} FLAGS NOSYS UNDOCUMENTED)
+if(BRLCAD_BSON_BUILD)
+  SetTargetFolder(libBSON "Third Party Libraries")
+  SetTargetFolder(libBSON-static "Third Party Libraries")
+endif(BRLCAD_BSON_BUILD)
+#=== END LIBBSON ==================================================
+else(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+  CMAKEFILES(libbson)
+endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # STEPcode
 # Need Lemon/Perplex to build STEP - conditionalize
@@ -807,6 +880,25 @@ SetTargetFolder(stepdai "Third Party Libraries")
 SetTargetFolder(stepeditor "Third Party Libraries")
 SetTargetFolder(steputils "Third Party Libraries")
 SetTargetFolder(version_string "Compilation Utilities")
+
+if(BRLCAD_ENABLE_GECODE)
+  set(gecode_ALIASES ENABLE_GECODE)
+  set(gecode_DESCRIPTION "
+  Option for enabling and disabling compilation of the Gecode Constraint
+  Solving Libraries provided with BRL-CAD's source code.  Default is AUTO,
+  responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+  first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+  ")
+  set(GECODE_USE_QT OFF)
+  mark_as_advanced(GECODE_USE_QT)
+  THIRD_PARTY(gecode GECODE gecode gecode_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL3 ALIASES ${gecode_ALIASES})
+  if(BRLCAD_GECODE_BUILD)
+    set(GECODE_LIBRARIES gecodesupport gecodekernel gecodesearch gecodeint
+      gecodeset gecodefloat gecodeminimodel gecodedriver gecodeflatzinc)
+    set(GECODE_LIBRARIES "${GECODE_LIBRARIES}"  CACHE STRING "Gecode libraries in BRL-CAD" FORCE)
+    set(GECODE_INCLUDE_DIR "${BRLCAD_BINARY_DIR}/src/other/gecode;${BRLCAD_SOURCE_DIR}/src/other/gecode"  CACHE STRING "Gecode headers in BRL-CAD" FORCE)
+  endif(BRLCAD_GECODE_BUILD)
+endif(BRLCAD_ENABLE_GECODE)
 
 # Clipper polygon clipping library - for now, we're going to use our copy
 if(BRLCAD_LEVEL2)
@@ -923,25 +1015,25 @@ if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS BRLCAD_ENABLE_BULLET BRLCAD_LEVEL2 ALIASES ${Bullet_ALIASES})
 if(BRLCAD_BULLET_BUILD)
   set(BULLET_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/bullet/src" CACHE STRING "Directory containing bullet headers." FORCE)
-  set(BULLET_LIBRARIES "BulletSoftBody;BulletCollision;BulletDynamics;LinearMath" CACHE STRING "Directory containing bullet headers." FORCE)
+  set(BULLET_LIBRARIES "bullet" CACHE STRING "BRL-CAD bullet lib." FORCE)
+  SetTargetFolder(bullet "Third Party Libraries")
 endif(BRLCAD_BULLET_BUILD)
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
 # is code that will make use of it if it is available.  If that code
 # becomes sufficiently useful, Adaptagrams will be integrated.  In the
 # meantime, locate the find logic for that package here.
-
 # Adaptagrams library
-if(BRLCAD_LEVEL2)
-  find_package(ADAPTAGRAMS)
-  if(ADAPTAGRAMS_FOUND)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_ADAPTAGRAMS 1\n")
-  endif(ADAPTAGRAMS_FOUND)
-  set(ADAPTAGRAMS_LIBRARIES "${ADAPTAGRAMS_LIBRARIES}" CACHE STRING "Adaptagrams libs" FORCE) 
-  set(ADAPTAGRAMS_FOUND "${ADAPTAGRAMS_FOUND}" CACHE BOOL "Adaptagrams status" FORCE) 
-  mark_as_advanced(ADAPTAGRAMS_FOUND)
-  mark_as_advanced(ADAPTAGRAMS_LIBRARIES)
-endif(BRLCAD_LEVEL2)
+#if(BRLCAD_LEVEL2)
+# find_package(ADAPTAGRAMS)
+# if(ADAPTAGRAMS_FOUND)
+#   CONFIG_H_APPEND(BRLCAD "#define HAVE_ADAPTAGRAMS 1\n")
+# endif(ADAPTAGRAMS_FOUND)
+# set(ADAPTAGRAMS_LIBRARIES "${ADAPTAGRAMS_LIBRARIES}" CACHE STRING "Adaptagrams libs" FORCE)
+# set(ADAPTAGRAMS_FOUND "${ADAPTAGRAMS_FOUND}" CACHE BOOL "Adaptagrams status" FORCE)
+# mark_as_advanced(ADAPTAGRAMS_FOUND)
+# mark_as_advanced(ADAPTAGRAMS_LIBRARIES)
+#endif(BRLCAD_LEVEL2)
 
 # Poly2Tri CDT library
 add_subdirectory(poly2tri)

@@ -7,10 +7,8 @@ set(FBBIN_INCLUDE_DIRS
   ${TERMINFO_INCLUDE_DIRS}
   ${UTAHRLE_INCLUDE_DIR}
   ${PNG_INCLUDE_DIR}
-  ${ZLIB_INCLUDE_DIR}
   )
-BRLCAD_SORT_INCLUDE_DIRS(FBBIN_INCLUDE_DIRS)
-include_directories(${FBBIN_INCLUDE_DIRS})
+BRLCAD_INCLUDE_DIRS(FBBIN_INCLUDE_DIRS)
 
 if(MSVC)
   add_definitions(-DIF_WGL)
@@ -67,7 +65,9 @@ endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb;libbn")
 
-add_subdirectory(tests)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+  add_subdirectory(tests)
+endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 
 # Local Variables:

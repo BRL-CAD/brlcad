@@ -11,8 +11,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -435,7 +433,7 @@ Tcl_ParseCommand(
 	    }
 
 	    if (isLiteral) {
-		int elemCount = 0, code = TCL_OK, nakedbs = 0;
+		int elemCount = 0, code = TCL_OK, literal = 1;
 		const char *nextElem, *listEnd, *elemStart;
 
 		/*
@@ -457,33 +455,24 @@ Tcl_ParseCommand(
 		 */
 
 		while (nextElem < listEnd) {
-		    int size, brace;
+		    int size;
 
 		    code = TclFindElement(NULL, nextElem, listEnd - nextElem,
-			    &elemStart, &nextElem, &size, &brace);
-		    if (code != TCL_OK) {
+			    &elemStart, &nextElem, &size, &literal);
+		    if ((code != TCL_OK) || !literal) {
 			break;
-		    }
-		    if (!brace) {
-			const char *s;
-
-			for(s=elemStart;size>0;s++,size--) {
-			    if ((*s)=='\\') {
-				nakedbs=1;
-				break;
-			    }
-			}
 		    }
 		    if (elemStart < listEnd) {
 			elemCount++;
 		    }
 		}
 
-		if ((code != TCL_OK) || nakedbs) {
+		if ((code != TCL_OK) || !literal) {
 		    /*
-		     * Some  list element  could not  be parsed,  or contained
-		     * naked  backslashes. This means  the literal  string was
-		     * not  in fact  a  valid nor  canonical  list. Defer  the
+		     * Some list element could not be parsed, or is not
+		     * present as a literal substring of the script.  The
+		     * compiler cannot handle list elements that get generated
+		     * by a call to TclCopyAndCollapse(). Defer  the
 		     * handling of  this to  compile/eval time, where  code is
 		     * already  in place to  report the  "attempt to  expand a
 		     * non-list" error or expand lists that require
@@ -507,6 +496,7 @@ Tcl_ParseCommand(
 		     * tokens representing the expanded list.
 		     */
 
+		    CONST char *listStart;
 		    int growthNeeded = wordIndex + 2*elemCount
 			    - parsePtr->numTokens;
 		    parsePtr->numWords += elemCount - 1;
@@ -525,14 +515,12 @@ Tcl_ParseCommand(
 		     * word value.
 		     */
 
-		    nextElem = tokenPtr[1].start;
-		    while (isspace(UCHAR(*nextElem))) {
-			nextElem++;
-		    }
+		    listStart = nextElem = tokenPtr[1].start;
 		    while (nextElem < listEnd) {
+			int quoted;
+
 			tokenPtr->type = TCL_TOKEN_SIMPLE_WORD;
 			tokenPtr->numComponents = 1;
-			tokenPtr->start = nextElem;
 
 			tokenPtr++;
 			tokenPtr->type = TCL_TOKEN_TEXT;
@@ -540,14 +528,13 @@ Tcl_ParseCommand(
 			TclFindElement(NULL, nextElem, listEnd - nextElem,
 				&(tokenPtr->start), &nextElem,
 				&(tokenPtr->size), NULL);
-			if (tokenPtr->start + tokenPtr->size == listEnd) {
-			    tokenPtr[-1].size = listEnd - tokenPtr[-1].start;
-			} else {
-			    tokenPtr[-1].size = tokenPtr->start
-				    + tokenPtr->size - tokenPtr[-1].start;
-			    tokenPtr[-1].size += (isspace(UCHAR(
-				tokenPtr->start[tokenPtr->size])) == 0);
-			}
+
+			quoted = (tokenPtr->start[-1] == '{'
+				|| tokenPtr->start[-1] == '"')
+				&& tokenPtr->start > listStart;
+			tokenPtr[-1].start = tokenPtr->start - quoted;
+			tokenPtr[-1].size = tokenPtr->start + tokenPtr->size
+				- tokenPtr[-1].start + quoted;
 
 			tokenPtr++;
 		    }
@@ -612,6 +599,71 @@ Tcl_ParseCommand(
     Tcl_FreeParse(parsePtr);
     parsePtr->commandSize = parsePtr->end - parsePtr->commandStart;
     return TCL_ERROR;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclIsSpaceProc --
+ *
+ *	Report whether byte is in the set of whitespace characters used by
+ *	Tcl to separate words in scripts or elements in lists.
+ *
+ * Results:
+ *	Returns 1, if byte is in the set, 0 otherwise.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclIsSpaceProc(
+    char byte)
+{
+    return CHAR_TYPE(byte) & (TYPE_SPACE) || byte == '\n';
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclIsBareword--
+ *
+ *	Report whether byte is one that can be part of a "bareword".
+ *	This concept is named in expression parsing, where it determines
+ *	what can be a legal function name, but is the same definition used
+ *	in determining what variable names can be parsed as variable
+ *	substitutions without the benefit of enclosing braces.  The set of
+ *	ASCII chars that are accepted are the numeric chars ('0'-'9'),
+ *	the alphabetic chars ('a'-'z', 'A'-'Z')	and underscore ('_').
+ *
+ * Results:
+ *	Returns 1, if byte is in the accepted set of chars, 0 otherwise.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclIsBareword(
+    char byte)
+{
+    if (byte < '0' || byte > 'z') {
+	return 0;
+    }
+    if (byte <= '9' || byte >= 'a') {
+	return 1;
+    }
+    if (byte == '_') {
+	return 1;
+    }
+    if (byte < 'A' || byte > 'Z') {
+	return 0;
+    }
+    return 1;
 }
 
 /*
@@ -853,7 +905,7 @@ TclParseBackslash(
 	result = 0xb;
 	break;
     case 'x':
-	count += TclParseHex(p+1, numBytes-1, &result);
+	count += TclParseHex(p+1, numBytes-2, &result);
 	if (count == 2) {
 	    /*
 	     * No hexadigits -> This is just "x".
@@ -868,7 +920,7 @@ TclParseBackslash(
 	}
 	break;
     case 'u':
-	count += TclParseHex(p+1, (numBytes > 5) ? 4 : numBytes-1, &result);
+	count += TclParseHex(p+1, (numBytes > 5) ? 4 : numBytes-2, &result);
 	if (count == 2) {
 	    /*
 	     * No hexadigits -> This is just "u".
@@ -1332,9 +1384,7 @@ Tcl_ParseVarName(
 {
     Tcl_Token *tokenPtr;
     register const char *src;
-    unsigned char c;
-    int varIndex, offset;
-    Tcl_UniChar ch;
+    int varIndex;
     unsigned array;
 
     if ((numBytes == 0) || (start == NULL)) {
@@ -1417,22 +1467,12 @@ Tcl_ParseVarName(
 	tokenPtr->numComponents = 0;
 
 	while (numBytes) {
-	    if (Tcl_UtfCharComplete(src, numBytes)) {
-		offset = Tcl_UtfToUniChar(src, &ch);
-	    } else {
-		char utfBytes[TCL_UTF_MAX];
-
-		memcpy(utfBytes, src, (size_t) numBytes);
-		utfBytes[numBytes] = '\0';
-		offset = Tcl_UtfToUniChar(utfBytes, &ch);
-	    }
-	    c = UCHAR(ch);
-	    if (isalnum(c) || (c == '_')) {	/* INTL: ISO only, UCHAR. */
-		src += offset;
-		numBytes -= offset;
+	    if (TclIsBareword(*src)) {
+		src += 1;
+		numBytes -= 1;
 		continue;
 	    }
-	    if ((c == ':') && (numBytes != 1) && (src[1] == ':')) {
+	    if ((src[0] == ':') && (numBytes != 1) && (src[1] == ':')) {
 		src += 2;
 		numBytes -= 2;
 		while (numBytes && (*src == ':')) {
@@ -1555,6 +1595,7 @@ Tcl_ParseVar(
 
     code = TclSubstTokens(interp, parsePtr->tokenPtr, parsePtr->numTokens,
 	    NULL, 1, NULL, NULL);
+    Tcl_FreeParse(parsePtr);
     TclStackFree(interp, parsePtr);
     if (code != TCL_OK) {
 	return NULL;
@@ -1765,7 +1806,7 @@ Tcl_ParseBraces(
 		openBrace = 0;
 		break;
 	    case '#' :
-		if (openBrace && isspace(UCHAR(src[-1]))) {
+		if (openBrace && TclIsSpaceProc(src[-1])) {
 		    Tcl_AppendResult(parsePtr->interp,
 			    ": possible unbalanced brace in comment", NULL);
 		    goto error;
@@ -2221,8 +2262,8 @@ TclSubstTokens(
 	    break;
 
 	case TCL_TOKEN_BS:
-	    appendByteLength = Tcl_UtfBackslash(tokenPtr->start, NULL,
-		    utfCharBytes);
+	    appendByteLength = TclParseBackslash(tokenPtr->start,
+		    tokenPtr->size, NULL, utfCharBytes);
 	    append = utfCharBytes;
 	    /*
 	     * If the backslash sequence we found is in a literal, and
@@ -2519,56 +2560,6 @@ TclObjCommandComplete(
     const char *script = Tcl_GetStringFromObj(objPtr, &length);
 
     return CommandComplete(script, length);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclIsLocalScalar --
- *
- *	Check to see if a given string is a legal scalar variable name with no
- *	namespace qualifiers or substitutions.
- *
- * Results:
- *	Returns 1 if the variable is a local scalar.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-int
-TclIsLocalScalar(
-    const char *src,
-    int len)
-{
-    const char *p;
-    const char *lastChar = src + (len - 1);
-
-    for (p=src ; p<=lastChar ; p++) {
-	if ((CHAR_TYPE(*p) != TYPE_NORMAL) &&
-		(CHAR_TYPE(*p) != TYPE_COMMAND_END)) {
-	    /*
-	     * TCL_COMMAND_END is returned for the last character of the
-	     * string. By this point we know it isn't an array or namespace
-	     * reference.
-	     */
-
-	    return 0;
-	}
-	if (*p == '(') {
-	    if (*lastChar == ')') {	/* We have an array element */
-		return 0;
-	    }
-	} else if (*p == ':') {
-	    if ((p != lastChar) && *(p+1) == ':') {	/* qualified name */
-		return 0;
-	    }
-	}
-    }
-
-    return 1;
 }
 
 /*

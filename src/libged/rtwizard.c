@@ -194,14 +194,14 @@ _ged_run_rtwizard(struct ged *gedp)
     run_rtp->hProcess = pi.hProcess;
     run_rtp->pid = pi.dwProcessId;
     run_rtp->aborted=0;
-    run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
+    run_rtp->chan = (void *)Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
 
     /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
-    Tcl_CreateChannelHandler(run_rtp->chan,
+    Tcl_CreateChannelHandler((Tcl_Channel)run_rtp->chan,
 			     TCL_READABLE,
 			     _ged_rt_output_handler,
 			     (ClientData)drcdp);

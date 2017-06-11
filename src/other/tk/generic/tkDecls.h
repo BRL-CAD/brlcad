@@ -7,8 +7,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TKDECLS
@@ -26,6 +24,10 @@
  */
 
 /* !BEGIN!: Do not edit below this line. */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Exported function declarations:
@@ -86,8 +88,8 @@ EXTERN void		Tk_CanvasDrawableCoords(Tk_Canvas canvas, double x,
 #ifndef Tk_CanvasEventuallyRedraw_TCL_DECLARED
 #define Tk_CanvasEventuallyRedraw_TCL_DECLARED
 /* 8 */
-EXTERN void		Tk_CanvasEventuallyRedraw(Tk_Canvas canvas, int _x1,
-				int _y1, int _x2, int _y2);
+EXTERN void		Tk_CanvasEventuallyRedraw(Tk_Canvas canvas, int x1,
+				int y1, int x2, int y2);
 #endif
 #ifndef Tk_CanvasGetCoord_TCL_DECLARED
 #define Tk_CanvasGetCoord_TCL_DECLARED
@@ -1676,6 +1678,12 @@ EXTERN void		Tk_CreateOldImageType(Tk_ImageType *typePtr);
 EXTERN void		Tk_CreateOldPhotoImageFormat(
 				Tk_PhotoImageFormat *formatPtr);
 #endif
+/* Slot 274 is reserved */
+#ifndef TkUnusedStubEntry_TCL_DECLARED
+#define TkUnusedStubEntry_TCL_DECLARED
+/* 275 */
+EXTERN void		TkUnusedStubEntry(void);
+#endif
 
 typedef struct TkStubHooks {
     struct TkPlatStubs *tkPlatStubs;
@@ -1696,7 +1704,7 @@ typedef struct TkStubs {
     void (*tk_AddOption) (Tk_Window tkwin, CONST char *name, CONST char *value, int priority); /* 5 */
     void (*tk_BindEvent) (Tk_BindingTable bindingTable, XEvent *eventPtr, Tk_Window tkwin, int numObjects, ClientData *objectPtr); /* 6 */
     void (*tk_CanvasDrawableCoords) (Tk_Canvas canvas, double x, double y, short *drawableXPtr, short *drawableYPtr); /* 7 */
-    void (*tk_CanvasEventuallyRedraw) (Tk_Canvas canvas, int _x1, int _y1, int _x2, int _y2); /* 8 */
+    void (*tk_CanvasEventuallyRedraw) (Tk_Canvas canvas, int x1, int y1, int x2, int y2); /* 8 */
     int (*tk_CanvasGetCoord) (Tcl_Interp *interp, Tk_Canvas canvas, CONST char *str, double *doublePtr); /* 9 */
     Tk_CanvasTextInfo * (*tk_CanvasGetTextInfo) (Tk_Canvas canvas); /* 10 */
     int (*tk_CanvasPsBitmap) (Tcl_Interp *interp, Tk_Canvas canvas, Pixmap bitmap, int x, int y, int width, int height); /* 11 */
@@ -1906,8 +1914,8 @@ typedef struct TkStubs {
     void (*tk_InitConsoleChannels) (Tcl_Interp *interp); /* 215 */
     int (*tk_CreateConsoleWindow) (Tcl_Interp *interp); /* 216 */
     void (*tk_CreateSmoothMethod) (Tcl_Interp *interp, Tk_SmoothMethod *method); /* 217 */
-    void *reserved218;
-    void *reserved219;
+    VOID *reserved218;
+    VOID *reserved219;
     int (*tk_GetDash) (Tcl_Interp *interp, CONST char *value, Tk_Dash *dash); /* 220 */
     void (*tk_CreateOutline) (Tk_Outline *outline); /* 221 */
     void (*tk_DeleteOutline) (Display *display, Tk_Outline *outline); /* 222 */
@@ -1962,12 +1970,12 @@ typedef struct TkStubs {
     Tcl_Interp * (*tk_Interp) (Tk_Window tkwin); /* 271 */
     void (*tk_CreateOldImageType) (Tk_ImageType *typePtr); /* 272 */
     void (*tk_CreateOldPhotoImageFormat) (Tk_PhotoImageFormat *formatPtr); /* 273 */
+    VOID *reserved274;
+    void (*tkUnusedStubEntry) (void); /* 275 */
 } TkStubs;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 extern TkStubs *tkStubsPtr;
+
 #ifdef __cplusplus
 }
 #endif
@@ -3068,6 +3076,11 @@ extern TkStubs *tkStubsPtr;
 #define Tk_CreateOldPhotoImageFormat \
 	(tkStubsPtr->tk_CreateOldPhotoImageFormat) /* 273 */
 #endif
+/* Slot 274 is reserved */
+#ifndef TkUnusedStubEntry
+#define TkUnusedStubEntry \
+	(tkStubsPtr->tkUnusedStubEntry) /* 275 */
+#endif
 
 #endif /* defined(USE_TK_STUBS) && !defined(USE_TK_STUB_PROCS) */
 
@@ -3075,6 +3088,8 @@ extern TkStubs *tkStubsPtr;
 
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
+
+#undef TkUnusedStubEntry
 
 #endif /* _TKDECLS */
 

@@ -26,6 +26,8 @@
 #include "common.h"
 
 #include "bu/parallel.h"
+#include "rt/wdb.h"
+#include "rt/global.h"
 #include "gcv.h"
 
 
@@ -33,7 +35,7 @@ union tree *
 _gcv_cleanup(int state, union tree *tp)
 {
     /* restore previous debug state */
-    RTG.NMG_debug = state;
+    nmg_debug = state;
 
     /* Dispose of original tree, so that all associated dynamic memory
      * is released now, not at the end of all regions.  A return of
@@ -100,7 +102,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     /* Sometimes the NMG library adds debugging bits when it detects
      * an internal error, before bombing.  Stash.
      */
-    NMG_debug_state = RTG.NMG_debug;
+    NMG_debug_state = nmg_debug;
 
     if (!BU_SETJUMP) {
 	/* try */
@@ -108,7 +110,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	 * curtree to an evaluated result and returns it if the evaluation
 	 * is successful.
 	 */
-	ret_tree = nmg_booltree_evaluate(tp, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(tp, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	/* Error, bail out */

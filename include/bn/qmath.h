@@ -145,7 +145,7 @@ BN_EXPORT extern void quat_sberp(quat_t qout,
  *   smallest rotation from q2 (of the two versions of q1 which
  *   produce the same orientation).
  *
- * Note that smallest euclidian distance implies smallest great
+ * Note that smallest euclidean distance implies smallest great
  *   circle distance as well (since surface is convex).
  */
 BN_EXPORT extern void quat_make_nearest(quat_t q1,

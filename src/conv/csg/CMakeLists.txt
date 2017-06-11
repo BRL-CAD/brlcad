@@ -23,7 +23,7 @@ set(CSG_SRCS
   ${LEMON_csg_parser_SRC}
   )
 
-BRLCAD_ADDEXEC(csg "${CSG_SRCS}" "libgcv;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(csg "${CSG_SRCS}" "libgcv;libbu" NO_STRICT NO_INSTALL)
 set_property(TARGET csg APPEND PROPERTY INCLUDE_DIRECTORIES "${PERPLEX_csg_scanner_INCLUDE_DIR}")
 set_property(TARGET csg APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_csg_parser_INCLUDE_DIR}")
 

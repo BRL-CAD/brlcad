@@ -30,8 +30,8 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/exit.h"
 
 
 unsigned char *obuf;
