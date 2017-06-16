@@ -554,7 +554,7 @@ main(int argc, char *argv[])
 
 	    /* maybe no files, only execution scripts, so default output */
 	    if (bu_vls_strlen(&name) == 0)
-		bu_vls_printf(&name, default_name);
+		bu_vls_printf(&name, "%s", default_name);
 
 	    printf(" %s", bu_vls_addr(&name));
 	    bu_vls_free(&name);

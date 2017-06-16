@@ -1477,7 +1477,7 @@ X_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 			 ~0, ZPixmap);
 
     if (!ximage_p) {
-	bu_log("png: could not get XImage\n", (char *)NULL);
+	bu_log("png: could not get XImage\n");
 	return BRLCAD_ERROR;
     }
 
@@ -1654,7 +1654,7 @@ X_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 	    bu_free(rows, "rows");
 	    bu_free(idata, "image data");
 
-	    bu_log("png: not supported for this platform\n", (char *)NULL);
+	    bu_log("png: not supported for this platform\n");
 	    return BRLCAD_ERROR;
 	}
     }

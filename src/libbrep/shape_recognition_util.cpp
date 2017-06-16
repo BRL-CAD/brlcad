@@ -692,7 +692,7 @@ ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
     if (c) {
 	bu_vls_sprintf(&color, "%s", c);
     } else {
-	bu_vls_sprintf(&color, "gray", c);
+	bu_vls_sprintf(&color, "gray");
     }
     if (pre) {
 	bu_vls_sprintf(&prefix, "%s", pre);
@@ -736,7 +736,7 @@ ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
 		    ON_3dPoint p = poly[si];
 		    bu_vls_printf(&output, "(%f, %f, %f) ", p.x, p.y, p.z);
 		}
-		bu_vls_printf(&output, "};\n", bu_vls_addr(&color));
+		bu_vls_printf(&output, "};\n");
 	    }
 	}
 	delete ecv;
