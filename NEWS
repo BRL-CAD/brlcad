@@ -19,6 +19,19 @@ changes made.  See document footer for additional details.
 --- 2017-06-10  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+Among a variety of bugs fixed, the patch corrects a critical error in
+BoT triangle mesh ray tracing.  For improved performance, it also
+changes the default frame buffer display behavior to fully buffer ray
+tracing images instead of displaying them incrementally.  A variety of
+MGED commands see improvements too with 'ls' now supporting listing
+objects by their on-disk size and the 'simulate' command applying
+forces on objects (e.g., gravity) with greater ease.  Not yet
+complete, there is a new interface being developed for resolving
+overlaps more efficiently, currently under development and usability
+testing with select users.  Lastly, a number of dependencies were
+upgraded, including Tcl/Tk, in order to patch security vulnerabilities
+and address portability issues.
+
 * upgraded Tcl/Tk from 8.5.9 to 8.5.19 - Sean Morrison
 * fixed background color setting in MGED - Cliff Yapp
 * upgraded libpng to version 1.6.29 - Cliff Yapp
