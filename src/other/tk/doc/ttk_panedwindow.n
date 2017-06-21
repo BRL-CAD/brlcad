@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
-'\" RCS: @(#) $Id$
-'\"
-.so man.macros
 .TH ttk::panedwindow n 8.5.9 Tk "Tk Themed Widget"
+.so man.macros
 .BS
 .SH NAME
 ttk::panedwindow \- Multi-pane container window
@@ -107,6 +105,12 @@ and the total size of the widget.
 .\" depending on which changed most recently.
 Returns the new position of sash number \fIindex\fR.
 .\" Full story: new position may be different than the requested position.
+.SH "VIRTUAL EVENTS"
+.PP
+The panedwindow widget generates an \fB<<EnteredChild>>\fR virtual event on
+LeaveNotify/NotifyInferior events, because Tk does not execute binding scripts
+for <Leave> events when the pointer crosses from a parent to a child. The
+panedwindow widget needs to know when that happens.
 .SH "SEE ALSO"
 ttk::widget(n), ttk::notebook(n), panedwindow(n)
 '\" Local Variables:

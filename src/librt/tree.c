@@ -32,7 +32,9 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-#include "./cache.h"
+#ifdef CACHE_ENABLED
+#  include "./cache.h"
+#endif
 
 
 #define ACQUIRE_SEMAPHORE_TREE(_hash) switch ((_hash)&03) {	\
@@ -126,7 +128,9 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
 struct rt_gettree_data
 {
     struct bu_hash_tbl *tbl;
+#ifdef CACHE_ENABLED
     struct rt_cache *cache;
+#endif
 };
 
 
@@ -521,7 +525,11 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
      * that is OK, as long as idb_ptr is set to null.  Note that the
      * prep routine may have changed st_id.
      */
+#ifdef CACHE_ENABLED
     ret = rt_cache_prep(data->cache, stp, ip);
+#else
+    ret = rt_obj_prep(stp, ip, stp->st_rtip);
+#endif
 
     if (ret) {
 	int hash;
@@ -772,9 +780,9 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	}
 
 	data.tbl = tbl;
-
-	if (!(data.cache = rt_cache_open()))
-	    bu_bomb("rt_cache_open() failed");
+#ifdef CACHE_ENABLED
+	data.cache = rt_cache_open();
+#endif
 
 	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
 			 &tree_state,
@@ -783,7 +791,9 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 			 _rt_gettree_leaf, (void *)&data);
 	bu_avs_free(&tree_state.ts_attrs);
 
+#ifdef CACHE_ENABLED
 	rt_cache_close(data.cache);
+#endif
     }
 
     /* DEBUG:  Ensure that all region trees are valid */
@@ -1021,19 +1031,6 @@ rt_find_solid(const struct rt_i *rtip, const char *name)
 
 
 void
-rt_grow_boolstack(struct resource *resp)
-{
-    if (resp->re_boolstack == (union tree **)0 || resp->re_boolslen <= 0) {
-	resp->re_boolslen = 128;	/* default len */
-	resp->re_boolstack = (union tree **)bu_malloc(sizeof(union tree *) * resp->re_boolslen,	"initial boolstack");
-    } else {
-	resp->re_boolslen <<= 1;
-	resp->re_boolstack = (union tree **)bu_realloc((char *)resp->re_boolstack, sizeof(union tree *) * resp->re_boolslen, "extend boolstack");
-    }
-}
-
-
-void
 rt_optim_tree(union tree *tp, struct resource *resp)
 {
     union tree **sp;
@@ -1091,43 +1088,6 @@ rt_optim_tree(union tree *tp, struct resource *resp)
 		bu_log("rt_optim_tree: bad op x%x\n", tp->tr_op);
 		break;
 	}
-    }
-}
-
-
-void
-rt_tree_rpn(union tree_rpn *rtree, const union tree *treep, size_t *len)
-{
-    if (treep == TREE_NULL)
-	return;
-
-    switch (treep->tr_op) {
-	case OP_SOLID:
-	    if (rtree) rtree[*len].st_bit = treep->tr_a.tu_stp->st_bit;
-	    ++*len;
-	    break;
-	case OP_UNION:
-	    rt_tree_rpn(rtree, treep->tr_b.tb_left, len);
-	    rt_tree_rpn(rtree, treep->tr_b.tb_right, len);
-	    if (rtree) rtree[*len].uop = UOP_UNION;
-	    ++*len;
-	    break;
-	case OP_INTERSECT:
-	    rt_tree_rpn(rtree, treep->tr_b.tb_left, len);
-	    rt_tree_rpn(rtree, treep->tr_b.tb_right, len);
-	    if (rtree) rtree[*len].uop = UOP_INTERSECT;
-	    ++*len;
-	    break;
-	case OP_SUBTRACT:
-	    rt_tree_rpn(rtree, treep->tr_b.tb_left, len);
-	    rt_tree_rpn(rtree, treep->tr_b.tb_right, len);
-	    if (rtree) rtree[*len].uop = UOP_SUBTRACT;
-	    ++*len;
-	    break;
-	default:
-	    bu_log("rt_tree_rpn:  bad op [%d]\n", treep->tr_op);
-	    exit(1);
-	    break;
     }
 }
 

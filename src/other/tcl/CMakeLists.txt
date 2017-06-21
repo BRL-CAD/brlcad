@@ -62,9 +62,11 @@ set(BUILD_STATIC_LIBS ON)
 # version numbers
 SET(TCL_VERSION_MAJOR 8)
 SET(TCL_VERSION_MINOR 5)
-SET(TCL_VERSION_PATCH 9)
+SET(TCL_VERSION_PATCH 19)
 
 SET(TCL_VERSION "${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}.${TCL_VERSION_PATCH}")
+SET(TCL_WIN_VERSION "${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}.${TCL_VERSION_PATCH}")
+SET(MACHINE "${CMAKE_SYSTEM_PROCESSOR}")
 
 # For Windows, we need the Resource Compiler language
 IF(WIN32)
@@ -76,22 +78,7 @@ ENDIF(WIN32)
 # the build directory AND install directory.  Thanks to plplot for
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 
-# use, i.e. don't skip the full RPATH for the build tree
-SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-
-# the RPATH/INSTALL_NAME_DIR to be used when installing
-if (NOT APPLE)
-  SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
-endif(NOT APPLE)
-SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
-
-# add the automatically determined parts of the RPATH which point to
-# directories outside the build tree to the install RPATH
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake)
 
 #----------------------------------------------------------------------------
 # The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX 
@@ -265,10 +252,10 @@ SC_TCL_64BIT_FLAGS()
 # Add options for optimized and debug compile options - replaces 
 # SC_ENABLE_SYMBOLS
 #----------------------------------------------------------------------------
-OPTION(TCL_OPTIMIZED "Built optimized Tcl" ON)
+OPTION(TCL_OPTIMIZED "Build optimized Tcl" ON)
 IF(TCL_OPTIMIZED)
   ADD_TCL_CFLAG(TCL_CFG_OPTIMIZED)
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O2")
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG=1 -O2")
 ENDIF(TCL_OPTIMIZED)
 
 OPTION(TCL_DEBUG "Enable Debugging" ON)
@@ -317,10 +304,6 @@ IF(NOT HAVE_GETCWD)
     ADD_TCL_CFLAG(USEGETWD)
   ENDIF(NOT HAVE_GETWD)
 ENDIF(NOT HAVE_GETCWD)
-TCL_CHECK_FUNCTION_EXISTS(hypot HAVE_HYPOT)
-IF(NOT HAVE_HYPOT)
-  SET(COMPAT_SRCS ${COMPAT_SRCS} compat/hypot.c)
-ENDIF()
 TCL_CHECK_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
 IF(NOT HAVE_MKSTEMP)
   SET(COMPAT_SRCS ${COMPAT_SRCS} compat/mkstemp.c)
@@ -426,8 +409,8 @@ SC_TIME_HANDLER()
 # Check for stat structure files and blkcnt_t
 #---------------------------------------------------------------------------
 
-TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blocks sys/stat.h	STRUCT_HAS_ST_BLOCKS)
-TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blksize sys/stat.h STRUCT_HAS_ST_BLKSIZE)
+TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blocks sys/stat.h HAVE_STRUCT_STAT_ST_BLOCKS)
+TCL_CHECK_STRUCT_HAS_MEMBER("struct stat" st_blksize sys/stat.h HAVE_STRUCT_STAT_ST_BLKSIZE)
 CHECK_TYPE_SIZE(blkcnt_t HAVE_BLKCNT_T)
 IF(HAVE_BLKCNT_T)
   ADD_TCL_CFLAG(HAVE_BLKCNT_T)
@@ -491,14 +474,14 @@ SC_TCL_CHECK_BROKEN_FUNC(
 #       Check for various typedefs and provide substitutes if
 #       they don't exist.
 #--------------------------------------------------------------------
-TCL_CHECK_TYPE_SIZE(mode_t MODE)
-TCL_CHECK_TYPE_SIZE(pid_t PID)
-TCL_CHECK_TYPE_SIZE(size_t SIZE)
-TCL_CHECK_TYPE_SIZE(uid_t UID)
+TCL_CHECK_TYPE_SIZE(mode_t HAVE_MODE)
+TCL_CHECK_TYPE_SIZE(pid_t HAVE_PID)
+TCL_CHECK_TYPE_SIZE(size_t HAVE_SIZE)
+TCL_CHECK_TYPE_SIZE(uid_t HAVE_UID)
 # The following tests may need to be more elaborate to function properly
-TCL_CHECK_TYPE_SIZE(socklen_t SOCKLEN sys/types.h sys/socket.h)
-TCL_CHECK_TYPE_SIZE(intptr_t INTPTR)
-TCL_CHECK_TYPE_SIZE(uintptr_t UINTPTR)
+TCL_CHECK_TYPE_SIZE(socklen_t HAVE_SOCKLEN sys/types.h sys/socket.h)
+TCL_CHECK_TYPE_SIZE(intptr_t HAVE_INTPTR)
+TCL_CHECK_TYPE_SIZE(uintptr_t HAVE_UINTPTR)
 
 IF(NOT HAVE_OPENDIR)
   ADD_TCL_CFLAG(USE_DIRENT2_H)
@@ -623,11 +606,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   TCL_CHECK_FUNCTION_EXISTS(getattrlist HAVE_GETATTRLIST)
   TCL_CHECK_INCLUDE_FILE(copyfile.h HAVE_COPYFILE_H)
   TCL_CHECK_FUNCTION_EXISTS(copyfile HAVE_COPYFILE)
-  IF(${CoreFoundation_LIBRARIES})
-    TCL_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
-    TCL_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
-    TCL_CHECK_FUNCTION_EXISTS(pthread_atfork HAVE_PTHREAD_ATFORK)
-  ENDIF(${CoreFoundation_LIBRARIES})
+  TCL_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
+  TCL_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
   ADD_TCL_CFLAG(USE_VFORK)
   add_definitions(-DTCL_DEFAULT_ENCODING="utf-8")
   ADD_TCL_CFLAG(TCL_LOAD_FROM_MEMORY)
@@ -755,12 +735,15 @@ TCL_CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
 TCL_CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 TCL_CHECK_INCLUDE_FILE(AvailabilityMacros.h HAVE_AVAILABILITYMACROS_H)
 IF(HAVE_AVAILABILITYMACROS_H)
-  add_definitions(-DHAVE_AVAILABILITY_MACROS_H)
+  add_definitions(-DHAVE_AVAILABILITYMACROS_H=1)
 ENDIF(HAVE_AVAILABILITYMACROS_H)
 
 CHECK_COMPILER_SUPPORTS_HIDDEN_D()
+IF(COMPILER_SUPPORTS_HIDDEN AND NOT MSVC)
+  add_definitions(-DMODULE_SCOPE=extern\ __attribute__\(\(__visibility__\("hidden"\)\)\))
+ENDIF(COMPILER_SUPPORTS_HIDDEN AND NOT MSVC)
 
-TCL_CHECK_INCLUDE_FILE_USABILITY(sys/modem.h SYS_MODEM_H)
+TCL_CHECK_INCLUDE_FILE_USABILITY(sys/modem.h HAVE_SYS_MODEM_H)
 
 
 CHECK_FD_SET_IN_TYPES_D()
@@ -875,8 +858,6 @@ SET(TCL_STUB_SRCS
   )
 
 SET(TCL_TOMMATH_SRCS
-  libtommath/bncore.c
-  libtommath/bn_reverse.c
   libtommath/bn_fast_s_mp_mul_digs.c
   libtommath/bn_fast_s_mp_sqr.c
   libtommath/bn_mp_add.c
@@ -888,13 +869,14 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_cmp.c
   libtommath/bn_mp_cmp_d.c
   libtommath/bn_mp_cmp_mag.c
+  libtommath/bn_mp_cnt_lsb.c
   libtommath/bn_mp_copy.c
   libtommath/bn_mp_count_bits.c
   libtommath/bn_mp_div.c
-  libtommath/bn_mp_div_d.c
   libtommath/bn_mp_div_2.c
   libtommath/bn_mp_div_2d.c
   libtommath/bn_mp_div_3.c
+  libtommath/bn_mp_div_d.c
   libtommath/bn_mp_exch.c
   libtommath/bn_mp_expt_d.c
   libtommath/bn_mp_grow.c
@@ -902,6 +884,7 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_init_copy.c
   libtommath/bn_mp_init_multi.c
   libtommath/bn_mp_init_set.c
+  libtommath/bn_mp_init_set_int.c
   libtommath/bn_mp_init_size.c
   libtommath/bn_mp_karatsuba_mul.c
   libtommath/bn_mp_karatsuba_sqr.c
@@ -919,6 +902,7 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_read_radix.c
   libtommath/bn_mp_rshd.c
   libtommath/bn_mp_set.c
+  libtommath/bn_mp_set_int.c
   libtommath/bn_mp_shrink.c
   libtommath/bn_mp_sqr.c
   libtommath/bn_mp_sqrt.c
@@ -932,10 +916,12 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_unsigned_bin_size.c
   libtommath/bn_mp_xor.c
   libtommath/bn_mp_zero.c
+  libtommath/bn_reverse.c
   libtommath/bn_s_mp_add.c
   libtommath/bn_s_mp_mul_digs.c
   libtommath/bn_s_mp_sqr.c
   libtommath/bn_s_mp_sub.c
+  libtommath/bncore.c
   )
 
 SET(TCL_OSX_SRCS
@@ -1031,12 +1017,6 @@ include_directories(
   ${TCL_INCLUDE_DIRS}
   )
 
-IF(WIN32)
-  SET(TCLSH_SRCS win/tclAppInit.c win/tclsh.rc)
-ELSE(WIN32)
-  SET(TCLSH_SRCS unix/tclAppInit.c)
-ENDIF(WIN32)
-
 IF(MINGW)
   set(TCL_MINGW_LIBS ws2_32)
 ENDIF(MINGW)
@@ -1067,6 +1047,12 @@ install(TARGETS tclstub
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
+
+IF(WIN32)
+  SET(TCLSH_SRCS win/tclAppInit.c win/tclsh.rc)
+ELSE(WIN32)
+  SET(TCLSH_SRCS unix/tclAppInit.c)
+ENDIF(WIN32)
 
 add_executable(tclsh ${TCLSH_SRCS})
 target_link_libraries(tclsh tcl ${M_LIBRARY} ${TCL_THREADS_LIB} ${EXTRA_TCLSH_LIBS})

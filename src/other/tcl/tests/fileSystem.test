@@ -129,13 +129,18 @@ test filesystem-1.9 {link normalisation} {unix hasLinks} {
     testPathEqual [file normalize [file join dir.dir linkinside.file foo]] \
 	[file normalize [file join dir.link inside.file foo]]
 } {1}
-test filesystem-1.10 {link normalisation: double link} {unix hasLinks} {
+test filesystem-1.10 {link normalisation: double link} -constraints {
+    unix hasLinks
+} -body {
     file link dir2.link dir.link
     testPathEqual [file normalize [file join dir.dir linkinside.file foo]] \
 	[file normalize [file join dir2.link inside.file foo]]
-} {1}
+} -cleanup {
+    file delete dir2.link
+} -result {1}
 makeDirectory dir2.file
 test filesystem-1.11 {link normalisation: double link, back in tree} {unix hasLinks} {
+    file link dir2.link dir.link
     file link [file join dir2.file dir2.link] [file join .. dir2.link]
     testPathEqual [file normalize [file join dir.dir linkinside.file foo]] \
 	[file normalize [file join dir2.file dir2.link inside.file foo]]
@@ -504,16 +509,22 @@ test filesystem-2.0 {new native path} {unix} {
 
 # Make sure the testfilesystem hasn't been registered.
 if {[testConstraint testfilesystem]} {
+  proc resetfs {} {
     while {![catch {testfilesystem 0}]} {}
+  }
 }
 
 test filesystem-3.0 {Tcl_FSRegister} testfilesystem {
+    resetfs
     testfilesystem 1
 } {registered}
 test filesystem-3.1 {Tcl_FSUnregister} testfilesystem {
+    resetfs
+    testfilesystem 1
     testfilesystem 0
 } {unregistered}
 test filesystem-3.2 {Tcl_FSUnregister} testfilesystem {
+    resetfs
     list [catch {testfilesystem 0} err] $err
 } {1 failed}
 test filesystem-3.3 {Tcl_FSRegister} testfilesystem {
@@ -522,12 +533,14 @@ test filesystem-3.3 {Tcl_FSRegister} testfilesystem {
     testfilesystem 0
     testfilesystem 0
 } {unregistered}
-test filesystem-3.4 {Tcl_FSRegister} testfilesystem {
+test filesystem-3.4 {Tcl_FSRegister} -constraints testfilesystem -body {
     testfilesystem 1
     file system bar
-} {reporting}
-test filesystem-3.5 {Tcl_FSUnregister} testfilesystem {
+} -cleanup {
     testfilesystem 0
+} -result {reporting}
+test filesystem-3.5 {Tcl_FSUnregister} testfilesystem {
+    resetfs
     lindex [file system bar] 0
 } {native}
 
@@ -695,6 +708,9 @@ test filesystem-6.32 {empty file name} {
 test filesystem-6.33 {empty file name} {
     list [catch {file writable ""} msg] $msg
 } {0 0}
+test filesystem-6.34 {file name with (invalid) nul character} {
+    list [catch "open foo\x00" msg] $msg
+} [list 1 "couldn't open \"foo\x00\": filename is invalid on this platform"]
 
 # Make sure the testfilesystem hasn't been registered.
 if {[testConstraint testfilesystem]} {
@@ -814,7 +830,7 @@ test filesystem-7.4 {cross-filesystem file copy with -force} testsimplefilesyste
     file delete -force file2
     cd $dir
     set res
-} {0 10 1 {error copying "simplefs:/simplefile" to "file2": file already exists} 0 10 1}
+} {0 {} 1 {error copying "simplefs:/simplefile" to "file2": file already exists} 0 {} 1}
 test filesystem-7.5 {cross-filesystem file copy with -force} {testsimplefilesystem unix} {
     set dir [pwd]
     cd [tcltest::temporaryDirectory]
@@ -838,7 +854,7 @@ test filesystem-7.5 {cross-filesystem file copy with -force} {testsimplefilesyst
     file delete -force file2
     cd $dir
     set res
-} {0 10 1 {error copying "simplefs:/simplefile" to "file2": file already exists} 0 10 1}
+} {0 {} 1 {error copying "simplefs:/simplefile" to "file2": file already exists} 0 {} 1}
 test filesystem-7.6 {cross-filesystem dir copy with -force} testsimplefilesystem {
     set dir [pwd]
     cd [tcltest::temporaryDirectory]
@@ -1093,6 +1109,10 @@ test filesystem-9.9 {path objects and glob and file tail and tilde} {
     cd $origdir
     set res
 } {0 0 0 0 1}
+
+test filesystem-10.1 {Bug 3414754} {
+    string match */ [file join [pwd] foo/]
+} 0
 
 cleanupTests
 unset -nocomplain drive

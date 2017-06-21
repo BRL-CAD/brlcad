@@ -209,8 +209,9 @@ proc do_Open { id } {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
 		$msg info 0 OK
 	} else {
+	    set dbtitle [title]
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "File loaded" \
-		$msg info 0 OK
+		$dbtitle info 0 OK
 	}
     }
 }

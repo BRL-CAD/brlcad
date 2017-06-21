@@ -7,21 +7,21 @@
 CFG=tcl - Win32 Debug Static
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "tcl.mak".
-!MESSAGE 
+!MESSAGE
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "tcl.mak" CFG="tcl - Win32 Debug Static"
-!MESSAGE 
+!MESSAGE
 !MESSAGE Possible choices for configuration are:
-!MESSAGE 
+!MESSAGE
 !MESSAGE "tcl - Win32 Release" (based on "Win32 (x86) External Target")
 !MESSAGE "tcl - Win32 Debug" (based on "Win32 (x86) External Target")
 !MESSAGE "tcl - Win32 Debug Static" (based on "Win32 (x86) External Target")
 !MESSAGE "tcl - Win32 Release Static" (based on "Win32 (x86) External Target")
-!MESSAGE 
+!MESSAGE
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
@@ -112,7 +112,7 @@ CFG=tcl - Win32 Debug Static
 # PROP Bsc_Name ""
 # PROP Target_Dir ""
 
-!ENDIF 
+!ENDIF
 
 # Begin Target
 
@@ -129,7 +129,7 @@ CFG=tcl - Win32 Debug Static
 
 !ELSEIF  "$(CFG)" == "tcl - Win32 Release Static"
 
-!ENDIF 
+!ENDIF
 
 # Begin Group "compat"
 
@@ -1020,7 +1020,7 @@ SOURCE=..\generic\regerrs.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\generic\regex.h
+SOURCE=..\generic\regextcl.h
 # End Source File
 # Begin Source File
 
@@ -1565,4 +1565,3 @@ SOURCE=.\tclWinTime.c
 # End Group
 # End Target
 # End Project
-

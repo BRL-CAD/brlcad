@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -59,7 +57,7 @@ static struct ThreadSpecificData *threadList;
  */
 
 typedef struct ThreadCtrl {
-    char *script;		/* The Tcl command this thread should
+    const char *script;	/* The Tcl command this thread should
 				 * execute */
     int flags;			/* Initial value of the "flags" field in the
 				 * ThreadSpecificData structure for the new
@@ -122,11 +120,11 @@ EXTERN int		TclThread_Init(Tcl_Interp *interp);
 EXTERN int		Tcl_ThreadObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
 			    Tcl_Obj *const objv[]);
-EXTERN int		TclCreateThread(Tcl_Interp *interp, char *script,
+EXTERN int		TclCreateThread(Tcl_Interp *interp, const char *script,
 			    int joinable);
 EXTERN int		TclThreadList(Tcl_Interp *interp);
 EXTERN int		TclThreadSend(Tcl_Interp *interp, Tcl_ThreadId id,
-			    char *script, int wait);
+			    const char *script, int wait);
 
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
@@ -236,7 +234,7 @@ Tcl_ThreadObjCmd(
 
     switch ((enum options)option) {
     case THREAD_CREATE: {
-	char *script;
+	const char *script;
 	int joinable, len;
 
 	if (objc == 2) {
@@ -294,7 +292,7 @@ Tcl_ThreadObjCmd(
 	return TCL_OK;
     case THREAD_ID:
 	if (objc == 2) {
-	    Tcl_Obj *idObj = Tcl_NewLongObj((long) Tcl_GetCurrentThread());
+	    Tcl_Obj *idObj = Tcl_NewWideIntObj((Tcl_WideInt)(size_t) Tcl_GetCurrentThread());
 
 	    Tcl_SetObjResult(interp, idObj);
 	    return TCL_OK;
@@ -303,24 +301,24 @@ Tcl_ThreadObjCmd(
 	    return TCL_ERROR;
 	}
     case THREAD_JOIN: {
-	long id;
+	Tcl_WideInt id;
 	int result, status;
 
 	if (objc != 3) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "id");
 	    return TCL_ERROR;
 	}
-	if (Tcl_GetLongFromObj(interp, objv[2], &id) != TCL_OK) {
+	if (Tcl_GetWideIntFromObj(interp, objv[2], &id) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 
-	result = Tcl_JoinThread ((Tcl_ThreadId) id, &status);
+	result = Tcl_JoinThread ((Tcl_ThreadId)(size_t)id, &status);
 	if (result == TCL_OK) {
 	    Tcl_SetIntObj (Tcl_GetObjResult (interp), status);
 	} else {
 	    char buf [20];
 
-	    sprintf(buf, "%ld", id);
+	    sprintf(buf, "%" TCL_LL_MODIFIER "d", id);
 	    Tcl_AppendResult(interp, "cannot join thread ", buf, NULL);
 	}
 	return result;
@@ -332,8 +330,8 @@ Tcl_ThreadObjCmd(
 	}
 	return TclThreadList(interp);
     case THREAD_SEND: {
-	long id;
-	char *script;
+	Tcl_WideInt id;
+	const char *script;
 	int wait, arg;
 
 	if ((objc != 4) && (objc != 5)) {
@@ -351,12 +349,12 @@ Tcl_ThreadObjCmd(
 	    wait = 1;
 	    arg = 2;
 	}
-	if (Tcl_GetLongFromObj(interp, objv[arg], &id) != TCL_OK) {
+	if (Tcl_GetWideIntFromObj(interp, objv[arg], &id) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 	arg++;
 	script = Tcl_GetString(objv[arg]);
-	return TclThreadSend(interp, (Tcl_ThreadId) id, script, wait);
+	return TclThreadSend(interp, (Tcl_ThreadId)(size_t)id, script, wait);
     }
     case THREAD_ERRORPROC: {
 	/*
@@ -409,7 +407,7 @@ Tcl_ThreadObjCmd(
 int
 TclCreateThread(
     Tcl_Interp *interp,		/* Current interpreter. */
-    char *script,		/* Script to execute */
+    const char *script,		/* Script to execute */
     int joinable)		/* Flag, joinable thread or not */
 {
     ThreadCtrl ctrl;
@@ -426,7 +424,6 @@ TclCreateThread(
 	    TCL_THREAD_STACK_DEFAULT, joinable) != TCL_OK) {
 	Tcl_MutexUnlock(&threadMutex);
         Tcl_AppendResult(interp, "can't create a new thread", NULL);
-	ckfree((char *) ctrl.script);
 	return TCL_ERROR;
     }
 
@@ -437,7 +434,7 @@ TclCreateThread(
     Tcl_ConditionWait(&ctrl.condWait, &threadMutex, NULL);
     Tcl_MutexUnlock(&threadMutex);
     Tcl_ConditionFinalize(&ctrl.condWait);
-    Tcl_SetObjResult(interp, Tcl_NewLongObj((long)id));
+    Tcl_SetObjResult(interp, Tcl_NewWideIntObj((Tcl_WideInt)(size_t)id));
     return TCL_OK;
 }
 
@@ -563,7 +560,7 @@ ThreadErrorProc(
     const char *errorInfo, *argv[3];
     char *script;
     char buf[TCL_DOUBLE_SPACE+1];
-    sprintf(buf, "%ld", (long) Tcl_GetCurrentThread());
+    sprintf(buf, "%" TCL_LL_MODIFIER "d", (Tcl_WideInt)(size_t)Tcl_GetCurrentThread());
 
     errorInfo = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY);
     if (errorProcString == NULL) {
@@ -680,7 +677,7 @@ TclThreadList(
     Tcl_MutexLock(&threadMutex);
     for (tsdPtr = threadList ; tsdPtr ; tsdPtr = tsdPtr->nextPtr) {
 	Tcl_ListObjAppendElement(interp, listPtr,
-		Tcl_NewLongObj((long) tsdPtr->threadId));
+		Tcl_NewWideIntObj((Tcl_WideInt)(size_t)tsdPtr->threadId));
     }
     Tcl_MutexUnlock(&threadMutex);
     Tcl_SetObjResult(interp, listPtr);
@@ -707,7 +704,7 @@ int
 TclThreadSend(
     Tcl_Interp *interp,		/* The current interpreter. */
     Tcl_ThreadId id,		/* Thread Id of other interpreter. */
-    char *script,		/* The script to evaluate. */
+    const char *script,		/* The script to evaluate. */
     int wait)			/* If 1, we block for the result. */
 {
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
@@ -1037,7 +1034,7 @@ ThreadExitProc(
 	     * going to call free on it.
 	     */
 
-	    char *msg = "target thread died";
+	    const char *msg = "target thread died";
 
 	    resultPtr->result = ckalloc(strlen(msg)+1);
 	    strcpy(resultPtr->result, msg);

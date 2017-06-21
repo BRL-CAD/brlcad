@@ -5,8 +5,6 @@
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -31,24 +29,31 @@ foreach {testName testData} {
 	20 20 badValue {bad screen distance "badValue"}}
     panedwindow-1.8 {-opaqueresize
 	true 1 foo {expected boolean value but got "foo"}}
-    panedwindow-1.9 {-orient
+    panedwindow-1.9 {-proxybackground
+	"#f0a0a0" "#f0a0a0" non-existent {unknown color name "non-existent"}}
+    panedwindow-1.10 {-proxyborderwidth
+	1.3 1.3 badValue {bad screen distance "badValue"}}
+    panedwindow-1.11 {-proxyrelief
+	groove groove
+	1.5 {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
+    panedwindow-1.12 {-orient
 	horizontal horizontal
 	badValue {bad orient "badValue": must be horizontal or vertical}}
-    panedwindow-1.10 {-relief
+    panedwindow-1.13 {-relief
 	groove groove
 	1.5 {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
-    panedwindow-1.11 {-sashcursor
+    panedwindow-1.14 {-sashcursor
 	arrow arrow badValue {bad cursor spec "badValue"}}
-    panedwindow-1.12 {-sashpad
+    panedwindow-1.15 {-sashpad
 	1.3 1 badValue {bad screen distance "badValue"}}
-    panedwindow-1.13 {-sashrelief
+    panedwindow-1.16 {-sashrelief
 	groove groove
 	1.5 {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
-    panedwindow-1.14 {-sashwidth
+    panedwindow-1.17 {-sashwidth
 	10 10 badValue {bad screen distance "badValue"}}
-    panedwindow-1.15 {-showhandle
+    panedwindow-1.18 {-showhandle
 	true 1 foo {expected boolean value but got "foo"}}
-    panedwindow-1.16 {-width
+    panedwindow-1.19 {-width
 	402 402 badValue {bad screen distance "badValue"}}
 } {
     lassign $testData optionName goodIn goodOut badIn badOut
@@ -2462,6 +2467,23 @@ test panedwindow-26.1 {DestroyPanedWindow} {
     }
     set result {}
 } {}
+test panedwindow-26.2 {UnmapNotify and MapNotify events are propagated to slaves} {
+    panedwindow .pw
+    .pw add [button .pw.b]
+    pack .pw
+    update
+    set result [winfo ismapped .pw.b]
+    pack forget .pw
+    update
+    lappend result [winfo ismapped .pw.b]
+    lappend result [winfo ismapped .pw]
+    pack .pw
+    update
+    lappend result [winfo ismapped .pw]
+    lappend result [winfo ismapped .pw.b]
+    destroy .pw .pw.b
+    set result
+} {1 0 0 1 1}
 
 test panedwindow-27.1 {PanedWindowIdentifyCoords} {
     panedwindow .p -bd 0 -sashwidth 2 -sashpad 2

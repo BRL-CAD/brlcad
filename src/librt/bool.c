@@ -657,41 +657,20 @@ bool_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *pp
 HIDDEN int
 bool_max_raynum(register const union tree *tp, register const struct partition *pp)
 {
-    int stack[64];
-    int stack_last;
-    int a, b, x;
-    size_t i;
-
+    RT_CK_TREE(tp);
     RT_CK_PARTITION(pp);
 
-    stack[0] = 0;
-    stack_last = 0;
-    for (i=0; i<rlen; i++) {
-	switch (rtree[i].uop) {
-	    case UOP_UNION:
-	    case UOP_INTERSECT:
-	    case UOP_SUBTRACT:
-	    case UOP_XOR:
-		b = stack[--stack_last];
-		a = stack[--stack_last];
-		stack[stack_last++] = (a > b) ? a : b;
-		break;
-	    case UOP_NOP:
-		stack[stack_last++] = -1;
-		break;
-	    default:
-		{
-		    const long st_bit = rtree[i].st_bit;
-		    struct seg **segpp;
-		    x = -1;
-		    for (BU_PTBL_FOR(segpp, (struct seg **), &pp->pt_seglist)) {
-			if ((*segpp)->seg_stp->st_bit == st_bit) {
-			    x = (*segpp)->seg_in.hit_rayp->index;
-			    break;
-			}
-		    }
-		    stack[stack_last++] = x;
-		    break;
+    switch (tp->tr_op) {
+	case OP_NOP:
+	    return -1;
+
+	case OP_SOLID:
+	    {
+		register struct soltab *seek_stp = tp->tr_a.tu_stp;
+		register struct seg **segpp;
+		for (BU_PTBL_FOR(segpp, (struct seg **), &pp->pt_seglist)) {
+		    if ((*segpp)->seg_stp != seek_stp) continue;
+		    return (*segpp)->seg_in.hit_rayp->index;
 		}
 	    }
 	    /* Maybe it hasn't been shot yet, or ray missed */
@@ -713,7 +692,7 @@ bool_max_raynum(register const union tree *tp, register const struct partition *
 	default:
 	    bu_bomb("bool_max_raynum: bad op\n");
     }
-    return stack[0];
+    return 0;
 }
 
 
@@ -1190,12 +1169,10 @@ bool_equal_overlap_tables(struct region *const*a, struct region *const*b)
 HIDDEN int
 bool_test_tree(register const union tree *tp, register const struct bu_bitv *solidbits, register const struct region *regionp, register const struct partition *pp)
 {
-    uint8_t stack[64];	/* uh bits would be enough */
-    int stack_last;
-    uint8_t a, b, x;
-    size_t i;
-
+    RT_CK_TREE(tp);
     BU_CK_BITV(solidbits);
+    RT_CK_REGION(regionp);
+    RT_CK_PT(pp);
 
     switch (tp->tr_op) {
 	case OP_NOP:
@@ -1226,7 +1203,7 @@ bool_test_tree(register const union tree *tp, register const struct bu_bitv *sol
 	default:
 	    bu_bomb("bool_test_tree: bad op\n");
     }
-    return stack[0];
+    return 0;
 }
 
 
@@ -1246,6 +1223,7 @@ bool_partition_eligible(register const struct bu_ptbl *regiontable, register con
 
     BU_CK_PTBL(regiontable);
     BU_CK_BITV(solidbits);
+    RT_CK_PT(pp);
 
     for (BU_PTBL_FOR(regpp, (struct region **), regiontable)) {
 	register struct region *regp;
@@ -1276,8 +1254,11 @@ rt_bool_growstack(register struct resource *resp)
 
 
 /**
- * Using a stack to recall state, evaluate a boolean expression in RPN
+ * Using a stack to recall state, evaluate a boolean expression
  * without recursion.
+ *
+ * For use with XOR, a pointer to the "first valid subtree" would
+ * be a useful addition, for rt_boolregions().
  *
  * Returns -
  * !0 tree is BOOL_TRUE
@@ -1291,10 +1272,12 @@ bool_eval(register union tree *treep, struct partition *partp, struct region **t
 /* XOR true (and overlap) return */
 /* resource pointer for this CPU */
 {
-    uint8_t stack[64];	/* uh bits would be enough */
-    int stack_last;
-    uint8_t a, b, x;
-    size_t i;
+    static union tree tree_not[MAX_PSW];	/* for OP_NOT nodes */
+    static union tree tree_guard[MAX_PSW];	/* for OP_GUARD nodes */
+    static union tree tree_xnop[MAX_PSW];	/* for OP_XNOP nodes */
+    register union tree **sp;
+    register int ret;
+    register union tree **stackend;
 
     RT_CK_TREE(treep);
     RT_CK_PT(partp);
@@ -1321,8 +1304,6 @@ stack:
 			ret = 1;
 			goto pop;
 		    }
-		    stack[stack_last++] = x;
-		    break;
 		}
 		ret = 0;
 	    }
@@ -1443,6 +1424,7 @@ int
 rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t startdist, fastf_t enddist, struct bu_ptbl *regiontable, struct application *ap, const struct bu_bitv *solidbits)
 {
     struct region *lastregion = (struct region *)NULL;
+    struct region *TrueRg[2];
     register struct partition *pp;
     register int claiming_regions;
     int hits_avail = 0;
@@ -1685,6 +1667,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	    struct region **regpp;
 	    for (BU_PTBL_FOR(regpp, (struct region **), regiontable)) {
 		register struct region *regp;
+
 		regp = *regpp;
 		RT_CK_REGION(regp);
 		if (RT_G_DEBUG&DEBUG_PARTITION) {
@@ -1708,7 +1691,6 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		    *regpp = REGION_NULL;
 		    continue;
 		}
-
 		/* This region claims partition */
 		if (RT_G_DEBUG&DEBUG_PARTITION)
 		    bu_log("BOOL_TRUE (eval)\n");

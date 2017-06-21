@@ -174,7 +174,7 @@ bu_namegen(struct bu_vls *name, const char *regex_str, const char *incr_spec)
 
 
     if (!incr_spec) {
-	bu_vls_sprintf(&ispec, "%d:%d:%d:%d", strlen(bu_vls_addr(&num_str)), 0, 0, 1);
+	bu_vls_sprintf(&ispec, "%lu:%d:%d:%d", strlen(bu_vls_addr(&num_str)), 0, 0, 1);
     } else {
 	bu_vls_sprintf(&ispec, "%s", incr_spec);
     }

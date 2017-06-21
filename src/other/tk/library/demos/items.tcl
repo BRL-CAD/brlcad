@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a canvas that displays the
 # canvas item types.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

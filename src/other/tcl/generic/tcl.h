@@ -12,8 +12,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TCL
@@ -60,10 +58,10 @@ extern "C" {
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   5
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  9
+#define TCL_RELEASE_SERIAL  19
 
 #define TCL_VERSION	    "8.5"
-#define TCL_PATCH_LEVEL	    "8.5.9"
+#define TCL_PATCH_LEVEL	    "8.5.19"
 
 /*
  * The following definitions set up the proper options for Windows compilers.
@@ -71,7 +69,7 @@ extern "C" {
  */
 
 #ifndef __WIN32__
-#   if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__) || defined(__BORLANDC__) || (defined(__WATCOMC__) && defined(__WINDOWS_386__))
+#   if defined(_WIN32) || defined(WIN32) || defined(__MSVCRT__) || defined(__BORLANDC__) || (defined(__WATCOMC__) && defined(__WINDOWS_386__))
 #	define __WIN32__
 #	ifndef WIN32
 #	    define WIN32
@@ -91,12 +89,6 @@ extern "C" {
 #	define STRICT
 #   endif
 #endif /* __WIN32__ */
-
-/* quell shadow warnings */
-#ifdef index
-#  undef index
-#endif
-#define index tcl_scoped_index
 
 /*
  * Utility macros: STRINGIFY takes an argument and wraps it in "" (double
@@ -176,12 +168,12 @@ extern "C" {
  *       MSVCRT.
  */
 
-#if (defined(__WIN32__) && (defined(_MSC_VER) || (__BORLANDC__ >= 0x0550) || defined(__LCC__) || defined(__WATCOMC__) || (defined(__GNUC__) && defined(__declspec))))
+#if (defined(__WIN32__) && (defined(_MSC_VER) || (defined(__BORLANDC__) && (__BORLANDC__ >= 0x0550)) || defined(__LCC__) || defined(__WATCOMC__) || (defined(__GNUC__) && defined(__declspec))))
 #   define HAVE_DECLSPEC 1
 #   ifdef STATIC_BUILD
 #       define DLLIMPORT
 #       define DLLEXPORT
-#       if (defined(HAVE_DECLSPEC) && defined(_DLL))
+#       ifdef _DLL
 #           define CRTIMPORT __declspec(dllimport)
 #       else
 #           define CRTIMPORT
@@ -199,10 +191,6 @@ extern "C" {
 #       define DLLEXPORT
 #   endif
 #   define CRTIMPORT
-#endif
-
-#ifndef HAVE_DECLSPEC
-#   define HAVE_DECLSPEC 0
 #endif
 
 /*
@@ -305,10 +293,12 @@ typedef long LONG;
  * in ANSI C; maps them to type "char *" in non-ANSI systems.
  */
 
-#ifndef NO_VOID
-#define VOID	void
-#else
-#define VOID	char
+#ifndef __VXWORKS__
+#   ifndef NO_VOID
+#	define VOID void
+#   else
+#	define VOID char
+#   endif
 #endif
 
 /*
@@ -364,28 +354,17 @@ typedef long LONG;
  */
 
 #if !defined(TCL_WIDE_INT_TYPE)&&!defined(TCL_WIDE_INT_IS_LONG)
-#   if defined(__GNUC__)
-#      define TCL_WIDE_INT_TYPE long long
-#      if defined(__WIN32__) && !defined(__CYGWIN__)
-#         define TCL_LL_MODIFIER        "I64"
-#      else
-#         define TCL_LL_MODIFIER	"ll"
-#      endif
-typedef struct stat	Tcl_StatBuf;
-#   elif defined(__WIN32__)
+#   if defined(__WIN32__)
 #      define TCL_WIDE_INT_TYPE __int64
 #      ifdef __BORLANDC__
-typedef struct stati64 Tcl_StatBuf;
 #         define TCL_LL_MODIFIER	"L"
 #      else /* __BORLANDC__ */
-#         if _MSC_VER < 1400 || !defined(_M_IX86)
-typedef struct _stati64	Tcl_StatBuf;
-#         else
-typedef struct _stat64	Tcl_StatBuf;
-#         endif /* _MSC_VER < 1400 */
 #         define TCL_LL_MODIFIER	"I64"
 #      endif /* __BORLANDC__ */
-#   else /* __WIN32__ */
+#   elif defined(__GNUC__)
+#      define TCL_WIDE_INT_TYPE long long
+#      define TCL_LL_MODIFIER	"ll"
+#   else /* ! __WIN32__ && ! __GNUC__ */
 /*
  * Don't know what platform it is and configure hasn't discovered what is
  * going on for us. Try to guess...
@@ -411,7 +390,6 @@ typedef TCL_WIDE_INT_TYPE		Tcl_WideInt;
 typedef unsigned TCL_WIDE_INT_TYPE	Tcl_WideUInt;
 
 #ifdef TCL_WIDE_INT_IS_LONG
-typedef struct stat	Tcl_StatBuf;
 #   define Tcl_WideAsLong(val)		((long)(val))
 #   define Tcl_LongAsWide(val)		((long)(val))
 #   define Tcl_WideAsDouble(val)	((double)((long)(val)))
@@ -425,11 +403,6 @@ typedef struct stat	Tcl_StatBuf;
  * or some other strange platform.
  */
 #   ifndef TCL_LL_MODIFIER
-#      ifdef HAVE_STRUCT_STAT64
-typedef struct stat64	Tcl_StatBuf;
-#      else
-typedef struct stat	Tcl_StatBuf;
-#      endif /* HAVE_STRUCT_STAT64 */
 #      define TCL_LL_MODIFIER		"ll"
 #   endif /* !TCL_LL_MODIFIER */
 #   define Tcl_WideAsLong(val)		((long)((Tcl_WideInt)(val)))
@@ -438,6 +411,39 @@ typedef struct stat	Tcl_StatBuf;
 #   define Tcl_DoubleAsWide(val)	((Tcl_WideInt)((double)(val)))
 #endif /* TCL_WIDE_INT_IS_LONG */
 
+#if defined(__WIN32__)
+#   ifdef __BORLANDC__
+	typedef struct stati64 Tcl_StatBuf;
+#   elif defined(_WIN64)
+	typedef struct __stat64 Tcl_StatBuf;
+#   elif (defined(_MSC_VER) && (_MSC_VER < 1400)) || defined(_USE_32BIT_TIME_T)
+	typedef struct _stati64	Tcl_StatBuf;
+#   else
+	typedef struct _stat32i64 Tcl_StatBuf;
+#   endif /* _MSC_VER < 1400 */
+#elif defined(__CYGWIN__)
+    typedef struct {
+	dev_t st_dev;
+	unsigned short st_ino;
+	unsigned short st_mode;
+	short st_nlink;
+	short st_uid;
+	short st_gid;
+	/* Here is a 2-byte gap */
+	dev_t st_rdev;
+	/* Here is a 4-byte gap */
+	long long st_size;
+	struct {long tv_sec;} st_atim;
+	struct {long tv_sec;} st_mtim;
+	struct {long tv_sec;} st_ctim;
+	/* Here is a 4-byte gap */
+    } Tcl_StatBuf;
+#elif defined(HAVE_STRUCT_STAT64) && !defined(__APPLE__)
+    typedef struct stat64 Tcl_StatBuf;
+#else
+    typedef struct stat Tcl_StatBuf;
+#endif
+
 /*
  * Data structures defined opaquely in this module. The definitions below just
  * provide dummy types. A few fields are made visible in Tcl_Interp
@@ -508,7 +514,7 @@ typedef void (Tcl_ThreadCreateProc) _ANSI_ARGS_((ClientData clientData));
 /*
  * Threading function return types used for abstracting away platform
  * differences when writing a Tcl_ThreadCreateProc. See the NewThread function
- * in generic/tclThreadTest.c for its usage.
+ * in generic/tclThreadTest.c for it's usage.
  */
 
 #if defined __WIN32__
@@ -794,10 +800,7 @@ typedef struct Tcl_Obj {
  * whether an object is shared (i.e. has reference count > 1). Note: clients
  * should use Tcl_DecrRefCount() when they are finished using an object, and
  * should never call TclFreeObj() directly. TclFreeObj() is only defined and
- * made public in tcl.h to support Tcl_DecrRefCount's macro definition. Note
- * also that Tcl_DecrRefCount() refers to the parameter "obj" twice. This
- * means that you should avoid calling it with an expression that is expensive
- * to compute or has side effects.
+ * made public in tcl.h to support Tcl_DecrRefCount's macro definition.
  */
 
 void		Tcl_IncrRefCount _ANSI_ARGS_((Tcl_Obj *objPtr));
@@ -966,8 +969,6 @@ typedef struct Tcl_DString {
  *	is safe to leave the hash unquoted when the element is not the first
  *	element of a list, and this flag can be used by the caller to indicate
  *	that condition.
- * (Careful! If you change these flag values be sure to change the definitions
- * at the front of tclUtil.c).
  */
 
 #define TCL_DONT_USE_BRACES	1
@@ -2147,7 +2148,7 @@ typedef struct Tcl_Parse {
  * reflected in regcustom.h.
  */
 
-#if TCL_UTF_MAX > 3
+#if TCL_UTF_MAX > 4
     /*
      * unsigned int isn't 100% accurate as it should be a strict 4-byte value
      * (perhaps wchar_t). 64-bit systems may have troubles. The size of this
@@ -2313,7 +2314,12 @@ EXTERN void		Tcl_GetMemoryInfo _ANSI_ARGS_((Tcl_DString *dsPtr));
      * http://c2.com/cgi/wiki?TrivialDoWhileLoop
      */
 #   define Tcl_DecrRefCount(objPtr) \
-	do { if (--(objPtr)->refCount <= 0) TclFreeObj(objPtr); } while(0)
+	do { \
+	    Tcl_Obj *_objPtr = (objPtr); \
+	    if (--(_objPtr)->refCount <= 0) { \
+		TclFreeObj(_objPtr); \
+	    } \
+	} while(0)
 #   define Tcl_IsShared(objPtr) \
 	((objPtr)->refCount > 1)
 #endif
@@ -2403,17 +2409,6 @@ EXTERN void		Tcl_GetMemoryInfo _ANSI_ARGS_((Tcl_DString *dsPtr));
 
 #ifndef TCL_NO_DEPRECATED
     /*
-     * Deprecated Tcl functions:
-     */
-
-#   undef  Tcl_EvalObj
-#   define Tcl_EvalObj(interp,objPtr) \
-	Tcl_EvalObjEx((interp),(objPtr),0)
-#   undef  Tcl_GlobalEvalObj
-#   define Tcl_GlobalEvalObj(interp,objPtr) \
-	Tcl_EvalObjEx((interp),(objPtr),TCL_EVAL_GLOBAL)
-
-    /*
      * These function have been renamed. The old names are deprecated, but we
      * define these macros for backwards compatibilty.
      */
@@ -2446,9 +2441,6 @@ EXTERN int		Tcl_AppInit _ANSI_ARGS_((Tcl_Interp *interp));
 /*
  * end block for C++
  */
-
-/* quell shadow warnings */
-#undef index
 
 #ifdef __cplusplus
 }

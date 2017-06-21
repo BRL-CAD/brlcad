@@ -185,24 +185,7 @@ ENDIF(SC_ENABLE_TESTING)
 # Documentation of these options is available at
 # http://www.cmake.org/Wiki/CMake_RPATH_handling
 
-# use, i.e. don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-
-# the RPATH/INSTALL_NAME_DIR to be used when installing
-if (NOT APPLE)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
-endif(NOT APPLE)
-# On OSX, we need to set INSTALL_NAME_DIR instead of RPATH
-# http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
-set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
-
-# add the automatically determined parts of the RPATH which point to
-# directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake)
 
 #-----------------------------------------------------------------------------
 # Output directories.

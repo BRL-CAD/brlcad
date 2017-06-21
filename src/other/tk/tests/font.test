@@ -5,8 +5,6 @@
 # Copyright (c) 1996-1998 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -17,9 +15,28 @@ toplevel .b
 wm geom .b +0+0
 update idletasks
 
+set defaultfontlist [font names]
+
+proc getnondefaultfonts {} {
+    global defaultfontlist
+    set nondeffonts [list ]
+    foreach afont [font names] {
+        if {$afont ni $defaultfontlist} {
+            lappend nondeffonts $afont
+        }
+    }
+    set nondeffonts
+}
+
+proc clearnondefaultfonts {} {
+    foreach afont [getnondefaultfonts] {
+        font delete $afont
+    }
+}
+
 proc setup {} {
     catch {destroy .b.f}
-    catch {eval font delete [font names]}
+    clearnondefaultfonts
     label .b.f 
     pack .b.f
     update
@@ -48,10 +65,9 @@ proc csetup {{str ""}} {
 
 setup
 
-case [tk windowingsystem] {
+switch [tk windowingsystem] {
     x11	 	{set fixed "fixed"}
     win32	{set fixed "courier 12"}
-    classic -
     aqua	{set fixed "monaco 9"}
 }
 
@@ -196,20 +212,20 @@ test font-6.1 {font command: create: make up name} {
     # (objc < 3) so name = NULL
     setup
     font create
-    font names
-} {font1}
+    expr {"font1" in [font names]}
+} {1}
 test font-6.2 {font command: create: name specified} {
     # not (objc < 3)
     setup
     font create xyz
-    font names
-} {xyz}
+    expr {"xyz" in [font names]}
+} {1}
 test font-6.3 {font command: create: name not really specified} {
     # (name[0] == '-') so name = NULL
     setup
     font create -family xyz
-    font names
-} {font1}
+    expr {"font1" in [font names]}
+} {1}
 test font-6.4 {font command: create: generate name} {
     # (name == NULL)
     setup
@@ -250,9 +266,9 @@ test font-7.2 {font command: delete: loop test} {
     font create c -underline 1
     font create d -underline 1
     font create e -underline 1
-    lappend x [lsort [font names]]
+    lappend x [lsort [getnondefaultfonts]]
     font delete a e c b
-    lappend x [lsort [font names]]
+    lappend x [lsort [getnondefaultfonts]]
 } {{a b c d e} d}
 test font-7.3 {font command: delete: loop test} {
     # (namedHashPtr == NULL) in middle of loop
@@ -263,9 +279,9 @@ test font-7.3 {font command: delete: loop test} {
     font create c -underline 1
     font create d -underline 1
     font create e -underline 1
-    lappend x [lsort [font names]]
+    lappend x [lsort [getnondefaultfonts]]
     catch {font delete a d q c e b}
-    lappend x [lsort [font names]]
+    lappend x [lsort [getnondefaultfonts]]
 } {{a b c d e} {b c e}}
 test font-7.4 {font command: delete: non-existent} {
     # (namedHashPtr == NULL) 
@@ -385,19 +401,19 @@ test font-11.1 {font command: names: arguments} {
 } {1 {wrong # args: should be "font names"}}
 test font-11.2 {font command: names: loop test: no passes} {
     setup
-    font names
+    getnondefaultfonts
 } {}
 test font-11.3 {font command: names: loop test: one pass} {
     setup
     font create
-    font names
+    getnondefaultfonts
 } {font1}
 test font-11.4 {font command: names: loop test: multiple passes} {
     setup
     font create xyz
     font create abc
     font create def
-    lsort [font names]
+    lsort [getnondefaultfonts]
 } {abc def xyz}
 test font-11.5 {font command: names: skip deletePending fonts} {
     # (nfPtr->deletePending == 0)
@@ -405,10 +421,10 @@ test font-11.5 {font command: names: skip deletePending fonts} {
     set x {}
     font create xyz
     font create abc
-    lappend x [lsort [font names]]
+    lappend x [lsort [getnondefaultfonts]]
     .b.f config -font xyz
     font delete xyz
-    lappend x [font names]
+    lappend x [getnondefaultfonts]
 } {{abc xyz} abc}
 
 test font-12.1 {UpdateDependantFonts procedure: no users} {
@@ -435,9 +451,9 @@ test font-13.1 {CreateNamedFont: new named font} {
     # not (new == 0)
     setup
     set x {}
-    lappend x [font names]
+    lappend x [getnondefaultfonts]
     font create xyz
-    lappend x [font names]
+    lappend x [getnondefaultfonts]
 } {{} xyz}
 test font-13.2 {CreateNamedFont: named font already exists} {
     # (new == 0)
@@ -589,8 +605,8 @@ test font-17.4 {Tk_FreeFont procedure: named font} {
     font create xyz
     .b.f config -font xyz
     destroy .b.f
-    font names
-} {xyz}
+    expr {"xyz" in [font names]}
+} {1}
 test font-17.5 {Tk_FreeFont procedure: named font} {
     # not (fontPtr->refCount == 0) 
     setup
@@ -813,7 +829,7 @@ test font-24.10 {Tk_ComputeTextLayout: tab caused break} {
     lappend x [getsize]
     .b.l config -wrap 0
     set x
-} "{[expr $ax*3] $ay} {[expr $ax*3] [expr $ay*2]}"
+} "{[expr $ax*8] $ay} {[expr $ax*8] [expr $ay*2]}"
 test font-24.11 {Tk_ComputeTextLayout: absorb spaces at eol} {
     set x {}
     .b.l config -text "000            000" -wrap [expr $ax*5]
@@ -1146,6 +1162,7 @@ test font-33.1 {Tk_TextWidth procedure} {
 
 test font-34.1 {ConfigAttributesObj procedure: arguments} {
     # (Tcl_GetIndexFromObj() != TCL_OK)
+    set x {}
     setup
     list [catch {font create xyz -xyz} msg] $msg
 } {1 {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}}
@@ -1382,6 +1399,17 @@ test font-46.5 {font actual, too many chars} {
 setup
 
 destroy .b
+
+test font-47.1 {Bug f214b8ad5b} -body {
+    interp create one
+    interp create two
+    load {} Tk one
+    load {} Tk two
+    one eval menu .menubar
+    two eval menu .menubar
+    interp delete one
+    interp delete two
+} -result {}
 
 # cleanup
 cleanupTests

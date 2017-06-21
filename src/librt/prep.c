@@ -44,7 +44,7 @@
 
 extern void rt_ck(struct rt_i *rtip);
 
-HIDDEN void rt_solid_bitfinder(const union tree_rpn *rtree, size_t rlen, struct soltab **solids, size_t nsolids, struct region *regp);
+HIDDEN void rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
 
 
 /* XXX Need rt_init_rtg(), rt_clean_rtg() */
@@ -273,6 +273,33 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     }
     RT_CK_RESOURCE(resp);
 
+    /* Build array of region pointers indexed by reg_bit.  Optimize
+     * each region's expression tree.  Set this region's bit in the
+     * bit vector of every solid contained in the subtree.
+     */
+    rtip->Regions = (struct region **)bu_calloc(rtip->nregions, sizeof(struct region *), "rtip->Regions[]");
+    if (RT_G_DEBUG&DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d) about to optimize regions\n",
+					 rtip->rti_dbip->dbi_filename,
+					 rtip->rti_dbip->dbi_uses);
+    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+	/* Ensure bit numbers are unique */
+	BU_ASSERT(rtip->Regions[regp->reg_bit] == REGION_NULL);
+	rtip->Regions[regp->reg_bit] = regp;
+	rt_optim_tree(regp->reg_treetop, resp);
+	rt_solid_bitfinder(regp->reg_treetop, regp, resp);
+	if (RT_G_DEBUG&DEBUG_REGIONS) {
+	    db_ck_tree(regp->reg_treetop);
+	    rt_pr_region(regp);
+	}
+    }
+    if (RT_G_DEBUG&DEBUG_REGIONS) {
+	bu_log("rt_prep_parallel() printing primitives' region pointers\n");
+	RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
+	    bu_log("solid %s ", stp->st_name);
+	    bu_pr_ptbl("st_regions", &stp->st_regions, 1);
+	} RT_VISIT_ALL_SOLTABS_END;
+    }
+
     /* Space for array of soltab pointers indexed by solid bit number.
      * Include enough extra space for an extra bitv_t's worth of bits,
      * to handle round-up.
@@ -296,54 +323,10 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	    bu_log("2nd soltab also claiming that bit is (st_rtip=%p):\n", (void *)stp->st_rtip);
 	    rt_pr_soltab(stp);
 	}
-	BU_ASSERT_PTR(*ssp, ==, SOLTAB_NULL);
+	BU_ASSERT(*ssp == SOLTAB_NULL);
 	*ssp = stp;
 	rtip->rti_nsol_by_type[stp->st_id]++;
     } RT_VISIT_ALL_SOLTABS_END;
-
-    /* Build array of region pointers indexed by reg_bit.  Optimize
-     * each region's expression tree.  Set this region's bit in the
-     * bit vector of every solid contained in the subtree.
-     */
-    rtip->Regions = (struct region **)bu_calloc(rtip->nregions, sizeof(struct region *), "rtip->Regions[]");
-    if (RT_G_DEBUG&DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d) about to optimize regions\n",
-					 rtip->rti_dbip->dbi_filename,
-					 rtip->rti_dbip->dbi_uses);
-    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-	size_t rlen;
-
-	/* Ensure bit numbers are unique */
-	BU_ASSERT_PTR(rtip->Regions[regp->reg_bit], ==, REGION_NULL);
-	rtip->Regions[regp->reg_bit] = regp;
-	rt_optim_tree(regp->reg_treetop, resp);
-
-	rlen = 0;
-	rt_tree_rpn(NULL, regp->reg_treetop, &rlen);
-	regp->reg_rtree = (union tree_rpn*)bu_malloc(rlen*sizeof(union tree_rpn),"region rtree");
-	regp->reg_nrtree = 0;
-	rt_tree_rpn(regp->reg_rtree, regp->reg_treetop, &regp->reg_nrtree);
-
-	if (RT_G_DEBUG&DEBUG_REGIONS) {
-	    rt_pr_rtree(regp->reg_rtree, regp->reg_nrtree);
-	    rt_pr_tree_val(regp->reg_treetop, NULL, 2, 0);
-	}
-
-	rt_solid_bitfinder(regp->reg_rtree, regp->reg_nrtree,
-			   rtip->rti_Solids, rtip->nsolids, regp);
-
-	if (RT_G_DEBUG&DEBUG_REGIONS) {
-	    db_ck_tree(regp->reg_treetop);
-	    rt_pr_region(regp);
-	}
-    }
-
-    if (RT_G_DEBUG&DEBUG_REGIONS) {
-	bu_log("rt_prep_parallel() printing primitives' region pointers\n");
-	RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
-	    bu_log("solid %s ", stp->st_name);
-	    bu_pr_ptbl("st_regions", &stp->st_regions, 1);
-	} RT_VISIT_ALL_SOLTABS_END;
-    }
 
     /* Find solid type with maximum length (for rt_shootray) */
     rtip->rti_maxsol_by_type = 0;
@@ -671,7 +654,7 @@ rt_plot_solid(
 		 (int)(255*regp->reg_mater.ma_color[2]));
     }
 
-    rt_vlist_to_uplot(fp, &vhead);
+    bn_vlist_to_uplot(fp, &vhead);
 
     RT_FREE_VLIST(&vhead);
     return 0;			/* OK */
@@ -686,8 +669,8 @@ rt_init_resource(struct resource *resp,
     if (!resp)
 	return;
 
-    BU_ASSERT_LONG(cpu_num, >=, 0);
-    BU_ASSERT_LONG(cpu_num, <, MAX_PSW);
+    BU_ASSERT(cpu_num >= 0);
+    BU_ASSERT(cpu_num < MAX_PSW);
 
     if (rtip)
 	RT_CK_RTI(rtip);
@@ -697,7 +680,7 @@ rt_init_resource(struct resource *resp,
     } else {
 	if (rtip != NULL && rtip->rti_treetop) {
 	    /* this is a submodel */
-	    BU_ASSERT_LONG(cpu_num, <, (long)rtip->rti_resources.blen);
+	    BU_ASSERT(cpu_num < (long)rtip->rti_resources.blen);
 	}
     }
 
@@ -725,8 +708,10 @@ rt_init_resource(struct resource *resp,
     if (!BU_LIST_IS_INITIALIZED(&resp->re_region_ptbl))
 	BU_LIST_INIT(&resp->re_region_ptbl);
 
-    if (!BU_LIST_IS_INITIALIZED(&resp->re_nmgfree))
-	BU_LIST_INIT(&resp->re_nmgfree);
+    /* transitioning to using a global independent of the librt
+     * structures as an intermediate step during lib refactoring */
+    if (!BU_LIST_IS_INITIALIZED(&re_nmgfree))
+	BU_LIST_INIT(&re_nmgfree);
 
     resp->re_boolstack = NULL;
     resp->re_boolslen = 0;
@@ -780,14 +765,14 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
     }
 
     /* The "struct hitmiss' guys are individually malloc()ed */
-    if (BU_LIST_IS_INITIALIZED(&resp->re_nmgfree)) {
+    if (BU_LIST_IS_INITIALIZED(&re_nmgfree)) {
 	struct hitmiss *hitp;
-	while (BU_LIST_WHILE(hitp, hitmiss, &resp->re_nmgfree)) {
+	while (BU_LIST_WHILE(hitp, hitmiss, &re_nmgfree)) {
 	    NMG_CK_HITMISS(hitp);
 	    BU_LIST_DEQUEUE((struct bu_list *)hitp);
 	    bu_free((void *)hitp, "struct hitmiss");
 	}
-	resp->re_nmgfree.forw = BU_LIST_NULL;
+	re_nmgfree.forw = BU_LIST_NULL;
     }
 
     /* The 'struct partition' guys are individually malloc()ed */
@@ -983,8 +968,6 @@ rt_clean(register struct rt_i *rtip)
 	RT_CK_REGION(regp);
 	BU_LIST_DEQUEUE(&(regp->l));
 	db_free_tree(regp->reg_treetop, &rt_uniresource);
-	bu_free(regp->reg_rtree, "region rtree");
-	regp->reg_nrtree = 0;
 	bu_free((void *)regp->reg_name, "region name str");
 	regp->reg_name = (char *)0;
 	if (regp->reg_mater.ma_shader) {
@@ -1160,14 +1143,14 @@ rt_del_regtree(struct rt_i *rtip, register struct region *delregp, struct resour
  * region bits have been assigned.
  */
 HIDDEN void
-rt_solid_bitfinder(const union tree_rpn *rtree, size_t rlen,
-		   struct soltab **solids, size_t nsolids, struct region *regp)
+rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp)
 {
-    struct soltab *stp;
-    long st_bit;
-    size_t i;
+    register union tree **sp;
+    register struct soltab *stp;
+    register union tree **stackend;
 
     RT_CK_REGION(regp);
+    RT_CK_RESOURCE(resp);
 
     while ((sp = resp->re_boolstack) == (union tree **)0)
 	rt_bool_growstack(resp);
@@ -1808,26 +1791,12 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
     rtip->needprep = 0;
 
-    if (rtip->nsolids > objs->old_nsolids) {
-	rtip->rti_Solids = (struct soltab **)bu_realloc(rtip->rti_Solids,
-							rtip->nsolids * sizeof(struct soltab *),
-							"rtip->rti_Solids");
-	memset(rtip->rti_Solids, 0, rtip->nsolids * sizeof(struct soltab *));
-    }
-
-    bitno = 0;
-    RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
-	stp->st_bit = bitno;
-	rtip->rti_Solids[bitno] = stp;
-	bitno++;
-    } RT_VISIT_ALL_SOLTABS_END;
-
-
     if (rtip->nregions > objs->old_nregions) {
 	rtip->Regions = (struct region **)bu_realloc(rtip->Regions,
 						     rtip->nregions * sizeof(struct region *), "rtip->Regions");
 	memset(rtip->Regions, 0, rtip->nregions);
     }
+
 
     bitno = 0;
     for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
@@ -1846,12 +1815,25 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 		VMINMAX(rtip->mdl_min, rtip->mdl_max, region_min);
 		VMINMAX(rtip->mdl_min, rtip->mdl_max, region_max);
 	    }
-	    rt_solid_bitfinder(rp->reg_rtree, rp->reg_nrtree,
-			       rtip->rti_Solids, rtip->nsolids, rp);
+	    rt_solid_bitfinder(rp->reg_treetop, rp, resp);
 	}
 	bitno++;
     }
 
+    if (rtip->nsolids > objs->old_nsolids) {
+	rtip->rti_Solids = (struct soltab **)bu_realloc(rtip->rti_Solids,
+							rtip->nsolids * sizeof(struct soltab *),
+							"rtip->rti_Solids");
+	memset(rtip->rti_Solids, 0, rtip->nsolids * sizeof(struct soltab *));
+    }
+
+    bitno = 0;
+    RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
+	stp->st_bit = bitno;
+	rtip->rti_Solids[bitno] = stp;
+	bitno++;
+
+    } RT_VISIT_ALL_SOLTABS_END;
 
     for (i=0; i<BU_PTBL_LEN(&rtip->rti_new_solids); i++) {
 	stp = (struct soltab *)BU_PTBL_GET(&rtip->rti_new_solids, i);

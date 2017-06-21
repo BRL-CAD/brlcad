@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -528,7 +526,7 @@ CopyRenameOneFile(
 	 * 16 bits and we get collisions. See bug #2015723.
 	 */
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__CYGWIN__)
 	if ((sourceStatBuf.st_ino != 0) && (targetStatBuf.st_ino != 0)) {
 	    if ((sourceStatBuf.st_ino == targetStatBuf.st_ino) &&
 		    (sourceStatBuf.st_dev == targetStatBuf.st_dev)) {
@@ -744,17 +742,14 @@ CopyRenameOneFile(
 	     */
 
 	    errfile = target;
-
-	    /*
-	     * We now need to reset the result, because the above call, if it
-	     * failed, may have put an error message in place. (Ideally we
-	     * would prefer not to pass an interpreter in above, but the
-	     * channel IO code used by TclCrossFilesystemCopy currently
-	     * requires one).
-	     */
-
-	    Tcl_ResetResult(interp);
 	}
+	/*
+	 * We now need to reset the result, because the above call,
+	 * may have left set it.  (Ideally we would prefer not to pass
+	 * an interpreter in above, but the channel IO code used by
+	 * TclCrossFilesystemCopy currently requires one)
+	 */
+	Tcl_ResetResult(interp);
     }
     if ((copyFlag == 0) && (result == TCL_OK)) {
 	if (S_ISDIR(sourceStatBuf.st_mode)) {
@@ -952,7 +947,7 @@ TclFileAttrsCmd(
     int result;
     CONST char ** attributeStrings;
     Tcl_Obj* objStrings = NULL;
-    int numObjStrings = -1;
+    int numObjStrings = -1, didAlloc = 0;
     Tcl_Obj *filePtr;
 
     if (objc < 3) {
@@ -985,9 +980,8 @@ TclFileAttrsCmd(
 		Tcl_AppendResult(interp, "could not read \"",
 			TclGetString(filePtr), "\": ", Tcl_PosixError(interp),
 			NULL);
-		return TCL_ERROR;
 	    }
-	    goto end;
+	    return TCL_ERROR;
 	}
 
 	/*
@@ -1005,12 +999,16 @@ TclFileAttrsCmd(
 	}
 	attributeStrings = (CONST char **) TclStackAlloc(interp,
 		(1+numObjStrings) * sizeof(char*));
+	didAlloc = 1;
 	for (index = 0; index < numObjStrings; index++) {
 	    Tcl_ListObjIndex(interp, objStrings, index, &objPtr);
 	    attributeStrings[index] = TclGetString(objPtr);
 	}
 	attributeStrings[index] = NULL;
+    } else if (objStrings != NULL) {
+	Tcl_Panic("must not update objPtrRef's variable and return non-NULL");
     }
+
     if (objc == 0) {
 	/*
 	 * Get all attributes.
@@ -1071,6 +1069,10 @@ TclFileAttrsCmd(
 		"option", 0, &index) != TCL_OK) {
 	    goto end;
 	}
+	if (didAlloc) {
+	    TclFreeIntRep(objv[0]);
+	    objv[0]->typePtr = NULL;
+	}
 	if (Tcl_FSFileAttrsGet(interp, index, filePtr,
 		&objPtr) != TCL_OK) {
 	    goto end;
@@ -1095,6 +1097,10 @@ TclFileAttrsCmd(
 		    "option", 0, &index) != TCL_OK) {
 		goto end;
     	    }
+	    if (didAlloc) {
+		TclFreeIntRep(objv[i]);
+		objv[i]->typePtr = NULL;
+	    }
 	    if (i + 1 == objc) {
 		Tcl_AppendResult(interp, "value for \"",
 			TclGetString(objv[i]), "\" missing", NULL);
@@ -1109,20 +1115,20 @@ TclFileAttrsCmd(
     result = TCL_OK;
 
   end:
-    if (numObjStrings != -1) {
+    if (didAlloc) {
 	/*
 	 * Free up the array we allocated.
 	 */
 
 	TclStackFree(interp, (void *)attributeStrings);
+    }
 
+    if (objStrings != NULL) {
 	/*
 	 * We don't need this object that was passed to us any more.
 	 */
 
-	if (objStrings != NULL) {
-	    Tcl_DecrRefCount(objStrings);
-	}
+	Tcl_DecrRefCount(objStrings);
     }
     return result;
 }

@@ -60,7 +60,7 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
     some_time = (Time64_T)time_val;
     if (some_time == (Time64_T)(-1)) {
 	/* time error: but set something, an invalid "NULL" time. */
-	bu_vls_sprintf(vls_gmtime, nulltime);
+	bu_vls_sprintf(vls_gmtime, "%s", nulltime);
 	return;
     }
 
@@ -76,7 +76,7 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 
     if (fail) {
 	/* time error: but set something, an invalid "NULL" time. */
-	bu_vls_sprintf(vls_gmtime, nulltime);
+	bu_vls_sprintf(vls_gmtime, "%s", nulltime);
 	return;
     }
 

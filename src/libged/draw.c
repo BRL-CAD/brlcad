@@ -776,7 +776,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				return GED_ERROR;
 			    }
 			} else {
-			    bu_vls_printf(gedp->ged_result_str, "-L requires an option\n", c);
+			    bu_vls_printf(gedp->ged_result_str, "-L requires an option\n");
 			    --drawtrees_depth;
 			    return GED_ERROR;
 			}

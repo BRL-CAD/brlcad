@@ -12,8 +12,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -35,7 +33,7 @@ test iocmd-1.2 {puts command} {
 } {1 {wrong # args: should be "puts ?-nonewline? ?channelId? string"}}
 test iocmd-1.3 {puts command} {
    list [catch {puts froboz -nonewline kablooie} msg] $msg
-} {1 {bad argument "kablooie": should be "nonewline"}}
+} {1 {wrong # args: should be "puts ?-nonewline? ?channelId? string"}}
 test iocmd-1.4 {puts command} {
    list [catch {puts froboz hello} msg] $msg
 } {1 {can not find channel named "froboz"}}
@@ -138,7 +136,7 @@ test iocmd-4.8 {read command with incorrect combination of arguments} {
 } {1 {wrong # args: should be "read channelId ?numChars?" or "read ?-nonewline? channelId"} NONE}
 test iocmd-4.9 {read command} {
     list [catch {read stdin foo} msg] $msg $::errorCode
-} {1 {bad argument "foo": should be "nonewline"} NONE}
+} {1 {expected integer but got "foo"} {TCL VALUE NUMBER}}
 test iocmd-4.10 {read command} {
     list [catch {read file107} msg] $msg $::errorCode
 } {1 {can not find channel named "file107"} {TCL LOOKUP CHANNEL file107}}
@@ -155,7 +153,7 @@ test iocmd-4.12 {read command} {
     set x [list [catch {read $f 12z} msg] $msg $::errorCode]
     close $f
     set x
-} {1 {expected integer but got "12z"} NONE}
+} {1 {expected integer but got "12z"} {TCL VALUE NUMBER}}
 
 test iocmd-5.1 {seek command} {
     list [catch {seek} msg] $msg
@@ -757,6 +755,90 @@ test iocmd-21.19 {chan create, init failure -> no channel, no finalize} -match g
     rename foo {}
     set res
 } -result {{} {initialize rc* {read write}} 1 {*all required methods*} {}}
+test iocmd-21.20 {Bug 88aef05cda} -setup {
+    proc foo {method chan args} {
+	switch -- $method blocking {
+	    chan configure $chan -blocking [lindex $args 0]
+	    return
+	} initialize {
+	    return {initialize finalize watch blocking read write
+		    configure cget cgetall}
+	} finalize {
+	    return
+	}
+    }
+    set ch [chan create {read write} foo]
+} -body {
+    list [catch {chan configure $ch -blocking 0} m] $m
+} -cleanup {
+    close $ch
+    rename foo {}
+} -match glob -result {1 {*nested eval*}}
+test iocmd-21.21 {[close] in [read] segfaults} -setup {
+    proc foo {method chan args} {
+	switch -- $method initialize {
+	    return {initialize finalize watch read}
+	} finalize {} watch {} read {
+	    close $chan
+	    return a
+	}
+    }
+    set ch [chan create read foo]
+} -body {
+    read $ch 0
+} -cleanup {
+    close $ch
+    rename foo {}
+} -result {}
+test iocmd-21.22 {[close] in [read] segfaults} -setup {
+    proc foo {method chan args} {
+	switch -- $method initialize {
+	    return {initialize finalize watch read}
+	} finalize {} watch {} read {
+	    catch {close $chan}
+	    return a
+	}
+    }
+    set ch [chan create read foo]
+} -body {
+    read $ch 1
+} -returnCodes error -cleanup {
+    catch {close $ch}
+    rename foo {}
+} -match glob -result {*invalid argument*}
+test iocmd-21.23 {[close] in [gets] segfaults} -setup {
+    proc foo {method chan args} {
+	switch -- $method initialize {
+	    return {initialize finalize watch read}
+	} finalize {} watch {} read {
+	    catch {close $chan}
+	    return \n
+	}
+    }
+    set ch [chan create read foo]
+} -body {
+    gets $ch
+} -cleanup {
+    catch {close $ch}
+    rename foo {}
+} -result {}
+test iocmd-21.24 {[close] in binary [gets] segfaults} -setup {
+    proc foo {method chan args} {
+	switch -- $method initialize {
+	    return {initialize finalize watch read}
+	} finalize {} watch {} read {
+	    catch {close $chan}
+	    return \n
+	}
+    }
+    set ch [chan create read foo]
+} -body {
+    chan configure $ch -translation binary
+    gets $ch
+} -cleanup {
+    catch {close $ch}
+    rename foo {}
+} -result {}
 
 # --- --- --- --------- --------- ---------
 # Helper commands to record the arguments to handler methods.
@@ -1015,6 +1097,20 @@ test iocmd-23.10 {chan read, EAGAIN means no data, yet no eof either} -match glo
     rename foo {}
     unset res
 } -result {{read rc* 4096} {} 0}
+test iocmd-23.11 {chan read, close pulls the rug out} -match glob -body {
+    set res {}
+    proc foo {args} {
+	oninit; onfinal; track
+	set args [lassign $args sub id]
+	if {$sub ne "read"} {return}
+	close $id
+	return {}
+    }
+    set c [chan create {r} foo]
+    note [read $c]
+    rename foo {}
+    set res
+} -result {{read rc* 4096} {}}
 
 # --- === *** ###########################
 # method write
@@ -1942,13 +2038,13 @@ test iocmd-32.1 {origin interpreter of moved channel destroyed during access} -m
 	proc foo {args} {
 	    oninit; onfinal; track;
 	    # destroy interpreter during channel access
-	    # Actually not possible for an interp to destory itself.
-	    interp delete {}
-	    return}
+	    suicide
+	}
 	set chan [chan create {r w} foo]
 	fconfigure $chan -buffering none
 	set chan
     }]
+    interp alias $ida suicide {} interp delete $ida
 
     # Move channel to 2nd thread.
     interp eval $ida [list testchannel cut    $chan]
@@ -1967,8 +2063,7 @@ test iocmd-32.1 {origin interpreter of moved channel destroyed during access} -m
 	set res
     }]
     set res
-} -constraints {testchannel impossible} \
-    -result {Owner lost}
+} -constraints {testchannel} -result {Owner lost}
 
 test iocmd-32.2 {delete interp of reflected chan} {
     # Bug 3034840

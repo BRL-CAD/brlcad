@@ -13,8 +13,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -822,11 +820,7 @@ Tcl_SetMaxBlockTime(
      */
 
     if (!tsdPtr->inTraversal) {
-	if (tsdPtr->blockTimeSet) {
-	    Tcl_SetTimer(&tsdPtr->blockTime);
-	} else {
-	    Tcl_SetTimer(NULL);
-	}
+	Tcl_SetTimer(&tsdPtr->blockTime);
     }
 }
 

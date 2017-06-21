@@ -8,8 +8,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -311,20 +309,21 @@ test unixFCmd-17.4 {SetPermissionsAttribute} {unix notRoot} {
 
 close [open foo.test w]
 set ::i 4
-proc permcheck {testnum permstr expected} {
+proc permcheck {testnum permList expected} {
     test $testnum {SetPermissionsAttribute} {unix notRoot} {
+      set result {}
+      foreach permstr $permList {
 	file attributes foo.test -permissions $permstr
-	file attributes foo.test -permissions
+	lappend result [file attributes foo.test -permissions]
+      }
+      set result
     } $expected
 }
 permcheck unixFCmd-17.5   rwxrwxrwx	00777
 permcheck unixFCmd-17.6   r--r---w-	00442
-permcheck unixFCmd-17.7   0		00000
-permcheck unixFCmd-17.8   u+rwx,g+r	00740
-permcheck unixFCmd-17.9   u-w		00540
-permcheck unixFCmd-17.10   o+rwx	00547
+permcheck unixFCmd-17.7   {0 u+rwx,g+r u-w o+rwx} {00000 00740 00540 00547}
 permcheck unixFCmd-17.11  --x--x--x	00111
-permcheck unixFCmd-17.12  a+rwx		00777
+permcheck unixFCmd-17.12  {0 a+rwx} {00000 00777}
 file delete -force -- foo.test
 
 test unixFCmd-18.1 {Unix pwd} {nonPortable unix notRoot} {

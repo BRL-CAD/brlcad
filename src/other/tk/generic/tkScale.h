@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TKSCALE
@@ -220,12 +218,6 @@ typedef struct TkScale {
  */
 
 #define SPACING 2
-
-/*
- * How many characters of space to provide when formatting the scale's value:
- */
-
-#define PRINT_CHARS 150
 
 /*
  * Declaration of procedures used in the implementation of the scale widget.
