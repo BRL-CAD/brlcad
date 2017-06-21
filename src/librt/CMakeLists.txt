@@ -13,7 +13,7 @@ set(RT_INCLUDE_DIRS
 
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
-  set(RT_INCLUDE_DIRS ${RT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS})
+  set(RT_INCLUDE_DIRS ${RT_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS})
 endif (BRLCAD_ENABLE_OPENCL)
 
 # locally used but not needed by users of the library
@@ -326,7 +326,7 @@ else(MSVC)
 endif(MSVC)
 
 if(BRLCAD_ENABLE_OPENCL)
-  set(OPENCL_LIBS ${OPENCL_LIBRARIES})
+  set(OPENCL_LIBS ${OpenCL_LIBRARIES})
 endif(BRLCAD_ENABLE_OPENCL)
 
 if(BRLCAD_ENABLE_SPR)
