@@ -625,6 +625,45 @@ out:
 }
 
 
+/**
+ * Produce representations of this postfix bool tree.
+ */
+void
+rt_pr_rtree(const union tree_rpn *rtp, size_t rtlen)
+{
+    size_t i;
+
+    bu_log("\npostfix: ");
+    for (i=0; i<rtlen; i++) {
+	switch (rtp[i].uop) {
+	    case UOP_NOP:
+		bu_log("NOP");
+		break;
+
+	    case UOP_UNION:
+		bu_log("%c", DB_OP_UNION);
+		break;
+	    case UOP_INTERSECT:
+		bu_log("%c", DB_OP_INTERSECT);
+		break;
+	    case UOP_SUBTRACT:
+		bu_log("%c", DB_OP_SUBTRACT);
+		break;
+	    case UOP_XOR:
+		bu_log("XOR");
+		break;
+
+	    default:
+		bu_log("%ld", rtp[i].st_bit);
+		break;
+	}
+	if (i != rtlen-1)
+	    bu_log(" ");
+    }
+    bu_log("\n");
+}
+
+
 void
 rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angles)
 {

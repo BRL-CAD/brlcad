@@ -45,6 +45,8 @@ struct region {
     struct bu_list      l;              /**< @brief magic # and doubly linked list */
     const char *        reg_name;       /**< @brief Identifying string */
     union tree *        reg_treetop;    /**< @brief Pointer to boolean tree */
+    union tree_rpn *	reg_rtree;	/**< @brief Pointer to boolean tree in RPN */
+    size_t		reg_nrtree;	/**< @brief number of elements in rtree */
     int                 reg_bit;        /**< @brief constant index into Regions[] */
     int                 reg_regionid;   /**< @brief Region ID code.  If <=0, use reg_aircode */
     int                 reg_aircode;    /**< @brief Region ID AIR code */
