@@ -44,22 +44,7 @@ PROJECT(VDS)
 # the build directory AND install directory.  Thanks to plplot for
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 
-# use, i.e. don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-
-# the RPATH/INSTALL_NAME_DIR to be used when installing
-if (NOT APPLE)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
-endif(NOT APPLE)
-set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
-
-# add the automatically determined parts of the RPATH which point to
-# directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+include(${CMAKE_CURRENT_SOURCE_DIR}/RPath_Setup.cmake)
 
 #---------------------------------------------------------------------
 # Output directories - this is where built library and executable

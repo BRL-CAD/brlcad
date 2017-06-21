@@ -103,22 +103,7 @@ ENDIF(WIN32)
 # the build directory AND install directory.  Thanks to plplot for
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 
-# use, i.e. don't skip the full RPATH for the build tree
-SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-
-# the RPATH/INSTALL_NAME_DIR to be used when installing
-if (NOT APPLE)
-  SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
-endif(NOT APPLE)
-SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
-
-# add the automatically determined parts of the RPATH which point to
-# directories outside the build tree to the install RPATH
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake)
 
 #----------------------------------------------------------------------------
 # The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX 
