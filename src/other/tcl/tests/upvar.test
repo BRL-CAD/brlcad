@@ -10,8 +10,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -19,7 +17,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 }
 
 testConstraint testupvar [llength [info commands testupvar]]
-
+
 test upvar-1.1 {reading variables with upvar} {
     proc p1 {a b} {set c 22; set d 33; p2}
     proc p2 {} {upvar a x1 b x2 c x3 d x4; set a abc; list $x1 $x2 $x3 $x4 $a}
@@ -334,7 +332,7 @@ test upvar-8.9 {upvar won't create namespace variable that refers to procedure v
         unset ::test_ns_1::a
     }
     list [catch {MakeLink 1} msg] $msg
-} {1 {bad variable name "a": upvar won't create namespace variable that refers to procedure variable}}
+} {1 {bad variable name "a": can't create namespace variable that refers to procedure variable}}
 test upvar-8.10 {upvar will create element alias for new array element} {
     catch {unset upvarArray}
     array set upvarArray {}
@@ -406,6 +404,17 @@ test upvar-9.7 {Tcl_UpVar procedure} testupvar {
     foo
 } {1234}
 catch {unset a}
+
+test upvar-10.1 {CompileWord OBOE} -setup {
+    proc linenumber {} {dict get [info frame -1] line}
+} -body {
+    apply {n {
+        upvar 1 {*}{
+        } [return [incr n -[linenumber]]] x
+    }} [linenumber]
+} -cleanup {
+    rename linenumber {}
+} -result 1
 
 
 #
@@ -544,7 +553,41 @@ test upvar-NS-1.9 {nsupvar links to correct variable} \
     -returnCodes error \
     -cleanup {namespace delete test_ns_1}
 
-
+test upvar-NS-3.1 {CompileWord OBOE} -setup {
+    proc linenumber {} {dict get [info frame -1] line}
+} -body {
+    apply {n {
+        namespace upvar {*}{
+        } [return [incr n -[linenumber]]] x y
+    }} [linenumber]
+} -cleanup {
+    rename linenumber {}
+} -result 1
+test upvar-NS-3.2 {CompileWord OBOE} -setup {
+    proc linenumber {} {dict get [info frame -1] line}
+} -body {
+    apply {n {
+        namespace upvar :: {*}{
+        } [return [incr n -[linenumber]]] x
+    }} [linenumber]
+} -cleanup {
+    rename linenumber {}
+} -result 1
+test upvar-NS-3.3 {CompileWord OBOE} -setup {
+    proc linenumber {} {dict get [info frame -1] line}
+} -body {
+    apply {n {
+        variable x {*}{
+        } [return [incr n -[linenumber]]]
+    }} [linenumber]
+} -cleanup {
+    rename linenumber {}
+} -result 1
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

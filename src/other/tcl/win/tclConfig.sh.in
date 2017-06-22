@@ -1,5 +1,5 @@
 # tclConfig.sh --
-# 
+#
 # This shell script (for sh) is generated automatically by Tcl's
 # configure script.  It will create shell variables for most of
 # the configuration options discovered by the configure script.
@@ -8,8 +8,6 @@
 # out for themselves.
 #
 # The information in this file is specific to a single platform.
-#
-# RCS: @(#) $Id$
 
 TCL_DLL_FILE="@TCL_DLL_FILE@"
 
@@ -177,6 +175,6 @@ TCL_BUILD_STUB_LIB_PATH='@TCL_BUILD_STUB_LIB_PATH@'
 # Path to the Tcl stub library in the install directory.
 TCL_STUB_LIB_PATH='@TCL_STUB_LIB_PATH@'
 
-# Flag, 1: we built Tcl with threads enables, 0 we didn't
+# Flag, 1: we built Tcl with threads enabled, 0 we didn't
 TCL_THREADS=@TCL_THREADS@
 

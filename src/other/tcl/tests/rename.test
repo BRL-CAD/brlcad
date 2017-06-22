@@ -10,8 +10,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -137,6 +135,13 @@ test rename-4.7 {reentrancy issues with command deletion and renaming} testdel {
 if {[info exists env(value)]} {
     unset env(value)
 }
+test rename-4.8 {Bug a16752c252} testdel {
+    set x broken
+    testdel {} foo {set x ok}
+    proc foo args {}
+    rename foo {}
+    return -level 0 $x[unset x]
+} ok
 
 # Save the unknown procedure which is modified by the following test.
 

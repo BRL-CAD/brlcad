@@ -746,7 +746,7 @@
 
 	* doc/trace.n: minor doc cleanup
 
-2000-09-06  André Pönitz <poenitz@htwm.de>
+2000-09-06  AndrÃ© PÃ¶nitz <poenitz@htwm.de>
 
 	* doc/*.n: added or changed "SEE ALSO:" section
 
@@ -1086,7 +1086,7 @@
 	* unix/tcl.m4 (SC_ENABLE_GCC): Don't set CC=gcc before running
 	AC_PROG_CC if CC is already set.
 
-2000-07-13  André Pönitz <poenitz@mathematik.tu-chemnitz.de>
+2000-07-13  AndrÃ© PÃ¶nitz <poenitz@mathematik.tu-chemnitz.de>
 
 	* doc/lappend.n:
 	* doc/lindex.n:

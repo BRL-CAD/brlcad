@@ -5,8 +5,6 @@
 # Copyright (c) 1994 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -199,13 +197,14 @@ test option-15.3 {database files} appNameIsTktest {option get . x2 color} green
 test option-15.4 {database files} {option get . x3 color} purple
 test option-15.5 {database files} {option get . {x 4} color} brown
 test option-15.6 {database files} {option get . x6 color} {}
-test option-15.7 {database files} {
+test option-15.7 {database files} {option get . x9 color} " \t\\A\n"
+test option-15.8 {database files} {
     list [catch {option read $option1 widget foo} msg] $msg
 } {1 {wrong # args: should be "option readfile fileName ?priority?"}}
 option add *x3 burgundy
 catch {option read $option1 userDefault}
-test option-15.8 {database files} {option get . x3 color} burgundy
-test option-15.9 {database files} {
+test option-15.9 {database files} {option get . x3 color} burgundy
+test option-15.10 {database files} {
     list [catch {option read $option2} msg] $msg
 } {1 {missing colon on line 2}}
 

@@ -42,7 +42,3 @@ int mp_init_size (mp_int * a, int size)
   return MP_OKAY;
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

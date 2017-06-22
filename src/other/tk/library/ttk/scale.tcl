@@ -1,8 +1,6 @@
 # scale.tcl - Copyright (C) 2004 Pat Thoyts <patthoyts@users.sourceforge.net>
 #
 # Bindings for the TScale widget
-#
-# $Id$
 
 namespace eval ttk::scale {
     variable State
@@ -41,7 +39,7 @@ proc ttk::scale::Press {w x y} {
     switch -glob -- [$w identify $x $y] {
 	*track -
         *trough {
-            set inc [expr {([$w get $x $y] <= [$w get]) ? -1 : 1}]
+            set inc [expr {([$w get $x $y] <= [$w get]) ^ ([$w cget -from] > [$w cget -to]) ? -1 : 1}]
             ttk::Repeatedly Increment $w $inc
         }
         *slider {
@@ -86,5 +84,8 @@ proc ttk::scale::Release {w x y} {
 
 proc ttk::scale::Increment {w delta} {
     if {![winfo exists $w]} return
+    if {([$w cget -from] > [$w cget -to])} {
+	set delta [expr {-$delta}]
+    }
     $w set [expr {[$w get] + $delta}]
 }

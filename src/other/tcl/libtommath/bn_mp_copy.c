@@ -62,7 +62,3 @@ mp_copy (mp_int * a, mp_int * b)
   return MP_OKAY;
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

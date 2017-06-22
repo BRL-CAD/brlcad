@@ -2463,7 +2463,7 @@ dmo_logfile_tcl(void *clientData, int argc, const char **argv)
 
     /* get log file */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", bu_vls_addr(&(dmop->dmo_dmp->dm_log)));
+	bu_vls_printf(&vls, "%s", bu_vls_addr(&(dmop->dmo_dmp->dm_log)));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 

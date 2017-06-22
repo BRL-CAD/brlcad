@@ -12,8 +12,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[catch {package require tcltest 2}]} {
     chan puts stderr "Skipping tests in [info script].  tcltest 2 required."
@@ -43,7 +41,7 @@ namespace eval ::tcl::test::io {
 
     # You need a *very* special environment to do some tests.  In
     # particular, many file systems do not support large-files...
-    testConstraint largefileSupport 0
+    testConstraint largefileSupport [expr {$::tcl_platform(os) ne "Darwin"}]
 
     # some tests can only be run is umask is 2
     # if "umask" cannot be run, the tests will be skipped.
@@ -3858,7 +3856,7 @@ test chan-io-32.3 {Tcl_Read, negative byte count} {
     set l [list [catch {chan read $f -1} msg] $msg]
     chan close $f
     set l
-} {1 {bad argument "-1": should be "nonewline"}}
+} {1 {expected non-negative integer but got "-1"}}
 test chan-io-32.4 {Tcl_Read, positive byte count} {
     set f [open $path(longfile) r]
     set x [chan read $f 1024]
@@ -4429,10 +4427,10 @@ test chan-io-34.21 {Tcl_Seek and Tcl_Tell on large files} {largefileSupport} {
     chan puts -nonewline $f abcdef
     lappend l [chan tell $f]
     chan close $f
-    lappend l [file size $f]
+    lappend l [file size $path(test3)]
     # truncate...
     chan close [open $path(test3) w]
-    lappend l [file size $f]
+    lappend l [file size $path(test3)]
     set l
 } {0 6 6 4294967296 4294967302 4294967302 0}
 

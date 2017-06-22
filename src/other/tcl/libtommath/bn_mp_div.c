@@ -286,7 +286,3 @@ LBL_Q:mp_clear (&q);
 #endif
 
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

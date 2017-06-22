@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "default.h"
@@ -25,7 +23,7 @@
  * a whole is not.
  */
 
-static char *wrapStrings[] = {
+static const char *wrapStrings[] = {
     "char", "none", "word", "", NULL
 };
 
@@ -36,7 +34,7 @@ static char *wrapStrings[] = {
  * widget as a whole is not.
  */
 
-static char *tabStyleStrings[] = {
+static const char *tabStyleStrings[] = {
     "tabular", "wordprocessor", "", NULL
 };
 
@@ -46,11 +44,11 @@ static const Tk_OptionSpec tagOptionSpecs[] = {
     {TK_OPTION_BITMAP, "-bgstipple", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, bgStipple), TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_PIXELS, "-borderwidth", NULL, NULL,
-	"0", Tk_Offset(TkTextTag, borderWidthPtr), Tk_Offset(TkTextTag, borderWidth),
-	TK_OPTION_DONT_SET_DEFAULT|TK_OPTION_NULL_OK, 0, 0},
+	NULL, Tk_Offset(TkTextTag, borderWidthPtr), Tk_Offset(TkTextTag, borderWidth),
+	TK_OPTION_NULL_OK|TK_OPTION_DONT_SET_DEFAULT, 0, 0},
     {TK_OPTION_STRING, "-elide", NULL, NULL,
-	"0", -1, Tk_Offset(TkTextTag, elideString),
-	TK_OPTION_DONT_SET_DEFAULT|TK_OPTION_NULL_OK, 0, 0},
+	NULL, -1, Tk_Offset(TkTextTag, elideString),
+	TK_OPTION_NULL_OK|TK_OPTION_DONT_SET_DEFAULT, 0, 0},
     {TK_OPTION_BITMAP, "-fgstipple", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, fgStipple), TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_FONT, "-font", NULL, NULL,
@@ -171,6 +169,14 @@ TkTextTagCmd(
 	    return TCL_ERROR;
 	}
 	tagPtr = TkTextCreateTag(textPtr, Tcl_GetString(objv[3]), NULL);
+	if (tagPtr->elide) {
+		/*
+		* Indices are potentially obsolete after adding or removing
+		* elided character ranges, especially indices having "display"
+		* or "any" submodifier, therefore increase the epoch.
+		*/
+		textPtr->sharedTextPtr->stateEpoch++;
+	}
 	for (i = 4; i < objc; i += 2) {
 	    if (TkTextGetObjIndex(interp, textPtr, objv[i],
 		    &index1) != TCL_OK) {
@@ -459,6 +465,11 @@ TkTextTagCmd(
 			&tagPtr->elide) != TCL_OK) {
 		    return TCL_ERROR;
 		}
+	        /* Indices are potentially obsolete after changing -elide,
+	         * especially those computed with "display" or "any"
+                 * submodifier, therefore increase the epoch.
+                 */
+	        textPtr->sharedTextPtr->stateEpoch++;
 	    }
 
 	    /*

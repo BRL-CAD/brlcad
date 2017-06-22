@@ -9,8 +9,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -255,6 +253,17 @@ test foreach-9.1 {compiled empty var list} {
     }
     list [catch { foo } msg] $msg
 } {1 {foreach varlist is empty}}
+
+test foreach-9.2 {line numbers} -setup {
+    proc linenumber {} {dict get [info frame -1] line}
+} -body {
+    apply {n {
+        foreach x y {*}{
+        } {return [incr n -[linenumber]]}
+    }} [linenumber]
+} -cleanup {
+    rename linenumber {}
+} -result 1
 
 test foreach-10.1 {foreach: [Bug 1671087]} -setup {
     proc demo {} {

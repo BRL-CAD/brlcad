@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TCLPORT
@@ -21,21 +19,10 @@
 #endif
 #if defined(_WIN32)
 #   include "tclWinPort.h"
-#endif
-#include "tcl.h"
-#if !defined(_WIN32)
+#else
 #   include "tclUnixPort.h"
 #endif
-
-#if defined(__CYGWIN__)
-#   define USE_PUTENV 1
-#   define USE_PUTENV_FOR_UNSET 1
-/* On Cygwin, the environment is imported from the Cygwin DLL. */
-    DLLIMPORT extern char **__cygwin_environ;
-    DLLIMPORT extern int cygwin_conv_to_win32_path(const char *, char *);
-#   define environ __cygwin_environ
-#   define timezone _timezone
-#endif
+#include "tcl.h"
 
 #if !defined(LLONG_MIN)
 #   ifdef TCL_WIDE_INT_IS_LONG

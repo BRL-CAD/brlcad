@@ -57,7 +57,7 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
 
 	switch (cinfo->curr_msg_type) {
 	    case MSG_FAIL:
-		bu_vls_sprintf(&vmsg, "FAILURE: %s", msg);
+		bu_vls_sprintf(&vmsg, "FAILURE!!!: %s", msg);
 		break;
 	    case MSG_OK:
 		bu_vls_sprintf(&vmsg, "SUCCESS: %s", msg);
@@ -94,7 +94,7 @@ wstr_to_long(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     ret = strtol(astr, &endptr, 0);
     if (endptr != NULL && strlen(endptr) > 0) {
 	/* Had some invalid character in the input, fail */
-	creo_log(cinfo, MSG_FAIL, "Invalid string specifier for int: %s\n", astr);
+	creo_log(cinfo, MSG_DEBUG, "Invalid string specifier for int: %s\n", astr);
 	return -1;
     }
     return ret;
@@ -111,7 +111,7 @@ wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     ret = strtod(astr, &endptr);
     if (endptr != NULL && strlen(endptr) > 0) {
 	/* Had some invalid character in the input, fail */
-	creo_log(cinfo, MSG_FAIL, "Invalid string specifier for double: %s\n", astr);
+	creo_log(cinfo, MSG_DEBUG, "Invalid string specifier for double: %s\n", astr);
 	return -1.0;
     }
     return ret;
@@ -456,7 +456,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
 	    if (count == LONG_MAX) {
 		bu_vls_free(gname);
 		BU_PUT(gname, struct bu_vls);
-		creo_log(cinfo, MSG_FAIL, "%s name generation FAILED.\n", astr);
+		creo_log(cinfo, MSG_DEBUG, "%s name generation FAILED.\n", astr);
 		return NULL;
 	    }
 	}

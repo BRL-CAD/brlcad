@@ -48,7 +48,7 @@ test_ppi(ON_3dPoint &p1, ON_3dPoint &p2)
 	for (int i = 0; i < x.Count(); i++)
 	    x[i].Dump(textlog);
 	ON_String str(wstr);
-	bu_log(str.Array());
+	bu_log("%s", str.Array());
     }
     bu_log("\n\n");
 }
@@ -74,7 +74,7 @@ test_pci(ON_3dPoint &p, ON_Curve &c)
 	for (int i = 0; i < x.Count(); i++)
 	    x[i].Dump(textlog);
 	ON_String str(wstr);
-	bu_log(str.Array());
+	bu_log("%s", str.Array());
     }
     bu_log("\n\n");
 }
@@ -98,7 +98,7 @@ test_psi(ON_3dPoint &p, ON_Surface &s)
 	for (int i = 0; i < x.Count(); i++)
 	    x[i].Dump(textlog);
 	ON_String str(wstr);
-	bu_log(str.Array());
+	bu_log("%s", str.Array());
     }
     bu_log("\n\n");
 }

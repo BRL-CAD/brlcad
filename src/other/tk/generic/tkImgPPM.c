@@ -12,8 +12,6 @@
  * Author: Paul Mackerras (paulus@cs.anu.edu.au),
  *	Department of Computer Science,
  *	Australian National University.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -142,7 +140,7 @@ FileReadPPM(
 				 * image being read. */
 {
     int fileWidth, fileHeight, maxIntensity;
-    int nLines, nBytes, h, type, count;
+    int nLines, nBytes, h, type, count, bytesPerChannel = 1;
     unsigned char *pixelPtr;
     Tk_PhotoImageBlock block;
 
@@ -157,13 +155,15 @@ FileReadPPM(
 		"\" has dimension(s) <= 0", NULL);
 	return TCL_ERROR;
     }
-    if ((maxIntensity <= 0) || (maxIntensity >= 256)) {
+    if ((maxIntensity <= 0) || (maxIntensity > 0xffff)) {
 	char buffer[TCL_INTEGER_SPACE];
 
 	sprintf(buffer, "%d", maxIntensity);
 	Tcl_AppendResult(interp, "PPM image file \"", fileName,
 		"\" has bad maximum intensity value ", buffer, NULL);
 	return TCL_ERROR;
+    } else if (maxIntensity > 0x00ff) {
+	bytesPerChannel = 2;
     }
 
     if ((srcX + width) > fileWidth) {
@@ -173,20 +173,20 @@ FileReadPPM(
 	height = fileHeight - srcY;
     }
     if ((width <= 0) || (height <= 0)
-	|| (srcX >= fileWidth) || (srcY >= fileHeight)) {
+	    || (srcX >= fileWidth) || (srcY >= fileHeight)) {
 	return TCL_OK;
     }
 
     if (type == PGM) {
-	block.pixelSize = 1;
+	block.pixelSize = 1 * bytesPerChannel;
 	block.offset[0] = 0;
 	block.offset[1] = 0;
 	block.offset[2] = 0;
     } else {
-	block.pixelSize = 3;
+	block.pixelSize = 3 * bytesPerChannel;
 	block.offset[0] = 0;
-	block.offset[1] = 1;
-	block.offset[2] = 2;
+	block.offset[1] = 1 * bytesPerChannel;
+	block.offset[2] = 2 * bytesPerChannel;
     }
     block.offset[3] = 0;
     block.width = width;
@@ -226,11 +226,20 @@ FileReadPPM(
 	    ckfree((char *) pixelPtr);
 	    return TCL_ERROR;
 	}
-	if (maxIntensity != 255) {
+	if (maxIntensity < 0x00ff) {
 	    unsigned char *p;
 
 	    for (p = pixelPtr; count > 0; count--, p++) {
 		*p = (((int) *p) * 255)/maxIntensity;
+	    }
+	} else if (maxIntensity > 0x00ff) {
+	    unsigned char *p;
+	    unsigned int value;
+
+	    for (p = pixelPtr; count > 0; count--, p += 2) {
+		value = ((unsigned int) p[0]) * 256 + ((unsigned int) p[1]);
+		value = value * 255 / maxIntensity;
+		p[0] = p[1] = (unsigned char) value;
 	    }
 	}
 	block.height = nLines;
@@ -476,7 +485,7 @@ StringReadPPM(
 				 * image being read. */
 {
     int fileWidth, fileHeight, maxIntensity;
-    int nLines, nBytes, h, type, count, dataSize;
+    int nLines, nBytes, h, type, count, dataSize, bytesPerChannel = 1;
     unsigned char *pixelPtr, *dataBuffer;
     Tk_PhotoImageBlock block;
 
@@ -492,7 +501,7 @@ StringReadPPM(
 		NULL);
 	return TCL_ERROR;
     }
-    if ((maxIntensity <= 0) || (maxIntensity >= 256)) {
+    if ((maxIntensity <= 0) || (maxIntensity > 0xffff)) {
 	char buffer[TCL_INTEGER_SPACE];
 
 	sprintf(buffer, "%d", maxIntensity);
@@ -500,6 +509,8 @@ StringReadPPM(
 		"PPM image data has bad maximum intensity value ", buffer,
 		NULL);
 	return TCL_ERROR;
+    } else if (maxIntensity > 0x00ff) {
+	bytesPerChannel = 2;
     }
 
     if ((srcX + width) > fileWidth) {
@@ -514,15 +525,15 @@ StringReadPPM(
     }
 
     if (type == PGM) {
-	block.pixelSize = 1;
+	block.pixelSize = 1 * bytesPerChannel;
 	block.offset[0] = 0;
 	block.offset[1] = 0;
 	block.offset[2] = 0;
     } else {
-	block.pixelSize = 3;
+	block.pixelSize = 3 * bytesPerChannel;
 	block.offset[0] = 0;
-	block.offset[1] = 1;
-	block.offset[2] = 2;
+	block.offset[1] = 1 * bytesPerChannel;
+	block.offset[2] = 2 * bytesPerChannel;
     }
     block.offset[3] = 0;
     block.width = width;
@@ -533,7 +544,7 @@ StringReadPPM(
 	dataSize -= srcY * block.pitch;
     }
 
-    if (maxIntensity == 255) {
+    if (maxIntensity == 0x00ff) {
 	/*
 	 * We have all the data in memory, so write everything in one go.
 	 */
@@ -576,8 +587,19 @@ StringReadPPM(
 	    Tcl_AppendResult(interp, "truncated PPM data", NULL);
 	    return TCL_ERROR;
 	}
-	for (p=pixelPtr,count=nBytes ; count>0 ; count--,p++,dataBuffer++) {
-	    *p = (((int) *dataBuffer) * 255)/maxIntensity;
+	if (maxIntensity < 0x00ff) {
+	    for (p=pixelPtr,count=nBytes ; count>0 ; count--,p++,dataBuffer++) {
+		*p = (((int) *dataBuffer) * 255)/maxIntensity;
+	    }
+	} else {
+	    unsigned char *p;
+	    unsigned int value;
+
+	    for (p = pixelPtr,count=nBytes; count > 1; count-=2, p += 2) {
+		value = ((unsigned int) p[0]) * 256 + ((unsigned int) p[1]);
+		value = value * 255 / maxIntensity;
+		p[0] = p[1] = (unsigned char) value;
+	    }
 	}
 	dataSize -= nBytes;
 	block.height = nLines;

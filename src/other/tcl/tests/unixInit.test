@@ -9,11 +9,9 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.2
-namespace import -force ::tcltest::*
+namespace import ::tcltest::*
 unset -nocomplain path
 catch {set oldlang $env(LANG)}
 set env(LANG) C
@@ -46,11 +44,11 @@ test unixInit-1.2 {initialisation: standard channel type deduction} {unix stdio}
     set pipe1 [open "|[list [interpreter]]" r+]
     puts $pipe1 {
 	proc accept {channel host port} {
-	    puts $channel {puts [fconfigure stdin -peername]; exit}
+	    puts $channel {puts [chan configure stdin -peername]; exit}
 	    close $channel
 	    exit
 	}
-	puts [fconfigure [socket -server accept -myaddr 127.0.0.1 0] -sockname]
+	puts [chan configure [socket -server accept -myaddr 127.0.0.1 0] -sockname]
 	vwait forever \
 	    }
     # Note the backslash above; this is important to make sure that the
@@ -66,8 +64,8 @@ test unixInit-1.2 {initialisation: standard channel type deduction} {unix stdio}
     set pipe2 [open "|[list [interpreter] <@$sock]" r]
     set result [gets $pipe2]
     # Clear any pending data; stops certain kinds of (non-important) errors
-    fconfigure $pipe1 -blocking 0; gets $pipe1
-    fconfigure $pipe2 -blocking 0; gets $pipe2
+    chan configure $pipe1 -blocking 0; gets $pipe1
+    chan configure $pipe2 -blocking 0; gets $pipe2
     # Close the pipes and the socket.
     close $pipe2
     close $pipe1
@@ -345,7 +343,7 @@ test unixInit-3.1 {TclpSetInitialEncodings} -constraints {
 } -body {
     set env(LANG) C
     set f [open "|[list [interpreter]]" w+]
-    fconfigure $f -buffering none
+    chan configure $f -buffering none
     puts $f {puts [encoding system]; exit}
     set enc [gets $f]
     close $f
@@ -358,7 +356,7 @@ test unixInit-3.2 {TclpSetInitialEncodings} {unix stdio} {
     catch {set oldlc_all $env(LC_ALL)}
     set env(LC_ALL) japanese
     set f [open "|[list [interpreter]]" w+]
-    fconfigure $f -buffering none
+    chan configure $f -buffering none
     puts $f {puts [encoding system]; exit}
     set enc [gets $f]
     close $f
@@ -405,7 +403,7 @@ test unixInit-7.1 {closed standard channel: Bug 772288} -constraints {
 } -returnCodes 0
 
 # cleanup
-catch {unset env(LANG)}
+unset -nocomplain env(LANG)
 catch {set env(LANG) $oldlang}
 unset -nocomplain path
 ::tcltest::cleanupTests

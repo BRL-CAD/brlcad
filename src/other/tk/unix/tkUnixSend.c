@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkUnixInt.h"
@@ -1024,7 +1022,7 @@ Tk_SendCmd(
 	localInterp = riPtr->interp;
 	Tcl_Preserve((ClientData) localInterp);
 	if (firstArg == (argc-1)) {
-	    result = Tcl_GlobalEval(localInterp, argv[firstArg]);
+	    result = Tcl_EvalEx(localInterp, argv[firstArg], -1, TCL_EVAL_GLOBAL);
 	} else {
 	    Tcl_DStringInit(&request);
 	    Tcl_DStringAppend(&request, argv[firstArg], -1);
@@ -1032,7 +1030,7 @@ Tk_SendCmd(
 		Tcl_DStringAppend(&request, " ", 1);
 		Tcl_DStringAppend(&request, argv[i], -1);
 	    }
-	    result = Tcl_GlobalEval(localInterp, Tcl_DStringValue(&request));
+	    result = Tcl_EvalEx(localInterp, Tcl_DStringValue(&request), -1, TCL_EVAL_GLOBAL);
 	    Tcl_DStringFree(&request);
 	}
 	if (interp != localInterp) {
@@ -1352,12 +1350,11 @@ SendInit(
      * for it.
      */
 
-    dispPtr->commTkwin = Tk_CreateWindow(interp, (Tk_Window) NULL,
-	    "_comm", DisplayString(dispPtr->display));
-    if (dispPtr->commTkwin == NULL) {
-	Tcl_Panic("Tk_CreateWindow failed in SendInit!");
-    }
+    dispPtr->commTkwin = (Tk_Window) TkAllocWindow(dispPtr,
+    	DefaultScreen(dispPtr->display), NULL);
     Tcl_Preserve((ClientData) dispPtr->commTkwin);
+    ((TkWindow *) dispPtr->commTkwin)->flags |=TK_TOP_HIERARCHY|TK_TOP_LEVEL|TK_HAS_WRAPPER|TK_WIN_MANAGED;
+    TkWmNewWindow((TkWindow *) dispPtr->commTkwin);
     atts.override_redirect = True;
     Tk_ChangeWindowAttributes(dispPtr->commTkwin,
 	    CWOverrideRedirect, &atts);
@@ -1559,7 +1556,7 @@ SendEventProc(
 	    remoteInterp = riPtr->interp;
 	    Tcl_Preserve((ClientData) remoteInterp);
 
-	    result = Tcl_GlobalEval(remoteInterp, script);
+	    result = Tcl_EvalEx(remoteInterp, script, -1, TCL_EVAL_GLOBAL);
 
 	    /*
 	     * The call to Tcl_Release may have released the interpreter which

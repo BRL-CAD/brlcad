@@ -227,6 +227,7 @@ CMAKEFILES(
   STRATEGY
   csv_to_comgeom.txt
   implicit_constraints.txt
+  lcov.txt
   pad_file.xml.in
   trunk_hierarchy.org
   )

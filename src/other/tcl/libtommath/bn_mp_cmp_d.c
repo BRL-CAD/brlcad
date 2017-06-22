@@ -38,7 +38,3 @@ int mp_cmp_d(mp_int * a, mp_digit b)
   }
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

@@ -47,7 +47,7 @@ test_cci(ON_Curve *c1, ON_Curve *c2)
 	for (int i = 0; i < x.Count(); i++)
 	    x[i].Dump(textlog);
 	ON_String str(wstr);
-	bu_log(str.Array());
+	bu_log("%s", str.Array());
     }
     bu_log("\n\n");
 }
@@ -69,7 +69,7 @@ test_csi(ON_Curve *c1, ON_Surface *s2)
 	for (int i = 0; i < x.Count(); i++)
 	    x[i].Dump(textlog);
 	ON_String str(wstr);
-	bu_log(str.Array());
+	bu_log("%s", str.Array());
     }
     bu_log("\n\n");
 }
