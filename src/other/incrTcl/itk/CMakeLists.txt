@@ -100,41 +100,6 @@ SET(ITK_PATCH_LEVEL "0")
 
 SET(ITK_VERSION "${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}")
 
-#---------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.  Thanks to plplot for
-# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
-
-include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake)
-
-#----------------------------------------------------------------------------
-# The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX
-# hasn't been set already, to try and allow parent builds (if any) some control.
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  IF(NOT WIN32)
-    IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-      SET(CMAKE_INSTALL_PREFIX "/usr/local/tcldev-${TCL_VERSION}")
-    ELSE ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-      SET(CMAKE_INSTALL_PREFIX "/usr")
-    ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-  ENDIF(NOT WIN32)
-  SET(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "TCL install prefix" FORCE)
-  SET(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
-ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-
-#-----------------------------------------------------------------------------
-# Output directories.
-
-IF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-ENDIF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-IF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-  SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
-ENDIF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-IF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-  SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
-ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way - things that are constant
 # between various platforms or pertain to specific OS definitions
