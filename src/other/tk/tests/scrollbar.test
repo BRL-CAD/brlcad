@@ -6,8 +6,6 @@
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -633,6 +631,36 @@ test scrollbar-9.1 {scrollbar widget vs hidden commands} {
     destroy .s
     list [winfo children .] [interp hidden]
 } [list {} $l]
+
+test scrollbar-10.1 {<MouseWheel> event on scrollbar} -constraints {win|unix} -setup {
+    destroy .t .s
+} -body {
+    pack [text .t -yscrollcommand {.s set}] -side left
+    for {set i 1} {$i < 100} {incr i} {.t insert end "Line $i\n"}
+    pack [scrollbar .s -command {.t yview}] -fill y -expand 1 -side left
+    update
+    focus -force .s
+    event generate .s <MouseWheel> -delta -120
+    after 200 {set eventprocessed 1} ; vwait eventprocessed
+    .t index @0,0
+} -cleanup {
+    destroy .t .s
+} -result {5.0}
+
+test scrollbar-10.2 {<MouseWheel> event on scrollbar} -constraints {win|unix} -setup {
+    destroy .t .s
+} -body {
+    pack [text .t -xscrollcommand {.s set} -wrap none] -side top
+    for {set i 1} {$i < 100} {incr i} {.t insert end "Char $i "}
+    pack [scrollbar .s -command {.t xview} -orient horizontal] -fill x -expand 1 -side top
+    update
+    focus -force .s
+    event generate .s <Shift-MouseWheel> -delta -120
+    after 200 {set eventprocessed 1} ; vwait eventprocessed
+    .t index @0,0
+} -cleanup {
+    destroy .t .s
+} -result {1.4}
 
 catch {destroy .s}
 catch {destroy .t}

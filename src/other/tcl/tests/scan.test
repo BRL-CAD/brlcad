@@ -10,8 +10,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -282,6 +280,12 @@ test scan-4.48 {Tcl_ScanObjCmd, float scanning} {
 test scan-4.49 {Tcl_ScanObjCmd, float scanning} {
     list [scan {.1 0.2 3.} {%e %f %g} x y z] $x $y $z
 } {3 0.1 0.2 3.0}
+test scan-4.49-uc-1 {Tcl_ScanObjCmd, float scanning} {
+    list [scan {0.5*0.75} {%E%c%G} x y z] $x $y $z
+} {3 0.5 42 0.75}
+test scan-4.49-uc-2 {Tcl_ScanObjCmd, float scanning} {
+    list [scan {5e-1*75E-2} {%E%c%G} x y z] $x $y $z
+} {3 0.5 42 0.75}
 test scan-4.50 {Tcl_ScanObjCmd, float scanning} {
     list [scan {1234567890a} %f x] $x
 } {1 1234567890.0}
@@ -361,6 +365,9 @@ test scan-4.63 {scanning of large and negative hex integers} {
     list [scan $scanstring {%x %x %x} a b c] \
 	[expr { $a == -1 }] [expr { $b == $MIN_INT }] [expr { $c == $MAX_INT }]
 } {3 1 1 1}
+test scan-4.64 {scanning of hex with %X} {
+    scan "123 abc f78" %X%X%X
+} {291 2748 3960}
 
 # clean up from last two tests
 
@@ -483,7 +490,7 @@ test scan-7.3 {string and character scanning} {
     list [scan "123456 test " "%*c%*s %s %s %s" a b c] $a $b $c
 } {1 test {} {}}
 test scan-7.4 {string and character scanning} {
-    set a {}; set b {}; set c {}; set d
+    set a {}; set b {}; set c {}; set d {}
     list [scan "ababcd01234  f 123450" {%4[abcd] %4[abcd] %[^abcdef] %[^0]} a b c d] $a $b $c $d
 } {4 abab cd {01234  } {f 12345}}
 test scan-7.5 {string and character scanning} {
@@ -517,14 +524,14 @@ test scan-8.4 {error conditions} {
     list [catch {scan a %O x} msg] $msg
 } {1 {bad scan conversion character "O"}}
 test scan-8.5 {error conditions} {
-    list [catch {scan a %X x} msg] $msg
-} {1 {bad scan conversion character "X"}}
+    list [catch {scan a %B x} msg] $msg
+} {1 {bad scan conversion character "B"}}
 test scan-8.6 {error conditions} {
     list [catch {scan a %F x} msg] $msg
 } {1 {bad scan conversion character "F"}}
 test scan-8.7 {error conditions} {
-    list [catch {scan a %E x} msg] $msg
-} {1 {bad scan conversion character "E"}}
+    list [catch {scan a %p x} msg] $msg
+} {1 {bad scan conversion character "p"}}
 test scan-8.8 {error conditions} {
     list [catch {scan a "%d %d" a} msg] $msg
 } {1 {different numbers of variable names and field specifiers}}
@@ -751,11 +758,11 @@ testConstraint ieeeFloatingPoint [testIEEE]
 
 # scan infinities - not working
 
-test scan-14.1 {infinity} ieeeFloatingPoint {
+test scan-14.1 {infinity} {
     scan Inf %g d
     set d
 } Inf
-test scan-14.2 {infinity} ieeeFloatingPoint {
+test scan-14.2 {infinity} {
     scan -Inf %g d
     set d
 } -Inf

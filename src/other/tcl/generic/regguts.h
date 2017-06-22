@@ -116,7 +116,7 @@
 #define	xxx		1
 
 #define	DUPMAX	_POSIX2_RE_DUP_MAX
-#define	INFINITY	(DUPMAX+1)
+#define	DUPINF	(DUPMAX+1)
 
 #define	REMAGIC	0xfed7		/* magic number for main struct */
 
@@ -162,6 +162,7 @@
 
 typedef short color;		/* colors of characters */
 typedef int pcolor;		/* what color promotes to */
+#define MAX_COLOR	SHRT_MAX /* max color value */
 #define	COLORLESS	(-1)	/* impossible color */
 #define	WHITE		0	/* default color, parent of all others */
 
@@ -264,8 +265,10 @@ struct arc {
     struct state *from;		/* where it's from (and contained within) */
     struct state *to;		/* where it's to */
     struct arc *outchain;	/* *from's outs chain or free chain */
-#define	freechain	outchain
+    struct arc *outchainRev;	/* back-link in *from's outs chain */
+#define	freechain outchain	/* we do not maintain "freechainRev" */
     struct arc *inchain;	/* *to's ins chain */
+    struct arc *inchainRev;	/* back-link in *to's ins chain */
     struct arc *colorchain;	/* color's arc chain */
     struct arc *colorchainRev;	/* back-link in color's arc chain */
 };
@@ -357,12 +360,12 @@ struct subre {
 #define	CAP	010		/* capturing parens below */
 #define	BACKR	020		/* back reference below */
 #define	INUSE	0100		/* in use in final tree */
-#define	LOCAL	03		/* bits which may not propagate up */
+#define	NOPROP	03		/* bits which may not propagate up */
 #define	LMIX(f)	((f)<<2)	/* LONGER -> MIXED */
 #define	SMIX(f)	((f)<<1)	/* SHORTER -> MIXED */
-#define	UP(f)	(((f)&~LOCAL) | (LMIX(f) & SMIX(f) & MIXED))
+#define	UP(f)	(((f)&~NOPROP) | (LMIX(f) & SMIX(f) & MIXED))
 #define	MESSY(f)	((f)&(MIXED|CAP|BACKR))
-#define	PREF(f)	((f)&LOCAL)
+#define	PREF(f)	((f)&NOPROP)
 #define	PREF2(f1, f2)	((PREF(f1) != 0) ? PREF(f1) : PREF(f2))
 #define	COMBINE(f1, f2)	(UP((f1)|(f2)) | PREF2(f1, f2))
     short retry;		/* index into retry memory */

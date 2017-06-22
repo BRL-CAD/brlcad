@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkUnixInt.h"
@@ -102,7 +100,7 @@ TkpUseWindow(
 {
     TkWindow *winPtr = (TkWindow *) tkwin;
     TkWindow *usePtr;
-    int id, anyError;
+    int anyError;
     Window parent;
     Tk_ErrorHandler handler;
     Container *containerPtr;
@@ -115,10 +113,9 @@ TkpUseWindow(
 		"can't modify container after widget is created", NULL);
 	return TCL_ERROR;
     }
-    if (Tcl_GetInt(interp, string, &id) != TCL_OK) {
+    if (TkpScanWindowId(interp, string, &parent) != TCL_OK) {
 	return TCL_ERROR;
     }
-    parent = (Window) id;
 
     usePtr = (TkWindow *) Tk_IdToWindow(winPtr->display, parent);
     if (usePtr != NULL) {

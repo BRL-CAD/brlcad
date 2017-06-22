@@ -5,8 +5,6 @@
 # Copyright (c) 1994-1995 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -1024,6 +1022,20 @@ test textWind-17.9 {peer widget window configuration} {
     destroy .tt .t
     set res
 } {{-window {} {} {} {}} {-window {} {} {} {}} {-window {} {} {} .t.f} {-window {} {} {} .tt.t.f}}
+
+test textWind-18.1 {embedded window deletion triggered by a script bound to <Map>} {
+    catch {destroy .t .f}
+    pack [text .t]
+    for {set i 1} {$i < 100} {incr i} {.t insert end "Line $i\n"}
+    .t window create end -window [frame .f -background red -width 80 -height 80]
+    .t window create end -window [frame .f2 -background blue -width 80 -height 80]
+    bind .f <Map> {.t delete .f}
+    update
+    # this shall not crash (bug 1501749)
+    after 100 {.t yview end}
+    tkwait visibility .f2
+    update
+} {}
 
 catch {destroy .t}
 option clear

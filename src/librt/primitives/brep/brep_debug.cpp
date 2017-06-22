@@ -1404,7 +1404,7 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 	}
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
 
     return 0;
 }
@@ -1451,7 +1451,7 @@ brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_
 	}
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     return 0;
 }
 
@@ -1484,7 +1484,7 @@ brep_trim_direction_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 	}
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     return 0;
 }
 
@@ -1514,7 +1514,7 @@ brep_surface_uv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	plotpoint(surf->PointAt(u, v), vbp, GREEN);
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
 
     return 0;
 }
@@ -1578,7 +1578,7 @@ brep_surface_uv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	}
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
 
     return 0;
 }
@@ -1617,7 +1617,7 @@ brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_i
 	}
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
 
     return 0;
 }
@@ -1650,7 +1650,7 @@ brep_surface_normal_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 	plotsurfacenormals(*surf, vbp, plotres);
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     return 0;
 }
 
@@ -1680,7 +1680,7 @@ brep_surface_knot_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 	plotsurfaceknots(*surf, vbp, dim3d);
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     return 0;
 }
 
@@ -1719,7 +1719,7 @@ brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_in
 	}
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     return 0;
 }
 
@@ -1795,7 +1795,7 @@ brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_inte
 	}
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     return 0;
 }
 
@@ -1829,7 +1829,7 @@ brep_loop_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_inte
 	}
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     return 0;
 }
 
@@ -1867,7 +1867,7 @@ brep_surface_cv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	vcount = ns->m_cv_count[1];
 	plot_nurbs_cv(vbp, ucount, vcount, ns);
     }
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     return 0;
 
 }
@@ -2401,7 +2401,7 @@ brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	}
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     return 0;
 }
 
@@ -2453,7 +2453,7 @@ brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 	}
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     return 0;
 }
 
@@ -2487,7 +2487,7 @@ brep_trimleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep
 	}
     }
 
-    bu_vls_printf(vls, ON_String(wstr).Array());
+    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     return 0;
 }
 

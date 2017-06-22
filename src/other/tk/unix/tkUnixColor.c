@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -128,20 +126,6 @@ TkpGetColor(
     Colormap colormap = Tk_Colormap(tkwin);
     XColor color;
     TkColor *tkColPtr;
-    char buf[100];
-    unsigned len = strlen(name);
-
-    /*
-     * Make sure that we never exceed a reasonable length of color name. A
-     * good maximum length is 99, arbitrary, but larger than any known color
-     * name. [Bug 2809525]
-     */
-
-    if (len > 99) {
-	len = 99;
-    }
-    memcpy(buf, name, len);
-    buf[len] = '\0';
 
     /*
      * Map from the name to a pixel value. Call XAllocNamedColor rather than
@@ -152,7 +136,22 @@ TkpGetColor(
     if (*name != '#') {
 	XColor screen;
 
-	if (XAllocNamedColor(display, colormap, buf, &screen, &color) != 0) {
+	if (((*name - 'A') & 0xdf) < sizeof(tkWebColors)/sizeof(tkWebColors[0])) {
+	    const char *p = tkWebColors[((*name - 'A') & 0x1f)];
+	    if (p) {
+		const char *q = name;
+		while (!((*p - *(++q)) & 0xdf)) {
+		    if (!*p++) {
+			name = p;
+			goto gotWebColor;
+		    }
+		}
+	    }
+	}
+	if (strlen(name) > 99) {
+	/* Don't bother to parse this. [Bug 2809525]*/
+	return (TkColor *) NULL;
+    } else if (XAllocNamedColor(display, colormap, name, &screen, &color) != 0) {
 	    DeleteStressedCmap(display, colormap);
 	} else {
 	    /*
@@ -162,13 +161,14 @@ TkpGetColor(
 	     * approximation to the desired color.
 	     */
 
-	    if (XLookupColor(display, colormap, buf, &color, &screen) == 0) {
+	    if (XLookupColor(display, colormap, name, &color, &screen) == 0) {
 		return NULL;
 	    }
 	    FindClosestColor(tkwin, &screen, &color);
 	}
     } else {
-	if (XParseColor(display, colormap, buf, &color) == 0) {
+    gotWebColor:
+	if (TkParseColor(display, colormap, name, &color) == 0) {
 	    return NULL;
 	}
 	if (XAllocColor(display, colormap, &color) != 0) {

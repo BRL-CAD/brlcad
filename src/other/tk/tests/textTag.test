@@ -5,8 +5,6 @@
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -149,6 +147,19 @@ test textTag-2.13 {TkTextTagCmd - "add" option} haveCourier12 {
     .t tag add sel 1.1 1.5 2.4
     .t tag ranges sel
 } {1.1 1.5 2.4 2.5}
+test textTag-2.14 {tag add before -startline - Bug 1615425} haveCourier12 {
+    text .tt
+    for {set i 1} {$i <10} {incr i} {
+        .tt insert end "Line $i\n"
+    }
+    .tt tag configure mytag -font {Courier 12 bold}
+    .tt peer create .ptt
+    .ptt configure -startline 3 -endline 7
+    # the test succeeds if next line does not crash
+    .tt tag add mytag 1.0 1.end
+    destroy .ptt .tt
+    set res 1
+} {1}
 
 catch {.t tag delete x}
 test textTag-3.1 {TkTextTagCmd - "bind" option} haveCourier12 {
@@ -588,6 +599,7 @@ set x3 [expr [lindex $c 0] + [lindex $c 2]/2]
 set y3 [expr [lindex $c 1] + [lindex $c 3]/2]
 
 test textTag-15.1 {TkTextBindProc} haveCourier12 {
+    event generate {} <Motion> -warp 1 -x -1 -y -1; update
     bind .t <ButtonRelease> {lappend x up}
     .t tag bind x <ButtonRelease> {lappend x x-up}
     .t tag bind y <ButtonRelease> {lappend x y-up}
@@ -607,6 +619,7 @@ test textTag-15.1 {TkTextBindProc} haveCourier12 {
     set x
 } {x-up up up y-up up}
 test textTag-15.2 {TkTextBindProc} haveCourier12 {
+    event generate {} <Motion> -warp 1 -x -1 -y -1; update
     catch {.t tag delete x}
     catch {.t tag delete y}
     .t tag bind x <Enter> {lappend x x-enter}
@@ -664,6 +677,7 @@ foreach tag [.t tag names] {
 }
 .t tag configure big -font $bigFont
 test textTag-16.1 {TkTextPickCurrent procedure} haveCourier12 {
+    event generate {} <Motion> -warp 1 -x -1 -y -1; update
     event gen .t <ButtonRelease-1> -state 0x100 -x $x1 -y $y1
     set x [.t index current]
     event gen .t <Motion> -x $x2 -y $y2
@@ -680,6 +694,7 @@ test textTag-16.1 {TkTextPickCurrent procedure} haveCourier12 {
     lappend x [.t index current]
 } {2.1 3.2 3.2 3.2 3.2 3.2 4.3}
 test textTag-16.2 {TkTextPickCurrent procedure} haveCourier12 {
+    event generate {} <Motion> -warp 1 -x -1 -y -1; update
     event gen .t <ButtonRelease-1> -state 0x100 -x $x1 -y $y1
     event gen .t <Motion> -x $x2 -y $y2
     set x [.t index current]
@@ -693,6 +708,7 @@ foreach i {a b c d} {
     .t tag bind $i <Leave> "lappend x leave-$i"
 }
 test textTag-16.3 {TkTextPickCurrent procedure} haveCourier12 {
+    event generate {} <Motion> -warp 1 -x -1 -y -1; update
     foreach i {a b c d} {
 	.t tag remove $i 1.0 end
     }
@@ -711,6 +727,7 @@ test textTag-16.3 {TkTextPickCurrent procedure} haveCourier12 {
     set x
 } {enter-a enter-b | leave-b enter-c | leave-a leave-c}
 test textTag-16.4 {TkTextPickCurrent procedure} haveCourier12 {
+    event generate {} <Motion> -warp 1 -x -1 -y -1; update
     foreach i {a b c d} {
 	.t tag remove $i 1.0 end
     }
@@ -731,6 +748,7 @@ foreach i {a b c d} {
     .t tag delete $i
 }
 test textTag-16.5 {TkTextPickCurrent procedure} haveCourier12 {
+    event generate {} <Motion> -warp 1 -x -1 -y -1; update
     foreach i {a b c d} {
 	.t tag remove $i 1.0 end
     }
@@ -741,6 +759,7 @@ test textTag-16.5 {TkTextPickCurrent procedure} haveCourier12 {
     .t index current
 } {3.2}
 test textTag-16.6 {TkTextPickCurrent procedure} haveCourier12 {
+    event generate {} <Motion> -warp 1 -x -1 -y -1; update
     foreach i {a b c d} {
 	.t tag remove $i 1.0 end
     }
@@ -752,6 +771,7 @@ test textTag-16.6 {TkTextPickCurrent procedure} haveCourier12 {
     .t index current
 } {3.1}
 test textTag-16.7 {TkTextPickCurrent procedure} haveCourier12 {
+    event generate {} <Motion> -warp 1 -x -1 -y -1; update
     foreach i {a b c d} {
 	.t tag remove $i 1.0 end
     }
@@ -774,6 +794,7 @@ test textTag-17.1 {insert procedure inserts tags} {
 catch {destroy .t}
 
 test textTag-18.1 {TkTextPickCurrent tag bindings} {
+    event generate {} <Motion> -warp 1 -x -1 -y -1; update
     text .t -width 30 -height 4 -relief sunken -borderwidth 10 \
       -highlightthickness 10 -pady 2
     pack .t

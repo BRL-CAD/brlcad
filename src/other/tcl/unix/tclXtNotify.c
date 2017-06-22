@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include <X11/Intrinsic.h>
@@ -76,13 +74,12 @@ static int initialized = 0;
  */
 
 static int		FileHandlerEventProc(Tcl_Event *evPtr, int flags);
-static void		FileProc(caddr_t clientData, int *source,
+static void		FileProc(XtPointer clientData, int *source,
 			    XtInputId *id);
-void			InitNotifier(void);
 static void		NotifierExitHandler(ClientData clientData);
-static void		TimerProc(caddr_t clientData, XtIntervalId *id);
+static void		TimerProc(XtPointer clientData, XtIntervalId *id);
 static void		CreateFileHandler(int fd, int mask,
-				Tcl_FileProc * proc, ClientData clientData);
+			    Tcl_FileProc *proc, ClientData clientData);
 static void		DeleteFileHandler(int fd);
 static void		SetTimer(Tcl_Time * timePtr);
 static int		WaitForEvent(Tcl_Time * timePtr);
@@ -91,7 +88,8 @@ static int		WaitForEvent(Tcl_Time * timePtr);
  * Functions defined in this file for use by users of the Xt Notifier:
  */
 
-EXTERN XtAppContext	TclSetAppContext(XtAppContext ctx);
+MODULE_SCOPE void InitNotifier(void);
+MODULE_SCOPE XtAppContext TclSetAppContext(XtAppContext ctx);
 
 /*
  *----------------------------------------------------------------------
@@ -180,7 +178,7 @@ TclSetAppContext(
 void
 InitNotifier(void)
 {
-    Tcl_NotifierProcs notifier;
+    Tcl_NotifierProcs np;
 
     /*
      * Only reinitialize if we are not in exit handling. The notifier can get
@@ -192,11 +190,15 @@ InitNotifier(void)
 	return;
     }
 
-    notifier.createFileHandlerProc = CreateFileHandler;
-    notifier.deleteFileHandlerProc = DeleteFileHandler;
-    notifier.setTimerProc = SetTimer;
-    notifier.waitForEventProc = WaitForEvent;
-    Tcl_SetNotifier(&notifier);
+    np.createFileHandlerProc = CreateFileHandler;
+    np.deleteFileHandlerProc = DeleteFileHandler;
+    np.setTimerProc = SetTimer;
+    np.waitForEventProc = WaitForEvent;
+    np.initNotifierProc = Tcl_InitNotifier;
+    np.finalizeNotifierProc = Tcl_FinalizeNotifier;
+    np.alertNotifierProc = Tcl_AlertNotifier;
+    np.serviceModeHookProc = Tcl_ServiceModeHook;
+    Tcl_SetNotifier(&np);
 
     /*
      * DO NOT create the application context yet; doing so would prevent
@@ -204,7 +206,7 @@ InitNotifier(void)
      */
 
     initialized = 1;
-    memset(&notifier, 0, sizeof(notifier));
+    memset(&np, 0, sizeof(np));
     Tcl_CreateExitHandler(NotifierExitHandler, NULL);
 }
 
@@ -300,7 +302,7 @@ SetTimer(
 
 static void
 TimerProc(
-    caddr_t data,		/* Not used. */
+    XtPointer clientData, /* Not used. */
     XtIntervalId *id)
 {
     if (*id != notifier.currentTimeout) {
@@ -374,7 +376,7 @@ CreateFileHandler(
     if (mask & TCL_READABLE) {
 	if (!(filePtr->mask & TCL_READABLE)) {
 	    filePtr->read = XtAppAddInput(notifier.appContext, fd,
-		    XtInputReadMask, FileProc, filePtr);
+		    INT2PTR(XtInputReadMask), FileProc, filePtr);
 	}
     } else {
 	if (filePtr->mask & TCL_READABLE) {
@@ -384,7 +386,7 @@ CreateFileHandler(
     if (mask & TCL_WRITABLE) {
 	if (!(filePtr->mask & TCL_WRITABLE)) {
 	    filePtr->write = XtAppAddInput(notifier.appContext, fd,
-		    XtInputWriteMask, FileProc, filePtr);
+		    INT2PTR(XtInputWriteMask), FileProc, filePtr);
 	}
     } else {
 	if (filePtr->mask & TCL_WRITABLE) {
@@ -394,7 +396,7 @@ CreateFileHandler(
     if (mask & TCL_EXCEPTION) {
 	if (!(filePtr->mask & TCL_EXCEPTION)) {
 	    filePtr->except = XtAppAddInput(notifier.appContext, fd,
-		    XtInputExceptMask, FileProc, filePtr);
+		    INT2PTR(XtInputExceptMask), FileProc, filePtr);
 	}
     } else {
 	if (filePtr->mask & TCL_EXCEPTION) {
@@ -487,7 +489,7 @@ DeleteFileHandler(
 
 static void
 FileProc(
-    caddr_t clientData,
+    XtPointer clientData,
     int *fd,
     XtInputId *id)
 {

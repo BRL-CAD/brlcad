@@ -214,7 +214,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_meth = &OBJ[ID_BOT];
 	intern.idb_ptr = (void *) bot;
 #else
-	bu_vls_printf(gedp->ged_result_str, "Screened Poisson support was not enabled for this build.  To test, pass -DBRLCAD_ENABLE_SPR=ON to the cmake configure.\n", newname);
+	bu_vls_printf(gedp->ged_result_str, "%s: Screened Poisson support was not enabled for this build.  To test, pass -DBRLCAD_ENABLE_SPR=ON to the cmake configure.\n", newname);
 	return GED_ERROR;
 #endif
     } else {

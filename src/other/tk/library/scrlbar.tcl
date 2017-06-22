@@ -3,8 +3,6 @@
 # This file defines the default bindings for Tk scrollbar widgets.
 # It also provides procedures that help in implementing the bindings.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 #
@@ -17,7 +15,7 @@
 #-------------------------------------------------------------------------
 
 # Standard Motif bindings:
-if {[tk windowingsystem] eq "x11"} {
+if {[tk windowingsystem] eq "x11" || [tk windowingsystem] eq "aqua"} {
 
 bind Scrollbar <Enter> {
     if {$tk_strictMotif} {
@@ -142,6 +140,13 @@ if {[tk windowingsystem] eq "aqua"} {
     }
     bind Scrollbar <Shift-Option-MouseWheel> {
         tk::ScrollByUnits %W h [expr {-10 * (%D)}]
+    }
+} else {
+    bind Scrollbar <MouseWheel> {
+	tk::ScrollByUnits %W v [expr {- (%D /120 ) * 4}]
+    }
+    bind Scrollbar <Shift-MouseWheel> {
+	tk::ScrollByUnits %W h [expr {- (%D /120 ) * 4}]
     }
 }
 # tk::ScrollButtonDown --

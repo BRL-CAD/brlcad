@@ -1595,14 +1595,16 @@ conv_cable( char *part_name, char *refset_name, char *inst_name, unsigned char *
     bu_vls_free( &region_name_vls );
 
     if ( inner_diam > 0.0 ) {
+	struct wmember head_region;
+
 	outer_name = create_unique_brlcad_name( &outer_name_vls );
 	bu_vls_free( &outer_name_vls );
+	if (!outer_name)
+	    return NULL;
 	inner_name = create_unique_brlcad_name( &inner_name_vls );
 	bu_vls_free( &inner_name_vls );
-    }
-
-    if ( inner_diam > 0.0 ) {
-	struct wmember head_region;
+	if (!inner_name)
+	    return NULL;
 
 	/* make outer and inner combinations, and do the subtraction in the region */
 	(void)mk_comb( wdb_fd, outer_name, &head_outer.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );

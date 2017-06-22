@@ -2,8 +2,8 @@
 '\" Generated from file './doc/clock.dt' by tcllib/doctools with format 'nroff'
 '\" Copyright (c) 2004 Kevin B. Kenny <kennykb@acm.org>. All rights reserved.
 '\"
-.so man.macros
 .TH "clock" n 8.5 Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 .SH NAME
 clock \- Obtain and manipulate dates and times
@@ -16,13 +16,13 @@ package require \fBTcl 8.5\fR
 .sp
 \fBclock format\fR \fItimeVal\fR ?\fI\-option value\fR...?
 .sp
-\fBclock microseconds\fR 
+\fBclock microseconds\fR
 .sp
-\fBclock milliseconds\fR 
+\fBclock milliseconds\fR
 .sp
 \fBclock scan\fR \fIinputString\fR ?\fI\-option value\fR...?
 .sp
-\fBclock seconds\fR 
+\fBclock seconds\fR
 .sp
 .BE
 .SH "DESCRIPTION"
@@ -58,10 +58,10 @@ Formats a time that is expressed as an integer number of seconds into a format
 intended for consumption by users or external programs.
 See \fBFORMATTING TIMES\fR for a full description.
 .TP
-\fBclock microseconds\fR 
+\fBclock microseconds\fR
 Returns the current time as an integer number of microseconds.  See \fBHIGH RESOLUTION TIMERS\fR for a full description.
 .TP
-\fBclock milliseconds\fR 
+\fBclock milliseconds\fR
 Returns the current time as an integer number of milliseconds.  See \fBHIGH RESOLUTION TIMERS\fR for a full description.
 .TP
 \fBclock scan\fR \fIinputString\fR ?\fI\-option value\fR...?
@@ -69,7 +69,7 @@ Scans a time that is expressed as a character string and produces an
 integer number of seconds.
 See \fBSCANNING TIMES\fR for a full description.
 .TP
-\fBclock seconds\fR 
+\fBclock seconds\fR
 Returns the current time as an integer number of seconds.
 .SS "PARAMETERS"
 .TP
@@ -112,7 +112,7 @@ and their interpretation, are described under \fBFORMAT GROUPS\fR.
 .PP
 On \fBclock format\fR, the default format is
 .CS
-%a %b %d %H:%M:%S %z %Y
+%a %b %d %H:%M:%S %Z %Y
 .CE
 .PP
 On \fBclock scan\fR, the lack of a \fI\-format\fR option indicates that a
@@ -514,7 +514,7 @@ string of the same meaning in the locale, to indicate whether \fB%Y\fR refers
 to years before or after Year 1 of the Common Era.  On input, accepts
 the string \fBB.C.E.\fR, \fBB.C.\fR, \fBC.E.\fR, \fBA.D.\fR, or the
 abbreviation appropriate to the current locale, and uses it to fix
-whether \fB%Y\fR refers to years before or after Year 1 of the 
+whether \fB%Y\fR refers to years before or after Year 1 of the
 Common Era.
 .TP
 \fB%Ex\fR
@@ -626,8 +626,9 @@ On output, produces a locale-dependent time of day representation on a
 12-hour clock. On input, accepts whatever \fB%r\fR produces.
 .TP
 \fB%R\fR
-On output, produces a locale-dependent time of day representation on a
-24-hour clock. On input, accepts whatever \fB%R\fR produces.
+On output, the time in 24-hour notation (%H:%M). For a version
+including the seconds, see \fB%T\fR below. On input, accepts whatever
+\fB%R\fR produces.
 .TP
 \fB%s\fR
 On output, simply formats the \fItimeVal\fR argument as a decimal
@@ -672,8 +673,8 @@ ISO8601 week number.
 \fB%w\fR
 On output, produces the ordinal number of the day of the week
 (Sunday==0; Saturday==6).  On input, accepts a single digit and
-interprets it as the day of the week; Sunday may be represented as 
-either 0 or 7.  Note that \fB%w\fR is not the ISO8601 weekday number, 
+interprets it as the day of the week; Sunday may be represented as
+either 0 or 7.  Note that \fB%w\fR is not the ISO8601 weekday number,
 which is produced and accepted by \fB%u\fR.
 .TP
 \fB%W\fR
@@ -752,7 +753,7 @@ The local time zone from the Control Panel on Windows systems.
 The C library's idea of the local time zone, as defined by the
 \fBmktime\fR and \fBlocaltime\fR functions.
 .PP
-In case [1] \fIonly,\fR the string is tested to see if it is one 
+In case [1] \fIonly,\fR the string is tested to see if it is one
 of the strings:
 .CS
  gmt     ut      utc     bst     wet     wat     at
@@ -768,7 +769,7 @@ of the strings:
 If it is a string in the above list, it designates a known
 time zone, and is interpreted as such.
 .PP
-For time zones in case [1] that do not match any of the above strings, 
+For time zones in case [1] that do not match any of the above strings,
 and always for cases [2]-[6], the following rules apply.
 .PP
 If the time zone begins with a colon, it is one of a
@@ -875,7 +876,7 @@ giving an explicit \fI\-format\fR option to the \fBclock scan\fR command.
 .TP
 \fIrelative time\fR
 A specification relative to the current time.  The format is \fBnumber
-unit\fR. Acceptable units are \fByear\fR, \fBfortnight\fR, 
+unit\fR. Acceptable units are \fByear\fR, \fBfortnight\fR,
 \fBmonth\fR, \fBweek\fR, \fBday\fR,
 \fBhour\fR, \fBminute\fR (or \fBmin\fR), and \fBsecond\fR (or \fBsec\fR).  The
 unit can be specified as a singular or plural, as in \fB3 weeks\fR.

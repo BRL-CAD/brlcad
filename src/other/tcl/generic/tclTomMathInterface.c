@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -114,7 +112,7 @@ extern void *
 TclBNAlloc(
     size_t x)
 {
-    return (void *) Tcl_Alloc((unsigned int) x);
+    return (void *) ckalloc((unsigned int) x);
 }
 
 /*
@@ -138,7 +136,7 @@ TclBNRealloc(
     void *p,
     size_t s)
 {
-    return (void *) Tcl_Realloc((char *) p, (unsigned int) s);
+    return (void *) ckrealloc((char *) p, (unsigned int) s);
 }
 
 /*
@@ -164,7 +162,7 @@ extern void
 TclBNFree(
     void *p)
 {
-    Tcl_Free((char *) p);
+    ckfree((char *) p);
 }
 #endif
 

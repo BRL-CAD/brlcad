@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH open n 8.3 Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -333,60 +331,27 @@ may cause this error.
 A BREAK condition has been detected by your UART (see above).
 .SH "PORTABILITY ISSUES"
 .TP
-\fBWindows \fR(all versions)
+\fBWindows \fR
 Valid values for \fIfileName\fR to open a serial port are of the form
-\fBcom\fIX\fB:\fR, where \fIX\fR is a number, generally from 1 to 4.
-This notation only works for serial ports from 1 to 9, if the system
-happens to have more than four.  An attempt to open a serial port that
+\fBcom\fIX\fB\fR, where \fIX\fR is a number, generally from 1 to 9.
+A legacy form accepted as well is \fBcom\fIX\fB:\fR. This notation only
+works for serial ports from 1 to 9.  An attempt to open a serial port that
 does not exist or has a number greater than 9 will fail.  An alternate
-form of opening serial ports is to use the filename \fB\e\e.\ecomX\fR,
-where X is any number that corresponds to a serial port; please note
-that this method is considerably slower on Windows 95 and Windows 98.
-.TP
-\fBWindows NT\fR
+form of opening serial ports is to use the filename \fB//./comX\fR,
+where X is any number that corresponds to a serial port.
+.RS
+.PP
 When running Tcl interactively, there may be some strange interactions
 between the real console, if one is present, and a command pipeline that uses
 standard input or output.  If a command pipeline is opened for reading, some
 of the lines entered at the console will be sent to the command pipeline and
 some will be sent to the Tcl evaluator.  If a command pipeline is opened for
 writing, keystrokes entered into the console are not visible until the
-pipe is closed.  This behavior occurs whether the command pipeline is
-executing 16-bit or 32-bit applications.  These problems only occur because
-both Tcl and the child application are competing for the console at
-the same time.  If the command pipeline is started from a script, so that Tcl
-is not accessing the console, or if the command pipeline does not use
-standard input or output, but is redirected from or to a file, then the
-above problems do not occur.  
-.TP
-\fBWindows 95\fR 
-A command pipeline that executes a 16-bit DOS application cannot be opened
-for both reading and writing, since 16-bit DOS applications that receive
-standard input from a pipe and send standard output to a pipe run
-synchronously.  Command pipelines that do not execute 16-bit DOS
-applications run asynchronously and can be opened for both reading and
-writing.  
-.RS
-.PP
-When running Tcl interactively, there may be some strange interactions
-between the real console, if one is present, and a command pipeline that uses
-standard input or output.  If a command pipeline is opened for reading from
-a 32-bit application, some of the keystrokes entered at the console will be
-sent to the command pipeline and some will be sent to the Tcl evaluator.  If
-a command pipeline is opened for writing to a 32-bit application, no output
-is visible on the console until the pipe is closed.  These problems only
-occur because both Tcl and the child application are competing for the
-console at the same time.  If the command pipeline is started from a script,
-so that Tcl is not accessing the console, or if the command pipeline does
-not use standard input or output, but is redirected from or to a file, then
-the above problems do not occur.  
-.PP
-Whether or not Tcl is running interactively, if a command pipeline is opened
-for reading from a 16-bit DOS application, the call to \fBopen\fR will not
-return until end-of-file has been received from the command pipeline's
-standard output.  If a command pipeline is opened for writing to a 16-bit DOS
-application, no data will be sent to the command pipeline's standard output
-until the pipe is actually closed.  This problem occurs because 16-bit DOS
-applications are run synchronously, as described above.  
+pipe is closed.  These problems only occur because both Tcl and the child
+application are competing for the console at the same time.  If the command
+pipeline is started from a script, so that Tcl is not accessing the console,
+or if the command pipeline does not use standard input or output, but is
+redirected from or to a file, then the above problems do not occur.  
 .RE
 .TP
 \fBUnix\fR\0\0\0\0\0\0\0

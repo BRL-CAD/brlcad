@@ -5,8 +5,6 @@
 # Copyright (c) 1995-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -405,6 +403,14 @@ test canvas-11.2 {canvas poly overlap fill check, bug 226357} -setup {
     .c itemconfig 1 -width 8
     lappend result [.c find over 45 50 45 50]; # outside poly
 } -result {1 1 {} 1 {} 1 1 {} 1 {} 1}
+test canvas-11.3 {canvas poly dchars, bug 3291543} {
+    # This would crash
+    destroy .c
+    pack [canvas .c]
+    .c create polygon 0 0 0 10 10 0
+    .c dchars 1 2 end
+    .c coords 1
+} {}
 
 test canvas-12.1 {canvas mm obj, patch SF-403327, 102471} -setup {
     destroy .c

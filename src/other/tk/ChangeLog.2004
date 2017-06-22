@@ -368,7 +368,7 @@
 	an .xbm extension so Windows users won't get confused when wandering
 	around the Tcl source tree. [Bug 733835]
 
-2004-10-11  Miguel Bañon <bagnonm@users.sourceforge.net>
+2004-10-11  Miguel BaÃ±on <bagnonm@users.sourceforge.net>
 
 	* library/msgs/sv.msg: Swedish message catalog from Mats Bengtsson.
 
@@ -1087,7 +1087,7 @@
 2004-04-21  Benjamin Riefenstahl  <Benjamin.Riefenstahl@epost.de>
 
 	Mac OS X: Fix several problems with Icelandic (and Faroese) keyboards
-	reported by Jérôme Gagnon-Voyer <gagnonje5000<at>mac<dot>com> on
+	reported by JÃ©rÃ´me Gagnon-Voyer <gagnonje5000<at>mac<dot>com> on
 	tcl-mac on 2004-03-22.
 
 	* macosx/tkMacOSXKeyEvent.c (KLSInit): Add.
@@ -2782,7 +2782,7 @@
 
 	* doc/text.n: Fixed markup errors.
 
-2003-05-28  Miguel Bañón <bagnonm@users.sourceforge.net>
+2003-05-28  Miguel BaÃ±Ã³n <bagnonm@users.sourceforge.net>
 
 	* library/msgs/cs.msg: Updated messages from wohnivec@iol.cz
 

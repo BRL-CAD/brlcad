@@ -94,7 +94,7 @@ main(int argc, char **argv)
 	bu_log("decimate: bad size of output range: %ldx%ld\n", (long int)owidth, (long int)oheight);
     }
     if (failure) {
-	bu_exit(EXIT_FAILURE, usage);
+	bu_exit(EXIT_FAILURE, "%s", usage);
     }
 
     /* Determine how many samples/lines to discard after each one saved,

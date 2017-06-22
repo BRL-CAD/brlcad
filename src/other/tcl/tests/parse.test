@@ -7,8 +7,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[catch {package require tcltest 2.0.2}]} {
     puts stderr "Skipping tests in [info script]. tcltest 2.0.2 required."
@@ -25,6 +23,7 @@ testConstraint testparsevarname [llength [info commands testparsevarname]]
 testConstraint testparsevar [llength [info commands testparsevar]]
 testConstraint testasync [llength [info commands testasync]]
 testConstraint testcmdtrace [llength [info commands testcmdtrace]]
+testConstraint memory [llength [info commands memory]]
 
 test parse-1.1 {Tcl_ParseCommand procedure, computing string length} testparser {
     testparser [bytestring "foo\0 bar"] -1
@@ -229,6 +228,18 @@ test parse-5.26 {Tcl_ParseCommand: {*} parsing} testparser {
 test parse-5.27 {Tcl_ParseCommand: {*} parsing} testparser {
     testparser "{*}\\\n foo bar" 0
 } {- \{*\}\\\n\ foo\ bar 3 simple {{*}} 1 text * 0 simple foo 1 text foo 0 simple bar 1 text bar 0 {}}
+test parse-5.28 {Tcl_ParseCommand: {*} parsing, expanded literals} testparser {
+    testparser {{*}{a b}} 0
+} {- {{*}{a b}} 2 simple a 1 text a 0 simple b 1 text b 0 {}}
+test parse-5.29 {Tcl_ParseCommand: {*} parsing, expanded literals, naked backslashes} testparser {
+    testparser {{*}{a \n b}} 0
+} {- {{*}{a \n b}} 1 expand {{*}{a \n b}} 1 text {a \n b} 0 {}}
+test parse-5.30 {Tcl_ParseCommand: {*} parsing, expanded literals} testparser {
+    testparser {{*}"a b"} 0
+} {- {{*}"a b"} 2 simple a 1 text a 0 simple b 1 text b 0 {}}
+test parse-5.31 {Tcl_ParseCommand: {*} parsing, expanded literals, naked backslashes} testparser {
+    testparser {{*}"a \n b"} 0
+} {- {{*}"a \n b"} 1 expand {{*}"a \n b"} 3 text {a } 0 backslash {\n} 0 text { b} 0 {}}
 
 test parse-6.1 {ParseTokens procedure, empty word} testparser {
     testparser {""} 0
@@ -425,7 +436,7 @@ test parse-8.12 {Tcl_EvalObjv procedure, TCL_EVAL_INVOKE} {
 
 
 test parse-9.1 {Tcl_LogCommandInfo, line numbers} testevalex {
-    catch {unset x}
+    unset -nocomplain x
     list [catch {testevalex {for {} 1 {} {
 
 
@@ -466,7 +477,7 @@ test parse-10.3 {Tcl_EvalTokens, nested commands} testevalex {
     testevalex {concat [expr 2 + 6]}
 } {8}
 test parse-10.4 {Tcl_EvalTokens, nested commands} testevalex {
-    catch {unset a}
+    unset -nocomplain a
     list [catch {testevalex {concat xxx[expr $a]}} msg] $msg
 } {1 {can't read "a": no such variable}}
 test parse-10.5 {Tcl_EvalTokens, simple variables} testevalex {
@@ -474,21 +485,21 @@ test parse-10.5 {Tcl_EvalTokens, simple variables} testevalex {
     testevalex {concat $a}
 } {hello}
 test parse-10.6 {Tcl_EvalTokens, array variables} testevalex {
-    catch {unset a}
+    unset -nocomplain a
     set a(12) 46
     testevalex {concat $a(12)}
 } {46}
 test parse-10.7 {Tcl_EvalTokens, array variables} testevalex {
-    catch {unset a}
+    unset -nocomplain a
     set a(12) 46
     testevalex {concat $a(1[expr 3 - 1])}
 } {46}
 test parse-10.8 {Tcl_EvalTokens, array variables} testevalex {
-    catch {unset a}
+    unset -nocomplain a
     list [catch {testevalex {concat $x($a)}} msg] $msg
 } {1 {can't read "a": no such variable}}
 test parse-10.9 {Tcl_EvalTokens, array variables} testevalex {
-    catch {unset a}
+    unset -nocomplain a
     list [catch {testevalex {concat xyz$a(1)}} msg] $msg
 } {1 {can't read "a(1)": no such variable}}
 test parse-10.10 {Tcl_EvalTokens, object values} testevalex {
@@ -528,11 +539,11 @@ test parse-11.2 {Tcl_EvalEx, error while parsing} testevalex {
     list [catch {testevalex {concat "abc}} msg] $msg
 } {1 {missing "}}
 test parse-11.3 {Tcl_EvalEx, error while collecting words} testevalex {
-    catch {unset a}
+    unset -nocomplain a
     list [catch {testevalex {concat xyz $a}} msg] $msg
 } {1 {can't read "a": no such variable}}
 test parse-11.4 {Tcl_EvalEx, error in Tcl_EvalObjv call} testevalex {
-    catch {unset a}
+    unset -nocomplain a
     list [catch {testevalex {_bogus_ a b c d}} msg] $msg
 } {1 {invalid command name "_bogus_"}}
 test parse-11.5 {Tcl_EvalEx, exceptional return} testevalex {
@@ -551,7 +562,7 @@ test parse-11.8 {Tcl_EvalEx, multiple commands in script} testevalex {
     }] $a $c
 } {d b d}
 test parse-11.9 {Tcl_EvalEx, freeing memory after error} testevalex {
-    catch {unset a}
+    unset -nocomplain a
     list [catch {testevalex {concat a b c d e f g h i j k l m n o p q r s t u v w x y z $a}} msg] $msg
 } {1 {can't read "a": no such variable}}
 test parse-11.10 {Tcl_EvalTokens, empty commands} testevalex {
@@ -645,6 +656,9 @@ test parse-12.24 {Tcl_ParseVarName procedure, missing close paren in array refer
 test parse-12.25 {Tcl_ParseVarName procedure, nested array reference} testparser {
     testparser {$x(a$y(b$z))} 0
 } {- {$x(a$y(b$z))} 1 word {$x(a$y(b$z))} 8 variable {$x(a$y(b$z))} 7 text x 0 text a 0 variable {$y(b$z)} 4 text y 0 text b 0 variable {$z} 1 text z 0 {}}
+test parse-12.26 {Tcl_ParseVarName [d2ffcca163] non-ascii} testparser {
+    testparser "$\u0433" -1
+} "- {$\u0433} 1 word {$\u0433} 2 text {$} 0 text \u0433 0 {}"
 
 test parse-13.1 {Tcl_ParseVar procedure} testparsevar {
     set abc 24
@@ -657,13 +671,33 @@ test parse-13.3 {Tcl_ParseVar procedure, no variable name} testparsevar {
     testparsevar {$.123}
 } {{$} .123}
 test parse-13.4 {Tcl_ParseVar procedure, error looking up variable} testparsevar {
-    catch {unset abc}
+    unset -nocomplain abc
     list [catch {testparsevar {$abc}} msg] $msg
 } {1 {can't read "abc": no such variable}}
 test parse-13.5 {Tcl_ParseVar procedure, error looking up variable} testparsevar {
-    catch {unset abc}
+    unset -nocomplain abc
     list [catch {testparsevar {$abc([bogus x y z])}} msg] $msg
 } {1 {invalid command name "bogus"}}
+test parse-13.6 {Tcl_ParseVar memory leak} -constraints memory -setup {
+    proc getbytes {} {
+	return [lindex [split [memory info] \n] 3 3]
+    }
+} -body {
+    set a() foo
+    set end [getbytes]
+    for {set i 0} {$i < 5} {incr i} {
+	set vn {}
+	set res [testparsevar [append vn $ a([string repeat {[]} 19]) bar]]
+	if {$res ne {foo bar}} {error "Unexpected result: $res"}
+
+	set tmp $end
+	set end [getbytes]
+    }
+    expr {$end - $tmp}
+} -cleanup {
+    unset -nocomplain a end i vn res tmp
+    rename getbytes {}
+} -result 0
 
 test parse-14.1 {Tcl_ParseBraces procedure, computing string length} testparser {
     testparser [bytestring "foo\0 bar"] -1
@@ -1051,6 +1085,44 @@ test parse-19.4 {Bug 1115904: recursion limit in Tcl_EvalEx} -setup {
 } -cleanup {
     interp delete i
 } -returnCodes error -match glob -result {too many nested*}
+
+test parse-20.1 {TclParseBackslash: truncated escape} testparser {
+    testparser {\u12345} 1
+} {- \\ 1 simple \\ 1 text \\ 0 u12345}
+test parse-20.2 {TclParseBackslash: truncated escape} testparser {
+    testparser {\u12345} 2
+} {- {\u} 1 word {\u} 1 backslash {\u} 0 12345}
+test parse-20.3 {TclParseBackslash: truncated escape} testparser {
+    testparser {\u12345} 3
+} {- {\u1} 1 word {\u1} 1 backslash {\u1} 0 2345}
+test parse-20.4 {TclParseBackslash: truncated escape} testparser {
+    testparser {\u12345} 4
+} {- {\u12} 1 word {\u12} 1 backslash {\u12} 0 345}
+test parse-20.5 {TclParseBackslash: truncated escape} testparser {
+    testparser {\u12345} 5
+} {- {\u123} 1 word {\u123} 1 backslash {\u123} 0 45}
+test parse-20.6 {TclParseBackslash: truncated escape} testparser {
+    testparser {\u12345} 6
+} {- {\u1234} 1 word {\u1234} 1 backslash {\u1234} 0 5}
+test parse-20.7 {TclParseBackslash: truncated escape} testparser {
+    testparser {\u12345} 7
+} {- {\u12345} 1 word {\u12345} 2 backslash {\u1234} 0 text 5 0 {}}
+
+test parse-20.8 {TclParseBackslash: truncated escape} testparser {
+    testparser {\x12X} 1
+} {- \\ 1 simple \\ 1 text \\ 0 x12X}
+test parse-20.9 {TclParseBackslash: truncated escape} testparser {
+    testparser {\x12X} 2
+} {- {\x} 1 word {\x} 1 backslash {\x} 0 12X}
+test parse-20.10 {TclParseBackslash: truncated escape} testparser {
+    testparser {\x12X} 3
+} {- {\x1} 1 word {\x1} 1 backslash {\x1} 0 2X}
+test parse-20.11 {TclParseBackslash: truncated escape} testparser {
+    testparser {\x12X} 4
+} {- {\x12} 1 word {\x12} 1 backslash {\x12} 0 X}
+test parse-20.12 {TclParseBackslash: truncated escape} testparser {
+    testparser {\x12X} 5
+} {- {\x12X} 1 word {\x12X} 2 backslash {\x12} 0 text X 0 {}}
 
 cleanupTests
 }

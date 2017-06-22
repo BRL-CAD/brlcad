@@ -1636,7 +1636,7 @@ f_bomb(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc,
 	bu_vls_free(&vls);
     }
 
-    bu_exit(EXIT_FAILURE, buffer);
+    bu_exit(EXIT_FAILURE, "%s", buffer);
 
     /* This is never reached */
 

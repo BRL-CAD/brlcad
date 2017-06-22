@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #define OEMRESOURCE
@@ -92,6 +90,7 @@ Tk_ClassProcs tkpButtonProcs = {
     sizeof(Tk_ClassProcs),	/* size */
     TkButtonWorldChanged,	/* worldChangedProc */
     CreateProc,			/* createProc */
+    NULL					/* modalProc */
 };
 
 
@@ -182,10 +181,7 @@ InitBoxes(void)
  */
 
 void
-TkpButtonSetDefaults(
-    Tk_OptionSpec *specPtr)	/* Points to an array of option specs,
-				 * terminated by one with type
-				 * TK_OPTION_END. */
+TkpButtonSetDefaults()
 {
     int width = GetSystemMetrics(SM_CXEDGE);
     if (width > 0) {
@@ -1269,21 +1265,29 @@ ButtonProc(
 	return 0;
     }
     case BN_CLICKED: {
-	int code;
-	Tcl_Interp *interp = butPtr->info.interp;
+	/*
+	 * OOPS: chromium fires WM_NULL regularly to ping if plugin is still
+	 * alive. When using an external window (i.e. via the tcl plugin), this
+	 * causes all buttons to fire once a second, so we need to make sure
+	 * that we are not dealing with the chromium life check.
+	*/
+        if (wParam != 0 || lParam != 0) {
+	    int code;
+	    Tcl_Interp *interp = butPtr->info.interp;
 
-	if (butPtr->info.state != STATE_DISABLED) {
-	    Tcl_Preserve((ClientData)interp);
-	    code = TkInvokeButton((TkButton*)butPtr);
-	    if (code != TCL_OK && code != TCL_CONTINUE
-		    && code != TCL_BREAK) {
-		Tcl_AddErrorInfo(interp, "\n    (button invoke)");
-		Tcl_BackgroundError(interp);
+	    if (butPtr->info.state != STATE_DISABLED) {
+		Tcl_Preserve((ClientData)interp);
+		code = TkInvokeButton((TkButton*)butPtr);
+		if (code != TCL_OK && code != TCL_CONTINUE
+			&& code != TCL_BREAK) {
+		    Tcl_AddErrorInfo(interp, "\n    (button invoke)");
+		    Tcl_BackgroundError(interp);
+		}
+		Tcl_Release((ClientData)interp);
 	    }
-	    Tcl_Release((ClientData)interp);
+	    Tcl_ServiceAll();
+	    return 0;
 	}
-	Tcl_ServiceAll();
-	return 0;
     }
 
     default:

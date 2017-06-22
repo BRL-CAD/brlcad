@@ -3,8 +3,6 @@
 # This file defines the default bindings for Tk scale widgets and provides
 # procedures that help in implementing the bindings.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1995 Sun Microsystems, Inc.
 #
@@ -62,7 +60,7 @@ bind Scale <ButtonRelease-2> {
     tk::ScaleEndDrag %W
     tk::ScaleActivate %W %x %y
 }
-if {$tcl_platform(platform) eq "windows"} {
+if {[tk windowingsystem] eq "win32"} {
     # On Windows do the same with button 3, as that is the right mouse button
     bind Scale <3>		[bind Scale <2>]
     bind Scale <B3-Motion>	[bind Scale <B2-Motion>]
@@ -225,7 +223,13 @@ proc ::tk::ScaleIncrement {w dir big repeat} {
 	set inc [$w cget -resolution]
     }
     if {([$w cget -from] > [$w cget -to]) ^ ($dir eq "up")} {
-	set inc [expr {-$inc}]
+        if {$inc > 0} {
+            set inc [expr {-$inc}]
+        }
+    } else {
+        if {$inc < 0} {
+            set inc [expr {-$inc}]
+        }
     }
     $w set [expr {[$w get] + $inc}]
 

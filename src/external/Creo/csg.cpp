@@ -208,7 +208,7 @@ tgc_hole_name(struct creo_conv_info *cinfo, wchar_t *wname, const char *suffix)
 	    bu_vls_free(hname);
 	    BU_PUT(hname, struct bu_vls);
 	    ProWstringToString(pname, wname);
-	    creo_log(cinfo, MSG_FAIL, "%s: hole name generation FAILED.\n", pname);
+	    creo_log(cinfo, MSG_DEBUG, "%s: hole name generation FAILED.\n", pname);
 	    return NULL;
 	}
     }

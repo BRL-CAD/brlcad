@@ -1330,6 +1330,8 @@ Release steps are as follows:
 #####################################################################
 # 09: Sync RELEASE to STABLE branch:
 
+    # Update the NEWS release date for the current release to today's date
+
     # NON-AUTO: Review the log and obtain the last merge revision
     # number from comments.
     svn log --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/STABLE | less

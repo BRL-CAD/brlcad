@@ -52,7 +52,7 @@
 HIDDEN void
 communications_error(const char *str)
 {
-    bu_log(str);
+    bu_log("%s", str);
 }
 
 

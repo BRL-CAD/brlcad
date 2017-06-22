@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * $Id$
  */
 
 #include <stdlib.h>
@@ -511,7 +509,7 @@ static void ThemeChangedProc(ClientData clientData)
     static char ThemeChangedScript[] = "ttk::ThemeChanged";
     StylePackageData *pkgPtr = clientData;
 
-    if (Tcl_GlobalEval(pkgPtr->interp, ThemeChangedScript) != TCL_OK) {
+    if (Tcl_EvalEx(pkgPtr->interp, ThemeChangedScript, -1, TCL_EVAL_GLOBAL) != TCL_OK) {
 	Tcl_BackgroundError(pkgPtr->interp);
     }
     pkgPtr->themeChangePending = 0;
