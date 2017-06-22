@@ -15,7 +15,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Version (TODO - display this in the plugin somehow...)
   set(CREO2BRL_VERSION_MAJOR 0)
   set(CREO2BRL_VERSION_MINOR 2)
-  set(CREO2BRL_VERSION_PATCH 3)
+  set(CREO2BRL_VERSION_PATCH 4)
 
   # Tweak compiler flags - we *must* use /MT for this to work
   set(flaglists

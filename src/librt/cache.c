@@ -62,9 +62,7 @@ struct rt_cache {
 HIDDEN void
 cache_check(const struct rt_cache *cache)
 {
-    if (!cache)
-	bu_bomb("NULL rt_cache pointer");
-
+    if (!cache) return;
     RT_CK_DBI(cache->dbip);
 }
 
@@ -175,6 +173,8 @@ have_cache_file:
 void
 rt_cache_close(struct rt_cache *cache)
 {
+    if (!cache) return;
+
     cache_check(cache);
 
     db_close(cache->dbip);
@@ -384,16 +384,16 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
 	      struct rt_db_internal *internal)
 {
     char name[37];
-    struct directory *dir;
+    struct directory *dir = RT_DIR_NULL;
 
     cache_check(cache);
     RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(internal);
 
     cache_generate_name(name, stp);
-    dir = db_lookup(cache->dbip, name, 0);
+    if (cache) dir = db_lookup(cache->dbip, name, 0);
 
-    if (dir) {
+    if (dir != RT_DIR_NULL) {
 	if (!cache_try_load(cache, dir, stp, internal))
 	    bu_bomb("cache_try_load() failed");
     } else {
@@ -402,12 +402,14 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
 	if (rt_obj_prep(stp, internal, stp->st_rtip))
 	    return 1;
 
-	if (OBJ[stp->st_id].ft_prep_serialize) {
-	    if (!(dir = db_diradd(cache->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM,
-				  (void *)&type)))
-		bu_bomb("db_diradd() failed");
+	if (cache) {
+	    if (OBJ[stp->st_id].ft_prep_serialize) {
+		if (!(dir = db_diradd(cache->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM,
+				(void *)&type)))
+		    bu_bomb("db_diradd() failed");
 
-	    cache_try_store(cache, dir, stp, internal);
+		cache_try_store(cache, dir, stp, internal);
+	    }
 	}
     }
 

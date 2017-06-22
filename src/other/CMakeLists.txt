@@ -35,8 +35,13 @@ RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 # Quiet all warnings in this directory
 DISABLE_WARNINGS()
 
-# Ideally we wouldn't need this, but in a few cases we're using
-# BRL-CAD's include dirs.
+# Set a variable that will tell build logic in subdirectories that there is a
+# parent build.  This will in some cases disable attempts to define settings
+# such as RPATH values that we need the parent build to manage.
+set(HAVE_PARENT_BUILD 1)
+
+# Ideally we wouldn't need this, but in a few cases we're using BRL-CAD's
+# include dirs.
 include_directories(
   "${BRLCAD_BINARY_DIR}/include"
   "${BRLCAD_SOURCE_DIR}/include"
@@ -461,7 +466,7 @@ if(BRLCAD_TK_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/library/Makefile")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/pkgIndex.tcl")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5.9")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5.19")
 elseif(BRLCAD_TK_BUILD AND BRLCAD_ENABLE_TK)
     BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
 endif(BRLCAD_TK_BUILD)
