@@ -180,12 +180,17 @@ ENDIF(SC_ENABLE_TESTING)
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.  Thanks to plplot for
-# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
-# Documentation of these options is available at
-# http://www.cmake.org/Wiki/CMake_RPATH_handling
-
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake)
+# the build directory AND install directory.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
+  if(COMMAND cmake_set_rpath)
+    cmake_set_rpath()
+  endif(COMMAND cmake_set_rpath)
+else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
+  if(NOT HAVE_PARENT_BUILD)
+    message(FATAL_ERROR "Not building as a subbuild, but cmake/RPath_Setup.cmake not found.  To build as a stand-alone build, add RPath_Setup.cmake to the CMake directory.")
+  endif(NOT HAVE_PARENT_BUILD)
+endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
 
 #-----------------------------------------------------------------------------
 # Output directories.

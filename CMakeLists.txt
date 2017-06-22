@@ -879,7 +879,11 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQU
 # Documentation of these options is available at
 # http://www.cmake.org/Wiki/CMake_RPATH_handling
 
+# TODO - once we've shifted to function invocation rather than having
+# our logic execute on load, this "include" step will probably be
+# consolidated into one large include...
 include("${BRLCAD_CMAKE_DIR}/RPath_Setup.cmake")
+cmake_set_rpath()
 
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine
