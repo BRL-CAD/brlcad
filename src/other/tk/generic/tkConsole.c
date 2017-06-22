@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tk.h"
@@ -83,6 +81,7 @@ static Tcl_ChannelType consoleChannelType = {
     NULL,			/* handler proc. */
     NULL,			/* wide seek proc */
     NULL,			/* thread action proc */
+    NULL
 };
 
 #ifdef __WIN32__
@@ -113,25 +112,17 @@ ShouldUseConsoleChannel(
     DCB dcb;
     DWORD consoleParams;
     DWORD fileType;
-    int mode;
-    char *bufMode;
     HANDLE handle;
 
     switch (type) {
     case TCL_STDIN:
 	handleId = STD_INPUT_HANDLE;
-	mode = TCL_READABLE;
-	bufMode = "line";
 	break;
     case TCL_STDOUT:
 	handleId = STD_OUTPUT_HANDLE;
-	mode = TCL_WRITABLE;
-	bufMode = "line";
 	break;
     case TCL_STDERR:
 	handleId = STD_ERROR_HANDLE;
-	mode = TCL_WRITABLE;
-	bufMode = "none";
 	break;
     default:
 	return 0;
@@ -229,11 +220,10 @@ Tk_InitConsoleChannels(
     Tcl_Channel consoleChannel;
 
     /*
-     * Ensure that we are getting the matching version of Tcl. This is really
-     * only an issue when Tk is loaded dynamically.
+     * Ensure that we are getting a compatible version of Tcl.
      */
 
-    if (Tcl_InitStubs(interp, TCL_VERSION, 0) == NULL) {
+    if (Tcl_InitStubs(interp, "8.5.0", 0) == NULL) {
         return;
     }
 
@@ -445,7 +435,8 @@ Tk_CreateConsoleWindow(
     }
 
     Tcl_Preserve((ClientData) consoleInterp);
-    result = Tcl_GlobalEval(consoleInterp, "source $tk_library/console.tcl");
+    result = Tcl_EvalEx(consoleInterp, "source $tk_library/console.tcl",
+	    -1, TCL_EVAL_GLOBAL);
     if (result == TCL_ERROR) {
 	Tcl_SetReturnOptions(interp,
 		Tcl_GetReturnOptions(consoleInterp, result));
@@ -509,7 +500,22 @@ ConsoleOutput(
 	Tcl_Interp *consoleInterp = info->consoleInterp;
 
 	if (consoleInterp && !Tcl_InterpDeleted(consoleInterp)) {
+	    Tcl_DString ds;
+	    Tcl_Encoding utf8 = Tcl_GetEncoding(NULL, "utf-8");
+
+	    /*
+	     * Not checking for utf8 == NULL.  Did not check for TCL_ERROR
+	     * from Tcl_SetChannelOption() in Tk_InitConsoleChannels() either.
+	     * Assumption is utf-8 Tcl_Encoding is reliably present.
+	     */
+
+	    CONST char *bytes
+		    = Tcl_ExternalToUtfDString(utf8, buf, toWrite, &ds);
+	    int numBytes = Tcl_DStringLength(&ds);
 	    Tcl_Obj *cmd = Tcl_NewStringObj("tk::ConsoleOutput", -1);
+
+	    Tcl_FreeEncoding(utf8);
+
 	    if (data->type == TCL_STDERR) {
 		Tcl_ListObjAppendElement(NULL, cmd,
 			Tcl_NewStringObj("stderr", -1));
@@ -517,9 +523,12 @@ ConsoleOutput(
 		Tcl_ListObjAppendElement(NULL, cmd,
 			Tcl_NewStringObj("stdout", -1));
 	    }
-	    Tcl_ListObjAppendElement(NULL, cmd, Tcl_NewStringObj(buf, toWrite));
+	    Tcl_ListObjAppendElement(NULL, cmd,
+		    Tcl_NewStringObj(bytes, numBytes));
+
+	    Tcl_DStringFree(&ds);
 	    Tcl_IncrRefCount(cmd);
-	    Tcl_GlobalEvalObj(consoleInterp, cmd);
+	    Tcl_EvalObjEx(consoleInterp, cmd, TCL_EVAL_GLOBAL);
 	    Tcl_DecrRefCount(cmd);
 	}
     }
@@ -723,7 +732,7 @@ ConsoleObjCmd(
     Tcl_IncrRefCount(cmd);
     if (consoleInterp && !Tcl_InterpDeleted(consoleInterp)) {
 	Tcl_Preserve((ClientData) consoleInterp);
-	result = Tcl_GlobalEvalObj(consoleInterp, cmd);
+	result = Tcl_EvalObjEx(consoleInterp, cmd, TCL_EVAL_GLOBAL);
 	Tcl_SetReturnOptions(interp,
 		Tcl_GetReturnOptions(consoleInterp, result));
 	Tcl_SetObjResult(interp, Tcl_GetObjResult(consoleInterp));
@@ -785,7 +794,7 @@ InterpreterObjCmd(
     Tcl_Preserve((ClientData) otherInterp);
     switch ((enum option) index) {
     case OTHER_EVAL:
-   	result = Tcl_GlobalEvalObj(otherInterp, objv[2]);
+   	result = Tcl_EvalObjEx(otherInterp, objv[2], TCL_EVAL_GLOBAL);
 	/*
 	 * TODO: Should exceptions be filtered here?
 	 */
@@ -920,7 +929,7 @@ ConsoleEventProc(
 	Tcl_Interp *consoleInterp = info->consoleInterp;
 
 	if (consoleInterp && !Tcl_InterpDeleted(consoleInterp)) {
-	    Tcl_GlobalEval(consoleInterp, "tk::ConsoleExit");
+	    Tcl_EvalEx(consoleInterp, "tk::ConsoleExit", -1, TCL_EVAL_GLOBAL);
 	}
 
 	if (--info->refCount <= 0) {

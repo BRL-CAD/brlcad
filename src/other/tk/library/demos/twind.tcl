@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a text widget with a bunch of
 # embedded windows.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

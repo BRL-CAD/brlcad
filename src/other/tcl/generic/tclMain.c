@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -30,7 +28,10 @@
  * source directory to make their own modified versions).
  */
 
+#if defined _MSC_VER && _MSC_VER < 1900
+/* isatty is always defined on MSVC 14.0, but not necessarily as CRTIMPORT. */
 extern CRTIMPORT int	isatty(int fd);
+#endif
 
 static Tcl_Obj *tclStartupScriptPath = NULL;
 static Tcl_Obj *tclStartupScriptEncoding = NULL;
@@ -344,9 +345,10 @@ Tcl_Main(
     Tcl_Interp *interp;
     Tcl_DString appName;
 
-    Tcl_FindExecutable(argv[0]);
-
     interp = Tcl_CreateInterp();
+    TclpSetInitialEncodings();
+    TclpFindExecutable(argv[0]);
+
     Tcl_InitMemory(interp);
 
     /*
@@ -454,6 +456,7 @@ Tcl_Main(
 		    Tcl_WriteObj(errChannel, valuePtr);
 		}
 		Tcl_WriteChars(errChannel, "\n", 1);
+		Tcl_DecrRefCount(options);
 	    }
 	    exitCode = 1;
 	}

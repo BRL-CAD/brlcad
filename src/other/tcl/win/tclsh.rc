@@ -1,4 +1,3 @@
-// RCS: @(#) $Id$
 //
 // Version Resource Script
 //
@@ -69,3 +68,4 @@ END
 //
 
 tclsh                      ICON    DISCARDABLE     "tclsh.ico"
+

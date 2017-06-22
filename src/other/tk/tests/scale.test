@@ -5,8 +5,6 @@
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -386,6 +384,11 @@ test scale-6.19 {ComputeFormat procedure} {
 } {1001.23}
 test scale-6.20 {ComputeFormat procedure} {
     .s configure -length 200 -from 1000 -to 1001.8 -resolution 0 -digits 0
+    .s set 1001.23456789
+    .s get
+} {1001.235}
+test scale-6.21 {ComputeFormat procedure} {
+    .s configure -length 200 -from 1000 -to 1001.8 -resolution 0 -digits 200
     .s set 1001.23456789
     .s get
 } {1001.235}
@@ -863,6 +866,40 @@ test scale-18.3 {Scale button 2 events [Bug 787065]} \
         catch {destroy .s}
     } \
     -result {0 {}}
+
+test scale-19 {Bug [3529885fff] - Click in through goes in wrong direction} \
+    -setup {
+        catch {destroy .s}
+        catch {destroy .s1 .s2 .s3 .s4}
+        unset -nocomplain x1 x2 x3 x4 x y
+        scale .s1 -from 0 -to 100 -resolution 1  -variable x1 -digits 4 -orient horizontal -length 100
+        scale .s2 -from 0 -to 100 -resolution -1 -variable x2 -digits 4 -orient horizontal -length 100
+        scale .s3 -from 100 -to 0 -resolution 1  -variable x3 -digits 4 -orient horizontal -length 100
+        scale .s4 -from 100 -to 0 -resolution -1 -variable x4 -digits 4 -orient horizontal -length 100
+        pack .s1 .s2 .s3 .s4 -side left
+        update
+    } \
+    -body {
+        foreach {x y} [.s1 coord 50] {}
+        event generate .s1 <1> -x $x -y $y
+        event generate .s1 <ButtonRelease-1> -x $x -y $y
+        foreach {x y} [.s2 coord 50] {}
+        event generate .s2 <1> -x $x -y $y
+        event generate .s2 <ButtonRelease-1> -x $x -y $y
+        foreach {x y} [.s3 coord 50] {}
+        event generate .s3 <1> -x $x -y $y
+        event generate .s3 <ButtonRelease-1> -x $x -y $y
+        foreach {x y} [.s4 coord 50] {}
+        event generate .s4 <1> -x $x -y $y
+        event generate .s4 <ButtonRelease-1> -x $x -y $y
+        update
+        list $x1 $x2 $x3 $x4
+    } \
+    -cleanup {
+        unset x1 x2 x3 x4 x y
+        destroy .s1 .s2 .s3 .s4
+    } \
+    -result {1.0 1.0 1.0 1.0}
 
 catch {destroy .s}
 option clear

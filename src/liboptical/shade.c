@@ -165,7 +165,7 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 			   OBJ[pp->pt_inseg->seg_stp->st_id].ft_name,
 			   swp->sw_hit.hit_surfno, f);
 		} else if (reported == 100) {
-		    bu_log("Too many flipped normals.  Suppressing further reporting.\n", pp->pt_inseg->seg_stp->st_name);
+		    bu_log("Too many flipped normals.  Suppressing further reporting.\n");
 		}
 		reported++;
 

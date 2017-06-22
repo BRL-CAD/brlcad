@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TKWINDEFAULT
@@ -372,6 +370,7 @@
 #define DEF_PANEDWINDOW_HEIGHT		""
 #define DEF_PANEDWINDOW_OPAQUERESIZE	"1"
 #define DEF_PANEDWINDOW_ORIENT		"horizontal"
+#define DEF_PANEDWINDOW_PROXYBORDER	"2"
 #define DEF_PANEDWINDOW_RELIEF		"flat"
 #define DEF_PANEDWINDOW_SASHCURSOR	""
 #define DEF_PANEDWINDOW_SASHPAD		"0"

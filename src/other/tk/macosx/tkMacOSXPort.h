@@ -6,13 +6,11 @@
  *	#includes for system include files and a few other things.
  *
  * Copyright (c) 1994-1996 Sun Microsystems, Inc.
- * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001-2009, Apple Inc.
+ * Copyright (c) 2005-2009 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TKMACPORT
@@ -142,7 +140,6 @@
 
 #define TkFreeWindowId(dispPtr,w)
 #define TkInitXId(dispPtr)
-#define TkpButtonSetDefaults(specPtr) {}
 #define TkpCmapStressed(tkwin,colormap) (0)
 #define TkpFreeColor(tkColPtr)
 #define TkSetPixmapColormap(p,c) {}
@@ -161,18 +158,10 @@
 
 /*
  * This macro stores a representation of the window handle in a string.
- * This should perhaps use the real size of an XID.
  */
 
 #define TkpPrintWindowId(buf,w) \
-	sprintf((buf), "0x%x", (unsigned int) (w))
-
-/*
- * TkpScanWindowId is just an alias for Tcl_GetInt on Unix.
- */
-
-#define TkpScanWindowId(i,s,wp) \
-	Tcl_GetInt((i),(s),(int *) (wp))
+	sprintf((buf), "0x%lx", (unsigned long) (w))
 
 /*
  * Turn off Tk double-buffering as Aqua windows are already double-buffered.

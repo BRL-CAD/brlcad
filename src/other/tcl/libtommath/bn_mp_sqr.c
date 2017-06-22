@@ -52,7 +52,3 @@ if (a->used >= KARATSUBA_SQR_CUTOFF) {
   return res;
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

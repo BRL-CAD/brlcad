@@ -109,7 +109,7 @@ main(int argc, char **argv)
     elems = NULL;
 
     if (argc < 2)
-	bu_exit(EXIT_FAILURE,  usage);
+	bu_exit(EXIT_FAILURE, "%s", usage);
 
     /* get command line arguments */
     while ((c = bu_getopt(argc, argv, "t:c:e:o:")) != -1) {
@@ -138,7 +138,7 @@ main(int argc, char **argv)
 		output_file = bu_optarg;
 		break;
 	    default:
-		bu_exit(EXIT_FAILURE,  usage);
+		bu_exit(EXIT_FAILURE, "%s", usage);
 		break;
 	}
     }
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 
     /* Must have some input */
     if (coords == NULL || elems == NULL)
-	bu_exit(EXIT_FAILURE,  usage);
+	bu_exit(EXIT_FAILURE, "%s", usage);
 
     /* build a title for the BRL-CAD database */
     if (coords_name[0] == 0) {

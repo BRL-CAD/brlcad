@@ -343,7 +343,7 @@ docbook_print_short_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type
     if (opt_type & OPT_REPEAT) {
 	bu_vls_printf(desc, " rep='repeat'");
     }
-    bu_vls_printf(desc, ">-%c", d->shortopt);
+    bu_vls_printf(desc, ">-%c", d->shortopt[0]);
     if (d->arg_helpstr && strlen(d->arg_helpstr) > 0) {
 	bu_vls_printf(desc, " <replaceable>%s</replaceable>", d->arg_helpstr);
     }

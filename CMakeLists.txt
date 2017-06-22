@@ -879,7 +879,11 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQU
 # Documentation of these options is available at
 # http://www.cmake.org/Wiki/CMake_RPATH_handling
 
+# TODO - once we've shifted to function invocation rather than having
+# our logic execute on load, this "include" step will probably be
+# consolidated into one large include...
 include("${BRLCAD_CMAKE_DIR}/RPath_Setup.cmake")
+cmake_set_rpath()
 
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine
@@ -994,7 +998,6 @@ if(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
 else(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
   set(CMAKE_WORD_SIZE "${BRLCAD_WORD_SIZE}")
 endif(${BRLCAD_WORD_SIZE} MATCHES "AUTO")
-CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
 
 # Enable/disable 64-bit build settings for MSVC, which is apparently
 # determined at the CMake generator level - need to override other
@@ -1010,6 +1013,7 @@ if(MSVC)
     endif(NOT ${CMAKE_WORD_SIZE} MATCHES "64BIT")
     add_definitions("-D_WIN64")
   else(CMAKE_CL_64)
+    set(CMAKE_SIZEOF_VOID_P 4)
     if(NOT ${CMAKE_WORD_SIZE} MATCHES "32BIT")
       set(CMAKE_WORD_SIZE "32BIT")
       if(NOT "${BRLCAD_WORD_SIZE}" MATCHES "AUTO")
@@ -1025,6 +1029,8 @@ if (APPLE)
     set(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "Building for i386" FORCE)
   endif (${CMAKE_WORD_SIZE} MATCHES "32BIT")
 endif (APPLE)
+
+CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
 
 # Based on what we are doing, we may need to constrain our search paths
 #
@@ -2536,19 +2542,21 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
-# For Windows, we need some dlls to be redistributed with the
-# installer
 if(MSVC)
   # By default, do not warn when built on machines using only VS Express
   # From: http://www.cmake.org/pipermail/cmake/2011-May/044166.html
   if(NOT DEFINED CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS)
     set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS ON)
   endif()
+  # For Windows, we need some dlls to be redistributed with the installer.
   include(InstallRequiredSystemLibraries)
-endif(MSVC)
 
-# Before we finalize, set some specific global linker flags
-if(MSVC)
+  # For portability with older Windows versions - remove this once we are no
+  # longer worried about Windows versions older than Windows 7/Windows 2008 R2
+  # https://blogs.msdn.microsoft.com/vcblog/2009/08/27/windows-sdk-v7-0v7-0a-incompatibility-workaround/
+  add_definitions(-DPSAPI_VERSION=1)
+
+  # Before we finalize, set some specific global linker flags
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")

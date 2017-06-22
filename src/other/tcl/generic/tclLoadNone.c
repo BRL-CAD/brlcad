@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -134,6 +132,39 @@ TclpUnloadFile(
 				 * that represents the loaded file. */
 {
 }
+
+/*
+ * These functions are fallbacks if we somehow determine that the platform can
+ * do loading from memory but the user wishes to disable it. They just report
+ * (gracefully) that they fail.
+ */
+
+#ifdef TCL_LOAD_FROM_MEMORY
+
+MODULE_SCOPE void *
+TclpLoadMemoryGetBuffer(
+    Tcl_Interp *interp,		/* Dummy: unused by this implementation */
+    int size)			/* Dummy: unused by this implementation */
+{
+    return NULL;
+}
+
+MODULE_SCOPE int
+TclpLoadMemory(
+    Tcl_Interp *interp,		/* Used for error reporting. */
+    void *buffer,		/* Dummy: unused by this implementation */
+    int size,			/* Dummy: unused by this implementation */
+    int codeSize,		/* Dummy: unused by this implementation */
+    Tcl_LoadHandle *loadHandle,	/* Dummy: unused by this implementation */
+    Tcl_FSUnloadFileProc **unloadProcPtr)
+				/* Dummy: unused by this implementation */
+{
+    Tcl_SetResult(interp, "dynamic loading from memory is not available "
+	    "on this system", TCL_STATIC);
+    return TCL_ERROR;
+}
+
+#endif /* TCL_LOAD_FROM_MEMORY */
 
 /*
  * Local Variables:

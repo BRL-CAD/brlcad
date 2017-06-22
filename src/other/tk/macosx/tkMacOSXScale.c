@@ -6,17 +6,17 @@
  *
  * Copyright (c) 1996 by Sun Microsystems, Inc.
  * Copyright (c) 1998-2000 by Scriptics Corporation.
- * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2006-2009 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2008-2009, Apple Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkMacOSXPrivate.h"
 #include "tkScale.h"
 
+#ifdef MAC_OSX_TK_TODO
 /*
 #ifdef TK_MAC_DEBUG
 #define TK_MAC_DEBUG_SCALE
@@ -145,7 +145,7 @@ TkpDisplayScale(
     Tk_Window tkwin = scalePtr->tkwin;
     Tcl_Interp *interp = scalePtr->interp;
     int result;
-    char string[PRINT_CHARS];
+    char string[TCL_DOUBLE_SPACE];
     MacScale *macScalePtr = (MacScale *) clientData;
     Rect r;
     WindowRef windowRef;
@@ -481,4 +481,13 @@ ScaleActionProc(
     TkMacOSXRunTclEventLoop();
     Tcl_Release((ClientData) scalePtr);
 }
-
+#endif
+
+/*
+ * Local Variables:
+ * mode: objc
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

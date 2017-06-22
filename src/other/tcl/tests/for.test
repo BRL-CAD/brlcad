@@ -8,14 +8,14 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
+testConstraint bug-05489ce335 [testConstraint knownBug]
+
 # Basic "for" operation.
 
 test for-1.1 {TclCompileForCmd: missing initial command} {
@@ -813,7 +813,176 @@ test for-6.18 {Tcl_ForObjCmd: for command result} {
     1 {invoked "continue" outside of a loop} \
     ]
 
-
+test for-8.0 {Coverity CID 1251203: break vs continue in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i; list a [eval {}]} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {6 5 3}
+test for-8.1 {Coverity CID 1251203: break vs continue in for-step clause} bug-05489ce335 {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i;list a [eval break]} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.2 {Coverity CID 1251203: break vs continue in for-step clause} bug-05489ce335 {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i;list a [eval continue]} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+test for-8.3 {break in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i; break} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.4 {continue in for-step clause} bug-05489ce335 {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i; continue} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+test for-8.5 {break in for-step clause} bug-05489ce335 {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i; list a [break]} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.6 {continue in for-step clause} bug-05489ce335 {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i; list a [continue]} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+test for-8.7 {break in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i;eval break} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.8 {continue in for-step clause} bug-05489ce335 {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i;eval continue} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+test for-8.9 {break in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    for {set i 0} {$i < 5} {incr i;eval break} {
+		incr j
+	    }
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.10 {continue in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    for {set i 0} {$i < 5} {incr i;eval continue} {
+		incr j
+	    }
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+test for-8.11 {break in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    for {set i 0} {$i < 5} {incr i;break} {
+		incr j
+	    }
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.12 {continue in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    for {set i 0} {$i < 5} {incr i;continue} {
+		incr j
+	    }
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

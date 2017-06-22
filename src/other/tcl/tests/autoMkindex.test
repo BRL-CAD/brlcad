@@ -8,8 +8,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -253,6 +251,38 @@ test autoMkindex-3.3 {auto_mkindex_parser::command} {knownBug} {
     list [lvalue $::result *mycmd4*] [lvalue $::result *mycmd5*] [lvalue $::result *mycmd6*]
 } "{::buried::mycmd4 $element} {::buried::mycmd5 $element} {mycmd6 $element}"
 
+makeFile {
+
+namespace eval wok {
+    namespace ensemble create -subcommands {commands vars}
+
+    proc commands {{pattern *}} {
+	puts [join [lsort -dictionary [info commands $pattern]] \n]
+    }
+
+    proc vars {{pattern *}} {
+	puts [join [lsort -dictionary [info vars $pattern]] \n]
+    }
+
+}
+
+} ensemblecommands.tcl
+
+test autoMkindex-3.4 {ensemble commands in tclIndex} {
+    file delete tclIndex
+    auto_mkindex . ensemblecommands.tcl
+    set f [open tclIndex r]
+    set dat [list]
+    foreach r [split [string trim [read $f]] "\n"] {
+	if {[string match {set auto_index*} $r]} {
+	    lappend dat $r
+	}
+    }
+    set result [lsort $dat]
+    close $f
+    set result
+} {{set auto_index(::wok::commands) [list source [file join $dir ensemblecommands.tcl]]} {set auto_index(::wok::vars) [list source [file join $dir ensemblecommands.tcl]]} {set auto_index(wok) [list source [file join $dir ensemblecommands.tcl]]}}
+removeFile ensemblecommands.tcl
 
 makeDirectory pkg
 makeFile {

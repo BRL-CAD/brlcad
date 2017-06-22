@@ -1,8 +1,6 @@
 # This file creates a screen to exercise Postscript generation
 # for images in canvases.  It is part of the Tk visual test suite,
 # which is invoked via the "visual" script.
-#
-# RCS: @(#) $Id$
 
 # Build a test image in a canvas
 proc BuildTestImage {} {

@@ -137,7 +137,7 @@ BINROOT		= ..
 !IF "$(NODEBUG)" == "1"
 TMPDIRNAME	= Release
 DBGX		=
-SYMDEFINES	=
+SYMDEFINES	= -DNDEBUG
 !ELSE
 TMPDIRNAME	= Debug
 #DBGX		= d
@@ -402,57 +402,57 @@ $(CAT32): $(WINDIR)\cat.c
 install-binaries: $(TCLSH)
 	$(MKDIR) "$(BIN_INSTALL_DIR)"
 	$(MKDIR) "$(LIB_INSTALL_DIR)"
-	@echo installing $(TCLDLLNAME)
+	@echo Installing $(TCLDLLNAME)
 	@copy "$(TCLDLL)" "$(BIN_INSTALL_DIR)"
 	@copy "$(TCLLIB)" "$(LIB_INSTALL_DIR)"
-	@echo installing "$(TCLSH)"
+	@echo Installing "$(TCLSH)"
 	@copy "$(TCLSH)" "$(BIN_INSTALL_DIR)"
-	@echo installing $(TCLPIPEDLLNAME)
+	@echo Installing $(TCLPIPEDLLNAME)
 	@copy "$(TCLPIPEDLL)" "$(BIN_INSTALL_DIR)"
-	@echo installing $(TCLSTUBLIBNAME)
+	@echo Installing $(TCLSTUBLIBNAME)
 	@copy "$(TCLSTUBLIB)" "$(LIB_INSTALL_DIR)"
 
 install-libraries:
 	-@$(MKDIR) "$(LIB_INSTALL_DIR)"
 	-@$(MKDIR) "$(INCLUDE_INSTALL_DIR)"
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)"
-	@echo installing http1.0
+	@echo Installing http1.0
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\http1.0"
 	-@copy "$(ROOT)\library\http1.0\http.tcl"     "$(SCRIPT_INSTALL_DIR)\http1.0"
 	-@copy "$(ROOT)\library\http1.0\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\http1.0"
-	@echo installing http2.7
+	@echo Installing http2.7
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\http2.7"
 	-@copy "$(ROOT)\library\http\http.tcl"     "$(SCRIPT_INSTALL_DIR)\http2.7"
 	-@copy "$(ROOT)\library\http\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\http2.7"
-	@echo installing opt0.4
+	@echo Installing opt0.4
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\opt0.4"
 	-@copy "$(ROOT)\library\opt\optparse.tcl" "$(SCRIPT_INSTALL_DIR)\opt0.4"
 	-@copy "$(ROOT)\library\opt\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\opt0.4"
-	@echo installing msgcat1.4
-	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\msgcat1.4"
-	-@copy "$(ROOT)\library\msgcat\msgcat.tcl"   "$(SCRIPT_INSTALL_DIR)\msgcat1.4"
-	-@copy "$(ROOT)\library\msgcat\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\msgcat1.4"
-	@echo installing tcltest2.3
+	@echo Installing msgcat1.5
+	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\msgcat1.5"
+	-@copy "$(ROOT)\library\msgcat\msgcat.tcl"   "$(SCRIPT_INSTALL_DIR)\msgcat1.5"
+	-@copy "$(ROOT)\library\msgcat\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\msgcat1.5"
+	@echo Installing tcltest2.3
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\tcltest2.3"
 	-@copy "$(ROOT)\library\tcltest\tcltest.tcl"   "$(SCRIPT_INSTALL_DIR)\tcltest2.3"
 	-@copy "$(ROOT)\library\tcltest\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\tcltest2.3"
-	@echo installing platform1.0
+	@echo Installing platform1.0
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\platform1.0"
 	-@copy "$(ROOT)\library\platform\platform.tcl" "$(SCRIPT_INSTALL_DIR)\platform1.0"
 	-@copy "$(ROOT)\library\platform\shell.tcl"    "$(SCRIPT_INSTALL_DIR)\platform1.0"
 	-@copy "$(ROOT)\library\platform\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\platform1.0"
-	@echo installing $(TCLDDEDLLNAME)
+	@echo Installing $(TCLDDEDLLNAME)
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\dde1.3"
 	-@copy "$(TCLDDEDLL)" "$(SCRIPT_INSTALL_DIR)\dde1.3"
 	-@copy "$(ROOT)\library\dde\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\dde1.3"
-	@echo installing $(TCLREGDLLNAME)
+	@echo Installing $(TCLREGDLLNAME)
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\reg1.2"
 	-@copy "$(TCLREGDLL)" "$(SCRIPT_INSTALL_DIR)\reg1.2"
 	-@copy "$(ROOT)\library\reg\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\reg1.2"
-	@echo installing encoding files
+	@echo Installing encoding files
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\encoding"
 	-@copy "$(ROOT)\library\encoding\*.enc" "$(SCRIPT_INSTALL_DIR)\encoding"
-	@echo installing library files
+	@echo Installing library files
 	-@copy "$(GENERICDIR)\tcl.h"         "$(INCLUDE_INSTALL_DIR)"
 	-@copy "$(GENERICDIR)\tclDecls.h"    "$(INCLUDE_INSTALL_DIR)"
 	-@copy "$(GENERICDIR)\tclPlatDecls.h" "$(INCLUDE_INSTALL_DIR)"
@@ -556,7 +556,7 @@ $(GENERICDIR)\regcomp.c: \
 $(GENERICDIR)\regcustom.h: \
 	$(GENERICDIR)\tclInt.h \
 	$(GENERICDIR)\tclPort.h \
-	$(GENERICDIR)\regex.h
+	$(GENERICDIR)\regextcl.h
 
 $(GENERICDIR)\regexec.c: \
 	$(GENERICDIR)\rege_dfa.c \
@@ -595,4 +595,3 @@ clean:
 	-@$(RM) $(TMPDIR)\*.exe
 	-@$(RMDIR) $(OUTDIR)
 	-@$(RMDIR) $(TMPDIR)
-

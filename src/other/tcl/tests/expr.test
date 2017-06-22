@@ -9,8 +9,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2.1
@@ -7166,6 +7164,14 @@ test expr-47.13 {isqrt and floating point rounding (Bug 2143288)} {
 test expr-48.1 {Bug 1770224} {
     expr {-0x8000000000000001 >> 0x8000000000000000}
 } -1
+
+test expr-50.1 {test sqrt() of bignums with non-Inf answer} {
+    expr {sqrt("1[string repeat 0 616]") == 1e308}
+} 1
+
+test expr-51.1 {test round-to-even on input} {
+    expr 6.9294956446009195e15
+} 6929495644600920.0
 
 # cleanup
 if {[info exists a]} {

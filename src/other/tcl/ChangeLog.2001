@@ -939,7 +939,7 @@
 	version of Tcl with Cygwin gcc. Users should compile with Mingw gcc
 	instead.
 
-2001-11-06  Andreas Kupries  <andreas_kupries@users.sourceforge.net> 
+2001-11-06  Andreas Kupries  <andreas_kupries@users.sourceforge.net>
 
 	* generic/tclIO.c (ReadChars): Fixed [Bug 478856] reported by Stuart
 	Cassoff <stwo@users.sourceforge.net>. The bug caused loss of

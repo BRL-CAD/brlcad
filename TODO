@@ -18,17 +18,20 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* figure out if active/inactive panes are switched around in MGED -
-  have user report that inactive bg color is being used for active
-  window and vice versa.
+* TBD
 
-* user report of runtime failure on Windows.  apparently need a build
-  flag to be portable:
-  https://blogs.msdn.microsoft.com/vcblog/2009/08/27/windows-sdk-v7-0v7-0a-incompatibility-workaround/
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
+* f_dbopen in MGED doesn't seem to be reporting failure
+  if a non-.g file is fed to opendb.  That doesn't seem
+  right... shouldn't the open process completely fail
+  if the file isn't a valid .g?
+
+* add regression test for BoT ray tracing
 
 * add regression test for directional light sources
-
-* update astyle
 
 * bundle primary rays in rt front end into postage stamps, shoot via
   rt_shootrays(), modify to pass all rays down through the spatial
@@ -49,12 +52,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
-
-* reinstate 'stat' and search -size, see r67636 through r67646
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
 
 * try to come up with a way we can report the number of times
   the configuration step has been run and changed something
@@ -92,6 +89,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* reinstate 'stat' and search -size, see r67636 through r67646
 
 * update dem-g to not use full paths for dsp primitive data locations -
   should default to embedding the data in the .g file as a binary object,

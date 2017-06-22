@@ -1,6 +1,4 @@
 #
-# $Id$
-#
 # Ttk widget set: progress bar utilities.
 #
 
@@ -20,10 +18,10 @@ proc ttk::progressbar::Autoincrement {pb steptime stepsize} {
 	return
     }
 
-    $pb step $stepsize
-
     set Timers($pb) [after $steptime \
     	[list ttk::progressbar::Autoincrement $pb $steptime $stepsize] ]
+
+    $pb step $stepsize
 }
 
 # ttk::progressbar::start --

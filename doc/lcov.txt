@@ -1,0 +1,34 @@
+Notes on using gcov/lcov with BRL-CAD
+
+Build with the BRLCAD_ENABLE_CAPTURE option set to ON
+
+If using only gcov, you need to cd to the directory where the object files were
+built and specify the object file(s) in question fully, e.g. (from the build
+directory):
+
+$ cd src/libbu/CMakeFiles/libbu.dir/
+$ gcov b64.c.o vls.c.o 
+File '/brlcad/src/libbu/b64.c'
+Lines executed:88.10% of 126
+/brlcad/src/libbu/b64.c:creating 'b64.c.gcov'
+
+File '/brlcad/src/libbu/vls.c'
+Lines executed:74.66% of 363
+/brlcad/src/libbu/vls.c:creating 'vls.c.gcov'
+
+
+
+When running lcov (from the build directory, assuming the
+build directory itself is <source_dir>/build):
+
+find . -name '*.gcda' -print0 | xargs -0 rm
+make -j3 check
+lcov --capture --directory . --output-file coverage.info
+lcov -r coverage.info \*\/build\/\* > coverage-2.info
+lcov -r coverage-2.info \*\/other\/\* > coverage-3.info
+lcov -r coverage-3.info \/usr\/\* > coverage-4.info
+lcov -r coverage-4.info \*\/misc\/\* > coverage-5.info
+lcov -r coverage-5.info \*\/tests\/\* > coverage_cad.info
+rm coverage-*.info
+genhtml coverage_cad.info --output-directory lcov-output
+

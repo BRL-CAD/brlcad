@@ -3,7 +3,7 @@
 #	This file contains the declarations for the functions in
 #	'libtommath' that are contained within the Tcl library.
 #	This file is used to generate the 'tclTomMathDecls.h' and
-#	'tclTomMathStub.c' files.
+#	'tclStubInit.c' files.
 #
 # If you edit this file, advance the revision number (and the epoch
 # if the new stubs are not backward compatible) in tclTomMathDecls.h
@@ -12,8 +12,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 library tcl
 
@@ -212,4 +210,13 @@ declare 59 generic {
 }
 declare 60 generic {
     int TclBN_s_mp_sub(mp_int *a, mp_int *b, mp_int *c)
+}
+declare 61 {
+    int TclBN_mp_init_set_int(mp_int *a, unsigned long i)
+}
+declare 62 {
+    int TclBN_mp_set_int(mp_int *a, unsigned long i)
+}
+declare 63 {
+    int TclBN_mp_cnt_lsb(mp_int *a)
 }

@@ -3284,7 +3284,7 @@
 
 2003-01-10  Vince Darley  <vincentdarley@users.sourceforge.net>
 
-	* generic/tclIOUtil.c: 
+	* generic/tclIOUtil.c:
 	* win/tclWinInt.h:
 	* win/tclWinInit.c: fix to new WinTcl crash on exit with vfs,
 	introduced on 2002-12-06. Encodings must be cleaned up after the
