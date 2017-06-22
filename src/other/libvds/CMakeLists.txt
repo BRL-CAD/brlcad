@@ -24,7 +24,7 @@
 # This file contains the top level CMakeLists.txt logic for the
 # BRL-CAD software package.
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.3)
+cmake_minimum_required(VERSION 2.8.3)
 if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
   CMAKE_POLICY(SET CMP0007 OLD)
@@ -39,69 +39,11 @@ endif(COMMAND CMAKE_POLICY)
 # set CMake project name
 PROJECT(VDS)
 
-#---------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.  Thanks to plplot for
-# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
-
-include(${CMAKE_CURRENT_SOURCE_DIR}/RPath_Setup.cmake)
-
-#---------------------------------------------------------------------
-# Output directories - this is where built library and executable
-# files will be placed after building but prior to install.
-if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  if(WIN32)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${VDS_BINARY_DIR}/bin	CACHE INTERNAL "Single output directory for building all libraries.")
-  else(WIN32)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
-      ${VDS_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all	libraries.")
-  endif(WIN32)
-endif(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${VDS_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
-endif(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${VDS_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all	executables.")
-endif(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-
-
-#---------------------------------------------------------------------
-# Configure install locations.  Don't set these if they have already
-# been set by some other means (like a higher level CMakeLists.txt file
-# including this one.)
-
-# The location in which to install executables.
-if(NOT BIN_DIR)
-  set(BIN_DIR bin)
-endif(NOT BIN_DIR)
-
-# The location in which to install header files.
-if(NOT INCLUDE_DIR)
-  set(INCLUDE_DIR include)
-endif(NOT INCLUDE_DIR)
-
-# The location in which to install libraries.
-if(NOT LIB_DIR)
-  if(NOT WIN32)
-    set(LIB_DIR lib)
-  else(NOT WIN32)
-    set(LIB_DIR bin)
-  endif(NOT WIN32)
-endif(NOT LIB_DIR)
-
-# The location in which to install Manual pages
-if(NOT MAN_DIR)
-  set(MAN_DIR man)
-endif(NOT MAN_DIR)
-
-#---------------------------------------------------------------------
 include(CheckLibraryExists)
 CHECK_LIBRARY_EXISTS(m cos "" HAVE_M_LIBRARY)
 if(HAVE_M_LIBRARY)
   set(SYS_LIBS ${SYS_LIBS} m)
 endif(HAVE_M_LIBRARY)
-
-#---------------------------------------------------------------------
 
 set(CORE_SRCS
   build.c
@@ -126,7 +68,6 @@ set(VDS_HDRS
   stdvds.h
   )
 
-
 ## Include -DVDS_DEBUGPRINT for verbose operation.
 ## Note that assertions are suppressed when VDS_DEBUGPRINT is not defined
 #add_definitions(-DVDS_DEBUGPRINT)
@@ -138,9 +79,9 @@ if(SYS_LIBS)
 endif(SYS_LIBS)
 
 install(TARGETS libvds
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
 add_library(stdvds SHARED ${STD_SRCS})
 set_target_properties(stdvds PROPERTIES VERSION 1.0.1 SOVERSION 1)
@@ -150,12 +91,12 @@ endif(SYS_LIBS)
 
 
 install(TARGETS stdvds
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
 if(MSVC)
-   set_property(TARGET libvds APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_EXPORTS")
+  set_property(TARGET libvds APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_EXPORTS")
 endif(MSVC)
 
 if(BUILD_STATIC_LIBS)
