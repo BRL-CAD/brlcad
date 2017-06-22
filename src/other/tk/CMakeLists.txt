@@ -85,7 +85,16 @@ set(TK_CMAKE_DIR "${TCL_SOURCE_DIR}/CMake")
 # directory AND install directory. Documentation of these options is available
 # at http://www.cmake.org/Wiki/CMake_RPATH_handling
 
-include("${TK_CMAKE_DIR}/RPath_Setup.cmake")
+if(EXISTS "${TK_CMAKE_DIR}/RPath_Setup.cmake")
+  include("${TK_CMAKE_DIR}/RPath_Setup.cmake")
+  if(COMMAND cmake_set_rpath)
+    cmake_set_rpath()
+  endif(COMMAND cmake_set_rpath)
+else(EXISTS "${TK_CMAKE_DIR}/RPath_Setup.cmake")
+  if(NOT HAVE_PARENT_BUILD)
+    message(FATAL_ERROR "Not building as a subbuild, but ${TK_CMAKE_DIR}/RPath_Setup.cmake not found.  To build as a stand-alone build, add RPath_Setup.cmake to the CMake directory.")
+  endif(NOT HAVE_PARENT_BUILD)
+endif(EXISTS "${TK_CMAKE_DIR}/RPath_Setup.cmake")
 
 #---------------------------------------------------------------------
 # Define relative install locations and output directories.  Don't set
