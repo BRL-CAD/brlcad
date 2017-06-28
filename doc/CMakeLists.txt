@@ -205,7 +205,6 @@ set(documentation_mged_old_DATA
   mged/wm-prims.ps
   mged/wm-tube.ps
   mk.tr
-  movie.txt
   old-mged.tr
   pkg.tr
   regions.txt
