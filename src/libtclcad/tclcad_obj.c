@@ -1557,6 +1557,10 @@ to_deleteProc(ClientData clientData)
     bu_hash_destroy(top->to_gop->go_edited_paths);
 
     while (BU_LIST_WHILE(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
+#if 1
+	/* This removes the view related command and results in a call to to_deleteViewProc to release resources. */
+	Tcl_DeleteCommand(top->to_interp, bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+#else	
 	BU_LIST_DEQUEUE(&(gdvp->l));
 	bu_vls_free(&gdvp->gdv_name);
 	bu_vls_free(&gdvp->gdv_callback);
@@ -1567,6 +1571,7 @@ to_deleteProc(ClientData clientData)
 	to_close_fbs(gdvp);
 
 	bu_free((void *)gdvp, "ged_dm_view");
+#endif
     }
 
     bu_free((void *)top, "struct ged_obj");
@@ -5498,6 +5503,7 @@ to_deleteViewProc(ClientData clientData)
     bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
     (void)dm_close(gdvp->gdv_dmp);
     bu_free((void *)gdvp->gdv_view, "ged_view");
+    to_close_fbs(gdvp);
     bu_free((void *)gdvp, "ged_dm_view");
 }
 
@@ -10885,6 +10891,7 @@ to_new_view(struct ged *gedp,
 		(ClientData)new_gdvp,
 		to_deleteViewProc);
     }
+
     bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&new_gdvp->gdv_name));
     return GED_OK;
 }
