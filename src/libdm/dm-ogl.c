@@ -83,6 +83,8 @@
 
 #include "./dm_private.h"
 
+#define ENABLE_POINT_SMOOTH 1
+
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))
 
@@ -1761,7 +1763,9 @@ ogl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    if (first == 0)
 			glEnd();
 		    first = 0;
+#if ENABLE_POINT_SMOOTH
 		    glEnable(GL_POINT_SMOOTH);
+#endif
 		    glBegin(GL_POINTS);
 		    glVertex3dv(dpt);
 		    break;
@@ -1922,7 +1926,9 @@ ogl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
     }
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
@@ -1947,7 +1953,9 @@ ogl_drawPoint3D(struct dm_internal *dmp, point_t point)
     /* fastf_t to double */
     VMOVE(dpt, point);
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     glVertex3dv(dpt);
     glEnd();
@@ -1969,7 +1977,9 @@ ogl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points)
 	bu_log("ogl_drawPoint3D():\n");
     }
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     for (i = 0; i < npoints; ++i) {
 	/* fastf_t to double */
