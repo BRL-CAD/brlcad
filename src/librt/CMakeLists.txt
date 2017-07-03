@@ -77,6 +77,7 @@ set(LIBRT_SOURCES
   op.c
   pr.c
   prep.c
+  primitives/annot/annot.c
   primitives/arb8/arb8.c
   primitives/arb8/arb8_brep.cpp
   primitives/arb8/arb8_mirror.c

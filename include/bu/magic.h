@@ -123,7 +123,7 @@ __BEGIN_DECLS
 #define RT_TOR_INTERNAL_MAGIC		0x9bffed87 /**< ???? */
 #define RT_VOL_INTERNAL_MAGIC		0x987ba1d0 /**< ?{?? */
 #define RT_PNTS_INTERNAL_MAGIC          0x706e7473 /**< pnts */
-#define RT_ANNOTATION_INTERNAL_MAGIC    0x616e6e6f /**< anno */
+#define RT_ANNOT_INTERNAL_MAGIC    0x616e6e6f /**< anno */
 #define RT_HRT_INTERNAL_MAGIC		0x6872743f /**< hrt? */
 
 /* n-manifold geometry */
@@ -210,6 +210,7 @@ __BEGIN_DECLS
 #define CURVE_CARC_MAGIC		0x63617263 /**< carc */
 #define CURVE_LSEG_MAGIC		0x6c736567 /**< lseg */
 #define CURVE_NURB_MAGIC		0x6e757262 /**< nurb */
+#define ANN_TSEG_MAGIC			0x74736567 /**< tseg */
 #define DB5_RAW_INTERNAL_MAGIC		0x64357269 /**< d5ri */
 #define DBI_MAGIC			0x57204381 /**< W C? */
 #define DB_FULL_PATH_MAGIC		0x64626670 /**< dbfp */

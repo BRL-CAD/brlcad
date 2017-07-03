@@ -624,6 +624,23 @@ static char *p_datum[] = {
 
 
 /**
+ * TODO:
+ * Add support for the line,curve,beizer,nurb
+ */
+static char *p_annot[] = {
+    "Enter the point to be annotated: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter the text label: ",
+    "Enter X,Y for the text placement: ",
+    "Enter Y: ",
+    "Enter the relative vertical position(1->bottom, 2->middle, 3->top): ",
+    "Enter the relative horizontal position(1->right, 2->center, 3->left): "
+};
+
+
+
+/**
  * helper function that infers a boolean value from a given string
  * returning 0 or 1 for false and true respectively.
  *
@@ -848,14 +865,14 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     dsp->dsp_smooth = atoi(cmd_argvs[7]);
 
     switch (*cmd_argvs[8]) {
-	case 'a':	/* adaptive */
+	case 'a':       /* adaptive */
 	case 'A':
 	    dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
 	    break;
-	case 'l':	/* lower left to upper right */
+	case 'l':       /* lower left to upper right */
 	    dsp->dsp_cuttype = DSP_CUT_DIR_llUR;
 	    break;
-	case 'L':	/* Upper Left to lower right */
+	case 'L':       /* Upper Left to lower right */
 	    dsp->dsp_cuttype = DSP_CUT_DIR_ULlr;
 	    break;
 	default:
@@ -1190,8 +1207,8 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     struct rt_ars_internal *arip;
     size_t i;
     size_t total_points;
-    int cv;	/* current curve (waterline) # */
-    size_t axis;	/* current fastf_t in waterline */
+    int cv;     /* current curve (waterline) # */
+    size_t axis;        /* current fastf_t in waterline */
     int ncurves_minus_one;
     int num_pts = 0;
     int num_curves = 0;
@@ -1225,8 +1242,8 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	return GED_MORE;
     }
 
-    total_vals_needed = 2 +		/* #rows, #pts/row */
-	(ELEMENTS_PER_POINT * 2) +	/* the first point, and very last */
+    total_vals_needed = 2 +             /* #rows, #pts/row */
+	(ELEMENTS_PER_POINT * 2) +      /* the first point, and very last */
 	(num_pts * ELEMENTS_PER_POINT * (num_curves-2)); /* the curves */
 
     if (vals_present < (total_vals_needed - ELEMENTS_PER_POINT)) {
@@ -1386,7 +1403,7 @@ arb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     aip = (struct rt_arb_internal *)intern->idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
-    n = atoi(&cmd_argvs[2][3]);	/* get # from "arb#" */
+    n = atoi(&cmd_argvs[2][3]); /* get # from "arb#" */
     for (j = 0; j < n; j++)
 	for (i = 0; i < ELEMENTS_PER_POINT; i++)
 	    aip->pt[j][i] = atof(cmd_argvs[3+i+3*j]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1409,7 +1426,7 @@ arb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	VMOVE(aip->pt[7], aip->pt[4]);
     }
 
-    return GED_OK;	/* success */
+    return GED_OK;      /* success */
 }
 
 
@@ -1457,8 +1474,8 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     int i, n;
     struct rt_ell_internal *eip;
 
-    n = 12;				/* ELL has twelve params */
-    if (cmd_argvs[2][3] != '\0')	/* ELLG and ELL1 have seven */
+    n = 12;                             /* ELL has twelve params */
+    if (cmd_argvs[2][3] != '\0')        /* ELLG and ELL1 have seven */
 	n = 7;
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1694,8 +1711,8 @@ tec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	return GED_ERROR;
     }
 
-    VSCALE(tip->c, tip->a, 1./ratio);	/* C vector */
-    VSCALE(tip->d, tip->b, 1./ratio);	/* D vector */
+    VSCALE(tip->c, tip->a, 1./ratio);   /* C vector */
+    VSCALE(tip->d, tip->b, 1./ratio);   /* D vector */
 
     return GED_OK;
 }
@@ -1734,8 +1751,8 @@ rec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	return GED_ERROR;
     }
 
-    VMOVE(tip->c, tip->a);		/* C vector */
-    VMOVE(tip->d, tip->b);		/* D vector */
+    VMOVE(tip->c, tip->a);              /* C vector */
+    VMOVE(tip->d, tip->b);              /* D vector */
 
     return GED_OK;
 }
@@ -2387,7 +2404,7 @@ superell_in(struct ged *gedp, char *cmd_argvs[], struct rt_db_internal *intern)
     int i, n;
     struct rt_superell_internal *eip;
 
-    n = 14;				/* SUPERELL has 12 (same as ELL) + 2 (for <n, e>) params */
+    n = 14;                             /* SUPERELL has 12 (same as ELL) + 2 (for <n, e>) params */
 
     intern->idb_type = ID_SUPERELL;
     intern->idb_meth = &OBJ[ID_SUPERELL];
@@ -3087,6 +3104,54 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 }
 
 
+/*
+ * reads annot parameters from the keyboard
+ *
+ * returns 0 if successul read
+ * 1 if unsuccessful read
+ */
+static int
+annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
+{
+    int i, p_ver, p_hor;
+    struct rt_annot_internal *anip;
+    struct txt_seg *tsg;
+
+    intern->idb_type = ID_ANNOT;
+    intern->idb_meth = &OBJ[ID_ANNOT];
+    BU_ALLOC(intern->idb_ptr, struct rt_annot_internal);
+    anip = (struct rt_annot_internal *)intern->idb_ptr;
+    anip->magic = RT_ANNOT_INTERNAL_MAGIC;
+
+
+    for (i = 0; i<ELEMENTS_PER_POINT; i++)
+	anip->V[i] = atof(cmd_argvs[3+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+
+    anip->vert_count = 1;
+    anip->verts = (point2d_t *)bu_calloc(anip->vert_count, sizeof(point2d_t), "verts");
+
+    BU_ALLOC(tsg, struct txt_seg);
+
+    tsg->magic = ANN_TSEG_MAGIC;
+    tsg->ref_pt = 0;
+    bu_vls_init(&tsg->label);
+    bu_vls_strcpy(&tsg->label, cmd_argvs[6]);
+
+
+
+    for (i = 0; i<ELEMENTS_PER_POINT2D; i++)
+	anip->verts[0][i] = atof(cmd_argvs[7+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+
+
+    p_ver = atoi(cmd_argvs[9]);
+    p_hor = atoi(cmd_argvs[10]);
+
+    rt_pos_flag(&tsg->pt_rel_pos, p_hor, p_ver);
+
+    return GED_OK;
+}
+
+
 int
 ged_in(struct ged *gedp, int argc, const char *argv[])
 {
@@ -3352,6 +3417,10 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	nvals = 3*3 + 1 + 2;
 	menu = p_joint;
 	fn_in = joint_in;
+    } else if (BU_STR_EQUAL(argv[2], "annot")) {
+	nvals = 3 + 1+ 2 + 2;
+	menu = p_annot;
+	fn_in = annot_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:

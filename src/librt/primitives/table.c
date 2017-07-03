@@ -105,6 +105,7 @@ RT_DECLARE_INTERFACE(grp);
 RT_DECLARE_INTERFACE(hf);
 RT_DECLARE_INTERFACE(dsp);
 RT_DECLARE_INTERFACE(sketch);
+RT_DECLARE_INTERFACE(annot);
 RT_DECLARE_INTERFACE(extrude);
 RT_DECLARE_INTERFACE(submodel);
 RT_DECLARE_INTERFACE(cline);
@@ -151,6 +152,7 @@ extern void rt_comb_ifree(struct rt_db_internal *ip);
 extern int rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_cline_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_extrude_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 
@@ -2137,39 +2139,39 @@ const struct rt_functab OBJ[] = {
 
     {
 	/* 42 */
-	RT_FUNCTAB_MAGIC, "ID_ANNOTATION", "anno",
+	RT_FUNCTAB_MAGIC, "ID_ANNOT", "annot",
 	0, /* ft_use_rpp */
-	NULL, /* prep */
-	NULL, /* shot */
-	NULL, /* print */
-	NULL, /* norm */
+	RTFUNCTAB_FUNC_PREP_CAST(rt_annot_prep),
+	RTFUNCTAB_FUNC_SHOT_CAST(rt_annot_shot),
+	RTFUNCTAB_FUNC_PRINT_CAST(rt_annot_print),
+	RTFUNCTAB_FUNC_NORM_CAST(rt_annot_norm),
 	NULL, /* piece_shot */
 	NULL, /* piece_hitsegs */
-	NULL, /* uv */
-	NULL, /* curve */
-	NULL, /* classify */
-	NULL, /* free */
+	RTFUNCTAB_FUNC_UV_CAST(rt_annot_uv),
+	RTFUNCTAB_FUNC_CURVE_CAST(rt_annot_curve),
+	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	RTFUNCTAB_FUNC_FREE_CAST(rt_annot_free),
 	NULL, /* plot */
 	NULL, /* adaptive_plot */
 	NULL, /* vshot */
 	NULL, /* tess */
 	NULL, /* tnurb */
 	NULL, /* brep */
-	NULL, /* import5 */
-	NULL, /* export5 */
-	NULL, /* import4 */
-	NULL, /* export4 */
-	NULL, /* ifree */
-	NULL, /* describe */
-	NULL, /* xform */
+	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_annot_import5),
+	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_annot_export5),
+	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_annot_import4),
+	RTFUNCTAB_FUNC_EXPORT4_CAST(rt_annot_export4),         
+	RTFUNCTAB_FUNC_IFREE_CAST(rt_annot_ifree),
+	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_annot_describe),
+	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
 	NULL, /* parse */
-	sizeof(struct rt_annotation_internal),
-	RT_ANNOTATION_INTERNAL_MAGIC,
-	NULL, /* get */
-	NULL, /* adjust */
-	NULL, /* form */
+	sizeof(struct rt_annot_internal),
+	RT_ANNOT_INTERNAL_MAGIC,
+	RTFUNCTAB_FUNC_GET_CAST(rt_annot_get),
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_annot_adjust),
+	RTFUNCTAB_FUNC_FORM_CAST(rt_annot_form),
 	NULL, /* make */
-	NULL, /* params */
+	RTFUNCTAB_FUNC_PARAMS_CAST(rt_annot_params),
 	NULL, /* bbox */
 	NULL, /* volume */
 	NULL, /* surf_area */
@@ -2425,6 +2427,9 @@ rt_id_solid(struct bu_external *ep)
 	case DBID_SKETCH:
 	    id = ID_SKETCH;
 	    break;
+	case DBID_ANNOT:
+	    id = ID_ANNOT;
+	    break;	
 	case DBID_EXTR:
 	    id = ID_EXTRUDE;
 	    break;

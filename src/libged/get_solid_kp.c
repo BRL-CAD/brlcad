@@ -338,6 +338,15 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		VMOVE(mpt, skt->V);
 		break;
 	    }
+	case ID_ANNOT:
+	    {
+		struct rt_annot_internal *ann =
+		    (struct rt_annot_internal *)ip->idb_ptr;
+		RT_SKETCH_CK_MAGIC(ann);
+
+		VMOVE(mpt, ann->V);
+		break;
+	    }
 	case ID_EXTRUDE:
 	    {
 		struct rt_extrude_internal *extr =
