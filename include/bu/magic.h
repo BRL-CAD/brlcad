@@ -122,8 +122,8 @@ __BEGIN_DECLS
 #define RT_TGC_INTERNAL_MAGIC		0xaabbdd87 /**< ???? */
 #define RT_TOR_INTERNAL_MAGIC		0x9bffed87 /**< ???? */
 #define RT_VOL_INTERNAL_MAGIC		0x987ba1d0 /**< ?{?? */
-#define RT_PNTS_INTERNAL_MAGIC          0x706e7473 /**< pnts */
-#define RT_ANNOT_INTERNAL_MAGIC    0x616e6e6f /**< anno */
+#define RT_PNTS_INTERNAL_MAGIC		0x706e7473 /**< pnts */
+#define RT_ANNOT_INTERNAL_MAGIC		0x616e6e6f /**< anno */
 #define RT_HRT_INTERNAL_MAGIC		0x6872743f /**< hrt? */
 
 /* n-manifold geometry */

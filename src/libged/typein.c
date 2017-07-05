@@ -3138,7 +3138,6 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
     bu_vls_strcpy(&tsg->label, cmd_argvs[6]);
 
 
-
     for (i = 0; i<ELEMENTS_PER_POINT2D; i++)
 	anip->verts[0][i] = atof(cmd_argvs[7+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
 

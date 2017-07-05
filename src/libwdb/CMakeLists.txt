@@ -12,6 +12,7 @@ set(WDB_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(wdb WDB_INCLUDE_DIRS "")
 
 set(LIBWDB_SOURCES
+  annot.c
   arbn.c
   ars.c
   bot.c

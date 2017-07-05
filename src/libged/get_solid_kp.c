@@ -342,7 +342,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_annot_internal *ann =
 		    (struct rt_annot_internal *)ip->idb_ptr;
-		RT_SKETCH_CK_MAGIC(ann);
+		RT_ANNOT_CK_MAGIC(ann);
 
 		VMOVE(mpt, ann->V);
 		break;

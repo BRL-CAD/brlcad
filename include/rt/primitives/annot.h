@@ -1,7 +1,7 @@
 /*                        A N N O T . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 2017 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,12 +37,12 @@ RT_EXPORT int rt_pos_flag(int *pos_flag, int p_hor, int p_ver);
 
 RT_EXPORT int rt_check_pos(const struct txt_seg *tsg, char **rel_pos);
 
-RT_EXPORT extern int ant_to_vlist(struct bu_list             *vhead,
+/**RT_EXPORT extern int ant_to_vlist(struct bu_list             *vhead,
                                     const struct rt_tess_tol *ttol,
                                     point_t                   V,
                                     struct rt_annot_internal *annot_ip,
                                     struct rt_ant             *ant);
-
+**/
 RT_EXPORT extern int rt_check_ant(const struct rt_ant *ant,
                                     const struct rt_annot_internal *annot_ip,
                                     int noisy);
@@ -52,7 +52,7 @@ RT_EXPORT extern void rt_copy_ant(struct rt_ant *ant_out,
 
 RT_EXPORT extern void rt_ant_free(struct rt_ant *ant);
 
-RT_EXPORT extern struct rt_annot_internal *rt_annot_sketch(const struct rt_annot_internal *annot_ip);
+RT_EXPORT extern struct rt_annot_internal *rt_copy_annot(const struct rt_annot_internal *annot_ip);
 RT_EXPORT extern int ant_to_tcl_list(struct bu_vls *vls,
                                        struct rt_ant *ant);
 

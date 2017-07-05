@@ -2534,6 +2534,9 @@ wdb_get_type_cmd(struct rt_wdb *wdbp,
 	case DB5_MINORTYPE_BRLCAD_SKETCH:
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "sketch", (char *)NULL);
 	    break;
+	case DB5_MINORTYPE_BRLCAD_ANNOT:
+	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "annot", (char *)NULL);
+	    break;
 	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "extrude", (char *)NULL);
 	    break;
