@@ -65,7 +65,6 @@ function(ADD_NIST_3DM_TARGET rhino_model folder)
 
   # We know enough - write the script
   generate_cmd_script(3dm-g "${script_file}" OLOG "${log_file}" ELOG "${log_file}" CARGS "${CMD_ARGS}")
-  DISTCLEAN(${script_file})
 
   # Define the target
   add_custom_command(
@@ -85,7 +84,6 @@ function(ADD_NIST_3DM_TARGET rhino_model folder)
 
   # Cleanup
   set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file};${log_file}")
-  DISTCLEAN(${log_file})
 
 endfunction(ADD_NIST_3DM_TARGET rhino_model folder)
 

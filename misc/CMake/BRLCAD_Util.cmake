@@ -296,6 +296,13 @@ function(generate_cmd_script cmd_exe script_file)
   file(APPEND "${script_file}" "  message(FATAL_ERROR \"\${CBDIR}/${BIN_DIR}/${cmd_exe}${EXE_EXT} failure: \${CR}\\n\${CO}\\n\${CE}\")\n")
   file(APPEND "${script_file}" "endif(CR)\n")
 
+  # If we are doing distclean, let CMake know to remove the script and log files
+  if(COMMAND distclean)
+    set(distclean_files "${script_file}" "${GCS_OLOG}" "${GCS_ELOG}")
+    list(REMOVE_DUPLICATES distclean_files)
+    distclean(${distclean_files})
+  endif(COMMAND distclean)
+
 endfunction(generate_cmd_script)
 
 # Local Variables:
