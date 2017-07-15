@@ -86,12 +86,11 @@ extern char *yytext;
 extern int yyparse();
 int main (void)
 {
-  int ret;
   char test_str[] = \"BRL-CAD\";
   YY_BUFFER_STATE buffer = yy_scan_string(test_str);
-  ret = !yylex();
+  yylex();
   yy_delete_buffer(buffer);
-  return ret;
+  return 0;
 }
 
 ")
@@ -110,8 +109,10 @@ int main (void)
     if(YYTEXT_POINTER_COMPILED AND NOT YYTEXT_POINTER_RAN)
       set(YYTEXT_POINTER 1 PARENT_SCOPE)
       if(CONFIG_H_FILE)
-	CONFIG_H_APPEND(${CMAKE_CURRENT_PROJECT} "#cmakedefine YYTEXT_POINTER 1\n")
+	CONFIG_H_APPEND(${CMAKE_CURRENT_PROJECT} "#define YYTEXT_POINTER 1\n")
       endif(CONFIG_H_FILE)
+    else(YYTEXT_POINTER_COMPILED AND NOT YYTEXT_POINTER_RAN)
+      set(YYTEXT_POINTER 0 PARENT_SCOPE)
     endif(YYTEXT_POINTER_COMPILED AND NOT YYTEXT_POINTER_RAN)
 
     file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c")
