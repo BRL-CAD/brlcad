@@ -2816,19 +2816,6 @@ else(EXISTS "${BRLCAD_BINARY_DIR}/include/brlcad_config.h")
 endif(EXISTS "${BRLCAD_BINARY_DIR}/include/brlcad_config.h")
 
 #---------------------------------------------------------------------
-# Create a 1 second sleep utility executable
-try_compile(BUILD_SLEEP
-  "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp"
-  "${BRLCAD_CMAKE_DIR}/test_srcs/sleep.c"
-  COMPILE_DEFINITIONS -DBRLCADBUILD -DHAVE_CONFIG_H
-  -I"${CMAKE_CURRENT_BINARY_DIR}/include"
-  -I"${CMAKE_CURRENT_SOURCE_DIR}/include"
-  OUTPUT_VARIABLE BUILD_SLEEP_LOG
-  COPY_FILE "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/sleep.bin")
-if(NOT BUILD_SLEEP)
-  message(FATAL_ERROR "BUILD_SLEEP failure: ${BUILD_SLEEP_LOG}")
-endif(NOT BUILD_SLEEP)
-
 # Rules for the toplevel documentation files
 set(toplevel_DOCFILES
   AUTHORS
