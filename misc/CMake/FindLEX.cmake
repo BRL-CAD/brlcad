@@ -70,6 +70,7 @@
 #to be defined
 function(yytext_pointer_test)
   set(LEX_TEST_SRCS "
+%option noyywrap
 %%
 a { ECHO; }
 b { REJECT; }
@@ -78,22 +79,25 @@ d { yyless (1); }
 e { yyless (input () != 0); }
 f { unput (yytext[0]); }
 . { BEGIN INITIAL; }
-%option noyywrap
 %%
 #ifdef YYTEXT_POINTER
 extern char *yytext;
 #endif
-int
-main (void)
+extern int yyparse();
+int main (void)
 {
-  return ! yylex () + ! yywrap ();
+  int ret;
+  char test_str[] = \"BRL-CAD\";
+  YY_BUFFER_STATE buffer = yy_scan_string(test_str);
+  ret = !yylex();
+  yy_delete_buffer(buffer);
+  return ret;
 }
 
 ")
   if(NOT DEFINED YYTEXT_POINTER)
     file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.l" "${LEX_TEST_SRCS}")
     execute_process(COMMAND ${LEX_EXECUTABLE} -o "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c" "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.l" RESULT_VARIABLE _retval OUTPUT_VARIABLE _lexOut)
-    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.l")
 
     try_run(YYTEXT_POINTER_RAN YYTEXT_POINTER_COMPILED
       "${CMAKE_BINARY_DIR}"
@@ -101,7 +105,8 @@ main (void)
       COMPILE_DEFINITIONS "-DYYTEXT_POINTER=1"
       COMPILE_OUTPUT_VARIABLE COUTPUT
       RUN_OUTPUT_VARIABLE ROUTPUT)
-
+    #message("COUTPUT: ${COUTPUT}")
+    #message("ROUTPUT: ${ROUTPUT}")
     if(YYTEXT_POINTER_COMPILED AND NOT YYTEXT_POINTER_RAN)
       set(YYTEXT_POINTER 1 PARENT_SCOPE)
       if(CONFIG_H_FILE)
@@ -109,7 +114,8 @@ main (void)
       endif(CONFIG_H_FILE)
     endif(YYTEXT_POINTER_COMPILED AND NOT YYTEXT_POINTER_RAN)
 
-    file(REMOVE "${CMAKE_SOURCE_DIR}/CMakeTmp/lex_test.c")
+    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c")
+    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.l")
   endif(NOT DEFINED YYTEXT_POINTER)
 endfunction(yytext_pointer_test)
 
