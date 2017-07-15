@@ -66,14 +66,60 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
+#Need to run a test lex file to determine if YYTEXT_POINTER needs
+#to be defined
+function(yytext_pointer_test)
+  set(LEX_TEST_SRCS "
+%%
+a { ECHO; }
+b { REJECT; }
+c { yymore (); }
+d { yyless (1); }
+e { yyless (input () != 0); }
+f { unput (yytext[0]); }
+. { BEGIN INITIAL; }
+%option noyywrap
+%%
+#ifdef YYTEXT_POINTER
+extern char *yytext;
+#endif
+int
+main (void)
+{
+  return ! yylex () + ! yywrap ();
+}
+
+")
+  if(NOT DEFINED YYTEXT_POINTER)
+    file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.l" "${LEX_TEST_SRCS}")
+    execute_process(COMMAND ${LEX_EXECUTABLE} -o "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c" "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.l" RESULT_VARIABLE _retval OUTPUT_VARIABLE _lexOut)
+    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.l")
+
+    try_run(YYTEXT_POINTER_RAN YYTEXT_POINTER_COMPILED
+      "${CMAKE_BINARY_DIR}"
+      "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c"
+      COMPILE_DEFINITIONS "-DYYTEXT_POINTER=1"
+      COMPILE_OUTPUT_VARIABLE COUTPUT
+      RUN_OUTPUT_VARIABLE ROUTPUT)
+
+    if(YYTEXT_POINTER_COMPILED AND NOT YYTEXT_POINTER_RAN)
+      set(YYTEXT_POINTER 1 PARENT_SCOPE)
+      if(CONFIG_H_FILE)
+	CONFIG_H_APPEND(${CMAKE_CURRENT_PROJECT} "#cmakedefine YYTEXT_POINTER 1\n")
+      endif(CONFIG_H_FILE)
+    endif(YYTEXT_POINTER_COMPILED AND NOT YYTEXT_POINTER_RAN)
+
+    file(REMOVE "${CMAKE_SOURCE_DIR}/CMakeTmp/lex_test.c")
+  endif(NOT DEFINED YYTEXT_POINTER)
+endfunction(yytext_pointer_test)
+
 find_program(LEX_EXECUTABLE flex DOC "path to the lex executable")
 if(NOT LEX_EXECUTABLE)
   find_program(LEX_EXECUTABLE lex DOC "path to the lex executable")
 endif(NOT LEX_EXECUTABLE)
 mark_as_advanced(LEX_EXECUTABLE)
 
-find_library(FL_LIBRARY NAMES fl
-  DOC "path to the fl library")
+find_library(FL_LIBRARY NAMES fl DOC "path to the fl library")
 mark_as_advanced(FL_LIBRARY)
 set(LEX_LIBRARIES ${FL_LIBRARY})
 
@@ -112,19 +158,8 @@ if(LEX_EXECUTABLE)
   endmacro(LEX_TARGET)
   #============================================================
 
-  #Need to run a test lex file to determine if YYTEXT_POINTER needs
-  #to be defined
-  EXEC_PROGRAM(${LEX_EXECUTABLE} ARGS "${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/lex_test.l" -o "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c" RETURN_VALUE _retval OUTPUT_VARIABLE _lexOut)
-  INCLUDE (CheckCSourceRuns)
-  set(FILE_RUN_DEFINITIONS "-DYYTEXT_POINTER=1")
-  if(NOT DEFINED YYTEXT_POINTER)
-    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c" YYTEXT_POINTER)
-  endif(NOT DEFINED YYTEXT_POINTER)
-  set(FILE_RUN_DEFINITIONS)
-  if(CONFIG_H_FILE)
-    CONFIG_H_APPEND(${CMAKE_CURRENT_PROJECT} "#cmakedefine YYTEXT_POINTER 1\n")
-  endif(CONFIG_H_FILE)
-
+  # Execute the YYTEXT pointer test defined above
+  yytext_pointer_test()
 
 endif(LEX_EXECUTABLE)
 
