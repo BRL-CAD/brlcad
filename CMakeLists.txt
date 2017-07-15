@@ -336,6 +336,34 @@ if(BRLCAD_PREFIX)
 endif(BRLCAD_PREFIX)
 mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
 
+#------------------------------------------------------------------------------
+# For multi-configuration builds, we frequently need to know the run-time build
+# directory.  Confusingly, we need to do different things for install commands
+# and custom command definitions.  To manage this, we define
+# CMAKE_CURRENT_BUILD_DIR_SCRIPT and CMAKE_CURRENT_BUILD_DIR_INSTALL once at
+# the top level, then use them when we need the configuration-dependent path.
+#
+# Note that neither of these will work when we need to generate a .cmake file
+# that does runtime detection of the current build configuration.  CMake
+# scripts run using "cmake -P script.cmake" style invocation are independent of
+# the "main" build system and will not know how to resolve either of the below
+# variables correctly.  In that case, the script itself must check the current
+# file in CMakeTmp/CURRENT_PATH (TODO - need to better organize and document
+# this mechanism, given how critical it is proving... possible convention will
+# be to have the string CURRENT_BUILD_DIR in any path that needs the relevant
+# logic in a script, and a standard substitution routine...) and set any
+# necessary path variables accordingly.  (TODO - make a standard function to do
+# that the right way that scripts can load and use - right now that logic is
+# scattered all over the code and if we wanted to change where those files went
+# it would be a lot of work.)
+if(CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_CURRENT_BUILD_DIR_SCRIPT "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
+  set(CMAKE_CURRENT_BUILD_DIR_INSTALL "${CMAKE_BINARY_DIR}/\${BUILD_TYPE}")
+else(CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_CURRENT_BUILD_DIR_SCRIPT "${CMAKE_BINARY_DIR}")
+  set(CMAKE_CURRENT_BUILD_DIR_INSTALL "${CMAKE_BINARY_DIR}")
+endif(CMAKE_CONFIGURATION_TYPES)
+
 #---------------------------------------------------------------------
 # For cleaning files as part of the distclean command, CMake needs
 # to be aware of what various generators will (or might) write out
