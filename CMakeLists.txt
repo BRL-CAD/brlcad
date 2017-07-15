@@ -2617,11 +2617,11 @@ endif(NOT BRLCAD_ENABLE_TARGETS)
 set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
 mark_as_advanced(SRC_OTHER_ADDED_DIRS)
 
-macro(SetTargetFolder targetname folder)
+function(SetTargetFolder targetname folder)
   if(TARGET ${targetname})
     set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
   endif(TARGET ${targetname})
-endmacro(SetTargetFolder)
+endfunction(SetTargetFolder)
 
 # Load some CMake macros to handle the special case of third party libraries.
 include("${BRLCAD_CMAKE_DIR}/ThirdParty.cmake")
