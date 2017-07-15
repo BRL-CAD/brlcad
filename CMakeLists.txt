@@ -2676,7 +2676,7 @@ include(CTest)
 mark_as_advanced(BUILD_TESTING)
 
 # We've done the toplevel configure steps, now add the subdirectories
-macro(verbose_add_subdirectory root dir)
+function(verbose_add_subdirectory root dir)
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
     if(BRLCAD_PRINT_MSGS)
       if(NOT "${root}" STREQUAL "")
@@ -2702,7 +2702,7 @@ macro(verbose_add_subdirectory root dir)
       endif(NOT "${root}" STREQUAL "")
     endif(BRLCAD_PRINT_MSGS)
   endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
-endmacro()
+endfunction()
 
 verbose_add_subdirectory("" src)
 verbose_add_subdirectory("" include)
