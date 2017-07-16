@@ -307,38 +307,76 @@ endfunction(generate_cmd_script)
 
 #---------------------------------------------------------------------------
 # Set variables reporting time of configuration.  Sets CONFIG_DATE and
-# CONFIG_TIMESTAMP_FILE in parent scope. (TODO - is the latter necessary?)
+# CONFIG_DATESTAMP in parent scope.
 #
 # Unfortunately, CMake doesn't give you variables with current day,
 # month, etc.  There are several possible approaches to this, but most
 # (e.g. the date command) are not cross platform. We build a small C
-# file which writes out the needed values to files in the build
-# directory. Those files are then read and stripped by CMake.
+# program which supplies the needed info.
 function(set_config_time)
-  set(CONFIG_TIME_DAY_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_DAY")
-  set(CONFIG_TIME_MONTH_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_MONTH")
-  set(CONFIG_TIME_YEAR_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_YEAR")
-  set(CONFIG_TIMESTAMP_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIMESTAMP" PARENT_SCOPE)
-  DISTCLEAN(${CONFIG_TIME_DAY_FILE} ${CONFIG_TIME_MONTH_FILE}
-    ${CONFIG_TIME_YEAR_FILE} ${CONFIG_TIMESTAMP_FILE})
-  file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include")
-  file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include/conf")
-  configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/time.c.in" "${CMAKE_BINARY_DIR}/CMakeTmp/time.c")
-  try_run(TIME_RESULT TIME_COMPILED
-    "${CMAKE_BINARY_DIR}/CMakeTmp"
-    "${CMAKE_BINARY_DIR}/CMakeTmp/time.c"
-    OUTPUT_VARIABLE COMPILEMESSAGES)
-  if(TIME_RESULT MATCHES "^0$")
-    file(READ ${CONFIG_TIME_DAY_FILE} CONFIG_DAY)
-    string(STRIP ${CONFIG_DAY} CONFIG_DAY)
-    file(READ ${CONFIG_TIME_MONTH_FILE} CONFIG_MONTH)
-    string(STRIP ${CONFIG_MONTH} CONFIG_MONTH)
-    file(READ ${CONFIG_TIME_YEAR_FILE} CONFIG_YEAR)
-    string(STRIP ${CONFIG_YEAR} CONFIG_YEAR)
-    set(CONFIG_DATE "${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}" PARENT_SCOPE)
-  else(TIME_RESULT MATCHES "^0$")
-    message(FATAL_ERROR "Code to determine current date and time failed!\n")
-  endif(TIME_RESULT MATCHES "^0$")
+
+  # We don't want any parent C flags here - hopefully, the below code will
+  # "just work" in any environment we are about.  The gnu89 standard doesn't
+  # like the %z print specifier, but unless/until we hit a compiler that really
+  # can't deal with it don't worry about it.
+  set(CMAKE_C_FLAGS "")
+
+  set(rfc2822_src "
+/* RFC2822 timestamp and individual day, month and year files */
+
+#include <time.h>
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc, const char **argv) {
+   time_t t = time(NULL);
+   struct tm *currenttime = localtime(&t);
+   if (argc <= 1) {
+      char rfc2822[200];
+      strftime(rfc2822, sizeof(rfc2822), \"%a, %d %b %Y %H:%M:%S %z\", currenttime);
+      printf(\"%s\", rfc2822);
+      return 0;
+   }
+   if (strncmp(argv[1], \"day\", 4) == 0) {
+      printf(\"%02d\", currenttime->tm_mday);
+   }
+   if (strncmp(argv[1], \"month\", 5) == 0) {
+      printf(\"%02d\", currenttime->tm_mon + 1);
+   }
+   if (strncmp(argv[1], \"year\", 4) == 0) {
+      printf(\"%d\", currenttime->tm_year + 1900);
+   }
+   return 0;
+}")
+
+  # Build the code so we can run it
+  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822.c" "${rfc2822_src}")
+  try_compile(rfc2822_build "${CMAKE_BINARY_DIR}/CMakeTmp"
+    SOURCES "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822.c"
+    OUTPUT_VARIABLE RFC2822_BUILD_INFO
+    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822")
+  if(NOT rfc2822_build)
+    message(FATAL_ERROR "Could not build rfc2822 timestamp pretty-printing utility: ${RFC2822_BUILD_INFO}")
+  endif(NOT rfc2822_build)
+  file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822.c")
+
+  # Build up and set CONFIG_DATE
+  execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822" day OUTPUT_VARIABLE CONFIG_DAY)
+  string(STRIP ${CONFIG_DAY} CONFIG_DAY)
+  execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822" month OUTPUT_VARIABLE CONFIG_MONTH)
+  string(STRIP ${CONFIG_MONTH} CONFIG_MONTH)
+  execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822" year OUTPUT_VARIABLE CONFIG_YEAR)
+  string(STRIP ${CONFIG_YEAR} CONFIG_YEAR)
+  set(CONFIG_DATE "${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}" PARENT_SCOPE)
+
+  # Set DATESTAMP
+  execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822" OUTPUT_VARIABLE RFC2822_STRING)
+  string(STRIP ${RFC2822_STRING} RFC2822_STRING)
+  set(CONFIG_DATESTAMP "${RFC2822_STRING}" PARENT_SCOPE)
+
+  # Cleanup
+  file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822")
+
 endfunction(set_config_time)
 
 # Local Variables:
