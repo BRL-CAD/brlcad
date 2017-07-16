@@ -568,6 +568,157 @@ int main(int argc, const char **argv) {
 
 endfunction(set_config_time)
 
+#---------------------------------------------------------------------------
+# Code for timing configuration and building of BRL-CAD.  These executables
+# are used to define build targets for cross-platform reporting.  Run after
+# set_config_time.
+function(generate_timer_exes)
+
+  #########################################################################
+  # Print a basic time stamp
+
+  set(printtimestamp_src "
+#define _CRT_SECURE_NO_WARNINGS 1
+
+#include <time.h>
+#include <stdio.h>
+
+int main(int argc, const char **argv)
+{
+  time_t t = time(NULL);
+  struct tm *currenttime = localtime(&t);
+  if (argc < 2) return 1;
+  printf(\"\\n%s%s\\n\", argv[1], asctime(currenttime));
+  return 0;
+}
+")
+
+  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/printtimestamp.c" "${printtimestamp_src}")
+  try_compile(pts_build ${CMAKE_BINARY_DIR}/CMakeTmp
+    "${CMAKE_BINARY_DIR}/CMakeTmp/printtimestamp.c"
+    COPY_FILE ${CMAKE_BINARY_DIR}/CMakeTmp/pts)
+  if(NOT pts_build)
+    message(FATAL_ERROR "Could not build timestamp pretty-printing utility")
+  endif(NOT pts_build)
+
+  #########################################################################
+  # We need some way to know at the end of the build when we kicked things
+  # off (both configuration and the build itself).  Create a simple program
+  # that can stash that info in a file
+
+  set(sstamp_src "
+#define _CRT_SECURE_NO_WARNINGS 1
+
+#include <time.h>
+#include <stdio.h>
+
+int main(int argc, const char **argv) {
+  FILE *outfp = NULL;
+  time_t t = time(NULL);
+  if (argc < 2) return 1;
+  outfp = fopen(argv[1], \"w\");
+  fprintf(outfp, \"%ld\", (long)t);
+  fclose(outfp);
+  return 0;
+}
+")
+
+  # Build the code so we can run it
+  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp.c" "${sstamp_src}")
+  try_compile(sstamp_build "${CMAKE_BINARY_DIR}/CMakeTmp"
+    SOURCES "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp.c"
+    OUTPUT_VARIABLE SSTAMP_BUILD_INFO
+    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp")
+  if(NOT sstamp_build)
+    message(FATAL_ERROR "Could not build second timestamping utility: ${SSTAMP_BUILD_INFO}")
+  endif(NOT sstamp_build)
+  file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp.c")
+  if(COMMAND distclean)
+    distclean("${CMAKE_BINARY_DIR}/CMakeTmp/sstamp")
+  endif(COMMAND distclean)
+
+  #########################################################################
+  # To report at the end what the actual deltas are, we need to read in the
+  # time stamps from the previous program and do some math.
+
+  # The install instructions at the end of the message are tool specific - key
+  # off of generators or build tools.
+  if("${CMAKE_GENERATOR}" MATCHES "Make")
+    set(INSTALL_LINE "Run 'make install' to begin installation into ${CMAKE_INSTALL_PREFIX}")
+    set(BENCHMARK_LINE "Run 'make benchmark' to run the BRL-CAD Benchmark Suite")
+  endif("${CMAKE_GENERATOR}" MATCHES "Make")
+  if("${CMAKE_GENERATOR}" MATCHES "Ninja")
+    set(INSTALL_LINE "Run 'ninja install' to begin installation into ${CMAKE_INSTALL_PREFIX}")
+    set(BENCHMARK_LINE "Run 'ninja benchmark' to run the BRL-CAD Benchmark Suite")
+  endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
+  if("${CMAKE_GENERATOR}" MATCHES "Xcode")
+    set(INSTALL_LINE "Run 'xcodebuild -target install' to begin installation into ${CMAKE_INSTALL_PREFIX}")
+    set(BENCHMARK_LINE "Run 'xcodebuild -target benchmark' to run the BRL-CAD Benchmark Suite")
+  endif("${CMAKE_GENERATOR}" MATCHES "Xcode")
+  if(MSVC)
+    # slightly misuse the lines for MSVC, since we don't usually do the
+    # install/benchmark routine there. (Benchmarks aren't currently supported
+    # in MSVC anyway.)
+    set(INSTALL_LINE "To build, launch Visual Studio and open ${CMAKE_BINARY_DIR}/BRLCAD.sln")
+    set(BENCHMARK_LINE "Build the ALL_BUILD target.  To create an NSIS installer, build the PACKAGE target")
+  endif(MSVC)
+
+  set(dreport_src "
+#define _CRT_SECURE_NO_WARNINGS 1
+
+#include <time.h>
+#include <stdio.h>
+#include <string.h>
+
+void printtime(long tdiff) {
+  long d_mins, d_hrs, d_days;
+  d_days = 0; d_hrs = 0; d_mins = 0;
+  if (tdiff > 86400) { d_days = tdiff / 86400; tdiff = tdiff % 86400; }
+  if (tdiff > 3600) { d_hrs = tdiff / 3600; tdiff = tdiff % 3600; }
+  if (tdiff > 60) { d_mins = tdiff / 60; tdiff = tdiff % 60; }
+  if (d_days > 0) { if (d_days == 1) { printf(\"%ld day \", d_days); } else { printf(\"%ld days \", d_days); } }
+  if (d_hrs > 0) { if (d_hrs == 1) { printf(\"%ld hour \", d_hrs); } else { printf(\"%ld hours \", d_hrs); } }
+  if (d_mins > 0) { if (d_mins == 1) { printf(\"%ld minute \", d_mins); } else { printf(\"%ld minutes \", d_mins); } }
+  if (tdiff > 0) { if (tdiff == 1) { printf(\"%ld second \", tdiff); } else { printf(\"%ld seconds \", tdiff); } }
+  if (tdiff == 0 && d_mins == 0 && d_hrs == 0 && d_days == 0) { printf(\"0 seconds \"); }
+}
+
+int main(int argc, const char **argv) {
+
+  FILE *infp = NULL; time_t t = time(NULL); long stime;
+  if (argc < 3) return 1;
+  if (strncmp(argv[1], \"final\", 5) == 0) {
+    if (argc < 4) return 1;
+    printf(\"Done.\\n\\nBRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE}\\n\\nElapsed compilation time: \");
+    infp = fopen(argv[2], \"r\"); (void)fscanf(infp, \"%ld\", &stime); ; fclose(infp); printtime(((long)t) - stime);
+    printf(\"\\nElapsed time since configuration: \");
+    infp = fopen(argv[3], \"r\"); (void)fscanf(infp, \"%ld\", &stime); ; fclose(infp); printtime(((long)t) - stime);
+    printf(\"\\n---\\n${INSTALL_LINE}\\n${BENCHMARK_LINE}\\n\\n\");
+    return 0;
+  }
+  printf(\"%s\", argv[1]);
+  infp = fopen(argv[2], \"r\"); (void)fscanf(infp, \"%ld\", &stime); ; fclose(infp); printtime(((long)t) - stime);
+  printf(\"\\n\");
+  return 0;
+}
+")
+
+  # Build the code so we can run it
+  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/dreport.c" "${dreport_src}")
+  try_compile(dreport_build "${CMAKE_BINARY_DIR}/CMakeTmp"
+    SOURCES "${CMAKE_BINARY_DIR}/CMakeTmp/dreport.c"
+    OUTPUT_VARIABLE FREPORT_BUILD_INFO
+    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/dreport")
+  if(NOT dreport_build)
+    message(FATAL_ERROR "Could not build time delta reporting utility: ${FREPORT_BUILD_INFO}")
+  endif(NOT dreport_build)
+  file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/dreport.c")
+  if(COMMAND distclean)
+    distclean("${CMAKE_BINARY_DIR}/CMakeTmp/dreport")
+  endif(COMMAND distclean)
+
+endfunction(generate_timer_exes)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
