@@ -172,11 +172,35 @@ endfunction(message)
 # delta calculations later)
 if(NOT BRLCAD_IS_SUBBUILD)
   set(DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_START")
-  configure_file("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/timedelta_start.c.in" "${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c")
-  TRY_RUN(TIME_RESULT TIME_COMPILED
+  set(timedelta_start_src "
+#include <time.h>
+#include <stdio.h>
+int main(void) {
+  FILE *outfp = NULL;
+  time_t t;
+  struct tm *currenttime;
+  t = time(NULL);
+  currenttime = localtime(&t);
+  outfp = fopen(\"${DELTA_START}\", \"w\");
+  fprintf(outfp, \"%d/\", currenttime->tm_sec);         /* seconds after the minute [0-60] */
+  fprintf(outfp, \"%d/\", currenttime->tm_min);         /* minutes after the hour [0-59] */
+  fprintf(outfp, \"%d/\", currenttime->tm_hour);        /* hours since midnight [0-23] */
+  fprintf(outfp, \"%d/\", currenttime->tm_mday);        /* day of the month [1-31] */
+  fprintf(outfp, \"%d/\", currenttime->tm_mon);         /* months since January [0-11] */
+  fprintf(outfp, \"%d/\", currenttime->tm_year);        /* years since 1900 */
+  fprintf(outfp, \"%d/\", currenttime->tm_wday);        /* days since Sunday [0-6] */
+  fprintf(outfp, \"%d/\", currenttime->tm_yday);        /* days since January 1 [0-365] */
+  fprintf(outfp, \"%d\", currenttime->tm_isdst);       /* Daylight Savings Time flag */
+  fclose(outfp);
+  return 0;
+}
+")
+  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c" "${timedelta_start_src}")
+  try_run(TIME_RESULT TIME_COMPILED
     "${CMAKE_BINARY_DIR}/CMakeTmp"
     "${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c"
     OUTPUT_VARIABLE COMPILEMESSAGES)
+  file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c")
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 
@@ -2842,12 +2866,52 @@ endif(NOT BRLCAD_DISABLE_SUMMARY)
 # We would need to be able to require 2.8.11 or newer, so there will
 # be a bit of a wait, but it's something to look into.
 if(NOT BRLCAD_IS_SUBBUILD)
+
   # Set up rules to print a timestamp string during build
+
+  #################################################################################
+  # We need to stamp the start time in a format we can read back in later.
   set(BUILD_DELTA_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_FILE")
+  set(builddelta_start_src "
+#define _CRT_SECURE_NO_WARNINGS 1
+
+#include <time.h>
+#include <stdio.h>
+
+int main(void)
+{
+  FILE *outfp = NULL;
+  time_t t;
+  struct tm *currenttime;
+  t = time(NULL);
+  currenttime = localtime(&t);
+  outfp = fopen(\"${BUILD_DELTA_FILE}\", \"w\");
+  fprintf(outfp, \"%d/\", currenttime->tm_sec);         /* seconds after the minute [0-60] */
+  fprintf(outfp, \"%d/\", currenttime->tm_min);         /* minutes after the hour [0-59] */
+  fprintf(outfp, \"%d/\", currenttime->tm_hour);        /* hours since midnight [0-23] */
+  fprintf(outfp, \"%d/\", currenttime->tm_mday);        /* day of the month [1-31] */
+  fprintf(outfp, \"%d/\", currenttime->tm_mon);         /* months since January [0-11] */
+  fprintf(outfp, \"%d/\", currenttime->tm_year);        /* years since 1900 */
+  fprintf(outfp, \"%d/\", currenttime->tm_wday);        /* days since Sunday [0-6] */
+  fprintf(outfp, \"%d/\", currenttime->tm_yday);        /* days since January 1 [0-365] */
+  fprintf(outfp, \"%d\", currenttime->tm_isdst);        /* Daylight Savings Time flag */
+  fclose(outfp);
+  return 0;
+}
+")
+  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c" "${builddelta_start_src}")
+  try_compile(bds_build ${CMAKE_BINARY_DIR}/CMakeTmp
+    "${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c"
+    COPY_FILE ${CMAKE_BINARY_DIR}/CMakeTmp/bds)
+  if(NOT bds_build)
+    message(FATAL_ERROR "Could not build timestamp initialization utility")
+  endif(NOT bds_build)
+
+  #################################################################################
+  # The following code does most of the work to pretty-print the timing information
+
   set(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
-  set(BUILD_DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_END")
-  configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_start.c.in"
-    "${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c")
+
   # The install instructions at the end of the message are tool specific - key
   # off of generators or build tools.
   if("${CMAKE_GENERATOR}" MATCHES "Make")
@@ -2869,30 +2933,129 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(INSTALL_LINE "To build, launch Visual Studio and open ${CMAKE_BINARY_DIR}/BRLCAD.sln")
     set(BENCHMARK_LINE "Build the ALL_BUILD target.  To create an NSIS installer, build the PACKAGE target")
   endif(MSVC)
-  configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_end.c.in"
-    "${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c")
-  add_executable(printtimestamp misc/CMake/test_srcs/print_timestamp.c)
-  set_target_properties(printtimestamp PROPERTIES FOLDER "Compilation Utilities")
-  add_executable(buildtimestart "${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c")
-  set_target_properties(buildtimestart PROPERTIES FOLDER "Compilation Utilities")
-  add_executable(buildtimeend "${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c")
-  set_target_properties(buildtimeend PROPERTIES FOLDER "Compilation Utilities")
+
+  set(builddelta_end_srcs "
+#define _CRT_SECURE_NO_WARNINGS 1
+
+#include <time.h>
+#include <stdio.h>
+
+void printtime(int tdiff) {
+  int d_mins, d_hrs, d_days;
+  d_days = 0; d_hrs = 0; d_mins = 0;
+
+  /* get days */
+  if (tdiff > 86400) { d_days = tdiff / 86400; tdiff = tdiff % 86400; }
+  /* get hours */
+  if (tdiff > 3600) { d_hrs = tdiff / 3600; tdiff = tdiff % 3600; }
+  /* get minutes */
+  if (tdiff > 60) { d_mins = tdiff / 60; tdiff = tdiff % 60; }
+  /* print */
+  if (d_days > 0) { if (d_days == 1) { printf(\"%d day \", d_days); } else { printf(\"%d days \", d_days); } }
+  if (d_hrs > 0) { if (d_hrs == 1) { printf(\"%d hour \", d_hrs); } else { printf(\"%d hours \", d_hrs); } }
+  if (d_mins > 0) { if (d_mins == 1) { printf(\"%d minute \", d_mins); } else { printf(\"%d minutes \", d_mins); } }
+  if (tdiff > 0) { if (tdiff == 1) { printf(\"%d second \", tdiff); } else { printf(\"%d seconds \", tdiff); } }
+  if (tdiff == 0 && d_mins == 0 && d_hrs == 0 && d_days == 0) { printf(\"0 seconds \"); }
+}
+
+
+int
+main(void)
+{
+  FILE *infp = NULL;
+  time_t t, ts, te;
+  struct tm *ctm;
+  struct tm stm;
+  int tdiff;
+  double tdiff_tmp;
+
+  t = time(NULL);
+  ctm = localtime(&t);
+
+  infp = fopen(\"${BUILD_DELTA_START}\", \"r\");
+  if(!fscanf(infp, \"%d/%d/%d/%d/%d/%d/%d/%d/%d\", &(stm.tm_sec), &(stm.tm_min), &(stm.tm_hour), &(stm.tm_mday), &(stm.tm_mon), &(stm.tm_year), &(stm.tm_wday), &(stm.tm_yday), &(stm.tm_isdst)))
+    printf(\"scan error\\n\");
+  fclose(infp);
+
+  ts = mktime(&stm);
+  te = mktime(ctm);
+
+  printf(\"Done.\\n\\nBRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE}\\n\\nElapsed compilation time: \");
+
+  tdiff_tmp = difftime(te, ts);
+  tdiff = (int)tdiff_tmp; /* intentionally truncates */
+  printtime(tdiff);
+
+  printf(\"\\nElapsed time since configuration: \");
+
+  infp = fopen(\"${DELTA_START}\", \"r\");
+  if(!fscanf(infp, \"%d/%d/%d/%d/%d/%d/%d/%d/%d\", &(stm.tm_sec), &(stm.tm_min), &(stm.tm_hour), &(stm.tm_mday), &(stm.tm_mon), &(stm.tm_year), &(stm.tm_wday), &(stm.tm_yday), &(stm.tm_isdst)))
+    printf(\"scan error\\n\");
+  fclose(infp);
+
+  ts = mktime(&stm);
+  tdiff_tmp = difftime(te, ts);
+  tdiff = (int)tdiff_tmp; /* intentionally truncates */
+  printtime(tdiff);
+  printf(\"\\n---\\n${INSTALL_LINE}\\n${BENCHMARK_LINE}\\n\\n\");
+
+  return 0;
+}
+")
+
+  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c" "${builddelta_end_srcs}")
+  try_compile(bde_build ${CMAKE_BINARY_DIR}/CMakeTmp
+    "${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c"
+    COPY_FILE ${CMAKE_BINARY_DIR}/CMakeTmp/bde)
+  if(NOT bde_build)
+    message(FATAL_ERROR "Could not build timestamp pretty-printing utility")
+  endif(NOT bde_build)
+
+  #################################################################################
+  # Print a basic time stamp
+
+  set(printtimestamp_src "
+#define _CRT_SECURE_NO_WARNINGS 1
+
+#include <time.h>
+#include <stdio.h>
+
+int main(void)
+{
+  time_t t;
+  struct tm *currenttime;
+  t = time(NULL);
+  currenttime = localtime(&t);
+  printf(\"\\nBuild Time: %s\\n\", asctime(currenttime));
+  return 0;
+}
+")
+
+  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/printtimestamp.c" "${printtimestamp_src}")
+  try_compile(pts_build ${CMAKE_BINARY_DIR}/CMakeTmp
+    "${CMAKE_BINARY_DIR}/CMakeTmp/printtimestamp.c"
+    COPY_FILE ${CMAKE_BINARY_DIR}/CMakeTmp/pts)
+  if(NOT pts_build)
+    message(FATAL_ERROR "Could not build timestamp pretty-printing utility")
+  endif(NOT pts_build)
+
+  ##########################################################
+  # Having created the executables, define the build targets
+
   add_custom_command(
     OUTPUT ${BUILD_DELTA_FILE}
-    COMMAND buildtimestart
+    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/bds
     COMMENT ""
-    DEPENDS buildtimestart
     )
   add_custom_target(timestamp ALL
-    COMMAND printtimestamp
+    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts
     COMMAND ${CMAKE_COMMAND} -E rename ${BUILD_DELTA_FILE} ${BUILD_DELTA_START}
-    DEPENDS ${BUILD_DELTA_FILE} printtimestamp
+    DEPENDS ${BUILD_DELTA_FILE}
     )
   set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
   add_custom_target(buildtimedelta ALL
-    COMMAND buildtimeend
+    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/bde
     COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
-    DEPENDS buildtimeend
     )
   set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
 endif(NOT BRLCAD_IS_SUBBUILD)
@@ -3279,11 +3442,48 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/cmakedirs.cmake" "${CMAKE_IGNORE_DIRS}")
 #Done with all really time-consuming steps - do the configure time delta
 if(NOT BRLCAD_IS_SUBBUILD)
   set(DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_END")
-  configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/timedelta_end.c.in" "${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c")
-  TRY_RUN(TIME_RESULT TIME_COMPILED
+  set(timedelta_end_src "
+#include <time.h>
+#include <stdio.h>
+int main(void) {
+  FILE *infp = NULL; FILE *outfp = NULL;
+  time_t t, ts, te;
+  struct tm *currenttime; struct tm starttime;
+  double tdiff_f;
+  int tdiff, d_mins, d_hrs, d_days;
+  t = time(NULL);
+  currenttime = localtime(&t);
+  infp = fopen(\"${DELTA_START}\", \"r\");
+  outfp = fopen(\"${DELTA_END}\", \"w\");
+  if(!fscanf(infp, \"%d/%d/%d/%d/%d/%d/%d/%d/%d\", &(starttime.tm_sec), &(starttime.tm_min), &(starttime.tm_hour), &(starttime.tm_mday), &(starttime.tm_mon), &(starttime.tm_year), &(starttime.tm_wday), &(starttime.tm_yday), &(starttime.tm_isdst)))
+    printf(\"scan error\\n\");
+  fclose(infp);
+
+  ts = mktime(&starttime); te = mktime(currenttime);
+  tdiff_f = difftime(te, ts); tdiff = (int)tdiff_f;
+  d_days = 0; d_hrs = 0; d_mins = 0;
+  /* get days */
+  if (tdiff > 86400) { d_days = tdiff / 86400; tdiff = tdiff % 86400; }
+  /* get hours */
+  if (tdiff > 3600) { d_hrs = tdiff / 3600; tdiff = tdiff % 3600; }
+  /* get minutes */
+  if (tdiff > 60) { d_mins = tdiff / 60; tdiff = tdiff % 60; }
+  /* print */
+  if (d_days > 0) { if (d_days == 1) { fprintf(outfp,\"%d day \", d_days); } else { fprintf(outfp,\"%d days \", d_days); } }
+  if (d_hrs> 0) { if (d_hrs == 1) { fprintf(outfp,\"%d hour \", d_hrs); } else { fprintf(outfp,\"%d hours \", d_hrs); } }
+  if (d_mins > 0) { if (d_mins == 1) { fprintf(outfp,\"%d minute \", d_mins); } else { fprintf(outfp,\"%d minutes \", d_mins); } }
+  if (tdiff > 0) { if (tdiff == 1) { fprintf(outfp,\"%d second \", tdiff); } else { fprintf(outfp,\"%d seconds \", tdiff); } }
+  if (tdiff == 0 && d_mins == 0 && d_hrs == 0 && d_days == 0) { fprintf(outfp,\"0 seconds \"); }
+  fclose(outfp);
+  return 0;
+}
+")
+  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c" "${timedelta_end_src}")
+  try_run(TIME_RESULT TIME_COMPILED
     "${CMAKE_BINARY_DIR}/CMakeTmp"
     "${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c"
     OUTPUT_VARIABLE COMPILEMESSAGES)
+  #file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c")
   file(READ ${DELTA_END} CONFIG_TIME_MSG)
   string(STRIP "${CONFIG_TIME_MSG}" CONFIG_TIME_MSG)
   set(CONFIG_TIME_MSG_LABEL "Elapsed configuration time")
@@ -3293,6 +3493,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     string(LENGTH "${CONFIG_TIME_MSG_LABEL}" CURRENTLENGTH)
   endwhile(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
   message("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
+
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 # Write out the Doxygen feature list
