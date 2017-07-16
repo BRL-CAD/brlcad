@@ -305,6 +305,42 @@ function(generate_cmd_script cmd_exe script_file)
 
 endfunction(generate_cmd_script)
 
+#---------------------------------------------------------------------------
+# Set variables reporting time of configuration.  Sets CONFIG_DATE and
+# CONFIG_TIMESTAMP_FILE in parent scope. (TODO - is the latter necessary?)
+#
+# Unfortunately, CMake doesn't give you variables with current day,
+# month, etc.  There are several possible approaches to this, but most
+# (e.g. the date command) are not cross platform. We build a small C
+# file which writes out the needed values to files in the build
+# directory. Those files are then read and stripped by CMake.
+function(set_config_time)
+  set(CONFIG_TIME_DAY_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_DAY")
+  set(CONFIG_TIME_MONTH_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_MONTH")
+  set(CONFIG_TIME_YEAR_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_YEAR")
+  set(CONFIG_TIMESTAMP_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIMESTAMP" PARENT_SCOPE)
+  DISTCLEAN(${CONFIG_TIME_DAY_FILE} ${CONFIG_TIME_MONTH_FILE}
+    ${CONFIG_TIME_YEAR_FILE} ${CONFIG_TIMESTAMP_FILE})
+  file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include")
+  file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include/conf")
+  configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/time.c.in" "${CMAKE_BINARY_DIR}/CMakeTmp/time.c")
+  try_run(TIME_RESULT TIME_COMPILED
+    "${CMAKE_BINARY_DIR}/CMakeTmp"
+    "${CMAKE_BINARY_DIR}/CMakeTmp/time.c"
+    OUTPUT_VARIABLE COMPILEMESSAGES)
+  if(TIME_RESULT MATCHES "^0$")
+    file(READ ${CONFIG_TIME_DAY_FILE} CONFIG_DAY)
+    string(STRIP ${CONFIG_DAY} CONFIG_DAY)
+    file(READ ${CONFIG_TIME_MONTH_FILE} CONFIG_MONTH)
+    string(STRIP ${CONFIG_MONTH} CONFIG_MONTH)
+    file(READ ${CONFIG_TIME_YEAR_FILE} CONFIG_YEAR)
+    string(STRIP ${CONFIG_YEAR} CONFIG_YEAR)
+    set(CONFIG_DATE "${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}" PARENT_SCOPE)
+  else(TIME_RESULT MATCHES "^0$")
+    message(FATAL_ERROR "Code to determine current date and time failed!\n")
+  endif(TIME_RESULT MATCHES "^0$")
+endfunction(set_config_time)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
