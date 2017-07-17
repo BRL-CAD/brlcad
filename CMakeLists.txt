@@ -2790,37 +2790,33 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
 endif(NOT BRLCAD_IS_SUBBUILD)
 
-# We want the timestamp to come first, so make ALL library,
-# exec and external targets depend on timestamp (except for
-# the exec target printtimestamp, which is needed by timestamp)
-# Similarly, buildtimedelta needs to depend on every target.
+# We want the timestamp to come first, so make ALL targets, depend on
+# timestamp.  Similarly, buildtimedelta needs to depend on every target
+# not excluded from the default build list.
 if(NOT BRLCAD_IS_SUBBUILD)
+
+  # Libraries and executables are fairly straightforward
   get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
   get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
-  get_property(CMAKE_CUSTOM_TARGET_LIST GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST)
-  get_property(CMAKE_EXTERNAL_TARGET_LIST GLOBAL PROPERTY CMAKE_EXTERNAL_TARGET_LIST)
   mark_as_advanced(CMAKE_LIBRARY_TARGET_LIST)
   mark_as_advanced(CMAKE_EXEC_TARGET_LIST)
-  mark_as_advanced(CMAKE_CUSTOM_TARGET_LIST)
-  mark_as_advanced(CMAKE_EXTERNAL_TARGET_LIST)
   list(REMOVE_DUPLICATES CMAKE_LIBRARY_TARGET_LIST)
   list(REMOVE_DUPLICATES CMAKE_EXEC_TARGET_LIST)
+  foreach(ctarget ${CMAKE_LIBRARY_TARGET_LIST} ${CMAKE_EXEC_TARGET_LIST})
+    if(TARGET ${ctarget})
+      add_dependencies(${ctarget} timestamp)
+      get_target_property(not_in_all ${ctarget} EXCLUDE_FROM_ALL)
+      get_target_property(not_in_default ${ctarget} EXCLUDE_FROM_DEFAULT_BUILD)
+      if(NOT not_in_all AND NOT not_in_default)
+	add_dependencies(buildtimedelta ${ctarget})
+      endif(NOT not_in_all AND NOT not_in_default)
+    endif(TARGET ${ctarget})
+  endforeach(ctarget ${CMAKE_LIBRARY_TARGET_LIST} ${CMAKE_EXEC_TARGET_LIST})
+
+  # For the custom targets, we need to avoid circular dependencies
+  get_property(CMAKE_CUSTOM_TARGET_LIST GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST)
+  mark_as_advanced(CMAKE_CUSTOM_TARGET_LIST)
   list(REMOVE_DUPLICATES CMAKE_CUSTOM_TARGET_LIST)
-  if(CMAKE_EXTERNAL_TARGET_LIST)
-    list(REMOVE_DUPLICATES CMAKE_EXTERNAL_TARGET_LIST)
-  endif(CMAKE_EXTERNAL_TARGET_LIST)
-  foreach(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
-    if(TARGET ${libtarget})
-      add_dependencies(${libtarget} timestamp)
-      add_dependencies(buildtimedelta ${libtarget})
-    endif(TARGET ${libtarget})
-  endforeach(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
-  foreach(exectarget ${CMAKE_EXEC_TARGET_LIST})
-    if(TARGET ${exectarget})
-      add_dependencies(${exectarget} timestamp)
-      add_dependencies(buildtimedelta ${exectarget})
-    endif(TARGET ${exectarget})
-  endforeach(exectarget ${CMAKE_EXEC_TARGET_LIST})
   foreach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
     if(NOT ${custtarget} MATCHES "timestamp")
       add_dependencies(${custtarget} timestamp)
@@ -2833,6 +2829,13 @@ if(NOT BRLCAD_IS_SUBBUILD)
       endif(NOT not_in_all AND NOT not_in_default)
     endif(NOT ${custtarget} MATCHES "buildtimedelta")
   endforeach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
+
+  # Theoretical logic to handle external targets - not currently in use
+  get_property(CMAKE_EXTERNAL_TARGET_LIST GLOBAL PROPERTY CMAKE_EXTERNAL_TARGET_LIST)
+  mark_as_advanced(CMAKE_EXTERNAL_TARGET_LIST)
+  if(CMAKE_EXTERNAL_TARGET_LIST)
+    list(REMOVE_DUPLICATES CMAKE_EXTERNAL_TARGET_LIST)
+  endif(CMAKE_EXTERNAL_TARGET_LIST)
   foreach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
     get_target_property(target_confcmd ${externaltarget} _EP_CONFIGURE_COMMAND)
     if(target_confcmd)
@@ -2840,6 +2843,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       add_dependencies(buildtimedelta ${externaltarget})
     endif(target_confcmd)
   endforeach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
+
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 
