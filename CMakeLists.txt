@@ -3153,9 +3153,6 @@ if(TARGET distclean)
   set_target_properties(distclean PROPERTIES FOLDER "Compilation Utilities")
 endif(TARGET distclean)
 
-# Not sure what this is - created automatically by CMake in MSVC?
-SetTargetFolder(core "CMakePredefinedTargets")
-
 # Have touched every file and directory that we are going to touch with the
 # build system - time to write out our lists for future processing.
 get_property(CMAKE_IGNORE_FILES GLOBAL PROPERTY CMAKE_IGNORE_FILES)
