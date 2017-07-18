@@ -359,6 +359,9 @@ clt_db_store(size_t count, struct soltab *solids[]);
 RT_EXPORT extern void
 clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes);
 
+RT_EXPORT extern void
+clt_db_store_boolean_regions(struct cl_bool_region *regions, size_t nregions, union tree_rpn *rtp, size_t sz_tree_rpn);
+
 RT_EXPORT extern void clt_db_release(void);
 
 

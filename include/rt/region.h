@@ -67,6 +67,21 @@ struct region {
 #define REGION_NULL     ((struct region *)0)
 #define RT_CK_REGION(_p) BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
 
+#ifdef USE_OPENCL
+union cl_tree_rpn {
+    long uop;
+    long st_bit;
+};
+
+struct cl_bool_region {
+    cl_uint rtree_offset;           /**< @brief index to the start of the rpn tree */
+    cl_uint reg_nrtree;             /**< @brief number of elements in rtree */
+    cl_int reg_aircode;             /**< @brief Region ID AIR code */
+    cl_short reg_all_unions;        /**< @brief 1=boolean tree is all unions */
+};
+
+#endif
+
 /* Print a region */
 RT_EXPORT extern void rt_pr_region(const struct region *rp);
 

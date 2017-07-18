@@ -604,7 +604,8 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 	 const double16 view2model, const double cell_width, const double cell_height,
 	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims,
-	 global struct region *regions)
+	 global struct region *regions, global struct partition *partitions, global uint *ipartition,
+     global uint *segs_bv, const int max_depth)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
@@ -626,21 +627,33 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
     double3 a_color;
     uchar3 rgb;
     struct hit hitp;
+    global struct partition *pp;
+    uint pp_eval, head;
 
     a_color = 0.0;
     hitp.hit_dist = INFINITY;
-    if (h[id] != h[id+1]) {
+    if (ipartition[id] > 0) {
 	uint idx;
 
 	idx = UINT_MAX;
-	for (uint k=h[id]; k!=h[id+1]; k++) {
-	    RESULT_TYPE segp = segs+k;
+
+    //Get first partition of the ray
+    head = ipartition[id];
+    pp_eval = 0;
+	for (uint current_index = head; current_index != UINT_MAX; current_index = partitions[current_index].forw_pp) {
+
+        pp = &partitions[current_index];
+        if (pp->evaluated) {
+	    RESULT_TYPE segp = &segs[pp->inseg];
 
 	    if (segp->seg_in.hit_dist < hitp.hit_dist) {
 		hitp = segp->seg_in;
 		idx = segp->seg_sti;
 	    }
+        pp_eval = 1;
+        }
 	}
+    if (pp_eval) {
         double3 normal;
 
 	if (hitp.hit_dist < 0.0) {
@@ -692,6 +705,12 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 	rgb = select(rgb, nonbackground, (uchar3)all(rgb == background));
 	// make sure it's never perfect black
 	rgb = select(rgb, (uchar3){rgb.x, rgb.y, 1}, (uchar3)all(!rgb));
+    } else {
+        /* partition not evaluated, don't dither */
+        rgb = background;
+        a_color = -1e-20;	// background flag
+        hitp.hit_dist = INFINITY;
+    }
     } else {
 	/* shot missed the model, don't dither */
         rgb = background;

@@ -176,6 +176,17 @@ struct cl_seg {
     cl_uint seg_sti;
 };
 
+struct cl_partition {
+    struct cl_hit inhit;
+    struct cl_hit outhit;
+    cl_uint inseg;
+    cl_uint outseg;
+    cl_uint forw_pp;                /* index to the next partition */
+    cl_uint back_pp;                /* index to the previous partition */
+    cl_uint region_id;              /* id of the "owning" region */
+    cl_short evaluated;             /* holds the result of boolean evaluation */
+};
+
 RT_EXPORT extern void
 clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	  int width, int ibackground[3], int inonbackground[3],

@@ -57,6 +57,29 @@ struct seg {
     uint seg_sti;
 };
 
+struct partition {
+    struct hit inhit;
+    struct hit outhit;
+    uint inseg;
+    uint outseg;
+    uint forw_pp;               /* index to the next partition */
+    uint back_pp;               /* index to the previous partition */
+    uint region_id;             /* id of the "owning" region */
+    short evaluated;            /* holds the result of boolean evaluation */
+};
+
+union tree_rpn {
+    long uop;
+    long st_bit;
+};
+
+struct bool_region {
+    uint rtree_offset;          /* index to the start of the rpn tree */
+    uint reg_nrtree;            /* number of elements in rtree */
+    int reg_aircode;            /* Region ID AIR code */
+    short reg_all_unions;       /* 1=boolean tree is all unions */
+};
+
 struct region;
 #if RT_SINGLE_HIT
 struct accum {
