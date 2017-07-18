@@ -2655,26 +2655,60 @@ set(BRLCAD_COMPILE_COUNT ${buildCounter})
 # DATE - RFC2822 timestamp
 set(BRLCAD_COMPILE_DATE \"${CONFIG_DATESTAMP}\")
 
+# Add definition HAVE_UNISTD_H to try_run for next couple tests, if present
+if(HAVE_UNISTD_H)
+  set(UNISTD_DEF "-DHAVE_UNISTD_H")
+endif(HAVE_UNISTD_H)
+
 # HOST
-set(BRLCAD_HOSTNAME_FILE "${BRLCAD_BINARY_DIR}/CMakeTmp/BRLCAD_BUILD_HOST")
-configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/report_hostname.c.in" "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c")
-if(NOT MSVC)
-  TRY_RUN(TIME_RESULT TIME_COMPILED
-    "${CMAKE_BINARY_DIR}/CMakeTmp"
-    "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"
-    OUTPUT_VARIABLE COMPILEMESSAGES)
-else(NOT MSVC)
-  set(CMAKE_REQUIRED_LIBRARIES ws2_32.lib)
-  TRY_RUN(TIME_RESULT TIME_COMPILED
-    "${CMAKE_BINARY_DIR}/CMakeTmp"
-    "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"
-    OUTPUT_VARIABLE COMPILEMESSAGES
-    CMAKE_FLAGS "-DLINK_LIBRARIES:STRING=ws2_32.lib")
-endif(NOT MSVC)
-# Let CMake give us the proper newline character(s) for the current platform
-file(READ "${BRLCAD_HOSTNAME_FILE}"  BRLCAD_COMPILE_HOST)
-string(STRIP ${BRLCAD_COMPILE_HOST} BRLCAD_COMPILE_HOST)
-DISTCLEAN("${BRLCAD_HOSTNAME_FILE}")
+set(report_hostname_src "
+#include <stdio.h>
+#ifdef HAVE_UNISTD_H
+  #include <unistd.h>
+  #define GETHOSTNAME_ERROR -1
+#else
+  #include <WinSock2.h>
+  #define GETHOSTNAME_ERROR SOCKET_ERROR
+#endif
+
+#define MAX_HOSTNAME 2048
+#if !defined(HAVE_UNISTD_H) || defined(_BSD_SOURCE) \
+    || defined(_XOPEN_SOURCE) && _XOPEN_SOURCE  >= 500 \
+    || defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112
+  #define HAVE_GETHOSTNAME 1
+#endif
+
+int main(void) {
+#if defined(HAVE_GETHOSTNAME)
+{
+    int ret; char hostname[MAX_HOSTNAME];
+  #if !defined(HAVE_UNISTD_H)
+    WORD wVersionRequested; WSADATA wsaData;
+    wVersionRequested = MAKEWORD(1, 1); WSAStartup(wVersionRequested, &wsaData);
+  #endif
+    ret = gethostname(hostname, MAX_HOSTNAME);
+    if (ret != GETHOSTNAME_ERROR) {printf(\"%s\", hostname);} else { printf(\"unknown\"); }
+}
+#else
+    printf(\"unknown\");
+#endif
+    return 0;
+}
+")
+file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c" "${report_hostname_src}")
+try_run(RH_RESULT RH_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
+  "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"
+  COMPILE_DEFINITIONS "${UNISTD_DEF}"
+  COMPILE_OUTPUT_VARIABLE RH_COMPILE_MSGS
+  RUN_OUTPUT_VARIABLE BRLCAD_COMPILE_HOSTNAME)
+if(NOT RH_COMPILED)
+  message(FATAL_ERROR "Could not build hostname reporting utility: ${RH_COMPILE_MSGS}")
+endif(NOT RH_COMPILED)
+if(RH_RESULT)
+  message(FATAL_ERROR "Could not run hostname reporting utility: ${BRLCAD_COMPILE_HOSTNAME}")
+endif(RH_RESULT)
+string(STRIP ${BRLCAD_COMPILE_HOSTNAME} BRLCAD_COMPILE_HOSTNAME)
+file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c")
 
 # USER
 set(report_username_src "
@@ -2692,12 +2726,9 @@ int main(void) {
 }")
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c" "${report_username_src}")
 # Add definition HAVE_UNISTD_H to try_run
-if(HAVE_UNISTED_H)
-  set(UNISTED_DEF "-DHAVE_UNISTED_H")
-endif(HAVE_UNISTED_H)
 try_run(RU_RESULT RU_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
   "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c"
-  COMPILE_DEFINITIONS "${UNISTED_DEF}"
+  COMPILE_DEFINITIONS "${UNISTD_DEF}"
   COMPILE_OUTPUT_VARIABLE RU_COMPILE_MSGS
   RUN_OUTPUT_VARIABLE BRLCAD_COMPILE_USER)
 if(NOT RU_COMPILED)
@@ -2707,7 +2738,6 @@ if(RU_RESULT)
   message(FATAL_ERROR "Could not run username reporting utility: ${BRLCAD_COMPILE_USER}")
 endif(RU_RESULT)
 string(STRIP ${BRLCAD_COMPILE_USER} BRLCAD_COMPILE_USER)
-message("BRLCAD_COMPILE_USER: ${BRLCAD_COMPILE_USER}")
 file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c")
 
 #---------------------------------------------------------------------
