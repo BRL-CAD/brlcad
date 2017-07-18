@@ -597,8 +597,8 @@ clt_cleanup(void)
 
     clReleaseKernel(clt_count_hits_kernel);
     clReleaseKernel(clt_store_segs_kernel);
-	clReleaseKernel(clt_boolweave_kernel);
-	clReleaseKernel(clt_boolfinal_kernel);
+    clReleaseKernel(clt_boolweave_kernel);
+    clReleaseKernel(clt_boolfinal_kernel);
     clReleaseKernel(clt_shade_segs_kernel);
 
     clReleaseKernel(clt_frame_kernel);
@@ -668,10 +668,10 @@ clt_init(void)
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
         clt_store_segs_kernel = clCreateKernel(clt_mh_program, "store_segs", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-		clt_boolweave_kernel = clCreateKernel(clt_mh_program, "rt_boolweave", &error);
-		if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-		clt_boolfinal_kernel = clCreateKernel(clt_mh_program, "rt_boolfinal", &error);
-		if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+	clt_boolweave_kernel = clCreateKernel(clt_mh_program, "rt_boolweave", &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+	clt_boolfinal_kernel = clCreateKernel(clt_mh_program, "rt_boolfinal", &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
         clt_shade_segs_kernel = clCreateKernel(clt_mh_program, "shade_segs", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
@@ -839,15 +839,15 @@ clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes)
 void
 clt_db_store_boolean_regions(struct cl_bool_region *regions, size_t nregions, union tree_rpn *rtp, size_t sz_tree_rpn)
 {
-	cl_int error;
-	clt_db_nregions = nregions;
+    cl_int error;
+    clt_db_nregions = nregions;
 
-	bu_log("OCLRegions:\t%ld regions\n\t%.2f KB total\n", (sizeof(struct cl_bool_region)*nregions)/1024.0);
-	clt_db_bool_regions = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct cl_bool_region)*nregions, regions, &error);
-	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL boolean regions buffer");
+    bu_log("OCLRegions:\t%ld regions\n\t%.2f KB total\n", (sizeof(struct cl_bool_region)*nregions)/1024.0);
+    clt_db_bool_regions = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct cl_bool_region)*nregions, regions, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL boolean regions buffer");
 
-	clt_db_rtree = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(union cl_tree_rpn)*sz_tree_rpn, rtp, &error);
-	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL boolean trees buffer");
+    clt_db_rtree = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(union cl_tree_rpn)*sz_tree_rpn, rtp, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL boolean trees buffer");
 }
 
 void
@@ -858,8 +858,8 @@ clt_db_release(void)
     clReleaseMemObject(clt_db_prims);
     clReleaseMemObject(clt_db_indexes);
     clReleaseMemObject(clt_db_ids);
-	clReleaseMemObject(clt_db_rtree);
-	clReleaseMemObject(clt_db_bool_regions);
+    clReleaseMemObject(clt_db_rtree);
+    clReleaseMemObject(clt_db_bool_regions);
 
     clt_db_nprims = 0;
 	clt_db_nregions = 0;

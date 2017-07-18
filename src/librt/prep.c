@@ -463,21 +463,21 @@ void
 rt_rtree_translate(struct rt_i *rtip, struct soltab **primitives, union tree_rpn *rtp, size_t start, size_t end, const long n_primitives)
 {
     size_t i;
-	long j;
+    long j;
 
-	RT_CK_RTI(rtip);
+    RT_CK_RTI(rtip);
 
-    for (i=start; i<start + end; i++) {
-		if (rtp[i].uop >= 0) {
-			const long st_bit = rtp[i].st_bit;
-			for (j = 0; j < n_primitives; j++) {
-				if (st_bit == primitives[j]->st_bit) {
-					rtp[i].st_bit = rtip->rti_Solids[j]->st_bit;
-					break;
-				}
-			}
+    for (i=start; i<start+end; i++) {
+	if (rtp[i].uop >= 0) {
+	    const long st_bit = rtp[i].st_bit;
+	    for (j = 0; j < n_primitives; j++) {
+		if (st_bit == primitives[j]->st_bit) {
+		    rtp[i].st_bit = rtip->rti_Solids[j]->st_bit;
+		    break;
 		}
+	    }
 	}
+    }
 }
 
 void
@@ -488,7 +488,7 @@ clt_prep(struct rt_i *rtip)
 
     struct soltab **primitives;
     long n_primitives;
-	size_t n_regions;
+    size_t n_regions;
 
     RT_CK_RTI(rtip);
 
@@ -557,57 +557,56 @@ clt_prep(struct rt_i *rtip)
 
 	n_regions = rtip->nregions;
 
-	if (n_regions != 0) {
+	if (n_regions > 0) {
+	    /* Build boolean regions */
+	    struct region *regp;
+	    struct cl_bool_region *regions;
+	    union tree_rpn *rtree;
+	    size_t sz_rtree_array;
+	    size_t len;
 
-		/* Build boolean regions */
-		struct region *regp;
-		struct cl_bool_region *regions;
-		union tree_rpn *rtree;
-		size_t sz_rtree_array;
-		size_t len;
+	    regions = (struct cl_bool_region*)bu_calloc(n_regions, sizeof(struct cl_bool_region),
+		    "regions");
 
-		regions = (struct cl_bool_region*)bu_calloc(n_regions, sizeof(struct cl_bool_region),
-							"regions");
+	    /* Determine the size of all trees to build one array containing
+	     * the rpn trees from all regions.
+	     */
+	    sz_rtree_array = 0;
 
-		/* Determine the size of all trees to build one array containing
-		* the rpn trees from all regions.
-		*/
-		sz_rtree_array = 0;
-
-		for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-			RT_CK_REGION(regp);
-
-			len = 0;
-			rt_tree_rpn(NULL, regp->reg_treetop, &len);
-			sz_rtree_array += len;
-		}
-
-		rtree = (union tree_rpn *)bu_calloc(sz_rtree_array, sizeof(union tree_rpn), "region rtree array");
+	    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+		RT_CK_REGION(regp);
 
 		len = 0;
-		i = 0;
-		for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-			RT_CK_REGION(regp);
+		rt_tree_rpn(NULL, regp->reg_treetop, &len);
+		sz_rtree_array += len;
+	    }
 
-			if (i == 0) {
-				regions[i].rtree_offset = 0;
-			} else {
-				regions[i].rtree_offset = regions[i-1].rtree_offset + regions[i-1].reg_nrtree;
-			}
+	    rtree = (union tree_rpn *)bu_calloc(sz_rtree_array, sizeof(union tree_rpn), "region rtree array");
 
-			regions[i].reg_nrtree = regp->reg_nrtree;
-			regions[i].reg_aircode = regp->reg_aircode;
-			regions[i].reg_all_unions = regp->reg_all_unions;
+	    len = 0;
+	    i = 0;
+	    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+		RT_CK_REGION(regp);
 
-			rt_tree_rpn(rtree, regp->reg_treetop, &len);
-			rt_rtree_translate(rtip, primitives, rtree, regions[i].rtree_offset, regions[i].reg_nrtree, n_primitives);
-
-			i++;
+		if (i == 0) {
+		    regions[i].rtree_offset = 0;
+		} else {
+		    regions[i].rtree_offset = regions[i-1].rtree_offset + regions[i-1].reg_nrtree;
 		}
 
-		clt_db_store_boolean_regions(regions, n_regions, rtree, sz_rtree_array);
-		bu_free(regions, "regions");
-		bu_free(rtree, "region rtree array");
+		regions[i].reg_nrtree = regp->reg_nrtree;
+		regions[i].reg_aircode = regp->reg_aircode;
+		regions[i].reg_all_unions = regp->reg_all_unions;
+
+		rt_tree_rpn(rtree, regp->reg_treetop, &len);
+		rt_rtree_translate(rtip, primitives, rtree, regions[i].rtree_offset, regions[i].reg_nrtree, n_primitives);
+
+		i++;
+	    }
+
+	    clt_db_store_boolean_regions(regions, n_regions, rtree, sz_rtree_array);
+	    bu_free(regions, "regions");
+	    bu_free(rtree, "region rtree array");
 	}
 
 	bu_free(primitives, "ordered primitives");
