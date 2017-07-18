@@ -36,7 +36,7 @@
 #define HT '\011'
 #define LF '\012'
 #define FF '\014'
-#define CR '\015'
+#define CRET '\015'
 #define DLE '\020'
 #define DC1 '\021'
 #define DC2 '\022'
