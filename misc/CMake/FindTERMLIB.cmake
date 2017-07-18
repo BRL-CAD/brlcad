@@ -45,6 +45,40 @@ include(CheckLibraryExists)
 include(CheckIncludeFiles)
 include(CheckCSourceRuns)
 
+set(termlib_src "
+#ifdef HAVE_TERMLIB_H
+#  include <termlib.h>
+#else
+#  ifdef HAVE_NCURSES_H
+#    include <ncurses.h>
+#  else
+#    ifdef HAVE_CURSES_H
+#      include <curses.h>
+#    else
+#      ifdef HAVE_TERMCAP_H
+#        include <termcap.h>
+#      else
+#        ifdef HAVE_TERMINFO_H
+#          include <terminfo.h>
+#        else
+#          ifdef HAVE_TINFO_H
+#            include <tinfo.h>
+#          endif
+#        endif
+#      endif
+#    endif
+#  endif
+#  ifdef HAVE_TERM_H
+#    include <term.h>
+#  endif
+#endif
+int main () {
+        char buffer[2048] = {0};
+        (void)tgetent(buffer, \"vt100\");
+        return 0;
+}
+")
+
 macro(TERMLIB_CHECK_LIBRARY lname func headers)
   if(NOT TERMLIB_LIBRARY OR "${TERMLIB_LIBRARY}" MATCHES "NOTFOUND")
     CHECK_LIBRARY_EXISTS(${lname} ${func} "" HAVE_TERMLIB_${lname})
@@ -59,12 +93,19 @@ macro(TERMLIB_CHECK_LIBRARY lname func headers)
 	  if(NOT "${TERMLIB_INCLUDE_DIR}" MATCHES "NOTFOUND")
 	    set(LIBTERM_RESULT)
 	    set(TERMLIB_LIBRARY "${lname}")
-	    configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/termlib.c.in" "${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c")
+	    file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c")
 	    set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
 	    set(CMAKE_REQUIRED_LIBRARIES ${TERMLIB_LIBRARY})
-	    if(NOT DEFINED LIBTERM_RESULT)
-	      CHECK_C_SOURCE_RUNS("${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c" LIBTERM_RESULT)
-	    endif(NOT DEFINED LIBTERM_RESULT)
+	    if(NOT LIBTERM_RESULT)
+              try_run(LIBTERM_RESULT LIBTERM_COMPILE
+		"${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c"
+		COMPILE_DEFINITIONS "-DHAVE_${HDR}"
+		COMPILE_OUTPUT_VARIABLE CTERM_OUT
+		RUN_OUTPUT_VARIABLE RTERM_OUT)
+	      #message("CTERM: ${CTERM_OUT}")
+	      #message("RTERM: ${RTERM_OUT}")
+	    endif(NOT LIBTERM_RESULT)
+	    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c")
 	    if(NOT LIBTERM_RESULT)
 	      set(TERMLIB_LIBRARY "NOTFOUND" CACHE STRING "TERMLIB" FORCE)
 	    else(NOT LIBTERM_RESULT)
