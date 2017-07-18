@@ -685,19 +685,19 @@ void printtime(long tdiff) {
 
 int main(int argc, const char **argv) {
 
-  FILE *infp = NULL; time_t t = time(NULL); long stime;
+  FILE *infp = NULL; time_t t = time(NULL); long start_time;
   if (argc < 3) return 1;
   if (strncmp(argv[1], \"final\", 5) == 0) {
     if (argc < 4) return 1;
     printf(\"Done.\\n\\nBRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE}\\n\\nElapsed compilation time: \");
-    infp = fopen(argv[2], \"r\"); (void)fscanf(infp, \"%ld\", &stime); ; fclose(infp); printtime(((long)t) - stime);
+    infp = fopen(argv[2], \"r\"); (void)fscanf(infp, \"%ld\", &start_time); ; fclose(infp); printtime(((long)t) - start_time);
     printf(\"\\nElapsed time since configuration: \");
-    infp = fopen(argv[3], \"r\"); (void)fscanf(infp, \"%ld\", &stime); ; fclose(infp); printtime(((long)t) - stime);
+    infp = fopen(argv[3], \"r\"); (void)fscanf(infp, \"%ld\", &start_time); ; fclose(infp); printtime(((long)t) - start_time);
     printf(\"\\n---\\n${INSTALL_LINE}\\n${BENCHMARK_LINE}\\n\\n\");
     return 0;
   }
   printf(\"%s\", argv[1]);
-  infp = fopen(argv[2], \"r\"); (void)fscanf(infp, \"%ld\", &stime); ; fclose(infp); printtime(((long)t) - stime);
+  infp = fopen(argv[2], \"r\"); (void)fscanf(infp, \"%ld\", &start_time); ; fclose(infp); printtime(((long)t) - start_time);
   printf(\"\\n\");
   return 0;
 }
