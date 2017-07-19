@@ -72,10 +72,10 @@ set(termlib_src "
 #    include <term.h>
 #  endif
 #endif
-int main () {
-        char buffer[2048] = {0};
-        (void)tgetent(buffer, \"vt100\");
-        return 0;
+int main (void) {
+   char buffer[2048] = {0};
+   (void)tgetent(buffer, \"vt100\");
+   return 0;
 }
 ")
 
@@ -85,33 +85,35 @@ macro(TERMLIB_CHECK_LIBRARY lname func headers)
     if(HAVE_TERMLIB_${lname})
       # Got lib, now sort through headers
       foreach(hdr ${headers})
-	string(TOUPPER "${hdr}" HDR)
-	string(REGEX REPLACE "[^A-Z0-9]" "_" HDR "${HDR}")
-	CHECK_INCLUDE_FILES(${hdr} HAVE_${HDR})
 	if(NOT TERMLIB_INCLUDE_DIR OR "${TERMLIB_INCLUDE_DIR}" MATCHES "NOTFOUND")
+	  message("${lname}: ${hdr}")
+	  string(TOUPPER "${hdr}" HDR)
+	  string(REGEX REPLACE "[^A-Z0-9]" "_" HDR "${HDR}")
+	  CHECK_INCLUDE_FILES(${hdr} HAVE_${HDR})
 	  find_path(TERMLIB_INCLUDE_DIR "${hdr}")
 	  if(NOT "${TERMLIB_INCLUDE_DIR}" MATCHES "NOTFOUND")
-	    set(LIBTERM_RESULT)
+	    set(LIBTERM_RESULT 1)
 	    set(TERMLIB_LIBRARY "${lname}")
-	    file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c")
-	    set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
-	    set(CMAKE_REQUIRED_LIBRARIES ${TERMLIB_LIBRARY})
-	    if(NOT LIBTERM_RESULT)
-              try_run(LIBTERM_RESULT LIBTERM_COMPILE
+	    file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c" "${termlib_src}")
+	    if(LIBTERM_RESULT)
+              try_run(LIBTERM_RESULT LIBTERM_COMPILE "${CMAKE_BINARY_DIR}/CMakeTmp"
 		"${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c"
 		COMPILE_DEFINITIONS "-DHAVE_${HDR}"
+		LINK_LIBRARIES "${lname}"
 		COMPILE_OUTPUT_VARIABLE CTERM_OUT
 		RUN_OUTPUT_VARIABLE RTERM_OUT)
-	      #message("CTERM: ${CTERM_OUT}")
-	      #message("RTERM: ${RTERM_OUT}")
-	    endif(NOT LIBTERM_RESULT)
-	    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c")
-	    if(NOT LIBTERM_RESULT)
+	      message("CTERM: ${CTERM_OUT}")
+	      message("RTERM: ${RTERM_OUT}")
+	      message("LIBTERM_RESULT: ${LIBTERM_RESULT}")
+	    endif(LIBTERM_RESULT)
+	    #file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c")
+	    if(LIBTERM_RESULT)
 	      set(TERMLIB_LIBRARY "NOTFOUND" CACHE STRING "TERMLIB" FORCE)
-	    else(NOT LIBTERM_RESULT)
-	      set(TERMLIB_LIBRARY ${TERMLIB_LIBRARY} CACHE STRING "TERMLIB" FORCE)
-	    endif(NOT LIBTERM_RESULT)
-	    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
+	      set(TERMLIB_INCLUDE_DIR "NOTFOUND"  CACHE STRING "TERMLIB" FORCE)
+	    else(LIBTERM_RESULT)
+	      set(TERMLIB_LIBRARY ${lname} CACHE STRING "TERMLIB" FORCE)
+	      set(TERMLIB_INCLUDE_DIR "${TERMLIB_INCLUDE_DIR}"  CACHE STRING "TERMLIB" FORCE)
+	    endif(LIBTERM_RESULT)
 	  endif(NOT "${TERMLIB_INCLUDE_DIR}" MATCHES "NOTFOUND")
 	endif(NOT TERMLIB_INCLUDE_DIR OR "${TERMLIB_INCLUDE_DIR}" MATCHES "NOTFOUND")
       endforeach(hdr ${headers})
