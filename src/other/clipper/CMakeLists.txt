@@ -27,7 +27,7 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
 endif(NOT DEFINED BUILD_SHARED_LIBS)
 
 if(BUILD_SHARED_LIBS)
-  add_library(clipper clipper.cpp)
+  add_library(clipper SHARED clipper.cpp)
   set_target_properties(clipper PROPERTIES VERSION 4.6.0 SOVERSION 4)
   install(TARGETS clipper
     RUNTIME DESTINATION ${BIN_DIR}
