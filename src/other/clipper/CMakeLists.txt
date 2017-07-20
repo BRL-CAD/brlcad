@@ -22,12 +22,29 @@ if(MSVC)
   add_definitions("-DCLIPPER_DLL_EXPORTS")
 endif(MSVC)
 
-add_library(clipper clipper.cpp)
-set_target_properties(clipper PROPERTIES VERSION 4.6.0 SOVERSION 4)
-install(TARGETS clipper
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+if(NOT DEFINED BUILD_SHARED_LIBS)
+  set(BUILD_SHARED_LIBS ON)
+endif(NOT DEFINED BUILD_SHARED_LIBS)
+
+if(BUILD_SHARED_LIBS)
+  add_library(clipper clipper.cpp)
+  set_target_properties(clipper PROPERTIES VERSION 4.6.0 SOVERSION 4)
+  install(TARGETS clipper
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif(BUILD_SHARED_LIBS)
+
+if(BUILD_STATIC_LIBS)
+  add_library(clipper-static STATIC clipper.cpp)
+  if(NOT WIN32)
+    set_target_properties(clipper-static PROPERTIES OUTPUT_NAME "clipper")
+  endif(NOT WIN32)
+  install(TARGETS clipper-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif(BUILD_STATIC_LIBS)
 
 install(FILES clipper.hpp DESTINATION include)
 
