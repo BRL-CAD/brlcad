@@ -455,9 +455,6 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     endif(${libname}-static MATCHES "^lib*")
 
     if(NOT MSVC)
-      if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-	target_link_libraries(${libname}-static ${libslist})
-      endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
       set_target_properties(${libname}-static PROPERTIES OUTPUT_NAME "${libname}")
     endif(NOT MSVC)
 
