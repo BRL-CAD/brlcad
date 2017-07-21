@@ -2718,8 +2718,8 @@ set(report_username_src "
 #endif
 int main(void) {
   char *name = getenv(\"USERNAME\");
-  if (strlen(name) == 0) name = getenv(\"USER\");
-  if (strlen(name) == 0) name = \"unknown\";
+  if ((name == 0) || (strlen(name) == 0)) name = getenv(\"USER\");
+  if ((name == 0) || (strlen(name) == 0)) name = \"unknown\";
   printf(\"%s\", name);
   return 0;
 }")
