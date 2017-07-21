@@ -119,11 +119,21 @@ else(NOT EXISTS ${BRLCAD_CNT_FILE})
   set(BRLCAD_PRINT_MSGS 0)
 endif(NOT EXISTS ${BRLCAD_CNT_FILE})
 
-# Make sure the BRL-CAD library list is initialized empty - this way
-# if pieces are disabled between one configure and the next, they
-# won't linger in the list
-set(BRLCAD_LIBS "" CACHE STRING "BRL-CAD libraries" FORCE)
+# We will need to define a number of dependent options early on
+include(CMakeDependentOption)
 
+#---------------------------------------------------------------------
+# Generate position independent code by default (i.e. -fPIC)
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+
+# Check whether we need to add import/export lines to libraries
+if(MSVC)
+  set(CPP_DLL_DEFINES 1)
+endif(MSVC)
+
+# If we can, use OBJECT libraries to build both shared and static
+# libraries from the same .o files, saving double compilation
+cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
 
 #---------------------------------------------------------------------
 # Load general utility routines for BRL-CAD CMake logic
@@ -1480,7 +1490,6 @@ permissions).
 ")
 BRLCAD_OPTION(${EXTRADOCS_DEFAULT} BRLCAD_EXTRADOCS BRLCAD_EXTRADOCS_ALIASES BRLCAD_EXTRADOCS_DESCRIPTION)
 
-include(CMakeDependentOption)
 
 # The HTML output is used in the graphical help browsers in MGED and Archer,
 # as well as being the most likely candidate for external viewers. Turn this
@@ -2464,10 +2473,6 @@ if(WIN32)
 
 endif(WIN32)
 
-# Check whether we need to add import/export lines to libraries
-if(MSVC)
-  set(CPP_DLL_DEFINES 1)
-endif(MSVC)
 
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)

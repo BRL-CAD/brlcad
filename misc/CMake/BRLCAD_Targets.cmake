@@ -39,49 +39,13 @@ include(CMakeParseArguments)
 
 # When defining targets, we need to know if we have a no-error flag
 include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
+check_c_compiler_flag(-Wno-error NOERROR_FLAG_C)
+check_cxx_compiler_flag(-Wno-error NOERROR_FLAG_CXX)
 
-# Take a target definition and find out what definitions its libraries
-# are using
-macro(GET_TARGET_DEFINES targetname target_libs)
-  # Take care of compile flags and definitions
-  foreach(libitem ${target_libs})
-    list(FIND BRLCAD_LIBS ${libitem} FOUNDIT)
-    if(NOT ${FOUNDIT} STREQUAL "-1")
-      get_property(${libitem}_DEFINES GLOBAL PROPERTY ${libitem}_DEFINES)
-      list(APPEND ${targetname}_DEFINES ${${libitem}_DEFINES})
-      if(${targetname}_DEFINES)
-	list(REMOVE_DUPLICATES ${targetname}_DEFINES)
-      endif(${targetname}_DEFINES)
-    endif(NOT ${FOUNDIT} STREQUAL "-1")
-  endforeach(libitem ${target_libs})
-endmacro(GET_TARGET_DEFINES)
-
-# Take a target definition and find out what its libraries
-# are supplying in the way of DLL definitions.
-macro(GET_TARGET_DLL_DEFINES targetname target_libs)
-  if(CPP_DLL_DEFINES)
-    # In case of re-running cmake, make sure the DLL_IMPORTS define
-    # for this specific library is removed, since for the actual target
-    # we need to export, not import.
-    get_property(${targetname}_DLL_DEFINES GLOBAL PROPERTY ${targetname}_DLL_DEFINES)
-    if(${targetname}_DLL_DEFINES)
-      list(REMOVE_ITEM ${targetname}_DLL_DEFINES ${targetname}_DLL_IMPORTS)
-    endif(${targetname}_DLL_DEFINES)
-    foreach(libitem ${target_libs})
-      list(FIND BRLCAD_LIBS ${libitem} FOUNDIT)
-      if(NOT ${FOUNDIT} STREQUAL "-1")
-	get_property(${libitem}_DLL_DEFINES GLOBAL PROPERTY ${libitem}_DLL_DEFINES)
-	list(APPEND ${targetname}_DLL_DEFINES ${${libitem}_DLL_DEFINES})
-	if(${targetname}_DLL_DEFINES)
-	  list(REMOVE_DUPLICATES ${targetname}_DLL_DEFINES)
-	endif(${targetname}_DLL_DEFINES)
-      endif(NOT ${FOUNDIT} STREQUAL "-1")
-    endforeach(libitem ${target_libs})
-  endif(CPP_DLL_DEFINES)
-endmacro(GET_TARGET_DLL_DEFINES)
 
 # For BRL-CAD targets, use CXX as the language if the user requests it
-macro(SET_CXX_LANG SRC_FILES)
+function(SET_LANG_CXX SRC_FILES)
   if(ENABLE_ALL_CXX_COMPILE)
     foreach(srcfile ${SRC_FILES})
       if(NOT "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}" MATCHES "src/other")
@@ -91,71 +55,14 @@ macro(SET_CXX_LANG SRC_FILES)
       endif(NOT "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}" MATCHES "src/other")
     endforeach(srcfile ${SRC_FILES})
   endif(ENABLE_ALL_CXX_COMPILE)
-endmacro(SET_CXX_LANG SRC_FILES)
+endfunction(SET_LANG_CXX SRC_FILES)
 
-# Take a target definition and find out what compilation flags its libraries
-# are using
-macro(GET_TARGET_FLAGS targetname target_libs)
-  set(FLAG_LANGUAGES C CXX)
-  foreach(lang ${FLAG_LANGUAGES})
-    get_property(${targetname}_${lang}_FLAGS GLOBAL PROPERTY ${targetname}_${lang}_FLAGS)
-    foreach(libitem ${target_libs})
-      list(FIND BRLCAD_LIBS ${libitem} FOUNDIT)
-      if(NOT ${FOUNDIT} STREQUAL "-1")
-	get_property(${libitem}_${lang}_FLAGS GLOBAL PROPERTY ${libitem}_${lang}_FLAGS)
-	list(APPEND ${targetname}_${lang}_FLAGS ${${libitem}_${lang}_FLAGS})
-      endif(NOT ${FOUNDIT} STREQUAL "-1")
-    endforeach(libitem ${target_libs})
-    if(${targetname}_${lang}_FLAGS)
-      list(REMOVE_DUPLICATES ${targetname}_${lang}_FLAGS)
-    endif(${targetname}_${lang}_FLAGS)
-    set_property(GLOBAL PROPERTY ${targetname}_${lang}_FLAGS "${${targetname}_${lang}_FLAGS}")
-    mark_as_advanced(${targetname}_${lang}_FLAGS)
-  endforeach(lang ${FLAG_LANGUAGES})
-endmacro(GET_TARGET_FLAGS)
+# BRL-CAD style checking with AStyle
+function(VALIDATE_STYLE targetname srcslist)
 
-# When a build target source file list contains files that are NOT all
-# one language, we need to apply flags on a per-file basis
-macro(FLAGS_TO_FILES srcslist targetname)
-  foreach(srcfile ${srcslist})
-    get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
-    if(NOT file_language)
-      get_filename_component(srcfile_ext ${srcfile} EXT)
-      if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
-	set(file_language CXX)
-      endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
-      if(${srcfile_ext} STREQUAL ".c")
-	set(file_language C)
-      endif(${srcfile_ext} STREQUAL ".c")
-    endif(NOT file_language)
-    if(file_language)
-      foreach(lib_flag ${${targetname}_${file_language}_FLAGS})
-	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
-      endforeach(lib_flag ${${targetname}_${file_language}_FLAGS})
-    endif(file_language)
-    if("${file_language}" STREQUAL "C" AND NOT "${C_INLINE}" STREQUAL "inline")
-      set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
-    endif("${file_language}" STREQUAL "C" AND NOT "${C_INLINE}" STREQUAL "inline")
-  endforeach(srcfile ${srcslist})
-endmacro(FLAGS_TO_FILES)
+  if(BRLCAD_STYLE_VALIDATE AND ASTYLE_EXECUTABLE AND NOT "${srcslist}" STREQUAL "")
 
-# Handle C++ NO_STRICT settings
-macro(CXX_NO_STRICT cxx_srcslist)
-  CHECK_CXX_COMPILER_FLAG(-Wno-error NOERROR_FLAG_CXX)
-  if(NOERROR_FLAG_CXX AND BRLCAD_ENABLE_STRICT)
-    foreach(srcfile ${cxx_srcslist})
-      get_filename_component(srcfile_ext ${srcfile} EXT)
-      if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
-	get_property(previous_flags SOURCE ${srcfile} PROPERTY COMPILE_FLAGS)
-	set_source_files_properties(${srcfile} COMPILE_FLAGS "${previous_flags} -Wno-error")
-      endif()
-    endforeach(srcfile ${cxx_srcslist})
-  endif(NOERROR_FLAG_CXX AND BRLCAD_ENABLE_STRICT)
-endmacro(CXX_NO_STRICT cxx_srcslist)
-
-# BRL-CAD style checking test
-function(VALIDATE_STYLE srcslist targetname)
-  if(BRLCAD_STYLE_VALIDATE)
+    # Find out of any of the files need to be ignored
     set(fullpath_srcslist)
     foreach(srcfile ${srcslist})
       if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
@@ -168,6 +75,7 @@ function(VALIDATE_STYLE srcslist targetname)
       endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
     endforeach(srcfile ${srcslist})
 
+    # If we have a list that isn't empty, use it
     if(fullpath_srcslist)
       add_custom_command(
 	TARGET ${targetname} PRE_LINK
@@ -179,49 +87,244 @@ function(VALIDATE_STYLE srcslist targetname)
       endif(TARGET astyle)
     endif(fullpath_srcslist)
 
-  endif(BRLCAD_STYLE_VALIDATE)
+  endif(BRLCAD_STYLE_VALIDATE AND ASTYLE_EXECUTABLE AND NOT "${srcslist}" STREQUAL "")
+
 endfunction(VALIDATE_STYLE)
+
+# Determine if a given file is a C or C++ file
+function(FILE_LANG sfile outvar)
+
+  # Try property first
+  get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
+
+  # If that doesn't work, go with extension
+  if(NOT file_language)
+
+    get_filename_component(srcfile_ext ${srcfile} EXT)
+    string(SUBSTRING "${srcfile_ext}" 1 -1 f_ext)
+    while(NOT "${f_ext}" STREQUAL "")
+      get_filename_component(f_ext ${f_ext} EXT)
+      if(f_ext)
+	set(srcfile_ext ${f_ext})
+	string(SUBSTRING "${f_ext}" 1 -1 f_ext)
+      endif(f_ext)
+    endwhile(NOT "${f_ext}" STREQUAL "")
+
+    # C++
+    if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
+      set(file_language CXX)
+    endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
+    if(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
+      set(file_language CXX)
+    endif(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
+
+    # C
+    if(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h")
+      set(file_language C)
+    endif(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h")
+
+    # If we can't figure it out, assume C...
+    if(NOT file_language)
+      message(WARNING "Can't determine the source language of ${sfile}, assuming C...")
+      set(file_language C)
+    endif(NOT file_language)
+
+  endif(NOT file_language)
+
+  set(${outvar} "${file_language}" PARENT_SCOPE)
+
+endfunction(FILE_LANG)
+
+
+# Assemble the targets and compilation flags needed by the target
+function(GET_FLAGS_AND_DEFINITIONS targetname target_libs)
+
+  cmake_parse_arguments(G "NO_DLL;ONLY_DLL" "CFLAGS;CXXFLAGS;DEFINES" "" ${ARGN})
+
+  #####################################################################
+  # Compile flags - note that targets may have separate C and C++ flags
+
+  if(G_CFLAGS OR G_CXXFLAGS)
+
+    set(FLAG_LANGUAGES C CXX)
+    foreach(slang ${FLAG_LANGUAGES})
+
+      # If we've already got some flags assigned to this target, pull them in
+      get_property(T_FLAGS GLOBAL PROPERTY ${targetname}_${lang}_FLAGS)
+
+      # Get all the flags from all the associated libraries
+      foreach(libitem ${target_libs})
+	get_property(ITEM_FLAGS GLOBAL PROPERTY ${libitem}_${lang}_FLAGS)
+	list(APPEND T_FLAGS ${${libitem}_${lang}_FLAGS})
+      endforeach(libitem ${target_libs})
+
+      # If we've got anything, scrub down to unique entries
+      if(T_FLAGS)
+	list(REMOVE_DUPLICATES T_FLAGS)
+      endif(T_FLAGS)
+
+      # Put the results back into the global target
+      set_property(GLOBAL PROPERTY ${targetname}_${lang}_FLAGS "${T_FLAGS}")
+
+      # Set the language specific flag variables
+      if("${slang}" STREQUAL "C")
+	set(T_C_FLAGS "${T_FLAGS}")
+      endif("${slang}" STREQUAL "C")
+      if("${slang}" STREQUAL "CXX")
+	set(T_CXX_FLAGS "${T_FLAGS}")
+      endif("${slang}" STREQUAL "CXX")
+
+    endforeach(slang ${FLAG_LANGUAGES})
+
+    if(G_CFLAGS)
+      set(${G_CFLAGS} ${T_C_FLAGS} PARENT_SCOPE)
+    endif(G_CFLAGS)
+    if(G_CXXFLAGS)
+      set(${G_CXXFLAGS} ${T_CXX_FLAGS} PARENT_SCOPE)
+    endif(G_CXXFLAGS)
+
+  endif(G_CFLAGS OR G_CXXFLAGS)
+
+  #############################################################
+  # Compilation definitions (common to all source files)
+
+  if(G_DEFINES)
+    if(NOT G_ONLY_DLL)
+      get_property(T_DEFINES GLOBAL PROPERTY ${targetname}_DEFINES)
+      foreach(libitem ${target_libs})
+	get_property(${libitem}_DEFINES GLOBAL PROPERTY ${libitem}_DEFINES)
+	list(APPEND T_DEFINES ${${libitem}_DEFINES})
+      endforeach(libitem ${target_libs})
+    endif(NOT G_ONLY_DLL)
+
+    # DLL definitions
+    if(NOT G_NO_DLL AND CPP_DLL_DEFINES)
+
+      # Start with the target itself
+      get_property(T_DLL_DEFINES GLOBAL PROPERTY ${targetname}_DLL_DEFINES)
+      set(T_DEFINES ${T_DEFINES} ${T_DLL_DEFINES})
+
+      # In case of re-running cmake, make sure the DLL_IMPORTS define for this
+      # specific target is removed if the target looks like a library, since for
+      # the actual library target we need to export, not import. (Don't want to
+      # do this willy-nilly, since (for example) the rt exec target and the librt
+      # library will both map to the same "UPPER_CORE" name...)
+      if(T_DEFINES AND ${targetname} MATCHES "^lib*")
+	string(REPLACE "lib" "" LOWERCORE "${targetname}")
+	string(TOUPPER ${LOWERCORE} UPPER_CORE)
+	list(REMOVE_ITEM T_DEFINES ${UPPER_CORE}_DLL_IMPORTS)
+      endif(T_DEFINES AND ${targetname} MATCHES "^lib*")
+
+      # See what the libraries add from a DLL perspective...
+      foreach(libitem ${target_libs})
+	get_property(${libitem}_DLL_DEFINES GLOBAL PROPERTY ${libitem}_DLL_DEFINES)
+	list(APPEND T_DEFINES ${${libitem}_DLL_DEFINES})
+      endforeach(libitem ${target_libs})
+
+    endif(NOT G_NO_DLL AND CPP_DLL_DEFINES)
+
+    # No duplicate definitions needed
+    if(T_DEFINES)
+      list(REMOVE_DUPLICATES T_DEFINES)
+    endif(T_DEFINES)
+
+    # Send the finalized list back to the parent
+    set(${G_DEFINES} ${T_DEFINES} PARENT_SCOPE)
+
+  endif(G_DEFINES)
+
+endfunction(GET_FLAGS_AND_DEFINITIONS)
+
+# Determine the language for a target
+
+# For simplicity, always set compile definitions and compile flags on files rather
+# than build targets (less logic, simplifies dealing with OBJECT libraries.)
+# TODO - remove duplicates, which may occur if more than one target uses the same
+# source file (i.e. rt, rtweight, etc...)
+function(SET_FLAGS_AND_DEFINITIONS srcslist)
+
+  cmake_parse_arguments(S "NO_STRICT_CXX" "" "CFLAGS;CXXFLAGS;DEFINES" ${ARGN})
+
+  foreach(srcfile ${srcslist})
+
+    # Defines apply across C/C++
+    foreach(tdef ${S_DEFINES})
+      set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "${tdef}")
+    endforeach(tdef ${S_DEFINES})
+
+    # C or C++?
+    FILE_LANG("${srcfile}" flang)
+
+    # Handle C files
+    if("${file_language}" STREQUAL "C")
+
+      foreach(tflag ${S_CFLAGS})
+	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "${tflag}")
+      endforeach(tflag ${S_CFLAGS})
+
+      # Handle inline definition for C files only
+      if(NOT "${C_INLINE}" STREQUAL "inline")
+	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
+      endif(NOT "${C_INLINE}" STREQUAL "inline")
+
+      # Handle disabling of strict compilation if target requires that
+      if(S_NO_STRICT AND NOERROR_FLAG AND BRLCAD_ENABLE_STRICT)
+	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
+      endif(S_NO_STRICT AND NOERROR_FLAG AND BRLCAD_ENABLE_STRICT)
+
+    endif("${file_language}" STREQUAL "C")
+
+    # Handle C++ files
+    if("${file_language}" STREQUAL "C++")
+
+      foreach(tflag ${S_CXXFLAGS})
+	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "${tflag}")
+      endforeach(tflag ${S_CXXFLAGS})
+
+      # Handle disabling of strict compilation if target requires that
+      if( (S_NO_STRICT OR _S_NO_STRICT_CXX) AND NOERROR_FLAG_CXX AND BRLCAD_ENABLE_STRICT)
+	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
+      endif( (S_NO_STRICT OR _S_NO_STRICT_CXX) AND NOERROR_FLAG_CXX AND BRLCAD_ENABLE_STRICT)
+
+    endif("${file_language}" STREQUAL "C++")
+
+  endforeach(srcfile ${srcslist})
+
+endfunction(SET_FLAGS_AND_DEFINITIONS)
+
 
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
-macro(BRLCAD_ADDEXEC execname srcslist libslist)
+function(BRLCAD_ADDEXEC execname srcslist libslist)
 
-  string(TOUPPER "${execname}" EXECNAME_UPPER)
-  if(${ARGC} GREATER 3)
-    CMAKE_PARSE_ARGUMENTS(${EXECNAME_UPPER} "TEST;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
-  endif(${ARGC} GREATER 3)
+  cmake_parse_arguments(E "TEST;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
 
   # Go all C++ if the settings request it
-  SET_CXX_LANG("${srcslist}")
+  SET_LANG_CXX("${srcslist}")
 
-  # Call standard CMake commands
-  if(${EXECNAME_UPPER}_GUI)
+  # Add the executable.  If the caller indicates this is a GUI type executable,
+  # add the correct flag for Visual Studio building (where it matters)
+  if(E_GUI)
     add_executable(${execname} WIN32 ${srcslist})
-  else(${EXECNAME_UPPER}_GUI)
+  else(E_GUI)
     add_executable(${execname} ${srcslist})
-  endif(${EXECNAME_UPPER}_GUI)
-  target_link_libraries(${execname} ${libslist})
+  endif(E_GUI)
 
-  # Check at comple time the standard BRL-CAD style rules
-  VALIDATE_STYLE("${srcslist}" "${execname}")
+  # Check at compile time the standard BRL-CAD style rules
+  VALIDATE_STYLE("${execname}" "${srcslist}")
 
+  # Use the list of libraries to be linked into this target to
+  # accumulate the necessary definitions and compilation flags.
+  GET_FLAGS_AND_DEFINITIONS(${execname} "${libslist}" CFLAGS E_C_FLAGS CXXFLAGS E_CXX_FLAGS DEFINES E_DEFINES)
 
-  # Set the FOLDER property.  If the target has supplied a folder, use
-  # that as a subfolder
-  set(SUBFOLDER "${${EXECNAME_UPPER}_FOLDER}")
-  if(${EXECNAME_UPPER}_NO_INSTALL AND "${SUBFOLDER}" STREQUAL "")
-    set(SUBFOLDER "Build Only")
-  endif(${EXECNAME_UPPER}_NO_INSTALL AND "${SUBFOLDER}" STREQUAL "")
-  if(${EXECNAME_UPPER}_TEST AND "${SUBFOLDER}" STREQUAL "")
-    set(SUBFOLDER "Test Programs")
-  endif(${EXECNAME_UPPER}_TEST AND "${SUBFOLDER}" STREQUAL "")
+  # Having built up the necessary sets, apply them
+  SET_FLAGS_AND_DEFINITIONS("${srcslist}" CFLAGS "${E_C_FLAGS}" CXXFLAGS "${E_CXX_FLAGS}" DEFINES "${E_DEFINES}")
 
-  if("${SUBFOLDER}" STREQUAL "")
-    set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables")
-  else("${SUBFOLDER}" STREQUAL "")
-    set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables/${SUBFOLDER}")
-  endif("${SUBFOLDER}" STREQUAL "")
+  # If we have libraries to link, link them.
+  if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+    target_link_libraries(${execname} ${libslist})
+  endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 
   # In some situations (usually test executables) we want to be able
   # to force the executable to remain in the local compilation
@@ -230,7 +333,9 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   # If an executable isn't to be installed or needs to be installed
   # somewhere other than the default location, the NO_INSTALL argument
   # bypasses the standard install command call.
-  if(${EXECNAME_UPPER}_NO_INSTALL OR ${EXECNAME_UPPER}_TEST)
+  #
+  # If we *are* installing, do so to the binary directory (BIN_DIR)
+  if(E_NO_INSTALL OR E_TEST)
     # Unfortunately, we currently need Windows binaries in the same directories as their DLL libraries
     if(NOT WIN32)
       if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -242,281 +347,138 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif(NOT CMAKE_CONFIGURATION_TYPES)
     endif(NOT WIN32)
-  else(${EXECNAME_UPPER}_NO_INSTALL OR ${EXECNAME_UPPER}_TEST)
+  else(E_NO_INSTALL OR E_TEST)
     install(TARGETS ${execname} DESTINATION ${BIN_DIR})
-  endif(${EXECNAME_UPPER}_NO_INSTALL OR ${EXECNAME_UPPER}_TEST)
+  endif(E_NO_INSTALL OR E_TEST)
 
-  # Use the list of libraries to be linked into this target to
-  # accumulate the necessary definitions and compilation flags.
-  GET_TARGET_DEFINES(${execname} "${libslist}")
-  # For DLL libraries, we may need additional flags
-  GET_TARGET_DLL_DEFINES(${execname} "${libslist}")
-  GET_TARGET_FLAGS(${execname} "${libslist}")
 
-  # Find out if we have C, C++, or both
-  SRCS_LANG("${srcslist}" exec_type ${execname})
+  # Set the folder property (used in programs such as Visual Studio to organize
+  # build targets.
+  if(E_NO_INSTALL AND NOT E_FOLDER)
+    set(SUBFOLDER "/Build Only")
+  endif(E_NO_INSTALL AND NOT E_FOLDER)
+  if(E_TEST AND NOT E_FOLDER AND NOT SUBFOLDER)
+    set(SUBFOLDER "/Test Programs")
+  endif(E_TEST AND NOT E_FOLDER AND NOT SUBFOLDER)
+  if(E_FOLDER)
+    set(SUBFOLDER "/${E_FOLDER}")
+  endif(E_FOLDER)
+  set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables${SUBFOLDER}")
 
-  # Add the definitions
-  foreach(lib_define ${${execname}_DEFINES})
-    set_property(TARGET ${execname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
-  endforeach(lib_define ${${execname}_DEFINES})
-  foreach(lib_define ${${execname}_DLL_DEFINES})
-    set_property(TARGET ${execname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
-  endforeach(lib_define ${${execname}_DLL_DEFINES})
 
-  # If we have a mixed language exec, pass on the flags to
-  # the source files - otherwise, use the target.
-  if(${exec_type} STREQUAL "MIXED")
-    FLAGS_TO_FILES("${srcslist}" ${execname})
-  else(${exec_type} STREQUAL "MIXED")
-    # All one language - we can apply the flags to the target
-    foreach(lib_flag ${${execname}_${exec_type}_FLAGS})
-      set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
-    endforeach(lib_flag ${${execname}_${exec_type}_FLAGS})
-    if(NOT "${C_INLINE}" STREQUAL "inline" AND "${exec_type}" STREQUAL "C")
-      set_property(TARGET ${execname} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
-    endif(NOT "${C_INLINE}" STREQUAL "inline" AND "${exec_type}" STREQUAL "C")
-  endif(${exec_type} STREQUAL "MIXED")
-
-  # If this target is marked as incompatible with the strict flags, disable them
-  if(${exec_type} STREQUAL "C" AND BRLCAD_ENABLE_STRICT AND ${EXECNAME_UPPER}_NO_STRICT)
-    CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
-    if(NOERROR_FLAG)
-      set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
-    endif(NOERROR_FLAG)
-  endif(${exec_type} STREQUAL "C" AND BRLCAD_ENABLE_STRICT AND ${EXECNAME_UPPER}_NO_STRICT)
-
-  if(${exec_type} STREQUAL "CXX" AND BRLCAD_ENABLE_STRICT)
-    if(${EXECNAME_UPPER}_NO_STRICT_CXX OR ${EXECNAME_UPPER}_NO_STRICT)
-      CHECK_CXX_COMPILER_FLAG(-Wno-error NOERROR_FLAG_CXX)
-      if(NOERROR_FLAG_CXX)
-	set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
-      endif(NOERROR_FLAG_CXX)
-    endif(${EXECNAME_UPPER}_NO_STRICT_CXX OR ${EXECNAME_UPPER}_NO_STRICT)
-  endif(${exec_type} STREQUAL "CXX" AND BRLCAD_ENABLE_STRICT)
-
-  # C++ is handled separately (on a per-file basis) if we have mixed sources via the NO_STRICT_CXX flag
-  if(${exec_type} STREQUAL "MIXED" AND ${EXECNAME_UPPER}_NO_STRICT_CXX)
-    CXX_NO_STRICT("${srcslist}")
-  endif(${exec_type} STREQUAL "MIXED" AND ${EXECNAME_UPPER}_NO_STRICT_CXX)
-
-endmacro(BRLCAD_ADDEXEC execname srcslist libslist)
+endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 
 
 #-----------------------------------------------------------------------------
-# Library macro handles both shared and static libs, so one "BRLCAD_ADDLIB"
+# Library function handles both shared and static libs, so one "BRLCAD_ADDLIB"
 # statement will cover both automatically
-macro(BRLCAD_ADDLIB libname srcslist libslist)
+function(BRLCAD_ADDLIB libname srcslist libslist)
 
-  string(TOUPPER "${libname}" LIBNAME_UPPER)
-  if(${ARGC} GREATER 3)
-    CMAKE_PARSE_ARGUMENTS(${LIBNAME_UPPER} "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SO_SRCS;STATIC_SRCS" ${ARGN})
-  endif(${ARGC} GREATER 3)
-
-  set(all_srcs ${srcslist} ${${LIBNAME_UPPER}_SO_SRCS} ${${LIBNAME_UPPER}_STATIC_SRCS})
+  cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SHARED_SRCS;STATIC_SRCS" ${ARGN})
 
   # Go all C++ if the settings request it
-  SET_CXX_LANG("${all_srcs}")
+  SET_LANG_CXX("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}")
 
-  # Add ${libname} to the list of BRL-CAD libraries
-  list(APPEND BRLCAD_LIBS ${libname})
-  list(REMOVE_DUPLICATES BRLCAD_LIBS)
-  set(BRLCAD_LIBS "${BRLCAD_LIBS}" CACHE STRING "BRL-CAD libraries" FORCE)
+  # Handle the build flags and the general definitions common to both shared and static
+  GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" NO_DLL CFLAGS L_C_FLAGS CXXFLAGS L_CXX_FLAGS DEFINES L_GENERAL_DEFINES)
+  SET_FLAGS_AND_DEFINITIONS("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}" CFLAGS "${L_C_FLAGS}" CXXFLAGS "${L_CXX_FLAGS}" DEFINES "${L_GENERAL_DEFINES}")
 
-  # Collect the definitions and flags needed by this library
-  GET_TARGET_DEFINES(${libname} "${libslist}")
-  # For DLL libraries, we may need additional flags
-  GET_TARGET_DLL_DEFINES(${libname} "${libslist}")
-  GET_TARGET_FLAGS(${libname} "${libslist}")
+  # If we're going to have a specified subfolder, prepare the appropriate string:
+  if(L_FOLDER)
+    set(SUBFOLDER "/${L_FOLDER}")
+  endif(L_FOLDER)
 
-  # Find out if we have C, C++, or both
-  SRCS_LANG("${all_srcs}" lib_type ${libname})
+  # Based on the options, define libraries as either stand-alone builds
+  # or dependencies on OBJECT library builds
+  if(NOT USE_OBJECT_LIBS OR L_SHARED_SRCS OR L_STATIC_SRCS)
+    if(BUILD_SHARED_LIBS OR L_SHARED)
+      add_library(${libname} SHARED ${srcslist} ${L_SHARED_SRCS})
+      GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" ONLY_DLL DEFINES L_DLL_DEFINES)
+      foreach(dll_define ${L_DLL_DEFINES})
+	set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${dll_define}")
+      endforeach(dll_define ${L_DLL_DEFINES})
+    endif(BUILD_SHARED_LIBS OR L_SHARED)
+    if(BUILD_STATIC_LIBS OR L_STATIC)
+      add_library(${libname}-static STATIC ${srcslist} ${L_STATIC_SRCS})
+    endif(BUILD_STATIC_LIBS OR L_STATIC)
+  else(NOT USE_OBJECT_LIBS OR L_SHARED_SRCS OR L_STATIC_SRCS)
+    add_library(${libname}-obj OBJECT ${srcslist})
+    set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
+    if(BUILD_SHARED_LIBS OR L_SHARED)
+      add_library(${libname} SHARED $<TARGET_OBJECTS:${libname}-obj>)
+      GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" ONLY_DLL DEFINES L_DLL_DEFINES)
+      foreach(dll_define ${L_DLL_DEFINES})
+	set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${dll_define}")
+      endforeach(dll_define ${L_DLL_DEFINES})
+    endif(BUILD_SHARED_LIBS OR L_SHARED)
+    if(BUILD_STATIC_LIBS OR L_STATIC)
+      add_library(${libname}-static STATIC $<TARGET_OBJECTS:${libname}-obj>)
+    endif(BUILD_STATIC_LIBS OR L_STATIC)
+  endif(NOT USE_OBJECT_LIBS OR L_SHARED_SRCS OR L_STATIC_SRCS)
 
-  # If we have a mixed language library, go ahead and pass on the flags to
-  # the source files - we don't need the targets defined since the flags
-  # will be managed per-source-file.
-  if(${lib_type} STREQUAL "MIXED")
-    FLAGS_TO_FILES("${all_srcs}" ${libname})
-  endif(${lib_type} STREQUAL "MIXED")
+  # Make sure we don't end up with outputs named liblib...
+  set(possible_targets ${libname} ${libname}-static)
+  foreach(pt ${possible_targets})
+    if(TARGET ${pt} AND ${pt} MATCHES "^lib*")
+      set_target_properties(${pt} PROPERTIES PREFIX "")
+    endif(TARGET ${pt} AND ${pt} MATCHES "^lib*")
+  endforeach(pt ${possible_targets})
 
+  # Set properties and validation rules if we're building static libs
+  if(BUILD_STATIC_LIBS OR L_STATIC)
+    set_target_properties(${libname}-static PROPERTIES FOLDER "BRL-CAD Static Libraries${SUBFOLDER}")
+    VALIDATE_STYLE("${libname}-static" "${srcslist};${L_STATIC_SRCS}")
+    if(NOT L_NO_INSTALL)
+      install(TARGETS ${libname}-static
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR})
+    endif(NOT L_NO_INSTALL)
+  endif(BUILD_STATIC_LIBS OR L_STATIC)
 
-  # Handle "shared" libraries (with MSVC, these would be dynamic libraries)
-  if((NOT ${LIBNAME_UPPER}_STATIC) AND (BUILD_SHARED_LIBS OR ${LIBNAME_UPPER}_SHARED))
+  # If we're building the shared library, there are a few more things we need to do
+  if(BUILD_SHARED_LIBS OR L_SHARED)
 
-    set(so_srcs ${srcslist} ${${LIBNAME_UPPER}_SO_SRCS})
-
-    add_library(${libname} SHARED ${so_srcs})
-
-    # Check at comple time the standard BRL-CAD style rules
-    VALIDATE_STYLE("${so_srcs}" "${libname}")
-
-    # Set the FOLDER property.  If the target has supplied a folder, use
-    # that as a subfolder
-    if("${${LIBNAME_UPPER}_FOLDER}" STREQUAL "")
-      set_target_properties(${libname} PROPERTIES FOLDER "BRL-CAD Shared Libraries")
-    else("${${LIBNAME_UPPER}_FOLDER}" STREQUAL "")
-      set_target_properties(${libname} PROPERTIES FOLDER "BRL-CAD Shared Libraries/${${LIBNAME_UPPER}_FOLDER}")
-    endif("${${LIBNAME_UPPER}_FOLDER}" STREQUAL "")
-
-    # Make sure we don't end up with outputs named liblib...
-    if(${libname} MATCHES "^lib*")
-      set_target_properties(${libname} PROPERTIES PREFIX "")
-    endif(${libname} MATCHES "^lib*")
+    set_target_properties(${libname} PROPERTIES FOLDER "BRL-CAD Shared Libraries${SUBFOLDER}")
+    VALIDATE_STYLE("${libname}" "${srcslist};${L_SHARED_SRCS}")
+    # If we have libraries to link for a shared library, link them.
+    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+      target_link_libraries(${libname} ${libslist})
+    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+    if(NOT L_NO_INSTALL)
+      install(TARGETS ${libname}
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR})
+    endif(NOT L_NO_INSTALL)
 
     # Generate the upper case abbreviation of the library that is used for
     # DLL definitions.  If We are using DLLs, we need to define export
     # for this library.
     if(CPP_DLL_DEFINES)
+
+      # For this target, we need to export
       string(REPLACE "lib" "" LOWERCORE "${libname}")
       string(TOUPPER ${LOWERCORE} UPPER_CORE)
-      set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
+      foreach(srcfile ${srcslist} ${L_SHARED_SRCS})
+	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
+      endforeach(srcfile ${srcslist} ${L_SHARED_SRCS})
+
+      # For any CPP_DLL_DEFINES DLL library, users of that library will need
+      # the DLL_IMPORTS definitions specific to that library - these are stored
+      # in ${UPPER_CORE}_DLL_DEFINES.  The particular IMPORTS definition is
+      # defined in BRL-CAD according to the below pattern - custom or
+      # additional IMPORTS will need to be added "manually" in the
+      # CMakeLists.txt files where the library targets are being defined.
+      get_property(${libname}_DLL_DEFINES GLOBAL PROPERTY ${libname}_DLL_DEFINES)
+      list(APPEND ${libname}_DLL_DEFINES ${UPPER_CORE}_DLL_IMPORTS)
+      set_property(GLOBAL PROPERTY ${libname}_DLL_DEFINES "${${libname}_DLL_DEFINES}")
+
     endif(CPP_DLL_DEFINES)
 
-    # If we have libraries to link, link them.
-    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-      target_link_libraries(${libname} ${libslist})
-    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+  endif(BUILD_SHARED_LIBS OR L_SHARED)
 
-    # If a library isn't to be installed or needs to be installed
-    # somewhere other than the default location, the NO_INSTALL argument
-    # bypasses the standard install command call. Otherwise, call install
-    # with standard arguments.
-    if(NOT ${LIBNAME_UPPER}_NO_INSTALL)
-      install(TARGETS ${libname}
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
-    endif(NOT ${LIBNAME_UPPER}_NO_INSTALL)
-
-    # Apply the definitions.
-    foreach(lib_define ${${libname}_DEFINES})
-      set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
-    endforeach(lib_define ${${libname}_DEFINES})
-    # If we're building a DLL, also apply the DLL definitions
-    foreach(lib_define ${${libname}_DLL_DEFINES})
-      set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
-    endforeach(lib_define ${${libname}_DLL_DEFINES})
-
-    # If we haven't already taken care of the flags on a per-file basis,
-    # apply them to the target now that we have one.
-    if(NOT ${lib_type} STREQUAL "MIXED")
-      # All one language - we can apply the flags to the target
-      foreach(lib_flag ${${libname}_${lib_type}_FLAGS})
-	set_property(TARGET ${libname} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
-      endforeach(lib_flag ${${libname}_${lib_type}_FLAGS})
-      if(NOT "${C_INLINE}" STREQUAL "inline" AND "${lib_type}" STREQUAL "C")
-	set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
-      endif(NOT "${C_INLINE}" STREQUAL "inline" AND "${lib_type}" STREQUAL "C")
-    endif(NOT ${lib_type} STREQUAL "MIXED")
-
-    # If we can't build this library strict, add the -Wno-error flag
-    if(${lib_type} STREQUAL "C" AND BRLCAD_ENABLE_STRICT AND ${LIBNAME_UPPER}_NO_STRICT)
-      CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
-      if(NOERROR_FLAG)
-	set_property(TARGET ${libname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
-      endif(NOERROR_FLAG)
-    endif(${lib_type} STREQUAL "C" AND BRLCAD_ENABLE_STRICT AND ${LIBNAME_UPPER}_NO_STRICT)
-
-    if(${lib_type} STREQUAL "CXX" AND BRLCAD_ENABLE_STRICT)
-      if(${LIBNAME_UPPER}_NO_STRICT_CXX OR ${LIBNAME_UPPER}_NO_STRICT)
-	CHECK_CXX_COMPILER_FLAG(-Wno-error NOERROR_FLAG_CXX)
-	if(NOERROR_FLAG_CXX)
-	  set_property(TARGET ${libname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
-	endif(NOERROR_FLAG_CXX)
-      endif(${LIBNAME_UPPER}_NO_STRICT_CXX OR ${LIBNAME_UPPER}_NO_STRICT)
-    endif(${lib_type} STREQUAL "CXX" AND BRLCAD_ENABLE_STRICT)
-
-  endif((NOT ${LIBNAME_UPPER}_STATIC) AND (BUILD_SHARED_LIBS OR ${LIBNAME_UPPER}_SHARED))
-
-  # Handle static libraries (renaming requirements to both allow unique targets and
-  # respect standard naming conventions.)
-  if((NOT ${LIBNAME_UPPER}_SHARED) AND (BUILD_STATIC_LIBS OR ${LIBNAME_UPPER}_STATIC))
-
-    set(static_srcs ${srcslist} ${${LIBNAME_UPPER}_STATIC_SRCS})
-
-    add_library(${libname}-static STATIC ${static_srcs})
-    set_target_properties(${libname}-static PROPERTIES FOLDER "BRL-CAD Static Libs")
-    if(NOT BUILD_SHARED_LIBS)
-      # Check at comple time the standard BRL-CAD style rules
-      VALIDATE_STYLE("${static_srcs}" "${libname}-static")
-    endif(NOT BUILD_SHARED_LIBS)
-
-    # Set the FOLDER property.  If the target has supplied a folder, use
-    # that as a subfolder
-    if("${${LIBNAME_UPPER}_FOLDER}" STREQUAL "")
-      set_target_properties(${libname}-static PROPERTIES FOLDER "BRL-CAD Static Libraries")
-    else("${${LIBNAME_UPPER}_FOLDER}" STREQUAL "")
-      set_target_properties(${libname}-static PROPERTIES FOLDER "BRL-CAD Static Libraries/${${LIBNAME_UPPER}_FOLDER}")
-    endif("${${LIBNAME_UPPER}_FOLDER}" STREQUAL "")
-
-    # Make sure we don't end up with outputs named liblib...
-    if(${libname}-static MATCHES "^lib*")
-      set_target_properties(${libname}-static PROPERTIES PREFIX "")
-    endif(${libname}-static MATCHES "^lib*")
-
-    if(NOT MSVC)
-      set_target_properties(${libname}-static PROPERTIES OUTPUT_NAME "${libname}")
-    endif(NOT MSVC)
-
-    # If a library isn't to be installed or needs to be installed
-    # somewhere other than the default location, the NO_INSTALL argument
-    # bypasses the standard install command call. Otherwise, call install
-    # with standard arguments.
-    if(NOT ${LIBNAME_UPPER}_NO_INSTALL)
-      install(TARGETS ${libname}-static
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
-    endif(NOT ${LIBNAME_UPPER}_NO_INSTALL)
-
-    foreach(lib_define ${${libname}_DEFINES})
-      set_property(TARGET ${libname}-static APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
-    endforeach(lib_define ${${libname}_DEFINES})
-
-    # If we haven't already taken care of the flags on a per-file basis,
-    # apply them to the target now that we have one.
-    if(NOT ${lib_type} STREQUAL "MIXED")
-      # All one language - we can apply the flags to the target
-      foreach(lib_flag ${${libname}_${lib_type}_FLAGS})
-	set_property(TARGET ${libname}-static APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
-      endforeach(lib_flag ${${libname}_${lib_type}_FLAGS})
-    endif(NOT ${lib_type} STREQUAL "MIXED")
-
-    # If we can't build this library strict, add the -Wno-error flag
-    if(${lib_type} STREQUAL "C" AND BRLCAD_ENABLE_STRICT AND ${LIBNAME_UPPER}_NO_STRICT)
-      CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
-      if(NOERROR_FLAG)
-	set_property(TARGET ${libname}-static APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
-      endif(NOERROR_FLAG)
-    endif(${lib_type} STREQUAL "C" AND BRLCAD_ENABLE_STRICT AND ${LIBNAME_UPPER}_NO_STRICT)
-
-    if(${lib_type} STREQUAL "CXX" AND BRLCAD_ENABLE_STRICT)
-      if(${LIBNAME_UPPER}_NO_STRICT_CXX OR ${LIBNAME_UPPER}_NO_STRICT)
-	CHECK_CXX_COMPILER_FLAG(-Wno-error NOERROR_FLAG_CXX)
-	if(NOERROR_FLAG_CXX)
-	  set_property(TARGET ${libname}-static APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
-	endif(NOERROR_FLAG_CXX)
-      endif(${LIBNAME_UPPER}_NO_STRICT_CXX OR ${LIBNAME_UPPER}_NO_STRICT)
-    endif(${lib_type} STREQUAL "CXX" AND BRLCAD_ENABLE_STRICT)
-
-  endif((NOT ${LIBNAME_UPPER}_SHARED) AND (BUILD_STATIC_LIBS OR ${LIBNAME_UPPER}_STATIC))
-
-  # Mixed source STRICTNESS is handled separately (on a per-file basis) if we have mixed
-  # sources via the NO_STRICT_CXX flag
-  if(${lib_type} STREQUAL "MIXED" AND ${LIBNAME_UPPER}_NO_STRICT_CXX)
-    CXX_NO_STRICT("${all_srcs}")
-  endif(${lib_type} STREQUAL "MIXED" AND ${LIBNAME_UPPER}_NO_STRICT_CXX)
-
-  # For any CPP_DLL_DEFINES DLL library, users of that library will need the DLL_IMPORTS
-  # definition specific to that library.  Add it to ${libname}_DLL_DEFINES
-  if(CPP_DLL_DEFINES)
-    list(APPEND ${libname}_DLL_DEFINES ${UPPER_CORE}_DLL_IMPORTS)
-  endif(CPP_DLL_DEFINES)
-  set_property(GLOBAL PROPERTY ${libname}_DLL_DEFINES "${${libname}_DLL_DEFINES}")
-
-  mark_as_advanced(BRLCAD_LIBS)
-
-endmacro(BRLCAD_ADDLIB libname srcslist libslist)
+endfunction(BRLCAD_ADDLIB libname srcslist libslist)
 
 #-----------------------------------------------------------------------------
 # For situations when a local 3rd party library (say, zlib) has been chosen in
@@ -548,7 +510,7 @@ endmacro(BRLCAD_ADDLIB libname srcslist libslist)
 # 3.  For remaining paths, if the "root" path matches the BRLCAD_SOURCE_DIR
 #     or BRLCAD_BINARY_DIR paths, they are appended.
 # 4.  Any remaining paths are appended.
-macro(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
+function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
   if(${DIR_LIST})
     set(ORDERED_ELEMENTS "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" "${BRLCAD_BINARY_DIR}/include" "${BRLCAD_SOURCE_DIR}/include")
     set(NEW_DIR_LIST "")
@@ -586,15 +548,15 @@ macro(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
     list(REMOVE_DUPLICATES NEW_DIR_LIST)
 
     # put the results into DIR_LIST
-    set(${DIR_LIST} ${NEW_DIR_LIST})
+    set(${DIR_LIST} ${NEW_DIR_LIST} PARENT_SCOPE)
   endif(${DIR_LIST})
-endmacro(BRLCAD_SORT_INCLUDE_DIRS)
+endfunction(BRLCAD_SORT_INCLUDE_DIRS)
 
 #-----------------------------------------------------------------------------
 # Wrapper to properly include directories for a BRL-CAD build.  Handles the
 # SYSTEM option to the include_directories command, as well as calling the
 # sort macro.
-macro(BRLCAD_INCLUDE_DIRS DIR_LIST)
+function(BRLCAD_INCLUDE_DIRS DIR_LIST)
 
   set(INCLUDE_DIRS ${${DIR_LIST}})
   if(INCLUDE_DIRS)
@@ -625,14 +587,14 @@ macro(BRLCAD_INCLUDE_DIRS DIR_LIST)
     endif("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
   endforeach(inc_dir ${ALL_INCLUDES})
 
-endmacro(BRLCAD_INCLUDE_DIRS DIR_LIST)
+endfunction(BRLCAD_INCLUDE_DIRS DIR_LIST)
 
 #-----------------------------------------------------------------------------
 # Wrapper to handle include directories specific to libraries.  Removes
 # duplicates and makes sure the <LIB>_INCLUDE_DIRS list is in the cache
 # immediately, so it can be used by other libraries.  These lists are not
 # intended as toplevel user settable options so mark as advanced.
-macro(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
+function(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
   string(TOUPPER ${libname} LIB_UPPER)
 
   list(REMOVE_DUPLICATES ${DIR_LIST})
@@ -641,7 +603,7 @@ macro(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
 
   set(ALL_INCLUDES ${${DIR_LIST}} ${${LOCAL_DIR_LIST}})
   BRLCAD_INCLUDE_DIRS(ALL_INCLUDES)
-endmacro(BRLCAD_LIB_INCLUDE_DIRS)
+endfunction(BRLCAD_LIB_INCLUDE_DIRS)
 
 
 #-----------------------------------------------------------------------------
