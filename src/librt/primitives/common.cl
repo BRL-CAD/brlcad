@@ -77,6 +77,7 @@ struct bool_region {
     uint rtree_offset;          /* index to the start of the rpn tree */
     uint reg_nrtree;            /* number of elements in rtree */
     int reg_aircode;            /* Region ID AIR code */
+    int reg_bit;                /* constant index into Regions[] */
     short reg_all_unions;       /* 1=boolean tree is all unions */
 };
 

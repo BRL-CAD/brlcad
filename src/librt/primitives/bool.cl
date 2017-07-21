@@ -135,7 +135,7 @@ bool_weave0seg(RESULT_TYPE segp, global struct partition *partitions, global uin
 	newpp->outseg = k;
 	newpp->outhit = segp->seg_out;
 	newpp->evaluated = 0;
-	set(segs_bv, start_index + ipartition[id] + (bv_index - 1), k-h[id]);
+	set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 	insert_partition_pp(partitions, ipartition, id, head, start_index + ipartition[id], *head);
 	ipartition[id]++;
 	return;
@@ -172,7 +172,7 @@ bool_weave0seg(RESULT_TYPE segp, global struct partition *partitions, global uin
 	    newpp->outseg = k;
 	    newpp->outhit = segp->seg_out;
 	    newpp->evaluated = 0;
-	    set(segs_bv, start_index + ipartition[id] + (bv_index - 1), k-h[id]);
+	    set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 	    insert_partition_pp(partitions, ipartition, id, head, start_index + ipartition[id], pp->forw_pp);
 	    ipartition[id]++;
 	    return;
@@ -240,7 +240,8 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 	    pp->outseg = k;
 	    pp->outhit = segp->seg_out;
 	    pp->evaluated = 0;
-	    set(segs_bv, start_index + ipartition[id] + (bv_index - 1), k-h[id]);
+	    pp->region_id = UINT_MAX;
+		set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 	    append_partition_pp(partitions, ipartition, id, start_index + ipartition[id], &tail_pp);
 	    ipartition[id]++;
 	} else if (NEAR_ZERO(diff, rti_tol_dist)) {
@@ -257,7 +258,8 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 	    pp->outseg = k;
 	    pp->outhit = segp->seg_out;
 	    pp->evaluated = 0;
-	    set(segs_bv, start_index + ipartition[id] + (bv_index - 1), k-h[id]);
+		pp->region_id = UINT_MAX;
+		set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 	    append_partition_pp(partitions, ipartition, id, start_index + ipartition[id], &tail_pp);
 	    ipartition[id]++;
 	} else {
@@ -319,13 +321,14 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 		    /* new partition is the span before seg joins partition */
 		    newpp = &partitions[start_index + ipartition[id]];
 		    *newpp = *pp;
-		    copy_bv(segs_bv, bv_index, start_index + ipartition[id] + (bv_index - 1), j + (bv_index - 1));
+		    copy_bv(segs_bv, bv_index, (start_index + ipartition[id]) * bv_index, j * bv_index);
 
 		    pp->inseg = k;
 		    pp->inhit = segp->seg_in;
 		    newpp->outseg = k;
 		    newpp->outhit = segp->seg_in;
 		    newpp->evaluated = 0;
+			newpp->region_id = UINT_MAX;
 		    insert_partition_pp(partitions, ipartition, id, &head_pp, start_index + ipartition[id], j);
 		    ipartition[id]++;
 		} else if (diff > -(rti_tol_dist)) {
@@ -363,10 +366,11 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 		     */
 		    newpp = &partitions[start_index + ipartition[id]];
 
-		    set(segs_bv, start_index + ipartition[id] + (bv_index - 1), k-h[id]);
+		    set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 		    newpp->inseg = lastseg;
 		    newpp->inhit = *lasthit;
 		    newpp->evaluated = 0;
+			newpp->region_id = UINT_MAX;
 		    diff = segp->seg_out.hit_dist - pp->inhit.hit_dist;
 		    if (diff < -(rti_tol_dist)) {
 			/*
@@ -436,7 +440,7 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 		     *	SSSSSSSS
 		     *	pp  |  newpp
 		     */
-		    set(segs_bv, j + (bv_index - 1), k-h[id]);
+		    set(segs_bv, j * bv_index, k-h[id]);
 
 		    lasthit = &pp->outhit;
 		    lastseg = pp->outseg;
@@ -450,7 +454,7 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 		     *	 PPPP
 		     *	 SSSS
 		     */
-		    set(segs_bv, j + (bv_index - 1), k-h[id]);
+		    set(segs_bv, j * bv_index, k-h[id]);
 		    break;
 		} else {
 		    /*
@@ -464,12 +468,13 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 		     */
 		    newpp = &partitions[start_index + ipartition[id]];
 		    *newpp = *pp;
-		    copy_bv(segs_bv, bv_index, start_index + ipartition[id] + (bv_index - 1), j + (bv_index - 1));
+		    copy_bv(segs_bv, bv_index, (start_index + ipartition[id]) * bv_index, j * bv_index);
 
-		    set(segs_bv, start_index + ipartition[id] + (bv_index - 1), k-h[id]);
+		    set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 		    newpp->outseg = k;
 		    newpp->outhit = segp->seg_out;
 		    newpp->evaluated = 0;
+			newpp->region_id = UINT_MAX;
 		    pp->inseg = k;
 		    pp->inhit = segp->seg_out;
 		    insert_partition_pp(partitions, ipartition, id, &head_pp, start_index + ipartition[id], j);
@@ -486,12 +491,13 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 	     */
 	    if (ipartition[id] > 0 && j == UINT_MAX) {
 		newpp = &partitions[start_index + ipartition[id]];
-		set(segs_bv, start_index + ipartition[id] + (bv_index - 1), k-h[id]);
+		set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 		newpp->inseg = lastseg;
 		newpp->inhit = *lasthit;
 		newpp->outseg = k;
 		newpp->outhit = segp->seg_out;
 		newpp->evaluated = 0;
+		newpp->region_id = UINT_MAX;
 		append_partition_pp(partitions, ipartition, id, start_index + ipartition[id], &tail_pp);
 		ipartition[id]++;
 	    }
@@ -612,10 +618,11 @@ bool_eval(global struct partition *partitions, global uint *ipartition, RESULT_T
 		pp = &partitions[offset];
 		//iterate over segments of partition
 		for (uint i = 0; i < bv_index; i++) {
-		    uint lz = clz(segs_bv[offset + (bv_index - 1) + i]);
-		    while ( lz != 32) {
+		    uint mask = segs_bv[offset * bv_index + i];
+		    while (mask != 0) {
+			uint lz = clz(mask);
 			uint k = h[id] + (31 - lz);
-			if (isset(segs_bv, offset + (bv_index - 1), k - h[id]) != 0) {
+			if (isset(segs_bv, offset * bv_index, k - h[id]) != 0) {
 			    RESULT_TYPE segp = segs+k;
 
 			    if (segp->seg_sti == st_bit) {
@@ -623,9 +630,10 @@ bool_eval(global struct partition *partitions, global uint *ipartition, RESULT_T
 				break;
 			    }
 			}
-			if (ret) break;
-			lz++;
+			// clear bit in mask
+			mask &= ~(1 << (31 - lz));
 		    }
+			if (ret) break;
 		}
 		stack[stackend++] = ret;
 		break;
@@ -643,96 +651,162 @@ bool_eval(global struct partition *partitions, global uint *ipartition, RESULT_T
  */
 void build_regiontable(global struct bool_region *bregions, global union tree_rpn *rtree, RESULT_TYPE segs,
         global uint *segs_bv, global uint *regiontable, const uint pp_idx, const uint seg_idx,
-        const uint bv_index, const uint rt_index, const uint total_regions)
+        const uint bv_index, const uint rt_index, const uint total_regions, const size_t id)
 {
     RESULT_TYPE segp;
 
     /* Iterate over segments of partition */
     for (uint i = 0; i < bv_index; i++) {
-	uint lz = clz(segs_bv[pp_idx + (bv_index - 1) + i]);
-	while (lz != 32) {
+	uint mask = segs_bv[pp_idx * bv_index + i];
+	while (mask != 0) {
+		uint lz = clz(mask);
 	    uint k = seg_idx + (31 - lz);
-	    if (isset(segs_bv, pp_idx + (bv_index - 1), k - seg_idx) != 0) {
+	    if (isset(segs_bv, pp_idx * bv_index, k - seg_idx) != 0) {
 		segp = segs+k;
 
 		/* Search for all regions involved in this partition */
 		for (uint m = 0; m < total_regions; m++) {
 		    if (region_involved(bregions, rtree, m, segp->seg_sti)) {
 			/* Region involved */
-			if (isset(regiontable, pp_idx + (rt_index - 1), m) != 0) {
+			if (isset(regiontable, id * rt_index, m) != 0) {
 			    continue;
 			} else {
-			    set(regiontable, pp_idx + (rt_index - 1), m);
+			    set(regiontable, id * rt_index, m);
 			}
 		    }
 		}
 	    }
-	    lz++;
+	    // clear bit in mask
+		mask &= ~(1 << (31 - lz));
 	}
     }
 }
 
 void
-rt_default_multioverlap(global struct bool_region *bregions, global uint *regiontable, const uint pp_idx, const uint total_regions)
+reset_regiontable(global uint *regiontable, const size_t id, const uint rt_index)
+{
+    for (uint k = 0; k < rt_index; k++) {
+        regiontable[id * rt_index + k] = 0;
+    }
+}
+
+int
+rt_defoverlap(global struct partition *partitions, const uint pp_idx, global struct bool_region *reg1,
+	      const uint reg1_id, global struct bool_region *reg2, const uint reg2_id, const uint headpp_idx)
+{
+
+    global struct partition *pp;
+
+    /*
+     * Apply heuristics as to which region should claim partition.
+     */
+    if (reg1->reg_aircode != 0) {
+	/* reg1 was air, replace with reg2 */
+	return 2;
+    }
+
+    pp = &partitions[pp_idx];
+    if (pp->back_pp != headpp_idx) {
+	if (partitions[pp->back_pp].region_id == reg1_id)
+	    return 1;
+	if (partitions[pp->back_pp].region_id == reg2_id)
+	    return 2;
+    }
+
+    /* To provide some consistency from ray to ray, use lowest bit # */
+    if (reg1->reg_bit < reg2->reg_bit)
+	return 1;
+    return 2;
+}
+
+void
+rt_default_multioverlap(global struct partition *partitions, global struct bool_region *bregions, global uint *regiontable,
+			const uint pp_idx, const uint total_regions, const uint headpp_idx, const size_t id)
 {
     global struct bool_region *lastregion;
-    int code;
-    uint i;
+    int code, ret;
 
     uint rt_index = total_regions/32 +1;
+	uint lastregion_id;
 
     // Get first region of the regiontable
-    for (i = 0; i < total_regions; i++) {
-	if (isset(regiontable, pp_idx + (rt_index - 1), i) != 0) {
-	    lastregion = &bregions[i];
-	    break;
+    for (uint i = 0; i < rt_index; i++) {
+	uint mask = regiontable[id * rt_index + i];
+	ret = 0;
+	while (mask != 0) {
+	    uint lz = clz(mask);
+	    uint k = (i * 32) + (31 - lz);
+	    if (isset(regiontable, id * rt_index, k) != 0) {
+		lastregion = &bregions[k];
+		lastregion_id = k;
+		ret = 1;
+		break;
+	    }
+	    // clear bit in mask
+	    mask &= ~(1 << (31 - lz));
 	}
+	if (ret) break;
     }
 
     /* Examine the overlapping regions, pairwise */
-    for (uint j = i + 1; j < total_regions; j++) {
+    for (uint i = 0; i < rt_index; i++) {
+	uint mask = regiontable[id * rt_index + i];
+	while (mask != 0) {
+	    uint lz = clz(mask);
+	    uint k = (i * 32) + (31 - lz);
+	    if (k != lastregion_id && isset(regiontable, id * rt_index, k) != 0) {
+		global struct bool_region *regp;
+		regp = &bregions[k];
 
-	if (isset(regiontable, pp_idx + (rt_index - 1), j) != 0) {
-	    global struct bool_region *regp;
-	    regp = &bregions[j];
-
-	    /*
-	     * Two or more regions claim this partition
-	     */
-	    if (lastregion->reg_aircode != 0 && regp->reg_aircode == 0) {
-		/* last region is air, replace with solid regp */
-		code = 2;
-	    } else if (lastregion->reg_aircode == 0 && regp->reg_aircode != 0) {
-		/* last region solid, regp is air, keep last */
-		code = 1;
-	    } else if (lastregion->reg_aircode != 0 &&
-		    regp->reg_aircode != 0 &&
-		    regp->reg_aircode == lastregion->reg_aircode) {
-		/* both are same air, keep last */
-		code = 1;
-	    }
-
-	    /* Implement the policy in "code" */
-	    switch (code) {
-		case 0:
+		code = -1;
+		/*
+		 * Two or more regions claim this partition
+		 */
+		if (lastregion->reg_aircode != 0 && regp->reg_aircode == 0) {
+		    /* last region is air, replace with solid regp */
+		    code = 2;
+		} else if (lastregion->reg_aircode == 0 && regp->reg_aircode != 0) {
+		    /* last region solid, regp is air, keep last */
+		    code = 1;
+		} else if (lastregion->reg_aircode != 0 &&
+			   regp->reg_aircode != 0 &&
+			   regp->reg_aircode == lastregion->reg_aircode) {
+		    /* both are same air, keep last */
+		    code = 1;
+		} else {
 		    /*
-		     * Destroy the whole partition.
-		     * Reset regiontable
+		     * Hand overlap to old-style application-specific
+		     * overlap handler, or default.
+		     * 0 = destroy partition,
+		     * 1 = keep part, claiming region=lastregion
+		     * 2 = keep part, claiming region=regp
 		     */
-		    for (uint k = 0; k < rt_index; k++) {
-			regiontable[k] = 0;
-		    }
-		    return;
-		case 1:
-		    /* Keep partition, claiming region = lastregion */
-		    clr(regiontable, pp_idx + (rt_index - 1), j);
-		    break;
-		case 2:
-		    /* Keep partition, claiming region = regp */
-		    lastregion = regp;
-		    clr(regiontable, pp_idx + (rt_index - 1), i);
-		    break;
+		    code = rt_defoverlap(partitions, pp_idx, lastregion, lastregion_id, regp, k, headpp_idx);
+		}
+
+		/* Implement the policy in "code" */
+		switch (code) {
+		    case 0:
+			/*
+			 * Destroy the whole partition.
+			 * Reset regiontable
+			 */
+			reset_regiontable(regiontable, id, rt_index);
+			return;
+		    case 1:
+			/* Keep partition, claiming region = lastregion */
+			clr(regiontable, id * rt_index, k);
+			break;
+		    case 2:
+			/* Keep partition, claiming region = regp */
+			clr(regiontable, id * rt_index, lastregion_id);
+			lastregion = regp;
+			lastregion_id = k;
+			break;
+		}
 	    }
+	    // clear bit in mask
+	    mask &= ~(1 << (31 - lz));
 	}
     }
 }
@@ -801,29 +875,37 @@ rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESUL
 	    }
 	}
 
+	/* Start with a clean state when evaluating this partition */
+	reset_regiontable(regiontable, id, rt_index);
+
 	/*
 	 * Build regiontable bitarray of all the regions involved in this
 	 * partitions to later evaluate the partitions against the involved
 	 * regions and to resolve any overlap that may occur
 	 */
-	build_regiontable(bregions, rtree, segs, segs_bv, regiontable, current_index, h[id], bv_index, rt_index, total_regions);
+	build_regiontable(bregions, rtree, segs, segs_bv, regiontable, current_index, h[id], bv_index, rt_index, total_regions, id);
 
 	/* Evaluate the boolean trees of any regions involved */
-	for (uint i = 0; i < total_regions; i++) {
+	for (uint i = 0; i < rt_index; i++) {
+	    uint mask = regiontable[id * rt_index + i];
+	    while (mask != 0) {
+		uint lz = clz(mask);
+		uint k = (i * 32) + (31 - lz);
+		if (isset(regiontable, id * rt_index, k) != 0) {
 
-	    if (isset(regiontable, current_index + (rt_index - 1), i) != 0) {
+		    if (bregions[k].reg_all_unions) {
+			claiming_regions++;
+			lastregion_idx = k;
+		    }
 
-		if (bregions[i].reg_all_unions) {
-		    claiming_regions++;
-		    lastregion_idx = i;
-		    continue;
+		    else if (bool_eval(partitions, ipartition, segs, h, segs_bv, bv_index, current_index, id, bregions, rtree, k) == BOOL_TRUE) {
+			/* This region claims partition */
+			claiming_regions++;
+			lastregion_idx = k;
+		    }
 		}
-
-		if (bool_eval(partitions, ipartition, segs, h, segs_bv, bv_index, current_index, id, bregions, rtree, i) == BOOL_TRUE) {
-		    /* This region claims partition */
-		    claiming_regions++;
-		    lastregion_idx = i;
-		}
+		// clear bit in mask
+		mask &= ~(1 << (31 - lz));
 	    }
 	}
 
@@ -832,15 +914,22 @@ rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESUL
 
 	if (claiming_regions > 1) {
 	    /* There is an overlap between two or more regions */
-	    rt_default_multioverlap(bregions, regiontable, current_index, total_regions);
+	    rt_default_multioverlap(partitions, bregions, regiontable, current_index, total_regions, head, id);
 
 	    /* Count number of remaining regions, s/b 0 or 1 */
 	    claiming_regions = 0;
-	    for (uint i = 0; i < total_regions; i++) {
+	    for (uint i = 0; i < rt_index; i++) {
+		uint mask = regiontable[id * rt_index + i];
+		while (mask != 0) {
+		    uint lz = clz(mask);
+		    uint k = (i * 32) + (31 - lz);
 
-		if (isset(regiontable, current_index + (rt_index - 1), i) != 0) {
-		    claiming_regions++;
-		    lastregion_idx = i;
+		    if (isset(regiontable, id * rt_index, k) != 0) {
+			claiming_regions++;
+			lastregion_idx = k;
+		    }
+		    // clear bit in mask
+		    mask &= ~(1 << (31 - lz));
 		}
 	    }
 

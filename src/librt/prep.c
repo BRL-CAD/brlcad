@@ -596,6 +596,7 @@ clt_prep(struct rt_i *rtip)
 
 		regions[i].reg_nrtree = regp->reg_nrtree;
 		regions[i].reg_aircode = regp->reg_aircode;
+		regions[i].reg_bit = regp->reg_bit;
 		regions[i].reg_all_unions = regp->reg_all_unions;
 
 		rt_tree_rpn(rtree, regp->reg_treetop, &len);

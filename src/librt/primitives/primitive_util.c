@@ -1002,7 +1002,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 		sz_bv = sizeof(cl_uint) * (h[npix]*2) * (max_depth/32 + 1); /* bitarray to represent the segs in each partition */
 		bv = (cl_uint*)bu_calloc(1, sz_bv, "bv");
 
-		sz_regiontable = sizeof(cl_uint) * (h[npix]*2) * (clt_db_nregions/32 +1); /* bitarray to represent the regions involved in each partition */
+		sz_regiontable = sizeof(cl_uint) * npix * (clt_db_nregions/32 +1); /* bitarray to represent the regions involved in each partition */
 		regiontable = (cl_uint*)bu_calloc(1, sz_regiontable, "regiontable");
 
 	    bu_free(h, "h");
