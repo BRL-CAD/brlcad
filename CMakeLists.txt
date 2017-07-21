@@ -2672,9 +2672,7 @@ set(report_hostname_src "
 #endif
 
 #define MAX_HOSTNAME 2048
-#if !defined(HAVE_UNISTD_H) || defined(_BSD_SOURCE) \
-    || defined(_XOPEN_SOURCE) && _XOPEN_SOURCE  >= 500 \
-    || defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112
+#if !defined(HAVE_UNISTD_H) || defined(_BSD_SOURCE) || defined(_XOPEN_SOURCE) && _XOPEN_SOURCE  >= 500 || defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112
   #define HAVE_GETHOSTNAME 1
 #endif
 
@@ -2714,13 +2712,14 @@ file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c")
 set(report_username_src "
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_UNISTD_H
    #include <unistd.h>
 #endif
 int main(void) {
   char *name = getenv(\"USERNAME\");
-  if (!name) name = getenv(\"USER\");
-  if (!name) name = \"unknown\";
+  if (strlen(name) == 0) name = getenv(\"USER\");
+  if (strlen(name) == 0) name = \"unknown\";
   printf(\"%s\", name);
   return 0;
 }")
