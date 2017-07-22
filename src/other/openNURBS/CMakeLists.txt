@@ -1,22 +1,73 @@
-IF(COMMAND CMAKE_POLICY)
+# Note: License below is for CMake build logic of openNURBS.  For license of
+# primary openNURBS source code, see license.txt file
+#
+# Copyright (c) 2010-2016 United States Government as represented by the U.S.
+# Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote products
+# derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+# EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Minimum required version of CMake
+cmake_minimum_required(VERSION 2.8.8)
+
+project(OPENNURBS)
+
+if(COMMAND CMAKE_POLICY)
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-ENDIF(COMMAND CMAKE_POLICY)
+endif(COMMAND CMAKE_POLICY)
+
+# Generate position independent code by default (i.e. -fPIC)
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+
+# If we can, use OBJECT libraries to build both shared and static
+# libraries from the same .o files, saving double compilation
+include(CMakeDependentOption)
+cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
 
 if(BRLCAD_FLAGS_DEBUG)
   add_definitions(${DEBUG_CXX_FLAGS})
 endif(BRLCAD_FLAGS_DEBUG)
 
 # build shared libs by default
-IF(NOT DEFINED BUILD_SHARED_LIBS)
+if(NOT DEFINED BUILD_SHARED_LIBS)
   set(BUILD_SHARED_LIBS ON)
-ENDIF(NOT DEFINED BUILD_SHARED_LIBS)
+endif(NOT DEFINED BUILD_SHARED_LIBS)
 
 # build static libs by default
-IF(NOT DEFINED BUILD_STATIC_LIBS)
+if(NOT DEFINED BUILD_STATIC_LIBS)
   set(BUILD_STATIC_LIBS ON)
-ENDIF(NOT DEFINED BUILD_STATIC_LIBS)
+endif(NOT DEFINED BUILD_STATIC_LIBS)
+
+# Define destinations if not already set
+if(NOT DEFINED BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT DEFINED BIN_DIR)
+if(NOT DEFINED LIB_DIR)
+  set(LIB_DIR lib)
+endif(NOT DEFINED LIB_DIR)
 
 # Passed to OpenNURBS build to turn on/off any extentions/modifications to the base code
 # specific to BRLCAD. Initially used for unwrapping UV points in a closed surface to
@@ -25,7 +76,7 @@ ENDIF(NOT DEFINED BUILD_STATIC_LIBS)
 option(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS "Enables BRLCAD related extensions to OpenNURBS" ON)
 mark_as_advanced(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS)
 
-# these are files no longer in opennurbs but retained for reference
+# these are files no longer in upstream openNURBS but retained for reference
 set(OPENNURBS_REF
   opennurbs_basic.cpp
   opennurbs_brep_changesrf.cpp
@@ -33,8 +84,8 @@ set(OPENNURBS_REF
   opennurbs_x.cpp
   )
 
-# these are files we turn off because we don't use them and they incur
-# some cost to enable (e.g., they require OpenGL)
+# these are files we turn off because we don't use them and they incur some
+# cost to enable (e.g., they require OpenGL)
 set(OPENNURBS_OFF
   opennurbs_gl.cpp
   opennurbs_gl.h
@@ -260,11 +311,10 @@ SET(OPENNURBS_HEADERS
   opennurbs_zlib.h
   )
 
-
-INCLUDE(CheckIncludeFiles)
-CHECK_INCLUDE_FILE(emmintrin.h HAVE_EMMINTRIN_H)
-CHECK_INCLUDE_FILE(ieeefp.h HAVE_IEEEFP_H)
-CHECK_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
+include(CheckIncludeFiles)
+check_include_files(emmintrin.h HAVE_EMMINTRIN_H)
+check_include_files(ieeefp.h HAVE_IEEEFP_H)
+check_include_files(sys/stat.h HAVE_SYS_STAT_H)
 if(HAVE_EMMINTRIN_H)
   add_definitions(-DHAVE_EMMINTRIN_H)
 endif(HAVE_EMMINTRIN_H)
@@ -275,21 +325,11 @@ if(HAVE_SYS_STAT_H)
   add_definitions(-DHAVE_SYS_STAT_H)
 endif(HAVE_SYS_STAT_H)
 
-IF(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS)
-  add_definitions(
-    -DBRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
-    )
-ENDIF(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS)
+if(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS)
+  add_definitions(-DBRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS)
+endif(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS)
 
-IF(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY AND ${CMAKE_PROJECT_NAME}_ZLIB_BUILD AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
-  set(OPENNURBS_LINKLIBRARIES
-    zlib-static
-    )
-ELSE(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY AND ${CMAKE_PROJECT_NAME}_ZLIB_BUILD AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
-  set(OPENNURBS_LINKLIBRARIES
-    ${ZLIB_LIBRARY}
-    )
-ENDIF(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY AND ${CMAKE_PROJECT_NAME}_ZLIB_BUILD AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
+set(OPENNURBS_LINKLIBRARIES ${ZLIB_LIBRARY})
 
 # Ideally, we should only need ZLIB here
 include_directories(
@@ -297,32 +337,42 @@ include_directories(
   ${ZLIB_INCLUDE_DIR}
   )
 
+add_definitions(-DON_COMPILING_OPENNURBS)
 if (MSVC)
-  add_definitions(
-    -DON_COMPILING_OPENNURBS
-    -DON_DLL_EXPORTS
-    )
-else (MSVC)
-  add_definitions(
-    -DON_COMPILING_OPENNURBS
-    )
+  add_definitions(-DUNICODE)
+  set(OPENNURBS_LINKLIBRARIES ${OPENNURBS_LINKLIBRARIES} Rpcrt4)
 endif(MSVC)
 
+# Based on the options, define libraries as either stand-alone builds
+# or dependencies on OBJECT library builds
+if(NOT USE_OBJECT_LIBS)
+  if(BUILD_SHARED_LIBS)
+    add_library(openNURBS SHARED ${OPENNURBS_SOURCES})
+    if(MSVC)
+      set_property(TARGET openNURBS APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_EXPORTS")
+    endif(MSVC)
+  endif(BUILD_SHARED_LIBS)
+  if(BUILD_STATIC_LIBS)
+    add_library(openNURBS-static STATIC ${OPENNURBS_SOURCES})
+  endif(BUILD_STATIC_LIBS)
+else(NOT USE_OBJECT_LIBS)
+  add_library(openNURBS-obj OBJECT ${OPENNURBS_SOURCES})
+  if(BUILD_SHARED_LIBS)
+    add_library(openNURBS SHARED $<TARGET_OBJECTS:openNURBS-obj>)
+    if(MSVC)
+      set_property(TARGET openNURBS APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_EXPORTS")
+    endif(MSVC)
+  endif(BUILD_SHARED_LIBS)
+  if(BUILD_STATIC_LIBS)
+    add_library(openNURBS-static STATIC $<TARGET_OBJECTS:openNURBS-obj>)
+  endif(BUILD_STATIC_LIBS)
+endif(NOT USE_OBJECT_LIBS)
 
-if(MSVC)
-  add_definitions(
-    -DUNICODE
-    )
-
-  set(OPENNURBS_LINKLIBRARIES
-    ${OPENNURBS_LINKLIBRARIES}
-    Rpcrt4
-    )
-endif(MSVC)
 
 IF(BUILD_SHARED_LIBS)
-  add_library(openNURBS SHARED ${OPENNURBS_SOURCES})
-  target_link_libraries(openNURBS ${OPENNURBS_LINKLIBRARIES})
+  if(OPENNURBS_LINKLIBRARIES)
+    target_link_libraries(openNURBS ${OPENNURBS_LINKLIBRARIES})
+  endif(OPENNURBS_LINKLIBRARIES)
   set_target_properties(openNURBS PROPERTIES VERSION "2012.10.245")
   install(TARGETS openNURBS
     RUNTIME DESTINATION ${BIN_DIR}
@@ -331,11 +381,10 @@ IF(BUILD_SHARED_LIBS)
 ENDIF(BUILD_SHARED_LIBS)
 
 IF(BUILD_STATIC_LIBS)
-  add_library(openNURBS-static STATIC ${OPENNURBS_SOURCES})
   target_link_libraries(openNURBS-static ${OPENNURBS_LINKLIBRARIES})
-  IF(NOT WIN32)
-    SET_TARGET_PROPERTIES(openNURBS-static PROPERTIES OUTPUT_NAME "openNURBS")
-  ENDIF(NOT WIN32)
+  if(NOT WIN32)
+    set_target_properties(openNURBS-static PROPERTIES OUTPUT_NAME "openNURBS")
+  endif(NOT WIN32)
   install(TARGETS openNURBS-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
