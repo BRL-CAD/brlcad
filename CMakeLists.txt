@@ -2813,7 +2813,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMENT ""
     )
   add_custom_target(timestamp ALL
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts "Build Time:  "
+    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts \"Build Time:  \"
     DEPENDS ${BUILD_DELTA_START}
     )
   set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
