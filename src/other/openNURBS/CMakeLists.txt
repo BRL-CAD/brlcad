@@ -47,6 +47,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 include(CMakeDependentOption)
 cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
 
+if(USE_COTIRE)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cotire.cmake)
+endif(USE_COTIRE)
+
 if(BRLCAD_FLAGS_DEBUG)
   add_definitions(${DEBUG_CXX_FLAGS})
 endif(BRLCAD_FLAGS_DEBUG)
@@ -357,6 +361,12 @@ if(NOT USE_OBJECT_LIBS)
   endif(BUILD_STATIC_LIBS)
 else(NOT USE_OBJECT_LIBS)
   add_library(openNURBS-obj OBJECT ${OPENNURBS_SOURCES})
+  if(USE_COTIRE)
+    # Use cotire (https://github.com/sakra/cotire) to manage precompiled
+    # headers in order to speed up building
+    set_target_properties(openNURBS-obj PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
+    cotire(openNURBS-obj)
+  endif(USE_COTIRE)
   if(BUILD_SHARED_LIBS)
     add_library(openNURBS SHARED $<TARGET_OBJECTS:openNURBS-obj>)
     if(MSVC)
@@ -369,7 +379,7 @@ else(NOT USE_OBJECT_LIBS)
 endif(NOT USE_OBJECT_LIBS)
 
 
-IF(BUILD_SHARED_LIBS)
+if(BUILD_SHARED_LIBS)
   if(OPENNURBS_LINKLIBRARIES)
     target_link_libraries(openNURBS ${OPENNURBS_LINKLIBRARIES})
   endif(OPENNURBS_LINKLIBRARIES)
@@ -378,9 +388,15 @@ IF(BUILD_SHARED_LIBS)
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
-ENDIF(BUILD_SHARED_LIBS)
 
-IF(BUILD_STATIC_LIBS)
+  if(USE_COTIRE AND NOT USE_OBJECT_LIBS)
+    set_target_properties(openNURBS PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
+    cotire(openNURBS)
+  endif(USE_COTIRE AND NOT USE_OBJECT_LIBS)
+
+endif(BUILD_SHARED_LIBS)
+
+if(BUILD_STATIC_LIBS)
   target_link_libraries(openNURBS-static ${OPENNURBS_LINKLIBRARIES})
   if(NOT WIN32)
     set_target_properties(openNURBS-static PROPERTIES OUTPUT_NAME "openNURBS")
@@ -389,7 +405,15 @@ IF(BUILD_STATIC_LIBS)
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
-ENDIF(BUILD_STATIC_LIBS)
+
+  if(USE_COTIRE AND NOT BUILD_SHARED_LIBS AND NOT USE_OBJECT_LIBS)
+    # Use cotire (https://github.com/sakra/cotire) to manage precompiled
+    # headers in order to speed up building
+    set_target_properties(openNURBS-static PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
+    cotire(openNURBS-static)
+  endif(USE_COTIRE AND NOT BUILD_SHARED_LIBS AND NOT USE_OBJECT_LIBS)
+
+endif(BUILD_STATIC_LIBS)
 
 install(FILES ${OPENNURBS_HEADERS} DESTINATION include/openNURBS)
 
