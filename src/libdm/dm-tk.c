@@ -197,7 +197,7 @@ tk_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 	bu_log("%g %g %g %g\n", mat[12], mat[13], mat[14], mat[15]);
     }
 
-    MAT_COPY(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, mat);
+    MAT_COPY(((struct x_vars *)dmp->dm_vars.priv_vars)->mod_mat, mat);
     return BRLCAD_OK;
 }
 
@@ -217,8 +217,11 @@ tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     int nseg;		        /* number of segments */
     fastf_t delta;
     point_t *pt_prev = NULL;
+    point_t tlate;
     fastf_t dist_prev=1.0;
     static int nvectors = 0;
+
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel) {
 	bu_log("tk_drawVList()\n");
@@ -229,7 +232,7 @@ tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
      * in front of eye plane (perspective mode only).
      * This value is a SWAG that seems to work OK.
      */
-    delta = ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15]*0.0001;
+    delta = *(privars->xmat)[15]*0.0001;
     if (delta < 0.0)
 	delta = -delta;
     if (delta < SQRT_SMALL_FASTF)
@@ -255,6 +258,16 @@ tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		case BN_VLIST_TRI_START:
 		case BN_VLIST_TRI_VERTNORM:
 		    continue;
+		case BN_VLIST_MODEL_MAT:
+		    privars->xmat = &(privars->mod_mat);
+		    continue;
+		case BN_VLIST_DISPLAY_MAT:
+		    MAT4X3PNT(tlate, (privars->disp_mat), *pt);
+		    privars->disp_mat[3] = privars->disp_mat[3] - tlate[0];
+		    privars->disp_mat[7] = privars->disp_mat[7] - tlate[1];
+		    privars->disp_mat[11] = privars->disp_mat[11] - tlate[2];
+		    privars->xmat = &(privars->disp_mat);
+		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_TRI_MOVE:
@@ -268,18 +281,18 @@ tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT(*pt, &((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[12]) + ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15];
+			dist = VDOT(*pt, &(*(privars->xmat)[12])) + *(privars->xmat)[15];
 			if (dist <= 0.0) {
 			    pt_prev = pt;
 			    dist_prev = dist;
 			    continue;
 			} else {
-			    MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+			    MAT4X3PNT(lpnt, *(privars->xmat), *pt);
 			    dist_prev = dist;
 			    pt_prev = pt;
 			}
 		    } else {
-			MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+			    MAT4X3PNT(lpnt, *(privars->xmat), *pt);
 		    }
 
 		    lpnt[0] *= 2047;
@@ -301,7 +314,7 @@ tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT(*pt, &((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[12]) + ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15];
+			dist = VDOT(*pt, &(*(privars->xmat)[12])) + *(privars->xmat)[15];
 			if (dmp->dm_debugLevel > 2)
 			    bu_log("dist=%g, dist_prev=%g\n", dist, dist_prev);
 			if (dist <= 0.0) {
@@ -320,7 +333,7 @@ tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 				VSUB2(diff, *pt, *pt_prev);
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-				MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, tmp_pt);
+				MAT4X3PNT(pnt, *(privars->xmat), tmp_pt);
 				}
 			    }
 			} else {
@@ -334,19 +347,19 @@ tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 				VSUB2(diff, *pt, *pt_prev);
 				alpha = (-dist_prev + delta) / (dist - dist_prev);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-				MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, tmp_pt);
+				MAT4X3PNT(pnt, *(privars->xmat), tmp_pt);
 				lpnt[0] *= 2047;
 				lpnt[1] *= 2047 * dmp->dm_aspect;
 				lpnt[2] *= 2047;
-				MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+				MAT4X3PNT(pnt, *(privars->xmat), *pt);
 				}
 			    } else {
-				MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+				MAT4X3PNT(pnt, *(privars->xmat), *pt);
 			    }
 			}
 			dist_prev = dist;
 		    } else {
-			MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+			MAT4X3PNT(pnt, *(privars->xmat), *pt);
 		    }
 
 		    pnt[0] *= 2047;
@@ -1096,7 +1109,11 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     */
     Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 
-    MAT_IDN(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat);
+    MAT_IDN(((struct x_vars *)dmp->dm_vars.priv_vars)->mod_mat);
+    MAT_IDN(((struct x_vars *)dmp->dm_vars.priv_vars)->disp_mat);
+
+    ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat = 
+        &(((struct x_vars *)dmp->dm_vars.priv_vars)->mod_mat);
 
     return dmp;
 }

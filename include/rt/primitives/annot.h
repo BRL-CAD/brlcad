@@ -37,12 +37,6 @@ RT_EXPORT int rt_pos_flag(int *pos_flag, int p_hor, int p_ver);
 
 RT_EXPORT int rt_check_pos(const struct txt_seg *tsg, char **rel_pos);
 
-/**RT_EXPORT extern int ant_to_vlist(struct bu_list             *vhead,
-                                    const struct rt_tess_tol *ttol,
-                                    point_t                   V,
-                                    struct rt_annot_internal *annot_ip,
-                                    struct rt_ant             *ant);
-**/
 RT_EXPORT extern int rt_check_ant(const struct rt_ant *ant,
                                     const struct rt_annot_internal *annot_ip,
                                     int noisy);

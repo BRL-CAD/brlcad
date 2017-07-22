@@ -64,6 +64,12 @@ RT_EXPORT extern struct rt_g RTG;
 
 #define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&RTG.rtg_vlfree, hd, pnt, draw)
 
+/** set the transformation matrix to display matrix */
+#define RT_VLIST_SET_DISP_MAT(_dest_hd, _ref_pt) BN_VLIST_SET_DISP_MAT(&RTG.rtg_vlfree, _dest_hd, _ref_pt)
+
+/** set the transformation matrix to model matrix */
+#define RT_VLIST_SET_MODEL_MAT(_dest_hd, _ref_pt) BN_VLIST_SET_MODEL_MAT(&RTG.rtg_vlfree, _dest_hd, _ref_pt)
+
 /** Set a point size to apply to the vlist elements that follow. */
 #define RT_VLIST_SET_POINT_SIZE(hd, size) BN_VLIST_SET_POINT_SIZE(&RTG.rtg_vlfree, hd, size)
 

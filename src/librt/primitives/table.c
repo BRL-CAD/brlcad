@@ -2151,7 +2151,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_annot_curve),
 	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_annot_free),
-	NULL, /* plot */
+	RTFUNCTAB_FUNC_PLOT_CAST(rt_annot_plot),
 	NULL, /* adaptive_plot */
 	NULL, /* vshot */
 	NULL, /* tess */
@@ -2160,7 +2160,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_annot_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_annot_export5),
 	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_annot_import4),
-	RTFUNCTAB_FUNC_EXPORT4_CAST(rt_annot_export4),         
+	RTFUNCTAB_FUNC_EXPORT4_CAST(rt_annot_export4),
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_annot_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_annot_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
@@ -2429,7 +2429,7 @@ rt_id_solid(struct bu_external *ep)
 	    break;
 	case DBID_ANNOT:
 	    id = ID_ANNOT;
-	    break;	
+	    break;
 	case DBID_EXTR:
 	    id = ID_EXTRUDE;
 	    break;
