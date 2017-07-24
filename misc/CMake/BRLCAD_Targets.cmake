@@ -383,38 +383,31 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" NO_DLL CFLAGS L_C_FLAGS CXXFLAGS L_CXX_FLAGS DEFINES L_GENERAL_DEFINES)
   SET_FLAGS_AND_DEFINITIONS("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}" CFLAGS "${L_C_FLAGS}" CXXFLAGS "${L_CXX_FLAGS}" DEFINES "${L_GENERAL_DEFINES}")
 
+  # Local copy of srcslist in case manipulation is needed
+    set(lsrcslist ${srcslist})
+
   # If we're going to have a specified subfolder, prepare the appropriate string:
   if(L_FOLDER)
     set(SUBFOLDER "/${L_FOLDER}")
   endif(L_FOLDER)
 
-  # Based on the options, define libraries as either stand-alone builds
-  # or dependencies on OBJECT library builds
-  if(NOT USE_OBJECT_LIBS OR L_SHARED_SRCS OR L_STATIC_SRCS)
-    if(BUILD_SHARED_LIBS OR L_SHARED)
-      add_library(${libname} SHARED ${srcslist} ${L_SHARED_SRCS})
-      GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" ONLY_DLL DEFINES L_DLL_DEFINES)
-      foreach(dll_define ${L_DLL_DEFINES})
-	set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${dll_define}")
-      endforeach(dll_define ${L_DLL_DEFINES})
-    endif(BUILD_SHARED_LIBS OR L_SHARED)
-    if(BUILD_STATIC_LIBS OR L_STATIC)
-      add_library(${libname}-static STATIC ${srcslist} ${L_STATIC_SRCS})
-    endif(BUILD_STATIC_LIBS OR L_STATIC)
-  else(NOT USE_OBJECT_LIBS OR L_SHARED_SRCS OR L_STATIC_SRCS)
-    add_library(${libname}-obj OBJECT ${srcslist})
+  # If we need it, set up the OBJECT library build
+  if(USE_OBJECT_LIBS)
+    add_library(${libname}-obj OBJECT ${lsrcslist})
+    set(lsrcslist $<TARGET_OBJECTS:${libname}-obj>)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
-    if(BUILD_SHARED_LIBS OR L_SHARED)
-      add_library(${libname} SHARED $<TARGET_OBJECTS:${libname}-obj>)
-      GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" ONLY_DLL DEFINES L_DLL_DEFINES)
-      foreach(dll_define ${L_DLL_DEFINES})
-	set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${dll_define}")
-      endforeach(dll_define ${L_DLL_DEFINES})
-    endif(BUILD_SHARED_LIBS OR L_SHARED)
-    if(BUILD_STATIC_LIBS OR L_STATIC)
-      add_library(${libname}-static STATIC $<TARGET_OBJECTS:${libname}-obj>)
-    endif(BUILD_STATIC_LIBS OR L_STATIC)
-  endif(NOT USE_OBJECT_LIBS OR L_SHARED_SRCS OR L_STATIC_SRCS)
+  endif(USE_OBJECT_LIBS)
+
+  if(BUILD_SHARED_LIBS)
+    add_library(${libname} SHARED ${lsrcslist}  ${L_SHARED_SRCS})
+    GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" ONLY_DLL DEFINES L_DLL_DEFINES)
+    foreach(dll_define ${L_DLL_DEFINES})
+      set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${dll_define}")
+    endforeach(dll_define ${L_DLL_DEFINES})
+  endif(BUILD_SHARED_LIBS)
+  if(BUILD_STATIC_LIBS)
+    add_library(${libname}-static STATIC ${lsrcslist} ${L_STATIC_SRCS})
+  endif(BUILD_STATIC_LIBS)
 
   # Make sure we don't end up with outputs named liblib...
   set(possible_targets ${libname} ${libname}-static)

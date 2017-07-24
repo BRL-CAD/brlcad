@@ -66,7 +66,7 @@ set(level_2_dirs
 # Level 3 directories contain BRL-CAD's executables.  Setting
 # the BRLCAD_ENABLE_TARGETS level to 3 will enable all programs.
 
-# FIXME: Ideally these should all be in the above list,
+# FIXME: Ideally these should all be in the below list,
 # need to fix them on Windows.
 if(NOT WIN32)
   set(non_win32_dirs remrt rttherm)
@@ -147,22 +147,27 @@ while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
   endforeach(subdir ${level_${current_level}_dirs})
 endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 
-# This corresponds roughly to the libbrlcad definition in
-# the autotools build.  It needs CMake 2.8.8 plus changes
-# to the BRLCAD_ADDLIB macro to define OBJECT add_library
-# targets, and is commented out for now, but this is the
-# starting point for a "proper" libbrlcad
-#if(${HIGHEST_TARGET_LEVEL} GREATER 1)
-#  add_library(libbrlcad STATIC
-#    $<TARGET_OBJECTS:libbu_OBJECTS>
-#    $<TARGET_OBJECTS:libbn_OBJECTS>
-#    $<TARGET_OBJECTS:librt_OBJECTS>
-#    $<TARGET_OBJECTS:libwdb_OBJECTS>
-#    $<TARGET_OBJECTS:libicv_OBJECTS>
-#    $<TARGET_OBJECTS:libged_OBJECTS>
-#    )
-#  target_link_libraries(libbrlcad ${OPENNURBS_LIBRARIES} ${TCL_LIBRARY})
-#endif(${HIGHEST_TARGET_LEVEL} GREATER 1)
+# This corresponds roughly to the libbrlcad originally defined in BRL-CAD
+# autotools build.
+if(BRLCAD_BUILD_LIBBRLCAD AND USE_OBJECT_LIBS)
+  set(current_level 1)
+  while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
+    set(wl 1)
+    math(EXPR cml "${current_level} + 1")
+    while(${wl} LESS ${cml})
+      message("libs: ${level_${wl}_dirs}")
+      foreach(llib ${level_${wl}_dirs})
+	if(TARGET ${llib})
+	  set(libbrlcad_objs ${libbrlcad_objs} $<TARGET_OBJECTS:${llib}-obj>)
+	endif(TARGET ${llib})
+      endforeach(llib ${level_${wl}_dirs})
+      math(EXPR wl "${wl} + 1")
+    endwhile(${wl} LESS ${cml})
+    add_library(libbrlcad-shared-${current_level} SHARED ${libbrlcad_objs})
+    add_library(libbrlcad-static-${current_level} STATIC ${libbrlcad_objs})
+    math(EXPR current_level "${current_level} + 1")
+  endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
+endif(BRLCAD_BUILD_LIBBRLCAD AND USE_OBJECT_LIBS)
 
 CMAKEFILES(README)
 
@@ -171,11 +176,9 @@ CMAKEFILES(README)
 # so it can be used for experimentation that needs to be
 # part of the build but the dev doesn't want to accidentally
 # commit.
-if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
-    add_subdirectory(testing)
-  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
-endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+if("${BRLCAD_ENABLE_TARGETS}" GREATER 2 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
+  add_subdirectory(testing)
+endif("${BRLCAD_ENABLE_TARGETS}" GREATER 2 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
 
 
 # Local Variables:

@@ -17,49 +17,46 @@ add_executable(ifftc ifftc.c ditsplitc.c)
 SetTargetFolder(ifftc "Compilation Utilities")
 target_link_libraries(ifftc ${M_LIBRARY})
 
+# We need to generate some of libfft's source files
+function(fft_gen numlist targetdir outfiles)
+  file(MAKE_DIRECTORY "${targetdir}")
+  foreach(filenum ${numlist})
+    add_custom_command(
+      OUTPUT ${targetdir}/rfft${filenum}.c
+      COMMAND fftc ${filenum} > ${targetdir}/rfft${filenum}.c
+      DEPENDS fftc
+      )
+    set(output_files "${output_files};${targetdir}/rfft${filenum}.c")
+    add_custom_command(
+      OUTPUT ${targetdir}/irfft${filenum}.c
+      COMMAND ifftc ${filenum} > ${targetdir}/irfft${filenum}.c
+      DEPENDS ifftc
+      )
+    set(output_files "${output_files};${targetdir}/irfft${filenum}.c")
+  endforeach(filenum ${FFT_NUMLIST})
+  set(${outfiles} "${output_files}" PARENT_SCOPE)
+endfunction(fft_gen numlist targetdir outfiles)
+
 # 512 and 1024 are tough in optimized compiles, don't
 # go that high until there's a demonstrated need. Only
 # use in BRL-CAD right now is 256.
 set(FFT_NUMLIST "16;32;64;128;256")
-set(FFT_GEN_SHARED_SRCS "")
-set(FFT_GEN_STATIC_SRCS "")
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/shared")
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/static")
-
-foreach(filenum ${FFT_NUMLIST})
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/shared/rfft${filenum}.c
-    COMMAND fftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/shared/rfft${filenum}.c
-    DEPENDS fftc
-    )
-  set(FFT_GEN_SHARED_SRCS "${FFT_GEN_SHARED_SRCS};${CMAKE_CURRENT_BINARY_DIR}/shared/rfft${filenum}.c")
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/shared/irfft${filenum}.c
-    COMMAND ifftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/shared/irfft${filenum}.c
-    DEPENDS ifftc
-    )
-  set(FFT_GEN_SHARED_SRCS "${FFT_GEN_SHARED_SRCS};${CMAKE_CURRENT_BINARY_DIR}/shared/irfft${filenum}.c")
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/static/rfft${filenum}.c
-    COMMAND fftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/static/rfft${filenum}.c
-    DEPENDS fftc
-    )
-  set(FFT_GEN_STATIC_SRCS "${FFT_GEN_STATIC_SRCS};${CMAKE_CURRENT_BINARY_DIR}/static/rfft${filenum}.c")
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/static/irfft${filenum}.c
-    COMMAND ifftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/static/irfft${filenum}.c
-    DEPENDS ifftc
-    )
-  set(FFT_GEN_STATIC_SRCS "${FFT_GEN_STATIC_SRCS};${CMAKE_CURRENT_BINARY_DIR}/static/irfft${filenum}.c")
-endforeach(filenum ${FFT_NUMLIST})
 
 set(LIBFFT_SRCS
   fftfast.c
   splitdit.c
   ditsplit.c
   )
+if(USE_OBJECT_LIBS)
+  fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}" FFT_GEN_SRCS)
+  set(LIBFFT_SRCS ${LIBFFT_SRCS} ${FFT_GEN_SRCS})
+  BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "${M_LIBRARY}")
+else(USE_OBJECT_LIBS)
+  fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}/shared" FFT_GEN_SHARED_SRCS)
+  fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}/static" FFT_GEN_STATIC_SRCS)
+  BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "${M_LIBRARY}" SHARED_SRCS "${FFT_GEN_SHARED_SRCS}" STATIC_SRCS "${FFT_GEN_STATIC_SRCS}")
+endif(USE_OBJECT_LIBS)
 
-BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "${M_LIBRARY}" SHARED_SRCS "${FFT_GEN_SHARED_SRCS}" STATIC_SRCS "${FFT_GEN_STATIC_SRCS}")
 set_target_properties(libfft PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(libfft PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
