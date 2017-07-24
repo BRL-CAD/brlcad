@@ -2727,7 +2727,8 @@ int main(void) {
   if ((name == 0) || (strlen(name) == 0)) name = \"unknown\";
   printf(\"%s\", name);
   return 0;
-}")
+}
+")
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c" "${report_username_src}")
 # Add definition HAVE_UNISTD_H to try_run
 try_run(RU_RESULT RU_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
