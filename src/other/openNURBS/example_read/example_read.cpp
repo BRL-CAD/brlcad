@@ -277,7 +277,7 @@ int main( int argc, const char *argv[] )
     return 0;
   }
 
-  // Call once in your application to initialze opennurbs library
+  // Call once in your application to initialize opennurbs library
   ON::Begin();
 
   // default dump is to stdout
