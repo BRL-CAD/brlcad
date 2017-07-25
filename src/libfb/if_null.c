@@ -37,7 +37,7 @@
 
 
 HIDDEN int
-null_fb_open(fb *ifp, const char *UNUSED(file), int width, int height)
+_fb_null_open(fb *ifp, const char *UNUSED(file), int width, int height)
 {
     FB_CK_FB(ifp);
 
@@ -50,44 +50,44 @@ null_fb_open(fb *ifp, const char *UNUSED(file), int width, int height)
 }
 
 HIDDEN struct fb_platform_specific *
-null_get_fbps(uint32_t UNUSED(magic))
+_fb_null_get_fbps(uint32_t UNUSED(magic))
 {
         return NULL;
 }
 
 
 HIDDEN void
-null_put_fbps(struct fb_platform_specific *UNUSED(fbps))
+_fb_null_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
 
 HIDDEN int
-null_fb_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+_fb_null_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
 
 HIDDEN int
-null_close_existing(fb *UNUSED(ifp))
+_fb_null_close_existing(fb *UNUSED(ifp))
 {
         return 0;
 }
 
 HIDDEN int
-null_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+_fb_null_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
 HIDDEN int
-null_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+_fb_null_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
 
 HIDDEN int
-null_close(fb *ifp)
+_fb_null_close(fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -96,7 +96,7 @@ null_close(fb *ifp)
 
 
 HIDDEN int
-null_clear(fb *ifp, unsigned char *UNUSED(pp))
+_fb_null_clear(fb *ifp, unsigned char *UNUSED(pp))
 {
     FB_CK_FB(ifp);
 
@@ -105,7 +105,7 @@ null_clear(fb *ifp, unsigned char *UNUSED(pp))
 
 
 HIDDEN ssize_t
-null_read(fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
+_fb_null_read(fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FB(ifp);
 
@@ -114,7 +114,7 @@ null_read(fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), 
 
 
 HIDDEN ssize_t
-null_write(fb *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
+_fb_null_write(fb *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FB(ifp);
 
@@ -123,7 +123,7 @@ null_write(fb *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pi
 
 
 HIDDEN int
-null_rmap(fb *ifp, ColorMap *UNUSED(cmp))
+_fb_null_rmap(fb *ifp, ColorMap *UNUSED(cmp))
 {
     FB_CK_FB(ifp);
 
@@ -132,7 +132,7 @@ null_rmap(fb *ifp, ColorMap *UNUSED(cmp))
 
 
 HIDDEN int
-null_wmap(fb *ifp, const ColorMap *UNUSED(cmp))
+_fb_null_wmap(fb *ifp, const ColorMap *UNUSED(cmp))
 {
     FB_CK_FB(ifp);
 
@@ -141,7 +141,7 @@ null_wmap(fb *ifp, const ColorMap *UNUSED(cmp))
 
 
 HIDDEN int
-null_view(fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
+_fb_null_view(fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
 {
     FB_CK_FB(ifp);
 
@@ -151,7 +151,7 @@ null_view(fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), 
 
 
 HIDDEN int
-null_getview(fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
+_fb_null_getview(fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
 {
     FB_CK_FB(ifp);
 
@@ -161,7 +161,7 @@ null_getview(fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xz
 
 
 HIDDEN int
-null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+_fb_null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp);
 
@@ -170,7 +170,7 @@ null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), in
 
 
 HIDDEN int
-null_cursor(fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
+_fb_null_cursor(fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     FB_CK_FB(ifp);
 
@@ -180,7 +180,7 @@ null_cursor(fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 
 
 HIDDEN int
-null_getcursor(fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
+_fb_null_getcursor(fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
     FB_CK_FB(ifp);
 
@@ -190,7 +190,7 @@ null_getcursor(fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 
 
 HIDDEN int
-null_readrect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
+_fb_null_readrect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
 {
     FB_CK_FB(ifp);
 
@@ -199,7 +199,7 @@ null_readrect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height
 
 
 HIDDEN int
-null_writerect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
+_fb_null_writerect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
 {
     FB_CK_FB(ifp);
 
@@ -208,7 +208,7 @@ null_writerect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int heigh
 
 
 HIDDEN int
-null_poll(fb *ifp)
+_fb_null_poll(fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -217,7 +217,7 @@ null_poll(fb *ifp)
 
 
 HIDDEN int
-null_flush(fb *ifp)
+_fb_null_flush(fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -226,7 +226,7 @@ null_flush(fb *ifp)
 
 
 HIDDEN int
-null_free(fb *ifp)
+_fb_null_free(fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -235,53 +235,53 @@ null_free(fb *ifp)
 
 
 HIDDEN int
-null_help(fb *ifp)
+_fb_null_help(fb *ifp)
 {
     FB_CK_FB(ifp);
 
-    fb_log("Description: %s\n", null_interface.if_type);
+    fb_log("Description: %s\n", fb_null_interface.if_type);
     fb_log("Device: %s\n", ifp->if_name);
     fb_log("Max width/height: %d %d\n",
-	   null_interface.if_max_width,
-	   null_interface.if_max_height);
+	   fb_null_interface.if_max_width,
+	   fb_null_interface.if_max_height);
     fb_log("Default width/height: %d %d\n",
-	   null_interface.if_width,
-	   null_interface.if_height);
+	   fb_null_interface.if_width,
+	   fb_null_interface.if_height);
     fb_log("Useful for Benchmarking/Debugging\n");
     return 0;
 }
 
 
 /* This is the ONLY thing that we normally "export" */
-fb null_interface =  {
+fb fb_null_interface =  {
     0,
     FB_NULL_MAGIC,
-    null_fb_open,		/* device_open */
-    null_fb_open_existing,	/* existing device_open */
-    null_close_existing,/* existing device_close */
-    null_get_fbps,
-    null_put_fbps,
-    null_close,		/* device_close */
-    null_clear,		/* device_clear */
-    null_read,		/* buffer_read */
-    null_write,		/* buffer_write */
-    null_rmap,		/* colormap_read */
-    null_wmap,		/* colormap_write */
-    null_view,		/* set view */
-    null_getview,	/* get view */
-    null_setcursor,	/* define cursor */
-    null_cursor,	/* set cursor */
-    null_getcursor,	/* get cursor */
-    null_readrect,	/* rectangle read */
-    null_writerect,	/* rectangle write */
-    null_readrect,	/* bw rectangle read */
-    null_writerect,	/* bw rectangle write */
-    null_configure_window,
-    null_refresh,
-    null_poll,		/* handle events */
-    null_flush,		/* flush output */
-    null_free,		/* free resources */
-    null_help,		/* help message */
+    _fb_null_open,		/* device_open */
+    _fb_null_open_existing,	/* existing device_open */
+    _fb_null_close_existing,/* existing device_close */
+    _fb_null_get_fbps,
+    _fb_null_put_fbps,
+    _fb_null_close,		/* device_close */
+    _fb_null_clear,		/* device_clear */
+    _fb_null_read,		/* buffer_read */
+    _fb_null_write,		/* buffer_write */
+    _fb_null_rmap,		/* colormap_read */
+    _fb_null_wmap,		/* colormap_write */
+    _fb_null_view,		/* set view */
+    _fb_null_getview,	/* get view */
+    _fb_null_setcursor,	/* define cursor */
+    _fb_null_cursor,	/* set cursor */
+    _fb_null_getcursor,	/* get cursor */
+    _fb_null_readrect,	/* rectangle read */
+    _fb_null_writerect,	/* rectangle write */
+    _fb_null_readrect,	/* bw rectangle read */
+    _fb_null_writerect,	/* bw rectangle write */
+    _fb_null_configure_window,
+    _fb_null_refresh,
+    _fb_null_poll,		/* handle events */
+    _fb_null_flush,		/* flush output */
+    _fb_null_free,		/* free resources */
+    _fb_null_help,		/* help message */
     "Null Device",	/* device description */
     32*1024,		/* max width */
     32*1024,		/* max height */

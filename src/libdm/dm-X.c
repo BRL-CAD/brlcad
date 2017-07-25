@@ -744,8 +744,10 @@ Skip_dials:
     Tk_MapWindow(pubvars->xtkwin);
 #endif
 
-    MAT_IDN(privars->xmat);
+    MAT_IDN(privars->mod_mat);
+    MAT_IDN(privars->disp_mat);
 
+    privars->xmat = &(privars->mod_mat);
     return dmp;
 }
 
@@ -805,7 +807,7 @@ X_drawEnd(struct dm_internal *dmp)
 
 
 /*
- * Load a new transformation matrix.  This will be followed by many
+ * Load a new Model matrix.  This will be followed by many
  * calls to X_draw().
  */
 HIDDEN int
@@ -814,7 +816,7 @@ X_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel) {
-	bu_log("X_loadMatrix()\n");
+	bu_log("X_load_Matrix()\n");
 
 	bu_log("which eye = %d\t", which_eye);
 	bu_log("transformation matrix = \n");
@@ -826,7 +828,7 @@ X_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 	bu_log("%g %g %g %g\n", mat[12], mat[13], mat[14], mat[15]);
     }
 
-    MAT_COPY(privars->xmat, mat);
+    MAT_COPY(privars->mod_mat, mat);
     return BRLCAD_OK;
 }
 
@@ -844,10 +846,11 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     fastf_t delta;
     point_t *pt_prev = NULL;
     fastf_t dist_prev=1.0;
+    fastf_t pointSize = DM_X_DEFAULT_POINT_SIZE;
+
     static int nvectors = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
-    fastf_t pointSize = DM_X_DEFAULT_POINT_SIZE;
 
     if (dmp->dm_debugLevel) {
 	bu_log("X_drawVList()\n");
@@ -858,7 +861,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
      * slightly in front of eye plane (perspective mode only).  This
      * value is a SWAG that seems to work OK.
      */
-    delta = privars->xmat[15]*0.0001;
+    delta = *(privars->xmat)[15]*0.0001;
     if (delta < 0.0)
 	delta = -delta;
     if (delta < SQRT_SMALL_FASTF)
@@ -871,6 +874,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
 	point_t *pt = tvp->pt;
+	point_t tlate;
 	fastf_t dist;
 
 	/* Viewing region is from -1.0 to +1.0 */
@@ -883,6 +887,16 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_START:
 		case BN_VLIST_TRI_VERTNORM:
+		    continue;
+		case BN_VLIST_MODEL_MAT:
+		    privars->xmat = &(privars->mod_mat);
+		    continue;
+		case BN_VLIST_DISPLAY_MAT:
+		    MAT4X3PNT(tlate, (privars->disp_mat), *pt);
+		    privars->disp_mat[3] = privars->disp_mat[3] - tlate[0];
+		    privars->disp_mat[7] = privars->disp_mat[7] - tlate[1];
+		    privars->disp_mat[11] = privars->disp_mat[11] - tlate[2];
+		    privars->xmat = &(privars->disp_mat);
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
@@ -897,18 +911,18 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT(*pt, &privars->xmat[12]) + privars->xmat[15];
+			dist = VDOT(*pt, &(*(privars->xmat)[12])) + *(privars->xmat)[15];
 			if (dist <= 0.0) {
 			    pt_prev = pt;
 			    dist_prev = dist;
 			    continue;
 			} else {
-			    MAT4X3PNT(lpnt, privars->xmat, *pt);
+			    MAT4X3PNT(lpnt, *(privars->xmat), *pt);
 			    dist_prev = dist;
 			    pt_prev = pt;
 			}
 		    } else {
-			MAT4X3PNT(lpnt, privars->xmat, *pt);
+			MAT4X3PNT(lpnt, *(privars->xmat), *pt);
 		    }
 
 		    lpnt[0] *= 2047;
@@ -930,7 +944,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT(*pt, &privars->xmat[12]) + privars->xmat[15];
+			dist = VDOT(*pt, &(*(privars->xmat)[12])) + *(privars->xmat)[15];
 			if (dmp->dm_debugLevel > 2)
 			    bu_log("dist=%g, dist_prev=%g\n", dist, dist_prev);
 			if (dist <= 0.0) {
@@ -949,7 +963,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 				VSUB2(diff, *pt, *pt_prev);
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-				MAT4X3PNT(pnt, privars->xmat, tmp_pt);
+				MAT4X3PNT(pnt, *(privars->xmat), tmp_pt);
 				}
 			    }
 			} else {
@@ -963,19 +977,19 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 				VSUB2(diff, *pt, *pt_prev);
 				alpha = (-dist_prev + delta) / (dist - dist_prev);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-				MAT4X3PNT(lpnt, privars->xmat, tmp_pt);
+				MAT4X3PNT(lpnt, *(privars->xmat), tmp_pt);
 				lpnt[0] *= 2047;
 				lpnt[1] *= 2047 * dmp->dm_aspect;
 				lpnt[2] *= 2047;
-				MAT4X3PNT(pnt, privars->xmat, *pt);
+				MAT4X3PNT(pnt, *(privars->xmat), *pt);
 				}
 			    } else {
-				MAT4X3PNT(pnt, privars->xmat, *pt);
+				MAT4X3PNT(pnt, *(privars->xmat), *pt);
 			    }
 			}
 			dist_prev = dist;
 		    } else {
-			MAT4X3PNT(pnt, privars->xmat, *pt);
+			MAT4X3PNT(pnt, *(privars->xmat), *pt);
 		    }
 
 		    pnt[0] *= 2047;
@@ -1063,7 +1077,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    }
 
 		    if (dmp->dm_perspective > 0) {
-			dist = VDOT(*pt, &privars->xmat[12]) + privars->xmat[15];
+			dist = VDOT(*pt, &(*(privars->xmat)[12])) + *(privars->xmat)[15];
 
 			if (dist <= 0.0) {
 			    /* nothing to plot - point is behind eye plane */
@@ -1071,7 +1085,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 			}
 		    }
 
-		    MAT4X3PNT(pnt, privars->xmat, *pt);
+		    MAT4X3PNT(pnt, *(privars->xmat), *pt);
 
 		    pnt[0] *= 2047;
 		    pnt[1] *= 2047 * dmp->dm_aspect;

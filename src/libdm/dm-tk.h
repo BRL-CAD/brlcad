@@ -34,7 +34,9 @@
 struct tk_vars {
     GC gc;
     Pixmap pix;
-    mat_t xmat;
+    mat_t *xmat;
+    mat_t mod_mat;		/* default model transformation matrix */
+    mat_t disp_mat;		/* display transformation matrix */
     int is_trueColor;
     unsigned long bd, bg, fg;   /* color of border, background, foreground */
     unsigned long pixels[NUM_PIXELS];

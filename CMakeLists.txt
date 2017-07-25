@@ -119,11 +119,21 @@ else(NOT EXISTS ${BRLCAD_CNT_FILE})
   set(BRLCAD_PRINT_MSGS 0)
 endif(NOT EXISTS ${BRLCAD_CNT_FILE})
 
-# Make sure the BRL-CAD library list is initialized empty - this way
-# if pieces are disabled between one configure and the next, they
-# won't linger in the list
-set(BRLCAD_LIBS "" CACHE STRING "BRL-CAD libraries" FORCE)
+# We will need to define a number of dependent options early on
+include(CMakeDependentOption)
 
+#---------------------------------------------------------------------
+# Generate position independent code by default (i.e. -fPIC)
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+
+# Check whether we need to add import/export lines to libraries
+if(MSVC)
+  set(CPP_DLL_DEFINES 1)
+endif(MSVC)
+
+# If we can, use OBJECT libraries to build both shared and static
+# libraries from the same .o files, saving double compilation
+cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
 
 #---------------------------------------------------------------------
 # Load general utility routines for BRL-CAD CMake logic
@@ -1480,7 +1490,6 @@ permissions).
 ")
 BRLCAD_OPTION(${EXTRADOCS_DEFAULT} BRLCAD_EXTRADOCS BRLCAD_EXTRADOCS_ALIASES BRLCAD_EXTRADOCS_DESCRIPTION)
 
-include(CMakeDependentOption)
 
 # The HTML output is used in the graphical help browsers in MGED and Archer,
 # as well as being the most likely candidate for external viewers. Turn this
@@ -2464,10 +2473,6 @@ if(WIN32)
 
 endif(WIN32)
 
-# Check whether we need to add import/export lines to libraries
-if(MSVC)
-  set(CPP_DLL_DEFINES 1)
-endif(MSVC)
 
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
@@ -2655,49 +2660,80 @@ set(BRLCAD_COMPILE_COUNT ${buildCounter})
 # DATE - RFC2822 timestamp
 set(BRLCAD_COMPILE_DATE \"${CONFIG_DATESTAMP}\")
 
+# Add definition HAVE_UNISTD_H to try_run for next couple tests, if present
+if(HAVE_UNISTD_H)
+  set(UNISTD_DEF "-DHAVE_UNISTD_H")
+endif(HAVE_UNISTD_H)
+
 # HOST
-set(BRLCAD_HOSTNAME_FILE "${BRLCAD_BINARY_DIR}/CMakeTmp/BRLCAD_BUILD_HOST")
-configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/report_hostname.c.in" "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c")
-if(NOT MSVC)
-  TRY_RUN(TIME_RESULT TIME_COMPILED
-    "${CMAKE_BINARY_DIR}/CMakeTmp"
-    "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"
-    OUTPUT_VARIABLE COMPILEMESSAGES)
-else(NOT MSVC)
-  set(CMAKE_REQUIRED_LIBRARIES ws2_32.lib)
-  TRY_RUN(TIME_RESULT TIME_COMPILED
-    "${CMAKE_BINARY_DIR}/CMakeTmp"
-    "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"
-    OUTPUT_VARIABLE COMPILEMESSAGES
-    CMAKE_FLAGS "-DLINK_LIBRARIES:STRING=ws2_32.lib")
-endif(NOT MSVC)
-# Let CMake give us the proper newline character(s) for the current platform
-file(READ "${BRLCAD_HOSTNAME_FILE}"  BRLCAD_COMPILE_HOST)
-string(STRIP ${BRLCAD_COMPILE_HOST} BRLCAD_COMPILE_HOST)
-DISTCLEAN("${BRLCAD_HOSTNAME_FILE}")
+set(report_hostname_src "
+#include <stdio.h>
+#ifdef HAVE_UNISTD_H
+  #include <unistd.h>
+  #define GETHOSTNAME_ERROR -1
+#else
+  #include <WinSock2.h>
+  #define GETHOSTNAME_ERROR SOCKET_ERROR
+#endif
+
+#define MAX_HOSTNAME 2048
+#if !defined(HAVE_UNISTD_H) || defined(_BSD_SOURCE) || defined(_XOPEN_SOURCE) && _XOPEN_SOURCE  >= 500 || defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112
+  #define HAVE_GETHOSTNAME 1
+#endif
+
+int main(void) {
+#if defined(HAVE_GETHOSTNAME)
+{
+    int ret; char hostname[MAX_HOSTNAME];
+  #if !defined(HAVE_UNISTD_H)
+    WORD wVersionRequested; WSADATA wsaData;
+    wVersionRequested = MAKEWORD(1, 1); WSAStartup(wVersionRequested, &wsaData);
+  #endif
+    ret = gethostname(hostname, MAX_HOSTNAME);
+    if (ret != GETHOSTNAME_ERROR) {printf(\"%s\", hostname);} else { printf(\"unknown\"); }
+}
+#else
+    printf(\"unknown\");
+#endif
+    return 0;
+}
+")
+file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c" "${report_hostname_src}")
+try_run(RH_RESULT RH_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
+  "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"
+  COMPILE_DEFINITIONS "${UNISTD_DEF}"
+  COMPILE_OUTPUT_VARIABLE RH_COMPILE_MSGS
+  RUN_OUTPUT_VARIABLE BRLCAD_COMPILE_HOSTNAME)
+if(NOT RH_COMPILED)
+  message(FATAL_ERROR "Could not build hostname reporting utility: ${RH_COMPILE_MSGS}")
+endif(NOT RH_COMPILED)
+if(RH_RESULT)
+  message(FATAL_ERROR "Could not run hostname reporting utility: ${BRLCAD_COMPILE_HOSTNAME}")
+endif(RH_RESULT)
+string(STRIP ${BRLCAD_COMPILE_HOSTNAME} BRLCAD_COMPILE_HOSTNAME)
+file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c")
 
 # USER
 set(report_username_src "
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_UNISTD_H
    #include <unistd.h>
 #endif
 int main(void) {
   char *name = getenv(\"USERNAME\");
-  if (!name) name = getenv(\"USER\");
-  if (!name) name = \"unknown\";
+  if ((name == 0) || (strlen(name) == 0)) name = getenv(\"USER\");
+  if ((name == 0) || (strlen(name) == 0)) name = \"unknown\";
   printf(\"%s\", name);
   return 0;
-}")
+}
+")
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c" "${report_username_src}")
 # Add definition HAVE_UNISTD_H to try_run
-if(HAVE_UNISTED_H)
-  set(UNISTED_DEF "-DHAVE_UNISTED_H")
-endif(HAVE_UNISTED_H)
 try_run(RU_RESULT RU_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
   "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c"
-  COMPILE_DEFINITIONS "${UNISTED_DEF}"
+  COMPILE_DEFINITIONS "${UNISTD_DEF}"
   COMPILE_OUTPUT_VARIABLE RU_COMPILE_MSGS
   RUN_OUTPUT_VARIABLE BRLCAD_COMPILE_USER)
 if(NOT RU_COMPILED)
@@ -2707,7 +2743,6 @@ if(RU_RESULT)
   message(FATAL_ERROR "Could not run username reporting utility: ${BRLCAD_COMPILE_USER}")
 endif(RU_RESULT)
 string(STRIP ${BRLCAD_COMPILE_USER} BRLCAD_COMPILE_USER)
-message("BRLCAD_COMPILE_USER: ${BRLCAD_COMPILE_USER}")
 file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c")
 
 #---------------------------------------------------------------------
@@ -2779,7 +2814,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMENT ""
     )
   add_custom_target(timestamp ALL
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts "Build Time:  "
+    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts \"Build Time:  \"
     DEPENDS ${BUILD_DELTA_START}
     )
   set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
