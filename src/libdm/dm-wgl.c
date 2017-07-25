@@ -51,6 +51,8 @@
 
 #include "./dm_private.h"
 
+#define ENABLE_POINT_SMOOTH 1
+
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))
 
@@ -1386,7 +1388,9 @@ wgl_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
 	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
     }
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
@@ -1406,7 +1410,9 @@ wgl_drawPoint3D(dm *dmp, point_t point)
 	bu_log("\tdmp: %llu\tpt - %lf %lf %lf\n", (unsigned long long)dmp, V3ARGS(point));
     }
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     glVertex3dv(point);
     glEnd();
@@ -1427,7 +1433,9 @@ wgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
 	bu_log("wgl_drawPoint3D():\n");
     }
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     for (i = 0; i < npoints; ++i)
 	glVertex3dv(points[i]);

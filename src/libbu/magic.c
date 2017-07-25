@@ -150,6 +150,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "rt_rpc_internal";
 	case RT_SKETCH_INTERNAL_MAGIC:
 	    return "rt_sketch_internal";
+	case RT_ANNOT_INTERNAL_MAGIC:
+	    return "rt_annot_internal";
 	case RT_SUBMODEL_INTERNAL_MAGIC:
 	    return "rt_submodel_internal";
 	case RT_SUPERELL_INTERNAL_MAGIC:

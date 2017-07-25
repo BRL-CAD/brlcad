@@ -22,7 +22,6 @@ set(documentation_DATA
   README.Windows
   TODO.BREP
   TODO.shaded_displays
-  anim.txt
   archer_ack.txt
   benchmark.tr
   brep.txt
@@ -206,13 +205,10 @@ set(documentation_mged_old_DATA
   mged/wm-prims.ps
   mged/wm-tube.ps
   mk.tr
-  movie.txt
   old-mged.tr
   pkg.tr
   regions.txt
   rounding.txt
-  sun.txt
-  tube.txt
   tool_categories.txt
   ecosystem.dot
   )

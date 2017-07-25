@@ -35,8 +35,13 @@ RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 # Quiet all warnings in this directory
 DISABLE_WARNINGS()
 
-# Ideally we wouldn't need this, but in a few cases we're using
-# BRL-CAD's include dirs.
+# Set a variable that will tell build logic in subdirectories that there is a
+# parent build.  This will in some cases disable attempts to define settings
+# such as RPATH values that we need the parent build to manage.
+set(HAVE_PARENT_BUILD 1)
+
+# Ideally we wouldn't need this, but in a few cases we're using BRL-CAD's
+# include dirs.
 include_directories(
   "${BRLCAD_BINARY_DIR}/include"
   "${BRLCAD_SOURCE_DIR}/include"
@@ -866,6 +871,7 @@ mark_as_advanced(SC_MEMMGR_ENABLE_CHECKS)
 mark_as_advanced(SC_SDAI_ADDITIONAL_EXES_SRCS)
 mark_as_advanced(SC_TRACE_FPRINTF)
 SetTargetFolder(exp2cxx "Third Party Executables")
+SetTargetFolder(core "Compilation Utilities")
 SetTargetFolder(print_attrs "Compilation Utilities")
 SetTargetFolder(print_schemas "Compilation Utilities")
 SetTargetFolder(exppp "Third Party Executables")

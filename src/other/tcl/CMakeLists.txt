@@ -78,7 +78,16 @@ ENDIF(WIN32)
 # the build directory AND install directory.  Thanks to plplot for
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
+  if(COMMAND cmake_set_rpath)
+    cmake_set_rpath()
+  endif(COMMAND cmake_set_rpath)
+else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
+  if(NOT HAVE_PARENT_BUILD)
+    message(FATAL_ERROR "Not building as a subbuild, but CMake/RPath_Setup.cmake not found.  To build as a stand-alone build, add RPath_Setup.cmake to the CMake directory.")
+  endif(NOT HAVE_PARENT_BUILD)
+endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
 
 #----------------------------------------------------------------------------
 # The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX 

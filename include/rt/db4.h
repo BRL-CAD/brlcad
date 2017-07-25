@@ -373,6 +373,16 @@ struct sketch_rec {
     unsigned char	skt_count[4];		/* number of additional granules */
 }; /* struct sketch_rec */
 
+struct annot_rec {
+    char	ant_id;			/*DBID_ANNOT */
+    char	ant_pad;
+    char	ant_name[NAMESIZE];
+    unsigned char	ant_V[8*3];		/* orgin map */
+    unsigned char       ant_vert_count[4];      /* number of vertices in annotation */
+    unsigned char       ant_seg_count[4];       /* number of segments in annotation */
+    unsigned char       ant_count[4];           /* number of additional granules */
+}; /* struct annot_rec */
+
 struct cline_rec {
     char	cli_id;			/* DBID_CLINE */
     char	cli_pad;
@@ -422,6 +432,7 @@ union record {
 #define DBID_PARTICLE	'p'	/* a particle (lozenge) */
 #define DBID_NMG	'N'	/* NMG solid */
 #define	DBID_SKETCH	'd'	/* 2D sketch */
+#define DBID_ANNOT	'a'	/* 2D annotations */
 #define	DBID_EXTR	'e'	/* solid of extrusion */
 #define DBID_CLINE	'c'	/* FASTGEN4 CLINE solid */
 #define	DBID_BOT	't'	/* Bag o' triangles */
@@ -462,6 +473,9 @@ union record {
 
     /* sketch */
     struct sketch_rec skt;
+
+    /* annotation */
+    struct annot_rec ant;
 
     /* FASTGEN4 CLINE element */
     struct cline_rec cli;

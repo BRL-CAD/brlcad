@@ -381,7 +381,18 @@ endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 ################################################################################
 # Installation stuff
-include(${OpenSceneGraph_SOURCE_DIR}/CMakeModules/RPath_Setup.cmake)
+if(EXISTS "${OpenSceneGraph_SOURCE_DIR}/CMakeModules/RPath_Setup.cmake")
+  include("${OpenSceneGraph_SOURCE_DIR}/CMakeModules/RPath_Setup.cmake")
+  if(COMMAND cmake_set_rpath)
+    cmake_set_rpath()
+  endif(COMMAND cmake_set_rpath)
+else(EXISTS "${OpenSceneGraph_SOURCE_DIR}/CMakeModules/RPath_Setup.cmake")
+  if(NOT HAVE_PARENT_BUILD)
+    message(FATAL_ERROR "Not building as a subbuild, but CMakeModules/RPath_Setup.cmake not found.  To build as a stand-alone build, add RPath_Setup.cmake to the CMakeModules directory.")
+  endif(NOT HAVE_PARENT_BUILD)
+endif(EXISTS "${OpenSceneGraph_SOURCE_DIR}/CMakeModules/RPath_Setup.cmake")
+
+
 include(${OpenSceneGraph_SOURCE_DIR}/CMakeModules/Path_Setup.cmake)
 
 ################################################################################
