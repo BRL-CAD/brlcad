@@ -543,7 +543,7 @@ int main(int argc, const char **argv) {
   try_compile(rfc2822_build "${CMAKE_BINARY_DIR}/CMakeTmp"
     SOURCES "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822.c"
     OUTPUT_VARIABLE RFC2822_BUILD_INFO
-    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822")
+    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/rfc2822${EXE_EXT}")
   if(NOT rfc2822_build)
     message(FATAL_ERROR "Could not build rfc2822 timestamp pretty-printing utility: ${RFC2822_BUILD_INFO}")
   endif(NOT rfc2822_build)
@@ -596,7 +596,7 @@ int main(int argc, const char **argv)
   file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/printtimestamp.c" "${printtimestamp_src}")
   try_compile(pts_build ${CMAKE_BINARY_DIR}/CMakeTmp
     "${CMAKE_BINARY_DIR}/CMakeTmp/printtimestamp.c"
-    COPY_FILE ${CMAKE_BINARY_DIR}/CMakeTmp/pts)
+    COPY_FILE ${CMAKE_BINARY_DIR}/CMakeTmp/pts${EXE_EXT})
   if(NOT pts_build)
     message(FATAL_ERROR "Could not build timestamp pretty-printing utility")
   endif(NOT pts_build)
@@ -628,7 +628,7 @@ int main(int argc, const char **argv) {
   try_compile(sstamp_build "${CMAKE_BINARY_DIR}/CMakeTmp"
     SOURCES "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp.c"
     OUTPUT_VARIABLE SSTAMP_BUILD_INFO
-    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp")
+    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT}")
   if(NOT sstamp_build)
     message(FATAL_ERROR "Could not build second timestamping utility: ${SSTAMP_BUILD_INFO}")
   endif(NOT sstamp_build)
@@ -708,7 +708,7 @@ int main(int argc, const char **argv) {
   try_compile(dreport_build "${CMAKE_BINARY_DIR}/CMakeTmp"
     SOURCES "${CMAKE_BINARY_DIR}/CMakeTmp/dreport.c"
     OUTPUT_VARIABLE FREPORT_BUILD_INFO
-    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/dreport")
+    COPY_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/dreport${EXE_EXT}")
   if(NOT dreport_build)
     message(FATAL_ERROR "Could not build time delta reporting utility: ${FREPORT_BUILD_INFO}")
   endif(NOT dreport_build)

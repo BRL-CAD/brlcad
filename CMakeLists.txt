@@ -139,6 +139,9 @@ cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DE
 # Load general utility routines for BRL-CAD CMake logic
 include("${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_Util.cmake")
 
+# Find the executable extension, if there is one
+get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
+
 #---------------------------------------------------------------------
 # Record the CMake command line arguments (more or less) in
 # CMakeFiles/CMakeOutput.log
@@ -153,7 +156,7 @@ generate_timer_exes()
 #---------------------------------------------------------------------
 # Mark the time at which the configuration process began.
 set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
-execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp" "${CONFIG_DELTA_START}")
+execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT}" "${CONFIG_DELTA_START}")
 
 #---------------------------------------------------------------------
 # Allow the BRLCAD_ROOT environment variable to set CMAKE_INSTALL_PREFIX
@@ -2817,16 +2820,16 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   add_custom_command(
     OUTPUT ${BUILD_DELTA_START}
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/sstamp "${BUILD_DELTA_START}"
+    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT} "${BUILD_DELTA_START}"
     COMMENT ""
     )
   add_custom_target(timestamp ALL
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts \"Build Time:  \"
+    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/pts${EXE_EXT} \"Build Time:  \"
     DEPENDS ${BUILD_DELTA_START}
     )
   set_target_properties(timestamp PROPERTIES FOLDER "Compilation Utilities")
   add_custom_target(buildtimedelta ALL
-    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/dreport final ${BUILD_DELTA_START} ${CONFIG_DELTA_START}
+    COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/dreport${EXE_EXT} final ${BUILD_DELTA_START} ${CONFIG_DELTA_START}
     COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
     )
   set_target_properties(buildtimedelta PROPERTIES FOLDER "Compilation Utilities")
