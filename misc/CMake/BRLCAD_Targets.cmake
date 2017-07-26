@@ -139,7 +139,7 @@ endfunction(FILE_LANG)
 # Assemble the targets and compilation flags needed by the target
 function(GET_FLAGS_AND_DEFINITIONS targetname target_libs)
 
-  cmake_parse_arguments(G "NO_DLL;ONLY_DLL" "CFLAGS;CXXFLAGS;DEFINES" "" ${ARGN})
+  cmake_parse_arguments(G "" "CFLAGS;CXXFLAGS;DEFINES" "" ${ARGN})
 
   #####################################################################
   # Compile flags - note that targets may have separate C and C++ flags
@@ -189,39 +189,24 @@ function(GET_FLAGS_AND_DEFINITIONS targetname target_libs)
   # Compilation definitions (common to all source files)
 
   if(G_DEFINES)
-    if(NOT G_ONLY_DLL)
-      get_property(T_DEFINES GLOBAL PROPERTY ${targetname}_DEFINES)
-      foreach(libitem ${target_libs})
-	get_property(${libitem}_DEFINES GLOBAL PROPERTY ${libitem}_DEFINES)
-	list(APPEND T_DEFINES ${${libitem}_DEFINES})
-      endforeach(libitem ${target_libs})
-    endif(NOT G_ONLY_DLL)
 
-    # DLL definitions
-    if(NOT G_NO_DLL AND CPP_DLL_DEFINES)
+    get_property(T_DEFINES GLOBAL PROPERTY ${targetname}_DEFINES)
+    message("${targetname}_DEFINES: ${T_DEFINES}")
+    foreach(libitem ${target_libs})
+      get_property(${libitem}_DEFINES GLOBAL PROPERTY ${libitem}_DEFINES)
+      list(APPEND T_DEFINES ${${libitem}_DEFINES})
+    endforeach(libitem ${target_libs})
 
-      # Start with the target itself
-      get_property(T_DLL_DEFINES GLOBAL PROPERTY ${targetname}_DLL_DEFINES)
-      set(T_DEFINES ${T_DEFINES} ${T_DLL_DEFINES})
-
-      # In case of re-running cmake, make sure the DLL_IMPORTS define for this
-      # specific target is removed if the target looks like a library, since for
-      # the actual library target we need to export, not import. (Don't want to
-      # do this willy-nilly, since (for example) the rt exec target and the librt
-      # library will both map to the same "UPPER_CORE" name...)
-      if(T_DEFINES AND ${targetname} MATCHES "^lib*")
-	string(REPLACE "lib" "" LOWERCORE "${targetname}")
-	string(TOUPPER ${LOWERCORE} UPPER_CORE)
-	list(REMOVE_ITEM T_DEFINES ${UPPER_CORE}_DLL_IMPORTS)
-      endif(T_DEFINES AND ${targetname} MATCHES "^lib*")
-
-      # See what the libraries add from a DLL perspective...
-      foreach(libitem ${target_libs})
-	get_property(${libitem}_DLL_DEFINES GLOBAL PROPERTY ${libitem}_DLL_DEFINES)
-	list(APPEND T_DEFINES ${${libitem}_DLL_DEFINES})
-      endforeach(libitem ${target_libs})
-
-    endif(NOT G_NO_DLL AND CPP_DLL_DEFINES)
+    # In case of re-running cmake, make sure the DLL_IMPORTS define for this
+    # specific target is removed if the target looks like a library, since for
+    # the actual library target we need to export, not import. (Don't want to
+    # do this willy-nilly, since (for example) the rt exec target and the librt
+    # library will both map to the same "UPPER_CORE" name...)
+    if(T_DEFINES AND ${targetname} MATCHES "^lib*")
+      string(REPLACE "lib" "" LOWERCORE "${targetname}")
+      string(TOUPPER ${LOWERCORE} UPPER_CORE)
+      list(REMOVE_ITEM T_DEFINES ${UPPER_CORE}_DLL_IMPORTS)
+    endif(T_DEFINES AND ${targetname} MATCHES "^lib*")
 
     # No duplicate definitions needed
     if(T_DEFINES)
@@ -243,7 +228,7 @@ endfunction(GET_FLAGS_AND_DEFINITIONS)
 # source file (i.e. rt, rtweight, etc...)
 function(SET_FLAGS_AND_DEFINITIONS srcslist)
 
-  cmake_parse_arguments(S "NO_STRICT_CXX" "" "CFLAGS;CXXFLAGS;DEFINES" ${ARGN})
+  cmake_parse_arguments(S "NO_STRICT_CXX" "TARGET" "CFLAGS;CXXFLAGS;DEFINES" ${ARGN})
 
   foreach(srcfile ${srcslist})
 
@@ -287,6 +272,11 @@ function(SET_FLAGS_AND_DEFINITIONS srcslist)
       endif( (S_NO_STRICT OR _S_NO_STRICT_CXX) AND NOERROR_FLAG_CXX AND BRLCAD_ENABLE_STRICT)
 
     endif("${file_language}" STREQUAL "C++")
+
+    # If we have been supplied a target name, set the global definitions property
+    if(S_TARGET)
+      set_property(GLOBAL PROPERTY ${S_TARGET}_DEFINES "${S_DEFINES}")
+    endif(S_TARGET)
 
   endforeach(srcfile ${srcslist})
 
@@ -380,8 +370,9 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   SET_LANG_CXX("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}")
 
   # Handle the build flags and the general definitions common to both shared and static
-  GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" NO_DLL CFLAGS L_C_FLAGS CXXFLAGS L_CXX_FLAGS DEFINES L_GENERAL_DEFINES)
-  SET_FLAGS_AND_DEFINITIONS("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}" CFLAGS "${L_C_FLAGS}" CXXFLAGS "${L_CXX_FLAGS}" DEFINES "${L_GENERAL_DEFINES}")
+  GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" NO_DLL CFLAGS L_C_FLAGS CXXFLAGS L_CXX_FLAGS DEFINES L_DEFINES)
+  SET_FLAGS_AND_DEFINITIONS("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}" TARGET ${libname} CFLAGS "${L_C_FLAGS}" CXXFLAGS "${L_CXX_FLAGS}" DEFINES "${L_DEFINES}")
+  message("${libname}: ${L_DEFINES}")
 
   # Local copy of srcslist in case manipulation is needed
     set(lsrcslist ${srcslist})
@@ -400,10 +391,10 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
   if(BUILD_SHARED_LIBS)
     add_library(${libname} SHARED ${lsrcslist}  ${L_SHARED_SRCS})
-    GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" ONLY_DLL DEFINES L_DLL_DEFINES)
-    foreach(dll_define ${L_DLL_DEFINES})
-      set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${dll_define}")
-    endforeach(dll_define ${L_DLL_DEFINES})
+    string(REPLACE "lib" "" LOWERCORE "${libname}")
+    string(TOUPPER ${LOWERCORE} UPPER_CORE)
+    set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
+    set_property(GLOBAL APPEND PROPERTY ${libname}_DEFINES "${UPPER_CORE}_DLL_IMPORTS")
   endif(BUILD_SHARED_LIBS)
   if(BUILD_STATIC_LIBS)
     add_library(${libname}-static STATIC ${lsrcslist} ${L_STATIC_SRCS})
@@ -431,7 +422,6 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
   # If we're building the shared library, there are a few more things we need to do
   if(BUILD_SHARED_LIBS OR L_SHARED)
-
     set_target_properties(${libname} PROPERTIES FOLDER "BRL-CAD Shared Libraries${SUBFOLDER}")
     VALIDATE_STYLE("${libname}" "${srcslist};${L_SHARED_SRCS}")
     # If we have libraries to link for a shared library, link them.
@@ -444,31 +434,6 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
     endif(NOT L_NO_INSTALL)
-
-    # Generate the upper case abbreviation of the library that is used for
-    # DLL definitions.  If We are using DLLs, we need to define export
-    # for this library.
-    if(CPP_DLL_DEFINES)
-
-      # For this target, we need to export
-      string(REPLACE "lib" "" LOWERCORE "${libname}")
-      string(TOUPPER ${LOWERCORE} UPPER_CORE)
-      foreach(srcfile ${srcslist} ${L_SHARED_SRCS})
-	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
-      endforeach(srcfile ${srcslist} ${L_SHARED_SRCS})
-
-      # For any CPP_DLL_DEFINES DLL library, users of that library will need
-      # the DLL_IMPORTS definitions specific to that library - these are stored
-      # in ${UPPER_CORE}_DLL_DEFINES.  The particular IMPORTS definition is
-      # defined in BRL-CAD according to the below pattern - custom or
-      # additional IMPORTS will need to be added "manually" in the
-      # CMakeLists.txt files where the library targets are being defined.
-      get_property(${libname}_DLL_DEFINES GLOBAL PROPERTY ${libname}_DLL_DEFINES)
-      list(APPEND ${libname}_DLL_DEFINES ${UPPER_CORE}_DLL_IMPORTS)
-      set_property(GLOBAL PROPERTY ${libname}_DLL_DEFINES "${${libname}_DLL_DEFINES}")
-
-    endif(CPP_DLL_DEFINES)
-
   endif(BUILD_SHARED_LIBS OR L_SHARED)
 
 endfunction(BRLCAD_ADDLIB libname srcslist libslist)
