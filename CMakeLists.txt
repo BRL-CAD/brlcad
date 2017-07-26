@@ -2698,10 +2698,17 @@ int main(void) {
     return 0;
 }
 ")
+# Grumble... find_library doesn't find ws2_32, so set it by hand.
+if(CPP_DLL_DEFINES)
+  set(WS2_32_LIBRARY ws2_32)
+else(CPP_DLL_DEFINES)
+  set(WS2_32_LIBRARY "")
+endif(CPP_DLL_DEFINES)
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c" "${report_hostname_src}")
 try_run(RH_RESULT RH_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
   "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"
   COMPILE_DEFINITIONS "${UNISTD_DEF}"
+  LINK_LIBRARIES "${WS2_32_LIBRARY}"
   COMPILE_OUTPUT_VARIABLE RH_COMPILE_MSGS
   RUN_OUTPUT_VARIABLE BRLCAD_COMPILE_HOSTNAME)
 if(NOT RH_COMPILED)
