@@ -191,7 +191,6 @@ function(GET_FLAGS_AND_DEFINITIONS targetname target_libs)
   if(G_DEFINES)
 
     get_property(T_DEFINES GLOBAL PROPERTY ${targetname}_DEFINES)
-    message("${targetname}_DEFINES: ${T_DEFINES}")
     foreach(libitem ${target_libs})
       get_property(${libitem}_DEFINES GLOBAL PROPERTY ${libitem}_DEFINES)
       list(APPEND T_DEFINES ${${libitem}_DEFINES})
@@ -372,7 +371,6 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   # Handle the build flags and the general definitions common to both shared and static
   GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" NO_DLL CFLAGS L_C_FLAGS CXXFLAGS L_CXX_FLAGS DEFINES L_DEFINES)
   SET_FLAGS_AND_DEFINITIONS("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}" TARGET ${libname} CFLAGS "${L_C_FLAGS}" CXXFLAGS "${L_CXX_FLAGS}" DEFINES "${L_DEFINES}")
-  message("${libname}: ${L_DEFINES}")
 
   # Local copy of srcslist in case manipulation is needed
     set(lsrcslist ${srcslist})
