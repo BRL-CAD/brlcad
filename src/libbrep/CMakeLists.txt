@@ -54,7 +54,9 @@ CMAKEFILES(${libbrep_ignored_files})
 set(libbrep_DEFINES "")
 
 # Set libbrep compile definitions
-set_property(GLOBAL PROPERTY libbrep_DEFINES "ON_DLL_IMPORTS")
+if(CPP_DLL_DEFINES)
+  set_property(GLOBAL PROPERTY libbrep_DEFINES "ON_DLL_IMPORTS")
+endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
