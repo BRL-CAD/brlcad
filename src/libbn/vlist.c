@@ -69,7 +69,6 @@ bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
 	    case BN_VLIST_POINT_SIZE:
 	    case BN_VLIST_LINE_WIDTH:
 	    case BN_VLIST_MODEL_MAT:
-	    case BN_VLIST_DISPLAY_MAT:
 		/* attribute, not location */
 		break;
 	    case BN_VLIST_LINE_MOVE:
@@ -80,6 +79,7 @@ bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
 	    case BN_VLIST_TRI_MOVE:
 	    case BN_VLIST_TRI_DRAW:
 	    case BN_VLIST_TRI_END:
+	    case BN_VLIST_DISPLAY_MAT:
 		V_MIN((*bmin)[X], (*pt)[X]);
 		V_MAX((*bmax)[X], (*pt)[X]);
 		V_MIN((*bmin)[Y], (*pt)[Y]);

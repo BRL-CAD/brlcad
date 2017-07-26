@@ -3116,19 +3116,21 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
     int i, p_ver, p_hor;
     struct rt_annot_internal *anip;
     struct txt_seg *tsg;
+    struct line_seg *lsg;
 
     intern->idb_type = ID_ANNOT;
     intern->idb_meth = &OBJ[ID_ANNOT];
     BU_ALLOC(intern->idb_ptr, struct rt_annot_internal);
     anip = (struct rt_annot_internal *)intern->idb_ptr;
     anip->magic = RT_ANNOT_INTERNAL_MAGIC;
-
-
-    for (i = 0; i<ELEMENTS_PER_POINT; i++)
-	anip->V[i] = atof(cmd_argvs[3+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
-
+    anip->ant.count = 1;
     anip->vert_count = 1;
     anip->verts = (point2d_t *)bu_calloc(anip->vert_count, sizeof(point2d_t), "verts");
+
+
+    for (i = 0; i<ELEMENTS_PER_POINT; i++) {
+	anip->V[i] = atof(cmd_argvs[3+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+   }
 
     BU_ALLOC(tsg, struct txt_seg);
 
@@ -3137,15 +3139,26 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
     bu_vls_init(&tsg->label);
     bu_vls_strcpy(&tsg->label, cmd_argvs[6]);
 
+    BU_ALLOC(lsg, struct line_seg);
+    lsg->magic = CURVE_LSEG_MAGIC;
+    lsg->start = 0;
+    lsg->end = 1;
+
+    anip->verts[1][0] = (anip->V[0]);
+    anip->verts[1][1] = (anip->V[1]);
 
     for (i = 0; i<ELEMENTS_PER_POINT2D; i++)
 	anip->verts[0][i] = atof(cmd_argvs[7+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
-
 
     p_ver = atoi(cmd_argvs[9]);
     p_hor = atoi(cmd_argvs[10]);
 
     rt_pos_flag(&tsg->pt_rel_pos, p_hor, p_ver);
+    anip->ant.segments = (void **)bu_calloc(anip->ant.count, sizeof(void *), "segs");
+    anip->ant.reverse = (int *)bu_calloc(anip->ant.count, sizeof(int), "rev");
+
+    anip->ant.segments[0] = (void *)tsg;
+    anip->ant.reverse[0] = 0;
 
     return GED_OK;
 }
