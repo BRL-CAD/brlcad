@@ -4451,11 +4451,6 @@ package provide cadwidgets::Ged 1.0
 
     if {$itk_option(-gridSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
-	set view [eval $mGed screen2view $itk_component($_pane) $mpos]
-	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
-	set mpos [$mGed view2screen $itk_component($_pane) $view]
-
-	# This will regenerate the circle based on the snapped mouse position
 	eval $mGed mouse_poly_circ $itk_component($_pane) $mpos
     }
 
@@ -4504,11 +4499,6 @@ package provide cadwidgets::Ged 1.0
 
     if {$itk_option(-gridSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
-	set view [eval $mGed screen2view $itk_component($_pane) $mpos]
-	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
-	set mpos [$mGed view2screen $itk_component($_pane) $view]
-
-	# This will regenerate the circle based on the snapped mouse position
 	eval $mGed mouse_poly_ell $itk_component($_pane) $mpos
     }
 
@@ -4530,11 +4520,6 @@ package provide cadwidgets::Ged 1.0
 
     if {$itk_option(-gridSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
-	set view [eval $mGed screen2view $itk_component($_pane) $mpos]
-	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
-	set mpos [$mGed view2screen $itk_component($_pane) $view]
-
-	# This will regenerate the rectangle based on the snapped mouse position
 	eval $mGed mouse_poly_rect $itk_component($_pane) $mpos
     }
 
