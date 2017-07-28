@@ -627,9 +627,8 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
     double3 a_color;
     uchar3 rgb;
     struct hit hitp;
-    global struct partition *pp;
     uint pp_eval, head;
-    int flipflag;
+    bool flipflag;
 
     a_color = 0.0;
     hitp.hit_dist = INFINITY;
@@ -643,7 +642,8 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 	flipflag = 0;
 	pp_eval = 0;
 	for (uint index = head; index != UINT_MAX; index = partitions[index].forw_pp) {
-	    pp = &partitions[index];
+	    global struct partition *pp = &partitions[index];
+
 	    if (pp->evaluated) {
 		RESULT_TYPE segp = &segs[pp->inseg];
 

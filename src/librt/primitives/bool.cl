@@ -210,7 +210,7 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 	global struct partition *newpp;
 	uint lastseg;
 	global struct hit *lasthit;
-	int lastflip = 0;
+	bool lastflip = 0;
 	uint j;
 
 	/* Make nearly zero be exactly zero */
