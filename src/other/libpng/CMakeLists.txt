@@ -11,19 +11,9 @@
 # For conditions of distribution and use, see the disclaimer
 # and license in png.h
 
-cmake_minimum_required(VERSION 2.8.3)
-cmake_policy(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
+cmake_policy(VERSION 3.0.2)
 
-# Set MacOSX @rpath usage globally.
-if (POLICY CMP0020)
-  cmake_policy(SET CMP0020 NEW)
-endif(POLICY CMP0020)
-if (POLICY CMP0026)
-  cmake_policy(SET CMP0026 OLD)
-endif(POLICY CMP0026)
-if (POLICY CMP0042)
-  cmake_policy(SET CMP0042 NEW)
-endif(POLICY CMP0042)
 # Use new variable expansion policy.
 if (POLICY CMP0053)
   cmake_policy(SET CMP0053 NEW)
@@ -485,37 +475,58 @@ function(png_add_test)
   endif()
 endfunction()
 
-# Ensure the CMAKE_LIBRARY_OUTPUT_DIRECTORY is set
-IF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "lib")
-ENDIF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-
 # Set a variable with CMake code which:
 # Creates a symlink from src to dest (if possible) or alternatively
 # copies if different.
-macro(CREATE_SYMLINK SRC_FILE DEST_FILE)
-  FILE(REMOVE ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${DEST_FILE})
-  if(WIN32 AND NOT CYGWIN AND NOT MSYS)
-    ADD_CUSTOM_COMMAND(
-        OUTPUT ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${DEST_FILE}   ${CMAKE_CURRENT_BINARY_DIR}/${DEST_FILE}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different  "${SRC_FILE}" ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${DEST_FILE}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different  "${SRC_FILE}" ${CMAKE_CURRENT_BINARY_DIR}/${DEST_FILE}
-        DEPENDS ${PNG_LIB_TARGETS}
-        )
-    ADD_CUSTOM_TARGET(${DEST_FILE}_COPY ALL DEPENDS ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${DEST_FILE})
-  else(WIN32 AND NOT CYGWIN AND NOT MSYS)
-    get_filename_component(LINK_TARGET "${SRC_FILE}" NAME)
-    set(ERASE_FILE 0)
-    if(NOT EXISTS ${DEST_FILE})
-      execute_process(COMMAND ${CMAKE_COMMAND} -E touch ${DEST_FILE})
-      set(ERASE_FILE 1)
-    endif(NOT EXISTS ${DEST_FILE})
-    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${LINK_TARGET}" ${DEST_FILE} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    if(ERASE_FILE)
-       execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${DEST_FILE})
-    endif(ERASE_FILE)
-  endif(WIN32 AND NOT CYGWIN AND NOT MSYS)
-endmacro()
+include(CMakeParseArguments)
+
+function(CREATE_SYMLINK DEST_FILE)
+
+  cmake_parse_arguments(S "" "WDIR;FILE;TARGET" "" ${ARGN})
+
+  if(NOT S_TARGET AND NOT S_FILE)
+    message(FATAL_ERROR "Specify either a TARGET or a FILE for CREATE_SYMLINK to link to.")
+  endif(NOT S_TARGET AND NOT S_FILE)
+
+  if(S_TARGET AND S_FILE)
+    message(FATAL_ERROR "CREATE_SYMLINK called with both source file ${S_FILE} and build target ${S_TARGET} arguments - can only handle 1 type per call.")
+  endif(S_TARGET AND S_FILE)
+
+  if(S_FILE)
+    # If we don't need to symlink something that's coming from a build target,
+    # we can go ahead and symlink/copy at configure time.
+
+    if(CMAKE_HOST_WIN32 AND NOT CYGWIN AND NOT MSYS)
+      execute_process(
+	COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${S_FILE} ${DEST_FILE}
+	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+	)
+    else(CMAKE_HOST_WIN32 AND NOT CYGWIN AND NOT MSYS)
+      execute_process(
+	COMMAND ${CMAKE_COMMAND} -E create_symlink ${S_FILE} ${DEST_FILE}
+	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+	)
+    endif(CMAKE_HOST_WIN32 AND NOT CYGWIN AND NOT MSYS)
+  endif(S_FILE)
+
+  if(S_TARGET)
+    # We need to use generator expressions, which can be a bit tricky, so for
+    # simplicity make the symlink a POST_BUILD step and use the TARGET
+    # signature of add_custom_command.
+
+    if(CMAKE_HOST_WIN32 AND NOT CYGWIN AND NOT MSYS)
+      add_custom_command(TARGET ${S_TARGET} POST_BUILD
+	COMMAND "${CMAKE_COMMAND}" -E copy_if_different $<TARGET_LINKER_FILE_NAME:${S_TARGET}> $<TARGET_LINKER_FILE_DIR:${S_TARGET}>/${DEST_FILE}
+	)
+    else(CMAKE_HOST_WIN32 AND NOT CYGWIN AND NOT MSYS)
+      add_custom_command(TARGET ${S_TARGET} POST_BUILD
+	COMMAND "${CMAKE_COMMAND}" -E create_symlink $<TARGET_LINKER_FILE_NAME:${S_TARGET}> $<TARGET_LINKER_FILE_DIR:${S_TARGET}>/${DEST_FILE}
+	)
+    endif(CMAKE_HOST_WIN32 AND NOT CYGWIN AND NOT MSYS)
+
+  endif(S_TARGET)
+
+endfunction()
 
 # Create source generation scripts.
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/genchk.cmake.in
@@ -543,11 +554,11 @@ if(NOT WIN32 OR CYGWIN OR MINGW)
   set(LIBS        "-lz -lm")
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libpng.pc.in
     ${CMAKE_CURRENT_BINARY_DIR}/${PNGLIB_NAME}.pc @ONLY)
-  CREATE_SYMLINK(${PNGLIB_NAME}.pc libpng.pc)
+  CREATE_SYMLINK(libpng.pc FILE ${PNGLIB_NAME}.pc)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libpng-config.in
     ${CMAKE_CURRENT_BINARY_DIR}/${PNGLIB_NAME}-config @ONLY)
-  CREATE_SYMLINK(${PNGLIB_NAME}-config libpng-config)
+  CREATE_SYMLINK(libpng-config FILE ${PNGLIB_NAME}-config)
 endif(NOT WIN32 OR CYGWIN OR MINGW)
 
 # SET UP LINKS
@@ -571,37 +582,31 @@ endif()
 # INSTALL
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
   install(TARGETS ${PNG_LIB_TARGETS}
-      ${PNG_EXPORT_RULE}
-      RUNTIME DESTINATION bin
-      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    ${PNG_EXPORT_RULE}
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
   if(PNG_SHARED)
     # Create a symlink for libpng.dll.a => libpng16.dll.a on Cygwin
     if(CYGWIN OR MINGW)
-       get_target_property(BUILD_TARGET_LOCATION png LOCATION_${CMAKE_BUILD_TYPE})
-       CREATE_SYMLINK(${BUILD_TARGET_LOCATION} libpng${CMAKE_IMPORT_LIBRARY_SUFFIX})
-       install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libpng${CMAKE_IMPORT_LIBRARY_SUFFIX}
-         DESTINATION ${CMAKE_INSTALL_LIBDIR})
+      CREATE_SYMLINK(libpng${CMAKE_IMPORT_LIBRARY_SUFFIX} TARGET png WDIR "${CLO_DIR_FULL}")
+      install(FILES $<TARGET_LINKER_FILE_DIR:png>/libpng${CMAKE_IMPORT_LIBRARY_SUFFIX} DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif(CYGWIN OR MINGW)
 
     if(NOT WIN32)
-      get_target_property(BUILD_TARGET_LOCATION png LOCATION_${CMAKE_BUILD_TYPE})
-      CREATE_SYMLINK(${BUILD_TARGET_LOCATION} libpng${CMAKE_SHARED_LIBRARY_SUFFIX})
-      install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libpng${CMAKE_SHARED_LIBRARY_SUFFIX}
-         DESTINATION ${CMAKE_INSTALL_LIBDIR})
+      CREATE_SYMLINK(libpng${CMAKE_SHARED_LIBRARY_SUFFIX} TARGET png WDIR "${CLO_DIR_FULL}")
+      install(FILES $<TARGET_LINKER_FILE_DIR:png>/libpng${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif(NOT WIN32)
   endif(PNG_SHARED)
 
   if(PNG_STATIC)
     if(NOT WIN32 OR CYGWIN OR MINGW)
-      get_target_property(BUILD_TARGET_LOCATION png_static LOCATION_${CMAKE_BUILD_TYPE})
-      CREATE_SYMLINK(${BUILD_TARGET_LOCATION} libpng${CMAKE_STATIC_LIBRARY_SUFFIX})
-      install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libpng${CMAKE_STATIC_LIBRARY_SUFFIX}
-         DESTINATION ${CMAKE_INSTALL_LIBDIR})
+      CREATE_SYMLINK( libpng${CMAKE_STATIC_LIBRARY_SUFFIX} TARGET png_static WDIR "${CAO_DIR_FULL}")
+      install(FILES $<TARGET_LINKER_FILE_DIR:png_static>/libpng${CMAKE_STATIC_LIBRARY_SUFFIX} DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif(NOT WIN32 OR CYGWIN OR MINGW)
- endif()
+  endif()
 endif()
 
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
@@ -629,7 +634,7 @@ if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
   install(FILES libpng.3 libpngpf.3      DESTINATION ${PNG_MAN_DIR}/man3)
   install(FILES png.5                    DESTINATION ${PNG_MAN_DIR}/man5)
   # Install pkg-config files
-  if(NOT WIN32 OR CYGWIN OR MINGW)
+  if(NOT CMAKE_HOST_WIN32 OR CYGWIN OR MINGW)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libpng.pc
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/libpng-config
@@ -638,7 +643,7 @@ if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${PNGLIB_NAME}-config
             DESTINATION bin)
-  endif(NOT WIN32 OR CYGWIN OR MINGW)
+  endif(NOT CMAKE_HOST_WIN32 OR CYGWIN OR MINGW)
 endif()
 
 # On versions of CMake that support it, create an export file CMake
@@ -658,4 +663,11 @@ endif()
 # to create msvc import lib for mingw compiled shared lib
 # pexports libpng.dll > libpng.def
 # lib /def:libpng.def /machine:x86
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
 
