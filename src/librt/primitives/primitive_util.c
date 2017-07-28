@@ -772,7 +772,7 @@ clt_db_store_regions(size_t sz_tree_rpn, union tree_rpn *rtp, size_t nregions, s
     cl_int error;
 
     if (nregions != 0) {
-	bu_log("OCLRegions:\t%ld regions\n\t%.2f KB regions, %.2f KB mtls\n", (sizeof(struct cl_bool_region)*nregions)/1024.0, (sizeof(*mtls)*nregions)/1024.0);
+	bu_log("OCLRegions:\t%ld regions\n\t%.2f KB regions, %.2f KB mtls\n", nregions, (sizeof(*regions)*nregions)/1024.0, (sizeof(*mtls)*nregions)/1024.0);
 	clt_db_bool_regions = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct cl_bool_region)*nregions, regions, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL boolean regions buffer");
 
