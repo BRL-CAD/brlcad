@@ -360,7 +360,7 @@ RT_EXPORT extern void
 clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes);
 
 RT_EXPORT extern void
-clt_db_store_boolean_regions(struct cl_bool_region *regions, size_t nregions, union tree_rpn *rtp, size_t sz_tree_rpn);
+clt_db_store_regions(size_t sz_tree_rpn, union tree_rpn *rtp, size_t nregions, struct cl_bool_region *regions, struct clt_region *mtls);
 
 RT_EXPORT extern void clt_db_release(void);
 

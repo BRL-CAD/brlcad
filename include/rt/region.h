@@ -81,6 +81,30 @@ struct cl_bool_region {
     cl_short reg_all_unions;        /**< @brief 1=boolean tree is all unions */
 };
 
+/*
+ * Values for Shader Function ID.
+ */
+#define SH_NONE 	0
+#define SH_PHONG	1
+
+
+struct clt_phong_specific {
+    cl_double wgt_specular;
+    cl_double wgt_diffuse;
+    cl_int shine;
+};
+
+/**
+ * The region structure.
+ */
+struct clt_region {
+    cl_float color[3];		/**< @brief explicit color:  0..1  */
+    cl_int mf_id;
+    union {
+	struct clt_phong_specific phg_spec;
+    }udata;
+};
+
 #endif
 
 /* Print a region */

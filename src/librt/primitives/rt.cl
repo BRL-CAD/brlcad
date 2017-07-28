@@ -317,8 +317,7 @@ double3 MAT4X3PNT(const double16 m, double3 i) {
 }
 
 inline double3
-shade(const double3 r_pt, const double3 r_dir, struct hit *hitp, const uint idx, const double3 lt_pos,
-      global uchar *ids, global uint *indexes, global uchar *prims, global struct region *regions)
+shade(const double3 r_pt, const double3 r_dir, struct hit *hitp, const double3 lt_pos, const uint idx, global struct region *regions)
 
 {
     double3 color;
@@ -364,8 +363,7 @@ void do_segp(RESULT_TYPE *res, const uint idx,
     if (acc->lightmodel == 4) {
 	if (seg_in->hit_dist >= 0.0) {
 	    norm(seg_in, acc->r_pt, acc->r_dir, acc->ids[idx], acc->prims + acc->indexes[idx]);
-	    const double3 color = shade(acc->r_pt, acc->r_dir, seg_in, idx,
-		    acc->lt_pos, acc->ids, acc->indexes, acc->prims, acc->regions);
+	    const double3 color = shade(acc->r_pt, acc->r_dir, seg_in, acc->lt_pos, 0/*FIXME*/, acc->regions);
 	    double f = exp(-seg_in->hit_dist*1e-10);
 	    acc->a_color += color * f;
 	    acc->a_total += f;
@@ -448,7 +446,7 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
          */
         switch (lightmodel) {
 	    default:
-		a_color = shade(r_pt, r_dir, hitp, idx, lt_pos, ids, indexes, prims, regions);
+		a_color = shade(r_pt, r_dir, hitp, lt_pos, 0/*FIXME*/, regions);
 	    	break;
             case 1:
                 /* Light from the "eye" (ray source).  Note sign change */
@@ -629,9 +627,11 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
     struct hit hitp;
     uint pp_eval, head;
     bool flipflag;
+    uint region_id;
 
     a_color = 0.0;
     hitp.hit_dist = INFINITY;
+    region_id = 0;
     if (ipartition[id] > 0) {
 	uint idx;
 
@@ -650,6 +650,7 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 		if (segp->seg_in.hit_dist < hitp.hit_dist) {
 		    hitp = pp->inhit;
 		    idx = segp->seg_sti;
+		    region_id = pp->region_id;
 		    flipflag = pp->inflip;
 		}
 		pp_eval = 1;
@@ -670,7 +671,7 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 	    /*
 	     * Diffuse reflectance from each light source
 	     */
-	    a_color = shade(r_pt, r_dir, &hitp, idx, lt_pos, ids, indexes, prims, regions);
+	    a_color = shade(r_pt, r_dir, &hitp, lt_pos, region_id, regions);
 
 	    /*
 	     * e ^(-density * distance)

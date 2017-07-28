@@ -41,6 +41,9 @@
 #include "raytrace.h"
 #include "bn/plot3.h"
 
+#include "optical.h"
+#include "optical/plastic.h"
+
 
 extern void rt_ck(struct rt_i *rtip);
 
@@ -557,28 +560,66 @@ clt_prep(struct rt_i *rtip)
 
 	n_regions = rtip->nregions;
 
-	if (n_regions > 0) {
+	if (n_regions != 0) {
 	    /* Build boolean regions */
 	    struct region *regp;
 	    struct cl_bool_region *regions;
+	    struct clt_region *mtls;
 	    union tree_rpn *rtree;
 	    size_t sz_rtree_array;
 	    size_t len;
 
-	    regions = (struct cl_bool_region*)bu_calloc(n_regions, sizeof(struct cl_bool_region),
-		    "regions");
+	    regions = (struct cl_bool_region*)bu_calloc(n_regions, sizeof(*regions), "regions");
+	    mtls = (struct clt_region*)bu_calloc(n_regions, sizeof(*mtls), "mtls");
 
 	    /* Determine the size of all trees to build one array containing
 	     * the rpn trees from all regions.
 	     */
 	    sz_rtree_array = 0;
 
+	    i = 0;
 	    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+		const struct mfuncs *mfp;
+		const cl_float unset[3] = {1.0f, 1.0f, 1.0f};
+
 		RT_CK_REGION(regp);
 
 		len = 0;
 		rt_tree_rpn(NULL, regp->reg_treetop, &len);
 		sz_rtree_array += len;
+
+
+		VMOVE(mtls[i].color, unset);
+		mtls[i].mf_id = SH_PHONG;
+
+		if (regp->reg_mater.ma_color_valid) {
+		    VMOVE(mtls[i].color, regp->reg_mater.ma_color);
+		    mtls[i].mf_id = SH_PHONG;
+		}
+
+		mfp = (const struct mfuncs*)regp->reg_mfuncs;
+		if (mfp) {
+		    if (bu_strcmp(mfp->mf_name, "default") ||
+			    bu_strcmp(mfp->mf_name, "phong") ||
+			    bu_strcmp(mfp->mf_name, "plastic") ||
+			    bu_strcmp(mfp->mf_name, "mirror") ||
+			    bu_strcmp(mfp->mf_name, "glass")) {
+			struct phong_specific *src =
+			    (struct phong_specific*)regp->reg_udata;
+			struct clt_phong_specific *dst =
+			    &mtls[i].udata.phg_spec;
+
+			dst->shine = src->shine;
+			dst->wgt_diffuse = src->wgt_diffuse;
+			dst->wgt_specular = src->wgt_specular;
+
+			mtls[i].mf_id = SH_PHONG;
+		    } else {
+			bu_log("Unknown OCL shader: %s\n", mfp->mf_name);
+		    }
+		}
+
+		i++;
 	    }
 
 	    rtree = (union tree_rpn *)bu_calloc(sz_rtree_array, sizeof(union tree_rpn), "region rtree array");
@@ -605,7 +646,8 @@ clt_prep(struct rt_i *rtip)
 		i++;
 	    }
 
-	    clt_db_store_boolean_regions(regions, n_regions, rtree, sz_rtree_array);
+	    clt_db_store_regions(sz_rtree_array, rtree, n_regions, regions, mtls);
+	    bu_free(mtls, "mtls");
 	    bu_free(regions, "regions");
 	    bu_free(rtree, "region rtree array");
 	}

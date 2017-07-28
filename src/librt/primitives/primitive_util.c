@@ -26,9 +26,7 @@
 
 #include "bu/malloc.h"
 #include "bu/opt.h"
-#include "optical.h"
 #include "../librt_private.h"
-#include "optical/plastic.h"
 
 
 /**
@@ -709,30 +707,6 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
 }
 
 
-/*
- * Values for Shader Function ID.
- */
-#define SH_NONE 	0
-#define SH_PHONG	1
-
-
-struct clt_phong_specific {
-    cl_double wgt_specular;
-    cl_double wgt_diffuse;
-    cl_int shine;
-};
-
-/**
- * The region structure.
- */
-struct clt_region {
-    cl_float color[3];		/**< @brief explicit color:  0..1  */
-    cl_int mf_id;
-    union {
-	struct clt_phong_specific phg_spec;
-    }udata;
-};
-
 void
 clt_db_store(size_t count, struct soltab *solids[])
 {
@@ -740,55 +714,14 @@ clt_db_store(size_t count, struct soltab *solids[])
 
     if (count != 0) {
         cl_uchar *ids;
-        struct clt_region *regions;
         cl_uint *indexes;
         struct bu_pool *pool;
         size_t i;
 
 	ids = (cl_uchar*)bu_calloc(count, sizeof(*ids), "ids");
-	regions = (struct clt_region*)bu_calloc(count, sizeof(*regions), "regions");
 	for (i=0; i < count; i++) {
 	    const struct soltab *stp = solids[i];
-	    const struct region *regp;
-	    const struct mfuncs *mfp;
-	    const cl_float unset[3] = {1.0f, 1.0f, 1.0f};
-
             ids[i] = stp->st_id;
-
-	    VMOVE(regions[i].color, unset);
-	    regions[i].mf_id = SH_PHONG;
-
-	    if (BU_PTBL_LEN(&stp->st_regions) > 0) {
-		regp = (const struct region*)BU_PTBL_GET(&stp->st_regions, BU_PTBL_LEN(&stp->st_regions)-1);
-		RT_CK_REGION(regp);
-
-		if (regp->reg_mater.ma_color_valid) {
-		    VMOVE(regions[i].color, regp->reg_mater.ma_color);
-		    regions[i].mf_id = SH_PHONG;
-		}
-
-		mfp = (const struct mfuncs*)regp->reg_mfuncs;
-		if (mfp) {
-		    if (bu_strcmp(mfp->mf_name, "default") ||
-			    bu_strcmp(mfp->mf_name, "phong") ||
-			    bu_strcmp(mfp->mf_name, "plastic") ||
-			    bu_strcmp(mfp->mf_name, "mirror") ||
-			    bu_strcmp(mfp->mf_name, "glass")) {
-			struct phong_specific *src =
-			    (struct phong_specific*)regp->reg_udata;
-			struct clt_phong_specific *dst =
-			    &regions[i].udata.phg_spec;
-
-			dst->shine = src->shine;
-			dst->wgt_diffuse = src->wgt_diffuse;
-			dst->wgt_specular = src->wgt_specular;
-
-			regions[i].mf_id = SH_PHONG;
-		    } else {
-			bu_log("Unknown OCL shader: %s\n", mfp->mf_name);
-		    }
-		}
-	    }
 	}
 
 	indexes = (cl_uint*)bu_calloc(count+1, sizeof(*indexes), "indexes");
@@ -802,8 +735,8 @@ clt_db_store(size_t count, struct soltab *solids[])
             /*bu_log("\t(%ld bytes)\n",size);*/
 	    indexes[i] = indexes[i-1] + size;
 	}
-        bu_log("OCLDB:\t%ld primitives\n\t%.2f KB indexes, %.2f KB ids, %.2f KB prims, %.2f KB regions\n", count,
-		(sizeof(*indexes)*(count+1))/1024.0, (sizeof(*ids)*count)/1024.0, indexes[count]/1024.0, (sizeof(*regions)*count)/1024.0);
+        bu_log("OCLDB:\t%ld primitives\n\t%.2f KB indexes, %.2f KB ids, %.2f KB prims\n", count,
+		(sizeof(*indexes)*(count+1))/1024.0, (sizeof(*ids)*count)/1024.0, indexes[count]/1024.0);
 
 	if (indexes[count] != 0) {
 	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], pool->block, &error);
@@ -813,14 +746,11 @@ clt_db_store(size_t count, struct soltab *solids[])
 
 	clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uchar)*count, ids, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ids buffer");
-	clt_db_regions = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct clt_region)*count, regions, &error);
-	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL regions buffer");
 	clt_db_indexes = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*(count+1), indexes, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
 
 	bu_free(indexes, "indexes");
 	bu_free(ids, "ids");
-	bu_free(regions, "regions");
     }
 
     clt_db_nprims = count;
@@ -837,17 +767,23 @@ clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes)
 }
 
 void
-clt_db_store_boolean_regions(struct cl_bool_region *regions, size_t nregions, union tree_rpn *rtp, size_t sz_tree_rpn)
+clt_db_store_regions(size_t sz_tree_rpn, union tree_rpn *rtp, size_t nregions, struct cl_bool_region *regions, struct clt_region *mtls)
 {
     cl_int error;
+
+    if (nregions != 0) {
+	bu_log("OCLRegions:\t%ld regions\n\t%.2f KB regions, %.2f KB mtls\n", (sizeof(struct cl_bool_region)*nregions)/1024.0, (sizeof(*mtls)*nregions)/1024.0);
+	clt_db_bool_regions = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct cl_bool_region)*nregions, regions, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL boolean regions buffer");
+
+	clt_db_rtree = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(union cl_tree_rpn)*sz_tree_rpn, rtp, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL boolean trees buffer");
+
+	clt_db_regions = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct clt_region)*nregions, mtls, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL regions buffer");
+    }
+
     clt_db_nregions = nregions;
-
-    bu_log("OCLRegions:\t%ld regions\n\t%.2f KB total\n", (sizeof(struct cl_bool_region)*nregions)/1024.0);
-    clt_db_bool_regions = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct cl_bool_region)*nregions, regions, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL boolean regions buffer");
-
-    clt_db_rtree = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(union cl_tree_rpn)*sz_tree_rpn, rtp, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL boolean trees buffer");
 }
 
 void
@@ -862,7 +798,7 @@ clt_db_release(void)
     clReleaseMemObject(clt_db_bool_regions);
 
     clt_db_nprims = 0;
-	clt_db_nregions = 0;
+    clt_db_nregions = 0;
 }
 
 void
