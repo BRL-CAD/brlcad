@@ -842,12 +842,6 @@ rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESUL
     if (id >= (last_pixel-cur_pixel+1))
 	return;
 
-    global struct partition *pp;
-    RESULT_TYPE segp;
-
-    uchar3 rgb;
-    double3 color;
-
     uint head;
     uint lastregion_idx;
     int claiming_regions;
@@ -867,8 +861,7 @@ rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESUL
 
     //iterate over partitions
     for (uint current_index = head; current_index != UINT_MAX; current_index = partitions[current_index].forw_pp) {
-
-	pp = &partitions[current_index];
+	global struct partition *pp = &partitions[current_index];
 
 	claiming_regions = 0;
 	/* Force "very thin" partitions to have exactly zero thickness. */
