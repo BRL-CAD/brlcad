@@ -663,12 +663,8 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 		normal = -r_dir;
 	    } else {
 		norm(&hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
-		if (flipflag) {
-		    hitp.hit_normal = -hitp.hit_normal;
-		    normal = hitp.hit_normal;
-		} else {
-		    normal = hitp.hit_normal;
-		}
+		hitp.hit_normal = flipflag ? -hitp.hit_normal : hitp.hit_normal;
+		normal = hitp.hit_normal;
 	    }
 
 	    /*
@@ -709,9 +705,9 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 	    }
 	    rgb = convert_uchar3_sat(t_color);
 
-	    rgb = select(rgb, nonbackground, (uchar3)all(rgb == background));
+	    rgb = (uchar3)all(rgb == background) ? nonbackground : rgb;
 	    // make sure it's never perfect black
-	    rgb = select(rgb, (uchar3){rgb.x, rgb.y, 1}, (uchar3)all(!rgb));
+	    rgb = (uchar3)all(!rgb) ? (uchar3){rgb.x, rgb.y, 1} : rgb;
 	} else {
 	    /* partition not evaluated, don't dither */
 	    rgb = background;
