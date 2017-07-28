@@ -185,6 +185,8 @@ struct cl_partition {
     cl_uint back_pp;                /* index to the previous partition */
     cl_uint region_id;              /* id of the "owning" region */
     cl_short evaluated;             /* holds the result of boolean evaluation */
+    cl_char inflip;                 /* flip inhit->hit_normal */
+    cl_char outflip;                /* flip outhit->hit_normal */
 };
 
 RT_EXPORT extern void

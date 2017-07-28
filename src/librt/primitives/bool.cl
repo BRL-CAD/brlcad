@@ -134,6 +134,8 @@ bool_weave0seg(RESULT_TYPE segp, global struct partition *partitions, global uin
 	newpp->inhit = segp->seg_in;
 	newpp->outseg = k;
 	newpp->outhit = segp->seg_out;
+	newpp->inflip = 0;
+	newpp->outflip = 0;
 	newpp->evaluated = 0;
 	set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 	insert_partition_pp(partitions, ipartition, id, head, start_index + ipartition[id], *head);
@@ -161,7 +163,7 @@ bool_weave0seg(RESULT_TYPE segp, global struct partition *partitions, global uin
 	    return;
 
 	if (segp->seg_out.hit_dist <= pp->outhit.hit_dist &&
-		segp->seg_in.hit_dist >= pp->inhit.hit_dist)
+	    segp->seg_in.hit_dist >= pp->inhit.hit_dist)
 	    return;
 
 	if (pp->forw_pp != UINT_MAX && segp->seg_out.hit_dist < partitions[pp->forw_pp].inhit.hit_dist) {
@@ -171,6 +173,8 @@ bool_weave0seg(RESULT_TYPE segp, global struct partition *partitions, global uin
 	    newpp->inhit = segp->seg_in;
 	    newpp->outseg = k;
 	    newpp->outhit = segp->seg_out;
+	    newpp->inflip = 0;
+	    newpp->outflip = 0;
 	    newpp->evaluated = 0;
 	    set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 	    insert_partition_pp(partitions, ipartition, id, head, start_index + ipartition[id], pp->forw_pp);
@@ -201,7 +205,6 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
     uint bv_index = max_depth/32 + 1;
 
     for (uint k=h[id]; k!=h[id+1]; k++) {
-
 	RESULT_TYPE segp = segs+k;
 
 	global struct partition *newpp;
@@ -239,9 +242,11 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 	    pp->inhit = segp->seg_in;
 	    pp->outseg = k;
 	    pp->outhit = segp->seg_out;
+	    pp->inflip = 0;
+	    pp->outflip = 0;
 	    pp->evaluated = 0;
 	    pp->region_id = UINT_MAX;
-		set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
+	    set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 	    append_partition_pp(partitions, ipartition, id, start_index + ipartition[id], &tail_pp);
 	    ipartition[id]++;
 	} else if (NEAR_ZERO(diff, rti_tol_dist)) {
@@ -257,9 +262,11 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 	    pp->inhit = segp->seg_in;
 	    pp->outseg = k;
 	    pp->outhit = segp->seg_out;
+	    pp->inflip = 0;
+	    pp->outflip = 0;
 	    pp->evaluated = 0;
-		pp->region_id = UINT_MAX;
-		set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
+	    pp->region_id = UINT_MAX;
+	    set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 	    append_partition_pp(partitions, ipartition, id, start_index + ipartition[id], &tail_pp);
 	    ipartition[id]++;
 	} else {
@@ -325,10 +332,12 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 
 		    pp->inseg = k;
 		    pp->inhit = segp->seg_in;
+		    pp->inflip = 0;
 		    newpp->outseg = k;
 		    newpp->outhit = segp->seg_in;
+		    newpp->outflip = 1;
 		    newpp->evaluated = 0;
-			newpp->region_id = UINT_MAX;
+		    newpp->region_id = UINT_MAX;
 		    insert_partition_pp(partitions, ipartition, id, &head_pp, start_index + ipartition[id], j);
 		    ipartition[id]++;
 		} else if (diff > -(rti_tol_dist)) {
@@ -352,6 +361,7 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 				diff < 0) {
 			    pp->inseg = k;
 			    pp->inhit = segp->seg_in;
+			    pp->inflip = 0;
 			}
 		    }
 		} else {
@@ -369,8 +379,9 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 		    set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 		    newpp->inseg = lastseg;
 		    newpp->inhit = *lasthit;
+		    newpp->inflip = lastflip;
 		    newpp->evaluated = 0;
-			newpp->region_id = UINT_MAX;
+		    newpp->region_id = UINT_MAX;
 		    diff = segp->seg_out.hit_dist - pp->inhit.hit_dist;
 		    if (diff < -(rti_tol_dist)) {
 			/*
@@ -384,6 +395,7 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 			 */
 			newpp->outseg = k;
 			newpp->outhit = segp->seg_out;
+			newpp->outflip = 0;
 			insert_partition_pp(partitions, ipartition, id, &head_pp, start_index + ipartition[id], j);
 			ipartition[id]++;
 			break;
@@ -404,6 +416,7 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 			newpp->outseg = k;
 			newpp->outhit = segp->seg_out;
 			newpp->outhit.hit_dist = pp->inhit.hit_dist;
+			newpp->outflip = 0;
 			insert_partition_pp(partitions, ipartition, id, &head_pp, start_index + ipartition[id], j);
 			ipartition[id]++;
 			break;
@@ -418,8 +431,10 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 		     */
 		    newpp->outseg = pp->inseg;
 		    newpp->outhit = pp->inhit;
+		    newpp->outflip = 1;
 		    lastseg = pp->inseg;
 		    lasthit = &pp->inhit;
+		    lastflip = newpp->outflip;
 		    insert_partition_pp(partitions, ipartition, id, &head_pp, start_index + ipartition[id], j);
 		    ipartition[id]++;
 		}
@@ -444,6 +459,7 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 
 		    lasthit = &pp->outhit;
 		    lastseg = pp->outseg;
+		    lastflip = 1;
 		    continue;
 		}
 		if (diff > -(rti_tol_dist)) {
@@ -473,10 +489,12 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 		    set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 		    newpp->outseg = k;
 		    newpp->outhit = segp->seg_out;
+		    newpp->outflip = 0;
 		    newpp->evaluated = 0;
-			newpp->region_id = UINT_MAX;
+		    newpp->region_id = UINT_MAX;
 		    pp->inseg = k;
 		    pp->inhit = segp->seg_out;
+		    pp->inflip = 1;
 		    insert_partition_pp(partitions, ipartition, id, &head_pp, start_index + ipartition[id], j);
 		    ipartition[id]++;
 		    break;
@@ -494,8 +512,10 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 		set(segs_bv, (start_index + ipartition[id]) * bv_index, k-h[id]);
 		newpp->inseg = lastseg;
 		newpp->inhit = *lasthit;
+		newpp->inflip = lastflip;
 		newpp->outseg = k;
 		newpp->outhit = segp->seg_out;
+		newpp->outflip = 0;
 		newpp->evaluated = 0;
 		newpp->region_id = UINT_MAX;
 		append_partition_pp(partitions, ipartition, id, start_index + ipartition[id], &tail_pp);
@@ -960,9 +980,9 @@ rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESUL
 	    if (lastpp_eval_idx != UINT_MAX && lastregion_idx == lastpp->region_id &&
 		    NEAR_EQUAL(pp->inhit.hit_dist, lastpp->outhit.hit_dist, rti_tol_dist)) {
 		/* same region, merge by extending last final partition */
-
 		lastpp->outhit = pp->outhit;
 		lastpp->outseg = pp->outseg;
+		lastpp->outflip = pp->outflip;
 
 		/* Don't lose the fact that the two solids of this
 		 * partition contributed.

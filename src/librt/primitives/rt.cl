@@ -629,6 +629,7 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
     struct hit hitp;
     global struct partition *pp;
     uint pp_eval, head;
+    int flipflag;
 
     a_color = 0.0;
     hitp.hit_dist = INFINITY;
@@ -639,6 +640,7 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 
 	/* Get first partition of the ray */
 	head = ipartition[id];
+	flipflag = 0;
 	pp_eval = 0;
 	for (uint index = head; index != UINT_MAX; index = partitions[index].forw_pp) {
 	    pp = &partitions[index];
@@ -646,8 +648,9 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 		RESULT_TYPE segp = &segs[pp->inseg];
 
 		if (segp->seg_in.hit_dist < hitp.hit_dist) {
-		    hitp = segp->seg_in;
+		    hitp = pp->inhit;
 		    idx = segp->seg_sti;
+		    flipflag = pp->inflip;
 		}
 		pp_eval = 1;
 	    }
@@ -660,7 +663,12 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 		normal = -r_dir;
 	    } else {
 		norm(&hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
-		normal = hitp.hit_normal;
+		if (flipflag) {
+		    hitp.hit_normal = -hitp.hit_normal;
+		    normal = hitp.hit_normal;
+		} else {
+		    normal = hitp.hit_normal;
+		}
 	    }
 
 	    /*
