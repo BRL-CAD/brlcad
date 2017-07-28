@@ -787,12 +787,14 @@ clt_db_store_regions(size_t sz_tree_rpn, union tree_rpn *rtp, size_t nregions, s
 }
 
 void
-clt_db_store_regions_table(uint *regions_table, size_t regions_table_size)
+clt_db_store_regions_table(cl_uint *regions_table, size_t regions_table_size)
 {
     cl_int error;
 
-    clt_db_regions_table = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(uint)*regions_table_size, regions_table, &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL regions_table buffer");
+    if (regions_table_size != 0) {
+	clt_db_regions_table = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*regions_table_size, regions_table, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL regions_table buffer");
+    }
 
     clt_db_regions_table_size = regions_table_size;
 }
@@ -948,10 +950,10 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 		sz_partitions = sizeof(struct cl_partition)*h[npix]*2; /*create partition buffer with size= 2*number of segments */
 		ipart = (cl_uint*)bu_calloc(1, sz_ipartitions, "ipart");
 
-		sz_bv = sizeof(cl_uint) * (h[npix]*2) * (max_depth/32 + 1); /* bitarray to represent the segs in each partition */
+		sz_bv = sizeof(cl_uint)*(h[npix]*2)*(max_depth/32 + 1); /* bitarray to represent the segs in each partition */
 		bv = (cl_uint*)bu_calloc(1, sz_bv, "bv");
 
-		sz_regiontable = sizeof(cl_uint) * npix * (clt_db_nregions/32 +1); /* bitarray to represent the regions involved in each partition */
+		sz_regiontable = sizeof(cl_uint)*npix*(clt_db_nregions/32 +1); /* bitarray to represent the regions involved in each partition */
 		regiontable = (cl_uint*)bu_calloc(1, sz_regiontable, "regiontable");
 
 	    bu_free(h, "h");
