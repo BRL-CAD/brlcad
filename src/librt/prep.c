@@ -484,6 +484,22 @@ rt_rtree_translate(struct rt_i *rtip, struct soltab **primitives, union tree_rpn
 }
 
 void
+build_regions_table(uint *regions_table, union tree_rpn *rtp, size_t start, size_t end, const long n_primitives, const int n_regions, const int reg_id)
+{
+    size_t i;
+    long st_bit;
+    uint rt_index;
+
+    rt_index = n_regions/32 +1;
+    for (i=start; i<start+end; i++) {
+	st_bit = rtp[i].st_bit;
+	if (st_bit >= 0L && st_bit < (long)n_primitives) {
+	    regions_table[st_bit * rt_index + (reg_id >> 5)] |= 1 << (reg_id & 31);
+	}
+    }
+}
+
+void
 clt_prep(struct rt_i *rtip)
 {
     struct soltab *stp;
@@ -566,6 +582,8 @@ clt_prep(struct rt_i *rtip)
 	    struct cl_bool_region *regions;
 	    struct clt_region *mtls;
 	    union tree_rpn *rtree;
+	    uint *regions_table;
+	    size_t sz_regions_table;
 	    size_t sz_rtree_array;
 	    size_t len;
 
@@ -622,7 +640,9 @@ clt_prep(struct rt_i *rtip)
 		i++;
 	    }
 
+	    sz_regions_table = n_primitives * ((n_regions/32) + 1);
 	    rtree = (union tree_rpn *)bu_calloc(sz_rtree_array, sizeof(union tree_rpn), "region rtree array");
+	    regions_table = (uint*)bu_calloc(sz_regions_table, sizeof(cl_uint), "regions_table");
 
 	    len = 0;
 	    i = 0;
@@ -642,14 +662,16 @@ clt_prep(struct rt_i *rtip)
 
 		rt_tree_rpn(rtree, regp->reg_treetop, &len);
 		rt_rtree_translate(rtip, primitives, rtree, regions[i].rtree_offset, regions[i].reg_nrtree, n_primitives);
-
+		build_regions_table(regions_table, rtree, regions[i].rtree_offset, regions[i].reg_nrtree, n_primitives, n_regions, i);
 		i++;
 	    }
 
 	    clt_db_store_regions(sz_rtree_array, rtree, n_regions, regions, mtls);
+	    clt_db_store_regions_table(regions_table, sz_regions_table);
 	    bu_free(mtls, "mtls");
 	    bu_free(regions, "regions");
 	    bu_free(rtree, "region rtree array");
+	    bu_free(regions_table, "regions_table");
 	}
 
 	bu_free(primitives, "ordered primitives");

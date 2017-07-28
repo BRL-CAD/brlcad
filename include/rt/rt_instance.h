@@ -362,6 +362,9 @@ clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes);
 RT_EXPORT extern void
 clt_db_store_regions(size_t sz_tree_rpn, union tree_rpn *rtp, size_t nregions, struct cl_bool_region *regions, struct clt_region *mtls);
 
+RT_EXPORT extern void
+clt_db_store_regions_table(uint *regions_table, size_t regions_table_size);
+
 RT_EXPORT extern void clt_db_release(void);
 
 

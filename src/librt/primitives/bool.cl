@@ -570,21 +570,6 @@ pr_all_rtrees(const int total_regions, global struct bool_region *bregions, glob
     printf("\n\n");
 }
 
-/**
- * iterate over this postfix bool tree and check if any bit of the tree
- * matches with the input 'segp->sti'
- */
-int region_involved(global struct bool_region *bregions, global union tree_rpn *rtp, const uint index, const uint seg_sti)
-{
-    for (uint i = bregions[index].rtree_offset; i < bregions[index].rtree_offset + bregions[index].reg_nrtree; i++) {
-	if (rtp[i].uop >= 0) {
-	    if (seg_sti == rtp[i].st_bit)
-		return 1;
-	}
-    }
-    return 0;
-}
-
 int
 bool_eval(global struct partition *partitions, global uint *ipartition, RESULT_TYPE segs,
         global uint *h, global uint *segs_bv, const uint bv_index, uint offset, size_t id,
@@ -669,9 +654,10 @@ bool_eval(global struct partition *partitions, global uint *ipartition, RESULT_T
  * the list of regions that refer to that solid into the
  * "regiontable" bitarray.
  */
-void build_regiontable(global struct bool_region *bregions, global union tree_rpn *rtree, RESULT_TYPE segs,
+void
+build_regiontable(global uint *regions_table, RESULT_TYPE segs,
         global uint *segs_bv, global uint *regiontable, const uint pp_idx, const uint seg_idx,
-        const uint bv_index, const uint rt_index, const uint total_regions, const size_t id)
+        const uint bv_index, const uint rt_index, const size_t id)
 {
     RESULT_TYPE segp;
 
@@ -685,15 +671,8 @@ void build_regiontable(global struct bool_region *bregions, global union tree_rp
 		segp = segs+k;
 
 		/* Search for all regions involved in this partition */
-		for (uint m = 0; m < total_regions; m++) {
-		    if (region_involved(bregions, rtree, m, segp->seg_sti)) {
-			/* Region involved */
-			if (isset(regiontable, id * rt_index, m) != 0) {
-			    continue;
-			} else {
-			    set(regiontable, id * rt_index, m);
-			}
-		    }
+		for (uint m = 0; m < rt_index; m++) {
+		    regiontable[id * rt_index + m] |= regions_table[segp->seg_sti * rt_index + m];
 		}
 	    }
 	    // clear bit in mask
@@ -835,7 +814,8 @@ __kernel void
 rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESULT_TYPE segs,
         global uint *h, global uint *segs_bv, const int max_depth,
         global struct bool_region *bregions, const uint total_regions, global union tree_rpn *rtree,
-        global uint *regiontable, const int cur_pixel, const int last_pixel)
+        global uint *regiontable, const int cur_pixel, const int last_pixel,
+        global uint *regions_table, const uint regions_table_size)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
@@ -896,7 +876,7 @@ rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESUL
 	 * partitions to later evaluate the partitions against the involved
 	 * regions and to resolve any overlap that may occur
 	 */
-	build_regiontable(bregions, rtree, segs, segs_bv, regiontable, current_index, h[id], bv_index, rt_index, total_regions, id);
+	build_regiontable(regions_table, segs, segs_bv, regiontable, current_index, h[id], bv_index, rt_index, id);
 
 	/* Evaluate the boolean trees of any regions involved */
 	for (uint i = 0; i < rt_index; i++) {

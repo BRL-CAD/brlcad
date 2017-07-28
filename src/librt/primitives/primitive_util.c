@@ -483,9 +483,9 @@ static cl_uint max_compute_units;
 static cl_mem clt_rand_halftab;
 
 static cl_mem clt_db_ids, clt_db_indexes, clt_db_prims, clt_db_bvh, clt_db_regions;
-static cl_mem clt_db_rtree, clt_db_bool_regions;
+static cl_mem clt_db_rtree, clt_db_bool_regions, clt_db_regions_table;
 static cl_uint clt_db_nprims;
-static cl_uint clt_db_nregions;
+static cl_uint clt_db_nregions, clt_db_regions_table_size;
 
 
 
@@ -787,6 +787,17 @@ clt_db_store_regions(size_t sz_tree_rpn, union tree_rpn *rtp, size_t nregions, s
 }
 
 void
+clt_db_store_regions_table(uint *regions_table, size_t regions_table_size)
+{
+    cl_int error;
+
+    clt_db_regions_table = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(uint)*regions_table_size, regions_table, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL regions_table buffer");
+
+    clt_db_regions_table_size = regions_table_size;
+}
+
+void
 clt_db_release(void)
 {
     clReleaseMemObject(clt_db_regions);
@@ -796,9 +807,11 @@ clt_db_release(void)
     clReleaseMemObject(clt_db_ids);
     clReleaseMemObject(clt_db_rtree);
     clReleaseMemObject(clt_db_bool_regions);
+    clReleaseMemObject(clt_db_regions_table);
 
     clt_db_nprims = 0;
     clt_db_nregions = 0;
+    clt_db_regions_table_size = 0;
 }
 
 void
@@ -1016,6 +1029,8 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 		error |= clSetKernelArg(clt_boolfinal_kernel, 9, sizeof(cl_mem), &regiontable_bv);
 		error |= clSetKernelArg(clt_boolfinal_kernel, 10, sizeof(cl_int), &p.cur_pixel);
 		error |= clSetKernelArg(clt_boolfinal_kernel, 11, sizeof(cl_int), &p.last_pixel);
+		error |= clSetKernelArg(clt_boolfinal_kernel, 12, sizeof(cl_mem), &clt_db_regions_table);
+		error |= clSetKernelArg(clt_boolfinal_kernel, 13, sizeof(cl_uint), &clt_db_regions_table_size);
 		if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
 		error = clEnqueueNDRangeKernel(clt_queue, clt_boolfinal_kernel, 1, NULL, &npix,
 		&snpix, 0, NULL, NULL);
