@@ -33,15 +33,10 @@
 # ***                libutahrle CMakeLists.txt                     ***
 # *******************************************************************
 
-if(COMMAND CMAKE_POLICY)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.0.2)
 
 project(UTAHRLE)
 
-cmake_minimum_required(VERSION 2.8)
 
 if(NOT DEFINED BUILD_SHARED_LIBS)
   set(BUILD_SHARED_LIBS ON)

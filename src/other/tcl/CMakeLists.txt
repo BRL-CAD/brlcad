@@ -37,21 +37,16 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	  CMAKE_POLICY(SET CMP0026 OLD)
-	  CMAKE_POLICY(SET CMP0048 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+cmake_minimum_required(VERSION 3.0.2)
+if(COMMAND CMAKE_POLICY)
+  if("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 	  CMAKE_POLICY(SET CMP0053 OLD)
 	  CMAKE_POLICY(SET CMP0054 NEW)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-ENDIF(COMMAND CMAKE_POLICY)
+endif(COMMAND CMAKE_POLICY)
 
 # Set CMake project name
-PROJECT(TCL)
+project(TCL)
 
 # build shared libs by default
 set(BUILD_SHARED_LIBS ON)
@@ -453,28 +448,22 @@ ENDIF(NOT HAVE_MEMCMP)
 #------------------------------------------------------------------------------
 # Test for broken functions.  Not clear how many of these are still needed.
 #------------------------------------------------------------------------------
-SC_TCL_CHECK_BROKEN_FUNC(
-  strstr "
+set(strstr_string "
 	extern int strstr();
-	exit(strstr(\"\\\0test\", \"test\") ? 1 : 0);"
-  )
+	exit(strstr(\"\\\0test\", \"test\") ? 1 : 0);")
+SC_TCL_CHECK_BROKEN_FUNC(strstr "${strstr_string}")
 
-
-SC_TCL_CHECK_BROKEN_FUNC(
-  strtoul "
+set(strtoul_string "
 	extern int strtoul();
 	char *term, *string = \"0\";
-	exit(strtoul(string,&term,0) != 0 || term != string+1);"
-  )
+	exit(strtoul(string,&term,0) != 0 || term != string+1);")
+SC_TCL_CHECK_BROKEN_FUNC(strtoul "${strtoul_string}")
 
-
-SC_TCL_CHECK_BROKEN_FUNC(
-  strtod "
+set(double_strtod_string "
 	extern double strtod();
 	char *term, *string = \" +69\";
-	exit(strtod(string,&term) != 69 || term != string+4);"
-  )
-
+	exit(strtod(string,&term) != 69 || term != string+4);")
+SC_TCL_CHECK_BROKEN_FUNC(strtod "${double_strtod_string}")
 
 
 #TODO SC_BUGGY_STRTOD - Solaris 2.4 only?  Do we still care?
@@ -1036,7 +1025,7 @@ install(TARGETS tcl
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
-GET_TARGET_PROPERTY(TCL_INSTALL_LIBNAME tcl LOCATION)
+set(TCL_INSTALL_LIBNAME "${CMAKE_SHARED_LIBRARY_PREFIX}tcl${CMAKE_SHARED_LIBRARY_SUFFIX}")
 SET_TARGET_PROPERTIES(tcl PROPERTIES VERSION ${TCL_VERSION} SOVERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   SET_TARGET_PROPERTIES(tcl PROPERTIES LINK_FLAGS "-compatibility_version ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR} -current_version ${TCL_VERSION} -install_name \"${TCL_INSTALL_LIBNAME}\" -seg1addr 0xa000000 -sectcreate __TEXT __info_plist \"${TCL_BINARY_DIR}/Tcl-Info.plist\"")

@@ -37,19 +37,15 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	  CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+cmake_minimum_required(VERSION 3.0.2)
+if(COMMAND CMAKE_POLICY)
+  if("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 	  CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-ENDIF(COMMAND CMAKE_POLICY)
+  endif("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
-PROJECT(TK)
+project(TK)
 
 # Without Tcl libraries AND sources, we can't build Tk.  Use TCL_SRC_PREFIX
 # and TCL_BIN_PREFIX to identify the location of the Tcl we are to use.

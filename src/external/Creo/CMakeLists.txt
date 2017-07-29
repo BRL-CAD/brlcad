@@ -1,13 +1,7 @@
 
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Minimum required version of CMake
-  cmake_minimum_required(VERSION 2.8)
-  if(COMMAND CMAKE_POLICY)
-    CMAKE_POLICY(SET CMP0003 NEW)
-    if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-      CMAKE_POLICY(SET CMP0026 OLD)
-    endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  endif(COMMAND CMAKE_POLICY)
+  cmake_minimum_required(VERSION 3.0.2)
 
   # Set CMake project name
   project(CREO2BRL)
