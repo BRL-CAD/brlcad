@@ -5,7 +5,7 @@ BRLCAD_ADDDATA(checker_TCLSCRIPTS tclscripts/checker)
 pkgIndex_BUILD(tclscripts/checker)
 tclIndex_BUILD(tclscripts/checker)
 
-CMAKEFILES(check.sh)
+CMAKEFILES(check.sh TODO)
 
 # Local Variables:
 # tab-width: 8
