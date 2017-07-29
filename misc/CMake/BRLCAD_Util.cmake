@@ -123,45 +123,32 @@ endfunction()
 # The routine below does the check without using regex matching, in order to
 # handle path names that contain characters that would be interpreted as active
 # in a regex string.
-function(IS_SUBPATH in_candidate_subpath in_full_path result_var)
-  # Convert paths to lists of directories - regex based
-  # matching won't work reliably, so instead look at each
-  # element compared to its corresponding element in the
-  # other path using string comparison.
+function(IS_SUBPATH candidate_subpath full_path result_var)
 
-  # get the CMake form of the path so we have something consistent
-  # to work on
-  file(TO_CMAKE_PATH "${in_full_path}" full_path)
-  file(TO_CMAKE_PATH "${in_candidate_subpath}" candidate_subpath)
+  # Just assume it isn't until we prove it is
+  set(${result_var} 0 PARENT_SCOPE)
 
-  # check the string lengths - if the "subpath" is longer
-  # than the full path, there's not point in going further
-  string(LENGTH "${full_path}" FULL_LENGTH)
-  string(LENGTH "${candidate_subpath}" SUB_LENGTH)
+  # get the CMake form of the path so we have something consistent to work on
+  file(TO_CMAKE_PATH "${full_path}" c_full_path)
+  file(TO_CMAKE_PATH "${candidate_subpath}" c_candidate_subpath)
+
+  # check the string lengths - if the "subpath" is longer than the full path,
+  # there's not point in going further
+  string(LENGTH "${c_full_path}" FULL_LENGTH)
+  string(LENGTH "${c_candidate_subpath}" SUB_LENGTH)
   if("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
-    set(${result_var} 0 PARENT_SCOPE)
-  else("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
-    # OK, maybe it's a subpath - time to actually check
-    string(REPLACE "/" ";" full_path_list "${full_path}")
-    string(REPLACE "/" ";" candidate_subpath_list "${candidate_subpath}")
-    set(found_difference 0)
-    while(NOT found_difference AND candidate_subpath_list)
-      list(GET full_path_list 0 full_path_element)
-      list(GET candidate_subpath_list 0 subpath_element)
-      if("${full_path_element}" STREQUAL "${subpath_element}")
-	list(REMOVE_AT full_path_list 0)
-	list(REMOVE_AT candidate_subpath_list 0)
-      else("${full_path_element}" STREQUAL "${subpath_element}")
-	set(found_difference 1)
-      endif("${full_path_element}" STREQUAL "${subpath_element}")
-    endwhile(NOT found_difference AND candidate_subpath_list)
-    # Now we know - report the result
-    if(NOT found_difference)
-      set(${result_var} 1 PARENT_SCOPE)
-    else(NOT found_difference)
-      set(${result_var} 0 PARENT_SCOPE)
-    endif(NOT found_difference)
+    return()
   endif("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
+
+  # OK, maybe it's a subpath - time to actually check
+  string(SUBSTRING "${c_full_path}" 0 ${SUB_LENGTH} c_full_subpath)
+  if(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
+    return()
+  endif(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
+
+  # If we get here, it's a subpath
+  set(${result_var} 1 PARENT_SCOPE)
+
 endfunction(IS_SUBPATH)
 
 #---------------------------------------------------------------------
