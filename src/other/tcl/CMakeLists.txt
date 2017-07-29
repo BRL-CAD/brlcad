@@ -40,7 +40,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 if(COMMAND CMAKE_POLICY)
   if("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-	  CMAKE_POLICY(SET CMP0053 OLD)
+	  CMAKE_POLICY(SET CMP0053 NEW)
 	  CMAKE_POLICY(SET CMP0054 NEW)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 endif(COMMAND CMAKE_POLICY)
@@ -448,21 +448,22 @@ ENDIF(NOT HAVE_MEMCMP)
 #------------------------------------------------------------------------------
 # Test for broken functions.  Not clear how many of these are still needed.
 #------------------------------------------------------------------------------
-set(strstr_string "
-	extern int strstr();
-	exit(strstr(\"\\\0test\", \"test\") ? 1 : 0);")
-SC_TCL_CHECK_BROKEN_FUNC(strstr "${strstr_string}")
+
+set(strstr_string "extern int strstr(); exit(strstr(\"\\\\0test\", \"test\") ? 1 : 0);")
+SC_TCL_CHECK_BROKEN_FUNC(strstr "${strtoul_string}")
 
 set(strtoul_string "
-	extern int strtoul();
+   extern int strtoul();
 	char *term, *string = \"0\";
-	exit(strtoul(string,&term,0) != 0 || term != string+1);")
+  	exit(strtoul(string,&term,0) != 0 || term != string+1);
+	")
 SC_TCL_CHECK_BROKEN_FUNC(strtoul "${strtoul_string}")
 
 set(double_strtod_string "
-	extern double strtod();
-	char *term, *string = \" +69\";
-	exit(strtod(string,&term) != 69 || term != string+4);")
+   extern double strtod();
+  	char *term, *string = \" +69\";
+  	exit(strtod(string,&term) != 69 || term != string+4);
+	")
 SC_TCL_CHECK_BROKEN_FUNC(strtod "${double_strtod_string}")
 
 
