@@ -1,0 +1,103 @@
+set(cmake_ignore_files
+  BRLCAD_CPackOptions.cmake.in
+  BRLCAD_CheckFunctions.cmake
+  BRLCAD_CompilerFlags.cmake
+  BRLCAD_Options.cmake
+  BRLCAD_Summary.cmake
+  BRLCAD_Targets.cmake
+  BRLCAD_Util.cmake
+  CheckCInline.cmake
+  CheckCSourceRuns.cmake
+  CompilerFlags.cmake
+  Distcheck.cmake
+  DocBook.cmake
+  Doxygen.cmake
+  FindADAPTAGRAMS.cmake
+  FindASTYLE.cmake
+  FindBRLCADTCL.cmake
+  FindBRLCADZLIB.cmake
+  FindBSON.cmake
+  FindFontconfig.cmake
+  FindGDAL.cmake
+  FindGECODE.cmake
+  FindGL.cmake
+  FindLEMON.cmake
+  FindLEX.cmake
+  FindLZ4.cmake
+  FindNETPBM.cmake
+  FindOIIO.cmake
+  FindOPENNURBS.cmake
+  FindOSL.cmake
+  FindOpenCL.cmake
+  FindOpenEXR.cmake
+  FindPERPLEX.cmake
+  FindPkgMacros.cmake
+  FindRE2C.cmake
+  FindREGEX.cmake
+  FindSCL.cmake
+  FindSTL.cmake
+  FindShellDeps.cmake
+  FindTBB.cmake
+  FindTERMLIB.cmake
+  FindTINYCTHREAD.cmake
+  FindUTAHRLE.cmake
+  FindUUID.cmake
+  FindVDS.cmake
+  FindX11.cmake
+  FindXMLLINT.cmake
+  FindXSLTPROC.cmake
+  Fink_MacPorts.cmake
+  NSIS.template.in
+  Path_Setup.cmake
+  RPath_Setup.cmake
+  ResetCache.cmake
+  TCL_PKGINDEX.cmake
+  ThirdParty.cmake
+  ThirdParty_TCL.cmake
+  autoheader.cmake
+  compat/README
+  compat/README.compat
+  compat/README.compat.c99
+  compat/fdopen_compat.h
+  compat/fileno_compat.h
+  compat/gethostname_compat.h
+  compat/hypot_compat.h
+  compat/posix_memalign_compat.h
+  compat/realpath_compat.h
+  compat/sigaction_compat.h
+  compat/snprintf_compat.h
+  compat/strcasecmp_compat.h
+  compat/strncasecmp_compat.h
+  compat/strtok_r_compat.h
+  compat/test_fdopen.c
+  compat/test_fileno.c
+  compat/test_gethostname.c
+  compat/test_posix_memalign.c
+  compat/test_realpath.c
+  compat/test_sigaction.c
+  compat/test_strcasecmp.c
+  compat/test_strncasecmp.c
+  compat/test_strtok_r.c
+  configure_prefix.sh
+  configure_suffix.sh
+  cotire.cmake
+  distcheck_in_src_dir.cmake.in
+  distcheck_repo_verify.cmake.in
+  distcheck_target.cmake.in
+  distclean.cmake.in
+  docbook.cmake.in
+  multiconfig_path_clean.cmake.in
+  multiconfig_path_read.cmake.in
+  source_archive_setup.cmake.in
+  tcltest.tcl.in
+  )
+CMAKEFILES(${cmake_ignore_files})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+
+

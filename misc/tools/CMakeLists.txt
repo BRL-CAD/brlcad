@@ -138,8 +138,6 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY_EXECUTABLE(astyle astyle "BRLCAD_LEVEL2" astyle_ALIASES astyle_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/astyle/Makefile)
 
-CMAKEFILES(astyle.dist)
-
 # dom2dox - Doc-O-Matic to Doxygen C++ source converter
 include(${CMAKE_CURRENT_SOURCE_DIR}/dom2dox.dist)
 CMAKEFILES_IN_DIR(dom2dox_ignore_files dom2dox)

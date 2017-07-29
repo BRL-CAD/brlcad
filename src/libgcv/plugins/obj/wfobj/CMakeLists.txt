@@ -47,7 +47,7 @@ if(COMMAND CMAKE_POLICY)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
-PROJECT(WFOBJ)
+project(WFOBJ)
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically

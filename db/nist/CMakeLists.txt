@@ -101,8 +101,19 @@ CMAKEFILES(${NIST_SAMPLE_3DM_MODELS})
 
 CMAKEFILES(
   README
-  pdf
-)
+  pdf/1.pdf
+  pdf/2.pdf
+  pdf/3.pdf
+  pdf/4.pdf
+  pdf/5.pdf
+  pdf/6.pdf
+  pdf/7-10_assem.pdf
+  pdf/7.pdf
+  pdf/8.pdf
+  pdf/9.pdf
+  pdf/10.pdf
+  pdf/11.pdf
+  )
 
 # Local Variables:
 # tab-width: 8

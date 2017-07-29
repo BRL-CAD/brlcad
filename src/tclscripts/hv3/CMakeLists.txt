@@ -13,7 +13,9 @@ tclIndex_BUILD(tclscripts/hv3)
 install(FILES hv3.man DESTINATION ${DATA_DIR}/doc)
 install(FILES tkhtml.n DESTINATION ${MAN_DIR}/mann)
 set(hv3_ignore_files
-  demo
+  demo/small-eagleCAD.gif
+  demo/index.html
+  demo/viewpage.tcl
   hv3.man
   license.txt
   license_snit.txt

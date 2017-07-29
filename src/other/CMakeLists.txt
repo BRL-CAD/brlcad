@@ -129,7 +129,6 @@ SetTargetFolder(tinycthread-static "Third Party Libraries")
 
 
 # LZ4 compression/decompression library
-
 set(lz4_ALIASES ENABLE_LZ4)
 set(lz4_DESCRIPTION "
 Option for enabling and disabling compilation of the lz4 data
@@ -148,7 +147,6 @@ endif(BRLCAD_LZ4_BUILD)
 
 
 # FreeType Libraries
-
 set(freetype_ALIASES ENABLE_FREETYPE)
 set(freetype_DESCRIPTION "
 Option for enabling and disabling compilation of the FreeType
@@ -180,9 +178,6 @@ if(BRLCAD_FREETYPE_BUILD)
   # we do have to build Tk, that we don't try enabling XFT.
   set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
   mark_as_advanced(TK_DISABLE_XFT)
-
-else(BRLCAD_FREETYPE_BUILD)
-  CMAKEFILES(freetype)
 endif(BRLCAD_FREETYPE_BUILD)
 if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
@@ -196,10 +191,6 @@ mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
 mark_as_advanced(FREETYPE_LIBRARIES)
 
 # --------------------------------------------------------------------
-# The incrtTcl subdirectory isn't directly referenced, but its
-# subdirectories are used - mark incrTcl as ignored
-CMAKEFILES(incrTcl)
-
 # libtermlib Library Only on WIN32 will the combination of the build
 # search tests and libtermlib fail to find a valid term, so set
 # variables accordingly
@@ -253,7 +244,6 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/pm_config.h")
 # translated to fit BRL-CAD's standard assumptions, so handle that
 # here as well.  BRL-CAD needs PNG's IO - turn it on (i.e. turn off
 # the disabling flags)
-
 set(SKIP_INSTALL_FILES ON CACHE BOOL "Don't install files from libpng" FORCE)
 mark_as_advanced(SKIP_INSTALL_FILES)
 set(SKIP_INSTALL_EXECUTABLES ON CACHE BOOL "Don't install files from libpng" FORCE)
@@ -344,7 +334,6 @@ mark_as_advanced(uname_executable)
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
 # and the include directory for utahrle are different, so override the
 # macro's setting of UTAHRLE_INCLUDE_DIR here.
-
 set(UTAHRLE_HAVE_COMMON_H 1)
 set(utahrle_ALIASES ENABLE_UTAHRLE)
 set(utahrle_DESCRIPTION "
@@ -421,8 +410,6 @@ if(BRLCAD_TCL_BUILD)
   set(TCL_VERSION_MINOR "${TCL_VERSION_MINOR}" CACHE STRING "Tcl MINOR version" FORCE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
   CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
-  include("${CMAKE_CURRENT_SOURCE_DIR}/tcl.dist")
-  CMAKEFILES_IN_DIR(tcl_ignore_files tcl)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/Makefile")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/man1")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/man3")
@@ -607,8 +594,12 @@ if(BRLCAD_ENABLE_TK)
   endif(BRLCAD_TK_BUILD)
 endif(BRLCAD_ENABLE_TK)
 
+# Ignore the toplevel incrTcl files that aren't used by either itcl
+# or itk
+include(${CMAKE_CURRENT_SOURCE_DIR}/incrTcl.dist)
+CMAKEFILES_IN_DIR(incrTcl_ignore_files incrTcl)
 
-# First up, look for IncrTcl's Itcl.
+# First up, look for incrTcl's Itcl.
 set(itcl_ALIASES ENABLE_ITCL)
 set(itcl_DESCRIPTION "
 Option for enabling and disabling compilation of the IncrTcl package
@@ -695,9 +686,7 @@ ELSE(BRLCAD_IWIDGETS_BUILD)
 endif(BRLCAD_IWIDGETS_BUILD)
 CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
 mark_as_advanced(IWIDGETS_VERSION)
-
 mark_as_advanced(COMPAT_SRCS)
-
 
 set(tkhtml_ALIASES ENABLE_TKHTML)
 set(tkhtml_DESCRIPTION "
@@ -817,7 +806,8 @@ if(BRLCAD_BSON_BUILD)
 endif(BRLCAD_BSON_BUILD)
 #=== END LIBBSON ==================================================
 else(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-  CMAKEFILES(libbson)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/libbson.dist")
+  CMAKEFILES_IN_DIR(libbson_ignore_files libbson)
 endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # STEPcode
@@ -908,10 +898,10 @@ if(BRLCAD_ENABLE_GECODE)
 endif(BRLCAD_ENABLE_GECODE)
 
 # Clipper polygon clipping library - for now, we're going to use our copy
+include(${CMAKE_CURRENT_SOURCE_DIR}/clipper.dist)
+CMAKEFILES_IN_DIR(clipper_ignore_files clipper)
 if(BRLCAD_LEVEL2)
   add_subdirectory(clipper)
-  include("${CMAKE_CURRENT_SOURCE_DIR}/clipper.dist")
-  CMAKEFILES_IN_DIR(clipper_ignore_files clipper)
   DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/clipper/Makefile")
   set(CLIPPER_LIBRARY "clipper" CACHE STRING "Clipper library" FORCE)
   set(CLIPPER_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/clipper" CACHE STRING "Directory containing clipper header" FORCE)
@@ -919,8 +909,6 @@ if(BRLCAD_LEVEL2)
   mark_as_advanced(CLIPPER_INCLUDE_DIR)
   SetTargetFolder(clipper "Third Party Libraries")
   SetTargetFolder(clipper-static "Third Party Libraries")
-else(BRLCAD_LEVEL2)
-  CMAKEFILES(clipper)
 endif(BRLCAD_LEVEL2)
 
 # VDSlib - A View-Dependent Simplification and Rendering Library For
@@ -928,7 +916,6 @@ endif(BRLCAD_LEVEL2)
 # systems would have 0.9 of vdslib installed, but it's unmaintained
 # and we're likely to be making changes.  If our own copy of VDSlib
 # ever spins back off into its own project, revisit the NOSYS
-
 set(libvds_ALIASES ENABLE_VDS)
 set(libvds_DESCRIPTION "
 Option for enabling and disabling compilation of the libvds triangle
@@ -994,7 +981,6 @@ else(BRLCAD_OSG_BUILD)
 endif(BRLCAD_OSG_BUILD)
 
 # gdiam
-
 set(libgdiam_ALIASES ENABLE_GDIAM)
 set(libgdiam_DESCRIPTION "
 Option for enabling and disabling compilation of the libgdiam approximate
@@ -1011,7 +997,6 @@ SetTargetFolder(libgdiam "Third Party Libraries")
 SetTargetFolder(libgdiam-static "Third Party Libraries")
 
 # Bullet - Real-Time Physics Simulation libraries
-
 set(Bullet_ALIASES ENABLE_BULLET)
 set(Bullet_DESCRIPTION "
 Option for enabling and disabling compilation of the Bullet Realtime
@@ -1072,11 +1057,8 @@ mark_as_advanced(RPLY_INCLUDE_DIRS)
 
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)
-CMAKEFILES(gct)
-
-if(BRLCAD_ENABLE_OSL)
-  add_subdirectory(osl)
-endif(BRLCAD_ENABLE_OSL)
+include("${CMAKE_CURRENT_SOURCE_DIR}/gct.dist")
+CMAKEFILES_IN_DIR(gct_ignore_files gct)
 
 CMAKEFILES(README)
 

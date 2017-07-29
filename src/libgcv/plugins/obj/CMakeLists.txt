@@ -16,7 +16,6 @@ LIBGCV_ADD_PLUGIN(obj "obj_read.c;obj_write.c;tri_face.c" "librt;libwfobj")
 
 set(obj_ignore_files
   tri_face.h
-  wfobj/CMake
   wfobj/CMake/FindLEMON.cmake
   wfobj/CMake/FindPERPLEX.cmake
   wfobj/CMake/FindRE2C.cmake
