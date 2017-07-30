@@ -192,6 +192,11 @@ fastf_t gamma_corr = 0.0;		/* gamma correction if !0 */
 int a_onehit = -1;
 
 /**
+ * Set to 1 to turn off boolean evaluation with -c 'set a_no_booleans=1'
+ */
+int a_no_booleans = -1;
+
+/**
  * Overlay
  *
  * If in overlay mode, and writing to a framebuffer, only write
@@ -213,6 +218,7 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "bounces", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ireflect", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "a_onehit", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "a_no_booleans", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", ELEMENTS_PER_VECT, "background", 0, color_hook, NULL, NULL},
     {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -1666,6 +1672,9 @@ view_2init(struct application *ap, char *UNUSED(framename))
     } else {
 	ap->a_onehit = a_onehit;
     }
+    if (a_no_booleans >= 0) {
+	ap->a_no_booleans = a_no_booleans;
+    }
 
     if (rpt_dist)
 	pwidth = 3+8;
@@ -1970,13 +1979,14 @@ application_init(void)
     view_parse[ 1].sp_offset = bu_byteoffset(max_bounces);
     view_parse[ 2].sp_offset = bu_byteoffset(max_ireflect);
     view_parse[ 3].sp_offset = bu_byteoffset(a_onehit);
-    view_parse[ 4].sp_offset = bu_byteoffset(background[0]);
-    view_parse[ 5].sp_offset = bu_byteoffset(overlay);
+    view_parse[ 4].sp_offset = bu_byteoffset(a_no_booleans);
+    view_parse[ 5].sp_offset = bu_byteoffset(background[0]);
     view_parse[ 6].sp_offset = bu_byteoffset(overlay);
-    view_parse[ 7].sp_offset = bu_byteoffset(ambSamples);
-    view_parse[ 8].sp_offset = bu_byteoffset(ambRadius);
-    view_parse[ 9].sp_offset = bu_byteoffset(ambOffset);
-    view_parse[10].sp_offset = bu_byteoffset(ambSlow);
+    view_parse[ 7].sp_offset = bu_byteoffset(overlay);
+    view_parse[ 8].sp_offset = bu_byteoffset(ambSamples);
+    view_parse[ 9].sp_offset = bu_byteoffset(ambRadius);
+    view_parse[10].sp_offset = bu_byteoffset(ambOffset);
+    view_parse[11].sp_offset = bu_byteoffset(ambSlow);
 }
 
 
