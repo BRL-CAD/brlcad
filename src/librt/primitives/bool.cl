@@ -638,7 +638,7 @@ bool_eval(global struct partition *partitions, global uint *ipartition, RESULT_T
 			// clear bit in mask
 			mask &= ~(1 << (31 - lz));
 		    }
-			if (ret) break;
+                    if (ret) break;
 		}
 		stack[stackend++] = ret;
 		break;
@@ -665,7 +665,7 @@ build_regiontable(global uint *regions_table, RESULT_TYPE segs,
     for (uint i = 0; i < bv_index; i++) {
 	uint mask = segs_bv[pp_idx * bv_index + i];
 	while (mask != 0) {
-		uint lz = clz(mask);
+            uint lz = clz(mask);
 	    uint k = seg_idx + (31 - lz);
 	    if (isset(segs_bv, pp_idx * bv_index, k - seg_idx) != 0) {
 		segp = segs+k;
@@ -676,7 +676,7 @@ build_regiontable(global uint *regions_table, RESULT_TYPE segs,
 		}
 	    }
 	    // clear bit in mask
-		mask &= ~(1 << (31 - lz));
+	    mask &= ~(1 << (31 - lz));
 	}
     }
 }
@@ -726,7 +726,7 @@ rt_default_multioverlap(global struct partition *partitions, global struct bool_
     int code, ret;
 
     uint rt_index = total_regions/32 +1;
-	uint lastregion_id;
+    uint lastregion_id;
 
     // Get first region of the regiontable
     for (uint i = 0; i < rt_index; i++) {

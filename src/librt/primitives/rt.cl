@@ -603,7 +603,7 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims,
 	 global struct region *regions, global struct partition *partitions, global uint *ipartition,
-     global uint *segs_bv, const int max_depth)
+         global uint *segs_bv, const int max_depth)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
