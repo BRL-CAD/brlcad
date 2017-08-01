@@ -644,7 +644,7 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 	    global struct partition *pp = &partitions[index];
             RESULT_TYPE segp = &segs[pp->inseg];
 
-            if (segp->seg_in.hit_dist < hitp.hit_dist) {
+            if (pp->inhit.hit_dist < hitp.hit_dist) {
                 hitp = pp->inhit;
                 idx = segp->seg_sti;
                 region_id = pp->region_id;
