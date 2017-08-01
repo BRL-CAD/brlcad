@@ -603,7 +603,7 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims,
 	 global struct region *regions, global struct partition *partitions, global uint *ipartition,
-         global uint *segs_bv, const int max_depth)
+         global uint *segs_bv, const int max_depth, global uint *head_partition)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
@@ -625,98 +625,87 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
     double3 a_color;
     uchar3 rgb;
     struct hit hitp;
-    uint pp_eval, head;
+    uint head;
     bool flipflag;
     uint region_id;
 
     a_color = 0.0;
     hitp.hit_dist = INFINITY;
     region_id = 0;
-    if (ipartition[id] > 0) {
+    if (head_partition[id] != UINT_MAX) {
 	uint idx;
 
 	idx = UINT_MAX;
 
 	/* Get first partition of the ray */
-	head = ipartition[id];
+	head = head_partition[id];
 	flipflag = 0;
-	pp_eval = 0;
-	for (uint index = head; index != UINT_MAX; index = partitions[index].forw_pp) {
+	for (uint index = head; index != UINT_MAX; index = partitions[index].next_evalpp) {
 	    global struct partition *pp = &partitions[index];
+            RESULT_TYPE segp = &segs[pp->inseg];
 
-	    if (pp->evaluated) {
-		RESULT_TYPE segp = &segs[pp->inseg];
-
-		if (segp->seg_in.hit_dist < hitp.hit_dist) {
-		    hitp = pp->inhit;
-		    idx = segp->seg_sti;
-		    region_id = pp->region_id;
-		    flipflag = pp->inflip;
-		}
-		pp_eval = 1;
-	    }
+            if (segp->seg_in.hit_dist < hitp.hit_dist) {
+                hitp = pp->inhit;
+                idx = segp->seg_sti;
+                region_id = pp->region_id;
+                flipflag = pp->inflip;
+            }
 	}
-	if (pp_eval) {
-	    double3 normal;
 
-	    if (hitp.hit_dist < 0.0) {
-		/* Eye inside solid, orthoview */
-		normal = -r_dir;
-	    } else {
-		norm(&hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
-		hitp.hit_normal = flipflag ? -hitp.hit_normal : hitp.hit_normal;
-		normal = hitp.hit_normal;
-	    }
+        double3 normal;
 
-	    /*
-	     * Diffuse reflectance from each light source
-	     */
-	    a_color = shade(r_pt, r_dir, &hitp, lt_pos, region_id, regions);
+        if (hitp.hit_dist < 0.0) {
+            /* Eye inside solid, orthoview */
+            normal = -r_dir;
+        } else {
+            norm(&hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
+            hitp.hit_normal = flipflag ? -hitp.hit_normal : hitp.hit_normal;
+            normal = hitp.hit_normal;
+        }
 
-	    /*
-	     * e ^(-density * distance)
-	     */
-	    if (!ZERO(airdensity)) {
-		double g;
-		double f = exp(-hitp.hit_dist * airdensity);
-		g = (1.0 - f);
-		a_color = a_color * f + haze * g;
-	    }
+        /*
+         * Diffuse reflectance from each light source
+         */
+        a_color = shade(r_pt, r_dir, &hitp, lt_pos, region_id, regions);
 
-	    double3 t_color;
+        /*
+         * e ^(-density * distance)
+         */
+        if (!ZERO(airdensity)) {
+            double g;
+            double f = exp(-hitp.hit_dist * airdensity);
+            g = (1.0 - f);
+            a_color = a_color * f + haze * g;
+        }
 
-	    /*
-	     * To prevent bad color aliasing, add some color dither.  Be
-	     * certain to NOT output the background color here.  Random
-	     * numbers in the range 0 to 1 are used, so that integer
-	     * valued colors (e.g., from texture maps) retain their original
-	     * values.
-	     */
-	    if (!ZERO(gamma)) {
-		/*
-		 * Perform gamma correction in floating-point space, and
-		 * avoid nasty mach bands in dark areas from doing it in
-		 * 0..255 space later.
-		 */
-		const double ex = 1.0/gamma;
-		t_color = floor(pow(a_color, ex) * DOUBLE_C(255.) +
-			bu_rand0to1(id, rand_halftab, randhalftabsize) + DOUBLE_C(0.5));
-	    } else {
-		t_color = a_color * DOUBLE_C(255.) + bu_rand0to1(id, rand_halftab, randhalftabsize);
-	    }
-	    rgb = convert_uchar3_sat(t_color);
+        double3 t_color;
 
-	    rgb = (uchar3)all(rgb == background) ? nonbackground : rgb;
-	    // make sure it's never perfect black
-	    rgb = (uchar3)all(!rgb) ? (uchar3){rgb.x, rgb.y, 1} : rgb;
-	} else {
-	    /* partition not evaluated, don't dither */
-	    rgb = background;
-	    a_color = -1e-20;	// background flag
-	    hitp.hit_dist = INFINITY;
-	}
+        /*
+         * To prevent bad color aliasing, add some color dither.  Be
+         * certain to NOT output the background color here.  Random
+         * numbers in the range 0 to 1 are used, so that integer
+         * valued colors (e.g., from texture maps) retain their original
+         * values.
+         */
+        if (!ZERO(gamma)) {
+            /*
+             * Perform gamma correction in floating-point space, and
+             * avoid nasty mach bands in dark areas from doing it in
+             * 0..255 space later.
+             */
+            const double ex = 1.0/gamma;
+            t_color = floor(pow(a_color, ex) * DOUBLE_C(255.) +
+                    bu_rand0to1(id, rand_halftab, randhalftabsize) + DOUBLE_C(0.5));
+        } else {
+            t_color = a_color * DOUBLE_C(255.) + bu_rand0to1(id, rand_halftab, randhalftabsize);
+        }
+        rgb = convert_uchar3_sat(t_color);
+
+        rgb = (uchar3)all(rgb == background) ? nonbackground : rgb;
+        // make sure it's never perfect black
+        rgb = (uchar3)all(!rgb) ? (uchar3){rgb.x, rgb.y, 1} : rgb;
     } else {
-	/* shot missed the model, don't dither */
+	/* no partition evaluated, don't dither */
 	rgb = background;
 	a_color = -1e-20;	// background flag
 	hitp.hit_dist = INFINITY;

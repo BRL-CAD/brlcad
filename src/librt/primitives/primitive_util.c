@@ -890,6 +890,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
             size_t sz_ipartitions;
 	    cl_uint *ipart;
 	    cl_mem ipartitions;
+            cl_mem head_partition;
 	    size_t sz_partitions;
 	    cl_mem ppartitions;
 	    cl_int max_depth;
@@ -987,6 +988,9 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 
 	    ipartitions = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sz_ipartitions, ipart, &error);
 	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL index partitions buffer");
+
+            head_partition = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sz_ipartitions, ipart, &error);
+            if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL head partitions buffer");
 	    bu_free(ipart, "ipart");
 
 	    segs_bv = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sz_bv, bv, &error);
@@ -1010,6 +1014,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 		error |= clSetKernelArg(clt_boolweave_kernel, 5, sizeof(cl_int), &p.cur_pixel);
 		error |= clSetKernelArg(clt_boolweave_kernel, 6, sizeof(cl_int), &p.last_pixel);
 		error |= clSetKernelArg(clt_boolweave_kernel, 7, sizeof(cl_int), &max_depth);
+                error |= clSetKernelArg(clt_boolweave_kernel, 8, sizeof(cl_mem), &head_partition);
 		if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
 		error = clEnqueueNDRangeKernel(clt_queue, clt_boolweave_kernel, 1, NULL, &npix,
 			&snpix, 0, NULL, NULL);
@@ -1033,6 +1038,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	    error |= clSetKernelArg(clt_boolfinal_kernel, 11, sizeof(cl_int), &p.last_pixel);
 	    error |= clSetKernelArg(clt_boolfinal_kernel, 12, sizeof(cl_mem), &clt_db_regions_table);
 	    error |= clSetKernelArg(clt_boolfinal_kernel, 13, sizeof(cl_uint), &clt_db_regions_table_size);
+            error |= clSetKernelArg(clt_boolfinal_kernel, 14, sizeof(cl_mem), &head_partition);
 	    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
 	    error = clEnqueueNDRangeKernel(clt_queue, clt_boolfinal_kernel, 1, NULL, &npix,
                     &snpix, 0, NULL, NULL);
@@ -1068,6 +1074,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	    error |= clSetKernelArg(clt_shade_segs_kernel, 26, sizeof(cl_mem), &ipartitions);
 	    error |= clSetKernelArg(clt_shade_segs_kernel, 27, sizeof(cl_mem), &segs_bv);
 	    error |= clSetKernelArg(clt_shade_segs_kernel, 28, sizeof(cl_int), &max_depth);
+            error |= clSetKernelArg(clt_shade_segs_kernel, 29, sizeof(cl_mem), &head_partition);
 	    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
 	    error = clEnqueueNDRangeKernel(clt_queue, clt_shade_segs_kernel, 1, NULL, &npix,
 		    &snpix, 0, NULL, NULL);
@@ -1079,6 +1086,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	    clReleaseMemObject(ppartitions);
 	    clReleaseMemObject(segs_bv);
 	    clReleaseMemObject(regiontable_bv);
+            clReleaseMemObject(head_partition);
 	    }
 	    break;
 	default:

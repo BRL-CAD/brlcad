@@ -69,8 +69,8 @@ struct partition {
     uint outseg;
     uint forw_pp;               /* index to the next partition */
     uint back_pp;               /* index to the previous partition */
+    uint next_evalpp;           /* index to the next evaluated partition */
     uint region_id;             /* id of the "owning" region */
-    short evaluated;		/* holds the result of boolean evaluation */
     char inflip;		/* flip inhit->hit_normal */
     char outflip;		/* flip outhit->hit_normal */
 };
