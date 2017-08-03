@@ -97,7 +97,7 @@ function(message)
 endfunction(message)
 
 #-----------------------------------------------------------------------------
-# Pretty-printing macro that generates a box around a string and prints the
+# Pretty-printing function that generates a box around a string and prints the
 # resulting message.
 function(BOX_PRINT input_string border_string)
   string(LENGTH ${input_string} MESSAGE_LENGTH)
