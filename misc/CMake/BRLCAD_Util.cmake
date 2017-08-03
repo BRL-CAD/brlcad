@@ -34,6 +34,9 @@
 #
 ###
 
+# Need sophisticated option parsing
+include(CMakeParseArguments)
+
 #-----------------------------------------------------------------------------
 # We want to support a "distclean" build target that will clear all
 # CMake-generated files from a source directory in the case of an
@@ -279,7 +282,9 @@ endfunction(CMAKEFILES_IN_DIR)
 # macros using the normalize macro get the list in a known variable and
 # can use it reliably, regardless of whether inlist contained the actual
 # list contents or a variable.
-macro(NORMALIZE_FILE_LIST inlist targetvar fullpath_targetvar)
+function(NORMALIZE_FILE_LIST inlist)
+
+  cmake_parse_arguments(N "" "RLIST;FPLIST;TARGET" "" ${ARGN})
 
   # First, figure out whether we have list contents or a list name
   set(havevarname 0)
@@ -287,59 +292,70 @@ macro(NORMALIZE_FILE_LIST inlist targetvar fullpath_targetvar)
     if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
       set(havevarname 1)
     endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
-  endforeach(maybefilename ${${targetvar}})
+  endforeach(maybefilename ${inlist})
 
   # Put the list contents in the targetvar variable and
   # generate a target name.
   if(NOT havevarname)
 
-    set(${targetvar} "${inlist}")
+    set(rlist "${inlist}")
+    if(N_RLIST)
+      set(${N_RLIST} "${inlist}" PARENT_SCOPE)
+    endif(N_RLIST)
 
-    # Initial clean-up
-    string(REGEX REPLACE " " "_" targetstr "${inlist}")
-    string(REGEX REPLACE "/" "_" targetstr "${targetstr}")
-    string(REGEX REPLACE "\\." "_" targetstr "${targetstr}")
+    # If we want a target name and all we've got is a list of files,
+    # we need to get a bit creative.
+    if(N_TARGET)
 
-    # For situations like file copying, where we sometimes need to autogenerate
-    # target names, it is important to make sure we can avoid generating absurdly
-    # long names.  To do this, we run candidate names through a length filter
-    # and use their MD5 hash if they are longer than 30 characters.
-    # It's cryptic but the odds are very good the result will be a unique
-    # target name and the string will be short enough, which is what we need.
-    string(LENGTH "${targetstr}" STRLEN)
-    if ("${STRLEN}" GREATER 30)
-      string(MD5 targetname "${targetstr}")
-    else ("${STRLEN}" GREATER 30)
-      set(targetname "${targetstr}")
-    endif ("${STRLEN}" GREATER 30)
+      # Initial clean-up
+      string(REGEX REPLACE " " "_" targetstr "${inlist}")
+      string(REGEX REPLACE "/" "_" targetstr "${targetstr}")
+      string(REGEX REPLACE "\\." "_" targetstr "${targetstr}")
+
+      # For situations like file copying, where we sometimes need to autogenerate
+      # target names, it is important to make sure we can avoid generating absurdly
+      # long names.  To do this, we run candidate names through a length filter
+      # and use their MD5 hash if they are longer than 30 characters.
+      # It's cryptic but the odds are very good the result will be a unique
+      # target name and the string will be short enough, which is what we need.
+      string(LENGTH "${targetstr}" STRLEN)
+      if ("${STRLEN}" GREATER 30)
+	string(MD5 targetname "${targetstr}")
+      else ("${STRLEN}" GREATER 30)
+	set(targetname "${targetstr}")
+      endif ("${STRLEN}" GREATER 30)
+
+      # Send back the final result
+      set(${N_TARGET} "${targetname}" PARENT_SCOPE)
+
+    endif(N_TARGET)
 
   else(NOT havevarname)
 
-    set(${targetvar} "${${inlist}}")
-    set(targetname "${inlist}")
+    set(rlist "${${inlist}}")
+    if(N_RLIST)
+      set(${N_RLIST} "${${inlist}}" PARENT_SCOPE)
+    endif(N_RLIST)
+
+    if(N_TARGET)
+      set(${N_TARGET} "${inlist}" PARENT_SCOPE)
+    endif(N_TARGET)
 
   endif(NOT havevarname)
-
-  # Mark the inputs as files to ignore in distcheck
-  CMAKEFILES(${${targetvar}})
 
   # For some uses, we need the contents of the input list
   # with full paths.  Generate a list that we're sure has
   # full paths, and return that to the second variable.
-  set(${fullpath_targetvar} "")
-  foreach(filename ${${targetvar}})
-    get_filename_component(file_fullpath "${filename}" ABSOLUTE)
-    set(${fullpath_targetvar} ${${fullpath_targetvar}} "${file_fullpath}")
-  endforeach(filename ${${targetvar}})
+  if(N_FPLIST)
+    set(fullpaths "")
+    foreach(filename ${rlist})
+      get_filename_component(file_fullpath "${filename}" ABSOLUTE)
+      set(fullpaths ${fullpaths} "${file_fullpath}")
+    endforeach(filename ${rlist})
+    set(${N_FPLIST} "${fullpaths}" PARENT_SCOPE)
+  endif(N_FPLIST)
 
-  # Some macros will also want a valid build target name
-  # based on the input - if a third input parameter has
-  # been supplied, return the target name using it.
-  if(NOT "${ARGV3}" STREQUAL "")
-    set(${ARGV3} "${targetname}")
-  endif(NOT "${ARGV3}" STREQUAL "")
-
-endmacro(NORMALIZE_FILE_LIST)
+endfunction(NORMALIZE_FILE_LIST)
 
 #-----------------------------------------------------------------------------
 # It is sometimes necessary for build logic to be aware of all instances

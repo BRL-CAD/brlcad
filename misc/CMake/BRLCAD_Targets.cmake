@@ -595,7 +595,10 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
 
   # Handle both a list of one or more files and variable holding a list of files -
   # find out what we've got.
-  NORMALIZE_FILE_LIST("${inputdata}" datalist fullpath_datalist targetname)
+  NORMALIZE_FILE_LIST("${inputdata}" RLIST datalist FPLIST fullpath_datalist TARGET targetname)
+
+  # Identify the source files for CMake
+  CMAKEFILES(${datalist})
 
   #-----------------------------------------------------------------------------
   # Some of the more advanced build system features in BRL-CAD's CMake
