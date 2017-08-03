@@ -258,8 +258,8 @@ function(CMAKEFILES)
   endif(NOT BRLCAD_IS_SUBBUILD)
 endfunction(CMAKEFILES FILESLIST)
 
-# Routine to tell distcheck to ignore a series of items in a directory.  Items may themselves
-# be directories.  Primarily useful when working with src/other dist lists.
+# Routine to tell distcheck to ignore a series of items in a directory.
+# Primarily useful when working with src/other dist lists.
 function(CMAKEFILES_IN_DIR filestoignore targetdir)
   if(NOT BRLCAD_IS_SUBBUILD)
     set(CMAKE_IGNORE_LIST "")
@@ -485,7 +485,7 @@ endfunction(generate_cmd_script)
 function(set_config_time)
 
   # We don't want any parent C flags here - hopefully, the below code will
-  # "just work" in any environment we are about.  The gnu89 standard doesn't
+  # "just work" in any environment we care about.  The gnu89 standard doesn't
   # like the %z print specifier, but unless/until we hit a compiler that really
   # can't deal with it don't worry about it.
   set(CMAKE_C_FLAGS "")
