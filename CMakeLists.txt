@@ -2799,6 +2799,7 @@ BRLCAD_ADDDATA(toplevel_DOCFILES ".")
 # settings.
 if(NOT BRLCAD_DISABLE_SUMMARY)
   include("${BRLCAD_CMAKE_DIR}/BRLCAD_Summary.cmake")
+  BRLCAD_Summary()
 endif(NOT BRLCAD_DISABLE_SUMMARY)
 
 # *******************************************************************
