@@ -248,6 +248,7 @@ function(CMAKEFILES)
     # yank them up front.
     set(ITEMS ${ARGN})
     list(REMOVE_ITEM ITEMS SHARED STATIC OBJECT WIN32 UNKNOWN IMPORTED MODULE INTERFACE EXCLUDE_FROM_ALL)
+    # TODO - once we requrire a new enough CMake version, replace the foreach below with list(FILTER ...)
     foreach(ITEM ${ITEMS})
       if("${ITEM}" MATCHES "TARGET_OBJECTS")
 	list(REMOVE_ITEM ITEMS "${ITEM}")
