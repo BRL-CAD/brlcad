@@ -352,7 +352,7 @@ endmacro(NORMALIZE_FILE_LIST)
 # seems to indicate that directory properties also apply to subdirectories,
 # and we want these lists to be associated with one and only one directory.
 
-macro(BRLCAD_ADD_DIR_LIST_ENTRY list_name dir_in list_entry)
+function(BRLCAD_ADD_DIR_LIST_ENTRY list_name dir_in list_entry)
   string(REGEX REPLACE "/" "_" currdir_str ${dir_in})
   string(TOUPPER "${currdir_str}" currdir_str)
   get_property(${list_name}_${currdir_str} GLOBAL PROPERTY DATA_TARGETS_${currdir_str})
@@ -360,14 +360,14 @@ macro(BRLCAD_ADD_DIR_LIST_ENTRY list_name dir_in list_entry)
     define_property(GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST BRIEF_DOCS "${list_name}" FULL_DOCS "${list_name} for directory ${dir_in}")
   endif(NOT ${list_name}_${currdir_str})
   set_property(GLOBAL APPEND PROPERTY ${list_name}_${currdir_str} ${list_entry})
-endmacro(BRLCAD_ADD_DIR_LIST_ENTRY)
+endfunction(BRLCAD_ADD_DIR_LIST_ENTRY)
 
-macro(BRLCAD_GET_DIR_LIST_CONTENTS list_name dir_in outvar)
+function(BRLCAD_GET_DIR_LIST_CONTENTS list_name dir_in outvar)
   string(REGEX REPLACE "/" "_" currdir_str ${dir_in})
   string(TOUPPER "${currdir_str}" currdir_str)
   get_property(${list_name}_${currdir_str} GLOBAL PROPERTY ${list_name}_${currdir_str})
-  set(${outvar} "${DATA_TARGETS_${currdir_str}}")
-endmacro(BRLCAD_GET_DIR_LIST_CONTENTS)
+  set(${outvar} "${DATA_TARGETS_${currdir_str}}" PARENT_SCOPE)
+endfunction(BRLCAD_GET_DIR_LIST_CONTENTS)
 
 
 #-----------------------------------------------------------------------------
