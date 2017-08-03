@@ -186,7 +186,7 @@ function(CHECK_SOURCE_DIR_FULLPATH ITEM_PATH)
 
   # If it's a full path in the binary dir, it's fine
   IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ITEM_PATH}" SUBPATH_TEST)
-  if(NOT"${SUBPATH_TEST}" STREQUAL "0")
+  if(NOT "${SUBPATH_TEST}" STREQUAL "0")
     return()
   endif(NOT "${SUBPATH_TEST}" STREQUAL "0")
 
