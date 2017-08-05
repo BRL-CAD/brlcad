@@ -460,6 +460,16 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # Override and wrap add_subdirectory.
   function(add_subdirectory name)
     _add_subdirectory(${name} ${ARGN})
+
+    # TODO - try to come up with some good way to do this bookkeeping without
+    # having to override add_subdirectory...
+    #
+    # see https://cmake.org/pipermail/cmake-developers/2015-July/025730.html
+    # for some work related to this...  the SOURCE_DIR and SOURCES properties
+    # went in in CMake 3.4.  Once we can require that as a minimum version, we
+    # can probably revisit at least part of this by getting a list of source
+    # directories for all targets at the end of the build and setting
+    # properties then.
     set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${name}")
     set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeLists.txt")
     DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/CMakeFiles")
