@@ -370,7 +370,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # on the lib prefix for libraries if the target name is lib<target>
   function(add_library name)
     _add_library(${name} ${ARGN})
-    CMAKEFILES(${ARGN})
     if(${name} MATCHES "^lib*")
       set_target_properties(${name} PROPERTIES PREFIX "")
     endif(${name} MATCHES "^lib*")
@@ -388,7 +387,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # Override and wrap add_executable
   function(add_executable name)
     _add_executable(${name} ${ARGN})
-    CMAKEFILES(${ARGN})
     set_property(GLOBAL APPEND PROPERTY CMAKE_EXEC_TARGET_LIST ${name})
   endfunction(add_executable)
 

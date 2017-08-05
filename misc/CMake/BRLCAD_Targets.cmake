@@ -300,6 +300,9 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
     add_executable(${execname} ${srcslist})
   endif(E_GUI)
 
+  # Let CMAKEFILES know what's going on
+  CMAKEFILES(${srcslist})
+
   # Check at compile time the standard BRL-CAD style rules
   VALIDATE_STYLE("${execname}" "${srcslist}")
 
@@ -379,6 +382,9 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   if(L_FOLDER)
     set(SUBFOLDER "/${L_FOLDER}")
   endif(L_FOLDER)
+
+  # Let CMAKEFILES know what's going on
+  CMAKEFILES(${lsrcslist}  ${L_SHARED_SRCS} ${L_STATIC_SRCS})
 
   # If we need it, set up the OBJECT library build
   if(USE_OBJECT_LIBS)
