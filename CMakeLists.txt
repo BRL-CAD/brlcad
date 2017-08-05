@@ -373,6 +373,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
     if(${name} MATCHES "^lib*")
       set_target_properties(${name} PROPERTIES PREFIX "")
     endif(${name} MATCHES "^lib*")
+
+    # TODO - the mechanism below should eventually be replaced by a proper
+    # feature in CMake, but it is as yet unimplemented:
+    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
+    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
+    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
     set(add_lib_to_list 1)
     foreach(libarg ${ARGN})
       if("${libarg}" STREQUAL "INTERFACE")
@@ -387,12 +393,24 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # Override and wrap add_executable
   function(add_executable name)
     _add_executable(${name} ${ARGN})
+
+    # TODO - the mechanism below should eventually be replaced by a proper
+    # feature in CMake, but it is as yet unimplemented:
+    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
+    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
+    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
     set_property(GLOBAL APPEND PROPERTY CMAKE_EXEC_TARGET_LIST ${name})
   endfunction(add_executable)
 
   # Override and wrap add_custom_target
   function(add_custom_target name)
     _add_custom_target(${name} ${ARGN})
+
+    # TODO - the mechanism below should eventually be replaced by a proper
+    # feature in CMake, but it is as yet unimplemented:
+    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
+    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
+    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
     set_property(GLOBAL APPEND PROPERTY CMAKE_CUSTOM_TARGET_LIST ${name})
   endfunction(add_custom_target)
 
