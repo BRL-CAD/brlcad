@@ -1078,7 +1078,12 @@ mark_as_advanced(BUILD_SHARED_LIBS)
 # option will not disable libraries specifically added as STATIC even
 # when OFF.  For multi-configuration options the build type determination
 # is made at build time, so just default to "ON".
-cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON " ( NOT \"${CMAKE_CONFIGURATION_TYPES}\" STREQUAL \"\" ) OR ( NOT \"${CMAKE_BUILD_TYPE}\" STREQUAL \"Debug\" ) " OFF)
+if(NOT CMAKE_BUILD_TYPE)
+  set(CBT "MULTICONFIG")
+else(NOT CMAKE_BUILD_TYPE)
+  set(CBT "${CMAKE_BUILD_TYPE}")
+endif(NOT CMAKE_BUILD_TYPE)
+cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONFIGURATION_TYPES OR NOT ${CBT} STREQUAL Debug" OFF)
 
 # On Mac OS X, it is common to have third party package managers
 # present for easy software installation (currently we're aware of
