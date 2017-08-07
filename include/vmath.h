@@ -1367,6 +1367,52 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 
 /**
+ * @brief Linearly interpolate between two 3D vectors `a' and `b' by
+ * interpolant `t', expected in the range [0,1], with result in `o'.
+ *
+ * NOTE: We intentionally use the form "o = a*(1-t) + b*t" which is
+ * mathematically equivalent to "o = a + (b-a)*t".  The latter might
+ * result in fewer math operations but cannot guarantee o==v1 when
+ * t==1 due to floating-point arithmetic error.
+ */
+#define VLERP(o, a, b, t) do { \
+	(o)[X] = (a)[X] * (1 - (t)) + (b)[X] * (t); \
+	(o)[Y] = (a)[Y] * (1 - (t)) + (b)[Y] * (t); \
+	(o)[Z] = (a)[Z] * (1 - (t)) + (b)[Z] * (t); \
+    } while (0)
+
+/**
+ * @brief Linearly interpolate between two 2D vectors `a' and `b' by
+ * interpolant `t', expected in the range [0,1], with result in `o'.
+ *
+ * NOTE: We intentionally use the form "o = a*(1-t) + b*t" which is
+ * mathematically equivalent to "o = a + (b-a)*t".  The latter might
+ * result in fewer math operations but cannot guarantee o==v1 when
+ * t==1 due to floating-point arithmetic error.
+ */
+#define V2LERP(o, a, b, t) do { \
+	(o)[X] = (a)[X] * (1 - (t)) + (b)[X] * (t); \
+	(o)[Y] = (a)[Y] * (1 - (t)) + (b)[Y] * (t); \
+    } while (0)
+
+/**
+ * @brief Linearly interpolate between two 4D vectors `a' and `b' by
+ * interpolant `t', expected in the range [0,1], with result in `o'.
+ *
+ * NOTE: We intentionally use the form "o = a*(1-t) + b*t" which is
+ * mathematically equivalent to "o = a + (b-a)*t".  The latter might
+ * result in fewer math operations but cannot guarantee o==v1 when
+ * t==1 due to floating-point arithmetic error.
+ */
+#define HLERP(o, a, b, t) do { \
+	(o)[X] = (a)[X] * (1 - (t)) + (b)[X] * (t); \
+	(o)[Y] = (a)[Y] * (1 - (t)) + (b)[Y] * (t); \
+	(o)[Z] = (a)[Z] * (1 - (t)) + (b)[Z] * (t); \
+	(o)[W] = (a)[W] * (1 - (t)) + (b)[W] * (t); \
+    } while (0)
+
+
+/**
  * @brief Subtract two points to make a vector, dot with another
  * vector.
  */
