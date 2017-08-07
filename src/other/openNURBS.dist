@@ -1,7 +1,6 @@
 set(openNURBS_ignore_files
 BRL-CAD_changes.txt
 CMakeLists.txt
-cotire.cmake
 example_brep/example_brep.cpp
 example_brep/example_brep.xcodeproj/project.pbxproj
 example_brep/example_brep.xcodeproj/project.xcworkspace/contents.xcworkspacedata
