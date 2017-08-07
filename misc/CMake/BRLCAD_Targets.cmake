@@ -368,33 +368,44 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
   cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SHARED_SRCS;STATIC_SRCS" ${ARGN})
 
+  # Let CMAKEFILES know what's going on
+  CMAKEFILES(${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
+
   # Go all C++ if the settings request it
   SET_LANG_CXX("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}")
 
   # Handle the build flags and the general definitions common to both shared and static
-  GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" NO_DLL CFLAGS L_C_FLAGS CXXFLAGS L_CXX_FLAGS DEFINES L_DEFINES)
+  GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" CFLAGS L_C_FLAGS CXXFLAGS L_CXX_FLAGS DEFINES L_DEFINES)
   SET_FLAGS_AND_DEFINITIONS("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}" TARGET ${libname} CFLAGS "${L_C_FLAGS}" CXXFLAGS "${L_CXX_FLAGS}" DEFINES "${L_DEFINES}")
 
   # Local copy of srcslist in case manipulation is needed
-    set(lsrcslist ${srcslist})
+  set(lsrcslist-shared ${srcslist} ${L_SHARED_SRCS})
+  set(lsrcslist-static ${srcslist} ${L_STATIC_SRCS})
 
   # If we're going to have a specified subfolder, prepare the appropriate string:
   if(L_FOLDER)
     set(SUBFOLDER "/${L_FOLDER}")
   endif(L_FOLDER)
 
-  # Let CMAKEFILES know what's going on
-  CMAKEFILES(${lsrcslist}  ${L_SHARED_SRCS} ${L_STATIC_SRCS})
-
   # If we need it, set up the OBJECT library build
   if(USE_OBJECT_LIBS)
-    add_library(${libname}-obj OBJECT ${lsrcslist})
-    set(lsrcslist $<TARGET_OBJECTS:${libname}-obj>)
+    add_library(${libname}-obj OBJECT ${lsrcslist-shared})
+    set(lsrcslist-shared $<TARGET_OBJECTS:${libname}-obj>)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
+    if(CPP_DLL_DEFINES)
+      # Static Visual C++ builds shouldn't have the dll import/export logic set,so in that case
+      # we need to build separate objects
+      add_library(${libname}-obj-static OBJECT ${lsrcslist-static})
+      set(lsrcslist-static $<TARGET_OBJECTS:${libname}-obj-static>)
+      target_compile_definitions(${libname}-obj-static PRIVATE STATIC_BUILD)
+      set_target_properties(${libname}-obj-static PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
+    else(CPP_DLL_DEFINES)
+      set(lsrcslist-static $<TARGET_OBJECTS:${libname}-obj>)
+    endif(CPP_DLL_DEFINES)
   endif(USE_OBJECT_LIBS)
 
   if(BUILD_SHARED_LIBS)
-    add_library(${libname} SHARED ${lsrcslist}  ${L_SHARED_SRCS})
+    add_library(${libname} SHARED ${lsrcslist-shared})
     string(REPLACE "lib" "" LOWERCORE "${libname}")
     string(TOUPPER ${LOWERCORE} UPPER_CORE)
     if(CPP_DLL_DEFINES)
@@ -403,7 +414,10 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     endif(CPP_DLL_DEFINES)
   endif(BUILD_SHARED_LIBS)
   if(BUILD_STATIC_LIBS)
-    add_library(${libname}-static STATIC ${lsrcslist} ${L_STATIC_SRCS})
+    add_library(${libname}-static STATIC ${lsrcslist-static})
+    if(USE_OBJECT_LIBS AND CPP_DLL_DEFINES)
+      target_compile_definitions(${libname}-static PRIVATE STATIC_BUILD)
+    endif(USE_OBJECT_LIBS AND CPP_DLL_DEFINES)
   endif(BUILD_STATIC_LIBS)
 
   # Make sure we don't end up with outputs named liblib...

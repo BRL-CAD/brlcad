@@ -35,6 +35,8 @@
 #ifndef BREP_EXPORT
 #  if defined(BREP_DLL_EXPORTS) && defined(BREP_DLL_IMPORTS)
 #    error "Only BREP_DLL_EXPORTS or BREP_DLL_IMPORTS can be defined, not both."
+#  elif defined(STATIC_BUILD)
+#    define BREP_EXPORT
 #  elif defined(BREP_DLL_EXPORTS)
 #    define BREP_EXPORT __declspec(dllexport)
 #  elif defined(BREP_DLL_IMPORTS)

@@ -126,9 +126,9 @@ if(MSVC)
   set(CPP_DLL_DEFINES 1)
 endif(MSVC)
 
-# If we can, use OBJECT libraries to build both shared and static
-# libraries from the same .o files, saving double compilation
-cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
+# Use OBJECT libraries
+option(USE_OBJECT_LIBS "Use OBJECT libraries" ON)
+mark_as_advanced(USE_OBJECT_LIBS)
 
 #---------------------------------------------------------------------
 # Load general utility routines for BRL-CAD CMake logic

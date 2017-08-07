@@ -34,6 +34,8 @@
 #ifndef BG_EXPORT
 #  if defined(BG_DLL_EXPORTS) && defined(BG_DLL_IMPORTS)
 #    error "Only BG_DLL_EXPORTS or BG_DLL_IMPORTS can be defined, not both."
+#  elif defined(STATIC_BUILD)
+#    define BG_EXPORT
 #  elif defined(BG_DLL_EXPORTS)
 #    define BG_EXPORT __declspec(dllexport)
 #  elif defined(BG_DLL_IMPORTS)

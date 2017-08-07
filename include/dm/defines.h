@@ -25,6 +25,8 @@
 #ifndef DM_EXPORT
 #  if defined(DM_DLL_EXPORTS) && defined(DM_DLL_IMPORTS)
 #    error "Only DM_DLL_EXPORTS or DM_DLL_IMPORTS can be defined, not both."
+#  elif defined(STATIC_BUILD)
+#    define DM_EXPORT
 #  elif defined(DM_DLL_EXPORTS)
 #    define DM_EXPORT __declspec(dllexport)
 #  elif defined(DM_DLL_IMPORTS)

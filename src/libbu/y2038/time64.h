@@ -6,6 +6,8 @@
 #ifndef Y2038_EXPORT
 #  if defined(Y2038_DLL_EXPORTS) && defined(Y2038_DLL_IMPORTS)
 #    error "Only Y2038_DLL_EXPORTS or Y2038_DLL_IMPORTS can be defined, not both."
+#  elif defined(STATIC_BUILD)
+#    define Y2038_EXPORT
 #  elif defined(Y2038_DLL_EXPORTS)
 #    define Y2038_EXPORT __declspec(dllexport)
 #  elif defined(Y2038_DLL_IMPORTS)
