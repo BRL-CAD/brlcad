@@ -126,8 +126,8 @@ if(MSVC)
   set(CPP_DLL_DEFINES 1)
 endif(MSVC)
 
-# Use OBJECT libraries
-option(USE_OBJECT_LIBS "Use OBJECT libraries" ON)
+# Use OBJECT libraries when we can
+cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
 mark_as_advanced(USE_OBJECT_LIBS)
 
 #---------------------------------------------------------------------

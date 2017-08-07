@@ -379,8 +379,7 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   SET_FLAGS_AND_DEFINITIONS("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}" TARGET ${libname} CFLAGS "${L_C_FLAGS}" CXXFLAGS "${L_CXX_FLAGS}" DEFINES "${L_DEFINES}")
 
   # Local copy of srcslist in case manipulation is needed
-  set(lsrcslist-shared ${srcslist} ${L_SHARED_SRCS})
-  set(lsrcslist-static ${srcslist} ${L_STATIC_SRCS})
+  set(lsrcslist ${srcslist})
 
   # If we're going to have a specified subfolder, prepare the appropriate string:
   if(L_FOLDER)
@@ -389,23 +388,13 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
   # If we need it, set up the OBJECT library build
   if(USE_OBJECT_LIBS)
-    add_library(${libname}-obj OBJECT ${lsrcslist-shared})
-    set(lsrcslist-shared $<TARGET_OBJECTS:${libname}-obj>)
+    add_library(${libname}-obj OBJECT ${lsrcslist})
+    set(lsrcslist $<TARGET_OBJECTS:${libname}-obj>)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
-    if(CPP_DLL_DEFINES)
-      # Static Visual C++ builds shouldn't have the dll import/export logic set,so in that case
-      # we need to build separate objects
-      add_library(${libname}-obj-static OBJECT ${lsrcslist-static})
-      set(lsrcslist-static $<TARGET_OBJECTS:${libname}-obj-static>)
-      target_compile_definitions(${libname}-obj-static PRIVATE STATIC_BUILD)
-      set_target_properties(${libname}-obj-static PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
-    else(CPP_DLL_DEFINES)
-      set(lsrcslist-static $<TARGET_OBJECTS:${libname}-obj>)
-    endif(CPP_DLL_DEFINES)
   endif(USE_OBJECT_LIBS)
 
   if(BUILD_SHARED_LIBS)
-    add_library(${libname} SHARED ${lsrcslist-shared})
+    add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
     string(REPLACE "lib" "" LOWERCORE "${libname}")
     string(TOUPPER ${LOWERCORE} UPPER_CORE)
     if(CPP_DLL_DEFINES)
@@ -414,10 +403,12 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     endif(CPP_DLL_DEFINES)
   endif(BUILD_SHARED_LIBS)
   if(BUILD_STATIC_LIBS)
-    add_library(${libname}-static STATIC ${lsrcslist-static})
-    if(USE_OBJECT_LIBS AND CPP_DLL_DEFINES)
+    add_library(${libname}-static STATIC ${lsrcslist} ${L_STATIC_SRCS})
+    # No DLL import/export machinery for static compilation with Visual C++,
+    # so define our short-circuiting definition for the headers
+    if(CPP_DLL_DEFINES)
       target_compile_definitions(${libname}-static PRIVATE STATIC_BUILD)
-    endif(USE_OBJECT_LIBS AND CPP_DLL_DEFINES)
+    endif(CPP_DLL_DEFINES)
   endif(BUILD_STATIC_LIBS)
 
   # Make sure we don't end up with outputs named liblib...
