@@ -640,7 +640,7 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 	/* Get first partition of the ray */
 	head = head_partition[id];
 	flipflag = 0;
-	for (uint index = head; index != UINT_MAX; index = partitions[index].next_evalpp) {
+	for (uint index = head; index != UINT_MAX; index = partitions[index].forw_pp) {
 	    global struct partition *pp = &partitions[index];
             RESULT_TYPE segp = &segs[pp->inseg];
 

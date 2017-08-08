@@ -114,7 +114,6 @@ initialize_partition(global struct partition *partitions, const uint pp_idx)
     if (pp_idx != UINT_MAX) {
         partitions[pp_idx].inflip = 0;
         partitions[pp_idx].outflip = 0;
-        partitions[pp_idx].next_evalpp = UINT_MAX;
         partitions[pp_idx].region_id = UINT_MAX;
     }
 }
@@ -956,7 +955,7 @@ rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESUL
 	    if (lastpp_eval_idx != UINT_MAX) {
 		/* there is one last partition evaluated for this ray */
 		lastpp = &partitions[lastpp_eval_idx];
-                lastpp->next_evalpp = current_index;
+                lastpp->forw_pp = current_index;
 	    }
 
 	    if (lastpp_eval_idx != UINT_MAX && lastregion_idx == lastpp->region_id &&

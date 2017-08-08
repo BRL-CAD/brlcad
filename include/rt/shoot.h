@@ -183,7 +183,6 @@ struct cl_partition {
     cl_uint outseg;
     cl_uint forw_pp;                /* index to the next partition */
     cl_uint back_pp;                /* index to the previous partition */
-    cl_uint next_evalpp;            /* index to the next evaluated partition */
     cl_uint region_id;              /* id of the "owning" region */
     cl_char inflip;                 /* flip inhit->hit_normal */
     cl_char outflip;                /* flip outhit->hit_normal */
