@@ -368,6 +368,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   # Distcheck file list
   set(creo_dist_files
+    ${creo_brl_srcs}
     README.txt
     cmake_uninstall.cmake.in
     creo-brl.dat.in

@@ -15,20 +15,26 @@ include_directories(
 LIBGCV_ADD_PLUGIN(obj "obj_read.c;obj_write.c;tri_face.c" "librt;libwfobj")
 
 set(obj_ignore_files
+  obj_read.c
+  obj_write.c
+  tri_face.c
   tri_face.h
   wfobj/CMake/FindLEMON.cmake
   wfobj/CMake/FindPERPLEX.cmake
   wfobj/CMake/FindRE2C.cmake
+  wfobj/CMakeLists.txt
   wfobj/CMake/Path_Setup.cmake
-  wfobj/obj_grammar.yy
   wfobj/obj_grammar_decls.h
+  wfobj/obj_grammar.yy
+  wfobj/obj_parser.cpp
   wfobj/obj_parser.h
   wfobj/obj_parser_state.h
   wfobj/obj_rules.h
   wfobj/obj_rules.l
   wfobj/obj_token_type.h
+  wfobj/obj_util.cpp
   wfobj/obj_util.h
-)
+  )
 
 CMAKEFILES(${obj_ignore_files})
 

@@ -39,7 +39,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   endif(CPP_DLL_DEFINES)
 
   # Distcheck file list
-  CMAKEFILES(conv.h log.h shim.h ug-g.1 ug_misc.h)
+  CMAKEFILES(${ug_g_srcs} conv.h log.h shim.h ug-g.1 ug_misc.h)
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 

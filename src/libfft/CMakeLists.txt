@@ -12,10 +12,12 @@ BRLCAD_LIB_INCLUDE_DIRS(fft FFT_INCLUDE_DIRS FFT_LOCAL_INCLUDE_DIRS)
 add_executable(fftc fftc.c splitditc.c)
 SetTargetFolder(fftc "Compilation Utilities")
 target_link_libraries(fftc ${M_LIBRARY})
+CMAKEFILES(fftc.c)
 
 add_executable(ifftc ifftc.c ditsplitc.c)
 SetTargetFolder(ifftc "Compilation Utilities")
 target_link_libraries(ifftc ${M_LIBRARY})
+CMAKEFILES(ifftc.c)
 
 # We need to generate some of libfft's source files
 function(fft_gen numlist targetdir outfiles)
@@ -57,6 +59,7 @@ set_target_properties(libfft PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_executable(fftest fftest.c)
 SetTargetFolder(fftest "Compilation Utilities")
 target_link_libraries(fftest libfft ${M_LIBRARY})
+CMAKEFILES(fftest.c)
 
 # Local Variables:
 # tab-width: 8
