@@ -18,7 +18,11 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* TBD
+* Take a close look at the new distcheck build introspection
+  setup - it's not catching some things it should (for example,
+  the sources for libfft's fftc compilation utility.)  Also
+  taking much longer than it should to get the build system
+  info - there's probably more than one bug hidden in there.
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
