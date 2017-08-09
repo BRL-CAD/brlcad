@@ -119,6 +119,7 @@ endif(BRLCAD_ENABLE_IFC)
 CMAKEFILES(
   AP_Common.h
   BRLCADWrapper.h
+  BRLCADWrapper.cpp
   STEPWrapper.h
   ap203_elements.txt
   ap203e2-g/CMakeLists.txt
