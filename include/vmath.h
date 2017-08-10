@@ -305,8 +305,8 @@ typedef enum bn_vector_component_ {
     X = 0,
     Y = 1,
     Z = 2,
-    H = 3,
-    W = H
+    W = 3,
+    H = W
 } bn_vector_component;
 
 /**
@@ -769,7 +769,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(a)[X] = (b); \
 	(a)[Y] = (c); \
 	(a)[Z] = (d); \
-	(a)[H] = (e); \
+	(a)[W] = (e); \
     } while (0)
 
 
@@ -785,7 +785,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Set 4D vector elements to same scalar value. */
 #define HSETALL(a, s) do { \
-	(a)[X] = (a)[Y] = (a)[Z] = (a)[H] = (s); \
+	(a)[X] = (a)[Y] = (a)[Z] = (a)[W] = (s); \
     } while (0)
 
 
@@ -1450,7 +1450,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 /** Clamp a 4D vector to nearby integer values. */
 #define HINTCLAMP(_v) do { \
 	VINTCLAMP(_v); \
-	(_v)[H] = INTCLAMP((_v)[H]); \
+	(_v)[W] = INTCLAMP((_v)[W]); \
     } while (0)
 
 
@@ -1595,10 +1595,10 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Output and input points should be separate arrays.
  */
 #define MAT4X4PNT(o, m, i) do { \
-	(o)[X]=(m)[ 0]*(i)[X] + (m)[ 1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[ 3]*(i)[H]; \
-	(o)[Y]=(m)[ 4]*(i)[X] + (m)[ 5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[ 7]*(i)[H]; \
-	(o)[Z]=(m)[ 8]*(i)[X] + (m)[ 9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11]*(i)[H]; \
-	(o)[H]=(m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]*(i)[H]; \
+	(o)[X]=(m)[ 0]*(i)[X] + (m)[ 1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[ 3]*(i)[W]; \
+	(o)[Y]=(m)[ 4]*(i)[X] + (m)[ 5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[ 7]*(i)[W]; \
+	(o)[Z]=(m)[ 8]*(i)[X] + (m)[ 9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11]*(i)[W]; \
+	(o)[W]=(m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]*(i)[W]; \
     } while (0)
 
 /**
@@ -1701,9 +1701,9 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * vect_t.
  */
 #define HDIVIDE(a, b) do { \
-	(a)[X] = (b)[X] / (b)[H]; \
-	(a)[Y] = (b)[Y] / (b)[H]; \
-	(a)[Z] = (b)[Z] / (b)[H]; \
+	(a)[X] = (b)[X] / (b)[W]; \
+	(a)[Y] = (b)[Y] / (b)[W]; \
+	(a)[Z] = (b)[Z] / (b)[W]; \
     } while (0)
 
 /**
