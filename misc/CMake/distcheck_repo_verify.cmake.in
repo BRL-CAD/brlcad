@@ -167,7 +167,6 @@ set(CPACK_IGNORE_BUILD_PATH "@CPACK_IGNORE_BUILD_PATH@")
 # Subversion *expect* to be present) minus files that CPack knows to
 # ignore (i.e., things that will not be included in a source archive.)
 message(" --- Building list of files actually present in source tree: ...")
-file(WRITE "@CMAKE_BINARY_DIR@/distcheck_fs_file_list.txt" "")
 file(GLOB_RECURSE FS_FILE_LIST RELATIVE "@CMAKE_SOURCE_DIR@" "@CMAKE_SOURCE_DIR@/*")
 # Start scrubbing...
 set(FS_FILES)
