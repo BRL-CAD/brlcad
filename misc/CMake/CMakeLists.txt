@@ -54,7 +54,6 @@ set(cmake_ignore_files
   TCL_PKGINDEX.cmake
   ThirdParty.cmake
   ThirdParty_TCL.cmake
-  autoheader.cmake
   compat/README
   compat/README.compat
   compat/README.compat.c99
