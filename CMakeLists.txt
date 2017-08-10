@@ -131,8 +131,17 @@ cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DE
 mark_as_advanced(USE_OBJECT_LIBS)
 
 #---------------------------------------------------------------------
+# CMake derives much of its functionality from modules, typically
+# stored in one directory - let CMake know where to find them.  If we
+# are a subbuild, let the parent's CMAKE_MODULE_PATH supply files before
+# our own, otherwise misc/CMake takes first priority.
+set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
+list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
+
+
+#---------------------------------------------------------------------
 # Load general utility routines for BRL-CAD CMake logic
-include("${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_Util.cmake")
+include(BRLCAD_Util)
 
 # Find the executable extension, if there is one
 get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
@@ -198,18 +207,6 @@ endif(BRLCAD_DATA_ENV)
 
 
 #---------------------------------------------------------------------
-# CMake derives much of its functionality from modules, typically
-# stored in one directory - let CMake know where to find them.  If we
-# are a subbuild, let the parent's CMAKE_MODULE_PATH supply files before
-# our own, otherwise misc/CMake takes first priority.
-set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
-if(BRLCAD_IS_SUBBUILD)
-  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${BRLCAD_CMAKE_DIR}")
-else(BRLCAD_IS_SUBBUILD)
-  set(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}" ${CMAKE_MODULE_PATH})
-endif(BRLCAD_IS_SUBBUILD)
-
-#---------------------------------------------------------------------
 # Define relative install locations and output directories.  Don't set
 # these if they have already been set by some other means (like a
 # higher level CMakeLists.txt file including this one).
@@ -219,7 +216,7 @@ endif(BRLCAD_IS_SUBBUILD)
 # build systems, so it is necessary to handle both cases on a
 # conditional basis.
 
-include("${BRLCAD_CMAKE_DIR}/Path_Setup.cmake")
+include(Path_Setup)
 
 #---------------------------------------------------------------------
 # Searching the system for packages presents something of a dilemma -
@@ -689,8 +686,8 @@ endif(NOT BRLCAD_IS_SUBBUILD)
 #---------------------------------------------------------------------
 # Load macros that will be used to define the BRL-CAD
 # build logic
-include("${BRLCAD_CMAKE_DIR}/BRLCAD_Options.cmake")
-include("${BRLCAD_CMAKE_DIR}/BRLCAD_Targets.cmake")
+include(BRLCAD_Options)
+include(BRLCAD_Targets)
 include(CheckTypeSize)
 include(CheckCSourceCompiles)
 include(CheckCXXSourceCompiles)
@@ -850,7 +847,7 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQU
 # TODO - once we've shifted to function invocation rather than having
 # our logic execute on load, this "include" step will probably be
 # consolidated into one large include...
-include("${BRLCAD_CMAKE_DIR}/RPath_Setup.cmake")
+include(RPath_Setup)
 cmake_set_rpath()
 
 #---------------------------------------------------------------------
@@ -1017,7 +1014,7 @@ endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
 # for 64 bit libs after a 32 bit configure, or vice versa.
 if(PREVIOUS_CONFIGURE_TYPE)
   if(NOT ${PREVIOUS_CONFIGURE_TYPE} MATCHES ${CMAKE_WORD_SIZE})
-    include("${BRLCAD_CMAKE_DIR}/ResetCache.cmake")
+    include(ResetCache)
     RESET_CACHE_file()
   endif(NOT ${PREVIOUS_CONFIGURE_TYPE} MATCHES ${CMAKE_WORD_SIZE})
 endif(PREVIOUS_CONFIGURE_TYPE)
@@ -1089,7 +1086,7 @@ cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONF
 # Fink and MacPorts).  This can seriously complicate find_* results,
 # so provide an option to specify whether or which of the third
 # party setup to use.
-include("${BRLCAD_CMAKE_DIR}/Fink_MacPorts.cmake")
+include(Fink_MacPorts)
 
 # Turn off the brlcad.dll build.
 # It's an expert's setting at the moment.
@@ -1146,7 +1143,7 @@ option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry fil
 # test for X11 on all platforms since we don't know when/where we'll find it, unless
 # we've indicated we *don't* want an X11 build
 if(NOT BRLCAD_ENABLE_AQUA)
-  include("${BRLCAD_CMAKE_DIR}/FindX11.cmake")
+  include(FindX11)
 endif(NOT BRLCAD_ENABLE_AQUA)
 
 # Set whether X11 is enabled or disabled by default
@@ -1196,7 +1193,7 @@ if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
   set(OPENGL_FOUND OFF)
   set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11 and NOT BRLCAD_ENABLE_AQUA" FORCE)
 else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  include("${BRLCAD_CMAKE_DIR}/FindGL.cmake")
+  include(FindGL)
 endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
 
 set(BRLCAD_ENABLE_OPENGL_ALIASES
@@ -1559,12 +1556,12 @@ mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 
 #----------------------------------------------------------------------
 # Load Doxygen related CMake macros
-include("${BRLCAD_CMAKE_DIR}/Doxygen.cmake")
+include(Doxygen)
 
 #----------------------------------------------------------------------
 # Load various wrapper macros for checking libraries, headers and
 # functions, some in use by src/other build logic
-include("${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake")
+include(BRLCAD_CheckFunctions)
 
 
 # *******************************************************************
@@ -1576,12 +1573,12 @@ endif(BRLCAD_PRINT_MSGS)
 
 # A variety of tools, such as the benchmark utilities, need
 # a Bourne shell and other commands - check for them.
-include("${BRLCAD_CMAKE_DIR}/FindShellDeps.cmake")
+include(FindShellDeps)
 
 # CMake can detect flex, but apparently not generic lex.
 # Solution is to make our own generic lex Find routine that looks
 # first for flex, but will take whatever's available.
-include("${BRLCAD_CMAKE_DIR}/FindLEX.cmake")
+include(FindLEX)
 
 # If using dtrace, we will need to find it
 if(BRLCAD_ENABLE_DTRACE)
@@ -1608,7 +1605,7 @@ if(BRLCAD_PRINT_MSGS)
 endif(BRLCAD_PRINT_MSGS)
 
 # load our compiler testing macro definitions
-include("${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake")
+include(CompilerFlags)
 
 # Cache the original CMake sets of build flags for later use
 if(NOT CMAKE_BUILD_FLAGS_CACHED_CMAKE_DEFAULT)
@@ -1914,7 +1911,7 @@ if(NOT MSVC)
   # We could include this, but these tests are almost entirely for
   # gcc-style flags.  This file is intentionally included after we
   # wipe out the various FLAGS variables.
-  include("${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake")
+  include(BRLCAD_CompilerFlags)
 endif(NOT MSVC)
 
 
@@ -2557,7 +2554,7 @@ function(SetTargetFolder targetname folder)
 endfunction(SetTargetFolder)
 
 # Load some CMake macros to handle the special case of third party libraries.
-include("${BRLCAD_CMAKE_DIR}/ThirdParty.cmake")
+include(ThirdParty)
 
 # Add misc/tools for tools that are used in BRL-CAD's build process
 # but are not otherwise usable in BRL-CAD (due to licensing, design
@@ -2821,7 +2818,7 @@ BRLCAD_ADDDATA(toplevel_DOCFILES ".")
 # Now that everything is configured, print a summary of the build
 # settings.
 if(NOT BRLCAD_DISABLE_SUMMARY)
-  include("${BRLCAD_CMAKE_DIR}/BRLCAD_Summary.cmake")
+  include(BRLCAD_Summary)
   BRLCAD_Summary()
 endif(NOT BRLCAD_DISABLE_SUMMARY)
 
@@ -3103,7 +3100,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # Define a distcheck target.  This performs a variety of tests to determine
   # whether BRL-CAD is in a distribution ready state.  Default to the standard
   # set of tests - Debug and Release build configurations
-  include("${BRLCAD_CMAKE_DIR}/Distcheck.cmake")
+  include(Distcheck)
 
   # Define some custom distcheck targets for distcheck-full (not run by default)
   #
