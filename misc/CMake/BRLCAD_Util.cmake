@@ -202,10 +202,6 @@ function(CMFILE ITEM)
   get_filename_component(ITEM_PATH "${ITEM}" PATH)
   if(NOT "${ITEM_PATH}" STREQUAL "")
     # The hard case - path specified, need some validation.
-
-    # If this becomes a problem with the third party build
-    # systems at some point in the future, we may have to
-    # exclude src/other paths from this check.
     CHECK_SOURCE_DIR_FULLPATH("${ITEM_PATH}")
 
     # Ignore files specified using full paths, since they
@@ -227,16 +223,6 @@ function(CMFILE ITEM)
 
   # We're good - log it
   set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-
-  # Track the directories as well
-  get_property(IGNORE_PATHS GLOBAL PROPERTY CMAKE_IGNORE_DIRS)
-  get_filename_component(NPATH "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}" PATH)
-  while(NOT "${NPATH}" STREQUAL "${CMAKE_SOURCE_DIR}")
-    list(APPEND IGNORE_PATHS "${NPATH}")
-    get_filename_component(NPATH "${NPATH}" PATH)
-  endwhile(NOT "${NPATH}" STREQUAL "${CMAKE_SOURCE_DIR}")
-  list(REMOVE_DUPLICATES IGNORE_PATHS)
-  set_property(GLOBAL PROPERTY CMAKE_IGNORE_DIRS "${IGNORE_PATHS}")
 
 endfunction(CMFILE ITEM)
 

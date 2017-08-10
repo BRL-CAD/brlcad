@@ -52,31 +52,25 @@ endfunction(FIND_ALL_DIRS)
 
 if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
   file(GLOB_RECURSE pre_existing_files "@CMAKE_BINARY_DIR@/source_archive_contents/*")
-  file(STRINGS "@CMAKE_BINARY_DIR@/cmakefiles.cmake" source_tree_files)
-  if(EXISTS "@CMAKE_BINARY_DIR@/cpack_ignore.cmake")
-    file(STRINGS "@CMAKE_BINARY_DIR@/cpack_ignore.cmake" ignored_src_files)
-  endif(EXISTS "@CMAKE_BINARY_DIR@/cpack_ignore.cmake")
+  file(STRINGS "@CMAKE_BINARY_DIR@/cmakefiles.cmake" source_tree_files_raw)
 
   message("Preparing file list...")
 
-  # Remove duplicates and scrub directories out of source_tree_files
+  # Remove duplicates and resolve relative paths
+  set(source_tree_files)
+  foreach(SF ${source_tree_files_raw})
+    get_filename_component(SFA "${SF}" ABSOLUTE)
+    list(APPEND source_tree_files ${SFA})
+  endforeach(SF ${source_tree_files_raw})
+  list(SORT source_tree_files)
   list(REMOVE_DUPLICATES source_tree_files)
-  foreach(ITEM ${source_tree_files})
-    if(IS_DIRECTORY ${ITEM})
-      list(REMOVE_ITEM source_tree_files ${ITEM})
-    endif(IS_DIRECTORY ${ITEM})
-  endforeach(ITEM ${source_tree_files})
-
-  # Sort the final list
-  set(final_list ${source_tree_files})
-  list(SORT final_list)
 
   # Do the actual copy
   message("Copying files...")
   set(processed_files)
   set(processed 0)
-  list(LENGTH final_list file_count)
-  foreach(source_file ${final_list})
+  list(LENGTH source_tree_files file_count)
+  foreach(source_file ${source_tree_files})
     string(REPLACE "@CMAKE_SOURCE_DIR@/" "@CMAKE_BINARY_DIR@/source_archive_contents/" outfile "${source_file}")
     if(EXISTS ${outfile})
       if("${source_file}" IS_NEWER_THAN ${outfile})
@@ -126,7 +120,6 @@ if(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
       endif(NOT dir_contents)
     endforeach(candidate ${dir_list})
   endwhile(HAVE_EMPTY_DIRS)
-
 
 endif(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
 

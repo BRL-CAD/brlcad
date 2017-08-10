@@ -470,7 +470,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
     # can probably revisit at least part of this by getting a list of source
     # directories for all targets at the end of the build and setting
     # properties then.
-    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${name}")
     set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeLists.txt")
     DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/CMakeFiles")
     DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/cmake_install.cmake")
@@ -3082,7 +3081,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # Handle some toplevel distclean listings
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeCache.txt")
   DISTCLEAN("${CMAKE_BINARY_DIR}/cmakefiles.cmake")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/cmakedirs.cmake")
   DISTCLEAN("${CMAKE_BINARY_DIR}/cmake_install.cmake")
   DISTCLEAN("${CMAKE_BINARY_DIR}/install_manifest.txt")
   DISTCLEAN("${CMAKE_BINARY_DIR}/OPTIONS")
@@ -3220,14 +3218,12 @@ if(TARGET distclean)
   set_target_properties(distclean PROPERTIES FOLDER "Compilation Utilities")
 endif(TARGET distclean)
 
-# Have touched every file and directory that we are going to touch with the
-# build system - time to write out our lists for future processing.
+# Have touched every file that we are going to touch with the build system -
+# time to write out our list for future processing.
 get_property(CMAKE_IGNORE_FILES GLOBAL PROPERTY CMAKE_IGNORE_FILES)
-get_property(CMAKE_IGNORE_DIRS GLOBAL PROPERTY CMAKE_IGNORE_DIRS)
+list(REMOVE_DUPLICATES CMAKE_IGNORE_FILES)
 string(REPLACE ";" "\n" CMAKE_IGNORE_FILES "${CMAKE_IGNORE_FILES}")
-string(REPLACE ";" "\n" CMAKE_IGNORE_DIRS "${CMAKE_IGNORE_DIRS}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake" "${CMAKE_IGNORE_FILES}")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/cmakedirs.cmake" "${CMAKE_IGNORE_DIRS}")
 
 #Done with all really time-consuming steps - do the configure time delta
 if(NOT BRLCAD_IS_SUBBUILD)
