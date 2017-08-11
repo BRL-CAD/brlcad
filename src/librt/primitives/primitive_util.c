@@ -767,7 +767,7 @@ clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes)
 }
 
 void
-clt_db_store_regions(size_t sz_tree_rpn, union tree_rpn *rtp, size_t nregions, struct cl_bool_region *regions, struct clt_region *mtls)
+clt_db_store_regions(size_t sz_btree_array, struct bit_tree *btp, size_t nregions, struct cl_bool_region *regions, struct clt_region *mtls)
 {
     cl_int error;
 
@@ -776,7 +776,7 @@ clt_db_store_regions(size_t sz_tree_rpn, union tree_rpn *rtp, size_t nregions, s
 	clt_db_bool_regions = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct cl_bool_region)*nregions, regions, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL boolean regions buffer");
 
-	clt_db_rtree = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(union cl_tree_rpn)*sz_tree_rpn, rtp, &error);
+	clt_db_rtree = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct cl_tree_bit)*sz_btree_array, btp, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL boolean trees buffer");
 
 	clt_db_regions = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct clt_region)*nregions, mtls, &error);

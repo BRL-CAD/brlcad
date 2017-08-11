@@ -74,14 +74,23 @@ struct partition {
     char outflip;		/* flip outhit->hit_normal */
 };
 
-union tree_rpn {
-    long uop;
-    long st_bit;
+/**
+ * bit expr tree representation
+ *
+ * node:
+ *      uint uop : 3
+ *      uint right_child : 29
+ *
+ * leaf:
+ *      uint uop : 3
+ *      uint st_bit : 29
+ */
+struct tree_bit {
+    uint val;
 };
 
 struct bool_region {
-    uint rtree_offset;          /* index to the start of the rpn tree */
-    uint reg_nrtree;            /* number of elements in rtree */
+    uint btree_offset;          /* index to the start of the bit tree */
     int reg_aircode;            /* Region ID AIR code */
     int reg_bit;                /* constant index into Regions[] */
     short reg_all_unions;       /* 1=boolean tree is all unions */

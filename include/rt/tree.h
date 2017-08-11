@@ -255,17 +255,31 @@ struct rt_tree_array
 #define TREE_LIST_NULL  ((struct tree_list *)0)
 
 /**
- * Flattened RPN version of the infix union tree.
+ * Flattened version of the infix union tree.
  */
-#define UOP_NOP		-1
-#define UOP_UNION	-2
-#define UOP_INTERSECT	-3
-#define UOP_SUBTRACT	-4
-#define UOP_XOR		-5
+#define UOP_UNION        1         /**< @brief  Binary: L union R */
+#define UOP_INTERSECT    2         /**< @brief  Binary: L intersect R */
+#define UOP_SUBTRACT     3         /**< @brief  Binary: L subtract R */
+#define UOP_XOR          4         /**< @brief  Binary: L xor R, not both*/
+#define UOP_NOT          5         /**< @brief  Unary:  not L */
+#define UOP_GUARD        6         /**< @brief  Unary:  not L, or else! */
+#define UOP_XNOP         7         /**< @brief  Unary:  L, mark region */
 
-union tree_rpn {			/* UOPs are negative. SOLIDs are non-negative */
-    long uop;
-    long st_bit;
+#define UOP_SOLID        0         /**< @brief  Leaf:  tr_stp -> solid */
+
+/**
+ * bit expr tree representation
+ *
+ * node:
+ *      uint uop : 3
+ *      uint right_child : 29
+ *
+ * leaf:
+ *      uint uop : 3
+ *      uint st_bit : 29
+ */
+struct bit_tree {
+    uint val;
 };
 
 /* Print an expr tree */
@@ -280,9 +294,10 @@ RT_EXPORT extern void rt_pr_tree_val(const union tree *tp,
                                      const struct partition *partp,
                                      int pr_name,
                                      int lvl);
-/* Print an RPN expr tree */
-RT_EXPORT extern void rt_pr_rtree(const union tree_rpn *rtp,
-				  size_t rlen);
+/* Print a bit expr tree */
+RT_EXPORT extern void rt_pr_bit_tree(const struct bit_tree *btp,
+                                     int idx,
+                                     int lvl);
 
 /**
  * Duplicate the contents of a db_tree_state structure, including a
@@ -769,9 +784,9 @@ RT_EXPORT extern union tree *db_mkgift_tree(struct rt_tree_array *trees,
 RT_EXPORT extern void rt_optim_tree(union tree *tp,
 	                            struct resource *resp);
 
-RT_EXPORT extern void rt_tree_rpn(union tree_rpn *rtp,
-				  const union tree *tp,
-				  size_t *len);
+RT_EXPORT extern void rt_bit_tree(struct bit_tree *btp,
+                                  const union tree *tp,
+                                  size_t *len);
 
 
 

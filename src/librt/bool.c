@@ -49,7 +49,7 @@
 #define BOOL_FALSE 0
 #define BOOL_TRUE 1
 
-#define BOOL_STACKSIZE 64
+#define BOOL_STACKSIZE 128
 
 
 /**
@@ -657,7 +657,7 @@ bool_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *pp
  * -1 If no rays are contributing segs for this region.
  */
 HIDDEN int
-bool_max_raynum(const union tree_rpn *rtp, size_t rtlen, const struct partition *pp)
+bool_max_raynum(struct bit_tree *btp, size_t btlen, register const struct partition *pp)
 {
     int max;
     size_t i;
@@ -665,9 +665,9 @@ bool_max_raynum(const union tree_rpn *rtp, size_t rtlen, const struct partition 
     RT_CK_PARTITION(pp);
 
     max = -1;
-    for (i=0; i<rtlen; i++) {
-	if (rtp[i].uop >= 0) {
-	    const long st_bit = rtp[i].st_bit;
+    for (i=0; i<btlen; i++) {
+	if ((btp[i].val & 7) == UOP_SOLID) {
+	    const uint st_bit = btp[i].val >> 3;
 	    struct seg **segpp;
 
 	    /* Maybe it hasn't been shot yet, or ray missed */
@@ -984,8 +984,8 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	     * retain that one.
 	     */
 	} else {
-	    int r1 = bool_max_raynum(lastregion->reg_rtree, lastregion->reg_nrtree, pp);
-	    int r2 = bool_max_raynum(regp->reg_rtree, regp->reg_nrtree, pp);
+	    int r1 = bool_max_raynum(lastregion->reg_btree, lastregion->reg_nbtree, pp);
+	    int r2 = bool_max_raynum(regp->reg_btree, regp->reg_nbtree, pp);
 
 	    /* Only use this algorithm if one is not the main ray */
 	    if (r1 > 0 || r2 > 0) {
@@ -1155,24 +1155,47 @@ bool_equal_overlap_tables(struct region *const*a, struct region *const*b)
  *  0 Region is not ready
  */
 HIDDEN int
-bool_test_tree(const union tree_rpn *rtp, size_t rtlen, const struct bu_bitv *solidbits)
+bool_test_tree(const struct bit_tree *btp, int idx, register const struct bu_bitv *solidbits)
 {
-    int all;
-    size_t i;
+    uint uop;
+    BU_CK_BITV(solidbits);
 
-    all = 1;
-    for (i=0; i<rtlen; i++) {
-	if (rtp[i].uop >= 0) {
-	    if (BU_BITTEST(solidbits, rtp[i].st_bit)) {
-		/* This solid's been shot, segs are valid. */
-		all &= 1;
-	    } else {
-		/* This solid has not been shot yet. */
-		all &= 0;
+    uop = btp[idx].val & 7;
+    switch (uop) {
+        case UOP_SOLID:
+            {
+                uint st_bit = btp[idx].val >> 3;
+                if (BU_BITTEST(solidbits, st_bit)) {
+                    /* This solid's been shot, segs are valid. */
+                    return 1;
+                }
+
+                /*
+	         * This solid has not been shot yet.
+	         */
+	        return 0;
 	    }
-	}
+
+	case UOP_NOT:
+	    return !bool_test_tree(btp, idx+1, solidbits);
+
+	case UOP_UNION:
+	case UOP_INTERSECT:
+	case UOP_SUBTRACT:
+	case UOP_XOR:
+            {
+                uint rchild;
+	        if (!bool_test_tree(btp, idx+1, solidbits))
+		    return 0;
+
+                rchild = btp[idx].val >> 3;
+	        return bool_test_tree(btp, rchild, solidbits);
+            }
+
+	default:
+	    bu_bomb("bool_test_tree: bad op\n");
     }
-    return all;
+    return 0;
 }
 
 
@@ -1200,7 +1223,7 @@ bool_partition_eligible(const struct bu_ptbl *regiontable, const struct bu_bitv 
 	RT_CK_REGION(regp);
 
 	/* Check region prerequisites */
-	if (!bool_test_tree(regp->reg_rtree, regp->reg_nrtree, solidbits)) {
+	if (!bool_test_tree(regp->reg_btree, 0, solidbits)) {
 	    return 0;
 	}
     }
@@ -1221,62 +1244,149 @@ bool_partition_eligible(const struct bu_ptbl *regiontable, const struct bu_bitv 
  * -1 tree is in error (GUARD)
  */
 HIDDEN int
-bool_eval(const union tree_rpn *rtp, size_t rtlen, struct partition *partp)
+bool_eval(struct bit_tree *treep, struct partition *partp, struct resource *resp)
+/* Tree to evaluate */
+/* Partition to evaluate */
+/* XOR true (and overlap) return */
+/* resource pointer for this CPU */
 {
-    uint8_t stack[BOOL_STACKSIZE];	/* uh bits would be enough */
-    size_t stackend;
-    uint8_t a, b, ret;
-    size_t i;
+    static int stack[BOOL_STACKSIZE*MAX_PSW];
+    int *sp;
+    int ret;
+    uint uop;
+    int idx;
 
-    stack[0] = 0;
-    stackend = 0;
-    for (i=0; i<rtlen; i++) {
-	if (stackend >= BOOL_STACKSIZE)
-	    return -1;
+    RT_CK_PT(partp);
 
-	switch (rtp[i].uop) {
-	    case UOP_NOP:
-		stack[stackend++] = 0;
-		break;
+    sp = &stack[BOOL_STACKSIZE*resp->re_cpu];
+    *sp++ = INT_MAX;
+    idx = 0;
+    for (;;) {
+	for (;;) {
+            uop = treep[idx].val & 7;
 
-	    case UOP_UNION:
-		b = stack[--stackend];
-		a = stack[--stackend];
-		stack[stackend++] = (a || b);
-		break;
-	    case UOP_INTERSECT:
-		b = stack[--stackend];
-		a = stack[--stackend];
-		stack[stackend++] = (a && b);
-		break;
-	    case UOP_SUBTRACT:
-		b = stack[--stackend];
-		a = stack[--stackend];
-		stack[stackend++] = (a && !b);
-		break;
-	    case UOP_XOR:
-		b = stack[--stackend];
-		a = stack[--stackend];
-		stack[stackend++] = (a ^ b);
-		break;
+            switch (uop) {
+                case UOP_SOLID:
+                    {
+                        /* Tree Leaf */
+                        register const uint st_bit = treep[idx].val >> 3;
+                        register struct seg **segpp;
+                        ret = 0;
+                        for (BU_PTBL_FOR(segpp, (struct seg **), &partp->pt_seglist)) {
+                            if ((*segpp)->seg_stp->st_bit == st_bit) {
+                                ret = 1;
+                                break;
+                            }
+		        }
+                    }
+                    break;
+                case UOP_UNION:
+                case UOP_INTERSECT:
+                case UOP_SUBTRACT:
+                case UOP_XOR:
+                    *sp++ = idx;
+                    idx++;
+                    continue;
+                default:
+                    bu_log("bool_eval:  bad stack op [%d]\n", uop);
+                    return BOOL_TRUE;	/* screw up output */
+            }
+	    break;
+	}
 
-	    default:
-		{
-		    const long st_bit = rtp[i].st_bit;
-		    struct seg **segpp;
-		    ret = 0;
-		    for (BU_PTBL_FOR(segpp, (struct seg **), &partp->pt_seglist)) {
-			if ((*segpp)->seg_stp->st_bit == st_bit) {
-			    ret = 1;
-			    break;
-			}
+        for (;;) {
+            idx = *--sp;
+
+            switch (idx) {
+                case INT_MAX:
+                    return ret;		/* top of tree again */
+                case -1:
+                    /* Special operation for subtraction */
+		    ret = !ret;
+		    continue;
+                case -2:
+                    /*
+		     * Special operation for XOR.  lhs was true.  If rhs
+		     * subtree was true, an overlap condition exists (both
+		     * sides of the XOR are BOOL_TRUE).  Return error
+		     * condition.  If subtree is false, then return BOOL_TRUE
+		     * (from lhs).
+		     */
+		    if (ret) {
+			/* stacked temp val: rhs */
+			return -1;	/* GUARD error */
 		    }
-		    stack[stackend++] = ret;
+		    ret = BOOL_TRUE;
+		    sp--;			/* pop temp val */
+		    continue;
+                case -3:
+                    /*
+		     * Special NOP for XOR.  lhs was false.  If rhs is true,
+		     * take note of its regionp.
+		     */
+		    sp--;			/* pop temp val */
+		    continue;
+                default:
+                    break;
+            }
+
+            uop = treep[idx].val & 7;
+
+	    /*
+	     * Here, each operation will look at the operation just completed
+	     * (the left branch of the tree generally), and rewrite the top of
+	     * the stack and/or branch accordingly.
+	     */
+            switch (uop) {
+                case UOP_SOLID:
+                    bu_log("bool_eval:  pop SOLID?\n");
+                    return BOOL_TRUE;	    /* screw up output */
+                case UOP_UNION:
+                    if (ret) continue;	    /* BOOL_TRUE, we are done */
+                    /* lhs was false, rewrite as rhs tree */
+                    idx = treep[idx].val >> 3;
+                    break;
+		case UOP_INTERSECT:
+		    if (!ret) {
+		        ret = BOOL_FALSE;
+			continue;
+		    }
+		    /* lhs was true, rewrite as rhs tree */
+                    idx = treep[idx].val >> 3;
 		    break;
-		}
+                case UOP_SUBTRACT:
+		    if (!ret) continue;	/* BOOL_FALSE, we are done */
+		    /* lhs was true, rewrite as NOT of rhs tree */
+		    /* We introduce the special NOT operator here */
+                    *sp++ = -1;
+                    idx = treep[idx].val >> 3;
+		    break;
+		case UOP_XOR:
+		    if (ret) {
+		        /* lhs was true, rhs better not be, or we have an
+			 * overlap condition.  Rewrite as guard node followed
+			 * by rhs.
+			 */
+                        idx = treep[idx].val >> 3;
+			*sp++ = idx;		/* temp val for guard node */
+			*sp++ = -2;
+		    } else {
+			/* lhs was false, rewrite as xnop node and result of
+			 * rhs.
+			 */
+                        idx = treep[idx].val >> 3;
+			*sp++ = idx;		/* temp val for xnop */
+			*sp++ = -3;
+		    }
+		    break;
+		default:
+		    bu_log("bool_eval:  bad pop op [%d]\n", uop);
+		    return BOOL_TRUE;	    /* screw up output */
+            }
+	    break;
 	}
     }
-    return stack[0];
+    /* NOTREACHED */
 }
 
 
@@ -1542,7 +1652,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		    lastregion = regp;
 		    continue;
 		}
-		if (bool_eval(regp->reg_rtree, regp->reg_nrtree, pp) == BOOL_FALSE) {
+		if (bool_eval(regp->reg_btree, pp, ap->a_resource) == BOOL_FALSE) {
 		    if (RT_G_DEBUG&DEBUG_PARTITION)
 			bu_log("BOOL_FALSE\n");
 		    /* Null out non-claiming region's pointer */

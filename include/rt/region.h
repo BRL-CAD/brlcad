@@ -45,8 +45,8 @@ struct region {
     struct bu_list      l;              /**< @brief magic # and doubly linked list */
     const char *        reg_name;       /**< @brief Identifying string */
     union tree *        reg_treetop;    /**< @brief Pointer to boolean tree */
-    union tree_rpn *	reg_rtree;	/**< @brief Pointer to boolean tree in RPN */
-    size_t		reg_nrtree;	/**< @brief number of elements in rtree */
+    struct bit_tree *   reg_btree;      /**< @brief Pointer to bit boolean tree */
+    size_t              reg_nbtree;     /**< @brief number of elements in btree */
     int                 reg_bit;        /**< @brief constant index into Regions[] */
     int                 reg_regionid;   /**< @brief Region ID code.  If <=0, use reg_aircode */
     int                 reg_aircode;    /**< @brief Region ID AIR code */
@@ -68,14 +68,12 @@ struct region {
 #define RT_CK_REGION(_p) BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
 
 #ifdef USE_OPENCL
-union cl_tree_rpn {
-    long uop;
-    long st_bit;
+struct cl_tree_bit {
+    cl_uint val;
 };
 
 struct cl_bool_region {
-    cl_uint rtree_offset;           /**< @brief index to the start of the rpn tree */
-    cl_uint reg_nrtree;             /**< @brief number of elements in rtree */
+    cl_uint btree_offset;           /**< @brief index to the start of the bit tree */
     cl_int reg_aircode;             /**< @brief Region ID AIR code */
     cl_int reg_bit;                 /**< @brief constant index into Regions[] */
     cl_short reg_all_unions;        /**< @brief 1=boolean tree is all unions */

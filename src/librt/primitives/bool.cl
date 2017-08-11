@@ -2,16 +2,20 @@
 
 #if !RT_SINGLE_HIT
 
-#define BOOL_STACKSIZE	64
+#define BOOL_STACKSIZE	128
 
 /**
- * Flattened RPN version of the infix union tree.
+ * Flattened version of the infix union tree.
  */
-#define UOP_NOP		-1
-#define UOP_UNION	-2
-#define UOP_INTERSECT	-3
-#define UOP_SUBTRACT	-4
-#define UOP_XOR		-5
+#define UOP_UNION        1         /* Binary: L union R */
+#define UOP_INTERSECT    2         /* Binary: L intersect R */
+#define UOP_SUBTRACT     3         /* Binary: L subtract R */
+#define UOP_XOR          4         /* Binary: L xor R, not both*/
+#define UOP_NOT          5         /* Unary:  not L */
+#define UOP_GUARD        6         /* Unary:  not L, or else! */
+#define UOP_XNOP         7         /* Unary:  L, mark region */
+
+#define UOP_SOLID        0         /* Leaf:  tr_stp -> solid */
 
 /* Boolean values.  Not easy to change, but defined symbolically */
 #define BOOL_FALSE	0
@@ -529,123 +533,163 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
     }
 }
 
-/**
- * Produce representations of all postfix bool trees in the regions.
- * Debug function - use when running opencl on the CPU
- */
-void
-pr_all_rtrees(const int total_regions, global struct bool_region *bregions, global union tree_rpn *rtree)
-{
-    for (uint j = 0; j < total_regions; j++) {
-        printf("\npostfix: ");
-        for (uint i=bregions[j].rtree_offset; i< bregions[j].rtree_offset + bregions[j].reg_nrtree; i++) {
-	    switch (rtree[i].uop) {
-		case UOP_NOP:
-		printf("NOP");
-		break;
-
-		case UOP_UNION:
-		printf("U");
-		break;
-		case UOP_INTERSECT:
-		printf("+");
-		break;
-		case UOP_SUBTRACT:
-		printf("-");
-		break;
-		case UOP_XOR:
-		printf("XOR");
-		break;
-
-		default:
-		printf("%ld", rtree[i].st_bit);
-		break;
-	    }
-	    if (i != bregions[j].rtree_offset + bregions[j].reg_nrtree-1)
-		printf(" ");
-        }
-        printf("\n");
-    }
-    printf("\n\n");
-}
-
 int
 bool_eval(global struct partition *partitions, global uint *ipartition, RESULT_TYPE segs,
         global uint *h, global uint *segs_bv, const uint bv_index, uint offset, size_t id,
-        global struct bool_region *bregions, global union tree_rpn *rtree, const uint region_index)
+        global struct bool_region *bregions, global struct tree_bit *btree, const uint region_index)
 {
-    uchar stack[BOOL_STACKSIZE];
+    int sp[BOOL_STACKSIZE];
+    int ret;
+    int stackend;
+    uint uop;
+    int idx;
 
-    size_t stackend;
-    uchar a, b, ret;
-
-    stack[0] = 0;
     stackend = 0;
+    sp[stackend++] = INT_MAX;
+    idx = bregions[region_index].btree_offset;
+    for(;;) {
+        for (;;) {
+            uop = btree[idx].val & 7;
 
-    for (uint i = bregions[region_index].rtree_offset; i < bregions[region_index].rtree_offset + bregions[region_index].reg_nrtree; i++) {
-	if (stackend >= BOOL_STACKSIZE)
-	    return -1;
+            switch (uop) {
+                case UOP_SOLID:
+                    {
+                        /* Tree Leaf */
+                        const uint st_bit = btree[idx].val >> 3;
+                        global struct partition *pp;
+                        RESULT_TYPE segp;
+                        ret = 0;
 
-        switch (rtree[i].uop) {
-            case UOP_NOP:
-            stack[stackend++] = 0;
-            break;
+                        pp = &partitions[offset];
+                        /* Iterate over segments of partition */
+                        for (uint i = 0; i < bv_index; i++) {
+                            uint mask = segs_bv[offset * bv_index + i];
+                            while (mask != 0) {
+                                uint lz = clz(mask);
+                                uint k = h[id] + (31 - lz);
+                                if (isset(segs_bv, offset * bv_index, k - h[id]) != 0) {
+                                    segp = segs+k;
 
-            case UOP_UNION:
-            b = stack[--stackend];
-            a = stack[--stackend];
-            stack[stackend++] = (a || b);
-            break;
-            case UOP_INTERSECT:
-            b = stack[--stackend];
-            a = stack[--stackend];
-            stack[stackend++] = (a && b);
-            break;
-            case UOP_SUBTRACT:
-            b = stack[--stackend];
-            a = stack[--stackend];
-            stack[stackend++] = (a && !b);
-            break;
-            case UOP_XOR:
-            b = stack[--stackend];
-            a = stack[--stackend];
-            stack[stackend++] = (a ^ b);
-            break;
+                                    if (segp->seg_sti == st_bit) {
+                                        ret = 1;
+                                        break;
+                                    }
+                                }
+                                // clear bit in mask
+                                mask &= ~(1 << (31-lz));
+                            }
+                            if (ret) break;
+                        }
+                    }
+                    break;
 
-            default:
-	    {
-		const long st_bit = rtree[i].st_bit;
-		global struct partition *pp;
-		RESULT_TYPE segp;
-		ret = 0;
-
-		pp = &partitions[offset];
-		//iterate over segments of partition
-		for (uint i = 0; i < bv_index; i++) {
-		    uint mask = segs_bv[offset * bv_index + i];
-		    while (mask != 0) {
-			uint lz = clz(mask);
-			uint k = h[id] + (31 - lz);
-			if (isset(segs_bv, offset * bv_index, k - h[id]) != 0) {
-			    RESULT_TYPE segp = segs+k;
-
-			    if (segp->seg_sti == st_bit) {
-				ret = 1;
-				break;
-			    }
-			}
-			// clear bit in mask
-			mask &= ~(1 << (31 - lz));
-		    }
-                    if (ret) break;
-		}
-		stack[stackend++] = ret;
-		break;
+                case UOP_UNION:
+                case UOP_INTERSECT:
+                case UOP_SUBTRACT:
+                case UOP_XOR:
+                    sp[stackend++] = idx;
+                    idx++;
+                    continue;
+                default:
+                    /* bad sp op */
+                    return BOOL_TRUE;       /* Screw up output */
             }
+            break;
         }
-    }
 
-    return stack[0];
+        for (;;) {
+            idx = sp[--stackend];
+
+            switch (idx) {
+                case INT_MAX:
+                    return ret;		/* top of tree again */
+                case -1:
+                    /* Special operation for subtraction */
+		    ret = !ret;
+		    continue;
+                case -2:
+                    /*
+		     * Special operation for XOR.  lhs was true.  If rhs
+		     * subtree was true, an overlap condition exists (both
+		     * sides of the XOR are BOOL_TRUE).  Return error
+		     * condition.  If subtree is false, then return BOOL_TRUE
+		     * (from lhs).
+		     */
+		    if (ret) {
+			/* stacked temp val: rhs */
+			return -1;	/* GUARD error */
+		    }
+		    ret = BOOL_TRUE;
+		    stackend--;			/* pop temp val */
+		    continue;
+                case -3:
+                    /*
+		     * Special NOP for XOR.  lhs was false.  If rhs is true,
+		     * take note of its regionp.
+		     */
+		    stackend--;			/* pop temp val */
+		    continue;
+                default:
+                    break;
+            }
+
+            uop = btree[idx].val & 7;
+
+	    /*
+	     * Here, each operation will look at the operation just completed
+	     * (the left branch of the tree generally), and rewrite the top of
+	     * the stack and/or branch accordingly.
+	     */
+            switch (uop) {
+                case UOP_SOLID:
+                    /* bool_eval:  pop SOLID? */
+                    return BOOL_TRUE;	    /* screw up output */
+                case UOP_UNION:
+                    if (ret) continue;	    /* BOOL_TRUE, we are done */
+                    /* lhs was false, rewrite as rhs tree */
+                    idx = btree[idx].val >> 3;
+                    break;
+		case UOP_INTERSECT:
+		    if (!ret) {
+		        ret = BOOL_FALSE;
+			continue;
+		    }
+		    /* lhs was true, rewrite as rhs tree */
+                    idx = btree[idx].val >> 3;
+		    break;
+                case UOP_SUBTRACT:
+		    if (!ret) continue;	/* BOOL_FALSE, we are done */
+		    /* lhs was true, rewrite as NOT of rhs tree */
+		    /* We introduce the special NOT operator here */
+                    sp[stackend++] = -1;
+                    idx = btree[idx].val >> 3;
+		    break;
+		case UOP_XOR:
+		    if (ret) {
+		        /* lhs was true, rhs better not be, or we have an
+			 * overlap condition.  Rewrite as guard node followed
+			 * by rhs.
+			 */
+                        idx = btree[idx].val >> 3;
+			sp[stackend++] = idx;		/* temp val for guard node */
+			sp[stackend++] = -2;
+		    } else {
+			/* lhs was false, rewrite as xnop node and result of
+			 * rhs.
+			 */
+                        idx = btree[idx].val >> 3;
+			sp[stackend++] = idx;		/* temp val for xnop */
+			sp[stackend++] = -3;
+		    }
+		    break;
+		default:
+		    /* bool_eval:  bad pop op */
+		    return BOOL_TRUE;	    /* screw up output */
+            }
+	    break;
+	}
+    }
+    /* NOTREACHED */
 }
 
 /**
@@ -812,7 +856,7 @@ rt_default_multioverlap(global struct partition *partitions, global struct bool_
 __kernel void
 rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESULT_TYPE segs,
         global uint *h, global uint *segs_bv, const int max_depth,
-        global struct bool_region *bregions, const uint total_regions, global union tree_rpn *rtree,
+        global struct bool_region *bregions, const uint total_regions, global struct tree_bit *rtree,
         global uint *regiontable, const int cur_pixel, const int last_pixel,
         global uint *regions_table, const uint regions_table_size, global uint *head_partition)
 {

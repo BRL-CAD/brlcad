@@ -626,41 +626,74 @@ out:
 
 
 /**
- * Produce representations of this postfix bool tree.
+ * Produce representations of this bit bool tree
  */
 void
-rt_pr_rtree(const union tree_rpn *rtp, size_t rtlen)
+rt_pr_bit_tree(const struct bit_tree *btp, int idx, int lvl)
+/* Tree to print */
+/* Offset in tree */
+/* Recursion level */
 {
-    size_t i;
+    uint uop, val;
 
-    bu_log("\npostfix: ");
-    for (i=0; i<rtlen; i++) {
-	switch (rtp[i].uop) {
-	    case UOP_NOP:
-		bu_log("NOP");
-		break;
+    uop = btp[idx].val & 7;
+    val = btp[idx].val >> 3;
 
-	    case UOP_UNION:
-		bu_log("%c", DB_OP_UNION);
-		break;
-	    case UOP_INTERSECT:
-		bu_log("%c", DB_OP_INTERSECT);
-		break;
-	    case UOP_SUBTRACT:
-		bu_log("%c", DB_OP_SUBTRACT);
-		break;
-	    case UOP_XOR:
-		bu_log("XOR");
-		break;
+    if (lvl == 0) bu_log("bit tree: ");
 
-	    default:
-		bu_log("%ld", rtp[i].st_bit);
-		break;
-	}
-	if (i != rtlen-1)
-	    bu_log(" ");
+    switch (uop) {
+        case UOP_SOLID:
+            /* Tree leaf */
+            bu_log("%ld", val);
+            if (lvl == 0) bu_log("\n");
+            return;
+        case UOP_SUBTRACT:
+            bu_log("(");
+            rt_pr_bit_tree(btp, idx+1, lvl+1);
+            bu_log(" %c ", DB_OP_SUBTRACT);
+            rt_pr_bit_tree(btp, val, lvl+1);
+            bu_log(")");
+            break;
+        case UOP_UNION:
+            bu_log("(");
+            rt_pr_bit_tree(btp, idx+1, lvl+1);
+            bu_log(" %c ", DB_OP_UNION);
+            rt_pr_bit_tree(btp, val, lvl+1);
+            bu_log(")");
+            break;
+        case UOP_INTERSECT:
+            bu_log("(");
+            rt_pr_bit_tree(btp, idx+1, lvl+1);
+            bu_log(" %c ", DB_OP_INTERSECT);
+            rt_pr_bit_tree(btp, val, lvl+1);
+            bu_log(")");
+            break;
+        case UOP_XOR:
+            bu_log("(");
+            rt_pr_bit_tree(btp, idx+1, lvl+1);
+            bu_log(" XOR ");
+            rt_pr_bit_tree(btp, val, lvl+1);
+            bu_log(")");
+            break;
+
+        case UOP_NOT:
+            bu_log(" !");
+            rt_pr_bit_tree(btp, idx+1, lvl+1);
+            break;
+        case UOP_GUARD:
+            bu_log(" GUARD ");
+            /* TODO */
+            break;
+        case UOP_XNOP:
+            bu_log(" XNOP ");
+            /* TODO */
+            break;
+        default:
+            bu_log("rt_bit_tree: bad op[%d]\n", uop);
+            exit(1);
+            break;
     }
-    bu_log("\n");
+    if (lvl == 0) bu_log("\n");
 }
 
 
