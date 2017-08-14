@@ -42,18 +42,12 @@ typedef union {
     struct { double re, im; };
 } bn_complex_t;
 
-/*TODO: remove hit_point and hit_normal from here and switch users of it into struct surf below. */
 struct hit {
   double3 hit_point;
   double3 hit_normal;
   double3 hit_vpriv;
   double hit_dist;
   int hit_surfno;
-};
-
-struct surf {
-  double3 srf_point;
-  double3 srf_normal;
 };
 
 struct seg {
