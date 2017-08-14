@@ -119,6 +119,9 @@ removed at any time.
 7.28
 ----
 
+include/vmath.h
+        VCOMB3, VCOMB3N, VJOIN4
+
 MGED commands
 	?devel, ?lib, aproposdevel, aproposlib, %, animmate, db_glob,
 	debugbu, debugdir, debuglib, debugmem, debugnmg, expand,
