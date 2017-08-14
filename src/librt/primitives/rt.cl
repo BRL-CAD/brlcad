@@ -363,7 +363,7 @@ void do_segp(RESULT_TYPE *res, const uint idx,
     if (acc->lightmodel == 4) {
 	if (seg_in->hit_dist >= 0.0) {
 	    norm(seg_in, acc->r_pt, acc->r_dir, acc->ids[idx], acc->prims + acc->indexes[idx]);
-	    const double3 color = shade(acc->r_pt, acc->r_dir, seg_in, acc->lt_pos, 0/*FIXME*/, acc->regions);
+	    const double3 color = shade(acc->r_pt, acc->r_dir, seg_in, acc->lt_pos, acc->iregions[idx], acc->regions);
 	    double f = exp(-seg_in->hit_dist*1e-10);
 	    acc->a_color += color * f;
 	    acc->a_total += f;
@@ -380,7 +380,7 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
 	 const double16 view2model, const double cell_width, const double cell_height,
 	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes,global uchar *prims,
-	 global struct region *regions)
+	 global struct region *regions, global int *iregions)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
@@ -410,6 +410,7 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
     a.indexes = indexes;
     a.prims = prims;
     a.regions = regions;
+    a.iregions = iregions;
 
     struct seg *segp = &a.s;
     segp->seg_in.hit_dist = INFINITY;
@@ -446,7 +447,7 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
          */
         switch (lightmodel) {
 	    default:
-		a_color = shade(r_pt, r_dir, hitp, lt_pos, 0/*FIXME*/, regions);
+		a_color = shade(r_pt, r_dir, hitp, lt_pos, iregions[idx], regions);
 	    	break;
             case 1:
                 /* Light from the "eye" (ray source).  Note sign change */

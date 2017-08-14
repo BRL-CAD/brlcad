@@ -482,7 +482,7 @@ static cl_uint max_compute_units;
 
 static cl_mem clt_rand_halftab;
 
-static cl_mem clt_db_ids, clt_db_indexes, clt_db_prims, clt_db_bvh, clt_db_regions;
+static cl_mem clt_db_ids, clt_db_indexes, clt_db_prims, clt_db_bvh, clt_db_regions, clt_db_iregions;
 static cl_mem clt_db_rtree, clt_db_bool_regions, clt_db_regions_table;
 static cl_uint clt_db_nprims;
 static cl_uint clt_db_nregions, clt_db_regions_table_size;
@@ -714,14 +714,21 @@ clt_db_store(size_t count, struct soltab *solids[])
 
     if (count != 0) {
         cl_uchar *ids;
+	cl_int *iregions;
         cl_uint *indexes;
         struct bu_pool *pool;
         size_t i;
 
 	ids = (cl_uchar*)bu_calloc(count, sizeof(*ids), "ids");
+	iregions = (cl_int*)bu_calloc(count, sizeof(*iregions), "iregions");
 	for (i=0; i < count; i++) {
 	    const struct soltab *stp = solids[i];
+	    const struct region *regp = (struct region *)BU_PTBL_GET(&stp->st_regions,0);
+
             ids[i] = stp->st_id;
+
+	    RT_CK_REGION(regp);
+	    iregions[i] = regp->reg_bit;
 	}
 
 	indexes = (cl_uint*)bu_calloc(count+1, sizeof(*indexes), "indexes");
@@ -746,10 +753,13 @@ clt_db_store(size_t count, struct soltab *solids[])
 
 	clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uchar)*count, ids, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ids buffer");
+	clt_db_iregions = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_int)*count, iregions, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL iregions buffer");
 	clt_db_indexes = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*(count+1), indexes, &error);
 	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
 
 	bu_free(indexes, "indexes");
+	bu_free(iregions, "iregions");
 	bu_free(ids, "ids");
     }
 
@@ -802,6 +812,7 @@ clt_db_store_regions_table(cl_uint *regions_table, size_t regions_table_size)
 void
 clt_db_release(void)
 {
+    clReleaseMemObject(clt_db_iregions);
     clReleaseMemObject(clt_db_regions);
     clReleaseMemObject(clt_db_bvh);
     clReleaseMemObject(clt_db_prims);
@@ -901,6 +912,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	error |= clSetKernelArg(clt_frame_kernel, 20, sizeof(cl_mem), &clt_db_indexes);
 	error |= clSetKernelArg(clt_frame_kernel, 21, sizeof(cl_mem), &clt_db_prims);
 	error |= clSetKernelArg(clt_frame_kernel, 22, sizeof(cl_mem), &clt_db_regions);
+	error |= clSetKernelArg(clt_frame_kernel, 23, sizeof(cl_mem), &clt_db_iregions);
 	if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
 	error = clEnqueueNDRangeKernel(clt_queue, clt_frame_kernel, 2, NULL, wxh,
 		swxh, 0, NULL, NULL);

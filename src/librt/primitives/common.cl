@@ -109,6 +109,7 @@ struct accum {
     global uint *indexes;
     global uchar *prims;
     global struct region *regions;
+    global int *iregions;
     int lightmodel;
 };
 
