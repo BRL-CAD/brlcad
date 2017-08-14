@@ -821,7 +821,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	  int width, int ibackground[3], int inonbackground[3],
 	  double airdensity, double haze[3], fastf_t gamma,
           mat_t view2model, fastf_t cell_width, fastf_t cell_height,
-          fastf_t aspect, int lightmodel)
+          fastf_t aspect, int lightmodel, int a_no_booleans)
 {
     const size_t npix = last_pixel-cur_pixel+1;
 
@@ -876,251 +876,244 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 
     bu_log("%ldx%ld grid, %ldx%ld subgrids\n", wxh[0], wxh[1], swxh[0], swxh[1]);
 
-    switch (lightmodel) {
-	case 5:
-	    {
-	    size_t sz_counts;
-	    cl_int *counts;
-	    cl_mem pcounts;
-	    size_t sz_h;
-	    cl_uint *h;
-	    cl_mem ph;
-	    size_t sz_segs;
-	    cl_mem psegs;
-            size_t sz_ipartitions;
-	    cl_uint *ipart;
-	    cl_mem ipartitions;
-            cl_mem head_partition;
-	    size_t sz_partitions;
-	    cl_mem ppartitions;
-	    cl_int max_depth;
-	    size_t sz_bv;
-	    cl_uint *bv;
-	    cl_mem segs_bv;
-	    size_t sz_regiontable;
-	    cl_uint *regiontable;
-	    cl_mem regiontable_bv;
-	    size_t snpix = swxh[0]*swxh[1];
+    if (a_no_booleans) {
+	bu_semaphore_acquire(clt_semaphore);
+	error = clSetKernelArg(clt_frame_kernel, 0, sizeof(cl_mem), &ppixels);
+	error |= clSetKernelArg(clt_frame_kernel, 1, sizeof(cl_uchar3), &p.o);
+	error |= clSetKernelArg(clt_frame_kernel, 2, sizeof(cl_int), &p.cur_pixel);
+	error |= clSetKernelArg(clt_frame_kernel, 3, sizeof(cl_int), &p.last_pixel);
+	error |= clSetKernelArg(clt_frame_kernel, 4, sizeof(cl_int), &p.width);
+	error |= clSetKernelArg(clt_frame_kernel, 5, sizeof(cl_mem), &clt_rand_halftab);
+	error |= clSetKernelArg(clt_frame_kernel, 6, sizeof(cl_uint), &p.randhalftabsize);
+	error |= clSetKernelArg(clt_frame_kernel, 7, sizeof(cl_uchar3), &p.ibackground);
+	error |= clSetKernelArg(clt_frame_kernel, 8, sizeof(cl_uchar3), &p.inonbackground);
+	error |= clSetKernelArg(clt_frame_kernel, 9, sizeof(cl_double), &p.airdensity);
+	error |= clSetKernelArg(clt_frame_kernel, 10, sizeof(cl_double3), &p.haze);
+	error |= clSetKernelArg(clt_frame_kernel, 11, sizeof(cl_double), &p.gamma);
+	error |= clSetKernelArg(clt_frame_kernel, 12, sizeof(cl_double16), &p.view2model);
+	error |= clSetKernelArg(clt_frame_kernel, 13, sizeof(cl_double), &p.cell_width);
+	error |= clSetKernelArg(clt_frame_kernel, 14, sizeof(cl_double), &p.cell_height);
+	error |= clSetKernelArg(clt_frame_kernel, 15, sizeof(cl_double), &p.aspect);
+	error |= clSetKernelArg(clt_frame_kernel, 16, sizeof(cl_int), &lightmodel);
+	error |= clSetKernelArg(clt_frame_kernel, 17, sizeof(cl_uint), &clt_db_nprims);
+	error |= clSetKernelArg(clt_frame_kernel, 18, sizeof(cl_mem), &clt_db_ids);
+	error |= clSetKernelArg(clt_frame_kernel, 19, sizeof(cl_mem), &clt_db_bvh);
+	error |= clSetKernelArg(clt_frame_kernel, 20, sizeof(cl_mem), &clt_db_indexes);
+	error |= clSetKernelArg(clt_frame_kernel, 21, sizeof(cl_mem), &clt_db_prims);
+	error |= clSetKernelArg(clt_frame_kernel, 22, sizeof(cl_mem), &clt_db_regions);
+	if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+	error = clEnqueueNDRangeKernel(clt_queue, clt_frame_kernel, 2, NULL, wxh,
+		swxh, 0, NULL, NULL);
+	bu_semaphore_release(clt_semaphore);
+    } else {
+	size_t sz_counts;
+	cl_int *counts;
+	cl_mem pcounts;
+	size_t sz_h;
+	cl_uint *h;
+	cl_mem ph;
+	size_t sz_segs;
+	cl_mem psegs;
+	size_t sz_ipartitions;
+	cl_uint *ipart;
+	cl_mem ipartitions;
+	cl_mem head_partition;
+	size_t sz_partitions;
+	cl_mem ppartitions;
+	cl_int max_depth;
+	size_t sz_bv;
+	cl_uint *bv;
+	cl_mem segs_bv;
+	size_t sz_regiontable;
+	cl_uint *regiontable;
+	cl_mem regiontable_bv;
+	size_t snpix = swxh[0]*swxh[1];
 
-	    sz_counts = sizeof(cl_int)*npix;
-	    pcounts = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY|CL_MEM_HOST_READ_ONLY, sz_counts, NULL, &error);
-	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL counts buffer");
+	sz_counts = sizeof(cl_int)*npix;
+	pcounts = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY|CL_MEM_HOST_READ_ONLY, sz_counts, NULL, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL counts buffer");
+
+	bu_semaphore_acquire(clt_semaphore);
+	error = clSetKernelArg(clt_count_hits_kernel, 0, sizeof(cl_mem), &pcounts);
+	error |= clSetKernelArg(clt_count_hits_kernel, 1, sizeof(cl_int), &p.cur_pixel);
+	error |= clSetKernelArg(clt_count_hits_kernel, 2, sizeof(cl_int), &p.last_pixel);
+	error |= clSetKernelArg(clt_count_hits_kernel, 3, sizeof(cl_int), &p.width);
+	error |= clSetKernelArg(clt_count_hits_kernel, 4, sizeof(cl_double16), &p.view2model);
+	error |= clSetKernelArg(clt_count_hits_kernel, 5, sizeof(cl_double), &p.cell_width);
+	error |= clSetKernelArg(clt_count_hits_kernel, 6, sizeof(cl_double), &p.cell_height);
+	error |= clSetKernelArg(clt_count_hits_kernel, 7, sizeof(cl_double), &p.aspect);
+	error |= clSetKernelArg(clt_count_hits_kernel, 8, sizeof(cl_uint), &clt_db_nprims);
+	error |= clSetKernelArg(clt_count_hits_kernel, 9, sizeof(cl_mem), &clt_db_ids);
+	error |= clSetKernelArg(clt_count_hits_kernel, 10, sizeof(cl_mem), &clt_db_bvh);
+	error |= clSetKernelArg(clt_count_hits_kernel, 11, sizeof(cl_mem), &clt_db_indexes);
+	error |= clSetKernelArg(clt_count_hits_kernel, 12, sizeof(cl_mem), &clt_db_prims);
+	if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+	error = clEnqueueNDRangeKernel(clt_queue, clt_count_hits_kernel, 2, NULL, wxh,
+		swxh, 0, NULL, NULL);
+	bu_semaphore_release(clt_semaphore);
+
+	/* once we can do the scan on the device we won't need these transfers */
+	counts = (cl_int*)bu_calloc(1, sz_counts, "counts");
+	clEnqueueReadBuffer(clt_queue, pcounts, CL_TRUE, 0, sz_counts, counts, 0, NULL, NULL);
+	clReleaseMemObject(pcounts);
+
+	sz_h = sizeof(cl_uint)*(npix+1);
+	h = (cl_uint*)bu_calloc(1, sz_h, "h");
+	h[0] = 0;
+	max_depth = 0;
+	for (i=1; i<=npix; i++) {
+	    BU_ASSERT((counts[i-1] % 2) == 0);
+	    h[i] = h[i-1] + counts[i-1]/2;	/* number of segs is half the number of hits */
+	    if (counts[i-1]/2 > max_depth)
+		max_depth = counts[i-1]/2;
+	}
+	bu_free(counts, "counts");
+
+	ph = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sz_h, h, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL offs buffer");
+
+	sz_segs = sizeof(struct cl_seg)*h[npix];
+
+	sz_ipartitions = sizeof(cl_uint)*npix; /* buffer to hold the number of partitions per ray */
+	sz_partitions = sizeof(struct cl_partition)*h[npix]*2; /*create partition buffer with size= 2*number of segments */
+	ipart = (cl_uint*)bu_calloc(1, sz_ipartitions, "ipart");
+
+	sz_bv = sizeof(cl_uint)*(h[npix]*2)*(max_depth/32 + 1); /* bitarray to represent the segs in each partition */
+	bv = (cl_uint*)bu_calloc(1, sz_bv, "bv");
+
+	sz_regiontable = sizeof(cl_uint)*npix*(clt_db_nregions/32 +1); /* bitarray to represent the regions involved in each partition */
+	regiontable = (cl_uint*)bu_calloc(1, sz_regiontable, "regiontable");
+
+	bu_free(h, "h");
+
+	if (sz_segs != 0) {
+	    psegs = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_HOST_NO_ACCESS, sz_segs, NULL, &error);
+	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL segs buffer");
 
 	    bu_semaphore_acquire(clt_semaphore);
-	    error = clSetKernelArg(clt_count_hits_kernel, 0, sizeof(cl_mem), &pcounts);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 1, sizeof(cl_int), &p.cur_pixel);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 2, sizeof(cl_int), &p.last_pixel);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 3, sizeof(cl_int), &p.width);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 4, sizeof(cl_double16), &p.view2model);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 5, sizeof(cl_double), &p.cell_width);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 6, sizeof(cl_double), &p.cell_height);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 7, sizeof(cl_double), &p.aspect);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 8, sizeof(cl_uint), &clt_db_nprims);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 9, sizeof(cl_mem), &clt_db_ids);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 10, sizeof(cl_mem), &clt_db_bvh);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 11, sizeof(cl_mem), &clt_db_indexes);
-	    error |= clSetKernelArg(clt_count_hits_kernel, 12, sizeof(cl_mem), &clt_db_prims);
+	    error = clSetKernelArg(clt_store_segs_kernel, 0, sizeof(cl_mem), &psegs);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 1, sizeof(cl_mem), &ph);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 2, sizeof(cl_int), &p.cur_pixel);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 3, sizeof(cl_int), &p.last_pixel);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 4, sizeof(cl_int), &p.width);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 5, sizeof(cl_double16), &p.view2model);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 6, sizeof(cl_double), &p.cell_width);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 7, sizeof(cl_double), &p.cell_height);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 8, sizeof(cl_double), &p.aspect);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 9, sizeof(cl_uint), &clt_db_nprims);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 10, sizeof(cl_mem), &clt_db_ids);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 11, sizeof(cl_mem), &clt_db_bvh);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 12, sizeof(cl_mem), &clt_db_indexes);
+	    error |= clSetKernelArg(clt_store_segs_kernel, 13, sizeof(cl_mem), &clt_db_prims);
 	    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-	    error = clEnqueueNDRangeKernel(clt_queue, clt_count_hits_kernel, 2, NULL, wxh,
+	    error = clEnqueueNDRangeKernel(clt_queue, clt_store_segs_kernel, 2, NULL, wxh,
 		    swxh, 0, NULL, NULL);
 	    bu_semaphore_release(clt_semaphore);
+	} else {
+	    psegs = NULL;
+	}
 
-	    /* once we can do the scan on the device we won't need these transfers */
-	    counts = (cl_int*)bu_calloc(1, sz_counts, "counts");
-	    clEnqueueReadBuffer(clt_queue, pcounts, CL_TRUE, 0, sz_counts, counts, 0, NULL, NULL);
-	    clReleaseMemObject(pcounts);
+	ipartitions = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sz_ipartitions, ipart, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL index partitions buffer");
 
-	    sz_h = sizeof(cl_uint)*(npix+1);
-	    h = (cl_uint*)bu_calloc(1, sz_h, "h");
-	    h[0] = 0;
-	    max_depth = 0;
-	    for (i=1; i<=npix; i++) {
-		BU_ASSERT((counts[i-1] % 2) == 0);
-		h[i] = h[i-1] + counts[i-1]/2;	/* number of segs is half the number of hits */
-		if (counts[i-1]/2 > max_depth)
-                    max_depth = counts[i-1]/2;
-	    }
-	    bu_free(counts, "counts");
+	head_partition = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sz_ipartitions, ipart, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL head partitions buffer");
+	bu_free(ipart, "ipart");
 
-	    ph = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_HOST_WRITE_ONLY|CL_MEM_COPY_HOST_PTR, sz_h, h, &error);
-	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL offs buffer");
+	segs_bv = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sz_bv, bv, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL segs bitvector buffer");
+	bu_free(bv, "bv");
 
-	    sz_segs = sizeof(struct cl_seg)*h[npix];
+	regiontable_bv = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sz_regiontable, regiontable, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL segs bitvector buffer");
+	bu_free(regiontable, "regiontable");
 
-	    sz_ipartitions = sizeof(cl_uint)*npix; /* buffer to hold the number of partitions per ray */
-	    sz_partitions = sizeof(struct cl_partition)*h[npix]*2; /*create partition buffer with size= 2*number of segments */
-	    ipart = (cl_uint*)bu_calloc(1, sz_ipartitions, "ipart");
-
-	    sz_bv = sizeof(cl_uint)*(h[npix]*2)*(max_depth/32 + 1); /* bitarray to represent the segs in each partition */
-	    bv = (cl_uint*)bu_calloc(1, sz_bv, "bv");
-
-	    sz_regiontable = sizeof(cl_uint)*npix*(clt_db_nregions/32 +1); /* bitarray to represent the regions involved in each partition */
-	    regiontable = (cl_uint*)bu_calloc(1, sz_regiontable, "regiontable");
-
-	    bu_free(h, "h");
-
-	    if (sz_segs != 0) {
-		psegs = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_HOST_NO_ACCESS, sz_segs, NULL, &error);
-		if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL segs buffer");
-
-		bu_semaphore_acquire(clt_semaphore);
-		error = clSetKernelArg(clt_store_segs_kernel, 0, sizeof(cl_mem), &psegs);
-		error |= clSetKernelArg(clt_store_segs_kernel, 1, sizeof(cl_mem), &ph);
-		error |= clSetKernelArg(clt_store_segs_kernel, 2, sizeof(cl_int), &p.cur_pixel);
-		error |= clSetKernelArg(clt_store_segs_kernel, 3, sizeof(cl_int), &p.last_pixel);
-		error |= clSetKernelArg(clt_store_segs_kernel, 4, sizeof(cl_int), &p.width);
-		error |= clSetKernelArg(clt_store_segs_kernel, 5, sizeof(cl_double16), &p.view2model);
-		error |= clSetKernelArg(clt_store_segs_kernel, 6, sizeof(cl_double), &p.cell_width);
-		error |= clSetKernelArg(clt_store_segs_kernel, 7, sizeof(cl_double), &p.cell_height);
-		error |= clSetKernelArg(clt_store_segs_kernel, 8, sizeof(cl_double), &p.aspect);
-		error |= clSetKernelArg(clt_store_segs_kernel, 9, sizeof(cl_uint), &clt_db_nprims);
-		error |= clSetKernelArg(clt_store_segs_kernel, 10, sizeof(cl_mem), &clt_db_ids);
-		error |= clSetKernelArg(clt_store_segs_kernel, 11, sizeof(cl_mem), &clt_db_bvh);
-		error |= clSetKernelArg(clt_store_segs_kernel, 12, sizeof(cl_mem), &clt_db_indexes);
-		error |= clSetKernelArg(clt_store_segs_kernel, 13, sizeof(cl_mem), &clt_db_prims);
-		if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-		error = clEnqueueNDRangeKernel(clt_queue, clt_store_segs_kernel, 2, NULL, wxh,
-			swxh, 0, NULL, NULL);
-		bu_semaphore_release(clt_semaphore);
-            } else {
-		psegs = NULL;
-            }
-
-	    ipartitions = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sz_ipartitions, ipart, &error);
-	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL index partitions buffer");
-
-            head_partition = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sz_ipartitions, ipart, &error);
-            if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL head partitions buffer");
-	    bu_free(ipart, "ipart");
-
-	    segs_bv = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sz_bv, bv, &error);
-	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL segs bitvector buffer");
-	    bu_free(bv, "bv");
-
-	    regiontable_bv = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sz_regiontable, regiontable, &error);
-	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL segs bitvector buffer");
-	    bu_free(regiontable, "regiontable");
-
-	    if (sz_partitions != 0) {
-		ppartitions = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_HOST_NO_ACCESS, sz_partitions, NULL, &error);
-		if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL partitions buffer");
-
-		bu_semaphore_acquire(clt_semaphore);
-		error = clSetKernelArg(clt_boolweave_kernel, 0, sizeof(cl_mem), &ppartitions);
-		error |= clSetKernelArg(clt_boolweave_kernel, 1, sizeof(cl_mem), &ipartitions);
-		error |= clSetKernelArg(clt_boolweave_kernel, 2, sizeof(cl_mem), &psegs);
-		error |= clSetKernelArg(clt_boolweave_kernel, 3, sizeof(cl_mem), &ph);
-		error |= clSetKernelArg(clt_boolweave_kernel, 4, sizeof(cl_mem), &segs_bv);
-		error |= clSetKernelArg(clt_boolweave_kernel, 5, sizeof(cl_int), &p.cur_pixel);
-		error |= clSetKernelArg(clt_boolweave_kernel, 6, sizeof(cl_int), &p.last_pixel);
-		error |= clSetKernelArg(clt_boolweave_kernel, 7, sizeof(cl_int), &max_depth);
-                error |= clSetKernelArg(clt_boolweave_kernel, 8, sizeof(cl_mem), &head_partition);
-		if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-		error = clEnqueueNDRangeKernel(clt_queue, clt_boolweave_kernel, 1, NULL, &npix,
-			&snpix, 0, NULL, NULL);
-		bu_semaphore_release(clt_semaphore);
-	    } else {
-		ppartitions = NULL;
-	    }
+	if (sz_partitions != 0) {
+	    ppartitions = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_HOST_NO_ACCESS, sz_partitions, NULL, &error);
+	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL partitions buffer");
 
 	    bu_semaphore_acquire(clt_semaphore);
-	    error = clSetKernelArg(clt_boolfinal_kernel, 0, sizeof(cl_mem), &ppartitions);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 1, sizeof(cl_mem), &ipartitions);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 2, sizeof(cl_mem), &psegs);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 3, sizeof(cl_mem), &ph);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 4, sizeof(cl_mem), &segs_bv);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 5, sizeof(cl_int), &max_depth);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 6, sizeof(cl_mem), &clt_db_bool_regions);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 7, sizeof(cl_uint), &clt_db_nregions);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 8, sizeof(cl_mem), &clt_db_rtree);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 9, sizeof(cl_mem), &regiontable_bv);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 10, sizeof(cl_int), &p.cur_pixel);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 11, sizeof(cl_int), &p.last_pixel);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 12, sizeof(cl_mem), &clt_db_regions_table);
-	    error |= clSetKernelArg(clt_boolfinal_kernel, 13, sizeof(cl_uint), &clt_db_regions_table_size);
-            error |= clSetKernelArg(clt_boolfinal_kernel, 14, sizeof(cl_mem), &head_partition);
+	    error = clSetKernelArg(clt_boolweave_kernel, 0, sizeof(cl_mem), &ppartitions);
+	    error |= clSetKernelArg(clt_boolweave_kernel, 1, sizeof(cl_mem), &ipartitions);
+	    error |= clSetKernelArg(clt_boolweave_kernel, 2, sizeof(cl_mem), &psegs);
+	    error |= clSetKernelArg(clt_boolweave_kernel, 3, sizeof(cl_mem), &ph);
+	    error |= clSetKernelArg(clt_boolweave_kernel, 4, sizeof(cl_mem), &segs_bv);
+	    error |= clSetKernelArg(clt_boolweave_kernel, 5, sizeof(cl_int), &p.cur_pixel);
+	    error |= clSetKernelArg(clt_boolweave_kernel, 6, sizeof(cl_int), &p.last_pixel);
+	    error |= clSetKernelArg(clt_boolweave_kernel, 7, sizeof(cl_int), &max_depth);
+	    error |= clSetKernelArg(clt_boolweave_kernel, 8, sizeof(cl_mem), &head_partition);
 	    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-	    error = clEnqueueNDRangeKernel(clt_queue, clt_boolfinal_kernel, 1, NULL, &npix,
-                    &snpix, 0, NULL, NULL);
-            bu_semaphore_release(clt_semaphore);
-
-	    bu_semaphore_acquire(clt_semaphore);
-	    error = clSetKernelArg(clt_shade_segs_kernel, 0, sizeof(cl_mem), &ppixels);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 1, sizeof(cl_uchar3), &p.o);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 2, sizeof(cl_mem), &psegs);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 3, sizeof(cl_mem), &ph);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 4, sizeof(cl_int), &p.cur_pixel);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 5, sizeof(cl_int), &p.last_pixel);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 6, sizeof(cl_int), &p.width);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 7, sizeof(cl_mem), &clt_rand_halftab);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 8, sizeof(cl_uint), &p.randhalftabsize);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 9, sizeof(cl_uchar3), &p.ibackground);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 10, sizeof(cl_uchar3), &p.inonbackground);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 11, sizeof(cl_double), &p.airdensity);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 12, sizeof(cl_double3), &p.haze);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 13, sizeof(cl_double), &p.gamma);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 14, sizeof(cl_double16), &p.view2model);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 15, sizeof(cl_double), &p.cell_width);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 16, sizeof(cl_double), &p.cell_height);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 17, sizeof(cl_double), &p.aspect);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 18, sizeof(cl_int), &lightmodel);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 19, sizeof(cl_uint), &clt_db_nprims);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 20, sizeof(cl_mem), &clt_db_ids);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 21, sizeof(cl_mem), &clt_db_bvh);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 22, sizeof(cl_mem), &clt_db_indexes);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 23, sizeof(cl_mem), &clt_db_prims);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 24, sizeof(cl_mem), &clt_db_regions);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 25, sizeof(cl_mem), &ppartitions);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 26, sizeof(cl_mem), &ipartitions);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 27, sizeof(cl_mem), &segs_bv);
-	    error |= clSetKernelArg(clt_shade_segs_kernel, 28, sizeof(cl_int), &max_depth);
-            error |= clSetKernelArg(clt_shade_segs_kernel, 29, sizeof(cl_mem), &head_partition);
-	    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-	    error = clEnqueueNDRangeKernel(clt_queue, clt_shade_segs_kernel, 1, NULL, &npix,
+	    error = clEnqueueNDRangeKernel(clt_queue, clt_boolweave_kernel, 1, NULL, &npix,
 		    &snpix, 0, NULL, NULL);
 	    bu_semaphore_release(clt_semaphore);
+	} else {
+	    ppartitions = NULL;
+	}
 
-	    clReleaseMemObject(ph);
-	    clReleaseMemObject(psegs);
-	    clReleaseMemObject(ipartitions);
-	    clReleaseMemObject(ppartitions);
-	    clReleaseMemObject(segs_bv);
-	    clReleaseMemObject(regiontable_bv);
-            clReleaseMemObject(head_partition);
-	    }
-	    break;
-	default:
-	    {
-	    bu_semaphore_acquire(clt_semaphore);
-	    error = clSetKernelArg(clt_frame_kernel, 0, sizeof(cl_mem), &ppixels);
-	    error |= clSetKernelArg(clt_frame_kernel, 1, sizeof(cl_uchar3), &p.o);
-	    error |= clSetKernelArg(clt_frame_kernel, 2, sizeof(cl_int), &p.cur_pixel);
-	    error |= clSetKernelArg(clt_frame_kernel, 3, sizeof(cl_int), &p.last_pixel);
-	    error |= clSetKernelArg(clt_frame_kernel, 4, sizeof(cl_int), &p.width);
-	    error |= clSetKernelArg(clt_frame_kernel, 5, sizeof(cl_mem), &clt_rand_halftab);
-	    error |= clSetKernelArg(clt_frame_kernel, 6, sizeof(cl_uint), &p.randhalftabsize);
-	    error |= clSetKernelArg(clt_frame_kernel, 7, sizeof(cl_uchar3), &p.ibackground);
-	    error |= clSetKernelArg(clt_frame_kernel, 8, sizeof(cl_uchar3), &p.inonbackground);
-	    error |= clSetKernelArg(clt_frame_kernel, 9, sizeof(cl_double), &p.airdensity);
-	    error |= clSetKernelArg(clt_frame_kernel, 10, sizeof(cl_double3), &p.haze);
-	    error |= clSetKernelArg(clt_frame_kernel, 11, sizeof(cl_double), &p.gamma);
-	    error |= clSetKernelArg(clt_frame_kernel, 12, sizeof(cl_double16), &p.view2model);
-	    error |= clSetKernelArg(clt_frame_kernel, 13, sizeof(cl_double), &p.cell_width);
-	    error |= clSetKernelArg(clt_frame_kernel, 14, sizeof(cl_double), &p.cell_height);
-	    error |= clSetKernelArg(clt_frame_kernel, 15, sizeof(cl_double), &p.aspect);
-	    error |= clSetKernelArg(clt_frame_kernel, 16, sizeof(cl_int), &lightmodel);
-	    error |= clSetKernelArg(clt_frame_kernel, 17, sizeof(cl_uint), &clt_db_nprims);
-	    error |= clSetKernelArg(clt_frame_kernel, 18, sizeof(cl_mem), &clt_db_ids);
-	    error |= clSetKernelArg(clt_frame_kernel, 19, sizeof(cl_mem), &clt_db_bvh);
-	    error |= clSetKernelArg(clt_frame_kernel, 20, sizeof(cl_mem), &clt_db_indexes);
-	    error |= clSetKernelArg(clt_frame_kernel, 21, sizeof(cl_mem), &clt_db_prims);
-	    error |= clSetKernelArg(clt_frame_kernel, 22, sizeof(cl_mem), &clt_db_regions);
-	    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-	    error = clEnqueueNDRangeKernel(clt_queue, clt_frame_kernel, 2, NULL, wxh,
-		    swxh, 0, NULL, NULL);
-	    bu_semaphore_release(clt_semaphore);
-	    }
-	    break;
+	bu_semaphore_acquire(clt_semaphore);
+	error = clSetKernelArg(clt_boolfinal_kernel, 0, sizeof(cl_mem), &ppartitions);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 1, sizeof(cl_mem), &ipartitions);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 2, sizeof(cl_mem), &psegs);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 3, sizeof(cl_mem), &ph);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 4, sizeof(cl_mem), &segs_bv);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 5, sizeof(cl_int), &max_depth);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 6, sizeof(cl_mem), &clt_db_bool_regions);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 7, sizeof(cl_uint), &clt_db_nregions);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 8, sizeof(cl_mem), &clt_db_rtree);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 9, sizeof(cl_mem), &regiontable_bv);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 10, sizeof(cl_int), &p.cur_pixel);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 11, sizeof(cl_int), &p.last_pixel);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 12, sizeof(cl_mem), &clt_db_regions_table);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 13, sizeof(cl_uint), &clt_db_regions_table_size);
+	error |= clSetKernelArg(clt_boolfinal_kernel, 14, sizeof(cl_mem), &head_partition);
+	if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+	error = clEnqueueNDRangeKernel(clt_queue, clt_boolfinal_kernel, 1, NULL, &npix,
+		&snpix, 0, NULL, NULL);
+	bu_semaphore_release(clt_semaphore);
+
+	bu_semaphore_acquire(clt_semaphore);
+	error = clSetKernelArg(clt_shade_segs_kernel, 0, sizeof(cl_mem), &ppixels);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 1, sizeof(cl_uchar3), &p.o);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 2, sizeof(cl_mem), &psegs);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 3, sizeof(cl_mem), &ph);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 4, sizeof(cl_int), &p.cur_pixel);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 5, sizeof(cl_int), &p.last_pixel);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 6, sizeof(cl_int), &p.width);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 7, sizeof(cl_mem), &clt_rand_halftab);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 8, sizeof(cl_uint), &p.randhalftabsize);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 9, sizeof(cl_uchar3), &p.ibackground);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 10, sizeof(cl_uchar3), &p.inonbackground);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 11, sizeof(cl_double), &p.airdensity);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 12, sizeof(cl_double3), &p.haze);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 13, sizeof(cl_double), &p.gamma);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 14, sizeof(cl_double16), &p.view2model);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 15, sizeof(cl_double), &p.cell_width);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 16, sizeof(cl_double), &p.cell_height);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 17, sizeof(cl_double), &p.aspect);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 18, sizeof(cl_int), &lightmodel);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 19, sizeof(cl_uint), &clt_db_nprims);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 20, sizeof(cl_mem), &clt_db_ids);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 21, sizeof(cl_mem), &clt_db_bvh);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 22, sizeof(cl_mem), &clt_db_indexes);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 23, sizeof(cl_mem), &clt_db_prims);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 24, sizeof(cl_mem), &clt_db_regions);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 25, sizeof(cl_mem), &ppartitions);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 26, sizeof(cl_mem), &ipartitions);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 27, sizeof(cl_mem), &segs_bv);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 28, sizeof(cl_int), &max_depth);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 29, sizeof(cl_mem), &head_partition);
+	if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+	error = clEnqueueNDRangeKernel(clt_queue, clt_shade_segs_kernel, 1, NULL, &npix,
+		&snpix, 0, NULL, NULL);
+	bu_semaphore_release(clt_semaphore);
+
+	clReleaseMemObject(ph);
+	clReleaseMemObject(psegs);
+	clReleaseMemObject(ipartitions);
+	clReleaseMemObject(ppartitions);
+	clReleaseMemObject(segs_bv);
+	clReleaseMemObject(regiontable_bv);
+	clReleaseMemObject(head_partition);
     }
     clEnqueueReadBuffer(clt_queue, ppixels, CL_TRUE, 0, sz_pixels, pixels, 0, NULL, NULL);
     clReleaseMemObject(ppixels);

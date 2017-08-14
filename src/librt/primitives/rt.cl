@@ -634,6 +634,9 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
     region_id = 0;
     if (head_partition[id] != UINT_MAX) {
 	uint idx;
+	double diffuse0 = 0;
+	double cosI0 = 0;
+	double3 work0, work1;
 
 	idx = UINT_MAX;
 
@@ -666,7 +669,28 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
         /*
          * Diffuse reflectance from each light source
          */
-        a_color = shade(r_pt, r_dir, &hitp, lt_pos, region_id, regions);
+        switch (lightmodel) {
+	    default:
+		a_color = shade(r_pt, r_dir, &hitp, lt_pos, region_id, regions);
+	    	break;
+            case 1:
+                /* Light from the "eye" (ray source).  Note sign change */
+                diffuse0 = 0;
+                if ((cosI0 = -dot(normal, r_dir)) >= 0.0)
+                    diffuse0 = cosI0 * (1.0 - AmbientIntensity);
+                work0 = lt_color * diffuse0;
+
+                /* Add in contribution from ambient light */
+                work1 = ambient_color * AmbientIntensity;
+                a_color = work0 + work1;
+                break;
+            case 2:
+                /* Store surface normals pointing inwards */
+                /* (For Spencer's moving light program) */
+                a_color = (normal * DOUBLE_C(-.5)) + DOUBLE_C(.5);
+                break;
+        }
+
 
         /*
          * e ^(-density * distance)
