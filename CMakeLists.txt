@@ -1359,11 +1359,15 @@ if(BRLCAD_ENABLE_STRICT)
 endif(BRLCAD_ENABLE_STRICT)
 
 # Build with compiler optimization flags.  This should normally be on for
-# release builds.
-AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
-if(CMAKE_CONFIGURATION_TYPES)
-  mark_as_advanced(BRLCAD_FLAGS_OPTIMIZATION)
-endif(CMAKE_CONFIGURATION_TYPES)
+# release builds and off otherwise, unless the user specifically enables it.
+# For multi-config build tools, this is managed on a per-configuration basis.
+if(CMAKE_BUILD_TYPE)
+  cmake_dependent_option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" ON "${CMAKE_BUILD_TYPE} STREQUAL Release" OFF)
+else(CMAKE_BUILD_TYPE)
+  # Note: the cmake_dependent_option test doesn't work if CMAKE_BUILD_TYPE isn't set.
+  option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" OFF)
+endif(CMAKE_BUILD_TYPE)
+mark_as_advanced(BRLCAD_OPTIMIZED_BUILD)
 
 # Build with full compiler lines visible by default (won't need make
 # VERBOSE=1) on command line

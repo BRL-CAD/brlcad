@@ -31,57 +31,6 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-###
-#-----------------------------------------------------------------------------
-# Build Type aware option
-macro(AUTO_OPTION username varname debug_state release_state)
-  string(LENGTH "${${username}}" ${username}_SET)
-
-  if(NOT ${username}_SET)
-    set(${username} "AUTO" CACHE STRING "auto option" FORCE)
-  endif(NOT ${username}_SET)
-
-  set_property(CACHE ${username} PROPERTY STRINGS AUTO "ON" "OFF")
-
-  string(TOUPPER "${${username}}" username_upper)
-  set(${username} ${username_upper})
-
-  if(NOT ${${username}} MATCHES "AUTO" AND NOT ${${username}} MATCHES "ON" AND NOT ${${username}} MATCHES "OFF")
-    message(WARNING "Unknown value ${${username}} supplied for ${username} - defaulting to AUTO.\nValid options are AUTO, ON and OFF")
-    set(${username} "AUTO" CACHE STRING "auto option" FORCE)
-  endif(NOT ${${username}} MATCHES "AUTO" AND NOT ${${username}} MATCHES "ON" AND NOT ${${username}} MATCHES "OFF")
-
-  # If the "parent" setting isn't AUTO, do what it says
-  if(NOT ${${username}} MATCHES "AUTO")
-    set(${varname} ${${username}})
-  endif(NOT ${${username}} MATCHES "AUTO")
-
-  # If we don't understand the build type and have an AUTO setting,
-  # varname is not set.
-  if(CMAKE_BUILD_TYPE AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-    if(NOT ${${username}} MATCHES "AUTO")
-      set(${varname} ${${username}})
-    endif(NOT ${${username}} MATCHES "AUTO")
-  endif(CMAKE_BUILD_TYPE AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-
-  # If we DO understand the build type and have AUTO, be smart
-  if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${${username}} MATCHES "AUTO")
-    set(${varname} ${release_state})
-    set(${username} "${release_state} (AUTO)" CACHE STRING "auto option" FORCE)
-  endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${${username}} MATCHES "AUTO")
-
-  if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${${username}} MATCHES "AUTO")
-    set(${varname} ${debug_state})
-    set(${username} "${debug_state} (AUTO)" CACHE STRING "auto option" FORCE)
-  endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${${username}} MATCHES "AUTO")
-
-  if(NOT CMAKE_BUILD_TYPE AND ${${username}} MATCHES "AUTO")
-    set(${varname} ${debug_state})
-    set(${username} "${debug_state} (AUTO)" CACHE STRING "auto option" FORCE)
-  endif(NOT CMAKE_BUILD_TYPE AND ${${username}} MATCHES "AUTO")
-
-endmacro(AUTO_OPTION varname release_state debug_state)
 
 #-----------------------------------------------------------------------------
 # For "top-level" BRL-CAD options, some extra work is in order - descriptions and
