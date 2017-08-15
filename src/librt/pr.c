@@ -676,20 +676,8 @@ rt_pr_bit_tree(const struct bit_tree *btp, int idx, int lvl)
             bu_log(")");
             break;
 
-        case UOP_NOT:
-            bu_log(" !");
-            rt_pr_bit_tree(btp, idx+1, lvl+1);
-            break;
-        case UOP_GUARD:
-            bu_log(" GUARD ");
-            /* TODO */
-            break;
-        case UOP_XNOP:
-            bu_log(" XNOP ");
-            /* TODO */
-            break;
         default:
-            bu_log("rt_bit_tree: bad op[%d]\n", uop);
+            bu_log("rt_pr_bit_tree: bad op[%d]\n", uop);
             exit(1);
             break;
     }
