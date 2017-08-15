@@ -763,32 +763,17 @@ rt_defoverlap(global struct partition *partitions, const uint pp_idx, global str
 
 void
 rt_default_multioverlap(global struct partition *partitions, global struct bool_region *bregions, global uint *regiontable,
-			const uint pp_idx, const uint total_regions, const uint headpp_idx, const size_t id)
+			const uint first_region, const uint pp_idx, const uint total_regions, const uint headpp_idx, const size_t id)
 {
     global struct bool_region *lastregion;
-    int code, ret;
+    int code;
 
     uint rt_index = total_regions/32 +1;
     uint lastregion_id;
 
     // Get first region of the regiontable
-    for (uint i = 0; i < rt_index; i++) {
-	uint mask = regiontable[id * rt_index + i];
-	ret = 0;
-	while (mask != 0) {
-	    uint lz = clz(mask);
-	    uint k = (i * 32) + (31 - lz);
-	    if (isset(regiontable, id * rt_index, k) != 0) {
-		lastregion = &bregions[k];
-		lastregion_id = k;
-		ret = 1;
-		break;
-	    }
-	    // clear bit in mask
-	    mask &= ~(1 << (31 - lz));
-	}
-	if (ret) break;
-    }
+    lastregion = &bregions[first_region];
+    lastregion_id = first_region;
 
     /* Examine the overlapping regions, pairwise */
     for (uint i = 0; i < rt_index; i++) {
@@ -886,6 +871,7 @@ rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESUL
     //iterate over partitions
     for (uint current_index = head; current_index != UINT_MAX; current_index = partitions[current_index].forw_pp) {
 	global struct partition *pp = &partitions[current_index];
+        uint first_region_idx = UINT_MAX;
 
 	claiming_regions = 0;
 	/* Force "very thin" partitions to have exactly zero thickness. */
@@ -930,6 +916,9 @@ rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESUL
 		uint k = (i * 32) + (31 - lz);
 		if (isset(regiontable, id * rt_index, k) != 0) {
 
+                    if (first_region_idx == UINT_MAX)
+                        first_region_idx = k;
+
 		    if (bregions[k].reg_all_unions) {
 			claiming_regions++;
 			lastregion_idx = k;
@@ -951,7 +940,7 @@ rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESUL
 
 	if (claiming_regions > 1) {
 	    /* There is an overlap between two or more regions */
-	    rt_default_multioverlap(partitions, bregions, regiontable, current_index, total_regions, head, id);
+	    rt_default_multioverlap(partitions, bregions, regiontable, first_region_idx, current_index, total_regions, head, id);
 
 	    /* Count number of remaining regions, s/b 0 or 1 */
 	    claiming_regions = 0;
