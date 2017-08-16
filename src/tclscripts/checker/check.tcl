@@ -759,11 +759,6 @@ body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
     $itk_component(buttonLeft) state disabled
     $itk_component(buttonRight) state disabled
 
-    # scroll to end of checklist so we can see the successful
-    # subtractions as they move to the bottom of the list
-    $_ck see [lindex [$_ck children {}] end]
-    update
-
     set subCmd "subtractItemRightFromLeft"
     if {$swap} {
 	set subCmd "subtractItemLeftFromRight"
