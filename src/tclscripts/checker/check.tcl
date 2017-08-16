@@ -495,6 +495,10 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     if {$_markedCount > 0} {
 	$_status configure -text "[$_status cget -text] ($_markedCount marked resolved)"
     }
+
+    # add key bindings
+    bind $_ck <Home> [code $_ck see [lindex [$_ck children {}] 0]]
+    bind $_ck <End> [code $_ck see [lindex [$_ck children {}] end]]
 }
 
 
