@@ -226,8 +226,6 @@ function(BRLCAD_OPTION opt default)
     set(otype ${O_TYPE})
   endif(O_TYPE)
 
-  message("O_ALIASES: ${O_ALIASES}")
-
   # Process aliases and write descriptions
   if(O_ALIASES)
     OPTION_RESOLVE_ALIASES(lopt "${opt}" "${O_ALIASES}" "${otype}")
