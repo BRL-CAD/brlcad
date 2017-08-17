@@ -267,7 +267,7 @@ macro(THIRD_PARTY dir varname_root build_target description)
   if(NOT ${varname_root}_UNDOCUMENTED)
     BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${varname_root}" "${${CMAKE_PROJECT_NAME}_${varname_root}}"
       TYPE ABS
-      ALIASES "${varname_root}_ALIASES"
+      ALIASES ${${varname_root}_ALIASES}
       DESCRIPTION "${description}")
   endif(NOT ${varname_root}_UNDOCUMENTED)
 
@@ -549,7 +549,7 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 
   BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${upper}" "${${CMAKE_PROJECT_NAME}_${upper}}"
       TYPE ABS
-      ALIASES "${aliases}"
+      ALIASES ${${aliases}}
       DESCRIPTION "${description}")
 
   mark_as_advanced(${upper}_EXECUTABLE)

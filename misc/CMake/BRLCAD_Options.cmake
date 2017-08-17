@@ -49,7 +49,7 @@
 
 function(WRITE_CONFIG_YN opt opt_ALIASES onval offval)
   set(ofile "${CMAKE_BINARY_DIR}/configure.new")
-  foreach(item ${${opt_ALIASES}})
+  foreach(item ${opt_ALIASES})
     string(TOLOWER ${item} alias_str)
     string(REPLACE "_" "-" alias_str "${alias_str}")
     string(REPLACE "enable" "disable" disable_str "${alias_str}")
@@ -57,16 +57,16 @@ function(WRITE_CONFIG_YN opt opt_ALIASES onval offval)
     file(APPEND "${ofile}" "                                  shift;;\n")
     file(APPEND "${ofile}" "     --${disable_str})                options=\"$options -D${opt}=${offval}\";\n")
     file(APPEND "${ofile}" "                                  shift;;\n")
-  endforeach(item ${${opt_ALIASES}})
+  endforeach(item ${opt_ALIASES})
 endfunction(WRITE_CONFIG_YN)
 
 function(WRITE_CONFIG_STR opt opt_ALIASES)
-  foreach(item ${${opt_ALIASES}})
+  foreach(item ${opt_ALIASES})
     string(TOLOWER ${item} alias_str)
     file(APPEND "${ofile}" "     --${alias_str}=*)               inputstr=$1;\n")
     file(APPEND "${ofile}" "                                     options=\"$options -D${opt}=\${inputstr#--${alias_str}=}\";\n")
     file(APPEND "${ofile}" "                                  shift;;\n")
-  endforeach(item ${${opt_ALIASES}})
+  endforeach(item ${opt_ALIASES})
 endfunction(WRITE_CONFIG_STR)
 
 function(WRITE_CONFIG_OPTS opt opt_ALIASES style)
@@ -96,13 +96,13 @@ function(OPTION_RESOLVE_ALIASES ropt opt opt_ALIASES style)
 
   set(lopt ${${ropt}})
 
-  foreach(item ${${opt_ALIASES}})
+  foreach(item ${opt_ALIASES})
     if(NOT "${item}" STREQUAL "${opt}" AND NOT "${${item}}" STREQUAL "")
       set(lopt ${${item}})
       set(${item} "" CACHE STRING "set ${opt} via this variable" FORCE)
       mark_as_advanced(${item})
     endif(NOT "${item}" STREQUAL "${opt}" AND NOT "${${item}}" STREQUAL "")
-  endforeach(item ${${opt_ALIASES}})
+  endforeach(item ${opt_ALIASES})
 
   # String types don't have inverses
   if("${style}" STREQUAL "STRING")
@@ -111,19 +111,19 @@ function(OPTION_RESOLVE_ALIASES ropt opt opt_ALIASES style)
   endif("${style}" STREQUAL "STRING")
 
   # Generate inverse aliases for all "ENABLE" options
-  foreach(item ${${opt_ALIASES}})
+  foreach(item ${opt_ALIASES})
     string(REPLACE "ENABLE_" "DISABLE_" inverse_item ${item})
     set(inverse_aliases ${inverse_aliases} ${inverse_item})
-  endforeach(item ${${opt_ALIASES}})
+  endforeach(item ${opt_ALIASES})
 
   # Check the inverse options for a set value
-  foreach(item ${${opt_ALIASES}})
+  foreach(item ${opt_ALIASES})
     if(NOT "${${item}}" STREQUAL "")
       set(lopt ${${item}})
       set(${item} "" CACHE STRING "set ${opt} via this variable" FORCE)
       mark_as_advanced(${item})
     endif(NOT "${${item}}" STREQUAL "")
-  endforeach(item ${${opt_ALIASES}})
+  endforeach(item ${opt_ALIASES})
 
   # Let the parent scope know the result
   set(${ropt} ${lopt} PARENT_SCOPE)
@@ -139,7 +139,7 @@ function(WRITE_OPTION_DESCRIPTION opt opt_ALIASES opt_DESCRIPTION)
   file(APPEND "${ofile}" "${${opt_DESCRIPTION}}")
 
   set(ALIASES_LIST "\nAliases: ")
-  foreach(item ${${opt_ALIASES}})
+  foreach(item ${opt_ALIASES})
     set(ALIASES_LIST_TEST "${ALIASES_LIST}, ${item}")
     string(LENGTH ${ALIASES_LIST_TEST} LL)
 
@@ -157,7 +157,7 @@ function(WRITE_OPTION_DESCRIPTION opt opt_ALIASES opt_DESCRIPTION)
 	endif(NOT ${ALIASES_LIST} STREQUAL "\nAliases: ")
       endif(NOT ${ALIASES_LIST} MATCHES "\nAliases")
     endif(${LL} GREATER 80)
-  endforeach(item ${${opt_ALIASES}})
+  endforeach(item ${opt_ALIASES})
 
   if(ALIASES_LIST)
     string(STRIP ALIASES_LIST ${ALIASES_LIST})
@@ -225,6 +225,8 @@ function(BRLCAD_OPTION opt default)
   if(O_TYPE)
     set(otype ${O_TYPE})
   endif(O_TYPE)
+
+  message("O_ALIASES: ${O_ALIASES}")
 
   # Process aliases and write descriptions
   if(O_ALIASES)

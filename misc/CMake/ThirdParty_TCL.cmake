@@ -391,7 +391,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
 
   BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}}"
     TYPE ABS
-    ALIASES "${aliases}"
+    ALIASES ${${aliases}}
     DESCRIPTION "${description}")
 
 endmacro(THIRD_PARTY_TCL_PACKAGE)
