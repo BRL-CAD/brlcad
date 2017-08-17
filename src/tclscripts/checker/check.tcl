@@ -58,6 +58,9 @@ catch {delete class GeometryChecker} error
 	method registerDrawCallbacks { left_callback right_callback } {}
 	method registerEraseCallback { callback } {}
 	method registerOverlapCallback { callback } {}
+
+	method handleHomeKey {} {}
+	method handleEndKey {} {}
     }
 
     private {
@@ -497,8 +500,8 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     }
 
     # add key bindings
-    bind $_ck <Home> [code $_ck see [lindex [$_ck children {}] 0]]
-    bind $_ck <End> [code $_ck see [lindex [$_ck children {}] end]]
+    bind $_ck <Home> [code $this handleHomeKey]
+    bind $_ck <End> [code $this handleEndKey]
 }
 
 
@@ -966,6 +969,14 @@ body GeometryChecker::registerEraseCallback {callback} {
 #
 body GeometryChecker::registerOverlapCallback {callback} {
     set _overlapCallback $callback
+}
+
+body GeometryChecker::handleHomeKey {} {
+    $_ck see [lindex [$_ck children {}] 0]
+}
+
+body GeometryChecker::handleEndKey {} {
+    $_ck see [lindex [$_ck children {}] end]
 }
 
 
