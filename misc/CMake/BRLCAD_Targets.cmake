@@ -524,7 +524,7 @@ endfunction(BRLCAD_SORT_INCLUDE_DIRS)
 #-----------------------------------------------------------------------------
 # Wrapper to properly include directories for a BRL-CAD build.  Handles the
 # SYSTEM option to the include_directories command, as well as calling the
-# sort macro.
+# sort function.
 function(BRLCAD_INCLUDE_DIRS DIR_LIST)
 
   set(INCLUDE_DIRS ${${DIR_LIST}})
