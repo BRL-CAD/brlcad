@@ -597,7 +597,7 @@ endfunction(BRLCAD_LIB_INCLUDE_DIRS)
 # of the custom commands robust we supply full file paths as dependencies to
 # the file copying custom commands.
 
-macro(BRLCAD_MANAGE_FILES inputdata targetdir)
+function(BRLCAD_MANAGE_FILES inputdata targetdir)
 
   string(RANDOM LENGTH 10 ALPHABET 0123456789 VAR_PREFIX)
   if(${ARGC} GREATER 2)
@@ -743,25 +743,25 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
     install(FILES ${datalist} DESTINATION ${targetdir})
   endif(${VAR_PREFIX}_EXEC)
 
-endmacro(BRLCAD_MANAGE_FILES)
+endfunction(BRLCAD_MANAGE_FILES)
 
 #-----------------------------------------------------------------------------
 # Specific uses of the BRLCAD_MANAGED_FILES functionality - these cover most
 # of the common cases in BRL-CAD.
 
-macro(BRLCAD_ADDDATA datalist targetdir)
+function(BRLCAD_ADDDATA datalist targetdir)
   BRLCAD_MANAGE_FILES(${datalist} ${DATA_DIR}/${targetdir})
-endmacro(BRLCAD_ADDDATA)
+endfunction(BRLCAD_ADDDATA)
 
-macro(ADD_DOC doclist targetdir)
+function(ADD_DOC doclist targetdir)
   set(doc_target_dir ${DOC_DIR}/${targetdir})
   BRLCAD_MANAGE_FILES(${doclist} ${doc_target_dir})
-endmacro(ADD_DOC)
+endfunction(ADD_DOC)
 
-macro(ADD_MAN_PAGES num inmanlist)
+function(ADD_MAN_PAGES num inmanlist)
   set(man_target_dir ${MAN_DIR}/man${num})
   BRLCAD_MANAGE_FILES(${inmanlist} ${man_target_dir})
-endmacro(ADD_MAN_PAGES)
+endfunction(ADD_MAN_PAGES)
 
 # Local Variables:
 # tab-width: 8
