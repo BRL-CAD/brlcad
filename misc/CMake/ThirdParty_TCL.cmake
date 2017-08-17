@@ -389,11 +389,10 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
     endif(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
   endif(NOT ${PKGNAME_UPPER}_MET_CONDITION)
 
-  OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${aliases}" "ABS")
-  OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${aliases}" "${description}")
-
-  # For drop-down menus in CMake gui - set STRINGS property
-  set_property(CACHE ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
+  BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}}"
+    TYPE ABS
+    ALIASES "${aliases}"
+    DESCRIPTION "${description}")
 
 endmacro(THIRD_PARTY_TCL_PACKAGE)
 

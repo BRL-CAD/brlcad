@@ -265,8 +265,10 @@ macro(THIRD_PARTY dir varname_root build_target description)
   endif(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
 
   if(NOT ${varname_root}_UNDOCUMENTED)
-    OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${varname_root}" "${varname_root}_ALIASES" "ABS")
-    OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${varname_root}" "${varname_root}_ALIASES" "${description}")
+    BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${varname_root}" "${${CMAKE_PROJECT_NAME}_${varname_root}}"
+      TYPE ABS
+      ALIASES "${varname_root}_ALIASES"
+      DESCRIPTION "${description}")
   endif(NOT ${varname_root}_UNDOCUMENTED)
 
   # For drop-down menus in CMake gui - set STRINGS property
@@ -545,11 +547,10 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
     set(${upper}_EXECUTABLE_TARGET "" CACHE STRING "No build target for ${lower}" FORCE)
   endif(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
 
-  OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${upper}" "${aliases}" "ABS")
-  OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${upper}" "${aliases}" "${description}")
-
-  # For drop-down menus in CMake gui - set STRINGS property
-  set_property(CACHE ${CMAKE_PROJECT_NAME}_${upper} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
+  BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${upper}" "${${CMAKE_PROJECT_NAME}_${upper}}"
+      TYPE ABS
+      ALIASES "${aliases}"
+      DESCRIPTION "${description}")
 
   mark_as_advanced(${upper}_EXECUTABLE)
   mark_as_advanced(${upper}_EXECUTABLE_TARGET)
