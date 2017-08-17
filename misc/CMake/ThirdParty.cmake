@@ -53,7 +53,7 @@ include(CMakeParseArguments)
 #            )
 
 #-----------------------------------------------------------------------------
-macro(THIRD_PARTY dir varname_root build_target description)
+function(THIRD_PARTY dir varname_root build_target description)
 
   # If the library variable has been explicitly set, get
   # an varname_rootcase version of it for easier matching
@@ -264,6 +264,12 @@ macro(THIRD_PARTY dir varname_root build_target description)
     set(${varname_root}_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${dir}" "${CMAKE_CURRENT_BINARY_DIR}/${dir}" CACHE STRING "set by THIRD_PARTY_SUBDIR macro" FORCE)
   endif(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
 
+  # Let parent scope know what's happening
+  set(${varname_root}_LIBRARY "${${varname_root}_LIBRARY}" PARENT_SCOPE)
+  set(${varname_root}_INCLUDE_DIR "${${varname_root}_INCLUDE_DIR}" PARENT_SCOPE)
+  set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ${${CMAKE_PROJECT_NAME}_${varname_root}_BUILD} PARENT_SCOPE)
+  set(${CMAKE_PROJECT_NAME}_${varname_root} "${${CMAKE_PROJECT_NAME}_${varname_root}}" PARENT_SCOPE)
+
   if(NOT ${varname_root}_UNDOCUMENTED)
     BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${varname_root}" "${${CMAKE_PROJECT_NAME}_${varname_root}}"
       TYPE ABS
@@ -276,7 +282,7 @@ macro(THIRD_PARTY dir varname_root build_target description)
 
   mark_as_advanced(${varname_root}_LIBRARY)
   mark_as_advanced(${varname_root}_INCLUDE_DIR)
-endmacro(THIRD_PARTY)
+endfunction(THIRD_PARTY)
 
 
 #-----------------------------------------------------------------------------
