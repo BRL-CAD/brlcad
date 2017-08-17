@@ -104,7 +104,7 @@ HIDDEN int
 get_dataset_info(struct conversion_state *gs)
 {
     char *gdal_info = GDALInfo(gs->hDataset, NULL);
-    if(gdal_info) bu_log("%s", gdal_info);
+    if (gdal_info) bu_log("%s", gdal_info);
     CPLFree(gdal_info);
     return 0;
 }
