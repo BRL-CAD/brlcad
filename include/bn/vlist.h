@@ -63,6 +63,8 @@ __BEGIN_DECLS
 
 
 #define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
+#define BN_VLIST_DISP_MODE_ON 1		/**< @brief display mode on */
+#define BN_VLIST_DISP_MODE_OFF 2	/**< @brief display mode off */
 
 struct bn_vlist  {
     struct bu_list l;		/**< @brief magic, forw, back */
@@ -151,7 +153,6 @@ struct bn_vlist  {
 	    BN_GET_VLIST(_free_hd, _vp); \
 	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
 	} \
-	_vp->pt[_vp->nused][0] = 0; \
 	_vp->cmd[_vp->nused++] = BN_VLIST_MODEL_MAT; \
 }
 
@@ -266,8 +267,8 @@ BN_EXPORT extern int bn_ck_vlist(const struct bu_list *vhead);
  * densely packed than the source.
  */
 BN_EXPORT extern void bn_vlist_copy(struct bu_list *vlists,
-	                            struct bu_list *dest,
-                                    const struct bu_list *src);
+				    struct bu_list *dest,
+				    const struct bu_list *src);
 
 
 /**
@@ -278,8 +279,8 @@ BN_EXPORT extern void bn_vlist_copy(struct bu_list *vlists,
  * length are available conveniently.
  */
 BN_EXPORT extern void bn_vlist_export(struct bu_vls *vls,
-                                      struct bu_list *hp,
-                                      const char *name);
+				      struct bu_list *hp,
+				      const char *name);
 
 
 /**
@@ -287,21 +288,21 @@ BN_EXPORT extern void bn_vlist_export(struct bu_vls *vls,
  * vls_vlist() and received from another machine, into a vlist chain.
  */
 BN_EXPORT extern void bn_vlist_import(struct bu_list *vlists,
-                                      struct bu_list *hp,
-                                      struct bu_vls *namevls,
-                                      const unsigned char *buf);
+				      struct bu_list *hp,
+				      struct bu_vls *namevls,
+				      const unsigned char *buf);
 
 BN_EXPORT extern void bn_vlist_cleanup(struct bu_list *hd);
 
 BN_EXPORT extern struct bn_vlblock *bn_vlblock_init(struct bu_list *free_vlist_hd, /* where to get/put free vlists */
-                                                    int max_ent);
+						    int max_ent);
 
 BN_EXPORT extern void bn_vlblock_free(struct bn_vlblock *vbp);
 
 BN_EXPORT extern struct bu_list *bn_vlblock_find(struct bn_vlblock *vbp,
-                                                 int r,
-                                                 int g,
-                                                 int b);
+						 int r,
+						 int g,
+						 int b);
 
 
 BN_EXPORT void bn_vlist_rpp(struct bu_list *vlists, struct bu_list *hd, const point_t minn, const point_t maxx);
@@ -311,7 +312,7 @@ BN_EXPORT void bn_vlist_rpp(struct bu_list *vlists, struct bu_list *hd, const po
  * color.
  */
 BN_EXPORT extern void bn_plot_vlblock(FILE *fp,
-                                      const struct bn_vlblock *vbp);
+				      const struct bn_vlblock *vbp);
 
 /**
  * Output a vlist as an extended 3-D floating point UNIX-Plot file.
@@ -319,7 +320,7 @@ BN_EXPORT extern void bn_plot_vlblock(FILE *fp,
  * UNIX-Plot output.
  */
 BN_EXPORT extern void bn_vlist_to_uplot(FILE *fp,
-                                        const struct bu_list *vhead);
+					const struct bu_list *vhead);
 
 /** @} */
 

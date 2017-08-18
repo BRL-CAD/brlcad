@@ -342,10 +342,8 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		ret++;
 		break;
 	    }
-	    VMOVE(pt, V);
 	    V2ADD2(pt, V, annot_ip->verts[lsg->start]);
 	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-	    VMOVE(pt, V);
 	    V2ADD2(pt, V, annot_ip->verts[lsg->end]);
 	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
 	    break;
@@ -359,7 +357,6 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		ret++;
 		break;
 	    }
-	    VMOVE(pt, V);
 	    V2ADD2(pt, V, annot_ip->verts[tsg->ref_pt]);
 	    bn_vlist_2string(vhead, &RTG.rtg_vlfree, tsg->label.vls_str, pt[0], pt[1], 0.2, 0);
 	    break;
@@ -379,9 +376,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 
 		delta = M_PI_4;
 		if (csg->radius <= 0.0) {
-		    VMOVE(center, V);
 		    V2ADD2(center, V, annot_ip->verts[csg->end]);
-		    VMOVE(pt, V);
 		    V2ADD2(pt, V, annot_ip->verts[csg->start]);
 
 		    VSUB2(semi_a, pt, center);
@@ -493,10 +488,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		cosdel = cos(delta);
 		sindel = sin(delta);
 
-		VMOVE(center, V);
 		V2ADD2(center, V, center2d);
-
-		VMOVE(start_pt, V);
 		V2ADD2(start_pt, V, start2d);
 		oldu = (start2d[0] - center2d[0]);
 		oldv = (start2d[1] - center2d[1]);
@@ -504,7 +496,6 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		for (i=0; i<nsegs; i++) {
 		    newu = oldu * cosdel - oldv * sindel;
 		    newv = oldu * sindel + oldv * cosdel;
-		    VMOVE(pt, center);
 		    V2SET(new_uv, newu, newv);
 		    V2ADD2(pt, center, new_uv);
 		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
@@ -530,7 +521,6 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		}
 		if (nsg->order < 3) {
 		    /* just straight lines */
-		    VMOVE(start_pt, V);
 		    V2ADD2(start_pt, V, annot_ip->verts[nsg->ctl_points[0]]);
 
 		    if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
@@ -539,7 +529,6 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		    }
 		    RT_ADD_VLIST(vhead, start_pt, BN_VLIST_LINE_MOVE);
 		    for (i=1; i<nsg->c_size; i++) {
-		    	VMOVE(pt, V);
 			V2ADD2(pt, V, annot_ip->verts[nsg->ctl_points[i]]);
 			if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 			    inv_weight = 1.0/nsg->weights[i];
@@ -559,13 +548,11 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		eg.ctl_points = (fastf_t *)bu_malloc(nsg->c_size * coords * sizeof(fastf_t), "eg.ctl_points");
 		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 		    for (i=0; i<nsg->c_size; i++) {
-		    	VMOVE(&eg.ctl_points[i*coords], V);
 			V2ADD2(&eg.ctl_points[i*coords], V, annot_ip->verts[nsg->ctl_points[i]]);
 			eg.ctl_points[(i+1)*coords - 1] = nsg->weights[i];
 		    }
 		} else {
 		    for (i=0; i<nsg->c_size; i++) {
-		    	VMOVE(&eg.ctl_points[i*coords], V);
 			V2ADD2(&eg.ctl_points[i*coords], V, annot_ip->verts[nsg->ctl_points[i]]);
 		    }
 		}
@@ -649,11 +636,9 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 
 	    if (bsg->degree == 1) {
 		/* straight line */
-		VMOVE(start_pt, V);
 		V2ADD2(start_pt, V, annot_ip->verts[bsg->ctl_points[0]]);
 		RT_ADD_VLIST(vhead, start_pt, BN_VLIST_LINE_MOVE);
 		for (i=1; i<=bsg->degree; i++) {
-		    VMOVE(pt, V);
 		    V2ADD2(pt, V, annot_ip->verts[bsg->ctl_points[i]]);
 		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
 		}
@@ -709,14 +694,12 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 
 	    /* plot the results */
 	    bz = BU_LIST_FIRST(bezier_2d_list, &bezier_hd->l);
-	    VMOVE(pt, V);
 	    V2ADD2(pt, V, bz->ctl[0]);
 	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
 
 	    while (BU_LIST_WHILE(bz, bezier_2d_list, &(bezier_hd->l))) {
 		BU_LIST_DEQUEUE(&bz->l);
 		for (i=1; i<=bsg->degree; i++) {
-		    VMOVE(pt, V);
 		    V2ADD2(pt, V, bz->ctl[i]);
 		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
 		}
@@ -1553,14 +1536,10 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		cp += SIZEOF_NETWORK_LONG;
 		*(uint32_t *)cp = htonl(tseg->pt_rel_pos);
 		cp += SIZEOF_NETWORK_LONG;
-		bu_strlcpy((char *)cp, tseg->label.vls_str, strlen(tseg->label.vls_str) + 1);
-		cp += strlen(tseg->label.vls_str)+1;
-		*(uint32_t *)cp = htonl(tseg->label.vls_offset);
-		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(tseg->label.vls_len);
-		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(tseg->label.vls_max);
-		cp += SIZEOF_NETWORK_LONG;
+
+		bu_strlcpy((char *)cp, bu_vls_addr(&tseg->label), bu_vls_strlen(&tseg->label) + 1);
+
+    		cp += bu_vls_strlen(&tseg->label) + 1;
 		break;
 	    case CURVE_CARC_MAGIC:
 		cseg = (struct carc_seg *)lng;
@@ -1886,9 +1865,14 @@ rt_ant_free(struct rt_ant *ant)
 		bu_free((char *)lng, "annotation segment");
 		break;
 	    case CURVE_LSEG_MAGIC:
+		bu_free((char *)lng, "annotation segment");
+		break;
 	    case ANN_TSEG_MAGIC:
 		tsg = (struct txt_seg *)lng;
-		bu_vls_free(&tsg->label);
+		if (BU_VLS_IS_INITIALIZED(&tsg->label))
+		    bu_vls_free(&tsg->label);
+		bu_free((char *)lng, "annotation segment");
+		break;
 	    case CURVE_CARC_MAGIC:
 		bu_free((char *)lng, "annotation segment");
 		break;

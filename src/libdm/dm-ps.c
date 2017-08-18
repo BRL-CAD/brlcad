@@ -60,6 +60,8 @@ char ps_usage[] = "Usage: ps [-f font] [-t title] [-c creator] [-s size in inche
 
 struct ps_vars head_ps_vars;
 static mat_t psmat;
+static mat_t disp_mat;
+static mat_t mod_mat;
 
 
 /*
@@ -146,7 +148,7 @@ ps_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
 	bu_vls_free(&tmp_vls);
     }
 
-    MAT_COPY(psmat, mat);
+    MAT_COPY(mod_mat, mat);
 
     Tcl_SetObjResult(dmp->dm_interp, obj);
     return BRLCAD_OK;
@@ -163,6 +165,7 @@ ps_drawVList(dm *dmp, struct bn_vlist *vp)
     fastf_t dist_prev=1.0;
     fastf_t dist;
     fastf_t delta;
+    point_t tlate;
     int useful = 0;
 
     if (!((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp)
@@ -190,6 +193,16 @@ ps_drawVList(dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_START:
 		case BN_VLIST_TRI_VERTNORM:
+		    continue;
+		case BN_VLIST_MODEL_MAT:
+		    MAT_COPY(psmat, mod_mat);
+		    continue;
+		case BN_VLIST_DISPLAY_MAT:
+		    MAT4X3PNT(tlate, (mod_mat), *pt);
+		    disp_mat[3] = tlate[0];
+		    disp_mat[7] = tlate[1];
+		    disp_mat[11] = tlate[2];
+		    MAT_COPY(psmat, disp_mat);
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
@@ -779,7 +792,9 @@ NEWPG\n\
 	    ((struct ps_vars *)dmp->dm_vars.priv_vars)->scale,
 	    ((struct ps_vars *)dmp->dm_vars.priv_vars)->scale);
 
-    MAT_IDN(psmat);
+    MAT_IDN(mod_mat);
+    MAT_IDN(disp_mat);
+    MAT_COPY(psmat, mod_mat);
 
     Tcl_SetObjResult(interp, obj);
     return dmp;
