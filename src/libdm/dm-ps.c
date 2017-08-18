@@ -149,6 +149,7 @@ ps_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
     }
 
     MAT_COPY(mod_mat, mat);
+    MAT_COPY(psmat, mat);
 
     Tcl_SetObjResult(dmp->dm_interp, obj);
     return BRLCAD_OK;
