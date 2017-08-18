@@ -45,6 +45,8 @@
 #include <gdal.h>
 #include <gdal_utils.h>
 #include <cpl_conv.h>
+#include <cpl_string.h>
+#include <cpl_multiproc.h>
 #include <ogr_spatialref.h>
 
 #include "raytrace.h"
@@ -122,12 +124,16 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     state->input_file = source_path;
     state->wdbp = context->dbip->dbi_wdbp;
 
-    state->hDataset = GDALOpenEx(source_path, GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, NULL, NULL, NULL);
+    GDALAllRegister();
+
+    state->hDataset = GDALOpenEx(source_path, GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL, NULL, NULL);
     if (!state->hDataset) {
 	bu_log("GDAL Reader: error opening input file %s\n", source_path);
 	BU_PUT(state, struct conversion_state);
-	return -1;
+	return 0;
     }
+
+    (void)get_dataset_info(state);
 
     GDALClose(state->hDataset);
 

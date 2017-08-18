@@ -631,12 +631,14 @@ main(int ac, const char **av)
 
     /* If we get to this point without knowing both input and output types, we've got a problem */
     if (in_type == BU_MIME_MODEL_UNKNOWN) {
+	/*
 	if (bu_vls_strlen(&in_path) > 0) {
 	    bu_vls_printf(&slog, "Error: no format type identified for input path: %s\n", bu_vls_addr(&in_path));
 	} else {
 	    bu_vls_printf(&slog, "Error: no input format type identified.\n");
 	}
-	ret = 1;
+	ret = 1; */
+	in_type = BU_MIME_MODEL_AUTO;
     }
     if (out_type == BU_MIME_MODEL_UNKNOWN) {
 	if (bu_vls_strlen(&out_path) > 0) {
@@ -700,7 +702,7 @@ main(int ac, const char **av)
 
     /* Clean up */
 cleanup:
-    if (bu_vls_strlen(&slog) > 0) bu_log("%s", bu_vls_addr(&slog));
+    if (bu_vls_strlen(&slog) > 0 && ret != 0) bu_log("%s", bu_vls_addr(&slog));
     if (in_fmt) bu_free((char *)in_fmt, "input format string");
     if (out_fmt) bu_free((char *)out_fmt, "output format string");
     bu_vls_free(&in_format);
