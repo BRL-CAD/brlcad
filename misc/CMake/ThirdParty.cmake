@@ -55,37 +55,27 @@ include(CMakeParseArguments)
 #-----------------------------------------------------------------------------
 function(THIRD_PARTY dir varname_root build_target description)
 
-  # If the library variable has been explicitly set, get
-  # an varname_rootcase version of it for easier matching
-  if(NOT ${${CMAKE_PROJECT_NAME}_${varname_root}} STREQUAL "")
-    string(TOUPPER "${${CMAKE_PROJECT_NAME}_${varname_root}}" OPT_STR_UPPER)
-  else(NOT ${${CMAKE_PROJECT_NAME}_${varname_root}} STREQUAL "")
-    set(OPT_STR_UPPER "")
-  endif(NOT ${${CMAKE_PROJECT_NAME}_${varname_root}} STREQUAL "")
-  if(NOT ${OPT_STR_UPPER} STREQUAL "")
-    if(${OPT_STR_UPPER} STREQUAL "ON")
-      set(OPT_STR_UPPER "BUNDLED")
-    endif(${OPT_STR_UPPER} STREQUAL "ON")
-    if(${OPT_STR_UPPER} STREQUAL "OFF")
-      set(OPT_STR_UPPER "SYSTEM")
-    endif(${OPT_STR_UPPER} STREQUAL "OFF")
-  endif(NOT ${OPT_STR_UPPER} STREQUAL "")
+  # Parse extra arguments
+  CMAKE_PARSE_ARGUMENTS(TP "UNDOCUMENTED" "FIND_NAME;FIND_VERSION" "FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
 
-  if(${ARGC} GREATER 3)
-    # Parse extra arguments
-    CMAKE_PARSE_ARGUMENTS(${varname_root} "UNDOCUMENTED" "FIND_NAME;FIND_VERSION" "FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
-  endif(${ARGC} GREATER 3)
-  if(NOT ${varname_root}_FIND_NAME)
-    set(${varname_root}_FIND_NAME ${varname_root})
-  endif(NOT ${varname_root}_FIND_NAME)
+  # If the library variable has been explicitly set, get
+  # a normalized version of it for easier matching
+  set(local_opt)
+  if(NOT "${${CMAKE_PROJECT_NAME}_${varname_root}}" STREQUAL "")
+    set(local_opt "${${CMAKE_PROJECT_NAME}_${varname_root}}")
+  endif(NOT "${${CMAKE_PROJECT_NAME}_${varname_root}}" STREQUAL "")
+  VAL_NORMALIZE(local_opt ABS)
 
   # Initialize some variables
-  set(${varname_root}_DISABLED 0)
-  set(${varname_root}_DISABLE_TEST 0)
-  set(${varname_root}_MET_CONDITION 0)
-  foreach(item ${${varname_root}_RESET_VARS})
+  set(TP_DISABLED 0)
+  set(TP_DISABLE_TEST 0)
+  set(TP_MET_CONDITION 0)
+  if(NOT TP_FIND_NAME)
+    set(TP_FIND_NAME ${varname_root})
+  endif(NOT TP_FIND_NAME)
+  foreach(item ${TP_RESET_VARS})
     set(${item} "${varname_root}-NOTFOUND" CACHE STRING "${item}" FORCE)
-  endforeach(item ${${varname_root}_RESET_VARS})
+  endforeach(item ${TP_RESET_VARS})
 
   # 0. Whether or not we're building the sources, we are tracking the files
   # that are supposed to be in the directory
@@ -98,10 +88,10 @@ function(THIRD_PARTY dir varname_root build_target description)
 
   # 1. If any of the required flags are off, this extension is a no-go.
   set(DISABLE_STR "")
-  foreach(item ${${varname_root}_REQUIRED_VARS})
+  foreach(item ${TP_REQUIRED_VARS})
     if(NOT ${item})
-      set(${varname_root}_DISABLED 1)
-      set(${varname_root}_DISABLE_TEST 1)
+      set(TP_DISABLED 1)
+      set(TP_DISABLE_TEST 1)
       set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD OFF)
       if(NOT DISABLE_STR)
 	set(DISABLE_STR "${item}")
@@ -109,83 +99,83 @@ function(THIRD_PARTY dir varname_root build_target description)
 	set(DISABLE_STR "${DISABLE_STR},${item}")
       endif(NOT DISABLE_STR)
     endif(NOT ${item})
-  endforeach(item ${${varname_root}_REQUIRED_VARS})
+  endforeach(item ${TP_REQUIRED_VARS})
   if(DISABLE_STR)
     set(${CMAKE_PROJECT_NAME}_${varname_root} "DISABLED ${DISABLE_STR}" CACHE STRING "DISABLED ${DISABLED_STR}" FORCE)
     mark_as_advanced(FORCE ${CMAKE_PROJECT_NAME}_${varname_root})
     set_property(CACHE ${CMAKE_PROJECT_NAME}_${varname_root} PROPERTY STRINGS "DISABLED ${DISABLE_STR}")
-    set(${varname_root}_MET_CONDITION 1)
+    set(TP_MET_CONDITION 1)
   else(DISABLE_STR)
     # If we have a leftover disabled setting in the cache from earlier runs, clear it.
-    if("${CMAKE_PROJECT_NAME}_${varname_root}" MATCHES "DISABLED")
+    if("${local_opt}" MATCHES "DISABLED")
       set(${CMAKE_PROJECT_NAME}_${varname_root} "" CACHE STRING "Clear DISABLED setting" FORCE)
       mark_as_advanced(CLEAR ${CMAKE_PROJECT_NAME}_${varname_root})
-    endif("${CMAKE_PROJECT_NAME}_${varname_root}" MATCHES "DISABLED")
+    endif("${local_opt}" MATCHES "DISABLED")
   endif(DISABLE_STR)
 
   # 2. Next - is the library variable explicitly set to SYSTEM?  If it is, we are NOT building it.
-  if(OPT_STR_UPPER)
-    if("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
+  if(local_opt)
+    if("${local_opt}" STREQUAL "SYSTEM")
       set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD OFF)
       set(${CMAKE_PROJECT_NAME}_${varname_root} "SYSTEM" CACHE STRING "User forced to SYSTEM" FORCE)
-      set(${varname_root}_MET_CONDITION 2)
-      foreach(extraarg ${${varname_root}_FLAGS})
+      set(TP_MET_CONDITION 2)
+      foreach(extraarg ${TP_FLAGS})
 	if(extraarg STREQUAL "NOSYS")
 	  message(WARNING "Compilation of ${build_target} was disabled, but local copy is modified - using a system version of ${build_target} may introduce problems or even fail to work!")
 
 	endif(extraarg STREQUAL "NOSYS")
-      endforeach(extraarg ${${varname_root}_FLAGS})
-    endif("${OPT_STR_UPPER}" STREQUAL "SYSTEM")
-  endif(OPT_STR_UPPER)
+      endforeach(extraarg ${TP_FLAGS})
+    endif("${local_opt}" STREQUAL "SYSTEM")
+  endif(local_opt)
 
   # 3. If we have a NOSYS flag and aren't explicitly disabled, ALWAYS use the bundled version.
   # The NOSYS flag signifies that the BRL-CAD project requires modifications in the local src/other
   # version of a library or tool that are not likely to be present in a system version.  These flags
   # should be periodically reviewed to determine if they can be removed (i.e. system packages have
   # appeared in modern OS distributions with the fixes needed by BRL-CAD...)
-  if(NOT ${varname_root}_MET_CONDITION)
-    foreach(extraarg ${${varname_root}_FLAGS})
+  if(NOT TP_MET_CONDITION)
+    foreach(extraarg ${TP_FLAGS})
       if(extraarg STREQUAL "NOSYS")
 	set(${CMAKE_PROJECT_NAME}_${varname_root} "BUNDLED" CACHE STRING "NOSYS passed, using bundled ${build_target}" FORCE)
 	set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ON)
-	set(${varname_root}_MET_CONDITION 3)
-	set(${varname_root}_DISABLE_TEST 1)
+	set(TP_MET_CONDITION 3)
+	set(TP_DISABLE_TEST 1)
       endif(extraarg STREQUAL "NOSYS")
-    endforeach(extraarg ${${varname_root}_FLAGS})
-  endif(NOT ${varname_root}_MET_CONDITION)
+    endforeach(extraarg ${TP_FLAGS})
+  endif(NOT TP_MET_CONDITION)
 
   # 4. If we have an explicit BUNDLE request for this particular library,  honor it as long as
   # features are satisfied.  No point in testing if we know we're turning it on - set vars accordingly.
-  if(OPT_STR_UPPER)
-    if("${OPT_STR_UPPER}" STREQUAL "BUNDLED")
-      if(NOT ${varname_root}_MET_CONDITION)
+  if(local_opt)
+    if("${local_opt}" STREQUAL "BUNDLED")
+      if(NOT TP_MET_CONDITION)
 	set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ON)
 	set(${CMAKE_PROJECT_NAME}_${varname_root} "BUNDLED" CACHE STRING "User forced to BUNDLED" FORCE)
-	set(${varname_root}_DISABLE_TEST 1)
-	set(${varname_root}_MET_CONDITION 4)
-      endif(NOT ${varname_root}_MET_CONDITION)
-    endif("${OPT_STR_UPPER}" STREQUAL "BUNDLED")
-  endif(OPT_STR_UPPER)
+	set(TP_DISABLE_TEST 1)
+	set(TP_MET_CONDITION 4)
+      endif(NOT TP_MET_CONDITION)
+    endif("${local_opt}" STREQUAL "BUNDLED")
+  endif(local_opt)
 
   # 5. If BRLCAD_BUNDLED_LIBS is exactly SYSTEM or exactly BUNDLED, and we haven't been overridden by
   # one of the other conditions above, go with that.
-  if(NOT ${varname_root}_MET_CONDITION)
+  if(NOT TP_MET_CONDITION)
     if("${BRLCAD_BUNDLED_LIBS}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
       set(${CMAKE_PROJECT_NAME}_${varname_root} "${BRLCAD_BUNDLED_LIBS} (AUTO)" CACHE STRING "BRLCAD_BUNDLED_LIBS: ${BRLCAD_BUNDLED_LIBS}" FORCE)
       if("${BRLCAD_BUNDLED_LIBS}" STREQUAL "SYSTEM")
 	set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD OFF)
-	set(${varname_root}_MET_CONDITION 5)
+	set(TP_MET_CONDITION 5)
       elseif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
 	set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ON)
-	set(${varname_root}_DISABLE_TEST 1)
-	set(${varname_root}_MET_CONDITION 5)
+	set(TP_DISABLE_TEST 1)
+	set(TP_MET_CONDITION 5)
       endif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "SYSTEM")
     endif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
-  endif(NOT ${varname_root}_MET_CONDITION)
+  endif(NOT TP_MET_CONDITION)
 
   # If we haven't been knocked out by any of the above conditions, do our testing and base the results on that.
 
-  if(NOT ${varname_root}_DISABLE_TEST)
+  if(NOT TP_DISABLE_TEST)
     # Stash the previous results (if any) so we don't repeatedly call out the tests - only report
     # if something actually changes in subsequent runs.
     set(${varname_root}_FOUND_STATUS ${${varname_root}_FOUND})
@@ -206,7 +196,7 @@ function(THIRD_PARTY dir varname_root build_target description)
     # Find*.cmake scripts that should be used.  Note that newer CMake versions will prefer a system
     # version of the module, so if a custom override is needed the Find*.cmake name should not conflict
     # with the system version.
-    find_package(${${varname_root}_FIND_NAME} ${${varname_root}_FIND_VERSION} COMPONENTS ${${varname_root}_FIND_COMPONENTS})
+    find_package(${TP_FIND_NAME} ${TP_FIND_VERSION} COMPONENTS ${TP_FIND_COMPONENTS})
 
     # going to use system or bundled versions of deps
     if(${varname_root}_FOUND)
@@ -216,21 +206,21 @@ function(THIRD_PARTY dir varname_root build_target description)
       endif(NOT "${CMAKE_PROJECT_NAME}_${varname_root}" STREQUAL "SYSTEM")
     else(${varname_root}_FOUND)
       # If one of our previous conditions precludes building this library, we've got a problem.
-      if("${OPT_STR_UPPER}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL SYSTEM)
+      if("${local_opt}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL SYSTEM)
 	set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD OFF)
 	set(${CMAKE_PROJECT_NAME}_${varname_root}_NOTFOUND 1)
 	message(WARNING "Compilation of local version of ${build_target} was disabled, but system version not found!")
-	if(NOT "${OPT_STR_UPPER}" STREQUAL "SYSTEM")
+	if(NOT "${local_opt}" STREQUAL "SYSTEM")
 	  set(${CMAKE_PROJECT_NAME}_${varname_root} "SYSTEM (AUTO)" CACHE STRING "BRLCAD_BUNDLED_LIBS forced to SYSTEM, but library not found!" FORCE)
-	else(NOT "${OPT_STR_UPPER}" STREQUAL "SYSTEM")
+	else(NOT "${local_opt}" STREQUAL "SYSTEM")
 	  set(${CMAKE_PROJECT_NAME}_${varname_root} "SYSTEM" CACHE STRING "Hard-set to SYSTEM by user, but library not found!" FORCE)
-	endif(NOT "${OPT_STR_UPPER}" STREQUAL "SYSTEM")
-      else("${OPT_STR_UPPER}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL SYSTEM)
+	endif(NOT "${local_opt}" STREQUAL "SYSTEM")
+      else("${local_opt}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL SYSTEM)
 	set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ON)
 	set(${CMAKE_PROJECT_NAME}_${varname_root} "BUNDLED (AUTO)" CACHE STRING "System test failed, enabling local copy" FORCE)
-      endif("${OPT_STR_UPPER}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL SYSTEM)
+      endif("${local_opt}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL SYSTEM)
     endif(${varname_root}_FOUND)
-  endif(NOT ${varname_root}_DISABLE_TEST)
+  endif(NOT TP_DISABLE_TEST)
 
   # If we're going with a system version of a library, we have to remove any previously built
   # output from enabled bundled copies of the library in question, or the linker will get
@@ -250,11 +240,11 @@ function(THIRD_PARTY dir varname_root build_target description)
 	)
     endforeach(stale_file ${STALE_FILES})
 
-    if(NOT "${CMAKE_PROJECT_NAME}_${varname_root}" MATCHES "${OPT_STR_UPPER}")
-      if("${OPT_STR_UPPER}" MATCHES "BUNDLED")
+    if(NOT "${CMAKE_PROJECT_NAME}_${varname_root}" MATCHES "${local_opt}")
+      if("${local_opt}" MATCHES "BUNDLED")
 	message("Reconfiguring to use system ${varname_root}")
-      endif("${OPT_STR_UPPER}" MATCHES "BUNDLED")
-    endif(NOT "${CMAKE_PROJECT_NAME}_${varname_root}" MATCHES "${OPT_STR_UPPER}")
+      endif("${local_opt}" MATCHES "BUNDLED")
+    endif(NOT "${CMAKE_PROJECT_NAME}_${varname_root}" MATCHES "${local_opt}")
   endif(NOT ${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
 
   # After all that, we know now what to do about src/other/${dir} - do it
@@ -273,7 +263,7 @@ function(THIRD_PARTY dir varname_root build_target description)
   if(NOT ${varname_root}_UNDOCUMENTED)
     BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${varname_root}" "${${CMAKE_PROJECT_NAME}_${varname_root}}"
       TYPE ABS
-      ALIASES ${${varname_root}_ALIASES}
+      ALIASES ${TP_ALIASES}
       DESCRIPTION "${description}")
   endif(NOT ${varname_root}_UNDOCUMENTED)
 
