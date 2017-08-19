@@ -317,9 +317,7 @@ double3 MAT4X3PNT(const double16 m, double3 i) {
 }
 
 inline double3
-shade(const double3 r_pt, const double3 r_dir, struct hit *hitp, const uint idx, const double3 lt_pos,
-      global uchar *ids, global uint *indexes, global uchar *prims, global struct region *regions)
-
+shade(const double3 r_pt, const double3 r_dir, struct hit *hitp, const double3 lt_pos, const uint idx, global struct region *regions)
 {
     double3 color;
     double3 normal;
@@ -364,8 +362,7 @@ void do_segp(RESULT_TYPE *res, const uint idx,
     if (acc->lightmodel == 4) {
 	if (seg_in->hit_dist >= 0.0) {
 	    norm(seg_in, acc->r_pt, acc->r_dir, acc->ids[idx], acc->prims + acc->indexes[idx]);
-	    const double3 color = shade(acc->r_pt, acc->r_dir, seg_in, idx,
-		    acc->lt_pos, acc->ids, acc->indexes, acc->prims, acc->regions);
+	    const double3 color = shade(acc->r_pt, acc->r_dir, seg_in, acc->lt_pos, acc->iregions[idx], acc->regions);
 	    double f = exp(-seg_in->hit_dist*1e-10);
 	    acc->a_color += color * f;
 	    acc->a_total += f;
@@ -382,7 +379,7 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
 	 const double16 view2model, const double cell_width, const double cell_height,
 	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes,global uchar *prims,
-	 global struct region *regions)
+	 global struct region *regions, global int *iregions)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
@@ -412,6 +409,7 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
     a.indexes = indexes;
     a.prims = prims;
     a.regions = regions;
+    a.iregions = iregions;
 
     struct seg *segp = &a.s;
     segp->seg_in.hit_dist = INFINITY;
@@ -448,7 +446,7 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
          */
         switch (lightmodel) {
 	    default:
-		a_color = shade(r_pt, r_dir, hitp, idx, lt_pos, ids, indexes, prims, regions);
+		a_color = shade(r_pt, r_dir, hitp, lt_pos, iregions[idx], regions);
 	    	break;
             case 1:
                 /* Light from the "eye" (ray source).  Note sign change */
@@ -604,7 +602,8 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 	 const double16 view2model, const double cell_width, const double cell_height,
 	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims,
-	 global struct region *regions)
+	 global struct region *regions, global struct partition *partitions, global uint *ipartition,
+         global uint *segs_bv, const int max_depth, global uint *head_partition)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
@@ -626,35 +625,71 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
     double3 a_color;
     uchar3 rgb;
     struct hit hitp;
+    uint head;
+    bool flipflag;
+    uint region_id;
 
     a_color = 0.0;
     hitp.hit_dist = INFINITY;
-    if (h[id] != h[id+1]) {
+    region_id = 0;
+    if (head_partition[id] != UINT_MAX) {
 	uint idx;
+	double diffuse0 = 0;
+	double cosI0 = 0;
+	double3 work0, work1;
 
 	idx = UINT_MAX;
-	for (uint k=h[id]; k!=h[id+1]; k++) {
-	    RESULT_TYPE segp = segs+k;
 
-	    if (segp->seg_in.hit_dist < hitp.hit_dist) {
-		hitp = segp->seg_in;
-		idx = segp->seg_sti;
-	    }
+	/* Get first partition of the ray */
+	head = head_partition[id];
+	flipflag = 0;
+	for (uint index = head; index != UINT_MAX; index = partitions[index].forw_pp) {
+	    global struct partition *pp = &partitions[index];
+            RESULT_TYPE segp = &segs[pp->inseg];
+
+            if (pp->inhit.hit_dist < hitp.hit_dist) {
+                hitp = pp->inhit;
+                idx = segp->seg_sti;
+                region_id = pp->region_id;
+                flipflag = pp->inflip;
+            }
 	}
+
         double3 normal;
 
-	if (hitp.hit_dist < 0.0) {
+        if (hitp.hit_dist < 0.0) {
 	    /* Eye inside solid, orthoview */
 	    normal = -r_dir;
         } else {
 	    norm(&hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
+            hitp.hit_normal = flipflag ? -hitp.hit_normal : hitp.hit_normal;
 	    normal = hitp.hit_normal;
         }
 
         /*
          * Diffuse reflectance from each light source
          */
-	a_color = shade(r_pt, r_dir, &hitp, idx, lt_pos, ids, indexes, prims, regions);
+        switch (lightmodel) {
+	    default:
+		a_color = shade(r_pt, r_dir, &hitp, lt_pos, region_id, regions);
+	    	break;
+            case 1:
+                /* Light from the "eye" (ray source).  Note sign change */
+                diffuse0 = 0;
+                if ((cosI0 = -dot(normal, r_dir)) >= 0.0)
+                    diffuse0 = cosI0 * (1.0 - AmbientIntensity);
+                work0 = lt_color * diffuse0;
+
+                /* Add in contribution from ambient light */
+                work1 = ambient_color * AmbientIntensity;
+                a_color = work0 + work1;
+                break;
+            case 2:
+                /* Store surface normals pointing inwards */
+                /* (For Spencer's moving light program) */
+                a_color = (normal * DOUBLE_C(-.5)) + DOUBLE_C(.5);
+                break;
+        }
 
         /*
          * e ^(-density * distance)
