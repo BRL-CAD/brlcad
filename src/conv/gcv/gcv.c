@@ -391,10 +391,21 @@ gcv_do_conversion(
     struct gcv_context context;
 
     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
-	if ((*entry)->filter_type == GCV_FILTER_READ && (*entry)->mime_type == in_type)
-	    in_filter = *entry;
-	else if ((*entry)->filter_type == GCV_FILTER_WRITE && (*entry)->mime_type == out_type)
-	    out_filter = *entry;
+	bu_mime_model_t emt = (*entry)->mime_type;
+	if ((*entry)->filter_type == GCV_FILTER_READ) {
+	    if (!in_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == in_type)) in_filter = *entry;
+	    if (!in_filter && (emt == BU_MIME_MODEL_AUTO) &&
+		    ((*entry)->data_supported && in_path && (*(*entry)->data_supported)(in_path)) ) {
+	       	in_filter = *entry;
+	    }
+	}
+	if ((*entry)->filter_type == GCV_FILTER_WRITE) {
+	    if (!out_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == out_type)) out_filter = *entry;
+	    if (!out_filter && (emt == BU_MIME_MODEL_AUTO) &&
+		    ((*entry)->data_supported && (*(*entry)->data_supported)(bu_file_mime_str(out_type, BU_MIME_MODEL))) ) {
+		out_filter = *entry;
+	    }
+	}
     }
 
     if (!in_filter)
@@ -629,17 +640,13 @@ main(int ac, const char **av)
 	out_fmt = NULL;
     }
 
-    /* If we get to this point without knowing both input and output types, we've got a problem */
+    /* If we get to this point without knowing the input type, it's up to the plugins to see if
+     * any of them can figure it out. */
     if (in_type == BU_MIME_MODEL_UNKNOWN) {
-	/*
-	if (bu_vls_strlen(&in_path) > 0) {
-	    bu_vls_printf(&slog, "Error: no format type identified for input path: %s\n", bu_vls_addr(&in_path));
-	} else {
-	    bu_vls_printf(&slog, "Error: no input format type identified.\n");
-	}
-	ret = 1; */
 	in_type = BU_MIME_MODEL_AUTO;
     }
+
+    /* If we get to this point without knowing the *output* type, we've got a problem */
     if (out_type == BU_MIME_MODEL_UNKNOWN) {
 	if (bu_vls_strlen(&out_path) > 0) {
 	    bu_vls_printf(&slog, "Error: no format type identified for output path: %s\n", bu_vls_addr(&out_path));

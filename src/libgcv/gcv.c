@@ -32,7 +32,9 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/mime.h"
 #include "bu/str.h"
+#include "rt/db4.h"
 #include "rt/db5.h"
 #include "rt/db_instance.h"
 #include "rt/db_io.h"
@@ -93,13 +95,32 @@ _gcv_brlcad_write(struct gcv_context *context,
     return 1;
 }
 
+int
+_gcv_brlcad_can_read(const char *data)
+{
+    union record record; /* GED database record */
+    FILE *ifp = fopen(data, "rb");
+    if (fread((char *)&record, sizeof record, 1, ifp) != 1) return 0;
+    fclose(ifp);
+    if (db5_header_is_valid((unsigned char *)&record)) return 1;
+    return 0;
+}
 
+int
+_gcv_brlcad_can_write(const char *data)
+{
+    int out_type = bu_file_mime_int(data);
+    if (out_type == (int)BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY) return 1;
+    return 0;
+}
+
+/* TODO - implement a BRL-CAD "valid file" test function...) */
 static const struct gcv_filter _gcv_filter_brlcad_read =
-{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_read};
+{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_read, NULL, NULL, _gcv_brlcad_read};
 
 
 static const struct gcv_filter _gcv_filter_brlcad_write =
-{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_write};
+{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_write, NULL, NULL, _gcv_brlcad_write};
 
 
 HIDDEN void
@@ -114,9 +135,6 @@ _gcv_filter_register(struct bu_ptbl *filter_table,
 
     switch (filter->filter_type) {
 	case GCV_FILTER_FILTER:
-	    if (filter->mime_type != BU_MIME_MODEL_UNKNOWN)
-		bu_bomb("invalid mime_type");
-
 	    break;
 
 	case GCV_FILTER_READ:

@@ -32,6 +32,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 #include "bnetwork.h"
 #include "bio.h"
 
@@ -614,9 +617,75 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     return 1;
 }
 
+/* Try to guide the flow of this logic according to this discussion:
+ *
+ * https://stackoverflow.com/questions/26171521/verifying-that-an-stl-file-is-ascii-or-binary
+ *
+ * The STL format is so simple this is actually a bit tricky to do reliably...
+ */
+HIDDEN int
+stl_can_read(const char *data)
+{
+    struct stat stat_buf;
+    char ascii_header[6];
+    FILE *fp;
+    size_t fsize = 3*sizeof(float) + 3*3*sizeof(float) + sizeof(uint16_t);
+    if(!data) return 0;
+    if (stat(data, &stat_buf)) return 0;
+
+    /* If it's too small, don't bother */
+    if (stat_buf.st_size < 15) return 0;
+
+    /* First, try an ASCII file */
+    fp = fopen(data, "r");
+    if (!fp) return 0;
+    if (fgets(ascii_header, 5, fp) != NULL && BU_STR_EQUAL(ascii_header, "solid")) {
+	/* We've got solid at the beginning, so look for "endsolid" later in the file.
+	 * If we find it, this is probably an ASCII file. */
+	int found_endsolid = 0;
+	struct bu_vls ves = BU_VLS_INIT_ZERO;
+	struct bu_vls nline = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&ves, "endsolid");
+	while (bu_vls_gets(&nline, fp) && !found_endsolid) {
+	    bu_vls_trimspace(&nline);
+	    if (bu_vls_strncmp(&nline, &ves, bu_vls_strlen(&ves)) == 0) found_endsolid = 1;
+	}
+	bu_vls_free(&ves);
+	bu_vls_free(&nline);
+	if (found_endsolid) {
+	    fclose(fp);
+	    return 1;
+	}
+    }
+    fclose(fp);
+
+    /* If that didn't work, see if it looks like a binary */
+
+    /* If it's too small, don't bother */
+    if (stat_buf.st_size < 84) return 0;
+
+    /* Open as a binary file this time */
+    fp = fopen(data, "rb");
+    if (!fp) return 0;
+    {
+	uint32_t tri_cnt;
+	unsigned char buffer[1000];
+	if (!fread(buffer, 80, 1, fp)) return 0;
+	/* Note: we're assuming little-endian... */
+	if (!fread(((void *)&tri_cnt), 4, 1, fp)) return 0;
+	if ((size_t)stat_buf.st_size == (84 + (tri_cnt * fsize))) {
+	    fclose(fp);
+	    return 1;
+	}
+    }
+    fclose(fp);
+
+    return 0;
+}
+
 
 static const struct gcv_filter gcv_conv_stl_read = {
-    "STL Reader", GCV_FILTER_READ, BU_MIME_MODEL_STL,
+    "STL Reader", GCV_FILTER_READ, BU_MIME_MODEL_STL, stl_can_read,
     stl_read_create_opts, stl_read_free_opts, stl_read
 };
 

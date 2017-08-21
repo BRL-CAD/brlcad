@@ -111,6 +111,24 @@ get_dataset_info(struct conversion_state *gs)
     return 0;
 }
 
+HIDDEN int
+gdal_can_read(const char *data)
+{
+    GDALDatasetH hDataset;
+    GDALAllRegister();
+
+    if (!data) return 0;
+
+    if (!bu_file_exists(data,NULL)) return 0;
+
+    hDataset = GDALOpenEx(data, GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL, NULL, NULL);
+
+    if (!hDataset) return 0;
+
+    GDALClose(hDataset);
+
+    return 1;
+}
 
 HIDDEN int
 gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
@@ -143,7 +161,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 extern "C"
 {
     struct gcv_filter gcv_conv_gdal_read =
-    {"GDAL Reader", GCV_FILTER_READ, BU_MIME_MODEL_AUTO, NULL, NULL, gdal_read};
+    {"GDAL Reader", GCV_FILTER_READ, BU_MIME_MODEL_AUTO, gdal_can_read, NULL, NULL, gdal_read};
 
     static const struct gcv_filter * const filters[] = {&gcv_conv_gdal_read, NULL};
     const struct gcv_plugin gcv_plugin_info_s = { filters };
