@@ -639,7 +639,7 @@ stl_can_read(const char *data)
     /* First, try an ASCII file */
     fp = fopen(data, "r");
     if (!fp) return 0;
-    if (fgets(ascii_header, 5, fp) != NULL && BU_STR_EQUAL(ascii_header, "solid")) {
+    if (bu_fgets(ascii_header, 5, fp) != NULL && BU_STR_EQUAL(ascii_header, "solid")) {
 	/* We've got solid at the beginning, so look for "endsolid" later in the file.
 	 * If we find it, this is probably an ASCII file. */
 	int found_endsolid = 0;

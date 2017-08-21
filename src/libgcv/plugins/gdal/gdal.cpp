@@ -160,6 +160,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     adfMinMax[0] = GDALGetRasterMinimum(band, &bmin);
     adfMinMax[1] = GDALGetRasterMaximum(band, &bmax);
     if (!(bmin && bmax)) GDALComputeRasterMinMax(band, TRUE, adfMinMax);
+    bu_log("Min/Max: %f, %f\n", adfMinMax[0], adfMinMax[1]);
     float *scanline = (float*)CPLMalloc(sizeof(float)*GDALGetRasterBandXSize(band));
     for(int i = 0; i < GDALGetRasterBandYSize(band); i++) {
 	if (GDALRasterIO(band, GF_Read, 0, i, GDALGetRasterBandXSize(band), 1, scanline, GDALGetRasterBandXSize(band), 1, GDT_Float32, 0, 0) == CPLE_None) {
