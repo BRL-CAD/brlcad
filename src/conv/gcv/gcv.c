@@ -664,7 +664,11 @@ main(int ac, const char **av)
      * parsing results for debugging. */
     in_fmt = bu_file_mime_str((int)in_type, BU_MIME_MODEL);
     out_fmt = bu_file_mime_str((int)out_type, BU_MIME_MODEL);
-    bu_log("Input file format: %s\n", in_fmt);
+    if (in_fmt) {
+	bu_log("Input file format: %s\n", in_fmt);
+    } else {
+	bu_log("Input file format: AUTO\n");
+    }
     bu_log("Output file format: %s\n", out_fmt);
     bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
     bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
