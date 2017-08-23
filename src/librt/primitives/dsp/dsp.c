@@ -4095,7 +4095,7 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 
 
 /* FIXME, not publicly exposed anywhere as it's a non-geom object */
-extern int rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i);
+extern int rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
 
 
 /**
@@ -4134,7 +4134,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	size_t i = 0;
 	size_t size;
 	struct bu_vls binudesc = BU_VLS_INIT_ZERO;
-	rt_binunif_describe(&binudesc, dsp_ip->dsp_bip, 0, dbip->dbi_base2local, NULL, (struct db_i *)dbip);
+	rt_binunif_describe(&binudesc, dsp_ip->dsp_bip, 0, dbip->dbi_base2local);
 
 	/* skip the first title line */
 	size = bu_vls_strlen(&binudesc);
