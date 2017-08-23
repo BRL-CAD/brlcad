@@ -154,29 +154,20 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     (void)get_dataset_info(state);
 
     /* Read in the data */
-    struct directory *ddp;
     unsigned int xsize = GDALGetRasterXSize(state->hDataset);
     unsigned int ysize = GDALGetRasterYSize(state->hDataset);
     {
-	struct rt_db_internal intern;
 	struct rt_binunif_internal *bip;
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
-	intern.idb_minor_type = DB5_MINORTYPE_BINU_16BITINT_U;
-	intern.idb_meth = &OBJ[ID_BINUNIF];
 	BU_ALLOC(bip, struct rt_binunif_internal);
-	intern.idb_ptr = (void *)bip;
 	bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
 	bip->type = DB5_MINORTYPE_BINU_16BITINT_U;
 	bip->count = xsize * ysize;
 	if (bip->count < xsize || bip->count < ysize) {
 	    bu_log("Error reading GDAL data\n");
-	    rt_db_free_internal(&intern);
 	    bu_free(bip, "bip");
 	    return 0;
 	}
-	bip->u.int16 = (short int *)bu_calloc(bip->count, sizeof(unsigned short), "unsigned short array");
-
+	bip->u.int8 = (char *)bu_calloc(bip->count, sizeof(unsigned short), "unsigned short array");
 
 	GDALRasterBandH band = GDALGetRasterBand(state->hDataset, 1);
 
@@ -201,32 +192,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	    }
 	}
 
-	struct bu_external body;
-	struct bu_external bin_ext;
-	int ret = -1;
-	if (intern.idb_meth->ft_export5) {
-	    ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, context->dbip, state->wdbp->wdb_resp);
-	}
-	if (ret != 0) {
-	    bu_log("Error while attempting to export test.data\n");
-	    rt_db_free_internal(&intern);
-	    return 0;
-	}
-	db5_export_object3(&bin_ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-		"test.data", 0, NULL, &body,
-		intern.idb_major_type, intern.idb_minor_type,
-		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
-
-	rt_db_free_internal(&intern);
-	bu_free_external(&body);
-
-	ddp = db_diradd5(context->dbip, "test.data", RT_DIR_PHONY_ADDR, DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_16BITINT_U, 0, 0, NULL);
-	if (ddp == RT_DIR_NULL) return 0;
-	if (db_put_external5(&bin_ext, ddp, context->dbip)) {
-	    bu_free_external(&bin_ext);
-	    return 0;
-	}
-	bu_free_external(&bin_ext);
+	wdb_export(state->wdbp, "test.data", (void *)bip, ID_BINUNIF, 1);
 
 	/* Done reading - close input file */
 	CPLFree(scanline);
@@ -237,14 +203,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     /* Write out the dsp */
     {
-	struct rt_db_internal intern;
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_DSP;
-	intern.idb_meth = &OBJ[ID_DSP];
 	struct rt_dsp_internal *dsp;
 	BU_ALLOC(dsp, struct rt_dsp_internal);
-	intern.idb_ptr = (void *)dsp;
 	dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
 	bu_vls_init(&dsp->dsp_name);
@@ -257,16 +217,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	MAT_IDN(dsp->dsp_stom);
 	bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
 
-	struct directory *dp = db_diradd(context->dbip, "test.s", RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-	if (dp == RT_DIR_NULL) {
-	    rt_db_free_internal(&intern);
-	    return 0;
-	}
-	if (rt_db_put_internal(dp, context->dbip, &intern, &rt_uniresource) < 0) {
-	    rt_db_free_internal(&intern);
-	    return 0;
-	}
-	rt_db_free_internal(&intern);
+	wdb_export(state->wdbp, "test.s", (void *)dsp, ID_DSP, 1);
     }
 
     return 1;
