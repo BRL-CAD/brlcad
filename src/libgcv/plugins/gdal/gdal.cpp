@@ -153,27 +153,121 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     (void)get_dataset_info(state);
 
-    /* Read in the band */
-    int bmin, bmax;
-    double adfMinMax[2];
-    GDALRasterBandH band = GDALGetRasterBand(state->hDataset, 1);
-    adfMinMax[0] = GDALGetRasterMinimum(band, &bmin);
-    adfMinMax[1] = GDALGetRasterMaximum(band, &bmax);
-    if (!(bmin && bmax)) GDALComputeRasterMinMax(band, TRUE, adfMinMax);
-    bu_log("Min/Max: %f, %f\n", adfMinMax[0], adfMinMax[1]);
-    float *scanline = (float*)CPLMalloc(sizeof(float)*GDALGetRasterBandXSize(band));
-    for(int i = 0; i < GDALGetRasterBandYSize(band); i++) {
-	if (GDALRasterIO(band, GF_Read, 0, i, GDALGetRasterBandXSize(band), 1, scanline, GDALGetRasterBandXSize(band), 1, GDT_Float32, 0, 0) == CPLE_None) {
-	    for (int j = 0; j < GDALGetRasterBandXSize(band); ++j) {
-		int p = static_cast<int>(scanline[j]);
-		bu_log("(%d,%d): %d\n", j, i, p);
+    /* Read in the data */
+    struct directory *ddp;
+    unsigned int xsize = GDALGetRasterXSize(state->hDataset);
+    unsigned int ysize = GDALGetRasterYSize(state->hDataset);
+    {
+	struct rt_db_internal intern;
+	struct rt_binunif_internal *bip;
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
+	intern.idb_minor_type = DB5_MINORTYPE_BINU_16BITINT_U;
+	intern.idb_meth = &OBJ[ID_BINUNIF];
+	BU_ALLOC(bip, struct rt_binunif_internal);
+	intern.idb_ptr = (void *)bip;
+	bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
+	bip->type = DB5_MINORTYPE_BINU_16BITINT_U;
+	bip->count = xsize * ysize;
+	if (bip->count < xsize || bip->count < ysize) {
+	    bu_log("Error reading GDAL data\n");
+	    rt_db_free_internal(&intern);
+	    bu_free(bip, "bip");
+	    return 0;
+	}
+	bip->u.int16 = (short int *)bu_calloc(bip->count, sizeof(unsigned short), "unsigned short array");
+
+
+	GDALRasterBandH band = GDALGetRasterBand(state->hDataset, 1);
+
+	/*
+	 int bmin, bmax;
+	 double adfMinMax[2];
+	 adfMinMax[0] = GDALGetRasterMinimum(band, &bmin);
+	 adfMinMax[1] = GDALGetRasterMaximum(band, &bmax);
+	 if (!(bmin && bmax)) GDALComputeRasterMinMax(band, TRUE, adfMinMax);
+	 bu_log("Min/Max: %f, %f\n", adfMinMax[0], adfMinMax[1]);
+	 */
+
+	/* If we're going to DSP we need the unsigned short read. */
+	uint16_t *scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*GDALGetRasterBandXSize(band));
+	for(int i = 0; i < GDALGetRasterBandYSize(band); i++) {
+	    if (GDALRasterIO(band, GF_Read, 0, i, GDALGetRasterBandXSize(band), 1, scanline, GDALGetRasterBandXSize(band), 1, GDT_UInt16, 0, 0) == CPLE_None) {
+		for (int j = 0; j < GDALGetRasterBandXSize(band); ++j) {
+		    /* This is the critical assignment point - if we get this
+		     * indexing wrong, data will not look right in dsp */
+		    bip->u.int16[i*ysize+j] = scanline[j];
+		}
 	    }
 	}
+
+	struct bu_external body;
+	struct bu_external bin_ext;
+	int ret = -1;
+	if (intern.idb_meth->ft_export5) {
+	    ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, context->dbip, state->wdbp->wdb_resp);
+	}
+	if (ret != 0) {
+	    bu_log("Error while attempting to export test.data\n");
+	    rt_db_free_internal(&intern);
+	    return 0;
+	}
+	db5_export_object3(&bin_ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+		"test.data", 0, NULL, &body,
+		intern.idb_major_type, intern.idb_minor_type,
+		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
+
+	rt_db_free_internal(&intern);
+	bu_free_external(&body);
+
+	ddp = db_diradd5(context->dbip, "test.data", RT_DIR_PHONY_ADDR, DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_16BITINT_U, 0, 0, NULL);
+	if (ddp == RT_DIR_NULL) return 0;
+	if (db_put_external5(&bin_ext, ddp, context->dbip)) {
+	    bu_free_external(&bin_ext);
+	    return 0;
+	}
+	bu_free_external(&bin_ext);
+
+	/* Done reading - close input file */
+	CPLFree(scanline);
+	GDALClose(state->hDataset);
     }
 
-    /* Done - close it out */
-    CPLFree(scanline);
-    GDALClose(state->hDataset);
+    /* TODO: if we're going to BoT (3-space mesh, will depend on the transform requested) we will need different logic... */
+
+    /* Write out the dsp */
+    {
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_DSP;
+	intern.idb_meth = &OBJ[ID_DSP];
+	struct rt_dsp_internal *dsp;
+	BU_ALLOC(dsp, struct rt_dsp_internal);
+	intern.idb_ptr = (void *)dsp;
+	dsp->magic = RT_DSP_INTERNAL_MAGIC;
+
+	bu_vls_init(&dsp->dsp_name);
+	bu_vls_strcpy(&dsp->dsp_name, "test.data");
+	dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
+	dsp->dsp_xcnt = xsize;
+	dsp->dsp_ycnt = ysize;
+	dsp->dsp_smooth = 1;
+	dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
+	MAT_IDN(dsp->dsp_stom);
+	bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
+
+	struct directory *dp = db_diradd(context->dbip, "test.s", RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+	if (dp == RT_DIR_NULL) {
+	    rt_db_free_internal(&intern);
+	    return 0;
+	}
+	if (rt_db_put_internal(dp, context->dbip, &intern, &rt_uniresource) < 0) {
+	    rt_db_free_internal(&intern);
+	    return 0;
+	}
+	rt_db_free_internal(&intern);
+    }
 
     return 1;
 }
