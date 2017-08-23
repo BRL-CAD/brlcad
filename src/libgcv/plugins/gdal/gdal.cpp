@@ -122,7 +122,7 @@ gdal_can_read(const char *data)
 
     if (!bu_file_exists(data,NULL)) return 0;
 
-    hDataset = GDALOpenEx(data, GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL, NULL, NULL);
+    hDataset = GDALOpenEx(data, GDAL_OF_READONLY | GDAL_OF_RASTER , NULL, NULL, NULL);
 
     if (!hDataset) return 0;
 
@@ -133,7 +133,7 @@ gdal_can_read(const char *data)
 
 HIDDEN int
 gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
-	               const void *options_data, const char *source_path)
+	const void *options_data, const char *source_path)
 {
     struct conversion_state *state;
     BU_GET(state, struct conversion_state);
@@ -177,7 +177,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	    for (int j = 0; j < GDALGetRasterBandXSize(band); ++j) {
 		/* This is the critical assignment point - if we get this
 		 * indexing wrong, data will not look right in dsp */
-		uint16_array[i*ysize+j] = scanline[j];
+		uint16_array[(ysize-i-1)*ysize+j] = scanline[j];
 	    }
 	}
     }
