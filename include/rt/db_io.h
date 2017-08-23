@@ -636,16 +636,13 @@ RT_EXPORT extern int db_version(struct db_i *dbip);
 RT_EXPORT extern int rt_db_flip_endian(struct db_i *dbip);
 
 
-/* extrude.c */
-RT_EXPORT extern int rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
-
-
 /**
  * "open" an in-memory-only database instance.  this initializes a
  * dbip for use, creating an inmem dbi_wdbp as the means to add
  * geometry to the directory (use wdb_export_external()).
  */
 RT_EXPORT extern struct db_i * db_open_inmem(void);
+
 
 /**
  * creates an in-memory-only database.  this is very similar to
