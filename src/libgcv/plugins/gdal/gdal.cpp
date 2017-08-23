@@ -52,6 +52,7 @@
 #include "raytrace.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
+#include "wdb.h"
 
 struct gdal_read_options
 {
@@ -156,69 +157,59 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     /* Read in the data */
     unsigned int xsize = GDALGetRasterXSize(state->hDataset);
     unsigned int ysize = GDALGetRasterYSize(state->hDataset);
-    {
-	struct rt_binunif_internal *bip;
-	BU_ALLOC(bip, struct rt_binunif_internal);
-	bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
-	bip->type = DB5_MINORTYPE_BINU_16BITINT_U;
-	bip->count = xsize * ysize;
-	if (bip->count < xsize || bip->count < ysize) {
-	    bu_log("Error reading GDAL data\n");
-	    bu_free(bip, "bip");
-	    return 0;
-	}
-	bip->u.int8 = (char *)bu_calloc(bip->count, sizeof(unsigned short), "unsigned short array");
+    unsigned short *uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
 
-	GDALRasterBandH band = GDALGetRasterBand(state->hDataset, 1);
+    GDALRasterBandH band = GDALGetRasterBand(state->hDataset, 1);
 
-	/*
-	 int bmin, bmax;
-	 double adfMinMax[2];
-	 adfMinMax[0] = GDALGetRasterMinimum(band, &bmin);
-	 adfMinMax[1] = GDALGetRasterMaximum(band, &bmax);
-	 if (!(bmin && bmax)) GDALComputeRasterMinMax(band, TRUE, adfMinMax);
-	 bu_log("Min/Max: %f, %f\n", adfMinMax[0], adfMinMax[1]);
-	 */
+    /*
+       int bmin, bmax;
+       double adfMinMax[2];
+       adfMinMax[0] = GDALGetRasterMinimum(band, &bmin);
+       adfMinMax[1] = GDALGetRasterMaximum(band, &bmax);
+       if (!(bmin && bmax)) GDALComputeRasterMinMax(band, TRUE, adfMinMax);
+       bu_log("Min/Max: %f, %f\n", adfMinMax[0], adfMinMax[1]);
+       */
 
-	/* If we're going to DSP we need the unsigned short read. */
-	uint16_t *scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*GDALGetRasterBandXSize(band));
-	for(int i = 0; i < GDALGetRasterBandYSize(band); i++) {
-	    if (GDALRasterIO(band, GF_Read, 0, i, GDALGetRasterBandXSize(band), 1, scanline, GDALGetRasterBandXSize(band), 1, GDT_UInt16, 0, 0) == CPLE_None) {
-		for (int j = 0; j < GDALGetRasterBandXSize(band); ++j) {
-		    /* This is the critical assignment point - if we get this
-		     * indexing wrong, data will not look right in dsp */
-		    bip->u.int16[i*ysize+j] = scanline[j];
-		}
+    /* If we're going to DSP we need the unsigned short read. */
+    uint16_t *scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*GDALGetRasterBandXSize(band));
+    for(int i = 0; i < GDALGetRasterBandYSize(band); i++) {
+	if (GDALRasterIO(band, GF_Read, 0, i, GDALGetRasterBandXSize(band), 1, scanline, GDALGetRasterBandXSize(band), 1, GDT_UInt16, 0, 0) == CPLE_None) {
+	    for (int j = 0; j < GDALGetRasterBandXSize(band); ++j) {
+		/* This is the critical assignment point - if we get this
+		 * indexing wrong, data will not look right in dsp */
+		uint16_array[i*ysize+j] = scanline[j];
 	    }
 	}
-
-	wdb_export(state->wdbp, "test.data", (void *)bip, ID_BINUNIF, 1);
-
-	/* Done reading - close input file */
-	CPLFree(scanline);
-	GDALClose(state->hDataset);
     }
+
+    /* Got it - write the binary object to the .g file */
+    mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, xsize * ysize);
+
+    /* Done reading - close input file */
+    CPLFree(scanline);
+    GDALClose(state->hDataset);
+
 
     /* TODO: if we're going to BoT (3-space mesh, will depend on the transform requested) we will need different logic... */
 
-    /* Write out the dsp */
-    {
-	struct rt_dsp_internal *dsp;
-	BU_ALLOC(dsp, struct rt_dsp_internal);
-	dsp->magic = RT_DSP_INTERNAL_MAGIC;
+    /* Write out the dsp.  Since we're using a data object, instead of a file,
+     * do the setup by hand. */
+    struct rt_dsp_internal *dsp;
+    BU_ALLOC(dsp, struct rt_dsp_internal);
+    dsp->magic = RT_DSP_INTERNAL_MAGIC;
+    bu_vls_init(&dsp->dsp_name);
+    bu_vls_strcpy(&dsp->dsp_name, "test.data");
+    dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
+    dsp->dsp_xcnt = xsize;
+    dsp->dsp_ycnt = ysize;
+    dsp->dsp_smooth = 1;
+    dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
+    MAT_IDN(dsp->dsp_stom);
+    dsp->dsp_stom[0] = dsp->dsp_stom[5] = 1000;
+    bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
 
-	bu_vls_init(&dsp->dsp_name);
-	bu_vls_strcpy(&dsp->dsp_name, "test.data");
-	dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
-	dsp->dsp_xcnt = xsize;
-	dsp->dsp_ycnt = ysize;
-	dsp->dsp_smooth = 1;
-	dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
-	MAT_IDN(dsp->dsp_stom);
-	bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
+    wdb_export(state->wdbp, "test.s", (void *)dsp, ID_DSP, 1);
 
-	wdb_export(state->wdbp, "test.s", (void *)dsp, ID_DSP, 1);
-    }
 
     return 1;
 }
