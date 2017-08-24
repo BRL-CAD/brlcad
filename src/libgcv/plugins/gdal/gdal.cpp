@@ -105,9 +105,9 @@ gdal_state_init(struct conversion_state *gs)
 }
 
 HIDDEN int
-get_dataset_info(struct conversion_state *gs)
+get_dataset_info(GDALDatasetH hDataset)
 {
-    char *gdal_info = GDALInfo(gs->hDataset, NULL);
+    char *gdal_info = GDALInfo(hDataset, NULL);
     if (gdal_info) bu_log("%s", gdal_info);
     CPLFree(gdal_info);
     return 0;
@@ -240,6 +240,7 @@ HIDDEN int
 gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	const void *options_data, const char *source_path)
 {
+    struct bu_vls epsg_str = BU_VLS_INIT_ZERO;
     struct conversion_state *state;
     BU_GET(state, struct conversion_state);
     gdal_state_init(state);
@@ -257,30 +258,29 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	return 0;
     }
 
-    (void)get_dataset_info(state);
+    (void)get_dataset_info(state->hDataset);
 
     int zone = gdal_utm_zone(state);
-    (void)gdal_utm_epsg(state, zone);
+    int epsg = gdal_utm_epsg(state, zone);
+    bu_vls_sprintf(&epsg_str, "EPSG:%d", epsg);
 
-#if 0
-    GDALDataType eDT = GDALGetRasterDataType(GDALGetRasterBand(state->hDataset,1));
-    GDALDriverH hD = GDALGetDriverByName("MEM");
-    const char *src_Wkt = GDALGetProjectionRef(state->HDataset);
     OGRSpatialReference oSRS;
-    oSRS.SetUTM(gdal_utm_zone(state));
-    oSRS.SetWellKnownGeogCS();
-    const char *dst_Wkt;
+    oSRS.SetWellKnownGeogCS(bu_vls_addr(&epsg_str));
+    oSRS.SetUTM(zone, TRUE);
+
+    char *dst_Wkt = NULL;
     oSRS.exportToWkt(&dst_Wkt);
-    void *hTsfA = GDALCreateGenImgProjTransformer(state->hDataset, src_Wkt, NULL dst_Wkt, FALSE, 0, 1);
-    double adfDstGeoTransform[6];
+    void *hTsfA = GDALCreateGenImgProjTransformer(state->hDataset, GDALGetProjectionRef(state->hDataset), NULL, dst_Wkt, FALSE, 0, 1);
+
     int nPixels=0, nLines=0;
+    double adfDstGeoTransform[6];
     CPLErr eErr = GDALSuggestedWarpOutput(state->hDataset, GDALGenImgProjTransform, hTsfA, adfDstGeoTransform, &nPixels, &nLines);
     GDALDestroyGenImgProjTransformer(hTsfA);
     if (eErr != CE_None) return 0;
 
-    GDALDatasetH pjdata = GDALCreate(hD, NULL, nPixels, nLines, GDALGetRasterCount(state->hDataset), eDT, NULL);
+    GDALDatasetH pjdata = GDALCreate(GDALGetDriverByName("MEM"), "", nPixels, nLines, GDALGetRasterCount(state->hDataset),
+	    GDALGetRasterDataType(GDALGetRasterBand(state->hDataset,1)), NULL);
     if (pjdata == NULL) return 0;
-
     GDALSetProjection(pjdata, dst_Wkt);
     GDALSetGeoTransform(pjdata, adfDstGeoTransform);
     GDALWarpOptions *w_opts = GDALCreateWarpOptions();
@@ -301,14 +301,16 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     oOperation.ChunkAndWarpImage(0, 0, GDALGetRasterXSize(pjdata), GDALGetRasterYSize(pjdata));
     GDALDestroyGenImgProjTransformer(w_opts->pTransformerArg);
     GDALDestroyWarpOptions(w_opts);
-#endif
+
+    bu_log("\nTransformed dataset info:\n");
+    (void)get_dataset_info(pjdata);
 
     /* Read the data into something a DSP can process */
-    unsigned int xsize = GDALGetRasterXSize(state->hDataset);
-    unsigned int ysize = GDALGetRasterYSize(state->hDataset);
+    unsigned int xsize = GDALGetRasterXSize(pjdata);
+    unsigned int ysize = GDALGetRasterYSize(pjdata);
     unsigned short *uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
 
-    GDALRasterBandH band = GDALGetRasterBand(state->hDataset, 1);
+    GDALRasterBandH band = GDALGetRasterBand(pjdata, 1);
 
     /*
        int bmin, bmax;
@@ -326,7 +328,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	    for (int j = 0; j < GDALGetRasterBandXSize(band); ++j) {
 		/* This is the critical assignment point - if we get this
 		 * indexing wrong, data will not look right in dsp */
-		uint16_array[(ysize-i-1)*ysize+j] = scanline[j];
+		uint16_array[i*ysize+j] = scanline[j];
+		//bu_log("%d, %d: %d\n", i, j, scanline[j]);
 	    }
 	}
     }
@@ -334,9 +337,10 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     /* Got it - write the binary object to the .g file */
     mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, xsize * ysize);
 
-    /* Done reading - close input file */
+    /* Done reading - close out inputs */
     CPLFree(scanline);
     GDALClose(state->hDataset);
+    GDALClose(pjdata);
 
 
     /* TODO: if we're going to BoT (3-space mesh, will depend on the transform requested) we will need different logic... */
