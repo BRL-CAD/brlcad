@@ -283,14 +283,11 @@ rt_binunif_export5(struct bu_external		*ep,
  * tab, and give parameter values.
  */
 int
-rt_binunif_describe(struct bu_vls *str,
-		     const struct rt_db_internal *ip,
-		     int UNUSED(verbose),
-		     double UNUSED(mm2local))
+rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double UNUSED(mm2local))
 {
-    register struct rt_binunif_internal	*bip;
-    char					buf[256];
-    unsigned short				wid;
+    register struct rt_binunif_internal *bip;
+    char buf[256];
+    unsigned short wid;
 
     bip = (struct rt_binunif_internal *) ip->idb_ptr;
     RT_CK_BINUNIF(bip);

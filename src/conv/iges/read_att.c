@@ -29,7 +29,7 @@ void
 Read_att(int att_de, struct brlcad_att *att)
 {
     int entityno;
-    int i;
+    int i = 0;
 
     if (att_de == 0) {
 	/* fill structure with default info */

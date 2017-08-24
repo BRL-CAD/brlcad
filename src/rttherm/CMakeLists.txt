@@ -14,7 +14,7 @@ else(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
   CMAKEFILES(ssampview.c)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
-BRLCAD_ADDEXEC(rttherm "spectrum.c;viewtherm.c" "libfb;libged;librttherm;libmultispectral")
+BRLCAD_ADDEXEC(rttherm "spectrum.c;viewtherm.c" "libfb;libged;librtuif_multispectral;libmultispectral")
 SET_TARGET_PROPERTIES(rttherm PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
 install(PROGRAMS ssampview.tcl DESTINATION ${BIN_DIR})
 

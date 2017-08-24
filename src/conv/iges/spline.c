@@ -26,23 +26,23 @@
 int
 spline(int entityno, struct face_g_snurb **b_patch)
 {
-    int k1;	/* upper index of first sum */
-    int k2;	/* upper index of second sum */
-    int m1;	/* degree of 1st set of basis functions */
-    int m2;	/* degree of 2nd set of basis functions */
-    int prop1;	/* !0 if closed in first direction */
-    int prop2;	/* !0 if closed in second direction */
-    int prop3;	/* !0 if polynomial (else rational) */
-    int prop4;	/* !0 if periodic in first direction */
-    int prop5;	/* !0 if periodic in second direction */
-    int sol_num; /* IGES solid type number */
+    int k1 = 0;	/* upper index of first sum */
+    int k2 = 0;	/* upper index of second sum */
+    int m1 = 0;	/* degree of 1st set of basis functions */
+    int m2 = 0;	/* degree of 2nd set of basis functions */
+    int prop1 = 0;	/* !0 if closed in first direction */
+    int prop2 = 0;	/* !0 if closed in second direction */
+    int prop3 = 0;	/* !0 if polynomial (else rational) */
+    int prop4 = 0;	/* !0 if periodic in first direction */
+    int prop5 = 0;	/* !0 if periodic in second direction */
+    int sol_num = 0; /* IGES solid type number */
     int n1, n2;
     int i, j, k;
     int count = 0;
-    int point_size;
+    int point_size = 0;
     fastf_t min_knot;
     double max_wt;
-    double scan;
+    double scan = 0.0;
 
     /* Acquiring Data */
 
