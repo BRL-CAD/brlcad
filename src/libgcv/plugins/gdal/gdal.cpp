@@ -306,20 +306,20 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     (void)get_dataset_info(pjdata);
 
     /* Read the data into something a DSP can process */
-    unsigned int xsize = GDALGetRasterXSize(pjdata);
-    unsigned int ysize = GDALGetRasterYSize(pjdata);
+    //GDALDatasetH indata = pjdata;
+    GDALDatasetH indata = state->hDataset;
+    unsigned int xsize = GDALGetRasterXSize(indata);
+    unsigned int ysize = GDALGetRasterYSize(indata);
     unsigned short *uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
 
-    GDALRasterBandH band = GDALGetRasterBand(pjdata, 1);
+    GDALRasterBandH band = GDALGetRasterBand(indata, 1);
 
-    /*
-       int bmin, bmax;
-       double adfMinMax[2];
-       adfMinMax[0] = GDALGetRasterMinimum(band, &bmin);
-       adfMinMax[1] = GDALGetRasterMaximum(band, &bmax);
-       if (!(bmin && bmax)) GDALComputeRasterMinMax(band, TRUE, adfMinMax);
-       bu_log("Min/Max: %f, %f\n", adfMinMax[0], adfMinMax[1]);
-       */
+    int bmin, bmax;
+    double adfMinMax[2];
+    adfMinMax[0] = GDALGetRasterMinimum(band, &bmin);
+    adfMinMax[1] = GDALGetRasterMaximum(band, &bmax);
+    if (!(bmin && bmax)) GDALComputeRasterMinMax(band, TRUE, adfMinMax);
+    bu_log("Min/Max: %f, %f\n", adfMinMax[0], adfMinMax[1]);
 
     /* If we're going to DSP we need the unsigned short read. */
     uint16_t *scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*GDALGetRasterBandXSize(band));
@@ -328,7 +328,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	    for (int j = 0; j < GDALGetRasterBandXSize(band); ++j) {
 		/* This is the critical assignment point - if we get this
 		 * indexing wrong, data will not look right in dsp */
-		uint16_array[i*ysize+j] = scanline[j];
+		uint16_array[(ysize-i-1)*ysize+j] = scanline[j];
 		//bu_log("%d, %d: %d\n", i, j, scanline[j]);
 	    }
 	}
