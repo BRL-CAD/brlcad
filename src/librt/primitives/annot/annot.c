@@ -322,7 +322,8 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
     struct nurb_seg *nsg;
     struct bezier_seg *bsg;
     fastf_t delta;
-    point_t center, start_pt;
+    point_t center = VINIT_ZERO;
+    point_t start_pt = VINIT_ZERO;
     fastf_t pt[4];
     vect_t semi_a, semi_b;
     fastf_t radius;
