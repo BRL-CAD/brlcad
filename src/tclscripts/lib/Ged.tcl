@@ -213,6 +213,7 @@ package provide cadwidgets::Ged 1.0
 	method dlist_on {args}
 	method draw {args}
 	method draw_ray {_start _partitions}
+	method dsp {args}
 	method dump {args}
 	method dup {args}
 	method E {args}
@@ -1704,6 +1705,10 @@ package provide cadwidgets::Ged 1.0
 	set prev_o_pt $o_pt
 	incr count
     }
+}
+
+::itcl::body cadwidgets::Ged::dsp {args} {
+    eval $mGed dsp $args
 }
 
 ::itcl::body cadwidgets::Ged::dump {args} {
@@ -6243,6 +6248,7 @@ package provide cadwidgets::Ged 1.0
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
     $help add dir2ae		{{az el} {returns a direction vector given the azimuth and elevation}}
     $help add draw		{{"-C#/#/# <objects>"} {draw objects}}
+    $help add dsp		{{obj [command]} {work with DSP primitives}}
     $help add dump		{{file} {write current state of database object to file}}
     $help add dup		{{file [prefix]} {check for dup names in 'file'}}
     $help add E			{{[-s] <objects>} {evaluated edit of objects. Option 's' provides a slower, but better fidelity evaluation}}

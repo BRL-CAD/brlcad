@@ -127,6 +127,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"dump", cmd_ged_plain_wrapper, ged_dump},
     {"dm", f_dm, GED_FUNC_PTR_NULL},
     {"draw", cmd_draw, GED_FUNC_PTR_NULL},
+    {"dsp", cmd_ged_plain_wrapper, ged_dsp},
     {"dup", cmd_ged_plain_wrapper, ged_dup},
     {"E", cmd_E, GED_FUNC_PTR_NULL},
     {"e", cmd_draw, GED_FUNC_PTR_NULL},

@@ -226,6 +226,7 @@ namespace eval ArcherCore {
 	method edcomb              {args}
 	method edmater             {args}
 	method d                   {args}
+	method dsp                 {args}
 	method erase               {args}
 	method ev                  {args}
 	method exists              {args}
@@ -583,7 +584,7 @@ namespace eval ArcherCore {
 	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
 	    brep c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
-	    delete draw e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
+	    delete draw dsp e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
 	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
 	    killtree l lc ls make make_name make_pnts man mater mirror move \
@@ -6362,6 +6363,10 @@ namespace eval ArcherCore {
     }
 
     return $ret
+}
+
+::itcl::body ArcherCore::dsp {args} {
+    eval gedWrapper dsp 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::E {args} {

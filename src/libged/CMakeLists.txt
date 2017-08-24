@@ -79,6 +79,7 @@ set(LIBGED_SOURCES
   display_list.c
   draw.c
   draw_calc.cpp
+  dsp.c
   dump.c
   dup.c
   eac.c
