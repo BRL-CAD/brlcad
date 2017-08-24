@@ -205,7 +205,7 @@ gdal_ll(GDALDatasetH hDataset, double *lat_center, double *long_center)
 }
 
 
-/* Get the UTM zone and corresponding EPSG number - see
+/* Get the UTM zone of the GDAL dataset - see
  * https://gis.stackexchange.com/questions/241696/how-to-convert-from-lat-lon-to-utm-with-gdaltransform
  * and the linked posts in the answers for more info. */
 HIDDEN int
