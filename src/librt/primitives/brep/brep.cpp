@@ -74,7 +74,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int rt_brep_bbox(struct rt_db_internal* ip, point_t *min, point_t *max);
+int rt_brep_bbox(struct rt_db_internal* ip, point_t *min, point_t *max, const struct bn_tol *tol);
 int rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
 void rt_brep_print(register const struct soltab *stp);
 int rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
@@ -95,7 +95,7 @@ int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
 RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
-int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
+int rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *dbip, const struct rt_selection *selection, const struct rt_selection_operation *op);
 int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
 int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #ifdef __cplusplus
@@ -430,7 +430,7 @@ brep_build_bvh(struct brep_specific* bs)
  * this routine just calls the openNURBS function.
  */
 int
-rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     struct rt_brep_internal* bi;
     ON_3dPoint dmin(0.0, 0.0, 0.0);
@@ -4960,10 +4960,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 }
 
 int
-rt_brep_process_selection(
-    struct rt_db_internal *ip,
-    const struct rt_selection *selection,
-    const struct rt_selection_operation *op)
+rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *UNUSED(dbip), const struct rt_selection *selection, const struct rt_selection_operation *op)
 {
     if (op->type == RT_SELECTION_NOP) {
 	return 0;

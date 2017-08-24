@@ -544,43 +544,7 @@ plot_cell_top(struct isect_stuff *isect,
 
 
 HIDDEN void
-dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
-{
-    point_t pt, v;
-    RT_DSP_CK_MAGIC(dsp_ip);
-    BU_CK_VLS(&dsp_ip->dsp_name);
-    BU_CK_VLS(vls);
-
-    bu_vls_printf(vls, "Displacement Map\n  file='%s' w=%u n=%u sm=%d",
-		  bu_vls_addr(&dsp_ip->dsp_name),
-		  dsp_ip->dsp_xcnt,
-		  dsp_ip->dsp_ycnt,
-		  dsp_ip->dsp_smooth);
-
-    VSETALL(pt, 0.0);
-
-    MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
-
-    bu_vls_printf(vls, " (origin at %g %g %g)mm\n", V3INTCLAMPARGS(v));
-
-    bu_vls_printf(vls, "  stom=\n");
-    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		  V4INTCLAMPARGS(dsp_ip->dsp_stom));
-
-    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		  V4INTCLAMPARGS(&dsp_ip->dsp_stom[4]));
-
-    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		  V4INTCLAMPARGS(&dsp_ip->dsp_stom[8]));
-
-    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		  V4INTCLAMPARGS(&dsp_ip->dsp_stom[12]));
-}
-
-
-HIDDEN void
-dsp_print_v5(struct bu_vls *vls,
-	     const struct rt_dsp_internal *dsp_ip)
+dsp_print(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 {
     point_t pt, v;
 
@@ -588,7 +552,6 @@ dsp_print_v5(struct bu_vls *vls,
 
     RT_DSP_CK_MAGIC(dsp_ip);
     BU_CK_VLS(&dsp_ip->dsp_name);
-
 
     bu_vls_printf(vls, "Displacement Map\n");
 
@@ -653,21 +616,9 @@ rt_dsp_print(register const struct soltab *stp)
     bu_vls_printf(&vls, "\n---------db version: %d----------\n",
 		  db_version(stp->st_rtip->rti_dbip));
 
-    switch (db_version(stp->st_rtip->rti_dbip)) {
-	case 4:
-	    BU_CK_VLS(&vls);
-	    dsp_print_v4(&vls, &(dsp->dsp_i));
-	    break;
-	case 5:
-	    BU_CK_VLS(&vls);
-	    dsp_print_v5(&vls, &(dsp->dsp_i));
-	    break;
-    }
-
+    dsp_print(&vls, &(dsp->dsp_i));
     bu_log("%s", bu_vls_addr(&vls));
-
-    if (BU_VLS_IS_INITIALIZED(&vls)) bu_vls_free(&vls);
-
+    bu_vls_free(&vls);
 }
 
 
@@ -3156,17 +3107,6 @@ rt_dsp_free(register struct soltab *stp)
 }
 
 
-/* FIXME: can't 'rt_dsp_class' be replaced by 'rt_generic_class'? */
-int
-rt_dsp_class(const struct soltab *UNUSED(s), const vect_t UNUSED(v0), const vect_t UNUSED(v2), const struct bn_tol *UNUSED(b))
-{
-    if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_class()\n");
-
-    return 0;
-}
-
-
 int
 rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -4378,15 +4318,13 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Apply modeling transformations as well.
  */
 int
-rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
+rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_dsp_internal *dsp_ip;
     unsigned char *cp;
 
     /* must be double for import and export */
     double scanmat[16];
-
-    if (resp) RT_CK_RESOURCE(resp);
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_import4_v5()\n");
@@ -4489,7 +4427,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  * The name is added by the caller, in the usual place.
  */
 int
-rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)
+rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *UNUSED(dbip))
 {
     struct rt_dsp_internal *dsp_ip;
     unsigned long name_len;
@@ -4498,9 +4436,6 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     /* must be double for import and export */
     double scanmat[16];
-
-    if (resp) RT_CK_RESOURCE(resp);
-    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_DSP) return -1;
@@ -4592,37 +4527,20 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * tab, and give parameter values.
  */
 int
-rt_dsp_describe(struct bu_vls *str,
-		const struct rt_db_internal *ip,
-		int UNUSED(verbose),
-		double UNUSED(mm2local),
-		struct resource *resp,
-		struct db_i *db_ip)
+rt_dsp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double UNUSED(mm2local))
 {
     register struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-    if (resp) RT_CK_RESOURCE(resp);
-    if (db_ip) RT_CK_DBI(db_ip);
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_describe()\n");
 
     RT_DSP_CK_MAGIC(dsp_ip);
 
-    switch (db_version(db_ip)) {
-	case 4:
-	    dsp_print_v4(&vls, dsp_ip);
-	    break;
-	case 5:
-	    dsp_print_v5(&vls, dsp_ip);
-	    break;
-    }
-
+    dsp_print(&vls, dsp_ip);
     bu_vls_vlscat(str, &vls);
-
-    if (BU_VLS_IS_INITIALIZED(&vls)) bu_vls_free(&vls);
+    bu_vls_free(&vls);
 
     return 0;
 }

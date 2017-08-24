@@ -1,4 +1,4 @@
-/*                         T A B L E . C
+/*                       T A B L E . C P P
  * BRL-CAD
  *
  * Copyright (c) 1989-2016 United States Government as represented by
@@ -39,6 +39,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 
+extern "C" {
 
 #define RT_DECLARE_INTERFACE(name) \
     extern int rt_##name##_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip); \
@@ -49,22 +50,22 @@
     extern void rt_##name##_norm(struct hit *hitp, struct soltab *stp, struct xray *rp); \
     extern void rt_##name##_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp); \
     extern void rt_##name##_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp); \
-    extern int rt_##name##_class(void); \
+    extern int rt_##name##_class(const struct soltab *, const fastf_t *, const fastf_t *, const struct bn_tol *); \
     extern void rt_##name##_free(struct soltab *stp); \
     extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info); \
     extern int rt_##name##_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info); \
     extern void rt_##name##_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap); \
     extern int rt_##name##_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol); \
     extern int rt_##name##_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol); \
-    extern void rt_##name##_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol); \
-    extern int rt_##name##_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp); \
-    extern int rt_##name##_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp); \
-    extern int rt_##name##_import4(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp); \
-    extern int rt_##name##_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp); \
+    extern void rt_##name##_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol); \
+    extern int rt_##name##_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip); \
+    extern int rt_##name##_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip); \
+    extern int rt_##name##_import4(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip); \
+    extern int rt_##name##_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip); \
     extern void rt_##name##_ifree(struct rt_db_internal *ip); \
     extern int rt_##name##_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr); \
     extern int rt_##name##_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv); \
-    extern int rt_##name##_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i); \
+    extern int rt_##name##_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local); \
     extern void rt_##name##_make(const struct rt_functab *ftp, struct rt_db_internal *intern); \
     extern int rt_##name##_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp); \
     extern int rt_##name##_params(struct pc_pc_set *ps, const struct rt_db_internal *ip); \
@@ -129,13 +130,13 @@ extern int rt_generic_adjust(struct bu_vls *, struct rt_db_internal *, int, cons
 extern int rt_generic_form(struct bu_vls *, const struct rt_functab *);
 extern void rt_generic_make(const struct rt_functab *, struct rt_db_internal *);
 extern int rt_generic_xform(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *, struct resource *);
-extern int rt_generic_class(const struct soltab *, const vect_t, const vect_t, const struct bn_tol *);
+extern int rt_generic_class(const struct soltab *, const fastf_t *, const fastf_t *, const struct bn_tol *);
 
 /* from db5_bin.c */
 extern int rt_binunif_import5(struct rt_db_internal * ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
 extern int rt_binunif_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp);
 extern void rt_binunif_ifree(struct rt_db_internal *ip);
-extern int rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i);
+extern int rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
 extern void rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
 extern int rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
 extern int rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
@@ -446,7 +447,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_hlf_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_hlf_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_hlf_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_hlf_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_hlf_plot),
 	NULL, /* adaptive_plot */
@@ -584,7 +585,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_nurb_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_nurb_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_nurb_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_nurb_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_nurb_plot),
 	NULL, /* adaptive_plot */
@@ -1363,7 +1364,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_dsp_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_dsp_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_dsp_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_dsp_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_dsp_plot),
 	NULL, /* adaptive_plot */
@@ -2019,7 +2020,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* tess */
 	NULL, /* tnurb */
 	NULL, /* brep */
-	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_constraint_import5),
+	NULL, /* import5 */
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_constraint_export5),
 	NULL, /* import4 */
 	NULL, /* export4 */
@@ -2193,14 +2194,14 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_NORM_CAST(rt_hrt_norm),
 	NULL, /* piece_shot */
 	NULL, /* piece_hitsegs */
-	RTFUNCTAB_FUNC_UV_CAST(rt_hrt_uv),
-	RTFUNCTAB_FUNC_CURVE_CAST(rt_hrt_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_hrt_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_hrt_plot),
-	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_hrt_adaptive_plot),
+	NULL, /* adaptive_plot */
 	RTFUNCTAB_FUNC_VSHOT_CAST(rt_hrt_vshot),
-	RTFUNCTAB_FUNC_TESS_CAST(rt_hrt_tess),
+	NULL, /* tess */
 	NULL, /* tnurb */
 	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_hrt_import5),
@@ -2219,7 +2220,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_hrt_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_hrt_bbox),
-	RTFUNCTAB_FUNC_VOLUME_CAST(rt_hrt_volume),
+	NULL, /* volume */
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_hrt_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_hrt_centroid),
 	NULL, /* oriented_bbox */
@@ -2468,6 +2469,8 @@ rt_get_functab_by_label(const char *label)
     return NULL;
 }
 
+
+} /* end extern "C" */
 
 /*
  * Local Variables:
