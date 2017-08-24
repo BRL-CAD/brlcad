@@ -208,7 +208,7 @@ set(LIBRT_SOURCES
   primitives/superell/superell.c
   primitives/superell/superell_brep.cpp
   primitives/superell/superell_mirror.c
-  primitives/table.c
+  primitives/table.cpp
   primitives/tgc/tgc.c
   primitives/tgc/tgc_brep.cpp
   primitives/tgc/tgc_mirror.c
