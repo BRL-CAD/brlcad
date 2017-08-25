@@ -240,7 +240,6 @@ HIDDEN int
 gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	const void *options_data, const char *source_path)
 {
-    struct bu_vls epsg_str = BU_VLS_INIT_ZERO;
     struct conversion_state *state;
     BU_GET(state, struct conversion_state);
     gdal_state_init(state);
@@ -259,9 +258,10 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     }
 
     (void)get_dataset_info(state->hDataset);
-
+#if 1
     int zone = gdal_utm_zone(state);
     int epsg = gdal_utm_epsg(state, zone);
+    struct bu_vls epsg_str = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&epsg_str, "EPSG:%d", epsg);
 
     OGRSpatialReference oSRS;
@@ -306,8 +306,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     (void)get_dataset_info(pjdata);
 
     /* Read the data into something a DSP can process */
-    //GDALDatasetH indata = pjdata;
-    GDALDatasetH indata = state->hDataset;
+    GDALDatasetH indata = pjdata;
+    //GDALDatasetH indata = state->hDataset;
     unsigned int xsize = GDALGetRasterXSize(indata);
     unsigned int ysize = GDALGetRasterYSize(indata);
     unsigned short *uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
@@ -323,13 +323,14 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     /* If we're going to DSP we need the unsigned short read. */
     uint16_t *scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*GDALGetRasterBandXSize(band));
-    for(int i = 0; i < GDALGetRasterBandYSize(band); i++) {
+    //for(int i = 0; i < GDALGetRasterBandYSize(band); i++) {
+    for(unsigned int i = 0; i < ysize; i++) {
 	if (GDALRasterIO(band, GF_Read, 0, i, GDALGetRasterBandXSize(band), 1, scanline, GDALGetRasterBandXSize(band), 1, GDT_UInt16, 0, 0) == CPLE_None) {
-	    for (int j = 0; j < GDALGetRasterBandXSize(band); ++j) {
+	    for (unsigned int j = 0; j < xsize; ++j) {
 		/* This is the critical assignment point - if we get this
 		 * indexing wrong, data will not look right in dsp */
-		uint16_array[(ysize-i-1)*ysize+j] = scanline[j];
-		//bu_log("%d, %d: %d\n", i, j, scanline[j]);
+		uint16_array[ysize*i+j] = scanline[j];
+		bu_log("%d, %d: %d\n", i, j, scanline[j]);
 	    }
 	}
     }
@@ -341,7 +342,18 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     CPLFree(scanline);
     GDALClose(state->hDataset);
     GDALClose(pjdata);
+#endif
 
+#if 0
+    unsigned int xsize = 1187;
+    unsigned int ysize = 1249;
+    unsigned short *uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
+    uint16_array[ysize*600+1157] = 100;
+    uint16_array[ysize*600+1158] = 100;
+    uint16_array[ysize*601+1157] = 100;
+    uint16_array[ysize*601+1158] = 100;
+    mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, xsize * ysize);
+#endif
 
     /* TODO: if we're going to BoT (3-space mesh, will depend on the transform requested) we will need different logic... */
 
@@ -353,9 +365,9 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     bu_vls_init(&dsp->dsp_name);
     bu_vls_strcpy(&dsp->dsp_name, "test.data");
     dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
-    dsp->dsp_xcnt = xsize;
-    dsp->dsp_ycnt = ysize;
-    dsp->dsp_smooth = 1;
+    dsp->dsp_xcnt = ysize;
+    dsp->dsp_ycnt = xsize;
+    dsp->dsp_smooth = 0;
     dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
     MAT_IDN(dsp->dsp_stom);
     dsp->dsp_stom[0] = dsp->dsp_stom[5] = 1000;
