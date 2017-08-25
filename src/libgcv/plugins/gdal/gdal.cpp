@@ -49,6 +49,7 @@
 #include <cpl_string.h>
 #include <cpl_multiproc.h>
 #include <ogr_spatialref.h>
+#include "vrtdataset.h"
 
 #include "raytrace.h"
 #include "gcv/api.h"
@@ -250,7 +251,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     GDALAllRegister();
 
-    state->hDataset = GDALOpenEx(source_path, GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL, NULL, NULL);
+    state->hDataset = GDALOpenEx(source_path, GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, NULL, NULL, NULL);
     if (!state->hDataset) {
 	bu_log("GDAL Reader: error opening input file %s\n", source_path);
 	BU_PUT(state, struct conversion_state);
@@ -278,7 +279,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     GDALDestroyGenImgProjTransformer(hTsfA);
     if (eErr != CE_None) return 0;
 
-    GDALDatasetH pjdata = GDALCreate(GDALGetDriverByName("MEM"), "", nPixels, nLines, GDALGetRasterCount(state->hDataset),
+    GDALDatasetH pjdata = GDALCreate(GDALGetDriverByName("GTiff"), "test_out.tiff", nPixels, nLines, GDALGetRasterCount(state->hDataset),
 	    GDALGetRasterDataType(GDALGetRasterBand(state->hDataset,1)), NULL);
     if (pjdata == NULL) return 0;
     GDALSetProjection(pjdata, dst_Wkt);
@@ -310,16 +311,57 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     //GDALDatasetH indata = state->hDataset;
     unsigned int xsize = GDALGetRasterXSize(indata);
     unsigned int ysize = GDALGetRasterYSize(indata);
+#endif
+
+
+    double adfGeoTransform[6];
+    VRTDataset *poVDS = (VRTDataset *)VRTCreate(GDALGetRasterXSize(indata), GDALGetRasterYSize(indata));
+    poVDS->SetProjection(GDALGetProjectionRef(indata));
+    GDALGetGeoTransform(indata, adfGeoTransform);
+    poVDS->SetGeoTransform(adfGeoTransform);
+    double adfWin[4];
+    adfWin[0] = 0;
+    adfWin[1] = 0;
+    adfWin[2] = xsize;
+    adfWin[3] = ysize;
+    /* psOptions->adfSrcWin */
+    GDALRasterBand *poSrcBand = ((GDALDataset *)indata)->GetRasterBand(1);
+    poVDS->AddBand(GDALGetRasterDataType(poSrcBand), NULL);
+    VRTSourcedRasterBand *poVRTBand = (VRTSourcedRasterBand *)poVDS->GetRasterBand(1);
+    double dfScale=1.0, dfOffset=0.0;
+    double dfScaleSrcMin = 0.0, dfScaleSrcMax = 0.0;
+    double dfScaleDstMin = 0.0, dfScaleDstMax = 255.999;
+    double adfCMinMax[2];
+    GDALComputeRasterMinMax(poSrcBand, TRUE, adfCMinMax);
+    dfScaleSrcMin = adfCMinMax[0];
+    dfScaleSrcMax = adfCMinMax[1];
+    dfScale = (dfScaleDstMax - dfScaleDstMin) / (dfScaleSrcMax - dfScaleSrcMin);
+    dfOffset = -1 * dfScaleSrcMin * dfScale + dfScaleDstMin;
+    VRTSimpleSource* poSimpleSource;
+    VRTComplexSource* poSource = new VRTComplexSource();
+    poSource->SetLinearScaling(dfOffset, dfScale);
+    poSimpleSource = poSource;
+    poSimpleSource->SetResampling(NULL);
+    poVRTBand->ConfigureSource( poSimpleSource, poSrcBand, FALSE, adfWin[0], adfWin[1], adfWin[2], adfWin[3], adfWin[0], adfWin[1], adfWin[2], adfWin[3]);
+    poVRTBand->AddSource(poSimpleSource);
+    GDALDatasetH hOutDS = GDALCreateCopy(GDALGetDriverByName("MEM"), "", (GDALDatasetH) poVDS, 0, NULL, GDALTermProgress, NULL);
+    GDALClose((GDALDatasetH)poVDS);
+
+    indata = hOutDS;
+
+#if 1
     unsigned short *uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
 
     GDALRasterBandH band = GDALGetRasterBand(indata, 1);
 
-    int bmin, bmax;
-    double adfMinMax[2];
-    adfMinMax[0] = GDALGetRasterMinimum(band, &bmin);
-    adfMinMax[1] = GDALGetRasterMaximum(band, &bmax);
-    if (!(bmin && bmax)) GDALComputeRasterMinMax(band, TRUE, adfMinMax);
-    bu_log("Min/Max: %f, %f\n", adfMinMax[0], adfMinMax[1]);
+    /*
+       int bmin, bmax;
+       double adfMinMax[2];
+       adfMinMax[0] = GDALGetRasterMinimum(band, &bmin);
+       adfMinMax[1] = GDALGetRasterMaximum(band, &bmax);
+       if (!(bmin && bmax)) GDALComputeRasterMinMax(band, TRUE, adfMinMax);
+       bu_log("Min/Max: %f, %f\n", adfMinMax[0], adfMinMax[1]);
+       */
 
     /* If we're going to DSP we need the unsigned short read. */
     uint16_t *scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*GDALGetRasterBandXSize(band));
@@ -330,7 +372,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 		/* This is the critical assignment point - if we get this
 		 * indexing wrong, data will not look right in dsp */
 		uint16_array[ysize*i+j] = scanline[j];
-		bu_log("%d, %d: %d\n", i, j, scanline[j]);
+		//bu_log("%d, %d: %d\n", i, j, scanline[j]);
 	    }
 	}
     }
@@ -367,7 +409,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
     dsp->dsp_xcnt = ysize;
     dsp->dsp_ycnt = xsize;
-    dsp->dsp_smooth = 0;
+    dsp->dsp_smooth = 1;
     dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
     MAT_IDN(dsp->dsp_stom);
     dsp->dsp_stom[0] = dsp->dsp_stom[5] = 1000;
