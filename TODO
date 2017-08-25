@@ -93,6 +93,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* afl on libged/mged/rt/...
+
+* moodycamel as libbu queue/list/ptbl implementation
+
 * reinstate 'stat' and search -size, see r67636 through r67646
 
 * update dem-g to not use full paths for dsp primitive data locations -
