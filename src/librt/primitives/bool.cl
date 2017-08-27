@@ -534,8 +534,8 @@ rt_boolweave(global struct partition *partitions, global uint *ipartition, RESUL
 }
 
 int
-bool_eval(global struct partition *partitions, global uint *ipartition, RESULT_TYPE segs,
-        global uint *h, global uint *segs_bv, const uint bv_index, uint offset, size_t id,
+bool_eval(global struct partition *partitions, RESULT_TYPE segs, global uint *h,
+        global uint *segs_bv, const uint bv_index, uint offset, size_t id,
         global struct bool_region *bregions, global struct tree_bit *btree, const uint region_index)
 {
     int sp[BOOL_STACKSIZE];
@@ -839,11 +839,11 @@ rt_default_multioverlap(global struct partition *partitions, global struct bool_
 }
 
 __kernel void
-rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESULT_TYPE segs,
+rt_boolfinal(global struct partition *partitions, global uint *head_partition, RESULT_TYPE segs,
         global uint *h, global uint *segs_bv, const int max_depth,
         global struct bool_region *bregions, const uint total_regions, global struct tree_bit *rtree,
         global uint *regiontable, const int cur_pixel, const int last_pixel,
-        global uint *regions_table, const uint regions_table_size, global uint *head_partition)
+        global uint *regions_table)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
@@ -924,7 +924,7 @@ rt_boolfinal(global struct partition *partitions, global uint *ipartition, RESUL
 			lastregion_idx = k;
 		    }
 
-		    else if (bool_eval(partitions, ipartition, segs, h, segs_bv, bv_index, current_index, id, bregions, rtree, k) == BOOL_TRUE) {
+		    else if (bool_eval(partitions, segs, h, segs_bv, bv_index, current_index, id, bregions, rtree, k) == BOOL_TRUE) {
 			/* This region claims partition */
 			claiming_regions++;
 			lastregion_idx = k;

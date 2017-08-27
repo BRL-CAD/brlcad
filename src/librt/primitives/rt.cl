@@ -594,16 +594,15 @@ store_segs(RESULT_TYPE segs, global uint *h,
 }
 
 __kernel void
-shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *h,
+shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *head_partition,
          const int cur_pixel, const int last_pixel, const int width,
 	 global float *rand_halftab, const uint randhalftabsize,
 	 const uchar3 background, const uchar3 nonbackground,
 	 const double airdensity, const double3 haze, const double gamma,
 	 const double16 view2model, const double cell_width, const double cell_height,
-	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
-	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims,
-	 global struct region *regions, global struct partition *partitions, global uint *ipartition,
-         global uint *segs_bv, const int max_depth, global uint *head_partition)
+	 const double aspect, const int lightmodel, global uchar *ids,
+	 global uint *indexes, global uchar *prims, global struct region *regions,
+         global struct partition *partitions)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
