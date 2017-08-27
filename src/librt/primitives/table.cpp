@@ -130,7 +130,6 @@ extern int rt_generic_adjust(struct bu_vls *, struct rt_db_internal *, int, cons
 extern int rt_generic_form(struct bu_vls *, const struct rt_functab *);
 extern void rt_generic_make(const struct rt_functab *, struct rt_db_internal *);
 extern int rt_generic_xform(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *, struct resource *);
-extern int rt_generic_class(const struct soltab *, const fastf_t *, const fastf_t *, const struct bn_tol *);
 
 /* from db5_bin.c */
 extern int rt_binunif_import5(struct rt_db_internal * ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
@@ -217,7 +216,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_tor_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_tor_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_tor_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_tor_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_tor_adaptive_plot),
@@ -263,7 +262,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_tgc_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_tgc_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_tgc_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_tgc_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_tgc_adaptive_plot),
@@ -309,7 +308,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_ell_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_ell_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_ell_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_ell_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_ell_adaptive_plot),
@@ -493,7 +492,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_rec_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_rec_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_rec_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_tgc_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_tgc_adaptive_plot),
@@ -539,7 +538,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_pg_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_pg_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_pg_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_pg_plot),
 	NULL, /* adaptive_plot */
@@ -631,7 +630,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_sph_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_sph_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_sph_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_ell_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_ell_adaptive_plot),
@@ -677,7 +676,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_nmg_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_nmg_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_nmg_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_nmg_plot),
 	NULL, /* adaptive_plot */
@@ -723,7 +722,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_ebm_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_ebm_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_ebm_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_ebm_plot),
 	NULL, /* adaptive_plot */
@@ -769,7 +768,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_vol_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_vol_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_vol_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_vol_plot),
 	NULL, /* adaptive_plot */
@@ -815,7 +814,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_arbn_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_arbn_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_arbn_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_arbn_plot),
 	NULL, /* adaptive_plot */
@@ -861,7 +860,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_pipe_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_pipe_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_pipe_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_pipe_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_pipe_adaptive_plot),
@@ -907,7 +906,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_part_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_part_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_part_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_part_plot),
 	NULL, /* adaptive_plot */
@@ -953,7 +952,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_rpc_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_rpc_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_rpc_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_rpc_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_rpc_adaptive_plot),
@@ -999,7 +998,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_rhc_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_rhc_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_rhc_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_rhc_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_rhc_adaptive_plot),
@@ -1045,7 +1044,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_epa_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_epa_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_epa_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_epa_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_epa_adaptive_plot),
@@ -1091,7 +1090,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_ehy_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_ehy_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_ehy_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_ehy_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_ehy_adaptive_plot),
@@ -1137,7 +1136,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_eto_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_eto_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_eto_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_eto_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_eto_adaptive_plot),
@@ -1183,7 +1182,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_grp_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_grp_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_grp_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_grp_plot),
 	NULL, /* adaptive_plot */
@@ -1229,7 +1228,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_joint_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_joint_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_joint_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_joint_plot),
 	NULL, /* adaptive_plot */
@@ -1318,7 +1317,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_hf_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_hf_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_hf_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_hf_plot),
 	NULL, /* adaptive_plot */
@@ -1410,7 +1409,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_sketch_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_sketch_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_sketch_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_sketch_plot),
 	NULL, /* adaptive_plot */
@@ -1456,7 +1455,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_extrude_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_extrude_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_extrude_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_extrude_plot),
 	NULL, /* adaptive_plot */
@@ -1828,7 +1827,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_superell_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_superell_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_superell_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_superell_plot),
 	NULL, /* adaptive_plot */
@@ -2058,7 +2057,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_revolve_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_revolve_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_revolve_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_revolve_plot),
 	NULL, /* adaptive_plot */
@@ -2150,7 +2149,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_annot_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_annot_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_annot_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_annot_plot),
 	NULL, /* adaptive_plot */
@@ -2243,7 +2242,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_datum_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_datum_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	NULL, /* class */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_datum_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_datum_plot),
 	NULL, /* adaptive_plot */
