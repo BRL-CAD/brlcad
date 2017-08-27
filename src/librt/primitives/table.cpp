@@ -1364,7 +1364,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_dsp_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_dsp_curve),
-	NULL, /* class */
+	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
 	RTFUNCTAB_FUNC_FREE_CAST(rt_dsp_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_dsp_plot),
 	NULL, /* adaptive_plot */
