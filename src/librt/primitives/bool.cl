@@ -1007,6 +1007,7 @@ rt_boolfinal(global struct partition *partitions, global uint *head_partition, R
 		lastpp_eval_idx = current_index;
 	    }
 	}
+        return;
     }
 }
 
