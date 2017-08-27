@@ -1315,6 +1315,7 @@ HIDDEN int
 rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register const struct soltab *stp, register const struct rt_i *rtip)
 {
     RT_CHECK_SOLTAB(stp);
+
     if (RT_G_DEBUG&DEBUG_BOXING) {
 	bu_log("rt_ck_overlap(%s)\n", stp->st_name);
 	VPRINT(" box min", min);
@@ -1322,32 +1323,26 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
 	VPRINT(" box max", max);
 	VPRINT(" sol max", stp->st_max);
     }
-    /* Ignore "dead" solids in the list.  (They failed prep) */
-    if (stp->st_aradius <= 0) return 0;
 
-    /* Only check RPP on finite solids */
+    /* Ignore "dead" solids in the list.  (They failed prep) */
+    if (stp->st_aradius <= 0)
+	return 0;
+
+    /* If the object fits in a box (i.e., it's not infinite), and that
+     * box doesn't overlap with the bounding RPP, we know it's a miss.
+     */
     if (stp->st_aradius < INFINITY) {
 	if (V3RPP_DISJOINT(stp->st_min, stp->st_max, min, max))
-	    goto fail;
+	    return 0;
     }
 
-    if (!OBJ[stp->st_id].ft_classify)
-	goto fail;
-
     /* RPP overlaps, invoke per-solid method for detailed check */
-    if (OBJ[stp->st_id].ft_classify(stp, min, max, &rtip->rti_tol) == BN_CLASSIFY_OUTSIDE)
-	goto fail;
+    if (OBJ[stp->st_id].ft_classify &&
+	OBJ[stp->st_id].ft_classify(stp, min, max, &rtip->rti_tol) == BN_CLASSIFY_OUTSIDE)
+	return 0;
 
-    if (RT_G_DEBUG&DEBUG_BOXING)
-	bu_log("rt_ck_overlap:  TRUE\n");
-
+    /* don't know, check it */
     return 1;
-
-fail:
-    if (RT_G_DEBUG&DEBUG_BOXING)
-	bu_log("rt_ck_overlap:  FALSE\n");
-
-    return 0;
 }
 
 
