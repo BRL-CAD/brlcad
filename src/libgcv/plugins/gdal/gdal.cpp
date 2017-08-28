@@ -241,6 +241,8 @@ HIDDEN int
 gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	const void *options_data, const char *source_path)
 {
+    unsigned int xsize = 0;
+    unsigned int ysize = 0;
     struct conversion_state *state;
     BU_GET(state, struct conversion_state);
     gdal_state_init(state);
@@ -260,6 +262,9 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     (void)get_dataset_info(state->hDataset);
 
+    /* Use the information in the data set to deduce the EPSG number corresponding
+     * to the correct UTM projection zone, define a spatial reference, and generate
+     * the "Well Known Text" to use as the argument to the warping function*/
     int zone = gdal_utm_zone(state);
     int epsg = gdal_utm_epsg(state, zone);
     struct bu_vls epsg_str = BU_VLS_INIT_ZERO;
@@ -269,49 +274,51 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     oSRS.SetUTM(zone, TRUE);
     char *dst_Wkt = NULL;
     oSRS.exportToWkt(&dst_Wkt);
+
+    /* Perform the UTM data warp.  At this point the data is not yet in the
+     * form needed by the DSP primitive */
     GDALDatasetH hOutDS = GDALAutoCreateWarpedVRT(state->hDataset, NULL, dst_Wkt, GRA_CubicSpline, 0.0, NULL);
     bu_log("\nTransformed dataset info:\n");
     (void)get_dataset_info(hOutDS);
 
-    /* UTM reprojection applied, now prepare for DSP (preliminary
-     * steps found in gdal_translate before writing an image file...) */
-    GDALDatasetH indata = hOutDS;
-    unsigned int xsize = GDALGetRasterXSize(indata);
-    unsigned int ysize = GDALGetRasterYSize(indata);
+    /* Prepare the data for the DSP converion (preliminary steps found in
+     * gdal_translate before writing an image file...) */
     double dfScale=1.0, dfOffset=0.0;
     double dfScaleDstMin = 0.0, dfScaleDstMax = 255.999;
     double adfCMinMax[2];
     double adfGeoTransform[6];
-    VRTDataset *poVDS = (VRTDataset *)VRTCreate(GDALGetRasterXSize(indata), GDALGetRasterYSize(indata));
-    poVDS->SetProjection(GDALGetProjectionRef(indata));
-    GDALGetGeoTransform(indata, adfGeoTransform);
+    xsize = GDALGetRasterXSize(hOutDS);
+    ysize = GDALGetRasterYSize(hOutDS);
+    GDALGetGeoTransform(hOutDS, adfGeoTransform);
+    VRTDataset *poVDS = (VRTDataset *)VRTCreate(GDALGetRasterXSize(hOutDS), GDALGetRasterYSize(hOutDS));
+    poVDS->SetProjection(GDALGetProjectionRef(hOutDS));
     poVDS->SetGeoTransform(adfGeoTransform);
-    GDALRasterBand *poSrcBand = ((GDALDataset *)indata)->GetRasterBand(1);
+    GDALRasterBand *poSrcBand = ((GDALDataset *)hOutDS)->GetRasterBand(1);
     poVDS->AddBand(GDALGetRasterDataType(poSrcBand), NULL);
-    VRTSourcedRasterBand *poVRTBand = (VRTSourcedRasterBand *)poVDS->GetRasterBand(1);
-
     GDALComputeRasterMinMax(poSrcBand, TRUE, adfCMinMax);
     dfScale = (dfScaleDstMax - dfScaleDstMin) / (adfCMinMax[1] - adfCMinMax[0]);
     dfOffset = -1 * adfCMinMax[0] * dfScale + dfScaleDstMin;
     VRTComplexSource* poSource = new VRTComplexSource();
     poSource->SetLinearScaling(dfOffset, dfScale);
     poSource->SetResampling(NULL);
+    VRTSourcedRasterBand *poVRTBand = (VRTSourcedRasterBand *)poVDS->GetRasterBand(1);
     poVRTBand->ConfigureSource(poSource, poSrcBand, FALSE, 0, 0, xsize, ysize, 0, 0, xsize, ysize);
     poVRTBand->AddSource(poSource);
     GDALDatasetH flatDS = GDALCreateCopy(GDALGetDriverByName("MEM"), "", (GDALDatasetH) poVDS, 0, NULL, GDALTermProgress, NULL);
     GDALClose((GDALDatasetH)poVDS);
-    indata = flatDS;
+    GDALClose(hOutDS);
 
-#if 1
     /* Read the data into something a DSP can process */
-    unsigned short *uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
-    GDALRasterBandH band = GDALGetRasterBand(indata, 1);
-    int bx = GDALGetRasterBandXSize(band);
-    int by = GDALGetRasterBandYSize(band);
-    /* If we're going to DSP we need the unsigned short read. */
-    uint16_t *scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*bx);
+    unsigned short *uint16_array = NULL;
+    uint16_t *scanline = NULL;
+    GDALRasterBandH band = GDALGetRasterBand(flatDS, 1);
+    xsize = GDALGetRasterBandXSize(band);
+    ysize = GDALGetRasterBandYSize(band);
+    uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
+    scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*xsize);
     for(unsigned int i = 0; i < ysize; i++) {
-	if (GDALRasterIO(band, GF_Read, 0, i, bx, 1, scanline, bx, 1, GDT_UInt16, 0, 0) == CPLE_None) {
+	/* If we're going to DSP we need the unsigned short (GDT_UInt16) read. */
+	if (GDALRasterIO(band, GF_Read, 0, i, xsize, 1, scanline, xsize, 1, GDT_UInt16, 0, 0) == CPLE_None) {
 	    for (unsigned int j = 0; j < xsize; ++j) {
 		/* This is the critical assignment point - if we get this
 		 * indexing wrong, data will not look right in dsp */
@@ -324,20 +331,21 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     /* Got it - write the binary object to the .g file */
     mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, xsize * ysize);
 
-    /* Done reading - close out inputs */
+    /* Done reading - close out inputs. */
     CPLFree(scanline);
+    GDALClose(flatDS);
     GDALClose(state->hDataset);
-    //GDALClose(pjdata);
-#endif
 
 #if 0
-    unsigned int xsize = 1187;
-    unsigned int ysize = 1249;
+    unsigned int xsize = 3;
+    unsigned int ysize = 2;
     unsigned short *uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
-    uint16_array[ysize*600+1157] = 100;
-    uint16_array[ysize*600+1158] = 100;
-    uint16_array[ysize*601+1157] = 100;
-    uint16_array[ysize*601+1158] = 100;
+    uint16_array[0] = 1;
+    uint16_array[1] = 2;
+    uint16_array[2] = 3;
+    uint16_array[3] = 4;
+    uint16_array[4] = 5;
+    uint16_array[5] = 6;
     mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, xsize * ysize);
 #endif
 
