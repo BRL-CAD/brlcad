@@ -1191,13 +1191,6 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-int
-rt_arb_class(const struct soltab *UNUSED(stp), const fastf_t *UNUSED(min), const fastf_t *UNUSED(max), const struct bn_tol *UNUSED(tol))
-{
-    return 0;
-}
-
-
 /**
  * Import an ARB8 from the database format to the internal format.
  * There are two parts to this: First, the database is presently

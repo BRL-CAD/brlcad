@@ -80,7 +80,6 @@ void rt_brep_print(register const struct soltab *stp);
 int rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
 void rt_brep_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp);
 void rt_brep_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp);
-int rt_brep_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol);
 void rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp);
 void rt_brep_free(register struct soltab *stp);
 int rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info);
@@ -1672,18 +1671,6 @@ rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 	return;
 
     /* XXX todo */
-}
-
-
-int
-rt_brep_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-    if (tol) BN_CK_TOL(tol);
-    if (!min) return 0;
-    if (!max) return 0;
-
-    return 0;
 }
 
 

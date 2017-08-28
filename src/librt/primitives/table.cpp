@@ -50,7 +50,6 @@ extern "C" {
     extern void rt_##name##_norm(struct hit *hitp, struct soltab *stp, struct xray *rp); \
     extern void rt_##name##_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp); \
     extern void rt_##name##_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp); \
-    extern int rt_##name##_class(const struct soltab *, const fastf_t *, const fastf_t *, const struct bn_tol *); \
     extern void rt_##name##_free(struct soltab *stp); \
     extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info); \
     extern int rt_##name##_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info); \
@@ -354,7 +353,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_arb_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_arb_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_arb_class),
+	NULL, /* classify */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_arb_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_arb_plot),
 	NULL, /* adaptive_plot */
@@ -400,7 +399,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PIECE_HITSEGS_CAST(rt_bot_piece_hitsegs),
 	RTFUNCTAB_FUNC_UV_CAST(rt_bot_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_bot_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_bot_class),
+	NULL, /* classify */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_bot_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_ars_plot),
 	NULL, /* adaptive_plot */
@@ -1501,7 +1500,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_submodel_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_submodel_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_submodel_class),
+	NULL, /* classify */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_submodel_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_submodel_plot),
 	NULL, /* adaptive_plot */
@@ -1547,7 +1546,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_cline_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_cline_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_cline_class),
+	NULL, /* classify */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_cline_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_cline_plot),
 	NULL, /* adaptive_plot */
@@ -1593,7 +1592,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PIECE_HITSEGS_CAST(rt_bot_piece_hitsegs),
 	RTFUNCTAB_FUNC_UV_CAST(rt_bot_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_bot_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_bot_class),
+	NULL, /* classify */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_bot_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_bot_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_bot_adaptive_plot),
@@ -1873,7 +1872,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_metaball_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_metaball_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_metaball_class),
+	NULL, /* classify */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_metaball_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_metaball_plot),
 	NULL, /* adaptive_plot */
@@ -1919,7 +1918,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* piece_hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_brep_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_brep_curve),
-	RTFUNCTAB_FUNC_CLASS_CAST(rt_brep_class),
+	NULL, /* classify */
 	RTFUNCTAB_FUNC_FREE_CAST(rt_brep_free),
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_brep_plot),
 	RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(rt_brep_adaptive_plot),
