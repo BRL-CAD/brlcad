@@ -298,6 +298,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     for(int i = 0; i < 4; i++) {
 	if(img_opts[i]) bu_free(img_opts[i], "imgopt");
     }
+    bu_log("\nFinalized dataset info:\n");
+    (void)get_dataset_info(flatDS);
 
     /* Read the data into something a DSP can process */
     unsigned short *uint16_array = NULL;
@@ -307,17 +309,27 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     ysize = GDALGetRasterBandYSize(band);
     uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
     scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*xsize);
+    struct bu_vls grid = BU_VLS_INIT_ZERO;
     for(unsigned int i = 0; i < ysize; i++) {
 	/* If we're going to DSP we need the unsigned short (GDT_UInt16) read. */
 	if (GDALRasterIO(band, GF_Read, 0, i, xsize, 1, scanline, xsize, 1, GDT_UInt16, 0, 0) == CPLE_None) {
-	    for (unsigned int j = 0; j < xsize; ++j) {
+	    for (unsigned int j = 0; j < xsize; j++) {
+		unsigned int xp, yp; /* need indexes for dsp xy space */
+		xp = ysize - i - 1;
+		yp = j;
+
+		int val = (scanline[j] > 0) ? 1 : 0;
+		bu_vls_printf(&grid, "%d", val);
 		/* This is the critical assignment point - if we get this
 		 * indexing wrong, data will not look right in dsp */
-		uint16_array[ysize*i+j] = scanline[j];
-		//bu_log("%d, %d: %d\n", i, j, scanline[j]);
+		uint16_array[xp+yp*ysize] = scanline[j];
 	    }
+	    bu_vls_printf(&grid, "\n");
 	}
     }
+    FILE *fp = fopen("gcv_gdal_grid.txt", "w");
+    fputs(bu_vls_addr(&grid), fp);
+    fclose(fp);
 
     /* Got it - write the binary object to the .g file */
     mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, xsize * ysize);
