@@ -51,6 +51,7 @@
 #include <ogr_spatialref.h>
 #include "vrtdataset.h"
 
+#include "bu/units.h"
 #include "raytrace.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
@@ -243,6 +244,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 {
     unsigned int xsize = 0;
     unsigned int ysize = 0;
+    double adfGeoTransform[6];
     struct conversion_state *state;
     BU_GET(state, struct conversion_state);
     gdal_state_init(state);
@@ -267,46 +269,35 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
      * the "Well Known Text" to use as the argument to the warping function*/
     int zone = gdal_utm_zone(state);
     int epsg = gdal_utm_epsg(state, zone);
-    struct bu_vls epsg_str = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&epsg_str, "EPSG:%d", epsg);
+    struct bu_vls proj4_str = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&proj4_str, "+init=epsg:%d +zone=%d +proj=utm +no_defs", epsg, zone);
     OGRSpatialReference oSRS;
-    oSRS.SetWellKnownGeogCS(bu_vls_addr(&epsg_str));
-    oSRS.SetUTM(zone, TRUE);
+    oSRS.importFromProj4(bu_vls_addr(&proj4_str));
     char *dst_Wkt = NULL;
     oSRS.exportToWkt(&dst_Wkt);
 
     /* Perform the UTM data warp.  At this point the data is not yet in the
      * form needed by the DSP primitive */
     GDALDatasetH hOutDS = GDALAutoCreateWarpedVRT(state->hDataset, NULL, dst_Wkt, GRA_CubicSpline, 0.0, NULL);
+    char *dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
+    GDALGetGeoTransform(hOutDS, adfGeoTransform);
     bu_log("\nTransformed dataset info:\n");
     (void)get_dataset_info(hOutDS);
 
-    /* Prepare the data for the DSP converion (preliminary steps found in
-     * gdal_translate before writing an image file...) */
-    double dfScale=1.0, dfOffset=0.0;
-    double dfScaleDstMin = 0.0, dfScaleDstMax = 255.999;
-    double adfCMinMax[2];
-    double adfGeoTransform[6];
-    xsize = GDALGetRasterXSize(hOutDS);
-    ysize = GDALGetRasterYSize(hOutDS);
-    GDALGetGeoTransform(hOutDS, adfGeoTransform);
-    VRTDataset *poVDS = (VRTDataset *)VRTCreate(GDALGetRasterXSize(hOutDS), GDALGetRasterYSize(hOutDS));
-    poVDS->SetProjection(GDALGetProjectionRef(hOutDS));
-    poVDS->SetGeoTransform(adfGeoTransform);
-    GDALRasterBand *poSrcBand = ((GDALDataset *)hOutDS)->GetRasterBand(1);
-    poVDS->AddBand(GDALGetRasterDataType(poSrcBand), NULL);
-    GDALComputeRasterMinMax(poSrcBand, TRUE, adfCMinMax);
-    dfScale = (dfScaleDstMax - dfScaleDstMin) / (adfCMinMax[1] - adfCMinMax[0]);
-    dfOffset = -1 * adfCMinMax[0] * dfScale + dfScaleDstMin;
-    VRTComplexSource* poSource = new VRTComplexSource();
-    poSource->SetLinearScaling(dfOffset, dfScale);
-    poSource->SetResampling(NULL);
-    VRTSourcedRasterBand *poVRTBand = (VRTSourcedRasterBand *)poVDS->GetRasterBand(1);
-    poVRTBand->ConfigureSource(poSource, poSrcBand, FALSE, 0, 0, xsize, ysize, 0, 0, xsize, ysize);
-    poVRTBand->AddSource(poSource);
-    GDALDatasetH flatDS = GDALCreateCopy(GDALGetDriverByName("MEM"), "", (GDALDatasetH) poVDS, 0, NULL, GDALTermProgress, NULL);
-    GDALClose((GDALDatasetH)poVDS);
+    /* Do the translate step (a.l.a gdal_translate) that puts the data in a
+     * form we can use */
+    char *img_opts[4];
+    img_opts[0] = bu_strdup("-scale");
+    img_opts[1] = bu_strdup("-of");
+    img_opts[2] = bu_strdup("MEM");
+    img_opts[3] = NULL;
+    GDALTranslateOptions *gdalt_opts = GDALTranslateOptionsNew(img_opts, NULL);
+    GDALDatasetH flatDS = GDALTranslate("", hOutDS, gdalt_opts, NULL);
+    GDALTranslateOptionsFree(gdalt_opts);
     GDALClose(hOutDS);
+    for(int i = 0; i < 4; i++) {
+	if(img_opts[i]) bu_free(img_opts[i], "imgopt");
+    }
 
     /* Read the data into something a DSP can process */
     unsigned short *uint16_array = NULL;
@@ -364,11 +355,16 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     dsp->dsp_smooth = 1;
     dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
     MAT_IDN(dsp->dsp_stom);
-    dsp->dsp_stom[0] = dsp->dsp_stom[5] = 1000;
+    dsp->dsp_stom[0] = dsp->dsp_stom[5] = adfGeoTransform[1] * bu_units_conversion(dunit);
+    dsp->dsp_stom[10] = 1 * bu_units_conversion(dunit);
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
+
+    bu_log("pixel: %f, conv: %f\n", adfGeoTransform[1], dsp->dsp_stom[0]);
+    bu_log("z: %f\n", dsp->dsp_stom[10]);
 
     wdb_export(state->wdbp, "test.s", (void *)dsp, ID_DSP, 1);
 
+    bu_free(dunit, "free dunit");
 
     return 1;
 }
