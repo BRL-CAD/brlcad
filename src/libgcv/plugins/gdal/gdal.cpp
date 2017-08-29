@@ -388,7 +388,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
     MAT_IDN(dsp->dsp_stom);
     dsp->dsp_stom[0] = dsp->dsp_stom[5] = adfGeoTransform[1] * bu_units_conversion(dunit);
-    dsp->dsp_stom[10] = 1 * bu_units_conversion(dunit);
+    dsp->dsp_stom[10] = bu_units_conversion(dunit);
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
 
     bu_log("pixel: %f, conv: %f\n", adfGeoTransform[1], dsp->dsp_stom[0]);
