@@ -208,7 +208,7 @@ gdal_ll(GDALDatasetH hDataset, double *lat_center, double *long_center)
 }
 
 HIDDEN void
-gdal_minmax(GDALDatasetH ds)
+gdal_elev_minmax(GDALDatasetH ds)
 {
     int bmin, bmax = 0;
     double mm[2];
@@ -216,7 +216,7 @@ gdal_minmax(GDALDatasetH ds)
     mm[0] = GDALGetRasterMinimum(band, &bmin);
     mm[1] = GDALGetRasterMaximum(band, &bmin);
     if (!bmin || !bmax) GDALComputeRasterMinMax(band, TRUE, mm);
-    bu_log("Min: %f, Max %f\n", mm[0], mm[1]);
+    bu_log("Elevation Minimum/Maximum: %f, %f\n", mm[0], mm[1]);
 }
 
 /* Get the UTM zone of the GDAL dataset - see
@@ -275,7 +275,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	return 0;
     }
     (void)get_dataset_info(state->hDataset);
-    gdal_minmax(state->hDataset);
+    gdal_elev_minmax(state->hDataset);
 
     /* Use the information in the data set to deduce the EPSG number corresponding
      * to the correct UTM projection zone, define a spatial reference, and generate
@@ -296,25 +296,24 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     GDALGetGeoTransform(hOutDS, adfGeoTransform);
     bu_log("\nTransformed dataset info:\n");
     (void)get_dataset_info(hOutDS);
-    gdal_minmax(hOutDS);
+    gdal_elev_minmax(hOutDS);
 
     /* Do the translate step (a.l.a gdal_translate) that puts the data in a
      * form we can use */
-    char *img_opts[4];
-    img_opts[0] = bu_strdup("-scale"); /* problematic... - shortening heights too much... */
-    img_opts[1] = bu_strdup("-of");
-    img_opts[2] = bu_strdup("MEM");
-    img_opts[3] = NULL;
+    char *img_opts[3];
+    img_opts[0] = bu_strdup("-of");
+    img_opts[1] = bu_strdup("MEM");
+    img_opts[2] = NULL;
     GDALTranslateOptions *gdalt_opts = GDALTranslateOptionsNew(img_opts, NULL);
     GDALDatasetH flatDS = GDALTranslate("", hOutDS, gdalt_opts, NULL);
     GDALTranslateOptionsFree(gdalt_opts);
     GDALClose(hOutDS);
-    for(int i = 0; i < 4; i++) {
+    for(int i = 0; i < 3; i++) {
 	if(img_opts[i]) bu_free(img_opts[i], "imgopt");
     }
     bu_log("\nFinalized dataset info:\n");
     (void)get_dataset_info(flatDS);
-    gdal_minmax(flatDS);
+    gdal_elev_minmax(flatDS);
 
     /* Read the data into something a DSP can process */
     unsigned short *uint16_array = NULL;
