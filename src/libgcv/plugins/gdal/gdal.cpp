@@ -207,6 +207,17 @@ gdal_ll(GDALDatasetH hDataset, double *lat_center, double *long_center)
     return 1;
 }
 
+HIDDEN void
+gdal_minmax(GDALDatasetH ds)
+{
+    int bmin, bmax = 0;
+    double mm[2];
+    GDALRasterBandH band = GDALGetRasterBand(ds, 1);
+    mm[0] = GDALGetRasterMinimum(band, &bmin);
+    mm[1] = GDALGetRasterMaximum(band, &bmin);
+    if (!bmin || !bmax) GDALComputeRasterMinMax(band, TRUE, mm);
+    bu_log("Min: %f, Max %f\n", mm[0], mm[1]);
+}
 
 /* Get the UTM zone of the GDAL dataset - see
  * https://gis.stackexchange.com/questions/241696/how-to-convert-from-lat-lon-to-utm-with-gdaltransform
@@ -263,8 +274,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	BU_PUT(state, struct conversion_state);
 	return 0;
     }
-
     (void)get_dataset_info(state->hDataset);
+    gdal_minmax(state->hDataset);
 
     /* Use the information in the data set to deduce the EPSG number corresponding
      * to the correct UTM projection zone, define a spatial reference, and generate
@@ -285,11 +296,12 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     GDALGetGeoTransform(hOutDS, adfGeoTransform);
     bu_log("\nTransformed dataset info:\n");
     (void)get_dataset_info(hOutDS);
+    gdal_minmax(hOutDS);
 
     /* Do the translate step (a.l.a gdal_translate) that puts the data in a
      * form we can use */
     char *img_opts[4];
-    img_opts[0] = bu_strdup("-scale");
+    img_opts[0] = bu_strdup("-scale"); /* problematic... - shortening heights too much... */
     img_opts[1] = bu_strdup("-of");
     img_opts[2] = bu_strdup("MEM");
     img_opts[3] = NULL;
@@ -302,6 +314,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     }
     bu_log("\nFinalized dataset info:\n");
     (void)get_dataset_info(flatDS);
+    gdal_minmax(flatDS);
 
     /* Read the data into something a DSP can process */
     unsigned short *uint16_array = NULL;
