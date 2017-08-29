@@ -3123,8 +3123,9 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
     BU_ALLOC(intern->idb_ptr, struct rt_annot_internal);
     anip = (struct rt_annot_internal *)intern->idb_ptr;
     anip->magic = RT_ANNOT_INTERNAL_MAGIC;
-    anip->ant.count = 1;
-    anip->vert_count = 1;
+    anip->ant.count = 2;
+    anip->vert_count = 2;
+
     anip->verts = (point2d_t *)bu_calloc(anip->vert_count, sizeof(point2d_t), "verts");
 
 
@@ -3157,9 +3158,10 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
     anip->ant.segments = (void **)bu_calloc(anip->ant.count, sizeof(void *), "segs");
     anip->ant.reverse = (int *)bu_calloc(anip->ant.count, sizeof(int), "rev");
 
-    anip->ant.segments[0] = (void *)tsg;
+    anip->ant.segments[0] = (void *)lsg;
     anip->ant.reverse[0] = 0;
-
+    anip->ant.segments[1] = (void *)tsg;
+    anip->ant.reverse[1] = 0;
     return GED_OK;
 }
 

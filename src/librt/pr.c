@@ -624,6 +624,66 @@ out:
     if (lvl == 0) bu_log("\n");
 }
 
+#ifdef USE_OPENCL
+/**
+ * Produce representations of this bit bool tree
+ */
+void
+rt_pr_bit_tree(const struct bit_tree *btp, int idx, int lvl)
+/* Tree to print */
+/* Offset in tree */
+/* Recursion level */
+{
+    uint uop, val;
+
+    uop = btp[idx].val & 7;
+    val = btp[idx].val >> 3;
+
+    if (lvl == 0) bu_log("bit tree: ");
+
+    switch (uop) {
+        case UOP_SOLID:
+            /* Tree leaf */
+            bu_log("%ld", val);
+            if (lvl == 0) bu_log("\n");
+            return;
+        case UOP_SUBTRACT:
+            bu_log("(");
+            rt_pr_bit_tree(btp, idx+1, lvl+1);
+            bu_log(" %c ", DB_OP_SUBTRACT);
+            rt_pr_bit_tree(btp, val, lvl+1);
+            bu_log(")");
+            break;
+        case UOP_UNION:
+            bu_log("(");
+            rt_pr_bit_tree(btp, idx+1, lvl+1);
+            bu_log(" %c ", DB_OP_UNION);
+            rt_pr_bit_tree(btp, val, lvl+1);
+            bu_log(")");
+            break;
+        case UOP_INTERSECT:
+            bu_log("(");
+            rt_pr_bit_tree(btp, idx+1, lvl+1);
+            bu_log(" %c ", DB_OP_INTERSECT);
+            rt_pr_bit_tree(btp, val, lvl+1);
+            bu_log(")");
+            break;
+        case UOP_XOR:
+            bu_log("(");
+            rt_pr_bit_tree(btp, idx+1, lvl+1);
+            bu_log(" XOR ");
+            rt_pr_bit_tree(btp, val, lvl+1);
+            bu_log(")");
+            break;
+
+        default:
+            bu_log("rt_pr_bit_tree: bad op[%d]\n", uop);
+            exit(1);
+            break;
+    }
+    if (lvl == 0) bu_log("\n");
+}
+#endif
 
 void
 rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angles)

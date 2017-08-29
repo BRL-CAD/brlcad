@@ -1099,7 +1099,6 @@ mark_as_advanced(BRLCAD_ENABLE_BRLCAD_LIBRARY)
 # build packages for a distribution.  If both of these options are
 # on the enabling of local packages is the "senior" option and will
 # force the system libs option to off.
-set(BRLCAD_BUNDLED_LIBS_ALIASES "ENABLE_ALL")
 set(BRLCAD_BUNDLED_LIBS_DESCRIPTION "
 Enables compilation of all 3rd party sources that are provided within a BRL-CAD
 source distribution.  If used this option sets all other 3rd party library
@@ -1114,18 +1113,12 @@ if(MSVC)
 else(MSVC)
   set(BRLCAD_BUNDLED_LIBS_DEFAULT "AUTO")
 endif(MSVC)
-BRLCAD_OPTION(${BRLCAD_BUNDLED_LIBS_DEFAULT} BRLCAD_BUNDLED_LIBS BRLCAD_BUNDLED_LIBS_ALIASES BRLCAD_BUNDLED_LIBS_DESCRIPTION)
-set_property(CACHE BRLCAD_BUNDLED_LIBS PROPERTY STRINGS AUTO BUNDLED SYSTEM)
-string(TOUPPER "${BRLCAD_BUNDLED_LIBS}" BRLCAD_BUNDLED_LIBS_UPPER)
-set(BRLCAD_BUNDLED_LIBS "${BRLCAD_BUNDLED_LIBS_UPPER}" CACHE STRING "Build bundled libraries." FORCE)
-if(${BRLCAD_BUNDLED_LIBS} MATCHES "ON")
-  set(BRLCAD_BUNDLED_LIBS "BUNDLED" CACHE STRING "Build bundled libraries." FORCE)
-endif(${BRLCAD_BUNDLED_LIBS} MATCHES "ON")
-if(${BRLCAD_BUNDLED_LIBS} MATCHES "OFF")
-  set(BRLCAD_BUNDLED_LIBS "SYSTEM" CACHE STRING "Build bundled libraries." FORCE)
-endif(${BRLCAD_BUNDLED_LIBS} MATCHES "OFF")
+BRLCAD_OPTION(BRLCAD_BUNDLED_LIBS ${BRLCAD_BUNDLED_LIBS_DEFAULT}
+  TYPE ABS
+  ALIASES ENABLE_ALL
+  DESCRIPTION BRLCAD_BUNDLED_LIBS_DESCRIPTION)
 if(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
-  message(WARNING "Unknown value BRLCAD_BUNDLED_LIBS supplied for BRLCAD_BUNDLED_LIBS - defaulting to AUTO")
+  message(WARNING "Unknown value BRLCAD_BUNDLED_LIBS supplied for BRLCAD_BUNDLED_LIBS (${BRLCAD_BUNDLED_LIBS}) - defaulting to AUTO")
   message(WARNING "Valid options are AUTO, BUNDLED and SYSTEM")
   set(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build bundled libraries." FORCE)
 endif(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
@@ -1196,15 +1189,15 @@ else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
   include(FindGL)
 endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
 
-set(BRLCAD_ENABLE_OPENGL_ALIASES
-  ENABLE_OPENGL
-  )
 set(BRLCAD_ENABLE_OPENGL_DESCRIPTION "
 Enable support for OpenGL based Display Managers in BRL-CAD.
 Default depends on whether OpenGL is successfully detected -
 if it is, default is to enable.
 ")
-BRLCAD_OPTION(${OPENGL_FOUND} BRLCAD_ENABLE_OPENGL BRLCAD_ENABLE_OPENGL_ALIASES BRLCAD_ENABLE_OPENGL_DESCRIPTION)
+BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ${OPENGL_FOUND}
+  TYPE BOOL
+  ALIASES ENABLE_OPENGL
+  DESCRIPTION BRLCAD_ENABLE_OPENGL_DESCRIPTION)
 
 # Enable RTGL.  Requires an enabled OpenGL.
 option(BRLCAD_ENABLE_RTGL "Enable experimental RTGL code." OFF)
@@ -1287,7 +1280,10 @@ checking (that in turn help prevent corruption of your data).
 Default is \"ON\", and should only be disabled for read-only render
 work where performance is critical.
 ")
-BRLCAD_OPTION(ON BRLCAD_ENABLE_RUNTIME_DEBUG BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION)
+BRLCAD_OPTION(BRLCAD_ENABLE_RUNTIME_DEBUG ON
+  TYPE BOOL
+  ALIASES ${BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES}
+  DESCRIPTION BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION)
 mark_as_advanced(BRLCAD_ENABLE_RUNTIME_DEBUG)
 if(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
   message("}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
@@ -1308,15 +1304,13 @@ endif(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
 
 # Enable debug flags during compilation - we always want to use these
 # unless explicitly told not to.
-set(BRLCAD_FLAGS_DEBUG_ALIASES
-  ENABLE_DEBUG
-  ENABLE_FLAGS_DEBUG
-  ENABLE_DEBUG_FLAGS
-  )
 set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
 Add compiler flags to aid in program debugging.  Defaults to ON.
 ")
-BRLCAD_OPTION(ON BRLCAD_FLAGS_DEBUG BRLCAD_FLAGS_DEBUG_ALIASES BRLCAD_FLAGS_DEBUG_DESCRIPTION)
+BRLCAD_OPTION(BRLCAD_FLAGS_DEBUG ON
+  TYPE BOOL
+  ALIASES ENABLE_DEBUG ENABLE_FLAGS_DEBUG ENABLE_DEBUG_FLAGS
+  DESCRIPTION BRLCAD_FLAGS_DEBUG_DESCRIPTION)
 
 # A variety of debugging messages in the code key off of the DEBUG
 # definition - set it according to whether we're using debug flags.
@@ -1325,16 +1319,13 @@ if(BRLCAD_FLAGS_DEBUG)
 endif(BRLCAD_FLAGS_DEBUG)
 
 # Build with compiler warning flags
-set(BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
-  ENABLE_WARNINGS
-  ENABLE_COMPILER_WARNINGS
-  )
 set(BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION "
 Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
 ")
-BRLCAD_OPTION(ON BRLCAD_ENABLE_COMPILER_WARNINGS
-  BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
-  BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
+BRLCAD_OPTION(BRLCAD_ENABLE_COMPILER_WARNINGS ON
+  TYPE BOOL
+  ALIASES ENABLE_WARNINGS ENABLE_COMPILER_WARNINGS
+  DESCRIPTION BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
 mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
 
 # Enable/disable strict compiler settings - these are used for building
@@ -1342,28 +1333,31 @@ mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
 # code unless the NO_STRICT option is specified when defining a target
 # with BRLCAD_ADDEXEC or BRLCAD_ADDLIB.  If only C++ files in a target
 # are not compatible with strict, the NO_STRICT_CXX option can be used.
-set(BRLCAD_ENABLE_STRICT_ALIASES
-  ENABLE_STRICT
-  ENABLE_STRICT_COMPILE
-  ENABLE_STRICT_COMPILE_FLAGS)
 set(BRLCAD_ENABLE_STRICT_DESCRIPTION "
 Causes all compilation warnings for C code to be treated as errors.  This is now
 the default for BRL-CAD source code, and developers should address issues
 discovered by these flags whenever possible rather than disabling strict
 mode.
 ")
-BRLCAD_OPTION(ON BRLCAD_ENABLE_STRICT BRLCAD_ENABLE_STRICT_ALIASES BRLCAD_ENABLE_STRICT_DESCRIPTION)
+BRLCAD_OPTION(BRLCAD_ENABLE_STRICT ON
+  TYPE BOOL
+  ALIASES ENABLE_STRICT ENABLE_STRICT_COMPILE ENABLE_STRICT_COMPILE_FLAGS
+  DESCRIPTION BRLCAD_ENABLE_STRICT_DESCRIPTION)
 if(BRLCAD_ENABLE_STRICT)
   mark_as_advanced(BRLCAD_ENABLE_STRICT)
   CONFIG_H_APPEND(BRLCAD "#define STRICT_FLAGS 1\n")
 endif(BRLCAD_ENABLE_STRICT)
 
 # Build with compiler optimization flags.  This should normally be on for
-# release builds.
-AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
-if(CMAKE_CONFIGURATION_TYPES)
-  mark_as_advanced(BRLCAD_FLAGS_OPTIMIZATION)
-endif(CMAKE_CONFIGURATION_TYPES)
+# release builds and off otherwise, unless the user specifically enables it.
+# For multi-config build tools, this is managed on a per-configuration basis.
+if(CMAKE_BUILD_TYPE)
+  cmake_dependent_option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" ON "${CMAKE_BUILD_TYPE} STREQUAL Release" OFF)
+else(CMAKE_BUILD_TYPE)
+  # Note: the cmake_dependent_option test doesn't work if CMAKE_BUILD_TYPE isn't set.
+  option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" OFF)
+endif(CMAKE_BUILD_TYPE)
+mark_as_advanced(BRLCAD_OPTIMIZED_BUILD)
 
 # Build with full compiler lines visible by default (won't need make
 # VERBOSE=1) on command line
@@ -1379,15 +1373,15 @@ mark_as_advanced(BRLCAD_ENABLE_PROFILING)
 
 #====== ALL CXX COMPILE ===================
 # Build all C and C++ files with a C++ compiler
-set(ENABLE_ALL_CXX_COMPILE_ALIASES "ENABLE_ALL_CXX")
 set(ENABLE_ALL_CXX_COMPILE_DESCRIPTION "
 Build all C and C++ files with a C++ compiler.  Defaults to OFF.
 
 EXPERIMENTAL!
 ")
-BRLCAD_OPTION(OFF ENABLE_ALL_CXX_COMPILE
-  ENABLE_ALL_CXX_COMPILE_ALIASES
-  ENABLE_ALL_CXX_COMPILE_DESCRIPTION)
+BRLCAD_OPTION(ENABLE_ALL_CXX_COMPILE OFF
+  TYPE BOOL
+  ALIASES ENABLE_ALL_CXX
+  DESCRIPTION ENABLE_ALL_CXX_COMPILE_DESCRIPTION)
 mark_as_advanced(ENABLE_ALL_CXX_COMPILE)
 
 # Build with coverage enabled
@@ -1396,7 +1390,6 @@ mark_as_advanced(BRLCAD_ENABLE_COVERAGE)
 
 #====== POSIX ===================
 # Build with strict POSIX compliance checking
-set(ENABLE_POSIX_COMPLIANCE_ALIASES "ENABLE_POSIX")
 set(ENABLE_POSIX_COMPLIANCE_DESCRIPTION "
 Build with strict POSIX compliance checking.  Defaults to OFF.
 
@@ -1405,22 +1398,23 @@ minimum C and C++ standards acceptable according to current BRL-CAD
 policy.  The current minimum C standard is ??.
 There is no currently defined minimum C++ standard.
 ")
-BRLCAD_OPTION(OFF ENABLE_POSIX_COMPLIANCE
-  ENABLE_POSIX_COMPLIANCE_ALIASES
-  ENABLE_POSIX_COMPLIANCE_DESCRIPTION)
+BRLCAD_OPTION(ENABLE_POSIX_COMPLIANCE OFF
+  TYPE BOOL
+  ALIASES ENABLE_POSIX
+  DESCRIPTION ENABLE_POSIX_COMPLIANCE_DESCRIPTION)
 mark_as_advanced(ENABLE_POSIX_COMPLIANCE)
 
 #== ISO C ==
-set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_ALIASES "STRICT_ISO_C")
 set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_DESCRIPTION "
 Build with strict ISO C compliance checking.  Defaults to OFF.
 
 Causes C compiler options to be set for strict compliance with the
 appropriate ISO C standard.
 ")
-BRLCAD_OPTION(OFF ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE
-  ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_ALIASES
-  ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_DESCRIPTION)
+BRLCAD_OPTION(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE OFF
+  TYPE BOOL
+  ALIASES STRICT_ISO_C
+  DESCRIPTION ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_DESCRIPTION)
 mark_as_advanced(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
 
 # Build with dtrace support
@@ -1491,11 +1485,6 @@ if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
   set(EXTRADOCS_DEFAULT "OFF")
 endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-set(BRLCAD_EXTRADOCS_ALIASES
-  ENABLE_DOCS
-  ENABLE_EXTRA_DOCS
-  ENABLE_DOCBOOK
-  )
 set(BRLCAD_EXTRADOCS_DESCRIPTION "
 The core option that enables and disables building of BRL-CAD's
 DocBook based documentation (includes manuals and man pages for
@@ -1506,7 +1495,10 @@ environment variable APACHE_FOP to point to your locally installed fop
 executable file (which on Linux is usually a shell script with 0755
 permissions).
 ")
-BRLCAD_OPTION(${EXTRADOCS_DEFAULT} BRLCAD_EXTRADOCS BRLCAD_EXTRADOCS_ALIASES BRLCAD_EXTRADOCS_DESCRIPTION)
+BRLCAD_OPTION(BRLCAD_EXTRADOCS ${EXTRADOCS_DEFAULT}
+  TYPE BOOL
+  ALIASES ENABLE_DOCS ENABLE_EXTRA_DOCS ENABLE_DOCBOOK
+  DESCRIPTION BRLCAD_EXTRADOCS_DESCRIPTION)
 
 
 # The HTML output is used in the graphical help browsers in MGED and Archer,

@@ -42,7 +42,6 @@ typedef union {
     struct { double re, im; };
 } bn_complex_t;
 
-
 struct hit {
   double3 hit_point;
   double3 hit_normal;
@@ -55,6 +54,40 @@ struct seg {
     struct hit seg_in;
     struct hit seg_out;
     uint seg_sti;
+};
+
+struct partition {
+    struct hit inhit;
+    struct hit outhit;
+    uint inseg;
+    uint outseg;
+    uint forw_pp;               /* index to the next partition */
+    uint back_pp;               /* index to the previous partition */
+    uint region_id;             /* id of the "owning" region */
+    char inflip;		/* flip inhit->hit_normal */
+    char outflip;		/* flip outhit->hit_normal */
+};
+
+/**
+ * bit expr tree representation
+ *
+ * node:
+ *      uint uop : 3
+ *      uint right_child : 29
+ *
+ * leaf:
+ *      uint uop : 3
+ *      uint st_bit : 29
+ */
+struct tree_bit {
+    uint val;
+};
+
+struct bool_region {
+    uint btree_offset;          /* index to the start of the bit tree */
+    int reg_aircode;            /* Region ID AIR code */
+    int reg_bit;                /* constant index into Regions[] */
+    short reg_all_unions;       /* 1=boolean tree is all unions */
 };
 
 struct region;
@@ -70,6 +103,7 @@ struct accum {
     global uint *indexes;
     global uchar *prims;
     global struct region *regions;
+    global int *iregions;
     int lightmodel;
 };
 

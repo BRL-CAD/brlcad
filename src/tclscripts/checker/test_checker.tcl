@@ -457,4 +457,59 @@ file copy -force $testdb_bak $testdb
 check_mged_result "subtract first solid in recipe with -F" \
   [subSelection "-F" 1 subLeft] $testdb_sub_r1_F
 
+# Random 3
+puts "== Subtraction Behavior, DB 3 =="
+write_db $testdb "
+  $make_solids
+  comb c1 u a.s u d.s
+  comb c2 u c1
+  r r1 u c1
+  r r2 u e.s u b.s
+  comb all u r1 u r2
+"
+file copy -force $testdb $testdb_bak
+
+write_file $olfile "/all/r2 /all/r1 212.1077"
+
+write_db $testdb_sub_r1_F "
+  $make_solids
+  comb c1 u a.s u d.s
+  comb c2 u c1
+  r r1 u c1
+  r r2 u e.s - a.s u b.s
+  comb all u r1 u r2
+"
+
+write_db $testdb_sub_r2_F "
+  $make_solids
+  comb c1 u a.s - e.s u d.s
+  comb c2 u c1
+  r r1 u c1
+  r r2 u e.s u b.s
+  comb all u r1 u r2
+"
+
+# shouldn't be able to subtract either side without -F
+check_mged_result "dont subtract recipe without -F" \
+  [subSelection "" 1 subLeft] $testdb [set expect_fail true]
+
+file copy -force $testdb_bak $testdb
+
+check_mged_result "dont subtract recipe without -F" \
+  [subSelection "" 1 subRight] $testdb [set expect_fail true]
+
+file copy -force $testdb_bak $testdb
+
+# should be able to subtract either side with -F
+check_mged_result "subtract first solid with -F" \
+  [subSelection "-F" 1 subLeft] $testdb_sub_r1_F
+
+file copy -force $testdb_bak $testdb
+
+check_mged_result "subtract first solid with -F" \
+  [subSelection "-F" 1 subRight] $testdb_sub_r2_F
+
+file copy -force $testdb_bak $testdb
+
+# cleanup
 file delete -force $testdir

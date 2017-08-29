@@ -10,9 +10,9 @@ while [ "$1" != "" ]
 do
    case $1
    in
-     --enable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=ON";
+     --enable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=BUNDLED";
                                   shift;;
-     --disable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=OFF";
+     --disable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=SYSTEM";
                                   shift;;
      --enable-opengl)                options="$options -DBRLCAD_ENABLE_OPENGL=ON";
                                   shift;;

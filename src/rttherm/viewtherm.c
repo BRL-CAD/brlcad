@@ -59,6 +59,7 @@
 /* private */
 #include "../rt/rtuif.h"
 #include "../rt/ext.h"
+#include "../rt/scanline.h"
 #include "brlcad_ident.h"
 
 
@@ -112,17 +113,14 @@ extern int max_ireflect;	/* from refract.c */
 extern int curframe;		/* from main.c */
 extern fastf_t frame_delta_t;	/* from main.c */
 
-void free_scanlines(void);
 
 /***** variables shared with rt.c *****/
 extern char *outputfile;	/* name of base of output file */
 /***** end variables shared with rt.c *****/
 
 
-static struct scanline {
-    int sl_left;		/* # pixels left on this scanline */
-    char *sl_buf;		/* ptr to scanline array of spectra */
-} *scanline;
+static struct scanline *scanline = NULL;
+
 
 fastf_t spectrum_param[3] = {
     100, 380, 12000		/* # samp, min nm, max nm */
@@ -159,8 +157,8 @@ curve_attach(struct application *app)
     /* If scanline buffer has not yet been allocated, do so now */
     slp = &scanline[app->a_y];
     bu_semaphore_acquire(RT_SEM_RESULTS);
-    if (slp->sl_buf == (char *)0) {
-	slp->sl_buf = (char *)bn_tabdata_malloc_array(spectrum, width);
+    if (!slp->sl_buf) {
+	slp->sl_buf = (unsigned char *)bn_tabdata_malloc_array(spectrum, width);
     }
     bu_semaphore_release(RT_SEM_RESULTS);
     BN_CK_TABDATA(slp->sl_buf);	/* pun for first struct in array (sanity) */
@@ -291,7 +289,7 @@ view_pixel(struct application *app)
     }
 #endif /* MSWISS */
     bu_free(scanline[app->a_y].sl_buf, "sl_buf scanline buffer");
-    scanline[app->a_y].sl_buf = (char *)0;
+    scanline[app->a_y].sl_buf = NULL;
 }
 
 
@@ -311,7 +309,7 @@ void
 view_end(struct application *app)
 {
     RT_AP_CHECK(app);
-    free_scanlines();
+    free_scanlines(height, scanline);
 }
 
 
@@ -637,22 +635,6 @@ out:
 }
 
 
-void
-free_scanlines(void)
-{
-    size_t y;
-
-    for (y=0; y<height; y++) {
-	if (scanline[y].sl_buf) {
-	    bu_free(scanline[y].sl_buf, "sl_buf scanline buffer");
-	    scanline[y].sl_buf = (char *)0;
-	}
-    }
-    bu_free((char *)scanline, "struct scanline[height]");
-    scanline = (struct scanline *)0;
-}
-
-
 /*
  * Called once, early on in RT setup, before view size is set.
  */
@@ -706,10 +688,9 @@ view_2init(struct application *app, char *framename)
      * one in incremental mode)
      */
     if (!incr_mode || !scanline) {
-	if (scanline) free_scanlines();
-	scanline = (struct scanline *)bu_calloc(
-	    height, sizeof(struct scanline),
-	    "struct scanline[height]");
+	if (scanline)
+	    free_scanlines(height, scanline);
+	scanline = (struct scanline *)bu_calloc(height, sizeof(struct scanline), "struct scanline[height]");
     }
 
     /* Extra 2nd file! Write out spectrum info */

@@ -34,7 +34,7 @@
 struct tk_vars {
     GC gc;
     Pixmap pix;
-    mat_t *xmat;
+    fastf_t *xmat;
     mat_t mod_mat;		/* default model transformation matrix */
     mat_t disp_mat;		/* display transformation matrix */
     int is_trueColor;

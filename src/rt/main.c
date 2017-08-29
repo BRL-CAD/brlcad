@@ -85,9 +85,9 @@ extern int	pix_start;		/* pixel to start at */
 extern int	pix_end;		/* pixel to end at */
 extern int	nobjs;			/* Number of cmd-line treetops */
 extern char	**objtab;		/* array of treetop strings */
-long		n_malloc;		/* Totals at last check */
-long		n_free;
-long		n_realloc;
+size_t		n_malloc;		/* Totals at last check */
+size_t		n_free;
+size_t		n_realloc;
 extern int	matflag;		/* read matrix from stdin */
 extern int	orientflag;		/* 1 means orientation has been set */
 extern int	desiredframe;		/* frame to start at */
@@ -120,20 +120,19 @@ siginfo_handler(int UNUSED(arg))
 
 
 void
-memory_summary(long num_free_calls)
+memory_summary(void)
 {
     if (rt_verbosity & VERBOSE_STATS)  {
-	long	mdelta = bu_n_malloc - n_malloc;
-	long	fdelta = num_free_calls - n_free;
-	fprintf(stderr,
-		"Additional #malloc=%ld, #free=%ld, #realloc=%ld (%ld retained)\n",
-		mdelta,
-		fdelta,
-		bu_n_realloc - n_realloc,
-		mdelta - fdelta);
+	size_t mdelta = bu_n_malloc - n_malloc;
+	size_t fdelta = bu_n_free - n_free;
+	bu_log("Additional #malloc=%zu, #free=%zu, #realloc=%zu (%zu retained)\n",
+	       mdelta,
+	       fdelta,
+	       bu_n_realloc - n_realloc,
+	       mdelta - fdelta);
     }
     n_malloc = bu_n_malloc;
-    n_free = num_free_calls;
+    n_free = bu_n_free;
     n_realloc = bu_n_realloc;
 }
 
@@ -144,7 +143,6 @@ int main(int argc, const char **argv)
     char idbuf[2048] = {0};			/* First ID record info */
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
-    long n_free_calls = 0;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -157,8 +155,17 @@ int main(int argc, const char **argv)
     elevation = 25.0;
 
     AmbientIntensity = 0.4;
+#ifndef RT_MULTISPECTRAL
     background[0] = background[1] = 0.0;
     background[2] = 1.0/255.0; /* slightly non-black */
+#else
+    {
+	extern struct bn_table *bn_table_make_visible_and_uniform(int num, double first, double last, int vis_nsamp);
+	extern fastf_t spectrum_param[];
+	spectrum = bn_table_make_visible_and_uniform((int)spectrum_param[0], spectrum_param[1], spectrum_param[2], 20);
+	BN_GET_TABDATA(background, spectrum);
+    }
+#endif
 
     /* Before option processing, get default number of processors */
     npsw = bu_avail_cpus();		/* Use all that are present */
@@ -353,7 +360,7 @@ int main(int argc, const char **argv)
     if (rt_verbosity & VERBOSE_STATS)
 	bu_log("DIRBUILD: %s\n", bu_vls_addr(&times));
     bu_vls_free(&times);
-    memory_summary(n_free_calls);
+    memory_summary();
 
     /* Copy values from command line options into rtip */
     rtip->rti_space_partition = space_partition;
@@ -442,7 +449,7 @@ int main(int argc, const char **argv)
     for (i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&resource[i], i, rtip);
     }
-    memory_summary(n_free_calls);
+    memory_summary();
 
 #ifdef SIGUSR1
     (void)signal(SIGUSR1, siginfo_handler);
@@ -483,7 +490,6 @@ int main(int argc, const char **argv)
 		fprintf(stderr, "cmd: %s\n", buf);
 	    ret = rt_do_cmd( rtip, buf, rt_cmdtab);
 	    bu_free( buf, "rt_read_cmd command buffer");
-	    n_free_calls++;
 	    if (ret < 0)
 		break;
 	}

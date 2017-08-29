@@ -1516,7 +1516,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 #ifdef RT_MULTISPECTRAL
 	/* XXX Need a power level for this! */
-	bn_tabdata_constval(((struct bn_tabdata *)los->inten), 1.0);
+	bn_tabdata_constval(*(los->inten), 1.0);
 #else
 	VSETALL(((vectp_t)los->inten), 1);
 #endif
@@ -1675,8 +1675,12 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 
 	los.lsp = lsp;
 #ifdef RT_MULTISPECTRAL
-	if (swp->msw_intensity[i]) BN_CK_TABDATA(swp->msw_intensity[i]);
-	los.inten = &swp->msw_intensity[i];
+	if (swp->msw_intensity[i]) {
+	    BN_CK_TABDATA(swp->msw_intensity[i]);
+	    los.inten = &swp->msw_intensity[i];
+	} else {
+	    bn_tabdata_constval(*los.inten, 1.0); /* punt */
+	}
 #else
 	los.inten = &swp->sw_intensity[3*i];
 #endif

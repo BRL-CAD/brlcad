@@ -1092,6 +1092,51 @@ rt_optim_tree(union tree *tp, struct resource *resp)
 }
 
 
+#ifdef USE_OPENCL
+void
+rt_bit_tree(struct bit_tree *btp, const union tree *tp, size_t *len)
+{
+    int idx;
+    uint st_bit, uop, rchild;
+
+    if (tp == TREE_NULL)
+        return;
+
+    idx = (*len)++;
+    switch (tp->tr_op) {
+        case OP_SOLID:
+            /* Tree Leaf */
+            st_bit = tp->tr_a.tu_stp->st_bit;
+            if (btp) btp[idx].val = (st_bit << 3) | UOP_SOLID;
+            return;
+        case OP_SUBTRACT:
+            uop = UOP_SUBTRACT;
+            break;
+        case OP_UNION:
+            uop = UOP_UNION;
+            break;
+        case OP_INTERSECT:
+            uop = UOP_INTERSECT;
+            break;
+        case OP_XOR:
+            uop = UOP_XOR;
+            break;
+        default:
+            bu_log("rt_bit_tree: bad op[%d]\n", tp->tr_op);
+            exit(1);
+            break;
+    }
+
+    rt_bit_tree(btp, tp->tr_b.tb_left, len);
+
+    rchild = *len;
+    if (btp) btp[idx].val = (rchild << 3) | uop;
+
+    rt_bit_tree(btp, tp->tr_b.tb_right, len);
+}
+#endif
+
+
 /*
  * Local Variables:
  * mode: C

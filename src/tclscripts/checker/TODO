@@ -60,6 +60,20 @@
    Could also have nav buttons that just take you to the last
    position.
 
+*** Solution
+
+    Have multiple lists in multiple tabs according to tag. Overlaps
+    can be tagged as unresolved (default), completed, or failed. They
+    then move to the matching tab.
+
+    More compact to just have a list-box to select a view, but more
+    clicks to switch.
+
+    Or, have headlining buttons, plus a "+" to launch a dialog to
+    manage custom tags. Then just press what you want to see.
+
+    Plus option to toggle union, intersection, or inverse of selected.
+
 ** Add Ability to Jump to a Specific Overlap
    Goto number, or just a search, or maybe a page up/down. It's very
    hard to get to a specific overlap right now.

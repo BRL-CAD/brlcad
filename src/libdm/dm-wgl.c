@@ -1116,6 +1116,7 @@ wgl_drawVList(dm *dmp, struct bn_vlist *vp)
     register int mflag = 1;
     float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLfloat originalPointSize, originalLineWidth;
+    GLfloat m[16];
 
     glGetFloatv(GL_POINT_SIZE, &originalPointSize);
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
@@ -1159,6 +1160,17 @@ wgl_drawVList(dm *dmp, struct bn_vlist *vp)
 
 		    glBegin(GL_LINE_STRIP);
 		    glVertex3dv(glpt);
+		    break;
+		case BN_VLIST_MODEL_MAT:
+		    glMatrixMode(GL_PROJECTION);
+		    glLoadIdentity();
+		    glLoadMatrixf(m);
+		    break;
+		case BN_VLIST_DISPLAY_MAT:
+		    glMatrixMode(GL_PROJECTION);
+		    glGetFloatv (GL_PROJECTION_MATRIX, m);
+		    glPopMatrix();
+		    glLoadIdentity();
 		    break;
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_TRI_START:

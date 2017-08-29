@@ -1192,25 +1192,9 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 int
-rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
+rt_arb_class(const struct soltab *UNUSED(stp), const fastf_t *UNUSED(min), const fastf_t *UNUSED(max), const struct bn_tol *UNUSED(tol))
 {
-    register struct arb_specific *arbp =
-	(struct arb_specific *)stp->st_specific;
-    register int i;
-
-    if (arbp == (struct arb_specific *)0) {
-	bu_log("arb(%s): no faces\n", stp->st_name);
-	return BN_CLASSIFY_UNIMPLEMENTED;
-    }
-
-    for (i = 0; i < arbp->arb_nmfaces; i++) {
-	if (bn_hlf_class(arbp->arb_face[i].peqn, min, max, tol) ==
-	    BN_CLASSIFY_OUTSIDE)
-	    return BN_CLASSIFY_OUTSIDE;
-    }
-
-    /* FIXME: We need to test for BN_CLASSIFY_INSIDE vs. BN_CLASSIFY_OVERLAPPING! */
-    return BN_CLASSIFY_UNIMPLEMENTED; /* let the caller assume the worst */
+    return 0;
 }
 
 
