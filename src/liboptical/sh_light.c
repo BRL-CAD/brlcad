@@ -1678,8 +1678,6 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	if (swp->msw_intensity[i]) {
 	    BN_CK_TABDATA(swp->msw_intensity[i]);
 	    los.inten = &swp->msw_intensity[i];
-	} else {
-	    bn_tabdata_constval(*(los.inten), 1.0); /* punt */
 	}
 #else
 	los.inten = &swp->sw_intensity[3*i];
