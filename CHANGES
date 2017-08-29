@@ -19,10 +19,9 @@ Changes MUST either be:
 MINIMALLY IMPACTING
 -------------------
 
-Changes deemed to be "minimally impacting" can be made at any time.
-For a change to be considered minimally impacting, its effect is
-strictly limited.  They are listed in the MINIMALLY IMPACTING CHANGES
-section below.  They MUST be:
+Changes deemed "minimally impacting" can be made at any time.  For a
+change to be considered as such, its effect must be strictly limited.
+Most are itemized under MINIMALLY IMPACTING CHANGES.  They MUST be:
 
     A.1) a relatively new interface
 
@@ -119,11 +118,11 @@ under MINIMALLY IMPACTING CHANGES.
 **********************************************************************
                     (reverse chronological order)
 
-The items listed below are interfaces that are deprecated, meaning
-they are slated for significant change or removal.  They are
-categorized by the release in which the deprecation was first
-announced.  If the change involved a removal of a command or function,
-both the original and new names are generally listed for reference.
+The interfaces announced below are scheduled to significantly change
+or be removed.  They are categorized by the release in which
+deprecation was first announced.  If the inteface change involved a
+removal or transition, both the original and new interface names are
+generally listed for reference.
 
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
