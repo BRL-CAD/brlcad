@@ -334,6 +334,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
     VSETALL(semi_a, 0);
     VSETALL(semi_b, 0);
     VSETALL(center, 0);
+    VSETALL(V, 0);
 
     lng = (uint32_t *)seg;
     switch (*lng) {
@@ -1710,9 +1711,8 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 		rt_check_pos(tsg, &rel_pos);
 		sprintf(buf, "\t\tRelative position: %s\n", rel_pos);
 		bu_vls_strcat(str, buf);
-		snprintf(buf, 256, "\tLabel text: ");
+		sprintf(buf, "\tLabel text: %s\n", bu_vls_addr(&tsg->label));
 		bu_vls_strcat(str, buf);
-		bu_vls_vlscat(str, &tsg->label);
 		break;
 	    case CURVE_CARC_MAGIC:
 		csg = (struct carc_seg *)annot_ip->ant.segments[seg_no];
@@ -2063,7 +2063,7 @@ ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 		{
 		    struct txt_seg *tsg = (struct txt_seg *)ant->segments[j];
 		    rt_check_pos(tsg, &rel_pos);
-		    bu_vls_printf(vls, " { label %s ref_pt %d position %d }", tsg->label, tsg->ref_pt, rel_pos);
+		    bu_vls_printf(vls, " { label %s ref_pt %d position %s }", bu_vls_addr(&tsg->label), tsg->ref_pt, rel_pos);
 		}
 		break;
 	    case CURVE_CARC_MAGIC:

@@ -63,8 +63,6 @@ __BEGIN_DECLS
 
 
 #define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
-#define BN_VLIST_DISP_MODE_ON 1		/**< @brief display mode on */
-#define BN_VLIST_DISP_MODE_OFF 2	/**< @brief display mode off */
 
 struct bn_vlist  {
     struct bu_list l;		/**< @brief magic, forw, back */
