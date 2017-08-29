@@ -2,118 +2,130 @@
 BRL-CAD Interface Change Policy
 ===============================
 
-Included below are details of BRL-CAD public interface changes that
-potentially impact external developers and users.  Public interfaces
-include developer application programming interface (API) calls as
-well as user application command-line interface (CLI) and graphical
-user interface (GUI) behaviors.  Changes are characterized as:
-
-    1) those affecting a new interface,
-    2) being minimally impacting, or
-    3) requiring adherence to deprecation policy.
-
-This policy is intentionally designed to balance developer agility,
-helping accelerate development, with interface stability, helping
-preserve application developer and user investments.
+This policy describes formal rules for changing an interface that
+potentially impacts developers or users.  The scope is limited to
+public interfaces including developer application programming
+interfaces (APIs), user application command-line interfaces (CLIs),
+and graphical user interfaces (GUIs).  The policy aims to balance
+developer agility with interface stability.
 
 All changes to BRL-CAD are expected to conform to this change policy.
+Changes MUST either be:
 
-
-NEW INTERFACE
--------------
-
-Changes to interfaces that have been recently introduced are often
-subject to further change and should not yet be relied upon by
-application developers or users until they stabilize.  They are
-allowed to change from release to release and are not subject to
-change policy restrictions until they have been included in at least
-TWO releases without any change.
+    A) MINIMALLY IMPACTING, or
+    B) FORMALLY DEPRECATED.
 
 
 MINIMALLY IMPACTING
 -------------------
 
-If a change to an interface has a suitable and completely equivalent
-alternative, the change is deemed to be "minimally impacting" and can
-be made during any release.  Examples of such changes include renaming
-an interface, reordering parameters, adding optional parameters,
-adding additional parameters for previously implicit behavior, and
-removing unused parameters.
+Changes deemed to be "minimally impacting" can be made at any time.
+For a change to be considered minimally impacting, its effect is
+strictly limited.  They are listed in the MINIMALLY IMPACTING CHANGES
+section below.  They MUST be:
 
-Generally, the impact can usually be considered minimally impacting if
-a static regular expression search-and-replace is all that is needed
-to update calling code, and no manual intervention is required.
+    A.1) a relatively new interface
+
+        Interfaces introduced recently are often subject to rapid
+        development change.  New interfaces are not subject to formal
+        deprecation rules until they have been included in at least
+        TWO releases without change.
+
+    A.2) an appreciably broken interface
+
+        Interfaces that have been unusable for at least TWO releases
+        may be fixed, changed, or removed without notice.  A broken
+        interface is one that does not perform its intended function
+        and does not have secondary utility.
+
+    A.3) an elementary change
+
+        Simple changes that are trivially accommodated without
+        conditional logic or manual inspection can be made at will.
+        It includes mechanical changes that can be automatically
+        updated by a single static regular expression substitution.
+
+        Examples include renaming, reordering parameters, adding
+        optional parameters, eliminating a duplicate equivalent
+        interface, adding parameters for implicit behavior, and
+        removing unused parameters.
 
 
-DEPRECATION POLICY
-------------------
+FORMALLY DEPRECATED
+-------------------
 
-If a change will intentionally alter, replace, or remove functionality
-that has been documented and published in at least TWO releases, it
-must first be announced as DEPRECATED.  Otherwise, changes to
-interfaces that have not been publicly announced or are not publicly
-documented for at least two releases may be changed without notice.
+Changes not minimally impacting must follow formal deprecation
+process.  This defers significant changes to major release points or
+requires public notification in advance.  Changes are documented in
+this file first as DEPRECATED CHANGES then later as OBSOLETED CHANGES.
+An interface may be changed:
 
-The general practice is that public interface changes may go from
-deprecated to obsolete, whereby previous behavior is removed or
-changed, during one of the following events:
+    B.1) during a major release (e.g. from 7.*.* to 8.*.*)
 
-a) during a major release (e.g. going from 7.*.* to 8.*.*)
+        Any change may be made without notice.  Major version number
+        releases imply intrinsic incompatibility or interface change.
 
-b) during a minor release provided the change was publicly announced
-   as deprecated beforehand AND sufficient deprecation warning was
-   given via i) TWO minor releases included the deprecation notice,
-   and ii) at least THREE months (90 days) have passed since the
-   deprecation was announced
+    B.2) during a minor release (e.g., from 7.26.* to 7.28.*)
 
-c) during any release provided there still exists an EQUIVALENT
-   alternative interface that does not impose an undue burden on users
-   or developers (see "MINIMALLY IMPACTING")
+        The interface must be publicly deprecated beforehand with
+        advance notice given in at least TWO minor releases and after
+        at least 90 days elapsed since initial release announcement.
 
-Public interfaces scheduled for removal should be visibly marked as
-deprecated during compilation with the DEPRECATED keyword on function
-declarations, with #warning "DEPRECATED ..." pre-processor statements,
-and with @DEPRECATED in source code comments.  Where users are not
-adversely affected, a run-time DEPRECATION statement may be printed.
+Public interfaces scheduled for change should be noted in this file
+and visibly marked in the source code.  This marking may be the
+DEPRECATED keyword on function declarations, #warning "DEPRECATED ..."
+pre-processor statements, @DEPRECATED source code comments, and
+combinations thereof.
 
-Whenever published functionality is finally removed, move its entry
-from the DEPRECATED section below to the REMOVED section for the
-version in which it was removed.  Make sure the entry retains a
-reference to the version in which the item was marked as deprecated.
+Where usage is not adversely affected, a run-time statement may be
+displayed (typically "DEPRECATION WARNING: ...").  All call references
+and documentation should be updated prior to obsoleting.
 
 
 EXAMPLES
 --------
 
-Example #1: Say we decided during 7.50.3 development to remove
-rt_shootray() from the API without a replacement. That does NOT
-qualify as "minimally impacting" because there's no replacement and
-rt_shootray() has been published and documented in more than two
-releases.  We'd annotate the deprecation in the CHANGES file, mark the
-function as DEPRECATED in the API header, and post the 7.50.4 release.
-The soonest that function could be removed would be in the 7.54.0
-release during 7.53 development.  It could NOT be removed in 7.54.2
-since it's a patch version, prior to the 7.54 release line, nor even
-during 7.54.0 if less than 90 days had passed since 7.50.6 was posted.
+Example #1: rt_shootray() removal
 
-Example #2: Say we decide during 7.48.0 development to modify bu_log()
-by adding a new additional enum parameter denoting a message type.
-This change is considered minimally impacting because it can be
-characterized by a simple regular expression (e.g.,
-s/bu_log(/bu_log(PRINT, /g).  Updates to calling codes are considered
-trivial.  The change would get documented in the CHANGES file and all
-calls that can be updated must be updated at that time.
+It's decided during 7.50.3 development to remove the rt_shootray()
+function. That does NOT qualify as "minimally impacting" because
+there's no equivalent replacement and rt_shootray() has been published
+and documented in more than two releases.  The function gets listed as
+DEPRECATED in the CHANGES file, marked as DEPRECATED in the API
+header, and is published via the 7.50.4 release.
+
+The soonest that function could be removed / obsoleted would be in
+7.54.0 during 7.53.* development provided more than 90 days had passed
+since the intiial announcement.  It could NOT be removed in 7.54.2 as
+that's a patch version, prior to 7.54, nor during 7.54.0 if less than
+90 days had passed since 7.50.6 was posted.
+
+Example #2: bu_log() mod
+
+It's decided during 7.48.1 development to modify bu_log() by adding an
+additional optional enum parameter denoting a message type, e.g.,
+bu_log(INFO, ...).  This change is considered "minimally impacting"
+because it can be characterized by a simple regular expression (e.g.,
+"s/bu_log\(/bu_log(INFO, /g)" and calling codes are trivially
+accommodated.  All calls to bu_log() should be updated to the new form
+prior to change announcement.
+
+The function could be changed at any time so long as it's documented
+under MINIMALLY IMPACTING CHANGES.
 
 
-**************
-* DEPRECATED *
-**************
+**********************************************************************
+***                       DEPRECATED CHANGES                       ***
+**********************************************************************
+                    (reverse chronological order)
 
-The items listed below are interfaces that are deprecated.  They are
-categorized by the release in which the change was made.  If the
-change involved a removal of a command or function, both the original
-and new names should be listed for reference.  If an item is marked
-with a "'" (single quote), that means it was not documented and may be
+The items listed below are interfaces that are deprecated, meaning
+they are slated for significant change or removal.  They are
+categorized by the release in which the deprecation was first
+announced.  If the change involved a removal of a command or function,
+both the original and new names are generally listed for reference.
+
+Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
 7.28
@@ -121,6 +133,7 @@ removed at any time.
 
 include/vmath.h
         VCOMB3, VCOMB3N, VJOIN4
+        Removed as inconsistent and unused API [deprecated 7.28]
 
 MGED commands
 	?devel, ?lib, aproposdevel, aproposlib, %, animmate, db_glob,
@@ -365,13 +378,10 @@ include/raytrace.h
 	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
 
 
-***********
-* REMOVED *
-***********
-
-Below are the interfaces that have followed deprecation policy or were
-deemed minimally impacting and, regardless, are now no longer a part
-of BRL-CAD.
+**********************************************************************
+***                       OBSOLETED CHANGES                        ***
+**********************************************************************
+                    (reverse chronological order)
 
 7.26.0
 ------
@@ -614,27 +624,26 @@ include/[library].h (several)
 	[library]_version -> [library]_version() [private]
 
 
-***********************************
-* MINIMALLY IMPACTING API CHANGES *
-***********************************
+**********************************************************************
+***                  MINIMALLY IMPACTING CHANGES                   ***
+**********************************************************************
+                    (forward chronological order)
 
-Included in following are various minimally impacting API changes that
-have been identified in chronological order.  As expressions are not
-extensively tested, use with caution.
-
-Unless noted otherwise, expressions are shown using Perl syntax (i.e.,
-the '(', ')', and '|' characters pertain to subexpression captures,
-escape with '\' to match literally.  Expressions should apply with:
+All minimally impacting changes are listed by release as regular
+expressions.  Unless noted otherwise, expressions are shown using Perl
+syntax (i.e., the '(', ')', and '|' characters pertain to
+subexpression captures, escaping with '\' matches literally.
+Expressions should apply via:
 
 perl -0777 -pi -e 'EXPRESSION' FILE
 
-To apply an expression to an entire SVN checkout, the following
-pattern is useful:
+To apply an expression to an entire source tree, the following pattern
+may work:
 
 find . -type f -not -path "*.svn/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 'EXPRESSION' {} \;
 
-Our catalog of minimally impacting changes follows with the most
-recent changes listed at the bottom.
+Expressions are minimally tested, use with caution.  Make a backup.
+
 
 6.0 (sed lines)
 ---
