@@ -351,6 +351,17 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	}
     }
 
+    /* Collect info for DSP */
+    double px, py = 0.0;
+    double cx, cy = 0.0;
+    double fGeoT[6];
+    if (GDALGetGeoTransform(flatDS, fGeoT) == CE_None) {
+	px = fGeoT[0];
+	py = fGeoT[3];
+	cx = fGeoT[0] + fGeoT[1] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[2] * GDALGetRasterYSize(flatDS)/2.0;
+	cy = fGeoT[3] + fGeoT[4] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[5] * GDALGetRasterYSize(flatDS)/2.0;
+    }
+
     /* Got it - write the binary object to the .g file */
     mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, count);
 
@@ -391,8 +402,9 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     dsp->dsp_stom[10] = bu_units_conversion(dunit);
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
 
-    bu_log("pixel: %f, conv: %f\n", adfGeoTransform[1], dsp->dsp_stom[0]);
-    bu_log("z: %f\n", dsp->dsp_stom[10]);
+    /* Position xy (TODO - add an option to put the dsp center at 0,0...) */
+    dsp->dsp_stom[3] = px * bu_units_conversion(dunit);
+    dsp->dsp_stom[7] = py * bu_units_conversion(dunit);
 
     wdb_export(state->wdbp, "test.s", (void *)dsp, ID_DSP, 1);
 
