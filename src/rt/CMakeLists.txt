@@ -107,6 +107,8 @@ set_target_properties(librttherm PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(librttherm PROPERTIES FOLDER "BRL-CAD Static Libraries")
 
 set(rt_ignore_files
+  ${LIBREMRT_SOURCES}
+  heatgraph.c
   ext.h
   libfb-dummy.c
   rad.h

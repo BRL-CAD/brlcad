@@ -32,6 +32,8 @@
 #ifndef RT_EXPORT
 #  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
 #    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
+#  elif defined(STATIC_BUILD)
+#    define RT_EXPORT
 #  elif defined(RT_DLL_EXPORTS)
 #    define RT_EXPORT __declspec(dllexport)
 #  elif defined(RT_DLL_IMPORTS)

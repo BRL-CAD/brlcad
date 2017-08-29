@@ -172,7 +172,6 @@ set(conv_ignore_files
   dbclean.sh
   dxf/dxf.h
   intaval-g.py
-  off
   patch/patch-g.h
   patch/pull_comp.sh
   patch/pull_solidsub.sh

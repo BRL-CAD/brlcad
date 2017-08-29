@@ -1,13 +1,23 @@
 if(BRLCAD_EXTRADOCS)
   verbose_add_subdirectory(doc docbook)
 else(BRLCAD_EXTRADOCS)
-  CMAKEFILES(docbook)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/docbook_files.cmake)
+  CMAKEFILES_IN_DIR(docbook_files docbook)
 endif(BRLCAD_EXTRADOCS)
 
 verbose_add_subdirectory(doc html)
 verbose_add_subdirectory(doc legal)
 
-CMAKEFILES(parsers)
+CMAKEFILES(
+  parsers/bison_to_lemon.txt
+  parsers/flex_to_re2c.txt
+  parsers/templates/CMakeLists.txt
+  parsers/templates/main.c
+  parsers/templates/main.h
+  parsers/templates/parser.lemon
+  parsers/templates/scanner.perplex
+  parsers/writing_perplex_lemon_parsers.txt
+  )
 
 set(documentation_DATA
   IDEAS
@@ -222,6 +232,7 @@ CMAKEFILES(
   STARTERS
   STRATEGY
   csv_to_comgeom.txt
+  docbook_files.cmake
   implicit_constraints.txt
   lcov.txt
   pad_file.xml.in

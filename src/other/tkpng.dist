@@ -1,6 +1,11 @@
-SET(tkpng_ignore_files
+set(tkpng_ignore_files
+CMake/FindTCL.cmake
+CMake/FindX11.cmake
+CMake/FindZLIB.cmake
+CMakeLists.txt
 README
+generic/tkImgPNG.c
+generic/tkImgPNGInit.c
 license.terms
 pkgIndex.tcl.in
-CMake
 )

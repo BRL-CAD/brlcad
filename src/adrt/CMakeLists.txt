@@ -89,7 +89,10 @@ add_subdirectory(master)
 
 set(adrt_ignore_files
   load.h
-  slave
+  slave/slave.c
+  slave/tienet_slave.h
+  slave/tienet_slave.c
+  slave/slave.h
   tienet.h
   )
 CMAKEFILES(${adrt_ignore_files})

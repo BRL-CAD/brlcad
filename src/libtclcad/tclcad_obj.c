@@ -9216,6 +9216,9 @@ to_mouse_poly_circ(struct ged *gedp,
 
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    if (gedp->ged_gvp->gv_grid.snap) {
+	ged_snap_to_grid(gedp, &fx, &fy);
+    }
 
     bu_vls_printf(&plist, "{0 ");
 
@@ -9426,6 +9429,9 @@ to_mouse_poly_ell(struct ged *gedp,
 
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    if (gedp->ged_gvp->gv_grid.snap) {
+	ged_snap_to_grid(gedp, &fx, &fy);
+    }
 
     bu_vls_printf(&plist, "{0 ");
 
@@ -9553,6 +9559,9 @@ to_mouse_poly_rect(struct ged *gedp,
 
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    if (gedp->ged_gvp->gv_grid.snap) {
+	ged_snap_to_grid(gedp, &fx, &fy);
+    }
 
     if (gdvp->gdv_view->gv_mode == TCLCAD_POLY_SQUARE_MODE) {
 	fastf_t dx, dy;

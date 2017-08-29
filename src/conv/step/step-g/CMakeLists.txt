@@ -463,16 +463,6 @@ BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
 add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
 set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
 
-if(USE_COTIRE)
-  # Use cotire (https://github.com/sakra/cotire) to manage precompiled
-  # headers in order to speed up building step-g
-  include(cotire)
-  set_target_properties(step-g PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
-  cotire(step-g)
-  # Make sure the cotire targets know to wait for the schema generation to finish
-  add_dependencies(step-g_pch_pre step-express-${SCHEMA_NAME}-stepg)
-endif(USE_COTIRE)
-
 if(MSVC)
   set(stepg_IMPORTS
     BU_DLL_IMPORTS

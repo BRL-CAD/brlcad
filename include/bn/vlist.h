@@ -143,7 +143,7 @@ struct bn_vlist  {
 }
 
 /** Change the transformation matrix to model */
-#define BN_VLIST_SET_MODEL_MAT(_free_hd, _dest_hd, _ref_pt) { \
+#define BN_VLIST_SET_MODEL_MAT(_free_hd, _dest_hd) { \
 	struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
@@ -151,7 +151,7 @@ struct bn_vlist  {
 	    BN_GET_VLIST(_free_hd, _vp); \
 	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
 	} \
-	VMOVE(_vp->pt[_vp->nused], (_ref_pt)); \
+	_vp->pt[_vp->nused][0] = 0; \
 	_vp->cmd[_vp->nused++] = BN_VLIST_MODEL_MAT; \
 }
 

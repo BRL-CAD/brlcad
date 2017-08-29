@@ -892,7 +892,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    privars->xmat = &(privars->mod_mat);
 		    continue;
 		case BN_VLIST_DISPLAY_MAT:
-		    MAT4X3PNT(tlate, (privars->disp_mat), *pt);
+		    MAT4X3PNT(tlate, (privars->mod_mat), *pt);
 		    privars->disp_mat[3] = privars->disp_mat[3] - tlate[0];
 		    privars->disp_mat[7] = privars->disp_mat[7] - tlate[1];
 		    privars->disp_mat[11] = privars->disp_mat[11] - tlate[2];

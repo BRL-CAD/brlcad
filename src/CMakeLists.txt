@@ -149,7 +149,7 @@ endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 
 # This corresponds roughly to the libbrlcad originally defined in BRL-CAD
 # autotools build.
-if(BRLCAD_BUILD_LIBBRLCAD AND USE_OBJECT_LIBS)
+if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
   set(current_level 1)
   while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
     set(wl 1)
@@ -172,7 +172,7 @@ if(BRLCAD_BUILD_LIBBRLCAD AND USE_OBJECT_LIBS)
     endif("${current_level}" EQUAL 2)
     math(EXPR current_level "${current_level} + 1")
   endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
-endif(BRLCAD_BUILD_LIBBRLCAD AND USE_OBJECT_LIBS)
+endif(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
 
 CMAKEFILES(README)
 

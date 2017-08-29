@@ -39,6 +39,8 @@ __BEGIN_DECLS
 #ifndef GED_EXPORT
 #  if defined(GED_DLL_EXPORTS) && defined(GED_DLL_IMPORTS)
 #    error "Only GED_DLL_EXPORTS or GED_DLL_IMPORTS can be defined, not both."
+#  elif defined(STATIC_BUILD)
+#    define GED_EXPORT
 #  elif defined(GED_DLL_EXPORTS)
 #    define GED_EXPORT __declspec(dllexport)
 #  elif defined(GED_DLL_IMPORTS)

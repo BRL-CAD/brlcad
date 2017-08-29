@@ -34,24 +34,34 @@
 
 
 int do_projection = 1;
-char eor, eof, card[256];
-fastf_t scale, inv_scale, conv_factor;
-int units, counter, pstart, dstart;
-size_t totentities, dirarraylen;
-FILE *fd;
-struct rt_wdb *fdout;
-char brlcad_file[256];
-int reclen, currec, ntypes;
+char eor = 0;
+char eof = -1;
+char card[256] = {0};
+fastf_t scale = 0.0;
+fastf_t inv_scale = 0.0;
+fastf_t conv_factor = 0.0;
+int units = 0;
+int counter = 0;
+int pstart = 0;
+int dstart = 0;
+size_t totentities = 0;
+size_t dirarraylen = 0;
+FILE *fd = NULL;
+struct rt_wdb *fdout = NULL;
+char brlcad_file[256] = {0};
+int reclen = 0;
+int currec = 0;
+int ntypes = 0;
 int brlcad_att_de = 0;
-struct iges_directory **dir;
-struct reglist *regroot;
-struct iges_edge_list *edge_root;
-struct iges_vertex_list *vertex_root;
-struct bn_tol tol;
-char *solid_name = (char *)NULL;
-struct file_list iges_list;
-struct file_list *curr_file;
-struct name_list *name_root;
+struct iges_directory **dir = NULL;
+struct reglist *regroot = NULL;
+struct iges_edge_list *edge_root = NULL;
+struct iges_vertex_list *vertex_root = NULL;
+struct bn_tol tol = BN_TOL_INIT_ZERO;
+char *solid_name = NULL;
+struct file_list iges_list = IGES_FILE_LIST_INIT_ZERO;
+struct file_list *curr_file = NULL;
+struct name_list *name_root = NULL;
 
 char operators[] = {
     ' ',
@@ -59,7 +69,7 @@ char operators[] = {
     '+',
     '-' };
 
-mat_t *identity;
+mat_t *identity = NULL;
 
 
 static int do_splines = 0;
@@ -67,7 +77,7 @@ static int do_drawings = 0;
 static int trimmed_surf = 0;
 int do_bots = 1;
 
-static char *iges_file;
+static char *iges_file = NULL;
 
 static char *msg1 =
 "\nThis IGES file contains solid model entities, but your options do not permit\n\

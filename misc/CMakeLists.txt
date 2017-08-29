@@ -50,48 +50,94 @@ BRLCAD_ADDDATA(profont/ProFont.ttf fonts)
 BRLCAD_ADDDATA(nsis/brlcad.ico icons)
 BRLCAD_ADDDATA(nsis/archer.ico icons)
 
-if(DOXYGEN_FOUND)
-  add_subdirectory(doxygen)
-else(DOXYGEN_FOUND)
-  set(misc_ignore_files doxygen)
-endif(DOXYGEN_FOUND)
+add_subdirectory(doxygen)
+add_subdirectory(CMake)
+add_subdirectory(d-bindings)
+add_subdirectory(debian)
+add_subdirectory(osl_shaders)
 
 set(misc_ignore_files
-  ${misc_ignore_files}
   Bullet_Box_Chain_Demo.cpp
-  CMake
   Description.txt
   Makefile.defs
-  archlinux
+  archlinux/PKGBUILD
+  archlinux/brlcad.install
   astyle.opt
-  auto-man-page
+  auto-man-page/BIN_OPT_ARG_ANALYSIS.txt
+  auto-man-page/README.auto-man-page-handling
+  auto-man-page/auto-man-progs.txt
   batch-indent-region.el
   brlcad-config.in
   brlcad.spec.in
   clang-static-analyzer-run.sh
-  d-bindings
-  debian
   flawfinder
   jove.emacs
-  macosx
+  macosx/README
+  macosx/Resources/License.rtf
+  macosx/Resources/ReadMe.rtfd/.typeAttributes.dict
+  macosx/Resources/ReadMe.rtfd/TXT.rtf
+  macosx/Resources/ReadMe.rtfd/brlcad_logo_tiny.png
+  macosx/Resources/Welcome.rtfd/.typeAttributes.dict
+  macosx/Resources/Welcome.rtfd/TXT.rtf
+  macosx/Resources/Welcome.rtfd/brlcad_logo_tiny.png
+  macosx/background.png
+  macosx/openUp.c
   mime.types
   mime_cad.types
-  nsis
-  osl_shaders
+  nsis/archer.ico
+  nsis/brlcad.ico
+  nsis/header.bmp
+  nsis/side.bmp
+  nsis/uninstall.ico
   profont/LICENSE
   profont/profont-IIx-charmap.png
   profont/profont_IIx_readme.pdf
   profont/readme.txt
-  svn2git
+  svn2git/README
+  svn2git/account-map
+  svn2git/archive_branches.sh
+  svn2git/rules
+  svn2git/svn2git/CMake/FindAPR.cmake
+  svn2git/svn2git/CMake/FindSubversionLibrary.cmake
+  svn2git/svn2git/CMakeLists.txt
+  svn2git/svn2git/COPYING
+  svn2git/svn2git/CommandLineParser.cpp
+  svn2git/svn2git/CommandLineParser.h
+  svn2git/svn2git/README
+  svn2git/svn2git/main.cpp
+  svn2git/svn2git/repository.cpp
+  svn2git/svn2git/repository.h
+  svn2git/svn2git/ruleparser.cpp
+  svn2git/svn2git/ruleparser.h
+  svn2git/svn2git/samples/ignore-branch.rules
+  svn2git/svn2git/samples/merged-branches-tags.rules
+  svn2git/svn2git/samples/min-max-revision.rules
+  svn2git/svn2git/samples/recurse.rules
+  svn2git/svn2git/samples/standardlayout.rules
+  svn2git/svn2git/samples/two-projects.rules
+  svn2git/svn2git/svn.cpp
+  svn2git/svn2git/svn.h
+  svn2git/svnlog2csv
   uncpowerplant2g.sh
-  win32-msvc
-  wix
+  win32-msvc/CMakeLists.txt
+  win32-msvc/Dll/BrlcadCore.def
+  win32-msvc/Dll/BrlcadCore.rc
+  win32-msvc/Dll/CMakeLists.txt
+  win32-msvc/Dll/TclDummies.c
+  win32-msvc/Dll/brlcad.def
+  win32-msvc/Dll/brlcad.rc
+  win32-msvc/bootstrap.cpp
+  wix/License.rtf
+  wix/brlcad_banner.bmp
+  wix/brlcad_dialog.bmp
+  wix/brlcad_product.ico
   )
 CMAKEFILES(${misc_ignore_files})
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+
+

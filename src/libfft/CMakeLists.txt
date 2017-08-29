@@ -12,10 +12,12 @@ BRLCAD_LIB_INCLUDE_DIRS(fft FFT_INCLUDE_DIRS FFT_LOCAL_INCLUDE_DIRS)
 add_executable(fftc fftc.c splitditc.c)
 SetTargetFolder(fftc "Compilation Utilities")
 target_link_libraries(fftc ${M_LIBRARY})
+CMAKEFILES(fftc.c splitditc.c)
 
 add_executable(ifftc ifftc.c ditsplitc.c)
 SetTargetFolder(ifftc "Compilation Utilities")
 target_link_libraries(ifftc ${M_LIBRARY})
+CMAKEFILES(ifftc.c ditsplitc.c)
 
 # We need to generate some of libfft's source files
 function(fft_gen numlist targetdir outfiles)
@@ -47,15 +49,9 @@ set(LIBFFT_SRCS
   splitdit.c
   ditsplit.c
   )
-if(USE_OBJECT_LIBS)
-  fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}" FFT_GEN_SRCS)
-  set(LIBFFT_SRCS ${LIBFFT_SRCS} ${FFT_GEN_SRCS})
-  BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "${M_LIBRARY}")
-else(USE_OBJECT_LIBS)
-  fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}/shared" FFT_GEN_SHARED_SRCS)
-  fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}/static" FFT_GEN_STATIC_SRCS)
-  BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "${M_LIBRARY}" SHARED_SRCS "${FFT_GEN_SHARED_SRCS}" STATIC_SRCS "${FFT_GEN_STATIC_SRCS}")
-endif(USE_OBJECT_LIBS)
+fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}/shared" FFT_GEN_SHARED_SRCS)
+fft_gen("${FFT_NUMLIST}" "${CMAKE_CURRENT_BINARY_DIR}/static" FFT_GEN_STATIC_SRCS)
+BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "${M_LIBRARY}" SHARED_SRCS "${FFT_GEN_SHARED_SRCS}" STATIC_SRCS "${FFT_GEN_STATIC_SRCS}")
 
 set_target_properties(libfft PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(libfft PROPERTIES VERSION 20.0.1 SOVERSION 20)
@@ -63,6 +59,7 @@ set_target_properties(libfft PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_executable(fftest fftest.c)
 SetTargetFolder(fftest "Compilation Utilities")
 target_link_libraries(fftest libfft ${M_LIBRARY})
+CMAKEFILES(fftest.c)
 
 # Local Variables:
 # tab-width: 8

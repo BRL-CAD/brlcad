@@ -87,6 +87,15 @@ macro(THIRD_PARTY dir varname_root build_target description)
     set(${item} "${varname_root}-NOTFOUND" CACHE STRING "${item}" FORCE)
   endforeach(item ${${varname_root}_RESET_VARS})
 
+  # 0. Whether or not we're building the sources, we are tracking the files
+  # that are supposed to be in the directory
+  get_filename_component(DIR_NAME "${dir}" NAME)
+  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+    message(FATAL_ERROR "Third party component ${DIR_NAME} does not have a dist file at \"${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist\"")
+  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+  CMAKEFILES_IN_DIR(${DIR_NAME}_ignore_files ${dir})
+
   # 1. If any of the required flags are off, this extension is a no-go.
   set(DISABLE_STR "")
   foreach(item ${${varname_root}_REQUIRED_VARS})
@@ -253,14 +262,6 @@ macro(THIRD_PARTY dir varname_root build_target description)
     add_subdirectory(${dir})
     set(${varname_root}_LIBRARY "${build_target}" CACHE STRING "${varname_root}_LIBRARY" FORCE)
     set(${varname_root}_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${dir}" "${CMAKE_CURRENT_BINARY_DIR}/${dir}" CACHE STRING "set by THIRD_PARTY_SUBDIR macro" FORCE)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
-      include("${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
-      CMAKEFILES_IN_DIR(${dir}_ignore_files ${dir})
-    else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
-      message("Bundled build, but file \"${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist\" not found")
-    endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
-  else(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
-    CMAKEFILES(${dir})
   endif(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
 
   if(NOT ${varname_root}_UNDOCUMENTED)
@@ -278,6 +279,7 @@ endmacro(THIRD_PARTY)
 
 #-----------------------------------------------------------------------------
 macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
+
   string(TOUPPER ${lower} upper)
   # If the exec variable has been explicitly set, get
   # an uppercase version of it for easier matching
@@ -294,6 +296,15 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
       set(OPT_STR_UPPER "SYSTEM")
     endif(${OPT_STR_UPPER} STREQUAL "OFF")
   endif(NOT ${OPT_STR_UPPER} STREQUAL "")
+
+  # Whether or not we're building the sources, we are tracking the files
+  # that are supposed to be in the directory
+  get_filename_component(DIR_NAME "${dir}" NAME)
+  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+    message(FATAL_ERROR "Third party component ${DIR_NAME} does not have a dist file at \"${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist\"")
+  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+  CMAKEFILES_IN_DIR(${DIR_NAME}_ignore_files ${dir})
 
   # For executables, it is a reasonable use case that the developer manually specifies
   # the location for an executable.  It is tricky to distinguish this situation from
@@ -518,23 +529,11 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 	list(REMOVE_DUPLICATES SRC_OTHER_ADDED_DIRS)
 	set(SRC_OTHER_ADDED_DIRS ${SRC_OTHER_ADDED_DIRS} CACHE STRING "Enabled 3rd party sub-directories" FORCE)
 	mark_as_advanced(SRC_OTHER_ADDED_DIRS)
-	if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
-	  include("${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
-	  CMAKEFILES_IN_DIR(${dir}_ignore_files ${dir})
-	else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
-	  message("Bundled build, but file \"${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist\" not found")
-	endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
       endif("${ADDED_RESULT}" STREQUAL "-1")
     else(SRC_OTHER_ADDED_DIRS)
       add_subdirectory(${dir})
       set(SRC_OTHER_ADDED_DIRS ${dir} CACHE STRING "Enabled 3rd party sub-directories" FORCE)
       mark_as_advanced(SRC_OTHER_ADDED_DIRS)
-      if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
-	include("${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
-	CMAKEFILES_IN_DIR(${dir}_ignore_files ${dir})
-      else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
-	message("Bundled build, but file \"${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist\" not found")
-      endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
     endif(SRC_OTHER_ADDED_DIRS)
     if(CMAKE_CONFIGURATION_TYPES)
       set(${upper}_EXECUTABLE "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${BIN_DIR}/${lower}" CACHE STRING "${upper}_EXECUTABLE" FORCE)
@@ -543,7 +542,6 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
     endif(CMAKE_CONFIGURATION_TYPES)
     set(${upper}_EXECUTABLE_TARGET ${lower} CACHE STRING "Build target for ${lower}" FORCE)
   else(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
-    CMAKEFILES(${dir})
     set(${upper}_EXECUTABLE_TARGET "" CACHE STRING "No build target for ${lower}" FORCE)
   endif(${CMAKE_PROJECT_NAME}_${upper}_BUILD)
 

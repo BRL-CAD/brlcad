@@ -24,20 +24,10 @@
 # This file contains the top level CMakeLists.txt logic for the
 # BRL-CAD software package.
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8.3)
-if(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  CMAKE_POLICY(SET CMP0007 OLD)
-  if("${CMAKE_VERSION}" VERSION_GREATER 2.8.3)
-    CMAKE_POLICY(SET CMP0017 OLD)
-  endif("${CMAKE_VERSION}" VERSION_GREATER 2.8.3)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.0.2)
 
 # set CMake project name
-PROJECT(VDS)
+project(VDS)
 
 include(CheckLibraryExists)
 CHECK_LIBRARY_EXISTS(m cos "" HAVE_M_LIBRARY)
