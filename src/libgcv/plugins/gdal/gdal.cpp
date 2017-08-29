@@ -60,8 +60,8 @@
 
 struct gdal_read_options
 {
-    const char *t_srs;
-    const char *fmt;
+    const char *proj;
+    int center;
 };
 
 struct conversion_state {
@@ -71,40 +71,19 @@ struct conversion_state {
     struct rt_wdb *wdbp;
 
     /* GDAL state */
-    OGRSpatialReference *sp;
     GDALDatasetH hDataset;
-    bool info;
-    bool debug;
-    int scalex;
-    int scaley;
-    int scalez;
-    double adfGeoTransform[6];
-    int az;
-    int el;
-    int pixsize;
 };
 
 HIDDEN void
 gdal_state_init(struct conversion_state *gs)
 {
-    int i = 0;
     if(!gs) return;
     gs->gcv_options = NULL;
     gs->ops = NULL;
     gs->input_file = NULL;
     gs->wdbp = RT_WDB_NULL;
 
-    gs->sp = NULL;
     gs->hDataset = NULL;
-    gs->info = false;
-    gs->debug = false;
-    gs->scalex = 1;
-    gs->scaley = 1;
-    gs->scalez = 1;
-    for(i = 0; i < 6; i++) gs->adfGeoTransform[i] = 0.0;
-    gs->az = 35;
-    gs->el = 35;
-    gs->pixsize = 512 * 3;
 }
 
 HIDDEN int
@@ -403,10 +382,33 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     return 1;
 }
 
+HIDDEN void
+gdal_read_create_opts(struct bu_opt_desc **odesc, void **dest_options_data)
+{
+    struct gdal_read_options *odata;
+
+    BU_ALLOC(odata, struct gdal_read_options);
+    *dest_options_data = odata;
+    *odesc = (struct bu_opt_desc *)bu_malloc(3*sizeof(struct bu_opt_desc), "gdal option descriptions");
+
+    odata->center = 0;
+    odata->proj = NULL;
+
+    BU_OPT((*odesc)[0], "c", "center", NULL, NULL, &(odata->center), "Center the dsp terrain at global (0,0)");
+    BU_OPT((*odesc)[1], "", "projection", "proj", &bu_opt_str, &(odata->proj), "Projection to apply to the terrain data before exporting to a .g file");
+    BU_OPT_NULL((*odesc)[2]);
+}
+
+HIDDEN void
+gdal_read_free_opts(void *options_data)
+{
+    bu_free(options_data, "options_data");
+}
+
 extern "C"
 {
     struct gcv_filter gcv_conv_gdal_read =
-    {"GDAL Reader", GCV_FILTER_READ, BU_MIME_MODEL_AUTO, gdal_can_read, NULL, NULL, gdal_read};
+    {"GDAL Reader", GCV_FILTER_READ, BU_MIME_MODEL_AUTO, gdal_can_read, gdal_read_create_opts, gdal_read_free_opts, gdal_read};
 
     static const struct gcv_filter * const filters[] = {&gcv_conv_gdal_read, NULL};
     const struct gcv_plugin gcv_plugin_info_s = { filters };
