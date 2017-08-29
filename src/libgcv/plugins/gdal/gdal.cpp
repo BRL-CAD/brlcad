@@ -227,11 +227,13 @@ gdal_utm_zone(struct conversion_state *state)
 {
     int zone = INT_MAX;
     double longitude = 0.0;
-    if (gdal_ll(state->hDataset, NULL, &longitude)) {
+    (void)gdal_ll(state->hDataset, NULL, &longitude);
+    if (longitude > -180.0 && longitude < 180.0) {
 	zone = floor((longitude + 180) / 6) + 1;
+	bu_log("zone: %d\n", zone);
+	return zone;
     }
-    bu_log("zone: %d\n", zone);
-    return zone;
+    return -1;
 }
 
 
@@ -280,23 +282,33 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     /* Use the information in the data set to deduce the EPSG number corresponding
      * to the correct UTM projection zone, define a spatial reference, and generate
      * the "Well Known Text" to use as the argument to the warping function*/
+    GDALDatasetH hOutDS;
     int zone = gdal_utm_zone(state);
-    int epsg = gdal_utm_epsg(state, zone);
-    struct bu_vls proj4_str = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&proj4_str, "+init=epsg:%d +zone=%d +proj=utm +no_defs", epsg, zone);
-    OGRSpatialReference oSRS;
-    oSRS.importFromProj4(bu_vls_addr(&proj4_str));
-    char *dst_Wkt = NULL;
-    oSRS.exportToWkt(&dst_Wkt);
+    char *dunit;
+    const char *dunit_default = "m";
+    if (zone != -1) {
+	int epsg = gdal_utm_epsg(state, zone);
+	struct bu_vls proj4_str = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&proj4_str, "+init=epsg:%d +zone=%d +proj=utm +no_defs", epsg, zone);
+	OGRSpatialReference oSRS;
+	oSRS.importFromProj4(bu_vls_addr(&proj4_str));
+	char *dst_Wkt = NULL;
+	oSRS.exportToWkt(&dst_Wkt);
 
-    /* Perform the UTM data warp.  At this point the data is not yet in the
-     * form needed by the DSP primitive */
-    GDALDatasetH hOutDS = GDALAutoCreateWarpedVRT(state->hDataset, NULL, dst_Wkt, GRA_CubicSpline, 0.0, NULL);
-    char *dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
-    GDALGetGeoTransform(hOutDS, adfGeoTransform);
-    bu_log("\nTransformed dataset info:\n");
-    (void)get_dataset_info(hOutDS);
-    gdal_elev_minmax(hOutDS);
+	/* Perform the UTM data warp.  At this point the data is not yet in the
+	 * form needed by the DSP primitive */
+	hOutDS = GDALAutoCreateWarpedVRT(state->hDataset, NULL, dst_Wkt, GRA_CubicSpline, 0.0, NULL);
+	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
+	GDALGetGeoTransform(hOutDS, adfGeoTransform);
+	bu_log("\nTransformed dataset info:\n");
+	(void)get_dataset_info(hOutDS);
+	gdal_elev_minmax(hOutDS);
+    } else {
+	hOutDS = state->hDataset;
+	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
+	GDALGetGeoTransform(hOutDS, adfGeoTransform);
+    }
+    if (!dunit || strlen(dunit) == 0) dunit = (char *)dunit_default;
 
     /* Do the translate step (a.l.a gdal_translate) that puts the data in a
      * form we can use */
@@ -307,7 +319,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     GDALTranslateOptions *gdalt_opts = GDALTranslateOptionsNew(img_opts, NULL);
     GDALDatasetH flatDS = GDALTranslate("", hOutDS, gdalt_opts, NULL);
     GDALTranslateOptionsFree(gdalt_opts);
-    GDALClose(hOutDS);
+    if (hOutDS != state->hDataset) GDALClose(hOutDS);
     for(int i = 0; i < 3; i++) {
 	if(img_opts[i]) bu_free(img_opts[i], "imgopt");
     }
@@ -323,34 +335,13 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     ysize = GDALGetRasterBandYSize(band);
     count = xsize * ysize; /* TODO - check for overflow here... */
     uint16_array = (unsigned short *)bu_calloc(count, sizeof(unsigned short), "unsigned short array");
-    scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*xsize);
     for(unsigned int i = 0; i < ysize; i++) {
-	/* If we're going to DSP we need the unsigned short (GDT_UInt16) read. */
-	if (GDALRasterIO(band, GF_Read, 0, i, xsize, 1, scanline, xsize, 1, GDT_UInt16, 0, 0) == CPLE_None) {
-	    for (unsigned int j = 0; j < xsize; j++) {
-		/* need indexes for dsp xy space */
-		unsigned int xp = ysize - i - 1;
-		unsigned int yp = j;
-		/* This is the critical assignment point - if we get this
-		 * indexing wrong, data will not look right in dsp */
-		uint16_array[xp+yp*ysize] = scanline[j];
-	    }
+	if (GDALRasterIO(band, GF_Read, 0, ysize-i-1, xsize, 1, &(uint16_array[i*xsize]), xsize, 1, GDT_UInt16, 0, 0) == CPLE_None) {
+	    continue;
+	} else {
+	    bu_log("read error: %d\n", i);
 	}
     }
-
-#if 0
-    /* Print debugging grid */
-    struct bu_vls grid = BU_VLS_INIT_ZERO;
-    for(unsigned int i = 0; i < xsize; i++) {
-	for (unsigned int j = 0; j < ysize; j++) {
-	    bu_vls_printf(&grid, "%4d", uint16_array[j+i*ysize]);
-	}
-	bu_vls_printf(&grid, "\n");
-    }
-    FILE *fp = fopen("gcv_gdal_grid.txt", "w");
-    fputs(bu_vls_addr(&grid), fp);
-    fclose(fp);
-#endif
 
     /* Convert the data before writing it so the DSP get_obj_data routine sees what it expects */
     int in_cookie = bu_cv_cookie("hus");
@@ -382,19 +373,6 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     GDALClose(flatDS);
     GDALClose(state->hDataset);
 
-#if 0
-    unsigned int xsize = 3;
-    unsigned int ysize = 2;
-    unsigned short *uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
-    uint16_array[0] = 1;
-    uint16_array[1] = 2;
-    uint16_array[2] = 3;
-    uint16_array[3] = 4;
-    uint16_array[4] = 5;
-    uint16_array[5] = 6;
-    mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, xsize * ysize);
-#endif
-
     /* TODO: if we're going to BoT (3-space mesh, will depend on the transform requested) we will need different logic... */
 
     /* Write out the dsp.  Since we're using a data object, instead of a file,
@@ -405,8 +383,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     bu_vls_init(&dsp->dsp_name);
     bu_vls_strcpy(&dsp->dsp_name, "test.data");
     dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
-    dsp->dsp_xcnt = ysize;
-    dsp->dsp_ycnt = xsize;
+    dsp->dsp_xcnt = xsize;
+    dsp->dsp_ycnt = ysize;
     dsp->dsp_smooth = 1;
     dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
     MAT_IDN(dsp->dsp_stom);
@@ -420,7 +398,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     wdb_export(state->wdbp, "test.s", (void *)dsp, ID_DSP, 1);
 
-    bu_free(dunit, "free dunit");
+    if (dunit != dunit_default) bu_free(dunit, "free dunit");
 
     return 1;
 }
