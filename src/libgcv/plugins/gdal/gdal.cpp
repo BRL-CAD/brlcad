@@ -51,6 +51,7 @@
 #include <ogr_spatialref.h>
 #include "vrtdataset.h"
 
+#include "bu/cv.h"
 #include "bu/units.h"
 #include "raytrace.h"
 #include "gcv/api.h"
@@ -242,6 +243,7 @@ HIDDEN int
 gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	const void *options_data, const char *source_path)
 {
+    size_t count;
     unsigned int xsize = 0;
     unsigned int ysize = 0;
     double adfGeoTransform[6];
@@ -307,7 +309,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     GDALRasterBandH band = GDALGetRasterBand(flatDS, 1);
     xsize = GDALGetRasterBandXSize(band);
     ysize = GDALGetRasterBandYSize(band);
-    uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
+    count = xsize * ysize; /* TODO - check for overflow here... */
+    uint16_array = (unsigned short *)bu_calloc(count, sizeof(unsigned short), "unsigned short array");
     scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*xsize);
     for(unsigned int i = 0; i < ysize; i++) {
 	/* If we're going to DSP we need the unsigned short (GDT_UInt16) read. */
@@ -337,8 +340,19 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     fclose(fp);
 #endif
 
+    /* Convert the data before writing it so the DSP get_obj_data routine sees what it expects */
+    int in_cookie = bu_cv_cookie("hus");
+    int out_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
+    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
+	size_t got = bu_cv_w_cookie(uint16_array, out_cookie, count * sizeof(unsigned short), uint16_array, in_cookie, count);
+	if (got != count) {
+	    bu_log("got %zu != count %zu", got, count);
+	    bu_bomb("\n");
+	}
+    }
+
     /* Got it - write the binary object to the .g file */
-    mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, xsize * ysize);
+    mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, count);
 
     /* Done reading - close out inputs. */
     CPLFree(scanline);
