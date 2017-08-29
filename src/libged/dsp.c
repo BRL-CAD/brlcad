@@ -44,7 +44,6 @@ ged_dsp(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_dsp_internal *dsp;
     const char *cmd = argv[0];
-    size_t len;
     const char *sub = NULL;
     const char *primitive = NULL;
     static const char *usage = "<obj> [command]\n";
@@ -81,7 +80,6 @@ ged_dsp(struct ged *gedp, int argc, const char *argv[])
 
     /* execute subcommand */
     sub = argv[2];
-    len = strlen(sub);
     if (BU_STR_EQUAL(sub, "xy")) {
 	unsigned short elev;
 	unsigned int gx = 0;
