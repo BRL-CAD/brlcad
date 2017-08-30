@@ -360,7 +360,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		break;
 	    }
 	    V2ADD2(pt, V, annot_ip->verts[tsg->ref_pt]);
-	    bn_vlist_2string(vhead, &RTG.rtg_vlfree, tsg->label.vls_str, pt[0], pt[1], 0.2, 0);
+	    bn_vlist_2string(vhead, &RTG.rtg_vlfree, tsg->label.vls_str, pt[0], pt[1], 5, 0);
 	    break;
 	case CURVE_CARC_MAGIC:
 	    {
