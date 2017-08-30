@@ -144,9 +144,14 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 HIDDEN int
 X_reshape(struct dm_internal *dmp, int width, int height)
 {
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
+
     dmp->dm_height = height;
     dmp->dm_width = width;
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+
+    privars->disp_mat[0] = 2. * privars->ppmm_x / dmp->dm_width;
+    privars->disp_mat[5] = 2. * privars->ppmm_y / dmp->dm_width;
 
     return 0;
 }
@@ -578,6 +583,9 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
      * Might have better luck calling functions instead of macros.
      */
 
+    privars->ppmm_x = screen->width / screen->mwidth;
+    privars->ppmm_y = screen->height / screen->mheight;
+
     if (dmp->dm_width == 0) {
 	dmp->dm_width =
 	    DisplayWidth(pubvars->dpy,
@@ -736,6 +744,11 @@ Done:
 #endif
 
 Skip_dials:
+    MAT_IDN(privars->mod_mat);
+    MAT_IDN(privars->disp_mat);
+
+    privars->xmat = &(privars->mod_mat[0]);
+
     (void)X_configureWin_guts(dmp, 1);
 
 #ifdef HAVE_TK
@@ -744,10 +757,6 @@ Skip_dials:
     Tk_MapWindow(pubvars->xtkwin);
 #endif
 
-    MAT_IDN(privars->mod_mat);
-    MAT_IDN(privars->disp_mat);
-
-    privars->xmat = &(privars->mod_mat[0]);
     return dmp;
 }
 
@@ -873,7 +882,6 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 	int i;
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
-	fastf_t fac = (GED_RANGE * GED_RANGE)/(50 * dmp->dm_width * dmp->dm_height);
 	point_t *pt = tvp->pt;
 	point_t tlate;
 	fastf_t dist;
@@ -897,9 +905,6 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    privars->disp_mat[3] = tlate[0];
 		    privars->disp_mat[7] = tlate[1];
 		    privars->disp_mat[11] = tlate[2];
-		    privars->disp_mat[0] *= fac;
-		    privars->disp_mat[5] *= fac;
-		    privars->disp_mat[10] *= fac;
 		    privars->xmat = &(privars->disp_mat[0]);
 		    continue;
 		case BN_VLIST_POLY_MOVE:
