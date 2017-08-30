@@ -52,6 +52,7 @@
 #include "vrtdataset.h"
 
 #include "bu/cv.h"
+#include "bu/path.h"
 #include "bu/units.h"
 #include "raytrace.h"
 #include "gcv/api.h"
@@ -240,6 +241,9 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     unsigned int ysize = 0;
     double adfGeoTransform[6];
     struct conversion_state *state;
+    struct bu_vls name_root = BU_VLS_INIT_ZERO;
+    struct bu_vls name_data = BU_VLS_INIT_ZERO;
+    struct bu_vls name_dsp = BU_VLS_INIT_ZERO;
     BU_GET(state, struct conversion_state);
     gdal_state_init(state);
     state->gcv_options = gcv_options;
@@ -345,8 +349,15 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	cy = (fGeoT[3] + fGeoT[4] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[5] * GDALGetRasterYSize(flatDS)/2.0) - py;
     }
 
+    /* We're in business - come up with some names for the objects */
+    if (!bu_path_component(&name_root, source_path, BU_PATH_BASENAME_EXTLESS)) {
+	bu_vls_sprintf(&name_root, "dsp");
+    }
+    bu_vls_sprintf(&name_data, "%s.data", bu_vls_addr(&name_root));
+    bu_vls_sprintf(&name_dsp, "%s.s", bu_vls_addr(&name_root));
+
     /* Got it - write the binary object to the .g file */
-    mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, count);
+    mk_binunif(state->wdbp, bu_vls_addr(&name_data), (void *)uint16_array, WDB_BINUNIF_UINT16, count);
 
     /* Done reading - close out inputs. */
     CPLFree(scanline);
@@ -361,7 +372,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     BU_ALLOC(dsp, struct rt_dsp_internal);
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
     bu_vls_init(&dsp->dsp_name);
-    bu_vls_strcpy(&dsp->dsp_name, "test.data");
+    bu_vls_strcpy(&dsp->dsp_name, bu_vls_addr(&name_data));
     dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
     dsp->dsp_xcnt = xsize;
     dsp->dsp_ycnt = ysize;
@@ -381,9 +392,13 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	dsp->dsp_stom[7] = py * bu_units_conversion(dunit);
     }
 
-    wdb_export(state->wdbp, "test.s", (void *)dsp, ID_DSP, 1);
+    wdb_export(state->wdbp, bu_vls_addr(&name_dsp), (void *)dsp, ID_DSP, 1);
 
     if (dunit != dunit_default) bu_free(dunit, "free dunit");
+
+    bu_vls_free(&name_root);
+    bu_vls_free(&name_data);
+    bu_vls_free(&name_dsp);
 
     return 1;
 }
