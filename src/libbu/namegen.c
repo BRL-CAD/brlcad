@@ -142,7 +142,7 @@ bu_namegen(struct bu_vls *name, const char *regex_str, const char *incr_spec)
     incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
     ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
     if (ret == REG_NOMATCH) {
-	bu_vls_printf(name, "-0");
+	bu_vls_printf(name, "0");
 	bu_free(incr_substrs, "free regex results");
 	incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
 	ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
