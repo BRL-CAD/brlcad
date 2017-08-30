@@ -306,7 +306,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     (void)get_dataset_info(flatDS);
     gdal_elev_minmax(flatDS);
 
-    /* Read the data into something a DSP can process */
+    /* Read the data into something a DSP can process - note that y is
+     * backwards for DSPs compared to GDAL */
     unsigned short *uint16_array = NULL;
     uint16_t *scanline = NULL;
     GDALRasterBandH band = GDALGetRasterBand(flatDS, 1);
@@ -318,7 +319,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	if (GDALRasterIO(band, GF_Read, 0, ysize-i-1, xsize, 1, &(uint16_array[i*xsize]), xsize, 1, GDT_UInt16, 0, 0) == CPLE_None) {
 	    continue;
 	} else {
-	    bu_log("read error: %d\n", i);
+	    bu_log("GDAL read error for band scanline %d\n", i);
 	}
     }
 
@@ -340,8 +341,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     if (GDALGetGeoTransform(flatDS, fGeoT) == CE_None) {
 	px = fGeoT[0];
 	py = fGeoT[3];
-	cx = fGeoT[0] + fGeoT[1] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[2] * GDALGetRasterYSize(flatDS)/2.0;
-	cy = fGeoT[3] + fGeoT[4] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[5] * GDALGetRasterYSize(flatDS)/2.0;
+	cx = (fGeoT[0] + fGeoT[1] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[2] * GDALGetRasterYSize(flatDS)/2.0) - px;
+	cy = (fGeoT[3] + fGeoT[4] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[5] * GDALGetRasterYSize(flatDS)/2.0) - py;
     }
 
     /* Got it - write the binary object to the .g file */
@@ -371,9 +372,14 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     dsp->dsp_stom[10] = bu_units_conversion(dunit);
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
 
-    /* Position xy (TODO - add an option to put the dsp center at 0,0...) */
-    dsp->dsp_stom[3] = px * bu_units_conversion(dunit);
-    dsp->dsp_stom[7] = py * bu_units_conversion(dunit);
+    if (state->ops->center) {
+	dsp->dsp_stom[3] = -cx * bu_units_conversion(dunit);
+	/* y is backwards for DSPs compared to GDAL */
+	dsp->dsp_stom[7] = cy * bu_units_conversion(dunit);
+    } else {
+	dsp->dsp_stom[3] = px * bu_units_conversion(dunit);
+	dsp->dsp_stom[7] = py * bu_units_conversion(dunit);
+    }
 
     wdb_export(state->wdbp, "test.s", (void *)dsp, ID_DSP, 1);
 
