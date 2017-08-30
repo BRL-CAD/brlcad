@@ -23,6 +23,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * libgcv should add objects to an existing .g if one is specified
   as the output target - right now it's overwriting the old file
 
+* consolidate dbconcat, clone, make_name, and any other .g I/O
+  routines that need to autogenerate names to use the new
+  bu_namegen/db_namegen functions.
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
