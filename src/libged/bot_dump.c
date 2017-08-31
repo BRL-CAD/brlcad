@@ -593,7 +593,7 @@ stl_write_bot_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 
 
 void
-_ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name)
+_ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_g_name)
 {
     int ret;
 
@@ -668,7 +668,7 @@ _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int f
 		case OTYPE_DXF:
 		    fprintf(fp,
 			    "0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
-			    dp->d_namep, db_name);
+			    dp->d_namep, db_g_name);
 		    dxf_write_bot(bot, fp, dp->d_namep);
 		    fprintf(fp, "0\nENDSEC\n0\nEOF\n");
 		    break;

@@ -1,4 +1,4 @@
-/*                       N A M E G E N . C
+/*                     V L S _ I N C R . C
  * BRL-CAD
  *
  * Copyright (c) 2015-2016 United States Government as represented by
@@ -29,7 +29,7 @@
 
 
 int
-namegen_main(int argc, char **argv)
+vls_incr_main(int argc, char **argv)
 {
     int ret = 1;
     int i = 0;
@@ -63,7 +63,7 @@ namegen_main(int argc, char **argv)
 
     bu_vls_sprintf(&name, "%s", argv[1]);
     while (i < inc_count) {
-	(void)bu_namegen(&name, rs, formatting);
+	(void)bu_vls_incr(&name, rs, formatting);
 	i++;
     }
 

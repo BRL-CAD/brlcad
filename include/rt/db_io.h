@@ -732,28 +732,36 @@ RT_EXPORT extern struct directory *db_lookup(const struct db_i *,
 
 /**
  * @brief
- * Unique database object name generation.
+ * Unique, legal database object name generation.
  *
  * When automatically creating names for objects in a database, the most common
- * constraints are 1) the name must not collide with any existing object in the
- * database and 2) the name should be the "next" name in some form of logical
- * sequence given a pre-existing name as input.
+ * constraints are:
  *
- * The responsibility for actual name generation lies with the libbu bu_namegen
- * function - db_namegen's responsibility is to ensure that the name provided
- * by bu_namegen is unique in the current database.
+ * 1) the name must not use any characters that are invalid or problematic for
+ * database processing
  *
- * Note that db_namegen does not "reserve" a name in the database once it is
- * generated - only an actual object creation will ensure that the next
- * db_namegen arrives at a different name given the same starting point.
- * Accordingly, this function should not be considered "thread safe" if
- * multiple threads are generating names to use for objects.
+ * 2) the name must not collide with any existing object in the database
+ *
+ * 3) in the event of a collision, return instead the "next" name in some
+ * logical sequence given a pre-existing name as input.
+ *
+ * The responsibility for actual name incrementing lies with the libbu
+ * bu_vls_incr function - see documentation for bu_vls_incr to understand the
+ * format of the incr_spec argument.
+ *
+ * Note: db_get_name does not "reserve" a name in the database once it is
+ * generated.  If the caller's intent is to pre-generate a series of names,
+ * they need to set the force_incr parameter to 1.  Otherwise, the decision for
+ * whether to increment the string will be based on whether the "cleaned up"
+ * version of the supplied string conflicts with an existing object name.
+ * Remember that names generated with force_incr set will still be checked
+ * against the database for potential conflicts.
  *
  * Note that an empty vls string supplied to name will not generate any new
- * strings - there will be no content on which the namegen routine can act,
- * and an error will be returned.
+ * strings - there will be no content on which the routine can act, and an
+ * error will be returned.
  */
-RT_EXPORT extern int db_namegen(struct bu_vls *name, struct db_i *dbip, const char *regex_str, const char *incr_spec);
+RT_EXPORT extern int db_get_name(struct bu_vls *name, struct db_i *dbip, int force_incr, const char *regex_str, const char *incr_spec);
 
 
 /* add entry to directory */

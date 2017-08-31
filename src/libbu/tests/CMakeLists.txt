@@ -15,7 +15,7 @@ set(bu_test_srcs
   file_mime.c
   heap.c
   humanize_number.c
-  namegen.c
+  vls_incr.c
   opt.c
   parallel.c
   path_component.c
@@ -469,25 +469,25 @@ add_test(NAME bu_badmagic_null_ptr    COMMAND bu_test badmagic 3)
 add_test(NAME bu_badmagic_misaligned  COMMAND bu_test badmagic 4)
 
 #
-#  *********** namegen.c tests ************
+#  *********** vls_incr.c tests ************
 #
 
-add_test(NAME bu_namegen_1  COMMAND bu_test namegen "test1.r"      0 "NULL"        1  "test2.r")
-add_test(NAME bu_namegen_2  COMMAND bu_test namegen "test1.r"      0 "0:0:0:0"    10  "test11.r")
-add_test(NAME bu_namegen_3  COMMAND bu_test namegen "test1_1.r"    0 "0:0:0:0"     2  "test1_3.r")
-add_test(NAME bu_namegen_4  COMMAND bu_test namegen "test-1.r"     0 "0:0:0:0"     1  "test-2.r")
-add_test(NAME bu_namegen_5  COMMAND bu_test namegen "test1.r"      0 "3:0:0:0"     1  "test002.r")
-add_test(NAME bu_namegen_6  COMMAND bu_test namegen "test1.r"      0 "3:5:0:0"     1  "test005.r")
-add_test(NAME bu_namegen_7  COMMAND bu_test namegen "test5.r"      0 "3:5:0:0"     1  "test006.r")
-add_test(NAME bu_namegen_8  COMMAND bu_test namegen "test8.r"      0 "0:0:9:0"     2  "test0.r")
-add_test(NAME bu_namegen_9  COMMAND bu_test namegen "test1.r"      0 "0:0:0:2"     2  "test5.r")
-add_test(NAME bu_namegen_10 COMMAND bu_test namegen "test90.r"     0 "4:20:99:5"   2  "test0020.r")
-add_test(NAME bu_namegen_11 COMMAND bu_test namegen "test_1_obj.r" 1 "0:0:0:0:-:-" 1  "test-2-obj.r")
-add_test(NAME bu_namegen_12 COMMAND bu_test namegen "test.r"       1 "3:0:0:0:-"   5  "test.r-005")
-add_test(NAME bu_namegen_13 COMMAND bu_test namegen "test1"        0 "NULL"        1  "test2")
-add_test(NAME bu_namegen_14 COMMAND bu_test namegen "test20"       0 "NULL"      100  "test120")
-add_test(NAME bu_namegen_15 COMMAND bu_test namegen "test"         0 "NULL"        1  "test1")
-add_test(NAME bu_namegen_16 COMMAND bu_test namegen "test"         0 "0:0:0:0:-"   1  "test-1")
+add_test(NAME bu_vls_incr_1  COMMAND bu_test vls_incr "test1.r"      0 "NULL"        1  "test2.r")
+add_test(NAME bu_vls_incr_2  COMMAND bu_test vls_incr "test1.r"      0 "0:0:0:0"    10  "test11.r")
+add_test(NAME bu_vls_incr_3  COMMAND bu_test vls_incr "test1_1.r"    0 "0:0:0:0"     2  "test1_3.r")
+add_test(NAME bu_vls_incr_4  COMMAND bu_test vls_incr "test-1.r"     0 "0:0:0:0"     1  "test-2.r")
+add_test(NAME bu_vls_incr_5  COMMAND bu_test vls_incr "test1.r"      0 "3:0:0:0"     1  "test002.r")
+add_test(NAME bu_vls_incr_6  COMMAND bu_test vls_incr "test1.r"      0 "3:5:0:0"     1  "test005.r")
+add_test(NAME bu_vls_incr_7  COMMAND bu_test vls_incr "test5.r"      0 "3:5:0:0"     1  "test006.r")
+add_test(NAME bu_vls_incr_8  COMMAND bu_test vls_incr "test8.r"      0 "0:0:9:0"     2  "test0.r")
+add_test(NAME bu_vls_incr_9  COMMAND bu_test vls_incr "test1.r"      0 "0:0:0:2"     2  "test5.r")
+add_test(NAME bu_vls_incr_10 COMMAND bu_test vls_incr "test90.r"     0 "4:20:99:5"   2  "test0020.r")
+add_test(NAME bu_vls_incr_11 COMMAND bu_test vls_incr "test_1_obj.r" 1 "0:0:0:0:-:-" 1  "test-2-obj.r")
+add_test(NAME bu_vls_incr_12 COMMAND bu_test vls_incr "test.r"       1 "3:0:0:0:-"   5  "test.r-005")
+add_test(NAME bu_vls_incr_13 COMMAND bu_test vls_incr "test1"        0 "NULL"        1  "test2")
+add_test(NAME bu_vls_incr_14 COMMAND bu_test vls_incr "test20"       0 "NULL"      100  "test120")
+add_test(NAME bu_vls_incr_15 COMMAND bu_test vls_incr "test"         0 "NULL"        1  "test1")
+add_test(NAME bu_vls_incr_16 COMMAND bu_test vls_incr "test"         0 "0:0:0:0:-"   1  "test-1")
 
 #
 #  *********** opt.c tests ************

@@ -31,7 +31,6 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu/namegen.h"
 #include "bu/vls.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -454,14 +453,19 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 
 
 int
-db_namegen(struct bu_vls *name, struct db_i *dbip, const char *regex_str, const char *incr_spec)
+db_get_name(struct bu_vls *name, struct db_i *dbip, int force_incr, const char *regex_str, const char *incr_spec)
 {
     int ret = -1;
     if (!name || !dbip) return ret;
     if (bu_vls_strlen(name) == 0) return ret;
-    ret = bu_namegen(name, regex_str, incr_spec);
+    /* TODO - scrub name for invalid characters */
+    if (force_incr) {
+	ret = bu_vls_incr(name, regex_str, incr_spec);
+    } else {
+	ret = 0;
+    }
     while (!ret && db_lookup(dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
-	ret = bu_namegen(name, regex_str, incr_spec);
+	ret = bu_vls_incr(name, regex_str, incr_spec);
     }
     return ret;
 }

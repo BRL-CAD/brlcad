@@ -367,7 +367,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
 	long count = 1;
 	tdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(&top_name), LOOKUP_QUIET);
 	while (tdp != RT_DIR_NULL) {
-	    (void)bu_namegen(&top_name, NULL, "0:0:0:0:-");
+	    (void)bu_vls_incr(&top_name, NULL, "0:0:0:0:-");
 	    if (count == LONG_MAX) {
 		creo_log(cinfo, MSG_FAIL, "%s: top level name gen failed\n", cinfo->output_file);
 		break;
