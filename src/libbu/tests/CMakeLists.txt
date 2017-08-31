@@ -16,6 +16,7 @@ set(bu_test_srcs
   heap.c
   humanize_number.c
   vls_incr.c
+  vls_simplify.c
   opt.c
   parallel.c
   path_component.c
@@ -488,6 +489,22 @@ add_test(NAME bu_vls_incr_13 COMMAND bu_test vls_incr "test1"        0 "NULL"   
 add_test(NAME bu_vls_incr_14 COMMAND bu_test vls_incr "test20"       0 "NULL"      100  "test120")
 add_test(NAME bu_vls_incr_15 COMMAND bu_test vls_incr "test"         0 "NULL"        1  "test1")
 add_test(NAME bu_vls_incr_16 COMMAND bu_test vls_incr "test"         0 "0:0:0:0:-"   1  "test-1")
+
+#
+#  *********** vls_simlify.c tests ************
+#
+
+add_test(NAME bu_vls_simplify_1  COMMAND bu_test vls_simplify "^%test1@@%"    "__test1___")
+add_test(NAME bu_vls_simplify_2  COMMAND bu_test vls_simplify "^%test1@@%"    "_test1_"     ""   "_")
+add_test(NAME bu_vls_simplify_3  COMMAND bu_test vls_simplify "^%test1@@%"    "_test1@@_"   "@"  "_")
+add_test(NAME bu_vls_simplify_4  COMMAND bu_test vls_simplify "^%test1.s@@%"  "_test1_s_"   ""   "_")
+add_test(NAME bu_vls_simplify_5  COMMAND bu_test vls_simplify "^%test1.s@@%"  "_test1.s_"   "."  "_")
+add_test(NAME bu_vls_simplify_6  COMMAND bu_test vls_simplify "^%test1.s@@%"  "test1.s"     "."  "_"  "_")
+add_test(NAME bu_vls_simplify_7  COMMAND bu_test vls_simplify "^%test1.s@@%"  "%test1.s_%"  ".%" "_"  "_")
+add_test(NAME bu_vls_simplify_8  COMMAND bu_test vls_simplify "^%test1.s@@%"  "test1.s"     ".%" "_"  "%_")
+add_test(NAME bu_vls_simplify_9  COMMAND bu_test vls_simplify "^%test1.s@@%"  "test1.s@"    ".@" "_@" "_")
+add_test(NAME bu_vls_simplify_10 COMMAND bu_test vls_simplify "^%test1.s@@%"  "test1.s"     ".@" "_@" "@_")
+add_test(NAME bu_vls_simplify_11 COMMAND bu_test vls_simplify "^%test@1.s@@%" "test@1.s"    ".@" "_@" "@_")
 
 #
 #  *********** opt.c tests ************

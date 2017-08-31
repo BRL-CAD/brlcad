@@ -471,6 +471,36 @@ BU_EXPORT extern const char *bu_vls_decode(struct bu_vls *vp, const char *str);
    below perform this type of work.
 */
 
+
+/**
+ * A problem frequently encountered when working with strings in BRL-CAD
+ * is the presence of special characters, characters active in the scripting
+ * language being applied, or other problematic contents that interfere with
+ * processing or readability of strings.  This function takes a vls as an
+ * input and simplifies it as follows:
+ *
+ * 1) Reduce characters present to alpha-numeric characters and those
+ *    characters supplied to the routine in the "keep" string.  Substitute
+ *    is performed as follows:
+ *
+ *    * Skip any character in the "keep" string
+ *
+ *    * Replace diacritic characters(code >= 192) from the extended ASCII set
+ *      with a specific mapping from the standard ASCII set. See discussion at:
+ *      http://stackoverflow.com/questions/14094621/ for more about this.
+ *
+ *    * Replace any non-keep characters that aren't replaced by other
+ *      approaches with the '_' underscore character
+ *
+ * 2) Collapses duplicate characters in the "de_dup" string.
+ *
+ * 3) Remove leading and trailing characters in the "trim' string.
+ *
+ * Returns 0 if string was not altered, 1 otherwise.
+ */
+BU_EXPORT extern int bu_vls_simplify(struct bu_vls *vp, const char *keep, const char *de_dup, const char *trim);
+
+
 /**
    A problem frequently encountered when generating names is generating names
    that are in some sense structured but avoid colliding.  For example, given a

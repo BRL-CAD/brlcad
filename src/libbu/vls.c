@@ -823,6 +823,89 @@ bu_vls_prepend(struct bu_vls *vp, char *str)
 }
 
 HIDDEN int
+_vls_char_in_set(const char *c, const char *str)
+{
+    unsigned int i = 0;
+    if (!c || !str) return 0;
+    for (i = 0; i < strlen(str); i++) {
+	if ((unsigned char)(*c) == (unsigned char )(str[i])) return 1;
+    }
+    return 0;
+}
+
+int
+bu_vls_simplify(struct bu_vls *vp, const char *keep, const char *de_dup, const char *trim)
+{
+    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+    const char *tr;
+    unsigned char *c = NULL;
+    int ret = 0;
+
+    if (!vp || bu_vls_strlen(vp) == 0) return 0;
+
+    /* Map for replacing diacritic characters(code >= 192) from the extended
+     * ASCII set with a specific mapping from the standard ASCII set. See
+     * http://stackoverflow.com/questions/14094621/ for more info */
+
+    /*   "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ" */
+    tr = "AAAAAAECEEEEIIIIDNOOOOOx0UUUUYPsaaaaaaeceeeeiiiiOnooooo/0uuuuypy";
+
+    c = (unsigned char *)bu_vls_addr(vp);
+    while (*c) {
+	unsigned char ch = (*c);
+	if (_vls_char_in_set((const char *)&ch, keep)) {
+	    bu_vls_putc(&tmpstr, ch);
+	} else {
+	    if (isalnum(ch)) {
+		bu_vls_putc(&tmpstr, ch);
+	    } else {
+		if (ch >= 192 && ch < strlen(tr) + 192) {
+		    bu_vls_putc(&tmpstr, tr[ch-192]);
+		} else {
+		    bu_vls_putc(&tmpstr, '_');
+		}
+	    }
+	}
+	c++;
+    }
+
+    if (de_dup) {
+	struct bu_vls dd_str = BU_VLS_INIT_ZERO;
+	unsigned char ch, currh;
+	c = (unsigned char *)bu_vls_addr(&tmpstr);
+	if (*c) bu_vls_putc(&dd_str, (unsigned char)(*c));
+	while (*c) {
+	    ch = (unsigned char)(*c);
+	    c++;
+	    currh = (unsigned char)(*c);
+	    if (!(ch == currh && _vls_char_in_set((const char *)&currh, de_dup))) {
+		bu_vls_putc(&dd_str, currh);
+	    }
+	}
+	bu_vls_sprintf(&tmpstr, "%s", bu_vls_addr(&dd_str));
+	bu_vls_free(&dd_str);
+    }
+
+
+    if (trim) {
+	int ccnt = 0;
+	c = (unsigned char *)bu_vls_addr(&tmpstr);
+	while (*c && _vls_char_in_set((const char *)c, trim)) {ccnt++; c++;}
+	if (ccnt) bu_vls_nibble(&tmpstr, ccnt);
+	ccnt = 0;
+	c = (unsigned char *)&(bu_vls_addr(&tmpstr)[(strlen(bu_vls_addr(&tmpstr)) - 1)]);
+	while (*c && _vls_char_in_set((const char *)c, trim)) {ccnt++; c--;}
+	if (ccnt) bu_vls_trunc(&tmpstr, bu_vls_strlen(&tmpstr) - ccnt);
+    }
+
+    ret = (!bu_vls_strcmp(&tmpstr, vp)) ? 0 : 1;
+    bu_vls_sprintf(vp, "%s", bu_vls_addr(&tmpstr));
+    bu_vls_free(&tmpstr);
+    return ret;
+}
+
+
+HIDDEN int
 _bu_vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *inc_specifier)
 {
     int i = 0;
