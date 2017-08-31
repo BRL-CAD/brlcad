@@ -26,7 +26,6 @@
 #include <limits.h> /* for LONG_MAX */
 #include <regex.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h> /* for strtol */
 #include <string.h>
 
