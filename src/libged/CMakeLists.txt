@@ -2,22 +2,29 @@
 # if GED command stuff is pushed into the actual subdirs, the autoconf vs cmake
 # verification (sh/cmakecheck.sh) will fail on dist-hook.  For now, just
 # handle it as part of libged
-if(BULLET_LIBRARIES)
-  set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${BULLET_LIBRARIES})
-  set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
+if(BRLCAD_ENABLE_BULLET)
   add_definitions(-DHAVE_BULLET=1)
-  if(CPP_DLL_DEFINES)
-    add_definitions(-DBULLET_DLL_IMPORTS)
-  endif(CPP_DLL_DEFINES)
-endif(BULLET_LIBRARIES)
+  set(LIBGED_CMD_INCLUDE_DIRS
+    ${LIBGED_CMD_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate
+    )
+  include_directories(SYSTEM
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/bullet
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/LinearMath
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletCollision
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletDynamics
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletSoftBody
+    )
+  include(simulate/bullet/CMakeLists.txt)
+endif(BRLCAD_ENABLE_BULLET)
 
 if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${ADAPTAGRAMS_LIBRARIES})
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
 endif(ADAPTAGRAMS_FOUND)
 
-
 set(LIBGED_SOURCES
+  ${LIBGED_SOURCES}
   3ptarb.c
   adc.c
   adjust.c
