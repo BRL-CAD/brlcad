@@ -400,6 +400,7 @@ set(Bullet_SRCS
   ${BulletSoftBody_SRCS}
   )
 
+if(BRLCAD_ENABLE_BULLET)
 set(LIBGED_SOURCES ${Bullet_SRCS} ${Bullet_HDRS})
 
 include(CheckCXXCompilerFlag)
@@ -410,6 +411,10 @@ if(NOERROR_FLAG_CXX AND NOWARN_FLAG_CXX)
     set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "-w -Wno-error")
   endforeach(srcfile ${Bullet_SRCS})
 endif(NOERROR_FLAG_CXX AND NOWARN_FLAG_CXX)
+else(BRLCAD_ENABLE_BULLET)
+  CMAKEFILES(${Bullet_SRCS})
+  CMAKEFILES(${Bullet_HDRS})
+endif(BRLCAD_ENABLE_BULLET)
 
 CMAKEFILES(simulate/bullet/AUTHORS.txt simulate/bullet/LICENSE.txt)
 

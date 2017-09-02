@@ -15,8 +15,8 @@ if(BRLCAD_ENABLE_BULLET)
     ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletDynamics
     ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletSoftBody
     )
-  include(simulate/bullet/CMakeLists.txt)
 endif(BRLCAD_ENABLE_BULLET)
+include(simulate/bullet/CMakeLists.txt)
 
 if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${ADAPTAGRAMS_LIBRARIES})
