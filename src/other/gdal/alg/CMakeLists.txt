@@ -1,0 +1,36 @@
+set(alg_srcs
+	alg/contour.cpp
+	alg/gdal_octave.cpp
+	alg/gdalgrid.cpp
+	alg/gdalpansharpen.cpp
+	alg/gdalrasterpolygonenumerator.cpp
+	alg/gdalsievefilter.cpp
+	alg/gdalsimplewarp.cpp
+	alg/gdalwarpoperation.cpp
+	alg/thinplatespline.cpp
+	alg/delaunay.c
+	alg/gdal_crs.c
+	alg/gdal_rpc.cpp
+	alg/gdal_simplesurf.cpp
+	alg/gdal_tps.cpp
+	alg/gdalapplyverticalshiftgrid.cpp
+	alg/gdalchecksum.cpp
+	alg/gdalcutline.cpp
+	alg/gdaldither.cpp
+	alg/gdalgeoloc.cpp
+	alg/gdalmatching.cpp
+	alg/gdalmediancut.cpp
+	alg/gdalproximity.cpp
+	alg/gdalrasterize.cpp
+	alg/gdaltransformer.cpp
+	alg/gdaltransformgeolocs.cpp
+	alg/gdalwarper.cpp
+	alg/gdalwarpkernel.cpp
+	alg/gdalwarpkernel_opencl.cpp
+	alg/llrasterize.cpp
+	alg/polygonize.cpp
+	alg/rasterfill.cpp
+	)
+
+add_definitions(-DINTERNAL_QHULL)
+

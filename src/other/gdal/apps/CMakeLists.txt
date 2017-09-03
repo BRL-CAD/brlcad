@@ -1,0 +1,11 @@
+set(apps_srcs
+	apps/gdalbuildvrt_lib.cpp
+	apps/gdaldem_lib.cpp
+	apps/gdal_grid_lib.cpp
+	apps/gdalinfo_lib.cpp
+	apps/gdal_rasterize_lib.cpp
+	apps/gdal_translate_lib.cpp
+	apps/gdalwarp_lib.cpp
+	apps/nearblack_lib.cpp
+	apps/ogr2ogr_lib.cpp
+	)
