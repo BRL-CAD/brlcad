@@ -37,6 +37,17 @@ set(gcore_srcs
 	gcore/gdalrasterblock.cpp
 	gcore/gdalrescaledalphaband.cpp
 	gcore/gdalvirtualmem.cpp
+	gcore/mdreader/reader_alos.cpp
+	gcore/mdreader/reader_digital_globe.cpp
+	gcore/mdreader/reader_eros.cpp
+	gcore/mdreader/reader_geo_eye.cpp
+	gcore/mdreader/reader_kompsat.cpp
+	gcore/mdreader/reader_landsat.cpp
+	gcore/mdreader/reader_orb_view.cpp
+	gcore/mdreader/reader_pleiades.cpp
+	gcore/mdreader/reader_rapid_eye.cpp
+	gcore/mdreader/reader_rdk1.cpp
+	gcore/mdreader/reader_spot.cpp
 	gcore/overview.cpp
 	gcore/rasterio.cpp
 	)

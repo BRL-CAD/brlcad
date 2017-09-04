@@ -45,6 +45,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/proj-4
   ${CMAKE_CURRENT_SOURCE_DIR}/port
   ${CMAKE_CURRENT_SOURCE_DIR}/gcore
+  ${CMAKE_CURRENT_SOURCE_DIR}/gcore/mdreader
   ${CMAKE_CURRENT_SOURCE_DIR}/alg
   ${CMAKE_CURRENT_SOURCE_DIR}/ogr
   ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts
