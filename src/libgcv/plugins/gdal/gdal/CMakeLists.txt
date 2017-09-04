@@ -178,7 +178,7 @@ set(GDAL_FORMATS
   fit
   gff gsg gtiff gxf
   hf2 hfa
-  idrisi ilwis ingr iris
+  idrisi ilwis ingr iris iso8211
   jaxapalsar jdem kmlsuperoverlay
   l1b leveller
   map mem
@@ -219,6 +219,17 @@ include(apps/CMakeLists.txt)
 set(gdal_srcs ${proj-4_srcs} ${cpl_srcs} ${gcore_srcs} ${alg_srcs} ${frmts_srcs} ${ogr_srcs} ${ogrsf_fmt_srcs} ${gnm_srcs} ${apps_srcs})
 
 
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-Wno-error NOERROR_FLAG_C)
+check_c_compiler_flag(-W NOWARN_FLAG_C)
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-Wno-error NOERROR_FLAG_CXX)
+check_cxx_compiler_flag(-W NOWARN_FLAG_CXX)
+if(NOERROR_FLAG_C AND NOWARN_FLAG_C AND NOERROR_FLAG_CXX AND NOWARN_FLAG_CXX)
+  add_definitions(-w)
+  add_definitions(-Wno-error)
+endif(NOERROR_FLAG_C AND NOWARN_FLAG_C AND NOERROR_FLAG_CXX AND NOWARN_FLAG_CXX)
+
 if(BUILD_SHARED_LIBS)
   add_library(gdal SHARED ${gdal_srcs})
   target_link_libraries(gdal ${ZLIB_LIBRARY} ${PNG_LIBRARY})
@@ -228,6 +239,7 @@ if(BUILD_SHARED_LIBS)
     ARCHIVE DESTINATION ${LIB_DIR})
 endif(BUILD_SHARED_LIBS)
 
+if(0)
 if(BUILD_STATIC_LIBS)
   add_library(gdal-static STATIC ${gdal_srcs})
   if(NOT WIN32)
@@ -238,6 +250,7 @@ if(BUILD_STATIC_LIBS)
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
 endif(BUILD_STATIC_LIBS)
+endif(0)
 
 # Local Variables:
 # tab-width: 8
