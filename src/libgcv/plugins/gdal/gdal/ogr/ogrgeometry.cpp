@@ -2780,28 +2780,6 @@ char *OGRGeometry::exportToGML( const char* const * papszOptions ) const
 }
 
 /************************************************************************/
-/*                            exportToKML()                             */
-/************************************************************************/
-
-/**
- * \fn char *OGRGeometry::exportToKML() const;
- *
- * \brief Convert a geometry into KML format.
- *
- * The returned string should be freed with CPLFree() when no longer required.
- *
- * This method is the same as the C function OGR_G_ExportToKML().
- *
- * @return A KML fragment or NULL in case of error.
- */
-
-char *OGRGeometry::exportToKML() const
-{
-    return OGR_G_ExportToKML(
-        reinterpret_cast<OGRGeometryH>(const_cast<OGRGeometry *>(this)), NULL);
-}
-
-/************************************************************************/
 /*                            exportToJson()                             */
 /************************************************************************/
 

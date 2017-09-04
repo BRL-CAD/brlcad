@@ -133,8 +133,6 @@ OGRGeometryH CPL_DLL OGR_G_CreateFromGMLTree( const CPLXMLNode * ) CPL_WARN_UNUS
 CPLXMLNode CPL_DLL *OGR_G_ExportToGMLTree( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 CPLXMLNode CPL_DLL *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 
-char   CPL_DLL *OGR_G_ExportToKML( OGRGeometryH, const char* pszAltitudeMode ) CPL_WARN_UNUSED_RESULT;
-
 char   CPL_DLL *OGR_G_ExportToJson( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 char   CPL_DLL *OGR_G_ExportToJsonEx( OGRGeometryH, char** papszOptions ) CPL_WARN_UNUSED_RESULT;
 /** Create a OGR geometry from a GeoJSON geometry object */

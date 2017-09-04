@@ -80,12 +80,15 @@ find_package(PNG)
 include_directories(${PNG_INCLUDE_DIR})
 
 add_definitions(-DGDAL_COMPILATION)
+add_definitions(-DINTERNAL_LIBTIFF)
+add_definitions(-DINTERNAL_LIBGEOTIFF)
 add_definitions(-DBIGTIFF_SUPPORT)
 add_definitions(-DZLIB_SUPPORT)
 add_definitions(-DDONT_DEPRECATE_SPRINTF)
 add_definitions(-DGNM_ENABLED)
 add_definitions(-DGNMFILE_ENABLED)
 add_definitions(-DGNMDB_ENABLED)
+add_definitions(-DHAVE_IEEEFP) # TODO test this for real
 
 if(ZLIB_LIBRARY)
   add_definitions(-DHAVE_ZLIB)
