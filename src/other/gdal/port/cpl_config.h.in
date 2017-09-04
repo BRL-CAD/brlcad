@@ -55,7 +55,7 @@
 #cmakedefine HAVE_GETCWD 1
 
 /* Define if you have the iconv() function and it works. */
-#cmakedefine HAVE_ICONV
+#cmakedefine HAVE_ICONV 
 
 /* Define as 0 or 1 according to the floating point format supported by the
    machine */
@@ -101,7 +101,7 @@
 #cmakedefine HAVE_LONG_LONG 1
 
 /* Define to 1, if your compiler supports uintptr_t data type */
-#cmakedefine HAVE_UINTPTR_T
+#cmakedefine HAVE_UINTPTR_T 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #cmakedefine HAVE_MEMORY_H 1
@@ -173,10 +173,10 @@
 #cmakedefine HOST_FILLORDER @HOST_FILLORDER@
 
 /* Define as const if the declaration of iconv() needs const. */
-#cmakedefine ICONV_CONST const
+#define ICONV_CONST @ICONV_CONST@
 
 /* For .cpp files, define as const if the declaration of iconv() needs const. */
-#cmakedefine ICONV_CPP_CONST const
+#define ICONV_CPP_CONST @ICONV_CPP_CONST@
 
 /* Define to 1 if libjvm.so should be dlopen'd */
 #cmakedefine JVM_LIB_DLOPEN 1

@@ -42,6 +42,7 @@ project(GDAL)
 
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/proj-4
   ${CMAKE_CURRENT_SOURCE_DIR}/port
   ${CMAKE_CURRENT_SOURCE_DIR}/gcore
   ${CMAKE_CURRENT_SOURCE_DIR}/alg
@@ -95,11 +96,56 @@ check_type_size(long SIZEOF_LONG)
 check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
 set(SIZEOF_VOIDP ${CMAKE_SIZEOF_VOID_P})
 check_type_size("long long" HAVE_LONG_LONG)
+check_type_size(int8 HAVE_INT8)
+check_type_size(int16 HAVE_INT16)
+check_type_size(int32 HAVE_INT32)
+check_type_size(__uint128_t HAVE_UINT128_T)
+check_type_size(uintptr_t HAVE_UINTPTR_T)
 
 include(CheckIncludeFiles)
-check_include_files(fcntl.h HAVE_FCNTL_H)
-check_include_files(unistd.h HAVE_UNISTD_H)
+check_include_files(assert.h HAVE_ASSERT_H)
+check_include_files(csf.h HAVE_CSF_H)
+check_include_files(dbmalloc.h HAVE_DBMALLOC_H)
+check_include_files(dirent.h HAVE_DIRENT_H)
+check_include_files(dlfcn.h HAVE_DLFCN_H)
 check_include_files(errno.h HAVE_ERRNO_H)
+check_include_files(fcntl.h HAVE_FCNTL_H)
+check_include_files(float.h HAVE_FLOAT_H)
+check_include_files(inttypes.h HAVE_INTTYPES_H)
+check_include_files(limits.h HAVE_LIMITS_H)
+check_include_files(locale.h HAVE_LOCALE_H)
+check_include_files(memory.h HAVE_MEMORY_H)
+check_include_files(stdint.h HAVE_STDINT_H)
+check_include_files(stdlib.h HAVE_STDLIB_H)
+check_include_files(string.h HAVE_STRING_H)
+check_include_files(strings.h HAVE_STRINGS_H)
+check_include_files(sys/stat.h HAVE_SYS_STAT_H)
+check_include_files(sys/types.h HAVE_SYS_TYPES_H)
+check_include_files(unistd.h HAVE_UNISTD_H)
+check_include_files(values.h HAVE_VALUES_H)
+
+include(CheckFunctionExists)
+check_function_exists(localeconv HAVE_LOCALECONV)
+check_function_exists(atoll HAVE_ATOLL)
+check_function_exists(getcwd HAVE_GETCWD)
+check_function_exists(iconv HAVE_ICONV)
+check_function_exists(snprintf HAVE_SNPRINTF)
+check_function_exists(strtof HAVE_STRTOF)
+check_function_exists(vprintf HAVE_VPRINTF)
+check_function_exists(vsnprintf HAVE_VSNPRINTF)
+check_function_exists(readlink HAVE_READLINK)
+check_function_exists(posix_spawnp HAVE_POSIX_SPAWNP)
+check_function_exists(posix_memalign HAVE_POSIX_MENALIGN)
+check_function_exists(vfork HAVE_VFORK)
+check_function_exists(mmap HAVE_MMAP)
+check_function_exists(statvfs HAVE_STATVFS)
+check_function_exists(statvfs64 HAVE_STATVFS64)
+check_function_exists(lstat HAVE_LSTAT)
+check_function_exists(uselocale HAVE_USELOCALE)
+
+include(CheckLibraryExists)
+check_library_exists(m ceil "" HAVE_LIBM)
+check_library_exists(dl dlopen "" HAVE_LIBDL)
 
 message("${CMAKE_SYSTEM_PROCESSOR}")
 if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i*86")
@@ -108,6 +154,19 @@ else("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}"
   set(HOST_FILLORDER "FILLORDER_MSB2LSB")
 endif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i*86")
 
+# Threads
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+find_package(Threads)
+include(CheckSymbolExists)
+check_symbol_exists(PTHREAD_MUTEX_RECURSIVE pthread.h HAVE_PTHREAD_MUTEX_RECURSIVE_DEFN)
+if(HAVE_PTHREAD_MUTEX_RECURSIVE_DEFN)
+  add_definitions(-DHAVE_PTHREAD_MUTEX_RECURSIVE=1)
+endif(HAVE_PTHREAD_MUTEX_RECURSIVE_DEFN)
+check_symbol_exists(PTHREAD_MUTEX_ADAPTIVE_NP pthread.h HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
+
+if(CMAKE_USE_PTHREADS_INIT)
+  set(CPL_MULTIPROC_PTHREAD 1)
+endif(CMAKE_USE_PTHREADS_INIT)
 
 
 set(GDAL_FORMATS
@@ -139,11 +198,15 @@ if(ZLIB_LIBRARY)
   set(GDAL_FORMATS ${GDAL_FORMATS} rik ozi)
 endif(ZLIB_LIBRARY)
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/proj-4/proj_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp)
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp)
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
 
-
+include(proj-4/CMakeLists.txt)
 include(port/CMakeLists.txt)
 include(gcore/CMakeLists.txt)
 include(alg/CMakeLists.txt)
@@ -153,7 +216,7 @@ include(ogr/ogrsf_frmts/CMakeLists.txt)
 include(gnm/CMakeLists.txt)
 include(apps/CMakeLists.txt)
 
-set(gdal_srcs ${cpl_srcs} ${gcore_srcs} ${alg_srcs} ${frmts_srcs} ${ogr_srcs} ${ogrsf_fmt_srcs} ${gnm_srcs} ${apps_srcs})
+set(gdal_srcs ${proj-4_srcs} ${cpl_srcs} ${gcore_srcs} ${alg_srcs} ${frmts_srcs} ${ogr_srcs} ${ogrsf_fmt_srcs} ${gnm_srcs} ${apps_srcs})
 
 
 if(BUILD_SHARED_LIBS)
