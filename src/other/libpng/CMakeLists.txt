@@ -137,7 +137,7 @@ find_program(AWK NAMES gawk awk)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-if(NOT AWK)
+if(NOT AWK OR MSVC)
   # No awk available to generate sources; use pre-built pnglibconf.h
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.h.prebuilt
                  ${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h)
@@ -316,7 +316,7 @@ else()
     "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.chk"
     "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.out"
     "${CMAKE_CURRENT_BINARY_DIR}/scripts/vers.out")
-endif(NOT AWK)
+endif(NOT AWK OR MSVC)
 
 # OUR SOURCES
 set(libpng_public_hdrs
