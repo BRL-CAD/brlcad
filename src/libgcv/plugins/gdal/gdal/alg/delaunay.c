@@ -219,7 +219,7 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
     psDT->nFacets = j;
     psDT->pasFacets = pasFacets;
 
-    // Store vertex and neighbor information for each triangle.
+    /* Store vertex and neighbor information for each triangle. */
     for(facet = qh facet_list;
         facet != NULL && facet->next != NULL;
         facet = facet->next)
@@ -534,7 +534,7 @@ int GDALTriangulationFindFacetDirected(const GDALTriangulation* psDT,
             continue;
         }
         else if( l1 > 1 + EPS )
-            bMatch = FALSE; // outside or degenerate
+            bMatch = FALSE; /* outside or degenerate */
 
         l2 = BARYC_COORD_L2(psCoeffs, dfX, dfY);
         if( l2 < -EPS )
@@ -549,7 +549,7 @@ int GDALTriangulationFindFacetDirected(const GDALTriangulation* psDT,
             continue;
         }
         else if( l2 > 1 + EPS )
-            bMatch = FALSE; // outside or degenerate
+            bMatch = FALSE; /* outside or degenerate */
 
         l3 = BARYC_COORD_L3(l1, l2);
         if( l3 < -EPS )
@@ -564,7 +564,7 @@ int GDALTriangulationFindFacetDirected(const GDALTriangulation* psDT,
             continue;
         }
         else if( l3 > 1 + EPS )
-            bMatch = FALSE; // outside or degenerate
+            bMatch = FALSE; /* outside or degenerate */
 
         if( bMatch )
         {

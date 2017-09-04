@@ -612,7 +612,7 @@ int CPL_DLL GDALTriangulationFindFacetDirected( const GDALTriangulation* psDT,
 void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
 
 /*! @cond Doxygen_Suppress */
-// GDAL internal use only
+/* GDAL internal use only */
 void GDALTriangulationTerminate(void);
 /*! @endcond */
 

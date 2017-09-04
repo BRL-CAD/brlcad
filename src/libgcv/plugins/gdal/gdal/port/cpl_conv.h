@@ -286,7 +286,7 @@ CPL_C_END
 /*      C++ object for temporarily forcing a LC_NUMERIC locale to "C".  */
 /* -------------------------------------------------------------------- */
 
-//! @cond Doxygen_Suppress
+/*! @cond Doxygen_Suppress */
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 class CPL_DLL CPLLocaleC
@@ -303,10 +303,10 @@ private:
     CPLLocaleC& operator=(const CPLLocaleC&);
 };
 
-// Does the same as CPLLocaleC except that, when available, it tries to
-// only affect the current thread. But code that would be dependent of
-// setlocale(LC_NUMERIC, NULL) returning "C", such as current proj.4 versions,
-// will not work depending on the actual implementation
+/* Does the same as CPLLocaleC except that, when available, it tries to
+   only affect the current thread. But code that would be dependent of
+   setlocale(LC_NUMERIC, NULL) returning "C", such as current proj.4 versions,
+   will not work depending on the actual implementation */
 class CPL_DLL CPLThreadLocaleC
 {
 public:
@@ -330,6 +330,6 @@ private:
 };
 
 #endif /* def __cplusplus */
-//! @endcond
+/*! @endcond */
 
 #endif /* ndef CPL_CONV_H_INCLUDED */

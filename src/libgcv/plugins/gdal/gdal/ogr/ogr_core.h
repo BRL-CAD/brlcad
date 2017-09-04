@@ -132,7 +132,7 @@ class CPL_DLL OGREnvelope
     }
 };
 
-} // extern "C++"
+} /* extern "C++" */
 
 #else
 typedef struct
@@ -240,7 +240,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
     }
 };
 
-} // extern "C++"
+} /* extern "C++" */
 
 #else
 typedef struct

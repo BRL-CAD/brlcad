@@ -279,7 +279,7 @@ typedef GUIntBig         GUInt64;
 
 #else
 
-// NOTE: we don't really support such platforms ! Many things might break
+/* NOTE: we don't really support such platforms ! Many things might break */
 
 typedef long             GIntBig;
 typedef unsigned long    GUIntBig;
@@ -408,14 +408,14 @@ typedef unsigned int  GUIntptr_t;
 /*! @endcond*/
 
 /*! @cond Doxygen_Suppress */
-// Define NULL_AS_NULLPTR together with -std=c++11 -Wzero-as-null-pointer-constant with GCC
-// to detect misuses of NULL
+/* Define NULL_AS_NULLPTR together with -std=c++11 -Wzero-as-null-pointer-constant with GCC
+   to detect misuses of NULL */
 #if defined(NULL_AS_NULLPTR) && HAVE_CXX11
 
 #ifdef __GNUC__
-// We need to include all that bunch of system headers, otherwise
-// as they include <stddef.h> with __need_NULL, this overrides our #define NULL nullptr
-// with #define NULL __null
+/* We need to include all that bunch of system headers, otherwise
+   as they include <stddef.h> with __need_NULL, this overrides our #define NULL nullptr
+   with #define NULL __null */
 #include <locale.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -1019,7 +1019,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 /*! @cond Doxygen_Suppress */
 /* Clang __has_attribute */
 #ifndef __has_attribute
-  #define __has_attribute(x) 0  // Compatibility with non-clang compilers.
+  #define __has_attribute(x) 0  /* Compatibility with non-clang compilers. */
 #endif
 
 /*! @endcond */
@@ -1159,10 +1159,10 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 #endif
 
 /*! @cond Doxygen_Suppress */
-// Define DEBUG_BOOL to compile in "MSVC mode", ie error out when
-// a integer is assigned to a bool
-// WARNING: use only at compilation time, since it is know to not work
-//  at runtime for unknown reasons (crash in MongoDB driver for example)
+/* Define DEBUG_BOOL to compile in "MSVC mode", ie error out when
+   a integer is assigned to a bool
+   WARNING: use only at compilation time, since it is know to not work
+    at runtime for unknown reasons (crash in MongoDB driver for example) */
 #if defined(__cplusplus) && defined(DEBUG_BOOL) && !defined(DO_NOT_USE_DEBUG_BOOL)
 extern "C++" {
 class MSVCPedanticBool
