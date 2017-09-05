@@ -89,7 +89,6 @@ add_definitions(-DHAVE_SSSE_AT_COMPILE_TIME)
 add_definitions(-DINST_DATA=\"/usr/local/share/gdal\")
 set(HAVE_IEEEFP 1) # TODO test this for real
 
-
 find_package(ZLIB)
 if(ZLIB_LIBRARY)
   include_directories(${ZLIB_INCLUDE_DIR})
@@ -99,7 +98,6 @@ find_package(PNG)
 if(PNG_LIBRARY)
   include_directories(${PNG_INCLUDE_DIR})
 endif(PNG_LIBRARY)
-
 
 
 include(CheckTypeSize)
@@ -165,25 +163,20 @@ if(HAVE_LIBDL)
   set(DL_LIBRARY dl)
 endif(HAVE_LIBDL)
 
-message("${CMAKE_SYSTEM_PROCESSOR}")
-if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i*86")
-  set(HOST_FILLORDER "FILLORDER_LSB2MSB")
-else("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i*86")
+set(HOST_FILLORDER "FILLORDER_LSB2MSB")
+if(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" AND NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i*86" AND NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64")
   set(HOST_FILLORDER "FILLORDER_MSB2LSB")
-endif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i*86")
+endif(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" AND NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i*86" AND NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64")
 
 # Threads
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads)
-include(CheckSymbolExists)
-check_symbol_exists(PTHREAD_MUTEX_RECURSIVE pthread.h HAVE_PTHREAD_MUTEX_RECURSIVE_DEFN)
-if(HAVE_PTHREAD_MUTEX_RECURSIVE_DEFN)
-  add_definitions(-DHAVE_PTHREAD_MUTEX_RECURSIVE=1)
-endif(HAVE_PTHREAD_MUTEX_RECURSIVE_DEFN)
-check_symbol_exists(PTHREAD_MUTEX_ADAPTIVE_NP pthread.h HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
-
 if(CMAKE_USE_PTHREADS_INIT)
   set(CPL_MULTIPROC_PTHREAD 1)
+  include(CheckSymbolExists)
+  check_symbol_exists(PTHREAD_MUTEX_RECURSIVE pthread.h HAVE_PTHREAD_MUTEX_RECURSIVE)
+  check_symbol_exists(PTHREAD_MUTEX_ADAPTIVE_NP pthread.h HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
+  check_type_size(pthread_spinlock_t HAVE_PTHREAD_SPINLOCK)
 endif(CMAKE_USE_PTHREADS_INIT)
 
 if(0)
@@ -256,7 +249,6 @@ add_subdirectory(gcore)
 add_subdirectory(alg)
 add_subdirectory(frmts)
 add_subdirectory(ogr)
-#include(ogr/ogrsf_frmts/CMakeLists.txt)
 add_subdirectory(gnm)
 add_subdirectory(apps)
 

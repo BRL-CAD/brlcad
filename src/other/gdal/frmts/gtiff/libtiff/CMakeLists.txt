@@ -44,8 +44,8 @@ set(libtiff_srcs
 	)
 
 add_definitions(-DDONT_DEPRECATE_SPRINTF)
-add_definitions(-DPIXARLOG_SUPPORT)
 if(ZLIB_LIBRARY)
+	add_definitions(-DPIXARLOG_SUPPORT)
 	add_definitions(-DZIP_SUPPORT)
 endif(ZLIB_LIBRARY)
 
