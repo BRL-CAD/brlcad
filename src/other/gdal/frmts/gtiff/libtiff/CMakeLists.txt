@@ -1,6 +1,5 @@
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${ZLIB_INCLUDE_DIR}
 	)
 
 set(libtiff_srcs
@@ -46,6 +45,8 @@ set(libtiff_srcs
 
 add_definitions(-DDONT_DEPRECATE_SPRINTF)
 add_definitions(-DPIXARLOG_SUPPORT)
-add_definitions(-DZIP_SUPPORT)
+if(ZLIB_LIBRARY)
+	add_definitions(-DZIP_SUPPORT)
+endif(ZLIB_LIBRARY)
 
 add_library(libtiff_obj OBJECT ${libtiff_srcs})

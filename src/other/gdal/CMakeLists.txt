@@ -63,10 +63,10 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
   set(BUILD_SHARED_LIBS ON)
 endif(NOT DEFINED BUILD_SHARED_LIBS)
 
-find_package(ZLIB)
-include_directories(${ZLIB_INCLUDE_DIR})
 find_package(PNG)
-include_directories(${PNG_INCLUDE_DIR})
+if(PNG_LIBRARY)
+  include_directories(${PNG_INCLUDE_DIR})
+endif(PNG_LIBRARY)
 
 add_definitions(-g)
 add_definitions(-O2)
@@ -85,7 +85,9 @@ add_definitions(-DINST_DATA=\"/usr/local/share/gdal\")
 set(HAVE_IEEEFP 1) # TODO test this for real
 
 
+find_package(ZLIB)
 if(ZLIB_LIBRARY)
+  include_directories(${ZLIB_INCLUDE_DIR})
   add_definitions(-DHAVE_LIBZ)
 endif(ZLIB_LIBRARY)
 
@@ -281,8 +283,18 @@ foreach(frmt ${OGR_FORMATS})
   set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:ogr_frmt_${frmt}>)
 endforeach(frmt ${OGR_FORMATS})
 
+set(gdal_libs
+  ${ZLIB_LIBRARY}
+  ${PNG_LIBRARY}
+  ${M_LIBRARY}
+  ${DL_LIBRARY}
+  ${CMAKE_THREAD_LIBS_INIT}
+  )
+
 add_library(gdal ${gdal_srcs})
-target_link_libraries(gdal ${ZLIB_LIBRARY} ${PNG_LIBRARY} ${M_LIBRARY} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+if(gdal_libs)
+  target_link_libraries(gdal ${gdal_libs})
+endif(gdal_libs)
 install(TARGETS gdal
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
