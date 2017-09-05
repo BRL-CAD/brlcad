@@ -1,36 +1,46 @@
-set(alg_srcs
-	alg/contour.cpp
-	alg/gdal_octave.cpp
-	alg/gdalgrid.cpp
-	alg/gdalpansharpen.cpp
-	alg/gdalrasterpolygonenumerator.cpp
-	alg/gdalsievefilter.cpp
-	alg/gdalsimplewarp.cpp
-	alg/gdalwarpoperation.cpp
-	alg/thinplatespline.cpp
-	alg/delaunay.c
-	alg/gdal_crs.c
-	alg/gdal_rpc.cpp
-	alg/gdal_simplesurf.cpp
-	alg/gdal_tps.cpp
-	alg/gdalapplyverticalshiftgrid.cpp
-	alg/gdalchecksum.cpp
-	alg/gdalcutline.cpp
-	alg/gdaldither.cpp
-	alg/gdalgeoloc.cpp
-	alg/gdalmatching.cpp
-	alg/gdalmediancut.cpp
-	alg/gdalproximity.cpp
-	alg/gdalrasterize.cpp
-	alg/gdaltransformer.cpp
-	alg/gdaltransformgeolocs.cpp
-	alg/gdalwarper.cpp
-	alg/gdalwarpkernel.cpp
-	alg/gdalwarpkernel_opencl.cpp
-	alg/llrasterize.cpp
-	alg/polygonize.cpp
-	alg/rasterfill.cpp
+
+include_directories(
+	${CMAKE_CURRENT_SOURCE_DIR}/../frmts/vrt
 	)
 
 add_definitions(-DINTERNAL_QHULL)
 
+set(alg_srcs
+	gdalmediancut.cpp
+	gdaldither.cpp
+	gdal_crs.c
+	gdaltransformer.cpp
+	gdalsimplewarp.cpp
+	gdalwarper.cpp
+	gdalwarpkernel.cpp
+	gdalwarpoperation.cpp
+	gdalchecksum.cpp
+	gdal_rpc.cpp
+	gdal_tps.cpp
+	thinplatespline.cpp
+	llrasterize.cpp
+	gdalrasterize.cpp
+	gdalgeoloc.cpp
+	gdalgrid.cpp
+	gdalcutline.cpp
+	gdalproximity.cpp
+	rasterfill.cpp
+	gdalrasterpolygonenumerator.cpp
+	gdalsievefilter.cpp
+	gdalwarpkernel_opencl.cpp
+	polygonize.cpp
+	contour.cpp
+	gdaltransformgeolocs.cpp
+	gdal_octave.cpp
+	gdal_simplesurf.cpp
+	gdalmatching.cpp
+	delaunay.c
+	gdalpansharpen.cpp
+	gdalapplyverticalshiftgrid.cpp
+	gdalgridavx.cpp
+	gdalgridsse.cpp
+	)
+
+set_property(SOURCE gdalgridavx.cpp APPEND PROPERTY COMPILE_FLAGS "-mavx")
+
+add_library(gdal_alg OBJECT ${alg_srcs})

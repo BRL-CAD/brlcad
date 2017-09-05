@@ -1,67 +1,61 @@
-set(gcore_srcs
-	gcore/gdal_mdreader.cpp
-	gcore/gdal_misc.cpp
-	gcore/gdal_rat.cpp
-	gcore/gdalabstractbandblockcache.cpp
-	gcore/gdalallvalidmaskband.cpp
-	gcore/gdalarraybandblockcache.cpp
-	gcore/gdalclientserver.cpp
-	gcore/gdalcolortable.cpp
-	gcore/gdaldataset.cpp
-	gcore/gdaldefaultasync.cpp
-	gcore/gdaldefaultoverviews.cpp
-	gcore/gdaldllmain.cpp
-	gcore/gdaldriver.cpp
-	gcore/gdaldrivermanager.cpp
-	gcore/gdalexif.cpp
-	gcore/gdalgeorefpamdataset.cpp
-	gcore/gdalgmlcoverage.cpp
-	gcore/gdalhashsetbandblockcache.cpp
-	gcore/gdaljp2abstractdataset.cpp
-	gcore/gdaljp2box.cpp
-	gcore/gdaljp2metadata.cpp
-	gcore/gdaljp2metadatagenerator.cpp
-	gcore/gdaljp2structure.cpp
-	gcore/gdalmajorobject.cpp
-	gcore/gdalmultidomainmetadata.cpp
-	gcore/gdalnodatamaskband.cpp
-	gcore/gdalnodatavaluesmaskband.cpp
-	gcore/gdalopeninfo.cpp
-	gcore/gdaloverviewdataset.cpp
-	gcore/gdalpamdataset.cpp
-	gcore/gdalpamproxydb.cpp
-	gcore/gdalpamrasterband.cpp
-	gcore/gdalproxydataset.cpp
-	gcore/gdalproxypool.cpp
-	gcore/gdalrasterband.cpp
-	gcore/gdalrasterblock.cpp
-	gcore/gdalrescaledalphaband.cpp
-	gcore/gdalvirtualmem.cpp
-	gcore/mdreader/reader_alos.cpp
-	gcore/mdreader/reader_digital_globe.cpp
-	gcore/mdreader/reader_eros.cpp
-	gcore/mdreader/reader_geo_eye.cpp
-	gcore/mdreader/reader_kompsat.cpp
-	gcore/mdreader/reader_landsat.cpp
-	gcore/mdreader/reader_orb_view.cpp
-	gcore/mdreader/reader_pleiades.cpp
-	gcore/mdreader/reader_rapid_eye.cpp
-	gcore/mdreader/reader_rdk1.cpp
-	gcore/mdreader/reader_spot.cpp
-	gcore/overview.cpp
-	gcore/rasterio.cpp
-	)
+add_subdirectory(mdreader)
 
 include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}/frmts/gtiff
-	${CMAKE_CURRENT_SOURCE_DIR}/frmts/mem
-	${CMAKE_CURRENT_SOURCE_DIR}/frmts/vrt
-	${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts/generic
-	${CMAKE_CURRENT_SOURCE_DIR}/gnm/gnm_frmts
-	${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts/geojson/libjson
-	${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts/geojson
+	${CMAKE_CURRENT_SOURCE_DIR}/../frmts/gtiff
+	${CMAKE_CURRENT_SOURCE_DIR}/../frmts/mem
+	${CMAKE_CURRENT_SOURCE_DIR}/../frmts/vrt
+	${CMAKE_CURRENT_SOURCE_DIR}/../ogr/ogrsf_frmts/generic
+	${CMAKE_CURRENT_SOURCE_DIR}/../gnm/gnm_frmts
+	${CMAKE_CURRENT_SOURCE_DIR}/../ogr/ogrsf_frmts/geojson/libjson
+	${CMAKE_CURRENT_SOURCE_DIR}/../ogr/ogrsf_frmts/geojson
 )
 
-#CPPFLAGS	:=	 -I../frmts/gtiff -I../frmts/mem -I../frmts/vrt -I../ogr -I../ogr/ogrsf_frmts/generic -I../gnm/ -I../gnm/gnm_frmts/ $(JSON_INCLUDE) -I../ogr/ogrsf_frmts/geojson $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT)
 
+set(gcore_srcs
+	gdalopeninfo.cpp
+	gdaldrivermanager.cpp
+	gdaldriver.cpp
+	gdaldataset.cpp
+	gdalrasterband.cpp
+	gdal_misc.cpp
+	rasterio.cpp
+	gdalrasterblock.cpp
+	gdalcolortable.cpp
+	gdalmajorobject.cpp
+	overview.cpp
+	gdaldefaultoverviews.cpp
+	gdalpamdataset.cpp
+	gdalpamrasterband.cpp
+	gdaljp2metadata.cpp
+	gdaljp2box.cpp
+	gdalmultidomainmetadata.cpp
+	gdal_rat.cpp
+	gdalgmlcoverage.cpp
+	gdalpamproxydb.cpp
+	gdalallvalidmaskband.cpp
+	gdalnodatamaskband.cpp
+	gdalproxydataset.cpp
+	gdalproxypool.cpp
+	gdaldefaultasync.cpp
+	gdalnodatavaluesmaskband.cpp
+	gdaldllmain.cpp
+	gdalexif.cpp
+	gdalclientserver.cpp
+	gdalgeorefpamdataset.cpp
+	gdaljp2abstractdataset.cpp
+	gdalvirtualmem.cpp
+	gdaloverviewdataset.cpp
+	gdalrescaledalphaband.cpp
+	gdaljp2structure.cpp
+	gdal_mdreader.cpp
+	gdaljp2metadatagenerator.cpp
+	gdalabstractbandblockcache.cpp
+	gdalarraybandblockcache.cpp
+	gdalhashsetbandblockcache.cpp
+	rasterio_ssse3.cpp
+	)
+
+set_property(SOURCE rasterio_ssse3.cpp APPEND PROPERTY COMPILE_FLAGS "-mssse3")
+
+add_library(gcore OBJECT ${gcore_srcs})
 

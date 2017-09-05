@@ -1,12 +1,20 @@
-set(frmts_srcs frmts/gdalallregister.cpp)
-foreach(frmt ${GDAL_FORMATS})
-	set(GDAL_DEFINES "${GDAL_DEFINES} -DFRMT_${frmt}")
-	set(GDAL_LIST "${GDAL_LIST} ${frmt}")
-	file(GLOB_RECURSE ${frmt}_srcs LIST_DIRECTORIES false RELATIVE ${GDAL_SOURCE_DIR} frmts/${frmt}/*.c*)
-	include_directories(frmts/${frmt})
-	message("${frmt}_srcs: ${${frmt}_srcs}")
-	set(frmts_srcs ${frmts_srcs} ${${frmt}_srcs})
-endforeach(frmt ${GDAL_FORMATS})
-set(GDAL_DEFINES "${GDAL_DEFINES} -DGDAL_FORMATS=\"${GDAL_LIST}\"")
-set_property(SOURCE gdalallregister.cpp APPEND PROPERTY COMPILE_FLAGS "${GDAL_DEFINES}")
 
+include_directories(
+	${CMAKE_CURRENT_SOURCE_DIR}/../gnm/gnm_frmts
+	)
+
+set(frmts_srcs frmts/gdalallregister.cpp)
+
+foreach(frmt ${GDAL_FORMATS})
+	add_definitions(-DFRMT_${frmt})
+	set(GDAL_LIST "${GDAL_LIST} ${frmt}")
+endforeach(frmt ${GDAL_FORMATS})
+
+add_definitions(-DGDAL_FORMATS=${GDAL_LIST})
+
+add_library(gdal_allreg OBJECT gdalallregister.cpp)
+
+
+foreach(frmt ${GDAL_FORMATS})
+	add_subdirectory(${frmt})
+endforeach(frmt ${GDAL_FORMATS})

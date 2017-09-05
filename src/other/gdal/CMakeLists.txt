@@ -42,26 +42,15 @@ project(GDAL)
 
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/proj-4
+  #${CMAKE_CURRENT_SOURCE_DIR}/proj-4
   ${CMAKE_CURRENT_SOURCE_DIR}/port
   ${CMAKE_CURRENT_SOURCE_DIR}/gcore
-  ${CMAKE_CURRENT_SOURCE_DIR}/gcore/mdreader
   ${CMAKE_CURRENT_SOURCE_DIR}/alg
   ${CMAKE_CURRENT_SOURCE_DIR}/ogr
   ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts
-  ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts/avc
-  ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts/shape
-  ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts/mem
-  ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts/geojson
-  ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts/zlib
-  ${CMAKE_CURRENT_SOURCE_DIR}/frmts/iso8211
-  ${CMAKE_CURRENT_SOURCE_DIR}/frmts/gtiff/libtiff
-  ${CMAKE_CURRENT_SOURCE_DIR}/frmts/gtiff/libgeotiff
   ${CMAKE_CURRENT_SOURCE_DIR}/gnm
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
   )
-
-#-DHAVE_AVX_AT_COMPILE_TIME -DHAVE_SSSE3_AT_COMPILE_TIME -DHAVE_SSE_AT_COMPILE_TIME -g -O2 -Wall -Wextra -Winit-self -Wunused-parameter -Wformat -Werror=format-security -Wno-format-nonliteral -Wlogical-op -Wshadow -Werror=vla -Wdate-time -Wnull-dereference -Wduplicated-cond -Wfloat-conversion -Wmissing-declarations -Wnon-virtual-dtor -Woverloaded-virtual -fno-operator-names -Wsuggest-override -DGNM_ENABLED -I/home/cyapp/brlcad/src/other/gdal/gdal-2.2.1/port -DGDAL_COMPILATION -c genbindataset.cpp  -fPIC -DPIC -o ../o/.libs/genbindataset.o
 
 if(NOT LIB_DIR)
   set(LIB_DIR lib)
@@ -79,19 +68,25 @@ include_directories(${ZLIB_INCLUDE_DIR})
 find_package(PNG)
 include_directories(${PNG_INCLUDE_DIR})
 
+add_definitions(-g)
+add_definitions(-O2)
+add_definitions(-fPIC)
+add_definitions(-DPIC)
+
 add_definitions(-DGDAL_COMPILATION)
-add_definitions(-DINTERNAL_LIBTIFF)
-add_definitions(-DINTERNAL_LIBGEOTIFF)
-add_definitions(-DBIGTIFF_SUPPORT)
-add_definitions(-DZLIB_SUPPORT)
-add_definitions(-DDONT_DEPRECATE_SPRINTF)
 add_definitions(-DGNM_ENABLED)
 add_definitions(-DGNMFILE_ENABLED)
 add_definitions(-DGNMDB_ENABLED)
-add_definitions(-DHAVE_IEEEFP) # TODO test this for real
+add_definitions(-DUSE_ONLY_CRYPTODLL_ALG)
+add_definitions(-DHAVE_AVX_AT_COMPILE_TIME)
+add_definitions(-DHAVE_SSSE3_AT_COMPILE_TIME)
+add_definitions(-DHAVE_SSSE_AT_COMPILE_TIME)
+add_definitions(-DINST_DATA=\"/usr/local/share/gdal\")
+set(HAVE_IEEEFP 1) # TODO test this for real
+
 
 if(ZLIB_LIBRARY)
-  add_definitions(-DHAVE_ZLIB)
+  add_definitions(-DHAVE_LIBZ)
 endif(ZLIB_LIBRARY)
 
 include(CheckTypeSize)
@@ -149,7 +144,13 @@ check_function_exists(uselocale HAVE_USELOCALE)
 
 include(CheckLibraryExists)
 check_library_exists(m ceil "" HAVE_LIBM)
+if(HAVE_LIBM)
+  set(M_LIBRARY m)
+endif(HAVE_LIBM)
 check_library_exists(dl dlopen "" HAVE_LIBDL)
+if(HAVE_LIBDL)
+  set(DL_LIBRARY dl)
+endif(HAVE_LIBDL)
 
 message("${CMAKE_SYSTEM_PROCESSOR}")
 if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i*86")
@@ -172,55 +173,68 @@ if(CMAKE_USE_PTHREADS_INIT)
   set(CPL_MULTIPROC_PTHREAD 1)
 endif(CMAKE_USE_PTHREADS_INIT)
 
+if(0)
+  set(GDAL_FORMATS
+    aaigrid adrg aigrid airsar arg
+    blx bmp
+    cals ceos ceos2 coasp cosar ctg
+    derived dimap dted
+    e00grid elas envisat ers
+    fit
+    gff gsg gtiff gxf
+    hf2 hfa
+    idrisi ilwis ingr iris iso8211
+    jaxapalsar jdem kmlsuperoverlay
+    l1b leveller
+    map mem
+    ngsgeoid nitf northwood
+    ozi
+    pds prf
+    r raw rik rmf rs2
+    safe saga
+    sentinel2 sgi srtmhgt
+    terragen til tsx
+    usgsdem
+    vrt
+    xpm xyz
+    zmap
+    )
+endif(0)
+set(GDAL_FORMATS raw vrt mem gtiff derived hfa usgsdem)
 
-set(GDAL_FORMATS
-  aaigrid adrg aigrid airsar arg
-  blx bmp
-  cals ceos ceos2 coasp cosar ctg
-  derived dimap dted
-  e00grid elas envisat ers
-  fit
-  gff gsg gtiff gxf
-  hf2 hfa
-  idrisi ilwis ingr iris iso8211
-  jaxapalsar jdem kmlsuperoverlay
-  l1b leveller
-  map mem
-  ngsgeoid nitf northwood
-  pds prf
-  r raw rmf rs2
-  safe saga
-  sentinel2 sgi srtmhgt
-  terragen til tsx
-  usgsdem
-  vrt
-  xpm xyz
-  zmap
-  )
+if(0)
+  set(OGR_FORMATS
+    aeronavfaa arcgen avc
+    bna
+    csv
+    dgn dxf
+    edigeo
+    generic geoconcept geojson gmt gpsbabel gtm
+    htf
+    idrisi
+    mem mitab
+    ntf
+    openair openfilegdb
+    pds pgdump
+    rec
+    s57 segukooa segy selafin shape sua sxf
+    tiger
+    vdv vrt
+    wasp
+    xplane
+    )
+endif(0)
+set(OGR_FORMATS generic vrt mem mitab geojson xplane)
 
-if(ZLIB_LIBRARY)
-  set(GDAL_FORMATS ${GDAL_FORMATS} rik ozi)
-endif(ZLIB_LIBRARY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/proj-4/proj_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h)
-execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp)
+
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/proj-4/proj_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp)
+#execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h)
+#execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
-
-include(proj-4/CMakeLists.txt)
-include(port/CMakeLists.txt)
-include(gcore/CMakeLists.txt)
-include(alg/CMakeLists.txt)
-include(frmts/CMakeLists.txt)
-include(ogr/CMakeLists.txt)
-include(ogr/ogrsf_frmts/CMakeLists.txt)
-include(gnm/CMakeLists.txt)
-include(apps/CMakeLists.txt)
-
-set(gdal_srcs ${proj-4_srcs} ${cpl_srcs} ${gcore_srcs} ${alg_srcs} ${frmts_srcs} ${ogr_srcs} ${ogrsf_fmt_srcs} ${gnm_srcs} ${apps_srcs})
 
 
 include(CheckCCompilerFlag)
@@ -230,31 +244,50 @@ include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-Wno-error NOERROR_FLAG_CXX)
 check_cxx_compiler_flag(-W NOWARN_FLAG_CXX)
 if(NOERROR_FLAG_C AND NOWARN_FLAG_C AND NOERROR_FLAG_CXX AND NOWARN_FLAG_CXX)
-  add_definitions(-w)
+  #add_definitions(-w)
+  add_definitions(-Wall)
   add_definitions(-Wno-error)
 endif(NOERROR_FLAG_C AND NOWARN_FLAG_C AND NOERROR_FLAG_CXX AND NOWARN_FLAG_CXX)
 
-if(BUILD_SHARED_LIBS)
-  add_library(gdal SHARED ${gdal_srcs})
-  target_link_libraries(gdal ${ZLIB_LIBRARY} ${PNG_LIBRARY})
-  install(TARGETS gdal
-    RUNTIME DESTINATION ${BIN_DIR}
-    LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR})
-endif(BUILD_SHARED_LIBS)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--no-undefined")
 
-if(0)
-if(BUILD_STATIC_LIBS)
-  add_library(gdal-static STATIC ${gdal_srcs})
-  if(NOT WIN32)
-    set_target_properties(gdal-static PROPERTIES OUTPUT_NAME "gdal")
-  endif(NOT WIN32)
-  install(TARGETS gdal-static
-    RUNTIME DESTINATION ${BIN_DIR}
-    LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR})
-endif(BUILD_STATIC_LIBS)
-endif(0)
+#include(proj-4/CMakeLists.txt)
+add_subdirectory(port)
+add_subdirectory(gcore)
+add_subdirectory(alg)
+add_subdirectory(frmts)
+add_subdirectory(ogr)
+#include(ogr/ogrsf_frmts/CMakeLists.txt)
+add_subdirectory(gnm)
+add_subdirectory(apps)
+
+set(gdal_srcs ${proj-4_srcs}
+  $<TARGET_OBJECTS:cpl>
+  $<TARGET_OBJECTS:mdreader>
+  $<TARGET_OBJECTS:gcore>
+  $<TARGET_OBJECTS:gdal_alg>
+  $<TARGET_OBJECTS:gdal_allreg>
+  $<TARGET_OBJECTS:libtiff_obj>
+  $<TARGET_OBJECTS:libgeotiff_obj>
+  $<TARGET_OBJECTS:json_obj>
+  $<TARGET_OBJECTS:gdal_ogr>
+  $<TARGET_OBJECTS:gnm_obj>
+  $<TARGET_OBJECTS:gdal_apps>
+  )
+foreach(frmt ${GDAL_FORMATS})
+  set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:frmt_${frmt}>)
+endforeach(frmt ${GDAL_FORMATS})
+foreach(frmt ${OGR_FORMATS})
+  set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:ogr_frmt_${frmt}>)
+endforeach(frmt ${OGR_FORMATS})
+
+add_library(gdal ${gdal_srcs})
+target_link_libraries(gdal ${ZLIB_LIBRARY} ${PNG_LIBRARY} ${M_LIBRARY} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+install(TARGETS gdal
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
+
 
 # Local Variables:
 # tab-width: 8
