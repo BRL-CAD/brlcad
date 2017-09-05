@@ -51,11 +51,16 @@ set(cpl_srcs
 	cpl_vsi_error.cpp
 	cpl_cpu_features.cpp
 	cpl_google_cloud.cpp
-	cpl_vsil_gzip.cpp
-	cpl_minizip_ioapi.cpp
-	cpl_minizip_unzip.cpp
-	cpl_minizip_zip.cpp
 	)
+
+if(ZLIB_LIBRARY)
+	set(cpl_srcs ${cpl_srcs}
+		cpl_vsil_gzip.cpp
+		cpl_minizip_ioapi.cpp
+		cpl_minizip_unzip.cpp
+		cpl_minizip_zip.cpp
+		)
+endif(ZLIB_LIBRARY)
 
 
 add_library(cpl OBJECT ${cpl_srcs})
