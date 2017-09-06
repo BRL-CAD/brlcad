@@ -53,6 +53,7 @@
 #endif
 
 #include "bu/color.h"
+#include "bu/log.h"
 #include "bu/str.h"
 #include "pkg.h"
 #include "fb_private.h"
