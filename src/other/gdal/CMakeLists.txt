@@ -88,7 +88,7 @@ add_definitions(-DUSE_ONLY_CRYPTODLL_ALG)
 add_definitions(-DHAVE_AVX_AT_COMPILE_TIME)
 add_definitions(-DHAVE_SSSE3_AT_COMPILE_TIME)
 add_definitions(-DHAVE_SSSE_AT_COMPILE_TIME)
-add_definitions(-DINST_DATA=\"/usr/local/share/gdal\")
+add_definitions(-DINST_DATA=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal\")
 set(HAVE_IEEEFP 1) # TODO test this for real
 
 if(MSVC)
