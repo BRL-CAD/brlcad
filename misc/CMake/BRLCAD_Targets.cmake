@@ -393,7 +393,7 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
   endif(USE_OBJECT_LIBS)
 
-  if(BUILD_SHARED_LIBS OR L_SHARED)
+  if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
     add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
     string(REPLACE "lib" "" LOWERCORE "${libname}")
     string(TOUPPER ${LOWERCORE} UPPER_CORE)
@@ -401,15 +401,20 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
       set_property(GLOBAL APPEND PROPERTY ${libname}_DEFINES "${UPPER_CORE}_DLL_IMPORTS")
     endif(CPP_DLL_DEFINES)
-  endif(BUILD_SHARED_LIBS OR L_SHARED)
-  if(BUILD_STATIC_LIBS OR L_STATIC)
-    add_library(${libname}-static STATIC ${lsrcslist} ${L_STATIC_SRCS})
+  endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
+  if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
+    if(L_STATIC)
+      set(libstatic ${libname})
+    else(L_STATIC)
+      set(libstatic ${libname}-static)
+    endif(L_STATIC)
+    add_library(${libstatic} STATIC ${lsrcslist} ${L_STATIC_SRCS})
     # No DLL import/export machinery for static compilation with Visual C++,
     # so define our short-circuiting definition for the headers
     if(CPP_DLL_DEFINES)
-      target_compile_definitions(${libname}-static PRIVATE STATIC_BUILD)
+      target_compile_definitions(${libstatic} PRIVATE STATIC_BUILD)
     endif(CPP_DLL_DEFINES)
-  endif(BUILD_STATIC_LIBS OR L_STATIC)
+  endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
 
   # Make sure we don't end up with outputs named liblib...
   set(possible_targets ${libname} ${libname}-static)
@@ -420,19 +425,19 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   endforeach(pt ${possible_targets})
 
   # Set properties and validation rules if we're building static libs
-  if(BUILD_STATIC_LIBS OR L_STATIC)
-    set_target_properties(${libname}-static PROPERTIES FOLDER "BRL-CAD Static Libraries${SUBFOLDER}")
-    VALIDATE_STYLE("${libname}-static" "${srcslist};${L_STATIC_SRCS}")
+  if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
+    set_target_properties(${libstatic} PROPERTIES FOLDER "BRL-CAD Static Libraries${SUBFOLDER}")
+    VALIDATE_STYLE("${libstatic}" "${srcslist};${L_STATIC_SRCS}")
     if(NOT L_NO_INSTALL)
-      install(TARGETS ${libname}-static
+      install(TARGETS ${libstatic}
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
     endif(NOT L_NO_INSTALL)
-  endif(BUILD_STATIC_LIBS OR L_STATIC)
+  endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
 
   # If we're building the shared library, there are a few more things we need to do
-  if(BUILD_SHARED_LIBS OR L_SHARED)
+  if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
     set_target_properties(${libname} PROPERTIES FOLDER "BRL-CAD Shared Libraries${SUBFOLDER}")
     VALIDATE_STYLE("${libname}" "${srcslist};${L_SHARED_SRCS}")
     # If we have libraries to link for a shared library, link them.
@@ -445,7 +450,7 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
     endif(NOT L_NO_INSTALL)
-  endif(BUILD_SHARED_LIBS OR L_SHARED)
+  endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 
 endfunction(BRLCAD_ADDLIB libname srcslist libslist)
 
