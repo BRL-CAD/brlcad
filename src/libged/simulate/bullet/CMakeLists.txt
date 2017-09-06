@@ -401,22 +401,42 @@ set(Bullet_SRCS
   )
 
 if(BRLCAD_ENABLE_BULLET)
-set(LIBGED_SOURCES ${Bullet_SRCS} ${Bullet_HDRS})
+  set(LIBGED_SOURCES ${Bullet_SRCS} ${Bullet_HDRS})
 
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag(-Wno-error NOERROR_FLAG_CXX)
-check_cxx_compiler_flag(-W NOWARN_FLAG_CXX)
-if(NOERROR_FLAG_CXX AND NOWARN_FLAG_CXX)
-  foreach(srcfile ${Bullet_SRCS})
-    set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "-w -Wno-error")
-  endforeach(srcfile ${Bullet_SRCS})
-endif(NOERROR_FLAG_CXX AND NOWARN_FLAG_CXX)
+  include(CheckCXXCompilerFlag)
+  check_cxx_compiler_flag(-Wno-error NOERROR_FLAG_CXX)
+  check_cxx_compiler_flag(-W NOWARN_FLAG_CXX)
+  if(NOERROR_FLAG_CXX AND NOWARN_FLAG_CXX)
+    foreach(srcfile ${Bullet_SRCS})
+      set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "-w -Wno-error")
+    endforeach(srcfile ${Bullet_SRCS})
+  endif(NOERROR_FLAG_CXX AND NOWARN_FLAG_CXX)
 else(BRLCAD_ENABLE_BULLET)
   CMAKEFILES(${Bullet_SRCS})
   CMAKEFILES(${Bullet_HDRS})
 endif(BRLCAD_ENABLE_BULLET)
 
-CMAKEFILES(simulate/bullet/AUTHORS.txt simulate/bullet/LICENSE.txt)
+set(Bullet_misc
+  simulate/bullet/BulletCollision/CMakeLists.txt
+  simulate/bullet/BulletCollision/Gimpact/btCompoundFromGimpact.h
+  simulate/bullet/BulletCollision/NarrowPhaseCollision/btComputeGjkEpaPenetration.h
+  simulate/bullet/BulletCollision/NarrowPhaseCollision/btGjkCollisionDescription.h
+  simulate/bullet/BulletCollision/NarrowPhaseCollision/btGjkEpa3.h
+  simulate/bullet/BulletCollision/NarrowPhaseCollision/btMprPenetration.h
+  simulate/bullet/BulletDynamics/CMakeLists.txt
+  simulate/bullet/BulletDynamics/Featherstone/btMultiBodyJointFeedback.h
+  simulate/bullet/BulletSoftBody/CMakeLists.txt
+  simulate/bullet/BulletSoftBody/btSoftBodyInternals.h
+  simulate/bullet/CMakeLists.txt
+  simulate/bullet/LinearMath/CMakeLists.txt
+  simulate/bullet/LinearMath/btCpuFeatureUtility.h
+  simulate/bullet/LinearMath/btMatrixX.h
+  simulate/bullet/LinearMath/btSpatialAlgebra.h
+  simulate/bullet/AUTHORS.txt
+  simulate/bullet/LICENSE.txt
+  )
+
+CMAKEFILES(${Bullet_misc})
 
 # Local Variables:
 # tab-width: 8

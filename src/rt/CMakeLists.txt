@@ -97,6 +97,7 @@ BRLCAD_ADDEXEC(rtxray "viewxray.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;lib
 set(rt_ignore_files
   ext.h
   libfb-dummy.c
+  main.c
   rad.h
   rtuif.h
   scanline.h
