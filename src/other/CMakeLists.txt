@@ -1021,6 +1021,30 @@ SetTargetFolder(rply-static "Third Party Libraries")
 mark_as_advanced(RPLY_LIBRARIES)
 mark_as_advanced(RPLY_INCLUDE_DIRS)
 
+if(0)
+# PROJ.4 library
+add_subdirectory(proj-4)
+
+# GDAL library
+add_subdirectory(gdal)
+set(GDAL_LIBRARY gdal CACHE STRING "libgdal" FORCE)
+set(GDAL_INCLUDE_DIR
+  "${CMAKE_CURRENT_BINARY_DIR}/gdal"
+  "${BRLCAD_SOURCE_DIR}/src/other/gdal/port"
+  "${BRLCAD_SOURCE_DIR}/src/other/gdal/gcore"
+  "${BRLCAD_SOURCE_DIR}/src/other/gdal/alg"
+  "${BRLCAD_SOURCE_DIR}/src/other/gdal/ogr"
+  "${BRLCAD_SOURCE_DIR}/src/other/gdal/ogr/ogrsf_frmts"
+  "${BRLCAD_SOURCE_DIR}/src/other/gdal/gnm"
+  "${BRLCAD_SOURCE_DIR}/src/other/gdal/apps"
+  "${BRLCAD_SOURCE_DIR}/src/other/gdal/frmts/vrt"
+  )
+set(GDAL_INCLUDE_DIR "${GDAL_INCLUDE_DIR}" CACHE STRING "Directories containing GDAL headers." FORCE)
+if(TARGET gdal AND TARGET proj)
+  add_dependencies(gdal proj)
+endif(TARGET gdal AND TARGET proj)
+endif()
+
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)
 include("${CMAKE_CURRENT_SOURCE_DIR}/gct.dist")
