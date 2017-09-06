@@ -63,7 +63,7 @@
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
 static int wgl_actively_drawing;
-HIDDEN PIXELFORMATDESCRIPTOR *wgl_choose_visual();
+HIDDEN int wgl_choose_visual();
 
 /* Display Manager package interface */
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
@@ -219,6 +219,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     Tk_Window tkwin;
     HWND hwnd;
     HDC hdc;
+	int gotvisual;
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
@@ -388,9 +389,8 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     hdc = GetDC(hwnd);
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc = hdc;
 
-    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip =
-	 wgl_choose_visual(dmp,
-			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) == NULL) {
+	gotvisual = wgl_choose_visual(dmp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+    if (!gotvisual) {
 	bu_log("wgl_open: Can't get an appropriate visual.\n");
 	(void)wgl_close(dmp);
 	return DM_NULL;
@@ -1518,20 +1518,19 @@ wgl_setWinBounds(dm *dmp, fastf_t w[6])
 /* currently, get a double buffered rgba visual that works with Tk and
  * OpenGL
  */
-HIDDEN PIXELFORMATDESCRIPTOR *
+HIDDEN int
 wgl_choose_visual(dm *dmp,
 		  Tk_Window tkwin)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     int iPixelFormat;
-    PIXELFORMATDESCRIPTOR *ppfd, pfd;
+    PIXELFORMATDESCRIPTOR pfd;
     BOOL good;
 
     /* Try to satisfy the above desires with a color visual of the
      * greatest depth */
 
-    ppfd = &pfd;
-    memset(ppfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+    memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
 
     iPixelFormat = GetPixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
     if (iPixelFormat) {
@@ -1550,25 +1549,24 @@ wgl_choose_visual(dm *dmp,
 	bu_log("wgl_choose_visual: %s", buf);
 	LocalFree(buf);
 
-	return (PIXELFORMATDESCRIPTOR *)NULL;
+	return 0;
     }
 
-    ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
-    ppfd->nVersion = 1;
-    ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    ppfd->iPixelType = PFD_TYPE_RGBA;
-    ppfd->cColorBits = 24;
-    ppfd->cDepthBits = 32;
-    ppfd->iLayerType = PFD_MAIN_PLANE;
+    pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+    pfd.nVersion = 1;
+    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pfd.iPixelType = PFD_TYPE_RGBA;
+    pfd.cColorBits = 24;
+    pfd.cDepthBits = 32;
+    pfd.iLayerType = PFD_MAIN_PLANE;
 
     mvars->zbuf = 1;
-    iPixelFormat = ChoosePixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ppfd);
-    good = SetPixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, iPixelFormat, ppfd);
+    iPixelFormat = ChoosePixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, &pfd);
+    good = SetPixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, iPixelFormat, &pfd);
 
     if (good)
-	return ppfd;
-
-    return (PIXELFORMATDESCRIPTOR *)NULL;
+	return 1;
+	return 0;
 }
 
 
@@ -2162,7 +2160,7 @@ wgl_openFb(dm *dmp)
     return 0;
 }
 
-void
+int
 wgl_get_internal(struct dm_internal *dmp)
 {
     struct modifiable_ogl_vars *mvars = NULL;
@@ -2172,9 +2170,10 @@ wgl_get_internal(struct dm_internal *dmp)
 	mvars->this_dm = dmp;
 	bu_vls_init(&(mvars->log));
     }
+	return 0;
 }
 
-void
+int
 wgl_put_internal(struct dm_internal *dmp)
 {
     struct modifiable_ogl_vars *mvars = NULL;
@@ -2183,6 +2182,7 @@ wgl_put_internal(struct dm_internal *dmp)
 	bu_vls_free(&(mvars->log));
 	BU_PUT(dmp->m_vars, struct modifiable_ogl_vars);
     }
+	return 0;
 }
 
 void
