@@ -47,48 +47,48 @@ BRLCAD_ADDEXEC(rtregis "read-rtlog.c;rtregis.c" "${CMAKE_THREAD_LIBS_INIT};librt
 
 BRLCAD_ADDEXEC(rtscale "read-rtlog.c;rtscale.c" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rt "view.c" "${OPENCL_LIBS};${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rt "${LIBRTUIF_SOURCES};view.c" "${OPENCL_LIBS};${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rt_bot_faces "view_bot_faces.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rt_bot_faces "${LIBRTUIF_SOURCES};view_bot_faces.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 set_property(TARGET rt_bot_faces APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtarea "viewarea.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtarea "${LIBRTUIF_SOURCES};viewarea.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 set_property(TARGET rtarea APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtcell "viewcell.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtcell "${LIBRTUIF_SOURCES};viewcell.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 set_property(TARGET rtcell APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtcheck "viewcheck.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtcheck "${LIBRTUIF_SOURCES};viewcheck.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 set_property(TARGET rtcheck APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtedge "viewedge.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtedge "${LIBRTUIF_SOURCES};viewedge.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtfrac "viewfrac.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtfrac "${LIBRTUIF_SOURCES};viewfrac.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 set_property(TARGET rtfrac APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtg3 "viewg3.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtg3 "${LIBRTUIF_SOURCES};viewg3.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 set_property(TARGET rtg3 APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rthide "viewhide.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rthide "${LIBRTUIF_SOURCES};viewhide.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 set_property(TARGET rthide APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtpp "viewpp.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtpp "${LIBRTUIF_SOURCES};viewpp.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtrad "viewrad.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtrad "${LIBRTUIF_SOURCES};viewrad.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 set_property(TARGET rtrad APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtrange "viewrange.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtrange "${LIBRTUIF_SOURCES};viewrange.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 set_property(TARGET rtrange APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtray "viewray.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtray "${LIBRTUIF_SOURCES};viewray.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 set_property(TARGET rtray APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtsil "viewsil.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtsil "${LIBRTUIF_SOURCES};viewsil.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtweight "viewweight.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtweight "${LIBRTUIF_SOURCES};viewweight.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 set_property(TARGET rtweight APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
-BRLCAD_ADDEXEC(rtxray "viewxray.c" "${CMAKE_THREAD_LIBS_INIT};librtuif;librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtxray "${LIBRTUIF_SOURCES};viewxray.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 
 set(rt_ignore_files
   ext.h
