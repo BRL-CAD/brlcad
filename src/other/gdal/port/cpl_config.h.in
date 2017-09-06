@@ -16,11 +16,22 @@
 #endif
 
 #if defined(_MSC_VER)
+
 #define HAVE_GETCWD 1
 /* gmt_notunix.h from GMT project also redefines getcwd. See #3138 */
 #ifndef getcwd
 #define getcwd _getcwd
 #endif
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+ * calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#  ifndef inline
+#    define inline __inline
+#  endif
+#endif
+
+#define lfind _lfind
 #endif
 
 #if defined(_MSC_VER) && (_MSC_VER < 1310)
