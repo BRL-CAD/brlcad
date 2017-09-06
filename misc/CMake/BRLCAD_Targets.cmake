@@ -393,7 +393,7 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
   endif(USE_OBJECT_LIBS)
 
-  if(BUILD_SHARED_LIBS)
+  if(BUILD_SHARED_LIBS OR L_SHARED)
     add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
     string(REPLACE "lib" "" LOWERCORE "${libname}")
     string(TOUPPER ${LOWERCORE} UPPER_CORE)
@@ -401,15 +401,15 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
       set_property(GLOBAL APPEND PROPERTY ${libname}_DEFINES "${UPPER_CORE}_DLL_IMPORTS")
     endif(CPP_DLL_DEFINES)
-  endif(BUILD_SHARED_LIBS)
-  if(BUILD_STATIC_LIBS)
+  endif(BUILD_SHARED_LIBS OR L_SHARED)
+  if(BUILD_STATIC_LIBS OR L_STATIC)
     add_library(${libname}-static STATIC ${lsrcslist} ${L_STATIC_SRCS})
     # No DLL import/export machinery for static compilation with Visual C++,
     # so define our short-circuiting definition for the headers
     if(CPP_DLL_DEFINES)
       target_compile_definitions(${libname}-static PRIVATE STATIC_BUILD)
     endif(CPP_DLL_DEFINES)
-  endif(BUILD_STATIC_LIBS)
+  endif(BUILD_STATIC_LIBS OR L_STATIC)
 
   # Make sure we don't end up with outputs named liblib...
   set(possible_targets ${libname} ${libname}-static)
