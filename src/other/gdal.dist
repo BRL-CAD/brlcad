@@ -214,7 +214,6 @@ frmts/derived/deriveddataset.cpp
 frmts/derived/derivedlist.c
 frmts/derived/derivedlist.h
 frmts/dimap/dimapdataset.cpp
-frmts/dted/CMakeLists.txt
 frmts/dted/dted_api.c
 frmts/dted/dted_api.h
 frmts/dted/dted_create.c
