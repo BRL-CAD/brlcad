@@ -94,6 +94,11 @@ endfunction(VALIDATE_STYLE)
 # Determine if a given file is a C or C++ file
 function(FILE_LANG sfile outvar)
 
+  if("${srcfile}" MATCHES "<TARGET_OBJECTS:")
+    set(${outvar} "" PARENT_SCOPE)
+    return()
+  endif("${srcfile}" MATCHES "<TARGET_OBJECTS:")
+
   # Try property first
   get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
 
