@@ -38,8 +38,8 @@
 #include "./Mm.h"
 #include "./burst.h"
 #include "./trie.h"
-#include "./ascii.h"
 #include "./extern.h"
+#include "./ascii.h"
 
 
 #define DEBUG_UI 0
