@@ -272,6 +272,7 @@ THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES E
 if(BRLCAD_PNG_BUILD)
 
   set(PNG_LIBRARY png CACHE STRING "PNG_LIBRARY" FORCE)
+  set(PNG_PNG_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libpng" CACHE STRING "PNG include directory" FORCE)
 
   # On Haiku the find_library call sets this variable directly, which is not
   # how we handle things elsewhere in BRL-CAD - unset the variable in that
@@ -290,12 +291,8 @@ if(BRLCAD_PNG_BUILD)
   SetTargetFolder(png "Third Party Libraries")
   SetTargetFolder(png_static "Third Party Libraries")
   SetTargetFolder(genfiles "Third Party Libraries")
-ELSE(BRLCAD_PNG_BUILD)
-  # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
-  # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
-  # handle it here.
-  set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 endif(BRLCAD_PNG_BUILD)
+set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 # Since SKIP_INSTALL_FILES doesn't have a PNG prefix, we'll unset it once we're done
 unset(SKIP_INSTALL_FILES CACHE)
 unset(SKIP_INSTALL_FILES)
