@@ -281,7 +281,7 @@ foreach(ll ${lib_list})
   endif(${ll}_LIBRARY)
 endforeach(ll ${lib_list})
 if(MSVC)
-  set(gdal_libs ws2_32.lib kernel32.lib psapi.lib)
+  set(gdal_libs ${gdal_libs} ws2_32.lib kernel32.lib psapi.lib)
 endif(MSVC)
 
 add_library(gdal ${gdal_srcs})
