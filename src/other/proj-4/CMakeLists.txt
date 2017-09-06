@@ -13,106 +13,104 @@ cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
 
 # proj4 is an ANSI C project
 project(PROJ4 C)
-set(PROJECT_INTERN_NAME PROJ)
 
 #################################################################################
-# PROJ4 CMake modules
-#################################################################################
-# Path to additional CMake modules
-set(CMAKE_MODULE_PATH ${PROJ4_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-set(CMAKE_MODULE_PATH ${PROJ4_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
-
-include(Proj4Utilities)
-
-message(STATUS "")
-colormsg(_HIBLUE_ "Configuring PROJ:")
-
-#################################################################################
-#PROJ version information
-#################################################################################
-include(Proj4Version)
-proj_version(MAJOR 4 MINOR 9 PATCH 3)
+set(PROJ_VERSION_MAJOR 4)
+set(PROJ_VERSION_MINOR 9)
+set(PROJ_VERSION_PATCH 3)
+set(PROJ_VERSION ${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_VERSION_PATCH})
+set(VERSION ${PROJ_VERSION})
+if(WIN32)
+  set(PROJ_ABI_VERSION "${PROJ_VERSION_MAJOR}_${PROJ_VERSION_MINOR}")
+endif(WIN32)
 set(PROJ_API_VERSION "12")
 set(PROJ_BUILD_VERSION "12.0.0")
 
 #################################################################################
-# Build features and variants
-#################################################################################
-include(Proj4SystemInfo)
-include(Proj4Config)
-include(Proj4Mac)
+if(NOT BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT BIN_DIR)
+if(NOT LIB_DIR)
+  if(MSVC)
+    set(LIB_DIR bin)
+  else(MSVC)
+    set(LIB_DIR lib)
+  endif(MSVC)
+endif(NOT LIB_DIR)
+if(NOT DATA_DIR)
+  set(DATA_DIR share)
+endif(NOT DATA_DIR)
+if(NOT INCLUDE_DIR)
+  set(INCLUDE_DIR include)
+endif(NOT INCLUDE_DIR)
 
 #################################################################################
-# Self-test build config
-#################################################################################
+# From SociConfig.cmake - CMake build configuration of SOCI library
+# Copyright (C) 2010 Mateusz Loskot <mateusz@loskot.net>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt)
 
-option(SELFTEST "Include self-test in build" OFF)
-if(SELFTEST)
-    add_definitions(-DPJ_SELFTEST)
-endif(SELFTEST)
+include (CheckIncludeFiles)
+include (CheckLibraryExists) 
+include (CheckFunctionExists)
 
-#################################################################################
-# threading configuration
+# check needed include file
+check_include_files(dlfcn.h HAVE_DLFCN_H)
+check_include_files(inttypes.h HAVE_INTTYPES_H)
+check_include_files(jni.h HAVE_JNI_H)
+check_include_files(memory.h HAVE_MEMORY_H)
+check_include_files(stdint.h HAVE_STDINT_H)
+check_include_files(stdlib.h HAVE_STDLIB_H)
+check_include_files(string.h HAVE_STRING_H)
+check_include_files(sys/stat.h HAVE_SYS_STAT_H)
+check_include_files(sys/types.h HAVE_SYS_TYPES_H)
+check_include_files(unistd.h HAVE_UNISTD_H)
+set(STDC_HEADERS 1)
+check_function_exists(localeconv HAVE_LOCALECONV)
+
+# check libm need on unix
+check_library_exists(m ceil "" HAVE_LIBM) 
+if(HAVE_LIBM)
+  set(M_LIBRARY m)
+endif(HAVE_LIBM)
+
 #################################################################################
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-find_package (Threads)
+option(USE_THREAD "Build libproj with thread/mutex support " ON)
+if(NOT USE_THREAD)
+  add_definitions( -DMUTEX_stub)
+endif(NOT USE_THREAD)
+find_package(Threads QUIET)
+if(USE_THREAD AND Threads_FOUND AND CMAKE_USE_WIN32_THREADS_INIT )
+  add_definitions( -DMUTEX_win32)
+endif(USE_THREAD AND Threads_FOUND AND CMAKE_USE_WIN32_THREADS_INIT )
+if(USE_THREAD AND Threads_FOUND AND CMAKE_USE_PTHREADS_INIT )
+  add_definitions( -DMUTEX_pthread)
+endif(USE_THREAD AND Threads_FOUND AND CMAKE_USE_PTHREADS_INIT )
+if(USE_THREAD AND NOT Threads_FOUND)
+  message(FATAL_ERROR "No thread library found and thread/mutex support is required by USE_THREAD option")
+endif(USE_THREAD AND NOT Threads_FOUND)
 
 include(CheckIncludeFiles)
 include(CheckSymbolExists)
 CHECK_SYMBOL_EXISTS(PTHREAD_MUTEX_RECURSIVE pthread.h HAVE_PTHREAD_MUTEX_RECURSIVE_DEFN)
 if (HAVE_PTHREAD_MUTEX_RECURSIVE_DEFN)
-    add_definitions(-DHAVE_PTHREAD_MUTEX_RECURSIVE=1)
+  add_definitions(-DHAVE_PTHREAD_MUTEX_RECURSIVE=1)
 endif()
 
-boost_report_value(PROJ_PLATFORM_NAME)
-boost_report_value(PROJ_COMPILER_NAME)
-
-# Set a default build type for single-configuration cmake generators if
-# no build type is set.
-if (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-  set (CMAKE_BUILD_TYPE Release)
-endif ()
-
-if (MSVC OR CMAKE_CONFIGURATION_TYPES)
-  # For multi-config systems and for Visual Studio, the debug version of
-  # the library has _d appended.
-  set (CMAKE_DEBUG_POSTFIX _d)
-endif ()
-
-option(PROJ4_TESTS "Enable build of collection of PROJ4 tests" ON)
-boost_report_value(PROJ4_TESTS)
-if(PROJ4_TESTS)
-    include(CTest)
-    enable_testing()
-endif(PROJ4_TESTS)
-include(Proj4Test)
-
-# Put the libaries and binaries that get built into directories at the
-# top of the build tree rather than in hard-to-find leaf
-# directories. This simplifies manual testing and the use of the build
-# tree rather than installed Boost libraries.
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
-link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-
 #################################################################################
-# Installation
-#################################################################################
-include(Proj4InstallPath)
-set(BINDIR "${DEFAULT_BINDIR}" CACHE PATH "The directory to install binaries into.")
-set(LIBDIR "${DEFAULT_LIBDIR}" CACHE PATH "The directory to install libraries into.")
-set(DATADIR "${DEFAULT_DATADIR}" CACHE PATH "The directory to install data files into.")
-set(DOCDIR "${DEFAULT_DOCDIR}" CACHE PATH "The directory to install doc files into.")
-set(INCLUDEDIR "${DEFAULT_INCLUDEDIR}" CACHE PATH "The directory to install includes into.")
 
-#################################################################################
-# Build configured components
-#################################################################################
-include_directories(${PROJ4_SOURCE_DIR}/src)
+configure_file(proj_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h)
 
-message(STATUS "")
 add_subdirectory(nad)
 add_subdirectory(src)
-add_subdirectory(cmake)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
 
