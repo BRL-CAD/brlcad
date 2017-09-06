@@ -1022,11 +1022,15 @@ mark_as_advanced(RPLY_LIBRARIES)
 mark_as_advanced(RPLY_INCLUDE_DIRS)
 
 if(0)
-# PROJ.4 library
+# PROJ.4 library - used by GDAL at runtime
 add_subdirectory(proj-4)
+include("${CMAKE_CURRENT_SOURCE_DIR}/proj-4.dist")
+CMAKEFILES_IN_DIR(proj-4_ignore_files proj-4)
 
 # GDAL library
 add_subdirectory(gdal)
+include("${CMAKE_CURRENT_SOURCE_DIR}/gdal.dist")
+CMAKEFILES_IN_DIR(gdal_ignore_files gdal)
 set(GDAL_LIBRARY gdal CACHE STRING "libgdal" FORCE)
 set(GDAL_INCLUDE_DIR
   "${CMAKE_CURRENT_BINARY_DIR}/gdal"
