@@ -42,7 +42,6 @@ project(GDAL)
 
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
-  #${CMAKE_CURRENT_SOURCE_DIR}/proj-4
   ${CMAKE_CURRENT_SOURCE_DIR}/port
   ${CMAKE_CURRENT_SOURCE_DIR}/gcore
   ${CMAKE_CURRENT_SOURCE_DIR}/alg
@@ -238,17 +237,11 @@ endif(0)
 set(OGR_FORMATS generic vrt mem mitab geojson xplane)
 
 
-
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/proj-4/proj_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp)
-#execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h)
-#execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/proj_config.h.tmp)
-
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
 
 
-#include(proj-4/CMakeLists.txt)
 add_subdirectory(port)
 add_subdirectory(gcore)
 add_subdirectory(alg)
@@ -257,7 +250,7 @@ add_subdirectory(ogr)
 add_subdirectory(gnm)
 add_subdirectory(apps)
 
-set(gdal_srcs ${proj-4_srcs}
+set(gdal_srcs
   $<TARGET_OBJECTS:cpl>
   $<TARGET_OBJECTS:mdreader>
   $<TARGET_OBJECTS:gcore>
