@@ -1,21 +1,20 @@
 /* port/cpl_config.h.in */
 
-#if defined(_MSC_VER) && !defined(CPL_DISABLE_STDCALL)
+#if defined(_MSC_VER)
+
+#if !defined(CPL_DISABLE_STDCALL)
 #  define CPL_STDCALL __stdcall
 #endif
-#if defined(_MSC_VER)
-#  define HAVE_VPRINTF 1
-#  define HAVE_VSNPRINTF 1
-#  define HAVE_SNPRINTF 1
-#  if defined(_MSC_VER) && (_MSC_VER < 1500)
-#    define vsnprintf _vsnprintf
-#  endif
-#  if defined(_MSC_VER) && (_MSC_VER < 1900)
-#    define snprintf _snprintf
-#  endif
+#define HAVE_VPRINTF 1
+#define HAVE_VSNPRINTF 1
+#define HAVE_SNPRINTF 1
+#if defined(_MSC_VER) && (_MSC_VER < 1500)
+#  define vsnprintf _vsnprintf
+#endif
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+#  define snprintf _snprintf
 #endif
 
-#if defined(_MSC_VER)
 
 #define HAVE_GETCWD 1
 /* gmt_notunix.h from GMT project also redefines getcwd. See #3138 */
@@ -32,9 +31,8 @@
 #endif
 
 #define lfind _lfind
-#endif
 
-#if defined(_MSC_VER) && (_MSC_VER < 1310)
+#if (_MSC_VER < 1310)
 #  define VSI_STAT64 _stat
 #  define VSI_STAT64_T _stat
 #else
@@ -43,13 +41,13 @@
 #endif
 
 /* VC6 doesn't known intptr_t */
-#if defined(_MSC_VER) && (_MSC_VER <= 1200)
+#if (_MSC_VER <= 1200)
     typedef int intptr_t;
 #endif
 
-#if defined(_MSC_VER)
 #pragma warning(disable: 4786)
-#endif
+
+#endif /* _MSC_VER */
 
 /* Define if you want to use pthreads based multiprocessing support */
 #cmakedefine CPL_MULTIPROC_PTHREAD
