@@ -55,6 +55,10 @@ CPL_CVSID("$Id$");
 static const int CPL_PATH_BUF_SIZE = 2048;
 static const int CPL_PATH_BUF_COUNT = 10;
 
+#if defined(_MSC_VER)
+#include <direct.h>  
+#endif
+
 #if defined(WIN32)
 static const char SEP_STRING[] = "\\";
 #else

@@ -66,7 +66,7 @@ endif(NOT DEFINED BUILD_SHARED_LIBS)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
-set(cmp_flags "Wno-error" g O2 fPIC DPIC "Wl,--no-undefined")
+set(cmp_flags "Wno-error" g O2 fPIC DPIC "Wl,--no-undefined" W4 wd4127 wd4251 wd4275 wd4786 wd4100 wd4245 wd4206 wd4351 wd4611)
 foreach(cf ${cmp_flags})
   check_c_compiler_flag(-${cf} ${cf}_FLAG_C)
   if(${cf}_FLAG_C)
@@ -88,6 +88,11 @@ add_definitions(-DHAVE_SSSE3_AT_COMPILE_TIME)
 add_definitions(-DHAVE_SSSE_AT_COMPILE_TIME)
 add_definitions(-DINST_DATA=\"/usr/local/share/gdal\")
 set(HAVE_IEEEFP 1) # TODO test this for real
+
+if(MSVC)
+  add_definitions(-DUSE_WIN32_MUTEX)
+  add_definitions(-DNOMINMAX)
+endif(MSVC)
 
 find_package(ZLIB)
 if(ZLIB_LIBRARY)
@@ -272,13 +277,16 @@ foreach(frmt ${OGR_FORMATS})
   set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:ogr_frmt_${frmt}>)
 endforeach(frmt ${OGR_FORMATS})
 
-set(gdal_libs
-  ${ZLIB_LIBRARY}
-  ${PNG_LIBRARY}
-  ${M_LIBRARY}
-  ${DL_LIBRARY}
-  ${CMAKE_THREAD_LIBS_INIT}
-  )
+set(lib_list ZLIB PNG M DL)
+set(gdal_libs ${CMAKE_THREAD_LIBS_INIT})
+foreach(ll ${lib_list})
+  if(${ll}_LIBRARY)
+    set(gdal_libs ${gdal_libs} ${${ll}_LIBRARY})
+  endif(${ll}_LIBRARY)
+endforeach(ll ${lib_list})
+if(MSVC)
+  set(gdal_libs ws2_32.lib kernel32.lib psapi.lib)
+endif(MSVC)
 
 add_library(gdal ${gdal_srcs})
 if(gdal_libs)
