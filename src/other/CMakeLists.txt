@@ -1018,11 +1018,13 @@ SetTargetFolder(rply-static "Third Party Libraries")
 mark_as_advanced(RPLY_LIBRARIES)
 mark_as_advanced(RPLY_INCLUDE_DIRS)
 
-if(0)
-# PROJ.4 library - used by GDAL at runtime
+if(1)
+# PROJ.4 library - used by GDAL
 add_subdirectory(proj-4)
 include("${CMAKE_CURRENT_SOURCE_DIR}/proj-4.dist")
 CMAKEFILES_IN_DIR(proj-4_ignore_files proj-4)
+set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
+set(PROJ4_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "Directory containing rply header" FORCE)
 
 # GDAL library
 add_subdirectory(gdal)
@@ -1041,9 +1043,6 @@ set(GDAL_INCLUDE_DIR
   "${BRLCAD_SOURCE_DIR}/src/other/gdal/frmts/vrt"
   )
 set(GDAL_INCLUDE_DIR "${GDAL_INCLUDE_DIR}" CACHE STRING "Directories containing GDAL headers." FORCE)
-if(TARGET gdal AND TARGET proj)
-  add_dependencies(gdal proj)
-endif(TARGET gdal AND TARGET proj)
 endif()
 
 # GCT is a collection of algorithms for geometry processing and conversion

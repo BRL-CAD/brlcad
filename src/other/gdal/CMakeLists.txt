@@ -49,6 +49,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts
   ${CMAKE_CURRENT_SOURCE_DIR}/gnm
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
+  ${PROJ4_INCLUDE_DIRS}
   )
 
 if(NOT LIB_DIR)
@@ -80,6 +81,7 @@ foreach(cf ${cmp_flags})
   endif(${cf}_FLAG_CXX)
 endforeach(cf ${cmp_flags})
 
+add_definitions(-DPROJ_STATIC)
 add_definitions(-DGDAL_COMPILATION)
 add_definitions(-DGNM_ENABLED)
 add_definitions(-DGNMFILE_ENABLED)
@@ -274,7 +276,7 @@ foreach(frmt ${OGR_FORMATS})
 endforeach(frmt ${OGR_FORMATS})
 
 set(lib_list ZLIB PNG M DL)
-set(gdal_libs ${CMAKE_THREAD_LIBS_INIT})
+set(gdal_libs ${PROJ4_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 foreach(ll ${lib_list})
   if(${ll}_LIBRARY)
     set(gdal_libs ${gdal_libs} ${${ll}_LIBRARY})
