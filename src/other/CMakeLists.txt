@@ -1018,7 +1018,7 @@ SetTargetFolder(rply-static "Third Party Libraries")
 mark_as_advanced(RPLY_LIBRARIES)
 mark_as_advanced(RPLY_INCLUDE_DIRS)
 
-if(1)
+if(0)
 # PROJ.4 library - used by GDAL
 add_subdirectory(proj-4)
 include("${CMAKE_CURRENT_SOURCE_DIR}/proj-4.dist")
