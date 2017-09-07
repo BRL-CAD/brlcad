@@ -339,8 +339,8 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     }
 
     /* Collect info for DSP */
-    double px, py = 0.0;
-    double cx, cy = 0.0;
+    double px = 0.0; double py = 0.0;
+    double cx = 0.0; double cy = 0.0;
     double fGeoT[6];
     if (GDALGetGeoTransform(flatDS, fGeoT) == CE_None) {
 	px = fGeoT[0];
