@@ -2992,6 +2992,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_RPM_PACKAGE_LICENSE "LGPL 2.1")
     set(CPACK_RPM_PACKAGE_GROUP "Applications/Engineering")
     set(CPACK_RPM_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
+
+    # We do NOT want to strip the binaries added to the RPM - 
+    # see https://cmake.org/Wiki/CMake:CPackPackageGenerators and
+    # https://public.kitware.com/Bug/view.php?id=7435
+    set(CPACK_RPM_SPEC_INSTALL_POST /bin/true)
+
     if(CPACK_RPM_VERSION)
       set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}")
       # If we've got a Redhat release, include some info about the specific release in the name.
