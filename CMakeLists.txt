@@ -123,10 +123,9 @@ if(MSVC)
   set(CPP_DLL_DEFINES 1)
 endif(MSVC)
 
-# Define an option to use OBJECT libraries - this makes for faster
-# builds but requires position independent code to work, which appears
-# to introduce a slight performance penalty.  Default to off.
-option(USE_OBJECT_LIBS "Use OBJECT libraries" OFF)
+# Define an option to use OBJECT libraries - when we build this
+# way, we also need position independent code.
+cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
 mark_as_advanced(USE_OBJECT_LIBS)
 if(USE_OBJECT_LIBS)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
