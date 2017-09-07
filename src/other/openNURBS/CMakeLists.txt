@@ -337,6 +337,14 @@ if (MSVC)
   set(OPENNURBS_LINKLIBRARIES ${OPENNURBS_LINKLIBRARIES} Rpcrt4)
 endif(MSVC)
 
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  include(CheckCXXCompilerFlag)
+  check_cxx_compiler_flag(-O3 HAVE_O3)
+  if(HAVE_O3)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+  endif(HAVE_O3)
+endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+
 # Based on the options, define libraries as either stand-alone builds
 # or dependencies on OBJECT library builds
 if(NOT USE_OBJECT_LIBS)
