@@ -118,17 +118,19 @@ endif(NOT EXISTS ${BRLCAD_CNT_FILE})
 include(CMakeDependentOption)
 
 #---------------------------------------------------------------------
-# Generate position independent code by default (i.e. -fPIC)
-set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-
 # Check whether we need to add import/export lines to libraries
 if(MSVC)
   set(CPP_DLL_DEFINES 1)
 endif(MSVC)
 
-# Use OBJECT libraries when we can
-cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
+# Define an option to use OBJECT libraries - this makes for faster
+# builds but requires position independent code to work, which appears
+# to introduce a slight performance penalty.  Default to off.
+option(USE_OBJECT_LIBS "Use OBJECT libraries" OFF)
 mark_as_advanced(USE_OBJECT_LIBS)
+if(USE_OBJECT_LIBS)
+  set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+endif(USE_OBJECT_LIBS)
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
