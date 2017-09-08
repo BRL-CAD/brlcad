@@ -196,7 +196,7 @@ BRLMAN_MAIN(
     struct bu_opt_desc d[6];
 
 #ifdef HAVE_WINDOWS_H
-    char **argv;
+    const char **argv;
     int argc;
 
     /* Get our args from the c-runtime. Ignore lpszCmdLine. */
@@ -248,7 +248,7 @@ BRLMAN_MAIN(
 		/* If we have a section identifier and it's not already the last
 		 * element in argv, adjust the array */
 		if (i < uac - 1) {
-		    char *tmp = (char *)argv[uac-1];
+		    const char *tmp = argv[uac-1];
 		    argv[uac-1] = argv[i];
 		    argv[i] = tmp;
 		}
