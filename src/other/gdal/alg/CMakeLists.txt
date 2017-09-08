@@ -43,4 +43,5 @@ set(alg_srcs
 
 set_property(SOURCE gdalgridavx.cpp APPEND PROPERTY COMPILE_FLAGS "-mavx")
 
-add_library(gdal_alg OBJECT ${alg_srcs})
+add_library(gdal_alg_obj OBJECT ${alg_srcs})
+set_target_properties(gdal_alg_obj PROPERTIES FOLDER "Third Party Libraries/gdal")

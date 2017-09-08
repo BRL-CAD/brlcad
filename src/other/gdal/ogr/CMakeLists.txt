@@ -75,4 +75,6 @@ set(ogr_srcs
 
 add_definitions(-DHAVE_MITAB)
 
-add_library(gdal_ogr OBJECT ${ogr_srcs})
+add_library(gdal_ogr_obj OBJECT ${ogr_srcs})
+set_target_properties(gdal_ogr_obj PROPERTIES FOLDER "Third Party Libraries/gdal")
+set_target_properties(gdal_ogr_obj PROPERTIES FOLDER "Third Party Libraries/gdal")

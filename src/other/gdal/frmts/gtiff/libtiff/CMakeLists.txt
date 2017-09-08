@@ -50,3 +50,4 @@ if(ZLIB_LIBRARY)
 endif(ZLIB_LIBRARY)
 
 add_library(libtiff_obj OBJECT ${libtiff_srcs})
+set_target_properties(libtiff_obj PROPERTIES FOLDER "Third Party Libraries/gdal")

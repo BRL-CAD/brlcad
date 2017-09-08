@@ -14,4 +14,5 @@ set(mdreader_srcs
 	reader_kompsat.cpp
 	)
 
-add_library(mdreader OBJECT ${mdreader_srcs})
+add_library(gdal_mdreader_obj OBJECT ${mdreader_srcs})
+set_target_properties(gdal_mdreader_obj PROPERTIES FOLDER "Third Party Libraries/gdal")

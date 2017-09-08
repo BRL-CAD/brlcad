@@ -81,7 +81,7 @@ foreach(cf ${cmp_flags})
   endif(${cf}_FLAG_CXX)
 endforeach(cf ${cmp_flags})
 
-add_definitions(-DPROJ_STATIC)
+#add_definitions(-DPROJ_STATIC)
 add_definitions(-DGDAL_COMPILATION)
 add_definitions(-DGNM_ENABLED)
 add_definitions(-DGNMFILE_ENABLED)
@@ -254,17 +254,17 @@ add_subdirectory(gnm)
 add_subdirectory(apps)
 
 set(gdal_srcs
-  $<TARGET_OBJECTS:cpl>
-  $<TARGET_OBJECTS:mdreader>
-  $<TARGET_OBJECTS:gcore>
-  $<TARGET_OBJECTS:gdal_alg>
-  $<TARGET_OBJECTS:gdal_allreg>
+  $<TARGET_OBJECTS:gdal_cpl_obj>
+  $<TARGET_OBJECTS:gdal_mdreader_obj>
+  $<TARGET_OBJECTS:gdal_gcore_obj>
+  $<TARGET_OBJECTS:gdal_alg_obj>
+  $<TARGET_OBJECTS:gdal_allreg_obj>
   $<TARGET_OBJECTS:libtiff_obj>
   $<TARGET_OBJECTS:libgeotiff_obj>
   $<TARGET_OBJECTS:json_obj>
-  $<TARGET_OBJECTS:gdal_ogr>
-  $<TARGET_OBJECTS:gnm_obj>
-  $<TARGET_OBJECTS:gdal_apps>
+  $<TARGET_OBJECTS:gdal_ogr_obj>
+  $<TARGET_OBJECTS:gdal_gnm_obj>
+  $<TARGET_OBJECTS:gdal_apps_obj>
   )
 foreach(frmt ${GDAL_FORMATS})
   set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:frmt_${frmt}>)

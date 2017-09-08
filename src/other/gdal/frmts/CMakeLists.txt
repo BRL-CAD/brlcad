@@ -12,8 +12,8 @@ endforeach(frmt ${GDAL_FORMATS})
 
 add_definitions(-DGDAL_FORMATS=${GDAL_LIST})
 
-add_library(gdal_allreg OBJECT gdalallregister.cpp)
-
+add_library(gdal_allreg_obj OBJECT gdalallregister.cpp)
+set_target_properties(gdal_allreg_obj PROPERTIES FOLDER "Third Party Libraries/gdal")
 
 foreach(frmt ${GDAL_FORMATS})
 	add_subdirectory(${frmt})

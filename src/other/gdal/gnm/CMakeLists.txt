@@ -16,4 +16,5 @@ include_directories(${GDAL_SOURCE_DIR}/gnm/gnm_frmts)
 include_directories(${GDAL_SOURCE_DIR}/gnm/gnm_frmts/file)
 include_directories(${GDAL_SOURCE_DIR}/gnm/gnm_frmts/db)
 
-add_library(gnm_obj OBJECT ${gnm_srcs})
+add_library(gdal_gnm_obj OBJECT ${gnm_srcs})
+set_target_properties(gdal_gnm_obj PROPERTIES FOLDER "Third Party Libraries/gdal")

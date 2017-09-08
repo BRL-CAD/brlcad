@@ -17,3 +17,4 @@ set(libjson_srcs
 add_definitions(-D_XOPEN_SOURCE=500)
 
 add_library(json_obj OBJECT ${libjson_srcs})
+set_target_properties(json_obj PROPERTIES FOLDER "Third Party Libraries/gdal")

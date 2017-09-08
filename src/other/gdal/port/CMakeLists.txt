@@ -63,6 +63,6 @@ if(ZLIB_LIBRARY)
 endif(ZLIB_LIBRARY)
 
 
-add_library(cpl OBJECT ${cpl_srcs})
+add_library(gdal_cpl_obj OBJECT ${cpl_srcs})
+set_target_properties(gdal_cpl_obj PROPERTIES FOLDER "Third Party Libraries/gdal")
 
-#add_executable(xmlreformatport/xmlreformat.cpp)

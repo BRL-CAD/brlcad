@@ -23,3 +23,4 @@ set(libgeotiff_srcs
 add_definitions(-DDONT_DEPRECATE_SPRINTF)
 
 add_library(libgeotiff_obj OBJECT ${libgeotiff_srcs})
+set_target_properties(libgeotiff_obj PROPERTIES FOLDER "Third Party Libraries/gdal")

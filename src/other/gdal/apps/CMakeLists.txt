@@ -20,4 +20,5 @@ set(apps_srcs
 	gdalbuildvrt_lib.cpp
 	)
 
-add_library(gdal_apps OBJECT ${apps_srcs})
+add_library(gdal_apps_obj OBJECT ${apps_srcs})
+set_target_properties(gdal_apps_obj PROPERTIES FOLDER "Third Party Libraries/gdal")
