@@ -81,7 +81,7 @@ foreach(cf ${cmp_flags})
   endif(${cf}_FLAG_CXX)
 endforeach(cf ${cmp_flags})
 
-#add_definitions(-DPROJ_STATIC)
+add_definitions(-DPROJ_STATIC)
 add_definitions(-DGDAL_COMPILATION)
 add_definitions(-DGNM_ENABLED)
 add_definitions(-DGNMFILE_ENABLED)
