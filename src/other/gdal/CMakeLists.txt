@@ -223,23 +223,21 @@ set(GDAL_FORMATS
 set(OGR_FORMATS
   ${OGR_FORMATS}
   aeronavfaa arcgen avc
-# bna
-# csv
-# dgn dxf
-# edigeo
-# geoconcept gmt gpsbabel gtm
-# htf
-# idrisi
-# ntf
-# openair openfilegdb
-# pds pgdump
-# rec
-# s57 segukooa segy selafin
-shape
-# sua sxf
-# tiger
-# vdv
-# wasp
+  bna
+  csv
+  dgn dxf
+  edigeo
+  geoconcept gmt gpsbabel gtm
+  htf
+  idrisi
+  ntf
+  openair openfilegdb
+  pds pgdump
+  rec
+  s57 segukooa segy selafin shape sua sxf
+  tiger
+  vdv
+  wasp
   )
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
