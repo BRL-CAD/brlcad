@@ -188,59 +188,59 @@ if(CMAKE_USE_PTHREADS_INIT)
   check_type_size(pthread_spinlock_t HAVE_PTHREAD_SPINLOCK)
 endif(CMAKE_USE_PTHREADS_INIT)
 
-if(0)
-  set(GDAL_FORMATS
-    aaigrid adrg aigrid airsar arg
-    blx bmp
-    cals ceos ceos2 coasp cosar ctg
-    derived dimap dted
-    e00grid elas envisat ers
-    fit
-    gff gsg gtiff gxf
-    hf2 hfa
-    idrisi ilwis ingr iris iso8211
-    jaxapalsar jdem kmlsuperoverlay
-    l1b leveller
-    map mem
-    ngsgeoid nitf northwood
-    ozi
-    pds prf
-    r raw rik rmf rs2
-    safe saga
-    sentinel2 sgi srtmhgt
-    terragen til tsx
-    usgsdem
-    vrt
-    xpm xyz
-    zmap
-    )
-endif(0)
-set(GDAL_FORMATS raw vrt mem gtiff derived hfa usgsdem)
-
-if(0)
-  set(OGR_FORMATS
-    aeronavfaa arcgen avc
-    bna
-    csv
-    dgn dxf
-    edigeo
-    generic geoconcept geojson gmt gpsbabel gtm
-    htf
-    idrisi
-    mem mitab
-    ntf
-    openair openfilegdb
-    pds pgdump
-    rec
-    s57 segukooa segy selafin shape sua sxf
-    tiger
-    vdv vrt
-    wasp
-    xplane
-    )
-endif(0)
+# Core essential formats
+set(GDAL_FORMATS raw vrt mem gtiff derived hfa)
 set(OGR_FORMATS generic vrt mem mitab geojson xplane)
 
+# Additional formats
+set(GDAL_FORMATS
+  ${GDAL_FORMATS}
+  aaigrid adrg aigrid airsar arg
+  blx bmp
+  cals ceos ceos2 coasp cosar ctg
+  dimap dted
+  e00grid elas envisat ers
+  fit
+  gff gsg gxf
+  hf2
+  idrisi ilwis ingr iris iso8211
+  jaxapalsar jdem
+  kmlsuperoverlay
+  l1b leveller
+  map
+  ngsgeoid nitf northwood
+  ozi
+  pds prf
+  r rik rmf rs2
+  safe saga
+  sentinel2 sgi srtmhgt
+  terragen til tsx
+  usgsdem
+  xpm xyz
+  zmap
+  )
+
+set(OGR_FORMATS
+  ${OGR_FORMATS}
+  aeronavfaa arcgen avc
+# bna
+# csv
+# dgn dxf
+# edigeo
+# geoconcept gmt gpsbabel gtm
+# htf
+# idrisi
+# ntf
+# openair openfilegdb
+# pds pgdump
+# rec
+# s57 segukooa segy selafin
+shape
+# sua sxf
+# tiger
+# vdv
+# wasp
+  )
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h)
@@ -270,9 +270,11 @@ set(gdal_srcs
   )
 foreach(frmt ${GDAL_FORMATS})
   set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:frmt_${frmt}>)
+  set_target_properties(frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/gdal")
 endforeach(frmt ${GDAL_FORMATS})
 foreach(frmt ${OGR_FORMATS})
   set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:ogr_frmt_${frmt}>)
+  set_target_properties(ogr_frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/gdal")
 endforeach(frmt ${OGR_FORMATS})
 
 set(lib_list ZLIB PNG M DL)
