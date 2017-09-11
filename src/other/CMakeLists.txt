@@ -1018,32 +1018,44 @@ SetTargetFolder(rply-static "Third Party Libraries")
 mark_as_advanced(RPLY_LIBRARIES)
 mark_as_advanced(RPLY_INCLUDE_DIRS)
 
-if(0)
 # PROJ.4 library - used by GDAL
-add_subdirectory(proj-4)
-include("${CMAKE_CURRENT_SOURCE_DIR}/proj-4.dist")
-CMAKEFILES_IN_DIR(proj-4_ignore_files proj-4)
-set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
-set(PROJ4_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "Directory containing rply header" FORCE)
+set(proj4_DESCRIPTION "
+Option for enabling and disabling compilation of the PROJ.4 geographic
+projection library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(proj-4 PROJ4 proj4 proj4_DESCRIPTION ALIASES ENABLE_PROJ4)
+if(BRLCAD_PROJ4_BUILD)
+  set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
+  set(PROJ4_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
+endif(BRLCAD_PROJ4_BUILD)
 
 # GDAL library
-add_subdirectory(gdal)
-include("${CMAKE_CURRENT_SOURCE_DIR}/gdal.dist")
-CMAKEFILES_IN_DIR(gdal_ignore_files gdal)
-set(GDAL_LIBRARY gdal CACHE STRING "libgdal" FORCE)
-set(GDAL_INCLUDE_DIR
-  "${CMAKE_CURRENT_BINARY_DIR}/gdal"
-  "${BRLCAD_SOURCE_DIR}/src/other/gdal/port"
-  "${BRLCAD_SOURCE_DIR}/src/other/gdal/gcore"
-  "${BRLCAD_SOURCE_DIR}/src/other/gdal/alg"
-  "${BRLCAD_SOURCE_DIR}/src/other/gdal/ogr"
-  "${BRLCAD_SOURCE_DIR}/src/other/gdal/ogr/ogrsf_frmts"
-  "${BRLCAD_SOURCE_DIR}/src/other/gdal/gnm"
-  "${BRLCAD_SOURCE_DIR}/src/other/gdal/apps"
-  "${BRLCAD_SOURCE_DIR}/src/other/gdal/frmts/vrt"
-  )
-set(GDAL_INCLUDE_DIR "${GDAL_INCLUDE_DIR}" CACHE STRING "Directories containing GDAL headers." FORCE)
-endif()
+set(gdal_DESCRIPTION "
+Option for enabling and disabling compilation of the GDAL geographic
+library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(gdal GDAL gdal gdal_DESCRIPTION ALIASES ENABLE_GDAL)
+if(BRLCAD_GDAL_BUILD)
+  set(GDAL_LIBRARY gdal CACHE STRING "libgdal" FORCE)
+  set(GDAL_INCLUDE_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/gdal"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/port"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/gcore"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/alg"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/ogr"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/ogr/ogrsf_frmts"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/gnm"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/apps"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/frmts/vrt"
+    )
+  set(GDAL_INCLUDE_DIR "${GDAL_INCLUDE_DIR}" CACHE STRING "libgdal includes" FORCE)
+endif(BRLCAD_GDAL_BUILD)
 
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)

@@ -32,6 +32,7 @@ set(cmake_ignore_files
   FindOpenEXR.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
+  FindPROJ4.cmake
   FindRE2C.cmake
   FindREGEX.cmake
   FindSCL.cmake
