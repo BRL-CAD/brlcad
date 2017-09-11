@@ -27,6 +27,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   routines that need to autogenerate names to use the new
   bu_namegen/db_namegen functions.
 
+* Explicitly list the CMakeLists.txt files rather than adding
+  them automatically in the add_subdirectory override, now that
+  we are listing all files explicitly - preserve the new simplicity
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
