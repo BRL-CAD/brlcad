@@ -1030,6 +1030,7 @@ THIRD_PARTY(proj-4 PROJ4 proj4 proj4_DESCRIPTION ALIASES ENABLE_PROJ4)
 if(BRLCAD_PROJ4_BUILD)
   set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
   set(PROJ4_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/proj-4/proj_config.h")
 endif(BRLCAD_PROJ4_BUILD)
 
 # GDAL library
@@ -1055,6 +1056,7 @@ if(BRLCAD_GDAL_BUILD)
     "${BRLCAD_SOURCE_DIR}/src/other/gdal/frmts/vrt"
     )
   set(GDAL_INCLUDE_DIR "${GDAL_INCLUDE_DIR}" CACHE STRING "libgdal includes" FORCE)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/gdal/cpl_config.h")
 endif(BRLCAD_GDAL_BUILD)
 
 # GCT is a collection of algorithms for geometry processing and conversion
