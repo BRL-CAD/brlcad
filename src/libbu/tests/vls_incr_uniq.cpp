@@ -19,6 +19,9 @@
  */
 
 #include "common.h"
+
+#include <set>
+
 #include <limits.h>
 #include <stdlib.h> /* for strtol */
 #include <ctype.h>
@@ -27,49 +30,39 @@
 #include "bn.h"
 #include "string.h"
 
+struct StrCmp {
+    bool operator()(const char *str1, const char *str2) const {
+	return (bu_strcmp(str1, str2) < 0);
+    }
+};
+
+int uniq_test(struct bu_vls *n, void *data)
+{
+    std::set<const char *, StrCmp> *smap = (std::set<const char *, StrCmp> *)data;
+    if (smap->find(bu_vls_addr(n)) == smap->end()) return 1;
+    return 0;
+}
 
 int
-vls_incr_main(int argc, char **argv)
+main(int argc, char **argv)
 {
     int ret = 1;
-    int i = 0;
     struct bu_vls name = BU_VLS_INIT_ZERO;
-    long inc_count = 0;
-    char *endptr;
-    const char *rs = NULL;
-    const char *rs_complex = "([-_:]*[0-9]+[-_:]*)[^0-9]*$";
-    const char *formatting = NULL;
+    std::set<const char *, StrCmp> *smap = new std::set<const char *, StrCmp>;
+    const char *str1 = "test.r2";
+    smap->insert(str1);
 
     /* Sanity check */
-    if (argc < 6) bu_exit(1, "ERROR: wrong number of parameters");
-
-    if (BU_STR_EQUAL(argv[2], "1")) {
-	rs = rs_complex;
-    }
-
-    if (!rs && !BU_STR_EQUAL(argv[2], "0") && !BU_STR_EQUAL(argv[2], "NULL")) {
-	rs = argv[2];
-    }
-
-    if (!BU_STR_EQUAL(argv[3], "NULL")) {
-	formatting = argv[3];
-    }
-
-    errno = 0;
-    inc_count = strtol(argv[4], &endptr, 10);
-    if (errno == ERANGE || inc_count <= 0) {
-	bu_exit(1, "invalid increment count: %s\n", argv[4]);
-    }
+    if (argc < 3) bu_exit(1, "ERROR: wrong number of parameters");
 
     bu_vls_sprintf(&name, "%s", argv[1]);
-    while (i < inc_count) {
-	(void)bu_vls_incr(&name, rs, formatting, NULL, NULL);
-	i++;
-    }
+    (void)bu_vls_incr(&name, NULL, NULL, &uniq_test, (void *)smap);
 
-    if (BU_STR_EQUAL(bu_vls_addr(&name), argv[5])) ret = 0;
+    if (BU_STR_EQUAL(bu_vls_addr(&name), argv[2])) ret = 0;
 
     bu_log("output: %s\n", bu_vls_addr(&name));
+
+    delete smap;
 
     return ret;
 }

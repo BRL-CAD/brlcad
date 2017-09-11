@@ -925,7 +925,7 @@ _bu_vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *
     state_val = strtol(incr_state, &endptr, 10);
     if (errno == ERANGE) {
 	bu_log("ERANGE error reading current value\n");
-	return ret;
+	return -1;
     }
 
     for(i = 0; i < 4; i++) {
@@ -951,7 +951,7 @@ _bu_vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *
     /* if we're above the maximum specified range, roll over */
     if (vals[2] && state_val > vals[2]) {
 	state_val = vals[1];
-	ret = 1;
+	ret = -2;
     }
 
     /* find out if we need padding zeros */
@@ -986,7 +986,7 @@ _bu_vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *
 }
 
 int
-bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec)
+bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, bu_vls_uniq_t ut, void *data)
 {
     int ret = 0;
     int i = 0;
@@ -1002,58 +1002,81 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec)
     const char *last_regex = "([0-9]+)[^0-9]*$";
     const char *rs = NULL;
     struct bu_vls num_str = BU_VLS_INIT_ZERO;
+    int success = 0;
 
     if (!name) return -1;
 
     rs = (regex_str) ? regex_str : last_regex;
 
-    /* Find incrementer. */
-    ret = regcomp(&compiled_regex, rs, REG_EXTENDED);
-    if (ret != 0) return -1;
-    incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
-    ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
-    if (ret == REG_NOMATCH) {
-	bu_vls_printf(name, "0");
-	bu_free(incr_substrs, "free regex results");
+    while (!success) {
+	/* Find incrementer. */
+	ret = regcomp(&compiled_regex, rs, REG_EXTENDED);
+	if (ret != 0) return -1;
 	incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
 	ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
 	if (ret == REG_NOMATCH) {
+	    bu_vls_printf(name, "0");
 	    bu_free(incr_substrs, "free regex results");
+	    incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
+	    ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
+	    if (ret == REG_NOMATCH) {
+		bu_free(incr_substrs, "free regex results");
+		return -1;
+	    }
+	}
+	i = bu_vls_strlen(name);
+	while(incr_substrs[i].rm_so == -1 || incr_substrs[i].rm_eo == -1) i--;
+
+	if (i != 1) return -1;
+
+	/* Now we know where the incrementer is - process, find the number, and assemble the new string */
+	bu_vls_trunc(&new_name, 0);
+	bu_vls_substr(&curr_incr, name, incr_substrs[1].rm_so, incr_substrs[1].rm_eo - incr_substrs[1].rm_so);
+	bu_vls_strncpy(&new_name, bu_vls_addr(name)+offset, incr_substrs[j].rm_so - offset);
+
+	/* Find number. */
+	ret = regcomp(&compiled_regex, num_regex, REG_EXTENDED);
+	if (ret != 0) return -1;
+	num_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(&curr_incr) + 1, sizeof(regmatch_t), "regex results");
+	ret = regexec(&compiled_regex, bu_vls_addr(&curr_incr), bu_vls_strlen(&curr_incr) + 1, num_substrs, 0);
+	if (ret == REG_NOMATCH) {
+	    bu_vls_free(&new_name);
+	    bu_vls_free(&ispec);
+	    bu_vls_free(&curr_incr);
+	    bu_free(num_substrs, "free regex results");
 	    return -1;
 	}
+	bu_vls_substr(&num_str, &curr_incr, num_substrs[1].rm_so, num_substrs[1].rm_eo - num_substrs[1].rm_so);
+
+
+	/* Either used the supplied incrementing specification or initialize with the default */
+	if (!incr_spec) {
+	    bu_vls_sprintf(&ispec, "%lu:%d:%d:%d", strlen(bu_vls_addr(&num_str)), 0, 0, 1);
+	} else {
+	    bu_vls_sprintf(&ispec, "%s", incr_spec);
+	}
+
+	/* Do incrementation */
+	ret = _bu_vls_incr_next(&new_name, bu_vls_addr(&num_str), bu_vls_addr(&ispec));
+	bu_vls_printf(&new_name, "%s", bu_vls_addr(name)+incr_substrs[1].rm_eo);
+
+	if (ret < 0) {
+	    bu_vls_free(&new_name);
+	    bu_vls_free(&ispec);
+	    bu_vls_free(&curr_incr);
+	    bu_free(num_substrs, "free regex results");
+	    return -1;
+	}
+
+	bu_vls_sprintf(name, "%s", bu_vls_addr(&new_name));
+
+	/* If we need to, test for uniqueness */
+	if (ut) {
+	    success = (*ut)(name,data);
+	} else {
+	    success = 1;
+	}
     }
-    i = bu_vls_strlen(name);
-    while(incr_substrs[i].rm_so == -1 || incr_substrs[i].rm_eo == -1) i--;
-
-    if (i != 1) return -1;
-
-    /* Now we know where the incrementer is - process, find the number, and assemble the new string */
-    bu_vls_trunc(&new_name, 0);
-    bu_vls_substr(&curr_incr, name, incr_substrs[1].rm_so, incr_substrs[1].rm_eo - incr_substrs[1].rm_so);
-    bu_vls_strncpy(&new_name, bu_vls_addr(name)+offset, incr_substrs[j].rm_so - offset);
-
-    /* Find number. */
-    ret = regcomp(&compiled_regex, num_regex, REG_EXTENDED);
-    if (ret != 0) return -1;
-    num_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(&curr_incr) + 1, sizeof(regmatch_t), "regex results");
-    ret = regexec(&compiled_regex, bu_vls_addr(&curr_incr), bu_vls_strlen(&curr_incr) + 1, num_substrs, 0);
-    if (ret == REG_NOMATCH) {
-	bu_free(num_substrs, "free regex results");
-	return -1;
-    }
-    bu_vls_substr(&num_str, &curr_incr, num_substrs[1].rm_so, num_substrs[1].rm_eo - num_substrs[1].rm_so);
-
-
-    if (!incr_spec) {
-	bu_vls_sprintf(&ispec, "%lu:%d:%d:%d", strlen(bu_vls_addr(&num_str)), 0, 0, 1);
-    } else {
-	bu_vls_sprintf(&ispec, "%s", incr_spec);
-    }
-
-    ret = _bu_vls_incr_next(&new_name, bu_vls_addr(&num_str), bu_vls_addr(&ispec));
-    bu_vls_printf(&new_name, "%s", bu_vls_addr(name)+incr_substrs[1].rm_eo);
-
-    bu_vls_sprintf(name, "%s", bu_vls_addr(&new_name));
 
     bu_vls_free(&new_name);
     bu_vls_free(&ispec);

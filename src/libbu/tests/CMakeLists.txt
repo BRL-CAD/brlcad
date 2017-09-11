@@ -490,6 +490,10 @@ add_test(NAME bu_vls_incr_14 COMMAND bu_test vls_incr "test20"       0 "NULL"   
 add_test(NAME bu_vls_incr_15 COMMAND bu_test vls_incr "test"         0 "NULL"        1  "test1")
 add_test(NAME bu_vls_incr_16 COMMAND bu_test vls_incr "test"         0 "0:0:0:0:-"   1  "test-1")
 
+BRLCAD_ADDEXEC(bu_vls_incr_uniq vls_incr_uniq.cpp libbu TEST)
+add_test(NAME bu_vls_incr_uniq_1  COMMAND bu_vls_incr_uniq  "testr1" "test.r3")
+add_test(NAME bu_vls_incr_uniq_2  COMMAND bu_vls_incr_uniq  "testr2" "test.r3")
+
 #
 #  *********** vls_simlify.c tests ************
 #
