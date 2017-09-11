@@ -1059,16 +1059,15 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 	/* Do incrementation */
 	ret = _bu_vls_incr_next(&new_name, bu_vls_addr(&num_str), bu_vls_addr(&ispec));
 	bu_vls_printf(&new_name, "%s", bu_vls_addr(name)+incr_substrs[1].rm_eo);
+	bu_vls_sprintf(name, "%s", bu_vls_addr(&new_name));
 
 	if (ret < 0) {
 	    bu_vls_free(&new_name);
 	    bu_vls_free(&ispec);
 	    bu_vls_free(&curr_incr);
 	    bu_free(num_substrs, "free regex results");
-	    return -1;
+	    return ret;
 	}
-
-	bu_vls_sprintf(name, "%s", bu_vls_addr(&new_name));
 
 	/* If we need to, test for uniqueness */
 	if (ut) {
