@@ -38,8 +38,8 @@ struct StrCmp {
 
 int uniq_test(struct bu_vls *n, void *data)
 {
-    std::set<const char *, StrCmp> *smap = (std::set<const char *, StrCmp> *)data;
-    if (smap->find(bu_vls_addr(n)) == smap->end()) return 1;
+    std::set<const char *, StrCmp> *sset = (std::set<const char *, StrCmp> *)data;
+    if (sset->find(bu_vls_addr(n)) == sset->end()) return 1;
     return 0;
 }
 
@@ -48,21 +48,21 @@ main(int argc, char **argv)
 {
     int ret = 1;
     struct bu_vls name = BU_VLS_INIT_ZERO;
-    std::set<const char *, StrCmp> *smap = new std::set<const char *, StrCmp>;
+    std::set<const char *, StrCmp> *sset = new std::set<const char *, StrCmp>;
     const char *str1 = "test.r2";
-    smap->insert(str1);
+    sset->insert(str1);
 
     /* Sanity check */
     if (argc < 3) bu_exit(1, "ERROR: wrong number of parameters");
 
     bu_vls_sprintf(&name, "%s", argv[1]);
-    (void)bu_vls_incr(&name, NULL, NULL, &uniq_test, (void *)smap);
+    (void)bu_vls_incr(&name, NULL, NULL, &uniq_test, (void *)sset);
 
     if (BU_STR_EQUAL(bu_vls_addr(&name), argv[2])) ret = 0;
 
     bu_log("output: %s\n", bu_vls_addr(&name));
 
-    delete smap;
+    delete sset;
 
     return ret;
 }
