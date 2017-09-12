@@ -63,6 +63,7 @@ struct gdal_read_options
 {
     const char *proj;
     int center;
+    int zone;
 };
 
 struct conversion_state {
@@ -211,9 +212,8 @@ gdal_utm_zone(struct conversion_state *state)
     if (longitude > -180.0 && longitude < 180.0) {
 	zone = floor((longitude + 180) / 6) + 1;
 	bu_log("zone: %d\n", zone);
-	return zone;
     }
-    return -1;
+    return zone;
 }
 
 
@@ -266,10 +266,10 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
      * to the correct UTM projection zone, define a spatial reference, and generate
      * the "Well Known Text" to use as the argument to the warping function*/
     GDALDatasetH hOutDS;
-    int zone = gdal_utm_zone(state);
+    int zone = (state->ops->zone == INT_MAX) ? gdal_utm_zone(state) : state->ops->zone;
     char *dunit;
     const char *dunit_default = "m";
-    if (zone != -1) {
+    if (zone != INT_MAX) {
 	int epsg = gdal_utm_epsg(state, zone);
 	struct bu_vls proj4_str = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&proj4_str, "+init=epsg:%d +zone=%d +proj=utm +no_defs", epsg, zone);
@@ -410,14 +410,16 @@ gdal_read_create_opts(struct bu_opt_desc **odesc, void **dest_options_data)
 
     BU_ALLOC(odata, struct gdal_read_options);
     *dest_options_data = odata;
-    *odesc = (struct bu_opt_desc *)bu_malloc(3*sizeof(struct bu_opt_desc), "gdal option descriptions");
+    *odesc = (struct bu_opt_desc *)bu_malloc(4*sizeof(struct bu_opt_desc), "gdal option descriptions");
 
     odata->center = 0;
     odata->proj = NULL;
+    odata->zone = INT_MAX;
 
     BU_OPT((*odesc)[0], "c", "center", NULL, NULL, &(odata->center), "Center the dsp terrain at global (0,0)");
-    BU_OPT((*odesc)[1], "", "projection", "proj", &bu_opt_str, &(odata->proj), "Projection to apply to the terrain data before exporting to a .g file");
-    BU_OPT_NULL((*odesc)[2]);
+    BU_OPT((*odesc)[1], "",  "utm-zone", "zone", &bu_opt_int, &(odata->zone), "When performing UTM project use the specified zone.");
+    BU_OPT((*odesc)[2], "", "projection", "proj", &bu_opt_str, &(odata->proj), "Projection to apply to the terrain data before exporting to a .g file");
+    BU_OPT_NULL((*odesc)[3]);
 }
 
 HIDDEN void
