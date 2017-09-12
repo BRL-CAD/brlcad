@@ -1254,4 +1254,10 @@ port/cplstring.cpp
 port/cplstringlist.cpp
 port/gdal_csv.h
 port/vsipreload.cpp
+progs/CMakeLists.txt
+progs/gdal_translate_bin.cpp
+progs/gdaldem_bin.cpp
+progs/gdalinfo_bin.cpp
+progs/gdaltransform.cpp
+progs/gdalwarp_bin.cpp
 )
