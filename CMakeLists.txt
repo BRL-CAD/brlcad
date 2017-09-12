@@ -2640,8 +2640,6 @@ if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
   verbose_add_subdirectory("" db)
   verbose_add_subdirectory("" bench)
   verbose_add_subdirectory("" regress)
-else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-  CMAKEFILES(doc bench regress db)
 endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 
 # Restore BRL-CAD configurations, if necessary
