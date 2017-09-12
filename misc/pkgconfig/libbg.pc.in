@@ -5,9 +5,9 @@ includedir=@includedir@
 datarootdir=@datarootdir@
 datadir=@datadir@
 
-Name: libbn
-Description: BRL-CAD Numerics Library
+Name: libbg
+Description: BRL-CAD Geometry Library
 Version: @BRLCAD_VERSION@
-Requires: libbu
+Requires: libbu libbn
 Libs: -L${libdir} -lbn -lbu @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

@@ -5,9 +5,9 @@ includedir=@includedir@
 datarootdir=@datarootdir@
 datadir=@datadir@
 
-Name: libbn
-Description: BRL-CAD Numerics Library
+Name: libnmg
+Description: BRL-CAD N-Manifold Geometry Library
 Version: @BRLCAD_VERSION@
-Requires: libbu
-Libs: -L${libdir} -lbn -lbu @LIBM@
+Requires: libbu libbn libbg
+Libs: -L${libdir} -lbg -lbn -lbu @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

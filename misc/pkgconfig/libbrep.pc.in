@@ -5,9 +5,9 @@ includedir=@includedir@
 datarootdir=@datarootdir@
 datadir=@datadir@
 
-Name: libgm
-Description: BRL-CAD Geometry Library
+Name: libbrep
+Description: BRL-CAD NURBS Boundary Representation Library
 Version: @BRLCAD_VERSION@
-Requires: libbn libbu
-Libs: -L${libdir} -lgm -lbn -lbu @LIBTCL@ @LIBM@
+Requires: libbg libbn libbu
+Libs: -L${libdir} -lbg -lbn -lbu @LIBOPENNURBS@ @LIBSTDCXX@ @LIBREGEX@ @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}
