@@ -34,6 +34,18 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* investigate possibility of using simple, compact libs
+  like miniz and lodepng to replace the complexity of
+  managing zlib and libpng in src/other.  These have been
+  a source of ongoing annoyance, particularly (but not
+  exclusively) on OSX.
+
+* remove libmultispectral and related codes - investigation
+  by Sean indicates these haven't been working for a while
+  and may not have been fully mature originally.  They are
+  also adding complexity and maintenance burden, so time to
+  remove.
+
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
