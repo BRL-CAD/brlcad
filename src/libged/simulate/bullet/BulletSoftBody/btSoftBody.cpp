@@ -381,6 +381,9 @@ void			btSoftBody::appendAnchor(int node,btRigidBody* body, const btVector3& loc
 	a.m_local			=	localPivot;
 	a.m_node->m_battach	=	1;
 	a.m_influence = influence;
+        a.m_c0[0] = a.m_c0[1] = a.m_c0[2] = btVector3(0.0, 0.0, 0.0);
+        a.m_c1 = btVector3(0.0, 0.0, 0.0);
+        a.m_c2 = 0.0;
 	m_anchors.push_back(a);
 }
 
