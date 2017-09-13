@@ -34,22 +34,34 @@
 #
 ###
 
-# -fast provokes a stack corruption in the shadow computations because
+# -ffast-math provokes a stack corruption in the shadow computations because
 # of strict aliasing getting enabled.  we _require_
 # -fno-strict-aliasing until someone changes how lists are managed.
 # -fast-math results in non-IEEE floating point math among a handful
 # of other optimizations that cause substantial error in ray tracing
 # and tessellation (and probably more).
 CHECK_C_FLAG(O3 GROUPS OPTIMIZE_C_FLAGS)
+# CHECK_C_FLAG(Ofast GROUPS OPTIMIZE_C_FLAGS)
+# CHECK_C_FLAG(march=native GROUPS OPTIMIZE_C_FLAGS)
 CHECK_C_FLAG(fstrength-reduce GROUPS OPTIMIZE_C_FLAGS)
 CHECK_C_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_C_FLAGS)
 CHECK_C_FLAG(finline-functions GROUPS OPTIMIZE_C_FLAGS)
 CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
 CHECK_CXX_FLAG(O3 GROUPS OPTIMIZE_CXX_FLAGS)
+# CHECK_CXX_FLAG(Ofast GROUPS OPTIMIZE_CXX_FLAGS)
+# CHECK_CXX_FLAG(march=native GROUPS OPTIMIZE_CXX_FLAGS)
 CHECK_CXX_FLAG(fstrength-reduce GROUPS OPTIMIZE_CXX_FLAGS)
 CHECK_CXX_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_CXX_FLAGS)
 CHECK_CXX_FLAG(finline-functions GROUPS OPTIMIZE_CXX_FLAGS)
 CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
+
+# FIXME: need to conditionally set gcc-ar/gcc-ranlib if we using -flto
+#######
+# CHECK_C_FLAG(flto GROUPS OPTIMIZE_C_FLAGS)
+# CHECK_CXX_FLAG(flto GROUPS OPTIMIZE_CXX_FLAGS)
+# SET(CMAKE_AR "gcc-ar" CACHE FILEPATH "Archiver" FORCE)
+# SET(CMAKE_RANLIB "gcc-ranlib" CACHE FILEPATH "Ranlib" FORCE)
+
 if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
   if(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
     CHECK_C_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
