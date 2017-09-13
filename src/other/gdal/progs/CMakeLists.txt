@@ -32,3 +32,8 @@ target_link_libraries(gdalwarp gdal)
 set_target_properties(gdalwarp PROPERTIES FOLDER "Third Party Libraries/gdal")
 install(TARGETS gdalwarp DESTINATION ${BIN_DIR})
 
+add_executable(gdalbuildvrt gdalbuildvrt_bin.cpp)
+target_link_libraries(gdalbuildvrt gdal)
+set_target_properties(gdalbuildvrt PROPERTIES FOLDER "Third Party Libraries/gdal")
+install(TARGETS gdalbuildvrt DESTINATION ${BIN_DIR})
+
