@@ -16,7 +16,7 @@ if(REGEX_LIBRARY)
 endif(REGEX_LIBRARY)
 if(UUID_LIBRARIES)
   set(LIBUUID "-l${UUID_LIBRARIES}")
-endif(UUID_LIBRARY)
+endif(UUID_LIBRARIES)
 
 #The CMake system relies on the C++ compiler to find
 #this, so we set it manually for pkgconfig
