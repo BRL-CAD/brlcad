@@ -106,6 +106,7 @@ endif(ZLIB_LIBRARY)
 find_package(PNG)
 if(PNG_LIBRARY)
   include_directories(${PNG_INCLUDE_DIR})
+  add_definitions(-DUSE_PNG)
 endif(PNG_LIBRARY)
 
 
@@ -210,7 +211,7 @@ set(GDAL_FORMATS
   map
   ngsgeoid nitf northwood
   ozi
-  pds prf
+  pds png prf
   r rik rmf rs2
   safe saga
   sentinel2 sgi srtmhgt
