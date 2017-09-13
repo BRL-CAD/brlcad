@@ -46,8 +46,8 @@ public:
     btVector3 m_normal;
     btScalar m_depth;//Positive value indicates interpenetration
     btScalar m_distance;//Padding not for use
-    int m_feature1;//Face number
-    int m_feature2;//Face number
+    unsigned int m_feature1;//Face number
+    unsigned int m_feature2;//Face number
 public:
     GIM_CONTACT()
     {
