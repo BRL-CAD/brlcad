@@ -1848,6 +1848,7 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 # ******************************************************************* #
 # For some tests, we need Werror to make sure the test actually fails
 
+# TODO - replace this cache approach with the CMakePushCheckState module
 set(CMAKE_REQUIRED_FLAGS_BAK ${CMAKE_REQUIRED_FLAGS})
 CHECK_C_FLAG(Werror VARS ERROR_FLAG)
 if (ERROR_FLAG)
@@ -2215,6 +2216,7 @@ BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 
 # timeSetEvent in Windows memory management
 if("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
+  # TODO - replace this cache approach with the CMakePushCheckState module
   set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
   set(CMAKE_REQUIRED_LIBRARIES "winmm.lib")
   check_c_source_compiles("#include <windows.h>\nint main() {(void)timeSetEvent(1000, 100, (LPTIMECALLBACK)NULL, (DWORD_PTR)NULL, TIME_ONESHOT);}" HAVE_TIMESETEVENT)
@@ -2581,6 +2583,7 @@ BRLCAD_FUNCTION_EXISTS(lrint HAVE_LRINT
   COMPILE_TEST_SRCS lrint_test lrint_test_negative
   REQUIRED_LIBS ${M_LIBRARY})
 if(NOT HAVE_LRINT AND "${HAVE_WORKING_LRINT_MACRO}" MATCHES "^${HAVE_WORKING_LRINT_MACRO}$")
+  # TODO - replace this cache approach with the CMakePushCheckState module
   set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
   set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
   # NOTE: this must match the lrint #define in include/common.h
@@ -2593,6 +2596,7 @@ endif(NOT HAVE_LRINT AND "${HAVE_WORKING_LRINT_MACRO}" MATCHES "^${HAVE_WORKING_
 
 # test for lrint() declaration
 if(HAVE_LRINT AND "${HAVE_DECL_LRINT}" MATCHES "^${HAVE_DECL_LRINT}$")
+  # TODO - replace this cache approach with the CMakePushCheckState module
   set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
   set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
   check_c_source_compiles("#include <math.h>\nint main() { (void)lrint(0); return 0; }" HAVE_DECL_LRINT)
