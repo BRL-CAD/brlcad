@@ -112,6 +112,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* look into https://github.com/garyhouston/hsrex, which
+  is a stand-alone version of Henry Spencer's most modern
+  regex library, as a replacement for the older version in
+  src/other/libregex
+
 * afl on libged/mged/rt/...
 
 * moodycamel as libbu queue/list/ptbl implementation
