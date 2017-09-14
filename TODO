@@ -115,7 +115,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * look into https://github.com/garyhouston/hsrex, which
   is a stand-alone version of Henry Spencer's most modern
   regex library, as a replacement for the older version in
-  src/other/libregex
+  src/other/libregex.  May actually want to re-do the
+  extraction from Tcl, as they have recent patches:
+  https://github.com/tcltk/tcl/tree/master/generic
 
 * afl on libged/mged/rt/...
 
