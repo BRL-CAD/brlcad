@@ -31,6 +31,12 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   them automatically in the add_subdirectory override, now that
   we are listing all files explicitly - preserve the new simplicity
 
+* renamed zlib and libpng when building bundled to avoid conflicting
+  with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
+  with name z_brlcad (perhaps as a post-compile rename custom command)
+  and png_brlcad respectively.
+
+
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
