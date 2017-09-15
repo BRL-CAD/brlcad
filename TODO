@@ -118,6 +118,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* bullet integration - need to expose restitution as an
+  object parameter so we can configure behavior:
+  http://www.bulletphysics.org/Bullet/phpBB3/viewtopic.php?p=&f=&t=3248
+
 * look into https://github.com/garyhouston/hsrex, which
   is a stand-alone version of Henry Spencer's most modern
   regex library, as a replacement for the older version in
