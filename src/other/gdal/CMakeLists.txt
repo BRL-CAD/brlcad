@@ -269,11 +269,11 @@ set(gdal_srcs
   )
 foreach(frmt ${GDAL_FORMATS})
   set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:frmt_${frmt}>)
-  set_target_properties(frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/gdal")
+  set_target_properties(frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")
 endforeach(frmt ${GDAL_FORMATS})
 foreach(frmt ${OGR_FORMATS})
   set(gdal_srcs ${gdal_srcs} $<TARGET_OBJECTS:ogr_frmt_${frmt}>)
-  set_target_properties(ogr_frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/gdal")
+  set_target_properties(ogr_frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")
 endforeach(frmt ${OGR_FORMATS})
 
 set(lib_list ZLIB PNG M DL)
@@ -295,6 +295,7 @@ install(TARGETS gdal
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
+SetTargetFolder(gdal "Third Party Libraries/GDAL")
 
 add_subdirectory(progs)
 
