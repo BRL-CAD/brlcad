@@ -1032,6 +1032,9 @@ if(BRLCAD_PROJ4_BUILD)
   set(PROJ4_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/proj-4/proj_config.h")
 endif(BRLCAD_PROJ4_BUILD)
+mark_as_advanced(PROJ4_INCLUDE_DIRS)
+mark_as_advanced(PROJ4_LIBRARY)
+mark_as_advanced(USE_THREAD)
 
 # GDAL library
 set(gdal_DESCRIPTION "
@@ -1058,6 +1061,9 @@ if(BRLCAD_GDAL_BUILD)
   set(GDAL_INCLUDE_DIR "${GDAL_INCLUDE_DIR}" CACHE STRING "libgdal includes" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/gdal/cpl_config.h")
 endif(BRLCAD_GDAL_BUILD)
+mark_as_advanced(GDAL_CONFIG)
+mark_as_advanced(GDAL_INCLUDE_DIR)
+mark_as_advanced(GDAL_LIBRARY)
 
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)
