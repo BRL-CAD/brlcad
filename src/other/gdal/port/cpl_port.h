@@ -150,6 +150,7 @@
 
 #ifdef HAVE_LOCALE_H
 #  include <locale.h>
+#  include <xlocale.h>
 #endif
 
 #ifdef HAVE_DIRECT_H
