@@ -177,9 +177,16 @@ if(CMAKE_USE_PTHREADS_INIT)
   check_type_size(pthread_spinlock_t HAVE_PTHREAD_SPINLOCK)
 endif(CMAKE_USE_PTHREADS_INIT)
 
+# Clang usually matches GNU, but linker flags are different on Apple
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+  set(fail_on_undefined_flag "Wl,--no-undefined")
+elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+  set(fail_on_undefined_flag "Wl,-undefined,error")
+endif()
+
 # Make sure to put these after the other tests, so we don't
 # mess up the detections with Wl,--no-undefined
-set(cmp_flags "Wno-error" g O2 fPIC DPIC "Wl,--no-undefined" W4 wd4127 wd4251 wd4275 wd4786 wd4100 wd4245 wd4206 wd4351 wd4611)
+set(cmp_flags "Wno-error" g O2 fPIC DPIC "${fail_on_undefined_flag}" W4 wd4127 wd4251 wd4275 wd4786 wd4100 wd4245 wd4206 wd4351 wd4611)
 foreach(cf ${cmp_flags})
   check_c_compiler_flag(-${cf} ${cf}_FLAG_C)
   if(${cf}_FLAG_C)
