@@ -69,18 +69,6 @@ endif(NOT DEFINED BUILD_SHARED_LIBS)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
-# set(cmp_flags "Wno-error" g O2 fPIC DPIC "Wl,--no-undefined" W4 wd4127 wd4251 wd4275 wd4786 wd4100 wd4245 wd4206 wd4351 wd4611)
-# foreach(cf ${cmp_flags})
-#   check_c_compiler_flag(-${cf} ${cf}_FLAG_C)
-#   if(${cf}_FLAG_C)
-#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -${cf}")
-#   endif(${cf}_FLAG_C)
-#   check_cxx_compiler_flag(-${cf} ${cf}_FLAG_CXX)
-#   if(${cf}_FLAG_CXX)
-#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -${cf}")
-#   endif(${cf}_FLAG_CXX)
-# endforeach(cf ${cmp_flags})
-
 add_definitions(-DPROJ_STATIC)
 add_definitions(-DGDAL_COMPILATION)
 add_definitions(-DGNM_ENABLED)
@@ -189,6 +177,20 @@ if(CMAKE_USE_PTHREADS_INIT)
   check_type_size(pthread_spinlock_t HAVE_PTHREAD_SPINLOCK)
 endif(CMAKE_USE_PTHREADS_INIT)
 
+# Make sure to put these after the other tests, so we don't
+# mess up the detections with Wl,--no-undefined
+set(cmp_flags "Wno-error" g O2 fPIC DPIC "Wl,--no-undefined" W4 wd4127 wd4251 wd4275 wd4786 wd4100 wd4245 wd4206 wd4351 wd4611)
+foreach(cf ${cmp_flags})
+  check_c_compiler_flag(-${cf} ${cf}_FLAG_C)
+  if(${cf}_FLAG_C)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -${cf}")
+  endif(${cf}_FLAG_C)
+  check_cxx_compiler_flag(-${cf} ${cf}_FLAG_CXX)
+  if(${cf}_FLAG_CXX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -${cf}")
+  endif(${cf}_FLAG_CXX)
+endforeach(cf ${cmp_flags})
+
 # Core essential formats
 set(GDAL_FORMATS raw vrt mem gtiff derived hfa)
 set(OGR_FORMATS generic vrt mem mitab geojson xplane)
@@ -244,7 +246,6 @@ set(OGR_FORMATS
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h.tmp)
-
 
 add_subdirectory(port)
 add_subdirectory(gcore)
