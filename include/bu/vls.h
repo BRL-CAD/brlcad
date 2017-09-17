@@ -502,6 +502,12 @@ BU_EXPORT extern int bu_vls_simplify(struct bu_vls *vp, const char *keep, const 
 
 
 /**
+ * callback type for bu_vls_incr()
+ */
+typedef int (*bu_vls_uniq_t)(struct bu_vls *v, void *data);
+
+
+/**
    A problem frequently encountered when generating names is generating names
    that are in some sense structured but avoid colliding.  For example, given a
    geometry object named:
@@ -647,7 +653,6 @@ BU_EXPORT extern int bu_vls_simplify(struct bu_vls *vp, const char *keep, const 
    @endcode
 
 */
-typedef int (*bu_vls_uniq_t)(struct bu_vls *v, void *data);
 BU_EXPORT extern int bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, bu_vls_uniq_t uniq_test, void *data);
 
 __END_DECLS
