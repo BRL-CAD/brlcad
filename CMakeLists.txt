@@ -1903,36 +1903,71 @@ CHECK_CXX_FLAG(Qunused-arguments)
 
 set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_BAK})
 
-# ******************************************************************* #
-# The following tests are almost entirely for gcc-style flags.
-if(NOT MSVC)
-  # -ffast-math provokes a stack corruption in the shadow computations because
-  # of strict aliasing getting enabled.  we _require_
-  # -fno-strict-aliasing until someone changes how lists are managed.
-  # -fast-math results in non-IEEE floating point math among a handful
-  # of other optimizations that cause substantial error in ray tracing
-  # and tessellation (and probably more).
-  CHECK_C_FLAG(O3 GROUPS OPTIMIZE_C_FLAGS)
-  # CHECK_C_FLAG(Ofast GROUPS OPTIMIZE_C_FLAGS)
-  # CHECK_C_FLAG(march=native GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_C_FLAG(fstrength-reduce GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_C_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_C_FLAG(finline-functions GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_CXX_FLAG(O3 GROUPS OPTIMIZE_CXX_FLAGS)
-  # CHECK_CXX_FLAG(Ofast GROUPS OPTIMIZE_CXX_FLAGS)
-  # CHECK_CXX_FLAG(march=native GROUPS OPTIMIZE_CXX_FLAGS)
-  CHECK_CXX_FLAG(fstrength-reduce GROUPS OPTIMIZE_CXX_FLAGS)
-  CHECK_CXX_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_CXX_FLAGS)
-  CHECK_CXX_FLAG(finline-functions GROUPS OPTIMIZE_CXX_FLAGS)
-  CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
 
-  # FIXME: need to conditionally set gcc-ar/gcc-ranlib if we using -flto
-  #######
-  # CHECK_C_FLAG(flto GROUPS OPTIMIZE_C_FLAGS)
-  # CHECK_CXX_FLAG(flto GROUPS OPTIMIZE_CXX_FLAGS)
-  # SET(CMAKE_AR "gcc-ar" CACHE FILEPATH "Archiver" FORCE)
-  # SET(CMAKE_RANLIB "gcc-ranlib" CACHE FILEPATH "Ranlib" FORCE)
+# The following tests are almost entirely for gcc/llvm style flags, so
+# we don't unnecessarily slow down the Windows build.
+if(NOT MSVC)
+
+  # -O3/-Ofast can enable -ffast-math which can provoke a stack
+  # corruption in the shadow computations because of strict aliasing
+  # getting enabled.  we _require_ -fno-strict-aliasing until someone
+  # changes how lists are managed.  -fast-math results in non-IEEE
+  # floating point math among a handful of other optimizations that
+  # cause substantial error in ray tracing and tessellation (and
+  # probably more).
+
+  CHECK_C_FLAG(O3 GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(O3 GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # goes a step beyond O3, possibly using dangerous imprecise math
+  CHECK_C_FLAG(Ofast GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(Ofast GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # binaries will not necessarily work on a different machine
+  CHECK_C_FLAG(march=native GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(march=native GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # perform interprocedural analysis, slows compilation heavily
+  CHECK_C_FLAG(fipa-pta GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(fipa-pta GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # enabled at -O2, but not in older compilers
+  CHECK_C_FLAG(fstrength-reduce GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(fstrength-reduce GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # enabled at -O2, but not in older compilers
+  CHECK_C_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # enabled at -O3, but not in older compilers
+  CHECK_C_FLAG(finline-functions GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(finline-functions GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
+  # CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # link-time optimization (LTO) results in slower linking, more
+  # warnings, and better optimization
+  CHECK_C_FLAG(flto GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(flto GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # GCC 4.9+ introduced "thin" LTO object files that require special
+  # ar/ranlib handling via wrappers or plugin specification.  These
+  # wrappers work fine even if we're not using LTO, so just use them
+  # if found.
+  if (CMAKE_C_COMPILER_ID MATCHES "GNU")
+    find_program(GCC_AR_LTO ${CMAKE_C_COMPILER}-ar NAMES gcc-ar DOC "GNU ARchiver wrapper with LTO support")
+    if (GCC_AR_LTO)
+      SET(CMAKE_AR "${GCC_AR_LTO}" CACHE FILEPATH "Archiver" FORCE)
+    endif (GCC_AR_LTO)
+    find_program(GCC_RANLIB_LTO ${CMAKE_C_COMPILER}-ranlib NAMES gcc-ranlib DOC "GNU Ranlib wrapper with LTO support")
+    if (GCC_RANLIB_LTO)
+      SET(CMAKE_RANLIB "${GCC_RANLIB_LTO}" CACHE FILEPATH "Ranlib" FORCE)
+    endif (GCC_RANLIB_LTO)
+  endif (CMAKE_C_COMPILER_ID MATCHES "GNU")
+
+  # only omit the frame pointer if we have no interest in profiling or
+  # debugging.
   if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
     if(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
       CHECK_C_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
@@ -1943,6 +1978,8 @@ if(NOT MSVC)
     endif(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
   endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
+  # add optimization flags to either all configurations, if enabled,
+  # or just Release builds.
   if(${BRLCAD_FLAGS_OPTIMIZATION} MATCHES "AUTO")
     if(CMAKE_CONFIGURATION_TYPES)
       set(opt_conf_list "Release")
