@@ -178,6 +178,10 @@ if(CMAKE_USE_PTHREADS_INIT)
   check_type_size(pthread_spinlock_t HAVE_PTHREAD_SPINLOCK)
 endif(CMAKE_USE_PTHREADS_INIT)
 
+# Need iconv library if it's around
+find_library(ICONV_LIBRARY NAMES iconv)
+mark_as_advanced(ICONV_LIBRARY)
+
 # Clang usually matches GNU, but linker flags are different on Apple
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
   set(fail_on_undefined_flag "Wl,--no-undefined")
@@ -285,7 +289,7 @@ foreach(frmt ${OGR_FORMATS})
   set_target_properties(ogr_frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")
 endforeach(frmt ${OGR_FORMATS})
 
-set(lib_list ZLIB PNG M DL)
+set(lib_list ZLIB PNG M DL ICONV)
 set(gdal_libs ${PROJ4_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 foreach(ll ${lib_list})
   if(${ll}_LIBRARY)
