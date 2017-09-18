@@ -131,6 +131,7 @@ check_include_files(sys/stat.h HAVE_SYS_STAT_H)
 check_include_files(sys/types.h HAVE_SYS_TYPES_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(values.h HAVE_VALUES_H)
+check_include_files(xlocale.h HAVE_XLOCALE_H)
 
 include(CheckFunctionExists)
 check_function_exists(localeconv HAVE_LOCALECONV)
