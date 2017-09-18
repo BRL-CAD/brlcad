@@ -1943,6 +1943,12 @@ if(NOT MSVC)
   CHECK_C_FLAG(finline-functions GROUPS OPTIMIZE_C_FLAGS)
   CHECK_CXX_FLAG(finline-functions GROUPS OPTIMIZE_CXX_FLAGS)
 
+  # cmake_push_check_state()
+  #   set(CMAKE_REQUIRED_FLAGS --coverage)
+  #   CHECK_C_FLAG("fprofile-use=/vld/other/morrison/Applications/profile-generate --coverage" GROUPS OPTIMIZE_C_FLAGS)
+  #   CHECK_CXX_FLAG("fprofile-use=/vld/other/morrison/Applications/profile-generate --coverage" GROUPS OPTIMIZE_CXX_FLAGS)
+  # cmake_pop_check_state()
+
   # CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
   # CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
 
@@ -1968,6 +1974,7 @@ if(NOT MSVC)
 
   # only omit the frame pointer if we have no interest in profiling or
   # debugging.
+
   if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
     if(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
       CHECK_C_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
