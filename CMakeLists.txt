@@ -1945,9 +1945,10 @@ if(NOT MSVC)
 
   # cmake_push_check_state()
   #   set(CMAKE_REQUIRED_FLAGS --coverage)
-  #   CHECK_C_FLAG("fprofile-use=/vld/other/morrison/Applications/profile-generate --coverage" GROUPS OPTIMIZE_C_FLAGS)
-  #   CHECK_CXX_FLAG("fprofile-use=/vld/other/morrison/Applications/profile-generate --coverage" GROUPS OPTIMIZE_CXX_FLAGS)
+  #   CHECK_C_FLAG("fprofile-use=${CMAKE_BINARY_DIR}/profile-generate --coverage" GROUPS OPTIMIZE_C_FLAGS)
+  #   CHECK_CXX_FLAG("fprofile-use=${CMAKE_BINARY_DIR}/profile-generate --coverage" GROUPS OPTIMIZE_CXX_FLAGS)
   # cmake_pop_check_state()
+  # DISTCLEAN(${CMAKE_BINARY_DIR}/profile-generate)
 
   # CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
   # CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
