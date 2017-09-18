@@ -1445,7 +1445,7 @@ static void CPLInitMutex( MutexLinkedElt* psItem )
         return;
     }
 
-#if defined(PTHREAD_MUTEX_RECURSIVE) || defined(HAVE_PTHREAD_MUTEX_RECURSIVE)
+#if defined(PTHREAD_MUTEX_RECURSIVE) || defined(HAVE_PTHREAD_MUTEX_RECURSIVE) || defined(__FreeBSD__)
     {
         pthread_mutexattr_t attr;
         pthread_mutexattr_init( &attr );
