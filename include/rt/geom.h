@@ -281,9 +281,7 @@ struct rt_nurb_internal {
     uint32_t magic;
     int nsrf;			/**< @brief number of surfaces */
     struct face_g_snurb **srfs;	/**< @brief The surfaces themselves */
-#ifdef CONVERT_TO_BREP
     ON_Brep *brep;
-#endif
 };
 
 
