@@ -446,14 +446,9 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
       set(libstatic ${libname}-static)
     endif(L_STATIC)
     add_library(${libstatic} STATIC ${lsrcslist} ${L_STATIC_SRCS})
-    # No DLL import/export machinery for static compilation with Visual C++,
-    # so define our short-circuiting definition for the headers.  If we're
-    # NOT doing a Visual C++ build, fix the library output name.
-    if(CPP_DLL_DEFINES)
-      target_compile_definitions(${libstatic} PRIVATE STATIC_BUILD)
-    else(CPP_DLL_DEFINES)
+    if(NOT CPP_DLL_DEFINES)
       set_target_properties(${libstatic} PROPERTIES OUTPUT_NAME "${libname}")
-    endif(CPP_DLL_DEFINES)
+    endif(NOT CPP_DLL_DEFINES)
   endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
 
   # Make sure we don't end up with outputs named liblib...
