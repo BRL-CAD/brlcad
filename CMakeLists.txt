@@ -1377,8 +1377,8 @@ endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 # location that did not exist beforehand, and again to use profiling
 # metrics captured on "typical" operations and data.
 
-option(BRLCAD_PGO_PATH "Path for profile-guided optimization")
-mark_as_advanced(BRLCAD_PGO_PATH)
+option(BRLCAD_PGO "Enable profile-guided optimization (set PGO_PATH environment variable)")
+mark_as_advanced(BRLCAD_PGO)
 
 #====== ALL CXX COMPILE ===================
 # Build all C and C++ files with a C++ compiler
@@ -1788,7 +1788,7 @@ endif(BRLCAD_FLAGS_DEBUG)
 if(APPLE)
   set(MACOSX_DEPLOYMENT_TARGET "$ENV{MACOSX_DEPLOYMENT_TARGET}")
   if(NOT MACOSX_DEPLOYMENT_TARGET)
-    set(ENV(MACOSX_DEPLOYMENT_TARGET) "10.3")
+    set(ENV{MACOSX_DEPLOYMENT_TARGET} "10.3")
   endif(NOT MACOSX_DEPLOYMENT_TARGET)
 
   if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.3")
@@ -1937,55 +1937,61 @@ if(NOT MSVC)
   # Profile-Guided Optimization -- this requires a two-pass compile,
   # once with BRLCAD_ENABLE_PROFGEN followed by BRLCAD_ENABLE_PROFUSE.
 
-  set(pgo_flags_found 0)
-  if(BRLCAD_PGO_PATH AND NOT EXISTS ${BRLCAD_PGO_PATH})
+  set(pgo_flags_found "")
+  if("$ENV{PGO_PATH}" STREQUAL "")
+    set(BRLCAD_PGO_PATH "${CMAKE_BINARY_DIR}/.profiling")
+  else(NOT "$ENV{PGO_PATH}" STREQUAL "")
+    set(BRLCAD_PGO_PATH "$ENV{PGO_PATH}")
+  endif("$ENV{PGO_PATH}" STREQUAL "")
+
+  if(BRLCAD_PGO AND NOT EXISTS "${BRLCAD_PGO_PATH}")
 
     # gcc-style GEN
-    if(NOT pgo_flags_found)
+    if("${pgo_flags_found}" STREQUAL "")
       cmake_push_check_state()
-        set(flags "fprofile-generate=\"${CMAKE_BINARY_DIR}/.profiling\" -Wno-error=coverage-mismatch -fprofile-correction")
+        set(flags "fprofile-generate=\"${BRLCAD_PGO_PATH}\" -Wno-error=coverage-mismatch -fprofile-correction")
         set(CMAKE_REQUIRED_FLAGS "-${flags}")
         CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
         CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
       cmake_pop_check_state()
-    endif(NOT pgo_flags_found)
+    endif("${pgo_flags_found}" STREQUAL "")
 
     # llvm-style GEN
-    if(NOT pgo_flags_found)
+    if("${pgo_flags_found}" STREQUAL "")
       cmake_push_check_state()
-        set(flags "fprofile-generate=\"${CMAKE_BINARY_DIR}/.profiling\"")
+        set(flags "fprofile-generate=\"${BRLCAD_PGO_PATH}\"")
         set(CMAKE_REQUIRED_FLAGS "-${flags}")
         CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
         CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
       cmake_pop_check_state()
-    endif(NOT pgo_flags_found)
+    endif("${pgo_flags_found}" STREQUAL "")
 
-    if(pgo_flags_found)
-      DISTCLEAN(${CMAKE_BINARY_DIR}/profile-generate)
-    endif(pgo_flags_found)
+    if(NOT "${pgo_flags_found}" STREQUAL "")
+      DISTCLEAN(${BRLCAD_PGO_PATH})
+    endif(NOT "${pgo_flags_found}" STREQUAL "")
 
-  elseif(BRLCAD_PGO_PATH AND EXISTS ${BRLCAD_PGO_PATH})
+  elseif(BRLCAD_PGO AND EXISTS "${BRLCAD_PGO_PATH}")
 
     # gcc-style USE
-    if(NOT pgo_flags_found)
+    if("${pgo_flags_found}" STREQUAL "")
       cmake_push_check_state()
-        set(flags "fprofile-use=\"${CMAKE_BINARY_DIR}/.profiling\" -Wno-error=coverage-mismatch -fprofile-correction")
+        set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\" -Wno-error=coverage-mismatch -fprofile-correction")
         set(CMAKE_REQUIRED_FLAGS "-${flags}")
         CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
         CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
       cmake_pop_check_state()
-    endif(NOT pgo_flags_found)
+    endif("${pgo_flags_found}" STREQUAL "")
 
     # llvm-style USE
-    if(NOT profuse_found)
+    if("${pgo_flags_found}" STREQUAL "")
       cmake_push_check_state()
-        set(flags "fprofile-use=\"${CMAKE_BINARY_DIR}/.profiling\"")
+        set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\"")
         set(CMAKE_REQUIRED_FLAGS "-${flags}")
         CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
         CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
       cmake_pop_check_state()
-    endif(NOT profuse_found)
-  endif(BRLCAD_PGO_PATH AND NOT EXISTS ${BRLCAD_PGO_PATH})
+    endif("${pgo_flags_found}" STREQUAL "")
+  endif(BRLCAD_PGO AND NOT EXISTS "${BRLCAD_PGO_PATH}")
 
   # CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
   # CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
