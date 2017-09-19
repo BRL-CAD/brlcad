@@ -38,8 +38,6 @@ __BEGIN_DECLS
 #ifndef ICV_EXPORT
 #  if defined(ICV_DLL_EXPORTS) && defined(ICV_DLL_IMPORTS)
 #    error "Only ICV_DLL_EXPORTS or ICV_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define ICV_EXPORT
 #  elif defined(ICV_DLL_EXPORTS)
 #    define ICV_EXPORT __declspec(dllexport)
 #  elif defined(ICV_DLL_IMPORTS)

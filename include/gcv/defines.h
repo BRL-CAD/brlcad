@@ -33,8 +33,6 @@ __BEGIN_DECLS
 #ifndef GCV_EXPORT
 #  if defined(GCV_DLL_EXPORTS) && defined(GCV_DLL_IMPORTS)
 #    error "Only GCV_DLL_EXPORTS or GCV_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define GCV_EXPORT
 #  elif defined(GCV_DLL_EXPORTS)
 #    define GCV_EXPORT __declspec(dllexport)
 #  elif defined(GCV_DLL_IMPORTS)

@@ -37,8 +37,6 @@
 #ifndef PKG_EXPORT
 #  if defined(PKG_DLL_EXPORTS) && defined(PKG_DLL_IMPORTS)
 #    error "Only PKG_DLL_EXPORTS or PKG_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define PKG_EXPORT
 #  elif defined(PKG_DLL_EXPORTS)
 #    define PKG_EXPORT __declspec(dllexport)
 #  elif defined(PKG_DLL_IMPORTS)

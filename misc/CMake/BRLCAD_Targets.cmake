@@ -404,9 +404,13 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   # Go all C++ if the settings request it
   SET_LANG_CXX("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}")
 
-  # Handle the build flags and the general definitions common to both shared and static
-  GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}" CFLAGS L_C_FLAGS CXXFLAGS L_CXX_FLAGS DEFINES L_DEFINES DLL_DEFINES L_DLL_DEFINES)
-  SET_FLAGS_AND_DEFINITIONS("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}" TARGET ${libname} CFLAGS "${L_C_FLAGS}" CXXFLAGS "${L_CXX_FLAGS}" DEFINES "${L_DEFINES}" DLL_DEFINES "${L_DLL_DEFINES}")
+  # Retrieve the build flags and definitions
+  GET_FLAGS_AND_DEFINITIONS(${libname} "${libslist}"
+    CFLAGS L_C_FLAGS
+    CXXFLAGS L_CXX_FLAGS
+    DEFINES L_DEFINES
+    DLL_DEFINES L_DLL_DEFINES
+    )
 
   # Local copy of srcslist in case manipulation is needed
   set(lsrcslist ${srcslist})
@@ -425,13 +429,14 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
   if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
     add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
-    string(REPLACE "lib" "" LOWERCORE "${libname}")
-    string(TOUPPER ${LOWERCORE} UPPER_CORE)
     if(CPP_DLL_DEFINES)
+      string(REPLACE "lib" "" LOWERCORE "${libname}")
+      string(TOUPPER ${LOWERCORE} UPPER_CORE)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
       set_property(GLOBAL APPEND PROPERTY ${libname}_DLL_DEFINES "${UPPER_CORE}_DLL_IMPORTS")
     endif(CPP_DLL_DEFINES)
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
+
   if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
     if(L_STATIC)
       set(libstatic ${libname})
@@ -457,7 +462,16 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     endif(TARGET ${pt} AND ${pt} MATCHES "^lib*")
   endforeach(pt ${possible_targets})
 
-  # Set properties and validation rules if we're building static libs
+  # Now that we have both the sources lists and the build targets, assign flags
+  SET_FLAGS_AND_DEFINITIONS("${srcslist};${L_SHARED_SRCS};${L_STATIC_SRCS}"
+    TARGET ${libname}
+    CFLAGS "${L_C_FLAGS}"
+    CXXFLAGS "${L_CXX_FLAGS}"
+    DEFINES "${L_DEFINES}"
+    DLL_DEFINES "${L_DLL_DEFINES}"
+    )
+
+  # Extra static lib specific work
   if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
     set_target_properties(${libstatic} PROPERTIES FOLDER "BRL-CAD Static Libraries${SUBFOLDER}")
     VALIDATE_STYLE("${libstatic}" "${srcslist};${L_STATIC_SRCS}")
@@ -469,7 +483,7 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     endif(NOT L_NO_INSTALL)
   endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
 
-  # If we're building the shared library, there are a few more things we need to do
+  # Extra shared lib specific work
   if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
     set_target_properties(${libname} PROPERTIES FOLDER "BRL-CAD Shared Libraries${SUBFOLDER}")
     VALIDATE_STYLE("${libname}" "${srcslist};${L_SHARED_SRCS}")
