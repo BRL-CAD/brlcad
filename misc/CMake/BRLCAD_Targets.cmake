@@ -343,7 +343,7 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   GET_FLAGS_AND_DEFINITIONS(${execname} "${libslist}" CFLAGS E_C_FLAGS CXXFLAGS E_CXX_FLAGS DEFINES E_DEFINES DLL_DEFINES E_DLL_DEFINES)
 
   # Having built up the necessary sets, apply them
-  SET_FLAGS_AND_DEFINITIONS("${srcslist}" CFLAGS "${E_C_FLAGS}" CXXFLAGS "${E_CXX_FLAGS}" DEFINES "${E_DEFINES}" DLL_DEFINES "${E_DLL_DEFINES}")
+  SET_FLAGS_AND_DEFINITIONS("${srcslist}" TARGET ${execname} CFLAGS "${E_C_FLAGS}" CXXFLAGS "${E_CXX_FLAGS}" DEFINES "${E_DEFINES}" DLL_DEFINES "${E_DLL_DEFINES}")
 
   # If we have libraries to link, link them.
   if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
