@@ -16,7 +16,7 @@ changes made.  See document footer for additional details.
 This is a patch release, primary focused on updates to the build
 system logic.
 
-
+* removed anim.txt, sun.txt, tube.txt and movie.txt - Cliff Yapp
 
 
 ----------------------------------------------------------------------
