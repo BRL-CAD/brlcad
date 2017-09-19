@@ -18,6 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
 * check that dbconcat supports objects created with the bo cmd
 
 * libgcv should add objects to an existing .g if one is specified
@@ -25,7 +29,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * consolidate dbconcat, clone, make_name, and any other .g I/O
   routines that need to autogenerate names to use the new
-  bu_namegen/db_namegen functions.
+  bu_vls_incr/bu_vls_simplify functions.
 
 * Explicitly list the CMakeLists.txt files rather than adding
   them automatically in the add_subdirectory override, now that
@@ -35,10 +39,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
   with name z_brlcad (perhaps as a post-compile rename custom command)
   and png_brlcad respectively.
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
 
 * investigate possibility of using simple, compact libs
   like miniz and lodepng to replace the complexity of
