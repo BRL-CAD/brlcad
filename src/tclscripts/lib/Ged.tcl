@@ -99,6 +99,7 @@ package provide cadwidgets::Ged 1.0
     itk_option define -rayColorVoid rayColorVoid RayColor Magenta
 
     itk_option define -pixelTol pixelTol PixelTol 8
+    itk_option define -limitedMeasuringTool limitedMeasuringTool LimitedMeasuringTool 0
 
     constructor {_gedOrFile args} {}
     destructor {}
@@ -4576,12 +4577,15 @@ package provide cadwidgets::Ged 1.0
 
     if {[expr {abs($delta) > 0.0001}]} {
 	set mMeasureLineActive 1
-	init_view_measure_part2 $_part2_button
 
-	# Add specific bindings to eliminate bleed through from measure tool bindings
-	foreach dm {ur ul ll lr} {
-	    bind $itk_component($dm) <Control-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
-	    bind $itk_component($dm) <Shift-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
+	if {!$itk_option(-limitedMeasuringTool)} {
+	    init_view_measure_part2 $_part2_button
+
+	    # Add specific bindings to eliminate bleed through from measure tool bindings
+	    foreach dm {ur ul ll lr} {
+		bind $itk_component($dm) <Control-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
+		bind $itk_component($dm) <Shift-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
+	    }
 	}
     } else {
 	init_button_no_op_prot $_part2_button
