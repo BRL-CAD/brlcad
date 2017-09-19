@@ -1216,8 +1216,12 @@ if(BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_AQUA)
 
 # Enable features requiring Bullet Physics SDK
-option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" ON)
+option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" OFF)
 mark_as_advanced(BRLCAD_ENABLE_BULLET)
+
+# Enable features requiring GDAL geospatial library
+option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" OFF)
+mark_as_advanced(BRLCAD_ENABLE_GDAL)
 
 # Enable features requiring Qt
 # TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
