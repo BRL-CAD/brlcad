@@ -296,18 +296,20 @@ function(SET_FLAGS_AND_DEFINITIONS srcslist)
 
     endif("${file_language}" STREQUAL "C++")
 
-    # If we have been supplied a target name, set the global definitions property
-    if(S_TARGET)
-      set_property(GLOBAL PROPERTY ${S_TARGET}_DEFINES "${S_DEFINES}")
-      if(S_DLL_DEFINES)
-	set_property(GLOBAL PROPERTY ${S_TARGET}_DLL_DEFINES "${S_DLL_DEFINES}")
-	foreach(tdef ${S_DLL_DEFINES})
-	  set_property(TARGET ${S_TARGET} APPEND PROPERTY COMPILE_DEFINITIONS "${tdef}")
-	endforeach(tdef ${S_DLL_DEFINES})
-      endif(S_DLL_DEFINES)
-    endif(S_TARGET)
 
   endforeach(srcfile ${srcslist})
+
+  # If we have been supplied a target name, set the appropriate properties.
+  if(S_TARGET)
+    set_property(GLOBAL PROPERTY ${S_TARGET}_DEFINES "${S_DEFINES}")
+    if(S_DLL_DEFINES)
+      # Make sure we append here, since the target will probably already have this property set.
+      set_property(GLOBAL APPEND PROPERTY ${S_TARGET}_DLL_DEFINES "${S_DLL_DEFINES}")
+      foreach(tdef ${S_DLL_DEFINES})
+	set_property(TARGET ${S_TARGET} APPEND PROPERTY COMPILE_DEFINITIONS "${tdef}")
+      endforeach(tdef ${S_DLL_DEFINES})
+    endif(S_DLL_DEFINES)
+  endif(S_TARGET)
 
 endfunction(SET_FLAGS_AND_DEFINITIONS)
 
