@@ -1372,9 +1372,13 @@ if(BRLCAD_ENABLE_VERBOSE_PROGRESS)
   set(CMAKE_VERBOSE_MAKEFILE ON)
 endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 
-# Build with profiling support
-option(BRLCAD_ENABLE_PROFILING "Build with profiling support" OFF)
-mark_as_advanced(BRLCAD_ENABLE_PROFILING)
+# Build with profile-guided optimization support.  this requires a
+# two-pass compile, once with BRLACD_PGO_PATH=/path/to/dir on a
+# location that did not exist beforehand, and again to use profiling
+# metrics captured on "typical" operations and data.
+
+option(BRLCAD_PGO_PATH "Path for profile-guided optimization")
+mark_as_advanced(BRLCAD_PGO_PATH)
 
 #====== ALL CXX COMPILE ===================
 # Build all C and C++ files with a C++ compiler
@@ -1746,19 +1750,6 @@ if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO"
   ADD_NEW_FLAG(EXE_LINKER 32BIT_FLAG ALL)
 endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO" AND NOT MSVC)
 
-if(BRLCAD_ENABLE_PROFILING)
-  CHECK_C_FLAG(pg VARS PROFILE_FLAG)
-  CHECK_C_FLAG(p VARS PROFILE_FLAG)
-  CHECK_C_FLAG(prof_gen VARS PROFILE_FLAG)
-  if(NOT PROFILE_FLAG)
-    message("Warning - profiling requested, but don't know how to profile with this compiler - disabling.")
-    set(BRLCAD_ENABLE_PROFILING OFF)
-  else(NOT PROFILE_FLAG)
-    ADD_NEW_FLAG(C PROFILE_FLAG ALL)
-    ADD_NEW_FLAG(CXX PROFILE_FLAG ALL)
-  endif(NOT PROFILE_FLAG)
-endif(BRLCAD_ENABLE_PROFILING)
-
 # Debugging flags
 if(BRLCAD_FLAGS_DEBUG)
   CHECK_C_FLAG(g GROUPS DEBUG_C_FLAGS)
@@ -1943,12 +1934,58 @@ if(NOT MSVC)
   CHECK_C_FLAG(finline-functions GROUPS OPTIMIZE_C_FLAGS)
   CHECK_CXX_FLAG(finline-functions GROUPS OPTIMIZE_CXX_FLAGS)
 
-  # cmake_push_check_state()
-  #   set(CMAKE_REQUIRED_FLAGS --coverage)
-  #   CHECK_C_FLAG("fprofile-use=${CMAKE_BINARY_DIR}/profile-generate --coverage" GROUPS OPTIMIZE_C_FLAGS)
-  #   CHECK_CXX_FLAG("fprofile-use=${CMAKE_BINARY_DIR}/profile-generate --coverage" GROUPS OPTIMIZE_CXX_FLAGS)
-  # cmake_pop_check_state()
-  # DISTCLEAN(${CMAKE_BINARY_DIR}/profile-generate)
+  # Profile-Guided Optimization -- this requires a two-pass compile,
+  # once with BRLCAD_ENABLE_PROFGEN followed by BRLCAD_ENABLE_PROFUSE.
+
+  set(pgo_flags_found 0)
+  if(BRLCAD_PGO_PATH AND NOT EXISTS ${BRLCAD_PGO_PATH})
+
+    # gcc-style GEN
+    if(NOT pgo_flags_found)
+      cmake_push_check_state()
+        set(flags "fprofile-generate=\"${CMAKE_BINARY_DIR}/.profiling\" -Wno-error=coverage-mismatch -fprofile-correction")
+        set(CMAKE_REQUIRED_FLAGS "-${flags}")
+        CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
+        CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
+      cmake_pop_check_state()
+    endif(NOT pgo_flags_found)
+
+    # llvm-style GEN
+    if(NOT pgo_flags_found)
+      cmake_push_check_state()
+        set(flags "fprofile-generate=\"${CMAKE_BINARY_DIR}/.profiling\"")
+        set(CMAKE_REQUIRED_FLAGS "-${flags}")
+        CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
+        CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
+      cmake_pop_check_state()
+    endif(NOT pgo_flags_found)
+
+    if(pgo_flags_found)
+      DISTCLEAN(${CMAKE_BINARY_DIR}/profile-generate)
+    endif(pgo_flags_found)
+
+  elseif(BRLCAD_PGO_PATH AND EXISTS ${BRLCAD_PGO_PATH})
+
+    # gcc-style USE
+    if(NOT pgo_flags_found)
+      cmake_push_check_state()
+        set(flags "fprofile-use=\"${CMAKE_BINARY_DIR}/.profiling\" -Wno-error=coverage-mismatch -fprofile-correction")
+        set(CMAKE_REQUIRED_FLAGS "-${flags}")
+        CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
+        CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
+      cmake_pop_check_state()
+    endif(NOT pgo_flags_found)
+
+    # llvm-style USE
+    if(NOT profuse_found)
+      cmake_push_check_state()
+        set(flags "fprofile-use=\"${CMAKE_BINARY_DIR}/.profiling\"")
+        set(CMAKE_REQUIRED_FLAGS "-${flags}")
+        CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
+        CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
+      cmake_pop_check_state()
+    endif(NOT profuse_found)
+  endif(BRLCAD_PGO_PATH AND NOT EXISTS ${BRLCAD_PGO_PATH})
 
   # CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
   # CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
@@ -2130,8 +2167,8 @@ if(NOT MSVC)
   if(BRLCAD_ENABLE_STRICT)
     # If we're going strict, suppress C11 warnings about isnan due to
     # clang issue:  https://llvm.org/bugs/show_bug.cgi?id=17788
-    CHECK_C_FLAG(Wno-c11-extensions)
-    CHECK_CXX_FLAG(Wno-c11-extensions)
+#    CHECK_C_FLAG(Wno-c11-extensions)
+#    CHECK_CXX_FLAG(Wno-c11-extensions)
 
     # Add the flag that actually turns warnings into errors
     CHECK_C_FLAG(Werror)
