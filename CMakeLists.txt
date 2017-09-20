@@ -1377,9 +1377,10 @@ if(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 
 # Build with profile-guided optimization support.  this requires a
-# two-pass compile, once with BRLACD_PGO_PATH=/path/to/dir on a
-# location that did not exist beforehand, and again to use profiling
-# metrics captured on "typical" operations and data.
+# two-pass compile, once with BRLCAD_PGO=ON on a location that did not
+# exist beforehand (specified via the PGO_PATH environment variable),
+# and again to use profiling metrics captured on "typical" operations
+# and data.  By default, path is BUILDDIR/.profiling
 
 option(BRLCAD_PGO "Enable profile-guided optimization (set PGO_PATH environment variable)")
 mark_as_advanced(BRLCAD_PGO)
@@ -1915,8 +1916,8 @@ if(NOT MSVC)
   CHECK_CXX_FLAG(O3 GROUPS OPTIMIZE_CXX_FLAGS)
 
   # goes a step beyond O3, possibly using dangerous imprecise math
-  CHECK_C_FLAG(Ofast GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_CXX_FLAG(Ofast GROUPS OPTIMIZE_CXX_FLAGS)
+  # CHECK_C_FLAG(Ofast GROUPS OPTIMIZE_C_FLAGS)
+  # CHECK_CXX_FLAG(Ofast GROUPS OPTIMIZE_CXX_FLAGS)
 
   # binaries will not necessarily work on a different machine
   CHECK_C_FLAG(march=native GROUPS OPTIMIZE_C_FLAGS)
@@ -1939,7 +1940,8 @@ if(NOT MSVC)
   CHECK_CXX_FLAG(finline-functions GROUPS OPTIMIZE_CXX_FLAGS)
 
   # Profile-Guided Optimization -- this requires a two-pass compile,
-  # once with BRLCAD_ENABLE_PROFGEN followed by BRLCAD_ENABLE_PROFUSE.
+  # with BRLCAD_PGO=ON and (optionally) the PGO_PATH environment
+  # variable set to a temp folder
 
   set(pgo_flags_found "")
   if("$ENV{PGO_PATH}" STREQUAL "")
