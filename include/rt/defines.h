@@ -125,7 +125,7 @@
 #define ID_HYP          38      /**< @brief Hyperboloid of one sheet */
 #define ID_REVOLVE      40      /**< @brief Solid of Revolution */
 #define ID_PNTS         41      /**< @brief Collection of Points */
-#define ID_ANNOTATION   42      /**< @brief Annotation */
+#define ID_ANNOT        42      /**< @brief Annotation */
 #define ID_HRT          43      /**< @brief Heart */
 #define ID_DATUM        44      /**< @brief Datum references */
 

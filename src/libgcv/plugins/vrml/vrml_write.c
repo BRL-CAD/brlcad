@@ -1376,12 +1376,10 @@ out:
     return 1;
 }
 
-
 static const struct gcv_filter gcv_conv_vrml_write = {
-    "VRML Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VRML,
+    "VRML Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VRML, NULL,
     vrml_write_create_opts, vrml_write_free_opts, vrml_write
 };
-
 
 extern const struct gcv_filter gcv_conv_vrml_read;
 static const struct gcv_filter * const filters[] = {&gcv_conv_vrml_read, &gcv_conv_vrml_write, NULL};

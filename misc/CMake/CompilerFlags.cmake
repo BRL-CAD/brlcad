@@ -37,6 +37,7 @@
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(CMakeParseArguments)
+include(CMakePushCheckState)
 
 set(CMAKE_BUILD_TYPES DEBUG RELEASE)
 
@@ -226,7 +227,7 @@ macro(CHECK_FLAG)
 
     # Iterate over listed Build types and append the flag to them if successfully tested.
     foreach(build_type ${FLAG_BUILD_TYPES})
-      CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
+      CHECK_COMPILER_FLAG(${FLAG_LANG} "${NEW_FLAG}" ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
       if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
 	ADD_NEW_FLAG(${FLAG_LANG} NEW_FLAG "${build_type}")
       endif(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
@@ -236,7 +237,7 @@ macro(CHECK_FLAG)
     # a string build, not a CMake list build.  Do this for all supplied
     # group variables.
     foreach(flag_group ${FLAG_GROUPS})
-      CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
+      CHECK_COMPILER_FLAG(${FLAG_LANG} "${NEW_FLAG}" ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
       if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
 	if(${flag_group})
 	  set(${flag_group} "${${flag_group}} ${NEW_FLAG}")
@@ -250,7 +251,7 @@ macro(CHECK_FLAG)
     # the flag as the variable's value.  Do this for all supplied variables.
     foreach(flag_var ${FLAG_VARS})
       if(NOT ${flag_var})
-	CHECK_COMPILER_FLAG(${FLAG_LANG} ${NEW_FLAG} ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
+	CHECK_COMPILER_FLAG(${FLAG_LANG} "${NEW_FLAG}" ${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND)
 	if(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND AND NOT "${${flag_var}}")
 	  set(${flag_var} "${NEW_FLAG}")
 	endif(${UPPER_FLAG}_${FLAG_LANG}_FLAG_FOUND AND NOT "${${flag_var}}")

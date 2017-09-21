@@ -426,13 +426,13 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_sprintf(&suffix, ".brep");
 	    } else if (argc == 4) {
 		/* brep obj --no-evaluation suffix */
-		bu_vls_sprintf(&bname, argv[3]);
-		bu_vls_sprintf(&suffix, argv[3]);
+		bu_vls_sprintf(&bname, "%s", argv[3]);
+		bu_vls_sprintf(&suffix, "%s", argv[3]);
 	    }
 	} else {
 	    /* brep obj brepname/suffix */
-	    bu_vls_sprintf(&bname, argv[2]);
-	    bu_vls_sprintf(&suffix, argv[2]);
+	    bu_vls_sprintf(&bname, "%s", argv[2]);
+	    bu_vls_sprintf(&suffix, "%s", argv[2]);
 	}
 
 	if (no_evaluation && intern.idb_type == ID_COMBINATION) {

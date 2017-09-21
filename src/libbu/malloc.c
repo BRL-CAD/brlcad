@@ -275,6 +275,7 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
     if (UNLIKELY(ptr==NULL || bu_debug&BU_DEBUG_MEM_LOG)) {
 	fprintf(stderr, "NULL malloc(%llu) %s\n", (unsigned long long)(cnt*size), str);
     }
+    bu_n_malloc++;
 
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_MALLOC);
@@ -307,7 +308,7 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 	BU_LIST_MAGIC_SET(&(mp->q), MDB_MAGIC);
 	bu_semaphore_release(BU_SEM_MALLOC);
     }
-    bu_n_malloc++;
+
     return ptr;
 }
 
@@ -375,6 +376,8 @@ bu_free(void *ptr, const char *str)
     *((uint32_t *)ptr) = 0xFFFFFFFF;	/* zappo! */
 
     free(ptr);
+    bu_n_free++;
+
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_MALLOC);
 #endif
@@ -460,7 +463,10 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_acquire(BU_SEM_MALLOC);
 #endif
+
     ptr = realloc(ptr, siz);
+    bu_n_realloc++;
+
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_MALLOC);
 #endif
@@ -519,7 +525,7 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
 	BU_LIST_MAGIC_SET(&(mqp->q), MDB_MAGIC);
 	bu_semaphore_release(BU_SEM_MALLOC);
     }
-    bu_n_realloc++;
+
     return ptr;
 }
 

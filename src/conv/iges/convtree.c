@@ -49,7 +49,8 @@ Convtree()
     int att_de = 0;
     struct brlcad_att brl_att;
     size_t i;
-    int j, k;
+    int j = 0;
+    int k = 0;
 
     if (bu_debug & BU_DEBUG_MEM_CHECK)
 	bu_log("Doing memory checking in Convtree()\n");

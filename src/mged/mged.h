@@ -623,6 +623,7 @@ int epain(struct rt_db_internal *ip, fastf_t thick[2]);
 int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
 
 /* set.c */
+extern void fbserv_set_port(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void mged_variable_setup(Tcl_Interp *interpreter);
 

@@ -26,7 +26,7 @@ Read_vertex_list(int vert_de)
 {
     struct iges_vertex_list *vertex_list;
     int entityno;
-    int sol_num;
+    int sol_num = 0;
     int i;
 
     entityno = (vert_de - 1)/2;

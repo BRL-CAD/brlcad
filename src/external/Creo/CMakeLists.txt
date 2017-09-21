@@ -1,13 +1,7 @@
 
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Minimum required version of CMake
-  cmake_minimum_required(VERSION 2.8)
-  if(COMMAND CMAKE_POLICY)
-    CMAKE_POLICY(SET CMP0003 NEW)
-    if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-      CMAKE_POLICY(SET CMP0026 OLD)
-    endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  endif(COMMAND CMAKE_POLICY)
+  cmake_minimum_required(VERSION 3.0.2)
 
   # Set CMake project name
   project(CREO2BRL)
@@ -15,7 +9,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Version (TODO - display this in the plugin somehow...)
   set(CREO2BRL_VERSION_MAJOR 0)
   set(CREO2BRL_VERSION_MINOR 2)
-  set(CREO2BRL_VERSION_PATCH 3)
+  set(CREO2BRL_VERSION_PATCH 4)
 
   # Tweak compiler flags - we *must* use /MT for this to work
   set(flaglists
@@ -374,6 +368,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   # Distcheck file list
   set(creo_dist_files
+    ${creo_brl_srcs}
     README.txt
     cmake_uninstall.cmake.in
     creo-brl.dat.in

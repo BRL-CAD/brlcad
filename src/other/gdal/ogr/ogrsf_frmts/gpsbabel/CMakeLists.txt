@@ -1,0 +1,2 @@
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+add_library(ogr_frmt_gpsbabel OBJECT ogrgpsbabeldriver.cpp ogrgpsbabeldatasource.cpp ogrgpsbabelwritedatasource.cpp)

@@ -69,19 +69,12 @@ rt_constraint_ifree(struct rt_db_internal *ip)
 
 
 int
-rt_constraint_export5(
-    struct bu_external *ep,
-    const struct rt_db_internal *ip,
-    double UNUSED(local2mm),
-    const struct db_i *dbip,
-    struct resource *resp)
+rt_constraint_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *UNUSED(dbip))
 {
     struct rt_constraint_internal *cip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
     RT_CK_DB_INTERNAL(ip);
-    if (dbip) RT_CK_DBI(dbip);
-    if (resp) RT_CK_RESOURCE(resp);
 
     if (ip->idb_type != ID_CONSTRAINT) bu_bomb("rt_constraint_export() type not ID_CONSTRAINT");
     cip = (struct rt_constraint_internal *) ip->idb_ptr;
@@ -97,18 +90,6 @@ rt_constraint_export5(
     bu_vls_free(&str);
 
     return 0;	/* OK */
-}
-
-
-int
-rt_constraint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t UNUSED(mat), const struct db_i *dbip, struct resource *resp)
-{
-    RT_CK_DB_INTERNAL(ip);
-    BU_CK_EXTERNAL(ep);
-    RT_CK_DBI(dbip);
-    if (resp) RT_CK_RESOURCE(resp);
-
-    return 0; /* OK */
 }
 
 

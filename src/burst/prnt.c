@@ -71,7 +71,7 @@ doMore(int *UNUSED(linesp))
 	    ret = 0;
 	    break;
 	case LF :
-	case CR :
+	case CRET :
 	    *linesp = 1;
 	    break;
 	default :

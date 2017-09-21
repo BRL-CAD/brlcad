@@ -26,6 +26,7 @@
 #include <math.h>
 #include <string.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "bu/cv.h"
 #include "bu/log.h"

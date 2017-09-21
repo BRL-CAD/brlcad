@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+Name: libbrep
+Description: BRL-CAD NURBS Boundary Representation Library
+Version: @BRLCAD_VERSION@
+Requires: libbg libbn libbu
+Libs: -L${libdir} -lbg -lbn -lbu @LIBOPENNURBS@ @LIBSTDCXX@ @LIBREGEX@ @LIBM@
+Cflags: -I${includedir}/brlcad -I${includedir}

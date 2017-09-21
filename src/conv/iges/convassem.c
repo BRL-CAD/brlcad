@@ -42,7 +42,11 @@ void
 Convassem()
 {
     size_t i;
-    int j, k, comblen, conv = 0, totass = 0;
+    int j = 0;
+    int k = 0;
+    int comblen = 0;
+    int conv = 0;
+    int totass = 0;
     struct solid_list *root, *ptr, *ptr_tmp;
     struct wmember head, *wmem;
     int no_of_assoc = 0;

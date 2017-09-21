@@ -301,7 +301,7 @@ free_soup(struct soup_s *s) {
 
 
 union tree *
-invert(union tree *tree)
+_tree_invert(union tree *tree)
 {
     struct soup_s *s;
     unsigned long int i;
@@ -468,7 +468,7 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 	case OP_INTERSECT:
 	    return compose(tr->tr_b.tb_left, tr->tr_b.tb_right, INSIDE, SAME, INSIDE);
 	case OP_SUBTRACT:
-	    return invert(compose(tr->tr_b.tb_left, invert(tr->tr_b.tb_right), OUTSIDE, OPPOSITE, INSIDE));
+	    return _tree_invert(compose(tr->tr_b.tb_left, _tree_invert(tr->tr_b.tb_right), OUTSIDE, OPPOSITE, INSIDE));
 	default:
 	    bu_bomb("bottess evaluate(): bad op (second pass, CSG)\n");
     }

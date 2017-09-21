@@ -99,6 +99,7 @@ package provide cadwidgets::Ged 1.0
     itk_option define -rayColorVoid rayColorVoid RayColor Magenta
 
     itk_option define -pixelTol pixelTol PixelTol 8
+    itk_option define -limitedMeasuringTool limitedMeasuringTool LimitedMeasuringTool 0
 
     constructor {_gedOrFile args} {}
     destructor {}
@@ -213,6 +214,7 @@ package provide cadwidgets::Ged 1.0
 	method dlist_on {args}
 	method draw {args}
 	method draw_ray {_start _partitions}
+	method dsp {args}
 	method dump {args}
 	method dup {args}
 	method E {args}
@@ -1704,6 +1706,10 @@ package provide cadwidgets::Ged 1.0
 	set prev_o_pt $o_pt
 	incr count
     }
+}
+
+::itcl::body cadwidgets::Ged::dsp {args} {
+    eval $mGed dsp $args
 }
 
 ::itcl::body cadwidgets::Ged::dump {args} {
@@ -4451,11 +4457,6 @@ package provide cadwidgets::Ged 1.0
 
     if {$itk_option(-gridSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
-	set view [eval $mGed screen2view $itk_component($_pane) $mpos]
-	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
-	set mpos [$mGed view2screen $itk_component($_pane) $view]
-
-	# This will regenerate the circle based on the snapped mouse position
 	eval $mGed mouse_poly_circ $itk_component($_pane) $mpos
     }
 
@@ -4504,11 +4505,6 @@ package provide cadwidgets::Ged 1.0
 
     if {$itk_option(-gridSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
-	set view [eval $mGed screen2view $itk_component($_pane) $mpos]
-	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
-	set mpos [$mGed view2screen $itk_component($_pane) $view]
-
-	# This will regenerate the circle based on the snapped mouse position
 	eval $mGed mouse_poly_ell $itk_component($_pane) $mpos
     }
 
@@ -4530,11 +4526,6 @@ package provide cadwidgets::Ged 1.0
 
     if {$itk_option(-gridSnap)} {
 	set mpos [$mGed get_prev_mouse $itk_component($_pane)]
-	set view [eval $mGed screen2view $itk_component($_pane) $mpos]
-	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
-	set mpos [$mGed view2screen $itk_component($_pane) $view]
-
-	# This will regenerate the rectangle based on the snapped mouse position
 	eval $mGed mouse_poly_rect $itk_component($_pane) $mpos
     }
 
@@ -4586,12 +4577,15 @@ package provide cadwidgets::Ged 1.0
 
     if {[expr {abs($delta) > 0.0001}]} {
 	set mMeasureLineActive 1
-	init_view_measure_part2 $_part2_button
 
-	# Add specific bindings to eliminate bleed through from measure tool bindings
-	foreach dm {ur ul ll lr} {
-	    bind $itk_component($dm) <Control-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
-	    bind $itk_component($dm) <Shift-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
+	if {!$itk_option(-limitedMeasuringTool)} {
+	    init_view_measure_part2 $_part2_button
+
+	    # Add specific bindings to eliminate bleed through from measure tool bindings
+	    foreach dm {ur ul ll lr} {
+		bind $itk_component($dm) <Control-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
+		bind $itk_component($dm) <Shift-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
+	    }
 	}
     } else {
 	init_button_no_op_prot $_part2_button
@@ -6258,6 +6252,7 @@ package provide cadwidgets::Ged 1.0
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
     $help add dir2ae		{{az el} {returns a direction vector given the azimuth and elevation}}
     $help add draw		{{"-C#/#/# <objects>"} {draw objects}}
+    $help add dsp		{{obj [command]} {work with DSP primitives}}
     $help add dump		{{file} {write current state of database object to file}}
     $help add dup		{{file [prefix]} {check for dup names in 'file'}}
     $help add E			{{[-s] <objects>} {evaluated edit of objects. Option 's' provides a slower, but better fidelity evaluation}}

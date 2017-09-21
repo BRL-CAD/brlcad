@@ -34,13 +34,8 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.0.2)
 if(COMMAND CMAKE_POLICY)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-    CMAKE_POLICY(SET CMP0042 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-
   if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
     CMAKE_POLICY(SET CMP0046 NEW)
     CMAKE_POLICY(SET CMP0053 NEW)
@@ -166,15 +161,17 @@ if(MSVC)
   # msvc does not append 'lib' - do it here to have consistent name
   set_target_properties(netpbm PROPERTIES PREFIX "lib")
   set_target_properties(netpbm PROPERTIES IMPORT_PREFIX "lib")
-
   set_property(TARGET netpbm APPEND PROPERTY COMPILE_DEFINITIONS "NETPBM_DLL_EXPORTS")
 endif(MSVC)
 
 if(BUILD_STATIC_LIBS)
   add_library(netpbm-static STATIC ${NETPBM_SRCS})
-  if(NOT WIN32)
+  if(MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(netpbm-static PROPERTIES PREFIX "lib")
+  else(MSVC)
     set_target_properties(netpbm-static PROPERTIES OUTPUT_NAME "netpbm")
-  endif(NOT WIN32)
+  endif(MSVC)
   install(TARGETS netpbm-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

@@ -32,7 +32,7 @@
 
 /* defined in read.c */
 extern int get_line(char *cp, int buflen, char *title);
-extern int getint(char *cp, int start, int len);
+extern int getint(char *cp, int start, size_t len);
 extern void namecvt(int n, char **cp, int c);
 
 /* defined in cvt.c */

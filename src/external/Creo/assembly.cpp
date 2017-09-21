@@ -77,10 +77,11 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
 			if (!stable) {
 			    creo_log(cinfo, MSG_DEBUG, "%s - is empty assembly, but no stable version of name found???.\n", ename);
 			} else {
-			    creo_log(cinfo, MSG_FAIL, "all contents of assembly %s are empty, skipping\n", ename);
+			    creo_log(cinfo, MSG_DEBUG, "all contents of assembly %s are empty, skipping\n", ename);
 			    cinfo->empty->insert(stable);
 			    steady_state = 0;
 			}
+			creo_log(cinfo, MSG_FAIL, "%s not converted.\n", ename);
 		    }
 		}
 	    }
@@ -139,17 +140,19 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     /* create the path */
     status = ProAsmcomppathInit((ProSolid)parent, id_table, 1, &comp_path );
     if ( status != PRO_TK_NO_ERROR ) {
-	creo_log(cinfo, MSG_FAIL, "%s: failed to get path from %s to %s, aborting\n", pname, pname, cname);
+	creo_log(cinfo, MSG_DEBUG, "%s: failed to get path from %s to %s, aborting\n", pname, pname, cname);
 	return status;
     }
     /* accumulate the xform matrix along the path created above */
     status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
     if ( status != PRO_TK_NO_ERROR ) {
-	creo_log(cinfo, MSG_FAIL, "%s: failed to get transformation matrix %s/%s, aborting\n", pname, pname, cname);
+	creo_log(cinfo, MSG_DEBUG, "%s: failed to get transformation matrix %s/%s, aborting\n", pname, pname, cname);
 	return status;
     }
 
-    /*** Write the matrix to BRL-CAD form ***/
+    /* Write the matrix to BRL-CAD form. Note: apparently, one
+	 * of the functions of these matricies in Creo is to correct
+	 * the size of subcomponents using different units. */
     if (is_non_identity(xform)) {
 	struct bu_vls mstr = BU_VLS_INIT_ZERO;
 	for (int j=0; j<4; j++) {

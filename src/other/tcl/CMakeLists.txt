@@ -37,21 +37,16 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	  CMAKE_POLICY(SET CMP0026 OLD)
-	  CMAKE_POLICY(SET CMP0048 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-	  CMAKE_POLICY(SET CMP0053 OLD)
+cmake_minimum_required(VERSION 3.0.2)
+if(COMMAND CMAKE_POLICY)
+  if("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+	  CMAKE_POLICY(SET CMP0053 NEW)
 	  CMAKE_POLICY(SET CMP0054 NEW)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-ENDIF(COMMAND CMAKE_POLICY)
+endif(COMMAND CMAKE_POLICY)
 
 # Set CMake project name
-PROJECT(TCL)
+project(TCL)
 
 # build shared libs by default
 set(BUILD_SHARED_LIBS ON)
@@ -78,22 +73,16 @@ ENDIF(WIN32)
 # the build directory AND install directory.  Thanks to plplot for
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 
-# use, i.e. don't skip the full RPATH for the build tree
-SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-
-# the RPATH/INSTALL_NAME_DIR to be used when installing
-if (NOT APPLE)
-  SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
-endif(NOT APPLE)
-SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
-
-# add the automatically determined parts of the RPATH which point to
-# directories outside the build tree to the install RPATH
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
+  if(COMMAND cmake_set_rpath)
+    cmake_set_rpath()
+  endif(COMMAND cmake_set_rpath)
+else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
+  if(NOT HAVE_PARENT_BUILD)
+    message(FATAL_ERROR "Not building as a subbuild, but CMake/RPath_Setup.cmake not found.  To build as a stand-alone build, add RPath_Setup.cmake to the CMake directory.")
+  endif(NOT HAVE_PARENT_BUILD)
+endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
 
 #----------------------------------------------------------------------------
 # The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX 
@@ -459,28 +448,23 @@ ENDIF(NOT HAVE_MEMCMP)
 #------------------------------------------------------------------------------
 # Test for broken functions.  Not clear how many of these are still needed.
 #------------------------------------------------------------------------------
-SC_TCL_CHECK_BROKEN_FUNC(
-  strstr "
-	extern int strstr();
-	exit(strstr(\"\\\0test\", \"test\") ? 1 : 0);"
-  )
 
+set(strstr_string "extern int strstr(); exit(strstr(\"\\\\0test\", \"test\") ? 1 : 0);")
+SC_TCL_CHECK_BROKEN_FUNC(strstr "${strtoul_string}")
 
-SC_TCL_CHECK_BROKEN_FUNC(
-  strtoul "
-	extern int strtoul();
+set(strtoul_string "
+   extern int strtoul();
 	char *term, *string = \"0\";
-	exit(strtoul(string,&term,0) != 0 || term != string+1);"
-  )
+  	exit(strtoul(string,&term,0) != 0 || term != string+1);
+	")
+SC_TCL_CHECK_BROKEN_FUNC(strtoul "${strtoul_string}")
 
-
-SC_TCL_CHECK_BROKEN_FUNC(
-  strtod "
-	extern double strtod();
-	char *term, *string = \" +69\";
-	exit(strtod(string,&term) != 69 || term != string+4);"
-  )
-
+set(double_strtod_string "
+   extern double strtod();
+  	char *term, *string = \" +69\";
+  	exit(strtod(string,&term) != 69 || term != string+4);
+	")
+SC_TCL_CHECK_BROKEN_FUNC(strtod "${double_strtod_string}")
 
 
 #TODO SC_BUGGY_STRTOD - Solaris 2.4 only?  Do we still care?
@@ -1042,7 +1026,7 @@ install(TARGETS tcl
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
-GET_TARGET_PROPERTY(TCL_INSTALL_LIBNAME tcl LOCATION)
+set(TCL_INSTALL_LIBNAME "${CMAKE_SHARED_LIBRARY_PREFIX}tcl${CMAKE_SHARED_LIBRARY_SUFFIX}")
 SET_TARGET_PROPERTIES(tcl PROPERTIES VERSION ${TCL_VERSION} SOVERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   SET_TARGET_PROPERTIES(tcl PROPERTIES LINK_FLAGS "-compatibility_version ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR} -current_version ${TCL_VERSION} -install_name \"${TCL_INSTALL_LIBNAME}\" -seg1addr 0xa000000 -sectcreate __TEXT __info_plist \"${TCL_BINARY_DIR}/Tcl-Info.plist\"")

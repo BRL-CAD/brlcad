@@ -42,8 +42,15 @@ DISTCLEAN(
   "${CMAKE_CURRENT_BINARY_DIR}/fastgen_dos.g"
   )
 CMAKEFILES(
-  fastgen_dos.fast4 
-  fastgen_box.fast4 
+  CMakeLists.txt
+  README
+  dem/CMakeLists.txt
+  dem/README
+  dem/hawaii-c.tar.bz2
+  dem/regress-dem.cmake.in
+  fastgen_box.fast4
+  fastgen_dos.fast4
+  regress-fastgen.cmake.in
   )
 
 

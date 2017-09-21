@@ -420,7 +420,7 @@ rt_bot_prep_pieces(struct bot_specific *bot,
  * Calculate an RPP for a BoT
  */
 int
-rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_bot_internal *bot_ip;
     size_t tri_index;
     point_t p1, p2, p3;
@@ -491,7 +491,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	rt_bot_mintie = atoi(getenv("LIBRT_BOT_MINTIE"));
     }
 
-    if (rt_bot_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_bot_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
 
     if (rt_bot_mintie > 0 && bot_ip->num_faces >= rt_bot_mintie /* FIXME: (necessary?) && (bot_ip->face_normals != NULL || bot_ip->orientation != RT_BOT_UNORIENTED) */)
 	ret = bottie_prep_double(stp, bot_ip, rtip);
@@ -721,18 +721,6 @@ rt_bot_free(struct soltab *stp)
 }
 
 
-int
-rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-    if (tol) BN_CK_TOL(tol);
-    if (!min) return 0;
-    if (!max) return 0;
-
-    return 0;
-}
-
-
 vdsNode *
 build_vertex_tree(struct rt_bot_internal *bot)
 {
@@ -870,7 +858,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     fold_data.root = vertex_tree;
     fold_data.point_spacing = info->point_spacing;
-    (void)rt_bot_bbox(ip, &min, &max);
+    (void)rt_bot_bbox(ip, &min, &max, NULL);
     d1 = max[0] - min[0];
     d2 = max[1] - min[1];
     d3 = max[2] - min[2];
@@ -913,7 +901,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
         }
 
 int
-rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *info)
+rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct rt_view_info *info)
 {
     struct rt_bot_internal *bot_ip;
     size_t i;
@@ -939,7 +927,7 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     } else {
 	/* too big - just draw the bbox */
 	point_t min, max;
-	(void)rt_bot_bbox(ip, &min, &max);
+	(void)rt_bot_bbox(ip, &min, &max, tol);
 	BOT_BB_PLOT_VLIST(min, max);
     }
 
@@ -1806,7 +1794,7 @@ rt_bot_ifree(struct rt_db_internal *ip)
 
 
 int
-rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_internal *ip, const int release, struct db_i *dbip)
+rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_internal *ip, const int release, struct db_i *dbip, struct resource *UNUSED(resp))
 {
     struct rt_bot_internal *botip, *botop;
     size_t i;
@@ -2492,7 +2480,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 	    if (argv[0][2] == '\0') {
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		    bu_vls_printf(logstr, "tcl list parse error.", len);
+		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
 		}
 		if ((size_t)len != bot->num_faces || len <= 0) {
@@ -2603,7 +2591,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 	    if (argv[0][1] == '\0') {
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		    bu_vls_printf(logstr, "tcl list parse error.", len);
+		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
@@ -2672,7 +2660,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 	    if (argv[0][1] == '\0') {
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		    bu_vls_printf(logstr, "tcl list parse error.", len);
+		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
@@ -2736,7 +2724,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 	    if (argv[0][1] == '\0') {
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		    bu_vls_printf(logstr, "tcl list parse error.", len);
+		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
@@ -2859,7 +2847,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 	    if (argv[0][1] == '\0') {
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		    bu_vls_printf(logstr, "tcl list parse error.", len);
+		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
@@ -2946,7 +2934,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    }
 	} else if (BU_STR_EQUAL(argv[0], "flags")) {
 	    if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
-		bu_vls_printf(logstr, "tcl list parse error.", len);
+		bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		return BRLCAD_ERROR;
 	    }
 	    bot->bot_flags = 0;

@@ -67,7 +67,7 @@ static int last_ihigh;			/* last inten_high */
 static int ntomiss;			/* number of pixels to miss */
 static int col;				/* column; for PP 75 char/line crap */
 
-void view_pixel(void) {}
+void view_pixel(struct application *UNUSED(ap)) {}
 
 #define pchar(c) {putc(c, stdout);if (col++==74) {putc('\n', stdout);col=0;}}
 
@@ -149,7 +149,7 @@ ppmiss(struct application *UNUSED(ap))
 }
 
 void
-view_eol(void)
+view_eol(struct application *UNUSED(ap))
 {
     pchar('.');		/* End of scanline */
     last_solidp = SOLTAB_NULL;
@@ -160,14 +160,14 @@ view_eol(void)
  * Called when the picture is finally done.
  */
 void
-view_end(void)
+view_end(struct application *UNUSED(ap))
 {
     fprintf(stdout, "/\n");	/* end of view */
     fflush(stdout);
 }
 
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
 {
     ap->a_hit = pphit;
     ap->a_miss = ppmiss;
@@ -185,10 +185,10 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     return 0;		/* no framebuffer needed */
 }
 
-void view_2init(void) {;}
+void view_2init(struct application *UNUSED(ap), char *UNUSED(framename)) {;}
 
-void view_setup(void) {}
-void view_cleanup(void) {}
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 void application_init (void) {}
 

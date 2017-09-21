@@ -25,10 +25,11 @@ void
 Convinst()
 {
 
-    size_t i;
-    int j, k;
-    int type;
-    int pointer;
+    size_t i = 0;
+    int j = 0;
+    int k = 0;
+    int type = 0;
+    int pointer = 0;
     int conv = 0;
     int totinst = 0;
     int no_of_assoc = 0;

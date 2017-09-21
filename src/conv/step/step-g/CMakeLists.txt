@@ -463,19 +463,12 @@ BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
 add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
 set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
 
-if(MSVC)
-  set(stepg_IMPORTS
-    BU_DLL_IMPORTS
-    RT_DLL_IMPORTS
-    WDB_DLL_IMPORTS
-    SC_CORE_DLL_IMPORTS
-    SC_DAI_DLL_IMPORTS
-    SC_EDITOR_DLL_IMPORTS
-    SC_UTILS_DLL_IMPORTS
-    )
-  list(APPEND stepg_IMPORTS ${stepg_IMPORTS})
-  set_target_properties(step-g PROPERTIES COMPILE_DEFINITIONS "${stepg_IMPORTS}")
-endif(MSVC)
+if(CPP_DLL_DEFINES)
+  set(SCIMPORTS SC_CORE_DLL_IMPORTS SC_DAI_DLL_IMPORTS SC_EDITOR_DLL_IMPORTS SC_UTILS_DLL_IMPORTS)
+  foreach(scp ${SCIMPORTS})
+    set_property(TARGET step-g APPEND PROPERTY COMPILE_DEFINITIONS "${scp}")
+  endforeach(scp ${SCIMPORTS})
+endif(CPP_DLL_DEFINES)
 
 # Local Variables:
 # tab-width: 8
