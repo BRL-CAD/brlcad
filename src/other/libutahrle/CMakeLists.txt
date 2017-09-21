@@ -130,7 +130,9 @@ endif(MSVC)
 
 if(BUILD_SHARED_LIBS)
   add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
-  set_property(TARGET utahrle APPEND PROPERTY COMPILE_DEFINITIONS "RLE_DLL_EXPORTS")
+  if(MSVC)
+    set_property(TARGET utahrle APPEND PROPERTY COMPILE_DEFINITIONS "RLE_DLL_EXPORTS")
+  endif(MSVC)
   target_link_libraries(utahrle ${M_LIBRARY})
   set_target_properties(utahrle PROPERTIES VERSION 19.0.1 SOVERSION 19)
   install(TARGETS utahrle
