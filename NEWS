@@ -10,7 +10,13 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2017-09-XX  Release 7.26.4                                     ---
+--- 201X-XX-XX  Release 7.28.0                                     ---
+----------------------------------------------------------------------
+
+
+
+----------------------------------------------------------------------
+--- 2017-09-21  Release 7.26.4                                     ---
 ----------------------------------------------------------------------
 
 This is a patch release, primary focused on updates to the build
