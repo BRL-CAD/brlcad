@@ -22,6 +22,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* move the rt_*_timer timing facilities to libbu and rework to allow
+  contexts, allowing for more than one timer to be active.  Make sure
+  the old librt API can be obsoleted cleanly.
+
 * check that dbconcat supports objects created with the bo cmd
 
 * libgcv should add objects to an existing .g if one is specified
@@ -864,12 +868,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * clean up new rt -l8 heat graph lighting model so that it works in
   parallel and with no "splotches"
-
-* make rt_prep_timer() take or return a context that gets subsequently
-  passed to rt_get_timer() calls for returning the elapsed time.  this
-  will allow multiple overlapping timers instead of just one global
-  timers.  move the timing facilities to libbu as part of the process
-  so API can be obsoleted cleanly.
 
 * separation of stderr from stdout within libbu, particularly for
   MGED, so that there is a clean separation of result output from
