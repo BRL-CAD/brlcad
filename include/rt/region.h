@@ -65,6 +65,40 @@ struct region {
 #define REGION_NULL     ((struct region *)0)
 #define RT_CK_REGION(_p) BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
 
+#ifdef USE_OPENCL
+struct cl_bool_region {
+    cl_uint btree_offset;           /**< @brief index to the start of the bit tree */
+    cl_int reg_aircode;             /**< @brief Region ID AIR code */
+    cl_int reg_bit;                 /**< @brief constant index into Regions[] */
+    cl_short reg_all_unions;        /**< @brief 1=boolean tree is all unions */
+};
+
+/*
+ * Values for Shader Function ID.
+ */
+#define SH_NONE 	0
+#define SH_PHONG	1
+
+
+struct cl_phong_specific {
+    cl_double wgt_specular;
+    cl_double wgt_diffuse;
+    cl_int shine;
+};
+
+/**
+ * The region structure.
+ */
+struct cl_region {
+    cl_float color[3];		/**< @brief explicit color:  0..1  */
+    cl_int mf_id;
+    union {
+	struct cl_phong_specific phg_spec;
+    }udata;
+};
+
+#endif
+
 /* Print a region */
 RT_EXPORT extern void rt_pr_region(const struct region *rp);
 

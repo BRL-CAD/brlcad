@@ -1264,7 +1264,7 @@ populate_triangle_indexes(struct ga_t *ga,
     tri_arr_3D_t index_arr_tri_3D = NULL;
 
     double *facePoints;
-    int *triFaces;
+    int *triFaces = NULL;
     size_t i, numFacePoints;
     struct faceuse *fu;
     const int POINTS_PER_FACE = 3;
@@ -1431,7 +1431,8 @@ populate_triangle_indexes(struct ga_t *ga,
 	ti->num_tri++;
     }
 
-    bu_free(triFaces, "triFaces");
+    if (triFaces)
+	bu_free(triFaces, "triFaces");
 
     return;
 }

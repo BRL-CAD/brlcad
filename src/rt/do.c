@@ -597,7 +597,7 @@ clt_run(int cur_pixel, int last_pixel)
     clt_frame(pixels, clt_o, cur_pixel, last_pixel, width,
               ibackground, inonbackground,
 	      airdensity, haze, gamma_corr, view2model, cell_width,
-              cell_height, aspect, lightmodel);
+              cell_height, aspect, lightmodel, APP.a_no_booleans);
 
     pixelp = pixels + cur_pixel*clt_o[2];
 

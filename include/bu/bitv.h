@@ -23,6 +23,8 @@
 
 #include "common.h"
 
+#include <limits.h> /* for CHAR_BIT */
+
 #include "bu/defines.h"
 #include "bu/magic.h"
 #include "bu/list.h"

@@ -25,14 +25,14 @@ int
 brep(int entityno)
 {
 
-    int sol_num;		/* IGES solid type number */
-    int shell_de;		/* Directory sequence number for a shell */
-    int orient;			/* Orientation of shell */
-    int *void_shell_de;		/* Directory sequence number for an void shell */
-    int *void_orient;		/* Orientation of void shell */
-    int num_of_voids;		/* Number of inner void shells */
+    int sol_num = 0;			/* IGES solid type number */
+    int shell_de = 0;			/* Directory sequence number for a shell */
+    int orient = 0;			/* Orientation of shell */
+    int *void_shell_de;			/* Directory sequence number for an void shell */
+    int *void_orient;			/* Orientation of void shell */
+    int num_of_voids = 0;		/* Number of inner void shells */
     struct model *m;			/* NMG model */
-    struct nmgregion *r;			/* NMG region */
+    struct nmgregion *r;		/* NMG region */
     struct shell **void_shells;		/* List of void shells */
     struct shell *s_outer;		/* Outer shell */
     struct iges_vertex_list *v_list;

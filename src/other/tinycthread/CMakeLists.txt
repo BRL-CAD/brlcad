@@ -1,11 +1,5 @@
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-if(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.0.2)
 
 # Set CMake project name
 project(TINYCTHREAD)
@@ -21,15 +15,12 @@ if(NOT LIB_DIR)
   set(LIB_DIR lib)
 endif(NOT LIB_DIR)
 
-if(MSVC)
-  add_definitions("-DTINYCTHREAD_DLL_EXPORTS")
-endif(MSVC)
-
 add_library(tinycthread SHARED tinycthread.c)
 if(MSVC)
   # msvc does not append 'lib' - do it here to have consistent name
   set_target_properties(tinycthread PROPERTIES PREFIX "lib")
   set_target_properties(tinycthread PROPERTIES IMPORT_PREFIX "lib")
+  set_property(TARGET tinycthread APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_EXPORTS")
 endif(MSVC)
 install(TARGETS tinycthread
   RUNTIME DESTINATION ${BIN_DIR}
@@ -40,7 +31,9 @@ if(BUILD_STATIC_LIBS)
   add_library(tinycthread-static STATIC tinycthread.c)
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(tinycthread PROPERTIES PREFIX "lib")
+    set_target_properties(tinycthread-static PROPERTIES PREFIX "lib")
+  else(MSVC)
+    set_target_properties(tinycthread-static PROPERTIES OUTPUT_NAME "tinycthread")
   endif(MSVC)
   install(TARGETS tinycthread-static
     RUNTIME DESTINATION ${BIN_DIR}

@@ -254,6 +254,49 @@ struct rt_tree_array
 
 #define TREE_LIST_NULL  ((struct tree_list *)0)
 
+#ifdef USE_OPENCL
+/**
+ * Flattened version of the infix union tree.
+ */
+#define UOP_UNION        1         /**< @brief  Binary: L union R */
+#define UOP_INTERSECT    2         /**< @brief  Binary: L intersect R */
+#define UOP_SUBTRACT     3         /**< @brief  Binary: L subtract R */
+#define UOP_XOR          4         /**< @brief  Binary: L xor R, not both*/
+#define UOP_NOT          5         /**< @brief  Unary:  not L */
+#define UOP_GUARD        6         /**< @brief  Unary:  not L, or else! */
+#define UOP_XNOP         7         /**< @brief  Unary:  L, mark region */
+
+#define UOP_SOLID        0         /**< @brief  Leaf:  tr_stp -> solid */
+
+/**
+ * bit expr tree representation
+ *
+ * node:
+ *      uint uop : 3
+ *      uint right_child : 29
+ *
+ * leaf:
+ *      uint uop : 3
+ *      uint st_bit : 29
+ */
+struct bit_tree {
+    uint val;
+};
+
+struct cl_tree_bit {
+    cl_uint val;
+};
+
+/* Print a bit expr tree */
+RT_EXPORT extern void rt_pr_bit_tree(const struct bit_tree *btp,
+                                     int idx,
+                                     int lvl);
+
+RT_EXPORT extern void rt_bit_tree(struct bit_tree *btp,
+                                  const union tree *tp,
+                                  size_t *len);
+#endif
+
 /* Print an expr tree */
 RT_EXPORT extern void rt_pr_tree(const union tree *tp,
 	                         int lvl);

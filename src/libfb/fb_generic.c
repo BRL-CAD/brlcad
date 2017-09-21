@@ -79,7 +79,7 @@ fb *_if_list[] = {
 /* never get any of the following by default */
     &stk_interface,
     &memory_interface,
-    &null_interface,
+    &fb_null_interface,
     (fb *) 0
 };
 

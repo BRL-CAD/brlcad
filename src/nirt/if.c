@@ -264,7 +264,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 
 
 int
-if_miss(void)
+if_miss(struct application *UNUSED(ap))
 {
     report(FMT_RAY);
     report(FMT_MISS);

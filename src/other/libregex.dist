@@ -1,8 +1,13 @@
-SET(libregex_ignore_files
+set(libregex_ignore_files
+CMakeLists.txt
 cclass.h
 cname.h
 engine.c
+regcomp.c
+regerror.c
 regex.h
 regex2.h
+regexec.c
+regfree.c
 utils.h
 )

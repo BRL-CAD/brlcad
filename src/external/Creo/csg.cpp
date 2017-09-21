@@ -201,14 +201,14 @@ tgc_hole_name(struct creo_conv_info *cinfo, wchar_t *wname, const char *suffix)
     cname = get_brlcad_name(cinfo, wname, NULL, N_CREO);
     bu_vls_sprintf(hname, "%s_hole_0.%s", bu_vls_addr(cname), suffix);
     while ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) {
-	(void)bu_namegen(hname, NULL, NULL);
+	(void)bu_vls_incr(hname, NULL, "0:0:0:0:-", NULL, NULL);
 	count++;
 	creo_log(cinfo, MSG_DEBUG, "\t trying hole name : %s\n", bu_vls_addr(hname));
 	if (count == LONG_MAX) {
 	    bu_vls_free(hname);
 	    BU_PUT(hname, struct bu_vls);
 	    ProWstringToString(pname, wname);
-	    creo_log(cinfo, MSG_FAIL, "%s: hole name generation FAILED.\n", pname);
+	    creo_log(cinfo, MSG_DEBUG, "%s: hole name generation FAILED.\n", pname);
 	    return NULL;
 	}
     }

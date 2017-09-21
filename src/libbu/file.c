@@ -206,8 +206,8 @@ bu_same_fd(int fd1, int fd2)
 #ifdef HAVE_GETFULLPATHNAME
 	HANDLE handle1, handle2;
 
-	handle1 = _get_osfhandle(fd1);
-	handle2 = _get_osfhandle(fd2);
+	handle1 = (HANDLE)_get_osfhandle(fd1);
+	handle2 = (HANDLE)_get_osfhandle(fd2);
 
 	ret = file_compare_info(handle1, handle2);
 #else

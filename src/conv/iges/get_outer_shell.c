@@ -26,7 +26,7 @@ Get_outer_shell(struct nmgregion *r, int entityno)
 {
 
     int sol_num;		/* IGES solid type number */
-    int no_of_faces;		/* Number of faces in shell */
+    int no_of_faces = 0;		/* Number of faces in shell */
     int face_count = 0;		/* Number of faces actually made */
     int *face_de;		/* Directory sequence numbers for faces */
     int *face_orient;		/* Orientation of faces */

@@ -636,16 +636,13 @@ RT_EXPORT extern int db_version(struct db_i *dbip);
 RT_EXPORT extern int rt_db_flip_endian(struct db_i *dbip);
 
 
-/* extrude.c */
-RT_EXPORT extern int rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
-
-
 /**
  * "open" an in-memory-only database instance.  this initializes a
  * dbip for use, creating an inmem dbi_wdbp as the means to add
  * geometry to the directory (use wdb_export_external()).
  */
 RT_EXPORT extern struct db_i * db_open_inmem(void);
+
 
 /**
  * creates an in-memory-only database.  this is very similar to
@@ -732,6 +729,40 @@ RT_EXPORT extern int db_dircheck(struct db_i *dbip,
 RT_EXPORT extern struct directory *db_lookup(const struct db_i *,
 					     const char *name,
 					     int noisy);
+
+/**
+ * @brief
+ * Unique, legal database object name generation.
+ *
+ * When automatically creating names for objects in a database, the most common
+ * constraints are:
+ *
+ * 1) the name must not use any characters that are invalid or problematic for
+ * database processing
+ *
+ * 2) the name must not collide with any existing object in the database
+ *
+ * 3) in the event of a collision, return instead the "next" name in some
+ * logical sequence given a pre-existing name as input.
+ *
+ * The responsibility for actual name incrementing lies with the libbu
+ * bu_vls_incr function - see documentation for bu_vls_incr to understand the
+ * format of the incr_spec argument.
+ *
+ * Note: db_get_name does not "reserve" a name in the database once it is
+ * generated.  If the caller's intent is to pre-generate a series of names,
+ * they need to set the force_incr parameter to 1.  Otherwise, the decision for
+ * whether to increment the string will be based on whether the "cleaned up"
+ * version of the supplied string conflicts with an existing object name.
+ * Remember that names generated with force_incr set will still be checked
+ * against the database for potential conflicts.
+ *
+ * Note that an empty vls string supplied to name will not generate any new
+ * strings - there will be no content on which the routine can act, and an
+ * error will be returned.
+ */
+RT_EXPORT extern int db_get_name(struct bu_vls *name, struct db_i *dbip, int force_incr, const char *regex_str, const char *incr_spec);
+
 
 /* add entry to directory */
 

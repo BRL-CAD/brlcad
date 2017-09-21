@@ -78,13 +78,13 @@ main(int argc, char **argv)
     uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
 
     if (uac == -1) {
-	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
+	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
     if (need_help) {
 	bu_vls_free(&out_fname);
-	bu_exit(EXIT_SUCCESS, usage);
+	bu_exit(EXIT_SUCCESS, "%s", usage);
     }
 
     switch (uac) {
@@ -103,7 +103,7 @@ main(int argc, char **argv)
 	case 2:
 	    if (bu_vls_strlen(&out_fname)) {
 		bu_vls_free(&out_fname);
-		bu_exit(EXIT_FAILURE, usage);
+		bu_exit(EXIT_FAILURE, "%s", usage);
 	    } else {
 		bu_vls_sprintf(&in_fname, "%s", argv[0]);
 		bu_vls_sprintf(&out_fname, "%s", argv[1]);
@@ -121,7 +121,7 @@ main(int argc, char **argv)
 	case 4:
 	    if (bu_vls_strlen(&out_fname)) {
 		bu_vls_free(&out_fname);
-		bu_exit(EXIT_FAILURE, usage);
+		bu_exit(EXIT_FAILURE, "%s", usage);
 	    } else {
 		rfile = argv[0];
 		gfile = argv[1];
@@ -134,8 +134,8 @@ main(int argc, char **argv)
     }
 
     /* Don't do stdin/stdio if we've got the isatty condition */
-    if (in_std && isatty(fileno(in_std))) bu_exit(EXIT_FAILURE, usage);
-    if (out_std && isatty(fileno(out_std))) bu_exit(EXIT_FAILURE, usage);
+    if (in_std && isatty(fileno(in_std))) bu_exit(EXIT_FAILURE, "%s", usage);
+    if (out_std && isatty(fileno(out_std))) bu_exit(EXIT_FAILURE, "%s", usage);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);

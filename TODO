@@ -18,11 +18,43 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* TBD
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* move the rt_*_timer timing facilities to libbu and rework to allow
+  contexts, allowing for more than one timer to be active.  Make sure
+  the old librt API can be obsoleted cleanly.
+
+* check that dbconcat supports objects created with the bo cmd
+
+* libgcv should add objects to an existing .g if one is specified
+  as the output target - right now it's overwriting the old file
+
+* consolidate dbconcat, clone, make_name, and any other .g I/O
+  routines that need to autogenerate names to use the new
+  bu_vls_incr/bu_vls_simplify functions.
+
+* Explicitly list the CMakeLists.txt files rather than adding
+  them automatically in the add_subdirectory override, now that
+  we are listing all files explicitly - preserve the new simplicity
+
+* renamed zlib and libpng when building bundled to avoid conflicting
+  with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
+  with name z_brlcad (perhaps as a post-compile rename custom command)
+  and png_brlcad respectively.
+
+* investigate possibility of using simple, compact libs
+  like miniz and lodepng to replace the complexity of
+  managing zlib and libpng in src/other.  These have been
+  a source of ongoing annoyance, particularly (but not
+  exclusively) on OSX.
+
+* remove libmultispectral and related codes - investigation
+  by Sean indicates these haven't been working for a while
+  and may not have been fully mature originally.  They are
+  also adding complexity and maintenance burden, so time to
+  remove.
 
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
@@ -89,6 +121,21 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* bullet integration - need to expose restitution as an
+  object parameter so we can configure behavior:
+  http://www.bulletphysics.org/Bullet/phpBB3/viewtopic.php?p=&f=&t=3248
+
+* look into https://github.com/garyhouston/hsrex, which
+  is a stand-alone version of Henry Spencer's most modern
+  regex library, as a replacement for the older version in
+  src/other/libregex.  May actually want to re-do the
+  extraction from Tcl, as they have recent patches:
+  https://github.com/tcltk/tcl/tree/master/generic
+
+* afl on libged/mged/rt/...
+
+* moodycamel as libbu queue/list/ptbl implementation
 
 * reinstate 'stat' and search -size, see r67636 through r67646
 
@@ -821,12 +868,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * clean up new rt -l8 heat graph lighting model so that it works in
   parallel and with no "splotches"
-
-* make rt_prep_timer() take or return a context that gets subsequently
-  passed to rt_get_timer() calls for returning the elapsed time.  this
-  will allow multiple overlapping timers instead of just one global
-  timers.  move the timing facilities to libbu as part of the process
-  so API can be obsoleted cleanly.
 
 * separation of stderr from stdout within libbu, particularly for
   MGED, so that there is a clean separation of result output from

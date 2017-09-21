@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 2.4.4)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
-if(COMMAND CMAKE_POLICY)
-	if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-		CMAKE_POLICY(SET CMP0026 OLD)
-	endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-endif(COMMAND CMAKE_POLICY)
 
 project(zlib C)
 
@@ -158,6 +153,10 @@ add_library(zlib SHARED ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC
 
 if(BUILD_STATIC_LIBS)
 	add_library(zlib-static STATIC ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+	if(MSVC)
+		# msvc does not append 'lib' - do it here to have consistent name
+		set_target_properties(zlib-static PROPERTIES PREFIX "lib")
+	endif(MSVC)
 	if(CMAKE_CL_64)
 		set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
 	elseif(MSVC)

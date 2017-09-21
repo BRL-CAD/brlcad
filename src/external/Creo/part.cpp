@@ -260,10 +260,10 @@ unsuppress_features(struct part_conv_info *pinfo)
 		creo_log(pinfo->cinfo, MSG_STATUS, "%s: feature %d unsuppressed", pname, pinfo->suppressed_features->at(i));
 		break;
 	    case PRO_TK_SUPP_PARENTS:
-		creo_log(pinfo->cinfo, MSG_FAIL, "%s: suppressed parents for feature %d not found\n", pname, pinfo->suppressed_features->at(i) );
+		creo_log(pinfo->cinfo, MSG_DEBUG, "%s: suppressed parents for feature %d not found\n", pname, pinfo->suppressed_features->at(i) );
 		break;
 	    default:
-		creo_log(pinfo->cinfo, MSG_FAIL, "%s: feature id %d unsuppression failed\n", pname, pinfo->suppressed_features->at(i) );
+		creo_log(pinfo->cinfo, MSG_DEBUG, "%s: feature id %d unsuppression failed\n", pname, pinfo->suppressed_features->at(i) );
 		break;
 	}
     }
@@ -506,7 +506,11 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     double curr_error;
     double curr_angle;
     double factor = cinfo->creo_to_brl_conv;
-    ProError ustatus = creo_model_units(&factor, model);
+
+	// Note: The below code works, but we can't use model units - Creo
+	// "corrects" object sizes with matricies in the parent hierarchies
+	// and correcting it here results in problems with those matricies.
+    // ProError ustatus = creo_model_units(&factor, model);
 
     ProMdlMdlnameGet(model, wname);
     ProWstringToString(pname, wname);
@@ -609,7 +613,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 		creo_log(cinfo, MSG_DEBUG, "%s tessellation using error - %g, angle - %g failed solidity test, trying next level...\n", pname, curr_error, curr_angle);
 
 	    } else {
-		creo_log(cinfo, MSG_FAIL, "%s tessellation failed solidity test, but solidity requirement is not enabled... continuing...\n", pname, curr_error, curr_angle);
+		creo_log(cinfo, MSG_DEBUG, "%s tessellation failed solidity test, but solidity requirement is not enabled... continuing...\n", pname, curr_error, curr_angle);
 		success = 1;
 		break;
 	    }
@@ -621,7 +625,6 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 
     if (!success) {
 	status = PRO_TK_NOT_EXIST;
-	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed\n", pname);
 	goto tess_cleanup;
     } else {
 	status = PRO_TK_NO_ERROR;
@@ -630,22 +633,14 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     /* make sure we have non-zero faces (and if needed, face_normals) vectors */
     if (faces.size() == 0 || !vert_tree->curr_vert) {
 	status = PRO_TK_NOT_EXIST;
-	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed\n", pname);
 	goto tess_cleanup;
     }
     if (cinfo->get_normals && face_normals.size() == 0) {
 	status = PRO_TK_NOT_EXIST;
-	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed\n", pname);
 	goto tess_cleanup;
     }
 
     creo_log(cinfo, MSG_OK, "%s: successfully tessellated with tessellation error: %g and angle: %g!!!\n", pname, curr_error, curr_angle);
-
-
-    // Use the part units for conversion - warn if it's different from the top level. 
-    if (ustatus == PRO_TK_NO_ERROR && !NEAR_EQUAL(factor, cinfo->creo_to_brl_conv, SMALL_FASTF)) {
-	creo_log(cinfo, MSG_DEBUG, "%s: Using part units for conversion, not global units.\n", pname);
-    }
 
     for (unsigned int i = 0; i < vert_tree->curr_vert * 3; i++) {
 	vert_tree->the_array[i] = vert_tree->the_array[i] * factor;
@@ -742,6 +737,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     ProWstringToString(pname, wname);
     creo_log(cinfo, MSG_OK, "Processing %s:\n", pname);
 
+	/* TODO - add some up-front logic to detect parts with no associated geometry. */
+
 
     /* Collect info about things that might be eliminated */
     if (cinfo->do_elims) {
@@ -754,7 +751,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    ret = ProFeatureSuppress(ProMdlToSolid(model), &(pinfo->suppressed_features->at(0)), pinfo->suppressed_features->size(), NULL, 0 );
 	    /* If something went wrong, need to undo just the suppressions we added */
 	    if (ret != PRO_TK_NO_ERROR) {
-		creo_log(cinfo, MSG_FAIL, "%s: failed to suppress features!!!\n", pname);
+		creo_log(cinfo, MSG_DEBUG, "%s: failed to suppress features!!!\n", pname);
 		unsuppress_features(pinfo);
 	    } else {
 		creo_log(cinfo, MSG_STATUS, "%s: features suppressed... continuing with conversion\n", pname);
@@ -776,7 +773,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     /* Deal with the solid conversion results */
     if (status == PRO_TK_NOT_EXIST) {
 	/* Failed!!! */
-	creo_log(cinfo, MSG_FAIL, "%s: tessellation failed.\n", pname);
+	creo_log(cinfo, MSG_DEBUG, "%s: tessellation failed.\n", pname);
 	if (cinfo->debug_bboxes && have_bbox) {
 	    /* A failed solid conversion with a bounding box indicates a problem - rather than
 	     * ignore it, put the bbox in the .g file as a placeholder. */
@@ -799,6 +796,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    } else {
 		cinfo->empty->insert(stable);
 	    }
+		creo_log(cinfo, MSG_FAIL, "%s not converted.\n", pname);
 	    ret = status;
 	    goto cleanup;
 	}
@@ -914,7 +912,7 @@ cleanup:
 	creo_log(cinfo, MSG_OK, "Unsuppressing %d features\n", pinfo->suppressed_features->size());
 	ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features->at(0), pinfo->suppressed_features->size(), NULL, 0);
 	if (ret != PRO_TK_NO_ERROR) {
-	    creo_log(cinfo, MSG_FAIL, "%s: failed to unsuppress features.\n", pname);
+	    creo_log(cinfo, MSG_DEBUG, "%s: failed to unsuppress features.\n", pname);
 	    cinfo->warn_feature_unsuppress = 1;
 	    return ret;
 	}
