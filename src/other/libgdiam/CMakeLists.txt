@@ -33,6 +33,10 @@ if(BUILD_STATIC_LIBS)
   if(NOT MSVC)
     set_target_properties(libgdiam-static PROPERTIES OUTPUT_NAME "libgdiam")
   endif(NOT MSVC)
+  install(TARGETS libgdiam-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
 endif(BUILD_STATIC_LIBS)
 
 

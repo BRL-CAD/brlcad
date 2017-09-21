@@ -67,7 +67,9 @@ set_target_properties(libvds PROPERTIES VERSION 1.0.1 SOVERSION 1)
 if(SYS_LIBS)
   target_link_libraries(libvds ${SYS_LIBS})
 endif(SYS_LIBS)
-
+if(MSVC)
+  set_property(TARGET libvds APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_EXPORTS")
+endif(MSVC)
 install(TARGETS libvds
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
@@ -78,16 +80,10 @@ set_target_properties(stdvds PROPERTIES VERSION 1.0.1 SOVERSION 1)
 if(SYS_LIBS)
   target_link_libraries(stdvds ${SYS_LIBS})
 endif(SYS_LIBS)
-
-
 install(TARGETS stdvds
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
-
-if(MSVC)
-  set_property(TARGET libvds APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_EXPORTS")
-endif(MSVC)
 
 if(BUILD_STATIC_LIBS)
   add_library(libvds-static STATIC ${CORE_SRCS})
@@ -97,14 +93,21 @@ if(BUILD_STATIC_LIBS)
   if(NOT MSVC)
     set_target_properties(libvds-static PROPERTIES OUTPUT_NAME "libvds")
   endif(NOT MSVC)
+  install(TARGETS libvds-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
 
   add_library(stdvds-static STATIC ${STD_SRCS})
+  if(MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(stdvds-static PROPERTIES PREFIX "lib")
+  else(MSVC)
+    set_target_properties(stdvds-static PROPERTIES OUTPUT_NAME "stdvds")
+  endif(MSVC)
   if(CMAKE_CL_64)
     set_target_properties(stdvds-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
   endif(CMAKE_CL_64)
-  if(NOT MSVC)
-    set_target_properties(stdvds-static PROPERTIES OUTPUT_NAME "stdvds")
-  endif(NOT MSVC)
 endif(BUILD_STATIC_LIBS)
 
 # Local Variables:

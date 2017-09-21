@@ -18,10 +18,6 @@ if(NOT BIN_DIR)
   set(BIN_DIR bin)
 endif(NOT BIN_DIR)
 
-if(MSVC)
-  add_definitions("-DCLIPPER_DLL_EXPORTS")
-endif(MSVC)
-
 if(NOT DEFINED BUILD_SHARED_LIBS)
   set(BUILD_SHARED_LIBS ON)
 endif(NOT DEFINED BUILD_SHARED_LIBS)
@@ -29,6 +25,9 @@ endif(NOT DEFINED BUILD_SHARED_LIBS)
 if(BUILD_SHARED_LIBS)
   add_library(clipper SHARED clipper.cpp)
   set_target_properties(clipper PROPERTIES VERSION 4.6.0 SOVERSION 4)
+  if(MSVC)
+    set_property(TARGET clipper APPEND PROPERTY COMPILE_DEFINITIONS "CLIPPER_DLL_EXPORTS")
+  endif(MSVC)
   install(TARGETS clipper
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
@@ -37,9 +36,12 @@ endif(BUILD_SHARED_LIBS)
 
 if(BUILD_STATIC_LIBS)
   add_library(clipper-static STATIC clipper.cpp)
-  if(NOT WIN32)
+  if(MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(clipper-static PROPERTIES PREFIX "lib")
+  else(MSVC)  
     set_target_properties(clipper-static PROPERTIES OUTPUT_NAME "clipper")
-  endif(NOT WIN32)
+  endif(MSVC)
   install(TARGETS clipper-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

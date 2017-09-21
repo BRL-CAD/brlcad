@@ -15,15 +15,12 @@ if(NOT LIB_DIR)
   set(LIB_DIR lib)
 endif(NOT LIB_DIR)
 
-if(MSVC)
-  add_definitions("-DTINYCTHREAD_DLL_EXPORTS")
-endif(MSVC)
-
 add_library(tinycthread SHARED tinycthread.c)
 if(MSVC)
   # msvc does not append 'lib' - do it here to have consistent name
   set_target_properties(tinycthread PROPERTIES PREFIX "lib")
   set_target_properties(tinycthread PROPERTIES IMPORT_PREFIX "lib")
+  set_property(TARGET tinycthread APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_EXPORTS")
 endif(MSVC)
 install(TARGETS tinycthread
   RUNTIME DESTINATION ${BIN_DIR}

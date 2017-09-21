@@ -391,27 +391,27 @@ endif()
 
 if(PNG_STATIC)
   # does not work without changing name
-  set(PNG_LIB_NAME_STATIC png_static)
-  add_library(png_static STATIC ${libpng_sources})
-  add_dependencies(png_static genfiles)
+  set(PNG_LIB_NAME_STATIC png-static)
+  add_library(png-static STATIC ${libpng_sources})
+  add_dependencies(png-static genfiles)
   # MSVC doesn't use a different file extension for shared vs. static
   # libs.  We are able to change OUTPUT_NAME to remove the _static
   # for all other platforms.
   if(NOT MSVC)
-    set_target_properties(png_static PROPERTIES
+    set_target_properties(png-static PROPERTIES
       OUTPUT_NAME "${PNG_LIB_NAME}"
       CLEAN_DIRECT_OUTPUT 1)
   else()
-    set_target_properties(png_static PROPERTIES
+    set_target_properties(png-static PROPERTIES
       OUTPUT_NAME "${PNG_LIB_NAME}_static"
       CLEAN_DIRECT_OUTPUT 1)
   endif()
-  list(APPEND PNG_LIB_TARGETS png_static)
+  list(APPEND PNG_LIB_TARGETS png-static)
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(png_static PROPERTIES PREFIX "lib")
+    set_target_properties(png-static PROPERTIES PREFIX "lib")
   endif()
-  target_link_libraries(png_static ${ZLIB_LIBRARY} ${M_LIBRARY})
+  target_link_libraries(png-static ${ZLIB_LIBRARY} ${M_LIBRARY})
 endif()
 
 if(PNG_FRAMEWORK)
@@ -603,8 +603,8 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
 
   if(PNG_STATIC)
     if(NOT WIN32 OR CYGWIN OR MINGW)
-      CREATE_SYMLINK( libpng${CMAKE_STATIC_LIBRARY_SUFFIX} TARGET png_static)
-      install(FILES $<TARGET_LINKER_FILE_DIR:png_static>/libpng${CMAKE_STATIC_LIBRARY_SUFFIX} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+      CREATE_SYMLINK( libpng${CMAKE_STATIC_LIBRARY_SUFFIX} TARGET png-static)
+      install(FILES $<TARGET_LINKER_FILE_DIR:png-static>/libpng${CMAKE_STATIC_LIBRARY_SUFFIX} DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif(NOT WIN32 OR CYGWIN OR MINGW)
   endif()
 endif()

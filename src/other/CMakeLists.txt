@@ -289,7 +289,7 @@ if(BRLCAD_PNG_BUILD)
   mark_as_advanced(TK_DISABLE_XFT)
 
   SetTargetFolder(png "Third Party Libraries")
-  SetTargetFolder(png_static "Third Party Libraries")
+  SetTargetFolder(png-static "Third Party Libraries")
   SetTargetFolder(genfiles "Third Party Libraries")
 endif(BRLCAD_PNG_BUILD)
 set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)

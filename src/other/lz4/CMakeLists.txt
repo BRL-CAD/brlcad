@@ -111,9 +111,12 @@ endif(MSVC)
 
 if(BUILD_STATIC_LIBS)
   add_library(lz4-static STATIC ${LZ4_SRCS})
-  if(NOT WIN32)
+  if(MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(lz4-static PROPERTIES PREFIX "lib")
+  else(MSVC)  
     set_target_properties(lz4-static PROPERTIES OUTPUT_NAME "lz4")
-  endif(NOT WIN32)
+  endif(MSVC)
   install(TARGETS lz4-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

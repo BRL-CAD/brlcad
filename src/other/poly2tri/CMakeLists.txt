@@ -49,9 +49,6 @@ if(NOT BIN_DIR)
   set(BIN_DIR bin)
 endif(NOT BIN_DIR)
 
-if(MSVC)
-  add_definitions("-DP2T_DLL_EXPORTS")
-endif(MSVC)
 add_definitions("-DP2T_NO_GLFW")
 
 add_library(${P2T_LIB_NAME} ${LIBP2T_SOURCES} ${LIBP2T_PUBLIC_HDRS} ${LIBP2T_PRIVATE_HDRS})
@@ -60,6 +57,7 @@ if(MSVC)
   # msvc does not append 'lib' - do it here to have consistent name
   set_target_properties(${P2T_LIB_NAME} PROPERTIES PREFIX "lib")
   set_target_properties(${P2T_LIB_NAME} PROPERTIES IMPORT_PREFIX "lib")
+  set_property(TARGET ${P2T_LIB_NAME} APPEND PROPERTY COMPILE_DEFINITIONS "P2T_DLL_EXPORTS")
 endif()
 target_link_libraries(${P2T_LIB_NAME} ${ZLIB_LIBRARY} ${M_LIBRARY})
 install(TARGETS ${P2T_LIB_NAME}

@@ -122,7 +122,6 @@ set(LIBUTAHRLE_SOURCES
 
 if(MSVC)
   add_definitions(
-    -DRLE_DLL_EXPORTS
     -DNO_DECLARE_MALLOC
     -DNEED_BSTRING
     -DNO_OPEN_PIPES
@@ -131,6 +130,7 @@ endif(MSVC)
 
 if(BUILD_SHARED_LIBS)
   add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
+  set_property(TARGET utahrle APPEND PROPERTY COMPILE_DEFINITIONS "RLE_DLL_EXPORTS")
   target_link_libraries(utahrle ${M_LIBRARY})
   set_target_properties(utahrle PROPERTIES VERSION 19.0.1 SOVERSION 19)
   install(TARGETS utahrle
@@ -141,19 +141,22 @@ endif(BUILD_SHARED_LIBS)
 
 if(BUILD_STATIC_LIBS)
   add_library(utahrle-static STATIC ${LIBUTAHRLE_SOURCES})
+  if(MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(utahrle-static PROPERTIES PREFIX "lib")
+  else(MSVC)
+    set_target_properties(utahrle-static PROPERTIES OUTPUT_NAME "utahrle")
+  endif(MSVC)
   target_link_libraries(utahrle-static ${M_LIBRARY})
   install(TARGETS utahrle-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
-  if(NOT WIN32)
-    set_target_properties(utahrle-static PROPERTIES OUTPUT_NAME "utahrle")
-  endif(NOT WIN32)
 endif(BUILD_STATIC_LIBS)
 
 if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
   install(FILES ${LIBUTAHRLE_PUBLIC_HDRS} DESTINATION include)
-endif()
+endif(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
 
 # Local Variables:
 # tab-width: 8
