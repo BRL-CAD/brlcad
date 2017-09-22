@@ -50,7 +50,7 @@
 #include "bn/plot3.h"
 
 
-HIDDEN int rt_ck_overlap(const vect_t min, const vect_t max, const struct soltab *stp);
+HIDDEN int rt_ck_overlap(const vect_t min, const vect_t max, const struct soltab *stp, const struct rt_i *rtip);
 HIDDEN int rt_ct_box(struct rt_i *rtip, union cutter *cutp, int axis, double where, int force);
 HIDDEN void rt_ct_optim(struct rt_i *rtip, union cutter *cutp, size_t depth);
 HIDDEN void rt_ct_free(struct rt_i *rtip, union cutter *cutp);
@@ -103,7 +103,8 @@ rt_cut_one_axis(struct bu_ptbl *boxes, struct rt_i *rtip, int axis, int min, int
 	/* Search all solids for those in this slice */
 	RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	    RT_CHECK_SOLTAB(stp);
-	    if (!rt_ck_overlap(box->bn.bn_min, box->bn.bn_max, stp))
+	    if (!rt_ck_overlap(box->bn.bn_min, box->bn.bn_max,
+			       stp, rtip))
 		continue;
 	    box->bn.bn_list[box->bn.bn_len++] = stp;
 	} RT_VISIT_ALL_SOLTABS_END
@@ -553,7 +554,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	for (i = 0, stpp = fromp->bn_list;
 	     i < fromp->bn_len;
 	     i++, stpp++) {
-	    if (!rt_ck_overlap(xmin, xmax, *stpp))
+	    if (!rt_ck_overlap(xmin, xmax, *stpp, rtip))
 		continue;
 	    nu_xbox.bn_list[nu_xbox.bn_len++] = *stpp;
 	}
@@ -569,7 +570,9 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	    nu_ybox.bn_len = 0;
 	    /* Search X slice for membs of this Y slice */
 	    for (i=0; i<nu_xbox.bn_len; i++) {
-		if (!rt_ck_overlap(ymin, ymax, nu_xbox.bn_list[i]))
+		if (!rt_ck_overlap(ymin, ymax,
+				   nu_xbox.bn_list[i],
+				   rtip))
 		    continue;
 		nu_ybox.bn_list[nu_ybox.bn_len++] =
 		    nu_xbox.bn_list[i];
@@ -595,7 +598,9 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		nu_zbox.bn_len = 0;
 		/* Search Y slice for members of this Z slice*/
 		for (i=0; i<nu_ybox.bn_len; i++) {
-		    if (!rt_ck_overlap(zmin, zmax, nu_ybox.bn_list[i]))
+		    if (!rt_ck_overlap(zmin, zmax,
+				       nu_ybox.bn_list[i],
+				       rtip))
 			continue;
 		    nu_zbox.bn_list[nu_zbox.bn_len++] =
 			nu_ybox.bn_list[i];
@@ -1138,7 +1143,8 @@ rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rti
 	    "bn_list");
 	for (i = inp->bn.bn_len-1; i >= 0; i--) {
 	    struct soltab *stp = inp->bn.bn_list[i];
-	    if (!rt_ck_overlap(outp->bn.bn_min, outp->bn.bn_max, stp))
+	    if (!rt_ck_overlap(outp->bn.bn_min, outp->bn.bn_max,
+			       stp, rtip))
 		continue;
 	    outp->bn.bn_list[outp->bn.bn_len++] = stp;
 	}
@@ -1298,12 +1304,15 @@ rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, dou
  * See if any part of the solid is contained within the bounding box
  * (RPP).
  *
+ * If the solid RPP at least partly overlaps the bounding RPP, invoke
+ * the per-solid "classifier" method to perform a more rigorous check.
+ *
  * Returns -
- * !0 if object potentially overlaps box.
+ * !0 if object overlaps box.
  *  0 if no overlap.
  */
 HIDDEN int
-rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register const struct soltab *stp)
+rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register const struct soltab *stp, register const struct rt_i *rtip)
 {
     RT_CHECK_SOLTAB(stp);
 
@@ -1322,7 +1331,14 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
     /* If the object fits in a box (i.e., it's not infinite), and that
      * box doesn't overlap with the bounding RPP, we know it's a miss.
      */
-    if ((stp->st_aradius < INFINITY) && V3RPP_DISJOINT(stp->st_min, stp->st_max, min, max))
+    if (stp->st_aradius < INFINITY) {
+	if (V3RPP_DISJOINT(stp->st_min, stp->st_max, min, max))
+	    return 0;
+    }
+
+    /* RPP overlaps, invoke per-solid method for detailed check */
+    if (OBJ[stp->st_id].ft_classify &&
+	OBJ[stp->st_id].ft_classify(stp, min, max, &rtip->rti_tol) == BN_CLASSIFY_OUTSIDE)
 	return 0;
 
     /* don't know, check it */

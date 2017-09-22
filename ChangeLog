@@ -1,3 +1,11 @@
+2017-09-22 18:35  starseeker
+
+	* [r70328] include/rt/functab.h, src/librt/cut.c,
+	  src/librt/primitives/arb8/arb8.c, src/librt/primitives/table.cpp:
+	  Removal of arb8 classification is causing some change - commit a
+	  minimal re-insertion to RELEASE branch to document what may be
+	  needed here...
+
 2017-09-21 15:17  starseeker
 
 	* [r70321] src/other/libutahrle/CMakeLists.txt:
