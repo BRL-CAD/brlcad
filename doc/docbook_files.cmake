@@ -812,7 +812,6 @@ system/man1/rtray.xml
 system/man1/rtregis.xml
 system/man1/rtscale.xml
 system/man1/rtshot.xml
-system/man1/rttherm.xml
 system/man1/rtwalk.xml
 system/man1/rtweight.xml
 system/man1/rtwizard.xml
@@ -822,7 +821,6 @@ system/man1/secpass.xml
 system/man1/shapefact.xml
 system/man1/showshot.xml
 system/man1/showtherm.xml
-system/man1/ssamp-bw.xml
 system/man1/stl-g.xml
 system/man1/sun-pix.xml
 system/man1/tabinterp.xml

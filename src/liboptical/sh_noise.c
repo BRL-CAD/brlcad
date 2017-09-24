@@ -358,11 +358,7 @@ fractal_render(struct application *ap, const struct partition *pp, struct shadew
 	    val = bn_noise_turb(pt, noise_sp->h_val,
 				noise_sp->lacunarity, noise_sp->octaves);
 	    if (val < noise_sp->minval) val = noise_sp->minval;
-#ifdef RT_MULTISPECTRAL
-	    swp->sw_temperature *= val;
-#else
 	    VSCALE(swp->sw_color, swp->sw_color, val);
-#endif
 	    norm_noise(pt, val, noise_sp, bn_noise_turb, swp, 0);
 	    break;
 	case 1:	/* fbmbump */
@@ -382,21 +378,13 @@ fractal_render(struct application *ap, const struct partition *pp, struct shadew
 			       noise_sp->lacunarity, noise_sp->octaves);
 	    RESCALE_NOISE(val);
 	    if (val < noise_sp->minval) val = noise_sp->minval;
-#ifdef RT_MULTISPECTRAL
-	    swp->sw_temperature *= val;
-#else
 	    VSCALE(swp->sw_color, swp->sw_color, val);
-#endif
 	    break;
 	case 4:	/* turcolor */
 	    val = bn_noise_turb(pt, noise_sp->h_val,
 				noise_sp->lacunarity, noise_sp->octaves);
 	    if (val < noise_sp->minval) val = noise_sp->minval;
-#ifdef RT_MULTISPECTRAL
-	    swp->sw_temperature *= val;
-#else
 	    VSCALE(swp->sw_color, swp->sw_color, val);
-#endif
 	    break;
 	case 5: /* grunge */
 	case 7: /* fbmcombo */
@@ -404,11 +392,7 @@ fractal_render(struct application *ap, const struct partition *pp, struct shadew
 			       noise_sp->lacunarity, noise_sp->octaves);
 	    RESCALE_NOISE(val);
 	    if (val < noise_sp->minval) val = noise_sp->minval;
-#ifdef RT_MULTISPECTRAL
-	    swp->sw_temperature *= val;
-#else
 	    VSCALE(swp->sw_color, swp->sw_color, val);
-#endif
 	    norm_noise(pt, val, noise_sp, bn_noise_fbm, swp, 1);
 	    break;
 
@@ -419,11 +403,7 @@ fractal_render(struct application *ap, const struct partition *pp, struct shadew
 	    val = 1.0 - val;
 	    if (val < noise_sp->minval) val = noise_sp->minval;
 
-#ifdef RT_MULTISPECTRAL
-	    swp->sw_temperature *= val;
-#else
 	    VSCALE(swp->sw_color, swp->sw_color, val);
-#endif
 	    swp->sw_temperature = val * 2000.0;
 	    break;
     }

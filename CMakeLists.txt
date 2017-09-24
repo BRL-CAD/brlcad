@@ -1641,8 +1641,7 @@ CHECK_CXX_FLAG(fno-common)
 
 # check for -fexceptions
 # this is needed to resolve __Unwind_Resume when compiling and
-# linking against openNURBS in librt for some binaries, for
-# example rttherm (i.e. any -static binaries)
+# linking against openNURBS in librt for any -static binaries
 CHECK_C_FLAG(fexceptions)
 CHECK_CXX_FLAG(fexceptions)
 

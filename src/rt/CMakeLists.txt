@@ -24,11 +24,6 @@ set(LIBRTUIF_SOURCES
 
 BRLCAD_ADDLIB(librtuif "${LIBRTUIF_SOURCES}" "${M_LIBRARY}" STATIC NO_INSTALL)
 
-add_library(librtuif_multispectral STATIC ${LIBRTUIF_SOURCES})
-set_property(TARGET librtuif_multispectral APPEND PROPERTY LINKER_LANGUAGE C)
-set_property(TARGET librtuif_multispectral APPEND PROPERTY COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
-set_property(TARGET librtuif_multispectral APPEND PROPERTY FOLDER "BRL-CAD Static Libraries")
-
 if(BRLCAD_ENABLE_OPENCL)
   set(OPENCL_LIBS ${OPENCL_LIBRARIES})
 endif(BRLCAD_ENABLE_OPENCL)

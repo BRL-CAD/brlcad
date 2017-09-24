@@ -57,7 +57,6 @@ set(level_2_dirs
   libdm
   libfft
   libicv
-  libmultispectral
   libpc
   libtclcad
   libtermio
@@ -69,7 +68,7 @@ set(level_2_dirs
 # FIXME: Ideally these should all be in the below list,
 # need to fix them on Windows.
 if(NOT WIN32)
-  set(non_win32_dirs remrt rttherm)
+  set(non_win32_dirs remrt)
 endif(NOT WIN32)
 
 set(level_3_dirs
@@ -154,9 +153,9 @@ if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
     math(EXPR cml "${current_level} + 1")
     while(${wl} LESS ${cml})
       foreach(llib ${level_${wl}_dirs})
-	if(TARGET ${llib} AND NOT "${llib}" STREQUAL "libmultispectral")
+	if(TARGET ${llib})
 	  set(libbrlcad_objs ${libbrlcad_objs} $<TARGET_OBJECTS:${llib}-obj>)
-	endif(TARGET ${llib} AND NOT "${llib}" STREQUAL "libmultispectral")
+	endif(TARGET ${llib})
       endforeach(llib ${level_${wl}_dirs})
       math(EXPR wl "${wl} + 1")
     endwhile(${wl} LESS ${cml})

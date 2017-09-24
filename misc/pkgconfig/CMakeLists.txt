@@ -51,7 +51,6 @@ if("${BRLCAD_ENABLE_TARGETS}" GREATER 1 OR "${BRLCAD_ENABLE_TARGETS}" STREQUAL "
     libgcv.pc.in
     libged.pc.in
     libicv.pc.in
-    libmultispectral.pc.in
     liboptical.pc.in
     libpc.pc.in
     libpkg.pc.in

@@ -40,11 +40,7 @@ int rdebug;			/* RT program debugging */
 double AmbientIntensity = 0.4;	/* Ambient light intensity */
 struct bn_table *spectrum = NULL;
 
-#ifdef RT_MULTISPECTRAL
-struct bn_tabdata *background = NULL;	/* radiant emittance of bg */
-#else
 vect_t background = VINIT_ZERO; /* Black */
-#endif
 
 /* initialized in the app code view handler */
 struct region env_region;
@@ -70,7 +66,6 @@ optical_shader_init(struct mfuncs **headp)
     MFUNCS(stk_mfuncs);
     MFUNCS(noise_mfuncs);
 
-#ifndef RT_MULTISPECTRAL
     DMFUNCS(null_mfuncs); /* null test shader */
     DMFUNCS(cloud_mfuncs);
     DMFUNCS(spm_mfuncs);
@@ -98,7 +93,6 @@ optical_shader_init(struct mfuncs **headp)
     DMFUNCS(osl_mfuncs);
 #endif
 
-#endif
 }
 
 

@@ -155,17 +155,8 @@ int main(int argc, const char **argv)
     elevation = 25.0;
 
     AmbientIntensity = 0.4;
-#ifndef RT_MULTISPECTRAL
     background[0] = background[1] = 0.0;
     background[2] = 1.0/255.0; /* slightly non-black */
-#else
-    {
-	extern struct bn_table *bn_table_make_visible_and_uniform(int num, double first, double last, int vis_nsamp);
-	extern fastf_t spectrum_param[];
-	spectrum = bn_table_make_visible_and_uniform((int)spectrum_param[0], spectrum_param[1], spectrum_param[2], 20);
-	BN_GET_TABDATA(background, spectrum);
-    }
-#endif
 
     /* Before option processing, get default number of processors */
     npsw = bu_avail_cpus();		/* Use all that are present */

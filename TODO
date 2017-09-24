@@ -50,12 +50,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   a source of ongoing annoyance, particularly (but not
   exclusively) on OSX.
 
-* remove libmultispectral and related codes - investigation
-  by Sean indicates these haven't been working for a while
-  and may not have been fully mature originally.  They are
-  also adding complexity and maintenance burden, so time to
-  remove.
-
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
@@ -1172,11 +1166,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   combinations of these primitives, provided their continuity at the
   ends ensures continuity all along "seams" - something to consider.
 
-* look into embedding both rgb[3] and complex[n] data types in a union
-  to allow unification of libmultispectral and liboptical APIs to a
-  single more general liboptical.  Need to be careful about
-  performance and maintainability concerns.
-
 * we need to define a libbu api for option handling that supports more
   features than getopt:
 
@@ -1887,10 +1876,7 @@ pl-dm      (possibly X11 specific)
 pp-fb      (TERMLIB)
 remrt      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
 rtsrv      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
-rttherm    (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
 scriptsort (lex)
-ssamp-bw   (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
-ssampview  (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
 ttcp       (not ported)
 
 The MGED points support doesn't appear as an executable, but it is

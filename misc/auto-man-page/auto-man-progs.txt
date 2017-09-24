@@ -135,7 +135,6 @@ sketch              src/proc-db/sketch.c
 smod                src/sig/smod.c
 sphflake            src/proc-db/sphflake.c
 spm-fb              src/fb/spm-fb.c
-ssampview           src/rttherm/ssampview.c
 step-g
 surfaceintersec
 tea                 src/proc-db/tea.c
