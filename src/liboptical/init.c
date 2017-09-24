@@ -38,13 +38,17 @@
 int rt_verbosity = -1;	/* blather incessantly by default */
 int rdebug;			/* RT program debugging */
 double AmbientIntensity = 0.4;	/* Ambient light intensity */
-struct bn_table *spectrum = NULL;
 
 vect_t background = VINIT_ZERO; /* Black */
 
 /* initialized in the app code view handler */
 struct region env_region;
 
+extern struct mfuncs camo_mfuncs[];
+extern struct mfuncs light_mfuncs[];
+extern struct mfuncs stk_mfuncs[];
+extern struct mfuncs phg_mfuncs[];
+extern struct mfuncs noise_mfuncs[];
 
 #define MFUNCS(_name)							\
     { mlib_add_shader(headp, _name); }

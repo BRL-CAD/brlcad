@@ -45,6 +45,39 @@
 #define noise_MAGIC 0x1847
 #define CK_noise_SP(_p) BU_CKMAG(_p, noise_MAGIC, "noise_specific")
 
+
+HIDDEN int noise_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+int fractal_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void noise_print(register struct region *rp, void *dp);
+HIDDEN void noise_free(void *cp);
+
+
+/* The "mfuncs" structure defines the external interface to the shader.
+ * Note that more than one shader "name" can be associated with a given
+ * shader by defining more than one mfuncs struct in this array.
+ * See sh_phong.c for an example of building more than one shader "name"
+ * from a set of source functions.  There you will find that "glass" "mirror"
+ * and "plastic" are all names for the same shader with different default
+ * values for the parameters.
+ *
+ * WARNING:  The order of this table is critical for these shaders.
+ */
+struct mfuncs noise_mfuncs[] = {
+    {MF_MAGIC, "gravel",   0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "fbmbump",  0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "turbump",  0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "fbmcolor", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "turcolor", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "grunge",   0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "turcombo", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "fbmcombo", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "flash",	   0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {       0, NULL,       0,			      0, 0,	      0,	      0,	   0,	       0 }
+};
+
+
+
+
 void
 noise_deg_to_rad(const struct bu_structparse *sdp,
 		 const char *UNUSED(name),
@@ -419,30 +452,6 @@ fractal_render(struct application *ap, const struct partition *pp, struct shadew
 
     return 1;
 }
-
-/* The "mfuncs" structure defines the external interface to the shader.
- * Note that more than one shader "name" can be associated with a given
- * shader by defining more than one mfuncs struct in this array.
- * See sh_phong.c for an example of building more than one shader "name"
- * from a set of source functions.  There you will find that "glass" "mirror"
- * and "plastic" are all names for the same shader with different default
- * values for the parameters.
- *
- * WARNING:  The order of this table is critical for these shaders.
- */
-struct mfuncs noise_mfuncs[] = {
-    {MF_MAGIC, "gravel",   0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
-    {MF_MAGIC, "fbmbump",  0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
-    {MF_MAGIC, "turbump",  0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
-    {MF_MAGIC, "fbmcolor", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
-    {MF_MAGIC, "turcolor", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
-    {MF_MAGIC, "grunge",   0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
-    {MF_MAGIC, "turcombo", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
-    {MF_MAGIC, "fbmcombo", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
-    {MF_MAGIC, "flash",	   0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
-    {       0, NULL,       0,			      0, 0,	      0,	      0,	   0,	       0 }
-};
-
 
 /*
  * Local Variables:
