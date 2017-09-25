@@ -912,6 +912,14 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_PATCH ${BRLCAD_VERSION_PATCH}\n")
 # Let programs know what the executable suffix is on this platform, if any
 CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
 
+
+#----------------------------------------------------------------------
+# If we're not debugging, we want HIDDEN to be defined as static.  Set
+# the NDEBUG flag accordingly, and common.h will take it from there.
+if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  CONFIG_H_APPEND(BRLCAD "#define NDEBUG 1")
+endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+
 #----------------------------------------------------------------------
 # Decide whether to do a 32 or a 64 bit build.
 
