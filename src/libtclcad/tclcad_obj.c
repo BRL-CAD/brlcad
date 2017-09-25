@@ -961,7 +961,6 @@ HIDDEN void to_autoview_all_views(struct tclcad_obj *top);
 HIDDEN void to_rt_end_callback_internal(int aborted);
 
 HIDDEN void to_output_handler(struct ged *gedp, char *line);
-HIDDEN int to_log_output_handler(void *client_data, void *vpstr);
 
 HIDDEN int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
 
@@ -14276,18 +14275,6 @@ to_output_handler(struct ged *gedp, char *line)
 
     tclcad_eval_noresult(current_top->to_interp, script, 1, (const char **)&line);
 }
-
-HIDDEN int
-to_log_output_handler(void *client_data, void *vpstr)
-{
-    struct ged *gedp = (struct ged *)client_data;
-    char *str = (char *)vpstr;
-
-    to_output_handler(gedp, str);
-
-    return strlen(str);
-}
-
 
 HIDDEN void go_dm_draw_arrows(dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf);
 HIDDEN void go_dm_draw_labels(dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat);

@@ -632,7 +632,8 @@ typedef enum {
     BREP_INTERSECT_FOUND = 1
 } brep_intersect_reason_t;
 
-
+/* TODO - do we need this? */
+#if 0
 HIDDEN const char*
 BREP_INTERSECT_REASON(brep_intersect_reason_t index)
 {
@@ -649,7 +650,7 @@ BREP_INTERSECT_REASON(brep_intersect_reason_t index)
 
     return reason[index + 5];
 }
-
+#endif
 
 void
 utah_F(const ON_3dPoint &S, const ON_3dVector &p1, const double p1d, const ON_3dVector &p2, const double p2d, double &f1, double &f2)

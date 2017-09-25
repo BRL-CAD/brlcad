@@ -519,7 +519,7 @@ is_point_outside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &lo
     return (point_loop_location(pt, loop) == OUTSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
 }
 
-
+#if 0
 HIDDEN ON_Interval
 union_intervals(const ON_SimpleArray<ON_Interval> &intervals)
 {
@@ -557,6 +557,7 @@ replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
 				      "subcurve\n");
     }
 }
+#endif
 
 
 HIDDEN ON_SimpleArray<ON_Interval>
@@ -649,12 +650,13 @@ get_curve_intervals_inside_or_on_face(
     return final_intervals;
 }
 
-
+#if 0
 HIDDEN int
 compare_interval(const ON_Interval *a, const ON_Interval *b)
 {
     return a->Compare(*b);
 }
+#endif
 
 
 struct IntervalPoints {

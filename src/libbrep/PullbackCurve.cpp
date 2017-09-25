@@ -2025,7 +2025,11 @@ toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve, ON_2dPoint& out_pt, d
 
 
 double
+#ifdef NDEBUG
+randomPointFromRange(PBCData& UNUSED(data), ON_2dPoint& UNUSED(out), double lo, double hi)
+#else
 randomPointFromRange(PBCData& data, ON_2dPoint& out, double lo, double hi)
+#endif
 {
     assert(lo < hi);
     double random_pos = drand48() * (RANGE_HI - RANGE_LO) + RANGE_LO;

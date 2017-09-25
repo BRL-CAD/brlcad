@@ -311,6 +311,7 @@ chull3d_Vec_dot(struct chull3d_data *cdata, point x, point y)
     return sum;
 }
 
+#if 0
     HIDDEN Coord
 chull3d_Vec_dot_pdim(struct chull3d_data *cdata, point x, point y)
 {
@@ -319,6 +320,7 @@ chull3d_Vec_dot_pdim(struct chull3d_data *cdata, point x, point y)
     for (i=0;i<cdata->pdim;i++) sum += x[i] * y[i];
     return sum;
 }
+#endif
 
     HIDDEN Coord
 chull3d_Norm2(struct chull3d_data *cdata, point x)
@@ -530,7 +532,7 @@ chull3d_get_normal_sede(struct chull3d_data *cdata, simplex *s)
 }
 
 
-HIDDEN void chull3d_get_normal(struct chull3d_data *cdata, simplex *s) {chull3d_get_normal_sede(cdata,s); return;}
+//HIDDEN void chull3d_get_normal(struct chull3d_data *cdata, simplex *s) {chull3d_get_normal_sede(cdata,s); return;}
 
 HIDDEN int
 chull3d_sees(struct chull3d_data *cdata, site p, simplex *s) {
@@ -589,11 +591,13 @@ chull3d_visit_fg_i(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data 
     chull3d_visit_fg_i(cdata, v_fg, t->right,depth,vn,boundary);
 }
 
+#if 0
 HIDDEN void
 chull3d_visit_fg(struct chull3d_data *cdata, fg *faces_gr, void (*v_fg)(struct chull3d_data *, Tree *, int, int))
 {
     chull3d_visit_fg_i(cdata, v_fg, faces_gr->facets, 0, ++(cdata->fg_vn), 1);
 }
+#endif
 
 HIDDEN int
 chull3d_visit_fg_i_far(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *, Tree *, int),
@@ -615,11 +619,13 @@ chull3d_visit_fg_i_far(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_d
     return nb;
 }
 
+#if 0
 HIDDEN void
 chull3d_visit_fg_far(struct chull3d_data *cdata, fg *faces_gr, void (*v_fg)(struct chull3d_data *, Tree *, int))
 {
     chull3d_visit_fg_i_far(cdata, v_fg,faces_gr->facets, 0, --(cdata->fg_vn));
 }
+#endif
 
 /* hull.c : "combinatorial" functions for hull computation */
 
@@ -673,6 +679,7 @@ chull3d_visit_hull(struct chull3d_data *cdata, simplex *root, chull3d_visit_func
     return chull3d_visit_triang_gen(cdata, (struct simplex *)chull3d_visit_triang(cdata, root, &chull3d_facet_test), visit, chull3d_hullt);
 }
 
+#if 0
 HIDDEN void *
 chull3d_check_simplex(struct chull3d_data *cdata, simplex *s, void *UNUSED(dum))
 {
@@ -707,6 +714,7 @@ chull3d_check_simplex(struct chull3d_data *cdata, simplex *s, void *UNUSED(dum))
     }
     return NULL;
 }
+#endif
 
 HIDDEN void *
 chull3d_collect_hull_pnts(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
@@ -792,7 +800,7 @@ chull3d_collect_faces(struct chull3d_data *cdata, simplex *s, void *UNUSED(p)) {
     return NULL;
 }
 
-
+#if 0
 HIDDEN Coord
 chull3d_maxdist(int dim, point p1, point p2)
 {
@@ -807,6 +815,7 @@ chull3d_maxdist(int dim, point p1, point p2)
     }
     return d;
 }
+#endif
 
 /* the neighbor entry of a containing b */
 HIDDEN neighbor *
