@@ -1224,11 +1224,11 @@ if(BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_AQUA)
 
 # Enable features requiring Bullet Physics SDK
-option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" OFF)
+option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" ON)
 mark_as_advanced(BRLCAD_ENABLE_BULLET)
 
 # Enable features requiring GDAL geospatial library
-option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" OFF)
+option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" ON)
 mark_as_advanced(BRLCAD_ENABLE_GDAL)
 
 # Enable features requiring Qt
