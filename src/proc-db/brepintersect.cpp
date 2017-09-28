@@ -342,8 +342,7 @@ int SegmentSegmentIntersect(
 	 * outside these bounds by tiny little amounts */
 	if (-tol <= s && s <= 1.0 + tol && -tol <= t && t <= 1.0 + tol) {
 	    ON_3dPoint Ps = x1 + s * (x2 - x1); /* The answer according to equation P*/
-	    ON_3dPoint Qt = x3 + t * (x4 - x3); /* The answer according to equation Q*/
-	    assert(VNEAR_EQUAL(Ps, Qt, tol)); /* check to see if they agree, just a sanity check*/
+	    assert(VNEAR_EQUAL(Ps, x3 + t * (x4 - x3), tol)); /* check to see if it agrees with the answer according to equation Q, just a sanity check*/
 	    x[0] = Ps;
 	    return 1;
 	} else {
