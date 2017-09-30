@@ -86,8 +86,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * make sure TIE can raytrace all of the various BoT modes
 
-* turn on Bullet code (simulate command) unconditionally
-
 * metaball in command input needs sanity checks and better
   validation.
 
