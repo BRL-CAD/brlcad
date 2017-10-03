@@ -49,7 +49,11 @@
 #include <cpl_string.h>
 #include <cpl_multiproc.h>
 #include <ogr_spatialref.h>
+#include "vrtdataset.h"
 
+#include "bu/cv.h"
+#include "bu/path.h"
+#include "bu/units.h"
 #include "raytrace.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
@@ -57,8 +61,8 @@
 
 struct gdal_read_options
 {
-    const char *t_srs;
-    const char *fmt;
+    const char *proj;
+    int center;
 };
 
 struct conversion_state {
@@ -68,40 +72,19 @@ struct conversion_state {
     struct rt_wdb *wdbp;
 
     /* GDAL state */
-    OGRSpatialReference *sp;
     GDALDatasetH hDataset;
-    bool info;
-    bool debug;
-    int scalex;
-    int scaley;
-    int scalez;
-    double adfGeoTransform[6];
-    int az;
-    int el;
-    int pixsize;
 };
 
 HIDDEN void
 gdal_state_init(struct conversion_state *gs)
 {
-    int i = 0;
     if(!gs) return;
     gs->gcv_options = NULL;
     gs->ops = NULL;
     gs->input_file = NULL;
     gs->wdbp = RT_WDB_NULL;
 
-    gs->sp = NULL;
     gs->hDataset = NULL;
-    gs->info = false;
-    gs->debug = false;
-    gs->scalex = 1;
-    gs->scaley = 1;
-    gs->scalez = 1;
-    for(i = 0; i < 6; i++) gs->adfGeoTransform[i] = 0.0;
-    gs->az = 35;
-    gs->el = 35;
-    gs->pixsize = 512 * 3;
 }
 
 HIDDEN int
@@ -204,6 +187,17 @@ gdal_ll(GDALDatasetH hDataset, double *lat_center, double *long_center)
     return 1;
 }
 
+HIDDEN void
+gdal_elev_minmax(GDALDatasetH ds)
+{
+    int bmin, bmax = 0;
+    double mm[2];
+    GDALRasterBandH band = GDALGetRasterBand(ds, 1);
+    mm[0] = GDALGetRasterMinimum(band, &bmin);
+    mm[1] = GDALGetRasterMaximum(band, &bmin);
+    if (!bmin || !bmax) GDALComputeRasterMinMax(band, TRUE, mm);
+    bu_log("Elevation Minimum/Maximum: %f, %f\n", mm[0], mm[1]);
+}
 
 /* Get the UTM zone of the GDAL dataset - see
  * https://gis.stackexchange.com/questions/241696/how-to-convert-from-lat-lon-to-utm-with-gdaltransform
@@ -213,11 +207,13 @@ gdal_utm_zone(struct conversion_state *state)
 {
     int zone = INT_MAX;
     double longitude = 0.0;
-    if (gdal_ll(state->hDataset, NULL, &longitude)) {
+    (void)gdal_ll(state->hDataset, NULL, &longitude);
+    if (longitude > -180.0 && longitude < 180.0) {
 	zone = floor((longitude + 180) / 6) + 1;
+	bu_log("zone: %d\n", zone);
+	return zone;
     }
-    bu_log("zone: %d\n", zone);
-    return zone;
+    return -1;
 }
 
 
@@ -240,8 +236,14 @@ HIDDEN int
 gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	const void *options_data, const char *source_path)
 {
-    struct bu_vls epsg_str = BU_VLS_INIT_ZERO;
+    size_t count;
+    unsigned int xsize = 0;
+    unsigned int ysize = 0;
+    double adfGeoTransform[6];
     struct conversion_state *state;
+    struct bu_vls name_root = BU_VLS_INIT_ZERO;
+    struct bu_vls name_data = BU_VLS_INIT_ZERO;
+    struct bu_vls name_dsp = BU_VLS_INIT_ZERO;
     BU_GET(state, struct conversion_state);
     gdal_state_init(state);
     state->gcv_options = gcv_options;
@@ -251,97 +253,116 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     GDALAllRegister();
 
-    state->hDataset = GDALOpenEx(source_path, GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL, NULL, NULL);
+    state->hDataset = GDALOpenEx(source_path, GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, NULL, NULL, NULL);
     if (!state->hDataset) {
 	bu_log("GDAL Reader: error opening input file %s\n", source_path);
 	BU_PUT(state, struct conversion_state);
 	return 0;
     }
-
     (void)get_dataset_info(state->hDataset);
+    gdal_elev_minmax(state->hDataset);
 
+    /* Use the information in the data set to deduce the EPSG number corresponding
+     * to the correct UTM projection zone, define a spatial reference, and generate
+     * the "Well Known Text" to use as the argument to the warping function*/
+    GDALDatasetH hOutDS;
     int zone = gdal_utm_zone(state);
-    int epsg = gdal_utm_epsg(state, zone);
-    bu_vls_sprintf(&epsg_str, "EPSG:%d", epsg);
+    char *dunit;
+    const char *dunit_default = "m";
+    if (zone != -1) {
+	int epsg = gdal_utm_epsg(state, zone);
+	struct bu_vls proj4_str = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&proj4_str, "+init=epsg:%d +zone=%d +proj=utm +no_defs", epsg, zone);
+	OGRSpatialReference oSRS;
+	oSRS.importFromProj4(bu_vls_addr(&proj4_str));
+	char *dst_Wkt = NULL;
+	oSRS.exportToWkt(&dst_Wkt);
 
-    OGRSpatialReference oSRS;
-    oSRS.SetWellKnownGeogCS(bu_vls_addr(&epsg_str));
-    oSRS.SetUTM(zone, TRUE);
+	/* Perform the UTM data warp.  At this point the data is not yet in the
+	 * form needed by the DSP primitive */
+	hOutDS = GDALAutoCreateWarpedVRT(state->hDataset, NULL, dst_Wkt, GRA_CubicSpline, 0.0, NULL);
+	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
+	GDALGetGeoTransform(hOutDS, adfGeoTransform);
+	bu_log("\nTransformed dataset info:\n");
+	(void)get_dataset_info(hOutDS);
+	gdal_elev_minmax(hOutDS);
+    } else {
+	hOutDS = state->hDataset;
+	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
+	GDALGetGeoTransform(hOutDS, adfGeoTransform);
+    }
+    if (!dunit || strlen(dunit) == 0) dunit = (char *)dunit_default;
 
-    char *dst_Wkt = NULL;
-    oSRS.exportToWkt(&dst_Wkt);
-    void *hTsfA = GDALCreateGenImgProjTransformer(state->hDataset, GDALGetProjectionRef(state->hDataset), NULL, dst_Wkt, FALSE, 0, 1);
+    /* Do the translate step (a.l.a gdal_translate) that puts the data in a
+     * form we can use */
+    char *img_opts[3];
+    img_opts[0] = bu_strdup("-of");
+    img_opts[1] = bu_strdup("MEM");
+    img_opts[2] = NULL;
+    GDALTranslateOptions *gdalt_opts = GDALTranslateOptionsNew(img_opts, NULL);
+    GDALDatasetH flatDS = GDALTranslate("", hOutDS, gdalt_opts, NULL);
+    GDALTranslateOptionsFree(gdalt_opts);
+    if (hOutDS != state->hDataset) GDALClose(hOutDS);
+    for(int i = 0; i < 3; i++) {
+	if(img_opts[i]) bu_free(img_opts[i], "imgopt");
+    }
+    bu_log("\nFinalized dataset info:\n");
+    (void)get_dataset_info(flatDS);
+    gdal_elev_minmax(flatDS);
 
-    int nPixels=0, nLines=0;
-    double adfDstGeoTransform[6];
-    CPLErr eErr = GDALSuggestedWarpOutput(state->hDataset, GDALGenImgProjTransform, hTsfA, adfDstGeoTransform, &nPixels, &nLines);
-    GDALDestroyGenImgProjTransformer(hTsfA);
-    if (eErr != CE_None) return 0;
-
-    GDALDatasetH pjdata = GDALCreate(GDALGetDriverByName("MEM"), "", nPixels, nLines, GDALGetRasterCount(state->hDataset),
-	    GDALGetRasterDataType(GDALGetRasterBand(state->hDataset,1)), NULL);
-    if (pjdata == NULL) return 0;
-    GDALSetProjection(pjdata, dst_Wkt);
-    GDALSetGeoTransform(pjdata, adfDstGeoTransform);
-    GDALWarpOptions *w_opts = GDALCreateWarpOptions();
-    w_opts->hSrcDS = state->hDataset;
-    w_opts->hDstDS = pjdata;
-    w_opts->nBandCount = 1;
-    w_opts->panSrcBands = (int *)CPLMalloc(sizeof(int) * w_opts->nBandCount);
-    w_opts->panSrcBands[0] = 1;
-    w_opts->panDstBands = (int *)CPLMalloc(sizeof(int) * w_opts->nBandCount);
-    w_opts->panDstBands[0] = 1;
-    w_opts->pfnProgress = GDALTermProgress;
-    // Establish reprojection transformer.
-    w_opts->pTransformerArg = GDALCreateGenImgProjTransformer(state->hDataset, GDALGetProjectionRef(state->hDataset), pjdata, GDALGetProjectionRef(pjdata), FALSE, 0.0, 1 );
-    w_opts->pfnTransformer = GDALGenImgProjTransform;
-    // Initialize and execute the warp operation.
-    GDALWarpOperation oOperation;
-    oOperation.Initialize(w_opts);
-    oOperation.ChunkAndWarpImage(0, 0, GDALGetRasterXSize(pjdata), GDALGetRasterYSize(pjdata));
-    GDALDestroyGenImgProjTransformer(w_opts->pTransformerArg);
-    GDALDestroyWarpOptions(w_opts);
-
-    bu_log("\nTransformed dataset info:\n");
-    (void)get_dataset_info(pjdata);
-
-    /* Read the data into something a DSP can process */
-    //GDALDatasetH indata = pjdata;
-    GDALDatasetH indata = state->hDataset;
-    unsigned int xsize = GDALGetRasterXSize(indata);
-    unsigned int ysize = GDALGetRasterYSize(indata);
-    unsigned short *uint16_array = (unsigned short *)bu_calloc(xsize*ysize, sizeof(unsigned short), "unsigned short array");
-
-    GDALRasterBandH band = GDALGetRasterBand(indata, 1);
-
-    int bmin, bmax;
-    double adfMinMax[2];
-    adfMinMax[0] = GDALGetRasterMinimum(band, &bmin);
-    adfMinMax[1] = GDALGetRasterMaximum(band, &bmax);
-    if (!(bmin && bmax)) GDALComputeRasterMinMax(band, TRUE, adfMinMax);
-    bu_log("Min/Max: %f, %f\n", adfMinMax[0], adfMinMax[1]);
-
-    /* If we're going to DSP we need the unsigned short read. */
-    uint16_t *scanline = (uint16_t *)CPLMalloc(sizeof(uint16_t)*GDALGetRasterBandXSize(band));
-    for(int i = 0; i < GDALGetRasterBandYSize(band); i++) {
-	if (GDALRasterIO(band, GF_Read, 0, i, GDALGetRasterBandXSize(band), 1, scanline, GDALGetRasterBandXSize(band), 1, GDT_UInt16, 0, 0) == CPLE_None) {
-	    for (int j = 0; j < GDALGetRasterBandXSize(band); ++j) {
-		/* This is the critical assignment point - if we get this
-		 * indexing wrong, data will not look right in dsp */
-		uint16_array[(ysize-i-1)*ysize+j] = scanline[j];
-		//bu_log("%d, %d: %d\n", i, j, scanline[j]);
-	    }
+    /* Read the data into something a DSP can process - note that y is
+     * backwards for DSPs compared to GDAL */
+    unsigned short *uint16_array = NULL;
+    uint16_t *scanline = NULL;
+    GDALRasterBandH band = GDALGetRasterBand(flatDS, 1);
+    xsize = GDALGetRasterBandXSize(band);
+    ysize = GDALGetRasterBandYSize(band);
+    count = xsize * ysize; /* TODO - check for overflow here... */
+    uint16_array = (unsigned short *)bu_calloc(count, sizeof(unsigned short), "unsigned short array");
+    for(unsigned int i = 0; i < ysize; i++) {
+	if (GDALRasterIO(band, GF_Read, 0, ysize-i-1, xsize, 1, &(uint16_array[i*xsize]), xsize, 1, GDT_UInt16, 0, 0) == CPLE_None) {
+	    continue;
+	} else {
+	    bu_log("GDAL read error for band scanline %d\n", i);
 	}
     }
 
+    /* Convert the data before writing it so the DSP get_obj_data routine sees what it expects */
+    int in_cookie = bu_cv_cookie("hus");
+    int out_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
+    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
+	size_t got = bu_cv_w_cookie(uint16_array, out_cookie, count * sizeof(unsigned short), uint16_array, in_cookie, count);
+	if (got != count) {
+	    bu_log("got %zu != count %zu", got, count);
+	    bu_bomb("\n");
+	}
+    }
+
+    /* Collect info for DSP */
+    double px, py = 0.0;
+    double cx, cy = 0.0;
+    double fGeoT[6];
+    if (GDALGetGeoTransform(flatDS, fGeoT) == CE_None) {
+	px = fGeoT[0];
+	py = fGeoT[3];
+	cx = (fGeoT[0] + fGeoT[1] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[2] * GDALGetRasterYSize(flatDS)/2.0) - px;
+	cy = (fGeoT[3] + fGeoT[4] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[5] * GDALGetRasterYSize(flatDS)/2.0) - py;
+    }
+
+    /* We're in business - come up with some names for the objects */
+    if (!bu_path_component(&name_root, source_path, BU_PATH_BASENAME_EXTLESS)) {
+	bu_vls_sprintf(&name_root, "dsp");
+    }
+    bu_vls_sprintf(&name_data, "%s.data", bu_vls_addr(&name_root));
+    bu_vls_sprintf(&name_dsp, "%s.s", bu_vls_addr(&name_root));
+
     /* Got it - write the binary object to the .g file */
-    mk_binunif(state->wdbp, "test.data", (void *)uint16_array, WDB_BINUNIF_UINT16, xsize * ysize);
+    mk_binunif(state->wdbp, bu_vls_addr(&name_data), (void *)uint16_array, WDB_BINUNIF_UINT16, count);
 
-    /* Done reading - close out inputs */
+    /* Done reading - close out inputs. */
     CPLFree(scanline);
+    GDALClose(flatDS);
     GDALClose(state->hDataset);
-    GDALClose(pjdata);
-
 
     /* TODO: if we're going to BoT (3-space mesh, will depend on the transform requested) we will need different logic... */
 
@@ -351,26 +372,64 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     BU_ALLOC(dsp, struct rt_dsp_internal);
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
     bu_vls_init(&dsp->dsp_name);
-    bu_vls_strcpy(&dsp->dsp_name, "test.data");
+    bu_vls_strcpy(&dsp->dsp_name, bu_vls_addr(&name_data));
     dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
     dsp->dsp_xcnt = xsize;
     dsp->dsp_ycnt = ysize;
     dsp->dsp_smooth = 1;
     dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
     MAT_IDN(dsp->dsp_stom);
-    dsp->dsp_stom[0] = dsp->dsp_stom[5] = 1000;
+    dsp->dsp_stom[0] = dsp->dsp_stom[5] = adfGeoTransform[1] * bu_units_conversion(dunit);
+    dsp->dsp_stom[10] = bu_units_conversion(dunit);
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
 
-    wdb_export(state->wdbp, "test.s", (void *)dsp, ID_DSP, 1);
+    if (state->ops->center) {
+	dsp->dsp_stom[3] = -cx * bu_units_conversion(dunit);
+	/* y is backwards for DSPs compared to GDAL */
+	dsp->dsp_stom[7] = cy * bu_units_conversion(dunit);
+    } else {
+	dsp->dsp_stom[3] = px * bu_units_conversion(dunit);
+	dsp->dsp_stom[7] = py * bu_units_conversion(dunit);
+    }
 
+    wdb_export(state->wdbp, bu_vls_addr(&name_dsp), (void *)dsp, ID_DSP, 1);
+
+    if (dunit != dunit_default) bu_free(dunit, "free dunit");
+
+    bu_vls_free(&name_root);
+    bu_vls_free(&name_data);
+    bu_vls_free(&name_dsp);
 
     return 1;
+}
+
+HIDDEN void
+gdal_read_create_opts(struct bu_opt_desc **odesc, void **dest_options_data)
+{
+    struct gdal_read_options *odata;
+
+    BU_ALLOC(odata, struct gdal_read_options);
+    *dest_options_data = odata;
+    *odesc = (struct bu_opt_desc *)bu_malloc(3*sizeof(struct bu_opt_desc), "gdal option descriptions");
+
+    odata->center = 0;
+    odata->proj = NULL;
+
+    BU_OPT((*odesc)[0], "c", "center", NULL, NULL, &(odata->center), "Center the dsp terrain at global (0,0)");
+    BU_OPT((*odesc)[1], "", "projection", "proj", &bu_opt_str, &(odata->proj), "Projection to apply to the terrain data before exporting to a .g file");
+    BU_OPT_NULL((*odesc)[2]);
+}
+
+HIDDEN void
+gdal_read_free_opts(void *options_data)
+{
+    bu_free(options_data, "options_data");
 }
 
 extern "C"
 {
     struct gcv_filter gcv_conv_gdal_read =
-    {"GDAL Reader", GCV_FILTER_READ, BU_MIME_MODEL_AUTO, gdal_can_read, NULL, NULL, gdal_read};
+    {"GDAL Reader", GCV_FILTER_READ, BU_MIME_MODEL_AUTO, gdal_can_read, gdal_read_create_opts, gdal_read_free_opts, gdal_read};
 
     static const struct gcv_filter * const filters[] = {&gcv_conv_gdal_read, NULL};
     const struct gcv_plugin gcv_plugin_info_s = { filters };

@@ -233,7 +233,7 @@ do_diff3(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *right_
 
 static void
 gdiff_usage(const char *str) {
-    bu_log("Usage: %s [-acmrv] file1.g file2.g\n", str);
+    bu_log("Usage: %s [-adhmux] [-v {0-4}] [-t tol] [-F \"filter_string\"] [-M merged.g] left.g [ancestor.g] right.g\n", str);
     bu_exit(1, NULL);
 }
 

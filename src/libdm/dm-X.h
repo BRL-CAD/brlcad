@@ -43,6 +43,8 @@ struct x_vars {
     int is_trueColor;
     unsigned long bd, bg, fg;   /* color of border, background, foreground */
     unsigned long pixels[NUM_PIXELS];
+    fastf_t ppmm_x;		/* pixel per mm in x */
+    fastf_t ppmm_y;		/* pixel per mm in y */
 };
 
 #endif /* DM_X_H */

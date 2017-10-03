@@ -58,13 +58,13 @@ bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
     size_t i;
     size_t nused = vp->nused;
     int *cmd = vp->cmd;
-    int disp_mode = BN_VLIST_DISP_MODE_OFF;
+    int disp_mode = 0;
     point_t *pt = vp->pt;
 
     for (i = 0; i < nused; i++, cmd++, pt++) {
-	if(disp_mode == BN_VLIST_DISP_MODE_ON && *cmd != BN_VLIST_MODEL_MAT)
+	if(disp_mode == 1 && *cmd != BN_VLIST_MODEL_MAT)
 	    continue;
-	disp_mode = BN_VLIST_DISP_MODE_OFF;
+	disp_mode = 0;
 	switch (*cmd) {
 	    case BN_VLIST_POLY_START:
 	    case BN_VLIST_POLY_VERTNORM:
@@ -76,7 +76,7 @@ bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
 		/* attribute, not location */
 		break;
 	    case BN_VLIST_DISPLAY_MAT:
-		disp_mode = BN_VLIST_DISP_MODE_ON;
+		disp_mode = 1;
 	    case BN_VLIST_LINE_MOVE:
 	    case BN_VLIST_LINE_DRAW:
 	    case BN_VLIST_POLY_MOVE:

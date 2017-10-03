@@ -1,4 +1,4 @@
-/*                       N A M E G E N . C
+/*                   V L S _ S I M P L I F Y . C
  * BRL-CAD
  *
  * Copyright (c) 2015-2016 United States Government as represented by
@@ -29,47 +29,33 @@
 
 
 int
-namegen_main(int argc, char **argv)
+vls_simplify_main(int argc, char **argv)
 {
-    int ret = 1;
-    int i = 0;
-    struct bu_vls name = BU_VLS_INIT_ZERO;
-    long inc_count = 0;
-    char *endptr;
-    const char *rs = NULL;
-    const char *rs_complex = "([-_:]*[0-9]+[-_:]*)[^0-9]*$";
-    const char *formatting = NULL;
+    int ret = 0;
+    struct bu_vls vstr = BU_VLS_INIT_ZERO;
+    const char *expected = NULL;
+    const char *keep_chars = NULL;
+    const char *dedup_chars = NULL;
+    const char *trim_chars = NULL;
 
     /* Sanity check */
-    if (argc < 6) bu_exit(1, "ERROR: wrong number of parameters");
+    if (argc < 3) bu_exit(1, "ERROR: wrong number of parameters");
 
-    if (BU_STR_EQUAL(argv[2], "1")) {
-	rs = rs_complex;
+    bu_vls_sprintf(&vstr, "%s", argv[1]);
+    expected = argv[2];
+
+    if (argc > 3 && strlen(argv[3]) > 0) keep_chars = argv[3];
+    if (argc > 4 && strlen(argv[4]) > 0) dedup_chars = argv[4];
+    if (argc > 5 && strlen(argv[5]) > 0) trim_chars = argv[5];
+
+    (void)bu_vls_simplify(&vstr, keep_chars, dedup_chars, trim_chars);
+
+    if (!BU_STR_EQUAL(bu_vls_addr(&vstr), expected)) {
+	bu_log("got: %s, expected: %s\n", bu_vls_addr(&vstr), expected);
+	ret = 1;
     }
 
-    if (!rs && !BU_STR_EQUAL(argv[2], "0") && !BU_STR_EQUAL(argv[2], "NULL")) {
-	rs = argv[2];
-    }
-
-    if (!BU_STR_EQUAL(argv[3], "NULL")) {
-	formatting = argv[3];
-    }
-
-    errno = 0;
-    inc_count = strtol(argv[4], &endptr, 10);
-    if (errno == ERANGE || inc_count <= 0) {
-	bu_exit(1, "invalid increment count: %s\n", argv[4]);
-    }
-
-    bu_vls_sprintf(&name, "%s", argv[1]);
-    while (i < inc_count) {
-	(void)bu_namegen(&name, rs, formatting);
-	i++;
-    }
-
-    if (BU_STR_EQUAL(bu_vls_addr(&name), argv[5])) ret = 0;
-
-    bu_log("output: %s\n", bu_vls_addr(&name));
+    bu_vls_free(&vstr);
 
     return ret;
 }
