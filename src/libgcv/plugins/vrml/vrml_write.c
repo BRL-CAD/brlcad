@@ -93,9 +93,9 @@ const struct bu_structparse vrml_mat_parse[]={
 };
 
 
-extern union tree *do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+HIDDEN union tree *do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+HIDDEN union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+HIDDEN union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 
 struct vrml_write_options

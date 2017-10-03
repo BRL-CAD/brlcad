@@ -38,8 +38,6 @@ __BEGIN_DECLS
 #ifndef PC_EXPORT
 #  if defined(PC_DLL_EXPORTS) && defined(PC_DLL_IMPORTS)
 #    error "Only PC_DLL_EXPORTS or PC_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define PC_EXPORT
 #  elif defined(PC_DLL_EXPORTS)
 #    define PC_EXPORT __declspec(dllexport)
 #  elif defined(PC_DLL_IMPORTS)

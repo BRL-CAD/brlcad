@@ -182,7 +182,6 @@ signal analysis tools
 	Removed as part of distillation effort [deprecated 7.26]
 infrared & shapefactor tools
 	all_sf', if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
-	ssamp-bw, ssampview', ssampview.tcl'
 	Removed as part of distillation effort [deprecated 7.26]
 misc tools
 	fix_polysolids' : obsolete primitive
@@ -381,6 +380,12 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
+
+7.28.0
+------
+
+libmultispectral, rttherm, ssamp-bw, ssampview, ssampview.tcl
+	removed, not working in testing [minimally impacting]
 
 7.26.0
 ------

@@ -31,8 +31,6 @@
 #ifndef FB_EXPORT
 #  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
 #    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define FB_EXPORT
 #  elif defined(FB_DLL_EXPORTS)
 #    define FB_EXPORT __declspec(dllexport)
 #  elif defined(FB_DLL_IMPORTS)

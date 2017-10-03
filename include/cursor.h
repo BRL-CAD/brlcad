@@ -37,8 +37,6 @@ __BEGIN_DECLS
 #ifndef CURSOR_EXPORT
 #  if defined(CURSOR_DLL_EXPORTS) && defined(CURSOR_DLL_IMPORTS)
 #    error "Only CURSOR_DLL_EXPORTS or CURSOR_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define CURSOR_EXPORT
 #  elif defined(CURSOR_DLL_EXPORTS)
 #    define CURSOR_EXPORT __declspec(dllexport)
 #  elif defined(CURSOR_DLL_IMPORTS)

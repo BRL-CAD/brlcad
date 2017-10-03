@@ -80,10 +80,8 @@ failingtest libged
 cleantest libcursor
 cleantest libdm
 cleantest libfft
-cleantest libmultispectral
 failingtest libtclcad
 cleantest libtermio
-cleantest librttherm
 failingtest libremrt
 cleantest librender
 
@@ -423,7 +421,6 @@ if [ "0" -eq "1" ]; then
  cleantest rtshot
  failingtest rtsil
  cleantest rtsrv
- cleantest rttherm
  cleantest rtwalk
  failingtest rtweight
  failingtest rtxray
@@ -438,8 +435,6 @@ if [ "0" -eq "1" ]; then
  failingtest smod
  failingtest sphflake
  cleantest spm-fb
- cleantest ssamp-bw
- cleantest ssampview
  cleantest stl-g
  cleantest sun-pix
  failingtest surfaceintersect

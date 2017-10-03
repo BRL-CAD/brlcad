@@ -10,9 +10,22 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 201X-XX-XX  Release 7.26.4                                     ---
+--- 201X-XX-XX  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 
+* Remove libmultispectral, rttherm, and related code/docs - Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2017-09-22  Release 7.26.4                                     ---
+----------------------------------------------------------------------
+
+This is a patch release, primary focused on updates to the build
+system logic.
+
+* fixed MGED bindings behavior for c, A, P, and S chars - Bob Parker
+* fixed gdiff usage statement - Sean Morrison
+* removed anim.txt, sun.txt, tube.txt and movie.txt - Cliff Yapp
 
 
 ----------------------------------------------------------------------

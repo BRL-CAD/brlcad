@@ -72,8 +72,6 @@
 #ifndef NMG_EXPORT
 #  if defined(NMG_DLL_EXPORTS) && defined(NMG_DLL_IMPORTS)
 #    error "Only NMG_DLL_EXPORTS or NMG_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define NMG_EXPORT
 #  elif defined(NMG_DLL_EXPORTS)
 #    define NMG_EXPORT __declspec(dllexport)
 #  elif defined(NMG_DLL_IMPORTS)

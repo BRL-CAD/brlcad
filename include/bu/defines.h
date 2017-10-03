@@ -37,8 +37,6 @@
 #ifndef BU_EXPORT
 #  if defined(BU_DLL_EXPORTS) && defined(BU_DLL_IMPORTS)
 #    error "Only BU_DLL_EXPORTS or BU_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define BU_EXPORT
 #  elif defined(BU_DLL_EXPORTS)
 #    define BU_EXPORT __declspec(dllexport)
 #  elif defined(BU_DLL_IMPORTS)

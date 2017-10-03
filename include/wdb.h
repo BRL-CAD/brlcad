@@ -58,8 +58,6 @@ __BEGIN_DECLS
 #ifndef WDB_EXPORT
 #  if defined(WDB_DLL_EXPORTS) && defined(WDB_DLL_IMPORTS)
 #    error "Only WDB_DLL_EXPORTS or WDB_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define WDB_EXPORT
 #  elif defined(WDB_DLL_EXPORTS)
 #    define WDB_EXPORT __declspec(dllexport)
 #  elif defined(WDB_DLL_IMPORTS)

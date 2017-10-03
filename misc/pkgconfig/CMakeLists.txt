@@ -40,8 +40,7 @@ set(pkgconfig_DATA
   librt.pc.in
   libwdb.pc.in
 )
-
-if("${BRLCAD_ENABLE_TARGETS}" GREATER 1)
+if("${BRLCAD_ENABLE_TARGETS}" GREATER 1 OR "${BRLCAD_ENABLE_TARGETS}" STREQUAL "")
   set(pkgconfig_DATA
     ${pkgconfig_DATA}
     libanalyze.pc.in
@@ -52,12 +51,11 @@ if("${BRLCAD_ENABLE_TARGETS}" GREATER 1)
     libgcv.pc.in
     libged.pc.in
     libicv.pc.in
-    libmultispectral.pc.in
     liboptical.pc.in
     libpc.pc.in
     libpkg.pc.in
     )
-endif("${BRLCAD_ENABLE_TARGETS}" GREATER 1)
+endif("${BRLCAD_ENABLE_TARGETS}" GREATER 1 OR "${BRLCAD_ENABLE_TARGETS}" STREQUAL "")
 
 foreach(pkgfile ${pkgconfig_DATA})
   string(REGEX REPLACE "([0-9a-z_-]*).pc.in" "\\1" filename_root "${pkgfile}")

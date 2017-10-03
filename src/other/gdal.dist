@@ -477,6 +477,8 @@ frmts/pds/pdsdataset.cpp
 frmts/pds/vicardataset.cpp
 frmts/pds/vicarkeywordhandler.cpp
 frmts/pds/vicarkeywordhandler.h
+frmts/png/CMakeLists.txt
+frmts/png/pngdataset.cpp
 frmts/prf/CMakeLists.txt
 frmts/prf/phprfdataset.cpp
 frmts/r/CMakeLists.txt

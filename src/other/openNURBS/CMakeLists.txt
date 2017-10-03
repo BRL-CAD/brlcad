@@ -384,9 +384,12 @@ endif(BUILD_SHARED_LIBS)
 
 if(BUILD_STATIC_LIBS)
   target_link_libraries(openNURBS-static ${OPENNURBS_LINKLIBRARIES})
-  if(NOT WIN32)
+  if(MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(openNURBS-static PROPERTIES PREFIX "lib")
+  else(MSVC)
     set_target_properties(openNURBS-static PROPERTIES OUTPUT_NAME "openNURBS")
-  endif(NOT WIN32)
+  endif(MSVC)
   install(TARGETS openNURBS-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

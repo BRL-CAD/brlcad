@@ -33,8 +33,6 @@
 #ifndef BN_EXPORT
 #  if defined(BN_DLL_EXPORTS) && defined(BN_DLL_IMPORTS)
 #    error "Only BN_DLL_EXPORTS or BN_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define BN_EXPORT
 #  elif defined(BN_DLL_EXPORTS)
 #    define BN_EXPORT __declspec(dllexport)
 #  elif defined(BN_DLL_IMPORTS)

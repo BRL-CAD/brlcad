@@ -40,9 +40,11 @@
 void
 Push(const ON_Surface *surf, double *s, double *t, ON_3dVector vec)
 {
+    int ret;
     ON_3dVector ds, dt;
     ON_3dPoint value;
-    assert(surf->Ev1Der(*s, *t, value, ds, dt));
+    ret = surf->Ev1Der(*s, *t, value, ds, dt);
+    if (!ret) return;
     double delta_s, delta_t;
     ON_DecomposeVector(vec, ds, dt, &delta_s, &delta_t);
     *s += delta_s;

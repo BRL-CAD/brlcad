@@ -273,6 +273,7 @@ if(BRLCAD_PNG_BUILD)
 
   set(PNG_LIBRARY png CACHE STRING "PNG_LIBRARY" FORCE)
   set(PNG_PNG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/libpng;${CMAKE_CURRENT_SOURCE_DIR}/libpng" CACHE STRING "PNG include directory" FORCE)
+  mark_as_advanced(PNG_PNG_INCLUDE_DIR)
 
   # On Haiku the find_library call sets this variable directly, which is not
   # how we handle things elsewhere in BRL-CAD - unset the variable in that
@@ -289,7 +290,7 @@ if(BRLCAD_PNG_BUILD)
   mark_as_advanced(TK_DISABLE_XFT)
 
   SetTargetFolder(png "Third Party Libraries")
-  SetTargetFolder(png_static "Third Party Libraries")
+  SetTargetFolder(png-static "Third Party Libraries")
   SetTargetFolder(genfiles "Third Party Libraries")
 endif(BRLCAD_PNG_BUILD)
 set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
@@ -1026,7 +1027,7 @@ is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(proj-4 PROJ4 proj4 proj4_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_PROJ4)
+THIRD_PARTY(proj-4 PROJ4 proj4 proj4_DESCRIPTION REQUIRED_VARS "BRLCAD_ENABLE_GDAL;BRLCAD_LEVEL2" ALIASES ENABLE_PROJ4)
 if(BRLCAD_PROJ4_BUILD)
   set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
   set(PROJ4_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
@@ -1045,7 +1046,7 @@ is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(gdal GDAL gdal gdal_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_GDAL)
+THIRD_PARTY(gdal GDAL gdal gdal_DESCRIPTION REQUIRED_VARS "BRLCAD_ENABLE_GDAL;BRLCAD_LEVEL2" ALIASES ENABLE_GDAL)
 if(BRLCAD_GDAL_BUILD)
   set(GDAL_LIBRARY gdal CACHE STRING "libgdal" FORCE)
   set(GDAL_INCLUDE_DIR

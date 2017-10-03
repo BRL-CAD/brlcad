@@ -41,8 +41,6 @@ __BEGIN_DECLS
 #ifndef OPTICAL_EXPORT
 #  if defined(OPTICAL_DLL_EXPORTS) && defined(OPTICAL_DLL_IMPORTS)
 #    error "Only OPTICAL_DLL_EXPORTS or OPTICAL_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define OPTICAL_EXPORT
 #  elif defined(OPTICAL_DLL_EXPORTS)
 #    define OPTICAL_EXPORT __declspec(dllexport)
 #  elif defined(OPTICAL_DLL_IMPORTS)
@@ -54,11 +52,7 @@ __BEGIN_DECLS
 
 /* for liboptical */
 OPTICAL_EXPORT extern double AmbientIntensity;
-#ifdef RT_MULTISPECTRAL
-OPTICAL_EXPORT extern struct bn_tabdata *background;
-#else
 OPTICAL_EXPORT extern vect_t background;
-#endif
 
 /* defined in sh_text.c */
 OPTICAL_EXPORT extern struct region env_region; /* environment map region */

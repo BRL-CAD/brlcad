@@ -912,6 +912,14 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_PATCH ${BRLCAD_VERSION_PATCH}\n")
 # Let programs know what the executable suffix is on this platform, if any
 CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
 
+
+#----------------------------------------------------------------------
+# If we're not debugging, we want HIDDEN to be defined as static.  Set
+# the NDEBUG flag accordingly, and common.h will take it from there.
+if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  CONFIG_H_APPEND(BRLCAD "#define NDEBUG 1")
+endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+
 #----------------------------------------------------------------------
 # Decide whether to do a 32 or a 64 bit build.
 
@@ -1219,6 +1227,10 @@ endif(BRLCAD_ENABLE_AQUA)
 option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" ON)
 mark_as_advanced(BRLCAD_ENABLE_BULLET)
 
+# Enable features requiring GDAL geospatial library
+option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" ON)
+mark_as_advanced(BRLCAD_ENABLE_GDAL)
+
 # Enable features requiring Qt
 # TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
 find_package(Qt5Widgets QUIET)
@@ -1372,9 +1384,14 @@ if(BRLCAD_ENABLE_VERBOSE_PROGRESS)
   set(CMAKE_VERBOSE_MAKEFILE ON)
 endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 
-# Build with profiling support
-option(BRLCAD_ENABLE_PROFILING "Build with profiling support" OFF)
-mark_as_advanced(BRLCAD_ENABLE_PROFILING)
+# Build with profile-guided optimization support.  this requires a
+# two-pass compile, once with BRLCAD_PGO=ON on a location that did not
+# exist beforehand (specified via the PGO_PATH environment variable),
+# and again to use profiling metrics captured on "typical" operations
+# and data.  By default, path is BUILDDIR/.profiling
+
+option(BRLCAD_PGO "Enable profile-guided optimization (set PGO_PATH environment variable)")
+mark_as_advanced(BRLCAD_PGO)
 
 #====== ALL CXX COMPILE ===================
 # Build all C and C++ files with a C++ compiler
@@ -1632,8 +1649,7 @@ CHECK_CXX_FLAG(fno-common)
 
 # check for -fexceptions
 # this is needed to resolve __Unwind_Resume when compiling and
-# linking against openNURBS in librt for some binaries, for
-# example rttherm (i.e. any -static binaries)
+# linking against openNURBS in librt for any -static binaries
 CHECK_C_FLAG(fexceptions)
 CHECK_CXX_FLAG(fexceptions)
 
@@ -1746,19 +1762,6 @@ if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO"
   ADD_NEW_FLAG(EXE_LINKER 32BIT_FLAG ALL)
 endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO" AND NOT MSVC)
 
-if(BRLCAD_ENABLE_PROFILING)
-  CHECK_C_FLAG(pg VARS PROFILE_FLAG)
-  CHECK_C_FLAG(p VARS PROFILE_FLAG)
-  CHECK_C_FLAG(prof_gen VARS PROFILE_FLAG)
-  if(NOT PROFILE_FLAG)
-    message("Warning - profiling requested, but don't know how to profile with this compiler - disabling.")
-    set(BRLCAD_ENABLE_PROFILING OFF)
-  else(NOT PROFILE_FLAG)
-    ADD_NEW_FLAG(C PROFILE_FLAG ALL)
-    ADD_NEW_FLAG(CXX PROFILE_FLAG ALL)
-  endif(NOT PROFILE_FLAG)
-endif(BRLCAD_ENABLE_PROFILING)
-
 # Debugging flags
 if(BRLCAD_FLAGS_DEBUG)
   CHECK_C_FLAG(g GROUPS DEBUG_C_FLAGS)
@@ -1797,7 +1800,7 @@ endif(BRLCAD_FLAGS_DEBUG)
 if(APPLE)
   set(MACOSX_DEPLOYMENT_TARGET "$ENV{MACOSX_DEPLOYMENT_TARGET}")
   if(NOT MACOSX_DEPLOYMENT_TARGET)
-    set(ENV(MACOSX_DEPLOYMENT_TARGET) "10.3")
+    set(ENV{MACOSX_DEPLOYMENT_TARGET} "10.3")
   endif(NOT MACOSX_DEPLOYMENT_TARGET)
 
   if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.3")
@@ -1903,36 +1906,132 @@ CHECK_CXX_FLAG(Qunused-arguments)
 
 set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_BAK})
 
-# ******************************************************************* #
-# The following tests are almost entirely for gcc-style flags.
-if(NOT MSVC)
-  # -ffast-math provokes a stack corruption in the shadow computations because
-  # of strict aliasing getting enabled.  we _require_
-  # -fno-strict-aliasing until someone changes how lists are managed.
-  # -fast-math results in non-IEEE floating point math among a handful
-  # of other optimizations that cause substantial error in ray tracing
-  # and tessellation (and probably more).
-  CHECK_C_FLAG(O3 GROUPS OPTIMIZE_C_FLAGS)
-  # CHECK_C_FLAG(Ofast GROUPS OPTIMIZE_C_FLAGS)
-  # CHECK_C_FLAG(march=native GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_C_FLAG(fstrength-reduce GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_C_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_C_FLAG(finline-functions GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_CXX_FLAG(O3 GROUPS OPTIMIZE_CXX_FLAGS)
-  # CHECK_CXX_FLAG(Ofast GROUPS OPTIMIZE_CXX_FLAGS)
-  # CHECK_CXX_FLAG(march=native GROUPS OPTIMIZE_CXX_FLAGS)
-  CHECK_CXX_FLAG(fstrength-reduce GROUPS OPTIMIZE_CXX_FLAGS)
-  CHECK_CXX_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_CXX_FLAGS)
-  CHECK_CXX_FLAG(finline-functions GROUPS OPTIMIZE_CXX_FLAGS)
-  CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
 
-  # FIXME: need to conditionally set gcc-ar/gcc-ranlib if we using -flto
-  #######
-  # CHECK_C_FLAG(flto GROUPS OPTIMIZE_C_FLAGS)
-  # CHECK_CXX_FLAG(flto GROUPS OPTIMIZE_CXX_FLAGS)
-  # SET(CMAKE_AR "gcc-ar" CACHE FILEPATH "Archiver" FORCE)
-  # SET(CMAKE_RANLIB "gcc-ranlib" CACHE FILEPATH "Ranlib" FORCE)
+# The following tests are almost entirely for gcc/llvm style flags, so
+# we don't unnecessarily slow down the Windows build.
+if(NOT MSVC)
+
+  # -O3/-Ofast can enable -ffast-math which can provoke a stack
+  # corruption in the shadow computations because of strict aliasing
+  # getting enabled.  we _require_ -fno-strict-aliasing until someone
+  # changes how lists are managed.  -fast-math results in non-IEEE
+  # floating point math among a handful of other optimizations that
+  # cause substantial error in ray tracing and tessellation (and
+  # probably more).
+
+  CHECK_C_FLAG(O3 GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(O3 GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # goes a step beyond O3, possibly using dangerous imprecise math
+  # CHECK_C_FLAG(Ofast GROUPS OPTIMIZE_C_FLAGS)
+  # CHECK_CXX_FLAG(Ofast GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # binaries will not necessarily work on a different machine
+  CHECK_C_FLAG(march=native GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(march=native GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # perform interprocedural analysis, slows compilation heavily
+  CHECK_C_FLAG(fipa-pta GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(fipa-pta GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # enabled at -O2, but not in older compilers
+  CHECK_C_FLAG(fstrength-reduce GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(fstrength-reduce GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # enabled at -O2, but not in older compilers
+  CHECK_C_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # enabled at -O3, but not in older compilers
+  CHECK_C_FLAG(finline-functions GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(finline-functions GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # Profile-Guided Optimization -- this requires a two-pass compile,
+  # with BRLCAD_PGO=ON and (optionally) the PGO_PATH environment
+  # variable set to a temp folder
+
+  set(pgo_flags_found "")
+  if("$ENV{PGO_PATH}" STREQUAL "")
+    set(BRLCAD_PGO_PATH "${CMAKE_BINARY_DIR}/.profiling")
+  else(NOT "$ENV{PGO_PATH}" STREQUAL "")
+    set(BRLCAD_PGO_PATH "$ENV{PGO_PATH}")
+  endif("$ENV{PGO_PATH}" STREQUAL "")
+
+  if(BRLCAD_PGO AND NOT EXISTS "${BRLCAD_PGO_PATH}")
+
+    # gcc-style GEN
+    if("${pgo_flags_found}" STREQUAL "")
+      cmake_push_check_state()
+        set(flags "fprofile-generate=\"${BRLCAD_PGO_PATH}\" -Wno-error=coverage-mismatch -fprofile-correction")
+        set(CMAKE_REQUIRED_FLAGS "-${flags}")
+        CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
+        CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
+      cmake_pop_check_state()
+    endif("${pgo_flags_found}" STREQUAL "")
+
+    # llvm-style GEN
+    if("${pgo_flags_found}" STREQUAL "")
+      cmake_push_check_state()
+        set(flags "fprofile-generate=\"${BRLCAD_PGO_PATH}\"")
+        set(CMAKE_REQUIRED_FLAGS "-${flags}")
+        CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
+        CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
+      cmake_pop_check_state()
+    endif("${pgo_flags_found}" STREQUAL "")
+
+    if(NOT "${pgo_flags_found}" STREQUAL "")
+      DISTCLEAN(${BRLCAD_PGO_PATH})
+    endif(NOT "${pgo_flags_found}" STREQUAL "")
+
+  elseif(BRLCAD_PGO AND EXISTS "${BRLCAD_PGO_PATH}")
+
+    # gcc-style USE
+    if("${pgo_flags_found}" STREQUAL "")
+      cmake_push_check_state()
+        set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\" -Wno-error=coverage-mismatch -fprofile-correction")
+        set(CMAKE_REQUIRED_FLAGS "-${flags}")
+        CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
+        CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
+      cmake_pop_check_state()
+    endif("${pgo_flags_found}" STREQUAL "")
+
+    # llvm-style USE
+    if("${pgo_flags_found}" STREQUAL "")
+      cmake_push_check_state()
+        set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\"")
+        set(CMAKE_REQUIRED_FLAGS "-${flags}")
+        CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
+        CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
+      cmake_pop_check_state()
+    endif("${pgo_flags_found}" STREQUAL "")
+  endif(BRLCAD_PGO AND NOT EXISTS "${BRLCAD_PGO_PATH}")
+
+  # CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
+  # CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # link-time optimization (LTO) results in slower linking, more
+  # warnings, and better optimization
+  CHECK_C_FLAG(flto GROUPS OPTIMIZE_C_FLAGS)
+  CHECK_CXX_FLAG(flto GROUPS OPTIMIZE_CXX_FLAGS)
+
+  # GCC 4.9+ introduced "thin" LTO object files that require special
+  # ar/ranlib handling via wrappers or plugin specification.  These
+  # wrappers work fine even if we're not using LTO, so just use them
+  # if found.
+  if (CMAKE_C_COMPILER_ID MATCHES "GNU")
+    find_program(GCC_AR_LTO ${CMAKE_C_COMPILER}-ar NAMES gcc-ar DOC "GNU ARchiver wrapper with LTO support")
+    if (GCC_AR_LTO)
+      SET(CMAKE_AR "${GCC_AR_LTO}" CACHE FILEPATH "Archiver" FORCE)
+    endif (GCC_AR_LTO)
+    find_program(GCC_RANLIB_LTO ${CMAKE_C_COMPILER}-ranlib NAMES gcc-ranlib DOC "GNU Ranlib wrapper with LTO support")
+    if (GCC_RANLIB_LTO)
+      SET(CMAKE_RANLIB "${GCC_RANLIB_LTO}" CACHE FILEPATH "Ranlib" FORCE)
+    endif (GCC_RANLIB_LTO)
+  endif (CMAKE_C_COMPILER_ID MATCHES "GNU")
+
+  # only omit the frame pointer if we have no interest in profiling or
+  # debugging.
+
   if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
     if(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
       CHECK_C_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
@@ -1943,6 +2042,8 @@ if(NOT MSVC)
     endif(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
   endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
+  # add optimization flags to either all configurations, if enabled,
+  # or just Release builds.
   if(${BRLCAD_FLAGS_OPTIMIZATION} MATCHES "AUTO")
     if(CMAKE_CONFIGURATION_TYPES)
       set(opt_conf_list "Release")
@@ -2085,8 +2186,8 @@ if(NOT MSVC)
   if(BRLCAD_ENABLE_STRICT)
     # If we're going strict, suppress C11 warnings about isnan due to
     # clang issue:  https://llvm.org/bugs/show_bug.cgi?id=17788
-    CHECK_C_FLAG(Wno-c11-extensions)
-    CHECK_CXX_FLAG(Wno-c11-extensions)
+#    CHECK_C_FLAG(Wno-c11-extensions)
+#    CHECK_CXX_FLAG(Wno-c11-extensions)
 
     # Add the flag that actually turns warnings into errors
     CHECK_C_FLAG(Werror)
@@ -3268,13 +3369,13 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif(BRLCAD_ENABLE_WIX)
     if(CMAKE_CL_64)
       set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_win64")
-      set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME} ${CPACK_PACKAGE_VERSION} win64")
+      set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "BRL-CAD ${BRLCAD_VERSION} win64")
       # Use the setting from http://public.kitware.com/pipermail/cmake/2013-June/055000.html to
       # provide the correct default 64 bit directory with older CMake versions
       set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
     else(CMAKE_CL_64)
       set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_win32")
-      set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME} ${CPACK_PACKAGE_VERSION} win32")
+      set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "BRL-CAD ${BRLCAD_VERSION} win32")
       set(CPACK_NSIS_PACKAGE_NAME "BRL-CAD (32 Bit)")
     endif(CMAKE_CL_64)
   endif(WIN32)

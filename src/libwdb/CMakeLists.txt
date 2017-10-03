@@ -38,20 +38,8 @@ set(LIBWDB_SOURCES
   wdb.c
   )
 
-# Initialize libwdb_DEFINES in case of reconfiguration
-set(libwdb_DEFINES "")
-
-# Set libwdb compile definitions
-get_property(libwdb_DEFINES GLOBAL PROPERTY libwdb_DEFINES)
-if(CPP_DLL_DEFINES)
-  LIST(APPEND libwdb_DLL_DEFINES "ON_DLL_IMPORTS")
-  set_property(GLOBAL PROPERTY libwdb_DLL_DEFINES "${libwdb_DLL_DEFINES}")
-endif(CPP_DLL_DEFINES)
-set_property(GLOBAL PROPERTY libwdb_DEFINES "${libwdb_DEFINES}")
-
 BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "librt;libnmg;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARY}")
 set_target_properties(libwdb PROPERTIES VERSION 20.0.1 SOVERSION 20)
-
 
 # Local Variables:
 # tab-width: 8

@@ -161,15 +161,17 @@ if(MSVC)
   # msvc does not append 'lib' - do it here to have consistent name
   set_target_properties(netpbm PROPERTIES PREFIX "lib")
   set_target_properties(netpbm PROPERTIES IMPORT_PREFIX "lib")
-
   set_property(TARGET netpbm APPEND PROPERTY COMPILE_DEFINITIONS "NETPBM_DLL_EXPORTS")
 endif(MSVC)
 
 if(BUILD_STATIC_LIBS)
   add_library(netpbm-static STATIC ${NETPBM_SRCS})
-  if(NOT WIN32)
+  if(MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(netpbm-static PROPERTIES PREFIX "lib")
+  else(MSVC)
     set_target_properties(netpbm-static PROPERTIES OUTPUT_NAME "netpbm")
-  endif(NOT WIN32)
+  endif(MSVC)
   install(TARGETS netpbm-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

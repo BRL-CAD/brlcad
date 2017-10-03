@@ -1036,7 +1036,7 @@ wdb_vls_long_dpp(struct rt_wdb *wdbp,
     const char *type=NULL;
     int max_nam_len = 0;
     int max_type_len = 0;
-    struct directory *dp;
+    struct directory *dp = NULL;
 
     bu_sort((void *)list_of_names,
 	    (unsigned)num_in_list, (unsigned)sizeof(struct directory *),

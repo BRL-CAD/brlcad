@@ -481,7 +481,8 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 	       closest->dist, nmg_class_name(closest->nmg_class));
 }
 
-
+/* TODO - do we need this? */
+#if 0
 /**
  * This is intended as an internal routine to support nmg_lu_reorient().
  *
@@ -578,6 +579,7 @@ again:
     }
     return nmg_class;
 }
+#endif
 
 
 /* Ray direction vectors for Jordan curve algorithm */
@@ -2090,7 +2092,8 @@ nmg_classify_pt_loop(const point_t pt,
     return closest.nmg_class;
 }
 
-
+/* TODO - do we need this? */
+#if 0
 /**
  * Find any point that is interior to LU
  *
@@ -2193,6 +2196,7 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
     VMOVE(pt, average_pt);
     return 4;
 }
+#endif
 
 
 /**

@@ -15,15 +15,12 @@ if(NOT LIB_DIR)
   set(LIB_DIR lib)
 endif(NOT LIB_DIR)
 
-if(MSVC)
-  add_definitions("-DRPLY_DLL_EXPORTS")
-endif(MSVC)
-
 add_library(rply rply.c)
 if(MSVC)
   # msvc does not append 'lib' - do it here to have consistent name
   set_target_properties(rply PROPERTIES PREFIX "lib")
   set_target_properties(rply PROPERTIES IMPORT_PREFIX "lib")
+  set_property(TARGET rply APPEND PROPERTY COMPILE_DEFINITIONS "RPLY_DLL_EXPORTS")
 endif(MSVC)
 install(TARGETS rply
   RUNTIME DESTINATION ${BIN_DIR}

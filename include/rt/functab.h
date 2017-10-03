@@ -116,6 +116,9 @@ struct rt_functab {
 		     struct soltab *stp);
 #define RTFUNCTAB_FUNC_CURVE_CAST(_func) ((void (*)(struct curvature *, struct hit *, struct soltab *))_func)
 
+    int (*ft_classify)(const struct soltab * /*stp*/, const vect_t /*min*/, const vect_t /*max*/, const struct bn_tol * /*tol*/);
+#define RTFUNCTAB_FUNC_CLASS_CAST(_func) ((int (*)(const struct soltab *, const vect_t, const vect_t, const struct bn_tol *))_func)
+
     void (*ft_free)(struct soltab * /*stp*/);
 #define RTFUNCTAB_FUNC_FREE_CAST(_func) ((void (*)(struct soltab *))_func)
 

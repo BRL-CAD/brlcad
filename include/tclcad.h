@@ -45,8 +45,6 @@ __BEGIN_DECLS
 #ifndef TCLCAD_EXPORT
 #  if defined(TCLCAD_DLL_EXPORTS) && defined(TCLCAD_DLL_IMPORTS)
 #    error "Only TCLCAD_DLL_EXPORTS or TCLCAD_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define TCLCAD_EXPORT
 #  elif defined(TCLCAD_DLL_EXPORTS)
 #    define TCLCAD_EXPORT __declspec(dllexport)
 #  elif defined(TCLCAD_DLL_IMPORTS)

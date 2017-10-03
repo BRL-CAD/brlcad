@@ -226,7 +226,6 @@ set(LIBRT_SOURCES
   screened_poisson.cpp
   search.c
   shoot.c
-  spectrum.c
   tol.c
   transform.c
   tree.c
