@@ -218,9 +218,13 @@ do
                                   shift;;
      --disable-gdiam)                options="$options -DBRLCAD_GDIAM=SYSTEM";
                                   shift;;
-     --enable-bullet)                options="$options -DBRLCAD_BULLET=BUNDLED";
+     --enable-proj4)                options="$options -DBRLCAD_PROJ4=BUNDLED";
                                   shift;;
-     --disable-bullet)                options="$options -DBRLCAD_BULLET=SYSTEM";
+     --disable-proj4)                options="$options -DBRLCAD_PROJ4=SYSTEM";
+                                  shift;;
+     --enable-gdal)                options="$options -DBRLCAD_GDAL=BUNDLED";
+                                  shift;;
+     --disable-gdal)                options="$options -DBRLCAD_GDAL=SYSTEM";
                                   shift;;
      --prefix=*)   	          inputstr=$1;
 				  options="$options -DCMAKE_INSTALL_PREFIX=${inputstr#--prefix=}";

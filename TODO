@@ -27,9 +27,30 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   routines that need to autogenerate names to use the new
   bu_namegen/db_namegen functions.
 
+* Explicitly list the CMakeLists.txt files rather than adding
+  them automatically in the add_subdirectory override, now that
+  we are listing all files explicitly - preserve the new simplicity
+
+* renamed zlib and libpng when building bundled to avoid conflicting
+  with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
+  with name z_brlcad (perhaps as a post-compile rename custom command)
+  and png_brlcad respectively.
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* investigate possibility of using simple, compact libs
+  like miniz and lodepng to replace the complexity of
+  managing zlib and libpng in src/other.  These have been
+  a source of ongoing annoyance, particularly (but not
+  exclusively) on OSX.
+
+* remove libmultispectral and related codes - investigation
+  by Sean indicates these haven't been working for a while
+  and may not have been fully mature originally.  They are
+  also adding complexity and maintenance burden, so time to
+  remove.
 
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
@@ -96,6 +117,17 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* bullet integration - need to expose restitution as an
+  object parameter so we can configure behavior:
+  http://www.bulletphysics.org/Bullet/phpBB3/viewtopic.php?p=&f=&t=3248
+
+* look into https://github.com/garyhouston/hsrex, which
+  is a stand-alone version of Henry Spencer's most modern
+  regex library, as a replacement for the older version in
+  src/other/libregex.  May actually want to re-do the
+  extraction from Tcl, as they have recent patches:
+  https://github.com/tcltk/tcl/tree/master/generic
 
 * afl on libged/mged/rt/...
 

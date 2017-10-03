@@ -36,8 +36,8 @@
 
 #include "./burst.h"
 #include "./trie.h"
-#include "./ascii.h"
 #include "./extern.h"
+#include "./ascii.h"
 
 
 #ifndef SIGCLD

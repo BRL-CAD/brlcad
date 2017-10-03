@@ -1,7 +1,6 @@
 set(cmake_ignore_files
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
-  BRLCAD_CompilerFlags.cmake
   BRLCAD_Options.cmake
   BRLCAD_Summary.cmake
   BRLCAD_Targets.cmake
@@ -32,6 +31,7 @@ set(cmake_ignore_files
   FindOpenEXR.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
+  FindPROJ4.cmake
   FindRE2C.cmake
   FindREGEX.cmake
   FindSCL.cmake

@@ -289,15 +289,11 @@ get_args(int argc, const char *argv[])
 			bu_log("ERROR: invalid color string: '%s'\n", bu_optarg);
 			return 0;
 		    }
-#if defined(_WIN32)
-		    VMOVE(background, color.buc_rgb);
-#else
 		    {
 			char buf[128] = {0};
 			sprintf(buf, "set background=%f/%f/%f", color.buc_rgb[RED], color.buc_rgb[GRN], color.buc_rgb[BLU]);
 			(void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
 		    }
-#endif
 		}
 		break;
 	    case 'T':

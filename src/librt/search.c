@@ -92,6 +92,7 @@
 #  undef __restrict
 #endif
 #define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
+#include <sys/types.h> /* for mingw regex.h->stdio.h types */
 #include <regex.h>
 
 #include "bu/cmd.h"

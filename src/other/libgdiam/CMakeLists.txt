@@ -30,6 +30,9 @@ if(BUILD_STATIC_LIBS)
   if(CMAKE_CL_64)
     set_target_properties(libgdiam-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
   endif(CMAKE_CL_64)
+  if(NOT MSVC)
+    set_target_properties(libgdiam-static PROPERTIES OUTPUT_NAME "libgdiam")
+  endif(NOT MSVC)
 endif(BUILD_STATIC_LIBS)
 
 

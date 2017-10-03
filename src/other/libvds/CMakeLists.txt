@@ -94,11 +94,17 @@ if(BUILD_STATIC_LIBS)
   if(CMAKE_CL_64)
     set_target_properties(libvds-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
   endif(CMAKE_CL_64)
+  if(NOT MSVC)
+    set_target_properties(libvds-static PROPERTIES OUTPUT_NAME "libvds")
+  endif(NOT MSVC)
 
   add_library(stdvds-static STATIC ${STD_SRCS})
   if(CMAKE_CL_64)
     set_target_properties(stdvds-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
   endif(CMAKE_CL_64)
+  if(NOT MSVC)
+    set_target_properties(stdvds-static PROPERTIES OUTPUT_NAME "stdvds")
+  endif(NOT MSVC)
 endif(BUILD_STATIC_LIBS)
 
 # Local Variables:

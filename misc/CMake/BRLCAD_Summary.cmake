@@ -239,7 +239,6 @@ function(BRLCAD_Summary)
   ###################################################
 
   # Build options
-  set(BRLCAD_BULLET_BUILD_LABEL "Compile Bullet ")
   set(BRLCAD_TCL_BUILD_LABEL "Compile Tcl ")
   set(BRLCAD_TK_BUILD_LABEL "Compile Tk ")
   set(BRLCAD_INCRTCL_BUILD_LABEL "Compile Itcl/Itk ")
@@ -276,7 +275,7 @@ function(BRLCAD_Summary)
   # Make sets to use for iteration over all report items
   set(BUILD_REPORT_ITEMS
     TCL TK INCRTCL IWIDGETS TKHTML TKPNG TKTABLE PNG REGEX ZLIB
-    TERMLIB UTAHRLE OPENNURBS SC BULLET)
+    TERMLIB UTAHRLE OPENNURBS SC)
 
   set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_OPENGL

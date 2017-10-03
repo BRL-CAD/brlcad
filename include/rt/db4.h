@@ -271,6 +271,7 @@ struct ars_rec {
     char	a_id;			/* ID_ARS_A */
     char	a_type;			/* primitive type */
     char	a_name[NAMESIZE];	/* unique name */
+    /* these cannot be size_t due to v4 compatibility */
     short	a_m;			/* # of curves */
     short	a_n;			/* # of points per curve */
     short	a_curlen;		/* # of granules per curve */

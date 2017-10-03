@@ -63,7 +63,7 @@ vls_incr_main(int argc, char **argv)
 
     bu_vls_sprintf(&name, "%s", argv[1]);
     while (i < inc_count) {
-	(void)bu_vls_incr(&name, rs, formatting);
+	(void)bu_vls_incr(&name, rs, formatting, NULL, NULL);
 	i++;
     }
 

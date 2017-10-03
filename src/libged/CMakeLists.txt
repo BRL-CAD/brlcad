@@ -2,14 +2,21 @@
 # if GED command stuff is pushed into the actual subdirs, the autoconf vs cmake
 # verification (sh/cmakecheck.sh) will fail on dist-hook.  For now, just
 # handle it as part of libged
-if(BULLET_LIBRARIES)
-  set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${BULLET_LIBRARIES})
-  set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
+if(BRLCAD_ENABLE_BULLET)
   add_definitions(-DHAVE_BULLET=1)
-  if(CPP_DLL_DEFINES)
-    add_definitions(-DBULLET_DLL_IMPORTS)
-  endif(CPP_DLL_DEFINES)
-endif(BULLET_LIBRARIES)
+  set(LIBGED_CMD_INCLUDE_DIRS
+    ${LIBGED_CMD_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate
+    )
+  include_directories(SYSTEM
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/bullet
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/LinearMath
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletCollision
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletDynamics
+    ${CMAKE_CURRENT_SOURCE_DIR}/simulate/BulletSoftBody
+    )
+endif(BRLCAD_ENABLE_BULLET)
+include(simulate/bullet/CMakeLists.txt)
 
 if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${ADAPTAGRAMS_LIBRARIES})
@@ -31,6 +38,7 @@ LEMON_TARGET(
 ADD_PERPLEX_LEMON_DEPENDENCY(${DPLOT_READER}_scanner ${DPLOT_READER}_parser)
 
 set(LIBGED_SOURCES
+  ${LIBGED_SOURCES}
   ${PERPLEX_${DPLOT_READER}_scanner_SRC}
   ${LEMON_${DPLOT_READER}_parser_SRC}
   3ptarb.c

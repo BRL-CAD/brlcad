@@ -34,7 +34,9 @@ if(BUILD_STATIC_LIBS)
   add_library(tinycthread-static STATIC tinycthread.c)
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(tinycthread PROPERTIES PREFIX "lib")
+    set_target_properties(tinycthread-static PROPERTIES PREFIX "lib")
+  else(MSVC)
+    set_target_properties(tinycthread-static PROPERTIES OUTPUT_NAME "tinycthread")
   endif(MSVC)
   install(TARGETS tinycthread-static
     RUNTIME DESTINATION ${BIN_DIR}

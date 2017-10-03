@@ -34,8 +34,10 @@ if(BUILD_STATIC_LIBS)
   add_library(rply-static STATIC rply.c)
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(rply PROPERTIES PREFIX "lib")
-  endif()
+    set_target_properties(rply-static PROPERTIES PREFIX "lib")
+  else(MSVC)
+    set_target_properties(rply-static PROPERTIES OUTPUT_NAME "rply")
+  endif(MSVC)
   install(TARGETS rply-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

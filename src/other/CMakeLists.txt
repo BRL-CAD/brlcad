@@ -272,6 +272,7 @@ THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES E
 if(BRLCAD_PNG_BUILD)
 
   set(PNG_LIBRARY png CACHE STRING "PNG_LIBRARY" FORCE)
+  set(PNG_PNG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/libpng;${CMAKE_CURRENT_SOURCE_DIR}/libpng" CACHE STRING "PNG include directory" FORCE)
 
   # On Haiku the find_library call sets this variable directly, which is not
   # how we handle things elsewhere in BRL-CAD - unset the variable in that
@@ -290,12 +291,8 @@ if(BRLCAD_PNG_BUILD)
   SetTargetFolder(png "Third Party Libraries")
   SetTargetFolder(png_static "Third Party Libraries")
   SetTargetFolder(genfiles "Third Party Libraries")
-ELSE(BRLCAD_PNG_BUILD)
-  # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
-  # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
-  # handle it here.
-  set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 endif(BRLCAD_PNG_BUILD)
+set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 # Since SKIP_INSTALL_FILES doesn't have a PNG prefix, we'll unset it once we're done
 unset(SKIP_INSTALL_FILES CACHE)
 unset(SKIP_INSTALL_FILES)
@@ -978,21 +975,6 @@ mark_as_advanced(LIBGDIAM_INCLUDE_DIR)
 SetTargetFolder(libgdiam "Third Party Libraries")
 SetTargetFolder(libgdiam-static "Third Party Libraries")
 
-# Bullet - Real-Time Physics Simulation libraries
-set(Bullet_DESCRIPTION "
-Option for enabling and disabling compilation of the Bullet Realtime
-Physics Simulation Libraries provided with BRL-CAD's source
-distribution.  Default is AUTO, responsive to the toplevel
-BRLCAD_BUNDLED_LIBS option and testing first for a system version
-if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS BRLCAD_ENABLE_BULLET BRLCAD_LEVEL2 ALIASES ENABLE_BULLET)
-if(BRLCAD_BULLET_BUILD)
-  set(BULLET_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/bullet/src" CACHE STRING "Directory containing bullet headers." FORCE)
-  set(BULLET_LIBRARIES "BulletSoftBody;BulletDynamics;BulletCollision;LinearMath" CACHE STRING "BRL-CAD bullet lib." FORCE)
-  SetTargetFolder(bullet "Third Party Libraries")
-endif(BRLCAD_BULLET_BUILD)
-
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
 # is code that will make use of it if it is available.  If that code
 # becomes sufficiently useful, Adaptagrams will be integrated.  In the
@@ -1035,6 +1017,54 @@ SetTargetFolder(rply "Third Party Libraries")
 SetTargetFolder(rply-static "Third Party Libraries")
 mark_as_advanced(RPLY_LIBRARIES)
 mark_as_advanced(RPLY_INCLUDE_DIRS)
+
+# PROJ.4 library - used by GDAL
+set(proj4_DESCRIPTION "
+Option for enabling and disabling compilation of the PROJ.4 geographic
+projection library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(proj-4 PROJ4 proj4 proj4_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_PROJ4)
+if(BRLCAD_PROJ4_BUILD)
+  set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
+  set(PROJ4_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/proj-4/proj_config.h")
+  SetTargetFolder(proj "Third Party Libraries/GDAL")
+endif(BRLCAD_PROJ4_BUILD)
+mark_as_advanced(PROJ4_INCLUDE_DIRS)
+mark_as_advanced(PROJ4_LIBRARY)
+mark_as_advanced(USE_THREAD)
+
+# GDAL library
+set(gdal_DESCRIPTION "
+Option for enabling and disabling compilation of the GDAL geographic
+library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(gdal GDAL gdal gdal_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_GDAL)
+if(BRLCAD_GDAL_BUILD)
+  set(GDAL_LIBRARY gdal CACHE STRING "libgdal" FORCE)
+  set(GDAL_INCLUDE_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/gdal"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/port"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/gcore"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/alg"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/ogr"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/ogr/ogrsf_frmts"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/gnm"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/apps"
+    "${BRLCAD_SOURCE_DIR}/src/other/gdal/frmts/vrt"
+    )
+  set(GDAL_INCLUDE_DIR "${GDAL_INCLUDE_DIR}" CACHE STRING "libgdal includes" FORCE)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/gdal/cpl_config.h")
+endif(BRLCAD_GDAL_BUILD)
+mark_as_advanced(GDAL_CONFIG)
+mark_as_advanced(GDAL_INCLUDE_DIR)
+mark_as_advanced(GDAL_LIBRARY)
 
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)

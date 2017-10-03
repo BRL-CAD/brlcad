@@ -175,6 +175,8 @@ SetTargetFolder(xml "Third Party Libraries")
 SetTargetFolder(xslt "Third Party Libraries")
 SetTargetFolder(exslt "Third Party Libraries")
 
+CMAKEFILES(README)
+
 # Locac Variables:
 # tab-width: 8
 # mode: cmake

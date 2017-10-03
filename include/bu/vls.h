@@ -502,6 +502,12 @@ BU_EXPORT extern int bu_vls_simplify(struct bu_vls *vp, const char *keep, const 
 
 
 /**
+ * callback type for bu_vls_incr()
+ */
+typedef int (*bu_vls_uniq_t)(struct bu_vls *v, void *data);
+
+
+/**
    A problem frequently encountered when generating names is generating names
    that are in some sense structured but avoid colliding.  For example, given a
    geometry object named:
@@ -615,7 +621,7 @@ BU_EXPORT extern int bu_vls_simplify(struct bu_vls *vp, const char *keep, const 
    struct bu_vls name = BU_VLS_INIT_ZERO;
    bu_vls_sprintf(&name, "%s", estr);
    while (i < 10) {
-       (void)bu_vls_incr(&name, NULL, "0:0:0:0:-");
+       (void)bu_vls_incr(&name, NULL, "0:0:0:0:-", NULL, NULL);
        bu_log("%s\n", bu_vls_addr(&name));
    }
    bu_vls_free(&name);
@@ -640,15 +646,14 @@ BU_EXPORT extern int bu_vls_simplify(struct bu_vls *vp, const char *keep, const 
    struct bu_vls name = BU_VLS_INIT_ZERO;
    bu_vls_sprintf(&name, "%s0.%s", bu_path_component(estr,BU_PATH_EXTLESS),bu_path_component(estr,BU_PATH_EXT));
    while (i < 10) {
-       (void)bu_vls_incr(&name, NULL, "4:10:0:10:_");
+       (void)bu_vls_incr(&name, NULL, "4:10:0:10:_", NULL, NULL);
        bu_log("%s\n", bu_vls_addr(&name));
    }
    bu_vls_free(&name);
    @endcode
 
 */
-BU_EXPORT extern int bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec);
-
+BU_EXPORT extern int bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, bu_vls_uniq_t uniq_test, void *data);
 
 __END_DECLS
 
