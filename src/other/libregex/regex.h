@@ -8,12 +8,12 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- *  * Redistributions of source code must retain the above copyright
+ * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *  * Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -102,15 +102,15 @@
 typedef off_t regoff_t;
 
 typedef struct {
-    int re_magic;
-    size_t re_nsub;		/* number of parenthesized subexpressions */
-    const char *re_endp;	/* end pointer for REG_PEND */
-    struct re_guts *re_g;	/* none of your business :-) */
+	int re_magic;
+	size_t re_nsub;		/* number of parenthesized subexpressions */
+	const char *re_endp;	/* end pointer for REG_PEND */
+	struct re_guts *re_g;	/* none of your business :-) */
 } regex_t;
 
 typedef struct {
-    regoff_t rm_so;		/* start of match */
-    regoff_t rm_eo;		/* end of match */
+	regoff_t rm_so;		/* start of match */
+	regoff_t rm_eo;		/* end of match */
 } regmatch_t;
 
 /* regcomp() flags */
