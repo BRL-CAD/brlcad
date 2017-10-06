@@ -37,6 +37,7 @@
 
 #if defined (_WIN32)
 #  include <BaseTsd.h>
+#  define snprintf _snprintf
 #endif
 
 #include <limits.h>
