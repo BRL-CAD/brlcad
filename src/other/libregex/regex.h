@@ -37,6 +37,10 @@
 
 #if defined (_WIN32)
 #  include <BaseTsd.h>
+#endif
+
+/* Pre VS2015, MSVC doesn't provide snprintf */
+#if defined(_MSC_VER) && _MSC_VER < 1900
 #  define snprintf _snprintf
 #endif
 
