@@ -916,9 +916,11 @@ CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"
 #----------------------------------------------------------------------
 # If we're not debugging, we want HIDDEN to be defined as static.  Set
 # the NDEBUG flag accordingly, and common.h will take it from there.
-if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+# Don't set this if we're doing multi-config, since whether we want
+# this on is not ultimately decided at configure time.
+if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
   CONFIG_H_APPEND(BRLCAD "#define NDEBUG 1")
-endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
 
 #----------------------------------------------------------------------
 # Decide whether to do a 32 or a 64 bit build.
