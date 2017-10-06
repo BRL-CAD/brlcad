@@ -1388,7 +1388,7 @@ endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 # two-pass compile, once with BRLCAD_PGO=ON on a location that did not
 # exist beforehand (specified via the PGO_PATH environment variable),
 # and again to use profiling metrics captured on "typical" operations
-# and data.  By default, path is BUILDDIR/.profiling
+# and data.  By default, path is BUILDDIR/profiling
 
 option(BRLCAD_PGO "Enable profile-guided optimization (set PGO_PATH environment variable)")
 mark_as_advanced(BRLCAD_PGO)
@@ -1952,7 +1952,7 @@ if(NOT MSVC)
 
   set(pgo_flags_found "")
   if("$ENV{PGO_PATH}" STREQUAL "")
-    set(BRLCAD_PGO_PATH "${CMAKE_BINARY_DIR}/.profiling")
+    set(BRLCAD_PGO_PATH "${CMAKE_BINARY_DIR}/profiling")
   else(NOT "$ENV{PGO_PATH}" STREQUAL "")
     set(BRLCAD_PGO_PATH "$ENV{PGO_PATH}")
   endif("$ENV{PGO_PATH}" STREQUAL "")
