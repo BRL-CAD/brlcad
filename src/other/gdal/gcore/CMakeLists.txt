@@ -58,4 +58,4 @@ set(gcore_srcs
 set_property(SOURCE rasterio_ssse3.cpp APPEND PROPERTY COMPILE_FLAGS "-mssse3")
 
 add_library(gdal_gcore_obj OBJECT ${gcore_srcs})
-set_target_properties(gdal_gcore_obj PROPERTIES FOLDER "Third Party Libraries/gdal")
+set_target_properties(gdal_gcore_obj PROPERTIES FOLDER "Third Party Libraries/GDAL")

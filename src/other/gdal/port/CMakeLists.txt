@@ -64,5 +64,5 @@ endif(ZLIB_LIBRARY)
 
 
 add_library(gdal_cpl_obj OBJECT ${cpl_srcs})
-set_target_properties(gdal_cpl_obj PROPERTIES FOLDER "Third Party Libraries/gdal")
+set_target_properties(gdal_cpl_obj PROPERTIES FOLDER "Third Party Libraries/GDAL")
 
