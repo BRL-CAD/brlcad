@@ -118,13 +118,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   object parameter so we can configure behavior:
   http://www.bulletphysics.org/Bullet/phpBB3/viewtopic.php?p=&f=&t=3248
 
-* look into https://github.com/garyhouston/hsrex, which
-  is a stand-alone version of Henry Spencer's most modern
-  regex library, as a replacement for the older version in
-  src/other/libregex.  May actually want to re-do the
-  extraction from Tcl, as they have recent patches:
-  https://github.com/tcltk/tcl/tree/master/generic
-
 * afl on libged/mged/rt/...
 
 * moodycamel as libbu queue/list/ptbl implementation
