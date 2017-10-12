@@ -1266,10 +1266,9 @@ rt_bool_growstack(register struct resource *resp)
  * -1 tree is in error (GUARD)
  */
 HIDDEN int
-bool_eval(register union tree *treep, struct partition *partp, struct region **trueregp, struct resource *resp)
+bool_eval(register union tree *treep, struct partition *partp, struct resource *resp)
 /* Tree to evaluate */
 /* Partition to evaluate */
-/* XOR true (and overlap) return */
 /* resource pointer for this CPU */
 {
     static union tree tree_not[MAX_PSW];	/* for OP_NOT nodes */
@@ -1282,10 +1281,7 @@ bool_eval(register union tree *treep, struct partition *partp, struct region **t
     RT_CK_TREE(treep);
     RT_CK_PT(partp);
     RT_CK_RESOURCE(resp);
-    if (treep->tr_op != OP_XOR)
-	trueregp[0] = treep->tr_regionp;
-    else
-	trueregp[0] = trueregp[1] = REGION_NULL;
+
     while ((sp = resp->re_boolstack) == (union tree **)0)
 	rt_bool_growstack(resp);
     stackend = &(resp->re_boolstack[resp->re_boolslen]);
@@ -1364,12 +1360,10 @@ pop:
 	    goto pop;
 	case OP_XOR:
 	    if (ret) {
-		/* lhs was true, rhs better not be, or we have an
+		/* lhs was true, rhs better not be or we have an
 		 * overlap condition.  Rewrite as guard node followed
 		 * by rhs.
 		 */
-		if (treep->tr_b.tb_left->tr_regionp)
-		    trueregp[0] = treep->tr_b.tb_left->tr_regionp;
 		tree_guard[resp->re_cpu].tr_op = OP_GUARD;
 		treep = treep->tr_b.tb_right;
 		*sp++ = treep;		/* temp val for guard node */
@@ -1394,8 +1388,6 @@ pop:
 	     */
 	    if (ret) {
 		/* stacked temp val: rhs */
-		if (sp[-1]->tr_regionp)
-		    trueregp[1] = sp[-1]->tr_regionp;
 		return -1;	/* GUARD error */
 	    }
 	    ret = BOOL_TRUE;
@@ -1403,14 +1395,9 @@ pop:
 	    goto pop;
 	case OP_XNOP:
 	    /*
-	     * Special NOP for XOR.  lhs was false.  If rhs is true,
-	     * take note of its regionp.
+	     * Special NOP for XOR.  lhs was false.
 	     */
 	    sp--;			/* pop temp val */
-	    if (ret) {
-		if ((*sp)->tr_regionp)
-		    trueregp[0] = (*sp)->tr_regionp;
-	    }
 	    goto pop;
 	default:
 	    bu_log("bool_eval:  bad pop op [%d]\n", treep->tr_op);
@@ -1424,7 +1411,6 @@ int
 rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t startdist, fastf_t enddist, struct bu_ptbl *regiontable, struct application *ap, const struct bu_bitv *solidbits)
 {
     struct region *lastregion = (struct region *)NULL;
-    struct region *TrueRg[2];
     register struct partition *pp;
     register int claiming_regions;
     int hits_avail = 0;
@@ -1683,8 +1669,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		    lastregion = regp;
 		    continue;
 		}
-		if (bool_eval(regp->reg_treetop, pp, TrueRg,
-			      ap->a_resource) == BOOL_FALSE) {
+		if (bool_eval(regp->reg_treetop, pp, ap->a_resource) == BOOL_FALSE) {
 		    if (RT_G_DEBUG&DEBUG_PARTITION)
 			bu_log("BOOL_FALSE\n");
 		    /* Null out non-claiming region's pointer */

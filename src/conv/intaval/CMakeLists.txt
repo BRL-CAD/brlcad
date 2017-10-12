@@ -3,14 +3,8 @@ set(INTAVAL_INCLUDE_DIRS
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
   )
-LIST(REMOVE_DUPLICATES INTAVAL_INCLUDE_DIRS)
+list(REMOVE_DUPLICATES INTAVAL_INCLUDE_DIRS)
 include_directories(${INTAVAL_INCLUDE_DIRS})
-
-if(MSVC)
-  add_definitions(
-    -DON_DLL_IMPORTS
-    )
-endif(MSVC)
 
 set(tgf_SRCS
   read_dra.cpp

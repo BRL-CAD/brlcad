@@ -138,10 +138,6 @@ eccetera.</para>
 (fb), che gestisce l'apertura di una finestra di framebuffer sulla quale
 effettuare il raytracing.</para>
 
-  <para>- <emphasis role="bold">libmultispectral</emphasis><emphasis role="bold">and liboptical</emphasis> &#xFFFD;
-sono le librerie per lo shading ed il texturing utilizzate dal
-raytracing.</para>
-
   <para>- <emphasis role="bold">libpkg</emphasis> &#xFFFD; &#xFFFD; una libreria che inplementa il
 meccanismo per il richiamo di una procedura remota (rpc). Questa libreria &#xFFFD;
 un predecessore del sistema attuale rpc. Al contrario del tipico servizio

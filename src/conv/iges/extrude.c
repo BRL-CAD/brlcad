@@ -26,11 +26,11 @@ int
 extrude(int entityno)
 {
 
-    fastf_t length;			/* extrusion length */
-    vect_t edir;			/* a unit vector (direction of extrusion */
-    vect_t evect;			/* Scaled vector for extrusion */
-    int sol_num;		/* IGES solid type number */
-    int curve;			/* pointer to directory entry for base curve */
+    fastf_t length = 0.0;		/* extrusion length */
+    vect_t edir = VINIT_ZERO;		/* a unit vector (direction of extrusion */
+    vect_t evect = VINIT_ZERO;		/* Scaled vector for extrusion */
+    int sol_num = 0;			/* IGES solid type number */
+    int curve = 0;			/* pointer to directory entry for base curve */
     struct ptlist *curv_pts;		/* List of points along curve */
     size_t i;
 

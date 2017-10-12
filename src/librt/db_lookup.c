@@ -31,6 +31,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/vls.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 

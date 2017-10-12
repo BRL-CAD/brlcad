@@ -77,7 +77,7 @@ HIDDEN void wgl_clipper(fb *ifp);
 HIDDEN int wgl_getmem(fb *ifp);
 HIDDEN void backbuffer_to_screen(fb *ifp, int one_y);
 HIDDEN void wgl_cminit(fb *ifp);
-HIDDEN PIXELFORMATDESCRIPTOR * wgl_choose_visual(fb *ifp);
+HIDDEN int wgl_choose_visual(fb *ifp);
 HIDDEN int is_linear_cmap(fb *ifp);
 
 HIDDEN int wgl_nwindows = 0; 	/* number of open windows */
@@ -166,7 +166,6 @@ struct wglinfo {
     int vp_height;		/* actual viewport height */
     struct wgl_clip clip;	/* current view clipping */
     Window cursor;
-    PIXELFORMATDESCRIPTOR *vip;	/* pointer to info on current visual */
     Colormap xcmap;		/* xstyle color map */
     int use_ext_ctrl;		/* for controlling the Wgl graphics engine externally */
     HDC hdc;
@@ -554,6 +553,7 @@ wgl_open(fb *ifp, const char *file, int width, int height)
     HINSTANCE hinstance;
     DWORD Dword;
     WNDCLASS wndclass;
+	int gotvisual;
 
     FB_CK_FB(ifp);
 
@@ -714,7 +714,8 @@ wgl_open(fb *ifp, const char *file, int width, int height)
 
 
     /* Choose an appropriate visual. */
-    if ((WGL(ifp)->vip = wgl_choose_visual(ifp)) == NULL) {
+	gotvisual = wgl_choose_visual(ifp);
+	if (!gotvisual) {
 	fb_log("wgl_open: Couldn't find an appropriate visual.  Exiting.\n");
 	return -1;
     }
@@ -765,7 +766,6 @@ _wgl_open_existing(fb *ifp,
 		   Display *dpy,
 		   Window win,
 		   Colormap cmap,
-		   PIXELFORMATDESCRIPTOR *vip,
 		   HDC hdc,
 		   int width,
 		   int height,
@@ -816,7 +816,6 @@ _wgl_open_existing(fb *ifp,
 
     WGL(ifp)->dispp = dpy;
 
-    WGL(ifp)->vip = vip;
     WGL(ifp)->glxc = glxc;
     SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
     WGL(ifp)->soft_cmap_flag = soft_cmap;
@@ -842,7 +841,7 @@ wgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *f
     struct wgl_fb_info *wgl_internal = (struct wgl_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_WGL_MAGIC, "wgl framebuffer");
     return _wgl_open_existing(ifp, wgl_internal->dpy, wgl_internal->win, wgl_internal->cmap,
-	    wgl_internal->vip, wgl_internal->hdc, width, height,
+	    wgl_internal->hdc, width, height,
 	    wgl_internal->glxc, wgl_internal->double_buffer, wgl_internal->soft_cmap);
     return 0;
 }
@@ -1982,54 +1981,52 @@ backbuffer_to_screen(fb *ifp, int one_y)
  * SGI(ifp)->mi_doublebuffer
  * WGL(ifp)->soft_cmap_flag
  *
- * Return NULL on failure.
+ * Return 0 on failure.
  */
-HIDDEN PIXELFORMATDESCRIPTOR *
+HIDDEN int
 wgl_choose_visual(fb *ifp)
 {
     int iPixelFormat;
-    PIXELFORMATDESCRIPTOR pfd, *ppfd;
-    BOOL good;
-
-    ppfd = &pfd;
+    PIXELFORMATDESCRIPTOR pfd;
+	BOOL good;
 
     iPixelFormat  = GetPixelFormat(WGL(ifp)->hdc);
-    ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
-    ppfd->nVersion = 1;
-    ppfd->dwFlags =  PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_TYPE_RGBA | PFD_STEREO;
-    ppfd->iPixelType = PFD_TYPE_RGBA;
-    ppfd->cColorBits = 24;
-    ppfd->cRedBits = 0;
-    ppfd->cRedShift = 0;
-    ppfd->cGreenBits = 0;
-    ppfd->cGreenShift = 0;
-    ppfd->cBlueBits = 0;
-    ppfd->cBlueShift = 0;
-    ppfd->cAlphaBits = 0;
-    ppfd->cAlphaShift = 0;
-    ppfd->cAccumBits = 0;
-    ppfd->cAccumRedBits = 0;
-    ppfd->cAccumGreenBits = 0;
-    ppfd->cAccumBlueBits = 0;
-    ppfd->cAccumAlphaBits = 0;
-    ppfd->cDepthBits = 32;
-    ppfd->cStencilBits = 0;
-    ppfd->cAuxBuffers = 0;
-    ppfd->iLayerType = PFD_MAIN_PLANE;
-    ppfd->bReserved = 0;
-    ppfd->dwLayerMask = 0;
-    ppfd->dwVisibleMask = 0;
-    ppfd->dwDamageMask = 0;
+    pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+    pfd.nVersion = 1;
+    pfd.dwFlags =  PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_TYPE_RGBA | PFD_STEREO;
+    pfd.iPixelType = PFD_TYPE_RGBA;
+    pfd.cColorBits = 24;
+    pfd.cRedBits = 0;
+    pfd.cRedShift = 0;
+    pfd.cGreenBits = 0;
+    pfd.cGreenShift = 0;
+    pfd.cBlueBits = 0;
+    pfd.cBlueShift = 0;
+    pfd.cAlphaBits = 0;
+    pfd.cAlphaShift = 0;
+    pfd.cAccumBits = 0;
+    pfd.cAccumRedBits = 0;
+    pfd.cAccumGreenBits = 0;
+    pfd.cAccumBlueBits = 0;
+    pfd.cAccumAlphaBits = 0;
+    pfd.cDepthBits = 32;
+    pfd.cStencilBits = 0;
+    pfd.cAuxBuffers = 0;
+    pfd.iLayerType = PFD_MAIN_PLANE;
+    pfd.bReserved = 0;
+    pfd.dwLayerMask = 0;
+    pfd.dwVisibleMask = 0;
+    pfd.dwDamageMask = 0;
 
-    iPixelFormat = ChoosePixelFormat(WGL(ifp)->hdc, ppfd);
-    good = SetPixelFormat(WGL(ifp)->hdc, iPixelFormat, ppfd);
-
+    iPixelFormat = ChoosePixelFormat(WGL(ifp)->hdc, &pfd);
+    good = SetPixelFormat(WGL(ifp)->hdc, iPixelFormat, &pfd);
 
     SGI(ifp)->mi_doublebuffer = 1;
     WGL(ifp)->soft_cmap_flag = 1;
 
-    if (good) return ppfd;
-    else return (PIXELFORMATDESCRIPTOR *)NULL;
+    if (good)
+		return 1;
+    return 0;
 }
 
 

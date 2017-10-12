@@ -42,7 +42,6 @@ set(public_hdrs
   photonmap.h
   pc.h
   pkg.h
-  spectrum.h
   vmath.h
   wdb.h
   )
@@ -81,7 +80,11 @@ CMAKEFILES(${noinst_HEADERS})
 
 set(include_misc
   brlcad_ident.h.in
-  conf
+  conf/BrlcadConfig.tmpl
+  conf/MAJOR
+  conf/MINOR
+  conf/PATCH
+  conf/make.vbs
   config_win.h.in
   )
 CMAKEFILES(${include_misc})

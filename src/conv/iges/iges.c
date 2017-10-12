@@ -72,7 +72,7 @@ static const char *unknown = "Unknown";
 static int unknown_count = 0;
 static int de_pointer_number;
 extern char **independent;
-extern int no_of_indeps;
+extern size_t no_of_indeps;
 extern int solid_is_brep;
 extern int comb_form;
 extern int do_nurbs;
@@ -82,7 +82,7 @@ extern int write_dir_entry(FILE *fp, int entry[]);
 extern int write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern int write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern int write_shell_face_loop(char *name, struct nmgregion *r, int dependent, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
-extern int write_solid_assembly(char *name, int de_list[], int length, int dependent, FILE *fp_dir, FILE *fp_param);
+extern int write_solid_assembly(char *name, int de_list[], size_t length, int dependent, FILE *fp_dir, FILE *fp_param);
 extern int write_planar_nurb(struct faceuse *fu, vect_t u_dir, vect_t v_dir, fastf_t *u_max, fastf_t *v_max, point_t base_pt, FILE *fp_dir, FILE *fp_param);
 extern int write_name_entity(char *name, FILE *fp_dir, FILE *fp_param);
 extern int write_att_entity(struct iges_properties *props, FILE *fp_dir, FILE *fp_param);
@@ -472,8 +472,8 @@ write_color_entity(unsigned char color[3],
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
     float c[3];
+    size_t i;
 
     /* initialize directory entry */
     for (i = 0; i < 21; i++)
@@ -524,7 +524,7 @@ write_attribute_definition(FILE *fp_dir, FILE *fp_param)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
 
     /* initialize directory entry */
     for (i = 0; i < 21; i++)
@@ -586,7 +586,7 @@ iges_init(struct bn_tol *set_tol,
 void
 Print_stats(FILE *fp)
 {
-    int i;
+    size_t i;
     int total_entities = 0;
 
     fprintf(fp, "Wrote the following numbers and type of entities:\n");
@@ -606,7 +606,7 @@ Print_stats(FILE *fp)
 int
 write_dir_entry(FILE *fp, int entry[])
 {
-    int i, j, type_index;
+    size_t i, j, type_index;
     const char *label;
 
     for (type_index = 0; type_index < NO_OF_TYPES; type_index++)
@@ -732,9 +732,9 @@ nmgregion_to_iges(char *name,
     int *brep_de;	/* Directory entry sequence # for BREP Object(s) */
     int vert_de;	/* Directory entry sequence # for vertex list */
     int edge_de;	/* Directory entry sequence # for edge list */
-    int outer_shell_count; /* number of outer shells in nmgregion */
-    int face_count = 0;	/* number of faces in nmgregion */
-    int i;
+    size_t outer_shell_count; /* number of outer shells in nmgregion */
+    size_t face_count = 0;	/* number of faces in nmgregion */
+    size_t i;
 
     NMG_CK_REGION(r);
 
@@ -833,13 +833,13 @@ nmgregion_to_iges(char *name,
 
 int
 verts_to_copious_data(point_t *pts,
-		      int vert_count,
-		      int pt_size,
+		      size_t vert_count,
+		      size_t pt_size,
 		      FILE *fp_dir, FILE *fp_param)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
 
     if (vert_count < 2)
 	return 0;
@@ -899,10 +899,10 @@ nmg_loop_to_tcurve(
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     struct edgeuse *eu;
-    int vert_count = 0;
     point_t *model_pts;
     point_t *param_pts;
-    int i;
+    size_t vert_count = 0;
+    size_t i;
 
     NMG_CK_LOOPUSE(lu);
 
@@ -990,9 +990,9 @@ nmg_fu_to_tsurf(struct faceuse *fu,
     point_t base_pt = VINIT_ZERO;
     fastf_t u_max = 0.0;
     fastf_t v_max = 0.0;
-    int loop_count = 0;
     int *curve_de;
-    int i;
+    size_t loop_count = 0;
+    size_t i;
 
     NMG_CK_FACEUSE(fu);
 
@@ -1145,7 +1145,7 @@ write_line_entity(struct vertex_g *start_vg,
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
 
     NMG_CK_VERTEX_G(start_vg);
     NMG_CK_VERTEX_G(end_vg);
@@ -1189,7 +1189,7 @@ write_linear_bspline(struct vertex_g *start_vg,
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
 
     NMG_CK_VERTEX_G(start_vg);
     NMG_CK_VERTEX_G(end_vg);
@@ -1309,7 +1309,7 @@ write_point_entity(point_t pt,
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
 
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
@@ -1343,7 +1343,7 @@ write_direction_entity(point_t pt,
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
 
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
@@ -1378,7 +1378,7 @@ write_plane_entity(plane_t plane,
     struct bu_vls str = BU_VLS_INIT_ZERO;
     point_t pt_on_plane;	/* a point on the plane */
     int dir_entry[21];
-    int i;
+    size_t i;
 
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
@@ -1423,7 +1423,7 @@ write_planar_nurb(struct faceuse *fu,
     fastf_t umin, umax, vmin, vmax;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
 
     NMG_CK_FACEUSE(fu);
 
@@ -1541,8 +1541,8 @@ write_shell_face_loop(char *name,
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct iges_properties props;
     int *shell_list;
-    int i;
-    int shell_count = 0;
+    size_t i;
+    size_t shell_count = 0;
     int dir_entry[21];
     int name_de;
     int prop_de;
@@ -1560,7 +1560,7 @@ write_shell_face_loop(char *name,
     shell_count = 0;
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	int *face_list;
-	int face_count = 0;
+	size_t face_count = 0;
 
 
 	/* Count faces */
@@ -1576,8 +1576,8 @@ write_shell_face_loop(char *name,
 	/* Shell is made of faces. */
 	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	    int *loop_list;
-	    int loop_count = 0;
-	    int exterior_loop = (-1);	/* index of outer loop (in loop_list) */
+	    size_t loop_count = 0;
+	    long exterior_loop = (-1);	/* index of outer loop (in loop_list) */
 	    int outer_loop_flag = 1;	/* IGES flag to indicate a selected outer loop */
 
 	    if (fu->orientation != OT_SAME)
@@ -1816,7 +1816,7 @@ int
 arb_is_rpp(struct rt_arb_internal *arb)
 {
     vect_t v0, v1, v2;
-    int i;
+    size_t i;
 
     RT_ARB_CK_MAGIC(arb);
 
@@ -1881,7 +1881,7 @@ write_name_entity(char *name,
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
     size_t name_len;
 
     name_len = strlen(name);
@@ -1924,7 +1924,7 @@ tor_to_iges(struct rt_db_internal *ip,
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int name_de;
-    int i;
+    size_t i;
 
     if (ip->idb_type != ID_TOR)
 	bu_log("tor_to_iges called for non-torus (type=%d)\n", ip->idb_type);
@@ -1976,7 +1976,7 @@ sph_to_iges(struct rt_db_internal *ip,
     double radius;
     int dir_entry[21];
     int name_de;
-    int i;
+    size_t i;
 
     if (ip->idb_type != ID_SPH)
 	bu_log("sph_to_iges called for non-sph (type=%d)\n", ip->idb_type);
@@ -2033,7 +2033,7 @@ ell_to_iges(struct rt_db_internal *ip,
     vect_t c_dir;
     int dir_entry[21];
     int name_de;
-    int i;
+    size_t i;
 
     if (ip->idb_type != ID_ELL)
 	bu_log("ell_to_iges called for non-ell (type=%d)\n", ip->idb_type);
@@ -2103,7 +2103,7 @@ rpp_to_iges(struct rt_db_internal *ip,
     vect_t tmp_dir;
     int dir_entry[21];
     int name_de;
-    int i;
+    size_t i;
 
     if (ip->idb_type != ID_ARB8)
 	bu_log("rpp_to_iges called for non-arb (type=%d)\n", ip->idb_type);
@@ -2205,7 +2205,7 @@ tgc_to_iges(struct rt_db_internal *ip,
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     int name_de;
-    int i;
+    size_t i;
 
     if (ip->idb_type != ID_TGC) {
 	bu_log("tgc_to_iges called for non-tgc (type=%d)\n", ip->idb_type);
@@ -2306,7 +2306,7 @@ tgc_to_iges(struct rt_db_internal *ip,
 int
 write_tree_of_unions(char *name,
 		     int de_list[],
-		     int length,
+		     size_t length,
 		     int dependent,
 		     FILE *fp_dir,
 		     FILE *fp_param)
@@ -2317,7 +2317,7 @@ write_tree_of_unions(char *name,
     int name_de;
     int prop_de;
     int color_de = DEFAULT;
-    int i;
+    size_t i;
 
     /* write name entity */
     if (name != NULL)
@@ -2379,7 +2379,7 @@ write_tree_of_unions(char *name,
 int
 write_solid_assembly(char *name,
 		     int de_list[],
-		     int length,
+		     size_t length,
 		     int dependent,
 		     FILE *fp_dir,
 		     FILE *fp_param)
@@ -2390,7 +2390,7 @@ write_solid_assembly(char *name,
     int name_de;
     int prop_de;
     int color_de = DEFAULT;
-    int i;
+    size_t i;
 
     /* write name entity */
     if (name != NULL)
@@ -2458,11 +2458,11 @@ nmg_to_iges(struct rt_db_internal *ip,
 {
     struct model *model;
     struct nmgregion *r;
-    int region_count;
     int *region_de;
     int brep_de;
     int dependent;
-    int i;
+    size_t region_count;
+    size_t i;
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -2505,8 +2505,7 @@ nmg_to_iges(struct rt_db_internal *ip,
 							      fp_dir, fp_param);
 
 	    /* now make the boolean tree */
-	    brep_de = write_tree_of_unions(name, region_de, region_count ,
-					   dependent, fp_dir, fp_param);
+	    brep_de = write_tree_of_unions(name, region_de, region_count, dependent, fp_dir, fp_param);
 
 	    bu_free((char *)region_de, "nmg_to_iges");
 	    return brep_de;
@@ -2568,7 +2567,7 @@ write_xform_entity(mat_t mat,
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
 
     /* initialize directory entry */
     for (i = 0; i < 21; i++)
@@ -2602,7 +2601,7 @@ write_solid_instance(int orig_de,
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
 
     /* initialize directory entry */
     for (i = 0; i < 21; i++)
@@ -2635,7 +2634,7 @@ write_att_entity(struct iges_properties *props,
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
     size_t str_len;
-    int i;
+    size_t i;
 
     /* initialize directory entry */
     for (i = 0; i < 21; i++)
@@ -2704,7 +2703,7 @@ short_comb_to_iges(struct iges_properties *props,
     int props_de;
     int color_de = DEFAULT;
     int status = 1;
-    int i;
+    size_t i;
 
     /* if member has not been converted, don't try to write the tree */
     if (de_pointers[0] == 0)
@@ -2833,20 +2832,20 @@ write_igs_tree(struct bu_vls *str,
 
 int
 tree_to_iges(struct rt_comb_internal *comb,
-	     int length, int dependent,
+	     size_t length, int dependent,
 	     struct iges_properties *props,
 	     int de_pointers[],
 	     FILE *fp_dir, FILE *fp_param)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int actual_length = 0;
+    size_t actual_length = 0;
     int name_de;
     int props_de;
     int color_de = DEFAULT;
     int status = 1;
     int entity_type;
-    int i;
+    size_t i;
 
     RT_CK_COMB(comb);
 
@@ -2923,11 +2922,7 @@ tree_to_iges(struct rt_comb_internal *comb,
 
 
 int
-comb_to_iges(struct rt_comb_internal *comb,
-	     int length, int dependent,
-	     struct iges_properties *props,
-	     int de_pointers[],
-	     FILE *fp_dir, FILE *fp_param)
+comb_to_iges(struct rt_comb_internal *comb, size_t length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param)
 {
     RT_CK_COMB(comb);
 

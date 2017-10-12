@@ -58,6 +58,9 @@ catch {delete class GeometryChecker} error
 	method registerDrawCallbacks { left_callback right_callback } {}
 	method registerEraseCallback { callback } {}
 	method registerOverlapCallback { callback } {}
+
+	method handleHomeKey {} {}
+	method handleEndKey {} {}
     }
 
     private {
@@ -495,6 +498,10 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     if {$_markedCount > 0} {
 	$_status configure -text "[$_status cget -text] ($_markedCount marked resolved)"
     }
+
+    # add key bindings
+    bind $_ck <Home> [code $this handleHomeKey]
+    bind $_ck <End> [code $this handleEndKey]
 }
 
 
@@ -759,11 +766,6 @@ body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
     $itk_component(buttonLeft) state disabled
     $itk_component(buttonRight) state disabled
 
-    # scroll to end of checklist so we can see the successful
-    # subtractions as they move to the bottom of the list
-    $_ck see [lindex [$_ck children {}] end]
-    update
-
     set subCmd "subtractItemRightFromLeft"
     if {$swap} {
 	set subCmd "subtractItemLeftFromRight"
@@ -967,6 +969,14 @@ body GeometryChecker::registerEraseCallback {callback} {
 #
 body GeometryChecker::registerOverlapCallback {callback} {
     set _overlapCallback $callback
+}
+
+body GeometryChecker::handleHomeKey {} {
+    $_ck see [lindex [$_ck children {}] 0]
+}
+
+body GeometryChecker::handleEndKey {} {
+    $_ck see [lindex [$_ck children {}] end]
 }
 
 

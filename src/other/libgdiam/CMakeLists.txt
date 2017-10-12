@@ -1,11 +1,5 @@
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8)
-if(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.0.2)
 
 # Set CMake project name
 project(GDIAM)
@@ -36,6 +30,13 @@ if(BUILD_STATIC_LIBS)
   if(CMAKE_CL_64)
     set_target_properties(libgdiam-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
   endif(CMAKE_CL_64)
+  if(NOT MSVC)
+    set_target_properties(libgdiam-static PROPERTIES OUTPUT_NAME "libgdiam")
+  endif(NOT MSVC)
+  install(TARGETS libgdiam-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
 endif(BUILD_STATIC_LIBS)
 
 

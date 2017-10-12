@@ -50,7 +50,7 @@ struct file_list
     char *file_name;		/* Name of external file */
     char obj_name[NAMESIZE+1];	/* BRL-CAD name for top level object */
 };
-
+#define IGES_FILE_LIST_INIT_ZERO {BU_LIST_INIT_ZERO, NULL, {0}}
 
 /* linked list of used BRL-CAD object names */
 struct name_list

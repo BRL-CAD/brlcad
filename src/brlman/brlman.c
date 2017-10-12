@@ -196,7 +196,7 @@ BRLMAN_MAIN(
     struct bu_opt_desc d[6];
 
 #ifdef HAVE_WINDOWS_H
-    char **argv;
+    const char **argv;
     int argc;
 
     /* Get our args from the c-runtime. Ignore lpszCmdLine. */

@@ -222,10 +222,10 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     rec[0].a.a_id = ID_ARS_A;
     rec[0].a.a_type = ARS; /* obsolete? */
-    rec[0].a.a_m = arip->ncurves;
-    rec[0].a.a_n = arip->pts_per_curve;
-    rec[0].a.a_curlen = per_curve_grans;
-    rec[0].a.a_totlen = per_curve_grans * arip->ncurves;
+    rec[0].a.a_m = (short)arip->ncurves;
+    rec[0].a.a_n = (short)arip->pts_per_curve;
+    rec[0].a.a_curlen = (short)per_curve_grans;
+    rec[0].a.a_totlen = (short)(per_curve_grans * arip->ncurves);
 
     VMOVE(base_pt, &arip->curves[0][0]);
     gno = 1;
@@ -243,8 +243,8 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 	    bp->b_id = ID_ARS_B;
 	    bp->b_type = ARSCONT;	/* obsolete? */
-	    bp->b_n = cur+1;		/* obsolete? */
-	    bp->b_ngranule = (npts/8)+1; /* obsolete? */
+	    bp->b_n = (short)cur+1;		/* obsolete? */
+	    bp->b_ngranule = (short)((npts/8)+1); /* obsolete? */
 
 	    lim = (left > 8) ? 8 : left;
 	    for (el = 0; el < lim; el++) {

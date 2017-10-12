@@ -428,18 +428,6 @@ rt_cline_free(register struct soltab *stp)
 
 
 int
-rt_cline_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-    if (!min) return 0;
-    if (!max) return 0;
-    if (tol) BN_CK_TOL(tol);
-
-    return 0;
-}
-
-
-int
 rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_cline_internal *cline_ip;

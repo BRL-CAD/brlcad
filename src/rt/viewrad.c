@@ -59,8 +59,8 @@ extern point_t viewbase_model;		/* lower_left of viewing plane */
 extern mat_t view2model;
 extern fastf_t viewsize;
 
-extern int width;
-extern int height;
+extern size_t width;
+extern size_t height;
 
 int numreflect = DEFAULTREFLECT;	/* max number of reflections */
 

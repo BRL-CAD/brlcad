@@ -961,7 +961,6 @@ HIDDEN void to_autoview_all_views(struct tclcad_obj *top);
 HIDDEN void to_rt_end_callback_internal(int aborted);
 
 HIDDEN void to_output_handler(struct ged *gedp, char *line);
-HIDDEN int to_log_output_handler(void *client_data, void *vpstr);
 
 HIDDEN int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
 
@@ -1557,6 +1556,10 @@ to_deleteProc(ClientData clientData)
     bu_hash_destroy(top->to_gop->go_edited_paths);
 
     while (BU_LIST_WHILE(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
+#if 1
+	/* This removes the view related command and results in a call to to_deleteViewProc to release resources. */
+	Tcl_DeleteCommand(top->to_interp, bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+#else	
 	BU_LIST_DEQUEUE(&(gdvp->l));
 	bu_vls_free(&gdvp->gdv_name);
 	bu_vls_free(&gdvp->gdv_callback);
@@ -1567,6 +1570,7 @@ to_deleteProc(ClientData clientData)
 	to_close_fbs(gdvp);
 
 	bu_free((void *)gdvp, "ged_dm_view");
+#endif
     }
 
     bu_free((void *)top, "struct ged_obj");
@@ -5498,6 +5502,7 @@ to_deleteViewProc(ClientData clientData)
     bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
     (void)dm_close(gdvp->gdv_dmp);
     bu_free((void *)gdvp->gdv_view, "ged_view");
+    to_close_fbs(gdvp);
     bu_free((void *)gdvp, "ged_dm_view");
 }
 
@@ -9069,6 +9074,9 @@ to_mouse_poly_circ(struct ged *gedp,
 
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    if (gedp->ged_gvp->gv_grid.snap) {
+	ged_snap_to_grid(gedp, &fx, &fy);
+    }
 
     bu_vls_printf(&plist, "{0 ");
 
@@ -9279,6 +9287,9 @@ to_mouse_poly_ell(struct ged *gedp,
 
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    if (gedp->ged_gvp->gv_grid.snap) {
+	ged_snap_to_grid(gedp, &fx, &fy);
+    }
 
     bu_vls_printf(&plist, "{0 ");
 
@@ -9406,6 +9417,9 @@ to_mouse_poly_rect(struct ged *gedp,
 
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
+    if (gedp->ged_gvp->gv_grid.snap) {
+	ged_snap_to_grid(gedp, &fx, &fy);
+    }
 
     if (gdvp->gdv_view->gv_mode == TCLCAD_POLY_SQUARE_MODE) {
 	fastf_t dx, dy;
@@ -10885,6 +10899,7 @@ to_new_view(struct ged *gedp,
 		(ClientData)new_gdvp,
 		to_deleteViewProc);
     }
+
     bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&new_gdvp->gdv_name));
     return GED_OK;
 }
@@ -14260,18 +14275,6 @@ to_output_handler(struct ged *gedp, char *line)
 
     tclcad_eval_noresult(current_top->to_interp, script, 1, (const char **)&line);
 }
-
-HIDDEN int
-to_log_output_handler(void *client_data, void *vpstr)
-{
-    struct ged *gedp = (struct ged *)client_data;
-    char *str = (char *)vpstr;
-
-    to_output_handler(gedp, str);
-
-    return strlen(str);
-}
-
 
 HIDDEN void go_dm_draw_arrows(dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf);
 HIDDEN void go_dm_draw_labels(dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat);

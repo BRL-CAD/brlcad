@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
-#include <assert.h>
 
 #include "vmath.h"
 #include "brep.h"
@@ -53,27 +52,27 @@ main(int argc, char** argv)
 
 	dvec<8> c = a + b;
 	double _c[8] VEC_ALIGN = {2, 5, 8, 11, 14, 17, 20, 23};
-	assert(c == dvec<8>(_c));
+	if (!(c == dvec<8>(_c))) return 1;
 
 	dvec<8> d = a - b;
 	double _d[8] VEC_ALIGN = {-2, -3, -4, -5, -6, -7, -8, -9};
-	assert(d == dvec<8>(_d));
+	if (!(d == dvec<8>(_d))) return 1;
 
 	dvec<8> e = a * b;
 	double _e[8] VEC_ALIGN = {0, 4, 12, 24, 40, 60, 84, 112};
-	assert(e == dvec<8>(_e));
+	if (!(e == dvec<8>(_e))) return 1;
 
 	dvec<8> f = a / b;
 	double _f[8] VEC_ALIGN = {0, 0.25, 0.333333333333, 0.375, 0.40, 0.4166666666, 0.42857142, 0.4375};
-	assert(f == dvec<8>(_f));
+	if (!(f == dvec<8>(_f))) return 1;
 
 	dvec<8> g = a.madd(c, b);
 	double _g[8] VEC_ALIGN = {2, 9, 22, 41, 66, 97, 134, 177};
-	assert(g == dvec<8>(_g));
+	if (!(g == dvec<8>(_g))) return 1;
 
 	dvec<8> h = a.madd(2.0, b);
 	double _h[8] VEC_ALIGN = {2, 6, 10, 14, 18, 22, 26, 30};
-	assert(h == dvec<8>(_h));
+	if (!(h == dvec<8>(_h))) return 1;
 
 	srand(time(NULL));
 	double total = 0.0;
@@ -122,22 +121,22 @@ main(int argc, char** argv)
     vec2d b(200.0, -200.0);
 
     vec2d c = a + b;
-    assert(vequals(c, vec2d(300.0, -300.0)));
+    if (!vequals(c, vec2d(300.0, -300.0))) return 1;
 
     vec2d d = a - b;
-    assert(vequals(d, vec2d(-100.0, 100.0)));
+    if (!vequals(d, vec2d(-100.0, 100.0))) return 1;
 
     vec2d e = a * b;
-    assert(vequals(e, vec2d(20000.0, 20000.0)));
+    if (!vequals(e, vec2d(20000.0, 20000.0))) return 1;
 
     vec2d f = b / a;
-    assert(vequals(f, vec2d(2.0, 2.0)));
+    if (!vequals(f, vec2d(2.0, 2.0))) return 1;
 
     vec2d g = a.madd(20.0, b);
-    assert(vequals(g, vec2d(2200.0, -2200.0)));
+    if (!vequals(g, vec2d(2200.0, -2200.0))) return 1;
 
     vec2d h = a.madd(d, b);
-    assert(vequals(h, vec2d(-9800.0, -10200.0)));
+    if (!vequals(h, vec2d(-9800.0, -10200.0))) return 1;
 
 /* simple performance test */
 

@@ -52,11 +52,7 @@ __BEGIN_DECLS
 
 /* for liboptical */
 OPTICAL_EXPORT extern double AmbientIntensity;
-#ifdef RT_MULTISPECTRAL
-OPTICAL_EXPORT extern struct bn_tabdata *background;
-#else
 OPTICAL_EXPORT extern vect_t background;
-#endif
 
 /* defined in sh_text.c */
 OPTICAL_EXPORT extern struct region env_region; /* environment map region */

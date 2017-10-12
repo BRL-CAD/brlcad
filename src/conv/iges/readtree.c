@@ -24,7 +24,10 @@
 union tree *
 Readtree(mat_t *matp)
 {
-    int length, i, k, op;
+    int length = 0;
+    int i = 0;
+    int k = 0;
+    int op = 0;
     union tree *ptr, *Pop();
     mat_t *new_mat;
 

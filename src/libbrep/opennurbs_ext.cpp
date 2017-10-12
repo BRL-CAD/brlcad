@@ -83,9 +83,12 @@ brep_get_plane_ray(const ON_Ray& r, plane_ray& pr)
 void
 brep_r(const ON_Surface* surf, const plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
 {
+    int ret;
     vect_t vp;
 
-    assert(surf->Ev1Der(uv[0], uv[1], pt, su, sv));
+    ret = surf->Ev1Der(uv[0], uv[1], pt, su, sv);
+    if(!ret) return;
+
     VMOVE(vp, pt);
 
     R[0] = VDOT(pr.n1, vp) - pr.d1;

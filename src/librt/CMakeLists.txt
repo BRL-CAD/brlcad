@@ -77,6 +77,7 @@ set(LIBRT_SOURCES
   op.c
   pr.c
   prep.c
+  primitives/annot/annot.c
   primitives/arb8/arb8.c
   primitives/arb8/arb8_brep.cpp
   primitives/arb8/arb8_mirror.c
@@ -207,7 +208,7 @@ set(LIBRT_SOURCES
   primitives/superell/superell.c
   primitives/superell/superell_brep.cpp
   primitives/superell/superell_mirror.c
-  primitives/table.c
+  primitives/table.cpp
   primitives/tgc/tgc.c
   primitives/tgc/tgc_brep.cpp
   primitives/tgc/tgc_mirror.c
@@ -225,7 +226,6 @@ set(LIBRT_SOURCES
   screened_poisson.cpp
   search.c
   shoot.c
-  spectrum.c
   tol.c
   transform.c
   tree.c
@@ -275,6 +275,7 @@ set(librt_ignored_files
   primitives/revolve/revolve.h
   primitives/rt.cl
   primitives/solver.cl
+  primitives/bool.cl
   primitives/sph/benchmark.sh
   primitives/sph/sph_shot.cl
   primitives/tgc/tgc_shot.cl
@@ -299,6 +300,7 @@ set(CL_FILES
   primitives/common.cl
   primitives/rt.cl
   primitives/solver.cl
+  primitives/bool.cl
 
   primitives/arb8/arb8_shot.cl
   primitives/bot/bot_shot.cl

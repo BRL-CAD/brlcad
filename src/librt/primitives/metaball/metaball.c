@@ -610,18 +610,6 @@ rt_metaball_free(register struct soltab *stp)
 }
 
 
-int
-rt_metaball_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-    if (tol) BN_CK_TOL(tol);
-    if (!min) return 0;
-    if (!max) return 0;
-
-    return 0;
-}
-
-
 void
 rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
 {

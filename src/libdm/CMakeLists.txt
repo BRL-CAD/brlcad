@@ -158,7 +158,11 @@ set(libdm_ignore_files
   dm-wgl.c
   dm-wgl.h
   dm_private.h
-  fontstash
+  fontstash/LICENSE.fontstash
+  fontstash/README.md
+  fontstash/fontstash.h
+  fontstash/glfontstash.h
+  fontstash/stb_truetype.h
   osg-test.cpp
   osg_bob.cpp
   )

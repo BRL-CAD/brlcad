@@ -240,7 +240,8 @@ nmg_show_each_loop(struct shell *s, char **classlist, int redraw, int fancy, con
     nmg_debug = save;		/* restore it */
 }
 
-
+/* TODO - do we need this? */
+#if 0
 HIDDEN void
 nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 {
@@ -393,6 +394,7 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 	fu = fu_next;
     }
 }
+#endif
 
 
 /**
