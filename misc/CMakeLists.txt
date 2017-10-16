@@ -100,10 +100,10 @@ set(misc_ignore_files
   svn2git/svn2git/CMake/FindAPR.cmake
   svn2git/svn2git/CMake/FindSubversionLibrary.cmake
   svn2git/svn2git/CMakeLists.txt
-  svn2git/svn2git/COPYING
+  svn2git/svn2git/LICENSE
   svn2git/svn2git/CommandLineParser.cpp
   svn2git/svn2git/CommandLineParser.h
-  svn2git/svn2git/README
+  svn2git/svn2git/README.md
   svn2git/svn2git/main.cpp
   svn2git/svn2git/repository.cpp
   svn2git/svn2git/repository.h
