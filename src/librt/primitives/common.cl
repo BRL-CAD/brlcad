@@ -161,6 +161,7 @@ struct tgc_specific;
 struct tor_specific;
 struct rhc_specific;
 struct rpc_specific;
+struct hrt_specific;
 
 extern int arb_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct arb_specific *arb);
 extern int bot_shot(RESULT_TYPE *res, const double3 r_pt, double3 r_dir, const uint idx, global const uchar *args);
@@ -175,6 +176,7 @@ extern int tgc_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, c
 extern int tor_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_specific *tor);
 extern int rhc_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct rhc_specific *rhc);
 extern int rpc_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct rpc_specific *rpc);
+extern int hrt_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct hrt_specific *hrt);
 
 extern void arb_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct arb_specific *arb);
 extern void bot_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const uchar *args);
@@ -189,6 +191,7 @@ extern void tgc_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, 
 extern void tor_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tor_specific *tor);
 extern void rhc_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rhc_specific *rhc);
 extern void rpc_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rpc_specific *rpc);
+extern void hrt_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct hrt_specific *hrt);
 
 
 #endif	/* COMMON_CL */

@@ -96,6 +96,7 @@ rt_in_rpp(const double3 pt,
 #define ID_EHY          20      /**< @brief Elliptical Hyperboloid  */
 #define ID_ETO          21      /**< @brief Elliptical Torus  */
 #define ID_BOT          30      /**< @brief Bag o' triangles */
+#define ID_HRT          43      /**< @brief Heart */
 
 
 inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, const int id, global const void *args)
@@ -115,6 +116,7 @@ inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const
     case ID_ETO:	return eto_shot(res, r_pt, r_dir, idx, args);
     case ID_RHC:	return rhc_shot(res, r_pt, r_dir, idx, args);
     case ID_RPC:	return rpc_shot(res, r_pt, r_dir, idx, args);
+    case ID_HRT:	return hrt_shot(res, r_pt, r_dir, idx, args);
     default:		return 0;
     };
 }
@@ -136,6 +138,7 @@ inline void norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, cons
     case ID_ETO:	eto_norm(hitp, r_pt, r_dir, args);	break;
     case ID_RHC:	rhc_norm(hitp, r_pt, r_dir, args);	break;
     case ID_RPC:	rpc_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_HRT:	hrt_norm(hitp, r_pt, r_dir, args);	break;
     default:							break;
     };
 }

@@ -231,6 +231,7 @@ CLT_DECLARE_INTERFACE(bot);
 CLT_DECLARE_INTERFACE(eto);
 CLT_DECLARE_INTERFACE(rhc);
 CLT_DECLARE_INTERFACE(rpc);
+CLT_DECLARE_INTERFACE(hrt);
 
 extern size_t clt_bot_pack(struct bu_pool *pool, struct soltab *stp);
 #endif
