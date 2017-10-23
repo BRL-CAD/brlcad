@@ -111,11 +111,11 @@ int hrt_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
      * sufficiently close, then use the real part as one value of 't'
      * for the intersections
      */
-    for (j=0, npts=0; j < 6; j++) {
+    for (j=0, npts=0; j < i; j++) {
         if (NEAR_ZERO(val[j].im, RT_PCOEF_TOL))
             k[npts++] = val[j].re;
     }
-    /* Here, 'i' is number of points found */
+    /* Here, 'npts' is number of points found */
     if (npts != 2 && npts != 4 && npts != 6) {
 	return 0;		/* No hit */
     }
