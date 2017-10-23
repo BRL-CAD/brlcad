@@ -149,50 +149,27 @@ extern void primitive_hitsort(struct hit *h, int nh);
 
 
 /* *_shot.cl */
-struct arb_specific;
-struct ehy_specific;
-struct ell_specific;
-struct epa_specific;
-struct eto_specific;
-struct part_specific;
-struct rec_specific;
-struct sph_specific;
-struct tgc_specific;
-struct tor_specific;
-struct rhc_specific;
-struct rpc_specific;
-struct hrt_specific;
+#define RT_DECLARE_INTERFACE(name) \
+struct name##_specific; \
+extern int name##_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct name##_specific *name); \
+extern void name##_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct name##_specific *name)
 
-extern int arb_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct arb_specific *arb);
+RT_DECLARE_INTERFACE(arb);
+RT_DECLARE_INTERFACE(ehy);
+RT_DECLARE_INTERFACE(ell);
+RT_DECLARE_INTERFACE(epa);
+RT_DECLARE_INTERFACE(eto);
+RT_DECLARE_INTERFACE(part);
+RT_DECLARE_INTERFACE(rec);
+RT_DECLARE_INTERFACE(sph);
+RT_DECLARE_INTERFACE(tgc);
+RT_DECLARE_INTERFACE(tor);
+RT_DECLARE_INTERFACE(rhc);
+RT_DECLARE_INTERFACE(rpc);
+RT_DECLARE_INTERFACE(hrt);
+
 extern int bot_shot(RESULT_TYPE *res, const double3 r_pt, double3 r_dir, const uint idx, global const uchar *args);
-extern int ehy_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ehy_specific *ehy);
-extern int ell_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ell_specific *ell);
-extern int epa_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct epa_specific *epa);
-extern int eto_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct eto_specific *eto);
-extern int part_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct part_specific *part);
-extern int rec_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct rec_specific *rec);
-extern int sph_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct sph_specific *sph);
-extern int tgc_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tgc_specific *tgc);
-extern int tor_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_specific *tor);
-extern int rhc_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct rhc_specific *rhc);
-extern int rpc_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct rpc_specific *rpc);
-extern int hrt_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct hrt_specific *hrt);
-
-extern void arb_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct arb_specific *arb);
 extern void bot_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const uchar *args);
-extern void ehy_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ehy_specific *ehy);
-extern void ell_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ell_specific *ell);
-extern void epa_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct epa_specific *epa);
-extern void eto_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct eto_specific *eto);
-extern void part_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct part_specific *part);
-extern void rec_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rec_specific *rec);
-extern void sph_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct sph_specific *sph);
-extern void tgc_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tgc_specific *tgc);
-extern void tor_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tor_specific *tor);
-extern void rhc_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rhc_specific *rhc);
-extern void rpc_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rpc_specific *rpc);
-extern void hrt_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct hrt_specific *hrt);
-
 
 #endif	/* COMMON_CL */
 
