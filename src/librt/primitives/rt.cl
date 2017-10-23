@@ -612,41 +612,43 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
     if (id >= (last_pixel-cur_pixel+1))
       return;
 
-    const int pixelnum = cur_pixel+id;
-
-    const int a_y = (int)(pixelnum/width);
-    const int a_x = (int)(pixelnum - (a_y * width));
-
-    double3 r_pt, r_dir;
-    gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
-
-    /* Determine the Light location(s) in view space */
-    /* 0:  At left edge, 1/2 high */
-    const double3 lt_pos = MAT4X3PNT(view2model, (double3){-1,0,1});
-
     double3 a_color;
     uchar3 rgb;
     struct hit hitp;
-    uint head;
-    bool flipflag;
-    uint region_id;
 
-    a_color = 0.0;
-    hitp.hit_dist = INFINITY;
-    region_id = 0;
-    if (head_partition[id] != UINT_MAX) {
+    if (lightmodel >= 0 && head_partition[id] != UINT_MAX) {
+	const int pixelnum = cur_pixel+id;
+
+	const int a_y = (int)(pixelnum/width);
+	const int a_x = (int)(pixelnum - (a_y * width));
+
+	double3 r_pt, r_dir;
+	gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
+
+	/* Determine the Light location(s) in view space */
+	/* 0:  At left edge, 1/2 high */
+	const double3 lt_pos = MAT4X3PNT(view2model, (double3){-1,0,1});
+
+	bool flipflag;
+	uint region_id;
 	uint idx;
+
 	double diffuse0 = 0;
 	double cosI0 = 0;
 	double3 work0, work1;
 
+	a_color = 0.0;
+	hitp.hit_dist = INFINITY;
+	region_id = 0;
+
 	idx = UINT_MAX;
 
 	/* Get first partition of the ray */
-	head = head_partition[id];
 	flipflag = 0;
-	for (uint index = head; index != UINT_MAX; index = partitions[index].forw_pp) {
-	    global struct partition *pp = &partitions[index];
+	for (uint k = head_partition[id];
+	     k != UINT_MAX;
+	     k = partitions[k].forw_pp) {
+	    global struct partition *pp = &partitions[k];
             RESULT_TYPE segp = &segs[pp->inseg];
 
             if (pp->inhit.hit_dist < hitp.hit_dist) {
