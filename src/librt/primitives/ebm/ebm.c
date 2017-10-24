@@ -108,6 +108,55 @@ extern int rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd,
     ((unsigned char *)((_eip)->mp->apbuf))[ ((_yy)+BIT_YWIDEN)*((_eip)->xdim + BIT_XWIDEN*2)+(_xx)+BIT_XWIDEN ]
 
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_ebm_specific {
+    cl_double ebm_xnorm[3];	/* local +X norm in model coords */
+    cl_double ebm_ynorm[3];
+    cl_double ebm_znorm[3];
+    cl_double ebm_cellsize[3];	/* ideal coords: size of each cell */
+    cl_double ebm_origin[3];	/* local coords of grid origin (0, 0, 0) for now */
+    cl_double ebm_large[3];	/* local coords of XYZ max */
+    cl_double ebm_mat[16];	/* model to ideal space */
+
+    cl_double tallness;		/**< @brief Z dimension (mm) */
+    cl_uint xdim;		/**< @brief X dimension (w cells) */
+    cl_uint ydim;		/**< @brief Y dimension (n cells) */
+    cl_uchar apbuf[];
+};
+
+size_t
+clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct rt_ebm_specific *ebm =
+        (struct rt_ebm_specific *)stp->st_specific;
+    struct clt_ebm_specific *args;
+
+    const size_t nbytes =
+	(ebm->ebm_i.xdim+BIT_XWIDEN*2)*(ebm->ebm_i.ydim+BIT_YWIDEN*2);
+    size_t size = sizeof(*args);
+
+    size += (nbytes/8)*8+8;
+    args = (struct clt_ebm_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->ebm_xnorm, ebm->ebm_xnorm);
+    VMOVE(args->ebm_ynorm, ebm->ebm_ynorm);
+    VMOVE(args->ebm_znorm, ebm->ebm_znorm);
+    VMOVE(args->ebm_cellsize, ebm->ebm_cellsize);
+    VMOVE(args->ebm_origin, ebm->ebm_origin);
+    VMOVE(args->ebm_large, ebm->ebm_large);
+    MAT_COPY(args->ebm_mat, ebm->ebm_mat);
+
+    args->tallness = ebm->ebm_i.tallness;
+    args->xdim = ebm->ebm_i.xdim;
+    args->ydim = ebm->ebm_i.ydim;
+    memcpy(args->apbuf, ebm->ebm_i.mp->apbuf, nbytes);
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
+
 /**
  * Computes centroid of an extruded bitmap
  */

@@ -135,14 +135,14 @@ extern int rt_poly_roots(double *eqn, uint dgr, bn_complex_t *roots);
 /* rt.cl */
 extern double3 MAT3X3VEC(global const double *m, double3 i);
 extern double3 MAT4X3VEC(global const double *m, double3 i);
-
-extern double3 bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsize);
-extern ulong bu_cv_htond(const ulong d);
-
+extern double3 MAT4X3PNT(const double16 m, double3 i);
 extern constant double rti_tol_dist;
 
 extern bool rt_in_rpp(const double3 pt, const double3 invdir,
 		      global const double *min, global const double *max);
+extern bool rt_in_rpp2(const double3 pt, const double3 invdir,
+		       global const double *min, global const double *max,
+		       double *rmin, double *rmax);
 extern void do_segp(RESULT_TYPE *res, const uint idx,
 		    struct hit *seg_in, struct hit *seg_out);
 extern void primitive_hitsort(struct hit *h, int nh);
@@ -162,6 +162,7 @@ RT_DECLARE_INTERFACE(eto);
 RT_DECLARE_INTERFACE(part);
 RT_DECLARE_INTERFACE(rec);
 RT_DECLARE_INTERFACE(sph);
+RT_DECLARE_INTERFACE(ebm);
 RT_DECLARE_INTERFACE(tgc);
 RT_DECLARE_INTERFACE(tor);
 RT_DECLARE_INTERFACE(rhc);

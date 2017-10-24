@@ -274,6 +274,7 @@ set(librt_ignored_files
 
   primitives/arb8/arb8_shot.cl
   primitives/bot/bot_shot.cl
+  primitives/ebm/ebm_shot.cl
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
   primitives/epa/epa_shot.cl
@@ -308,6 +309,7 @@ set(CL_FILES
 
   primitives/arb8/arb8_shot.cl
   primitives/bot/bot_shot.cl
+  primitives/ebm/ebm_shot.cl
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
   primitives/epa/epa_shot.cl
