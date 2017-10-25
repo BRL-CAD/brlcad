@@ -182,11 +182,8 @@ int ebm_shot(RESULT_TYPE *res, const double3 r_pt_, const double3 r_dir_, const 
 		hits[0].hit_dist = 0;
 		hits[1].hit_dist = INFINITY;
 
-		hits[0].hit_vpriv.x = (double)igrid[X] / ebm->xdim;
-		hits[0].hit_vpriv.y = (double)igrid[Y] / ebm->ydim;
-
-		hits[1].hit_vpriv.x = (double)igrid[X] / ebm->xdim;
-		hits[1].hit_vpriv.y = (double)igrid[Y] / ebm->ydim;
+		hits[0].hit_vpriv.x = hits[1].hit_vpriv.x = (double)igrid[X] / ebm->xdim;
+		hits[0].hit_vpriv.y = hits[1].hit_vpriv.y = (double)igrid[Y] / ebm->ydim;
 
 		if (r_dir[Z] < 0) {
 		    hits[0].hit_surfno = NORM_ZPOS;

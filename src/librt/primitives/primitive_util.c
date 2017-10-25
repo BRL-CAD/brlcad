@@ -496,17 +496,17 @@ cl_device_id
 clt_get_cl_device(void)
 {
     cl_int error;
-    cl_platform_id platform;
+    cl_platform_id platform[2];
     cl_device_id device;
     int using_cpu = 0;
 
-    error = clGetPlatformIDs(1, &platform, NULL);
+    error = clGetPlatformIDs(2, platform, NULL);
     if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL platform");
 
-    error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+    error = clGetDeviceIDs(platform[1], CL_DEVICE_TYPE_GPU, 1, &device, NULL);
     if (error == CL_DEVICE_NOT_FOUND) {
         using_cpu = 1;
-        error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
+        error = clGetDeviceIDs(platform[1], CL_DEVICE_TYPE_CPU, 1, &device, NULL);
     }
     if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL device (using this method)");
 
