@@ -92,7 +92,6 @@ int ebm_shot(RESULT_TYPE *res, const double3 r_pt_, const double3 r_dir_, const 
     uint igrid[2];	/* grid cell coordinates of cell (integerized) */
     uchar in_index;
     uchar out_index;
-    uchar val;
 
     /* transform actual ray into ideal space at origin in X-Y plane */
     r_pt = MAT4X3PNT(vload16(0, ebm->ebm_mat), r_pt_);
@@ -131,30 +130,24 @@ int ebm_shot(RESULT_TYPE *res, const double3 r_pt_, const double3 r_dir_, const 
 	double norm_dist_min, norm_dist_max;
 	double slant_factor;
 	double kmin, kmax;
-	int npts;
-	int nhits;
-	const char rt_ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 	char out_norm_code;
 
 	norm_dist_min = r_pt.z;
-	slant_factor = -r_dir[Z];    /* always abs < 1 */
+	norm_dist_max = ebm->tallness - r_pt.z;
+	slant_factor = r_dir[Z];    /* always abs < 1 */
 	if (ZERO(slant_factor)) {
 	    if (norm_dist_min < 0.0) {
 		return 0;
 	    }
-	    kmin = -INFINITY;
-	} else
-	    kmin = norm_dist_min / slant_factor;
-
-	norm_dist_max = ebm->tallness - r_pt.z;
-	slant_factor = r_dir[Z];    /* always abs < 1 */
-	if (ZERO(slant_factor)) {
 	    if (norm_dist_max < 0.0) {
 		return 0;
 	    }
+	    kmin = -INFINITY;
 	    kmax = INFINITY;
-	} else
+	} else {
 	    kmax =  norm_dist_max / slant_factor;
+	    kmin = -norm_dist_min / slant_factor;
+	}
 
 	if (kmin > kmax) {
 	    /* if r_dir.z < 0, will need to swap min & max */
@@ -166,8 +159,8 @@ int ebm_shot(RESULT_TYPE *res, const double3 r_pt_, const double3 r_dir_, const 
 	    out_norm_code = NORM_ZNEG;
 	}
 
-	P = r_pt + vload3(0, r_dir) * t0;
 	/* P is hit point (on RPP?) */
+	P = r_pt + vload3(0, r_dir) * t0;
 
 	/* find grid cell where ray first hits ideal space bounding RPP */
 	igrid[X] = (P.x - ebm->ebm_origin[X]) / ebm->ebm_cellsize[X];
@@ -205,6 +198,11 @@ int ebm_shot(RESULT_TYPE *res, const double3 r_pt_, const double3 r_dir_, const 
 		return ebm_segp(res, hits, idx, kmin, kmax, out_norm_code);
 	    }
 	} else {
+	    int npts;
+	    int nhits;
+	    const char rt_ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
+	    uchar opaque;
+
 	    /* X setup */
 	    if (ZERO(r_dir[X])) {
 		t[X] = INFINITY;
@@ -263,10 +261,10 @@ int ebm_shot(RESULT_TYPE *res, const double3 r_pt_, const double3 r_dir_, const 
 		t1 = t[out_index];
 
 		/* ray passes through cell igrid[XY] from t0 to t1 */
-		val = BIT(ebm, igrid[X], igrid[Y]);
+		opaque = BIT(ebm, igrid[X], igrid[Y]) != 0;
 
 		if ((nhits&1)) {
-		    if (val > 0) {
+		    if (opaque) {
 			/* do nothing, marching through solid */
 		    } else {
 			/* end of segment (now in an empty voxel) */
@@ -276,18 +274,12 @@ int ebm_shot(RESULT_TYPE *res, const double3 r_pt_, const double3 r_dir_, const 
 			hits[1].hit_vpriv.y = (double)igrid[Y] / ebm->ydim;
 
 			/* compute exit normal */
-			if (r_dir[in_index] < 0) {
-			    /* go left, exit normal goes left */
-			    hits[1].hit_surfno = -rt_ebm_normtab[in_index];
-			} else {
-			    /* go right, exit norm goes right */
-			    hits[1].hit_surfno =  rt_ebm_normtab[in_index];
-			}
+			hits[1].hit_surfno = (r_dir[in_index] < 0) ? -rt_ebm_normtab[in_index] : rt_ebm_normtab[in_index];
 			nhits++;
 			npts += ebm_segp(res, hits, idx, kmin, kmax, out_norm_code);
 		    }
 		} else {
-		    if (val > 0) {
+		    if (opaque) {
 			/* handle the transition from vacuum to solid */
 			/* start of segment (entering a full voxel) */
 			hits[0].hit_dist = t0;
@@ -295,13 +287,7 @@ int ebm_shot(RESULT_TYPE *res, const double3 r_pt_, const double3 r_dir_, const 
 			hits[0].hit_vpriv.y = (double)igrid[Y] / ebm->ydim;
 
 			/* compute entry normal */
-			if (r_dir[in_index] < 0) {
-			    /* go left, entry norm goes right */
-			    hits[0].hit_surfno =  rt_ebm_normtab[in_index];
-			} else {
-			    /* go right, entry norm goes left */
-			    hits[0].hit_surfno = -rt_ebm_normtab[in_index];
-			}
+			hits[0].hit_surfno = (r_dir[in_index] < 0) ? rt_ebm_normtab[in_index] : -rt_ebm_normtab[in_index];
 			nhits++;
 		    } else {
 			/* do nothing, marching through void */
@@ -325,13 +311,7 @@ int ebm_shot(RESULT_TYPE *res, const double3 r_pt_, const double3 r_dir_, const 
 		hits[1].hit_vpriv = (double3)(0.0);
 
 		/* compute exit normal.  previous out_index is now in_index */
-		if (r_dir[in_index] < 0) {
-		    /* go left, exit normal goes left */
-		    hits[1].hit_surfno = -rt_ebm_normtab[in_index];
-		} else {
-		    /* go right, exit norm goes right */
-		    hits[1].hit_surfno =  rt_ebm_normtab[in_index];
-		}
+		hits[1].hit_surfno = (r_dir[in_index] < 0) ? -rt_ebm_normtab[in_index] : rt_ebm_normtab[in_index];
 		nhits++;
 		npts += ebm_segp(res, hits, idx, kmin, kmax, out_norm_code);
 	    }
