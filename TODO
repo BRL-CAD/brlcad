@@ -114,6 +114,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* mater command does not validate its arguments - fix that.  Also
+  properly document using "." to skip specifying something - not in
+  the man page currently.
+
 * bullet integration - need to expose restitution as an
   object parameter so we can configure behavior:
   http://www.bulletphysics.org/Bullet/phpBB3/viewtopic.php?p=&f=&t=3248
