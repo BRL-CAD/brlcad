@@ -147,6 +147,30 @@ struct hrt_specific {
     mat_t hrt_invR; /* transposed rotation matrix */
 };
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_hrt_specific {
+    cl_double hrt_V[3];		/* Vector to center of heart */
+    cl_double hrt_SoR[16];	/* Scale(Rot(vect)) */
+};
+
+size_t
+clt_hrt_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct hrt_specific *hrt =
+        (struct hrt_specific *)stp->st_specific;
+    struct clt_hrt_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_hrt_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->hrt_V, hrt->hrt_V);
+    MAT_COPY(args->hrt_SoR, hrt->hrt_SoR);
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
 
 /**
  * Compute the bounding RPP for a heart.

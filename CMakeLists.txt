@@ -916,9 +916,11 @@ CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"
 #----------------------------------------------------------------------
 # If we're not debugging, we want HIDDEN to be defined as static.  Set
 # the NDEBUG flag accordingly, and common.h will take it from there.
-if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+# Don't set this if we're doing multi-config, since whether we want
+# this on is not ultimately decided at configure time.
+if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
   CONFIG_H_APPEND(BRLCAD "#define NDEBUG 1")
-endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
 
 #----------------------------------------------------------------------
 # Decide whether to do a 32 or a 64 bit build.
@@ -1388,7 +1390,7 @@ endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 # two-pass compile, once with BRLCAD_PGO=ON on a location that did not
 # exist beforehand (specified via the PGO_PATH environment variable),
 # and again to use profiling metrics captured on "typical" operations
-# and data.  By default, path is BUILDDIR/.profiling
+# and data.  By default, path is BUILDDIR/profiling
 
 option(BRLCAD_PGO "Enable profile-guided optimization (set PGO_PATH environment variable)")
 mark_as_advanced(BRLCAD_PGO)
@@ -1952,7 +1954,7 @@ if(NOT MSVC)
 
   set(pgo_flags_found "")
   if("$ENV{PGO_PATH}" STREQUAL "")
-    set(BRLCAD_PGO_PATH "${CMAKE_BINARY_DIR}/.profiling")
+    set(BRLCAD_PGO_PATH "${CMAKE_BINARY_DIR}/profiling")
   else(NOT "$ENV{PGO_PATH}" STREQUAL "")
     set(BRLCAD_PGO_PATH "$ENV{PGO_PATH}")
   endif("$ENV{PGO_PATH}" STREQUAL "")
@@ -3335,18 +3337,21 @@ if(NOT BRLCAD_IS_SUBBUILD)
 	else(LINUX_DIST_TYPE)
 	  set(LINUX_DIST_TYPE "rh")
 	endif(LINUX_DIST_TYPE)
-	set(CPACK_RPM_PACKAGE_RELEASE _${CPACK_RPM_VERSION}.${LINUX_DIST_TYPE}${REDHAT_VERSION})
+	set(CPACK_RPM_PACKAGE_RELEASE ${CPACK_RPM_VERSION}.${LINUX_DIST_TYPE}${REDHAT_VERSION})
       else(EXISTS /etc/redhat-release)
-	set(CPACK_RPM_PACKAGE_RELEASE _${CPACK_RPM_VERSION})
+	set(CPACK_RPM_PACKAGE_RELEASE ${CPACK_RPM_VERSION})
       endif(EXISTS /etc/redhat-release)
     endif(CPACK_RPM_VERSION)
   endif(RPMBUILD_EXEC AND NOT CPACK_RPM_SKIP)
 
   if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-    set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_NAME}_x86${CPACK_RPM_PACKAGE_RELEASE}")
+    set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_NAME}_x86")
   else(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-    set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}${CPACK_RPM_PACKAGE_RELEASE}")
+    set(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}")
   endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+  if(CPACK_RPM_PACKAGE_RELEASE)
+    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}_${CPACK_RPM_PACKAGE_RELEASE}")
+  endif(CPACK_RPM_PACKAGE_RELEASE)
 
   if(WIN32)
     set(CPACK_GENERATOR NSIS)

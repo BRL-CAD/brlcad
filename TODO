@@ -114,16 +114,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* mater command does not validate its arguments - fix that.  Also
+  properly document using "." to skip specifying something - not in
+  the man page currently.
+
 * bullet integration - need to expose restitution as an
   object parameter so we can configure behavior:
   http://www.bulletphysics.org/Bullet/phpBB3/viewtopic.php?p=&f=&t=3248
-
-* look into https://github.com/garyhouston/hsrex, which
-  is a stand-alone version of Henry Spencer's most modern
-  regex library, as a replacement for the older version in
-  src/other/libregex.  May actually want to re-do the
-  extraction from Tcl, as they have recent patches:
-  https://github.com/tcltk/tcl/tree/master/generic
 
 * afl on libged/mged/rt/...
 
