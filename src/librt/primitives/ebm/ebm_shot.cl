@@ -13,7 +13,7 @@ struct ebm_specific {
     double tallness;	    /**< @brief Z dimension (mm) */
     uint xdim;		    /**< @brief X dimension (w cells) */
     uint ydim;		    /**< @brief Y dimension (n cells) */
-    uchar apbuf[16];
+    uchar apbuf[8];
 };
 
 
@@ -25,8 +25,10 @@ struct ebm_specific {
  */
 #define BIT_XWIDEN 2
 #define BIT_YWIDEN 2
-#define BIT(_eip, _x, _y) \
-    (((_eip)->apbuf))[((_y)+BIT_YWIDEN)*((_eip)->xdim+BIT_XWIDEN*2)+(_x)+BIT_XWIDEN]
+static inline uint BIT(global const struct ebm_specific *eip, uint x, uint y) {
+    uint id = (y+BIT_YWIDEN)*(eip->xdim + BIT_XWIDEN*2)+x+BIT_XWIDEN;
+    return ((eip->apbuf[(id >> 3)] & (1 << (id & 7))));
+}
 
 /*
  * Codes to represent surface normals.  In a bitmap, there are only 4

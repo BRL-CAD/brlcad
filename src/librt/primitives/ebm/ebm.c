@@ -132,11 +132,15 @@ clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
         (struct rt_ebm_specific *)stp->st_specific;
     struct clt_ebm_specific *args;
 
-    const size_t nbytes =
-	(ebm->ebm_i.xdim+BIT_XWIDEN*2)*(ebm->ebm_i.ydim+BIT_YWIDEN*2);
+    struct rt_ebm_internal *eip = &ebm->ebm_i;
+    unsigned int x, y, id;
+
+    const size_t npixels =
+	(eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
+    const size_t nbytes = ((npixels/8+1)/8)*8+8;
     size_t size = sizeof(*args);
 
-    size += (nbytes/8)*8+8;
+    size += nbytes;
     args = (struct clt_ebm_specific*)bu_pool_alloc(pool, 1, size);
 
     VMOVE(args->ebm_xnorm, ebm->ebm_xnorm);
@@ -147,10 +151,19 @@ clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
     VMOVE(args->ebm_large, ebm->ebm_large);
     MAT_COPY(args->ebm_mat, ebm->ebm_mat);
 
-    args->tallness = ebm->ebm_i.tallness;
-    args->xdim = ebm->ebm_i.xdim;
-    args->ydim = ebm->ebm_i.ydim;
-    memcpy(args->apbuf, ebm->ebm_i.mp->apbuf, nbytes);
+    args->tallness = eip->tallness;
+    args->xdim = eip->xdim;
+    args->ydim = eip->ydim;
+    memset(args->apbuf, 0, nbytes);
+
+    for (y = 0; y < eip->ydim; y++) {
+	for (x = 0; x < eip->xdim; x++) {
+	    if (BIT(eip, x, y) != 0) {
+		id = (y+BIT_YWIDEN)*(eip->xdim + BIT_XWIDEN*2)+x+BIT_XWIDEN; 
+		args->apbuf[(id >> 3)] |= (1 << (id & 7));
+	    }
+	}
+    }
     return size;
 }
 
