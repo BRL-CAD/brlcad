@@ -15,6 +15,13 @@ on-going issues.
 Recent Bugs
 -----------
 
+* infinite looping in rt_shootray() via ~shoot.c:684 from shoot.c:1127
+  in rt_find_backing_dist() when passed a directionless ray (i.e.,
+  r_dir={0,0,0}).  there is rt_shootray() debug code that checks this
+  condition (by expensively calculating the magnitude), but need
+  something better.  one possibility might be to detect that
+  rt_find_backing_dist() isn't progressing the ray forward.
+
 * get_regions tcl command doesn't respond well to situations where
   child object names in combs have dashes (the "-" character) in
   names.  It tries to interpret the dash as an argument delimiter.
