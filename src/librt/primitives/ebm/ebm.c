@@ -137,7 +137,7 @@ clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
 
     const size_t npixels =
 	(eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
-    const size_t nbytes = ((npixels/8+1)/8)*8+8;
+    const size_t nbytes = (npixels/8+1);
     size_t size = sizeof(*args);
 
     size += nbytes;

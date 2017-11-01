@@ -13,7 +13,7 @@ struct ebm_specific {
     double tallness;	    /**< @brief Z dimension (mm) */
     uint xdim;		    /**< @brief X dimension (w cells) */
     uint ydim;		    /**< @brief Y dimension (n cells) */
-    uchar apbuf[8];
+    uchar apbuf[1];
 };
 
 
