@@ -125,6 +125,9 @@ struct clt_ebm_specific {
     cl_uchar apbuf[];
 };
 
+/* Pad struct to multiple of 8 bytes (sizeof double). */
+#define CL_PADDED_SIZE(bytes)	((bytes+4) & ~7)
+
 size_t
 clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
 {
@@ -137,7 +140,7 @@ clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
 
     const size_t npixels =
 	(eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
-    const size_t nbytes = (npixels/8+1);
+    const size_t nbytes = CL_PADDED_SIZE(npixels/8+1);
     size_t size = sizeof(*args);
 
     size += nbytes;
