@@ -1467,33 +1467,23 @@ weave:
 	goto out;
     }
 
-    /*
-     * Ray/model intersections exist.  Pass the list to the user's
-     * a_hit() routine.  Note that only the hit_dist elements of
-     * pt_inhit and pt_outhit have been computed yet.  To compute both
-     * hit_point and hit_normal, use the
-     *
-     * RT_HIT_NORMAL(NULL, hitp, stp, rayp, 0);
-     *
-     * macro.  To compute just hit_point, use
-     *
-     * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
-     */
 hitit:
+    /* Ray/model intersections exist */
+
     if (debug_shoot) rt_pr_partitions(rtip, &FinalPart, "a_hit()");
 
-    /*
-     * Before recursing, release storage for unused Initial
+    /* Before recursing, release storage for unused Initial
      * partitions.  finished_segs can not be released yet, because
      * FinalPart partitions will point to hits in those segments.
      */
     RT_FREE_PT_LIST(&InitialPart, resp);
 
-    /*
-     * finished_segs is only used by special hit routines which don't
+    /* finished_segs is only used by special hit routines which don't
      * follow the traditional solid modeling paradigm.
      */
     if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
+
+    /* Invoke caller's a_hit callback with the list of partitions */
     if (ap->a_hit) {
 	ap->a_return = ap->a_hit(ap, &FinalPart, &finished_segs);
 	status = "HIT";
