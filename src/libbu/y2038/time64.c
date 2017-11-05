@@ -50,6 +50,8 @@ gmtime64_r() is a 64-bit equivalent of gmtime_r().
 #include "time64.h"
 #include "time64_limits.h"
 
+#include "bu/log.h"
+
 /* Max/min for mktime() */
 /* MODIFIED: Assign to each field so as not to depend on system field
    ordering
@@ -390,19 +392,19 @@ static int safe_year(const Year year)
     if( year_cycle < 0 )
         year_cycle = SOLAR_CYCLE_LENGTH + year_cycle;
 
-    assert( year_cycle >= 0 );
-    assert( year_cycle < SOLAR_CYCLE_LENGTH );
+    BU_ASSERT( year_cycle >= 0 );
+    BU_ASSERT( year_cycle < SOLAR_CYCLE_LENGTH );
     if( year < MIN_SAFE_YEAR )
         ret = safe_years_low[year_cycle];
     else if( year > MAX_SAFE_YEAR )
         ret = safe_years_high[year_cycle];
     else
-        assert(0);
+        bu_bomb("unexpected value for year");
 
     TIME64_TRACE3("# year: %lld, year_cycle: %lld, safe_year: %d\n",
           year, year_cycle, ret);
 
-    assert(ret <= MAX_SAFE_YEAR && ret >= MIN_SAFE_YEAR);
+    BU_ASSERT(ret <= MAX_SAFE_YEAR && ret >= MIN_SAFE_YEAR);
 
     return ret;
 }
@@ -476,7 +478,7 @@ void copy_TM64_to_tm(const struct TM *src, struct tm *dest) {
 struct tm * fake_localtime_r(const time_t *ytime, struct tm *result) {
     const struct tm *static_result = localtime(ytime);
 
-    assert(result != NULL);
+    BU_ASSERT(result != NULL);
 
     if( static_result == NULL ) {
         memset(result, 0, sizeof(*result));
@@ -493,7 +495,7 @@ struct tm * fake_localtime_r(const time_t *ytime, struct tm *result) {
 struct tm * fake_gmtime_r(const time_t *ytime, struct tm *result) {
     const struct tm *static_result = gmtime(ytime);
 
-    assert(result != NULL);
+    BU_ASSERT(result != NULL);
 
     if( static_result == NULL ) {
         memset(result, 0, sizeof(*result));
@@ -587,7 +589,7 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
     Year year = 70;
     int cycles = 0;
 
-    assert(p != NULL);
+    BU_ASSERT(p != NULL);
 
     /* Use the system gmtime() if time_t is small enough */
     if( SHOULD_USE_SYSTEM_GMTIME(*in_time) ) {
@@ -709,7 +711,7 @@ struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
     Year orig_year;
     int month_diff;
 
-    assert(local_tm != NULL);
+    BU_ASSERT(local_tm != NULL);
 
     /* Use the system localtime() if time_t is small enough */
     if( SHOULD_USE_SYSTEM_LOCALTIME(*ytime) ) {
