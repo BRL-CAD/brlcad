@@ -77,6 +77,7 @@ bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
 		break;
 	    case BN_VLIST_DISPLAY_MAT:
 		disp_mode = 1;
+		/* fall through */
 	    case BN_VLIST_LINE_MOVE:
 	    case BN_VLIST_LINE_DRAW:
 	    case BN_VLIST_POLY_MOVE:

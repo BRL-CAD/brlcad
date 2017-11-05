@@ -65,7 +65,7 @@ mv_edge(struct rt_arb_internal *arb,
 	const int end1, const int end2,
 	const vect_t dir,
 	const struct bn_tol *tol,
-       	fastf_t peqn[7][4])
+	fastf_t peqn[7][4])
 {
     fastf_t t1, t2;
 
@@ -394,7 +394,7 @@ arb_permute(struct rt_arb_internal *arb, const char *encoded_permutation, const 
     switch (type) {
 	case ARB4:
 	    VMOVE(larb.pt[3], larb.pt[0]);
-	    /* break intentionally left out */
+	    /* fall through */
 	case ARB5:
 	    VMOVE(larb.pt[5], larb.pt[4]);
 	    VMOVE(larb.pt[6], larb.pt[4]);

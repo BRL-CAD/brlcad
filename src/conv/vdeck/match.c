@@ -115,7 +115,7 @@ match(char *pattern, char *string)
 	    }
 	    case '\\': /* Escape special character.			*/
 		++pattern;
-		/* WARNING: falls through to default case.	*/
+		/* fall through */
 	    default:  /* Compare characters.			*/
 		if (pattern[0] != string[0])
 		    return	0;

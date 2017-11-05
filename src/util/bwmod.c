@@ -66,8 +66,8 @@ Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
 #define OR	7
 #define XOR	8
 #define ROUND	9 /* this was TRUNC, which is discontinued because
-                   * truncation is handled internally as "-S 0"
-                   */
+		   * truncation is handled internally as "-S 0"
+		   */
 #define BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
 
 int numop = 0;			/* number of operations */
@@ -181,6 +181,7 @@ get_args(int argc, char **argv)
 	     */
 	    /* val[numop++] = 0.0; */
 	    numop++;
+	    /* fall through */
 	case 't':
 	    /* Notice that -S truncates, so we internally use -S 0 */
 	    op[numop] = SHIFT;

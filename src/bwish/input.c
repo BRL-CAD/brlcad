@@ -515,7 +515,7 @@ processChar(char ch)
 		bracketed = 1;
 		break;
 	    }
-	    /* Fall through if not escaped! */
+	    /* fall through - not escaped */
 	default:
 	    if (!isprint((int)ch))
 		break;

@@ -639,12 +639,14 @@ mk_binunif (
     switch (data_type) {
 	case WDB_BINUNIF_FILE_FLOAT:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_FLOAT:
 	    bytes = sizeof(float);
 	    minor_type = DB5_MINORTYPE_BINU_FLOAT;
 	    break;
 	case WDB_BINUNIF_FILE_DOUBLE:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_DOUBLE:
 	    bytes = sizeof(double);
 	    minor_type = DB5_MINORTYPE_BINU_DOUBLE;
@@ -652,44 +654,52 @@ mk_binunif (
 
 	case WDB_BINUNIF_FILE_INT8:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_INT8:
 	    bytes = 1;
 	    break;
 	case WDB_BINUNIF_FILE_UINT8:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_UINT8:
 	    nosign = 1;
 	    bytes = 1;
 	    break;
 	case WDB_BINUNIF_FILE_INT16:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_INT16:
 	    bytes = 2;
 	    break;
 	case WDB_BINUNIF_FILE_UINT16:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_UINT16:
 	    nosign = 1;
 	    bytes = 2;
 	    break;
 	case WDB_BINUNIF_FILE_INT32:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_INT32:
 	    bytes = 4;
 	    break;
 	case WDB_BINUNIF_FILE_UINT32:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_UINT32:
 	    nosign = 1;
 	    bytes = 4;
 	    break;
 	case WDB_BINUNIF_FILE_INT64:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_INT64:
 	    bytes = 8;
 	    break;
 	case WDB_BINUNIF_FILE_UINT64:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_UINT64:
 	    nosign = 1;
 	    bytes = 8;
@@ -697,50 +707,59 @@ mk_binunif (
 
 	case WDB_BINUNIF_FILE_CHAR:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_CHAR:
 	    bytes = sizeof(char);
 	    break;
 	case WDB_BINUNIF_FILE_UCHAR:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_UCHAR:
 	    nosign = 1;
 	    bytes = sizeof(unsigned char);
 	    break;
 	case WDB_BINUNIF_FILE_SHORT:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_SHORT:
 	    bytes = sizeof(short);
 	    break;
 	case WDB_BINUNIF_FILE_USHORT:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_USHORT:
 	    nosign = 1;
 	    bytes = sizeof(unsigned short);
 	    break;
 	case WDB_BINUNIF_FILE_INT:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_INT:
 	    bytes = sizeof(int);
 	    break;
 	case WDB_BINUNIF_FILE_UINT:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_UINT:
 	    nosign = 1;
 	    bytes = sizeof(unsigned int);
 	    break;
 	case WDB_BINUNIF_FILE_LONG:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_LONG:
 	    bytes = sizeof(long);
 	    break;
 	case WDB_BINUNIF_FILE_ULONG:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_ULONG:
 	    nosign = 1;
 	    bytes = sizeof(unsigned long);
 	    break;
 	case WDB_BINUNIF_FILE_LONGLONG:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_LONGLONG:
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	    bytes = sizeof(__int64);
@@ -750,6 +769,7 @@ mk_binunif (
 	    break;
 	case WDB_BINUNIF_FILE_ULONGLONG:
 	    from_file = 1;
+	    /* fall through */
 	case WDB_BINUNIF_ULONGLONG:
 	    nosign = 1;
 #if defined(_WIN32) && !defined(__CYGWIN__)

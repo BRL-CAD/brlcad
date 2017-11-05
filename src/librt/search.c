@@ -173,6 +173,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 	    if (tp->tr_op == OP_INTERSECT) bool_val = 3;
 	    if (tp->tr_op == OP_SUBTRACT) bool_val = 4;
 	    db_fullpath_list_subtree(path, bool_val, tp->tr_b.tb_right, traverse_func, client_data);
+	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:

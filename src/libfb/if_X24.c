@@ -2051,10 +2051,9 @@ using private memory instead, errno %d\n", errno);
 		/* Change it to local */
 		xi->xi_mode = (xi->xi_mode & ~MODE10_MASK) | MODE10_MALLOC;
 #endif
-
-		/*FALLTHROUGH*/
-
 	    }
+
+	    /* fall through */
 	case MODE10_MALLOC:
 
 	    if ((mem = (char *)malloc(size)) == 0) {
@@ -2659,7 +2658,6 @@ X24_configureWindow(fb *ifp, int width, int height)
     return 0;
 
 }
-
 
 
 int

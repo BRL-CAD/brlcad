@@ -473,6 +473,9 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    break;
 		}
 	    }
+
+	    /* fall through */
+
 	default:
 	    VSETALL(mpt, 0.0);
 	    bu_vls_printf(gedp->ged_result_str,

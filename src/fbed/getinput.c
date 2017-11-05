@@ -216,7 +216,7 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
 		    *macro_ptr++ = c;
 		    *macro_ptr = NUL;
 		}
-		/* Fall through to default case! */
+		/* fall through */
 	    default : /* Insert character at cursor. */
 	    {
 		char *q = p;
@@ -445,7 +445,7 @@ get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
 		    *macro_ptr++ = c;
 		    *macro_ptr = NUL;
 		}
-		/* Fall through to default case! */
+		/* fall through */
 	    default : /* Insert character at cursor. */
 	    {
 		char *q = p;

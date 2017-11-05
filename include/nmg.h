@@ -1028,9 +1028,11 @@ NMG_EXPORT extern struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmis
             case NMG_MISS_LIST: \
                 bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
                 bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+                break; \
             case NMG_HIT_LIST: \
                 bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
                 bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+                break; \
             default: \
                 bu_log(CPP_FILELINE ": bad struct hitmiss magic: %u:(0x%08x)\n", \
                        hm->l.magic, hm->l.magic); \

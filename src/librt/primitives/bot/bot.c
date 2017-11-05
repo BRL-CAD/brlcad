@@ -3471,6 +3471,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 		    if (!ZERO(bot->thickness[i] - bot->thickness[j]) ||
 			(BU_BITTEST(bot->face_mode, i)?1:0) != (BU_BITTEST(bot->face_mode, j)?1:0))
 			break;
+		    /* fall through */
 		case RT_BOT_SOLID:
 		case RT_BOT_SURFACE:
 		    if (bot->orientation == RT_BOT_UNORIENTED) {

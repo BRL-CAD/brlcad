@@ -331,21 +331,26 @@ primary(enum token n, struct exists_data *ed)
 	    case OCOMB:
 		bu_log("comb case");
 		/*return is_comb();*/
+		/* fall through */
 	    case OEXIST:
 		return db_object_exists(ed);
 		/*return db_lookup();*/
+		/* fall through */
 	    case ONULL:
 		bu_log("null case");
 		/*return is_null();*/
+		/* fall through */
 	    case ONNULL:
 		/* default case */
 		return db_object_exists_and_non_null(ed);
 	    case OPRIM:
 		bu_log("primitive case");
 		/*return is_prim();*/
+		/* fall through */
 	    case OBVOL:
 		bu_log("bounding volume case");
 		/*return has_vol();*/
+		/* fall through */
 	    default:
 		/* not reached */
 		return 0;
@@ -379,33 +384,43 @@ binop(struct exists_data *ed)
 	case EXTEQ:
 	    bu_log("extern eq case");
 	    /*bu_extern compare*/
+	    /* fall through */
 	case EXTNE:
 	    bu_log("extern neq case");
 	    /*bu_extern compare*/
+	    /* fall through */
 	case EXTLT:
 	    bu_log("extern lt case");
 	    /*bu_extern compare*/
+	    /* fall through */
 	case EXTGT:
 	    bu_log("extern gt case");
 	    /*bu_extern compare*/
+	    /* fall through */
 	case BVOLEQ:
 	    bu_log("vol eq case");
 	    /*return bbox_vol(opnd1) == bbox_vol(opnd2);*/
+	    /* fall through */
 	case BVOLNE:
 	    bu_log("vol neq case");
 	    /*return bbox_vol(opnd1) != bbox_vol(opnd2);*/
+	    /* fall through */
 	case BVOLGE:
 	    bu_log("vol geq case");
 	    /*return bbox_vol(opnd1) >= bbox_vol(opnd2);*/
+	    /* fall through */
 	case BVOLGT:
 	    bu_log("vol gt case");
 	    /*return bbox_vol(opnd1) > bbox_vol(opnd2);*/
+	    /* fall through */
 	case BVOLLE:
 	    bu_log("vol leq case");
 	    /*return bbox_vol(opnd1) <= bbox_vol(opnd2);*/
+	    /* fall through */
 	case BVOLLT:
 	    bu_log("vol lt case");
 	    /*return bbox_vol(opnd1) < bbox_vol(opnd2);*/
+	    /* fall through */
 	default:
 	    return 0;
 	    /* NOTREACHED */

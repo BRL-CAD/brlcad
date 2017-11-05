@@ -125,7 +125,7 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
 			    u[0], line_num, (unsigned long)idx+2, strerror(errno), buf_p);
 		    return EXIT_FAILURE;
 		}
-		if ((*endp != '\0') || (buf_p == endp) || (strchr(buf_p, '-') != '\0')) {
+		if ((*endp != '\0') || (buf_p == endp) || (strchr(buf_p, '-') != NULL)) {
 		    fprintf(stream, "Convert to unsigned long int failed, function %lu test case on line %lu parameter %lu string '%s'\n",
 			    u[0], line_num, (unsigned long)idx+2, buf_p);
 		    return EXIT_FAILURE;
@@ -210,7 +210,7 @@ main(int argc, char **argv)
 		    bu_log("Invalid test case line number '%s' '%s'\n", bu_optarg, strerror(errno));
 		    bu_exit(EXIT_FAILURE, USAGE);
 		}
-		if ((*endp != '\0') || (bu_optarg == endp) || (strchr(bu_optarg, '-') != '\0')) {
+		if ((*endp != '\0') || (bu_optarg == endp) || (strchr(bu_optarg, '-') != NULL)) {
 		    bu_log("Invalid test case line number '%s'\n", bu_optarg);
 		    bu_exit(EXIT_FAILURE, USAGE);
 		}
@@ -223,7 +223,7 @@ main(int argc, char **argv)
 		    bu_log("Invalid function number '%s' '%s'\n", bu_optarg, strerror(errno));
 		    bu_exit(EXIT_FAILURE, USAGE);
 		}
-		if ((*endp != '\0') || (bu_optarg == endp) || (strchr(bu_optarg, '-') != '\0')) {
+		if ((*endp != '\0') || (bu_optarg == endp) || (strchr(bu_optarg, '-') != NULL)) {
 		    bu_log("Invalid function number '%s'\n", bu_optarg);
 		    bu_exit(EXIT_FAILURE, USAGE);
 		}
@@ -367,7 +367,7 @@ main(int argc, char **argv)
 		    fprintf(stream, "Read function number failed, line %lu error msg: '%s' string '%s'\n",
 				  line_num, strerror(errno), buf_p);
 		    valid_function_number = 0;
-		} else if ((*endp != '\0') || (buf_p == endp) || (strchr(buf_p, '-') != '\0')) {
+		} else if ((*endp != '\0') || (buf_p == endp) || (strchr(buf_p, '-') != NULL)) {
 		    fprintf(stream, "Read function number failed, line %lu string '%s'\n", line_num, buf_p);
 		    valid_function_number = 0;
 		}

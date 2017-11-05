@@ -195,7 +195,7 @@ format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 		break;
 	    }
 	    fprintf(stderr, "Error: Illegal format specification: '%s'\n", buffer);
-	    /* fall through here */
+	    /* fall through */
 	case '?':
 	    com_usage(ctp);
 	    return;
@@ -344,7 +344,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	    }
 	}
 
-	if (vtp->name == '\0') {
+	if (!vtp->name || vtp->name[0] == '\0') {
 	    fprintf(stderr, "Error: Invalid output item '%s'\n", up);
 	    bu_free(mycopy, "Copy of user's output spec");
 	    return;
@@ -516,7 +516,7 @@ print_item (char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	    }
 	}
 
-	if (vtp->name == '\0') {
+	if (!vtp->name || vtp->name[0] == '\0') {
 	    fprintf(stderr, "Error: Invalid output item '%s'\n", bp0);
 	    return;
 	}

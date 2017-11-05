@@ -265,7 +265,7 @@ nmg_visit(const uint32_t *magicp, const struct nmg_visit_handlers *htab, void *s
 	default:
 	    bu_log("nmg_visit() Can't visit %s directly\n", bu_identify_magic(*magicp));
 	    bu_bomb("nmg_visit()\n");
-	    /* NOTREACHED */
+	    break;
 	case NMG_MODEL_MAGIC:
 	    nmg_visit_model((struct model *)magicp, htab, state, vlfree);
 	    break;

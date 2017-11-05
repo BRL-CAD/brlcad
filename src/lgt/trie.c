@@ -570,7 +570,7 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
 	    case Ctrl('V') :
 		/* Escape character, do not process next char.	*/
 		c = hm_getchar();
-		/* Fall through to default case! */
+		/* fall through */
 	    default : {
 		/* Insert character at cursor.		*/
 		char *q = p;

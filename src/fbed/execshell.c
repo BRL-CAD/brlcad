@@ -76,6 +76,7 @@ exec_Shell(char **args)
 	    (void)execvp(args[0], args);
 	    fb_log("%s : could not execute.\n", args[0]);
 	    bu_exit(1, NULL);
+	    break;
 	default :
 	{
 	    int pid;
@@ -109,6 +110,8 @@ exec_Shell(char **args)
 	    }
 	}
     }
+
+    return -1;
 }
 
 /*

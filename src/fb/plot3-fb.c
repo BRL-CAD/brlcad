@@ -1021,9 +1021,10 @@ DoFile(void)	/* returns vpl status code */
 		    if (debug)
 			fprintf(stderr, "Line3\n");
 
-		    /* line: fall through */
+		    /* fall through - line */
 
 		case 'N':	/* continue3 */
+		    /* fall through - line */
 		case 'P':	/* point3 */
 		    if (!Get3Coords(&newpos))
 			return Foo(-9);
@@ -1050,9 +1051,11 @@ DoFile(void)	/* returns vpl status code */
 			    fprintf(stderr, "move\n");
 			continue;
 		    }
-		    /* line: fall through */
+
 		    if (debug)
 			fprintf(stderr, "line\n");
+
+		    /* fall through - line */
 
 		case 'n':	/* cont */
 		case 'p':	/* point */
@@ -1085,7 +1088,7 @@ DoFile(void)	/* returns vpl status code */
 		    if (debug)
 			fprintf(stderr, "dLine3\n");
 
-		    /* line: fall through */
+		    /* fall through - line */
 
 		case 'Q':	/* continue3 */
 		case 'X':	/* point3 */
@@ -1114,9 +1117,11 @@ DoFile(void)	/* returns vpl status code */
 			    fprintf(stderr, "dmove\n");
 			continue;
 		    }
-		    /* line: fall through */
+
 		    if (debug)
 			fprintf(stderr, "dline\n");
+
+		    /* fall through - line */
 
 		case 'q':	/* cont */
 		case 'x':	/* point */

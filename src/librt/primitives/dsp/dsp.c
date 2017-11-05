@@ -4732,7 +4732,6 @@ swap_cell_pts(int A[3],
     switch (dsp->dsp_i.dsp_cuttype) {
 	case DSP_CUT_DIR_llUR:
 	    return 0;
-	    break;
 
 	case DSP_CUT_DIR_ADAPT: {
 	    int lo[2], hi[2];
@@ -4797,10 +4796,10 @@ swap_cell_pts(int A[3],
 
 		return 0;
 	    }
-
-	    /* fallthrough */
-
 	}
+
+	/* fall through */
+
 	case DSP_CUT_DIR_ULlr: {
 	    /* prefer the B-C cut */
 	    int tmp[3];

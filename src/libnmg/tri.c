@@ -1097,7 +1097,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	    join_mapped_loops(tbl2d, p1, p2, color, vlfree, tol);
 	    return (struct pt2d *)NULL;
 	} else {
-	    char buf[80];
+	    char buf[160];
 	    char name[32];
 	    static int iter=0;
 	    vect_t cut_vect, cut_start, cut_end;

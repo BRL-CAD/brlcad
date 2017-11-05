@@ -1173,6 +1173,7 @@ _db_comb_find_invalid(int *inv_cnt, struct db_i *dbip, union tree *tp)
         case OP_SUBTRACT:
         case OP_XOR:
             _db_comb_find_invalid(inv_cnt, dbip, tp->tr_b.tb_right);
+            /* fall through */
         case OP_NOT:
         case OP_GUARD:
         case OP_XNOP:
@@ -1209,6 +1210,7 @@ _db_comb_get_children(struct directory **children, int *curr_ind, int curr_bool,
         case OP_XOR:
 	    bool_op = tp->tr_op;
             _db_comb_get_children(children, curr_ind, bool_op, dbip, tp->tr_b.tb_right, bool_ops, mats);
+            /* fall through */
         case OP_NOT:
         case OP_GUARD:
         case OP_XNOP:
