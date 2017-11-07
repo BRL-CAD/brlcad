@@ -330,27 +330,22 @@ primary(enum token n, struct exists_data *ed)
 	switch (n) {
 	    case OCOMB:
 		bu_log("comb case");
-		/*return is_comb();*/
-		/* fall through */
+		return 0;
 	    case OEXIST:
 		return db_object_exists(ed);
 		/*return db_lookup();*/
-		/* fall through */
 	    case ONULL:
 		bu_log("null case");
-		/*return is_null();*/
-		/* fall through */
+		return 0;
 	    case ONNULL:
 		/* default case */
 		return db_object_exists_and_non_null(ed);
 	    case OPRIM:
 		bu_log("primitive case");
-		/*return is_prim();*/
-		/* fall through */
+		return 0;
 	    case OBVOL:
 		bu_log("bounding volume case");
-		/*return has_vol();*/
-		/* fall through */
+		return 0;
 	    default:
 		/* not reached */
 		return 0;
@@ -383,44 +378,34 @@ binop(struct exists_data *ed)
     switch (op->op_num) {
 	case EXTEQ:
 	    bu_log("extern eq case");
-	    /*bu_extern compare*/
-	    /* fall through */
+	    return 0;
 	case EXTNE:
 	    bu_log("extern neq case");
-	    /*bu_extern compare*/
-	    /* fall through */
+	    return 0;
 	case EXTLT:
 	    bu_log("extern lt case");
-	    /*bu_extern compare*/
-	    /* fall through */
+	    return 0;
 	case EXTGT:
 	    bu_log("extern gt case");
-	    /*bu_extern compare*/
-	    /* fall through */
+	    return 0;
 	case BVOLEQ:
 	    bu_log("vol eq case");
-	    /*return bbox_vol(opnd1) == bbox_vol(opnd2);*/
-	    /* fall through */
+	    return 0;
 	case BVOLNE:
 	    bu_log("vol neq case");
-	    /*return bbox_vol(opnd1) != bbox_vol(opnd2);*/
-	    /* fall through */
+	    return 0;
 	case BVOLGE:
 	    bu_log("vol geq case");
-	    /*return bbox_vol(opnd1) >= bbox_vol(opnd2);*/
-	    /* fall through */
+	    return 0;
 	case BVOLGT:
 	    bu_log("vol gt case");
-	    /*return bbox_vol(opnd1) > bbox_vol(opnd2);*/
-	    /* fall through */
+	    return 0;
 	case BVOLLE:
 	    bu_log("vol leq case");
-	    /*return bbox_vol(opnd1) <= bbox_vol(opnd2);*/
-	    /* fall through */
+	    return 0;
 	case BVOLLT:
 	    bu_log("vol lt case");
-	    /*return bbox_vol(opnd1) < bbox_vol(opnd2);*/
-	    /* fall through */
+	    return 0;
 	default:
 	    return 0;
 	    /* NOTREACHED */
@@ -458,7 +443,7 @@ int db_object_exists_and_non_null(struct exists_data *ed)
 int
 ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 {
-/* struct directory *dp;*/
+    /* struct directory *dp;*/
     static const char *usage = "object";
     struct exists_data ed = EXISTS_DATA_INIT_ZERO;
     struct bu_vls message = BU_VLS_INIT_ZERO;
@@ -476,12 +461,6 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
 	return GED_HELP;
     }
-    /*
-      if (argc != 2) {
-      bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
-      return GED_ERROR;
-      }
-    */
 
     ed.t_wp = &argv[1];
     ed.gedp = gedp;
