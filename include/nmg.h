@@ -51,6 +51,15 @@
  * containers and just extend them with the necessary extra information...
  * Don't know if that's possible, but it would be really nice from a data
  * conversion standpoint...
+ *
+ * TODO:  This paper may be worth a look from an API design perspective:
+ * Topological Operators for Non-Manifold Modeling (1995) 
+ * http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.50.1961
+ *
+ * also potentially useful:
+ * https://www.cs.purdue.edu/homes/cmh/distribution/books/geo.html
+ * https://cs.nyu.edu/faculty/yap/book/egc/
+ *
  */
 
 #ifndef NMG_H
