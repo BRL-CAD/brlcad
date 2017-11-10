@@ -111,7 +111,10 @@ bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t cli
 }
 
 /*
- * Clip a ray against a rectangular parallelepiped (RPP)
+ * FIXME: the function name implies this takes a point,dir for a,b but
+ * it actually takes a line segment going from points a to b!
+ *
+ * Clip a line segment against a rectangular parallelepiped (RPP)
  * that has faces parallel to the coordinate planes (a clipping RPP).
  * The RPP is defined by a minimum point and a maximum point.
  *
