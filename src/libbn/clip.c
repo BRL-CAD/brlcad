@@ -55,7 +55,7 @@ clip_code(fastf_t x, fastf_t y, fastf_t clip_min, fastf_t clip_max)
     return cval;
 }
 
-/* clip a 2-D integer line seg against the size of the display */
+
 int
 bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t clip_min, fastf_t clip_max)
 {
@@ -110,23 +110,9 @@ bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t cli
     return 0;
 }
 
-/*
- * FIXME: the function name implies this takes a point,dir for a,b but
- * it actually takes a line segment going from points a to b!
- *
- * Clip a line segment against a rectangular parallelepiped (RPP)
- * that has faces parallel to the coordinate planes (a clipping RPP).
- * The RPP is defined by a minimum point and a maximum point.
- *
- * Returns -
- * 0 if ray does not hit RPP,
- * !0 if ray hits RPP.
- *
- * Implicit Return -
- * if !0 was returned, "a" and "b" have been clipped to the RPP.
- */
+
 int
-bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
+bn_ray_vclip(vect_t a, vect_t b, fastf_t *min_pt, fastf_t *max_pt)
 {
     static vect_t diff;
     static double sv;
@@ -140,22 +126,22 @@ bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
     maxdist = CLIP_DISTANCE;
     VSUB2(diff, b, a);
 
-    for (i = 0; i < 3; i++, pt++, dir++, max++, min++) {
+    for (i = 0; i < 3; i++, pt++, dir++, max_pt++, min_pt++) {
         if (*dir < -EPSILON) {
-	    sv = (*min - *pt) / *dir;
+	    sv = (*min_pt - *pt) / *dir;
             if (sv < 0.0)
                 return 0;       /* MISS */
 
-	    st = (*max - *pt) / *dir;
+	    st = (*max_pt - *pt) / *dir;
 	    V_MAX(mindist, st);
 	    V_MIN(maxdist, sv);
 
         }  else if (*dir > EPSILON) {
-	    st = (*max - *pt) / *dir;
+	    st = (*max_pt - *pt) / *dir;
             if (st < 0.0)
                 return 0;       /* MISS */
 
-	    sv = (*min - *pt) / *dir;
+	    sv = (*min_pt - *pt) / *dir;
 	    V_MAX(mindist, sv);
 	    V_MIN(maxdist, st);
         } else {
@@ -164,7 +150,7 @@ bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
              * (i.e., this ray is aligned with this axis),
              * merely check against the boundaries.
              */
-            if ((*min > *pt) || (*max < *pt))
+            if ((*min_pt > *pt) || (*max_pt < *pt))
                 return 0;       /* MISS */
         }
     }

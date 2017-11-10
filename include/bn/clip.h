@@ -41,11 +41,16 @@ __BEGIN_DECLS
  */
 BN_EXPORT extern int bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t clip_min, fastf_t clip_max);
 
+
 /**
  * @brief
- * Clip a ray against a rectangular parallelepiped (RPP)
- * that has faces parallel to the coordinate planes (a clipping RPP).
- * The RPP is defined by a minimum point and a maximum point.
+ * Clip a line segment against a rectangular parallelepiped (RPP).
+ *
+ * The RPP has faces parallel to the coordinate planes and is defined
+ * by a minimum point and a maximum point.
+ *
+ * FIXME: the function name implies this takes a point,dir for a,b but
+ * it actually takes a line segment going from points a to b!
  *
  * Returns -
  * 0 if ray does not hit RPP,
@@ -54,7 +59,7 @@ BN_EXPORT extern int bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fast
  * Implicit Return -
  * if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
-BN_EXPORT extern int bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max);
+BN_EXPORT extern int bn_ray_vclip(vect_t a, vect_t b, fastf_t *min_pt, fastf_t *max_pt);
 
 __END_DECLS
 
