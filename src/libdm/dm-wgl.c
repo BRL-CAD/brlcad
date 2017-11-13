@@ -1901,6 +1901,33 @@ wgl_configureWin_guts(dm *dmp,
 
 
 HIDDEN int
+wgl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
+{
+    if (dmp->dm_type == DM_TYPE_WGL || dmp->dm_type == DM_TYPE_OGL) {
+	unsigned char *idata;
+	int width;
+	int height;
+
+	width = dmp->dm_width;
+	height = dmp->dm_height;
+
+	idata = (unsigned char*)bu_calloc(height * width * 3, sizeof(unsigned char), "rgb data");
+
+	glReadBuffer(GL_FRONT);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, idata);
+	*image = idata;
+	flip_display_image_vertically(*image, width, height);
+    } else {
+	bu_log("ogl_getDisplayImage: Display type not set as OGL or WGL\n");
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK; /* caller will need to bu_free(idata, "image data"); */
+}
+
+
+HIDDEN int
 wgl_reshape(dm *dmp, int width, int height)
 {
     GLint mm;
@@ -2403,7 +2430,7 @@ dm dm_wgl = {
     wgl_freeDLists,
     wgl_genDLists,
     wgl_draw_obj,
-    null_getDisplayImage,	/* display to image function */
+    wgl_getDisplayImage,	/* display to image function */
     wgl_reshape,
     wgl_makeCurrent,
     wgl_openFb,
