@@ -19,6 +19,7 @@
  */
 
 #include "common.h"
+#include "string.h" /* for memcpy */
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bg/trimesh.h"
@@ -261,10 +262,10 @@ bg_trimesh_solid(size_t vcnt, size_t fcnt, fastf_t *v, int *f, int **bedges)
     if (bedges) {
 	int copy_cnt = 0;
 	struct bg_trimesh_solid_errors errors;
-	
+
 	bedge_cnt = bg_trimesh_solid2(vcnt, fcnt, v, f, &errors);
 	*bedges = (int *)bu_calloc(bedge_cnt * 2, sizeof(int), "bad edges");
-	
+
 	memcpy(*bedges, errors.unmatched.edges, errors.unmatched.count * 2 * sizeof(int));
 	copy_cnt += errors.unmatched.count * 2;
 
