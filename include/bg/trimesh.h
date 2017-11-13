@@ -37,9 +37,36 @@
 
 __BEGIN_DECLS
 
+/* every pair of contiguous elements is the start and end vertex index of an edge */
+struct bg_trimesh_edges {
+    int count;
+    int *edges;
+};
+
+struct bg_trimesh_faces {
+    int count;
+    int *faces;
+};
+
+struct bg_trimesh_solid_errors {
+    struct bg_trimesh_faces degenerate;
+    struct bg_trimesh_edges unmatched;
+    struct bg_trimesh_edges excess;
+    struct bg_trimesh_edges misoriented;
+};
+
+#define BG_TRIMESH_EDGES_INIT_NULL {0, NULL}
+#define BG_TRIMESH_FACES_INIT_NULL {0, NULL}
+#define BG_TRIMESH_SOLDID_ERRORS_INIT_NULL {BG_TRIMESH_FACES_INIT_NULL, BG_TRIMESH_EDGES_INIT_NULL, BG_TRIMESH_EDGES_INIT_NULL, BG_TRIMESH_EDGES_INIT_NULL}
+
+BG_EXPORT extern void bg_free_trimesh_edges(struct bg_trimesh_edges *edges);
+BG_EXPORT extern void bg_free_trimesh_faces(struct bg_trimesh_faces *faces);
+BG_EXPORT extern void bg_free_trimesh_solid_errors(struct bg_trimesh_solid_errors *errors);
+
 BG_EXPORT extern int bg_trimesh_closed_fan(size_t vcnt, size_t fcnt, fastf_t *v, int *f);
 BG_EXPORT extern int bg_trimesh_orientable(size_t vcnt, size_t fcnt, fastf_t *v, int *f);
 BG_EXPORT extern int bg_trimesh_solid(size_t vcnt, size_t fcnt, fastf_t *v, int *f, int **bedges);
+BG_EXPORT extern int bg_trimesh_solid2(size_t vcnt, size_t fcnt, fastf_t *v, int *f, struct bg_trimesh_solid_errors *errors);
 
 __END_DECLS
 

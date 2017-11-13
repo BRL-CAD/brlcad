@@ -35,6 +35,70 @@
 #include "wdb.h"
 #include "./ged_private.h"
 
+HIDDEN void draw_edges(struct ged *gedp, struct rt_bot_internal *bot, int num_edges, int edges[], int draw_color[3], const char *draw_name)
+{
+    int curr_edge = 0;
+    struct bu_list *vhead;
+    point_t a, b;
+    struct bn_vlblock *vbp;
+    struct bu_list local_vlist;
+
+    BU_LIST_INIT(&local_vlist);
+    vbp = bn_vlblock_init(&local_vlist, 32);
+
+    /* Clear any previous visual */
+    if (db_lookup(gedp->ged_wdbp->dbip, draw_name, LOOKUP_QUIET) != RT_DIR_NULL)
+	dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, draw_name, 1, gedp->freesolid);
+
+    for (curr_edge = 0; curr_edge < num_edges; curr_edge++) {
+	int p1 = edges[curr_edge*2];
+	int p2 = edges[curr_edge*2+1];
+	VSET(a, bot->vertices[p1*3], bot->vertices[p1*3+1], bot->vertices[p1*3+2]);
+	VSET(b, bot->vertices[p2*3], bot->vertices[p2*3+1], bot->vertices[p2*3+2]);
+	vhead = bn_vlblock_find(vbp, draw_color[0], draw_color[1], draw_color[2]);
+	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+    }
+
+    _ged_cvt_vlblock_to_solids(gedp, vbp, draw_name, 0);
+    bn_vlist_cleanup(&local_vlist);
+    bn_vlblock_free(vbp);
+}
+
+HIDDEN void draw_faces(struct ged *gedp, struct rt_bot_internal *bot, int num_faces, int faces[], int draw_color[3], const char *draw_name)
+{
+    int curr_face = 0;
+    struct bu_list *vhead;
+    point_t a, b, c;
+    struct bn_vlblock *vbp;
+    struct bu_list local_vlist;
+
+    BU_LIST_INIT(&local_vlist);
+    vbp = bn_vlblock_init(&local_vlist, 32);
+
+    /* Clear any previous visual */
+    if (db_lookup(gedp->ged_wdbp->dbip, draw_name, LOOKUP_QUIET) != RT_DIR_NULL)
+	dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, draw_name, 1, gedp->freesolid);
+
+    for (curr_face = 0; curr_face < num_faces; curr_face++) {
+	int bot_face = faces[curr_face];
+	int p1 = bot->faces[bot_face];
+	int p2 = bot->faces[bot_face+1];
+	int p3 = bot->faces[bot_face+2];
+	VSET(a, bot->vertices[p1*3], bot->vertices[p1*3+1], bot->vertices[p1*3+2]);
+	VSET(b, bot->vertices[p2*3], bot->vertices[p2*3+1], bot->vertices[p2*3+2]);
+	VSET(c, bot->vertices[p3*3], bot->vertices[p3*3+1], bot->vertices[p3*3+2]);
+	vhead = bn_vlblock_find(vbp, draw_color[0], draw_color[1], draw_color[2]);
+	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
+	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, c, BN_VLIST_LINE_DRAW);
+	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_DRAW);
+    }
+
+    _ged_cvt_vlblock_to_solids(gedp, vbp, draw_name, 0);
+    bn_vlist_cleanup(&local_vlist);
+    bn_vlblock_free(vbp);
+}
 
 int
 ged_bot(struct ged *gedp, int argc, const char *argv[])
@@ -171,7 +235,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 
     if (bu_strncmp(sub, "solid_vis", len) == 0) {
 	int not_solid = 0;
-	int *edges = NULL;
+	struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLDID_ERRORS_INIT_NULL;
 
 	/* must be wanting help */
 	if (argc != 3) {
@@ -180,41 +244,26 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	not_solid = bg_trimesh_solid(bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, &edges);
+	not_solid = bg_trimesh_solid2(bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, &errors);
 	if (!not_solid) {
 	    bu_vls_printf(gedp->ged_result_str, "1");
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "0");
 	}
 
-	if (not_solid && edges) {
-	    int curr_edge = 0;
-	    struct bu_list *vhead;
-	    point_t a, b;
-	    struct bn_vlblock *vbp;
-	    struct bu_list local_vlist;
-	    BU_LIST_INIT(&local_vlist);
-	    vbp = bn_vlblock_init(&local_vlist, 32);
+	if (not_solid) {
+	    int blue[] = {0, 0, 255};
+	    int yellow[] = {255, 255, 0};
+	    int orange[] = {255, 128, 0};
+	    int purple[] = {255, 0, 255};
 
-	    /* Clear any previous visual */
-	    if (db_lookup(gedp->ged_wdbp->dbip, "badedge_visualff", LOOKUP_QUIET) != RT_DIR_NULL)
-		dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, "badedge_visualff", 1, gedp->freesolid);
+	    draw_faces(gedp, bot, errors.degenerate.count, errors.degenerate.faces, blue, "degenerate faces");
+	    draw_edges(gedp, bot, errors.unmatched.count, errors.unmatched.edges, yellow, "unmatched edges");
+	    draw_edges(gedp, bot, errors.misoriented.count, errors.misoriented.edges, orange, "misoriented edges");
+	    draw_edges(gedp, bot, errors.excess.count, errors.excess.edges, purple, "excess edges");
 
-	    for (curr_edge = 0; curr_edge < not_solid; curr_edge++) {
-		int p1 = edges[curr_edge*2];
-		int p2 = edges[curr_edge*2+1];
-		VSET(a, bot->vertices[p1*3], bot->vertices[p1*3+1], bot->vertices[p1*3+2]);
-		VSET(b, bot->vertices[p2*3], bot->vertices[p2*3+1], bot->vertices[p2*3+2]);
-		vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-	    }
-
-	    _ged_cvt_vlblock_to_solids(gedp, vbp, "badedge_visualff", 0);
-	    bn_vlist_cleanup(&local_vlist);
-	    bn_vlblock_free(vbp);
+	    bg_free_trimesh_solid_errors(&errors);
 	}
-	bu_free(edges, "free edge info array");
 	rt_db_free_internal(&intern);
 
 	return GED_OK;
