@@ -840,7 +840,8 @@ SetSixDigitPoints(int family, fastf_t tc, struct fortran_array *xt, struct fortr
     const fastf_t A = 1.0;
     const int NP = 201;
     fastf_t phi[201], eps[201], psi[201];
-    const fastf_t *orig_eps, *orig_psi;
+    const fastf_t *orig_eps = NULL;
+    const fastf_t *orig_psi = NULL;
     bn_complex_t tmp;
     bn_complex_t z[201], zprime[201], zeta[201], zfinal[201];
     int i;
