@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * ported mged 'screengrab' command to Windows - Nick Reed
-* Remove libmultispectral, rttherm, and related code/docs - Cliff Yapp
+* removed spectral tracing: libmultispectral & rttherm - Cliff Yapp
 
 
 ----------------------------------------------------------------------
