@@ -262,6 +262,11 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     (void)get_dataset_info(state->hDataset);
     gdal_elev_minmax(state->hDataset);
 
+    /* Stash the original Spatial Reference System as a PROJ.4 string for later assignment */
+    char *orig_proj4_str = NULL;
+    OGRSpatialReference iSRS(GDALGetProjectionRef(state->hDataset));
+    iSRS.exportToProj4(&orig_proj4_str);
+
     /* Use the information in the data set to deduce the EPSG number corresponding
      * to the correct UTM projection zone, define a spatial reference, and generate
      * the "Well Known Text" to use as the argument to the warping function*/
@@ -269,18 +274,19 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     int zone = (state->ops->zone == INT_MAX) ? gdal_utm_zone(state) : state->ops->zone;
     char *dunit;
     const char *dunit_default = "m";
+    struct bu_vls new_proj4_str = BU_VLS_INIT_ZERO;
     if (zone != INT_MAX) {
 	int epsg = gdal_utm_epsg(state, zone);
-	struct bu_vls proj4_str = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&proj4_str, "+init=epsg:%d +zone=%d +proj=utm +no_defs", epsg, zone);
+	bu_vls_sprintf(&new_proj4_str, "+init=epsg:%d +zone=%d +proj=utm +no_defs", epsg, zone);
 	OGRSpatialReference oSRS;
-	oSRS.importFromProj4(bu_vls_addr(&proj4_str));
+	oSRS.importFromProj4(bu_vls_addr(&new_proj4_str));
 	char *dst_Wkt = NULL;
 	oSRS.exportToWkt(&dst_Wkt);
 
 	/* Perform the UTM data warp.  At this point the data is not yet in the
 	 * form needed by the DSP primitive */
 	hOutDS = GDALAutoCreateWarpedVRT(state->hDataset, NULL, dst_Wkt, GRA_CubicSpline, 0.0, NULL);
+	CPLFree(dst_Wkt);
 	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
 	GDALGetGeoTransform(hOutDS, adfGeoTransform);
 	bu_log("\nTransformed dataset info:\n");
@@ -394,7 +400,19 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     wdb_export(state->wdbp, bu_vls_addr(&name_dsp), (void *)dsp, ID_DSP, 1);
 
+    /* Write out the original and current Spatial Reference Systems to attributes on the dsp */
+    struct bu_attribute_value_set avs;
+    bu_avs_init_empty(&avs);
+    struct directory *dp = db_lookup(state->wdbp->dbip, bu_vls_addr(&name_dsp), LOOKUP_QUIET);
+    if (dp != RT_DIR_NULL && !db5_get_attributes(state->wdbp->dbip, &avs, dp)) {
+	(void)bu_avs_add(&avs, "s_srs" , orig_proj4_str);
+	(void)bu_avs_add(&avs, "t_srs" , bu_vls_addr(&new_proj4_str));
+	(void)db5_update_attributes(dp, &avs, state->wdbp->dbip);
+    }
+
     if (dunit != dunit_default) bu_free(dunit, "free dunit");
+    if (orig_proj4_str) CPLFree(orig_proj4_str);
+    bu_vls_free(&new_proj4_str);
 
     bu_vls_free(&name_root);
     bu_vls_free(&name_data);
