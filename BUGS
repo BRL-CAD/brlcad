@@ -15,6 +15,16 @@ on-going issues.
 Recent Bugs
 -----------
 
+* a character is (still) sometimes captured by the cursor box.  steps
+  to reproduce:
+    1) write a word on the mged command prompt ("e.g. hello")
+    2) select the word to end of line with mouse
+    3) paste the word (e.g., middle mouse) and press enter
+    4) type "hello" again and press enter
+
+  you should now see an "o" in the yellow cursor box.  sometimes
+  you'll see the "o" after step 3.  running "clear" resets the cursor.
+
 * get_regions tcl command doesn't respond well to situations where
   child object names in combs have dashes (the "-" character) in
   names.  It tries to interpret the dash as an argument delimiter.
@@ -277,9 +287,6 @@ Recent Bugs
 * if you attach a display manager in tk-mged, kill the window, then
   quit, mged crashes on exit.
 
-* CMD-b and CMD-f navigates the mged command window text widget on Mac
-  and trivially causes problems with the cursor and text injection.
-
 * mged segfaults when drawing lots of solids at once (e.g. draw *.s)
 
 * mged command mode doesn't display the output of multiple
@@ -443,8 +450,6 @@ Recent Bugs
 
 * overlap tool in mged encourages very inefficient CSG operations
   (e.g. a simple bolt with an entire hull armor subtracted)
-
-* a character is (still) sometimes captured by the cursor box
 
 * permute (in mged) requires apply or save before 'new' vertex values
   will function properly as keypoints.
