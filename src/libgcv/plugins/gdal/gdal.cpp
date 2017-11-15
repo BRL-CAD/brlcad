@@ -312,6 +312,12 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     for(int i = 0; i < 3; i++) {
 	if(img_opts[i]) bu_free(img_opts[i], "imgopt");
     }
+
+    /* Stash the flat Spatial Reference System as a PROJ.4 string for later assignment */
+    char *flat_proj4_str = NULL;
+    OGRSpatialReference fSRS(GDALGetProjectionRef(flatDS));
+    fSRS.exportToProj4(&flat_proj4_str);
+
     bu_log("\nFinalized dataset info:\n");
     (void)get_dataset_info(flatDS);
     gdal_elev_minmax(flatDS);
@@ -407,11 +413,13 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     if (dp != RT_DIR_NULL && !db5_get_attributes(state->wdbp->dbip, &avs, dp)) {
 	(void)bu_avs_add(&avs, "s_srs" , orig_proj4_str);
 	(void)bu_avs_add(&avs, "t_srs" , bu_vls_addr(&new_proj4_str));
+	(void)bu_avs_add(&avs, "f_srs" , flat_proj4_str);
 	(void)db5_update_attributes(dp, &avs, state->wdbp->dbip);
     }
 
     if (dunit != dunit_default) bu_free(dunit, "free dunit");
     if (orig_proj4_str) CPLFree(orig_proj4_str);
+    if (flat_proj4_str) CPLFree(flat_proj4_str);
     bu_vls_free(&new_proj4_str);
 
     bu_vls_free(&name_root);
