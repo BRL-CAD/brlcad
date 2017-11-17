@@ -146,19 +146,19 @@ bg_trimesh_degenerate_faces(size_t num_faces, int *fpoints, bg_face_error_func_t
 typedef int (*bg_edge_filter_func_t)(size_t num_edges, struct trimesh_halfedge *edge_list, size_t cur_idx);
 
 HIDDEN int
-edge_filter_all(size_t num_edges, struct trimesh_halfedge *edge_list, size_t cur_idx)
+edge_filter_all(size_t UNUSED(num_edges), struct trimesh_halfedge *UNUSED(edge_list), size_t UNUSED(cur_idx))
 {
     return 1;
 }
 
 HIDDEN int
-edge_unmatched(size_t num_edges, struct trimesh_halfedge *edge_list, size_t cur_idx)
+edge_unmatched(size_t UNUSED(num_edges), struct trimesh_halfedge *edge_list, size_t cur_idx)
 {
     return !TRIMESH_EDGE_EQUAL(edge_list[cur_idx], edge_list[cur_idx + 1]);
 }
 
 HIDDEN int
-edge_misoriented(size_t num_edges, struct trimesh_halfedge *edge_list, size_t cur_idx)
+edge_misoriented(size_t UNUSED(num_edges), struct trimesh_halfedge *edge_list, size_t cur_idx)
 {
     return edge_list[cur_idx].flipped == edge_list[cur_idx + 1].flipped;
 }
