@@ -37,6 +37,11 @@
 
 __BEGIN_DECLS
 
+struct trimesh_halfedge {
+    int va, vb;
+    int flipped;
+};
+
 /* every pair of contiguous elements is the start and end vertex index of an edge */
 struct bg_trimesh_edges {
     int count;
@@ -66,7 +71,38 @@ BG_EXPORT extern void bg_free_trimesh_solid_errors(struct bg_trimesh_solid_error
 BG_EXPORT extern int bg_trimesh_closed_fan(size_t vcnt, size_t fcnt, fastf_t *v, int *f);
 BG_EXPORT extern int bg_trimesh_orientable(size_t vcnt, size_t fcnt, fastf_t *v, int *f);
 BG_EXPORT extern int bg_trimesh_solid(size_t vcnt, size_t fcnt, fastf_t *v, int *f, int **bedges);
+
+/* The below functions are for use as arguments to error tests. Given
+ * a face/edge, they return true if the caller should continue
+ * iterating through faces/edges, and false otherwise.
+ *
+ * The *_exit and *_continue functions just return false and true
+ * respectively. The *_gather functions expect the data argument to
+ * be a struct bg_trimesh_faces or struct bg_trimesh_edges with
+ * pre-allocated members of the correct size and count members set to
+ * 0, that they will populate.
+ */
+typedef int (*bg_face_error_func_t)(size_t face_idx, void *data);
+typedef int (*bg_edge_error_funct_t)(struct trimesh_halfedge *edge, void *data);
+
+BG_EXPORT extern int bg_trimesh_face_exit(size_t face_idx, void *data);
+BG_EXPORT extern int bg_trimesh_face_continue(size_t face_idx, void *data);
+BG_EXPORT extern int bg_trimesh_face_gather(size_t face_idx, void *data);
+BG_EXPORT extern int bg_trimesh_edge_exit(struct trimesh_halfedge *edge, void *data);
+BG_EXPORT extern int bg_trimesh_edge_continue(struct trimesh_halfedge *edge, void *data);
+BG_EXPORT extern int bg_trimesh_edge_gather(struct trimesh_halfedge *edge, void *data);
+
+/* These functions return 0 if no instances of the error are found.
+ * Otherwise, they return the number of instances of the error found
+ * before the error function argument returned false (at least 1).
+ */
+BG_EXPORT extern int bg_trimesh_degenerate_faces(size_t num_faces, int *fpoints, bg_face_error_func_t degenerate_func, void *data);
+BG_EXPORT extern int bg_trimesh_unmatched_edges(size_t num_edges, struct trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data);
+BG_EXPORT extern int bg_trimesh_misoriented_edges(size_t num_edges, struct trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data);
+BG_EXPORT extern int bg_trimesh_excess_edges(size_t num_edges, struct trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data);
 BG_EXPORT extern int bg_trimesh_solid2(size_t vcnt, size_t fcnt, fastf_t *v, int *f, struct bg_trimesh_solid_errors *errors);
+
+BG_EXPORT extern struct trimesh_halfedge * bg_trimesh_generate_edge_list(size_t fcnt, int *f);
 
 __END_DECLS
 
