@@ -937,7 +937,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * integrate library tester into regression suite that validates
   exported library symbols published in headers.  make sure they at
   least exist and maybe even try to ensure they will run with null
-  arguments without crashing.
+  arguments without crashing.  make sure headers compile as c++ (with
+  proper extern "C" wrapping).
 
 * make _plot() callbacks fill in plot objects instead of returning
   line segments.
@@ -2280,16 +2281,23 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 DOCUMENTATION
 -------------
 
-* break up library headers into subheaders so includes can be more
-  specific (and help speed up compilation) and locally documented, but
-  prevent subheaders from being directly included outside of our
-  compilation (we don't want subdir filenames to become public API)
+* BRL-CAD Primitives
+	An overview of the various primitive object types in BRL-CAD,
+	their range of features, and a description of their input
+	parameters.
 
-* move our public library headers into subdirs, e.g. include/bu/bu.h,
-  so it's clear when you're using headers from another library and
-  breaking encapsulation.
+        Create a catalog of all possible entity types.  Include
+        distinct parameterizations with sufficient variety that
+        conveys the object's parameterization options (e.g. ell as
+        sphere, flat disc, long spike, etc.).  this is necessarily
+        defined per object type and possibly programmable.  See
+        src/proc-db/csgbrep.cpp for a basic start.
 
-* make our C headers C++-convenient with proper extern "C" wrapping.
+* BRL-CAD Ray Tracing Shaders
+	An overview of the various shaders and shader options
+	available in BRL-CAD.  Create a catalog of all
+	possible/distinct/useful shader settings.  See
+	regress/shaders.sh for a basic start.
 
 * add missing manual pages (tbrowder2 generated list 2013-08):
 
@@ -2461,24 +2469,6 @@ DOCUMENTATION
 	surface representations, volumetric models, wireframes,
 	boolean operations, feature edit operations, and parametric
 	modeling.
-
-* BRL-CAD Primitives
-	An overview of the various primitive object types in BRL-CAD,
-	their range of features, and a description of their input
-	parameters.
-
-        Create a catalog of all possible entity types.  Include
-        distinct parameterizations with sufficient variety that
-        conveys the object's parameterization options (e.g. ell as
-        sphere, flat disc, long spike, etc.).  this is necessarily
-        defined per object type and possibly programmable.  See
-        src/proc-db/csgbrep.cpp for a basic start.
-
-* BRL-CAD Ray Tracing Shaders
-	An overview of the various shaders and shader options
-	available in BRL-CAD.  Create a catalog of all
-	possible/distinct/useful shader settings.  See
-	regress/shaders.sh for a basic start.
 
 * BRL-CAD Open Source
 	An overview of how BRL-CAD is organized as an open source
