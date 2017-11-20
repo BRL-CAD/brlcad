@@ -25,90 +25,95 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
+  HLCS1
 
 * check that dbconcat supports objects created with the bo cmd
+  HLCS1
 
 * libgcv should add objects to an existing .g if one is specified
   as the output target - right now it's overwriting the old file
+  VNES1
 
 * consolidate dbconcat, clone, make_name, and any other .g I/O
   routines that need to autogenerate names to use the new
   bu_vls_incr/bu_vls_simplify functions.
+  HLEM2
 
-* Explicitly list the CMakeLists.txt files rather than adding
+* explicitly list the CMakeLists.txt files rather than adding
   them automatically in the add_subdirectory override, now that
   we are listing all files explicitly - preserve the new simplicity
+  HNES1
 
-* renamed zlib and libpng when building bundled to avoid conflicting
+* rename zlib and libpng when building bundled to avoid conflicting
   with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
   with name z_brlcad (perhaps as a post-compile rename custom command)
   and png_brlcad respectively.
+  HNES1
 
 * investigate possibility of using simple, compact libs
   like miniz and lodepng to replace the complexity of
   managing zlib and libpng in src/other.  These have been
   a source of ongoing annoyance, particularly (but not
   exclusively) on OSX.
+  HLEM2
 
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
   if the file isn't a valid .g?
+  HNCS1
 
-* add regression test for BoT ray tracing
+* add regression test for BoT ray tracing.  test whether TIE and RT
+  can raytrace all of the various BoT modes.
+  HLCS1
 
 * add regression test for directional light sources
+  HLCS1
 
 * bundle primary rays in rt front end into postage stamps, shoot via
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
+  VNES3
 
-* create a catalog of all possible entity types.  including distinct
-  parameterizations with sufficient variety that conveys the object's
-  parameterization options (e.g. ell as sphere, flat disc, long spike,
-  etc.).  this is necessarily defined per object type and possibly
-  programmable.  see src/proc-db/csgbrep.cpp for a basic start.
-
-  create a BRL-CAD .g with all possible object types embedded.
+* create a BRL-CAD .g with all possible object types embedded.
   integrate into testing.
-
-* create a catalog of all possible/distinct/useful shader settings.
-  see regress/shaders.sh for a basic start.
+  HLCS1
 
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
+  VNCS1
 
-* try to come up with a way we can report the number of times
-  the configuration step has been run and changed something
-  without triggering almost a full rebuild.  Maybe have the
-  bits that need to report it pull from a file in bu_brlcad_data?
-
-* make sure TIE can raytrace all of the various BoT modes
-
-* metaball in command input needs sanity checks and better
-  validation.
+* metaball in command input needs sanity checks and better validation.
+  HNES1
 
 * integrate gen-registered-attributes-html output into website
+  VNES1
 
 * brlcad-config build helper script is not working (not reporting
   -llibs, reporting semicolon list for 'brlcad' lib).  Example working output:
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config brlcad
-  -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lbrlcad -lged -lwdb -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS -lanalyze  
+  -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lbrlcad -lged -lwdb -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS -lanalyze
 
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
   -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
 
+  VNCS1
+
 * OpenCL for enhanced performance boolweave sorting
+  VLEM3
 
 * create boolweave+boolfinal unit tests to validate weaving behavior
   and performance.
+  HLCM1
 
 * make sure we can run db_dirbuild() multiple times without creating
   duplicate entries.
+  HNEM2
 
 * heap unit test needs to actually compare performance against system
   allocation, not just do some work
+  HLCS1
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
@@ -2462,9 +2467,18 @@ DOCUMENTATION
 	their range of features, and a description of their input
 	parameters.
 
+        Create a catalog of all possible entity types.  Include
+        distinct parameterizations with sufficient variety that
+        conveys the object's parameterization options (e.g. ell as
+        sphere, flat disc, long spike, etc.).  this is necessarily
+        defined per object type and possibly programmable.  See
+        src/proc-db/csgbrep.cpp for a basic start.
+
 * BRL-CAD Ray Tracing Shaders
 	An overview of the various shaders and shader options
-	available in BRL-CAD.
+	available in BRL-CAD.  Create a catalog of all
+	possible/distinct/useful shader settings.  See
+	regress/shaders.sh for a basic start.
 
 * BRL-CAD Open Source
 	An overview of how BRL-CAD is organized as an open source
@@ -2505,5 +2519,12 @@ DOCUMENTATION
 ---
 See the feature request and bug trackers for more tasks and future
 planning efforts: https://sourceforge.net/tracker/?group_id=105292
+
+Items may encode metadata on a separate line including whether:
+  1) result is user 'V'isible or 'H'idden
+  2) utility is 'N'ow (by next minor release) or 'L'ater,
+  3) category is 'C'orrective or 'E'nhancement (perfective, adaptive),
+  4) interfaces impacted is 'S'ome (1-3 api/ui) or 'M'any (>3 api/ui),
+  5) and a time estimate (i.e., number of days effort).
 
 TODO items should be formatted to column 70 (M-q in emacs), no tabs.
