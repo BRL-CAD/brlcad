@@ -25,70 +25,85 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
-  HLCS1
+
+  user:hidden utility:later category:corrective impacts:some days:1
 
 * check that dbconcat supports objects created with the bo cmd
-  HLCS1
+
+  user:hidden utility:later category:corrective impacts:some days:1
 
 * libgcv should add objects to an existing .g if one is specified
   as the output target - right now it's overwriting the old file
-  VNES1
+
+  user:visible utility:now category:enhancement impacts:some days:1
 
 * consolidate dbconcat, clone, make_name, and any other .g I/O
   routines that need to autogenerate names to use the new
   bu_vls_incr/bu_vls_simplify functions.
-  HLEM2
+
+  user:hidden utility:later category:enhancement impacts:many days:2
 
 * explicitly list the CMakeLists.txt files rather than adding
   them automatically in the add_subdirectory override, now that
   we are listing all files explicitly - preserve the new simplicity
-  HNES1
+
+  user:hidden utility:now category:enhancement impacts:some days:1
 
 * rename zlib and libpng when building bundled to avoid conflicting
   with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
   with name z_brlcad (perhaps as a post-compile rename custom command)
   and png_brlcad respectively.
-  HNES1
+
+  user:hidden utility:now category:enhancement impacts:some days:1
 
 * investigate possibility of using simple, compact libs
   like miniz and lodepng to replace the complexity of
   managing zlib and libpng in src/other.  These have been
   a source of ongoing annoyance, particularly (but not
   exclusively) on OSX.
-  HLEM2
+
+  user:hidden utility:later category:enhancement impacts:many days:2
 
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
   if the file isn't a valid .g?
-  HNCS1
+
+  user:hidden utility:now category:corrective impacts:some days:1
 
 * add regression test for BoT ray tracing.  test whether TIE and RT
   can raytrace all of the various BoT modes.
-  HLCS1
+
+  user:hidden utility:later category:corrective impacts:some days:1
 
 * add regression test for directional light sources
-  HLCS1
+
+  user:hidden utility:later category:corrective impacts:some days:1
 
 * bundle primary rays in rt front end into postage stamps, shoot via
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
-  VNES3
+
+  user:visible utility:now category:enhancement impacts:some days:3
 
 * create a BRL-CAD .g with all possible object types embedded.
   integrate into testing.
-  HLCS1
+
+  user:hidden utility:later category:corrective impacts:some days:1
 
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
-  VNCS1
+
+  user:visible utility:now category:corrective impacts:some days:1
 
 * metaball in command input needs sanity checks and better validation.
-  HNES1
+
+  user:hidden utility:now category:enhancement impacts:some days:1
 
 * integrate gen-registered-attributes-html output into website
-  VNES1
+
+  user:visible utility:now category:enhancement impacts:some days:1
 
 * brlcad-config build helper script is not working (not reporting
   -llibs, reporting semicolon list for 'brlcad' lib).  Example working output:
@@ -98,22 +113,26 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
   -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
 
-  VNCS1
+  user:visible utility:now category:corrective impacts:some days:1
 
 * OpenCL for enhanced performance boolweave sorting
-  VLEM3
+
+  user:visible utility:later category:enhancement impacts:many days:3
 
 * create boolweave+boolfinal unit tests to validate weaving behavior
   and performance.
-  HLCM1
+
+  user:hidden utility:later category:corrective impacts:many days:1
 
 * make sure we can run db_dirbuild() multiple times without creating
   duplicate entries.
-  HNEM2
+
+  user:hidden utility:now category:enhancement impacts:many days:2
 
 * heap unit test needs to actually compare performance against system
   allocation, not just do some work
-  HLCS1
+  
+  user:hidden utility:later category:corrective impacts:some days:1
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
