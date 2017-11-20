@@ -102,12 +102,7 @@ as input and compared against file3.pix, reporting on the differences.</para>
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>
-<para>Christopher Sean Morrison ,
-<!-- .br -->
-Charles M. Kennedy ,
-<!-- .br -->
-Michael John Muuss</para>
-
+<para><emphasis remap='B'>BRL-CAD Team</emphasis></para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>

@@ -89,7 +89,7 @@ sets both the height and width to the size given.</para>
 </refsection>
 
 <refsection xml:id="author"><title>AUTHOR</title>
-<para>Michael John Muuss</para>
+<para><emphasis remap='B'>BRL-CAD Team</emphasis></para>
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>

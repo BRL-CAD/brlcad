@@ -338,10 +338,7 @@ seen.</para>
 </refsect1>
 
 <refsect1 xml:id='authors'><title>AUTHORS</title>
-<para>Dr. Susanne Muuss
-<!-- .br -->
-Michael John Muuss</para>
-
+<para><emphasis remap='B'>BRL-CAD Team</emphasis></para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>

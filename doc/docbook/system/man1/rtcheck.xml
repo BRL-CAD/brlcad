@@ -174,8 +174,7 @@
   </refsection>
 
   <refsection xml:id="author"><title>AUTHORS</title>
-    <para>Michael John Muuss</para>
-    <para>Gary S. Moss</para>
+    <para><emphasis remap='B'>BRL-CAD Team</emphasis></para>
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
