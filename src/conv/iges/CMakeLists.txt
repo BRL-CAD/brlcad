@@ -27,7 +27,6 @@ set(iges-g_SRCS
   b-spline.c
   block2.c
   brep.c
-  brlabs.c
   check_names.c
   cone.c
   conv_drawings.c
