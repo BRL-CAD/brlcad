@@ -23,16 +23,20 @@
  *
  * @brief fundamental vector, matrix, quaternion math macros
  *
- * VMATH defines commonly needed 2D/3D/4D homogenous math macros for:
+ * VMATH defines commonly needed macros for 2D/3D/4D math involving:
  *
- *   vectors (vect2d_t, vect_t, and hvect_t),
  *   points (point2d_t, point_t, and hpoint_t),
+ *   vectors (vect2d_t, vect_t, and hvect_t),
  *   quaternions (quat_t),
  *   planes (plane_t), and
  *   4x4 matrices (mat_t).
  *
- * All are stored as simple arrays using the fastf_t floating point
- * type, defined to a fast 64-bit type.
+ * By default, all floating point numbers are stored in arrays using
+ * the 'fastf_t' type definition.  It should be manually typedef'd to
+ * the "fastest" 64-bit floating point type available on the current
+ * hardware with at least 64 bits of precision.  On 16 and 32 bit
+ * machines, this is typically "double", but on 64 bit machines, it
+ * could be "float".
  *
  * Matrix array elements have the following positions in the matrix:
  * @code
@@ -45,10 +49,10 @@
  * @endcode
  *
  * Note that while many people in the computer graphics field use
- * post-multiplication with row vectors (i.e., vector * matrix * matrix
- * ...) the BRL-CAD system uses the more traditional representation
- * of column vectors (i.e., ... matrix * matrix * vector).  (The
- * matrices in these two representations are the transposes of each
+ * post-multiplication with row vectors (i.e., vector * matrix *
+ * matrix ...) VMATH uses the more traditional representation of
+ * column vectors (i.e., ... matrix * matrix * vector).  (The matrices
+ * in these two representations are the transposes of each
  * other). Therefore, when transforming a vector by a matrix,
  * pre-multiplication is used, i.e.:
  *
@@ -78,6 +82,8 @@
  *
  * Most of these macros require that the result be in separate
  * storage, distinct from the input parameters, except where noted.
+ *
+ * IMPLEMENTOR NOTES
  *
  * When writing macros like this, it is very important that any
  * variables declared within a macro code blocks start with an
@@ -317,21 +323,10 @@ extern "C" {
 
 
 /*
- * Types for matrices and vectors.
+ * Fundamental types
  */
 
-/**
- * fastf_t - Intended to be the fastest floating point data type on
- * the current machine, with at least 64 bits of precision.  On 16 and
- * 32 bit machines, this is typically "double", but on 64 bit machines,
- * it is often "float".  Virtually all floating point variables (and
- * more complicated data types, like vect_t and mat_t) are defined as
- * fastf_t.  The one exception is when a subroutine return is a
- * floating point value; that is always declared as "double".
- *
- * TODO: If used pervasively, it should eventually be possible to make
- * fastf_t a GMP C++ type for fixed-precision computations.
- */
+/** @brief fastest 64-bit (or larger) floating point type */
 typedef double fastf_t;
 
 /** @brief 2-tuple vector */
