@@ -21,12 +21,18 @@
 /** @{ */
 /** @file vmath.h
  *
- * @brief vector/matrix math, matrix representation
+ * @brief fundamental vector, matrix, quaternion math macros
  *
- * This header file defines many commonly used 3D vector math macros,
- * and operates on vect_t, point_t, mat_t, and quat_t objects.
+ * VMATH defines commonly needed 2D/3D/4D homogenous math macros for:
  *
- * 4 x 4 Matrix manipulation functions...
+ *   vectors (vect2d_t, vect_t, and hvect_t),
+ *   points (point2d_t, point_t, and hpoint_t),
+ *   quaternions (quat_t),
+ *   planes (plane_t), and
+ *   4x4 matrices (mat_t).
+ *
+ * All are stored as simple arrays using the fastf_t floating point
+ * type, defined to a fast 64-bit type.
  *
  * Matrix array elements have the following positions in the matrix:
  * @code
@@ -367,29 +373,6 @@ typedef fastf_t mat_t[ELEMENTS_PER_MAT];
 /** @brief pointer to a 4x4 matrix */
 typedef fastf_t *matp_t;
 
-/** Vector component names for homogeneous (4-tuple) vectors */
-typedef enum vmath_vector_component_ {
-    X = 0,
-    Y = 1,
-    Z = 2,
-    W = 3,
-    H = W
-} vmath_vector_component;
-
-/**
- * Locations of deltas (MD*) and scaling values (MS*) in a 4x4
- * Homogeneous Transform matrix
- */
-typedef enum vmath_matrix_component_ {
-    MSX = 0,
-    MDX = 3,
-    MSY = 5,
-    MDY = 7,
-    MSZ = 10,
-    MDZ = 11,
-    MSA = 15
-} vmath_matrix_component;
-
 /**
  * @brief Definition of a plane equation
  *
@@ -413,6 +396,29 @@ typedef enum vmath_matrix_component_ {
  *@n VDOT(D, N) > 0 ray exits halfspace defined by plane
  */
 typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
+
+/** Vector component names for homogeneous (4-tuple) vectors */
+typedef enum vmath_vector_component_ {
+    X = 0,
+    Y = 1,
+    Z = 2,
+    W = 3,
+    H = W
+} vmath_vector_component;
+
+/**
+ * Locations of deltas (MD*) and scaling values (MS*) in a 4x4
+ * Homogeneous Transform matrix
+ */
+typedef enum vmath_matrix_component_ {
+    MSX = 0,
+    MDX = 3,
+    MSY = 5,
+    MDY = 7,
+    MSZ = 10,
+    MDZ = 11,
+    MSA = 15
+} vmath_matrix_component;
 
 /**
  * Evaluates truthfully whether a number is not within valid range of
