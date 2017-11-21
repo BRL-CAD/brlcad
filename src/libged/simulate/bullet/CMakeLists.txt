@@ -405,7 +405,7 @@ if(BRLCAD_ENABLE_BULLET)
 
   include(CheckCXXCompilerFlag)
   check_cxx_compiler_flag(-Wno-error NOERROR_FLAG_CXX)
-  check_cxx_compiler_flag(-W NOWARN_FLAG_CXX)
+  check_cxx_compiler_flag(-w NOWARN_FLAG_CXX)
   if(NOERROR_FLAG_CXX AND NOWARN_FLAG_CXX)
     foreach(srcfile ${Bullet_SRCS})
       set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "-w -Wno-error")
