@@ -4088,31 +4088,8 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 
 	    /* back out to bounding box limits */
 
-	    /* Compute the inverse of the direction cosines */
-	    if (ap.a_ray.r_dir[X] < -SQRT_SMALL_FASTF) {
-		inv_dir[X] = 1.0/ap.a_ray.r_dir[X];
-	    } else if (ap.a_ray.r_dir[X] > SQRT_SMALL_FASTF) {
-		inv_dir[X] = 1.0/ap.a_ray.r_dir[X];
-	    } else {
-		ap.a_ray.r_dir[X] = 0.0;
-		inv_dir[X] = INFINITY;
-	    }
-	    if (ap.a_ray.r_dir[Y] < -SQRT_SMALL_FASTF) {
-		inv_dir[Y] = 1.0/ap.a_ray.r_dir[Y];
-	    } else if (ap.a_ray.r_dir[Y] > SQRT_SMALL_FASTF) {
-		inv_dir[Y] = 1.0/ap.a_ray.r_dir[Y];
-	    } else {
-		ap.a_ray.r_dir[Y] = 0.0;
-		inv_dir[Y] = INFINITY;
-	    }
-	    if (ap.a_ray.r_dir[Z] < -SQRT_SMALL_FASTF) {
-		inv_dir[Z]=1.0/ap.a_ray.r_dir[Z];
-	    } else if (ap.a_ray.r_dir[Z] > SQRT_SMALL_FASTF) {
-		inv_dir[Z]=1.0/ap.a_ray.r_dir[Z];
-	    } else {
-		ap.a_ray.r_dir[Z] = 0.0;
-		inv_dir[Z] = INFINITY;
-	    }
+	    /* Compute inverse of the direction cosines */
+	    VINVDIR(inv_dir, ap.a_ray.r_dir);
 
 	    if (!rt_in_rpp(&ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max)) {
 		/* ray missed!!! */
