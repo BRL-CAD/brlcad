@@ -21,8 +21,8 @@
 #include "common.h"
 
 #include <stdio.h>
+#include "vmath.h"
 
-#include "bu/defines.h"
 
 fastf_t brlabs(const fastf_t a)
 {
