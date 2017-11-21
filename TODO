@@ -138,6 +138,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add ability to capture any command's output to a file, ideally with
+  options for specifying stdout and/or stderr.  of priority are the
+  attr and rtcheck/gqa commands.  this should probably be handled by a
+  libged command wrapper so it's consistent and available to any
+  command.
+
 * mater command does not validate its arguments - fix that.  Also
   properly document using "." to skip specifying something - not in
   the man page currently.
@@ -1535,8 +1541,6 @@ ATTRIBUTES
 
 * See src/libbu/TODO.binary_attributes for more info about
   bson based binary attribute work.
-
-* attr command option to output to a file
 
 * attr command change to only output non-standard attributes
 
