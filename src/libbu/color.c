@@ -45,18 +45,6 @@
 #define BLU 2
 
 
-/* vmath/libbu routines replicated here to avoid a libbn dependency */
-enum axis {
-    X = 0,
-    Y = 1,
-    Z = 2
-};
-#define VSET(a, b, c, d) { (a)[X] = (b); (a)[Y] = (c); (a)[Z] = (d); }
-#define VSETALL(a, s) { (a)[X] = (a)[Y] = (a)[Z] = (s); }
-#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
-#define V3ARGS(a) (a)[X], (a)[Y], (a)[Z]
-
-
 void
 bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
 {

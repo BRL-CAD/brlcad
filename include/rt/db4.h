@@ -66,7 +66,7 @@
 
 #include "common.h"
 
-#include "bu/defines.h"  /* Needed only for the deprecated functions below using fastf_t */
+#include "vmath.h"  /* Needed only for the deprecated functions below using fastf_t */
 
 __BEGIN_DECLS
 

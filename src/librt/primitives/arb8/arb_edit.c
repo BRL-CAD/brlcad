@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "vmath.h"
 
 #include "rt/db4.h" /* For ARB* defines */
 #include "rt/arb_edit.h"

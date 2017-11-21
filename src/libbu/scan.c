@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include "vmath.h"
 
 #include "bu/log.h"
 #include "bu/malloc.h"
