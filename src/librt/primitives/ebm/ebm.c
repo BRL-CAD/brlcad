@@ -325,25 +325,8 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     int out_index;
     int j;
 
-    /* Compute the inverse of the direction cosines */
-    if (!ZERO(rp->r_dir[X])) {
-	invdir[X] = 1.0/rp->r_dir[X];
-    } else {
-	invdir[X] = INFINITY;
-	rp->r_dir[X] = 0.0;
-    }
-    if (!ZERO(rp->r_dir[Y])) {
-	invdir[Y] = 1.0/rp->r_dir[Y];
-    } else {
-	invdir[Y] = INFINITY;
-	rp->r_dir[Y] = 0.0;
-    }
-    if (!ZERO(rp->r_dir[Z])) {
-	invdir[Z] = 1.0/rp->r_dir[Z];
-    } else {
-	invdir[Z] = INFINITY;
-	rp->r_dir[Z] = 0.0;
-    }
+    /* Compute inverse of the direction cosines */
+    VINVDIR(invdir, rp->r_dir);
 
     /* intersect ray with ideal grid rpp */
     VSETALL(P, 0);
