@@ -284,6 +284,7 @@ extern "C" {
 #  endif
 #endif
 
+
 /** @brief number of fastf_t's per vect2d_t */
 #define ELEMENTS_PER_VECT2D	2
 
@@ -307,6 +308,7 @@ extern "C" {
 
 /** @brief number of fastf_t's per mat_t */
 #define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
+
 
 /*
  * Types for matrices and vectors.
@@ -366,19 +368,19 @@ typedef fastf_t mat_t[ELEMENTS_PER_MAT];
 typedef fastf_t *matp_t;
 
 /** Vector component names for homogeneous (4-tuple) vectors */
-typedef enum bn_vector_component_ {
+typedef enum vmath_vector_component_ {
     X = 0,
     Y = 1,
     Z = 2,
     W = 3,
     H = W
-} bn_vector_component;
+} vmath_vector_component;
 
 /**
  * Locations of deltas (MD*) and scaling values (MS*) in a 4x4
  * Homogeneous Transform matrix
  */
-typedef enum bn_matrix_component_ {
+typedef enum vmath_matrix_component_ {
     MSX = 0,
     MDX = 3,
     MSY = 5,
@@ -386,7 +388,7 @@ typedef enum bn_matrix_component_ {
     MSZ = 10,
     MDZ = 11,
     MSA = 15
-} bn_matrix_component;
+} vmath_matrix_component;
 
 /**
  * @brief Definition of a plane equation
@@ -1761,10 +1763,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5]) * _f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6]) * _f; \
     } while (0)
-
-/** @brief Test a vector for non-unit length. */
-#define BN_VEC_NON_UNIT_LEN(_vec)	\
-	(fabs(MAGSQ(_vec)) < 0.0001 || fabs(fabs(MAGSQ(_vec))-1) > 0.0001)
 
 /**
  * @brief Included below are macros to update min and max X, Y, Z
