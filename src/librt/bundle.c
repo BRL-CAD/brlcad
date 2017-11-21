@@ -184,6 +184,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     }
 
     /* Compute the inverse of the direction cosines */
+    /* TODO: utilize VINVDIR after getting rid of nugrid */
     if (ap->a_ray.r_dir[X] < -SQRT_SMALL_FASTF) {
 	ss.abs_inv_dir[X] = -(ss.inv_dir[X]=1.0/ap->a_ray.r_dir[X]);
 	ss.rstep[X] = -1;
