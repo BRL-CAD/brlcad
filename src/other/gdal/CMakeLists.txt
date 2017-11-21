@@ -49,7 +49,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts
   ${CMAKE_CURRENT_SOURCE_DIR}/gnm
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
-  ${PROJ4_INCLUDE_DIRS}
+  ${PROJ4_INCLUDE_DIR}
   )
 
 if(NOT LIB_DIR)
