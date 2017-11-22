@@ -929,7 +929,7 @@ x24_setup(fb *ifp, int width, int height)
 
 	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(char),
 						       xi->xi_image->bytes_per_line * height)) == NULL) {
-		fb_log("X24_open: pix1 malloc failed\n");
+		fb_log("X24_open: pix_1 malloc failed\n");
 		return -1;
 	    }
 	    xi->xi_image->data = (char *) xi->xi_pix;
@@ -1003,17 +1003,17 @@ x24_setup(fb *ifp, int width, int height)
  * register.  This register is then clocked out as bytes in the
  * correct ordering.
  *
- * x1, y1->w, h describes a Rectangle of changed bits (image space coord.)
+ * x_1, y_1->w, h describes a Rectangle of changed bits (image space coord.)
  */
 HIDDEN void
-X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
+X24_blit(fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx flags */)
 {
     struct xinfo *xi = XI(ifp);
 
-    int x2 = x1 + w - 1;	/* Convert to rectangle corners */
-    int y2 = y1 + h - 1;
+    int x2 = x_1 + w - 1;	/* Convert to rectangle corners */
+    int y2 = y_1 + h - 1;
 
-    int x1wd, x2wd, y1ht, y2ht;
+    int x_1wd, x2wd, y_1ht, y2ht;
     int x, y;
     int ox, oy;
     int xdel, ydel;
@@ -1085,33 +1085,33 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
      * nothing to do
      */
 
-    if (x1 > xi->xi_irt ||
+    if (x_1 > xi->xi_irt ||
 	x2 < xi->xi_ilf ||
-	y1 > xi->xi_itp ||
+	y_1 > xi->xi_itp ||
 	y2 < xi->xi_ibt)
 	return;
 
     /*
      * Clamp to actual displayed portion of image
      */
-    if (x1 < xi->xi_ilf) x1 = xi->xi_ilf;
+    if (x_1 < xi->xi_ilf) x_1 = xi->xi_ilf;
     if (x2 > xi->xi_irt) x2 = xi->xi_irt;
-    if (y1 < xi->xi_ibt) y1 = xi->xi_ibt;
+    if (y_1 < xi->xi_ibt) y_1 = xi->xi_ibt;
     if (y2 > xi->xi_itp) y2 = xi->xi_itp;
 
     /*
      * Figure out sizes of outermost image pixels
      */
-    x1wd = (x1 == xi->xi_ilf) ? xi->xi_ilf_w : ifp->if_xzoom;
+    x_1wd = (x_1 == xi->xi_ilf) ? xi->xi_ilf_w : ifp->if_xzoom;
     x2wd = (x2 == xi->xi_irt) ? xi->xi_irt_w : ifp->if_xzoom;
-    y1ht = (y1 == xi->xi_ibt) ? xi->xi_ibt_h : ifp->if_yzoom;
+    y_1ht = (y_1 == xi->xi_ibt) ? xi->xi_ibt_h : ifp->if_yzoom;
     y2ht = (y2 == xi->xi_itp) ? xi->xi_itp_h : ifp->if_yzoom;
 
     /* Compute ox: offset from left edge of window to left pixel */
 
-    xdel = x1 - xi->xi_ilf;
+    xdel = x_1 - xi->xi_ilf;
     if (xdel) {
-	ox = x1wd + ((xdel - 1) * ifp->if_xzoom) + xi->xi_xlf;
+	ox = x_1wd + ((xdel - 1) * ifp->if_xzoom) + xi->xi_xlf;
     } else {
 	ox = xi->xi_xlf;
     }
@@ -1119,9 +1119,9 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 
     /* Compute oy: offset from top edge of window to bottom pixel */
 
-    ydel = y1 - xi->xi_ibt;
+    ydel = y_1 - xi->xi_ibt;
     if (ydel) {
-	oy = xi->xi_xbt - (y1ht + ((ydel - 1) * ifp->if_yzoom));
+	oy = xi->xi_xbt - (y_1ht + ((ydel - 1) * ifp->if_yzoom));
     } else {
 	oy = xi->xi_xbt;
     }
@@ -1129,16 +1129,16 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 
     /* Figure out size of changed area on screen in X pixels */
 
-    if (x2 == x1) {
-	xwd = x1wd;
+    if (x2 == x_1) {
+	xwd = x_1wd;
     } else {
-	xwd = x1wd + x2wd + ifp->if_xzoom * (x2 - x1 - 1);
+	xwd = x_1wd + x2wd + ifp->if_xzoom * (x2 - x_1 - 1);
     }
 
-    if (y2 == y1) {
-	xht = y1ht;
+    if (y2 == y_1) {
+	xht = y_1ht;
     } else {
-	xht = y1ht + y2ht + ifp->if_yzoom * (y2 - y1 - 1);
+	xht = y_1ht + y2ht + ifp->if_yzoom * (y2 - y_1 - 1);
     }
 
     /*
@@ -1170,11 +1170,11 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 		/*
 		 * Our source of pixels in packed RGB order
 		 */
-		irgb = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) * sizeof(RGBpixel)]);
+		irgb = &(xi->xi_mem[(y_1 * xi->xi_iwidth + x_1) * sizeof(RGBpixel)]);
 
 		/* General case, zooming in effect */
 
-		for (y = y1; y <= y2; y++) {
+		for (y = y_1; y <= y2; y++) {
 		    unsigned char *line_irgb;
 		    unsigned char *p;
 
@@ -1185,14 +1185,14 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 
 		    /* For the first line, convert/copy pixels */
 
-		    for (x = x1; x <= x2; x++) {
+		    for (x = x_1; x <= x2; x++) {
 			int pxwd;
 
 			/* Calculate # pixels needed */
 			/* See comment above for more info */
 
-			if (x == x1) {
-			    pxwd = x1wd;
+			if (x == x_1) {
+			    pxwd = x_1wd;
 			} else if (x == x2) {
 			    pxwd = x2wd;
 			} else {
@@ -1298,7 +1298,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 		unsigned char *grn = xi->xi_grnmap;
 		unsigned char *blu = xi->xi_blumap;
 
-		unsigned char *ip = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) *
+		unsigned char *ip = &(xi->xi_mem[(y_1 * xi->xi_iwidth + x_1) *
 						 sizeof (RGBpixel)]);
 		unsigned char *op = (unsigned char *) &xi->xi_pix[oy *
 								  xi->xi_xwidth + ox];
@@ -1309,7 +1309,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 
 		    int j, k;
 
-		    for (j = y2 - y1 + 1; j; j--) {
+		    for (j = y2 - y_1 + 1; j; j--) {
 			unsigned char *lip;
 			unsigned char *lop;
 
@@ -1319,7 +1319,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 			/* For each line, convert/copy pixels */
 
 			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
-			    for (k = x2 - x1 + 1; k; k--) {
+			    for (k = x2 - x_1 + 1; k; k--) {
 				r = lip[RED];
 				g = lip[GRN];
 				b = lip[BLU];
@@ -1333,7 +1333,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 				lip += sizeof (RGBpixel);
 			    }
 			} else {
-			    for (k = x2 - x1 + 1; k; k--) {
+			    for (k = x2 - x_1 + 1; k; k--) {
 				r = red[lip[RED]];
 				g = grn[lip[GRN]];
 				b = blu[lip[BLU]];
@@ -1356,15 +1356,15 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 		} else {
 		    /* General case */
 
-		    for (y = y1; y <= y2; y++) {
+		    for (y = y_1; y <= y2; y++) {
 			int pyht;
 			unsigned char *lip;
 			unsigned char *lop;
 
 			/* Calculate # lines needed */
 
-			if (y == y1)
-			    pyht = y1ht;
+			if (y == y_1)
+			    pyht = y_1ht;
 			else if (y == y2)
 			    pyht = y2ht;
 			else
@@ -1377,13 +1377,13 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 			    lop = op;
 
 			    if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
-				for (x = x1; x <= x2; x++) {
+				for (x = x_1; x <= x2; x++) {
 				    int pxwd;
 
 				    /* Calculate # pixels needed */
 
-				    if (x == x1)
-					pxwd = x1wd;
+				    if (x == x_1)
+					pxwd = x_1wd;
 				    else if (x == x2)
 					pxwd = x2wd;
 				    else
@@ -1405,13 +1405,13 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 				    lip += sizeof (RGBpixel);
 				}
 			    } else {
-				for (x = x1; x <= x2; x++) {
+				for (x = x_1; x <= x2; x++) {
 				    int pxwd;
 
 				    /* Calculate # pixels needed */
 
-				    if (x == x1)
-					pxwd = x1wd;
+				    if (x == x_1)
+					pxwd = x_1wd;
 				    else if (x == x2)
 					pxwd = x2wd;
 				    else
@@ -1452,7 +1452,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 		unsigned char *grn = xi->xi_grnmap;
 		unsigned char *blu = xi->xi_blumap;
 
-		unsigned char *ip = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) *
+		unsigned char *ip = &(xi->xi_mem[(y_1 * xi->xi_iwidth + x_1) *
 						 sizeof (RGBpixel)]);
 		unsigned char *op = (unsigned char *) &xi->xi_pix[oy *
 								  xi->xi_xwidth + ox];
@@ -1462,7 +1462,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 
 		    int j, k;
 
-		    for (j = y2 - y1 + 1; j; j--) {
+		    for (j = y2 - y_1 + 1; j; j--) {
 			unsigned char *lip;
 			unsigned char *lop;
 
@@ -1472,7 +1472,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 			/* For each line, convert/copy pixels */
 
 			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
-			    for (k = x2 - x1 + 1; k; k--) {
+			    for (k = x2 - x_1 + 1; k; k--) {
 				r = lip[RED];
 				g = lip[GRN];
 				b = lip[BLU];
@@ -1484,7 +1484,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 				lip += sizeof (RGBpixel);
 			    }
 			} else {
-			    for (k = x2 - x1 + 1; k; k--) {
+			    for (k = x2 - x_1 + 1; k; k--) {
 				r = red[lip[RED]];
 				g = grn[lip[GRN]];
 				b = blu[lip[BLU]];
@@ -1503,7 +1503,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 		} else {
 		    /* General case */
 
-		    for (y = y1; y <= y2; y++) {
+		    for (y = y_1; y <= y2; y++) {
 			int pyht;
 			int copied;
 			unsigned char *lip;
@@ -1511,8 +1511,8 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 
 			/* Calculate # lines needed */
 
-			if (y == y1)
-			    pyht = y1ht;
+			if (y == y_1)
+			    pyht = y_1ht;
 			else if (y == y2)
 			    pyht = y2ht;
 			else
@@ -1527,13 +1527,13 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 			/* For the first line, convert/copy pixels */
 
 			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
-			    for (x = x1; x <= x2; x++) {
+			    for (x = x_1; x <= x2; x++) {
 				int pxwd;
 
 				/* Calculate # pixels needed */
 
-				if (x == x1)
-				    pxwd = x1wd;
+				if (x == x_1)
+				    pxwd = x_1wd;
 				else if (x == x2)
 				    pxwd = x2wd;
 				else
@@ -1558,13 +1558,13 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 				    *lop++ = pix;
 			    }
 			} else {
-			    for (x = x1; x <= x2; x++) {
+			    for (x = x_1; x <= x2; x++) {
 				int pxwd;
 
 				/* Calculate # pixels needed */
 
-				if (x == x1)
-				    pxwd = x1wd;
+				if (x == x_1)
+				    pxwd = x_1wd;
 				else if (x == x2)
 				    pxwd = x2wd;
 				else
@@ -1617,7 +1617,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 		unsigned char *grn = xi->xi_grnmap;
 		unsigned char *blu = xi->xi_blumap;
 
-		unsigned char *ip = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) *
+		unsigned char *ip = &(xi->xi_mem[(y_1 * xi->xi_iwidth + x_1) *
 						 sizeof (RGBpixel)]);
 		unsigned char *op = (unsigned char *) &xi->xi_pix[oy *
 								  xi->xi_image->bytes_per_line + ox / 8];
@@ -1628,7 +1628,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 
 		    int j, k;
 
-		    for (j = y2 - y1 + 1; j; j--) {
+		    for (j = y2 - y_1 + 1; j; j--) {
 			unsigned char *lip;
 			unsigned char *lop;
 			unsigned char loppix;
@@ -1641,7 +1641,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 			/* For each line, convert/copy pixels */
 
 			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
-			    for (k = x2 - x1 + 1; k; k--) {
+			    for (k = x2 - x_1 + 1; k; k--) {
 				r = lip[RED];
 				g = lip[GRN];
 				b = lip[BLU];
@@ -1666,7 +1666,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 				lip += sizeof (RGBpixel);
 			    }
 			} else {
-			    for (k = x2 - x1 + 1; k; k--) {
+			    for (k = x2 - x_1 + 1; k; k--) {
 				r = lip[RED];
 				g = lip[GRN];
 				b = lip[BLU];
@@ -1702,7 +1702,7 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 		} else {
 		    /* General case */
 
-		    for (y = y1; y <= y2; y++) {
+		    for (y = y_1; y <= y2; y++) {
 			int pyht;
 			unsigned char *lip;
 			unsigned char *lop;
@@ -1711,8 +1711,8 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 
 			/* Calculate # lines needed */
 
-			if (y == y1)
-			    pyht = y1ht;
+			if (y == y_1)
+			    pyht = y_1ht;
 			else if (y == y2)
 			    pyht = y2ht;
 			else
@@ -1726,13 +1726,13 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 			    loppix = *lop;
 
 			    if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
-				for (x = x1; x <= x2; x++) {
+				for (x = x_1; x <= x2; x++) {
 				    int pxwd;
 
 				    /* Calculate # pixels needed */
 
-				    if (x == x1)
-					pxwd = x1wd;
+				    if (x == x_1)
+					pxwd = x_1wd;
 				    else if (x == x2)
 					pxwd = x2wd;
 				    else
@@ -1764,13 +1764,13 @@ X24_blit(fb *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 				    lip += sizeof (RGBpixel);
 				}
 			    } else {
-				for (x = x1; x <= x2; x++) {
+				for (x = x_1; x <= x2; x++) {
 				    int pxwd;
 
 				    /* Calculate # pixels needed */
 
-				    if (x == x1)
-					pxwd = x1wd;
+				    if (x == x_1)
+					pxwd = x_1wd;
 				    else if (x == x2)
 					pxwd = x2wd;
 				    else
@@ -2644,7 +2644,7 @@ X24_configureWindow(fb *ifp, int width, int height)
 
 	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(char),
 						      xi->xi_image->bytes_per_line * xi->xi_xheight)) == NULL) {
-		fb_log("X24: pix1 malloc failed in resize!\n");
+		fb_log("X24: pix_1 malloc failed in resize!\n");
 		return 1;
 	    }
 
@@ -2871,27 +2871,27 @@ X24_handle_event(fb *ifp, XEvent *event)
 	case Expose:
 	    {
 		XExposeEvent *expose = (XExposeEvent *)event;
-		int ex1, ey1, ex2, ey2;
+		int ex_1, ey_1, ex2, ey2;
 
-		ex1 = expose->x;
-		ey1 = expose->y;
-		ex2 = ex1 + expose->width - 1;
-		ey2 = ey1 + expose->height - 1;
+		ex_1 = expose->x;
+		ey_1 = expose->y;
+		ex2 = ex_1 + expose->width - 1;
+		ey2 = ey_1 + expose->height - 1;
 
 		/* Clip to outline of valid bits in window */
-		if (ex1 < xi->xi_xlf)
-		    ex1 = xi->xi_xlf;
+		if (ex_1 < xi->xi_xlf)
+		    ex_1 = xi->xi_xlf;
 		if (ex2 > xi->xi_xrt)
 		    ex2 = xi->xi_xrt;
-		if (ey1 < xi->xi_xtp)
-		    ey1 = xi->xi_xtp;
+		if (ey_1 < xi->xi_xtp)
+		    ey_1 = xi->xi_xtp;
 		if (ey2 > xi->xi_xbt)
 		    ey2 = xi->xi_xbt;
 
-		if (ex2 >= ex1 && ey2 >= ey1)
+		if (ex2 >= ex_1 && ey2 >= ey_1)
 		    XPutImage(xi->xi_dpy, xi->xi_win, xi->xi_gc,
-			      xi->xi_image, ex1, ey1, ex1,
-			      ey1, ex2 - ex1 + 1, ey2 - ey1 + 1);
+			      xi->xi_image, ex_1, ey_1, ex_1,
+			      ey_1, ex2 - ex_1 + 1, ey2 - ey_1 + 1);
 		break;
 	    }
 	case ButtonPress:
