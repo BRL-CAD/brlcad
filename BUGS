@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* crash in rt_bot_xform() due to a bot being marked as having face
+  normals, but didn't.  bot probably written wrong via conversion
+  to/from obj or asc.  found importing teapot.
+
 * rtedge with perspective is wrong.  it fills in nearly entire faces,
   vertically in particular.  it's worse on small sized renders, and
   gets better the larger the render size (indicating there's some
