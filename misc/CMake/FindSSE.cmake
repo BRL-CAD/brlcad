@@ -37,10 +37,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-INCLUDE(CheckCSourceRuns)
-INCLUDE(CheckCXXSourceRuns)
+include(CheckCSourceRuns)
+include(CheckCXXSourceRuns)
 
-SET(SSE1_CODE "
+set(SSE1_CODE "
   #include <xmmintrin.h>
 
   int main()
@@ -51,7 +51,7 @@ SET(SSE1_CODE "
     return 0;
   }")
 
-SET(SSE2_CODE "
+set(SSE2_CODE "
   #include <emmintrin.h>
 
   int main()
@@ -62,7 +62,7 @@ SET(SSE2_CODE "
     return 0;
   }")
 
-SET(SSE3_CODE "
+set(SSE3_CODE "
   #include <pmmintrin.h>
 
   int main( )
@@ -73,7 +73,7 @@ SET(SSE3_CODE "
     return 0;
   }")
 
-SET(SSE4_1_CODE "
+set(SSE4_1_CODE "
   #include <smmintrin.h>
 
   int main ()
@@ -85,7 +85,7 @@ SET(SSE4_1_CODE "
   }
 ")
 
-SET(SSE4_2_CODE "
+set(SSE4_2_CODE "
   #include <nmmintrin.h>
 
   int main()
@@ -96,7 +96,7 @@ SET(SSE4_2_CODE "
   }
 ")
 
-SET(AVX_CODE "
+set(AVX_CODE "
   #include <immintrin.h>
 
   int main()
@@ -107,7 +107,7 @@ SET(AVX_CODE "
   }
 ")
 
-SET(AVX2_CODE "
+set(AVX2_CODE "
   #include <immintrin.h>
 
   int main()
@@ -118,34 +118,36 @@ SET(AVX2_CODE "
   }
 ")
 
-MACRO(CHECK_SSE lang type flags)
-  SET(__FLAG_I 1)
-  SET(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
-  FOREACH(__FLAG ${flags})
-    IF(NOT ${lang}_${type}_FOUND)
-      SET(CMAKE_REQUIRED_FLAGS ${__FLAG})
-      IF(lang STREQUAL "CXX")
+macro(CHECK_SSE lang type flags)
+  set(__FLAG_I 1)
+  set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
+  foreach(__FLAG ${flags})
+    if(NOT ${lang}_${type}_FOUND)
+      set(CMAKE_REQUIRED_FLAGS ${__FLAG})
+      if("${lang}" STREQUAL "CXX")
         CHECK_CXX_SOURCE_RUNS("${${type}_CODE}" ${lang}_HAS_${type}_${__FLAG_I})
-      ELSE()
+      else()
         CHECK_C_SOURCE_RUNS("${${type}_CODE}" ${lang}_HAS_${type}_${__FLAG_I})
-      ENDIF()
-      IF(${lang}_HAS_${type}_${__FLAG_I})
-        SET(${lang}_${type}_FOUND TRUE CACHE BOOL "${lang} ${type} support")
-        SET(${lang}_${type}_FLAGS "${__FLAG}" CACHE STRING "${lang} ${type} flags")
-      ENDIF()
-      MATH(EXPR __FLAG_I "${__FLAG_I}+1")
-    ENDIF()
-  ENDFOREACH()
-  SET(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_SAVE})
+      endif("${lang}" STREQUAL "CXX")
+      if(${lang}_HAS_${type}_${__FLAG_I})
+        set(${lang}_${type}_FOUND TRUE CACHE BOOL "${lang} ${type} support")
+        set(${lang}_${type}_FLAGS "${__FLAG}" CACHE STRING "${lang} ${type} flags")
+      endif(${lang}_HAS_${type}_${__FLAG_I})
+      math(EXPR __FLAG_I "${__FLAG_I}+1")
+    endif(NOT ${lang}_${type}_FOUND)
+  endforeach(__FLAG ${flags})
+  set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_SAVE})
 
-  IF(NOT ${lang}_${type}_FOUND)
-    SET(${lang}_${type}_FOUND FALSE CACHE BOOL "${lang} ${type} support")
-    SET(${lang}_${type}_FLAGS "" CACHE STRING "${lang} ${type} flags")
-  ENDIF()
+  if(NOT ${lang}_${type}_FOUND)
+    set(${lang}_${type}_FOUND FALSE CACHE BOOL "${lang} ${type} support")
+    set(${lang}_${type}_FLAGS "" CACHE STRING "${lang} ${type} flags")
+  endif(NOT ${lang}_${type}_FOUND)
 
-  MARK_AS_ADVANCED(${lang}_${type}_FOUND ${lang}_${type}_FLAGS)
+  mark_as_advanced(${lang}_${type}_FOUND ${lang}_${type}_FLAGS)
 
-ENDMACRO()
+endmacro(CHECK_SSE)
+
+# Examples:
 
 # CHECK_SSE(C "SSE1" " ;-msse;/arch:SSE")
 # CHECK_SSE(C "SSE2" " ;-msse2;/arch:SSE2")
