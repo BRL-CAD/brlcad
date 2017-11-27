@@ -2016,15 +2016,21 @@ if(NOT MSVC)
   # CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
 
   # link-time optimization (LTO) results in slower linking, more
-  # warnings, and better optimization
-  CHECK_C_FLAG(flto GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_CXX_FLAG(flto GROUPS OPTIMIZE_CXX_FLAGS)
+  # warnings, and better optimization, but requires newer versions of
+  # compilers to avoid common bugs.
+  if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
+    # LTO bug in GCC 4.8.5 (__fread_chk_warn)
+  else ()
+    CHECK_C_FLAG(flto GROUPS OPTIMIZE_C_FLAGS)
+    CHECK_CXX_FLAG(flto GROUPS OPTIMIZE_CXX_FLAGS)
+  endif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
+
 
   # GCC 4.9+ introduced "thin" LTO object files that require special
   # ar/ranlib handling via wrappers or plugin specification.  These
   # wrappers work fine even if we're not using LTO, so just use them
   # if found.
-  if (CMAKE_C_COMPILER_ID MATCHES "GNU")
+  if (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_X_COMPILER_VERSION VERSION_GREATER 4.8)
     find_program(GCC_AR_LTO ${CMAKE_C_COMPILER}-ar NAMES gcc-ar DOC "GNU ARchiver wrapper with LTO support")
     if (GCC_AR_LTO)
       SET(CMAKE_AR "${GCC_AR_LTO}" CACHE FILEPATH "Archiver" FORCE)
@@ -2033,7 +2039,7 @@ if(NOT MSVC)
     if (GCC_RANLIB_LTO)
       SET(CMAKE_RANLIB "${GCC_RANLIB_LTO}" CACHE FILEPATH "Ranlib" FORCE)
     endif (GCC_RANLIB_LTO)
-  endif (CMAKE_C_COMPILER_ID MATCHES "GNU")
+  endif (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_X_COMPILER_VERSION VERSION_GREATER 4.8)
 
   # only omit the frame pointer if we have no interest in profiling or
   # debugging.
@@ -2155,12 +2161,15 @@ if(NOT MSVC)
     #  CHECK_C_FLAG(Wredundant-decls)
     #  CHECK_CXX_FLAG(Wredundant-decls)
 
-    # want C inline warnings, but not for c++.  versions of g++ (circa
-    # 4.7) spew unquellable bogus warnings on default constructors that
-    # we don't have access to (e.g., in opennurbs and boost), so turn
-    # them off
+    # want inline warnings, but not for some c++ buggy compilers
     CHECK_C_FLAG(Winline)
-    CHECK_CXX_FLAG(Wno-inline)
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+      # g++ 4.7 spews unquellable bogus warnings on default
+      # constructors (e.g., in opennurbs and boost)
+      CHECK_CXX_FLAG(Wno-inline)
+    else()
+      CHECK_CXX_FLAG(Wninline)
+    endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
 
     # this makes sure we don't warn about using long long.  really, it's okay.
     CHECK_C_FLAG(Wno-long-long)
