@@ -41,7 +41,13 @@ set(alg_srcs
 	gdalgridsse.cpp
 	)
 
-set_property(SOURCE gdalgridavx.cpp APPEND PROPERTY COMPILE_FLAGS "-mavx")
+if(C_AVX_FOUND)
+  set_property(SOURCE gdalgridavx.cpp APPEND PROPERTY COMPILE_FLAGS "${C_AVX_FLAGS}")
+endif(C_AVX_FOUND)
+
+if(C_SSE_FOUND)
+  set_property(SOURCE gdalgridsse.cpp APPEND PROPERTY COMPILE_FLAGS "${C_SSE_FLAGS}")
+endif(C_SSE_FOUND)
 
 add_library(gdal_alg_obj OBJECT ${alg_srcs})
 set_target_properties(gdal_alg_obj PROPERTIES FOLDER "Third Party Libraries/GDAL")
