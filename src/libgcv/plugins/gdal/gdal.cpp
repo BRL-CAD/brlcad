@@ -239,7 +239,6 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     size_t count;
     unsigned int xsize = 0;
     unsigned int ysize = 0;
-    double adfGeoTransform[6];
     struct conversion_state *state;
     struct bu_vls name_root = BU_VLS_INIT_ZERO;
     struct bu_vls name_data = BU_VLS_INIT_ZERO;
@@ -288,14 +287,12 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	hOutDS = GDALAutoCreateWarpedVRT(state->hDataset, NULL, dst_Wkt, GRA_CubicSpline, 0.0, NULL);
 	CPLFree(dst_Wkt);
 	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
-	GDALGetGeoTransform(hOutDS, adfGeoTransform);
 	bu_log("\nTransformed dataset info:\n");
 	(void)get_dataset_info(hOutDS);
 	gdal_elev_minmax(hOutDS);
     } else {
 	hOutDS = state->hDataset;
 	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
-	GDALGetGeoTransform(hOutDS, adfGeoTransform);
     }
     if (!dunit || strlen(dunit) == 0) dunit = (char *)dunit_default;
 
@@ -391,7 +388,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     dsp->dsp_smooth = 1;
     dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
     MAT_IDN(dsp->dsp_stom);
-    dsp->dsp_stom[0] = dsp->dsp_stom[5] = adfGeoTransform[1] * bu_units_conversion(dunit);
+    dsp->dsp_stom[0] = dsp->dsp_stom[5] = fGeoT[1] * bu_units_conversion(dunit);
     dsp->dsp_stom[10] = bu_units_conversion(dunit);
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
 
