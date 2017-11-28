@@ -82,6 +82,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"bot", cmd_ged_plain_wrapper, ged_bot},
     {"bot_condense", cmd_ged_plain_wrapper, ged_bot_condense},
     {"bot_decimate", cmd_ged_plain_wrapper, ged_bot_decimate},
+    {"bot_dump", cmd_ged_plain_wrapper, ged_bot_dump},
     {"bot_face_fuse", cmd_ged_plain_wrapper, ged_bot_face_fuse},
     {"bot_face_sort", cmd_ged_plain_wrapper, ged_bot_face_sort},
     {"bot_flip", cmd_ged_plain_wrapper, ged_bot_flip},
