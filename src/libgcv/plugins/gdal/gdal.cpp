@@ -352,10 +352,11 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     double cx = 0.0; double cy = 0.0;
     double fGeoT[6];
     if (GDALGetGeoTransform(flatDS, fGeoT) == CE_None) {
+	cx = (fGeoT[0] + fGeoT[1] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[2] * GDALGetRasterYSize(flatDS)/2.0) - fGeoT[0];
+	cy = (fGeoT[3] + fGeoT[4] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[5] * GDALGetRasterYSize(flatDS)/2.0) - fGeoT[3];
 	px = fGeoT[0];
-	py = fGeoT[3];
-	cx = (fGeoT[0] + fGeoT[1] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[2] * GDALGetRasterYSize(flatDS)/2.0) - px;
-	cy = (fGeoT[3] + fGeoT[4] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[5] * GDALGetRasterYSize(flatDS)/2.0) - py;
+	/* y is backwards for DSPs compared to GDAL */
+	py = fGeoT[3] + 2 * cy;
     }
 
     /* We're in business - come up with some names for the objects */
@@ -411,6 +412,14 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	(void)bu_avs_add(&avs, "s_srs" , orig_proj4_str);
 	(void)bu_avs_add(&avs, "t_srs" , bu_vls_addr(&new_proj4_str));
 	(void)bu_avs_add(&avs, "f_srs" , flat_proj4_str);
+	if (state->ops->center) {
+	    struct bu_vls tstr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&tstr, "%f %s", px + cx, dunit);
+	    (void)bu_avs_add(&avs, "x_offset" , bu_vls_addr(&tstr));
+	    bu_vls_sprintf(&tstr, "%f %s", py - cy, dunit);
+	    (void)bu_avs_add(&avs, "y_offset" , bu_vls_addr(&tstr));
+	    bu_vls_free(&tstr);
+	}
 	(void)db5_update_attributes(dp, &avs, state->wdbp->dbip);
     }
 
