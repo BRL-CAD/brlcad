@@ -404,22 +404,27 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     wdb_export(state->wdbp, bu_vls_addr(&name_dsp), (void *)dsp, ID_DSP, 1);
 
-    /* Write out the original and current Spatial Reference Systems to attributes on the dsp */
+    /* Write out the original and current Spatial Reference Systems and other dimensional
+     * information to attributes on the dsp */
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
     struct directory *dp = db_lookup(state->wdbp->dbip, bu_vls_addr(&name_dsp), LOOKUP_QUIET);
     if (dp != RT_DIR_NULL && !db5_get_attributes(state->wdbp->dbip, &avs, dp)) {
+	struct bu_vls tstr = BU_VLS_INIT_ZERO;
 	(void)bu_avs_add(&avs, "s_srs" , orig_proj4_str);
 	(void)bu_avs_add(&avs, "t_srs" , bu_vls_addr(&new_proj4_str));
 	(void)bu_avs_add(&avs, "f_srs" , flat_proj4_str);
+	bu_vls_sprintf(&tstr, "%f %s", fabs(2*cx), dunit);
+	(void)bu_avs_add(&avs, "x_length" , bu_vls_addr(&tstr));
+	bu_vls_sprintf(&tstr, "%f %s", fabs(2*cy), dunit);
+	(void)bu_avs_add(&avs, "y_length" , bu_vls_addr(&tstr));
 	if (state->ops->center) {
-	    struct bu_vls tstr = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&tstr, "%f %s", px + cx, dunit);
 	    (void)bu_avs_add(&avs, "x_offset" , bu_vls_addr(&tstr));
 	    bu_vls_sprintf(&tstr, "%f %s", py - cy, dunit);
 	    (void)bu_avs_add(&avs, "y_offset" , bu_vls_addr(&tstr));
-	    bu_vls_free(&tstr);
 	}
+	bu_vls_free(&tstr);
 	(void)db5_update_attributes(dp, &avs, state->wdbp->dbip);
     }
 
