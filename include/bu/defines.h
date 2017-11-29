@@ -183,8 +183,9 @@
 #else
 #  define BU_ASSERT(_equation)	\
     if (UNLIKELY(!(_equation))) { \
-	bu_log("BU_ASSERT(" #_equation ") failed, file %s, line %d\n", \
-	       __FILE__, __LINE__); \
+	const char *_equation_buf = #_equation; \
+	bu_log("BU_ASSERT(%s), failed, file %s, line %d\n", \
+	       _equation_buf, __FILE__, __LINE__); \
 	bu_bomb("BU_ASSERT failure\n"); \
     }
 #endif
