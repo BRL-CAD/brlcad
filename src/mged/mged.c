@@ -808,7 +808,7 @@ mged_process_char(char ch)
 		bu_vls_addr(&input_str)[input_str_index - 1];
 	    bu_vls_addr(&input_str)[input_str_index - 1] = ch;
 	    bu_log("\b");
-	    bu_log("%c%c", bu_vls_addr(&input_str)+input_str_index-1, bu_vls_addr(&input_str)+input_str_index);
+	    bu_log("%c%c", bu_vls_addr(&input_str)[input_str_index-1], bu_vls_addr(&input_str)[input_str_index]);
 	    ++input_str_index;
 	    escaped = bracketed = 0;
 	    break;
