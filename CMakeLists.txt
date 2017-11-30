@@ -837,6 +837,43 @@ include(RPath_Setup)
 cmake_set_rpath()
 
 #---------------------------------------------------------------------
+# We need compiler support for certain C and C++ standards when we
+# build.  Set CMake's flags accordingly.
+
+# C
+set(CMAKE_C_EXTENSIONS ON)
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT MSVC)
+  set(CMAKE_C_STANDARD 99)
+  set(CMAKE_C_STANDARD_REQUIRED ON)
+  if(NOT "${CMAKE_C_COMPILE_FEATURES}" MATCHES "c_std_${CMAKE_C_STANDARD}")
+    message(FATAL_ERROR "C standard specification failure: compiler does not support the C${CMAKE_C_STANDARD} standard:\n${CMAKE_C_COMPILE_FEATURES}")
+  endif(NOT "${CMAKE_C_COMPILE_FEATURES}" MATCHES "c_std_${CMAKE_C_STANDARD}")
+else()
+  set(CMAKE_C_STANDARD 90)
+  set(CMAKE_C_STANDARD_REQUIRED ON)
+endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT MSVC)
+
+# C++
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(NOT "${CMAKE_CXX_COMPILE_FEATURES}" MATCHES "cxx_std_${CMAKE_CXX_STANDARD}")
+  message(FATAL_ERROR "C++ standard specification failure: compiler does not support the C++${CMAKE_CXX_STANDARD} standard:\n${CMAKE_CXX_COMPILE_FEATURES}")
+endif(NOT "${CMAKE_CXX_COMPILE_FEATURES}" MATCHES "cxx_std_${CMAKE_CXX_STANDARD}")
+
+# Spread the word...
+if(CMAKE_C_EXTENSIONS)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C${CMAKE_C_STANDARD}_EXTENSION_COMPILE_OPTION}")
+else()
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C${CMAKE_C_STANDARD}_STANDARD_COMPILE_OPTION}")
+endif(CMAKE_C_EXTENSIONS)
+if(CMAKE_CXX_EXTENSIONS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX${CMAKE_CXX_STANDARD}_EXTENSION_COMPILE_OPTION}")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX${CMAKE_CXX_STANDARD}_STANDARD_COMPILE_OPTION}")
+endif(CMAKE_CXX_EXTENSIONS)
+
+#---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine
 # statements, which will in turn be used to generate a brlcad_conf.h
 # file.  In autotools this process is handled by autoheader - in the
@@ -1658,14 +1695,7 @@ CHECK_CXX_FLAG(ftemplate-depth-128)
 # CHECK_C_FLAG(msse2)
 # CHECK_C_FLAG(msse3)
 
-# Check for c90 support with gnu extensions if we're not building for
-# a release so we get more broad portability testing.  Since the
-# default is debug, it will be the more difficult to keep working
-# given it's the lesser feature-rich C standard.  If we're going for
-# a strictly standard compliant build, use the c** options instead
-# of the gnu variations
 if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
-  CHECK_C_FLAG("std=c99")
   # we need to define some things as "empty" to avoid false positives
   # for bu_* functions using varargs and print specifiers
   CHECK_C_FLAG("D_BU_ATTR_PRINTF12=''")
@@ -1674,33 +1704,13 @@ if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
   # a hack to temp work around signal() handling in interrupt.c
   CHECK_C_FLAG("DC99_POSIX_USE_BSD")
   #=== C++
-  CHECK_CXX_FLAG("std=c++03")
   # for bu_* functions using varargs and print specifiers
   CHECK_CXX_FLAG("D_BU_ATTR_PRINTF12=''")
   CHECK_CXX_FLAG("D_BU_ATTR_PRINTF23=''")
   CHECK_CXX_FLAG("D_BU_ATTR_SCANF23=''")
   # a hack to temp work around signal() handling in interrupt.c
   CHECK_CXX_FLAG("DC99_POSIX_USE_BSD")
-else()
-  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    CHECK_C_FLAG("std=gnu99")
-  else("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    CHECK_C_FLAG("std=gnu89")
-  endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  CHECK_CXX_FLAG("std=gnu++11" VARS CXX11_FLAG)
-  if(NOT CXX11_FLAG)
-    CHECK_CXX_FLAG("std=gnu++0x" VARS CXX11_FLAG)
-    if(NOT CXX11_FLAG)
-      CHECK_CXX_FLAG("std=c++11" VARS CXX11_FLAG)
-      if(NOT CXX11_FLAG)
-	CHECK_CXX_FLAG("std=c++0x" VARS CXX11_FLAG)
-	if(NOT MSVC AND NOT CXX11_FLAG)
-	  message(WARNING "No working C++11 flag found.")
-	endif(NOT MSVC AND NOT CXX11_FLAG)
-      endif(NOT CXX11_FLAG)
-    endif(NOT CXX11_FLAG)
-  endif(NOT CXX11_FLAG)
-endif()
+endif(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
 
 # TODO - should be using this with MSVC, but it breaks the BUILD_SLEEP
 # try_compile below with errors that appear to be coming from Windows
