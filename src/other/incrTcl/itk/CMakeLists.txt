@@ -37,13 +37,7 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0)
-	  CMAKE_POLICY(SET CMP0048 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0)
-ENDIF(COMMAND CMAKE_POLICY)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1.3)
 
 # set CMake project name
 PROJECT(ITK)
