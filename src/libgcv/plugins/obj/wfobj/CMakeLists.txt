@@ -69,20 +69,6 @@ include(${WFOBJ_CMAKE_DIR}/Path_Setup.cmake)
 # Includes are in current dir
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-# Check if we should be using unique_ptr
-include(CheckCXXSourceCompiles)
-cmake_push_check_state()
-if(CMAKE_CXX_EXTENSIONS)
-  set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_CXX${CMAKE_CXX_STANDARD}_EXTENSION_COMPILE_OPTION})
-else()
-  set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_CXX${CMAKE_CXX_STANDARD}_STANDARD_COMPILE_OPTION})
-endif(CMAKE_CXX_EXTENSIONS)
-check_cxx_source_compiles("#include <memory>\n int main() { std::unique_ptr<int> uptr; *uptr.get() = 0; return *uptr.get(); }" HAVE_UNIQUE_PTR)
-cmake_pop_check_state()
-if(HAVE_UNIQUE_PTR)
-  add_definitions(-DHAVE_UNIQUE_PTR)
-endif(HAVE_UNIQUE_PTR)
-
 # Find tools for generating source files
 find_package(LEMON REQUIRED)
 find_package(RE2C REQUIRED)
