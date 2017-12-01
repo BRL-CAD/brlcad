@@ -18,19 +18,36 @@
 # information.
 #
 
-package require ManBrowser 1.0
 
 encoding system utf-8
 
 proc man {{cmdname {}}} {
-    if {![winfo exists .mgedMan]} {
-	ManBrowser .mgedMan -useToC 1 -defaultDir n -parentName MGED
+    global mged_console_mode
+    global tcl_platform
+    if {![info exists mged_console_mode]} {
+	error "Unable to determine MGED console mode."
     }
+    if {$mged_console_mode == "gui"} {
+	package require ManBrowser 1.0
+	if {![winfo exists .mgedMan]} {
+	    ManBrowser .mgedMan -useToC 1 -defaultDir n -parentName MGED
+	}
 
-    if {$cmdname != {} && ![.mgedMan select $cmdname]} {
-	error "couldn't find manual page \"$cmdname\""
+	if {$cmdname != {} && ![.mgedMan select $cmdname]} {
+	    error "couldn't find manual page \"$cmdname\""
+	}
+	.mgedMan activate
     }
-    .mgedMan activate
+    if {$mged_console_mode == "classic"} {
+	if {$cmdname != {}} {
+	    set exe_ext ""
+	    if {$tcl_platform(platform) == "windows"} {
+		set exe_ext ".exe"
+	    }
+	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] brlman$exe_ext]]]
+	    exec $cmd $cmdname
+	}
+    }
 }
 
 # Local Variables:

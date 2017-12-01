@@ -1361,6 +1361,8 @@ main(int argc, char *argv[])
 	if (classic_mged) {
 	    /* identify */
 
+	    (void)Tcl_Eval(INTERP, "set mged_console_mode classic");
+
 	    bu_log("%s\n", brlcad_ident("Geometry Editor (MGED)"));
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
@@ -1377,6 +1379,8 @@ main(int argc, char *argv[])
 	    int status;
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 	    struct bu_vls error = BU_VLS_INIT_ZERO;
+
+	    (void)Tcl_Eval(INTERP, "set mged_console_mode gui");
 
 	    if (dpy_string != (char *)NULL)
 		bu_vls_printf(&vls, "loadtk %s", dpy_string);
@@ -1401,6 +1405,8 @@ main(int argc, char *argv[])
 	    }
 	    bu_vls_free(&error);
 	}
+    } else {
+	(void)Tcl_Eval(INTERP, "set mged_console_mode batch");
     }
 
     if (!interactive || classic_mged || old_mged_gui) {
