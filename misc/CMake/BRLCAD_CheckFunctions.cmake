@@ -193,7 +193,7 @@ endmacro(BRLCAD_INCLUDE_FILE)
 ###
 macro(BRLCAD_INCLUDE_FILE_CXX filename var)
   set(CMAKE_CXX_FLAGS_TMP "${CMAKE_CXX_FLAGS}")
-  set(CMAKE_C_FLAGS "${CMAKE_C_STD_FLAG}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_STD_FLAG}")
   CHECK_INCLUDE_FILE_CXX(${filename} ${var})
   if(CONFIG_H_FILE AND ${var})
     CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
