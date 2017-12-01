@@ -138,6 +138,42 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* lay out filesystem and URI models for database storage and access -
+  these design decisions are fundamental and have broad implications for many
+  other design decisions.  Issues to consider include where and how versioning,
+  how to access attribute data from URIs, what the filesystem analogies are
+  (combs -> directories, objects -> hard links, etc...), where they break down
+  (comb boolean expressions don't map cleanly to the notion of directory
+   contents, for example) and how to handle the various cases, how to present
+  a "db_glob" API etc.  Need a proper document laying all of this out.
+
+  Potentially relevant/useful links:
+  URI specification:  https://tools.ietf.org/html/rfc3986
+  Minimal URI parser:  https://github.com/cloderic/curi
+  Larger URI parser: https://github.com/bnoordhuis/uriparser2
+  Fast parser, has deps: https://github.com/toffaletti/libguri
+  OpenBSD glob with function callbacks (rework/simplify
+     to be *only* a callback API to make this properly generic,
+     then have OS or .g specific functions...):
+  https://cvsweb.openbsd.org/cgi-bin/cvsweb/src/include/glob.h
+  https://cvsweb.openbsd.org/cgi-bin/cvsweb/src/lib/libc/gen/glob.c
+
+* look at components of the Screened Poisson code and figure out where/how
+  they would map into BRL-CAD components. (this is partially to see whether
+  we can (re)implement this logic in our framework and partially an exercise
+  in BRL-CAD library scoping)
+
+* replace guts of bu_ptbl to see if we can improve performance -
+  implications for removal if an appropriate substitute is found,
+  needs to be deprecated if we remove all API but we can update guts.
+  Try moodycamel https://github.com/cameron314/concurrentqueue
+
+* check state of adaptagrams work - turn on? if not, delete?
+
+* brlman - need remote text display in MGED, maybe run non-graphical brlman
+  in MGED console mode?  A last resort fallback could be console text output
+  via mandoc...
+
 * add ability to capture any command's output to a file, ideally with
   options for specifying stdout and/or stderr.  of priority are the
   attr and rtcheck/gqa commands.  this should probably be handled by a
@@ -155,8 +191,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * afl on libged/mged/rt/...
 
 * moodycamel as libbu queue/list/ptbl implementation
-
-* reinstate 'stat' and search -size, see r67636 through r67646
 
 * update dem-g to not use full paths for dsp primitive data locations -
   should default to embedding the data in the .g file as a binary object,
@@ -1323,16 +1357,6 @@ LIBGED
 
 * See src/libged/TODO for new command and subcommand ideas.
 
-* the lt [-c] obj command looks like it should be replaceable with
-  a search command (search obj -depth 1) and a more powerful -print
-  option that can do things like mimic tcl style output and create
-  lists with user specified character separation.  Enhance search
-  to do more powerful printing, then make lt an alias to a search
-  call.
-
-* pull work on rm command out of history (commit r67394 reverted it)
-  and take it to a production ready stage.
-
 * libged needs to support "temporary" objects that are in-memory only
   and will disappear when the ged instance is destroyed, yet is
   otherwise considered real objects in a given database.  this
@@ -1398,14 +1422,9 @@ LIBGED
   specific options to the user.
 
 * use the globbing work needed for proper rm support to enhance the
-  ls command.  dbfind's behavior can be emulated by search, but the
-  speed of dbfind is not practical in search due to the potential
-  generality of search's filters.  search would have to pre-process
-  its plan and prove it needed to examine only a subset of the full
-  hierarchy in advance.  ls */objname is a better match for what
-  dbfind is actually doing, and if need be we could add a
-  --print-parent option or some such to precisely mimic dbfind's
-  output.
+  ls command.  filesystem/URI work relates to this - in "flat" viewing
+  ls */* is meaningless, but in the hierarchy view it should do the
+  same glob resolution rm will need to do in that context.
 
 * make the idents command not list subtracted objects by default,
   optionally list everything
@@ -1442,9 +1461,6 @@ LIBGED
   ensure geometry isn't left in a broken state.  needs to be a way to
   do the simple consolidate/distribute operation regardless of
   resulting state.
-
-* update search depth options (above + below) to make sure the logic
-  supports depth=0 / above=0 / below=0 meaning the current node.
 
 * the 'comb' command both updates and creates combinations.  this is a
   problem because it's not possible to infer an intended result from
@@ -1500,10 +1516,6 @@ LIBGED
   and E come to mind)
 
 * have mged record a timestamped command history by default
-
-* implement -exec support for 'search' command
-
-* implement -param support for 'search' command
 
 * implement 'analyze' command option to write output to a file
 

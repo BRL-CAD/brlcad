@@ -230,6 +230,46 @@ Be specific.
   arguments or objects with '-' at the beginning of the name and how
   argv processing will be handled.
 
+* 'rm' command: replace most or all of the kill* commands with a
+  UNIX style rm command.  Needs the URI/filesystem model to be fleshed
+  out before we can fully work this through - we need an equivalent to
+  the UNIX ability to do glob matching on .g paths.  OpenBSD glob code
+  offers a possible starting point.
+
+  - existing work is reverted in commit r67394
+
+  Notes from Sean:
+
+  rm deletes an object/primitive/instance iff
+     1) it exists
+     2) it is not externally instanced
+     3) it has no children
+
+  rm -f deletes an object/primitive/instance iff
+     1) it exists
+
+  rm -r deletes an object/primitive/instance and all children recursively iff
+     1) it exists
+     2) it is not externally instanced
+     3) all children instances could be deleted ("safe" delete)
+
+  * Makes "rm -f" akin to "kill"
+  * "rm obj" will succeed on most top-level primitives but shouldn't on extrude,
+    dsp, ebm,... maybe new callback
+  * No difference between "rm path/to/inst" and "rm -f path/to/inst" other than
+    error suppression on non-existent paths/instances
+
+  Common cases (have some questions here... CY):
+  "rm prim" -> deletes prim if no */prim instance exists
+  "rm -f prim" -> deletes prim (children untouched)
+  "rm -rf prim" -> deletes prim and any children without */child ref.
+  "rm comb" -> always fails unless comb is empty and no */comb instance exists
+  "rm -f comb" -> deletes comb object
+  "rm -rf comb" -> deletes comb and safe-deletes children
+  "rm path/inst" -> deletes inst (if no */path/inst exists??)
+  "rm -f path/inst" -> deletes inst
+  "rm -rf path/inst" -> deletes inst
+
 * 'select' command: creates a selection set based on specified
   sampling parameters or object lists.  Should also provide a basic
   command-line mechanism for implementing band selection based on
@@ -412,3 +452,34 @@ Alternative usage possibility:
     analyze --visualize aabb,centroid obj1.s
     analyze surface --component F:1-10,23-30 mesh.s
     analyze overlap --create=overlap.s  obj1.c obj2.c
+
+-------------------------------------------------------------------------------
+search command ideas
+
+* rewrite search code for better performance, consistency, hide flat
+  searches (base it on supplied filters), make above/below searches
+  faster, lazy depth building on paths, see if the experimental logic
+  for fast size calculations can be finished...
+
+* reinstate 'stat' and search -size, see r67636 through r67646
+
+* the lt [-c] obj command looks like it should be replaceable with
+  a search command (search obj -depth 1) and a more powerful -print
+  option that can do things like mimic tcl style output and create
+  lists with user specified character separation.  Enhance search 
+  to do more powerful printing, then make lt an alias to a search
+  call.
+
+* dbfind's behavior can be emulated by search, but the
+  speed of dbfind is not practical in search due to the potential
+  generality of search's filters.  search should pre-process
+  its plan and prove it needed to examine only a subset of the full
+  hierarchy in advance.
+
+* update search depth options (above + below) to make sure the logic
+  supports depth=0 / above=0 / below=0 meaning the current node.
+
+* implement -exec support for 'search' command
+
+* implement -param support for 'search' command
+
