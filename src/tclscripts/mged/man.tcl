@@ -38,7 +38,7 @@ proc man {{cmdname {}}} {
 	}
 	.mgedMan activate
     }
-    if {$mged_console_mode == "classic"} {
+    if {$mged_console_mode == "classic" || $mged_console_mode == "batch"} {
 	if {$cmdname != {}} {
 	    set exe_ext ""
 	    if {$tcl_platform(platform) == "windows"} {
