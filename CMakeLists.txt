@@ -875,9 +875,9 @@ else()
   set(CMAKE_CXX_STD_FLAG "${CMAKE_C${CMAKE_CXX_STANDARD}_STANDARD_COMPILE_OPTION}")
 endif(CMAKE_CXX_EXTENSIONS)
 
-if("${CMAKE_CXX_STD_FLAG}" STREQUAL "")
+if("${CMAKE_CXX_STD_FLAG}" STREQUAL "" AND NOT MSVC)
   message(FATAL_ERROR "C++ standard specification failure: compiler does not support the C++${CMAKE_CXX_STANDARD} standard:\n${CMAKE_CXX_COMPILE_FEATURES}")
-endif("${CMAKE_CXX_STD_FLAG}" STREQUAL "")
+endif("${CMAKE_CXX_STD_FLAG}" STREQUAL "" AND NOT MSVC)
 
 # Spread the word...
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_STD_FLAG}")
