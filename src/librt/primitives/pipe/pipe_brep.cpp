@@ -126,9 +126,9 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 {
     struct rt_pipe_internal *pip;
 
-    register struct wdb_pipept *prevp;
-    register struct wdb_pipept *curp;
-    register struct wdb_pipept *nextp;
+    struct wdb_pipept *prevp;
+    struct wdb_pipept *curp;
+    struct wdb_pipept *nextp;
     point_t current_point;
     vect_t x_dir, y_dir, pipe_dir;
 
