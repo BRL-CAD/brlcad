@@ -48,10 +48,10 @@ __BEGIN_DECLS
  *
  * To visit all the elements in the vlist:
  *	for (BU_LIST_FOR(vp, bn_vlist, hp)) {
- *		register int	i;
- *		register int	nused = vp->nused;
- *		register int	*cmd = vp->cmd;
- *		register point_t *pt = vp->pt;
+ *		int	i;
+ *		int	nused = vp->nused;
+ *		int	*cmd = vp->cmd;
+ *		point_t *pt = vp->pt;
  *		for (i = 0; i < nused; i++, cmd++, pt++) {
  *			access(*cmd, *pt);
  *			access(vp->cmd[i], vp->pt[i]);
@@ -118,7 +118,7 @@ struct bn_vlist  {
     }
 
 #define BN_ADD_VLIST(_free_hd, _dest_hd, pnt, draw) { \
-	register struct bn_vlist *_vp; \
+	struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
 	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BN_VLIST_CHUNK) { \
