@@ -311,7 +311,7 @@ chull3d_Vec_dot(struct chull3d_data *cdata, point x, point y)
     return sum;
 }
 
-    HIDDEN Coord
+HIDDEN Coord
 chull3d_Norm2(struct chull3d_data *cdata, point x)
 {
     int i;
@@ -320,7 +320,7 @@ chull3d_Norm2(struct chull3d_data *cdata, point x)
     return sum;
 }
 
-    HIDDEN void
+HIDDEN void
 chull3d_Ax_plus_y(struct chull3d_data *cdata, Coord a, point x, point y)
 {
     int i;
@@ -329,11 +329,11 @@ chull3d_Ax_plus_y(struct chull3d_data *cdata, Coord a, point x, point y)
     }
 }
 
-    HIDDEN void
+HIDDEN void
 chull3d_Vec_scale(struct chull3d_data *UNUSED(cdata), int n, Coord a, Coord *x)
 {
-    register Coord *xx = x;
-    register Coord *xend = xx + n;
+    Coord *xx = x;
+    Coord *xend = xx + n;
 
     while (xx!=xend) {
 	*xx *= a;
@@ -351,7 +351,7 @@ double logb(double x) {
 
 
 /* amount by which to scale up vector, for reduce_inner */
-    HIDDEN double
+HIDDEN double
 chull3d_sc(struct chull3d_data *cdata, basis_s *v,simplex *s, int k, int j)
 {
     double labound;
@@ -394,7 +394,7 @@ chull3d_sc(struct chull3d_data *cdata, basis_s *v,simplex *s, int k, int j)
 }
 
 
-    HIDDEN int
+HIDDEN int
 chull3d_reduce_inner(struct chull3d_data *cdata, basis_s *v, simplex *s, int k)
 {
     point	va = CHULL3D_VA(v);
@@ -448,7 +448,7 @@ chull3d_reduce(struct chull3d_data *cdata, basis_s **v, point p, simplex *s, int
     return chull3d_reduce_inner(cdata,*v,s,k);
 }
 
-    HIDDEN void
+HIDDEN void
 chull3d_get_basis_sede(struct chull3d_data *cdata, simplex *s)
 {
     int	k=1;
@@ -465,7 +465,7 @@ chull3d_get_basis_sede(struct chull3d_data *cdata, simplex *s)
     }
 }
 
-    HIDDEN int
+HIDDEN int
 chull3d_out_of_flat(struct chull3d_data *cdata, simplex *root, point p)
 {
     if (!cdata->p_neigh.basis) cdata->p_neigh.basis = (basis_s*) malloc(cdata->basis_s_size);
@@ -1079,7 +1079,7 @@ chull3d_data_init(struct chull3d_data *data, int vert_cnt)
     if (!data->faces) data->faces = (int *)bu_calloc(3*vert_cnt, sizeof(int), "face array");
 }
 
-    HIDDEN void
+HIDDEN void
 chull3d_data_free(struct chull3d_data *data)
 {
     bu_free(data->site_blocks, "site_blocks");
