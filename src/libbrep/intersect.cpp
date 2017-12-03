@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <vector>
 #include <algorithm> // for std::sort
+#include <cmath>
 
 #include "vmath.h"
 
@@ -724,7 +725,7 @@ newton_pci(double &t, const ON_3dPoint &pointA, const ON_Curve &curveB, double t
     t = std::max(curveB.Domain().Min(), t);
     closest_point = curveB.PointAt(t);
     dist = closest_point.DistanceTo(pointA);
-    return dist <= tol && !isnan(t);
+    return dist <= tol && !std::isnan(t);
 }
 
 
@@ -884,7 +885,7 @@ newton_psi(double &u, double &v, const ON_3dPoint &pointA, const ON_Surface &sur
     v = std::max(v, surfB.Domain(1).Min());
     closest_point = surfB.PointAt(u, v);
     dist = closest_point.DistanceTo(pointA);
-    return dist <= tol && !isnan(u) && !isnan(v);
+    return dist <= tol && !std::isnan(u) && !std::isnan(v);
 }
 
 
@@ -1365,12 +1366,12 @@ ON_Intersect(const ON_Curve *curveA,
 	    newton_cci(t_a1, t_b1, curveA, curveB, isect_tol);
 	    double t_a2 = i->first->m_t.Max(), t_b2 = i->second->m_t.Max();
 	    newton_cci(t_a2, t_b2, curveA, curveB, isect_tol);
-	    if (isnan(t_a1) || isnan(t_b1)) {
+	    if (std::isnan(t_a1) || std::isnan(t_b1)) {
 		// the first iteration result is not sufficient
 		std::swap(t_a1, t_a2);
 		std::swap(t_b1, t_b2);
 	    }
-	    if (isnan(t_a1) || isnan(t_b1)) {
+	    if (std::isnan(t_a1) || std::isnan(t_b1)) {
 		continue;
 	    }
 
@@ -1379,7 +1380,7 @@ ON_Intersect(const ON_Curve *curveA,
 	    ON_3dPoint pointA2 = curveA->PointAt(t_a2);
 	    ON_3dPoint pointB2 = curveB->PointAt(t_b2);
 	    if ((pointA1.DistanceTo(pointA2) < isect_tol && pointB1.DistanceTo(pointB2) < isect_tol)
-		|| (isnan(t_a2) || isnan(t_b2))) {
+		|| (std::isnan(t_a2) || std::isnan(t_b2))) {
 		// it's considered the same point
 		ON_3dPoint pointA = curveA->PointAt(t_a1);
 		ON_3dPoint pointB = curveB->PointAt(t_b1);
@@ -2022,13 +2023,13 @@ ON_Intersect(const ON_Curve *curveA,
 	double t2 = i->first->m_t.Max();
 	newton_csi(t2, u2, v2, curveA, surfaceB, isect_tol, treeB);
 
-	if (isnan(u1) || isnan(v1) || isnan(t1)) {
+	if (std::isnan(u1) || std::isnan(v1) || std::isnan(t1)) {
 	    u1 = u2;
 	    v1 = v2;
 	    t1 = t2;
 	}
 
-	if (isnan(u1) || isnan(v1) || isnan(t1)) {
+	if (std::isnan(u1) || std::isnan(v1) || std::isnan(t1)) {
 	    continue;
 	}
 
@@ -2550,7 +2551,7 @@ newton_ssi(double &uA, double &vA, double &uB, double &vB, const ON_Surface *sur
 
     pointA = surfA->PointAt(uA, vA);
     pointB = surfB->PointAt(uB, vB);
-    return (pointA.DistanceTo(pointB) < isect_tol) && !isnan(uA) && !isnan(vA) && !isnan(uB) & !isnan(vB);
+    return (pointA.DistanceTo(pointB) < isect_tol) && !std::isnan(uA) && !std::isnan(vA) && !std::isnan(uB) & !std::isnan(vB);
 }
 
 
