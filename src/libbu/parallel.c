@@ -108,6 +108,9 @@
 #include "./parallel.h"
 
 
+void parallel_cpp11thread(void (*func)(size_t, void *), size_t ncpu, void *arg);
+
+
 typedef enum {
     PARALLEL_GET = 0,
     PARALLEL_PUT = 1
@@ -460,6 +463,20 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
     bu_log("bu_parallel(%zu., %p):  Not compiled for PARALLEL machine, running single-threaded\n", ncpu, arg);
     /* do the work anyways */
     (*func)(0, arg);
+
+#elif defined(HAVE_THREAD_LOCAL)
+
+    if (!func)
+	return; /* nothing to do */
+
+    if (ncpu == 1) {
+	return func(ncpu, arg);
+    } else if (ncpu > MAX_PSW) {
+	bu_log("WARNING: bu_parallel() ncpu(%zd) > MAX_PSW(%d), adjusting ncpu\n", ncpu, MAX_PSW);
+	ncpu = MAX_PSW;
+    }
+
+    parallel_cpp11thread(func, ncpu, arg);
 
 #else
 

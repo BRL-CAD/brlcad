@@ -95,6 +95,7 @@ set(LIBBU_SOURCES
   observer.c
   opt.c
   parallel.c
+  parallel_cpp11thread.cpp
   parse.c
   path.c
   printb.c
@@ -125,7 +126,7 @@ set(LIBBU_SOURCES
   )
 
 BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY}")
-set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20 CXX_STANDARD 11)
 
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
