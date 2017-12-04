@@ -25,7 +25,7 @@
 #include <stddef.h>
 
 
-void
+extern "C" void
 parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg)
 {
     std::vector<std::thread> threads;

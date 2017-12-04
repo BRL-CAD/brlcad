@@ -108,7 +108,7 @@
 #include "./parallel.h"
 
 
-void parallel_cpp11thread(void (*func)(size_t, void *), size_t ncpu, void *arg);
+void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
 
 
 typedef enum {
@@ -323,6 +323,7 @@ bu_avail_cpus(void)
 
 #ifdef PARALLEL
 
+#ifndef HAVE_THREAD_LOCAL
 /* this function provides book-keeping so that we give out unique
  * thread identifiers and for tracking a thread's parent context.
  *
@@ -448,7 +449,7 @@ parallel_interface_arg_stub(struct thread_data *user_thread_data)
 }
 #endif
 
-
+#endif /* !HAVE_THREAD_LOCAL */
 #endif /* PARALLEL */
 
 
@@ -470,7 +471,8 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	return; /* nothing to do */
 
     if (ncpu == 1) {
-	return func(ncpu, arg);
+	func(ncpu, arg);
+	return;
     } else if (ncpu > MAX_PSW) {
 	bu_log("WARNING: bu_parallel() ncpu(%zd) > MAX_PSW(%d), adjusting ncpu\n", ncpu, MAX_PSW);
 	ncpu = MAX_PSW;
