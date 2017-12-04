@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* make eto eto
+  tol norm 1
+  facetize eto.bot eto
+  [crashes due to excessive recursion]
+
 * crash in rt_bot_xform() due to a bot being marked as having face
   normals, but didn't.  bot probably written wrong via conversion
   to/from obj or asc.  found importing teapot.
