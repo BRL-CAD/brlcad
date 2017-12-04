@@ -28,6 +28,7 @@ set(G_SAMPLE_MODELS
   pic.asc
   pinewood.asc
   prim.asc
+  rook.asc
   tank_car.asc
   terra.asc
   toyjeep.asc
