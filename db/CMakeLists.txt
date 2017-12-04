@@ -18,6 +18,7 @@ set(G_SAMPLE_MODELS
   crod.asc
   cube.asc
   demo.asc
+  die.asc
   galileo.asc
   goliath.asc
   havoc.asc
