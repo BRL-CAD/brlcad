@@ -29,7 +29,6 @@ set(G_SAMPLE_MODELS
   pic.asc
   pinewood.asc
   prim.asc
-  rook.asc
   tank_car.asc
   terra.asc
   toyjeep.asc
@@ -75,6 +74,7 @@ else(CMAKE_CONFIGURATION_TYPES)
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${DATA_DIR}/db")
 endif(CMAKE_CONFIGURATION_TYPES)
 
+add_subdirectory(chess)
 add_subdirectory(comgeom)
 add_subdirectory(nist)
 add_subdirectory(faa)
