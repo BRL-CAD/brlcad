@@ -2795,9 +2795,14 @@ if(WIN32)
 
   CHECK_SYMBOL_EXISTS(isnan "math.h" HAVE_ISNAN)
   #If we don't have it, need to define it in config_win
-  if(NOT HAVE_ISNAN)
-    set(isnan 1)
-  endif(NOT HAVE_ISNAN)
+  if(HAVE_ISNAN)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_ISNAN 1\n")
+  else(HAVE_ISNAN)
+    CHECK_SYMBOL_EXISTS(_isnan "float.h" HAVE__ISNAN)
+    if (HAVE__ISNAN)
+      CONFIG_H_APPEND(BRLCAD "#define HAVE__ISNAN 1\n")
+    endif (HAVE__ISNAN)
+  endif(HAVE_ISNAN)
 
   CHECK_SYMBOL_EXISTS(isinf "math.h" HAVE_ISINF)
   #If we don't have it, need to define it in config_win
