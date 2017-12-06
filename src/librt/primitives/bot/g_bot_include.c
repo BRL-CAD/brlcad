@@ -738,7 +738,8 @@ CPP_XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct sol
 				dn = hits[j].hit_vpriv[X];
 			    } else if (keep2 == -1) {
 				keep2 = j;
-				dn = hits[j].hit_vpriv[X];
+				/* TODO: assignment not used - should it be? */
+				/*dn = hits[j].hit_vpriv[X];*/
 				break;
 			    }
 			}

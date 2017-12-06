@@ -277,22 +277,25 @@ BU_FORTRAN(frnorm, FRNORM)(double *normal,	/* output only */
 			   double *UNUSED(pt),
 			   double *UNUSED(dir))
 {
-    register struct context *ctp;
-    struct hit hit;
-    struct soltab *stp;
+    register struct context *ctp = NULL;
+    struct hit fhit = RT_HIT_INIT_ZERO;
+    struct soltab *stp = RT_SOLTAB_NULL;
     register int i;
+
+    /* Invalid inputs means we can't play... */
+    if (!idx || !indist || !context || !normal) return;
 
     i = *idx - 1; /* Selects which inhit is used */
 
     /* Reconstruct the hit structure */
-    hit.hit_dist = indist[i];
+    fhit.hit_dist = indist[i];
     ctp = &context[i];
     stp = ctp->co_stp;
-    VMOVE(hit.hit_vpriv, ctp->co_vpriv);
-    hit.hit_private = (void *)ctp->co_priv;
+    VMOVE(fhit.hit_vpriv, ctp->co_vpriv);
+    fhit.hit_private = (void *)ctp->co_priv;
 
     /* The new macro doesn't use ray argument */
-    RT_HIT_NORMAL(normal, &hit, stp, NULL, ctp->co_inflip);
+    RT_HIT_NORMAL(normal, &fhit, stp, NULL, ctp->co_inflip);
 }
 
 
@@ -346,7 +349,7 @@ BU_FORTRAN(frname, FRNAME)(char *fbuf,
 	    fbuf[i] = ' ';
 	return;
     }
-    sprintf(fbuf, "Unable to find region %d", *region_num);
+    sprintf(buf, "Unable to find region %d", *region_num);
     fr_string_c2f(fbuf, buf, fbuflen);
 }
 
