@@ -158,24 +158,29 @@ void
 diff_free_result(struct diff_result *result)
 {
     unsigned int i = 0;
+    if (!result) return;
     if (result->obj_name) {
 	bu_free(result->obj_name, "free name copy in diff result");
     }
-    BU_PUT(result->diff_tol, struct bn_tol);
-    for (i = 0; i < BU_PTBL_LEN(result->param_diffs); i++) {
-	struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(result->param_diffs, i);
-	diff_free_avp(avp);
-	BU_PUT(avp, struct diff_avp);
+    if (result->diff_tol) BU_PUT(result->diff_tol, struct bn_tol);
+    if (result->param_diffs) {
+	for (i = 0; i < BU_PTBL_LEN(result->param_diffs); i++) {
+	    struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(result->param_diffs, i);
+	    diff_free_avp(avp);
+	    BU_PUT(avp, struct diff_avp);
+	}
+	bu_ptbl_free(result->param_diffs);
+	BU_PUT(result->param_diffs, struct bu_ptbl);
     }
-    bu_ptbl_free(result->param_diffs);
-    BU_PUT(result->param_diffs, struct bu_ptbl);
-    for (i = 0; i < BU_PTBL_LEN(result->attr_diffs); i++) {
-	struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(result->attr_diffs, i);
-	diff_free_avp(avp);
-	BU_PUT(avp, struct diff_avp);
+    if (result->attr_diffs) {
+	for (i = 0; i < BU_PTBL_LEN(result->attr_diffs); i++) {
+	    struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(result->attr_diffs, i);
+	    diff_free_avp(avp);
+	    BU_PUT(avp, struct diff_avp);
+	}
+	bu_ptbl_free(result->attr_diffs);
+	BU_PUT(result->attr_diffs, struct bu_ptbl);
     }
-    bu_ptbl_free(result->attr_diffs);
-    BU_PUT(result->attr_diffs, struct bu_ptbl);
 }
 
 HIDDEN int
