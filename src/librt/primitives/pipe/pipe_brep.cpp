@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <cmath>
+
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "brep.h"
