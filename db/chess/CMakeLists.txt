@@ -1,4 +1,6 @@
 set(CHESS_PARTS
+  bishop.asc
+  chessboard.asc
   rook.asc
   pawn.asc
   )
