@@ -2706,6 +2706,10 @@ endif(NOT HAVE_LRINT AND NOT DEFINED HAVE_WORKING_LRINT_MACRO)
 set(tgamma_test "#include <math.h>\nint main() {double tga = tgamma(3.14); return 0;}")
 BRLCAD_FUNCTION_EXISTS(tgamma COMPILE_TEST_SRCS tgamma_test REQUIRED_LIBS ${M_LIBRARY})
 
+# Check for logb in C++
+check_cxx_source_compiles("#include <cmath>\nint main() {return logb(3.14);}" HAVE_CXX_LOGB)
+CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_CXX_LOGB 1\n")
+
 #-----------------------------------------------------------------------
 # check C99 and POSIX 200112L missing functions with a more
 # rigorously-controlled compiler environment

@@ -46,11 +46,11 @@ include(CheckLibraryExists)
 include(CheckStructHasMember)
 include(CheckCInline)
 
-# Note: sync the defines list in BRLCAD_FUNCTION_EXISTS with this include
 set(std_hdr_includes
 "
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #if HAVE_GETOPT_H
 # include <getopt.h>
@@ -82,14 +82,27 @@ set(std_hdr_includes
 "
 )
 
+# Use this function to construct compile defines that uses the CMake
+# header tests results to properly support the above header includes
+function(std_hdr_defs def_str)
+  set(def_full_str)
+  string(REPLACE "\n" ";" deflist "${std_hdr_includes}")
+  foreach(dstr ${deflist})
+    if("${dstr}" MATCHES ".*HAVE_.*" )
+      string(REGEX REPLACE "^.if[ ]+" "" defcore "${dstr}")
+      set(def_full_str "${def_full_str} -D${defcore}=${${defcore}}")
+    endif("${dstr}" MATCHES ".*HAVE_.*" )
+  endforeach(dstr ${deflist})
+  set(${def_str} "${def_full_str}" PARENT_SCOPE)
+endfunction(std_hdr_defs)
+
 ###
 # Check if a function exists (i.e., compiles to a valid symbol).  Adds
 # HAVE_* define to config header.
 ###
 macro(BRLCAD_FUNCTION_EXISTS function)
 
-  # sync this with std_hdr_includes
-  set(std_defs "-DHAVE_GETOPT_H=${HAVE_GETOPT_H} -DHAVE_SIGNAL_H=${HAVE_SIGNAL_H} -DHAVE_SYS_RESOURCE_H=${HAVE_SYS_RESOURCE_H} -DHAVE_SYS_SHM_H=${HAVE_SYS_SHM_H} -DHAVE_SYS_STAT_H=${HAVE_SYS_STAT_H} -DHAVE_SYS_SYSCTL_H=${HAVE_SYS_SYSCTL_H} -DHAVE_SYS_TYPES_H=${HAVE_SYS_TYPES_H} -DHAVE_SYS_UIO_H=${HAVE_SYS_UIO_H} -DHAVE_UNISTD_H=${HAVE_UNISTD_H}")
+  std_hdr_defs(std_defs)
 
   string(TOUPPER "${function}" var)
 
@@ -99,7 +112,7 @@ macro(BRLCAD_FUNCTION_EXISTS function)
     # the function exists AT ALL we want to know it, so don't let the
     # flags get in the way
     set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-    unset(CMAKE_C_FLAGS)
+    set(CMAKE_C_FLAGS "")
 
     # Clear our testing variables, unless something specifically requested
     # is supplied as a command line argument

@@ -14,10 +14,10 @@
 #include "common.h"
 
 #include <map>
+#include <cmath>
 
 #include <float.h>
 #include <locale.h>
-#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -342,7 +342,7 @@ chull3d_Vec_scale(struct chull3d_data *UNUSED(cdata), int n, Coord a, Coord *x)
 }
 
 
-#ifndef HAVE_LOGB
+#ifndef HAVE_CXX_LOGB
 double logb(double x) {
     if (x<=0) return -1e305;
     return log(x)/log(2.);
