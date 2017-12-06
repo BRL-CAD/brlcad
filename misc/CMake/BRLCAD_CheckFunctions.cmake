@@ -102,10 +102,10 @@ endfunction(std_hdr_defs)
 ###
 macro(BRLCAD_FUNCTION_EXISTS function)
 
-  std_hdr_defs(std_defs)
-
+  # Use the upper case form of the function for variable names
   string(TOUPPER "${function}" var)
 
+  # Only do the testing once per configure run
   if(NOT DEFINED HAVE_${var})
 
     # For this first test, be permissive.  For a number of cases, if
@@ -127,13 +127,11 @@ macro(BRLCAD_FUNCTION_EXISTS function)
     endif(${ARGC} GREATER 2)
 
     # Set the compiler definitions for the standard headers
+    std_hdr_defs(std_defs)
     set(CMAKE_REQUIRED_DEFINITIONS "${std_defs} ${CMAKE_REQUIRED_DEFINITIONS}")
 
     # First (permissive) test
     CHECK_FUNCTION_EXISTS(${function} HAVE_${var})
-    if(CONFIG_H_FILE AND HAVE_${var})
-      CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_${var} 1\n")
-    endif(CONFIG_H_FILE AND HAVE_${var})
 
     # Now, restore the C flags - any subsequent tests will be done using the
     # parent C_FLAGS environment.
@@ -145,28 +143,40 @@ macro(BRLCAD_FUNCTION_EXISTS function)
       # flag.  Unlike the HAVE_${var} results, this will not be automatically
       # written to the CONFIG_H_FILE - the caller must do so if they want to
       # capture the results.
-      if(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
-	check_c_source_compiles("${${var}_DECL_TEST_SRCS}" HAVE_DECL_${var})
-      else(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
-	check_c_source_compiles("${std_hdr_includes}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
-      endif(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+      if(NOT DEFINED HAVE_DECL_${var})
+	if(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	  check_c_source_compiles("${${var}_DECL_TEST_SRCS}" HAVE_DECL_${var})
+	else(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	  check_c_source_compiles("${std_hdr_includes}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
+	endif(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	set(HAVE_DECL_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache decl test result")
+      endif(NOT DEFINED HAVE_DECL_${var})
 
       # If we have sources supplied for the purpose, test if the function is working.
-      if(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
-	set(HAVE_WORKING_${var} 1)
-	foreach(test_src ${${var}_DECL_TEST_SRCS})
-	  check_c_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
-	  if(NOT ${var}_${test_src}_COMPILE)
-	    set(HAVE_WORKING_${var} 0)
-	  endif(NOT ${var}_${test_src}_COMPILE)
-	endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
-      endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+      if(NOT DEFINED HAVE_WORKING_${var})
+	if(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+	  set(HAVE_WORKING_${var} 1)
+	  foreach(test_src ${${var}_DECL_TEST_SRCS})
+	    check_c_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
+	    if(NOT ${var}_${test_src}_COMPILE)
+	      set(HAVE_WORKING_${var} 0)
+	    endif(NOT ${var}_${test_src}_COMPILE)
+	  endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
+	  set(HAVE_WORKING_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache working test result")
+	endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+      endif(NOT DEFINED HAVE_WORKING_${var})
 
     endif(HAVE_${var})
 
     cmake_pop_check_state()
 
   endif(NOT DEFINED HAVE_${var})
+
+  # The config file is regenerated every time CMake is run, so we
+  # always need this bit even if the testing is already complete.
+  if(CONFIG_H_FILE AND HAVE_${var})
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_${var} 1\n")
+  endif(CONFIG_H_FILE AND HAVE_${var})
 
 endmacro(BRLCAD_FUNCTION_EXISTS)
 
