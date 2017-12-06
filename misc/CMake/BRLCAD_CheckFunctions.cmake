@@ -119,7 +119,7 @@ macro(BRLCAD_FUNCTION_EXISTS function)
     # First (permissive) test
     CHECK_FUNCTION_EXISTS(${function} HAVE_${var})
     if(CONFIG_H_FILE AND HAVE_${var})
-      CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
+      CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_${var} 1\n")
     endif(CONFIG_H_FILE AND HAVE_${var})
 
     # Now, restore the C flags - any subsequent tests will be done using the
