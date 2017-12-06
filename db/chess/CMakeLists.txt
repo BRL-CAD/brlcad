@@ -9,7 +9,6 @@ endforeach(piece ${CHESS_PARTS})
 
 CMAKEFILES(${CHESS_PARTS})
 
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake
