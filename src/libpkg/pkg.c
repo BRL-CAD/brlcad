@@ -81,7 +81,7 @@
 #  include <sys/netinet/tcp.h>
 #endif
 
-#ifdef HAVE_WRITEV
+#ifdef HAVE_SYS_UIO_H
 #  include <sys/uio.h>		/* for struct iovec (writev) */
 #endif
 

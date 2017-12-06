@@ -46,104 +46,115 @@ include(CheckLibraryExists)
 include(CheckStructHasMember)
 include(CheckCInline)
 
+# Note: sync the defines list in BRLCAD_FUNCTION_EXISTS with this include
+set(std_hdr_includes
+"
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#if HAVE_GETOPT_H
+# include <getopt.h>
+#endif
+#if HAVE_SIGNAL_H
+# include <signal.h>
+#endif
+#if HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
+#endif
+#if HAVE_SYS_SHM_H
+# include <sys/shm.h>
+#endif
+#if HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#if HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_SYS_UIO_H
+# include <sys/uio.h>
+#endif
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+"
+)
 
 ###
 # Check if a function exists (i.e., compiles to a valid symbol).  Adds
 # HAVE_* define to config header.
 ###
-macro(BRLCAD_FUNCTION_EXISTS function var)
-  if(NOT DEFINED ${var})
+macro(BRLCAD_FUNCTION_EXISTS function)
+
+  # sync this with std_hdr_includes
+  set(std_defs "-DHAVE_GETOPT_H=${HAVE_GETOPT_H} -DHAVE_SIGNAL_H=${HAVE_SIGNAL_H} -DHAVE_SYS_RESOURCE_H=${HAVE_SYS_RESOURCE_H} -DHAVE_SYS_SHM_H=${HAVE_SYS_SHM_H} -DHAVE_SYS_STAT_H=${HAVE_SYS_STAT_H} -DHAVE_SYS_SYSCTL_H=${HAVE_SYS_SYSCTL_H} -DHAVE_SYS_TYPES_H=${HAVE_SYS_TYPES_H} -DHAVE_SYS_UIO_H=${HAVE_SYS_UIO_H} -DHAVE_UNISTD_H=${HAVE_UNISTD_H}")
+
+  string(TOUPPER "${function}" var)
+
+  if(NOT DEFINED HAVE_${var})
+
+    # For this first test, be permissive.  For a number of cases, if
+    # the function exists AT ALL we want to know it, so don't let the
+    # flags get in the way
     set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-    set(CMAKE_C_FLAGS "${CMAKE_C_STD_FLAG}")
+    unset(CMAKE_C_FLAGS)
+
+    # Clear our testing variables, unless something specifically requested
+    # is supplied as a command line argument
+    cmake_push_check_state(RESET)
     if(${ARGC} GREATER 2)
       # Parse extra arguments
-      CMAKE_PARSE_ARGUMENTS(${var} "" "" "COMPILE_TEST_SRCS;REQUIRED_LIBS;REQUIRED_DEFS;REQUIRED_FLAGS;REQUIRED_DIRS" ${ARGN})
-      if(NOT "${${var}_REQUIRED_LIBS}" STREQUAL "")
-	set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
-	set(CMAKE_REQUIRED_LIBRARIES ${${var}_REQUIRED_LIBS})
-      endif(NOT "${${var}_REQUIRED_LIBS}" STREQUAL "")
-
-      if(NOT "${${var}_REQUIRED_FLAGS}" STREQUAL "")
-	set(CMAKE_REQUIRED_FLAGS_BAK ${CMAKE_REQUIRED_FLAGS})
-	set(CMAKE_REQUIRED_FLAGS ${${var}_REQUIRED_FLAGS})
-      endif(NOT "${${var}_REQUIRED_FLAGS}" STREQUAL "")
-
-      if(NOT "${${var}_REQUIRED_DIRS}" STREQUAL "")
-	set(CMAKE_REQUIRED_INCLUDES_BAK ${CMAKE_REQUIRED_INCLUDES})
-	set(CMAKE_REQUIRED_INCLUDES ${${var}_REQUIRED_DIRS})
-      endif(NOT "${${var}_REQUIRED_DIRS}" STREQUAL "")
-
-      if(NOT "${${var}_REQUIRED_DEFS}" STREQUAL "")
-	set(CMAKE_REQUIRED_DEFINITIONS_BAK ${CMAKE_REQUIRED_DEFINITIONS})
-	set(CMAKE_REQUIRED_DEFINITIONS ${${var}_REQUIRED_DEFS})
-      endif(NOT "${${var}_REQUIRED_DEFS}" STREQUAL "")
+      CMAKE_PARSE_ARGUMENTS(${var} "" "DECL_TEST_SRCS" "WORKING_TEST_SRCS;REQUIRED_LIBS;REQUIRED_DEFS;REQUIRED_FLAGS;REQUIRED_DIRS" ${ARGN})
+      set(CMAKE_REQUIRED_LIBRARIES ${${var}_REQUIRED_LIBS})
+      set(CMAKE_REQUIRED_FLAGS ${${var}_REQUIRED_FLAGS})
+      set(CMAKE_REQUIRED_INCLUDES ${${var}_REQUIRED_DIRS})
+      set(CMAKE_REQUIRED_DEFINITIONS ${${var}_REQUIRED_DEFS})
     endif(${ARGC} GREATER 2)
 
-    CHECK_FUNCTION_EXISTS(${function} ${var}_EXISTS)
+    # Set the compiler definitions for the standard headers
+    set(CMAKE_REQUIRED_DEFINITIONS "${std_defs} ${CMAKE_REQUIRED_DEFINITIONS}")
 
-    # Restore required vars - this is done before any possible compilation tests,
-    # since the presumption is that the function must succeed in the parent
-    # compilation environment, not just in isolated testing.  (In particular,
-    # if -Werror is active that needs to be a failure.
+    # First (permissive) test
+    CHECK_FUNCTION_EXISTS(${function} HAVE_${var})
+    if(CONFIG_H_FILE AND HAVE_${var})
+      CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
+    endif(CONFIG_H_FILE AND HAVE_${var})
 
-    # TODO - need to think about what to do when CMAKE_CONFIGURATION_TYPES is active,
-    # and we need to essentially run multiple cycles of these tests on a per config
-    # basis...
-    string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
-    if(BUILD_TYPE)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP} ${CMAKE_C_FLAGS_${BUILD_TYPE}}")
-    else(BUILD_TYPE)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-    endif(BUILD_TYPE)
-
-    if(${var}_EXISTS)
-      if(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
-	set(${var}_COMPILE 1)
-	foreach(test_src ${${var}_COMPILE_TEST_SRCS})
-	  check_c_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
-	  if(NOT ${var}_${test_src}_COMPILE)
-	    set(${var}_COMPILE 0)
-	  endif(NOT ${var}_${test_src}_COMPILE)
-	endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
-	if(${var}_COMPILE)
-	  set(${var} 1 CACHE INTERNAL "Have function ${function}")
-	else(${var}_COMPILE)
-	  set(${var} "" CACHE INTERNAL "Function ${function} found but did not build.")
-	endif(${var}_COMPILE)
-      else(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
-	set(${var} 1 CACHE INTERNAL "Have function ${function}")
-      endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
-    else(${var}_EXISTS)
-      set(${var} "" CACHE INTERNAL "Have function ${function}")
-    endif(${var}_EXISTS)
-
-    if(${ARGC} GREATER 2)
-      if (${${var}_REQUIRED_LIBS})
-	set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
-      endif (${${var}_REQUIRED_LIBS})
-
-      if (${${var}_REQUIRED_FLAGS})
-	set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_BAK})
-      endif (${${var}_REQUIRED_FLAGS})
-
-      if (${${var}_REQUIRED_INCLUDES})
-	set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_BAK})
-      endif (${${var}_REQUIRED_INCLUDES})
-    endif(${ARGC} GREATER 2)
-
-    # We used this variable for CHECK_FUNCTION_EXISTS to allow
-    # the additional specific src compile test as an option - ${var}
-    # is where the final result is cached.
-    unset(${var}_EXISTS CACHE)
-
-    # Put C_FLAGS back where we found it
+    # Now, restore the C flags - any subsequent tests will be done using the
+    # parent C_FLAGS environment.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 
-  endif(NOT DEFINED ${var})
+    if(HAVE_${var})
 
-  if(CONFIG_H_FILE AND ${var})
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
-  endif(CONFIG_H_FILE AND ${var})
+      # Test if the function is declared.This will set the HAVE_DECL_${var}
+      # flag.  Unlike the HAVE_${var} results, this will not be automatically
+      # written to the CONFIG_H_FILE - the caller must do so if they want to
+      # capture the results.
+      if(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	check_c_source_compiles("${${var}_DECL_TEST_SRCS}" HAVE_DECL_${var})
+      else(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	check_c_source_compiles("${std_hdr_includes}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
+      endif(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+
+      # If we have sources supplied for the purpose, test if the function is working.
+      if(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+	set(HAVE_WORKING_${var} 1)
+	foreach(test_src ${${var}_DECL_TEST_SRCS})
+	  check_c_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
+	  if(NOT ${var}_${test_src}_COMPILE)
+	    set(HAVE_WORKING_${var} 0)
+	  endif(NOT ${var}_${test_src}_COMPILE)
+	endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
+      endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+
+    endif(HAVE_${var})
+
+    cmake_pop_check_state()
+
+  endif(NOT DEFINED HAVE_${var})
+
 endmacro(BRLCAD_FUNCTION_EXISTS)
 
 
