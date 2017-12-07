@@ -142,7 +142,7 @@
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
 
-#define MAX_PKG_ERRBUF_SIZE 80
+#define MAX_PKG_ERRBUF_SIZE 128
 static char _pkg_errbuf[MAX_PKG_ERRBUF_SIZE] = {0};
 static FILE *_pkg_debug = (FILE*)NULL;
 
