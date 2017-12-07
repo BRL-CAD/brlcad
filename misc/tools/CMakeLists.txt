@@ -24,6 +24,13 @@ CLEAR_BUILD_FLAGS()
 # Restore CMake defaults, in case they are needed
 RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
+# For misc/tools, be liberal about standards
+if(NOT MSVC)
+  set(CMAKE_C_EXTENSIONS ON)
+  set(CMAKE_C_STANDARD 99)
+  set(CMAKE_C_STANDARD_REQUIRED OFF)
+endif(NOT MSVC)
+
 # Quiet all warnings in this directory
 DISABLE_WARNINGS()
 
