@@ -213,7 +213,9 @@ bu_vls_trunc(struct bu_vls *vp, int len)
     if (len == 0)
 	vp->vls_offset = 0;
 
-    vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
+    if (vp->vls_str)
+       	vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
+
     vp->vls_len = len;
 }
 

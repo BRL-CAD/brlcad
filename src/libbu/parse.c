@@ -1897,7 +1897,7 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 
 		bu_vls_strcat(vls, " {");
 		while (1) {
-		    if (*iptr == '"' && *prev != '\\') {
+		    if (*iptr == '"' && (!prev || *prev != '\\')) {
 			bu_vls_putc(vls, '}');
 			iptr++;
 			break;
