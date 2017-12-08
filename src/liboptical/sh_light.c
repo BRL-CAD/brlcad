@@ -1460,7 +1460,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     int vis_ray;
     int tot_vis_rays;
     int visibility;
-    struct light_obs_stuff los;
+    struct light_obs_stuff los = {NULL, NULL, NULL, NULL, NULL, 0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
     static int rand_idx;
     int flag_size = 0;
 
