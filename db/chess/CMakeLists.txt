@@ -1,8 +1,10 @@
 set(CHESS_PARTS
   bishop.asc
   chessboard.asc
-  rook.asc
+  king.asc
   pawn.asc
+  queen.asc
+  rook.asc
   )
 
 foreach(piece ${CHESS_PARTS})
