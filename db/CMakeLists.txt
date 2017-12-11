@@ -18,6 +18,7 @@ set(G_SAMPLE_MODELS
   crod.asc
   cube.asc
   demo.asc
+  die.asc
   galileo.asc
   goliath.asc
   havoc.asc
@@ -73,6 +74,7 @@ else(CMAKE_CONFIGURATION_TYPES)
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${DATA_DIR}/db")
 endif(CMAKE_CONFIGURATION_TYPES)
 
+add_subdirectory(chess)
 add_subdirectory(comgeom)
 add_subdirectory(nist)
 add_subdirectory(faa)

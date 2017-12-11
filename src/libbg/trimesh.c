@@ -276,17 +276,17 @@ bg_trimesh_solid2(size_t vcnt, size_t fcnt, fastf_t *v, int *f, struct bg_trimes
     /* If we got here, we're interesting in knowing what the problems are */
     if (unmatched_edges) {
 	errors->unmatched.count = 0;
-	errors->unmatched.edges = (int *)bu_calloc(unmatched_edges, sizeof(int), "unmatched edge indices");
+	errors->unmatched.edges = (int *)bu_calloc(unmatched_edges * 2, sizeof(int), "unmatched edge indices");
 	bg_trimesh_unmatched_edges(num_edges, edge_list, bg_trimesh_edge_gather, &(errors->unmatched));
     }
     if (excess_edges) {
 	errors->excess.count = 0;
-	errors->excess.edges = (int *)bu_calloc(excess_edges, sizeof(int), "excess edge indices");
+	errors->excess.edges = (int *)bu_calloc(excess_edges * 2, sizeof(int), "excess edge indices");
 	bg_trimesh_excess_edges(num_edges, edge_list, bg_trimesh_edge_gather, &(errors->excess));
     }
     if (misoriented_edges) {
 	errors->misoriented.count = 0;
-	errors->misoriented.edges = (int *)bu_calloc(misoriented_edges, sizeof(int), "misoriented edge indices");
+	errors->misoriented.edges = (int *)bu_calloc(misoriented_edges * 2, sizeof(int), "misoriented edge indices");
 	bg_trimesh_misoriented_edges(num_edges, edge_list, bg_trimesh_edge_gather, &(errors->misoriented));
     }
 

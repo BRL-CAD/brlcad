@@ -1,6 +1,6 @@
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Minimum required version of CMake
-  cmake_minimum_required(VERSION 3.0.2)
+  cmake_minimum_required(VERSION 3.1.3)
 
   # Set CMake project name
   project(UG2G)

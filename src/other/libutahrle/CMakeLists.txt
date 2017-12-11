@@ -33,7 +33,7 @@
 # ***                libutahrle CMakeLists.txt                     ***
 # *******************************************************************
 
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.1.3)
 
 project(UTAHRLE)
 

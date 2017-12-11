@@ -2371,8 +2371,8 @@ static char idmap[] = {
 int
 rt_id_solid(struct bu_external *ep)
 {
-    register union record *rec;
-    register int id;
+    union record *rec;
+    int id;
 
     BU_CK_EXTERNAL(ep);
     rec = (union record *)ep->ext_buf;
@@ -2459,7 +2459,7 @@ rt_id_solid(struct bu_external *ep)
 const struct rt_functab *
 rt_get_functab_by_label(const char *label)
 {
-    register const struct rt_functab *ftp;
+    const struct rt_functab *ftp;
 
     for (ftp = OBJ; ftp->magic != 0; ftp++) {
 	if (bu_strncmp(label, ftp->ft_label, 8) == 0)

@@ -4085,12 +4085,12 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	    bu_vls_nibble(&binudesc, 1);
 
 	bu_log("ERROR: Binary object '%s' has invalid data (expected type %d, found %d).\n"
-	       "       Expecting %llu 16-bit unsigned short (nus) integer data values.\n"
+	       "       Expecting %zu 16-bit unsigned short (nus) integer data values.\n"
 	       "       Encountered %s\n",
 	       bu_vls_cstr(&dsp_ip->dsp_name),
 	       DB5_MINORTYPE_BINU_16BITINT_U,
 	       bip->type,
-	       dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt,
+	       (size_t)(dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt),
 	       bu_vls_cstr(&binudesc));
 	return -2;
     }

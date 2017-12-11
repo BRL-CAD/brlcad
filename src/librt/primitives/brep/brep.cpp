@@ -1557,7 +1557,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 #endif
 		const brep_hit& out = *i;
 
-		register struct seg* segp;
+		struct seg* segp;
 		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
 
@@ -1682,7 +1682,7 @@ rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * v = elevation
  */
 void
-rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct brep_specific* bs;
 
@@ -1700,7 +1700,7 @@ rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 
 
 void
-rt_brep_free(register struct soltab *stp)
+rt_brep_free(struct soltab *stp)
 {
     TRACE1("rt_brep_free");
 

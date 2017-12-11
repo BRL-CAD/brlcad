@@ -55,7 +55,7 @@ struct contour_node {
 static fastf_t
 load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_polygon *gpoly, fastf_t sf, matp_t mat)
 {
-    register size_t j, k, n;
+    size_t j, k, n;
     ClipperLib::Polygon curr_poly;
     fastf_t vZ = 1.0;
 
@@ -86,7 +86,7 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_pol
 static fastf_t
 load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_polygons *subj, fastf_t sf, matp_t mat)
 {
-    register size_t i;
+    size_t i;
     fastf_t vZ = 1.0;
 
     for (i = 0; i < subj->gp_num_polygons; ++i)
@@ -102,7 +102,7 @@ load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_po
 static bview_polygon *
 extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat, fastf_t vZ)
 {
-    register size_t i, j, k, n;
+    size_t i, j, k, n;
     size_t num_contours = 0;
     bview_polygon *result_poly;
 
@@ -249,8 +249,8 @@ ged_clip_polygons(ClipType op, bview_polygons *subj, bview_polygons *clip, fastf
 int
 ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
 {
-    register size_t j, k, n;
-    register size_t num_verts = 0;
+    size_t j, k, n;
+    size_t num_verts = 0;
     struct rt_db_internal internal;
     struct rt_sketch_internal *sketch_ip;
     struct line_seg *lsg;
@@ -347,8 +347,8 @@ ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t pol
 bview_polygon *
 ged_import_polygon(struct ged *gedp, const char *sname)
 {
-    register size_t j, n;
-    register size_t ncontours = 0;
+    size_t j, n;
+    size_t ncontours = 0;
     struct rt_db_internal intern;
     struct rt_sketch_internal *sketch_ip;
     struct bu_list HeadSegmentNodes;
@@ -433,7 +433,7 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 
     j = 0;
     while (BU_LIST_NON_EMPTY(&HeadContourNodes)) {
-	register size_t k = 0;
+	size_t k = 0;
 	size_t npoints = 0;
 	struct line_seg *curr_lsg = NULL;
 
@@ -477,7 +477,7 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 fastf_t
 ged_find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
 {
-    register size_t j, k, n;
+    size_t j, k, n;
     ClipperLib::Polygon poly;
     fastf_t area = 0.0;
 
@@ -521,8 +521,8 @@ typedef struct {
 int
 ged_polygons_overlap(struct ged *gedp, bview_polygon *polyA, bview_polygon *polyB)
 {
-    register size_t i, j;
-    register size_t beginA, endA, beginB, endB;
+    size_t i, j;
+    size_t beginA, endA, beginB, endB;
     fastf_t tol_dist;
     fastf_t tol_dist_sq;
     fastf_t scale;
@@ -910,9 +910,9 @@ sort_by_X(const void *p1, const void *p2, void *UNUSED(arg))
 void
 ged_polygon_fill_segments(struct ged *gedp, bview_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta)
 {
-    register size_t i, j;
-    register fastf_t vx, vy, vZ = 0.0;
-    register size_t begin, end;
+    size_t i, j;
+    fastf_t vx, vy, vZ = 0.0;
+    size_t begin, end;
     point2d_t pt_2d;
     point_t pt;
     point_t hit_pt;

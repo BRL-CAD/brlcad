@@ -35,7 +35,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.1.3)
 
 # Set CMake project name
 project(GDAL)
@@ -69,15 +69,32 @@ endif(NOT DEFINED BUILD_SHARED_LIBS)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
+FIND_PACKAGE(SSE) # checks SSE, AVX and AVX2
+
+CHECK_SSE(CXX "AVX" " ;-mavx;/arch:AVX")
+IF(C_AVX_FOUND)
+  MESSAGE(STATUS "AVX Found")
+  add_definitions(-DHAVE_AVX_AT_COMPILE_TIME)
+ENDIF(C_AVX_FOUND)
+
+CHECK_SSE(CXX "SSE" " ;-msse;/arch:SSE")
+IF(C_SSE_FOUND)
+  MESSAGE(STATUS "SSE Found")
+  add_definitions(-DHAVE_SSE_AT_COMPILE_TIME)
+ENDIF(C_SSE_FOUND)
+
+CHECK_SSE(CXX "SSSE3" " ;-mssse3;/arch:SSE3")
+IF(C_SSSE3_FOUND)
+  MESSAGE(STATUS "MSSSE3 Found")
+  add_definitions(-DHAVE_SSSE3_AT_COMPILE_TIME)
+ENDIF(C_SSSE3_FOUND)
+
 add_definitions(-DPROJ_STATIC)
 add_definitions(-DGDAL_COMPILATION)
 add_definitions(-DGNM_ENABLED)
 add_definitions(-DGNMFILE_ENABLED)
 add_definitions(-DGNMDB_ENABLED)
 add_definitions(-DUSE_ONLY_CRYPTODLL_ALG)
-add_definitions(-DHAVE_AVX_AT_COMPILE_TIME)
-add_definitions(-DHAVE_SSSE3_AT_COMPILE_TIME)
-add_definitions(-DHAVE_SSSE_AT_COMPILE_TIME)
 add_definitions(-DINST_DATA=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal\")
 set(HAVE_IEEEFP 1) # TODO test this for real
 
@@ -101,7 +118,8 @@ endif(PNG_LIBRARY)
 include(CheckTypeSize)
 check_type_size(int SIZEOF_INT)
 check_type_size(long SIZEOF_LONG)
-check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
+check_type_size("unsigned long" SIZEOF_ULONG)
+set(SIZEOF_UNSIGNED_LONG ${SIZEOF_ULONG})
 set(SIZEOF_VOIDP ${CMAKE_SIZEOF_VOID_P})
 check_type_size("long long" HAVE_LONG_LONG)
 check_type_size(int8 HAVE_INT8)

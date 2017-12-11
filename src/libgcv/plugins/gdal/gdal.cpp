@@ -239,7 +239,6 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     size_t count;
     unsigned int xsize = 0;
     unsigned int ysize = 0;
-    double adfGeoTransform[6];
     struct conversion_state *state;
     struct bu_vls name_root = BU_VLS_INIT_ZERO;
     struct bu_vls name_data = BU_VLS_INIT_ZERO;
@@ -288,14 +287,12 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	hOutDS = GDALAutoCreateWarpedVRT(state->hDataset, NULL, dst_Wkt, GRA_CubicSpline, 0.0, NULL);
 	CPLFree(dst_Wkt);
 	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
-	GDALGetGeoTransform(hOutDS, adfGeoTransform);
 	bu_log("\nTransformed dataset info:\n");
 	(void)get_dataset_info(hOutDS);
 	gdal_elev_minmax(hOutDS);
     } else {
 	hOutDS = state->hDataset;
 	dunit = bu_strdup(GDALGetRasterUnitType(((GDALDataset *)hOutDS)->GetRasterBand(1)));
-	GDALGetGeoTransform(hOutDS, adfGeoTransform);
     }
     if (!dunit || strlen(dunit) == 0) dunit = (char *)dunit_default;
 
@@ -355,10 +352,11 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     double cx = 0.0; double cy = 0.0;
     double fGeoT[6];
     if (GDALGetGeoTransform(flatDS, fGeoT) == CE_None) {
+	cx = (fGeoT[0] + fGeoT[1] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[2] * GDALGetRasterYSize(flatDS)/2.0) - fGeoT[0];
+	cy = (fGeoT[3] + fGeoT[4] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[5] * GDALGetRasterYSize(flatDS)/2.0) - fGeoT[3];
 	px = fGeoT[0];
-	py = fGeoT[3];
-	cx = (fGeoT[0] + fGeoT[1] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[2] * GDALGetRasterYSize(flatDS)/2.0) - px;
-	cy = (fGeoT[3] + fGeoT[4] * GDALGetRasterXSize(flatDS)/2.0 + fGeoT[5] * GDALGetRasterYSize(flatDS)/2.0) - py;
+	/* y is backwards for DSPs compared to GDAL */
+	py = fGeoT[3] + 2 * cy;
     }
 
     /* We're in business - come up with some names for the objects */
@@ -391,7 +389,7 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     dsp->dsp_smooth = 1;
     dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
     MAT_IDN(dsp->dsp_stom);
-    dsp->dsp_stom[0] = dsp->dsp_stom[5] = adfGeoTransform[1] * bu_units_conversion(dunit);
+    dsp->dsp_stom[0] = dsp->dsp_stom[5] = fGeoT[1] * bu_units_conversion(dunit);
     dsp->dsp_stom[10] = bu_units_conversion(dunit);
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
 
@@ -406,14 +404,27 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
     wdb_export(state->wdbp, bu_vls_addr(&name_dsp), (void *)dsp, ID_DSP, 1);
 
-    /* Write out the original and current Spatial Reference Systems to attributes on the dsp */
+    /* Write out the original and current Spatial Reference Systems and other dimensional
+     * information to attributes on the dsp */
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
     struct directory *dp = db_lookup(state->wdbp->dbip, bu_vls_addr(&name_dsp), LOOKUP_QUIET);
     if (dp != RT_DIR_NULL && !db5_get_attributes(state->wdbp->dbip, &avs, dp)) {
+	struct bu_vls tstr = BU_VLS_INIT_ZERO;
 	(void)bu_avs_add(&avs, "s_srs" , orig_proj4_str);
 	(void)bu_avs_add(&avs, "t_srs" , bu_vls_addr(&new_proj4_str));
 	(void)bu_avs_add(&avs, "f_srs" , flat_proj4_str);
+	bu_vls_sprintf(&tstr, "%f %s", fabs(2*cx), dunit);
+	(void)bu_avs_add(&avs, "x_length" , bu_vls_addr(&tstr));
+	bu_vls_sprintf(&tstr, "%f %s", fabs(2*cy), dunit);
+	(void)bu_avs_add(&avs, "y_length" , bu_vls_addr(&tstr));
+	if (state->ops->center) {
+	    bu_vls_sprintf(&tstr, "%f %s", px + cx, dunit);
+	    (void)bu_avs_add(&avs, "x_offset" , bu_vls_addr(&tstr));
+	    bu_vls_sprintf(&tstr, "%f %s", py - cy, dunit);
+	    (void)bu_avs_add(&avs, "y_offset" , bu_vls_addr(&tstr));
+	}
+	bu_vls_free(&tstr);
 	(void)db5_update_attributes(dp, &avs, state->wdbp->dbip);
     }
 

@@ -1181,7 +1181,8 @@ nmg_isect_2colinear_edge2p(struct edgeuse *eu1, struct edgeuse *eu2, struct face
 /* optional: list of new eu1 pieces */
 /* optional: list of new eu2 pieces */
 {
-    struct edgeuse *eu[10];
+#define MAX_EU 20 /* arbitrary number of max colinear edges */
+    struct edgeuse *eu[MAX_EU];
     struct vertexuse *vu[4];
     register int i;
     register int j;
@@ -1225,8 +1226,8 @@ nmg_isect_2colinear_edge2p(struct edgeuse *eu1, struct edgeuse *eu2, struct face
     /* Now join 'em up */
     /* This step should no longer be necessary, as nmg_ebreaker()
      * from nmg_break_eu_on_v() should have already handled this. */
-    for (i=0; i < neu-1; i++) {
-	for (j=i+1; j < neu; j++) {
+    for (i=0; i < neu-2; i++) {
+	for (j=i+1; j < neu-1 && j < MAX_EU; j++) {
 	    if (!NMG_ARE_EUS_ADJACENT(eu[i], eu[j])) continue;
 	    nmg_radial_join_eu(eu[i], eu[j], &(is->tol));
 	}

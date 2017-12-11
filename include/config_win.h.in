@@ -27,6 +27,7 @@
  */
 
 #ifndef IGNORE_CONFIG_H
+#define IGNORE_CONFIG_H
 #if defined(_WIN32)
 
 #include <fcntl.h>
@@ -142,7 +143,20 @@
 /* FIXME: this will be wildly wrong for any values far from 1.0 */
 #cmakedefine nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
 
-#cmakedefine isnan _isnan
+#if !defined(HAVE_ISNAN) && defined(HAVE__ISNAN)
+#  if defined(__cplusplus)
+     /* workaround for VS 2012, needed for Creo 3 build */
+     #include <float.h> /* for _isnan() */
+     namespace std {
+       static inline int isnan(double x) {
+         return _isnan(x);
+       }
+     }
+#  else
+#    define isnan _isnan
+#  endif
+#endif
+
 #cmakedefine isinf(x) (!_finite(x))
 #cmakedefine asinh(x) (log(x + sqrt(x * x + 1)))
 #define execvp _execvp

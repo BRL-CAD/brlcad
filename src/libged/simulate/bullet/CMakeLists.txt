@@ -401,12 +401,12 @@ set(Bullet_SRCS
   )
 
 if(BRLCAD_ENABLE_BULLET)
-  add_library(cadbullet ${Bullet_SRCS} ${Bullet_HDRS})
+  BRLCAD_ADDLIB(cadbullet "${Bullet_SRCS}" NO_STRICT NO_INSTALL STATIC)
   DISABLE_WARNINGS()
 else(BRLCAD_ENABLE_BULLET)
   CMAKEFILES(${Bullet_SRCS})
-  CMAKEFILES(${Bullet_HDRS})
 endif(BRLCAD_ENABLE_BULLET)
+CMAKEFILES(${Bullet_HDRS})
 
 set(Bullet_misc
   simulate/bullet/BulletCollision/CMakeLists.txt

@@ -85,12 +85,12 @@ struct nurb_hit {
     extern void rt_nurb_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
 
     extern int rt_brep_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
-    extern void rt_brep_print(register const struct soltab *stp);
-    extern int rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
-    extern void rt_brep_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp);
-    extern void rt_brep_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp);
-    extern void rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp);
-    extern void rt_brep_free(register struct soltab *stp);
+    extern void rt_brep_print(const struct soltab *stp);
+    extern int rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead);
+    extern void rt_brep_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
+    extern void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
+    extern void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
+    extern void rt_brep_free(struct soltab *stp);
     extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
 
 #endif /* CONVERT_TO_BREP */
@@ -161,7 +161,7 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
     BBOX_NONDEGEN((*min), (*max), SMALL_FASTF);
 
     for (; nurbs != (struct nurb_specific *)0; nurbs = next) {
-	register struct face_g_snurb *s;
+	struct face_g_snurb *s;
 
 	next = nurbs->next;
 
@@ -270,12 +270,12 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 
 void
-rt_nurb_print(register const struct soltab *stp)
+rt_nurb_print(const struct soltab *stp)
 {
 #ifdef CONVERT_TO_BREP
     return rt_brep_print(stp);
 #else
-    register struct nurb_specific *nurb =
+    struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific;
 
     if (nurb == (struct nurb_specific *)0) {
@@ -300,14 +300,14 @@ rt_nurb_print(register const struct soltab *stp)
  *  >0 HIT
  */
 int
-rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_nurb_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
 #ifdef CONVERT_TO_BREP
     return rt_brep_shot(stp, rp, ap, seghead);
 #else
-    register struct nurb_specific *nurb =
+    struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific;
-    register struct seg *segp;
+    struct seg *segp;
     const struct bn_tol *tol = &ap->a_rt_i->rti_tol;
     point_t p1, p2, p3, p4;
     vect_t dir1, dir2;
@@ -445,12 +445,12 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_nurb_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_nurb_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
 #ifdef CONVERT_TO_BREP
     return rt_brep_norm(hitp, stp, rp);
 #else
-/*	register struct nurb_specific *nurb =
+/*	struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific; */
 
     struct face_g_snurb *n = (struct face_g_snurb *) hitp->hit_private;
@@ -475,12 +475,12 @@ rt_nurb_norm(register struct hit *hitp, struct soltab *stp, register struct xray
  * Return the curvature of the nurb.
  */
 void
-rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_nurb_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
 #ifdef CONVERT_TO_BREP
     return rt_brep_curve(cvp, hitp, stp);
 #else
-/*	register struct nurb_specific *nurb =
+/*	struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific; */
     struct face_g_snurb *srf = (struct face_g_snurb *) hitp->hit_private;
     fastf_t u, v;
@@ -508,12 +508,12 @@ rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct 
  * v = elevation
  */
 void
-rt_nurb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_nurb_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
 #ifdef CONVERT_TO_BREP
     return rt_brep_uv(ap, stp, hitp, uvp);
 #else
-/*	register struct nurb_specific *nurb =
+/*	struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific; */
     uvp->uv_u = hitp->hit_vpriv[0];
     uvp->uv_v = hitp->hit_vpriv[1];
@@ -523,21 +523,21 @@ rt_nurb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 
 
 void
-rt_nurb_free(register struct soltab *stp)
+rt_nurb_free(struct soltab *stp)
 {
 #ifdef CONVERT_TO_BREP
     return rt_brep_free(stp);
 #else
 
-    register struct nurb_specific *nurb =
+    struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific;
-    register struct nurb_specific *next;
+    struct nurb_specific *next;
 
     if (nurb == (struct nurb_specific *)0)
 	bu_bomb("rt_nurb_free: no surfaces\n");
 
     for (; nurb != (struct nurb_specific *)0; nurb = next) {
-	register struct face_g_snurb *s;
+	struct face_g_snurb *s;
 
 	next = nurb->next;
 
@@ -692,11 +692,11 @@ rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const
 
 
 int
-rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_nurb_internal *sip;
     union record *rp;
-    register int i;
+    int i;
     int s;
 
     if (dbip) RT_CK_DBI(dbip);
@@ -727,9 +727,9 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     rp++;
 
     for (s = 0; s < sip->nsrf; s++) {
-	register fastf_t * m;
+	fastf_t * m;
 	int coords;
-	register dbfloat_t *vp;
+	dbfloat_t *vp;
 	int pt_type;
 	union record d;
 
@@ -853,7 +853,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 int
 rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
-    register int rec_ptr;
+    int rec_ptr;
     struct rt_nurb_internal *sip;
     union record *rec;
     int s;
@@ -890,7 +890,7 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     rec_ptr = 1;
 
     for (s = 0; s < sip->nsrf; s++) {
-	register struct face_g_snurb *srf = sip->srfs[s];
+	struct face_g_snurb *srf = sip->srfs[s];
 	NMG_CK_SNURB(srf);
 
 	grans = rt_nurb_grans(srf);
@@ -1052,11 +1052,11 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
 
 int
-rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
 
     struct rt_nurb_internal *sip;
-    register int i;
+    int i;
     int s;
     unsigned char *cp;
     fastf_t tmp_vec[4];
@@ -1080,7 +1080,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     sip->srfs = (struct face_g_snurb **) bu_calloc(sip->nsrf, sizeof(struct face_g_snurb *), "nurb srfs[]");
 
     for (s = 0; s < sip->nsrf; s++) {
-	register struct face_g_snurb *srf;
+	struct face_g_snurb *srf;
 	int coords;
 	int pt_type;
 	int order[2], u_size, v_size;
@@ -1179,8 +1179,8 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 void
 rt_nurb_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_nurb_internal *sip;
-    register int i;
+    struct rt_nurb_internal *sip;
+    int i;
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -1204,8 +1204,8 @@ rt_nurb_ifree(struct rt_db_internal *ip)
 int
 rt_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register int j;
-    register struct rt_nurb_internal *sip =
+    int j;
+    struct rt_nurb_internal *sip =
 	(struct rt_nurb_internal *) ip->idb_ptr;
     int i;
     int surf;
@@ -1217,8 +1217,8 @@ rt_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     if (verbose < 2)  return 0;
 
     for (surf = 0; surf < sip->nsrf; surf++) {
-	register struct face_g_snurb *np;
-	register fastf_t *mp;
+	struct face_g_snurb *np;
+	fastf_t *mp;
 	int ncoord;
 
 	np = sip->srfs[surf];

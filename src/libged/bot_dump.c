@@ -53,8 +53,7 @@
 
 #define V3ARGS_SCALE(_a) (_a)[X]*cfactor, (_a)[Y]*cfactor, (_a)[Z]*cfactor
 
-static char usage[] = "\
-Usage: %s [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n";
+static char usage[] = "[-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]";
 
 
 struct _ged_bot_dump_client_data {
@@ -819,7 +818,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		else if (BU_STR_EQUAL("stl", bu_optarg))
 		    output_type = OTYPE_STL;
 		else {
-		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 		    return GED_ERROR;
 		}
 		break;
@@ -832,7 +831,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 		return GED_ERROR;
 	}
     }
@@ -863,7 +862,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, usage, argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -884,7 +883,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
     if (!output_file && !output_directory) {
 	if (binary) {
-	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s\n", argv[0], usage);
 	    return GED_ERROR;
 	}
 	fp = stdout;

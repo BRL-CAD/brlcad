@@ -79,14 +79,7 @@
 # BRL-CAD software package.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.0.2)
-if(COMMAND CMAKE_POLICY)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-    CMAKE_POLICY(SET CMP0046 NEW)
-    CMAKE_POLICY(SET CMP0053 NEW)
-    CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
 project(BRLCAD)
@@ -495,11 +488,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endif(NOT N EQUAL 0)
 
   if(CMAKE_CONFIGURATION_TYPES)
-    if(${CMAKE_VERSION} VERSION_GREATER 2.99)
-      set(CONFIG $<CONFIG>)
-    else(${CMAKE_VERSION} VERSION_GREATER 2.99)
-      set(CONFIG $<CONFIGURATION>)
-    endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+    set(CONFIG $<CONFIG>)
   else(CMAKE_CONFIGURATION_TYPES)
     if ("${CONFIG}" STREQUAL "")
       set(CONFIG "\"\"")
@@ -541,11 +530,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endif(NOT N EQUAL 0)
 
   if(CMAKE_CONFIGURATION_TYPES)
-    if(${CMAKE_VERSION} VERSION_GREATER 2.99)
-      set(CONFIG $<CONFIG>)
-    else(${CMAKE_VERSION} VERSION_GREATER 2.99)
-      set(CONFIG $<CONFIGURATION>)
-    endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+    set(CONFIG $<CONFIG>)
   else(CMAKE_CONFIGURATION_TYPES)
     if ("${CONFIG}" STREQUAL "")
       set(CONFIG "\"\"")
@@ -850,6 +835,53 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQU
 # consolidated into one large include...
 include(RPath_Setup)
 cmake_set_rpath()
+
+#---------------------------------------------------------------------
+# We need compiler support for certain C and C++ standards when we
+# build.  Set CMake's flags accordingly.
+
+# C
+unset(CMAKE_C_STD_FLAG)
+set(CMAKE_C_EXTENSIONS ON)
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT MSVC)
+  set(CMAKE_C_STANDARD 99)
+  set(CMAKE_C_STANDARD_REQUIRED ON)
+  if(CMAKE_C_EXTENSIONS)
+    set(CMAKE_C_STD_FLAG "${CMAKE_C${CMAKE_C_STANDARD}_EXTENSION_COMPILE_OPTION}")
+  else()
+    set(CMAKE_C_STD_FLAG "${CMAKE_C${CMAKE_C_STANDARD}_STANDARD_COMPILE_OPTION}")
+  endif(CMAKE_C_EXTENSIONS)
+  if("${CMAKE_C_STD_FLAG}" STREQUAL "")
+    message(FATAL_ERROR "C standard specification failure: compiler does not support the C${CMAKE_C_STANDARD} standard:\n${CMAKE_C_COMPILE_FEATURES}")
+  endif("${CMAKE_C_STD_FLAG}" STREQUAL "")
+else()
+  set(CMAKE_C_STANDARD 90)
+  set(CMAKE_C_STANDARD_REQUIRED ON)
+  if(CMAKE_C_EXTENSIONS)
+    set(CMAKE_C_STD_FLAG "${CMAKE_C${CMAKE_C_STANDARD}_EXTENSION_COMPILE_OPTION}")
+  else()
+    set(CMAKE_C_STD_FLAG "${CMAKE_C${CMAKE_C_STANDARD}_STANDARD_COMPILE_OPTION}")
+  endif(CMAKE_C_EXTENSIONS)
+endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT MSVC)
+
+# C++
+unset(CMAKE_CXX_STD_FLAG)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(CMAKE_CXX_EXTENSIONS)
+  set(CMAKE_CXX_STD_FLAG "${CMAKE_CXX${CMAKE_CXX_STANDARD}_EXTENSION_COMPILE_OPTION}")
+else()
+  set(CMAKE_CXX_STD_FLAG "${CMAKE_CXX${CMAKE_CXX_STANDARD}_STANDARD_COMPILE_OPTION}")
+endif(CMAKE_CXX_EXTENSIONS)
+
+if("${CMAKE_CXX_STD_FLAG}" STREQUAL "" AND NOT MSVC)
+  message(FATAL_ERROR "C++ standard specification failure: compiler does not support the C++${CMAKE_CXX_STANDARD} standard:\n${CMAKE_CXX_COMPILE_FEATURES}")
+endif("${CMAKE_CXX_STD_FLAG}" STREQUAL "" AND NOT MSVC)
+
+# Spread the word...
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_STD_FLAG}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_STD_FLAG}")
 
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine
@@ -1226,7 +1258,11 @@ if(BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_AQUA)
 
 # Enable features requiring Bullet Physics SDK
-option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" ON)
+option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" OFF)
+if(BRLCAD_ENABLE_BULLET)
+  message("Bullet support is not currently working - disabling.")
+  set(BRLCAD_ENABLE_BULLET OFF CACHE BOOL "Currently broken" FORCE)
+endif(BRLCAD_ENABLE_BULLET)
 mark_as_advanced(BRLCAD_ENABLE_BULLET)
 
 # Enable features requiring GDAL geospatial library
@@ -1669,14 +1705,7 @@ CHECK_CXX_FLAG(ftemplate-depth-128)
 # CHECK_C_FLAG(msse2)
 # CHECK_C_FLAG(msse3)
 
-# Check for c90 support with gnu extensions if we're not building for
-# a release so we get more broad portability testing.  Since the
-# default is debug, it will be the more difficult to keep working
-# given it's the lesser feature-rich C standard.  If we're going for
-# a strictly standard compliant build, use the c** options instead
-# of the gnu variations
 if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
-  CHECK_C_FLAG("std=c99")
   # we need to define some things as "empty" to avoid false positives
   # for bu_* functions using varargs and print specifiers
   CHECK_C_FLAG("D_BU_ATTR_PRINTF12=''")
@@ -1685,33 +1714,13 @@ if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
   # a hack to temp work around signal() handling in interrupt.c
   CHECK_C_FLAG("DC99_POSIX_USE_BSD")
   #=== C++
-  CHECK_CXX_FLAG("std=c++03")
   # for bu_* functions using varargs and print specifiers
   CHECK_CXX_FLAG("D_BU_ATTR_PRINTF12=''")
   CHECK_CXX_FLAG("D_BU_ATTR_PRINTF23=''")
   CHECK_CXX_FLAG("D_BU_ATTR_SCANF23=''")
   # a hack to temp work around signal() handling in interrupt.c
   CHECK_CXX_FLAG("DC99_POSIX_USE_BSD")
-else()
-  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    CHECK_C_FLAG("std=gnu99")
-  else("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    CHECK_C_FLAG("std=gnu89")
-  endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  CHECK_CXX_FLAG("std=gnu++11" VARS CXX11_FLAG)
-  if(NOT CXX11_FLAG)
-    CHECK_CXX_FLAG("std=gnu++0x" VARS CXX11_FLAG)
-    if(NOT CXX11_FLAG)
-      CHECK_CXX_FLAG("std=c++11" VARS CXX11_FLAG)
-      if(NOT CXX11_FLAG)
-	CHECK_CXX_FLAG("std=c++0x" VARS CXX11_FLAG)
-	if(NOT MSVC AND NOT CXX11_FLAG)
-	  message(WARNING "No working C++11 flag found.")
-	endif(NOT MSVC AND NOT CXX11_FLAG)
-      endif(NOT CXX11_FLAG)
-    endif(NOT CXX11_FLAG)
-  endif(NOT CXX11_FLAG)
-endif()
+endif(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
 
 # TODO - should be using this with MSVC, but it breaks the BUILD_SLEEP
 # try_compile below with errors that appear to be coming from Windows
@@ -2012,15 +2021,21 @@ if(NOT MSVC)
   # CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
 
   # link-time optimization (LTO) results in slower linking, more
-  # warnings, and better optimization
-  CHECK_C_FLAG(flto GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_CXX_FLAG(flto GROUPS OPTIMIZE_CXX_FLAGS)
+  # warnings, and better optimization, but requires newer versions of
+  # compilers to avoid common bugs.
+  if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
+    # LTO bug in GCC 4.8.5 (__fread_chk_warn)
+  else ()
+    CHECK_C_FLAG(flto GROUPS OPTIMIZE_C_FLAGS)
+    CHECK_CXX_FLAG(flto GROUPS OPTIMIZE_CXX_FLAGS)
+  endif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
+
 
   # GCC 4.9+ introduced "thin" LTO object files that require special
   # ar/ranlib handling via wrappers or plugin specification.  These
   # wrappers work fine even if we're not using LTO, so just use them
   # if found.
-  if (CMAKE_C_COMPILER_ID MATCHES "GNU")
+  if (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_X_COMPILER_VERSION VERSION_GREATER 4.8)
     find_program(GCC_AR_LTO ${CMAKE_C_COMPILER}-ar NAMES gcc-ar DOC "GNU ARchiver wrapper with LTO support")
     if (GCC_AR_LTO)
       SET(CMAKE_AR "${GCC_AR_LTO}" CACHE FILEPATH "Archiver" FORCE)
@@ -2029,7 +2044,7 @@ if(NOT MSVC)
     if (GCC_RANLIB_LTO)
       SET(CMAKE_RANLIB "${GCC_RANLIB_LTO}" CACHE FILEPATH "Ranlib" FORCE)
     endif (GCC_RANLIB_LTO)
-  endif (CMAKE_C_COMPILER_ID MATCHES "GNU")
+  endif (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_X_COMPILER_VERSION VERSION_GREATER 4.8)
 
   # only omit the frame pointer if we have no interest in profiling or
   # debugging.
@@ -2151,12 +2166,15 @@ if(NOT MSVC)
     #  CHECK_C_FLAG(Wredundant-decls)
     #  CHECK_CXX_FLAG(Wredundant-decls)
 
-    # want C inline warnings, but not for c++.  versions of g++ (circa
-    # 4.7) spew unquellable bogus warnings on default constructors that
-    # we don't have access to (e.g., in opennurbs and boost), so turn
-    # them off
+    # want inline warnings, but not for some c++ buggy compilers
     CHECK_C_FLAG(Winline)
-    CHECK_CXX_FLAG(Wno-inline)
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+      # g++ 4.7 spews unquellable bogus warnings on default
+      # constructors (e.g., in opennurbs and boost)
+      CHECK_CXX_FLAG(Wno-inline)
+    else()
+      CHECK_CXX_FLAG(Wninline)
+    endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
 
     # this makes sure we don't warn about using long long.  really, it's okay.
     CHECK_C_FLAG(Wno-long-long)
@@ -2425,6 +2443,7 @@ BRLCAD_INCLUDE_FILE(sys/sysmp.h HAVE_SYS_SYSMP_H)
 BRLCAD_INCLUDE_FILE(sys/time.h HAVE_SYS_TIME_H)
 BRLCAD_INCLUDE_FILE(sys/times.h HAVE_SYS_TIMES_H)
 BRLCAD_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
+BRLCAD_INCLUDE_FILE(sys/uio.h HAVE_SYS_UIO_H)
 BRLCAD_INCLUDE_FILE(sys/un.h HAVE_SYS_UN_H)
 BRLCAD_INCLUDE_FILE(sys/wait.h HAVE_SYS_WAIT_H)
 BRLCAD_INCLUDE_FILE(syslog.h HAVE_SYSLOG_H)
@@ -2548,57 +2567,70 @@ endif(BRLCAD_PRINT_MSGS)
 # ALLOCA test - based on AC_FUNC_ALLOCA
 BRLCAD_ALLOCA()
 
-BRLCAD_FUNCTION_EXISTS(XQueryExtension HAVE_XQUERYEXTENSION)
-BRLCAD_FUNCTION_EXISTS(_putenv_s HAVE__PUTENV_S)
-BRLCAD_FUNCTION_EXISTS(_splitpath HAVE__SPLITPATH)
-BRLCAD_FUNCTION_EXISTS(_strtoi64 HAVE__STRTOI64)
-BRLCAD_FUNCTION_EXISTS(alarm HAVE_ALARM)
-BRLCAD_FUNCTION_EXISTS(dlopen HAVE_DLOPEN)
-BRLCAD_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
-BRLCAD_FUNCTION_EXISTS(fchmod HAVE_FCHMOD)
-BRLCAD_FUNCTION_EXISTS(fsync HAVE_FSYNC)
-BRLCAD_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
-BRLCAD_FUNCTION_EXISTS(getegid HAVE_GETEGID)
-BRLCAD_FUNCTION_EXISTS(getenv_s HAVE_GETENV_S)
-BRLCAD_FUNCTION_EXISTS(geteuid HAVE_GETEUID)
-BRLCAD_FUNCTION_EXISTS(gethostname HAVE_GETHOSTNAME)
-BRLCAD_FUNCTION_EXISTS(getloadavg HAVE_GETLOADAVG)
-BRLCAD_FUNCTION_EXISTS(getopt_long HAVE_GETOPT_LONG)
-BRLCAD_FUNCTION_EXISTS(getprogname HAVE_GETPROGNAME) # bsd
-BRLCAD_FUNCTION_EXISTS(htonll HAVE_HTONLL)
-BRLCAD_FUNCTION_EXISTS(logb HAVE_LOGB REQUIRED_LIBS ${M_LIBRARY})
-BRLCAD_FUNCTION_EXISTS(lrand48 HAVE_LRAND48)
-BRLCAD_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
-BRLCAD_FUNCTION_EXISTS(ntohll HAVE_NTOHLL)
-BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
-BRLCAD_FUNCTION_EXISTS(popen HAVE_POPEN)
-BRLCAD_FUNCTION_EXISTS(posix_memalign HAVE_POSIX_MEMALIGN) # IEEE Std 1003.1-2001
-BRLCAD_FUNCTION_EXISTS(random HAVE_RANDOM)
-BRLCAD_FUNCTION_EXISTS(realpath HAVE_REALPATH)
-BRLCAD_FUNCTION_EXISTS(setenv HAVE_SETENV)
-BRLCAD_FUNCTION_EXISTS(setpgid HAVE_SETPGID)
-BRLCAD_FUNCTION_EXISTS(setpriority HAVE_SETPRIORITY)
-BRLCAD_FUNCTION_EXISTS(shmat HAVE_SHMAT)
-BRLCAD_FUNCTION_EXISTS(shmctl HAVE_SHMCTL)
-BRLCAD_FUNCTION_EXISTS(shmdt HAVE_SHMDT)
-BRLCAD_FUNCTION_EXISTS(shmget HAVE_SHMGET)
-BRLCAD_FUNCTION_EXISTS(srand48 HAVE_SRAND48)
-BRLCAD_FUNCTION_EXISTS(strcasecmp HAVE_STRCASECMP)
-BRLCAD_FUNCTION_EXISTS(strdup HAVE_STRDUP)
-BRLCAD_FUNCTION_EXISTS(strlcat HAVE_STRLCAT)
-BRLCAD_FUNCTION_EXISTS(strlcpy HAVE_STRLCPY)
-BRLCAD_FUNCTION_EXISTS(strtoll HAVE_STRTOLL)
-BRLCAD_FUNCTION_EXISTS(strncasecmp HAVE_STRNCASECMP)
-BRLCAD_FUNCTION_EXISTS(sync HAVE_SYNC)
-BRLCAD_FUNCTION_EXISTS(sysconf HAVE_SYSCONF)
-BRLCAD_FUNCTION_EXISTS(sysctl HAVE_SYSCTL)
-BRLCAD_FUNCTION_EXISTS(sysmp HAVE_SYSMP)
-BRLCAD_FUNCTION_EXISTS(vfork HAVE_VFORK)
-BRLCAD_FUNCTION_EXISTS(vsscanf HAVE_VSSCANF)
-BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
+BRLCAD_FUNCTION_EXISTS(XQueryExtension)
+BRLCAD_FUNCTION_EXISTS(_putenv_s)
+BRLCAD_FUNCTION_EXISTS(_splitpath)
+BRLCAD_FUNCTION_EXISTS(_strtoi64)
+BRLCAD_FUNCTION_EXISTS(alarm)
+BRLCAD_FUNCTION_EXISTS(dlopen)
+BRLCAD_FUNCTION_EXISTS(drand48)
+BRLCAD_FUNCTION_EXISTS(fchmod)
+BRLCAD_FUNCTION_EXISTS(fsync)
+BRLCAD_FUNCTION_EXISTS(getcwd)
+BRLCAD_FUNCTION_EXISTS(getegid)
+BRLCAD_FUNCTION_EXISTS(getenv_s)
+BRLCAD_FUNCTION_EXISTS(geteuid)
+BRLCAD_FUNCTION_EXISTS(gethostname)
+BRLCAD_FUNCTION_EXISTS(getloadavg)
+BRLCAD_FUNCTION_EXISTS(getopt_long)
+BRLCAD_FUNCTION_EXISTS(getprogname) # bsd
+BRLCAD_FUNCTION_EXISTS(htonll)
+BRLCAD_FUNCTION_EXISTS(logb REQUIRED_LIBS ${M_LIBRARY})
+BRLCAD_FUNCTION_EXISTS(lrand48)
+BRLCAD_FUNCTION_EXISTS(mkstemp)
+BRLCAD_FUNCTION_EXISTS(ntohll)
+BRLCAD_FUNCTION_EXISTS(pipe)
+BRLCAD_FUNCTION_EXISTS(popen)
+BRLCAD_FUNCTION_EXISTS(posix_memalign) # IEEE Std 1003.1-2001
+BRLCAD_FUNCTION_EXISTS(random)
+BRLCAD_FUNCTION_EXISTS(realpath)
+BRLCAD_FUNCTION_EXISTS(setenv)
+BRLCAD_FUNCTION_EXISTS(setpgid)
+BRLCAD_FUNCTION_EXISTS(setpriority)
+BRLCAD_FUNCTION_EXISTS(shmat)
+BRLCAD_FUNCTION_EXISTS(shmctl)
+BRLCAD_FUNCTION_EXISTS(shmdt)
+BRLCAD_FUNCTION_EXISTS(shmget)
+BRLCAD_FUNCTION_EXISTS(snprintf)
+BRLCAD_FUNCTION_EXISTS(srand48)
+BRLCAD_FUNCTION_EXISTS(strcasecmp)
+BRLCAD_FUNCTION_EXISTS(strdup)
+BRLCAD_FUNCTION_EXISTS(strlcat)
+BRLCAD_FUNCTION_EXISTS(strlcpy)
+BRLCAD_FUNCTION_EXISTS(strtoll)
+BRLCAD_FUNCTION_EXISTS(strncasecmp)
+BRLCAD_FUNCTION_EXISTS(sync)
+BRLCAD_FUNCTION_EXISTS(sysconf)
+BRLCAD_FUNCTION_EXISTS(sysctl)
+BRLCAD_FUNCTION_EXISTS(sysmp)
+BRLCAD_FUNCTION_EXISTS(vfork)
+BRLCAD_FUNCTION_EXISTS(vsscanf)
+BRLCAD_FUNCTION_EXISTS(writev)
+
+# We may want access to some POSIX functions even when compiling in strict
+# mode, if they are present. For those cases, we need to record the DECL
+# test result.
+BRLCAD_FUNCTION_EXISTS(kill)
+if(HAVE_DECL_KILL)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_KILL 1\n")
+endif(HAVE_DECL_KILL)
+BRLCAD_FUNCTION_EXISTS(fileno)
+if(HAVE_DECL_FILENO)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_FILENO 1\n")
+endif(HAVE_DECL_FILENO)
 
 # test for daemon(), which is deprecated on Mac OS X 10.5+
-BRLCAD_FUNCTION_EXISTS(daemon HAVE_DAEMON)
+BRLCAD_FUNCTION_EXISTS(daemon)
 if (HAVE_DAEMON)
   check_c_source_compiles("#include <stdlib.h>\nint main() { (void)daemon; return 0; }" HAVE_WORKING_DAEMON_FUNCTION)
 endif (HAVE_DAEMON)
@@ -2619,37 +2651,9 @@ if("${HAVE_HTONLL}" STREQUAL "")
   endif(HAVE_HTONLL_SYS__ENDIAN AND CONFIG_H_FILE)
 endif("${HAVE_HTONLL}" STREQUAL "")
 
-# we may compile in strict pedantic mode, but still want access to
-# some POSIX functions.  test whether some symbols (below) are
-# declared in addition to whether they resolve (above).
-#
-# we do this manually for now because CHECK_SYMBOL_EXISTS and
-# CHECK_PROTOTYPE_EXISTS are both terribly broken.
-#
-# FIXME: wrap these into a BRLCAD_CHECK_SYMBOL() macro or similar.
-
-# test for kill()
-BRLCAD_FUNCTION_EXISTS(kill HAVE_KILL)
-if("${HAVE_DECL_KILL}" MATCHES "^${HAVE_DECL_KILL}$")
-  check_c_source_compiles("#include <sys/types.h>\n#include <signal.h>\nint main() { (void)kill; return 0; }" HAVE_DECL_KILL)
-  if(HAVE_DECL_KILL)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_KILL 1\n")
-  endif(HAVE_DECL_KILL)
-endif("${HAVE_DECL_KILL}" MATCHES "^${HAVE_DECL_KILL}$")
-
-# test for fileno()
-BRLCAD_FUNCTION_EXISTS(fileno HAVE_FILENO)
-if("${HAVE_DECL_FILENO}" MATCHES "^${HAVE_DECL_FILENO}$")
-  check_c_source_compiles("#include <stdio.h>\nint main() { (void)fileno; return 0; }" HAVE_DECL_FILENO)
-  if(HAVE_DECL_FILENO)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_FILENO 1\n")
-  endif(HAVE_DECL_FILENO)
-endif("${HAVE_DECL_FILENO}" MATCHES "^${HAVE_DECL_FILENO}$")
-
-# test for snprintf()
-BRLCAD_FUNCTION_EXISTS(snprintf HAVE_SNPRINTF)
+# Test for _snprintf() if we don't have snprintf
 if(NOT HAVE_SNPRINTF)
-  BRLCAD_FUNCTION_EXISTS(_snprintf HAVE__SNPRINTF)
+  BRLCAD_FUNCTION_EXISTS(_snprintf)
   if(HAVE__SNPRINTF)
     CONFIG_H_APPEND(BRLCAD "#define snprintf _snprintf\n")
   endif(HAVE__SNPRINTF)
@@ -2677,41 +2681,34 @@ if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$"
   endif(HAVE_PROGRAM_INVOCATION_NAME)
 endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
 
-# test for lrint existence
+# functionality tests for lrint
 set(lrint_test "long int lrint(double); int main() {return lrint(3.14);}")
-# this second test is mainly a test for BRLCAD_FUNCTION_EXISTS - can
-# go away once behavior of the macro is solid
 set(lrint_test_negative "long int lrint(double); int main() {return lrint(-1);}")
-BRLCAD_FUNCTION_EXISTS(lrint HAVE_LRINT
-  COMPILE_TEST_SRCS lrint_test lrint_test_negative
+# decl test for lrint
+set(lrint_decl_test "#include <math.h>\nint main() { (void)lrint(0); return 0; }")
+BRLCAD_FUNCTION_EXISTS(lrint DECL_TEST_SRCS lrint_decl_test
+  WORKING_TEST_SRCS lrint_test lrint_test_negative
   REQUIRED_LIBS ${M_LIBRARY})
-if(NOT HAVE_LRINT AND "${HAVE_WORKING_LRINT_MACRO}" MATCHES "^${HAVE_WORKING_LRINT_MACRO}$")
-  # TODO - replace this cache approach with the CMakePushCheckState module
-  set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
+if(HAVE_DECL_LRINT)
+  CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_LRINT 1\n")
+endif(HAVE_DECL_LRINT)
+if(NOT HAVE_LRINT AND NOT DEFINED HAVE_WORKING_LRINT_MACRO)
+  cmake_push_check_state(RESET)
   set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
   # NOTE: this must match the lrint #define in include/common.h
   check_c_source_compiles("#define lrint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))\nint main() {return lrint(3.14);}" HAVE_WORKING_LRINT_MACRO)
-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
   if(HAVE_WORKING_LRINT_MACRO)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_WORKING_LRINT_MACRO 1\n")
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_LRINT_MACRO 1\n")
   endif(HAVE_WORKING_LRINT_MACRO)
-endif(NOT HAVE_LRINT AND "${HAVE_WORKING_LRINT_MACRO}" MATCHES "^${HAVE_WORKING_LRINT_MACRO}$")
-
-# test for lrint() declaration
-if(HAVE_LRINT AND "${HAVE_DECL_LRINT}" MATCHES "^${HAVE_DECL_LRINT}$")
-  # TODO - replace this cache approach with the CMakePushCheckState module
-  set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
-  set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
-  check_c_source_compiles("#include <math.h>\nint main() { (void)lrint(0); return 0; }" HAVE_DECL_LRINT)
-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
-  if(HAVE_DECL_LRINT)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_LRINT 1\n")
-  endif(HAVE_DECL_LRINT)
-endif(HAVE_LRINT AND "${HAVE_DECL_LRINT}" MATCHES "^${HAVE_DECL_LRINT}$")
+endif(NOT HAVE_LRINT AND NOT DEFINED HAVE_WORKING_LRINT_MACRO)
 
 # test for tgamma
 set(tgamma_test "#include <math.h>\nint main() {double tga = tgamma(3.14); return 0;}")
-BRLCAD_FUNCTION_EXISTS(tgamma HAVE_TGAMMA COMPILE_TEST_SRCS tgamma_test REQUIRED_LIBS ${M_LIBRARY})
+BRLCAD_FUNCTION_EXISTS(tgamma COMPILE_TEST_SRCS tgamma_test REQUIRED_LIBS ${M_LIBRARY})
+
+# Check for logb in C++
+check_cxx_source_compiles("#include <cmath>\nint main() {return logb(3.14);}" HAVE_CXX_LOGB)
+CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_CXX_LOGB 1\n")
 
 #-----------------------------------------------------------------------
 # check C99 and POSIX 200112L missing functions with a more
@@ -2777,9 +2774,14 @@ if(WIN32)
 
   CHECK_SYMBOL_EXISTS(isnan "math.h" HAVE_ISNAN)
   #If we don't have it, need to define it in config_win
-  if(NOT HAVE_ISNAN)
-    set(isnan 1)
-  endif(NOT HAVE_ISNAN)
+  if(HAVE_ISNAN)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_ISNAN 1\n")
+  else(HAVE_ISNAN)
+    CHECK_SYMBOL_EXISTS(_isnan "float.h" HAVE__ISNAN)
+    if (HAVE__ISNAN)
+      CONFIG_H_APPEND(BRLCAD "#define HAVE__ISNAN 1\n")
+    endif (HAVE__ISNAN)
+  endif(HAVE_ISNAN)
 
   CHECK_SYMBOL_EXISTS(isinf "math.h" HAVE_ISINF)
   #If we don't have it, need to define it in config_win
@@ -2811,8 +2813,8 @@ if(WIN32)
     set(nextafterl 1)
   endif(NOT HAVE_NEXTAFTERL)
 
-  BRLCAD_FUNCTION_EXISTS(_fseeki64 HAVE__FSEEKI64)
-  BRLCAD_FUNCTION_EXISTS(_ftelli64 HAVE__FTELLI64)
+  BRLCAD_FUNCTION_EXISTS(_fseeki64)
+  BRLCAD_FUNCTION_EXISTS(_ftelli64)
 
 endif(WIN32)
 

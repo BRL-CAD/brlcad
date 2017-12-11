@@ -37,14 +37,7 @@
 
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.0.2)
-if(COMMAND CMAKE_POLICY)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-    CMAKE_POLICY(SET CMP0046 NEW)
-    CMAKE_POLICY(SET CMP0053 NEW)
-    CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
 project(WFOBJ)
@@ -75,13 +68,6 @@ include(${WFOBJ_CMAKE_DIR}/Path_Setup.cmake)
 
 # Includes are in current dir
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
-# Check if we should be using unique_ptr
-include(CheckCXXSourceCompiles)
-check_cxx_source_compiles("#include <memory>\n int main() { std::unique_ptr<int> uptr; *uptr.get() = 0; return *uptr.get(); }" HAVE_UNIQUE_PTR)
-if(HAVE_UNIQUE_PTR)
-  add_definitions(-DHAVE_UNIQUE_PTR)
-endif(HAVE_UNIQUE_PTR)
 
 # Find tools for generating source files
 find_package(LEMON REQUIRED)

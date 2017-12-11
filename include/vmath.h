@@ -91,7 +91,7 @@
  * user-provided parameters, such as _f in the following example:
  *
  * @code
- * #define ABC() do { register double _f; do stuff; } while (0)
+ * #define ABC() do { double _f; do stuff; } while (0)
  * @endcode
  *
  * All of the macros that introduce a scope like the preceding
@@ -864,7 +864,7 @@ typedef enum vmath_matrix_component_ {
 
 /** @brief Set all elements of N-vector to same scalar value. */
 #define VSETALLN(v, s, n) do { \
-	register size_t _j; \
+	size_t _j; \
 	for (_j=0; _j < (size_t)(n); _j++) v[_j]=(s); \
     } while (0)
 
@@ -892,7 +892,7 @@ typedef enum vmath_matrix_component_ {
 
 /** @brief Transfer vector of length `n' at `v' to vector at `o'. */
 #define VMOVEN(o, v, n) do { \
-	register size_t _vmove; \
+	size_t _vmove; \
 	for (_vmove = 0; _vmove < (size_t)(n); _vmove++) { \
 	    (o)[_vmove] = (v)[_vmove]; \
 	} \
@@ -959,7 +959,7 @@ typedef enum vmath_matrix_component_ {
  * `o'.
  */
 #define VADD2N(o, a, b, n) do { \
-	register size_t _vadd2; \
+	size_t _vadd2; \
 	for (_vadd2 = 0; _vadd2 < (size_t)(n); _vadd2++) { \
 		(o)[_vadd2] = (a)[_vadd2] + (b)[_vadd2]; \
 	} \
@@ -1001,7 +1001,7 @@ typedef enum vmath_matrix_component_ {
  * `a', store result at `o'.
  */
 #define VSUB2N(o, a, b, n) do { \
-	register size_t _vsub2; \
+	size_t _vsub2; \
 	for (_vsub2 = 0; _vsub2 < (size_t)(n); _vsub2++) { \
 		(o)[_vsub2] = (a)[_vsub2] - (b)[_vsub2]; \
 	} \
@@ -1031,7 +1031,7 @@ typedef enum vmath_matrix_component_ {
 
 /** @brief Vectors:  O = A - B - C for vectors of length `n'. */
 #define VSUB3N(o, a, b, c, n) do { \
-	register size_t _vsub3; \
+	size_t _vsub3; \
 	for (_vsub3 = 0; _vsub3 < (size_t)(n); _vsub3++) { \
 		(o)[_vsub3] = (a)[_vsub3] - (b)[_vsub3] - (c)[_vsub3]; \
 	} \
@@ -1064,7 +1064,7 @@ typedef enum vmath_matrix_component_ {
  * result at `o'.
  */
 #define VADD3N(o, a, b, c, n) do { \
-	register size_t _vadd3; \
+	size_t _vadd3; \
 	for (_vadd3 = 0; _vadd3 < (size_t)(n); _vadd3++) { \
 		(o)[_vadd3] = (a)[_vadd3] + (b)[_vadd3] + (c)[_vadd3]; \
 	} \
@@ -1106,7 +1106,7 @@ typedef enum vmath_matrix_component_ {
  * result at `o'.
  */
 #define VADD4N(o, a, b, c, d, n) do { \
-	register size_t _vadd4;		   \
+	size_t _vadd4;		   \
 	for (_vadd4 = 0; _vadd4 < (size_t)(n); _vadd4++) { \
 		(o)[_vadd4] = (a)[_vadd4] + (b)[_vadd4] + (c)[_vadd4] + (d)[_vadd4]; \
 	} \
@@ -1139,7 +1139,7 @@ typedef enum vmath_matrix_component_ {
  * result at `o'
  */
 #define VSCALEN(o, v, s, n) do { \
-	register size_t _vscale; \
+	size_t _vscale; \
 	for (_vscale = 0; _vscale < (size_t)(n); _vscale++) { \
 		(o)[_vscale] = (v)[_vscale] * (s); \
 	} \
@@ -1188,7 +1188,7 @@ typedef enum vmath_matrix_component_ {
  * result by `s'.  Often used to find the midpoint.
  */
 #define VADD2SCALEN(o, a, b, s, n) do { \
-	register size_t _vadd2scale; \
+	size_t _vadd2scale; \
 	for (_vadd2scale = 0; \
 	     _vadd2scale < (size_t)(n); \
 	     _vadd2scale++) { \
@@ -1211,7 +1211,7 @@ typedef enum vmath_matrix_component_ {
  * scale result by `s'.
  */
 #define VSUB2SCALEN(o, a, b, s, n) do { \
-	register size_t _vsub2scale; \
+	size_t _vsub2scale; \
 	for (_vsub2scale = 0; \
 	     _vsub2scale < (size_t)(n); \
 	     _vsub2scale++) { \
@@ -1238,7 +1238,7 @@ typedef enum vmath_matrix_component_ {
  * DEPRECATED: API inconsistent, use combo of other macros.
  */
 #define VCOMB3N(o, a, b, c, d, e, f, n) do { \
-	register size_t _vcomb3; \
+	size_t _vcomb3; \
 	for (_vcomb3 = 0; \
 	     _vcomb3 < (size_t)(n); \
 	     _vcomb3++) { \
@@ -1260,7 +1260,7 @@ typedef enum vmath_matrix_component_ {
  * scalars.
  */
 #define VCOMB2N(o, sa, a, sb, b, n) do { \
-	register size_t _vcomb2; \
+	size_t _vcomb2; \
 	for (_vcomb2 = 0; \
 	     _vcomb2 < (size_t)(n); \
 	     _vcomb2++) { \
@@ -1324,7 +1324,7 @@ typedef enum vmath_matrix_component_ {
     } while (0)
 
 #define VJOIN2N(o, a, sb, b, sc, c, n) do { \
-	register size_t _vjoin2; \
+	size_t _vjoin2; \
 	for (_vjoin2 = 0; \
 	     _vjoin2 < (size_t)(n); \
 	     _vjoin2++) { \
@@ -1380,7 +1380,7 @@ typedef enum vmath_matrix_component_ {
  * This is basically a shorthand for VSCALEN();VADD2N();.
  */
 #define VJOIN1N(o, a, sb, b, n) do { \
-	register size_t _vjoin1; \
+	size_t _vjoin1; \
 	for (_vjoin1 = 0; \
 	     _vjoin1 < (size_t)(n); \
 	     _vjoin1++) { \
@@ -1406,7 +1406,7 @@ typedef enum vmath_matrix_component_ {
  * scalar `sb' times vector at `b'
  */
 #define VBLEND2N(o, sa, a, sb, b, n) do { \
-	register size_t _vblend2; \
+	size_t _vblend2; \
 	for (_vblend2 = 0; \
 	     _vblend2 < (size_t)(n); \
 	     _vblend2++) { \
@@ -1697,7 +1697,7 @@ typedef enum vmath_matrix_component_ {
  * in space.  Output and input points should be separate arrays.
  */
 #define MAT4X3PNT(o, m, i) do { \
-	register double _f; \
+	double _f; \
 	_f = 1.0/((m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]); \
 	(o)[X]=((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[3]) * _f; \
 	(o)[Y]=((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[7]) * _f; \
@@ -1709,7 +1709,7 @@ typedef enum vmath_matrix_component_ {
  * and input points should be separate arrays.
  */
 #define PNT3X4MAT(o, i, m) do { \
-	register double _f; \
+	double _f; \
 	_f = 1.0/((i)[X]*(m)[3] + (i)[Y]*(m)[7] + (i)[Z]*(m)[11] + (m)[15]); \
 	(o)[X]=((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8] + (m)[12]) * _f; \
 	(o)[Y]=((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9] + (m)[13]) * _f; \
@@ -1733,7 +1733,7 @@ typedef enum vmath_matrix_component_ {
  * 1.0.  Output and input vectors should be separate arrays.
  */
 #define MAT4X3VEC(o, m, i) do { \
-	register double _f; \
+	double _f; \
 	_f = 1.0/((m)[15]); \
 	(o)[X] = ((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z]) * _f; \
 	(o)[Y] = ((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z]) * _f; \
@@ -1749,7 +1749,7 @@ typedef enum vmath_matrix_component_ {
  * Output and input vectors should be separate arrays.
  */
 #define VEC3X4MAT(o, i, m) do { \
-	register double _f; \
+	double _f; \
 	_f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]) * _f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]) * _f; \
@@ -1758,7 +1758,7 @@ typedef enum vmath_matrix_component_ {
 
 /** @brief Multiply a Relative 2-Vector by most of a 4x4 matrix. */
 #define VEC2X4MAT(o, i, m) do { \
-	register double _f; \
+	double _f; \
 	_f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4]) * _f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5]) * _f; \
@@ -1852,7 +1852,7 @@ typedef enum vmath_matrix_component_ {
  * QUAT_FROM_ROT_DEG(quat, 180.0, 1.0, 0.0, 0.0, 0.0);
  */
 #define QUAT_FROM_ROT(q, r, x, y, z) do { \
-	register fastf_t _rot = (r) * 0.5; \
+	fastf_t _rot = (r) * 0.5; \
 	QSET(q, x, y, z, cos(_rot)); \
 	VUNITIZE(q); \
 	_rot = sin(_rot); /* _rot is really just a temp variable now */ \
@@ -1860,7 +1860,7 @@ typedef enum vmath_matrix_component_ {
     } while (0)
 
 #define QUAT_FROM_VROT(q, r, v) do { \
-	register fastf_t _rot = (r) * 0.5; \
+	fastf_t _rot = (r) * 0.5; \
 	VMOVE(q, v); \
 	VUNITIZE(q); \
 	(q)[W] = cos(_rot); \
@@ -1926,7 +1926,7 @@ typedef enum vmath_matrix_component_ {
 
 /** @brief Normalize quaternion 'a' to be a unit quaternion. */
 #define QUNITIZE(a) do { \
-	register double _f; \
+	double _f; \
 	_f = QMAGNITUDE(a); \
 	if (_f < VDIVIDE_TOL) _f = 0.0; else _f = 1.0/_f; \
 	(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; (a)[W] *= _f; \
@@ -1969,7 +1969,7 @@ typedef enum vmath_matrix_component_ {
 
 /** @brief Multiplicative inverse quaternion */
 #define QINVERSE(a, b) do { \
-	register double _f = QMAGSQ(b); \
+	double _f = QMAGSQ(b); \
 	if (_f < VDIVIDE_TOL) _f = 0.0; else _f = 1.0/_f; \
 	(a)[X] = -(b)[X] * _f; \
 	(a)[Y] = -(b)[Y] * _f; \
@@ -2075,7 +2075,7 @@ typedef enum vmath_matrix_component_ {
 
 /** Convert an azimuth/elevation to a direction vector. */
 #define V3DIR_FROM_AZEL(_d, _a, _e) do { \
-	register fastf_t _c_e = cos(_e); \
+	fastf_t _c_e = cos(_e); \
 	(_d)[X] = cos(_a) * _c_e; \
 	(_d)[Y] = sin(_a) * _c_e; \
 	(_d)[Z] = sin(_e); \
