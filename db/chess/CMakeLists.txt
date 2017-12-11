@@ -2,6 +2,7 @@ set(CHESS_PARTS
   bishop.asc
   chessboard.asc
   king.asc
+  knight.asc
   pawn.asc
   queen.asc
   rook.asc
