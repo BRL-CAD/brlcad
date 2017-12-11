@@ -2000,6 +2000,8 @@ nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, str
     return discards;
 }
 
+
+/* FIXME: UGH, Bloody hell, another one. */
 int
 ray_in_rpp(struct nmg_ray *rp,
           register const fastf_t *invdir,       /* inverses of rp->r_dir[] */
@@ -5978,6 +5980,7 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, struct bu_
 	    return;
 	case -3:
 	    bu_bomb("nmg_isect_two_generic_faces(): faceuse should have intersection but could not find it\n");
+	    break;
 	default:
 	    /* internal error */
 	    bu_bomb("nmg_isect_two_generic_faces(): invalid return code from function nmg_isect_2faceuse\n");

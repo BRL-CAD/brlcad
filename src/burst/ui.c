@@ -22,6 +22,7 @@
  *
  */
 
+
 #include "common.h"
 
 #include <assert.h>
@@ -43,6 +44,12 @@
 
 
 #define DEBUG_UI 0
+
+
+#if defined(__GNUC__) && __GNUC__ >= 7 && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#  pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
+
 
 static char promptbuf[LNBUFSZ];
 #ifdef HAVE_TERMLIB

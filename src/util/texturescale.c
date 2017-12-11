@@ -129,6 +129,7 @@ get_args (int argc, char **argv)
 	    case 'h':
 		(void) fputs(usage, stderr);
 		bu_exit (0, NULL);
+		break;
 	    default:
 		return 0;
 	}

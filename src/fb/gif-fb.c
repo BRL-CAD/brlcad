@@ -469,7 +469,7 @@ main(int argc, char **argv)
 	int c;
 	bool_t errors;
 
-    	errors = argc == 1 && isatty(fileno(stdin));
+	errors = argc == 1 && isatty(fileno(stdin));
 
 	while ((c = bu_getopt(argc, argv, OPTSTR)) != -1) {
 	    switch (c) {
@@ -539,6 +539,7 @@ main(int argc, char **argv)
 	    switch (getc(gfp)) {
 		case EOF:
 		    Fatal(fbp, "File does not contain \"GIF\" header");
+		    break;
 
 		case 'G':
 		    state = ST_G_SEEN;
@@ -749,6 +750,7 @@ main(int argc, char **argv)
 		bu_free(g_cmap, "g_cmap");
 
 		bu_exit(EXIT_SUCCESS, NULL);
+		break;
 
 	    case GIF_EXTENSION: {
 		/* GIF extension block introducer */

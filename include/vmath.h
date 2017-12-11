@@ -21,12 +21,22 @@
 /** @{ */
 /** @file vmath.h
  *
- * @brief vector/matrix math, matrix representation
+ * @brief fundamental vector, matrix, quaternion math macros
  *
- * This header file defines many commonly used 3D vector math macros,
- * and operates on vect_t, point_t, mat_t, and quat_t objects.
+ * VMATH defines commonly needed macros for 2D/3D/4D math involving:
  *
- * 4 x 4 Matrix manipulation functions...
+ *   points (point2d_t, point_t, and hpoint_t),
+ *   vectors (vect2d_t, vect_t, and hvect_t),
+ *   quaternions (quat_t),
+ *   planes (plane_t), and
+ *   4x4 matrices (mat_t).
+ *
+ * By default, all floating point numbers are stored in arrays using
+ * the 'fastf_t' type definition.  It should be manually typedef'd to
+ * the "fastest" 64-bit floating point type available on the current
+ * hardware with at least 64 bits of precision.  On 16 and 32 bit
+ * machines, this is typically "double", but on 64 bit machines, it
+ * could be "float".
  *
  * Matrix array elements have the following positions in the matrix:
  * @code
@@ -39,10 +49,10 @@
  * @endcode
  *
  * Note that while many people in the computer graphics field use
- * post-multiplication with row vectors (i.e., vector * matrix * matrix
- * ...) the BRL-CAD system uses the more traditional representation
- * of column vectors (i.e., ... matrix * matrix * vector).  (The
- * matrices in these two representations are the transposes of each
+ * post-multiplication with row vectors (i.e., vector * matrix *
+ * matrix ...) VMATH uses the more traditional representation of
+ * column vectors (i.e., ... matrix * matrix * vector).  (The matrices
+ * in these two representations are the transposes of each
  * other). Therefore, when transforming a vector by a matrix,
  * pre-multiplication is used, i.e.:
  *
@@ -73,6 +83,8 @@
  * Most of these macros require that the result be in separate
  * storage, distinct from the input parameters, except where noted.
  *
+ * IMPLEMENTOR NOTES
+ *
  * When writing macros like this, it is very important that any
  * variables declared within a macro code blocks start with an
  * underscore in order to (hopefully) minimize any name conflicts with
@@ -102,11 +114,11 @@
 /* for floating point tolerances and other math constants */
 #include <float.h>
 
-/* for fastf_t */
-#include "bu/defines.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-__BEGIN_DECLS
 
 #ifndef M_
 #  define M_		XXX /**< all with 36-digits of precision */
@@ -182,6 +194,57 @@ __BEGIN_DECLS
 
 
 /**
+ * Definitions about limits of floating point representation
+ * Eventually, should be tied to type of hardware (IEEE, IBM, Cray)
+ * used to implement the fastf_t type.
+ *
+ * MAX_FASTF - Very close to the largest value that can be held by a
+ * fastf_t without overflow.  Typically specified as an integer power
+ * of ten, to make the value easy to spot when printed.  TODO: macro
+ * function syntax instead of constant (DEPRECATED)
+ *
+ * SQRT_MAX_FASTF - sqrt(MAX_FASTF), or slightly smaller.  Any number
+ * larger than this, if squared, can be expected to * produce an
+ * overflow.  TODO: macro function syntax instead of constant
+ * (DEPRECATED)
+ *
+ * SMALL_FASTF - Very close to the smallest value that can be
+ * represented while still being greater than zero.  Any number
+ * smaller than this (and non-negative) can be considered to be
+ * zero; dividing by such a number can be expected to produce a
+ * divide-by-zero error.  All divisors should be checked against
+ * this value before actual division is performed.  TODO: macro
+ * function syntax instead of constant (DEPRECATED)
+ *
+ * SQRT_SMALL_FASTF - sqrt(SMALL_FASTF), or slightly larger.  The
+ * value of this is quite a lot larger than that of SMALL_FASTF.  Any
+ * number smaller than this, when squared, can be expected to produce
+ * a zero result.  TODO: macro function syntax instead of constant
+ * (DEPRECATED)
+ *
+ */
+#if defined(vax)
+/* DEC VAX "D" format, the most restrictive */
+#  define MAX_FASTF		1.0e37	/* Very close to the largest number */
+#  define SQRT_MAX_FASTF	1.0e18	/* This squared just avoids overflow */
+#  define SMALL_FASTF		1.0e-37	/* Anything smaller is zero */
+#  define SQRT_SMALL_FASTF	1.0e-18	/* This squared gives zero */
+#else
+/* IBM format, being the next most restrictive format */
+#  define MAX_FASTF		1.0e73	/* Very close to the largest number */
+#  define SQRT_MAX_FASTF	1.0e36	/* This squared just avoids overflow */
+#  define SMALL_FASTF		1.0e-77	/* Anything smaller is zero */
+#  if defined(aux)
+#    define SQRT_SMALL_FASTF	1.0e-40 /* _doprnt error in libc */
+#  else
+#    define SQRT_SMALL_FASTF	1.0e-39	/* This squared gives zero */
+#  endif
+#endif
+
+/** DEPRECATED, do not use */
+#define SMALL SQRT_SMALL_FASTF
+
+/**
  * It is necessary to have a representation of 1.0/0.0 or log(0),
  * i.e., "infinity" that fits within the dynamic range of the machine
  * being used.  This constant places an upper bound on the size object
@@ -233,6 +296,7 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+
 /** @brief number of fastf_t's per vect2d_t */
 #define ELEMENTS_PER_VECT2D	2
 
@@ -257,9 +321,13 @@ __BEGIN_DECLS
 /** @brief number of fastf_t's per mat_t */
 #define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
 
+
 /*
- * Types for matrices and vectors.
+ * Fundamental types
  */
+
+/** @brief fastest 64-bit (or larger) floating point type */
+typedef double fastf_t;
 
 /** @brief 2-tuple vector */
 typedef fastf_t vect2d_t[ELEMENTS_PER_VECT2D];
@@ -300,29 +368,6 @@ typedef fastf_t mat_t[ELEMENTS_PER_MAT];
 /** @brief pointer to a 4x4 matrix */
 typedef fastf_t *matp_t;
 
-/** Vector component names for homogeneous (4-tuple) vectors */
-typedef enum bn_vector_component_ {
-    X = 0,
-    Y = 1,
-    Z = 2,
-    W = 3,
-    H = W
-} bn_vector_component;
-
-/**
- * Locations of deltas (MD*) and scaling values (MS*) in a 4x4
- * Homogeneous Transform matrix
- */
-typedef enum bn_matrix_component_ {
-    MSX = 0,
-    MDX = 3,
-    MSY = 5,
-    MDY = 7,
-    MSZ = 10,
-    MDZ = 11,
-    MSA = 15
-} bn_matrix_component;
-
 /**
  * @brief Definition of a plane equation
  *
@@ -346,6 +391,29 @@ typedef enum bn_matrix_component_ {
  *@n VDOT(D, N) > 0 ray exits halfspace defined by plane
  */
 typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
+
+/** Vector component names for homogeneous (4-tuple) vectors */
+typedef enum vmath_vector_component_ {
+    X = 0,
+    Y = 1,
+    Z = 2,
+    W = 3,
+    H = W
+} vmath_vector_component;
+
+/**
+ * Locations of deltas (MD*) and scaling values (MS*) in a 4x4
+ * Homogeneous Transform matrix
+ */
+typedef enum vmath_matrix_component_ {
+    MSX = 0,
+    MDX = 3,
+    MSY = 5,
+    MDY = 7,
+    MSZ = 10,
+    MDZ = 11,
+    MSA = 15
+} vmath_matrix_component;
 
 /**
  * Evaluates truthfully whether a number is not within valid range of
@@ -1697,10 +1765,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6]) * _f; \
     } while (0)
 
-/** @brief Test a vector for non-unit length. */
-#define BN_VEC_NON_UNIT_LEN(_vec)	\
-	(fabs(MAGSQ(_vec)) < 0.0001 || fabs(fabs(MAGSQ(_vec))-1) > 0.0001)
-
 /**
  * @brief Included below are macros to update min and max X, Y, Z
  * values to contain a point
@@ -2138,7 +2202,10 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  */
 #define MAT_INIT_ZERO {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
-__END_DECLS
+
+#ifdef __cplusplus
+} /* end extern "C" */
+#endif
 
 #endif /* VMATH_H */
 

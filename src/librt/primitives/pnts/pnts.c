@@ -706,41 +706,57 @@ rt_pnts_print(register const struct soltab *stp)
 	    register struct pnt *point;
 	    for (BU_LIST_FOR(point, pnt, &(((struct pnt *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_COL: {
 	    register struct pnt_color *point;
 	    for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_SCA: {
 	    register struct pnt_scale *point;
 	    for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_NRM: {
 	    register struct pnt_normal *point;
 	    for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_COL_SCA: {
 	    register struct pnt_color_scale *point;
 	    for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_COL_NRM: {
 	    register struct pnt_color_normal *point;
 	    for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_SCA_NRM: {
 	    register struct pnt_scale_normal *point;
 	    for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_COL_SCA_NRM: {
 	    register struct pnt_color_scale_normal *point;
 	    for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	default:
 	    bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);

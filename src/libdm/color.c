@@ -31,6 +31,7 @@
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
 #endif
+#include "vmath.h"
 
 #include "bu/malloc.h"
 #include "dm/dm_xvars.h"

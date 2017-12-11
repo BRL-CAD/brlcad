@@ -1925,27 +1925,32 @@ general_Handler(int sig)
 	    restore_Tty();
 	    bu_exit(sig, NULL);
 	    /*NOTREACHED*/
+	    break;
 	case SIGINT :
 	    prnt_Event("Interrupt.");
 	    restore_Tty();
 	    bu_exit(sig, NULL);
 	    /*NOTREACHED*/
+	    break;
 	case SIGQUIT :
 	    prnt_Event("Quit (core dumped).");
 	    restore_Tty();
 	    bu_bomb("SIGQUIT");
 	    /*NOTREACHED*/
+	    break;
 	case SIGILL :
 	    prnt_Event("Illegal instruction (core dumped).");
 	    restore_Tty();
 	    bu_bomb("SIGILL");
 	    /*NOTREACHED*/
+	    break;
 #if defined(SIGIOT)
 	case SIGIOT :
 	    prnt_Event("IOT trap (core dumped).");
 	    restore_Tty();
 	    bu_bomb("SIGIOT");
 	    /*NOTREACHED*/
+	    break;
 #endif
 #if defined(SIGBUS)
 	case SIGBUS :
@@ -1953,6 +1958,7 @@ general_Handler(int sig)
 	    restore_Tty();
 	    bu_bomb("SIGBUS");
 	    /*NOTREACHED*/
+	    break;
 #endif
 #if defined(SIGSEGV)
 #  if !defined(SIGBUS) || (SIGSEGV != SIGBUS)
@@ -1961,6 +1967,7 @@ general_Handler(int sig)
 	    restore_Tty();
 	    bu_bomb("SIGSEGV");
 	    /*NOTREACHED*/
+	    break;
 #  endif
 #endif
 	case SIGALRM :

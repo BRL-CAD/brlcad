@@ -133,7 +133,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	switch (c) {
 	    case 'm':
 		marching_cube = triangulate = 1;
-		/* no break, marching cubes assumes nmg for now */
+		/* fall through - marching cubes assumes nmg for now */
 	    case 'n':
 		make_bot = 0;
 		break;

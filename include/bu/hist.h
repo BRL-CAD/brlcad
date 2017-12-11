@@ -24,6 +24,7 @@
 #include "common.h"
 
 #include <stddef.h> /* for size_t */
+#include "vmath.h"
 
 #include "bu/defines.h"
 #include "bu/magic.h"

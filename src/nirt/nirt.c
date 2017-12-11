@@ -398,7 +398,7 @@ main(int argc, char *argv[])
 
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
-    	if (bu_optopt == '?') Ch='h';
+	if (bu_optopt == '?') Ch='h';
 	switch (Ch) {
 	    case 'A':
 		attrib_add(bu_optarg, &need_prep);
@@ -435,6 +435,7 @@ main(int argc, char *argv[])
 	    case 'L':
 		listformats(NULL);
 		bu_exit(EXIT_SUCCESS, NULL);
+		break;
 	    case 'M':
 		mat_flag = 1;
 		break;

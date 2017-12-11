@@ -91,7 +91,7 @@ bw-rle tank.bw tank.rle
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>
-<para>Michael John Muuss</para>
+<para><emphasis remap='B'>BRL-CAD Team</emphasis></para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>

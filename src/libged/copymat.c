@@ -107,10 +107,10 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 			      "%s: Non-combination directory <%p> '%s' for combination rt_db_internal <%p>\nThis should not happen\n",
 			      argv[0], (void *)dp, dp->d_namep, (void *)&intern);
 	    }
-	    /* Fall through this case */
+	    /* fall through */
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "%s: Object '%s' is not a combination\n", argv[0], parent);
-	    /* Fall through this case */
+	    /* fall through */
 	case ID_NULL:
 	    bu_vls_free(&pvls);
 	    return GED_ERROR;

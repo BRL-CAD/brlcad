@@ -180,16 +180,19 @@ escape_main(int ac, char *av[])
 		bufp = bu_str_unescape(bu_str_escape("abc", "b", buffer, 32), NULL, 0);
 		pass = esc_compare("abc", bufp, "abc");
 		bu_free(bufp, NULL);
+		/* fall through */
 
 	    case 2:
 		bufp = bu_str_unescape(bu_str_escape("abc\\cba", "b", buffer, 32), NULL, 0);
 		pass = esc_compare("abc\\cba", bufp, "abccba");
 		bu_free(bufp, NULL);
+		/* fall through */
 
 	    case 3:
 		bufp = bu_str_unescape(bu_str_escape("abc\\\\cba", "b", buffer, 32), NULL, 0);
 		pass = esc_compare("abc\\\\cba", bufp, "abc\\cba");
 		bu_free(bufp, NULL);
+		/* fall through */
 
 	    case 4:
 		bufp = bu_str_unescape(bu_str_escape("abc\\\\\\c\\ba\\", "b", buffer, 32), NULL, 0);

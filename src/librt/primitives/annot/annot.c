@@ -61,7 +61,9 @@ rt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 	    break;
 	case 3:
 	    *pos_flag = RT_ANNOT_POS_BL;
+	    goto case2;
 	}
+case2:
     case 2:
 	switch(p_hor) {
 	case 1:
@@ -72,7 +74,9 @@ rt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 	    break;
 	case 3:
 	    *pos_flag = RT_ANNOT_POS_ML;
+	    goto case3;
 	}
+case3:
     case 3:
 	switch(p_hor) {
 	case 1:
@@ -736,7 +740,7 @@ ant_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
     RT_VLIST_SET_DISP_MAT(vhead, annot_ip->V);
 
     for (seg_no=0; seg_no < ant->count; seg_no++) {
-	ret += seg_to_vlist(vhead, ttol, V, annot_ip, ant->segments[seg_no]);	
+	ret += seg_to_vlist(vhead, ttol, V, annot_ip, ant->segments[seg_no]);
     }
     RT_VLIST_SET_MODEL_MAT(vhead);
 
@@ -1116,7 +1120,7 @@ rt_annot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
 		*(uint32_t *)ptr = htonl(tseg->label.vls_max);
 		ptr += SIZEOF_NETWORK_LONG;
 		bu_strlcpy((char *)ptr, tseg->label.vls_str, tseg->label.vls_len);
-    		ptr += tseg->label.vls_len;
+		ptr += tseg->label.vls_len;
 		break;
 	    case CURVE_CARC_MAGIC:
 		cseg = (struct carc_seg *)lng;
@@ -1541,7 +1545,7 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 
 		bu_strlcpy((char *)cp, bu_vls_addr(&tseg->label), bu_vls_strlen(&tseg->label) + 1);
 
-    		cp += bu_vls_strlen(&tseg->label) + 1;
+		cp += bu_vls_strlen(&tseg->label) + 1;
 		break;
 	    case CURVE_CARC_MAGIC:
 		cseg = (struct carc_seg *)lng;
@@ -2173,7 +2177,7 @@ rt_annot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const c
 int
 get_tcl_ant(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 {
-   	int count;
+	int count;
     int j;
     const char **seg_list = NULL;
 
@@ -2433,7 +2437,6 @@ rt_annot_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 
     return 0;			/* OK */
 }
-
 
 
 /*

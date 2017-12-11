@@ -478,6 +478,7 @@ db_tree_del_lhs(union tree *tp, struct resource *resp)
 
 	default:
 	    bu_bomb("db_tree_del_lhs() called with leaf node as parameter\n");
+	    break;
 
 	case OP_UNION:
 	case OP_INTERSECT:
@@ -524,6 +525,7 @@ db_tree_del_rhs(union tree *tp, struct resource *resp)
 
 	default:
 	    bu_bomb("db_tree_del_rhs() called with leaf node as parameter\n");
+	    break;
 
 	case OP_UNION:
 	case OP_INTERSECT:
@@ -643,7 +645,7 @@ db_tree_funcleaf(
     struct rt_comb_internal *comb,
     union tree *comb_tree,
     void (*leaf_func)(struct db_i *, struct rt_comb_internal *, union tree *,
-                      void *, void *, void *, void *),
+		      void *, void *, void *, void *),
     void *user_ptr1,
     void *user_ptr2,
     void *user_ptr3,
@@ -1931,6 +1933,7 @@ _db_walk_subtree(
 	case OP_DB_LEAF:
 	    rt_pr_tree(tp, 1);
 	    bu_bomb("_db_walk_subtree() unexpected DB_LEAF\n");
+	    break;
 
 	default:
 	    bu_log("_db_walk_subtree: bad op %d\n", tp->tr_op);

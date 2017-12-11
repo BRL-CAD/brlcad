@@ -39,7 +39,9 @@
  */
 
 #include "common.h"
-#include "bu/defines.h"
+
+#include "vmath.h"
+
 
 /* The array in this structure should be 1-indexed */
 struct fortran_array {

@@ -318,13 +318,7 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
     int hit_num;
     int surface = 0;
 
-    invdir[0] = invdir[1] = invdir[2] = INFINITY;
-    if (!ZERO(rp->r_dir[0]))
-	invdir[0] = 1.0 / rp->r_dir[0];
-    if (!ZERO(rp->r_dir[1]))
-	invdir[1] = 1.0 / rp->r_dir[1];
-    if (!ZERO(rp->r_dir[2]))
-	invdir[2] = 1.0 / rp->r_dir[2];
+    VINVDIR(invdir, rp->r_dir);
 
     /* Create two orthogonal Planes their intersection contains the
      * ray so we can project the surface into a 2 dimensional problem

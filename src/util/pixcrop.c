@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h> /* for INT_MAX */
+#include "vmath.h"
 
 #include "bu/file.h"
 #include "bu/malloc.h"

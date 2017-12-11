@@ -882,6 +882,7 @@ opt_main(int argc, char **argv)
     switch (desc_num) {
 	case 0:
 	    ret = bu_opt_parse(NULL, 0, NULL, NULL);
+	    /* fall through */
 	case 1:
 	    ret = desc_1(cgy, test_num);
 	    break;

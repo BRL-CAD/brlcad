@@ -1009,6 +1009,8 @@ mged_process_char(char ch)
 		bracketed = 1;
 		break;
 	    }
+
+	    /* fall through */
 	case '~':
 	    if (tilded) {
 		/* we were in an escape sequence (Mac delete key),
@@ -1018,6 +1020,7 @@ mged_process_char(char ch)
 		break;
 	    }
 	    /* Fall through if not escaped! */
+	    /* fall through */
 	default:
 	    if (!isprint((int)ch))
 		break;
@@ -1123,7 +1126,7 @@ main(int argc, char *argv[])
 		break;
 	    default:
 		bu_log("Unrecognized option (%c)\n", bu_optopt);
-		/* Fall through to help */
+		/* fall through */
 	    case 'h':
 		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}

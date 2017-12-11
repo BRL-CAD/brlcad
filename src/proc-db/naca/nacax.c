@@ -60,7 +60,6 @@ static fastf_t Polynomial(struct fortran_array *c, fastf_t x);
 void SetSixDigitPoints(int family, fastf_t tc, struct fortran_array *xt, struct fortran_array *yt);
 
 
-
 /**
  * If x(1:n) and y(1:n) define an airfoil surface from leading edge to
  * trailing edge and if the final point has x < 1.0, add an additional
@@ -841,7 +840,8 @@ SetSixDigitPoints(int family, fastf_t tc, struct fortran_array *xt, struct fortr
     const fastf_t A = 1.0;
     const int NP = 201;
     fastf_t phi[201], eps[201], psi[201];
-    const fastf_t *orig_eps, *orig_psi;
+    const fastf_t *orig_eps = NULL;
+    const fastf_t *orig_psi = NULL;
     bn_complex_t tmp;
     bn_complex_t z[201], zprime[201], zeta[201], zfinal[201];
     int i;
@@ -855,24 +855,31 @@ SetSixDigitPoints(int family, fastf_t tc, struct fortran_array *xt, struct fortr
     case 1:
 	orig_eps = EPS1;
 	orig_psi = PSI1;
+	break;
     case 2:
 	orig_eps = EPS2;
 	orig_psi = PSI2;
+	break;
     case 3:
 	orig_eps = EPS3;
 	orig_psi = PSI3;
+	break;
     case 4:
 	orig_eps = EPS4;
 	orig_psi = PSI4;
+	break;
     case 5:
 	orig_eps = EPS5;
 	orig_psi = PSI5;
+	break;
     case 6:
 	orig_eps = EPS6;
 	orig_psi = PSI6;
+	break;
     case 7:
 	orig_eps = EPS7;
 	orig_psi = PSI7;
+	break;
     case 8:
 	orig_eps = EPS8;
 	orig_psi = PSI8;

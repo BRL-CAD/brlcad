@@ -34,6 +34,12 @@
 #include "./mat_db.h"
 #include "./screen.h"
 
+
+#if defined(__GNUC__) && __GNUC__ >= 7 && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#  pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
+
+
 static Mat_Db_Entry mat_db_table[MAX_MAT_DB];
 static int mat_db_size = 0;
 Mat_Db_Entry mat_dfl_entry =

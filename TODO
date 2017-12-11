@@ -26,23 +26,35 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
 
+  user:hidden utility:later category:corrective impacts:some days:1
+
 * check that dbconcat supports objects created with the bo cmd
+
+  user:hidden utility:later category:corrective impacts:some days:1
 
 * libgcv should add objects to an existing .g if one is specified
   as the output target - right now it's overwriting the old file
+
+  user:visible utility:now category:enhancement impacts:some days:1
 
 * consolidate dbconcat, clone, make_name, and any other .g I/O
   routines that need to autogenerate names to use the new
   bu_vls_incr/bu_vls_simplify functions.
 
-* Explicitly list the CMakeLists.txt files rather than adding
+  user:hidden utility:later category:enhancement impacts:many days:2
+
+* explicitly list the CMakeLists.txt files rather than adding
   them automatically in the add_subdirectory override, now that
   we are listing all files explicitly - preserve the new simplicity
 
-* renamed zlib and libpng when building bundled to avoid conflicting
+  user:hidden utility:now category:enhancement impacts:some days:1
+
+* rename zlib and libpng when building bundled to avoid conflicting
   with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
   with name z_brlcad (perhaps as a post-compile rename custom command)
   and png_brlcad respectively.
+
+  user:hidden utility:now category:enhancement impacts:some days:1
 
 * investigate possibility of using simple, compact libs
   like miniz and lodepng to replace the complexity of
@@ -50,69 +62,87 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   a source of ongoing annoyance, particularly (but not
   exclusively) on OSX.
 
+  user:hidden utility:later category:enhancement impacts:many days:2
+
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
   if the file isn't a valid .g?
 
-* add regression test for BoT ray tracing
+  user:hidden utility:now category:corrective impacts:some days:1
+
+* add regression test for BoT ray tracing.  test whether TIE and RT
+  can raytrace all of the various BoT modes.
+
+  user:hidden utility:later category:corrective impacts:some days:1
 
 * add regression test for directional light sources
+
+  user:hidden utility:later category:corrective impacts:some days:1
 
 * bundle primary rays in rt front end into postage stamps, shoot via
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
 
-* create a catalog of all possible entity types.  including distinct
-  parameterizations with sufficient variety that conveys the object's
-  parameterization options (e.g. ell as sphere, flat disc, long spike,
-  etc.).  this is necessarily defined per object type and possibly
-  programmable.  see src/proc-db/csgbrep.cpp for a basic start.
+  user:visible utility:now category:enhancement impacts:some days:3
 
-  create a BRL-CAD .g with all possible object types embedded.
+* create a BRL-CAD .g with all possible object types embedded.
   integrate into testing.
 
-* create a catalog of all possible/distinct/useful shader settings.
-  see regress/shaders.sh for a basic start.
+  user:hidden utility:later category:corrective impacts:some days:1
 
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
 
-* try to come up with a way we can report the number of times
-  the configuration step has been run and changed something
-  without triggering almost a full rebuild.  Maybe have the
-  bits that need to report it pull from a file in bu_brlcad_data?
+  user:visible utility:now category:corrective impacts:some days:1
 
-* make sure TIE can raytrace all of the various BoT modes
+* metaball in command input needs sanity checks and better validation.
 
-* metaball in command input needs sanity checks and better
-  validation.
+  user:hidden utility:now category:enhancement impacts:some days:1
 
 * integrate gen-registered-attributes-html output into website
+
+  user:visible utility:now category:enhancement impacts:some days:1
 
 * brlcad-config build helper script is not working (not reporting
   -llibs, reporting semicolon list for 'brlcad' lib).  Example working output:
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config brlcad
-  -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lbrlcad -lged -lwdb -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS -lanalyze  
+  -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lbrlcad -lged -lwdb -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS -lanalyze
 
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
   -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
 
+  user:visible utility:now category:corrective impacts:some days:1
+
 * OpenCL for enhanced performance boolweave sorting
+
+  user:visible utility:later category:enhancement impacts:many days:3
 
 * create boolweave+boolfinal unit tests to validate weaving behavior
   and performance.
 
+  user:hidden utility:later category:corrective impacts:many days:1
+
 * make sure we can run db_dirbuild() multiple times without creating
   duplicate entries.
 
+  user:hidden utility:now category:enhancement impacts:many days:2
+
 * heap unit test needs to actually compare performance against system
   allocation, not just do some work
+  
+  user:hidden utility:later category:corrective impacts:some days:1
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* add ability to capture any command's output to a file, ideally with
+  options for specifying stdout and/or stderr.  of priority are the
+  attr and rtcheck/gqa commands.  this should probably be handled by a
+  libged command wrapper so it's consistent and available to any
+  command.
 
 * mater command does not validate its arguments - fix that.  Also
   properly document using "." to skip specifying something - not in
@@ -932,7 +962,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * integrate library tester into regression suite that validates
   exported library symbols published in headers.  make sure they at
   least exist and maybe even try to ensure they will run with null
-  arguments without crashing.
+  arguments without crashing.  make sure headers compile as c++ (with
+  proper extern "C" wrapping).
 
 * make _plot() callbacks fill in plot objects instead of returning
   line segments.
@@ -1510,8 +1541,6 @@ ATTRIBUTES
 
 * See src/libbu/TODO.binary_attributes for more info about
   bson based binary attribute work.
-
-* attr command option to output to a file
 
 * attr command change to only output non-standard attributes
 
@@ -2275,16 +2304,23 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 DOCUMENTATION
 -------------
 
-* break up library headers into subheaders so includes can be more
-  specific (and help speed up compilation) and locally documented, but
-  prevent subheaders from being directly included outside of our
-  compilation (we don't want subdir filenames to become public API)
+* BRL-CAD Primitives
+	An overview of the various primitive object types in BRL-CAD,
+	their range of features, and a description of their input
+	parameters.
 
-* move our public library headers into subdirs, e.g. include/bu/bu.h,
-  so it's clear when you're using headers from another library and
-  breaking encapsulation.
+        Create a catalog of all possible entity types.  Include
+        distinct parameterizations with sufficient variety that
+        conveys the object's parameterization options (e.g. ell as
+        sphere, flat disc, long spike, etc.).  this is necessarily
+        defined per object type and possibly programmable.  See
+        src/proc-db/csgbrep.cpp for a basic start.
 
-* make our C headers C++-convenient with proper extern "C" wrapping.
+* BRL-CAD Ray Tracing Shaders
+	An overview of the various shaders and shader options
+	available in BRL-CAD.  Create a catalog of all
+	possible/distinct/useful shader settings.  See
+	regress/shaders.sh for a basic start.
 
 * add missing manual pages (tbrowder2 generated list 2013-08):
 
@@ -2457,15 +2493,6 @@ DOCUMENTATION
 	boolean operations, feature edit operations, and parametric
 	modeling.
 
-* BRL-CAD Primitives
-	An overview of the various primitive object types in BRL-CAD,
-	their range of features, and a description of their input
-	parameters.
-
-* BRL-CAD Ray Tracing Shaders
-	An overview of the various shaders and shader options
-	available in BRL-CAD.
-
 * BRL-CAD Open Source
 	An overview of how BRL-CAD is organized as an open source
 	project and community describing the developer meritocracy,
@@ -2505,5 +2532,12 @@ DOCUMENTATION
 ---
 See the feature request and bug trackers for more tasks and future
 planning efforts: https://sourceforge.net/tracker/?group_id=105292
+
+Items may encode metadata on a separate line including whether:
+  1) result is user 'V'isible or 'H'idden
+  2) utility is 'N'ow (by next minor release) or 'L'ater,
+  3) category is 'C'orrective or 'E'nhancement (perfective, adaptive),
+  4) interfaces impacted is 'S'ome (1-3 api/ui) or 'M'any (>3 api/ui),
+  5) and a time estimate (i.e., number of days effort).
 
 TODO items should be formatted to column 70 (M-q in emacs), no tabs.

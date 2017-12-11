@@ -108,14 +108,7 @@ IGES/PDES Organization, September 1991</para>
 </refsect1>
 
 <refsect1 xml:id='authors'><title>AUTHORS</title>
-<para>John Anderson;
-<!-- .br -->
-Susanne Muuss;
-<!-- .br -->
-Phil Dykstra;
-<!-- .br -->
-Earl Weaver</para>
-
+<para><emphasis remap='B'>BRL-CAD Team</emphasis></para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>

@@ -195,11 +195,7 @@ benchmark analysis, leaving only the summary file and any
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>
-<para>Christopher Sean Morrison ,
-<!-- .br -->
-Michael John Muuss ,
-<!-- .br -->
-Susan Muuss</para>
+<para><emphasis remap='B'>BRL-CAD Team</emphasis></para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>

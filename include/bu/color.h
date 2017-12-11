@@ -23,6 +23,8 @@
 
 #include "common.h"
 
+#include "vmath.h"
+
 #include "bu/defines.h"
 #include "bu/magic.h"
 

@@ -32,17 +32,13 @@
 #include <string.h>
 #include <float.h>
 #include <limits.h>
+#include "vmath.h"
 
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/units.h"
 #include "bu/vls.h"
-
-
-/* done specifically to avoid a libbn dependency */
-#define NEAR_ZERO(val, epsilon) (((val) > -epsilon) && ((val) < epsilon))
-#define ZERO(val) NEAR_ZERO((val), SMALL_FASTF)
 
 
 struct cvt_tab {

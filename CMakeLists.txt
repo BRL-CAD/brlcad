@@ -2188,8 +2188,8 @@ if(NOT MSVC)
   if(BRLCAD_ENABLE_STRICT)
     # If we're going strict, suppress C11 warnings about isnan due to
     # clang issue:  https://llvm.org/bugs/show_bug.cgi?id=17788
-#    CHECK_C_FLAG(Wno-c11-extensions)
-#    CHECK_CXX_FLAG(Wno-c11-extensions)
+    CHECK_C_FLAG(Wno-c11-extensions)
+    CHECK_CXX_FLAG(Wno-c11-extensions)
 
     # Add the flag that actually turns warnings into errors
     CHECK_C_FLAG(Werror)
@@ -2909,20 +2909,6 @@ if(BRLCAD_PRINT_MSGS)
   message("*        Stage 9 of 9 - Define BRL-CAD Build Targets      *")
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
-
-# Make sure the flags that were cleared earlier are at least set
-# to empty - CMake considers them "required internal variables".
-set(CMAKE_REQUIRED_FLAG_VARS
-  CMAKE_C_FLAGS
-  CMAKE_CXX_FLAGS
-  CMAKE_SHARED_LINKER_FLAGS
-  CMAKE_EXE_LINKER_FLAGS
-  )
-foreach(req_var ${CMAKE_REQUIRED_FLAG_VARS})
-  if(NOT DEFINED ${req_var})
-    set(${req_var} "")
-  endif(NOT DEFINED ${req_var})
-endforeach(req_var ${CMAKE_REQUIRED_FLAG_VARS})
 
 # Enable CTest Testing support - this is done after src/other is
 # added to avoid incorporating src/other CTests into BRL-CAD's own

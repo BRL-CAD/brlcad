@@ -211,11 +211,11 @@ main (int argc, char **argv)
     switch (argc - bu_optind) {
 	case 0:
 	    infp = stdin;
-	    /* Break intentionally omitted */
+	    /* fall through */
 	case 1:
 	    outf_name = "stdout";
 	    outfp = stdout;
-	    /* Break intentionally omitted */
+	    /* fall through */
 	case 2:
 	    break;
 	default:

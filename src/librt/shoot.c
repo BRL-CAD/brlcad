@@ -649,9 +649,10 @@ escaped_from_model:
  */
 fastf_t
 rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
-    fastf_t min_backing_dist=BACKING_DIST;
-    fastf_t cur_dist=0.0;
-    point_t cur_pt;
+    fastf_t min_backing_dist = BACKING_DIST;
+    fastf_t prev_dist = -1.0;
+    fastf_t curr_dist = 0.0;
+    point_t curr_pt;
     union cutter *cutp;
     struct bu_bitv *solidbits;
     struct xray ray;
@@ -669,19 +670,19 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
 
     ray = ss->ap->a_ray;	/* struct copy, don't mess with the original */
 
-    /* cur_dist keeps track of where we are along the ray.  stop when
-     * cur_dist reaches far intersection of ray and model bounding box
+    VMOVE(curr_pt, ss->ap->a_ray.r_pt);
+
+    /* curr_dist keeps track of where we are along the ray.  stop when
+     * curr_dist reaches far intersection of ray and model bounding box
      */
-    while (cur_dist <= ss->ap->a_ray.r_max) {
-	/* calculate the current point along the ray */
-	VJOIN1(cur_pt, ss->ap->a_ray.r_pt, cur_dist, ss->ap->a_ray.r_dir);
+    while (curr_dist <= ss->ap->a_ray.r_max && !EQUAL(curr_dist, prev_dist)) {
 
 	/* descend into the space partitioning tree based on this
 	 * point.
 	 */
 	cutp = &ss->ap->a_rt_i->rti_CutHead;
 	while (cutp->cut_type == CUT_CUTNODE) {
-	    if (cur_pt[cutp->cn.cn_axis] >= cutp->cn.cn_point) {
+	    if (curr_pt[cutp->cn.cn_axis] >= cutp->cn.cn_point) {
 		cutp=cutp->cn.cn_r;
 	    } else {
 		cutp=cutp->cn.cn_l;
@@ -699,8 +700,9 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
 	     */
 	    goto done;
 	} else {
-	    /* increment cur_dist into next cell for next execution of this loop */
-	    cur_dist = ray.r_max + ss->ap->a_rt_i->rti_tol.dist;
+	    /* increment curr_dist into next cell for next execution of this loop */
+	    prev_dist = curr_dist;
+	    curr_dist = ray.r_max + ss->ap->a_rt_i->rti_tol.dist;
 	}
 
 	/* process this box node (look at all the pieces) */
@@ -726,7 +728,12 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
 		BU_BITSET(solidbits, plp->stp->st_bit);
 	    }
 	}
+
+	/* calculate the next point along the ray */
+	VJOIN1(curr_pt, ss->ap->a_ray.r_pt, curr_dist, ss->ap->a_ray.r_dir);
+
     }
+
 done:
     /* put our bit vector on the resource list */
     BU_CK_BITV(solidbits);
@@ -1467,33 +1474,23 @@ weave:
 	goto out;
     }
 
-    /*
-     * Ray/model intersections exist.  Pass the list to the user's
-     * a_hit() routine.  Note that only the hit_dist elements of
-     * pt_inhit and pt_outhit have been computed yet.  To compute both
-     * hit_point and hit_normal, use the
-     *
-     * RT_HIT_NORMAL(NULL, hitp, stp, rayp, 0);
-     *
-     * macro.  To compute just hit_point, use
-     *
-     * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
-     */
 hitit:
+    /* Ray/model intersections exist */
+
     if (debug_shoot) rt_pr_partitions(rtip, &FinalPart, "a_hit()");
 
-    /*
-     * Before recursing, release storage for unused Initial
+    /* Before recursing, release storage for unused Initial
      * partitions.  finished_segs can not be released yet, because
      * FinalPart partitions will point to hits in those segments.
      */
     RT_FREE_PT_LIST(&InitialPart, resp);
 
-    /*
-     * finished_segs is only used by special hit routines which don't
+    /* finished_segs is only used by special hit routines which don't
      * follow the traditional solid modeling paradigm.
      */
     if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
+
+    /* Invoke caller's a_hit callback with the list of partitions */
     if (ap->a_hit) {
 	ap->a_return = ap->a_hit(ap, &FinalPart, &finished_segs);
 	status = "HIT";

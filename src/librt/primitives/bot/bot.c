@@ -2484,7 +2484,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 		if ((size_t)len != bot->num_faces || len <= 0) {
-		    bu_vls_printf(logstr, "Only %d face normals? Must provide normals for all faces!!!", len);
+		    bu_vls_printf(logstr, "Only %d face normals? Must provide normals for all faces.", len);
 		    if (obj_array) bu_free((char *)obj_array, "obj_array");
 		    return BRLCAD_ERROR;
 		}
@@ -2595,7 +2595,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
-		    bu_vls_printf(logstr, "Must provide at least one normal!!!");
+		    bu_vls_printf(logstr, "Must provide at least one normal.");
 		    return BRLCAD_ERROR;
 		}
 		bot->num_normals = len;
@@ -2664,7 +2664,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
-		    bu_vls_printf(logstr, "Must provide at least one vertex!!!");
+		    bu_vls_printf(logstr, "Must provide at least one vertex.");
 		    return BRLCAD_ERROR;
 		}
 		bot->num_vertices = len;
@@ -2728,7 +2728,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
-		    bu_vls_printf(logstr, "Must provide at least one face!!!");
+		    bu_vls_printf(logstr, "Must provide at least one face.");
 		    return BRLCAD_ERROR;
 		}
 		bot->num_faces = len;
@@ -2851,7 +2851,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
-		    bu_vls_printf(logstr, "Must provide at least one thickness!!!");
+		    bu_vls_printf(logstr, "Must provide at least one thickness.");
 		    return BRLCAD_ERROR;
 		}
 		if ((size_t)len > bot->num_faces) {
@@ -3471,6 +3471,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 		    if (!ZERO(bot->thickness[i] - bot->thickness[j]) ||
 			(BU_BITTEST(bot->face_mode, i)?1:0) != (BU_BITTEST(bot->face_mode, j)?1:0))
 			break;
+		    /* fall through */
 		case RT_BOT_SOLID:
 		case RT_BOT_SURFACE:
 		    if (bot->orientation == RT_BOT_UNORIENTED) {
@@ -4087,35 +4088,11 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 
 	    /* back out to bounding box limits */
 
-	    /* Compute the inverse of the direction cosines */
-	    if (ap.a_ray.r_dir[X] < -SQRT_SMALL_FASTF) {
-		inv_dir[X] = 1.0/ap.a_ray.r_dir[X];
-	    } else if (ap.a_ray.r_dir[X] > SQRT_SMALL_FASTF) {
-		inv_dir[X] = 1.0/ap.a_ray.r_dir[X];
-	    } else {
-		ap.a_ray.r_dir[X] = 0.0;
-		inv_dir[X] = INFINITY;
-	    }
-	    if (ap.a_ray.r_dir[Y] < -SQRT_SMALL_FASTF) {
-		inv_dir[Y] = 1.0/ap.a_ray.r_dir[Y];
-	    } else if (ap.a_ray.r_dir[Y] > SQRT_SMALL_FASTF) {
-		inv_dir[Y] = 1.0/ap.a_ray.r_dir[Y];
-	    } else {
-		ap.a_ray.r_dir[Y] = 0.0;
-		inv_dir[Y] = INFINITY;
-	    }
-	    if (ap.a_ray.r_dir[Z] < -SQRT_SMALL_FASTF) {
-		inv_dir[Z]=1.0/ap.a_ray.r_dir[Z];
-	    } else if (ap.a_ray.r_dir[Z] > SQRT_SMALL_FASTF) {
-		inv_dir[Z]=1.0/ap.a_ray.r_dir[Z];
-	    } else {
-		ap.a_ray.r_dir[Z] = 0.0;
-		inv_dir[Z] = INFINITY;
-	    }
+	    /* Compute inverse of the direction cosines */
+	    VINVDIR(inv_dir, ap.a_ray.r_dir);
 
 	    if (!rt_in_rpp(&ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max)) {
-		/* ray missed!!! */
-		bu_log("ERROR: Ray missed target!!!!\n");
+		bu_log("ERROR: Ray missed target!!!\n");
 	    }
 	    VJOIN1(ap.a_ray.r_pt, ap.a_ray.r_pt, ap.a_ray.r_min, ap.a_ray.r_dir);
 	    ap.a_user = i;

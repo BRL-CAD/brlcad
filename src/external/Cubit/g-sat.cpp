@@ -185,6 +185,7 @@ parse_args(int ac, char **av)
 	    case 't':               /* calculational tolerance */
 		tol.dist = atof(bu_optarg);
 		tol.dist_sq = tol.dist * tol.dist;
+		/* fall through */
 	    case 'o':               /* Output file name */
 		/* grab output file name */
 		output_file = bu_optarg;

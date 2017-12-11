@@ -2478,6 +2478,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		    break;
 		}
 	    }
+	    /* fall through */
 	default:
 	    Tcl_AppendResult(INTERP, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
 	    VSETALL(mpt, 0.0);
@@ -5594,6 +5595,8 @@ sedit(void)
 		}
 	    }
 
+	    /* fall through */
+
 	case ECMD_NMG_ESPLIT:
 	    {
 		struct vertex *v=(struct vertex *)NULL;
@@ -8671,6 +8674,7 @@ f_keypoint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 				   &es_int, es_mat);
 		break;
 	    }
+	    /* fall through */
 	default:
 	    Tcl_AppendResult(interp, "Usage: 'keypoint [<x y z> | reset]'\n", (char *)NULL);
 	    return TCL_ERROR;

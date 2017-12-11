@@ -232,6 +232,7 @@ TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id,
      * Precompute direction inverse since it's used in a bunch of
      * divides, this allows those divides to become fast multiplies.
      */
+    /* FIXME: consolidate with VINVDIR, but also computes sign bit */
     for (i = 0; i < 3; i++) {
 	if (ZERO(ray->dir[i]))
 	    ray->dir[i] = TIE_PREC;

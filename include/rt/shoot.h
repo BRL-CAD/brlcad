@@ -67,10 +67,19 @@ __BEGIN_DECLS
  * a_hit =======> Routine to call when something is hit
  * a_miss ======> Routine to call when ray misses everything
  *
- * Calls user's a_miss() or a_hit() routine as appropriate.  Passes
- * a_hit() routine list of partitions, with only hit_dist fields
- * valid.  Normal computation deferred to user code, to avoid needless
- * computation here.
+ * Calls user's a_miss() or a_hit() routine as appropriate passing
+ * a_hit() a list of partitions intersected.  Note that only the
+ * hit_dist elements of pt_inhit and pt_outhit are computed.  To
+ * compute both hit_point and hit_normal, use:
+ *
+ * RT_HIT_NORMAL(NULL, hitp, stp, rayp, 0);
+ *
+ * To compute just the hit_point, use:
+ *
+ * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
+ *
+ * These calculations are deferred to user code to avoid needless
+ * computation in other ray situations.
  *
  * Formal Return: whatever the application function returns (an int).
  *
