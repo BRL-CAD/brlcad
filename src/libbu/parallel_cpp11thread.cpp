@@ -43,7 +43,7 @@ parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg)
 
     /* Create and run threads. */
     for (size_t i = 0; i < ncpu; ++i)
-	threads.emplace_back(func, ncpu, arg);
+	threads.emplace_back(func, i, arg);
 
     /* Wait for the parallel task to complete. */
     for (size_t i = 0; i < threads.size(); ++i)
