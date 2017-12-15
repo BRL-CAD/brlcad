@@ -107,8 +107,11 @@
 
 #include "./parallel.h"
 
+/* #define CPP11THREAD */
 
+#if defined(CPP11THREAD)
 void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
+#endif /* CPP11THREAD */
 
 
 typedef enum {
@@ -465,7 +468,8 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
     /* do the work anyways */
     (*func)(0, arg);
 
-#elif defined(HAVE_THREAD_LOCAL)
+#elif defined(HAVE_THREAD_LOCAL) && defined(CPP11THREAD)
+
 
     if (!func)
 	return; /* nothing to do */
