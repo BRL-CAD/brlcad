@@ -326,7 +326,7 @@ bu_avail_cpus(void)
 
 #ifdef PARALLEL
 
-#ifndef HAVE_THREAD_LOCAL
+#if !defined(HAVE_THREAD_LOCAL)  || !defined(CPP11THREAD)
 /* this function provides book-keeping so that we give out unique
  * thread identifiers and for tracking a thread's parent context.
  *
@@ -452,7 +452,7 @@ parallel_interface_arg_stub(struct thread_data *user_thread_data)
 }
 #endif
 
-#endif /* !HAVE_THREAD_LOCAL */
+#endif /* !HAVE_THREAD_LOCAL || !CPP11THREAD */
 #endif /* PARALLEL */
 
 
