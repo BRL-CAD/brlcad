@@ -78,25 +78,23 @@ end;
 
 ")
 file(WRITE vmat.in "${vmat}")
-execute_process(COMMAND ${RT} -M -B -p30 -o lights.pix lights.g 'all.g' INPUT_FILE vmat.in OUTPUT_FILE lights.log ERROR_FILE lights.log)
+execute_process(COMMAND ${RT} -M -B -p30 -o lights.pix lights.g all.g INPUT_FILE vmat.in ERROR_FILE lights.log)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove -f vmat.in)
 
+execute_process(COMMAND ${A2P} INPUT_FILE lights_ref.asc OUTPUT_FILE lights_ref.pix)
+execute_process(COMMAND ${PIXDIFF} lights.pix lights_ref.pix OUTPUT_FILE lights_diff.pix ERROR_FILE lights_diff.log)
 
-#$A2P < "$1/regress/lights_ref.asc"  > lights_ref.pix
-execute_process(COMMAND ${A2P} ${CMAKE_CURRENT_SOURCE_DIR}/lights_ref.asc > lights_ref.pix)
-#$PIXDIFF lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
-execute_process(COMMAND ${PIXDIFF} lights.pix lights_ref.pix > lights_diff.pix ERROR_LOG lights.log)
+file(READ lights_diff.log llog)
+file(APPEND lights.log "${llog}")
+string(REGEX REPLACE ".*([0-9]+) off by many.*" "\\1" n_wrong "${llog}")
+message("lights.pix ${n_wrong} off by many")
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove -f lights_diff.log)
 
-file(READ lights.log llog)
-string(REGEX MATCHALL "many" matches "${llog}")
-list(LENGTH matches n_wrong)
-message("lights.pix $n_wrong off by many")
-
-if($n_wrong EQUAL 0)
+if(${n_wrong} EQUAL 0)
     message("-> lights.sh succeeded")
-else($n_wrong EQUAL 0)
+else(${n_wrong} EQUAL 0)
     message(FATAL_ERROR "-> lights.sh FAILED")
-endif($n_wrong EQUAL 0)
+endif(${n_wrong} EQUAL 0)
 
 # Local Variables:
 # mode: sh

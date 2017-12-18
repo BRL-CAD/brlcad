@@ -36,12 +36,17 @@
 
 include(CMakeParseArguments)
 
-set(CBD "@CMAKE_BINARY_DIR@")
-if(NOT EXISTS "${CBD}")
-  set(CBD "${CMAKE_CURRENT_BINARY_DIR}")
-endif(NOT EXISTS "${CBD}")
-
 function(ensearch efile efound)
+
+  # set policies for the CBD setting behavior -
+  # avoids warnings
+  cmake_policy(SET CMP0011 NEW)
+  cmake_policy(SET CMP0053 NEW)
+  set(CBD "@CMAKE_BINARY_DIR@")
+  if(NOT EXISTS "${CBD}")
+    set(CBD "${CMAKE_CURRENT_BINARY_DIR}")
+  endif(NOT EXISTS "${CBD}")
+
   cmake_parse_arguments(ENS "REQUIRED" "" "" ${ARGN})
   set(sdirs
     "${CBD}/bin"
