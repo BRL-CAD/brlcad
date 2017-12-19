@@ -59,7 +59,10 @@ extern void rect_view2image();		/* defined in rect.c */
 extern void rect_image2view();
 extern void rb_set_dirty_flag();
 
+#ifdef HAVE_X11_TYPES
 HIDDEN void motion_event_handler();
+#endif
+
 #ifdef IR_KNOBS
 HIDDEN void dials_event_handler();
 #endif
