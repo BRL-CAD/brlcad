@@ -138,6 +138,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Fedora doesn't have the old fonts mged assumes: dm-X: Can't open font '9x15' or '-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1'
+
 * Investigate using https://github.com/weiss/c99-snprintf to guarantee
   snprintf cross-platform.  There are potential drawbacks to the current
   MSVC approach pre Visual Studio 2015 (_snprintf doesn't null terminate
