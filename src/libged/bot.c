@@ -106,23 +106,24 @@ HIDDEN void draw_faces(struct ged *gedp, struct rt_bot_internal *bot, int num_fa
 HIDDEN void _bot_show_help(struct ged *gedp, struct bu_opt_desc *d)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    const char *option_help = bu_opt_describe(d, NULL);
-    bu_vls_sprintf(&str, "Usage: bot [options] [subcommand] [subcommand arguments]\n");
-    if (option_help) {
+    const char *option_help;
+    
+    bu_vls_sprintf(&str, "Usage: bot [options] [subcommand] [subcommand arguments]\n\n");
+
+    if ((option_help = bu_opt_describe(d, NULL))) {
 	bu_vls_printf(&str, "Options:\n%s\n", option_help);
 	bu_free((char *)option_help, "help str");
     }
-    bu_vls_printf(&str, "\nSubcommands:\n\n");
-    bu_vls_printf(&str, "   get   (faces|minEdge|maxEdge|orientation|type|vertices)\n");
-    bu_vls_printf(&str, "         - Get specific BoT information.\n");
-    bu_vls_printf(&str, "   check (solid|degen_faces|flipped_faces|...)\n\n");
-    bu_vls_printf(&str, "         - Check the BoT for problems (see bot_check man page for details.\n\n");
-    bu_vls_printf(&str, "   chull <input_bot_obj> <output_bot_obj>\n");
-    bu_vls_printf(&str, "         - Generate the BoT's convex hull and store it as <output_bot_obj>\n\n");
+    bu_vls_printf(&str, "Subcommands:\n\n");
+    bu_vls_printf(&str, "  get   (faces|minEdge|maxEdge|orientation|type|vertices) <bot>\n");
+    bu_vls_printf(&str, "    - Get specific BoT information.\n\n");
+    bu_vls_printf(&str, "  check (solid|degen_faces|flipped_faces|...) <bot>\n");
+    bu_vls_printf(&str, "    - Check the BoT for problems (see bot_check man page).\n\n");
+    bu_vls_printf(&str, "  chull <bot> <output_bot>\n");
+    bu_vls_printf(&str, "    - Store the BoT's convex hull in <output_bot>.\n\n");
 
-    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&str));
+    bu_vls_vlscat(gedp->ged_result_str, &str);
     bu_vls_free(&str);
-    return;
 }
 
 int
@@ -146,7 +147,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     struct bu_opt_desc d[3];
     const char * const bot_subcommands[] = {"check","chull","get", NULL};
     BU_OPT(d[0], "h", "help", "", NULL, (void *)&print_help, "Print help and exit");
-    BU_OPT(d[1], "V", "visualize", "", NULL, (void *)&visualize_results, "Enable any 3D visualization capabilities supported by the subcommand.");
+    BU_OPT(d[1], "V", "visualize", "", NULL, (void *)&visualize_results, "Use subcommand's 3D visualization.");
     BU_OPT_NULL(d[2]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
