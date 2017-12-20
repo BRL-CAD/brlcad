@@ -138,10 +138,11 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     size_t len;
     fastf_t tmp;
     fastf_t propVal;
+    int i;
     int print_help = 0;
     int visualize_results = 0;
     int opt_ret = 0;
-    int opt_argc = 1;
+    int opt_argc;
     struct bu_opt_desc d[3];
     const char * const bot_subcommands[] = {"check","chull","get", NULL};
     BU_OPT(d[0], "h", "help", "", NULL, (void *)&print_help, "Print help and exit");
@@ -162,47 +163,50 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* See if we have any options to deal with.  Once we hit a subcommand, we're done */
-    {
-	int done = 0;
-	while (opt_argc < argc && !done) {
-	    int j = 0;
-	    const char *sc = bot_subcommands[j];
-	    while (sc) {
-		if (BU_STR_EQUAL(argv[opt_argc],sc)) {
-		    done = 1;
-		    sc = NULL;
-		} else {
-		    j++;
-		    sc = bot_subcommands[j];
-		}
+    opt_argc = argc;
+    for (i = 1; i < argc; ++i) {
+	const char * const *subcmd = bot_subcommands;
+
+	for (; *subcmd != NULL; ++subcmd) {
+	    if (BU_STR_EQUAL(argv[i], *subcmd)) {
+		opt_argc = i;
+		i = argc;
+		break;
 	    }
-	    if (!done) opt_argc++;
 	}
     }
 
     if (opt_argc >= argc) {
-  	_bot_show_help(gedp, d);
+	/* no subcommand given */
+	_bot_show_help(gedp, d);
 	return GED_ERROR;
     }
 
     if (opt_argc > 1) {
+	/* parse standard options */
 	opt_ret = bu_opt_parse(NULL, opt_argc, argv, d);
 	if (opt_ret < 0) _bot_show_help(gedp, d);
     }
 
+    /* shift past standard options to subcommand args */
+    argc -= opt_argc;
+    argv = &argv[opt_argc];
+
+    if (argc < 2) {
+	_bot_show_help(gedp, d);
+	return GED_ERROR;
+    }
+
     /* determine subcommand */
-    sub = argv[opt_argc];
+    sub = argv[0];
     len = strlen(sub);
     if (bu_strncmp(sub, "get", len) == 0) {
 	primitive = argv[argc - 1];
-    }
-    if (bu_strncmp(sub, "chull", len) == 0) {
-	primitive = argv[opt_argc+1];
-    }
-    if (bu_strncmp(sub, "check", len) == 0) {
+    } else if (bu_strncmp(sub, "chull", len) == 0) {
+	primitive = argv[1];
+    } else if (bu_strncmp(sub, "check", len) == 0) {
 	primitive = argv[argc - 1];
-    }
-    if (primitive == NULL) {
+    } else {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
 	return GED_ERROR;
     }
@@ -221,8 +225,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     RT_BOT_CK_MAGIC(bot);
 
     if (bu_strncmp(sub, "get", len) == 0) {
-
-	arg = argv[opt_argc+1];
+	arg = argv[1];
 	propVal = rt_bot_propget(bot, arg);
 
 	/* print result string */
@@ -254,7 +257,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	unsigned char err = 0;
 
 	/* must be wanting help */
-	if (argc - opt_argc + 1 < 4) {
+	if (argc < 3) {
 	    _bot_show_help(gedp, d);
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
@@ -267,7 +270,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	retval = mk_bot(gedp->ged_wdbp, argv[opt_argc+2], RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
+	retval = mk_bot(gedp->ged_wdbp, argv[2], RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
 
 	if (retval) {
 	    rt_db_free_internal(&intern);
@@ -279,43 +282,42 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	/* TODO - add ability to do one or a list of checks.  For now, just have the solid test */
 
 	/* must be wanting help */
-	if (argc - opt_argc + 1 < 3) {
+	if (argc < 2) {
 	    _bot_show_help(gedp, d);
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
 
-	if (BU_STR_EQUAL(argv[argc-2], "check") || BU_STR_EQUAL(argv[opt_argc + 1], "solid")) {
+	if (argc < 3 || BU_STR_EQUAL(argv[1], "solid")) {
 	    struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLDID_ERRORS_INIT_NULL;
 	    int not_solid = bg_trimesh_solid2(bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, &errors);
-	if (!not_solid) {
-	    bu_vls_printf(gedp->ged_result_str, "1");
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "0");
-	}
+	    if (!not_solid) {
+		bu_vls_printf(gedp->ged_result_str, "1");
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "0");
+	    }
 
 	    if (not_solid && visualize_results) {
-	    int blue[] = {0, 0, 255};
-	    int yellow[] = {255, 255, 0};
-	    int orange[] = {255, 128, 0};
-	    int purple[] = {255, 0, 255};
+		int blue[] = {0, 0, 255};
+		int yellow[] = {255, 255, 0};
+		int orange[] = {255, 128, 0};
+		int purple[] = {255, 0, 255};
 
-	    draw_faces(gedp, bot, errors.degenerate.count, errors.degenerate.faces, blue, "degenerate faces");
-	    draw_edges(gedp, bot, errors.unmatched.count, errors.unmatched.edges, yellow, "unmatched edges");
-	    draw_edges(gedp, bot, errors.misoriented.count, errors.misoriented.edges, orange, "misoriented edges");
-	    draw_edges(gedp, bot, errors.excess.count, errors.excess.edges, purple, "excess edges");
+		draw_faces(gedp, bot, errors.degenerate.count, errors.degenerate.faces, blue, "degenerate faces");
+		draw_edges(gedp, bot, errors.unmatched.count, errors.unmatched.edges, yellow, "unmatched edges");
+		draw_edges(gedp, bot, errors.misoriented.count, errors.misoriented.edges, orange, "misoriented edges");
+		draw_edges(gedp, bot, errors.excess.count, errors.excess.edges, purple, "excess edges");
 
-	    bg_free_trimesh_solid_errors(&errors);
+		bg_free_trimesh_solid_errors(&errors);
+	    }
+	    rt_db_free_internal(&intern);
+	    return GED_OK;
 	}
-	rt_db_free_internal(&intern);
-
-	return GED_OK;
-    }
 
 	/* If we didn't check *something*, error out */
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
-
     rt_db_free_internal(&intern);
     return GED_OK;
 }
