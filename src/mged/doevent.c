@@ -39,9 +39,11 @@
 
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xutil.h>
+#  include <X11/keysym.h>
+#endif
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
 #  include <X11/extensions/XI.h>
 #  include <X11/extensions/XInput.h>
-#  include <X11/keysym.h>
 #endif
 
 #include "vmath.h"
