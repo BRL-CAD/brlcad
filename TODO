@@ -138,6 +138,25 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* screengrab on windows
+
+* bot overlaps when unoriented, when clearly not overlapping
+
+* improve rtweight .density file handling on Windows, can't find it.
+  needs better search and override logic.
+
+* ray trace pnts
+
+* handling of geometry with names like "--_25" fails in archer
+
+* drawing with origin, axes, and overall dimensions for rt/rtedge/etc.
+
+* a_logoverlap doesn't work with rt_shootrays because it overwrites
+  a_uptr
+
+* gather v&v docs on configuration management process, user manuals,
+  process documentation, software documentation, model descriptions.
+
 * STIX 2.0 fonts are released, using OpenType - check to see whether
   we can upgrade to these for our DocBook processing
 
