@@ -131,12 +131,15 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * heap unit test needs to actually compare performance against system
   allocation, not just do some work
-  
+
   user:hidden utility:later category:corrective impacts:some days:1
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* STIX 2.0 fonts are released, using OpenType - check to see whether
+  we can upgrade to these for our DocBook processing
 
 * Fedora doesn't have the old fonts mged assumes: dm-X: Can't open font '9x15' or '-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1'
 
