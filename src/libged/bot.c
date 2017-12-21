@@ -36,6 +36,29 @@
 #include "wdb.h"
 #include "./ged_private.h"
 
+HIDDEN void _bot_show_help(struct ged *gedp, struct bu_opt_desc *d)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    const char *option_help;
+    
+    bu_vls_sprintf(&str, "Usage: bot [options] [subcommand] [subcommand arguments]\n\n");
+
+    if ((option_help = bu_opt_describe(d, NULL))) {
+	bu_vls_printf(&str, "Options:\n%s\n", option_help);
+	bu_free((char *)option_help, "help str");
+    }
+    bu_vls_printf(&str, "Subcommands:\n\n");
+    bu_vls_printf(&str, "  get   (faces|minEdge|maxEdge|orientation|type|vertices) <bot>\n");
+    bu_vls_printf(&str, "    - Get specific BoT information.\n\n");
+    bu_vls_printf(&str, "  check (solid|degen_faces|open_edges|extra_edges|flipped_edges) <bot>\n");
+    bu_vls_printf(&str, "    - Check the BoT for problems (see bot_check man page).\n\n");
+    bu_vls_printf(&str, "  chull <bot> <output_bot>\n");
+    bu_vls_printf(&str, "    - Store the BoT's convex hull in <output_bot>.\n\n");
+
+    bu_vls_vlscat(gedp->ged_result_str, &str);
+    bu_vls_free(&str);
+}
+
 HIDDEN void draw_edges(struct ged *gedp, struct rt_bot_internal *bot, int num_edges, int edges[], int draw_color[3], const char *draw_name)
 {
     int curr_edge = 0;
@@ -101,29 +124,131 @@ HIDDEN void draw_faces(struct ged *gedp, struct rt_bot_internal *bot, int num_fa
     bn_vlblock_free(vbp);
 }
 
-
-
-HIDDEN void _bot_show_help(struct ged *gedp, struct bu_opt_desc *d)
+HIDDEN int
+bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d, struct rt_db_internal *ip, int visualize_results)
 {
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    const char *option_help;
-    
-    bu_vls_sprintf(&str, "Usage: bot [options] [subcommand] [subcommand arguments]\n\n");
+    const char *check = argv[1];
+    const char * const *sub, *subcommands[] = {"solid", "degen_faces", "open_edges", "extra_edges", "flipped_edges", NULL};
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+    struct bg_trimesh_halfedge *edge_list;
+    int (*edge_test)(size_t, struct bg_trimesh_halfedge *, bg_edge_error_funct_t, void *);
+    size_t num_edges;
+    int found;
+    int blue[] = {0, 0, 255};
+    int yellow[] = {255, 255, 0};
+    int orange[] = {255, 128, 0};
+    int purple[] = {255, 0, 255};
 
-    if ((option_help = bu_opt_describe(d, NULL))) {
-	bu_vls_printf(&str, "Options:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
+    /* must be wanting help */
+    if (argc < 2) {
+	_bot_show_help(gedp, d);
+	rt_db_free_internal(ip);
+	return GED_ERROR;
     }
-    bu_vls_printf(&str, "Subcommands:\n\n");
-    bu_vls_printf(&str, "  get   (faces|minEdge|maxEdge|orientation|type|vertices) <bot>\n");
-    bu_vls_printf(&str, "    - Get specific BoT information.\n\n");
-    bu_vls_printf(&str, "  check (solid|degen_faces|flipped_faces|...) <bot>\n");
-    bu_vls_printf(&str, "    - Check the BoT for problems (see bot_check man page).\n\n");
-    bu_vls_printf(&str, "  chull <bot> <output_bot>\n");
-    bu_vls_printf(&str, "    - Store the BoT's convex hull in <output_bot>.\n\n");
 
-    bu_vls_vlscat(gedp->ged_result_str, &str);
-    bu_vls_free(&str);
+    if (argc < 3 || BU_STR_EQUAL(check, "solid")) {
+	struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLDID_ERRORS_INIT_NULL;
+	int not_solid = bg_trimesh_solid2(bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, visualize_results ? &errors : NULL);
+	bu_vls_printf(gedp->ged_result_str, not_solid ? "0" : "1");
+
+	if (not_solid && visualize_results) {
+	    draw_faces(gedp, bot, errors.degenerate.count, errors.degenerate.faces, blue, "degenerate faces");
+	    draw_edges(gedp, bot, errors.unmatched.count, errors.unmatched.edges, yellow, "unmatched edges");
+	    draw_edges(gedp, bot, errors.misoriented.count, errors.misoriented.edges, orange, "misoriented edges");
+	    draw_edges(gedp, bot, errors.excess.count, errors.excess.edges, purple, "excess edges");
+
+	    bg_free_trimesh_solid_errors(&errors);
+	}
+	rt_db_free_internal(ip);
+	return GED_OK;
+    }
+
+    /* check for one of the individual tests */
+    found = 0;
+    for (sub = subcommands; sub != NULL; ++sub) {
+	if (BU_STR_EQUAL(check, *sub)) {
+	    found = 1;
+	    break;
+	}
+    }
+    if (!found) {
+	bu_vls_printf(gedp->ged_result_str, "check: %s is not a recognized check subcommand!\n", check);
+	rt_db_free_internal(ip);
+	return GED_ERROR;
+    }
+    
+    /* face test */
+    if (BU_STR_EQUAL(check, "degen_faces")) {
+	struct bg_trimesh_faces degenerate = BG_TRIMESH_FACES_INIT_NULL;
+	int degenerate_faces = 0;
+
+	if (visualize_results) {
+	    /* first pass - count errors */
+	    degenerate_faces = bg_trimesh_degenerate_faces(bot->num_faces, bot->faces, bg_trimesh_face_continue, NULL);
+
+	    if (degenerate_faces) {
+		/* second pass - generate error faces array and draw it */
+		degenerate.count = 0;
+		degenerate.faces = (int *)bu_calloc(degenerate_faces, sizeof(int), "degenerate faces");
+		bg_trimesh_degenerate_faces(bot->num_faces, bot->faces, bg_trimesh_face_gather, &degenerate);
+
+		draw_faces(gedp, bot, degenerate.count, degenerate.faces, yellow, "degenerate faces");
+
+		bg_free_trimesh_faces(&degenerate);
+	    }
+	} else {
+	    /* fast path - exit on first error */
+	    degenerate_faces = bg_trimesh_degenerate_faces(bot->num_faces, bot->faces, bg_trimesh_face_exit, NULL);
+	}
+
+	bu_vls_printf(gedp->ged_result_str, degenerate_faces ? "1" : "0");
+
+	rt_db_free_internal(ip);
+	return GED_OK;
+    }
+
+    /* must be doing one of the edge tests */
+
+    /* generate half-edge list */
+    num_edges = bot->num_faces * 3;
+    if (!(edge_list = bg_trimesh_generate_edge_list(bot->num_faces, bot->faces))) {
+	rt_db_free_internal(ip);
+	return GED_ERROR;
+    }
+
+    /* select edge test */
+    if (BU_STR_EQUAL(check, "open_edges")) {
+	edge_test = bg_trimesh_unmatched_edges;
+    } else if (BU_STR_EQUAL(check, "flipped_edges")) {
+	edge_test = bg_trimesh_misoriented_edges;
+    } else if (BU_STR_EQUAL(check, "extra_edges")) {
+	edge_test = bg_trimesh_excess_edges;
+    }
+
+    if (visualize_results) {
+	/* first pass - count errors */
+	struct bg_trimesh_edges error_edges = BG_TRIMESH_EDGES_INIT_NULL;
+
+	found = edge_test(num_edges, edge_list, bg_trimesh_edge_continue, NULL);
+
+	if (found) {
+	    /* second pass - generate error edge array and draw it */
+	    error_edges.count = 0;
+	    error_edges.edges = (int *)bu_calloc(found * 2, sizeof(int), "error edges");
+	    found = edge_test(num_edges, edge_list, bg_trimesh_edge_gather, &error_edges);
+
+	    draw_edges(gedp, bot, error_edges.count, error_edges.edges, yellow, "error edges");
+
+	    bg_free_trimesh_edges(&error_edges);
+	}
+    } else {
+	/* fast path - exit on first error */
+	found = edge_test(num_edges, edge_list, bg_trimesh_edge_exit, NULL);
+    }
+
+    bu_vls_printf(gedp->ged_result_str, found ? "1" : "0");
+    rt_db_free_internal(ip);
+    return GED_OK;
 }
 
 int
@@ -278,47 +403,10 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
     }
-
     if (bu_strncmp(sub, "check", len) == 0) {
-	/* TODO - add ability to do one or a list of checks.  For now, just have the solid test */
-
-	/* must be wanting help */
-	if (argc < 2) {
-	    _bot_show_help(gedp, d);
-	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
-	}
-
-	if (argc < 3 || BU_STR_EQUAL(argv[1], "solid")) {
-	    struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLDID_ERRORS_INIT_NULL;
-	    int not_solid = bg_trimesh_solid2(bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, &errors);
-	    if (!not_solid) {
-		bu_vls_printf(gedp->ged_result_str, "1");
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "0");
-	    }
-
-	    if (not_solid && visualize_results) {
-		int blue[] = {0, 0, 255};
-		int yellow[] = {255, 255, 0};
-		int orange[] = {255, 128, 0};
-		int purple[] = {255, 0, 255};
-
-		draw_faces(gedp, bot, errors.degenerate.count, errors.degenerate.faces, blue, "degenerate faces");
-		draw_edges(gedp, bot, errors.unmatched.count, errors.unmatched.edges, yellow, "unmatched edges");
-		draw_edges(gedp, bot, errors.misoriented.count, errors.misoriented.edges, orange, "misoriented edges");
-		draw_edges(gedp, bot, errors.excess.count, errors.excess.edges, purple, "excess edges");
-
-		bg_free_trimesh_solid_errors(&errors);
-	    }
-	    rt_db_free_internal(&intern);
-	    return GED_OK;
-	}
-
-	/* If we didn't check *something*, error out */
-	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return bot_check(gedp, argc, argv, d, &intern, visualize_results);
     }
+
     rt_db_free_internal(&intern);
     return GED_OK;
 }
