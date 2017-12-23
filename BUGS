@@ -15,6 +15,14 @@ on-going issues.
 Recent Bugs
 -----------
 
+* annotation bugs:
+  in sph1.s sph 0 0 0 10
+  in ann1.s annot 0 0 0 test1 10 10 3 1
+  in ann2.s annot 30 30 30 test2 40 40 3 1
+  # ann2.s's label looks wrong, points at origin?
+  in ann3.s annot 0 0 0 1 10 10 3 1
+  # using numbers for a label results in no label
+
 * make eto eto
   tol norm 1
   facetize eto.bot eto
