@@ -292,7 +292,14 @@ rr_refract(vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2)
     fastf_t beta;
 
     if (NEAR_ZERO(ri_1, 0.0001) || NEAR_ZERO(ri_2, 0.0001)) {
-	bu_log("rr_refract:ri1=%g, ri2=%g\n", ri_1, ri_2);
+	static int counter = 0;
+	if (counter < 100) {
+	    bu_log("rr_refract: ri1=%g, ri2=%g\n", ri_1, ri_2);
+	    counter++;
+	} else if (counter == 100) {
+	    bu_log("rr_refract: further warnings suppressed\n");
+	    counter++;
+	}
 	beta = 1;
     } else {
 	beta = ri_1/ri_2;		/* temp */
