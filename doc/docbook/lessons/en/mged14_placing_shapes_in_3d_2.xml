@@ -276,7 +276,7 @@
 	  <literallayout class="normal">
     for {set i 1} {i `&lt;= 1000} {incr i} {[Enter]
 
-    r sph$i.r u sph$i.s [Enter]
+      r sph$i.r u sph$i.s [Enter]
 
     }
 	  </literallayout>
@@ -357,47 +357,47 @@
 	<literallayout class="normal">
    u base1.r/R
 
-   u eto1.s
+     u eto1.s
 
-   u rcc1.c
+     u rcc1.c
 
-   u rcc1.s
+       u rcc1.s
 
-   - sph1.r/R
+       - sph1.r/R
 
-   u sph1.s
+         u sph1.s
 
-   - sph2.r/R
+       - sph2.r/R
 
-   u sph2.s
+         u sph2.s
 
-   - sph3.r/R
+       - sph3.r/R
 
-   u sph3.s
+         u sph3.s
 
-   - sph4.r/R
+       - sph4.r/R
 
-   u sph4.s
+         u sph4.s
 
-   - sph5.r/R
+       - sph5.r/R
 
-   u sph5.s
+         u sph5.s
 
-   - sph6.r/R
+       - sph6.r/R
 
-   u sph6.s
+         u sph6.s
 
-   - sph7.r/R
+       - sph7.r/R
 
-   u sph7.s
+         u sph7.s
 
-   - sph8.r/R
+       - sph8.r/R
 
-   u sph8.s
+         u sph8.s
 
-   u eto2.s
+     u eto2.s
 
-   - rcc2.s
+     - rcc2.s
 	</literallayout>
       </para>
       <note>
@@ -415,47 +415,47 @@
 	  <literallayout class="normal">
     u base1.r/R
 
-    u eto1.s
+      u eto1.s
 
-    u eto2.s
+      u eto2.s
 
-    - rcc2.s
+      - rcc2.s
 
-    u rcc1.c
+      u rcc1.c
 
-    u rcc1.s
+        u rcc1.s
 
-    - sph1.r/R
+        - sph1.r/R
 
-    u sph1.s
+          u sph1.s
 
-    - sph2.r/R
+        - sph2.r/R
 
-    u sph2.s
+          u sph2.s
 
-    - sph3.r/R
+        - sph3.r/R
 
-    u sph3.s
+          u sph3.s
 
-    - sph4.r/R
+        - sph4.r/R
 
-    u sph4.s
+          u sph4.s
 
-    - sph5.r/R
+        - sph5.r/R
 
-    u sph5.s
+          u sph5.s
 
-    - sph6.r/R
+        - sph6.r/R
 
-    u sph6.s
+          u sph6.s
 
-    - sph7.r/R
+        - sph7.r/R
 
-    u sph7.s
+          u sph7.s
 
-    - sph8.r/R
+        - sph8.r/R
 
-    u sph8.s
+          u sph8.s
 	  </literallayout>
 	</para>
 	<para>
@@ -467,45 +467,45 @@
 	  <literallayout class="normal">
     u base1.r/R
 
-    u eto1.s
+      u eto1.s
 
-    u eto2.s
+      u eto2.s
 
-    - rcc2.s
+      - rcc2.s
 
-    u rcc1.s
+      u rcc1.s
 
-    - sph1.r/R
+      - sph1.r/R
 
-    u sph1.s
+        u sph1.s
 
-    - sph2.r/R
+      - sph2.r/R
 
-    u sph2.s
+        u sph2.s
 
-    - sph3.r/R
+      - sph3.r/R
 
-    u sph3.s
+        u sph3.s
 
-    - sph4.r/R
+      - sph4.r/R
 
-    u sph4.s
+        u sph4.s
 
-    - sph5.r/R
+      - sph5.r/R
 
-    u sph5.s
+        u sph5.s
 
-    - sph6.r/R
+      - sph6.r/R
 
-    u sph6.s
+        u sph6.s
 
-    - sph7.r/R
+      - sph7.r/R
 
-    u sph7.s
+        u sph7.s
 
-    - sph8.r/R
+      - sph8.r/R
 
-    u sph8.s
+        u sph8.s
 	  </literallayout>
 	</para>
 	<para>
