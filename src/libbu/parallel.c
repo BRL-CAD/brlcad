@@ -93,7 +93,7 @@
 #  define rt_thread_t pthread_t
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #  define rt_thread_t HANDLE
 #endif
 
@@ -743,7 +743,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 #  endif /* end if posix threads */
 
 
-#  ifdef WIN32
+#  ifdef _WIN32
     /* Create the Win32 threads */
     nthreadc = 0;
     for (i = 0; i < ncpu; i++) {
