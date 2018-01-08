@@ -14,7 +14,6 @@ set(NIRT_SRCS
   interact.c
   bsphere.c
   read_mat.c
-  str_manip.c
   parse_fmt.c
   )
 
