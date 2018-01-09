@@ -316,7 +316,7 @@ arbin(struct ged *gedp,
 		}
 	    }
 	    if (!found) {
-		bu_vls_printf(gedp->ged_result_str, "Could not move face plane for arb7, face #%d\n", i);
+		bu_vls_printf(gedp->ged_result_str, "Could not move face plane for arb7, face #%zu\n", i);
 		nmg_km(m);
 		return GED_ERROR;
 	    }

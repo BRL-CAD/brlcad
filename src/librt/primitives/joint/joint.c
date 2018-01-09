@@ -119,8 +119,8 @@ rt_joint_print(const struct soltab *stp)
     VPRINT("Location", jointp->joint_location);
     VPRINT("Vector1", jointp->joint_vector1);
     VPRINT("Vector2", jointp->joint_vector2);
-    bu_log("reference_path_1 = %f\n", jointp->reference_path_1);
-    bu_log("reference_path_2 = %f\n", jointp->reference_path_1);
+    bu_log("reference_path_1 = %s\n", jointp->reference_path_1);
+    bu_log("reference_path_2 = %s\n", jointp->reference_path_1);
     bu_log("Value = %f\n", jointp->joint_value);
 }
 

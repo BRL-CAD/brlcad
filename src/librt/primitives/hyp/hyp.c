@@ -1076,7 +1076,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Associate the face geometry */
     for (i = 0; i < face; i++) {
 	if (nmg_fu_planeeqn(outfaceuses[i], tol) < 0) {
-	    bu_log("planeeqn fail:\n\ti:\t%d\n\toutfaceuses:\n\tmin:\t%f\t%f\t%f\n\tmax:\t%f\t%f\t%f\n",
+	    bu_log("planeeqn fail:\n\ti:\t%zu\n\toutfaceuses:\n\tmin:\t%f\t%f\t%f\n\tmax:\t%f\t%f\t%f\n",
 		   i, outfaceuses[i]->f_p->min_pt[0],
 		   outfaceuses[i]->f_p->min_pt[1],
 		   outfaceuses[i]->f_p->min_pt[2],

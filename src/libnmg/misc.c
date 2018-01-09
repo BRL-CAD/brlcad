@@ -2374,7 +2374,7 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 			}
 			if (found) {
 			    /* Could not even make a plane, this is some serious screw-up */
-			    bu_log("nmg_close_shell: cannot make any planes from loop, old_loop_size = %d\n", old_loop_size);
+			    bu_log("nmg_close_shell: cannot make any planes from loop, old_loop_size = %zu\n", old_loop_size);
 			    for (i=0; i<old_loop_size; i++) {
 				eu= (struct edgeuse *)BU_PTBL_GET(&eu_tbl, idx[i]);
 				bu_log("(%g %g %g) <-> (%g %g %g)\n",
@@ -4498,7 +4498,7 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
     nmg_rebound(m , tol);
 
     if (nmg_debug & DEBUG_BASIC)
-	bu_log("nmg_decompose_shell END (%d shells)\n", no_of_shells);
+	bu_log("nmg_decompose_shell END (%zu shells)\n", no_of_shells);
 
     return no_of_shells;
 }
@@ -4776,7 +4776,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 	    if (fu->orientation != OT_SAME)
 		bu_log("\tface (%p) has no OT_SAME use\n", (void *)f);
 	    NMG_GET_FU_PLANE(pl, fu);
-	    bu_log("\t#%d: %g %g %g %g\n", i, V4ARGS(pl));
+	    bu_log("\t#%zu: %g %g %g %g\n", i, V4ARGS(pl));
 	}
     }
 
@@ -4967,7 +4967,7 @@ nmg_pr_inter(const struct vertex *new_v, const struct bu_ptbl *int_faces)
 
 	i_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, i);
 
-	bu_log("edge number %d, %p\n", i, (void *)i_fus);
+	bu_log("edge number %zu, %p\n", i, (void *)i_fus);
 	if (i_fus->fu[0])
 	    fp1 = i_fus->fu[0]->f_p;
 	else
@@ -5325,7 +5325,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 	if (other_fus != edge_fus) {
 	    if (!bn_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol)) {
 		if (nmg_debug & DEBUG_BASIC)
-		    bu_log("Edge #%d intersects edge #%d at dist = %f\n", edge_no, next_edge_no, dist[0]);
+		    bu_log("Edge #%zu intersects edge #%zu at dist = %f\n", edge_no, next_edge_no, dist[0]);
 		if (NEAR_ZERO(dist[0], tol->dist))
 		    dist[0] = 0.0;
 		if (dist[0] > max_dist)
@@ -5353,7 +5353,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 	if (other_fus != edge_fus) {
 	    if (bn_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol) >= 0) {
 		if (nmg_debug & DEBUG_BASIC)
-		    bu_log("Edge #%d intersects edge #%d at dist = %f\n", edge_no, prev_edge_no, dist[0]);
+		    bu_log("Edge #%zu intersects edge #%zu at dist = %f\n", edge_no, prev_edge_no, dist[0]);
 		if (NEAR_ZERO(dist[0], tol->dist))
 		    dist[0] = 0.0;
 		if (dist[0] > max_dist)
@@ -5391,7 +5391,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 		    continue;
 
 		if (nmg_debug & DEBUG_BASIC)
-		    bu_log("Edge #%d intersects fu[0] from edge #%d at dist = %f\n", edge_no, other_index, dist[0]);
+		    bu_log("Edge #%zu intersects fu[0] from edge #%zu at dist = %f\n", edge_no, other_index, dist[0]);
 
 		if (NEAR_ZERO(dist[0], tol->dist))
 		    dist[0] = 0.0;
@@ -6695,7 +6695,7 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
 	    NMG_GET_FU_PLANE(planes[i], fu);
 
 	    if (nmg_debug & DEBUG_BASIC)
-		bu_log("\t plane #%d: %g %g %g %g\n", i, V4ARGS(planes[i]));
+		bu_log("\t plane #%zu: %g %g %g %g\n", i, V4ARGS(planes[i]));
 	}
 
 	if (nmg_debug & DEBUG_BASIC) {
@@ -6705,11 +6705,11 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
 		fastf_t dot;
 
 		dot = VDOT(planes[i], new_v->vg_p->coord);
-		bu_log("\tVDOT(#%d, new_v) - dist = %g\n", i, dot-planes[i][W]);
+		bu_log("\tVDOT(#%zu, new_v) - dist = %g\n", i, dot-planes[i][W]);
 
 		for (j=0; j<BU_PTBL_LEN(faces); j++) {
 		    dot = VDOT(planes[i], planes[j]);
-		    bu_log("\tVDOT(#%d, #%d) = %g\n", i, j, dot);
+		    bu_log("\tVDOT(#%zu, #%zu) = %g\n", i, j, dot);
 		}
 	    }
 	}

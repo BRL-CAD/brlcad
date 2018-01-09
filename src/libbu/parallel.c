@@ -534,7 +534,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	/* otherwise, limit ourselves to what is actually available */
 	avail_cpus = bu_avail_cpus();
 	if (ncpu > avail_cpus) {
-	    bu_log("%zd cpus requested, but only %d available\n", ncpu, avail_cpus);
+	    bu_log("%zd cpus requested, but only %zu available\n", ncpu, avail_cpus);
 	    ncpu = avail_cpus;
 	}
     }
@@ -702,7 +702,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
 	for (i = 0; i < nthreadc; i++) {
-	    bu_log("bu_parallel(): thread_tbl[%d] = %p\n", i, (void *)thread_tbl[i]);
+	    bu_log("bu_parallel(): thread_tbl[%zu] = %p\n", i, (void *)thread_tbl[i]);
 	}
 #    ifdef SIGINFO
 	/* may be BSD-only (calls _thread_dump_info()) */
@@ -719,12 +719,12 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	int ret;
 
 	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-	    bu_log("bu_parallel(): waiting for thread %p to complete:\t(loop:%d) (nthreadc:%zu) (nthreade:%zu)\n",
+	    bu_log("bu_parallel(): waiting for thread %p to complete:\t(loop:%zu) (nthreadc:%zu) (nthreade:%zu)\n",
 		   (void *)thread_tbl[x], x, nthreadc, nthreade);
 
 	if ((ret = pthread_join(thread_tbl[x], NULL)) != 0) {
 	    /* badness happened */
-	    bu_log("pthread_join(thread_tbl[%d]=%p) ret=%d\n", x, (void *)thread_tbl[x], ret);
+	    bu_log("pthread_join(thread_tbl[%zu]=%p) ret=%d\n", x, (void *)thread_tbl[x], ret);
 	}
 
 	nthreade++;

@@ -47,7 +47,7 @@ void
 bu_avs_init(struct bu_attribute_value_set *avsp, size_t len, const char *str)
 {
     if (UNLIKELY(bu_debug & BU_DEBUG_AVS))
-	bu_log("bu_avs_init(%p, len=%d, %s)\n", (void *)avsp, len, str);
+	bu_log("bu_avs_init(%p, len=%zu, %s)\n", (void *)avsp, len, str);
 
     avsp->magic = BU_AVS_MAGIC;
     if (UNLIKELY(len == 0))
@@ -68,7 +68,7 @@ bu_avs_new(size_t len, const char *str)
     bu_avs_init(avsp, len, "bu_avs_new");
 
     if (UNLIKELY(bu_debug & BU_DEBUG_AVS))
-	bu_log("bu_avs_new(len=%d, %s) = %p\n", len, str, (void *)avsp);
+	bu_log("bu_avs_new(len=%zu, %s) = %p\n", len, str, (void *)avsp);
 
     return avsp;
 }
@@ -279,7 +279,7 @@ bu_avs_print(const struct bu_attribute_value_set *avsp, const char *title)
     BU_CK_AVS(avsp);
 
     if (title) {
-	bu_log("%s: %d attributes:\n", title, avsp->count);
+	bu_log("%s: %zu attributes:\n", title, avsp->count);
     }
 
     avpp = avsp->avp;

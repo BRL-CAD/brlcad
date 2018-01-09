@@ -2084,7 +2084,7 @@ find_loop_to_cut(int *index1, int *index2, size_t prior_start, size_t prior_end,
     int done = 0;
 
     if (nmg_debug&DEBUG_FCUT)
-	bu_log("find_loop_to_cut: prior_start=%d, prior_end=%d, next_start=%d, next_end=%d, rs=%p\n",
+	bu_log("find_loop_to_cut: prior_start=%zu, prior_end=%zu, next_start=%zu, next_end=%zu, rs=%p\n",
 	       prior_start, prior_end, next_start, next_end, (void *)rs);
 
     NMG_CK_RAYSTATE(rs);
@@ -2095,11 +2095,11 @@ find_loop_to_cut(int *index1, int *index2, size_t prior_start, size_t prior_end,
 	count++;
 	if (count > 100) {
 	    bu_log("find_loop_to_cut: infinite loop\n");
-	    bu_log("prior_start = %d, prior_end = %d, next_start = %d next_nd = %d\n",
+	    bu_log("prior_start = %zu, prior_end = %zu, next_start = %zu next_end = %zu\n",
 		   prior_start, prior_end, next_start, next_end);
 	    bu_log("mid_point = (%f %f %f)\n", V3ARGS(mid_pt));
 	    for (i = 0; i < (size_t)rs->nvu; i++)
-		bu_log("\t%d %p\n", i, (void *)rs->vu[i]);
+		bu_log("\t%zu %p\n", i, (void *)rs->vu[i]);
 	    bu_bomb("find_loop_to_cut: infinite loop");
 	}
 	for (i=prior_start; i < prior_end; i++) {
@@ -2251,7 +2251,7 @@ find_loop_to_cut(int *index1, int *index2, size_t prior_start, size_t prior_end,
 		angle = atan2(VDOT(y_dir, eu_dir), VDOT(x_dir, eu_dir));
 
 		if (nmg_debug&DEBUG_FCUT)
-		    bu_log("\tangle for eu %p (vu=%p, #%d) is %g\n",
+		    bu_log("\tangle for eu %p (vu=%p, #%zu) is %g\n",
 			   (void *)eu, (void *)rs->vu[i], i, angle);
 
 		/* select max angle */
@@ -2383,7 +2383,7 @@ find_loop_to_cut(int *index1, int *index2, size_t prior_start, size_t prior_end,
 		angle = atan2(VDOT(y_dir, eu_dir), VDOT(x_dir, eu_dir));
 
 		if (nmg_debug&DEBUG_FCUT)
-		    bu_log("\tangle for eu %p (vu=%p, #%d) is %g\n",
+		    bu_log("\tangle for eu %p (vu=%p, #%zu) is %g\n",
 			   (void *)eu, (void *)rs->vu[i], i, angle);
 
 		/* select max angle */
@@ -2663,7 +2663,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	if (nmg_debug&DEBUG_FCUT) {
 	    bu_log("rs->fu1 = %p\n", (void *)rs->fu1);
 	    bu_log("rs->fu2 = %p\n", (void *)rs->fu2);
-	    bu_log("prior_start=%d. prior_end=%d, next_start=%d, next_end=%d\n",
+	    bu_log("prior_start=%zu. prior_end=%zu, next_start=%zu, next_end=%zu\n",
 		   prior_start, prior_end, next_start, next_end);
 	    bu_log("%d vertices on intersect line\n", rs->nvu);
 	    for (cur = 0; cur < rs->nvu; cur++)
@@ -2744,7 +2744,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 		struct loop_cuts *lcut;
 
 		if (nmg_debug&DEBUG_FCUT)
-		    bu_log("\tcut loop (#%d of %ld)\n", cut_no, BU_PTBL_LEN(cuts));
+		    bu_log("\tcut loop (#%zu of %zu)\n", cut_no, BU_PTBL_LEN(cuts));
 
 		lcut = (struct loop_cuts *)BU_PTBL_GET(cuts, cut_no);
 
@@ -3117,11 +3117,11 @@ top:
     if (nmg_debug&DEBUG_FCUT) {
 	bu_log("Ray vu intersection list:\n");
 	for (i = 0; (off_t)i < b1->end; i++) {
-	    bu_log(" %d %e ", i, mag1[i]);
+	    bu_log(" %zu %e ", i, mag1[i]);
 	    nmg_pr_vu_briefly(vu1[i], (char *)0);
 	}
 	for (i = 0; (off_t)i < b2->end; i++) {
-	    bu_log(" %d %e ", i, mag2[i]);
+	    bu_log(" %zu %e ", i, mag2[i]);
 	    nmg_pr_vu_briefly(vu2[i], (char *)0);
 	}
     }
@@ -3188,7 +3188,7 @@ top:
     i = nmg_mesh_two_faces(fu1, fu2, tol);
     if (i) {
 	if (nmg_debug&DEBUG_FCUT)
-	    bu_log("nmg_face_cutjoin() meshed %d edges\n", i);
+	    bu_log("nmg_face_cutjoin() meshed %zu edges\n", i);
     }
     if (nmg_debug&DEBUG_FCUT) {
 	bu_log("nmg_face_cutjoin(fu1=%p, fu2=%p) eg=%p END\n", (void *)fu1, (void *)fu2, (void *)rs1.eg_p);
