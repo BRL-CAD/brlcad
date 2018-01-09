@@ -51,7 +51,7 @@
  *	/Za		for ANSI C
  */
 # if !__STDC__
-#	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
+#	error "STDC is not properly set on _WIN32 build, add /Za to Project Settings / Project Options"
 # endif
 
 #ifndef EXPAND_IN_STRING
