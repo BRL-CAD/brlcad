@@ -42,7 +42,10 @@
 #  undef X_NOT_POSIX
 #endif
 
-#include <X11/extensions/XInput.h>
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
+#  include <X11/extensions/XInput.h>
+#endif /* HAVE_X11_XINPUT_H */
+
 #include <GL/glx.h>
 #include <GL/gl.h>
 
@@ -383,6 +386,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	(char) glXIsDirect(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			   ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc);
 
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     /*
      * Take a look at the available input devices. We're looking
      * for "dial+buttons".
@@ -390,6 +394,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     if (XQueryExtension(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, "XInputExtension", &unused, &unused, &unused)) {
 	olist = list = (XDeviceInfoPtr)XListInputDevices(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, &ndevices);
     }
+#endif
 
     if (list == (XDeviceInfoPtr)NULL ||
 	list == (XDeviceInfoPtr)1) goto Done;

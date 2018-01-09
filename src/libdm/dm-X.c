@@ -44,7 +44,6 @@
 
 #ifdef HAVE_X11_EXTENSIONS_XINPUT_H
 #  include <X11/extensions/XInput.h>
-#  define USE_DIALS_AND_BUTTONS 1
 #endif /* HAVE_X11_XINPUT_H */
 
 #if defined(linux)
@@ -426,7 +425,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     static int count = 0;
     int make_square = -1;
     XGCValues gcv;
-#if defined(USE_DIALS_AND_BUTTONS)
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     int j, k;
     int ndevices;
     int nclass = 0;
@@ -688,7 +687,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    goto Skip_dials;
     }
 
-#if defined(USE_DIALS_AND_BUTTONS)
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     /*
      * Take a look at the available input devices. We're looking for
      * "dial+buttons".
@@ -696,6 +695,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     if (XQueryExtension(pubvars->dpy, "XInputExtension", &unused, &unused, &unused)) {
 	olist = list = (XDeviceInfoPtr)XListInputDevices(pubvars->dpy, &ndevices);
     }
+#endif
 
     if (list == (XDeviceInfoPtr)NULL ||
 	list == (XDeviceInfoPtr)1) goto Done;

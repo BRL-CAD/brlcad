@@ -41,7 +41,9 @@
 #  undef X_NOT_POSIX
 #endif
 
-#include <X11/extensions/XInput.h>
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
+#  include <X11/extensions/XInput.h>
+#endif /* HAVE_X11_XINPUT_H */
 
 /* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
  * parameter names that shadow system symbols.  protect the system
@@ -876,6 +878,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
      */
     privvars->is_direct = (char) glXIsDirect(pubvars->dpy, privvars->glxc);
 
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     /*
      * Take a look at the available input devices. We're looking
      * for "dial+buttons".
@@ -883,6 +886,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     if (XQueryExtension(pubvars->dpy, "XInputExtension", &unused, &unused, &unused)) {
 	olist = list = (XDeviceInfoPtr)XListInputDevices(pubvars->dpy, &ndevices);
     }
+#endif
 
     if (list == (XDeviceInfoPtr)NULL ||
 	list == (XDeviceInfoPtr)1) goto Done;
