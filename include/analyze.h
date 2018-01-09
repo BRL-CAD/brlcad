@@ -215,6 +215,83 @@ analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
 ANALYZE_EXPORT void
 analyze_heal_bot(struct rt_bot_internal *bot, double zipper_tol);
 
+#if 0
+/**
+ *    A library implemantation of functionality originally developed in
+ *    Natalie's Interactive Ray Tracer (NIRT)
+ */
+
+struct nirt_state {
+    /* PRIVATE - everything below should go into an opaque typedef */
+    struct application *ap;
+    /* scripts */
+    int script_cnt;
+    char **scripts;
+    /* runtime options */
+    int use_air;
+    int rt_bot_minpieces;
+    struct bu_color hit_color;
+    struct bu_color miss_color;
+    struct bu_color overlap_color;
+    /* state variables */
+    double azimuth;
+    double elevation;
+    vect_t direct;
+    vect_t target;
+    vect_t grid;
+    /* output options */
+    int print_header;
+    int print_ident_flag;
+    unsigned int rt_debug;
+    unsigned int nirt_debug;
+
+    /* PUBLIC*/
+    struct bu_vls *out;
+    struct bu_vls *err;
+    struct bn_vlist *segs;
+};
+
+
+ANALYZE_EXPORT int
+nirt_get(struct nirt_state **ns);
+
+ANALYZE_EXPORT void
+nirt_put(struct nirt_state *ns);
+
+ANALYZE_EXPORT int
+nirt_parse_fmt(struct nirt_state *ns, const char *fmt);
+
+ANALYZE_EXPORT int
+nirt_list_fmts(struct nirt_state *ns, bu_opt_format_t ofmt);
+
+/* Appends a script to the enqueued array of scripts stored
+ * in the nirt state.  This allows an application to build
+ * up a sequence of steps which can be executed repeatedly */
+ANALYZE_EXPORT int
+nirt_enqueue_script(struct nirt_state *ns, const char *script);
+
+/* If script != NULL, remove the first (order = 0) or last (order = 1)
+ * matching instance of the script from the queued array.  If script == NULL,
+ * clear all enqueued scripts.  Returns -1 if a script was supplied and
+ * no instance of it was cleared, and 0 otherwise. */
+ANALYZE_EXPORT int
+nirt_clear_scripts(struct nirt_state *ns, const char *script, int order);
+
+/* Lists available commands and their options. */
+ANALYZE_EXPORT int
+nirt_help(struct nirt_state *ns, bu_opt_format_t ofmt);
+
+/* Runs either the supplied script (if script != NULL), or (if script == NULL)
+ * the sequence of enqueued scripts stored in the state.
+ *
+ * Each exec call clears out, err and segs.  Applications should
+ * make copies of any previously generated output in those containers
+ * they wish to save before calling exec */
+ANALYZE_EXPORT int
+nirt_exec(struct nirt_state *ns, const char *script);
+
+#endif
+
 
 __END_DECLS
 
