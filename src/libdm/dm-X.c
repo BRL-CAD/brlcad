@@ -695,7 +695,6 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     if (XQueryExtension(pubvars->dpy, "XInputExtension", &unused, &unused, &unused)) {
 	olist = list = (XDeviceInfoPtr)XListInputDevices(pubvars->dpy, &ndevices);
     }
-#endif
 
     if (list == (XDeviceInfoPtr)NULL ||
 	list == (XDeviceInfoPtr)1) goto Done;
@@ -861,11 +860,6 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     static int nvectors = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
-
-    if (dmp->dm_debugLevel) {
-	bu_log("X_drawVList()\n");
-	bu_log("vp - %lu, perspective - %d\n", vp, dmp->dm_perspective);
-    }
 
     /* delta is used in clipping to insure clipped endpoint is
      * slightly in front of eye plane (perspective mode only).  This
