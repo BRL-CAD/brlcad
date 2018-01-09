@@ -647,10 +647,14 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     int ndevices;
     int nclass = 0;
     int unused;
+
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     XDeviceInfoPtr olist = NULL, list = NULL;
     XDevice *dev = NULL;
     XEventClass e_class[15];
     XInputClassInfo *cip;
+#endif
+
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     Display *tmp_dpy = (Display *)NULL;
@@ -886,7 +890,6 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     if (XQueryExtension(pubvars->dpy, "XInputExtension", &unused, &unused, &unused)) {
 	olist = list = (XDeviceInfoPtr)XListInputDevices(pubvars->dpy, &ndevices);
     }
-#endif
 
     if (list == (XDeviceInfoPtr)NULL ||
 	list == (XDeviceInfoPtr)1) goto Done;
@@ -932,6 +935,8 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     }
 Done:
     XFreeDeviceList(olist);
+
+#endif /* HAVE_X11_EXTENSIONS_XINPUT_H */
 
     Tk_MapWindow(pubvars->xtkwin);
 
