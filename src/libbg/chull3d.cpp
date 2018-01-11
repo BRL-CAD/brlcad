@@ -226,7 +226,7 @@ chull3d_new_block_simplex(struct chull3d_data *cdata, int make_blocks)
 	memset(xbt,0,cdata->input_vert_cnt * cdata->simplex_size);
 	xlm = ((simplex*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->simplex_size));
 	for (i=0; i<cdata->input_vert_cnt; i++) {
-	    xlm = ((simplex*) ( (char*)xlm + ((-1)) * cdata->simplex_size));
+	    xlm = ((simplex*) ( (char*)xlm - cdata->simplex_size );
 	    xlm->next = cdata->simplex_list;
 	    cdata->simplex_list = xlm;
 	}
@@ -254,7 +254,7 @@ chull3d_new_block_basis_s(struct chull3d_data *cdata, int make_blocks)
 	memset(xbt,0,cdata->input_vert_cnt * cdata->basis_s_size);
 	xlm = ((basis_s*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->basis_s_size));
 	for (i=0; i<cdata->input_vert_cnt; i++) {
-	    xlm = ((basis_s*) ( (char*)xlm + ((-1)) * cdata->basis_s_size));
+	    xlm = ((basis_s*) ( (char*)xlm - cdata->basis_s_size );
 	    xlm->next = cdata->basis_s_list;
 	    cdata->basis_s_list = xlm;
 	}
@@ -282,7 +282,7 @@ chull3d_new_block_Tree(struct chull3d_data *cdata, int make_blocks) {
 	memset(xbt,0,cdata->input_vert_cnt * cdata->Tree_size);
 	xlm = ((Tree*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->Tree_size));
 	for (i=0; i<cdata->input_vert_cnt; i++) {
-	    xlm = ((Tree*) ( (char*)xlm + ((-1)) * cdata->Tree_size));
+	    xlm = ((Tree*) ( (char*)xlm -1 cdata->Tree_size );
 	    xlm->next = cdata->Tree_list;
 	    cdata->Tree_list = xlm;
 	}
@@ -501,7 +501,7 @@ chull3d_get_normal_sede(struct chull3d_data *cdata, simplex *s)
 	c[2] = a[0]*b[1] - a[1]*b[0];
 	s->normal->sqb = chull3d_Norm2(cdata, c);
 	for (i=(cdata->cdim)+1,rn = cdata->ch_root->neigh+(cdata->cdim)-1; i; i--, rn--) {
-	    for (j = 0; j<(cdata->cdim) && rn->vert != s->neigh[j].vert;j++);
+	    for (j = 0; j<(cdata->cdim) && rn->vert != s->neigh[j].vert;j++) {};
 	    if (j<(cdata->cdim)) continue;
 	    if (rn->vert==cdata->hull_infinity) {
 		if (c[2] > -cdata->b_err_min) continue;
@@ -513,7 +513,7 @@ chull3d_get_normal_sede(struct chull3d_data *cdata, simplex *s)
     }
 
     for (i=(cdata->cdim)+1,rn = cdata->ch_root->neigh+(cdata->cdim)-1; i; i--, rn--) {
-	for (j = 0; j<(cdata->cdim) && rn->vert != s->neigh[j].vert;j++);
+	for (j = 0; j<(cdata->cdim) && rn->vert != s->neigh[j].vert;j++) {};
 	if (j<(cdata->cdim)) continue;
 	chull3d_reduce(cdata, &s->normal,rn->vert,s,(cdata->cdim));
 	if (!ZERO(s->normal->sqb)) break;
@@ -581,6 +581,42 @@ chull3d_visit_triang_gen(struct chull3d_data *cdata, simplex *s, chull3d_visit_f
     int i;
     long tms = 0;
 
+#if 0
+    /* Hey Cliff, can you check this? */
+
+/p/home/morrison/brlcad.trunk/src/libbg/chull3d.cpp(594): error #170: pointer points outside of underlying object
+  	for (i=-1,sn = t->neigh-1;i<(cdata->cdim);i++,sn++)
+  	                       ^
+
+/p/home/morrison/brlcad.trunk/src/libbg/chull3d.cpp(626): error #170: pointer points outside of underlying object
+      for (i=-1,sn=s->neigh-1;i<(cdata->cdim);i++,sn++) {
+                           ^
+
+/p/home/morrison/brlcad.trunk/src/libbg/chull3d.cpp(634): error #170: pointer points outside of underlying object
+  	for (j=-1,snn=sns->neigh-1; j<(cdata->cdim) && snn->simp!=s; j++,snn++) {};
+  	                        ^
+
+/p/home/morrison/brlcad.trunk/src/libbg/chull3d.cpp(638): error #170: pointer points outside of underlying object
+  	for (k=-1,snn=sns->neigh-1; k<(cdata->cdim); k++,snn++){
+  	                        ^
+
+/p/home/morrison/brlcad.trunk/src/libbg/chull3d.cpp(641): error #170: pointer points outside of underlying object
+  		for (l=-1,sn2 = s->neigh-1;
+  		                        ^
+
+/p/home/morrison/brlcad.trunk/src/libbg/chull3d.cpp(825): error #170: pointer points outside of underlying object
+  	CHULL3D_copy_simp(cdata, cdata->ns, seen);
+  	^
+
+/p/home/morrison/brlcad.trunk/src/libbg/chull3d.cpp(860): error #170: pointer points outside of underlying object
+  	CHULL3D_copy_simp(cdata, ns, s);
+  	^
+
+/p/home/morrison/brlcad.trunk/src/libbg/chull3d.cpp(972): error #170: pointer points outside of underlying object
+      CHULL3D_copy_simp(cdata, s, root);
+      ^
+#endif
+
     (cdata->vnum)--;
     if (s) CHULL3D_push(s);
     while (tms) {
@@ -591,7 +627,7 @@ chull3d_visit_triang_gen(struct chull3d_data *cdata, simplex *s, chull3d_visit_f
 	if (!t || t->visit == cdata->vnum) continue;
 	t->visit = cdata->vnum;
 	if ((v=(*visit)(cdata,t,0))) {return v;}
-	for (i=-1,sn = t->neigh-1;i<(cdata->cdim);i++,sn++)
+	for (i=-1,sn = t->neigh-1; i<(cdata->cdim); i++,sn++)
 	    if ((sn->simp->visit != cdata->vnum) && sn->simp && test(cdata,t,i,0))
 		CHULL3D_push(sn->simp);
     }
@@ -705,7 +741,7 @@ chull3d_op_simp(struct chull3d_data *cdata, simplex *a, simplex *b)
 {
     int i;
     neighbor *x;
-    for (i=0, x = a->neigh; (x->simp != b) && (i<(cdata->cdim)) ; i++, x++);
+    for (i=0, x = a->neigh; (x->simp != b) && (i<(cdata->cdim)) ; i++, x++) {};
     if (i<(cdata->cdim))
 	return x;
     else {
@@ -718,7 +754,7 @@ chull3d_op_vert(struct chull3d_data *cdata, simplex *a, site b)
 {
     int i;
     neighbor *x;
-    for (i=0, x = a->neigh; (x->vert != b) && (i<(cdata->cdim)) ; i++, x++);
+    for (i=0, x = a->neigh; (x->vert != b) && (i<(cdata->cdim)) ; i++, x++) {};
     if (i<(cdata->cdim))
 	return x;
     else {
