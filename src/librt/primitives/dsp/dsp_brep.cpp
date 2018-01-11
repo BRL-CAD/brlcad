@@ -401,14 +401,14 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     bool exceedtol = false;
     ON_SimpleArray<ON_3dPointArray *> bezcurvarray(dsp_ip->dsp_ycnt);
     for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
-	bezcurvarray[(const int)y] = new ON_3dPointArray(dsp_ip->dsp_xcnt);
+	bezcurvarray[y] = new ON_3dPointArray(dsp_ip->dsp_xcnt);
 	for (unsigned int x = 0; x < dsp_ip->dsp_xcnt; x++) {
-	    bezcurvarray[(const int)y]->Append(bezsurf->CV(x, y));
+	    bezcurvarray[y]->Append(bezsurf->CV(x, y));
 	}
     }
     while (currentdegree && !exceedtol) {
 	for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
-	    if (DegreeReduction(currentdegree - 1, *bezcurvarray[(const int)y], tol, maxerr) == -1) {
+	    if (DegreeReduction(currentdegree - 1, *bezcurvarray[y], tol, maxerr) == -1) {
 		exceedtol = true;
 		break;
 	    }
@@ -417,7 +417,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	    currentdegree--;
 	    for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
 		for (unsigned int x = 0; x <= currentdegree; x++) {
-		    reducedsurf->SetCV(x, y, (*bezcurvarray[(const int)y])[(const int)x]);
+		    reducedsurf->SetCV(x, y, (*bezcurvarray[y])[x]);
 		}
 	    }
 	}
@@ -450,7 +450,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	    currentdegree--;
 	    for (int x = 0; x < reducedsurf->m_order[0]; x++) {
 		for (unsigned int y = 0; y <= currentdegree; y++) {
-		    reducedsurf->SetCV(x, y, (*bezcurvarray[(const int)x])[(const int)y]);
+		    reducedsurf->SetCV(x, y, (*bezcurvarray[x])[y]);
 		}
 	    }
 	}
