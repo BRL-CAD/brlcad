@@ -1438,8 +1438,8 @@ edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
     const vect_t *from = (const vect_t *)cmd->translate.ref_vector.from->vector;
     const vect_t *to = (const vect_t *)cmd->translate.ref_vector.to->vector;
     return edit_translate(gedp,
-			  (const vect_t * const)from,
-			  (const vect_t * const)to,
+			  (vect_t * const)from,
+			  (vect_t * const)to,
 			  (const struct db_full_path *)cmd->translate.objects->object);
 }
 
