@@ -14,6 +14,7 @@
 #ifndef _WINPORT
 #define _WINPORT
 
+#include <windows.h>
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 #include <X11/keysym.h>

@@ -10,10 +10,10 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#include "tkInt.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
+#include "tkInt.h"
 #include <locale.h>
 
 #if defined(__GNUC__)
