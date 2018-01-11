@@ -113,8 +113,7 @@ extern void do_line(int xpos, int ypos, const char *line, RGBpixel (*menu_border
 extern int pad_open(int n);
 extern void pad_close(void);
 
-extern void pos_close();
-extern int fb_Init_Menu();
+extern void pos_close(void);
 
 extern void clr_CRNL();
 extern void clr_Echo();
