@@ -78,10 +78,6 @@ int tty_usable(int fd) {
 /* defined in input.c */
 extern void initInput(void);
 
-#ifdef BWISH
-/* defined in libtk/(unix|win|mac)/tk(Unix|Win|Mac)Init.c */
-void TkpDisplayWarning();
-#endif
 
 #ifdef BWISH
 #  if defined(HAVE_WINDOWS_H)
@@ -174,6 +170,24 @@ Cad_Exit(int status)
 #endif
     Tcl_Exit(status);
 }
+
+
+#ifdef BWISH
+static void
+displayWarning(
+    const char *msg,            /* Message to be displayed. */
+    const char *title)          /* Title of warning. */
+{
+    Tcl_Channel errChannel = Tcl_GetStdChannel(TCL_STDERR);
+    if (errChannel) {
+        Tcl_WriteChars(errChannel, title, -1);
+        Tcl_WriteChars(errChannel, ": ", 2);
+        Tcl_WriteChars(errChannel, msg, -1);
+        Tcl_WriteChars(errChannel, "\n", 1);
+    }
+}
+#endif
+
 
 #if defined(BWISH) && defined(HAVE_WINDOWS_H)
 int APIENTRY
@@ -272,7 +286,7 @@ main(int argc, char **argv)
 #ifdef BWISH
 	struct bu_vls errstr = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&errstr, "Application initialization failed:\n%s\n", bu_vls_addr(&tlog));
-	TkpDisplayWarning(bu_vls_addr(&errstr), "ERROR");
+	displayWarning(bu_vls_addr(&errstr), "ERROR");
 	bu_vls_free(&errstr);
 #else
 	bu_log("tclcad_init failure:\n%s\n", bu_vls_addr(&tlog));
@@ -301,8 +315,8 @@ main(int argc, char **argv)
 	if (fstatus != TCL_OK) {
 	    Tcl_AddErrorInfo(INTERP, "");
 #ifdef BWISH
-	    TkpDisplayWarning(Tcl_GetVar(INTERP, "errorInfo",
-					 TCL_GLOBAL_ONLY), "Error in startup script");
+	    displayWarning(Tcl_GetVar(INTERP, "errorInfo",
+				      TCL_GLOBAL_ONLY), "Error in startup script");
 #else
 	    bu_log("Error in startup script: %s\n", Tcl_GetVar(INTERP, "errorInfo", TCL_GLOBAL_ONLY));
 #endif
