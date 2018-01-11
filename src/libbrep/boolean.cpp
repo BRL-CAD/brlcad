@@ -1579,13 +1579,13 @@ public:
 
 CurvePoint::Location
 CurvePoint::PointLoopLocation(
-    ON_2dPoint pt,
+    ON_2dPoint point,
     const ON_SimpleArray<ON_Curve *> &loop)
 {
-    if (is_point_on_loop(pt, loop)) {
+    if (is_point_on_loop(point, loop)) {
 	return CurvePoint::BOUNDARY;
     }
-    if (point_loop_location(pt, loop) == OUTSIDE_OR_ON_LOOP) {
+    if (point_loop_location(point, loop) == OUTSIDE_OR_ON_LOOP) {
 	return CurvePoint::OUTSIDE;
     }
     return CurvePoint::INSIDE;
