@@ -2751,7 +2751,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    fg->ctl_points = rt_nmg_import4_fastf(basep,
 						  ecnt,
 						  ntohl(*(uint32_t*)(d->ctl_points)),
-						  mat,
+						  (matp_t)mat,
 						  fg->s_size[0] * fg->s_size[1],
 						  fg->pt_type);
 	}
@@ -2924,7 +2924,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 		eg->ctl_points = rt_nmg_import4_fastf(basep,
 						      ecnt,
 						      ntohl(*(uint32_t*)(d->ctl_points)),
-						      mat,
+						      (matp_t)mat,
 						      eg->c_size,
 						      eg->pt_type);
 	    }
