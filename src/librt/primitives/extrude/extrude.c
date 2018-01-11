@@ -848,9 +848,9 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     point_t ray_start;			/* 2D */
     vect_t ray_dir, ray_dir_unit;	/* 2D */
     struct rt_curve *crv;
-    struct hit hits[MAX_HITS];
-    fastf_t dists_before[MAX_HITS];
-    fastf_t dists_after[MAX_HITS];
+    struct hit hits[MAX_HITS] = {0};
+    fastf_t dists_before[MAX_HITS] = {0.0};
+    fastf_t dists_after[MAX_HITS] = {0.0};
     fastf_t *dists=NULL;
     size_t dist_count = 0;
     size_t hit_count = 0;
