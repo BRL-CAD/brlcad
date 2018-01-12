@@ -1668,7 +1668,7 @@ void VRTDataset::BuildVirtualOverviews()
             return;
 
         // To prevent recursion
-        m_apoOverviewsBak.push_back(nullptr);
+        m_apoOverviewsBak.push_back(NULL);
         const int nOvrCount = poSrcBand->GetOverviewCount();
         m_apoOverviewsBak.resize(0);
 
@@ -1758,7 +1758,7 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
     {
         // Add a dummy overview so that GDALDataset::IBuildOverviews()
         // doesn't manage to get a virtual implicit overview.
-        m_apoOverviews.push_back(nullptr);
+        m_apoOverviews.push_back(NULL);
     }
 
     return GDALDataset::IBuildOverviews( pszResampling,

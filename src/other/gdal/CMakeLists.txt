@@ -69,7 +69,7 @@ endif(NOT DEFINED BUILD_SHARED_LIBS)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
-FIND_PACKAGE(SSE) # checks SSE, AVX and AVX2
+find_package(SSE) # checks SSE, AVX and AVX2
 
 CHECK_SSE(CXX "AVX" " ;-mavx;/arch:AVX")
 IF(C_AVX_FOUND)
@@ -97,6 +97,27 @@ add_definitions(-DGNMDB_ENABLED)
 add_definitions(-DUSE_ONLY_CRYPTODLL_ALG)
 add_definitions(-DINST_DATA=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal\")
 set(HAVE_IEEEFP 1) # TODO test this for real
+
+# see if we have nullptr: https://stackoverflow.com/a/14112019
+set(nullptr_src "
+#include <cstddef>
+#include <iostream>
+int retval;
+void r(int i) {if (i < 0) {std::cout << \"Error - wrong function called\";} retval = 1;}
+void r(char *c){retval = (!c) ? 0 : 1;}
+int main() {
+  retval = 1;
+  r(nullptr);
+  return retval;
+}")
+include(CheckCXXSourceRuns)
+check_cxx_source_runs("${nullptr_src}" HAVE_NULLPTR)
+
+if(HAVE_NULLPTR)
+  add_definitions(-DHAVE_CXX11)
+  add_definitions(-DNULL_AS_NULLPTR)
+endif(HAVE_NULLPTR)
+
 
 if(MSVC)
   add_definitions(-DUSE_WIN32_MUTEX)

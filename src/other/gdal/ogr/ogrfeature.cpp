@@ -3851,7 +3851,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                 {
                     for( int i = 0; i < nCount; i++ )
                         aosValues.push_back( papszValueList[i+1] );
-                    aosValues.push_back(nullptr);
+                    aosValues.push_back( NULL );
                     SetField( iField, &(aosValues[0]) );
                 }
                 CSLDestroy(papszValueList);
