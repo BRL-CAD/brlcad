@@ -1345,9 +1345,9 @@ edit_scale_get_arg_head(const union edit_cmd *const cmd, int idx)
  * Perform a translation on an object by specifying points.
  */
 HIDDEN int
-edit_translate(struct ged *gedp, const vect_t *const from,
-	       const vect_t *const to,
-	       const struct db_full_path *const path)
+edit_translate(struct ged *gedp, const vect_t *from,
+	       const vect_t *to,
+	       const struct db_full_path *path)
 {
     struct directory *d_to_modify = NULL;
     struct directory *d_obj = NULL;
@@ -1438,8 +1438,8 @@ edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
     const vect_t *from = (const vect_t *)cmd->translate.ref_vector.from->vector;
     const vect_t *to = (const vect_t *)cmd->translate.ref_vector.to->vector;
     return edit_translate(gedp,
-			  (vect_t * const)from,
-			  (vect_t * const)to,
+			  from,
+			  to,
 			  (const struct db_full_path *)cmd->translate.objects->object);
 }
 
