@@ -226,7 +226,7 @@ chull3d_new_block_simplex(struct chull3d_data *cdata, int make_blocks)
 	memset(xbt,0,cdata->input_vert_cnt * cdata->simplex_size);
 	xlm = ((simplex*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->simplex_size));
 	for (i=0; i<cdata->input_vert_cnt; i++) {
-	    xlm = ((simplex*) ( (char*)xlm - cdata->simplex_size );
+	    xlm = ((simplex*) ( (char*)xlm - cdata->simplex_size ));
 	    xlm->next = cdata->simplex_list;
 	    cdata->simplex_list = xlm;
 	}
@@ -254,7 +254,7 @@ chull3d_new_block_basis_s(struct chull3d_data *cdata, int make_blocks)
 	memset(xbt,0,cdata->input_vert_cnt * cdata->basis_s_size);
 	xlm = ((basis_s*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->basis_s_size));
 	for (i=0; i<cdata->input_vert_cnt; i++) {
-	    xlm = ((basis_s*) ( (char*)xlm - cdata->basis_s_size );
+	    xlm = ((basis_s*) ( (char*)xlm - cdata->basis_s_size ));
 	    xlm->next = cdata->basis_s_list;
 	    cdata->basis_s_list = xlm;
 	}
@@ -282,7 +282,7 @@ chull3d_new_block_Tree(struct chull3d_data *cdata, int make_blocks) {
 	memset(xbt,0,cdata->input_vert_cnt * cdata->Tree_size);
 	xlm = ((Tree*) ( (char*)xbt + (cdata->input_vert_cnt) * cdata->Tree_size));
 	for (i=0; i<cdata->input_vert_cnt; i++) {
-	    xlm = ((Tree*) ( (char*)xlm -1 cdata->Tree_size );
+	    xlm = ((Tree*) ( (char*)xlm - cdata->Tree_size ));
 	    xlm->next = cdata->Tree_list;
 	    cdata->Tree_list = xlm;
 	}
