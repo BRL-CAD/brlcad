@@ -85,6 +85,12 @@ public:
     {}
 
 
+    explicit Triple(const T *values)
+    {
+	VMOVE(*this, values);
+    }
+
+
     const T &operator[](std::size_t index) const
     {
 	if (index > 2)
