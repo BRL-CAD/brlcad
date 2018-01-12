@@ -265,13 +265,20 @@ struct bu_opt_desc_opts {
 
 /**
  * initialize an bu_opt_desc_opts struct.
- * offset = 2 is a default offset into ...
- * option_columns = 28 is the index of ...
- * description_columns = 50 is ...
  *
- * FIXME: these three new magic numbers must be documented (why these
- * particular values), enough info to know how to update them or
- * recognize that their value is right or wrong.
+ * Out of the box, assume an overall column width of 80
+ * characters.  Given that width, we do a default partitioning.
+ * The first three numbers tell the option printer what column
+ * breakout to use for various components of the lines:
+ *
+ * offset = 2 is the default column offsetting from the left edge
+ * option_columns = The next 28 columns are for printing the option and its aliases
+ * description_columns = The remaining 50 columns are for human readable explanations of the option
+ *
+ * These values were chosen after some casual experimentation/observation to
+ * see what "looked right" for Linux command line option printing - if better
+ * values (perhaps based on some OS convention or standard) are available, it
+ * would be better to use those and document their source.
  */
 #define BU_OPT_DESC_OPTS_INIT_ZERO { BU_OPT_ASCII, 2, 28, 50, NULL, NULL, NULL, 1, NULL, NULL }
 
