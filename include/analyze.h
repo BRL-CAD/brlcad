@@ -217,69 +217,44 @@ analyze_heal_bot(struct rt_bot_internal *bot, double zipper_tol);
 
 #if 0
 /**
- *    A library implemantation of functionality originally developed in
+ *    A library implementation of functionality originally developed in
  *    Natalie's Interactive Ray Tracer (NIRT)
  */
 
-struct nirt_state {
-    /* PRIVATE - everything below should go into an opaque typedef */
-    struct application *ap;
-    /* scripts */
-    int script_cnt;
-    char **scripts;
-    /* runtime options */
-    int use_air;
-    int rt_bot_minpieces;
-    struct bu_color hit_color;
-    struct bu_color miss_color;
-    struct bu_color overlap_color;
-    /* state variables */
-    double azimuth;
-    double elevation;
-    vect_t direct;
-    vect_t target;
-    vect_t grid;
-    /* output options */
-    int print_header;
-    int print_ident_flag;
-    unsigned int rt_debug;
-    unsigned int nirt_debug;
+/** The opaque container that will hold NIRT's state. */
+typedef struct nirt_state NIRT;
 
-    /* PUBLIC*/
-    struct bu_vls *out;
-    struct bu_vls *err;
-    struct bn_vlist *segs;
-};
+/** Create and initialize a NIRT state. */
+ANALYZE_EXPORT int nirt_get(NIRT **ns);
 
+/** Free a NIRT state. */
+ANALYZE_EXPORT void nirt_put(NIRT *ns);
 
-ANALYZE_EXPORT int
-nirt_get(struct nirt_state **ns);
+/**
+ * NIRT uses formatting instructions to control its output settings.
+ * Parse the supplied format and set up the NIRT state's reporting
+ * accordingly.  Return 0 on success and -1 on parsing failure.
+ * See the nirt(5) man page for documentation of the syntax of
+ * the format instructions.
+ */
+ANALYZE_EXPORT int nirt_parse_frmt(NIRT *ns, const char *frmt);
 
-ANALYZE_EXPORT void
-nirt_put(struct nirt_state *ns);
+/* NIRT segment types */
+#define NIRT_HIT_SEG      1    /**< @brief Ray segment representing a solid region */
+#define NIRT_MISS_SEG     2    /**< @brief Ray segment representing a gap */
+#define NIRT_AIR_SEG      3    /**< @brief Ray segment representing an air region */
+#define NIRT_OVERLAP_SEG  4    /**< @brief Ray segment representing an overlap region */
 
-ANALYZE_EXPORT int
-nirt_parse_fmt(struct nirt_state *ns, const char *fmt);
+/* Set the color to be used when generating various types of NIRT line segments */
+ANALYZE_EXPORT int nirt_put_color(NIRT *ns, struct bu_color *c, int seg_type);
 
-ANALYZE_EXPORT int
-nirt_list_fmts(struct nirt_state *ns, bu_opt_format_t ofmt);
+/* Get the color to be used when generating a specific type of NIRT line segments */
+ANALYZE_EXPORT int nirt_get_color(struct bu_color *c, NIRT *ns, int seg_type);
 
 /* Appends a script to the enqueued array of scripts stored
  * in the nirt state.  This allows an application to build
  * up a sequence of steps which can be executed repeatedly */
-ANALYZE_EXPORT int
-nirt_enqueue_script(struct nirt_state *ns, const char *script);
-
-/* If script != NULL, remove the first (order = 0) or last (order = 1)
- * matching instance of the script from the queued array.  If script == NULL,
- * clear all enqueued scripts.  Returns -1 if a script was supplied and
- * no instance of it was cleared, and 0 otherwise. */
-ANALYZE_EXPORT int
-nirt_clear_scripts(struct nirt_state *ns, const char *script, int order);
-
-/* Lists available commands and their options. */
-ANALYZE_EXPORT int
-nirt_help(struct nirt_state *ns, bu_opt_format_t ofmt);
+ANALYZE_EXPORT int nirt_enqueue_script(NIRT *ns, const char *script);
 
 /* Runs either the supplied script (if script != NULL), or (if script == NULL)
  * the sequence of enqueued scripts stored in the state.
@@ -287,8 +262,36 @@ nirt_help(struct nirt_state *ns, bu_opt_format_t ofmt);
  * Each exec call clears out, err and segs.  Applications should
  * make copies of any previously generated output in those containers
  * they wish to save before calling exec */
-ANALYZE_EXPORT int
-nirt_exec(struct nirt_state *ns, const char *script);
+ANALYZE_EXPORT int nirt_exec(NIRT *ns, const char *script);
+
+/* Flags for clearing/resetting/reporting the NIRT state */
+#define NIRT_ALL      0x1    /**< @brief reset to initial state */
+#define NIRT_OUT      0x2    /**< @brief output log*/
+#define NIRT_ERR      0x4    /**< @brief error log */
+#define NIRT_SEGS     0x8    /**< @brief segment list */
+#define NIRT_SCRIPTS  0x10   /**< @brief enqueued scripts */
+#define NIRT_OBJS     0x20   /**< @brief 'active' objects from the scene */
+#define NIRT_FRMTS    0x40   /**< @brief available pre-defined output formats */
+
+/* Reset some or all of the NIRT state, depending on the supplied flags. If
+ * other flags are provided with NIRT_ALL, NIRT_ALL will skip the clearing
+ * step(s) specified by the other flag(s).  So, for example, if a caller
+ * wishes to reset the NIRT state but retain the existing scripts for re-use
+ * they could call with nirt_clear with NIRT_ALL|NIRT_SCRIPTS.  NIRT_FRMTS is
+ * a no-op for nirt_clear. */
+ANALYZE_EXPORT void nirt_clear(NIRT *ns, int flags);
+
+/* Report command output.  For SEGS, SCRIPTS, OBJS and FRMTS reports a textual
+ * list of the output.  Unlike clear, which takes the type as combinable
+ * flags, nirt_log expects only one type. */
+ANALYZE_EXPORT int nirt_log(struct bu_vls *o, NIRT *ns, int output_type);
+
+/* Reports available commands and their options. */
+ANALYZE_EXPORT int nirt_help(struct bu_vls *h, NIRT *ns, bu_opt_format_t ofmt);
+
+/* Return any line segments generated by processed commands in segs.  Returns number of
+ * line segments in segs. */
+ANALYZE_EXPORT int nirt_line_segments(struct bn_vlist **segs, NIRT *ns);
 
 #endif
 
