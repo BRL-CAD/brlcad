@@ -272,6 +272,7 @@ ANALYZE_EXPORT int nirt_exec(NIRT *ns, const char *script);
 #define NIRT_SCRIPTS  0x10   /**< @brief enqueued scripts */
 #define NIRT_OBJS     0x20   /**< @brief 'active' objects from the scene */
 #define NIRT_FRMTS    0x40   /**< @brief available pre-defined output formats */
+#define NIRT_SCENE    0x80   /**< @brief the current view (ae/dir/center/etc.) */
 
 /* Reset some or all of the NIRT state, depending on the supplied flags. If
  * other flags are provided with NIRT_ALL, NIRT_ALL will skip the clearing
@@ -286,6 +287,11 @@ ANALYZE_EXPORT void nirt_clear(NIRT *ns, int flags);
  * nirt_log expects only one type. Returns -1 if output can't be printed for
  * any reason (NULL input or unknown output_type) and 0 otherwise. */
 ANALYZE_EXPORT void nirt_log(struct bu_vls *o, NIRT *ns, int output_type);
+
+/* Report the last timestamp at which the information in the specified output
+ * type changed.  Intended to be used by external applications which are
+ * be updating their displays to reflect current NIRT state. */
+ANALYZE_EXPORT unsigned long nirt_changed(NIRT *ns, int output_type);
 
 /* Reports available commands and their options. Returns -1 if help can't be
  * printed for any reason (NULL input or unknown output type) and 0 otherwise.
