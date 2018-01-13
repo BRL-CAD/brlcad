@@ -52,6 +52,10 @@ gmtime64_r() is a 64-bit equivalent of gmtime_r().
 
 #include "bu/log.h"
 
+#if defined(HAVE_TZSET) && !defined(HAVE_DECL_TZSET)
+extern void tzset (void);
+#endif
+
 /* Max/min for mktime() */
 /* MODIFIED: Assign to each field so as not to depend on system field
    ordering

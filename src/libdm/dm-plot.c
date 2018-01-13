@@ -50,6 +50,13 @@
 
 #include "./dm_private.h"
 
+#if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN)
+extern FILE *popen(const char *command, const char *type);
+#endif
+#if defined(HAVE_PCLOSE) && !defined(HAVE_DECL_PCLOSE)
+extern int pclose(FILE *stream);
+#endif
+
 /* Display Manager package interface */
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */

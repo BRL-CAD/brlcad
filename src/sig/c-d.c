@@ -30,6 +30,9 @@
 #include "bu/exit.h"
 #include "vmath.h"
 
+#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT)
+extern double hypot(double x, double y);
+#endif
 
 int
 main(int argc, char *argv[])

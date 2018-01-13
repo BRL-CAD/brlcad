@@ -57,6 +57,8 @@
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
 #    define HAVE_DRAND48 1
 #    define srand48(seed) (srand(seed))
+#  elif !defined(HAVE_DECL_DRAND48) && !defined(__cplusplus)
+extern double drand48(void);
 #  endif
 
 /* make sure lrint() is provided */
@@ -67,6 +69,18 @@
 long int lrint(double x);
 #    define HAVE_LRINT 1
 #  endif
+
+/* strict c89 doesn't declare snprintf() */
+# if defined(HAVE_SNPRINTF) && !defined(HAVE_DECL_SNPRINTF) && !defined(__cplusplus)
+# include <stddef.h> /* for size_t */
+extern int snprintf(char *str, size_t size, const char *format, ...);
+# endif
+
+/* strict c89 doesn't declare fileno() */
+# if defined(HAVE_FILENO) && !defined(HAVE_DECL_FILENO) && !defined(__cplusplus)
+# include <stdio.h> /* for FILE */
+extern int fileno(FILE *stream);
+# endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
 

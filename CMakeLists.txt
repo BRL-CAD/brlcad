@@ -842,7 +842,7 @@ cmake_set_rpath()
 
 # C
 unset(CMAKE_C_STD_FLAG)
-set(CMAKE_C_EXTENSIONS ON)
+set(CMAKE_C_EXTENSIONS OFF)
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT MSVC)
   set(CMAKE_C_STANDARD 99)
   set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -1451,35 +1451,6 @@ mark_as_advanced(ENABLE_ALL_CXX_COMPILE)
 option(BRLCAD_ENABLE_COVERAGE "Build with coverage enabled" OFF)
 mark_as_advanced(BRLCAD_ENABLE_COVERAGE)
 
-#====== POSIX ===================
-# Build with strict POSIX compliance checking
-set(ENABLE_POSIX_COMPLIANCE_DESCRIPTION "
-Build with strict POSIX compliance checking.  Defaults to OFF.
-
-Causes compiler options to be set for strict compliance with the
-minimum C and C++ standards acceptable according to current BRL-CAD
-policy.  The current minimum C standard is ??.
-There is no currently defined minimum C++ standard.
-")
-BRLCAD_OPTION(ENABLE_POSIX_COMPLIANCE OFF
-  TYPE BOOL
-  ALIASES ENABLE_POSIX
-  DESCRIPTION ENABLE_POSIX_COMPLIANCE_DESCRIPTION)
-mark_as_advanced(ENABLE_POSIX_COMPLIANCE)
-
-#== ISO C ==
-set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_DESCRIPTION "
-Build with strict ISO C compliance checking.  Defaults to OFF.
-
-Causes C compiler options to be set for strict compliance with the
-appropriate ISO C standard.
-")
-BRLCAD_OPTION(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE OFF
-  TYPE BOOL
-  ALIASES STRICT_ISO_C
-  DESCRIPTION ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_DESCRIPTION)
-mark_as_advanced(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
-
 # Build with dtrace support
 option(BRLCAD_ENABLE_DTRACE "Build with dtrace support" OFF)
 mark_as_advanced(BRLCAD_ENABLE_DTRACE)
@@ -1712,41 +1683,13 @@ CHECK_CXX_FLAG(ftemplate-depth-128)
 # CHECK_C_FLAG(msse2)
 # CHECK_C_FLAG(msse3)
 
-if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
-  # we need to define some things as "empty" to avoid false positives
-  # for bu_* functions using varargs and print specifiers
-  CHECK_C_FLAG("D_BU_ATTR_PRINTF12=''")
-  CHECK_C_FLAG("D_BU_ATTR_PRINTF23=''")
-  CHECK_C_FLAG("D_BU_ATTR_SCANF23=''")
-  # a hack to temp work around signal() handling in interrupt.c
-  CHECK_C_FLAG("DC99_POSIX_USE_BSD")
-  #=== C++
-  # for bu_* functions using varargs and print specifiers
-  CHECK_CXX_FLAG("D_BU_ATTR_PRINTF12=''")
-  CHECK_CXX_FLAG("D_BU_ATTR_PRINTF23=''")
-  CHECK_CXX_FLAG("D_BU_ATTR_SCANF23=''")
-  # a hack to temp work around signal() handling in interrupt.c
-  CHECK_CXX_FLAG("DC99_POSIX_USE_BSD")
-endif(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
-
 # TODO - should be using this with MSVC, but it breaks the BUILD_SLEEP
 # try_compile below with errors that appear to be coming from Windows
 # headers??
 # CHECK_C_FLAG("Za")
 
-# What POSIX do we want to target, initially?  See
-# http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
-# for options...
-if(ENABLE_POSIX_COMPLIANCE)
-  # use this version so three non-C99 functions (without bu*
-  # replacements) will work (fileno, fdopen, and posix_memalign):
-  CHECK_C_FLAG("D_POSIX_C_SOURCE=200112L")
-  # need this for glibc < 2.12 (for gethostname):
-  CHECK_C_FLAG("D_XOPEN_SOURCE=500")
-  #=== same for C++
-  CHECK_CXX_FLAG("D_POSIX_C_SOURCE=200112L")
-  CHECK_CXX_FLAG("D_XOPEN_SOURCE=500")
-endif()
+# Need this for (at least) sys/ipc.h with C89
+CHECK_C_FLAG("D_XOPEN_SOURCE=500" VARS XOPEN_FLAG)
 
 # 64bit compilation flags
 if(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64)
@@ -2586,9 +2529,11 @@ BRLCAD_FUNCTION_EXISTS(_putenv_s)
 BRLCAD_FUNCTION_EXISTS(_splitpath)
 BRLCAD_FUNCTION_EXISTS(_strtoi64)
 BRLCAD_FUNCTION_EXISTS(alarm)
+BRLCAD_FUNCTION_EXISTS(asinh REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(dlopen)
 BRLCAD_FUNCTION_EXISTS(drand48)
 BRLCAD_FUNCTION_EXISTS(fchmod)
+BRLCAD_FUNCTION_EXISTS(fdopen)
 BRLCAD_FUNCTION_EXISTS(fsync)
 BRLCAD_FUNCTION_EXISTS(getcwd)
 BRLCAD_FUNCTION_EXISTS(getegid)
@@ -2599,15 +2544,24 @@ BRLCAD_FUNCTION_EXISTS(getloadavg)
 BRLCAD_FUNCTION_EXISTS(getopt_long)
 BRLCAD_FUNCTION_EXISTS(getprogname) # bsd
 BRLCAD_FUNCTION_EXISTS(htonll)
+BRLCAD_FUNCTION_EXISTS(hypot REQUIRED_LIBS ${M_LIBRARY})
+BRLCAD_FUNCTION_EXISTS(isascii)
+BRLCAD_FUNCTION_EXISTS(isinf REQUIRED_LIBS ${M_LIBRARY})
+BRLCAD_FUNCTION_EXISTS(isnan REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(logb REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(lrand48)
 BRLCAD_FUNCTION_EXISTS(mkstemp)
+BRLCAD_FUNCTION_EXISTS(modff REQUIRED_LIBS ${M_LIBRARY})
+BRLCAD_FUNCTION_EXISTS(nextafter REQUIRED_LIBS ${M_LIBRARY})
+BRLCAD_FUNCTION_EXISTS(nextafterf REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(ntohll)
 BRLCAD_FUNCTION_EXISTS(pipe)
 BRLCAD_FUNCTION_EXISTS(popen)
+BRLCAD_FUNCTION_EXISTS(pclose)
 BRLCAD_FUNCTION_EXISTS(posix_memalign) # IEEE Std 1003.1-2001
 BRLCAD_FUNCTION_EXISTS(random)
 BRLCAD_FUNCTION_EXISTS(realpath)
+BRLCAD_FUNCTION_EXISTS(rint REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(setenv)
 BRLCAD_FUNCTION_EXISTS(setpgid)
 BRLCAD_FUNCTION_EXISTS(setpriority)
@@ -2621,13 +2575,16 @@ BRLCAD_FUNCTION_EXISTS(strcasecmp)
 BRLCAD_FUNCTION_EXISTS(strdup)
 BRLCAD_FUNCTION_EXISTS(strlcat)
 BRLCAD_FUNCTION_EXISTS(strlcpy)
-BRLCAD_FUNCTION_EXISTS(strtoll)
 BRLCAD_FUNCTION_EXISTS(strncasecmp)
+BRLCAD_FUNCTION_EXISTS(strtoll)
 BRLCAD_FUNCTION_EXISTS(sync)
 BRLCAD_FUNCTION_EXISTS(sysconf)
 BRLCAD_FUNCTION_EXISTS(sysctl)
 BRLCAD_FUNCTION_EXISTS(sysmp)
+BRLCAD_FUNCTION_EXISTS(toascii)
+BRLCAD_FUNCTION_EXISTS(tzset)
 BRLCAD_FUNCTION_EXISTS(vfork)
+BRLCAD_FUNCTION_EXISTS(vsnprintf)
 BRLCAD_FUNCTION_EXISTS(vsscanf)
 BRLCAD_FUNCTION_EXISTS(writev)
 
@@ -2724,45 +2681,6 @@ BRLCAD_FUNCTION_EXISTS(tgamma COMPILE_TEST_SRCS tgamma_test REQUIRED_LIBS ${M_LI
 check_cxx_source_compiles("#include <cmath>\nint main() {return logb(3.14);}" HAVE_CXX_LOGB)
 CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_CXX_LOGB 1\n")
 
-#-----------------------------------------------------------------------
-# check C99 and POSIX 200112L missing functions with a more
-# rigorously-controlled compiler environment
-if(ENABLE_POSIX_COMPLIANCE
-    OR ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
-
-  set(needed_FUNCS
-    test_fdopen
-    test_fileno
-    test_realpath
-    test_gethostname
-    test_posix_memalign
-    test_strcasecmp
-    test_strncasecmp
-    test_sigaction
-    test_strtok_r
-    )
-
-  foreach(tprog ${needed_FUNCS})
-    # remove "test_" from tprog
-    STRING(REGEX REPLACE "test_" "" func ${tprog})
-    STRING(TOUPPER "${func}" FUNC)
-
-    TRY_COMPILE(success
-      "${CMAKE_BINARY_DIR}/test_funcs"
-      "${CMAKE_SOURCE_DIR}/misc/CMake/compat/${tprog}.c"
-      CMAKE_FLAGS "${CMAKE_C_FLAGS}"
-      )
-
-    if(success)
-      CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_${FUNC}_FUNCTION 1\n")
-      message("Try compile '${tprog}.c' (function ${func}) SUCCESS")
-    else()
-      message("Try compile '${tprog}.c' (function ${func}) FAIL")
-    endif()
-
-  endforeach()
-
-endif()
 #-----------------------------------------------------------------------
 
 # On Windows, we need to check for hypot etc.  This test pertains

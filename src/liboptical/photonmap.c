@@ -39,6 +39,9 @@
 #include "bu/parallel.h"
 #include "photonmap.h"
 
+#if defined(HAVE_SRAND48) && !defined(HAVE_DECL_SRAND48)
+extern void srand48(long int seedval);
+#endif
 
 int PM_Activated;
 int PM_Visualize;

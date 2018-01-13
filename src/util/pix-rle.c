@@ -33,6 +33,9 @@
 #include "bu/exit.h"
 #include "fb.h"
 
+#if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME)
+extern int gethostname(char *name, size_t len);
+#endif
 
 /*
  * system installed RLE reports a re-define, so undef it to quell the

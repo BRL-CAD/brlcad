@@ -87,6 +87,10 @@
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
 
+#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII)
+extern int isascii(int c);
+#endif
+
 extern void draw_e_axes(void);
 extern void draw_m_axes(void);
 extern void draw_v_axes(void);

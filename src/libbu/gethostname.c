@@ -27,6 +27,10 @@
 #include "bu/str.h"
 #include "bu/endian.h"
 
+/* strict c89 doesn't declare gethostname() */
+#if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME)
+extern int gethostname(char *name, size_t len);
+#endif
 
 int
 bu_gethostname(char *hostname, size_t hostlen)

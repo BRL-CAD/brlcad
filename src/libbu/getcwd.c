@@ -42,6 +42,10 @@
 #include "bu/log.h"
 #include "bu/exit.h"
 
+/* c89 strict doesn't declare realpath */
+#if defined(HAVE_REALPATH) && !defined(HAVE_DECL_REALPATH)
+extern char *realpath(const char *path, char *resolved_path);
+#endif
 
 char *
 bu_getcwd(char *buf, size_t size)

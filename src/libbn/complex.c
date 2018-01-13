@@ -27,6 +27,9 @@
 #include "vmath.h"
 #include "bn/complex.h"
 
+#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT)
+extern double hypot(double x, double y);
+#endif
 
 void
 bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)

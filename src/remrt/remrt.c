@@ -49,6 +49,16 @@
 #include "bresource.h"
 #include "bsocket.h"
 
+#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
+#if defined(HAVE_VFORK) && !defined(HAVE_DECL_VFORK)
+extern pid_t vfork(void);
+#endif
+#if defined(HAVE_FCHMOD) && !defined(HAVE_DECL_FCHMOD)
+extern int fchmod(int fd, mode_t mode);
+#endif
+
 /* FIXME: is this basically FD_COPY()? */
 #ifndef FD_MOVE
 #  define FD_MOVE(a, b) { unsigned int _i; for (_i = 0; _i < FD_SETSIZE; _i++) \

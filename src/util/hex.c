@@ -38,6 +38,9 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 
+#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII)
+extern int isascii(int c);
+#endif
 
 /* declarations to support use of bu_getopt() system call */
 static char options[] = "o:";

@@ -35,6 +35,10 @@
 
 #include "fft.h"
 
+#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT)
+extern double hypot(double x, double y);
+#endif
+
 /*
  * Returns the magnitude of the transfer function Hs(s) for a 1/3
  * octave 6-pole Butterworth bandpass filter of the given frequency.

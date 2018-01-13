@@ -36,6 +36,10 @@
 #include "fb.h"
 #include "rle.h"
 
+#if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME)
+extern int gethostname(char *name, size_t len);
+#endif
+
 
 #define COMMENT_SIZE 512
 

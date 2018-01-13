@@ -45,6 +45,12 @@
 /* extern int fchmod(int, mode_t); */
 /* use correct fchmod decl: */
 #  include <sys/stat.h>
+
+/* c89 strict doesn't declare fchmod */
+# ifndef HAVE_DECL_FCHMOD
+extern int fchmod(int fd, mode_t mode);
+# endif
+
 #else
 
 /* Presumably Windows, pulled from MSDN sample code */

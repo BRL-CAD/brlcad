@@ -173,6 +173,10 @@
 
 #include "../../librt_private.h"
 
+#if defined(HAVE_ASINH) && !defined(HAVE_DECL_ASINH)
+extern double asinh(double x);
+#endif
+
 static int rpc_is_valid(struct rt_rpc_internal *rpc);
 
 struct rpc_specific {

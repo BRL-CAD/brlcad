@@ -46,6 +46,14 @@
 
 /* #define HAVE_IEEE754 1 */
 
+#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN)
+extern int isnan(double x);
+#endif
+
+#if defined(HAVE_ISINF) && !defined(HAVE_DECL_ISINF)
+extern int isinf(double x);
+#endif
+
 double
 bn_epsilon(void)
 {

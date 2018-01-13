@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 
@@ -35,6 +36,12 @@
 
 #include "./ged_private.h"
 
+#if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN)
+extern FILE *popen(const char *command, const char *type);
+#endif
+#if defined(HAVE_PCLOSE) && !defined(HAVE_DECL_PCLOSE)
+extern int pclose(FILE *stream);
+#endif
 
 /*
  * plot file [opts]

@@ -45,6 +45,13 @@
 #include "./try.h"
 #include "./extern.h"
 
+#if defined(HAVE_KILL) && !defined(__cplusplus)
+extern int kill(pid_t, int);
+#endif
+#if defined(HAVE_TOASCII) && !defined(HAVE_DECL_TOASCII)
+extern int toascii(int c);
+#endif
+
 #if !defined(NSIG)
 #  define NSIG	64		/* conservative */
 #endif

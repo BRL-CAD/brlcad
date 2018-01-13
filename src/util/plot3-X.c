@@ -37,6 +37,10 @@
 #include "bu/log.h"
 #include "bu/str.h"
 
+#if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME)
+extern int gethostname(char *name, size_t len);
+#endif
+
 #define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
 #define TSHORT	2	/* Vax 16-bit short */
