@@ -21,6 +21,9 @@
 #include "common.h"
 
 #ifdef HAVE_INTTYPES_H
+#  if defined(__cplusplus)
+#  define __STDC_FORMAT_MACROS
+#  endif
 #  include <inttypes.h>
 #else
 #  include "pinttypes.h"

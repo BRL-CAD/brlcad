@@ -521,7 +521,7 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
     int offset = 1;
     const char *opt;
     char *optcpy;
-    char *equal_pos;
+    const char *equal_pos;
     if (!eq_arg && !opt_candidate) return 0;
     if (opt_candidate[1] == '-') offset++;
     equal_pos = strchr(opt_candidate, '=');

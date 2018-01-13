@@ -155,7 +155,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
     int ret = 0;
     char *basename = NULL;
     char *dirname = NULL;
-    char *period_pos = NULL;
+    const char *period_pos = NULL;
 
     /* nothing to match is a match */
     if (UNLIKELY(!path) || UNLIKELY(strlen(path)) == 0)
