@@ -1077,7 +1077,7 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
      * based upon the "unit number" or flags.
      * file = "/dev/ogl###"
      */
-    mode = MODE_2LINGERING | MODE_1MALLOC | MODE_12DELAY_WRITES_TILL_FLUSH;
+    mode = MODE_2LINGERING | MODE_12DELAY_WRITES_TILL_FLUSH;
 
     if (file != NULL) {
 	const char *cp;
