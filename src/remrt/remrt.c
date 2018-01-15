@@ -46,16 +46,17 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* sometimes includes <time.h> */
 #endif
+#include "bio.h"
 #include "bresource.h"
 #include "bsocket.h"
 
-#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
+#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN) && !defined(fdopen)
 extern FILE *fdopen(int fd, const char *mode);
 #endif
-#if defined(HAVE_VFORK) && !defined(HAVE_DECL_VFORK)
+#if defined(HAVE_VFORK) && !defined(HAVE_DECL_VFORK) && !defined(vfork)
 extern pid_t vfork(void);
 #endif
-#if defined(HAVE_FCHMOD) && !defined(HAVE_DECL_FCHMOD)
+#if defined(HAVE_FCHMOD) && !defined(HAVE_DECL_FCHMOD) && !defined(fchmod)
 extern int fchmod(int fd, mode_t mode);
 #endif
 

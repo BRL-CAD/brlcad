@@ -53,7 +53,7 @@
 /* Simulates drand48() functionality using rand() which is assumed to
  * exist everywhere. The range is [0, 1).
  */
-#  ifndef HAVE_DRAND48
+#  if !defined(HAVE_DRAND48) && !defined(drand48)
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
 #    define HAVE_DRAND48 1
 #    define srand48(seed) (srand(seed))
@@ -71,13 +71,13 @@ long int lrint(double x);
 #  endif
 
 /* strict c89 doesn't declare snprintf() */
-# if defined(HAVE_SNPRINTF) && !defined(HAVE_DECL_SNPRINTF) && !defined(__cplusplus)
+# if defined(HAVE_SNPRINTF) && !defined(HAVE_DECL_SNPRINTF) && !defined(snprintf) && !defined(__cplusplus)
 # include <stddef.h> /* for size_t */
 extern int snprintf(char *str, size_t size, const char *format, ...);
 # endif
 
 /* strict c89 doesn't declare fileno() */
-# if defined(HAVE_FILENO) && !defined(HAVE_DECL_FILENO) && !defined(__cplusplus)
+# if defined(HAVE_FILENO) && !defined(HAVE_DECL_FILENO) && !defined(fileno) && !defined(__cplusplus)
 # include <stdio.h> /* for FILE */
 extern int fileno(FILE *stream);
 # endif

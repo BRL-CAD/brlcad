@@ -25,7 +25,7 @@
 
 #include "bu.h"
 
-#if defined(HAVE_ISINF) && !defined(HAVE_DECL_ISINF)
+#if defined(HAVE_ISINF) && !defined(HAVE_DECL_ISINF) && !defined(isinf)
 extern int isinf(double x);
 #endif
 

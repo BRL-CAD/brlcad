@@ -32,7 +32,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN)
+#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan)
 extern int isnan(double x);
 #endif
 

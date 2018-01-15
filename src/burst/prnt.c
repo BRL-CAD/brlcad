@@ -41,7 +41,7 @@
 #include "./ascii.h"
 #include "./extern.h"
 
-#if defined(HAVE_VSNPRINTF) && !defined(HAVE_DECL_VSNPRINTF)
+#if defined(HAVE_VSNPRINTF) && !defined(HAVE_DECL_VSNPRINTF) && !defined(vsnprintf)
 extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #endif
 
