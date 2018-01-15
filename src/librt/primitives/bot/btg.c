@@ -38,10 +38,6 @@
 #include "btg.h"
 #include "../../librt_private.h"
 
-#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN)
-extern int isnan(double x);
-#endif
-
 #include "tie.c"
 #include "tie_kdtree.c"
 
