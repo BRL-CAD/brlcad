@@ -2590,23 +2590,11 @@ BRLCAD_FUNCTION_EXISTS(writev)
 # mode, if they are present. For those cases, we need to record the DECL
 # test result.
 BRLCAD_FUNCTION_EXISTS(kill)
-if(HAVE_DECL_KILL)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_KILL 1\n")
-endif(HAVE_DECL_KILL)
 BRLCAD_FUNCTION_EXISTS(fileno)
-if(HAVE_DECL_FILENO)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_FILENO 1\n")
-endif(HAVE_DECL_FILENO)
 
 # check for popen/pclose
 BRLCAD_FUNCTION_EXISTS(popen)
-if(HAVE_DECL_POPEN)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_POPEN 1\n")
-endif(HAVE_DECL_POPEN)
 BRLCAD_FUNCTION_EXISTS(pclose)
-if(HAVE_DECL_PCLOSE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_PCLOSE 1\n")
-endif(HAVE_DECL_PCLOSE)
 
 # test for daemon(), which is deprecated on Mac OS X 10.5+
 BRLCAD_FUNCTION_EXISTS(daemon)

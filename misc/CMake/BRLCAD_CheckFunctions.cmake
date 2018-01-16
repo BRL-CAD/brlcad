@@ -98,7 +98,8 @@ endfunction(std_hdr_defs)
 
 ###
 # Check if a function exists (i.e., compiles to a valid symbol).  Adds
-# HAVE_* define to config header.
+# HAVE_* define to config header, and HAVE_DECL_* and HAVE_WORKING_* if
+# those tests are performed and successful.
 ###
 macro(BRLCAD_FUNCTION_EXISTS function)
 
@@ -151,10 +152,15 @@ macro(BRLCAD_FUNCTION_EXISTS function)
 	endif(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
 	set(HAVE_DECL_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache decl test result")
       endif(NOT DEFINED HAVE_DECL_${var})
+      # The config file is regenerated every time CMake is run, so we
+      # always need this bit even if the testing is already complete.
+      if(CONFIG_H_FILE AND HAVE_DECL_${var})
+	CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_${var} 1\n")
+      endif(CONFIG_H_FILE AND HAVE_DECL_${var})
 
       # If we have sources supplied for the purpose, test if the function is working.
-      if(NOT DEFINED HAVE_WORKING_${var})
-	if(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+      if(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+	if(NOT DEFINED HAVE_WORKING_${var})
 	  set(HAVE_WORKING_${var} 1)
 	  foreach(test_src ${${var}_DECL_TEST_SRCS})
 	    check_c_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
@@ -163,8 +169,13 @@ macro(BRLCAD_FUNCTION_EXISTS function)
 	    endif(NOT ${var}_${test_src}_COMPILE)
 	  endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
 	  set(HAVE_WORKING_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache working test result")
-	endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
-      endif(NOT DEFINED HAVE_WORKING_${var})
+	endif(NOT DEFINED HAVE_WORKING_${var})
+	# The config file is regenerated every time CMake is run, so we
+	# always need this bit even if the testing is already complete.
+	if(CONFIG_H_FILE AND HAVE_WORKING_${var})
+	  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_${var} 1\n")
+	endif(CONFIG_H_FILE AND HAVE_WORKING_${var})
+      endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
 
     endif(HAVE_${var})
 
@@ -175,7 +186,7 @@ macro(BRLCAD_FUNCTION_EXISTS function)
   # The config file is regenerated every time CMake is run, so we
   # always need this bit even if the testing is already complete.
   if(CONFIG_H_FILE AND HAVE_${var})
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_${var} 1\n")
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_${var} 1\n")
   endif(CONFIG_H_FILE AND HAVE_${var})
 
 endmacro(BRLCAD_FUNCTION_EXISTS)
