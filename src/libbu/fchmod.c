@@ -47,7 +47,7 @@
 #  include <sys/stat.h>
 
 /* c89 strict doesn't declare fchmod */
-# ifndef HAVE_DECL_FCHMOD
+# if !defined(HAVE_DECL_FCHMOD) && !defined(__cplusplus)
 extern int fchmod(int fd, mode_t mode);
 # endif
 
