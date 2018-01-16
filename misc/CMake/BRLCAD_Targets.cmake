@@ -99,10 +99,15 @@ function(FILE_LANG sfile outvar)
     return()
   endif("${srcfile}" MATCHES "<TARGET_OBJECTS:")
 
-  # Try property first
+  # If we're building all CXX, assume CXX
+  if(ENABLE_ALL_CXX_COMPILE)
+    set(file_language CXX)
+  endif(ENABLE_ALL_CXX_COMPILE)
+
+  # Try LANGUAGE property
   get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
 
-  # If that doesn't work, go with extension
+  # If we still don't know, go with extension
   if(NOT file_language)
 
     get_filename_component(srcfile_ext ${srcfile} EXT)
@@ -247,32 +252,51 @@ endfunction(GET_FLAGS_AND_DEFINITIONS)
 
 # For simplicity, always set compile definitions and compile flags on files rather
 # than build targets (less logic, simplifies dealing with OBJECT libraries.)
-# TODO - remove duplicates, which may occur if more than one target uses the same
-# source file (i.e. rt, rtweight, etc...)
 function(SET_FLAGS_AND_DEFINITIONS srcslist)
 
   cmake_parse_arguments(S "NO_STRICT_CXX" "TARGET" "CFLAGS;CXXFLAGS;DEFINES;DLL_DEFINES" ${ARGN})
 
   foreach(srcfile ${srcslist})
 
+    # Find existing definitions so we aren't adding duplicates
+    get_property(E_DEFINES SOURCE ${srcfile} PROPERTY COMPILE_DEFINITIONS)
+    set(W_DEFINES ${S_DEFINES})
+    if(W_DEFINES)
+      foreach(df ${E_DEFINES})
+	list(REMOVE_ITEM W_DEFINES ${df})
+      endforeach(df ${E_DEFINES})
+    endif(W_DEFINES)
+
     # Defines apply across C/C++
-    foreach(tdef ${S_DEFINES})
+    foreach(tdef ${W_DEFINES})
       set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "${tdef}")
-    endforeach(tdef ${S_DEFINES})
+    endforeach(tdef ${W_DEFINES})
 
     # C or C++?
-    FILE_LANG("${srcfile}" flang)
+    FILE_LANG("${srcfile}" file_language)
 
     # Handle C files
     if("${file_language}" STREQUAL "C")
 
-      foreach(tflag ${S_CFLAGS})
+      # Find existing flags so we aren't adding duplicates
+      get_property(E_CFLAGS SOURCE ${srcfile} PROPERTY COMPILE_FLAGS)
+      set(W_CFLAGS ${S_CFLAGS})
+      if(W_CFLAGS)
+	foreach(df ${E_CFLAGS})
+	  list(REMOVE_ITEM W_CFLAGS ${df})
+	endforeach(df ${E_CFLAGS})
+      endif(W_CFLAGS)
+
+      foreach(tflag ${W_CFLAGS})
 	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "${tflag}")
-      endforeach(tflag ${S_CFLAGS})
+      endforeach(tflag ${W_CFLAGS})
 
       # Handle inline definition for C files only
       if(NOT "${C_INLINE}" STREQUAL "inline")
-	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
+	list(FIND E_DEFINES "inline=${C_INLINE}" HAVE_INLINE_DEF)
+	if("${HAVE_INLINE_DEF}" EQUAL -1)
+	  set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
+	endif("${HAVE_INLINE_DEF}" EQUAL -1)
       endif(NOT "${C_INLINE}" STREQUAL "inline")
 
       # Handle disabling of strict compilation if target requires that
@@ -285,9 +309,18 @@ function(SET_FLAGS_AND_DEFINITIONS srcslist)
     # Handle C++ files
     if("${file_language}" STREQUAL "C++")
 
-      foreach(tflag ${S_CXXFLAGS})
+      # Find existing flags so we aren't adding duplicates
+      get_property(E_CXXFLAGS SOURCE ${srcfile} PROPERTY COMPILE_FLAGS)
+      set(W_CXXFLAGS ${S_CXXFLAGS})
+      if(W_CXXFLAGS)
+	foreach(df ${E_CXXFLAGS})
+	  list(REMOVE_ITEM W_CXXFLAGS ${df})
+	endforeach(df ${E_CXXFLAGS})
+      endif(W_CXXFLAGS)
+
+      foreach(tflag ${W_CXXFLAGS})
 	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "${tflag}")
-      endforeach(tflag ${S_CXXFLAGS})
+      endforeach(tflag ${W_CXXFLAGS})
 
       # Handle disabling of strict compilation if target requires that
       if( (S_NO_STRICT OR _S_NO_STRICT_CXX) AND NOERROR_FLAG_CXX AND BRLCAD_ENABLE_STRICT)
@@ -295,7 +328,6 @@ function(SET_FLAGS_AND_DEFINITIONS srcslist)
       endif( (S_NO_STRICT OR _S_NO_STRICT_CXX) AND NOERROR_FLAG_CXX AND BRLCAD_ENABLE_STRICT)
 
     endif("${file_language}" STREQUAL "C++")
-
 
   endforeach(srcfile ${srcslist})
 
