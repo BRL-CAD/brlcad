@@ -34,8 +34,12 @@
 
 #include "bio.h"
 
-
 #include "tieprivate.h"
+
+#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan)
+extern int isnan(double x);
+#endif
+
 
 #define TIE_TAB1 "\1\0\0\2\2\1"	/* Triangle Index Table */
 
