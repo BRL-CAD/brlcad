@@ -105,7 +105,7 @@ bu_crashreport(const char *filename)
     path = bu_which("uname");
     if (path) {
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
-#if defined(HAVE_POPEN)
+#ifdef HAVE_POPEN
 	popenfp = popen(buffer, "r");
 	if (!popenfp) {
 	    perror("unable to popen uname");
@@ -125,7 +125,7 @@ bu_crashreport(const char *filename)
 		    perror("fwrite failed");
 	    }
 	}
-#if defined(HAVE_POPEN)
+#ifdef HAVE_POPEN
 	(void)pclose(popenfp);
 #endif
 	popenfp = NULL;
@@ -137,7 +137,7 @@ bu_crashreport(const char *filename)
     if (path) {
 	/* need 2>&1 to capture stderr junk from sysctl on Mac OS X for kern.exec */
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
-#if defined(HAVE_POPEN)
+#ifdef HAVE_POPEN
 	popenfp = popen(buffer, "r");
 	if (popenfp == (FILE *)NULL) {
 	    perror("unable to popen sysctl");
@@ -163,7 +163,7 @@ bu_crashreport(const char *filename)
 		    perror("fwrite failed");
 	    }
 	}
-#if defined(HAVE_POPEN)
+#ifdef HAVE_POPEN
 	(void)pclose(popenfp);
 #endif
 	popenfp = NULL;

@@ -2592,9 +2592,8 @@ BRLCAD_FUNCTION_EXISTS(writev)
 BRLCAD_FUNCTION_EXISTS(kill)
 BRLCAD_FUNCTION_EXISTS(fileno)
 
-# check for popen/pclose
+# check for popen (implies pclose)
 BRLCAD_FUNCTION_EXISTS(popen)
-BRLCAD_FUNCTION_EXISTS(pclose)
 
 # test for daemon(), which is deprecated on Mac OS X 10.5+
 BRLCAD_FUNCTION_EXISTS(daemon)

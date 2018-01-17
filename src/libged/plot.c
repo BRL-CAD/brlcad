@@ -33,15 +33,15 @@
 #include "bn.h"
 #include "bn/plot3.h"
 
-
 #include "./ged_private.h"
 
-#if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN)
+#if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN) && !defined(popen)
 extern FILE *popen(const char *command, const char *type);
 #endif
-#if defined(HAVE_PCLOSE) && !defined(HAVE_DECL_PCLOSE)
+#if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(pclose)
 extern int pclose(FILE *stream);
 #endif
+
 
 /*
  * plot file [opts]
