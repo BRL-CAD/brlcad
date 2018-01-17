@@ -215,7 +215,6 @@ analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
 ANALYZE_EXPORT void
 analyze_heal_bot(struct rt_bot_internal *bot, double zipper_tol);
 
-#if 0
 /**
  *    A library implementation of functionality originally developed in
  *    Natalie's Interactive Ray Tracer (NIRT)
@@ -224,55 +223,31 @@ analyze_heal_bot(struct rt_bot_internal *bot, double zipper_tol);
 /** The opaque container that will hold NIRT's state. */
 typedef struct nirt_state NIRT;
 
+#if 0
 /** Create and initialize a NIRT state. */
-ANALYZE_EXPORT int nirt_get(NIRT **ns);
+ANALYZE_EXPORT int nirt_create(NIRT **ns, struct db_i *dbip);
 
-/** Free a NIRT state. */
-ANALYZE_EXPORT void nirt_put(NIRT *ns);
-
-/**
- * NIRT uses formatting instructions to control its output settings.
- * Parse the supplied format and set up the NIRT state's reporting
- * accordingly.  Return 0 on success and -1 on parsing failure.
- * See the nirt(5) man page for documentation of the syntax of
- * the format instructions.
- */
-ANALYZE_EXPORT int nirt_parse_frmt(NIRT *ns, const char *frmt);
-
-/* NIRT segment types */
-#define NIRT_HIT_SEG      1    /**< @brief Ray segment representing a solid region */
-#define NIRT_MISS_SEG     2    /**< @brief Ray segment representing a gap */
-#define NIRT_AIR_SEG      3    /**< @brief Ray segment representing an air region */
-#define NIRT_OVERLAP_SEG  4    /**< @brief Ray segment representing an overlap region */
-
-/* Set the color to be used when generating various types of NIRT line segments */
-ANALYZE_EXPORT int nirt_put_color(NIRT *ns, struct bu_color *c, int seg_type);
-
-/* Get the color to be used when generating a specific type of NIRT line segments */
-ANALYZE_EXPORT int nirt_get_color(struct bu_color *c, NIRT *ns, int seg_type);
-
-/* Appends a script to the enqueued array of scripts stored
- * in the nirt state.  This allows an application to build
- * up a sequence of steps which can be executed repeatedly */
-ANALYZE_EXPORT int nirt_enqueue_script(NIRT *ns, const char *script);
+/** Clean up and free a NIRT state. */
+ANALYZE_EXPORT void nirt_destroy(NIRT *ns);
 
 /* Runs either the supplied script (if script != NULL), or (if script == NULL)
  * the sequence of enqueued scripts stored in the state.
  *
  * Returns -1 if there was any sort of error, 0 if the script(s) executed
- * successfully.
+ * successfully without a quit call, and 1 if a quit command was encountered
+ * during execution.
  */
 ANALYZE_EXPORT int nirt_exec(NIRT *ns, const char *script);
 
 /* Flags for clearing/resetting/reporting the NIRT state */
-#define NIRT_ALL      0x1    /**< @brief reset to initial state */
+#define NIRT_ALL      0x1    /**< @brief reset to initial state or report all state */
 #define NIRT_OUT      0x2    /**< @brief output log*/
 #define NIRT_ERR      0x4    /**< @brief error log */
 #define NIRT_SEGS     0x8    /**< @brief segment list */
 #define NIRT_SCRIPTS  0x10   /**< @brief enqueued scripts */
 #define NIRT_OBJS     0x20   /**< @brief 'active' objects from the scene */
 #define NIRT_FRMTS    0x40   /**< @brief available pre-defined output formats */
-#define NIRT_SCENE    0x80   /**< @brief the current view (ae/dir/center/etc.) */
+#define NIRT_VIEW     0x80   /**< @brief the current view (ae/dir/center/etc.) */
 
 /* Reset some or all of the NIRT state, depending on the supplied flags. If
  * other flags are provided with NIRT_ALL, NIRT_ALL will skip the clearing
@@ -288,10 +263,10 @@ ANALYZE_EXPORT void nirt_clear(NIRT *ns, int flags);
  * any reason (NULL input or unknown output_type) and 0 otherwise. */
 ANALYZE_EXPORT void nirt_log(struct bu_vls *o, NIRT *ns, int output_type);
 
-/* Report the last timestamp at which the information in the specified output
- * type changed.  Intended to be used by external applications which are
- * be updating their displays to reflect current NIRT state. */
-ANALYZE_EXPORT unsigned long nirt_changed(NIRT *ns, int output_type);
+/* Report whether the specified data type was changed by the last exec.
+ * Intended to be used by external applications which are be updating their
+ * displays to reflect current NIRT state. */
+ANALYZE_EXPORT unsigned int nirt_changed(NIRT *ns, int output_type);
 
 /* Reports available commands and their options. Returns -1 if help can't be
  * printed for any reason (NULL input or unknown output type) and 0 otherwise.
