@@ -1,0 +1,22 @@
+BRL-CAD has long followed a pattern of library interface design that exposes
+Application Programming Interfaces (APIs) using the C programming language.
+The universality and relative simplicity of working with C libraries makes that
+language an appealing one to standardize on when defining externally visible
+interfaces.
+
+However, modern trends in language development and compiler implementation have
+concentrated many interesting new features in the C++ language.  That means
+coders designing and implementing BRL-CAD libraries need to be aware of how and
+when to "hide" implementation details (and when not to) and what the potential
+pitfalls are of various approaches.  The Pointer to Implementation (or "PImpl")
+pattern is the preferred pattern for BRL-CAD, except in cases where using it
+has significant negative performance implications.
+
+The examples implement various approaches to a simple unique number set
+construction problem to illustrate various approaches and why the PImpl pattern
+is preferred for BRL-CAD's code base.  The overall paradigm is a calling
+application that uses routines from a library to do the work (not necessary for
+such a simple problem, but illustrative of how larger problems are approached.)
+The examples work from a very basic exposed C structure up to a PImpl
+implementation using C++ under the hood.
+
