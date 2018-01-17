@@ -241,27 +241,22 @@ CMAKEFILES(
 
 # Generic C/C++ examples
 CMAKEFILES(
-  c_cxx_patterns/01_basic_C
   c_cxx_patterns/01_basic_C/CMakeLists.txt
   c_cxx_patterns/01_basic_C/main.c
   c_cxx_patterns/01_basic_C/nlib.c
   c_cxx_patterns/01_basic_C/nlib.h
-  c_cxx_patterns/02_hidden_C
   c_cxx_patterns/02_hidden_C/CMakeLists.txt
   c_cxx_patterns/02_hidden_C/main.c
   c_cxx_patterns/02_hidden_C/nlib.c
   c_cxx_patterns/02_hidden_C/nlib.h
-  c_cxx_patterns/03_PImpl_C
   c_cxx_patterns/03_PImpl_C/CMakeLists.txt
   c_cxx_patterns/03_PImpl_C/main.c
   c_cxx_patterns/03_PImpl_C/nlib.c
   c_cxx_patterns/03_PImpl_C/nlib.h
-  c_cxx_patterns/04_hidden_CXX
   c_cxx_patterns/04_hidden_CXX/CMakeLists.txt
   c_cxx_patterns/04_hidden_CXX/main.c
   c_cxx_patterns/04_hidden_CXX/nlib.cxx
   c_cxx_patterns/04_hidden_CXX/nlib.h
-  c_cxx_patterns/05_PImpl_CXX
   c_cxx_patterns/05_PImpl_CXX/CMakeLists.txt
   c_cxx_patterns/05_PImpl_CXX/main.c
   c_cxx_patterns/05_PImpl_CXX/nlib.cxx
