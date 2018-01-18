@@ -460,43 +460,38 @@ endfunction(BRLCAD_ALLOCA)
 # See if the compiler supports the C99 %z print specifier for size_t.
 # Sets -DHAVE_STDINT_H=1 as global preprocessor flag if found.
 ###
-function(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
+function(BRLCAD_CHECK_PERCENT_Z)
 
   check_include_file(stdint.h HAVE_STDINT_H)
 
-  set(CHECK_C99_FORMAT_SPECIFIERS_SRC "
+  set(CHECK_PERCENT_Z_SRC "
 #ifdef HAVE_STDINT_H
 #  include <stdint.h>
 #endif
 #include <stdio.h>
-#include <string.h>
 int main(int ac, char *av[])
 {
   char buf[64] = {0};
-  if (sprintf(buf, \"%zu\", (size_t)1234) != 4)
+  if (sprintf(buf, \"%zu\", (size_t)1) != 1 || buf[0] != 1 || buf[1] != 0)
     return 1;
-  else if (strcmp(buf, \"1234\"))
-    return 2;
-  else if (ac < 0 || !av)
-    return 3;
-  return 0;
+  return (ac < 0) ? (int)av[0][0] : 0;
 }
 ")
 
-  if(NOT DEFINED HAVE_C99_FORMAT_SPECIFIERS)
+  if(NOT DEFINED HAVE_PERCENT_Z)
     cmake_push_check_state()
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
     if(HAVE_STDINT_H)
       set(CMAKE_REQUIRED_DEFINITIONS "-DHAVE_STDINT_H=1")
     endif(HAVE_STDINT_H)
-    check_c_source_runs("${CHECK_C99_FORMAT_SPECIFIERS_SRC}" HAVE_C99_FORMAT_SPECIFIERS)
+    check_c_source_runs("${CHECK_PERCENT_Z_SRC}" HAVE_PERCENT_Z)
     cmake_pop_check_state()
-  endif(NOT DEFINED HAVE_C99_FORMAT_SPECIFIERS)
+  endif(NOT DEFINED HAVE_PERCENT_Z)
 
-  if(HAVE_C99_FORMAT_SPECIFIERS)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_C99_FORMAT_SPECIFIERS 1\n")
-  endif(HAVE_C99_FORMAT_SPECIFIERS)
-endfunction(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
+  if(HAVE_PERCENT_Z)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_PERCENT_Z 1\n")
+  endif(HAVE_PERCENT_Z)
+endfunction(BRLCAD_CHECK_PERCENT_Z)
 
 
 function(BRLCAD_CHECK_STATIC_ARRAYS)

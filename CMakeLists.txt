@@ -2507,7 +2507,7 @@ else (HAVE_THREAD_LOCAL)
 endif (HAVE_THREAD_LOCAL)
 
 # see if the compiler supports %z as a size_t print width specifier
-BRLCAD_CHECK_C99_FORMAT_SPECIFIERS()
+BRLCAD_CHECK_PERCENT_Z()
 
 # see if the compiler supports [static] array hints
 BRLCAD_CHECK_STATIC_ARRAYS()

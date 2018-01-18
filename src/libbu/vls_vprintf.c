@@ -483,11 +483,12 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	bu_vls_strncpy(&fbuf, sp, (size_t)len);
 	fbufp = bu_vls_addr(&fbuf);
 
-#ifndef HAVE_C99_FORMAT_SPECIFIERS
-	/* if the format string uses the %z, %t, or %j width specifiers, we need to
-	 * them it with something more palatable to this busted compiler.
+	/* if the format string uses the %z, %t, or %j width
+	 * specifiers, we may need to substitute them with something
+	 * more palatable on lame compilers.
 	 */
 
+#ifndef HAVE_PERCENT_Z
 	if ((f.flags & SIZETINT) || (f.flags & PTRDIFFT) || (f.flags & INTMAX_T)) {
 	    char *fp = fbufp;
 	    while (*fp) {
@@ -509,11 +510,11 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    continue;
 			}
 			if (*fp == 'z' || *fp == 't' || *fp == 'j') {
-			    /* assume MSVC replacing instances of %z or %t or
-			     * %j with %I (capital i) until we encounter
-			     * anything different.
-			     */
-			    *fp = 'I';
+#  ifdef _SIZE_T_DEFINED
+			    *fp = 'I'; /* MSVC: replace with %I (uppercase i) */
+#  else
+			    *fp = 'l'; /* anyone else: assume it fits in long */
+#  endif /* _SIZE_T_DEFINED */
 			}
 
 			break;
@@ -525,7 +526,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		fp++;
 	    }
 	}
-#endif
+#endif /* HAVE_PERCENT_Z */
 
 	/* use type specifier to grab parameter appropriately from arg
 	   list, and print it correctly */
