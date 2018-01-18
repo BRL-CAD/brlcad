@@ -477,6 +477,8 @@ int main(int ac, char *av[])
     return 1;
   else if (strcmp(buf, \"1234\"))
     return 2;
+  else if (ac < 0 || !av)
+    return 3;
   return 0;
 }
 ")
