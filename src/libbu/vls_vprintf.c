@@ -510,11 +510,11 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    continue;
 			}
 			if (*fp == 'z' || *fp == 't' || *fp == 'j') {
-#  ifdef _SIZE_T_DEFINED
+#  ifdef HAVE_WINDOWS_H
 			    *fp = 'I'; /* MSVC: replace with %I (uppercase i) */
 #  else
 			    *fp = 'l'; /* anyone else: assume it fits in long */
-#  endif /* _SIZE_T_DEFINED */
+#  endif /* HAVE_WINDOWS_H */
 			}
 
 			break;
