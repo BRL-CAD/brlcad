@@ -52,6 +52,7 @@ set(std_hdr_includes
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
 #if HAVE_GETOPT_H
 # include <getopt.h>
 #endif
