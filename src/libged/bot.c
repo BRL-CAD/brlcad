@@ -271,8 +271,8 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     int opt_argc;
     struct bu_opt_desc d[3];
     const char * const bot_subcommands[] = {"check","chull","get", NULL};
-    BU_OPT(d[0], "h", "help", "", NULL, (void *)&print_help, "Print help and exit");
-    BU_OPT(d[1], "V", "visualize", "", NULL, (void *)&visualize_results, "Use subcommand's 3D visualization.");
+    BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
+    BU_OPT(d[1], "V", "visualize", "", NULL, &visualize_results, "Use subcommand's 3D visualization.");
     BU_OPT_NULL(d[2]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

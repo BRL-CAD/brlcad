@@ -194,7 +194,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     db_op_t op = DB_OP_NULL;
     int opt_ret = 0;
     struct bu_opt_desc d[2];
-    BU_OPT(d[0], "C", "color", "r/g/b", &bu_opt_color, (void *)&color, "Set color");
+    BU_OPT(d[0], "C", "color", "r/g/b", &bu_opt_color, &color, "Set color");
     BU_OPT_NULL(d[1]);
 
     opt_ret = bu_opt_parse(NULL, argc, argv, d);

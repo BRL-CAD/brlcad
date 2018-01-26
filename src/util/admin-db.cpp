@@ -57,11 +57,11 @@ main(int argc, char** argv)
     struct bu_vls db2_fname = BU_VLS_INIT_ZERO;
 
     struct bu_opt_desc d[6];
-    BU_OPT(d[0],  "h", "help",                "",           NULL,             (void *)&has_help,     "Print help and exit");
-    BU_OPT(d[1],  "f", "force",               "bool",       &bu_opt_bool,     (void *)&has_force,    "Allow overwriting existing files.");
-    BU_OPT(d[2],  "c", "compress",            "bool",       &bu_opt_bool,     (void *)&has_compress, "Create a copy with no free space.");
-    BU_OPT(d[3],  "",  "DB_infile",           "filename",   &bu_opt_vls,      (void *)&db_fname,     "DB input file name");
-    BU_OPT(d[4],  "",  "DB_outfile",          "filename",   &bu_opt_vls,      (void *)&db2_fname,    "DB output file name");
+    BU_OPT(d[0],  "h", "help",       "",         NULL,         &has_help,     "Print help and exit");
+    BU_OPT(d[1],  "f", "force",      "bool",     &bu_opt_bool, &has_force,    "Allow overwriting existing files.");
+    BU_OPT(d[2],  "c", "compress",   "bool",     &bu_opt_bool, &has_compress, "Create a copy with no free space.");
+    BU_OPT(d[3],  "",  "DB_infile",  "filename", &bu_opt_vls,  &db_fname,     "DB input file name");
+    BU_OPT(d[4],  "",  "DB_outfile", "filename", &bu_opt_vls,  &db2_fname,    "DB output file name");
     BU_OPT_NULL(d[5]);
 
     /* Skip first arg */
