@@ -361,8 +361,17 @@ target_coor(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 extern "C" int
 shoot(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
+    int i;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+
+    double bov = 0.0;
+    for (i = 0; i < 3; ++i) {
+	nss->target[i] = nss->target[i] + (bov * -1*(nss->direct[i]));
+	nss->ap->a_ray.r_pt[i] = nss->target[i];
+	nss->ap->a_ray.r_dir[i] = nss->direct[i];
+    }
+
     (void)rt_shootray(nss->ap);
     return 0;
 }
@@ -875,6 +884,9 @@ nirt_init(NIRT *ns, struct db_i *dbip)
     /* By default use the .g units */
     ns->base2local = dbip->dbi_base2local;
     ns->local2base = dbip->dbi_local2base;
+
+    /* Initial direction is -x */
+    VSET(ns->direct, -1, 0, 0);
 
     return 0;
 }
