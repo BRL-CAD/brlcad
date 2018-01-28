@@ -332,11 +332,29 @@ az_el(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 extern "C" int
-dir_vect(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+dir_vect(void *ns, int argc, const char *argv[])
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    vect_t dir = VINIT_ZERO;
+    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
-    bu_log("dir_vect\n");
+
+    if (argc == 1) {
+	lout(nss, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(nss->direct));
+	return 0;
+    }
+
+    argc--; argv++;
+    if (argc != 3) return -1;
+
+    if (bu_opt_vect_t(&opt_msg, 3, argv, (void *)&dir) == -1) {
+	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	bu_vls_free(&opt_msg);
+	return -1;
+    }
+
+    VUNITIZE(dir);
+    VMOVE(nss->direct, dir);
     return 0;
 }
 
