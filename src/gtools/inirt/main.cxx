@@ -208,6 +208,7 @@ main(int argc, const char **argv)
     struct bu_vls last_script_file = BU_VLS_INIT_ZERO;
     struct script_file_data sfd = {&init_scripts, &last_script_file, 0};
     char *line;
+    int ac = 0;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     std::set<std::string> attrs;
     std::set<std::string>::iterator a_it;
@@ -249,7 +250,7 @@ main(int argc, const char **argv)
     if (argc == 0 || !argv) return -1;
 
     argv++; argc--;
-    if (bu_opt_parse(&optparse_msg, argc, (const char **)argv, d) == -1) {
+    if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
        	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
@@ -325,6 +326,10 @@ main(int argc, const char **argv)
     RT_CK_DBI(dbip);
 
     if (silent_mode != SILENT_YES) printf("Building the directory...\n");
+    if (db_dirbuild(dbip) < 0) {
+	db_close(dbip);
+	bu_exit(EXIT_FAILURE, "db_dirbuild failed: %s\n", argv[0]);
+    }
 
     if (nirt_alloc(&ns) == -1) {
 	bu_exit(EXIT_FAILURE, "nirt allocation failed\n");
@@ -402,16 +407,16 @@ main(int argc, const char **argv)
 
     /* We know enough now to initialize */
     if (nirt_init(ns, dbip) == -1) {
-	bu_exit(EXIT_FAILURE, "db_dirbuild failed: %s\n", argv[0]);
+	bu_exit(EXIT_FAILURE, "nirt_init failed: %s\n", argv[0]);
     }
     db_close(dbip); /* nirt will now manage its own copies of the dbip */
 
     /* Ready now - draw the initial set of objects, if supplied */
-    if (argc > 1) {
+    if (ac > 1) {
 	int i = 0;
 	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&ncmd, "draw");
-	for (i = 1; i < argc; i++) {
+	for (i = 1; i < ac; i++) {
 	    bu_vls_printf(&ncmd, " %s", argv[i]);
 	}
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
@@ -464,6 +469,7 @@ main(int argc, const char **argv)
 done:
     linenoiseHistoryFree();
     bu_vls_free(&iline);
+    nirt_destroy(ns);
     return 0;
 }
 

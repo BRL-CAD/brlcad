@@ -34,6 +34,7 @@ extern "C" {
 #include "bu/color.h"
 #include "bu/cmd.h"
 #include "bu/malloc.h"
+#include "bu/units.h"
 #include "bu/vls.h"
 #include "analyze.h"
 }
@@ -44,47 +45,30 @@ extern "C" {
 #define NIRT_AIR_SEG      3    /**< @brief Ray segment representing an air region */
 #define NIRT_OVERLAP_SEG  4    /**< @brief Ray segment representing an overlap region */
 
+#define SILENT_UNSET    0
+#define SILENT_YES      1
+#define SILENT_NO       -1
+
 struct nirt_state {
-    struct application *ap;
-    struct db_i *dbip;
-    /* Parallel structures needed for operation w/ and w/o air */
-    struct rt_i *rtip;
-    struct resource res;
-    struct rt_i *rtip_air;
-    struct resource res_air;
-    /* scripts */
-    int script_cnt;
-    char **scripts;
-    /* runtime options */
-    int use_air;
-    int rt_bot_minpieces;
-    struct bu_color hit_color;
-    struct bu_color miss_color;
-    struct bu_color overlap_color;
-    /* state variables */
-    double azimuth;
-    double elevation;
-    vect_t direct;
-    vect_t target;
-    vect_t grid;
-    /* output options */
+    /* Output options */
+    struct bu_color *hit_color;
+    struct bu_color *miss_color;
+    struct bu_color *overlap_color;
     int print_header;
     int print_ident_flag;
+    int silent_flag;
     unsigned int rt_debug;
     unsigned int nirt_debug;
-
-    /* list of active attributes */
-    std::set<std::string> attrs;
-    /* list of active paths for raytracer */
-    std::set<std::string> active_paths;
 
     /* Output */
     struct bu_vls *out;
     int out_accumulate;
     struct bu_vls *err;
     int err_accumulate;
-    struct bn_vlist *segs;
+    struct bu_list s_vlist; /* used by the segs vlblock */
+    struct bn_vlblock *segs;
     //TODO - int segs_accumulate;
+    int ret;  // return code to be returned by nirt_exec after execution
 
     /* Callbacks */
     nirt_hook_t h_state;   // any state change
@@ -96,7 +80,21 @@ struct nirt_state {
     nirt_hook_t h_frmts;   // output formatting is changed
     nirt_hook_t h_view;    // the camera view is changed
 
-    /* internal */
+
+    /* state variables */
+    double azimuth;
+    double base2local;
+    double elevation;
+    double local2base;
+    int rt_bot_minpieces;
+    int use_air;
+    vect_t direct;
+    vect_t grid;
+    vect_t target;
+    std::set<std::string> attrs;        // active attributes
+    std::set<std::string> active_paths; // active paths for raytracer
+
+    /* state alteration flags */
     bool b_state;   // updated for any state change
     bool b_out;     // updated when output changes
     bool b_err;     // updated when err changes
@@ -106,9 +104,15 @@ struct nirt_state {
     bool b_frmts;   // updated when output formatting is changed
     bool b_view;    // updated when the camera view is changed
 
-    int enqueued;   // have enqueued scripts to run
+    /* internal containers for raytracing */
+    struct application *ap;
+    struct db_i *dbip;
+    /* Note: Parallel structures are needed for operation w/ and w/o air */
+    struct rt_i *rtip;
+    struct resource *res;
+    struct rt_i *rtip_air;
+    struct resource *res_air;
 
-    int ret;  // return code to be returned by nirt_exec after execution
     void *u_data; // user data
 };
 
@@ -119,11 +123,13 @@ struct nirt_state {
 void lout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23
 {
     va_list ap;
-    struct bu_vls *vls = nss->out;
-    BU_CK_VLS(vls);
-    va_start(ap, fmt);
-    bu_vls_vprintf(vls, fmt, ap);
-    nss->b_state = nss->b_out = true;
+    if (nss->silent_flag != SILENT_YES) {
+	struct bu_vls *vls = nss->out;
+	BU_CK_VLS(vls);
+	va_start(ap, fmt);
+	bu_vls_vprintf(vls, fmt, ap);
+	nss->b_state = nss->b_out = true;
+    }
     va_end(ap);
 }
 
@@ -141,21 +147,31 @@ void lerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23
 HIDDEN int
 raytrace_gettrees(struct nirt_state *nss)
 {
-    int i;
+    int i = 0;
+    int ocnt = 0;
+    int acnt = 0;
 
     // Prepare C-style arrays for rt prep
-    std::vector<const char *> objs;
-    std::vector<const char *> attrs;
+    const char **objs = (const char **)bu_calloc(nss->active_paths.size() + 1, sizeof(char *), "objs");
+    const char **attrs = (const char **)bu_calloc(nss->attrs.size() + 1, sizeof(char *), "attrs");
     std::set<std::string>::iterator s_it;
     for (s_it = nss->active_paths.begin(); s_it != nss->active_paths.end(); s_it++) {
-	objs.push_back((*s_it).c_str());
+	const char *o = (*s_it).c_str();
+	objs[ocnt] = o;
+	ocnt++;
     }
+    objs[ocnt] = '\0';
     for (s_it = nss->attrs.begin(); s_it != nss->attrs.end(); s_it++) {
-	attrs.push_back((*s_it).c_str());
+	const char *a = (*s_it).c_str();
+	attrs[acnt] = a;
+	acnt++;
     }
+    attrs[acnt] = '\0';
     lout(nss, "Get trees...\n");
 
-    i = rt_gettrees_and_attrs(nss->ap->a_rt_i, (const char **)(attrs.data()), (int)nss->active_paths.size(), (const char **) objs.data(), 1);
+    i = rt_gettrees_and_attrs(nss->ap->a_rt_i, attrs, ocnt, objs, 1);
+    bu_free(objs, "objs");
+    bu_free(attrs, "objs");
     if (i) {
 	lerr(nss, "rt_gettrees() failed\n");
 	return -1;
@@ -167,46 +183,42 @@ raytrace_gettrees(struct nirt_state *nss)
 HIDDEN struct rt_i *
 get_rtip(struct nirt_state *nss)
 {
+    if (!nss || nss->dbip == DBI_NULL) return NULL;
+
     if (nss->use_air) {
-	if (!nss->rtip_air) {
+	if (nss->rtip_air == RTI_NULL) {
 	    nss->rtip_air = rt_new_rti(nss->dbip); /* clones dbip, so we can operate on the copy */
 	    nss->rtip_air->rti_dbip->dbi_fp = fopen(nss->dbip->dbi_filename, "rb"); /* get read-only fp */
 	    if (nss->rtip_air->rti_dbip->dbi_fp == NULL) {
-		// TODO - free rtip_air...
-		return NULL;
+		rt_free_rti(nss->rtip_air);
+		nss->rtip_air = RTI_NULL;
+		return RTI_NULL;
 	    }
 	    nss->rtip_air->rti_dbip->dbi_read_only = 1;
-	    if (db_dirbuild(nss->rtip_air->rti_dbip) < 0) {
-		// TODO - free rtip_air...
-		return NULL;
-	    }
-	    rt_init_resource(&nss->res_air, 0, nss->rtip_air);
+	    rt_init_resource(nss->res_air, 0, nss->rtip_air);
 	}
 	return nss->rtip_air;
-    } else {
-	if (!nss->rtip) {
-	    nss->rtip = rt_new_rti(nss->dbip); /* clones dbip, so we can operate on the copy */
-	    nss->rtip->rti_dbip->dbi_fp = fopen(nss->dbip->dbi_filename, "rb"); /* get read-only fp */
-	    if (nss->rtip->rti_dbip->dbi_fp == NULL) {
-		// TODO - free rtip...
-		return NULL;
-	    }
-	    nss->rtip->rti_dbip->dbi_read_only = 1;
-	    if (db_dirbuild(nss->rtip->rti_dbip) < 0) {
-		// TODO - free rtip...
-		return NULL;
-	    }
-	    rt_init_resource(&nss->res, 0, nss->rtip);
-	}
-	return nss->rtip;
     }
+
+    if (nss->rtip == RTI_NULL) {
+	nss->rtip = rt_new_rti(nss->dbip); /* clones dbip, so we can operate on the copy */
+	nss->rtip->rti_dbip->dbi_fp = fopen(nss->dbip->dbi_filename, "rb"); /* get read-only fp */
+	if (nss->rtip->rti_dbip->dbi_fp == NULL) {
+	    rt_free_rti(nss->rtip);
+	    nss->rtip = RTI_NULL;
+	    return RTI_NULL;
+	}
+	nss->rtip->rti_dbip->dbi_read_only = 1;
+	rt_init_resource(nss->res, 0, nss->rtip);
+    }
+    return nss->rtip;
 }
 
 HIDDEN struct resource *
 get_resource(struct nirt_state *nss)
 {
-    if (nss->use_air) return &(nss->res_air);
-    return &(nss->res);
+    if (nss->use_air) return nss->res_air;
+    return nss->res;
 }
 
 HIDDEN int
@@ -255,21 +267,58 @@ nirt_if_overlap(struct application *ap, struct partition *pp, struct region *reg
 extern "C" int
 cm_attr(void *ns, int argc, const char *argv[])
 {
+    if (!ns) return -1;
     struct nirt_state *nss = (struct nirt_state *)ns;
     int i = 0;
-    if (!ns) return -1;
+    int print_help = 0;
+    int attr_print = 0;
+    int attr_flush = 0;
+    int val_attrs = 0;
+    size_t orig_size = nss->active_paths.size();
+    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0],  "h", "help", "",      &bu_opt_bool,   &print_help, "print help and exit");
+    BU_OPT(d[1],  "p", "",     "",      &bu_opt_bool,   &attr_print, "print active attributes");
+    BU_OPT(d[2],  "f", "",     "",      &bu_opt_bool,   &attr_flush, "clear attribute list");
+    BU_OPT(d[3],  "v", "",     "",      &bu_opt_bool,   &val_attrs,  "validate attributes - only accept attributes used by one or more objects in the active database");
+    BU_OPT_NULL(d[4]);
 
-    if (argc == 1) {
+    argv++; argc--;
+
+    if (bu_opt_parse(&optparse_msg, argc, (const char **)argv, d) == -1) {
+	lerr(nss, "%s", bu_vls_addr(&optparse_msg));
+	bu_vls_free(&optparse_msg);
+	return -1;
+    }
+
+    if (argc == 0) {
 	// TODO print attrs and return
 	return 0;
     }
-    for (i = 1; i < argc; i++) {
-	bu_log("cm_attr: inserting %s\n", argv[i]);
+
+    if (attr_flush) {
+	nss->attrs.clear();
+	return 0;
+    }
+
+    if (attr_print || argc == 0) {
+	std::set<std::string>::iterator a_it;
+	for (a_it = nss->attrs.begin(); a_it != nss->attrs.end(); a_it++) {
+	    lout(nss, "\"%s\"\n", (*a_it).c_str());
+	}
+    }
+
+    for (i = 0; i < argc; i++) {
+	const char *sattr = db5_standard_attribute(db5_standardize_attribute(argv[i]));
+	if (val_attrs) {
+	} 
 	nss->attrs.insert(argv[i]);
+	/* If there is a standardized version of this attribute that is
+	 * different from the supplied version, activate it as well. */
+	nss->attrs.insert(sattr);
     }
-    if (nss->active_paths.size() > 0) {
-	// TODO - redo prep
-    }
+
+    if (nss->active_paths.size() != orig_size) raytrace_prep(nss);
     return 0;
 }
 
@@ -343,11 +392,31 @@ use_air(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-nirt_units(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+nirt_units(void *ns, int argc, const char *argv[])
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    double ncv = 0.0;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
-    bu_log("nirt_units\n");
+
+    if (argc == 1) {
+	lout(nss, "units = %s\n", bu_units_string(nss->local2base));
+	return 0;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "default")) {
+	nss->base2local = nss->dbip->dbi_base2local;
+	nss->local2base = nss->dbip->dbi_local2base;
+	return 0;
+    }
+
+    ncv = bu_units_conversion(argv[1]);
+    if (ncv <= 0.0) {
+	lerr(nss, "Invalid unit specification: '%s'\n", argv[1]);
+	return -1;
+    }
+    nss->base2local = 1.0/ncv;
+    nss->local2base = ncv;
+
     return 0;
 }
 
@@ -442,8 +511,9 @@ cm_debug(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 extern "C" int
-quit(void *UNUSED(ns), int UNUSED(argc), const char *UNUSED(argv[]))
+quit(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
+    lout((struct nirt_state *)ns, "Quitting...\n");
     return 1;
 }
 
@@ -701,29 +771,86 @@ nps_done:
 /* Public API functions */
 //////////////////////////
 
-int
+extern "C" int
 nirt_alloc(NIRT **ns)
 {
+    unsigned int rgb[3] = {0, 0, 0};
     NIRT *n = NULL;
 
     if (!ns) return -1;
 
     /* Get memory */
     n = new nirt_state;
-    BU_GET(n->ap, struct application);
-    BU_GET(n->out, struct bu_vls);
-    BU_GET(n->err, struct bu_vls);
-    BU_GET(n->segs, struct bn_vlist);
-    bu_vls_init(n->out);
-    bu_vls_init(n->err);
+    BU_GET(n->hit_color, struct bu_color);
+    BU_GET(n->miss_color, struct bu_color);
+    BU_GET(n->overlap_color, struct bu_color);
 
+    /* Strictly speaking these initializations are more
+     * than an "alloc" function needs to do, but we want
+     * a nirt state to be "functional" even though it
+     * is not set up with a database (it's true/proper
+     * initialization.)*/
+    bu_color_from_rgb_chars(n->hit_color, (unsigned char *)&rgb);
+    bu_color_from_rgb_chars(n->miss_color, (unsigned char *)&rgb);
+    bu_color_from_rgb_chars(n->overlap_color, (unsigned char *)&rgb);
+    n->print_header = 0;
+    n->print_ident_flag = 0;
+    n->silent_flag = SILENT_UNSET;
+    n->rt_debug = 0;
+    n->nirt_debug = 0;
+
+    BU_GET(n->out, struct bu_vls);
+    bu_vls_init(n->out);
+    n->out_accumulate = 0;
+    BU_GET(n->err, struct bu_vls);
+    bu_vls_init(n->err);
+    n->err_accumulate = 0;
+    BU_LIST_INIT(&(n->s_vlist));
+    n->segs = bn_vlblock_init(&(n->s_vlist), 32);
+    n->ret = 0;
+
+    n->h_state = NULL;
+    n->h_out = NULL;
+    n->h_err = NULL;
+    n->h_segs = NULL;
+    n->h_scripts = NULL;
+    n->h_objs = NULL;
+    n->h_frmts = NULL;
+    n->h_view = NULL;
+
+    n->azimuth = 0.0;
+    n->base2local = 0.0;
+    n->elevation = 0.0;
+    n->local2base = 0.0;
+    n->rt_bot_minpieces = 0;
+    n->use_air = 0;
+    VZERO(n->direct);
+    VZERO(n->grid);
+    VZERO(n->target);
+
+    n->b_state = false;
+    n->b_out = false;
+    n->b_err = false;
+    n->b_segs = false;
+    n->b_scripts = false;
+    n->b_objs = false;
+    n->b_frmts = false;
+    n->b_view = false;
+
+    BU_GET(n->ap, struct application);
     n->dbip = DBI_NULL;
+    BU_GET(n->res, struct resource);
+    BU_GET(n->res_air, struct resource);
+    n->rtip = RTI_NULL;
+    n->rtip_air = RTI_NULL;
+
+    n->u_data = NULL;
 
     (*ns) = n;
     return 0;
 }
 
-int
+extern "C" int
 nirt_init(NIRT *ns, struct db_i *dbip)
 {
     if (!ns || !dbip) return -1;
@@ -745,6 +872,10 @@ nirt_init(NIRT *ns, struct db_i *dbip)
     ns->ap->a_zero1 = 0;           /* sanity check, sayth raytrace.h */
     ns->ap->a_zero2 = 0;           /* sanity check, sayth raytrace.h */
 
+    /* By default use the .g units */
+    ns->base2local = dbip->dbi_base2local;
+    ns->local2base = dbip->dbi_local2base;
+
     return 0;
 }
 
@@ -754,10 +885,20 @@ nirt_destroy(NIRT *ns)
     if (!ns) return;
     bu_vls_free(ns->err);
     bu_vls_free(ns->out);
-    BU_PUT(ns->segs, struct bn_vlist);
-    BU_GET(ns->err, struct bu_vls);
-    BU_GET(ns->out, struct bu_vls);
-    BU_GET(ns->ap, struct application);
+    bn_vlist_cleanup(&(ns->s_vlist));
+    bn_vlblock_free(ns->segs);
+
+    if (ns->rtip != RTI_NULL) rt_free_rti(ns->rtip);
+    if (ns->rtip_air != RTI_NULL) rt_free_rti(ns->rtip_air);
+
+    BU_PUT(ns->res, struct resource);
+    BU_PUT(ns->res_air, struct resource);
+    BU_PUT(ns->err, struct bu_vls);
+    BU_PUT(ns->out, struct bu_vls);
+    BU_PUT(ns->ap, struct application);
+    BU_PUT(ns->hit_color, struct bu_color);
+    BU_PUT(ns->miss_color, struct bu_color);
+    BU_PUT(ns->overlap_color, struct bu_color);
     delete ns;
 }
 
@@ -786,11 +927,14 @@ nirt_exec(NIRT *ns, const char *script)
     if (script) {
 	ns->ret = nirt_parse_script(ns, script, &nirt_exec_cmd);
     } else {
+	return 0;
+#if 0
 	if (ns->enqueued == 1) {
 	    // Execute enqueued logic
 	} else {
 	    return ns->ret;
 	}
+#endif
     }
 
     NIRT_HOOK(b_state, h_state);
