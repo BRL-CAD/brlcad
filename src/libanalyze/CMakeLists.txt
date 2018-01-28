@@ -13,6 +13,7 @@ set(LIBANALYZE_SOURCES
   centroid.c
   density.c
   inside.c
+  nirt.cxx
   overlaps.c
   raydiff.c
   #find_subtracted_shapes.cpp

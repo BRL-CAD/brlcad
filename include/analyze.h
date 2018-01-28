@@ -221,30 +221,31 @@ analyze_heal_bot(struct rt_bot_internal *bot, double zipper_tol);
  *    A library implementation of functionality originally developed in
  *    Natalie's Interactive Ray Tracer (NIRT)
  */
-#if 0
+#if 1
 /** The opaque container that will hold NIRT's state. */
 typedef struct nirt_state NIRT;
 
-/** Create and initialize a NIRT state. */
-ANALYZE_EXPORT int nirt_create(NIRT **ns, struct db_i *dbip);
+/**
+ * Create a NIRT state. An alloced NIRT state can accept
+ * some commands (like updates to the attribute list but
+ * will not be able to raytrace. */
+ANALYZE_EXPORT int nirt_alloc(NIRT **ns);
+
+/** Initialize a NIRT state. */
+ANALYZE_EXPORT int nirt_init(NIRT *ns, struct db_i *dbip);
 
 /** Clean up and free a NIRT state. */
 ANALYZE_EXPORT void nirt_destroy(NIRT *ns);
 
-/* Accepts a script as a series of argv strings.  Runs either the supplied
- * script (if script != NULL), or (if script == NULL) the sequence of enqueued
- * scripts stored in the state.
- *
- * Note: If the caller has a single char array containing the script, use
- * bu_argv_from_string to prepare an argv array suitable for passing to
- * nirt_exec
+/* Execute nirt commands.  Runs either the supplied script (if script != NULL),
+ * or (if script == NULL) the sequence of enqueued scripts stored in the state.
  *
  * Returns -1 if there was any sort of error, 0 if the script(s) executed
  * successfully without a quit call, and 1 if a quit command was encountered
  * during execution. See the man(1) nirt manual page for documentation of
  * valid script options
  */
-ANALYZE_EXPORT int nirt_exec(NIRT *ns, int argc, const char **script);
+ANALYZE_EXPORT int nirt_exec(NIRT *ns, const char *script);
 
 /* Flags for clearing/resetting/reporting the NIRT state */
 #define NIRT_ALL      0x1    /**< @brief reset to initial state or report all state */
