@@ -49,6 +49,10 @@ extern "C" {
 #define SILENT_YES      1
 #define SILENT_NO       -1
 
+#define HORZ            0
+#define VERT            1
+#define DIST            2
+
 struct nirt_state {
     /* Output options */
     struct bu_color *hit_color;
@@ -239,6 +243,29 @@ raytrace_prep(struct nirt_state *nss)
     return 0;
 }
 
+void grid2targ(struct nirt_state *nss)
+{
+    vect_t grid;
+    double ar = nss->azimuth * DEG2RAD;
+    double er = nss->elevation * DEG2RAD;
+    VMOVE(grid, nss->grid);
+    nss->target[X] = - grid[HORZ] * sin(ar) - grid[VERT] * cos(ar) * sin(er) + grid[DIST] * cos(ar) * cos(er);
+    nss->target[Y] =   grid[HORZ] * cos(ar) - grid[VERT] * sin(ar) * sin(er) + grid[DIST] * sin(ar) * cos(er);
+    nss->target[Z] =   grid[VERT] * cos(er) + grid[DIST] * sin(er);
+}
+
+void targ2grid(struct nirt_state *nss)
+{
+    vect_t target;
+    double ar = nss->azimuth * DEG2RAD;
+    double er = nss->elevation * DEG2RAD;
+    VMOVE(target, nss->target);
+    nss->grid[HORZ] = - target[X] * sin(ar) + target[Y] * cos(ar);
+    nss->grid[VERT] = - target[X] * cos(ar) * sin(er) - target[Y] * sin(er) * sin(ar) + target[Z] * cos(er);
+    nss->grid[DIST] =   target[X] * cos(er) * cos(ar) + target[Y] * cos(er) * sin(ar) + target[Z] * sin(er);
+}
+
+
 extern "C" int
 nirt_if_hit(struct application *UNUSED(ap), struct partition *UNUSED(part_head), struct seg *UNUSED(finished_segs))
 {
@@ -359,20 +386,79 @@ dir_vect(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-grid_coor(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+grid_coor(void *ns, int argc, const char *argv[])
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    vect_t grid = VINIT_ZERO;
+    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
-    bu_log("grid_coor\n");
+
+    if (argc == 1) {
+	VMOVE(grid, nss->grid);
+	VSCALE(grid, grid, nss->base2local);
+	lout(nss, "(h, v, d) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(grid));
+	return 0;
+    }
+
+    argc--; argv++;
+    if (argc != 2 && argc != 3) return -1;
+    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(grid[HORZ])) == -1) {
+	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	bu_vls_free(&opt_msg);
+	return -1;
+    }
+    argc--; argv++;
+    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(grid[VERT])) == -1) {
+	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	bu_vls_free(&opt_msg);
+	return -1;
+    }
+    argc--; argv++;
+    if (argc) {
+	if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(grid[DIST])) == -1) {
+	    lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	    bu_vls_free(&opt_msg);
+	    return -1;
+	}
+    } else {
+	grid[DIST] = nss->grid[DIST];
+    }
+
+    VSCALE(grid, grid, nss->local2base);
+    VMOVE(nss->grid, grid);
+    grid2targ(nss);
+
     return 0;
 }
 
 extern "C" int
-target_coor(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+target_coor(void *ns, int argc, const char *argv[])
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    vect_t target = VINIT_ZERO;
+    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
-    bu_log("target_coor\n");
+
+    if (argc == 1) {
+	VMOVE(target, nss->target);
+	VSCALE(target, target, nss->base2local);
+	lout(nss, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(target));
+	return 0;
+    }
+
+    argc--; argv++;
+    if (argc != 3) return -1;
+
+    if (bu_opt_vect_t(&opt_msg, 3, argv, (void *)&target) == -1) {
+	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	bu_vls_free(&opt_msg);
+	return -1;
+    }
+
+    VSCALE(target, target, nss->local2base);
+    VMOVE(nss->target, target);
+    targ2grid(nss);
+
     return 0;
 }
 
