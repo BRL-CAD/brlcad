@@ -421,7 +421,7 @@ struct nirt_cmd_desc {
 };
 
 const struct nirt_cmd_desc nirt_descs[] = {
-    { "attr",           "select attributes",                             "<-f(flush) | -p(print) | attribute_name>" },
+    { "attr",           "select attributes",                             NULL },
     { "ae",             "set/query azimuth and elevation",               "azimuth elevation" },
     { "dir",            "set/query direction vector",                    "x-component y-component z-component" },
     { "hv",             "set/query gridplane coordinates",               "horz vert [dist]" },
@@ -445,6 +445,16 @@ const struct nirt_cmd_desc nirt_descs[] = {
     { (char *)NULL,     NULL,                                            NULL}
 };
 
+const char *
+get_desc_args(const char *key)
+{
+    const struct nirt_cmd_desc *d;
+    for (d = nirt_descs; d->cmd; d++) {
+	if (BU_STR_EQUAL(d->cmd, key)) return d->args;
+    }
+    return NULL;
+}
+
 extern "C" int
 cm_attr(void *ns, int argc, const char *argv[])
 {
@@ -465,11 +475,12 @@ cm_attr(void *ns, int argc, const char *argv[])
     BU_OPT(d[3],  "v", "",      "",  NULL,   &val_attrs,  "validate attributes - only accept attributes used by one or more objects in the active database");
     BU_OPT_NULL(d[4]);
     const char *help = bu_opt_describe(d, NULL);
+    const char *ustr = "Usage: attr <opts> <attribute_name_1> <attribute_name_2> ...\nNote: attr with no options and no attributes to add will print the list of active attributes.\nOptions:";
 
     argv++; argc--;
 
     if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
-	lerr(nss, "Option parsing error: %s\n\nUsage: attr <opts> <attribute_name>\nOptions:\n%s\n", bu_vls_addr(&optparse_msg), help);
+	lerr(nss, "Option parsing error: %s\n\n%s\n%s\n", bu_vls_addr(&optparse_msg), ustr, help);
 	if (help) bu_free((char *)help, "help str");
 	bu_vls_free(&optparse_msg);
 	return -1;
@@ -478,8 +489,8 @@ cm_attr(void *ns, int argc, const char *argv[])
 
     if (attr_flush) nss->attrs.clear();
 
-    if (attr_print && ac > 0) {
-	lerr(nss, "Usage: attr <opts> <attribute_name>\nOptions:\n%s", help);
+    if (print_help || (attr_print && ac > 0)) {
+	lerr(nss, "%s\n%s", ustr, help);
 	if (help) bu_free((char *)help, "help str");
 	return -1;
     }
@@ -522,7 +533,10 @@ az_el(void *ns, int argc, const char *argv[])
 
     argv++; argc--;
 
-    if (argc != 2) return -1;
+    if (argc != 2) {
+	lerr(nss, "Usage:  ae %s\n", get_desc_args("ae"));
+	return -1;
+    }
 
     if ((ret = bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&az)) == -1) {
 	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
@@ -571,7 +585,10 @@ dir_vect(void *ns, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    if (argc != 3) return -1;
+    if (argc != 3) {
+	lerr(nss, "Usage:  dir %s\n", get_desc_args("dir"));
+	return -1;
+    }
 
     if (bu_opt_vect_t(&opt_msg, 3, argv, (void *)&dir) == -1) {
 	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
@@ -601,7 +618,10 @@ grid_coor(void *ns, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    if (argc != 2 && argc != 3) return -1;
+    if (argc != 2 && argc != 3) {
+	lerr(nss, "Usage:  hv %s\n", get_desc_args("hv"));
+	return -1;
+    }
     if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(grid[HORZ])) == -1) {
 	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	bu_vls_free(&opt_msg);
@@ -647,7 +667,10 @@ target_coor(void *ns, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    if (argc != 3) return -1;
+    if (argc != 3) {
+	lerr(nss, "Usage:  xyz %s\n", get_desc_args("xyz"));
+	return -1;
+    }
 
     if (bu_opt_vect_t(&opt_msg, 3, argv, (void *)&target) == -1) {
 	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
@@ -724,6 +747,8 @@ use_air(void *ns, int argc, const char *argv[])
 	lout(nss, "use_air = %d\n", nss->use_air);
 	return 0;
     }
+    // TODO - handle error
+    // lerr(nss, "Usage:  useair %s\n", get_desc_args("useair"));
     (void)bu_opt_int(NULL, 1, (const char **)&(argv[1]), (void *)&nss->use_air);
     nss->ap->a_rt_i = get_rtip(nss);
     nss->ap->a_resource = get_resource(nss);
@@ -742,6 +767,9 @@ nirt_units(void *ns, int argc, const char *argv[])
 	return 0;
     }
 
+    // TODO - handle error
+    // lerr(nss, "Usage:  units %s\n", get_desc_args("units"));
+  
     if (BU_STR_EQUAL(argv[1], "default")) {
 	nss->base2local = nss->dbip->dbi_base2local;
 	nss->local2base = nss->dbip->dbi_local2base;
@@ -764,6 +792,11 @@ do_overlap_claims(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+
+    // TODO - handle error
+    // lerr(nss, "Usage:  overlap_claims %s\n", get_desc_args("overlap_claims"));
+  
+
     bu_log("do_overlap_claims\n");
     return 0;
 }
@@ -773,6 +806,10 @@ format_output(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+
+    // TODO - handle error
+    // lerr(nss, "Usage:  fmt %s\n", get_desc_args("fmt"));
+
     bu_log("format_output\n");
     return 0;
 }
@@ -782,6 +819,10 @@ direct_output(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+
+    // TODO - handle error
+    // lerr(nss, "Usage:  dest %s\n", get_desc_args("dest"));
+
     bu_log("direct_output\n");
     return 0;
 }
@@ -791,6 +832,10 @@ state_file(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+    // TODO - handle error
+    // lerr(nss, "Usage:  statefile %s\n", get_desc_args("statefile"));
+
+
     bu_log("state_file\n");
     return 0;
 }
@@ -800,6 +845,7 @@ dump_state(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+
     bu_log("dump_state\n");
     return 0;
 }
@@ -818,6 +864,10 @@ print_item(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+    // TODO - handle error
+    // lerr(nss, "Usage:  print %s\n", get_desc_args("print"));
+
+
     bu_log("print_item\n");
     return 0;
 }
@@ -827,6 +877,10 @@ bot_minpieces(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+    // TODO - handle error
+    // lerr(nss, "Usage:  bot_minpieces %s\n", get_desc_args("bot_minpieces"));
+
+
     bu_log("bot_minpieces\n");
     return 0;
 }
@@ -836,6 +890,10 @@ cm_libdebug(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+    // TODO - handle error
+    // lerr(nss, "Usage:  libdebug %s\n", get_desc_args("libdebug"));
+
+
     bu_log("cm_libdebug\n");
     return 0;
 }
@@ -845,6 +903,10 @@ cm_debug(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+    // TODO - handle error
+    // lerr(nss, "Usage:  debug %s\n", get_desc_args("debug"));
+
+
     bu_log("cm_debug\n");
     return 0;
 }
