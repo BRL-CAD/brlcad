@@ -228,18 +228,18 @@ main(int argc, const char **argv)
     /* These bu_opt_desc_opts settings approximate the old NIRT help formatting */
     struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 11, 67, NULL, NULL, NULL, 1, NULL, NULL };
     struct bu_opt_desc d[18];
-    BU_OPT(d[0],  "h", "help", "",       &bu_opt_bool,     &print_help,     "print help and exit");
+    BU_OPT(d[0],  "h", "help", "",       NULL,             &print_help,     "print help and exit");
     BU_OPT(d[1],  "A", "",     "n",      &enqueue_attrs,   &attrs,          "add attribute_name=n"); /* TODO - support reading a list of attributes? */
-    BU_OPT(d[2],  "M", "",     "",       &bu_opt_bool,     &read_matrix,    "read matrix, cmds on stdin");
-    BU_OPT(d[3],  "b", "",     "",       &bu_opt_bool,     &backout,        "back out of geometry before first shot");
+    BU_OPT(d[2],  "M", "",     "",       NULL,             &read_matrix,    "read matrix, cmds on stdin");
+    BU_OPT(d[3],  "b", "",     "",       NULL,             &backout,        "back out of geometry before first shot");
     BU_OPT(d[4],  "B", "",     "n",      &bu_opt_int,      &minpieces,      "set rt_bot_minpieces=n");
     BU_OPT(d[5],  "T", "",     "n",      &bu_opt_int,      &bot_mintie,     "set rt_bot_mintie=n (deprecated, use LIBRT_BOT_MINTIE instead)");
     BU_OPT(d[6],  "e", "",     "script", &enqueue_script,  &init_scripts,   "run script before interacting");
     BU_OPT(d[7],  "f", "",     "sfile",  &enqueue_file,    &sfd,            "run script sfile before interacting");
     BU_OPT(d[8],  "E", "",     "",       &dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
-    BU_OPT(d[9],  "L", "",     "",       &bu_opt_bool,     &list_formats,   "list output formatting options");
-    BU_OPT(d[10], "s", "",     "",       &bu_opt_bool,     &silent_mode,    "run in silent (non-verbose) mode");
-    BU_OPT(d[11], "v", "",     "",       &bu_opt_bool,     &verbose_mode,   "run in verbose mode");
+    BU_OPT(d[9],  "L", "",     "",       NULL,             &list_formats,   "list output formatting options");
+    BU_OPT(d[10], "s", "",     "",       NULL,             &silent_mode,    "run in silent (non-verbose) mode");
+    BU_OPT(d[11], "v", "",     "",       NULL,             &verbose_mode,   "run in verbose mode");
     BU_OPT(d[12], "H", "",     "n",      &bu_opt_int,      &header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
     BU_OPT(d[13], "u", "",     "n",      &bu_opt_int,      &use_air,        "set use_air=n (default 0)");
     BU_OPT(d[14], "O", "",     "action", &decode_overlap,  &overlap_claims, "handle overlap claims via action");

@@ -53,6 +53,46 @@ extern "C" {
 #define VERT            1
 #define DIST            2
 
+#define DEBUG_INTERACT  0x001
+#define DEBUG_SCRIPTS   0x002
+#define DEBUG_MAT       0x004
+#define DEBUG_BACKOUT   0x008
+#define DEBUG_HITS      0x010
+
+struct outitem {
+    char *format;
+    int code_nm;
+    struct outitem_tag *next;
+};
+#define OUTITEM_NULL ((struct outitem *)0)
+
+struct outval {
+    char *name;
+    int code_nm;
+    int type;
+    union ovv {
+	fastf_t fval;
+	const char *sval;
+	int ival;
+    } value;
+};
+
+struct overlap {
+    struct application *ap;
+    struct partition *pp;
+    struct region *reg1;
+    struct region *reg2;
+    fastf_t in_dist;
+    fastf_t out_dist;
+    point_t in_point;
+    point_t out_point;
+    struct ovlp_tag *forw;
+    struct ovlp_tag *backw;
+};
+#define OVERLAP_NULL ((struct overlap *)0)
+
+
+
 struct nirt_state {
     /* Output options */
     struct bu_color *hit_color;
@@ -90,6 +130,7 @@ struct nirt_state {
     double base2local;
     double elevation;
     double local2base;
+    int backout;
     int rt_bot_minpieces;
     int use_air;
     vect_t direct;
@@ -147,6 +188,107 @@ void lerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23
     nss->b_state = nss->b_err = true;
     va_end(ap);
 }
+
+void ldbg(struct nirt_state *nss, int flag, const char *fmt, ...) _BU_ATTR_PRINTF23
+{
+    va_list ap;
+    if (nss->silent_flag != SILENT_YES && (nss->nirt_debug & flag)) {
+	struct bu_vls *vls = nss->out;
+	BU_CK_VLS(vls);
+	va_start(ap, fmt);
+	bu_vls_vprintf(vls, fmt, ap);
+	nss->b_state = nss->b_out = true;
+    }
+    va_end(ap);
+}
+
+
+/********************************
+ * Conversions and Calculations *
+ ********************************/
+
+void grid2targ(struct nirt_state *nss)
+{
+    vect_t grid;
+    double ar = nss->azimuth * DEG2RAD;
+    double er = nss->elevation * DEG2RAD;
+    VMOVE(grid, nss->grid);
+    nss->target[X] = - grid[HORZ] * sin(ar) - grid[VERT] * cos(ar) * sin(er) + grid[DIST] * cos(ar) * cos(er);
+    nss->target[Y] =   grid[HORZ] * cos(ar) - grid[VERT] * sin(ar) * sin(er) + grid[DIST] * sin(ar) * cos(er);
+    nss->target[Z] =   grid[VERT] * cos(er) + grid[DIST] * sin(er);
+}
+
+void targ2grid(struct nirt_state *nss)
+{
+    vect_t target;
+    double ar = nss->azimuth * DEG2RAD;
+    double er = nss->elevation * DEG2RAD;
+    VMOVE(target, nss->target);
+    nss->grid[HORZ] = - target[X] * sin(ar) + target[Y] * cos(ar);
+    nss->grid[VERT] = - target[X] * cos(ar) * sin(er) - target[Y] * sin(er) * sin(ar) + target[Z] * cos(er);
+    nss->grid[DIST] =   target[X] * cos(er) * cos(ar) + target[Y] * cos(er) * sin(ar) + target[Z] * sin(er);
+}
+
+void dir2ae(struct nirt_state *nss)
+{
+    int zeroes = ZERO(nss->direct[Y]) && ZERO(nss->direct[X]);
+    double square = sqrt(nss->direct[X] * nss->direct[X] + nss->direct[Y] * nss->direct[Y]);
+
+    nss->azimuth = zeroes ? 0.0 : atan2 (-(nss->direct[Y]), -(nss->direct[X])) / DEG2RAD;
+    nss->elevation = atan2(-(nss->direct[Z]), square) / DEG2RAD;
+}
+
+void ae2dir(struct nirt_state *nss)
+{
+    vect_t dir;
+    double ar = nss->azimuth * DEG2RAD;
+    double er = nss->elevation * DEG2RAD;
+
+    dir[X] = -cos(ar) * cos(er);
+    dir[Y] = -sin(ar) * cos(er);
+    dir[Z] = -sin(er);
+    VUNITIZE(dir);
+    VMOVE(nss->direct, dir);
+}
+
+double backout(struct nirt_state *nss)
+{
+    double bov;
+    point_t ray_point;
+    vect_t diag, dvec, ray_dir, center_bsphere;
+    fastf_t bsphere_diameter, dist_to_target, delta;
+
+    if (!nss || !nss->backout) return 0.0;
+
+    VMOVE(ray_point, nss->target);
+    VMOVE(ray_dir, nss->direct);
+
+    VSUB2(diag, nss->ap->a_rt_i->mdl_max, nss->ap->a_rt_i->mdl_min);
+    bsphere_diameter = MAGNITUDE(diag);
+
+    /*
+     * calculate the distance from a plane normal to the ray direction through the center of
+     * the bounding sphere and a plane normal to the ray direction through the aim point.
+     */
+    VADD2SCALE(center_bsphere, nss->ap->a_rt_i->mdl_max, nss->ap->a_rt_i->mdl_min, 0.5);
+
+    dist_to_target = DIST_PT_PT(center_bsphere, ray_point);
+
+    VSUB2(dvec, ray_point, center_bsphere);
+    VUNITIZE(dvec);
+    delta = dist_to_target*VDOT(ray_dir, dvec);
+
+    /*
+     * this should put us about a bounding sphere radius in front of the bounding sphere
+     */
+    bov = bsphere_diameter + delta;
+
+    return bov;
+}
+
+/********************
+ * Raytracing setup *
+ ********************/
 
 HIDDEN int
 raytrace_gettrees(struct nirt_state *nss)
@@ -243,28 +385,9 @@ raytrace_prep(struct nirt_state *nss)
     return 0;
 }
 
-void grid2targ(struct nirt_state *nss)
-{
-    vect_t grid;
-    double ar = nss->azimuth * DEG2RAD;
-    double er = nss->elevation * DEG2RAD;
-    VMOVE(grid, nss->grid);
-    nss->target[X] = - grid[HORZ] * sin(ar) - grid[VERT] * cos(ar) * sin(er) + grid[DIST] * cos(ar) * cos(er);
-    nss->target[Y] =   grid[HORZ] * cos(ar) - grid[VERT] * sin(ar) * sin(er) + grid[DIST] * sin(ar) * cos(er);
-    nss->target[Z] =   grid[VERT] * cos(er) + grid[DIST] * sin(er);
-}
-
-void targ2grid(struct nirt_state *nss)
-{
-    vect_t target;
-    double ar = nss->azimuth * DEG2RAD;
-    double er = nss->elevation * DEG2RAD;
-    VMOVE(target, nss->target);
-    nss->grid[HORZ] = - target[X] * sin(ar) + target[Y] * cos(ar);
-    nss->grid[VERT] = - target[X] * cos(ar) * sin(er) - target[Y] * sin(er) * sin(ar) + target[Z] * cos(er);
-    nss->grid[DIST] =   target[X] * cos(er) * cos(ar) + target[Y] * cos(er) * sin(ar) + target[Z] * sin(er);
-}
-
+/************************
+ * Raytracing Callbacks *
+ ************************/
 
 extern "C" int
 nirt_if_hit(struct application *UNUSED(ap), struct partition *UNUSED(part_head), struct seg *UNUSED(finished_segs))
@@ -291,58 +414,91 @@ nirt_if_overlap(struct application *ap, struct partition *pp, struct region *reg
  *  Commands  *
  **************/
 
+struct nirt_cmd_desc {
+    const char *cmd;  // Must match the eventual bu_cmtab key
+    const char *desc;
+    const char *args;
+};
+
+const struct nirt_cmd_desc nirt_descs[] = {
+    { "attr",           "select attributes",                             "<-f(flush) | -p(print) | attribute_name>" },
+    { "ae",             "set/query azimuth and elevation",               "azimuth elevation" },
+    { "dir",            "set/query direction vector",                    "x-component y-component z-component" },
+    { "hv",             "set/query gridplane coordinates",               "horz vert [dist]" },
+    { "xyz",            "set/query target coordinates",                  "X Y Z" },
+    { "s",              "shoot a ray at the target",                     NULL },
+    { "backout",        "back out of model",                             NULL },
+    { "useair",         "set/query use of air",                          "<0|1|2|...>" },
+    { "units",          "set/query local units",                         "<mm|cm|m|in|ft>" },
+    { "overlap_claims", "set/query overlap rebuilding/retention",        "<0|1|2|3>" },
+    { "fmt",            "set/query output formats",                      "{rhpfmog} format item item ..." },
+    { "dest",           "set/query output destination",                  "file/pipe" },
+    { "statefile",      "set/query name of state file",                  "file" },
+    { "dump",           "write current state of NIRT to the state file", NULL },
+    { "load",           "read new state for NIRT from the state file",   NULL },
+    { "print",          "query an output item",                          "item" },
+    { "bot_minpieces",  "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
+    { "libdebug",       "set/query librt debug flags",                   "hex_flag_value" },
+    { "debug",          "set/query nirt debug flags",                    "hex_flag_value" },
+    { "q",              "quit",                                          NULL },
+    { "?",              "display this help menu",                        NULL },
+    { (char *)NULL,     NULL,                                            NULL}
+};
+
 extern "C" int
 cm_attr(void *ns, int argc, const char *argv[])
 {
     if (!ns) return -1;
     struct nirt_state *nss = (struct nirt_state *)ns;
     int i = 0;
+    int ac = 0;
     int print_help = 0;
     int attr_print = 0;
     int attr_flush = 0;
     int val_attrs = 0;
-    size_t orig_size = nss->active_paths.size();
+    size_t orig_size = nss->attrs.size();
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_opt_desc d[5];
-    BU_OPT(d[0],  "h", "help", "",      &bu_opt_bool,   &print_help, "print help and exit");
-    BU_OPT(d[1],  "p", "",     "",      &bu_opt_bool,   &attr_print, "print active attributes");
-    BU_OPT(d[2],  "f", "",     "",      &bu_opt_bool,   &attr_flush, "clear attribute list");
-    BU_OPT(d[3],  "v", "",     "",      &bu_opt_bool,   &val_attrs,  "validate attributes - only accept attributes used by one or more objects in the active database");
+    BU_OPT(d[0],  "h", "help",  "",  NULL,   &print_help, "print help and exit");
+    BU_OPT(d[1],  "p", "print", "",  NULL,   &attr_print, "print active attributes");
+    BU_OPT(d[2],  "f", "flush", "",  NULL,   &attr_flush, "clear attribute list");
+    BU_OPT(d[3],  "v", "",      "",  NULL,   &val_attrs,  "validate attributes - only accept attributes used by one or more objects in the active database");
     BU_OPT_NULL(d[4]);
+    const char *help = bu_opt_describe(d, NULL);
 
     argv++; argc--;
 
-    if (bu_opt_parse(&optparse_msg, argc, (const char **)argv, d) == -1) {
-	lerr(nss, "%s", bu_vls_addr(&optparse_msg));
+    if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
+	lerr(nss, "Option parsing error: %s\n\nUsage: attr <opts> <attribute_name>\nOptions:\n%s\n", bu_vls_addr(&optparse_msg), help);
+	if (help) bu_free((char *)help, "help str");
 	bu_vls_free(&optparse_msg);
 	return -1;
     }
+    bu_vls_free(&optparse_msg);
 
-    if (argc == 0) {
-	// TODO print attrs and return
-	return 0;
+    if (attr_flush) nss->attrs.clear();
+
+    if (attr_print && ac > 0) {
+	lerr(nss, "Usage: attr <opts> <attribute_name>\nOptions:\n%s", help);
+	if (help) bu_free((char *)help, "help str");
+	return -1;
     }
-
-    if (attr_flush) {
-	nss->attrs.clear();
-	return 0;
-    }
-
-    if (attr_print || argc == 0) {
+    if (attr_print || ac == 0) {
 	std::set<std::string>::iterator a_it;
 	for (a_it = nss->attrs.begin(); a_it != nss->attrs.end(); a_it++) {
 	    lout(nss, "\"%s\"\n", (*a_it).c_str());
 	}
+	return 0;
     }
 
-    for (i = 0; i < argc; i++) {
+    for (i = 0; i < ac; i++) {
 	const char *sattr = db5_standard_attribute(db5_standardize_attribute(argv[i]));
 	if (val_attrs) {
 	} 
 	nss->attrs.insert(argv[i]);
 	/* If there is a standardized version of this attribute that is
 	 * different from the supplied version, activate it as well. */
-	nss->attrs.insert(sattr);
+	if (sattr) nss->attrs.insert(sattr);
     }
 
     if (nss->active_paths.size() != orig_size) raytrace_prep(nss);
@@ -350,12 +506,55 @@ cm_attr(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-az_el(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+az_el(void *ns, int argc, const char *argv[])
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    double az = 0.0;
+    double el = 0.0;
+    int ret = 0;
+    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
-    bu_log("az_el\n");
-    return 0;
+
+    if (argc == 1) {
+	lout(nss, "(az, el) = (%4.2f, %4.2f)\n", nss->azimuth, nss->elevation);
+	return 0;
+    }
+
+    argv++; argc--;
+
+    if (argc != 2) return -1;
+
+    if ((ret = bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&az)) == -1) {
+	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	goto azel_done;
+    }
+
+    if (fabs(az) > 360) {
+	lerr(nss, "Error:  |azimuth| <= 360\n");
+	ret = -1;
+	goto azel_done;
+    }
+
+    argc--; argv++;
+    if ((ret = bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&el)) == -1) {
+	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	goto azel_done;
+    }
+
+    if (fabs(el) > 90) {
+	lerr(nss, "Error:  |elevation| <= 90\n");
+	ret = -1;
+	goto azel_done;
+    }
+
+    nss->azimuth = az;
+    nss->elevation = el;
+    ae2dir(nss);
+    ret = 0;
+
+azel_done:
+    bu_vls_free(&opt_msg);
+    return ret;
 }
 
 extern "C" int
@@ -382,6 +581,7 @@ dir_vect(void *ns, int argc, const char *argv[])
 
     VUNITIZE(dir);
     VMOVE(nss->direct, dir);
+    dir2ae(nss);
     return 0;
 }
 
@@ -467,26 +667,52 @@ shoot(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     int i;
     struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
+    if (!ns || !nss->ap || !nss->ap->a_rt_i) return -1;
 
-    double bov = 0.0;
+    double bov = backout(nss);
     for (i = 0; i < 3; ++i) {
 	nss->target[i] = nss->target[i] + (bov * -1*(nss->direct[i]));
 	nss->ap->a_ray.r_pt[i] = nss->target[i];
 	nss->ap->a_ray.r_dir[i] = nss->direct[i];
     }
 
+    ldbg(nss, DEBUG_BACKOUT,
+	    "Backing out %g units to (%g %g %g), shooting dir is (%g %g %g)\n",
+	    bov * nss->base2local,
+	    nss->ap->a_ray.r_pt[0] * nss->base2local,
+	    nss->ap->a_ray.r_pt[1] * nss->base2local,
+	    nss->ap->a_ray.r_pt[2] * nss->base2local,
+	    V3ARGS(nss->ap->a_ray.r_dir));
+
+
+
     (void)rt_shootray(nss->ap);
     return 0;
 }
 
 extern "C" int
-backout(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+backout(void *ns, int argc, const char *argv[])
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
-    bu_log("backout\n");
-    return 0;
+
+    if (argc == 1) {
+	lout(nss, "backout = %d\n", nss->backout);
+	return 0;
+    }
+
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "0")) {
+	nss->backout = 0;
+	return 0;
+    }
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "1")) {
+	nss->backout = 1;
+	return 0;
+    }
+
+    lerr(nss, "backout must be set to 0 (off) or 1 (on)\n");
+
+    return -1;
 }
 
 extern "C" int
@@ -633,9 +859,17 @@ quit(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 extern "C" int
 show_menu(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    int longest = 0;
+    const struct nirt_cmd_desc *d;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
-    bu_log("show_menu\n");
+    for (d = nirt_descs; d->cmd != NULL; d++) {
+	int l = strlen(d->cmd);
+	if (l > longest) longest = l;
+    }
+    for (d = nirt_descs; d->cmd != NULL; d++) {
+	lout(nss, "%*s %s\n", longest, d->cmd, d->desc);
+    }
     return 0;
 }
 
