@@ -2922,6 +2922,13 @@ if(HAVE_UNISTD_H)
 endif(HAVE_UNISTD_H)
 
 # HOST
+if(HAVE_GETHOSTNAME)
+  set(GETHOSTNAME_DEF "-DHAVE_GETHOSTNAME")
+endif(HAVE_GETHOSTNAME)
+if(HAVE_DECL_GETHOSTNAME)
+  set(GETHOSTNAME_DECL_DEF "-DHAVE_DECL_GETHOSTNAME")
+endif(HAVE_DECL_GETHOSTNAME)
+
 set(report_hostname_src "
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
@@ -2933,8 +2940,10 @@ set(report_hostname_src "
 #endif
 
 #define MAX_HOSTNAME 2048
-#if !defined(HAVE_UNISTD_H) || defined(_BSD_SOURCE) || defined(_XOPEN_SOURCE) && _XOPEN_SOURCE  >= 500 || defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112
-  #define HAVE_GETHOSTNAME 1
+
+/* strict c89 doesn't declare gethostname() */
+#if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME) && !defined(__cplusplus)
+extern int gethostname(char *name, size_t len);
 #endif
 
 int main(void) {
@@ -2963,7 +2972,7 @@ endif(CPP_DLL_DEFINES)
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c" "${report_hostname_src}")
 try_run(RH_RESULT RH_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
   "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"
-  COMPILE_DEFINITIONS "${UNISTD_DEF}"
+  COMPILE_DEFINITIONS "${UNISTD_DEF}" "${GETHOSTNAME_DEF}" "${GETHOSTNAME_DECL_DEF}"
   LINK_LIBRARIES "${WS2_32_LIBRARY}"
   COMPILE_OUTPUT_VARIABLE RH_COMPILE_MSGS
   RUN_OUTPUT_VARIABLE BRLCAD_COMPILE_HOSTNAME)
