@@ -59,6 +59,11 @@ extern "C" {
 #define DEBUG_BACKOUT   0x008
 #define DEBUG_HITS      0x010
 
+#define OVLP_RESOLVE            0
+#define OVLP_REBUILD_FASTGEN    1
+#define OVLP_REBUILD_ALL        2
+#define OVLP_RETAIN             3
+
 struct outitem {
     char *format;
     int code_nm;
@@ -131,6 +136,7 @@ struct nirt_state {
     double elevation;
     double local2base;
     int backout;
+    int overlap_claims;
     int rt_bot_minpieces;
     int use_air;
     vect_t direct;
@@ -707,9 +713,15 @@ shoot(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 	    nss->ap->a_ray.r_pt[2] * nss->base2local,
 	    V3ARGS(nss->ap->a_ray.r_dir));
 
-
+    // TODO - any necessary initialization for data collection by callbacks
 
     (void)rt_shootray(nss->ap);
+
+    // Undo backout
+    for (i = 0; i < 3; ++i) {
+	nss->target[i] = nss->target[i] - (bov * -1*(nss->direct[i]));
+    }
+
     return 0;
 }
 
@@ -742,14 +754,20 @@ extern "C" int
 use_air(void *ns, int argc, const char *argv[])
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
+    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     if (!ns) return -1;
     if (argc == 1) {
 	lout(nss, "use_air = %d\n", nss->use_air);
 	return 0;
     }
-    // TODO - handle error
-    // lerr(nss, "Usage:  useair %s\n", get_desc_args("useair"));
-    (void)bu_opt_int(NULL, 1, (const char **)&(argv[1]), (void *)&nss->use_air);
+    if (argc > 2) {
+	lerr(nss, "Usage:  useair %s\n", get_desc_args("useair"));
+	return -1;
+    }
+    if (bu_opt_int(NULL, 1, (const char **)&(argv[1]), (void *)&nss->use_air) == -1) {
+	lerr(nss, "Option parsing error: %s\n\nUsage:  useair %s\n", bu_vls_addr(&optparse_msg), get_desc_args("useair"));
+	return -1;
+    }
     nss->ap->a_rt_i = get_rtip(nss);
     nss->ap->a_resource = get_resource(nss);
     return 0;
@@ -767,9 +785,11 @@ nirt_units(void *ns, int argc, const char *argv[])
 	return 0;
     }
 
-    // TODO - handle error
-    // lerr(nss, "Usage:  units %s\n", get_desc_args("units"));
-  
+    if (argc > 2) {
+	lerr(nss, "Usage:  units %s\n", get_desc_args("units"));
+	return -1;
+    } 
+
     if (BU_STR_EQUAL(argv[1], "default")) {
 	nss->base2local = nss->dbip->dbi_base2local;
 	nss->local2base = nss->dbip->dbi_local2base;
@@ -788,16 +808,62 @@ nirt_units(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-do_overlap_claims(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+do_overlap_claims(void *ns, int argc, const char *argv[])
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    int valid_specification = 0;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
-    // TODO - handle error
-    // lerr(nss, "Usage:  overlap_claims %s\n", get_desc_args("overlap_claims"));
-  
+    if (argc == 1) {
+	switch (nss->overlap_claims) {
+	    case OVLP_RESOLVE:
+		lout(nss, "resolve (0)\n");
+		return 0;
+	    case OVLP_REBUILD_FASTGEN:
+		lout(nss, "rebuild_fastgen (1)\n");
+		return 0;
+	    case OVLP_REBUILD_ALL:
+		lout(nss, "rebuild_all (2)\n");
+		return 0;
+	    case OVLP_RETAIN:
+		lout(nss, "retain (3)\n");
+		return 0;
+	    default:
+		lerr(nss, "Error - overlap_clams is set to invalid value %d\n", nss->overlap_claims);
+		return -1;
+	}
+    }
 
-    bu_log("do_overlap_claims\n");
+    if (argc > 2) {
+	lerr(nss, "Usage:  overlap_claims %s\n", get_desc_args("overlap_claims"));
+	return -1;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "resolve") || BU_STR_EQUAL(argv[1], "0")) {
+	nss->overlap_claims = OVLP_RESOLVE;
+	valid_specification = 1;
+    }
+    if (BU_STR_EQUAL(argv[1], "rebuild_fastgen") || BU_STR_EQUAL(argv[1], "1")) {
+	nss->overlap_claims = OVLP_REBUILD_FASTGEN;
+	valid_specification = 1;
+    }
+    if (BU_STR_EQUAL(argv[1], "rebuild_all") || BU_STR_EQUAL(argv[1], "2")) {
+	nss->overlap_claims = OVLP_REBUILD_ALL;
+	valid_specification = 1;
+    }
+    if (BU_STR_EQUAL(argv[1], "retain") || BU_STR_EQUAL(argv[1], "3")) {
+	nss->overlap_claims = OVLP_RETAIN;
+	valid_specification = 1;
+    }
+
+    if (!valid_specification) {
+	lerr(nss, "Invalid overlap_claims specification: '%s'\n", argv[1]);
+	return -1;
+    }
+
+    if (nss->rtip) nss->rtip->rti_save_overlaps = (nss->overlap_claims > 0);
+    if (nss->rtip_air) nss->rtip_air->rti_save_overlaps = (nss->overlap_claims > 0);
+
     return 0;
 }
 
@@ -811,19 +877,6 @@ format_output(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
     // lerr(nss, "Usage:  fmt %s\n", get_desc_args("fmt"));
 
     bu_log("format_output\n");
-    return 0;
-}
-
-extern "C" int
-direct_output(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
-{
-    //struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
-
-    // TODO - handle error
-    // lerr(nss, "Usage:  dest %s\n", get_desc_args("dest"));
-
-    bu_log("direct_output\n");
     return 0;
 }
 
@@ -1040,7 +1093,6 @@ const struct bu_cmdtab nirt_cmds[] = {
     { "units",          nirt_units},
     { "overlap_claims", do_overlap_claims},
     { "fmt",            format_output},
-    { "dest",           direct_output},
     { "statefile",      state_file},
     { "dump",           dump_state},
     { "load",           load_state},
@@ -1280,6 +1332,7 @@ nirt_init(NIRT *ns, struct db_i *dbip)
     ns->ap->a_resource = get_resource(ns); /* note: resource is initialized by get_rtip */
     ns->ap->a_zero1 = 0;           /* sanity check, sayth raytrace.h */
     ns->ap->a_zero2 = 0;           /* sanity check, sayth raytrace.h */
+    ns->ap->a_uptr = (void *)ns;
 
     /* By default use the .g units */
     ns->base2local = dbip->dbi_base2local;

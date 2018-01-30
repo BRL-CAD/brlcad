@@ -266,7 +266,8 @@ ANALYZE_EXPORT void *nirt_udata(NIRT *ns, void *u_data);
 
 /* Mechanism for setting callback hooks executed when the specified state
  * is changed after a nirt_exec call.  NIRT_ALL will be executed last, and
- * is run if set and if any of the other states change. */
+ * is run if set and if any of the other states change. Hook functions
+ * will be passed the current value of the u_data pointer. */
 typedef int (*nirt_hook_t)(NIRT *ns, void *u_data);
 ANALYZE_EXPORT void nirt_hook(NIRT *ns, nirt_hook_t hf, int flag);
 

@@ -180,30 +180,123 @@ decode_overlap(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     return 1;
 }
 
+
+struct nirt_io_data {
+    FILE *out;
+    struct bu_vls *outfile;
+    FILE *err;
+    struct bu_vls *errfile;
+    int using_pipe;
+};
+#define IO_DATA_NULL { stdout, NULL, stderr, NULL, 0 }
+
 int
-nirt_stdout_hook(NIRT *ns, void *UNUSED(u_data))
+nirt_stdout_hook(NIRT *ns, void *u_data)
 {
+    struct nirt_io_data *io_data = (struct nirt_io_data *)u_data;
     struct bu_vls out = BU_VLS_INIT_ZERO;
     nirt_log(&out, ns, NIRT_OUT);
-    printf("%s", bu_vls_addr(&out));
-    fflush(stdout);
+    fprintf(io_data->out, "%s", bu_vls_addr(&out));
+    if (io_data->out == stdout) fflush(stdout);
     bu_vls_free(&out);
     return 0;
 }
 
 int
-nirt_stderr_hook(NIRT *ns, void *UNUSED(u_data))
+nirt_stderr_hook(NIRT *ns, void *u_data)
 {
+    struct nirt_io_data *io_data = (struct nirt_io_data *)u_data;
     struct bu_vls out = BU_VLS_INIT_ZERO;
     nirt_log(&out, ns, NIRT_ERR);
-    bu_log("%s", bu_vls_addr(&out));
+    fprintf(io_data->err, "%s", bu_vls_addr(&out));
+    if (io_data->err == stderr) fflush(stderr);
     bu_vls_free(&out);
     return 0;
+}
+
+/* TODO - eventually, should support separate destinations for output
+ * and error. */
+void
+nirt_dest(struct nirt_io_data *io_data, struct bu_vls *iline) {
+    // Destination is handled above the library level.
+    FILE *newf = NULL;
+    int use_pipe = 0;
+    bu_vls_nibble(iline, 4);
+    bu_vls_trimspace(iline);
+    if (!bu_vls_strlen(iline)) {
+	if (io_data->using_pipe) {
+	    fprintf(io_data->out, "destination = '| %s'\n", bu_vls_addr(io_data->outfile));
+	} else {
+	    fprintf(io_data->out, "destination = '%s'\n", bu_vls_addr(io_data->outfile));
+	}
+	return;
+    }
+    if (bu_vls_addr(iline)[0] == '|') {
+	/* We're looking for a pipe... */
+	use_pipe = 1;
+	bu_vls_nibble(iline, 1);
+	bu_vls_trimspace(iline);
+    }
+    if (bu_file_exists(bu_vls_addr(iline), NULL)) {
+	fprintf(io_data->err, "File %s already exists.\n", bu_vls_addr(iline));
+	bu_vls_trunc(iline, 0);
+	return;
+    }
+    if (use_pipe) {
+#ifdef HAVE_POPEN
+	newf = popen(bu_vls_addr(iline), "w");
+	if (!newf) {
+	    fprintf(io_data->err, "Cannot open pipe '%s'\n", bu_vls_addr(iline));
+	} else {
+	    if (io_data->using_pipe) {
+		pclose(io_data->out);
+		pclose(io_data->err);
+	    } else {
+		if (io_data->out && io_data->out != stdout) fclose(io_data->out);
+		if (io_data->err && io_data->err != stderr) fclose(io_data->err);
+	    }
+	    io_data->out = newf;
+	    io_data->err = newf;
+	    io_data->using_pipe = 1;
+	    bu_vls_sprintf(io_data->outfile, "%s", bu_vls_addr(iline));
+	    bu_vls_sprintf(io_data->errfile, "%s", bu_vls_addr(iline));
+	}
+#else
+	fprintf(stderr, "Error, support for pipe output is disabled.  Try a redirect instead.\n");
+#endif
+    } else {
+	/* File or stdout/stderr */
+	if (io_data->using_pipe) {
+	    pclose(io_data->out);
+	    pclose(io_data->err);
+	    io_data->using_pipe = 0;
+	}
+	if (BU_STR_EQUAL(bu_vls_addr(iline), "default")) {
+	    if (io_data->out != stdout) fclose(io_data->out);
+	    if (io_data->err != stderr) fclose(io_data->err);
+	    io_data->out = stdout;
+	    io_data->err = stderr;
+	    bu_vls_sprintf(io_data->outfile, "stdout");
+	    bu_vls_sprintf(io_data->errfile, "stderr");
+	} else {
+	    newf = fopen(bu_vls_addr(iline), "w");
+	    if (!newf) {
+		fprintf(io_data->err, "Cannot open file '%s'\n", bu_vls_addr(iline));
+	    } else {
+		io_data->out = newf;
+		io_data->err = newf;
+	    }
+	    bu_vls_sprintf(io_data->outfile, "%s", bu_vls_addr(iline));
+	    bu_vls_sprintf(io_data->errfile, "%s", bu_vls_addr(iline));
+	}
+    }
+    bu_vls_trunc(iline, 0);
 }
 
 int
 main(int argc, const char **argv)
 {
+    struct nirt_io_data io_data = IO_DATA_NULL;
     std::vector<std::string> init_scripts;
     struct bu_vls last_script_file = BU_VLS_INIT_ZERO;
     struct script_file_data sfd = {&init_scripts, &last_script_file, 0};
@@ -336,6 +429,13 @@ main(int argc, const char **argv)
     }
 
     /* Set up hooks so we can capture I/O from nirt_exec */
+    BU_GET(io_data.outfile, struct bu_vls);
+    BU_GET(io_data.errfile, struct bu_vls);
+    bu_vls_init(io_data.outfile);
+    bu_vls_init(io_data.errfile);
+    bu_vls_sprintf(io_data.outfile, "stdout");
+    bu_vls_sprintf(io_data.errfile, "stderr");
+    (void)nirt_udata(ns, (void *)&io_data);
     nirt_hook(ns, &nirt_stdout_hook, NIRT_OUT);
     nirt_hook(ns, &nirt_stderr_hook, NIRT_ERR);
 
@@ -453,11 +553,20 @@ main(int argc, const char **argv)
 	bu_vls_trimspace(&iline);
 	if (!bu_vls_strlen(&iline)) continue;
 	linenoiseHistoryAdd(bu_vls_addr(&iline));
+
+	/* A couple of the commands are application level, not
+	 * library level - handle them here. */
 	if (BU_STR_EQUAL(bu_vls_addr(&iline), "clear")) {
 	    linenoiseClearScreen();
 	    bu_vls_trunc(&iline, 0);
 	    continue;
 	}
+
+	if (BU_STR_EQUAL(bu_vls_addr(&iline), "dest") || !bu_fnmatch("dest *", bu_vls_addr(&iline), 0)) {
+	    nirt_dest(&io_data, &iline);
+	    continue;
+	}
+
 	nret = nirt_exec(ns, bu_vls_addr(&iline));
 	if (nret == 1) goto done;
 	if (nret == -1) {
@@ -469,6 +578,17 @@ main(int argc, const char **argv)
 done:
     linenoiseHistoryFree();
     bu_vls_free(&iline);
+    if (io_data.using_pipe) {
+	pclose(io_data.out);
+	pclose(io_data.err);
+    } else {
+	if (io_data.out != stdout) fclose(io_data.out);
+	if (io_data.err != stderr) fclose(io_data.err);
+    }
+    bu_vls_free(io_data.outfile);
+    bu_vls_free(io_data.errfile);
+    BU_PUT(io_data.outfile, struct bu_vls);
+    BU_PUT(io_data.errfile, struct bu_vls);
     nirt_destroy(ns);
     return 0;
 }
