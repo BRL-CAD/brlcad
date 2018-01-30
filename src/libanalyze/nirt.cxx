@@ -124,7 +124,6 @@ struct nirt_state {
     nirt_hook_t h_out;     // output changes
     nirt_hook_t h_err;     // err changes
     nirt_hook_t h_segs;    // segement list is changed
-    nirt_hook_t h_scripts; // enqueued scripts change
     nirt_hook_t h_objs;    // active list of objects in scene changes
     nirt_hook_t h_frmts;   // output formatting is changed
     nirt_hook_t h_view;    // the camera view is changed
@@ -150,7 +149,6 @@ struct nirt_state {
     bool b_out;     // updated when output changes
     bool b_err;     // updated when err changes
     bool b_segs;    // updated when segement list is changed
-    bool b_scripts; // updated when enqueued scripts change
     bool b_objs;    // updated when active list of objects in scene changes
     bool b_frmts;   // updated when output formatting is changed
     bool b_view;    // updated when the camera view is changed
@@ -989,15 +987,6 @@ show_menu(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 extern "C" int
-queue_cmd(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
-{
-    //struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
-    bu_log("queue_cmd\n");
-    return 0;
-}
-
-extern "C" int
 draw_cmd(void *ns, int argc, const char *argv[])
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
@@ -1023,37 +1012,16 @@ erase_cmd(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 extern "C" int
-nreport_cmd(void *ns, int argc, const char *argv[])
+state_cmd(void *ns, int argc, const char *argv[])
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
     struct rt_i *rtip = nss->ap->a_rt_i;
     double base2local = rtip->rti_dbip->dbi_base2local;
     if (argc == 1) {
-	// TODO some kind of generic report...
+	// TODO
 	return 0;
     }
-    if (BU_STR_EQUAL(argv[1], "model_bounds")) {
-	lout(nss, "model_min = (%g, %g, %g)    model_max = (%g, %g, %g)\n",
-		rtip->mdl_min[X] * base2local,
-		rtip->mdl_min[Y] * base2local,
-		rtip->mdl_min[Z] * base2local,
-		rtip->mdl_max[X] * base2local,
-		rtip->mdl_max[Y] * base2local,
-		rtip->mdl_max[Z] * base2local);
-    }
-    return 0;
-}
-
-/* Low level manipulation of nirt state - usually will be used
- * by programs.  TODO This and nreport should probably go in
- * a separate cmdtbl so documentation won't automatically get
- * generated for them... */
-extern "C" int
-nstate_cmd(void *ns, int argc, const char *argv[])
-{
-    struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
     if (BU_STR_EQUAL(argv[1], "out_accumulate")) {
 	int setting = 0;
 	if (argc == 2) {
@@ -1074,12 +1042,22 @@ nstate_cmd(void *ns, int argc, const char *argv[])
 	nss->err_accumulate = setting;
 	return 0;
     }
-
-
-    /* Unknown state command - return -1 */
-    return -1;
+    if (BU_STR_EQUAL(argv[1], "model_bounds")) {
+	if (argc != 2) {
+	    lerr(nss, "TODO - state cmd help\n");
+	    return -1;
+	}
+	lout(nss, "model_min = (%g, %g, %g)    model_max = (%g, %g, %g)\n",
+		rtip->mdl_min[X] * base2local,
+		rtip->mdl_min[Y] * base2local,
+		rtip->mdl_min[Z] * base2local,
+		rtip->mdl_max[X] * base2local,
+		rtip->mdl_max[Y] * base2local,
+		rtip->mdl_max[Z] * base2local);
+	return 0;
+    }
+    return 0;
 }
-
 
 const struct bu_cmdtab nirt_cmds[] = {
     { "attr",           cm_attr},
@@ -1103,11 +1081,9 @@ const struct bu_cmdtab nirt_cmds[] = {
     { "q",              quit},
     { "?",              show_menu},
     // New commands...
-    { "queue",          queue_cmd},
     { "draw",           draw_cmd},
     { "erase",          erase_cmd},
-    { "nreport",        nreport_cmd},
-    { "nstate",         nstate_cmd},
+    { "state",          state_cmd},
     { (char *)NULL,     NULL}
 };
 
@@ -1274,7 +1250,6 @@ nirt_alloc(NIRT **ns)
     n->h_out = NULL;
     n->h_err = NULL;
     n->h_segs = NULL;
-    n->h_scripts = NULL;
     n->h_objs = NULL;
     n->h_frmts = NULL;
     n->h_view = NULL;
@@ -1293,7 +1268,6 @@ nirt_alloc(NIRT **ns)
     n->b_out = false;
     n->b_err = false;
     n->b_segs = false;
-    n->b_scripts = false;
     n->b_objs = false;
     n->b_frmts = false;
     n->b_view = false;
@@ -1379,7 +1353,6 @@ nirt_exec(NIRT *ns, const char *script)
     ns->b_out = false;
     ns->b_err = false;
     ns->b_segs = false;
-    ns->b_scripts = false;
     ns->b_objs = false;
     ns->b_frmts = false;
     ns->b_view = false;
@@ -1393,20 +1366,12 @@ nirt_exec(NIRT *ns, const char *script)
 	ns->ret = nirt_parse_script(ns, script, &nirt_exec_cmd);
     } else {
 	return 0;
-#if 0
-	if (ns->enqueued == 1) {
-	    // Execute enqueued logic
-	} else {
-	    return ns->ret;
-	}
-#endif
     }
 
     NIRT_HOOK(b_state, h_state);
     NIRT_HOOK(b_out, h_out);
     NIRT_HOOK(b_err, h_err);
     NIRT_HOOK(b_segs, h_segs);
-    NIRT_HOOK(b_scripts, h_scripts);
     NIRT_HOOK(b_objs, h_objs);
     NIRT_HOOK(b_frmts, h_frmts);
     NIRT_HOOK(b_view, h_view);
@@ -1438,9 +1403,6 @@ nirt_hook(NIRT *ns, nirt_hook_t hf, int flag)
 	    break;
 	case NIRT_SEGS:
 	    ns->h_segs = hf;
-	    break;
-	case NIRT_SCRIPTS:
-	    ns->h_scripts = hf;
 	    break;
 	case NIRT_OBJS:
 	    ns->h_objs = hf;
@@ -1476,9 +1438,6 @@ nirt_clear(NIRT *ns, int flags)
     if (NCFC(NIRT_SEGS)) {
     }
 
-    if (NCFC(NIRT_SCRIPTS)) {
-    }
-
     if (NCFC(NIRT_OBJS)) {
     }
 
@@ -1511,9 +1470,6 @@ nirt_log(struct bu_vls *o, NIRT *ns, int output_type)
 	    break;
 	case NIRT_SEGS:
 	    bu_vls_sprintf(o, "%s", "NIRT_SEGS: TODO\n");
-	    break;
-	case NIRT_SCRIPTS:
-	    bu_vls_sprintf(o, "%s", "NIRT_SCRIPTS: TODO\n");
 	    break;
 	case NIRT_OBJS:
 	    bu_vls_sprintf(o, "%s", "NIRT_OBJS: TODO\n");

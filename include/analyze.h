@@ -237,13 +237,12 @@ ANALYZE_EXPORT int nirt_init(NIRT *ns, struct db_i *dbip);
 /** Clean up and free a NIRT state. */
 ANALYZE_EXPORT void nirt_destroy(NIRT *ns);
 
-/* Execute nirt commands.  Runs either the supplied script (if script != NULL),
- * or (if script == NULL) the sequence of enqueued scripts stored in the state.
+/* Execute nirt commands.  Runs either the supplied script.
  *
- * Returns -1 if there was any sort of error, 0 if the script(s) executed
+ * Returns -1 if there was any sort of error, 0 if the script executed
  * successfully without a quit call, and 1 if a quit command was encountered
  * during execution. See the man(1) nirt manual page for documentation of
- * valid script options
+ * valid script commands and options.
  */
 ANALYZE_EXPORT int nirt_exec(NIRT *ns, const char *script);
 
@@ -252,10 +251,9 @@ ANALYZE_EXPORT int nirt_exec(NIRT *ns, const char *script);
 #define NIRT_OUT      0x2    /**< @brief output log*/
 #define NIRT_ERR      0x4    /**< @brief error log */
 #define NIRT_SEGS     0x8    /**< @brief segment list */
-#define NIRT_SCRIPTS  0x10   /**< @brief enqueued scripts */
-#define NIRT_OBJS     0x20   /**< @brief 'active' objects from the scene */
-#define NIRT_FRMTS    0x40   /**< @brief available pre-defined output formats */
-#define NIRT_VIEW     0x80   /**< @brief the current view (ae/dir/center/etc.) */
+#define NIRT_OBJS     0x10   /**< @brief 'active' objects from the scene */
+#define NIRT_FRMTS    0x20   /**< @brief available pre-defined output formats */
+#define NIRT_VIEW     0x40   /**< @brief the current view (ae/dir/center/etc.) */
 
 /* Associate a pointer to user data with the NIRT state, unless u_data is
  * NULL. Returns the current u_data pointer - so to extract the current NIRT data

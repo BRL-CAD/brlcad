@@ -528,7 +528,7 @@ main(int argc, const char **argv)
 	const char *ustr = bu_units_string(dbip->dbi_local2base);
 	printf("Database title: '%s'\n", dbip->dbi_title);
 	printf("Database units: '%s'\n", (ustr) ? ustr : "Unknown units");
-	(void)nirt_exec(ns, "nreport model_bounds");
+	(void)nirt_exec(ns, "state model_bounds");
     }
 
     /* If we're supposed to read input from stdin, do that */
