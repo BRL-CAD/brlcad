@@ -58,7 +58,7 @@ ged_inirt(struct ged *gedp, int argc, const char *argv[], NIRT *n)
     /* TODO - capture segments for drawing... */
 
     /* Reset textual outputs and vlists, but keep scene definition active */
-    nirt_clear(ns, NIRT_ALL|NIRT_OBJS|NIRT_VIEW|NIRT_SCRIPTS);
+    nirt_clear(ns, NIRT_ALL|NIRT_OBJS|NIRT_VIEW);
 
     if (!n || nr == 1) nirt_destroy(ns);
     return GED_OK;
