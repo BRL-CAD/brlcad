@@ -214,6 +214,16 @@ nirt_stderr_hook(NIRT *ns, void *u_data)
     return 0;
 }
 
+int
+nirt_app_stdout_hook(NIRT *ns, void *u_data)
+{
+    struct bu_vls *log = (struct bu_vls *)u_data;
+    nirt_log(log, ns, NIRT_OUT);
+    return 0;
+}
+
+
+
 /* TODO - eventually, should support separate destinations for output
  * and error. */
 void
@@ -293,6 +303,122 @@ nirt_dest(struct nirt_io_data *io_data, struct bu_vls *iline) {
     bu_vls_trunc(iline, 0);
 }
 
+
+/* TODO - need some libbu mechanism for subcommands a.l.a. bu_opt... */
+struct nirt_help_desc {
+        const char *cmd;
+	const char *desc;
+};
+const struct nirt_help_desc nirt_help_descs[] = {
+    { "dest",           "set/query output destination" },
+    { "statefile",      "set/query name of state file" },
+    { "dump",           "write current state of NIRT to the state file" },
+    { "load",           "read new state for NIRT from the state file" },
+    { "clear",          "clears text from the terminal screen (interactive mode only)" },
+    { (char *)NULL,     NULL }
+};
+
+int
+nirt_app_exec(NIRT *ns, struct bu_vls *iline, struct bu_vls *state_file, struct nirt_io_data *io_data)
+{
+    int nret = 0;
+
+    /* A couple of the commands are application level, not
+     * library level - handle them here. */
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "dest") || !bu_fnmatch("dest *", bu_vls_addr(iline), 0)) {
+	nirt_dest(io_data, iline);
+	return 0;
+    }
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "dump") || !bu_fnmatch("dump *", bu_vls_addr(iline), 0)) {
+	bu_vls_nibble(iline, 4);
+	bu_vls_trimspace(iline);
+	if (bu_vls_strlen(iline)) {
+	    // TODO - this is lame, but matches the existing nirt behavior - need to fix it to work right...
+	    fprintf(io_data->err, "Error: dump does not take arguments - output goes to the statefile %s\n", bu_vls_addr(state_file));
+	    return -1;
+	}
+	struct bu_vls dumpstr = BU_VLS_INIT_ZERO;
+	(void)nirt_udata(ns, (void *)&dumpstr);
+	nirt_hook(ns, &nirt_app_stdout_hook, NIRT_OUT);
+	(void)nirt_exec(ns, "state -d");
+	(void)nirt_udata(ns, (void *)io_data);
+	nirt_hook(ns, &nirt_stdout_hook, NIRT_OUT);
+
+	FILE *sfPtr = fopen(bu_vls_addr(state_file), "wb");
+	if (!sfPtr) {
+	    fprintf(io_data->err, "Error: Cannot open statefile '%s'\n", bu_vls_addr(state_file));
+	    bu_vls_free(&dumpstr);
+	    return -1;
+	}
+	fprintf(sfPtr, "%s\n", bu_vls_addr(&dumpstr));
+	fclose(sfPtr);
+	bu_vls_free(&dumpstr);
+	return 0;
+    }
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "load") || !bu_fnmatch("load *", bu_vls_addr(iline), 0)) {
+	bu_vls_nibble(iline, 4);
+	bu_vls_trimspace(iline);
+	if (bu_vls_strlen(iline)) {
+	    // TODO - this is lame, but matches the existing nirt behavior - need to fix it to work right...
+	    fprintf(io_data->err, "Error: load does not take arguments - input is read from the statefile %s\n", bu_vls_addr(state_file));
+	    return -1;
+	}
+
+	FILE *sfPtr = fopen(bu_vls_addr(state_file), "rb");
+	if (!sfPtr) {
+	    fprintf(io_data->err, "Error: could not open statefile %s\n", bu_vls_addr(state_file));
+	    return -1;
+	} else {
+	    int ret = 0;
+	    struct bu_vls fl = BU_VLS_INIT_ZERO;
+	    while (bu_vls_gets(&fl, sfPtr)) {
+		ret = nirt_exec(ns, bu_vls_addr(&fl));
+		if (ret < 0) {
+		    fprintf(io_data->err, "Error: failed to execute nirt script:\n\n%s\n\nwhen reading from statefile %s\n", bu_vls_addr(&fl), bu_vls_addr(state_file));
+		    bu_vls_free(&fl);
+		    return ret;
+		}
+		bu_vls_trunc(&fl, 0);
+	    }
+	    bu_vls_free(&fl);
+	}
+	return 0;
+    }
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "statefile") || !bu_fnmatch("statefile *", bu_vls_addr(iline), 0)) {
+	bu_vls_nibble(iline, 9);
+	bu_vls_trimspace(iline);
+	if (!bu_vls_strlen(iline)) {
+	    fprintf(io_data->out, "statefile = '%s'\n", bu_vls_addr(state_file));
+	    return 0;
+	}
+	bu_vls_sprintf(state_file, "%s", bu_vls_addr(iline));
+	return 0;
+    }
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "?")) {
+	// Get library documentation and add app level help to it.
+	struct bu_vls helpstr = BU_VLS_INIT_ZERO;
+	(void)nirt_udata(ns, (void *)&helpstr);
+	nirt_hook(ns, &nirt_app_stdout_hook, NIRT_OUT);
+	(void)nirt_exec(ns, "?");
+	(void)nirt_udata(ns, (void *)io_data);
+	nirt_hook(ns, &nirt_stdout_hook, NIRT_OUT);
+	fprintf(io_data->out, "%s\n", bu_vls_addr(&helpstr));
+	bu_vls_free(&helpstr);
+
+	const struct nirt_help_desc *hd;
+	for (hd = nirt_help_descs; hd->cmd != NULL; hd++) {	    
+	    fprintf(io_data->out, "%*s %s\n", 14, hd->cmd, hd->desc);
+	}
+
+	return 0;
+    }
+
+    /* Not one of the command level commands - up to the library */
+    nret = nirt_exec(ns, bu_vls_addr(iline));
+
+    return nret;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -302,7 +428,7 @@ main(int argc, const char **argv)
     struct script_file_data sfd = {&init_scripts, &last_script_file, 0};
     char *line;
     int ac = 0;
-    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    struct bu_vls state_file = BU_VLS_INIT_ZERO;
     std::set<std::string> attrs;
     std::set<std::string>::iterator a_it;
     struct bu_vls iline = BU_VLS_INIT_ZERO;
@@ -318,6 +444,7 @@ main(int argc, const char **argv)
     int silent_mode = SILENT_UNSET;
     int use_air = 0;
     int verbose_mode = 0;
+    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     /* These bu_opt_desc_opts settings approximate the old NIRT help formatting */
     struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 11, 67, NULL, NULL, NULL, 1, NULL, NULL };
     struct bu_opt_desc d[18];
@@ -531,6 +658,9 @@ main(int argc, const char **argv)
 	(void)nirt_exec(ns, "state model_bounds");
     }
 
+    /* Initialize the state file to "nirt_state" */
+    bu_vls_sprintf(&state_file, "nirt_state");
+
     /* If we're supposed to read input from stdin, do that */
     if (read_matrix) {
     }
@@ -554,24 +684,16 @@ main(int argc, const char **argv)
 	if (!bu_vls_strlen(&iline)) continue;
 	linenoiseHistoryAdd(bu_vls_addr(&iline));
 
-	/* A couple of the commands are application level, not
-	 * library level - handle them here. */
+	/* The "clear" command only makes sense in interactive
+	 * mode */
 	if (BU_STR_EQUAL(bu_vls_addr(&iline), "clear")) {
 	    linenoiseClearScreen();
 	    bu_vls_trunc(&iline, 0);
-	    continue;
+	    return 0;
 	}
 
-	if (BU_STR_EQUAL(bu_vls_addr(&iline), "dest") || !bu_fnmatch("dest *", bu_vls_addr(&iline), 0)) {
-	    nirt_dest(&io_data, &iline);
-	    continue;
-	}
-
-	nret = nirt_exec(ns, bu_vls_addr(&iline));
+	nret = nirt_app_exec(ns, &iline, &state_file, &io_data);
 	if (nret == 1) goto done;
-	if (nret == -1) {
-	    /* TODO - report error */
-	}
 	bu_vls_trunc(&iline, 0);
     }
 

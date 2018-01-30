@@ -436,10 +436,6 @@ const struct nirt_cmd_desc nirt_descs[] = {
     { "units",          "set/query local units",                         "<mm|cm|m|in|ft>" },
     { "overlap_claims", "set/query overlap rebuilding/retention",        "<0|1|2|3>" },
     { "fmt",            "set/query output formats",                      "{rhpfmog} format item item ..." },
-    { "dest",           "set/query output destination",                  "file/pipe" },
-    { "statefile",      "set/query name of state file",                  "file" },
-    { "dump",           "write current state of NIRT to the state file", NULL },
-    { "load",           "read new state for NIRT from the state file",   NULL },
     { "print",          "query an output item",                          "item" },
     { "bot_minpieces",  "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
     { "libdebug",       "set/query librt debug flags",                   "hex_flag_value" },
@@ -879,38 +875,6 @@ format_output(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 extern "C" int
-state_file(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
-{
-    //struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
-    // TODO - handle error
-    // lerr(nss, "Usage:  statefile %s\n", get_desc_args("statefile"));
-
-
-    bu_log("state_file\n");
-    return 0;
-}
-
-extern "C" int
-dump_state(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
-{
-    //struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
-
-    bu_log("dump_state\n");
-    return 0;
-}
-
-extern "C" int
-load_state(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
-{
-    //struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
-    bu_log("load_state\n");
-    return 0;
-}
-
-extern "C" int
 print_item(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
@@ -1071,9 +1035,6 @@ const struct bu_cmdtab nirt_cmds[] = {
     { "units",          nirt_units},
     { "overlap_claims", do_overlap_claims},
     { "fmt",            format_output},
-    { "statefile",      state_file},
-    { "dump",           dump_state},
-    { "load",           load_state},
     { "print",          print_item},
     { "bot_minpieces",  bot_minpieces},
     { "libdebug",       cm_libdebug},
