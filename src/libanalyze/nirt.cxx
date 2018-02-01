@@ -310,13 +310,13 @@ raytrace_gettrees(struct nirt_state *nss)
 	objs[ocnt] = o;
 	ocnt++;
     }
-    objs[ocnt] = '\0';
+    objs[ocnt] = NULL;
     for (s_it = nss->attrs.begin(); s_it != nss->attrs.end(); s_it++) {
 	const char *a = (*s_it).c_str();
 	attrs[acnt] = a;
 	acnt++;
     }
-    attrs[acnt] = '\0';
+    attrs[acnt] = NULL;
     lout(nss, "Get trees...\n");
 
     i = rt_gettrees_and_attrs(nss->ap->a_rt_i, attrs, ocnt, objs, 1);
