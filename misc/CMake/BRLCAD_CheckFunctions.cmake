@@ -146,11 +146,18 @@ macro(BRLCAD_FUNCTION_EXISTS function)
       # written to the CONFIG_H_FILE - the caller must do so if they want to
       # capture the results.
       if(NOT DEFINED HAVE_DECL_${var})
-	if(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
-	  check_c_source_compiles("${${var}_DECL_TEST_SRCS}" HAVE_DECL_${var})
-	else(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
-	  check_c_source_compiles("${std_hdr_includes}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
-	endif(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	if(NOT MSVC)
+	  if(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	    check_c_source_compiles("${${var}_DECL_TEST_SRCS}" HAVE_DECL_${var})
+	  else(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	    check_c_source_compiles("${std_hdr_includes}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
+	  endif(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	else()
+	  # Note - config_win.h (and probably other issues) make the decl tests
+	  # a no-go with Visual Studio - punt until the larger issues are
+	  # sorted out.
+	  set(HAVE_DECL_${var} 1)
+	endif(NOT MSVC)
 	set(HAVE_DECL_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache decl test result")
       endif(NOT DEFINED HAVE_DECL_${var})
       # The config file is regenerated every time CMake is run, so we
