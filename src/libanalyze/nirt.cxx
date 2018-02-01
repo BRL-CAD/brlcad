@@ -686,7 +686,7 @@ target_coor(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-shoot(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+shoot(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
     int i;
     struct nirt_state *nss = (struct nirt_state *)ns;
@@ -862,7 +862,7 @@ do_overlap_claims(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-format_output(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+format_output(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
@@ -875,7 +875,7 @@ format_output(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 extern "C" int
-print_item(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+print_item(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
@@ -888,7 +888,7 @@ print_item(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 extern "C" int
-bot_minpieces(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+bot_minpieces(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
@@ -901,7 +901,7 @@ bot_minpieces(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 extern "C" int
-cm_libdebug(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+cm_libdebug(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
@@ -914,7 +914,7 @@ cm_libdebug(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 extern "C" int
-cm_debug(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+cm_debug(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
@@ -927,14 +927,14 @@ cm_debug(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
 }
 
 extern "C" int
-quit(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+quit(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
     lout((struct nirt_state *)ns, "Quitting...\n");
     return 1;
 }
 
 extern "C" int
-show_menu(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+show_menu(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
     int longest = 0;
     const struct nirt_cmd_desc *d;
@@ -967,7 +967,7 @@ draw_cmd(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-erase_cmd(void *ns, int UNUSED(argc), const char *UNUSED(argv[]))
+erase_cmd(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
     //struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
