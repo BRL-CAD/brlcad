@@ -32,6 +32,9 @@
 
 #include <fcntl.h>
 #include <errno.h>
+#if !defined(__cplusplus)
+#include <math.h>
+#endif
 
 /* !!! this should not be here, should fix the build system settings */
 #define __STDC__ 1
@@ -153,11 +156,15 @@
        }
      }
 #  else
-#    define isnan _isnan
+#    if !defined(isnan) && !defined(__cplusplus)
+#       define isnan _isnan
+#    endif
 #  endif
 #endif
 
-#cmakedefine isinf(x) (!_finite(x))
+#if !defined(isinf) && !defined(__cplusplus)
+#   define isinf(x) (!_finite(x))
+#endif
 #cmakedefine asinh(x) (log(x + sqrt(x * x + 1)))
 #define execvp _execvp
 #define fdopen _fdopen
