@@ -130,7 +130,9 @@
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
-#include <strings.h>
+#ifndef _WIN32
+#  include <strings.h>
+#endif
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/types.h>
