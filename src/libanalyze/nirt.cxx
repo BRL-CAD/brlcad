@@ -58,7 +58,6 @@ extern "C" {
 #define DEBUG_MAT       0x004
 #define DEBUG_BACKOUT   0x008
 #define DEBUG_HITS      0x010
-
 #define DEBUG_FMT        "\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
 
 #define OVLP_RESOLVE            0
@@ -507,7 +506,8 @@ cm_attr(void *ns, int argc, const char *argv[])
     for (i = 0; i < ac; i++) {
 	const char *sattr = db5_standard_attribute(db5_standardize_attribute(argv[i]));
 	if (val_attrs) {
-	} 
+	    //TODO - check against the .g for any usage of the attribute
+	}
 	nss->attrs.insert(argv[i]);
 	/* If there is a standardized version of this attribute that is
 	 * different from the supplied version, activate it as well. */
@@ -688,11 +688,16 @@ target_coor(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-shoot(void *ns, int UNUSED(argc), const char **UNUSED(argv))
+shoot(void *ns, int argc, const char **UNUSED(argv))
 {
     int i;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns || !nss->ap || !nss->ap->a_rt_i) return -1;
+
+    if (argc != 1) {
+	lerr(nss, "Usage:  s\n");
+	return -1;
+    }
 
     double bov = backout(nss);
     for (i = 0; i < 3; ++i) {
@@ -784,7 +789,7 @@ nirt_units(void *ns, int argc, const char *argv[])
     if (argc > 2) {
 	lerr(nss, "Usage:  units %s\n", get_desc_args("units"));
 	return -1;
-    } 
+    }
 
     if (BU_STR_EQUAL(argv[1], "default")) {
 	nss->base2local = nss->dbip->dbi_base2local;
@@ -918,6 +923,12 @@ bot_minpieces(void *ns, int argc, const char **argv)
     }
 
     argc--; argv++;
+
+    if (argc > 1) {
+	lerr(nss, "Usage:  bot_minpieces %s\n", get_desc_args("bot_minpieces"));
+	return -1;
+    }
+
     if ((ret = bu_opt_long(&opt_msg, 1, argv, (void *)&minpieces)) == -1) {
 	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	goto bot_minpieces_done;
@@ -957,6 +968,12 @@ librt_debug(void *ns, int argc, const char **argv)
     }
 
     argc--; argv++;
+
+    if (argc > 1) {
+	lerr(nss, "Usage:  libdebug %s\n", get_desc_args("libdebug"));
+	return -1;
+    }
+
     if ((ret = bu_opt_long_hex(&msg, 1, argv, (void *)&dflg)) == -1) {
 	lerr(nss, "%s\n", bu_vls_addr(&msg));
 	goto librt_nirt_debug_done;
@@ -993,6 +1010,12 @@ nirt_debug(void *ns, int argc, const char **argv)
     }
 
     argc--; argv++;
+
+    if (argc > 1) {
+	lerr(nss, "Usage:  debug %s\n", get_desc_args("debug"));
+	return -1;
+    }
+
     if ((ret = bu_opt_long_hex(&msg, 1, argv, (void *)&dflg)) == -1) {
 	lerr(nss, "%s\n", bu_vls_addr(&msg));
 	goto nirt_debug_done;
@@ -1388,6 +1411,9 @@ nirt_destroy(NIRT *ns)
     delete ns;
 }
 
+/* Note - defined inside the execute-once do-while loop to allow for putting a
+ * semicolon at the end of a NIRT_HOOK() statement (makes code formatters
+ * happier) */
 #define NIRT_HOOK(btype,htype) \
     do { if (ns->btype && ns->htype){(*ns->htype)(ns, ns->u_data);} } \
     while (0)
