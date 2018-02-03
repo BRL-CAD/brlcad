@@ -519,46 +519,6 @@ is_point_outside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &lo
     return (point_loop_location(pt, loop) == OUTSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
 }
 
-#if 0
-HIDDEN ON_Interval
-union_intervals(const ON_SimpleArray<ON_Interval> &intervals)
-{
-    ON_Interval union_interval;
-    for (int i = 0; i < intervals.Count(); ++i) {
-	union_interval.Union(intervals[i]);
-    }
-    if (!union_interval.IsValid()) {
-	throw IntervalGenerationError("union_intervals() created invalid interval\n");
-    }
-    return union_interval;
-}
-
-
-HIDDEN ON_Interval
-intersect_intervals(const ON_Interval &interval1, const ON_Interval &interval2)
-{
-    ON_Interval intersection_interval;
-    if (!intersection_interval.Intersection(interval1, interval2)) {
-	throw IntervalGenerationError("intersect_intervals() failed to intersect intervals\n");
-    }
-    return intersection_interval;
-}
-
-
-HIDDEN void
-replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
-{
-    try {
-	ON_Curve *subcurve = sub_curve(curve, interval.Min(), interval.Max());
-	delete curve;
-	curve = subcurve;
-    } catch (InvalidInterval &) {
-	throw GeometryGenerationError("replace_curve_with_subcurve(): NULL "
-				      "subcurve\n");
-    }
-}
-#endif
-
 
 HIDDEN ON_SimpleArray<ON_Interval>
 get_curve_intervals_inside_or_on_face(
@@ -649,14 +609,6 @@ get_curve_intervals_inside_or_on_face(
 
     return final_intervals;
 }
-
-#if 0
-HIDDEN int
-compare_interval(const ON_Interval *a, const ON_Interval *b)
-{
-    return a->Compare(*b);
-}
-#endif
 
 
 struct IntervalPoints {
