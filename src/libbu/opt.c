@@ -882,18 +882,46 @@ bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
     if (endptr != NULL && strlen(endptr) > 0) {
 	/* Had some invalid character in the input, fail */
-	if (msg) bu_vls_printf(msg, "Invalid string specifier for int: %s\n", argv[0]);
+	if (msg) bu_vls_printf(msg, "Invalid string specifier for long: %s\n", argv[0]);
 	return -1;
     }
 
     if (errno == ERANGE) {
-	if (msg) bu_vls_printf(msg, "Invalid input for int (range error): %s\n", argv[0]);
+	if (msg) bu_vls_printf(msg, "Invalid input for long (range error): %s\n", argv[0]);
 	return -1;
     }
 
     if (long_set) (*long_set) = l;
     return 1;
 }
+
+int
+bu_opt_long_hex(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+{
+    long int l;
+    char *endptr = NULL;
+    long *long_set = (long *)set_var;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_long");
+
+    errno = 0;
+    l = strtol(argv[0], &endptr, 16);
+
+    if (endptr != NULL && strlen(endptr) > 0) {
+	/* Had some invalid character in the input, fail */
+	if (msg) bu_vls_printf(msg, "Invalid string specifier for long: %s\n", argv[0]);
+	return -1;
+    }
+
+    if (errno == ERANGE) {
+	if (msg) bu_vls_printf(msg, "Invalid input for long (range error): %s\n", argv[0]);
+	return -1;
+    }
+
+    if (long_set) (*long_set) = l;
+    return 1;
+}
+
 
 int
 bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)

@@ -59,6 +59,8 @@ extern "C" {
 #define DEBUG_BACKOUT   0x008
 #define DEBUG_HITS      0x010
 
+#define DEBUG_FMT        "\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
+
 #define OVLP_RESOLVE            0
 #define OVLP_REBUILD_FASTGEN    1
 #define OVLP_REBUILD_ALL        2
@@ -136,7 +138,6 @@ struct nirt_state {
     double local2base;
     int backout;
     int overlap_claims;
-    int rt_bot_minpieces;
     int use_air;
     vect_t direct;
     vect_t grid;
@@ -376,9 +377,10 @@ raytrace_prep(struct nirt_state *nss)
 {
     std::set<std::string>::iterator s_it;
     lout(nss, "Prepping the geometry...\n");
-    if (nss->use_air) {
+    if (nss->rtip_air) {
 	rt_prep(nss->rtip_air);
-    } else {
+    } 
+    if (nss->rtip) {
 	rt_prep(nss->rtip);
     }
     lout(nss, "%s", (nss->active_paths.size() == 1) ? "Object" : "Objects");
@@ -902,62 +904,113 @@ print_item(void *ns, int argc, const char **argv)
 extern "C" int
 bot_minpieces(void *ns, int argc, const char **argv)
 {
+    /* Ew - rt_bot_minpieces is a librt global.  Why isn't it
+     * a part of the specific rtip? */
+    int ret = 0;
+    long minpieces = 0;
+    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "%s\n", argv[0]);
+	lout(nss, "rt_bot_minpieces = %zu\n", rt_bot_minpieces);
 	return 0;
     }
 
+    argc--; argv++;
+    if ((ret = bu_opt_long(&opt_msg, 1, argv, (void *)&minpieces)) == -1) {
+	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	goto bot_minpieces_done;
+    }
 
+    if (minpieces < 0) {
+	lerr(nss, "Error: rt_bot_minpieces cannot be less than 0\n");
+	ret = -1;
+	goto bot_minpieces_done;
+    }
 
-    // TODO - handle error
-    // lerr(nss, "Usage:  bot_minpieces %s\n", get_desc_args("bot_minpieces"));
+    if (rt_bot_minpieces != (size_t)minpieces) {
+	rt_bot_minpieces = minpieces;
+	bu_vls_free(&opt_msg);
+	return raytrace_prep(nss);
+    }
 
-
-    bu_log("bot_minpieces\n");
-    return 0;
+bot_minpieces_done:
+    bu_vls_free(&opt_msg);
+    return ret;
 }
 
 extern "C" int
-cm_libdebug(void *ns, int argc, const char **argv)
+librt_debug(void *ns, int argc, const char **argv)
 {
+    int ret = 0;
+    long dflg = 0;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
+    /* Sigh... another librt global, not rtip specific... */
     if (argc == 1) {
-	lout(nss, "%s\n", argv[0]);
-	return 0;
+	bu_vls_printb(&msg, "librt debug ", RT_G_DEBUG, DEBUG_FMT);
+	lout(nss, "%s\n", bu_vls_addr(&msg));
+	goto librt_nirt_debug_done;
     }
 
+    argc--; argv++;
+    if ((ret = bu_opt_long_hex(&msg, 1, argv, (void *)&dflg)) == -1) {
+	lerr(nss, "%s\n", bu_vls_addr(&msg));
+	goto librt_nirt_debug_done;
+    }
 
-    // TODO - handle error
-    // lerr(nss, "Usage:  libdebug %s\n", get_desc_args("libdebug"));
+    if (dflg < 0 || dflg > UINT32_MAX) {
+	lerr(nss, "Error: LIBRT debug flag cannot be less than 0 or greater than %d\n", UINT32_MAX);
+	ret = -1;
+	goto librt_nirt_debug_done;
+    }
 
+    RT_G_DEBUG = (uint32_t)dflg;
+    bu_vls_printb(&msg, "librt debug ", RT_G_DEBUG, DEBUG_FMT);
+    lout(nss, "%s\n", bu_vls_addr(&msg));
 
-    bu_log("cm_libdebug\n");
-    return 0;
+librt_nirt_debug_done:
+    bu_vls_free(&msg);
+    return ret;
 }
 
 extern "C" int
-cm_debug(void *ns, int argc, const char **argv)
+nirt_debug(void *ns, int argc, const char **argv)
 {
+    int ret = 0;
+    long dflg = 0;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "%s\n", argv[0]);
-	return 0;
+	bu_vls_printb(&msg, "debug ", nss->nirt_debug, DEBUG_FMT);
+	lout(nss, "%s\n", bu_vls_addr(&msg));
+	goto nirt_debug_done;
     }
 
-    // TODO - handle error
-    // lerr(nss, "Usage:  debug %s\n", get_desc_args("debug"));
+    argc--; argv++;
+    if ((ret = bu_opt_long_hex(&msg, 1, argv, (void *)&dflg)) == -1) {
+	lerr(nss, "%s\n", bu_vls_addr(&msg));
+	goto nirt_debug_done;
+    }
 
+    if (dflg < 0) {
+	lerr(nss, "Error: NIRT debug flag cannot be less than 0\n");
+	ret = -1;
+	goto nirt_debug_done;
+    }
 
+    nss->nirt_debug = (unsigned int)dflg;
+    bu_vls_printb(&msg, "debug ", nss->nirt_debug, DEBUG_FMT);
+    lout(nss, "%s\n", bu_vls_addr(&msg));
 
-    bu_log("cm_debug\n");
-    return 0;
+nirt_debug_done:
+    bu_vls_free(&msg);
+    return ret;
 }
 
 extern "C" int
@@ -1071,8 +1124,8 @@ const struct bu_cmdtab nirt_cmds[] = {
     { "fmt",            format_output},
     { "print",          print_item},
     { "bot_minpieces",  bot_minpieces},
-    { "libdebug",       cm_libdebug},
-    { "debug",          cm_debug},
+    { "libdebug",       librt_debug},
+    { "debug",          nirt_debug},
     { "q",              quit},
     { "?",              show_menu},
     // New commands...
@@ -1253,7 +1306,6 @@ nirt_alloc(NIRT **ns)
     n->base2local = 0.0;
     n->elevation = 0.0;
     n->local2base = 0.0;
-    n->rt_bot_minpieces = 0;
     n->use_air = 0;
     VZERO(n->direct);
     VZERO(n->grid);
