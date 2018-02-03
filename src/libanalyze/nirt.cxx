@@ -862,10 +862,15 @@ do_overlap_claims(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-format_output(void *ns, int UNUSED(argc), const char **UNUSED(argv))
+format_output(void *ns, int argc, const char **argv)
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+
+    if (argc == 1) {
+	lout(nss, "%s\n", argv[0]);
+	return 0;
+    }
 
     // TODO - handle error
     // lerr(nss, "Usage:  fmt %s\n", get_desc_args("fmt"));
@@ -875,10 +880,17 @@ format_output(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 }
 
 extern "C" int
-print_item(void *ns, int UNUSED(argc), const char **UNUSED(argv))
+print_item(void *ns, int argc, const char **argv)
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+
+    if (argc == 1) {
+	lout(nss, "%s\n", argv[0]);
+	return 0;
+    }
+
+
     // TODO - handle error
     // lerr(nss, "Usage:  print %s\n", get_desc_args("print"));
 
@@ -888,10 +900,18 @@ print_item(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 }
 
 extern "C" int
-bot_minpieces(void *ns, int UNUSED(argc), const char **UNUSED(argv))
+bot_minpieces(void *ns, int argc, const char **argv)
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+
+    if (argc == 1) {
+	lout(nss, "%s\n", argv[0]);
+	return 0;
+    }
+
+
+
     // TODO - handle error
     // lerr(nss, "Usage:  bot_minpieces %s\n", get_desc_args("bot_minpieces"));
 
@@ -901,10 +921,17 @@ bot_minpieces(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 }
 
 extern "C" int
-cm_libdebug(void *ns, int UNUSED(argc), const char **UNUSED(argv))
+cm_libdebug(void *ns, int argc, const char **argv)
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+
+    if (argc == 1) {
+	lout(nss, "%s\n", argv[0]);
+	return 0;
+    }
+
+
     // TODO - handle error
     // lerr(nss, "Usage:  libdebug %s\n", get_desc_args("libdebug"));
 
@@ -914,12 +941,19 @@ cm_libdebug(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 }
 
 extern "C" int
-cm_debug(void *ns, int UNUSED(argc), const char **UNUSED(argv))
+cm_debug(void *ns, int argc, const char **argv)
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
+    struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
+
+    if (argc == 1) {
+	lout(nss, "%s\n", argv[0]);
+	return 0;
+    }
+
     // TODO - handle error
     // lerr(nss, "Usage:  debug %s\n", get_desc_args("debug"));
+
 
 
     bu_log("cm_debug\n");
