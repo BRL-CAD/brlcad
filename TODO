@@ -145,7 +145,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * improve rtweight .density file handling on Windows, can't find it.
   needs better search and override logic.
 
-* ray trace pnts
+* finish implementing pnts:
+  - ray trace pnts
+  - make color and vectors on pnts work
 
 * handling of geometry with names like "--_25" fails in archer
 
@@ -1013,8 +1015,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add support to 'rtxray' for outputting inverted pixel values so that
   we have pixel values that are directly related to material thickness
 
-* make color and vectors on pnts work
-
 * mged inconsistently ignores signals.  initially allowing mged to be
   backgrounded, but then later ignores them.  needs to consistently
   ignore or not ignore them, ideally the latter.
@@ -1329,31 +1329,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   objects, allow deletion/undeletion/hiding/unhiding, provide some
   general means to manipulate the packed and unpacked .g file data for
   performing low-level modifications
-
-* evaluate performance of using an SQL/XML store for BRL-CAD geometry,
-  particularly as it pertains to rt_dirbuild() run times on large
-  models and db_lookup() times.
-
-* multiple-representation geometry.  support storing different
-  "versions" of a given combination node, as selectable subtrees where
-  one selectable subtree is always marked active/selected.  the
-  selectable subtrees could generally be entirely different
-  configurations (e.g., different poses) or different geometry
-  structure (e.g., a blast, signature, or lethality version of a given
-  model).  These could be implemented as a modification to the union
-  tree and exposed to the user as a parametric selection on a comb.
-  Something perhaps like this:
-
-  union tree {
-    ...
-    struct tree_representation {
-      uint32_t magic;
-      int tr_op;
-      const char *tr_name;
-      union tree *tr_subtree;
-    } tr_r;
-    ...
-  };
 
 * evaluate performance of using an SQL/XML store for BRL-CAD geometry,
   particularly as it pertains to rt_dirbuild() run times on large
