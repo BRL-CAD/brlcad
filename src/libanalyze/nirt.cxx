@@ -392,6 +392,93 @@ raytrace_prep(struct nirt_state *nss)
     return 0;
 }
 
+/*********************
+ * Output formatting *
+ *********************/
+
+int
+split_fmt(const char *fmt, char ***breakout)
+{
+    int fcnt = 0;
+    const char *up = NULL;
+    const char *uos = NULL;
+    char **fstrs = NULL;
+    struct bu_vls specifier = BU_VLS_INIT_ZERO;
+
+    if (!fmt || fmt[0] != '"') return -1;
+
+    /* count maximum possible number of format placeholders
+     * (Use the trick from https://stackoverflow.com/a/4235884) */
+    uos = fmt;
+    for (fcnt = 0; uos[fcnt]; uos[fcnt] == '%' ? fcnt++ : *uos++);
+
+    /* We have at most this many "units" to handle */
+    fstrs = (char **)bu_calloc(2*fcnt + 2, sizeof(const char *), "output formatters");
+
+    /* initialize to just after the initial '"' char */
+    uos = fmt + 1;
+
+    /* Find one specifier per substring breakout */
+    fcnt = 0;
+    while (*uos != '"') {
+	int nm_cs = 0;
+	/* Find first '%' format placeholder */
+	for (up = uos; *uos != '"'; ++uos) {
+	    if (*uos == '%') {
+		if (*(uos + 1) == '%') {
+		    ++uos;
+		} else if (nm_cs == 1) {
+		    break;
+		} else {
+		    /* nm_cs == 0 */
+		    ++nm_cs;
+		}
+	    }
+	    if (*uos == '\\' && (*(uos + 1) == '"')) ++uos;
+	}
+
+	/* Store the format. */
+	bu_vls_trunc(&specifier, 0);
+	while (up != uos) {
+	    if (*up == '\\') {
+		switch (*(up + 1)) {
+		    case 'n':
+			bu_vls_putc(&specifier, '\n');
+			up += 2;
+			break;
+		    case '\042':
+		    case '\047':
+		    case '\134':
+			bu_vls_printf(&specifier, "%c", *(up + 1));
+			up += 2;
+			break;
+		    default:
+			bu_vls_putc(&specifier, *up++);
+			break;
+		}
+	    } else {
+		bu_vls_putc(&specifier, *up++);
+	    }
+	}
+	fstrs[fcnt] = bu_strdup(bu_vls_addr(&specifier));
+	fcnt++;
+    }
+    if (fcnt) {
+	(*breakout) = (char **)bu_calloc(fcnt, sizeof(const char *), "breakout");
+	for (int i = 0; i < fcnt; i++) {
+	    (*breakout)[i] = fstrs[i];
+	}
+	bu_free(fstrs, "temp container");
+	bu_vls_free(&specifier);
+	return fcnt;
+    } else {
+	bu_free(fstrs, "temp container");
+	bu_vls_free(&specifier);
+	return -1;
+    }
+}
+
+
 /************************
  * Raytracing Callbacks *
  ************************/
