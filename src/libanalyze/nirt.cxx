@@ -169,7 +169,8 @@ struct nirt_state {
  * Internal functionality *
  **************************/
 
-void lout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23
+void lout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
+void lout(struct nirt_state *nss, const char *fmt, ...)
 {
     va_list ap;
     if (nss->silent_flag != SILENT_YES) {
@@ -182,7 +183,8 @@ void lout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23
     va_end(ap);
 }
 
-void lerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23
+void lerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
+void lerr(struct nirt_state *nss, const char *fmt, ...)
 {
     va_list ap;
     struct bu_vls *vls = nss->err;
@@ -193,7 +195,7 @@ void lerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23
     va_end(ap);
 }
 
-void ldbg(struct nirt_state *nss, int flag, const char *fmt, ...) _BU_ATTR_PRINTF23
+void ldbg(struct nirt_state *nss, int flag, const char *fmt, ...)
 {
     va_list ap;
     if (nss->silent_flag != SILENT_YES && (nss->nirt_debug & flag)) {
@@ -918,7 +920,7 @@ bot_minpieces(void *ns, int argc, const char **argv)
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "rt_bot_minpieces = %zu\n", rt_bot_minpieces);
+	lout(nss, "rt_bot_minpieces = %d\n", (unsigned int)rt_bot_minpieces);
 	return 0;
     }
 
