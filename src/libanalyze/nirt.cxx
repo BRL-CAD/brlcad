@@ -73,69 +73,120 @@ extern "C" {
 #define OIT_STRING  3
 
 static const char *ovals =
-   "x_orig,         OIT_FLOAT,    Ray origin X coordinate,"
-   "y_orig,         OIT_FLOAT,    Ray origin Y coordinate,"
-   "z_orig,         OIT_FLOAT,    Ray origin Z coordinate,"
-   "h,              OIT_FLOAT,"
-   "v,              OIT_FLOAT,"
-   "d_orig,         OIT_FLOAT,"
-   "x_dir,          OIT_FNOUNIT,  Ray direction unit vector x component,"
-   "y_dir,          OIT_FNOUNIT,  Ray direction unit vector y component,"
-   "z_dir,          OIT_FNOUNIT,  Ray direction unit vector z component,"
-   "a,              OIT_FNOUNIT,  Azimuth,"
-   "e,              OIT_FNOUNIT,  Elevation,"
-   "x_in,           OIT_FLOAT,"
-   "y_in,           OIT_FLOAT,"
-   "z_in,           OIT_FLOAT,"
-   "d_in,           OIT_FLOAT,"
-   "x_out,          OIT_FLOAT,"
-   "y_out,          OIT_FLOAT,"
-   "z_out,          OIT_FLOAT,"
-   "d_out,          OIT_FLOAT,"
-   "los,            OIT_FLOAT,"
-   "scaled_los,     OIT_FLOAT,"
-   "path_name,      OIT_STRING,"
-   "reg_name,       OIT_STRING,"
-   "reg_id,         OIT_INT,"
-   "obliq_in,       OIT_FNOUNIT,"
-   "obliq_out,      OIT_FNOUNIT,"
-   "nm_x_in,        OIT_FNOUNIT,"
-   "nm_y_in,        OIT_FNOUNIT,"
-   "nm_z_in,        OIT_FNOUNIT,"
-   "nm_d_in,        OIT_FNOUNIT,"
-   "nm_h_in,        OIT_FNOUNIT,"
-   "nm_v_in,        OIT_FNOUNIT,"
-   "nm_x_out,       OIT_FNOUNIT,"
-   "nm_y_out,       OIT_FNOUNIT,"
-   "nm_z_out,       OIT_FNOUNIT,"
-   "nm_d_out,       OIT_FNOUNIT,"
-   "nm_h_out,       OIT_FNOUNIT,"
-   "nm_v_out,       OIT_FNOUNIT,"
-   "ov_reg1_name,   OIT_STRING,"
-   "ov_reg1_id,     OIT_INT,"
-   "ov_reg2_name,   OIT_STRING,"
-   "ov_reg2_id,     OIT_INT,"
-   "ov_sol_in,      OIT_STRING,"
-   "ov_sol_out,     OIT_STRING,"
-   "ov_los,         OIT_FLOAT,"
-   "ov_x_in,        OIT_FLOAT,"
-   "ov_y_in,        OIT_FLOAT,"
-   "ov_z_in,        OIT_FLOAT,"
-   "ov_d_in,        OIT_FLOAT,"
-   "ov_x_out,       OIT_FLOAT,"
-   "ov_y_out,       OIT_FLOAT,"
-   "ov_z_out,       OIT_FLOAT,"
-   "ov_d_out,       OIT_FLOAT,"
-   "surf_num_in,    OIT_INT,"
-   "surf_num_out,   OIT_INT,"
-   "claimant_count, OIT_INT,"
-   "claimant_list,  OIT_STRING,"
-   "claimant_listn, OIT_STRING,"
-   "attributes,     OIT_STRING,"
-   "x_gap_in,       OIT_FLOAT,"
-   "y_gap_in,       OIT_FLOAT,"
-   "z_gap_in,       OIT_FLOAT,"
-   "gap_los,        OIT_FLOAT,";
+"x_orig,         OIT_FLOAT,    Ray origin X coordinate,"
+"y_orig,         OIT_FLOAT,    Ray origin Y coordinate,"
+"z_orig,         OIT_FLOAT,    Ray origin Z coordinate,"
+"h,              OIT_FLOAT,"
+"v,              OIT_FLOAT,"
+"d_orig,         OIT_FLOAT,"
+"x_dir,          OIT_FNOUNIT,  Ray direction unit vector x component,"
+"y_dir,          OIT_FNOUNIT,  Ray direction unit vector y component,"
+"z_dir,          OIT_FNOUNIT,  Ray direction unit vector z component,"
+"a,              OIT_FNOUNIT,  Azimuth,"
+"e,              OIT_FNOUNIT,  Elevation,"
+"x_in,           OIT_FLOAT,"
+"y_in,           OIT_FLOAT,"
+"z_in,           OIT_FLOAT,"
+"d_in,           OIT_FLOAT,"
+"x_out,          OIT_FLOAT,"
+"y_out,          OIT_FLOAT,"
+"z_out,          OIT_FLOAT,"
+"d_out,          OIT_FLOAT,"
+"los,            OIT_FLOAT,"
+"scaled_los,     OIT_FLOAT,"
+"path_name,      OIT_STRING,"
+"reg_name,       OIT_STRING,"
+"reg_id,         OIT_INT,"
+"obliq_in,       OIT_FNOUNIT,"
+"obliq_out,      OIT_FNOUNIT,"
+"nm_x_in,        OIT_FNOUNIT,"
+"nm_y_in,        OIT_FNOUNIT,"
+"nm_z_in,        OIT_FNOUNIT,"
+"nm_d_in,        OIT_FNOUNIT,"
+"nm_h_in,        OIT_FNOUNIT,"
+"nm_v_in,        OIT_FNOUNIT,"
+"nm_x_out,       OIT_FNOUNIT,"
+"nm_y_out,       OIT_FNOUNIT,"
+"nm_z_out,       OIT_FNOUNIT,"
+"nm_d_out,       OIT_FNOUNIT,"
+"nm_h_out,       OIT_FNOUNIT,"
+"nm_v_out,       OIT_FNOUNIT,"
+"ov_reg1_name,   OIT_STRING,"
+"ov_reg1_id,     OIT_INT,"
+"ov_reg2_name,   OIT_STRING,"
+"ov_reg2_id,     OIT_INT,"
+"ov_sol_in,      OIT_STRING,"
+"ov_sol_out,     OIT_STRING,"
+"ov_los,         OIT_FLOAT,"
+"ov_x_in,        OIT_FLOAT,"
+"ov_y_in,        OIT_FLOAT,"
+"ov_z_in,        OIT_FLOAT,"
+"ov_d_in,        OIT_FLOAT,"
+"ov_x_out,       OIT_FLOAT,"
+"ov_y_out,       OIT_FLOAT,"
+"ov_z_out,       OIT_FLOAT,"
+"ov_d_out,       OIT_FLOAT,"
+"surf_num_in,    OIT_INT,"
+"surf_num_out,   OIT_INT,"
+"claimant_count, OIT_INT,"
+"claimant_list,  OIT_STRING,"
+"claimant_listn, OIT_STRING,"
+"attributes,     OIT_STRING,"
+"x_gap_in,       OIT_FLOAT,"
+"y_gap_in,       OIT_FLOAT,"
+"z_gap_in,       OIT_FLOAT,"
+"gap_los,        OIT_FLOAT,";
+
+/* This record structure doesn't have to correspond exactly to the above list
+ * of available values, but it needs to retain sufficient information to
+ * support the ability to generate all of them upon request. */
+struct nout_record {
+    point_t orig;
+    fastf_t h;
+    fastf_t v;
+    fastf_t d_orig;
+    vect_t dir;
+    fastf_t a;
+    fastf_t e;
+    point_t in;
+    fastf_t d_in;
+    point_t out;
+    fastf_t d_out;
+    fastf_t los;
+    fastf_t scaled_los;
+    struct bu_vls path_name;
+    struct bu_vls reg_name;
+    int reg_id;
+    fastf_t obliq_in;
+    fastf_t obliq_out;
+    vect_t nm_in;
+    fastf_t nm_d_in;
+    fastf_t nm_h_in;
+    fastf_t nm_v_in;
+    vect_t nm_out;
+    fastf_t nm_d_out;
+    fastf_t nm_h_out;
+    fastf_t nm_v_out;
+    struct bu_vls ov_reg1_name;
+    int ov_reg1_id;
+    struct bu_vls ov_reg2_name;
+    int ov_reg2_id;
+    struct bu_vls ov_sol_in;
+    struct bu_vls ov_sol_out;
+    fastf_t ov_los;
+    point_t ov_in;
+    fastf_t ov_d_in;
+    point_t ov_out;
+    fastf_t ov_d_out;
+    int surf_num_in;
+    int surf_num_out;
+    int claimant_count;
+    struct bu_vls claimant_list;
+    struct bu_vls claimant_listn; /* ?? */
+    struct bu_vls attributes;
+    point_t gap_in;
+    fastf_t gap_los;
+};
 
 struct overlap {
     struct application *ap;
