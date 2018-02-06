@@ -27,6 +27,8 @@
 /* BRL-CAD includes */
 #include "common.h"
 
+#include <string>
+#include <sstream>
 #include <set>
 #include <vector>
 
@@ -65,23 +67,75 @@ extern "C" {
 #define OVLP_REBUILD_ALL        2
 #define OVLP_RETAIN             3
 
-struct outitem {
-    char *format;
-    int code_nm;
-    struct outitem_tag *next;
-};
-#define OUTITEM_NULL ((struct outitem *)0)
+#define OIT_INT     0
+#define OIT_FLOAT   1
+#define OIT_FNOUNIT 2   /* Local units don't apply */
+#define OIT_STRING  3
 
-struct outval {
-    char *name;
-    int code_nm;
-    int type;
-    union ovv {
-	fastf_t fval;
-	const char *sval;
-	int ival;
-    } value;
-};
+static const char *ovals =
+   "x_orig,         OIT_FLOAT,    Ray origin X coordinate,"
+   "y_orig,         OIT_FLOAT,    Ray origin Y coordinate,"
+   "z_orig,         OIT_FLOAT,    Ray origin Z coordinate,"
+   "h,              OIT_FLOAT,"
+   "v,              OIT_FLOAT,"
+   "d_orig,         OIT_FLOAT,"
+   "x_dir,          OIT_FNOUNIT,  Ray direction unit vector x component,"
+   "y_dir,          OIT_FNOUNIT,  Ray direction unit vector y component,"
+   "z_dir,          OIT_FNOUNIT,  Ray direction unit vector z component,"
+   "a,              OIT_FNOUNIT,  Azimuth,"
+   "e,              OIT_FNOUNIT,  Elevation,"
+   "x_in,           OIT_FLOAT,"
+   "y_in,           OIT_FLOAT,"
+   "z_in,           OIT_FLOAT,"
+   "d_in,           OIT_FLOAT,"
+   "x_out,          OIT_FLOAT,"
+   "y_out,          OIT_FLOAT,"
+   "z_out,          OIT_FLOAT,"
+   "d_out,          OIT_FLOAT,"
+   "los,            OIT_FLOAT,"
+   "scaled_los,     OIT_FLOAT,"
+   "path_name,      OIT_STRING,"
+   "reg_name,       OIT_STRING,"
+   "reg_id,         OIT_INT,"
+   "obliq_in,       OIT_FNOUNIT,"
+   "obliq_out,      OIT_FNOUNIT,"
+   "nm_x_in,        OIT_FNOUNIT,"
+   "nm_y_in,        OIT_FNOUNIT,"
+   "nm_z_in,        OIT_FNOUNIT,"
+   "nm_d_in,        OIT_FNOUNIT,"
+   "nm_h_in,        OIT_FNOUNIT,"
+   "nm_v_in,        OIT_FNOUNIT,"
+   "nm_x_out,       OIT_FNOUNIT,"
+   "nm_y_out,       OIT_FNOUNIT,"
+   "nm_z_out,       OIT_FNOUNIT,"
+   "nm_d_out,       OIT_FNOUNIT,"
+   "nm_h_out,       OIT_FNOUNIT,"
+   "nm_v_out,       OIT_FNOUNIT,"
+   "ov_reg1_name,   OIT_STRING,"
+   "ov_reg1_id,     OIT_INT,"
+   "ov_reg2_name,   OIT_STRING,"
+   "ov_reg2_id,     OIT_INT,"
+   "ov_sol_in,      OIT_STRING,"
+   "ov_sol_out,     OIT_STRING,"
+   "ov_los,         OIT_FLOAT,"
+   "ov_x_in,        OIT_FLOAT,"
+   "ov_y_in,        OIT_FLOAT,"
+   "ov_z_in,        OIT_FLOAT,"
+   "ov_d_in,        OIT_FLOAT,"
+   "ov_x_out,       OIT_FLOAT,"
+   "ov_y_out,       OIT_FLOAT,"
+   "ov_z_out,       OIT_FLOAT,"
+   "ov_d_out,       OIT_FLOAT,"
+   "surf_num_in,    OIT_INT,"
+   "surf_num_out,   OIT_INT,"
+   "claimant_count, OIT_INT,"
+   "claimant_list,  OIT_STRING,"
+   "claimant_listn, OIT_STRING,"
+   "attributes,     OIT_STRING,"
+   "x_gap_in,       OIT_FLOAT,"
+   "y_gap_in,       OIT_FLOAT,"
+   "z_gap_in,       OIT_FLOAT,"
+   "gap_los,        OIT_FLOAT,";
 
 struct overlap {
     struct application *ap;
@@ -161,6 +215,17 @@ struct nirt_state {
     struct resource *res;
     struct rt_i *rtip_air;
     struct resource *res_air;
+
+    /* internal format specifier arrays */
+    struct bu_attribute_value_set *val_types;
+    struct bu_attribute_value_set *val_docs;
+    std::vector<std::pair<std::string,std::string> > fmt_ray;
+    std::vector<std::pair<std::string,std::string> > fmt_head;
+    std::vector<std::pair<std::string,std::string> > fmt_part;
+    std::vector<std::pair<std::string,std::string> > fmt_foot;
+    std::vector<std::pair<std::string,std::string> > fmt_miss;
+    std::vector<std::pair<std::string,std::string> > fmt_ovlp;
+    std::vector<std::pair<std::string,std::string> > fmt_gap;
 
     void *u_data; // user data
 };
@@ -396,45 +461,48 @@ raytrace_prep(struct nirt_state *nss)
  * Output formatting *
  *********************/
 
+unsigned int
+fmt_ph_cnt(const char *fmt) {
+    unsigned int fcnt = 0;
+    const char *up = NULL;
+    const char *uos = fmt;
+    for (up = uos; (*(uos + 1) != '"' && *(uos + 1) != '\0'); ++uos) {
+	if (*uos == '%' && (*(uos + 1) == '%')) continue;
+	if (*uos == '%') fcnt++;
+    }
+    return fcnt;
+}
+
 int
 split_fmt(const char *fmt, char ***breakout)
 {
+    int i = 0;
     int fcnt = 0;
     const char *up = NULL;
     const char *uos = NULL;
     char **fstrs = NULL;
     struct bu_vls specifier = BU_VLS_INIT_ZERO;
 
-    if (!fmt || fmt[0] != '"') return -1;
+    if (!fmt) return -1;
 
-    /* count maximum possible number of format placeholders
-     * (Use the trick from https://stackoverflow.com/a/4235884) */
-    uos = fmt;
-    for (fcnt = 0; uos[fcnt]; uos[fcnt] == '%' ? fcnt++ : *uos++);
-
-    /* We have at most this many "units" to handle */
-    fstrs = (char **)bu_calloc(2*fcnt + 2, sizeof(const char *), "output formatters");
+    /* Count maximum possible number of format placeholders.  We have at most
+     * fcnt+1 "units" to handle */
+    fcnt = fmt_ph_cnt(fmt);
+    fstrs = (char **)bu_calloc(fcnt + 1, sizeof(const char *), "output formatters");
 
     /* initialize to just after the initial '"' char */
-    uos = fmt + 1;
+    uos = (fmt[0] == '"') ? fmt + 1 : fmt;
 
     /* Find one specifier per substring breakout */
     fcnt = 0;
-    while (*uos != '"') {
-	int nm_cs = 0;
+    while (*uos != '"' && *uos != '\0') {
+	int have_placeholder = 0;
 	/* Find first '%' format placeholder */
-	for (up = uos; *uos != '"'; ++uos) {
-	    if (*uos == '%') {
-		if (*(uos + 1) == '%') {
-		    ++uos;
-		} else if (nm_cs == 1) {
-		    break;
-		} else {
-		    /* nm_cs == 0 */
-		    ++nm_cs;
-		}
-	    }
-	    if (*uos == '\\' && (*(uos + 1) == '"')) ++uos;
+	for (up = uos; (*uos != '"' && *uos != '\0'); ++uos) {
+	    if (*uos == '%' && (*(uos + 1) == '%')) continue;
+	    if (*uos == '\\' && (*(uos + 1) == '"')) continue;
+	    if (*uos == '%' && have_placeholder) break;
+	    if (*uos == '%' && !have_placeholder) have_placeholder = 1;
 	}
 
 	/* Store the format. */
@@ -465,7 +533,7 @@ split_fmt(const char *fmt, char ***breakout)
     }
     if (fcnt) {
 	(*breakout) = (char **)bu_calloc(fcnt, sizeof(const char *), "breakout");
-	for (int i = 0; i < fcnt; i++) {
+	for (i = 0; i < fcnt; i++) {
 	    (*breakout)[i] = fstrs[i];
 	}
 	bu_free(fstrs, "temp container");
@@ -477,6 +545,7 @@ split_fmt(const char *fmt, char ***breakout)
 	return -1;
     }
 }
+
 
 
 /************************
@@ -961,17 +1030,92 @@ extern "C" int
 format_output(void *ns, int argc, const char **argv)
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
+    char type;
     if (!ns) return -1;
 
+    if (argc < 2 || strlen(argv[1]) != 1 || BU_STR_EQUAL(argv[1], "?")) {
+	// TODO - need a *much* better help for fmt
+	lerr(nss, "Usage:  fmt %s\n", get_desc_args("fmt"));
+	return -1;
+    }
+
+    type = argv[1][0];
+    if (!strchr("rhpfmog", type)) {
+	lerr(nss, "Unknown fmt type %s\n", type);
+	return -1;
+    }
+
+    argc--; argv++;
     if (argc == 1) {
-	lout(nss, "%s\n", argv[0]);
+	// TODO - print out current fmt str for the specified type
+	// struct bu_vls ostr = BU_VLS_INIT_ZERO:
+	// fmt_str(&ostr, nss, type);
+	//lout(nss, "%s\n", bu_vls_addr(&ostr));
+	//bu_vls_free(&ostr);
 	return 0;
     }
 
-    // TODO - handle error
-    // lerr(nss, "Usage:  fmt %s\n", get_desc_args("fmt"));
+    argc--; argv++;
+    if (argc) {
+	int fmt_cnt = 0;
+	std::vector<std::pair<std::string,std::string> > fmt_tmp;
+	const char *fmtstr = argv[0];
+	char **fmts = NULL;
+	if ((fmt_cnt = split_fmt(fmtstr, &fmts)) <= 0) {
+	    lerr(nss, "Error parsing format string \"%s\"\n", fmtstr);
+	    return -1;
+	}
+	argc--; argv++;
 
-    bu_log("format_output\n");
+	for (int i = 0; i < fmt_cnt; i++) {
+	    unsigned int fc = fmt_ph_cnt(fmts[i]);
+	    const char *key = NULL;
+	    if (fc > 0) {
+		if (!argc) {
+		    lerr(nss, "Error parsing format string \"%s\" - missing value for format placeholder in substring \"%s\"\n", fmtstr, fmts[i]);
+		    return -1;
+		}
+		key = argv[0];
+		// TODO - check type against fmt_ph substring...
+		argc--; argv++;
+	    }
+	    fmt_tmp.push_back(std::make_pair(std::string(fmts[i]), std::string(key)));
+	}
+
+	if (argc) {
+	    lerr(nss, "Error: fmt string \"%s\" has %d format placeholders, but has %d arguments specified\n", argv[2], fmt_cnt, fmt_cnt + argc);
+	    return -1;
+	}
+
+	switch (type) {
+	    case 'r':
+		nss->fmt_ray.clear();
+		nss->fmt_ray = fmt_tmp;
+		break;
+	    case 'h':
+		break;
+	    case 'p':
+		break;
+	    case 'f':
+		break;
+	    case 'm':
+		break;
+	    case 'o':
+		break;
+	    case 'g':
+		break;
+	    default:
+		lerr(nss, "Unknown fmt type %s\n", argv[1]);
+		return -1;
+		break;
+	}
+
+	std::vector<std::pair<std::string,std::string> >::iterator f_it;
+	for(f_it = nss->fmt_ray.begin(); f_it != nss->fmt_ray.end(); f_it++) {
+	    bu_log("fmt[%c] %s\t\t\t:%s\n", type, (*f_it).first.c_str(), (*f_it).second.c_str());
+	}
+    }
+
     return 0;
 }
 
@@ -1437,6 +1581,36 @@ nirt_alloc(NIRT **ns)
     BU_GET(n->res_air, struct resource);
     n->rtip = RTI_NULL;
     n->rtip_air = RTI_NULL;
+
+    BU_GET(n->val_types, struct bu_attribute_value_set);
+    BU_GET(n->val_docs, struct bu_attribute_value_set);
+    bu_avs_init_empty(n->val_types);
+    bu_avs_init_empty(n->val_docs);
+
+    /* Populate the output key and type information */
+    {
+	std::string s(ovals);
+	std::string entry, key;
+	std::stringstream ss(s);
+	int place = 0;
+	while (std::getline(ss, entry, ',')) {
+	    size_t sb = entry.find_first_not_of(" \t");
+	    size_t se = entry.find_last_not_of(" \t");
+	    std::string tentry = entry.substr(sb, se - sb + 1);
+	    if (!place) { key = tentry; place++; continue; }
+	    if (place == 1) {
+		bu_avs_add(n->val_types, key.c_str(), tentry.c_str());
+		place++;
+		continue;
+	    }
+	    if (place == 2) {
+		if (!entry.empty()) {
+		    bu_avs_add(n->val_docs, key.c_str(), tentry.c_str());
+		}
+		place = 0;
+	    }
+	}
+    }
 
     n->u_data = NULL;
 
