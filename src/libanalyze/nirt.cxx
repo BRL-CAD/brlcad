@@ -830,7 +830,7 @@ print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::string
 	fmt_keys.append(" ");
 	fmt_keys.append((*f_it).second);
     }
-    bu_vls_sprintf(ostr, "\"%s\"%s", fmt_str.c_str(), fmt_keys.c_str());
+    bu_vls_sprintf(ostr, "Format: \"%s\"\nItem(s):%s", fmt_str.c_str(), fmt_keys.c_str());
     bu_vls_trimspace(ostr);
 }
 
@@ -1741,37 +1741,6 @@ const struct bu_cmdtab nirt_cmds[] = {
 };
 
 
-
-/* Parse command line command and execute */
-HIDDEN int
-nirt_exec_cmd(NIRT *ns, const char *cmdstr)
-{
-    int ac;
-    int ret = 0;
-    char *cmdp = NULL;
-    char **av = NULL;
-    if (!ns || !cmdstr || strlen(cmdstr) > MAXPATHLEN) return -1;
-
-    /* Take the quoting level down by one, now that we are about to execute */
-
-    // TODO - should we be using bu_vls_decode for this instead of
-    // bu_str_unescape?
-    cmdp = (char *)bu_calloc(strlen(cmdstr)+2, sizeof(char), "unescaped str");
-    bu_str_unescape(cmdstr, cmdp, strlen(cmdstr)+1);
-
-    /* get an argc/argv array for bu_cmd style command execution */
-    av = (char **)bu_calloc(strlen(cmdp)+1, sizeof(char *), "av");
-    ac = bu_argv_from_string(av, strlen(cmdp), cmdp);
-
-    if (bu_cmd(nirt_cmds, ac, (const char **)av, 0, (void *)ns, &ret) != BRLCAD_OK) {
-	ret = -1;
-    }
-
-    bu_free(av, "free av array");
-    bu_free(cmdp, "free unescaped copy of input cmd");
-    return ret;
-}
-
 HIDDEN size_t
 find_first_unescaped(std::string &s, const char *keys, int offset)
 {
@@ -1790,6 +1759,69 @@ find_first_unescaped(std::string &s, const char *keys, int offset)
     return candidate;
 }
 
+
+/* Parse command line command and execute */
+HIDDEN int
+nirt_exec_cmd(NIRT *ns, const char *cmdstr)
+{
+    int ac = 0;
+    int ac_max = 0;
+    int i = 0;
+    int ret = 0;
+    char **av = NULL;
+    size_t q_start, q_end, pos;
+    std::string entry;
+    if (!ns || !cmdstr || strlen(cmdstr) > entry.max_size()) return -1;
+    std::string s(cmdstr);
+    std::stringstream ss(s);
+    // get an upper limit on the size of argv
+    while (std::getline(ss, entry, ' ')) ac_max++;
+    ss.clear();
+    ss.seekg(0, ss.beg);
+
+    /* Start by initializing the position markers for quoted substrings. */
+    q_start = find_first_unescaped(s, "'\"", 0);
+    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
+
+    /* get an argc/argv array for bu_cmd style command execution */
+    av = (char **)bu_calloc(ac_max+1, sizeof(char *), "av");
+
+    pos = 0; ac = 0;
+    while ((pos = s.find_first_of(" \t", pos)) != std::string::npos) {
+	/* If we're inside matched quotes, only an un-escaped quote char means
+	 * anything */
+	if (q_end != std::string::npos && pos > q_start && pos < q_end) {
+	    pos = q_end + 1;
+	    continue;
+	}
+	/* Extract and operate on the command specific subset string */
+	std::string cmd = s.substr(0, pos);
+	if (cmd.find_first_not_of(" \t") != std::string::npos) {
+	    av[ac] = bu_strdup(cmd.c_str());
+	    ac++;
+	}
+
+	/* Prepare the rest of the script string for processing */
+	s.erase(0, pos + 1);
+	q_start = find_first_unescaped(s, "'\"", 0);
+	q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
+	pos = 0;
+    }
+    if (s.length() > 0) {
+	av[ac] = bu_strdup(s.c_str());
+	ac++;
+    }
+    av[ac] = NULL;
+
+    if (bu_cmd(nirt_cmds, ac, (const char **)av, 0, (void *)ns, &ret) != BRLCAD_OK) ret = -1;
+
+    for (i = 0; i < ac_max; i++) {
+	if (av[i]) bu_free(av[i], "free av str");
+    }
+    bu_free(av, "free av array");
+    return ret;
+}
+
 /* Parse command line script into individual commands, and run
  * the supplied callback on each command. The semicolon ';' char
  * denotes the end of one command and the beginning of another, unless
@@ -1804,16 +1836,10 @@ nirt_parse_script(NIRT *ns, const char *script, int (*nc)(NIRT *ns, const char *
     struct bu_vls tcmd = BU_VLS_INIT_ZERO;
     size_t pos = 0;
     size_t q_start, q_end;
-    struct bu_vls echar = BU_VLS_INIT_ZERO;
 
     /* Start by initializing the position markers for quoted substrings. */
     q_start = find_first_unescaped(s, "'\"", 0);
-    if (q_start != std::string::npos) {
-	bu_vls_sprintf(&echar, "%c", s.at(q_start));
-	q_end = find_first_unescaped(s, bu_vls_addr(&echar), q_start + 1);
-    } else {
-	q_end = std::string::npos;
-    }
+    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
 
     /* Slice and dice to get individual commands. */
     while ((pos = s.find(";", pos)) != std::string::npos) {
@@ -1828,31 +1854,30 @@ nirt_parse_script(NIRT *ns, const char *script, int (*nc)(NIRT *ns, const char *
 	bu_vls_sprintf(&tcmd, "%s", cmd.c_str());
 	bu_vls_trimspace(&tcmd);
 	if (bu_vls_strlen(&tcmd) > 0) {
-	    ret = (*nc)(ns, bu_vls_addr(&tcmd));
+	    if (strchr(bu_vls_addr(&tcmd), ';')) {
+		ret = nirt_parse_script(ns, bu_vls_addr(&tcmd), nc);
+	    } else {
+		ret = (*nc)(ns, bu_vls_addr(&tcmd));
+	    }
 	    if (ret) goto nps_done;
 	}
 
 	/* Prepare the rest of the script string for processing */
 	s.erase(0, pos + 1);
 	q_start = find_first_unescaped(s, "'\"", 0);
-	if (q_start != std::string::npos) {
-	    bu_vls_sprintf(&echar, "%c", s.at(q_start));
-	    q_end = find_first_unescaped(s, bu_vls_addr(&echar), q_start + 1);
-	} else {
-	    q_end = std::string::npos;
-	}
+	q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
 	pos = 0;
     }
 
-    /* If there's anything left over, it's a tailing command */
+    /* If there's anything left over, it's a tailing command or a single command */
     bu_vls_sprintf(&tcmd, "%s", s.c_str());
     bu_vls_trimspace(&tcmd);
     if (bu_vls_strlen(&tcmd) > 0) {
 	ret = (*nc)(ns, bu_vls_addr(&tcmd));
     }
+
 nps_done:
     bu_vls_free(&tcmd);
-    bu_vls_free(&echar);
     return ret;
 }
 
