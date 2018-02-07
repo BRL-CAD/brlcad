@@ -1759,6 +1759,30 @@ find_first_unescaped(std::string &s, const char *keys, int offset)
     return candidate;
 }
 
+HIDDEN size_t
+find_first_unquoted(std::string &ts, const char *key, size_t offset)
+{
+    size_t q_start, q_end, pos;
+    std::string s = ts;
+    /* Start by initializing the position markers for quoted substrings. */
+    q_start = find_first_unescaped(s, "'\"", offset);
+    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
+
+    pos = offset;
+    while ((pos = s.find(key, pos)) != std::string::npos) {
+	/* If we're inside matched quotes, only an un-escaped quote char means
+	 * anything */
+	if (q_end != std::string::npos && pos > q_start && pos < q_end) {
+	    pos = q_end + 1;
+	    q_start = find_first_unescaped(s, "'\"", q_end + 1);
+	    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
+	    continue;
+	}
+	break;
+    }
+    return pos;
+}
+
 
 /* Parse command line command and execute */
 HIDDEN int
@@ -1842,7 +1866,7 @@ nirt_parse_script(NIRT *ns, const char *script, int (*nc)(NIRT *ns, const char *
     q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
 
     /* Slice and dice to get individual commands. */
-    while ((pos = s.find(";", pos)) != std::string::npos) {
+    while ((pos = find_first_unquoted(s, ";", pos)) != std::string::npos) {
 	/* If we're inside matched quotes, only an un-escaped quote char means
 	 * anything */
 	if (q_end != std::string::npos && pos > q_start && pos < q_end) {
