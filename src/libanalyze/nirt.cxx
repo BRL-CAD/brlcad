@@ -515,9 +515,8 @@ raytrace_prep(struct nirt_state *nss)
 unsigned int
 fmt_ph_cnt(const char *fmt) {
     unsigned int fcnt = 0;
-    const char *up = NULL;
-    const char *uos = fmt;
-    for (up = uos; (*(uos + 1) != '"' && *(uos + 1) != '\0'); ++uos) {
+    const char *uos = NULL;
+    for (uos = fmt; (*(uos + 1) != '"' && *(uos + 1) != '\0'); ++uos) {
 	if (*uos == '%' && (*(uos + 1) == '%')) continue;
 	if (*uos == '%') fcnt++;
     }
