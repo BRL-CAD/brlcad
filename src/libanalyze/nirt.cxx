@@ -1129,7 +1129,13 @@ format_output(void *ns, int argc, const char **argv)
 		// TODO - check type against fmt_ph substring...
 		argc--; argv++;
 	    }
-	    fmt_tmp.push_back(std::make_pair(std::string(fmts[i]), std::string(key)));
+	    if (key) {
+		fmt_tmp.push_back(std::make_pair(std::string(fmts[i]), std::string(key)));
+	    } else {
+		/* If there are no format placeholders, we don't need any key */
+		fmt_tmp.push_back(std::make_pair(std::string(fmts[i]), ""));
+		argc--; argv++;
+	    }
 	}
 
 	if (argc) {
