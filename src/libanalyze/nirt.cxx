@@ -31,6 +31,7 @@
 #include <sstream>
 #include <set>
 #include <vector>
+#include <limits>
 
 extern "C" {
 #include "bu/color.h"
@@ -521,6 +522,117 @@ fmt_sp_cnt(const char *fmt) {
     return fcnt;
 }
 
+
+#define NIRT_PRINTF_FLAGS "-+# "
+
+int
+fmt_sp_flags_check(struct nirt_state *nss, std::string &fmt_sp)
+{
+    size_t sp = fmt_sp.find_first_of(NIRT_PRINTF_FLAGS);
+    size_t ep = fmt_sp.find_last_of(NIRT_PRINTF_FLAGS);
+    if (sp == std::string::npos) return 0; // no flags is acceptable
+    std::string flags = fmt_sp.substr(sp, ep - sp + 1);
+    size_t invalid_char = flags.find_first_not_of(NIRT_PRINTF_FLAGS);
+    if (invalid_char != std::string::npos) {
+	lerr(nss, "Error - invalid characters in flags substring (\"%s\") of format specifier \"%s\"\n", flags.c_str(), fmt_sp.c_str());
+	return -1;
+    }
+    return 0;
+}
+
+#define NIRT_PRINTF_PRECISION "0123456789."
+#define NIRT_PRINTF_MAXWIDTH 1000 //Arbitrary sanity boundary for width specification
+#define NIRT_PRINTF_MAXPRECI 
+
+int
+fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
+{
+    size_t sp = fmt_sp.find_first_of(NIRT_PRINTF_PRECISION);
+    size_t ep = fmt_sp.find_last_of(NIRT_PRINTF_PRECISION);
+    if (sp == std::string::npos) return 0; // no width/precision settings is acceptable
+    std::string p = fmt_sp.substr(sp, ep - sp + 1);
+    size_t invalid_char = p.find_first_not_of(NIRT_PRINTF_PRECISION);
+    if (invalid_char != std::string::npos) {
+	lerr(nss, "Error - invalid characters in precision substring (\"%s\") of format specifier \"%s\"\n", p.c_str(), fmt_sp.c_str());
+	return -1;
+    }
+
+    /* If we've got one or more numbers, check them for sanity */
+    size_t ps = p.find_first_of(".");
+    std::string wn, pn;
+    if (ps != std::string::npos) {
+	if (ps == 0) {
+	    pn = p.substr(1, std::string::npos);
+	} else {
+	    pn = p.substr(ps + 1, std::string::npos);
+	    wn = p.substr(0, ps - 1);
+	}
+    } else {
+	wn = p;
+    }
+    if (wn.length() > 0) {
+	// Width check
+	struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+	int w = 0;
+	const char *wn_cstr = wn.c_str();
+	if (bu_opt_int(&optparse_msg, 1, (const char **)&wn_cstr, (void *)&w) == -1) {
+	    lerr(nss, "Option parsing error reading format specifier width from substring \"%s\" of specifier \"%s\": %s\n", wn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
+	    bu_vls_free(&optparse_msg);
+	    return -1;
+	}
+	bu_vls_free(&optparse_msg);
+	if (w > NIRT_PRINTF_MAXWIDTH) {
+	    lerr(nss, "Width specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed max width (%d)\n", wn.c_str(), fmt_sp.c_str(), NIRT_PRINTF_MAXWIDTH);
+	    return -1;
+	} 
+    }
+    if (pn.length() > 0) {
+	// Precision check
+	struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+	int p_num = 0;
+	const char *pn_cstr = pn.c_str();
+	if (bu_opt_int(&optparse_msg, 1, (const char **)&pn_cstr, (void *)&p_num) == -1) {
+	    lerr(nss, "Option parsing error reading format specifier precision from substring \"%s\" of specifier \"%s\": %s\n", pn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
+	    bu_vls_free(&optparse_msg);
+	    return -1;
+	}
+	bu_vls_free(&optparse_msg);
+
+	switch (fmt_sp.c_str()[fmt_sp.length()-1]) {
+	    case 'd':
+	    case 'i':
+		if (p_num > std::numeric_limits<int>::digits10) {
+		    lerr(nss, "Precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<int>::digits10);
+		    return -1;
+		} 
+		break;
+	    case 'f':
+	    case 'e':
+	    case 'E':
+	    case 'g':
+	    case 'G':
+		// TODO - once we enable C++ 11 switch the test below to (p > std::numeric_limits<fastf_t>::max_digits10) and update the lerr msg
+		if (p_num > std::numeric_limits<fastf_t>::digits10 + 2) {
+		    lerr(nss, "Precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<fastf_t>::digits10);
+		    return -1;
+		}
+		break;
+	    case 's':
+		if ((size_t)p_num > pn.max_size()) {
+		    lerr(nss, "Precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), pn.max_size());
+		    return -1;
+		}
+		break;
+	    default:
+		lerr(nss, "NIRT internal error in format width/precision validation.\n");
+		return -1;
+		break;
+	}
+    }
+    return 0;
+}
+
+
 /* Note: because of split_fmt, we can assume at most one format specifier is
  * present in the fmt string */
 int
@@ -566,6 +678,10 @@ fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
 	fmt_sp.clear();
 	return 0;
     }
+
+    // Sanity check any sub-specifiers
+    if (fmt_sp_flags_check(nss, fmt_sp)) return -1;
+    if (fmt_sp_width_precision_check(nss, fmt_sp)) return -1;
 
     return 1;
 }
@@ -1094,7 +1210,7 @@ use_air(void *ns, int argc, const char *argv[])
 	lerr(nss, "Usage:  useair %s\n", get_desc_args("useair"));
 	return -1;
     }
-    if (bu_opt_int(NULL, 1, (const char **)&(argv[1]), (void *)&nss->use_air) == -1) {
+    if (bu_opt_int(&optparse_msg, 1, (const char **)&(argv[1]), (void *)&nss->use_air) == -1) {
 	lerr(nss, "Option parsing error: %s\n\nUsage:  useair %s\n", bu_vls_addr(&optparse_msg), get_desc_args("useair"));
 	return -1;
     }
