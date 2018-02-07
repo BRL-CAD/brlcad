@@ -67,75 +67,72 @@ extern "C" {
 #define OVLP_REBUILD_ALL        2
 #define OVLP_RETAIN             3
 
-#define OIT_INT     0
-#define OIT_FLOAT   1
-#define OIT_FNOUNIT 2   /* Local units don't apply */
-#define OIT_STRING  3
+#define NIRT_PRINTF_SPECIFIERS "difeEgGs"
 
 static const char *ovals =
-"x_orig,         OIT_FLOAT,    Ray origin X coordinate,"
-"y_orig,         OIT_FLOAT,    Ray origin Y coordinate,"
-"z_orig,         OIT_FLOAT,    Ray origin Z coordinate,"
-"h,              OIT_FLOAT,"
-"v,              OIT_FLOAT,"
-"d_orig,         OIT_FLOAT,"
-"x_dir,          OIT_FNOUNIT,  Ray direction unit vector x component,"
-"y_dir,          OIT_FNOUNIT,  Ray direction unit vector y component,"
-"z_dir,          OIT_FNOUNIT,  Ray direction unit vector z component,"
-"a,              OIT_FNOUNIT,  Azimuth,"
-"e,              OIT_FNOUNIT,  Elevation,"
-"x_in,           OIT_FLOAT,"
-"y_in,           OIT_FLOAT,"
-"z_in,           OIT_FLOAT,"
-"d_in,           OIT_FLOAT,"
-"x_out,          OIT_FLOAT,"
-"y_out,          OIT_FLOAT,"
-"z_out,          OIT_FLOAT,"
-"d_out,          OIT_FLOAT,"
-"los,            OIT_FLOAT,"
-"scaled_los,     OIT_FLOAT,"
-"path_name,      OIT_STRING,"
-"reg_name,       OIT_STRING,"
-"reg_id,         OIT_INT,"
-"obliq_in,       OIT_FNOUNIT,"
-"obliq_out,      OIT_FNOUNIT,"
-"nm_x_in,        OIT_FNOUNIT,"
-"nm_y_in,        OIT_FNOUNIT,"
-"nm_z_in,        OIT_FNOUNIT,"
-"nm_d_in,        OIT_FNOUNIT,"
-"nm_h_in,        OIT_FNOUNIT,"
-"nm_v_in,        OIT_FNOUNIT,"
-"nm_x_out,       OIT_FNOUNIT,"
-"nm_y_out,       OIT_FNOUNIT,"
-"nm_z_out,       OIT_FNOUNIT,"
-"nm_d_out,       OIT_FNOUNIT,"
-"nm_h_out,       OIT_FNOUNIT,"
-"nm_v_out,       OIT_FNOUNIT,"
-"ov_reg1_name,   OIT_STRING,"
-"ov_reg1_id,     OIT_INT,"
-"ov_reg2_name,   OIT_STRING,"
-"ov_reg2_id,     OIT_INT,"
-"ov_sol_in,      OIT_STRING,"
-"ov_sol_out,     OIT_STRING,"
-"ov_los,         OIT_FLOAT,"
-"ov_x_in,        OIT_FLOAT,"
-"ov_y_in,        OIT_FLOAT,"
-"ov_z_in,        OIT_FLOAT,"
-"ov_d_in,        OIT_FLOAT,"
-"ov_x_out,       OIT_FLOAT,"
-"ov_y_out,       OIT_FLOAT,"
-"ov_z_out,       OIT_FLOAT,"
-"ov_d_out,       OIT_FLOAT,"
-"surf_num_in,    OIT_INT,"
-"surf_num_out,   OIT_INT,"
-"claimant_count, OIT_INT,"
-"claimant_list,  OIT_STRING,"
-"claimant_listn, OIT_STRING,"
-"attributes,     OIT_STRING,"
-"x_gap_in,       OIT_FLOAT,"
-"y_gap_in,       OIT_FLOAT,"
-"z_gap_in,       OIT_FLOAT,"
-"gap_los,        OIT_FLOAT,";
+"x_orig,         FLOAT,         Ray origin X coordinate,"
+"y_orig,         FLOAT,         Ray origin Y coordinate,"
+"z_orig,         FLOAT,         Ray origin Z coordinate,"
+"h,              FLOAT,         ,"
+"v,              FLOAT,         ,"
+"d_orig,         FLOAT,         ,"
+"x_dir,          FNOUNIT,       Ray direction unit vector x component,"
+"y_dir,          FNOUNIT,       Ray direction unit vector y component,"
+"z_dir,          FNOUNIT,       Ray direction unit vector z component,"
+"a,              FNOUNIT,       Azimuth,"
+"e,              FNOUNIT,       Elevation,"
+"x_in,           FLOAT,         ,"
+"y_in,           FLOAT,         ,"
+"z_in,           FLOAT,         ,"
+"d_in,           FLOAT,         ,"
+"x_out,          FLOAT,         ,"
+"y_out,          FLOAT,         ,"
+"z_out,          FLOAT,         ,"
+"d_out,          FLOAT,         ,"
+"los,            FLOAT,         ,"
+"scaled_los,     FLOAT,         ,"
+"path_name,      STRING,        ,"
+"reg_name,       STRING,        ,"
+"reg_id,         INT,           ,"
+"obliq_in,       FNOUNIT,       ,"
+"obliq_out,      FNOUNIT,       ,"
+"nm_x_in,        FNOUNIT,       ,"
+"nm_y_in,        FNOUNIT,       ,"
+"nm_z_in,        FNOUNIT,       ,"
+"nm_d_in,        FNOUNIT,       ,"
+"nm_h_in,        FNOUNIT,       ,"
+"nm_v_in,        FNOUNIT,       ,"
+"nm_x_out,       FNOUNIT,       ,"
+"nm_y_out,       FNOUNIT,       ,"
+"nm_z_out,       FNOUNIT,       ,"
+"nm_d_out,       FNOUNIT,       ,"
+"nm_h_out,       FNOUNIT,       ,"
+"nm_v_out,       FNOUNIT,       ,"
+"ov_reg1_name,   STRING,        ,"
+"ov_reg1_id,     INT,           ,"
+"ov_reg2_name,   STRING,        ,"
+"ov_reg2_id,     INT,           ,"
+"ov_sol_in,      STRING,        ,"
+"ov_sol_out,     STRING,        ,"
+"ov_los,         FLOAT,         ,"
+"ov_x_in,        FLOAT,         ,"
+"ov_y_in,        FLOAT,         ,"
+"ov_z_in,        FLOAT,         ,"
+"ov_d_in,        FLOAT,         ,"
+"ov_x_out,       FLOAT,         ,"
+"ov_y_out,       FLOAT,         ,"
+"ov_z_out,       FLOAT,         ,"
+"ov_d_out,       FLOAT,         ,"
+"surf_num_in,    INT,           ,"
+"surf_num_out,   INT,           ,"
+"claimant_count, INT,           ,"
+"claimant_list,  STRING,        ,"
+"claimant_listn, STRING,        ,"
+"attributes,     STRING,        ,"
+"x_gap_in,       FLOAT,         ,"
+"y_gap_in,       FLOAT,         ,"
+"z_gap_in,       FLOAT,         ,"
+"gap_los,        FLOAT,         ,";
 
 /* This record structure doesn't have to correspond exactly to the above list
  * of available values, but it needs to retain sufficient information to
@@ -513,7 +510,7 @@ raytrace_prep(struct nirt_state *nss)
  *********************/
 
 unsigned int
-fmt_ph_cnt(const char *fmt) {
+fmt_sp_cnt(const char *fmt) {
     unsigned int fcnt = 0;
     const char *uos = NULL;
     for (uos = fmt; (*(uos + 1) != '"' && *(uos + 1) != '\0'); ++uos) {
@@ -522,6 +519,66 @@ fmt_ph_cnt(const char *fmt) {
     }
     return fcnt;
 }
+
+/* Note: because of split_fmt, we can assume at most one format specifier is
+ * present in the fmt string */
+int
+fmt_sp_get(const char *fmt, std::string &fmt_sp)
+{
+    int found = 0;
+    const char *uos = NULL;
+    if (!fmt) return 0;
+    /* Find uncommented '%' format specifier */
+    for (uos = fmt; (*uos != '"' && *uos != '\0'); ++uos) {
+	if (*uos == '%' && (*(uos + 1) == '%')) continue;
+	if (*uos == '%') {
+	    found++;
+	    break;
+	}
+    }
+    if (!found) return 0;
+
+    // Find the terminating character of the specifier and build
+    // the substring.
+    std::string wfmt(uos);
+    size_t ep = wfmt.find_first_of(NIRT_PRINTF_SPECIFIERS);
+    if (ep == std::string::npos) return 0;
+    fmt_sp = wfmt.substr(0, ep+1);
+    return 1;
+}
+
+/* Return 0 if specifier type is acceptable for supplied key, 1 if key is not found,
+ * 2 if the type isn't acceptable, and -1 if there's another error */
+int
+fmt_sp_key_check(struct nirt_state *nss, const char *key, std::string &fmt_sp)
+{
+    const char *type = NULL;
+    if (!nss || !nss->val_types || fmt_sp.length() == 0) return -1;
+    if (!key) return 1;
+    type = bu_avs_get(nss->val_types, key);
+    if (!type) return 1;
+    switch (fmt_sp.c_str()[fmt_sp.length()-1]) {
+	case 'd':
+	case 'i':
+	    if (BU_STR_EQUAL(type, "INT")) return 0;
+	    return 2;
+	    break;
+	case 'f':
+	case 'e':
+	case 'E':
+	case 'g':
+	case 'G':
+	    if (BU_STR_EQUAL(type, "FLOAT") || BU_STR_EQUAL(type, "FNOUNIT")) return 0;
+	    return 2;
+	    break;
+	case 's':
+	    if (BU_STR_EQUAL(type, "STRING")) return 0;
+	    return 2;
+	    break;
+	default:
+	    return 2;
+    }
+} 
 
 int
 split_fmt(const char *fmt, char ***breakout)
@@ -535,9 +592,9 @@ split_fmt(const char *fmt, char ***breakout)
 
     if (!fmt) return -1;
 
-    /* Count maximum possible number of format placeholders.  We have at most
+    /* Count maximum possible number of format specifiers.  We have at most
      * fcnt+1 "units" to handle */
-    fcnt = fmt_ph_cnt(fmt);
+    fcnt = fmt_sp_cnt(fmt);
     fstrs = (char **)bu_calloc(fcnt + 1, sizeof(const char *), "output formatters");
 
     /* initialize to just after the initial '"' char */
@@ -546,13 +603,13 @@ split_fmt(const char *fmt, char ***breakout)
     /* Find one specifier per substring breakout */
     fcnt = 0;
     while (*uos != '"' && *uos != '\0') {
-	int have_placeholder = 0;
-	/* Find first '%' format placeholder */
+	int have_specifier= 0;
+	/* Find first '%' format specifier*/
 	for (up = uos; (*uos != '"' && *uos != '\0'); ++uos) {
 	    if (*uos == '%' && (*(uos + 1) == '%')) continue;
 	    if (*uos == '\\' && (*(uos + 1) == '"')) continue;
-	    if (*uos == '%' && have_placeholder) break;
-	    if (*uos == '%' && !have_placeholder) have_placeholder = 1;
+	    if (*uos == '%' && have_specifier) break;
+	    if (*uos == '%' && !have_specifier) have_specifier = 1;
 	}
 
 	/* Store the format. */
@@ -595,7 +652,6 @@ split_fmt(const char *fmt, char ***breakout)
 	return -1;
     }
 }
-
 
 
 /************************
@@ -1118,28 +1174,53 @@ format_output(void *ns, int argc, const char **argv)
 	argc--; argv++;
 
 	for (int i = 0; i < fmt_cnt; i++) {
-	    unsigned int fc = fmt_ph_cnt(fmts[i]);
+	    unsigned int fc = fmt_sp_cnt(fmts[i]);
 	    const char *key = NULL;
 	    if (fc > 0) {
+		int key_check = 0;
+		std::string fs;
 		if (!argc) {
-		    lerr(nss, "Error parsing format string \"%s\" - missing value for format placeholder in substring \"%s\"\n", fmtstr, fmts[i]);
+		    lerr(nss, "Error parsing format string \"%s\" - missing value for format specifier in substring \"%s\"\n", fmtstr, fmts[i]);
 		    return -1;
 		}
 		key = argv[0];
-		// TODO - check type against fmt_ph substring...
+		if (!fmt_sp_get(fmts[i],fs)) {
+		    lerr(nss, "Error - could not find format specifier in fmt substring \"%s\"\n", fmts[i]);
+		    return -1;
+		}
+		// check type of supplied format specifier value against fmt_sp substring
+		key_check = fmt_sp_key_check(nss, key, fs);
+		if (key_check) {
+		    switch (key_check) {
+			case 1:
+			    lerr(nss, "Key \"%s\" supplied to format specifier \"%s\" is not a valid NIRT value key\n", key, fs.c_str());
+			    return -1;
+			    break;
+			case 2:
+			    lerr(nss, "NIRT value key \"%s\" has type %s, which does not match the type expected by format specifier \"%s\" \n", key, bu_avs_get(nss->val_types, key), fs.c_str());
+			    return -1;
+			    break;
+			default:
+			    lerr(nss, "Internal NIRT format processing error.\n");
+			    return -1;
+			    break;
+
+		    }
+		}
+		std::cout << "fmtsubstr: " << fmts[i] << " , specifier: " << fs << "\n";
 		argc--; argv++;
 	    }
 	    if (key) {
 		fmt_tmp.push_back(std::make_pair(std::string(fmts[i]), std::string(key)));
 	    } else {
-		/* If there are no format placeholders, we don't need any key */
+		/* If there are no format specifiers, we don't need any key */
 		fmt_tmp.push_back(std::make_pair(std::string(fmts[i]), ""));
 		argc--; argv++;
 	    }
 	}
 
 	if (argc) {
-	    lerr(nss, "Error: fmt string \"%s\" has %d format placeholders, but has %d arguments specified\n", argv[2], fmt_cnt, fmt_cnt + argc);
+	    lerr(nss, "Error: fmt string \"%s\" has %d format specifiers, but has %d arguments specified\n", argv[2], fmt_cnt, fmt_cnt + argc);
 	    return -1;
 	}
 
@@ -1650,9 +1731,12 @@ nirt_alloc(NIRT **ns)
 	std::stringstream ss(s);
 	int place = 0;
 	while (std::getline(ss, entry, ',')) {
+	    std::string tentry;
 	    size_t sb = entry.find_first_not_of(" \t");
 	    size_t se = entry.find_last_not_of(" \t");
-	    std::string tentry = entry.substr(sb, se - sb + 1);
+	    if (sb != std::string::npos && se != std::string::npos) {
+		tentry = entry.substr(sb, se - sb + 1);
+	    }
 	    if (!place) { key = tentry; place++; continue; }
 	    if (place == 1) {
 		bu_avs_add(n->val_types, key.c_str(), tentry.c_str());
@@ -1660,7 +1744,7 @@ nirt_alloc(NIRT **ns)
 		continue;
 	    }
 	    if (place == 2) {
-		if (!entry.empty()) {
+		if (!tentry.empty()) {
 		    bu_avs_add(n->val_docs, key.c_str(), tentry.c_str());
 		}
 		place = 0;
