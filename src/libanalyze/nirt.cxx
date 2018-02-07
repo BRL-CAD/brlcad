@@ -29,6 +29,7 @@
 
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <set>
 #include <vector>
 #include <limits>
@@ -1765,8 +1766,8 @@ find_first_unquoted(std::string &ts, const char *key, size_t offset)
     size_t q_start, q_end, pos;
     std::string s = ts;
     /* Start by initializing the position markers for quoted substrings. */
-    q_start = find_first_unescaped(s, "'\"", offset);
-    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
+    q_start = find_first_unescaped(s, "\"", offset);
+    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
 
     pos = offset;
     while ((pos = s.find(key, pos)) != std::string::npos) {
@@ -1774,7 +1775,7 @@ find_first_unquoted(std::string &ts, const char *key, size_t offset)
 	 * anything */
 	if (q_end != std::string::npos && pos > q_start && pos < q_end) {
 	    pos = q_end + 1;
-	    q_start = find_first_unescaped(s, "'\"", q_end + 1);
+	    q_start = find_first_unescaped(s, "\"", q_end + 1);
 	    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
 	    continue;
 	}
@@ -1804,8 +1805,8 @@ nirt_exec_cmd(NIRT *ns, const char *cmdstr)
     ss.seekg(0, ss.beg);
 
     /* Start by initializing the position markers for quoted substrings. */
-    q_start = find_first_unescaped(s, "'\"", 0);
-    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
+    q_start = find_first_unescaped(s, "\"", 0);
+    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
 
     /* get an argc/argv array for bu_cmd style command execution */
     av = (char **)bu_calloc(ac_max+1, sizeof(char *), "av");
@@ -1827,8 +1828,8 @@ nirt_exec_cmd(NIRT *ns, const char *cmdstr)
 
 	/* Prepare the rest of the script string for processing */
 	s.erase(0, pos + 1);
-	q_start = find_first_unescaped(s, "'\"", 0);
-	q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
+	q_start = find_first_unescaped(s, "\"", 0);
+	q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
 	pos = 0;
     }
     if (s.length() > 0) {
@@ -1861,9 +1862,12 @@ nirt_parse_script(NIRT *ns, const char *script, int (*nc)(NIRT *ns, const char *
     size_t pos = 0;
     size_t q_start, q_end;
 
+    /* If this line is a comment, we're done */
+    if (script[0] == '#') return 0;
+
     /* Start by initializing the position markers for quoted substrings. */
-    q_start = find_first_unescaped(s, "'\"", 0);
-    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
+    q_start = find_first_unescaped(s, "\"", 0);
+    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
 
     /* Slice and dice to get individual commands. */
     while ((pos = find_first_unquoted(s, ";", pos)) != std::string::npos) {
@@ -1888,8 +1892,8 @@ nirt_parse_script(NIRT *ns, const char *script, int (*nc)(NIRT *ns, const char *
 
 	/* Prepare the rest of the script string for processing */
 	s.erase(0, pos + 1);
-	q_start = find_first_unescaped(s, "'\"", 0);
-	q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
+	q_start = find_first_unescaped(s, "\"", 0);
+	q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
 	pos = 0;
     }
 
@@ -2048,6 +2052,23 @@ nirt_init(NIRT *ns, struct db_i *dbip)
 
     /* Initial direction is -x */
     VSET(ns->direct, -1, 0, 0);
+
+    /* Set up the default NIRT formatting output */
+    std::ifstream fs;
+    std::string fmtline;
+    fs.open(bu_brlcad_data("nirt/default.nrt", 0), std::fstream::binary);
+    if (!fs.is_open()) {
+	lerr(ns, "Error - could not load default NIRT formatting file: %s\n", bu_brlcad_data("nirt/default.nrt", 0));
+	return -1;
+    }
+    while (std::getline(fs, fmtline)) {
+	if (nirt_exec(ns, fmtline.c_str()) < 0) {
+	    lerr(ns, "Error - could not load default NIRT formatting file: %s\n", bu_brlcad_data("nirt/default.nrt", 0));
+	    return -1;
+	}
+    }
+
+    fs.close();
 
     return 0;
 }
