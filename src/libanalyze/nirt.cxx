@@ -68,6 +68,7 @@ extern "C" {
 #define OVLP_RETAIN             3
 
 #define NIRT_PRINTF_SPECIFIERS "difeEgGs"
+#define NIRT_OUTPUT_TYPE_SPECIFIERS "rhpfmog"
 
 static const char *ovals =
 "x_orig,         FLOAT,         Ray origin X coordinate,"
@@ -523,7 +524,7 @@ fmt_sp_cnt(const char *fmt) {
 /* Note: because of split_fmt, we can assume at most one format specifier is
  * present in the fmt string */
 int
-fmt_sp_get(const char *fmt, std::string &fmt_sp)
+fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
 {
     int found = 0;
     const char *uos = NULL;
@@ -536,49 +537,90 @@ fmt_sp_get(const char *fmt, std::string &fmt_sp)
 	    break;
 	}
     }
-    if (!found) return 0;
+    if (!found) {
+	lerr(nss, "Error - could not find format specifier in fmt substring \"%s\"\n", fmt);
+	return 0;
+    }
 
     // Find the terminating character of the specifier and build
     // the substring.
     std::string wfmt(uos);
     size_t ep = wfmt.find_first_of(NIRT_PRINTF_SPECIFIERS);
-    if (ep == std::string::npos) return 0;
+    if (ep == std::string::npos) {
+	lerr(nss, "Error - could not find valid format specifier terminator in fmt substring \"%s\" - candidates are \"%s\"\n", fmt, NIRT_PRINTF_SPECIFIERS);
+	return 0;
+    }
     fmt_sp = wfmt.substr(0, ep+1);
+
+    // Check for unsupported fmt features
+    size_t invalid_char;
+    invalid_char = fmt_sp.find_first_of("*");
+    if (invalid_char != std::string::npos) {
+	lerr(nss, "Error - NIRT format specifiers do not support wildcard ('*') characters for width or precision: \"%s\"\n", fmt_sp.c_str());
+	fmt_sp.clear();
+	return 0;
+    }
+    invalid_char = fmt_sp.find_first_of("hljztL");
+    if (invalid_char != std::string::npos) {
+	lerr(nss, "Error - NIRT format specifiers do not support length sub-specifiers: \"%s\"\n", fmt_sp.c_str());
+	fmt_sp.clear();
+	return 0;
+    }
+
     return 1;
 }
 
-/* Return 0 if specifier type is acceptable for supplied key, 1 if key is not found,
- * 2 if the type isn't acceptable, and -1 if there's another error */
+/* Return 0 if specifier type is acceptable, else -1 */
 int
 fmt_sp_key_check(struct nirt_state *nss, const char *key, std::string &fmt_sp)
 {
+    int key_ok = 1;
     const char *type = NULL;
-    if (!nss || !nss->val_types || fmt_sp.length() == 0) return -1;
-    if (!key) return 1;
+
+    if (!nss || !nss->val_types || fmt_sp.length() == 0) {
+	lerr(nss, "Internal NIRT format processing error.\n");
+	return -1;
+    }
+
+    if (!key || strlen(key) == 0) {
+	lerr(nss, "Format specifier \"%s\" has no matching NIRT value key\n", fmt_sp.c_str());
+	return -1;
+    }
+
     type = bu_avs_get(nss->val_types, key);
-    if (!type) return 1;
+    if (!type) {
+	lerr(nss, "Key \"%s\" supplied to format specifier \"%s\" is not a valid NIRT value key\n", key, fmt_sp.c_str());
+	return -1;
+    }
+
     switch (fmt_sp.c_str()[fmt_sp.length()-1]) {
 	case 'd':
 	case 'i':
-	    if (BU_STR_EQUAL(type, "INT")) return 0;
-	    return 2;
+	    if (!BU_STR_EQUAL(type, "INT")) key_ok = 0;
 	    break;
 	case 'f':
 	case 'e':
 	case 'E':
 	case 'g':
 	case 'G':
-	    if (BU_STR_EQUAL(type, "FLOAT") || BU_STR_EQUAL(type, "FNOUNIT")) return 0;
-	    return 2;
+	    if (!BU_STR_EQUAL(type, "FLOAT") && !BU_STR_EQUAL(type, "FNOUNIT")) key_ok = 0;
 	    break;
 	case 's':
-	    if (BU_STR_EQUAL(type, "STRING")) return 0;
-	    return 2;
+	    if (!BU_STR_EQUAL(type, "STRING")) key_ok = 0;
 	    break;
 	default:
-	    return 2;
+	    lerr(nss, "Error - format specifier terminator \"%s\" is invalid/unsupported: \"%c\" \n", fmt_sp.c_str(), fmt_sp.c_str()[fmt_sp.length()-1]);
+	    return -1;
+	    break;
     }
-} 
+
+    if (!key_ok) {
+	lerr(nss, "NIRT value key \"%s\" has type %s, which does not match the type expected by format specifier \"%s\" \n", key, bu_avs_get(nss->val_types, key), fmt_sp.c_str());
+	return -1;
+    }
+
+    return 0;
+}
 
 int
 split_fmt(const char *fmt, char ***breakout)
@@ -653,6 +695,29 @@ split_fmt(const char *fmt, char ***breakout)
     }
 }
 
+void
+print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::string> > &fmt_vect)
+{
+    std::string fmt_str, fmt_keys;
+    std::vector<std::pair<std::string,std::string> >::iterator f_it;
+
+    if (!ostr || fmt_vect.size() == 0) return;
+
+    for(f_it = fmt_vect.begin(); f_it != fmt_vect.end(); f_it++) {
+	for (std::string::size_type i = 0; i < (*f_it).first.size(); ++i) {
+	    if ((*f_it).first[i] == '\n')  {
+		fmt_str.push_back('\\');
+		fmt_str.push_back('n');
+	    } else {
+		fmt_str.push_back((*f_it).first[i]);
+	    }
+	}
+	fmt_keys.append(" ");
+	fmt_keys.append((*f_it).second);
+    }
+    bu_vls_sprintf(ostr, "\"%s\"%s", fmt_str.c_str(), fmt_keys.c_str());
+    bu_vls_trimspace(ostr);
+}
 
 /************************
  * Raytracing Callbacks *
@@ -1146,88 +1211,18 @@ format_output(void *ns, int argc, const char **argv)
     }
 
     type = argv[1][0];
-    if (!strchr("rhpfmog", type)) {
-	lerr(nss, "Unknown fmt type %s\n", type);
+    if (!strchr(NIRT_OUTPUT_TYPE_SPECIFIERS, type)) {
+	lerr(nss, "Unknown fmt type %c\n", type);
 	return -1;
     }
 
     argc--; argv++;
     if (argc == 1) {
-	// TODO - print out current fmt str for the specified type
-	// struct bu_vls ostr = BU_VLS_INIT_ZERO:
-	// fmt_str(&ostr, nss, type);
-	//lout(nss, "%s\n", bu_vls_addr(&ostr));
-	//bu_vls_free(&ostr);
-	return 0;
-    }
-
-    argc--; argv++;
-    if (argc) {
-	int fmt_cnt = 0;
-	std::vector<std::pair<std::string,std::string> > fmt_tmp;
-	const char *fmtstr = argv[0];
-	char **fmts = NULL;
-	if ((fmt_cnt = split_fmt(fmtstr, &fmts)) <= 0) {
-	    lerr(nss, "Error parsing format string \"%s\"\n", fmtstr);
-	    return -1;
-	}
-	argc--; argv++;
-
-	for (int i = 0; i < fmt_cnt; i++) {
-	    unsigned int fc = fmt_sp_cnt(fmts[i]);
-	    const char *key = NULL;
-	    if (fc > 0) {
-		int key_check = 0;
-		std::string fs;
-		if (!argc) {
-		    lerr(nss, "Error parsing format string \"%s\" - missing value for format specifier in substring \"%s\"\n", fmtstr, fmts[i]);
-		    return -1;
-		}
-		key = argv[0];
-		if (!fmt_sp_get(fmts[i],fs)) {
-		    lerr(nss, "Error - could not find format specifier in fmt substring \"%s\"\n", fmts[i]);
-		    return -1;
-		}
-		// check type of supplied format specifier value against fmt_sp substring
-		key_check = fmt_sp_key_check(nss, key, fs);
-		if (key_check) {
-		    switch (key_check) {
-			case 1:
-			    lerr(nss, "Key \"%s\" supplied to format specifier \"%s\" is not a valid NIRT value key\n", key, fs.c_str());
-			    return -1;
-			    break;
-			case 2:
-			    lerr(nss, "NIRT value key \"%s\" has type %s, which does not match the type expected by format specifier \"%s\" \n", key, bu_avs_get(nss->val_types, key), fs.c_str());
-			    return -1;
-			    break;
-			default:
-			    lerr(nss, "Internal NIRT format processing error.\n");
-			    return -1;
-			    break;
-
-		    }
-		}
-		std::cout << "fmtsubstr: " << fmts[i] << " , specifier: " << fs << "\n";
-		argc--; argv++;
-	    }
-	    if (key) {
-		fmt_tmp.push_back(std::make_pair(std::string(fmts[i]), std::string(key)));
-	    } else {
-		/* If there are no format specifiers, we don't need any key */
-		fmt_tmp.push_back(std::make_pair(std::string(fmts[i]), ""));
-		argc--; argv++;
-	    }
-	}
-
-	if (argc) {
-	    lerr(nss, "Error: fmt string \"%s\" has %d format specifiers, but has %d arguments specified\n", argv[2], fmt_cnt, fmt_cnt + argc);
-	    return -1;
-	}
-
+	// print out current fmt str for the specified type
+	struct bu_vls ostr = BU_VLS_INIT_ZERO;
 	switch (type) {
 	    case 'r':
-		nss->fmt_ray.clear();
-		nss->fmt_ray = fmt_tmp;
+		print_fmt_str(&ostr, nss->fmt_ray);
 		break;
 	    case 'h':
 		break;
@@ -1246,10 +1241,101 @@ format_output(void *ns, int argc, const char **argv)
 		return -1;
 		break;
 	}
+	lout(nss, "%s\n", bu_vls_addr(&ostr));
+	bu_vls_free(&ostr);
+	return 0;
+    }
 
-	std::vector<std::pair<std::string,std::string> >::iterator f_it;
-	for(f_it = nss->fmt_ray.begin(); f_it != nss->fmt_ray.end(); f_it++) {
-	    bu_log("fmt[%c] %s\t\t\t:%s\n", type, (*f_it).first.c_str(), (*f_it).second.c_str());
+    argc--; argv++;
+    if (argc) {
+	int fmt_cnt = 0;
+	int fmt_sp_count = 0;
+	std::vector<std::pair<std::string,std::string> > fmt_tmp;
+	const char *fmtstr = argv[0];
+	char **fmts = NULL;
+	if ((fmt_cnt = split_fmt(fmtstr, &fmts)) <= 0) {
+	    lerr(nss, "Error parsing format string \"%s\"\n", fmtstr);
+	    return -1;
+	}
+	argc--; argv++;
+
+	for (int i = 0; i < fmt_cnt; i++) {
+	    unsigned int fc = fmt_sp_cnt(fmts[i]);
+	    const char *key = NULL;
+	    if (fc > 0) {
+		std::string fs;
+		if (!argc) {
+		    lerr(nss, "Error parsing format string \"%s\" - missing value for format specifier in substring \"%s\"\n", fmtstr, fmts[i]);
+		    return -1;
+		}
+		key = argv[0];
+		fmt_sp_count++;
+
+		// Get fmt_sp substring and perform validation with the matching NIRT value key
+		if (!fmt_sp_get(nss, fmts[i], fs)) return -1;
+		if (fmt_sp_key_check(nss, key, fs)) return -1;
+
+		argc--; argv++;
+	    }
+	    if (key) {
+		fmt_tmp.push_back(std::make_pair(std::string(fmts[i]), std::string(key)));
+	    } else {
+		/* If there are no format specifiers, we don't need any key */
+		fmt_tmp.push_back(std::make_pair(std::string(fmts[i]), ""));
+	    }
+	}
+
+	/* we don't care about leftovers if they're empty (looks like bu_argv_from_string can produce them) */
+	int ac_prev = 0;
+	while (argc > 0 && ac_prev != argc) {
+	    if (!strlen(argv[0])) {
+		ac_prev = argc;
+		argc--; argv++;
+	    } else {
+		ac_prev = argc;
+	    }
+	}
+
+	/* If we *do* have leftover we we care about, error out */
+	if (argc) {
+	    lerr(nss, "Error: fmt string \"%s\" has %d format %s, but has %d %s specified\n", fmtstr, fmt_sp_count, (fmt_sp_count == 1) ? "specifier" : "specifiers", fmt_sp_count + argc, ((fmt_sp_count + argc) == 1) ? "key" : "keys");
+	    return -1;
+	}
+
+	/* OK, we should be good - scrub and replace */
+	switch (type) {
+	    case 'r':
+		nss->fmt_ray.clear();
+		nss->fmt_ray = fmt_tmp;
+		break;
+	    case 'h':
+		nss->fmt_head.clear();
+		nss->fmt_head = fmt_tmp;
+		break;
+	    case 'p':
+		nss->fmt_part.clear();
+		nss->fmt_part = fmt_tmp;
+		break;
+	    case 'f':
+		nss->fmt_foot.clear();
+		nss->fmt_foot = fmt_tmp;
+		break;
+	    case 'm':
+		nss->fmt_miss.clear();
+		nss->fmt_miss = fmt_tmp;
+		break;
+	    case 'o':
+		nss->fmt_ovlp.clear();
+		nss->fmt_ovlp = fmt_tmp;
+		break;
+	    case 'g':
+		nss->fmt_gap.clear();
+		nss->fmt_gap = fmt_tmp;
+		break;
+	    default:
+		lerr(nss, "Unknown fmt type %s\n", argv[1]);
+		return -1;
+		break;
 	}
     }
 
