@@ -701,7 +701,7 @@ print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::string
     std::string fmt_str, fmt_keys;
     std::vector<std::pair<std::string,std::string> >::iterator f_it;
 
-    if (!ostr || fmt_vect.size() == 0) return;
+    if (!ostr) return;
 
     for(f_it = fmt_vect.begin(); f_it != fmt_vect.end(); f_it++) {
 	for (std::string::size_type i = 0; i < (*f_it).first.size(); ++i) {
@@ -1225,16 +1225,22 @@ format_output(void *ns, int argc, const char **argv)
 		print_fmt_str(&ostr, nss->fmt_ray);
 		break;
 	    case 'h':
+		print_fmt_str(&ostr, nss->fmt_head);
 		break;
 	    case 'p':
+		print_fmt_str(&ostr, nss->fmt_part);
 		break;
 	    case 'f':
+		print_fmt_str(&ostr, nss->fmt_foot);
 		break;
 	    case 'm':
+		print_fmt_str(&ostr, nss->fmt_miss);
 		break;
 	    case 'o':
+		print_fmt_str(&ostr, nss->fmt_ovlp);
 		break;
 	    case 'g':
+		print_fmt_str(&ostr, nss->fmt_gap);
 		break;
 	    default:
 		lerr(nss, "Unknown fmt type %s\n", argv[1]);
