@@ -534,7 +534,7 @@ fmt_sp_flags_check(struct nirt_state *nss, std::string &fmt_sp)
     std::string flags = fmt_sp.substr(sp, ep - sp + 1);
     size_t invalid_char = flags.find_first_not_of(NIRT_PRINTF_FLAGS);
     if (invalid_char != std::string::npos) {
-	lerr(nss, "Error - invalid characters in flags substring (\"%s\") of format specifier \"%s\"\n", flags.c_str(), fmt_sp.c_str());
+	lerr(nss, "Error: invalid characters in flags substring (\"%s\") of format specifier \"%s\"\n", flags.c_str(), fmt_sp.c_str());
 	return -1;
     }
     return 0;
@@ -542,7 +542,6 @@ fmt_sp_flags_check(struct nirt_state *nss, std::string &fmt_sp)
 
 #define NIRT_PRINTF_PRECISION "0123456789."
 #define NIRT_PRINTF_MAXWIDTH 1000 //Arbitrary sanity boundary for width specification
-#define NIRT_PRINTF_MAXPRECI 
 
 int
 fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
@@ -553,7 +552,7 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
     std::string p = fmt_sp.substr(sp, ep - sp + 1);
     size_t invalid_char = p.find_first_not_of(NIRT_PRINTF_PRECISION);
     if (invalid_char != std::string::npos) {
-	lerr(nss, "Error - invalid characters in precision substring (\"%s\") of format specifier \"%s\"\n", p.c_str(), fmt_sp.c_str());
+	lerr(nss, "Error: invalid characters in precision substring (\"%s\") of format specifier \"%s\"\n", p.c_str(), fmt_sp.c_str());
 	return -1;
     }
 
@@ -565,7 +564,7 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	    pn = p.substr(1, std::string::npos);
 	} else {
 	    pn = p.substr(ps + 1, std::string::npos);
-	    wn = p.substr(0, ps - 1);
+	    wn = p.substr(0, ps);
 	}
     } else {
 	wn = p;
@@ -576,13 +575,13 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	int w = 0;
 	const char *wn_cstr = wn.c_str();
 	if (bu_opt_int(&optparse_msg, 1, (const char **)&wn_cstr, (void *)&w) == -1) {
-	    lerr(nss, "Option parsing error reading format specifier width from substring \"%s\" of specifier \"%s\": %s\n", wn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
+	    lerr(nss, "Error: bu_opt value read failure reading format specifier width from substring \"%s\" of specifier \"%s\": %s\n", wn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
 	    bu_vls_free(&optparse_msg);
 	    return -1;
 	}
 	bu_vls_free(&optparse_msg);
 	if (w > NIRT_PRINTF_MAXWIDTH) {
-	    lerr(nss, "Width specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed max width (%d)\n", wn.c_str(), fmt_sp.c_str(), NIRT_PRINTF_MAXWIDTH);
+	    lerr(nss, "Error: width specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed max width (%d)\n", wn.c_str(), fmt_sp.c_str(), NIRT_PRINTF_MAXWIDTH);
 	    return -1;
 	} 
     }
@@ -592,7 +591,7 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	int p_num = 0;
 	const char *pn_cstr = pn.c_str();
 	if (bu_opt_int(&optparse_msg, 1, (const char **)&pn_cstr, (void *)&p_num) == -1) {
-	    lerr(nss, "Option parsing error reading format specifier precision from substring \"%s\" of specifier \"%s\": %s\n", pn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
+	    lerr(nss, "Error: bu_opt value read failure reading format specifier precision from substring \"%s\" of specifier \"%s\": %s\n", pn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
 	    bu_vls_free(&optparse_msg);
 	    return -1;
 	}
@@ -602,7 +601,7 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	    case 'd':
 	    case 'i':
 		if (p_num > std::numeric_limits<int>::digits10) {
-		    lerr(nss, "Precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<int>::digits10);
+		    lerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<int>::digits10);
 		    return -1;
 		} 
 		break;
@@ -613,18 +612,18 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	    case 'G':
 		// TODO - once we enable C++ 11 switch the test below to (p > std::numeric_limits<fastf_t>::max_digits10) and update the lerr msg
 		if (p_num > std::numeric_limits<fastf_t>::digits10 + 2) {
-		    lerr(nss, "Precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<fastf_t>::digits10);
+		    lerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<fastf_t>::digits10 + 2);
 		    return -1;
 		}
 		break;
 	    case 's':
 		if ((size_t)p_num > pn.max_size()) {
-		    lerr(nss, "Precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), pn.max_size());
+		    lerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), pn.max_size());
 		    return -1;
 		}
 		break;
 	    default:
-		lerr(nss, "NIRT internal error in format width/precision validation.\n");
+		lerr(nss, "Error: NIRT internal error in format width/precision validation.\n");
 		return -1;
 		break;
 	}
@@ -640,7 +639,7 @@ fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
 {
     int found = 0;
     const char *uos = NULL;
-    if (!fmt) return 0;
+    if (!fmt) return -1;
     /* Find uncommented '%' format specifier */
     for (uos = fmt; (*uos != '"' && *uos != '\0'); ++uos) {
 	if (*uos == '%' && (*(uos + 1) == '%')) continue;
@@ -650,8 +649,8 @@ fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
 	}
     }
     if (!found) {
-	lerr(nss, "Error - could not find format specifier in fmt substring \"%s\"\n", fmt);
-	return 0;
+	lerr(nss, "Error: could not find format specifier in fmt substring \"%s\"\n", fmt);
+	return -1;
     }
 
     // Find the terminating character of the specifier and build
@@ -659,8 +658,8 @@ fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
     std::string wfmt(uos);
     size_t ep = wfmt.find_first_of(NIRT_PRINTF_SPECIFIERS);
     if (ep == std::string::npos) {
-	lerr(nss, "Error - could not find valid format specifier terminator in fmt substring \"%s\" - candidates are \"%s\"\n", fmt, NIRT_PRINTF_SPECIFIERS);
-	return 0;
+	lerr(nss, "Error: could not find valid format specifier terminator in fmt substring \"%s\" - candidates are \"%s\"\n", fmt, NIRT_PRINTF_SPECIFIERS);
+	return -1;
     }
     fmt_sp = wfmt.substr(0, ep+1);
 
@@ -668,22 +667,22 @@ fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
     size_t invalid_char;
     invalid_char = fmt_sp.find_first_of("*");
     if (invalid_char != std::string::npos) {
-	lerr(nss, "Error - NIRT format specifiers do not support wildcard ('*') characters for width or precision: \"%s\"\n", fmt_sp.c_str());
+	lerr(nss, "Error: NIRT format specifiers do not support wildcard ('*') characters for width or precision: \"%s\"\n", fmt_sp.c_str());
 	fmt_sp.clear();
-	return 0;
+	return -1;
     }
     invalid_char = fmt_sp.find_first_of("hljztL");
     if (invalid_char != std::string::npos) {
-	lerr(nss, "Error - NIRT format specifiers do not support length sub-specifiers: \"%s\"\n", fmt_sp.c_str());
+	lerr(nss, "Error: NIRT format specifiers do not support length sub-specifiers: \"%s\"\n", fmt_sp.c_str());
 	fmt_sp.clear();
-	return 0;
+	return -1;
     }
 
     // Sanity check any sub-specifiers
     if (fmt_sp_flags_check(nss, fmt_sp)) return -1;
     if (fmt_sp_width_precision_check(nss, fmt_sp)) return -1;
 
-    return 1;
+    return 0;
 }
 
 /* Return 0 if specifier type is acceptable, else -1 */
@@ -725,13 +724,13 @@ fmt_sp_key_check(struct nirt_state *nss, const char *key, std::string &fmt_sp)
 	    if (!BU_STR_EQUAL(type, "STRING")) key_ok = 0;
 	    break;
 	default:
-	    lerr(nss, "Error - format specifier terminator \"%s\" is invalid/unsupported: \"%c\" \n", fmt_sp.c_str(), fmt_sp.c_str()[fmt_sp.length()-1]);
+	    lerr(nss, "Error: format specifier terminator \"%s\" is invalid/unsupported: \"%c\" \n", fmt_sp.c_str(), fmt_sp.c_str()[fmt_sp.length()-1]);
 	    return -1;
 	    break;
     }
 
     if (!key_ok) {
-	lerr(nss, "NIRT value key \"%s\" has type %s, which does not match the type expected by format specifier \"%s\" \n", key, bu_avs_get(nss->val_types, key), fmt_sp.c_str());
+	lerr(nss, "Error: NIRT value key \"%s\" has type %s, which does not match the type expected by format specifier \"%s\" \n", key, bu_avs_get(nss->val_types, key), fmt_sp.c_str());
 	return -1;
     }
 
@@ -926,7 +925,7 @@ cm_attr(void *ns, int argc, const char *argv[])
     argv++; argc--;
 
     if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
-	lerr(nss, "Option parsing error: %s\n\n%s\n%s\n", bu_vls_addr(&optparse_msg), ustr, help);
+	lerr(nss, "Error: bu_opt value read failure: %s\n\n%s\n%s\n", bu_vls_addr(&optparse_msg), ustr, help);
 	if (help) bu_free((char *)help, "help str");
 	bu_vls_free(&optparse_msg);
 	return -1;
@@ -986,7 +985,7 @@ az_el(void *ns, int argc, const char *argv[])
     }
 
     if ((ret = bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&az)) == -1) {
-	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	lerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
 	goto azel_done;
     }
 
@@ -1211,7 +1210,7 @@ use_air(void *ns, int argc, const char *argv[])
 	return -1;
     }
     if (bu_opt_int(&optparse_msg, 1, (const char **)&(argv[1]), (void *)&nss->use_air) == -1) {
-	lerr(nss, "Option parsing error: %s\n\nUsage:  useair %s\n", bu_vls_addr(&optparse_msg), get_desc_args("useair"));
+	lerr(nss, "Error: bu_opt value read failure: %s\n\nUsage:  useair %s\n", bu_vls_addr(&optparse_msg), get_desc_args("useair"));
 	return -1;
     }
     nss->ap->a_rt_i = get_rtip(nss);
@@ -1275,7 +1274,7 @@ do_overlap_claims(void *ns, int argc, const char *argv[])
 		lout(nss, "retain (3)\n");
 		return 0;
 	    default:
-		lerr(nss, "Error - overlap_clams is set to invalid value %d\n", nss->overlap_claims);
+		lerr(nss, "Error: overlap_clams is set to invalid value %d\n", nss->overlap_claims);
 		return -1;
 	}
     }
@@ -1303,7 +1302,7 @@ do_overlap_claims(void *ns, int argc, const char *argv[])
     }
 
     if (!valid_specification) {
-	lerr(nss, "Invalid overlap_claims specification: '%s'\n", argv[1]);
+	lerr(nss, "Error: Invalid overlap_claims specification: '%s'\n", argv[1]);
 	return -1;
     }
 
@@ -1328,7 +1327,7 @@ format_output(void *ns, int argc, const char **argv)
 
     type = argv[1][0];
     if (!strchr(NIRT_OUTPUT_TYPE_SPECIFIERS, type)) {
-	lerr(nss, "Unknown fmt type %c\n", type);
+	lerr(nss, "Error: unknown fmt type %c\n", type);
 	return -1;
     }
 
@@ -1359,7 +1358,7 @@ format_output(void *ns, int argc, const char **argv)
 		print_fmt_str(&ostr, nss->fmt_gap);
 		break;
 	    default:
-		lerr(nss, "Unknown fmt type %s\n", argv[1]);
+		lerr(nss, "Error: unknown fmt type %s\n", argv[1]);
 		return -1;
 		break;
 	}
@@ -1370,13 +1369,17 @@ format_output(void *ns, int argc, const char **argv)
 
     argc--; argv++;
     if (argc) {
+	int ac_prev = 0;
 	int fmt_cnt = 0;
 	int fmt_sp_count = 0;
 	std::vector<std::pair<std::string,std::string> > fmt_tmp;
 	const char *fmtstr = argv[0];
 	char **fmts = NULL;
+	if (strlen(argv[0]) == 0 || BU_STR_EQUAL(argv[0], "\"\"") || BU_STR_EQUAL(argv[0], "''")) {
+	    goto set_fmt;
+	}
 	if ((fmt_cnt = split_fmt(fmtstr, &fmts)) <= 0) {
-	    lerr(nss, "Error parsing format string \"%s\"\n", fmtstr);
+	    lerr(nss, "Error: failure parsing format string \"%s\"\n", fmtstr);
 	    return -1;
 	}
 	argc--; argv++;
@@ -1387,14 +1390,14 @@ format_output(void *ns, int argc, const char **argv)
 	    if (fc > 0) {
 		std::string fs;
 		if (!argc) {
-		    lerr(nss, "Error parsing format string \"%s\" - missing value for format specifier in substring \"%s\"\n", fmtstr, fmts[i]);
+		    lerr(nss, "Error: failure parsing format string \"%s\" - missing value for format specifier in substring \"%s\"\n", fmtstr, fmts[i]);
 		    return -1;
 		}
 		key = argv[0];
 		fmt_sp_count++;
 
 		// Get fmt_sp substring and perform validation with the matching NIRT value key
-		if (!fmt_sp_get(nss, fmts[i], fs)) return -1;
+		if (fmt_sp_get(nss, fmts[i], fs)) return -1;
 		if (fmt_sp_key_check(nss, key, fs)) return -1;
 
 		argc--; argv++;
@@ -1408,7 +1411,7 @@ format_output(void *ns, int argc, const char **argv)
 	}
 
 	/* we don't care about leftovers if they're empty (looks like bu_argv_from_string can produce them) */
-	int ac_prev = 0;
+	ac_prev = 0;
 	while (argc > 0 && ac_prev != argc) {
 	    if (!strlen(argv[0])) {
 		ac_prev = argc;
@@ -1425,6 +1428,7 @@ format_output(void *ns, int argc, const char **argv)
 	}
 
 	/* OK, we should be good - scrub and replace */
+set_fmt:
 	switch (type) {
 	    case 'r':
 		nss->fmt_ray.clear();
@@ -1455,7 +1459,7 @@ format_output(void *ns, int argc, const char **argv)
 		nss->fmt_gap = fmt_tmp;
 		break;
 	    default:
-		lerr(nss, "Unknown fmt type %s\n", argv[1]);
+		lerr(nss, "Error: unknown fmt type %s\n", argv[1]);
 		return -1;
 		break;
 	}
@@ -1508,7 +1512,7 @@ bot_minpieces(void *ns, int argc, const char **argv)
     }
 
     if ((ret = bu_opt_long(&opt_msg, 1, argv, (void *)&minpieces)) == -1) {
-	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	lerr(nss, "Error: bu_opt value read failure reading minpieces value: %s\n", bu_vls_addr(&opt_msg));
 	goto bot_minpieces_done;
     }
 
