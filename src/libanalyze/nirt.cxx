@@ -267,6 +267,7 @@ struct nirt_state {
     struct resource *res;
     struct rt_i *rtip_air;
     struct resource *res_air;
+    struct nout_record *vals;
 
     /* internal format specifier arrays */
     struct bu_attribute_value_set *val_types;
@@ -1587,20 +1588,47 @@ set_fmt:
 extern "C" int
 print_item(void *ns, int argc, const char **argv)
 {
+    int i = 0;
+    struct bu_vls oval = BU_VLS_INIT_ZERO;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "%s\n", argv[0]);
+	lerr(nss, "Usage:  print %s\n", get_desc_args("print"));
 	return 0;
     }
 
+    argc--; argv++;
 
-    // TODO - handle error
-    // lerr(nss, "Usage:  print %s\n", get_desc_args("print"));
+    for (i = 0; i < argc; i++) {
+	const char *val_type = bu_avs_get(nss->val_types, argv[i]);
+	bu_vls_trunc(&oval, 0);
+	if (!val_type) {
+	    lerr(nss, "Error: item %s is not a valid NIRT value key\n", argv[i]);
+	    bu_vls_free(&oval);
+	    return -1;
+	}
+	if (BU_STR_EQUAL(val_type, "INT")) {
+	    nirt_print_fmt_substr(&oval, "%d", argv[i], nss->vals, nss->base2local);
+	    lout(nss, "%s\n", bu_vls_addr(&oval));
+	    continue;
+	}
+	if (BU_STR_EQUAL(val_type, "FLOAT") || BU_STR_EQUAL(val_type, "FNOUNIT")) {
+	    nirt_print_fmt_substr(&oval, "%g", argv[i], nss->vals, nss->base2local);
+	    lout(nss, "%s\n", bu_vls_addr(&oval));
+	    continue;
+	}
+	if (BU_STR_EQUAL(val_type, "STRING")) {
+	    nirt_print_fmt_substr(&oval, "%s", argv[i], nss->vals, nss->base2local);
+	    lout(nss, "%s\n", bu_vls_addr(&oval));
+	    continue;
+	}
+	lerr(nss, "Error: item %s has unknown value type %s\n", argv[i], val_type);
+	bu_vls_free(&oval);
+	return -1;
+    }
 
-
-    bu_log("print_item\n");
+    bu_vls_free(&oval);
     return 0;
 }
 
@@ -2104,6 +2132,16 @@ nirt_alloc(NIRT **ns)
     bu_avs_init_empty(n->val_types);
     bu_avs_init_empty(n->val_docs);
 
+    BU_GET(n->vals, struct nout_record);
+    bu_vls_init(&n->vals->path_name);
+    bu_vls_init(&n->vals->reg_name);
+    bu_vls_init(&n->vals->ov_reg1_name);
+    bu_vls_init(&n->vals->ov_sol_in);
+    bu_vls_init(&n->vals->ov_sol_out);
+    bu_vls_init(&n->vals->claimant_list);
+    bu_vls_init(&n->vals->claimant_listn);
+    bu_vls_init(&n->vals->attributes);
+
     /* Populate the output key and type information */
     {
 	std::string s(ovals);
@@ -2199,6 +2237,16 @@ nirt_destroy(NIRT *ns)
 
     if (ns->rtip != RTI_NULL) rt_free_rti(ns->rtip);
     if (ns->rtip_air != RTI_NULL) rt_free_rti(ns->rtip_air);
+
+    bu_vls_free(&ns->vals->path_name);
+    bu_vls_free(&ns->vals->reg_name);
+    bu_vls_free(&ns->vals->ov_reg1_name);
+    bu_vls_free(&ns->vals->ov_sol_in);
+    bu_vls_free(&ns->vals->ov_sol_out);
+    bu_vls_free(&ns->vals->claimant_list);
+    bu_vls_free(&ns->vals->claimant_listn);
+    bu_vls_free(&ns->vals->attributes);
+    BU_PUT(ns->vals, struct nout_record);
 
     BU_PUT(ns->res, struct resource);
     BU_PUT(ns->res_air, struct resource);
