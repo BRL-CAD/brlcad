@@ -911,7 +911,7 @@ void
 report(struct nirt_state *nss, char type, struct nout_record *r)
 {
     struct bu_vls rstr = BU_VLS_INIT_ZERO;
-    std::vector<std::pair<std::string,std::string> > *fmt_vect;
+    std::vector<std::pair<std::string,std::string> > *fmt_vect = NULL;
     std::vector<std::pair<std::string,std::string> >::iterator f_it;
 
     switch (type) {
@@ -938,7 +938,7 @@ report(struct nirt_state *nss, char type, struct nout_record *r)
 	    break;
 	default:
 	    lerr(nss, "Error: unknown fmt type %s\n", type);
-	    break;
+	    return;
     }
     for(f_it = fmt_vect->begin(); f_it != fmt_vect->end(); f_it++) {
 	const char *key = (*f_it).second.c_str();
