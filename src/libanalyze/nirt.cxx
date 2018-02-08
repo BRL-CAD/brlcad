@@ -237,9 +237,7 @@ struct nirt_state {
 
 
     /* state variables */
-    double azimuth;
     double base2local;
-    double elevation;
     double local2base;
     int backout;
     int overlap_claims;
@@ -249,6 +247,7 @@ struct nirt_state {
     vect_t target;
     std::set<std::string> attrs;        // active attributes
     std::set<std::string> active_paths; // active paths for raytracer
+    struct nout_record *vals;
 
     /* state alteration flags */
     bool b_state;   // updated for any state change
@@ -267,7 +266,6 @@ struct nirt_state {
     struct resource *res;
     struct rt_i *rtip_air;
     struct resource *res_air;
-    struct nout_record *vals;
 
     /* internal format specifier arrays */
     struct bu_attribute_value_set *val_types;
@@ -334,8 +332,8 @@ void ldbg(struct nirt_state *nss, int flag, const char *fmt, ...)
 void grid2targ(struct nirt_state *nss)
 {
     vect_t grid;
-    double ar = nss->azimuth * DEG2RAD;
-    double er = nss->elevation * DEG2RAD;
+    double ar = nss->vals->a * DEG2RAD;
+    double er = nss->vals->e * DEG2RAD;
     VMOVE(grid, nss->grid);
     nss->target[X] = - grid[HORZ] * sin(ar) - grid[VERT] * cos(ar) * sin(er) + grid[DIST] * cos(ar) * cos(er);
     nss->target[Y] =   grid[HORZ] * cos(ar) - grid[VERT] * sin(ar) * sin(er) + grid[DIST] * sin(ar) * cos(er);
@@ -345,8 +343,8 @@ void grid2targ(struct nirt_state *nss)
 void targ2grid(struct nirt_state *nss)
 {
     vect_t target;
-    double ar = nss->azimuth * DEG2RAD;
-    double er = nss->elevation * DEG2RAD;
+    double ar = nss->vals->a * DEG2RAD;
+    double er = nss->vals->e * DEG2RAD;
     VMOVE(target, nss->target);
     nss->grid[HORZ] = - target[X] * sin(ar) + target[Y] * cos(ar);
     nss->grid[VERT] = - target[X] * cos(ar) * sin(er) - target[Y] * sin(er) * sin(ar) + target[Z] * cos(er);
@@ -355,24 +353,24 @@ void targ2grid(struct nirt_state *nss)
 
 void dir2ae(struct nirt_state *nss)
 {
-    int zeroes = ZERO(nss->direct[Y]) && ZERO(nss->direct[X]);
-    double square = sqrt(nss->direct[X] * nss->direct[X] + nss->direct[Y] * nss->direct[Y]);
+    int zeroes = ZERO(nss->vals->dir[Y]) && ZERO(nss->vals->dir[X]);
+    double square = sqrt(nss->vals->dir[X] * nss->vals->dir[X] + nss->vals->dir[Y] * nss->vals->dir[Y]);
 
-    nss->azimuth = zeroes ? 0.0 : atan2 (-(nss->direct[Y]), -(nss->direct[X])) / DEG2RAD;
-    nss->elevation = atan2(-(nss->direct[Z]), square) / DEG2RAD;
+    nss->vals->a = zeroes ? 0.0 : atan2 (-(nss->vals->dir[Y]), -(nss->vals->dir[X])) / DEG2RAD;
+    nss->vals->e = atan2(-(nss->vals->dir[Z]), square) / DEG2RAD;
 }
 
 void ae2dir(struct nirt_state *nss)
 {
     vect_t dir;
-    double ar = nss->azimuth * DEG2RAD;
-    double er = nss->elevation * DEG2RAD;
+    double ar = nss->vals->a * DEG2RAD;
+    double er = nss->vals->e * DEG2RAD;
 
     dir[X] = -cos(ar) * cos(er);
     dir[Y] = -sin(ar) * cos(er);
     dir[Z] = -sin(er);
     VUNITIZE(dir);
-    VMOVE(nss->direct, dir);
+    VMOVE(nss->vals->dir, dir);
 }
 
 double backout(struct nirt_state *nss)
@@ -385,7 +383,7 @@ double backout(struct nirt_state *nss)
     if (!nss || !nss->backout) return 0.0;
 
     VMOVE(ray_point, nss->target);
-    VMOVE(ray_dir, nss->direct);
+    VMOVE(ray_dir, nss->vals->dir);
 
     VSUB2(diag, nss->ap->a_rt_i->mdl_max, nss->ap->a_rt_i->mdl_min);
     bsphere_diameter = MAGNITUDE(diag);
@@ -408,6 +406,36 @@ double backout(struct nirt_state *nss)
     bov = bsphere_diameter + delta;
 
     return bov;
+}
+
+fastf_t
+get_obliq(fastf_t *ray, fastf_t *normal)
+{
+    fastf_t cos_obl;
+    fastf_t obliquity;
+
+    cos_obl = fabs(VDOT(ray, normal) / (MAGNITUDE(normal) * MAGNITUDE(ray)));
+    if (cos_obl < 1.001) {
+	if (cos_obl > 1)
+	    cos_obl = 1;
+	obliquity = acos(cos_obl);
+    } else {
+	fflush(stdout);
+	fprintf (stderr, "Error:  cos(obliquity) > 1 (%g)\n", cos_obl);
+	obliquity = 0;
+	bu_exit(1, NULL);
+    }
+
+    /* convert obliquity to degrees */
+    obliquity = fabs(obliquity * RAD2DEG);
+    if (obliquity > 90 && obliquity <= 180)
+	obliquity = 180 - obliquity;
+    else if (obliquity > 180 && obliquity <= 270)
+	obliquity = obliquity - 180;
+    else if (obliquity > 270 && obliquity <= 360)
+	obliquity = 360 - obliquity;
+
+    return obliquity;
 }
 
 /********************
@@ -956,22 +984,49 @@ report(struct nirt_state *nss, char type, struct nout_record *r)
  ************************/
 
 extern "C" int
-nirt_if_hit(struct application *UNUSED(ap), struct partition *UNUSED(part_head), struct seg *UNUSED(finished_segs))
+nirt_if_hit(struct application *ap, struct partition *UNUSED(part_head), struct seg *UNUSED(finished_segs))
 {
+    struct nirt_state *nss = (struct nirt_state *)ap->a_uptr;
+#if 0
+    fastf_t ar = nss->vals->a * DEG2RAD;
+    fastf_t er = nss->vals->e * DEG2RAD;
+    int part_nm = 0;
+    overlap *ovp;
+    point_t inormal;
+    point_t onormal;
+    struct partition *part;
+#endif
+    report(nss, 'r', nss->vals);
+
     bu_log("hit\n");
     return HIT;
 }
 
 extern "C" int
-nirt_if_miss(struct application *UNUSED(ap))
+nirt_if_miss(struct application *ap)
 {
+    struct nirt_state *nss = (struct nirt_state *)ap->a_uptr;
+    report(nss, 'r', nss->vals);
+    report(nss, 'm', nss->vals);
     return MISS;
 }
 
 extern "C" int
 nirt_if_overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp)
 {
-    bu_log("overlap\n");
+    struct overlap *o;
+    BU_ALLOC(o, overlap);
+    o->ap = ap;
+    o->pp = pp;
+    o->reg1 = reg1;
+    o->reg2 = reg2;
+    o->in_dist = pp->pt_inhit->hit_dist;
+    o->out_dist = pp->pt_outhit->hit_dist;
+    VJOIN1(o->in_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+    VJOIN1(o->out_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+
+    // TODO - insert into overlap container - ideally not bu_list...
+
     /* Match current BRL-CAD default behavior */
     return rt_defoverlap (ap, pp, reg1, reg2, InputHdp);
 }
@@ -1090,7 +1145,7 @@ az_el(void *ns, int argc, const char *argv[])
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "(az, el) = (%4.2f, %4.2f)\n", nss->azimuth, nss->elevation);
+	lout(nss, "(az, el) = (%4.2f, %4.2f)\n", nss->vals->a, nss->vals->e);
 	return 0;
     }
 
@@ -1124,8 +1179,8 @@ az_el(void *ns, int argc, const char *argv[])
 	goto azel_done;
     }
 
-    nss->azimuth = az;
-    nss->elevation = el;
+    nss->vals->a = az;
+    nss->vals->e = el;
     ae2dir(nss);
     ret = 0;
 
@@ -1143,7 +1198,7 @@ dir_vect(void *ns, int argc, const char *argv[])
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(nss->direct));
+	lout(nss, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(nss->vals->dir));
 	return 0;
     }
 
@@ -1160,7 +1215,7 @@ dir_vect(void *ns, int argc, const char *argv[])
     }
 
     VUNITIZE(dir);
-    VMOVE(nss->direct, dir);
+    VMOVE(nss->vals->dir, dir);
     dir2ae(nss);
     return 0;
 }
@@ -1262,9 +1317,9 @@ shoot(void *ns, int argc, const char **UNUSED(argv))
 
     double bov = backout(nss);
     for (i = 0; i < 3; ++i) {
-	nss->target[i] = nss->target[i] + (bov * -1*(nss->direct[i]));
+	nss->target[i] = nss->target[i] + (bov * -1*(nss->vals->dir[i]));
 	nss->ap->a_ray.r_pt[i] = nss->target[i];
-	nss->ap->a_ray.r_dir[i] = nss->direct[i];
+	nss->ap->a_ray.r_dir[i] = nss->vals->dir[i];
     }
 
     ldbg(nss, DEBUG_BACKOUT,
@@ -1281,7 +1336,7 @@ shoot(void *ns, int argc, const char **UNUSED(argv))
 
     // Undo backout
     for (i = 0; i < 3; ++i) {
-	nss->target[i] = nss->target[i] - (bov * -1*(nss->direct[i]));
+	nss->target[i] = nss->target[i] - (bov * -1*(nss->vals->dir[i]));
     }
 
     return 0;
@@ -2103,12 +2158,9 @@ nirt_alloc(NIRT **ns)
     n->h_frmts = NULL;
     n->h_view = NULL;
 
-    n->azimuth = 0.0;
     n->base2local = 0.0;
-    n->elevation = 0.0;
     n->local2base = 0.0;
     n->use_air = 0;
-    VZERO(n->direct);
     VZERO(n->grid);
     VZERO(n->target);
 
