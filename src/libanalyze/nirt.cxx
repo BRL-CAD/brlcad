@@ -538,10 +538,11 @@ raytrace_prep(struct nirt_state *nss)
     return 0;
 }
 
-/*********************
- * Output formatting *
- *********************/
+/*****************************************
+ * Routines to support output formatting *
+ *****************************************/
 
+/* Count how many format specifiers we might find in a format string */
 unsigned int
 fmt_sp_cnt(const char *fmt) {
     unsigned int fcnt = 0;
@@ -554,8 +555,9 @@ fmt_sp_cnt(const char *fmt) {
 }
 
 
+/* Validate the width specification portion of the format specifier against
+ * the system limits and types supported by NIRT.*/
 #define NIRT_PRINTF_FLAGS "-+# "
-
 int
 fmt_sp_flags_check(struct nirt_state *nss, std::string &fmt_sp)
 {
@@ -571,9 +573,10 @@ fmt_sp_flags_check(struct nirt_state *nss, std::string &fmt_sp)
     return 0;
 }
 
+/* Validate the precision specification portion of the format specifier against
+ * the system limits */
 #define NIRT_PRINTF_PRECISION "0123456789."
 #define NIRT_PRINTF_MAXWIDTH 1000 //Arbitrary sanity boundary for width specification
-
 int
 fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 {
@@ -662,9 +665,18 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
     return 0;
 }
 
+int
+fmt_sp_validate(struct nirt_state *nss, std::string &fmt_sp)
+{
+    // Sanity check any sub-specifiers
+    if (fmt_sp_flags_check(nss, fmt_sp)) return -1;
+    if (fmt_sp_width_precision_check(nss, fmt_sp)) return -1;
+    return 0;
+}
 
-/* Note: because of split_fmt, we can assume at most one format specifier is
- * present in the fmt string */
+/* Processes the first format specifier.  (We use split_fmt to break up a format string into
+ * substrings with one format specifier per string - fmt_sp_get's job is to extract the actual
+ * format specifier from those substrings.) */
 int
 fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
 {
@@ -709,14 +721,11 @@ fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
 	return -1;
     }
 
-    // Sanity check any sub-specifiers
-    if (fmt_sp_flags_check(nss, fmt_sp)) return -1;
-    if (fmt_sp_width_precision_check(nss, fmt_sp)) return -1;
-
     return 0;
 }
 
-/* Return 0 if specifier type is acceptable, else -1 */
+/* Given a key and a format specifier string, use the NIRT type to check that the
+ * supplied key is an appropriate input for that specifier. */
 int
 fmt_sp_key_check(struct nirt_state *nss, const char *key, std::string &fmt_sp)
 {
@@ -768,6 +777,8 @@ fmt_sp_key_check(struct nirt_state *nss, const char *key, std::string &fmt_sp)
     return 0;
 }
 
+/* Given a format string, produce an array of substrings each of which contain
+ * at most one format specifier */
 int
 split_fmt(const char *fmt, char ***breakout)
 {
@@ -841,6 +852,8 @@ split_fmt(const char *fmt, char ***breakout)
     }
 }
 
+/* Given a vector breakout of a format string, generate the NIRT report string
+ * displaying the full, assembled format string and listing NIRT keys (Items) */
 void
 print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::string> > &fmt_vect)
 {
@@ -865,8 +878,10 @@ print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::string
     bu_vls_trimspace(ostr);
 }
 
+/* Translate NIRT value keys into strings of the current value, using the
+ * supplied format string.  This should never be called using any fmt string
+ * that hasn't been validated by  fmt_sp_validate and fmt_sp_key_check */
 #define nirt_print_key(keystr,val) if (BU_STR_EQUAL(key, keystr)) bu_vls_printf(ostr, fmt, val)
-
 void
 nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, struct nout_record *r, fastf_t base2local)
 {
@@ -936,6 +951,8 @@ nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, str
     nirt_print_key("gap_los", r->gap_los * base2local);
 }
 
+/* Generate the full report string defined by the array of fmt,key pairs
+ * associated with the supplied type, based on current values */
 void
 report(struct nirt_state *nss, char type, struct nout_record *r)
 {
@@ -1541,15 +1558,24 @@ format_output(void *ns, int argc, const char **argv)
 
     argc--; argv++;
     if (argc) {
+
 	int ac_prev = 0;
 	int fmt_cnt = 0;
 	int fmt_sp_count = 0;
 	std::vector<std::pair<std::string,std::string> > fmt_tmp;
 	const char *fmtstr = argv[0];
 	char **fmts = NULL;
+
+	/* Empty format strings are easy */
 	if (strlen(argv[0]) == 0 || BU_STR_EQUAL(argv[0], "\"\"") || BU_STR_EQUAL(argv[0], "''")) {
 	    goto set_fmt;
 	}
+
+	/* We now must take the format string and do a lot of validation on it so we
+	 * can safely use it to dynamically format output.  This is a classic problem in C:
+	 * CWE-134: Use of Externally-Controlled Format String. See
+	 * http://cwe.mitre.org/data/definitions/134.html for more details. */
+
 	if ((fmt_cnt = split_fmt(fmtstr, &fmts)) <= 0) {
 	    lerr(nss, "Error: failure parsing format string \"%s\"\n", fmtstr);
 	    return -1;
@@ -1570,6 +1596,7 @@ format_output(void *ns, int argc, const char **argv)
 
 		// Get fmt_sp substring and perform validation with the matching NIRT value key
 		if (fmt_sp_get(nss, fmts[i], fs)) return -1;
+		if (fmt_sp_validate(nss, fs)) return -1;
 		if (fmt_sp_key_check(nss, key, fs)) return -1;
 
 		argc--; argv++;
@@ -1582,7 +1609,8 @@ format_output(void *ns, int argc, const char **argv)
 	    }
 	}
 
-	/* we don't care about leftovers if they're empty (looks like bu_argv_from_string can produce them) */
+	/* we don't care about leftovers if they're empty (looks like
+	 * bu_argv_from_string can empty argv strings...) */
 	ac_prev = 0;
 	while (argc > 0 && ac_prev != argc) {
 	    if (!strlen(argv[0])) {
@@ -1599,7 +1627,8 @@ format_output(void *ns, int argc, const char **argv)
 	    return -1;
 	}
 
-	/* OK, we should be good - scrub and replace */
+	/* OK, validation passed - we should be good.  Scrub and replace pre-existing
+	 * formatting instructions with the new. */
 set_fmt:
 	switch (type) {
 	    case 'r':
