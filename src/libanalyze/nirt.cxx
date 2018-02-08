@@ -39,6 +39,7 @@ extern "C" {
 #include "bu/cmd.h"
 #include "bu/malloc.h"
 #include "bu/units.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 #include "analyze.h"
 }
@@ -834,6 +835,120 @@ print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::string
     bu_vls_sprintf(ostr, "Format: \"%s\"\nItem(s):%s", fmt_str.c_str(), fmt_keys.c_str());
     bu_vls_trimspace(ostr);
 }
+
+#define nirt_print_key(keystr,val) if (BU_STR_EQUAL(key, keystr)) bu_vls_printf(ostr, fmt, val)
+
+void
+nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, struct nout_record *r, fastf_t base2local)
+{
+    if (!ostr || !key || !fmt || !r) return;
+    nirt_print_key("x_orig", r->orig[X] * base2local);
+    nirt_print_key("y_orig", r->orig[Y] * base2local);
+    nirt_print_key("z_orig", r->orig[Z] * base2local);
+    nirt_print_key("h", r->h * base2local);
+    nirt_print_key("v", r->v * base2local);
+    nirt_print_key("d_orig", r->d_orig * base2local);
+    nirt_print_key("x_dir", r->dir[X]);
+    nirt_print_key("y_dir", r->dir[Y]);
+    nirt_print_key("z_dir", r->dir[Z]);
+    nirt_print_key("a", r->a);
+    nirt_print_key("e", r->e);
+    nirt_print_key("x_in", r->in[X] * base2local);
+    nirt_print_key("y_in", r->in[Y] * base2local);
+    nirt_print_key("z_in", r->in[Z] * base2local);
+    nirt_print_key("d_in", r->d_in * base2local);
+    nirt_print_key("x_out", r->out[X] * base2local);
+    nirt_print_key("y_out", r->out[Y] * base2local);
+    nirt_print_key("z_out", r->out[Z] * base2local);
+    nirt_print_key("d_out", r->d_out * base2local);
+    nirt_print_key("los", r->los * base2local);
+    nirt_print_key("scaled_los", r->scaled_los * base2local);
+    nirt_print_key("path_name", bu_vls_addr(&r->path_name));
+    nirt_print_key("reg_name", bu_vls_addr(&r->reg_name));
+    nirt_print_key("reg_id", r->reg_id);
+    nirt_print_key("obliq_in", r->obliq_in);
+    nirt_print_key("obliq_out", r->obliq_out);
+    nirt_print_key("nm_x_in", r->nm_in[X]);
+    nirt_print_key("nm_y_in", r->nm_in[Y]);
+    nirt_print_key("nm_z_in", r->nm_in[Z]);
+    nirt_print_key("nm_d_in", r->nm_d_in);
+    nirt_print_key("nm_h_in", r->nm_h_in);
+    nirt_print_key("nm_v_in", r->nm_v_in);
+    nirt_print_key("nm_x_out", r->nm_out[X]);
+    nirt_print_key("nm_y_out", r->nm_out[Y]);
+    nirt_print_key("nm_z_out", r->nm_out[Z]);
+    nirt_print_key("nm_d_out", r->nm_d_out);
+    nirt_print_key("nm_h_out", r->nm_h_out);
+    nirt_print_key("nm_v_out", r->nm_v_out);
+    nirt_print_key("ov_reg1_name", bu_vls_addr(&r->ov_reg1_name));
+    nirt_print_key("ov_reg1_id", r->ov_reg1_id);
+    nirt_print_key("ov_reg2_name", bu_vls_addr(&r->ov_reg2_name));
+    nirt_print_key("ov_reg2_id", r->ov_reg2_id);
+    nirt_print_key("ov_sol_in", bu_vls_addr(&r->ov_sol_in));
+    nirt_print_key("ov_sol_out", bu_vls_addr(&r->ov_sol_out));
+    nirt_print_key("ov_los", r->ov_los * base2local);
+    nirt_print_key("ov_x_in", r->ov_in[X] * base2local);
+    nirt_print_key("ov_y_in", r->ov_in[Y] * base2local);
+    nirt_print_key("ov_z_in", r->ov_in[Z] * base2local);
+    nirt_print_key("ov_d_in", r->ov_d_in * base2local);
+    nirt_print_key("ov_x_out", r->ov_out[X] * base2local);
+    nirt_print_key("ov_y_out", r->ov_out[Y] * base2local);
+    nirt_print_key("ov_z_out", r->ov_out[Z] * base2local);
+    nirt_print_key("ov_d_out", r->ov_d_out * base2local);
+    nirt_print_key("surf_num_in", r->surf_num_in);
+    nirt_print_key("surf_num_out", r->surf_num_out);
+    nirt_print_key("claimant_count", r->claimant_count);
+    nirt_print_key("claimant_list", bu_vls_addr(&r->claimant_list));
+    nirt_print_key("claimant_listn", bu_vls_addr(&r->claimant_listn));
+    nirt_print_key("attributes", bu_vls_addr(&r->attributes));
+    nirt_print_key("x_gap_in", r->gap_in[X] * base2local);
+    nirt_print_key("y_gap_in", r->gap_in[Y] * base2local);
+    nirt_print_key("z_gap_in", r->gap_in[Z] * base2local);
+    nirt_print_key("gap_los", r->gap_los * base2local);
+}
+
+void
+report(struct nirt_state *nss, char type, struct nout_record *r)
+{
+    struct bu_vls rstr = BU_VLS_INIT_ZERO;
+    std::vector<std::pair<std::string,std::string> > *fmt_vect;
+    std::vector<std::pair<std::string,std::string> >::iterator f_it;
+
+    switch (type) {
+	case 'r':
+	    fmt_vect = &nss->fmt_ray;
+	    break;
+	case 'h':
+	    fmt_vect = &nss->fmt_head;
+	    break;
+	case 'p':
+	    fmt_vect = &nss->fmt_part;
+	    break;
+	case 'f':
+	    fmt_vect = &nss->fmt_foot;
+	    break;
+	case 'm':
+	    fmt_vect = &nss->fmt_miss;
+	    break;
+	case 'o':
+	    fmt_vect = &nss->fmt_ovlp;
+	    break;
+	case 'g':
+	    fmt_vect = &nss->fmt_gap;
+	    break;
+	default:
+	    lerr(nss, "Error: unknown fmt type %s\n", type);
+	    break;
+    }
+    for(f_it = fmt_vect->begin(); f_it != fmt_vect->end(); f_it++) {
+	const char *key = (*f_it).second.c_str();
+	const char *fmt = (*f_it).first.c_str();
+	nirt_print_fmt_substr(&rstr, fmt, key, r, nss->base2local);
+    }
+    lout(nss, "%s", bu_vls_addr(&rstr));
+    bu_vls_free(&rstr);
+}
+
 
 /************************
  * Raytracing Callbacks *
