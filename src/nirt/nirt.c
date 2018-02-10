@@ -49,27 +49,27 @@
 int need_prep = 1;
 
 const com_table ComTab[] = {
-    { "attr", cm_attr, "select attributes", "<-f(flush) | -p(print) | attribute_name>" },
-    { "ae", az_el, "set/query azimuth and elevation", "azimuth elevation" },
-    { "dir", dir_vect, "set/query direction vector", "x-component y-component z-component" },
-    { "hv", grid_coor, "set/query gridplane coordinates", "horz vert [dist]" },
-    { "xyz", target_coor, "set/query target coordinates", "X Y Z" },
-    { "s", shoot, "shoot a ray at the target", NULL },
-    { "backout", backout, "back out of model", NULL },
-    { "useair", use_air, "set/query use of air", "<0|1|2|...>" },
-    { "units", nirt_units, "set/query local units", "<mm|cm|m|in|ft>" },
-    { "overlap_claims", do_overlap_claims, "set/query overlap rebuilding/retention", "<0|1|2|3>" },
-    { "fmt", format_output, "set/query output formats", "{rhpfmog} format item item ..." },
-    { "dest", direct_output, "set/query output destination", "file/pipe" },
-    { "statefile", state_file, "set/query name of state file", "file" },
-    { "dump", dump_state, "write current state of NIRT to the state file", NULL },
-    { "load", load_state, "read new state for NIRT from the state file", NULL },
-    { "print", print_item, "query an output item", "item" },
-    { "bot_minpieces", bot_minpieces, "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
-    { "libdebug", cm_libdebug, "set/query librt debug flags", "hex_flag_value" },
-    { "debug", cm_debug, "set/query nirt debug flags", "hex_flag_value" },
-    { "q", quit, "quit", NULL },
-    { "?", show_menu, "display this help menu", NULL },
+    { "attr", old_cm_attr, "select attributes", "<-f(flush) | -p(print) | attribute_name>" },
+    { "ae", old_az_el, "set/query azimuth and elevation", "azimuth elevation" },
+    { "dir", old_dir_vect, "set/query direction vector", "x-component y-component z-component" },
+    { "hv", old_grid_coor, "set/query gridplane coordinates", "horz vert [dist]" },
+    { "xyz", old_target_coor, "set/query target coordinates", "X Y Z" },
+    { "s", old_shoot, "shoot a ray at the target", NULL },
+    { "backout", old_backout, "back out of model", NULL },
+    { "useair", old_use_air, "set/query use of air", "<0|1|2|...>" },
+    { "units", old_nirt_units, "set/query local units", "<mm|cm|m|in|ft>" },
+    { "overlap_claims", old_do_overlap_claims, "set/query overlap rebuilding/retention", "<0|1|2|3>" },
+    { "fmt", old_format_output, "set/query output formats", "{rhpfmog} format item item ..." },
+    { "dest", old_direct_output, "set/query output destination", "file/pipe" },
+    { "statefile", old_state_file, "set/query name of state file", "file" },
+    { "dump", old_dump_state, "write current state of NIRT to the state file", NULL },
+    { "load", old_load_state, "read new state for NIRT from the state file", NULL },
+    { "print", old_print_item, "query an output item", "item" },
+    { "bot_minpieces", old_bot_minpieces, "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
+    { "libdebug", old_cm_libdebug, "set/query librt debug flags", "hex_flag_value" },
+    { "debug", old_cm_debug, "set/query nirt debug flags", "hex_flag_value" },
+    { "q", old_quit, "quit", NULL },
+    { "?", old_show_menu, "display this help menu", NULL },
     { (char *)NULL, NULL, (char *)NULL, (char *)NULL }
 };
 
@@ -103,7 +103,7 @@ attr_table a_tab;
 char *db_name;
 
 
-void printusage(void)
+void old_printusage(void)
 {
     bu_log("Usage: 'nirt [options] model.g objects...'\n");
     bu_log("Options:\n");
@@ -177,7 +177,7 @@ listformats(char ***names)
 }
 
 void
-attrib_print(void)
+old_attrib_print(void)
 {
     int i;
 
@@ -191,7 +191,7 @@ attrib_print(void)
  * flush the list of desired attributes
  */
 void
-attrib_flush(void)
+old_attrib_flush(void)
 {
     int i;
 
@@ -202,7 +202,7 @@ attrib_flush(void)
 
 
 void
-attrib_add(char *a, int *prep)
+old_attrib_add(char *a, int *prep)
 {
     char *p;
 
@@ -281,7 +281,7 @@ enqueue_script(struct bu_list *qp, int type, char *string)
  * text is for the title line
  */
 static void
-show_scripts(struct bu_list *sl, char *text)
+old_show_scripts(struct bu_list *sl, char *text)
 {
     int i;
     struct script_rec *srp;
@@ -321,7 +321,7 @@ run_scripts(struct bu_list *sl, struct rt_i *rtip)
     FILE *fPtr;
 
     if (nirt_debug & DEBUG_SCRIPTS)
-	show_scripts(sl, "before running them");
+	old_show_scripts(sl, "before running them");
 
     while (BU_LIST_WHILE(srp, script_rec, sl)) {
 	BU_LIST_DEQUEUE(&(srp->l));
@@ -337,13 +337,13 @@ run_scripts(struct bu_list *sl, struct rt_i *rtip)
 
 	switch (srp->sr_type) {
 	    case READING_STRING:
-		interact(READING_STRING, cp, rtip);
+		old_interact(READING_STRING, cp, rtip);
 		break;
 	    case READING_FILE:
 		if ((fPtr = fopen(cp, "rb")) == NULL) {
 		    bu_log("Cannot open script file '%s'\n", cp);
 		} else {
-		    interact(READING_FILE, fPtr, rtip);
+		    old_interact(READING_FILE, fPtr, rtip);
 		    fclose(fPtr);
 		}
 		break;
@@ -354,12 +354,12 @@ run_scripts(struct bu_list *sl, struct rt_i *rtip)
     }
 
     if (nirt_debug & DEBUG_SCRIPTS)
-	show_scripts(sl, "after running them");
+	old_show_scripts(sl, "after running them");
 }
 
 
 int
-main(int argc, char *argv[])
+old_nirt_main(int argc, char *argv[])
 {
     struct rt_i *rtip = NULL;
 
@@ -380,9 +380,9 @@ main(int argc, char *argv[])
     extern outval ValTab[];
 
     /* from if.c, callback functions for overlap, hit, and miss shots */
-    int if_overlap(struct application *, struct partition *, struct region *, struct region *, struct partition *);
-    int if_hit(struct application *, struct partition *, struct seg *);
-    int if_miss(struct application *);
+    int old_if_overlap(struct application *, struct partition *, struct region *, struct region *, struct partition *);
+    int old_if_hit(struct application *, struct partition *, struct seg *);
+    int old_if_miss(struct application *);
 
     BU_LIST_INIT(&script_list);
 
@@ -401,7 +401,7 @@ main(int argc, char *argv[])
 	if (bu_optopt == '?') Ch='h';
 	switch (Ch) {
 	    case 'A':
-		attrib_add(bu_optarg, &need_prep);
+		old_attrib_add(bu_optarg, &need_prep);
 		break;
 	    case 'B':
 		rt_bot_minpieces = atoi(bu_optarg);
@@ -414,23 +414,23 @@ main(int argc, char *argv[])
 		break;
 	    case 'E':
 		if (nirt_debug & DEBUG_SCRIPTS)
-		    show_scripts(&script_list, "before erasure");
+		    old_show_scripts(&script_list, "before erasure");
 		while (BU_LIST_WHILE(srp, script_rec, &script_list)) {
 		    BU_LIST_DEQUEUE(&(srp->l));
 		    free_script(srp);
 		}
 		if (nirt_debug & DEBUG_SCRIPTS)
-		    show_scripts(&script_list, "after erasure");
+		    old_show_scripts(&script_list, "after erasure");
 		break;
 	    case 'e':
 		enqueue_script(&script_list, READING_STRING, bu_optarg);
 		if (nirt_debug & DEBUG_SCRIPTS)
-		    show_scripts(&script_list, "after enqueueing a literal");
+		    old_show_scripts(&script_list, "after enqueueing a literal");
 		break;
 	    case 'f':
 		enqueue_script(&script_list, READING_FILE, bu_optarg);
 		if (nirt_debug & DEBUG_SCRIPTS)
-		    show_scripts(&script_list, "after enqueueing a file name");
+		    old_show_scripts(&script_list, "after enqueueing a file name");
 		break;
 	    case 'L':
 		listformats(NULL);
@@ -469,13 +469,13 @@ main(int argc, char *argv[])
 		}
 		break;
 	    default:
-		printusage();
+		old_printusage();
 		bu_exit (Ch != 'h', NULL);
 	}
     } /* end while getopt */
 
     if (argc - bu_optind < 2) {
-	printusage();
+	old_printusage();
 	return 1;
     }
 
@@ -595,16 +595,16 @@ main(int argc, char *argv[])
     rtip->rti_save_overlaps = (overlap_claims > 0);
 
     ++bu_optind;
-    do_rt_gettrees(rtip, argv + bu_optind, argc - bu_optind, &need_prep);
+    old_do_rt_gettrees(rtip, argv + bu_optind, argc - bu_optind, &need_prep);
 
     /* Initialize the table of resource structures */
     rt_init_resource(&res_tab, 0, rtip);
 
     /* initialization of the application structure */
     RT_APPLICATION_INIT(&ap);
-    ap.a_hit = if_hit;        /* branch to if_hit routine */
-    ap.a_miss = if_miss;      /* branch to if_miss routine */
-    ap.a_overlap = if_overlap;/* branch to if_overlap routine */
+    ap.a_hit = old_if_hit;        /* branch to if_hit routine */
+    ap.a_miss = old_if_miss;      /* branch to if_miss routine */
+    ap.a_overlap = old_if_overlap;/* branch to if_overlap routine */
     ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_onehit = 0;          /* continue through shotline after hit */
     ap.a_resource = &res_tab;
@@ -623,11 +623,11 @@ main(int argc, char *argv[])
     grid(HORZ) = 0.0;
     grid(VERT) = 0.0;
     grid(DIST) = 0.0;
-    grid2targ();
-    set_diameter(rtip);
+    old_grid2targ();
+    old_set_diameter(rtip);
 
     /* initialize the output specification */
-    default_ospec();
+    old_default_ospec();
 
     /* initialize NIRT's local units */
     base2local = rtip->rti_dbip->dbi_base2local;
@@ -652,8 +652,8 @@ main(int argc, char *argv[])
     }
 
     /* Run the run-time configuration file, if it exists */
-    if ((fPtr = fopenrc()) != NULL) {
-	interact(READING_FILE, fPtr, rtip);
+    if ((fPtr = old_fopenrc()) != NULL) {
+	old_interact(READING_FILE, fPtr, rtip);
 	fclose(fPtr);
     }
 
@@ -662,10 +662,10 @@ main(int argc, char *argv[])
 
     /* Perform the user interface */
     if (mat_flag) {
-	read_mat(rtip);
+	old_read_mat(rtip);
 	return 0;
     } else {
-	interact(READING_FILE, stdin, rtip);
+	old_interact(READING_FILE, stdin, rtip);
     }
 
     return 0;
@@ -673,7 +673,7 @@ main(int argc, char *argv[])
 
 
 void
-do_rt_gettrees(struct rt_i *my_rtip, char **object_name, int nm_objects, int *prep)
+old_do_rt_gettrees(struct rt_i *my_rtip, char **object_name, int nm_objects, int *prep)
 {
     static char **prev_names = 0;
     static int prev_nm = 0;

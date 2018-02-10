@@ -38,7 +38,7 @@
 fastf_t	bsphere_diameter = (fastf_t)-1.0;
 
 void
-set_diameter(struct rt_i *rtip)
+old_set_diameter(struct rt_i *rtip)
 {
     vect_t	diag;
 

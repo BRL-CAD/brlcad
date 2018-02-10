@@ -27,6 +27,7 @@
 /* BRL-CAD includes */
 #include "common.h"
 
+#include <algorithm>
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -245,11 +246,8 @@ struct nirt_state {
     int backout;
     int overlap_claims;
     int use_air;
-    vect_t direct;
-    vect_t grid;
-    vect_t target;
     std::set<std::string> attrs;        // active attributes
-    std::set<std::string> active_paths; // active paths for raytracer
+    std::vector<std::string> active_paths; // active paths for raytracer
     struct nout_record *vals;
 
     /* state alteration flags */
@@ -286,8 +284,8 @@ struct nirt_state {
  * Internal functionality *
  **************************/
 
-void lout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
-void lout(struct nirt_state *nss, const char *fmt, ...)
+static void lout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
+static void lout(struct nirt_state *nss, const char *fmt, ...)
 {
     va_list ap;
     if (nss->silent_flag != SILENT_YES && nss->h_out) {
@@ -301,8 +299,8 @@ void lout(struct nirt_state *nss, const char *fmt, ...)
     va_end(ap);
 }
 
-void lerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
-void lerr(struct nirt_state *nss, const char *fmt, ...)
+static void lerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
+static void lerr(struct nirt_state *nss, const char *fmt, ...)
 {
     va_list ap;
     if (nss->h_err){
@@ -316,7 +314,7 @@ void lerr(struct nirt_state *nss, const char *fmt, ...)
     va_end(ap);
 }
 
-void ldbg(struct nirt_state *nss, int flag, const char *fmt, ...)
+static void ldbg(struct nirt_state *nss, int flag, const char *fmt, ...)
 {
     va_list ap;
     if (nss->silent_flag != SILENT_YES && (nss->nirt_debug & flag) && nss->h_out) {
@@ -340,10 +338,10 @@ void grid2targ(struct nirt_state *nss)
     vect_t grid;
     double ar = nss->vals->a * DEG2RAD;
     double er = nss->vals->e * DEG2RAD;
-    VMOVE(grid, nss->grid);
-    nss->target[X] = - grid[HORZ] * sin(ar) - grid[VERT] * cos(ar) * sin(er) + grid[DIST] * cos(ar) * cos(er);
-    nss->target[Y] =   grid[HORZ] * cos(ar) - grid[VERT] * sin(ar) * sin(er) + grid[DIST] * sin(ar) * cos(er);
-    nss->target[Z] =   grid[VERT] * cos(er) + grid[DIST] * sin(er);
+    VSET(grid, nss->vals->h, nss->vals->v, nss->vals->d_orig);
+    nss->vals->orig[X] = - nss->vals->h * sin(ar) - nss->vals->v * cos(ar) * sin(er) + nss->vals->d_orig * cos(ar) * cos(er);
+    nss->vals->orig[Y] =   nss->vals->h * cos(ar) - nss->vals->v * sin(ar) * sin(er) + nss->vals->d_orig * sin(ar) * cos(er);
+    nss->vals->orig[Z] =   nss->vals->v * cos(er) + nss->vals->d_orig * sin(er);
 }
 
 void targ2grid(struct nirt_state *nss)
@@ -351,10 +349,10 @@ void targ2grid(struct nirt_state *nss)
     vect_t target;
     double ar = nss->vals->a * DEG2RAD;
     double er = nss->vals->e * DEG2RAD;
-    VMOVE(target, nss->target);
-    nss->grid[HORZ] = - target[X] * sin(ar) + target[Y] * cos(ar);
-    nss->grid[VERT] = - target[X] * cos(ar) * sin(er) - target[Y] * sin(er) * sin(ar) + target[Z] * cos(er);
-    nss->grid[DIST] =   target[X] * cos(er) * cos(ar) + target[Y] * cos(er) * sin(ar) + target[Z] * sin(er);
+    VMOVE(target, nss->vals->orig);
+    nss->vals->h = - target[X] * sin(ar) + target[Y] * cos(ar);
+    nss->vals->v = - target[X] * cos(ar) * sin(er) - target[Y] * sin(er) * sin(ar) + target[Z] * cos(er);
+    nss->vals->d_orig =   target[X] * cos(er) * cos(ar) + target[Y] * cos(er) * sin(ar) + target[Z] * sin(er);
 }
 
 void dir2ae(struct nirt_state *nss)
@@ -388,7 +386,7 @@ double backout(struct nirt_state *nss)
 
     if (!nss || !nss->backout) return 0.0;
 
-    VMOVE(ray_point, nss->target);
+    VMOVE(ray_point, nss->vals->orig);
     VMOVE(ray_dir, nss->vals->dir);
 
     VSUB2(diag, nss->ap->a_rt_i->mdl_max, nss->ap->a_rt_i->mdl_min);
@@ -458,13 +456,13 @@ raytrace_gettrees(struct nirt_state *nss)
     // Prepare C-style arrays for rt prep
     const char **objs = (const char **)bu_calloc(nss->active_paths.size() + 1, sizeof(char *), "objs");
     const char **attrs = (const char **)bu_calloc(nss->attrs.size() + 1, sizeof(char *), "attrs");
-    std::set<std::string>::iterator s_it;
-    for (s_it = nss->active_paths.begin(); s_it != nss->active_paths.end(); s_it++) {
-	const char *o = (*s_it).c_str();
+    for (size_t ui = 0; ui < nss->active_paths.size(); ui++) {
+	const char *o = nss->active_paths[ui].c_str();
 	objs[ocnt] = o;
 	ocnt++;
     }
     objs[ocnt] = NULL;
+    std::set<std::string>::iterator s_it;
     for (s_it = nss->attrs.begin(); s_it != nss->attrs.end(); s_it++) {
 	const char *a = (*s_it).c_str();
 	attrs[acnt] = a;
@@ -536,9 +534,13 @@ raytrace_prep(struct nirt_state *nss)
     if (nss->rtip) {
 	rt_prep(nss->rtip);
     }
-    lout(nss, "%s", (nss->active_paths.size() == 1) ? "Object" : "Objects");
-    for (s_it = nss->active_paths.begin(); s_it != nss->active_paths.end(); s_it++) {
-	lout(nss, " %s", (*s_it).c_str());
+    lout(nss, "%s ", (nss->active_paths.size() == 1) ? "Object" : "Objects");
+    for (size_t i = 0; i < nss->active_paths.size(); i++) {
+	if (i == 0) {
+	    lout(nss, "'%s'", nss->active_paths[i].c_str());
+	} else {
+	    lout(nss, " '%s'", nss->active_paths[i].c_str());
+	}
     }
     lout(nss, " processed\n");
     return 0;
@@ -553,9 +555,11 @@ unsigned int
 fmt_sp_cnt(const char *fmt) {
     unsigned int fcnt = 0;
     const char *uos = NULL;
-    for (uos = fmt; (*(uos + 1) != '"' && *(uos + 1) != '\0'); ++uos) {
+    for (uos = fmt; *(uos + 1) != '\0'; ++uos) {
 	if (*uos == '%' && (*(uos + 1) == '%')) continue;
-	if (*uos == '%') fcnt++;
+	if (*uos == '%' && (*(uos + 1) != '\0')) {
+	    fcnt++;
+	}
     }
     return fcnt;
 }
@@ -690,9 +694,9 @@ fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
     const char *uos = NULL;
     if (!fmt) return -1;
     /* Find uncommented '%' format specifier */
-    for (uos = fmt; (*uos != '"' && *uos != '\0'); ++uos) {
+    for (uos = fmt; *uos != '\0'; ++uos) {
 	if (*uos == '%' && (*(uos + 1) == '%')) continue;
-	if (*uos == '%') {
+	if (*uos == '%' && (*(uos + 1) != '\0')) {
 	    found++;
 	    break;
 	}
@@ -786,7 +790,7 @@ fmt_sp_key_check(struct nirt_state *nss, const char *key, std::string &fmt_sp)
 /* Given a format string, produce an array of substrings each of which contain
  * at most one format specifier */
 int
-split_fmt(const char *fmt, char ***breakout)
+split_fmt(const char *ofmt, char ***breakout)
 {
     int i = 0;
     int fcnt = 0;
@@ -794,8 +798,9 @@ split_fmt(const char *fmt, char ***breakout)
     const char *uos = NULL;
     char **fstrs = NULL;
     struct bu_vls specifier = BU_VLS_INIT_ZERO;
-
-    if (!fmt) return -1;
+    if (!ofmt) return -1;
+    char *cfmt = bu_strdup(ofmt);
+    char *fmt = cfmt;
 
     /* Count maximum possible number of format specifiers.  We have at most
      * fcnt+1 "units" to handle */
@@ -804,15 +809,16 @@ split_fmt(const char *fmt, char ***breakout)
 
     /* initialize to just after the initial '"' char */
     uos = (fmt[0] == '"') ? fmt + 1 : fmt;
+    if (fmt[strlen(fmt)-1] == '"') fmt[strlen(fmt)-1] = '\0';
 
     /* Find one specifier per substring breakout */
     fcnt = 0;
-    while (*uos != '"' && *uos != '\0') {
+    while (*uos != '\0') {
 	int have_specifier= 0;
+	up = uos;
 	/* Find first '%' format specifier*/
-	for (up = uos; (*uos != '"' && *uos != '\0'); ++uos) {
+	for (; *uos != '\0'; ++uos) {
 	    if (*uos == '%' && (*(uos + 1) == '%')) continue;
-	    if (*uos == '\\' && (*(uos + 1) == '"')) continue;
 	    if (*uos == '%' && have_specifier) break;
 	    if (*uos == '%' && !have_specifier) have_specifier = 1;
 	}
@@ -850,10 +856,12 @@ split_fmt(const char *fmt, char ***breakout)
 	}
 	bu_free(fstrs, "temp container");
 	bu_vls_free(&specifier);
+	bu_free(cfmt, "fmt cpy");
 	return fcnt;
     } else {
 	bu_free(fstrs, "temp container");
 	bu_vls_free(&specifier);
+	bu_free(cfmt, "fmt cpy");
 	return -1;
     }
 }
@@ -1103,13 +1111,14 @@ nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNU
 	if (part_nm > 1) {
 	    /* old d_out - new d_in */
 	    vals->gap_los = vals->gap_los - vals->d_in;
+	    report(nss, 'g', vals);
 	}
 
 	bu_vls_sprintf(vals->path_name, "%s", part->pt_regionp->reg_name);
 	{
 	    char *tmp_regname = (char *)bu_calloc(bu_vls_strlen(vals->path_name) + 1, sizeof(char), "tmp reg_name");
 	    bu_basename(part->pt_regionp->reg_name, tmp_regname);
-	    bu_vls_sprintf(vals->reg_name, "%s", part->pt_regionp->reg_name);
+	    bu_vls_sprintf(vals->reg_name, "%s", tmp_regname);
 	    bu_free(tmp_regname, "tmp reg_name");
 	}
 
@@ -1169,7 +1178,7 @@ nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNU
 	    bu_free(copy_ovlp_reg1, "cp1");
 	    char *t2 = (char *)bu_calloc(strlen(copy_ovlp_reg2), sizeof(char), "if_hit sval3");
 	    bu_basename(copy_ovlp_reg2, t2);
-	    bu_vls_sprintf(vals->ov_reg2_name, "%s", t1);
+	    bu_vls_sprintf(vals->ov_reg2_name, "%s", t2);
 	    bu_free(t2, "t2");
 	    bu_free(copy_ovlp_reg2, "cp2");
 
@@ -1437,7 +1446,7 @@ grid_coor(void *ns, int argc, const char *argv[])
     if (!ns) return -1;
 
     if (argc == 1) {
-	VMOVE(grid, nss->grid);
+	VSET(grid, nss->vals->h, nss->vals->v, nss->vals->d_orig);
 	VSCALE(grid, grid, nss->base2local);
 	lout(nss, "(h, v, d) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(grid));
 	return 0;
@@ -1448,30 +1457,32 @@ grid_coor(void *ns, int argc, const char *argv[])
 	lerr(nss, "Usage:  hv %s\n", get_desc_args("hv"));
 	return -1;
     }
-    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(grid[HORZ])) == -1) {
+    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(nss->vals->h)) == -1) {
 	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
     argc--; argv++;
-    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(grid[VERT])) == -1) {
+    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(nss->vals->v)) == -1) {
 	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
     argc--; argv++;
     if (argc) {
-	if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(grid[DIST])) == -1) {
+	if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(nss->vals->d_orig)) == -1) {
 	    lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	    bu_vls_free(&opt_msg);
 	    return -1;
 	}
     } else {
-	grid[DIST] = nss->grid[DIST];
+	grid[2] = nss->vals->d_orig;
     }
 
     VSCALE(grid, grid, nss->local2base);
-    VMOVE(nss->grid, grid);
+    nss->vals->h = grid[0];
+    nss->vals->v = grid[1];
+    nss->vals->d_orig = grid[2];
     grid2targ(nss);
 
     return 0;
@@ -1486,7 +1497,7 @@ target_coor(void *ns, int argc, const char *argv[])
     if (!ns) return -1;
 
     if (argc == 1) {
-	VMOVE(target, nss->target);
+	VMOVE(target, nss->vals->orig);
 	VSCALE(target, target, nss->base2local);
 	lout(nss, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(target));
 	return 0;
@@ -1505,7 +1516,8 @@ target_coor(void *ns, int argc, const char *argv[])
     }
 
     VSCALE(target, target, nss->local2base);
-    VMOVE(nss->target, target);
+    VMOVE(nss->vals->orig, target);
+    VMOVE(nss->vals->orig, target);
     targ2grid(nss);
 
     return 0;
@@ -1525,8 +1537,8 @@ shoot(void *ns, int argc, const char **UNUSED(argv))
 
     double bov = backout(nss);
     for (i = 0; i < 3; ++i) {
-	nss->target[i] = nss->target[i] + (bov * -1*(nss->vals->dir[i]));
-	nss->ap->a_ray.r_pt[i] = nss->target[i];
+	nss->vals->orig[i] = nss->vals->orig[i] + (bov * -1*(nss->vals->dir[i]));
+	nss->ap->a_ray.r_pt[i] = nss->vals->orig[i];
 	nss->ap->a_ray.r_dir[i] = nss->vals->dir[i];
     }
 
@@ -1544,7 +1556,7 @@ shoot(void *ns, int argc, const char **UNUSED(argv))
 
     // Undo backout
     for (i = 0; i < 3; ++i) {
-	nss->target[i] = nss->target[i] - (bov * -1*(nss->vals->dir[i]));
+	nss->vals->orig[i] = nss->vals->orig[i] - (bov * -1*(nss->vals->dir[i]));
     }
 
     return 0;
@@ -2069,8 +2081,10 @@ draw_cmd(void *ns, int argc, const char *argv[])
     int ret = 0;
     if (!ns || argc < 2) return -1;
     for (i = 1; i < argc; i++) {
-	bu_log("draw_cmd: drawing %s\n", argv[i]);
-	nss->active_paths.insert(argv[i]);
+	if (std::find(nss->active_paths.begin(), nss->active_paths.end(), argv[i]) == nss->active_paths.end()) {
+	    bu_log("draw_cmd: drawing %s\n", argv[i]);
+	    nss->active_paths.push_back(argv[i]);
+	}
     }
     ret = raytrace_gettrees(nss);
     if (ret) return ret;
@@ -2280,6 +2294,8 @@ nirt_parse_script(NIRT *ns, const char *script, int (*nc)(NIRT *ns, const char *
     size_t pos = 0;
     size_t q_start, q_end;
 
+    /* TODO - eat leading whitespace, potentially masking a comment char */
+
     /* If this line is a comment, we're done */
     if (script[0] == '#') return 0;
 
@@ -2381,8 +2397,6 @@ nirt_alloc(NIRT **ns)
     n->base2local = 0.0;
     n->local2base = 0.0;
     n->use_air = 0;
-    VZERO(n->grid);
-    VZERO(n->target);
 
     n->b_state = false;
     n->b_segs = false;
@@ -2406,15 +2420,22 @@ nirt_alloc(NIRT **ns)
     BU_GET(n->vals->path_name, struct bu_vls);
     BU_GET(n->vals->reg_name, struct bu_vls);
     BU_GET(n->vals->ov_reg1_name, struct bu_vls);
+    BU_GET(n->vals->ov_reg2_name, struct bu_vls);
     BU_GET(n->vals->ov_sol_in, struct bu_vls);
     BU_GET(n->vals->ov_sol_out, struct bu_vls);
     BU_GET(n->vals->claimant_list, struct bu_vls);
     BU_GET(n->vals->claimant_listn, struct bu_vls);
     BU_GET(n->vals->attributes, struct bu_vls);
 
+    VSETALL(n->vals->orig, 0.0);
+    n->vals->h = 0.0;
+    n->vals->v = 0.0;
+    n->vals->d_orig = 0.0;
+
     bu_vls_init(n->vals->path_name);
     bu_vls_init(n->vals->reg_name);
     bu_vls_init(n->vals->ov_reg1_name);
+    bu_vls_init(n->vals->ov_reg2_name);
     bu_vls_init(n->vals->ov_sol_in);
     bu_vls_init(n->vals->ov_sol_out);
     bu_vls_init(n->vals->claimant_list);
@@ -2483,7 +2504,7 @@ nirt_init(NIRT *ns, struct db_i *dbip)
     ns->local2base = dbip->dbi_local2base;
 
     /* Initial direction is -x */
-    VSET(ns->direct, -1, 0, 0);
+    VSET(ns->vals->dir, -1, 0, 0);
 
     /* Set up the default NIRT formatting output */
     std::ifstream fs;
@@ -2520,6 +2541,7 @@ nirt_destroy(NIRT *ns)
     bu_vls_free(ns->vals->path_name);
     bu_vls_free(ns->vals->reg_name);
     bu_vls_free(ns->vals->ov_reg1_name);
+    bu_vls_free(ns->vals->ov_reg2_name);
     bu_vls_free(ns->vals->ov_sol_in);
     bu_vls_free(ns->vals->ov_sol_out);
     bu_vls_free(ns->vals->claimant_list);
@@ -2529,6 +2551,7 @@ nirt_destroy(NIRT *ns)
     BU_PUT(ns->vals->path_name, struct bu_vls);
     BU_PUT(ns->vals->reg_name, struct bu_vls);
     BU_PUT(ns->vals->ov_reg1_name, struct bu_vls);
+    BU_PUT(ns->vals->ov_reg2_name, struct bu_vls);
     BU_PUT(ns->vals->ov_sol_in, struct bu_vls);
     BU_PUT(ns->vals->ov_sol_out, struct bu_vls);
     BU_PUT(ns->vals->claimant_list, struct bu_vls);

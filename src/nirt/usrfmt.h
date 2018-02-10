@@ -64,7 +64,7 @@ typedef struct ovlp_tag {
     struct ovlp_tag *backw;
 } overlap;
 
-extern FILE *fopenrc(void);
+extern FILE *old_fopenrc(void);
 
 /* Codes for output-item data types */
 #define OIT_INT     0

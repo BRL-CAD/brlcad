@@ -140,7 +140,7 @@ enqueue_file(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
     file.open(argv[0]);
     if (!file.is_open()) {
-	struct bu_vls str;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_data("nirt", 0), argv[0]);
 	file.open(bu_vls_addr(&str));
 	bu_vls_free(&str);
@@ -419,9 +419,23 @@ nirt_app_exec(NIRT *ns, struct bu_vls *iline, struct bu_vls *state_file, struct 
     return nret;
 }
 
+/* gateway into the old NIRT code, if we need to run it */
+extern "C" {int old_nirt_main(int argc, const char *argv[]);}
+
 int
 main(int argc, const char **argv)
 {
+
+    return old_nirt_main(argc, argv);
+#if 0
+    /* Make the old behavior accessible */
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "--old")) {
+	argv[1] = argv[0];
+	argc--;	argv++;
+	return old_nirt_main(argc, argv);
+    }
+#endif
+
     struct nirt_io_data io_data = IO_DATA_NULL;
     std::vector<std::string> init_scripts;
     struct bu_vls last_script_file = BU_VLS_INIT_ZERO;

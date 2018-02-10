@@ -271,10 +271,10 @@ ANALYZE_EXPORT void nirt_hook(NIRT *ns, nirt_hook_t hf, int flag);
 
 /* Reset some or all of the NIRT state, depending on the supplied flags. If
  * other flags are provided with NIRT_ALL, NIRT_ALL will skip the clearing
- * step(s) specified by the other flag(s).  So, for example, if a caller
- * wishes to reset the NIRT state but retain the existing scripts for re-use
- * they could call with nirt_clear with NIRT_ALL|NIRT_SCRIPTS.  NIRT_FRMTS is
- * a no-op for nirt_clear. */
+ * step(s) specified by the other flag(s).  So, for example, if a caller wishes
+ * to reset the NIRT state but retain the existing scripts for re-use they
+ * could call with nirt_clear with NIRT_ALL|NIRT_SCRIPTS.  Note that the
+ * NIRT_FRMTS, NIRT_OUT and NIRT_ERR flags are no-ops for nirt_clear. */
 ANALYZE_EXPORT void nirt_clear(NIRT *ns, int flags);
 
 /* Report command output.  For SEGS, SCRIPTS, OBJS and FRMTS reports a textual

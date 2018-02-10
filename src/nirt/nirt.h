@@ -111,45 +111,45 @@ extern attr_table a_tab;
 
 __BEGIN_DECLS
 
-extern void ae2dir(void);
-extern void attrib_add(char *a, int *prep);
-extern void attrib_flush(void);
-extern void attrib_print(void);
-extern void az_el(char *buffer, com_table *ctp, struct rt_i *rtip);
-extern void backout(char *buffer, com_table *ctp, struct rt_i *rtip);
-extern void bot_minpieces(char *buffer, com_table *ctp, struct rt_i *rtip);
-extern int check_conv_spec(outitem *oip);
-extern void default_ospec(void);
-extern void dir2ae(void);
-extern void dir_vect(char *buffer, com_table *ctp, struct rt_i *rtip);
-extern void direct_output(const char* buffer, com_table* ctp, struct rt_i *rtip);
-extern void do_overlap_claims();
-extern void do_rt_gettrees(struct rt_i *, char **object_name, int nm_objects, int *do_prep);
-extern void dump_state(const char* buffer, com_table* ctp, struct rt_i *rtip);
-extern void format_output(const char* buffer, com_table* ctp, struct rt_i *rtip);
-extern com_table *get_comtab_ent(char *pattern, int pat_len);
-extern void grid2targ(void);
-extern void grid_coor(char *buffer, com_table *ctp, struct rt_i *rtip);
-extern void interact(int input_source, void *sPtr, struct rt_i *rtip);
-extern void load_state(char *buffer, com_table *ctp, struct rt_i *rtip);
-extern void nirt_units();
-extern void print_item(char *buffer, com_table *ctp, struct rt_i *rtip);
-extern void printusage(void);
-extern void quit();
-extern void read_mat(struct rt_i *rtip);
-extern void report(int outcom_type);
-extern void set_diameter(struct rt_i *);
-extern void shoot(char *buffer, com_table *ctp, struct rt_i *rtip);
-extern void show_menu();
-extern void state_file(const char* buffer, com_table* ctp, struct rt_i *rtip);
-extern void targ2grid(void);
-extern void target_coor(char *buffer, com_table *ctp, struct rt_i *rtip);
-extern void use_air(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void old_ae2dir(void);
+extern void old_attrib_add(char *a, int *prep);
+extern void old_attrib_flush(void);
+extern void old_attrib_print(void);
+extern void old_az_el(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void old_backout(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void old_bot_minpieces(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern int old_check_conv_spec(outitem *oip);
+extern void old_default_ospec(void);
+extern void old_dir2ae(void);
+extern void old_dir_vect(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void old_direct_output(const char* buffer, com_table* ctp, struct rt_i *rtip);
+extern void old_do_overlap_claims();
+extern void old_do_rt_gettrees(struct rt_i *, char **object_name, int nm_objects, int *do_prep);
+extern void old_dump_state(const char* buffer, com_table* ctp, struct rt_i *rtip);
+extern void old_format_output(const char* buffer, com_table* ctp, struct rt_i *rtip);
+extern com_table *old_get_comtab_ent(char *pattern, int pat_len);
+extern void old_grid2targ(void);
+extern void old_grid_coor(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void old_interact(int input_source, void *sPtr, struct rt_i *rtip);
+extern void old_load_state(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void old_nirt_units();
+extern void old_print_item(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void old_printusage(void);
+extern void old_quit();
+extern void old_read_mat(struct rt_i *rtip);
+extern void old_report(int outcom_type);
+extern void old_set_diameter(struct rt_i *);
+extern void old_shoot(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void old_show_menu();
+extern void old_state_file(const char* buffer, com_table* ctp, struct rt_i *rtip);
+extern void old_targ2grid(void);
+extern void old_target_coor(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void old_use_air(char *buffer, com_table *ctp, struct rt_i *rtip);
 
 /* main driver needs to get at these, even though they're command-specific */
-extern void cm_libdebug();
-extern void cm_debug();
-extern void cm_attr();
+extern void old_cm_libdebug();
+extern void old_cm_debug();
+extern void old_cm_attr();
 
 __END_DECLS
 

@@ -85,7 +85,7 @@ sgetc (char *string)
  * the key word, the command is executed.
  */
 void
-interact(int input_source, void *sPtr, struct rt_i *rtip)
+old_interact(int input_source, void *sPtr, struct rt_i *rtip)
 {
     int Ch;			/* individual characters of the input line */
     int Prev_ch=0;		/* previous character */
@@ -178,7 +178,7 @@ interact(int input_source, void *sPtr, struct rt_i *rtip)
 	if (nirt_debug & DEBUG_INTERACT)
 	    bu_log("Line buffer contains '%s'\n", line_buffer);
 
-	ctp = get_comtab_ent(line_buffer, key_len);
+	ctp = old_get_comtab_ent(line_buffer, key_len);
 	if (ctp == CT_NULL) {
 	    line_buffer[key_len] = '\0';
 	    fprintf(stderr,
@@ -193,7 +193,7 @@ interact(int input_source, void *sPtr, struct rt_i *rtip)
 
 
 com_table *
-get_comtab_ent(char *pattern, int pat_len)
+old_get_comtab_ent(char *pattern, int pat_len)
 {
     com_table *ctp;
     int len;

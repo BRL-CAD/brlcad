@@ -18,7 +18,6 @@ BRLCAD_ADDDATA(gtransfer.c sample_applications)
 
 add_subdirectory(beset)
 add_subdirectory(gdiff)
-add_subdirectory(inirt)
 
 # Local Variables:
 # tab-width: 8
