@@ -38,6 +38,7 @@ extern "C" {
 #include "bu/color.h"
 #include "bu/cmd.h"
 #include "bu/malloc.h"
+#include "bu/path.h"
 #include "bu/units.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -138,6 +139,21 @@ static const char *ovals =
 "z_gap_in,       FLOAT,         ,"
 "gap_los,        FLOAT,         ,";
 
+
+struct overlap {
+    struct application *ap;
+    struct partition *pp;
+    struct region *reg1;
+    struct region *reg2;
+    fastf_t in_dist;
+    fastf_t out_dist;
+    point_t in_point;
+    point_t out_point;
+    struct overlap *forw;
+    struct overlap *backw;
+};
+#define OVERLAP_NULL ((struct overlap *)0)
+
 /* This record structure doesn't have to correspond exactly to the above list
  * of available values, but it needs to retain sufficient information to
  * support the ability to generate all of them upon request. */
@@ -155,8 +171,8 @@ struct nout_record {
     fastf_t d_out;
     fastf_t los;
     fastf_t scaled_los;
-    struct bu_vls path_name;
-    struct bu_vls reg_name;
+    struct bu_vls *path_name;
+    struct bu_vls *reg_name;
     int reg_id;
     fastf_t obliq_in;
     fastf_t obliq_out;
@@ -168,12 +184,12 @@ struct nout_record {
     fastf_t nm_d_out;
     fastf_t nm_h_out;
     fastf_t nm_v_out;
-    struct bu_vls ov_reg1_name;
+    struct bu_vls *ov_reg1_name;
     int ov_reg1_id;
-    struct bu_vls ov_reg2_name;
+    struct bu_vls *ov_reg2_name;
     int ov_reg2_id;
-    struct bu_vls ov_sol_in;
-    struct bu_vls ov_sol_out;
+    struct bu_vls *ov_sol_in;
+    struct bu_vls *ov_sol_out;
     fastf_t ov_los;
     point_t ov_in;
     fastf_t ov_d_in;
@@ -182,26 +198,13 @@ struct nout_record {
     int surf_num_in;
     int surf_num_out;
     int claimant_count;
-    struct bu_vls claimant_list;
-    struct bu_vls claimant_listn; /* ?? */
-    struct bu_vls attributes;
+    struct bu_vls *claimant_list;
+    struct bu_vls *claimant_listn; /* uses \n instead of space to separate claimants */
+    struct bu_vls *attributes;
     point_t gap_in;
     fastf_t gap_los;
+    struct overlap ovlp_list;
 };
-
-struct overlap {
-    struct application *ap;
-    struct partition *pp;
-    struct region *reg1;
-    struct region *reg2;
-    fastf_t in_dist;
-    fastf_t out_dist;
-    point_t in_point;
-    point_t out_point;
-    struct ovlp_tag *forw;
-    struct ovlp_tag *backw;
-};
-#define OVERLAP_NULL ((struct overlap *)0)
 
 
 
@@ -251,8 +254,6 @@ struct nirt_state {
 
     /* state alteration flags */
     bool b_state;   // updated for any state change
-    bool b_out;     // updated when output changes
-    bool b_err;     // updated when err changes
     bool b_segs;    // updated when segement list is changed
     bool b_objs;    // updated when active list of objects in scene changes
     bool b_frmts;   // updated when output formatting is changed
@@ -289,12 +290,13 @@ void lout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
 void lout(struct nirt_state *nss, const char *fmt, ...)
 {
     va_list ap;
-    if (nss->silent_flag != SILENT_YES) {
+    if (nss->silent_flag != SILENT_YES && nss->h_out) {
 	struct bu_vls *vls = nss->out;
 	BU_CK_VLS(vls);
 	va_start(ap, fmt);
 	bu_vls_vprintf(vls, fmt, ap);
-	nss->b_state = nss->b_out = true;
+	(*nss->h_out)(nss, nss->u_data);
+	bu_vls_trunc(vls, 0);
     }
     va_end(ap);
 }
@@ -303,23 +305,27 @@ void lerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
 void lerr(struct nirt_state *nss, const char *fmt, ...)
 {
     va_list ap;
-    struct bu_vls *vls = nss->err;
-    BU_CK_VLS(vls);
-    va_start(ap, fmt);
-    bu_vls_vprintf(vls, fmt, ap);
-    nss->b_state = nss->b_err = true;
+    if (nss->h_err){
+	struct bu_vls *vls = nss->err;
+	BU_CK_VLS(vls);
+	va_start(ap, fmt);
+	bu_vls_vprintf(vls, fmt, ap);
+	(*nss->h_err)(nss, nss->u_data);
+	bu_vls_trunc(vls, 0);
+    }
     va_end(ap);
 }
 
 void ldbg(struct nirt_state *nss, int flag, const char *fmt, ...)
 {
     va_list ap;
-    if (nss->silent_flag != SILENT_YES && (nss->nirt_debug & flag)) {
+    if (nss->silent_flag != SILENT_YES && (nss->nirt_debug & flag) && nss->h_out) {
 	struct bu_vls *vls = nss->out;
 	BU_CK_VLS(vls);
 	va_start(ap, fmt);
 	bu_vls_vprintf(vls, fmt, ap);
-	nss->b_state = nss->b_out = true;
+	(*nss->h_out)(nss, nss->u_data);
+	bu_vls_trunc(vls, 0);
     }
     va_end(ap);
 }
@@ -878,14 +884,18 @@ print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::string
     bu_vls_trimspace(ostr);
 }
 
-/* Translate NIRT value keys into strings of the current value, using the
- * supplied format string.  This should never be called using any fmt string
- * that hasn't been validated by  fmt_sp_validate and fmt_sp_key_check */
+/* Translate NIRT fmt substrings into fully evaluated printf output, while also
+ * handling units on key values.  This should never be called using any fmt
+ * string that hasn't been validated by fmt_sp_validate and fmt_sp_key_check */
 #define nirt_print_key(keystr,val) if (BU_STR_EQUAL(key, keystr)) bu_vls_printf(ostr, fmt, val)
 void
 nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, struct nout_record *r, fastf_t base2local)
 {
-    if (!ostr || !key || !fmt || !r) return;
+    if (!ostr || !fmt || !r) return;
+    if (!key || !strlen(key)) {
+	bu_vls_printf(ostr, fmt);
+	return;
+    }
     nirt_print_key("x_orig", r->orig[X] * base2local);
     nirt_print_key("y_orig", r->orig[Y] * base2local);
     nirt_print_key("z_orig", r->orig[Z] * base2local);
@@ -907,8 +917,8 @@ nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, str
     nirt_print_key("d_out", r->d_out * base2local);
     nirt_print_key("los", r->los * base2local);
     nirt_print_key("scaled_los", r->scaled_los * base2local);
-    nirt_print_key("path_name", bu_vls_addr(&r->path_name));
-    nirt_print_key("reg_name", bu_vls_addr(&r->reg_name));
+    nirt_print_key("path_name", bu_vls_addr(r->path_name));
+    nirt_print_key("reg_name", bu_vls_addr(r->reg_name));
     nirt_print_key("reg_id", r->reg_id);
     nirt_print_key("obliq_in", r->obliq_in);
     nirt_print_key("obliq_out", r->obliq_out);
@@ -924,12 +934,12 @@ nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, str
     nirt_print_key("nm_d_out", r->nm_d_out);
     nirt_print_key("nm_h_out", r->nm_h_out);
     nirt_print_key("nm_v_out", r->nm_v_out);
-    nirt_print_key("ov_reg1_name", bu_vls_addr(&r->ov_reg1_name));
+    nirt_print_key("ov_reg1_name", bu_vls_addr(r->ov_reg1_name));
     nirt_print_key("ov_reg1_id", r->ov_reg1_id);
-    nirt_print_key("ov_reg2_name", bu_vls_addr(&r->ov_reg2_name));
+    nirt_print_key("ov_reg2_name", bu_vls_addr(r->ov_reg2_name));
     nirt_print_key("ov_reg2_id", r->ov_reg2_id);
-    nirt_print_key("ov_sol_in", bu_vls_addr(&r->ov_sol_in));
-    nirt_print_key("ov_sol_out", bu_vls_addr(&r->ov_sol_out));
+    nirt_print_key("ov_sol_in", bu_vls_addr(r->ov_sol_in));
+    nirt_print_key("ov_sol_out", bu_vls_addr(r->ov_sol_out));
     nirt_print_key("ov_los", r->ov_los * base2local);
     nirt_print_key("ov_x_in", r->ov_in[X] * base2local);
     nirt_print_key("ov_y_in", r->ov_in[Y] * base2local);
@@ -942,9 +952,9 @@ nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, str
     nirt_print_key("surf_num_in", r->surf_num_in);
     nirt_print_key("surf_num_out", r->surf_num_out);
     nirt_print_key("claimant_count", r->claimant_count);
-    nirt_print_key("claimant_list", bu_vls_addr(&r->claimant_list));
-    nirt_print_key("claimant_listn", bu_vls_addr(&r->claimant_listn));
-    nirt_print_key("attributes", bu_vls_addr(&r->attributes));
+    nirt_print_key("claimant_list", bu_vls_addr(r->claimant_list));
+    nirt_print_key("claimant_listn", bu_vls_addr(r->claimant_listn));
+    nirt_print_key("attributes", bu_vls_addr(r->attributes));
     nirt_print_key("x_gap_in", r->gap_in[X] * base2local);
     nirt_print_key("y_gap_in", r->gap_in[Y] * base2local);
     nirt_print_key("z_gap_in", r->gap_in[Z] * base2local);
@@ -983,7 +993,7 @@ report(struct nirt_state *nss, char type, struct nout_record *r)
 	    fmt_vect = &nss->fmt_gap;
 	    break;
 	default:
-	    lerr(nss, "Error: unknown fmt type %s\n", type);
+	    lerr(nss, "Error: NIRT internal error, attempt to report using unknown fmt type %c\n", type);
 	    return;
     }
     for(f_it = fmt_vect->begin(); f_it != fmt_vect->end(); f_it++) {
@@ -1000,11 +1010,42 @@ report(struct nirt_state *nss, char type, struct nout_record *r)
  * Raytracing Callbacks *
  ************************/
 
+struct overlap *
+find_ovlp(struct nirt_state *nss, struct partition *pp)
+{
+    struct overlap *op;
+
+    for (op = nss->vals->ovlp_list.forw; op != &(nss->vals->ovlp_list); op = op->forw) {
+	if (((pp->pt_inhit->hit_dist <= op->in_dist)
+		    && (op->in_dist <= pp->pt_outhit->hit_dist)) ||
+		((pp->pt_inhit->hit_dist <= op->out_dist)
+		 && (op->in_dist <= pp->pt_outhit->hit_dist)))
+	    break;
+    }
+    return (op == &(nss->vals->ovlp_list)) ? OVERLAP_NULL : op;
+}
+
+
+void
+del_ovlp(struct overlap *op)
+{
+    op->forw->backw = op->backw;
+    op->backw->forw = op->forw;
+    bu_free((char *)op, "free op in del_ovlp");
+}
+
+void
+init_ovlp(struct nirt_state *nss)
+{
+    nss->vals->ovlp_list.forw = nss->vals->ovlp_list.backw = &(nss->vals->ovlp_list);
+}
+
+
 extern "C" int
-nirt_if_hit(struct application *ap, struct partition *UNUSED(part_head), struct seg *UNUSED(finished_segs))
+nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(finished_segs))
 {
     struct nirt_state *nss = (struct nirt_state *)ap->a_uptr;
-#if 0
+    struct nout_record *vals = nss->vals;
     fastf_t ar = nss->vals->a * DEG2RAD;
     fastf_t er = nss->vals->e * DEG2RAD;
     int part_nm = 0;
@@ -1012,10 +1053,155 @@ nirt_if_hit(struct application *ap, struct partition *UNUSED(part_head), struct 
     point_t inormal;
     point_t onormal;
     struct partition *part;
-#endif
-    report(nss, 'r', nss->vals);
 
-    bu_log("hit\n");
+    report(nss, 'r', vals);
+    report(nss, 'h', vals);
+
+    if (nss->overlap_claims == OVLP_REBUILD_FASTGEN) {
+	rt_rebuild_overlaps(part_head, ap, 1);
+    } else if (nss->overlap_claims == OVLP_REBUILD_ALL) {
+	rt_rebuild_overlaps(part_head, ap, 0);
+    }
+
+    for (part = part_head->pt_forw; part != part_head; part = part->pt_forw) {
+	++part_nm;
+
+	RT_HIT_NORMAL(inormal, part->pt_inhit, part->pt_inseg->seg_stp,
+		&ap->a_ray, part->pt_inflip);
+	RT_HIT_NORMAL(onormal, part->pt_outhit, part->pt_outseg->seg_stp,
+		&ap->a_ray, part->pt_outflip);
+
+	/* Update the output values */
+	if (part_nm > 1) {
+	    VMOVE(vals->gap_in, vals->out);
+	    // Stash the previous d_out value for use after we calculate the new d_in
+	    vals->gap_los = vals->d_out;
+	}
+
+	VMOVE(vals->in, part->pt_inhit->hit_point);
+	VMOVE(vals->out, part->pt_outhit->hit_point);
+	VMOVE(vals->nm_in, inormal);
+	VMOVE(vals->nm_out, onormal);
+
+	ldbg(nss, DEBUG_HITS, "Partition %d entry: (%g, %g, %g) exit: (%g, %g, %g)\n",
+		part_nm, V3ARGS(vals->in), V3ARGS(vals->out));
+
+	vals->d_in = vals->in[X] * cos(er) * cos(ar) + vals->in[Y] * cos(er) * sin(ar) + vals->in[Z] * sin(er);
+	vals->d_out = vals->out[X] * cos(er) * cos(ar) + vals->out[Y] * cos(er) * sin(ar) + vals->out[Z] * sin(er);
+
+	vals->nm_d_in = vals->nm_in[X] * cos(er) * cos(ar) + vals->nm_in[Y] * cos(er) * sin(ar) + vals->nm_in[Z] * sin(er);
+	vals->nm_h_in = vals->nm_in[X] * (-sin(ar)) + vals->nm_in[Y] * cos(ar);
+	vals->nm_v_in = vals->nm_in[X] * (-sin(er)) * cos(ar) + vals->nm_in[Y] * (-sin(er)) * sin(ar) + vals->nm_in[Z] * cos(er);
+
+	vals->nm_d_out = vals->nm_out[X] * cos(er) * cos(ar) + vals->nm_out[Y] * cos(er) * sin(ar) + vals->nm_out[Z] * sin(er);
+	vals->nm_h_out = vals->nm_out[X] * (-sin(ar)) + vals->nm_out[Y] * cos(ar);
+	vals->nm_v_out = vals->nm_out[X] * (-sin(er)) * cos(ar) + vals->nm_out[Y] * (-sin(er)) * sin(ar) + vals->nm_out[Z] * cos(er);
+
+	vals->los = vals->d_in - vals->d_out;
+	vals->scaled_los = 0.01 * vals->los * part->pt_regionp->reg_los;
+
+	if (part_nm > 1) {
+	    /* old d_out - new d_in */
+	    vals->gap_los = vals->gap_los - vals->d_in;
+	}
+
+	bu_vls_sprintf(vals->path_name, "%s", part->pt_regionp->reg_name);
+	{
+	    char *tmp_regname = (char *)bu_calloc(bu_vls_strlen(vals->path_name) + 1, sizeof(char), "tmp reg_name");
+	    bu_basename(part->pt_regionp->reg_name, tmp_regname);
+	    bu_vls_sprintf(vals->reg_name, "%s", part->pt_regionp->reg_name);
+	    bu_free(tmp_regname, "tmp reg_name");
+	}
+
+	vals->reg_id = part->pt_regionp->reg_regionid;
+	vals->surf_num_in = part->pt_inhit->hit_surfno;
+	vals->surf_num_out = part->pt_outhit->hit_surfno;
+	vals->obliq_in = get_obliq(ap->a_ray.r_dir, inormal);
+	vals->obliq_out = get_obliq(ap->a_ray.r_dir, onormal);
+
+	bu_vls_trunc(vals->claimant_list, 0);
+	bu_vls_trunc(vals->claimant_listn, 0);
+	if (part->pt_overlap_reg == 0) {
+	    vals->claimant_count = 1;
+	} else {
+	    struct region **rpp;
+	    struct bu_vls tmpcp = BU_VLS_INIT_ZERO;
+	    vals->claimant_count = 0;
+	    for (rpp = part->pt_overlap_reg; *rpp != REGION_NULL; ++rpp) {
+		char *base = NULL;
+		if (vals->claimant_count) bu_vls_strcat(vals->claimant_list, " ");
+		vals->claimant_count++;
+		bu_vls_sprintf(&tmpcp, "%s", (*rpp)->reg_name);
+		base = bu_basename(bu_vls_addr(&tmpcp), NULL);
+		bu_vls_strcat(vals->claimant_list, base);
+		bu_free(base, "bu_basename");
+	    }
+	    bu_vls_free(&tmpcp);
+
+	    /* insert newlines instead of spaces for listn */
+	    bu_vls_sprintf(vals->claimant_listn, "%s", bu_vls_addr(vals->claimant_list));
+	    for (char *cp = bu_vls_addr(vals->claimant_listn); *cp != '\0'; ++cp) {
+		if (*cp == ' ') *cp = '\n';
+	    }
+	}
+
+	bu_vls_trunc(vals->attributes, 0);
+	std::set<std::string>::iterator a_it;
+	for (a_it = nss->attrs.begin(); a_it != nss->attrs.end(); a_it++) {
+	    const char *key = (*a_it).c_str();
+	    const char *val = bu_avs_get(&part->pt_regionp->attr_values, db5_standard_attribute(db5_standardize_attribute(key)));
+	    if (val != NULL) {
+		bu_vls_printf(vals->attributes, "%s=%s ", key, val);
+	    }
+	}
+
+	report(nss, 'p', vals);
+
+	while ((ovp = find_ovlp(nss, part)) != OVERLAP_NULL) {
+
+	    // TODO - do this more cleanly
+	    char *copy_ovlp_reg1 = bu_strdup(ovp->reg1->reg_name);
+	    char *copy_ovlp_reg2 = bu_strdup(ovp->reg2->reg_name);
+	    char *t1 = (char *)bu_calloc(strlen(copy_ovlp_reg1), sizeof(char), "if_hit sval2");
+	    bu_basename(copy_ovlp_reg1, t1);
+	    bu_vls_sprintf(vals->ov_reg1_name, "%s", t1);
+	    bu_free(t1, "t1");
+	    bu_free(copy_ovlp_reg1, "cp1");
+	    char *t2 = (char *)bu_calloc(strlen(copy_ovlp_reg2), sizeof(char), "if_hit sval3");
+	    bu_basename(copy_ovlp_reg2, t2);
+	    bu_vls_sprintf(vals->ov_reg2_name, "%s", t1);
+	    bu_free(t2, "t2");
+	    bu_free(copy_ovlp_reg2, "cp2");
+
+
+	    vals->ov_reg1_id = ovp->reg1->reg_regionid;
+	    vals->ov_reg2_id = ovp->reg2->reg_regionid;
+	    bu_vls_sprintf(vals->ov_sol_in, "%s", part->pt_inseg->seg_stp->st_dp->d_namep);
+	    bu_vls_sprintf(vals->ov_sol_out, "%s", part->pt_outseg->seg_stp->st_dp->d_namep);
+	    VMOVE(vals->ov_in, ovp->in_point);
+	    VMOVE(vals->ov_out, ovp->out_point);
+
+	    vals->ov_d_in = vals->d_orig - ovp->in_dist; // TODO looks sketchy in NIRT - did they really mean target(D) ?? -> (VTI_XORIG + 3 -> VTI_H)
+	    vals->ov_d_out = vals->d_orig - ovp->out_dist; // TODO looks sketchy in NIRT - did they really mean target(D) ?? -> (VTI_XORIG + 3 -> VTI_H)
+	    vals->ov_los = vals->ov_d_in - vals->ov_d_out;
+
+	    report(nss, 'o', vals);
+
+	    del_ovlp(ovp);
+	}
+    }
+
+    report(nss, 'f', vals);
+
+    if (vals->ovlp_list.forw != &(vals->ovlp_list)) {
+	lerr(nss, "Previously unreported overlaps.  Shouldn't happen\n");
+	ovp = vals->ovlp_list.forw;
+	while (ovp != &(vals->ovlp_list)) {
+	    lerr(nss, " OVERLAP:\n\t%s %s (%g %g %g) %g\n", ovp->reg1->reg_name, ovp->reg2->reg_name, V3ARGS(ovp->in_point), ovp->out_dist - ovp->in_dist);
+	    ovp = ovp->forw;
+	}
+    }
+
     return HIT;
 }
 
@@ -1031,6 +1217,7 @@ nirt_if_miss(struct application *ap)
 extern "C" int
 nirt_if_overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp)
 {
+    struct nirt_state *nss = (struct nirt_state *)ap->a_uptr;
     struct overlap *o;
     BU_ALLOC(o, overlap);
     o->ap = ap;
@@ -1042,7 +1229,11 @@ nirt_if_overlap(struct application *ap, struct partition *pp, struct region *reg
     VJOIN1(o->in_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
     VJOIN1(o->out_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
-    // TODO - insert into overlap container - ideally not bu_list...
+    /* Insert the new overlap into the list of overlaps */
+    o->forw = nss->vals->ovlp_list.forw;
+    o->backw = &(nss->vals->ovlp_list);
+    o->forw->backw = o;
+    nss->vals->ovlp_list.forw = o;
 
     /* Match current BRL-CAD default behavior */
     return rt_defoverlap (ap, pp, reg1, reg2, InputHdp);
@@ -1348,7 +1539,7 @@ shoot(void *ns, int argc, const char **UNUSED(argv))
 	    V3ARGS(nss->ap->a_ray.r_dir));
 
     // TODO - any necessary initialization for data collection by callbacks
-
+    init_ovlp(nss);
     (void)rt_shootray(nss->ap);
 
     // Undo backout
@@ -2194,8 +2385,6 @@ nirt_alloc(NIRT **ns)
     VZERO(n->target);
 
     n->b_state = false;
-    n->b_out = false;
-    n->b_err = false;
     n->b_segs = false;
     n->b_objs = false;
     n->b_frmts = false;
@@ -2214,14 +2403,23 @@ nirt_alloc(NIRT **ns)
     bu_avs_init_empty(n->val_docs);
 
     BU_GET(n->vals, struct nout_record);
-    bu_vls_init(&n->vals->path_name);
-    bu_vls_init(&n->vals->reg_name);
-    bu_vls_init(&n->vals->ov_reg1_name);
-    bu_vls_init(&n->vals->ov_sol_in);
-    bu_vls_init(&n->vals->ov_sol_out);
-    bu_vls_init(&n->vals->claimant_list);
-    bu_vls_init(&n->vals->claimant_listn);
-    bu_vls_init(&n->vals->attributes);
+    BU_GET(n->vals->path_name, struct bu_vls);
+    BU_GET(n->vals->reg_name, struct bu_vls);
+    BU_GET(n->vals->ov_reg1_name, struct bu_vls);
+    BU_GET(n->vals->ov_sol_in, struct bu_vls);
+    BU_GET(n->vals->ov_sol_out, struct bu_vls);
+    BU_GET(n->vals->claimant_list, struct bu_vls);
+    BU_GET(n->vals->claimant_listn, struct bu_vls);
+    BU_GET(n->vals->attributes, struct bu_vls);
+
+    bu_vls_init(n->vals->path_name);
+    bu_vls_init(n->vals->reg_name);
+    bu_vls_init(n->vals->ov_reg1_name);
+    bu_vls_init(n->vals->ov_sol_in);
+    bu_vls_init(n->vals->ov_sol_out);
+    bu_vls_init(n->vals->claimant_list);
+    bu_vls_init(n->vals->claimant_listn);
+    bu_vls_init(n->vals->attributes);
 
     /* Populate the output key and type information */
     {
@@ -2319,14 +2517,23 @@ nirt_destroy(NIRT *ns)
     if (ns->rtip != RTI_NULL) rt_free_rti(ns->rtip);
     if (ns->rtip_air != RTI_NULL) rt_free_rti(ns->rtip_air);
 
-    bu_vls_free(&ns->vals->path_name);
-    bu_vls_free(&ns->vals->reg_name);
-    bu_vls_free(&ns->vals->ov_reg1_name);
-    bu_vls_free(&ns->vals->ov_sol_in);
-    bu_vls_free(&ns->vals->ov_sol_out);
-    bu_vls_free(&ns->vals->claimant_list);
-    bu_vls_free(&ns->vals->claimant_listn);
-    bu_vls_free(&ns->vals->attributes);
+    bu_vls_free(ns->vals->path_name);
+    bu_vls_free(ns->vals->reg_name);
+    bu_vls_free(ns->vals->ov_reg1_name);
+    bu_vls_free(ns->vals->ov_sol_in);
+    bu_vls_free(ns->vals->ov_sol_out);
+    bu_vls_free(ns->vals->claimant_list);
+    bu_vls_free(ns->vals->claimant_listn);
+    bu_vls_free(ns->vals->attributes);
+
+    BU_PUT(ns->vals->path_name, struct bu_vls);
+    BU_PUT(ns->vals->reg_name, struct bu_vls);
+    BU_PUT(ns->vals->ov_reg1_name, struct bu_vls);
+    BU_PUT(ns->vals->ov_sol_in, struct bu_vls);
+    BU_PUT(ns->vals->ov_sol_out, struct bu_vls);
+    BU_PUT(ns->vals->claimant_list, struct bu_vls);
+    BU_PUT(ns->vals->claimant_listn, struct bu_vls);
+    BU_PUT(ns->vals->attributes, struct bu_vls);
     BU_PUT(ns->vals, struct nout_record);
 
     BU_PUT(ns->res, struct resource);
@@ -2352,8 +2559,6 @@ nirt_exec(NIRT *ns, const char *script)
 {
     ns->ret = 0;
     ns->b_state = false;
-    ns->b_out = false;
-    ns->b_err = false;
     ns->b_segs = false;
     ns->b_objs = false;
     ns->b_frmts = false;
@@ -2371,8 +2576,6 @@ nirt_exec(NIRT *ns, const char *script)
     }
 
     NIRT_HOOK(b_state, h_state);
-    NIRT_HOOK(b_out, h_out);
-    NIRT_HOOK(b_err, h_err);
     NIRT_HOOK(b_segs, h_segs);
     NIRT_HOOK(b_objs, h_objs);
     NIRT_HOOK(b_frmts, h_frmts);
