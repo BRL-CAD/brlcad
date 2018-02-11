@@ -498,6 +498,7 @@ get_rtip(struct nirt_state *nss)
 	    }
 	    nss->rtip_air->rti_dbip->dbi_read_only = 1;
 	    rt_init_resource(nss->res_air, 0, nss->rtip_air);
+	    nss->rtip_air->useair = 1;
 	}
 	return nss->rtip_air;
     }
@@ -1618,7 +1619,7 @@ nirt_units(void *ns, int argc, const char *argv[])
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "units = %s\n", bu_units_string(nss->local2base));
+	lout(nss, "units = '%s'\n", bu_units_string(nss->local2base));
 	return 0;
     }
 
