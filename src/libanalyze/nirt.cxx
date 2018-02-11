@@ -445,43 +445,6 @@ get_obliq(fastf_t *ray, fastf_t *normal)
 /********************
  * Raytracing setup *
  ********************/
-
-HIDDEN int
-raytrace_gettrees(struct nirt_state *nss)
-{
-    int i = 0;
-    int ocnt = 0;
-    int acnt = 0;
-
-    // Prepare C-style arrays for rt prep
-    const char **objs = (const char **)bu_calloc(nss->active_paths.size() + 1, sizeof(char *), "objs");
-    const char **attrs = (const char **)bu_calloc(nss->attrs.size() + 1, sizeof(char *), "attrs");
-    for (size_t ui = 0; ui < nss->active_paths.size(); ui++) {
-	const char *o = nss->active_paths[ui].c_str();
-	objs[ocnt] = o;
-	ocnt++;
-    }
-    objs[ocnt] = NULL;
-    std::set<std::string>::iterator s_it;
-    for (s_it = nss->attrs.begin(); s_it != nss->attrs.end(); s_it++) {
-	const char *a = (*s_it).c_str();
-	attrs[acnt] = a;
-	acnt++;
-    }
-    attrs[acnt] = NULL;
-    lout(nss, "Get trees...\n");
-
-    i = rt_gettrees_and_attrs(nss->ap->a_rt_i, attrs, ocnt, objs, 1);
-    bu_free(objs, "objs");
-    bu_free(attrs, "objs");
-    if (i) {
-	lerr(nss, "rt_gettrees() failed\n");
-	return -1;
-    }
-
-    return 0;
-}
-
 HIDDEN struct rt_i *
 get_rtip(struct nirt_state *nss)
 {
@@ -527,14 +490,41 @@ get_resource(struct nirt_state *nss)
 HIDDEN int
 raytrace_prep(struct nirt_state *nss)
 {
+    int ocnt = 0;
+    int acnt = 0;
     std::set<std::string>::iterator s_it;
-    lout(nss, "Prepping the geometry...\n");
-    if (nss->rtip_air) {
-	rt_prep(nss->rtip_air);
-    } 
-    if (nss->rtip) {
-	rt_prep(nss->rtip);
+
+    /* Don't have enough info to prep yet - can happen if we're in a pre "nirt_init" state */
+    if (!nss->ap->a_rt_i) return 0;
+
+    // Prepare C-style arrays for rt prep
+    const char **objs = (const char **)bu_calloc(nss->active_paths.size() + 1, sizeof(char *), "objs");
+    const char **attrs = (const char **)bu_calloc(nss->attrs.size() + 1, sizeof(char *), "attrs");
+    for (size_t ui = 0; ui < nss->active_paths.size(); ui++) {
+	const char *o = nss->active_paths[ui].c_str();
+	objs[ocnt] = o;
+	ocnt++;
     }
+    objs[ocnt] = NULL;
+    for (s_it = nss->attrs.begin(); s_it != nss->attrs.end(); s_it++) {
+	const char *a = (*s_it).c_str();
+	attrs[acnt] = a;
+	acnt++;
+    }
+    attrs[acnt] = NULL;
+    lout(nss, "Get trees...\n");
+    rt_clean(nss->ap->a_rt_i);
+    if (rt_gettrees_and_attrs(nss->ap->a_rt_i, attrs, ocnt, objs, 1)) {
+	lerr(nss, "rt_gettrees() failed\n");
+	bu_free(objs, "objs");
+	bu_free(attrs, "objs");
+	return -1;
+    }
+    bu_free(objs, "objs");
+    bu_free(attrs, "objs");
+
+    lout(nss, "Prepping the geometry...\n");
+    rt_prep(nss->ap->a_rt_i);
     lout(nss, "%s ", (nss->active_paths.size() == 1) ? "Object" : "Objects");
     for (size_t i = 0; i < nss->active_paths.size(); i++) {
 	if (i == 0) {
@@ -1159,7 +1149,7 @@ nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNU
 	std::set<std::string>::iterator a_it;
 	for (a_it = nss->attrs.begin(); a_it != nss->attrs.end(); a_it++) {
 	    const char *key = (*a_it).c_str();
-	    const char *val = bu_avs_get(&part->pt_regionp->attr_values, db5_standard_attribute(db5_standardize_attribute(key)));
+	    const char *val = bu_avs_get(&part->pt_regionp->attr_values, key);
 	    if (val != NULL) {
 		bu_vls_printf(vals->attributes, "%s=%s ", key, val);
 	    }
@@ -1342,13 +1332,16 @@ cm_attr(void *ns, int argc, const char *argv[])
 	if (val_attrs) {
 	    //TODO - check against the .g for any usage of the attribute
 	}
-	nss->attrs.insert(argv[i]);
 	/* If there is a standardized version of this attribute that is
 	 * different from the supplied version, activate it as well. */
-	if (sattr) nss->attrs.insert(sattr);
+	if (sattr) {
+	    nss->attrs.insert(sattr);
+	} else {
+	    nss->attrs.insert(argv[i]);
+	}
     }
 
-    if (nss->active_paths.size() != orig_size) raytrace_prep(nss);
+    if (nss->attrs.size() != orig_size) return raytrace_prep(nss);
     return 0;
 }
 
@@ -2078,26 +2071,31 @@ extern "C" int
 draw_cmd(void *ns, int argc, const char *argv[])
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
-    int i = 0;
-    int ret = 0;
     if (!ns || argc < 2) return -1;
-    for (i = 1; i < argc; i++) {
+    size_t orig_size = nss->active_paths.size();
+    for (int i = 1; i < argc; i++) {
 	if (std::find(nss->active_paths.begin(), nss->active_paths.end(), argv[i]) == nss->active_paths.end()) {
-	    bu_log("draw_cmd: drawing %s\n", argv[i]);
 	    nss->active_paths.push_back(argv[i]);
 	}
     }
-    ret = raytrace_gettrees(nss);
-    if (ret) return ret;
-    return raytrace_prep(nss);
+    if (nss->active_paths.size() != orig_size) return raytrace_prep(nss);
+    return 0;
 }
 
 extern "C" int
-erase_cmd(void *ns, int UNUSED(argc), const char **UNUSED(argv))
+erase_cmd(void *ns, int argc, const char **argv)
 {
-    //struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
-    bu_log("erase_cmd\n");
+    struct nirt_state *nss = (struct nirt_state *)ns;
+    if (!ns || argc < 2) return -1;
+    size_t orig_size = nss->active_paths.size();
+    for (int i = 1; i < argc; i++) {
+	std::vector<std::string>::iterator v_it = std::find(nss->active_paths.begin(), nss->active_paths.end(), argv[i]);
+	if (v_it != nss->active_paths.end()) {
+	    bu_log("erase_cmd: erasing %s\n", argv[i]);
+	    nss->active_paths.erase(v_it);
+	}
+    }
+    if (nss->active_paths.size() > 0 && nss->active_paths.size() != orig_size) return raytrace_prep(nss);
     return 0;
 }
 
