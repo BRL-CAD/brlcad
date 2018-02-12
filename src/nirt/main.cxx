@@ -425,7 +425,6 @@ extern "C" {int old_nirt_main(int argc, const char *argv[]);}
 int
 main(int argc, const char **argv)
 {
-
     return old_nirt_main(argc, argv);
 #if 0
     /* Make the old behavior accessible */
@@ -646,13 +645,7 @@ main(int argc, const char **argv)
 	bu_vls_free(&ncmd);
     }
 
-    /* We know enough now to initialize */
-    if (nirt_init(ns, dbip) == -1) {
-	bu_exit(EXIT_FAILURE, "nirt_init failed: %s\n", argv[0]);
-    }
-    db_close(dbip); /* nirt will now manage its own copies of the dbip */
-
-    /* Ready now - draw the initial set of objects, if supplied */
+    /* Draw the initial set of objects, if supplied */
     if (ac > 1) {
 	int i = 0;
 	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
@@ -663,6 +656,12 @@ main(int argc, const char **argv)
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
 	bu_vls_free(&ncmd);
     }
+
+    /* We know enough now to initialize */
+    if (nirt_init(ns, dbip) == -1) {
+	bu_exit(EXIT_FAILURE, "nirt_init failed: %s\n", argv[0]);
+    }
+    db_close(dbip); /* nirt will now manage its own copies of the dbip */
 
     /* Report Database info */
     if (silent_mode != SILENT_YES) {

@@ -265,6 +265,7 @@ struct nirt_state {
     struct resource *res;
     struct rt_i *rtip_air;
     struct resource *res_air;
+    int need_reprep;
 
     /* internal format specifier arrays */
     struct bu_attribute_value_set *val_types;
@@ -335,10 +336,8 @@ static void ldbg(struct nirt_state *nss, int flag, const char *fmt, ...)
 
 void grid2targ(struct nirt_state *nss)
 {
-    vect_t grid;
     double ar = nss->vals->a * DEG2RAD;
     double er = nss->vals->e * DEG2RAD;
-    VSET(grid, nss->vals->h, nss->vals->v, nss->vals->d_orig);
     nss->vals->orig[X] = - nss->vals->h * sin(ar) - nss->vals->v * cos(ar) * sin(er) + nss->vals->d_orig * cos(ar) * cos(er);
     nss->vals->orig[Y] =   nss->vals->h * cos(ar) - nss->vals->v * sin(ar) * sin(er) + nss->vals->d_orig * sin(ar) * cos(er);
     nss->vals->orig[Z] =   nss->vals->v * cos(er) + nss->vals->d_orig * sin(er);
@@ -346,13 +345,11 @@ void grid2targ(struct nirt_state *nss)
 
 void targ2grid(struct nirt_state *nss)
 {
-    vect_t target;
     double ar = nss->vals->a * DEG2RAD;
     double er = nss->vals->e * DEG2RAD;
-    VMOVE(target, nss->vals->orig);
-    nss->vals->h = - target[X] * sin(ar) + target[Y] * cos(ar);
-    nss->vals->v = - target[X] * cos(ar) * sin(er) - target[Y] * sin(er) * sin(ar) + target[Z] * cos(er);
-    nss->vals->d_orig =   target[X] * cos(er) * cos(ar) + target[Y] * cos(er) * sin(ar) + target[Z] * sin(er);
+    nss->vals->h = - nss->vals->orig[X] * sin(ar) + nss->vals->orig[Y] * cos(ar);
+    nss->vals->v = - nss->vals->orig[X] * cos(ar) * sin(er) - nss->vals->orig[Y] * sin(er) * sin(ar) + nss->vals->orig[Z] * cos(er);
+    nss->vals->d_orig =   nss->vals->orig[X] * cos(er) * cos(ar) + nss->vals->orig[Y] * cos(er) * sin(ar) + nss->vals->orig[Z] * sin(er);
 }
 
 void dir2ae(struct nirt_state *nss)
@@ -448,7 +445,7 @@ get_obliq(fastf_t *ray, fastf_t *normal)
 HIDDEN struct rt_i *
 get_rtip(struct nirt_state *nss)
 {
-    if (!nss || nss->dbip == DBI_NULL) return NULL;
+    if (!nss || nss->dbip == DBI_NULL || nss->active_paths.size() == 0) return NULL;
 
     if (nss->use_air) {
 	if (nss->rtip_air == RTI_NULL) {
@@ -483,6 +480,7 @@ get_rtip(struct nirt_state *nss)
 HIDDEN struct resource *
 get_resource(struct nirt_state *nss)
 {
+    if (!nss || nss->dbip == DBI_NULL || nss->active_paths.size() == 0) return NULL;
     if (nss->use_air) return nss->res_air;
     return nss->res;
 }
@@ -493,6 +491,10 @@ raytrace_prep(struct nirt_state *nss)
     int ocnt = 0;
     int acnt = 0;
     std::set<std::string>::iterator s_it;
+
+    /* Based on current settings, pick the particular rtip */
+    nss->ap->a_rt_i = get_rtip(nss);
+    nss->ap->a_resource = get_resource(nss);
 
     /* Don't have enough info to prep yet - can happen if we're in a pre "nirt_init" state */
     if (!nss->ap->a_rt_i) return 0;
@@ -534,6 +536,7 @@ raytrace_prep(struct nirt_state *nss)
 	}
     }
     lout(nss, " processed\n");
+    nss->need_reprep = 0;
     return 0;
 }
 
@@ -1341,7 +1344,9 @@ cm_attr(void *ns, int argc, const char *argv[])
 	}
     }
 
-    if (nss->attrs.size() != orig_size) return raytrace_prep(nss);
+    if (nss->attrs.size() != orig_size) {
+	nss->need_reprep = 1;
+    }
     return 0;
 }
 
@@ -1522,11 +1527,28 @@ shoot(void *ns, int argc, const char **UNUSED(argv))
 {
     int i;
     struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns || !nss->ap || !nss->ap->a_rt_i) return -1;
+    if (!ns || !nss->ap) return -1;
 
     if (argc != 1) {
 	lerr(nss, "Usage:  s\n");
 	return -1;
+    }
+
+    /* If we have no active rtip, we don't need to prep or shoot */
+    if (!get_rtip(nss)) {
+	return 0;
+    } else {
+	if (nss->need_reprep) {
+	    /* If we need to (re)prep, do it now. Failure is an error. */
+	    if (raytrace_prep(nss)) {
+		lerr(nss, "Error: raytrace prep failed!\n");
+		return -1;
+	    }
+	} else {
+	    /* Based on current settings, tell the ap which rtip to use */
+	    nss->ap->a_rt_i = get_rtip(nss);
+	    nss->ap->a_resource = get_resource(nss);
+	}
     }
 
     double bov = backout(nss);
@@ -1599,8 +1621,6 @@ use_air(void *ns, int argc, const char *argv[])
 	lerr(nss, "Error: bu_opt value read failure: %s\n\nUsage:  useair %s\n", bu_vls_addr(&optparse_msg), get_desc_args("useair"));
 	return -1;
     }
-    nss->ap->a_rt_i = get_rtip(nss);
-    nss->ap->a_resource = get_resource(nss);
     return 0;
 }
 
@@ -1950,7 +1970,7 @@ bot_minpieces(void *ns, int argc, const char **argv)
     if (rt_bot_minpieces != (size_t)minpieces) {
 	rt_bot_minpieces = minpieces;
 	bu_vls_free(&opt_msg);
-	return raytrace_prep(nss);
+	nss->need_reprep = 1;
     }
 
 bot_minpieces_done:
@@ -2078,7 +2098,7 @@ draw_cmd(void *ns, int argc, const char *argv[])
 	    nss->active_paths.push_back(argv[i]);
 	}
     }
-    if (nss->active_paths.size() != orig_size) return raytrace_prep(nss);
+    if (nss->active_paths.size() != orig_size) nss->need_reprep = 1;
     return 0;
 }
 
@@ -2095,7 +2115,7 @@ erase_cmd(void *ns, int argc, const char **argv)
 	    nss->active_paths.erase(v_it);
 	}
     }
-    if (nss->active_paths.size() > 0 && nss->active_paths.size() != orig_size) return raytrace_prep(nss);
+    if (nss->active_paths.size() > 0 && nss->active_paths.size() != orig_size) nss->need_reprep = 1;
     return 0;
 }
 
@@ -2104,8 +2124,6 @@ state_cmd(void *ns, int argc, const char *argv[])
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
-    struct rt_i *rtip = nss->ap->a_rt_i;
-    double base2local = rtip->rti_dbip->dbi_base2local;
     if (argc == 1) {
 	// TODO
 	return 0;
@@ -2135,13 +2153,24 @@ state_cmd(void *ns, int argc, const char *argv[])
 	    lerr(nss, "TODO - state cmd help\n");
 	    return -1;
 	}
-	lout(nss, "model_min = (%g, %g, %g)    model_max = (%g, %g, %g)\n",
-		rtip->mdl_min[X] * base2local,
-		rtip->mdl_min[Y] * base2local,
-		rtip->mdl_min[Z] * base2local,
-		rtip->mdl_max[X] * base2local,
-		rtip->mdl_max[Y] * base2local,
-		rtip->mdl_max[Z] * base2local);
+	if (nss->need_reprep) {
+	    if (raytrace_prep(nss)) {
+		lerr(nss, "Error: raytrace prep failed!\n");
+		return -1;
+	    }
+	}
+	if (nss->ap->a_rt_i) {
+	    double base2local = nss->ap->a_rt_i->rti_dbip->dbi_base2local;
+	    lout(nss, "model_min = (%g, %g, %g)    model_max = (%g, %g, %g)\n",
+		    nss->ap->a_rt_i->mdl_min[X] * base2local,
+		    nss->ap->a_rt_i->mdl_min[Y] * base2local,
+		    nss->ap->a_rt_i->mdl_min[Z] * base2local,
+		    nss->ap->a_rt_i->mdl_max[X] * base2local,
+		    nss->ap->a_rt_i->mdl_max[Y] * base2local,
+		    nss->ap->a_rt_i->mdl_max[Z] * base2local);
+	} else {
+	    lout(nss, "model_min = (0, 0, 0)    model_max = (0, 0, 0)\n");
+	}
 	return 0;
     }
     return 0;
@@ -2409,6 +2438,7 @@ nirt_alloc(NIRT **ns)
     BU_GET(n->res_air, struct resource);
     n->rtip = RTI_NULL;
     n->rtip_air = RTI_NULL;
+    n->need_reprep = 1;
 
     BU_GET(n->val_types, struct bu_attribute_value_set);
     BU_GET(n->val_docs, struct bu_attribute_value_set);
@@ -2482,7 +2512,7 @@ nirt_init(NIRT *ns, struct db_i *dbip)
 
     RT_CK_DBI(dbip);
 
-    ns->dbip = dbip;
+    ns->dbip = db_clone_dbi(dbip, NULL);
 
     /* initialize the application structure */
     RT_APPLICATION_INIT(ns->ap);
@@ -2497,6 +2527,14 @@ nirt_init(NIRT *ns, struct db_i *dbip)
     ns->ap->a_zero1 = 0;           /* sanity check, sayth raytrace.h */
     ns->ap->a_zero2 = 0;           /* sanity check, sayth raytrace.h */
     ns->ap->a_uptr = (void *)ns;
+
+    /* If we've already got something, go ahead and prep */
+    if (ns->need_reprep && ns->active_paths.size() > 0) {
+	if (raytrace_prep(ns)) {
+	    lerr(ns, "Error - raytrace prep failed during initialization!\n");
+	    return -1;
+	}
+    }
 
     /* By default use the .g units */
     ns->base2local = dbip->dbi_base2local;
@@ -2536,6 +2574,8 @@ nirt_destroy(NIRT *ns)
 
     if (ns->rtip != RTI_NULL) rt_free_rti(ns->rtip);
     if (ns->rtip_air != RTI_NULL) rt_free_rti(ns->rtip_air);
+
+    db_close(ns->dbip);
 
     bu_vls_free(ns->vals->path_name);
     bu_vls_free(ns->vals->reg_name);
