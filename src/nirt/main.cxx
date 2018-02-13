@@ -57,8 +57,6 @@ extern "C" {
 #define RMAT_SAW_ORI    0x02
 #define RMAT_SAW_VR     0x02
 
-#define DEBUG_MAT        0x004
-
 size_t
 _list_formats(char ***names)
 {
@@ -452,7 +450,6 @@ main(int argc, const char **argv)
     std::set<std::string>::iterator a_it;
     struct bu_vls iline = BU_VLS_INIT_ZERO;
     struct bu_vls nirt_debug = BU_VLS_INIT_ZERO;
-    unsigned int nirt_app_debug = 0;
     int overlap_claims = OVLP_RESOLVE;
     int backout = 0;
     int bot_mintie = 0;
@@ -636,23 +633,9 @@ main(int argc, const char **argv)
     if (bu_vls_strlen(&nirt_debug) > 0) {
 	struct bu_vls msg = BU_VLS_INIT_ZERO;
 	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
-
-	// Libanalyze
 	bu_vls_sprintf(&ncmd, "debug %s", bu_vls_addr(&nirt_debug));
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
 	bu_vls_free(&ncmd);
-
-	// App
-	long dflg = 0;
-	const char *arg = bu_vls_addr(&nirt_debug);
-	if (bu_opt_long_hex(&msg, 1, &arg, (void *)&dflg) == -1) {
-	    bu_exit(EXIT_FAILURE, "Error parsing debug flags \"%s\": %s\n", bu_vls_addr(&nirt_debug), bu_vls_addr(&msg));
-	}
-	bu_vls_free(&msg);
-	if (dflg < 0) {
-	    bu_exit(EXIT_FAILURE, "Debug flag value of \"%s\" is < 0\n", bu_vls_addr(&nirt_debug));
-	}
-	nirt_app_debug = (unsigned int)dflg;
     }
 
     /* Initialize the attribute list before we do the drawing, since
@@ -731,8 +714,7 @@ main(int argc, const char **argv)
 		}
 		MAT_COPY(q, scan);
 		quat_quat2mat(m, q);
-		if (nirt_app_debug & DEBUG_MAT)
-		    bn_mat_print("view matrix", m);
+		//bn_mat_print("view matrix", m);
 		status |= RMAT_SAW_ORI;
 	    } else if (bu_strncmp(buf, "viewrot", 7) == 0) {
 		if (sscanf(buf + 7,
@@ -744,8 +726,7 @@ main(int argc, const char **argv)
 		    bu_exit(1, "nirt: read_mat(): Failed to read viewrot\n");
 		}
 		MAT_COPY(m, scan);
-		if (nirt_app_debug & DEBUG_MAT)
-		    bn_mat_print("view matrix", m);
+		//bn_mat_print("view matrix", m);
 		status |= RMAT_SAW_VR;
 	    }
 	}

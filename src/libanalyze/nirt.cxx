@@ -56,8 +56,7 @@ extern "C" {
 #define NIRT_SILENT_YES      1
 #define NIRT_SILENT_NO       -1
 
-// TODO - I think these three debugging modes make sense only in the
-// front end application, but need to double check.
+// Used by front end applications, but library needs to store and report as well.
 #define NIRT_DEBUG_INTERACT  0x001
 #define NIRT_DEBUG_SCRIPTS   0x002
 #define NIRT_DEBUG_MAT       0x004
