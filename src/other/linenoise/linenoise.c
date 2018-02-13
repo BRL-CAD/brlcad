@@ -1265,8 +1265,9 @@ process_char:
                 history_len--;
                 free(history[history_len]);
                 return -1;
-            }
-            /* Otherwise fall through to delete char to right of cursor */
+		/* Otherwise fall through to delete char to right of cursor */
+	    }
+	    /* FALL THROUGH */
         case SPECIAL_DELETE:
             if (remove_char(current, current->pos) == 1) {
                 refreshLine(current->prompt, current);
