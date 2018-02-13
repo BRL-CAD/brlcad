@@ -631,7 +631,6 @@ main(int argc, const char **argv)
     }
 
     if (bu_vls_strlen(&nirt_debug) > 0) {
-	struct bu_vls msg = BU_VLS_INIT_ZERO;
 	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&ncmd, "debug %s", bu_vls_addr(&nirt_debug));
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
