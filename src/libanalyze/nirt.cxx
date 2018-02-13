@@ -52,33 +52,29 @@ extern "C" {
 #define NIRT_AIR_SEG      3    /**< @brief Ray segment representing an air region */
 #define NIRT_OVERLAP_SEG  4    /**< @brief Ray segment representing an overlap region */
 
-#define SILENT_UNSET    0
-#define SILENT_YES      1
-#define SILENT_NO       -1
-
-#define HORZ            0
-#define VERT            1
-#define DIST            2
+#define NIRT_SILENT_UNSET    0
+#define NIRT_SILENT_YES      1
+#define NIRT_SILENT_NO       -1
 
 // TODO - I think these three debugging modes make sense only in the
 // front end application, but need to double check.
-#define DEBUG_INTERACT  0x001
-#define DEBUG_SCRIPTS   0x002
-#define DEBUG_MAT       0x004
+#define NIRT_DEBUG_INTERACT  0x001
+#define NIRT_DEBUG_SCRIPTS   0x002
+#define NIRT_DEBUG_MAT       0x004
 
-#define DEBUG_BACKOUT   0x008
-#define DEBUG_HITS      0x010
-#define DEBUG_FMT        "\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
+#define NIRT_DEBUG_BACKOUT   0x008
+#define NIRT_DEBUG_HITS      0x010
+#define NIRT_DEBUG_FMT        "\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
 
-#define OVLP_RESOLVE            0
-#define OVLP_REBUILD_FASTGEN    1
-#define OVLP_REBUILD_ALL        2
-#define OVLP_RETAIN             3
+#define NIRT_OVLP_RESOLVE            0
+#define NIRT_OVLP_REBUILD_FASTGEN    1
+#define NIRT_OVLP_REBUILD_ALL        2
+#define NIRT_OVLP_RETAIN             3
 
 #define NIRT_PRINTF_SPECIFIERS "difeEgGs"
 #define NIRT_OUTPUT_TYPE_SPECIFIERS "rhpfmog"
 
-static const char *ovals =
+HIDDEN const char *nirt_cmd_tbl_defs =
 "x_orig,         FLOAT,         Ray origin X coordinate,"
 "y_orig,         FLOAT,         Ray origin Y coordinate,"
 "z_orig,         FLOAT,         Ray origin Z coordinate,"
@@ -144,7 +140,7 @@ static const char *ovals =
 "gap_los,        FLOAT,         ,";
 
 
-struct overlap {
+struct nirt_overlap {
     struct application *ap;
     struct partition *pp;
     struct region *reg1;
@@ -153,15 +149,15 @@ struct overlap {
     fastf_t out_dist;
     point_t in_point;
     point_t out_point;
-    struct overlap *forw;
-    struct overlap *backw;
+    struct nirt_overlap *forw;
+    struct nirt_overlap *backw;
 };
-#define OVERLAP_NULL ((struct overlap *)0)
+#define NIRT_OVERLAP_NULL ((struct nirt_overlap *)0)
 
 /* This record structure doesn't have to correspond exactly to the above list
  * of available values, but it needs to retain sufficient information to
  * support the ability to generate all of them upon request. */
-struct nout_record {
+struct nirt_output_record {
     point_t orig;
     fastf_t h;
     fastf_t v;
@@ -207,7 +203,7 @@ struct nout_record {
     struct bu_vls *attributes;
     point_t gap_in;
     fastf_t gap_los;
-    struct overlap ovlp_list;
+    struct nirt_overlap ovlp_list;
 };
 
 
@@ -251,7 +247,7 @@ struct nirt_state {
     int use_air;
     std::set<std::string> attrs;        // active attributes
     std::vector<std::string> active_paths; // active paths for raytracer
-    struct nout_record *vals;
+    struct nirt_output_record *vals;
 
     /* state alteration flags */
     bool b_state;   // updated for any state change
@@ -288,11 +284,11 @@ struct nirt_state {
  * Internal functionality *
  **************************/
 
-static void lout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
-static void lout(struct nirt_state *nss, const char *fmt, ...)
+HIDDEN void nout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
+HIDDEN void nout(struct nirt_state *nss, const char *fmt, ...)
 {
     va_list ap;
-    if (nss->silent_flag != SILENT_YES && nss->h_out) {
+    if (nss->silent_flag != NIRT_SILENT_YES && nss->h_out) {
 	struct bu_vls *vls = nss->out;
 	BU_CK_VLS(vls);
 	va_start(ap, fmt);
@@ -303,8 +299,8 @@ static void lout(struct nirt_state *nss, const char *fmt, ...)
     va_end(ap);
 }
 
-static void lerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
-static void lerr(struct nirt_state *nss, const char *fmt, ...)
+HIDDEN void nerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
+HIDDEN void nerr(struct nirt_state *nss, const char *fmt, ...)
 {
     va_list ap;
     if (nss->h_err){
@@ -318,10 +314,10 @@ static void lerr(struct nirt_state *nss, const char *fmt, ...)
     va_end(ap);
 }
 
-static void ldbg(struct nirt_state *nss, int flag, const char *fmt, ...)
+HIDDEN void ndbg(struct nirt_state *nss, int flag, const char *fmt, ...)
 {
     va_list ap;
-    if (nss->silent_flag != SILENT_YES && (nss->nirt_debug & flag) && nss->h_out) {
+    if (nss->silent_flag != NIRT_SILENT_YES && (nss->nirt_debug & flag) && nss->h_out) {
 	struct bu_vls *vls = nss->out;
 	BU_CK_VLS(vls);
 	va_start(ap, fmt);
@@ -337,7 +333,7 @@ static void ldbg(struct nirt_state *nss, int flag, const char *fmt, ...)
  * Conversions and Calculations *
  ********************************/
 
-void grid2targ(struct nirt_state *nss)
+HIDDEN void _nirt_grid2targ(struct nirt_state *nss)
 {
     double ar = nss->vals->a * DEG2RAD;
     double er = nss->vals->e * DEG2RAD;
@@ -346,7 +342,7 @@ void grid2targ(struct nirt_state *nss)
     nss->vals->orig[Z] =   nss->vals->v * cos(er) + nss->vals->d_orig * sin(er);
 }
 
-void targ2grid(struct nirt_state *nss)
+HIDDEN void _nirt_targ2grid(struct nirt_state *nss)
 {
     double ar = nss->vals->a * DEG2RAD;
     double er = nss->vals->e * DEG2RAD;
@@ -355,7 +351,7 @@ void targ2grid(struct nirt_state *nss)
     nss->vals->d_orig =   nss->vals->orig[X] * cos(er) * cos(ar) + nss->vals->orig[Y] * cos(er) * sin(ar) + nss->vals->orig[Z] * sin(er);
 }
 
-void dir2ae(struct nirt_state *nss)
+HIDDEN void _nirt_dir2ae(struct nirt_state *nss)
 {
     int zeroes = ZERO(nss->vals->dir[Y]) && ZERO(nss->vals->dir[X]);
     double square = sqrt(nss->vals->dir[X] * nss->vals->dir[X] + nss->vals->dir[Y] * nss->vals->dir[Y]);
@@ -364,7 +360,7 @@ void dir2ae(struct nirt_state *nss)
     nss->vals->e = atan2(-(nss->vals->dir[Z]), square) / DEG2RAD;
 }
 
-void ae2dir(struct nirt_state *nss)
+HIDDEN void _nirt_ae2dir(struct nirt_state *nss)
 {
     vect_t dir;
     double ar = nss->vals->a * DEG2RAD;
@@ -377,7 +373,7 @@ void ae2dir(struct nirt_state *nss)
     VMOVE(nss->vals->dir, dir);
 }
 
-double backout(struct nirt_state *nss)
+HIDDEN double _nirt_backout(struct nirt_state *nss)
 {
     double bov;
     point_t ray_point;
@@ -412,8 +408,8 @@ double backout(struct nirt_state *nss)
     return bov;
 }
 
-fastf_t
-get_obliq(fastf_t *ray, fastf_t *normal)
+HIDDEN fastf_t
+_nirt_get_obliq(fastf_t *ray, fastf_t *normal)
 {
     fastf_t cos_obl;
     fastf_t obliquity;
@@ -446,7 +442,7 @@ get_obliq(fastf_t *ray, fastf_t *normal)
  * Raytracing setup *
  ********************/
 HIDDEN struct rt_i *
-get_rtip(struct nirt_state *nss)
+_nirt_get_rtip(struct nirt_state *nss)
 {
     if (!nss || nss->dbip == DBI_NULL || nss->active_paths.size() == 0) return NULL;
 
@@ -481,7 +477,7 @@ get_rtip(struct nirt_state *nss)
 }
 
 HIDDEN struct resource *
-get_resource(struct nirt_state *nss)
+_nirt_get_resource(struct nirt_state *nss)
 {
     if (!nss || nss->dbip == DBI_NULL || nss->active_paths.size() == 0) return NULL;
     if (nss->use_air) return nss->res_air;
@@ -489,15 +485,15 @@ get_resource(struct nirt_state *nss)
 }
 
 HIDDEN int
-raytrace_prep(struct nirt_state *nss)
+_nirt_raytrace_prep(struct nirt_state *nss)
 {
     int ocnt = 0;
     int acnt = 0;
     std::set<std::string>::iterator s_it;
 
     /* Based on current settings, pick the particular rtip */
-    nss->ap->a_rt_i = get_rtip(nss);
-    nss->ap->a_resource = get_resource(nss);
+    nss->ap->a_rt_i = _nirt_get_rtip(nss);
+    nss->ap->a_resource = _nirt_get_resource(nss);
 
     /* Don't have enough info to prep yet - can happen if we're in a pre "nirt_init" state */
     if (!nss->ap->a_rt_i) return 0;
@@ -517,10 +513,10 @@ raytrace_prep(struct nirt_state *nss)
 	acnt++;
     }
     attrs[acnt] = NULL;
-    lout(nss, "Get trees...\n");
+    nout(nss, "Get trees...\n");
     rt_clean(nss->ap->a_rt_i);
     if (rt_gettrees_and_attrs(nss->ap->a_rt_i, attrs, ocnt, objs, 1)) {
-	lerr(nss, "rt_gettrees() failed\n");
+	nerr(nss, "rt_gettrees() failed\n");
 	bu_free(objs, "objs");
 	bu_free(attrs, "objs");
 	return -1;
@@ -528,17 +524,17 @@ raytrace_prep(struct nirt_state *nss)
     bu_free(objs, "objs");
     bu_free(attrs, "objs");
 
-    lout(nss, "Prepping the geometry...\n");
+    nout(nss, "Prepping the geometry...\n");
     rt_prep(nss->ap->a_rt_i);
-    lout(nss, "%s ", (nss->active_paths.size() == 1) ? "Object" : "Objects");
+    nout(nss, "%s ", (nss->active_paths.size() == 1) ? "Object" : "Objects");
     for (size_t i = 0; i < nss->active_paths.size(); i++) {
 	if (i == 0) {
-	    lout(nss, "'%s'", nss->active_paths[i].c_str());
+	    nout(nss, "'%s'", nss->active_paths[i].c_str());
 	} else {
-	    lout(nss, " '%s'", nss->active_paths[i].c_str());
+	    nout(nss, " '%s'", nss->active_paths[i].c_str());
 	}
     }
-    lout(nss, " processed\n");
+    nout(nss, " processed\n");
     nss->need_reprep = 0;
     return 0;
 }
@@ -548,8 +544,8 @@ raytrace_prep(struct nirt_state *nss)
  *****************************************/
 
 /* Count how many format specifiers we might find in a format string */
-unsigned int
-fmt_sp_cnt(const char *fmt) {
+HIDDEN unsigned int
+_nirt_fmt_sp_cnt(const char *fmt) {
     unsigned int fcnt = 0;
     const char *uos = NULL;
     for (uos = fmt; *(uos + 1) != '\0'; ++uos) {
@@ -565,8 +561,8 @@ fmt_sp_cnt(const char *fmt) {
 /* Validate the width specification portion of the format specifier against
  * the system limits and types supported by NIRT.*/
 #define NIRT_PRINTF_FLAGS "-+# "
-int
-fmt_sp_flags_check(struct nirt_state *nss, std::string &fmt_sp)
+HIDDEN int
+_nirt_fmt_sp_flags_check(struct nirt_state *nss, std::string &fmt_sp)
 {
     size_t sp = fmt_sp.find_first_of(NIRT_PRINTF_FLAGS);
     size_t ep = fmt_sp.find_last_of(NIRT_PRINTF_FLAGS);
@@ -574,7 +570,7 @@ fmt_sp_flags_check(struct nirt_state *nss, std::string &fmt_sp)
     std::string flags = fmt_sp.substr(sp, ep - sp + 1);
     size_t invalid_char = flags.find_first_not_of(NIRT_PRINTF_FLAGS);
     if (invalid_char != std::string::npos) {
-	lerr(nss, "Error: invalid characters in flags substring (\"%s\") of format specifier \"%s\"\n", flags.c_str(), fmt_sp.c_str());
+	nerr(nss, "Error: invalid characters in flags substring (\"%s\") of format specifier \"%s\"\n", flags.c_str(), fmt_sp.c_str());
 	return -1;
     }
     return 0;
@@ -584,8 +580,8 @@ fmt_sp_flags_check(struct nirt_state *nss, std::string &fmt_sp)
  * the system limits */
 #define NIRT_PRINTF_PRECISION "0123456789."
 #define NIRT_PRINTF_MAXWIDTH 1000 //Arbitrary sanity boundary for width specification
-int
-fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
+HIDDEN int
+_nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 {
     size_t sp = fmt_sp.find_first_of(NIRT_PRINTF_PRECISION);
     size_t ep = fmt_sp.find_last_of(NIRT_PRINTF_PRECISION);
@@ -593,7 +589,7 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
     std::string p = fmt_sp.substr(sp, ep - sp + 1);
     size_t invalid_char = p.find_first_not_of(NIRT_PRINTF_PRECISION);
     if (invalid_char != std::string::npos) {
-	lerr(nss, "Error: invalid characters in precision substring (\"%s\") of format specifier \"%s\"\n", p.c_str(), fmt_sp.c_str());
+	nerr(nss, "Error: invalid characters in precision substring (\"%s\") of format specifier \"%s\"\n", p.c_str(), fmt_sp.c_str());
 	return -1;
     }
 
@@ -616,13 +612,13 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	int w = 0;
 	const char *wn_cstr = wn.c_str();
 	if (bu_opt_int(&optparse_msg, 1, (const char **)&wn_cstr, (void *)&w) == -1) {
-	    lerr(nss, "Error: bu_opt value read failure reading format specifier width from substring \"%s\" of specifier \"%s\": %s\n", wn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
+	    nerr(nss, "Error: bu_opt value read failure reading format specifier width from substring \"%s\" of specifier \"%s\": %s\n", wn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
 	    bu_vls_free(&optparse_msg);
 	    return -1;
 	}
 	bu_vls_free(&optparse_msg);
 	if (w > NIRT_PRINTF_MAXWIDTH) {
-	    lerr(nss, "Error: width specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed max width (%d)\n", wn.c_str(), fmt_sp.c_str(), NIRT_PRINTF_MAXWIDTH);
+	    nerr(nss, "Error: width specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed max width (%d)\n", wn.c_str(), fmt_sp.c_str(), NIRT_PRINTF_MAXWIDTH);
 	    return -1;
 	} 
     }
@@ -632,7 +628,7 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	int p_num = 0;
 	const char *pn_cstr = pn.c_str();
 	if (bu_opt_int(&optparse_msg, 1, (const char **)&pn_cstr, (void *)&p_num) == -1) {
-	    lerr(nss, "Error: bu_opt value read failure reading format specifier precision from substring \"%s\" of specifier \"%s\": %s\n", pn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
+	    nerr(nss, "Error: bu_opt value read failure reading format specifier precision from substring \"%s\" of specifier \"%s\": %s\n", pn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
 	    bu_vls_free(&optparse_msg);
 	    return -1;
 	}
@@ -642,7 +638,7 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	    case 'd':
 	    case 'i':
 		if (p_num > std::numeric_limits<int>::digits10) {
-		    lerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<int>::digits10);
+		    nerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<int>::digits10);
 		    return -1;
 		} 
 		break;
@@ -651,20 +647,20 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	    case 'E':
 	    case 'g':
 	    case 'G':
-		// TODO - once we enable C++ 11 switch the test below to (p > std::numeric_limits<fastf_t>::max_digits10) and update the lerr msg
+		// TODO - once we enable C++ 11 switch the test below to (p > std::numeric_limits<fastf_t>::max_digits10) and update the nerr msg
 		if (p_num > std::numeric_limits<fastf_t>::digits10 + 2) {
-		    lerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<fastf_t>::digits10 + 2);
+		    nerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<fastf_t>::digits10 + 2);
 		    return -1;
 		}
 		break;
 	    case 's':
 		if ((size_t)p_num > pn.max_size()) {
-		    lerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), pn.max_size());
+		    nerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), pn.max_size());
 		    return -1;
 		}
 		break;
 	    default:
-		lerr(nss, "Error: NIRT internal error in format width/precision validation.\n");
+		nerr(nss, "Error: NIRT internal error in format width/precision validation.\n");
 		return -1;
 		break;
 	}
@@ -672,20 +668,20 @@ fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
     return 0;
 }
 
-int
-fmt_sp_validate(struct nirt_state *nss, std::string &fmt_sp)
+HIDDEN int
+_nirt_fmt_sp_validate(struct nirt_state *nss, std::string &fmt_sp)
 {
     // Sanity check any sub-specifiers
-    if (fmt_sp_flags_check(nss, fmt_sp)) return -1;
-    if (fmt_sp_width_precision_check(nss, fmt_sp)) return -1;
+    if (_nirt_fmt_sp_flags_check(nss, fmt_sp)) return -1;
+    if (_nirt_fmt_sp_width_precision_check(nss, fmt_sp)) return -1;
     return 0;
 }
 
-/* Processes the first format specifier.  (We use split_fmt to break up a format string into
- * substrings with one format specifier per string - fmt_sp_get's job is to extract the actual
+/* Processes the first format specifier.  (We use _nirt_split_fmt to break up a format string into
+ * substrings with one format specifier per string - _nirt_fmt_sp_get's job is to extract the actual
  * format specifier from those substrings.) */
-int
-fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
+HIDDEN int
+_nirt_fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
 {
     int found = 0;
     const char *uos = NULL;
@@ -699,7 +695,7 @@ fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
 	}
     }
     if (!found) {
-	lerr(nss, "Error: could not find format specifier in fmt substring \"%s\"\n", fmt);
+	nerr(nss, "Error: could not find format specifier in fmt substring \"%s\"\n", fmt);
 	return -1;
     }
 
@@ -708,7 +704,7 @@ fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
     std::string wfmt(uos);
     size_t ep = wfmt.find_first_of(NIRT_PRINTF_SPECIFIERS);
     if (ep == std::string::npos) {
-	lerr(nss, "Error: could not find valid format specifier terminator in fmt substring \"%s\" - candidates are \"%s\"\n", fmt, NIRT_PRINTF_SPECIFIERS);
+	nerr(nss, "Error: could not find valid format specifier terminator in fmt substring \"%s\" - candidates are \"%s\"\n", fmt, NIRT_PRINTF_SPECIFIERS);
 	return -1;
     }
     fmt_sp = wfmt.substr(0, ep+1);
@@ -717,13 +713,13 @@ fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
     size_t invalid_char;
     invalid_char = fmt_sp.find_first_of("*");
     if (invalid_char != std::string::npos) {
-	lerr(nss, "Error: NIRT format specifiers do not support wildcard ('*') characters for width or precision: \"%s\"\n", fmt_sp.c_str());
+	nerr(nss, "Error: NIRT format specifiers do not support wildcard ('*') characters for width or precision: \"%s\"\n", fmt_sp.c_str());
 	fmt_sp.clear();
 	return -1;
     }
     invalid_char = fmt_sp.find_first_of("hljztL");
     if (invalid_char != std::string::npos) {
-	lerr(nss, "Error: NIRT format specifiers do not support length sub-specifiers: \"%s\"\n", fmt_sp.c_str());
+	nerr(nss, "Error: NIRT format specifiers do not support length sub-specifiers: \"%s\"\n", fmt_sp.c_str());
 	fmt_sp.clear();
 	return -1;
     }
@@ -733,25 +729,25 @@ fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
 
 /* Given a key and a format specifier string, use the NIRT type to check that the
  * supplied key is an appropriate input for that specifier. */
-int
-fmt_sp_key_check(struct nirt_state *nss, const char *key, std::string &fmt_sp)
+HIDDEN int
+_nirt_fmt_sp_key_check(struct nirt_state *nss, const char *key, std::string &fmt_sp)
 {
     int key_ok = 1;
     const char *type = NULL;
 
     if (!nss || !nss->val_types || fmt_sp.length() == 0) {
-	lerr(nss, "Internal NIRT format processing error.\n");
+	nerr(nss, "Internal NIRT format processing error.\n");
 	return -1;
     }
 
     if (!key || strlen(key) == 0) {
-	lerr(nss, "Format specifier \"%s\" has no matching NIRT value key\n", fmt_sp.c_str());
+	nerr(nss, "Format specifier \"%s\" has no matching NIRT value key\n", fmt_sp.c_str());
 	return -1;
     }
 
     type = bu_avs_get(nss->val_types, key);
     if (!type) {
-	lerr(nss, "Key \"%s\" supplied to format specifier \"%s\" is not a valid NIRT value key\n", key, fmt_sp.c_str());
+	nerr(nss, "Key \"%s\" supplied to format specifier \"%s\" is not a valid NIRT value key\n", key, fmt_sp.c_str());
 	return -1;
     }
 
@@ -771,13 +767,13 @@ fmt_sp_key_check(struct nirt_state *nss, const char *key, std::string &fmt_sp)
 	    if (!BU_STR_EQUAL(type, "STRING")) key_ok = 0;
 	    break;
 	default:
-	    lerr(nss, "Error: format specifier terminator \"%s\" is invalid/unsupported: \"%c\" \n", fmt_sp.c_str(), fmt_sp.c_str()[fmt_sp.length()-1]);
+	    nerr(nss, "Error: format specifier terminator \"%s\" is invalid/unsupported: \"%c\" \n", fmt_sp.c_str(), fmt_sp.c_str()[fmt_sp.length()-1]);
 	    return -1;
 	    break;
     }
 
     if (!key_ok) {
-	lerr(nss, "Error: NIRT value key \"%s\" has type %s, which does not match the type expected by format specifier \"%s\" \n", key, bu_avs_get(nss->val_types, key), fmt_sp.c_str());
+	nerr(nss, "Error: NIRT value key \"%s\" has type %s, which does not match the type expected by format specifier \"%s\" \n", key, bu_avs_get(nss->val_types, key), fmt_sp.c_str());
 	return -1;
     }
 
@@ -786,8 +782,8 @@ fmt_sp_key_check(struct nirt_state *nss, const char *key, std::string &fmt_sp)
 
 /* Given a format string, produce an array of substrings each of which contain
  * at most one format specifier */
-int
-split_fmt(const char *ofmt, char ***breakout)
+HIDDEN int
+_nirt_split_fmt(const char *ofmt, char ***breakout)
 {
     int i = 0;
     int fcnt = 0;
@@ -801,7 +797,7 @@ split_fmt(const char *ofmt, char ***breakout)
 
     /* Count maximum possible number of format specifiers.  We have at most
      * fcnt+1 "units" to handle */
-    fcnt = fmt_sp_cnt(fmt);
+    fcnt = _nirt_fmt_sp_cnt(fmt);
     fstrs = (char **)bu_calloc(fcnt + 1, sizeof(const char *), "output formatters");
 
     /* initialize to just after the initial '"' char */
@@ -865,8 +861,8 @@ split_fmt(const char *ofmt, char ***breakout)
 
 /* Given a vector breakout of a format string, generate the NIRT report string
  * displaying the full, assembled format string and listing NIRT keys (Items) */
-void
-print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::string> > &fmt_vect)
+HIDDEN void
+_nirt_print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::string> > &fmt_vect)
 {
     std::string fmt_str, fmt_keys;
     std::vector<std::pair<std::string,std::string> >::iterator f_it;
@@ -891,10 +887,10 @@ print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::string
 
 /* Translate NIRT fmt substrings into fully evaluated printf output, while also
  * handling units on key values.  This should never be called using any fmt
- * string that hasn't been validated by fmt_sp_validate and fmt_sp_key_check */
+ * string that hasn't been validated by _nirt_fmt_sp_validate and _nirt_fmt_sp_key_check */
 #define nirt_print_key(keystr,val) if (BU_STR_EQUAL(key, keystr)) bu_vls_printf(ostr, fmt, val)
 void
-nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, struct nout_record *r, fastf_t base2local)
+_nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, struct nirt_output_record *r, fastf_t base2local)
 {
     if (!ostr || !fmt || !r) return;
     if (!key || !strlen(key)) {
@@ -968,8 +964,8 @@ nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, str
 
 /* Generate the full report string defined by the array of fmt,key pairs
  * associated with the supplied type, based on current values */
-void
-report(struct nirt_state *nss, char type, struct nout_record *r)
+HIDDEN void
+_nirt_report(struct nirt_state *nss, char type, struct nirt_output_record *r)
 {
     struct bu_vls rstr = BU_VLS_INIT_ZERO;
     std::vector<std::pair<std::string,std::string> > *fmt_vect = NULL;
@@ -998,15 +994,15 @@ report(struct nirt_state *nss, char type, struct nout_record *r)
 	    fmt_vect = &nss->fmt_gap;
 	    break;
 	default:
-	    lerr(nss, "Error: NIRT internal error, attempt to report using unknown fmt type %c\n", type);
+	    nerr(nss, "Error: NIRT internal error, attempt to report using unknown fmt type %c\n", type);
 	    return;
     }
     for(f_it = fmt_vect->begin(); f_it != fmt_vect->end(); f_it++) {
 	const char *key = (*f_it).second.c_str();
 	const char *fmt = (*f_it).first.c_str();
-	nirt_print_fmt_substr(&rstr, fmt, key, r, nss->base2local);
+	_nirt_print_fmt_substr(&rstr, fmt, key, r, nss->base2local);
     }
-    lout(nss, "%s", bu_vls_addr(&rstr));
+    nout(nss, "%s", bu_vls_addr(&rstr));
     bu_vls_free(&rstr);
 }
 
@@ -1015,10 +1011,10 @@ report(struct nirt_state *nss, char type, struct nout_record *r)
  * Raytracing Callbacks *
  ************************/
 
-struct overlap *
-find_ovlp(struct nirt_state *nss, struct partition *pp)
+HIDDEN struct nirt_overlap *
+_nirt_find_ovlp(struct nirt_state *nss, struct partition *pp)
 {
-    struct overlap *op;
+    struct nirt_overlap *op;
 
     for (op = nss->vals->ovlp_list.forw; op != &(nss->vals->ovlp_list); op = op->forw) {
 	if (((pp->pt_inhit->hit_dist <= op->in_dist)
@@ -1027,44 +1023,44 @@ find_ovlp(struct nirt_state *nss, struct partition *pp)
 		 && (op->in_dist <= pp->pt_outhit->hit_dist)))
 	    break;
     }
-    return (op == &(nss->vals->ovlp_list)) ? OVERLAP_NULL : op;
+    return (op == &(nss->vals->ovlp_list)) ? NIRT_OVERLAP_NULL : op;
 }
 
 
-void
-del_ovlp(struct overlap *op)
+HIDDEN void
+_nirt_del_ovlp(struct nirt_overlap *op)
 {
     op->forw->backw = op->backw;
     op->backw->forw = op->forw;
     bu_free((char *)op, "free op in del_ovlp");
 }
 
-void
-init_ovlp(struct nirt_state *nss)
+HIDDEN void
+_nirt_init_ovlp(struct nirt_state *nss)
 {
     nss->vals->ovlp_list.forw = nss->vals->ovlp_list.backw = &(nss->vals->ovlp_list);
 }
 
 
 extern "C" int
-nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(finished_segs))
+_nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(finished_segs))
 {
     struct nirt_state *nss = (struct nirt_state *)ap->a_uptr;
-    struct nout_record *vals = nss->vals;
+    struct nirt_output_record *vals = nss->vals;
     fastf_t ar = nss->vals->a * DEG2RAD;
     fastf_t er = nss->vals->e * DEG2RAD;
     int part_nm = 0;
-    overlap *ovp;
+    struct nirt_overlap *ovp;
     point_t inormal;
     point_t onormal;
     struct partition *part;
 
-    report(nss, 'r', vals);
-    report(nss, 'h', vals);
+    _nirt_report(nss, 'r', vals);
+    _nirt_report(nss, 'h', vals);
 
-    if (nss->overlap_claims == OVLP_REBUILD_FASTGEN) {
+    if (nss->overlap_claims == NIRT_OVLP_REBUILD_FASTGEN) {
 	rt_rebuild_overlaps(part_head, ap, 1);
-    } else if (nss->overlap_claims == OVLP_REBUILD_ALL) {
+    } else if (nss->overlap_claims == NIRT_OVLP_REBUILD_ALL) {
 	rt_rebuild_overlaps(part_head, ap, 0);
     }
 
@@ -1088,7 +1084,7 @@ nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNU
 	VMOVE(vals->nm_in, inormal);
 	VMOVE(vals->nm_out, onormal);
 
-	ldbg(nss, DEBUG_HITS, "Partition %d entry: (%g, %g, %g) exit: (%g, %g, %g)\n",
+	ndbg(nss, NIRT_DEBUG_HITS, "Partition %d entry: (%g, %g, %g) exit: (%g, %g, %g)\n",
 		part_nm, V3ARGS(vals->in), V3ARGS(vals->out));
 
 	vals->d_in = vals->in[X] * cos(er) * cos(ar) + vals->in[Y] * cos(er) * sin(ar) + vals->in[Z] * sin(er);
@@ -1108,7 +1104,7 @@ nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNU
 	if (part_nm > 1) {
 	    /* old d_out - new d_in */
 	    vals->gap_los = vals->gap_los - vals->d_in;
-	    report(nss, 'g', vals);
+	    _nirt_report(nss, 'g', vals);
 	}
 
 	bu_vls_sprintf(vals->path_name, "%s", part->pt_regionp->reg_name);
@@ -1122,8 +1118,8 @@ nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNU
 	vals->reg_id = part->pt_regionp->reg_regionid;
 	vals->surf_num_in = part->pt_inhit->hit_surfno;
 	vals->surf_num_out = part->pt_outhit->hit_surfno;
-	vals->obliq_in = get_obliq(ap->a_ray.r_dir, inormal);
-	vals->obliq_out = get_obliq(ap->a_ray.r_dir, onormal);
+	vals->obliq_in = _nirt_get_obliq(ap->a_ray.r_dir, inormal);
+	vals->obliq_out = _nirt_get_obliq(ap->a_ray.r_dir, onormal);
 
 	bu_vls_trunc(vals->claimant_list, 0);
 	bu_vls_trunc(vals->claimant_listn, 0);
@@ -1161,9 +1157,9 @@ nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNU
 	    }
 	}
 
-	report(nss, 'p', vals);
+	_nirt_report(nss, 'p', vals);
 
-	while ((ovp = find_ovlp(nss, part)) != OVERLAP_NULL) {
+	while ((ovp = _nirt_find_ovlp(nss, part)) != NIRT_OVERLAP_NULL) {
 
 	    // TODO - do this more cleanly
 	    char *copy_ovlp_reg1 = bu_strdup(ovp->reg1->reg_name);
@@ -1191,19 +1187,19 @@ nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNU
 	    vals->ov_d_out = vals->d_orig - ovp->out_dist; // TODO looks sketchy in NIRT - did they really mean target(D) ?? -> (VTI_XORIG + 3 -> VTI_H)
 	    vals->ov_los = vals->ov_d_in - vals->ov_d_out;
 
-	    report(nss, 'o', vals);
+	    _nirt_report(nss, 'o', vals);
 
-	    del_ovlp(ovp);
+	    _nirt_del_ovlp(ovp);
 	}
     }
 
-    report(nss, 'f', vals);
+    _nirt_report(nss, 'f', vals);
 
     if (vals->ovlp_list.forw != &(vals->ovlp_list)) {
-	lerr(nss, "Previously unreported overlaps.  Shouldn't happen\n");
+	nerr(nss, "Previously unreported overlaps.  Shouldn't happen\n");
 	ovp = vals->ovlp_list.forw;
 	while (ovp != &(vals->ovlp_list)) {
-	    lerr(nss, " OVERLAP:\n\t%s %s (%g %g %g) %g\n", ovp->reg1->reg_name, ovp->reg2->reg_name, V3ARGS(ovp->in_point), ovp->out_dist - ovp->in_dist);
+	    nerr(nss, " OVERLAP:\n\t%s %s (%g %g %g) %g\n", ovp->reg1->reg_name, ovp->reg2->reg_name, V3ARGS(ovp->in_point), ovp->out_dist - ovp->in_dist);
 	    ovp = ovp->forw;
 	}
     }
@@ -1212,20 +1208,20 @@ nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UNU
 }
 
 extern "C" int
-nirt_if_miss(struct application *ap)
+_nirt_if_miss(struct application *ap)
 {
     struct nirt_state *nss = (struct nirt_state *)ap->a_uptr;
-    report(nss, 'r', nss->vals);
-    report(nss, 'm', nss->vals);
+    _nirt_report(nss, 'r', nss->vals);
+    _nirt_report(nss, 'm', nss->vals);
     return MISS;
 }
 
 extern "C" int
-nirt_if_overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp)
+_nirt_if_overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp)
 {
     struct nirt_state *nss = (struct nirt_state *)ap->a_uptr;
-    struct overlap *o;
-    BU_ALLOC(o, overlap);
+    struct nirt_overlap *o;
+    BU_ALLOC(o, struct nirt_overlap);
     o->ap = ap;
     o->pp = pp;
     o->reg1 = reg1;
@@ -1255,7 +1251,7 @@ struct nirt_cmd_desc {
     const char *args;
 };
 
-const struct nirt_cmd_desc nirt_descs[] = {
+static const struct nirt_cmd_desc nirt_descs[] = {
     { "attr",           "select attributes",                             NULL },
     { "ae",             "set/query azimuth and elevation",               "azimuth elevation" },
     { "dir",            "set/query direction vector",                    "x-component y-component z-component" },
@@ -1276,8 +1272,8 @@ const struct nirt_cmd_desc nirt_descs[] = {
     { (char *)NULL,     NULL,                                            NULL}
 };
 
-const char *
-get_desc_args(const char *key)
+HIDDEN const char *
+_nirt_get_desc_args(const char *key)
 {
     const struct nirt_cmd_desc *d;
     for (d = nirt_descs; d->cmd; d++) {
@@ -1287,7 +1283,7 @@ get_desc_args(const char *key)
 }
 
 extern "C" int
-cm_attr(void *ns, int argc, const char *argv[])
+_nirt_cmd_attr(void *ns, int argc, const char *argv[])
 {
     if (!ns) return -1;
     struct nirt_state *nss = (struct nirt_state *)ns;
@@ -1311,7 +1307,7 @@ cm_attr(void *ns, int argc, const char *argv[])
     argv++; argc--;
 
     if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
-	lerr(nss, "Error: bu_opt value read failure: %s\n\n%s\n%s\n", bu_vls_addr(&optparse_msg), ustr, help);
+	nerr(nss, "Error: bu_opt value read failure: %s\n\n%s\n%s\n", bu_vls_addr(&optparse_msg), ustr, help);
 	if (help) bu_free((char *)help, "help str");
 	bu_vls_free(&optparse_msg);
 	return -1;
@@ -1321,14 +1317,14 @@ cm_attr(void *ns, int argc, const char *argv[])
     if (attr_flush) nss->attrs.clear();
 
     if (print_help || (attr_print && ac > 0)) {
-	lerr(nss, "%s\n%s", ustr, help);
+	nerr(nss, "%s\n%s", ustr, help);
 	if (help) bu_free((char *)help, "help str");
 	return -1;
     }
     if (attr_print || ac == 0) {
 	std::set<std::string>::iterator a_it;
 	for (a_it = nss->attrs.begin(); a_it != nss->attrs.end(); a_it++) {
-	    lout(nss, "\"%s\"\n", (*a_it).c_str());
+	    nout(nss, "\"%s\"\n", (*a_it).c_str());
 	}
 	return 0;
     }
@@ -1354,7 +1350,7 @@ cm_attr(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-az_el(void *ns, int argc, const char *argv[])
+_nirt_cmd_az_el(void *ns, int argc, const char *argv[])
 {
     double az = 0.0;
     double el = 0.0;
@@ -1364,43 +1360,43 @@ az_el(void *ns, int argc, const char *argv[])
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "(az, el) = (%4.2f, %4.2f)\n", nss->vals->a, nss->vals->e);
+	nout(nss, "(az, el) = (%4.2f, %4.2f)\n", nss->vals->a, nss->vals->e);
 	return 0;
     }
 
     argv++; argc--;
 
     if (argc != 2) {
-	lerr(nss, "Usage:  ae %s\n", get_desc_args("ae"));
+	nerr(nss, "Usage:  ae %s\n", _nirt_get_desc_args("ae"));
 	return -1;
     }
 
     if ((ret = bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&az)) == -1) {
-	lerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
 	goto azel_done;
     }
 
     if (fabs(az) > 360) {
-	lerr(nss, "Error:  |azimuth| <= 360\n");
+	nerr(nss, "Error:  |azimuth| <= 360\n");
 	ret = -1;
 	goto azel_done;
     }
 
     argc--; argv++;
     if ((ret = bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&el)) == -1) {
-	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	goto azel_done;
     }
 
     if (fabs(el) > 90) {
-	lerr(nss, "Error:  |elevation| <= 90\n");
+	nerr(nss, "Error:  |elevation| <= 90\n");
 	ret = -1;
 	goto azel_done;
     }
 
     nss->vals->a = az;
     nss->vals->e = el;
-    ae2dir(nss);
+    _nirt_ae2dir(nss);
     ret = 0;
 
 azel_done:
@@ -1409,7 +1405,7 @@ azel_done:
 }
 
 extern "C" int
-dir_vect(void *ns, int argc, const char *argv[])
+_nirt_cmd_dir_vect(void *ns, int argc, const char *argv[])
 {
     vect_t dir = VINIT_ZERO;
     struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
@@ -1417,30 +1413,30 @@ dir_vect(void *ns, int argc, const char *argv[])
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(nss->vals->dir));
+	nout(nss, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(nss->vals->dir));
 	return 0;
     }
 
     argc--; argv++;
     if (argc != 3) {
-	lerr(nss, "Usage:  dir %s\n", get_desc_args("dir"));
+	nerr(nss, "Usage:  dir %s\n", _nirt_get_desc_args("dir"));
 	return -1;
     }
 
     if (bu_opt_vect_t(&opt_msg, 3, argv, (void *)&dir) == -1) {
-	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
 
     VUNITIZE(dir);
     VMOVE(nss->vals->dir, dir);
-    dir2ae(nss);
+    _nirt_dir2ae(nss);
     return 0;
 }
 
 extern "C" int
-grid_coor(void *ns, int argc, const char *argv[])
+_nirt_cmd_grid_coor(void *ns, int argc, const char *argv[])
 {
     vect_t grid = VINIT_ZERO;
     struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
@@ -1450,30 +1446,30 @@ grid_coor(void *ns, int argc, const char *argv[])
     if (argc == 1) {
 	VSET(grid, nss->vals->h, nss->vals->v, nss->vals->d_orig);
 	VSCALE(grid, grid, nss->base2local);
-	lout(nss, "(h, v, d) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(grid));
+	nout(nss, "(h, v, d) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(grid));
 	return 0;
     }
 
     argc--; argv++;
     if (argc != 2 && argc != 3) {
-	lerr(nss, "Usage:  hv %s\n", get_desc_args("hv"));
+	nerr(nss, "Usage:  hv %s\n", _nirt_get_desc_args("hv"));
 	return -1;
     }
     if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(nss->vals->h)) == -1) {
-	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
     argc--; argv++;
     if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(nss->vals->v)) == -1) {
-	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
     argc--; argv++;
     if (argc) {
 	if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(nss->vals->d_orig)) == -1) {
-	    lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	    nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	    bu_vls_free(&opt_msg);
 	    return -1;
 	}
@@ -1485,13 +1481,13 @@ grid_coor(void *ns, int argc, const char *argv[])
     nss->vals->h = grid[0];
     nss->vals->v = grid[1];
     nss->vals->d_orig = grid[2];
-    grid2targ(nss);
+    _nirt_grid2targ(nss);
 
     return 0;
 }
 
 extern "C" int
-target_coor(void *ns, int argc, const char *argv[])
+_nirt_cmd_target_coor(void *ns, int argc, const char *argv[])
 {
     vect_t target = VINIT_ZERO;
     struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
@@ -1501,18 +1497,18 @@ target_coor(void *ns, int argc, const char *argv[])
     if (argc == 1) {
 	VMOVE(target, nss->vals->orig);
 	VSCALE(target, target, nss->base2local);
-	lout(nss, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(target));
+	nout(nss, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n", V3ARGS(target));
 	return 0;
     }
 
     argc--; argv++;
     if (argc != 3) {
-	lerr(nss, "Usage:  xyz %s\n", get_desc_args("xyz"));
+	nerr(nss, "Usage:  xyz %s\n", _nirt_get_desc_args("xyz"));
 	return -1;
     }
 
     if (bu_opt_vect_t(&opt_msg, 3, argv, (void *)&target) == -1) {
-	lerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
@@ -1520,48 +1516,48 @@ target_coor(void *ns, int argc, const char *argv[])
     VSCALE(target, target, nss->local2base);
     VMOVE(nss->vals->orig, target);
     VMOVE(nss->vals->orig, target);
-    targ2grid(nss);
+    _nirt_targ2grid(nss);
 
     return 0;
 }
 
 extern "C" int
-shoot(void *ns, int argc, const char **UNUSED(argv))
+_nirt_cmd_shoot(void *ns, int argc, const char **UNUSED(argv))
 {
     int i;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns || !nss->ap) return -1;
 
     if (argc != 1) {
-	lerr(nss, "Usage:  s\n");
+	nerr(nss, "Usage:  s\n");
 	return -1;
     }
 
     /* If we have no active rtip, we don't need to prep or shoot */
-    if (!get_rtip(nss)) {
+    if (!_nirt_get_rtip(nss)) {
 	return 0;
     } else {
 	if (nss->need_reprep) {
 	    /* If we need to (re)prep, do it now. Failure is an error. */
-	    if (raytrace_prep(nss)) {
-		lerr(nss, "Error: raytrace prep failed!\n");
+	    if (_nirt_raytrace_prep(nss)) {
+		nerr(nss, "Error: raytrace prep failed!\n");
 		return -1;
 	    }
 	} else {
 	    /* Based on current settings, tell the ap which rtip to use */
-	    nss->ap->a_rt_i = get_rtip(nss);
-	    nss->ap->a_resource = get_resource(nss);
+	    nss->ap->a_rt_i = _nirt_get_rtip(nss);
+	    nss->ap->a_resource = _nirt_get_resource(nss);
 	}
     }
 
-    double bov = backout(nss);
+    double bov = _nirt_backout(nss);
     for (i = 0; i < 3; ++i) {
 	nss->vals->orig[i] = nss->vals->orig[i] + (bov * -1*(nss->vals->dir[i]));
 	nss->ap->a_ray.r_pt[i] = nss->vals->orig[i];
 	nss->ap->a_ray.r_dir[i] = nss->vals->dir[i];
     }
 
-    ldbg(nss, DEBUG_BACKOUT,
+    ndbg(nss, NIRT_DEBUG_BACKOUT,
 	    "Backing out %g units to (%g %g %g), shooting dir is (%g %g %g)\n",
 	    bov * nss->base2local,
 	    nss->ap->a_ray.r_pt[0] * nss->base2local,
@@ -1570,7 +1566,7 @@ shoot(void *ns, int argc, const char **UNUSED(argv))
 	    V3ARGS(nss->ap->a_ray.r_dir));
 
     // TODO - any necessary initialization for data collection by callbacks
-    init_ovlp(nss);
+    _nirt_init_ovlp(nss);
     (void)rt_shootray(nss->ap);
 
     // Undo backout
@@ -1582,13 +1578,13 @@ shoot(void *ns, int argc, const char **UNUSED(argv))
 }
 
 extern "C" int
-backout(void *ns, int argc, const char *argv[])
+_nirt_cmd_backout(void *ns, int argc, const char *argv[])
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "backout = %d\n", nss->backout);
+	nout(nss, "backout = %d\n", nss->backout);
 	return 0;
     }
 
@@ -1601,46 +1597,46 @@ backout(void *ns, int argc, const char *argv[])
 	return 0;
     }
 
-    lerr(nss, "backout must be set to 0 (off) or 1 (on)\n");
+    nerr(nss, "backout must be set to 0 (off) or 1 (on)\n");
 
     return -1;
 }
 
 extern "C" int
-use_air(void *ns, int argc, const char *argv[])
+_nirt_cmd_use_air(void *ns, int argc, const char *argv[])
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     if (!ns) return -1;
     if (argc == 1) {
-	lout(nss, "use_air = %d\n", nss->use_air);
+	nout(nss, "use_air = %d\n", nss->use_air);
 	return 0;
     }
     if (argc > 2) {
-	lerr(nss, "Usage:  useair %s\n", get_desc_args("useair"));
+	nerr(nss, "Usage:  useair %s\n", _nirt_get_desc_args("useair"));
 	return -1;
     }
     if (bu_opt_int(&optparse_msg, 1, (const char **)&(argv[1]), (void *)&nss->use_air) == -1) {
-	lerr(nss, "Error: bu_opt value read failure: %s\n\nUsage:  useair %s\n", bu_vls_addr(&optparse_msg), get_desc_args("useair"));
+	nerr(nss, "Error: bu_opt value read failure: %s\n\nUsage:  useair %s\n", bu_vls_addr(&optparse_msg), _nirt_get_desc_args("useair"));
 	return -1;
     }
     return 0;
 }
 
 extern "C" int
-nirt_units(void *ns, int argc, const char *argv[])
+_nirt_cmd_units(void *ns, int argc, const char *argv[])
 {
     double ncv = 0.0;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "units = '%s'\n", bu_units_string(nss->local2base));
+	nout(nss, "units = '%s'\n", bu_units_string(nss->local2base));
 	return 0;
     }
 
     if (argc > 2) {
-	lerr(nss, "Usage:  units %s\n", get_desc_args("units"));
+	nerr(nss, "Usage:  units %s\n", _nirt_get_desc_args("units"));
 	return -1;
     }
 
@@ -1652,7 +1648,7 @@ nirt_units(void *ns, int argc, const char *argv[])
 
     ncv = bu_units_conversion(argv[1]);
     if (ncv <= 0.0) {
-	lerr(nss, "Invalid unit specification: '%s'\n", argv[1]);
+	nerr(nss, "Invalid unit specification: '%s'\n", argv[1]);
 	return -1;
     }
     nss->base2local = 1.0/ncv;
@@ -1662,7 +1658,7 @@ nirt_units(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-do_overlap_claims(void *ns, int argc, const char *argv[])
+_nirt_cmd_do_overlap_claims(void *ns, int argc, const char *argv[])
 {
     int valid_specification = 0;
     struct nirt_state *nss = (struct nirt_state *)ns;
@@ -1670,48 +1666,48 @@ do_overlap_claims(void *ns, int argc, const char *argv[])
 
     if (argc == 1) {
 	switch (nss->overlap_claims) {
-	    case OVLP_RESOLVE:
-		lout(nss, "resolve (0)\n");
+	    case NIRT_OVLP_RESOLVE:
+		nout(nss, "resolve (0)\n");
 		return 0;
-	    case OVLP_REBUILD_FASTGEN:
-		lout(nss, "rebuild_fastgen (1)\n");
+	    case NIRT_OVLP_REBUILD_FASTGEN:
+		nout(nss, "rebuild_fastgen (1)\n");
 		return 0;
-	    case OVLP_REBUILD_ALL:
-		lout(nss, "rebuild_all (2)\n");
+	    case NIRT_OVLP_REBUILD_ALL:
+		nout(nss, "rebuild_all (2)\n");
 		return 0;
-	    case OVLP_RETAIN:
-		lout(nss, "retain (3)\n");
+	    case NIRT_OVLP_RETAIN:
+		nout(nss, "retain (3)\n");
 		return 0;
 	    default:
-		lerr(nss, "Error: overlap_clams is set to invalid value %d\n", nss->overlap_claims);
+		nerr(nss, "Error: overlap_clams is set to invalid value %d\n", nss->overlap_claims);
 		return -1;
 	}
     }
 
     if (argc > 2) {
-	lerr(nss, "Usage:  overlap_claims %s\n", get_desc_args("overlap_claims"));
+	nerr(nss, "Usage:  overlap_claims %s\n", _nirt_get_desc_args("overlap_claims"));
 	return -1;
     }
 
     if (BU_STR_EQUAL(argv[1], "resolve") || BU_STR_EQUAL(argv[1], "0")) {
-	nss->overlap_claims = OVLP_RESOLVE;
+	nss->overlap_claims = NIRT_OVLP_RESOLVE;
 	valid_specification = 1;
     }
     if (BU_STR_EQUAL(argv[1], "rebuild_fastgen") || BU_STR_EQUAL(argv[1], "1")) {
-	nss->overlap_claims = OVLP_REBUILD_FASTGEN;
+	nss->overlap_claims = NIRT_OVLP_REBUILD_FASTGEN;
 	valid_specification = 1;
     }
     if (BU_STR_EQUAL(argv[1], "rebuild_all") || BU_STR_EQUAL(argv[1], "2")) {
-	nss->overlap_claims = OVLP_REBUILD_ALL;
+	nss->overlap_claims = NIRT_OVLP_REBUILD_ALL;
 	valid_specification = 1;
     }
     if (BU_STR_EQUAL(argv[1], "retain") || BU_STR_EQUAL(argv[1], "3")) {
-	nss->overlap_claims = OVLP_RETAIN;
+	nss->overlap_claims = NIRT_OVLP_RETAIN;
 	valid_specification = 1;
     }
 
     if (!valid_specification) {
-	lerr(nss, "Error: Invalid overlap_claims specification: '%s'\n", argv[1]);
+	nerr(nss, "Error: Invalid overlap_claims specification: '%s'\n", argv[1]);
 	return -1;
     }
 
@@ -1722,7 +1718,7 @@ do_overlap_claims(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-format_output(void *ns, int argc, const char **argv)
+_nirt_cmd_format_output(void *ns, int argc, const char **argv)
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
     char type;
@@ -1730,13 +1726,13 @@ format_output(void *ns, int argc, const char **argv)
 
     if (argc < 2 || strlen(argv[1]) != 1 || BU_STR_EQUAL(argv[1], "?")) {
 	// TODO - need a *much* better help for fmt
-	lerr(nss, "Usage:  fmt %s\n", get_desc_args("fmt"));
+	nerr(nss, "Usage:  fmt %s\n", _nirt_get_desc_args("fmt"));
 	return -1;
     }
 
     type = argv[1][0];
     if (!strchr(NIRT_OUTPUT_TYPE_SPECIFIERS, type)) {
-	lerr(nss, "Error: unknown fmt type %c\n", type);
+	nerr(nss, "Error: unknown fmt type %c\n", type);
 	return -1;
     }
 
@@ -1746,32 +1742,32 @@ format_output(void *ns, int argc, const char **argv)
 	struct bu_vls ostr = BU_VLS_INIT_ZERO;
 	switch (type) {
 	    case 'r':
-		print_fmt_str(&ostr, nss->fmt_ray);
+		_nirt_print_fmt_str(&ostr, nss->fmt_ray);
 		break;
 	    case 'h':
-		print_fmt_str(&ostr, nss->fmt_head);
+		_nirt_print_fmt_str(&ostr, nss->fmt_head);
 		break;
 	    case 'p':
-		print_fmt_str(&ostr, nss->fmt_part);
+		_nirt_print_fmt_str(&ostr, nss->fmt_part);
 		break;
 	    case 'f':
-		print_fmt_str(&ostr, nss->fmt_foot);
+		_nirt_print_fmt_str(&ostr, nss->fmt_foot);
 		break;
 	    case 'm':
-		print_fmt_str(&ostr, nss->fmt_miss);
+		_nirt_print_fmt_str(&ostr, nss->fmt_miss);
 		break;
 	    case 'o':
-		print_fmt_str(&ostr, nss->fmt_ovlp);
+		_nirt_print_fmt_str(&ostr, nss->fmt_ovlp);
 		break;
 	    case 'g':
-		print_fmt_str(&ostr, nss->fmt_gap);
+		_nirt_print_fmt_str(&ostr, nss->fmt_gap);
 		break;
 	    default:
-		lerr(nss, "Error: unknown fmt type %s\n", argv[1]);
+		nerr(nss, "Error: unknown fmt type %s\n", argv[1]);
 		return -1;
 		break;
 	}
-	lout(nss, "%s\n", bu_vls_addr(&ostr));
+	nout(nss, "%s\n", bu_vls_addr(&ostr));
 	bu_vls_free(&ostr);
 	return 0;
     }
@@ -1796,28 +1792,28 @@ format_output(void *ns, int argc, const char **argv)
 	 * CWE-134: Use of Externally-Controlled Format String. See
 	 * http://cwe.mitre.org/data/definitions/134.html for more details. */
 
-	if ((fmt_cnt = split_fmt(fmtstr, &fmts)) <= 0) {
-	    lerr(nss, "Error: failure parsing format string \"%s\"\n", fmtstr);
+	if ((fmt_cnt = _nirt_split_fmt(fmtstr, &fmts)) <= 0) {
+	    nerr(nss, "Error: failure parsing format string \"%s\"\n", fmtstr);
 	    return -1;
 	}
 	argc--; argv++;
 
 	for (int i = 0; i < fmt_cnt; i++) {
-	    unsigned int fc = fmt_sp_cnt(fmts[i]);
+	    unsigned int fc = _nirt_fmt_sp_cnt(fmts[i]);
 	    const char *key = NULL;
 	    if (fc > 0) {
 		std::string fs;
 		if (!argc) {
-		    lerr(nss, "Error: failure parsing format string \"%s\" - missing value for format specifier in substring \"%s\"\n", fmtstr, fmts[i]);
+		    nerr(nss, "Error: failure parsing format string \"%s\" - missing value for format specifier in substring \"%s\"\n", fmtstr, fmts[i]);
 		    return -1;
 		}
 		key = argv[0];
 		fmt_sp_count++;
 
 		// Get fmt_sp substring and perform validation with the matching NIRT value key
-		if (fmt_sp_get(nss, fmts[i], fs)) return -1;
-		if (fmt_sp_validate(nss, fs)) return -1;
-		if (fmt_sp_key_check(nss, key, fs)) return -1;
+		if (_nirt_fmt_sp_get(nss, fmts[i], fs)) return -1;
+		if (_nirt_fmt_sp_validate(nss, fs)) return -1;
+		if (_nirt_fmt_sp_key_check(nss, key, fs)) return -1;
 
 		argc--; argv++;
 	    }
@@ -1843,7 +1839,7 @@ format_output(void *ns, int argc, const char **argv)
 
 	/* If we *do* have leftover we we care about, error out */
 	if (argc) {
-	    lerr(nss, "Error: fmt string \"%s\" has %d format %s, but has %d %s specified\n", fmtstr, fmt_sp_count, (fmt_sp_count == 1) ? "specifier" : "specifiers", fmt_sp_count + argc, ((fmt_sp_count + argc) == 1) ? "key" : "keys");
+	    nerr(nss, "Error: fmt string \"%s\" has %d format %s, but has %d %s specified\n", fmtstr, fmt_sp_count, (fmt_sp_count == 1) ? "specifier" : "specifiers", fmt_sp_count + argc, ((fmt_sp_count + argc) == 1) ? "key" : "keys");
 	    return -1;
 	}
 
@@ -1880,7 +1876,7 @@ set_fmt:
 		nss->fmt_gap = fmt_tmp;
 		break;
 	    default:
-		lerr(nss, "Error: unknown fmt type %s\n", argv[1]);
+		nerr(nss, "Error: unknown fmt type %s\n", argv[1]);
 		return -1;
 		break;
 	}
@@ -1890,7 +1886,7 @@ set_fmt:
 }
 
 extern "C" int
-print_item(void *ns, int argc, const char **argv)
+_nirt_cmd_print_item(void *ns, int argc, const char **argv)
 {
     int i = 0;
     struct bu_vls oval = BU_VLS_INIT_ZERO;
@@ -1898,7 +1894,7 @@ print_item(void *ns, int argc, const char **argv)
     if (!ns) return -1;
 
     if (argc == 1) {
-	lerr(nss, "Usage:  print %s\n", get_desc_args("print"));
+	nerr(nss, "Usage:  print %s\n", _nirt_get_desc_args("print"));
 	return 0;
     }
 
@@ -1908,26 +1904,26 @@ print_item(void *ns, int argc, const char **argv)
 	const char *val_type = bu_avs_get(nss->val_types, argv[i]);
 	bu_vls_trunc(&oval, 0);
 	if (!val_type) {
-	    lerr(nss, "Error: item %s is not a valid NIRT value key\n", argv[i]);
+	    nerr(nss, "Error: item %s is not a valid NIRT value key\n", argv[i]);
 	    bu_vls_free(&oval);
 	    return -1;
 	}
 	if (BU_STR_EQUAL(val_type, "INT")) {
-	    nirt_print_fmt_substr(&oval, "%d", argv[i], nss->vals, nss->base2local);
-	    lout(nss, "%s\n", bu_vls_addr(&oval));
+	    _nirt_print_fmt_substr(&oval, "%d", argv[i], nss->vals, nss->base2local);
+	    nout(nss, "%s\n", bu_vls_addr(&oval));
 	    continue;
 	}
 	if (BU_STR_EQUAL(val_type, "FLOAT") || BU_STR_EQUAL(val_type, "FNOUNIT")) {
-	    nirt_print_fmt_substr(&oval, "%g", argv[i], nss->vals, nss->base2local);
-	    lout(nss, "%s\n", bu_vls_addr(&oval));
+	    _nirt_print_fmt_substr(&oval, "%g", argv[i], nss->vals, nss->base2local);
+	    nout(nss, "%s\n", bu_vls_addr(&oval));
 	    continue;
 	}
 	if (BU_STR_EQUAL(val_type, "STRING")) {
-	    nirt_print_fmt_substr(&oval, "%s", argv[i], nss->vals, nss->base2local);
-	    lout(nss, "%s\n", bu_vls_addr(&oval));
+	    _nirt_print_fmt_substr(&oval, "%s", argv[i], nss->vals, nss->base2local);
+	    nout(nss, "%s\n", bu_vls_addr(&oval));
 	    continue;
 	}
-	lerr(nss, "Error: item %s has unknown value type %s\n", argv[i], val_type);
+	nerr(nss, "Error: item %s has unknown value type %s\n", argv[i], val_type);
 	bu_vls_free(&oval);
 	return -1;
     }
@@ -1937,7 +1933,7 @@ print_item(void *ns, int argc, const char **argv)
 }
 
 extern "C" int
-bot_minpieces(void *ns, int argc, const char **argv)
+_nirt_cmd_bot_minpieces(void *ns, int argc, const char **argv)
 {
     /* Ew - rt_bot_minpieces is a librt global.  Why isn't it
      * a part of the specific rtip? */
@@ -1948,24 +1944,24 @@ bot_minpieces(void *ns, int argc, const char **argv)
     if (!ns) return -1;
 
     if (argc == 1) {
-	lout(nss, "rt_bot_minpieces = %d\n", (unsigned int)rt_bot_minpieces);
+	nout(nss, "rt_bot_minpieces = %d\n", (unsigned int)rt_bot_minpieces);
 	return 0;
     }
 
     argc--; argv++;
 
     if (argc > 1) {
-	lerr(nss, "Usage:  bot_minpieces %s\n", get_desc_args("bot_minpieces"));
+	nerr(nss, "Usage:  bot_minpieces %s\n", _nirt_get_desc_args("bot_minpieces"));
 	return -1;
     }
 
     if ((ret = bu_opt_long(&opt_msg, 1, argv, (void *)&minpieces)) == -1) {
-	lerr(nss, "Error: bu_opt value read failure reading minpieces value: %s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "Error: bu_opt value read failure reading minpieces value: %s\n", bu_vls_addr(&opt_msg));
 	goto bot_minpieces_done;
     }
 
     if (minpieces < 0) {
-	lerr(nss, "Error: rt_bot_minpieces cannot be less than 0\n");
+	nerr(nss, "Error: rt_bot_minpieces cannot be less than 0\n");
 	ret = -1;
 	goto bot_minpieces_done;
     }
@@ -1982,7 +1978,7 @@ bot_minpieces_done:
 }
 
 extern "C" int
-librt_debug(void *ns, int argc, const char **argv)
+_nirt_cmd_librt_debug(void *ns, int argc, const char **argv)
 {
     int ret = 0;
     long dflg = 0;
@@ -1992,32 +1988,32 @@ librt_debug(void *ns, int argc, const char **argv)
 
     /* Sigh... another librt global, not rtip specific... */
     if (argc == 1) {
-	bu_vls_printb(&msg, "librt debug ", RT_G_DEBUG, DEBUG_FMT);
-	lout(nss, "%s\n", bu_vls_addr(&msg));
+	bu_vls_printb(&msg, "librt debug ", RT_G_DEBUG, NIRT_DEBUG_FMT);
+	nout(nss, "%s\n", bu_vls_addr(&msg));
 	goto librt_nirt_debug_done;
     }
 
     argc--; argv++;
 
     if (argc > 1) {
-	lerr(nss, "Usage:  libdebug %s\n", get_desc_args("libdebug"));
+	nerr(nss, "Usage:  libdebug %s\n", _nirt_get_desc_args("libdebug"));
 	return -1;
     }
 
     if ((ret = bu_opt_long_hex(&msg, 1, argv, (void *)&dflg)) == -1) {
-	lerr(nss, "%s\n", bu_vls_addr(&msg));
+	nerr(nss, "%s\n", bu_vls_addr(&msg));
 	goto librt_nirt_debug_done;
     }
 
     if (dflg < 0 || dflg > UINT32_MAX) {
-	lerr(nss, "Error: LIBRT debug flag cannot be less than 0 or greater than %d\n", UINT32_MAX);
+	nerr(nss, "Error: LIBRT debug flag cannot be less than 0 or greater than %d\n", UINT32_MAX);
 	ret = -1;
 	goto librt_nirt_debug_done;
     }
 
     RT_G_DEBUG = (uint32_t)dflg;
-    bu_vls_printb(&msg, "librt debug ", RT_G_DEBUG, DEBUG_FMT);
-    lout(nss, "%s\n", bu_vls_addr(&msg));
+    bu_vls_printb(&msg, "librt debug ", RT_G_DEBUG, NIRT_DEBUG_FMT);
+    nout(nss, "%s\n", bu_vls_addr(&msg));
 
 librt_nirt_debug_done:
     bu_vls_free(&msg);
@@ -2025,7 +2021,7 @@ librt_nirt_debug_done:
 }
 
 extern "C" int
-nirt_debug(void *ns, int argc, const char **argv)
+_nirt_cmd_debug(void *ns, int argc, const char **argv)
 {
     int ret = 0;
     long dflg = 0;
@@ -2034,32 +2030,32 @@ nirt_debug(void *ns, int argc, const char **argv)
     if (!ns) return -1;
 
     if (argc == 1) {
-	bu_vls_printb(&msg, "debug ", nss->nirt_debug, DEBUG_FMT);
-	lout(nss, "%s\n", bu_vls_addr(&msg));
+	bu_vls_printb(&msg, "debug ", nss->nirt_debug, NIRT_DEBUG_FMT);
+	nout(nss, "%s\n", bu_vls_addr(&msg));
 	goto nirt_debug_done;
     }
 
     argc--; argv++;
 
     if (argc > 1) {
-	lerr(nss, "Usage:  debug %s\n", get_desc_args("debug"));
+	nerr(nss, "Usage:  debug %s\n", _nirt_get_desc_args("debug"));
 	return -1;
     }
 
     if ((ret = bu_opt_long_hex(&msg, 1, argv, (void *)&dflg)) == -1) {
-	lerr(nss, "%s\n", bu_vls_addr(&msg));
+	nerr(nss, "%s\n", bu_vls_addr(&msg));
 	goto nirt_debug_done;
     }
 
     if (dflg < 0) {
-	lerr(nss, "Error: NIRT debug flag cannot be less than 0\n");
+	nerr(nss, "Error: NIRT debug flag cannot be less than 0\n");
 	ret = -1;
 	goto nirt_debug_done;
     }
 
     nss->nirt_debug = (unsigned int)dflg;
-    bu_vls_printb(&msg, "debug ", nss->nirt_debug, DEBUG_FMT);
-    lout(nss, "%s\n", bu_vls_addr(&msg));
+    bu_vls_printb(&msg, "debug ", nss->nirt_debug, NIRT_DEBUG_FMT);
+    nout(nss, "%s\n", bu_vls_addr(&msg));
 
 nirt_debug_done:
     bu_vls_free(&msg);
@@ -2067,14 +2063,14 @@ nirt_debug_done:
 }
 
 extern "C" int
-quit(void *ns, int UNUSED(argc), const char **UNUSED(argv))
+_nirt_cmd_quit(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
-    lout((struct nirt_state *)ns, "Quitting...\n");
+    nout((struct nirt_state *)ns, "Quitting...\n");
     return 1;
 }
 
 extern "C" int
-show_menu(void *ns, int UNUSED(argc), const char **UNUSED(argv))
+_nirt_cmd_show_menu(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
     int longest = 0;
     const struct nirt_cmd_desc *d;
@@ -2085,13 +2081,13 @@ show_menu(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 	if (l > longest) longest = l;
     }
     for (d = nirt_descs; d->cmd != NULL; d++) {
-	lout(nss, "%*s %s\n", longest, d->cmd, d->desc);
+	nout(nss, "%*s %s\n", longest, d->cmd, d->desc);
     }
     return 0;
 }
 
 extern "C" int
-draw_cmd(void *ns, int argc, const char *argv[])
+_nirt_cmd_draw(void *ns, int argc, const char *argv[])
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns || argc < 2) return -1;
@@ -2106,7 +2102,7 @@ draw_cmd(void *ns, int argc, const char *argv[])
 }
 
 extern "C" int
-erase_cmd(void *ns, int argc, const char **argv)
+_nirt_cmd_erase(void *ns, int argc, const char **argv)
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns || argc < 2) return -1;
@@ -2123,7 +2119,7 @@ erase_cmd(void *ns, int argc, const char **argv)
 }
 
 extern "C" int
-state_cmd(void *ns, int argc, const char *argv[])
+_nirt_cmd_state(void *ns, int argc, const char *argv[])
 {
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
@@ -2134,7 +2130,7 @@ state_cmd(void *ns, int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[1], "out_accumulate")) {
 	int setting = 0;
 	if (argc == 2) {
-	    lout(nss, "%d\n", nss->out_accumulate);
+	    nout(nss, "%d\n", nss->out_accumulate);
 	    return 0;
 	}
 	(void)bu_opt_int(NULL, 1, (const char **)&(argv[2]), (void *)&setting);
@@ -2144,7 +2140,7 @@ state_cmd(void *ns, int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[1], "err_accumulate")) {
 	int setting = 0;
 	if (argc == 2) {
-	    lout(nss, "%d\n", nss->err_accumulate);
+	    nout(nss, "%d\n", nss->err_accumulate);
 	    return 0;
 	}
 	(void)bu_opt_int(NULL, 1, (const char **)&(argv[2]), (void *)&setting);
@@ -2153,18 +2149,18 @@ state_cmd(void *ns, int argc, const char *argv[])
     }
     if (BU_STR_EQUAL(argv[1], "model_bounds")) {
 	if (argc != 2) {
-	    lerr(nss, "TODO - state cmd help\n");
+	    nerr(nss, "TODO - state cmd help\n");
 	    return -1;
 	}
 	if (nss->need_reprep) {
-	    if (raytrace_prep(nss)) {
-		lerr(nss, "Error: raytrace prep failed!\n");
+	    if (_nirt_raytrace_prep(nss)) {
+		nerr(nss, "Error: raytrace prep failed!\n");
 		return -1;
 	    }
 	}
 	if (nss->ap->a_rt_i) {
 	    double base2local = nss->ap->a_rt_i->rti_dbip->dbi_base2local;
-	    lout(nss, "model_min = (%g, %g, %g)    model_max = (%g, %g, %g)\n",
+	    nout(nss, "model_min = (%g, %g, %g)    model_max = (%g, %g, %g)\n",
 		    nss->ap->a_rt_i->mdl_min[X] * base2local,
 		    nss->ap->a_rt_i->mdl_min[Y] * base2local,
 		    nss->ap->a_rt_i->mdl_min[Z] * base2local,
@@ -2172,41 +2168,41 @@ state_cmd(void *ns, int argc, const char *argv[])
 		    nss->ap->a_rt_i->mdl_max[Y] * base2local,
 		    nss->ap->a_rt_i->mdl_max[Z] * base2local);
 	} else {
-	    lout(nss, "model_min = (0, 0, 0)    model_max = (0, 0, 0)\n");
+	    nout(nss, "model_min = (0, 0, 0)    model_max = (0, 0, 0)\n");
 	}
 	return 0;
     }
     return 0;
 }
 
-const struct bu_cmdtab nirt_cmds[] = {
-    { "attr",           cm_attr},
-    { "ae",             az_el},
-    { "dir",            dir_vect},
-    { "hv",             grid_coor},
-    { "xyz",            target_coor},
-    { "s",              shoot},
-    { "backout",        backout},
-    { "useair",         use_air},
-    { "units",          nirt_units},
-    { "overlap_claims", do_overlap_claims},
-    { "fmt",            format_output},
-    { "print",          print_item},
-    { "bot_minpieces",  bot_minpieces},
-    { "libdebug",       librt_debug},
-    { "debug",          nirt_debug},
-    { "q",              quit},
-    { "?",              show_menu},
+const struct bu_cmdtab _libanalyze_nirt_cmds[] = {
+    { "attr",           _nirt_cmd_attr},
+    { "ae",             _nirt_cmd_az_el},
+    { "dir",            _nirt_cmd_dir_vect},
+    { "hv",             _nirt_cmd_grid_coor},
+    { "xyz",            _nirt_cmd_target_coor},
+    { "s",              _nirt_cmd_shoot},
+    { "backout",        _nirt_cmd_backout},
+    { "useair",         _nirt_cmd_use_air},
+    { "units",          _nirt_cmd_units},
+    { "overlap_claims", _nirt_cmd_do_overlap_claims},
+    { "fmt",            _nirt_cmd_format_output},
+    { "print",          _nirt_cmd_print_item},
+    { "bot_minpieces",  _nirt_cmd_bot_minpieces},
+    { "libdebug",       _nirt_cmd_librt_debug},
+    { "debug",          _nirt_cmd_debug},
+    { "q",              _nirt_cmd_quit},
+    { "?",              _nirt_cmd_show_menu},
     // New commands...
-    { "draw",           draw_cmd},
-    { "erase",          erase_cmd},
-    { "state",          state_cmd},
+    { "draw",           _nirt_cmd_draw},
+    { "erase",          _nirt_cmd_erase},
+    { "state",          _nirt_cmd_state},
     { (char *)NULL,     NULL}
 };
 
 
 HIDDEN size_t
-find_first_unescaped(std::string &s, const char *keys, int offset)
+_nirt_find_first_unescaped(std::string &s, const char *keys, int offset)
 {
     int off = offset;
     int done = 0;
@@ -2224,13 +2220,13 @@ find_first_unescaped(std::string &s, const char *keys, int offset)
 }
 
 HIDDEN size_t
-find_first_unquoted(std::string &ts, const char *key, size_t offset)
+_nirt_find_first_unquoted(std::string &ts, const char *key, size_t offset)
 {
     size_t q_start, q_end, pos;
     std::string s = ts;
     /* Start by initializing the position markers for quoted substrings. */
-    q_start = find_first_unescaped(s, "\"", offset);
-    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
+    q_start = _nirt_find_first_unescaped(s, "\"", offset);
+    q_end = (q_start != std::string::npos) ? _nirt_find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
 
     pos = offset;
     while ((pos = s.find(key, pos)) != std::string::npos) {
@@ -2238,8 +2234,8 @@ find_first_unquoted(std::string &ts, const char *key, size_t offset)
 	 * anything */
 	if (q_end != std::string::npos && pos > q_start && pos < q_end) {
 	    pos = q_end + 1;
-	    q_start = find_first_unescaped(s, "\"", q_end + 1);
-	    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
+	    q_start = _nirt_find_first_unescaped(s, "\"", q_end + 1);
+	    q_end = (q_start != std::string::npos) ? _nirt_find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
 	    continue;
 	}
 	break;
@@ -2250,7 +2246,7 @@ find_first_unquoted(std::string &ts, const char *key, size_t offset)
 
 /* Parse command line command and execute */
 HIDDEN int
-nirt_exec_cmd(NIRT *ns, const char *cmdstr)
+_nirt_exec_cmd(NIRT *ns, const char *cmdstr)
 {
     int ac = 0;
     int ac_max = 0;
@@ -2268,8 +2264,8 @@ nirt_exec_cmd(NIRT *ns, const char *cmdstr)
     ss.seekg(0, ss.beg);
 
     /* Start by initializing the position markers for quoted substrings. */
-    q_start = find_first_unescaped(s, "\"", 0);
-    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
+    q_start = _nirt_find_first_unescaped(s, "\"", 0);
+    q_end = (q_start != std::string::npos) ? _nirt_find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
 
     /* get an argc/argv array for bu_cmd style command execution */
     av = (char **)bu_calloc(ac_max+1, sizeof(char *), "av");
@@ -2291,8 +2287,8 @@ nirt_exec_cmd(NIRT *ns, const char *cmdstr)
 
 	/* Prepare the rest of the script string for processing */
 	s.erase(0, pos + 1);
-	q_start = find_first_unescaped(s, "\"", 0);
-	q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
+	q_start = _nirt_find_first_unescaped(s, "\"", 0);
+	q_end = (q_start != std::string::npos) ? _nirt_find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
 	pos = 0;
     }
     if (s.length() > 0) {
@@ -2301,7 +2297,7 @@ nirt_exec_cmd(NIRT *ns, const char *cmdstr)
     }
     av[ac] = NULL;
 
-    if (bu_cmd(nirt_cmds, ac, (const char **)av, 0, (void *)ns, &ret) != BRLCAD_OK) ret = -1;
+    if (bu_cmd(_libanalyze_nirt_cmds, ac, (const char **)av, 0, (void *)ns, &ret) != BRLCAD_OK) ret = -1;
 
     for (i = 0; i < ac_max; i++) {
 	if (av[i]) bu_free(av[i], "free av str");
@@ -2315,9 +2311,9 @@ nirt_exec_cmd(NIRT *ns, const char *cmdstr)
  * denotes the end of one command and the beginning of another, unless
  * the semicolon is inside single or double quotes*/
 HIDDEN int
-nirt_parse_script(NIRT *ns, const char *script, int (*nc)(NIRT *ns, const char *cmdstr))
+_nirt_parse_script(NIRT *ns, const char *script)
 {
-    if (!ns || !script || !nc) return -1;
+    if (!ns || !script) return -1;
     int ret = 0;
     std::string s(script);
     std::string cmd;
@@ -2331,11 +2327,11 @@ nirt_parse_script(NIRT *ns, const char *script, int (*nc)(NIRT *ns, const char *
     if (script[0] == '#') return 0;
 
     /* Start by initializing the position markers for quoted substrings. */
-    q_start = find_first_unescaped(s, "\"", 0);
-    q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
+    q_start = _nirt_find_first_unescaped(s, "\"", 0);
+    q_end = (q_start != std::string::npos) ? _nirt_find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
 
     /* Slice and dice to get individual commands. */
-    while ((pos = find_first_unquoted(s, ";", pos)) != std::string::npos) {
+    while ((pos = _nirt_find_first_unquoted(s, ";", pos)) != std::string::npos) {
 	/* If we're inside matched quotes, only an un-escaped quote char means
 	 * anything */
 	if (q_end != std::string::npos && pos > q_start && pos < q_end) {
@@ -2348,17 +2344,17 @@ nirt_parse_script(NIRT *ns, const char *script, int (*nc)(NIRT *ns, const char *
 	bu_vls_trimspace(&tcmd);
 	if (bu_vls_strlen(&tcmd) > 0) {
 	    if (strchr(bu_vls_addr(&tcmd), ';')) {
-		ret = nirt_parse_script(ns, bu_vls_addr(&tcmd), nc);
+		ret = _nirt_parse_script(ns, bu_vls_addr(&tcmd));
 	    } else {
-		ret = (*nc)(ns, bu_vls_addr(&tcmd));
+		ret = _nirt_exec_cmd(ns, bu_vls_addr(&tcmd));
 	    }
 	    if (ret) goto nps_done;
 	}
 
 	/* Prepare the rest of the script string for processing */
 	s.erase(0, pos + 1);
-	q_start = find_first_unescaped(s, "\"", 0);
-	q_end = (q_start != std::string::npos) ? find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
+	q_start = _nirt_find_first_unescaped(s, "\"", 0);
+	q_end = (q_start != std::string::npos) ? _nirt_find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
 	pos = 0;
     }
 
@@ -2366,7 +2362,7 @@ nirt_parse_script(NIRT *ns, const char *script, int (*nc)(NIRT *ns, const char *
     bu_vls_sprintf(&tcmd, "%s", s.c_str());
     bu_vls_trimspace(&tcmd);
     if (bu_vls_strlen(&tcmd) > 0) {
-	ret = (*nc)(ns, bu_vls_addr(&tcmd));
+	ret = _nirt_exec_cmd(ns, bu_vls_addr(&tcmd));
     }
 
 nps_done:
@@ -2403,7 +2399,7 @@ nirt_alloc(NIRT **ns)
     bu_color_from_rgb_chars(n->overlap_color, (unsigned char *)&rgb);
     n->print_header = 0;
     n->print_ident_flag = 0;
-    n->silent_flag = SILENT_UNSET;
+    n->silent_flag = NIRT_SILENT_UNSET;
     n->rt_debug = 0;
     n->nirt_debug = 0;
 
@@ -2448,7 +2444,7 @@ nirt_alloc(NIRT **ns)
     bu_avs_init_empty(n->val_types);
     bu_avs_init_empty(n->val_docs);
 
-    BU_GET(n->vals, struct nout_record);
+    BU_GET(n->vals, struct nirt_output_record);
     BU_GET(n->vals->path_name, struct bu_vls);
     BU_GET(n->vals->reg_name, struct bu_vls);
     BU_GET(n->vals->ov_reg1_name, struct bu_vls);
@@ -2476,7 +2472,7 @@ nirt_alloc(NIRT **ns)
 
     /* Populate the output key and type information */
     {
-	std::string s(ovals);
+	std::string s(nirt_cmd_tbl_defs);
 	std::string entry, key;
 	std::stringstream ss(s);
 	int place = 0;
@@ -2519,22 +2515,22 @@ nirt_init(NIRT *ns, struct db_i *dbip)
 
     /* initialize the application structure */
     RT_APPLICATION_INIT(ns->ap);
-    ns->ap->a_hit = nirt_if_hit;        /* branch to if_hit routine */
-    ns->ap->a_miss = nirt_if_miss;      /* branch to if_miss routine */
-    ns->ap->a_overlap = nirt_if_overlap;/* branch to if_overlap routine */
+    ns->ap->a_hit = _nirt_if_hit;        /* branch to if_hit routine */
+    ns->ap->a_miss = _nirt_if_miss;      /* branch to if_miss routine */
+    ns->ap->a_overlap = _nirt_if_overlap;/* branch to if_overlap routine */
     ns->ap->a_logoverlap = rt_silent_logoverlap;
     ns->ap->a_onehit = 0;               /* continue through shotline after hit */
     ns->ap->a_purpose = "NIRT ray";
-    ns->ap->a_rt_i = get_rtip(ns);         /* rt_i pointer */
-    ns->ap->a_resource = get_resource(ns); /* note: resource is initialized by get_rtip */
+    ns->ap->a_rt_i = _nirt_get_rtip(ns);         /* rt_i pointer */
+    ns->ap->a_resource = _nirt_get_resource(ns); /* note: resource is initialized by get_rtip */
     ns->ap->a_zero1 = 0;           /* sanity check, sayth raytrace.h */
     ns->ap->a_zero2 = 0;           /* sanity check, sayth raytrace.h */
     ns->ap->a_uptr = (void *)ns;
 
     /* If we've already got something, go ahead and prep */
     if (ns->need_reprep && ns->active_paths.size() > 0) {
-	if (raytrace_prep(ns)) {
-	    lerr(ns, "Error - raytrace prep failed during initialization!\n");
+	if (_nirt_raytrace_prep(ns)) {
+	    nerr(ns, "Error - raytrace prep failed during initialization!\n");
 	    return -1;
 	}
     }
@@ -2551,12 +2547,12 @@ nirt_init(NIRT *ns, struct db_i *dbip)
     std::string fmtline;
     fs.open(bu_brlcad_data("nirt/default.nrt", 0), std::fstream::binary);
     if (!fs.is_open()) {
-	lerr(ns, "Error - could not load default NIRT formatting file: %s\n", bu_brlcad_data("nirt/default.nrt", 0));
+	nerr(ns, "Error - could not load default NIRT formatting file: %s\n", bu_brlcad_data("nirt/default.nrt", 0));
 	return -1;
     }
     while (std::getline(fs, fmtline)) {
 	if (nirt_exec(ns, fmtline.c_str()) < 0) {
-	    lerr(ns, "Error - could not load default NIRT formatting file: %s\n", bu_brlcad_data("nirt/default.nrt", 0));
+	    nerr(ns, "Error - could not load default NIRT formatting file: %s\n", bu_brlcad_data("nirt/default.nrt", 0));
 	    return -1;
 	}
     }
@@ -2599,7 +2595,7 @@ nirt_destroy(NIRT *ns)
     BU_PUT(ns->vals->claimant_list, struct bu_vls);
     BU_PUT(ns->vals->claimant_listn, struct bu_vls);
     BU_PUT(ns->vals->attributes, struct bu_vls);
-    BU_PUT(ns->vals, struct nout_record);
+    BU_PUT(ns->vals, struct nirt_output_record);
 
     BU_PUT(ns->res, struct resource);
     BU_PUT(ns->res_air, struct resource);
@@ -2635,7 +2631,7 @@ nirt_exec(NIRT *ns, const char *script)
     if (!ns->err_accumulate) bu_vls_trunc(ns->err, 0);
 
     if (script) {
-	ns->ret = nirt_parse_script(ns, script, &nirt_exec_cmd);
+	ns->ret = _nirt_parse_script(ns, script);
     } else {
 	return 0;
     }
