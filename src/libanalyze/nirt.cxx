@@ -884,6 +884,31 @@ _nirt_print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::
     bu_vls_trimspace(ostr);
 }
 
+/* Given a vector breakout of a format string, generate the NIRT fmt command that
+ * created it */
+HIDDEN void
+_nirt_print_fmt_cmd(struct bu_vls *ostr, char f, std::vector<std::pair<std::string,std::string> > &fmt_vect)
+{
+    std::string fmt_str, fmt_keys;
+    std::vector<std::pair<std::string,std::string> >::iterator f_it;
+
+    if (!ostr) return;
+
+    for(f_it = fmt_vect.begin(); f_it != fmt_vect.end(); f_it++) {
+	for (std::string::size_type i = 0; i < (*f_it).first.size(); ++i) {
+	    if ((*f_it).first[i] == '\n')  {
+		fmt_str.push_back('\\');
+		fmt_str.push_back('n');
+	    } else {
+		fmt_str.push_back((*f_it).first[i]);
+	    }
+	}
+	fmt_keys.append(" ");
+	fmt_keys.append((*f_it).second);
+    }
+    bu_vls_sprintf(ostr, "fmt %c \"%s\"%s\n", f, fmt_str.c_str(), fmt_keys.c_str());
+}
+
 /* Translate NIRT fmt substrings into fully evaluated printf output, while also
  * handling units on key values.  This should never be called using any fmt
  * string that hasn't been validated by _nirt_fmt_sp_validate and _nirt_fmt_sp_key_check */
@@ -2171,6 +2196,51 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	}
 	return 0;
     }
+    if (BU_STR_EQUAL(argv[1], "-d")) {
+	struct bu_vls dumpstr = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&dumpstr, "#  file created by the dump command of nirt\n");
+	bu_vls_printf(&dumpstr, "xyz %g %g %g\n", V3ARGS(nss->vals->orig));
+	bu_vls_printf(&dumpstr, "dir %g %g %g\n", V3ARGS(nss->vals->dir));
+	bu_vls_printf(&dumpstr, "useair %d\n", nss->use_air);
+	bu_vls_printf(&dumpstr, "units %s\n", bu_units_string(nss->local2base));
+	bu_vls_printf(&dumpstr, "overlap_claims ");
+	switch (nss->overlap_claims) {
+	    case NIRT_OVLP_RESOLVE:
+		bu_vls_printf(&dumpstr, "resolve\n");
+		break;
+	    case NIRT_OVLP_REBUILD_FASTGEN:
+		bu_vls_printf(&dumpstr, "rebuild_fastgen\n");
+		break;
+	    case NIRT_OVLP_REBUILD_ALL:
+		bu_vls_printf(&dumpstr, "rebuild_all\n");
+		break;
+	    case NIRT_OVLP_RETAIN:
+		bu_vls_printf(&dumpstr, "retain\n");
+		break;
+	    default:
+		bu_vls_printf(&dumpstr, "error: invalid overlap_clams value %d\n", nss->overlap_claims);
+		break;
+	}
+	struct bu_vls ostr = BU_VLS_INIT_ZERO;
+	_nirt_print_fmt_cmd(&ostr, 'r', nss->fmt_ray);
+	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	_nirt_print_fmt_cmd(&ostr, 'h', nss->fmt_head);
+	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	_nirt_print_fmt_cmd(&ostr, 'p', nss->fmt_part);
+	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	_nirt_print_fmt_cmd(&ostr, 'f', nss->fmt_foot);
+	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	_nirt_print_fmt_cmd(&ostr, 'm', nss->fmt_miss);
+	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	_nirt_print_fmt_cmd(&ostr, 'o', nss->fmt_ovlp);
+	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	_nirt_print_fmt_cmd(&ostr, 'g', nss->fmt_gap);
+	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	nout(nss, "%s", bu_vls_addr(&dumpstr));
+	bu_vls_free(&dumpstr);
+	bu_vls_free(&ostr);
+    }
+
     return 0;
 }
 

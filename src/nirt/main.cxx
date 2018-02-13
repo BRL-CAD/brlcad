@@ -220,12 +220,24 @@ nirt_stderr_hook(NIRT *ns, void *u_data)
 }
 
 int
-nirt_app_stdout_hook(NIRT *ns, void *u_data)
+nirt_show_menu_hook(NIRT *ns, void *u_data)
 {
     struct bu_vls *log = (struct bu_vls *)u_data;
     nirt_log(log, ns, NIRT_OUT);
     return 0;
 }
+
+int
+nirt_dump_hook(NIRT *ns, void *u_data)
+{
+    struct bu_vls tmp = BU_VLS_INIT_ZERO;
+    struct bu_vls *log = (struct bu_vls *)u_data;
+    nirt_log(&tmp, ns, NIRT_OUT);
+    bu_vls_printf(log, "%s", bu_vls_addr(&tmp));
+    bu_vls_free(&tmp);
+    return 0;
+}
+
 
 
 /* TODO - eventually, should support separate destinations for output
@@ -342,11 +354,18 @@ nirt_app_exec(NIRT *ns, struct bu_vls *iline, struct bu_vls *state_file, struct 
 	    return -1;
 	}
 	struct bu_vls dumpstr = BU_VLS_INIT_ZERO;
+	// Capture output for post-processing
 	(void)nirt_udata(ns, (void *)&dumpstr);
-	nirt_hook(ns, &nirt_app_stdout_hook, NIRT_OUT);
+	nirt_hook(ns, &nirt_dump_hook, NIRT_OUT);
 	(void)nirt_exec(ns, "state -d");
+	// Restore "normal" settings
 	(void)nirt_udata(ns, (void *)io_data);
 	nirt_hook(ns, &nirt_stdout_hook, NIRT_OUT);
+	if(BU_STR_EQUAL(bu_vls_addr(io_data->outfile), "stdout")) {
+	    bu_vls_printf(&dumpstr, "dest default");
+	} else {
+	    bu_vls_printf(&dumpstr, "dest %s", bu_vls_addr(io_data->outfile));
+	}
 
 	FILE *sfPtr = fopen(bu_vls_addr(state_file), "wb");
 	if (!sfPtr) {
@@ -402,7 +421,7 @@ nirt_app_exec(NIRT *ns, struct bu_vls *iline, struct bu_vls *state_file, struct 
 	// Get library documentation and add app level help to it.
 	struct bu_vls helpstr = BU_VLS_INIT_ZERO;
 	(void)nirt_udata(ns, (void *)&helpstr);
-	nirt_hook(ns, &nirt_app_stdout_hook, NIRT_OUT);
+	nirt_hook(ns, &nirt_show_menu_hook, NIRT_OUT);
 	(void)nirt_exec(ns, "?");
 	(void)nirt_udata(ns, (void *)io_data);
 	nirt_hook(ns, &nirt_stdout_hook, NIRT_OUT);
