@@ -30,6 +30,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <limits>
 
 extern "C" {
 #include "linenoise.h"
@@ -451,6 +452,7 @@ main(int argc, const char **argv)
     std::set<std::string>::iterator a_it;
     struct bu_vls iline = BU_VLS_INIT_ZERO;
     struct bu_vls nirt_debug = BU_VLS_INIT_ZERO;
+    unsigned int nirt_app_debug = 0;
     int overlap_claims = OVLP_RESOLVE;
     int backout = 0;
     int bot_mintie = 0;
@@ -632,10 +634,25 @@ main(int argc, const char **argv)
     }
 
     if (bu_vls_strlen(&nirt_debug) > 0) {
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
 	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
+
+	// Libanalyze
 	bu_vls_sprintf(&ncmd, "debug %s", bu_vls_addr(&nirt_debug));
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
 	bu_vls_free(&ncmd);
+
+	// App
+	long dflg = 0;
+	const char *arg = bu_vls_addr(&nirt_debug);
+	if (bu_opt_long_hex(&msg, 1, &arg, (void *)&dflg) == -1) {
+	    bu_exit(EXIT_FAILURE, "Error parsing debug flags \"%s\": %s\n", bu_vls_addr(&nirt_debug), bu_vls_addr(&msg));
+	}
+	bu_vls_free(&msg);
+	if (dflg < 0) {
+	    bu_exit(EXIT_FAILURE, "Debug flag value of \"%s\" is < 0\n", bu_vls_addr(&nirt_debug));
+	}
+	nirt_app_debug = (unsigned int)dflg;
     }
 
     /* Initialize the attribute list before we do the drawing, since
@@ -691,81 +708,68 @@ main(int argc, const char **argv)
 
     /* If we're supposed to read matrix input from stdin instead of interacting, do that */
     if (read_matrix) {
-	 double scan[16] = MAT_INIT_ZERO;
-	 char *buf;
-	 int  status = 0x0;
-	 mat_t m;
-	 mat_t q;
-	 point_t target;
-	 point_t direct;
-	 double azimuth;
-	 double elevation;
+	struct bu_vls dir_cmd = BU_VLS_INIT_ZERO;
+	double scan[16] = MAT_INIT_ZERO;
+	char *buf;
+	int  status = 0x0;
+	mat_t m;
+	mat_t q;
 
-	 while ((buf = rt_read_cmd(stdin)) != (char *) 0) {
-	     if (bu_strncmp(buf, "eye_pt", 6) == 0) {
-		 if (sscanf(buf + 6, "%lf%lf%lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
-		     bu_exit(1, "nirt: read_mat(): Failed to read eye_pt\n");
-		 }
-		 target[X] = scan[X];
-		 target[Y] = scan[Y];
-		 target[Z] = scan[Z];
-		 status |= RMAT_SAW_EYE;
-	     } else if (bu_strncmp(buf, "orientation", 11) == 0) {
-		 if (sscanf(buf + 11, "%lf%lf%lf%lf", &scan[X], &scan[Y], &scan[Z], &scan[W]) != 4) {
-		     bu_exit(1, "nirt: read_mat(): Failed to read orientation\n");
-		 }
-		 MAT_COPY(q, scan);
-		 quat_quat2mat(m, q);
-		 //if (nirt_debug & DEBUG_MAT)
-		 //    bn_mat_print("view matrix", m);
-		 azimuth = atan2(-m[0], m[1]) / DEG2RAD;
-		 elevation = atan2(m[10], m[6]) / DEG2RAD;
-		 status |= RMAT_SAW_ORI;
-	     } else if (bu_strncmp(buf, "viewrot", 7) == 0) {
-		 if (sscanf(buf + 7,
-			     "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
-			     &scan[0], &scan[1], &scan[2], &scan[3],
-			     &scan[4], &scan[5], &scan[6], &scan[7],
-			     &scan[8], &scan[9], &scan[10], &scan[11],
-			     &scan[12], &scan[13], &scan[14], &scan[15]) != 16) {
-		     bu_exit(1, "nirt: read_mat(): Failed to read viewrot\n");
-		 }
-		 MAT_COPY(m, scan);
-		 //if (nirt_debug & DEBUG_MAT)
-		 //    bn_mat_print("view matrix", m);
-		 azimuth = atan2(-m[0], m[1]) / DEG2RAD;
-		 elevation = atan2(m[10], m[6]) / DEG2RAD;
-		 status |= RMAT_SAW_VR;
-	     }
-	 }
-	 if ((status & RMAT_SAW_EYE) == 0) {
-	     bu_exit(1, "nirt: read_mat(): Was given no eye_pt\n");
-	 }
-	 if ((status & (RMAT_SAW_ORI | RMAT_SAW_VR)) == 0) {
-	     bu_exit(1, "nirt: read_mat(): Was given no orientation or viewrot\n");
-	 }
+	while ((buf = rt_read_cmd(stdin)) != (char *) 0) {
+	    if (bu_strncmp(buf, "eye_pt", 6) == 0) {
+		struct bu_vls eye_pt_cmd = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&eye_pt_cmd, "xyz %s", buf + 6);
+		if (nirt_exec(ns, bu_vls_addr(&eye_pt_cmd)) < 0) {
+		    bu_vls_free(&eye_pt_cmd);
+		    bu_exit(1, "nirt: read_mat(): Failed to read eye_pt\n");
+		}
+		bu_vls_free(&eye_pt_cmd);
+		status |= RMAT_SAW_EYE;
+	    } else if (bu_strncmp(buf, "orientation", 11) == 0) {
+		if (sscanf(buf + 11, "%lf%lf%lf%lf", &scan[X], &scan[Y], &scan[Z], &scan[W]) != 4) {
+		    bu_exit(1, "nirt: read_mat(): Failed to read orientation\n");
+		}
+		MAT_COPY(q, scan);
+		quat_quat2mat(m, q);
+		if (nirt_app_debug & DEBUG_MAT)
+		    bn_mat_print("view matrix", m);
+		status |= RMAT_SAW_ORI;
+	    } else if (bu_strncmp(buf, "viewrot", 7) == 0) {
+		if (sscanf(buf + 7,
+			    "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
+			    &scan[0], &scan[1], &scan[2], &scan[3],
+			    &scan[4], &scan[5], &scan[6], &scan[7],
+			    &scan[8], &scan[9], &scan[10], &scan[11],
+			    &scan[12], &scan[13], &scan[14], &scan[15]) != 16) {
+		    bu_exit(1, "nirt: read_mat(): Failed to read viewrot\n");
+		}
+		MAT_COPY(m, scan);
+		if (nirt_app_debug & DEBUG_MAT)
+		    bn_mat_print("view matrix", m);
+		status |= RMAT_SAW_VR;
+	    }
+	}
+	if ((status & RMAT_SAW_EYE) == 0) {
+	    bu_exit(1, "nirt: read_mat(): Was given no eye_pt\n");
+	}
+	if ((status & (RMAT_SAW_ORI | RMAT_SAW_VR)) == 0) {
+	    bu_exit(1, "nirt: read_mat(): Was given no orientation or viewrot\n");
+	}
 
-	 // TODO - set these in the nirt state with appropriate nirt_exec calls.  Even
-	 // better, copy the original strings (where possible) directly into the
-	 // commands assembled for nirt_exec rather than doing the math ourselves
-	 // here.
-	 //
-	 // The original nirt code sets azimuth and elevation, but then sets direct
-	 // and calls dir2ae.  not sure why it's doing both?
-	 direct[X] = -m[8];
-	 direct[Y] = -m[9];
-	 direct[Z] = -m[10];
+	// Now, construct a dir command line from the m matrix
+	size_t prec = std::numeric_limits<fastf_t>::digits10 + 2; // TODO - once we enable C++ 11 switch this to (p > std::numeric_limits<fastf_t>::max_digits10)
+	bu_vls_sprintf(&dir_cmd, "dir %.*f %.*f %.*f", prec, -m[8], prec, -m[9], prec, -m[10]);
+	if (nirt_exec(ns, bu_vls_addr(&dir_cmd)) < 0) {
+	    bu_vls_free(&dir_cmd);
+	    bu_exit(1, "nirt: read_mat(): Failed to set the view direction\n");
+	}
+	bu_vls_free(&dir_cmd);
 
-	 bu_log("target: %f,%f,%f\n", V3ARGS(target));
-	 bu_log("direct: %f,%f,%f\n", V3ARGS(direct));
-	 bu_log("az: %f\n", azimuth);
-	 bu_log("el: %f\n", elevation);
+	if (nirt_exec(ns, "s") < 0) {
+	    bu_exit(1, "nirt: read_mat(): Shot failed\n");
+	}
 
-	 // dir2ae
-	 // tar2grid
-	 // shoot
-
-	 return 0;
+	goto done;
     }
 
 
@@ -783,7 +787,7 @@ main(int argc, const char **argv)
 	if (BU_STR_EQUAL(bu_vls_addr(&iline), "clear")) {
 	    linenoiseClearScreen();
 	    bu_vls_trunc(&iline, 0);
-	    return 0;
+	    continue;
 	}
 
 	nret = nirt_app_exec(ns, &iline, &state_file, &io_data);
