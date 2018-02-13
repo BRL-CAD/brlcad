@@ -51,7 +51,7 @@
 extern outval			ValTab[];
 extern int			nirt_debug;
 
-void old_read_mat (struct rt_i *rtip)
+void read_mat (struct rt_i *rtip)
 {
     double scan[16] = MAT_INIT_ZERO;
     char	*buf;
@@ -110,10 +110,10 @@ void old_read_mat (struct rt_i *rtip)
     direct(Y) = -m[9];
     direct(Z) = -m[10];
 
-    old_dir2ae();
+    dir2ae();
 
-    old_targ2grid();
-    old_shoot("", 0, rtip);
+    targ2grid();
+    shoot("", 0, rtip);
 }
 
 /*

@@ -37,7 +37,7 @@
 extern outval ValTab[];
 
 void
-old_dir2ae(void)
+dir2ae(void)
 {
     double square;
     int zeroes = ZERO(direct(Y)) && ZERO(direct(X));
@@ -50,7 +50,7 @@ old_dir2ae(void)
 
 
 void
-old_grid2targ(void)
+grid2targ(void)
 {
     double ar = azimuth() * DEG2RAD;
     double er = elevation() * DEG2RAD;
@@ -67,7 +67,7 @@ old_grid2targ(void)
 
 
 void
-old_targ2grid(void)
+targ2grid(void)
 {
     double ar = azimuth() * DEG2RAD;
     double er = elevation() * DEG2RAD;
@@ -84,7 +84,7 @@ old_targ2grid(void)
 
 
 void
-old_ae2dir(void)
+ae2dir(void)
 {
     double ar = azimuth() * DEG2RAD;
     double er = elevation() * DEG2RAD;

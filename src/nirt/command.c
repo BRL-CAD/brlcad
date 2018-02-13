@@ -62,7 +62,7 @@ extern int need_prep;
 
 
 void
-old_bot_minpieces(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
+bot_minpieces(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
     long new_lvalue;
     int i=0;
@@ -88,7 +88,7 @@ old_bot_minpieces(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip
 }
 
 void
-old_az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     double az = 0.0;
     double el = 0.0;
@@ -147,11 +147,11 @@ old_az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     }
     azimuth() = az;
     elevation() = el;
-    old_ae2dir();
+    ae2dir();
 }
 
 void
-old_grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     double g = 0.0;
     vect_t Gr = VINIT_ZERO;
@@ -200,7 +200,7 @@ old_grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	/* if there is no dist coor, set default */
 	grid(HORZ) = Gr[HORZ] * local2base;
 	grid(VERT) = Gr[VERT] * local2base;
-	old_grid2targ();
+	grid2targ();
 	return;
     }
 
@@ -226,11 +226,11 @@ old_grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     grid(HORZ) = Gr[HORZ] * local2base;
     grid(VERT) = Gr[VERT] * local2base;
     grid(DIST) = Gr[DIST] * local2base;
-    old_grid2targ();
+    grid2targ();
 }
 
 void
-old_target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     double tg = 0.0;
     vect_t Tar = VINIT_ZERO;	    /* Target x, y and z */
@@ -298,11 +298,11 @@ old_target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     target(X) = Tar[X] * local2base;
     target(Y) = Tar[Y] * local2base;
     target(Z) = Tar[Z] * local2base;
-    old_targ2grid();
+    targ2grid();
 }
 
 void
-old_dir_vect(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+dir_vect(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     double dr = 0.0;
     vect_t Dir = VINIT_ZERO;	   /* Direction vector x, y and z */
@@ -369,11 +369,11 @@ old_dir_vect(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     direct(X) = Dir[X];
     direct(Y) = Dir[Y];
     direct(Z) = Dir[Z];
-    old_dir2ae();
+    dir2ae();
 }
 
 void
-old_quit()
+quit()
 {
     if (silent_flag != SILENT_YES)
 	(void) fputs("Quitting...\n", stdout);
@@ -381,7 +381,7 @@ old_quit()
 }
 
 void
-old_show_menu()
+show_menu()
 {
     com_table *ctp;
 
@@ -390,19 +390,19 @@ old_show_menu()
 }
 
 void
-old_shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
+shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 {
     int i;
     double bov = 0.0;	/* back out value */
 
-    extern void old_init_ovlp();
+    extern void init_ovlp();
 
     if (!rtip)
       return;
 
     if (need_prep) {
 	rt_clean(rtip);
-	old_do_rt_gettrees(rtip, NULL, 0, &need_prep);
+	do_rt_gettrees(rtip, NULL, 0, &need_prep);
     }
 
     if (do_backout) {
@@ -419,7 +419,7 @@ old_shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 	}
 
 	if (bsphere_diameter < 0)
-	    old_set_diameter(rtip);
+	    set_diameter(rtip);
 
 	/*
 	 * calculate the distance from a plane normal to the ray direction through the center of
@@ -454,7 +454,7 @@ old_shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 	       V3ARGS(ap.a_ray.r_dir));
     }
 
-    old_init_ovlp();
+    init_ovlp();
     (void) rt_shootray(&ap);
 
     /* Restore pre-backout target values */
@@ -467,7 +467,7 @@ old_shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 }
 
 void
-old_use_air(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+use_air(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     int new_use = 0;      /* current position on the *buffer */
     char response[128];
@@ -514,7 +514,7 @@ old_use_air(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	bu_log("Building the directory...");
 	if ((my_rtip = rt_dirbuild(db_name, db_title, TITLE_LEN)) == RTI_NULL) {
 	    bu_log("Could not load file %s\n", db_name);
-	    old_printusage();
+	    printusage();
 	    bu_exit(1, NULL);
 	}
 	rti_tab[new_use] = my_rtip;
@@ -522,15 +522,15 @@ old_use_air(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	my_rtip->rti_save_overlaps = (overlap_claims > 0);
 
 	bu_log("Prepping the geometry...");
-	old_do_rt_gettrees(my_rtip, NULL, 0, &need_prep);
+	do_rt_gettrees(my_rtip, NULL, 0, &need_prep);
     }
     ap.a_rt_i = rti_tab[new_use];
     ap.a_resource = &res_tab[new_use];
-    old_set_diameter(ap.a_rt_i);
+    set_diameter(ap.a_rt_i);
 }
 
 void
-old_nirt_units(char *buffer, com_table *ctp, struct rt_i *rtip)
+nirt_units(char *buffer, com_table *ctp, struct rt_i *rtip)
 {
     double tmp_dbl;
     int i = 0;      /* current position on the *buffer */
@@ -565,7 +565,7 @@ old_nirt_units(char *buffer, com_table *ctp, struct rt_i *rtip)
 }
 
 void
-old_do_overlap_claims(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+do_overlap_claims(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     int i = 0;      /* current position on the *buffer */
     int j;
@@ -602,7 +602,7 @@ old_do_overlap_claims(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 }
 
 void
-old_cm_attr(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+cm_attr(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     while (isascii(*buffer) && isspace((int)*buffer)) buffer++;
 
@@ -612,20 +612,20 @@ old_cm_attr(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     }
 
     if (! bu_strncmp(buffer, "-p", 2)) {
-	old_attrib_print();
+	attrib_print();
 	return;
     }
 
     if (! bu_strncmp(buffer, "-f", 2)) {
-	old_attrib_flush();
+	attrib_flush();
 	return;
     }
 
-    old_attrib_add(buffer, &need_prep);
+    attrib_add(buffer, &need_prep);
 }
 
 void
-old_cm_debug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+cm_debug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     char *cp = buffer;
 
@@ -648,7 +648,7 @@ old_cm_debug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 }
 
 void
-old_cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     char *cp = buffer;
 
@@ -674,7 +674,7 @@ old_cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 }
 
 void
-old_backout(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
+backout(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
 
     while (isspace((int)*buffer))

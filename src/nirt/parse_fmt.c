@@ -130,7 +130,7 @@ const char *def_fmt[] = {
     "\"\""
 };
 
-void old_free_ospec(outitem *oil);
+void free_ospec(outitem *oil);
 
 extern double base2local;
 extern struct application ap;
@@ -140,15 +140,15 @@ extern char *ocname[];
 
 
 void
-old_format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
+format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 {
     const char* bp = buffer;	/* was + 1; */
     int fmt_type = FMT_NONE;
     int i;
     int use_defaults = 0;
 
-    void old_parse_fmt(const char* uoutspec, int outcom_type);
-    void old_show_ospec(outitem *oil);
+    void parse_fmt(const char* uoutspec, int outcom_type);
+    void show_ospec(outitem *oil);
 
     /* Handle no args, arg=='?', and obvious bad arg */
     if (*bp != '\0')
@@ -189,7 +189,7 @@ old_format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip)
 	    if (fmt_type == FMT_NONE)
 		fprintf(stderr, "Error: No output-statement type specified\n");
 	    else
-		old_show_ospec(oi_list[fmt_type]);
+		show_ospec(oi_list[fmt_type]);
 	    return;
 	case '"':
 	    if (fmt_type == FMT_NONE) {
@@ -212,13 +212,13 @@ old_format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip)
     if (use_defaults) {
 	if (fmt_type == FMT_NONE) {
 	    for (i = 0; i < FMT_NONE; ++i) {
-		old_parse_fmt(def_fmt[i], i);
+		parse_fmt(def_fmt[i], i);
 	    }
 	} else {
-	    old_parse_fmt(def_fmt[fmt_type], fmt_type);
+	    parse_fmt(def_fmt[fmt_type], fmt_type);
 	}
     } else {
-	old_parse_fmt(bp, fmt_type);
+	parse_fmt(bp, fmt_type);
     }
 }
 
@@ -228,7 +228,7 @@ old_format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip)
  * outcom_type is the type of output command
  */
 void
-old_parse_fmt(const char *uoutspec, int outcom_type)
+parse_fmt(const char *uoutspec, int outcom_type)
 {
     char *of;		/* Format for current output item */
     char *up;
@@ -369,25 +369,25 @@ old_parse_fmt(const char *uoutspec, int outcom_type)
 	return;
     }
 
-    old_check_conv_spec(oil);
+    check_conv_spec(oil);
 
     /* We are now satisfied that oil is a valid list of output items,
      * so it's time to install it as such
      */
-    old_free_ospec(oi_list[outcom_type]);
+    free_ospec(oi_list[outcom_type]);
     oi_list[outcom_type] = oil;
 
     bu_free(mycopy, "Copy of user's output spec");
 }
 
 void
-old_default_ospec (void)
+default_ospec (void)
 {
     int i;
 
     for (i = 0; i < FMT_NONE; ++i) {
 	oi_list[i] = OUTITEM_NULL;
-	old_parse_fmt(def_fmt[i], i);
+	parse_fmt(def_fmt[i], i);
     }
 }
 
@@ -396,7 +396,7 @@ old_default_ospec (void)
  * oil is a list of output items
  */
 void
-old_show_ospec (outitem *oil)
+show_ospec (outitem *oil)
 {
     outitem *oip;		/* Pointer into list of output items */
     char *c;
@@ -424,7 +424,7 @@ old_show_ospec (outitem *oil)
 
 
 void
-old_report(int outcom_type)
+report(int outcom_type)
 {
     outitem *oip;
 
@@ -466,7 +466,7 @@ old_report(int outcom_type)
 
 
 void
-old_print_item (char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+print_item (char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     char *bp = buffer;
     char *bp0;
@@ -532,7 +532,7 @@ old_print_item (char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 }
 
 FILE *
-old_fopenrc(void)
+fopenrc(void)
 {
     char *rc_file_name;
     char *home;
@@ -552,7 +552,7 @@ old_fopenrc(void)
 }
 
 int
-old_check_conv_spec(outitem *oip)
+check_conv_spec(outitem *oip)
 {
     char *cp;
     int oi_type;
@@ -645,7 +645,7 @@ old_check_conv_spec(outitem *oip)
 
 
 void
-old_direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     size_t i = 0;      /* current position on the *buffer */
     size_t j = 0;      /* position of last non-whitespace char in the *buffer */
@@ -733,7 +733,7 @@ old_direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
 
 void
-old_state_file(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+state_file(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     int i = 0;      /* current position on the *buffer */
     static char *new_name;
@@ -769,7 +769,7 @@ old_state_file(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
 
 void
-old_dump_state(const char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
+dump_state(const char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
     char *c;
     static const char fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o', 'g'};
@@ -817,7 +817,7 @@ old_dump_state(const char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *
 
 
 void
-old_load_state(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
+load_state(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 {
     FILE *sfPtr;
 
@@ -826,7 +826,7 @@ old_load_state(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 	return;
     }
     bu_log("Loading NIRT state from file '%s'...", sf_name);
-    old_interact(READING_FILE, sfPtr, rtip);
+    interact(READING_FILE, sfPtr, rtip);
     bu_log("\n");
     fclose(sfPtr);
 }
@@ -836,7 +836,7 @@ old_load_state(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
  * oil is a list of output items
  */
 void
-old_free_ospec (outitem *oil)
+free_ospec (outitem *oil)
 {
     outitem *next = oil;	/* Pointer to next output item */
     outitem *oip;		/* Pointer to output item to free */
