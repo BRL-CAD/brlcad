@@ -60,9 +60,12 @@ extern "C" {
 #define VERT            1
 #define DIST            2
 
+// TODO - I think these three debugging modes make sense only in the
+// front end application, but need to double check.
 #define DEBUG_INTERACT  0x001
 #define DEBUG_SCRIPTS   0x002
 #define DEBUG_MAT       0x004
+
 #define DEBUG_BACKOUT   0x008
 #define DEBUG_HITS      0x010
 #define DEBUG_FMT        "\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
