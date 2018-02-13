@@ -59,7 +59,7 @@ extern "C" {
 #define DEBUG_MAT        0x004
 
 size_t
-nirt_list_formats(char ***names)
+_list_formats(char ***names)
 {
     size_t files, i;
     char **filearray = NULL;
@@ -105,7 +105,7 @@ nirt_list_formats(char ***names)
 }
 
 extern "C" int
-dequeue_scripts(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+_dequeue_scripts(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     std::vector<std::string> *init_scripts = (std::vector<std::string> *)set_var;
     init_scripts->clear();
@@ -113,7 +113,7 @@ dequeue_scripts(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSE
 }
 
 extern "C" int
-enqueue_script(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+_enqueue_script(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     std::vector<std::string> *init_scripts = (std::vector<std::string> *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt script enqueue");
@@ -122,14 +122,13 @@ enqueue_script(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 }
 
 extern "C" int
-enqueue_attrs(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+_enqueue_attrs(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     std::set<std::string> *attrs = (std::set<std::string> *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt attr enqueue");
     attrs->insert(argv[0]);
     return 1;
 }
-
 
 struct script_file_data {
     std::vector<std::string> *init_scripts;
@@ -138,7 +137,7 @@ struct script_file_data {
 };
 
 extern "C" int
-enqueue_file(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+_enqueue_file(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     std::string s;
     std::ifstream file;
@@ -168,7 +167,7 @@ enqueue_file(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 }
 
 extern "C" int
-decode_overlap(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+_decode_overlap(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     int *oval = (int *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt overlap handle");
@@ -230,11 +229,10 @@ nirt_app_stdout_hook(NIRT *ns, void *u_data)
 }
 
 
-
 /* TODO - eventually, should support separate destinations for output
  * and error. */
 void
-nirt_dest(struct nirt_io_data *io_data, struct bu_vls *iline) {
+_nirt_dest_cmd(struct nirt_io_data *io_data, struct bu_vls *iline) {
     // Destination is handled above the library level.
     FILE *newf = NULL;
     int use_pipe = 0;
@@ -333,7 +331,7 @@ nirt_app_exec(NIRT *ns, struct bu_vls *iline, struct bu_vls *state_file, struct 
     /* A couple of the commands are application level, not
      * library level - handle them here. */
     if (BU_STR_EQUAL(bu_vls_addr(iline), "dest") || !bu_fnmatch("dest *", bu_vls_addr(iline), 0)) {
-	nirt_dest(io_data, iline);
+	_nirt_dest_cmd(io_data, iline);
 	return 0;
     }
     if (BU_STR_EQUAL(bu_vls_addr(iline), "dump") || !bu_fnmatch("dump *", bu_vls_addr(iline), 0)) {
@@ -468,23 +466,23 @@ main(int argc, const char **argv)
     /* These bu_opt_desc_opts settings approximate the old NIRT help formatting */
     struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 11, 67, NULL, NULL, NULL, 1, NULL, NULL };
     struct bu_opt_desc d[18];
-    BU_OPT(d[0],  "h", "help", "",       NULL,             &print_help,     "print help and exit");
-    BU_OPT(d[1],  "A", "",     "n",      &enqueue_attrs,   &attrs,          "add attribute_name=n"); /* TODO - support reading a list of attributes? */
-    BU_OPT(d[2],  "M", "",     "",       NULL,             &read_matrix,    "read matrix, cmds on stdin");
-    BU_OPT(d[3],  "b", "",     "",       NULL,             &backout,        "back out of geometry before first shot");
-    BU_OPT(d[4],  "B", "",     "n",      &bu_opt_int,      &minpieces,      "set rt_bot_minpieces=n");
-    BU_OPT(d[5],  "T", "",     "n",      &bu_opt_int,      &bot_mintie,     "set rt_bot_mintie=n (deprecated, use LIBRT_BOT_MINTIE instead)");
-    BU_OPT(d[6],  "e", "",     "script", &enqueue_script,  &init_scripts,   "run script before interacting");
-    BU_OPT(d[7],  "f", "",     "sfile",  &enqueue_file,    &sfd,            "run script sfile before interacting");
-    BU_OPT(d[8],  "E", "",     "",       &dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
-    BU_OPT(d[9],  "L", "",     "",       NULL,             &list_formats,   "list output formatting options");
-    BU_OPT(d[10], "s", "",     "",       NULL,             &silent_mode,    "run in silent (non-verbose) mode");
-    BU_OPT(d[11], "v", "",     "",       NULL,             &verbose_mode,   "run in verbose mode");
-    BU_OPT(d[12], "H", "",     "n",      &bu_opt_int,      &header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
-    BU_OPT(d[13], "u", "",     "n",      &bu_opt_int,      &use_air,        "set use_air=n (default 0)");
-    BU_OPT(d[14], "O", "",     "action", &decode_overlap,  &overlap_claims, "handle overlap claims via action");
+    BU_OPT(d[0],  "h", "help", "",       NULL,              &print_help,     "print help and exit");
+    BU_OPT(d[1],  "A", "",     "n",      &_enqueue_attrs,   &attrs,          "add attribute_name=n"); /* TODO - support reading a list of attributes? */
+    BU_OPT(d[2],  "M", "",     "",       NULL,              &read_matrix,    "read matrix, cmds on stdin");
+    BU_OPT(d[3],  "b", "",     "",       NULL,              &backout,        "back out of geometry before first shot");
+    BU_OPT(d[4],  "B", "",     "n",      &bu_opt_int,       &minpieces,      "set rt_bot_minpieces=n");
+    BU_OPT(d[5],  "T", "",     "n",      &bu_opt_int,       &bot_mintie,     "set rt_bot_mintie=n (deprecated, use LIBRT_BOT_MINTIE instead)");
+    BU_OPT(d[6],  "e", "",     "script", &_enqueue_script,  &init_scripts,   "run script before interacting");
+    BU_OPT(d[7],  "f", "",     "sfile",  &_enqueue_file,    &sfd,            "run script sfile before interacting");
+    BU_OPT(d[8],  "E", "",     "",       &_dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
+    BU_OPT(d[9],  "L", "",     "",       NULL,              &list_formats,   "list output formatting options");
+    BU_OPT(d[10], "s", "",     "",       NULL,              &silent_mode,    "run in silent (non-verbose) mode");
+    BU_OPT(d[11], "v", "",     "",       NULL,              &verbose_mode,   "run in verbose mode");
+    BU_OPT(d[12], "H", "",     "n",      &bu_opt_int,       &header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
+    BU_OPT(d[13], "u", "",     "n",      &bu_opt_int,       &use_air,        "set use_air=n (default 0)");
+    BU_OPT(d[14], "O", "",     "action", &_decode_overlap,  &overlap_claims, "handle overlap claims via action");
     BU_OPT(d[15], "x", "",     "v",      NULL,    &RTG.debug,      "set librt(3) diagnostic flag=v");
-    BU_OPT(d[16], "X", "",     "v",      &bu_opt_vls,      &nirt_debug,     "set nirt diagnostic flag=v");
+    BU_OPT(d[16], "X", "",     "v",      &bu_opt_vls,       &nirt_debug,     "set nirt diagnostic flag=v");
     BU_OPT_NULL(d[17]);
 
     if (argc == 0 || !argv) return -1;
@@ -508,7 +506,7 @@ main(int argc, const char **argv)
     if (list_formats) {
 	/* Print available header formats and exit */
 	bu_log("Formats available:\n");
-	nirt_list_formats(NULL);
+	_list_formats(NULL);
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
@@ -537,7 +535,7 @@ main(int argc, const char **argv)
 	{
 	    size_t fmtcnt = 0;
 	    char **names = NULL;
-	    if ((fmtcnt = nirt_list_formats(&names)) > 0) {
+	    if ((fmtcnt = _list_formats(&names)) > 0) {
 		size_t i = 0;
 		printf("Formats available:");
 		do {
