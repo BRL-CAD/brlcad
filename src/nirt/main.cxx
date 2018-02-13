@@ -51,6 +51,13 @@ extern "C" {
 #define OVLP_REBUILD_ALL        2
 #define OVLP_RETAIN             3
 
+/* state for -M reading */
+#define RMAT_SAW_EYE    0x01
+#define RMAT_SAW_ORI    0x02
+#define RMAT_SAW_VR     0x02
+
+#define DEBUG_MAT        0x004
+
 size_t
 nirt_list_formats(char ***names)
 {
@@ -674,10 +681,6 @@ main(int argc, const char **argv)
     /* Initialize the state file to "nirt_state" */
     bu_vls_sprintf(&state_file, "nirt_state");
 
-    /* If we're supposed to read input from stdin, do that */
-    if (read_matrix) {
-    }
-
     /* If we ended up with scripts to run before interacting, run them */
     if (init_scripts.size() > 0) {
 	int nret = 0;
@@ -687,6 +690,86 @@ main(int argc, const char **argv)
 	}
 	init_scripts.clear();
     }
+
+    /* If we're supposed to read matrix input from stdin instead of interacting, do that */
+    if (read_matrix) {
+	 double scan[16] = MAT_INIT_ZERO;
+	 char *buf;
+	 int  status = 0x0;
+	 mat_t m;
+	 mat_t q;
+	 point_t target;
+	 point_t direct;
+	 double azimuth;
+	 double elevation;
+
+	 while ((buf = rt_read_cmd(stdin)) != (char *) 0) {
+	     if (bu_strncmp(buf, "eye_pt", 6) == 0) {
+		 if (sscanf(buf + 6, "%lf%lf%lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
+		     bu_exit(1, "nirt: read_mat(): Failed to read eye_pt\n");
+		 }
+		 target[X] = scan[X];
+		 target[Y] = scan[Y];
+		 target[Z] = scan[Z];
+		 status |= RMAT_SAW_EYE;
+	     } else if (bu_strncmp(buf, "orientation", 11) == 0) {
+		 if (sscanf(buf + 11, "%lf%lf%lf%lf", &scan[X], &scan[Y], &scan[Z], &scan[W]) != 4) {
+		     bu_exit(1, "nirt: read_mat(): Failed to read orientation\n");
+		 }
+		 MAT_COPY(q, scan);
+		 quat_quat2mat(m, q);
+		 //if (nirt_debug & DEBUG_MAT)
+		 //    bn_mat_print("view matrix", m);
+		 azimuth = atan2(-m[0], m[1]) / DEG2RAD;
+		 elevation = atan2(m[10], m[6]) / DEG2RAD;
+		 status |= RMAT_SAW_ORI;
+	     } else if (bu_strncmp(buf, "viewrot", 7) == 0) {
+		 if (sscanf(buf + 7,
+			     "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
+			     &scan[0], &scan[1], &scan[2], &scan[3],
+			     &scan[4], &scan[5], &scan[6], &scan[7],
+			     &scan[8], &scan[9], &scan[10], &scan[11],
+			     &scan[12], &scan[13], &scan[14], &scan[15]) != 16) {
+		     bu_exit(1, "nirt: read_mat(): Failed to read viewrot\n");
+		 }
+		 MAT_COPY(m, scan);
+		 //if (nirt_debug & DEBUG_MAT)
+		 //    bn_mat_print("view matrix", m);
+		 azimuth = atan2(-m[0], m[1]) / DEG2RAD;
+		 elevation = atan2(m[10], m[6]) / DEG2RAD;
+		 status |= RMAT_SAW_VR;
+	     }
+	 }
+	 if ((status & RMAT_SAW_EYE) == 0) {
+	     bu_exit(1, "nirt: read_mat(): Was given no eye_pt\n");
+	 }
+	 if ((status & (RMAT_SAW_ORI | RMAT_SAW_VR)) == 0) {
+	     bu_exit(1, "nirt: read_mat(): Was given no orientation or viewrot\n");
+	 }
+
+	 // TODO - set these in the nirt state with appropriate nirt_exec calls.  Even
+	 // better, copy the original strings (where possible) directly into the
+	 // commands assembled for nirt_exec rather than doing the math ourselves
+	 // here.
+	 //
+	 // The original nirt code sets azimuth and elevation, but then sets direct
+	 // and calls dir2ae.  not sure why it's doing both?
+	 direct[X] = -m[8];
+	 direct[Y] = -m[9];
+	 direct[Z] = -m[10];
+
+	 bu_log("target: %f,%f,%f\n", V3ARGS(target));
+	 bu_log("direct: %f,%f,%f\n", V3ARGS(direct));
+	 bu_log("az: %f\n", azimuth);
+	 bu_log("el: %f\n", elevation);
+
+	 // dir2ae
+	 // tar2grid
+	 // shoot
+
+	 return 0;
+    }
+
 
     /* Start the interactive loop */
     while ((line = linenoise("nirt> ")) != NULL) {
