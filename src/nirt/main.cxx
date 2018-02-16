@@ -613,7 +613,7 @@ main(int argc, const char **argv)
     /* OK, from here on out we are actually going to be working with NIRT
      * itself.  Set up the initial environment */
     struct db_i *dbip;
-    struct nirt_state *ns;
+    struct nirt_state *ns = NULL;
     if (rt_uniresource.re_magic == 0) rt_init_resource(&rt_uniresource, 0, NULL);
 
     if (silent_mode != SILENT_YES) {
