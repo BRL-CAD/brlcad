@@ -550,6 +550,9 @@ main(int argc, const char **argv)
 
     if (argc == 0 || !argv) return -1;
 
+    /* Let bu_brlcad_root and friends know where we are */
+    bu_setprogname(argv[0]);
+
     argv++; argc--;
     if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
        	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
