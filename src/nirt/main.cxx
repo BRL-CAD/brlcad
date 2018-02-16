@@ -57,6 +57,8 @@ extern "C" {
 #define RMAT_SAW_ORI    0x02
 #define RMAT_SAW_VR     0x02
 
+#define NIRT_PROMPT "nirt> "
+
 size_t
 _list_formats(char ***names)
 {
@@ -196,7 +198,7 @@ struct nirt_io_data {
 #define IO_DATA_NULL { stdout, NULL, stderr, NULL, 0 }
 
 int
-nirt_stdout_hook(NIRT *ns, void *u_data)
+nirt_stdout_hook(struct nirt_state *ns, void *u_data)
 {
     struct nirt_io_data *io_data = (struct nirt_io_data *)u_data;
     struct bu_vls out = BU_VLS_INIT_ZERO;
@@ -208,7 +210,19 @@ nirt_stdout_hook(NIRT *ns, void *u_data)
 }
 
 int
-nirt_stderr_hook(NIRT *ns, void *u_data)
+nirt_msg_hook(struct nirt_state *ns, void *u_data)
+{
+    struct nirt_io_data *io_data = (struct nirt_io_data *)u_data;
+    struct bu_vls out = BU_VLS_INIT_ZERO;
+    nirt_log(&out, ns, NIRT_MSG);
+    fprintf(io_data->out, "%s", bu_vls_addr(&out));
+    if (io_data->out == stdout) fflush(stdout);
+    bu_vls_free(&out);
+    return 0;
+}
+
+int
+nirt_stderr_hook(struct nirt_state *ns, void *u_data)
 {
     struct nirt_io_data *io_data = (struct nirt_io_data *)u_data;
     struct bu_vls out = BU_VLS_INIT_ZERO;
@@ -220,7 +234,7 @@ nirt_stderr_hook(NIRT *ns, void *u_data)
 }
 
 int
-nirt_show_menu_hook(NIRT *ns, void *u_data)
+nirt_show_menu_hook(struct nirt_state *ns, void *u_data)
 {
     struct bu_vls *log = (struct bu_vls *)u_data;
     nirt_log(log, ns, NIRT_OUT);
@@ -228,7 +242,7 @@ nirt_show_menu_hook(NIRT *ns, void *u_data)
 }
 
 int
-nirt_dump_hook(NIRT *ns, void *u_data)
+nirt_dump_hook(struct nirt_state *ns, void *u_data)
 {
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
     struct bu_vls *log = (struct bu_vls *)u_data;
@@ -328,14 +342,14 @@ struct nirt_help_desc {
 const struct nirt_help_desc nirt_help_descs[] = {
     { "dest",           "set/query output destination" },
     { "statefile",      "set/query name of state file" },
-    { "dump",           "write current state of NIRT to the state file" },
-    { "load",           "read new state for NIRT from the state file" },
+    { "dump",           "write current state of struct nirt_state to the state file" },
+    { "load",           "read new state for struct nirt_state from the state file" },
     { "clear",          "clears text from the terminal screen (interactive mode only)" },
     { (char *)NULL,     NULL }
 };
 
 int
-nirt_app_exec(NIRT *ns, struct bu_vls *iline, struct bu_vls *state_file, struct nirt_io_data *io_data)
+nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_file, struct nirt_io_data *io_data)
 {
     int nret = 0;
 
@@ -442,14 +456,14 @@ nirt_app_exec(NIRT *ns, struct bu_vls *iline, struct bu_vls *state_file, struct 
     return nret;
 }
 
-/* gateway into the old NIRT code, if we need to run it */
+/* gateway into the old struct nirt_state code, if we need to run it */
 extern "C" {int old_nirt_main(int argc, const char *argv[]);}
 
 int
 main(int argc, const char **argv)
 {
-    return old_nirt_main(argc, argv);
-#if 0
+    //return old_nirt_main(argc, argv);
+#if 1
     /* Make the old behavior accessible */
     if (argc > 1 && BU_STR_EQUAL(argv[1], "--old")) {
 	argv[1] = argv[0];
@@ -480,8 +494,9 @@ main(int argc, const char **argv)
     int silent_mode = SILENT_UNSET;
     int use_air = 0;
     int verbose_mode = 0;
+    const char *np = NULL;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    /* These bu_opt_desc_opts settings approximate the old NIRT help formatting */
+    /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
     struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 11, 67, NULL, NULL, NULL, 1, NULL, NULL };
     struct bu_opt_desc d[18];
     BU_OPT(d[0],  "h", "help", "",       NULL,              &print_help,     "print help and exit");
@@ -572,7 +587,7 @@ main(int argc, const char **argv)
     /* OK, from here on out we are actually going to be working with NIRT
      * itself.  Set up the initial environment */
     struct db_i *dbip;
-    NIRT *ns;
+    struct nirt_state *ns;
     if (rt_uniresource.re_magic == 0) rt_init_resource(&rt_uniresource, 0, NULL);
 
     if (silent_mode != SILENT_YES) printf("Database file:  '%s'\n", argv[0]);
@@ -587,8 +602,10 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_FAILURE, "db_dirbuild failed: %s\n", argv[0]);
     }
 
-    if (nirt_alloc(&ns) == -1) {
-	bu_exit(EXIT_FAILURE, "nirt allocation failed\n");
+    BU_GET(ns, struct nirt_state);
+    if (nirt_init(ns) == -1) {
+	BU_PUT(ns, struct nirt_state);
+	bu_exit(EXIT_FAILURE, "nirt state initialization failed\n");
     }
 
     /* Set up hooks so we can capture I/O from nirt_exec */
@@ -600,10 +617,21 @@ main(int argc, const char **argv)
     bu_vls_sprintf(io_data.errfile, "stderr");
     (void)nirt_udata(ns, (void *)&io_data);
     nirt_hook(ns, &nirt_stdout_hook, NIRT_OUT);
+    if (silent_mode != SILENT_YES) {
+	nirt_hook(ns, &nirt_msg_hook, NIRT_MSG);
+    }
     nirt_hook(ns, &nirt_stderr_hook, NIRT_ERR);
 
     /* If any of the options require state setup, run the appropriate commands
-     * to put the NIRT environment in the correct state. */
+     * to put the struct nirt_state environment in the correct state. */
+
+    if (silent_mode != SILENT_UNSET) {
+	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&ncmd, "state silent_mode %d", silent_mode);
+	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
+	bu_vls_free(&ncmd);
+    }
+
     if (bot_mintie) {
 	struct bu_vls envs = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&envs, "%d", minpieces);
@@ -681,8 +709,9 @@ main(int argc, const char **argv)
     }
 
     /* We know enough now to initialize */
-    if (nirt_init(ns, dbip) == -1) {
-	bu_exit(EXIT_FAILURE, "nirt_init failed: %s\n", argv[0]);
+    if (nirt_init_dbip(ns, dbip) == -1) {
+	BU_PUT(ns, struct nirt_state);
+	bu_exit(EXIT_FAILURE, "nirt_init_dbip failed: %s\n", argv[0]);
     }
     db_close(dbip); /* nirt will now manage its own copies of the dbip */
 
@@ -773,7 +802,8 @@ main(int argc, const char **argv)
 
 
     /* Start the interactive loop */
-    while ((line = linenoise("nirt> ")) != NULL) {
+    np = (silent_mode == SILENT_YES) ? "": NIRT_PROMPT;
+    while ((line = linenoise(np)) != NULL) {
 	int nret = 0;
 	bu_vls_sprintf(&iline, "%s", line);
 	free(line);
@@ -809,6 +839,7 @@ done:
     BU_PUT(io_data.outfile, struct bu_vls);
     BU_PUT(io_data.errfile, struct bu_vls);
     nirt_destroy(ns);
+    BU_PUT(ns, struct nirt_state);
     return 0;
 }
 

@@ -136,7 +136,6 @@ set(LIBGED_SOURCES
   human.c
   illum.c
   importFg4Section.c
-  inirt.c
   inside.c
   instance.c
   isize.c
