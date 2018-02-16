@@ -558,6 +558,9 @@ main(int argc, const char **argv)
 
     BU_GET(io_data.outfile, struct bu_vls);
     BU_GET(io_data.errfile, struct bu_vls);
+    // Start out using the standard channels until a dest command tells us otherwise.
+    io_data.out = stdout;
+    io_data.err = stderr;
     bu_vls_init(io_data.outfile);
     bu_vls_init(io_data.errfile);
     bu_vls_sprintf(io_data.outfile, "stdout");
