@@ -291,7 +291,15 @@ x_orig,y_orig,z_orig,d_orig,h,v,x_dir,y_dir,z_dir,az,el
 Results:
 reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled_los,obliq_in,obliq_out,surf_num_in,surf_num_out
 "right_cube.r","/right_cube.r",1003,3.000000,0.000000,0.000000,3.000000,1.000000,0.000000,0.000000,1.000000,2.000000,2.000000,0.000000,0.000000,0,1
+
+GAP:,x_gap_in,y_gap_in,z_gap_in,x_gap_out,y_gap_out,z_gap_out,gap_los
+ ,1.00000000,0.00000000,0.00000000,1.000000,0.000000,0.000000,0.00000000
+
 "center_cube.r","/center_cube.r",1000,1.000000,0.000000,0.000000,1.000000,-1.000000,0.000000,0.000000,-1.000000,2.000000,2.000000,0.000000,0.000000,0,1
+
+GAP:,x_gap_in,y_gap_in,z_gap_in,x_gap_out,y_gap_out,z_gap_out,gap_los
+ ,-1.00000000,0.00000000,0.00000000,-1.000000,0.000000,0.000000,0.00000000
+
 "left_cube.r","/left_cube.r",1002,-1.000000,0.000000,0.000000,-1.000000,-3.000000,0.000000,0.000000,-3.000000,2.000000,2.000000,0.000000,0.000000,0,1
 
 Quitting...
@@ -343,7 +351,9 @@ Origin (x y z) = (6.63324958 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 right_cube.r         (   3.0000    0.0000    0.0000)   2.0000   0.0000 
+GAP: xyz_in=(1 0 0) los=0
 center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000 
+GAP: xyz_in=(-1 0 0) los=0
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
 Output format: gap2 (specify -L option for descriptive listing)
@@ -360,7 +370,9 @@ Origin (x y z) = (6.63324958 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 right_cube.r         (   3.0000    0.0000    0.0000)   2.0000   0.0000 
+GAP: xyz_in=(1 0 0) xyz_out=(1 0 0) los=0
 center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000 
+GAP: xyz_in=(-1 0 0) xyz_out=(-1 0 0) los=0
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
 *** Test 8 - attribute reporting ***
@@ -375,7 +387,6 @@ Database title: 'NIRT example database'
 Database units: 'mm'
 model_min = (-3, -1, -1)    model_max = (3, 1, 1)
 "color"
-
 Get trees...
 Prepping the geometry...
 Objects 'left_cube_color.r' 'center_cube_color.r' 'right_cube_color.r' processed
@@ -387,7 +398,6 @@ center_cube_color.r  (   1.0000    0.0000    0.0000)   2.0000   0.0000 color=0/2
 left_cube_color.r    (  -1.0000    0.0000    0.0000)   2.0000   0.0000 color=255/0/0 
 "color"
 "region"
-
 Get trees...
 Prepping the geometry...
 Objects 'left_cube_color.r' 'center_cube_color.r' 'right_cube_color.r' processed

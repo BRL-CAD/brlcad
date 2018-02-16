@@ -462,15 +462,12 @@ extern "C" {int old_nirt_main(int argc, const char *argv[]);}
 int
 main(int argc, const char **argv)
 {
-    //return old_nirt_main(argc, argv);
-#if 1
     /* Make the old behavior accessible */
     if (argc > 1 && BU_STR_EQUAL(argv[1], "--old")) {
 	argv[1] = argv[0];
 	argc--;	argv++;
 	return old_nirt_main(argc, argv);
     }
-#endif
 
     struct nirt_io_data io_data = IO_DATA_NULL;
     std::vector<std::string> init_scripts;
@@ -531,7 +528,7 @@ main(int argc, const char **argv)
     if (print_help || argc < 2 || (silent_mode == SILENT_YES && verbose_mode)) {
 	int ret = (argc < 2) ? EXIT_FAILURE : EXIT_SUCCESS;
 	const char *help = bu_opt_describe(d, &dopts);
-	bu_log("Usage: 'nirt [options] model.g objects...'\nOptions:\n%s\n", help);
+	bu_log("Usage: 'nirt [options] model.g objects...'\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
 	if (help) bu_free((char *)help, "help str");
 	bu_exit(ret, NULL);
     }
