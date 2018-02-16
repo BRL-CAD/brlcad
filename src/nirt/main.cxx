@@ -880,7 +880,7 @@ done:
     BU_PUT(io_data.outfile, struct bu_vls);
     BU_PUT(io_data.errfile, struct bu_vls);
     nirt_destroy(ns);
-    BU_PUT(ns, struct nirt_state);
+    if (ns) BU_PUT(ns, struct nirt_state);
     return ret;
 }
 
