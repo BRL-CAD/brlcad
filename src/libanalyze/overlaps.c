@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ged.h" /* need GED_SEM_LIST - may have to re-think how to handle SEMS here. */
 #include "analyze.h"
 
 
@@ -37,7 +36,6 @@ add_unique_pair(struct region_pair *list, /* list to add into */
     struct region_pair *rp, *rpair;
 
     /* look for it in our list */
-    bu_semaphore_acquire(GED_SEM_LIST);
     for (BU_LIST_FOR (rp, region_pair, &list->l)) {
 
 	if ((r1 == rp->r.r1 && r2 == rp->r2) || (r1 == rp->r2 && r2 == rp->r.r1)) {
@@ -72,7 +70,6 @@ add_unique_pair(struct region_pair *list, /* list to add into */
     }
     BU_LIST_INSERT(&rp->l, &rpair->l);
  found:
-    bu_semaphore_release(GED_SEM_LIST);
     return rpair;
 }
 

@@ -28,7 +28,6 @@
 #include "common.h"
 #include "raytrace.h"			/* For interfacing to librt */
 #include "vmath.h"			/* Vector Math macros */
-#include "ged.h"
 #include "rt/geom.h"
 #include "bu/parallel.h"
 #include "analyze.h"

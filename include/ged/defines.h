@@ -33,6 +33,7 @@
 #include "bu/hash.h"
 #include "bu/list.h"
 #include "bu/vls.h"
+#include "dm/bview.h"
 
 __BEGIN_DECLS
 

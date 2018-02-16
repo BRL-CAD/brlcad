@@ -4,7 +4,6 @@ set(ANALYZE_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
-  ${TCL_INCLUDE_DIRS}
   )
 BRLCAD_LIB_INCLUDE_DIRS(analyze ANALYZE_INCLUDE_DIRS "")
 
@@ -39,7 +38,7 @@ set(libanalyze_ignored_files
 )
 CMAKEFILES(${libanalyze_ignored_files})
 
-BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "${TCL_LIBRARY};libbu;librt")
+BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "librt;libbu")
 set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)

@@ -888,7 +888,9 @@ overlap(struct application *ap,
     }
 
     if (analysis_flags & ANALYSIS_OVERLAPS) {
+	bu_semaphore_acquire(GED_SEM_LIST);
 	add_unique_pair(&overlapList, reg1, reg2, depth, ihit);
+	bu_semaphore_release(GED_SEM_LIST);
 
 	if (plot_overlaps) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -937,11 +939,13 @@ void exposed_air(struct partition *pp,
 {
     /* this shouldn't be air */
 
+    bu_semaphore_acquire(GED_SEM_LIST);
     add_unique_pair(&exposedAirList,
-		    pp->pt_regionp,
-		    (struct region *)NULL,
-		    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist, /* thickness */
-		    last_out_point); /* location */
+	    pp->pt_regionp,
+	    (struct region *)NULL,
+	    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist, /* thickness */
+	    last_out_point); /* location */
+    bu_semaphore_release(GED_SEM_LIST);
 
     if (plot_expair) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -1026,11 +1030,13 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		if (gap_dist > overlap_tolerance) {
 
 		    /* like overlaps, we only want to report unique pairs */
+		    bu_semaphore_acquire(GED_SEM_LIST);
 		    add_unique_pair(&gapList,
-				    pp->pt_regionp,
-				    pp->pt_back->pt_regionp,
-				    gap_dist,
-				    pt);
+			    pp->pt_regionp,
+			    pp->pt_back->pt_regionp,
+			    gap_dist,
+			    pt);
+		    bu_semaphore_release(GED_SEM_LIST);
 
 		    /* like overlaps, let's plot */
 		    if (plot_gaps) {
@@ -1232,7 +1238,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		double d = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 		point_t aapt;
 
+		bu_semaphore_acquire(GED_SEM_LIST);
 		add_unique_pair(&adjAirList, pp->pt_back->pt_regionp, pp->pt_regionp, 0.0, pt);
+		bu_semaphore_release(GED_SEM_LIST);
 
 
 		d *= 0.25;

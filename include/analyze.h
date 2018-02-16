@@ -31,7 +31,7 @@
 #include "common.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "ged.h"
+#include "ged/defines.h" /* For GED_SEM_LAST */
 #include "raytrace.h"
 
 __BEGIN_DECLS
