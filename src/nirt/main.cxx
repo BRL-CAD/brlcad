@@ -490,6 +490,7 @@ main(int argc, const char **argv)
     struct script_file_data sfd = {&init_scripts, &last_script_file, 0};
     char *line;
     int ac = 0;
+    size_t i = 0;
     struct bu_vls state_file = BU_VLS_INIT_ZERO;
     std::set<std::string> attrs;
     std::set<std::string>::iterator a_it;
@@ -507,8 +508,24 @@ main(int argc, const char **argv)
     int use_air = 0;
     int verbose_mode = 0;
     int ret = 0;
+    int nret = 0;
+    struct db_i *dbip;
+    struct nirt_state *ns = NULL;
+    const char *help = NULL;
     const char *np = NULL;
+    const char *units_str = NULL;
+    char *dot = NULL;
+    size_t fmtcnt = 0;
+    char **names = NULL;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    struct bu_vls ncmd = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    double scan[16] = MAT_INIT_ZERO;
+    size_t prec = std::numeric_limits<fastf_t>::digits10 + 2; // TODO - once we enable C++ 11 switch this to (p > std::numeric_limits<fastf_t>::max_digits10)
+    char *buf = NULL;
+    int  status = 0x0;
+    mat_t m;
+    mat_t q;
     /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
     struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 11, 67, NULL, NULL, NULL, 1, NULL, NULL };
     struct bu_opt_desc d[18];
@@ -550,11 +567,9 @@ main(int argc, const char **argv)
      * and exit */
     if (print_help || argc < 2 || (silent_mode == SILENT_YES && verbose_mode)) {
 	ret = (argc < 2) ? EXIT_FAILURE : EXIT_SUCCESS;
-	struct bu_vls hout = BU_VLS_INIT_ZERO;
-	const char *help = bu_opt_describe(d, &dopts);
-	bu_vls_sprintf(&hout, "Usage: 'nirt [options] model.g objects...'\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
-	nirt_out(&io_data, bu_vls_addr(&hout));
-	bu_vls_free(&hout);
+	help = bu_opt_describe(d, &dopts);
+	bu_vls_sprintf(&msg, "Usage: 'nirt [options] model.g objects...'\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
+	nirt_out(&io_data, bu_vls_addr(&msg));
 	if (help) bu_free((char *)help, "help str");
 	goto done;
     }
@@ -591,13 +606,12 @@ main(int argc, const char **argv)
 	nirt_msg(&io_data, " (specify -L option for descriptive listing)\n");
 
 	{
-	    size_t fmtcnt = 0;
-	    char **names = NULL;
+	    fmtcnt = 0;
 	    if ((fmtcnt = _list_formats(&io_data, &names)) > 0) {
-		size_t i = 0;
+		i = 0;
 		nirt_msg(&io_data, "Formats available:");
 		do {
-		    char *dot = strchr(names[i], '.');
+		    dot = strchr(names[i], '.');
 		    /* trim off any filename suffix */
 		    if (dot) *dot = '\0';
 		    nirt_msg(&io_data, " ");
@@ -612,21 +626,15 @@ main(int argc, const char **argv)
 
     /* OK, from here on out we are actually going to be working with NIRT
      * itself.  Set up the initial environment */
-    struct db_i *dbip;
-    struct nirt_state *ns = NULL;
-    if (rt_uniresource.re_magic == 0) rt_init_resource(&rt_uniresource, 0, NULL);
+   if (rt_uniresource.re_magic == 0) rt_init_resource(&rt_uniresource, 0, NULL);
 
     if (silent_mode != SILENT_YES) {
-	struct bu_vls dfmsg = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&dfmsg, "Database file:  '%s'\n", argv[0]);
-	nirt_msg(&io_data, bu_vls_addr(&dfmsg));
-	bu_vls_free(&dfmsg);
+	bu_vls_sprintf(&msg, "Database file:  '%s'\n", argv[0]);
+	nirt_msg(&io_data, bu_vls_addr(&msg));
     }
     if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
-	struct bu_vls emsg = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&emsg, "Unable to open db file %s\n", argv[0]);
-	nirt_err(&io_data, bu_vls_addr(&emsg));
-	bu_vls_free(&emsg);
+	bu_vls_sprintf(&msg, "Unable to open db file %s\n", argv[0]);
+	nirt_err(&io_data, bu_vls_addr(&msg));
 	ret = EXIT_FAILURE;
 	goto done;
     }
@@ -634,11 +642,9 @@ main(int argc, const char **argv)
 
     if (silent_mode != SILENT_YES) nirt_msg(&io_data, "Building the directory...\n");
     if (db_dirbuild(dbip) < 0) {
-	struct bu_vls emsg = BU_VLS_INIT_ZERO;
 	db_close(dbip);
-	bu_vls_sprintf(&emsg, "db_dirbuild failed: %s\n", argv[0]);
-	nirt_err(&io_data, bu_vls_addr(&emsg));
-	bu_vls_free(&emsg);
+	bu_vls_sprintf(&msg, "db_dirbuild failed: %s\n", argv[0]);
+	nirt_err(&io_data, bu_vls_addr(&msg));
 	ret = EXIT_FAILURE;
 	goto done;
     }
@@ -663,24 +669,18 @@ main(int argc, const char **argv)
      * to put the struct nirt_state environment in the correct state. */
 
     if (silent_mode != SILENT_UNSET) {
-	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&ncmd, "state silent_mode %d", silent_mode);
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
-	bu_vls_free(&ncmd);
     }
 
     if (bot_mintie) {
-	struct bu_vls envs = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&envs, "%d", minpieces);
-	bu_setenv("LIBRT_BOT_MINTIE", bu_vls_addr(&envs), 1);
-	bu_vls_free(&envs);
+	bu_vls_sprintf(&ncmd, "%d", minpieces);
+	bu_setenv("LIBRT_BOT_MINTIE", bu_vls_addr(&ncmd), 1);
     }
 
     if (minpieces >= 0) {
-	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&ncmd, "bot_minpieces %d", minpieces);
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
-	bu_vls_free(&ncmd);
     }
 
     if (backout) {
@@ -688,10 +688,8 @@ main(int argc, const char **argv)
     }
 
     if (use_air) {
-	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&ncmd, "useair %d", use_air);
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
-	bu_vls_free(&ncmd);
     }
 
     if (overlap_claims) {
@@ -715,43 +713,34 @@ main(int argc, const char **argv)
     }
 
     if (bu_vls_strlen(&nirt_debug) > 0) {
-	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&ncmd, "debug %s", bu_vls_addr(&nirt_debug));
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
-	bu_vls_free(&ncmd);
     }
 
     /* Initialize the attribute list before we do the drawing, since
      * setting attrs with no objects drawn won't trigger a prep */
     if (attrs.size() > 0) {
-	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&ncmd, "attr");
 	for (a_it = attrs.begin(); a_it != attrs.end(); a_it++) {
 	    bu_vls_printf(&ncmd, " %s", (*a_it).c_str());
 	}
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
-	bu_vls_free(&ncmd);
     }
 
     /* Draw the initial set of objects, if supplied */
     if (ac > 1) {
-	int i = 0;
-	struct bu_vls ncmd = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&ncmd, "draw");
-	for (i = 1; i < ac; i++) {
+	for (i = 1; i < (size_t)ac; i++) {
 	    bu_vls_printf(&ncmd, " %s", argv[i]);
 	}
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
-	bu_vls_free(&ncmd);
     }
 
     /* We know enough now to initialize */
     if (nirt_init_dbip(ns, dbip) == -1) {
-	struct bu_vls emsg = BU_VLS_INIT_ZERO;
 	BU_PUT(ns, struct nirt_state);
-	bu_vls_sprintf(&emsg, "nirt_init_dbip failed: %s\n", argv[0]);
-	nirt_err(&io_data, bu_vls_addr(&emsg));
-	bu_vls_free(&emsg);
+	bu_vls_sprintf(&msg, "nirt_init_dbip failed: %s\n", argv[0]);
+	nirt_err(&io_data, bu_vls_addr(&msg));
 	ret = EXIT_FAILURE;
 	goto done;
     }
@@ -759,13 +748,11 @@ main(int argc, const char **argv)
 
     /* Report Database info */
     if (silent_mode != SILENT_YES) {
-	struct bu_vls dmsg = BU_VLS_INIT_ZERO;
-	const char *ustr = bu_units_string(dbip->dbi_local2base);
-	bu_vls_sprintf(&dmsg, "Database title: '%s'\n", dbip->dbi_title);
-	nirt_msg(&io_data, bu_vls_addr(&dmsg));
-	bu_vls_sprintf(&dmsg, "Database units: '%s'\n", (ustr) ? ustr : "Unknown units");
-	nirt_msg(&io_data, bu_vls_addr(&dmsg));
-	bu_vls_free(&dmsg);
+	units_str = bu_units_string(dbip->dbi_local2base);
+	bu_vls_sprintf(&msg, "Database title: '%s'\n", dbip->dbi_title);
+	nirt_msg(&io_data, bu_vls_addr(&msg));
+	bu_vls_sprintf(&msg, "Database units: '%s'\n", (units_str) ? units_str : "Unknown units");
+	nirt_msg(&io_data, bu_vls_addr(&msg));
 	(void)nirt_exec(ns, "state model_bounds");
     }
 
@@ -774,23 +761,14 @@ main(int argc, const char **argv)
 
     /* If we ended up with scripts to run before interacting, run them */
     if (init_scripts.size() > 0) {
-	int nret = 0;
-	for (unsigned int i = 0; i < init_scripts.size(); i++) {
-	    nret = nirt_exec(ns, init_scripts.at(i).c_str());
-	    if (nret == 1) goto done;
+	for (i = 0; i < init_scripts.size(); i++) {
+	    if (nirt_exec(ns, init_scripts.at(i).c_str()) == 1) goto done;
 	}
 	init_scripts.clear();
     }
 
     /* If we're supposed to read matrix input from stdin instead of interacting, do that */
     if (read_matrix) {
-	struct bu_vls dir_cmd = BU_VLS_INIT_ZERO;
-	double scan[16] = MAT_INIT_ZERO;
-	char *buf;
-	int  status = 0x0;
-	mat_t m;
-	mat_t q;
-
 	while ((buf = rt_read_cmd(stdin)) != (char *) 0) {
 	    if (bu_strncmp(buf, "eye_pt", 6) == 0) {
 		struct bu_vls eye_pt_cmd = BU_VLS_INIT_ZERO;
@@ -839,15 +817,12 @@ main(int argc, const char **argv)
 	}
 
 	// Now, construct a dir command line from the m matrix
-	size_t prec = std::numeric_limits<fastf_t>::digits10 + 2; // TODO - once we enable C++ 11 switch this to (p > std::numeric_limits<fastf_t>::max_digits10)
-	bu_vls_sprintf(&dir_cmd, "dir %.*f %.*f %.*f", prec, -m[8], prec, -m[9], prec, -m[10]);
-	if (nirt_exec(ns, bu_vls_addr(&dir_cmd)) < 0) {
-	    bu_vls_free(&dir_cmd);
+	bu_vls_sprintf(&ncmd, "dir %.*f %.*f %.*f", prec, -m[8], prec, -m[9], prec, -m[10]);
+	if (nirt_exec(ns, bu_vls_addr(&ncmd)) < 0) {
 	    nirt_err(&io_data, "nirt: read_mat(): Failed to set the view direction\n");
 	    ret = EXIT_FAILURE;
 	    goto done;
 	}
-	bu_vls_free(&dir_cmd);
 
 	if (nirt_exec(ns, "s") < 0) {
 	    nirt_err(&io_data, "nirt: read_mat(): Shot failed\n");
@@ -862,7 +837,6 @@ main(int argc, const char **argv)
     /* Start the interactive loop */
     np = (silent_mode == SILENT_YES) ? "": NIRT_PROMPT;
     while ((line = linenoise(np)) != NULL) {
-	int nret = 0;
 	bu_vls_sprintf(&iline, "%s", line);
 	free(line);
 	bu_vls_trimspace(&iline);
@@ -884,6 +858,8 @@ main(int argc, const char **argv)
 
 done:
     linenoiseHistoryFree();
+    bu_vls_free(&msg);
+    bu_vls_free(&ncmd);
     bu_vls_free(&iline);
     if (io_data.using_pipe) {
 	pclose(io_data.out);
