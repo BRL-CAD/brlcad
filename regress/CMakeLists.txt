@@ -16,7 +16,6 @@ endmacro(Add_Regression_Test)
 
 # Define the toplevel regression target - unless specifically excluded
 # via a macro argument, this should collect all regression targets.
-# TODO - need to generalize it to accommodate regressions not using sh
 include(ProcessorCount)
 ProcessorCount(N)
 if(NOT N EQUAL 0)
@@ -53,6 +52,7 @@ if(SH_EXEC)
       set_tests_properties(regress-${testname} PROPERTIES LABELS "NOT_WORKING")
     endif(NOT ${testname}_EXCLUDE_FROM_REGRESS)
     if(NOT "${depends_list}" STREQUAL "")
+      add_dependencies(regress-${testname} ${depends_list})
       add_dependencies(regress ${depends_list})
       if(TARGET check)
 	add_dependencies(check ${depends_list})
