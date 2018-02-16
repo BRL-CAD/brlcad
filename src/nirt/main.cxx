@@ -585,6 +585,7 @@ main(int argc, const char **argv)
 	goto done;
     }
 
+    if (verbose_mode) silent_mode = SILENT_NO;
     /* Check if we're on a terminal or not - it has implications for the modes */
     if (silent_mode == SILENT_UNSET) {
 	silent_mode = (isatty(0)) ? SILENT_NO : SILENT_YES;
