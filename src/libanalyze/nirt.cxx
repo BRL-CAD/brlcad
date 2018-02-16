@@ -2622,6 +2622,7 @@ nirt_init(struct nirt_state *ns)
     n->base2local = 0.0;
     n->local2base = 0.0;
     n->use_air = 0;
+    n->backout = 0;
 
     n->b_state = false;
     n->b_segs = false;
