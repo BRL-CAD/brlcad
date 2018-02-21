@@ -1148,12 +1148,15 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	if (part_nm > 1) {
 	    /* old d_out - new d_in */
 	    vals->gap_los = vals->gap_los - vals->d_in;
-	    _nirt_report(nss, 'g', vals);
-	    /* vlist segment for gap */
-	    vhead = bn_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
-	    BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, vals->gap_in, BN_VLIST_LINE_MOVE);
-	    BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, vals->in, BN_VLIST_LINE_DRAW);
-	    nss->i->b_segs = true;
+
+	    if (vals->gap_los > 0) {
+		_nirt_report(nss, 'g', vals);
+		/* vlist segment for gap */
+		vhead = bn_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
+		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, vals->gap_in, BN_VLIST_LINE_MOVE);
+		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, vals->in, BN_VLIST_LINE_DRAW);
+		nss->i->b_segs = true;
+	    }
 	}
 
 	bu_vls_sprintf(vals->path_name, "%s", part->pt_regionp->reg_name);
