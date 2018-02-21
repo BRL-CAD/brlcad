@@ -1522,6 +1522,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     }
 
     while (std::getline(ifs, line)) {
+	if (!line.compare(0, 1, "#")) continue; // Skip comments
 	if (!line.compare(0, 5, "Ray: ")) {
 	    if (have_ray) {
 		// Have ray already - execute current ray, store results in
@@ -1533,10 +1534,6 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    std::string rstr = line.substr(5);
 	    bu_log("Found Ray: %s\n", rstr.c_str());
 	    have_ray = 1;
-	}
-	if (!line.compare(0, 5, "HIT: ")) {
-	    std::string hstr = line.substr(5);
-	    bu_log("Found HIT: %s\n", hstr.c_str());
 	}
 	if (!line.compare(0, 5, "HIT: ")) {
 	    std::string hstr = line.substr(5);
