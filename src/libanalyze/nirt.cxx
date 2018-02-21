@@ -1325,6 +1325,7 @@ static const struct nirt_cmd_desc nirt_descs[] = {
     { "attr",           "select attributes",                             NULL },
     { "ae",             "set/query azimuth and elevation",               "azimuth elevation" },
     { "dir",            "set/query direction vector",                    "x-component y-component z-component" },
+    { "diff",           "test a ray result against a supplied default",  "[-t tol] partition_info" },
     { "hv",             "set/query gridplane coordinates",               "horz vert [dist]" },
     { "xyz",            "set/query target coordinates",                  "X Y Z" },
     { "s",              "shoot a ray at the target",                     NULL },
@@ -1473,6 +1474,104 @@ azel_done:
     bu_vls_free(&opt_msg);
     return ret;
 }
+
+
+extern "C" int
+_nirt_cmd_diff(void *ns, int argc, const char *argv[])
+{
+    if (!ns) return -1;
+    struct nirt_state *nss = (struct nirt_state *)ns;
+    int ac = 0;
+    int print_help = 0;
+    double tol = 0;
+    int have_ray = 0;
+    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc d[3];
+    // TODO - add reporting options for enabling/disabling region/path, partition length, normal, and overlap ordering diffs.
+    // For example, if r1 and r2 have the same shape in space, we may want to suppress name based differences and look at
+    // other aspects of the shotline.  Also need sorting options for output - max partition diff first, max normal diff first,
+    // max numerical delta, etc...
+    BU_OPT(d[0],  "h", "help",       "",             NULL,   &print_help, "print help and exit");
+    BU_OPT(d[1],  "t", "tol",   "<val>",  &bu_opt_fastf_t,   &tol,        "set diff tolerance");
+    BU_OPT_NULL(d[2]);
+    const char *help = bu_opt_describe(d, NULL);
+    const char *ustr = "Usage: diff [opts] shotfile";
+
+    argv++; argc--;
+
+    if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
+	nerr(nss, "Error: bu_opt value read failure: %s\n\n%s\n%s\n", bu_vls_addr(&optparse_msg), ustr, help);
+	if (help) bu_free((char *)help, "help str");
+	bu_vls_free(&optparse_msg);
+	return -1;
+    }
+    bu_vls_free(&optparse_msg);
+
+    if (print_help || (ac != 1) || !argv[0]) {
+	nerr(nss, "%s\n%s", ustr, help);
+	if (help) bu_free((char *)help, "help str");
+	return -1;
+    }
+
+    std::string line;
+    std::ifstream ifs;
+    ifs.open(argv[0]);
+    if (!ifs.is_open()) {
+	nerr(nss, "Error: could not open file %s\n", argv[0]);
+	return -1;
+    }
+
+    while (std::getline(ifs, line)) {
+	if (!line.compare(0, 5, "Ray: ")) {
+	    if (have_ray) {
+		// Have ray already - execute current ray, store results in
+		// diff database (if any diffs were found), then clear expected
+		// results and old ray
+		bu_log("\n\nanother ray!\n\n\n");
+	    }
+	    // Read ray
+	    std::string rstr = line.substr(5);
+	    bu_log("Found Ray: %s\n", rstr.c_str());
+	    have_ray = 1;
+	}
+	if (!line.compare(0, 5, "HIT: ")) {
+	    std::string hstr = line.substr(5);
+	    bu_log("Found HIT: %s\n", hstr.c_str());
+	}
+	if (!line.compare(0, 5, "HIT: ")) {
+	    std::string hstr = line.substr(5);
+	    bu_log("Found HIT: %s\n", hstr.c_str());
+	}
+	if (!line.compare(0, 5, "GAP: ")) {
+	    std::string gstr = line.substr(5);
+	    bu_log("Found GAP: %s\n", gstr.c_str());
+	}
+	if (!line.compare(0, 6, "MISS: ")) {
+	    std::string mstr = line.substr(6);
+	    bu_log("Found MISS: %s\n", mstr.c_str());
+	}
+	if (!line.compare(0, 9, "OVERLAP: ")) {
+	    std::string ostr = line.substr(9);
+	    bu_log("Found OVERLAP: %s\n", ostr.c_str());
+	}
+	//bu_log("line: %s\n", line.c_str());
+    }
+
+    if (have_ray) {
+	// Execute work.
+	//
+	// Thought - if we have rays but no pre-defined output, write out the
+	// expected output to stdout - in this mode diff will generate a diff
+	// input file from a supplied list of rays.
+    }
+
+    // Report diff results according to the supplied options.
+
+    ifs.close();
+
+    return 0;
+}
+
 
 extern "C" int
 _nirt_cmd_dir_vect(void *ns, int argc, const char *argv[])
@@ -2373,6 +2472,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 const struct bu_cmdtab _libanalyze_nirt_cmds[] = {
     { "attr",           _nirt_cmd_attr},
     { "ae",             _nirt_cmd_az_el},
+    { "diff",           _nirt_cmd_diff},
     { "dir",            _nirt_cmd_dir_vect},
     { "hv",             _nirt_cmd_grid_coor},
     { "xyz",            _nirt_cmd_target_coor},
