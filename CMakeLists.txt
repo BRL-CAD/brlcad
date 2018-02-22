@@ -1756,32 +1756,11 @@ if(BRLCAD_FLAGS_DEBUG)
 endif(BRLCAD_FLAGS_DEBUG)
 
 
-# Set the minimum compilation linkage for Mac systems if not already
-# set, no harm if set elsewhere.
-if(APPLE)
-  set(MACOSX_DEPLOYMENT_TARGET "$ENV{MACOSX_DEPLOYMENT_TARGET}")
-  if(NOT MACOSX_DEPLOYMENT_TARGET)
-    set(ENV{MACOSX_DEPLOYMENT_TARGET} "10.3")
-  endif(NOT MACOSX_DEPLOYMENT_TARGET)
+# Warn if no minimum compilation linkage is set for Mac systems
+if(APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND "$ENV{MACOSX_DEPLOYMENT_TARGET}" STREQUAL "")
+  message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nMACOSX_DEPLOYMENT_TARGET should be set for release builds\nto something less than the latest release for portability\ne.g., export MACOSX_DEPLOYMENT_TARGET=10.5\nSee https://github.com/brlcad/MacOSX-SDKs}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
+endif(APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND "$ENV{MACOSX_DEPLOYMENT_TARGET}" STREQUAL "")
 
-  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.3")
-    CHECK_C_FLAG("mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.3.9.sdk" VARS SDK_FLAG)
-  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.3")
-  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.4")
-    CHECK_C_FLAG("mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk" VARS SDK_FLAG)
-  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.4")
-  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.5")
-    CHECK_C_FLAG("mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk" VARS SDK_FLAG)
-  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.5")
-  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.6")
-    CHECK_C_FLAG("mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk" VARS SDK_FLAG)
-  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.6")
-
-  ADD_NEW_FLAG(C SDK_FLAG ALL)
-  ADD_NEW_FLAG(CXX SDK_FLAG ALL)
-  ADD_NEW_FLAG(SHARED_LINKER SDK_FLAG ALL)
-  ADD_NEW_FLAG(EXE_LINKER SDK_FLAG ALL)
-endif(APPLE)
 
 # Most of the src/other projects have their own logic for handling
 # the C inline issue - BRL-CAD needs a fine-grained approach.  Mixed
