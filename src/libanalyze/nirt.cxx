@@ -403,6 +403,18 @@ _nirt_string_split(std::string s)
     return substrs;
 }
 
+HIDDEN void
+_nirt_trim_whitespace(std::string &s)
+{
+    size_t ep = s.find_last_not_of(" \t");
+    size_t sp = s.find_first_not_of(" \t");
+    if (sp == std::string::npos) {
+	s.clear();
+	return;
+    }
+    s = s.substr(sp, ep+1);
+}
+
 #if 0
 HIDDEN std::string
 _nirt_dbl_to_str(double d)
@@ -2629,7 +2641,7 @@ _nirt_exec_cmd(struct nirt_state *ns, const char *cmdstr)
     int i = 0;
     int ret = 0;
     char **av = NULL;
-    size_t q_start, q_end, pos;
+    size_t q_start, q_end, pos, cmt;
     std::string entry;
     if (!ns || !cmdstr || strlen(cmdstr) > entry.max_size()) return -1;
     std::string s(cmdstr);
@@ -2638,6 +2650,15 @@ _nirt_exec_cmd(struct nirt_state *ns, const char *cmdstr)
     while (std::getline(ss, entry, ' ')) ac_max++;
     ss.clear();
     ss.seekg(0, ss.beg);
+
+    /* If part of the line is commented, skip that part */
+    cmt = _nirt_find_first_unescaped(s, "#", 0);
+    if (cmt != std::string::npos) {
+	s.erase(cmt);
+    }
+
+    _nirt_trim_whitespace(s);
+    if (!s.length()) return 0;
 
     /* Start by initializing the position markers for quoted substrings. */
     q_start = _nirt_find_first_unescaped(s, "\"", 0);
@@ -2695,12 +2716,16 @@ _nirt_parse_script(struct nirt_state *ns, const char *script)
     std::string cmd;
     struct bu_vls tcmd = BU_VLS_INIT_ZERO;
     size_t pos = 0;
-    size_t q_start, q_end;
+    size_t q_start, q_end, cmt;
 
-    /* TODO - eat leading whitespace, potentially masking a comment char */
+    /* If part of the line is commented, skip that part */
+    cmt = _nirt_find_first_unescaped(s, "#", 0);
+    if (cmt != std::string::npos) {
+	s.erase(cmt);
+    }
 
-    /* If this line is a comment, we're done */
-    if (script[0] == '#') return 0;
+    _nirt_trim_whitespace(s);
+    if (!s.length()) return 0;
 
     /* Start by initializing the position markers for quoted substrings. */
     q_start = _nirt_find_first_unescaped(s, "\"", 0);
