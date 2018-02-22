@@ -403,6 +403,7 @@ _nirt_string_split(std::string s)
     return substrs;
 }
 
+#if 0
 HIDDEN std::string
 _nirt_dbl_to_str(double d)
 {
@@ -415,6 +416,7 @@ _nirt_dbl_to_str(double d)
     bu_log("dbl   : %.17f\nstr   : %s\n", d, sd.c_str());
     return sd;
 }
+#endif
 
 HIDDEN double 
 _nirt_str_to_dbl(std::string s)
@@ -424,7 +426,7 @@ _nirt_str_to_dbl(std::string s)
     size_t prec = std::numeric_limits<double>::digits10 + 2;
     std::stringstream ss(s);
     ss >> std::setprecision(prec) >> std::fixed >> d;
-    bu_log("str   : %s\ndbl   : %.17f\n", s.c_str(), d);
+    //bu_log("str   : %s\ndbl   : %.17f\n", s.c_str(), d);
     return d;
 }
 /********************************
@@ -1612,26 +1614,56 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		bu_log("\n\nanother ray!\n\n\n");
 	    }
 	    // Read ray
+	    vect_t dir;
+	    point_t orig;
 	    std::string rstr = line.substr(5);
-	    bu_log("Found Ray: %s\n", rstr.c_str());
 	    have_ray = 1;
 	    std::vector<std::string> substrs = _nirt_string_split(rstr);
 	    if (substrs.size() != 6) {
-		bu_log("Error processing ray line \"%s\"!\nExpected 6 elements, found %d\n", line.c_str(), substrs.size());
+		nerr(nss, "Error processing ray line \"%s\"!\nExpected 6 elements, found %d\n", line.c_str(), substrs.size());
+		return -1;
 	    }
-	    bu_log("x_orig: %s\n", substrs[0].c_str());
-	    double xo = _nirt_str_to_dbl(substrs[0]);
-	    std::string xos = _nirt_dbl_to_str(xo);
-	    bu_log("roundtrip: %s\n", xos.c_str());
-	    bu_log("y_orig: %s\n", substrs[1].c_str());
-	    bu_log("z_orig: %s\n", substrs[2].c_str());
-	    bu_log("x_dir: %s\n", substrs[3].c_str());
-	    bu_log("y_dir: %s\n", substrs[4].c_str());
-	    bu_log("z_dir: %s\n", substrs[5].c_str());
+	    bu_log("Found Ray:\n");
+	    orig[X] = _nirt_str_to_dbl(substrs[0]);
+	    orig[Y] = _nirt_str_to_dbl(substrs[1]);
+	    orig[Z] = _nirt_str_to_dbl(substrs[2]);
+	    dir[X] = _nirt_str_to_dbl(substrs[3]);
+	    dir[Y] = _nirt_str_to_dbl(substrs[4]);
+	    dir[Z] = _nirt_str_to_dbl(substrs[5]);
+	    VMOVE(nss->i->vals->dir, dir);
+	    VMOVE(nss->i->vals->orig, orig);
+	    _nirt_targ2grid(nss);
 	}
 	if (!line.compare(0, 5, "HIT: ")) {
 	    std::string hstr = line.substr(5);
-	    bu_log("Found HIT: %s\n", hstr.c_str());
+	    std::vector<std::string> substrs = _nirt_string_split(hstr);
+	    if (substrs.size() != 15) {
+		nerr(nss, "Error processing ray line \"%s\"!\nExpected 15 elements, found %d\n", hstr.c_str(), substrs.size());
+		return -1;
+	    }
+	    point_t in, out;
+	    double los, scaled_los, d_in, d_out, obliq_in, obliq_out;
+	    bu_log("Found HIT:\n");
+	    bu_log("reg_name: %s\n", substrs[0].c_str());
+	    bu_log("reg_path: %s\n", substrs[1].c_str());
+	    bu_log("reg_id: %s\n", substrs[2].c_str());
+	    in[X] = _nirt_str_to_dbl(substrs[3]);
+	    in[Y] = _nirt_str_to_dbl(substrs[4]);
+	    in[Z] = _nirt_str_to_dbl(substrs[5]);
+	    d_in = _nirt_str_to_dbl(substrs[6]);
+	    out[X] = _nirt_str_to_dbl(substrs[7]);
+	    out[Y] = _nirt_str_to_dbl(substrs[8]);
+	    out[Z] = _nirt_str_to_dbl(substrs[9]);
+	    d_out = _nirt_str_to_dbl(substrs[10]);
+	    los = _nirt_str_to_dbl(substrs[11]);
+	    scaled_los = _nirt_str_to_dbl(substrs[12]);
+	    obliq_in = _nirt_str_to_dbl(substrs[13]);
+	    obliq_out = _nirt_str_to_dbl(substrs[14]);
+	    bu_log("in: %0.17f, %0.17f, %0.17f\n", V3ARGS(in));
+	    bu_log("out: %0.17f, %0.17f, %0.17f\n", V3ARGS(out));
+	    bu_log("d_in: %0.17f d_out: %0.17f\n", d_in, d_out);
+	    bu_log("los: %0.17f  scaled_los: %0.17f\n", los, scaled_los);
+	    bu_log("obliq_in: %0.17f  obliq_out: %0.17f\n", obliq_in, obliq_out);
 	}
 	if (!line.compare(0, 5, "GAP: ")) {
 	    std::string gstr = line.substr(5);
@@ -1774,7 +1806,6 @@ _nirt_cmd_target_coor(void *ns, int argc, const char *argv[])
     }
 
     VSCALE(target, target, nss->i->local2base);
-    VMOVE(nss->i->vals->orig, target);
     VMOVE(nss->i->vals->orig, target);
     _nirt_targ2grid(nss);
 
