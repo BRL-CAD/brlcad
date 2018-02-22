@@ -388,21 +388,6 @@ _nirt_find_first_unquoted(std::string &ts, const char *key, size_t offset)
     return pos;
 }
 
-HIDDEN std::vector<std::string>
-_nirt_string_split(std::string s)
-{
-    std::vector<std::string> substrs;
-    std::string lstr = s;
-    size_t pos = 0;
-    while ((pos = _nirt_find_first_unquoted(lstr, ",", 0)) != std::string::npos) {
-	std::string ss = lstr.substr(0, pos);
-	substrs.push_back(ss);
-	lstr.erase(0, pos + 1);
-    }
-    substrs.push_back(lstr);
-    return substrs;
-}
-
 HIDDEN void
 _nirt_trim_whitespace(std::string &s)
 {
@@ -413,6 +398,22 @@ _nirt_trim_whitespace(std::string &s)
 	return;
     }
     s = s.substr(sp, ep+1);
+}
+
+HIDDEN std::vector<std::string>
+_nirt_string_split(std::string s)
+{
+    std::vector<std::string> substrs;
+    std::string lstr = s;
+    size_t pos = 0;
+    while ((pos = _nirt_find_first_unquoted(lstr, ",", 0)) != std::string::npos) {
+	std::string ss = lstr.substr(0, pos);
+	_nirt_trim_whitespace(ss);
+	substrs.push_back(ss);
+	lstr.erase(0, pos + 1);
+    }
+    substrs.push_back(lstr);
+    return substrs;
 }
 
 #if 0
@@ -1580,6 +1581,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     int print_help = 0;
     double tol = 0;
     int have_ray = 0;
+    size_t cmt;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_opt_desc d[3];
     // TODO - add reporting options for enabling/disabling region/path, partition length, normal, and overlap ordering diffs.
@@ -1616,8 +1618,17 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	return -1;
     }
 
+    have_ray = 0;
     while (std::getline(ifs, line)) {
-	if (!line.compare(0, 1, "#")) continue; // Skip comments
+
+	/* If part of the line is commented, skip that part */
+	cmt = _nirt_find_first_unescaped(line, "#", 0);
+	if (cmt != std::string::npos) {
+	    line.erase(cmt);
+	}
+	_nirt_trim_whitespace(line);
+	if (!line.length()) continue;
+
 	if (!line.compare(0, 5, "Ray: ")) {
 	    if (have_ray) {
 		// Have ray already - execute current ray, store results in
@@ -1644,18 +1655,29 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    dir[Z] = _nirt_str_to_dbl(substrs[5]);
 	    VMOVE(nss->i->vals->dir, dir);
 	    VMOVE(nss->i->vals->orig, orig);
+	    bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(orig));
+	    bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(dir));
 	    _nirt_targ2grid(nss);
+	    continue;
+	} else {
+	    if (!line.compare(0, 5, "HIT: ") || !line.compare(0, 5, "GAP: ") ||
+		    !line.compare("MISS") || !line.compare(0, 9, "OVERLAP: ")) {
+		if (!have_ray) {
+		    nerr(nss, "Error: Result line found but no ray set.\n");
+		    return -1;
+		}
+	    }
 	}
 	if (!line.compare(0, 5, "HIT: ")) {
 	    std::string hstr = line.substr(5);
 	    std::vector<std::string> substrs = _nirt_string_split(hstr);
 	    if (substrs.size() != 15) {
-		nerr(nss, "Error processing ray line \"%s\"!\nExpected 15 elements, found %d\n", hstr.c_str(), substrs.size());
+		nerr(nss, "Error processing hit line \"%s\"!\nExpected 15 elements, found %d\n", hstr.c_str(), substrs.size());
 		return -1;
 	    }
 	    point_t in, out;
 	    double los, scaled_los, d_in, d_out, obliq_in, obliq_out;
-	    bu_log("Found HIT:\n");
+	    bu_log("Found %s:\n", line.c_str());
 	    bu_log("reg_name: %s\n", substrs[0].c_str());
 	    bu_log("reg_path: %s\n", substrs[1].c_str());
 	    bu_log("reg_id: %s\n", substrs[2].c_str());
@@ -1676,20 +1698,56 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    bu_log("d_in: %0.17f d_out: %0.17f\n", d_in, d_out);
 	    bu_log("los: %0.17f  scaled_los: %0.17f\n", los, scaled_los);
 	    bu_log("obliq_in: %0.17f  obliq_out: %0.17f\n", obliq_in, obliq_out);
+	    continue;
 	}
 	if (!line.compare(0, 5, "GAP: ")) {
 	    std::string gstr = line.substr(5);
-	    bu_log("Found GAP: %s\n", gstr.c_str());
+	    std::vector<std::string> substrs = _nirt_string_split(gstr);
+	    if (substrs.size() != 7) {
+		nerr(nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %d\n", gstr.c_str(), substrs.size());
+		return -1;
+	    }
+	    bu_log("Found %s:\n", line.c_str());
+	    point_t in, out;
+	    double gap_los;
+	    in[X] = _nirt_str_to_dbl(substrs[0]);
+	    in[Y] = _nirt_str_to_dbl(substrs[1]);
+	    in[Z] = _nirt_str_to_dbl(substrs[2]);
+	    out[X] = _nirt_str_to_dbl(substrs[3]);
+	    out[Y] = _nirt_str_to_dbl(substrs[4]);
+	    out[Z] = _nirt_str_to_dbl(substrs[5]);
+	    gap_los = _nirt_str_to_dbl(substrs[6]);
+	    bu_log("in: %0.17f, %0.17f, %0.17f\n", V3ARGS(in));
+	    bu_log("out: %0.17f, %0.17f, %0.17f\n", V3ARGS(out));
+	    bu_log("gap_los: %0.17f\n", gap_los);
+	    continue;
 	}
-	if (!line.compare(0, 6, "MISS: ")) {
-	    std::string mstr = line.substr(6);
-	    bu_log("Found MISS: %s\n", mstr.c_str());
+	if (!line.compare("MISS")) {
+	    bu_log("Found MISS\n");
+	    have_ray = 0;
+	    continue;
 	}
 	if (!line.compare(0, 9, "OVERLAP: ")) {
 	    std::string ostr = line.substr(9);
-	    bu_log("Found OVERLAP: %s\n", ostr.c_str());
+	    std::vector<std::string> substrs = _nirt_string_split(ostr);
+	    if (substrs.size() != 6) {
+		nerr(nss, "Error processing overlap line \"%s\"!\nExpected 6 elements, found %d\n", ostr.c_str(), substrs.size());
+		return -1;
+	    }
+	    bu_log("Found %s:\n", line.c_str());
+	    point_t ov_in;
+	    double ov_los;
+	    bu_log("ov_reg1_name: %s\n", substrs[0].c_str());
+	    bu_log("ov_reg2_name: %s\n", substrs[1].c_str());
+	    ov_in[X] = _nirt_str_to_dbl(substrs[2]);
+	    ov_in[Y] = _nirt_str_to_dbl(substrs[3]);
+	    ov_in[Z] = _nirt_str_to_dbl(substrs[4]);
+	    ov_los = _nirt_str_to_dbl(substrs[5]);
+	    bu_log("ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(ov_in));
+	    bu_log("ov_los: %0.17f\n", ov_los);
+	    continue;
 	}
-	//bu_log("line: %s\n", line.c_str());
+	nerr(nss, "Warning - unknown line type, skipping: %s\n", line.c_str());
     }
 
     if (have_ray) {
