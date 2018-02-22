@@ -73,6 +73,7 @@
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
+#include "bio.h"
 #include "bresource.h"
 
 #include "bu/color.h"
@@ -1065,7 +1066,7 @@ is_linear_cmap(register fb *ifp)
 HIDDEN int
 fb_ogl_open(fb *ifp, const char *file, int width, int height)
 {
-    static char title[128];
+    static char title[128] = {0};
     int mode, i, direct;
     long valuemask;
     XSetWindowAttributes swa;
@@ -1180,13 +1181,13 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
     SGIINFO(ifp)->mi_curs_on = 1;
 
     /* Build a descriptive window title bar */
-    (void)snprintf(title, 128, "BRL-CAD /dev/ogl %s, %s",
-		   ((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
-		   "Transient Win":
-		   "Lingering Win",
-		   ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) ?
-		   "Private Mem" :
-		   "Shared Mem");
+    snprintf(title, 128, "BRL-CAD /dev/ogl %s, %s",
+	     ((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
+	     "Transient Win":
+	     "Lingering Win",
+	     ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) ?
+	     "Private Mem" :
+	     "Shared Mem");
 
     /* initialize window state variables before calling ogl_getmem */
     ifp->if_zoomflag = 0;
