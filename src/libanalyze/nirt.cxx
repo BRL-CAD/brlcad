@@ -416,6 +416,14 @@ _nirt_string_split(std::string s)
     return substrs;
 }
 
+
+/*
+ * References for string to-from floating point issues:
+ * https://stackoverflow.com/a/22458961
+ * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2005.pdf
+ * https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
+ */
+
 #if 0
 HIDDEN std::string
 _nirt_dbl_to_str(double d)
