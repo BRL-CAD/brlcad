@@ -31,6 +31,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <iomanip>
 #include <set>
 #include <vector>
 #include <limits>
@@ -345,7 +346,87 @@ HIDDEN void ndbg(struct nirt_state *nss, int flag, const char *fmt, ...)
     va_end(ap);
 }
 
+HIDDEN size_t
+_nirt_find_first_unescaped(std::string &s, const char *keys, int offset)
+{
+    int off = offset;
+    int done = 0;
+    size_t candidate = std::string::npos;
+    while (!done) {
+	candidate = s.find_first_of(keys, off);
+	if (!candidate || candidate == std::string::npos) return candidate;
+	if (s.at(candidate - 1) == '\\') {
+	    off = candidate + 1;
+	} else {
+	    done = 1;
+	}
+    }
+    return candidate;
+}
 
+HIDDEN size_t
+_nirt_find_first_unquoted(std::string &ts, const char *key, size_t offset)
+{
+    size_t q_start, q_end, pos;
+    std::string s = ts;
+    /* Start by initializing the position markers for quoted substrings. */
+    q_start = _nirt_find_first_unescaped(s, "\"", offset);
+    q_end = (q_start != std::string::npos) ? _nirt_find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
+
+    pos = offset;
+    while ((pos = s.find(key, pos)) != std::string::npos) {
+	/* If we're inside matched quotes, only an un-escaped quote char means
+	 * anything */
+	if (q_end != std::string::npos && pos > q_start && pos < q_end) {
+	    pos = q_end + 1;
+	    q_start = _nirt_find_first_unescaped(s, "\"", q_end + 1);
+	    q_end = (q_start != std::string::npos) ? _nirt_find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
+	    continue;
+	}
+	break;
+    }
+    return pos;
+}
+
+HIDDEN std::vector<std::string>
+_nirt_string_split(std::string s)
+{
+    std::vector<std::string> substrs;
+    std::string lstr = s;
+    size_t pos = 0;
+    while ((pos = _nirt_find_first_unquoted(lstr, ",", 0)) != std::string::npos) {
+	std::string ss = lstr.substr(0, pos);
+	substrs.push_back(ss);
+	lstr.erase(0, pos + 1);
+    }
+    substrs.push_back(lstr);
+    return substrs;
+}
+
+HIDDEN std::string
+_nirt_dbl_to_str(double d)
+{
+    // TODO - once we enable C++ 11 switch the precision below to std::numeric_limits<double>::max_digits10
+    size_t prec = std::numeric_limits<double>::digits10 + 2;
+    bu_log("prec: %d\n",prec);
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(prec) << d;
+    std::string sd = ss.str();
+    bu_log("dbl   : %.17f\nstr   : %s\n", d, sd.c_str());
+    return sd;
+}
+
+HIDDEN double 
+_nirt_str_to_dbl(std::string s)
+{
+    double d;
+    // TODO - once we enable C++ 11 switch the precision below to std::numeric_limits<double>::max_digits10
+    size_t prec = std::numeric_limits<double>::digits10 + 2;
+    std::stringstream ss(s);
+    ss >> std::setprecision(prec) >> std::fixed >> d;
+    bu_log("str   : %s\ndbl   : %.17f\n", s.c_str(), d);
+    return d;
+}
 /********************************
  * Conversions and Calculations *
  ********************************/
@@ -664,7 +745,7 @@ _nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	    case 'E':
 	    case 'g':
 	    case 'G':
-		// TODO - once we enable C++ 11 switch the test below to (p > std::numeric_limits<fastf_t>::max_digits10) and update the nerr msg
+		// TODO - once we enable C++ 11 switch the test below to (p > std::numeric_limits<fastf_t>::max_digits10) and update the nerr msg.
 		if (p_num > std::numeric_limits<fastf_t>::digits10 + 2) {
 		    nerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<fastf_t>::digits10 + 2);
 		    return -1;
@@ -1534,6 +1615,19 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    std::string rstr = line.substr(5);
 	    bu_log("Found Ray: %s\n", rstr.c_str());
 	    have_ray = 1;
+	    std::vector<std::string> substrs = _nirt_string_split(rstr);
+	    if (substrs.size() != 6) {
+		bu_log("Error processing ray line \"%s\"!\nExpected 6 elements, found %d\n", line.c_str(), substrs.size());
+	    }
+	    bu_log("x_orig: %s\n", substrs[0].c_str());
+	    double xo = _nirt_str_to_dbl(substrs[0]);
+	    std::string xos = _nirt_dbl_to_str(xo);
+	    bu_log("roundtrip: %s\n", xos.c_str());
+	    bu_log("y_orig: %s\n", substrs[1].c_str());
+	    bu_log("z_orig: %s\n", substrs[2].c_str());
+	    bu_log("x_dir: %s\n", substrs[3].c_str());
+	    bu_log("y_dir: %s\n", substrs[4].c_str());
+	    bu_log("z_dir: %s\n", substrs[5].c_str());
 	}
 	if (!line.compare(0, 5, "HIT: ")) {
 	    std::string hstr = line.substr(5);
@@ -2493,47 +2587,6 @@ const struct bu_cmdtab _libanalyze_nirt_cmds[] = {
 };
 
 
-HIDDEN size_t
-_nirt_find_first_unescaped(std::string &s, const char *keys, int offset)
-{
-    int off = offset;
-    int done = 0;
-    size_t candidate = std::string::npos;
-    while (!done) {
-	candidate = s.find_first_of(keys, off);
-	if (!candidate || candidate == std::string::npos) return candidate;
-	if (s.at(candidate - 1) == '\\') {
-	    off = candidate + 1;
-	} else {
-	    done = 1;
-	}
-    }
-    return candidate;
-}
-
-HIDDEN size_t
-_nirt_find_first_unquoted(std::string &ts, const char *key, size_t offset)
-{
-    size_t q_start, q_end, pos;
-    std::string s = ts;
-    /* Start by initializing the position markers for quoted substrings. */
-    q_start = _nirt_find_first_unescaped(s, "\"", offset);
-    q_end = (q_start != std::string::npos) ? _nirt_find_first_unescaped(s, "\"", q_start + 1) : std::string::npos;
-
-    pos = offset;
-    while ((pos = s.find(key, pos)) != std::string::npos) {
-	/* If we're inside matched quotes, only an un-escaped quote char means
-	 * anything */
-	if (q_end != std::string::npos && pos > q_start && pos < q_end) {
-	    pos = q_end + 1;
-	    q_start = _nirt_find_first_unescaped(s, "\"", q_end + 1);
-	    q_end = (q_start != std::string::npos) ? _nirt_find_first_unescaped(s, "'\"", q_start + 1) : std::string::npos;
-	    continue;
-	}
-	break;
-    }
-    return pos;
-}
 
 
 /* Parse command line command and execute */
