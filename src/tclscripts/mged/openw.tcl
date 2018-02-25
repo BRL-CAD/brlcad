@@ -2079,9 +2079,9 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	MGED's commands." }
 	    { see_also "apropos" } }
 
-    if {$tcl_platform(os) == "Windows NT"} {
+    if {$::tcl_platform(os) == "Windows NT"} {
 	set web_cmd "exec \$mged_browser \$mged_html_dir/index.html &"
-    } elseif {$tcl_platform(os) == "Darwin"} {
+    } elseif {$::tcl_platform(os) == "Darwin"} {
 	set web_cmd "exec \$mged_browser \$mged_html_dir/index.html"
     } else {
 	set web_cmd "exec \$mged_browser -display $screen \$mged_html_dir/index.html 2> /dev/null &"

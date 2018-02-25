@@ -3465,7 +3465,7 @@ proc sketch_sort { sortp outfile list } {
 
     frame $sortp.fa
     label $sortp.fa.l0 -text "Sorting $outfile ..."
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	set kill_cmd taskkill
     } else {
 	set kill_cmd kill

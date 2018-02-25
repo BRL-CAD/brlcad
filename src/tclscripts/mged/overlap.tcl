@@ -277,7 +277,7 @@ proc fix_overlaps { id } {
 	set model [opendb]
 
 	set ::exe_ext ""
-	if {$tcl_platform(platform) == "windows"} {
+	if {$::tcl_platform(platform) == "windows"} {
 	    set ::exe_ext ".exe"
 	}
 	set g_lint_cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] g_lint$::exe_ext]]
@@ -447,7 +447,7 @@ proc over_quit { id } {
     vdraw send
 
     if { $over_cont($id,ray) == "ray" && $over_cont($id,fd) > 0 } {
-	if {$tcl_platform(platform) == "windows"} {
+	if {$::tcl_platform(platform) == "windows"} {
 	    set kill_cmd {taskkill [lindex $over_cont($id,pid) 0]}
 	} else {
 	    set kill_cmd {kill -9 [lindex $over_cont($id,pid) 0]}

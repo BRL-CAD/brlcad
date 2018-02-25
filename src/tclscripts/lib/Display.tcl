@@ -168,7 +168,7 @@
     public method transparency {args}
     public method zbuffer {args}
     public method zclip {args}
-    if {$tcl_platform(os) != "Windows NT"} {
+    if {$::tcl_platform(os) != "Windows NT"} {
     }
     public method fb_active {args}
 
@@ -973,10 +973,6 @@
     }
 
     set v_obj [View::get_viewname]
-    #    if {$tcl_platform(os) != "Windows NT"} {
-    #	eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
-    #    } else {
-    #    }
 
     # If arguments remain, they should specify size, framebuffer etc.
     if {[llength $args] > 0} {
@@ -1140,7 +1136,7 @@
     return $itk_option(-perspective)
 }
 
-if {$tcl_platform(os) != "Windows NT"} {
+if {$::tcl_platform(os) != "Windows NT"} {
 }
 ::itcl::body Display::fb_active {args} {
     if {$args == ""} {
@@ -1675,7 +1671,7 @@ if {$tcl_platform(os) != "Windows NT"} {
 ::itcl::body Display::doBindings {} {
     global tcl_platform
 
-    if {$tcl_platform(os) != "Windows NT"} {
+    if {$::tcl_platform(os) != "Windows NT"} {
 	bind $itk_component(dm) <Enter> "focus $itk_component(dm);"
     }
 

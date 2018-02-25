@@ -283,7 +283,7 @@ proc default_mouse_bindings { w } {
     global tcl_platform
 
     # default button bindings
-    if {![regexp {^[0-9]+} $tcl_platform(osVersion) osMajorVersion]} {
+    if {![regexp {^[0-9]+} $::tcl_platform(osVersion) osMajorVersion]} {
 	set osMajorVersion 0
     }
 
@@ -292,7 +292,7 @@ proc default_mouse_bindings { w } {
 	bind $w <2> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	bind $w <3> "winset $w; zoom 2.0; break"
 
-	if {$tcl_platform(os) == "Darwin"} {
+	if {$::tcl_platform(os) == "Darwin"} {
 	    # Mac option-key emulates mouse 2 (doesn't work?)
 	    bind $w <Option-ButtonPress-1> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	    # Mac command-key emulates mouse 3
@@ -303,7 +303,7 @@ proc default_mouse_bindings { w } {
 	bind $w <2> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	bind $w <3> "winset $w; focus $w; zoom 2.0; break"
 
-	if {$tcl_platform(os) == "Darwin"} {
+	if {$::tcl_platform(os) == "Darwin"} {
 	    # Mac command-key emulates mouse 2 (doesn't work?)
 	    bind $w <Option-ButtonPress-1> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	    # Mac command-key emulates mouse 3

@@ -60,7 +60,7 @@
 	common SystemButtonFace
 	common SystemButtonText
 
-	if {$tcl_platform(os) != "Windows NT"} {
+	if {$::tcl_platform(os) != "Windows NT"} {
 	    set SystemWindowFont Helvetica
 	    set SystemWindowText black
 	    set SystemWindow \#d9d9d9

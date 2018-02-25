@@ -27,7 +27,7 @@ package provide cadwidgets::GeometryIO 1.0
 
 namespace eval cadwidgets {
 set ::exe_ext ""
-if {$tcl_platform(platform) == "windows"} {
+if {$::tcl_platform(platform) == "windows"} {
     set ::exe_ext ".exe"
 }
 

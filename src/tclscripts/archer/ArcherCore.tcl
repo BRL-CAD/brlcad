@@ -309,7 +309,7 @@ namespace eval ArcherCore {
 	method Z                   {args}
 	method zap                 {args}
 
-	if {$tcl_platform(platform) != "windows"} {
+	if {$::tcl_platform(platform) != "windows"} {
 	    set SystemWindowFont Helvetica
 	    set SystemWindowText black
 	    set SystemWindow $LABEL_BACKGROUND_COLOR
@@ -1018,7 +1018,7 @@ namespace eval ArcherCore {
     global env
     global tcl_platform
 
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	set mDisplayFontSizes {0 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29}
     } else {
 	set mDisplayFontSizes {0 5 6 7 8 9 10 12}
@@ -5353,7 +5353,7 @@ namespace eval ArcherCore {
 	set mDbReadOnly 1
     } elseif {[file exists $mTarget]} {
 	if {[file writable $mTarget] ||
-	    ($tcl_platform(platform) == "windows" && ![file attributes $mTarget -readonly])} {
+	    ($::tcl_platform(platform) == "windows" && ![file attributes $mTarget -readonly])} {
 	    set mDbReadOnly 0
 	} else {
 	    set mDbReadOnly 1
