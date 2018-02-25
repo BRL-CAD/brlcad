@@ -721,8 +721,14 @@ bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), siz
     int ret = 1;
 #ifdef HAVE_SYS_SHM_H
     int shmsize;
-    long psize = sysconf(_SC_PAGESIZE);
+    long psize;
     int flags = IPC_CREAT|0666;
+
+#ifdef _SC_PAGESIZE
+    psize = sysconf(_SC_PAGESIZE);
+#else
+    psize = 4096;
+#endif
 
     ret = 0;
     errno = 0;
