@@ -44,8 +44,8 @@
 #include "bu/vls.h"
 
 /* strict c89 doesn't declare strtoll() */
-#if defined(HAVE_STRTOLL) && !defined(HAVE_DECL_STRTOLL) && !defined(__cplusplus)
-extern long long int strtoll(const char *nptr, char **endptr, int base);
+#ifndef HAVE_DECL_STRTOLL
+extern long long int strtoll(const char *, char **, int);
 #endif
 
 #if !defined(LLONG_MAX) && defined(__LONG_LONG_MAX__)

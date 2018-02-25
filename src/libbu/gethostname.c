@@ -28,8 +28,8 @@
 #include "bu/endian.h"
 
 /* strict c89 doesn't declare gethostname() */
-#if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME) && !defined(__cplusplus) && !defined(_WINSOCKAPI_)
-extern int gethostname(char *name, size_t len);
+#if !defined(HAVE_DECL_GETHOSTNAME) && !defined(_WINSOCKAPI_)
+extern int gethostname(char *, size_t);
 #endif
 
 int

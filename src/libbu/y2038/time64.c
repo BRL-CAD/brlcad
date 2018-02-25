@@ -52,7 +52,7 @@ gmtime64_r() is a 64-bit equivalent of gmtime_r().
 
 #include "bu/log.h"
 
-#if defined(HAVE_TZSET) && !defined(HAVE_DECL_TZSET) && !defined(__cplusplus)
+#ifndef HAVE_DECL_TZSET
 extern void tzset (void);
 #endif
 

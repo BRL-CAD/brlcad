@@ -39,9 +39,10 @@
 #include "bu/log.h"
 
 /* strict c89 doesn't declare posix_memalign */
-#if defined(HAVE_POSIX_MEMALIGN) && !defined(HAVE_DECL_POSIX_MEMALIGN) && !defined(__cplusplus)
-extern int posix_memalign(void **memptr, size_t alignment, size_t size);
+#ifndef HAVE_DECL_POSIX_MEMALIGN
+extern int posix_memalign(void **, size_t, size_t);
 #endif
+
 
 /**
  * this controls whether to semaphore protect malloc calls
