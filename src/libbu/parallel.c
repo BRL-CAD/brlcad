@@ -26,38 +26,48 @@
 #include <string.h>
 #include <signal.h>
 
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+/* sys/sysctl.h may need help with c90-era BSD/XOPEN API */
+#  ifndef _U_LONG
+#    define u_long unsigned long
+#  endif
+#  ifndef _U_INT
+#    define u_int unsigned int
+#  endif
+#  ifndef _U_SHORT
+#    define u_short unsigned short
+#  endif
+#  ifndef _U_CHAR
+#    define u_char unsigned char
+#  endif
+#endif
+
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 
 #ifdef linux
-#  include <sys/types.h>
 #  include <sys/stat.h>
 #endif
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
-#  include <sys/types.h>
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
 #  include <sys/stat.h>
 #endif
 
 #ifdef __APPLE__
-#  include <sys/types.h>
 #  include <sys/stat.h>
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
 #endif
 
 #ifdef __sp3__
-#  include <sys/types.h>
 #  include <sys/sysconfig.h>
 #  include <sys/var.h>
 #endif
 
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
 #ifdef HAVE_ULOCKS_H
 #  include <ulocks.h>
 #endif
