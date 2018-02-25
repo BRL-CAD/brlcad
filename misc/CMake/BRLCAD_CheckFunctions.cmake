@@ -46,38 +46,44 @@ include(CheckLibraryExists)
 include(CheckStructHasMember)
 include(CheckCInline)
 
-set(std_hdr_includes
+set(standard_header_template
 "
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
-#if HAVE_GETOPT_H
+#ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif
-#if HAVE_SIGNAL_H
+#ifdef HAVE_SIGNAL_H
 # include <signal.h>
 #endif
-#if HAVE_SYS_RESOURCE_H
+#ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
-#if HAVE_SYS_SHM_H
+#ifdef HAVE_SYS_SHM_H
 # include <sys/shm.h>
 #endif
-#if HAVE_SYS_STAT_H
+#ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
-#if HAVE_SYS_SYSCTL_H
+#ifdef HAVE_SYS_SYSCTL_H
+# if defined(_XOPEN_SOURCE) && _XOPEN_SOURCE < 500
+#  define u_char unsigned char
+#  define u_int unsigned int
+#  define u_long unsigned long
+#  define u_short unsigned short
+# endif
 # include <sys/sysctl.h>
 #endif
-#if HAVE_SYS_TYPES_H
+#ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
-#if HAVE_SYS_UIO_H
+#ifdef HAVE_SYS_UIO_H
 # include <sys/uio.h>
 #endif
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 "
@@ -85,17 +91,21 @@ set(std_hdr_includes
 
 # Use this function to construct compile defines that uses the CMake
 # header tests results to properly support the above header includes
-function(std_hdr_defs def_str)
-  set(def_full_str)
-  string(REPLACE "\n" ";" deflist "${std_hdr_includes}")
-  foreach(dstr ${deflist})
-    if("${dstr}" MATCHES ".*HAVE_.*" )
-      string(REGEX REPLACE "^.if[ ]+" "" defcore "${dstr}")
-      set(def_full_str "${def_full_str} -D${defcore}=${${defcore}}")
-    endif("${dstr}" MATCHES ".*HAVE_.*" )
-  endforeach(dstr ${deflist})
-  set(${def_str} "${def_full_str}" PARENT_SCOPE)
-endfunction(std_hdr_defs)
+function(standard_header_cppflags header_cppflags)
+  set(have_cppflags)
+  string(REPLACE "\n" ";" template_line "${standard_header_template}")
+  foreach(line ${template_line})
+    if("${line}" MATCHES ".* HAVE_.*_H" )
+      # extract the HAVE_* symbol from the #ifdef lines
+      string(REGEX REPLACE "^[ ]*#[ ]*if.*[ ]+" "" have_symbol "${line}")
+      if(NOT "${${have_symbol}}" MATCHES "^[\"]*$") # matches empty or ""
+	set(have_cppflags "${have_cppflags} -D${have_symbol}=${${have_symbol}}")
+      endif(NOT "${${have_symbol}}" MATCHES "^[\"]*$")
+    endif("${line}" MATCHES ".* HAVE_.*_H" )
+  endforeach(line ${template_line})
+  set(${header_cppflags} "${have_cppflags}" PARENT_SCOPE)
+endfunction(standard_header_cppflags)
+
 
 ###
 # Check if a function exists (i.e., compiles to a valid symbol).  Adds
@@ -129,8 +139,11 @@ macro(BRLCAD_FUNCTION_EXISTS function)
     endif(${ARGC} GREATER 2)
 
     # Set the compiler definitions for the standard headers
-    std_hdr_defs(std_defs)
-    set(CMAKE_REQUIRED_DEFINITIONS "${std_defs} ${CMAKE_REQUIRED_DEFINITIONS}")
+    if("${have_header_cppflags}" STREQUAL "")
+      # get the cppflags once, the first time we test
+      standard_header_cppflags(have_header_cppflags)
+    endif("${have_header_cppflags}" STREQUAL "")
+    set(CMAKE_REQUIRED_DEFINITIONS "${have_header_cppflags} ${CMAKE_REQUIRED_DEFINITIONS}")
 
     # First (permissive) test
     CHECK_FUNCTION_EXISTS(${function} HAVE_${var})
@@ -150,7 +163,7 @@ macro(BRLCAD_FUNCTION_EXISTS function)
 	  if(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
 	    check_c_source_compiles("${${var}_DECL_TEST_SRCS}" HAVE_DECL_${var})
 	  else(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
-	    check_c_source_compiles("${std_hdr_includes}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
+	    check_c_source_compiles("${standard_header_template}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
 	  endif(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
 	else()
 	  # Note - config_win.h (and probably other issues) make the decl tests
