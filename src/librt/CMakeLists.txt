@@ -295,7 +295,6 @@ set(librt_ignored_files
   test_nurbsfit.cpp
   test_root3-subd.cpp
   timer-nt.c
-  timerhep.c
   timerunix.c
   uvpoints.cpp
   )
