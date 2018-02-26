@@ -5,13 +5,20 @@
 
 #include <cstdlib>
 #include <cctype>
-#include <fstream>
 #include <iostream>
 #include <iterator>
 #include <sstream>
 #include <string>
 #include <set>
 #include <map>
+
+/* needed on mac in c90 mode */
+#ifndef HAVE_DECL_FSEEKO
+extern "C" int fseeko(FILE *, off_t, int);
+extern "C" off_t ftello(FILE *);
+#endif
+#include <fstream>
+
 
 void
 gen_attr_xml_list(const char *fname, const char *xref_id)
