@@ -27,9 +27,16 @@
 /* BRL-CAD includes */
 #include "common.h"
 
+
 #include <algorithm>
 #include <string>
 #include <sstream>
+
+/* needed on mac in c90 mode */
+#ifndef HAVE_DECL_FSEEKO
+extern "C" int fseeko(FILE *, off_t, int);
+extern "C" off_t ftello(FILE *);
+#endif
 #include <fstream>
 #include <iomanip>
 #include <set>
