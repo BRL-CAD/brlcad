@@ -161,6 +161,31 @@ struct nirt_overlap {
 };
 #define NIRT_OVERLAP_NULL ((struct nirt_overlap *)0)
 
+#if 0
+struct nirt_seg {
+    int type
+    point_t in;
+    point_t out;
+    fastf_t los;
+    fastf_t scaled_los;
+    struct bu_vls *n1;
+    struct bu_vls *n2;
+    int reg_id_1;
+    int reg_id_2;
+    vect_t nm_in;
+    vect_t nm_out;
+    struct bu_vls *ov_sol_in;
+    struct bu_vls *ov_sol_out;
+    fastf_t ov_los;
+    int surf_num_in;
+    int surf_num_out;
+    int claimant_count;
+    struct bu_vls *claimant_list;
+    struct bu_vls *claimant_listn; /* uses \n instead of space to separate claimants */
+    struct bu_vls *attributes;
+};
+#endif
+
 struct nirt_seg {
     point_t in;
     fastf_t d_in;
@@ -272,7 +297,7 @@ struct nirt_output_record {
 struct nirt_diff {
     point_t orig;
     vect_t dir;
-    std::vector<struct nirt_seg *> segs;
+    std::vector<std::pair<struct nirt_seg *, struct nirt_seg *> > diffs;
 };
 
 struct nirt_state_impl {
@@ -318,6 +343,7 @@ struct nirt_state_impl {
     std::set<std::string> attrs;        // active attributes
     std::vector<std::string> active_paths; // active paths for raytracer
     struct nirt_output_record *vals;
+    std::vector<struct nirt_diff *> diffs;
 
     /* state alteration flags */
     bool b_state;   // updated for any state change
@@ -520,6 +546,29 @@ _nirt_str_to_dbl(std::string s)
 /********************************
  * Conversions and Calculations *
  ********************************/
+
+HIDDEN fastf_t
+d_calc(struct nirt_state *nss, point_t p)
+{
+    fastf_t ar = nss->i->vals->a * DEG2RAD;
+    fastf_t er = nss->i->vals->e * DEG2RAD;
+    return p[X] * cos(er) * cos(ar) + p[Y] * cos(er) * sin(ar) + p[Z] * sin(er);
+}
+
+HIDDEN fastf_t
+h_calc(struct nirt_state *nss, point_t p)
+{
+    fastf_t ar = nss->i->vals->a * DEG2RAD;
+    return p[X] * (-sin(ar)) + p[Y] * cos(ar);
+}
+
+HIDDEN fastf_t
+v_calc(struct nirt_state *nss, point_t p)
+{
+    fastf_t ar = nss->i->vals->a * DEG2RAD;
+    fastf_t er = nss->i->vals->e * DEG2RAD;
+    return p[X] * (-sin(er)) * cos(ar) + p[Y] * (-sin(er)) * sin(ar) + p[Z] * cos(er);
+}
 
 HIDDEN void _nirt_grid2targ(struct nirt_state *nss)
 {
@@ -1261,14 +1310,11 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
     struct bu_list *vhead;
     struct nirt_state *nss = (struct nirt_state *)ap->a_uptr;
     struct nirt_output_record *vals = nss->i->vals;
-    fastf_t ar = nss->i->vals->a * DEG2RAD;
-    fastf_t er = nss->i->vals->e * DEG2RAD;
     int part_nm = 0;
     struct nirt_overlap *ovp;
-    point_t inormal;
-    point_t onormal;
     struct partition *part;
     int ev_odd = 1; /* first partition is colored as "odd" */
+    point_t out_old;
     double d_out_old = 0.0; 
 
     _nirt_report(nss, 'r', vals);
@@ -1287,31 +1333,27 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	++part_nm;
 
-	RT_HIT_NORMAL(inormal, part->pt_inhit, part->pt_inseg->seg_stp,
-		&ap->a_ray, part->pt_inflip);
-	RT_HIT_NORMAL(onormal, part->pt_outhit, part->pt_outseg->seg_stp,
-		&ap->a_ray, part->pt_outflip);
-
 	/* Update the output values */
-	if (part_nm > 1) VMOVE(s->gap_in, s->out);
+	RT_HIT_NORMAL(s->nm_in, part->pt_inhit, part->pt_inseg->seg_stp,
+		&ap->a_ray, part->pt_inflip);
+	RT_HIT_NORMAL(s->nm_out, part->pt_outhit, part->pt_outseg->seg_stp,
+		&ap->a_ray, part->pt_outflip);
 	VMOVE(s->in, part->pt_inhit->hit_point);
 	VMOVE(s->out, part->pt_outhit->hit_point);
-	VMOVE(s->nm_in, inormal);
-	VMOVE(s->nm_out, onormal);
+	if (part_nm > 1) VMOVE(s->gap_in, out_old);
 
 	ndbg(nss, NIRT_DEBUG_HITS, "Partition %d entry: (%g, %g, %g) exit: (%g, %g, %g)\n",
 		part_nm, V3ARGS(s->in), V3ARGS(s->out));
 
-	s->d_in = s->in[X] * cos(er) * cos(ar) + s->in[Y] * cos(er) * sin(ar) + s->in[Z] * sin(er);
-	s->d_out = s->out[X] * cos(er) * cos(ar) + s->out[Y] * cos(er) * sin(ar) + s->out[Z] * sin(er);
-	d_out_old = s->d_out; // Stash the d_out value for gap_los calculation in the next partition
-	s->nm_d_in = s->nm_in[X] * cos(er) * cos(ar) + s->nm_in[Y] * cos(er) * sin(ar) + s->nm_in[Z] * sin(er);
-	s->nm_h_in = s->nm_in[X] * (-sin(ar)) + s->nm_in[Y] * cos(ar);
-	s->nm_v_in = s->nm_in[X] * (-sin(er)) * cos(ar) + s->nm_in[Y] * (-sin(er)) * sin(ar) + s->nm_in[Z] * cos(er);
+	s->d_in = d_calc(nss, s->in);
+	s->d_out = d_calc(nss, s->out);
+	s->nm_d_in = d_calc(nss, s->nm_in);
+	s->nm_h_in = h_calc(nss, s->nm_in);
+	s->nm_v_in = v_calc(nss, s->nm_in);
 
-	s->nm_d_out = s->nm_out[X] * cos(er) * cos(ar) + s->nm_out[Y] * cos(er) * sin(ar) + s->nm_out[Z] * sin(er);
-	s->nm_h_out = s->nm_out[X] * (-sin(ar)) + s->nm_out[Y] * cos(ar);
-	s->nm_v_out = s->nm_out[X] * (-sin(er)) * cos(ar) + s->nm_out[Y] * (-sin(er)) * sin(ar) + s->nm_out[Z] * cos(er);
+	s->nm_d_out = d_calc(nss, s->nm_out);
+	s->nm_h_out = h_calc(nss, s->nm_out);
+	s->nm_v_out = v_calc(nss, s->nm_out);
 
 	s->los = s->d_in - s->d_out;
 	s->scaled_los = 0.01 * s->los * part->pt_regionp->reg_los;
@@ -1329,6 +1371,8 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		nss->i->b_segs = true;
 	    }
 	}
+	VMOVE(out_old, s->out); // Stash the out value for gap_los calculation in the next partition
+	d_out_old = s->d_out; // Stash the d_out value for gap_los calculation in the next partition
 
 	bu_vls_sprintf(s->path_name, "%s", part->pt_regionp->reg_name);
 	{
@@ -1341,8 +1385,8 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	s->reg_id = part->pt_regionp->reg_regionid;
 	s->surf_num_in = part->pt_inhit->hit_surfno;
 	s->surf_num_out = part->pt_outhit->hit_surfno;
-	s->obliq_in = _nirt_get_obliq(ap->a_ray.r_dir, inormal);
-	s->obliq_out = _nirt_get_obliq(ap->a_ray.r_dir, onormal);
+	s->obliq_in = _nirt_get_obliq(ap->a_ray.r_dir, s->nm_in);
+	s->obliq_out = _nirt_get_obliq(ap->a_ray.r_dir, s->nm_out);
 
 	bu_vls_trunc(s->claimant_list, 0);
 	bu_vls_trunc(s->claimant_listn, 0);
@@ -1392,7 +1436,12 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BN_VLIST_LINE_DRAW);
 	nss->i->b_segs = true;
 
+	/* done with hit portion - if diff, stash */
+
 	while ((ovp = _nirt_find_ovlp(nss, part)) != NIRT_OVERLAP_NULL) {
+
+	    // New nirt_seg for overlap
+
 
 	    // TODO - do this more cleanly
 	    char *copy_ovlp_reg1 = bu_strdup(ovp->reg1->reg_name);
@@ -1704,6 +1753,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 
     have_ray = 0;
     while (std::getline(ifs, line)) {
+	struct nirt_diff *df;
 
 	/* If part of the line is commented, skip that part */
 	cmt = _nirt_find_first_unescaped(line, "#", 0);
@@ -1721,8 +1771,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		bu_log("\n\nanother ray!\n\n\n");
 	    }
 	    // Read ray
-	    vect_t dir;
-	    point_t orig;
+	    df = new struct nirt_diff;
 	    std::string rstr = line.substr(5);
 	    have_ray = 1;
 	    std::vector<std::string> substrs = _nirt_string_split(rstr);
@@ -1731,17 +1780,14 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		return -1;
 	    }
 	    bu_log("Found Ray:\n");
-	    orig[X] = _nirt_str_to_dbl(substrs[0]);
-	    orig[Y] = _nirt_str_to_dbl(substrs[1]);
-	    orig[Z] = _nirt_str_to_dbl(substrs[2]);
-	    dir[X] = _nirt_str_to_dbl(substrs[3]);
-	    dir[Y] = _nirt_str_to_dbl(substrs[4]);
-	    dir[Z] = _nirt_str_to_dbl(substrs[5]);
-	    VMOVE(nss->i->vals->dir, dir);
-	    VMOVE(nss->i->vals->orig, orig);
-	    bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(orig));
-	    bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(dir));
+	    VSET(df->orig, _nirt_str_to_dbl(substrs[0]), _nirt_str_to_dbl(substrs[1]), _nirt_str_to_dbl(substrs[2]));
+	    VSET(df->dir, _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]), _nirt_str_to_dbl(substrs[5]));
+	    VMOVE(nss->i->vals->dir, df->dir);
+	    VMOVE(nss->i->vals->orig, df->orig);
+	    bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(df->orig));
+	    bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(df->dir));
 	    _nirt_targ2grid(nss);
+	    nss->i->diffs.push_back(df);
 	    continue;
 	} else {
 	    if (!line.compare(0, 5, "HIT: ") || !line.compare(0, 5, "GAP: ") ||
