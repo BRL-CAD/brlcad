@@ -1315,7 +1315,8 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
     struct partition *part;
     int ev_odd = 1; /* first partition is colored as "odd" */
     point_t out_old;
-    double d_out_old = 0.0; 
+    double d_out_old = 0.0;
+    VSETALL(out_old, 0.0);
 
     _nirt_report(nss, 'r', vals);
     _nirt_report(nss, 'h', vals);
