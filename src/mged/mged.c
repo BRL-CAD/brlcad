@@ -65,6 +65,7 @@
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
+#include "bu/time.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "libtermio.h"
@@ -2291,10 +2292,8 @@ refresh(void)
     struct bu_vls overlay_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     int do_overlay = 1;
-    double elapsed_time;
+    int64_t elapsed_time, start_time = bu_gettime();
     int do_time = 0;
-
-    rt_prep_timer();
 
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
 	if (!p->dml_view_state)
@@ -2447,11 +2446,11 @@ refresh(void)
 
     /* a frame was drawn */
     if (do_time) {
-	(void)rt_get_timer((struct bu_vls *)0, &elapsed_time);
+	elapsed_time = bu_gettime() - start_time;
 	/* Only use reasonable measurements */
-	if (elapsed_time > 1.0e-5 && elapsed_time < 30) {
+	if (elapsed_time > 10LL && elapsed_time < 30000000LL) {
 	    /* Smoothly transition to new speed */
-	    frametime = 0.9 * frametime + 0.1 * elapsed_time;
+	    frametime = 0.9 * frametime + 0.1 * elapsed_time / 1000000LL;
 	}
     }
 
