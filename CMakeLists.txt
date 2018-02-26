@@ -838,46 +838,73 @@ cmake_set_rpath()
 
 #---------------------------------------------------------------------
 # We need compiler support for certain C and C++ standards when we
-# build.  Set CMake's flags accordingly.
+# build.  Set CMake's flags accordingly for what source code syntax
+# (i.e., -std=xxx flags) and API (i.e., -D_POSIX_C_SOURCE defines) to
+# permit and utilize respectively.  Common profiles:
+#
+#   1989-1998: C90 & C++98  (target: 1990)
+#     ISO/IEC 9899:1990 __STDC__
+#     ISO/IEC 14882:1998 __cplusplus==199711L
+#     ISO/IEC 9945-1:1990 -D_POSIX_C_SOURCE=199009L (or =1)
+#     X/Open Portability Guide 3 (1989) -D_XOPEN_SOURCE=3
+#   1999-2010: C99 & C++98 (skippable,  target: 2000)
+#     ISO/IEC 9899:1999 __STDC_VERSION__==199901L
+#     ISO/IEC 14882:2011 __cplusplus==201103L
+#     IEEE 1003.1-2001 -D_POSIX_C_SOURCE=200112L
+#     X/Open Single UNIX Specification, Version 2 (1998) -D_XOPEN_SOURCE=500
+#   2011-2016: C11 & C++11 (ignoring C++14, target: 2013)
+#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
+#     ISO/IEC 14882:2011 __cplusplus==201103L
+#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
+#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
+#   2017-2020: C11 & C++17 (target: 2019)
+#     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
+#     ISO/IEC 14882:2017 __cplusplus==201703L
+#     IEEE 1003.1-2008 -D_POSIX_C_SOURCE=200809L
+#     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
+#
+# Sources: https://sourceforge.net/p/predef/wiki/Standards/
 
 # C
-unset(CMAKE_C_STD_FLAG)
+unset(C_STANDARD_FLAGS)
 set(CMAKE_C_EXTENSIONS OFF)
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT MSVC)
   set(CMAKE_C_STANDARD 99)
   set(CMAKE_C_STANDARD_REQUIRED ON)
+  set(API_FLAGS "-D_POSIX_C_SOURCE=200112L -D_XOPEN_SOURCE=500")
   if(CMAKE_C_EXTENSIONS)
-    set(CMAKE_C_STD_FLAG "${CMAKE_C${CMAKE_C_STANDARD}_EXTENSION_COMPILE_OPTION}")
+    set(C_STANDARD_FLAGS "${CMAKE_C${CMAKE_C_STANDARD}_EXTENSION_COMPILE_OPTION}")
   else()
-    set(CMAKE_C_STD_FLAG "${CMAKE_C${CMAKE_C_STANDARD}_STANDARD_COMPILE_OPTION}")
+    set(C_STANDARD_FLAGS "${CMAKE_C${CMAKE_C_STANDARD}_STANDARD_COMPILE_OPTION} ${API_FLAGS}")
   endif(CMAKE_C_EXTENSIONS)
-  if("${CMAKE_C_STD_FLAG}" STREQUAL "")
+  if("${C_STANDARD_FLAGS}" STREQUAL "")
     message(FATAL_ERROR "C standard specification failure: compiler does not support the C${CMAKE_C_STANDARD} standard:\n${CMAKE_C_COMPILE_FEATURES}")
-  endif("${CMAKE_C_STD_FLAG}" STREQUAL "")
+  endif("${C_STANDARD_FLAGS}" STREQUAL "")
 else()
   set(CMAKE_C_STANDARD 90)
   set(CMAKE_C_STANDARD_REQUIRED ON)
+  set(API_FLAGS "-D_POSIX_C_SOURCE=199009L -D_XOPEN_SOURCE=3")
   if(CMAKE_C_EXTENSIONS)
-    set(CMAKE_C_STD_FLAG "${CMAKE_C${CMAKE_C_STANDARD}_EXTENSION_COMPILE_OPTION}")
+    set(C_STANDARD_FLAGS "${CMAKE_C${CMAKE_C_STANDARD}_EXTENSION_COMPILE_OPTION}")
   else()
-    set(CMAKE_C_STD_FLAG "${CMAKE_C${CMAKE_C_STANDARD}_STANDARD_COMPILE_OPTION}")
+    set(C_STANDARD_FLAGS "${CMAKE_C${CMAKE_C_STANDARD}_STANDARD_COMPILE_OPTION} ${API_FLAGS}")
   endif(CMAKE_C_EXTENSIONS)
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT MSVC)
 
 # C++
-unset(CMAKE_CXX_STD_FLAG)
+unset(CXX_STANDARD_FLAGS)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 98)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(CMAKE_CXX_EXTENSIONS)
-  set(CMAKE_CXX_STD_FLAG "${CMAKE_CXX${CMAKE_CXX_STANDARD}_EXTENSION_COMPILE_OPTION}")
+  set(CXX_STANDARD_FLAGS "${CMAKE_CXX${CMAKE_CXX_STANDARD}_EXTENSION_COMPILE_OPTION}")
 else()
-  set(CMAKE_CXX_STD_FLAG "${CMAKE_CXX${CMAKE_CXX_STANDARD}_STANDARD_COMPILE_OPTION}")
+  set(CXX_STANDARD_FLAGS "${CMAKE_CXX${CMAKE_CXX_STANDARD}_STANDARD_COMPILE_OPTION} ${API_FLAGS}")
 endif(CMAKE_CXX_EXTENSIONS)
 
-if("${CMAKE_CXX_STD_FLAG}" STREQUAL "" AND NOT MSVC)
+if("${CXX_STANDARD_FLAGS}" STREQUAL "" AND NOT MSVC)
   message(FATAL_ERROR "C++ standard specification failure: compiler does not support the C++${CMAKE_CXX_STANDARD} standard:\n${CMAKE_CXX_COMPILE_FEATURES}")
-endif("${CMAKE_CXX_STD_FLAG}" STREQUAL "" AND NOT MSVC)
+endif("${CXX_STANDARD_FLAGS}" STREQUAL "" AND NOT MSVC)
 
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine
@@ -1646,8 +1673,8 @@ endif(NOT CMAKE_BUILD_FLAGS_CACHED_CMAKE_DEFAULT)
 CLEAR_BUILD_FLAGS()
 
 # Since this isn't src/other or misc/tools, we want the standards set.
-set(CMAKE_C_FLAGS "${CMAKE_C_STD_FLAG}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_STD_FLAG}")
+set(CMAKE_C_FLAGS "${C_STANDARD_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CXX_STANDARD_FLAGS}")
 
 # try to use -pipe to speed up the compiles
 CHECK_C_FLAG(pipe)
@@ -1687,9 +1714,6 @@ CHECK_CXX_FLAG(ftemplate-depth-128)
 # try_compile below with errors that appear to be coming from Windows
 # headers??
 # CHECK_C_FLAG("Za")
-
-# Need this for (at least) sys/ipc.h with C89
-CHECK_C_FLAG("D_XOPEN_SOURCE=500" VARS XOPEN_FLAG)
 
 # 64bit compilation flags
 if(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64)
@@ -2320,11 +2344,11 @@ CONFIG_H_APPEND(BRLCAD "#define STDC_HEADERS 1\n")
 
 # AC_HEADER_SYS_WAIT
 BRLCAD_HEADER_SYS_WAIT()
+
 # dirent.h is POSIX.1, but not present on Windows (grr)
 # so we need to check for it
 BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
 
-# Need to compare this with the configure.ac list
 BRLCAD_INCLUDE_FILE(arpa/inet.h HAVE_ARPA_INET_H)
 BRLCAD_INCLUDE_FILE(direct.h HAVE_DIRECT_H)
 BRLCAD_INCLUDE_FILE(dlfcn.h HAVE_DLFCN_H)
@@ -2373,7 +2397,6 @@ BRLCAD_INCLUDE_FILE(sys/select.h HAVE_SYS_SELECT_H)
 BRLCAD_INCLUDE_FILE(sys/shm.h HAVE_SYS_SHM_H)
 BRLCAD_INCLUDE_FILE(sys/socket.h HAVE_SYS_SOCKET_H)
 BRLCAD_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
-BRLCAD_INCLUDE_FILE(sys/sysctl.h HAVE_SYS_SYSCTL_H)
 BRLCAD_INCLUDE_FILE(sys/sysinfo.h HAVE_SYS_SYSINFO_H)
 BRLCAD_INCLUDE_FILE(sys/sysmp.h HAVE_SYS_SYSMP_H)
 BRLCAD_INCLUDE_FILE(sys/time.h HAVE_SYS_TIME_H)
@@ -2388,6 +2411,12 @@ BRLCAD_INCLUDE_FILE(uuid.h HAVE_UUID_H) # for uuid_generate() on BSD
 BRLCAD_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 BRLCAD_INCLUDE_FILE(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac & Linux
 BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
+
+# custom sys/sysctl.h test due to BSDisms when compiling as c90-era API
+check_c_source_compiles("#define u_char unsigned char\n#define u_int unsigned int\n#define u_long unsigned long\n#define u_short unsigned short\n#include <sys/sysctl.h>\nint main() { return 0; }" HAVE_SYS_SYSCTL_H)
+if(HAVE_SYS_SYSCTL_H)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_SYS_SYSCTL_H 1\n")
+endif(HAVE_SYS_SYSCTL_H)
 
 # Termlib related headers - these will be checked for in FindTERMLIB.cmake
 # testing logic, so at this stage just let the config header know we're
@@ -2424,7 +2453,7 @@ endif(BRLCAD_ENABLE_OPENGL)
 
 # may have the header, but ensure it works in pedantic mode (gcc bug)
 if(HAVE_EMMINTRIN_H)
-  check_cxx_source_compiles("#include <emmintrin.h>\nint main() { return 0; }" HAVE_EMMINTRIN)
+  check_c_source_compiles("#include <emmintrin.h>\nint main() { return 0; }" HAVE_EMMINTRIN)
   if(HAVE_EMMINTRIN)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_EMMINTRIN 1\n")
   endif(HAVE_EMMINTRIN)
@@ -2499,10 +2528,6 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
-
-# ALLOCA test - based on AC_FUNC_ALLOCA
-BRLCAD_ALLOCA()
-
 BRLCAD_FUNCTION_EXISTS(XQueryExtension)
 BRLCAD_FUNCTION_EXISTS(_putenv_s)
 BRLCAD_FUNCTION_EXISTS(_splitpath)
@@ -2513,6 +2538,7 @@ BRLCAD_FUNCTION_EXISTS(dlopen)
 BRLCAD_FUNCTION_EXISTS(drand48)
 BRLCAD_FUNCTION_EXISTS(fchmod)
 BRLCAD_FUNCTION_EXISTS(fdopen)
+BRLCAD_FUNCTION_EXISTS(fseeko)
 BRLCAD_FUNCTION_EXISTS(fsync)
 BRLCAD_FUNCTION_EXISTS(getcwd)
 BRLCAD_FUNCTION_EXISTS(getegid)
@@ -2521,7 +2547,8 @@ BRLCAD_FUNCTION_EXISTS(geteuid)
 BRLCAD_FUNCTION_EXISTS(gethostname)
 BRLCAD_FUNCTION_EXISTS(getloadavg)
 BRLCAD_FUNCTION_EXISTS(getopt_long)
-BRLCAD_FUNCTION_EXISTS(getprogname) # bsd
+BRLCAD_FUNCTION_EXISTS(getprogname)
+BRLCAD_FUNCTION_EXISTS(gettimeofday)
 BRLCAD_FUNCTION_EXISTS(htonll)
 BRLCAD_FUNCTION_EXISTS(hypot REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(isascii)
@@ -2558,12 +2585,16 @@ BRLCAD_FUNCTION_EXISTS(sync)
 BRLCAD_FUNCTION_EXISTS(sysconf)
 BRLCAD_FUNCTION_EXISTS(sysctl)
 BRLCAD_FUNCTION_EXISTS(sysmp)
+BRLCAD_FUNCTION_EXISTS(time)
 BRLCAD_FUNCTION_EXISTS(toascii)
 BRLCAD_FUNCTION_EXISTS(tzset)
 BRLCAD_FUNCTION_EXISTS(vfork)
 BRLCAD_FUNCTION_EXISTS(vsnprintf)
 BRLCAD_FUNCTION_EXISTS(vsscanf)
 BRLCAD_FUNCTION_EXISTS(writev)
+
+# ALLOCA test - based on AC_FUNC_ALLOCA
+BRLCAD_ALLOCA()
 
 # We may want access to some POSIX functions even when compiling in strict
 # mode, if they are present. For those cases, we need to record the DECL
