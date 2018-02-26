@@ -20,6 +20,9 @@
 
 #include "tienet.h"
 
+#include "bio.h"
+#include "bresource.h"
+#include "bsocket.h"
 #include "bnetwork.h"
 #include "bio.h"
 
