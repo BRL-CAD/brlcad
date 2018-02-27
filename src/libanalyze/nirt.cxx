@@ -55,10 +55,11 @@ extern "C" {
 }
 
 /* NIRT segment types */
-#define NIRT_HIT_SEG      1    /**< @brief Ray segment representing a solid region */
-#define NIRT_MISS_SEG     2    /**< @brief Ray segment representing a gap */
-#define NIRT_AIR_SEG      3    /**< @brief Ray segment representing an air region */
-#define NIRT_OVERLAP_SEG  4    /**< @brief Ray segment representing an overlap region */
+#define NIRT_MISS_SEG      1    /**< @brief Ray segment representing a miss */
+#define NIRT_PARTITION_SEG 2    /**< @brief Ray segment representing a solid region */
+#define NIRT_OVERLAP_SEG   3    /**< @brief Ray segment representing an overlap region */
+#define NIRT_GAP_SEG       4    /**< @brief Ray segment representing a gap */
+#define NIRT_ALL_SEG       5    /**< @brief Enable all values (for print) */
 
 #define NIRT_SILENT_UNSET    0
 #define NIRT_SILENT_YES      1
@@ -161,32 +162,8 @@ struct nirt_overlap {
 };
 #define NIRT_OVERLAP_NULL ((struct nirt_overlap *)0)
 
-#if 0
 struct nirt_seg {
-    int type
-    point_t in;
-    point_t out;
-    fastf_t los;
-    fastf_t scaled_los;
-    struct bu_vls *n1;
-    struct bu_vls *n2;
-    int reg_id_1;
-    int reg_id_2;
-    vect_t nm_in;
-    vect_t nm_out;
-    struct bu_vls *ov_sol_in;
-    struct bu_vls *ov_sol_out;
-    fastf_t ov_los;
-    int surf_num_in;
-    int surf_num_out;
-    int claimant_count;
-    struct bu_vls *claimant_list;
-    struct bu_vls *claimant_listn; /* uses \n instead of space to separate claimants */
-    struct bu_vls *attributes;
-};
-#endif
-
-struct nirt_seg {
+    int type;
     point_t in;
     fastf_t d_in;
     point_t out;
@@ -233,6 +210,7 @@ _nirt_seg_init(struct nirt_seg **s)
     if (!s) return;
 
     BU_GET(*s, struct nirt_seg);
+    (*s)->type = 0;
     BU_GET((*s)->path_name, struct bu_vls);
     BU_GET((*s)->reg_name, struct bu_vls);
     BU_GET((*s)->ov_reg1_name, struct bu_vls);
@@ -1150,9 +1128,12 @@ _nirt_print_fmt_cmd(struct bu_vls *ostr, char f, std::vector<std::pair<std::stri
 /* Translate NIRT fmt substrings into fully evaluated printf output, while also
  * handling units on key values.  This should never be called using any fmt
  * string that hasn't been validated by _nirt_fmt_sp_validate and _nirt_fmt_sp_key_check */
-#define nirt_print_key(keystr,val) if (BU_STR_EQUAL(key, keystr)) bu_vls_printf(ostr, fmt, val)
+#define nirt_print_key(keystr,val) \
+    do {if (BU_STR_EQUAL(key, keystr)) { bu_vls_printf(ostr, fmt, val); return; } } \
+    while (0)
+
 void
-_nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, struct nirt_output_record *r, fastf_t base2local)
+_nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *fmt, const char *key, struct nirt_output_record *r, fastf_t base2local)
 {
     if (!ostr || !fmt || !r) return;
     if (!key || !strlen(key)) {
@@ -1170,58 +1151,84 @@ _nirt_print_fmt_substr(struct bu_vls *ostr, const char *fmt, const char *key, st
     nirt_print_key("z_dir", r->dir[Z]);
     nirt_print_key("a", r->a);
     nirt_print_key("e", r->e);
-    nirt_print_key("x_in", r->seg->in[X] * base2local);
-    nirt_print_key("y_in", r->seg->in[Y] * base2local);
-    nirt_print_key("z_in", r->seg->in[Z] * base2local);
-    nirt_print_key("d_in", r->seg->d_in * base2local);
-    nirt_print_key("x_out", r->seg->out[X] * base2local);
-    nirt_print_key("y_out", r->seg->out[Y] * base2local);
-    nirt_print_key("z_out", r->seg->out[Z] * base2local);
-    nirt_print_key("d_out", r->seg->d_out * base2local);
-    nirt_print_key("los", r->seg->los * base2local);
-    nirt_print_key("scaled_los", r->seg->scaled_los * base2local);
-    nirt_print_key("path_name", bu_vls_addr(r->seg->path_name));
-    nirt_print_key("reg_name", bu_vls_addr(r->seg->reg_name));
-    nirt_print_key("reg_id", r->seg->reg_id);
-    nirt_print_key("obliq_in", r->seg->obliq_in);
-    nirt_print_key("obliq_out", r->seg->obliq_out);
-    nirt_print_key("nm_x_in", r->seg->nm_in[X]);
-    nirt_print_key("nm_y_in", r->seg->nm_in[Y]);
-    nirt_print_key("nm_z_in", r->seg->nm_in[Z]);
-    nirt_print_key("nm_d_in", r->seg->nm_d_in);
-    nirt_print_key("nm_h_in", r->seg->nm_h_in);
-    nirt_print_key("nm_v_in", r->seg->nm_v_in);
-    nirt_print_key("nm_x_out", r->seg->nm_out[X]);
-    nirt_print_key("nm_y_out", r->seg->nm_out[Y]);
-    nirt_print_key("nm_z_out", r->seg->nm_out[Z]);
-    nirt_print_key("nm_d_out", r->seg->nm_d_out);
-    nirt_print_key("nm_h_out", r->seg->nm_h_out);
-    nirt_print_key("nm_v_out", r->seg->nm_v_out);
-    nirt_print_key("ov_reg1_name", bu_vls_addr(r->seg->ov_reg1_name));
-    nirt_print_key("ov_reg1_id", r->seg->ov_reg1_id);
-    nirt_print_key("ov_reg2_name", bu_vls_addr(r->seg->ov_reg2_name));
-    nirt_print_key("ov_reg2_id", r->seg->ov_reg2_id);
-    nirt_print_key("ov_sol_in", bu_vls_addr(r->seg->ov_sol_in));
-    nirt_print_key("ov_sol_out", bu_vls_addr(r->seg->ov_sol_out));
-    nirt_print_key("ov_los", r->seg->ov_los * base2local);
-    nirt_print_key("ov_x_in", r->seg->ov_in[X] * base2local);
-    nirt_print_key("ov_y_in", r->seg->ov_in[Y] * base2local);
-    nirt_print_key("ov_z_in", r->seg->ov_in[Z] * base2local);
-    nirt_print_key("ov_d_in", r->seg->ov_d_in * base2local);
-    nirt_print_key("ov_x_out", r->seg->ov_out[X] * base2local);
-    nirt_print_key("ov_y_out", r->seg->ov_out[Y] * base2local);
-    nirt_print_key("ov_z_out", r->seg->ov_out[Z] * base2local);
-    nirt_print_key("ov_d_out", r->seg->ov_d_out * base2local);
-    nirt_print_key("surf_num_in", r->seg->surf_num_in);
-    nirt_print_key("surf_num_out", r->seg->surf_num_out);
-    nirt_print_key("claimant_count", r->seg->claimant_count);
-    nirt_print_key("claimant_list", bu_vls_addr(r->seg->claimant_list));
-    nirt_print_key("claimant_listn", bu_vls_addr(r->seg->claimant_listn));
-    nirt_print_key("attributes", bu_vls_addr(r->seg->attributes));
-    nirt_print_key("x_gap_in", r->seg->gap_in[X] * base2local);
-    nirt_print_key("y_gap_in", r->seg->gap_in[Y] * base2local);
-    nirt_print_key("z_gap_in", r->seg->gap_in[Z] * base2local);
-    nirt_print_key("gap_los", r->seg->gap_los * base2local);
+    
+    if (!r->seg || r->seg->type == 0) return;
+
+    if (r->seg->type == NIRT_PARTITION_SEG || r->seg->type == NIRT_ALL_SEG) {
+	nirt_print_key("x_in", r->seg->in[X] * base2local);
+	nirt_print_key("y_in", r->seg->in[Y] * base2local);
+	nirt_print_key("z_in", r->seg->in[Z] * base2local);
+	nirt_print_key("d_in", r->seg->d_in * base2local);
+	nirt_print_key("x_out", r->seg->out[X] * base2local);
+	nirt_print_key("y_out", r->seg->out[Y] * base2local);
+	nirt_print_key("z_out", r->seg->out[Z] * base2local);
+	nirt_print_key("d_out", r->seg->d_out * base2local);
+	nirt_print_key("los", r->seg->los * base2local);
+	nirt_print_key("scaled_los", r->seg->scaled_los * base2local);
+	nirt_print_key("path_name", bu_vls_addr(r->seg->path_name));
+	nirt_print_key("reg_name", bu_vls_addr(r->seg->reg_name));
+	nirt_print_key("reg_id", r->seg->reg_id);
+	nirt_print_key("obliq_in", r->seg->obliq_in);
+	nirt_print_key("obliq_out", r->seg->obliq_out);
+	nirt_print_key("nm_x_in", r->seg->nm_in[X]);
+	nirt_print_key("nm_y_in", r->seg->nm_in[Y]);
+	nirt_print_key("nm_z_in", r->seg->nm_in[Z]);
+	nirt_print_key("nm_d_in", r->seg->nm_d_in);
+	nirt_print_key("nm_h_in", r->seg->nm_h_in);
+	nirt_print_key("nm_v_in", r->seg->nm_v_in);
+	nirt_print_key("nm_x_out", r->seg->nm_out[X]);
+	nirt_print_key("nm_y_out", r->seg->nm_out[Y]);
+	nirt_print_key("nm_z_out", r->seg->nm_out[Z]);
+	nirt_print_key("nm_d_out", r->seg->nm_d_out);
+	nirt_print_key("nm_h_out", r->seg->nm_h_out);
+	nirt_print_key("nm_v_out", r->seg->nm_v_out);
+	nirt_print_key("surf_num_in", r->seg->surf_num_in);
+	nirt_print_key("surf_num_out", r->seg->surf_num_out);
+	nirt_print_key("claimant_count", r->seg->claimant_count);
+	nirt_print_key("claimant_list", bu_vls_addr(r->seg->claimant_list));
+	nirt_print_key("claimant_listn", bu_vls_addr(r->seg->claimant_listn));
+	nirt_print_key("attributes", bu_vls_addr(r->seg->attributes));
+    }
+
+    if (r->seg->type == NIRT_OVERLAP_SEG || r->seg->type == NIRT_ALL_SEG) {
+	nirt_print_key("ov_reg1_name", bu_vls_addr(r->seg->ov_reg1_name));
+	nirt_print_key("ov_reg1_id", r->seg->ov_reg1_id);
+	nirt_print_key("ov_reg2_name", bu_vls_addr(r->seg->ov_reg2_name));
+	nirt_print_key("ov_reg2_id", r->seg->ov_reg2_id);
+	nirt_print_key("ov_sol_in", bu_vls_addr(r->seg->ov_sol_in));
+	nirt_print_key("ov_sol_out", bu_vls_addr(r->seg->ov_sol_out));
+	nirt_print_key("ov_los", r->seg->ov_los * base2local);
+	nirt_print_key("ov_x_in", r->seg->ov_in[X] * base2local);
+	nirt_print_key("ov_y_in", r->seg->ov_in[Y] * base2local);
+	nirt_print_key("ov_z_in", r->seg->ov_in[Z] * base2local);
+	nirt_print_key("ov_d_in", r->seg->ov_d_in * base2local);
+	nirt_print_key("ov_x_out", r->seg->ov_out[X] * base2local);
+	nirt_print_key("ov_y_out", r->seg->ov_out[Y] * base2local);
+	nirt_print_key("ov_z_out", r->seg->ov_out[Z] * base2local);
+	nirt_print_key("ov_d_out", r->seg->ov_d_out * base2local);
+    }
+
+    if (r->seg->type == NIRT_GAP_SEG || r->seg->type == NIRT_ALL_SEG) {
+	nirt_print_key("x_gap_in", r->seg->gap_in[X] * base2local);
+	nirt_print_key("y_gap_in", r->seg->gap_in[Y] * base2local);
+	nirt_print_key("z_gap_in", r->seg->gap_in[Z] * base2local);
+	nirt_print_key("gap_los", r->seg->gap_los * base2local);
+    }
+
+    switch (r->seg->type) {
+	case NIRT_MISS_SEG:
+	    nerr(nss, "Key %s is not supported in MISS reporting\n", key);
+	    break;
+	case NIRT_PARTITION_SEG:
+	    nerr(nss, "Key %s is not supported in PARTITION reporting\n", key);
+	    break;
+	case NIRT_OVERLAP_SEG:
+	    nerr(nss, "Key %s is not supported in OVERLAP reporting\n", key);
+	    break;
+	case NIRT_GAP_SEG:
+	    nerr(nss, "Key %s is not supported in GAP reporting\n", key);
+	    break;
+    }	
 }
 
 /* Generate the full report string defined by the array of fmt,key pairs
@@ -1262,7 +1269,7 @@ _nirt_report(struct nirt_state *nss, char type, struct nirt_output_record *r)
     for(f_it = fmt_vect->begin(); f_it != fmt_vect->end(); f_it++) {
 	const char *key = (*f_it).second.c_str();
 	const char *fmt = (*f_it).first.c_str();
-	_nirt_print_fmt_substr(&rstr, fmt, key, r, nss->i->base2local);
+	_nirt_print_fmt_substr(nss, &rstr, fmt, key, r, nss->i->base2local);
     }
     nout(nss, "%s", bu_vls_addr(&rstr));
     bu_vls_free(&rstr);
@@ -1316,6 +1323,13 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
     int ev_odd = 1; /* first partition is colored as "odd" */
     point_t out_old = VINIT_ZERO;
     double d_out_old = 0.0;
+    struct nirt_seg *s;
+    _nirt_seg_init(&s);
+    if (vals->seg) {
+	_nirt_seg_free(vals->seg);
+	vals->seg = NULL;
+    }
+    vals->seg = s;
 
     _nirt_report(nss, 'r', vals);
     _nirt_report(nss, 'h', vals);
@@ -1327,9 +1341,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
     }
 
     for (part = part_head->pt_forw; part != part_head; part = part->pt_forw) {
-	struct nirt_seg *s;
-	_nirt_seg_init(&s);
-	vals->seg = s;
+	s->type = NIRT_PARTITION_SEG;
 
 	++part_nm;
 
@@ -1363,12 +1375,15 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    s->gap_los = d_out_old - s->d_in;
 
 	    if (s->gap_los > 0) {
+		// TODO - make a new nirt_seg here for diff purposes
+		s->type = NIRT_GAP_SEG;
 		_nirt_report(nss, 'g', vals);
 		/* vlist segment for gap */
 		vhead = bn_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
 		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BN_VLIST_LINE_MOVE);
 		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BN_VLIST_LINE_DRAW);
 		nss->i->b_segs = true;
+		s->type = NIRT_PARTITION_SEG;
 	    }
 	}
 	VMOVE(out_old, s->out); // Stash the out value for gap_los calculation in the next partition
@@ -1440,8 +1455,8 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	while ((ovp = _nirt_find_ovlp(nss, part)) != NIRT_OVERLAP_NULL) {
 
-	    // New nirt_seg for overlap
-
+	    // TODO - new nirt_seg for overlap
+	    s->type = NIRT_OVERLAP_SEG;
 
 	    // TODO - do this more cleanly
 	    char *copy_ovlp_reg1 = bu_strdup(ovp->reg1->reg_name);
@@ -1486,10 +1501,6 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	// diffs[current].segs.push_back(s);
 	// vals->seg = NULL; // Diff will be using this seg structure, so don't free it in this logic.
 	
-	if (vals->seg) {
-	    _nirt_seg_free(vals->seg);
-	    vals->seg = NULL;
-	}
     }
 
     _nirt_report(nss, 'f', vals);
@@ -1502,6 +1513,9 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    ovp = ovp->forw;
 	}
     }
+    
+    /* We're done reporting - let print get at everything */
+    vals->seg->type = NIRT_ALL_SEG;
 
     return HIT;
 }
@@ -2400,17 +2414,17 @@ _nirt_cmd_print_item(void *ns, int argc, const char **argv)
 	    return -1;
 	}
 	if (BU_STR_EQUAL(val_type, "INT")) {
-	    _nirt_print_fmt_substr(&oval, "%d", argv[i], nss->i->vals, nss->i->base2local);
+	    _nirt_print_fmt_substr(nss, &oval, "%d", argv[i], nss->i->vals, nss->i->base2local);
 	    nout(nss, "%s\n", bu_vls_addr(&oval));
 	    continue;
 	}
 	if (BU_STR_EQUAL(val_type, "FLOAT") || BU_STR_EQUAL(val_type, "FNOUNIT")) {
-	    _nirt_print_fmt_substr(&oval, "%g", argv[i], nss->i->vals, nss->i->base2local);
+	    _nirt_print_fmt_substr(nss, &oval, "%g", argv[i], nss->i->vals, nss->i->base2local);
 	    nout(nss, "%s\n", bu_vls_addr(&oval));
 	    continue;
 	}
 	if (BU_STR_EQUAL(val_type, "STRING")) {
-	    _nirt_print_fmt_substr(&oval, "%s", argv[i], nss->i->vals, nss->i->base2local);
+	    _nirt_print_fmt_substr(nss, &oval, "%s", argv[i], nss->i->vals, nss->i->base2local);
 	    nout(nss, "%s\n", bu_vls_addr(&oval));
 	    continue;
 	}
@@ -3046,6 +3060,7 @@ nirt_init(struct nirt_state *ns)
     n->vals->h = 0.0;
     n->vals->v = 0.0;
     n->vals->d_orig = 0.0;
+    n->vals->seg = NULL;
 
     /* Populate the output key and type information */
     {
