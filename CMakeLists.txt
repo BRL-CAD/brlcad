@@ -1797,7 +1797,7 @@ if(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
   CONFIG_H_APPEND(BRLCAD "#  define inline __inline\n")
   CONFIG_H_APPEND(BRLCAD "#endif /* !__cplusplus */\n")
 elseif(HAVE_INLINE_KEYWORD)
-  # this ugly hack is to avoid broken Mac OS X (10.11 era) ctype
+  # this ugly hack is to avoid broken Mac OS X (10.13 era) ctype
   # headers that drop the inline keyword when compiling c99.
   CONFIG_H_APPEND(BRLCAD "#if !defined(inline) && !defined(__cplusplus)\n")
   CONFIG_H_APPEND(BRLCAD "#  define inline inline\n")
