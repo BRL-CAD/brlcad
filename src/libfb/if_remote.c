@@ -45,12 +45,7 @@
 #ifdef HAVE_WRITEV
 #  include <sys/uio.h>		/* for struct iovec */
 #endif
-#ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>		/* for htons(), etc. */
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h>
-#endif
+#include "bnetwork.h"
 
 #include "bu/color.h"
 #include "bu/log.h"
