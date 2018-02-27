@@ -546,7 +546,8 @@ plot_cell_top(struct isect_stuff *isect,
 HIDDEN void
 dsp_print(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 {
-    point_t pt, v;
+    point_t pt = VINIT_ZERO;
+    point_t v = VINIT_ZERO;
 
     BU_CK_VLS(vls);
 
@@ -586,9 +587,6 @@ dsp_print(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 			  dsp_ip->dsp_cuttype,
 			  dsp_ip->dsp_cuttype); break;
     }
-
-
-    VSETALL(pt, 0.0);
 
     MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
 

@@ -2038,11 +2038,10 @@ summary_reports(struct cstate *state)
 
 	    if (analysis_flags & ANALYSIS_CENTROIDS &&
 		!ZERO(avg_mass)) {
-		vect_t centroid;
+		vect_t centroid = VINIT_ZERO;
 		fastf_t Dx_sq, Dy_sq, Dz_sq;
 		fastf_t inv_total_mass = 1.0/avg_mass;
 
-		VSETALL(centroid, 0.0);
 		for (view=0; view < num_views; view++) {
 		    vect_t torque;
 		    fastf_t cell_area = state->area[view] / state->shots[view];
@@ -2152,11 +2151,10 @@ summary_reports(struct cstate *state)
 
 	if (analysis_flags & ANALYSIS_CENTROIDS &&
 	    !ZERO(avg_mass)) {
-	    vect_t centroid;
+	    vect_t centroid = VINIT_ZERO;
 	    fastf_t Dx_sq, Dy_sq, Dz_sq;
 	    fastf_t inv_total_mass = 1.0/avg_mass;
 
-	    VSETALL(centroid, 0.0);
 	    for (view=0; view < num_views; view++) {
 		vect_t torque;
 		fastf_t cell_area = state->area[view] / state->shots[view];

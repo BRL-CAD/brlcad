@@ -40,7 +40,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
 {
     int is_empty = 1;
     vect_t min, max;
-    vect_t center;
+    vect_t center = VINIT_ZERO;
     vect_t radial;
     vect_t sqrt_small;
 
@@ -84,7 +84,6 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
 
     if (is_empty) {
 	/* Nothing is in view */
-	VSETALL(center, 0.0);
 	VSETALL(radial, 1000.0);
     } else {
 	VADD2SCALE(center, max, min, 0.5);

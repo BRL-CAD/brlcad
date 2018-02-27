@@ -1028,12 +1028,11 @@ shrink_wrap(struct shell *s)
     for (vert_no = 0; vert_no < BU_PTBL_LEN(&extra_verts); vert_no++) {
 	struct vertex *v;
 	struct vertexuse *vu;
-	vect_t dir;
+	vect_t dir = VINIT_ZERO;
 	vect_t abs_dir;
 	int dir_index;
 
 	v = (struct vertex *)BU_PTBL_GET(&extra_verts, vert_no);
-	VSETALL(dir, 0.0);
 	for (BU_LIST_FOR(vu, vertexuse, &v->vu_hd)) {
 	    vect_t norm;
 

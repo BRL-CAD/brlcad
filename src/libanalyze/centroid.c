@@ -75,10 +75,9 @@ analyze_centroid(struct raytracing_context *context, const char *name)
 
     avg_mass /= context->num_views;
     if (!ZERO(avg_mass)) {
-	point_t centroid;
+	point_t centroid = VINIT_ZERO;
 	fastf_t inv_total_mass = 1.0/avg_mass;
 
-	VSETALL(centroid, 0.0);
 	for (view = 0; view < context->num_views; view++) {
 	    vect_t torque;
 	    fastf_t cell_area = context->area[view] / context->shots[view];

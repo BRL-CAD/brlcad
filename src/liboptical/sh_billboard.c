@@ -368,7 +368,7 @@ do_ray_image(struct application *ap,
     unsigned char *pixels, *color;
     int val;
     static const double rgb255 = 1.0 / 256.0;
-    vect_t cum_color;
+    vect_t cum_color = VINIT_ZERO;
     point_t pt;
     vect_t vpt;
     double radius;
@@ -436,7 +436,6 @@ do_ray_image(struct application *ap,
 
     tot = (uhi - ulo + 1) * (vhi - vlo + 1); /* total # of pixels */
     color_count = 0; /* */
-    VSETALL(cum_color, 0.0);
     for (v = vlo; v <= vhi; v++) {
 	for (u = ulo; u <= uhi; u++) {
 	    color = &pixels[v*bi->img_width*3 + u*3];

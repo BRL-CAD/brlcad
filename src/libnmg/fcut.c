@@ -3204,7 +3204,7 @@ void
 nmg_fcut_face_2d(struct bu_ptbl *vu_list, fastf_t *UNUSED(mag), struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree, struct bn_tol *tol)
 {
     struct nmg_ray_state rs;
-    point_t pt;
+    point_t pt = VINIT_ZERO;
     vect_t dir;
     struct edge_g_lseg *eg;
 
@@ -3213,7 +3213,6 @@ nmg_fcut_face_2d(struct bu_ptbl *vu_list, fastf_t *UNUSED(mag), struct faceuse *
     BN_CK_TOL(tol);
     BU_CK_PTBL(vu_list);
 
-    VSETALL(pt, 0.0);
     VSET(dir, 1.0, 0.0 , 0.0);
     eg = (struct edge_g_lseg *)NULL;
 

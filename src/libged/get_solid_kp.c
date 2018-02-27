@@ -141,11 +141,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_ebm_internal *ebm =
 		    (struct rt_ebm_internal *)ip->idb_ptr;
-		point_t pnt;
+		point_t pnt = VINIT_ZERO;
 
 		RT_EBM_CK_MAGIC(ebm);
 
-		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, ebm->mat, pnt);
 		break;
 	    }
@@ -161,11 +160,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_dsp_internal *dsp =
 		    (struct rt_dsp_internal *)ip->idb_ptr;
-		point_t pnt;
+		point_t pnt = VINIT_ZERO;
 
 		RT_DSP_CK_MAGIC(dsp);
 
-		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, dsp->dsp_stom, pnt);
 		break;
 	    }
@@ -183,11 +181,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_vol_internal *vol =
 		    (struct rt_vol_internal *)ip->idb_ptr;
-		point_t pnt;
+		point_t pnt = VINIT_ZERO;
 
 		RT_VOL_CK_MAGIC(vol);
 
-		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, vol->mat, pnt);
 		break;
 	    }

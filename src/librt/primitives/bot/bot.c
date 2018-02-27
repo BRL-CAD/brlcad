@@ -4130,11 +4130,10 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 
 	/* process each vertex in his face */
 	for (k = 0; k < 3; k++) {
-	    vect_t ave_norm;
+	    vect_t ave_norm = VINIT_ZERO;
 
 	    /* the actual vertex index */
 	    vert_no = bot->faces[i*3+k];
-	    VSETALL(ave_norm, 0.0);
 
 	    /* find all the faces that use this vertex */
 	    for (j = 0; j < bot->num_faces * 3; j++) {

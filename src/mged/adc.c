@@ -115,10 +115,9 @@ adc_model_To_adc_view(void)
 static void
 adc_grid_To_adc_view(void)
 {
-    point_t model_pt;
+    point_t model_pt = VINIT_ZERO;
     point_t view_pt;
 
-    VSETALL(model_pt, 0.0);
     MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     VADD2(adc_state->adc_pos_view, view_pt, adc_state->adc_pos_grid);
     adc_state->adc_dv_x = adc_state->adc_pos_view[X] * GED_MAX;
@@ -129,10 +128,9 @@ adc_grid_To_adc_view(void)
 static void
 adc_view_To_adc_grid(void)
 {
-    point_t model_pt;
+    point_t model_pt = VINIT_ZERO;
     point_t view_pt;
 
-    VSETALL(model_pt, 0.0);
     MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     VSUB2(adc_state->adc_pos_grid, adc_state->adc_pos_view, view_pt);
 }
