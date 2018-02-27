@@ -56,6 +56,9 @@ set(standard_header_template
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
 #ifdef HAVE_SIGNAL_H
 # include <signal.h>
 #endif
