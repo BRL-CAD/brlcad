@@ -256,6 +256,56 @@ _nirt_seg_free(struct nirt_seg *s)
     BU_PUT(s, struct nirt_seg);
 }
 
+struct nirt_seg *
+_nirt_seg_cpy(struct nirt_seg *s, int type)
+{
+    struct nirt_seg *n = NULL;
+    if (!s) return NULL;
+
+    _nirt_seg_init(&n);
+
+    n->type = type;
+    VMOVE(n->in, s->in);
+    n->d_in = s->d_in;
+    VMOVE(n->out, s->out);
+    n->d_out = s->d_out;
+    n->los = s->los;
+    n->scaled_los = s->scaled_los;
+    bu_vls_sprintf(n->path_name, "%s", bu_vls_addr(s->path_name));
+    bu_vls_sprintf(n->reg_name, "%s", bu_vls_addr(s->reg_name));
+    n->reg_id = s->reg_id;
+    n->obliq_in = s->obliq_in;
+    n->obliq_out = s->obliq_out;
+    VMOVE(n->nm_in, s->nm_in);
+    n->nm_d_in = s->nm_d_in;
+    n->nm_h_in = s->nm_h_in;
+    n->nm_v_in = s->nm_v_in;
+    VMOVE(n->nm_out, s->nm_out);
+    n->nm_d_out = s->nm_d_out;
+    n->nm_h_out = s->nm_h_out;
+    n->nm_v_out = s->nm_v_out;
+    bu_vls_sprintf(n->ov_reg1_name, "%s", bu_vls_addr(s->ov_reg1_name));
+    n->ov_reg1_id = s->ov_reg1_id;
+    bu_vls_sprintf(n->ov_reg2_name, "%s", bu_vls_addr(s->ov_reg2_name));
+    n->ov_reg2_id = s->ov_reg2_id;
+    bu_vls_sprintf(n->ov_sol_in, "%s", bu_vls_addr(s->ov_sol_in));
+    bu_vls_sprintf(n->ov_sol_out, "%s", bu_vls_addr(s->ov_sol_out));
+    n->ov_los = s->ov_los;
+    VMOVE(n->ov_in, s->ov_in);
+    n->ov_d_in = s->ov_d_in;
+    VMOVE(n->ov_out, s->ov_out);
+    n->ov_d_out = s->ov_d_out;
+    n->surf_num_in = s->surf_num_in;
+    n->surf_num_out = s->surf_num_out;
+    n->claimant_count = s->claimant_count;
+    bu_vls_sprintf(n->claimant_list, "%s", bu_vls_addr(s->claimant_list));
+    bu_vls_sprintf(n->claimant_listn, "%s", bu_vls_addr(s->claimant_listn));
+    bu_vls_sprintf(n->attributes, "%s", bu_vls_addr(s->attributes));
+    VMOVE(n->gap_in, s->gap_in);
+    n->gap_los = s->gap_los;
+    return n;
+}
+
 
 /* This record structure doesn't have to correspond exactly to the above list
  * of available values, but it needs to retain sufficient information to
@@ -275,6 +325,8 @@ struct nirt_output_record {
 struct nirt_diff {
     point_t orig;
     vect_t dir;
+    int has_diff;
+    std::vector<struct nirt_seg *> segs;
     std::vector<std::pair<struct nirt_seg *, struct nirt_seg *> > diffs;
 };
 
@@ -321,6 +373,7 @@ struct nirt_state_impl {
     std::set<std::string> attrs;        // active attributes
     std::vector<std::string> active_paths; // active paths for raytracer
     struct nirt_output_record *vals;
+    struct nirt_diff *diff;
     std::vector<struct nirt_diff *> diffs;
 
     /* state alteration flags */
@@ -521,6 +574,16 @@ _nirt_str_to_dbl(std::string s)
     //bu_log("str   : %s\ndbl   : %.17f\n", s.c_str(), d);
     return d;
 }
+
+HIDDEN int
+_nirt_str_to_int(std::string s)
+{
+    int i;
+    std::stringstream ss(s);
+    ss >> i;
+    return i;
+}
+
 /********************************
  * Conversions and Calculations *
  ********************************/
@@ -1785,9 +1848,20 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		// diff database (if any diffs were found), then clear expected
 		// results and old ray
 		bu_log("\n\nanother ray!\n\n\n");
+		// if  (nss->i->diff->has_diff) { 
+		// nss->i->diffs.push_back(nss->i->diff);
+		// } else {
+		//    std::vector<struct nirt_seg *>::iterator d_it;
+		//    for (size_t i = 0; i < nss->i->diff->segs.size(); i++) {
+		//        struct nirt_seg *seg = nss->i->diff->segs[i];
+		//        _nirt_seg_free(seg);
+		//    }
+		//    delete *(nss->i->diff);
+		// }
 	    }
 	    // Read ray
 	    df = new struct nirt_diff;
+	    df->has_diff = 0;
 	    std::string rstr = line.substr(5);
 	    have_ray = 1;
 	    std::vector<std::string> substrs = _nirt_string_split(rstr);
@@ -1803,7 +1877,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(df->orig));
 	    bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(df->dir));
 	    _nirt_targ2grid(nss);
-	    nss->i->diffs.push_back(df);
+	    nss->i->diff = df;
 	    continue;
 	} else {
 	    if (!line.compare(0, 5, "HIT: ") || !line.compare(0, 5, "GAP: ") ||
@@ -1821,29 +1895,30 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		nerr(nss, "Error processing hit line \"%s\"!\nExpected 15 elements, found %d\n", hstr.c_str(), substrs.size());
 		return -1;
 	    }
-	    point_t in, out;
-	    double los, scaled_los, d_in, d_out, obliq_in, obliq_out;
 	    bu_log("Found %s:\n", line.c_str());
-	    bu_log("reg_name: %s\n", substrs[0].c_str());
-	    bu_log("reg_path: %s\n", substrs[1].c_str());
-	    bu_log("reg_id: %s\n", substrs[2].c_str());
-	    in[X] = _nirt_str_to_dbl(substrs[3]);
-	    in[Y] = _nirt_str_to_dbl(substrs[4]);
-	    in[Z] = _nirt_str_to_dbl(substrs[5]);
-	    d_in = _nirt_str_to_dbl(substrs[6]);
-	    out[X] = _nirt_str_to_dbl(substrs[7]);
-	    out[Y] = _nirt_str_to_dbl(substrs[8]);
-	    out[Z] = _nirt_str_to_dbl(substrs[9]);
-	    d_out = _nirt_str_to_dbl(substrs[10]);
-	    los = _nirt_str_to_dbl(substrs[11]);
-	    scaled_los = _nirt_str_to_dbl(substrs[12]);
-	    obliq_in = _nirt_str_to_dbl(substrs[13]);
-	    obliq_out = _nirt_str_to_dbl(substrs[14]);
-	    bu_log("in: %0.17f, %0.17f, %0.17f\n", V3ARGS(in));
-	    bu_log("out: %0.17f, %0.17f, %0.17f\n", V3ARGS(out));
-	    bu_log("d_in: %0.17f d_out: %0.17f\n", d_in, d_out);
-	    bu_log("los: %0.17f  scaled_los: %0.17f\n", los, scaled_los);
-	    bu_log("obliq_in: %0.17f  obliq_out: %0.17f\n", obliq_in, obliq_out);
+	    struct nirt_seg *seg;
+	    _nirt_seg_init(&seg);
+	    seg->type = NIRT_PARTITION_SEG;
+	    bu_vls_sprintf(seg->reg_name, "%s", substrs[0].c_str());
+	    bu_vls_sprintf(seg->path_name, "%s", substrs[1].c_str());
+	    seg->reg_id = _nirt_str_to_int(substrs[2]);
+	    VSET(seg->in, _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]), _nirt_str_to_dbl(substrs[6]));
+	    seg->d_in = _nirt_str_to_dbl(substrs[6]);
+	    VSET(seg->out, _nirt_str_to_dbl(substrs[7]), _nirt_str_to_dbl(substrs[8]), _nirt_str_to_dbl(substrs[9]));
+	    seg->d_out = _nirt_str_to_dbl(substrs[10]);
+	    seg->los = _nirt_str_to_dbl(substrs[11]);
+	    seg->scaled_los = _nirt_str_to_dbl(substrs[12]);
+	    seg->obliq_in = _nirt_str_to_dbl(substrs[13]);
+	    seg->obliq_out = _nirt_str_to_dbl(substrs[14]);
+	    bu_log("reg_name: %s\n", bu_vls_addr(seg->reg_name));
+	    bu_log("path_name: %s\n", bu_vls_addr(seg->path_name));
+	    bu_log("reg_id: %d\n", seg->reg_id);
+	    bu_log("in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg->in));
+	    bu_log("out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg->out));
+	    bu_log("d_in: %0.17f d_out: %0.17f\n", seg->d_in, seg->d_out);
+	    bu_log("los: %0.17f  scaled_los: %0.17f\n", seg->los, seg->scaled_los);
+	    bu_log("obliq_in: %0.17f  obliq_out: %0.17f\n", seg->obliq_in, seg->obliq_out);
+	    nss->i->diff->segs.push_back(seg);
 	    continue;
 	}
 	if (!line.compare(0, 5, "GAP: ")) {
@@ -1854,26 +1929,28 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		return -1;
 	    }
 	    bu_log("Found %s:\n", line.c_str());
-	    point_t in, out;
-	    double gap_los;
-	    in[X] = _nirt_str_to_dbl(substrs[0]);
-	    in[Y] = _nirt_str_to_dbl(substrs[1]);
-	    in[Z] = _nirt_str_to_dbl(substrs[2]);
-	    out[X] = _nirt_str_to_dbl(substrs[3]);
-	    out[Y] = _nirt_str_to_dbl(substrs[4]);
-	    out[Z] = _nirt_str_to_dbl(substrs[5]);
-	    gap_los = _nirt_str_to_dbl(substrs[6]);
-	    bu_log("in: %0.17f, %0.17f, %0.17f\n", V3ARGS(in));
-	    bu_log("out: %0.17f, %0.17f, %0.17f\n", V3ARGS(out));
-	    bu_log("gap_los: %0.17f\n", gap_los);
+	    struct nirt_seg *seg;
+	    _nirt_seg_init(&seg);
+	    seg->type = NIRT_GAP_SEG;
+	    VSET(seg->gap_in, _nirt_str_to_dbl(substrs[0]), _nirt_str_to_dbl(substrs[1]), _nirt_str_to_dbl(substrs[2]));
+	    VSET(seg->in, _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]), _nirt_str_to_dbl(substrs[5]));
+	    seg->gap_los = _nirt_str_to_dbl(substrs[6]);
+	    bu_log("in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg->gap_in));
+	    bu_log("out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg->in));
+	    bu_log("gap_los: %0.17f\n", seg->gap_los);
+	    nss->i->diff->segs.push_back(seg);
 	    continue;
 	}
 	if (!line.compare("MISS")) {
+	    struct nirt_seg *seg;
+	    _nirt_seg_init(&seg);
+	    seg->type = NIRT_MISS_SEG;
 	    bu_log("Found MISS\n");
 	    have_ray = 0;
+	    nss->i->diff->segs.push_back(seg);
 	    continue;
 	}
-	if (!line.compare(0, 9, "OVERLAP: ")) {
+	if (!line.compare(0, 9, "OVERLAP: ")) { 
 	    std::string ostr = line.substr(9);
 	    std::vector<std::string> substrs = _nirt_string_split(ostr);
 	    if (substrs.size() != 6) {
@@ -1881,16 +1958,18 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		return -1;
 	    }
 	    bu_log("Found %s:\n", line.c_str());
-	    point_t ov_in;
-	    double ov_los;
-	    bu_log("ov_reg1_name: %s\n", substrs[0].c_str());
-	    bu_log("ov_reg2_name: %s\n", substrs[1].c_str());
-	    ov_in[X] = _nirt_str_to_dbl(substrs[2]);
-	    ov_in[Y] = _nirt_str_to_dbl(substrs[3]);
-	    ov_in[Z] = _nirt_str_to_dbl(substrs[4]);
-	    ov_los = _nirt_str_to_dbl(substrs[5]);
-	    bu_log("ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(ov_in));
-	    bu_log("ov_los: %0.17f\n", ov_los);
+	    struct nirt_seg *seg;
+	    _nirt_seg_init(&seg);
+	    seg->type = NIRT_OVERLAP_SEG;
+	    bu_vls_sprintf(seg->ov_reg1_name, "%s", substrs[0].c_str());
+	    bu_vls_sprintf(seg->ov_reg2_name, "%s", substrs[1].c_str());
+	    VSET(seg->ov_in, _nirt_str_to_dbl(substrs[2]), _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]));
+	    seg->ov_los = _nirt_str_to_dbl(substrs[5]);
+	    bu_log("ov_reg1_name: %s\n", bu_vls_addr(seg->ov_reg1_name));
+	    bu_log("ov_reg2_name: %s\n", bu_vls_addr(seg->ov_reg2_name));
+	    bu_log("ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg->ov_in));
+	    bu_log("ov_los: %0.17f\n", seg->ov_los);
+	    nss->i->diff->segs.push_back(seg);
 	    continue;
 	}
 	nerr(nss, "Warning - unknown line type, skipping: %s\n", line.c_str());
