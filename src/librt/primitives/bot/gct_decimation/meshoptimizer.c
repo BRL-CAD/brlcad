@@ -1521,7 +1521,7 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
 	factor *= 0.25;
 
     for (a = 3; a < mesh.vertexcachesize; a++)
-	mesh.cachescore[a] = powf(1.0 - ((mof)(a - 3) * factor), 1.5);
+	mesh.cachescore[a] = pow(1.0 - ((mof)(a - 3) * factor), 1.5);
 
     if (mesh.operationflags & MO_FLAGS_FIXED_CACHE_SIZE) {
 	if (mesh.vertexcachesize > 1)
@@ -1534,7 +1534,7 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     mesh.trirefscore[0] = -256.0;
 
     for (a = 1; a < MO_TRIREFSCORE_COUNT; a++)
-	mesh.trirefscore[a] = 2.0 * powf((float)a, -0.5);
+	mesh.trirefscore[a] = 2.0 * pow((float)a, -0.5);
 
     /* Allocation */
     mesh.vertexlist = (moVertex *)mmAlignAlloc(mesh.vertexcount * sizeof(moVertex), 0x40);
