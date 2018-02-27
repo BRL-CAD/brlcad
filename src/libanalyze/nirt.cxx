@@ -1151,7 +1151,7 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
     nirt_print_key("z_dir", r->dir[Z]);
     nirt_print_key("a", r->a);
     nirt_print_key("e", r->e);
-    
+
     if (!r->seg || r->seg->type == 0) return;
 
     if (r->seg->type == NIRT_PARTITION_SEG || r->seg->type == NIRT_ALL_SEG) {
@@ -1215,6 +1215,8 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
 	nirt_print_key("gap_los", r->seg->gap_los * base2local);
     }
 
+    /* TODO - the fmt command should ideally do checking on format definition
+     * to preclude the possibility of needing these error checks... */
     switch (r->seg->type) {
 	case NIRT_MISS_SEG:
 	    nerr(nss, "Key %s is not supported in MISS reporting\n", key);
@@ -1228,7 +1230,7 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
 	case NIRT_GAP_SEG:
 	    nerr(nss, "Key %s is not supported in GAP reporting\n", key);
 	    break;
-    }	
+    }
 }
 
 /* Generate the full report string defined by the array of fmt,key pairs
