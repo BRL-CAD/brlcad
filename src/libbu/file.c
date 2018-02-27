@@ -356,6 +356,10 @@ bu_file_symbolic(const char *path)
 	return 0;
     }
 
+    /* c99 portability */
+#if !defined(S_ISLNK) && defined(S_IFLNK)
+#define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
+#endif
     return (S_ISLNK(sb.st_mode));
 }
 
