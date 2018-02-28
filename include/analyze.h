@@ -212,7 +212,7 @@ struct rt_gen_worker_vars {
 ANALYZE_EXPORT int
 analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
 	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
-	const char *curr_comb, struct bu_ptbl *candidates, void *curr_union_data, int ncpus);
+	const char *curr_comb, struct bu_ptbl *candidates, void *curr_union_data, size_t ncpus);
 
 ANALYZE_EXPORT void
 analyze_heal_bot(struct rt_bot_internal *bot, double zipper_tol);
