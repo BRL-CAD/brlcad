@@ -2089,7 +2089,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    bu_vls_sprintf(seg->reg_name, "%s", substrs[0].c_str());
 	    bu_vls_sprintf(seg->path_name, "%s", substrs[1].c_str());
 	    seg->reg_id = _nirt_str_to_int(substrs[2]);
-	    VSET(seg->in, _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]), _nirt_str_to_dbl(substrs[6]));
+	    VSET(seg->in, _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]), _nirt_str_to_dbl(substrs[5]));
 	    seg->d_in = _nirt_str_to_dbl(substrs[6]);
 	    VSET(seg->out, _nirt_str_to_dbl(substrs[7]), _nirt_str_to_dbl(substrs[8]), _nirt_str_to_dbl(substrs[9]));
 	    seg->d_out = _nirt_str_to_dbl(substrs[10]);
