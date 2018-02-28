@@ -1679,7 +1679,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	nss->i->b_segs = true;
 
 	/* done with hit portion - if diff, stash */
-	{
+	if (nss->i->diff) {
 	    struct nirt_seg_diff *sd = _nirt_segs_diff(nss, nss->i->diff->segs[cnt-1], s);
 	    if (sd) {
 		nss->i->diff->diffs.push_back(sd);
@@ -1731,7 +1731,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    }
 
 	    /* Diff */
-	    {
+	    if (nss->i->diff) {
 		struct nirt_seg_diff *sd = _nirt_segs_diff(nss, nss->i->diff->segs[cnt-1], s);
 		if (sd) {
 		    nss->i->diff->diffs.push_back(sd);
