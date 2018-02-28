@@ -61,6 +61,11 @@ extern int kill(pid_t, int);
 extern int fileno(FILE*);
 #endif
 
+/* strict c90 doesn't provide basics */
+#ifndef HAVE_DECL_GETTIMEOFDAY
+extern int gettimeofday(struct timeval *, void *);
+#endif
+
 
 /* so we don't have to worry as much about stack stomping */
 #define BT_BUFSIZE 4096
