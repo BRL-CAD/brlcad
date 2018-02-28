@@ -45,7 +45,6 @@ set(public_hdrs
   vmath.h
   wdb.h
   )
-CMAKEFILES(${public_hdrs})
 install(FILES ${public_hdrs} DESTINATION ${INCLUDE_DIR}/brlcad)
 
 # Configuration headers
@@ -54,12 +53,8 @@ if(WIN32)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config_win.h" DESTINATION ${INCLUDE_DIR}/brlcad)
 endif(WIN32)
 
-# headers used by multiple packages but still considered private.
-# public headers should NOT include these headers.
-set(noinst_HEADERS
-  brlcad_version.h
-  )
-CMAKEFILES(${noinst_HEADERS})
+# Used by others but still considered private
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/brlcad_version.h" DESTINATION ${INCLUDE_DIR})
 
 # Enforce the above list - check the public headers to make sure
 # they do not include any private headers.
