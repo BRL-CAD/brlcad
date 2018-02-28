@@ -33,7 +33,12 @@
 #endif
 
 #ifdef HAVE_PTHREAD_H
+/* hack for bsd c90-mode headers using undefined types */
+#  ifndef clockid_t
+#    define clockid_t int32_t
+#  endif
 #  include <pthread.h>
+#  undef clockid_t
 #endif
 
 #ifdef HAVE_PTHREAD_NP_H
