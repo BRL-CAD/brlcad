@@ -1897,8 +1897,8 @@ if(NOT MSVC)
   # CHECK_CXX_FLAG(Ofast GROUPS OPTIMIZE_CXX_FLAGS)
 
   # binaries will not necessarily work on a different machine
-  CHECK_C_FLAG(march=native GROUPS OPTIMIZE_C_FLAGS)
-  CHECK_CXX_FLAG(march=native GROUPS OPTIMIZE_CXX_FLAGS)
+  # CHECK_C_FLAG(march=native GROUPS OPTIMIZE_C_FLAGS)
+  # CHECK_CXX_FLAG(march=native GROUPS OPTIMIZE_CXX_FLAGS)
 
   # perform interprocedural analysis, slows compilation heavily
   CHECK_C_FLAG(fipa-pta GROUPS OPTIMIZE_C_FLAGS)
