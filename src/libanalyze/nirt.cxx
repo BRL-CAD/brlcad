@@ -164,6 +164,7 @@ struct nirt_overlap {
 
 struct nirt_seg {
     int type;
+    int id;
     point_t in;
     fastf_t d_in;
     point_t out;
@@ -257,14 +258,14 @@ _nirt_seg_free(struct nirt_seg *s)
 }
 
 struct nirt_seg *
-_nirt_seg_cpy(struct nirt_seg *s, int type)
+_nirt_seg_cpy(struct nirt_seg *s)
 {
     struct nirt_seg *n = NULL;
     if (!s) return NULL;
 
     _nirt_seg_init(&n);
 
-    n->type = type;
+    n->type = s->type;
     VMOVE(n->in, s->in);
     n->d_in = s->d_in;
     VMOVE(n->out, s->out);
@@ -330,6 +331,26 @@ struct nirt_diff {
     std::vector<std::pair<struct nirt_seg *, struct nirt_seg *> > diffs;
 };
 
+struct nirt_diff_settings {
+    int report_partitions;
+    int report_misses;
+    int report_gaps;
+    int report_overlaps;
+    int report_partition_reg_ids;
+    int report_partition_reg_names;
+    int report_partition_path_names;
+    int report_partition_dists;
+    int report_partition_obliq;
+    int report_overlap_reg_names;
+    int report_overlap_reg_ids;
+    int report_overlap_dists;
+    int report_overlap_obliq;
+    fastf_t dist_delta_tol;
+    fastf_t obliq_delta_tol;
+    fastf_t los_delta_tol;
+    fastf_t scaled_los_delta_tol;
+};
+
 struct nirt_state_impl {
     /* Output options */
     struct bu_color *hit_odd_color;
@@ -375,6 +396,7 @@ struct nirt_state_impl {
     struct nirt_output_record *vals;
     struct nirt_diff *diff;
     std::vector<struct nirt_diff *> diffs;
+    struct nirt_diff_settings *diff_settings;
 
     /* state alteration flags */
     bool b_state;   // updated for any state change
@@ -714,6 +736,57 @@ _nirt_get_obliq(fastf_t *ray, fastf_t *normal)
 	obliquity = 360 - obliquity;
 
     return obliquity;
+}
+
+/**********************
+ * Diff functionality *
+ **********************/
+
+HIDDEN int
+_nirt_partition_diff(struct nirt_state *nss, struct nirt_seg *left, struct nirt_seg *right)
+{
+    if (!nss || !nss->i->diff) return 0;
+    if (!left || !right) return 1;
+    return 0; 
+}
+
+HIDDEN int
+_nirt_overlap_diff(struct nirt_state *nss, struct nirt_seg *left, struct nirt_seg *right)
+{
+    if (!nss || !nss->i->diff) return 0;
+    if (!left || !right) return 1;
+    return 0; 
+}
+
+HIDDEN int
+_nirt_gap_diff(struct nirt_state *nss, struct nirt_seg *left, struct nirt_seg *right)
+{
+    if (!nss || !nss->i->diff) return 0;
+    if (!left || !right) return 1;
+    return 0; 
+}
+
+HIDDEN int
+_nirt_seg_diff(struct nirt_state *nss, struct nirt_seg *left, struct nirt_seg *right)
+{
+    if (!nss || !nss->i->diff) return 0;
+    if (!left || !right) return 1;
+    if (left->type != right->type) return 1;
+
+    switch(left->type) {
+	case NIRT_MISS_SEG:
+	    /* Types don't differ and they're both misses - we're good */
+	    return 0;
+	case NIRT_PARTITION_SEG:
+	    return _nirt_partition_diff(nss, left, right);
+	case NIRT_GAP_SEG:
+	    return _nirt_gap_diff(nss, left, right);
+	case NIRT_OVERLAP_SEG:
+	    return _nirt_overlap_diff(nss, left, right);
+	default:
+	    nerr(nss, "NIRT diff error: unknown segment type: %d\n", left->type);
+	    return 0;
+    }
 }
 
 /********************
@@ -1386,6 +1459,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
     struct nirt_overlap *ovp;
     struct partition *part;
     int ev_odd = 1; /* first partition is colored as "odd" */
+    int cnt = 0;
     point_t out_old = VINIT_ZERO;
     double d_out_old = 0.0;
     struct nirt_seg *s;
@@ -1407,6 +1481,8 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
     for (part = part_head->pt_forw; part != part_head; part = part->pt_forw) {
 	s->type = NIRT_PARTITION_SEG;
+	cnt++;
+	s->id = cnt;
 
 	++part_nm;
 
@@ -1440,15 +1516,23 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    s->gap_los = d_out_old - s->d_in;
 
 	    if (s->gap_los > 0) {
-		// TODO - make a new nirt_seg here for diff purposes
 		s->type = NIRT_GAP_SEG;
 		_nirt_report(nss, 'g', vals);
+		if (nss->i->diff) {
+		    if (_nirt_seg_diff(nss, nss->i->diff->segs[cnt-1], s)) {
+			nss->i->diff->diffs.push_back(std::make_pair(_nirt_seg_cpy(s), nss->i->diff->segs[cnt-1]));
+		    } else {
+			_nirt_seg_free(nss->i->diff->segs[cnt-1]);  // matched - we don't need this one anymore
+		    }
+		}
 		/* vlist segment for gap */
 		vhead = bn_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
 		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BN_VLIST_LINE_MOVE);
 		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BN_VLIST_LINE_DRAW);
 		nss->i->b_segs = true;
 		s->type = NIRT_PARTITION_SEG;
+		cnt++;  // bump the partition out to the next index to account for gap
+		s->id = cnt;
 	    }
 	}
 	VMOVE(out_old, s->out); // Stash the out value for gap_los calculation in the next partition
@@ -1517,11 +1601,16 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	nss->i->b_segs = true;
 
 	/* done with hit portion - if diff, stash */
+	// if (_nirt_seg_diff(nss->i->diff->segs[cnt-1], s)) {
+	//   nss->i->diffs.push_back(std::make_pair(_nirt_seg_cpy(s), nss->i->diff->segs[i]));
+	// }
 
 	while ((ovp = _nirt_find_ovlp(nss, part)) != NIRT_OVERLAP_NULL) {
 
 	    // TODO - new nirt_seg for overlap
 	    s->type = NIRT_OVERLAP_SEG;
+	    //   cnt++;  // bump the partition out to the next index - ovlp is its own seg
+	    //   s->id = cnt;
 
 	    // TODO - do this more cleanly
 	    char *copy_ovlp_reg1 = bu_strdup(ovp->reg1->reg_name);
@@ -1793,7 +1882,8 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     int print_help = 0;
     double tol = 0;
     int have_ray = 0;
-    size_t cmt;
+    size_t cmt = std::string::npos;
+    int cnt = 0;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_opt_desc d[3];
     // TODO - add reporting options for enabling/disabling region/path, partition length, normal, and overlap ordering diffs.
@@ -1878,6 +1968,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(df->dir));
 	    _nirt_targ2grid(nss);
 	    nss->i->diff = df;
+	    cnt = 0;
 	    continue;
 	} else {
 	    if (!line.compare(0, 5, "HIT: ") || !line.compare(0, 5, "GAP: ") ||
@@ -1896,9 +1987,11 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		return -1;
 	    }
 	    bu_log("Found %s:\n", line.c_str());
+	    cnt++;
 	    struct nirt_seg *seg;
 	    _nirt_seg_init(&seg);
 	    seg->type = NIRT_PARTITION_SEG;
+	    seg->id = cnt;
 	    bu_vls_sprintf(seg->reg_name, "%s", substrs[0].c_str());
 	    bu_vls_sprintf(seg->path_name, "%s", substrs[1].c_str());
 	    seg->reg_id = _nirt_str_to_int(substrs[2]);
@@ -1929,9 +2022,11 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		return -1;
 	    }
 	    bu_log("Found %s:\n", line.c_str());
+	    cnt++;
 	    struct nirt_seg *seg;
 	    _nirt_seg_init(&seg);
 	    seg->type = NIRT_GAP_SEG;
+	    seg->id = cnt;
 	    VSET(seg->gap_in, _nirt_str_to_dbl(substrs[0]), _nirt_str_to_dbl(substrs[1]), _nirt_str_to_dbl(substrs[2]));
 	    VSET(seg->in, _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]), _nirt_str_to_dbl(substrs[5]));
 	    seg->gap_los = _nirt_str_to_dbl(substrs[6]);
@@ -1944,7 +2039,9 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	if (!line.compare("MISS")) {
 	    struct nirt_seg *seg;
 	    _nirt_seg_init(&seg);
+	    cnt++;
 	    seg->type = NIRT_MISS_SEG;
+	    seg->id = cnt;
 	    bu_log("Found MISS\n");
 	    have_ray = 0;
 	    nss->i->diff->segs.push_back(seg);
@@ -1958,9 +2055,11 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		return -1;
 	    }
 	    bu_log("Found %s:\n", line.c_str());
+	    cnt++;
 	    struct nirt_seg *seg;
 	    _nirt_seg_init(&seg);
 	    seg->type = NIRT_OVERLAP_SEG;
+	    seg->id = cnt;
 	    bu_vls_sprintf(seg->ov_reg1_name, "%s", substrs[0].c_str());
 	    bu_vls_sprintf(seg->ov_reg2_name, "%s", substrs[1].c_str());
 	    VSET(seg->ov_in, _nirt_str_to_dbl(substrs[2]), _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]));
@@ -3135,6 +3234,8 @@ nirt_init(struct nirt_state *ns)
     bu_avs_init_empty(n->val_types);
     bu_avs_init_empty(n->val_docs);
 
+    BU_GET(n->diff_settings, struct nirt_diff_settings);
+    
     BU_GET(n->vals, struct nirt_output_record);
 
     VSETALL(n->vals->orig, 0.0);
@@ -3142,6 +3243,7 @@ nirt_init(struct nirt_state *ns)
     n->vals->v = 0.0;
     n->vals->d_orig = 0.0;
     n->vals->seg = NULL;
+
 
     /* Populate the output key and type information */
     {
@@ -3270,6 +3372,7 @@ nirt_destroy(struct nirt_state *ns)
 
     db_close(ns->i->dbip);
 
+    BU_PUT(ns->i->diff_settings, struct nirt_diff_settings);
     BU_PUT(ns->i->vals, struct nirt_output_record);
 
     BU_PUT(ns->i->res, struct resource);
