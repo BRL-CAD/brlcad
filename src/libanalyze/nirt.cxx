@@ -2011,9 +2011,18 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	nerr(nss, "Error: could not open file %s\n", argv[0]);
 	return -1;
     }
-   
-    // TODO - rethink this container... 
-    _nirt_init_ovlp(nss);
+
+    if (nss->i->need_reprep) {
+	/* If we need to (re)prep, do it now. Failure is an error. */
+	if (_nirt_raytrace_prep(nss)) {
+	    nerr(nss, "Error: raytrace prep failed!\n");
+	    return -1;
+	}
+    } else {
+	/* Based on current settings, tell the ap which rtip to use */
+	nss->i->ap->a_rt_i = _nirt_get_rtip(nss);
+	nss->i->ap->a_resource = _nirt_get_resource(nss);
+    }
 
     have_ray = 0;
     while (std::getline(ifs, line)) {
@@ -2033,8 +2042,14 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		// Have ray already - execute current ray, store results in
 		// diff database (if any diffs were found), then clear expected
 		// results and old ray
+		for (int i = 0; i < 3; ++i) {
+		    nss->i->ap->a_ray.r_pt[i] = nss->i->vals->orig[i];
+		    nss->i->ap->a_ray.r_dir[i] = nss->i->vals->dir[i];
+		}
+		// TODO - rethink this container...
+		_nirt_init_ovlp(nss);
 		(void)rt_shootray(nss->i->ap);
-		if  (nss->i->diff->diffs.size() > 0) { 
+		if  (nss->i->diff->diffs.size() > 0) {
 		    nss->i->diffs.push_back(nss->i->diff);
 		} else {
 		   delete nss->i->diff;
@@ -2057,10 +2072,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(df->orig));
 	    bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(df->dir));
 	    _nirt_targ2grid(nss);
-	    for (int i = 0; i < 3; ++i) {
-		nss->i->ap->a_ray.r_pt[i] = nss->i->vals->orig[i];
-		nss->i->ap->a_ray.r_dir[i] = nss->i->vals->dir[i];
-	    }
+	    _nirt_dir2ae(nss);
 	    nss->i->diff = df;
 	    cnt = 0;
 	    continue;
@@ -3349,7 +3361,7 @@ nirt_init(struct nirt_state *ns)
     n->diff_settings->report_overlap_dists = 1;
     n->diff_settings->report_overlap_obliq = 1;
     n->diff_settings->dist_delta_tol = BN_TOL_DIST;
-    n->diff_settings->obliq_delta_tol = VUNITIZE_TOL;
+    n->diff_settings->obliq_delta_tol = BN_TOL_DIST;
     n->diff_settings->los_delta_tol = BN_TOL_DIST;
     n->diff_settings->scaled_los_delta_tol = BN_TOL_DIST;
 
