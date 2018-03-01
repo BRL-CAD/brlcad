@@ -360,6 +360,7 @@ struct nirt_diff_settings {
     int report_overlap_reg_ids;
     int report_overlap_dists;
     int report_overlap_obliq;
+    int report_gap_dists;
     fastf_t dist_delta_tol;
     fastf_t obliq_delta_tol;
     fastf_t los_delta_tol;
@@ -577,6 +578,19 @@ _nirt_string_split(std::string s)
     return substrs;
 }
 
+/* Based on tolerance, how many digits should we print? */
+HIDDEN int
+_nirt_digits(fastf_t ftol)
+{
+    int tol = 1;
+    fastf_t tt = ftol;
+    if (tt < SMALL_FASTF) return 1;
+    while (tt < 1 && tol < 17) {
+	tol++;
+	tt = tt * 10;
+    }
+    return tol;
+}
 
 /*
  * References for string to-from floating point issues:
@@ -585,27 +599,25 @@ _nirt_string_split(std::string s)
  * https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
  */
 
-#if 0
 HIDDEN std::string
-_nirt_dbl_to_str(double d)
+_nirt_dbl_to_str(double d, size_t p)
 {
     // TODO - once we enable C++ 11 switch the precision below to std::numeric_limits<double>::max_digits10
-    size_t prec = std::numeric_limits<double>::digits10 + 2;
+    size_t prec = (p) ? p : std::numeric_limits<double>::digits10 + 2;
     bu_log("prec: %d\n",prec);
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(prec) << d;
     std::string sd = ss.str();
-    bu_log("dbl   : %.17f\nstr   : %s\n", d, sd.c_str());
+    bu_log("sd: %s\n", sd.c_str());
     return sd;
 }
-#endif
 
 HIDDEN double 
-_nirt_str_to_dbl(std::string s)
+_nirt_str_to_dbl(std::string s, size_t p)
 {
     double d;
     // TODO - once we enable C++ 11 switch the precision below to std::numeric_limits<double>::max_digits10
-    size_t prec = std::numeric_limits<double>::digits10 + 2;
+    size_t prec = (p) ? p : std::numeric_limits<double>::digits10 + 2;
     std::stringstream ss(s);
     ss >> std::setprecision(prec) >> std::fixed >> d;
     //bu_log("str   : %s\ndbl   : %.17f\n", s.c_str(), d);
@@ -773,9 +785,9 @@ _nirt_partition_diff(struct nirt_state *nss, struct nirt_seg *left, struct nirt_
     fastf_t scaled_los_delta = fabs(left->scaled_los - right->scaled_los);
     fastf_t obliq_in_delta = fabs(left->obliq_in - right->obliq_in);
     fastf_t obliq_out_delta = fabs(left->obliq_out - right->obliq_out);
-    if (!bu_vls_strcmp(left->reg_name, right->reg_name)) have_diff = 1;
-    if (!bu_vls_strcmp(left->path_name, right->path_name)) have_diff = 1;
-    //if (left->reg_id == right->reg_id) have_diff = 1;
+    if (bu_vls_strcmp(left->reg_name, right->reg_name)) have_diff = 1;
+    if (bu_vls_strcmp(left->path_name, right->path_name)) have_diff = 1;
+    if (left->reg_id != right->reg_id) have_diff = 1;
     if (in_delta > nss->i->diff_settings->dist_delta_tol) have_diff = 1;
     if (out_delta > nss->i->diff_settings->dist_delta_tol) have_diff = 1;
     if (los_delta > nss->i->diff_settings->los_delta_tol) have_diff = 1;
@@ -804,10 +816,10 @@ _nirt_overlap_diff(struct nirt_state *nss, struct nirt_seg *left, struct nirt_se
     fastf_t ov_in_delta = DIST_PT_PT(left->ov_in, right->ov_in);
     fastf_t ov_out_delta = DIST_PT_PT(left->ov_out, right->ov_out);
     fastf_t ov_los_delta = fabs(left->ov_los - right->ov_los);
-    if (!bu_vls_strcmp(left->ov_reg1_name, right->ov_reg1_name)) have_diff = 1;
-    if (!bu_vls_strcmp(left->ov_reg2_name, right->ov_reg2_name)) have_diff = 1;
-    //if (left->ov_reg1_id == right->ov_reg1_id) have_diff = 1;
-    //if (left->ov_reg2_id == right->ov_reg2_id) have_diff = 1;
+    if (bu_vls_strcmp(left->ov_reg1_name, right->ov_reg1_name)) have_diff = 1;
+    if (bu_vls_strcmp(left->ov_reg2_name, right->ov_reg2_name)) have_diff = 1;
+    if (left->ov_reg1_id != right->ov_reg1_id) have_diff = 1;
+    if (left->ov_reg2_id != right->ov_reg2_id) have_diff = 1;
     if (ov_in_delta > nss->i->diff_settings->dist_delta_tol) have_diff = 1;
     if (ov_out_delta > nss->i->diff_settings->dist_delta_tol) have_diff = 1;
     if (ov_los_delta > nss->i->diff_settings->los_delta_tol) have_diff = 1;
@@ -864,6 +876,158 @@ _nirt_segs_diff(struct nirt_state *nss, struct nirt_seg *left, struct nirt_seg *
 	    nerr(nss, "NIRT diff error: unknown segment type: %d\n", left->type);
 	    return 0;
     }
+}
+
+HIDDEN const char *
+_nirt_seg_string(int type) {
+    static const char *p = "Partition";
+    static const char *g = "Gap";
+    static const char *o = "Overlap";
+    static const char *m = "Miss";
+    switch (type) {
+	case NIRT_MISS_SEG:
+	    return m;
+	case NIRT_PARTITION_SEG:
+	    return p;
+	case NIRT_GAP_SEG:
+	    return g;
+	case NIRT_OVERLAP_SEG:
+	    return o;
+	default:
+	    return NULL;
+    }
+}
+
+
+HIDDEN int
+_nirt_diff_report(struct nirt_state *nss)
+{
+    int reporting_diff = 0;
+    struct bu_vls dreport = BU_VLS_INIT_ZERO;
+    if (!nss || nss->i->diffs.size() == 0) return 0;
+    std::vector<struct nirt_diff *> *dfs = &(nss->i->diffs); 
+
+    for (size_t i = 0; i < dfs->size(); i++) {
+	struct nirt_diff *d = (*dfs)[i];
+	bu_vls_printf(&dreport, "Found differences along Ray:\n  xyz %.17f %.17f %.17f\n  dir %.17f %.17f %.17f\n \n", V3ARGS(d->orig), V3ARGS(d->dir));
+	for (size_t j = 0; j < d->diffs.size(); j++) {
+	    struct nirt_seg_diff *sd = d->diffs[j];
+	    struct nirt_seg *left = sd->left;
+	    struct nirt_seg *right = sd->right;
+	    if (left->type != right->type) {
+		bu_vls_printf(&dreport, "  Segment %d type mismatch : Original %s, Current %s\n", j, _nirt_seg_string(sd->left->type), _nirt_seg_string(sd->right->type));
+		nout(nss, "%s", bu_vls_addr(&dreport));
+		bu_vls_free(&dreport);
+		return 1;
+	    } else {
+		bu_vls_printf(&dreport, "  %s %d:\n", _nirt_seg_string(sd->left->type), left->id);
+	    }
+	    switch (sd->left->type) {
+		case NIRT_MISS_SEG:
+		    if (!nss->i->diff_settings->report_misses) continue;
+		    /* TODO */
+		    break;
+		case NIRT_PARTITION_SEG:
+		    if (!nss->i->diff_settings->report_partitions) continue;
+		    if (bu_vls_strcmp(left->reg_name, right->reg_name) && nss->i->diff_settings->report_partition_reg_names) {
+			bu_vls_printf(&dreport, "    Region Name(Original): %s,  Region Name(Current): %s\n", bu_vls_addr(left->reg_name), bu_vls_addr(right->reg_name));
+			reporting_diff = 1;
+		    }
+		    if (bu_vls_strcmp(left->path_name, right->path_name) && nss->i->diff_settings->report_partition_path_names) {
+			bu_vls_printf(&dreport, "    Path Name(Original): %s,  Path Name(Current): %s\n", bu_vls_addr(left->path_name), bu_vls_addr(right->path_name));
+			reporting_diff = 1;
+		    }
+		    if (left->reg_id != right->reg_id && nss->i->diff_settings->report_partition_reg_ids) {
+			bu_vls_printf(&dreport, "    Region ID(Original): %d,  Region ID(Current): %d\n", left->reg_id, right->reg_id);
+			reporting_diff = 1;
+		    }
+		    if (sd->in_delta > nss->i->diff_settings->dist_delta_tol && nss->i->diff_settings->report_partition_dists) {
+			std::string oval = _nirt_dbl_to_str(sd->in_delta, _nirt_digits(nss->i->diff_settings->dist_delta_tol));
+			bu_vls_printf(&dreport, "    Distance between Original and Current Input Points: %s\n", oval.c_str());
+			reporting_diff = 1;
+		    }
+		    if (sd->out_delta > nss->i->diff_settings->dist_delta_tol && nss->i->diff_settings->report_partition_dists) {
+			std::string oval = _nirt_dbl_to_str(sd->out_delta, _nirt_digits(nss->i->diff_settings->dist_delta_tol));
+			bu_vls_printf(&dreport, "    Distance between Original and Current Output Points: %s\n", oval.c_str());
+			reporting_diff = 1;
+		    }
+		    if (sd->los_delta > nss->i->diff_settings->los_delta_tol && nss->i->diff_settings->report_partition_dists) {
+			std::string oval = _nirt_dbl_to_str(sd->los_delta, _nirt_digits(nss->i->diff_settings->los_delta_tol));
+			bu_vls_printf(&dreport, "    Distance between Original and Current Line-Of-Sight (LOS): %s\n", oval.c_str());
+			reporting_diff = 1;
+		    }
+		    if (sd->scaled_los_delta > nss->i->diff_settings->scaled_los_delta_tol && nss->i->diff_settings->report_partition_dists) {
+			std::string oval = _nirt_dbl_to_str(sd->scaled_los_delta, _nirt_digits(nss->i->diff_settings->los_delta_tol));
+			bu_vls_printf(&dreport, "    Distance between Original and Current Scaled Line-Of-Sight: %s\n", oval.c_str());
+			reporting_diff = 1;
+		    }
+		    if (sd->obliq_in_delta > nss->i->diff_settings->obliq_delta_tol && nss->i->diff_settings->report_partition_obliq) {
+			std::string oval = _nirt_dbl_to_str(sd->obliq_in_delta, _nirt_digits(nss->i->diff_settings->obliq_delta_tol));
+			bu_vls_printf(&dreport, "    Distance between Original and Current Input Normal Obliquity: %s\n", oval.c_str());
+			reporting_diff = 1;
+		    }
+		    if (sd->obliq_out_delta > nss->i->diff_settings->obliq_delta_tol && nss->i->diff_settings->report_partition_obliq) {
+			std::string oval = _nirt_dbl_to_str(sd->obliq_out_delta, _nirt_digits(nss->i->diff_settings->obliq_delta_tol));
+			bu_vls_printf(&dreport, "    Distance between Original and Current Output Normal Obliquity: %s\n", oval.c_str());
+			reporting_diff = 1;
+		    }
+		    break;
+		case NIRT_GAP_SEG:
+		    if (!nss->i->diff_settings->report_gaps) continue;
+		    if (sd->gap_in_delta > nss->i->diff_settings->dist_delta_tol && nss->i->diff_settings->report_gap_dists) {
+			std::string oval = _nirt_dbl_to_str(sd->gap_in_delta, _nirt_digits(nss->i->diff_settings->dist_delta_tol));
+			bu_vls_printf(&dreport, "    Distance between Original and Current Input Points: %s\n", oval.c_str());
+			reporting_diff = 1;
+		    }
+		    if (sd->gap_los_delta > nss->i->diff_settings->los_delta_tol && nss->i->diff_settings->report_gap_dists) {
+			std::string oval = _nirt_dbl_to_str(sd->gap_los_delta, _nirt_digits(nss->i->diff_settings->los_delta_tol));
+			bu_vls_printf(&dreport, "    Distance between Original and Current Line-Of-Sight (LOS): %s\n", oval.c_str());
+			reporting_diff = 1;
+		    }
+		    break;
+		case NIRT_OVERLAP_SEG:
+		    if (!nss->i->diff_settings->report_overlaps) continue;
+		    if (bu_vls_strcmp(left->ov_reg1_name, right->ov_reg1_name) && nss->i->diff_settings->report_overlap_reg_names) {
+			bu_vls_printf(&dreport, "    Region 1 Name(Original): %s,  Region 1 Name(Current): %s\n", bu_vls_addr(left->ov_reg1_name), bu_vls_addr(right->ov_reg1_name));
+			reporting_diff = 1;
+		    }
+		    if (bu_vls_strcmp(left->ov_reg2_name, right->ov_reg2_name) && nss->i->diff_settings->report_overlap_reg_names) {
+			bu_vls_printf(&dreport, "    Region 2 Name(Original): %s,  Region 2 Name(Current): %s\n", bu_vls_addr(left->ov_reg2_name), bu_vls_addr(right->ov_reg2_name));
+			reporting_diff = 1;
+		    }
+		    if (left->ov_reg1_id != right->ov_reg1_id && nss->i->diff_settings->report_overlap_reg_ids) {
+			bu_vls_printf(&dreport, "    Region 1 ID(Original): %d,  Region 1 ID(Current): %d\n", left->ov_reg1_id, right->ov_reg1_id);
+			reporting_diff = 1;
+		    }
+		    if (left->ov_reg2_id != right->ov_reg2_id && nss->i->diff_settings->report_overlap_reg_ids) {
+			bu_vls_printf(&dreport, "    Region 2 ID(Original): %d,  Region 2 ID(Current): %d\n", left->ov_reg2_id, right->ov_reg2_id);
+			reporting_diff = 1;
+		    }
+		    if (sd->ov_in_delta > nss->i->diff_settings->dist_delta_tol && nss->i->diff_settings->report_overlap_dists) {
+			std::string oval = _nirt_dbl_to_str(sd->ov_in_delta, _nirt_digits(nss->i->diff_settings->dist_delta_tol));
+			bu_vls_printf(&dreport, "    Distance between Original and Current Input Points: %s\n", oval.c_str());
+			reporting_diff = 1;
+		    }
+		    if (sd->ov_los_delta > nss->i->diff_settings->los_delta_tol && nss->i->diff_settings->report_overlap_dists) {
+			std::string oval = _nirt_dbl_to_str(sd->ov_los_delta, _nirt_digits(nss->i->diff_settings->los_delta_tol));
+			bu_vls_printf(&dreport, "    Distance between Original and Current Line-Of-Sight (LOS): %s\n", oval.c_str());
+			reporting_diff = 1;
+		    }
+		    break;
+		default:
+		    nerr(nss, "NIRT diff error: unknown segment type: %d\n", left->type);
+		    return 0;
+	    }
+	}
+
+    }
+
+    if (reporting_diff) {
+	nout(nss, "%s", bu_vls_addr(&dreport));
+    }
+    bu_vls_free(&dreport);
+
+    return reporting_diff;
 }
 
 /********************
@@ -2049,7 +2213,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		// TODO - rethink this container...
 		_nirt_init_ovlp(nss);
 		(void)rt_shootray(nss->i->ap);
-		if  (nss->i->diff->diffs.size() > 0) {
+		if (nss->i->diff->diffs.size() > 0) {
 		    nss->i->diffs.push_back(nss->i->diff);
 		} else {
 		   delete nss->i->diff;
@@ -2065,8 +2229,8 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		return -1;
 	    }
 	    bu_log("Found Ray:\n");
-	    VSET(df->orig, _nirt_str_to_dbl(substrs[0]), _nirt_str_to_dbl(substrs[1]), _nirt_str_to_dbl(substrs[2]));
-	    VSET(df->dir, _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]), _nirt_str_to_dbl(substrs[5]));
+	    VSET(df->orig, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
+	    VSET(df->dir, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
 	    VMOVE(nss->i->vals->dir, df->dir);
 	    VMOVE(nss->i->vals->orig, df->orig);
 	    bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(df->orig));
@@ -2098,17 +2262,17 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    _nirt_seg_init(&seg);
 	    seg->type = NIRT_PARTITION_SEG;
 	    seg->id = cnt;
-	    bu_vls_sprintf(seg->reg_name, "%s", substrs[0].c_str());
-	    bu_vls_sprintf(seg->path_name, "%s", substrs[1].c_str());
+	    bu_vls_decode(seg->reg_name, substrs[0].c_str());
+	    bu_vls_decode(seg->path_name, substrs[1].c_str());
 	    seg->reg_id = _nirt_str_to_int(substrs[2]);
-	    VSET(seg->in, _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]), _nirt_str_to_dbl(substrs[5]));
-	    seg->d_in = _nirt_str_to_dbl(substrs[6]);
-	    VSET(seg->out, _nirt_str_to_dbl(substrs[7]), _nirt_str_to_dbl(substrs[8]), _nirt_str_to_dbl(substrs[9]));
-	    seg->d_out = _nirt_str_to_dbl(substrs[10]);
-	    seg->los = _nirt_str_to_dbl(substrs[11]);
-	    seg->scaled_los = _nirt_str_to_dbl(substrs[12]);
-	    seg->obliq_in = _nirt_str_to_dbl(substrs[13]);
-	    seg->obliq_out = _nirt_str_to_dbl(substrs[14]);
+	    VSET(seg->in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
+	    seg->d_in = _nirt_str_to_dbl(substrs[6], 0);
+	    VSET(seg->out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
+	    seg->d_out = _nirt_str_to_dbl(substrs[10], 0);
+	    seg->los = _nirt_str_to_dbl(substrs[11], 0);
+	    seg->scaled_los = _nirt_str_to_dbl(substrs[12], 0);
+	    seg->obliq_in = _nirt_str_to_dbl(substrs[13], 0);
+	    seg->obliq_out = _nirt_str_to_dbl(substrs[14], 0);
 	    bu_log("reg_name: %s\n", bu_vls_addr(seg->reg_name));
 	    bu_log("path_name: %s\n", bu_vls_addr(seg->path_name));
 	    bu_log("reg_id: %d\n", seg->reg_id);
@@ -2133,9 +2297,9 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    _nirt_seg_init(&seg);
 	    seg->type = NIRT_GAP_SEG;
 	    seg->id = cnt;
-	    VSET(seg->gap_in, _nirt_str_to_dbl(substrs[0]), _nirt_str_to_dbl(substrs[1]), _nirt_str_to_dbl(substrs[2]));
-	    VSET(seg->in, _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]), _nirt_str_to_dbl(substrs[5]));
-	    seg->gap_los = _nirt_str_to_dbl(substrs[6]);
+	    VSET(seg->gap_in, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
+	    VSET(seg->in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
+	    seg->gap_los = _nirt_str_to_dbl(substrs[6], 0);
 	    bu_log("in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg->gap_in));
 	    bu_log("out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg->in));
 	    bu_log("gap_los: %0.17f\n", seg->gap_los);
@@ -2156,8 +2320,8 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	if (!line.compare(0, 9, "OVERLAP: ")) { 
 	    std::string ostr = line.substr(9);
 	    std::vector<std::string> substrs = _nirt_string_split(ostr);
-	    if (substrs.size() != 6) {
-		nerr(nss, "Error processing overlap line \"%s\"!\nExpected 6 elements, found %d\n", ostr.c_str(), substrs.size());
+	    if (substrs.size() != 8) {
+		nerr(nss, "Error processing overlap line \"%s\"!\nExpected 8 elements, found %d\n", ostr.c_str(), substrs.size());
 		return -1;
 	    }
 	    bu_log("Found %s:\n", line.c_str());
@@ -2166,12 +2330,17 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    _nirt_seg_init(&seg);
 	    seg->type = NIRT_OVERLAP_SEG;
 	    seg->id = cnt;
-	    bu_vls_sprintf(seg->ov_reg1_name, "%s", substrs[0].c_str());
-	    bu_vls_sprintf(seg->ov_reg2_name, "%s", substrs[1].c_str());
-	    VSET(seg->ov_in, _nirt_str_to_dbl(substrs[2]), _nirt_str_to_dbl(substrs[3]), _nirt_str_to_dbl(substrs[4]));
-	    seg->ov_los = _nirt_str_to_dbl(substrs[5]);
+	    bu_vls_decode(seg->ov_reg1_name, substrs[0].c_str());
+	    bu_vls_decode(seg->ov_reg2_name, substrs[1].c_str());
+	    seg->ov_reg1_id = _nirt_str_to_int(substrs[2]);
+	    seg->ov_reg2_id = _nirt_str_to_int(substrs[3]);
+
+	    VSET(seg->ov_in, _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0), _nirt_str_to_dbl(substrs[6], 0));
+	    seg->ov_los = _nirt_str_to_dbl(substrs[7], 0);
 	    bu_log("ov_reg1_name: %s\n", bu_vls_addr(seg->ov_reg1_name));
 	    bu_log("ov_reg2_name: %s\n", bu_vls_addr(seg->ov_reg2_name));
+	    bu_log("ov_reg1_id: %d\n", seg->ov_reg1_id);
+	    bu_log("ov_reg2_id: %d\n", seg->ov_reg2_id);
 	    bu_log("ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg->ov_in));
 	    bu_log("ov_los: %0.17f\n", seg->ov_los);
 	    nss->i->diff->segs.push_back(seg);
@@ -2182,6 +2351,12 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 
     if (have_ray) {
 	// Execute work.
+	for (int i = 0; i < 3; ++i) {
+	    nss->i->ap->a_ray.r_pt[i] = nss->i->vals->orig[i];
+	    nss->i->ap->a_ray.r_dir[i] = nss->i->vals->dir[i];
+	}
+	// TODO - rethink this container...
+	_nirt_init_ovlp(nss);
 	(void)rt_shootray(nss->i->ap);
 	if  (nss->i->diff->diffs.size() > 0) { 
 	    nss->i->diffs.push_back(nss->i->diff);
@@ -2194,9 +2369,11 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	// input file from a supplied list of rays.
     }
 
-    // Report diff results according to the supplied options.
 
     ifs.close();
+
+    // Report diff results according to the supplied options.
+    (void)_nirt_diff_report(nss);
 
     return 0;
 }
@@ -3360,6 +3537,7 @@ nirt_init(struct nirt_state *ns)
     n->diff_settings->report_overlap_reg_ids = 1;
     n->diff_settings->report_overlap_dists = 1;
     n->diff_settings->report_overlap_obliq = 1;
+    n->diff_settings->report_gap_dists = 1;
     n->diff_settings->dist_delta_tol = BN_TOL_DIST;
     n->diff_settings->obliq_delta_tol = BN_TOL_DIST;
     n->diff_settings->los_delta_tol = BN_TOL_DIST;
