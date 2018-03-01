@@ -38,12 +38,20 @@
 #include "common.h"
 
 #include <stddef.h>
+#include <time.h>
 
 #include "bu/exit.h"
 #include "mmatomic.h"
 
 
 #include "tinycthread.h"
+
+#if !defined(HAVE_STRUCT_TIMESPEC)
+struct timespec {
+  time_t tv_sec;
+  long tv_nsec;
+};
+#endif
 
 
 static inline void mtSignalWaitTimeout(cnd_t *gsignal, mtx_t *mutex, long milliseconds)
