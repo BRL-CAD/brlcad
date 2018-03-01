@@ -496,9 +496,7 @@ void mmInit()
     if (!(mmcontext.numaflag)) {
 	mmcontext.nodecount = 1;
 	sysmemory = -1;
-#if defined(MM_LINUX)
-	mmcontext.pagesize = sysconf(_SC_PAGESIZE);
-#elif defined(MM_UNIX)
+#if defined(_SC_PAGESIZE) && (defined(MM_LINUX) || defined(MM_UNIX))
 	mmcontext.pagesize = sysconf(_SC_PAGESIZE);
 #elif defined(MM_WIN32)
 	{
@@ -506,6 +504,8 @@ void mmInit()
 	    GetSystemInfo(&sysinfo);
 	    mmcontext.pagesize = sysinfo.dwPageSize;
 	}
+#else
+	mmcontext.pagesize = 4096;
 #endif
 #if defined(MM_UNIX) && defined(_SC_PHYS_PAGES)
 	sysmemory = sysconf(_SC_PHYS_PAGES);
