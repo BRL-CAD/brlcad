@@ -56,6 +56,11 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
+/* for strict c90 */
+#ifndef HAVE_DECL_GETTIMEOFDAY
+extern int gettimeofday(struct timeval *, void *);
+#endif
+
 
 extern void update_grids(fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(void);		/* in chgmodel.c */

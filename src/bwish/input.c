@@ -46,6 +46,11 @@
 #include "tcl.h"
 #include "libtermio.h"
 
+/* for strict c90 */
+#ifndef HAVE_DECL_GETTIMEOFDAY
+extern int gettimeofday(struct timeval *, void *);
+#endif
+
 
 #define CTRL_A      1
 #define CTRL_B      2
