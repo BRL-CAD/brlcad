@@ -35,6 +35,7 @@ set(nirt_sfiles
   sfiles/csv.nrt
   sfiles/csv-gap.nrt
   sfiles/default.nrt
+  sfiles/diff.nrt
   sfiles/entryexit.nrt
   sfiles/gap1.nrt
   sfiles/gap2.nrt

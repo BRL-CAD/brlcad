@@ -30,9 +30,12 @@
 #include <string>
 #include <iostream>
 #include <limits>
+#include <cstdio>
+#include <cstring>
 
 /* needed on mac in c90 mode */
 #ifndef HAVE_DECL_FSEEKO
+#include <sys/types.h> /* for off_t */
 extern "C" int fseeko(FILE *, off_t, int);
 extern "C" off_t ftello(FILE *);
 #endif
