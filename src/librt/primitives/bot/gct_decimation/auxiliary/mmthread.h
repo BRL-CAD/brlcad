@@ -38,11 +38,13 @@
 #include "common.h"
 
 #include <stddef.h>
+#ifdef HAVE_SYS_SELECT_H
+#  include <sys/select.h>
+#endif
 #include <time.h>
 
 #include "bu/exit.h"
 #include "mmatomic.h"
-
 
 #include "tinycthread.h"
 

@@ -2493,6 +2493,11 @@ BRLCAD_STRUCT_MEMBER("struct stat" st_blksize sys/stat.h STRUCT_STAT_ST_BLKSIZE)
 BRLCAD_STRUCT_MEMBER("struct stat" st_blocks sys/stat.h STRUCT_STAT_ST_BLOCKS)
 BRLCAD_STRUCT_MEMBER("struct stat" st_rdev sys/stat.h STRUCT_STAT_ST_RDEV)
 
+# timespec can come in through sys/select.h
+if(HAVE_SYS_SELECT_H)
+  BRLCAD_STRUCT_MEMBER("struct timespec" tv_sec sys/select.h STRUCT_TIMESPEC)
+endif(HAVE_SYS_SELECT_H)
+
 # socklen_t
 BRLCAD_TYPE_SIZE("socklen_t" "")
 if(NOT HAVE_SOCKLEN_T)

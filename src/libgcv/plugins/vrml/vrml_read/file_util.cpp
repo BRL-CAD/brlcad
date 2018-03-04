@@ -28,16 +28,16 @@
 
 #include "file_util.h"
 
+#include <cstdio>
+#include <cstring>
 #include <iostream>
 
 #ifndef HAVE_DECL_FSEEKO
+#include <sys/types.h> /* for off_t */
 extern "C" int fseeko(FILE *, off_t, int);
 extern "C" off_t ftello(FILE *);
 #endif
 #include <fstream>
-
-#include <cstdio>
-#include <cstring>
 
 #include "bu.h"
 
