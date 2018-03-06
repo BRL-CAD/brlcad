@@ -66,10 +66,18 @@ extern double drand48(void);
 #  if !defined(__cplusplus) && !defined(HAVE_LRINT) && defined(HAVE_WORKING_LRINT_MACRO)
 #    define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
 #    define HAVE_LRINT 1
-#    define HAVE_DECL_LRINT 1
 #  elif !defined(__cplusplus) && defined(HAVE_LRINT) && !defined(HAVE_DECL_LRINT) && !defined(HAVE_WINDOWS_H)
 long int lrint(double x);
-#    define HAVE_LRINT 1
+#    define HAVE_DECL_LRINT 1
+#  endif
+
+/* make sure rint() is provided */
+#  if !defined(__cplusplus) && !defined(HAVE_RINT) && defined(rint)
+#    define rint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))
+#    define HAVE_RINT 1
+#  elif !defined(__cplusplus) && defined(HAVE_RINT) && !defined(HAVE_DECL_RINT) && !defined(HAVE_WINDOWS_H)
+double rint(double x);
+#    define HAVE_DECL_RINT 1
 #  endif
 
 /* strict c89 doesn't declare snprintf() */
