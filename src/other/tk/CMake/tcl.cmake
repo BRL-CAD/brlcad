@@ -150,6 +150,20 @@ ENDMACRO(TCL_CHECK_STRUCT_HAS_MEMBER)
 # SC_ENABLE_THREADS
 #------------------------------------------------------------------------
 MACRO(SC_ENABLE_THREADS)
+
+  CHECK_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H)
+   if (NOT PROBE_PTHREAD_H)
+     cmake_push_check_state(RESET)
+     # pthread.h on FreeBSD 10 and some older Linucies use non-c90 types
+     set(CMAKE_REQUIRED_DEFINITIONS "-Dclockid_t=clock_t")
+     set(CMAKE_REQUIRED_FLAGS "-pthread")
+     CHECK_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H_CLOCKID_T)
+     if (PROBE_PTHREAD_H_CLOCKID_T)
+       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dclockid_t=clock_t -pthread")
+       set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+     endif (PROBE_PTHREAD_H_CLOCKID_T)
+   endif (NOT PROBE_PTHREAD_H)
+
    FIND_PACKAGE(Threads)
    IF(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
 		SET(TCL_FOUND_THREADS ON)
