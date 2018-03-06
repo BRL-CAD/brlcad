@@ -12,6 +12,7 @@ macro(Add_Regression_Test testname depends_list)
       add_dependencies(check ${depends_list})
     endif(TARGET check)
   endif(NOT "${depends_list}" STREQUAL "")
+  set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
 endmacro(Add_Regression_Test)
 
 # Define the toplevel regression target - unless specifically excluded
@@ -58,6 +59,7 @@ if(SH_EXEC)
 	add_dependencies(check ${depends_list})
       endif(TARGET check)
     endif(NOT "${depends_list}" STREQUAL "")
+    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
   endmacro(Sh_Regression_Test)
 
   Sh_Regression_Test(mged mged)
