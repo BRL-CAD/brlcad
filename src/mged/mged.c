@@ -88,7 +88,7 @@
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
 
-#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII)
+#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII) && !defined(isascii)
 extern int isascii(int c);
 #endif
 

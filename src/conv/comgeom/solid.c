@@ -53,6 +53,10 @@ extern void col_pr(char *str);
 /* defined in solid.c */
 extern int read_arbn(char *name);
 
+#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII) && !defined(isascii)
+extern int isascii(int c);
+#endif
+
 extern struct rt_wdb *outfp;
 extern int version;
 extern int verbose;

@@ -87,11 +87,11 @@
 
 #define COMMA ','
 
-#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII)
+#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII) && !defined(isascii)
 extern int isascii(int c);
 #endif
 
-#if defined(HAVE_KILL) && !defined(__cplusplus)
+#if defined(HAVE_KILL)
 extern int kill(pid_t, int);
 #endif
 
