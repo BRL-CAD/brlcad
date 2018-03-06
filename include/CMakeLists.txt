@@ -11,37 +11,37 @@ add_subdirectory(rt)
 add_subdirectory(fb)
 
 set(public_hdrs
-  bio.h
-  bresource.h
-  bsocket.h
-  bnetwork.h
   RtServerImpl.h
-  bn.h
-  bu.h
-  bg.h
-  common.h
-  cursor.h
-  ged.h
-  pinttypes.h
-  pstdint.h
-  raytrace.h
-  rtserver.h
-  tclcad.h
   analyze.h
+  bg.h
+  bio.h
+  bn.h
+  bnetwork.h
   brep.h
+  bresource.h
   brlcad.h
   brlcad.i
+  bsocket.h
+  bu.h
+  common.h
+  cursor.h
   dm.h
   fb.h
   fft.h
   gcv.h
+  ged.h
   icv.h
   libtermio.h
   nmg.h
   optical.h
-  photonmap.h
   pc.h
+  photonmap.h
+  pinttypes.h
   pkg.h
+  pstdint.h
+  raytrace.h
+  rtserver.h
+  tclcad.h
   vmath.h
   wdb.h
   )
