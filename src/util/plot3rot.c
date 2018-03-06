@@ -40,9 +40,10 @@
 #include "bn/plot3.h"
 #include "bn.h"
 
-#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII)
+#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII) && !defined(isascii)
 extern int isascii(int c);
 #endif
+
 
 #define UPPER_CASE(c)	((c)-32)
 #define COPY(n) {size_t ret; ret = fread(cbuf, 1, n, fp); if (ret < n) perror("fread"); ret = fwrite(cbuf, 1, n, stdout); if (ret < n) perror("fwrite");}
