@@ -50,6 +50,10 @@
 
 #include <string.h>
 
+#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan)
+extern int isnan(double x);
+#endif
+
 
 /* Define to use double floating point precision */
 #define MD_CONF_DOUBLE_PRECISION
@@ -58,7 +62,7 @@
 /* Define to use double precision just quadric maths. Very strongly recommended. */
 #define MD_CONF_QUADRICS_DOUBLE_PRECISION
 
-
+/* Define to call a status callback function. */
 #define MD_CONF_ENABLE_PROGRESS
 
 
@@ -155,9 +159,7 @@ typedef double mdf;
 #    define mdflog2(x) (log(x) / log(2))
 #  endif
 #  define mdfmin(x,y) FMIN((x),(y))
-/* or round() or nearbyint() or lrint() -- see lrint in common.h */
 #  define mdfround(x) rint(x)
-
 #else
 
 typedef float mdf;
