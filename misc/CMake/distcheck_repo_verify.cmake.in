@@ -219,6 +219,14 @@ if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
     message("\nFiles mentioned in build logic are not checked into the repository: \n${BUILD_FILES_NOT_IN_SVN}\n")
   endif(BUILD_FILES_NOT_IN_SVN)
 
+  # Either of the previous two cases halts distcheck until fixed.
+  set(FORCE_DISTCHECK @FORCE_DISTCHECK@)
+  if (SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
+    if (NOT FORCE_DISTCHECK)
+      message(FATAL_ERROR "ERROR: Distcheck cannot proceed until build files and repo are in sync (set -DFORCE_DISTCHECK=ON to override)")
+    endif (NOT FORCE_DISTCHECK)
+  endif (SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
+
 endif(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
 
 set(IGNORED_FS_FILES ${FS_FILE_LIST})

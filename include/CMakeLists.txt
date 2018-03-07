@@ -46,6 +46,7 @@ set(public_hdrs
   wdb.h
   )
 install(FILES ${public_hdrs} DESTINATION ${INCLUDE_DIR}/brlcad)
+CMAKEFILES(${public_hdrs})
 
 # Configuration headers
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h" DESTINATION ${INCLUDE_DIR}/brlcad)
@@ -55,6 +56,7 @@ endif(WIN32)
 
 # Used by others but still considered private
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/brlcad_version.h" DESTINATION ${INCLUDE_DIR})
+CMAKEFILES(brlcad_version.h)
 
 # Enforce the above list - check the public headers to make sure
 # they do not include any private headers.
