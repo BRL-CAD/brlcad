@@ -27,6 +27,7 @@ changes made.  See document footer for additional details.
 This is a patch release, primary focused on updates to the build
 system logic.
 
+* upgraded libgdiam to version 1.0.3 - Cliff Yapp
 * fixed MGED bindings behavior for c, A, P, and S chars - Bob Parker
 * fixed gdiff usage statement - Sean Morrison
 * removed anim.txt, sun.txt, tube.txt and movie.txt - Cliff Yapp
