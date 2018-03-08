@@ -2261,6 +2261,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		std::vector<std::string> substrs = _nirt_string_split(rstr);
 		if (substrs.size() != 6) {
 		    nerr(nss, "Error processing ray line \"%s\"!\nExpected 6 elements, found %d\n", line.c_str(), substrs.size());
+		    delete df;
 		    return -1;
 		}
 		VSET(df->orig, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
