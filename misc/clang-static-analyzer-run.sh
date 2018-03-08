@@ -96,7 +96,6 @@ cleantest libdm
 cleantest libfft
 failingtest libtclcad
 cleantest libtermio
-cleantest libremrt
 cleantest librender
 
 # Executables
