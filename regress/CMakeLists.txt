@@ -59,9 +59,7 @@ if(SH_EXEC)
 	add_dependencies(check ${depends_list})
       endif(TARGET check)
     endif(NOT "${depends_list}" STREQUAL "")
-    # TODO - we should keep our tests short - right now, regress repository
-    # makes this impractical
-    # set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
   endmacro(Sh_Regression_Test)
 
   Sh_Regression_Test(mged mged)
@@ -75,7 +73,13 @@ if(SH_EXEC)
   Sh_Regression_Test(gqa "gqa;mged")
   Sh_Regression_Test(bots "mged;pixdiff;rt")
   Sh_Regression_Test(flawfinder "" EXCLUDE_FROM_REGRESS)
+
+  # TODO - keep all tests short.  right now, regress repository
+  # violates this as it spends considerable time scanning the entire
+  # source tree, then scanning different sets of files for properties.
   Sh_Regression_Test(repository "")
+  set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
+
   Sh_Regression_Test(red mged)
   Sh_Regression_Test(nirt "mged;nirt")
   Sh_Regression_Test(comgeom "mged;asc2g;vdeck;comgeom-g")
