@@ -62,7 +62,6 @@ if(SH_EXEC)
     set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
   endmacro(Sh_Regression_Test)
 
-  Sh_Regression_Test(mged mged)
   Sh_Regression_Test(moss "rt;asc2g;pixdiff;asc2pix;pix-png;png-pix")
   Sh_Regression_Test(lights "rt;asc2g;pixdiff;asc2pix")
   Sh_Regression_Test(solids "rt;mged;pixdiff;asc2pix;gencolor")
@@ -79,6 +78,8 @@ if(SH_EXEC)
   # source tree, then scanning different sets of files for properties.
   Sh_Regression_Test(repository "")
   set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
+  Sh_Regression_Test(mged mged)
+  set_tests_properties(regress-mged PROPERTIES TIMEOUT 600)
 
   Sh_Regression_Test(red mged)
   Sh_Regression_Test(nirt "mged;nirt")
