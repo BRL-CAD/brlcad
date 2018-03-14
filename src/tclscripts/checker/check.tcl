@@ -61,6 +61,8 @@ catch {delete class GeometryChecker} error
 
 	method handleHomeKey {} {}
 	method handleEndKey {} {}
+
+	method setMode {subFirst} {}
     }
 
     private {
@@ -94,6 +96,7 @@ catch {delete class GeometryChecker} error
 
 	variable _displayFinished
 	variable _drew
+	variable _drawFirstUnion
 
 	variable _whoCallback
 	variable _leftDrawCallback
@@ -123,6 +126,7 @@ catch {delete class GeometryChecker} error
 	method handleCheckListSelect {}
 
 	method updateDisplayFinished {}
+	method firstUnionedSolid {tree}
     }
 }
 
@@ -236,13 +240,23 @@ body GeometryChecker::handleCheckListSelect {} {
 	ttk::scrollbar $itk_component(checkFrame).checkScroll -orient vertical -command [ code $itk_component(checkFrame).checkList yview ]
     } {}
 
-    itk_component add commandLabel {
-	ttk::label $itk_interior.commandLabel \
-	    -textvariable [scope _commandText] \
+    itk_component add checkFooterFrame {
+	ttk::frame $itk_interior.checkFooterFrame
+    } {}
+
+    itk_component add optionFrame {
+	ttk::labelframe $itk_component(checkFooterFrame).optionFrame -text "Draw" -padding {2 0}
+    } {}
+    itk_component add firstCheck {
+	ttk::checkbutton $itk_component(optionFrame).firstCheck -text "Only First Union" -variable [scope _drawFirstUnion] -command [code $this display]
     } {}
 
     itk_component add progressFrame {
-    	ttk::frame $itk_interior.progressFrame -padding 0
+    	ttk::frame $itk_component(checkFooterFrame).progressFrame -padding 0
+    } {}
+    itk_component add commandLabel {
+	ttk::label $itk_component(progressFrame).commandLabel \
+	    -textvariable [scope _commandText] \
     } {}
     itk_component add progressBar {
 	ttk::progressbar $itk_component(progressFrame).progressBar -variable [scope _progressValue]
@@ -251,6 +265,7 @@ body GeometryChecker::handleCheckListSelect {} {
 	ttk::button $itk_component(progressFrame).progressButton \
 	-text "X" \
 	-width 1 \
+	-padding {2 0} \
 	-command [code $this handleProgressButton]
     } {}
 
@@ -301,17 +316,21 @@ body GeometryChecker::handleCheckListSelect {} {
     $itk_component(checkMenu) add command -label "Unmark Selected" -command [code $this unmarkSelection]
 
     pack $itk_component(headerFrame) -side top -fill both
-    pack $itk_component(headerLabelStatus) -side top -anchor nw
+    pack $itk_component(headerLabelStatus) -side left -anchor w
 
     pack $itk_component(checkFrame) -expand true -fill both -anchor center
     pack $itk_component(checkFrame).checkScroll -side right -fill y 
     pack $itk_component(checkFrame).checkList -expand 1 -fill both -padx {16 0}
 
-    pack $itk_component(commandLabel) -side top -fill x -padx 2 -anchor nw
+    pack $itk_component(checkFooterFrame) -side top -fill x -padx 8
 
-    pack $itk_component(progressFrame) -side top -fill x
-    pack $itk_component(progressBar) -side left -expand true -fill x -padx {20 2}
-    pack $itk_component(progressButton) -side left -padx 2
+    pack $itk_component(optionFrame) -side left -fill y
+    pack $itk_component(firstCheck) -side top -anchor nw
+
+    pack $itk_component(progressFrame) -side left -expand true -fill both
+    pack $itk_component(commandLabel) -side top -fill x -anchor nw
+    pack $itk_component(progressBar) -side left -expand true -fill x -padx 4
+    pack $itk_component(progressButton) -side right
 
     pack $itk_component(checkButtonFrame) -side top -fill both
     pack $itk_component(buttonLeft) -side left -padx 4 -pady {16 0} -anchor e -expand true
@@ -830,12 +849,15 @@ body GeometryChecker::updateDisplayFinished {} {
     return $_displayFinished
 }
 
+body GeometryChecker::firstUnionedSolid {tree} {
+    return [string trim [file tail [lindex [search $tree -type shape -bool u] 0]]]
+}
+
 # display
 #
 # draw the currently selected geometry
 #
 body GeometryChecker::display {} {
-
     set _displayFinished false
     set sset [$_ck selection]
 
@@ -843,7 +865,12 @@ body GeometryChecker::display {} {
     set drawing ""
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    lappend drawing $left $right
+	    if {$_drawFirstUnion} {
+		lappend drawing [$this firstUnionedSolid $left]
+		lappend drawing [$this firstUnionedSolid $right]
+	    } else {
+		lappend drawing $left $right
+	    }
 	}
     }
 
@@ -855,6 +882,10 @@ body GeometryChecker::display {} {
     set _progressButtonInvoked false
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    if {$_drawFirstUnion} {
+		set left [$this firstUnionedSolid $left]
+		set right [$this firstUnionedSolid $right]
+	    }
 	    set _commandText "Drawing $left"
 
 	    if {[$this updateDisplayFinished]} {
@@ -979,6 +1010,12 @@ body GeometryChecker::handleEndKey {} {
     $_ck see [lindex [$_ck children {}] end]
 }
 
+body GeometryChecker::setMode {subFirst} {
+    set subtractFirst $subFirst
+    if {$subFirst} {
+	set _drawFirstUnion 1
+    }
+}
 
 ##########
 # end public methods
@@ -1077,10 +1114,6 @@ proc drawLeft {path} {
     if [ catch { opendb } dbname ] {
 	return -code 1 "no database seems to be open"
     }
-    if [ exists $path ] {
-	puts ""
-	puts "WARNING: unable to find $path"
-    }
 
     if [catch {draw -C255/0/0 $path} path_error] {
 	puts "ERROR: $path_error"
@@ -1090,10 +1123,6 @@ proc drawLeft {path} {
 proc drawRight {path} {
     if [ catch { opendb } dbname ] {
 	return -code error "no database seems to be open"
-    }
-    if [ exists $path ] {
-	puts ""
-	puts "WARNING: unable to find $path"
     }
 
     if [catch {draw -C0/0/255 $path} path_error] {
@@ -1141,7 +1170,7 @@ proc check {{args}} {
     set checkerWindow [toplevel $parent.checker]
     set checker [GeometryChecker $checkerWindow.ck]
 
-    $checker configure -subtractFirst $firstFlag
+    $checker setMode $firstFlag
     $checker registerWhoCallback [code who]
     $checker registerDrawCallbacks [code drawLeft] [code drawRight]
     $checker registerEraseCallback [code erase]
