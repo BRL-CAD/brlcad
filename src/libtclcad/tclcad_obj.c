@@ -1487,8 +1487,7 @@ to_cmd(ClientData clientData,
     current_top = top;
 
     for (ctp = to_cmds; ctp->to_name != (char *)0; ctp++) {
-	if (ctp->to_name[0] == argv[1][0] &&
-	    BU_STR_EQUAL(ctp->to_name, argv[1])) {
+	if (BU_STR_EQUAL(ctp->to_name, argv[1])) {
 	    struct ged *gedp = top->to_gop->go_gedp;
 	    ret = (*ctp->to_wrapper_func)(gedp, argc-1, (const char **)argv+1, ctp->to_func, ctp->to_usage, ctp->to_maxargs);
 	    break;
