@@ -96,7 +96,7 @@ catch {delete class GeometryChecker} error
 
 	variable _displayFinished
 	variable _drew
-	variable _drawFirstUnion
+	variable _drawFirstUnion 0
 
 	variable _whoCallback
 	variable _leftDrawCallback
