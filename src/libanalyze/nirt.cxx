@@ -329,6 +329,61 @@ struct nirt_output_record {
     struct nirt_seg *seg;
 };
 
+
+/**
+ * Design thoughts for nirt diffing:
+ *
+ * NIRT difference events come in two primary forms: "transition" differences
+ * in the form of entry/exit hits, and differences in segments - the regions
+ * between transitions.  In the context of a diff, a segment by definition
+ * contains no transitions on *either* shotline path.  Even if a segment
+ * contains no transitions along its own shotline, if a transition from the
+ * other shot falls within its bounds the original segment will be treated as
+ * two sequential segments of the same type for the purposes of comparison.
+ *
+ * Transitions are compared only to other transitions, and segments are
+ * compared only to other segments.
+ *
+ * The comparison criteria are as follows:
+ *
+ * Transition points:
+ *
+ * 1.  DIST_PT_PT - if there is a transition on either path that does not align
+ *     within the specified distance tolerance with a transition on the other
+ *     path, the transition is unmatched and reported as a difference.
+ * 2.  Obliquity delta - if two transition points align within the distance
+ *     tolerance, the next test is the difference between their normals. If
+ *     these match in direction and obliquity angle, the transition points
+ *     are deemed to be matching.  Otherwise, a difference is reported on the
+ *     transition point.
+ *
+ * Segments:
+ *
+ * 1.  The first comparison made between segments is their type. Type
+ *     differences will always be reported as a difference.
+ *
+ * 2.  If types match, behavior will depend on options and the specific
+ *     types being compared:
+ *
+ *     GAPS:       always match.
+ *
+ *     PARTITIONS: Match if all active criteria match.  If no criteria
+ *                 are active, match.  Possible active criteria:
+ *
+ *                 Region name
+ *                 Path name
+ *                 Region ID
+ *
+ *     OVERLAPS:   Match if all active criteria match.  If no criteria
+ *                 are active, match.  Possible active criteria:
+ *                 
+ *                 Overlap region set
+ *                 Overlap path set
+ *                 Overlap region id set
+ *                 Selected "winning" partition in the overlap
+ */
+
+
 struct nirt_seg_diff {
     struct nirt_seg *left;
     struct nirt_seg *right;
@@ -622,7 +677,7 @@ _nirt_dbl_to_str(double d, size_t p)
     return sd;
 }
 
-HIDDEN double 
+HIDDEN double
 _nirt_str_to_dbl(std::string s, size_t p)
 {
     double d;
@@ -864,7 +919,7 @@ _nirt_gap_diff(struct nirt_state *nss, struct nirt_seg *left, struct nirt_seg *r
 	sd->gap_los_delta = gap_los_delta;
 	return sd;
     }
-    return 0; 
+    return 0;
 }
 
 HIDDEN struct nirt_seg_diff *
@@ -914,9 +969,11 @@ _nirt_seg_string(int type) {
 }
 
 
+
+
 HIDDEN int
 _nirt_diff_report(struct nirt_state *nss)
-{
+ {
     int reporting_diff = 0;
     int did_header = 0;
     struct bu_vls dreport = BU_VLS_INIT_ZERO;
