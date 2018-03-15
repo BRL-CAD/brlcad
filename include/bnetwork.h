@@ -53,12 +53,11 @@
 #  include <netinet/tcp.h> /* for TCP_NODELAY sockopt */
 #  include <arpa/inet.h> /* hton/ntoh, inet_addr functions */
 #  include <sys/socket.h> /* accept, connect, send, recv, ... */
-#endif
-
-/* for c90/c99 compatibility */
-#if !defined(HAVE_DECL_HTONL) && !defined(htonl)
-extern uint32_t htonl(uint32_t);
-extern uint32_t ntohl(uint32_t);
+   /* for c90/c99 compatibility */
+#  if !defined(HAVE_DECL_HTONL) && !defined(htonl)
+      extern uint32_t htonl(uint32_t);
+      extern uint32_t ntohl(uint32_t);
+   #endif
 #endif
 
 #endif /* BNETWORK_H */

@@ -48,7 +48,7 @@
 
 #include "tinycthread.h"
 
-#if !defined(HAVE_STRUCT_TIMESPEC)
+#if !defined(HAVE_STRUCT_TIMESPEC) && !defined(timespec)  /* tinycthread.h will define timespec on Windows */
 struct timespec {
   time_t tv_sec;
   long tv_nsec;

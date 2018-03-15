@@ -39,7 +39,7 @@
 #include "bu/path.h"
 #include "bu/str.h"
 
-#ifndef HAVE_DECL_GETPROGNAME
+#if !defined(HAVE_DECL_GETPROGNAME) && !defined(getprogname)
 const char *getprogname(void);
 #endif
 
