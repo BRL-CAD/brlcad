@@ -3213,8 +3213,8 @@ _nirt_cmd_librt_debug(void *ns, int argc, const char **argv)
 	goto librt_nirt_debug_done;
     }
 
-    RT_G_DEBUG = (uint32_t)dflg;
-    bu_vls_printb(&msg, "librt debug ", RT_G_DEBUG, NIRT_DEBUG_FMT);
+    RTG.debug = (uint32_t)dflg;
+    bu_vls_printb(&msg, "librt debug ", RTG.debug, NIRT_DEBUG_FMT);
     nout(nss, "%s\n", bu_vls_addr(&msg));
 
 librt_nirt_debug_done:
