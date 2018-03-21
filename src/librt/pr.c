@@ -637,7 +637,7 @@ rt_pr_bit_tree(const struct bit_tree *btp, int idx, int lvl)
 /* Offset in tree */
 /* Recursion level */
 {
-    uint uop, val;
+    unsigned uop, val;
 
     uop = btp[idx].val & 7;
     val = btp[idx].val >> 3;
@@ -647,7 +647,7 @@ rt_pr_bit_tree(const struct bit_tree *btp, int idx, int lvl)
     switch (uop) {
         case UOP_SOLID:
             /* Tree leaf */
-            bu_log("%ld", val);
+            bu_log("%d", val);
             if (lvl == 0) bu_log("\n");
             return;
         case UOP_SUBTRACT:

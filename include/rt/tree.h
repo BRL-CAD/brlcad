@@ -280,7 +280,7 @@ struct rt_tree_array
  *      uint st_bit : 29
  */
 struct bit_tree {
-    uint val;
+    unsigned val;
 };
 
 struct cl_tree_bit {

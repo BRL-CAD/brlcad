@@ -253,7 +253,7 @@ size_t
 clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-    uint ntri;
+    unsigned ntri;
     size_t i;
     struct clt_linear_bvh_node *nodes;
 
