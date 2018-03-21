@@ -130,6 +130,14 @@ struct _tthread_timespec {
   long   tv_nsec;
 };
 #define timespec _tthread_timespec
+#else
+#if !defined(HAVE_STRUCT_TIMESPEC)
+struct timespec {
+	time_t tv_sec;
+	long tv_nsec;
+};
+#endif
+#define HAVE_STRUCT_TIMESPEC 1
 #endif
 
 TINYCTHREAD_EXPORT extern int _tthread_timespec_get(struct timespec *ts, int base);
