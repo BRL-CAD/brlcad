@@ -120,18 +120,6 @@ SetTargetFolder(zlib-static "Third Party Libraries")
 SetTargetFolder(example "Third Party Executables")
 SetTargetFolder(minigzip "Third Party Executables")
 
-# tinycthread Library - C11 style threads portability wrapper 
-set(tinycthread_DESCRIPTION "
-Option for enabling and disabling compilation of the tinycthread library
-provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(tinycthread TINYCTHREAD tinycthread tinycthread_DESCRIPTION ALIASES ENABLE_TINYCTHREAD)
-SetTargetFolder(tinycthread "Third Party Libraries")
-SetTargetFolder(tinycthread-static "Third Party Libraries")
-
-
 # LZ4 compression/decompression library
 set(lz4_DESCRIPTION "
 Option for enabling and disabling compilation of the lz4 data

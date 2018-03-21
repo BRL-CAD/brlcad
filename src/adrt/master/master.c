@@ -35,7 +35,9 @@
 #  include <getopt.h>
 #endif
 
+#if 0
 #include <tinycthread.h>
+#endif
 #include <zlib.h>
 
 #include "bnetwork.h"

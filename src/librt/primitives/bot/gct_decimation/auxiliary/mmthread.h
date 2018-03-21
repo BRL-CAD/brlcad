@@ -46,8 +46,6 @@
 #include "bu/exit.h"
 #include "mmatomic.h"
 
-#include "tinycthread.h"
-
 #if !defined(HAVE_STRUCT_TIMESPEC) && !defined(timespec)  /* tinycthread.h will define timespec on Windows */
 struct timespec {
   time_t tv_sec;
@@ -55,7 +53,7 @@ struct timespec {
 };
 #endif
 
-
+#if 0
 static inline void mtSignalWaitTimeout(cnd_t *gsignal, mtx_t *mutex, long milliseconds)
 {
     uint64_t microsecs;
@@ -75,7 +73,7 @@ static inline void mtSignalWaitTimeout(cnd_t *gsignal, mtx_t *mutex, long millis
     if (cnd_timedwait(gsignal, mutex, &ts) == thrd_error)
 	bu_bomb("cnd_timedwait() failed");
 }
-
+#endif
 
 #ifdef MM_ATOMIC_SUPPORT
 
@@ -205,7 +203,7 @@ static inline void mtSpinUnlock(mtSpin *spin)
 static void mtQuellPedantic(int var)
 {
 if (!var) {
-  (void)mtSignalWaitTimeout(NULL, NULL, 0);
+  /*(void)mtSignalWaitTimeout(NULL, NULL, 0);*/
   (void)mtSpinInit(NULL);
   (void)mtSpinDestroy(NULL);
   (void)mtSpinLock(NULL);

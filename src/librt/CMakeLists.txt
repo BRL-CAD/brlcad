@@ -22,7 +22,6 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIR}
   ${VDS_INCLUDE_DIR}
   ${GDIAM_INCLUDE_DIR}
-  ${TINYCTHREAD_INCLUDE_DIR}
   ${LZ4_INCLUDE_DIR}
   )
 
@@ -95,16 +94,6 @@ set(LIBRT_SOURCES
   primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
-  primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-  primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-  primitives/bot/gct_decimation/auxiliary/mm.c
-  primitives/bot/gct_decimation/auxiliary/mmhash.c
-  primitives/bot/gct_decimation/meshoptimization.c
-  primitives/bot/gct_decimation/meshoptimizer.c
-  primitives/bot/gct_decimation/meshdecimation.c
-  primitives/bot/gct_decimation/meshdecimationSSE2.c
-  primitives/bot/gct_decimation/meshdecimationSSE3.c
-  primitives/bot/gct_decimation/meshdecimationSSE4p1.c
   primitives/bot/decimate.c
   primitives/brep/brep.cpp
   primitives/brep/brep_debug.cpp
@@ -233,6 +222,17 @@ set(LIBRT_SOURCES
   vlist.c
   vshoot.c
   wdb.c
+  primitives/bot/gct_decimation/auxiliary/tcm.c
+  primitives/bot/gct_decimation/auxiliary/mmbinsort.c
+  primitives/bot/gct_decimation/auxiliary/mmbitmap.c
+  primitives/bot/gct_decimation/auxiliary/mm.c
+  primitives/bot/gct_decimation/auxiliary/mmhash.c
+  primitives/bot/gct_decimation/meshoptimization.c
+  primitives/bot/gct_decimation/meshoptimizer.c
+  primitives/bot/gct_decimation/meshdecimation.c
+  primitives/bot/gct_decimation/meshdecimationSSE2.c
+  primitives/bot/gct_decimation/meshdecimationSSE3.c
+  primitives/bot/gct_decimation/meshdecimationSSE4p1.c
   )
 
 set(librt_ignored_files
@@ -244,6 +244,7 @@ set(librt_ignored_files
   primitives/bot/bot_wireframe.cpp
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
+  primitives/bot/gct_decimation/auxiliary/tcm.h
   primitives/bot/gct_decimation/auxiliary/cc.h
   primitives/bot/gct_decimation/auxiliary/mm.h
   primitives/bot/gct_decimation/auxiliary/mmatomic.h
@@ -341,7 +342,7 @@ if(BRLCAD_ENABLE_SPR)
   set(SPR_LIB libSPR)
 endif(BRLCAD_ENABLE_SPR)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libnmg;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${TINYCTHREAD_LIBRARY};${LZ4_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libnmg;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${LZ4_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
@@ -350,7 +351,6 @@ if(CPP_DLL_DEFINES)
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "SPR_DLL_IMPORTS")
-  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
 endif(CPP_DLL_DEFINES)
 

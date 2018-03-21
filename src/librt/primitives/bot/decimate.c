@@ -465,15 +465,18 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
     return 1;
 }
 
-
 /**
  * decimate a BOT using the new GCT decimator.
  * `feature_size` is the smallest feature size to keep undecimated.
  * returns the number of edges removed.
  */
 size_t
-rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size)
-{
+#if 0
+rt_bot_decimate_gct(struct rt_bot_internal *UNUSED(bot), fastf_t UNUSED(feature_size)) {
+    bu_log("GCT decimation currently disabled - can not decimate.");
+    return 0;
+#else
+rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
     const int opt_level = 3; /* maximum */
     mdOperation mdop;
 
@@ -497,8 +500,8 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size)
     mesh_optimization(bot->num_vertices, bot->num_faces, bot->faces, sizeof(bot->faces[0]), opt_level);
 
     return mdop.decimationcount;
+#endif
 }
-
 
 /**
  * routine to reduce the number of triangles in a BOT by edges

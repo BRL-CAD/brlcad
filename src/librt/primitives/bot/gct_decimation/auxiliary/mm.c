@@ -753,14 +753,13 @@ void mmListRemove(void *item, intptr_t offset)
     }
 }
 
-
 #ifdef MM_LINUX
 #define _GNU_SOURCE
 #include <sched.h>
 #endif
 void mmThreadBindToCpu(int cpuindex)
 {
-#if defined(MM_LINUX)
+#if 0 /*if defined(MM_LINUX) */
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(cpuindex, &cpuset);
@@ -769,7 +768,6 @@ void mmThreadBindToCpu(int cpuindex)
     (void)cpuindex;
 #endif
 }
-
 
 int mmCpuGetNode(int cpuindex)
 {

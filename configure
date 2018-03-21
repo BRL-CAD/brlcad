@@ -118,10 +118,6 @@ do
                                   shift;;
      --disable-libz)                options="$options -DBRLCAD_ZLIB=SYSTEM";
                                   shift;;
-     --enable-tinycthread)                options="$options -DBRLCAD_TINYCTHREAD=BUNDLED";
-                                  shift;;
-     --disable-tinycthread)                options="$options -DBRLCAD_TINYCTHREAD=SYSTEM";
-                                  shift;;
      --enable-lz4)                options="$options -DBRLCAD_LZ4=BUNDLED";
                                   shift;;
      --disable-lz4)                options="$options -DBRLCAD_LZ4=SYSTEM";

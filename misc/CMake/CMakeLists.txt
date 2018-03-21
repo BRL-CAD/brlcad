@@ -41,7 +41,6 @@ set(cmake_ignore_files
   FindShellDeps.cmake
   FindTBB.cmake
   FindTERMLIB.cmake
-  FindTINYCTHREAD.cmake
   FindUTAHRLE.cmake
   FindUUID.cmake
   FindVDS.cmake

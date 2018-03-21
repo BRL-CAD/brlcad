@@ -1,31 +1,3 @@
-/*                        T I E N E T . C
- * BRL-CAD
- *
- * Copyright (c) 2016-2018 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-
-#include "tienet.h"
-
-#include "bio.h"
-#include "bresource.h"
-#include "bsocket.h"
-#include "bnetwork.h"
-#include "bio.h"
-
 /************************************************************************/
 /* Bits from tinycthread for portable threads
  *
@@ -52,12 +24,16 @@
  *  distribution.
  */
 
-int mtx_init(mtx_t *mtx)
+#include "common.h"
+#include "tcm.h"
+#include "bu/malloc.h"
+
+int rt_mtx_init(rt_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
     mtx->mAlreadyLocked = FALSE;
     mtx->mRecursive = type & mtx_recursive;
-    mtx->mTimed = type & mtx_timed;
+    mtx->mTimed = type & rt_mtx_timed;
     if (!mtx->mTimed)
     {
 	InitializeCriticalSection(&(mtx->mHandle.cs));
@@ -81,7 +57,7 @@ int mtx_init(mtx_t *mtx)
 #endif
 }
 
-void mtx_destroy(mtx_t *mtx)
+void rt_mtx_destroy(rt_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
   if (!mtx->mTimed)
@@ -102,7 +78,7 @@ void mtx_destroy(mtx_t *mtx)
 #define _CONDITION_EVENT_ALL 1
 #endif
 
-int cnd_init(cnd_t *cond)
+int rt_cnd_init(rt_cnd_t *cond)
 {
 #if defined(HAVE_WINDOWS_H)
   cond->mWaitersCount = 0;
@@ -131,7 +107,7 @@ int cnd_init(cnd_t *cond)
 #endif
 }
 
-void cnd_destroy(cnd_t *cond)
+void rt_cnd_destroy(rt_cnd_t *cond)
 {
 #if defined(HAVE_WINDOWS_H)
   if (cond->mEvents[_CONDITION_EVENT_ONE] != NULL)
@@ -148,7 +124,7 @@ void cnd_destroy(cnd_t *cond)
 #endif
 }
 
-int mtx_lock(mtx_t *mtx)
+int rt_mtx_lock(rt_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
   if (!mtx->mTimed)
@@ -178,7 +154,7 @@ int mtx_lock(mtx_t *mtx)
 #endif
 }
 
-int mtx_unlock(mtx_t *mtx)
+int rt_mtx_unlock(rt_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
   mtx->mAlreadyLocked = FALSE;
@@ -199,7 +175,7 @@ int mtx_unlock(mtx_t *mtx)
 #endif
 }
 
-int cnd_signal(cnd_t *cond)
+int rt_cnd_signal(rt_cnd_t *cond)
 {
 #if defined(HAVE_WINDOWS_H)
   int haveWaiters;
@@ -225,7 +201,7 @@ int cnd_signal(cnd_t *cond)
 }
 
 #if defined(HAVE_WINDOWS_H)
-static int _cnd_timedwait_win32(cnd_t *cond, mtx_t *mtx, DWORD timeout)
+static int _rt_rt_cnd_timedwait_win32(rt_cnd_t *cond, rt_mtx_t *mtx, DWORD timeout)
 {
   DWORD result;
   int lastWaiter;
@@ -280,33 +256,33 @@ static int _cnd_timedwait_win32(cnd_t *cond, mtx_t *mtx, DWORD timeout)
 }
 #endif
 
-int cnd_wait(cnd_t *cond, mtx_t *mtx)
+int rt_cnd_wait(rt_cnd_t *cond, rt_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
-  return _cnd_timedwait_win32(cond, mtx, INFINITE);
+  return _rt_rt_cnd_timedwait_win32(cond, mtx, INFINITE);
 #else
   return pthread_cond_wait(cond, mtx) == 0 ? thrd_success : thrd_error;
 #endif
 }
 
 typedef struct {
-    thrd_start_t mFunction; /**< Pointer to the function to be executed. */
+    rt_thrd_start_t mFunction; /**< Pointer to the function to be executed. */
     void * mArg;            /**< Function argument for the thread function. */
-} _thread_start_info;
+} _rt_thread_start_info;
 
 /* Thread wrapper function. */
 #if defined(HAVE_WINDOWS_H)
-static DWORD WINAPI _thrd_wrapper_function(LPVOID aArg)
+static DWORD WINAPI _rt_thrd_wrapper_function(LPVOID aArg)
 #else
-static void * _thrd_wrapper_function(void * aArg)
+static void * _rt_thrd_wrapper_function(void * aArg)
 #endif
 {
-    thrd_start_t fun;
+    rt_thrd_start_t fun;
     void *arg;
     int  res;
 
     /* Get thread startup information */
-    _thread_start_info *ti = (_thread_start_info *) aArg;
+    _rt_thread_start_info *ti = (_rt_thread_start_info *) aArg;
     fun = ti->mFunction;
     arg = ti->mArg;
 
@@ -328,11 +304,11 @@ static void * _thrd_wrapper_function(void * aArg)
 #endif
 }
 
-int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
+int rt_thrd_create(rt_thrd_t *thr, rt_thrd_start_t func, void *arg)
 {
       /* Fill out the thread startup information (passed to the thread wrapper,
        *      which will eventually free it) */
-      _thread_start_info* ti = (_thread_start_info*)bu_malloc(sizeof(_thread_start_info), "thread info");
+      _rt_thread_start_info* ti = (_rt_thread_start_info*)bu_malloc(sizeof(_rt_thread_start_info), "thread info");
         if (ti == NULL)
 	      {
 		      return thrd_nomem;
@@ -342,9 +318,9 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 
 	      /* Create the thread */
 #if defined(HAVE_WINDOWS_H)
-	    *thr = CreateThread(NULL, 0, _thrd_wrapper_function, (LPVOID) ti, 0, NULL);
+	    *thr = CreateThread(NULL, 0, _rt_thrd_wrapper_function, (LPVOID) ti, 0, NULL);
 #else
-	    if(pthread_create(thr, NULL, _thrd_wrapper_function, (void *)ti) != 0)
+	    if(pthread_create(thr, NULL, _rt_thrd_wrapper_function, (void *)ti) != 0)
 	    {
 		*thr = 0;
 	    }
@@ -360,7 +336,7 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 
 }
 
-int thrd_join(thrd_t thr, int *res)
+int rt_thrd_join(rt_thrd_t thr, int *res)
 {
 #if defined(HAVE_WINDOWS_H)
     DWORD dwRes;
@@ -395,83 +371,30 @@ int thrd_join(thrd_t thr, int *res)
     return thrd_success;
 }
 
-
-/************************************************************************/
-
-int
-tienet_send(int tsocket, void* data, size_t size)
+int rt_cnd_broadcast(rt_cnd_t *cond)
 {
-    fd_set	 set;
-    unsigned int ind = 0;
-    int		 r;
+#if defined(HAVE_WINDOWS_H)
+    int haveWaiters;
 
-    FD_ZERO(&set);
-    FD_SET(tsocket, &set);
+    /* Are there any waiters? */
+    EnterCriticalSection(&cond->mWaitersCountLock);
+    haveWaiters = (cond->mWaitersCount > 0);
+    LeaveCriticalSection(&cond->mWaitersCountLock);
 
-    do {
-	select(tsocket+1, NULL, &set, NULL, NULL);
-	r = write(tsocket, &((char*)data)[ind], size-ind);
-	ind += r;
-	if (r <= 0) return 1;	/* Error, socket is probably dead */
-    } while (ind < size);
+    /* If we have any waiting threads, send them a signal */
+    if(haveWaiters)
+    {
+	if (SetEvent(cond->mEvents[_CONDITION_EVENT_ALL]) == 0)
+	{
+	    return thrd_error;
+	}
+    }
 
-    return 0;
+    return thrd_success;
+#else
+    return pthread_cond_broadcast(cond) == 0 ? thrd_success : thrd_error;
+#endif
 }
-
-int
-tienet_recv(int tsocket, void* data, size_t size)
-{
-    fd_set	 set;
-    unsigned int ind = 0;
-    int		 r;
-
-    FD_ZERO(&set);
-    FD_SET(tsocket, &set);
-
-    do {
-	select(tsocket+1, NULL, &set, NULL, NULL);
-	r = read(tsocket, &((char*)data)[ind], size-ind);
-	ind += r;
-	if (r <= 0) return 1;	/* Error, socket is probably dead */
-    } while (ind < size);
-
-    return 0;
-}
-
-
-void tienet_sem_init(tienet_sem_t *sem, int val)
-{
-    mtx_init(&sem->mut);
-    cnd_init(&sem->cond);
-    sem->val = val;
-}
-
-
-void tienet_sem_free(tienet_sem_t *sem)
-{
-    mtx_destroy(&sem->mut);
-    cnd_destroy(&sem->cond);
-}
-
-
-void tienet_sem_post(tienet_sem_t *sem)
-{
-    mtx_lock(&sem->mut);
-    sem->val++;
-    cnd_signal(&sem->cond);
-    mtx_unlock(&sem->mut);
-}
-
-
-void tienet_sem_wait(tienet_sem_t *sem)
-{
-    mtx_lock(&sem->mut);
-    if (!sem->val)
-	cnd_wait(&sem->cond, &sem->mut);
-    sem->val--;
-    mtx_unlock(&sem->mut);
-}
-
 
 /*
  * Local Variables:

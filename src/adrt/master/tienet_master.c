@@ -178,9 +178,9 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
 
     tienet_sem_init(&tienet_master_sem_app, 0);
     tienet_sem_init(&tienet_master_sem_out, 0);
-    mtx_init(&tienet_master_send_mut, 0);
-    mtx_init(&tienet_master_push_mut, 0);
-    mtx_init(&tienet_master_broadcast_mut, 0);
+    mtx_init(&tienet_master_send_mut);
+    mtx_init(&tienet_master_push_mut);
+    mtx_init(&tienet_master_broadcast_mut);
 
     /* Start the Listener as a Thread */
     thrd_create(&thread, (thrd_start_t)tienet_master_listener, NULL);

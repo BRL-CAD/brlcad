@@ -41,8 +41,6 @@
 #include "mm.h"
 #include "mmatomic.h"
 
-#include "tinycthread.h"
-
 #include <string.h>
 
 
