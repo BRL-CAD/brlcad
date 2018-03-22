@@ -171,11 +171,11 @@ int bu_mtx_trylock(bu_mtx_t *mtx)
 
 	if (!mtx->mTimed)
 	{
-		ret = TryEnterCriticalSection(&(mtx->mHandle.cs)) ? bu_thrd_success : thrd_busy;
+		ret = TryEnterCriticalSection(&(mtx->mHandle.cs)) ? bu_thrd_success : bu_thrd_busy;
 	}
 	else
 	{
-		ret = (WaitForSingleObject(mtx->mHandle.mut, 0) == WAIT_OBJECT_0) ? bu_thrd_success : thrd_busy;
+		ret = (WaitForSingleObject(mtx->mHandle.mut, 0) == WAIT_OBJECT_0) ? bu_thrd_success : bu_thrd_busy;
 	}
 
 	if ((!mtx->mRecursive) && (ret == bu_thrd_success))
@@ -183,7 +183,7 @@ int bu_mtx_trylock(bu_mtx_t *mtx)
 		if (mtx->mAlreadyLocked)
 		{
 			LeaveCriticalSection(&(mtx->mHandle.cs));
-			ret = thrd_busy;
+			ret = bu_thrd_busy;
 		}
 		else
 		{
@@ -241,7 +241,7 @@ static int _bu_bu_cnd_timedwait_win32(bu_cnd_t *cond, bu_mtx_t *mtx, DWORD timeo
   {
     /* The mutex is locked again before the function returns, even if an error occurred */
     bu_mtx_lock(mtx);
-    return thrd_timedout;
+    return bu_thrd_timedout;
   }
   else if (result == WAIT_FAILED)
   {

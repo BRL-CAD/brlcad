@@ -119,7 +119,7 @@ static inline int mtMutexTryLock(bu_mtx_t *mutex)
 	case bu_thrd_success:
 	    return 1;
 
-	case thrd_busy:
+	case bu_thrd_busy:
 	    return 0;
 
 	default:
