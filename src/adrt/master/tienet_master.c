@@ -119,9 +119,9 @@ int tienet_master_shutdown_state;
 int tienet_master_halt_networking;
 
 tienet_buffer_t tienet_master_result_buffer;
-mtx_t tienet_master_send_mut;
-mtx_t tienet_master_push_mut;
-mtx_t tienet_master_broadcast_mut;
+bu_mtx_t tienet_master_send_mut;
+bu_mtx_t tienet_master_push_mut;
+bu_mtx_t tienet_master_broadcast_mut;
 
 tienet_buffer_t tienet_master_result_buffer_comp;
 
@@ -132,7 +132,7 @@ tienet_master_fcb_result_t *tienet_master_fcb_result;
 
 void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char *list, char *exec, int buffer_size, int ver_key, int verbose)
 {
-    thrd_t thread;
+    bu_thrd_t thread;
     int i;
 
 
@@ -178,12 +178,12 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
 
     tienet_sem_init(&tienet_master_sem_app, 0);
     tienet_sem_init(&tienet_master_sem_out, 0);
-    mtx_init(&tienet_master_send_mut);
-    mtx_init(&tienet_master_push_mut);
-    mtx_init(&tienet_master_broadcast_mut);
+    bu_mtx_init(&tienet_master_send_mut);
+    bu_mtx_init(&tienet_master_push_mut);
+    bu_mtx_init(&tienet_master_broadcast_mut);
 
     /* Start the Listener as a Thread */
-    thrd_create(&thread, (thrd_start_t)tienet_master_listener, NULL);
+    bu_thrd_create(&thread, (bu_thrd_start_t)tienet_master_listener, NULL);
 }
 
 
@@ -215,7 +215,7 @@ void tienet_master_push(const void *data, size_t size)
     tienet_master_socket_t *tsocket, *tmp;
     short op;
 
-    mtx_lock(&tienet_master_push_mut);
+    bu_mtx_lock(&tienet_master_push_mut);
 
     op = TN_OP_SENDWORK;
 
@@ -273,7 +273,7 @@ void tienet_master_push(const void *data, size_t size)
 	    tienet_master_send_work(tsocket);
     }
 
-    mtx_unlock(&tienet_master_push_mut);
+    bu_mtx_unlock(&tienet_master_push_mut);
 }
 
 
@@ -590,7 +590,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
      * tienet_master_sem_read with the first one hitting the wait on a
      * value of one the other one could end up waiting forever.
      */
-    mtx_lock(&tienet_master_send_mut);
+    bu_mtx_lock(&tienet_master_send_mut);
 
     /*
      * If shutdown has been initiated, do not send any data to the slaves,
@@ -608,7 +608,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
      * Check to see if a broadcast message is sitting in the queue.
      * The mutex prevents a read and write from occurring at the same time.
      */
-    mtx_lock(&tienet_master_broadcast_mut);
+    bu_mtx_lock(&tienet_master_broadcast_mut);
     if (sock->mesg.size) {
 	op = TN_OP_SENDWORK;
 	tienet_send(sock->num, &op, sizeof(short));
@@ -619,11 +619,11 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
 	sock->mesg.data = NULL;
 	sock->mesg.size = 0;
 
-	mtx_unlock(&tienet_master_broadcast_mut);
-	mtx_unlock(&tienet_master_send_mut);
+	bu_mtx_unlock(&tienet_master_broadcast_mut);
+	bu_mtx_unlock(&tienet_master_send_mut);
 	return;
     }
-    mtx_unlock(&tienet_master_broadcast_mut);
+    bu_mtx_unlock(&tienet_master_broadcast_mut);
 
 
     /* Check to see if work is available */
@@ -658,7 +658,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
 	sock->idle = 1;
     }
 
-    mtx_unlock(&tienet_master_send_mut);
+    bu_mtx_unlock(&tienet_master_send_mut);
 }
 
 
@@ -764,7 +764,7 @@ void tienet_master_broadcast(const void *mesg, size_t mesg_len)
     tienet_master_socket_t *tsocket;
 
     /* Prevent a Read and Write of the broadcast from occurring at the same time */
-    mtx_lock(&tienet_master_broadcast_mut);
+    bu_mtx_lock(&tienet_master_broadcast_mut);
 
     /* Send a message to each available socket */
     for (tsocket = tienet_master_socket_list; tsocket; tsocket = tsocket->next) {
@@ -775,7 +775,7 @@ void tienet_master_broadcast(const void *mesg, size_t mesg_len)
 	    memcpy(tsocket->mesg.data, mesg, mesg_len);
 	}
     }
-    mtx_unlock(&tienet_master_broadcast_mut);
+    bu_mtx_unlock(&tienet_master_broadcast_mut);
 
     /*
      * Tell any idle slaves to get back to work.  This is the case

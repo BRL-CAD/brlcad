@@ -29,6 +29,7 @@ set(bu_headers
   simd.h
   sort.h
   str.h
+  tc.h
   time.h
   units.h
   uuid.h

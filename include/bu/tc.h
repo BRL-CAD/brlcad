@@ -24,15 +24,19 @@
  *  distribution.
  */
 
-#ifndef _RT_TCM_H
-#define _RT_TCM_H
+/* Note - this is a temporary measure for portable compilation of some BRL-CAD
+ * components, and will likely be replaced by standards and/or other API at
+ * some future date.
+ *
+ * This header should be considered as INTERNAL ONLY - not public API. */
+
+#ifndef _BU_TCM_H
+#define _BU_TCM_H
 
 #include "common.h"
+#include "bu/defines.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+__BEGIN_DECLS
 
 #if defined(HAVE_PTHREAD_H)
 #  include <pthread.h>
@@ -51,17 +55,18 @@ extern "C" {
 #  include <sys/timeb.h>
 #endif
 
-#define thrd_error    0 /**< The requested operation failed */
-#define thrd_success  1 /**< The requested operation succeeded */
-#define thrd_timedout 2 /**< The time specified in the call was reached without acquiring the requested resource */
-#define thrd_busy     3 /**< The requested operation failed because a tesource requested by a test and return function is already in use */
-#define thrd_nomem    4 /**< The requested operation failed because it was unable to allocate memory */
 
-typedef int (*rt_thrd_start_t)(void *arg);
+#define bu_thrd_error    0 /**< The requested operation failed */
+#define bu_thrd_success  1 /**< The requested operation succeeded */
+#define bu_thrd_timedout 2 /**< The time specified in the call was reached without acquiring the requested resource */
+#define bu_thrd_busy     3 /**< The requested operation failed because a tesource requested by a test and return function is already in use */
+#define bu_thrd_nomem    4 /**< The requested operation failed because it was unable to allocate memory */
+
+typedef int (*bu_thrd_start_t)(void *arg);
 #if defined(HAVE_WINDOWS_H)
-typedef HANDLE rt_thrd_t;
+typedef HANDLE bu_thrd_t;
 #else
-typedef pthread_t rt_thrd_t;
+typedef pthread_t bu_thrd_t;
 #endif
 
 /* Mutex */
@@ -74,9 +79,9 @@ typedef struct {
     int mAlreadyLocked;         /* TRUE if the mutex is already locked */
     int mRecursive;             /* TRUE if the mutex is recursive */
     int mTimed;                 /* TRUE if the mutex is timed */
-} rt_mtx_t;
+} bu_mtx_t;
 #else
-typedef pthread_mutex_t rt_mtx_t;
+typedef pthread_mutex_t bu_mtx_t;
 #endif
 
 /* Condition variable */
@@ -85,30 +90,29 @@ typedef struct {
   HANDLE mEvents[2];                  /* Signal and broadcast event HANDLEs. */
   unsigned int mWaitersCount;         /* Count of the number of waiters. */
   CRITICAL_SECTION mWaitersCountLock; /* Serialize access to mWaitersCount. */
-} rt_cnd_t;
+} bu_cnd_t;
 #else
-typedef pthread_cond_t rt_cnd_t;
+typedef pthread_cond_t bu_cnd_t;
 #endif
 
-extern int rt_thrd_create(rt_thrd_t *thr, rt_thrd_start_t func, void *arg);
-extern int rt_thrd_join(rt_thrd_t thr, int *res);
-extern int rt_mtx_init(rt_mtx_t *mtx);
-extern int rt_mtx_lock(rt_mtx_t *mtx);
-extern int rt_mtx_unlock(rt_mtx_t *mtx);
-extern void rt_mtx_destroy(rt_mtx_t *mtx);
-extern int rt_cnd_init(rt_cnd_t *cond);
-extern void rt_cnd_destroy(rt_cnd_t *cond);
-extern int rt_cnd_wait(rt_cnd_t *cond, rt_mtx_t *mtx);
-extern int rt_cnd_broadcast(rt_cnd_t *cond);
+BU_EXPORT extern int bu_thrd_create(bu_thrd_t *thr, bu_thrd_start_t func, void *arg);
+BU_EXPORT extern int bu_thrd_join(bu_thrd_t thr, int *res);
+BU_EXPORT extern int bu_mtx_init(bu_mtx_t *mtx);
+BU_EXPORT extern int bu_mtx_lock(bu_mtx_t *mtx);
+BU_EXPORT extern int bu_mtx_unlock(bu_mtx_t *mtx);
+BU_EXPORT extern void bu_mtx_destroy(bu_mtx_t *mtx);
+BU_EXPORT extern int bu_cnd_init(bu_cnd_t *cond);
+BU_EXPORT extern void bu_cnd_destroy(bu_cnd_t *cond);
+BU_EXPORT extern int bu_cnd_wait(bu_cnd_t *cond, bu_mtx_t *mtx);
+BU_EXPORT extern int bu_cnd_broadcast(bu_cnd_t *cond);
+BU_EXPORT extern int bu_cnd_signal(bu_cnd_t *cond);
 #if defined(HAVE_WINDOWS_H)
-extern int rt_mtx_trylock(rt_mtx_t *mtx);
+BU_EXPORT extern int bu_mtx_trylock(bu_mtx_t *mtx);
 #endif
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
-#endif /* _RT_TCM_H */
+#endif /* _BU_TCM_H */
 
 /************************************************************************/
 /*

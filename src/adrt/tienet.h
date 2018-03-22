@@ -24,6 +24,7 @@
 #include "common.h"
 
 #include "bu/malloc.h"
+#include "bu/tc.h"
 
 #define	TN_MASTER_PORT		1980
 #define	TN_SLAVE_PORT		1981
@@ -36,97 +37,6 @@
 #define	TN_OP_SHUTDOWN		0x0015
 #define TN_OP_OKAY		0x0016
 #define	TN_OP_MESSAGE		0x0017
-
-#if defined(HAVE_PTHREAD_H)
-#  include <pthread.h>
-#endif
-#if defined(HAVE_WINDOWS_H)
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#    define __UNDEF_LEAN_AND_MEAN
-#  endif
-#  include <windows.h>
-#  ifdef __UNDEF_LEAN_AND_MEAN
-#    undef WIN32_LEAN_AND_MEAN
-#    undef __UNDEF_LEAN_AND_MEAN
-#  endif
-#  include <process.h>
-#  include <sys/timeb.h>
-#endif
-
-/************************************************************************/
-/* Bits from tinycthread for portable threads
- *
- * Copyright (c) 2012 Marcus Geelnard
- * Copyright (c) 2013-2016 Evan Nemerson
- *
- * This software is provided 'as-is', without any express or implied
- * warranty. In no event will the authors be held liable for any damages
- * arising from the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
-
- *  1. The origin of this software must not be misrepresented; you must not
- *  claim that you wrote the original software. If you use this software
- *  in a product, an acknowledgment in the product documentation would be
- *  appreciated but is not required.
- *
- *  2. Altered source versions must be plainly marked as such, and must not be
- *  misrepresented as being the original software.
- *
- *  3. This notice may not be removed or altered from any source
- *  distribution.
- */
-
-#define thrd_error    0 /**< The requested operation failed */
-#define thrd_success  1 /**< The requested operation succeeded */
-#define thrd_timedout 2 /**< The time specified in the call was reached without acquiring the requested resource */
-#define thrd_busy     3 /**< The requested operation failed because a tesource requested by a test and return function is already in use */
-#define thrd_nomem    4 /**< The requested operation failed because it was unable to allocate memory */
-
-typedef int (*thrd_start_t)(void *arg);
-#if defined(HAVE_WINDOWS_H)
-typedef HANDLE thrd_t;
-#else
-typedef pthread_t thrd_t;
-#endif
-
-/* Mutex */
-#if defined(HAVE_WINDOWS_H)
-typedef struct {
-    union {
-	CRITICAL_SECTION cs;      /* Critical section handle (used for non-timed mutexes) */
-	HANDLE mut;               /* Mutex handle (used for timed mutex) */
-    } mHandle;                  /* Mutex handle */
-    int mAlreadyLocked;         /* TRUE if the mutex is already locked */
-    int mRecursive;             /* TRUE if the mutex is recursive */
-    int mTimed;                 /* TRUE if the mutex is timed */
-} mtx_t;
-#else
-typedef pthread_mutex_t mtx_t;
-#endif
-
-/* Condition variable */
-#if defined(HAVE_WINDOWS_H)
-typedef struct {
-  HANDLE mEvents[2];                  /* Signal and broadcast event HANDLEs. */
-  unsigned int mWaitersCount;         /* Count of the number of waiters. */
-  CRITICAL_SECTION mWaitersCountLock; /* Serialize access to mWaitersCount. */
-} cnd_t;
-#else
-typedef pthread_cond_t cnd_t;
-#endif
-
-extern int thrd_create(thrd_t *thr, thrd_start_t func, void *arg);
-extern int thrd_join(thrd_t thr, int *res);
-extern int mtx_init(mtx_t *mtx);
-extern int mtx_lock(mtx_t *mtx);
-extern int mtx_unlock(mtx_t *mtx);
-
-/************************************************************************/
-
 
 #define TIENET_BUFFER_INIT(_b) { \
 	_b.data = NULL; \
@@ -150,8 +60,8 @@ typedef struct tienet_buffer_s {
 
 typedef struct tienet_sem_s {
     int val;
-    mtx_t mut;
-    cnd_t cond;
+    bu_mtx_t mut;
+    bu_cnd_t cond;
 } tienet_sem_t;
 
 

@@ -222,7 +222,6 @@ set(LIBRT_SOURCES
   vlist.c
   vshoot.c
   wdb.c
-  primitives/bot/gct_decimation/auxiliary/tcm.c
   primitives/bot/gct_decimation/auxiliary/mmbinsort.c
   primitives/bot/gct_decimation/auxiliary/mmbitmap.c
   primitives/bot/gct_decimation/auxiliary/mm.c
@@ -244,7 +243,6 @@ set(librt_ignored_files
   primitives/bot/bot_wireframe.cpp
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
-  primitives/bot/gct_decimation/auxiliary/tcm.h
   primitives/bot/gct_decimation/auxiliary/cc.h
   primitives/bot/gct_decimation/auxiliary/mm.h
   primitives/bot/gct_decimation/auxiliary/mmatomic.h

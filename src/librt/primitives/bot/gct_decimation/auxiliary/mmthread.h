@@ -43,7 +43,7 @@
 #endif
 #include <time.h>
 
-#include "tcm.h"
+#include "bu/tc.h"
 
 #include "bu/exit.h"
 #include "mmatomic.h"
@@ -72,7 +72,7 @@ static inline void mtSignalWaitTimeout(cnd_t *gsignal, mtx_t *mutex, long millis
 
     ts.tv_nsec = microsecs * 1000;
 
-    if (cnd_timedwait(gsignal, mutex, &ts) == thrd_error)
+    if (cnd_timedwait(gsignal, mutex, &ts) == bu_thrd_error)
 	bu_bomb("cnd_timedwait() failed");
 }
 #endif
@@ -113,17 +113,17 @@ static inline void mtSpinUnlock(mtSpin *spin)
 #else
 
 
-static inline int mtMutexTryLock(rt_mtx_t *mutex)
+static inline int mtMutexTryLock(bu_mtx_t *mutex)
 {
-    switch (rt_mtx_trylock(mutex)) {
-	case thrd_success:
+    switch (bu_mtx_trylock(mutex)) {
+	case bu_thrd_success:
 	    return 1;
 
 	case thrd_busy:
 	    return 0;
 
 	default:
-	    bu_bomb("rt_mtx_trylock() failed");
+	    bu_bomb("bu_mtx_trylock() failed");
 	    return -1; /* silence warnings */
     };
 }
@@ -170,32 +170,32 @@ static inline void mtSpinUnlock(mtSpin *spin)
 #else
 
 
-typedef rt_mtx_t mtSpin;
+typedef bu_mtx_t mtSpin;
 
 
 static inline void mtSpinInit(mtSpin *spin)
 {
-    if (rt_mtx_init(spin) == thrd_error)
-	bu_bomb("rt_mtx_init() failed");
+    if (bu_mtx_init(spin) == bu_thrd_error)
+	bu_bomb("bu_mtx_init() failed");
 }
 
 
 static inline void mtSpinDestroy(mtSpin *spin)
 {
-    rt_mtx_destroy(spin);
+    bu_mtx_destroy(spin);
 }
 
 static inline void mtSpinLock(mtSpin *spin)
 {
-    if (rt_mtx_lock(spin) == thrd_error)
-	bu_bomb("rt_mtx_lock() failed");
+    if (bu_mtx_lock(spin) == bu_thrd_error)
+	bu_bomb("bu_mtx_lock() failed");
 }
 
 
 static inline void mtSpinUnlock(mtSpin *spin)
 {
-    if (rt_mtx_unlock(spin) == thrd_error)
-	bu_bomb("rt_mtx_unlock() failed");
+    if (bu_mtx_unlock(spin) == bu_thrd_error)
+	bu_bomb("bu_mtx_unlock() failed");
 }
 
 

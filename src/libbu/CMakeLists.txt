@@ -110,6 +110,7 @@ set(LIBBU_SOURCES
   sscanf.c
   scan.c
   str.c
+  tc.c
   temp.c
   thread.cpp
   units.c

@@ -25,28 +25,28 @@
  */
 
 #include "common.h"
-#include "tcm.h"
+#include "bu/tc.h"
 #include "bu/malloc.h"
 
-int rt_mtx_init(rt_mtx_t *mtx)
+int bu_mtx_init(bu_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
     mtx->mAlreadyLocked = FALSE;
     mtx->mRecursive = 0;
     mtx->mTimed = 0;
 	InitializeCriticalSection(&(mtx->mHandle.cs));
-    return thrd_success;
+    return bu_thrd_success;
 #else
     int ret;
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     ret = pthread_mutex_init(mtx, &attr);
     pthread_mutexattr_destroy(&attr);
-    return ret == 0 ? thrd_success : thrd_error;
+    return ret == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
 
-void rt_mtx_destroy(rt_mtx_t *mtx)
+void bu_mtx_destroy(bu_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
   if (!mtx->mTimed)
@@ -67,7 +67,7 @@ void rt_mtx_destroy(rt_mtx_t *mtx)
 #define _CONDITION_EVENT_ALL 1
 #endif
 
-int rt_cnd_init(rt_cnd_t *cond)
+int bu_cnd_init(bu_cnd_t *cond)
 {
 #if defined(HAVE_WINDOWS_H)
   cond->mWaitersCount = 0;
@@ -80,23 +80,23 @@ int rt_cnd_init(rt_cnd_t *cond)
   if (cond->mEvents[_CONDITION_EVENT_ONE] == NULL)
   {
     cond->mEvents[_CONDITION_EVENT_ALL] = NULL;
-    return thrd_error;
+    return bu_thrd_error;
   }
   cond->mEvents[_CONDITION_EVENT_ALL] = CreateEvent(NULL, TRUE, FALSE, NULL);
   if (cond->mEvents[_CONDITION_EVENT_ALL] == NULL)
   {
     CloseHandle(cond->mEvents[_CONDITION_EVENT_ONE]);
     cond->mEvents[_CONDITION_EVENT_ONE] = NULL;
-    return thrd_error;
+    return bu_thrd_error;
   }
 
-  return thrd_success;
+  return bu_thrd_success;
 #else
-  return pthread_cond_init(cond, NULL) == 0 ? thrd_success : thrd_error;
+  return pthread_cond_init(cond, NULL) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
 
-void rt_cnd_destroy(rt_cnd_t *cond)
+void bu_cnd_destroy(bu_cnd_t *cond)
 {
 #if defined(HAVE_WINDOWS_H)
   if (cond->mEvents[_CONDITION_EVENT_ONE] != NULL)
@@ -113,7 +113,7 @@ void rt_cnd_destroy(rt_cnd_t *cond)
 #endif
 }
 
-int rt_mtx_lock(rt_mtx_t *mtx)
+int bu_mtx_lock(bu_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
   if (!mtx->mTimed)
@@ -128,7 +128,7 @@ int rt_mtx_lock(rt_mtx_t *mtx)
         break;
       case WAIT_ABANDONED:
       default:
-        return thrd_error;
+        return bu_thrd_error;
     }
   }
 
@@ -137,13 +137,13 @@ int rt_mtx_lock(rt_mtx_t *mtx)
     while(mtx->mAlreadyLocked) Sleep(1); /* Simulate deadlock... */
     mtx->mAlreadyLocked = TRUE;
   }
-  return thrd_success;
+  return bu_thrd_success;
 #else
-  return pthread_mutex_lock(mtx) == 0 ? thrd_success : thrd_error;
+  return pthread_mutex_lock(mtx) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
 
-int rt_mtx_unlock(rt_mtx_t *mtx)
+int bu_mtx_unlock(bu_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
   mtx->mAlreadyLocked = FALSE;
@@ -155,30 +155,30 @@ int rt_mtx_unlock(rt_mtx_t *mtx)
   {
     if (!ReleaseMutex(mtx->mHandle.mut))
     {
-      return thrd_error;
+      return bu_thrd_error;
     }
   }
-  return thrd_success;
+  return bu_thrd_success;
 #else
-  return pthread_mutex_unlock(mtx) == 0 ? thrd_success : thrd_error;;
+  return pthread_mutex_unlock(mtx) == 0 ? bu_thrd_success : bu_thrd_error;;
 #endif
 }
 
 #if defined(HAVE_WINDOWS_H)
-int rt_mtx_trylock(rt_mtx_t *mtx)
+int bu_mtx_trylock(bu_mtx_t *mtx)
 {
 	int ret;
 
 	if (!mtx->mTimed)
 	{
-		ret = TryEnterCriticalSection(&(mtx->mHandle.cs)) ? thrd_success : thrd_busy;
+		ret = TryEnterCriticalSection(&(mtx->mHandle.cs)) ? bu_thrd_success : thrd_busy;
 	}
 	else
 	{
-		ret = (WaitForSingleObject(mtx->mHandle.mut, 0) == WAIT_OBJECT_0) ? thrd_success : thrd_busy;
+		ret = (WaitForSingleObject(mtx->mHandle.mut, 0) == WAIT_OBJECT_0) ? bu_thrd_success : thrd_busy;
 	}
 
-	if ((!mtx->mRecursive) && (ret == thrd_success))
+	if ((!mtx->mRecursive) && (ret == bu_thrd_success))
 	{
 		if (mtx->mAlreadyLocked)
 		{
@@ -194,7 +194,7 @@ int rt_mtx_trylock(rt_mtx_t *mtx)
 }
 #endif
 
-int rt_cnd_signal(rt_cnd_t *cond)
+int bu_cnd_signal(bu_cnd_t *cond)
 {
 #if defined(HAVE_WINDOWS_H)
   int haveWaiters;
@@ -209,18 +209,18 @@ int rt_cnd_signal(rt_cnd_t *cond)
   {
     if (SetEvent(cond->mEvents[_CONDITION_EVENT_ONE]) == 0)
     {
-      return thrd_error;
+      return bu_thrd_error;
     }
   }
 
-  return thrd_success;
+  return bu_thrd_success;
 #else
-  return pthread_cond_signal(cond) == 0 ? thrd_success : thrd_error;
+  return pthread_cond_signal(cond) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
 
 #if defined(HAVE_WINDOWS_H)
-static int _rt_rt_cnd_timedwait_win32(rt_cnd_t *cond, rt_mtx_t *mtx, DWORD timeout)
+static int _bu_bu_cnd_timedwait_win32(bu_cnd_t *cond, bu_mtx_t *mtx, DWORD timeout)
 {
   DWORD result;
   int lastWaiter;
@@ -232,7 +232,7 @@ static int _rt_rt_cnd_timedwait_win32(rt_cnd_t *cond, rt_mtx_t *mtx, DWORD timeo
 
   /* Release the mutex while waiting for the condition (will decrease
      the number of waiters when done)... */
-  rt_mtx_unlock(mtx);
+  bu_mtx_unlock(mtx);
 
   /* Wait for either event to become signaled due to cnd_signal() or
      cnd_broadcast() being called */
@@ -240,14 +240,14 @@ static int _rt_rt_cnd_timedwait_win32(rt_cnd_t *cond, rt_mtx_t *mtx, DWORD timeo
   if (result == WAIT_TIMEOUT)
   {
     /* The mutex is locked again before the function returns, even if an error occurred */
-    rt_mtx_lock(mtx);
+    bu_mtx_lock(mtx);
     return thrd_timedout;
   }
   else if (result == WAIT_FAILED)
   {
     /* The mutex is locked again before the function returns, even if an error occurred */
-    rt_mtx_lock(mtx);
-    return thrd_error;
+    bu_mtx_lock(mtx);
+    return bu_thrd_error;
   }
 
   /* Check if we are the last waiter */
@@ -263,24 +263,24 @@ static int _rt_rt_cnd_timedwait_win32(rt_cnd_t *cond, rt_mtx_t *mtx, DWORD timeo
     if (ResetEvent(cond->mEvents[_CONDITION_EVENT_ALL]) == 0)
     {
       /* The mutex is locked again before the function returns, even if an error occurred */
-      rt_mtx_lock(mtx);
-      return thrd_error;
+      bu_mtx_lock(mtx);
+      return bu_thrd_error;
     }
   }
 
   /* Re-acquire the mutex */
-  rt_mtx_lock(mtx);
+  bu_mtx_lock(mtx);
 
-  return thrd_success;
+  return bu_thrd_success;
 }
 #endif
 
-int rt_cnd_wait(rt_cnd_t *cond, rt_mtx_t *mtx)
+int bu_cnd_wait(bu_cnd_t *cond, bu_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
-  return _rt_rt_cnd_timedwait_win32(cond, mtx, INFINITE);
+  return _bu_bu_cnd_timedwait_win32(cond, mtx, INFINITE);
 #else
-  return pthread_cond_wait(cond, mtx) == 0 ? thrd_success : thrd_error;
+  return pthread_cond_wait(cond, mtx) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
 
@@ -364,23 +364,23 @@ PIMAGE_TLS_CALLBACK p_thread_callback = _tinycthread_tss_callback;
 #endif /* defined(HAVE_WINDOWS_H) */
 
 typedef struct {
-    rt_thrd_start_t mFunction; /**< Pointer to the function to be executed. */
+    bu_thrd_start_t mFunction; /**< Pointer to the function to be executed. */
     void * mArg;            /**< Function argument for the thread function. */
-} _rt_thread_start_info;
+} _bu_thread_start_info;
 
 /* Thread wrapper function. */
 #if defined(HAVE_WINDOWS_H)
-static DWORD WINAPI _rt_thrd_wrapper_function(LPVOID aArg)
+static DWORD WINAPI _bu_thrd_wrapper_function(LPVOID aArg)
 #else
-static void * _rt_thrd_wrapper_function(void * aArg)
+static void * _bu_thrd_wrapper_function(void * aArg)
 #endif
 {
-    rt_thrd_start_t fun;
+    bu_thrd_start_t fun;
     void *arg;
     int  res;
 
     /* Get thread startup information */
-    _rt_thread_start_info *ti = (_rt_thread_start_info *) aArg;
+    _bu_thread_start_info *ti = (_bu_thread_start_info *) aArg;
     fun = ti->mFunction;
     arg = ti->mArg;
 
@@ -402,23 +402,23 @@ static void * _rt_thrd_wrapper_function(void * aArg)
 #endif
 }
 
-int rt_thrd_create(rt_thrd_t *thr, rt_thrd_start_t func, void *arg)
+int bu_thrd_create(bu_thrd_t *thr, bu_thrd_start_t func, void *arg)
 {
       /* Fill out the thread startup information (passed to the thread wrapper,
        *      which will eventually free it) */
-      _rt_thread_start_info* ti = (_rt_thread_start_info*)bu_malloc(sizeof(_rt_thread_start_info), "thread info");
+      _bu_thread_start_info* ti = (_bu_thread_start_info*)bu_malloc(sizeof(_bu_thread_start_info), "thread info");
         if (ti == NULL)
 	      {
-		      return thrd_nomem;
+		      return bu_thrd_nomem;
 		        }
 	  ti->mFunction = func;
 	    ti->mArg = arg;
 
 	      /* Create the thread */
 #if defined(HAVE_WINDOWS_H)
-	    *thr = CreateThread(NULL, 0, _rt_thrd_wrapper_function, (LPVOID) ti, 0, NULL);
+	    *thr = CreateThread(NULL, 0, _bu_thrd_wrapper_function, (LPVOID) ti, 0, NULL);
 #else
-	    if(pthread_create(thr, NULL, _rt_thrd_wrapper_function, (void *)ti) != 0)
+	    if(pthread_create(thr, NULL, _bu_thrd_wrapper_function, (void *)ti) != 0)
 	    {
 		*thr = 0;
 	    }
@@ -427,21 +427,21 @@ int rt_thrd_create(rt_thrd_t *thr, rt_thrd_start_t func, void *arg)
 	    if(!*thr)
 	    {
 		bu_free(ti, "thread info");
-		return thrd_error;
+		return bu_thrd_error;
 	    }
 
-	    return thrd_success;
+	    return bu_thrd_success;
 
 }
 
-int rt_thrd_join(rt_thrd_t thr, int *res)
+int bu_thrd_join(bu_thrd_t thr, int *res)
 {
 #if defined(HAVE_WINDOWS_H)
     DWORD dwRes;
 
     if (WaitForSingleObject(thr, INFINITE) == WAIT_FAILED)
     {
-	return thrd_error;
+	return bu_thrd_error;
     }
     if (res != NULL)
     {
@@ -451,7 +451,7 @@ int rt_thrd_join(rt_thrd_t thr, int *res)
 	}
 	else
 	{
-	    return thrd_error;
+	    return bu_thrd_error;
 	}
     }
     CloseHandle(thr);
@@ -459,17 +459,17 @@ int rt_thrd_join(rt_thrd_t thr, int *res)
     void *pres;
     if (pthread_join(thr, &pres) != 0)
     {
-	return thrd_error;
+	return bu_thrd_error;
     }
     if (res != NULL)
     {
 	*res = (int)(intptr_t)pres;
     }
 #endif
-    return thrd_success;
+    return bu_thrd_success;
 }
 
-int rt_cnd_broadcast(rt_cnd_t *cond)
+int bu_cnd_broadcast(bu_cnd_t *cond)
 {
 #if defined(HAVE_WINDOWS_H)
     int haveWaiters;
@@ -484,15 +484,17 @@ int rt_cnd_broadcast(rt_cnd_t *cond)
     {
 	if (SetEvent(cond->mEvents[_CONDITION_EVENT_ALL]) == 0)
 	{
-	    return thrd_error;
+	    return bu_thrd_error;
 	}
     }
 
-    return thrd_success;
+    return bu_thrd_success;
 #else
-    return pthread_cond_broadcast(cond) == 0 ? thrd_success : thrd_error;
+    return pthread_cond_broadcast(cond) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
+
+
 
 /*
  * Local Variables:
