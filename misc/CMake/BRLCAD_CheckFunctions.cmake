@@ -184,6 +184,7 @@ macro(BRLCAD_FUNCTION_EXISTS function)
 	  set(HAVE_DECL_${var} 1)
 	endif(NOT MSVC)
 	set(HAVE_DECL_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache decl test result")
+	mark_as_advanced(HAVE_DECL_${var})
       endif(NOT DEFINED HAVE_DECL_${var})
 
       # If we have sources supplied for the purpose, test if the function is working.
@@ -197,6 +198,7 @@ macro(BRLCAD_FUNCTION_EXISTS function)
 	    endif(NOT ${var}_${test_src}_COMPILE)
 	  endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
 	  set(HAVE_WORKING_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache working test result")
+	  mark_as_advanced(HAVE_WORKING_${var})
 	endif(NOT DEFINED HAVE_WORKING_${var})
       endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
 
