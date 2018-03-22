@@ -29,10 +29,24 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #if defined(HAVE_PTHREAD_H)
 #  include <pthread.h>
 #endif
 #if defined(HAVE_WINDOWS_H)
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#    define __UNDEF_LEAN_AND_MEAN
+#  endif
+#  include <windows.h>
+#  ifdef __UNDEF_LEAN_AND_MEAN
+#    undef WIN32_LEAN_AND_MEAN
+#    undef __UNDEF_LEAN_AND_MEAN
+  #endif
   #include <process.h>
   #include <sys/timeb.h>
 #endif
@@ -86,6 +100,13 @@ extern int rt_cnd_init(rt_cnd_t *cond);
 extern void rt_cnd_destroy(rt_cnd_t *cond);
 extern int rt_cnd_wait(rt_cnd_t *cond, rt_mtx_t *mtx);
 extern int rt_cnd_broadcast(rt_cnd_t *cond);
+#if defined(HAVE_WINDOWS_H)
+extern int rt_mtx_trylock(rt_mtx_t *mtx);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _RT_TCM_H */
 

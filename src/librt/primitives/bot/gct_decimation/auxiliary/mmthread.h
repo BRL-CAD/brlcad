@@ -43,6 +43,8 @@
 #endif
 #include <time.h>
 
+#include "tcm.h"
+
 #include "bu/exit.h"
 #include "mmatomic.h"
 
@@ -111,9 +113,9 @@ static inline void mtSpinUnlock(mtSpin *spin)
 #else
 
 
-static inline int mtMutexTryLock(mtx_t *mutex)
+static inline int mtMutexTryLock(rt_mtx_t *mutex)
 {
-    switch (mtx_trylock(mutex)) {
+    switch (rt_mtx_trylock(mutex)) {
 	case thrd_success:
 	    return 1;
 
@@ -121,7 +123,7 @@ static inline int mtMutexTryLock(mtx_t *mutex)
 	    return 0;
 
 	default:
-	    bu_bomb("mtx_trylock() failed");
+	    bu_bomb("rt_mtx_trylock() failed");
 	    return -1; /* silence warnings */
     };
 }
@@ -168,32 +170,32 @@ static inline void mtSpinUnlock(mtSpin *spin)
 #else
 
 
-typedef mtx_t mtSpin;
+typedef rt_mtx_t mtSpin;
 
 
 static inline void mtSpinInit(mtSpin *spin)
 {
-    if (mtx_init(spin, mtx_plain) == thrd_error)
-	bu_bomb("mtx_init() failed");
+    if (rt_mtx_init(spin) == thrd_error)
+	bu_bomb("rt_mtx_init() failed");
 }
 
 
 static inline void mtSpinDestroy(mtSpin *spin)
 {
-    mtx_destroy(spin);
+    rt_mtx_destroy(spin);
 }
 
 static inline void mtSpinLock(mtSpin *spin)
 {
-    if (mtx_lock(spin) == thrd_error)
-	bu_bomb("mtx_lock() failed");
+    if (rt_mtx_lock(spin) == thrd_error)
+	bu_bomb("rt_mtx_lock() failed");
 }
 
 
 static inline void mtSpinUnlock(mtSpin *spin)
 {
-    if (mtx_unlock(spin) == thrd_error)
-	bu_bomb("mtx_unlock() failed");
+    if (rt_mtx_unlock(spin) == thrd_error)
+	bu_bomb("rt_mtx_unlock() failed");
 }
 
 
