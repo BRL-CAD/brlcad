@@ -46,9 +46,9 @@ extern "C" {
 #  ifdef __UNDEF_LEAN_AND_MEAN
 #    undef WIN32_LEAN_AND_MEAN
 #    undef __UNDEF_LEAN_AND_MEAN
-  #endif
-  #include <process.h>
-  #include <sys/timeb.h>
+#  endif
+#  include <process.h>
+#  include <sys/timeb.h>
 #endif
 
 #define thrd_error    0 /**< The requested operation failed */

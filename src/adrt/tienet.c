@@ -56,20 +56,9 @@ int mtx_init(mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
     mtx->mAlreadyLocked = FALSE;
-    mtx->mRecursive = type & mtx_recursive;
-    mtx->mTimed = type & mtx_timed;
-    if (!mtx->mTimed)
-    {
+    mtx->mRecursive = 0;
+    mtx->mTimed = 0;
 	InitializeCriticalSection(&(mtx->mHandle.cs));
-    }
-    else
-    {
-	mtx->mHandle.mut = CreateMutex(NULL, FALSE, NULL);
-	if (mtx->mHandle.mut == NULL)
-	{
-	    return thrd_error;
-	}
-    }
     return thrd_success;
 #else
     int ret;
@@ -288,6 +277,85 @@ int cnd_wait(cnd_t *cond, mtx_t *mtx)
   return pthread_cond_wait(cond, mtx) == 0 ? thrd_success : thrd_error;
 #endif
 }
+
+#if defined(HAVE_WINDOWS_H)
+
+typedef DWORD tss_t;
+typedef void(*tss_dtor_t)(void *val);
+#define _Thread_local __declspec(thread)
+#define TSS_DTOR_ITERATIONS (4)
+
+struct TinyCThreadTSSData {
+	void* value;
+	tss_t key;
+	struct TinyCThreadTSSData* next;
+};
+
+static tss_dtor_t _tinycthread_tss_dtors[1088] = { NULL, };
+
+static _Thread_local struct TinyCThreadTSSData* _tinycthread_tss_head = NULL;
+static _Thread_local struct TinyCThreadTSSData* _tinycthread_tss_tail = NULL;
+
+static void _tinycthread_tss_cleanup(void);
+
+static void _tinycthread_tss_cleanup(void) {
+	struct TinyCThreadTSSData* data;
+	int iteration;
+	unsigned int again = 1;
+	void* value;
+
+	for (iteration = 0; iteration < TSS_DTOR_ITERATIONS && again > 0; iteration++)
+	{
+		again = 0;
+		for (data = _tinycthread_tss_head; data != NULL; data = data->next)
+		{
+			if (data->value != NULL)
+			{
+				value = data->value;
+				data->value = NULL;
+
+				if (_tinycthread_tss_dtors[data->key] != NULL)
+				{
+					again = 1;
+					_tinycthread_tss_dtors[data->key](value);
+				}
+			}
+		}
+	}
+
+	while (_tinycthread_tss_head != NULL) {
+		data = _tinycthread_tss_head->next;
+		free(_tinycthread_tss_head);
+		_tinycthread_tss_head = data;
+	}
+	_tinycthread_tss_head = NULL;
+	_tinycthread_tss_tail = NULL;
+}
+static void NTAPI _tinycthread_tss_callback(PVOID h, DWORD dwReason, PVOID pv)
+{
+	(void)h;
+	(void)pv;
+
+	if (_tinycthread_tss_head != NULL && (dwReason == DLL_THREAD_DETACH || dwReason == DLL_PROCESS_DETACH))
+	{
+		_tinycthread_tss_cleanup();
+	}
+}
+
+#if defined(_MSC_VER)
+#ifdef _M_X64
+#pragma const_seg(".CRT$XLB")
+#else
+#pragma data_seg(".CRT$XLB")
+#endif
+PIMAGE_TLS_CALLBACK p_thread_callback = _tinycthread_tss_callback;
+#ifdef _M_X64
+#pragma data_seg()
+#else
+#pragma const_seg()
+#endif
+#endif
+#endif /* defined(HAVE_WINDOWS_H) */
 
 typedef struct {
     thrd_start_t mFunction; /**< Pointer to the function to be executed. */
