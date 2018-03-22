@@ -3713,7 +3713,6 @@ void mdOperationStatusCallback(mdOperation *op, void (*statuscallback)(void *opa
 int mdMeshDecimation(mdOperation *operation, int flags)
 {
     int threadid, threadcount;
-    long statuswait;
     mdMesh mesh;
     bu_thrd_t thread[MAX_PSW];
     mdThreadInit threadinit[MAX_PSW];
@@ -3868,7 +3867,6 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 
     mesh.updatestatusflag = 0;
     status.progress = 0.0;
-    statuswait = (operation->statusmiliseconds > 10 ? operation->statusmiliseconds : 10);
     status.trianglecount = 0;
 
     if (operation->statuscallback) {
