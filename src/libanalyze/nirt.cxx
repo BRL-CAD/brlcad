@@ -3207,7 +3207,7 @@ _nirt_cmd_librt_debug(void *ns, int argc, const char **argv)
 	goto librt_nirt_debug_done;
     }
 
-    if (dflg < 0 || dflg > UINT32_MAX) {
+    if (dflg < 0 || dflg > (long)UINT32_MAX) {
 	nerr(nss, "Error: LIBRT debug flag cannot be less than 0 or greater than %d\n", UINT32_MAX);
 	ret = -1;
 	goto librt_nirt_debug_done;
