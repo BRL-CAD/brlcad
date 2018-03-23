@@ -38,10 +38,6 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 
-#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII) && !defined(isascii)
-extern int isascii(int c);
-#endif
-
 /* declarations to support use of bu_getopt() system call */
 static char options[] = "o:";
 static char noname[]  = "(noname)";
@@ -108,7 +104,7 @@ dump(FILE *fd)
 		c = 0;
 	    else if (c > 255)
 		c = 255;
-	    if (isascii(c) && isprint(c))
+	    if (isprint(c))
 		putchar(c);
 	    else
 		putchar('.');
