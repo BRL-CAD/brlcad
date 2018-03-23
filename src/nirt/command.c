@@ -39,10 +39,6 @@
 #include "./nirt.h"
 #include "./usrfmt.h"
 
-#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII) && !defined(isascii)
-extern int isascii(int c);
-#endif
-
 char local_u_name[65];
 double base2local;		/* from db_i struct, not fastf_t */
 double local2base;		/* from db_i struct, not fastf_t */
@@ -604,7 +600,8 @@ do_overlap_claims(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 void
 cm_attr(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
-    while (isascii(*buffer) && isspace((int)*buffer)) buffer++;
+    while (isspace((int)*buffer))
+	buffer++;
 
     if (strlen(buffer) == 0) {
 	com_usage(ctp);
@@ -630,7 +627,7 @@ cm_debug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     char *cp = buffer;
 
     /* This is really icky -- should have argc, argv interface */
-    while (*cp && isascii(*cp) && isspace((int)*cp))  cp++;
+    while (*cp && isspace((int)*cp))  cp++;
     if (*cp == '\0') {
 	/* display current value */
 	bu_printb("debug ", nirt_debug, DEBUG_FMT);
@@ -654,7 +651,7 @@ cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
     /* This is really icky -- should have argc, argv interface */
 
-    while (*cp && isascii(*cp) && isspace((int)*cp))
+    while (*cp && isspace((int)*cp))
 	cp++;
 
     if (*cp == '\0') {

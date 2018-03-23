@@ -87,10 +87,6 @@
 
 #define COMMA ','
 
-#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII) && !defined(isascii)
-extern int isascii(int c);
-#endif
-
 #if defined(HAVE_KILL)
 extern int kill(pid_t, int);
 #endif
@@ -894,7 +890,7 @@ put_vector_char(char c, coords *pos)
     struct vectorchar *vc;
     struct relvect *rv;
 
-    if (!isascii(c))
+    if (!isprint(c))
 	c = '?';
     if (islower((int)c))
 	c = toupper((int)c);
