@@ -88,10 +88,6 @@
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
 
-#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII) && !defined(isascii)
-extern int isascii(int c);
-#endif
-
 extern void draw_e_axes(void);
 extern void draw_m_axes(void);
 extern void draw_v_axes(void);
@@ -1870,8 +1866,6 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 		c = 0;
 	    if (c > CHAR_MAX)
 		c = CHAR_MAX;
-	    if (!isascii(c))
-		continue;
 #endif
 	    mged_process_char(c);
 #ifdef TRY_STDIN_INPUT_HACK
