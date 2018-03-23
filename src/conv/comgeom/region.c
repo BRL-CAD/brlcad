@@ -57,10 +57,6 @@ void group_register(char *name, int lo, int hi);
 void group_add(int val, char *name);
 void group_write(void);
 
-#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII) && !defined(isascii)
-extern int isascii(int c);
-#endif
-
 
 /*
  * Use wmp[region_number] as head for each region.
@@ -144,7 +140,7 @@ top:
 	    /* Remove all spaces from the number */
 	    np = nbuf;
 	    for (j = 2; j < 7; j++) {
-		if (!isascii((int)cp[j]))
+		if (!isprint((int)cp[j]))
 		    *np++ = '?';
 		else if (isspace((int)cp[j]))
 		    continue;
