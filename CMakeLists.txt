@@ -745,13 +745,6 @@ endif(UMASK_EXEC)
 BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***" "*")
 
 #---------------------------------------------------------------------
-# CMake by default provides four different configurations for multi-
-# configuration build tools.  We want only two - Debug and Release.
-if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-
-#---------------------------------------------------------------------
 # We want to check /usr/local by default, so add it if it exists
 if (IS_DIRECTORY /usr/local)
   set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
@@ -2022,7 +2015,7 @@ if(NOT MSVC)
   # or just Release builds.
   if(${BRLCAD_FLAGS_OPTIMIZATION} MATCHES "AUTO")
     if(CMAKE_CONFIGURATION_TYPES)
-      set(opt_conf_list "Release")
+      set(opt_conf_list "Release;RelWithDebInfo;MinSizeRel")
     else(CMAKE_CONFIGURATION_TYPES)
       if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 	set(opt_conf_list "ALL")
@@ -2862,11 +2855,6 @@ add_subdirectory(src/other)
 # Now put back the BRL-CAD flags
 RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
 
-# Restore BRL-CAD configurations, if necessary
-if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
@@ -2919,11 +2907,6 @@ if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
   verbose_add_subdirectory("" bench)
   verbose_add_subdirectory("" regress)
 endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-
-# Restore BRL-CAD configurations, if necessary
-if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
 
 # *******************************************************************
 # ***        Output and Summarize Results - Stage 9 of 9          ***
