@@ -624,7 +624,7 @@ _nirt_trim_whitespace(std::string &s)
 	s.clear();
 	return;
     }
-    s = s.substr(sp, ep+1);
+    s = s.substr(sp, ep-sp+1);
 }
 
 HIDDEN std::vector<std::string>
