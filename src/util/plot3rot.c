@@ -40,11 +40,6 @@
 #include "bn/plot3.h"
 #include "bn.h"
 
-#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII) && !defined(isascii)
-extern int isascii(int c);
-#endif
-
-
 #define UPPER_CASE(c)	((c)-32)
 #define COPY(n) {size_t ret; ret = fread(cbuf, 1, n, fp); if (ret < n) perror("fread"); ret = fwrite(cbuf, 1, n, stdout); if (ret < n) perror("fwrite");}
 #define SKIP(n) {size_t ret; ret = fread(cbuf, 1, n, fp); if (ret < n) perror("fread");}
@@ -528,7 +523,7 @@ dofile(FILE *fp)
 		break;
 	    default:
 		bu_log("plot3rot: unrecognized command '%c' (0x%x)\n",
-		       (isascii(c) && isprint(c)) ? c : '?',
+		       (isprint(c)) ? c : '?',
 		       c);
 		bu_log("plot3rot: ftell = %ld\n", bu_ftell(fp));
 		putchar(c);
