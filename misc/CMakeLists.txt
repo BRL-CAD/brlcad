@@ -52,7 +52,6 @@ BRLCAD_ADDDATA(nsis/archer.ico icons)
 
 add_subdirectory(doxygen)
 add_subdirectory(CMake)
-add_subdirectory(d-bindings)
 add_subdirectory(debian)
 add_subdirectory(osl_shaders)
 
