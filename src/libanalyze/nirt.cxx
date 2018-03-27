@@ -618,8 +618,8 @@ _nirt_find_first_unquoted(std::string &ts, const char *key, size_t offset)
 HIDDEN void
 _nirt_trim_whitespace(std::string &s)
 {
-    size_t ep = s.find_last_not_of(" \t");
-    size_t sp = s.find_first_not_of(" \t");
+    size_t ep = s.find_last_not_of(" \t\n\v\f\r");
+    size_t sp = s.find_first_not_of(" \t\n\v\f\r");
     if (sp == std::string::npos) {
 	s.clear();
 	return;
