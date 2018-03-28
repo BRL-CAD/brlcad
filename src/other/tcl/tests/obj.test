@@ -623,6 +623,19 @@ test obj-33.7 {integer overflow on input} {longIs32bit wideBiggerThanInt} {
     list [string is integer $x] [expr { wide($x) }]
 } {0 -4294967296}
 
+test obj-34.1 {mp_iseven} testobj {
+    set result ""
+    lappend result [testbignumobj set 1 0]
+    lappend result [testbignumobj iseven 1]    ;
+    lappend result [testobj type 1]
+} {0 1 int}
+test obj-34.2 {mp_radix_size} testobj {
+    set result ""
+    lappend result [testbignumobj set 1 9]
+    lappend result [testbignumobj radixsize 1]    ;
+    lappend result [testobj type 1]
+} {9 2 int}
+
 if {[testConstraint testobj]} {
     testobj freeallvars
 }

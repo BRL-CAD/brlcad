@@ -1261,6 +1261,8 @@ Tcl_AppendUnicodeToObj(
  * Side effects:
  *	The string rep of appendObjPtr is appended to the string
  *	representation of objPtr.
+ *	IMPORTANT: This routine does not and MUST NOT shimmer appendObjPtr.
+ *	Callers are counting on that.
  *
  *----------------------------------------------------------------------
  */

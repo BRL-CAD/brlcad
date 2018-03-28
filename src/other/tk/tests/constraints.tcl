@@ -5,8 +5,6 @@ if {[namespace exists tk::test]} {
     return
 }
 
-package require Tcl 8.4
-
 package require Tk 8.4
 tk appname tktest
 wm title . tktest

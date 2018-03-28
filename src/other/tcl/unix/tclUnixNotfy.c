@@ -432,9 +432,11 @@ Tcl_FinalizeNotifier(
 			"unable to write q to triggerPipe");
 	    }
 	    close(triggerPipe);
+	    pthread_mutex_lock(&notifierMutex);
 	    while(triggerPipe != -1) {
 		pthread_cond_wait(&notifierCV, &notifierMutex);
 	    }
+	    pthread_mutex_unlock(&notifierMutex);
 	    if (notifierThreadRunning) {
 		int result = pthread_join((pthread_t) notifierThread, NULL);
 

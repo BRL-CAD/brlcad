@@ -779,6 +779,7 @@ library/tzdata/America/Port_of_Spain
 library/tzdata/America/Porto_Acre
 library/tzdata/America/Porto_Velho
 library/tzdata/America/Puerto_Rico
+library/tzdata/America/Punta_Arenas
 library/tzdata/America/Rainy_River
 library/tzdata/America/Rankin_Inlet
 library/tzdata/America/Recife
@@ -834,10 +835,12 @@ library/tzdata/Asia/Aqtau
 library/tzdata/Asia/Aqtobe
 library/tzdata/Asia/Ashgabat
 library/tzdata/Asia/Ashkhabad
+library/tzdata/Asia/Atyrau
 library/tzdata/Asia/Baghdad
 library/tzdata/Asia/Bahrain
 library/tzdata/Asia/Baku
 library/tzdata/Asia/Bangkok
+library/tzdata/Asia/Barnaul
 library/tzdata/Asia/Beirut
 library/tzdata/Asia/Bishkek
 library/tzdata/Asia/Brunei
@@ -853,6 +856,7 @@ library/tzdata/Asia/Dhaka
 library/tzdata/Asia/Dili
 library/tzdata/Asia/Dubai
 library/tzdata/Asia/Dushanbe
+library/tzdata/Asia/Famagusta
 library/tzdata/Asia/Gaza
 library/tzdata/Asia/Harbin
 library/tzdata/Asia/Hebron
@@ -909,6 +913,7 @@ library/tzdata/Asia/Tel_Aviv
 library/tzdata/Asia/Thimbu
 library/tzdata/Asia/Thimphu
 library/tzdata/Asia/Tokyo
+library/tzdata/Asia/Tomsk
 library/tzdata/Asia/Ujung_Pandang
 library/tzdata/Asia/Ulaanbaatar
 library/tzdata/Asia/Ulan_Bator
@@ -917,6 +922,7 @@ library/tzdata/Asia/Ust-Nera
 library/tzdata/Asia/Vientiane
 library/tzdata/Asia/Vladivostok
 library/tzdata/Asia/Yakutsk
+library/tzdata/Asia/Yangon
 library/tzdata/Asia/Yekaterinburg
 library/tzdata/Asia/Yerevan
 library/tzdata/Atlantic/Azores
@@ -1014,6 +1020,7 @@ library/tzdata/Etc/Universal
 library/tzdata/Etc/Zulu
 library/tzdata/Europe/Amsterdam
 library/tzdata/Europe/Andorra
+library/tzdata/Europe/Astrakhan
 library/tzdata/Europe/Athens
 library/tzdata/Europe/Belfast
 library/tzdata/Europe/Belgrade
@@ -1034,6 +1041,7 @@ library/tzdata/Europe/Istanbul
 library/tzdata/Europe/Jersey
 library/tzdata/Europe/Kaliningrad
 library/tzdata/Europe/Kiev
+library/tzdata/Europe/Kirov
 library/tzdata/Europe/Lisbon
 library/tzdata/Europe/Ljubljana
 library/tzdata/Europe/London
@@ -1054,6 +1062,7 @@ library/tzdata/Europe/Rome
 library/tzdata/Europe/Samara
 library/tzdata/Europe/San_Marino
 library/tzdata/Europe/Sarajevo
+library/tzdata/Europe/Saratov
 library/tzdata/Europe/Simferopol
 library/tzdata/Europe/Skopje
 library/tzdata/Europe/Sofia
@@ -1061,6 +1070,7 @@ library/tzdata/Europe/Stockholm
 library/tzdata/Europe/Tallinn
 library/tzdata/Europe/Tirane
 library/tzdata/Europe/Tiraspol
+library/tzdata/Europe/Ulyanovsk
 library/tzdata/Europe/Uzhgorod
 library/tzdata/Europe/Vaduz
 library/tzdata/Europe/Vatican

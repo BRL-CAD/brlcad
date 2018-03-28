@@ -287,7 +287,6 @@ test exec-6.3 {redirecting stderr through a pipeline} {exec stdio} {
 # I/O redirection: combinations.
 
 set path(gorp.file2) [makeFile {} gorp.file2]
-file delete $path(gorp.file2)
 
 test exec-7.1 {multiple I/O redirections} {exec} {
     exec << "command input" > $path(gorp.file2) [interpreter] $path(cat) < $path(gorp.file)

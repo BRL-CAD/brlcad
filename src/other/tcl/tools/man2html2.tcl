@@ -6,8 +6,6 @@
 #
 # Copyright (c) 1996 by Sun Microsystems, Inc.
 
-package require Tcl 8.4
-
 # Global variables used by these scripts:
 #
 # NAME_file -	array indexed by NAME and containing file names used for

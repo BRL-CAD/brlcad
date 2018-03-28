@@ -22,6 +22,21 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 testConstraint testupvar [llength [info commands testupvar]]
 testConstraint testgetvarfullname [llength [info commands testgetvarfullname]]
 testConstraint testsetnoerr [llength [info commands testsetnoerr]]
+testConstraint memory [llength [info commands memory]]
+if {[testConstraint memory]} {
+    proc getbytes {} {
+        return [lindex [split [memory info] \n] 3 3]
+    }
+    proc leaktest {script {iterations 3}} {
+        set end [getbytes]
+        for {set i 0} {$i < $iterations} {incr i} {
+            uplevel 1 $script
+            set tmp $end
+            set end [getbytes]
+        }
+        return [expr {$end - $tmp}]
+    }
+}
 
 catch {rename p ""}
 catch {namespace delete test_ns_var}
@@ -539,6 +554,22 @@ test var-8.2 {TclDeleteNamespaceVars, "unset" traces on ns delete are called wit
 
     list [namespace delete test_ns_var] $::info
 } {{} {::test_ns_var::v {} u}}
+
+test var-8.3 {TclDeleteNamespaceVars, mem leak} -constraints memory -setup {
+    proc ::t {a i o} {
+	set $a 321
+    }
+} -body {
+    leaktest {
+	namespace eval n {
+	    variable v 123
+	    trace variable v u ::t
+	}
+	namespace delete n
+    }
+} -cleanup {
+    rename ::t {}
+} -result 0
 
 test var-9.1 {behaviour of TclGet/SetVar simple get/set} testsetnoerr {
     catch {unset u}; catch {unset v}

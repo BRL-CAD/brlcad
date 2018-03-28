@@ -1,5 +1,15 @@
 /*
- * This file is generated from $(INCLUDESRC)/keysymdef.h.  Do not edit.
+ * This file should be maintained in sync with xlib/X11/keysymdefs.h
+ *
+ * Note that this should be done manually only, because in some cases
+ * keysymdefs.h defines the same integer for multiple keysyms, e.g.:
+ *
+ *    #define XK_Greek_LAMDA                         0x7cb
+ *    #define XK_Greek_LAMBDA                        0x7cb
+ *
+ *    #define XK_Cyrillic_DZHE                       0x6bf
+ *    #define XK_Serbian_DZE                         0x6bf  (deprecated)
+ *
  */
 { "BackSpace", 0xFF08 },
 { "Tab", 0xFF09 },
@@ -920,3 +930,10 @@
 { "hebrew_shin", 0xcf9 },
 { "hebrew_taf", 0xcfa },
 { "Hebrew_switch", 0xFF7E },
+{ "XF86AudioLowerVolume", 0x1008FF11 },
+{ "XF86AudioMute", 0x1008FF12 },
+{ "XF86AudioRaiseVolume", 0x1008FF13 },
+{ "XF86AudioPlay", 0x1008FF14 },
+{ "XF86AudioStop", 0x1008FF15 },
+{ "XF86AudioPrev", 0x1008FF16 },
+{ "XF86AudioNext", 0x1008FF17 },

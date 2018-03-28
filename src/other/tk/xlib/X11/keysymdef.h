@@ -1167,3 +1167,15 @@ SOFTWARE.
 #define XK_Hebrew_switch        0xFF7E  /* Alias for mode_switch */
 #endif /* XK_HEBREW */
 
+/* Multimedia keys, defined same as on Linux
+ * /usr/include/pkg/libxkbcommon/xkbcommon/xkbcommon-keysyms.h
+ */
+
+#define XK_XF86AudioLowerVolume	0x1008FF11   /* Volume control down        */
+#define XK_XF86AudioMute	0x1008FF12   /* Mute sound from the system */
+#define XK_XF86AudioRaiseVolume	0x1008FF13   /* Volume control up          */
+#define XK_XF86AudioPlay	0x1008FF14   /* Start playing of audio >   */
+#define XK_XF86AudioStop	0x1008FF15   /* Stop playing audio         */
+#define XK_XF86AudioPrev	0x1008FF16   /* Previous track             */
+#define XK_XF86AudioNext	0x1008FF17   /* Next track                 */
+

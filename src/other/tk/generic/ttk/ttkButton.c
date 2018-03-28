@@ -136,6 +136,15 @@ BaseCleanup(void *recordPtr)
     	TtkFreeImageSpec(basePtr->base.imageSpec);
 }
 
+static void
+BaseImageChanged(
+	ClientData clientData, int x, int y, int width, int height,
+	int imageWidth, int imageHeight)
+{
+    Base *basePtr = (Base *)clientData;
+    TtkResizeWidget(&basePtr->core);
+}
+
 static int BaseConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
 {
     Base *basePtr = recordPtr;
@@ -149,8 +158,8 @@ static int BaseConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
     }
 
     if (basePtr->base.imageObj) {
-	imageSpec = TtkGetImageSpec(
-	    interp, basePtr->core.tkwin, basePtr->base.imageObj);
+	imageSpec = TtkGetImageSpecEx(
+	    interp, basePtr->core.tkwin, basePtr->base.imageObj, BaseImageChanged, basePtr);
 	if (!imageSpec) {
 	    goto error;
 	}

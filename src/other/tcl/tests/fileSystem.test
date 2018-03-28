@@ -498,6 +498,32 @@ test filesystem-1.51.1 {file normalisation .. beyond root (Bug 1379287)} {
         set res "ok"
     }
 } {ok}
+test filesystem-1.52 {bug f9f390d0fa: file join where strep is not canonical} -constraints unix -body {
+    set x //foo
+    file normalize $x
+    file join $x bar
+} -result /foo/bar
+test filesystem-1.52.1 {bug f9f390d0fa: file join where strep is not canonical} -body {
+    set x //foo
+    file normalize $x
+    file join $x
+} -result /foo
+test filesystem-1.53 {[Bug 3559678] - normalize when tail is empty} {
+  string match */ [file normalize [lindex [glob -dir [pwd] {{}}] 0]]
+} 0
+test filesystem-1.54 {[Bug ce3a211dcb] - normalize when tail is empty} -setup {
+    set save [pwd]
+    cd [set home [makeDirectory ce3a211dcb]]
+    makeDirectory A $home
+    cd [lindex [glob */] 0]
+} -body {
+    string match */A [pwd]
+} -cleanup {
+    cd $home
+    removeDirectory A $home
+    cd $save
+    removeDirectory ce3a211dcb
+} -result 1
 
 test filesystem-2.0 {new native path} {unix} {
    foreach f [lsort [glob -nocomplain /usr/bin/c*]] {

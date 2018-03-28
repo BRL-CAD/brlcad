@@ -619,93 +619,85 @@ TclWinSetInterfaces(
 	tclWinProcs = &unicodeProcs;
 	tclWinTCharEncoding = Tcl_GetEncoding(NULL, "unicode");
 	if (tclWinProcs->getFileAttributesExProc == NULL) {
-	    HINSTANCE hInstance = LoadLibraryA("kernel32");
-	    if (hInstance != NULL) {
-		tclWinProcs->getFileAttributesExProc =
-			(BOOL (WINAPI *)(CONST TCHAR *, GET_FILEEX_INFO_LEVELS,
-			LPVOID)) GetProcAddress(hInstance,
-			"GetFileAttributesExW");
-		tclWinProcs->createHardLinkProc =
-			(BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR*,
-			LPSECURITY_ATTRIBUTES)) GetProcAddress(hInstance,
-			"CreateHardLinkW");
-		tclWinProcs->findFirstFileExProc =
-			(HANDLE (WINAPI *)(CONST TCHAR*, UINT, LPVOID, UINT,
-			LPVOID, DWORD)) GetProcAddress(hInstance,
-			"FindFirstFileExW");
-		tclWinProcs->getVolumeNameForVMPProc =
-			(BOOL (WINAPI *)(CONST TCHAR*, TCHAR*,
-			DWORD)) GetProcAddress(hInstance,
-			"GetVolumeNameForVolumeMountPointW");
-		tclWinProcs->getLongPathNameProc =
-			(DWORD (WINAPI *)(CONST TCHAR*, TCHAR*,
-			DWORD)) GetProcAddress(hInstance, "GetLongPathNameW");
-		FreeLibrary(hInstance);
-	    }
-	    hInstance = LoadLibraryA("advapi32");
-	    if (hInstance != NULL) {
-		tclWinProcs->getFileSecurityProc = (BOOL (WINAPI *)(
-			LPCTSTR lpFileName,
-			SECURITY_INFORMATION RequestedInformation,
-			PSECURITY_DESCRIPTOR pSecurityDescriptor,
-			DWORD nLength, LPDWORD lpnLengthNeeded))
-			GetProcAddress(hInstance, "GetFileSecurityW");
-		tclWinProcs->impersonateSelfProc = (BOOL (WINAPI *) (
-			SECURITY_IMPERSONATION_LEVEL ImpersonationLevel))
-			GetProcAddress(hInstance, "ImpersonateSelf");
-		tclWinProcs->openThreadTokenProc = (BOOL (WINAPI *) (
-			HANDLE ThreadHandle, DWORD DesiredAccess,
-			BOOL OpenAsSelf, PHANDLE TokenHandle))
-			GetProcAddress(hInstance, "OpenThreadToken");
-		tclWinProcs->revertToSelfProc = (BOOL (WINAPI *) (void))
-			GetProcAddress(hInstance, "RevertToSelf");
-		tclWinProcs->mapGenericMaskProc = (VOID (WINAPI *) (
-			PDWORD AccessMask, PGENERIC_MAPPING GenericMapping))
-			GetProcAddress(hInstance, "MapGenericMask");
-		tclWinProcs->accessCheckProc = (BOOL (WINAPI *)(
-			PSECURITY_DESCRIPTOR pSecurityDescriptor,
-			HANDLE ClientToken, DWORD DesiredAccess,
-			PGENERIC_MAPPING GenericMapping,
-			PPRIVILEGE_SET PrivilegeSet,
-			LPDWORD PrivilegeSetLength, LPDWORD GrantedAccess,
-			LPBOOL AccessStatus)) GetProcAddress(hInstance,
-			"AccessCheck");
-		FreeLibrary(hInstance);
-	    }
+	    HMODULE handle = GetModuleHandle(TEXT("KERNEL32"));
+	    tclWinProcs->getFileAttributesExProc =
+		    (BOOL (WINAPI *)(CONST TCHAR *, GET_FILEEX_INFO_LEVELS,
+		    LPVOID)) GetProcAddress(handle,
+		    "GetFileAttributesExW");
+	    tclWinProcs->createHardLinkProc =
+		    (BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR*,
+		    LPSECURITY_ATTRIBUTES)) GetProcAddress(handle,
+		    "CreateHardLinkW");
+	    tclWinProcs->findFirstFileExProc =
+		    (HANDLE (WINAPI *)(CONST TCHAR*, UINT, LPVOID, UINT,
+		    LPVOID, DWORD)) GetProcAddress(handle,
+		    "FindFirstFileExW");
+	    tclWinProcs->getVolumeNameForVMPProc =
+		    (BOOL (WINAPI *)(CONST TCHAR*, TCHAR*,
+		    DWORD)) GetProcAddress(handle,
+		    "GetVolumeNameForVolumeMountPointW");
+	    tclWinProcs->getLongPathNameProc =
+		    (DWORD (WINAPI *)(CONST TCHAR*, TCHAR*,
+		    DWORD)) GetProcAddress(handle, "GetLongPathNameW");
+
+	    handle = GetModuleHandle(TEXT("ADVAPI32"));
+	    tclWinProcs->getFileSecurityProc = (BOOL (WINAPI *)(
+		    LPCTSTR lpFileName,
+		    SECURITY_INFORMATION RequestedInformation,
+		    PSECURITY_DESCRIPTOR pSecurityDescriptor,
+		    DWORD nLength, LPDWORD lpnLengthNeeded))
+		    GetProcAddress(handle, "GetFileSecurityW");
+	    tclWinProcs->impersonateSelfProc = (BOOL (WINAPI *) (
+		    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel))
+		    GetProcAddress(handle, "ImpersonateSelf");
+	    tclWinProcs->openThreadTokenProc = (BOOL (WINAPI *) (
+		    HANDLE ThreadHandle, DWORD DesiredAccess,
+		    BOOL OpenAsSelf, PHANDLE TokenHandle))
+		    GetProcAddress(handle, "OpenThreadToken");
+	    tclWinProcs->revertToSelfProc = (BOOL (WINAPI *) (void))
+		    GetProcAddress(handle, "RevertToSelf");
+	    tclWinProcs->mapGenericMaskProc = (VOID (WINAPI *) (
+		    PDWORD AccessMask, PGENERIC_MAPPING GenericMapping))
+		    GetProcAddress(handle, "MapGenericMask");
+	    tclWinProcs->accessCheckProc = (BOOL (WINAPI *)(
+		    PSECURITY_DESCRIPTOR pSecurityDescriptor,
+		    HANDLE ClientToken, DWORD DesiredAccess,
+		    PGENERIC_MAPPING GenericMapping,
+		    PPRIVILEGE_SET PrivilegeSet,
+		    LPDWORD PrivilegeSetLength, LPDWORD GrantedAccess,
+		    LPBOOL AccessStatus)) GetProcAddress(handle,
+		    "AccessCheck");
 	}
     } else {
 	tclWinProcs = &asciiProcs;
 	tclWinTCharEncoding = NULL;
 	if (tclWinProcs->getFileAttributesExProc == NULL) {
-	    HINSTANCE hInstance = LoadLibraryA("kernel32");
-	    if (hInstance != NULL) {
-		tclWinProcs->getFileAttributesExProc =
-			(BOOL (WINAPI *)(CONST TCHAR *, GET_FILEEX_INFO_LEVELS,
-			LPVOID)) GetProcAddress(hInstance,
-			"GetFileAttributesExA");
-		tclWinProcs->createHardLinkProc =
-			(BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR*,
-			LPSECURITY_ATTRIBUTES)) GetProcAddress(hInstance,
-			"CreateHardLinkA");
-		tclWinProcs->findFirstFileExProc = NULL;
-		tclWinProcs->getLongPathNameProc = NULL;
-		/*
-		 * The 'findFirstFileExProc' function exists on some of
-		 * 95/98/ME, but it seems not to work as anticipated.
-		 * Therefore we don't set this function pointer. The relevant
-		 * code will fall back on a slower approach using the normal
-		 * findFirstFileProc.
-		 *
-		 * (HANDLE (WINAPI *)(CONST TCHAR*, UINT,
-		 * LPVOID, UINT, LPVOID, DWORD)) GetProcAddress(hInstance,
-		 * "FindFirstFileExA");
-		 */
-		tclWinProcs->getVolumeNameForVMPProc =
-			(BOOL (WINAPI *)(CONST TCHAR*, TCHAR*,
-			DWORD)) GetProcAddress(hInstance,
-			"GetVolumeNameForVolumeMountPointA");
-		FreeLibrary(hInstance);
-	    }
+	    HMODULE handle = GetModuleHandle(TEXT("KERNEL32"));
+	    tclWinProcs->getFileAttributesExProc =
+		    (BOOL (WINAPI *)(CONST TCHAR *, GET_FILEEX_INFO_LEVELS,
+		    LPVOID)) GetProcAddress(handle,
+		    "GetFileAttributesExA");
+	    tclWinProcs->createHardLinkProc =
+		    (BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR*,
+		    LPSECURITY_ATTRIBUTES)) GetProcAddress(handle,
+		    "CreateHardLinkA");
+	    tclWinProcs->findFirstFileExProc = NULL;
+	    tclWinProcs->getLongPathNameProc = NULL;
+	    /*
+	     * The 'findFirstFileExProc' function exists on some of
+	     * 95/98/ME, but it seems not to work as anticipated.
+	     * Therefore we don't set this function pointer. The relevant
+	     * code will fall back on a slower approach using the normal
+	     * findFirstFileProc.
+	     *
+	     * (HANDLE (WINAPI *)(CONST TCHAR*, UINT,
+	     * LPVOID, UINT, LPVOID, DWORD)) GetProcAddress(handle,
+	     * "FindFirstFileExA");
+	     */
+	    tclWinProcs->getVolumeNameForVMPProc =
+		    (BOOL (WINAPI *)(CONST TCHAR*, TCHAR*,
+		    DWORD)) GetProcAddress(handle,
+		    "GetVolumeNameForVolumeMountPointA");
 	}
     }
 }

@@ -14,10 +14,6 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #include "default.h"
 #include "tkInt.h"
 #include "tkUndo.h"
@@ -3007,11 +3003,16 @@ DeleteIndexRange(
      * The code below is ugly, but it's needed to make sure there is always a
      * dummy empty line at the end of the text. If the final newline of the
      * file (just before the dummy line) is being deleted, then back up index
-     * to just before the newline. Furthermore, remove any tags that are
-     * present on the newline that isn't going to be deleted after all (this
-     * simulates deleting the newline and then adding a "clean" one back
-     * again). Note that index1 and index2 might now be equal again which
-     * means that no text will be deleted but tags might be removed.
+     * to just before the newline. If there is a newline just before the first
+     * character being deleted, then back up the first index too. The idea is
+     * that a deletion involving a range starting at a line start and
+     * including the final \n (i.e. index2 is "end") is an attempt to delete
+     * complete lines, so the \n before the deleted block shall become the new
+     * final \n. Furthermore, remove any tags that are present on the newline
+     * that isn't going to be deleted after all (this simulates deleting the
+     * newline and then adding a "clean" one back again). Note that index1 and
+     * index2 might now be equal again which means that no text will be
+     * deleted but tags might be removed.
      */
 
     line1 = TkBTreeLinesTo(textPtr, index1.linePtr);
@@ -3024,6 +3025,10 @@ DeleteIndexRange(
 	oldIndex2 = index2;
 	TkTextIndexBackChars(NULL, &oldIndex2, 1, &index2, COUNT_INDICES);
 	line2--;
+	if ((index1.byteIndex == 0) && (line1 != 0)) {
+	    TkTextIndexBackChars(NULL, &index1, 1, &index1, COUNT_INDICES);
+	    line1--;
+	}
 	arrayPtr = TkBTreeGetTags(&index2, NULL, &arraySize);
 	if (arrayPtr != NULL) {
 	    for (i = 0; i < arraySize; i++) {
@@ -3655,9 +3660,9 @@ TextSearchCmd(
 	"-strictlimits", NULL
     };
     enum SearchSwitches {
-	TK_TEXT_SEARCH_END, TK_TEXT_SEARCH_ALL, TK_TEXT_SEARCH_BACK, TK_TEXT_SEARCH_COUNT, TK_TEXT_SEARCH_ELIDE,
-	TK_TEXT_SEARCH_EXACT, TK_TEXT_SEARCH_FWD, TK_TEXT_SEARCH_HIDDEN, TK_TEXT_SEARCH_NOCASE,
-	TK_TEXT_SEARCH_NOLINESTOP, TK_TEXT_SEARCH_OVERLAP, TK_TEXT_SEARCH_REGEXP, TK_TEXT_SEARCH_STRICTLIMITS
+	SEARCH_END, SEARCH_ALL, SEARCH_BACK, SEARCH_COUNT, SEARCH_ELIDE,
+	SEARCH_EXACT, SEARCH_FWD, SEARCH_HIDDEN, SEARCH_NOCASE,
+	SEARCH_NOLINESTOP, SEARCH_OVERLAP, SEARCH_REGEXP, SEARCH_STRICTLIMITS
     };
 
     /*
@@ -3708,16 +3713,16 @@ TextSearchCmd(
 	}
 
 	switch ((enum SearchSwitches) index) {
-	case TK_TEXT_SEARCH_END:
+	case SEARCH_END:
 	    i++;
 	    goto endOfSwitchProcessing;
-	case TK_TEXT_SEARCH_ALL:
+	case SEARCH_ALL:
 	    searchSpec.all = 1;
 	    break;
-	case TK_TEXT_SEARCH_BACK:
+	case SEARCH_BACK:
 	    searchSpec.backwards = 1;
 	    break;
-	case TK_TEXT_SEARCH_COUNT:
+	case SEARCH_COUNT:
 	    if (i >= objc-1) {
 		Tcl_SetResult(interp, "no value given for \"-count\" option",
 			TCL_STATIC);
@@ -3732,29 +3737,29 @@ TextSearchCmd(
 
 	    searchSpec.varPtr = objv[i];
 	    break;
-	case TK_TEXT_SEARCH_ELIDE:
-	case TK_TEXT_SEARCH_HIDDEN:
+	case SEARCH_ELIDE:
+	case SEARCH_HIDDEN:
 	    searchSpec.searchElide = 1;
 	    break;
-	case TK_TEXT_SEARCH_EXACT:
+	case SEARCH_EXACT:
 	    searchSpec.exact = 1;
 	    break;
-	case TK_TEXT_SEARCH_FWD:
+	case SEARCH_FWD:
 	    searchSpec.backwards = 0;
 	    break;
-	case TK_TEXT_SEARCH_NOCASE:
+	case SEARCH_NOCASE:
 	    searchSpec.noCase = 1;
 	    break;
-	case TK_TEXT_SEARCH_NOLINESTOP:
+	case SEARCH_NOLINESTOP:
 	    searchSpec.noLineStop = 1;
 	    break;
-	case TK_TEXT_SEARCH_OVERLAP:
+	case SEARCH_OVERLAP:
 	    searchSpec.overlap = 1;
 	    break;
-	case TK_TEXT_SEARCH_STRICTLIMITS:
+	case SEARCH_STRICTLIMITS:
 	    searchSpec.strictLimits = 1;
 	    break;
-	case TK_TEXT_SEARCH_REGEXP:
+	case SEARCH_REGEXP:
 	    searchSpec.exact = 0;
 	    break;
 	default:
