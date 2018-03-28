@@ -858,10 +858,25 @@ cmake_set_rpath()
 #
 # Sources: https://sourceforge.net/p/predef/wiki/Standards/
 
+
+# For certain platforms (in particular Visual C++) we want to keep some pre-defined
+# flags that are commonly used in the build logic.
+if(NOT "${CMAKE_C_FLAGS}" STREQUAL "" AND NOT DEFINED CMAKE_C_FLAGS_DEFAULT)
+  set(CMAKE_C_FLAGS_DEFAULT "${CMAKE_C_FLAGS}" CACHE STRING "Default C flags" FORCE)
+endif(NOT "${CMAKE_C_FLAGS}" STREQUAL "" AND NOT DEFINED CMAKE_C_FLAGS_DEFAULT)
+if(NOT "${CMAKE_CXX_FLAGS}" STREQUAL "" AND NOT DEFINED CMAKE_CXX_FLAGS_DEFAULT)
+  set(CMAKE_CXX_FLAGS_DEFAULT "${CMAKE_CXX_FLAGS}" CACHE STRING "Default CXX flags" FORCE)
+endif(NOT "${CMAKE_CXX_FLAGS}" STREQUAL "" AND NOT DEFINED CMAKE_CXX_FLAGS_DEFAULT)
+
 # C
+
 unset(C_STANDARD_FLAGS)
 set(CMAKE_C_EXTENSIONS OFF)
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT MSVC)
+# Punt for now on multiconfig tools like Visual Studio and XCode, and just go
+# with the more modern standard in all cases.  After the next (last) C90
+# release, we will be using a uniform standard for all build types and that
+# means it's not worth trying to manage per-build-config standards.
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" OR CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_C_STANDARD 99)
   set(CMAKE_C_STANDARD_REQUIRED ON)
   set(API_FLAGS "-D_POSIX_C_SOURCE=200112L -D_XOPEN_SOURCE=500")
@@ -882,9 +897,12 @@ else()
   else()
     set(C_STANDARD_FLAGS "${CMAKE_C${CMAKE_C_STANDARD}_STANDARD_COMPILE_OPTION} ${API_FLAGS}")
   endif(CMAKE_C_EXTENSIONS)
-endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT MSVC)
+endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release" OR CMAKE_CONFIGURATION_TYPES)
+set(C_STANDARD_FLAGS "${CMAKE_C_FLAGS_DEFAULT} ${C_STANDARD_FLAGS}")
+string(STRIP "${C_STANDARD_FLAGS}" C_STANDARD_FLAGS)
 
 # C++
+
 unset(CXX_STANDARD_FLAGS)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 98)
@@ -894,10 +912,12 @@ if(CMAKE_CXX_EXTENSIONS)
 else()
   set(CXX_STANDARD_FLAGS "${CMAKE_CXX${CMAKE_CXX_STANDARD}_STANDARD_COMPILE_OPTION}")
 endif(CMAKE_CXX_EXTENSIONS)
+set(CXX_STANDARD_FLAGS "${CMAKE_CXX_FLAGS_DEFAULT} ${CXX_STANDARD_FLAGS}")
+string(STRIP "${CXX_STANDARD_FLAGS}" CXX_STANDARD_FLAGS)
 
-if("${CXX_STANDARD_FLAGS}" STREQUAL "" AND NOT MSVC)
-  message(FATAL_ERROR "C++ standard specification failure: compiler does not support the C++${CMAKE_CXX_STANDARD} standard:\n${CMAKE_CXX_COMPILE_FEATURES}")
-endif("${CXX_STANDARD_FLAGS}" STREQUAL "" AND NOT MSVC)
+if("${CXX_STANDARD_FLAGS}" STREQUAL "")
+  message(FATAL_ERROR "C++ standard specification failure: supported flags not found for C++${CMAKE_CXX_STANDARD} standard building:\n${CMAKE_CXX_COMPILE_FEATURES}")
+endif("${CXX_STANDARD_FLAGS}" STREQUAL "")
 
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine

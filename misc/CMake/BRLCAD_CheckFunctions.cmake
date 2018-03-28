@@ -115,9 +115,9 @@ endfunction(standard_header_cppflags)
 
 # The macros and functions below need C_STANDARD_FLAGS to be set for most
 # compilers - be sure it is in those cases
-if("${C_STANDARD_FLAGS}" STREQUAL "" AND NOT HAVE_WINDOWS_H)
+if("${C_STANDARD_FLAGS}" STREQUAL "")
   message(FATAL_ERROR "C_STANDARD_FLAGS is not set - should at least be defining the C standard")
-endif("${C_STANDARD_FLAGS}" STREQUAL "" AND NOT HAVE_WINDOWS_H)
+endif("${C_STANDARD_FLAGS}" STREQUAL "")
 
 ###
 # Check if a function exists (i.e., compiles to a valid symbol).  Adds
