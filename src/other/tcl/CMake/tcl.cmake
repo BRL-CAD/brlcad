@@ -13,6 +13,7 @@ INCLUDE(CheckCSourceCompiles)
 INCLUDE(CheckPrototypeExists)
 INCLUDE(CheckCSourceRuns)
 INCLUDE(CheckCSourceRuns)
+include(CMakePushCheckState)
 
 INCLUDE(ac_std_funcs)
 
