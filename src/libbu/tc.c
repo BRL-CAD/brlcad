@@ -25,6 +25,7 @@
  */
 
 #include "common.h"
+#include <stdlib.h>
 #include "bu/tc.h"
 #include "bu/malloc.h"
 
@@ -220,7 +221,7 @@ int bu_cnd_signal(bu_cnd_t *cond)
 }
 
 #if defined(HAVE_WINDOWS_H)
-static int _bu_bu_cnd_timedwait_win32(bu_cnd_t *cond, bu_mtx_t *mtx, DWORD timeout)
+static int _bu_cnd_timedwait_win32(bu_cnd_t *cond, bu_mtx_t *mtx, DWORD timeout)
 {
   DWORD result;
   int lastWaiter;
@@ -278,7 +279,7 @@ static int _bu_bu_cnd_timedwait_win32(bu_cnd_t *cond, bu_mtx_t *mtx, DWORD timeo
 int bu_cnd_wait(bu_cnd_t *cond, bu_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
-  return _bu_bu_cnd_timedwait_win32(cond, mtx, INFINITE);
+  return _bu_cnd_timedwait_win32(cond, mtx, INFINITE);
 #else
   return pthread_cond_wait(cond, mtx) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
