@@ -1894,6 +1894,26 @@ set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_BAK})
 # we don't unnecessarily slow down the Windows build.
 if(NOT MSVC)
 
+  # This is nominally a header test, but because it can impact the C/C++ flags
+  # we do it before the final caching of BRL-CAD flags.  We need this because
+  # pthread headers on some BSD platforms still haven't been scrubbed for
+  # c90/posix.1 compliance - see r70785
+  BRLCAD_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H)
+  if (NOT PROBE_PTHREAD_H)
+    cmake_push_check_state(RESET)
+    # pthread.h on FreeBSD 10 and some older Linucies use non-c90 types
+    set(CMAKE_REQUIRED_DEFINITIONS "-Dclockid_t=clock_t")
+    set(CMAKE_REQUIRED_FLAGS "-pthread")
+    BRLCAD_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H_CLOCKID_T)
+    if (PROBE_PTHREAD_H_CLOCKID_T)
+      set(C_STANDARD_FLAGS "${C_STANDARD_FLAGS} -Dclockid_t=clock_t -pthread")
+      set(CXX_STANDARD_FLAGS "${CXX_STANDARD_FLAGS} -Dclockid_t=clock_t -pthread")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dclockid_t=clock_t -pthread")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dclockid_t=clock_t -pthread")
+      set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+    endif (PROBE_PTHREAD_H_CLOCKID_T)
+  endif (NOT PROBE_PTHREAD_H)
+
   # -O3/-Ofast can enable -ffast-math which can provoke a stack
   # corruption in the shadow computations because of strict aliasing
   # getting enabled.  we _require_ -fno-strict-aliasing until someone
@@ -2246,21 +2266,6 @@ endif(BRLCAD_PRINT_MSGS)
 # Look for threads (doesn't check for headers)
 # The variable CMAKE_THREAD_LIBS_INIT is the one of interest
 # when writing target_link_libraries lists.
-BRLCAD_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H)
-if (NOT PROBE_PTHREAD_H)
-  cmake_push_check_state(RESET)
-  # pthread.h on FreeBSD 10 and some older Linucies use non-c90 types
-  set(CMAKE_REQUIRED_DEFINITIONS "-Dclockid_t=clock_t")
-  set(CMAKE_REQUIRED_FLAGS "-pthread")
-  BRLCAD_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H_CLOCKID_T)
-  if (PROBE_PTHREAD_H_CLOCKID_T)
-    set(C_STANDARD_FLAGS "${C_STANDARD_FLAGS} -Dclockid_t=clock_t -pthread")
-    set(CXX_STANDARD_FLAGS "${CXX_STANDARD_FLAGS} -Dclockid_t=clock_t -pthread")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dclockid_t=clock_t -pthread")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dclockid_t=clock_t -pthread")
-    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-  endif (PROBE_PTHREAD_H_CLOCKID_T)
-endif (NOT PROBE_PTHREAD_H)
 find_package(Threads)
 
 # Check for the C++ STL library - need to link it explicitly in
