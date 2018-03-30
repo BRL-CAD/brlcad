@@ -27,7 +27,6 @@
 #include "common.h"
 #include <stdlib.h>
 #include "bu/tc.h"
-#include "bu/malloc.h"
 
 int bu_mtx_init(bu_mtx_t *mtx)
 {
@@ -386,7 +385,7 @@ static void * _bu_thrd_wrapper_function(void * aArg)
     arg = ti->mArg;
 
     /* The thread is responsible for freeing the startup information */
-    bu_free((void *)ti, "thread info");
+    free((void *)ti);
 
     /* Call the actual client thread function */
     res = fun(arg);
@@ -405,33 +404,33 @@ static void * _bu_thrd_wrapper_function(void * aArg)
 
 int bu_thrd_create(bu_thrd_t *thr, bu_thrd_start_t func, void *arg)
 {
-      /* Fill out the thread startup information (passed to the thread wrapper,
-       *      which will eventually free it) */
-      _bu_thread_start_info* ti = (_bu_thread_start_info*)bu_malloc(sizeof(_bu_thread_start_info), "thread info");
-        if (ti == NULL)
-	      {
-		      return bu_thrd_nomem;
-		        }
-	  ti->mFunction = func;
-	    ti->mArg = arg;
+    /* Fill out the thread startup information (passed to the thread wrapper,
+     * which will eventually free it) */
+    _bu_thread_start_info* ti = (_bu_thread_start_info*)malloc(sizeof(_bu_thread_start_info));
+    if (ti == NULL)
+    {
+	return bu_thrd_nomem;
+    }
+    ti->mFunction = func;
+    ti->mArg = arg;
 
-	      /* Create the thread */
+    /* Create the thread */
 #if defined(HAVE_WINDOWS_H)
-	    *thr = CreateThread(NULL, 0, _bu_thrd_wrapper_function, (LPVOID) ti, 0, NULL);
+    *thr = CreateThread(NULL, 0, _bu_thrd_wrapper_function, (LPVOID) ti, 0, NULL);
 #else
-	    if(pthread_create(thr, NULL, _bu_thrd_wrapper_function, (void *)ti) != 0)
-	    {
-		*thr = 0;
-	    }
+    if(pthread_create(thr, NULL, _bu_thrd_wrapper_function, (void *)ti) != 0)
+    {
+	*thr = 0;
+    }
 #endif
-	    /* Did we fail to create the thread? */
-	    if(!*thr)
-	    {
-		bu_free(ti, "thread info");
-		return bu_thrd_error;
-	    }
+    /* Did we fail to create the thread? */
+    if(!*thr)
+    {
+	free((void *)ti);
+	return bu_thrd_error;
+    }
 
-	    return bu_thrd_success;
+    return bu_thrd_success;
 
 }
 
