@@ -33,7 +33,7 @@ function(ADD_G_TARGET in_model folder)
   # Find our output file and path
   string(REPLACE "${CMAKE_SOURCE_DIR}/" "" rel_dir "${CMAKE_CURRENT_SOURCE_DIR}")
   set(output_file ${DATA_DIR}/${rel_dir}/${in_model_root}.g)
-  set(log_file ${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.log)
+  set(log_file ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${in_model_root}.log)
 
   # Make sure the output db target directories are there
   if(CMAKE_CONFIGURATION_TYPES)
