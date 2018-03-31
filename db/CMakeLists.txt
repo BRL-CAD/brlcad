@@ -117,7 +117,6 @@ function(ADD_G_TARGET in_model folder)
   endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 
   # Clean-up
-  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}")
   set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${log_file}")
   DISTCLEAN("${log_file}")
 
