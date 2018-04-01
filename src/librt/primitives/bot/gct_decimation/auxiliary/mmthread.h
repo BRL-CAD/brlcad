@@ -48,7 +48,7 @@
 #include "bu/exit.h"
 #include "mmatomic.h"
 
-#if !defined(HAVE_STRUCT_TIMESPEC) && !defined(timespec)  /* tinycthread.h will define timespec on Windows */
+#if !defined(HAVE_STRUCT_TIMESPEC) && !defined(timespec) && !defined(__timespec_defined)  /* tinycthread.h will define timespec on Windows */
 struct timespec {
   time_t tv_sec;
   long tv_nsec;
