@@ -264,6 +264,7 @@ AUTO.
 # Note - we don't actually know the libpng build target name for the
 # shared library at this point - use png as a stub and override
 # once we know what PNG_LIB_NAME is.
+set(CMAKE_FIND_FRAMEWORK LAST)
 THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_PNG)
 if(BRLCAD_PNG_BUILD)
 
