@@ -35,6 +35,7 @@
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "bu/units.h"
+#include "bn/str.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -398,12 +399,16 @@ get_args(int argc, const char *argv[])
 
 	    case 'a':
 		/* Set azimuth */
-		azimuth = atof(bu_optarg);
+		if (bn_decode_angle(&azimuth,bu_optarg) == 0) {
+		    fprintf(stderr, "WARNING: Unexpected units for azimuth angle, using default value\n");
+		}
 		matflag = 0;
 		break;
 	    case 'e':
 		/* Set elevation */
-		elevation = atof(bu_optarg);
+		if (bn_decode_angle(&elevation,bu_optarg) == 0) {
+		    fprintf(stderr, "WARNING: Unexpected units for elevation angle, using default value\n");
+		}
 		matflag = 0;
 		break;
 	    case 'l':

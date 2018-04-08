@@ -42,6 +42,30 @@
 extern double rint(double x);
 #endif
 
+
+int
+bn_decode_angle(double *ang, const char *str)
+{
+    char unit[5];
+    double val;
+    int ret;
+
+    ret = sscanf(str,"%lf%4s",&val,unit);
+    if (ret == 1) {
+	*ang = val;
+    } else if (ret == 2) {
+	if (BU_STR_EQUAL(unit,"rad")) {
+	    *ang = (val * RAD2DEG);
+	} else if (BU_STR_EQUAL(unit,"deg")){
+	    *ang = val;
+	} else {
+	    ret = 0;
+	}
+    }
+    return ret;
+}
+
+
 int
 bn_decode_mat(fastf_t *mat, const char *str)
 {

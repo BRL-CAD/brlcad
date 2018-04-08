@@ -554,14 +554,14 @@ parse_args(int ac, char *av[])
 		}
 	    case 'a':
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "azimuth not implemented\n");
-		if (sscanf(bu_optarg, "%lg", &azimuth_deg) != 1) {
+		if (bn_decode_angle(&azimuth_deg,bu_optarg) == 0) {
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		break;
 	    case 'e':
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "elevation not implemented\n");
-		if (sscanf(bu_optarg, "%lg", &elevation_deg) != 1) {
+		if (bn_decode_angle(&elevation_deg,bu_optarg) == 0) {
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
 		    return -1;
 		}
