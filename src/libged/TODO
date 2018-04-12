@@ -530,7 +530,7 @@ Rules for pair combination and simplification:
   // → /        /. → error    /_ → error    /| → |/
   ./ → error    .. → .        ._ → _        .| → |
   _/ → error    _. → _        __ → _        _| → |_
-  |/ → |/       |. → |        |_ → |_        || → |
+  |/ → |/       |. → |        |_ → |_       || → |
 
 If more than two print/modifier characters are present at the head of the
 path specifier, they will be collapsed using the above rules until either a
