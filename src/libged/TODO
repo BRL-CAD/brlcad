@@ -483,6 +483,77 @@ search command ideas
 
 * implement -param support for 'search' command
 
+-------------------------------------------------------------------------------
+Thoughts on search path modifiers - this is a slight iteration on the results
+of Cliff and Nick trying to work through what "preferred" meanings and
+conventions are for path specifier modifiers.
+
+A path modifier is a single or multiple character pattern specified at the head
+of an object name, path, or glob pattern:
+
+[modifer]object_pattern[/object_pattern]
+
+Valid single character modifiers and their behaviors:
+
+  /object_pattern[/object_pattern]
+  .object_pattern[/object_pattern]
+  _object_pattern
+  |object_pattern[/object_pattern]
+
+  / → print option, full path.  If specified without modifier, uses tops
+      objects as input list
+  . → print option, last object in path only.  Default print mode if full path
+      is not specified.  If specified without modifier, uses "tops" command
+      objects as input list
+  _ → modifier specifying flat object search, with no hierarchy walking.  All
+      specifiers that require hierarchy are incompatible with this modifier.
+      By default it will use the tops output - if a glob pattern is supplied
+      as the object pattern, it will match all database objects against that
+      pattern and use the matching set as its input set.  An object_pattern
+      including hierarchy will produce an error.
+  | → use all objects in the database as starting points for a hierarchical
+      search.  Overrides default behavior of using tops objects as input list.
+      Without other modifiers, this is essentially an implicit "|." specifier,
+      since the output will default to the "." mode of printing without paths.
+
+Modifier pairs:
+
+       /     .     _     |
+    +---------------------
+  / | //    /.    /_    /|
+  . | ./    ..    ._    .|
+  _ | _/    _.    __    _|
+  | | |/    |.    |_    ||
+
+
+Rules for pair combination and simplification:
+  // → /        /. → error    /_ → error    /| → |/
+  ./ → error    .. → .        ._ → _        .| → |
+  _/ → error    _. → _        __ → _        _| → |_
+  |/ → |/       |. → |        |_ → |_        || → |
+
+If more than two print/modifier characters are present at the head of the
+path specifier, they will be collapsed using the above rules until either a
+single valid pairing is arrived at, a single valid character is arrived at,
+or an error condition occurs.  (Any larger combination which which evaluates
+to more than two valid specification characters is defined to be erroneous.)
+
+Note: the simplification process is allowed to reorder individual characters
+within a longer specification string when attempting to collapse characters,
+since none of the valid combined behavior specifications is dependent on
+modifier position in the string under the above rules.
+
+Per the above rules, all possible valid path specifier combinations collapse
+into one of the four atomic rules, with the exception of "|/" and "|_":
+
+"|/" -  this paring will produce a search output that both uses all objects in
+the database as starting points and reports full paths.
+
+"|_" -  this paring will produce a search output that uses all objects in the
+database as starting points and performs a flat search.  It is equivalent to
+the full pattern "_*" but may be slightly faster in that it doesn't require the
+evaluation of the glob expression to build the object set.
+
 
 --- COMMAND PATTERNS ---
 
