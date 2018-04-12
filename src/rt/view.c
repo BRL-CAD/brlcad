@@ -73,7 +73,7 @@ usage(const char *argv0)
     bu_log(" -r		Report overlaps (default)\n");
     bu_log(" -R		Do not report overlaps\n");
     bu_log(" -M		Read matrix+commands on stdin\n");
-    bu_log(" -o model.pix	Output .pix format file (default is window)\n");
+    bu_log(" -o image.png	Output .png format file (default is window)\n");
     bu_log(" -s #		Square grid size in pixels (default is 512)\n");
     bu_log(" -w # -n #	Grid size width (w) and height (n) in pixels\n");
     bu_log(" -a # -e #	Azimuth (a) and elevation (e) in degrees\n");
@@ -120,7 +120,7 @@ usage(const char *argv0)
     bu_log(" -H #		Set number of extra rays to fire\n");
     bu_log(" -J #		Set a bit vector for \"jitter\"\n");
     bu_log(" -K #		Specify the ending frame number (starting frame number is specified via -D #)\n");
-    bu_log(" -O model.pix	Output .pix format file, double precision format\n");
+    bu_log(" -O model.dpix	Output .dpix format file, double precision image data\n");
     bu_log(" -Q x,y		Select pixel ray for query with debugging; compute other pixels without debugging\n");
     bu_log(" -S		Enable stereo viewing (off by default)\n");
     bu_log(" -W		Set background image color to white (default is black)\n");
