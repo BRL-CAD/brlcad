@@ -37,17 +37,24 @@
       <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
       Alternatively, the output can be stored in a pixel file
       (<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-      format) by specifying <option>-o</option> <replaceable>output.pix</replaceable>
-      in the option list. The orientation of the rays to be fired may be specified by
-      the <option>-a</option> and <option>-e</option> options, in which case the model
-      will be autosized, and the grid will be centered on the centroid of the model, with
-      ray spacing chosen to span the entire set of <emphasis remap="I">objects</emphasis>.
-      Alternatively, with the <option>-M</option> option, a transformation matrix may
-      be provided on standard input which maps model-space to view-space. In this case,
-      the grid ranges from -1.0 = X,Y = +1.0 in view space, with the size of the grid
-      (number of rays fired) specified with <option>-s</option>.  The <option>-M</option>
-      option is most useful when <command>rt</command> is being invoked from a shell script
-      created by an <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      format) by
+      specifying <option>-o</option> <replaceable>output.pix</replaceable>
+      or in a PNG image file by
+      specifying <option>-o</option> <replaceable>output.png</replaceable>
+      in the option list. The orientation of the rays to be fired may
+      be specified by the <option>-a</option> and <option>-e</option>
+      options, in which case the model will be autosized, and the grid
+      will be centered on the centroid of the model, with ray spacing
+      chosen to span the entire set
+      of <emphasis remap="I">objects</emphasis>.  Alternatively, with
+      the <option>-M</option> option, a transformation matrix may be
+      provided on standard input which maps model-space to
+      view-space. In this case, the grid ranges from -1.0 = X,Y = +1.0
+      in view space, with the size of the grid (number of rays fired)
+      specified with <option>-s</option>.  The <option>-M</option>
+      option is most useful when <command>rt</command> is being
+      invoked from a shell script created by
+      an <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
       <emphasis remap="I">saveview</emphasis> command.
     </para>
 
@@ -281,15 +288,20 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-o output.pix</option></term>
+	<term><option>-o output</option></term>
 	<listitem>
 	  <para>
-	  specifies the name of a file to store the
+	  specifies the name of a file to store your output data file.
+	  For example, if you specify your output as image.pix, it
+	  will write out an image file in the
 	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-	  format output.
-	  The
+	  file format.  If you specify an image.png file, it will
+	  write out an image file in the PNG file format.  The
 	  <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-	  utility can be used later to display ".pix" files.
+	  and
+	  <citerefentry><refentrytitle>png-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+	  utilities can be used to display ".pix" and ".png" files
+	  respectively.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -702,6 +714,7 @@
   <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>lgt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>png-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
