@@ -483,3 +483,64 @@ search command ideas
 
 * implement -param support for 'search' command
 
+
+--- COMMAND PATTERNS ---
+
+Here are notes on command parsing infrastructure, how to unify our
+commands so that parsing can be consistent across embeddings including
+GED instances like mged/archer and unix command lines.
+
+One idea being considered is having commands publish their argument
+interface, in code, into some simple standard format (e.g., json or
+docbook).  from that description, we could derive documentation and
+inform interfaces how to automatically provide or validate arguments.
+
+Here's a list of typical BRL-CAD command arguments in EBNF form
+related to INPUT specification:
+
+geometry ::= gfile objects
+ objects ::= object *(object)
+  object ::= <PRINT>           ; need to verify which chars are excluded
+ gfile ::= <FILE>             ; does not need to exist
+
+view ::= 0*1(viewsize) 0*1(orientation) 0*1(eye_point)
+ viewsize ::= <POSITIVE>
+ orientation ::= quaternion | matrix | 0*1(azimuth) 0*1(elevation)
+  quaternion ::= <HVECT>
+  matrix ::= <MATRIX>
+  azimuth ::= <ANGLE>
+  elevation ::= <ANGLE>
+ eye_point ::= <POINT> | <FLOAT>  ; specific point or distance to model rpp center
+perspective ::= 0 | <ANGLE>
+cutting_plane ::= <PLANE>
+use_air ::= <BOOL>
+ambient_intensity ::= <FLOAT>
+
+tolerance ::= distance_tol | perpendicular_tol
+ distance_tol ::= <DISTANCE>
+ perpendicular_tol ::= <ANGLE>
+
+num_procs ::= <POSITIVE>
+
+Here's a list of typical BRL-CAD command arguments in EBNF form
+related to OUTPUT specification (intentionally omitting options
+related to debugging and text output):
+
+image ::= (pixel_coordinates | pixel_dimensions | grid_dimensions) bgcolor output
+ pixel_coordinates ::= (pixel_x pixel_y) 0*1(pixel_x pixel_y) ; pixel or subrect
+  pixel_x ::= <NON_NEG>
+  pixel_y ::= <NOT_NEG>
+ pixel_dimensions ::= pixel_width pixel_height  ; aka size
+  pixel_width ::= <POSITIVE>
+  pixel_height ::= <POSITIVE>
+ grid_dimensions ::= cell_width cell_height
+  cell_width ::= <FLOAT>
+  cell_height ::= <FLOAT>
+ bgcolor ::= <COLOR>
+ output ::= framebuffer | imagefile
+  framebuffer ::= <FB_FILE>
+  imagefile ::= <FILE>
+
+render_type ::= <LIGHTING_MODEL>
+hypersample ::= <UINT>
+jitter ::= <JITTER_TYPE>
