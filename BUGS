@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtsil command works if do what usage says and redirect output to
+  file, but mentions .pix when data is actually .bw; and using the -o
+  option results in a black image.  it is also inconsistent, writing a
+  black silhouette on a white background, instead of black on white
+  and missing background color options.
+
 * make sph sph
   clone -i 1 -t 1000 0 0 -n 100 sph
   kill sph
