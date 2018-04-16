@@ -95,6 +95,7 @@ set(misc_ignore_files
   svn2git/README
   svn2git/account-map
   svn2git/archive_branches.sh
+  svn2git/md5_process_lines.cxx
   svn2git/rules
   svn2git/svn2git/CMake/FindAPR.cmake
   svn2git/svn2git/CMake/FindSubversionLibrary.cmake
