@@ -29,7 +29,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include <errno.h> /* for errno */
 
 #include "bu/str.h"
 #include "bu/units.h"
@@ -63,7 +62,8 @@ bot_minpieces(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
     long new_lvalue;
     int i=0;
 
-    while (isspace((int)*(buffer+i))) ++i;
+    while (isspace((int)*(buffer+i)))
+	++i;
     if (*(buffer+i) == '\0') {
 	/* display current rt_bot_minpieces */
 	bu_log("rt_bot_minpieces = %zu\n", rt_bot_minpieces);
@@ -86,57 +86,48 @@ bot_minpieces(char *buffer, com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 void
 az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
-    double az = 0.0;
-    double el = 0.0;
-    char *endptr = NULL;
-    char *cbuffer = buffer;
+    extern int str_dbl();  /* function to convert string to double */
+    int i = 0;      /* current position on the *buffer */
+    int rc = 0;     /* the return code value from str_dbl()   */
+    double az;
+    double el;
 
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-    if (*(cbuffer) == '\0') {
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if (*(buffer+i) == '\0') {
 	/* display current az and el values */
-	bu_log("(az, el) = (%4.2f, %4.2f)\n", azimuth(), elevation());
+	bu_log("(az, el) = (%4.2f, %4.2f)\n",
+	       azimuth(), elevation());
 	return;
     }
-
-    errno = 0;
-    az = strtod(cbuffer, &endptr);
-    if (sizeof(fastf_t) == sizeof(float) && (az > FLT_MAX)) errno = ERANGE;
-    if (errno == ERANGE || endptr == cbuffer) {
-	/* failed to get az value */
+    if ((rc = str_dbl(buffer+i, &az)) == 0) {
+	/* get az value */
 	com_usage(ctp);
 	return;
-    } else {
-	cbuffer = endptr;
     }
-
     if (fabs(az) > 360) {
 	/* check for valid az value */
+
 	bu_log("Error:  |azimuth| <= 360\n");
 	return;
     }
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-
-    errno = 0;
-    el = strtod(cbuffer, &endptr);
-    if (sizeof(fastf_t) == sizeof(float) && (el > FLT_MAX)) errno = ERANGE;
-    if (errno == ERANGE || endptr == cbuffer) {
-	/* failed to get el value */
+    i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if ((rc = str_dbl(buffer+i, &el)) == 0) {
+	/* get el value */
 	com_usage(ctp);
 	return;
-    } else {
-	cbuffer = endptr;
     }
-
     if (fabs(el) > 90) {
 	/* check for valid el value */
 	bu_log("Error:  |elevation| <= 90\n");
 	return;
     }
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-
-    if (*(cbuffer) != '\0') {
+    i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if (*(buffer+i) != '\0') {
 	/* check for garbage at the end of the line */
 	com_usage(ctp);
 	return;
@@ -149,13 +140,14 @@ az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 void
 grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
-    double g = 0.0;
-    vect_t Gr = VINIT_ZERO;
-    char *endptr = NULL;
-    char *cbuffer = buffer;
+    extern int str_dbl();  /* function to convert string to double */
+    int i = 0;
+    int rc = 0;    /* the return code value from str_dbl() */
+    vect_t Gr;
 
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-    if (*(cbuffer) == '\0') {
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if (*(buffer+i) == '\0') {
 	/* display current grid coordinates */
 	fprintf(stdout, "(h, v, d) = (%4.2f, %4.2f, %4.2f)\n",
 	       grid(HORZ) * base2local,
@@ -163,58 +155,38 @@ grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	       grid(DIST) * base2local);
 	return;
     }
-
-    errno = 0;
-    g = strtod(cbuffer, &endptr);
-    if (sizeof(fastf_t) == sizeof(float) && (g > FLT_MAX)) errno = ERANGE;
-    if (errno == ERANGE || endptr == cbuffer) {
-	/* failed to get horz coor */
+    if ((rc = str_dbl(buffer+i, &Gr[HORZ])) == 0) {
+	/* get horz coor */
 	com_usage(ctp);
 	return;
-    } else {
-	Gr[HORZ] = g;
-	cbuffer = endptr;
     }
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-
-    errno = 0;
-    g = strtod(cbuffer, &endptr);
-    if (sizeof(fastf_t) == sizeof(float) && (g > FLT_MAX)) errno = ERANGE;
-    if (errno == ERANGE || endptr == cbuffer) {
-	/* failed to get vert coor */
+    i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if ((rc = str_dbl(buffer+i, &Gr[VERT])) == 0) {
+	/* get vert coor */
 	com_usage(ctp);
 	return;
-    } else {
-	Gr[VERT] = g;
-	cbuffer = endptr;
     }
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-
-    if (*(cbuffer) == '\0') {
+    i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if (*(buffer+i) == '\0') {
 	/* if there is no dist coor, set default */
 	grid(HORZ) = Gr[HORZ] * local2base;
 	grid(VERT) = Gr[VERT] * local2base;
 	grid2targ();
 	return;
     }
-
-    errno = 0;
-    g = strtod(cbuffer, &endptr);
-    if (sizeof(fastf_t) == sizeof(float) && (g > FLT_MAX)) errno = ERANGE;
-    if (errno == ERANGE || endptr == cbuffer) {
-	/* failed to get vert coor */
+    if ((rc = str_dbl(buffer+i, &Gr[DIST])) == 0) {
+	/* set dist coor */
 	com_usage(ctp);
 	return;
-    } else {
-	Gr[DIST] = g;
-	cbuffer = endptr;
     }
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-
-    if (*(cbuffer) != '\0') {
+    i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if (*(buffer+i) != '\0') {
 	/* check for garbage at the end of the line */
 	com_usage(ctp);
 	return;
@@ -228,13 +200,14 @@ grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 void
 target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
-    double tg = 0.0;
-    vect_t Tar = VINIT_ZERO;	    /* Target x, y and z */
-    char *endptr = NULL;
-    char *cbuffer = buffer;
+    extern int str_dbl();  /* function to convert string to double */
+    int i = 0;
+    int rc = 0;     /* the return code value from str_dbl() */
+    vect_t Tar;	    /* Target x, y and z */
 
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-    if (*(cbuffer) == '\0') {
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if (*(buffer+i) == '\0') {
 	/* display current target coors */
 	fprintf(stdout, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n",
 	       target(X) * base2local,
@@ -242,55 +215,35 @@ target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	       target(Z) * base2local);
 	return;
     }
-
-    errno = 0;
-    tg = strtod(cbuffer, &endptr);
-    if (sizeof(fastf_t) == sizeof(float) && (tg > FLT_MAX)) errno = ERANGE;
-    if (errno == ERANGE || endptr == cbuffer) {
-	/* failed to get target x coor  */
+    if ((rc = str_dbl(buffer+i, &Tar[X])) == 0) {
+	/* get target x coor */
 	com_usage(ctp);
 	return;
-    } else {
-	Tar[X] = tg;
-	cbuffer = endptr;
     }
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-
-    errno = 0;
-    tg = strtod(cbuffer, &endptr);
-    if (sizeof(fastf_t) == sizeof(float) && (tg > FLT_MAX)) errno = ERANGE;
-    if (errno == ERANGE || endptr == cbuffer) {
-	/* failed to get target y coor */
+    i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if ((rc = str_dbl(buffer+i, &Tar[Y])) == 0) {
+	/* get target y coor */
 	com_usage(ctp);
 	return;
-    } else {
-	Tar[Y] = tg;
-	cbuffer = endptr;
     }
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-
-    errno = 0;
-    tg = strtod(cbuffer, &endptr);
-    if (sizeof(fastf_t) == sizeof(float) && (tg > FLT_MAX)) errno = ERANGE;
-    if (errno == ERANGE || endptr == cbuffer) {
-	/* failed to get target z coor */
+    i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if ((rc = str_dbl(buffer+i, &Tar[Z])) == 0) {
+	/* get target z coor */
 	com_usage(ctp);
 	return;
-    } else {
-	Tar[Z] = tg;
-	cbuffer = endptr;
     }
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-
-    if (*(cbuffer) != '\0') {
+    i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if (*(buffer+i) != '\0') {
 	/* check for garbage at the end of the line */
 	com_usage(ctp);
 	return;
     }
-
     target(X) = Tar[X] * local2base;
     target(Y) = Tar[Y] * local2base;
     target(Z) = Tar[Z] * local2base;
@@ -300,63 +253,44 @@ target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 void
 dir_vect(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
-    double dr = 0.0;
-    vect_t Dir = VINIT_ZERO;	   /* Direction vector x, y and z */
-    char *endptr = NULL;
-    char *cbuffer = buffer;
+    extern int str_dbl();  /* function to convert string to double */
+    int i = 0;
+    int rc = 0;    /* the return code value from str_dbl() */
+    vect_t Dir;	   /* Direction vector x, y and z */
 
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-    if (*(cbuffer) == '\0') {
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if (*(buffer+i) == '\0') {
 	/* display current direct coors */
 	fprintf(stdout, "(x, y, z) = (%4.2f, %4.2f, %4.2f)\n",
 	       direct(X), direct(Y), direct(Z));
 	return;
     }
-
-    errno = 0;
-    dr = strtod(cbuffer, &endptr);
-    if (sizeof(fastf_t) == sizeof(float) && (dr > FLT_MAX)) errno = ERANGE;
-    if (errno == ERANGE || endptr == cbuffer) {
-	/* failed to get direct x coor */
+    if ((rc = str_dbl(buffer+i, &Dir[X])) == 0) {
+	/* get direct x coor */
 	com_usage(ctp);
 	return;
-    } else {
-	Dir[X] = dr;
-	cbuffer = endptr;
     }
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-
-    errno = 0;
-    dr = strtod(cbuffer, &endptr);
-    if (sizeof(fastf_t) == sizeof(float) && (dr > FLT_MAX)) errno = ERANGE;
-    if (errno == ERANGE || endptr == cbuffer) {
-	/* failed to get direct y coor */
+    i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if ((rc = str_dbl(buffer+i, &Dir[Y])) == 0) {
+	/* get direct y coor */
 	com_usage(ctp);
 	return;
-    } else {
-	Dir[Y] = dr;
-	cbuffer = endptr;
     }
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-
-    errno = 0;
-    dr = strtod(cbuffer, &endptr);
-    if (sizeof(fastf_t) == sizeof(float) && (dr > FLT_MAX)) errno = ERANGE;
-    if (errno == ERANGE || endptr == cbuffer) {
-	/* failed to get direct z coor */
+    i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if ((rc = str_dbl(buffer+i, &Dir[Z])) == 0) {
+	/* get direct z coor */
 	com_usage(ctp);
 	return;
-    } else {
-	Dir[Z] = dr;
-	cbuffer = endptr;
     }
-
-    while (isspace((int)*(cbuffer))) ++cbuffer;
-
-    if (*(cbuffer) != '\0') {
+    i += rc;
+    while (isspace((int)*(buffer+i)))
+	++i;
+    if (*(buffer+i) != '\0') {
 	/* check for garbage at the end of the line */
 	com_usage(ctp);
 	return;
