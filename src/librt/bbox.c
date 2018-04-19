@@ -172,14 +172,14 @@ rt_in_rpp(struct xray *rp,
     /* Start with infinite ray, and trim it down */
 
     /* X axis */
-    if (*invdir < -SMALL_FASTF) {
+    if (*invdir < -SMALL_FASTF && *invdir > -INFINITY) {
 	/* Heading towards smaller numbers */
 	/* if (*min > *pt) miss */
 	if (rmax > (sv = (*min - *pt) * *invdir))
 	    rmax = sv;
 	if (rmin < (st = (*max - *pt) * *invdir))
 	    rmin = st;
-    }  else if (*invdir > SMALL_FASTF) {
+    }  else if (*invdir > SMALL_FASTF && *invdir < INFINITY) {
 	/* Heading towards larger numbers */
 	/* if (*max < *pt) miss */
 	if (rmax > (st = (*max - *pt) * *invdir))
@@ -198,12 +198,12 @@ rt_in_rpp(struct xray *rp,
 
     /* Y axis */
     pt++; invdir++; max++; min++;
-    if (*invdir < -SMALL_FASTF) {
+    if (*invdir < -SMALL_FASTF && *invdir > -INFINITY) {
 	if (rmax > (sv = (*min - *pt) * *invdir))
 	    rmax = sv;
 	if (rmin < (st = (*max - *pt) * *invdir))
 	    rmin = st;
-    }  else if (*invdir > SMALL_FASTF) {
+    }  else if (*invdir > SMALL_FASTF && *invdir < INFINITY) {
 	if (rmax > (st = (*max - *pt) * *invdir))
 	    rmax = st;
 	if (rmin < ((sv = (*min - *pt) * *invdir)))
@@ -215,12 +215,12 @@ rt_in_rpp(struct xray *rp,
 
     /* Z axis */
     pt++; invdir++; max++; min++;
-    if (*invdir < -SMALL_FASTF) {
+    if (*invdir < -SMALL_FASTF && *invdir > -INFINITY) {
 	if (rmax > (sv = (*min - *pt) * *invdir))
 	    rmax = sv;
 	if (rmin < (st = (*max - *pt) * *invdir))
 	    rmin = st;
-    }  else if (*invdir > SMALL_FASTF) {
+    }  else if (*invdir > SMALL_FASTF && *invdir < INFINITY) {
 	if (rmax > (st = (*max - *pt) * *invdir))
 	    rmax = st;
 	if (rmin < ((sv = (*min - *pt) * *invdir)))
