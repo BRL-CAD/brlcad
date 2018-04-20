@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 
+* removed precision limitation in NIRT input parsing - Cliff Yapp
 * added new example geometry models: chess and die pieces - Jeff Sieu
 * fixed graphical mode initial page loading in brlman - Cliff Yapp
 * added 'bot_dump' command to MGED - Nick Reed
