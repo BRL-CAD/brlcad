@@ -28,6 +28,8 @@
  * they could break git log --follow
  */
 
+#include "pstream.h"
+#include <stdlib.h>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -45,10 +47,11 @@ int main(int argc, const char **argv)
     int node_path_filtered = 0;
     int rev_problem = 0;
 
-    if (argc == 1) {
-	std::cerr << "Error: need a file to work on!\n";
+    if (argc != 3) {
+	std::cerr << "svn_moved_and_edited <dumpfile> <repository_clone>\n";
 	return -1;
     }
+
     std::ifstream infile(argv[1]);
     std::string line;
     std::string node_path;
@@ -76,11 +79,11 @@ int main(int argc, const char **argv)
 		}
 		have_node_path = 1; is_move = 0; is_edit = 0; node_is_file = 0;
 		node_path = s.substr(11);
-		if (node_path.compare(0, 6, "brlcad") != 0) {
-		    node_path_filtered = 1;
-		} else {
+		//if (node_path.compare(0, 6, "brlcad") != 0) {
+		//    node_path_filtered = 1;
+		//} else {
 		    node_path_filtered = 0;
-		}
+		//}
 		//std::cout <<  "Node path: " << node_path << "\n";
 	    } else {
 		if (have_node_path && !node_path_filtered) {
@@ -101,7 +104,12 @@ int main(int argc, const char **argv)
     }
     std::set<int>::iterator iit;
     for (iit = problem_revs.begin(); iit != problem_revs.end(); iit++) {
-	std::cout << "Revision " << *iit << ":\n";
+	std::string logmsg;
+	std::string logcmd = "svn log -r" + std::to_string(*iit) + " --xml file://" + std::string(argv[2]) + " > msg.xml";
+	std::system(logcmd.c_str());
+	redi::ipstream proc("xsltproc svn_logmsg.xsl msg.xml", redi::pstreams::pstdout);
+	std::getline(proc.out(), logmsg);
+	std::cout << "Revision " << *iit << ": " << logmsg << "\n";
 	std::multimap<int, std::pair<std::string, std::string> >::iterator rmit;
 	std::pair<std::multimap<int, std::pair<std::string, std::string> >::iterator, std::multimap<int, std::pair<std::string, std::string> >::iterator> revrange;
 	revrange = revs_move_map.equal_range(*iit);
