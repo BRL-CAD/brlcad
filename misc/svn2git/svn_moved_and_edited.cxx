@@ -76,6 +76,10 @@ int main(int argc, const char **argv)
 	    }
 	}
     }
+    // If the newest commit satisfies the criteria, print it
+    if (is_move && is_edit) {
+	std::cout << rev << "\n";
+    }
 }
 
 // Local Variables:
