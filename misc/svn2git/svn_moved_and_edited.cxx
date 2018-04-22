@@ -37,7 +37,45 @@
 #include <set>
 #include <map>
 
-int main(int argc, const char **argv)
+void cvs_init()
+{
+    std::system("rm -rf brlcad_cvs");
+    std::system("tar -xf brlcad_cvs.tar.gz");
+    std::system("rm brlcad_cvs/brlcad/src/librt/Attic/parse.c,v");
+    std::system("rm brlcad_cvs/brlcad/pix/sphflake.pix,v");
+    std::system("cp repaired/sphflake.pix,v brlcad_cvs/brlcad/pix/");
+    // RCS headers introduce unnecessary file differences, and file differences
+    // can be poison pills for git log --follow
+    std::system("find brlcad_cvs/brlcad/ -type f -exec sed -i 's/$Date:[^$]*/$Date:/' {} \\;");
+    std::system("find brlcad_cvs/brlcad/ -type f -exec sed -i 's/$Header:[^$]*/$Header:/' {} \\;");
+    std::system("find brlcad_cvs/brlcad/ -type f -exec sed -i 's/$Id:[^$]*/$Id:/' {} \\;");
+    std::system("find brlcad_cvs/brlcad/ -type f -exec sed -i 's/$Log:[^$]*/$Log:/' {} \\;");
+    std::system("find brlcad_cvs/brlcad/ -type f -exec sed -i 's/$Revision:[^$]*/$Revision:/' {} \\;");
+    std::system("find brlcad_cvs/brlcad/ -type f -exec sed -i 's/$Source:[^$]*/$Source:/' {} \\;");
+    std::system("sed -i 's/$Author:[^$]*/$Author:/' brlcad_cvs/brlcad/misc/Attic/cvs2cl.pl,v");
+    std::system("sed -i 's/$Author:[^$]*/$Author:/' brlcad_cvs/brlcad/sh/Attic/cvs2cl.pl,v");
+    std::system("sed -i 's/$Locker:[^$]*/$Locker:/' brlcad_cvs/brlcad/src/other/URToolkit/tools/mallocNd.c,v");
+}
+
+void cvs_to_git()
+{
+    std::system("find brlcad_cvs/brlcad/ | cvs-fast-export -A authormap > brlcad_git.fi");
+    std::system("rm -rf brlcad_git");
+    std::system("mkdir brlcad_git");
+    chdir("brlcad_git");
+    std::system("git init");
+    std::system("cat ../brlcad_git.fi | git fast-import");
+    std::system("git checkout master");
+    // This repository has as its newest commit a "test acl" commit that doesn't
+    // appear in subversion - the newest master commit matching subversion corresponds
+    // to r29886.  To clear this commit and label the new head with its corresponding
+    // subversion revision, we do:
+    std::system("git reset --hard HEAD~1");
+    // Done
+    chdir("..");
+}
+
+void characterize_commits(const char *dfile, std::set<int> &problem_revs, std::multimap<int, std::pair<std::string, std::string> > &revs_move_map, std::set<int> &merge_commits)
 {
     int rev = -1;
     int is_move = 0;
@@ -45,19 +83,13 @@ int main(int argc, const char **argv)
     int node_is_file = 0;
     int have_node_path = 0;
     int node_path_filtered = 0;
+    int branch_commit = 0;
+    int merge_commit = 0;
     int rev_problem = 0;
-
-    if (argc != 3) {
-	std::cerr << "svn_moved_and_edited <dumpfile> <repository_clone>\n";
-	return -1;
-    }
-
-    std::ifstream infile(argv[1]);
+    std::ifstream infile(dfile);
     std::string line;
     std::string node_path;
     std::string node_copyfrom_path;
-    std::set<int> problem_revs;
-    std::multimap<int, std::pair<std::string, std::string> > revs_move_map;
     while (std::getline(infile, line))
     {
 	std::istringstream ss(line);
@@ -65,7 +97,7 @@ int main(int argc, const char **argv)
 	if (!s.compare(0, 16, "Revision-number:")) {
 	    // Grab new revision number
 	    rev = std::stoi(s.substr(17));
-	    have_node_path = 0; is_move = 0; is_edit = 0; node_is_file = 0;
+	    have_node_path = 0; is_move = 0; is_edit = 0; node_is_file = 0; merge_commit = 0;
 	}
 	if (rev >= 0) {
 	    // OK , now we have a revision - start looking for content
@@ -77,13 +109,25 @@ int main(int argc, const char **argv)
 		    revs_move_map.insert(mvmap);
 		    problem_revs.insert(rev);
 		}
+		if (merge_commit && branch_commit) {
+		    if (merge_commits.find(rev) == merge_commits.end()) {
+			merge_commits.insert(rev);
+		    }
+		}
 		have_node_path = 1; is_move = 0; is_edit = 0; node_is_file = 0;
+	       	merge_commit = 0; branch_commit = 0;
 		node_path = s.substr(11);
-		//if (node_path.compare(0, 6, "brlcad") != 0) {
-		//    node_path_filtered = 1;
-		//} else {
+		if (node_path.compare(0, 6, "brlcad") != 0) {
+		    node_path_filtered = 1;
+		} else {
 		    node_path_filtered = 0;
-		//}
+		    if (!node_path.compare(0, 15, "brlcad/branches")) {
+			branch_commit = 1;
+		    }
+		    if (!node_path.compare(0, 11, "brlcad/tags")) {
+			branch_commit = 1;
+		    }
+		}
 		//std::cout <<  "Node path: " << node_path << "\n";
 	    } else {
 		if (have_node_path && !node_path_filtered) {
@@ -99,17 +143,121 @@ int main(int argc, const char **argv)
 			node_is_file = 1;
 		    }
 		}
+		if (!merge_commit) {
+		    if (!s.compare(0, 13, "svn:mergeinfo")) {
+			merge_commit = 1;
+		    }
+		}
 	    }
 	}
     }
+}
+
+std::string
+revision_date(const char *repo, int rev)
+{
+    std::string datestr;
+    std::string datecmd = "svn propget --revprop -r " + std::to_string(rev) + " svn:date file://" + std::string(repo);
+    redi::ipstream proc(datecmd.c_str(), redi::pstreams::pstdout);
+    std::getline(proc.out(), datestr);
+    return datestr;
+}
+
+std::string
+revision_author(const char *repo, int rev)
+{
+    std::string authorstr;
+    std::string authorcmd = "svn propget --revprop -r " + std::to_string(rev) + " svn:author file://" + std::string(repo);
+    redi::ipstream proc(authorcmd.c_str(), redi::pstreams::pstdout);
+    std::getline(proc.out(), authorstr);
+    return authorstr;
+}
+
+// Provides both in-memory and in-msg.txt-file versions of log msg, for both
+// in memory processing and git add -F msg.txt support.
+std::string
+revision_log_msg(const char *repo, int rev)
+{
+    std::string logmsg;
+    std::string logcmd = "svn log -r" + std::to_string(rev) + " --xml file://" + std::string(repo) + " > msg.xml";
+    std::system(logcmd.c_str());
+    std::system("xsltproc svn_logmsg.xsl msg.xml > msg.txt");
+    std::ifstream mstream("msg.txt");
+    std::stringstream mbuffer;
+    mbuffer << mstream.rdbuf();
+    logmsg = mbuffer.str();
+    return logmsg;
+}
+
+void
+revision_diff(const char *repo, int rev)
+{
+    std::string diffcmd = "svn diff -c" + std::to_string(rev) + " > svn.diff";
+    std::system(diffcmd.c_str());
+    //TODO - characterize branch from diff, checkout (or make) correct branch, format
+    //diff appropriately for local application.  Need to detect and handle multi-branch commits
+    //somehow, if they occur...
+    //
+    //TODO - detect and handle merge commits...
+}
+
+int
+apply_rev(const char *repo, int rev)
+{
+    int orev = rev - 1;
+    revision_diff(repo, rev);
+    std::system("patch -f --remove-empty-files -p0 < svn.diff");
+    std::system("rm svn.diff");
+    std::system("git add -A");
+    revision_log_msg(repo, rev);
+    std::system("git commit -F msg.txt");
+    std::system("rm msg.xml");
+    std::system("rm msg.txt");
+}
+
+int
+apply_split_rev(const char *repo, int rev)
+{
+    int orev = rev - 1;
+    revision_diff(repo, rev);
+    std::system("patch -p0 < svn.diff");
+    std::system("rm svn.diff");
+    std::system("git add -A");
+    revision_log_msg(repo, rev);
+    std::system("git commit -F msg.txt");
+    std::system("rm msg.xml");
+    std::system("rm msg.txt");
+}
+
+
+
+int main(int argc, const char **argv)
+{
+    int start_svn_rev = 29886;
+    std::set<int> merge_commits;
+    std::set<int> problem_revs;
+    std::multimap<int, std::pair<std::string, std::string> > revs_move_map;
+
+    if (argc != 3) {
+	std::cerr << "svn_moved_and_edited <dumpfile> <repository_clone>\n";
+	return -1;
+    }
+
+    // We begin by processing the CVS repository for commits through r29886
+    //cvs_init();
+    //cvs_to_git();
+
+    // Commits in SVN that both moved and edited files are problematic for
+    // git log --follow, and merge commits to branches need particular handling
+    // - find out which ones they are
+    characterize_commits(argv[1], problem_revs, revs_move_map, merge_commits);
     std::set<int>::iterator iit;
+    for (iit = merge_commits.begin(); iit != merge_commits.end(); iit++) {
+	std::string logmsg = revision_log_msg(argv[2], *iit);
+	std::cout << "Merge commit " << *iit << ": " << logmsg << "\n";
+    }
+#if 0
     for (iit = problem_revs.begin(); iit != problem_revs.end(); iit++) {
-	std::string logmsg;
-	std::string logcmd = "svn log -r" + std::to_string(*iit) + " --xml file://" + std::string(argv[2]) + " > msg.xml";
-	std::system(logcmd.c_str());
-	redi::ipstream proc("xsltproc svn_logmsg.xsl msg.xml", redi::pstreams::pstdout);
-	std::getline(proc.out(), logmsg);
-	std::cout << "Revision " << *iit << ": " << logmsg << "\n";
 	std::multimap<int, std::pair<std::string, std::string> >::iterator rmit;
 	std::pair<std::multimap<int, std::pair<std::string, std::string> >::iterator, std::multimap<int, std::pair<std::string, std::string> >::iterator> revrange;
 	revrange = revs_move_map.equal_range(*iit);
@@ -117,6 +265,7 @@ int main(int argc, const char **argv)
 	    std::cout << "  " << rmit->second.first << " -> " << rmit->second.second << "\n";
 	}
     }
+#endif
 }
 
 // Local Variables:
