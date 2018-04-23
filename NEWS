@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 
+* changed remrt/rtsrv to no longer report overlaps - Sean Morrison
 * fixed geometry directory building bug in remrt/rtsrv - Sean Morrison
 * fixed gcv problem with full paths on Windows - Cliff Yapp
 * removed precision limitation in NIRT input parsing - Cliff Yapp
