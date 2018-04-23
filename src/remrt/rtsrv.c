@@ -298,6 +298,9 @@ main(int argc, char **argv)
     RT_APPLICATION_INIT(&APP);
     application_init();
 
+    /* excessive overlap reporting can saturate remrt */
+    APP.a_logoverlap = rt_silent_logoverlap;
+
     BU_LIST_INIT(&WorkHead);
 
     for (;;) {
