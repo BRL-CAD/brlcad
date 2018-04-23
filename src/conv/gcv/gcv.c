@@ -492,6 +492,8 @@ main(int ac, const char **av)
 	BU_OPT_DESC_NULL
     };
 
+    bu_setprogname(argv[0]);
+
     gcv_fmt_opts_init(&in_only_opts, gcv_opt_desc);
     gcv_fmt_opts_init(&out_only_opts, gcv_opt_desc);
     gcv_fmt_opts_init(&both_opts, gcv_opt_desc);
