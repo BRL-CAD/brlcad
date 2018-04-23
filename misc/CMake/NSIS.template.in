@@ -33,7 +33,7 @@ RequestExecutionLevel user
   !include "MUI.nsh"
 
   ;Default installation folder
-  InstallDir "@CPACK_NSIS_INSTALL_ROOT@\@CPACK_PACKAGE_INSTALL_DIRECTORY@"
+  InstallDir "@CPACK_NSIS_INSTALL_ROOT@\@CMAKE_NSIS_INSTALL_DIRECTORY@"
 
 ;--------------------------------
 ;General
@@ -986,14 +986,14 @@ inst:
   ; install directory that is expected to be the
   ; default
   StrCpy $IS_DEFAULT_INSTALLDIR 0
-  StrCmp "$INSTDIR" "@CPACK_NSIS_INSTALL_ROOT@\@CPACK_PACKAGE_INSTALL_DIRECTORY@" 0 +2
+  StrCmp "$INSTDIR" "@CPACK_NSIS_INSTALL_ROOT@\@CMAKE_NSIS_INSTALL_DIRECTORY@" 0 +2
     StrCpy $IS_DEFAULT_INSTALLDIR 1
 
   StrCpy $SV_ALLUSERS "JustMe"
   ; if default install dir then change the default
   ; if it is installed for JustMe
   StrCmp "$IS_DEFAULT_INSTALLDIR" "1" 0 +2
-    StrCpy $INSTDIR "$DOCUMENTS\@CPACK_PACKAGE_INSTALL_DIRECTORY@"
+    StrCpy $INSTDIR "$DOCUMENTS\@CMAKE_NSIS_INSTALL_DIRECTORY@"
 
   ClearErrors
   UserInfo::GetName
@@ -1019,7 +1019,7 @@ inst:
   done:
   StrCmp $SV_ALLUSERS "AllUsers" 0 +3
     StrCmp "$IS_DEFAULT_INSTALLDIR" "1" 0 +2
-      StrCpy $INSTDIR "@CPACK_NSIS_INSTALL_ROOT@\@CPACK_PACKAGE_INSTALL_DIRECTORY@"
+      StrCpy $INSTDIR "@CPACK_NSIS_INSTALL_ROOT@\@CMAKE_NSIS_INSTALL_DIRECTORY@"
 
   StrCmp "@CPACK_NSIS_MODIFY_PATH@" "ON" 0 noOptionsPage
     !insertmacro MUI_INSTALLOPTIONS_EXTRACT "NSIS.InstallOptions.ini"
