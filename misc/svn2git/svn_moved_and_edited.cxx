@@ -75,6 +75,15 @@ void cvs_to_git()
     chdir("..");
 }
 
+int
+path_is_branch(std::string path)
+{
+    if (path.length() <= 15 || path.compare(0, 15, "brlcad/branches")) return 0;
+    std::string spath = path.substr(16);
+    size_t slashpos = spath.find_first_of('/');
+    return (slashpos == std::string::npos) ? 1 : 0;
+}
+
 void characterize_commits(const char *dfile, std::set<int> &problem_revs, std::multimap<int, std::pair<std::string, std::string> > &revs_move_map, std::set<int> &merge_commits)
 {
     int rev = -1;
@@ -86,6 +95,7 @@ void characterize_commits(const char *dfile, std::set<int> &problem_revs, std::m
     int branch_commit = 0;
     int merge_commit = 0;
     int rev_problem = 0;
+    int have_delete = 0;
     std::ifstream infile(dfile);
     std::string line;
     std::string node_path;
@@ -98,6 +108,7 @@ void characterize_commits(const char *dfile, std::set<int> &problem_revs, std::m
 	    // Grab new revision number
 	    rev = std::stoi(s.substr(17));
 	    have_node_path = 0; is_move = 0; is_edit = 0; node_is_file = 0; merge_commit = 0;
+	    have_delete = 0;
 	}
 	if (rev >= 0) {
 	    // OK , now we have a revision - start looking for content
@@ -114,8 +125,11 @@ void characterize_commits(const char *dfile, std::set<int> &problem_revs, std::m
 			merge_commits.insert(rev);
 		    }
 		}
+		if (path_is_branch(node_path) && have_delete) {
+		    std::cout << "Branch delete " << rev << ": " << node_path << "\n";
+		}
 		have_node_path = 1; is_move = 0; is_edit = 0; node_is_file = 0;
-	       	merge_commit = 0; branch_commit = 0;
+	       	merge_commit = 0; branch_commit = 0; have_delete = 0;
 		node_path = s.substr(11);
 		if (node_path.compare(0, 6, "brlcad") != 0) {
 		    node_path_filtered = 1;
@@ -141,6 +155,9 @@ void characterize_commits(const char *dfile, std::set<int> &problem_revs, std::m
 		    }
 		    if (!s.compare(0, 15, "Node-kind: file")) {
 			node_is_file = 1;
+		    }
+		    if (!s.compare(0, 19, "Node-action: delete")) {
+			have_delete = 1;
 		    }
 		}
 		if (!merge_commit) {
