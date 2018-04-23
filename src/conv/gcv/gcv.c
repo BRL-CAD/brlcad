@@ -207,7 +207,10 @@ extract_format_prefix(struct bu_vls *format, const char *input)
 	int ret = 0;
 	bu_vls_sprintf(&wformat, "%s", input);
 	bu_vls_trunc(&wformat, -1 * strlen(colon_pos));
-	if (bu_vls_strlen(&wformat) > 0) {
+	/* Note: because Windows supports drive letters in the form {drive}: in
+	 * paths, we can't use single characters as format specifiers for the
+	 * {format}: prefix - they must be multi-character. */
+	if (bu_vls_strlen(&wformat) > 1) {
 	    ret = 1;
 	    if (format) bu_vls_sprintf(format, "%s", bu_vls_addr(&wformat));
 	}

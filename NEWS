@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed gcv problem with full paths on Windows - Cliff Yapp
 * removed precision limitation in NIRT input parsing - Cliff Yapp
 * added new example geometry models: chess and die pieces - Jeff Sieu
 * fixed graphical mode initial page loading in brlman - Cliff Yapp
