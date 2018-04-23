@@ -19,7 +19,7 @@
  */
 /** @file rtsrv.c
  *
- *  Remote Ray Tracing service program, using RT library.
+ * Remote Ray Tracing service program, using RT library.
  *
  */
 
@@ -61,71 +61,73 @@
 #include "./protocol.h"
 
 
-struct bu_list	WorkHead;
+struct bu_list WorkHead;
 
 struct pkg_queue {
-    struct bu_list	l;
-    unsigned short	type;
-    char		*buf;
+    struct bu_list l;
+    unsigned short type;
+    char *buf;
 };
+
 
 /***** Variables shared with viewing model *** */
 fb *fbp = FB_NULL;	/* Framebuffer handle */
-FILE *outfp = NULL;		/* optional pixel output file */
+FILE *outfp = NULL;	/* optional pixel output file */
 mat_t view2model;
 mat_t model2view;
-int srv_startpix;		/* offset for view_pixel */
+int srv_startpix;	/* offset for view_pixel */
 int srv_scanlen = REMRT_MAX_PIXELS;	/* max assignment */
 unsigned char *scanbuf;
 /***** end of sharing with viewing model *****/
 
 extern void grid_setup();
 extern void worker();
+extern void application_init(void);
 
 /***** variables shared with worker() ******/
 struct application APP;
-vect_t		left_eye_delta;
-int		report_progress;	/* !0 = user wants progress report */
+vect_t left_eye_delta;
+int report_progress;	/* !0 = user wants progress report */
 /***** end variables shared with worker() *****/
 
 /* Variables shared elsewhere */
-extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
-extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
-extern int	rdebug;			/* RT program debugging (not library) */
-extern int	rt_verbosity;		/* from liboptical */
-static char idbuf[132];			/* First ID record info */
+extern fastf_t rt_dist_tol;	/* Value for rti_tol.dist */
+extern fastf_t rt_perp_tol;	/* Value for rti_tol.perp */
+extern int rdebug;		/* RT program debugging (not library) */
+extern int rt_verbosity;	/* from liboptical */
+static char idbuf[132];		/* First ID record info */
 
 /* State flags */
-static int	seen_dirbuild;
-static int	seen_gettrees;
-static int	seen_matrix;
+static int seen_dirbuild;
+static int seen_gettrees;
+static int seen_matrix;
 
 static char *title_file, *title_obj;	/* name of file and first object */
 
-#define MAX_WIDTH	(16*1024)
+#define MAX_WIDTH (16*1024)
 
-static int	avail_cpus;		/* # of cpus avail on this system */
+static int avail_cpus;		/* # of cpus avail on this system */
 
-int	save_overlaps=0;
+int save_overlaps=0;
 
 struct icv_image *bif = NULL;
 
 /*
  * Package Handlers.
  */
-void	ph_unexp(struct pkg_conn *pc, char *buf);	/* foobar message handler */
-void	ph_enqueue(struct pkg_conn *pc, char *buf);	/* Adds message to linked list */
-void	ph_dirbuild(struct pkg_conn *pc, char *buf);
-void	ph_gettrees(struct pkg_conn *pc, char *buf);
-void	ph_matrix(struct pkg_conn *pc, char *buf);
-void	ph_options(struct pkg_conn *pc, char *buf);
-void	ph_lines(struct pkg_conn *pc, char *buf);
-void	ph_end(struct pkg_conn *pc, char *buf);
-void	ph_restart(struct pkg_conn *pc, char *buf);
-void	ph_loglvl(struct pkg_conn *pc, char *buf);
-void	ph_cd(struct pkg_conn *pc, char *buf);
+void ph_unexp(struct pkg_conn *pc, char *buf);		/* foobar message handler */
+void ph_enqueue(struct pkg_conn *pc, char *buf);	/* Adds message to linked list */
+void ph_dirbuild(struct pkg_conn *pc, char *buf);
+void ph_gettrees(struct pkg_conn *pc, char *buf);
+void ph_matrix(struct pkg_conn *pc, char *buf);
+void ph_options(struct pkg_conn *pc, char *buf);
+void ph_lines(struct pkg_conn *pc, char *buf);
+void ph_end(struct pkg_conn *pc, char *buf);
+void ph_restart(struct pkg_conn *pc, char *buf);
+void ph_loglvl(struct pkg_conn *pc, char *buf);
+void ph_cd(struct pkg_conn *pc, char *buf);
 
-void	prepare(void);
+void prepare(void);
 
 struct pkg_switch pkgswitch[] = {
     { MSG_DIRBUILD,	ph_dirbuild,	"DirBuild", NULL },
@@ -141,10 +143,10 @@ struct pkg_switch pkgswitch[] = {
     { 0,		0,		NULL, NULL }
 };
 
-struct pkg_conn *pcsrv;		/* PKG connection to server */
-char		*control_host;	/* name of host running controller */
-char		*tcp_port;	/* TCP port on control_host */
 
+struct pkg_conn *pcsrv;	/* PKG connection to server */
+char *control_host;	/* name of host running controller */
+char *tcp_port;		/* TCP port on control_host */
 int debug = 0;		/* 0=off, 1=debug, 2=verbose */
 
 char srv_usage[] = "Usage: rtsrv [-d] control-host tcp-port [cmd]\n";
@@ -152,19 +154,19 @@ char srv_usage[] = "Usage: rtsrv [-d] control-host tcp-port [cmd]\n";
 int
 main(int argc, char **argv)
 {
-    int	n;
+    int n;
 
-    if (argc < 2)  {
+    if (argc < 2) {
 	fprintf(stderr, "%s", srv_usage);
 	return 1;
     }
-    while (argv[1][0] == '-')  {
-	if (BU_STR_EQUAL(argv[1], "-d"))  {
+    while (argv[1][0] == '-') {
+	if (BU_STR_EQUAL(argv[1], "-d")) {
 	    debug++;
-	} else if (BU_STR_EQUAL(argv[1], "-x"))  {
+	} else if (BU_STR_EQUAL(argv[1], "-x")) {
 	    sscanf(argv[2], "%x", (unsigned int *)&RTG.debug);
 	    argc--; argv++;
-	} else if (BU_STR_EQUAL(argv[1], "-X"))  {
+	} else if (BU_STR_EQUAL(argv[1], "-X")) {
 	    sscanf(argv[2], "%x", (unsigned int *)&rdebug);
 	    argc--; argv++;
 	} else {
@@ -173,7 +175,7 @@ main(int argc, char **argv)
 	}
 	argc--; argv++;
     }
-    if (argc != 3 && argc != 4)  {
+    if (argc != 3 && argc != 4) {
 	fprintf(stderr, "%s", srv_usage);
 	return 2;
     }
@@ -185,17 +187,17 @@ main(int argc, char **argv)
      * "bu_log", as that can cause bu_log to be entered recursively.
      * Given the special version of bu_log in use here,
      * that will result in a deadlock in bu_semaphore_acquire(res_syscall)!
-     *  libpkg will default to stderr via pkg_errlog(), which is fine.
+     * libpkg will default to stderr via pkg_errlog(), which is fine.
      */
     pcsrv = pkg_open(control_host, tcp_port, "tcp", "", "",
-		      pkgswitch, NULL);
-    if (pcsrv == PKC_ERROR)  {
+		     pkgswitch, NULL);
+    if (pcsrv == PKC_ERROR) {
 	fprintf(stderr, "rtsrv: unable to contact %s, port %s\n",
 		control_host, tcp_port);
 	return 1;
     }
 
-    if (argc == 4)  {
+    if (argc == 4) {
 	/* Slip one command to dispatcher */
 	(void)pkg_send(MSG_CMD, argv[3], strlen(argv[3])+1, pcsrv);
 
@@ -213,11 +215,12 @@ main(int argc, char **argv)
     {
 	int val = 32767;
 	n = setsockopt(pcsrv->pkc_fd, SOL_SOCKET, SO_SNDBUF, (const void *)&val, sizeof(val));
-	if (n < 0)  perror("setsockopt: SO_SNDBUF");
+	if (n < 0)
+	    perror("setsockopt: SO_SNDBUF");
     }
 #endif
 
-    if (!debug)  {
+    if (!debug) {
 	/* A fresh process */
 	if (fork())
 	    return 0;
@@ -266,39 +269,44 @@ main(int argc, char **argv)
     }
 
     /* Send our version string */
-    if (pkg_send(MSG_VERSION,
-		   PROTOCOL_VERSION, strlen(PROTOCOL_VERSION)+1, pcsrv) < 0)  {
+    if (pkg_send(MSG_VERSION, PROTOCOL_VERSION, strlen(PROTOCOL_VERSION)+1, pcsrv) < 0) {
 	fprintf(stderr, "pkg_send MSG_VERSION error\n");
 	return 1;
     }
-    if (debug)  fprintf(stderr, "PROTOCOL_VERSION='%s'\n", PROTOCOL_VERSION);
+    if (debug)
+	fprintf(stderr, "PROTOCOL_VERSION='%s'\n", PROTOCOL_VERSION);
 
     /*
-     *  Now that the fork() has been done, it is safe to initialize
-     *  the parallel processing support.
+     * Now that the fork() has been done, it is safe to initialize
+     * the parallel processing support.
      */
 
     avail_cpus = bu_avail_cpus();
 
     /* Need to set rtg_parallel non_zero here for RES_INIT to work */
     npsw = avail_cpus;
-    if (npsw > 1)  {
+    if (npsw > 1) {
 	RTG.rtg_parallel = 1;
-    } else
+    } else {
 	RTG.rtg_parallel = 0;
+    }
 
     bu_log("using %d of %d cpus\n",
 	   npsw, avail_cpus);
 
+    /* Before option processing, do application-specific initialization */
+    RT_APPLICATION_INIT(&APP);
+    application_init();
+
     BU_LIST_INIT(&WorkHead);
 
-    for (;;)  {
-	struct pkg_queue	*lp;
+    for (;;) {
+	struct pkg_queue *lp;
 	fd_set ifds;
 	struct timeval tv;
 
 	/* First, process any packages in library buffers */
-	if (pkg_process(pcsrv) < 0)  {
+	if (pkg_process(pcsrv) < 0) {
 	    bu_log("pkg_get error\n");
 	    break;
 	}
@@ -310,12 +318,12 @@ main(int argc, char **argv)
 	tv.tv_usec = 0L;
 
 	if (select(pcsrv->pkc_fd+1, &ifds, (fd_set *)0, (fd_set *)0,
-		    &tv) != 0)  {
+		   &tv) != 0) {
 	    n = pkg_suckin(pcsrv);
-	    if (n < 0)  {
+	    if (n < 0) {
 		bu_log("pkg_suckin error\n");
 		break;
-	    } else if (n == 0)  {
+	    } else if (n == 0) {
 		/* EOF detected */
 		break;
 	    } else {
@@ -324,16 +332,16 @@ main(int argc, char **argv)
 	}
 
 	/* Third, process any new packages in library buffers */
-	if (pkg_process(pcsrv) < 0)  {
+	if (pkg_process(pcsrv) < 0) {
 	    bu_log("pkg_get error\n");
 	    break;
 	}
 
 	/* Finally, more work may have just arrived, check our list */
-	if (BU_LIST_NON_EMPTY(&WorkHead))  {
+	if (BU_LIST_NON_EMPTY(&WorkHead)) {
 	    lp = BU_LIST_FIRST(pkg_queue, &WorkHead);
 	    BU_LIST_DEQUEUE(&lp->l);
-	    switch (lp->type)  {
+	    switch (lp->type) {
 		case MSG_MATRIX:
 		    ph_matrix((struct pkg_conn *)0, lp->buf);
 		    break;
@@ -357,18 +365,20 @@ main(int argc, char **argv)
     return 0;		/* bu_exit(0, NULL) */
 }
 
+
 /*
- *  Generic routine to add a newly arrived PKG to a linked list,
- *  for later processing.
- *  Note that the buffer will be freed when the list element is processed.
- *  Presently used for MATRIX and LINES messages.
+ * Generic routine to add a newly arrived PKG to a linked list, for
+ * later processing.  Note that the buffer will be freed when the list
+ * element is processed.  Presently used for MATRIX and LINES
+ * messages.
  */
 void
 ph_enqueue(struct pkg_conn *pc, char *buf)
 {
-    struct pkg_queue	*lp;
+    struct pkg_queue *lp;
 
-    if (debug)  fprintf(stderr, "ph_enqueue: %s\n", buf);
+    if (debug)
+	fprintf(stderr, "ph_enqueue: %s\n", buf);
 
     BU_GET(lp, struct pkg_queue);
     lp->type = pc->pkc_type;
@@ -376,20 +386,24 @@ ph_enqueue(struct pkg_conn *pc, char *buf)
     BU_LIST_INSERT(&WorkHead, &lp->l);
 }
 
+
 void
 ph_cd(struct pkg_conn *UNUSED(pc), char *buf)
 {
-    if (debug)fprintf(stderr, "ph_cd %s\n", buf);
+    if (debug)
+	fprintf(stderr, "ph_cd %s\n", buf);
     if (chdir(buf) < 0)
 	bu_exit(1, "ph_cd: chdir(%s) failure\n", buf);
     (void)free(buf);
 }
 
+
 void
 ph_restart(struct pkg_conn *UNUSED(pc), char *buf)
 {
 
-    if (debug)fprintf(stderr, "ph_restart %s\n", buf);
+    if (debug)
+	fprintf(stderr, "ph_restart %s\n", buf);
     bu_log("Restarting\n");
     pkg_close(pcsrv);
     execlp("rtsrv", "rtsrv", control_host, tcp_port, (char *)0);
@@ -397,8 +411,9 @@ ph_restart(struct pkg_conn *UNUSED(pc), char *buf)
     bu_exit(1, NULL);
 }
 
+
 /*
- *  The only argument is the name of the database file.
+ * The only argument is the name of the database file.
  */
 void
 ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
@@ -408,20 +423,21 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
     struct rt_i *rtip = NULL;
     size_t n = 0;
 
-    if (debug)  fprintf(stderr, "ph_dirbuild: %s\n", buf);
+    if (debug)
+	fprintf(stderr, "ph_dirbuild: %s\n", buf);
 
     /* assume maximal delimiter chars */
     max_argc = (strlen(buf) / 2) + 1;
     argv = (char **)bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
 
-    if ((bu_argv_from_string(argv, max_argc, buf)) <= 0)  {
+    if ((bu_argv_from_string(argv, max_argc, buf)) <= 0) {
 	/* No words in input */
 	(void)free(buf);
 	bu_free(argv, "free argv");
 	return;
     }
 
-    if (seen_dirbuild)  {
+    if (seen_dirbuild) {
 	bu_log("ph_dirbuild:  MSG_DIRBUILD already seen, ignored\n");
 	(void)free(buf);
 	bu_free(argv, "free argv");
@@ -438,41 +454,42 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
     seen_dirbuild = 1;
 
     /*
-     *  Initialize all the per-CPU memory resources.
-     *  Go for the max, as TCL interface may change npsw as we run.
+     * Initialize all the per-CPU memory resources.  Go for the max,
+     * as TCL interface may change npsw as we run.
      */
     memset(resource, 0, sizeof(resource));
-    for (n=0; n < MAX_PSW; n++)  {
+    for (n=0; n < MAX_PSW; n++) {
 	rt_init_resource(&resource[n], n, rtip);
     }
 
-    if (pkg_send(MSG_DIRBUILD_REPLY,
-		   idbuf, strlen(idbuf)+1, pcsrv) < 0)
+    if (pkg_send(MSG_DIRBUILD_REPLY, idbuf, strlen(idbuf)+1, pcsrv) < 0)
 	fprintf(stderr, "MSG_DIRBUILD_REPLY error\n");
 }
 
+
 /*
- *  Each word in the command buffer is the name of a treetop.
+ * Each word in the command buffer is the name of a treetop.
  */
 void
 ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 {
     long max_argc = 0;
     char **argv = NULL;
-    int	argc = 0;
+    int argc = 0;
     struct rt_i *rtip = APP.a_rt_i;
 
     RT_CK_RTI(rtip);
 
-    if (debug)  fprintf(stderr, "ph_gettrees: %s\n", buf);
+    if (debug)
+	fprintf(stderr, "ph_gettrees: %s\n", buf);
 
     /* Copy values from command line options into rtip */
     rtip->useair = use_air;
-    if (rt_dist_tol > 0)  {
+    if (rt_dist_tol > 0) {
 	rtip->rti_tol.dist = rt_dist_tol;
 	rtip->rti_tol.dist_sq = rt_dist_tol * rt_dist_tol;
     }
-    if (rt_perp_tol > 0)  {
+    if (rt_perp_tol > 0) {
 	rtip->rti_tol.perp = rt_perp_tol;
 	rtip->rti_tol.para = 1 - rt_perp_tol;
     }
@@ -481,7 +498,7 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
     max_argc = (strlen(buf) / 2) + 1;
     argv = (char **)bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
 
-    if ((argc = bu_argv_from_string(argv, max_argc, buf)) <= 0)  {
+    if ((argc = bu_argv_from_string(argv, max_argc, buf)) <= 0) {
 	/* No words in input */
 	(void)free(buf);
 	bu_free(argv, "free argv");
@@ -489,7 +506,7 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
     }
     title_obj = bu_strdup(argv[0]);
 
-    if (rtip->needprep == 0)  {
+    if (rtip->needprep == 0) {
 	/* First clean up after the end of the previous frame */
 	if (debug)bu_log("Cleaning previous model\n");
 	view_end(&APP);
@@ -505,7 +522,7 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
     bu_free(argv, "free argv");
 
     /* In case it changed from startup time via an OPT command */
-    if (npsw > 1)  {
+    if (npsw > 1) {
 	RTG.rtg_parallel = 1;
     } else
 	RTG.rtg_parallel = 0;
@@ -516,18 +533,18 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
     prepare();
 
     /* Acknowledge that we are ready */
-    if (pkg_send(MSG_GETTREES_REPLY,
-		   title_obj, strlen(title_obj)+1, pcsrv) < 0)
+    if (pkg_send(MSG_GETTREES_REPLY, title_obj, strlen(title_obj)+1, pcsrv) < 0)
 	fprintf(stderr, "MSG_START error\n");
 }
+
 
 void
 process_cmd(char *buf)
 {
-    char	*cp;
-    char	*sp;
-    char	*ep;
-    int		len;
+    char *cp;
+    char *sp;
+    char *ep;
+    int len;
     extern struct command_tab rt_cmdtab[];	/* from do.c */
 
     /* Parse the string */
@@ -535,23 +552,26 @@ process_cmd(char *buf)
     ep = buf+len;
     sp = buf;
     cp = buf;
-    while (sp < ep)  {
+    while (sp < ep) {
 	/* Find next semi-colon */
-	while (*cp && *cp != ';')  cp++;
+	while (*cp && *cp != ';') cp++;
 	*cp++ = '\0';
 	/* Process this command */
-	if (debug)  bu_log("process_cmd '%s'\n", sp);
+	if (debug)
+	    bu_log("process_cmd '%s'\n", sp);
 	if (rt_do_cmd(APP.a_rt_i, sp, rt_cmdtab) < 0)
 	    bu_exit(1, "process_cmd: error on '%s'\n", sp);
 	sp = cp;
     }
 }
 
+
 void
 ph_options(struct pkg_conn *UNUSED(pc), char *buf)
 {
 
-    if (debug)  fprintf(stderr, "ph_options: %s\n", buf);
+    if (debug)
+	fprintf(stderr, "ph_options: %s\n", buf);
 
     process_cmd(buf);
 
@@ -559,10 +579,10 @@ ph_options(struct pkg_conn *UNUSED(pc), char *buf)
     /* need to decouple parsing of user args from the npsw processor
      * thread count being used, which should be an unsigned/size_t
      * type. -- CSM */
-/*     if (npsw < 0)  { */
-/* 	/\* Negative number means "all but #" available *\/ */
-/* 	npsw = avail_cpus - npsw; */
-/*     } */
+/* if (npsw < 0) { */
+/* /\* Negative number means "all but #" available *\/ */
+/* npsw = avail_cpus - npsw; */
+/* } */
 
     /* basic bounds sanity */
     if (npsw > MAX_PSW)
@@ -575,6 +595,7 @@ ph_options(struct pkg_conn *UNUSED(pc), char *buf)
     (void)free(buf);
 }
 
+
 void
 ph_matrix(struct pkg_conn *UNUSED(pc), char *buf)
 {
@@ -584,7 +605,8 @@ ph_matrix(struct pkg_conn *UNUSED(pc), char *buf)
     RT_CK_RTI(rtip);
 #endif
 
-    if (debug)  fprintf(stderr, "ph_matrix: %s\n", buf);
+    if (debug)
+	fprintf(stderr, "ph_matrix: %s\n", buf);
 
     /* Start options in a known state */
     AmbientIntensity = 0.4;
@@ -608,6 +630,7 @@ ph_matrix(struct pkg_conn *UNUSED(pc), char *buf)
     seen_matrix = 1;
 }
 
+
 void
 prepare(void)
 {
@@ -615,7 +638,8 @@ prepare(void)
 
     RT_CK_RTI(rtip);
 
-    if (debug)  fprintf(stderr, "prepare()\n");
+    if (debug)
+	fprintf(stderr, "prepare()\n");
 
     /*
      * initialize application -- it will allocate 1 line and
@@ -643,28 +667,30 @@ prepare(void)
 
 }
 
+
 /*
- *  Process pixels from 'a' to 'b' inclusive.
- *  The results are sent back all at once.
- *  Limitation:  may not do more than 'width' pixels at once,
- *  because that is the size of the buffer (for now).
+ * Process pixels from 'a' to 'b' inclusive.  The results are sent
+ * back all at once.  Limitation: may not do more than 'width' pixels
+ * at once, because that is the size of the buffer (for now).
  */
 void
 ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
 {
-    int		a, b, fr;
-    struct line_info	info;
-    struct rt_i	*rtip = APP.a_rt_i;
-    struct	bu_external	ext;
+    int a, b, fr;
+    struct line_info info;
+    struct rt_i *rtip = APP.a_rt_i;
+    struct bu_external ext;
+    int ret;
 
     RT_CK_RTI(rtip);
 
-    if (debug > 1)  fprintf(stderr, "ph_lines: %s\n", buf);
-    if (!seen_gettrees)  {
+    if (debug > 1)
+	fprintf(stderr, "ph_lines: %s\n", buf);
+    if (!seen_gettrees) {
 	bu_log("ph_lines:  no MSG_GETTREES yet\n");
 	return;
     }
-    if (!seen_matrix)  {
+    if (!seen_matrix) {
 	bu_log("ph_lines:  no MSG_MATRIX yet\n");
 	return;
     }
@@ -676,7 +702,8 @@ ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
 	bu_exit(2, "ph_lines:  %s conversion error\n", buf);
 
     srv_startpix = a;		/* buffer un-offset for view_pixel */
-    if (b-a+1 > srv_scanlen)  b = a + srv_scanlen - 1;
+    if (b-a+1 > srv_scanlen)
+	b = a + srv_scanlen - 1;
 
     rtip->rti_nrays = 0;
     info.li_startpix = a;
@@ -692,13 +719,15 @@ ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
     if (!bu_struct_export(&ext, (void *)&info, desc_line_info))
 	bu_exit(98, "ph_lines: bu_struct_export failure\n");
 
-    if (debug)  {
+    if (debug) {
 	fprintf(stderr, "PIXELS fr=%d pix=%d..%d, rays=%d, cpu=%g\n",
 		info.li_frame,
 		info.li_startpix, info.li_endpix,
 		info.li_nrays, info.li_cpusec);
     }
-    if (pkg_2send(MSG_PIXELS, (const char *)ext.ext_buf, ext.ext_nbytes, (const char *)scanbuf, (b-a+1)*3, pcsrv) < 0)  {
+
+    ret = pkg_2send(MSG_PIXELS, (const char *)ext.ext_buf, ext.ext_nbytes, (const char *)scanbuf, (b-a+1)*3, pcsrv);
+    if (ret < 0) {
 	fprintf(stderr, "MSG_PIXELS send error\n");
 	bu_free_external(&ext);
     }
@@ -706,23 +735,29 @@ ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
     bu_free_external(&ext);
 }
 
+
 int print_on = 1;
 
 void
 ph_loglvl(struct pkg_conn *UNUSED(pc), char *buf)
 {
-    if (debug) fprintf(stderr, "ph_loglvl %s\n", buf);
+    if (debug)
+	fprintf(stderr, "ph_loglvl %s\n", buf);
+
     if (buf[0] == '0')
 	print_on = 0;
-    else	print_on = 1;
+    else
+	print_on = 1;
+
     (void)free(buf);
 }
 
+
 /**** Other replacement routines from libbu/log.c ****/
-int	bu_log_indent_cur_level = 0; /* formerly RTG.rtg_logindent */
+int bu_log_indent_cur_level = 0; /* formerly RTG.rtg_logindent */
 /*
- *  Change indentation level by indicated number of characters.
- *  Call with a large negative number to cancel all indentation.
+ * Change indent level by indicated number of characters.  Call with a
+ * large negative number to cancel all indentation.
  */
 void
 bu_log_indent_delta(int delta)
@@ -731,10 +766,11 @@ bu_log_indent_delta(int delta)
 	bu_log_indent_cur_level = 0;
 }
 
+
 /*
- *  For multi-line vls generators, honor logindent level like bu_log() does,
- *  and prefix the proper number of spaces.
- *  Should be called at the front of each new line.
+ * For multi-line vls generators, honor logindent level like bu_log()
+ * does, and prefix the proper number of spaces.  Should be called at
+ * the front of each new line.
  */
 void
 bu_log_indent_vls(struct bu_vls *v)
@@ -744,31 +780,38 @@ bu_log_indent_vls(struct bu_vls *v)
 
 
 /*
- *  Log an error.
- *  This version buffers a full line, to save network traffic.
+ * Log an error.  This version buffers a full line, to save network
+ * traffic.
  */
 void
 bu_log(const char *fmt, ...)
 {
     va_list vap;
     char buf[512];		/* a generous output line.  Must be AUTO, else non-PARALLEL. */
+    int ret;
 
-    if (print_on == 0)  return;
+    if (print_on == 0)
+	return;
+
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     va_start(vap, fmt);
     (void)vsprintf(buf, fmt, vap);
     va_end(vap);
 
-    if (pcsrv == PKC_NULL || pcsrv == PKC_ERROR)  {
+    if (pcsrv == PKC_NULL || pcsrv == PKC_ERROR) {
 	fprintf(stderr, "%s", buf);
 	goto out;
     }
-    if (debug) fprintf(stderr, "%s", buf);
-    if (pkg_send(MSG_PRINT, buf, strlen(buf)+1, pcsrv) < 0)  {
+
+    if (debug)
+	fprintf(stderr, "%s", buf);
+
+    ret = pkg_send(MSG_PRINT, buf, strlen(buf)+1, pcsrv);
+    if (ret < 0) {
 	fprintf(stderr, "pkg_send MSG_PRINT failed\n");
 	bu_exit(12, NULL);
     }
- out:
+out:
     bu_semaphore_release(BU_SEM_SYSCALL);
 }
 
@@ -780,16 +823,21 @@ bu_log(const char *fmt, ...)
 void
 bu_bomb(const char *str)
 {
-    char	*bomb = "RTSRV terminated by bu_bomb()\n";
+    char *bomb = "RTSRV terminated by bu_bomb()\n";
+    int ret;
 
-    if (pkg_send(MSG_PRINT, (char *)str, strlen(str)+1, pcsrv) < 0)  {
+    ret = pkg_send(MSG_PRINT, (char *)str, strlen(str)+1, pcsrv);
+    if (ret < 0) {
 	fprintf(stderr, "bu_bomb MSG_PRINT failed\n");
     }
-    if (pkg_send(MSG_PRINT, bomb, strlen(bomb)+1, pcsrv) < 0)  {
+
+    ret = pkg_send(MSG_PRINT, bomb, strlen(bomb)+1, pcsrv);
+    if (ret < 0) {
 	fprintf(stderr, "bu_bomb MSG_PRINT failed\n");
     }
 
-    if (debug)  fprintf(stderr, "\n%s\n", str);
+    if (debug)
+	fprintf(stderr, "\n%s\n", str);
     fflush(stderr);
 
     bu_exit(12, NULL);
@@ -801,10 +849,12 @@ ph_unexp(struct pkg_conn *pc, char *buf)
 {
     int i;
 
-    if (debug) fprintf(stderr, "ph_unexp %s\n", buf);
+    if (debug)
+	fprintf(stderr, "ph_unexp %s\n", buf);
 
-    for (i=0; pc->pkc_switch[i].pks_handler != NULL; i++)  {
-	if (pc->pkc_switch[i].pks_type == pc->pkc_type)  break;
+    for (i=0; pc->pkc_switch[i].pks_handler != NULL; i++) {
+	if (pc->pkc_switch[i].pks_type == pc->pkc_type)
+	    break;
     }
     bu_log("ph_unexp: unable to handle %s message: len %zu",
 	   pc->pkc_switch[i].pks_title, pc->pkc_len);
@@ -816,7 +866,9 @@ ph_unexp(struct pkg_conn *pc, char *buf)
 void
 ph_end(struct pkg_conn *UNUSED(pc), char *UNUSED(buf))
 {
-    if (debug)  fprintf(stderr, "ph_end\n");
+    if (debug)
+	fprintf(stderr, "ph_end\n");
+
     pkg_close(pcsrv);
     bu_exit(0, NULL);
 }
@@ -835,6 +887,7 @@ void
 memory_summary(void)
 {
 }
+
 
 /*
  * Local Variables:

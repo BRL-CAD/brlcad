@@ -88,8 +88,6 @@ extern int gettimeofday(struct timeval *, void *);
 #include "brlcad_ident.h"
 
 
-
-
 #ifndef HAVE_VFORK
 #  ifdef HAVE_FORK
 #    define vfork fork
@@ -741,7 +739,7 @@ static double
 tvdiff(struct timeval *t1, struct timeval *t0)
 {
     return ((t1->tv_sec - t0->tv_sec) +
-	   (t1->tv_usec - t0->tv_usec) / 1000000.);
+	    (t1->tv_usec - t0->tv_usec) / 1000000.);
 }
 
 
