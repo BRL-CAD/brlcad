@@ -3205,6 +3205,8 @@ _nirt_cmd_librt_debug(void *ns, int argc, const char **argv)
     if ((ret = bu_opt_long_hex(&msg, 1, argv, (void *)&dflg)) == -1) {
 	nerr(nss, "%s\n", bu_vls_addr(&msg));
 	goto librt_nirt_debug_done;
+    } else {
+	ret = 0;
     }
 
     if (dflg < 0 || dflg > (long)UINT32_MAX) {
@@ -3247,6 +3249,8 @@ _nirt_cmd_debug(void *ns, int argc, const char **argv)
     if ((ret = bu_opt_long_hex(&msg, 1, argv, (void *)&dflg)) == -1) {
 	nerr(nss, "%s\n", bu_vls_addr(&msg));
 	goto nirt_debug_done;
+    } else {
+	ret = 0;
     }
 
     if (dflg < 0) {
