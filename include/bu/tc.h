@@ -98,11 +98,8 @@ BU_EXPORT extern void bu_cnd_destroy(bu_cnd_t *cond);
 BU_EXPORT extern int bu_cnd_wait(bu_cnd_t *cond, bu_mtx_t *mtx);
 BU_EXPORT extern int bu_cnd_broadcast(bu_cnd_t *cond);
 BU_EXPORT extern int bu_cnd_signal(bu_cnd_t *cond);
-
-/* FIXME: conditional API is bad */
-#if (!(defined(__i386__) || defined(__x86_64__)) && defined(__GNUC__))
 BU_EXPORT extern int bu_mtx_trylock(bu_mtx_t *mtx);
-#endif
+
 
 __END_DECLS
 
