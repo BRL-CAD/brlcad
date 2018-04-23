@@ -164,9 +164,10 @@ int bu_mtx_unlock(bu_mtx_t *mtx)
 #endif
 }
 
-#if defined(HAVE_WINDOWS_H)
+#if (!(defined(__i386__) || defined(__x86_64__)) && defined(__GNUC__))
 int bu_mtx_trylock(bu_mtx_t *mtx)
 {
+#  if defined(HAVE_WINDOWS_H)
 	int ret;
 
 	if (!mtx->mTimed)
@@ -191,6 +192,12 @@ int bu_mtx_trylock(bu_mtx_t *mtx)
 		}
 	}
 	return ret;
+#  else
+#    error "bu_mtx_trylock() Not implemented on this platform"
+	if (!mtx)
+	    return 1;
+	return 0;
+#  endif
 }
 #endif
 
