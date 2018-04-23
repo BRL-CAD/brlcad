@@ -1147,6 +1147,9 @@ main(int argc, char *argv[])
 {
     const char usage[] = "Usage: plot3-dm [-t o|X] plot_file(s)\n";
 
+    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv))
 	bu_exit (1, "%s", usage);
 
