@@ -410,10 +410,8 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
 
     if (debug)  fprintf(stderr, "ph_dirbuild: %s\n", buf);
 
-    for (n = 0; n < strlen(buf); n++) {
-	if (isspace((int)buf[n]))
-	    max_argc++;
-    }
+    /* assume maximal delimiter chars */
+    max_argc = (strlen(buf) / 2) + 1;
     argv = (char **)bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
 
     if ((bu_argv_from_string(argv, max_argc, buf)) <= 0)  {
@@ -459,7 +457,6 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
 void
 ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 {
-    size_t n = 0;
     long max_argc = 0;
     char **argv = NULL;
     int	argc = 0;
@@ -480,10 +477,8 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 	rtip->rti_tol.para = 1 - rt_perp_tol;
     }
 
-    for (n = 0; n < strlen(buf); n++) {
-	if (isspace((int)buf[n]))
-	    max_argc++;
-    }
+    /* assume maximal delimiter chars */
+    max_argc = (strlen(buf) / 2) + 1;
     argv = (char **)bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
 
     if ((argc = bu_argv_from_string(argv, max_argc, buf)) <= 0)  {
