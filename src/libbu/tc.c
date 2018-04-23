@@ -192,10 +192,7 @@ int bu_mtx_trylock(bu_mtx_t *mtx)
 	}
 	return ret;
 #else
-#  error "bu_mtx_trylock() Not implemented on this platform"
-	if (!mtx)
-	    return 1;
-	return 0;
+	return pthread_mutex_trylock(mtx) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
 
