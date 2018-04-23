@@ -84,85 +84,118 @@ path_is_branch(std::string path)
     return (slashpos == std::string::npos) ? 1 : 0;
 }
 
-void characterize_commits(const char *dfile, std::set<int> &problem_revs, std::multimap<int, std::pair<std::string, std::string> > &revs_move_map, std::set<int> &merge_commits)
-{
-    int rev = -1;
-    int is_move = 0;
-    int is_edit = 0;
-    int node_is_file = 0;
-    int have_node_path = 0;
-    int node_path_filtered = 0;
+struct node_info {
     int branch_commit = 0;
-    int merge_commit = 0;
-    int rev_problem = 0;
     int have_delete = 0;
-    std::ifstream infile(dfile);
-    std::string line;
+    int have_node_path = 0;
+    int is_edit = 0;
+    int is_move = 0;
+    int merge_commit = 0;
+    int node_is_file = 0;
+    int node_path_filtered = 0;
+    int move_edit_rev = 0;
+    int rev = -1;
     std::string node_path;
     std::string node_copyfrom_path;
+};
+void node_info_reset(struct node_info *i)
+{
+    i->branch_commit = 0;
+    i->have_delete = 0;
+    i->have_node_path = 0;
+    i->is_edit = 0;
+    i->is_move = 0;
+    i->merge_commit = 0;
+    i->node_is_file = 0;
+    i->node_path_filtered = 0;
+    i->move_edit_rev = 0;
+    i->rev = -1;
+    i->node_path.clear();
+    i->node_copyfrom_path.clear();
+}
+
+void process_node(struct node_info *i, std::set<int> &move_edit_revs, std::multimap<int, std::pair<std::string, std::string> > &revs_move_map, std::set<int> &merge_commits)
+{
+    if (i->is_move && i->is_edit && i->node_is_file) {
+	std::pair<std::string, std::string> move(i->node_copyfrom_path, i->node_path);
+	std::pair<int, std::pair<std::string, std::string> > mvmap(i->rev, move);
+	revs_move_map.insert(mvmap);
+	move_edit_revs.insert(i->rev);
+    }
+    if (i->merge_commit && i->branch_commit) {
+	if (merge_commits.find(i->rev) == merge_commits.end()) {
+	    merge_commits.insert(i->rev);
+	}
+    }
+    if (path_is_branch(i->node_path) && i->have_delete) {
+	std::cout << "Branch delete " << i->rev << ": " << i->node_path << "\n";
+    }
+
+}
+
+void characterize_commits(const char *dfile, std::set<int> &move_edit_revs, std::multimap<int, std::pair<std::string, std::string> > &revs_move_map, std::set<int> &merge_commits)
+{
+    int rev = -1;
+    struct node_info info;
+    std::ifstream infile(dfile);
+    std::string line;
     while (std::getline(infile, line))
     {
 	std::istringstream ss(line);
 	std::string s = ss.str();
 	if (!s.compare(0, 16, "Revision-number:")) {
+	    if (rev >= 0) {
+		// Process last node of previous revision
+		process_node(&info, move_edit_revs, revs_move_map, merge_commits);
+	    }
+	    node_info_reset(&info);
 	    // Grab new revision number
 	    rev = std::stoi(s.substr(17));
-	    have_node_path = 0; is_move = 0; is_edit = 0; node_is_file = 0; merge_commit = 0;
-	    have_delete = 0;
 	}
 	if (rev >= 0) {
 	    // OK , now we have a revision - start looking for content
 	    if (!s.compare(0, 10, "Node-path:")) {
-		if (is_move && is_edit && node_is_file) {
-		    rev_problem = 1;
-		    std::pair<std::string, std::string> move(node_copyfrom_path, node_path);
-		    std::pair<int, std::pair<std::string, std::string> > mvmap(rev, move);
-		    revs_move_map.insert(mvmap);
-		    problem_revs.insert(rev);
+		if (info.have_node_path) {
+		    // Process previous node
+		    process_node(&info, move_edit_revs, revs_move_map, merge_commits);
 		}
-		if (merge_commit && branch_commit) {
-		    if (merge_commits.find(rev) == merge_commits.end()) {
-			merge_commits.insert(rev);
-		    }
-		}
-		if (path_is_branch(node_path) && have_delete) {
-		    std::cout << "Branch delete " << rev << ": " << node_path << "\n";
-		}
-		have_node_path = 1; is_move = 0; is_edit = 0; node_is_file = 0;
-	       	merge_commit = 0; branch_commit = 0; have_delete = 0;
-		node_path = s.substr(11);
-		if (node_path.compare(0, 6, "brlcad") != 0) {
-		    node_path_filtered = 1;
+		// Have a node - initialize
+		node_info_reset(&info);
+		info.rev = rev;
+		info.have_node_path = 1;
+		info.node_path = s.substr(11);
+		if (info.node_path.compare(0, 6, "brlcad") != 0) {
+		    info.node_path_filtered = 1;
 		} else {
-		    node_path_filtered = 0;
-		    if (!node_path.compare(0, 15, "brlcad/branches")) {
-			branch_commit = 1;
+		    info.node_path_filtered = 0;
+		    if (!info.node_path.compare(0, 15, "brlcad/branches")) {
+			info.branch_commit = 1;
 		    }
-		    if (!node_path.compare(0, 11, "brlcad/tags")) {
-			branch_commit = 1;
+		    if (!info.node_path.compare(0, 11, "brlcad/tags")) {
+			info.branch_commit = 1;
 		    }
 		}
 		//std::cout <<  "Node path: " << node_path << "\n";
 	    } else {
-		if (have_node_path && !node_path_filtered) {
+		if (info.have_node_path && !info.node_path_filtered) {
 		    if (!s.compare(0, 19, "Node-copyfrom-path:")) {
-			is_move = 1;
-			node_copyfrom_path = s.substr(19);
+			info.is_move = 1;
+			info.node_copyfrom_path = s.substr(19);
 			//std::cout <<  "Node copyfrom path: " << node_copyfrom_path << "\n";
 		    }
 		    if (!s.compare(0, 15, "Content-length:")) {
-			is_edit = 1;
+			info.is_edit = 1;
 		    }
 		    if (!s.compare(0, 15, "Node-kind: file")) {
-			node_is_file = 1;
+			info.node_is_file = 1;
 		    }
 		    if (!s.compare(0, 19, "Node-action: delete")) {
-			have_delete = 1;
+			info.have_delete = 1;
 		    }
 		}
-		if (!merge_commit) {
+		if (!info.merge_commit) {
 		    if (!s.compare(0, 13, "svn:mergeinfo")) {
-			merge_commit = 1;
+			info.merge_commit = 1;
 		    }
 		}
 	    }
@@ -252,7 +285,7 @@ int main(int argc, const char **argv)
 {
     int start_svn_rev = 29886;
     std::set<int> merge_commits;
-    std::set<int> problem_revs;
+    std::set<int> move_edit_revs;
     std::multimap<int, std::pair<std::string, std::string> > revs_move_map;
 
     if (argc != 3) {
@@ -267,22 +300,22 @@ int main(int argc, const char **argv)
     // Commits in SVN that both moved and edited files are problematic for
     // git log --follow, and merge commits to branches need particular handling
     // - find out which ones they are
-    characterize_commits(argv[1], problem_revs, revs_move_map, merge_commits);
+    characterize_commits(argv[1], move_edit_revs, revs_move_map, merge_commits);
     std::set<int>::iterator iit;
     for (iit = merge_commits.begin(); iit != merge_commits.end(); iit++) {
-	std::string logmsg = revision_log_msg(argv[2], *iit);
-	std::cout << "Merge commit " << *iit << ": " << logmsg << "\n";
+	//std::string logmsg = revision_log_msg(argv[2], *iit);
+	//std::cout << "Merge commit " << *iit << ": " << logmsg << "\n";
+	std::cout << "Merge commit " << *iit << "\n";
     }
-#if 0
-    for (iit = problem_revs.begin(); iit != problem_revs.end(); iit++) {
+    for (iit = move_edit_revs.begin(); iit != move_edit_revs.end(); iit++) {
 	std::multimap<int, std::pair<std::string, std::string> >::iterator rmit;
 	std::pair<std::multimap<int, std::pair<std::string, std::string> >::iterator, std::multimap<int, std::pair<std::string, std::string> >::iterator> revrange;
+	std::cout << "Move+edit commit: " << *iit << "\n";
 	revrange = revs_move_map.equal_range(*iit);
 	for (rmit = revrange.first; rmit != revrange.second; rmit++) {
 	    std::cout << "  " << rmit->second.first << " -> " << rmit->second.second << "\n";
 	}
     }
-#endif
 }
 
 // Local Variables:
