@@ -267,7 +267,10 @@ int
 nirt_show_menu_hook(struct nirt_state *ns, void *u_data)
 {
     struct bu_vls *log = (struct bu_vls *)u_data;
-    nirt_log(log, ns, NIRT_OUT);
+    struct bu_vls nline = BU_VLS_INIT_ZERO;
+    nirt_log(&nline, ns, NIRT_OUT);
+    bu_vls_printf(log, "%s", bu_vls_addr(&nline));
+    bu_vls_free(&nline);
     return 0;
 }
 
