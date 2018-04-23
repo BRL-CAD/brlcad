@@ -37,8 +37,11 @@
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
 
-#include "./gct_decimation/meshdecimation.h"
-#include "./gct_decimation/meshoptimization.h"
+#if !defined(BRLCAD_DISABLE_GCT)
+#  include "./gct_decimation/meshdecimation.h"
+#  include "./gct_decimation/meshoptimization.h"
+#endif
+
 #include "./bot_edge.h"
 
 
@@ -471,7 +474,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
  * returns the number of edges removed.
  */
 size_t
-#if 0
+#if defined(BRLCAD_DISABLE_GCT)
 rt_bot_decimate_gct(struct rt_bot_internal *UNUSED(bot), fastf_t UNUSED(feature_size)) {
     bu_log("GCT decimation currently disabled - can not decimate.");
     return 0;

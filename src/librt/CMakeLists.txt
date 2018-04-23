@@ -222,17 +222,22 @@ set(LIBRT_SOURCES
   vlist.c
   vshoot.c
   wdb.c
-  primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-  primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-  primitives/bot/gct_decimation/auxiliary/mm.c
-  primitives/bot/gct_decimation/auxiliary/mmhash.c
-  primitives/bot/gct_decimation/meshoptimization.c
-  primitives/bot/gct_decimation/meshoptimizer.c
-  primitives/bot/gct_decimation/meshdecimation.c
-  primitives/bot/gct_decimation/meshdecimationSSE2.c
-  primitives/bot/gct_decimation/meshdecimationSSE3.c
-  primitives/bot/gct_decimation/meshdecimationSSE4p1.c
   )
+if(BRLCAD_ENABLE_GCT)
+  set(LIBRT_SOURCES
+    ${LIBRT_SOURCES}
+    primitives/bot/gct_decimation/auxiliary/mmbinsort.c
+    primitives/bot/gct_decimation/auxiliary/mmbitmap.c
+    primitives/bot/gct_decimation/auxiliary/mm.c
+    primitives/bot/gct_decimation/auxiliary/mmhash.c
+    primitives/bot/gct_decimation/meshoptimization.c
+    primitives/bot/gct_decimation/meshoptimizer.c
+    primitives/bot/gct_decimation/meshdecimation.c
+    primitives/bot/gct_decimation/meshdecimationSSE2.c
+    primitives/bot/gct_decimation/meshdecimationSSE3.c
+    primitives/bot/gct_decimation/meshdecimationSSE4p1.c
+    )
+endif(BRLCAD_ENABLE_GCT)
 
 set(librt_ignored_files
   cache.h
@@ -297,6 +302,21 @@ set(librt_ignored_files
   timerunix.c
   uvpoints.cpp
   )
+if(NOT BRLCAD_ENABLE_GCT)
+  set(librt_ignored_files
+    ${librt_ignored_files}
+    primitives/bot/gct_decimation/auxiliary/mmbinsort.c
+    primitives/bot/gct_decimation/auxiliary/mmbitmap.c
+    primitives/bot/gct_decimation/auxiliary/mm.c
+    primitives/bot/gct_decimation/auxiliary/mmhash.c
+    primitives/bot/gct_decimation/meshoptimization.c
+    primitives/bot/gct_decimation/meshoptimizer.c
+    primitives/bot/gct_decimation/meshdecimation.c
+    primitives/bot/gct_decimation/meshdecimationSSE2.c
+    primitives/bot/gct_decimation/meshdecimationSSE3.c
+    primitives/bot/gct_decimation/meshdecimationSSE4p1.c
+    )
+endif(NOT BRLCAD_ENABLE_GCT)
 CMAKEFILES(${librt_ignored_files})
 
 set(CL_FILES

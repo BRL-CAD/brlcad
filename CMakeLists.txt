@@ -996,7 +996,7 @@ CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"
 # Don't set this if we're doing multi-config, since whether we want
 # this on is not ultimately decided at configure time.
 if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
-  CONFIG_H_APPEND(BRLCAD "#define NDEBUG 1")
+  CONFIG_H_APPEND(BRLCAD "#define NDEBUG 1\n")
 endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
 
 #----------------------------------------------------------------------
@@ -1342,6 +1342,13 @@ if(BRLCAD_ENABLE_OSG)
     set(OSG_WINDOWING_SYSTEM "X11" CACHE STRING "Use X11" FORCE)
   endif(APPLE AND NOT BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_OSG)
+
+# Enable features requiring GCT
+option(BRLCAD_ENABLE_GCT "Enable features requiring GCT" ON)
+mark_as_advanced(BRLCAD_ENABLE_GCT)
+if(NOT BRLCAD_ENABLE_GCT)
+  CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DISABLE_GCT 1\n")
+endif(NOT BRLCAD_ENABLE_GCT)
 
 # Enable features requiring OpenCL
 option(BRLCAD_ENABLE_OPENCL "Enable features requiring OpenCL" OFF)
