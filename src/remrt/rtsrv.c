@@ -221,13 +221,20 @@ main(int argc, char **argv)
 #endif
 
     if (!debug) {
-	/* A fresh process */
-	if (fork())
+	int i;
+	FILE *fp;
+
+	/* DAEMONIZE */
+
+	/* Get a fresh process */
+	i = fork();
+	if (i < 0)
+	    perror("fork");
+	else if (i)
 	    return 0;
 
 	/* Go into our own process group */
 	n = bu_process_id();
-
 #ifdef HAVE_SETPGID
 	if (setpgid(n, n) < 0)
 	    perror("setpgid");
@@ -238,34 +245,49 @@ main(int argc, char **argv)
 	setpgrp();
 #endif
 
+	/* Create our own session */
+#ifdef HAVE_SETSID
+	if (setsid() < 0)
+	    perror("setpgid");
+#endif
+
+	/* TODO: need to change directory (e.g., to TEMP) so we don't
+	 * make the initial working directory unlinkable on some OS.
+	 * However, for rtsrv, we first need a more robust way for
+	 * getting geometry from remrt.  See gtransfer.
+	 */
+
 	/* Drop to the lowest sensible priority. */
 	bu_nice_set(19);
 
 	/* Close off the world */
-	fclose(stdin);
-	fclose(stdout);
-	fclose(stderr);
 
-	(void)close(0);
-	(void)close(1);
-	(void)close(2);
+#ifdef HAVE_WINDOWS_H
+#  define DEVNULL "\\\\.\\NUL"
+#else
+#  define DEVNULL "/dev/null"
+#endif
 
-	/* For stdio & perror safety, reopen 0, 1, 2 */
-	(void)open("/dev/null", 0);	/* to fd 0 */
-	n = dup(0);			/* to fd 1 */
-	if (n == -1)
-	    perror("dup");
-	n = dup(0);			/* to fd 2 */
-	if (n == -1)
-	    perror("dup");
+	fp = freopen(DEVNULL, "r", stdin);
+	if (fp == NULL)
+	    perror("freopen STDIN");
+
+	fp = freopen(DEVNULL, "w", stdout);
+	if (fp == NULL)
+	    perror("freopen STDOUT");
 
 #if defined(HAVE_SYS_IOCTL_H) && defined(TIOCNOTTY)
-	n = open("/dev/tty", 2);
-	if (n >= 0) {
-	    (void)ioctl(n, TIOCNOTTY, 0);
-	    (void)close(n);
-	}
+	fp = freopen("/dev/tty", "a", stderr);
+	if (fp == NULL)
+	    perror("freopen(/dev/tty) STDERR");
+
+	(void)ioctl(fileno(fp), TIOCNOTTY, 0);
+	(void)fclose(fp);
 #endif
+
+	fp = freopen(DEVNULL, "w", stderr);
+	if (fp == NULL)
+	    perror("freopen STDERR");
     }
 
     /* Send our version string */
