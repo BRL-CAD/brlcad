@@ -98,6 +98,13 @@ struct node_info {
     std::string node_path;
     std::string node_copyfrom_path;
 };
+
+struct commit_info {
+    std::set<int> move_edit_revs;
+    std::multimap<int, std::pair<std::string, std::string> > revs_move_map;
+    std::set<int> merge_commits;
+};
+
 void node_info_reset(struct node_info *i)
 {
     i->branch_commit = 0;
@@ -114,17 +121,17 @@ void node_info_reset(struct node_info *i)
     i->node_copyfrom_path.clear();
 }
 
-void process_node(struct node_info *i, std::set<int> &move_edit_revs, std::multimap<int, std::pair<std::string, std::string> > &revs_move_map, std::set<int> &merge_commits)
+void process_node(struct node_info *i, struct commit_info *c)
 {
     if (i->is_move && i->is_edit && i->node_is_file) {
 	std::pair<std::string, std::string> move(i->node_copyfrom_path, i->node_path);
 	std::pair<int, std::pair<std::string, std::string> > mvmap(i->rev, move);
-	revs_move_map.insert(mvmap);
-	move_edit_revs.insert(i->rev);
+	c->revs_move_map.insert(mvmap);
+	c->move_edit_revs.insert(i->rev);
     }
     if (i->merge_commit && i->branch_commit) {
-	if (merge_commits.find(i->rev) == merge_commits.end()) {
-	    merge_commits.insert(i->rev);
+	if (c->merge_commits.find(i->rev) == c->merge_commits.end()) {
+	    c->merge_commits.insert(i->rev);
 	}
     }
     if (path_is_branch(i->node_path) && i->have_delete) {
@@ -133,7 +140,7 @@ void process_node(struct node_info *i, std::set<int> &move_edit_revs, std::multi
 
 }
 
-void characterize_commits(const char *dfile, std::set<int> &move_edit_revs, std::multimap<int, std::pair<std::string, std::string> > &revs_move_map, std::set<int> &merge_commits)
+void characterize_commits(const char *dfile, struct commit_info *c)
 {
     int rev = -1;
     struct node_info info;
@@ -146,7 +153,7 @@ void characterize_commits(const char *dfile, std::set<int> &move_edit_revs, std:
 	if (!s.compare(0, 16, "Revision-number:")) {
 	    if (rev >= 0) {
 		// Process last node of previous revision
-		process_node(&info, move_edit_revs, revs_move_map, merge_commits);
+		process_node(&info, c);
 	    }
 	    node_info_reset(&info);
 	    // Grab new revision number
@@ -157,7 +164,7 @@ void characterize_commits(const char *dfile, std::set<int> &move_edit_revs, std:
 	    if (!s.compare(0, 10, "Node-path:")) {
 		if (info.have_node_path) {
 		    // Process previous node
-		    process_node(&info, move_edit_revs, revs_move_map, merge_commits);
+		    process_node(&info, c);
 		}
 		// Have a node - initialize
 		node_info_reset(&info);
@@ -284,9 +291,7 @@ apply_split_rev(const char *repo, int rev)
 int main(int argc, const char **argv)
 {
     int start_svn_rev = 29886;
-    std::set<int> merge_commits;
-    std::set<int> move_edit_revs;
-    std::multimap<int, std::pair<std::string, std::string> > revs_move_map;
+    struct commit_info c;
 
     if (argc != 3) {
 	std::cerr << "svn_moved_and_edited <dumpfile> <repository_clone>\n";
@@ -300,18 +305,18 @@ int main(int argc, const char **argv)
     // Commits in SVN that both moved and edited files are problematic for
     // git log --follow, and merge commits to branches need particular handling
     // - find out which ones they are
-    characterize_commits(argv[1], move_edit_revs, revs_move_map, merge_commits);
+    characterize_commits(argv[1], &c);
     std::set<int>::iterator iit;
-    for (iit = merge_commits.begin(); iit != merge_commits.end(); iit++) {
+    for (iit = c.merge_commits.begin(); iit != c.merge_commits.end(); iit++) {
 	//std::string logmsg = revision_log_msg(argv[2], *iit);
 	//std::cout << "Merge commit " << *iit << ": " << logmsg << "\n";
 	std::cout << "Merge commit " << *iit << "\n";
     }
-    for (iit = move_edit_revs.begin(); iit != move_edit_revs.end(); iit++) {
+    for (iit = c.move_edit_revs.begin(); iit != c.move_edit_revs.end(); iit++) {
 	std::multimap<int, std::pair<std::string, std::string> >::iterator rmit;
 	std::pair<std::multimap<int, std::pair<std::string, std::string> >::iterator, std::multimap<int, std::pair<std::string, std::string> >::iterator> revrange;
 	std::cout << "Move+edit commit: " << *iit << "\n";
-	revrange = revs_move_map.equal_range(*iit);
+	revrange = c.revs_move_map.equal_range(*iit);
 	for (rmit = revrange.first; rmit != revrange.second; rmit++) {
 	    std::cout << "  " << rmit->second.first << " -> " << rmit->second.second << "\n";
 	}
