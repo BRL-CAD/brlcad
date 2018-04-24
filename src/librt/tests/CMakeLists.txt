@@ -34,6 +34,9 @@ endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 # size testing
 BRLCAD_ADDEXEC(db5_size db5_size.c "librt" TEST)
 
+# datum testing
+BRLCAD_ADDEXEC(rt_datum rt_datum.c "librt" TEST)
+
 set(distcheck_files
   arb_intersect.g
   brep_boolean_tests.g
