@@ -181,7 +181,7 @@ main(int UNUSED(argc), char *argv[])
 
     db_update_nref(dbip, &rt_uniresource);
 
-    sleep(1000);
+    /*sleep(1000);*/
 
     wdb_close(wdbp);
     /*bu_file_delete(tmpfile);*/
