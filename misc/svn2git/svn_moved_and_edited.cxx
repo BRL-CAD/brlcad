@@ -84,6 +84,15 @@ path_is_branch(std::string path)
     return (slashpos == std::string::npos) ? 1 : 0;
 }
 
+int
+path_is_tag(std::string path)
+{
+    if (path.length() <= 11 || path.compare(0, 11, "brlcad/tags")) return 0;
+    std::string spath = path.substr(12);
+    size_t slashpos = spath.find_first_of('/');
+    return (slashpos == std::string::npos) ? 1 : 0;
+}
+
 struct node_info {
     int in_branch = 0;
     int in_tag = 0;
@@ -105,6 +114,7 @@ struct commit_info {
     std::set<int> move_edit_revs;
     std::multimap<int, std::pair<std::string, std::string> > revs_move_map;
     std::set<int> merge_commits;
+    std::set<int> tags;
 };
 
 void node_info_reset(struct node_info *i)
@@ -144,6 +154,19 @@ void process_node(struct node_info *i, struct commit_info *c)
     if (path_is_branch(i->node_path) && i->is_add) {
 	std::cout << "Branch add    " << i->rev << ": " << i->node_path << "\n";
     }
+    if (path_is_tag(i->node_path) && i->is_add) {
+	std::cout << "Tag add       " << i->rev << ": " << i->node_path << "\n";
+	c->tags.insert(i->rev);
+    }
+    if (path_is_tag(i->node_path) && i->is_delete) {
+	std::cout << "Tag delete    " << i->rev << ": " << i->node_path << "\n";
+	c->tags.insert(i->rev);
+    }
+    if (c->tags.find(i->rev) == c->tags.end() && i->in_tag && !(path_is_tag(i->node_path) && i->is_delete)) {
+	std::cout << "Tag edit      " << i->rev << ": " << i->node_path << "\n";
+    }
+
+
 }
 
 void characterize_commits(const char *dfile, struct commit_info *c)
