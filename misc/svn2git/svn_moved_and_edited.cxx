@@ -85,13 +85,15 @@ path_is_branch(std::string path)
 }
 
 struct node_info {
-    int branch_commit = 0;
-    int have_delete = 0;
+    int in_branch = 0;
+    int in_tag = 0;
     int have_node_path = 0;
+    int is_add = 0;
+    int is_delete = 0;
     int is_edit = 0;
+    int is_file = 0;
     int is_move = 0;
     int merge_commit = 0;
-    int node_is_file = 0;
     int node_path_filtered = 0;
     int move_edit_rev = 0;
     int rev = -1;
@@ -107,13 +109,15 @@ struct commit_info {
 
 void node_info_reset(struct node_info *i)
 {
-    i->branch_commit = 0;
-    i->have_delete = 0;
+    i->in_branch = 0;
+    i->in_tag = 0;
     i->have_node_path = 0;
+    i->is_add = 0;
+    i->is_delete = 0;
     i->is_edit = 0;
+    i->is_file = 0;
     i->is_move = 0;
     i->merge_commit = 0;
-    i->node_is_file = 0;
     i->node_path_filtered = 0;
     i->move_edit_rev = 0;
     i->rev = -1;
@@ -123,21 +127,23 @@ void node_info_reset(struct node_info *i)
 
 void process_node(struct node_info *i, struct commit_info *c)
 {
-    if (i->is_move && i->is_edit && i->node_is_file) {
+    if (i->is_move && i->is_edit && i->is_file) {
 	std::pair<std::string, std::string> move(i->node_copyfrom_path, i->node_path);
 	std::pair<int, std::pair<std::string, std::string> > mvmap(i->rev, move);
 	c->revs_move_map.insert(mvmap);
 	c->move_edit_revs.insert(i->rev);
     }
-    if (i->merge_commit && i->branch_commit) {
+    if (i->merge_commit && i->in_branch) {
 	if (c->merge_commits.find(i->rev) == c->merge_commits.end()) {
 	    c->merge_commits.insert(i->rev);
 	}
     }
-    if (path_is_branch(i->node_path) && i->have_delete) {
+    if (path_is_branch(i->node_path) && i->is_delete) {
 	std::cout << "Branch delete " << i->rev << ": " << i->node_path << "\n";
     }
-
+    if (path_is_branch(i->node_path) && i->is_add) {
+	std::cout << "Branch add    " << i->rev << ": " << i->node_path << "\n";
+    }
 }
 
 void characterize_commits(const char *dfile, struct commit_info *c)
@@ -176,10 +182,10 @@ void characterize_commits(const char *dfile, struct commit_info *c)
 		} else {
 		    info.node_path_filtered = 0;
 		    if (!info.node_path.compare(0, 15, "brlcad/branches")) {
-			info.branch_commit = 1;
+			info.in_branch = 1;
 		    }
 		    if (!info.node_path.compare(0, 11, "brlcad/tags")) {
-			info.branch_commit = 1;
+			info.in_tag = 1;
 		    }
 		}
 		//std::cout <<  "Node path: " << node_path << "\n";
@@ -194,11 +200,15 @@ void characterize_commits(const char *dfile, struct commit_info *c)
 			info.is_edit = 1;
 		    }
 		    if (!s.compare(0, 15, "Node-kind: file")) {
-			info.node_is_file = 1;
+			info.is_file = 1;
 		    }
 		    if (!s.compare(0, 19, "Node-action: delete")) {
-			info.have_delete = 1;
+			info.is_delete = 1;
 		    }
+		    if (!s.compare(0, 19, "Node-action: add")) {
+			info.is_add = 1;
+		    }
+
 		}
 		if (!info.merge_commit) {
 		    if (!s.compare(0, 13, "svn:mergeinfo")) {
@@ -292,6 +302,18 @@ int main(int argc, const char **argv)
 {
     int start_svn_rev = 29886;
     struct commit_info c;
+
+    // To obtain a repository copy for processing, do:
+    //
+    // rsync -av svn.code.sf.net::p/brlcad/code .
+    //
+    // To produce an efficient dump file for processing, use the
+    // incremental and delta options for the subversion dump (we
+    // are after the flow of commits and metadata rather than the
+    // specific content of the commits, and this produces a much
+    // smaller file to parse):
+    //
+    // svnadmin dump --incremental --deltas /home/user/code
 
     if (argc != 3) {
 	std::cerr << "svn_moved_and_edited <dumpfile> <repository_clone>\n";
