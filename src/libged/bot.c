@@ -213,6 +213,7 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
     num_edges = bot->num_faces * 3;
     if (!(edge_list = bg_trimesh_generate_edge_list(bot->num_faces, bot->faces))) {
 	rt_db_free_internal(ip);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: failed to generate an edge list\n");
 	return GED_ERROR;
     }
 
@@ -223,6 +224,9 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 	edge_test = bg_trimesh_misoriented_edges;
     } else if (BU_STR_EQUAL(check, "extra_edges")) {
 	edge_test = bg_trimesh_excess_edges;
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: unrecognized edge test [%s]\n", check);
+	return GED_ERROR;
     }
 
     if (visualize_results) {
