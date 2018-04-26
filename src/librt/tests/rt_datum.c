@@ -33,7 +33,6 @@ main(int UNUSED(argc), char *argv[])
 {
     char tmpfile[MAXPATHLEN];
     struct db_i *dbip = DBI_NULL;
-    struct rt_wdb *wdbp;
 
     /* Get a guaranteed-valid temp file */
     FILE *fp = bu_temp_file(tmpfile, MAXPATHLEN);
@@ -59,7 +58,7 @@ main(int UNUSED(argc), char *argv[])
 	return 1;
     }
     RT_CK_DBI(dbip);
-    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* Control RCC shape */
     {
@@ -183,7 +182,7 @@ main(int UNUSED(argc), char *argv[])
 
     /*sleep(1000);*/
 
-    wdb_close(wdbp);
+    db_close(dbip);
     /*bu_file_delete(tmpfile);*/
     return 0;
 }
