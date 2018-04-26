@@ -304,6 +304,8 @@ report_instance_params(struct db_i *dbip, const char *c, const char *o)
 int
 main(int UNUSED(argc), char *argv[])
 {
+    point_t p;
+    vect_t delta;
     mat_t mat;
     char tmpfile[MAXPATHLEN];
     struct db_i *dbip = DBI_NULL;
@@ -376,14 +378,25 @@ main(int UNUSED(argc), char *argv[])
     report_object_params(dbip, "datum_plane.s");
     report_matrix(dbip, "comb_1.c/rcc_1.s");
     report_matrix(dbip, "comb_1.c/datum_plane.s");
-    report_matrix(dbip, "comb_2.c/rcc_1.s");
-    report_matrix(dbip, "comb_2.c/datum_plane.s");
     report_instance_params(dbip, "comb_1.c", "rcc_1.s");
     report_instance_params(dbip, "comb_1.c", "datum_plane.s");
+
+    bu_log("\n\nOperation 02: apply a -100,20,45 translation to a parent comb\n\n");
+    MAT_IDN(mat);
+    VSET(delta, -100, 20, 45);
+    MAT_DELTAS_VEC(mat, delta);
+    apply_mat_obj(dbip, "comb_2.c", mat);
+
+    /* Report */
+    report_object_params(dbip, "rcc_1.s");
+    report_object_params(dbip, "datum_plane.s");
+    report_matrix(dbip, "comb_2.c/rcc_1.s");
+    report_matrix(dbip, "comb_2.c/datum_plane.s");
     report_instance_params(dbip, "comb_2.c", "rcc_1.s");
     report_instance_params(dbip, "comb_2.c", "datum_plane.s");
 
-    bu_log("\n\nOperation 02: apply a -90, -90 rotation to the solids\n\n");
+
+    bu_log("\n\nOperation 03: apply a -90, -90 rotation to the solids\n\n");
     bn_mat_ae(mat, -90, -90);
     apply_mat_obj(dbip, "rcc_1.s", mat);
     apply_mat_obj(dbip, "datum_plane.s", mat);
@@ -399,6 +412,44 @@ main(int UNUSED(argc), char *argv[])
     report_instance_params(dbip, "comb_1.c", "datum_plane.s");
     report_instance_params(dbip, "comb_2.c", "rcc_1.s");
     report_instance_params(dbip, "comb_2.c", "datum_plane.s");
+
+    bu_log("\n\nOperation 04: apply a 10,30,-40 translation to the solids\n\n");
+    MAT_IDN(mat);
+    VSET(delta, 10, 30, -40);
+    MAT_DELTAS_VEC(mat, delta);
+    apply_mat_obj(dbip, "rcc_1.s", mat);
+    apply_mat_obj(dbip, "datum_plane.s", mat);
+
+    /* Report */
+    report_object_params(dbip, "rcc_1.s");
+    report_object_params(dbip, "datum_plane.s");
+    report_matrix(dbip, "comb_1.c/rcc_1.s");
+    report_matrix(dbip, "comb_1.c/datum_plane.s");
+    report_matrix(dbip, "comb_2.c/rcc_1.s");
+    report_matrix(dbip, "comb_2.c/datum_plane.s");
+    report_instance_params(dbip, "comb_1.c", "rcc_1.s");
+    report_instance_params(dbip, "comb_1.c", "datum_plane.s");
+    report_instance_params(dbip, "comb_2.c", "rcc_1.s");
+    report_instance_params(dbip, "comb_2.c", "datum_plane.s");
+
+    bu_log("\n\nOperation 05: scale a comb about -30, 40, 10 by 5x\n\n");
+    VSET(p, -30, 40, 10);
+    bn_mat_scale_about_pt(mat, p, 5);
+    apply_mat_obj(dbip, "comb_1.c", mat);
+
+    /* Report */
+    report_object_params(dbip, "rcc_1.s");
+    report_object_params(dbip, "datum_plane.s");
+    report_matrix(dbip, "comb_1.c/rcc_1.s");
+    report_matrix(dbip, "comb_1.c/datum_plane.s");
+    report_matrix(dbip, "comb_2.c/rcc_1.s");
+    report_matrix(dbip, "comb_2.c/datum_plane.s");
+    report_instance_params(dbip, "comb_1.c", "rcc_1.s");
+    report_instance_params(dbip, "comb_1.c", "datum_plane.s");
+    report_instance_params(dbip, "comb_2.c", "rcc_1.s");
+    report_instance_params(dbip, "comb_2.c", "datum_plane.s");
+
+
 
     /*sleep(1000);*/
 
