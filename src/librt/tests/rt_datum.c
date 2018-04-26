@@ -159,10 +159,152 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
     return 0;
 }
 
+/* TODO - are these already expressed as API somewhere? Got most of
+ * the logic below from studying MGED code... */
+int
+apply_mat_obj(struct db_i *dbip, const char *obj_name, matp_t mat)
+{
+    struct rt_db_internal intern;
+    struct directory *dp = db_lookup(dbip, obj_name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	bu_log("Error - could not find object %s\n", obj_name);
+	return 1;
+    }
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
+	bu_log("rt_db_get_internal error\n");
+	rt_db_free_internal(&intern);
+	return 1;
+    }
+    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	bu_log("rt_db_put_internal error\n");
+	rt_db_free_internal(&intern);
+	return 1;
+    }
+    return 0;
+}
+
+int
+apply_mat_instance(struct db_i *dbip, const char *comb_name, const char *obj_name, matp_t mat)
+{
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    union tree *tp;
+    struct directory *cdp = db_lookup(dbip, comb_name, LOOKUP_QUIET);
+    struct directory *dp = db_lookup(dbip, obj_name, LOOKUP_QUIET);
+    if (cdp == RT_DIR_NULL) {
+	bu_log("Error - could not find comb %s\n", comb_name);
+	return 1;
+    }
+    if (dp == RT_DIR_NULL) {
+	bu_log("Error - could not find object %s\n", obj_name);
+	return 1;
+    }
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
+	bu_log("rt_db_get_internal error\n");
+	rt_db_free_internal(&intern);
+	return 1;
+    }
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    if (!comb->tree) {
+	bu_log("comb has no tree??");
+	return 1;
+    }
+    tp = (union tree *)db_find_named_leaf(comb->tree, dp->d_namep);
+    if (tp != TREE_NULL) {
+	/* Got a matching instance, do matrix */
+	if (tp->tr_l.tl_mat) {
+	     bn_mat_mul2(mat, tp->tr_l.tl_mat);
+	} else {
+	    tp->tr_l.tl_mat = (matp_t)bu_malloc(16 * sizeof(fastf_t), "tl_mat");
+	    MAT_COPY(tp->tr_l.tl_mat, mat);
+	}
+	/* Write result */
+	if (rt_db_put_internal(cdp, dbip, &intern, &rt_uniresource) < 0) {
+	    bu_log("rt_db_put_internal error\n");
+	    rt_db_free_internal(&intern);
+	}
+    } else {
+	bu_log("Error: comb has no instance of %s", dp->d_namep);
+	rt_db_free_internal(&intern);
+	return 1;
+    }
+
+    return 0;
+}
+
+void
+report_matrix(struct db_i *dbip, const char *p)
+{
+    mat_t m;
+    struct db_full_path path;
+    (void)db_string_to_path(&path, dbip, p);
+    (void)db_path_to_mat(dbip, &path, (matp_t)(&m), path.fp_len, &rt_uniresource);
+    bn_mat_print(p, m);
+}
+
+void
+report_object_params(struct db_i *dbip, const char *o)
+{
+    int id;
+    struct bu_vls log = BU_VLS_INIT_ZERO;
+    struct rt_db_internal intern;
+    struct directory *dp = db_lookup(dbip, o, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) return;
+    RT_DB_INTERNAL_INIT(&intern);
+    if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) return;
+    if (!OBJ[id].ft_describe) return;
+    if (OBJ[id].ft_describe(&log, &intern, 1, dbip->dbi_base2local, &rt_uniresource,dbip) < 0) return;
+    bu_log("OBJECT %s:\n%s\n", o, bu_vls_addr(&log));
+    bu_vls_free(&log);
+}
+
+
+void
+report_instance_params(struct db_i *dbip, const char *c, const char *o)
+{
+    int id;
+    mat_t cmat = MAT_INIT_IDN;
+    struct bu_vls log = BU_VLS_INIT_ZERO;
+    struct rt_db_internal intern, cintern;
+    struct rt_comb_internal *comb;
+    union tree *tp;
+    struct directory *cdp = db_lookup(dbip, c, LOOKUP_QUIET);
+    struct directory *dp = db_lookup(dbip, o, LOOKUP_QUIET);
+    if (cdp == RT_DIR_NULL || dp == RT_DIR_NULL) return;
+    RT_DB_INTERNAL_INIT(&cintern);
+    if (rt_db_get_internal(&cintern, cdp, dbip, NULL, &rt_uniresource) < 0) {
+	rt_db_free_internal(&cintern);
+	return;
+    }
+    comb = (struct rt_comb_internal *)cintern.idb_ptr;
+    if (!comb->tree) return;
+    tp = (union tree *)db_find_named_leaf(comb->tree, dp->d_namep);
+    if (tp == TREE_NULL) {
+	rt_db_free_internal(&cintern);
+	return;
+    }
+    /* Got a matching instance, grab matrix */
+    if (tp->tr_l.tl_mat) {
+	MAT_COPY(cmat, tp->tr_l.tl_mat);
+    } 
+
+    /* Load the actual object instance, applying the comb matrix to transform the
+     * object parameter values into the instance values */
+    RT_DB_INTERNAL_INIT(&intern);
+    if ((id = rt_db_get_internal(&intern, dp, dbip, cmat, &rt_uniresource)) < 0) return;
+    if (!OBJ[id].ft_describe) return;
+    if (OBJ[id].ft_describe(&log, &intern, 1, dbip->dbi_base2local, &rt_uniresource,dbip) < 0) return;
+    bu_log("INSTANCE %s/%s:\n%s\n", c, o, bu_vls_addr(&log));
+    bu_vls_free(&log);
+}
+
 
 int
 main(int UNUSED(argc), char *argv[])
 {
+    mat_t mat;
     char tmpfile[MAXPATHLEN];
     struct db_i *dbip = DBI_NULL;
 
@@ -212,30 +354,51 @@ main(int UNUSED(argc), char *argv[])
 	if (add_datum(dbip, "datum_plane.s", &pnt, &dir, w)) return 1;
     }
 
-    /* Make a comb with all the objects */
+    /* Make combs with all the objects */
     {
 	int node_count = 2;
 	const char *names[] = {"rcc_1.s", "datum_plane.s"};
 	if (add_comb(dbip, "comb_1.c", node_count, (const char **)names)) return 1;
+	if (add_comb(dbip, "comb_2.c", node_count, (const char **)names)) return 1;
     }
 
     db_update_nref(dbip, &rt_uniresource);
 
-    /* Manipulate the comb */
+    /* Manipulate the objects */
 
-    /* TODO */
 
-    /* Read the values with the comb matrix applied */
-    {
-	mat_t rm, dm;
-	struct db_full_path datum_path, rcc_path;
-	(void)db_string_to_path(&rcc_path, dbip, "comb_1.c/rcc_1.s");
-	(void)db_string_to_path(&datum_path, dbip, "comb_1.c/datum_plane.s");
-	(void)db_path_to_mat(dbip, &rcc_path, (matp_t)(&rm), rcc_path.fp_len, &rt_uniresource);
-	bn_mat_print("rcc matrix", rm);
-	(void)db_path_to_mat(dbip, &datum_path, (matp_t)(&dm), datum_path.fp_len, &rt_uniresource);
-	bn_mat_print("datum matrix", dm);
-    }
+    bu_log("\n\nOperation 01: apply a 90, 90 rotation to a parent comb\n\n");
+    bn_mat_ae(mat, 90, 90);
+    apply_mat_obj(dbip, "comb_1.c", mat);
+
+    /* Report */
+    report_object_params(dbip, "rcc_1.s");
+    report_object_params(dbip, "datum_plane.s");
+    report_matrix(dbip, "comb_1.c/rcc_1.s");
+    report_matrix(dbip, "comb_1.c/datum_plane.s");
+    report_matrix(dbip, "comb_2.c/rcc_1.s");
+    report_matrix(dbip, "comb_2.c/datum_plane.s");
+    report_instance_params(dbip, "comb_1.c", "rcc_1.s");
+    report_instance_params(dbip, "comb_1.c", "datum_plane.s");
+    report_instance_params(dbip, "comb_2.c", "rcc_1.s");
+    report_instance_params(dbip, "comb_2.c", "datum_plane.s");
+
+    bu_log("\n\nOperation 02: apply a -90, -90 rotation to the solids\n\n");
+    bn_mat_ae(mat, -90, -90);
+    apply_mat_obj(dbip, "rcc_1.s", mat);
+    apply_mat_obj(dbip, "datum_plane.s", mat);
+
+    /* Report */
+    report_object_params(dbip, "rcc_1.s");
+    report_object_params(dbip, "datum_plane.s");
+    report_matrix(dbip, "comb_1.c/rcc_1.s");
+    report_matrix(dbip, "comb_1.c/datum_plane.s");
+    report_matrix(dbip, "comb_2.c/rcc_1.s");
+    report_matrix(dbip, "comb_2.c/datum_plane.s");
+    report_instance_params(dbip, "comb_1.c", "rcc_1.s");
+    report_instance_params(dbip, "comb_1.c", "datum_plane.s");
+    report_instance_params(dbip, "comb_2.c", "rcc_1.s");
+    report_instance_params(dbip, "comb_2.c", "datum_plane.s");
 
     /*sleep(1000);*/
 
