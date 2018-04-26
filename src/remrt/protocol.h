@@ -47,7 +47,7 @@
 #define MSG_GETTREES		17	/* request rt_gettrees() be called */
 #define MSG_GETTREES_REPLY	18	/* response to MSG_GETTREES */
 
-#define REMRT_MAX_PIXELS	(32*1024)	/* Max MSG_LINES req */
+#define REMRT_MAX_PIXELS	(1024)	/* Max MSG_LINES req */
 
 /*
  *  This structure is used for MSG_PIXELS messages
