@@ -727,6 +727,11 @@ ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
 	bu_exit(2, "ph_lines:  %s conversion error\n", buf);
 
     srv_startpix = a;		/* buffer un-offset for view_pixel */
+
+    /* FIXME: if we do less than we were assigned, remrt is just going
+     * to drop us!  If we go over our scanlen, we'll probably overstep
+     * memory in the view front-end.
+     */
     if (b-a+1 > srv_scanlen)
 	b = a + srv_scanlen - 1;
 

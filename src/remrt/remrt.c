@@ -1557,7 +1557,7 @@ send_gettrees(struct servers *sp, struct frame *fr)
 static void
 send_do_lines(struct servers *sp, int start, int stop, int framenum)
 {
-    char obuf[128];
+    char obuf[256] = {0};
 
     if (sp->sr_pc == PKC_NULL) return;
 
@@ -1680,8 +1680,8 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
     if (work_allocate_method == OPT_MOVIE) {
 	lump = fr->fr_width * 2;	/* 2 scanlines at a whack */
     } else {
-	/* Limit growth in assignment size to 2X each assignment */
-	if (lump > 2*sp->sr_lump) lump = 2*sp->sr_lump;
+	/* Limit growth in assignment size to 1.5X each assignment */
+	if (lump > 1.5*sp->sr_lump) lump = 1.5*sp->sr_lump;
     }
     /* Provide some bounds checking */
     if (lump < 32) lump = 32;

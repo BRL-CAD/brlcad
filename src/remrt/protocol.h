@@ -47,7 +47,12 @@
 #define MSG_GETTREES		17	/* request rt_gettrees() be called */
 #define MSG_GETTREES_REPLY	18	/* response to MSG_GETTREES */
 
-#define REMRT_MAX_PIXELS	(1024)	/* Max MSG_LINES req */
+/* FIXME: if this number is smaller than the amount remrt enqued,
+ * rtsrv will send back only this many and get dropped because of a
+ * pixel assignment mismatch.  implies an inconsistency bug, but
+ * making this "big enough" is a workaround.
+ */
+#define REMRT_MAX_PIXELS	(1024*1024)	/* Max MSG_LINES req */
 
 /*
  *  This structure is used for MSG_PIXELS messages
