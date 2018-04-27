@@ -449,6 +449,25 @@ main(int UNUSED(argc), char *argv[])
     report_instance_params(dbip, "comb_2.c", "rcc_1.s");
     report_instance_params(dbip, "comb_2.c", "datum_plane.s");
 
+    bu_log("\n\nOperation 06: scale the solids about 10, 30, -40 by 5x\n\n");
+    VSET(p, 10, 30, -40);
+    bn_mat_scale_about_pt(mat, p, 5);
+    apply_mat_obj(dbip, "rcc_1.s", mat);
+    apply_mat_obj(dbip, "datum_plane.s", mat);
+
+    /* Report */
+    report_object_params(dbip, "rcc_1.s");
+    report_object_params(dbip, "datum_plane.s");
+    report_matrix(dbip, "comb_1.c/rcc_1.s");
+    report_matrix(dbip, "comb_1.c/datum_plane.s");
+    report_matrix(dbip, "comb_2.c/rcc_1.s");
+    report_matrix(dbip, "comb_2.c/datum_plane.s");
+    report_instance_params(dbip, "comb_1.c", "rcc_1.s");
+    report_instance_params(dbip, "comb_1.c", "datum_plane.s");
+    report_instance_params(dbip, "comb_2.c", "rcc_1.s");
+    report_instance_params(dbip, "comb_2.c", "datum_plane.s");
+
+
 
 
     /*sleep(1000);*/
