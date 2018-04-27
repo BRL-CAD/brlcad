@@ -96,7 +96,7 @@ extern int gettimeofday(struct timeval *, void *);
 #  endif
 #endif
 
-#define TARDY_SERVER_INTERVAL	(9*60)		/* max seconds of silence */
+#define TARDY_SERVER_INTERVAL	(900*60)	/* max seconds of silence */
 #define N_SERVER_ASSIGNMENTS	3		/* desired # of assignments */
 #define MIN_ASSIGNMENT_TIME	5		/* desired seconds/result */
 #define SERVER_CHECK_INTERVAL	(10*60)		/* seconds */
@@ -1604,14 +1604,13 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
     }
 
     /*
-     * Check for tardy server.
-     * The assignments are estimated to take about MIN_ASSIGNMENT_TIME
-     * seconds, so waiting many minutes is unreasonable.
-     * However, if the picture "suddenly" became very complex,
-     * or a system got very busy,
-     * the estimate could be quite low.
-     * This mechanism exists mostly to protect against servers that
-     * go into "black hole" mode while REMRT is running unattended.
+     * Check for tardy server.  The assignments are estimated to take
+     * about MIN_ASSIGNMENT_TIME seconds, so waiting many minutes is
+     * unreasonable.  However, if the picture "suddenly" became very
+     * complex, or a system got very busy, the estimate could be quite
+     * low.  This mechanism exists mostly to protect against servers
+     * that go into "black hole" mode while REMRT is running
+     * unattended.
      */
     if (server_q_len(sp) > 0 &&
 	sp->sr_sendtime.tv_sec > 0 &&
