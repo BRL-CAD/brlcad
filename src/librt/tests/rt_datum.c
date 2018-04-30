@@ -248,16 +248,16 @@ void
 report_object_params(struct db_i *dbip, const char *o)
 {
     int id;
-    struct bu_vls log = BU_VLS_INIT_ZERO;
+    struct bu_vls rtlog = BU_VLS_INIT_ZERO;
     struct rt_db_internal intern;
     struct directory *dp = db_lookup(dbip, o, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) return;
     RT_DB_INTERNAL_INIT(&intern);
     if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) return;
     if (!OBJ[id].ft_describe) return;
-    if (OBJ[id].ft_describe(&log, &intern, 1, dbip->dbi_base2local, &rt_uniresource,dbip) < 0) return;
-    bu_log("OBJECT %s:\n%s\n", o, bu_vls_addr(&log));
-    bu_vls_free(&log);
+    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local, &rt_uniresource,dbip) < 0) return;
+    bu_log("OBJECT %s:\n%s\n", o, bu_vls_addr(&rtlog));
+    bu_vls_free(&rtlog);
 }
 
 
@@ -266,7 +266,7 @@ report_instance_params(struct db_i *dbip, const char *c, const char *o)
 {
     int id;
     mat_t cmat = MAT_INIT_IDN;
-    struct bu_vls log = BU_VLS_INIT_ZERO;
+    struct bu_vls rtlog = BU_VLS_INIT_ZERO;
     struct rt_db_internal intern, cintern;
     struct rt_comb_internal *comb;
     union tree *tp;
@@ -295,9 +295,9 @@ report_instance_params(struct db_i *dbip, const char *c, const char *o)
     RT_DB_INTERNAL_INIT(&intern);
     if ((id = rt_db_get_internal(&intern, dp, dbip, cmat, &rt_uniresource)) < 0) return;
     if (!OBJ[id].ft_describe) return;
-    if (OBJ[id].ft_describe(&log, &intern, 1, dbip->dbi_base2local, &rt_uniresource,dbip) < 0) return;
-    bu_log("INSTANCE %s/%s:\n%s\n", c, o, bu_vls_addr(&log));
-    bu_vls_free(&log);
+    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local, &rt_uniresource,dbip) < 0) return;
+    bu_log("INSTANCE %s/%s:\n%s\n", c, o, bu_vls_addr(&rtlog));
+    bu_vls_free(&rtlog);
 }
 
 
@@ -307,30 +307,30 @@ main(int UNUSED(argc), char *argv[])
     point_t p;
     vect_t delta;
     mat_t mat;
-    char tmpfile[MAXPATHLEN];
+    char rt_tmpfile[MAXPATHLEN];
     struct db_i *dbip = DBI_NULL;
 
     /* Get a guaranteed-valid temp file */
-    FILE *fp = bu_temp_file(tmpfile, MAXPATHLEN);
+    FILE *fp = bu_temp_file(rt_tmpfile, MAXPATHLEN);
     if (fp == NULL) {
 	bu_log("%s error: unable to create temporary .g file\n", argv[0]);
 	return 1;
     } else {
-	bu_log("%s\n", tmpfile);
+	bu_log("%s\n", rt_tmpfile);
     }
 
     /* Manually turn the temp file into a .g */
     if (db5_fwrite_ident(fp, "librt datum test file", 1.0) < 0) {
-	bu_log("%s error: failed to prepare .g file %s\n", argv[0], tmpfile);
+	bu_log("%s error: failed to prepare .g file %s\n", argv[0], rt_tmpfile);
 	return 1;
     }
     (void)fclose(fp);
-    if ((dbip = db_open(tmpfile, DB_OPEN_READWRITE)) == DBI_NULL) {
-	bu_log("%s error: db_open of %s failed\n", argv[0], tmpfile);
+    if ((dbip = db_open(rt_tmpfile, DB_OPEN_READWRITE)) == DBI_NULL) {
+	bu_log("%s error: db_open of %s failed\n", argv[0], rt_tmpfile);
 	return 1;
     }
     if (db_dirbuild(dbip) < 0) {
-	bu_log("%s error: db_dirbuild of %s failed\n", argv[0], tmpfile);
+	bu_log("%s error: db_dirbuild of %s failed\n", argv[0], rt_tmpfile);
 	return 1;
     }
     RT_CK_DBI(dbip);
