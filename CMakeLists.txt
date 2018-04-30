@@ -157,48 +157,35 @@ set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
 execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT}" "${CONFIG_DELTA_START}")
 
 #---------------------------------------------------------------------
-# Allow the BRLCAD_ROOT environment variable to set CMAKE_INSTALL_PREFIX
-# but be noisy about it.  This is generally not a good idea.
+# Allow the BRLCAD_ROOT environment variable to set during build, but be noisy
+# about it unless we're specifically told this is intentional.  Having this
+# happen by accident is generally not a good idea.
 find_program(SLEEP_EXEC sleep)
 mark_as_advanced(SLEEP_EXEC)
-set(BRLCAD_ROOT "$ENV{BRLCAD_ROOT}")
-if(BRLCAD_ROOT)
-  if(NOT BRLCAD_ROOT_OVERRIDE)
-    message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nBRLCAD_ROOT should only be used to override an install directory at runtime. BRLCAD_ROOT is presently set to \"${BRLCAD_ROOT}\"  It is *highly* recommended that BRLCAD_ROOT be unset and not used.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
-    if(CMAKE_INSTALL_PREFIX AND NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-      if(${BRLCAD_ROOT} STREQUAL "${CMAKE_INSTALL_PREFIX}")
-	message("BRLCAD_ROOT is not necessary and may cause unexpected behavior")
-      else(${BRLCAD_ROOT} STREQUAL "${CMAKE_INSTALL_PREFIX}")
-	message(FATAL_ERROR "BRLCAD_ROOT environment variable conflicts with CMAKE_INSTALL_PREFIX")
-      endif(${BRLCAD_ROOT} STREQUAL "${CMAKE_INSTALL_PREFIX}")
-    endif(CMAKE_INSTALL_PREFIX AND NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    if(SLEEP_EXEC)
-      execute_process(COMMAND ${SLEEP_EXEC} 2)
-    endif(SLEEP_EXEC)
-  endif(NOT BRLCAD_ROOT_OVERRIDE)
-endif(BRLCAD_ROOT)
-if(NOT BRLCAD_ROOT_OVERRIDE)
-  if(BRLCAD_ROOT STREQUAL "/usr" OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr")
-    message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nIt is STRONGLY recommended that you DO NOT install BRL-CAD into /usr as BRL-CAD provides several libraries that may conflict with other libraries (e.g. librt, libbu, libbn) on certain system configurations.\nSince our libraries predate all those that we're known to conflict with and are at the very core of our geometry services and project heritage, we have no plans to change the names of our libraries at this time.\nINSTALLING INTO /usr CAN MAKE A SYSTEM COMPLETELY UNUSABLE.  If you choose to continue installing into /usr, you do so entirely at your own risk.  You have been warned.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
-    if(SLEEP_EXEC)
-      message("Pausing 15 seconds...")
-      execute_process(COMMAND ${SLEEP_EXEC} 15)
-    endif(SLEEP_EXEC)
-    if(${CMAKE_INSTALL_PREFIX} STREQUAL "/usr")
-      message(FATAL_ERROR "If you wish to proceed using /usr as your prefix, define BRLCAD_ROOT_OVERRIDE=1 for CMake")
-    endif(${CMAKE_INSTALL_PREFIX} STREQUAL "/usr")
-  endif(BRLCAD_ROOT STREQUAL "/usr" OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr")
-endif(NOT BRLCAD_ROOT_OVERRIDE)
-
-# While we're at it, complain if BRLCAD_DATA is set
-set(BRLCAD_DATA_ENV "$ENV{BRLCAD_DATA}")
-if(BRLCAD_DATA_ENV)
-  message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nBRLCAD_DATA should only be used to override an install directory at runtime. BRLCAD_DATA is presently set to \"${BRLCAD_DATA_ENV}\"  It is *highly* recommended that BRLCAD_DATA be unset and not used.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
+if(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
+  message(WARNING "\nBRLCAD_ROOT is presently set to \"$ENV{BRLCAD_ROOT}\"\nBRLCAD_ROOT should typically be used only when needed as a runtime override, not during compilation.  Building with BRLCAD_ROOT set may produce unexpected behavior during both compilation and subsequent program execution.  It is *highly* recommended that BRLCAD_ROOT be unset and not used.\n")
   if(SLEEP_EXEC)
     execute_process(COMMAND ${SLEEP_EXEC} 2)
   endif(SLEEP_EXEC)
-endif(BRLCAD_DATA_ENV)
+endif(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
 
+# While we're at it, complain if BRLCAD_DATA is set
+if(NOT "$ENV{BRLCAD_DATA}" STREQUAL "" AND NOT BRLCAD_DATA_OVERRIDE)
+  message(WARNING "\nBRLCAD_DATA is presently set to \"$ENV{BRLCAD_DATA}\"\nBRLCAD_DATA should typically be used only when needed as a runtime override, not during compilation.  Building with BRLCAD_ROOT set may produce unexpected behavior during both compilation and subsequent program execution.  It is *highly* recommended that BRLCAD_DATA be unset and not used.\n")
+  if(SLEEP_EXEC)
+    execute_process(COMMAND ${SLEEP_EXEC} 2)
+  endif(SLEEP_EXEC)
+endif(NOT "$ENV{BRLCAD_DATA}" STREQUAL "" AND NOT BRLCAD_DATA_OVERRIDE)
+
+# If CMAKE_INSTALL_PREFIX is "/usr", be VERY noisy about it - a make install in
+# this location is dangerous/destructive on some systems.
+if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
+  message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nIt is STRONGLY recommended that you DO NOT install BRL-CAD into /usr as BRL-CAD provides several libraries that may conflict with other libraries (e.g. librt, libbu, libbn) on certain system configurations.\nSince our libraries predate all those that we're known to conflict with and are at the very core of our geometry services and project heritage, we have no plans to change the names of our libraries at this time.\nINSTALLING INTO /usr CAN MAKE A SYSTEM COMPLETELY UNUSABLE.  If you choose to continue installing into /usr, you do so entirely at your own risk.  You have been warned.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
+  if(SLEEP_EXEC)
+    execute_process(COMMAND ${SLEEP_EXEC} 15)
+  endif(SLEEP_EXEC)
+  message(FATAL_ERROR "If you wish to proceed using /usr as your prefix, define BRLCAD_ALLOW_INSTALL_TO_USR=1 for CMake")
+endif("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
 
 #---------------------------------------------------------------------
 # Define relative install locations and output directories.  Don't set
