@@ -76,6 +76,65 @@ void cvs_to_git()
 }
 
 int
+git_tree_changed()
+{
+    return std::system("git status --porcelain");
+}
+
+int
+git_commit(std::string &author, std::map<std::string,std::string> &amap, std::string &date, std::string &svn_branch, int svn_rev)
+{
+    if (!git_tree_changed()) {
+	std::cout << "*******************************\n";
+	std::cout << "Warning - commit " << svn_rev << " is a no op!\n";
+	std::cout << date << "\n";
+	std::system("echo msg.txt");
+	std::cout << author << "\n";
+	std::cout << "*******************************\n";
+    }
+    std::string commit_author = (author.length()) ? amap[author] : "Unknown <unknown@unknown>";
+    std::system("git add -A");
+    std::string git_cmd = "git commit -F msg.txt --author=\"" + commit_author + "\" --date=" + date;
+    std::system(git_cmd.c_str());
+    std::string git_note_cmd = "git notes add -m \"svn:revision:" + std::to_string(svn_rev) + " svn:author:" + author;
+    if (svn_branch.length()) {
+	// append svn branch if we have it
+	git_note_cmd.append(" svn:branch:");
+	git_note_cmd.append(svn_branch);
+    }
+    git_note_cmd.append("\"");
+    std::system(git_note_cmd.c_str());
+}
+
+int
+git_tag(std::string &tag_msg, std::string &author, std::string &date, std::string &svn_branch)
+{
+    std::string tag_author = (author.length()) ? author : "Unknown <unknown@unknown>";
+
+}
+
+void
+svn_patch(const char *repo, std::map<int, std::string> &bmap, int rev)
+{
+    std::string master = "trunk";
+    if (bmap.find(rev) == bmap.end()) {
+	std::cout << "Error - no known branch for commit " << rev << "\n";
+	return;
+    }
+    std::string branch = bmap[rev];
+
+    if (!master.compare(branch)) {
+	std::system("git checkout master");
+    } else {
+	std::string git_branch = branch.substr(10);
+	std::string git_bcmd = "git checkout " + git_branch;
+	std::system(git_bcmd.c_str());
+    }
+
+    std::string patchcmd = "svn diff -c" + std::to_string(rev) + " file://" + std::string(repo) + "/brlcad/" + branch + " | patch -f --remove-empty-files -p 0";
+}
+
+int
 path_is_branch(std::string path)
 {
     if (path.length() <= 15 || path.compare(0, 15, "brlcad/branches")) return 0;
@@ -83,6 +142,37 @@ path_is_branch(std::string path)
     size_t slashpos = spath.find_first_of('/');
     return (slashpos == std::string::npos) ? 1 : 0;
 }
+
+std::string
+path_get_branch(std::string path)
+{
+    std::string empty = "";
+    if (path.length() <= 12) return empty;
+    if (!path.compare(0, 12, "brlcad/trunk")) {
+	return std::string("trunk");
+    }
+    if (path.length() <= 15) return empty;
+    if (!path.compare(0, 15, "brlcad/branches")) {
+	std::string spath = path.substr(16);
+	std::string bpath = "branches/";
+	size_t slashpos = spath.find_first_of('/');
+	if (slashpos == std::string::npos) {
+	    if (spath.length() > 0) {
+		bpath.append(spath);
+		return bpath;
+	    } else {
+		return empty;
+	    }
+	} else {
+	    std::string bsubstr = spath.substr(0, slashpos);
+	    bpath.append(bsubstr);
+	    return bpath;
+	}
+    }
+    return empty;
+}
+
+
 
 int
 path_is_tag(std::string path)
@@ -115,6 +205,7 @@ struct commit_info {
     std::multimap<int, std::pair<std::string, std::string> > revs_move_map;
     std::set<int> merge_commits;
     std::set<int> tags;
+    std::map<int, std::string> branch;
 };
 
 void node_info_reset(struct node_info *i)
@@ -137,6 +228,7 @@ void node_info_reset(struct node_info *i)
 
 void process_node(struct node_info *i, struct commit_info *c)
 {
+    int branch_delete = 0;
     if (i->is_move && i->is_edit && i->is_file) {
 	std::pair<std::string, std::string> move(i->node_copyfrom_path, i->node_path);
 	std::pair<int, std::pair<std::string, std::string> > mvmap(i->rev, move);
@@ -150,6 +242,7 @@ void process_node(struct node_info *i, struct commit_info *c)
     }
     if (path_is_branch(i->node_path) && i->is_delete) {
 	std::cout << "Branch delete " << i->rev << ": " << i->node_path << "\n";
+	branch_delete = 1;
     }
     if (path_is_branch(i->node_path) && i->is_add) {
 	std::cout << "Branch add    " << i->rev << ": " << i->node_path << "\n";
@@ -166,6 +259,19 @@ void process_node(struct node_info *i, struct commit_info *c)
 	std::cout << "Tag edit      " << i->rev << ": " << i->node_path << "\n";
     }
 
+    if (!branch_delete) {
+	std::string branch = path_get_branch(i->node_path);
+	if (branch.length() > 0) {
+	    if (c->branch.find(i->rev) != c->branch.end()) {
+		std::string existing_branch = c->branch[i->rev];
+		if (existing_branch.compare(branch)) {
+		    std::cout << "Warning - commit " << i->rev << " claims both branch " << branch << " and branch " << existing_branch << "\n";
+		}
+	    } else {
+		c->branch[i->rev] = branch;
+	    }
+	}
+    }
 
 }
 
@@ -323,7 +429,8 @@ apply_split_rev(const char *repo, int rev)
 
 int main(int argc, const char **argv)
 {
-    int start_svn_rev = 29886;
+    int start_svn_rev = 29887;
+    int max_svn_rev = 29900;
     struct commit_info c;
 
     // To obtain a repository copy for processing, do:
@@ -351,6 +458,7 @@ int main(int argc, const char **argv)
     // git log --follow, and merge commits to branches need particular handling
     // - find out which ones they are
     characterize_commits(argv[1], &c);
+#if 0
     std::set<int>::iterator iit;
     for (iit = c.merge_commits.begin(); iit != c.merge_commits.end(); iit++) {
 	//std::string logmsg = revision_log_msg(argv[2], *iit);
@@ -366,6 +474,15 @@ int main(int argc, const char **argv)
 	    std::cout << "  " << rmit->second.first << " -> " << rmit->second.second << "\n";
 	}
     }
+#endif
+
+#if 0
+    chdir("brlcad_git");
+    for (int i = start_svn_rev; i <= max_svn_rev; i++) {
+	svn_patch(argv[2], i);
+    }
+#endif
+
 }
 
 // Local Variables:
