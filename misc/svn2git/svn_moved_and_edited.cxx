@@ -471,7 +471,7 @@ int main(int argc, const char **argv)
     // specific content of the commits, and this produces a much
     // smaller file to parse):
     //
-    // svnadmin dump --incremental --deltas /home/user/code
+    // svnadmin dump --incremental --deltas /home/user/code > brlcad.dump
 
     if (argc != 3) {
 	std::cerr << "svn_moved_and_edited <dumpfile> <repository_clone>\n";
@@ -482,9 +482,20 @@ int main(int argc, const char **argv)
     //cvs_init();
     //cvs_to_git();
 
-    // Commits in SVN that both moved and edited files are problematic for
-    // git log --follow, and merge commits to branches need particular handling
-    // - find out which ones they are
+    // There are several categories of commits in SVN that need particular
+    // handling, including:
+    //
+    // 1.  Branch adds
+    // 2.  Branch deletes
+    // 3.  Tag adds
+    // 4.  Tag deletes
+    // 5.  Tags containing subsequent edits
+    // 6.  Merge commits (from branch to branch)
+    // 7.  Commits that both move and edit a file simultaneously
+    //     (these can break git log --follow)
+    //
+    // Analyze the dump file to spot these cases and build up information
+    // about them.
     characterize_commits(argv[1], &c);
 
     // Replay subversion-only commits in git repository, according to the specific
