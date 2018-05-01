@@ -38,10 +38,6 @@
 #include "bn/mat.h"
 #include "nmg.h"
 
-#if defined(HAVE_RINT) && !defined(HAVE_DECL_RINT)
-extern double rint(double x);
-#endif
-
 /* externed */
 uint32_t nmg_debug;
 struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmiss freelist */

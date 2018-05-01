@@ -333,7 +333,7 @@ typedef int mode_t;
 
 #define fork() -1
 #define getprogname() _pgmptr
-#cmakedefine rint(_X) (floor((_X) + 0.5))
+#define HAVE_SHARED_RINT_TEST 1
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
 
 #ifndef __cplusplus

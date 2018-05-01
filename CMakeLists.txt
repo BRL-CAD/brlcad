@@ -2724,10 +2724,10 @@ if(NOT HAVE_LRINT AND NOT DEFINED HAVE_WORKING_LRINT_MACRO)
   set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
   # NOTE: this must match the lrint #define in include/common.h
   check_c_source_compiles("#define lrint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))\nint main() {return lrint(3.14);}" HAVE_WORKING_LRINT_MACRO)
-  if(HAVE_WORKING_LRINT_MACRO)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_LRINT_MACRO 1\n")
-  endif(HAVE_WORKING_LRINT_MACRO)
 endif(NOT HAVE_LRINT AND NOT DEFINED HAVE_WORKING_LRINT_MACRO)
+if(HAVE_WORKING_LRINT_MACRO)
+  CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_WORKING_LRINT_MACRO 1\n")
+endif(HAVE_WORKING_LRINT_MACRO)
 
 # test for tgamma
 set(tgamma_test "#include <math.h>\nint main() {double tga = tgamma(3.14); return 0;}")
@@ -2778,10 +2778,6 @@ if(WIN32)
   endif(NOT HAVE_ISINF)
 
   CHECK_SYMBOL_EXISTS(rint "math.h" HAVE_RINT)
-  #If we don't have it, need to define it in config_win
-  if(NOT HAVE_RINT)
-    set(rint 1)
-  endif(NOT HAVE_RINT)
 
   CHECK_SYMBOL_EXISTS(fmax "math.h" HAVE_FMAX)
   #If we don't have it, need to define it in config_win

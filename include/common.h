@@ -62,23 +62,35 @@
 extern double drand48(void);
 #  endif
 
+#if !defined(__cplusplus) || defined(HAVE_SHARED_RINT_TEST)
 /* make sure lrint() is provided */
-#  if !defined(__cplusplus) && !defined(HAVE_LRINT) && defined(HAVE_WORKING_LRINT_MACRO)
-#    define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
-#    define HAVE_LRINT 1
-#  elif !defined(__cplusplus) && defined(HAVE_LRINT) && !defined(HAVE_DECL_LRINT) && !defined(HAVE_WINDOWS_H)
+#  if !defined(lrint)
+#    if !defined(HAVE_LRINT)
+#      define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
+#    elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_LRINT)
 long int lrint(double x);
-#    define HAVE_DECL_LRINT 1
+#      define HAVE_DECL_LRINT 1
+#    endif
+#  endif
+
+#  if !defined(HAVE_LRINT)
+#    define HAVE_LRINT 1
 #  endif
 
 /* make sure rint() is provided */
-#  if !defined(__cplusplus) && !defined(HAVE_RINT) && defined(rint)
-#    define rint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))
-#    define HAVE_RINT 1
-#  elif !defined(__cplusplus) && defined(HAVE_RINT) && !defined(HAVE_DECL_RINT) && !defined(HAVE_WINDOWS_H)
+#  if !defined(rint)
+#    if !defined(HAVE_RINT)
+#      define rint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))
+#    elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_RINT)
 double rint(double x);
-#    define HAVE_DECL_RINT 1
+#      define HAVE_DECL_RINT 1
+#    endif
 #  endif
+
+#  if !defined(HAVE_RINT)
+#    define HAVE_RINT 1
+#  endif
+#endif
 
 /* strict c89 doesn't declare snprintf() */
 # if defined(HAVE_SNPRINTF) && !defined(HAVE_DECL_SNPRINTF) && !defined(snprintf) && !defined(__cplusplus)
