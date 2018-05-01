@@ -49,6 +49,7 @@
 #endif
 
 #include "bu/list.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -73,6 +74,7 @@ struct pkg_queue {
 /***** Variables shared with viewing model *** */
 fb *fbp = FB_NULL;	/* Framebuffer handle */
 FILE *outfp = NULL;	/* optional pixel output file */
+
 mat_t view2model;
 mat_t model2view;
 int srv_startpix;	/* offset for view_pixel */
@@ -107,6 +109,10 @@ static char *title_file, *title_obj;	/* name of file and first object */
 #define MAX_WIDTH (16*1024)
 
 static int avail_cpus;		/* # of cpus avail on this system */
+
+/* store program parameters in case of restart */
+static int original_argc;
+static char **original_argv;
 
 int save_overlaps=0;
 
@@ -160,6 +166,8 @@ main(int argc, char **argv)
 	fprintf(stderr, "%s", srv_usage);
 	return 1;
     }
+    original_argc = argc;
+    original_argv = bu_argv_dup(argc, (const char **)argv);
     while (argv[1][0] == '-') {
 	if (BU_STR_EQUAL(argv[1], "-d")) {
 	    debug++;
@@ -431,7 +439,9 @@ ph_restart(struct pkg_conn *UNUSED(pc), char *buf)
 	fprintf(stderr, "ph_restart %s\n", buf);
     bu_log("Restarting\n");
     pkg_close(pcsrv);
-    execlp("rtsrv", "rtsrv", control_host, tcp_port, (char *)0);
+    execvp(original_argv[0], original_argv);
+    /* should not reach */
+    bu_argv_free(original_argc, original_argv);
     perror("rtsrv");
     bu_exit(1, NULL);
 }
