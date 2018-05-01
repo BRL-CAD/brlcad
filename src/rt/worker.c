@@ -464,8 +464,47 @@ worker(int cpu, void *UNUSED(arg))
     int pixelnum;
     int pat_num = -1;
 
-    /* The more CPUs at work, the bigger the bites we take */
-    if (per_processor_chunk <= 0) per_processor_chunk = npsw;
+    /* Figure out a reasonable chunk size that should keep most
+     * workers busy all the way to the end.  We divide up the image
+     * into chunks equating to tiles 1x1, 2x2, 4x4, 8x8 ... in size.
+     * Work is distributed so that all CPUs work on at least 8 chunks
+     * with the chunking adjusted from a maximum chunk size (512x512)
+     * all the way down to 1 pixel at a time, depending on the number
+     * of cores and the size of our rendering.
+     *
+     * TODO: actually work on image tiles instead of pixel spans.
+     */
+    if (per_processor_chunk <= 0) {
+	size_t chunk_size;
+	size_t one_eighth = (last_pixel - cur_pixel) * (hypersample + 1) / 8;
+	if (UNLIKELY(one_eighth < 1))
+	    one_eighth = 1;
+
+	if (one_eighth > npsw * 262144)
+	    chunk_size = 262144; /* 512x512 */
+	else if (one_eighth > npsw * 65536)
+	    chunk_size = 65536; /* 256x256 */
+	else if (one_eighth > npsw * 16384)
+	    chunk_size = 16384; /* 128x128 */
+	else if (one_eighth > npsw * 4096)
+	    chunk_size = 4096; /* 64x64 */
+	else if (one_eighth > npsw * 1024)
+	    chunk_size = 1024; /* 32x32 */
+	else if (one_eighth > npsw * 256)
+	    chunk_size = 256; /* 16x16 */
+	else if (one_eighth > npsw * 64)
+	    chunk_size = 64; /* 8x8 */
+	else if (one_eighth > npsw * 16)
+	    chunk_size = 16; /* 4x4 */
+	else if (one_eighth > npsw * 4)
+	    chunk_size = 4; /* 2x2 */
+	else
+	    chunk_size = 1; /* one pixel at a time */
+
+	bu_semaphore_acquire(RT_SEM_WORKER);
+	per_processor_chunk = chunk_size;
+	bu_semaphore_release(RT_SEM_WORKER);
+    }
 
     if (cpu >= MAX_PSW) {
 	bu_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
