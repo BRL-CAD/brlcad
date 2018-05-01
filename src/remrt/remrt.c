@@ -97,7 +97,7 @@ extern int gettimeofday(struct timeval *, void *);
 #endif
 
 #define TARDY_SERVER_INTERVAL	(900*60)	/* max seconds of silence */
-#define N_SERVER_ASSIGNMENTS	3		/* desired # of assignments */
+#define N_SERVER_ASSIGNMENTS	1		/* desired # of assignments */
 #define MIN_ASSIGNMENT_TIME	5		/* desired seconds/result */
 #define SERVER_CHECK_INTERVAL	(10*60)		/* seconds */
 #ifndef RSH
