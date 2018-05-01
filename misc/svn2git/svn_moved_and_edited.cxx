@@ -547,7 +547,7 @@ int main(int argc, const char **argv)
 	if (c.merge_commits.find(i) != c.merge_commits.end()) {
 	    //std::string logmsg = revision_log_msg(argv[2], i);
 	    //std::cout << "Merge commit " << i << ": " << logmsg << "\n";
-	    std::cout << "Merge commit " << i << "\n";
+	    std::cout << "Merge commit (" << c.commit_branch[i]  << ") " << i << "\n";
 	    continue;
 	}
 	if (c.multi_branch_commits.find(i) != c.multi_branch_commits.end()) {
@@ -559,7 +559,7 @@ int main(int argc, const char **argv)
 	    continue;
 	}
 	if (c.move_edit_revs.find(i) != c.move_edit_revs.end()) {
-	    std::cout << "Commit contains rename + edits " << i << ":\n";
+	    std::cout << "Commit contains rename + edits (" << c.commit_branch[i]  << ") " << i << ":\n";
 	    std::multimap<int, std::pair<std::string, std::string> >::iterator rmit;
 	    std::pair<std::multimap<int, std::pair<std::string, std::string> >::iterator, std::multimap<int, std::pair<std::string, std::string> >::iterator> revrange;
 	    revrange = c.revs_move_map.equal_range(i);
@@ -567,6 +567,10 @@ int main(int argc, const char **argv)
 		std::cout << "   " << rmit->second.first << " -> " << rmit->second.second << "\n";
 	    }
 	    continue;
+	}
+	std::string branch = c.commit_branch[i];
+	if (branch.length()) {
+	    std::cout << "Standard commit (" << c.commit_branch[i] << ") " << i << "\n";
 	}
     }
     chdir("..");
