@@ -203,6 +203,7 @@ struct node_info {
 struct commit_info {
     std::map<int, std::string> commit_branch;
     std::set<int> multi_branch_commits;
+    std::map<int, std::set<std::string> > multi_branch_branches;
     std::set<int> merge_commits;
     std::set<int> branch_deletes;
     std::multimap<int, std::string > branch_delete_paths;
@@ -289,6 +290,8 @@ void process_node(struct node_info *i, struct commit_info *c)
 		std::string existing_branch = c->commit_branch[i->rev];
 		if (existing_branch.compare(branch)) {
 		    c->multi_branch_commits.insert(i->rev);
+		    c->multi_branch_branches[i->rev].insert(existing_branch);
+		    c->multi_branch_branches[i->rev].insert(branch);
 		}
 	    } else {
 		c->commit_branch[i->rev] = branch;
@@ -531,13 +534,17 @@ int main(int argc, const char **argv)
 	    continue;
 	}
 	if (c.merge_commits.find(i) != c.merge_commits.end()) {
-	    //std::string logmsg = revision_log_msg(argv[2], *iit);
-	    //std::cout << "Merge commit " << *iit << ": " << logmsg << "\n";
+	    //std::string logmsg = revision_log_msg(argv[2], i);
+	    //std::cout << "Merge commit " << i << ": " << logmsg << "\n";
 	    std::cout << "Merge commit " << i << "\n";
 	    continue;
 	}
 	if (c.multi_branch_commits.find(i) != c.multi_branch_commits.end()) {
-	    std::cout << "Commit edits multiple branches " << i << "\n";
+	    std::set<std::string>::iterator mbit;
+	    std::cout << "Commit edits multiple branches " << i << ":\n";
+	    for (mbit = c.multi_branch_branches[i].begin(); mbit != c.multi_branch_branches[i].end(); mbit++) {
+		std::cout << "               " << *mbit << "\n";
+	    }
 	    continue;
 	}
 	if (c.move_edit_revs.find(i) != c.move_edit_revs.end()) {
