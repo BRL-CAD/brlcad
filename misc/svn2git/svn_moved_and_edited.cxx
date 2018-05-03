@@ -114,6 +114,57 @@ git_tag(std::string &tag_msg, std::string &author, std::string &date, std::strin
 }
 
 void
+git_make_branch(std::string &bname, int rev, std::string &author)
+{
+    std::string bcheck = "git show-ref --verify --quiet refs/heads/" + bname;
+    if (!std::system(bcheck.c_str())) {
+	std::cerr << "Error - branch " << bname << " already exists in repository\n";
+	return;
+    }
+    // TODO - should we check if a "deleted" version of this branch exists, and if
+    // so restore it rather than making a new branch? There are several cases in SVN
+    // where STABLE was deleted and restored to try and clear out merge messes, so
+    // in those cases it might be more appropriate to "restore" the removed branch...
+    std::string bmake = "git branch " + bname;
+    std::system(bmake.c_str());
+    std::string bco = "git checkout " + bname;
+    std::system(bco.c_str());
+    std::string git_note_cmd = "git notes add -m \"svn:revision:" + std::to_string(rev) + " svn:author:" + author;
+    std::system(git_note_cmd.c_str());
+    std::system("git notes append -F msg.txt");
+}
+
+void
+git_delete_branch(std::string &bname, int rev, std::string &rev_date)
+{
+    std::string tname = bname + "-" + rev_date;
+    std::string bcheck = "git show-ref --verify --quiet refs/heads/" + bname;
+    if (std::system(bcheck.c_str())) {
+	std::cerr << "Error - branch " << bname << " does not exist in the repository\n";
+	return;
+    }
+    // Because we want to preserve our history, deleted branches are first
+    // tagged with an "archived/" prefix so they can be recovered later.
+    // ("Deleting" a branch for BRL-CAD is simply getting it out of the
+    // "active" branch list reported by git branch, not completely removing it
+    // from the repository history.)
+    //
+    // TODO - the below will preserve all deletes as separate archived tags, even
+    // if the branch is deleted and re-created multiple times.  Should we instead
+    // restore the branch from the tag if it is recreated, and simply delete the old
+    // archived tag and add a new one if it is re-deleted?
+    std::string tcheck = "git show-ref --verify --quiet refs/tags/archived/" + tname;
+    if (!std::system(bcheck.c_str())) {
+	std::cerr << "Error - " << tname << " already exists (??)\n";
+	return;
+    }
+    std::string tcmd = "git tag archived/" + tname + " " + bname;
+    std::system(tcmd.c_str());
+    std::string dcmd = "git branch -D " + bname;
+    std::system(dcmd.c_str());
+}
+
+void
 svn_patch(const char *repo, std::map<int, std::string> &bmap, int rev)
 {
     std::string master = "trunk";
@@ -172,8 +223,6 @@ path_get_branch(std::string path)
     return empty;
 }
 
-
-
 int
 path_is_tag(std::string path)
 {
@@ -182,6 +231,30 @@ path_is_tag(std::string path)
     size_t slashpos = spath.find_first_of('/');
     return (slashpos == std::string::npos) ? 1 : 0;
 }
+
+std::string
+path_get_tag(std::string path)
+{
+    std::string empty = "";
+    if (path.length() <= 11) return empty;
+    if (!path.compare(0, 11, "brlcad/tags")) {
+	std::string spath = path.substr(12);
+	size_t slashpos = spath.find_first_of('/');
+	if (slashpos == std::string::npos) {
+	    if (spath.length() > 0) {
+		return spath;
+	    } else {
+		return empty;
+	    }
+	} else {
+	    std::string bsubstr = spath.substr(0, slashpos);
+	    return bsubstr;
+	}
+    }
+    return empty;
+}
+
+
 
 struct node_info {
     int in_branch = 0;
@@ -214,6 +287,8 @@ struct commit_info {
     std::set<int> tag_deletes;
     std::multimap<int, std::string > tag_delete_paths;
     std::set<int> tag_edits;
+    std::set<std::string> edited_tags;
+    std::map<std::string, i> max_rev_tag_edit;
     std::multimap<int, std::string > tag_edit_paths;
     std::set<int> move_edit_revs;
     std::multimap<int, std::pair<std::string, std::string> > revs_move_map;
@@ -278,9 +353,16 @@ void process_node(struct node_info *i, struct commit_info *c)
     }
     if (c->tag_adds.find(i->rev) == c->tag_adds.end() && i->in_tag && !(path_is_tag(i->node_path) && i->is_delete)) {
 	//std::cout << "Tag edit      " << i->rev << ": " << i->node_path << "\n";
-	c->tag_edits.insert(i->rev);
-	std::pair<int, std::string > nmap(i->rev, i->node_path);
-	c->tag_edit_paths.insert(nmap);
+	std::string curr_tag = path_get_tag(i->node_path);
+	if (curr_tag.length()) {
+	    c->tag_edits.insert(i->rev);
+	    c->edited_tags.insert(curr_tag);
+	    c->max_rev_tag_edit[curr_tag] = i->rev;
+	    std::pair<int, std::string > nmap(i->rev, i->node_path);
+	    c->tag_edit_paths.insert(nmap);
+	} else {
+	    //std::cerr << "Tag edit detected on " << i->rev << "," << i->node_path << " but could not determine current tag\n";
+	}
     }
 
     if (!branch_delete) {
@@ -525,6 +607,11 @@ int main(int argc, const char **argv)
 	    rr = c.tag_add_paths.equal_range(i);
 	    for (mmit = rr.first; mmit != rr.second; mmit++) {
 		std::cout << "               " << mmit->second << "\n";
+		if (c.edited_tags.find(mmit->second) != c.edited_tags.end()) {
+		    std::cout << "    Tag " << mmit->second << " contains edits - adding as branch\n";
+		} else {
+		    std::cout << "    Valid tag - tagging\n"
+		}
 	    }
 	    continue;
 	}
@@ -542,6 +629,8 @@ int main(int argc, const char **argv)
 	    for (mmit = rr.first; mmit != rr.second; mmit++) {
 		std::cout << "               " << mmit->second << "\n";
 	    }
+	    // TODO - if this is the last commit that edits this
+	    // particular tag branch, tag it and archive/remove the branch
 	    continue;
 	}
 	if (c.merge_commits.find(i) != c.merge_commits.end()) {
