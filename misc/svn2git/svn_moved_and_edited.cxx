@@ -130,24 +130,64 @@ git_to_svn(std::string &gin, std::string &branch, int is_tag)
 int
 git_tree_changed()
 {
-    return std::system("git status --porcelain");
+    std::string mods;
+    redi::ipstream proc("git status --porcelain", redi::pstreams::pstdout);
+    std::getline(proc.out(), mods);
+    return mods.length();
 }
 
 int
-git_commit(std::string &author, std::map<std::string,std::string> &amap, std::string &date, std::string &svn_branch, int svn_rev)
+git_commit(const char *svn_repo, int svn_rev, std::string &svn_branch, std::string &logmsg, std::string &author, std::string &date)
 {
+    // Pull patch from SVN
+    std::string diffcmd = "svn diff -c" + std::to_string(svn_rev) + " file://" + svn_repo + "/brlcad/" + svn_branch + " > ../svn.diff";
+    std::cout << diffcmd << "\n";
+    std::system(diffcmd.c_str());
+    std::cout << std::endl;
+
+    // TODO - squash RCSid strings out of patches - otherwise will not apply cleanly...  this only
+    // needs to be done up until they're removed from SVN history
+
+    // Make sure we're in the right working branch
+    std::cout << "Switching to " << svn_to_git(svn_branch) << " (svn branch " << svn_branch << ")\n";
+    std::string bco = "git checkout " + svn_to_git(svn_branch);
+    std::system(bco.c_str());
+    std::cout << std::endl;
+
+    // Apply the patch
+    std::cout << "Patch file contains: \n";
+    std::cout << std::endl;
+    std::system("cat ../svn.diff");
+    std::cout << std::endl;
+    std::system("patch -f --remove-empty-files -p0 < ../svn.diff");
+    std::cout << std::endl;
+
+    // See what happened
     if (!git_tree_changed()) {
 	std::cout << "*******************************\n";
 	std::cout << "Warning - commit " << svn_rev << " is a no op!\n";
 	std::cout << date << "\n";
-	std::system("echo ../msg.txt");
+	std::cout << std::endl;
+	std::system("cat ../msg.txt");
+	std::cout << std::endl;
 	std::cout << author << "\n";
 	std::cout << "*******************************\n";
+	std::cout << std::endl;
+	return 0;
     }
-    std::string commit_author = (author.length()) ? amap[author] : "Unknown <unknown@unknown>";
+    //std::string commit_author = (author.length()) ? amap[author] : "Unknown <unknown@unknown>";
+    std::string commit_author = "Unknown <unknown@unknown>";
     std::system("git add -A");
-    std::string git_cmd = "git commit -F ../msg.txt --author=\"" + commit_author + "\" --date=" + date;
-    std::system(git_cmd.c_str());
+    std::cout << std::endl;
+    if (logmsg.length()) {
+	std::string git_cmd = "git commit -F ../msg.txt --author=\"" + commit_author + "\" --date=" + date;
+	std::system(git_cmd.c_str());
+	std::cout << std::endl;
+    } else {
+	std::string git_cmd = "git commit -m \"empty commit message\" --author=\"" + commit_author + "\" --date=" + date;
+	std::system(git_cmd.c_str());
+	std::cout << std::endl;
+    }
     std::string git_note_cmd = "git notes add -m \"svn:revision:" + std::to_string(svn_rev) + " svn:author:" + author;
     if (svn_branch.length()) {
 	// append svn branch if we have it
@@ -156,6 +196,7 @@ git_commit(std::string &author, std::map<std::string,std::string> &amap, std::st
     }
     git_note_cmd.append("\"");
     std::system(git_note_cmd.c_str());
+    std::cout << std::endl;
 }
 
 int
@@ -610,8 +651,8 @@ revision_log_msg(const char *repo, int rev)
 
 int main(int argc, const char **argv)
 {
-    //int start_svn_rev = 29887;
-    int start_svn_rev = 1;
+    int start_svn_rev = 29887;
+    //int start_svn_rev = 1;
     int max_svn_rev = -1;
     struct commit_info c;
 
@@ -660,7 +701,7 @@ int main(int argc, const char **argv)
     for (int i = start_svn_rev; i <= max_svn_rev; i++) {
 
 	// Get the SVN commit message and prepare msg.txt
-	//std::string logmsg = revision_log_msg(argv[2], i);
+	std::string logmsg = revision_log_msg(argv[2], i);
 
 	struct stat buffer;
 	std::string rev_script = "../rev_scripts/" + std::to_string(i) + ".sh";
@@ -679,8 +720,8 @@ int main(int argc, const char **argv)
 
 	// If we're not running a custom script for this revision, get the SVN
 	// commit author and date as well
-	//std::string rauthor = revision_author(argv[2], i);
-	//std::string rdate = revision_date(argv[2], i);
+	std::string rauthor = revision_author(argv[2], i);
+	std::string rdate = revision_date(argv[2], i);
 
 	if (c.branch_adds.find(i) != c.branch_adds.end()) {
 	    std::cout << "Branch add " << i << ":\n";
@@ -777,6 +818,9 @@ int main(int argc, const char **argv)
 	std::string branch = c.commit_branch[i];
 	if (branch.length()) {
 	    std::cout << "Standard commit (" << c.commit_branch[i] << ") " << i << "\n";
+	    if (!c.commit_branch[i].compare("trunk")) {
+		git_commit(argv[2], i, c.commit_branch[i], logmsg, rauthor, rdate);
+	    }
 	}
     }
     chdir("..");
