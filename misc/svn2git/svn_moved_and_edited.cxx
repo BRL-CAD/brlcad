@@ -597,7 +597,7 @@ revision_log_msg(const char *repo, int rev)
     std::string logmsg;
     std::string logcmd = "svn log -r" + std::to_string(rev) + " --xml file://" + std::string(repo) + " > ../msg.xml";
     std::system(logcmd.c_str());
-    std::system("xsltproc ../svn_logmsg.xsl msg.xml > ../msg.txt");
+    std::system("xsltproc ../svn_logmsg.xsl ../msg.xml > ../msg.txt");
     std::ifstream mstream("../msg.txt");
     std::stringstream mbuffer;
     mbuffer << mstream.rdbuf();
