@@ -155,7 +155,7 @@ git_delete_branch(std::string &bname, int rev, std::string &rev_date)
     // archived tag and add a new one if it is re-deleted?
     std::string tcheck = "git show-ref --verify --quiet refs/tags/archived/" + tname;
     if (!std::system(bcheck.c_str())) {
-	std::cerr << "Error - " << tname << " already exists (??)\n";
+	std::cerr << "Error - " << tname << " already exists\n";
 	return;
     }
     std::string tcmd = "git tag archived/" + tname + " " + bname;
@@ -266,6 +266,7 @@ struct node_info {
     int is_file = 0;
     int is_move = 0;
     int merge_commit = 0;
+    std::string from_path;
     int node_path_filtered = 0;
     int move_edit_rev = 0;
     int rev = -1;
@@ -278,6 +279,7 @@ struct commit_info {
     std::set<int> multi_branch_commits;
     std::map<int, std::set<std::string> > multi_branch_branches;
     std::set<int> merge_commits;
+    std::map<int, std::string > merge_commit_from;
     std::set<int> branch_deletes;
     std::multimap<int, std::string > branch_delete_paths;
     std::set<int> branch_adds;
@@ -288,7 +290,7 @@ struct commit_info {
     std::multimap<int, std::string > tag_delete_paths;
     std::set<int> tag_edits;
     std::set<std::string> edited_tags;
-    std::map<std::string, i> max_rev_tag_edit;
+    std::map<std::string, int> max_rev_tag_edit;
     std::multimap<int, std::string > tag_edit_paths;
     std::set<int> move_edit_revs;
     std::multimap<int, std::pair<std::string, std::string> > revs_move_map;
@@ -324,6 +326,8 @@ void process_node(struct node_info *i, struct commit_info *c)
     if (i->merge_commit && i->in_branch) {
 	if (c->merge_commits.find(i->rev) == c->merge_commits.end()) {
 	    c->merge_commits.insert(i->rev);
+	    c->merge_commit_from[i->rev] = i->from_path;
+	    //std::cerr << "Assigning merged-from branch " << i->from_path << " for commit " << i->rev << "\n";
 	}
     }
     if (path_is_branch(i->node_path) && i->is_delete) {
@@ -391,6 +395,7 @@ void characterize_commits(const char *dfile, struct commit_info *c)
     std::string line;
     while (std::getline(infile, line))
     {
+	int high_rev = -1;
 	std::istringstream ss(line);
 	std::string s = ss.str();
 	if (!s.compare(0, 16, "Revision-number:")) {
@@ -398,6 +403,7 @@ void characterize_commits(const char *dfile, struct commit_info *c)
 		// Process last node of previous revision
 		process_node(&info, c);
 	    }
+	    high_rev = -1;
 	    node_info_reset(&info);
 	    // Grab new revision number
 	    rev = std::stoi(s.substr(17));
@@ -451,6 +457,46 @@ void characterize_commits(const char *dfile, struct commit_info *c)
 		if (!info.merge_commit) {
 		    if (!s.compare(0, 13, "svn:mergeinfo")) {
 			info.merge_commit = 1;
+			std::getline(infile, line);
+			std::istringstream mss(line);
+			std::string ms = mss.str();
+			if (ms.compare(0, 3, "V 0")) {
+			    // If we have a non-empty mergeinfo property, read it to get the
+			    // "from" branch for the merge.
+			    std::string fs = "";
+			    std::string from_path = "";
+			    while (fs.compare(0, 9, "PROPS-END")) {
+				std::getline(infile, line);
+				std::istringstream fss(line);
+				fs = fss.str();
+				if (!fs.compare(0, 8, "/brlcad/")) {
+				    size_t spos = fs.find_last_of(":-");
+				    std::string rev = fs.substr(spos+1);
+				    int mrev = std::atoi(rev.c_str());
+				    if (mrev > high_rev) {
+					fs.replace(0, 8, "");
+					if (!fs.compare(0, 9, "branches/")) {
+					    fs.replace(0, 9, "");
+					} else if (!fs.compare(0, 5, "tags/")) {
+					    fs.replace(0, 5, "");
+					}
+					size_t epos = fs.find_first_of("/:");
+					std::string branch = path_get_branch(info.node_path);
+					if (!branch.compare(0, 9, "branches/")) {
+					    branch.replace(0, 9, "");
+					}
+					std::string candidate = fs.substr(0, epos);
+					if (branch.compare(candidate)) {
+					    from_path = fs.substr(0, epos);
+					    high_rev = mrev;
+					}
+				    }
+				}
+			    }
+			    if (from_path.length()) {
+				info.from_path = from_path;
+			    }
+			}
 		    }
 		}
 	    }
@@ -610,7 +656,7 @@ int main(int argc, const char **argv)
 		if (c.edited_tags.find(mmit->second) != c.edited_tags.end()) {
 		    std::cout << "    Tag " << mmit->second << " contains edits - adding as branch\n";
 		} else {
-		    std::cout << "    Valid tag - tagging\n"
+		    std::cout << "    Valid tag - tagging\n";
 		}
 	    }
 	    continue;
@@ -634,9 +680,9 @@ int main(int argc, const char **argv)
 	    continue;
 	}
 	if (c.merge_commits.find(i) != c.merge_commits.end()) {
-	    //std::string logmsg = revision_log_msg(argv[2], i);
-	    //std::cout << "Merge commit " << i << ": " << logmsg << "\n";
-	    std::cout << "Merge commit (" << c.commit_branch[i]  << ") " << i << "\n";
+	    std::string logmsg = revision_log_msg(argv[2], i);
+	    std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << ": " << logmsg << "\n";
+	    //std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << "\n";
 	    continue;
 	}
 	if (c.multi_branch_commits.find(i) != c.multi_branch_commits.end()) {
