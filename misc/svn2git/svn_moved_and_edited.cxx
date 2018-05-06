@@ -76,6 +76,57 @@ void cvs_to_git()
     chdir("..");
 }
 
+std::string
+svn_to_git(std::string &path)
+{
+    std::string npath = path;
+    if (!npath.compare(0, 1, "/")) npath.replace(0, 1, "");
+    if (!npath.compare(0, 7, "brlcad/")) npath.replace(0, 7, "");;
+    if (!npath.compare("trunk")) return std::string("master");
+    if (!npath.compare(0, 6, "trunk/")) {
+   	npath.replace(0, 6, "");
+	return npath;
+    }
+    if (!npath.compare(0, 9, "branches/")) {
+	npath.replace(0, 9, "");
+	return npath;
+    }
+    if (!npath.compare(0, 5, "tags/")) {
+	npath.replace(0, 5, "");
+	return npath;
+    }
+}
+
+
+std::string
+git_to_svn(std::string &gin, std::string &branch, int is_tag)
+{
+    if (!branch.compare("master")) {
+	if (gin.length()) {
+	    std::string npath = "brlcad/trunk/" + gin;
+	    return npath;
+	} else {
+	    return std::string("brlcad/trunk/");
+	}
+    }
+    if (!is_tag) {
+	std::string npath = "brlcad/branches/" + branch;
+	if (gin.length()) {
+	    npath.append("/");
+	    npath.append(gin);
+	}
+	return npath;
+    } else {
+	std::string npath = "brlcad/tags/" + branch;
+	if (gin.length()) {
+	    npath.append("/");
+	    npath.append(gin);
+	} 
+	return npath;
+    }
+}
+
+
 int
 git_tree_changed()
 {
@@ -89,13 +140,13 @@ git_commit(std::string &author, std::map<std::string,std::string> &amap, std::st
 	std::cout << "*******************************\n";
 	std::cout << "Warning - commit " << svn_rev << " is a no op!\n";
 	std::cout << date << "\n";
-	std::system("echo msg.txt");
+	std::system("echo ../msg.txt");
 	std::cout << author << "\n";
 	std::cout << "*******************************\n";
     }
     std::string commit_author = (author.length()) ? amap[author] : "Unknown <unknown@unknown>";
     std::system("git add -A");
-    std::string git_cmd = "git commit -F msg.txt --author=\"" + commit_author + "\" --date=" + date;
+    std::string git_cmd = "git commit -F ../msg.txt --author=\"" + commit_author + "\" --date=" + date;
     std::system(git_cmd.c_str());
     std::string git_note_cmd = "git notes add -m \"svn:revision:" + std::to_string(svn_rev) + " svn:author:" + author;
     if (svn_branch.length()) {
@@ -130,9 +181,9 @@ git_make_branch(std::string &bname, int rev, std::string &author)
     std::system(bmake.c_str());
     std::string bco = "git checkout " + bname;
     std::system(bco.c_str());
-    std::string git_note_cmd = "git notes add -m \"svn:revision:" + std::to_string(rev) + " svn:author:" + author;
+    std::string git_note_cmd = "git notes append -m \"Branch " + bname + "added: svn:revision:" + std::to_string(rev) + " svn:author:" + author + "\nsvn:branchmsg:\n\"";
     std::system(git_note_cmd.c_str());
-    std::system("git notes append -F msg.txt");
+    std::system("git notes append -F ../msg.txt");
 }
 
 void
@@ -255,8 +306,6 @@ path_get_tag(std::string path)
     return empty;
 }
 
-
-
 struct node_info {
     int in_branch = 0;
     int in_tag = 0;
@@ -313,6 +362,7 @@ void node_info_reset(struct node_info *i)
     i->node_path_filtered = 0;
     i->move_edit_rev = 0;
     i->rev = -1;
+    i->from_path.clear();
     i->node_path.clear();
     i->node_copyfrom_path.clear();
 }
@@ -545,57 +595,15 @@ std::string
 revision_log_msg(const char *repo, int rev)
 {
     std::string logmsg;
-    std::string logcmd = "svn log -r" + std::to_string(rev) + " --xml file://" + std::string(repo) + " > msg.xml";
+    std::string logcmd = "svn log -r" + std::to_string(rev) + " --xml file://" + std::string(repo) + " > ../msg.xml";
     std::system(logcmd.c_str());
-    std::system("xsltproc svn_logmsg.xsl msg.xml > msg.txt");
-    std::ifstream mstream("msg.txt");
+    std::system("xsltproc ../svn_logmsg.xsl msg.xml > ../msg.txt");
+    std::ifstream mstream("../msg.txt");
     std::stringstream mbuffer;
     mbuffer << mstream.rdbuf();
     logmsg = mbuffer.str();
     return logmsg;
 }
-
-void
-revision_diff(const char *repo, int rev)
-{
-    std::string diffcmd = "svn diff -c" + std::to_string(rev) + " > svn.diff";
-    std::system(diffcmd.c_str());
-    //TODO - characterize branch from diff, checkout (or make) correct branch, format
-    //diff appropriately for local application.  Need to detect and handle multi-branch commits
-    //somehow, if they occur...
-    //
-    //TODO - detect and handle merge commits...
-}
-
-int
-apply_rev(const char *repo, int rev)
-{
-    int orev = rev - 1;
-    revision_diff(repo, rev);
-    std::system("patch -f --remove-empty-files -p0 < svn.diff");
-    std::system("rm svn.diff");
-    std::system("git add -A");
-    revision_log_msg(repo, rev);
-    std::system("git commit -F msg.txt");
-    std::system("rm msg.xml");
-    std::system("rm msg.txt");
-}
-
-int
-apply_split_rev(const char *repo, int rev)
-{
-    int orev = rev - 1;
-    revision_diff(repo, rev);
-    std::system("patch -p0 < svn.diff");
-    std::system("rm svn.diff");
-    std::system("git add -A");
-    revision_log_msg(repo, rev);
-    std::system("git commit -F msg.txt");
-    std::system("rm msg.xml");
-    std::system("rm msg.txt");
-}
-
-
 
 int main(int argc, const char **argv)
 {
@@ -647,6 +655,10 @@ int main(int argc, const char **argv)
     std::multimap<int, std::string>::iterator mmit;
     std::pair<std::multimap<int, std::string>::iterator, std::multimap<int, std::string>::iterator> rr;
     for (int i = start_svn_rev; i <= max_svn_rev; i++) {
+
+	// Get the SVN commit message and prepare msg.txt
+	std::string logmsg = revision_log_msg(argv[2], i);
+
 	struct stat buffer;
 	std::string rev_script = "../rev_scripts/" + std::to_string(i) + ".sh";
 	if (stat(rev_script.c_str(), &buffer) == 0) {
@@ -661,6 +673,12 @@ int main(int argc, const char **argv)
 	    }
 	    continue;
 	}
+
+	// If we're not running a custom script for this revision, get the SVN
+	// commit author and date as well
+	std::string rauthor = revision_author(argv[2], i);
+	std::string rdate = revision_date(argv[2], i);
+
 	if (c.branch_adds.find(i) != c.branch_adds.end()) {
 	    std::cout << "Branch add " << i << ":\n";
 	    rr = c.branch_add_paths.equal_range(i);
@@ -709,9 +727,8 @@ int main(int argc, const char **argv)
 	    continue;
 	}
 	if (c.merge_commits.find(i) != c.merge_commits.end()) {
-	    //std::string logmsg = revision_log_msg(argv[2], i);
-	    //std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << ": " << logmsg << "\n";
-	    std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << "\n";
+	    std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << ": " << logmsg << "\n";
+	    //std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << "\n";
 	    if (c.move_edit_revs.find(i) != c.move_edit_revs.end()) {
 		std::cout << "Warning - merge commit " << i << " also contains move + edit operations!!\n";
 	    } else {
