@@ -31,11 +31,13 @@
 #include "pstream.h"
 #include <stdlib.h>
 #include <fstream>
+#include <future>
 #include <sstream>
 #include <string>
 #include <iostream>
 #include <set>
 #include <map>
+#include <sys/stat.h>
 
 void cvs_init()
 {
@@ -632,6 +634,20 @@ int main(int argc, const char **argv)
     std::multimap<int, std::string>::iterator mmit;
     std::pair<std::multimap<int, std::string>::iterator, std::multimap<int, std::string>::iterator> rr;
     for (int i = start_svn_rev; i <= max_svn_rev; i++) {
+	struct stat buffer;
+	std::string rev_script = "../rev_scripts/" + std::to_string(i) + ".sh";
+	if (stat(rev_script.c_str(), &buffer) == 0) {
+	    // If we have a specific script defined for a particular revision,
+	    // run it and continue.  Before running, send endl to cout to make
+	    // sure any output from the script ends up at the correct place in
+	    // the log
+	    std::cout << std::endl;
+	    if (std::system(rev_script.c_str())) {
+		std::cerr << "Error executing script " << rev_script.c_str() << "\n";
+		return -1;
+	    }
+	    continue;
+	}
 	if (c.branch_adds.find(i) != c.branch_adds.end()) {
 	    std::cout << "Branch add " << i << ":\n";
 	    rr = c.branch_add_paths.equal_range(i);
@@ -680,9 +696,9 @@ int main(int argc, const char **argv)
 	    continue;
 	}
 	if (c.merge_commits.find(i) != c.merge_commits.end()) {
-	    std::string logmsg = revision_log_msg(argv[2], i);
-	    std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << ": " << logmsg << "\n";
-	    //std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << "\n";
+	    //std::string logmsg = revision_log_msg(argv[2], i);
+	    //std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << ": " << logmsg << "\n";
+	    std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << "\n";
 	    continue;
 	}
 	if (c.multi_branch_commits.find(i) != c.multi_branch_commits.end()) {
