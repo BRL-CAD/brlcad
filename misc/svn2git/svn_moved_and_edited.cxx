@@ -425,6 +425,7 @@ void process_node(struct node_info *i, struct commit_info *c)
 	std::string curr_tag = path_get_tag(i->node_path);
 	if (curr_tag.length()) {
 	    c->tag_edits.insert(i->rev);
+	    std::cerr << "adding tag " << curr_tag << "\n";
 	    c->edited_tags.insert(curr_tag);
 	    c->max_rev_tag_edit[curr_tag] = i->rev;
 	    std::pair<int, std::string > nmap(i->rev, i->node_path);
@@ -452,7 +453,7 @@ void process_node(struct node_info *i, struct commit_info *c)
 
 }
 
-void characterize_commits(const char *dfile, struct commit_info *c)
+int characterize_commits(const char *dfile, struct commit_info *c)
 {
     int rev = -1;
     struct node_info info;
@@ -460,7 +461,7 @@ void characterize_commits(const char *dfile, struct commit_info *c)
     std::string line;
     while (std::getline(infile, line))
     {
-	int high_rev = -1;
+	int high_merge_rev = -1;
 	std::istringstream ss(line);
 	std::string s = ss.str();
 	if (!s.compare(0, 16, "Revision-number:")) {
@@ -468,7 +469,7 @@ void characterize_commits(const char *dfile, struct commit_info *c)
 		// Process last node of previous revision
 		process_node(&info, c);
 	    }
-	    high_rev = -1;
+	    high_merge_rev = -1;
 	    node_info_reset(&info);
 	    // Grab new revision number
 	    rev = std::stoi(s.substr(17));
@@ -538,7 +539,7 @@ void characterize_commits(const char *dfile, struct commit_info *c)
 				    size_t spos = fs.find_last_of(":-");
 				    std::string rev = fs.substr(spos+1);
 				    int mrev = std::atoi(rev.c_str());
-				    if (mrev > high_rev) {
+				    if (mrev > high_merge_rev) {
 					fs.replace(0, 8, "");
 					if (!fs.compare(0, 9, "branches/")) {
 					    fs.replace(0, 9, "");
@@ -553,7 +554,7 @@ void characterize_commits(const char *dfile, struct commit_info *c)
 					std::string candidate = fs.substr(0, epos);
 					if (branch.compare(candidate)) {
 					    from_path = fs.substr(0, epos);
-					    high_rev = mrev;
+					    high_merge_rev = mrev;
 					}
 				    }
 				}
@@ -567,6 +568,8 @@ void characterize_commits(const char *dfile, struct commit_info *c)
 	    }
 	}
     }
+
+    return rev;
 }
 
 std::string
@@ -609,7 +612,7 @@ int main(int argc, const char **argv)
 {
     //int start_svn_rev = 29887;
     int start_svn_rev = 1;
-    int max_svn_rev = 79000;
+    int max_svn_rev = -1;
     struct commit_info c;
 
     // To obtain a repository copy for processing, do:
@@ -647,7 +650,7 @@ int main(int argc, const char **argv)
     //
     // Analyze the dump file to spot these cases and build up information
     // about them.
-    characterize_commits(argv[1], &c);
+    max_svn_rev = characterize_commits(argv[1], &c);
 
     // Replay subversion-only commits in git repository, according to the specific
     // commit type.
@@ -657,7 +660,7 @@ int main(int argc, const char **argv)
     for (int i = start_svn_rev; i <= max_svn_rev; i++) {
 
 	// Get the SVN commit message and prepare msg.txt
-	std::string logmsg = revision_log_msg(argv[2], i);
+	//std::string logmsg = revision_log_msg(argv[2], i);
 
 	struct stat buffer;
 	std::string rev_script = "../rev_scripts/" + std::to_string(i) + ".sh";
@@ -676,8 +679,8 @@ int main(int argc, const char **argv)
 
 	// If we're not running a custom script for this revision, get the SVN
 	// commit author and date as well
-	std::string rauthor = revision_author(argv[2], i);
-	std::string rdate = revision_date(argv[2], i);
+	//std::string rauthor = revision_author(argv[2], i);
+	//std::string rdate = revision_date(argv[2], i);
 
 	if (c.branch_adds.find(i) != c.branch_adds.end()) {
 	    std::cout << "Branch add " << i << ":\n";
@@ -700,7 +703,7 @@ int main(int argc, const char **argv)
 	    rr = c.tag_add_paths.equal_range(i);
 	    for (mmit = rr.first; mmit != rr.second; mmit++) {
 		std::cout << "               " << mmit->second << "\n";
-		if (c.edited_tags.find(mmit->second) != c.edited_tags.end()) {
+		if (c.edited_tags.find(svn_to_git(mmit->second)) != c.edited_tags.end()) {
 		    std::cout << "    Tag " << mmit->second << " contains edits - adding as branch\n";
 		} else {
 		    std::cout << "    Valid tag - tagging\n";
@@ -727,8 +730,8 @@ int main(int argc, const char **argv)
 	    continue;
 	}
 	if (c.merge_commits.find(i) != c.merge_commits.end()) {
-	    std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << ": " << logmsg << "\n";
-	    //std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << "\n";
+	    //std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << ": " << logmsg << "\n";
+	    std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << "\n";
 	    if (c.move_edit_revs.find(i) != c.move_edit_revs.end()) {
 		std::cout << "Warning - merge commit " << i << " also contains move + edit operations!!\n";
 	    } else {
