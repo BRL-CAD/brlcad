@@ -31,7 +31,6 @@
 #include "pstream.h"
 #include <stdlib.h>
 #include <fstream>
-#include <future>
 #include <sstream>
 #include <string>
 #include <iostream>
@@ -295,7 +294,9 @@ struct commit_info {
     std::map<std::string, int> max_rev_tag_edit;
     std::multimap<int, std::string > tag_edit_paths;
     std::set<int> move_edit_revs;
-    std::multimap<int, std::pair<std::string, std::string> > revs_move_map;
+    std::multimap<int, std::pair<std::string, std::string> > revs_move_only_map;
+    std::multimap<int, std::pair<std::string, std::string> > revs_move_edit_map;
+    std::multimap<int, std::string > revs_edit_only_map;
 };
 
 void node_info_reset(struct node_info *i)
@@ -319,11 +320,23 @@ void node_info_reset(struct node_info *i)
 void process_node(struct node_info *i, struct commit_info *c)
 {
     int branch_delete = 0;
-    if (i->is_move && i->is_edit && i->is_file) {
-	std::pair<std::string, std::string> move(i->node_copyfrom_path, i->node_path);
-	std::pair<int, std::pair<std::string, std::string> > mvmap(i->rev, move);
-	c->revs_move_map.insert(mvmap);
-	c->move_edit_revs.insert(i->rev);
+    if (i->is_file) {
+	if (i->is_move && i->is_edit) {
+	    std::pair<std::string, std::string> move(i->node_copyfrom_path, i->node_path);
+	    std::pair<int, std::pair<std::string, std::string> > mvmap(i->rev, move);
+	    c->revs_move_edit_map.insert(mvmap);
+	    c->move_edit_revs.insert(i->rev);
+	} else {
+	    if (i->is_move) {
+		std::pair<std::string, std::string> move(i->node_copyfrom_path, i->node_path);
+		std::pair<int, std::pair<std::string, std::string> > mvmap(i->rev, move);
+		c->revs_move_only_map.insert(mvmap);
+	    }
+	    if (i->is_edit) {
+		std::pair<int, std::string > editmap(i->rev, i->node_path);
+		c->revs_edit_only_map.insert(editmap);
+	    }
+	}
     }
     if (i->merge_commit && i->in_branch) {
 	if (c->merge_commits.find(i->rev) == c->merge_commits.end()) {
@@ -710,13 +723,31 @@ int main(int argc, const char **argv)
 	    continue;
 	}
 	if (c.move_edit_revs.find(i) != c.move_edit_revs.end()) {
-	    std::cout << "Commit contains rename + edits (" << c.commit_branch[i]  << ") " << i << ":\n";
+	    std::cout << "Commit contains move + edits (" << c.commit_branch[i]  << ") " << i << ":\n";
 	    std::multimap<int, std::pair<std::string, std::string> >::iterator rmit;
 	    std::pair<std::multimap<int, std::pair<std::string, std::string> >::iterator, std::multimap<int, std::pair<std::string, std::string> >::iterator> revrange;
-	    revrange = c.revs_move_map.equal_range(i);
+	    std::cout << "Move + edit:\n";
+	    revrange = c.revs_move_edit_map.equal_range(i);
 	    for (rmit = revrange.first; rmit != revrange.second; rmit++) {
 		std::cout << "   " << rmit->second.first << " -> " << rmit->second.second << "\n";
 	    }
+	    revrange = c.revs_move_only_map.equal_range(i);
+	    if (revrange.first != revrange.second) {
+		std::cout << "Moves:\n";
+		for (rmit = revrange.first; rmit != revrange.second; rmit++) {
+		    std::cout << "   " << rmit->second.first << " -> " << rmit->second.second << "\n";
+		}
+	    }
+	    std::multimap<int, std::string >::iterator ermit;
+	    std::pair<std::multimap<int, std::string >::iterator, std::multimap<int, std::string >::iterator> erevrange;
+	    erevrange = c.revs_edit_only_map.equal_range(i);
+	    if (revrange.first != revrange.second) {
+		std::cout << "Edits:\n";
+		for (ermit = erevrange.first; ermit != erevrange.second; ermit++) {
+		    std::cout << "   " << ermit->second << "\n";
+		}
+	    }
+
 	    continue;
 	}
 	std::string branch = c.commit_branch[i];
