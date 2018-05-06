@@ -712,7 +712,11 @@ int main(int argc, const char **argv)
 	    //std::string logmsg = revision_log_msg(argv[2], i);
 	    //std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << ": " << logmsg << "\n";
 	    std::cout << "Merge commit (" << c.merge_commit_from[i] << " -> " << c.commit_branch[i]  << ") " << i << "\n";
-	    continue;
+	    if (c.move_edit_revs.find(i) != c.move_edit_revs.end()) {
+		std::cout << "Warning - merge commit " << i << " also contains move + edit operations!!\n";
+	    } else {
+		continue;
+	    }
 	}
 	if (c.multi_branch_commits.find(i) != c.multi_branch_commits.end()) {
 	    std::set<std::string>::iterator mbit;
