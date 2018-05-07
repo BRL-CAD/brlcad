@@ -81,13 +81,19 @@ typedef struct bu_color bu_color_t;
  */
 #define BU_COLOR_IS_INITIALIZED(_c) (((struct bu_color *)(_c) != BU_COLOR_NULL) && LIKELY((_c)->magic == BU_COLOR_MAGIC))
 
+
 /**
  * Function to generate random color
  *
- * TODO - multiple possibilities here - truly random color,
- * or "constrained" random aka the BRLCADWrapper:getRandomColor
- * function.  Need a function that provides flexibility.  Possible
- * calling syntax:
+ * Refactoring points:
+ *   truly random color
+ *     3dm-g: src/libgcv/plugins/rhino/rhino_read.cpp
+ *   "constrained" random
+ *     BRLCADWrapper:getRandomColor(): src/conv/step/BRLCADWrapper.cpp
+ *   color command (set specified color)
+ *     src/libged/color.c
+ *
+ * Possible calling syntax:
  @code
  * bu_color_rand(cp, NULL, NULL,     NULL,     0);            #generate a totally random color value
  * bu_color_rand(cp, NULL, rgb_seed, NULL,     COLOR_SET_R);  #randomize the R value only, else use rgb_seed values
@@ -99,6 +105,17 @@ typedef struct bu_color bu_color_t;
  * better to use just one bu_color seed and make callers pre-package it - not sure yet.  If we go that
  * route, we'll have to implement the unimplemented utility functions below.
  *
+ * Need:
+ *   way to map from different color specifications to color including
+ *     name: "red"
+ *     rgbint: 255/0/0
+ *     rgbfloat: 1.0f/0f/0f
+ *     hexint: #FF0000
+ *     hexshort: #F00
+ *     hsv: 0/100%/100%
+ *     hsl: 0/100%/50%
+ *     ignoring YCbCr, YPbPr, YUV, YIQ, CMYK, CIE LAB
+ *     ignoring grayscale specification
  */
 #if 0
 #define COLOR_SET_R     0x1
@@ -112,6 +129,7 @@ BU_EXPORT extern int bu_color_rand(struct bu_color *cp,
 				   const fastf_t *seed_hsv,
 				   int flags);
 #endif
+
 
 /**
  * Convert between RGB and HSV color models
