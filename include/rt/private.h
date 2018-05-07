@@ -73,22 +73,6 @@ struct rt_shootray_status {
     int                 box_num;        /**< @brief  which cell along ray */
 };
 
-#define NUGRID_T_SETUP(_ax, _cval, _cno) \
-    if (ssp->rstep[_ax] > 0) { \
-        ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_epos - _cval) * \
-            ssp->inv_dir[_ax]; \
-    } else if (ssp->rstep[_ax] < 0) { \
-        ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_spos - _cval) * \
-            ssp->inv_dir[_ax]; \
-    } else { \
-        ssp->tv[_ax] = INFINITY; \
-    }
-#define NUGRID_T_ADV(_ax, _cno) \
-    if (ssp->rstep[_ax] != 0) { \
-        ssp->tv[_ax] += nu_axis[_ax][_cno].nu_width * \
-            ssp->abs_inv_dir[_ax]; \
-    }
-
 
 __END_DECLS
 

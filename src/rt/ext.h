@@ -32,11 +32,9 @@
 /***** Variables declared in opt.c *****/
 extern char *framebuffer;		/* desired framebuffer */
 extern fastf_t azimuth, elevation;
-extern double nu_gfactor;		/* constant factor in NUgrid algorithm */
 extern int Query_one_pixel;
 extern int benchmark;
 extern int lightmodel;			/* Select lighting model */
-extern int nugrid_dimlimit;		/* limit to dimensions of nugrid; <= 0 means no limit */
 extern int query_debug;
 extern int query_rdebug;
 extern int query_x;

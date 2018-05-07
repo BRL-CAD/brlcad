@@ -123,9 +123,6 @@ rt_new_rti(struct db_i *dbip)
      */
     rtip->rti_space_partition = RT_PART_NUBSPT;
 
-    rtip->rti_nugrid_dimlimit = 0;
-    rtip->rti_nu_gfactor = RT_NU_GFACTOR_DEFAULT;
-
     /*
      * Zero the solid instancing counters in dbip database instance.
      * Done here because the same dbip could be used by multiple

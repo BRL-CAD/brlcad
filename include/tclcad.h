@@ -153,7 +153,6 @@ TCLCAD_EXPORT extern int tclcad_rt_parse_ray(Tcl_Interp *interp,
  * Examples -
  * type cutnode
  * type boxnode
- * type nugridnode
  */
 TCLCAD_EXPORT extern void tclcad_rt_pr_cutter(Tcl_Interp *interp,
                                        const union cutter *cutp);

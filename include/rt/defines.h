@@ -209,7 +209,6 @@
 #define RT_MAXLINE              10240
 
 #define RT_PART_NUBSPT  0
-#define RT_PART_NUGRID  1
 
 /*
  *  * Replacements for definitions from vmath.h

@@ -86,7 +86,7 @@ struct resource {
     /* Optimizations.  Rays not shot at solids */
     long                re_prune_solrpp;/**< @brief  shot missed solid RPP, ft_shot skipped */
     long                re_ndup;        /**< @brief  ft_shot() calls skipped for already-ft_shot() solids */
-    long                re_nempty_cells;        /**< @brief  number of empty NUgrid cells passed through */
+    long                re_nempty_cells;        /**< @brief  number of empty spatial partitioning cells passed through */
     /* Data for accelerating "pieces" of solids */
     struct rt_piecestate *re_pieces;    /**< @brief  array [rti_nsolids_with_pieces] */
     long                re_piece_ndup;  /**< @brief  ft_piece_shot() calls skipped for already-ft_shot() solids */

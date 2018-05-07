@@ -63,30 +63,15 @@ struct boxnode {
     size_t              bn_maxpiecelen; /**< @brief # of piecelists allocated */
 };
 
-struct nu_axis {
-    fastf_t     nu_spos;        /**< @brief cell start position */
-    fastf_t     nu_epos;        /**< @brief cell end position */
-    fastf_t     nu_width;       /**< @brief voxel size (end - start) */
-};
-
-struct nugridnode {
-    int nu_type;
-    struct nu_axis *nu_axis[3];
-    int nu_cells_per_axis[3];   /**< @brief number of slabs */
-    int nu_stepsize[3];         /**< @brief number of cells to jump for one step in each axis */
-    union cutter *nu_grid;      /**< @brief 3-D array of boxnodes */
-};
 
 #define CUT_CUTNODE     1
 #define CUT_BOXNODE     2
-#define CUT_NUGRIDNODE  3
-#define CUT_MAXIMUM     3
+#define CUT_MAXIMUM     2
 union cutter {
     int cut_type;
     union cutter *cut_forw;     /**< @brief Freelist forward link */
     struct cutnode cn;
     struct boxnode bn;
-    struct nugridnode nugn;
 };
 
 
