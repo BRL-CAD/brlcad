@@ -82,8 +82,6 @@ extern size_t	incr_nlevel;		/* number of levels */
 /***** variables shared with do.c *****/
 extern int	pix_start;		/* pixel to start at */
 extern int	pix_end;		/* pixel to end at */
-extern int	nobjs;			/* Number of cmd-line treetops */
-extern char	**objtab;		/* array of treetop strings */
 size_t		n_malloc;		/* Totals at last check */
 size_t		n_free;
 size_t		n_realloc;
@@ -291,10 +289,10 @@ int main(int argc, const char **argv)
 
     title_file = argv[bu_optind];
     title_obj = argv[bu_optind+1];
-    nobjs = argc - bu_optind - 1;
-    objtab = (char **)&(argv[bu_optind+1]);
+    objc = argc - bu_optind - 1;
+    objv = (char **)&(argv[bu_optind+1]);
 
-    if (nobjs <= 0) {
+    if (objc <= 0) {
 	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
 	return 1;
     }
@@ -326,10 +324,14 @@ int main(int argc, const char **argv)
 	bu_vls_strcat(&str, "\nopendb ");
 	bu_vls_strcat(&str, title_file);
 	bu_vls_strcat(&str, ";\ntree ");
+
+	/* arbitrarily limit the number of command-line objects being
+	 * echo'd back for log printing, followed by ellipses.
+	 */
 	bu_vls_from_argv( &str,
-			  nobjs <= 16 ? nobjs : 16,
+			  objc <= 16 ? objc : 16,
 			  (const char **)argv+bu_optind+1);
-	if (nobjs > 16)
+	if (objc > 16)
 	    bu_vls_strcat(&str, " ...");
 	else
 	    bu_vls_putc(&str, ';');

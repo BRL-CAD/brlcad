@@ -494,8 +494,8 @@ def_tree(register struct rt_i *rtip)
     RT_CK_RTI(rtip);
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0) {
-	bu_log("rt_gettrees(%s) FAILED\n", (objtab && objtab[0]) ? objtab[0] : "ERROR");
+    if (rt_gettrees(rtip, objc, (const char **)objv, npsw) < 0) {
+	bu_log("rt_gettrees(%s) FAILED\n", (objv && objv[0]) ? objv[0] : "ERROR");
     }
     (void)rt_get_timer(&times, NULL);
 

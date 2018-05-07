@@ -111,14 +111,14 @@ extern double pmargs[9];
 /***** ************************ *****/
 
 /***** variables shared with do.c *****/
-extern char **objtab;			/* array of treetop strings */
+extern int objc;			/* Number of cmd-line treetops */
+extern char **objv;			/* array of treetop strings */
 extern char *outputfile;		/* name of base of output file */
 extern fastf_t frame_delta_t;		/* 1.0 / frames_per_second_playback */
 extern int benchmark;			/* No random numbers:  benchmark */
 extern int curframe;			/* current frame number */
 extern int desiredframe;		/* frame to start at */
 extern int matflag;			/* read matrix from stdin */
-extern int nobjs;			/* Number of cmd-line treetops */
 extern int pix_end;			/* pixel to end at */
 extern int pix_start;			/* pixel to start at */
 /***** end variables shared with do.c *****/
