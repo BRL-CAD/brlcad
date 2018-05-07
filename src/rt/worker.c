@@ -83,6 +83,9 @@ int last_pixel;			/* last pixel number */
 
 int stop_worker = 0;
 
+/* for stereo output */
+vect_t left_eye_delta = VINIT_ZERO;
+
 /**
  * For certain hypersample values there is a particular advantage to
  * subdividing the pixel and shooting a ray in each sub-pixel.  This
@@ -667,9 +670,7 @@ grid_setup(void)
     if (stereo) {
 	/* Move left 2.5 inches (63.5mm) */
 	VSET(temp, -63.5*2.0/viewsize, 0, 0);
-	bu_log("red eye: moving %f relative screen (left)\n", temp[X]);
 	MAT4X3VEC(left_eye_delta, view2model, temp);
-	VPRINT("left_eye_delta", left_eye_delta);
     }
 
     /* "Lower left" corner of viewing plane */

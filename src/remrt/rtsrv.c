@@ -88,7 +88,6 @@ extern void application_init(void);
 
 /***** variables shared with worker() ******/
 struct application APP;
-vect_t left_eye_delta;
 int report_progress;	/* !0 = user wants progress report */
 /***** end variables shared with worker() *****/
 

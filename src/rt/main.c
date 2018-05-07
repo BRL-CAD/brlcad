@@ -73,7 +73,6 @@ mat_t		model2view;
 
 /***** variables shared with worker() ******/
 struct application APP;
-vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern size_t	incr_nlevel;		/* number of levels */

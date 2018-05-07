@@ -63,8 +63,6 @@ extern mat_t model2view;
 extern mat_t view2model;
 extern struct application APP;
 extern struct icv_image *bif;
-extern vect_t left_eye_delta;
-extern vect_t left_eye_delta;
 
 /***** variables shared with worker() ******/
 extern unsigned char *scanbuf;		/* pixels for REMRT */
