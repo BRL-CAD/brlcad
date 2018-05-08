@@ -137,10 +137,19 @@ git_tree_changed()
 }
 
 int
+have_rej_files()
+{
+    std::string rejs;
+    redi::ipstream proc("find .  -name *.rej", redi::pstreams::pstdout);
+    std::getline(proc.out(), rejs);
+    return rejs.length();
+}
+
+int
 git_commit(const char *svn_repo, int svn_rev, std::string &svn_branch, std::string &logmsg, std::string &author, std::string &date)
 {
     // Pull patch from SVN
-    std::string diffcmd = "svn diff -c" + std::to_string(svn_rev) + " file://" + svn_repo + "/brlcad/" + svn_branch + " > ../svn.diff";
+    std::string diffcmd = "svn diff --patch-compatible -c" + std::to_string(svn_rev) + " file://" + svn_repo + "/brlcad/" + svn_branch + " > ../svn.diff";
     std::cout << diffcmd << "\n";
     std::system(diffcmd.c_str());
     std::cout << std::endl;
@@ -155,11 +164,7 @@ git_commit(const char *svn_repo, int svn_rev, std::string &svn_branch, std::stri
     std::cout << std::endl;
 
     // Apply the patch
-    std::cout << "Patch file contains: \n";
-    std::cout << std::endl;
-    std::system("cat ../svn.diff");
-    std::cout << std::endl;
-    std::system("patch -f --remove-empty-files -p0 < ../svn.diff");
+    std::system("patch --binary --ignore-whitespace -f --remove-empty-files -p0 < ../svn.diff");
     std::cout << std::endl;
 
     // See what happened
@@ -175,6 +180,18 @@ git_commit(const char *svn_repo, int svn_rev, std::string &svn_branch, std::stri
 	std::cout << std::endl;
 	return 0;
     }
+
+    if (have_rej_files()) {
+	std::cout << "**********************************************************************\n";
+	std::cout << "Fatal error - reject in patch application for commit " << svn_rev << "\n";
+	std::cout << date << "\n";
+	std::cout << std::endl;
+	std::cout << author << "\n";
+	std::cout << "**********************************************************************\n";
+	std::cout << std::endl;
+	exit(1);
+    }
+
     //std::string commit_author = (author.length()) ? amap[author] : "Unknown <unknown@unknown>";
     std::string commit_author = "Unknown <unknown@unknown>";
     std::system("git add -A");
