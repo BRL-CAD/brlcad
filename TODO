@@ -22,7 +22,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * make brlman a synonym for help in mged/archer so docs work
 
-* verify datums in hiearchy
+* fix regions/idents table commands, broken on Windows
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
