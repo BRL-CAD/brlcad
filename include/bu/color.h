@@ -169,20 +169,26 @@ BU_EXPORT extern int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb);
  * for color handling.
  *
  * FIXME: inconsistent input/output parameters!
- */
-BU_EXPORT extern int bu_str_to_rgb(char *str, unsigned char *rgb);
-BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb);
-BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
-BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb);
-BU_EXPORT extern int bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb);
-BU_EXPORT extern int bu_color_to_rgb_ints(struct bu_color *cp, int *r, int *g, int *b);
-BU_EXPORT extern int bu_color_from_str(struct bu_color *cp, const char *str);
-
-/* UNIMPLEMENTED
+ * TODO: consider stdarg ... to consolidate all the _from_ functions, e.g.,
+ *   // 3 colors
+ *   bu_color_create(struct bu_color **colors, "red", "0/255/0", "#0000ff", NULL);
  *
- * BU_EXPORT extern int bu_color_from_hsv_floats(struct bu_color *cp, fastf_t *hsv);
- * BU_EXPORT extern int bu_color_to_hsv_floats(struct bu_color *cp, fastf_t *hsv);
+ *   // 2 colors from existing data
+ *   struct bu_color *colors = NULL;
+ *   bu_color_create(&colors, "%d/%d/%d", rgb[0], rgb[1], rgb[2], "hsv(%lf,0.5,0.95)", hsv, NULL);
+ *   bu_color_destroy(colors);
  */
+BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb);
+BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb);
+BU_EXPORT extern int bu_color_from_str(struct bu_color *cp, const char *str);
+/* UNIMPLEMENTED: BU_EXPORT extern int bu_color_from_hsv_floats(struct bu_color *cp, fastf_t *hsv); */
+
+BU_EXPORT extern int bu_str_to_rgb(char *str, unsigned char *rgb);  // inconsistent, deprecate
+
+BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb); // bu_color_as_rgb_3fv
+BU_EXPORT extern int bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb); // bu_color_as_rgb
+BU_EXPORT extern int bu_color_to_rgb_ints(struct bu_color *cp, int *r, int *g, int *b); // bu_color_as_rgb_3i
+/* UNIMPLEMENTED: BU_EXPORT extern int bu_color_to_hsv_floats(struct bu_color *cp, fastf_t *hsv); // bu_color_as_hsv_3fv */
 
 
 /** @} */
