@@ -92,18 +92,31 @@ typedef struct bu_color bu_color_t;
  *     BRLCADWrapper:getRandomColor(): src/conv/step/BRLCADWrapper.cpp
  *   color command (set specified color)
  *     src/libged/color.c
+ *     src/libged/brep.c
+ *   get color from string
+ *     src/libbu/color.c
  *
  * Possible calling syntax:
  @code
- * bu_color_rand(cp, NULL, NULL,     NULL,     0);            #generate a totally random color value
- * bu_color_rand(cp, NULL, rgb_seed, NULL,     COLOR_SET_R);  #randomize the R value only, else use rgb_seed values
- * bu_color_rand(cp, NULL, rgb_seed, NULL,     COLOR_GOLDEN); #use the golden ratio constraining technique
- * bu_color_rand(cp, NULL, NULL,     hsv_seed, COLOR_GOLDEN); #use the golden ratio constraining technique with an hsv input
- * bu_color_rand(cp, seed, NULL,     NULL,     0);            #randomize, using bu_color seed
+ * // get a color object given a string description
+ * bu_color_from_str(redcolor, "red");
+ *
+ * // draw a purely random color in 0/0/0 to 255/255/255 range
+ * bn_color_samples(colors, NULL, COLOR_RANDOM, 1); // problematic in libbu, random is libbn domain
+ *
+ * // draw a golden ratio distribution random color in 0/0/0 to 255/255/255 range, s=0.5, v=0.95
+ * bn_color_samples(colors, NULL, COLOR_RANDOM_LIGHTENED, 1); // problematic in libbu, random is libbn domain
+ *
+ * // draw bezier interpolated and lightened samples
+ * struct bu_color range[4] = {0};
+ * bu_color_from_str(&range[0], "#0f0"); // green
+ * bu_color_from_str(&range[1], "0.f/0.f/1.f") // blue
+ * bu_color_from_str(&range[2], "purple");
+ * bn_color_samples(colors, range, COLOR_LINEAR, 10); // 10 dark colors from green to blue to purple
+ *
+ * // return a standard "heat map" with 18 quantized samples
+ * bn_color_samples(colors, NULL, COLOR_STANDARD_HEAT, 18);
  @endcode
- * Passing multiple seeds would be an error - the multiple slots are for formatting convenience.  May be
- * better to use just one bu_color seed and make callers pre-package it - not sure yet.  If we go that
- * route, we'll have to implement the unimplemented utility functions below.
  *
  * Need:
  *   way to map from different color specifications to color including
@@ -118,16 +131,18 @@ typedef struct bu_color bu_color_t;
  *     ignoring grayscale specification
  */
 #if 0
-#define COLOR_SET_R     0x1
-#define COLOR_SET_G     0x2
-#define COLOR_SET_B     0x4
-#define COLOR_SET_RGB   0x7  /* Either 0x0 or 0x7 will do this - default behavior */
-#define COLOR_GOLDEN    0x8  /* Needs seed color */
-BU_EXPORT extern int bu_color_rand(struct bu_color *cp,
-				   const struct bu_color *seed,
-				   const unsigned char *seed_rgb,
-				   const fastf_t *seed_hsv,
-				   int flags);
+/**
+ * Return a set of sampled colors given a range of zero or more colors
+ * (a NULL-terminated list of colors), a sample method, and desired
+ * number of color samples to return.
+ *
+ * Specifying no colors implies full spectrum.  The default sampling
+ * method uses a golden ratio distribution to give a "balanced" random
+ * distribution that is effective with dark backgrounds and/or text.
+ *
+ * Returns the number of samples allocated.
+ */
+size_t bn_color_samples(struct bu_color **samples, const bu_color *colors, enum sampleMethod, size_t numSamples);
 #endif
 
 
@@ -151,7 +166,9 @@ BU_EXPORT extern int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb);
 
 /**
  * Utility functions to convert between various containers
- * for color handling
+ * for color handling.
+ *
+ * FIXME: inconsistent input/output parameters!
  */
 BU_EXPORT extern int bu_str_to_rgb(char *str, unsigned char *rgb);
 BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb);
