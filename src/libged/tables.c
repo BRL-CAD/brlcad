@@ -207,11 +207,11 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	    if ((sol_dp=db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 		if (sol_dp->d_flags & RT_DIR_COMB) {
 		    fprintf(tabptr, "   RG %c %s\n",
-				  op, sol_dp->d_namep);
+			    op, sol_dp->d_namep);
 		    continue;
 		} else if (!(sol_dp->d_flags & RT_DIR_SOLID)) {
 		    fprintf(tabptr, "   ?? %c %s\n",
-				  op, sol_dp->d_namep);
+			    op, sol_dp->d_namep);
 		    continue;
 		} else {
 		    if (tree_list[i].tl_tree->tr_l.tl_mat) {
@@ -316,7 +316,6 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 {
     static const char sortcmd_orig[] = "sort -n +1 -2 -o /tmp/ord_id ";
     static const char sortcmd_long[] = "sort --numeric --key=2, 2 --output /tmp/ord_id ";
-    static const char catcmd[] = "cat /tmp/ord_id >> ";
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     struct bu_ptbl cur_path;
@@ -324,7 +323,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     int status;
     char *timep;
     time_t now;
-    int i;
+    size_t i;
     const char *usage = "file object(s)";
 
     size_t numreg = 0;
@@ -406,10 +405,9 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     }
 #endif
     fprintf(tabptr, "6 -3         target title : %s\n", gedp->ged_wdbp->dbip->dbi_title);
-    fprintf(tabptr, "7 -2         target units : %s\n",
-		  bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
+    fprintf(tabptr, "7 -2         target units : %s\n", bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
     fprintf(tabptr, "8 -1         objects      :");
-    for (i = 2; i < argc; i++) {
+    for (i = 2; i < (size_t)argc; i++) {
 	if ((i%8) == 0)
 	    fprintf(tabptr, "\n                           ");
 	fprintf(tabptr, " %s", argv[i]);
@@ -417,7 +415,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     fprintf(tabptr, "\n\n");
 
     /* make the tables */
-    for (i = 2; i < argc; i++) {
+    for (i = 2; i < (size_t)argc; i++) {
 	struct directory *dp;
 
 	bu_ptbl_reset(&cur_path);
@@ -446,6 +444,9 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	(void)fclose(tabptr);
     } else {
 	int ret;
+	FILE *outFile;
+	struct bu_mapped_file *inFile;
+	const char *currptr;
 
 	fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 	(void)fclose(tabptr);
@@ -466,13 +467,22 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	}
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&cmd));
 
-	bu_vls_trunc(&cmd, 0);
-	bu_vls_strcpy(&cmd, catcmd);
-	bu_vls_strcat(&cmd, argv[1]);
-	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&cmd));
-	ret = system(bu_vls_addr(&cmd));
-	if (ret != 0)
-	    bu_log("WARNING: cat failure detected\n");
+ 	inFile = bu_open_mapped_file("/tmp/ord_id", (char *)NULL);
+ 	if (!inFile) {
+ 	    bu_vls_printf(gedp->ged_result_str, "Cannot open temporary file %s\n", argv[1]);
+ 	    return GED_ERROR;
+ 	}
+ 	outFile = fopen(argv[1], "a");
+ 	if (!outFile) {
+ 	    bu_vls_printf(gedp->ged_result_str, "Cannot open output file %s\n", argv[1]);
+ 	    return GED_ERROR;
+ 	}
+ 	currptr = (const char *)(inFile->buf);
+ 	for (i = 0; i < inFile->buflen; i++) {
+ 	    fputc(*(currptr + i), outFile);
+ 	}
+ 	bu_close_mapped_file(inFile);
+ 	fclose(outFile);
 
 	bu_file_delete("/tmp/ord_id\0");
     }
