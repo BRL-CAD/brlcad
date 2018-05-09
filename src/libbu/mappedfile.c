@@ -193,7 +193,8 @@ bu_open_mapped_file(const char *name, const char *appl)
     /* Optimistically assume that things will proceed OK */
     BU_ALLOC(mp, struct bu_mapped_file);
     mp->name = bu_strdup(real_path);
-    if (appl) mp->appl = bu_strdup(appl);
+    if (appl)
+	mp->appl = bu_strdup(appl);
 
 #ifdef HAVE_SYS_STAT_H
     mp->buflen = sb.st_size;
@@ -322,14 +323,15 @@ fail:
 
     if (mp) {
 	bu_free(mp->name, "mp->name");
-	if (mp->appl) bu_free(mp->appl, "mp->appl");
+	if (mp->appl)
+	    bu_free(mp->appl, "mp->appl");
 	/* Don't free mp->buf here, it might not be bu_malloced but mmaped */
 	bu_free(mp, "mp from bu_open_mapped_file fail");
     }
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	bu_log("bu_open_mapped_file(%s, %s) can't open file\n",
-		real_path, appl ? appl: "(NIL)");
+	       real_path, appl ? appl: "(NIL)");
 
     if (real_path) {
 	bu_free(real_path, "real_path alloc from bu_realpath");
@@ -389,7 +391,8 @@ bu_free_mapped_files(int verbose)
 	mp = next;
 	next = BU_LIST_NEXT(bu_mapped_file, &mp->l);
 
-	if (mp->uses > 0)  continue;
+	if (mp->uses > 0)
+	    continue;
 
 	/* Found one that needs to have storage released */
 	if (UNLIKELY(verbose || (bu_debug&BU_DEBUG_MAPPED_FILE)))
@@ -400,7 +403,8 @@ bu_free_mapped_files(int verbose)
 	/* If application pointed mp->apbuf at mp->buf, break that
 	 * association so we don't double-free the buffer.
 	 */
-	if (mp->apbuf == mp->buf)  mp->apbuf = (void *)NULL;
+	if (mp->apbuf == mp->buf)
+	    mp->apbuf = (void *)NULL;
 
 #ifdef HAVE_SYS_MMAN_H
 	if (mp->is_mapped) {
@@ -464,6 +468,7 @@ bu_open_mapped_file_with_path(char *const *path, const char *name, const char *a
     bu_vls_free(&str);
     return (struct bu_mapped_file *)NULL;
 }
+
 
 /*
  * Local Variables:
