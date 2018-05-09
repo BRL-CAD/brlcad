@@ -117,14 +117,18 @@ bu_open_mapped_file(const char *name, const char *appl)
 		    fd = -1;
 		}
 		if ((size_t)sb.st_size != mp->buflen) {
-		    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, mp->buflen, sb.st_size);
+		    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
+			bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, mp->buflen, sb.st_size);
+		    }
 		    /* mp doesn't reflect the file any longer.  Invalidate. */
 		    mp->appl = bu_strdup("__STALE__");
 		    /* Can't invalidate old copy, it may still be in use. */
 		    break;
 		}
 		if (sb.st_mtime != mp->modtime) {
-		    bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n", real_path);
+		    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
+			bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n", real_path);
+		    }
 		    /* mp doesn't reflect the file any longer.  Invalidate. */
 		    mp->appl = bu_strdup("__STALE__");
 		    /* Can't invalidate old copy, it may still be in use. */
