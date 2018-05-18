@@ -129,29 +129,6 @@ struct db_plan_t {
 };
 
 
-#define a_data		p_un._a_data
-#define c_data		p_un._c_data
-#define ci_data		p_un._ci_data
-#define path_data	p_un._path_data
-#define regex_pattern 	p_un._regex_pattern
-#define attr_data	p_un._attr_data
-#define param_data	p_un._param_data
-#define depth_data	p_un._depth_data
-#define node_data	p_un._node_data
-#define fl_flags	p_un.fl._f_flags
-#define fl_mask		p_un.fl._f_mask
-#define g_data		p_un._g_data
-#define max_data	p_un._max_data
-#define min_data	p_un._min_data
-#define p_data		p_un._p_data
-#define ab_data		p_un._ab_data
-#define bl_data		p_un._bl_data
-#define type_data	p_un._type_data
-#define bool_data	p_un._bool_data
-#define e_argv		p_un.ex._e_argv
-#define e_orig		p_un.ex._e_orig
-#define e_len		p_un.ex._e_len
-
 typedef struct _option {
     char *name;				/* option name */
     enum db_search_ntype token;			/* token type */

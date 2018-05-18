@@ -271,7 +271,7 @@ f_expr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     struct db_plan_t *p = NULL;
     int state = 0;
 
-    for (p = plan->p_data[0]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
+    for (p = plan->p_un._p_data[0]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
     if (!state) db_node->matched_filters = 0;
@@ -311,7 +311,7 @@ f_not(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, stru
     struct db_plan_t *p = NULL;
     int state = 0;
 
-    for (p = plan->p_data[0]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
+    for (p = plan->p_un._p_data[0]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
     if (!state && db_node->matched_filters == 0) db_node->matched_filters = 1;
@@ -361,7 +361,7 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
     while ((parent_path.fp_len > 0) && (state == 0) && !(db_node->flags & DB_SEARCH_FLAT)) {
 	distance++;
 	if ((distance <= plan->max_depth) && (distance >= plan->min_depth)) {
-	    state += find_execute_nested_plans(dbip, results, &curr_node, plan->ab_data[0]);
+	    state += find_execute_nested_plans(dbip, results, &curr_node, plan->p_un._ab_data[0]);
 	}
 	DB_FULL_PATH_POP(&parent_path);
     }
@@ -409,7 +409,7 @@ f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 		curr_node.flags = db_node->flags;
 		curr_node.full_paths = full_paths;
 
-		state = find_execute_nested_plans(dbip, NULL, &curr_node, plan->bl_data[0]);
+		state = find_execute_nested_plans(dbip, NULL, &curr_node, plan->p_un._bl_data[0]);
 		if (state)
 		    return 1;
 	    }
@@ -441,13 +441,13 @@ f_or(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struc
     struct db_plan_t *p = NULL;
     int state = 0;
 
-    for (p = plan->p_data[0]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
+    for (p = plan->p_un._p_data[0]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
     if (state)
 	return 1;
 
-    for (p = plan->p_data[1]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
+    for (p = plan->p_un._p_data[1]; p && (state = (p->eval)(p, db_node, dbip, results)); p = p->next)
 	; /* do nothing */
 
     if (!state) db_node->matched_filters = 0;
@@ -481,7 +481,7 @@ f_name(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	return 0;
     }
 
-    ret = !bu_fnmatch(plan->c_data, dp->d_namep, 0);
+    ret = !bu_fnmatch(plan->p_un._c_data, dp->d_namep, 0);
 
     if (!ret) db_node->matched_filters = 0;
     return ret;
@@ -494,7 +494,7 @@ c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
     struct db_plan_t *newplan;
 
     newplan = palloc(N_NAME, f_name, tbl);
-    newplan->c_data = pattern;
+    newplan->p_un._c_data = pattern;
     (*resultplan) = newplan;
     return BRLCAD_OK;
 }
@@ -519,7 +519,7 @@ f_iname(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
 	return 0;
     }
 
-    ret = !bu_fnmatch(plan->c_data, dp->d_namep, BU_FNMATCH_CASEFOLD);
+    ret = !bu_fnmatch(plan->p_un._c_data, dp->d_namep, BU_FNMATCH_CASEFOLD);
     if (!ret) db_node->matched_filters = 0;
     return ret;
 }
@@ -531,7 +531,7 @@ c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
     struct db_plan_t *newplan;
 
     newplan = palloc(N_INAME, f_iname, tbl);
-    newplan->ci_data = pattern;
+    newplan->p_un._ci_data = pattern;
     (*resultplan) = newplan;
 
     return BRLCAD_OK;
@@ -551,9 +551,9 @@ f_regex(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
     regex_t reg;
     int ret = 0;
     if (plan->type == N_IREGEX) {
-	(void)regcomp(&reg, plan->regex_pattern, REG_NOSUB|REG_EXTENDED|REG_ICASE);
+	(void)regcomp(&reg, plan->p_un._regex_pattern, REG_NOSUB|REG_EXTENDED|REG_ICASE);
     } else {
-	(void)regcomp(&reg, plan->regex_pattern, REG_NOSUB|REG_EXTENDED);
+	(void)regcomp(&reg, plan->p_un._regex_pattern, REG_NOSUB|REG_EXTENDED);
     }
     ret = !(regexec(&reg, db_path_to_string(db_node->path), 0, NULL, 0));
     if (!ret) db_node->matched_filters = 0;
@@ -582,7 +582,7 @@ c_regex_common(enum db_search_ntype type, char *regexp, int icase, struct db_pla
     }
 
     newplan = palloc(type, f_regex, tbl);
-    newplan->regex_pattern = regexp;
+    newplan->p_un._regex_pattern = regexp;
     (*resultplan) = newplan;
 
     return BRLCAD_OK;
@@ -766,7 +766,7 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
      * between strings, fnmatch is used to support pattern matching
      */
 
-    checkval = string_to_name_and_val(plan->attr_data, &paramname, &value);
+    checkval = string_to_name_and_val(plan->p_un._attr_data, &paramname, &value);
 
     /* Now that we have the value, check to see if it is all numbers.
      * If so, use numerical comparison logic - otherwise use string
@@ -824,7 +824,7 @@ c_objparam(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
     struct db_plan_t *newplan;
 
     newplan = palloc(N_ATTR, f_objparam, tbl);
-    newplan->attr_data = pattern;
+    newplan->p_un._attr_data = pattern;
     (*resultplan) = newplan;
     return BRLCAD_OK;
 }
@@ -856,7 +856,7 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
      * between strings, fnmatch is used to support pattern matching
      */
 
-    checkval = string_to_name_and_val(plan->attr_data, &attribname, &value);
+    checkval = string_to_name_and_val(plan->p_un._attr_data, &attribname, &value);
 
     /* Now that we have the value, check to see if it is all numbers.
      * If so, use numerical comparison logic - otherwise use string
@@ -898,7 +898,7 @@ c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
     struct db_plan_t *newplan;
 
     newplan = palloc(N_ATTR, f_attr, tbl);
-    newplan->attr_data = pattern;
+    newplan->p_un._attr_data = pattern;
     (*resultplan) = newplan;
     return BRLCAD_OK;
 }
@@ -1002,16 +1002,16 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
      * to help performance. */
     if (dp->d_flags & RT_DIR_COMB) {
 	if (dp->d_flags & RT_DIR_REGION) {
-	    if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0))) {
+	    if ((!bu_fnmatch(plan->p_un._type_data, "r", 0)) || (!bu_fnmatch(plan->p_un._type_data, "reg", 0))  || (!bu_fnmatch(plan->p_un._type_data, "region", 0))) {
 		type_match = 1;
 	    }
 	}
-	if ((!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
+	if ((!bu_fnmatch(plan->p_un._type_data, "c", 0)) || (!bu_fnmatch(plan->p_un._type_data, "comb", 0)) || (!bu_fnmatch(plan->p_un._type_data, "combination", 0))) {
 	    type_match = 1;
 	}
 	goto return_label;
     } else {
-	if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0)) || (!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
+	if ((!bu_fnmatch(plan->p_un._type_data, "r", 0)) || (!bu_fnmatch(plan->p_un._type_data, "reg", 0))  || (!bu_fnmatch(plan->p_un._type_data, "region", 0)) || (!bu_fnmatch(plan->p_un._type_data, "c", 0)) || (!bu_fnmatch(plan->p_un._type_data, "comb", 0)) || (!bu_fnmatch(plan->p_un._type_data, "combination", 0))) {
 	    goto return_label;
 	}
 
@@ -1029,37 +1029,37 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 	    type = rt_arb_std_type(&intern, &arb_tol);
 	    switch (type) {
 		case 4:
-		    type_match = (!bu_fnmatch(plan->type_data, "arb4", 0));
+		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb4", 0));
 		    break;
 		case 5:
-		    type_match = (!bu_fnmatch(plan->type_data, "arb5", 0));
+		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb5", 0));
 		    break;
 		case 6:
-		    type_match = (!bu_fnmatch(plan->type_data, "arb6", 0));
+		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb6", 0));
 		    break;
 		case 7:
-		    type_match = (!bu_fnmatch(plan->type_data, "arb7", 0));
+		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb7", 0));
 		    break;
 		case 8:
-		    type_match = (!bu_fnmatch(plan->type_data, "arb8", 0));
+		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb8", 0));
 		    break;
 		default:
-		    type_match = (!bu_fnmatch(plan->type_data, "invalid", 0));
+		    type_match = (!bu_fnmatch(plan->p_un._type_data, "invalid", 0));
 		    break;
 	    }
 	    break;
 	case DB5_MINORTYPE_BRLCAD_METABALL:
 	    /* Because ft_label is only 8 characters, ft_label doesn't work in fnmatch for metaball*/
-	    type_match = (!bu_fnmatch(plan->type_data, "metaball", 0));
+	    type_match = (!bu_fnmatch(plan->p_un._type_data, "metaball", 0));
 	    break;
 	default:
-	    type_match = !bu_fnmatch(plan->type_data, intern.idb_meth->ft_label, 0);
+	    type_match = !bu_fnmatch(plan->p_un._type_data, intern.idb_meth->ft_label, 0);
 	    break;
     }
 
     /* Match anything that doesn't define a 2D or 3D shape - unfortunately, this list will have to
      * be updated manually unless/until some functionality is added to generate it */
-    if (!bu_fnmatch(plan->type_data, "shape", 0) &&
+    if (!bu_fnmatch(plan->p_un._type_data, "shape", 0) &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOT &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_CONSTRAINT &&
@@ -1084,7 +1084,7 @@ c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
     struct db_plan_t *newplan;
 
     newplan = palloc(N_TYPE, f_type, tbl);
-    newplan->type_data = pattern;
+    newplan->p_un._type_data = pattern;
     (*resultplan) = newplan;
 
     return BRLCAD_OK;
@@ -1103,7 +1103,7 @@ f_bool(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 {
     int bool_match = 0;
     int bool_type = DB_FULL_PATH_CUR_BOOL(db_node->path);
-    if (plan->bool_data == bool_type) bool_match = 1;
+    if (plan->p_un._bool_data == bool_type) bool_match = 1;
     if (!bool_match) db_node->matched_filters = 0;
     return bool_match;
 }
@@ -1121,7 +1121,7 @@ c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
     if (!bu_fnmatch(pattern, "+", 0)) bool_type = 3;
     if (!bu_fnmatch(pattern, "-", 0)) bool_type = 4;
 
-    newplan->bool_data = bool_type;
+    newplan->p_un._bool_data = bool_type;
     (*resultplan) = newplan;
     return BRLCAD_OK;
 }
@@ -1137,7 +1137,7 @@ c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 HIDDEN int
 f_maxdepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
-    int ret = ((int)db_node->path->fp_len - 1 <= plan->max_data) ? 1 : 0;
+    int ret = ((int)db_node->path->fp_len - 1 <= plan->p_un._max_data) ? 1 : 0;
     if (!ret) db_node->matched_filters = 0;
     return ret;
 }
@@ -1149,7 +1149,7 @@ c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
     struct db_plan_t *newplan;
 
     newplan = palloc(N_MAXDEPTH, f_maxdepth, tbl);
-    newplan->max_data = atoi(pattern);
+    newplan->p_un._max_data = atoi(pattern);
     (*resultplan) = newplan;
 
     return BRLCAD_OK;
@@ -1166,7 +1166,7 @@ c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
 HIDDEN int
 f_mindepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
-    int ret = ((int)db_node->path->fp_len - 1 >= plan->min_data) ? 1 : 0;
+    int ret = ((int)db_node->path->fp_len - 1 >= plan->p_un._min_data) ? 1 : 0;
     if (!ret) db_node->matched_filters = 0;
     return ret;
 }
@@ -1178,7 +1178,7 @@ c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
     struct db_plan_t *newplan;
 
     newplan = palloc(N_MINDEPTH, f_mindepth, tbl);
-    newplan->min_data = atoi(pattern);
+    newplan->p_un._min_data = atoi(pattern);
     (*resultplan) = newplan;
 
     return BRLCAD_OK;
@@ -1207,7 +1207,7 @@ f_depth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
      * between strings, fnmatch is used to support pattern matching
      */
 
-    checkval = string_to_name_and_val(plan->depth_data, &name, &value);
+    checkval = string_to_name_and_val(plan->p_un._depth_data, &name, &value);
 
     if ((bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0]))
 	|| (bu_vls_strlen(&value) == 0 && isdigit((int)bu_vls_addr(&name)[0]))) {
@@ -1249,7 +1249,7 @@ c_depth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
     struct db_plan_t *newplan;
 
     newplan = palloc(N_DEPTH, f_depth, tbl);
-    newplan->attr_data = pattern;
+    newplan->p_un._attr_data = pattern;
     (*resultplan) = newplan;
 
     return BRLCAD_OK;
@@ -1282,26 +1282,26 @@ f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, s
      * positions.
      */
 
-    if (isdigit((int)plan->node_data[0])) {
+    if (isdigit((int)plan->p_un._node_data[0])) {
 	doequal = 1;
-	node_count_target = (size_t)atoi(plan->node_data);
+	node_count_target = (size_t)atoi(plan->p_un._node_data);
     } else {
-	if (plan->node_data[0] == '>') dogreaterthan = 1;
-	if (plan->node_data[0] == '<') dolessthan = 1;
-	if (plan->node_data[0] == '=') doequal = 1;
-	if (plan->node_data[0] != '>' && plan->node_data[0] != '<' && plan->node_data[0] != '=') {
+	if (plan->p_un._node_data[0] == '>') dogreaterthan = 1;
+	if (plan->p_un._node_data[0] == '<') dolessthan = 1;
+	if (plan->p_un._node_data[0] == '=') doequal = 1;
+	if (plan->p_un._node_data[0] != '>' && plan->p_un._node_data[0] != '<' && plan->p_un._node_data[0] != '=') {
 	    return 0;
 	}
-	if (plan->node_data[1] == '=') {
+	if (plan->p_un._node_data[1] == '=') {
 	    doequal = 1;
-	    if (isdigit((int)plan->node_data[2])) {
-		node_count_target = (size_t)atoi((plan->node_data)+2);
+	    if (isdigit((int)plan->p_un._node_data[2])) {
+		node_count_target = (size_t)atoi((plan->p_un._node_data)+2);
 	    } else {
 		return 0;
 	    }
 	} else {
-	    if (isdigit((int)plan->node_data[1])) {
-		node_count_target = (size_t)atoi((plan->node_data)+1);
+	    if (isdigit((int)plan->p_un._node_data[1])) {
+		node_count_target = (size_t)atoi((plan->p_un._node_data)+1);
 	    } else {
 		return 0;
 	    }
@@ -1359,7 +1359,7 @@ c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
     struct db_plan_t *newplan;
 
     newplan = palloc(N_NNODES, f_nnodes, tbl);
-    newplan->node_data = pattern;
+    newplan->p_un._node_data = pattern;
     (*resultplan) = newplan;
     return BRLCAD_OK;
 }
@@ -1375,7 +1375,7 @@ c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
 HIDDEN int
 f_path(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
-    int ret = !bu_fnmatch(plan->path_data, db_path_to_string(db_node->path), 0);
+    int ret = !bu_fnmatch(plan->p_un._path_data, db_path_to_string(db_node->path), 0);
     if (!ret) db_node->matched_filters = 0;
     return ret;
 }
@@ -1387,7 +1387,7 @@ c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
     struct db_plan_t *newplan;
 
     newplan = palloc(N_PATH, f_path, tbl);
-    newplan->path_data = pattern;
+    newplan->p_un._path_data = pattern;
     (*resultplan) = newplan;
     return BRLCAD_OK;
 }
@@ -1607,7 +1607,7 @@ yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* po
 		    bu_log("(): empty inner expression");
 		    return BRLCAD_ERROR;
 		}
-		node->p_data[0] = subplan;
+		node->p_un._p_data[0] = subplan;
 		node->type = N_EXPR;
 		node->eval = f_expr;
 		break;
@@ -1690,7 +1690,7 @@ not_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* pl
 	 * expr subplan.
 	 */
 	if (next->type == N_EXPR)
-	    if (not_squish(next->p_data[0], &(next->p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+	    if (not_squish(next->p_un._p_data[0], &(next->p_un._p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
 
 	/*
 	 * if we encounter a not, then snag the next node and place it
@@ -1718,7 +1718,7 @@ not_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* pl
 	    if (notlevel % 2 != 1)
 		next = node;
 	    else
-		next->p_data[0] = node;
+		next->p_un._p_data[0] = node;
 	}
 
 	/* add the node to our result plan */
@@ -1754,7 +1754,7 @@ above_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 	 * expr subplan.
 	 */
 	if (next->type == N_EXPR)
-	    if (above_squish(next->ab_data[0], &(next->ab_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+	    if (above_squish(next->p_un._ab_data[0], &(next->p_un._ab_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
 
 	/*
 	 * if we encounter an above, then snag the next node and place it
@@ -1778,7 +1778,7 @@ above_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 	    if (node->type == N_EXPR)
 		if (above_squish(node, &node) != BRLCAD_OK) return BRLCAD_ERROR;
 	    /*Made it*/
-	    next->ab_data[0] = node;
+	    next->p_un._ab_data[0] = node;
 	}
 
 	/* add the node to our result plan */
@@ -1814,7 +1814,7 @@ below_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 	 * the expr subplan.
 	 */
 	if (next->type == N_EXPR)
-	    if (below_squish(next->bl_data[0], &(next->bl_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+	    if (below_squish(next->p_un._bl_data[0], &(next->p_un._bl_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
 
 	/*
 	 * if we encounter a not, then snag the next node and place it
@@ -1838,7 +1838,7 @@ below_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 	    if (node->type == N_EXPR)
 		if (below_squish(node, &node) != BRLCAD_OK) return BRLCAD_ERROR;
 	    /* Made it */
-	    next->bl_data[0] = node;
+	    next->p_un._bl_data[0] = node;
 	}
 
 	/* add the node to our result plan */
@@ -1873,11 +1873,11 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
 	 * the expr subplan.
 	 */
 	if (next->type == N_EXPR)
-	    if (or_squish(next->p_data[0], &(next->p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+	    if (or_squish(next->p_un._p_data[0], &(next->p_un._p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
 
 	/* if we encounter a not then look for not's in the subplan */
 	if (next->type == N_NOT)
-	    if (or_squish(next->p_data[0], &(next->p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+	    if (or_squish(next->p_un._p_data[0], &(next->p_un._p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
 
 	/*
 	 * if we encounter an or, then place our collected plan in the
@@ -1889,9 +1889,9 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
 		bu_log("-o: no expression before -o");
 		return BRLCAD_ERROR;
 	    }
-	    next->p_data[0] = result;
-	    if (or_squish(plan, &(next->p_data[1]))  != BRLCAD_OK) return BRLCAD_ERROR;
-	    if (next->p_data[1] == NULL) {
+	    next->p_un._p_data[0] = result;
+	    if (or_squish(plan, &(next->p_un._p_data[1]))  != BRLCAD_OK) return BRLCAD_ERROR;
+	    if (next->p_un._p_data[1] == NULL) {
 		bu_log("-o: no expression after -o");
 		return BRLCAD_ERROR;
 	    }
