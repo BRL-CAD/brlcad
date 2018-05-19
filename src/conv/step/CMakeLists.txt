@@ -12,6 +12,9 @@ CHECK_CXX_FLAG("wd4065") # switch contains default but no case labels
 CHECK_CXX_FLAG("wd4251") # exporting STL objects
 CHECK_CXX_FLAG("wd4800") # implicit conversions to bool
 
+# Also quell a GCC warning for similar reasons.
+CHECK_CXX_FLAG("Wno-ignored-qualifiers")
+
 
 set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
 set(STEP_INCLUDE_DIRS
