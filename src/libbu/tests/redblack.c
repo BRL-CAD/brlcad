@@ -64,13 +64,15 @@ redblack_main(int ac, char *av[])
     const char *sources[] = {"h", "e", "a", "l", "l", "o"};
     int i = 0;
     int passed = 0;
+    void (*s)(void);
 
     if (ac > 1) {
 	printf("uh oh, unexpected args after %s\n", av[0]);
 	return 1;
     }
 
-    testTree = bu_rb_create1("TestingTree", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compareFunc));
+    s = (void (*)(void))compareFunc;
+    testTree = bu_rb_create1("TestingTree", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(s));
     for (i = 0; i < 6; i++)
 	bu_rb_insert(testTree, (void *)sources[i]);
 

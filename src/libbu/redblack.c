@@ -184,11 +184,12 @@ bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const
 struct bu_rb_tree *
 bu_rb_create1(const char *description, int (*compare_func)(void))
 {
-    int (**cfp)(const void *, const void *);
+    /* Stage through (void (*)(void)) for GCC -Wcast-function-type */
+    void (*s)(void) = (void (*)(void))compare_func;
 
-    cfp = (int (**)(const void *, const void *))
-	bu_malloc(sizeof(int (*)(const void *, const void *)), "red-black function table");
-    *cfp = (int (*)(const void *, const void *)) compare_func;
+    int (**cfp)(const void *, const void *);
+    cfp = (int (**)(const void *, const void *))bu_malloc(sizeof(int (*)(const void *, const void *)), "red-black function table");
+    *cfp = (int (*)(const void *, const void *)) s;
     return bu_rb_create(description, 1, cfp);
 }
 
@@ -618,13 +619,16 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
     struct bu_rb_tree *tree;
     struct bu_rb_package *package;
     void (*pp)(void *, const int);	/* Pretty print function */
+    void (*s)(void);
 
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
     tree = node->rbn_tree;
     RB_CKORDER(tree, d_order);
 
     package = (node->rbn_package)[d_order];
-    pp = (void (*)(void *, const int))tree->rbt_print;
+    /* Stage through (void (*)(void)) for GCC -Wcast-function-type */
+    s = (void (*)(void))tree->rbt_print;
+    pp = (void (*)(void *, const int))s;
 
     bu_log("%*snode <%p>...\n", depth * 2, "", (void*)node);
     bu_log("%*s  tree:    <%p>\n", depth * 2, "", (void*)node->rbn_tree);
