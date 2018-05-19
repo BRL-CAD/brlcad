@@ -107,10 +107,10 @@ print_pixel(void *p, int UNUSED(depth))
  * The comparison callback for the red-black tree
  */
 int
-compare_pixels(void *v1, void *v2)
+compare_pixels(const void *v1, const void *v2)
 {
-    struct pixel *p1 = (struct pixel *)v1;
-    struct pixel *p2 = (struct pixel *)v2;
+    const struct pixel *p1 = (const struct pixel *)v1;
+    const struct pixel *p2 = (const struct pixel *)v2;
     int i;
 
     BU_CKMAG(p1, PIXEL_MAGIC, "pixel");
@@ -170,6 +170,9 @@ main(int argc, char **argv)
     FILE *infp = NULL;	/* input stream */
     int ch;		/* current char in command line */
     struct pixel *pp;
+    bu_rb_cmp_t farray[1];
+    farray[0] = &compare_pixels;
+
 
     /*
      * Process the command line
@@ -222,7 +225,7 @@ main(int argc, char **argv)
 	}
     }
 
-    palette = bu_rb_create("Pixel palette", 1, compare_pixels);
+    palette = bu_rb_create("Pixel palette", 1, farray);
     bu_rb_uniq_on1(palette);
 
     /*

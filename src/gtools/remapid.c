@@ -487,10 +487,10 @@ free_remap_reg(struct remap_reg *rp)
  ************************************************************************/
 
 int
-compare_curr_ids(void *v1, void *v2)
+compare_curr_ids(const void *v1, const void *v2)
 {
-    struct curr_id *id1 = (struct curr_id *) v1;
-    struct curr_id *id2 = (struct curr_id *) v2;
+    const struct curr_id *id1 = (const struct curr_id *) v1;
+    const struct curr_id *id2 = (const struct curr_id *) v2;
 
     BU_CKMAG(id1, CURR_ID_MAGIC, "curr_id");
     BU_CKMAG(id2, CURR_ID_MAGIC, "curr_id");
@@ -798,6 +798,8 @@ main(int argc, char **argv)
     REMAPID_FILE *sfp = NULL;	/* Spec file */
     int ch;		/* Command-line character */
     int tankill = 0;	/* TANKILL format (vs. BRL-CAD)? */
+    bu_rb_cmp_t farray[1];
+    farray[0] = &compare_curr_ids;
 
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 
@@ -837,7 +839,7 @@ main(int argc, char **argv)
     /*
      * Initialize the assignment
      */
-    assignment = bu_rb_create("Remapping assignment", 1, compare_curr_ids);
+    assignment = bu_rb_create("Remapping assignment", 1, farray);
     bu_rb_uniq_on1(assignment);
 
     /*

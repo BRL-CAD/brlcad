@@ -110,7 +110,7 @@
 
 
 struct bu_rb_tree *
-bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const void *, const void *))
+bu_rb_create(const char *description, int nm_orders, bu_rb_cmp_t *compare_funcs)
 {
     int order;
     struct bu_rb_tree *tree;

@@ -245,7 +245,8 @@ enum BU_RB_WALK_ORDER {
  * and the comparison functions (one per order).  bu_rb_create()
  * returns a pointer to the red-black tree header record.
  */
-BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const void *, const void *));
+typedef int (*bu_rb_cmp_t)(const void *, const void *);
+BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm_orders, bu_rb_cmp_t *compare_funcs);
 
 /** @brief Routines to delete a node from a red-black tree */
 

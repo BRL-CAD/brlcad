@@ -297,10 +297,10 @@ void print_overlap_o(void *v, int UNUSED(depth))
 /**
  * The red-black-tree comparison callback for the overlap log.
  */
-int compare_overlaps(void *v1, void *v2)
+int compare_overlaps(const void *v1, const void *v2)
 {
-    struct g_lint_ovlp *o1 = (struct g_lint_ovlp *) v1;
-    struct g_lint_ovlp *o2 = (struct g_lint_ovlp *) v2;
+    const struct g_lint_ovlp *o1 = (const struct g_lint_ovlp *) v1;
+    const struct g_lint_ovlp *o2 = (const struct g_lint_ovlp *) v2;
 
     BU_CKMAG(o1, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
     BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
@@ -322,10 +322,10 @@ int compare_overlaps(void *v1, void *v2)
  * The red-black-tree comparison callback for the final re-sorting of
  * the overlaps by volume.
  */
-int compare_by_vol(void *v1, void *v2)
+int compare_by_vol(const void *v1, const void *v2)
 {
-    struct g_lint_ovlp *o1 = (struct g_lint_ovlp *) v1;
-    struct g_lint_ovlp *o2 = (struct g_lint_ovlp *) v2;
+    const struct g_lint_ovlp *o1 = (const struct g_lint_ovlp *) v1;
+    const struct g_lint_ovlp *o2 = (const struct g_lint_ovlp *) v2;
 
     BU_CKMAG(o1, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
     BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
@@ -783,11 +783,16 @@ main(int argc, char **argv)
     vect_t unit_D;		/* View basis vectors */
     vect_t unit_H;
     vect_t unit_V;
+    bu_rb_cmp_t cbva[1];
+    bu_rb_cmp_t coa[1];
 
     /* intentionally double for scan */
     double azimuth = 0.0;
     double celsiz = 100.0;	/* Spatial sampling rate */
     double elevation = 0.0;
+
+    cbva[0] = &compare_by_vol;
+    coa[0] = &compare_overlaps;
 
     bu_log("%s\n", rt_version());
 
@@ -860,7 +865,7 @@ main(int argc, char **argv)
 		use_air = ((control.glc_what_to_report & G_LINT_A_ANY) != 0);
 		break;
 	    case 's':
-		ovlp_log = bu_rb_create("overlap log", 1, compare_overlaps);
+		ovlp_log = bu_rb_create("overlap log", 1, coa);
 		if (control.glc_how_to_report == G_LINT_PLOT3)
 		    control.glc_how_to_report = G_LINT_ASCII;
 		bu_rb_uniq_on1(ovlp_log);
@@ -995,7 +1000,7 @@ main(int argc, char **argv)
      * sort them now and then print them out.
      */
     if (ovlp_log) {
-	ovlps_by_vol = bu_rb_create("overlaps by volume", 1, compare_by_vol);
+	ovlps_by_vol = bu_rb_create("overlaps by volume", 1, cbva);
 	bu_rb_uniq_on1(ovlps_by_vol);
 	bu_rb_walk1(ovlp_log, (void (*)(void))insert_by_vol, BU_RB_WALK_INORDER);
 
