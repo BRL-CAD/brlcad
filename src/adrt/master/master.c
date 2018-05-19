@@ -96,7 +96,7 @@ typedef struct master_s
 
 
 void master_dispatcher_init();
-int* master_networking(void *ptr);
+int master_networking(void *ptr);
 void master_result(tienet_buffer_t *result);
 
 master_t master;
@@ -315,7 +315,7 @@ master_result(tienet_buffer_t *result)
 }
 
 
-int *
+int
 master_networking(void *ptr)
 {
     master_socket_t *sock, *tmp;
@@ -452,7 +452,7 @@ master_networking(void *ptr)
 	    switch (op) {
 		case ADRT_NETOP_SHUTDOWN:
 		    tienet_sem_post(&master.wait_sem);
-		    return NULL;
+		    return 0;
 		    break;
 
 		case ADRT_NETOP_INIT:
