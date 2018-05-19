@@ -247,7 +247,7 @@ enum BU_RB_WALK_ORDER {
  */
 BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const void *, const void *));
 /* A macro for correct casting of a rb compare function for use a function argument: */
-#define BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(_func) ((int (*)(void))((void(*)(void))_func))
+#define BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(_func) ((int (*)(void))_func)
 
 /**
  * Create a single-order red-black tree

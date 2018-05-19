@@ -1054,7 +1054,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 #if defined(_WIN32) && !defined(__CYGWIN__)
     Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (ClientData *)&fbsp->fbs_listener.fbsl_fd);
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-    Tcl_CreateFileHandler(fbsp->fbs_listener.fbsl_fd, TCL_READABLE, (Tcl_FileProc *)(void(*)(void))new_client_handler, (ClientData)&fbsp->fbs_listener);
+    Tcl_CreateFileHandler(fbsp->fbs_listener.fbsl_fd, TCL_READABLE, (Tcl_FileProc *)new_client_handler, (ClientData)&fbsp->fbs_listener);
 #endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
     return TCL_OK;

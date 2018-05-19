@@ -396,10 +396,7 @@ db_dirbuild(struct db_i *dbip)
     } else if (version == 4) {
 	/* things used to be pretty simple with v4 */
 
-	/* Stage pointer to avoid GCC 8 -Wcast-function-type */
-	void (*s)(void) = (void (*)(void))db_diradd;
-
-	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, void *))s, 1, NULL) < 0) {
+	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, void *))db_diradd, 1, NULL) < 0) {
 	    return -1;
 	}
 
