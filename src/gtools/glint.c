@@ -860,7 +860,7 @@ main(int argc, char **argv)
 		use_air = ((control.glc_what_to_report & G_LINT_A_ANY) != 0);
 		break;
 	    case 's':
-		ovlp_log = bu_rb_create1("overlap log", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compare_overlaps));
+		ovlp_log = bu_rb_create("overlap log", 1, compare_overlaps);
 		if (control.glc_how_to_report == G_LINT_PLOT3)
 		    control.glc_how_to_report = G_LINT_ASCII;
 		bu_rb_uniq_on1(ovlp_log);
@@ -995,7 +995,7 @@ main(int argc, char **argv)
      * sort them now and then print them out.
      */
     if (ovlp_log) {
-	ovlps_by_vol = bu_rb_create1("overlaps by volume", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compare_by_vol));
+	ovlps_by_vol = bu_rb_create("overlaps by volume", 1, compare_by_vol);
 	bu_rb_uniq_on1(ovlps_by_vol);
 	bu_rb_walk1(ovlp_log, (void (*)(void))insert_by_vol, BU_RB_WALK_INORDER);
 

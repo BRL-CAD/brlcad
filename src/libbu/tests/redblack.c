@@ -70,7 +70,7 @@ redblack_main(int ac, char *av[])
 	return 1;
     }
 
-    testTree = bu_rb_create1("TestingTree", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compareFunc));
+    testTree = bu_rb_create("TestingTree", 1, compareFunc);
     for (i = 0; i < 6; i++)
 	bu_rb_insert(testTree, (void *)sources[i]);
 

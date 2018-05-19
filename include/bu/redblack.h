@@ -246,23 +246,6 @@ enum BU_RB_WALK_ORDER {
  * returns a pointer to the red-black tree header record.
  */
 BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const void *, const void *));
-/* A macro for correct casting of a rb compare function for use a function argument: */
-#define BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(_func) ((int (*)(void))_func)
-
-/**
- * Create a single-order red-black tree
- *
- * This function has two parameters: a comment describing the tree to
- * create and a comparison function.  bu_rb_create1() builds an array
- * of one function pointer and passes it to bu_rb_create().
- * bu_rb_create1() returns a pointer to the red-black tree header
- * record.
- *
- * N.B. - Since this function allocates storage for the array of
- * function pointers, in order to avoid memory leaks on freeing the
- * tree, applications should call bu_rb_free1(), NOT bu_rb_free().
- */
-BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(const char *description, int (*compare_func)(void));
 
 /** @brief Routines to delete a node from a red-black tree */
 

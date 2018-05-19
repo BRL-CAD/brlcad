@@ -837,7 +837,7 @@ main(int argc, char **argv)
     /*
      * Initialize the assignment
      */
-    assignment = bu_rb_create1("Remapping assignment", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compare_curr_ids));
+    assignment = bu_rb_create("Remapping assignment", 1, compare_curr_ids);
     bu_rb_uniq_on1(assignment);
 
     /*
