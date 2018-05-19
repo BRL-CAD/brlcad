@@ -2693,10 +2693,10 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	 * Note that ON fu1 is not an option at this point
 	 */
 	VAVERAGE(mid_pt, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord)
-	    nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu1, (struct loopuse *)NULL,
-					       (void (*)(struct edgeuse *, point_t, const char *))NULL,
-					       (void (*)(struct vertexuse *, point_t, const char *))NULL,
-					       (const char *)NULL, 0, 1, vlfree, rs->tol);
+	    nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu1, NULL,
+					       NULL,
+					       NULL,
+					       NULL, 0, 1, vlfree, rs->tol);
 
 	if (nmg_debug&DEBUG_FCUT) {
 	    bu_log("vu1=%p (%g %g %g), vu2=%p (%g %g %g)\n",
@@ -2712,10 +2712,10 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	/* Check if mid-point is in fu2. If fu2 is disjoint loops, this point
 	 * may be outside fu2, and we don't want to cut fu1 here.
 	 */
-	nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu2, (struct loopuse *)NULL,
-					   (void (*)(struct edgeuse *, point_t, const char *))NULL,
-					   (void (*)(struct vertexuse *, point_t, const char *))NULL,
-					   (char *)NULL, 0, 0, vlfree, rs->tol);
+	nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu2, NULL,
+					   NULL,
+					   NULL,
+					   NULL, 0, 0, vlfree, rs->tol);
 
 	if (nmg_class == NMG_CLASS_AoutB)
 	    continue;

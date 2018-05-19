@@ -1625,7 +1625,7 @@ isect_ray_loopuse(struct nmg_ray_data *rd, struct loopuse *lu_p, struct bu_list 
 
 
 HIDDEN void
-eu_touch_func(struct edgeuse *eu, fastf_t *pt, char *priv, struct bu_list *vlfree)
+eu_touch_func(struct edgeuse *eu, fastf_t *pt, const char *priv, struct bu_list *vlfree)
 {
     struct edgeuse *eu_next;
     struct nmg_ray_data *rd;
@@ -2054,7 +2054,6 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
     }
 }
 
-
 HIDDEN void
 isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_list *vlfree)
 {
@@ -2131,7 +2130,7 @@ isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_l
     else
 	pt_class = nmg_class_pt_fu_except(plane_pt, fu_p,
 					  (struct loopuse *)NULL,
-					  (void (*)(struct edgeuse *, point_t, const char *))eu_touch_func,
+					  eu_touch_func,
 					  (void (*)(struct vertexuse *, point_t, const char *))vu_touch_func,
 					  (char *)rd,
 					  NMG_FPI_PERGEOM,
