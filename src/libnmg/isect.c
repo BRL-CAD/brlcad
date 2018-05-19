@@ -2128,16 +2128,18 @@ isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_l
 	pt_class = nmg_class_pt_fu_except(plane_pt, fu_p, (struct loopuse *)NULL,
 					  0, 0, (char *)rd, NMG_FPI_PERGEOM, 1, vlfree,
 					  rd->tol);
-    else
+    else {
+	/* for GCC 8 -Wcast-function-type */
+	void (*s)(void) = (void (*)(void))eu_touch_func;
 	pt_class = nmg_class_pt_fu_except(plane_pt, fu_p,
 					  (struct loopuse *)NULL,
-					  (void (*)(struct edgeuse *, point_t, const char *))eu_touch_func,
+					  (void (*)(struct edgeuse *, point_t, const char *))s,
 					  (void (*)(struct vertexuse *, point_t, const char *))vu_touch_func,
 					  (char *)rd,
 					  NMG_FPI_PERGEOM,
 					  0, vlfree,
 					  rd->tol);
-
+    }
 
     NMG_GET_HITMISS(myhit);
     NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
