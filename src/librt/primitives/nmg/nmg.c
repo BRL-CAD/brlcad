@@ -1145,15 +1145,14 @@ state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
     return state5and6(seghead, seg_p, seg_count, a_hit, stp, ap, tol, 6);
 }
 
-
-static int (*state_table[7])(void) = {
-    (int (*)(void))state0,
-    (int (*)(void))state1,
-    (int (*)(void))state2,
-    (int (*)(void))state3,
-    (int (*)(void))state4,
-    (int (*)(void))state5,
-    (int (*)(void))state6
+static int (*state_table[7])(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *) = {
+    state0,
+    state1,
+    state2,
+    state3,
+    state4,
+    state5,
+    state6
 };
 
 
