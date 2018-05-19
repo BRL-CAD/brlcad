@@ -222,7 +222,7 @@ main(int argc, char **argv)
 	}
     }
 
-    palette = bu_rb_create1("Pixel palette", (int (*)(void))compare_pixels);
+    palette = bu_rb_create1("Pixel palette", (int (*)(void))((void(*)(void))compare_pixels));
     bu_rb_uniq_on1(palette);
 
     /*

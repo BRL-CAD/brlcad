@@ -183,7 +183,7 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
     bu_mtx_init(&tienet_master_broadcast_mut);
 
     /* Start the Listener as a Thread */
-    bu_thrd_create(&thread, (bu_thrd_start_t)tienet_master_listener, NULL);
+    bu_thrd_create(&thread, (bu_thrd_start_t)(void (*)(void))tienet_master_listener, NULL);
 }
 
 

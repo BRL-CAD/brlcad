@@ -218,7 +218,7 @@ ScInit(FILE *fp) {
     ScLoadTP();
     ScLoadTCS();
 
-    tputs(ScTI, 1, (int (*)(int))PutChr);	/* Initialize terminal.			*/
+    tputs(ScTI, 1, (int (*)(int))(void (*)(void))PutChr);	/* Initialize terminal.			*/
 #endif
     return 1;		/* All is well.				*/
 }
@@ -232,7 +232,7 @@ ScClrEOL(void) {
     if (ScCE == NULL)
 	return 0;
 #ifdef HAVE_TERMLIB
-    tputs(ScCE, 1, (int (*)(int))PutChr);
+    tputs(ScCE, 1, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }
@@ -246,7 +246,7 @@ ScClrScrlReg(void) {
     if (ScCS == NULL)
 	return 0;
 #ifdef HAVE_TERMLIB
-    tputs(tgoto(ScCS, ScLI-1, 0), 1, (int (*)(int))PutChr);
+    tputs(tgoto(ScCS, ScLI-1, 0), 1, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }
@@ -260,7 +260,7 @@ ScClrStandout(void) {
     if (ScSE == NULL)
 	return 0;
 #ifdef HAVE_TERMLIB
-    tputs(ScSE, 1, (int (*)(int))PutChr);
+    tputs(ScSE, 1, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }
@@ -274,7 +274,7 @@ ScClrText(void) {
     if (ScCL == NULL)
 	return 0;
 #ifdef HAVE_TERMLIB
-    tputs(ScCL, ScLI, (int (*)(int))PutChr);
+    tputs(ScCL, ScLI, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }
@@ -288,7 +288,7 @@ ScInsertLn(void) {
     if (ScAL == NULL)
 	return 0;
 #ifdef HAVE_TERMLIB
-    tputs(ScAL, 1, (int (*)(int))PutChr);
+    tputs(ScAL, 1, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }
@@ -302,7 +302,7 @@ ScDeleteLn(void) {
     if (ScDL == NULL)
 	return 0;
 #ifdef HAVE_TERMLIB
-    tputs(ScDL, 1, (int (*)(int))PutChr);
+    tputs(ScDL, 1, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }
@@ -316,7 +316,7 @@ ScDnScroll(void) {
     if (ScSR == NULL)
 	return 0;
 #ifdef HAVE_TERMLIB
-    tputs(ScSR, 1, (int (*)(int))PutChr);
+    tputs(ScSR, 1, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }
@@ -330,7 +330,7 @@ ScHmCursor(void) {
     if (ScHO == NULL)
 	return 0;
 #ifdef HAVE_TERMLIB
-    tputs(ScHO, 1, (int (*)(int))PutChr);
+    tputs(ScHO, 1, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }
@@ -351,7 +351,7 @@ ScMvCursor(int UNUSED(x), int UNUSED(y)) {
 
 #ifdef HAVE_TERMLIB
     --x; --y; /* Tgoto() adds 1 to each coordinate!? */
-    tputs(tgoto(ScCM, x, y), 1, (int (*)(int))PutChr);
+    tputs(tgoto(ScCM, x, y), 1, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }
@@ -370,7 +370,7 @@ ScSetScrlReg(int UNUSED(top), int UNUSED(btm)) {
     if (ScCS == NULL)
 	return 0;
 #ifdef HAVE_TERMLIB
-    tputs(tgoto(ScCS, btm-1, top-1), 1, (int (*)(int))PutChr);
+    tputs(tgoto(ScCS, btm-1, top-1), 1, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }
@@ -384,7 +384,7 @@ ScSetStandout(void) {
     if (ScSO == NULL)
 	return 0;
 #ifdef HAVE_TERMLIB
-    tputs(ScSO, 1, (int (*)(int))PutChr);
+    tputs(ScSO, 1, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }
@@ -398,7 +398,7 @@ ScUpScroll(void) {
     if (ScSF == NULL)
 	return 0;
 #ifdef HAVE_TERMLIB
-    tputs(ScSF, 1, (int (*)(int))PutChr);
+    tputs(ScSF, 1, (int (*)(int))(void (*)(void))PutChr);
 #endif
     return 1;
 }

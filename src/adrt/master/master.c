@@ -132,7 +132,7 @@ master_init(int port, int obs_port, char *list, char *exec, char *comp_host)
     tienet_master_init(port, master_result, list, exec, 5, ADRT_VER_KEY, bu_debug & BU_DEBUG_UNUSED_1);
 
     /* Launch a thread to handle networking */
-    bu_thrd_create(&master.networking_thread, (bu_thrd_start_t)master_networking, &obs_port);
+    bu_thrd_create(&master.networking_thread, (bu_thrd_start_t)(void (*)(void))master_networking, &obs_port);
 
     /* Connect to the component Server */
     compnet_connect(comp_host, ISST_COMPNET_PORT);

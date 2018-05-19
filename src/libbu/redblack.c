@@ -184,12 +184,10 @@ bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const
 struct bu_rb_tree *
 bu_rb_create1(const char *description, int (*compare_func)(void))
 {
-    /* Stage through (void (*)(void)) for GCC -Wcast-function-type */
-    void (*s)(void) = (void (*)(void))compare_func;
-
     int (**cfp)(const void *, const void *);
     cfp = (int (**)(const void *, const void *))bu_malloc(sizeof(int (*)(const void *, const void *)), "red-black function table");
-    *cfp = (int (*)(const void *, const void *)) s;
+    /* Stage through (void (*)(void)) for GCC -Wcast-function-type */
+    *cfp = (int (*)(const void *, const void *)) (void (*)(void))compare_func;
     return bu_rb_create(description, 1, cfp);
 }
 
