@@ -1147,13 +1147,13 @@ state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 
 static int (*state_table[7])(void) = {
-    (int (*)(void))state0,
-    (int (*)(void))state1,
-    (int (*)(void))state2,
-    (int (*)(void))state3,
-    (int (*)(void))state4,
-    (int (*)(void))state5,
-    (int (*)(void))state6
+    (int (*)(void))((void (*)(void))state0),
+    (int (*)(void))((void (*)(void))state1),
+    (int (*)(void))((void (*)(void))state2),
+    (int (*)(void))((void (*)(void))state3),
+    (int (*)(void))((void (*)(void))state4),
+    (int (*)(void))((void (*)(void))state5),
+    (int (*)(void))((void (*)(void))state6)
 };
 
 
@@ -1177,7 +1177,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 	NMG_CK_HITMISS(a_hit);
 
 	/* cast function pointers for use */
-	state_table_func = (int (*)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *))state_table[ray_state];
+	state_table_func = (int (*)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *))((void (*)(void))state_table[ray_state]);
 	new_state = state_table_func(seghead, &seg_p, &seg_count, a_hit, stp, ap, (struct bn_tol *)rd->tol);
 	if (new_state < 0) {
 	    /* state transition error.  Print out the hit list
