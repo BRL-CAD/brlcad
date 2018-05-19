@@ -925,8 +925,6 @@ new_client_handler(ClientData clientData,
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
 HIDDEN void
 new_client_handler(ClientData clientData,
-		   Tcl_Channel UNUSED(chan),
-		   char *UNUSED(host),
 		   int UNUSED(port))
 {
     struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
