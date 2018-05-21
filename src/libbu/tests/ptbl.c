@@ -119,7 +119,7 @@ test_bu_ptbl_rm(const char *type)
 
     for (i = 0; i < how_many; i++) {
 	bu_ptbl_ins(&b, &p);
-	if (strcmp(type, "mix") == 0) {
+	if (BU_STR_EQUAL(type, "mix")) {
 	    bu_ptbl_ins(&b, &q);
 	}
     }
@@ -207,7 +207,7 @@ ptbl_main(int argc, char *argv[])
 	bu_exit(1, "ERROR: usage: %s test_name [test_args...]\n", argv[0]);
     }
 
-    if (strcmp(argv[1], "init") == 0) {
+    if (BU_STR_EQUAL(argv[1], "init")) {
 	ptbl_size = 100;
 	if (argc > 2) {
 	    if (bu_opt_long(NULL, 2, (const char **) argv, (void *) &ptbl_size) < 0) {
@@ -216,19 +216,19 @@ ptbl_main(int argc, char *argv[])
 	}
 
 	return test_bu_ptbl_init(ptbl_size);
-    } else if (strcmp(argv[1], "reset") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "reset")) {
 	return test_bu_ptbl_reset();
-    } else if (strcmp(argv[1], "zero") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "zero")) {
 	return test_bu_ptbl_reset();
-    } else if (strcmp(argv[1], "ins") == 0) {
-	return test_bu_ptbl_ins(argc > 2 ? strcmp(argv[2], "uniq") == 0 : 0);
-    } else if (strcmp(argv[1], "locate") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "ins")) {
+	return test_bu_ptbl_ins(argc > 2 ? BU_STR_EQUAL(argv[2], "uniq") : 0);
+    } else if (BU_STR_EQUAL(argv[1], "locate")) {
 	return test_bu_ptbl_ins(0);
-    } else if (strcmp(argv[1], "rm") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "rm")) {
 	return test_bu_ptbl_rm(argv[2]);
-    } else if (strcmp(argv[1], "cat") == 0) {
-	return test_bu_ptbl_cat(argc > 2 ? strcmp(argv[2], "uniq") == 0 : 0);
-    } else if (strcmp(argv[1], "trunc") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "cat")) {
+	return test_bu_ptbl_cat(argc > 2 ? BU_STR_EQUAL(argv[2], "uniq") : 0);
+    } else if (BU_STR_EQUAL(argv[1], "trunc")) {
 	return test_bu_ptbl_trunc();
     }
 
