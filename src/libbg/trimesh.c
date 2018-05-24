@@ -164,7 +164,7 @@ edge_unmatched(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *
 }
 
 HIDDEN int
-edge_misoriented(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
+edge_misoriented(size_t *edge_skip, size_t UNUSED(num_edges), struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
 {
     *edge_skip = 1;
     return edge_list[cur_idx].flipped == edge_list[cur_idx + 1].flipped;
