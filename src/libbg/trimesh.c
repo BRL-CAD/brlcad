@@ -143,30 +143,43 @@ bg_trimesh_degenerate_faces(size_t num_faces, int *fpoints, bg_face_error_func_t
     return ecount;
 }
 
-typedef int (*bg_edge_filter_func_t)(size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx);
+/**
+ * @param[out] edge_skip Number of edges after current caller should skip (initialized to 0).
+ */
+typedef int (*bg_edge_filter_func_t)(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx);
 
 HIDDEN int
-edge_filter_all(size_t UNUSED(num_edges), struct bg_trimesh_halfedge *UNUSED(edge_list), size_t UNUSED(cur_idx))
+edge_filter_all(size_t *UNUSED(edge_skip), size_t UNUSED(num_edges), struct bg_trimesh_halfedge *UNUSED(edge_list), size_t UNUSED(cur_idx))
 {
     return 1;
 }
 
 HIDDEN int
-edge_unmatched(size_t UNUSED(num_edges), struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
+edge_unmatched(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
 {
-    return !TRIMESH_EDGE_EQUAL(edge_list[cur_idx], edge_list[cur_idx + 1]);
+    if (cur_idx + 1 < num_edges) {
+	return !(*edge_skip = TRIMESH_EDGE_EQUAL(edge_list[cur_idx], edge_list[cur_idx + 1]));
+    }
+    return 0;
 }
 
 HIDDEN int
-edge_misoriented(size_t UNUSED(num_edges), struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
+edge_misoriented(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
 {
+    *edge_skip = 1;
     return edge_list[cur_idx].flipped == edge_list[cur_idx + 1].flipped;
 }
 
 HIDDEN int
-edge_overmatched(size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
+edge_overmatched(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
 {
-    return (cur_idx + 2 < num_edges) && TRIMESH_EDGE_EQUAL(edge_list[cur_idx], edge_list[cur_idx + 2]);
+    size_t nxt_idx = cur_idx + 2;
+
+    /* skip past third and later copies of current edge */
+    while (nxt_idx < num_edges && TRIMESH_EDGE_EQUAL(edge_list[cur_idx], edge_list[nxt_idx])) {
+	++nxt_idx;
+    }
+    return (*edge_skip = nxt_idx - (cur_idx + 2)) > 0;
 }
 
 HIDDEN int
@@ -177,7 +190,7 @@ trimesh_count_error_edges(
     bg_edge_error_funct_t error_edge_func,
     void *data)
 {
-    size_t i;
+    size_t i, skip;
     int matching_edges = 0;
 
     if (!edge_list) return 0;
@@ -186,13 +199,12 @@ trimesh_count_error_edges(
 	filter_func = edge_filter_all;
     }
 
-    for (i = 0; i + 1 < num_edges; i += 2) {
-	if (filter_func(num_edges, edge_list, i)) {
+    for (i = 0; i < num_edges; i += 1 + skip) {
+	skip = 0;
+	if (filter_func(&skip, num_edges, edge_list, i)) {
 	    ++matching_edges;
-	    if (error_edge_func) {
-		if (!error_edge_func(&edge_list[i], data) || !error_edge_func(&edge_list[i + 1], data)) {
-		    return matching_edges;
-		}
+	    if (error_edge_func && !error_edge_func(&edge_list[i], data)) {
+		return matching_edges;
 	    }
 	}
     }
