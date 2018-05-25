@@ -59,6 +59,7 @@ set(LIBGED_SOURCES
   cat.c
   cc.c
   center.c
+  check_overlaps.c
   clone.c
   coil.c
   color.c

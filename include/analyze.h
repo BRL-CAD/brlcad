@@ -125,7 +125,23 @@ ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *li
 							  struct region *r1,
 							  struct region *r2,
 							  double dist, point_t pt);
+/**
+ * analyze_overlap function for check command
+ */
+typedef void (*analyze_overlaps_callback)(struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *, void *);
 
+ANALYZE_EXPORT extern int
+analyze_overlaps(struct rt_i *rtip,
+		 size_t width,
+		 size_t height,
+		 fastf_t cell_width,
+		 fastf_t cell_height,
+		 fastf_t aspect,
+		 fastf_t viewsize,
+		 mat_t model2view,
+		 size_t npsw,
+		 analyze_overlaps_callback callback, 
+		 void *callBackData);
 
 /**
  * voxelize function takes raytrace instance and user parameters as inputs
