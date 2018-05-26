@@ -304,7 +304,8 @@ load_model(const gcv_opts &gcv_options, const std::string &path,
 HIDDEN void
 write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 {
-    if (mk_brep(&wdb, name.c_str(), const_cast<ON_Brep *>(&brep)))
+    ON_Brep *b = const_cast<ON_Brep *>(&brep);
+    if (mk_brep(&wdb, name.c_str(), (void *)b))
 	bu_bomb("mk_brep() failed");
 }
 

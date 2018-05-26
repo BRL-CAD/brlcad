@@ -131,7 +131,7 @@ main (int argc, char *argv[])
    bname = (char*)bu_malloc(strlen(argv[2])+6, "char");
    bu_strlcpy(bname, argv[2], strlen(argv[2])+1);
    bu_strlcat(bname, "_brep", strlen(bname)+6);
-   if (mk_brep(wdbp, bname, brep) == 0) {
+   if (mk_brep(wdbp, bname, (void *)brep) == 0) {
       bu_log("Generated brep object %s\n", bname);
    }
    bu_free(bname, "char");

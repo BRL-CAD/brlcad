@@ -294,7 +294,7 @@ main(int argc, char** argv)
 
 
     brep = Cobb_Sphere(1, &origin);
-    mk_brep(outfp, geom_name, brep);
+    mk_brep(outfp, geom_name, (void *)brep);
 
     //mk_comb1(outfp, "cube.r", geom_name, 1);
     unsigned char rgb[] = {50, 255, 50};
