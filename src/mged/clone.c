@@ -235,9 +235,12 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", prefix, &num, suffix, suffix2); /* CLONE_BUFSIZE */
 	snprintf(suffix, CLONE_BUFSIZE, "%s", suffix2);
     } else if (state->updpos == 1) {
+	struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
 	int num2 = 0;
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", prefix, &num2, suffix2, &num, suffix);
-	snprintf(prefix, CLONE_BUFSIZE, "%s%d%s", prefix, num2, suffix2);
+	bu_vls_sprintf(&tmpbuf, "%s%d%s", prefix, num2, suffix2);
+	snprintf(prefix, CLONE_BUFSIZE, "%s", bu_vls_addr(&tmpbuf));
+	bu_vls_free(&tmpbuf);
     } else
 	bu_exit(EXIT_FAILURE, "multiple -c options not supported yet.");
 
