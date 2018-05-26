@@ -1832,7 +1832,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 
 	if (planar) {
 	    vect_t u_dir, v_dir;
-	    point_t ctl_pt[4];
+	    point_t ctl_pt[4] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
 	    vect_t hit_dir;
 	    int i, j;
 	    int rational;
