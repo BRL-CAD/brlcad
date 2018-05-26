@@ -518,7 +518,7 @@ static int getWindowSize(struct current *current)
      */
 
     if (current->cols == 0) {
-        int here;
+        int here = 0;
 
         current->cols = 80;
 
