@@ -15,6 +15,10 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     "${REGEX_INCLUDE_DIR}"
     )
 
+  # The build shims aren't so great at mocking the initialization
+  # behavior of the real code.
+  CHECK_CXX_FLAG("Wno-maybe-uninitialized")
+
   set(g_sat_srcs g-sat.cpp)
   add_definitions(-DTEST_BUILD)
   add_library(g-sat ${g_sat_srcs})
