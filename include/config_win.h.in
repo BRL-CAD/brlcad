@@ -336,7 +336,7 @@ typedef int mode_t;
 #define HAVE_SHARED_RINT_TEST 1
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
 
-#ifndef __cplusplus
+#if !defined(__cplusplus) && !defined(inline)
 /*  Microsoft specific inline specifier */
 #   define inline __inline
 #endif /* not __cplusplus */

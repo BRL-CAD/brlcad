@@ -104,6 +104,8 @@
 
 #include "common.h"
 
+#include <stdio.h>
+
 #ifdef _WIN32 /* Windows platform, either MinGW or Visual Studio (MSVC) */
 #include <windows.h>
 #include <fcntl.h>
@@ -112,7 +114,9 @@
 #define HAVE_UNISTD_H
 #else
 /* Microsoft headers don't like old POSIX names */
+#if !defined(snprintf)
 #define snprintf _snprintf
+#endif
 #endif
 #else
 #include <termios.h>
@@ -126,7 +130,6 @@
 #endif
 #include <stdlib.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
