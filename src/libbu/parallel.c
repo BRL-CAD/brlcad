@@ -107,8 +107,11 @@
 
 #include "./parallel.h"
 
+/* #define CPP11THREAD */
 
+#if defined(CPP11THREAD)
 void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
+#endif /* CPP11THREAD */
 
 
 typedef enum {
@@ -323,7 +326,7 @@ bu_avail_cpus(void)
 
 #ifdef PARALLEL
 
-#ifndef HAVE_THREAD_LOCAL
+#if !defined(HAVE_THREAD_LOCAL)  || !defined(CPP11THREAD)
 /* this function provides book-keeping so that we give out unique
  * thread identifiers and for tracking a thread's parent context.
  *
@@ -449,7 +452,7 @@ parallel_interface_arg_stub(struct thread_data *user_thread_data)
 }
 #endif
 
-#endif /* !HAVE_THREAD_LOCAL */
+#endif /* !HAVE_THREAD_LOCAL || !CPP11THREAD */
 #endif /* PARALLEL */
 
 
@@ -465,7 +468,8 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
     /* do the work anyways */
     (*func)(0, arg);
 
-#elif defined(HAVE_THREAD_LOCAL)
+#elif defined(HAVE_THREAD_LOCAL) && defined(CPP11THREAD)
+
 
     if (!func)
 	return; /* nothing to do */

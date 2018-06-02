@@ -118,6 +118,7 @@ CMAKEFILES(
   gqa.sh
   iges.sh
   library.sh
+  lights.cmake
   lights.sh
   lights_ref.asc
   master_fetch.sh

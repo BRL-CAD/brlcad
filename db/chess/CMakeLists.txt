@@ -1,6 +1,11 @@
 set(CHESS_PARTS
-  rook.asc
+  bishop.asc
+  chessboard.asc
+  king.asc
+  knight.asc
   pawn.asc
+  queen.asc
+  rook.asc
   )
 
 foreach(piece ${CHESS_PARTS})
@@ -8,7 +13,6 @@ foreach(piece ${CHESS_PARTS})
 endforeach(piece ${CHESS_PARTS})
 
 CMAKEFILES(${CHESS_PARTS})
-
 
 # Local Variables:
 # tab-width: 8

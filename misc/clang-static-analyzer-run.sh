@@ -2,6 +2,9 @@
 export CCC_CC=clang
 export CCC_CXX=clang++
 
+# TODO - test if this is a valid way to enable the new Z3 static analyzer support...
+#export CCC_ANALYZER_CONSTRAINTS_MODEL=z3
+
 expected_success=()
 declare -A expected_failure
 new_success=()

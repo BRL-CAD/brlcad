@@ -1344,17 +1344,19 @@ void
 rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct poly_face *faces;
-    struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    struct rt_arbn_internal *aip;
     size_t i;
     point_t arbit_point = VINIT_ZERO;
     fastf_t volume = 0.0;
 
+    if (!cent || !ip || !ip->idb_ptr) return;
+
+    aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    if (!aip->neqn) return;
+
     *cent[0] = 0.0;
     *cent[1] = 0.0;
     *cent[2] = 0.0;
-
-    if (cent == NULL)
-	return;
 
     /* allocate array of face structs */
     faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "rt_arbn_centroid: faces");

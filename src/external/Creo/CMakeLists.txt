@@ -206,7 +206,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     libwdb
     openNURBS
     regex
-    y2038
     zlib1
     )
   set(BRLCAD_STATIC_LIBS)

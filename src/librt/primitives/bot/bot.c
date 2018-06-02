@@ -3689,11 +3689,11 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
     int *piece_verts = (int *)NULL;	/* a list of vertices in the current piece (each vertex appears only once) */
     unsigned char *vert_count;		/* an array used to hold the number of piece vertices that appear in each BOT face */
     size_t new_face_count = 0;		/* the current number of faces in the "new_faces" list */
-    size_t faces_left;			/* the number of faces in the "old_faces" array that have not yet been used */
-    size_t piece_len;			/* the current number of faces in the piece */
-    size_t max_verts;			/* the maximum number of piece_verts found in a single unused face */
-    size_t i;
-    size_t j;
+    size_t faces_left = 0;		/* the number of faces in the "old_faces" array that have not yet been used */
+    size_t piece_len = 0;		/* the current number of faces in the piece */
+    size_t max_verts = 0;		/* the maximum number of piece_verts found in a single unused face */
+    size_t i = 0;
+    size_t j = 0;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -3767,7 +3767,6 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 		new_face_count++;
 	    }
 	    piece_len = 0;
-	    max_verts = 0;
 
 	    /* set flag to skip the loop below */
 	    done_with_piece = 1;

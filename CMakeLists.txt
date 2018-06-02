@@ -879,10 +879,6 @@ if("${CMAKE_CXX_STD_FLAG}" STREQUAL "" AND NOT MSVC)
   message(FATAL_ERROR "C++ standard specification failure: compiler does not support the C++${CMAKE_CXX_STANDARD} standard:\n${CMAKE_CXX_COMPILE_FEATURES}")
 endif("${CMAKE_CXX_STD_FLAG}" STREQUAL "" AND NOT MSVC)
 
-# Spread the word...
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_STD_FLAG}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_STD_FLAG}")
-
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine
 # statements, which will in turn be used to generate a brlcad_conf.h
@@ -1670,6 +1666,10 @@ endif(NOT CMAKE_BUILD_FLAGS_CACHED_CMAKE_DEFAULT)
 # At the same time, pull in any flags that have been set
 # in the environment.
 CLEAR_BUILD_FLAGS()
+
+# Since this isn't src/other or misc/tools, we want the standards set.
+set(CMAKE_C_FLAGS "${CMAKE_C_STD_FLAG}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_STD_FLAG}")
 
 # try to use -pipe to speed up the compiles
 CHECK_C_FLAG(pipe)

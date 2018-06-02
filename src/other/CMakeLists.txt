@@ -35,6 +35,13 @@ RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 # Quiet all warnings in this directory
 DISABLE_WARNINGS()
 
+# For src/other, be liberal about standards 
+if(NOT MSVC)
+  set(CMAKE_C_EXTENSIONS ON)
+  set(CMAKE_C_STANDARD_REQUIRED OFF)
+  set(CMAKE_C_STANDARD 99)
+endif(NOT MSVC)
+
 # Set a variable that will tell build logic in subdirectories that there is a
 # parent build.  This will in some cases disable attempts to define settings
 # such as RPATH values that we need the parent build to manage.
