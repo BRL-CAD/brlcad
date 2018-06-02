@@ -95,13 +95,13 @@ DebugPlot::LinkedCurves(void)
 HIDDEN void
 rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
 {
-    register struct bn_vlist *vp;
+    struct bn_vlist *vp;
 
     for (BU_LIST_FOR(vp, bn_vlist, vhead)) {
-	register int i;
-	register int nused = vp->nused;
-	register const int *cmd = vp->cmd;
-	register point_t *pt = vp->pt;
+	 int i;
+	 int nused = vp->nused;
+	 const int *cmd = vp->cmd;
+	 point_t *pt = vp->pt;
 
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {

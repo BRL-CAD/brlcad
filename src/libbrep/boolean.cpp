@@ -97,7 +97,7 @@ struct SSICurve {
 };
 
 
-HIDDEN void
+void
 append_to_polycurve(ON_Curve *curve, ON_PolyCurve &polycurve);
 // We link the SSICurves that share an endpoint, and form this new structure,
 // which has many similar behaviors as ON_Curve, e.g. PointAt(), Reverse().
