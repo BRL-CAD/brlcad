@@ -86,10 +86,10 @@ analov_miss(struct application *UNUSED(ap))
 
 
 HIDDEN void
-overlapsAdapter(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *hp)
+overlapsAdapter(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *UNUSED(hp))
 {
     struct analyze_private_callback_data* callBack = (struct analyze_private_callback_data*) ap->a_uptr;
-    callBack->overlapHandler(ap, pp, regiontable, hp, callBack->overlapHandlerData);
+    callBack->overlapHandler(&ap->a_ray, pp, regiontable, callBack->overlapHandlerData);
 }
 
 
@@ -323,7 +323,7 @@ analov_grid_setup(struct application *APP,
 		  point_t viewbase_model)
 {
     vect_t temp;
-    
+
     /* Create basis vectors dx and dy for emanation plane (grid) */
     VSET(temp, 1, 0, 0);
     MAT3X3VEC(dx_unit, view2model, temp);	/* rotate only */
@@ -384,13 +384,6 @@ analyze_overlaps(struct rt_i *rtip,
     vect_t dy_unit;		/* view delta-Y as unit-len vect */
     point_t viewbase_model;	/* model-space location of viewplane corner */
 
-    setmode(fileno(stdin), O_BINARY);
-    setmode(fileno(stdout), O_BINARY);
-    setmode(fileno(stderr), O_BINARY);
-
-    bu_setlinebuf(stdout);
-    bu_setlinebuf(stderr);
-
     /* application-specific initialization */
     RT_APPLICATION_INIT(&APP);
 
@@ -430,9 +423,10 @@ analyze_overlaps(struct rt_i *rtip,
     for (i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&analov_res[i], i, rtip);
     }
-
-    rt_prep_parallel(rtip, npsw);
-
+    /* needs to be run before grid setup */
+    if (rtip->needprep) {
+	rt_prep_parallel(rtip, npsw);
+    }
     /* Initialize the view2model before calling do_frame */
     bn_mat_inv(view2model, model2view);
     /* remaining parts of grid_setup */

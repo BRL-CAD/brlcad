@@ -125,10 +125,11 @@ ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *li
 							  struct region *r1,
 							  struct region *r2,
 							  double dist, point_t pt);
+
 /**
  * analyze_overlap function for check command
  */
-typedef void (*analyze_overlaps_callback)(struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *, void *);
+typedef void (*analyze_overlaps_callback)(const struct xray *rayp, const struct partition *partitionPointer, const struct bu_ptbl *regionTable, void *context);
 
 ANALYZE_EXPORT extern int
 analyze_overlaps(struct rt_i *rtip,

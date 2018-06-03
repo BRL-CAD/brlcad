@@ -173,6 +173,7 @@ package provide cadwidgets::Ged 1.0
 	method c {args}
 	method cat {args}
 	method center {args}
+	method check_overlaps {args}
 	method clear {args}
 	method clone {args}
 	method coil {args}
@@ -1424,6 +1425,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::center {args} {
     eval $mGed center $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::check_overlaps {args} {
+    eval $mGed check_overlaps $args
 }
 
 ::itcl::body cadwidgets::Ged::clear {args} {
@@ -6226,6 +6231,7 @@ package provide cadwidgets::Ged 1.0
     $help add c		{{[-gr] comb_name <boolean_expr>} {create or extend a combination using standard notation}}
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add center		{{["x y z"]} {set/get the view center}}
+    $help add check_overlaps	{{[options] [objects]} {check for overlaps in the current view or the specified objects}}
     $help add clear		{{} {clear screen}}
     $help add clone		{{[options] object} {clone the specified object}}
     $help add coord		{{[m|v]} {set/get the coordinate system}}

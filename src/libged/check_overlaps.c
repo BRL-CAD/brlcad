@@ -28,6 +28,7 @@
 #include "bu/str.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
+#include "bn/plot3.h"
 #include "bn/str.h"
 #include "raytrace.h"
 
@@ -49,19 +50,23 @@ struct overlap_list {
 struct overlaps_context {
     struct overlap_list **list;
     int numberOfOverlaps;
+    struct bn_vlblock *vbp;
+    struct bu_list *vhead;
 };
 
 
 HIDDEN void
-log_overlaps(const char *reg1, const char *reg2, double depth, void *context)
+log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit, vect_t ohit, void *context)
 {
     struct overlaps_context *callbackdata = (struct overlaps_context*)context;
     struct overlap_list **olist = (struct overlap_list **) callbackdata->list;
-
     struct overlap_list *prev_ol = (struct overlap_list *)0;
     struct overlap_list *op;		/* overlap list */
     struct overlap_list *new_op;
 
+
+    BN_ADD_VLIST(callbackdata->vbp->free_vlist_hd, callbackdata->vhead, ihit, BN_VLIST_LINE_MOVE);
+    BN_ADD_VLIST(callbackdata->vbp->free_vlist_hd, callbackdata->vhead, ohit, BN_VLIST_LINE_DRAW);
     callbackdata->numberOfOverlaps++;
 
     BU_ALLOC(new_op, struct overlap_list);
@@ -94,28 +99,30 @@ log_overlaps(const char *reg1, const char *reg2, double depth, void *context)
 
 
 HIDDEN void
-overlapHandler(struct application *UNUSED(ap), const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *UNUSED(hp), void *context)
+overlapHandler(const struct xray *rp, const struct partition *pp, const struct bu_ptbl *regiontable, void *context)
 {
-    struct region *lastregion = (struct region *)NULL;
+    struct region *reg1 = (struct region *)NULL;
+    struct region *reg2 = (struct region *)NULL;
     register double depth;
-    size_t i;
     register struct hit *ihitp = pp->pt_inhit;
     register struct hit *ohitp = pp->pt_outhit;
+    vect_t ihit;
+    vect_t ohit;
+
+    VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
+    VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
 
     depth = ohitp->hit_dist - ihitp->hit_dist;
     if (depth < OVLP_TOL)
 	return;
-    lastregion = (struct region *)BU_PTBL_GET(regiontable, 0);
-    RT_CK_REGION(lastregion);
-    for (i = 0; i < BU_PTBL_LEN(regiontable); i++)
-    {
-	struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
-	if (regp == REGION_NULL)
-	    continue;
-	RT_CK_REGION(regp);
-	log_overlaps(lastregion->reg_name, regp->reg_name, depth, context);
-	return;
-    }
+
+    reg1 = (struct region *)BU_PTBL_GET(regiontable, 0);
+    RT_CK_REGION(reg1);
+    reg2 = (struct region *)BU_PTBL_GET(regiontable, 1);
+    RT_CK_REGION(reg2);
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    log_overlaps(reg1->reg_name, reg2->reg_name, depth, ihit, ohit, context);
+    bu_semaphore_release(BU_SEM_SYSCALL);
 }
 
 
@@ -184,15 +191,14 @@ check_do_ae(double azim,
 	    fastf_t aspect,
 	    mat_t model2view,
 	    mat_t view2model,
-	    fastf_t *eye_backoff,
 	    point_t eye_model)
 {
     vect_t temp;
     vect_t diag;
     mat_t toEye;
-
+    fastf_t eye_backoff = (fastf_t)M_SQRT2;
     if (rtip == NULL) {
-    	bu_log("analov_do_ae: ERROR: rtip is null");
+	bu_log("analov_do_ae: ERROR: rtip is null");
 	return GED_ERROR;
     }
 
@@ -259,9 +265,8 @@ check_do_ae(double azim,
     Viewrotscale[15] = 0.5*(*viewsize);	/* Viewscale */
     bn_mat_mul(model2view, Viewrotscale, toEye);
     bn_mat_inv(view2model, model2view);
-    VSET(temp, 0, 0, (*eye_backoff));
+    VSET(temp, 0, 0, eye_backoff);
     MAT4X3PNT(eye_model, view2model, temp);
-
     return GED_OK;
 }
 
@@ -270,6 +275,9 @@ int
 ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 {
     int i, c;
+    size_t index;
+    int getfromview = 1;
+    int debug = 0;			/* debug flag */
     size_t width = 0;			/* # of pixels in X */
     size_t height = 0;			/* # of lines in Y */
     fastf_t cell_width = (fastf_t)0.0;	/* model space grid cell width */
@@ -278,11 +286,16 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
     fastf_t azimuth = 35.0, elevation = 25.0;
     size_t npsw = bu_avail_cpus();	/* number of worker PSWs to run */
     fastf_t aspect = (fastf_t)1.0;	/* view aspect ratio X/Y (needs to be 1.0 for g/G options) */
-    int	nobjs;				/* Number of cmd-line treetops */
+    size_t nobjs = 0;			/* Number of cmd-line treetops */
     const char **objtab;		/* array of treetop strings */
-    char *rt_options = ".:a:e:g:n:s:w:G:P:V:h?";
-    char *check_help = "Options:\n -s #\tSquare grid size in pixels (default 512)\n -w # -n #\tGrid size width and height in pixels\n -V #\tView (pixel) aspect ratio (width/height)\n -a #\tAzimuth in degrees\n -e #\tElevation in degrees\n -g #\tGrid cell width\n -G #\tGrid cell height\n -P #\tSet number of processors\n\n";
+    char *rt_options = ".:a:de:g:n:s:w:G:P:V:h?";
+    char *check_help = "Options:\n -s #\t\tSquare grid size in pixels (default 512)\n -w # -n #\t\tGrid size width and height in pixels\n -V #\t\tView (pixel) aspect ratio (width/height)\n -a #\t\tAzimuth in degrees\n -e #\t\tElevation in degrees\n -g #\t\tGrid cell width\n -G #\t\tGrid cell height\n -d\t\tDebug flag to print some information\n -P #\t\tSet number of processors\n\n";
     struct rt_i *rtip = NULL;
+
+    size_t tnobjs = 0;
+    size_t nvobjs = 0;
+    char **tobjtab;
+    char **objp;
 
     mat_t Viewrotscale = { (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 			   (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
@@ -292,9 +305,9 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
     mat_t model2view;
     mat_t view2model;
     point_t eye_model = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
-    fastf_t eye_backoff = (fastf_t)M_SQRT2;
+    quat_t quat;
 
-    /* overlap specific variables */    
+    /* overlap specific variables */
     struct overlap_list *nextop=(struct overlap_list *)NULL;
     struct overlap_list *olist = NULL;
     struct overlap_list *op;
@@ -307,11 +320,6 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s [options] objects...\n %s", argv[0], check_help);
-	return GED_HELP;
-    }
 
     bu_optind = 1;	/* restart parsing of args */
 
@@ -355,12 +363,14 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 		if (bn_decode_angle(&azimuth,bu_optarg) == 0) {
 		    fprintf(stderr, "WARNING: Unexpected units for azimuth angle, using default value\n");
 		}
+		getfromview = 0;
 		break;
 	    case 'e':
 		/* Set elevation */
 		if (bn_decode_angle(&elevation,bu_optarg) == 0) {
 		    fprintf(stderr, "WARNING: Unexpected units for elevation angle, using default value\n");
 		}
+		getfromview = 0;
 		break;
 	    case 'P':
 		{
@@ -415,8 +425,11 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 		    }
 		}
 		break;
+	    case 'd':
+		debug = 1;
+		break;
 	    case 'h':
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s [options] objects...\n %s", argv[0], check_help);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s [options] [objects]\n %s", argv[0], check_help);
 		return GED_HELP;
 		break;
 	    default:		/* '?' 'h' */
@@ -442,49 +455,113 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
     nobjs = argc - bu_optind;
     objtab = argv + (bu_optind);
 
-    if (nobjs <= 0) {
-	bu_vls_printf(gedp->ged_result_str,"no objects specified -- raytrace aborted\n");
+    if (nobjs <= 0){
+	nvobjs = ged_count_tops(gedp);
+    }
+
+    tnobjs = nvobjs + nobjs;
+
+    if (tnobjs <= 0) {
+	bu_vls_printf(gedp->ged_result_str,"no objects specified or in view -- raytrace aborted\n");
 	return GED_ERROR;
     }
 
+    tobjtab = (char **)bu_calloc(tnobjs, sizeof(char *), "alloc tobjtab");
+    objp = &tobjtab[0];
+
+    /* copy all specified objects if any */
+    for(index = 0; index<nobjs; index++)
+	*objp++ = bu_strdup(objtab[index]);
+
+    /* else copy all the objects in view if any */
+    if (nobjs <= 0) {
+	nvobjs = ged_build_tops(gedp, objp, &tobjtab[tnobjs]);
+	/* now, as we know the exact number of objects in the view, check again for > 0 */
+	if (nvobjs <= 0) {
+	    bu_vls_printf(gedp->ged_result_str,"no objects specified or in view, aborting\n");
+	    bu_free(tobjtab, "free tobjtab");
+	    tobjtab = NULL;
+	    return GED_ERROR;
+	}
+    }
+
+    tnobjs = nvobjs + nobjs;
+
     rtip = rt_new_rti(gedp->ged_wdbp->dbip);
 
-    for (i=0; i<nobjs; i++) {
-	if (rt_gettree(rtip,objtab[i]) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "error: object '%s' does not exists, aborting\n", objtab[i]);
+    for (index=0; index<tnobjs; index++) {
+	if (rt_gettree(rtip, tobjtab[index]) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "error: object '%s' does not exists, aborting\n", tobjtab[index]);
+	    bu_free(tobjtab, "free tobjtab");
+	    tobjtab = NULL;
 	    rt_free_rti(rtip);
 	    rtip = NULL;
 	    return GED_ERROR;
 	}
     }
 
-    if (check_do_ae(azimuth, elevation, rtip, Viewrotscale, &viewsize, aspect, model2view, view2model, &eye_backoff, eye_model)) {
-	rt_free_rti(rtip);
-	rtip = NULL;
-	return GED_ERROR;
+    if (!nobjs && getfromview) {
+	_ged_rt_set_eye_model(gedp, eye_model);
+	viewsize =  gedp->ged_gvp->gv_size;
+	quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
+	quat_quat2mat(Viewrotscale, quat);
+    } else {
+	if (check_do_ae(azimuth, elevation, rtip, Viewrotscale, &viewsize, aspect, model2view, view2model, eye_model)) {
+	    rt_free_rti(rtip);
+	    rtip = NULL;
+	    bu_free(tobjtab, "free tobjtab");
+	    tobjtab = NULL;
+	    return GED_ERROR;
+	}
     }
 
     if (check_grid_setup(&cell_newsize, &width, &height, &cell_width, &cell_height, aspect, viewsize, eye_model, Viewrotscale, model2view, view2model)) {
 	rt_free_rti(rtip);
 	rtip = NULL;
+	bu_free(tobjtab, "free tobjtab");
+	tobjtab = NULL;
 	return GED_ERROR;
+    }
+
+    if (debug) {
+	vect_t work, temp;
+	VSET(work, 0, 0, 1);
+	MAT3X3VEC(temp, view2model, work);
+	bn_ae_vec(&azimuth, &elevation, temp);
+	bu_vls_printf(gedp->ged_result_str, "\nView: %g azimuth, %g elevation off of front view\n", azimuth, elevation);
+	bu_vls_printf(gedp->ged_result_str, "Orientation: %g, %g, %g, %g\n", V4ARGS(quat));
+	bu_vls_printf(gedp->ged_result_str, "Eye_pos: %g, %g, %g\n", V3ARGS(eye_model));
+	bu_vls_printf(gedp->ged_result_str, "Size: %gmm\n", viewsize);
+	bu_vls_printf(gedp->ged_result_str, "Grid: (%g, %g) mm, (%zu, %zu) pixels\n", cell_width, cell_height, width, height);
     }
 
     overlapData.list = &olist;
     overlapData.numberOfOverlaps = 0;
+    overlapData.vbp = rt_vlblock_init();
+    overlapData.vhead = bn_vlblock_find(overlapData.vbp, 0xFF, 0xFF, 0x00);
     callbackData = (void*)(&overlapData);
 
     if (analyze_overlaps(rtip, width, height, cell_width, cell_height, aspect, viewsize, model2view, npsw, overlapHandler, callbackData)) {
 	rt_free_rti(rtip);
 	rtip = NULL;
+	bu_free(tobjtab, "free tobjtab");
+	tobjtab = NULL;
+	bn_vlblock_free(overlapData.vbp);
 	return GED_ERROR;
     }
 
-    bu_vls_printf(gedp->ged_result_str, "\nNumber of Overlaps: %d\n",overlapData.numberOfOverlaps);
+    /* show overlays */
+    dl_set_flag(gedp->ged_gdp->gd_headDisplay, DOWN);
+    _ged_cvt_vlblock_to_solids(gedp, overlapData.vbp, "OVERLAPS", 0);
+
+    bu_vls_printf(gedp->ged_result_str, "\nNumber of Overlaps: %d\n", overlapData.numberOfOverlaps);
     for (op=olist; op; op=op->next) {
 	bu_vls_printf(gedp->ged_result_str,"\t<%s, %s>: %zu overlap%c detected, maximum depth is %gmm\n", op->reg1, op->reg2, op->count, op->count>1 ? 's' : (char) 0, op->maxdepth);
     }
+
     /* free our structures */
+    bn_vlblock_free(overlapData.vbp);
+
     op = olist;
     while (op) {
 	/* free struct */
@@ -495,6 +572,10 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 	op = nextop;
     }
     olist = (struct overlap_list *)NULL;
+
+    /* Free tobjtab */
+    bu_free(tobjtab, "free tobjtab");
+    tobjtab = NULL;
 
     /* Release the ray-tracer instance */
     rt_free_rti(rtip);
