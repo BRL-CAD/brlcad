@@ -1176,7 +1176,7 @@ bn_table_delete_sample_pts(struct bn_table *tabp, size_t i, size_t j)
     size_t k;
 
     if (bu_debug&BU_DEBUG_TABDATA)
-	bu_log("bn_table_delete_samples(%p, %d, %d)\n", (void *)tabp, i, j);
+	bu_log("bn_table_delete_samples(%p, %zu, %zu)\n", (void *)tabp, i, j);
 
     BN_CK_TABLE(tabp);
 

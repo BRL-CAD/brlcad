@@ -145,7 +145,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "WARNING: rcodes file \"%s\" contained no matching lines.  Geometry unchanged.\n", argv[1]);
     } else {
 	if (g_changed) {
-	    bu_vls_printf(gedp->ged_result_str, "NOTE: rcodes file \"%s\" applied.  %d region%supdated.\n", argv[1], g_changed, (g_changed==1)?" ":"s ");
+	    bu_vls_printf(gedp->ged_result_str, "NOTE: rcodes file \"%s\" applied.  %zu region%supdated.\n", argv[1], g_changed, (g_changed==1)?" ":"s ");
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "NOTE: 0 regions updated, geometry unchanged.\n");
 	}

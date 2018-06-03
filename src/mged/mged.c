@@ -572,7 +572,7 @@ mged_process_char(char ch)
 #define CTRL_W      '\027'
 #define ESC         27
 #define BACKSPACE   '\b'
-#ifdef WIN32
+#ifdef _WIN32
 # undef DELETE
 #endif
 #define DELETE      127

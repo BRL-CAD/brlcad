@@ -429,8 +429,8 @@ HIDDEN int
 tk_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_view(0x%lx, %4d, %4d, %4d, %4d)\n",
-	   (unsigned long)ifp, xcenter, ycenter, xzoom, yzoom);
+    fb_log("fb_view(%p, %4d, %4d, %4d, %4d)\n",
+	   ifp, xcenter, ycenter, xzoom, yzoom);
     fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
     return 0;
 }
@@ -440,8 +440,8 @@ HIDDEN int
 tk_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_getview(0x%lx, 0x%x, 0x%x, 0x%x, 0x%x)\n",
-	   (unsigned long)ifp, xcenter, ycenter, xzoom, yzoom);
+    fb_log("fb_getview(%p, %p, %p, %p, %p)\n",
+	   ifp, xcenter, ycenter, xzoom, yzoom);
     fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
     fb_log(" <= %d %d %d %d\n",
 	   *xcenter, *ycenter, *xzoom, *yzoom);
@@ -453,8 +453,8 @@ HIDDEN int
 tk_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_setcursor(0x%lx, 0x%lx, %d, %d, %d, %d)\n",
-	   (unsigned long)ifp, bits, xbits, ybits, xorig, yorig);
+    fb_log("fb_setcursor(%p, %p, %d, %d, %d, %d)\n",
+	   ifp, bits, xbits, ybits, xorig, yorig);
     return 0;
 }
 
@@ -473,8 +473,8 @@ HIDDEN int
 tk_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_getcursor(0x%lx, 0x%x, 0x%x, 0x%x)\n",
-	   (unsigned long)ifp, mode, x, y);
+    fb_log("fb_getcursor(%p, %p, %p, %p)\n",
+	   ifp, mode, x, y);
     fb_sim_getcursor(ifp, mode, x, y);
     fb_log(" <= %d %d %d\n", *mode, *x, *y);
     return 0;

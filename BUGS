@@ -304,6 +304,9 @@ Recent Bugs
 
 * hyp tessellation routine creates bot that does not raytrace
 
+* hyp used in a boolean with other objects (even unions) does not
+  raytrace
+
 * if you attach a display manager in tk-mged, kill the window, then
   quit, mged crashes on exit.
 

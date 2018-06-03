@@ -2188,12 +2188,12 @@ ogl_help(fb *ifp)
     switch (visual->class) {
 	case DirectColor:
 	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
-	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
+	    fb_log("\tRGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;
 	case TrueColor:
 	    fb_log("\tTrueColor: Fixed RGB maps, pixel RGB subfield indices\n");
-	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
+	    fb_log("\tRGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;
 	case PseudoColor:

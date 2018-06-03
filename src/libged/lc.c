@@ -435,12 +435,12 @@ print_results:
 	print_cmd_args(output, orig_argc, orig_argv);
     }
 
-    bu_vls_printf(output, "List length: %d\n", BU_PTBL_LEN(&results2) - ignored_cnt);
+    bu_vls_printf(output, "List length: %lu\n", BU_PTBL_LEN(&results2) - ignored_cnt);
     bu_vls_printf(output, "%-*s %-*s %-*s %-*s %s\n",
-		  region_id_len_max + 1, "ID",
-		  material_id_len_max + 1, "MAT",
-		  los_len_max, "LOS",
-		  obj_len_max,  "REGION",
+		  (int)region_id_len_max + 1, "ID",
+		  (int)material_id_len_max + 1, "MAT",
+		  (int)los_len_max, "LOS",
+		  (int)obj_len_max,  "REGION",
 		  "PARENT");
     end = BU_PTBL_LEN(&results2);
     if (descending_sort_flag) {
@@ -451,10 +451,10 @@ print_results:
     for (i = start; i != end; i += incr) {
 	if (regions[i].ignore) { continue; }
 	bu_vls_printf(output, "%-*s %-*s %-*s %-*s %s\n",
-		      region_id_len_max + 1, regions[i].region_id,
-		      material_id_len_max + 1, regions[i].material_id,
-		      los_len_max, regions[i].los,
-		      obj_len_max, regions[i].obj_name,
+		      (int)region_id_len_max + 1, regions[i].region_id,
+		      (int)material_id_len_max + 1, regions[i].material_id,
+		      (int)los_len_max, regions[i].los,
+		      (int)obj_len_max, regions[i].obj_name,
 		      regions[i].obj_parent);
     }
     bu_vls_printf(gedp->ged_result_str, "Done.");

@@ -209,9 +209,9 @@
 	The program will ask you to enter more values for the elliptical torus you
 	are creating. Type in the values shown in bold.
 
-	<command>Enter X, Y, Z, of vector C: .6 0 0[Enter]</command>
-
 	<command>Enter radius of revolution, r: 1.45[Enter]</command>
+
+	<command>Enter X, Y, Z, of vector C: .6 0 0[Enter]</command>
 
 	<command>Enter elliptical semi-minor axis, d: 0.2[Enter]</command>
       </para>

@@ -212,7 +212,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
     }
 
     if (is->mag_len <= BU_PTBL_LEN(is->l1) || is->mag_len <= BU_PTBL_LEN(is->l2))
-	bu_log("Array for distances to vertexuses is too small (%d)\n", is->mag_len);
+	bu_log("Array for distances to vertexuses is too small (%zu)\n", is->mag_len);
 
     sv = nmg_find_s_of_vu(vu);
     fuv = nmg_find_fu_of_vu(vu);
@@ -444,7 +444,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	oldmax = is->maxindex;
 	m = nmg_find_model(&v->magic);
 	NMG_CK_MODEL(m);
-	bu_log("nmg_get_2d_vertex:  v=%p, v->index=%ld, is->maxindex=%d, m->maxindex=%ld\n",
+	bu_log("nmg_get_2d_vertex:  v=%p, v->index=%ld, is->maxindex=%zu, m->maxindex=%ld\n",
 	       (void *)v, v->index, is->maxindex, m->maxindex);
 	if (v->index >= m->maxindex) {
 	    /* Really off the end */
@@ -454,7 +454,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	/* Need to extend array, it's grown. */
 	is->maxindex = m->maxindex * 4;
 	if (nmg_debug & DEBUG_POLYSECT) {
-	    bu_log("nmg_get_2d_vertex() extending vert2d array from %d to %d points (m max=%ld)\n",
+	    bu_log("nmg_get_2d_vertex() extending vert2d array from %d to %zu points (m max=%ld)\n",
 		   oldmax, is->maxindex, m->maxindex);
 	}
 	is->vert2d = (fastf_t *)bu_realloc((char *)is->vert2d,
@@ -2360,7 +2360,7 @@ nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf
     NMG_CK_VERTEXUSE(vu);
 
     if (is->mag_len <= BU_PTBL_LEN(is->l1) || is->mag_len <= BU_PTBL_LEN(is->l2))
-	bu_log("Array for distances to vertexuses is too small (%d)\n", is->mag_len);
+	bu_log("Array for distances to vertexuses is too small (%zu)\n", is->mag_len);
 
     sv = nmg_find_s_of_vu(vu);
 
@@ -3937,7 +3937,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 	bu_log("Intersect vertices along eu %p:\n", (void *)eu);
 	for (i = 0; i < BU_PTBL_LEN(&inters); i++)
-	    bu_log("%d %p %g\n", i+1, (void *)BU_PTBL_GET(&inters, i), inter_dist[i]);
+	    bu_log("%zu %p %g\n", i+1, (void *)BU_PTBL_GET(&inters, i), inter_dist[i]);
     }
 
     while (1) {
@@ -3963,7 +3963,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 
 	if (v != eu->vu_p->v_p && v != eu->eumate_p->vu_p->v_p) {
 	    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
-		bu_log("Breaking edges at vertex #%d, dist=%g, v=%p\n", i+1, inter_dist[i], (void *)v);
+		bu_log("Breaking edges at vertex #%zu, dist=%g, v=%p\n", i+1, inter_dist[i], (void *)v);
 	    (void)nmg_break_all_es_on_v(&fu->l.magic, v, vlfree, &is->tol);
 	    (void)nmg_break_all_es_on_v(&eu->l.magic, v, vlfree, &is->tol);
 	}
@@ -5215,14 +5215,14 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 
     if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("\t pl=(%g %g %g %g)\n", V4ARGS(pl));
-	bu_log("\tcut_lists=%ld, on=%d, in=%d, out=%d\n", BU_PTBL_LEN(&cut_list), on, in, out);
+	bu_log("\tcut_lists=%ld, on=%zu, in=%zu, out=%zu\n", BU_PTBL_LEN(&cut_list), on, in, out);
 	if (BU_PTBL_LEN(&cut_list)) {
 	    bu_log("\tcut_lists:\n");
 	    for (i=0; i<BU_PTBL_LEN(&cut_list); i++) {
 		struct vertex *v;
 
 		v = (struct vertex *)BU_PTBL_GET(&cut_list, i);
-		bu_log("\t\t%d, %p\n", i+1, (void *)v);
+		bu_log("\t\t%zu, %p\n", i+1, (void *)v);
 	    }
 	}
     }
@@ -5598,7 +5598,7 @@ nmg_check_radial_angles(char *str, struct shell *s, struct bu_list *vlfree, cons
 	    fu = nmg_find_fu_of_eu(eu);
 	    if (fu) {
 		if (face_count >= MAX_FACES) {
-		    bu_log("Too many faces in nmg_check_radial_angles (%d)\n", face_count);
+		    bu_log("Too many faces in nmg_check_radial_angles (%zu)\n", face_count);
 		    bu_bomb("Too many faces in nmg_check_radial_angles\n");
 		}
 		angle[face_count] = nmg_measure_fu_angle(eu, xvec, yvec, zvec);

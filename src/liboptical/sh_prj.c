@@ -165,11 +165,11 @@ img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const u
 
 	    /* check size of object */
 	    if (image->i_binunifp->count < size) {
-		bu_log("\nWARNING: %s needs %d bytes, binary object only has %zu\n", bu_vls_addr(&image->i_name), size, image->i_binunifp->count);
+		bu_log("\nWARNING: %s needs %zu bytes, binary object only has %zu\n", bu_vls_addr(&image->i_name), size, image->i_binunifp->count);
 	    } else if (image->i_binunifp->count > size) {
-		bu_log("\nWARNING: Binary object is larger than specified image size\n\tBinary Object: %lu pixels\n"
+		bu_log("\nWARNING: Binary object is larger than specified image size\n\tBinary Object: %zu pixels\n"
 		       "\tSpecified Image Size: %zu pixels\n...continuing to load using image subsection...",
-		       (unsigned long)image->i_binunifp->count);
+		       image->i_binunifp->count, size);
 	    }
 	    image->i_img = (unsigned char *) image->i_binunifp->u.uint8;
 

@@ -3050,7 +3050,7 @@ top:
 	    bu_ptbl_free(&jaunt_tbl);
 
 	if ((nmg_debug & DEBUG_BASIC) || (nmg_debug & DEBUG_CUTLOOP)) {
-	    bu_log("nmg_loop_split_at_touching_jaunt(lu=%p) END count=%d\n",
+	    bu_log("nmg_loop_split_at_touching_jaunt(lu=%p) END count=%zu\n",
 		   (void *)lu, count);
 	}
 	return count;
@@ -3077,7 +3077,7 @@ top:
 	    bu_free((char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n");
 
 	if ((nmg_debug & DEBUG_BASIC) || (nmg_debug & DEBUG_CUTLOOP)) {
-	    bu_log("nmg_loop_split_at_touching_jaunt(lu=%p) END count=%d\n",
+	    bu_log("nmg_loop_split_at_touching_jaunt(lu=%p) END count=%zu\n",
 		   (void *)lu, count);
 	}
 	return count;
@@ -3132,7 +3132,7 @@ top:
 
 	if (nmg_debug & DEBUG_CUTLOOP) {
 	    bu_log("\tConsider splitting lu %p at vu=%p\n", (void *)lu, (void *)start_eu1->vu_p);
-	    bu_log("\t\t(jaunt number %d\n", jaunt_no);
+	    bu_log("\t\t(jaunt number %zu\n", jaunt_no);
 	}
 
 	/* determine status of jaunts in the proposed new loop */

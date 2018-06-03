@@ -146,7 +146,7 @@ bu_uuid_decode(const char *cp, uint8_t uuid[STATIC_ARRAY(16)])
     while (*cp) {
 	int chars = 1;
 	if (isxdigit(*cp)) {
-	    int value;
+	    unsigned int value;
 	    bu_sscanf(cp, "%02X%n", &value, &chars);
 	    uuid[count++] = (uint8_t)value;
 	}

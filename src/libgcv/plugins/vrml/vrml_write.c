@@ -1178,7 +1178,7 @@ vrml_write_make_units_str(double scale_factor)
 	return bu_strdup(bu_units);
     else {
 	struct bu_vls temp = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&temp, "%d units per mm", scale_factor);
+	bu_vls_printf(&temp, "%zu units per mm", scale_factor);
 	return bu_vls_strgrab(&temp);
     }
 }

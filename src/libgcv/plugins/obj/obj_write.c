@@ -392,9 +392,9 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     if (RT_G_DEBUG&DEBUG_TREEWALK || pstate->gcv_options->verbosity_level) {
 	char *sofar = db_path_to_string(pathp);
-	bu_log("\ndo_region_end(%d %d%%) %s\n",
+	bu_log("\ndo_region_end(%zu %zu%%) %s\n",
 	       pstate->regions_tried,
-	       pstate->regions_tried>0 ? (pstate->regions_converted * 100) / pstate->regions_tried : 0,
+	       (pstate->regions_tried>0) ? (pstate->regions_converted * 100) / pstate->regions_tried : 0,
 	       sofar);
 	bu_free(sofar, "path string");
     }
@@ -466,7 +466,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	npercent = (float)(pstate->regions_converted * 100) / pstate->regions_tried;
 	tpercent = (float)(pstate->regions_written * 100) / pstate->regions_tried;
-	bu_log("Tried %zu regions; %d conv. to NMG's, %zu conv. to tri.; nmgper = %.2f%%, triper = %.2f%%\n",
+	bu_log("Tried %zu regions; %zu conv. to NMG's, %zu conv. to tri.; nmgper = %.2f%%, triper = %.2f%%\n",
 	       pstate->regions_tried, pstate->regions_converted, pstate->regions_written, npercent, tpercent);
     }
 

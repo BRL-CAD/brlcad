@@ -500,7 +500,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     if (UNLIKELY(val != PARSE_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, PARSE_MAGIC_1,
-	       bu_identify_magic(val), val, __FILE__, __LINE__);
+	       bu_identify_magic(val), (unsigned long)val, __FILE__, __LINE__);
 	bu_bomb("bad getput buffer");
     }
 
@@ -531,7 +531,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     if (UNLIKELY(val != PARSE_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, PARSE_MAGIC_2,
-	       bu_identify_magic(val), val, __FILE__, __LINE__);
+	       bu_identify_magic(val), (unsigned long)val, __FILE__, __LINE__);
 	ext->ext_nbytes = 0;
 	bu_free(ext->ext_buf, "bu_struct_get full buffer");
 	ext->ext_buf = NULL;
