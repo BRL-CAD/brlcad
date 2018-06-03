@@ -96,11 +96,11 @@ else(${n_wrong} EQUAL 0)
     message(FATAL_ERROR "-> lights.sh FAILED")
 endif(${n_wrong} EQUAL 0)
 
+
+
 # Local Variables:
-# mode: sh
 # tab-width: 8
-# sh-indentation: 4
-# sh-basic-offset: 4
+# mode: cmake
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=4 tabstop=8
+# ex: shiftwidth=2 tabstop=8
