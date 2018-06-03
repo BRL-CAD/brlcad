@@ -37,15 +37,16 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#define USE_DIALS_AND_BUTTONS 1
-
 #ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
 #  include <X11/Xosdefs.h>
 #endif
-#if USE_DIALS_AND_BUTTONS
+
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
 #  include <X11/extensions/XInput.h>
-#endif
+#  define USE_DIALS_AND_BUTTONS 1
+#endif /* HAVE_X11_XINPUT_H */
+
 #if defined(linux)
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
@@ -425,7 +426,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     static int count = 0;
     int make_square = -1;
     XGCValues gcv;
-#if USE_DIALS_AND_BUTTONS
+#if defined(USE_DIALS_AND_BUTTONS)
     int j, k;
     int ndevices;
     int nclass = 0;
@@ -687,7 +688,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    goto Skip_dials;
     }
 
-#if USE_DIALS_AND_BUTTONS
+#if defined(USE_DIALS_AND_BUTTONS)
     /*
      * Take a look at the available input devices. We're looking for
      * "dial+buttons".

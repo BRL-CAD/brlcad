@@ -39,9 +39,11 @@
 
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xutil.h>
+#  include <X11/keysym.h>
+#endif
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
 #  include <X11/extensions/XI.h>
 #  include <X11/extensions/XInput.h>
-#  include <X11/keysym.h>
 #endif
 
 #include "vmath.h"
@@ -59,7 +61,10 @@ extern void rect_view2image();		/* defined in rect.c */
 extern void rect_image2view();
 extern void rb_set_dirty_flag();
 
+#ifdef HAVE_X11_TYPES
 HIDDEN void motion_event_handler();
+#endif
+
 #ifdef IR_KNOBS
 HIDDEN void dials_event_handler();
 #endif

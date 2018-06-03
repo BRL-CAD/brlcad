@@ -1178,6 +1178,12 @@ if(NOT BRLCAD_ENABLE_AQUA)
   include(FindX11)
 endif(NOT BRLCAD_ENABLE_AQUA)
 
+# make sure Xi is included in the list of X11 libs
+# (Xext is automatically added during FindX11)
+if(X11_Xi_FOUND)
+    set(X11_LIBRARIES ${X11_LIBRARIES} ${X11_Xi_LIB})
+endif(X11_Xi_FOUND)
+
 # Set whether X11 is enabled or disabled by default
 if(WIN32)
   # even if there is x11, we default to native
@@ -1187,11 +1193,12 @@ elseif(BRLCAD_ENABLE_AQUA)
   option(BRLCAD_ENABLE_X11 "Use X11." OFF)
 else(WIN32)
   # make everywhere else depend on whether we found a suitable X11
-  if(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB AND X11_Xlib_INCLUDE_PATH)
+  # X11_Xext_LIB AND X11_Xi_LIB AND 
+  if(X11_FOUND)
     option(BRLCAD_ENABLE_X11 "Use X11." ON)
-  else(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB AND X11_Xlib_INCLUDE_PATH)
+  else(X11_FOUND)
     option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-  endif(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB AND X11_Xlib_INCLUDE_PATH)
+  endif(X11_FOUND)
 endif(WIN32)
 mark_as_advanced(BRLCAD_ENABLE_X11)
 
@@ -2301,10 +2308,17 @@ endif(APPLE)
 
 # Mark X11 as available if it is enabled and we find Xlib.h
 if(BRLCAD_ENABLE_X11)
+  message("X11 detected and enabled")
   if(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
     set(HAVE_X11_XLIB_H 1)
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_X11_XLIB_H 1\n")
+    message("Defining HAVE_X11_XLIB_H")
   endif(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
+  if(X11_Xi_INCLUDE_PATH AND CONFIG_H_FILE)
+    set(HAVE_X11_EXTENSIONS_XINPUT_H 1)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_X11_EXTENSIONS_XINPUT_H 1\n")
+    message("Defining HAVE_X11_EXTENSIONS_XINPUT_H")
+  endif(X11_Xi_INCLUDE_PATH AND CONFIG_H_FILE)
 endif(BRLCAD_ENABLE_X11)
 
 # math library

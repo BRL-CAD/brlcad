@@ -27,7 +27,7 @@
 #define TRIMESH_EDGE_EQUAL(e1, e2) ((e1).va == (e2).va && (e1).vb == (e2).vb)
 
 HIDDEN inline void
-_trimesh_set_edge(struct trimesh_halfedge *edge, int va, int vb)
+_trimesh_set_edge(struct bg_trimesh_halfedge *edge, int va, int vb)
 {
     if (va < vb) {
 	edge->va = va;
@@ -41,26 +41,26 @@ _trimesh_set_edge(struct trimesh_halfedge *edge, int va, int vb)
 }
 
 HIDDEN int
-_trimesh_halfedge_compare(const void *pleft, const void *pright, void *UNUSED(context))
+_bg_trimesh_halfedge_compare(const void *pleft, const void *pright, void *UNUSED(context))
 {
-    const struct trimesh_halfedge * const left = (struct trimesh_halfedge *)pleft;
-    const struct trimesh_halfedge * const right = (struct trimesh_halfedge *)pright;
+    const struct bg_trimesh_halfedge * const left = (struct bg_trimesh_halfedge *)pleft;
+    const struct bg_trimesh_halfedge * const right = (struct bg_trimesh_halfedge *)pright;
 
     const int a = left->va - right->va;
     return a ? a : left->vb - right->vb;
 }
 
-struct trimesh_halfedge *
+struct bg_trimesh_halfedge *
 bg_trimesh_generate_edge_list(size_t fcnt, int *f)
 {
     size_t num_edges;
-    struct trimesh_halfedge *edge_list;
+    struct bg_trimesh_halfedge *edge_list;
     size_t face_index;
 
     if (!fcnt || !f) return NULL;
 
     num_edges = 3 * fcnt;
-    edge_list = (struct trimesh_halfedge *)bu_calloc(num_edges, sizeof(struct trimesh_halfedge), "edge_list");
+    edge_list = (struct bg_trimesh_halfedge *)bu_calloc(num_edges, sizeof(struct bg_trimesh_halfedge), "edge_list");
 
     for (face_index = 0; face_index < fcnt; ++face_index) {
 	const int * const face = &f[face_index * 3];
@@ -70,7 +70,7 @@ bg_trimesh_generate_edge_list(size_t fcnt, int *f)
 	_trimesh_set_edge(&edge_list[face_index * 3 + 2], face[2], face[0]);
     }
 
-    bu_sort(edge_list, num_edges, sizeof(struct trimesh_halfedge), _trimesh_halfedge_compare, NULL);
+    bu_sort(edge_list, num_edges, sizeof(struct bg_trimesh_halfedge), _bg_trimesh_halfedge_compare, NULL);
 
     return edge_list;
 }
@@ -98,19 +98,19 @@ bg_trimesh_face_gather(size_t face_idx, void *data)
 }
 
 int
-bg_trimesh_edge_exit(struct trimesh_halfedge *UNUSED(edge), void *UNUSED(data))
+bg_trimesh_edge_exit(struct bg_trimesh_halfedge *UNUSED(edge), void *UNUSED(data))
 {
     return 0;
 }
 
 int
-bg_trimesh_edge_continue(struct trimesh_halfedge *UNUSED(edge), void *UNUSED(data))
+bg_trimesh_edge_continue(struct bg_trimesh_halfedge *UNUSED(edge), void *UNUSED(data))
 {
     return 1;
 }
 
 int
-bg_trimesh_edge_gather(struct trimesh_halfedge *edge, void *data)
+bg_trimesh_edge_gather(struct bg_trimesh_halfedge *edge, void *data)
 {
     struct bg_trimesh_edges *bad_edges = (struct bg_trimesh_edges *)data;
 
@@ -143,28 +143,28 @@ bg_trimesh_degenerate_faces(size_t num_faces, int *fpoints, bg_face_error_func_t
     return ecount;
 }
 
-typedef int (*bg_edge_filter_func_t)(size_t num_edges, struct trimesh_halfedge *edge_list, size_t cur_idx);
+typedef int (*bg_edge_filter_func_t)(size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx);
 
 HIDDEN int
-edge_filter_all(size_t UNUSED(num_edges), struct trimesh_halfedge *UNUSED(edge_list), size_t UNUSED(cur_idx))
+edge_filter_all(size_t UNUSED(num_edges), struct bg_trimesh_halfedge *UNUSED(edge_list), size_t UNUSED(cur_idx))
 {
     return 1;
 }
 
 HIDDEN int
-edge_unmatched(size_t UNUSED(num_edges), struct trimesh_halfedge *edge_list, size_t cur_idx)
+edge_unmatched(size_t UNUSED(num_edges), struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
 {
     return !TRIMESH_EDGE_EQUAL(edge_list[cur_idx], edge_list[cur_idx + 1]);
 }
 
 HIDDEN int
-edge_misoriented(size_t UNUSED(num_edges), struct trimesh_halfedge *edge_list, size_t cur_idx)
+edge_misoriented(size_t UNUSED(num_edges), struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
 {
     return edge_list[cur_idx].flipped == edge_list[cur_idx + 1].flipped;
 }
 
 HIDDEN int
-edge_overmatched(size_t num_edges, struct trimesh_halfedge *edge_list, size_t cur_idx)
+edge_overmatched(size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
 {
     return (cur_idx + 2 < num_edges) && TRIMESH_EDGE_EQUAL(edge_list[cur_idx], edge_list[cur_idx + 2]);
 }
@@ -172,7 +172,7 @@ edge_overmatched(size_t num_edges, struct trimesh_halfedge *edge_list, size_t cu
 HIDDEN int
 trimesh_count_error_edges(
     size_t num_edges,
-    struct trimesh_halfedge *edge_list,
+    struct bg_trimesh_halfedge *edge_list,
     bg_edge_filter_func_t filter_func,
     bg_edge_error_funct_t error_edge_func,
     void *data)
@@ -200,19 +200,19 @@ trimesh_count_error_edges(
 }
 
 int
-bg_trimesh_unmatched_edges(size_t num_edges, struct trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
+bg_trimesh_unmatched_edges(size_t num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
 {
     return trimesh_count_error_edges(num_edges, edge_list, edge_unmatched, error_edge_func, data);
 }
 
 int
-bg_trimesh_misoriented_edges(size_t num_edges, struct trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
+bg_trimesh_misoriented_edges(size_t num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
 {
     return trimesh_count_error_edges(num_edges, edge_list, edge_misoriented, error_edge_func, data);
 }
 
 int
-bg_trimesh_excess_edges(size_t num_edges, struct trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
+bg_trimesh_excess_edges(size_t num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
 {  
     return trimesh_count_error_edges(num_edges, edge_list, edge_overmatched, error_edge_func, data);
 }
@@ -221,7 +221,7 @@ int
 bg_trimesh_solid2(size_t vcnt, size_t fcnt, fastf_t *v, int *f, struct bg_trimesh_solid_errors *errors)
 {
     size_t num_edges;
-    struct trimesh_halfedge *edge_list;
+    struct bg_trimesh_halfedge *edge_list;
     int not_solid = 0;
     int degenerate_faces = 0;
     int unmatched_edges = 0;
@@ -359,7 +359,7 @@ int
 bg_trimesh_closed_fan(size_t vcnt, size_t fcnt, fastf_t *v, int *f)
 {
     size_t num_edges;
-    struct trimesh_halfedge *edge_list;
+    struct bg_trimesh_halfedge *edge_list;
     size_t i;
 
     if (!vcnt || !v || !fcnt || !f) return 0;
@@ -393,7 +393,7 @@ int
 bg_trimesh_orientable(size_t vcnt, size_t fcnt, fastf_t *v, int *f)
 {
     size_t num_edges;
-    struct trimesh_halfedge *edge_list;
+    struct bg_trimesh_halfedge *edge_list;
     size_t i;
 
     if (!vcnt || !v || !fcnt || !f) return 0;
