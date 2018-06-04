@@ -164,16 +164,6 @@ edge_unmatched(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *
 }
 
 HIDDEN int
-edge_misoriented(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
-{
-    *edge_skip = 1;
-    if (cur_idx + 1 < num_edges) {
-	return edge_list[cur_idx].flipped == edge_list[cur_idx + 1].flipped;
-    }
-    return 0;
-}
-
-HIDDEN int
 edge_overmatched(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
 {
     size_t nxt_idx = cur_idx + 2;
@@ -183,6 +173,25 @@ edge_overmatched(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge
 	++nxt_idx;
     }
     return (*edge_skip = nxt_idx - (cur_idx + 2)) > 0;
+}
+
+HIDDEN int
+edge_misoriented(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
+{
+    /* If we don't have exactly two matching half-edges, it implies
+     * the mesh is not orientable, so count the edge as misoriented.
+     */
+    if (edge_unmatched(edge_skip, num_edges, edge_list, cur_idx) ||
+	edge_overmatched(edge_skip, num_edges, edge_list, cur_idx))
+    {
+	return 1;
+    }
+
+    *edge_skip = 1;
+    if (cur_idx + 1 < num_edges) {
+	return edge_list[cur_idx].flipped == edge_list[cur_idx + 1].flipped;
+    }
+    return 0;
 }
 
 HIDDEN int
