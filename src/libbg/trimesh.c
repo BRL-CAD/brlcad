@@ -51,13 +51,13 @@ _bg_trimesh_halfedge_compare(const void *pleft, const void *pright, void *UNUSED
 }
 
 struct bg_trimesh_halfedge *
-bg_trimesh_generate_edge_list(size_t fcnt, int *f)
+bg_trimesh_generate_edge_list(int fcnt, int *f)
 {
-    size_t num_edges;
+    int num_edges;
     struct bg_trimesh_halfedge *edge_list;
-    size_t face_index;
+    int face_index;
 
-    if (!fcnt || !f) return NULL;
+    if (fcnt < 1 || !f) return NULL;
 
     num_edges = 3 * fcnt;
     edge_list = (struct bg_trimesh_halfedge *)bu_calloc(num_edges, sizeof(struct bg_trimesh_halfedge), "edge_list");
@@ -76,21 +76,21 @@ bg_trimesh_generate_edge_list(size_t fcnt, int *f)
 }
 
 int
-bg_trimesh_face_exit(size_t UNUSED(face_idx), void *UNUSED(data))
+bg_trimesh_face_exit(int UNUSED(face_idx), void *UNUSED(data))
 {
     return 0;
 }
 
 int
-bg_trimesh_face_continue(size_t UNUSED(face_idx), void *UNUSED(data))
+bg_trimesh_face_continue(int UNUSED(face_idx), void *UNUSED(data))
 {
     return 1;
 }
 
 int
-bg_trimesh_face_gather(size_t face_idx, void *data)
+bg_trimesh_face_gather(int face_idx, void *data)
 {
-    if (data) {
+    if (data && face_idx >= 0) {
 	struct bg_trimesh_faces *faces = (struct bg_trimesh_faces *)data;
 	faces->faces[faces->count++] = face_idx * 3;
     }
@@ -114,20 +114,22 @@ bg_trimesh_edge_gather(struct bg_trimesh_halfedge *edge, void *data)
 {
     struct bg_trimesh_edges *bad_edges = (struct bg_trimesh_edges *)data;
 
-    bad_edges->edges[bad_edges->count * 2] = edge->va;
-    bad_edges->edges[bad_edges->count * 2 + 1] = edge->vb;
-    ++(bad_edges->count);
+    if (bad_edges) {
+	bad_edges->edges[bad_edges->count * 2] = edge->va;
+	bad_edges->edges[bad_edges->count * 2 + 1] = edge->vb;
+	++(bad_edges->count);
+    }
 
     return 1;
 }
 
 int
-bg_trimesh_degenerate_faces(size_t num_faces, int *fpoints, bg_face_error_func_t degenerate_func, void *data)
+bg_trimesh_degenerate_faces(int num_faces, int *fpoints, bg_face_error_func_t degenerate_func, void *data)
 {
-    size_t face_index;
+    int face_index;
     int ecount = 0;
 
-    if (!num_faces || !fpoints) return ecount;
+    if (num_faces < 1 || !fpoints) return ecount;
 
     for (face_index = 0; face_index < num_faces; ++face_index) {
 	const int * const face = &fpoints[face_index * 3];
@@ -146,66 +148,64 @@ bg_trimesh_degenerate_faces(size_t num_faces, int *fpoints, bg_face_error_func_t
 /**
  * @param[out] edge_skip Number of edges after current caller should skip (initialized to 0).
  */
-typedef int (*bg_edge_filter_func_t)(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx);
+typedef int (*bg_edge_filter_func_t)(int *edge_skip, int num_edges, struct bg_trimesh_halfedge *edge_list, int cur_idx);
 
 HIDDEN int
-edge_filter_all(size_t *UNUSED(edge_skip), size_t UNUSED(num_edges), struct bg_trimesh_halfedge *UNUSED(edge_list), size_t UNUSED(cur_idx))
+edge_filter_all(int *UNUSED(edge_skip), int UNUSED(num_edges), struct bg_trimesh_halfedge *UNUSED(edge_list), int UNUSED(cur_idx))
 {
     return 1;
 }
 
 HIDDEN int
-edge_unmatched(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
+edge_copies(int num_edges, struct bg_trimesh_halfedge *edge_list, int cur_idx)
 {
-    if (cur_idx + 1 < num_edges) {
-	return !(*edge_skip = TRIMESH_EDGE_EQUAL(edge_list[cur_idx], edge_list[cur_idx + 1]));
-    }
-    return 0;
-}
-
-HIDDEN int
-edge_overmatched(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
-{
-    size_t nxt_idx = cur_idx + 2;
-
-    /* skip past third and later copies of current edge */
+    int nxt_idx = cur_idx + 1;
     while (nxt_idx < num_edges && TRIMESH_EDGE_EQUAL(edge_list[cur_idx], edge_list[nxt_idx])) {
 	++nxt_idx;
     }
-    return (*edge_skip = nxt_idx - (cur_idx + 2)) > 0;
+    return nxt_idx - cur_idx;
 }
 
 HIDDEN int
-edge_misoriented(size_t *edge_skip, size_t num_edges, struct bg_trimesh_halfedge *edge_list, size_t cur_idx)
+edge_unmatched(int *edge_skip, int num_edges, struct bg_trimesh_halfedge *edge_list, int cur_idx)
 {
-    /* If we don't have exactly two matching half-edges, it implies
-     * the mesh is not orientable, so count the edge as misoriented.
-     */
-    if (edge_unmatched(edge_skip, num_edges, edge_list, cur_idx) ||
-	edge_overmatched(edge_skip, num_edges, edge_list, cur_idx))
-    {
+    if (edge_copies(num_edges, edge_list, cur_idx) == 1) {
 	return 1;
     }
-
     *edge_skip = 1;
-    if (cur_idx + 1 < num_edges) {
-	return edge_list[cur_idx].flipped == edge_list[cur_idx + 1].flipped;
-    }
     return 0;
+}
+
+HIDDEN int
+edge_overmatched(int *edge_skip, int num_edges, struct bg_trimesh_halfedge *edge_list, int cur_idx)
+{
+    int copies = edge_copies(num_edges, edge_list, cur_idx);
+    *edge_skip = copies - 1;
+
+    return copies > 2;
+}
+
+HIDDEN int
+edge_misoriented(int *edge_skip, int num_edges, struct bg_trimesh_halfedge *edge_list, int cur_idx)
+{
+    int copies = edge_copies(num_edges, edge_list, cur_idx);
+    *edge_skip = copies - 1;
+
+    return (copies != 2 || edge_list[cur_idx].flipped == edge_list[cur_idx + 1].flipped);
 }
 
 HIDDEN int
 trimesh_count_error_edges(
-    size_t num_edges,
+    int num_edges,
     struct bg_trimesh_halfedge *edge_list,
     bg_edge_filter_func_t filter_func,
     bg_edge_error_funct_t error_edge_func,
     void *data)
 {
-    size_t i, skip;
+    int i, skip;
     int matching_edges = 0;
 
-    if (!edge_list) return 0;
+    if (num_edges < 1 || !edge_list) return 0;
 
     if (!filter_func) {
 	filter_func = edge_filter_all;
@@ -224,27 +224,27 @@ trimesh_count_error_edges(
 }
 
 int
-bg_trimesh_unmatched_edges(size_t num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
+bg_trimesh_unmatched_edges(int num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
 {
     return trimesh_count_error_edges(num_edges, edge_list, edge_unmatched, error_edge_func, data);
 }
 
 int
-bg_trimesh_misoriented_edges(size_t num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
+bg_trimesh_misoriented_edges(int num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
 {
     return trimesh_count_error_edges(num_edges, edge_list, edge_misoriented, error_edge_func, data);
 }
 
 int
-bg_trimesh_excess_edges(size_t num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
+bg_trimesh_excess_edges(int num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
 {  
     return trimesh_count_error_edges(num_edges, edge_list, edge_overmatched, error_edge_func, data);
 }
 
 int
-bg_trimesh_solid2(size_t vcnt, size_t fcnt, fastf_t *v, int *f, struct bg_trimesh_solid_errors *errors)
+bg_trimesh_solid2(int vcnt, int fcnt, fastf_t *v, int *f, struct bg_trimesh_solid_errors *errors)
 {
-    size_t num_edges;
+    int num_edges = 3 * fcnt;
     struct bg_trimesh_halfedge *edge_list;
     int not_solid = 0;
     int degenerate_faces = 0;
@@ -253,11 +253,8 @@ bg_trimesh_solid2(size_t vcnt, size_t fcnt, fastf_t *v, int *f, struct bg_trimes
     int misoriented_edges = 0;
     bg_edge_error_funct_t bad_edge_func;
 
-    if (!vcnt || !v || !fcnt || !f) return 1;
+    if (vcnt < 4 || fcnt < 4 || !v || !f) return 1;
 
-    num_edges = 3 * fcnt;
-
-    if (fcnt < 4 || vcnt < 4) return 1;
     if (!errors && num_edges % 2) return 1;
 
     if (errors) {
@@ -352,7 +349,7 @@ bg_free_trimesh_faces(struct bg_trimesh_faces *faces)
  }
 
 int
-bg_trimesh_solid(size_t vcnt, size_t fcnt, fastf_t *v, int *f, int **bedges)
+bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges)
 {
     int bedge_cnt = 0;
 
@@ -380,29 +377,18 @@ bg_trimesh_solid(size_t vcnt, size_t fcnt, fastf_t *v, int *f, int **bedges)
 }
 
 int
-bg_trimesh_closed_fan(size_t vcnt, size_t fcnt, fastf_t *v, int *f)
+bg_trimesh_closed_fan(int vcnt, int fcnt, fastf_t *v, int *f)
 {
-    size_t num_edges;
+    int num_edges = 3 * fcnt;
     struct bg_trimesh_halfedge *edge_list;
-    size_t i;
+    int i;
 
-    if (!vcnt || !v || !fcnt || !f) return 0;
+    if (vcnt < 4 || fcnt < 4 || !v || !f) return 0;
 
-    num_edges = 3 * fcnt;
-
-    if (fcnt < 4 || vcnt < 4 || num_edges % 2) return 0;
-
-    if (!(edge_list = bg_trimesh_generate_edge_list(fcnt, f))) return 0;
+    if (num_edges % 2 || !(edge_list = bg_trimesh_generate_edge_list(fcnt, f))) return 0;
 
     for (i = 0; i + 1 < num_edges; i += 2) {
-	/* each edge must have two half-edges */
-	if (!TRIMESH_EDGE_EQUAL(edge_list[i], edge_list[i + 1])) {
-	    bu_free(edge_list, "edge_list");
-	    return 0;
-	}
-
-	/* only two half-edges may share an edge */
-	if (i + 2 < num_edges && TRIMESH_EDGE_EQUAL(edge_list[i], edge_list[i + 2])) {
+	if (edge_copies(num_edges, edge_list, i) != 2) {
 	    bu_free(edge_list, "edge_list");
 	    return 0;
 	}
@@ -414,35 +400,27 @@ bg_trimesh_closed_fan(size_t vcnt, size_t fcnt, fastf_t *v, int *f)
 
 
 int
-bg_trimesh_orientable(size_t vcnt, size_t fcnt, fastf_t *v, int *f)
+bg_trimesh_orientable(int vcnt, int fcnt, fastf_t *v, int *f)
 {
-    size_t num_edges;
+    int num_edges = 3 * fcnt;
     struct bg_trimesh_halfedge *edge_list;
-    size_t i;
+    int i, copies;
 
-    if (!vcnt || !v || !fcnt || !f) return 0;
-
-    num_edges = 3 * fcnt;
-
-    if (fcnt < 4 || vcnt < 4) return 0;
+    if (vcnt < 4 || fcnt < 4 || !v || !f) return 0;
 
     if (!(edge_list = bg_trimesh_generate_edge_list(fcnt, f))) return 0;
 
     for (i = 0; i + 1 < num_edges; i += 2) {
+	copies = edge_copies(num_edges, edge_list, i);
+
 	/* skip if there is no adjacent half-edge */
-	if (!TRIMESH_EDGE_EQUAL(edge_list[i], edge_list[i + 1])) {
+	if (copies == 1) {
 	    --i;
 	    continue;
 	}
 
 	/* adjacent half-edges must be compatibly oriented */
-	if (edge_list[i].flipped == edge_list[i + 1].flipped) {
-	    bu_free(edge_list, "edge_list");
-	    return 0;
-	}
-
-	/* only two half-edges may share an edge */
-	if (i + 2 < num_edges && TRIMESH_EDGE_EQUAL(edge_list[i], edge_list[i + 2])) {
+	if (copies != 2 || edge_list[i].flipped == edge_list[i + 1].flipped) {
 	    bu_free(edge_list, "edge_list");
 	    return 0;
 	}
