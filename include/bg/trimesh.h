@@ -68,8 +68,25 @@ BG_EXPORT extern void bg_free_trimesh_edges(struct bg_trimesh_edges *edges);
 BG_EXPORT extern void bg_free_trimesh_faces(struct bg_trimesh_faces *faces);
 BG_EXPORT extern void bg_free_trimesh_solid_errors(struct bg_trimesh_solid_errors *errors);
 
-BG_EXPORT extern int bg_trimesh_closed_fan(int vcnt, int fcnt, fastf_t *v, int *f);
-BG_EXPORT extern int bg_trimesh_orientable(int vcnt, int fcnt, fastf_t *v, int *f);
+/**
+ * Check if a mesh is topologically closed and manifold. True if for
+ * every edge, there is exactly one other edge with the same two end
+ * vertices.
+ */
+BG_EXPORT extern int bg_trimesh_manifold_closed(int vcnt, int fcnt, fastf_t *v, int *f);
+
+/**
+ * Check if a mesh is consistently oriented. True if for every edge
+ * that has exactly one matching edge, the two edges have opposite
+ * orientations. Note that an open mesh can be oriented, but a
+ * non-manifold mesh cannot.
+ */
+BG_EXPORT extern int bg_trimesh_oriented(int vcnt, int fcnt, fastf_t *v, int *f);
+
+/**
+ * Check if a mesh is toplogically solid. True if the mesh is closed,
+ * manifold, and oriented.
+ */
 BG_EXPORT extern int bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges);
 
 /* The below functions are for use as arguments to error tests. Given
