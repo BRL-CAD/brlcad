@@ -59,6 +59,81 @@ HIDDEN void _bot_show_help(struct ged *gedp, struct bu_opt_desc *d)
     bu_vls_free(&str);
 }
 
+HIDDEN int edge_compare(const void *a, const void *b)
+{
+    const int *edge_a = (int *)a;
+    const int *edge_b = (int *)b;
+    int diff = edge_a[0] - edge_b[0];
+    return diff ? diff : edge_a[1] - edge_b[1];
+}
+
+HIDDEN int is_edge_in_list(int edge[2], struct bg_trimesh_edges list)
+{
+    return (bsearch(edge, list.edges, list.count, sizeof(int) * 2, edge_compare) != NULL);
+}
+
+HIDDEN int is_edge_in_lists(int edge[2], struct bg_trimesh_edges lists[], int num_lists)
+{
+    int i;
+    for (i = 0; i < num_lists; ++i) {
+	if (is_edge_in_list(edge, lists[i])) {
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+HIDDEN struct bg_trimesh_edges* make_edges(int edge_count)
+{
+    struct bg_trimesh_edges *edges;
+    BU_ALLOC(edges, struct bg_trimesh_edges);
+    edges->count = 0;
+    edges->edges = (int *)bu_malloc(edge_count * 2 * sizeof(int), "make edges");
+    return edges;
+}
+
+HIDDEN void copy_edge(int dst[2], int src[2])
+{
+    dst[0] = src[0];
+    dst[1] = src[1];
+}
+
+HIDDEN void append_edge(struct bg_trimesh_edges *list, int edge[2])
+{
+    copy_edge(&list->edges[list->count * 2], edge);
+    ++(list->count);
+}
+
+HIDDEN void append_edge_if_not_in_lists(struct bg_trimesh_edges *dst, int edge[2], struct bg_trimesh_edges lists[], int num_lists)
+{
+    if (!is_edge_in_lists(edge, lists, num_lists)) {
+	append_edge(dst, edge);
+    }
+}
+
+HIDDEN struct bg_trimesh_edges* edges_not_in_lists(struct bg_trimesh_edges all, struct bg_trimesh_edges lists[], int num_lists)
+{
+    int i;
+    struct bg_trimesh_edges *remaining = make_edges(all.count);
+
+    for (i = 0; i < all.count; ++i) {
+	append_edge_if_not_in_lists(remaining, &all.edges[i * 2], lists, num_lists);
+    }
+    return remaining;
+}
+
+HIDDEN struct bg_trimesh_edges* edges_from_half_edges(struct bg_trimesh_halfedge edge_list[], int num_edges)
+{
+    int i;
+    struct bg_trimesh_edges *edges = make_edges(num_edges);
+
+    for (i = 0; i < num_edges; ++i) {
+	int half_edge[] = {edge_list[i].va, edge_list[i].vb};
+	append_edge_if_not_in_lists(edges, half_edge, edges, 1);
+    }
+    return edges;
+}
+
 HIDDEN void draw_edges(struct ged *gedp, struct rt_bot_internal *bot, int num_edges, int edges[], int draw_color[3], const char *draw_name)
 {
     int curr_edge = 0;
@@ -134,6 +209,7 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
     int (*edge_test)(int, struct bg_trimesh_halfedge *, bg_edge_error_funct_t, void *);
     int num_vertices, num_faces, num_edges;
     int found;
+    int red[] = {255, 0, 0};
     int blue[] = {0, 0, 255};
     int yellow[] = {255, 255, 0};
     int orange[] = {255, 128, 0};
@@ -235,6 +311,7 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
     if (visualize_results) {
 	/* first pass - count errors */
 	struct bg_trimesh_edges error_edges = BG_TRIMESH_EDGES_INIT_NULL;
+	struct bg_trimesh_edges *all_edges, *other_edges;
 
 	found = edge_test(num_edges, edge_list, bg_trimesh_edge_continue, NULL);
 
@@ -246,12 +323,23 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 
 	    draw_edges(gedp, bot, error_edges.count, error_edges.edges, yellow, "error edges");
 
+	    all_edges = edges_from_half_edges(edge_list, num_edges);
+	    other_edges = edges_not_in_lists(*all_edges, &error_edges, 1);
 	    bg_free_trimesh_edges(&error_edges);
+	    bg_free_trimesh_edges(all_edges);
+	    BU_FREE(all_edges, struct bg_trimesh_edges);
+
+	    draw_edges(gedp, bot, other_edges->count, other_edges->edges, red, "other edges");
+
+	    bg_free_trimesh_edges(other_edges);
+	    BU_FREE(other_edges, struct bg_trimesh_edges);
 	}
     } else {
 	/* fast path - exit on first error */
 	found = edge_test(num_edges, edge_list, bg_trimesh_edge_exit, NULL);
     }
+
+    bu_free(edge_list, "edge list");
 
     bu_vls_printf(gedp->ged_result_str, found ? "1" : "0");
     rt_db_free_internal(ip);
