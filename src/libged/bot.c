@@ -128,7 +128,9 @@ HIDDEN struct bg_trimesh_edges* edges_from_half_edges(struct bg_trimesh_halfedge
     struct bg_trimesh_edges *edges = make_edges(num_edges);
 
     for (i = 0; i < num_edges; ++i) {
-	int half_edge[] = {edge_list[i].va, edge_list[i].vb};
+	int half_edge[2];
+	half_edge[0] = edge_list[i].va;
+	half_edge[1] = edge_list[i].vb;
 	append_edge_if_not_in_lists(edges, half_edge, edges, 1);
     }
     return edges;
