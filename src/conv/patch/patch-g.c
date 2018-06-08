@@ -63,6 +63,9 @@
 
 #include "./patch-g.h"
 
+#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT)
+extern double hypot(double x, double y);
+#endif
 
 #define ABS(_x)	((_x > 0.0)? _x : (-_x))
 

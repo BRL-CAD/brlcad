@@ -809,7 +809,7 @@ bu_vls_detab(struct bu_vls *vp)
 
 
 void
-bu_vls_prepend(struct bu_vls *vp, char *str)
+bu_vls_prepend(struct bu_vls *vp, const char *str)
 {
     size_t len = strlen(str);
 

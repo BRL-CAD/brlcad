@@ -45,6 +45,9 @@
 
 #include "../../librt_private.h"
 
+#if defined(HAVE_TGAMMA) && !defined(HAVE_DECL_TGAMMA)
+extern double tgamma(double x);
+#endif
 
 const struct bu_structparse rt_superell_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_superell_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

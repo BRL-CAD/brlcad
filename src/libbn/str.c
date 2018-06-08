@@ -38,6 +38,10 @@
 #include "bu/str.h"
 #include "bn/str.h"
 
+#if defined(HAVE_RINT) && !defined(HAVE_DECL_RINT)
+extern double rint(double x);
+#endif
+
 int
 bn_decode_mat(fastf_t *mat, const char *str)
 {

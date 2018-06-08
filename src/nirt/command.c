@@ -39,6 +39,9 @@
 #include "./nirt.h"
 #include "./usrfmt.h"
 
+#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII)
+extern int isascii(int c);
+#endif
 
 char local_u_name[65];
 double base2local;		/* from db_i struct, not fastf_t */

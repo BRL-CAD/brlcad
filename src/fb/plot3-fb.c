@@ -87,6 +87,14 @@
 
 #define COMMA ','
 
+#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII)
+extern int isascii(int c);
+#endif
+
+#if defined(HAVE_KILL) && !defined(__cplusplus)
+extern int kill(pid_t, int);
+#endif
+
 /*
   Raster device model and image terminology as used herein:
 

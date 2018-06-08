@@ -42,6 +42,9 @@
 #include "bn/mat.h"
 #include "bn/plane.h"
 
+#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT)
+extern double hypot(double x, double y);
+#endif
 
 const mat_t bn_mat_identity = MAT_INIT_IDN;
 

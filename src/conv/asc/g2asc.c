@@ -42,6 +42,10 @@
 #include "rt/geom.h"
 #include "tcl.h"
 
+#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII)
+extern int isascii(int c);
+#endif
+
 const mat_t id_mat = MAT_INIT_IDN; /* identity matrix for pipes */
 
 char *strchop(char *str, size_t len);

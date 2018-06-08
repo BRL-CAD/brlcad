@@ -39,6 +39,9 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 
+#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
 
 int
 f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])

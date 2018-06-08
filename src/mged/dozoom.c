@@ -35,6 +35,10 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+#if defined(HAVE_NEXTAFTER) && !defined(HAVE_DECL_NEXTAFTER)
+extern double nextafter(double x, double y);
+#endif
+
 mat_t perspective_mat;
 mat_t incr_change;
 mat_t modelchanges;

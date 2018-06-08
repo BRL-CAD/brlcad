@@ -36,6 +36,9 @@
 
 #include "raytrace.h"
 
+#if defined(HAVE_RINT) && !defined(HAVE_DECL_RINT)
+extern double rint(double x);
+#endif
 
 void
 rt_pr_soltab(register const struct soltab *stp)

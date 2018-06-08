@@ -52,6 +52,9 @@
 
 #include "./ihost.h"
 
+#if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME)
+extern int gethostname(char *name, size_t len);
+#endif
 
 struct bu_list	HostHead;
 

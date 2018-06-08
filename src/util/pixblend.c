@@ -46,6 +46,9 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 
+#if defined(HAVE_SRAND48) && !defined(HAVE_DECL_SRAND48)
+extern void srand48(long int seedval);
+#endif
 
 static char *f1_name;
 static char *f2_name;

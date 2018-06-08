@@ -34,6 +34,10 @@
 
 #include "./vegetation.h"
 
+#if defined(HAVE_SRAND48) && !defined(HAVE_DECL_SRAND48)
+extern void srand48(long int seedval);
+#endif
+
 static void
 ageStructure(structure_t *structure)
 {

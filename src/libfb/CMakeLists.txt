@@ -31,6 +31,11 @@ if(BRLCAD_ENABLE_OPENGL AND OPENGL_FOUND AND NOT MSVC)
   set(LINKLIBS ${LINKLIBS} ${OPENGL_LIBRARIES})
   set(fbogl_srcs if_ogl.c)
   set_property(SOURCE if_ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  # Need this for sys/ipc.h with C89
+  if(XOPEN_FLAG)
+    string(REPLACE "-D" "" XOPEN_FLAG "${XOPEN_FLAG}")
+    set_property(SOURCE if_ogl.c APPEND PROPERTY COMPILE_DEFINITIONS ${XOPEN_FLAG})
+  endif(XOPEN_FLAG)
 endif()
 if(WIN32)
   add_definitions(

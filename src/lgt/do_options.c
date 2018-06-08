@@ -50,6 +50,9 @@
 #include "./screen.h"
 #include "./cursors.h"
 
+#if defined(HAVE_KILL) && !defined(__cplusplus)
+extern int kill(pid_t, int);
+#endif
 
 #define MAX_ARGS 81
 #define MAX_COLS 128

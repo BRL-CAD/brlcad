@@ -39,6 +39,9 @@
 
 #include "./ged_private.h"
 
+#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
 
 struct _ged_rt_client_data {
     struct ged_run_rt *rrtp;

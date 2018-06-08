@@ -32,6 +32,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <signal.h>
@@ -46,6 +47,10 @@
 
 #include "./qray.h"
 #include "./ged_private.h"
+
+#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
 
 /**
  * Invoke nirt with the current view & stuff

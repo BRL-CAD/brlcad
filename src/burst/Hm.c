@@ -37,6 +37,10 @@
 #include "./Mm.h"
 #include "./extern.h"
 
+#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
+
 #define ErLog brst_log
 
 #define HmDEBUG 0

@@ -43,6 +43,10 @@
 #include "bu/env.h"
 #include "bu/malloc.h"
 
+/* strict c89 doesn't declare setenv() */
+#if defined(HAVE_SETENV) && !defined(HAVE_DECL_SETENV)
+extern int setenv(const char *name, const char *value, int overwrite);
+#endif
 
 int
 bu_setenv(const char *name, const char *value, int overwrite)

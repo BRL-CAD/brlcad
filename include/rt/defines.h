@@ -43,6 +43,10 @@
 
 #include "common.h"
 
+#if defined(HAVE_RINT) && !defined(HAVE_DECL_RINT) && !defined(__cplusplus)
+extern double rint(double x);
+#endif
+
 #ifdef USE_OPENCL
 #include <limits.h>
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS

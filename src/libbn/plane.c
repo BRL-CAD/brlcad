@@ -42,6 +42,15 @@
 
 #define UNIT_SQ_TOL 1.0e-13
 
+#if defined(HAVE_NEXTAFTER) && !defined(HAVE_DECL_NEXTAFTER)
+extern double nextafter(double x, double y);
+#endif
+#if defined(HAVE_NEXTAFTERF) && !defined(HAVE_DECL_NEXTAFTERF)
+extern float nextafterf(float x, float y);
+#endif
+#if defined(HAVE_MODFF) && !defined(HAVE_DECL_MODFF)
+extern float modff(float x, float *iptr);
+#endif
 
 double
 bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)

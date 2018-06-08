@@ -15,6 +15,20 @@ on-going issues.
 Recent Bugs
 -----------
 
+* make sph sph
+  clone -i 1 -t 1000 0 0 -n 100 sph
+  kill sph
+  g line sph*
+  clone -i 1 -t 0 1000 0 -n 100 line
+  kill line
+  g square line*
+  clone -i 1 -t 0 0 1000 -n 100 square
+  ... never returns ...
+
+  This should be merely 1M spheres, but something chokes.  Could be
+  somewhere in the Tk layer.  Maybe somewhere in the db layer.  Maybe
+  something is corrupted by clone when it
+
 * If we draw any form, then trace it using rt, then change of database
   (by clicking file>open and selecting another database), badness
   ensues.  One report has quitting the rt window causing a segfault.

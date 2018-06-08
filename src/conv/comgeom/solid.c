@@ -41,6 +41,9 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII)
+extern int isascii(int c);
+#endif
 
 /* defined in read.c */
 extern int get_line(char *cp, int buflen, char *title);

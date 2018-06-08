@@ -372,7 +372,7 @@ BU_EXPORT extern void bu_vls_detab(struct bu_vls *vp);
  * Add a string to the beginning of the vls.
  */
 BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
-				     char *str);
+				     const char *str);
 
 
 /**

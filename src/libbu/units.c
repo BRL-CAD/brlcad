@@ -21,6 +21,9 @@
 #include "common.h"
 
 #ifdef HAVE_INTTYPES_H
+#  if defined(__cplusplus)
+#  define __STDC_FORMAT_MACROS
+#  endif
 #  include <inttypes.h>
 #else
 #  include "pinttypes.h"
@@ -40,6 +43,17 @@
 #include "bu/units.h"
 #include "bu/vls.h"
 
+/* strict c89 doesn't declare strtoll() */
+#if defined(HAVE_STRTOLL) && !defined(HAVE_DECL_STRTOLL)
+extern long long int strtoll(const char *nptr, char **endptr, int base);
+#endif
+
+#if !defined(LLONG_MAX) && defined(__LONG_LONG_MAX__)
+#  define LLONG_MAX __LONG_LONG_MAX__
+#endif
+#if !defined(LLONG_MIN) && defined(__LONG_LONG_MAX__)
+#  define LLONG_MIN (-__LONG_LONG_MAX__-1LL)
+#endif
 
 struct cvt_tab {
     double val;
