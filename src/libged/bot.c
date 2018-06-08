@@ -136,6 +136,85 @@ HIDDEN struct bg_trimesh_edges* edges_from_half_edges(struct bg_trimesh_halfedge
     return edges;
 }
 
+HIDDEN void standardize_edge(int edge[2])
+{
+    if (edge[1] < edge[0]) {
+	int tmp = edge[0];
+	edge[0] = edge[1];
+	edge[1] = tmp;
+    }
+}
+
+HIDDEN void append_face_edges(struct bg_trimesh_edges *edges, int face[3])
+{
+    int i, edge[2];
+    for (i = 0; i < 3; ++i) {
+	edge[0] = face[i];
+	edge[1] = face[(i + 1) % 3];
+	standardize_edge(edge);
+	append_edge(edges, edge);
+    }
+}
+
+HIDDEN struct bg_trimesh_edges* non_unique_face_edges(struct bg_trimesh_faces faces, struct rt_bot_internal *bot)
+{
+    int i;
+    struct bg_trimesh_edges *edges = make_edges(faces.count * 3);
+
+    for (i = 0; i < faces.count; ++i) {
+	append_face_edges(edges, &bot->faces[faces.faces[i] * 3]);
+    }
+    qsort(edges->edges, edges->count, sizeof(int) * 2, edge_compare);
+    return edges;
+}
+
+HIDDEN struct bg_trimesh_edges* face_edges(struct bg_trimesh_faces faces, struct rt_bot_internal *bot)
+{
+    int i;
+    struct bg_trimesh_edges *unique_edges = make_edges(faces.count * 3);
+    struct bg_trimesh_edges *all_edges = non_unique_face_edges(faces, bot);
+
+    for (i = 0; i < all_edges->count; ++i) {
+	append_edge_if_not_in_lists(unique_edges, &all_edges->edges[i * 2], unique_edges, 1);
+    }
+    bg_free_trimesh_edges(all_edges);
+    BU_FREE(all_edges, struct bg_trimesh_edges);
+
+    return unique_edges;
+}
+
+HIDDEN struct bg_trimesh_faces* make_faces(int num_faces)
+{
+    struct bg_trimesh_faces *faces;
+    BU_ALLOC(faces, struct bg_trimesh_faces);
+
+    faces->count = 0;
+    faces->faces = (int *)bu_malloc(sizeof(int) * num_faces, "make faces");
+    return faces;
+}
+
+HIDDEN struct bg_trimesh_faces* faces_from_bot(struct rt_bot_internal *bot)
+{
+    int i;
+    struct bg_trimesh_faces *faces = make_faces((int)bot->num_faces);
+    faces->count = (int)bot->num_faces;
+    for (i = 0; i < faces->count; ++i) {
+	faces->faces[i] = i;
+    }
+    return faces;
+}
+
+HIDDEN struct bg_trimesh_edges* edges_from_bot(struct rt_bot_internal *bot)
+{
+    struct bg_trimesh_faces *faces = faces_from_bot(bot);
+    struct bg_trimesh_edges *edges = face_edges(*faces, bot);
+
+    bg_free_trimesh_faces(faces);
+    BU_FREE(faces, struct bg_trimesh_faces);
+
+    return edges;
+}
+
 HIDDEN void draw_edges(struct ged *gedp, struct rt_bot_internal *bot, int num_edges, int edges[], int draw_color[3], const char *draw_name)
 {
     int curr_edge = 0;
@@ -159,41 +238,6 @@ HIDDEN void draw_edges(struct ged *gedp, struct rt_bot_internal *bot, int num_ed
 	vhead = bn_vlblock_find(vbp, draw_color[0], draw_color[1], draw_color[2]);
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-    }
-
-    _ged_cvt_vlblock_to_solids(gedp, vbp, draw_name, 0);
-    bn_vlist_cleanup(&local_vlist);
-    bn_vlblock_free(vbp);
-}
-
-HIDDEN void draw_faces(struct ged *gedp, struct rt_bot_internal *bot, int num_faces, int faces[], int draw_color[3], const char *draw_name)
-{
-    int curr_face = 0;
-    struct bu_list *vhead;
-    point_t a, b, c;
-    struct bn_vlblock *vbp;
-    struct bu_list local_vlist;
-
-    BU_LIST_INIT(&local_vlist);
-    vbp = bn_vlblock_init(&local_vlist, 32);
-
-    /* Clear any previous visual */
-    if (db_lookup(gedp->ged_wdbp->dbip, draw_name, LOOKUP_QUIET) != RT_DIR_NULL)
-	dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, draw_name, 1, gedp->freesolid);
-
-    for (curr_face = 0; curr_face < num_faces; curr_face++) {
-	int bot_face = faces[curr_face];
-	int p1 = bot->faces[bot_face];
-	int p2 = bot->faces[bot_face+1];
-	int p3 = bot->faces[bot_face+2];
-	VSET(a, bot->vertices[p1*3], bot->vertices[p1*3+1], bot->vertices[p1*3+2]);
-	VSET(b, bot->vertices[p2*3], bot->vertices[p2*3+1], bot->vertices[p2*3+2]);
-	VSET(c, bot->vertices[p3*3], bot->vertices[p3*3+1], bot->vertices[p3*3+2]);
-	vhead = bn_vlblock_find(vbp, draw_color[0], draw_color[1], draw_color[2]);
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, c, BN_VLIST_LINE_DRAW);
-	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_DRAW);
     }
 
     _ged_cvt_vlblock_to_solids(gedp, vbp, draw_name, 0);
@@ -234,11 +278,36 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 	bu_vls_printf(gedp->ged_result_str, not_solid ? "0" : "1");
 
 	if (not_solid && visualize_results) {
-	    draw_faces(gedp, bot, errors.degenerate.count, errors.degenerate.faces, blue, "degenerate faces");
+	    struct bg_trimesh_edges *degen_edges, *all_edges, *other_edges;
+	    struct bg_trimesh_edges error_lists[4];
+	    int num_lists = 0;
+
+	    error_lists[num_lists++] = errors.unmatched;
+	    error_lists[num_lists++] = errors.misoriented;
+	    error_lists[num_lists++] = errors.excess;
+	    if (errors.degenerate.count > 0) {
+		degen_edges = face_edges(errors.degenerate, bot);
+		error_lists[num_lists++] = *degen_edges;
+	    }
+
+	    all_edges = edges_from_bot(bot);
+	    other_edges = edges_not_in_lists(*all_edges, error_lists, num_lists);
+	    bg_free_trimesh_edges(all_edges);
+	    BU_FREE(all_edges, struct bg_trimesh_edges);
+
+	    draw_edges(gedp, bot, other_edges->count, other_edges->edges, red, "other faces");
 	    draw_edges(gedp, bot, errors.unmatched.count, errors.unmatched.edges, yellow, "unmatched edges");
 	    draw_edges(gedp, bot, errors.misoriented.count, errors.misoriented.edges, orange, "misoriented edges");
 	    draw_edges(gedp, bot, errors.excess.count, errors.excess.edges, purple, "excess edges");
 
+	    if (errors.degenerate.count > 0) {
+		draw_edges(gedp, bot, degen_edges->count, degen_edges->edges, blue, "degenerate faces");
+
+		bg_free_trimesh_edges(degen_edges);
+		BU_FREE(degen_edges, struct bg_trimesh_edges);
+	    }
+	    bg_free_trimesh_edges(other_edges);
+	    BU_FREE(other_edges, struct bg_trimesh_edges);
 	    bg_free_trimesh_solid_errors(&errors);
 	}
 	rt_db_free_internal(ip);
@@ -262,6 +331,7 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
     /* face test */
     if (BU_STR_EQUAL(check, "degen_faces")) {
 	struct bg_trimesh_faces degenerate = BG_TRIMESH_FACES_INIT_NULL;
+	struct bg_trimesh_edges *degen_edges, *all_edges, *other_edges;
 	int degenerate_faces = 0;
 
 	if (visualize_results) {
@@ -274,9 +344,21 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 		degenerate.faces = (int *)bu_calloc(degenerate_faces, sizeof(int), "degenerate faces");
 		bg_trimesh_degenerate_faces(num_faces, bot->faces, bg_trimesh_face_gather, &degenerate);
 
-		draw_faces(gedp, bot, degenerate.count, degenerate.faces, yellow, "degenerate faces");
-
+		degen_edges = face_edges(degenerate, bot);
 		bg_free_trimesh_faces(&degenerate);
+
+		all_edges = edges_from_bot(bot);
+		other_edges = edges_not_in_lists(*all_edges, degen_edges, 1);
+		bg_free_trimesh_edges(all_edges);
+		BU_FREE(all_edges, struct bg_trimesh_edges);
+
+		draw_edges(gedp, bot, degen_edges->count, degen_edges->edges, yellow, "degenerate faces");
+		draw_edges(gedp, bot, other_edges->count, other_edges->edges, red, "othererate faces");
+
+		bg_free_trimesh_edges(degen_edges);
+		BU_FREE(degen_edges, struct bg_trimesh_edges);
+		bg_free_trimesh_edges(other_edges);
+		BU_FREE(other_edges, struct bg_trimesh_edges);
 	    }
 	} else {
 	    /* fast path - exit on first error */
@@ -323,16 +405,15 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 	    error_edges.edges = (int *)bu_calloc(found * 2, sizeof(int), "error edges");
 	    found = edge_test(num_edges, edge_list, bg_trimesh_edge_gather, &error_edges);
 
-	    draw_edges(gedp, bot, error_edges.count, error_edges.edges, yellow, "error edges");
-
 	    all_edges = edges_from_half_edges(edge_list, num_edges);
 	    other_edges = edges_not_in_lists(*all_edges, &error_edges, 1);
-	    bg_free_trimesh_edges(&error_edges);
 	    bg_free_trimesh_edges(all_edges);
 	    BU_FREE(all_edges, struct bg_trimesh_edges);
 
+	    draw_edges(gedp, bot, error_edges.count, error_edges.edges, yellow, "error edges");
 	    draw_edges(gedp, bot, other_edges->count, other_edges->edges, red, "other edges");
 
+	    bg_free_trimesh_edges(&error_edges);
 	    bg_free_trimesh_edges(other_edges);
 	    BU_FREE(other_edges, struct bg_trimesh_edges);
 	}
