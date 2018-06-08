@@ -69,8 +69,8 @@ main(int argc, char **argv)
     char usage[] = "Usage: bw-pix [-o out_file.pix] [file.bw] [file_green.bw file_blue.bw] [ > out_file.pix]\n";
 
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",         "",           NULL,        (void *)&need_help,    "Print help and exit");
-    BU_OPT(d[1], "o", "output-file",  "filename",   &bu_opt_vls, (void *)&out_fname,    "PIX output file name");
+    BU_OPT(d[0], "h", "help",        "",         NULL,        &need_help, "Print help and exit");
+    BU_OPT(d[1], "o", "output-file", "filename", &bu_opt_vls, &out_fname, "PIX output file name");
     BU_OPT_NULL(d[2]);
 
     /* Skip first arg */

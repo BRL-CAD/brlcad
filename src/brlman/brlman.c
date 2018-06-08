@@ -208,11 +208,11 @@ BRLMAN_MAIN(
     bu_setprogname(argv[0]);
 
     /* Handle options in C */
-    BU_OPT(d[0], "h", "help",        "",         NULL, (void *)&print_help,  "Print help and exit");
-    BU_OPT(d[1], "g", "gui",         "",         NULL, (void *)&enable_gui,  "Enable GUI");
-    BU_OPT(d[2], "",  "no-gui",      "",         NULL, (void *)&disable_gui, "Disable GUI");
-    BU_OPT(d[3], "L", "language",  "lg",    &opt_lang, (void *)&lang,        "Set language");
-    BU_OPT(d[4], "S", "section",    "#",  &opt_section, (void *)&man_section, "Set section");
+    BU_OPT(d[0], "h", "help",        "",         NULL, &print_help,  "Print help and exit");
+    BU_OPT(d[1], "g", "gui",         "",         NULL, &enable_gui,  "Enable GUI");
+    BU_OPT(d[2], "",  "no-gui",      "",         NULL, &disable_gui, "Disable GUI");
+    BU_OPT(d[3], "L", "language",  "lg",    &opt_lang, &lang,        "Set language");
+    BU_OPT(d[4], "S", "section",    "#", &opt_section, &man_section, "Set section");
     BU_OPT_NULL(d[5]);
 
     /* Skip first arg */

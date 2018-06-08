@@ -16,5 +16,14 @@ LIBICV To Do List
 
 * Support dynamically loading formats (e.g., define a plug-in API).
 
+* icv_image_t *icv_create(width, height)
+  icv_image_t *icv_clone(image)
+  int icv_destroy(image)
+  icv_image_t *icv_subimage(image, x, y, w, h)
+  icv_image_t *icv_load(filepath)
+  void icv_save(image, filepath)
+  size_t icv_width(image)
+  size_t icv_height(image)
+  
 ---------------------------------------------------------------------
 TODO items should be formatted to column 70 (M-q in emacs), no tabs.

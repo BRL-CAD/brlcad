@@ -42,13 +42,13 @@
 
 #define UNIT_SQ_TOL 1.0e-13
 
-#if defined(HAVE_NEXTAFTER) && !defined(HAVE_DECL_NEXTAFTER)
+#if defined(HAVE_NEXTAFTER) && !defined(HAVE_DECL_NEXTAFTER) && !defined(__cplusplus)
 extern double nextafter(double x, double y);
 #endif
-#if defined(HAVE_NEXTAFTERF) && !defined(HAVE_DECL_NEXTAFTERF)
+#if defined(HAVE_NEXTAFTERF) && !defined(HAVE_DECL_NEXTAFTERF) && !defined(__cplusplus)
 extern float nextafterf(float x, float y);
 #endif
-#if defined(HAVE_MODFF) && !defined(HAVE_DECL_MODFF)
+#if defined(HAVE_MODFF) && !defined(HAVE_DECL_MODFF) && !defined(__cplusplus)
 extern float modff(float x, float *iptr);
 #endif
 

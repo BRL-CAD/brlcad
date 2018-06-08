@@ -95,7 +95,6 @@ set(LIBBU_SOURCES
   observer.c
   opt.c
   parallel.c
-  parallel_cpp11thread.cpp
   parse.c
   path.c
   printb.c
@@ -124,6 +123,11 @@ set(LIBBU_SOURCES
   which.c
   xdr.c
   )
+if(NOT CMAKE_CXX_STANDARD EQUAL 98)
+  set(LIBBU_SOURCES ${LIBBU_SOURCES} parallel_cpp11thread.cpp)
+else(NOT CMAKE_CXX_STANDARD EQUAL 98)
+  CMAKEFILES(parallel_cpp11thread.cpp)
+endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 
 BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)

@@ -40,7 +40,7 @@
 #include "bu/exit.h"
 #include "bu/log.h"
 
-#if defined(HAVE_DRAND48) && !defined(HAVE_DECL_DRAND48)
+#if defined(HAVE_DRAND48) && !defined(HAVE_DECL_DRAND48) && !defined(__cplusplus)
 extern double drand48(void);
 #endif
 

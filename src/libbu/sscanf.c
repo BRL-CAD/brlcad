@@ -235,41 +235,46 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		}
 		goto again;
 	    case 't':
-#ifndef HAVE_C99_FORMAT_SPECIFIERS
+#ifndef HAVE_PERCENT_Z
 		/* remove C99 't' */
 		bu_vls_trunc(&partFmt, (int)(bu_vls_strlen(&partFmt) - 1));
 
-		/* Assume MSVC.
+		/* For 32-bit Windows, ptrdiff_t is __int32, and
+		 * equivalent of %t[dioxX] is %[dioxX]
 		 *
-		 * For 32-bit, ptrdiff_t is __int32, and equivalent of %t[dioxX] is
-		 * %[dioxX].
-		 *
-		 * For 64-bit, ptrdiff_t is __int64, and equivalent of %t[dioxX] is
-		 * %I64[dioxX].
+		 * For 64-bit Windows, ptrdiff_t is __int64, and
+		 * equivalent of %t[dioxX] is %I64[dioxX]
 		 */
-#if defined(SIZEOF_SIZE_T) && SIZEOF_SIZE_T == 8
-		bu_vls_strcat(&partFmt, "I64");
-#endif
-#endif
+
+#  if defined(SIZEOF_SIZE_T) && SIZEOF_SIZE_T == 8
+#    ifdef _SIZE_T_DEFINED
+		bu_vls_strcat(&partFmt, "I64"); /* MSVC */
+#    else
+		bu_vls_strcat(&partFmt, "ll"); /* everyone else */
+#    endif
+#  endif
+#endif /* HAVE_PERCENT_Z */
 		flags |= PTRDIFFT;
 		goto again;
 	    case 'z':
-#ifndef HAVE_C99_FORMAT_SPECIFIERS
+#ifndef HAVE_PERCENT_Z
 		/* remove C99 'z' */
 		bu_vls_trunc(&partFmt, (int)(bu_vls_strlen(&partFmt) - 1));
 
-		/* Assume MSVC.
+		/* For 32-bit Windows, size_t is unsigned __int32, and
+		 * equivalent of %z[dioxX] is %[dioxX]
 		 *
-		 * For 32-bit, size_t is unsigned __int32, and equivalent of
-		 * %z[dioxX] is %[dioxX].
-		 *
-		 * For 64-bit, size_t is unsigned __int64, and equivalent of
-		 * %z[dioxX] is %I64[dioxX].
+		 * For 64-bit, size_t is unsigned __int64, and
+		 * equivalent of %z[dioxX] is %I64[dioxX]
 		 */
-#if defined(SIZEOF_SIZE_T) && SIZEOF_SIZE_T == 8
-		bu_vls_strcat(&partFmt, "I64");
-#endif
-#endif
+#  if defined(SIZEOF_SIZE_T) && SIZEOF_SIZE_T == 8
+#    ifdef _SIZE_T_DEFINED
+		bu_vls_strcat(&partFmt, "I64"); /* MSVC */
+#    else
+		bu_vls_strcat(&partFmt, "ll"); /* everyone else */
+#    endif
+#  endif
+#endif /* HAVE_PERCENT_Z */
 		flags |= SIZET;
 		goto again;
 	    case 'L':
@@ -280,13 +285,13 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		    /* First occurrence of 'h' in this conversion specifier. */
 		    flags |= SHORT;
 		} else {
-#ifndef HAVE_C99_FORMAT_SPECIFIERS
-		    /* Assume MSVC, where there is no equivalent of %hh[diouxX].
-		     * Will use %h[diouxX] with short instead, then cast into
-		     * char argument.
+#ifndef HAVE_PERCENT_Z
+		    /* Where there is no equivalent of %hh[diouxX].
+		     * Will use %h[diouxX] with short instead, then
+		     * cast into char argument.
 		     */
 		    bu_vls_trunc(&partFmt, (int)(bu_vls_strlen(&partFmt) - 1));
-#endif
+#endif /* HAVE_PERCENT_Z */
 		    /* Since SHORT is set, the previous conversion character must
 		     * have been 'h'. With this second 'h', we know we have an "hh"
 		     * modifier, not an 'h' modifier. We need to replace the
@@ -593,10 +598,10 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		if (flags & SHORT) {
 		    SSCANF_SIGNED_UNSIGNED(short int*);
 		} else if (flags & SHORTSHORT) {
-#ifndef HAVE_C99_FORMAT_SPECIFIERS
-		    /* Assume MSVC, where there is no equivalent of %hh[diouxX].
-		     * Will use %h[diouxX] with short instead, then cast into
-		     * char argument.
+#ifndef HAVE_PERCENT_Z
+		    /* Where there is no equivalent of %hh[diouxX].
+		     * Will use %h[diouxX] with short instead, then
+		     * cast into char argument.
 		     */
 		    if (flags & SUPPRESS) {
 			partAssigned = sscanf(&src[numCharsConsumed],
@@ -619,7 +624,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 
 #else
 		    SSCANF_SIGNED_UNSIGNED(char*);
-#endif
+#endif /* HAVE_PERCENT_Z */
 		} else if (flags & LONG) {
 		    SSCANF_SIGNED_UNSIGNED(long int*);
 		} else if (flags & LONGLONG) {

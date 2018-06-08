@@ -867,7 +867,7 @@ endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT MSVC)
 # C++
 unset(CMAKE_CXX_STD_FLAG)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 98)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(CMAKE_CXX_EXTENSIONS)
   set(CMAKE_CXX_STD_FLAG "${CMAKE_CXX${CMAKE_CXX_STANDARD}_EXTENSION_COMPILE_OPTION}")
@@ -2507,7 +2507,7 @@ else (HAVE_THREAD_LOCAL)
 endif (HAVE_THREAD_LOCAL)
 
 # see if the compiler supports %z as a size_t print width specifier
-BRLCAD_CHECK_C99_FORMAT_SPECIFIERS()
+BRLCAD_CHECK_PERCENT_Z()
 
 # see if the compiler supports [static] array hints
 BRLCAD_CHECK_STATIC_ARRAYS()
@@ -2590,23 +2590,10 @@ BRLCAD_FUNCTION_EXISTS(writev)
 # mode, if they are present. For those cases, we need to record the DECL
 # test result.
 BRLCAD_FUNCTION_EXISTS(kill)
-if(HAVE_DECL_KILL)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_KILL 1\n")
-endif(HAVE_DECL_KILL)
 BRLCAD_FUNCTION_EXISTS(fileno)
-if(HAVE_DECL_FILENO)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_FILENO 1\n")
-endif(HAVE_DECL_FILENO)
 
-# check for popen/pclose
+# check for popen (implies pclose)
 BRLCAD_FUNCTION_EXISTS(popen)
-if(HAVE_DECL_POPEN)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_POPEN 1\n")
-endif(HAVE_DECL_POPEN)
-BRLCAD_FUNCTION_EXISTS(pclose)
-if(HAVE_DECL_PCLOSE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_PCLOSE 1\n")
-endif(HAVE_DECL_PCLOSE)
 
 # test for daemon(), which is deprecated on Mac OS X 10.5+
 BRLCAD_FUNCTION_EXISTS(daemon)

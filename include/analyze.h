@@ -29,6 +29,8 @@
 #define ANALYZE_H
 
 #include "common.h"
+#include "bu/opt.h"
+#include "bu/vls.h"
 #include "ged.h"
 #include "raytrace.h"
 
@@ -215,64 +217,58 @@ analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
 ANALYZE_EXPORT void
 analyze_heal_bot(struct rt_bot_internal *bot, double zipper_tol);
 
-#if 0
 /**
  *    A library implementation of functionality originally developed in
  *    Natalie's Interactive Ray Tracer (NIRT)
  */
-
+#if 1
 /** The opaque container that will hold NIRT's state. */
 typedef struct nirt_state NIRT;
 
-/** Create and initialize a NIRT state. */
-ANALYZE_EXPORT int nirt_get(NIRT **ns);
-
-/** Free a NIRT state. */
-ANALYZE_EXPORT void nirt_put(NIRT *ns);
-
 /**
- * NIRT uses formatting instructions to control its output settings.
- * Parse the supplied format and set up the NIRT state's reporting
- * accordingly.  Return 0 on success and -1 on parsing failure.
- * See the nirt(5) man page for documentation of the syntax of
- * the format instructions.
- */
-ANALYZE_EXPORT int nirt_parse_frmt(NIRT *ns, const char *frmt);
+ * Create a NIRT state. An alloced NIRT state can accept
+ * some commands (like updates to the attribute list but
+ * will not be able to raytrace. */
+ANALYZE_EXPORT int nirt_alloc(NIRT **ns);
 
-/* NIRT segment types */
-#define NIRT_HIT_SEG      1    /**< @brief Ray segment representing a solid region */
-#define NIRT_MISS_SEG     2    /**< @brief Ray segment representing a gap */
-#define NIRT_AIR_SEG      3    /**< @brief Ray segment representing an air region */
-#define NIRT_OVERLAP_SEG  4    /**< @brief Ray segment representing an overlap region */
+/** Initialize a NIRT state. */
+ANALYZE_EXPORT int nirt_init(NIRT *ns, struct db_i *dbip);
 
-/* Set the color to be used when generating various types of NIRT line segments */
-ANALYZE_EXPORT int nirt_put_color(NIRT *ns, struct bu_color *c, int seg_type);
+/** Clean up and free a NIRT state. */
+ANALYZE_EXPORT void nirt_destroy(NIRT *ns);
 
-/* Get the color to be used when generating a specific type of NIRT line segments */
-ANALYZE_EXPORT int nirt_get_color(struct bu_color *c, NIRT *ns, int seg_type);
-
-/* Appends a script to the enqueued array of scripts stored
- * in the nirt state.  This allows an application to build
- * up a sequence of steps which can be executed repeatedly */
-ANALYZE_EXPORT int nirt_enqueue_script(NIRT *ns, const char *script);
-
-/* Runs either the supplied script (if script != NULL), or (if script == NULL)
- * the sequence of enqueued scripts stored in the state.
+/* Execute nirt commands.  Runs either the supplied script (if script != NULL),
+ * or (if script == NULL) the sequence of enqueued scripts stored in the state.
  *
  * Returns -1 if there was any sort of error, 0 if the script(s) executed
- * successfully.
+ * successfully without a quit call, and 1 if a quit command was encountered
+ * during execution. See the man(1) nirt manual page for documentation of
+ * valid script options
  */
 ANALYZE_EXPORT int nirt_exec(NIRT *ns, const char *script);
 
 /* Flags for clearing/resetting/reporting the NIRT state */
-#define NIRT_ALL      0x1    /**< @brief reset to initial state */
+#define NIRT_ALL      0x1    /**< @brief reset to initial state or report all state */
 #define NIRT_OUT      0x2    /**< @brief output log*/
 #define NIRT_ERR      0x4    /**< @brief error log */
 #define NIRT_SEGS     0x8    /**< @brief segment list */
 #define NIRT_SCRIPTS  0x10   /**< @brief enqueued scripts */
 #define NIRT_OBJS     0x20   /**< @brief 'active' objects from the scene */
 #define NIRT_FRMTS    0x40   /**< @brief available pre-defined output formats */
-#define NIRT_SCENE    0x80   /**< @brief the current view (ae/dir/center/etc.) */
+#define NIRT_VIEW     0x80   /**< @brief the current view (ae/dir/center/etc.) */
+
+/* Associate a pointer to user data with the NIRT state, unless u_data is
+ * NULL. Returns the current u_data pointer - so to extract the current NIRT data
+ * pointer value, supply a NULL argument to u_data. If u_data is non-NULL, the
+ * current data pointer will be overwritten - the caller should save the old
+ * pointer if they need it before setting the new one. */
+ANALYZE_EXPORT void *nirt_udata(NIRT *ns, void *u_data);
+
+/* Mechanism for setting callback hooks executed when the specified state
+ * is changed after a nirt_exec call.  NIRT_ALL will be executed last, and
+ * is run if set and if any of the other states change. */
+typedef int (*nirt_hook_t)(NIRT *ns, void *u_data);
+ANALYZE_EXPORT void nirt_hook(NIRT *ns, nirt_hook_t hf, int flag);
 
 /* Reset some or all of the NIRT state, depending on the supplied flags. If
  * other flags are provided with NIRT_ALL, NIRT_ALL will skip the clearing
@@ -288,11 +284,6 @@ ANALYZE_EXPORT void nirt_clear(NIRT *ns, int flags);
  * any reason (NULL input or unknown output_type) and 0 otherwise. */
 ANALYZE_EXPORT void nirt_log(struct bu_vls *o, NIRT *ns, int output_type);
 
-/* Report the last timestamp at which the information in the specified output
- * type changed.  Intended to be used by external applications which are
- * be updating their displays to reflect current NIRT state. */
-ANALYZE_EXPORT unsigned long nirt_changed(NIRT *ns, int output_type);
-
 /* Reports available commands and their options. Returns -1 if help can't be
  * printed for any reason (NULL input or unknown output type) and 0 otherwise.
  */
@@ -301,10 +292,7 @@ ANALYZE_EXPORT int nirt_help(struct bu_vls *h, NIRT *ns, bu_opt_format_t ofmt);
 /* Return any line segments generated by processed commands in segs.  Returns number of
  * line segments in segs, or -1 if there was an error. */
 ANALYZE_EXPORT int nirt_line_segments(struct bn_vlist **segs, NIRT *ns);
-
 #endif
-
-
 __END_DECLS
 
 #endif /* ANALYZE_H */

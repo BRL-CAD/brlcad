@@ -202,16 +202,16 @@ int desc_1(const char *cgy, int test_num)
 
     /* Option descriptions */
     struct bu_opt_desc d[] = {
-	{"h", "help",    "",       NULL,     (void *)&print_help, help_str},
-	{"?", "",        "",       NULL,     (void *)&print_help, help_str},
-	{"v", "verb",    "[#]",    &d1_verb, (void *)&verbosity,  "Set verbosity (range is 0 to 3)"},
-	{"b", "bool",    "bool",   &bu_opt_bool, (void *)&b,      "Set boolean flag"},
-	{"s", "str",     "string", &bu_opt_str,  (void *)&str,    "Set string"},
-	{"i", "int",     "#",      &bu_opt_int,  (void *)&i,      "Set int"},
-	{"l", "long",    "#",      &bu_opt_long, (void *)&l,      "Set long"},
-	{"f", "fastf_t", "#",      &bu_opt_fastf_t, (void *)&f,   "Read float"},
-	{"m", "mflag",   "flag",   NULL,     (void *)&m,      "Set boolean flag"},
-	{"F", "Fflag",   "flag",   NULL,     (void *)&F,      "Set boolean flag"},
+	{"h", "help",    "",       NULL,            (void *)&print_help, help_str},
+	{"?", "",        "",       NULL,            (void *)&print_help, help_str},
+	{"v", "verb",    "[#]",    &d1_verb,        (void *)&verbosity,  "Set verbosity (range is 0 to 3)"},
+	{"b", "bool",    "bool",   &bu_opt_bool,    (void *)&b,          "Set boolean flag"},
+	{"s", "str",     "string", &bu_opt_str,     (void *)&str,        "Set string"},
+	{"i", "int",     "#",      &bu_opt_int,     (void *)&i,          "Set int"},
+	{"l", "long",    "#",      &bu_opt_long,    (void *)&l,          "Set long"},
+	{"f", "fastf_t", "#",      &bu_opt_fastf_t, (void *)&f,          "Read float"},
+	{"m", "mflag",   "flag",   NULL,            (void *)&m,          "Set boolean flag"},
+	{"F", "Fflag",   "flag",   NULL,            (void *)&F,          "Set boolean flag"},
 	BU_OPT_DESC_NULL
     };
 
@@ -634,8 +634,8 @@ int desc_2(int test_num)
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
 
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",  "",      NULL,      (void *)&print_help, help_str);
-    BU_OPT(d[1], "C", "color", "r/g/b", &dc_color, (void *)&color,      "Set color");
+    BU_OPT(d[0], "h", "help",  "",      NULL,      &print_help, help_str);
+    BU_OPT(d[1], "C", "color", "r/g/b", &dc_color, &color,      "Set color");
     BU_OPT_NULL(d[2]);
 
     av = (const char **)bu_calloc(containers, sizeof(char *), "Input array");
@@ -786,8 +786,8 @@ int desc_3(int test_num)
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
 
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",  "",      NULL,      (void *)&print_help, help_str);
-    BU_OPT(d[1], "V", "vector", "x,y,z", &bu_opt_vect_t, (void *)&v, "Set vector");
+    BU_OPT(d[0], "h", "help",   "",      NULL,           &print_help, help_str);
+    BU_OPT(d[1], "V", "vector", "x,y,z", &bu_opt_vect_t, &v,          "Set vector");
     BU_OPT_NULL(d[2]);
 
     av = (const char **)bu_calloc(5, sizeof(char *), "Input array");

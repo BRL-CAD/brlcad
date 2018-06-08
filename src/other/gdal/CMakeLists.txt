@@ -40,6 +40,8 @@ cmake_minimum_required(VERSION 3.1.3)
 # Set CMake project name
 project(GDAL)
 
+set(CMAKE_CXX_STANDARD 11)
+
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/port

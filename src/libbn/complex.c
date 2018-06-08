@@ -27,7 +27,7 @@
 #include "vmath.h"
 #include "bn/complex.h"
 
-#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT)
+#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT) && !defined(__cplusplus)
 extern double hypot(double x, double y);
 #endif
 

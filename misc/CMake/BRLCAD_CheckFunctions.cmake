@@ -52,6 +52,7 @@ set(std_hdr_includes
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
 #if HAVE_GETOPT_H
 # include <getopt.h>
 #endif
@@ -98,7 +99,8 @@ endfunction(std_hdr_defs)
 
 ###
 # Check if a function exists (i.e., compiles to a valid symbol).  Adds
-# HAVE_* define to config header.
+# HAVE_* define to config header, and HAVE_DECL_* and HAVE_WORKING_* if
+# those tests are performed and successful.
 ###
 macro(BRLCAD_FUNCTION_EXISTS function)
 
@@ -151,10 +153,15 @@ macro(BRLCAD_FUNCTION_EXISTS function)
 	endif(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
 	set(HAVE_DECL_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache decl test result")
       endif(NOT DEFINED HAVE_DECL_${var})
+      # The config file is regenerated every time CMake is run, so we
+      # always need this bit even if the testing is already complete.
+      if(CONFIG_H_FILE AND HAVE_DECL_${var})
+	CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_${var} 1\n")
+      endif(CONFIG_H_FILE AND HAVE_DECL_${var})
 
       # If we have sources supplied for the purpose, test if the function is working.
-      if(NOT DEFINED HAVE_WORKING_${var})
-	if(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+      if(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+	if(NOT DEFINED HAVE_WORKING_${var})
 	  set(HAVE_WORKING_${var} 1)
 	  foreach(test_src ${${var}_DECL_TEST_SRCS})
 	    check_c_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
@@ -163,8 +170,13 @@ macro(BRLCAD_FUNCTION_EXISTS function)
 	    endif(NOT ${var}_${test_src}_COMPILE)
 	  endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
 	  set(HAVE_WORKING_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache working test result")
-	endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
-      endif(NOT DEFINED HAVE_WORKING_${var})
+	endif(NOT DEFINED HAVE_WORKING_${var})
+	# The config file is regenerated every time CMake is run, so we
+	# always need this bit even if the testing is already complete.
+	if(CONFIG_H_FILE AND HAVE_WORKING_${var})
+	  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_${var} 1\n")
+	endif(CONFIG_H_FILE AND HAVE_WORKING_${var})
+      endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
 
     endif(HAVE_${var})
 
@@ -175,7 +187,7 @@ macro(BRLCAD_FUNCTION_EXISTS function)
   # The config file is regenerated every time CMake is run, so we
   # always need this bit even if the testing is already complete.
   if(CONFIG_H_FILE AND HAVE_${var})
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_${var} 1\n")
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_${var} 1\n")
   endif(CONFIG_H_FILE AND HAVE_${var})
 
 endmacro(BRLCAD_FUNCTION_EXISTS)
@@ -449,41 +461,38 @@ endfunction(BRLCAD_ALLOCA)
 # See if the compiler supports the C99 %z print specifier for size_t.
 # Sets -DHAVE_STDINT_H=1 as global preprocessor flag if found.
 ###
-function(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
+function(BRLCAD_CHECK_PERCENT_Z)
 
   check_include_file(stdint.h HAVE_STDINT_H)
 
-  set(CHECK_C99_FORMAT_SPECIFIERS_SRC "
+  set(CHECK_PERCENT_Z_SRC "
 #ifdef HAVE_STDINT_H
 #  include <stdint.h>
 #endif
 #include <stdio.h>
-#include <string.h>
 int main(int ac, char *av[])
 {
   char buf[64] = {0};
-  if (sprintf(buf, \"%zu\", (size_t)1234) != 4)
+  if (sprintf(buf, \"%zu\", (size_t)1) != 1 || buf[0] != 1 || buf[1] != 0)
     return 1;
-  else if (strcmp(buf, \"1234\"))
-    return 2;
-  return 0;
+  return (ac < 0) ? (int)av[0][0] : 0;
 }
 ")
 
-  if(NOT DEFINED HAVE_C99_FORMAT_SPECIFIERS)
+  if(NOT DEFINED HAVE_PERCENT_Z)
     cmake_push_check_state()
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
     if(HAVE_STDINT_H)
       set(CMAKE_REQUIRED_DEFINITIONS "-DHAVE_STDINT_H=1")
     endif(HAVE_STDINT_H)
-    check_c_source_runs("${CHECK_C99_FORMAT_SPECIFIERS_SRC}" HAVE_C99_FORMAT_SPECIFIERS)
+    check_c_source_runs("${CHECK_PERCENT_Z_SRC}" HAVE_PERCENT_Z)
     cmake_pop_check_state()
-  endif(NOT DEFINED HAVE_C99_FORMAT_SPECIFIERS)
+  endif(NOT DEFINED HAVE_PERCENT_Z)
 
-  if(HAVE_C99_FORMAT_SPECIFIERS)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_C99_FORMAT_SPECIFIERS 1\n")
-  endif(HAVE_C99_FORMAT_SPECIFIERS)
-endfunction(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
+  if(HAVE_PERCENT_Z)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_PERCENT_Z 1\n")
+  endif(HAVE_PERCENT_Z)
+endfunction(BRLCAD_CHECK_PERCENT_Z)
 
 
 function(BRLCAD_CHECK_STATIC_ARRAYS)
