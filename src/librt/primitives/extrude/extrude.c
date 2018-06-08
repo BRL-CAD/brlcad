@@ -2672,11 +2672,6 @@ rt_extrude_xform(
     eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of extrude_xform():\n");
-	bu_mem_barriercheck();
-    }
-
     if (op != ip) {
 	RT_DB_INTERNAL_INIT(op);
 	BU_ALLOC(eop, struct rt_extrude_internal);
@@ -2712,11 +2707,6 @@ rt_extrude_xform(
 	eop->skt = rt_copy_sketch(eip->skt);
     } else {
 	eop->skt = (struct rt_sketch_internal *)NULL;
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of extrude_xform():\n");
-	bu_mem_barriercheck();
     }
 
     return 0;

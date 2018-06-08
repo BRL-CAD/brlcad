@@ -69,7 +69,7 @@ rt_generic_xform(
     switch (db_version(dbip)) {
 	case 4:
 	    if (OBJ[id].ft_export4(&ext, ip, 1.0, dbip, &rt_uniresource) < 0) {
-		bu_log("rt_generic_xform():  %s export failure\n",
+		bu_log("ERROR:  %s export failure\n",
 		       OBJ[id].ft_name);
 		return -1;			/* FAIL */
 	    }
@@ -77,13 +77,13 @@ rt_generic_xform(
 
 	    RT_DB_INTERNAL_INIT(op);
 	    if (OBJ[id].ft_import4(op, &ext, mat, dbip, &rt_uniresource) < 0) {
-		bu_log("rt_generic_xform():  solid import failure\n");
+		bu_log("ERROR:  solid import failure\n");
 		return -1;			/* FAIL */
 	    }
 	    break;
 	case 5:
 	    if (OBJ[id].ft_export5(&ext, ip, 1.0, dbip, &rt_uniresource) < 0) {
-		bu_log("rt_generic_xform():  %s export failure\n",
+		bu_log("ERROR:  %s export failure\n",
 		       OBJ[id].ft_name);
 		return -1;			/* FAIL */
 	    }
@@ -115,7 +115,7 @@ rt_generic_xform(
 	    }
 
 	    if (OBJ[id].ft_import5(op, &ext, mat, dbip, &rt_uniresource) < 0) {
-		bu_log("rt_generic_xform():  solid import failure\n");
+		bu_log("ERROR:  solid import failure\n");
 		return -1;			/* FAIL */
 	    }
 	    break;

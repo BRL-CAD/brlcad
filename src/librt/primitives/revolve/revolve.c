@@ -1554,11 +1554,6 @@ rt_revolve_xform(
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of revolve_xform():\n");
-	bu_mem_barriercheck();
-    }
-
     if (op != ip) {
 	RT_DB_INTERNAL_INIT(op);
 	BU_ALLOC(rop, struct rt_revolve_internal);
@@ -1591,11 +1586,6 @@ rt_revolve_xform(
 	rop->skt = rt_copy_sketch(rip->skt);
     } else {
 	rop->skt = (struct rt_sketch_internal *)NULL;
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of revolve_xform():\n");
-	bu_mem_barriercheck();
     }
 
     return 0;
