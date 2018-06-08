@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* If we draw any form, then trace it using rt, then change of database
+  (by clicking file>open and selecting another database), badness
+  ensues.  One report has quitting the rt window causing a segfault.
+  Another (confirmed) hung mged (stuck/inf loop).
+
 * annotation bugs:
   in sph1.s sph 0 0 0 10
   in ann1.s annot 0 0 0 test1 10 10 3 1

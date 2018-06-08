@@ -34,14 +34,12 @@
 #include "vmath.h"
 #include "dm.h"
 
-int dm_validXType(char *dpy_string, char *name);
-char *dm_bestXType(char *dpy_string);
 
 int
 #if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_X)
-dm_validXType(char *UNUSED(dpy_string), char *name)
+dm_validXType(const char *UNUSED(dpy_string), const char *name)
 #else
-dm_validXType(char *dpy_string, char *name)
+dm_validXType(const char *dpy_string, const char *name)
 #endif
 {
     if (BU_STR_EQUAL(name, "wgl")) {
@@ -118,9 +116,9 @@ dm_validXType(char *dpy_string, char *name)
 
 char *
 #if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_OSGL) && !defined(DM_X)
-dm_bestXType(char *UNUSED(dpy_string))
+dm_bestXType(const char *UNUSED(dpy_string))
 #else
-dm_bestXType(char *dpy_string)
+dm_bestXType(const char *dpy_string)
 #endif
 {
 

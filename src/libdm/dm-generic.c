@@ -42,48 +42,48 @@ extern dm *txt_open(Tcl_Interp *interp, int argc, const char **argv);
 
 #ifdef DM_X
 #  if defined(HAVE_TK)
-extern dm *X_open_dm();
+extern dm *X_open_dm(Tcl_Interp *interp, int argc, const char **argv);
 #  endif
 #endif /* DM_X */
 
 #ifdef DM_TK
-extern dm *tk_open_dm();
+extern dm *tk_open_dm(Tcl_Interp *interp, int argc, const char **argv);
 #endif /* DM_TK */
 
 #ifdef DM_OGL
 #  if defined(HAVE_TK)
-extern dm *ogl_open();
-extern void ogl_fogHint();
-extern int ogl_share_dlist();
+extern dm *ogl_open(Tcl_Interp *interp, int argc, const char **argv);
+extern void ogl_fogHint(dm *dmp, int fastfog);
+extern int ogl_share_dlist(dm *dmp1, dm *dmp2);
 #  endif
 #endif /* DM_OGL */
 
 #ifdef DM_OSG
-extern dm *osg_open();
-extern void osg_fogHint();
-extern int osg_share_dlist();
+extern dm *osg_open(Tcl_Interp *interp, int argc, const char **argv);
+extern void osg_fogHint(dm *dmp, int fastfog);
+extern int osg_share_dlist(dm *dmp1, dm *dmp2);
 #endif /* DM_OSG*/
 
 #ifdef DM_OSGL
-extern dm *osgl_open();
-extern void osgl_fogHint();
-extern int osgl_share_dlist();
+extern dm *osgl_open(Tcl_Interp *interp, int argc, const char **argv);
+extern void osgl_fogHint(dm *dmp, int fastfog);
+extern int osgl_share_dlist(dm *dmp1, dm *dmp2);
 #endif /* DM_OSGL*/
 
 #ifdef DM_RTGL
-extern dm *rtgl_open();
-extern void rtgl_fogHint();
-extern int rtgl_share_dlist();
+extern dm *rtgl_open(Tcl_Interp *interp, int argc, const char **argv);
+extern void rtgl_fogHint(dm *dmp, int fastfog);
+extern int rtgl_share_dlist(dm *dmp1, dm *dmp2);
 #endif /* DM_RTGL */
 
 #ifdef DM_WGL
-extern dm *wgl_open();
-extern void wgl_fogHint();
-extern int wgl_share_dlist();
+extern dm *wgl_open(Tcl_Interp *interp, int argc, const char **argv);
+extern void wgl_fogHint(dm *dmp, int fastfog);
+extern int wgl_share_dlist(dm *dmp1, dm *dmp2);
 #endif /* DM_WGL */
 
 #ifdef DM_QT
-extern dm *qt_open();
+extern dm *qt_open(Tcl_Interp *interp, int argc, const char **argv);
 #endif /* DM_QT */
 
 HIDDEN dm *

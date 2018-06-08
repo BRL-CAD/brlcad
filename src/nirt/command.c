@@ -252,7 +252,7 @@ target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	com_usage(ctp);
 	return;
     } else {
-	Tar[X] = 0.0;
+	Tar[X] = tg;
 	cbuffer = endptr;
     }
 
@@ -266,7 +266,7 @@ target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	com_usage(ctp);
 	return;
     } else {
-	Tar[Y] = 0.0;
+	Tar[Y] = tg;
 	cbuffer = endptr;
     }
 
@@ -280,7 +280,7 @@ target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	com_usage(ctp);
 	return;
     } else {
-	Tar[Z] = 0.0;
+	Tar[Z] = tg;
 	cbuffer = endptr;
     }
 

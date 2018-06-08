@@ -63,7 +63,7 @@
 #  if !defined(__cplusplus) && !defined(HAVE_LRINT) && defined(HAVE_WORKING_LRINT_MACRO)
 #    define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
 #    define HAVE_LRINT 1
-#  elif !defined(__cplusplus) && defined(HAVE_LRINT) && !defined(HAVE_DECL_LRINT)
+#  elif !defined(__cplusplus) && defined(HAVE_LRINT) && !defined(HAVE_DECL_LRINT) && !defined(HAVE_WINDOWS_H)
 long int lrint(double x);
 #    define HAVE_LRINT 1
 #  endif

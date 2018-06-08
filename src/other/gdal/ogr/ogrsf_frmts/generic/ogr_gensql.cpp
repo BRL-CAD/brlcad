@@ -1307,7 +1307,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         // if source key is null, we can't do join.
         if( osFilter.empty() )
         {
-            apoFeatures.push_back( NULL );
+            apoFeatures.push_back(nullptr);
             continue;
         }
 
