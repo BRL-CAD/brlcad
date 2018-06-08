@@ -67,7 +67,7 @@ extern "C" {
     extern int rt_##name##_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv); \
     extern int rt_##name##_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local); \
     extern void rt_##name##_make(const struct rt_functab *ftp, struct rt_db_internal *intern); \
-    extern int rt_##name##_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp); \
+    extern int rt_##name##_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip); \
     extern int rt_##name##_params(struct pc_pc_set *ps, const struct rt_db_internal *ip); \
     extern int rt_##name##_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol); \
     extern int rt_##name##_mirror(struct rt_db_internal *ip, const plane_t *plane); \
@@ -129,7 +129,7 @@ extern int rt_generic_get(struct bu_vls *, const struct rt_db_internal *, const 
 extern int rt_generic_adjust(struct bu_vls *, struct rt_db_internal *, int, const char **);
 extern int rt_generic_form(struct bu_vls *, const struct rt_functab *);
 extern void rt_generic_make(const struct rt_functab *, struct rt_db_internal *);
-extern int rt_generic_xform(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *, struct resource *);
+extern int rt_generic_xform(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *);
 
 /* from db5_bin.c */
 extern int rt_binunif_import5(struct rt_db_internal * ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);

@@ -26,18 +26,17 @@
 
 
 int
-rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int freeflag, struct db_i *dbip, struct resource *resource)
+rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int freeflag, struct db_i *dbip, struct resource *UNUSED(resource))
 {
     int ret;
 
     RT_CK_DB_INTERNAL(output);
     RT_CK_DB_INTERNAL(input);
     RT_CK_DBI(dbip);
-    RT_CK_RESOURCE(resource);
 
     ret = -1;
     if (OBJ[input->idb_type].ft_xform) {
-	ret = OBJ[input->idb_type].ft_xform(output, matrix, input, freeflag, dbip, resource);
+	ret = OBJ[input->idb_type].ft_xform(output, matrix, input, freeflag, dbip);
     }
 
     return ret;

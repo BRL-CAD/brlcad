@@ -1336,7 +1336,7 @@ apply_path_xform(db_i &db, const mat_t &matrix, rt_db_internal &internal)
     RT_CK_DBI(&db);
     RT_CK_DB_INTERNAL(&internal);
 
-    if (rt_obj_xform(&internal, matrix, &internal, 0, &db, &rt_uniresource))
+    if (rt_obj_xform(&internal, matrix, &internal, 0, &db))
 	throw std::runtime_error("rt_obj_xform() failed");
 }
 

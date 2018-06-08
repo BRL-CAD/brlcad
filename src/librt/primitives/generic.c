@@ -52,8 +52,7 @@ rt_generic_xform(
     const mat_t mat,
     struct rt_db_internal *ip,
     int release,
-    struct db_i *dbip,
-    struct resource *resp)
+    struct db_i *dbip)
 {
     struct bu_external ext;
     int id;
@@ -61,7 +60,6 @@ rt_generic_xform(
 
     RT_CK_DB_INTERNAL(ip);
     RT_CK_DBI(dbip);
-    RT_CK_RESOURCE(resp);
 
     memset(&avs, 0, sizeof(struct bu_attribute_value_set));
 
@@ -70,7 +68,7 @@ rt_generic_xform(
     /* Scale change on export is 1.0 -- no change */
     switch (db_version(dbip)) {
 	case 4:
-	    if (OBJ[id].ft_export4(&ext, ip, 1.0, dbip, resp) < 0) {
+	    if (OBJ[id].ft_export4(&ext, ip, 1.0, dbip, &rt_uniresource) < 0) {
 		bu_log("rt_generic_xform():  %s export failure\n",
 		       OBJ[id].ft_name);
 		return -1;			/* FAIL */
@@ -78,13 +76,13 @@ rt_generic_xform(
 	    if ((release || op == ip)) rt_db_free_internal(ip);
 
 	    RT_DB_INTERNAL_INIT(op);
-	    if (OBJ[id].ft_import4(op, &ext, mat, dbip, resp) < 0) {
+	    if (OBJ[id].ft_import4(op, &ext, mat, dbip, &rt_uniresource) < 0) {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	    }
 	    break;
 	case 5:
-	    if (OBJ[id].ft_export5(&ext, ip, 1.0, dbip, resp) < 0) {
+	    if (OBJ[id].ft_export5(&ext, ip, 1.0, dbip, &rt_uniresource) < 0) {
 		bu_log("rt_generic_xform():  %s export failure\n",
 		       OBJ[id].ft_name);
 		return -1;			/* FAIL */
@@ -116,7 +114,7 @@ rt_generic_xform(
 		bu_avs_free(&avs);
 	    }
 
-	    if (OBJ[id].ft_import5(op, &ext, mat, dbip, resp) < 0) {
+	    if (OBJ[id].ft_import5(op, &ext, mat, dbip, &rt_uniresource) < 0) {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	    }

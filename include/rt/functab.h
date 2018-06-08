@@ -198,9 +198,8 @@ struct rt_functab {
 
     int (*ft_xform)(struct rt_db_internal * /*op*/,
 		    const mat_t /*mat*/, struct rt_db_internal * /*ip*/,
-		    int /*free*/, struct db_i * /*dbip*/,
-		    struct resource * /*resp*/);
-#define RTFUNCTAB_FUNC_XFORM_CAST(_func) ((int (*)(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *, struct resource *))((void (*)(void))_func))
+		    int /*free*/, struct db_i * /*dbip*/);
+#define RTFUNCTAB_FUNC_XFORM_CAST(_func) ((int (*)(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *))((void (*)(void))_func))
 
     const struct bu_structparse *ft_parsetab;   /**< @brief rt_xxx_parse */
     size_t ft_internal_size;    /**< @brief sizeof(struct rt_xxx_internal) */

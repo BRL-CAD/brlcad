@@ -1794,7 +1794,7 @@ rt_bot_ifree(struct rt_db_internal *ip)
 
 
 int
-rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_internal *ip, const int release, struct db_i *dbip, struct resource *UNUSED(resp))
+rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_internal *ip, const int release, struct db_i *dbip)
 {
     struct rt_bot_internal *botip, *botop;
     size_t i;

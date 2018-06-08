@@ -194,11 +194,14 @@ pull_leaf(struct db_i *dbip, struct directory *dp, void *mp)
      */
     (intern.idb_meth)->ft_bbox(&intern, &min, &max, &tol);
 
-    /* pulls primitive translation matrix copying inverse transformation to restore primitive and bbox */
+    /* pulls primitive translation matrix copying inverse
+     * transformation to restore primitive and bbox
+     */
     translate(mat,matrix, min, max);
-    bn_mat_inverse(invXform, matrix);/* computes the inverse of transformation matrix. */
+    bn_mat_inverse(invXform, matrix);
 
-    (intern.idb_meth)->ft_xform(&intern, invXform, &intern, 0, dbip, &rt_uniresource);/* restores the primitive */
+    /* restores the primitive */
+    (intern.idb_meth)->ft_xform(&intern, invXform, &intern, 0, dbip);
 
     return;
 }

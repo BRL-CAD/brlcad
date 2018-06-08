@@ -1544,15 +1544,13 @@ rt_revolve_xform(
     const mat_t mat,
     struct rt_db_internal *ip,
     int release,
-    struct db_i *dbip,
-    struct resource *resp)
+    struct db_i *dbip)
 {
     struct rt_revolve_internal *rip, *rop;
     point_t tmp_vec;
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
