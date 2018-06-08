@@ -199,11 +199,6 @@ main(int argc, char *argv [])
 	usage(argv[0]);
     }
 
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("Memory checking enabled\n");
-	bu_mem_barriercheck();
-    }
-
     bu_log("%s", brlcad_ident("IGES to BRL-CAD Translator"));
     bu_log("Please direct bug reports to <bugs@brlcad.org>\n\n");
 

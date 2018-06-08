@@ -1951,13 +1951,9 @@ f4_Add_bot_face(struct conversion_state *pstate, int pt1, int pt2, int pt3, fast
 
     if (pstate->face_count >= pstate->face_size) {
 	pstate->face_size += GRID_BLOCK;
-	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	    bu_log("memory corrupted before realloc of faces, thickness, and facemode\n");
 	pstate->faces = (int *)bu_realloc((void *)pstate->faces, pstate->face_size*3*sizeof(int), "faces");
 	pstate->thickness = (fastf_t *)bu_realloc((void *)pstate->thickness, pstate->face_size*sizeof(fastf_t), "thickness");
 	pstate->facemode = (char *)bu_realloc((void *)pstate->facemode, pstate->face_size*sizeof(char), "facemode");
-	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	    bu_log("memory corrupted after realloc of faces, thickness, and facemode\n");
     }
 
     pstate->faces[pstate->face_count*3] = pt1;
@@ -1975,9 +1971,6 @@ f4_Add_bot_face(struct conversion_state *pstate, int pt1, int pt2, int pt3, fast
     }
 
     pstate->face_count++;
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("memory corrupted at end of f4_Add_bot_face()\n");
 }
 
 
@@ -2002,15 +1995,11 @@ f4_do_tri(struct conversion_state *pstate)
 	return;
 
     if (pstate->faces == NULL) {
-	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	    bu_log("memory corrupted before malloc of faces\n");
 	pstate->faces = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
 	pstate->thickness = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
 	pstate->facemode = (char *)bu_malloc(GRID_BLOCK*sizeof(char), "facemode");
 	pstate->face_size = GRID_BLOCK;
 	pstate->face_count = 0;
-	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	    bu_log("memory corrupted after malloc of faces, thickness, and facemode\n");
     }
 
     bu_strlcpy(pstate->field, &pstate->line[24], sizeof(pstate->field));
@@ -2042,13 +2031,7 @@ f4_do_tri(struct conversion_state *pstate)
     if (pstate->f4_do_plot)
 	plot_tri(pstate, pt1, pt2, pt3);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("memory corrupted before call to f4_Add_bot_face()\n");
-
     f4_Add_bot_face(pstate, pt1, pt2, pt3, thick, pos);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("memory corrupted after call to f4_Add_bot_face()\n");
 }
 
 
@@ -2476,8 +2459,6 @@ Process_hole_wall(struct conversion_state *pstate)
 {
     if (pstate->gcv_options->debug_mode)
 	bu_log("Process_hole_wall\n");
-    if (bu_debug & BU_DEBUG_MEM_CHECK)
-	bu_prmem("At start of Process_hole_wall:");
 
     rewind(pstate->fpin);
     while (1) {
@@ -2575,8 +2556,6 @@ Process_input(struct conversion_state *pstate, int pass_number)
 {
     if (pstate->gcv_options->debug_mode)
 	bu_log("\n\nProcess_input(pass = %d)\n", pass_number);
-    if (bu_debug & BU_DEBUG_MEM_CHECK)
-	bu_prmem("At start of Process_input:");
 
     if (pass_number != 0 && pass_number != 1) {
 	bu_bomb("Process_input: illegal pass_number");
@@ -2669,18 +2648,12 @@ make_region_list(struct conversion_state *pstate, const char *in_str)
 	    ptr2++;
 	    start = atoi(ptr);
 	    stop = atoi(ptr2);
-	    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-		bu_bomb("ERROR: bu_mem_barriercheck failed in make_region_list");
 	    for (i=start; i<=stop; i++) {
 		if (pstate->f4_do_skips == pstate->region_list_len) {
 		    pstate->region_list_len += REGION_LIST_BLOCK;
 		    pstate->region_list = (int *)bu_realloc((char *)pstate->region_list, pstate->region_list_len*sizeof(int), "region_list");
-		    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-			bu_bomb("ERROR: bu_mem_barriercheck failed in make_region_list (after realloc)");
 		}
 		pstate->region_list[pstate->f4_do_skips++] = i;
-		if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-		    bu_bomb("ERROR: bu_mem_barriercheck failed in make_region_list (after adding)");
 	    }
 	} else {
 	    if (pstate->f4_do_skips == pstate->region_list_len) {
@@ -2958,9 +2931,6 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
 	    fg4_free_conversion_state(&state);
 	    return 0;
 	}
-
-    if (bu_debug & BU_DEBUG_MEM_CHECK)
-	bu_log("doing memory checking\n");
 
     if ((state.fpin=fopen(source_path, "rb")) == (FILE *)NULL) {
 	bu_log("Cannot open FASTGEN4 file (%s)\n", source_path);

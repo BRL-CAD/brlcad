@@ -252,13 +252,9 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 
     if (face_count >= face_size) {
 	face_size += GRID_BLOCK;
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	    bu_log("memory corrupted before realloc of faces, THICKNESS, and facemode\n");
 	FACES = (int *)bu_realloc((void *)FACES,  face_size*3*sizeof(int), "faces");
 	THICKNESS = (fastf_t *)bu_realloc((void *)THICKNESS, face_size*sizeof(fastf_t), "thickness");
 	facemode = (char *)bu_realloc((void *)facemode, face_size*sizeof(char), "facemode");
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	    bu_log("memory corrupted after realloc of faces, thickness, and facemode\n");
     }
 
     FACES[face_count*3] = pt1;
@@ -274,9 +270,6 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
     }
 
     face_count++;
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	bu_log("memory corrupted at end of Add_bot_face()\n");
 }
 
 
@@ -298,15 +291,11 @@ do_tri(char *line)
 	bot = element_id;
 
     if (FACES == NULL) {
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	    bu_log("memory corrupted before malloc of faces\n");
 	FACES = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
 	THICKNESS = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
 	facemode = (char *)bu_malloc(GRID_BLOCK*sizeof(char), "facemode");
 	face_size = GRID_BLOCK;
 	face_count = 0;
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	    bu_log("memory corrupted after malloc of faces, thickness, and facemode\n");
     }
 
     bu_strlcpy(field,  &line[24], sizeof(field));
@@ -335,13 +324,7 @@ do_tri(char *line)
 
     }
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	bu_log("memory corrupted before call to Add_bot_face()\n");
-
     Add_bot_face(pt1, pt2, pt3, thick, pos);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	bu_log("memory corrupted after call to Add_bot_face()\n");
 }
 
 

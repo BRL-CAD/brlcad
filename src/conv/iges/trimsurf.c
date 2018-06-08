@@ -915,11 +915,6 @@ trim_surf(int entityno, struct shell *s)
     m = nmg_find_model(&s->l.magic);
     NMG_CK_MODEL(m);
 
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("barriercheck at start of trim_surf():\n");
-	bu_mem_barriercheck();
-    }
-
     /* Acquiring Data */
     if (dir[entityno]->param <= pstart) {
 	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
@@ -956,52 +951,22 @@ trim_surf(int entityno, struct shell *s)
     for (i = 0; i < 3; i++)
 	verts[i] = (struct vertex *)NULL;
 
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("barriercheck before making face:\n");
-	bu_mem_barriercheck();
-    }
-
     fu = nmg_cface(s, verts, 3);
     Assign_surface_to_fu(fu, srf);
 
     kill_lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 
     if (!has_outer_boundary) {
-	if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	    bu_log("barriercheck before making default loop():\n");
-	    bu_mem_barriercheck();
-	}
-
 	lu = Make_default_loop(srf, fu);
     } else {
-	if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	    bu_log("barriercheck before Make_loop():\n");
-	    bu_mem_barriercheck();
-	}
-
 	lu = Make_loop((outer_loop-1)/2, OT_SAME, surf_de, srf, fu);
     }
-
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("barriercheck after making loop:\n");
-	bu_mem_barriercheck();
-    }
-
 
     (void)nmg_klu(kill_lu);
 
     /* first loop is an outer loop, orientation must be OT_SAME */
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("barriercheck before nmg_snurb_calc_lu_uv_orient(():\n");
-	bu_mem_barriercheck();
-	bu_log("check complete!\n");
-    }
 
     lu_uv_orient = nmg_snurb_calc_lu_uv_orient(lu);
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("barriercheck after nmg_snurb_calc_lu_uv_orient(():\n");
-	bu_mem_barriercheck();
-    }
     if (lu_uv_orient == OT_SAME)
 	nmg_set_lu_orientation(lu, 0);
     else {

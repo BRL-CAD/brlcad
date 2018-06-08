@@ -52,8 +52,6 @@ Convtree()
     int j = 0;
     int k = 0;
 
-    if (bu_debug & BU_DEBUG_MEM_CHECK)
-	bu_log("Doing memory checking in Convtree()\n");
     MEMCHECK;
 
     bu_log("\nConverting boolean tree entities:\n");

@@ -61,7 +61,7 @@ main(int argc, char *argv[])
     mat_t identity_mat;
     int i;
 
-    bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_COREDUMP;
+    /* bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_COREDUMP; */
 
     if (argc < 3) {
 	fprintf(stderr, "Usage:\n\t%s db_file object1 object2 ...\n", argv[0]);

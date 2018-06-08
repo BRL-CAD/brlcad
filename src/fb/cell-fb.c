@@ -932,7 +932,6 @@ main(int argc, char **argv)
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     sleep(1);
 
-    bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_MEM_LOG;
     bu_debug = 0;
 
     BU_LIST_INIT(&(gp_locs.l));
