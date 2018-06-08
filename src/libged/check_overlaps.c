@@ -1,4 +1,4 @@
-/*			C H E C K . C
+/*                C H E C K _ O V E R L A P S . C
  * BRL-CAD
  *
  * Copyright (c) 2018 United States Government as represented by
@@ -17,6 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @file libged/check_overlaps.c
+ * 
+ * The check_overlaps command.
+ * Checks for overlaps in the mentioned objects or the objects
+ * currently visible in the view.
+ *
+ */
 
 #include "common.h"
 
@@ -28,7 +35,6 @@
 #include "bu/str.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
-#include "bn/plot3.h"
 #include "bn/str.h"
 #include "raytrace.h"
 
@@ -63,7 +69,6 @@ log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit, vect
     struct overlap_list *prev_ol = (struct overlap_list *)0;
     struct overlap_list *op;		/* overlap list */
     struct overlap_list *new_op;
-
 
     BN_ADD_VLIST(callbackdata->vbp->free_vlist_hd, callbackdata->vhead, ihit, BN_VLIST_LINE_MOVE);
     BN_ADD_VLIST(callbackdata->vbp->free_vlist_hd, callbackdata->vhead, ohit, BN_VLIST_LINE_DRAW);
@@ -288,8 +293,8 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
     fastf_t aspect = (fastf_t)1.0;	/* view aspect ratio X/Y (needs to be 1.0 for g/G options) */
     size_t nobjs = 0;			/* Number of cmd-line treetops */
     const char **objtab;		/* array of treetop strings */
-    char *rt_options = ".:a:de:g:n:s:w:G:P:V:h?";
-    char *check_help = "Options:\n -s #\t\tSquare grid size in pixels (default 512)\n -w # -n #\t\tGrid size width and height in pixels\n -V #\t\tView (pixel) aspect ratio (width/height)\n -a #\t\tAzimuth in degrees\n -e #\t\tElevation in degrees\n -g #\t\tGrid cell width\n -G #\t\tGrid cell height\n -d\t\tDebug flag to print some information\n -P #\t\tSet number of processors\n\n";
+    const char *check_options = ".:a:de:g:n:s:w:G:P:V:h?";
+    const char *check_help = "Options:\n -s #\t\tSquare grid size in pixels (default 512)\n -w # -n #\t\tGrid size width and height in pixels\n -V #\t\tView (pixel) aspect ratio (width/height)\n -a #\t\tAzimuth in degrees\n -e #\t\tElevation in degrees\n -g #\t\tGrid cell width\n -G #\t\tGrid cell height\n -d\t\tDebug flag to print some information\n -P #\t\tSet number of processors\n\n";
     struct rt_i *rtip = NULL;
 
     size_t tnobjs = 0;
@@ -323,7 +328,7 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;	/* restart parsing of args */
 
-    while ((c=bu_getopt(argc, (char **)argv, rt_options)) != -1) {
+    while ((c=bu_getopt(argc, (char **)argv, check_options)) != -1) {
 	if (bu_optopt == '?')
 	    c = 'h';
 	switch (c) {
