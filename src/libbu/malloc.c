@@ -229,7 +229,6 @@ bu_free(void *ptr, const char *str)
 void *
 bu_realloc(register void *ptr, size_t siz, const char *str)
 {
-    void *original_ptr;
     const size_t MINSIZE = sizeof(uint32_t) > sizeof(intptr_t) ? sizeof(uint32_t) : sizeof(intptr_t);
 
     /* If bu_realloc receives a NULL pointer and zero size then bomb
@@ -266,8 +265,6 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
     if (UNLIKELY(siz < MINSIZE)) {
 	siz = MINSIZE;
     }
-
-    original_ptr = ptr;
 
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_acquire(BU_SEM_MALLOC);
