@@ -122,14 +122,14 @@ master_setup()
 
 
 void
-master_init(int port, int obs_port, char *list, char *exec, char *comp_host)
+master_init(int port, int obs_port, char *list, char *exec, char *comp_host, int verbose)
 {
     /* Setup defaults */
     master_setup();
 
     /* Initialize tienet master */
     master.tile_num = DISPATCHER_TILE_NUM * DISPATCHER_TILE_NUM;
-    tienet_master_init(port, master_result, list, exec, 5, ADRT_VER_KEY, bu_debug & BU_DEBUG_UNUSED_1);
+    tienet_master_init(port, master_result, list, exec, 5, ADRT_VER_KEY, verbose);
 
     /* Launch a thread to handle networking */
     bu_thrd_create(&master.networking_thread, (bu_thrd_start_t)master_networking, &obs_port);
@@ -648,10 +648,9 @@ static void help() {
 int main(int argc, char **argv) {
     int port = 0, obs_port = 0, c = 0;
     char exec[64], list[64], comp_host[64];
-
+    int verbose = 0;
 
     signal(SIGINT, finish);
-
 
     /* Initialize strings */
     list[0] = 0;
@@ -706,14 +705,7 @@ int main(int argc, char **argv) {
 		break;
 
 	    case 'v':
-		if (!(bu_debug & BU_DEBUG_UNUSED_1))
-		    bu_debug |= BU_DEBUG_UNUSED_1;
-		else if (!(bu_debug & BU_DEBUG_UNUSED_2))
-		    bu_debug |= BU_DEBUG_UNUSED_2;
-		else if (!(bu_debug & BU_DEBUG_UNUSED_3))
-		    bu_debug |= BU_DEBUG_UNUSED_3;
-		else
-		    bu_log("Too verbose!\n");
+		verbose = 1;
 		break;
 
 	    default:
@@ -724,7 +716,7 @@ int main(int argc, char **argv) {
     argc -= bu_optind;
     argv += bu_optind;
 
-    master_init(port, obs_port, list, exec, comp_host);
+    master_init(port, obs_port, list, exec, comp_host, verbose);
 
     return EXIT_SUCCESS;
 }
