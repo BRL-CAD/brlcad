@@ -405,7 +405,6 @@ package provide cadwidgets::Ged 1.0
 	method pane_autoview {_pane args}
 	method pane_bind {_pane _event _script}
 	method pane_center {_pane args}
-	method pane_check_overlaps {_pane args}
 	method pane_constrain_rmode {_pane args}
 	method pane_constrain_tmode {_pane args}
 	method pane_data_scale_mode {_pane args}
@@ -499,6 +498,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_rrt {_pane args}
 	method pane_rt {_pane args}
 	method pane_rtarea {_pane args}
+	method pane_rtcheck {_pane args}
 	method pane_rtedge {_pane args}
 	method pane_rtweight {_pane args}
 	method pane_rtwizard {_pane args}
@@ -598,6 +598,7 @@ package provide cadwidgets::Ged 1.0
 	method rt_gettrees {args}
 	method rtabort {args}
 	method rtarea {args}
+	method rtcheck {args}
 	method rtedge {args}
 	method rtweight {args}
 	method rtwizard {args}
@@ -1422,7 +1423,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::check_overlaps {args} {
-    eval $mGed check_overlaps $itk_component($itk_option(-pane)) $args
+    eval $mGed check_overlaps $args
 }
 
 ::itcl::body cadwidgets::Ged::clear {args} {
@@ -2607,10 +2608,6 @@ package provide cadwidgets::Ged 1.0
     eval $mGed center $itk_component($_pane) $args
 }
 
-::itcl::body cadwidgets::Ged::pane_check_overlaps {_pane args} {
-    eval $mGed check_overlaps $itk_component($_pane) $args
-}
-
 ::itcl::body cadwidgets::Ged::pane_constrain_rmode {_pane args} {
     eval $mGed constrain_rmode $itk_component($_pane) $args
 }
@@ -3209,6 +3206,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed rtarea $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_rtcheck {_pane args} {
+    eval $mGed rtcheck $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_rtedge {_pane args} {
     eval $mGed rtedge $itk_component($_pane) $args
 }
@@ -3628,6 +3629,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::rtarea {args} {
     eval $mGed rtarea $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::rtcheck {args} {
+    eval $mGed rtcheck $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::rtedge {args} {
@@ -6409,6 +6414,7 @@ package provide cadwidgets::Ged 1.0
     $help add rt_gettrees      	{{[-i] [-u] pname object} {create a raytracing object}}
     $help add rtabort		{{} {abort the associated raytraces}}
     $help add rtarea		{{[options] [-- objects]} {calculate area of specified objects}}
+    $help add rtcheck		{{[options]} {check for overlaps in current view}}
     $help add rtedge		{{[options] [-- objects]} {do raytrace of view or specified objects yielding only edges}}
     $help add rtweight		{{[options] [-- objects]} {calculate weight of specified objects}}
     $help add savekey		{{file [time]} {save key frame data to file}}

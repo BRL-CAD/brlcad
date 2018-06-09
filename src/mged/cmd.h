@@ -56,7 +56,6 @@ extern int cmd_arot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_autoview(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_blast(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_center(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_check_overlaps(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_cmd_win(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_draw(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_emuves(ClientData, Tcl_Interp *, int, const char *[]);

@@ -49,41 +49,9 @@
 #include "./qray.h"
 #include "./cmd.h"
 
-/**
- * invoke check_overlaps
- */
-int
-cmd_check_overlaps(ClientData UNUSED(clientData),
-		   Tcl_Interp *interp,
-		   int argc,
-		   const char *argv[])
-{
-    int ret;
-    Tcl_DString ds;
-
-    CHECK_DBI_NULL;
-
-    /* skip past _mged_ */
-    if (argv[0][0] == '_' && argv[0][1] == 'm' &&
-	bu_strncmp(argv[0], "_mged_", 6) == 0)
-	argv[0] += 6;
-
-    Tcl_DStringInit(&ds);
-
-    ret = ged_check_overlaps(gedp, argc, (const char **)argv);
-
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
-
-    if (ret == GED_OK)
-	return TCL_OK;
-
-    return TCL_ERROR;
-}
-
 
 /**
- * rt, rtarea, rtweight, and rtedge all use this.
+ * rt, rtarea, rtweight, rtcheck, and rtedge all use this.
  */
 int
 cmd_rt(ClientData UNUSED(clientData),
@@ -91,6 +59,7 @@ cmd_rt(ClientData UNUSED(clientData),
        int argc,
        const char *argv[])
 {
+    int doRtcheck;
     int ret;
     Tcl_DString ds;
 
@@ -101,9 +70,17 @@ cmd_rt(ClientData UNUSED(clientData),
 	bu_strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
+    if (BU_STR_EQUAL(argv[0], "rtcheck"))
+	doRtcheck = 1;
+    else
+	doRtcheck = 0;
+
     Tcl_DStringInit(&ds);
 
-    ret = ged_rt(gedp, argc, (const char **)argv);
+    if (doRtcheck)
+	ret = ged_rtcheck(gedp, argc, (const char **)argv);
+    else
+	ret = ged_rt(gedp, argc, (const char **)argv);
 
     Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);

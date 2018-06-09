@@ -657,7 +657,6 @@ namespace eval ArcherCore {
 
 	method launchNirt {}
 	method launchRtApp {_app _size}
-	method launchCheckOverlaps {_size}
 
 	method updateDisplaySettings {}
 	method updateLightingMode {}
@@ -1561,22 +1560,8 @@ namespace eval ArcherCore {
 			    -label "Window Size" \
 			    -helpstr "Raytrace at a resolution matching the window width"
 		    }
-		cascade rtedge \
-		    -label "rtedge" \
-		    -menu {
-			command fivetwelve \
-			    -label "512x512" \
-			    -helpstr "Raytrace at a resolution of 512x512"
-			command tentwenty \
-			    -label "1024x1024" \
-			    -helpstr "Raytrace at a resolution of 1024x1024"
-			command window \
-			    -label "Window Size" \
-			    -helpstr "Raytrace at a resolution matching the window width"
-		    }
-		separator sep0
-		cascade checkoverlaps \
-		    -label "check overlaps" \
+		cascade rtcheck \
+		    -label "rtcheck" \
 		    -menu {
 			command fifty \
 			    -label "50x50" \
@@ -1590,6 +1575,19 @@ namespace eval ArcherCore {
 			command fivetwelve \
 			    -label "512x512" \
 			    -helpstr "Check for overlaps using a 512x512 grid"
+		    }
+		cascade rtedge \
+		    -label "rtedge" \
+		    -menu {
+			command fivetwelve \
+			    -label "512x512" \
+			    -helpstr "Raytrace at a resolution of 512x512"
+			command tentwenty \
+			    -label "1024x1024" \
+			    -helpstr "Raytrace at a resolution of 1024x1024"
+			command window \
+			    -label "Window Size" \
+			    -helpstr "Raytrace at a resolution matching the window width"
 		    }
 		separator sep0
 		command nirt \
@@ -1608,19 +1606,19 @@ namespace eval ArcherCore {
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt.window \
 	    -command [::itcl::code $this launchRtApp rt window] \
 	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps \
+	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck \
 	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fifty \
-	    -command [::itcl::code $this launchCheckOverlaps 50] \
+	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.fifty \
+	    -command [::itcl::code $this launchRtApp rtcheck 50] \
 	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.hundred \
-	    -command [::itcl::code $this launchCheckOverlaps 100] \
+	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.hundred \
+	    -command [::itcl::code $this launchRtApp rtcheck 100] \
 	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.twofiftysix \
-	    -command [::itcl::code $this launchCheckOverlaps 256] \
+	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.twofiftysix \
+	    -command [::itcl::code $this launchRtApp rtcheck 256] \
 	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fivetwelve \
-	    -command [::itcl::code $this launchCheckOverlaps 512] \
+	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.fivetwelve \
+	    -command [::itcl::code $this launchRtApp rtcheck 512] \
 	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .raytrace.rtedge \
 	    -state disabled
@@ -2068,6 +2066,16 @@ namespace eval ArcherCore {
 	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt.window \
 	    -state normal
+	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.fifty \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.hundred \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.twofiftysix \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .raytrace.rtcheck.fivetwelve \
+	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.rtedge \
 	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.rtedge.fivetwelve \
@@ -2075,16 +2083,6 @@ namespace eval ArcherCore {
 	$itk_component(canvas_menu) menuconfigure .raytrace.rtedge.tentwenty \
 	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.rtedge.window \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fifty \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.hundred \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.twofiftysix \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fivetwelve \
 	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.nirt \
 	    -state normal
@@ -5900,11 +5898,6 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::launchNirt {} {
     putString "nirt -b"
     putString [$itk_component(ged) nirt -b]
-}
-
-::itcl::body ArcherCore::launchCheckOverlaps {size} {
-    putString "running check_overlaps -s $size"
-    putString [$itk_component(ged) check_overlaps -s $size]
 }
 
 ::itcl::body ArcherCore::launchRtApp {app size} {

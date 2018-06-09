@@ -239,6 +239,7 @@ set(LIBGED_SOURCES
   rrt.c
   rt.c
   rtabort.c
+  rtcheck.c
   rtwizard.c
   savekey.c
   saveview.c

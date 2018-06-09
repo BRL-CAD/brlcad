@@ -172,7 +172,6 @@ set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
 set helplib_data(dgo_assoc)		{{[wdb_obj]} {set/get the associated database object}}
 set helplib_data(dgo_autoview)		{{view_obj} {calculate an appropriate view size and center for view_obj}}
 set helplib_data(dgo_blast)		{{[-A] [-o] [-C#/#/#] [-s] <object(s) | attribute name/value pairs>} {erase all currently displayed geometry and draw the specified object(s)}}
-set helplib_data(dgo_check_overlaps)	{{[options] [objects]} {check for overlaps in the current view or the specified objects}}
 set helplib_data(dgo_clear)		{{} {erase all objects from the display}}
 set helplib_data(dgo_draw)		{{[-A] [-o] [-C#/#/#] [-s] <objects | attribute name/value pairs>} {prepare object(s) for display}}
 set helplib_data(dgo_E)			{{[-C#/#/#] [-s] <objects>} {evaluated display of objects}}
@@ -190,6 +189,7 @@ set helplib_data(dgo_qray)		{{subcommand}	{get/set query_ray characteristics}}
 set helplib_data(dgo_solid_report)	{{[lvl]} {print solid table & vector list}}
 set helplib_data(dgo_rt)		{{[options] [-- objects]}	{do raytrace of view or specified objects}}
 set helplib_data(dgo_rtabort)		{{} {abort the associated raytraces}}
+set helplib_data(dgo_rtcheck)		{{[options]}	{check for overlaps in current view}}
 set helplib_data(dgo_rtarea)		{{[options] [-- objects]}	{report the exposed and presented areas in the current view}}
 set helplib_data(dgo_rtedge)		{{[options] [-- objects]}	{do edge rendering of view or specified objects}}
 set helplib_data(dgo_rtweight)		{{[options] [-- objects]}	{report the approximate weight and centroid of displayed geometry}}

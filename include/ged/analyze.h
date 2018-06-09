@@ -46,7 +46,7 @@ GED_EXPORT extern int ged_analyze(struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT extern int ged_bb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Checks for overlaps in the current view or specified objects.
+ * Check command for overlap-checker tool
  */
 GED_EXPORT extern int ged_check_overlaps(struct ged *gedp, int argc, const char *argv[]);
 
@@ -73,6 +73,11 @@ GED_EXPORT extern int ged_qray(struct ged *gedp, int argc, const char *argv[]);
 
 GED_EXPORT extern void ged_init_qray(struct ged_drawable *gdp);
 GED_EXPORT extern void ged_free_qray(struct ged_drawable *gdp);
+
+/**
+ * Check for overlaps in the current view.
+ */
+GED_EXPORT extern int ged_rtcheck(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Performs simulations.

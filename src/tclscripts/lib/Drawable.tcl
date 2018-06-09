@@ -55,6 +55,7 @@
 	method rt {args}
 	method rtabort {args}
 	method rtarea {args}
+	method rtcheck {args}
 	method rtedge {args}
 	method rtweight {args}
 	method set_outputHandler {args}
@@ -184,6 +185,10 @@
     eval $dg rtarea $args
 }
 
+::itcl::body Drawable::rtcheck {args} {
+    eval $dg rtcheck $args
+}
+
 ::itcl::body Drawable::rtedge {args} {
     eval $dg rtedge $args
 }
@@ -251,6 +256,7 @@
     $help add qray		{{subcommand}	{get/set query_ray characteristics}}
     $help add rt		{{[options] [-- objects]} {do raytrace of view or specified objects}}
     $help add rtabort		{{} {abort the associated raytraces}}
+    $help add rtcheck		{{[options]} {check for overlaps in current view}}
     $help add rtarea		{{[options] [-- objects]} {calculate area of specified objects}}
     $help add rtedge		{{[options] [-- objects]} {do raytrace of view or specified objects yielding only edges}}
     $help add rtweight		{{[options] [-- objects]} {calculate weight of specified objects}}
