@@ -255,7 +255,7 @@ package provide Archer 1.0
 	#XXX Need to split up menuStatusCB into one method per menu
 	method menuStatusCB {_w}
 	method modesMenuStatusCB {_w}
-	method rtCheckMenuStatusCB {_w}
+	method checkOverlapsMenuStatusCB {_w}
 	method rtEdgeMenuStatusCB {_w}
 	method rtMenuStatusCB {_w}
 
@@ -4041,24 +4041,24 @@ proc title_node_handler {node} {
 	-label "Window Size" \
 	-command [::itcl::code $this launchRtApp rt window]
 
-    itk_component add ${_prefix}rtcheckmenu {
-	::menu $itk_component(${_prefix}raytracemenu).${_prefix}rtcheckmenu \
+    itk_component add ${_prefix}checkoverlapsmenu {
+	::menu $itk_component(${_prefix}raytracemenu).${_prefix}checkoverlapsmenu \
 	    -tearoff 0
     } {
 	keep -background
     }
-    $itk_component(${_prefix}rtcheckmenu) add command \
+    $itk_component(${_prefix}checkoverlapsmenu) add command \
 	-label "50x50" \
-	-command [::itcl::code $this launchRtApp rtcheck 50]
-    $itk_component(${_prefix}rtcheckmenu) add command \
+	-command [::itcl::code $this launchCheckOverlaps 50]
+    $itk_component(${_prefix}checkoverlapsmenu) add command \
 	-label "100x100" \
-	-command [::itcl::code $this launchRtApp rtcheck 100]
-    $itk_component(${_prefix}rtcheckmenu) add command \
+	-command [::itcl::code $this launchCheckOverlaps 100]
+    $itk_component(${_prefix}checkoverlapsmenu) add command \
 	-label "256x256" \
-	-command [::itcl::code $this launchRtApp rtcheck 256]
-    $itk_component(${_prefix}rtcheckmenu) add command \
+	-command [::itcl::code $this launchCheckOverlaps 256]
+    $itk_component(${_prefix}checkoverlapsmenu) add command \
 	-label "512x512" \
-	-command [::itcl::code $this launchRtApp rtcheck 512]
+	-command [::itcl::code $this launchCheckOverlaps 512]
 
     itk_component add ${_prefix}rtedgemenu {
 	::menu $itk_component(${_prefix}raytracemenu).${_prefix}rtedgemenu \
@@ -4081,12 +4081,13 @@ proc title_node_handler {node} {
 	-menu $itk_component(${_prefix}rtmenu) \
 	-state disabled
     $itk_component(${_prefix}raytracemenu) add cascade \
-	-label "rtcheck" \
-	-menu $itk_component(${_prefix}rtcheckmenu) \
-	-state disabled
-    $itk_component(${_prefix}raytracemenu) add cascade \
 	-label "rtedge" \
 	-menu $itk_component(${_prefix}rtedgemenu) \
+	-state disabled
+    $itk_component(${_prefix}raytracemenu) add separator
+    $itk_component(${_prefix}raytracemenu) add cascade \
+	-label "check overlaps" \
+	-menu $itk_component(${_prefix}checkoverlapsmenu) \
 	-state disabled
     $itk_component(${_prefix}raytracemenu) add separator
     $itk_component(${_prefix}raytracemenu) add command \
@@ -4153,7 +4154,7 @@ proc title_node_handler {node} {
 
     bind $itk_component(${_prefix}raytracemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(${_prefix}rtmenu) <<MenuSelect>> [::itcl::code $this rtMenuStatusCB %W]
-    bind $itk_component(${_prefix}rtcheckmenu) <<MenuSelect>> [::itcl::code $this rtCheckMenuStatusCB %W]
+    bind $itk_component(${_prefix}checkoverlapsmenu) <<MenuSelect>> [::itcl::code $this checkOverlapsMenuStatusCB %W]
     bind $itk_component(${_prefix}rtedgemenu) <<MenuSelect>> [::itcl::code $this rtEdgeMenuStatusCB %W]
 }
 
@@ -4782,7 +4783,7 @@ proc title_node_handler {node} {
 }
 
 
-::itcl::body Archer::rtCheckMenuStatusCB {_w} {
+::itcl::body Archer::checkOverlapsMenuStatusCB {_w} {
     if {$mDoStatus} {
 	# entry might not support -label (i.e. tearoffs)
 	if {[catch {$_w entrycget active -label} op]} {
@@ -4791,16 +4792,16 @@ proc title_node_handler {node} {
 
 	switch -- $op {
 	    "50x50" {
-		set mStatusStr "Run rtcheck with a size of 50 on the displayed geometry"
+		set mStatusStr "Run check_overlaps with a size of 50 on the displayed geometry"
 	    }
 	    "100x100" {
-		set mStatusStr "Run rtcheck with a size of 100 on the displayed geometry"
+		set mStatusStr "Run check_overlaps with a size of 100 on the displayed geometry"
 	    }
 	    "256x256" {
-		set mStatusStr "Run rtcheck with a size of 256 on the displayed geometry"
+		set mStatusStr "Run check_overlaps with a size of 256 on the displayed geometry"
 	    }
 	    "512x512" {
-		set mStatusStr "Run rtcheck with a size of 512 on the displayed geometry"
+		set mStatusStr "Run check_overlaps with a size of 512 on the displayed geometry"
 	    }
 	    default {
 		set mStatusStr ""
@@ -5852,17 +5853,6 @@ proc title_node_handler {node} {
 		    -helpstr "Render the current view with rt using the window size."
 	    }
 
-	    cascade rtcheck -label "rtcheck" -menu {
-		command rtcheck50 -label "50x50" \
-		    -helpstr "Run rtcheck -s 50."
-		command rtcheck100 -label "100x100" \
-		    -helpstr "Run rtcheck -s 100."
-		command rtcheck256 -label "256x256" \
-		    -helpstr "Run rtcheck -s 256."
-		command rtcheck512 -label "512x512" \
-		    -helpstr "Run rtcheck -s 512."
-	    }
-
 	    cascade rtedge -label "rtedge" -menu {
 		command rtedge512 -label "512x512" \
 		    -helpstr "Render the current view with rtedge -s 512."
@@ -5870,6 +5860,17 @@ proc title_node_handler {node} {
 		    -helpstr "Render the current view with rtedge -s 1024."
 		command rtedgewinsize -label "Window Size" \
 		    -helpstr "Render the current view with rtedge using the window size."
+	    }
+
+	    cascade checkoverlaps -label "check overlaps" -menu {
+		command checkoverlaps50 -label "50x50" \
+		    -helpstr "Run check_overlaps -s 50."
+		command checkoverlaps100 -label "100x100" \
+		    -helpstr "Run check_overlaps -s 100."
+		command checkoverlaps256 -label "256x256" \
+		    -helpstr "Run check_overlaps -s 256."
+		command checkoverlaps512 -label "512x512" \
+		    -helpstr "Run check_overlaps -s 512."
 	    }
 
 	    command nirt -label "nirt" \
@@ -5885,17 +5886,6 @@ proc title_node_handler {node} {
     $itk_component(menubar) menuconfigure .raytrace.rt.rtwinsize \
 	-command [::itcl::code $this launchRtApp rt window]
 
-    $itk_component(menubar) menuconfigure .raytrace.rtcheck \
-	-state disabled
-    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck50 \
-	-command [::itcl::code $this launchRtApp rtcheck 50]
-    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck100 \
-	-command [::itcl::code $this launchRtApp rtcheck 100]
-    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck256 \
-	-command [::itcl::code $this launchRtApp rtcheck 256]
-    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck512 \
-	-command [::itcl::code $this launchRtApp rtcheck 512]
-
     $itk_component(menubar) menuconfigure .raytrace.rtedge \
 	-state disabled
     $itk_component(menubar) menuconfigure .raytrace.rtedge.rtedge512 \
@@ -5904,6 +5894,17 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this launchRtApp rtedge 1024]
     $itk_component(menubar) menuconfigure .raytrace.rtedge.rtedgewinsize \
 	-command [::itcl::code $this launchRtApp rtedge window]
+
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps \
+	-state disabled
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps50 \
+	-command [::itcl::code $this launchCheckOverlaps 50]
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps100 \
+	-command [::itcl::code $this launchCheckOverlaps 100]
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps256 \
+	-command [::itcl::code $this launchCheckOverlaps 256]
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps512 \
+	-command [::itcl::code $this launchCheckOverlaps 512]
 
     $itk_component(menubar) menuconfigure .raytrace.nirt \
 	-command [::itcl::code $this launchNirt] \
@@ -6157,8 +6158,8 @@ proc title_node_handler {node} {
 		$itk_component(${prefix}modesmenu) entryconfigure "Angle/Distance Cursor" -state normal
 
 		$itk_component(${prefix}raytracemenu) entryconfigure "rt" -state normal
-		$itk_component(${prefix}raytracemenu) entryconfigure "rtcheck" -state normal
 		$itk_component(${prefix}raytracemenu) entryconfigure "rtedge" -state normal
+		$itk_component(${prefix}raytracemenu) entryconfigure "check overlaps" -state normal
 		$itk_component(${prefix}raytracemenu) entryconfigure "nirt" -state normal
 	    }
 	} else {
@@ -6187,8 +6188,8 @@ proc title_node_handler {node} {
 	    $itk_component(menubar) menuconfigure .modes.adc -state normal
 
 	    $itk_component(menubar) menuconfigure .raytrace.rt -state normal
-	    $itk_component(menubar) menuconfigure .raytrace.rtcheck -state normal
 	    $itk_component(menubar) menuconfigure .raytrace.rtedge -state normal
+	    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps -state normal
 	    $itk_component(menubar) menuconfigure .raytrace.nirt -state normal
 	}
     }

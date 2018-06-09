@@ -325,6 +325,10 @@ extern void _ged_vls_col_pr4v(struct bu_vls *vls,
 extern struct directory ** _ged_getspace(struct db_i *dbip,
 					 size_t num_entries);
 
+/* defined in nirt.c */
+extern void _ged_wait_status(struct bu_vls *logstr,
+			     int status);
+
 /* defined in preview.c */
 extern void _ged_setup_rt(struct ged *gedp,
 			  char **vp,
@@ -344,10 +348,6 @@ extern void _ged_rt_write(struct ged *gedp,
 			  vect_t eye_model);
 extern void _ged_rt_output_handler(ClientData clientData,
 				   int mask);
-
-/* defined in rtcheck.c */
-extern void _ged_wait_status(struct bu_vls *logstr,
-			     int status);
 
 /* defined in rotate_eto.c */
 extern int _ged_rotate_eto(struct ged *gedp,

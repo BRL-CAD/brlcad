@@ -140,7 +140,6 @@
     public method rt {args}
     public method rtabort {{gi 0}}
     public method rtarea {args}
-    public method rtcheck {args}
     public method rtedge {args}
     public method rtweight {args}
     public method autoview {{g_index 0}}
@@ -932,27 +931,6 @@
 
     set v_obj [View::get_viewname]
     eval $geo rtarea $v_obj -V $aspect $args
-}
-
-::itcl::body Display::rtcheck {args} {
-    global tcl_platform
-
-    set len [llength $args]
-
-    if {$len > 1 && [lindex $args 0] == "-geo"} {
-	set index [lindex $args 1]
-	set args [lrange $args 2 end]
-	set geo [lindex $geolist $index]
-    } else {
-	set geo [lindex $geolist 0]
-    }
-
-    if {$geo == ""} {
-	return "rtcheck: bad geometry index"
-    }
-
-    set v_obj [View::get_viewname]
-    eval $geo rtcheck $v_obj $args
 }
 
 ::itcl::body Display::rtedge {args} {
