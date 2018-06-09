@@ -29,9 +29,6 @@
 #include "./iges_extern.h"
 
 
-#define MEMCHECK if ((bu_debug & BU_DEBUG_MEM_CHECK) && (bu_mem_barriercheck())) bu_log("memory corruption found in file %s at line %d\n", __FILE__, __LINE__)
-
-
 union tree *Readtree();
 union tree *Copytree();
 
@@ -52,8 +49,6 @@ Convtree()
     int j = 0;
     int k = 0;
 
-    MEMCHECK;
-
     bu_log("\nConverting boolean tree entities:\n");
 
     for (i = 0; i < totentities; i++) {
@@ -73,11 +68,7 @@ Convtree()
 
 	Readrec(dir[i]->param); /* read first record into buffer */
 
-	MEMCHECK;
-
 	ptr = Readtree(dir[i]->rot); /* construct the tree */
-
-	MEMCHECK;
 
 	if (!ptr) {
 	    /* failure */
@@ -135,17 +126,13 @@ Convtree()
 	}
 	bu_vls_init(&comb->material);
 
-	MEMCHECK;
 	if (wdb_export(fdout, dir[i]->name, (void *)comb, ID_COMBINATION, mk_conv2mm))
 	    bu_exit(1, "mk_export_fwrite() failed for combination (%s)\n", dir[i]->name);
 
 	conv++;
-
-	MEMCHECK;
     }
 
     bu_log("Converted %d trees successfully out of %d total trees\n", conv, tottrees);
-    MEMCHECK;
 }
 
 /*

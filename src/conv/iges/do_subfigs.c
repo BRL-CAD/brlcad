@@ -31,9 +31,6 @@ Do_subfigs()
     struct wmember head1;
     struct wmember *wmem;
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_mem_barriercheck();
-
     BU_LIST_INIT(&head1.l);
 
     for (i = 0; i < totentities; i++) {
@@ -48,9 +45,6 @@ Do_subfigs()
 
 	if (dir[i]->type != 408)
 	    continue;
-
-	if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	    bu_mem_barriercheck();
 
 	if (dir[i]->param <= pstart) {
 	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
@@ -217,18 +211,11 @@ Do_subfigs()
 			   (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
     }
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_mem_barriercheck();
-
     if (BU_LIST_IS_EMPTY(&head1.l))
 	return;
 
     (void) mk_lcomb(fdout, curr_file->obj_name, &head1, 0,
 		    (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
-
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_mem_barriercheck();
-
 }
 
 

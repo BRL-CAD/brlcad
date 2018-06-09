@@ -570,8 +570,6 @@ Insert_region_name(char *name, int reg_id)
 	}
     }
     Check_names();
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in Insert_region_name\n");
 }
 
 
@@ -613,8 +611,6 @@ make_unique_name(char *name)
 	bu_vls_printf(&vls, "%s_%d", name, name_count);
 	(void)Search_names(name_root, bu_vls_addr(&vls), &found);
     }
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in make_unique_name\n");
 
     return bu_vls_strgrab(&vls);
 }
@@ -706,8 +702,6 @@ Insert_name(struct name_tree **root, char *name, int inner)
 	}
 	ptr->nleft = new_ptr;
     }
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in Insert_name\n");
 }
 
 
@@ -947,8 +941,6 @@ f4_do_name(void)
     Insert_region_name(tmp_name, region_id);
 
     name_count = 0;
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in f4_do_name\n");
 }
 
 
@@ -960,9 +952,6 @@ f4_do_grid(void)
 
     if (!pass)	/* not doing geometry yet */
 	return;
-
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed at start of f4_do_grid\n");
 
     bu_strlcpy(field, &line[8], sizeof(field));
     grid_no = atoi(field);
@@ -986,11 +975,7 @@ f4_do_grid(void)
     }
 
     VSET(grid_points[grid_no], x*25.4, y*25.4, z*25.4);
-
     V_MAX(max_grid_no, grid_no);
-
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed at end of f4_do_grid\n");
 }
 
 
@@ -1706,18 +1691,12 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
 	if (!skip_region(gr*1000 + comp)) {
 	    /* add holes for this region to the list of regions to process */
 	    hptr = ptr;
-	    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-		bu_log("ERROR: bu_mem_barriercheck failed in Add_hole\n");
 	    while (hptr) {
 		if (f4_do_skips == region_list_len) {
 		    region_list_len += REGION_LIST_BLOCK;
 		    region_list = (int *)bu_realloc((char *)region_list, region_list_len*sizeof(int), "region_list");
-		    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-			bu_log("ERROR: bu_mem_barriercheck failed in Add_hole (after realloc)\n");
 		}
 		region_list[f4_do_skips++] = 1000*hptr->group + hptr->component;
-		if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-		    bu_log("ERROR: bu_mem_barriercheck failed in Add_hole (after adding %d\n)\n", 1000*hptr->group + hptr->component);
 		hptr = hptr->next;
 	    }
 	}

@@ -181,10 +181,6 @@ main(int argc, char *argv [])
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
-		if (RT_G_DEBUG & DEBUG_MEM)
-		    bu_debug |= BU_DEBUG_MEM_LOG;
-		if (RT_G_DEBUG & DEBUG_MEM_FULL)
-		    bu_debug |= BU_DEBUG_MEM_CHECK;
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
@@ -247,9 +243,6 @@ main(int argc, char *argv [])
     BU_LIST_APPEND(&iges_list.l, &curr_file->l);
 
     while (BU_LIST_NON_EMPTY(&iges_list.l)) {
-	if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	    bu_mem_barriercheck();
-
 	curr_file = BU_LIST_FIRST(file_list, &iges_list.l);
 	iges_file = curr_file->file_name;
 
@@ -306,22 +299,12 @@ main(int argc, char *argv [])
 	    Convassem();	/* Convert solid assemblies */
 	}
 
-	if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	    bu_mem_barriercheck();
-
 	Free_dir();
-
-	if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	    bu_mem_barriercheck();
 
 	BU_LIST_DEQUEUE(&curr_file->l);
 	bu_free((char *)curr_file->file_name, "iges-g: curr_file->file_name");
 	bu_free((char *)curr_file, "iges-g: curr_file");
 	file_count++;
-
-	if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	    bu_mem_barriercheck();
-
     }
 
     iges_file = argv[0];
