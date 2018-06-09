@@ -129,6 +129,8 @@ removed at any time.
 
 7.28
 ----
+include/bu/malloc.h
+        bu_ck_malloc_ptr, bu_mem_barriercheck [deprecated 7.28]
 
 include/vmath.h
         VCOMB3, VCOMB3N, VJOIN4
@@ -1334,3 +1336,5 @@ s/free_vert_tree[[:space:]]*\(/bn_vert_tree_destroy\(/g
 s/Add_vert[[:space:]]*\(([^,]*,)([^,]*,)([^,]*,)([^,]*,)/bn_vert_tree_add\(\4\1\2\3/g
 s/Add_vert_and_norm[[:space:]]*\(([^,]*,)([^,]*,)([^,]*,)([^,]*,)([^,]*,)([^,]*,)([^,]*,)/bn_vert_tree_add_w_norm\(\7\1\2\3\4\5\6/g
 s/clean_vert_tree[[:space:]]*\(/bn_vert_tree_clean\(/g
+s/BU_DEBUG_MEM_CHECK/0/g
+s/DEBUG_MEM_FULL/0/g

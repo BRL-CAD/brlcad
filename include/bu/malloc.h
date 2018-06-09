@@ -108,28 +108,12 @@ BU_EXPORT extern void bu_prmem(const char *str);
 BU_EXPORT extern int bu_malloc_len_roundup(int nbytes);
 
 /**
- * For a given pointer allocated by bu_malloc(), bu_calloc(), or
- * BU_ALLOC() check the magic number stored after the allocation area
- * when BU_DEBUG_MEM_CHECK is set.
- *
- * This is the individual version of bu_mem_barriercheck().
- *
- * returns if pointer good or BU_DEBUG_MEM_CHECK not set, bombs if
- * memory is corrupted.
+ * DEPRECATED: use valgrind/memcheck, SGcheck
  */
 BU_EXPORT extern void bu_ck_malloc_ptr(void *ptr, const char *str);
 
 /**
- * Check *all* entries in the memory debug table for barrier word
- * corruption.  Intended to be called periodically through an
- * application during debugging.  Has to run single-threaded, to
- * prevent table mutation.
- *
- * This is the bulk version of bu_ck_malloc_ptr()
- *
- * Returns -
- *  -1	something is wrong
- *   0	all is OK;
+ * DEPRECATED: use valgrind/memcheck, SGcheck
  */
 BU_EXPORT extern int bu_mem_barriercheck(void);
 

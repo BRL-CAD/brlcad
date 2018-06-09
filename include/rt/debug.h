@@ -54,6 +54,7 @@ __BEGIN_DECLS
 #define DEBUG_SOLIDS	0x00000020	/**< @brief 6 Print prep'ed solids */
 #define DEBUG_REGIONS	0x00000040	/**< @brief 7 Print regions & boolean trees */
 #define DEBUG_ARB8	0x00000080	/**< @brief 8 Print voluminous ARB8 details */
+
 #define DEBUG_SPLINE	0x00000100	/**< @brief 9 Splines */
 #define DEBUG_ANIM	0x00000200	/**< @brief 10 Animation */
 #define DEBUG_ANIM_FULL	0x00000400	/**< @brief 11 Animation matrices */
@@ -64,23 +65,26 @@ __BEGIN_DECLS
 #define DEBUG_PARTITION	0x00002000	/**< @brief 14 Info about bool_weave() */
 #define DEBUG_CUT	0x00004000	/**< @brief 15 Print space cutting statistics */
 #define DEBUG_BOXING	0x00008000	/**< @brief 16 Object/box checking details */
+
 #define DEBUG_MEM	0x00010000	/**< @brief 17 -->> BU_DEBUG_MEM_LOG */
-#define DEBUG_MEM_FULL	0x00020000	/**< @brief 18 -->> BU_DEBUG_MEM_CHECK */
+#define DEBUG_UNUSED_0	0x00020000	/**< @brief 18 Unassigned */
 #define DEBUG_FDIFF	0x00040000	/**< @brief 19 bool/fdiff debugging */
 #define DEBUG_PARALLEL	0x00080000	/**< @brief 20 -->> BU_DEBUG_PARALLEL */
+
 #define DEBUG_CUTDETAIL	0x00100000	/**< @brief 21 Print space cutting details */
 #define DEBUG_TREEWALK	0x00200000	/**< @brief 22 Database tree traversal */
 #define DEBUG_TESTING	0x00400000	/**< @brief 23 One-shot debugging flag */
 #define DEBUG_ADVANCE	0x00800000	/**< @brief 24 Cell-to-cell space partitioning */
+
 #define DEBUG_MATH	0x01000000	/**< @brief 25 nmg math routines */
 
 /* Options for debugging particular solids */
 #define DEBUG_EBM	0x02000000	/**< @brief 26 Extruded bit-map solids */
 #define DEBUG_HF	0x04000000	/**< @brief 27 Height Field solids */
 
-#define DEBUG_UNUSED1	0x08000000	/**< @brief 28 unused */
-#define DEBUG_UNUSED2	0x10000000	/**< @brief 29 unused */
-#define DEBUG_UNUSED3	0x20000000	/**< @brief 30 unused */
+#define DEBUG_UNUSED_1	0x08000000	/**< @brief 28 Unassigned */
+#define DEBUG_UNUSED_2	0x10000000	/**< @brief 29 Unassigned */
+#define DEBUG_UNUSED_3	0x20000000	/**< @brief 30 Unassigned */
 
 /* Options which will cause the library to write binary debugging output */
 #define DEBUG_PL_SOLIDS 0x40000000	/**< @brief 31 plot all solids */
@@ -91,7 +95,7 @@ __BEGIN_DECLS
     "\020\040PLOTBOX\
 \037PLOTSOLIDS\
 \033HF\032EBM\031MATH\030ADVANCE\
-\027TESTING\026TREEWALK\025CUTDETAIL\024PARALLEL\023FDIFF\022MEM_FULL\
+\027TESTING\026TREEWALK\025CUTDETAIL\024PARALLEL\023FDIFF\
 \021MEM\020BOXING\017CUTTING\016PARTITION\015ROOTS\014VOL\
 \013ANIM_FULL\012ANIM\011SPLINE\010ARB8\7REGIONS\6SOLIDS\5DB\
 \4INSTANCE\3SHOOT\2ALLHITS\1ALLRAYS"

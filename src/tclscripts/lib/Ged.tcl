@@ -165,7 +165,6 @@ package provide cadwidgets::Ged 1.0
 	method bu_brlcad_data {args}
 	method bu_brlcad_dir {args}
 	method bu_brlcad_root {args}
-	method bu_mem_barriercheck {args}
 	method bu_prmem {args}
 	method bu_get_value_by_keyword {args}
 	method bu_rgb_to_hsv {args}
@@ -1392,10 +1391,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::bu_brlcad_root {args} {
     uplevel \#0 bu_brlcad_root $args
-}
-
-::itcl::body cadwidgets::Ged::bu_mem_barriercheck {args} {
-    uplevel \#0 bu_mem_barriercheck $args
 }
 
 ::itcl::body cadwidgets::Ged::bu_prmem {args} {
@@ -6218,7 +6213,6 @@ package provide cadwidgets::Ged 1.0
     $help add bu_brlcad_data	{{subdir} {}}
     $help add bu_brlcad_dir	{{dirkey} {}}
     $help add bu_brlcad_root	{{subdir} {}}
-    $help add bu_mem_barriercheck {{} {}}
     $help add bu_prmem		{{title} {}}
     $help add bu_get_value_by_keyword {{iwant list} {}}
     $help add bu_rgb_to_hsv	{{rgb} {}}

@@ -81,7 +81,7 @@ main(int argc, char **argv)
     while ((i=bu_getopt(argc, argv, "dH:h?")) != -1) {
 	switch (i) {
 	    case 'd':
-		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
+		RTG.debug |= DEBUG_MEM;
 		break;
 	    case 'H':
 		hscale = atof(bu_optarg);

@@ -197,9 +197,6 @@ do_grid(char *line)
     int grid_no;
     fastf_t x, y, z;
 
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed at start of do_grid\n");
-
     bu_strlcpy(field,  &line[8], sizeof(field));
     grid_no = atoi(field);
 
@@ -226,8 +223,6 @@ do_grid(char *line)
 
     if (grid_no > max_grid_no)
 	max_grid_no = grid_no;
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed at end of do_grid\n");
 }
 
 

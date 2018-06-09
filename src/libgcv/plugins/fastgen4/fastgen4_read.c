@@ -649,8 +649,6 @@ Insert_region_name(struct conversion_state *pstate, char *name, int reg_id)
 	}
     }
     Check_names(pstate);
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed in Insert_region_name");
 }
 
 
@@ -692,8 +690,6 @@ make_unique_name(const struct conversion_state *pstate, char *name)
 	bu_vls_printf(&vls, "%s_%d", name, pstate->name_count);
 	(void)Search_names(pstate->name_root, bu_vls_addr(&vls), &found);
     }
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed in make_unique_name");
 
     return bu_vls_strgrab(&vls);
 }
@@ -785,8 +781,6 @@ Insert_name(const struct conversion_state *pstate, struct name_tree **root, char
 	}
 	ptr->nleft = new_ptr;
     }
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed in Insert_name");
 }
 
 
@@ -1026,8 +1020,6 @@ f4_do_name(struct conversion_state *pstate)
     Insert_region_name(pstate, tmp_name, pstate->region_id);
 
     pstate->name_count = 0;
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed in f4_do_name");
 }
 
 
@@ -1039,9 +1031,6 @@ f4_do_grid(struct conversion_state *pstate)
 
     if (!pstate->pass)	/* not doing geometry yet */
 	return 1;
-
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed at start of f4_do_grid");
 
     bu_strlcpy(pstate->field, &pstate->line[8], sizeof(pstate->field));
     grid_no = atoi(pstate->field);
@@ -1068,9 +1057,6 @@ f4_do_grid(struct conversion_state *pstate)
     VSET(pstate->grid_points[grid_no], x*25.4, y*25.4, z*25.4);
 
     V_MAX(pstate->max_grid_no, grid_no);
-
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed at end of f4_do_grid");
 
     return 1;
 }
@@ -1795,18 +1781,12 @@ Add_holes(struct conversion_state *pstate, int type, int gr, int comp, struct ho
 	if (!skip_region(pstate, gr*1000 + comp)) {
 	    /* add holes for this region to the list of regions to process */
 	    hptr = ptr;
-	    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-		bu_bomb("ERROR: bu_mem_barriercheck failed in Add_hole");
 	    while (hptr) {
 		if (pstate->f4_do_skips == pstate->region_list_len) {
 		    pstate->region_list_len += REGION_LIST_BLOCK;
 		    pstate->region_list = (int *)bu_realloc((char *)pstate->region_list, pstate->region_list_len*sizeof(int), "region_list");
-		    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-			bu_bomb("ERROR: bu_mem_barriercheck failed in Add_hole (after realloc)");
 		}
 		pstate->region_list[pstate->f4_do_skips++] = 1000*hptr->group + hptr->component;
-		if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-		    bu_bomb("ERROR: bu_mem_barriercheck failed in Add_hole (after adding)");
 		hptr = hptr->next;
 	    }
 	}

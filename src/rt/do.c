@@ -940,10 +940,6 @@ do_frame(int framenumber)
     }
 #endif
 
-    /* Just while doing the ray-tracing */
-    if (R_DEBUG&RDEBUG_RTMEM)
-	bu_debug |= (BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_LOG);
-
     rtip->nshots = 0;
     rtip->nmiss_model = 0;
     rtip->nmiss_tree = 0;
