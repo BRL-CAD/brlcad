@@ -28,6 +28,8 @@
 #include "bu/malloc.h"
 #include "bu/ptbl.h"
 
+static const size_t BU_PTBL_DEFAULT_LEN = 16;
+
 void
 bu_ptbl_init(struct bu_ptbl *b, size_t len, const char *str)
 {
@@ -37,7 +39,7 @@ bu_ptbl_init(struct bu_ptbl *b, size_t len, const char *str)
     BU_LIST_INIT_MAGIC(&b->l, BU_PTBL_MAGIC);
 
     if (UNLIKELY(len <= (size_t)0))
-	len = 64;
+	len = BU_PTBL_DEFAULT_LEN;
 
     b->blen = len;
     b->buffer = (long **)bu_calloc(b->blen, sizeof(long *), str);
@@ -68,7 +70,7 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 	bu_log("bu_ptbl_ins(%p, %p)\n", (void *)b, (void *)p);
 
     if (b->blen == 0)
-	bu_ptbl_init(b, 64, "bu_ptbl_ins() buffer");
+	bu_ptbl_init(b, BU_PTBL_DEFAULT_LEN, "bu_ptbl_ins() buffer");
 
     if ((size_t)b->end >= b->blen) {
 	b->buffer = (long **)bu_realloc((char *)b->buffer,
