@@ -23,6 +23,7 @@ changes made.  See document footer for additional details.
 * added 'bot_dump' command to MGED - Nick Reed
 * ported MGED 'screengrab' command to Windows - Nick Reed
 * removed spectral tracing: libmultispectral & rttherm - Cliff Yapp
+* sped up raytracing by 10% - Cezar Elnazli
 
 
 ----------------------------------------------------------------------
