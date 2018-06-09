@@ -25,9 +25,14 @@
 #define RT_CMD_H
 
 #include "common.h"
+
+/* interface headers */
 #include "vmath.h"
 #include "rt/defines.h"
 #include "rt/rt_instance.h"
+
+/* system headers */
+#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 

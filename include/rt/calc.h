@@ -27,9 +27,14 @@
 #define RT_CALC_H
 
 #include "common.h"
+
+/* interface headers */
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn/poly.h"
+
+/* system headers */
+#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 

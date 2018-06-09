@@ -25,11 +25,16 @@
 #define RT_DB_INTERNAL_H
 
 #include "common.h"
+
+/* interface headers */
 #include "bu/magic.h"
 #include "bu/avs.h"
 #include "bn/mat.h"
 #include "rt/defines.h"
 #include "rt/resource.h"
+
+/* system headers */
+#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 

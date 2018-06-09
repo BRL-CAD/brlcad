@@ -25,12 +25,17 @@
 #define RT_ANIM_H
 
 #include "common.h"
+
+/* interface headers */
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bu/file.h"
 #include "rt/defines.h"
 #include "rt/mater.h"
 #include "rt/db_fullpath.h"
+
+/* system headers */
+#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 

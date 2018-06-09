@@ -25,8 +25,14 @@
 #define RT_VLIST_H
 
 #include "common.h"
+
+/* interface headers */
 #include "vmath.h"
 #include "bu/vls.h"
+
+/* system headers */
+#include "bio.h" /* for FILE */
+
 
 __BEGIN_DECLS
 

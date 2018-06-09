@@ -25,10 +25,15 @@
 #define RT_DB_IO_H
 
 #include "common.h"
+
+/* interface headers */
 #include "vmath.h"
 #include "bu/avs.h"
 #include "rt/db5.h"
 #include "rt/defines.h"
+
+/* system headers */
+#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 
