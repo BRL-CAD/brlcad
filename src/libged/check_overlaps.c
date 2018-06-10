@@ -93,10 +93,10 @@ log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit, vect
     else
 	*olist = op;	/* finally initialize root */
 
-    BU_ALLOC(op->reg1,char);
-    BU_ALLOC(op->reg2,char);
-    bu_strlcpy(op->reg1, reg1, sizeof(op->reg1));
-    bu_strlcpy(op->reg2, reg2, sizeof(op->reg2));
+    new_op->reg1 = (char *)bu_malloc(strlen(reg1)+1, "reg1");
+    new_op->reg2 = (char *)bu_malloc(strlen(reg2)+1, "reg2");
+    bu_strlcpy(new_op->reg1, reg1, strlen(reg1)+1);
+    bu_strlcpy(new_op->reg2, reg2, strlen(reg2)+1);
     op->maxdepth = depth;
     op->next = NULL;
     op->count = 1;
