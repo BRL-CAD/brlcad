@@ -405,6 +405,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_autoview {_pane args}
 	method pane_bind {_pane _event _script}
 	method pane_center {_pane args}
+	method pane_check_overlaps {_pane args}
 	method pane_constrain_rmode {_pane args}
 	method pane_constrain_tmode {_pane args}
 	method pane_data_scale_mode {_pane args}
@@ -1423,7 +1424,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::check_overlaps {args} {
-    eval $mGed check_overlaps $args
+    eval $mGed check_overlaps $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::clear {args} {
@@ -2606,6 +2607,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_center {_pane args} {
     eval $mGed center $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_check_overlaps {_pane args} {
+    eval $mGed check_overlaps $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_constrain_rmode {_pane args} {
