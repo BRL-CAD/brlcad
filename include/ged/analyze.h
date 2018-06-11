@@ -46,7 +46,7 @@ GED_EXPORT extern int ged_analyze(struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT extern int ged_bb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Check command for overlap-checker tool
+ * Checks for overlaps of the current view or specified objects.
  */
 GED_EXPORT extern int ged_check_overlaps(struct ged *gedp, int argc, const char *argv[]);
 
