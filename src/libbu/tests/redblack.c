@@ -23,25 +23,15 @@
 
 #include "common.h"
 
-/* system headers */
 #include <stdlib.h>
 #include <stdio.h>
 
-/* interface headers */
 #include "bu.h"
 
-/**
- * Generic Comparison function that internally casts
- * parameters to integers.
- *
- * Comment to be deleted if considered useless.
- */
 static int
 compareFunc(const void* a, const void* b)
 {
-    if (*(int*)a > *(int*)b) return (1);
-    if (*(int*)a < *(int*)b) return (-1);
-    return (0);
+    return *(int *) a - *(int *) b;
 }
 
 
@@ -57,7 +47,7 @@ displayNode(void* data, int dep)
 
 
 int
-redblack_main(int ac, char *av[])
+redblack_main(int UNUSED(ac), char *UNUSED(av[]))
 {
     struct bu_rb_tree *testTree;
     void *searchedValue;
@@ -66,11 +56,6 @@ redblack_main(int ac, char *av[])
     int passed = 0;
     bu_rb_cmp_t farray[1];
     farray[0] = &compareFunc;
-
-    if (ac > 1) {
-	printf("uh oh, unexpected args after %s\n", av[0]);
-	return 1;
-    }
 
     testTree = bu_rb_create("TestingTree", 1, farray);
     for (i = 0; i < 6; i++)
@@ -130,9 +115,7 @@ redblack_main(int ac, char *av[])
     bu_rb_walk(testTree, 0, BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(displayNode), 2);
     bu_rb_diagnose_tree(testTree, 0, BU_RB_WALK_POSTORDER);
 
-    if (passed != 3)
-	return 1;
-    return 0;
+    return passed != 3;
 }
 
 
