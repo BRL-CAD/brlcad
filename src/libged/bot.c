@@ -301,7 +301,7 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
     num_edges = num_faces * 3;
 
     if (argc < 3 || BU_STR_EQUAL(check, "solid")) {
-	struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLDID_ERRORS_INIT_NULL;
+	struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
 	int not_solid = bg_trimesh_solid2(num_vertices, num_faces, bot->vertices, bot->faces, visualize_results ? &errors : NULL);
 	bu_vls_printf(gedp->ged_result_str, not_solid ? "0" : "1");
 
