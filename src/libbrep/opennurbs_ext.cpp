@@ -988,7 +988,7 @@ initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_Interval& u
 
 // Cache surface information as file static to ensure initialization once;
 static const ON_Surface *prev_surf[MAX_PSW] = {NULL};
-static ON_Interval dom[MAX_PSW][2] = {{ON_Interval::EmptyInterval, ON_Interval::EmptyInterval}};
+static ON_Interval dom[MAX_PSW][2];
 static int span_cnt[MAX_PSW][2] = {{0, 0}};
 static double *span[MAX_PSW][2] = {{NULL, NULL}};
 
