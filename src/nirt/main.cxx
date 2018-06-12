@@ -51,7 +51,7 @@ extern "C" {
 #include "bu/units.h"
 #include "analyze.h"
 
-#ifndef HAVE_DECL_POPEN
+#if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN)
 extern FILE *popen(const char *command, const char *mode);
 extern int pclose(FILE *stream);
 #endif
