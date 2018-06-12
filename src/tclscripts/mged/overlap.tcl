@@ -25,16 +25,16 @@
 #	matrices are considered. The user also has the option of manually
 #	editing one of the offending regions by pressing the appropriate
 #	button in this gui.
-#	This script is sensitive to the output format of "g_lint -s"
+#	This script is sensitive to the output format of "glint -s"
 #	It expects the output to be in millimeters and in the form:
 # overlap path1 path2 overlap_length overlap_start_point overlap_end_point
 #	(10 elements per line) with the output sorted so that pairs of regions
 #	are kept together, and the "worst" overlap pairs come first.
 
-#	return the index into the 'g_lint' output that is the start point
+#	return the index into the 'glint' output that is the start point
 #	of the last consecutive line that refers to the next region overlap pair
 #	The input is:
-#		glout - the entire output from g_lint
+#		glout - the entire output from glint
 #		counter - index into $glout that is he start of the current region pair
 #		length - the length of $glout
 proc get_next_overlap { id glout counter length } {
@@ -215,7 +215,7 @@ proc overlap_temp_file { } {
 	}
     }
 
-    return "$dir/g_lint_error"
+    return "$dir/glint_error"
 }
 
 proc read_output { id } {
@@ -249,7 +249,7 @@ proc read_output { id } {
     append over_cont($id,glint_ret) $inn
 }
 
-# run 'g_lint' and display the frame containing the fixing options
+# run 'glint' and display the frame containing the fixing options
 proc fix_overlaps { id } {
     global over_cont
 
@@ -280,18 +280,18 @@ proc fix_overlaps { id } {
 	if {$::tcl_platform(platform) == "windows"} {
 	    set ::exe_ext ".exe"
 	}
-	set g_lint_cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] g_lint$::exe_ext]]
-	set g_lint_tmp [overlap_temp_file]
-	set file_name "| $g_lint_cmd -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) 2> $g_lint_tmp"
+	set glint_cmd [bu_brlcad_root [file join [bu_brlcad_dir bin] glint$::exe_ext]]
+	set glint_tmp [overlap_temp_file]
+	set file_name "| $glint_cmd -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) 2> $glint_tmp"
 	set over_cont($id,fd) [open $file_name]
 	fconfigure $over_cont($id,fd) -blocking false
 
 	if { $over_cont($id,fd) < 1 } {
-	    set fd [open $g_lint_tmp]
+	    set fd [open $glint_tmp]
 	    set mess [read $fd]
 	    close $fd
-	    file delete $g_lint_tmp
-	    tk_messageBox -icon error -message $mess -title "g_lint error" -type ok
+	    file delete $glint_tmp
+	    tk_messageBox -icon error -message $mess -title "glint error" -type ok
 	    $over_cont($id,top).status configure -text "ready"
 	    $over_cont($id,top).go_quit.go configure -state normal
 	    return
@@ -547,12 +547,12 @@ proc overlap_tool { id } {
 	{summary "Select this option to do raytracing to discover overlaps" }
     }
     radiobutton $over_cont($id,top).glint -variable over_cont($id,ray) -value "glint" -command "glint_setup $id"
-    label $over_cont($id,top).glint_lab -text "Read overlaps from g_lint output"
+    label $over_cont($id,top).glint_lab -text "Read overlaps from glint output"
     hoc_register_data $over_cont($id,top).glint "Read Overlaps from a file" {
-	{summary "Select this option to read an overlap file produced from 'g_lint -s'" }
+	{summary "Select this option to read an overlap file produced from 'glint -s'" }
     }
     hoc_register_data $over_cont($id,top).glint_lab "Read Overlaps from a file" {
-	{summary "Select this option to read an overlap file produced from 'g_lint -s'" }
+	{summary "Select this option to read an overlap file produced from 'glint -s'" }
     }
 
     frame $over_cont($id,top).ray_fr
@@ -568,30 +568,30 @@ proc overlap_tool { id } {
     }
     label $over_cont($id,top).ray_fr.ray -text "Raytracing Parameters:"
     hoc_register_data $over_cont($id,top).ray_fr.ray "Ray Tracing Parameters" {
-	{summary "This is a list of parameters that will be passed to 'g_lint'\n\
+	{summary "This is a list of parameters that will be passed to 'glint'\n\
 			to check the object list for overlapping regions."}
     }
     label $over_cont($id,top).ray_fr.az_l -text "Azimuth:"
     entry $over_cont($id,top).ray_fr.az_e -width 5 -textvariable over_cont($id,az)
     hoc_register_data $over_cont($id,top).ray_fr.az_l "Azimuth" {
-	{summary "Enter the azimuth angle to be passed to 'g_lint' for its\n\
+	{summary "Enter the azimuth angle to be passed to 'glint' for its\n\
 			check for overlapping regions."}
 	{range "0 through 360 degrees"}
     }
     hoc_register_data $over_cont($id,top).ray_fr.az_e "Azimuth" {
-	{summary "Enter the azimuth angle to be passed to 'g_lint' for its\n\
+	{summary "Enter the azimuth angle to be passed to 'glint' for its\n\
 			check for overlapping regions."}
 	{range "0 through 360 degrees"}
     }
     label $over_cont($id,top).ray_fr.el_l -text "Elevation:"
     entry $over_cont($id,top).ray_fr.el_e -width 5 -textvariable over_cont($id,el)
     hoc_register_data $over_cont($id,top).ray_fr.el_l "Elevation" {
-	{summary "Enter the elevation angle to be passed to 'g_lint' for its\n\
+	{summary "Enter the elevation angle to be passed to 'glint' for its\n\
 			check for overlapping regions."}
 	{range "-90 through 90 degrees"}
     }
     hoc_register_data $over_cont($id,top).ray_fr.el_e "Elevation" {
-	{summary "Enter the elevation angle to be passed to 'g_lint' for its\n\
+	{summary "Enter the elevation angle to be passed to 'glint' for its\n\
 			check for overlapping regions."}
 	{range "-90 through 90 degrees"}
     }
@@ -618,10 +618,10 @@ proc overlap_tool { id } {
     label $over_cont($id,top).glint_fr.file_l -text "Enter overlap file:"
     entry $over_cont($id,top).glint_fr.file_e -textvariable over_cont($id,file) -width 40
     hoc_register_data $over_cont($id,top).glint_fr.file_l "Overlap File" {
-	{summary "Enter the name of a file containing overlap data from 'g_lint -s'" }
+	{summary "Enter the name of a file containing overlap data from 'glint -s'" }
     }
     hoc_register_data $over_cont($id,top).glint_fr.file_e "Overlap File" {
-	{summary "Enter the name of a file containing overlap data from 'g_lint -s'" }
+	{summary "Enter the name of a file containing overlap data from 'glint -s'" }
     }
 
     frame $over_cont($id,top).go_quit
@@ -679,7 +679,7 @@ proc overlap_tool { id } {
     }
     set reg_data [list [list summary "Object1 and Object2 are regions that appear to\n\
 		occupy some of the same space. The maximum length of the overlap\n\
-		as discovered by 'g_lint' using the ray trace parameters provided is displayed."]]
+		as discovered by 'glint' using the ray trace parameters provided is displayed."]]
     hoc_register_data $over_cont($id,work_frame).l1 "Object1" $reg_data
     hoc_register_data $over_cont($id,work_frame).l2 "overlaps" $reg_data
     hoc_register_data $over_cont($id,work_frame).l3 "Object2" $reg_data
@@ -719,7 +719,7 @@ proc overlap_tool { id } {
     button $over_cont($id,work_frame).b6 -text "plot overlaps" -command "plot_overlaps $id"
     hoc_register_data $over_cont($id,work_frame).b6 "plot overlaps" {
 	{summary "Press this button to see a plot of the two overlapping regions\n\
-			and the rays that 'g_lint' reported in the overlap area.\n\
+			and the rays that 'glint' reported in the overlap area.\n\
 			The overlap rays are drawn in red. Object 1 is drawn in green,\n\
 			and Object 2 is drawn in cyan."}
     }
