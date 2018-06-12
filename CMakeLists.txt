@@ -1198,6 +1198,19 @@ if(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "B
   set(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build bundled libraries." FORCE)
 endif(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
 
+# Single flag for disabling GUI instead of 5.
+option(BRLCAD_ENABLE_MINIMAL "Skip GUI support and docs. Faster builds." OFF)
+mark_as_advanced(BRLCAD_ENABLE_MINIMAL)
+
+if(BRLCAD_ENABLE_MINIMAL)
+  set(BRLCAD_ENABLE_OPENGL "OFF")
+  set(BRLCAD_ENABLE_X11 "OFF")
+  set(BRLCAD_ENABLE_TK "OFF")
+  set(BRLCAD_ENABLE_QT "OFF")
+  set(BRLCAD_ENABLE_AQUA "OFF")
+  set(BRLCAD_EXTRADOCS "OFF")
+endif(BRLCAD_ENABLE_MINIMAL)
+
 # Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
 # building. Not currently working - needs work in at least Tk
 # CMake logic (probably more), and the display manager/framebuffer codes are known to depend
@@ -1210,9 +1223,9 @@ option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry fil
 
 # test for X11 on all platforms since we don't know when/where we'll find it, unless
 # we've indicated we *don't* want an X11 build
-if(NOT BRLCAD_ENABLE_AQUA)
+if(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
   include(FindX11)
-endif(NOT BRLCAD_ENABLE_AQUA)
+endif(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
 
 # make sure Xi is included in the list of X11 libs
 # (Xext is automatically added during FindX11)
@@ -1229,12 +1242,12 @@ elseif(BRLCAD_ENABLE_AQUA)
   option(BRLCAD_ENABLE_X11 "Use X11." OFF)
 else(WIN32)
   # make everywhere else depend on whether we found a suitable X11
-  # X11_Xext_LIB AND X11_Xi_LIB AND 
-  if(X11_FOUND)
+  # X11_Xext_LIB AND X11_Xi_LIB AND
+  if(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
     option(BRLCAD_ENABLE_X11 "Use X11." ON)
-  else(X11_FOUND)
+  else(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
     option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-  endif(X11_FOUND)
+  endif(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
 endif(WIN32)
 mark_as_advanced(BRLCAD_ENABLE_X11)
 
@@ -1622,6 +1635,7 @@ CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook docum
 # the target count on MSVC, disable validation there.
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
+
 
 #----------------------------------------------------------------------
 # Load Doxygen related CMake macros
@@ -3304,7 +3318,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_RPM_PACKAGE_GROUP "Applications/Engineering")
     set(CPACK_RPM_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
 
-    # We do NOT want to strip the binaries added to the RPM - 
+    # We do NOT want to strip the binaries added to the RPM -
     # see https://cmake.org/Wiki/CMake:CPackPackageGenerators and
     # https://public.kitware.com/Bug/view.php?id=7435
     set(CPACK_RPM_SPEC_INSTALL_POST /bin/true)
