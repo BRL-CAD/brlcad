@@ -334,3 +334,8 @@
    want to be able to sort on that as well.
 
 ** List View Needs Horizontal Scroll When Paths Are Very Long
+* Check for other issues, separate report tabs
+** for geometry that was not hit
+** for air gaps
+** for invalid/non-volume geometry
+** for other glint issues
