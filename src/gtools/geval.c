@@ -31,9 +31,12 @@
 
 int
 main(int ac, char *av[]) {
-    int i;
+    int i, ret;
     size_t len = 0;
     struct ged *dbp;
+    void *libged = bu_dlopen(NULL, BU_RTLD_LAZY);
+    char gedfunc[MAXPATHLEN] = {0};
+    int (*func)(struct ged *gedp, ...);
 
     if (ac < 2) {
 	printf("Usage: %s file.g [command]\n", av[0]);
@@ -59,12 +62,11 @@ main(int ac, char *av[]) {
 	printf("=");
     printf("\n");
 
-    void *libged = bu_dlopen(NULL, BU_RTLD_LAZY);
     if (!libged) {
 	printf("ERROR: %s\n", dlerror());
 	return -3;
     }
-    char gedfunc[MAXPATHLEN] = {0};
+
     bu_strlcat(gedfunc, "ged_", MAXPATHLEN);
     bu_strlcat(gedfunc, av[0], MAXPATHLEN - strlen(gedfunc));
     if (strlen(gedfunc) < 1 || gedfunc[0] != 'g') {
@@ -72,13 +74,12 @@ main(int ac, char *av[]) {
 	return -4;
     }
 
-    int (*func)(struct ged *gedp, ...);
     func = (int (*)(struct ged *gedp, ...)) bu_dlsym(libged, gedfunc);
     if (!func) {
 	printf("ERROR: unrecognized command [%s]\n", av[0]);
 	return -5;
     }
-    int ret = func(dbp, ac, av);
+    ret = func(dbp, ac, av);
 
     dlclose(libged);
 
