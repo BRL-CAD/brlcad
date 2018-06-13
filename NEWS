@@ -24,6 +24,7 @@ changes made.  See document footer for additional details.
 * ported MGED 'screengrab' command to Windows - Nick Reed
 * removed spectral tracing: libmultispectral & rttherm - Cliff Yapp
 * sped up raytracing by 10% - Cezar Elnazli
+* fixed crash of MGED's overlap tool - Saran Narayan
 
 
 ----------------------------------------------------------------------
