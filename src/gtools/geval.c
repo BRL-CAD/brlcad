@@ -55,7 +55,7 @@ main(int ac, char *av[]) {
 	len += strlen(av[i]) + 1;
     }
     printf("\n");
-    for (i = 0; i < len; i++)
+    for (i = 0; i < (int) len; i++)
 	printf("=");
     printf("\n");
 
@@ -73,7 +73,7 @@ main(int ac, char *av[]) {
     }
 
     int (*func)(struct ged *gedp, ...);
-    func = bu_dlsym(libged, gedfunc);
+    func = (int (*)(struct ged *gedp, ...)) bu_dlsym(libged, gedfunc);
     if (!func) {
 	printf("ERROR: unrecognized command [%s]\n", av[0]);
 	return -5;
