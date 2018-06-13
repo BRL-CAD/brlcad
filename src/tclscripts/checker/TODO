@@ -271,26 +271,51 @@
   such as giving the option to translate one or both sides of the
   overlap apart.
 
+** Resolve overlaps based on materials
+
+  User suggested subtracting smaller from bigger where material types
+  are the same, subtracting less dense items when they are not the
+  same.  May want to limit this to "small" overlaps and/or consider if
+  there are cases when it should not apply.
+
 * Better Overlap Detection
   Currently there are a lot of false positive you get when a pipe or
-  box runs through a bot hull. The bboxes intersect, but the actual
-  geometry doesn't. Detect and group for mass review?
+  box runs through a bot hull (CSM: this sounds like a bug! or perhaps
+  bad bot geometry...). The bboxes intersect, but the actual geometry
+  doesn't (CSM: then it shouldn't have resulted in an overlap
+  event...). Detect and group for mass review?
 
   Two bot-specific issues:
   1. Overlap detection sometimes dependent on face orientation.
   1. Tight triangles leas to ray sneak-through.
 
-* Remove Linux Requirement -- Convert Shell+Tcl Script to Tcl/libged
+** Use montecarlo convergence
+
+  Shoot rays iteratively until we reach a particular sampling density.
+
+** Use spherical sampling
+
+  Quasirandom or importance sampling can be used for faster
+  convergence performance.
+
+* Convert Shell+Tcl Script to Tcl/libged/libanalyze
+
+  Make the capability an integrated feature available the same across
+  all platforms (including Windows) without requiring it be a
+  multistep process.  Ideally as a libged command that integrates with
+  the GUI.
+
 * Optimization (Facetization) of Small Bot Fixes
 
   Can we do a post-process after automatic resolution to attempt to
-  facetize the many regions which just contain a bot and a subtraction
-  of some other object to fix an overlap, replacing the recipe with a
-  region containing a new, non-overlapping bot.
+  re-facetize regions which contain a bot and a subtraction of some
+  other object(s), replacing the recipe with a region containing a
+  single new evaluated bot.
 
   User said it's okay if this operation takes a week or a month
   even. It might be nice to be able to take intermediate results,
   abort it maybe and take what's done.
+
 * Minor GUI Improvements
 ** Show Units for Volume Estimates
 
