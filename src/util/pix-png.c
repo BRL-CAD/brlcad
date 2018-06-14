@@ -174,6 +174,7 @@ write_png(FILE *outfp, unsigned char **scanlines, long int width, long int heigh
     png_write_info(png_p, info_p);
     png_write_image(png_p, scanlines);
     png_write_end(png_p, NULL);
+    png_write_flush(png_p);
     png_destroy_write_struct(&png_p, &info_p);
 }
 
@@ -194,6 +195,10 @@ main(int argc, char *argv[])
 	[-s square_file_size] [-o file.png] [file.pix] [> file.png]\n";
 
     bu_setprogname(argv[0]);
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
 
     /* important to store these before calling get_args().  they're
      * also not necessarily constants so have to set here instead of
@@ -260,8 +265,10 @@ main(int argc, char *argv[])
     bu_free(scanbuf, "scanbuf");
     bu_free(rows, "rows");
 
-    (void)fclose(infp);
-    (void)fclose(outfp);
+    if (infp != stdin)
+	fclose(infp);
+    if (outfp != stdout)
+	fclose(outfp);
 
     return 0;
 }
