@@ -2104,21 +2104,23 @@ if(NOT MSVC)
     CHECK_CXX_FLAG(qstackprotect)
   endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 
-  # enable memory error detector AddressSanitizer (see
-  # https://code.google.com/p/address-sanitizer/ for more info.)
-  if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
+  # Similarly, enable the AddressSanitizer memory address sanitizer.
+  # See https://code.google.com/p/address-sanitizer/ for more info.
+  # This typically is reported to cause a 2x slowdown.
+  if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
     CHECK_C_FLAG(fsanitize=address)
     CHECK_C_FLAG(fno-omit-frame-pointer)
     CHECK_CXX_FLAG(fsanitize=address)
     CHECK_CXX_FLAG(fno-omit-frame-pointer)
-  endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
+  endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 
-  # enable data race detector  ThreadSanitizer (see
-  # https://code.google.com/p/thread-sanitizer/ for more info.)
-  if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_THREAD_SANITIZER)
+  # Differently, enable the ThreadSanitizer race condition detector
+  # only as requested since it can incur a 5x-15x slowdown.  See
+  # https://code.google.com/p/thread-sanitizer/ for more info.
+  if(BRLCAD_SANITIZE_THREAD)
     CHECK_C_FLAG(fsanitize=thread)
     CHECK_CXX_FLAG(fsanitize=thread)
-  endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_THREAD_SANITIZER)
+  endif(BRLCAD_SANITIZE_THREAD)
 
   # verbose warning flags.  we intentionally try to turn on as many as
   # possible.  adding more is encouraged (as long as all issues are
