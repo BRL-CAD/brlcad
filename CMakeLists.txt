@@ -2188,16 +2188,27 @@ if(NOT MSVC)
       # constructors (e.g., in opennurbs and boost)
       CHECK_CXX_FLAG(Wno-inline)
     else()
-      CHECK_CXX_FLAG(Wninline)
+      CHECK_CXX_FLAG(Winline)
     endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
 
-    # this makes sure we don't warn about using long long.  really, it's okay.
-    CHECK_C_FLAG(Wno-long-long)
-    CHECK_CXX_FLAG(Wno-long-long)
+    # NOTE: Cannot directly test for -Wno-... flags because GCC
+    # intentionally emits no diagnostic, only warning about
+    # unrecognized options when other diagnostics are produced.
+    # Instead, we must use an indirect test via -Wno-error=...
 
-    # this is for X11 headers, they use variadic macros
-    CHECK_C_FLAG(Wno-variadic-macros)
-    CHECK_CXX_FLAG(Wno-variadic-macros)
+    CHECK_C_FLAG(Wno-error=long-long VARS long_long)
+    if(long_long)
+      # this makes sure we don't warn about using long long.  really, it's okay.
+      CHECK_C_FLAG(Wno-long-long)
+      CHECK_CXX_FLAG(Wno-long-long)
+    endif(long_long)
+
+    CHECK_C_FLAG(Wno-error=variadic-macros VARS variadic_macros)
+    if(variadic_macros)
+      # this is for X11 headers, they use variadic macros
+      CHECK_C_FLAG(Wno-variadic-macros)
+      CHECK_CXX_FLAG(Wno-variadic-macros)
+    endif(variadic_macros)
 
     # this is used to check Doxygen comment syntax
     CHECK_C_FLAG(Wdocumentation)
@@ -2219,16 +2230,16 @@ if(NOT MSVC)
   endif(BRLCAD_ENABLE_COVERAGE)
 
   if(BRLCAD_ENABLE_STRICT)
-    # If we're going strict, suppress C11 warnings about isnan due to
-    # clang issue:  https://llvm.org/bugs/show_bug.cgi?id=17788
 
     # NOTE: Cannot directly test for -Wno-... flags because GCC
     # intentionally emits no diagnostic, only warning about
     # unrecognized options when other diagnostics are produced.
-    # Instead, we must use an indirect test for the flag.
+    # Instead, we must use an indirect test via -Wno-error=...
 
     CHECK_C_FLAG(Wno-error=c11-extensions VARS c11_extensions)
     if(c11_extensions)
+      # If we're going strict, suppress C11 warnings about isnan due
+      # to clang issue: https://llvm.org/bugs/show_bug.cgi?id=17788
       CHECK_C_FLAG(Wno-c11-extensions)
       CHECK_CXX_FLAG(Wno-c11-extensions)
     endif(c11_extensions)
