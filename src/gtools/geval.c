@@ -24,25 +24,15 @@
  */
 
 #include "common.h"
-#include <stdio.h>
+
+/* system headers */
+#include "bio.h"
 #include <string.h>
+
+/* implementation headers */
 #include <bu.h>
 #include <ged.h>
 
-/* TODO - we need to make a more generic version of this uglyness part
- * of a library somewhere... dlsym requires void* to function pointer casting
- * but in general this is not permitted by ISO C (triggers -Wpedantic):
- *
- * https://stackoverflow.com/questions/31526876/casting-when-using-dlsym
- */
-typedef int (*ged_func_ptr_t)(struct ged *gedp, ...);
-ged_func_ptr_t
-ged_get_func_ptr(void *libged, char *gedfunc)
-{
-    ged_func_ptr_t f;
-    *(void **) (&f) = bu_dlsym(libged, gedfunc);
-    return f;
-}
 
 int
 main(int ac, char *av[]) {
@@ -51,7 +41,7 @@ main(int ac, char *av[]) {
     struct ged *dbp;
     void *libged = bu_dlopen(NULL, BU_RTLD_LAZY);
     char gedfunc[MAXPATHLEN] = {0};
-    ged_func_ptr_t func;
+    int (*func)(struct ged *, int, char *[]);
 
     if (ac < 2) {
 	printf("Usage: %s file.g [command]\n", av[0]);
@@ -78,7 +68,7 @@ main(int ac, char *av[]) {
     printf("\n");
 
     if (!libged) {
-	printf("ERROR: %s\n", dlerror());
+	printf("ERROR: %s\n", bu_dlerror());
 	return -3;
     }
 
@@ -89,14 +79,14 @@ main(int ac, char *av[]) {
 	return -4;
     }
 
-    func = ged_get_func_ptr(libged, gedfunc);
+    *(void **)(&func) = bu_dlsym(libged, gedfunc);
     if (!func) {
 	printf("ERROR: unrecognized command [%s]\n", av[0]);
 	return -5;
     }
     ret = func(dbp, ac, av);
 
-    dlclose(libged);
+    bu_dlclose(libged);
 
     printf("%s", bu_vls_addr(dbp->ged_result_str));
     ged_close(dbp);
