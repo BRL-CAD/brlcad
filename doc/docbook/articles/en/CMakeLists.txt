@@ -16,6 +16,7 @@ set(articles_EN
   tire.xml
   mged.xml
   main_menu.xml
+  overlap_tool.xml
   )
 
 set(articles_EN_IMAGES
