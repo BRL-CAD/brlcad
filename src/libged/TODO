@@ -86,7 +86,7 @@ Be specific.
 
   The command becomes more of a stream processor on the input file, as
   if piped on the shell line.  To embed awk, sed, cut, see qse:
-	  http://code.google.com/p/qse/
+	  https://github.com/hyung-hwan/qse
 
   Batch needs some syntax like $*, $1, $2, or {*}, {1}, {2}, etc., to
   represent file columns (in a poor man's awk fashion) and search
