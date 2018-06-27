@@ -1205,6 +1205,9 @@ bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
     iv_1 = input_points_3d;
     nv_1 = num_input_pnts;
 
+    iv_2 = (point_t *) 0;
+    nv_2 = 0;
+
     (void)chull3d_intermediate_set(&iv_2, &nv_2, iv_1, nv_1);
     iva = iv_2;
     nva = nv_2;
