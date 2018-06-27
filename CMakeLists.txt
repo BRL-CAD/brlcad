@@ -2044,7 +2044,7 @@ if(NOT MSVC)
   # ar/ranlib handling via wrappers or plugin specification.  These
   # wrappers work fine even if we're not using LTO, so just use them
   # if found.
-  if (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_X_COMPILER_VERSION VERSION_GREATER 4.8)
+  if (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
     find_program(GCC_AR_LTO ${CMAKE_C_COMPILER}-ar NAMES gcc-ar DOC "GNU ARchiver wrapper with LTO support")
     if (GCC_AR_LTO)
       SET(CMAKE_AR "${GCC_AR_LTO}" CACHE FILEPATH "Archiver" FORCE)
@@ -2053,7 +2053,7 @@ if(NOT MSVC)
     if (GCC_RANLIB_LTO)
       SET(CMAKE_RANLIB "${GCC_RANLIB_LTO}" CACHE FILEPATH "Ranlib" FORCE)
     endif (GCC_RANLIB_LTO)
-  endif (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_X_COMPILER_VERSION VERSION_GREATER 4.8)
+  endif (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
 
   # only omit the frame pointer if we have no interest in profiling or
   # debugging.
