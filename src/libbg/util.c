@@ -57,7 +57,7 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
     plane_t plane;
     fastf_t dist_pt_pt = 0.0;
     fastf_t vdot = 1.0;
-    point_t p_farthest;
+    point_t p_farthest = VINIT_ZERO;
     int p_farthest_index = 0;
     vect_t normal = VINIT_ZERO;
     const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST/2.0, BN_TOL_DIST*BN_TOL_DIST/4.0, 1.0e-6, 1.0-1.0e-6};
@@ -70,7 +70,6 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
     VSCALE(*origin_pnt, *origin_pnt, 1.0/n);
 
     /* Step 2 - find furthest points from the center point */
-    VSETALL(p_farthest, 0.0);
     for (i = 0; i < n; i++) {
 	fastf_t curr_dist = DIST_PT_PT_SQ(*origin_pnt, points_3d[i]);
 	if (curr_dist > dist_pt_pt) {

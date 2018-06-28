@@ -17,7 +17,7 @@
 #include "tkMacOSXWm.h"
 #include "tkMacOSXEvent.h"
 #include "tkMacOSXDebug.h"
- 
+
 /*
 #ifdef TK_MAC_DEBUG
 #define TK_MAC_DEBUG_EVENTS
@@ -365,10 +365,10 @@ GenerateUpdates(
     event.xexpose.count = 0;
     Tk_HandleEvent(&event);
 
-    #ifdef TK_MAC_DEBUG_DRAWING
+#ifdef TK_MAC_DEBUG_DRAWING
     NSLog(@"Expose %p {{%d, %d}, {%d, %d}}", event.xany.window, event.xexpose.x,
 	event.xexpose.y, event.xexpose.width, event.xexpose.height);
-    #endif
+#endif
 
     /*
      * Generate updates for the children of this window
@@ -395,7 +395,7 @@ GenerateUpdates(
 	/*
 	 * TODO: Here we should handle out of process embedding.
 	 */
-    }    
+    }
 
     return 1;
 }
@@ -770,7 +770,7 @@ Tk_MacOSXIsAppInFront(void)
 
 /*
  * Custom content view for use in Tk NSWindows.
- * 
+ *
  * Since Tk handles all drawing of widgets, we only use the AppKit event loop
  * as a source of input events.  To do this, we overload the NSView drawRect
  * method with a method which generates Expose events for Tk but does no
@@ -812,7 +812,7 @@ ConfigureRestrictProc(
 {
     const NSRect *rectsBeingDrawn;
     NSInteger rectsBeingDrawnCount;
-    
+
     [self getRectsBeingDrawn:&rectsBeingDrawn count:&rectsBeingDrawnCount];
 
 #ifdef TK_MAC_DEBUG_DRAWING
@@ -822,7 +822,7 @@ ConfigureRestrictProc(
 	    NSCompositeSourceOver);
 #endif
 
- 	    
+
     CGFloat height = [self bounds].size.height;
     HIMutableShapeRef drawShape = HIShapeCreateMutable();
 
@@ -841,9 +841,9 @@ ConfigureRestrictProc(
 			NSEventTrackingRunLoopMode, NSModalPanelRunLoopMode,
 			nil]];
     }
-   
+
     CFRelease(drawShape);
-  
+
 }
 
 -(void) setFrameSize: (NSSize)newsize
@@ -863,13 +863,13 @@ ConfigureRestrictProc(
 	 * don't clobber the AutoreleasePool set up by the caller.
 	 */
 	[NSApp setPoolProtected:YES];
-	
+
 	/*
 	 * Try to prevent flickers and flashes.
 	 */
 	[w disableFlushWindow];
 	NSDisableScreenUpdates();
-	
+
 	/* Disable Tk drawing until the window has been completely configured.*/
 	TkMacOSXSetDrawingEnabled(winPtr, 0);
 

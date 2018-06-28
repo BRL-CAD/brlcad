@@ -188,10 +188,9 @@ adc_model_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t am
 void
 adc_grid_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax)
 {
-    point_t model_pt;
+    point_t model_pt = VINIT_ZERO;
     point_t view_pt;
 
-    VSETALL(model_pt, 0.0);
     MAT4X3PNT(view_pt, model2view, model_pt);
     VADD2(adcs->pos_view, view_pt, adcs->pos_grid);
     adcs->dv_x = adcs->pos_view[X] * amax;
@@ -202,10 +201,9 @@ adc_grid_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t ama
 void
 adc_view_to_adc_grid(struct bview_adc_state *adcs, mat_t model2view)
 {
-    point_t model_pt;
+    point_t model_pt = VINIT_ZERO;
     point_t view_pt;
 
-    VSETALL(model_pt, 0.0);
     MAT4X3PNT(view_pt, model2view, model_pt);
     VSUB2(adcs->pos_grid, adcs->pos_view, view_pt);
 }

@@ -193,13 +193,11 @@ static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 
 int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 {
-    fastf_t float_rgb[3];
+    fastf_t float_rgb[3] = VINIT_ZERO;
     fastf_t hue, sat, val;
     fastf_t hue_frac;
     fastf_t p, q, t;
     int hue_int;
-
-    VSETALL(float_rgb, 0.0);
 
     hue = hsv[HUE];
     sat = hsv[SAT];

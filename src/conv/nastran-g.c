@@ -533,10 +533,9 @@ HIDDEN int
 convert_cs(struct coord_sys *cs)
 {
     struct coord_sys *cs2;
-    point_t tmp_orig, tmp_pt1, tmp_pt2;
-    VSETALL(tmp_orig, 0.0);
-    VSETALL(tmp_pt1, 0.0);
-    VSETALL(tmp_pt2, 0.0);
+    point_t tmp_orig = VINIT_ZERO;
+    point_t tmp_pt1 = VINIT_ZERO;
+    point_t tmp_pt2 = VINIT_ZERO;
 
     if (!cs->rid)
 	return 0;
@@ -624,9 +623,7 @@ HIDDEN int
 convert_grid(int idx)
 {
     struct coord_sys *cs;
-    point_t tmp_pt;
-    VSETALL(tmp_pt, 0.0);
-
+    point_t tmp_pt = VINIT_ZERO;
 
     if (!g_pts[idx].cid)
 	return 0;

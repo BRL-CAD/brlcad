@@ -1134,7 +1134,9 @@ Tk_ConfigOutlineGC(
     if (mask && (dash->number != 0)) {
 	gcValues->line_style = LineOnOffDash;
 	gcValues->dash_offset = outline->offset;
-	if (dash->number > 0) {
+	if ((unsigned int)ABS(dash->number) > sizeof(char *)) {
+	    gcValues->dashes = dash->pattern.pt[0];
+	} else if (dash->number != 0) {
 	    gcValues->dashes = dash->pattern.array[0];
 	} else {
 	    gcValues->dashes = (char) (4 * width + 0.5);
@@ -1338,7 +1340,9 @@ Tk_ResetOutlineGC(
     if ((dash->number > 2) || (dash->number < -1) || (dash->number==2 &&
 	    (dash->pattern.array[0] != dash->pattern.array[1])) ||
 	    ((dash->number == -1) && (dash->pattern.array[0] != ','))) {
-	if (dash->number > 0) {
+	if ((unsigned int)ABS(dash->number) > sizeof(char *)) {
+	    dashList = dash->pattern.pt[0];
+	} else if (dash->number != 0) {
 	    dashList = dash->pattern.array[0];
 	} else {
 	    dashList = (char) (4 * width + 0.5);

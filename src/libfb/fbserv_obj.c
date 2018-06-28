@@ -33,15 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-#ifdef HAVE_WINSOCK_H
-#  include <process.h>
-#  include <winsock.h>
-#else
-#  include <sys/socket.h>
-#  include <netinet/in.h>		/* For htonl(), etc. */
-#endif
 #include <tcl.h>
+#include "bnetwork.h"
 
 #include "raytrace.h"
 #include "dm.h"

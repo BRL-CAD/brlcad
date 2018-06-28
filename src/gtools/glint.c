@@ -37,6 +37,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
+#include "bn/str.h"
 
 
 #define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__);
@@ -802,7 +803,7 @@ main(int argc, char **argv)
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (ch) {
 	    case 'a':
-		if (sscanf(bu_optarg, "%lf", &azimuth) != 1) {
+		if (bn_decode_angle(&azimuth,bu_optarg) == 0) {
 		    bu_log("Invalid azimuth specification: '%s'\n", bu_optarg);
 		    printusage();
 		    bu_exit (1, NULL);
@@ -812,7 +813,7 @@ main(int argc, char **argv)
 		cell_center = 1;
 		break;
 	    case 'e':
-		if (sscanf(bu_optarg, "%lf", &elevation) != 1) {
+		if (bn_decode_angle(&elevation,bu_optarg) == 0) {
 		    bu_log("Invalid elevation specification: '%s'\n", bu_optarg);
 		    printusage();
 		    bu_exit (1, NULL);

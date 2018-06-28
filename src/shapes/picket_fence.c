@@ -36,7 +36,9 @@
 extern int isnan(double x);
 #endif
 
-int main(int argc, char *argv[])
+
+int
+main(int argc, char *argv[])
 {
     long i, j, k, l;
     struct rt_wdb *fp_db = NULL;

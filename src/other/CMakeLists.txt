@@ -35,12 +35,13 @@ RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 # Quiet all warnings in this directory
 DISABLE_WARNINGS()
 
-# For src/other, be liberal about standards 
-if(NOT MSVC)
-  set(CMAKE_C_EXTENSIONS ON)
-  set(CMAKE_C_STANDARD_REQUIRED OFF)
-  set(CMAKE_C_STANDARD 99)
-endif(NOT MSVC)
+# For src/other, be liberal about standards
+unset(CMAKE_C_EXTENSIONS)
+unset(CMAKE_C_STANDARD_REQUIRED)
+unset(CMAKE_C_STANDARD)
+unset(CMAKE_CXX_EXTENSIONS)
+unset(CMAKE_CXX_STANDARD_REQUIRED)
+unset(CMAKE_CXX_STANDARD)
 
 # Set a variable that will tell build logic in subdirectories that there is a
 # parent build.  This will in some cases disable attempts to define settings
@@ -119,18 +120,6 @@ SetTargetFolder(zlib "Third Party Libraries")
 SetTargetFolder(zlib-static "Third Party Libraries")
 SetTargetFolder(example "Third Party Executables")
 SetTargetFolder(minigzip "Third Party Executables")
-
-# tinycthread Library - C11 style threads portability wrapper 
-set(tinycthread_DESCRIPTION "
-Option for enabling and disabling compilation of the tinycthread library
-provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(tinycthread TINYCTHREAD tinycthread tinycthread_DESCRIPTION ALIASES ENABLE_TINYCTHREAD)
-SetTargetFolder(tinycthread "Third Party Libraries")
-SetTargetFolder(tinycthread-static "Third Party Libraries")
-
 
 # LZ4 compression/decompression library
 set(lz4_DESCRIPTION "
@@ -275,6 +264,7 @@ AUTO.
 # Note - we don't actually know the libpng build target name for the
 # shared library at this point - use png as a stub and override
 # once we know what PNG_LIB_NAME is.
+set(CMAKE_FIND_FRAMEWORK LAST)
 THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_PNG)
 if(BRLCAD_PNG_BUILD)
 

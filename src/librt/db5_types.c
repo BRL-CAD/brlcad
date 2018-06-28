@@ -196,7 +196,7 @@ db5_type_codes_from_tag(int *major, int *minor, const char *tag)
     for (tp = (struct db5_type *) type_table;
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if ((*(tp->tag) == *tag) && (BU_STR_EQUAL(tp->tag, tag))) {
+	if (BU_STR_EQUAL(tp->tag, tag)) {
 	    *major = tp->major_code;
 	    *minor = tp->minor_code;
 	    return 0;
@@ -214,8 +214,7 @@ db5_type_codes_from_descrip(int *major, int *minor, const char *descrip)
     for (tp = (struct db5_type *) type_table;
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if ((*(tp->description) == *descrip)
-	    && (BU_STR_EQUAL(tp->description, descrip))) {
+	if (BU_STR_EQUAL(tp->description, descrip)) {
 	    *major = tp->major_code;
 	    *minor = tp->minor_code;
 	    return 0;

@@ -3455,7 +3455,7 @@ TclArraySet(
     } else {
 	/*
 	 * Not a dictionary, so assume (and convert to, for backward-
-	 * -compatability reasons) a list.
+	 * -compatibility reasons) a list.
 	 */
 
 	int elemLen;
@@ -4498,11 +4498,14 @@ TclDeleteNamespaceVars(
 	Tcl_GetVariableFullName(interp, (Tcl_Var) varPtr, objPtr);
 	UnsetVarStruct(varPtr, NULL, iPtr, /* part1 */ objPtr,
 		NULL, flags);
-	Tcl_DecrRefCount(objPtr); /* free no longer needed obj */
 
 	/*
-	 * Remove the variable from the table and force it undefined in case
-	 * an unset trace brought it back from the dead.
+	 * We just unset the variable. However, an unset trace might
+	 * have re-set it, or might have re-established traces on it.
+	 * This namespace and its vartable are going away unconditionally,
+	 * so we cannot let such things linger. That would be a leak.
+	 *
+	 * First we destroy all traces. ...
 	 */
 
 	if (TclIsVarTraced(varPtr)) {
@@ -4527,6 +4530,17 @@ TclDeleteNamespaceVars(
 		}
 	    }
 	}
+
+	/*
+	 * ...and then, if the variable still holds a value, we unset it
+	 * again. This time with no traces left, we're sure it goes away.
+	 */
+
+	if (!TclIsVarUndefined(varPtr)) {
+	    UnsetVarStruct(varPtr, NULL, iPtr, /* part1 */ objPtr,
+		    NULL, flags);
+	}
+	Tcl_DecrRefCount(objPtr); /* free no longer needed obj */
 	VarHashRefCount(varPtr)--;
 	VarHashDeleteEntry(varPtr);
     }

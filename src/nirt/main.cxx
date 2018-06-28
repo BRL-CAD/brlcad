@@ -29,8 +29,18 @@
 #include <set>
 #include <string>
 #include <iostream>
-#include <fstream>
 #include <limits>
+#include <cstdio>
+#include <cstring>
+
+/* needed on mac in c90 mode */
+#ifndef HAVE_DECL_FSEEKO
+#include <sys/types.h> /* for off_t */
+extern "C" int fseeko(FILE *, off_t, int);
+extern "C" off_t ftello(FILE *);
+#endif
+#include <fstream>
+
 
 extern "C" {
 #include "linenoise.h"
@@ -40,6 +50,11 @@ extern "C" {
 #include "bu/path.h"
 #include "bu/units.h"
 #include "analyze.h"
+
+#ifndef HAVE_DECL_POPEN
+extern FILE *popen(const char *command, const char *mode);
+extern int pclose(FILE *stream);
+#endif
 }
 
 #define SILENT_UNSET    0
@@ -252,7 +267,10 @@ int
 nirt_show_menu_hook(struct nirt_state *ns, void *u_data)
 {
     struct bu_vls *log = (struct bu_vls *)u_data;
-    nirt_log(log, ns, NIRT_OUT);
+    struct bu_vls nline = BU_VLS_INIT_ZERO;
+    nirt_log(&nline, ns, NIRT_OUT);
+    bu_vls_printf(log, "%s", bu_vls_addr(&nline));
+    bu_vls_free(&nline);
     return 0;
 }
 

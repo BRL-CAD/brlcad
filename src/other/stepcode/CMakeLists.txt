@@ -77,6 +77,10 @@ if(NOT DEFINED LIB_DIR)
   set(LIB_DIR lib)
 endif(NOT DEFINED LIB_DIR)
 
+# Because the STEPcode headers are used in BRL-CAD, we have added some decl code
+# to the headers for strict c89/c++98.  Don't use it for the stepcode build itself
+add_definitions(-DHAVE_DECL_FSEEKO)
+
 IF( NOT DEFINED SC_BUILD_TYPE )
   SET( SC_BUILD_TYPE "Debug" CACHE STRING "Build type" ) # By default set debug build
 ENDIF( NOT DEFINED SC_BUILD_TYPE )

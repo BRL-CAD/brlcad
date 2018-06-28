@@ -537,11 +537,10 @@ main(int argc, char *argv[])
 	    bot = (struct bot_specific *)stp->st_specific;
 	    tri = (struct tri_specific *)bot->bot_facelist;
 	    while (tri) {
-		point_t p2, p3, sum;
+		point_t p2, p3, sum = VINIT_ZERO;
 
 		VADD2(p2, tri->tri_A, tri->tri_BA);
 		VADD2(p3, tri->tri_A, tri->tri_CA);
-		VSETALL(sum, 0.0);
 		VADD2(sum, sum, tri->tri_A);
 		VADD2(sum, sum, p2);
 		VADD2(sum, sum, p3);

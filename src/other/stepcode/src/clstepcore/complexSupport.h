@@ -16,7 +16,16 @@
 
 #include <sc_export.h>
 #include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#ifndef HAVE_DECL_FSEEKO
+#include <sys/types.h> /* for off_t */
+extern "C" int fseeko(FILE *, off_t, int);
+extern "C" off_t ftello(FILE *);
+#endif
 #include <fstream>
+
 using namespace std;
 #include "Str.h"
 

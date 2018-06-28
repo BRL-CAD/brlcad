@@ -105,12 +105,12 @@ the build instructions.
 #		memdbg   = Enables the debugging memory allocator.
 #
 #	CHECKS=64bit,fullwarn,nodep,none
-#		Sets special macros for checking compatability.
+#		Sets special macros for checking compatibility.
 #
 #		64bit    = Enable 64bit portability warnings (if available)
 #		fullwarn = Builds with full compiler and link warnings enabled.
 #			    Very verbose.
-#		nodep	 = Turns off compatability macros to ensure the core
+#		nodep	 = Turns off compatibility macros to ensure the core
 #			    isn't being built with deprecated functions.
 #
 #	MACHINE=(ALPHA|AMD64|IA64|IX86)

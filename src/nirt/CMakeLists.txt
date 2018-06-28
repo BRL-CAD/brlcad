@@ -17,6 +17,7 @@ set(NIRT_OLD_SRCS
   interact.c
   bsphere.c
   read_mat.c
+  str_manip.c
   parse_fmt.c
   )
 
@@ -35,6 +36,7 @@ set(nirt_sfiles
   sfiles/csv.nrt
   sfiles/csv-gap.nrt
   sfiles/default.nrt
+  sfiles/diff.nrt
   sfiles/entryexit.nrt
   sfiles/gap1.nrt
   sfiles/gap2.nrt

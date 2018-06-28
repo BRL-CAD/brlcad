@@ -56,6 +56,9 @@ set(standard_header_template
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
 #ifdef HAVE_SIGNAL_H
 # include <signal.h>
 #endif
@@ -80,6 +83,9 @@ set(standard_header_template
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
 #ifdef HAVE_SYS_UIO_H
 # include <sys/uio.h>
 #endif
@@ -88,6 +94,7 @@ set(standard_header_template
 #endif
 "
 )
+
 
 # Use this function to construct compile defines that uses the CMake
 # header tests results to properly support the above header includes
@@ -106,6 +113,11 @@ function(standard_header_cppflags header_cppflags)
   set(${header_cppflags} "${have_cppflags}" PARENT_SCOPE)
 endfunction(standard_header_cppflags)
 
+# The macros and functions below need C_STANDARD_FLAGS to be set for most
+# compilers - be sure it is in those cases
+if("${C_STANDARD_FLAGS}" STREQUAL "")
+  message(FATAL_ERROR "C_STANDARD_FLAGS is not set - should at least be defining the C standard")
+endif("${C_STANDARD_FLAGS}" STREQUAL "")
 
 ###
 # Check if a function exists (i.e., compiles to a valid symbol).  Adds
@@ -172,6 +184,7 @@ macro(BRLCAD_FUNCTION_EXISTS function)
 	  set(HAVE_DECL_${var} 1)
 	endif(NOT MSVC)
 	set(HAVE_DECL_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache decl test result")
+	mark_as_advanced(HAVE_DECL_${var})
       endif(NOT DEFINED HAVE_DECL_${var})
 
       # If we have sources supplied for the purpose, test if the function is working.
@@ -185,6 +198,7 @@ macro(BRLCAD_FUNCTION_EXISTS function)
 	    endif(NOT ${var}_${test_src}_COMPILE)
 	  endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
 	  set(HAVE_WORKING_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache working test result")
+	  mark_as_advanced(HAVE_WORKING_${var})
 	endif(NOT DEFINED HAVE_WORKING_${var})
       endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
 
@@ -217,7 +231,7 @@ endmacro(BRLCAD_FUNCTION_EXISTS)
 macro(BRLCAD_INCLUDE_FILE filelist var)
 
   cmake_push_check_state()
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
   if(NOT "${ARGV2}" STREQUAL "")
     set(CMAKE_REQUIRED_INCLUDES ${ARGV2} ${CMAKE_REQUIRED_INCLUDES})
   endif(NOT "${ARGV2}" STREQUAL "")
@@ -267,7 +281,7 @@ macro(BRLCAD_TYPE_SIZE typename headers)
 
   # Proceed with type check.
   cmake_push_check_state()
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
   set(CMAKE_EXTRA_INCLUDE_FILES "${headers}")
   check_type_size(${typename} ${testvar})
   cmake_pop_check_state()
@@ -289,7 +303,7 @@ endmacro(BRLCAD_TYPE_SIZE)
 macro(BRLCAD_STRUCT_MEMBER structname member headers var)
 
   cmake_push_check_state()
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
 
   check_struct_has_member(${structname} ${member} "${headers}" HAVE_${var})
 
@@ -308,7 +322,7 @@ endmacro(BRLCAD_STRUCT_MEMBER)
 macro(BRLCAD_CHECK_LIBRARY targetname lname func)
 
   cmake_push_check_state()
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
 
   # Don't error out on the builtin conflict case
   check_c_compiler_flag(-fno-builtin HAVE_NO_BUILTIN)
@@ -347,7 +361,7 @@ return 0;
 }")
   if(NOT DEFINED HAVE_BASENAME)
     cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
     CHECK_C_SOURCE_RUNS("${BASENAME_SRC}" HAVE_BASENAME)
     cmake_pop_check_state()
   endif(NOT DEFINED HAVE_BASENAME)
@@ -370,7 +384,7 @@ return 0;
 }")
   if(NOT DEFINED HAVE_DIRNAME)
     cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
     CHECK_C_SOURCE_RUNS("${DIRNAME_SRC}" HAVE_DIRNAME)
     cmake_pop_check_state()
   endif(NOT DEFINED HAVE_DIRNAME)
@@ -401,7 +415,7 @@ int main() {
 }")
   if(NOT DEFINED WORKING_SYS_WAIT)
     cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
     CHECK_C_SOURCE_RUNS("${SYS_WAIT_SRC}" WORKING_SYS_WAIT)
     cmake_pop_check_state()
   endif(NOT DEFINED WORKING_SYS_WAIT)
@@ -453,7 +467,7 @@ int main() {
 }")
   if(WORKING_ALLOC_H STREQUAL "")
     cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
     CHECK_C_SOURCE_RUNS("${ALLOCA_HEADER_SRC}" WORKING_ALLOCA_H)
     cmake_pop_check_state()
     set(WORKING_ALLOCA_H ${WORKING_ALLOCA_H} CACHE INTERNAL "alloca_h test")
@@ -464,7 +478,7 @@ int main() {
   endif(WORKING_ALLOCA_H)
   if(NOT DEFINED WORKING_ALLOCA)
     cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
     CHECK_C_SOURCE_RUNS("${ALLOCA_TEST_SRC}" WORKING_ALLOCA)
     cmake_pop_check_state()
   endif(NOT DEFINED WORKING_ALLOCA)
@@ -497,7 +511,7 @@ int main(int ac, char *av[])
 
   if(NOT DEFINED HAVE_PERCENT_Z)
     cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
     if(HAVE_STDINT_H)
       set(CMAKE_REQUIRED_DEFINITIONS "-DHAVE_STDINT_H=1")
     endif(HAVE_STDINT_H)
@@ -532,7 +546,7 @@ int main(int ac, char *av[])
 ")
   if(NOT DEFINED HAVE_STATIC_ARRAYS)
     cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_STD_FLAG}")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
     CHECK_C_SOURCE_RUNS("${CHECK_STATIC_ARRAYS_SRC}" HAVE_STATIC_ARRAYS)
     cmake_pop_check_state()
   endif(NOT DEFINED HAVE_STATIC_ARRAYS)

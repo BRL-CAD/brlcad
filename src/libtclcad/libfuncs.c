@@ -549,8 +549,10 @@ tclcad_bn_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, i
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     fastf_t dist[2];
-    point_t pt, a;
-    vect_t dir, c;
+    point_t pt = VINIT_ZERO;
+    point_t a = VINIT_ZERO;
+    vect_t dir = VINIT_ZERO;
+    vect_t c = VINIT_ZERO;
     int i;
     static const struct bn_tol tol = {
 	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
@@ -564,11 +566,6 @@ tclcad_bn_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, i
     }
 
     /* i = bn_isect_line2_line2 {0 0} {1 0} {1 1} {0 -1} */
-
-    VSETALL(pt, 0.0);
-    VSETALL(dir, 0.0);
-    VSETALL(a, 0.0);
-    VSETALL(c, 0.0);
 
     if (bn_decode_vect(pt, argv[1]) < 2) {
 	bu_vls_printf(&result, "bn_isect_line2_line2 no pt: %s\n", argv[0]);

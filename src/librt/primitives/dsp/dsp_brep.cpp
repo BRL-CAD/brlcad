@@ -129,10 +129,9 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     // Step 1 - create the bottom face.
 
     point_t p_origin, p2, p3;
-    point_t p_temp;
+    point_t p_temp = VINIT_ZERO;
     ON_3dPoint plane_origin, plane_x_dir, plane_y_dir, pt2, pt3, pt4;
 
-    VSETALL(p_temp, 0.0);
     MOVEPT(p_origin);
     plane_origin = ON_3dPoint(p_origin);
 

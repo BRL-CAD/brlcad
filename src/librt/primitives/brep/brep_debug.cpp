@@ -171,11 +171,10 @@ unsigned int
 plotsurfaceleafs(const SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
 {
     struct bu_list *vhead;
-    fastf_t min[3], max[3];
+    fastf_t min[3] = VINIT_ZERO;
+    fastf_t max[3];
     std::list<const BBNode*> leaves;
     surf->getLeaves(leaves);
-
-    VSETALL(min, 0.0);
 
     ON_TextLog tl(stderr);
 
@@ -212,12 +211,10 @@ void
 plottrimleafs(const SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
 {
     struct bu_list *vhead;
-    vect_t min;
+    vect_t min = VINIT_ZERO;
     vect_t max;
     std::list<const BRNode*> leaves;
     st->m_ctree->getLeaves(leaves);
-
-    VSETALL(min, 0.0);
 
     ON_TextLog tl(stderr);
 

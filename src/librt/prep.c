@@ -453,7 +453,7 @@ rt_btree_translate(struct rt_i *rtip, struct soltab **primitives, struct bit_tre
 {
     size_t i;
     long j;
-    uint uop, st_bit;
+    unsigned uop, st_bit;
 
     RT_CK_RTI(rtip);
 
@@ -475,8 +475,8 @@ static void
 build_regions_table(cl_uint *regions_table, struct bit_tree *btp, size_t start, size_t end, const long n_primitives, const size_t n_regions, const long reg_id)
 {
     size_t i;
-    uint uop, st_bit;
-    uint rt_index;
+    unsigned uop, st_bit;
+    unsigned rt_index;
 
     rt_index = n_regions/32 + 1;
     for (i=start; i<end; i++) {

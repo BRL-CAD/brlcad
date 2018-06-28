@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <tk.h>
 #include <tkInt.h>
 #include "ttkThemeInt.h"
 

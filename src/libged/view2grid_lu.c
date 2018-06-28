@@ -39,7 +39,7 @@ ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[])
     double view_pt[3];
 
     fastf_t f;
-    point_t model_pt;
+    point_t model_pt = VINIT_ZERO;
     point_t mo_view_pt;           /* model origin in view space */
     point_t diff;
     static const char *usage = "x y z";
@@ -59,8 +59,6 @@ ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[])
 	sscanf(argv[3], "%lf", &view_pt[Z]) != 1)
 	goto bad;
 
-
-    VSETALL(model_pt, 0.0);
     MAT4X3PNT(mo_view_pt, gedp->ged_gvp->gv_model2view, model_pt);
     f = gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;
     VSCALE(mo_view_pt, mo_view_pt, f);

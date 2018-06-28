@@ -2949,21 +2949,22 @@ clt_linear_bvh_create(long n_primitives, struct clt_linear_bvh_node **nodes_p,
 	}
 
 	if (RT_G_DEBUG&DEBUG_CUT) {
-	    long i, j;
+	    int i;
+	    long j;
 	    for (i=0; i<lnodes_created; i++) {
 		if (nodes[i].n_primitives != 0) {
-		    bu_log("#%ld: %ld\n", i, nodes[i].n_primitives);
+		    bu_log("#%d: %d\n", i, nodes[i].n_primitives);
 		    for (j=0; j<nodes[i].n_primitives; j++) {
-			bu_log("  %ld\n", ordered_prims[nodes[i].u.primitives_offset+j]);
+			bu_log("  %ld\n", (*ordered_prims)[nodes[i].u.primitives_offset+j]);
 		    }
 		} else {
-		    bu_log("#%ld> #%ld\n", i, nodes[i].u.second_child_offset);
+		    bu_log("#%d> #%d\n", i, nodes[i].u.second_child_offset);
 
 		}
 	    }
 
 	    for (i=0; i<n_primitives; i++) {
-		bu_log(":%ld\n", ordered_prims[i]);
+		bu_log(":%ld\n", (*ordered_prims)[i]);
 	    }
 	}
     }

@@ -145,7 +145,7 @@ MGED commands
 ----
 ray tracing tools
 	lgt : functionally replaced by nirt
-	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis, rtsil'
+	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis
 	Removed as part of distillation effort [deprecated 7.26]
 converter tools
 	cy-g, euclid-g, euclid_format', euclid_unformat', g-euclid,

@@ -48,6 +48,8 @@ __BEGIN_DECLS
  * XXX don't spoil the conversion.
  */
 
+BN_EXPORT extern int bn_decode_angle(double *ang,
+				     const char *str);
 BN_EXPORT extern int bn_decode_mat(mat_t m,
 				   const char *str);
 BN_EXPORT extern int bn_decode_quat(quat_t q,

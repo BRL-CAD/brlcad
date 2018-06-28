@@ -589,6 +589,9 @@ TclParseNumber(
 	    acceptPoint = p;
 	    acceptLen = len;
 	    if (c == 'x' || c == 'X') {
+		if (flags & TCL_PARSE_OCTAL_ONLY) {
+		    goto endgame;
+		}
 		state = ZERO_X;
 		break;
 	    }
@@ -599,6 +602,9 @@ TclParseNumber(
 		goto zeroo;
 	    }
 	    if (c == 'b' || c == 'B') {
+		if (flags & TCL_PARSE_OCTAL_ONLY) {
+		    goto endgame;
+		}
 		state = ZERO_B;
 		break;
 	    }

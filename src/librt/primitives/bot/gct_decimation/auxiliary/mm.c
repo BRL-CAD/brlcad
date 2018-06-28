@@ -53,10 +53,9 @@
 
 #include <string.h>
 
-#if defined(MM_LINUX) || defined(MM_UNIX)
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
-
 
 #define ADDRESSDIFF(a,b) (((char *)a)-((char *)b))
 
@@ -496,9 +495,7 @@ void mmInit()
     if (!(mmcontext.numaflag)) {
 	mmcontext.nodecount = 1;
 	sysmemory = -1;
-#if defined(MM_LINUX)
-	mmcontext.pagesize = sysconf(_SC_PAGESIZE);
-#elif defined(MM_UNIX)
+#if defined(_SC_PAGESIZE) && (defined(MM_LINUX) || defined(MM_UNIX))
 	mmcontext.pagesize = sysconf(_SC_PAGESIZE);
 #elif defined(MM_WIN32)
 	{
@@ -506,6 +503,8 @@ void mmInit()
 	    GetSystemInfo(&sysinfo);
 	    mmcontext.pagesize = sysinfo.dwPageSize;
 	}
+#else
+	mmcontext.pagesize = 4096;
 #endif
 #if defined(MM_UNIX) && defined(_SC_PHYS_PAGES)
 	sysmemory = sysconf(_SC_PHYS_PAGES);
@@ -753,22 +752,22 @@ void mmListRemove(void *item, intptr_t offset)
     }
 }
 
-
-#ifdef MM_LINUX
+#if 0 /*if defined(MM_LINUX) */
 #define _GNU_SOURCE
 #include <sched.h>
-#endif
 void mmThreadBindToCpu(int cpuindex)
 {
-#if defined(MM_LINUX)
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(cpuindex, &cpuset);
     sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-#else
-    (void)cpuindex;
-#endif
 }
+#else
+void mmThreadBindToCpu(int cpuindex)
+{
+    (void)cpuindex;
+}
+#endif
 
 
 int mmCpuGetNode(int cpuindex)

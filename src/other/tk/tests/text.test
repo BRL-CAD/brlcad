@@ -1272,10 +1272,9 @@ test text-17.8 {DeleteChars procedure} {
     .t tag add sel 1.0 end
     .t delete 4.0 end
     list [.t tag ranges sel] [.t get 1.0 end]
-} {{1.0 4.0} {Line 1
+} {{1.0 3.5} {Line 1
 abcde
 12345
-
 }}
 test text-17.9 {DeleteChars procedure} {
     setup

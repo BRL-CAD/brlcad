@@ -13,6 +13,10 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 
+* changed remrt/rtsrv to no longer report overlaps - Sean Morrison
+* fixed geometry directory building bug in remrt/rtsrv - Sean Morrison
+* fixed gcv problem with full paths on Windows - Cliff Yapp
+* removed precision limitation in NIRT input parsing - Cliff Yapp
 * added new example geometry models: chess and die pieces - Jeff Sieu
 * fixed graphical mode initial page loading in brlman - Cliff Yapp
 * added 'bot_dump' command to MGED - Nick Reed
@@ -27,6 +31,7 @@ changes made.  See document footer for additional details.
 This is a patch release, primary focused on updates to the build
 system logic.
 
+* upgraded libgdiam to version 1.0.3 - Cliff Yapp
 * fixed MGED bindings behavior for c, A, P, and S chars - Bob Parker
 * fixed gdiff usage statement - Sean Morrison
 * removed anim.txt, sun.txt, tube.txt and movie.txt - Cliff Yapp

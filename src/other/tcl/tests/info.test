@@ -1818,6 +1818,23 @@ test info-38.2 {location information for uplevel, dl, direct-literal} -match glo
 * {type source line 1814 file info.test cmd etrace level 1}
 * {type source line 1812 file info.test cmd uplevel\\ \\\\ level 1}} -cleanup {interp delete sub}
 
+test info-39.2 {Bug 4b61afd660} -setup {
+    proc probe {} {
+	return [dict get [info frame -1] line]
+    }
+    set body {
+	set cmd probe
+	$cmd
+    }
+    proc demo {} $body
+} -body {
+    demo
+} -cleanup {
+    unset -nocomplain body
+    rename demo {}
+    rename probe {}
+} -result 3
+
 # cleanup
 catch {namespace delete test_ns_info1 test_ns_info2}
 ::tcltest::cleanupTests

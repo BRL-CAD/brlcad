@@ -34,7 +34,7 @@
 int
 ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
 {
-    point_t pt;
+    point_t pt = VINIT_ZERO;
     vect_t axisv;
     double axis[3]; /* not fastf_t due to sscanf */
     double angle; /* not fastf_t due to sscanf */
@@ -78,7 +78,6 @@ ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
 	return GED_ERROR;
     }
 
-    VSETALL(pt, 0.0);
     VUNITIZE(axis);
     VMOVE(axisv, axis);
     bn_mat_arb_rot(rmat, pt, axisv, angle*DEG2RAD);

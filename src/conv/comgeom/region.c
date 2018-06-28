@@ -30,10 +30,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII)
-extern int isascii(int c);
-#endif
-
 /* defined in read.c */
 extern int get_line(char *cp, int buflen, char *title);
 extern int getint(char *cp, int start, size_t len);
@@ -60,6 +56,7 @@ void group_init(void);
 void group_register(char *name, int lo, int hi);
 void group_add(int val, char *name);
 void group_write(void);
+
 
 /*
  * Use wmp[region_number] as head for each region.
@@ -143,7 +140,7 @@ top:
 	    /* Remove all spaces from the number */
 	    np = nbuf;
 	    for (j = 2; j < 7; j++) {
-		if (!isascii((int)cp[j]))
+		if (!isprint((int)cp[j]))
 		    *np++ = '?';
 		else if (isspace((int)cp[j]))
 		    continue;

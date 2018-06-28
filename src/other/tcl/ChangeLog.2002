@@ -847,7 +847,7 @@
 	exit.
 
 	* tests/exec.test: marked exec-18.1 unixOnly until the Windows
-	incompatability (in the test, not the core) can be resolved.
+	incompatibility (in the test, not the core) can be resolved.
 
 	* tests/http.test (http-3.11): added close $fp that was causing an
 	error on Windows because the file was not closed before deleting.
@@ -3642,7 +3642,7 @@
 	* compat/strtoll.c (strtoll):
 	* compat/strtoull.c (strtoull):
 	* unix/tclUnixPort.h:
-	* win/tclWinPort.h: Const-ing 64-bit compatability declarations. Note
+	* win/tclWinPort.h: Const-ing 64-bit compatibility declarations. Note
 	that the return pointer is non-const because it is entirely legal for
 	the functions to be called from somewhere that owns the string being
 	passed. Fixes problem reported by Larry Virden.
@@ -3779,7 +3779,7 @@
 
 	There are a lot of changes from this TIP, so please see
 	http://purl.org/tcl/tip/72.html for discussion of
-	backward-compatability issues, but the main ones modifications are in:
+	backward-compatibility issues, but the main ones modifications are in:
 
 	* generic/tcl.h: New types.
 	* generic/tcl.decls: New public functions.

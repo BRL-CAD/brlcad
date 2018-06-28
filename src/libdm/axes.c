@@ -246,9 +246,9 @@ dm_draw_axes(dm				*dmp,
 	int numTicks = viewSize / bnasp->tick_interval * 0.5 * halfAxesSize;
 	int doMajorOnly = 0;
 	int i;
-	vect_t xend1, xend2;
-	vect_t yend1, yend2;
-	vect_t zend1, zend2;
+	vect_t xend1 = VINIT_ZERO, xend2 = VINIT_ZERO;
+	vect_t yend1 = VINIT_ZERO, yend2 = VINIT_ZERO;
+	vect_t zend1 = VINIT_ZERO, zend2 = VINIT_ZERO;
 	vect_t dir;
 	vect_t rxdir, neg_rxdir;
 	vect_t rydir, neg_rydir;
@@ -259,13 +259,6 @@ dm_draw_axes(dm				*dmp,
 	vect_t maj_xend1, maj_xend2;
 	vect_t maj_yend1, maj_yend2;
 	vect_t maj_zend1, maj_zend2;
-
-	VSETALL(xend1, 0.0);
-	VSETALL(xend2, 0.0);
-	VSETALL(yend1, 0.0);
-	VSETALL(yend2, 0.0);
-	VSETALL(zend1, 0.0);
-	VSETALL(zend2, 0.0);
 
 	if (dmp->dm_width <= numTicks / halfAxesSize * bnasp->tick_threshold * 2) {
 	    int numMajorTicks = numTicks / bnasp->ticks_per_major;

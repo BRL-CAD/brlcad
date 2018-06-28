@@ -1638,7 +1638,7 @@ LayoutDLine(
      * Make one more pass over the line to recompute various things like its
      * height, length, and total number of bytes. Also modify the x-locations
      * of chunks to reflect justification. If we're not wrapping, I'm not sure
-     * what is the best way to handle left and center justification: should
+     * what is the best way to handle right and center justification: should
      * the total length, for purposes of justification, be (a) the window
      * width, (b) the length of the longest line in the window, or (c) the
      * length of the longest line in the text? (c) isn't available, (b) seems

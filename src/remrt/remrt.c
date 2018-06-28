@@ -50,14 +50,19 @@
 #include "bresource.h"
 #include "bsocket.h"
 
-#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN) && !defined(fdopen)
+/* decls for strict c90 */
+
+#if !defined(HAVE_DECL_FDOPEN) && !defined(fdopen)
 extern FILE *fdopen(int fd, const char *mode);
 #endif
-#if defined(HAVE_VFORK) && !defined(HAVE_DECL_VFORK) && !defined(vfork)
+#if !defined(HAVE_DECL_VFORK) && !defined(vfork)
 extern pid_t vfork(void);
 #endif
-#if defined(HAVE_FCHMOD) && !defined(HAVE_DECL_FCHMOD) && !defined(fchmod)
+#if !defined(HAVE_DECL_FCHMOD) && !defined(fchmod)
 extern int fchmod(int fd, mode_t mode);
+#endif
+#if !defined(HAVE_DECL_GETTIMEOFDAY) && !defined(gettimeofday)
+extern int gettimeofday(struct timeval *, void *);
 #endif
 
 /* FIXME: is this basically FD_COPY()? */
@@ -81,8 +86,6 @@ extern int fchmod(int fd, mode_t mode);
 #include "./protocol.h"
 #include "./ihost.h"
 #include "brlcad_ident.h"
-
-
 
 
 #ifndef HAVE_VFORK
@@ -736,7 +739,7 @@ static double
 tvdiff(struct timeval *t1, struct timeval *t0)
 {
     return ((t1->tv_sec - t0->tv_sec) +
-	   (t1->tv_usec - t0->tv_usec) / 1000000.);
+	    (t1->tv_usec - t0->tv_usec) / 1000000.);
 }
 
 

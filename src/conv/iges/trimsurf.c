@@ -316,14 +316,12 @@ void
 Assign_vu_geom(struct vertexuse *vu, fastf_t u, fastf_t v, struct face_g_snurb *srf)
 {
     point_t uvw;
-    hpoint_t pt_on_srf;
+    hpoint_t pt_on_srf = HINIT_ZERO;
     struct vertexuse *vu1;
     int moved = 0;
 
     NMG_CK_VERTEXUSE(vu);
     NMG_CK_SNURB(srf);
-
-    VSETALLN(pt_on_srf, 0.0, 4);
 
     if (u < srf->u.knots[0] || v < srf->v.knots[0] ||
 	u > srf->u.knots[srf->u.k_size-1] || v > srf->v.knots[srf->v.k_size-1]) {
@@ -1403,11 +1401,8 @@ Convtrimsurfs()
     /* do some raytracing to get face orientations correct */
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	struct faceuse *fu2;
-	point_t mid_pt;
+	point_t mid_pt = VINIT_ZERO;
 	vect_t ray_dir;
-
-	/* initialize for compiler */
-	VSETALL(mid_pt, 0.0);
 
 	if (fu->orientation != OT_SAME)
 	    continue;

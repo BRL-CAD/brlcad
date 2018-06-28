@@ -56,6 +56,27 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
+#ifdef _WIN32
+/* limited to seconds only */
+void gettimeofday(struct timeval *tp, struct timezone *tzp)
+{
+
+	time_t ltime;
+
+	time(&ltime);
+
+	tp->tv_sec = ltime;
+	tp->tv_usec = 0;
+
+}
+#else
+   /* for strict c90 */
+#  if !defined(HAVE_DECL_GETTIMEOFDAY) && !defined(gettimeofday)
+      extern int gettimeofday(struct timeval *, void *);
+#  endif
+#endif
+
+
 
 extern void update_grids(fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(void);		/* in chgmodel.c */
@@ -945,20 +966,7 @@ cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int
 }
 
 
-#ifdef _WIN32
-/* limited to seconds only */
-void gettimeofday(struct timeval *tp, struct timezone *tzp)
-{
 
-    time_t ltime;
-
-    time(&ltime);
-
-    tp->tv_sec = ltime;
-    tp->tv_usec = 0;
-
-}
-#endif
 
 
 /**

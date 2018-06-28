@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tcl_SaveResult 3 8.1 Tcl "Tcl Library Procedures"
 .so man.macros
 .BS
@@ -56,9 +56,9 @@ is called, Tcl will take care of memory management.
 .PP
 The second triplet stores the snapshot of only the interpreter
 result (not its complete state) in memory allocated by the caller.
-These routines are passed a pointer to a \fBTcl_SavedResult\fR structure
+These routines are passed a pointer to \fBTcl_SavedResult\fR
 that is used to store enough information to restore the interpreter result.
-This structure can be allocated on the stack of the calling
+\fBTcl_SavedResult\fR can be allocated on the stack of the calling
 procedure.  These routines do not save the state of any error
 information in the interpreter (e.g. the \fB\-errorcode\fR or
 \fB\-errorinfo\fR return options, when an error is in progress).
@@ -69,7 +69,7 @@ a superset of the functions provided by the other routines,
 any new code should only make use of the more powerful routines.
 The older, weaker routines \fBTcl_SaveResult\fR, \fBTcl_RestoreResult\fR,
 and \fBTcl_DiscardResult\fR continue to exist only for the sake
-of existing programs that may already be using them.  
+of existing programs that may already be using them.
 .PP
 \fBTcl_SaveInterpState\fR takes a snapshot of those portions of
 interpreter state that make up the full result of script evaluation.
@@ -118,7 +118,6 @@ uninitialized state and cannot be used until another call to
 Once \fBTcl_SaveResult\fR is called to save the interpreter
 result, either \fBTcl_RestoreResult\fR or
 \fBTcl_DiscardResult\fR must be called to properly clean up the
-memory associated with the saved state.  
-
+memory associated with the saved state.
 .SH KEYWORDS
 result, state, interp

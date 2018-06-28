@@ -33,11 +33,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>
-#endif
 #include <tcl.h>
 #include <tk.h>
+#include "bnetwork.h"
 
 #include "bu/color.h"
 #include "bu/str.h"

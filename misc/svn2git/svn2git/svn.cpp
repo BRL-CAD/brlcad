@@ -68,12 +68,12 @@ class AprAutoPool
 public:
     inline AprAutoPool(apr_pool_t *parent = NULL)
         {
-		pool = svn_pool_create(parent);
-	}
-	inline ~AprAutoPool()
+            pool = svn_pool_create(parent);
+        }
+        inline ~AprAutoPool()
         {
-		svn_pool_destroy(pool);
-	}
+            svn_pool_destroy(pool);
+        }
 
     inline void clear() { svn_pool_clear(pool); }
     inline apr_pool_t *data() const { return pool; }
@@ -1042,9 +1042,28 @@ int SvnRevision::fetchIgnoreProps(QString *ignore, apr_pool_t *pool, const char 
     SVN_ERR(svn_fs_node_prop(&prop, fs_root, key, "svn:ignore", pool));
     if (prop) {
         *ignore = QString(prop->data);
+        // remove patterns with slashes or backslashes,
+        // they didn't match anything in Subversion but would in Git eventually
+        ignore->remove(QRegExp("^[^\\r\\n]*[\\\\/][^\\r\\n]*(?:[\\r\\n]|$)|[\\r\\n][^\\r\\n]*[\\\\/][^\\r\\n]*(?=[\\r\\n]|$)"));
+        // add a slash in front to have the same meaning in Git of only working on the direct children
+        ignore->replace(QRegExp("(^|[\\r\\n])\\s*(?![\\r\\n]|$)"), "\\1/");
     } else {
         *ignore = QString();
     }
+
+    // Get svn:global-ignores
+    prop = NULL;
+    SVN_ERR(svn_fs_node_prop(&prop, fs_root, key, "svn:global-ignores", pool));
+    if (prop) {
+        QString global_ignore = QString(prop->data);
+        // remove patterns with slashes or backslashes,
+        // they didn't match anything in Subversion but would in Git eventually
+        global_ignore.remove(QRegExp("^[^\\r\\n]*[\\\\/][^\\r\\n]*(?:[\\r\\n]|$)|[\\r\\n][^\\r\\n]*[\\\\/][^\\r\\n]*(?=[\\r\\n]|$)"));
+        ignore->append(global_ignore);
+    }
+
+    // replace multiple asterisks Subversion meaning by Git meaning
+    ignore->replace(QRegExp("\\*+"), "*");
 
     return EXIT_SUCCESS;
 }

@@ -1434,7 +1434,8 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
     struct edgeuse *eu;
     size_t cnt;
     vect_t zaxis = {0.0, 0.0, 1.0};
-    vect_t sum, cog;
+    vect_t sum = VINIT_ZERO;
+    vect_t cog;
     mat_t mat;
     point_t pt, pt_next, pt_1st;
     fastf_t scale;
@@ -1486,7 +1487,6 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
     VINTCLAMP(pt_1st);
     VSCALE(pt_1st, pt_1st, scale);
 
-    VSETALL(sum, 0.0);
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	NMG_CK_EDGEUSE(eu);
 	/* scale up the coordinates to reduce floating point error */

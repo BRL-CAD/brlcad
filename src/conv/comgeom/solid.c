@@ -41,10 +41,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#if defined(HAVE_ISASCII) && !defined(HAVE_DECL_ISASCII)
-extern int isascii(int c);
-#endif
-
 /* defined in read.c */
 extern int get_line(char *cp, int buflen, char *title);
 extern void namecvt(int n, char **cp, int c);
@@ -254,7 +250,7 @@ getsolid(void)
 
 	cp = solid_type;
 	while ((c = *cp) != '\0') {
-	    if (!isascii(c)) {
+	    if (!isprint(c)) {
 		*cp++ = '?';
 	    } else if (isupper((int)c)) {
 		*cp++ = tolower((int)c);

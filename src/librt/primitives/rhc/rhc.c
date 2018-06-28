@@ -852,7 +852,7 @@ rhc_plot_hyperbolas(
     struct rt_rhc_internal *rhc,
     struct rt_pt_node *pts)
 {
-    vect_t rhc_H;
+    vect_t rhc_H = VINIT_ZERO;
     struct rhc_specific rhc_s;
 
     VMOVE(rhc_s.rhc_V, rhc->rhc_V);
@@ -864,7 +864,6 @@ rhc_plot_hyperbolas(
     VUNITIZE(rhc_s.rhc_Runit);
 
     /* plot hyperbolic contour curve of face containing V */
-    VSETALL(rhc_H, 0.0);
     rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, 1.0);
     rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, -1.0);
 

@@ -148,10 +148,11 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
 fb *
 fb_open_existing(const char *file, int width, int height, struct fb_platform_specific *fb_p)
 {
-    fb *ifp = (fb *) calloc(sizeof(fb), 1);
+    fb *ifp = (fb *)calloc(sizeof(fb), 1);
+    if (!ifp) return NULL;
     fb_set_interface(ifp, file);
     fb_set_magic(ifp, FB_MAGIC);
-    ifp->if_open_existing(ifp, width, height, fb_p);
+    if (ifp->if_open_existing) ifp->if_open_existing(ifp, width, height, fb_p);
     return ifp;
 }
 
@@ -221,6 +222,7 @@ int fb_clear_fd(fb *ifp, fd_set *list)
 
 void fb_set_magic(fb *ifp, uint32_t magic)
 {
+    if (!ifp) return;
     ifp->if_magic = magic;
 }
 

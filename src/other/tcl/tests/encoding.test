@@ -66,10 +66,10 @@ test encoding-2.2 {Tcl_FreeEncoding: refcount != 0} {testencoding} {
     encoding system shiftjis		;# incr ref count
     encoding dirs [list [pwd]]
     set x [encoding convertto shiftjis \u4e4e]	;# old one found   
-    encoding system identity
+    encoding system iso8859-1
     llength shiftjis
     lappend x [catch {encoding convertto shiftjis \u4e4e} msg] $msg
-    encoding system identity
+    encoding system iso8859-1
     encoding dirs $path
     encoding system $system
     set x
@@ -121,7 +121,7 @@ test encoding-5.1 {Tcl_SetSystemEncoding} {
     set old [encoding system]
     encoding system jis0208
     set x [encoding convertto \u4e4e]
-    encoding system identity
+    encoding system iso8859-1
     encoding system $old
     set x
 } {8C}
@@ -245,7 +245,7 @@ test encoding-11.5.1 {LoadEncodingFile: escape file} {
 test encoding-11.6 {LoadEncodingFile: invalid file} {testencoding} {
     set system [encoding system]
     set path [encoding dirs]
-    encoding system identity
+    encoding system iso8859-1
     cd [temporaryDirectory]
     encoding dirs [file join tmp encoding]
     makeDirectory tmp
@@ -438,6 +438,31 @@ test encoding-24.3 {EscapeFreeProc on open channels} {stdio} {
     removeFile iso2022.tcl
     list $count [viewable $line]
 } [list 3 "\u4e4e\u4e5e\u4e5f (\\u4e4e\\u4e5e\\u4e5f)"]
+
+test encoding-24.4 {Parse valid or invalid utf-8} {
+    string length [encoding convertfrom utf-8 "\xc0\x80"]
+} 1
+test encoding-24.5 {Parse valid or invalid utf-8} {
+    string length [encoding convertfrom utf-8 "\xc0\x81"]
+} 2
+test encoding-24.6 {Parse valid or invalid utf-8} {
+    string length [encoding convertfrom utf-8 "\xc1\xbf"]
+} 2
+test encoding-24.7 {Parse valid or invalid utf-8} {
+    string length [encoding convertfrom utf-8 "\xc2\x80"]
+} 1
+test encoding-24.8 {Parse valid or invalid utf-8} {
+    string length [encoding convertfrom utf-8 "\xe0\x80\x80"]
+} 3
+test encoding-24.9 {Parse valid or invalid utf-8} {
+    string length [encoding convertfrom utf-8 "\xe0\x9f\xbf"]
+} 3
+test encoding-24.10 {Parse valid or invalid utf-8} {
+    string length [encoding convertfrom utf-8 "\xe0\xa0\x80"]
+} 1
+test encoding-24.11 {Parse valid or invalid utf-8} {
+    string length [encoding convertfrom utf-8 "\xef\xbf\xbf"]
+} 1
 
 file delete [file join [temporaryDirectory] iso2022.txt]
 

@@ -2025,6 +2025,14 @@ Tcl_JoinObjCmd(
     resObjPtr = Tcl_NewObj();
     for (i = 0;  i < listLen;  i++) {
 	if (i > 0) {
+
+	    /*
+	     * NOTE: This code is relying on Tcl_AppendObjToObj() **NOT**
+	     * to shimmer joinObjPtr.  If it did, then the case where
+	     * objv[1] and objv[2] are the same value would not be safe.
+	     * Accessing elemPtrs would crash.
+	     */
+
 	    Tcl_AppendObjToObj(resObjPtr, joinObjPtr);
 	}
 	Tcl_AppendObjToObj(resObjPtr, elemPtrs[i]);

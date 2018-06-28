@@ -781,7 +781,7 @@ FrameWidgetObjCmd(
 		    || ((c == 'v')
 			&& (strncmp(arg, "-visual", (unsigned)length) == 0))) {
 
-		    #ifdef SUPPORT_CONFIG_EMBEDDED
+#ifdef SUPPORT_CONFIG_EMBEDDED
 		    if (c == 'u') {
 			CONST char *string = Tcl_GetString(objv[i+1]);
 			if (TkpUseWindow(interp, framePtr->tkwin,
@@ -800,7 +800,7 @@ FrameWidgetObjCmd(
 				" option after widget is created", NULL);
 			result = TCL_ERROR;
 			goto done;
-		    #endif
+#endif
 		}
 	    }
 	    result = ConfigureFrame(interp, framePtr, objc-2, objv+2);
@@ -1939,7 +1939,7 @@ TkMapTopFrame (tkwin)
 	return;
     }
     /*
-     * The option table has already been created so 
+     * The option table has already been created so
      * the cached pointer will be returned.
      */
     optionTable = Tk_CreateOptionTable(framePtr->interp, optionSpecs[framePtr->type]);

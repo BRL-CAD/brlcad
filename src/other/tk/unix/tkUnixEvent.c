@@ -11,7 +11,6 @@
  */
 
 #include "tkUnixInt.h"
-#include <sys/select.h>
 #include <signal.h>
 #ifdef HAVE_XKBKEYCODETOKEYSYM
 #  include <X11/XKBlib.h>

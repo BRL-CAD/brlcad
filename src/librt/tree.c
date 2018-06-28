@@ -1097,7 +1097,7 @@ void
 rt_bit_tree(struct bit_tree *btp, const union tree *tp, size_t *len)
 {
     int idx;
-    uint st_bit, uop, rchild;
+    unsigned st_bit, uop, rchild;
 
     if (tp == TREE_NULL)
         return;

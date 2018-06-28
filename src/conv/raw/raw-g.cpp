@@ -27,7 +27,15 @@
  */
 
 #include "common.h"
+
 #include <cassert>
+#include <cstdio>
+#include <iostream>
+
+#ifndef HAVE_DECL_FSEEKO
+extern "C" int fseeko(FILE *, off_t, int);
+extern "C" off_t ftello(FILE *);
+#endif
 #include <fstream>
 
 #include "RegionList.h"

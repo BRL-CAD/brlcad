@@ -468,7 +468,6 @@ declare 128 {
 declare 129 {
     int Tcl_Eval(Tcl_Interp *interp, const char *script)
 }
-# This is obsolete, use Tcl_FSEvalFile
 declare 130 {
     int Tcl_EvalFile(Tcl_Interp *interp, const char *fileName)
 }

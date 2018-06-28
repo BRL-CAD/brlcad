@@ -947,7 +947,7 @@
 	declarations match and will end up using the declarations in the
 	public code from now on because of #include ordering. Keeping the old
 	declarations in tclInt.decls; there's no need to gratuitously break
-	compatability for those extensions which are already clients of the
+	compatibility for those extensions which are already clients of the
 	namespace code.
 
 2003-08-23  Zoran Vasiljevic  <zoran@archiwrae.com>
@@ -1278,7 +1278,7 @@
 
 	* generic/tclVar.c (Tcl_ArrayObjCmd, TclArraySet): Made [array get]
 	and [array set] work with dictionaries, producing them and consuming
-	them. Note that for compatability reasons, you will never get a dict
+	them. Note that for compatibility reasons, you will never get a dict
 	from feeding a string literal to [array set] since that alters the
 	trace behaviour of "multi-key" sets. [Bug 759935]
 

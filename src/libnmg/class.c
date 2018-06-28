@@ -2111,7 +2111,7 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
     fastf_t point_count = 0.0;
     double one_over_count;
     point_t test_pt;
-    point_t average_pt;
+    point_t average_pt = VINIT_ZERO;
     int i;
 
     NMG_CK_LOOPUSE(lu);
@@ -2127,7 +2127,6 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
 	return 3;
 
     /* first try just averaging all the vertices */
-    VSETALL(average_pt, 0.0);
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	struct vertex_g *vg;
 	NMG_CK_EDGEUSE(eu);

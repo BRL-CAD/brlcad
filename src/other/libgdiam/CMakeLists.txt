@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.1.3)
 # Set CMake project name
 project(GDIAM)
 
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 if(NOT DEFINED BIN_DIR)
@@ -24,6 +25,8 @@ install(TARGETS libgdiam
 if(MSVC)
    set_property(TARGET libgdiam APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_EXPORTS")
 endif(MSVC)
+
+add_definitions(-DGDIAM_QUIET)
 
 if(BUILD_STATIC_LIBS)
   add_library(libgdiam-static STATIC gdiam.cpp)

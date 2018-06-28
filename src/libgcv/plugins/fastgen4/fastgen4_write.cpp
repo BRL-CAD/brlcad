@@ -27,12 +27,19 @@
 #include "common.h"
 
 #include <cmath>
-#include <fstream>
+
 #include <iomanip>
 #include <map>
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <cstdlib>
+
+#ifndef HAVE_DECL_FSEEKO
+extern "C" int fseeko(FILE *, off_t, int);
+extern "C" off_t ftello(FILE *);
+#endif
+#include <fstream>
 
 #include "raytrace.h"
 #include "gcv/api.h"

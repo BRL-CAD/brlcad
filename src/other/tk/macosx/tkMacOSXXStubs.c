@@ -555,7 +555,7 @@ XClearWindow(
 }
 
 /*
-void
+int
 XDrawPoint(
     Display* display,
     Drawable d,
@@ -565,7 +565,7 @@ XDrawPoint(
 {
 }
 
-void
+int
 XDrawPoints(
     Display* display,
     Drawable d,
