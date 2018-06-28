@@ -2021,7 +2021,7 @@ proc set_text_key_bindings { id } {
 	break
     }
 
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	bind $w <Control-c> "do_windows_copy $w; break"
     } else {
 	bind $w <Control-c> "\

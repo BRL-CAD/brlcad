@@ -1447,7 +1447,7 @@
     bind $w <Right> "[::itcl::code $this doRight]; break"
     bind $w <Control-a> "[::itcl::code $this doControl_a]; break"
     bind $w <Control-b> "[::itcl::code $this backward_char]; break"
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	bind $w <Control-c> "[::itcl::code $this doCopy]; break"
     } else {
 	bind $w <Control-c> "[::itcl::code $this doControl_c]; break"

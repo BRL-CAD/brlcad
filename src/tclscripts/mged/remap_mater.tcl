@@ -72,8 +72,7 @@
 # workaround.
 #
 proc string_is_digit_strict {s} {
-    global tcl_version
-    if {$tcl_version >= 8.2} {
+    if {$::tcl_version >= 8.2} {
 	return [string is digit -strict $s]
     } else {
 	set l [string length $s]

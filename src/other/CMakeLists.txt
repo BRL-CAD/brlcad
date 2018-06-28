@@ -1079,6 +1079,10 @@ mark_as_advanced(GDAL_LIBRARY)
 include("${CMAKE_CURRENT_SOURCE_DIR}/gct.dist")
 CMAKEFILES_IN_DIR(gct_ignore_files gct)
 
+# linenoise is used by applications directly
+include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
+CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
+
 CMAKEFILES(README)
 
 # Local Variables:

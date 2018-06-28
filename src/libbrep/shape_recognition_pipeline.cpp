@@ -218,14 +218,6 @@ shoal_csg(struct bu_vls *msgs, surface_t surface_type, struct subbrep_shoal_data
 	if (flipped) shoal_planes[i].Flip();
     }
 
-#if 0
-    // Planes should be oriented correctly now
-    for (int i = 0; i < shoal_planes.Count(); i++) {
-	ON_Plane p = shoal_planes[i];
-	bu_log("plane %d origin: %f, %f, %f\n", i, p.origin.x, p.origin.y, p.origin.z);
-	bu_log("plane %d normal: %f, %f, %f\n", i, p.Normal().x, p.Normal().y, p.Normal().z);
-    }
-#endif
     if (implicit_plane_ind != -1) {
 	//bu_log("have implicit plane\n");
 	ON_Plane shoal_implicit_plane = shoal_planes[implicit_plane_ind];

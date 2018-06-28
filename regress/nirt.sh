@@ -375,7 +375,6 @@ Database title: 'NIRT example database'
 Database units: 'mm'
 model_min = (-3, -1, -1)    model_max = (3, 1, 1)
 "color"
-
 Get trees...
 Prepping the geometry...
 Objects 'left_cube_color.r' 'center_cube_color.r' 'right_cube_color.r' processed
@@ -387,7 +386,6 @@ center_cube_color.r  (   1.0000    0.0000    0.0000)   2.0000   0.0000 color=0/2
 left_cube_color.r    (  -1.0000    0.0000    0.0000)   2.0000   0.0000 color=255/0/0 
 "color"
 "region"
-
 Get trees...
 Prepping the geometry...
 Objects 'left_cube_color.r' 'center_cube_color.r' 'right_cube_color.r' processed
@@ -544,3 +542,4 @@ exit $STATUS
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=4 tabstop=8
+

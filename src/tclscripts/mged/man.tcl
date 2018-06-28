@@ -41,7 +41,7 @@ proc man {{cmdname {}}} {
     if {$mged_console_mode == "classic" || $mged_console_mode == "batch"} {
 	if {$cmdname != {}} {
 	    set exe_ext ""
-	    if {$tcl_platform(platform) == "windows"} {
+	    if {$::tcl_platform(platform) == "windows"} {
 		set exe_ext ".exe"
 	    }
 	    set cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] brlman$exe_ext]]]

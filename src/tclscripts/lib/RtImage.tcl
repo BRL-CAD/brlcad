@@ -68,7 +68,7 @@ proc rtimage {rtimage_dict} {
 
     set ar [ expr $_w.0 / $_n.0 ]
 
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	if {[catch {set dir $env(TMP)}]} {
 	    return "make_image: env(TMP) does not exist"
 	}

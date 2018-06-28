@@ -1093,7 +1093,7 @@ package provide Archer 1.0
 	set dbname [file normalize $mTarget]
 	set execpath [file dirname [file normalize $argv0]]
 
-	if {$tcl_platform(platform) == "windows"} {
+	if {$::tcl_platform(platform) == "windows"} {
 	    set rtwizname [file join $execpath rtwizard.exe]
 	} else {
 	    set rtwizname [file join $execpath rtwizard]
@@ -3465,13 +3465,6 @@ proc title_node_handler {node} {
 
     after idle "$itk_component(aboutDialog) center; $itk_component(mouseOverridesDialog) center"
 
-    #    if {$tcl_platform(platform) == "windows"} {
-    #	wm attributes $itk_component(aboutDialog) -topmost 1
-    #	wm attributes $itk_component(mouseOverridesDialog) -topmost 1
-    #    }
-
-    #    wm group $itk_component(aboutDialog) [namespace tail $this]
-    #    wm group $itk_component(mouseOverridesDialog) [namespace tail $this]
     }
 }
 

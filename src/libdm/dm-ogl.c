@@ -642,13 +642,13 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
-    int j, k;
     int make_square = -1;
+
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
+    int j, k;
     int ndevices;
     int nclass = 0;
     int unused;
-
-#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     XDeviceInfoPtr olist = NULL, list = NULL;
     XDevice *dev = NULL;
     XEventClass e_class[15];

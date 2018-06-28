@@ -35,6 +35,13 @@
 #include "bu/parallel.h"
 #include "bu/str.h"
 
+#ifndef HAVE_DECL_STRLCAT
+extern size_t strlcat(char *, const char *, size_t);
+#endif
+#ifndef HAVE_DECL_STRLCPY
+extern size_t strlcpy(char *, const char *, size_t);
+#endif
+
 
 size_t
 bu_strlcatm(char *dst, const char *src, size_t size, const char *label)

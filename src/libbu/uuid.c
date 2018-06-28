@@ -40,9 +40,10 @@
 #include "bu/exit.h"
 #include "bu/log.h"
 
-#if defined(HAVE_DRAND48) && !defined(HAVE_DECL_DRAND48) && !defined(__cplusplus)
+#ifndef HAVE_DECL_DRAND48
 extern double drand48(void);
 #endif
+
 
 int
 bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, const uint8_t *bytes, const uint8_t namespace_uuid[STATIC_ARRAY(16)])

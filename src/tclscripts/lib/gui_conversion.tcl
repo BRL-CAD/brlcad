@@ -597,7 +597,7 @@ proc gui_conversion { cmd logfile } {
 
 #set ::info_id [open /home/cyapp/convdebug.log "w"]
 set ::exe_ext ""
-if {$tcl_platform(platform) == "windows"} {
+if {$::tcl_platform(platform) == "windows"} {
     set ::exe_ext ".exe"
 }
 

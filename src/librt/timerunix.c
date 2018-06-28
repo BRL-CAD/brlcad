@@ -33,12 +33,19 @@
 # include <sys/machd.h>
 #endif
 
+#include "bu/vls.h"
+#include "bu/str.h"
+
+#ifndef HAVE_DECL_TIME
+time_t time(time_t *);
+#endif
+
+
 #ifndef HZ
 /* It's not always in sys/param.h;  if not, guess */
 #  define HZ 60
 #  define DEFAULT_HZ yes
 #endif
-
 
 
 /* Standard System V stuff */

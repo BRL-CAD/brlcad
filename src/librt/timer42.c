@@ -29,6 +29,11 @@
 #include "vmath.h"
 #include "raytrace.h"
 
+#ifndef HAVE_DECL_GETTIMEOFDAY
+extern int gettimeofday(struct timeval *, void *);
+#endif
+
+
 static struct timeval time0;	/* Time at which timing started */
 static struct rusage ru0;	/* Resource utilization at the start */
 static struct rusage ru0c;	/* Resource utilization at the start */

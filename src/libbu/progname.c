@@ -39,6 +39,11 @@
 #include "bu/path.h"
 #include "bu/str.h"
 
+#ifndef HAVE_DECL_GETPROGNAME
+const char *getprogname(void);
+#endif
+
+
 /* internal storage for bu_getprogname/bu_setprogname */
 static char bu_progname[MAXPATHLEN] = {0};
 const char *DEFAULT_PROGNAME = "(BRL-CAD)";

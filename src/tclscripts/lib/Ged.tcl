@@ -2135,7 +2135,7 @@ package provide cadwidgets::Ged 1.0
     set binpath [bu_brlcad_root "bin"]
     catch {exec [file join $binpath fb-fb] $fbs_port $port &}
 
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	set kill_cmd [auto_execok taskkill]
     } else {
 	set kill_cmd [auto_execok kill]
@@ -5091,7 +5091,7 @@ package provide cadwidgets::Ged 1.0
     # Turn off <Enter> bindings. This fixes the problem where various
     # various dialogs disappear when the mouse enters the geometry
     # window when on the "windows" platform.
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	foreach dm {ur ul ll lr} {
 	    bind $itk_component($dm) <Enter> {}
 	}

@@ -359,7 +359,7 @@ run_scripts(struct bu_list *sl, struct rt_i *rtip)
 
 
 int
-main(int argc, char *argv[])
+old_nirt_main(int argc, char *argv[])
 {
     struct rt_i *rtip = NULL;
 

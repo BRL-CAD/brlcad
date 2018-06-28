@@ -77,7 +77,7 @@ exec wish "$0" ${1+"$@"}
 #    tkcon master set ::tkcon:PRIV(proxy) wwwproxy:8080
 #
 
-if {$tcl_version < 8.4} {
+if {$::tcl_version < 8.4} {
     return -code error "tkcon requires at least Tcl/Tk 8.4"
 } else {
     package require Tk 8.4
@@ -281,7 +281,7 @@ proc ::tkcon::Init {args} {
     ## Do platform specific configuration here, other than defaults
     ### Use tkcon.cfg filename for resource filename on non-unix systems
     ### Determine what directory the resource file should be in
-    switch $tcl_platform(platform) {
+    switch $::tcl_platform(platform) {
 	macintosh	{
 	    if {![interp issafe]} {cd [file dirname [info script]]}
 	    set envHome		PREF_FOLDER
@@ -527,7 +527,7 @@ proc ::tkcon::InitSlave {slave {slaveargs {}} {slaveargv0 {}}} {
 	interp eval $slave \
 	    [list set auto_path [lremove $auto_path $tk_library]]
 	interp eval $slave [dump var -nocomplain tcl_library env]
-	interp eval $slave { catch {source [file join $tcl_library init.tcl]} }
+	interp eval $slave { catch {source [file join $::tcl_library init.tcl]} }
 	interp eval $slave { catch unknown }
     }
     # This will likely be overridden to call DeleteTab where possible
@@ -561,7 +561,7 @@ proc ::tkcon::InitSlave {slave {slaveargs {}} {slaveargv0 {}}} {
     } else {
 	if {[info exists argv0]} {interp eval $slave [list set argv0 $argv0]}
     }
-    interp eval $slave set tcl_interactive $tcl_interactive \; \
+    interp eval $slave set tcl_interactive $::tcl_interactive \; \
 	    set auto_path [list [lremove $auto_path $tk_library]] \; \
 	    set argc [llength $slaveargs] \; \
 	    set argv  [list $slaveargs] \; {
@@ -1665,7 +1665,7 @@ proc ::tkcon::InitMenus {w title} {
 		-command ::tkcon::About
 	if {![catch {package require ActiveTcl} ver]} {
 	    set cmd ""
-	    if {$tcl_platform(platform) == "windows"} {
+	    if {$::tcl_platform(platform) == "windows"} {
 		package require registry
 		set ver [join [lrange [split $ver .] 0 3] .]
 		set key {HKEY_LOCAL_MACHINE\SOFTWARE\ActiveState\ActiveTcl}
@@ -1673,14 +1673,14 @@ proc ::tkcon::InitMenus {w title} {
 		    && [file exists $help]} {
 		    set cmd [list exec $::env(COMSPEC) /c start {} $help]
 		}
-	    } elseif {$tcl_platform(os) == "Darwin"} {
+	    } elseif {$::tcl_platform(os) == "Darwin"} {
 		set ver ActiveTcl-[join [lrange [split $ver .] 0 1] .]
 		set rsc "/Library/Frameworks/Tcl.framework/Resources"
 		set help "$rsc/English.lproj/$ver/index.html"
 		if {[file exists $help]} {
 		    set cmd [list exec open $help]
 		}
-	    } elseif {$tcl_platform(platform) == "unix"} {
+	    } elseif {$::tcl_platform(platform) == "unix"} {
 		set help [file dirname [info nameofexe]]
 		append help /../html/index.html
 		if {[file exists $help]} {
@@ -4570,23 +4570,23 @@ proc observe {opt name args} {
 	    }
 	    uplevel \[lreplace \[info level 0\] 0 0 $old\]
 	    "
-	    set tcl_observe($name) $old
+	    set ::tcl_observe($name) $old
 	}
 	cd* {
-	    if {[info exists tcl_observe($name)] && [catch {
+	    if {[info exists ::tcl_observe($name)] && [catch {
 		rename $name {}
-		rename $tcl_observe($name) $name
+		rename $::tcl_observe($name) $name
 		unset tcl_observe($name)
 	    } err]} { return -code error $err }
 	}
 	ci* {
 	    ## What a useless method...
-	    if {[info exists tcl_observe($name)]} {
-		set i $tcl_observe($name)
+	    if {[info exists ::tcl_observe($name)]} {
+		set i $::tcl_observe($name)
 		set res "\"$name\" observes true command \"$i\""
-		while {[info exists tcl_observe($i)]} {
+		while {[info exists ::tcl_observe($i)]} {
 		    append res "\n\"$name\" observes true command \"$i\""
-		    set i $tcl_observe($name)
+		    set i $::tcl_observe($name)
 		}
 		return $res
 	    }
@@ -5028,7 +5028,7 @@ proc tcl_unknown args {
 	}
     }
     if {[info level] == 1 && [string match {} [info script]] \
-	    && [info exists tcl_interactive] && $tcl_interactive} {
+	    && [info exists ::tcl_interactive] && $::tcl_interactive} {
 	if {![info exists auto_noexec]} {
 	    set new [auto_execok $name]
 	    if {[string compare {} $new]} {
@@ -5773,7 +5773,7 @@ proc ::tkcon::ExpandPathname str {
     } else {
 	if {[llength $m] > 1} {
 	    global tcl_platform
-	    if {[string match windows $tcl_platform(platform)]} {
+	    if {[string match windows $::tcl_platform(platform)]} {
 		## Windows is screwy because it's case insensitive
 		set tmp [ExpandBestMatch [string tolower $m] \
 			[string tolower $tdir]]

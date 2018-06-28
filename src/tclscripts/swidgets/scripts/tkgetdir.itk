@@ -379,7 +379,7 @@ itcl::class swidgets::tkgetdir {
     if {[info exist drives] == 0} {
 	set drives [file volume]
     }
-    if ![string compare $tcl_platform(platform) windows] {
+    if ![string compare $::tcl_platform(platform) windows] {
 	foreach drive $drives {
 	    $itk_component(directory) insert end $drive
 	}

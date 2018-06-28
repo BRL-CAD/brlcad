@@ -1756,32 +1756,11 @@ if(BRLCAD_FLAGS_DEBUG)
 endif(BRLCAD_FLAGS_DEBUG)
 
 
-# Set the minimum compilation linkage for Mac systems if not already
-# set, no harm if set elsewhere.
-if(APPLE)
-  set(MACOSX_DEPLOYMENT_TARGET "$ENV{MACOSX_DEPLOYMENT_TARGET}")
-  if(NOT MACOSX_DEPLOYMENT_TARGET)
-    set(ENV{MACOSX_DEPLOYMENT_TARGET} "10.3")
-  endif(NOT MACOSX_DEPLOYMENT_TARGET)
+# Warn if no minimum compilation linkage is set for Mac systems
+if(APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND "$ENV{MACOSX_DEPLOYMENT_TARGET}" STREQUAL "")
+  message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nMACOSX_DEPLOYMENT_TARGET should be set for release builds\nto something less than the latest release for portability\ne.g., export MACOSX_DEPLOYMENT_TARGET=10.5\nSee https://github.com/brlcad/MacOSX-SDKs}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
+endif(APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND "$ENV{MACOSX_DEPLOYMENT_TARGET}" STREQUAL "")
 
-  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.3")
-    CHECK_C_FLAG("mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.3.9.sdk" VARS SDK_FLAG)
-  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.3")
-  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.4")
-    CHECK_C_FLAG("mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk" VARS SDK_FLAG)
-  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.4")
-  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.5")
-    CHECK_C_FLAG("mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk" VARS SDK_FLAG)
-  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.5")
-  if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.6")
-    CHECK_C_FLAG("mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk" VARS SDK_FLAG)
-  endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.6")
-
-  ADD_NEW_FLAG(C SDK_FLAG ALL)
-  ADD_NEW_FLAG(CXX SDK_FLAG ALL)
-  ADD_NEW_FLAG(SHARED_LINKER SDK_FLAG ALL)
-  ADD_NEW_FLAG(EXE_LINKER SDK_FLAG ALL)
-endif(APPLE)
 
 # Most of the src/other projects have their own logic for handling
 # the C inline issue - BRL-CAD needs a fine-grained approach.  Mixed
@@ -2922,6 +2901,13 @@ if(HAVE_UNISTD_H)
 endif(HAVE_UNISTD_H)
 
 # HOST
+if(HAVE_GETHOSTNAME)
+  set(GETHOSTNAME_DEF "-DHAVE_GETHOSTNAME")
+endif(HAVE_GETHOSTNAME)
+if(HAVE_DECL_GETHOSTNAME)
+  set(GETHOSTNAME_DECL_DEF "-DHAVE_DECL_GETHOSTNAME")
+endif(HAVE_DECL_GETHOSTNAME)
+
 set(report_hostname_src "
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
@@ -2933,8 +2919,10 @@ set(report_hostname_src "
 #endif
 
 #define MAX_HOSTNAME 2048
-#if !defined(HAVE_UNISTD_H) || defined(_BSD_SOURCE) || defined(_XOPEN_SOURCE) && _XOPEN_SOURCE  >= 500 || defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112
-  #define HAVE_GETHOSTNAME 1
+
+/* strict c89 doesn't declare gethostname() */
+#if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME) && !defined(__cplusplus) && !defined(_WINSOCKAPI_)
+extern int gethostname(char *name, size_t len);
 #endif
 
 int main(void) {
@@ -2963,7 +2951,7 @@ endif(CPP_DLL_DEFINES)
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c" "${report_hostname_src}")
 try_run(RH_RESULT RH_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
   "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"
-  COMPILE_DEFINITIONS "${UNISTD_DEF}"
+  COMPILE_DEFINITIONS "${UNISTD_DEF}" "${GETHOSTNAME_DEF}" "${GETHOSTNAME_DECL_DEF}"
   LINK_LIBRARIES "${WS2_32_LIBRARY}"
   COMPILE_OUTPUT_VARIABLE RH_COMPILE_MSGS
   RUN_OUTPUT_VARIABLE BRLCAD_COMPILE_HOSTNAME)

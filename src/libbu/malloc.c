@@ -39,9 +39,10 @@
 #include "bu/log.h"
 
 /* strict c89 doesn't declare posix_memalign */
-#if defined(HAVE_POSIX_MEMALIGN) && !defined(HAVE_DECL_POSIX_MEMALIGN) && !defined(__cplusplus)
-extern int posix_memalign(void **memptr, size_t alignment, size_t size);
+#ifndef HAVE_DECL_POSIX_MEMALIGN
+extern int posix_memalign(void **, size_t, size_t);
 #endif
+
 
 /**
  * this controls whether to semaphore protect malloc calls
@@ -721,8 +722,14 @@ bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), siz
     int ret = 1;
 #ifdef HAVE_SYS_SHM_H
     int shmsize;
-    long psize = sysconf(_SC_PAGESIZE);
+    long psize;
     int flags = IPC_CREAT|0666;
+
+#ifdef _SC_PAGESIZE
+    psize = sysconf(_SC_PAGESIZE);
+#else
+    psize = 4096;
+#endif
 
     ret = 0;
     errno = 0;

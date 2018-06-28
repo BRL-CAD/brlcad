@@ -453,10 +453,10 @@ set_O_NDELAY(int fd)
 {
 #if defined(O_NDELAY)
     return fcntl(fd, F_SETFL, O_NDELAY);
-#else
-#  if defined(HAVE_TERMIOS_H)
+#elif defined(O_NONBLOCK)
+    return fcntl(fd, F_SETFL, O_NONBLOCK);
+#elif defined(HAVE_TERMIOS_H) && defined(FNDELAY)
     return fcntl(fd, F_SETFL, FNDELAY);
-#  endif
 #endif
 }
 

@@ -30,8 +30,8 @@
 #include "bu/str.h"
 
 /* c89 strict doesn't declare realpath */
-#if defined(HAVE_REALPATH) && !defined(HAVE_DECL_REALPATH) && !defined(__cplusplus)
-extern char *realpath(const char *path, char *resolved_path);
+#ifndef HAVE_DECL_REALPATH
+extern char *realpath(const char *, char *);
 #endif
 
 char *

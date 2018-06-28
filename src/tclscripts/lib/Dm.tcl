@@ -44,7 +44,7 @@
     itk_option define -zbuffer zbuffer Zbuffer 0
     itk_option define -zclip zclip Zclip 0
 
-    if {$tcl_platform(os) != "Windows NT"} {
+    if {$::tcl_platform(os) != "Windows NT"} {
     }
     itk_option define -fb_active fb_active Fb_active 0
     itk_option define -fb_observe fb_observe Fb_observe 1
@@ -90,7 +90,7 @@
     public method zbuffer {args}
     public method zclip {args}
 
-    if {$tcl_platform(os) != "Windows NT"} {
+    if {$::tcl_platform(os) != "Windows NT"} {
     }
     public method listen {args}
     public method refreshfb {}
@@ -126,7 +126,7 @@
     private variable initializing 1
     private variable tkwin
 
-    if {$tcl_platform(os) != "Windows NT"} {
+    if {$::tcl_platform(os) != "Windows NT"} {
 	private variable priv_type X
     } else {
 	private variable priv_type wgl
@@ -147,7 +147,7 @@
     }
 
     if {[catch {dm_bestXType $display} priv_type]} {
-	if {$tcl_platform(os) != "Windows NT"} {
+	if {$::tcl_platform(os) != "Windows NT"} {
 	    set priv_type X
 	} else {
 	    set priv_type wgl
@@ -186,7 +186,7 @@
     }
 }
 
-if {$tcl_platform(os) != "Windows NT"} {
+if {$::tcl_platform(os) != "Windows NT"} {
 }
 ::itcl::configbody Dm::listen {
     if {!$initializing} {
@@ -464,7 +464,7 @@ if {$tcl_platform(os) != "Windows NT"} {
     set itk_option(-debug) $args
 }
 
-if {$tcl_platform(os) != "Windows NT"} {
+if {$::tcl_platform(os) != "Windows NT"} {
 }
 ::itcl::body Dm::listen {args} {
     if {$args == ""} {
@@ -659,7 +659,7 @@ if {$tcl_platform(os) != "Windows NT"} {
 ::itcl::body Dm::doBindings {} {
     global tcl_platform
 
-    if {$tcl_platform(os) != "Windows NT"} {
+    if {$::tcl_platform(os) != "Windows NT"} {
 	bind $itk_component(dm) <Enter> "focus $itk_component(dm);"
     }
 

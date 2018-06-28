@@ -86,7 +86,7 @@ if {[info exists ::use_gui]} {
    # Have to do these loads until we get "package require tclcad" and "package require dm"
    # working - bwish loads them for us by default, but since rtwizard may be either
    # graphical or command line we need to start with btclsh
-   if {$tcl_platform(platform) == "windows"} {
+   if {$::tcl_platform(platform) == "windows"} {
      load [file join [bu_brlcad_root [bu_brlcad_dir bin]] libtclcad[info sharedlibextension]]
      load [file join [bu_brlcad_root [bu_brlcad_dir bin]] libdm[info sharedlibextension]]
    } else {
@@ -246,7 +246,7 @@ if {[info exists ::use_gui]} {
 
    if {$::RtWizard::wizard_state(fbserv_device) == "/dev/mem"} {
        if {[info exists fbserv_pid]} {
-	  if {$tcl_platform(platform) == "windows"} {
+	  if {$::tcl_platform(platform) == "windows"} {
 	      set kill_cmd [auto_execok taskkill]
 	      set kill_args [list $kill_cmd "/F" "/PID" $fbserv_pid]
 	  } else {
