@@ -2020,20 +2020,6 @@ tclcad_rt_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 	    }
 	    bu_vls_strcat(&str, "}");
 	    break;
-	case CUT_NUGRIDNODE:
-	    bu_vls_printf(&str, "type nugridnode");
-	    for (i = 0; i < 3; i++) {
-		bu_vls_printf(&str, " %c {", xyz[i]);
-		bu_vls_printf(&str, "spos %.25G epos %.25G width %.25g",
-			      cutp->nugn.nu_axis[i]->nu_spos,
-			      cutp->nugn.nu_axis[i]->nu_epos,
-			      cutp->nugn.nu_axis[i]->nu_width);
-		bu_vls_printf(&str, " cells_per_axis %d",
-			      cutp->nugn.nu_cells_per_axis[i]);
-		bu_vls_printf(&str, " stepsize %d}",
-			      cutp->nugn.nu_stepsize[i]);
-	    }
-	    break;
 	default:
 	    bu_vls_printf(&str, "tclcad_rt_pr_cutter() bad pointer cutp=%p",
 			  (void *)cutp);
@@ -2366,10 +2352,9 @@ tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 		  rtip->needprep
 	);
 
-    bu_vls_printf(&str, " space_partition_type %s n_nugridnode %d n_cutnode %d n_boxnode %d n_empty %ld",
-		  rtip->rti_space_partition == RT_PART_NUGRID ?
-		  "NUGrid" : "NUBSP",
-		  rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
+    bu_vls_printf(&str, " space_partition_type %s n_cutnode %d n_boxnode %d n_empty %ld",
+		  rtip->rti_space_partition == RT_PART_NUBSPT ?
+		  "NUBSP" : "unknown",
 		  rtip->rti_ncut_by_type[CUT_CUTNODE],
 		  rtip->rti_ncut_by_type[CUT_BOXNODE],
 		  rtip->nempty_cells);

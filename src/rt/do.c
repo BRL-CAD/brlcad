@@ -494,8 +494,8 @@ def_tree(register struct rt_i *rtip)
     RT_CK_RTI(rtip);
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0) {
-	bu_log("rt_gettrees(%s) FAILED\n", (objtab && objtab[0]) ? objtab[0] : "ERROR");
+    if (rt_gettrees(rtip, objc, (const char **)objv, npsw) < 0) {
+	bu_log("rt_gettrees(%s) FAILED\n", (objv && objv[0]) ? objv[0] : "ERROR");
     }
     (void)rt_get_timer(&times, NULL);
 
@@ -684,10 +684,9 @@ do_prep(struct rt_i *rtip)
     }
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {
-	bu_log("%s: %d nu, %d cut, %d box (%zu empty)\n",
-	       rtip->rti_space_partition == RT_PART_NUGRID ?
-	       "NUGrid" : "NUBSP",
-	       rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
+	bu_log("%s: %d cut, %d box (%zu empty)\n",
+	       rtip->rti_space_partition == RT_PART_NUBSPT ?
+	       "NUBSP" : "unknown",
 	       rtip->rti_ncut_by_type[CUT_CUTNODE],
 	       rtip->rti_ncut_by_type[CUT_BOXNODE],
 	       rtip->nempty_cells);

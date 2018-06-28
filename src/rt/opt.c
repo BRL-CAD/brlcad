@@ -110,12 +110,12 @@ char pmfile[255];
 /***** ************************ *****/
 
 /***** variables shared with do.c *****/
+int objc = 0;		/* Number of cmd-line treetops */
+char **objv = (char **)NULL;	/* array of treetop strings */
 char *string_pix_start = (char *)NULL;	/* string spec of starting pixel */
 char *string_pix_end = (char *)NULL;	/* string spec of ending pixel */
 int pix_start = -1;		/* pixel to start at */
 int pix_end = 0;		/* pixel to end at */
-int nobjs = 0;		/* Number of cmd-line treetops */
-char **objtab = (char **)NULL;	/* array of treetop strings */
 int matflag = 0;		/* read matrix from stdin */
 int orientflag = 0;		/* 1 means orientation has been set */
 int desiredframe = 0;	/* frame to start at */
@@ -161,24 +161,12 @@ fastf_t rt_dist_tol = (fastf_t)0.0005;	/* Value for rti_tol.dist */
 fastf_t rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
 char *framebuffer = (char *)NULL;		/* desired framebuffer */
 
-int space_partition = 	/*space partitioning algorithm to use*/
-/* Do NOT insert value above for space_partition ; it's taken care of below. */
-
-/* TODO: need a run-time mechanism for toggling spatial partitioning
- * methods.  Use this compile-time switch to toggle between different
- * spatial partitioning methods.
+/**
+ * space partitioning algorithm to use.  previously had experimental
+ * grid support, but now only uses a Non-uniform Binary Spatial
+ * Partitioning (BSP) tree.
  */
-#ifdef USE_NUGRID
-/* Non-uniform grid/mesh discretized spatial partitioning */
-    RT_PART_NUGRID;
-#else
-/* Non-uniform Binary Spatial Partitioning (BSP) tree */
-RT_PART_NUBSPT;
-#endif
-int nugrid_dimlimit = 0;	/* limit to each dimension of
-				   the nugrid */
-double nu_gfactor = RT_NU_GFACTOR_DEFAULT;
-/* constant factor in NUgrid algorithm, if applicable */
+int space_partition = RT_PART_NUBSPT;
 
 #define MAX_WIDTH (32*1024)
 
@@ -270,14 +258,8 @@ get_args(int argc, const char *argv[])
 		kut_plane[W] *= f;
 		break;
 	    }
-	    case '.':
-		nu_gfactor = (double)atof(bu_optarg);
-		break;
 	    case COMMA:
 		space_partition = atoi(bu_optarg);
-		break;
-	    case '@':
-		nugrid_dimlimit = atoi(bu_optarg);
 		break;
 	    case 'c':
 		(void)rt_do_cmd((struct rt_i *)0, bu_optarg, rt_cmdtab);

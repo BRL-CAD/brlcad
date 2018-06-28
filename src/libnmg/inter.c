@@ -66,10 +66,6 @@
 #include "bn/plot3.h"
 #include "nmg.h"
 
-#if defined(HAVE_RINT) && !defined(HAVE_DECL_RINT)
-extern double rint(double x);
-#endif
-
 #define ISECT_NONE 0
 #define ISECT_SHARED_V 1
 #define ISECT_SPLIT1 2

@@ -609,8 +609,7 @@ WDB_EXPORT extern int mk_vol(struct rt_wdb *fp, const char *name, const char *fi
 /**
  * Create a submodel solid.  If file is NULL or "", the treetop refers
  * to the current database.  Treetop is the name of a single database
- * object in 'file'.  meth is 0 (RT_PART_NUBSPT) or 1
- * (RT_PART_NUGRID).  method 0 is what is normally used.
+ * object in 'file'.  meth is normally 0 (RT_PART_NUBSPT) and unused.
  */
 WDB_EXPORT extern int mk_submodel(struct rt_wdb *fp, const char *name, const char *file,
 				  const char *treetop, int meth);

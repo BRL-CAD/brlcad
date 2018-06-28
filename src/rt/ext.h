@@ -32,11 +32,9 @@
 /***** Variables declared in opt.c *****/
 extern char *framebuffer;		/* desired framebuffer */
 extern fastf_t azimuth, elevation;
-extern double nu_gfactor;		/* constant factor in NUgrid algorithm */
 extern int Query_one_pixel;
 extern int benchmark;
 extern int lightmodel;			/* Select lighting model */
-extern int nugrid_dimlimit;		/* limit to dimensions of nugrid; <= 0 means no limit */
 extern int query_debug;
 extern int query_rdebug;
 extern int query_x;
@@ -63,8 +61,6 @@ extern mat_t model2view;
 extern mat_t view2model;
 extern struct application APP;
 extern struct icv_image *bif;
-extern vect_t left_eye_delta;
-extern vect_t left_eye_delta;
 
 /***** variables shared with worker() ******/
 extern unsigned char *scanbuf;		/* pixels for REMRT */
@@ -113,14 +109,14 @@ extern double pmargs[9];
 /***** ************************ *****/
 
 /***** variables shared with do.c *****/
-extern char **objtab;			/* array of treetop strings */
+extern int objc;			/* Number of cmd-line treetops */
+extern char **objv;			/* array of treetop strings */
 extern char *outputfile;		/* name of base of output file */
 extern fastf_t frame_delta_t;		/* 1.0 / frames_per_second_playback */
 extern int benchmark;			/* No random numbers:  benchmark */
 extern int curframe;			/* current frame number */
 extern int desiredframe;		/* frame to start at */
 extern int matflag;			/* read matrix from stdin */
-extern int nobjs;			/* Number of cmd-line treetops */
 extern int pix_end;			/* pixel to end at */
 extern int pix_start;			/* pixel to start at */
 /***** end variables shared with do.c *****/

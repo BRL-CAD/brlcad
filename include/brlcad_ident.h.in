@@ -51,7 +51,7 @@ static const char *BRLCAD_DATE = @BRLCAD_COMPILE_DATE@;
 /**
  * Compilation host, updated every time a build pass occurs.
  */
-static const char *BRLCAD_HOST = "@BRLCAD_COMPILE_HOST@";
+static const char *BRLCAD_HOST = "@BRLCAD_COMPILE_HOSTNAME@";
 
 /**
  * Compilation user, updated every time a build pass occurs.

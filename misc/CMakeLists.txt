@@ -99,6 +99,7 @@ set(misc_ignore_files
   svn2git/md5_process_lines.cxx
   svn2git/pstream.h
   svn2git/rules
+  svn2git/sphflake.pix,v
   svn2git/svn_logmsg.xsl
   svn2git/svn_moved_and_edited.cxx
   svn2git/svn2git/CMake/FindAPR.cmake

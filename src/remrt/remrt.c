@@ -96,8 +96,8 @@ extern int gettimeofday(struct timeval *, void *);
 #  endif
 #endif
 
-#define TARDY_SERVER_INTERVAL	(9*60)		/* max seconds of silence */
-#define N_SERVER_ASSIGNMENTS	3		/* desired # of assignments */
+#define TARDY_SERVER_INTERVAL	(900*60)	/* max seconds of silence */
+#define N_SERVER_ASSIGNMENTS	1		/* desired # of assignments */
 #define MIN_ASSIGNMENT_TIME	5		/* desired seconds/result */
 #define SERVER_CHECK_INTERVAL	(10*60)		/* seconds */
 #ifndef RSH
@@ -1557,7 +1557,7 @@ send_gettrees(struct servers *sp, struct frame *fr)
 static void
 send_do_lines(struct servers *sp, int start, int stop, int framenum)
 {
-    char obuf[128];
+    char obuf[256] = {0};
 
     if (sp->sr_pc == PKC_NULL) return;
 
@@ -1604,14 +1604,13 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
     }
 
     /*
-     * Check for tardy server.
-     * The assignments are estimated to take about MIN_ASSIGNMENT_TIME
-     * seconds, so waiting many minutes is unreasonable.
-     * However, if the picture "suddenly" became very complex,
-     * or a system got very busy,
-     * the estimate could be quite low.
-     * This mechanism exists mostly to protect against servers that
-     * go into "black hole" mode while REMRT is running unattended.
+     * Check for tardy server.  The assignments are estimated to take
+     * about MIN_ASSIGNMENT_TIME seconds, so waiting many minutes is
+     * unreasonable.  However, if the picture "suddenly" became very
+     * complex, or a system got very busy, the estimate could be quite
+     * low.  This mechanism exists mostly to protect against servers
+     * that go into "black hole" mode while REMRT is running
+     * unattended.
      */
     if (server_q_len(sp) > 0 &&
 	sp->sr_sendtime.tv_sec > 0 &&
@@ -1680,8 +1679,8 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
     if (work_allocate_method == OPT_MOVIE) {
 	lump = fr->fr_width * 2;	/* 2 scanlines at a whack */
     } else {
-	/* Limit growth in assignment size to 2X each assignment */
-	if (lump > 2*sp->sr_lump) lump = 2*sp->sr_lump;
+	/* Limit growth in assignment size to 1.5X each assignment */
+	if (lump > 1.5*sp->sr_lump) lump = 1.5*sp->sr_lump;
     }
     /* Provide some bounds checking */
     if (lump < 32) lump = 32;
