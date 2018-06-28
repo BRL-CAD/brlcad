@@ -264,9 +264,6 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-	bu_prmem("At end of do_region_end()");
-
     BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;

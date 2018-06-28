@@ -734,22 +734,12 @@ ant_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 
     BU_CK_LIST_HEAD(vhead);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of ant_to_vlist():\n");
-	bu_mem_barriercheck();
-    }
-
     RT_VLIST_SET_DISP_MAT(vhead, annot_ip->V);
 
     for (seg_no=0; seg_no < ant->count; seg_no++) {
 	ret += seg_to_vlist(vhead, ttol, V, annot_ip, ant->segments[seg_no]);
     }
     RT_VLIST_SET_MODEL_MAT(vhead);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of ant_to_vlist():\n");
-	bu_mem_barriercheck();
-    }
 
     return ret;
 }
@@ -804,11 +794,6 @@ rt_annot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
     if (rp->u_id != DBID_ANNOT) {
 	bu_log("rt_annot_import4: defective record\n");
 	return -1;
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of annot_import4():\n");
-	bu_mem_barriercheck();
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -979,11 +964,6 @@ rt_annot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	ptr += SIZEOF_NETWORK_LONG;
     }
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of annotation_import4():\n");
-	bu_mem_barriercheck();
-    }
-
     return 0;			/* OK */
 }
 
@@ -1008,11 +988,6 @@ rt_annot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     if (ip->idb_type != ID_ANNOT) return -1;
     annot_ip = (struct rt_annot_internal *)ip->idb_ptr;
     RT_ANNOT_CK_MAGIC(annot_ip);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of annot_export4():\n");
-	bu_mem_barriercheck();
-    }
 
     BU_CK_EXTERNAL(ep);
 
@@ -1197,10 +1172,6 @@ rt_annot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
 	*(uint32_t *)ptr = htonl(annot_ip->ant.reverse[seg_no]);
 	ptr += SIZEOF_NETWORK_LONG;
     }
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of annot_export4():\n");
-	bu_mem_barriercheck();
-    }
 
     return 0;
 }
@@ -1222,11 +1193,6 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     /* must be double for import and export */
     double v[ELEMENTS_PER_VECT];
     double *vp;
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of annot_import5():\n");
-	bu_mem_barriercheck();
-    }
 
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
@@ -1402,11 +1368,6 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	ptr += SIZEOF_NETWORK_LONG;
     }
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of annot_import5():\n");
-	bu_mem_barriercheck();
-    }
-
     return 0;			/* OK */
 }
 
@@ -1424,11 +1385,6 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 
     /* must be double for import and export */
     double tmp_vec[ELEMENTS_PER_VECT];
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of annot_export5():\n");
-	bu_mem_barriercheck();
-    }
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1621,11 +1577,6 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     for (seg_no=0; seg_no < annot_ip->ant.count; seg_no++) {
 	*(uint32_t *)cp = htonl(annot_ip->ant.reverse[seg_no]);
 	cp += SIZEOF_NETWORK_LONG;
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of annot_export5():\n");
-	bu_mem_barriercheck();
     }
 
     return 0;
@@ -1914,11 +1865,6 @@ rt_annot_ifree(struct rt_db_internal *ip)
     RT_ANNOT_CK_MAGIC(annot_ip);
     annot_ip->magic = 0;			/* sanity */
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of annot_ifree():\n");
-	bu_mem_barriercheck();
-    }
-
     if (annot_ip->verts)
 	bu_free((char *)annot_ip->verts, "annot_ip->verts");
 
@@ -1928,11 +1874,6 @@ rt_annot_ifree(struct rt_db_internal *ip)
 
     bu_free((char *)annot_ip, "annotation ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of annot_ifree():\n");
-	bu_mem_barriercheck();
-    }
 }
 
 
@@ -2022,11 +1963,6 @@ rt_copy_annot(const struct rt_annot_internal *annot_ip)
 
     RT_ANNOT_CK_MAGIC(annot_ip);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of rt_copy_annot():\n");
-	bu_mem_barriercheck();
-    }
-
     BU_ALLOC(out, struct rt_annot_internal);
     *out = *annot_ip;	/* struct copy */
 
@@ -2040,11 +1976,6 @@ rt_copy_annot(const struct rt_annot_internal *annot_ip)
     ant_out = &out->ant;
     if (ant_out)
 	rt_copy_ant(ant_out, &annot_ip->ant);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of rt_copy_annot():\n");
-	bu_mem_barriercheck();
-    }
 
     return out;
 }

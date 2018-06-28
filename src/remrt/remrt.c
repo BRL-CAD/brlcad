@@ -2359,23 +2359,6 @@ cd_frames(const int argc, const char **UNUSED(argv))
 
 
 static int
-cd_memprint(const int argc, const char **argv)
-{
-    if (argc < 2)
-	return 1;
-
-    if (BU_STR_EQUAL(argv[1], "on")) {
-	RTG.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
-    } else if (BU_STR_EQUAL(argv[1], "off")) {
-	RTG.debug &= ~(DEBUG_MEM|DEBUG_MEM_FULL);
-    } else {
-	bu_prmem("memprint command");
-    }
-    return 0;
-}
-
-
-static int
 cd_stat(const int UNUSED(argc), const char **UNUSED(argv))
 {
     struct servers *sp;
@@ -3747,8 +3730,6 @@ struct command_tab cmd_tab[] = {
      cd_persp,	2, 2},
     {"print", "[0|1]",	"set/toggle remote message printing",
      cd_print,	1, 2},
-    {"memprint", "on|off|NULL",	"debug dump of memory usage",
-     cd_memprint,	1, 2},
     /* HELP */
     {"?", "",		"help",
      cd_help,	1, 1},

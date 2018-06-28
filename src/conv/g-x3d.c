@@ -47,18 +47,6 @@
 #include "wdb.h"
 
 
-/* #define MEMORY_LEAK_CHECKING 1 */
-
-#ifdef MEMORY_LEAK_CHECKING
-#define BARRIER_CHECK {							\
-	if (bu_mem_barriercheck()) {					\
-	    bu_log("memory is corrupted at line %d in file %d\n", __LINE__, __FILE__); \
-	}								\
-    }
-#else
-#define BARRIER_CHECK /* */
-#endif
-
 #define TXT_BUF_LEN 512
 #define TXT_NAME_SIZE 128
 
@@ -164,8 +152,6 @@ clean_pmp(struct plate_mode *pmp)
 {
     int i;
 
-    BARRIER_CHECK;
-
     pmp->num_bots = 0;
     pmp->num_nonbots = 0;
     for (i=0; i<pmp->array_size; i++) {
@@ -181,7 +167,6 @@ clean_pmp(struct plate_mode *pmp)
 	    pmp->bots[i] = NULL;
 	}
     }
-    BARRIER_CHECK;
 }
 
 
@@ -277,8 +262,6 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
     struct rt_bot_internal *bot;
     struct plate_mode *pmp = (struct plate_mode *)client_data;
 
-    BARRIER_CHECK;
-
     if (ip->idb_type != ID_BOT) {
 	pmp->num_nonbots++;
 	return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
@@ -298,14 +281,11 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 
 	/* walk tree will free the BOT, so we need a copy */
 	pmp->bots[pmp->num_bots] = dup_bot(bot);
-	BARRIER_CHECK;
 	pmp->num_bots++;
 	return (union tree *)NULL;
     }
 
     pmp->num_nonbots++;
-
-    BARRIER_CHECK;
 
     return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
 }
@@ -399,7 +379,6 @@ main(int argc, char **argv)
 
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
-    BARRIER_CHECK;
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "d:a:n:o:r:vx:P:X:u:h?")) != -1) {
 	switch (c) {
@@ -470,8 +449,6 @@ main(int argc, char **argv)
     writeX3dHeader(outfp, out_file);
     bu_optind++;
 
-    BARRIER_CHECK;
-
     pm.num_bots = 0;
     pm.num_nonbots = 0;
     pm.array_size = 5;
@@ -501,7 +478,6 @@ main(int argc, char **argv)
 
 
     }
-    BARRIER_CHECK;
 
     /* Walk indicated tree(s).  Each non-light-source region will be output separately */
     (void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
@@ -512,7 +488,6 @@ main(int argc, char **argv)
 		       leaf_tess,
 		       (void *)&pm);	/* in librt/nmg_bool.c */
 
-    BARRIER_CHECK;
     /* Release dynamic storage */
     nmg_km(the_model);
 
@@ -630,8 +605,6 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     int id;
 
     NMG_CK_MODEL(m);
-
-    BARRIER_CHECK;
 
     full_path = db_path_to_string(pathp);
 
@@ -839,8 +812,6 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     fprintf(fp, "\t\t</IndexedFaceSet>\n");
     /* Shape end tag */
     fprintf(fp, "\t</Shape>\n");
-
-    BARRIER_CHECK;
 }
 
 
@@ -853,8 +824,6 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
     int bot_num;
     size_t i;
     size_t vert_count=0;
-
-    BARRIER_CHECK;
 
     path_str = db_path_to_string(pathp);
     /* replace all occurrences of '.' with '_' */
@@ -909,8 +878,6 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
     fprintf(outfp, "\t\t</IndexedFaceSet>\n");
     /* Shape end tag */
     fprintf(outfp, "\t</Shape>\n");
-
-    BARRIER_CHECK;
 }
 
 
@@ -925,7 +892,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     struct plate_mode *pmp = (struct plate_mode *)client_data;
     char *name;
 
-    BARRIER_CHECK;
     if (tsp->ts_is_fastgen != REGION_FASTGEN_PLATE) {
 	clean_pmp(pmp);
 	return nmg_region_end(tsp, pathp, curtree, client_data);
@@ -934,7 +900,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     /* FASTGEN plate mode region, just spew the bot triangles */
     if (pmp->num_bots < 1 || pmp->num_nonbots > 0) {
 	clean_pmp(pmp);
-	BARRIER_CHECK;
 	return nmg_region_end(tsp, pathp, curtree, client_data);
     }
 
@@ -951,7 +916,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     bot2vrml(pmp, pathp, tsp->ts_regionid);
     clean_pmp(pmp);
     regions_converted++;
-    BARRIER_CHECK;
     return (union tree *)NULL;
 }
 
@@ -1013,7 +977,6 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 
-    BARRIER_CHECK;
     BU_LIST_INIT(&vhead);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
@@ -1095,7 +1058,6 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
-    BARRIER_CHECK;
     return curtree;
 }
 

@@ -23,7 +23,7 @@
 #include "rt/func.h"
 
 int
-rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp)
+rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip)
 {
     int id;
     const struct rt_functab *ft;
@@ -34,7 +34,6 @@ rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *
     RT_CK_DB_INTERNAL(op);
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
-    if (resp) RT_CK_RESOURCE(resp);
 
     id = ip->idb_minor_type;
     if (id < 0)
@@ -46,7 +45,7 @@ rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *
     if (!ft->ft_xform)
 	return -4;
 
-    return ft->ft_xform(op, mat, ip, release, dbip, resp);
+    return ft->ft_xform(op, mat, ip, release, dbip);
 }
 
 

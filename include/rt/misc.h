@@ -42,12 +42,6 @@ RT_EXPORT extern struct bu_bitv *rt_get_solidbitv(size_t nbits,
 
 /* table.c */
 RT_EXPORT extern int rt_id_solid(struct bu_external *ep);
-RT_EXPORT extern int rt_generic_xform(struct rt_db_internal     *op,
-                                      const mat_t               mat,
-                                      struct rt_db_internal     *ip,
-                                      int                       avail,
-                                      struct db_i               *dbip,
-                                      struct resource           *resp);
 
 /**
  * Used by MGED for labeling vertices of a solid.
@@ -67,8 +61,6 @@ rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
 		 struct db_i *dbip, const char *obj, int fidelity);
 
 
-RT_EXPORT extern void rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
-
 /**
  * reduce an object into some form of simpler representation
  */
@@ -80,6 +72,16 @@ RT_EXPORT extern void rt_reduce_obj(struct rt_db_internal *dest, const struct rt
  * reduce the database hierarchy
  */
 RT_EXPORT extern void rt_reduce_db(struct db_i *db, size_t num_preserved_attributes, const char * const * preserved_attributes, const struct bu_ptbl *preserved_combs_dirs);
+
+/* below are librt table implementation detail */
+
+RT_EXPORT extern int rt_generic_xform(struct rt_db_internal     *op,
+                                      const mat_t               mat,
+                                      struct rt_db_internal     *ip,
+                                      int                       avail,
+                                      struct db_i               *dbip);
+RT_EXPORT extern void rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
+
 
 __END_DECLS
 

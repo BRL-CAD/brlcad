@@ -186,7 +186,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	    }
 	}
 
-	for (op=olist; op; prev_ol=op, op=op->next) {
+	for (op=olist; op; op=op->next) {
 	    /* if this pair was seen in reverse, decrease the unique counter */
 	    if ((BU_STR_EQUAL(reg1->reg_name, op->reg2)) && (BU_STR_EQUAL(reg2->reg_name, op->reg1))) {
 		unique_overlap_count--;

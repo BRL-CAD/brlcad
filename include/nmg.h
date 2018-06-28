@@ -78,6 +78,10 @@
 #include "bn/vlist.h"
 #include "vmath.h"
 
+/* system headers */
+#include "bio.h" /* for FILE */
+
+
 #ifndef NMG_EXPORT
 #  if defined(NMG_DLL_EXPORTS) && defined(NMG_DLL_IMPORTS)
 #    error "Only NMG_DLL_EXPORTS or NMG_DLL_IMPORTS can be defined, not both."

@@ -3728,9 +3728,6 @@ main(int argc, char **argv)
 		    bu_log("IN: %f %f %f\n", in[j].x, in[j].y, in[j].z);
 	    }
 
-	    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-		bu_prmem("At start of component");
-
 	    switch (in[i-1].surf_type) {
 		/* Key on surface types. */
 
@@ -3804,9 +3801,6 @@ main(int argc, char **argv)
 
 	    in[0] = in[i];
 	    i = 0;
-
-	    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-		bu_prmem("At end of component");
 
 	}       /* end "processing" if */
     }

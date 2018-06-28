@@ -62,36 +62,6 @@ lwrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 #define SMALLBUFSIZ 256
 
 /**
- * A wrapper for bu_mem_barriercheck.
- *
- * \@param clientData    - UNUSED, present for signature matching
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
- */
-HIDDEN int
-tcl_bu_mem_barriercheck(void *UNUSED(clientData),
-			int argc,
-			const char **argv)
-{
-    int ret;
-
-    if (argc > 1) {
-	bu_log("Usage: %s\n", argv[0]);
-	return BRLCAD_ERROR;
-    }
-
-    ret = bu_mem_barriercheck();
-    if (UNLIKELY(ret < 0)) {
-	bu_log("bu_mem_barriercheck() failed\n");
-	return BRLCAD_ERROR;
-    }
-    return BRLCAD_OK;
-}
-
-
-/**
  * A wrapper for bu_prmem. Prints map of memory currently in use, to
  * stderr.
  *
@@ -436,7 +406,6 @@ Bu_Init(void *p)
 	{"bu_brlcad_data",		tcl_bu_brlcad_data},
 	{"bu_brlcad_dir",		tcl_bu_brlcad_dir},
 	{"bu_brlcad_root",		tcl_bu_brlcad_root},
-	{"bu_mem_barriercheck",		tcl_bu_mem_barriercheck},
 	{"bu_prmem",			tcl_bu_prmem},
 	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
 	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},

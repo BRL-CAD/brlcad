@@ -5088,8 +5088,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 
     /* create the new solid */
     RT_DB_INTERNAL_INIT(&new_int);
-    if (rt_generic_xform(&new_int, gtd.gtd_xform,
-			 &internal, 0, wdbp->dbip, &rt_uniresource)) {
+    if (rt_generic_xform(&new_int, gtd.gtd_xform, &internal, 0, wdbp->dbip)) {
 	rt_db_free_internal(&internal);
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "wdb_copyeval_cmd: rt_generic_xform failed\n", (char *)NULL);
 

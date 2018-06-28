@@ -863,18 +863,8 @@ curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V
 
     BU_CK_LIST_HEAD(vhead);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of curve_to_vlist():\n");
-	bu_mem_barriercheck();
-    }
-
     for (seg_no=0; seg_no < crv->count; seg_no++) {
 	ret += seg_to_vlist(vhead, ttol, V, u_vec, v_vec, sketch_ip, crv->segment[seg_no]);
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of curve_to_vlist():\n");
-	bu_mem_barriercheck();
     }
 
     return ret;
@@ -1121,11 +1111,6 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 	return -1;
     }
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_import4():\n");
-	bu_mem_barriercheck();
-    }
-
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SKETCH;
@@ -1277,11 +1262,6 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 	ptr += SIZEOF_NETWORK_LONG;
     }
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_import4():\n");
-	bu_mem_barriercheck();
-    }
-
     return 0;			/* OK */
 }
 
@@ -1306,11 +1286,6 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     if (ip->idb_type != ID_SKETCH) return -1;
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_export4():\n");
-	bu_mem_barriercheck();
-    }
 
     BU_CK_EXTERNAL(ep);
 
@@ -1478,10 +1453,6 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	*(uint32_t *)ptr = htonl(sketch_ip->curve.reverse[seg_no]);
 	ptr += SIZEOF_NETWORK_LONG;
     }
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_export4():\n");
-	bu_mem_barriercheck();
-    }
 
     return 0;
 }
@@ -1503,11 +1474,6 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     /* must be double for import and export */
     double v[ELEMENTS_PER_VECT];
     double *vp;
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_import5():\n");
-	bu_mem_barriercheck();
-    }
 
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
@@ -1668,11 +1634,6 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 	ptr += SIZEOF_NETWORK_LONG;
     }
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_import5():\n");
-	bu_mem_barriercheck();
-    }
-
     return 0;			/* OK */
 }
 
@@ -1690,11 +1651,6 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 
     /* must be double for import and export */
     double tmp_vec[ELEMENTS_PER_VECT];
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_export5():\n");
-	bu_mem_barriercheck();
-    }
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1877,11 +1833,6 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     for (seg_no=0; seg_no < sketch_ip->curve.count; seg_no++) {
 	*(uint32_t *)cp = htonl(sketch_ip->curve.reverse[seg_no]);
 	cp += SIZEOF_NETWORK_LONG;
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_export5():\n");
-	bu_mem_barriercheck();
     }
 
     return 0;
@@ -2148,11 +2099,6 @@ rt_sketch_ifree(struct rt_db_internal *ip)
     RT_SKETCH_CK_MAGIC(sketch_ip);
     sketch_ip->magic = 0;			/* sanity */
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_ifree():\n");
-	bu_mem_barriercheck();
-    }
-
     if (sketch_ip->verts)
 	bu_free((char *)sketch_ip->verts, "sketch_ip->verts");
 
@@ -2162,11 +2108,6 @@ rt_sketch_ifree(struct rt_db_internal *ip)
 
     bu_free((char *)sketch_ip, "sketch ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_ifree():\n");
-	bu_mem_barriercheck();
-    }
 }
 
 
@@ -2249,11 +2190,6 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 
     RT_SKETCH_CK_MAGIC(sketch_ip);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of rt_copy_sketch():\n");
-	bu_mem_barriercheck();
-    }
-
     BU_ALLOC(out, struct rt_sketch_internal);
     *out = *sketch_ip;	/* struct copy */
 
@@ -2267,11 +2203,6 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
     crv_out = &out->curve;
     if (crv_out)
 	rt_copy_curve(crv_out, &sketch_ip->curve);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of rt_copy_sketch():\n");
-	bu_mem_barriercheck();
-    }
 
     return out;
 }

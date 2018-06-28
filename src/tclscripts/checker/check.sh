@@ -137,11 +137,10 @@ for obj in $tops ; do
 		    }' $OBJ.$az.$el.rtcheck.log |
 		    cut -f 1,2,3,9 -d ' ' |
 		    awk '{if ($2 < $1) { tmp = $1; $1 = $2; $2 = tmp}; print $1, $2, $3 * $4}' >> $OBJ.pairings
-
-		cat $OBJ.pairings >> $JOB.pairings
 	    fi
 	done
     done
+    cat $OBJ.pairings >> $JOB.pairings
 done
 
 

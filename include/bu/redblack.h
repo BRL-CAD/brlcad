@@ -158,7 +158,7 @@ typedef struct bu_rb_tree bu_rb_tree_t;
  * bu_rb_tree struct.  does not allocate memory.
  */
 #define BU_RB_TREE_INIT_ZERO { BU_RB_TREE_MAGIC, 0, NULL, 0, NULL, 0, NULL, NULL, NULL, NULL, \
-	{ BU_LIST_INIT_ZER0, {NULL, NULL} }, { BU_LIST_INIT_ZER0, {NULL, NULL} }, NULL, NULL, NULL }
+	{ BU_LIST_INIT_ZERO, { NULL } }, { BU_LIST_INIT_ZERO, { NULL } }, NULL, NULL, NULL }
 
 /**
  * returns truthfully whether a bu_rb_tree has been initialized.

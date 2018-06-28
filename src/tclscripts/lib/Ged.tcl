@@ -165,7 +165,6 @@ package provide cadwidgets::Ged 1.0
 	method bu_brlcad_data {args}
 	method bu_brlcad_dir {args}
 	method bu_brlcad_root {args}
-	method bu_mem_barriercheck {args}
 	method bu_prmem {args}
 	method bu_get_value_by_keyword {args}
 	method bu_rgb_to_hsv {args}
@@ -407,6 +406,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_autoview {_pane args}
 	method pane_bind {_pane _event _script}
 	method pane_center {_pane args}
+	method pane_check_overlaps {_pane args}
 	method pane_constrain_rmode {_pane args}
 	method pane_constrain_tmode {_pane args}
 	method pane_data_scale_mode {_pane args}
@@ -1396,10 +1396,6 @@ package provide cadwidgets::Ged 1.0
     uplevel \#0 bu_brlcad_root $args
 }
 
-::itcl::body cadwidgets::Ged::bu_mem_barriercheck {args} {
-    uplevel \#0 bu_mem_barriercheck $args
-}
-
 ::itcl::body cadwidgets::Ged::bu_prmem {args} {
     uplevel \#0 bu_prmem $args
 }
@@ -1429,7 +1425,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::check_overlaps {args} {
-    eval $mGed check_overlaps $args
+    eval $mGed check_overlaps $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::clear {args} {
@@ -2616,6 +2612,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_center {_pane args} {
     eval $mGed center $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_check_overlaps {_pane args} {
+    eval $mGed check_overlaps $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_constrain_rmode {_pane args} {
@@ -6228,7 +6228,6 @@ package provide cadwidgets::Ged 1.0
     $help add bu_brlcad_data	{{subdir} {}}
     $help add bu_brlcad_dir	{{dirkey} {}}
     $help add bu_brlcad_root	{{subdir} {}}
-    $help add bu_mem_barriercheck {{} {}}
     $help add bu_prmem		{{title} {}}
     $help add bu_get_value_by_keyword {{iwant list} {}}
     $help add bu_rgb_to_hsv	{{rgb} {}}

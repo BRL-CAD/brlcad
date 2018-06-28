@@ -16,6 +16,7 @@ set(articles_EN
   projection_shader.xml
   tire.xml
   main_menu.xml
+  overlap_tool.xml
   )
 
 set(articles_EN_IMAGES

@@ -304,12 +304,6 @@ Convert_assy(char *line)
     int start;
     int i;
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at start of Convert_assy:\n");
-	if (bu_mem_barriercheck())
-	    bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n");
-    }
-
     BU_LIST_INIT(&head.l);
 
     start = (-1);
@@ -433,14 +427,7 @@ Convert_assy(char *line)
 	}
     }
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at end of Convert_assy:\n");
-	if (bu_mem_barriercheck())
-	    bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n");
-    }
-
     top_level = 0;
-
 }
 
 
@@ -601,16 +588,6 @@ Convert_part(char *line)
     int solid_in_region=0;
     point_t part_max, part_min;	/* Part RPP */
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_prmem("At start of Conv_prt():\n");
-
-    if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at start of Convert_part:\n");
-	if (bu_mem_barriercheck())
-	    bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n");
-    }
-
-
     bot_fcurr = 0;
     BU_LIST_INIT(&head.l);
     VSETALL(part_min, INFINITY);
@@ -693,9 +670,6 @@ Convert_part(char *line)
     solid_name = Get_solid_name(name, obj);
 
     bu_log("\tUsing solid name: %s\n", solid_name);
-
-    if (RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_prmem("At start of Convert_part()");
 
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in) != NULL) {
 	start = (-1);
@@ -863,12 +837,6 @@ Convert_part(char *line)
 		(void)mk_addmember(brlcad_name, &all_head.l, NULL, WMOP_UNION);
 	    id_no++;
 	}
-    }
-
-    if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at end of Convert_part:\n");
-	if (bu_mem_barriercheck())
-	    bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n");
     }
 
     top_level = 0;

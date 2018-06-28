@@ -449,8 +449,7 @@ rt_hlf_xform(
     const mat_t mat,
     struct rt_db_internal *ip,
     int release,
-    struct db_i *dbip,
-    struct resource *resp)
+    struct db_i *dbip)
 {
     struct rt_half_internal *hip, *hop;
     point_t orig_pt, pt;
@@ -459,7 +458,6 @@ rt_hlf_xform(
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
     RT_CK_DB_INTERNAL(op);

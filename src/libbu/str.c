@@ -164,12 +164,6 @@ bu_strdupm(register const char *cp, const char *label)
 	len = strlen(cp)+1;
 	base = (char *)bu_malloc(len, label);
 
-	if (UNLIKELY(bu_debug&BU_DEBUG_MEM_LOG)) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    fprintf(stderr, "%p strdup%llu \"%s\"\n", (void *)base, (unsigned long long)len, cp);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	}
-
 	memcpy(base, cp, len);
     }
     return base;

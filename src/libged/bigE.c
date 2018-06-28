@@ -1107,9 +1107,6 @@ shoot_and_plot(point_t start_pt,
     size_t shoot_leaf;
     struct bu_list *final_segs;
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("Error at start of shoot_and_plot()\n");
-
     CK_ETREE(eptr);
 
     memset(&rd, 0, sizeof(struct ray_data));
@@ -1298,10 +1295,6 @@ shoot_and_plot(point_t start_pt,
     if (final_segs)
 	MY_FREE_SEG_LIST(final_segs, dgcdp->ap->a_resource);
     bu_free((char *)final_segs, "bu_list");
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("Error at end of shoot_and_plot()\n");
-
 }
 
 
@@ -2007,9 +2000,6 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("Error at start of 'E'\n");
 
     /* XXX: where is this released? */
     BU_ALLOC(dgcdp, struct _ged_client_data);

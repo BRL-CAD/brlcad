@@ -603,17 +603,10 @@ get_args(int argc, const char *argv[])
     if (RT_G_DEBUG || R_DEBUG || nmg_debug)
 	bu_debug |= BU_DEBUG_COREDUMP;
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_debug |= BU_DEBUG_MEM_CHECK;
-    if (RT_G_DEBUG & DEBUG_MEM)
-	bu_debug |= BU_DEBUG_MEM_LOG;
     if (RT_G_DEBUG & DEBUG_PARALLEL)
 	bu_debug |= BU_DEBUG_PARALLEL;
     if (RT_G_DEBUG & DEBUG_MATH)
 	bu_debug |= BU_DEBUG_MATH;
-
-    if (R_DEBUG & RDEBUG_RTMEM_END)
-	bu_debug |= BU_DEBUG_MEM_CHECK;
 
     /* TODO: add options instead of reading from ENV */
     env_str = getenv("LIBRT_RAND_MODE");

@@ -143,16 +143,6 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
     vect_t normal={0, 0, 0};
     int solid_in_region=0;
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_prmem("At start of Convert_part_ascii():\n");
-
-    if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at start of Convert_part_ascii:\n");
-	if (bu_mem_barriercheck())
-	    bu_exit(EXIT_FAILURE, "Barrier check failed!\n");
-    }
-
-
     pstate->bot_fcurr = 0;
     BU_LIST_INIT(&head.l);
 
@@ -215,9 +205,6 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 
     if (pstate->gcv_options->verbosity_level)
 	bu_log("\tUsing solid name: %s\n", bu_vls_addr(&solid_name));
-
-    if (RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_prmem("At start of Convert_part_ascii()");
 
     while (bu_fgets(line1, MAX_LINE_SIZE, pstate->fd_in) != NULL) {
 	start = (-1);
@@ -352,12 +339,6 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 	if (face_count)
 	    (void)mk_addmember(bu_vls_addr(&region_name), &pstate->all_head.l, NULL, WMOP_UNION);
 	pstate->id_no++;
-    }
-
-    if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at end of Convert_part_ascii:\n");
-	if (bu_mem_barriercheck())
-	    bu_exit(EXIT_FAILURE, "Barrier check failed!\n");
     }
 
     bu_vls_free(&region_name);
@@ -495,12 +476,6 @@ Convert_part_binary(struct conversion_state *pstate)
 	if (face_count)
 	    (void)mk_addmember(bu_vls_addr(&region_name), &pstate->all_head.l, NULL, WMOP_UNION);
 	pstate->id_no++;
-    }
-
-    if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at end of Convert_part_ascii:\n");
-	if (bu_mem_barriercheck())
-	    bu_exit(EXIT_FAILURE, "Barrier check failed!\n");
     }
 
     return;

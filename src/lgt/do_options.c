@@ -575,7 +575,6 @@ HMitem debug_items[] =
     { "partition", "info about boolweave()", 0, 0, 0, 0, DEBUG_PARTITION },
     { "cut", "space subdivision details", 0, 0, 0, 0, DEBUG_CUT },
     { "boxing", "object/box checking details", 0, 0, 0, 0, DEBUG_BOXING },
-    { "memory", "dynamic memory operations", 0, 0, 0, 0, DEBUG_MEM },
     { "testing", "one-shot debugging flag", 0, 0, 0, 0, DEBUG_TESTING },
     { "fdiff", "bool/fdiff debugging", 0, 0, 0, 0, DEBUG_FDIFF },
     { "RGB", "trace color computation", 0, 0, 0, 0, DEBUG_RGB },

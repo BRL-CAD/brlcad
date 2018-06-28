@@ -16,6 +16,8 @@ BRLCAD_ADDEXEC(remapid remapid.c "librt;libbu")
 BRLCAD_ADDEXEC(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)
 BRLCAD_ADDDATA(gtransfer.c sample_applications)
 
+BRLCAD_ADDEXEC(geval geval.c "libged;libbu" NO_INSTALL)
+
 add_subdirectory(beset)
 add_subdirectory(gdiff)
 

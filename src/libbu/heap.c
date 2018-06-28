@@ -202,8 +202,8 @@ bu_heap_get(size_t sz)
 	if (bu_debug) {
 	    bu_log("DEBUG: heap size %zd out of range\n", sz);
 
-	    if (bu_debug & (BU_DEBUG_COREDUMP | BU_DEBUG_MEM_CHECK)) {
-		bu_bomb("Intentionally bombing due to BU_DEBUG_COREDUMP and BU_DEBUG_MEM_CHECK\n");
+	    if (bu_debug & BU_DEBUG_COREDUMP) {
+		bu_bomb("Intentionally bombing due to BU_DEBUG_COREDUMP\n");
 	    }
 	}
 	return bu_calloc(1, sz, "heap calloc");

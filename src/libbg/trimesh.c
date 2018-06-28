@@ -377,7 +377,7 @@ bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges)
 }
 
 int
-bg_trimesh_closed_fan(int vcnt, int fcnt, fastf_t *v, int *f)
+bg_trimesh_manifold_closed(int vcnt, int fcnt, fastf_t *v, int *f)
 {
     int num_edges = 3 * fcnt;
     struct bg_trimesh_halfedge *edge_list;
@@ -400,7 +400,7 @@ bg_trimesh_closed_fan(int vcnt, int fcnt, fastf_t *v, int *f)
 
 
 int
-bg_trimesh_orientable(int vcnt, int fcnt, fastf_t *v, int *f)
+bg_trimesh_oriented(int vcnt, int fcnt, fastf_t *v, int *f)
 {
     int num_edges = 3 * fcnt;
     struct bg_trimesh_halfedge *edge_list;

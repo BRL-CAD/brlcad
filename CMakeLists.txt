@@ -1198,6 +1198,19 @@ if(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "B
   set(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build bundled libraries." FORCE)
 endif(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
 
+# Single flag for disabling GUI instead of 5.
+option(BRLCAD_ENABLE_MINIMAL "Skip GUI support and docs. Faster builds." OFF)
+mark_as_advanced(BRLCAD_ENABLE_MINIMAL)
+
+if(BRLCAD_ENABLE_MINIMAL)
+  set(BRLCAD_ENABLE_OPENGL "OFF")
+  set(BRLCAD_ENABLE_X11 "OFF")
+  set(BRLCAD_ENABLE_TK "OFF")
+  set(BRLCAD_ENABLE_QT "OFF")
+  set(BRLCAD_ENABLE_AQUA "OFF")
+  set(BRLCAD_EXTRADOCS "OFF")
+endif(BRLCAD_ENABLE_MINIMAL)
+
 # Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
 # building. Not currently working - needs work in at least Tk
 # CMake logic (probably more), and the display manager/framebuffer codes are known to depend
@@ -1210,9 +1223,9 @@ option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry fil
 
 # test for X11 on all platforms since we don't know when/where we'll find it, unless
 # we've indicated we *don't* want an X11 build
-if(NOT BRLCAD_ENABLE_AQUA)
+if(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
   include(FindX11)
-endif(NOT BRLCAD_ENABLE_AQUA)
+endif(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
 
 # make sure Xi is included in the list of X11 libs
 # (Xext is automatically added during FindX11)
@@ -1229,12 +1242,12 @@ elseif(BRLCAD_ENABLE_AQUA)
   option(BRLCAD_ENABLE_X11 "Use X11." OFF)
 else(WIN32)
   # make everywhere else depend on whether we found a suitable X11
-  # X11_Xext_LIB AND X11_Xi_LIB AND 
-  if(X11_FOUND)
+  # X11_Xext_LIB AND X11_Xi_LIB AND
+  if(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
     option(BRLCAD_ENABLE_X11 "Use X11." ON)
-  else(X11_FOUND)
+  else(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
     option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-  endif(X11_FOUND)
+  endif(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
 endif(WIN32)
 mark_as_advanced(BRLCAD_ENABLE_X11)
 
@@ -1622,6 +1635,7 @@ CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook docum
 # the target count on MSVC, disable validation there.
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
+
 
 #----------------------------------------------------------------------
 # Load Doxygen related CMake macros
@@ -2030,7 +2044,7 @@ if(NOT MSVC)
   # ar/ranlib handling via wrappers or plugin specification.  These
   # wrappers work fine even if we're not using LTO, so just use them
   # if found.
-  if (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_X_COMPILER_VERSION VERSION_GREATER 4.8)
+  if (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
     find_program(GCC_AR_LTO ${CMAKE_C_COMPILER}-ar NAMES gcc-ar DOC "GNU ARchiver wrapper with LTO support")
     if (GCC_AR_LTO)
       SET(CMAKE_AR "${GCC_AR_LTO}" CACHE FILEPATH "Archiver" FORCE)
@@ -2039,7 +2053,7 @@ if(NOT MSVC)
     if (GCC_RANLIB_LTO)
       SET(CMAKE_RANLIB "${GCC_RANLIB_LTO}" CACHE FILEPATH "Ranlib" FORCE)
     endif (GCC_RANLIB_LTO)
-  endif (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_X_COMPILER_VERSION VERSION_GREATER 4.8)
+  endif (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
 
   # only omit the frame pointer if we have no interest in profiling or
   # debugging.
@@ -2090,21 +2104,23 @@ if(NOT MSVC)
     CHECK_CXX_FLAG(qstackprotect)
   endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 
-  # enable memory error detector AddressSanitizer (see
-  # https://code.google.com/p/address-sanitizer/ for more info.)
-  if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
+  # Similarly, enable the AddressSanitizer memory address sanitizer.
+  # See https://code.google.com/p/address-sanitizer/ for more info.
+  # This typically is reported to cause a 2x slowdown.
+  if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
     CHECK_C_FLAG(fsanitize=address)
     CHECK_C_FLAG(fno-omit-frame-pointer)
     CHECK_CXX_FLAG(fsanitize=address)
     CHECK_CXX_FLAG(fno-omit-frame-pointer)
-  endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
+  endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 
-  # enable data race detector  ThreadSanitizer (see
-  # https://code.google.com/p/thread-sanitizer/ for more info.)
-  if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_THREAD_SANITIZER)
+  # Differently, enable the ThreadSanitizer race condition detector
+  # only as requested since it can incur a 5x-15x slowdown.  See
+  # https://code.google.com/p/thread-sanitizer/ for more info.
+  if(BRLCAD_SANITIZE_THREAD)
     CHECK_C_FLAG(fsanitize=thread)
     CHECK_CXX_FLAG(fsanitize=thread)
-  endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_THREAD_SANITIZER)
+  endif(BRLCAD_SANITIZE_THREAD)
 
   # verbose warning flags.  we intentionally try to turn on as many as
   # possible.  adding more is encouraged (as long as all issues are
@@ -2172,16 +2188,27 @@ if(NOT MSVC)
       # constructors (e.g., in opennurbs and boost)
       CHECK_CXX_FLAG(Wno-inline)
     else()
-      CHECK_CXX_FLAG(Wninline)
+      CHECK_CXX_FLAG(Winline)
     endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
 
-    # this makes sure we don't warn about using long long.  really, it's okay.
-    CHECK_C_FLAG(Wno-long-long)
-    CHECK_CXX_FLAG(Wno-long-long)
+    # NOTE: Cannot directly test for -Wno-... flags because GCC
+    # intentionally emits no diagnostic, only warning about
+    # unrecognized options when other diagnostics are produced.
+    # Instead, we must use an indirect test via -Wno-error=...
 
-    # this is for X11 headers, they use variadic macros
-    CHECK_C_FLAG(Wno-variadic-macros)
-    CHECK_CXX_FLAG(Wno-variadic-macros)
+    CHECK_C_FLAG(Wno-error=long-long VARS long_long)
+    if(long_long)
+      # this makes sure we don't warn about using long long.  really, it's okay.
+      CHECK_C_FLAG(Wno-long-long)
+      CHECK_CXX_FLAG(Wno-long-long)
+    endif(long_long)
+
+    CHECK_C_FLAG(Wno-error=variadic-macros VARS variadic_macros)
+    if(variadic_macros)
+      # this is for X11 headers, they use variadic macros
+      CHECK_C_FLAG(Wno-variadic-macros)
+      CHECK_CXX_FLAG(Wno-variadic-macros)
+    endif(variadic_macros)
 
     # this is used to check Doxygen comment syntax
     CHECK_C_FLAG(Wdocumentation)
@@ -2203,10 +2230,19 @@ if(NOT MSVC)
   endif(BRLCAD_ENABLE_COVERAGE)
 
   if(BRLCAD_ENABLE_STRICT)
-    # If we're going strict, suppress C11 warnings about isnan due to
-    # clang issue:  https://llvm.org/bugs/show_bug.cgi?id=17788
-    CHECK_C_FLAG(Wno-c11-extensions)
-    CHECK_CXX_FLAG(Wno-c11-extensions)
+
+    # NOTE: Cannot directly test for -Wno-... flags because GCC
+    # intentionally emits no diagnostic, only warning about
+    # unrecognized options when other diagnostics are produced.
+    # Instead, we must use an indirect test via -Wno-error=...
+
+    CHECK_C_FLAG(Wno-error=c11-extensions VARS c11_extensions)
+    if(c11_extensions)
+      # If we're going strict, suppress C11 warnings about isnan due
+      # to clang issue: https://llvm.org/bugs/show_bug.cgi?id=17788
+      CHECK_C_FLAG(Wno-c11-extensions)
+      CHECK_CXX_FLAG(Wno-c11-extensions)
+    endif(c11_extensions)
 
     # Add the flag that actually turns warnings into errors
     CHECK_C_FLAG(Werror)
@@ -3304,7 +3340,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_RPM_PACKAGE_GROUP "Applications/Engineering")
     set(CPACK_RPM_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
 
-    # We do NOT want to strip the binaries added to the RPM - 
+    # We do NOT want to strip the binaries added to the RPM -
     # see https://cmake.org/Wiki/CMake:CPackPackageGenerators and
     # https://public.kitware.com/Bug/view.php?id=7435
     set(CPACK_RPM_SPEC_INSTALL_POST /bin/true)

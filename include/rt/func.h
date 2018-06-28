@@ -165,7 +165,7 @@ RT_EXPORT extern int rt_obj_make(const struct rt_functab *ftp, struct rt_db_inte
 /**
  * apply a matrix transformation to an object (translation, rotation, scale)
  */
-RT_EXPORT extern int rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp);
+RT_EXPORT extern int rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip);
 
 /**
  * obtain parameters for an object in libpc form
