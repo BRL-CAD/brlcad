@@ -493,7 +493,7 @@ ProError PopupMsg(const char *title, const char *msg)
 {
     wchar_t wtitle[CREO_NAME_MAX];
     wchar_t wmsg[CREO_MSG_MAX];
-    ProUIMessageButton* button;
+    ProUIMessageButton* button = NULL;
     ProUIMessageButton bresult;
 
     ProArrayAlloc(1, sizeof(ProUIMessageButton), 1, (ProArray*)&button);

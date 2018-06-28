@@ -416,9 +416,11 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
 }
 
 
-HIDDEN void
-parallel_interface_arg(struct thread_data *user_thread_data)
+HIDDEN void *
+parallel_interface_arg(void *utd)
 {
+    struct thread_data *user_thread_data = (struct thread_data *)utd;
+
     /* keep track of our parallel ID number */
     thread_set_cpu(user_thread_data->cpu_id);
 
@@ -443,6 +445,7 @@ parallel_interface_arg(struct thread_data *user_thread_data)
 
     parallel_mapping(PARALLEL_PUT, user_thread_data->cpu_id, 0);
 
+    return NULL;
 }
 
 
@@ -621,7 +624,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
     for (x = 0; x < ncpu; x++) {
 	parallel_wait_for_slot(throttle, parent, ncpu);
 
-	if (thr_create(0, 0, (void *(*)(void *))parallel_interface_arg, &thread_context[x], 0, &thread)) {
+	if (thr_create(0, 0, parallel_interface_arg, &thread_context[x], 0, &thread)) {
 	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed for processor thread # %d\n",
 		   parallel_interface_arg, &thread, x);
 	    /* Not much to do, lump it */
@@ -693,7 +696,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 
 	parallel_wait_for_slot(throttle, parent, ncpu);
 
-	if (pthread_create(&thread, &attrs, (void *(*)(void *))parallel_interface_arg, &thread_context[x])) {
+	if (pthread_create(&thread, &attrs, parallel_interface_arg, &thread_context[x])) {
 	    bu_log("ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed for processor thread # %zu\n",
 		   (unsigned long int)parallel_interface_arg, (void *)&thread, x);
 

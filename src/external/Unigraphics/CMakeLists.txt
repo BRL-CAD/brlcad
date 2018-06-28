@@ -16,6 +16,11 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     "${TCL_INCLUDE_DIRS}"
     )
 
+  # The build shims aren't so great at mocking the initialization
+  # behavior of the real code.
+  CHECK_CXX_FLAG("Wno-uninitialized")
+  CHECK_CXX_FLAG("Wno-maybe-uninitialized")
+
   set(ug_g_srcs ug-g.c ug_misc.c shim.cpp)
   add_definitions(-DTEST_BUILD)
   add_library(ug-g ${ug_g_srcs})

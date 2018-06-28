@@ -20,6 +20,7 @@ set(bu_test_srcs
   opt.c
   parallel.c
   path_component.c
+  ptbl.c
   redblack.c
   semaphore.c
   sort.c
@@ -632,6 +633,28 @@ add_test(NAME bu_uuid_encode COMMAND bu_test uuid)
 #add_test(NAME bu_uuid_compare COMMAND bu_test uuid 1)
 #add_test(NAME bu_uuid_encode  COMMAND bu_test uuid 2)
 
+#
+#  *********** ptbl.c tests ************
+#
+
+add_test(NAME bu_ptbl_init_default COMMAND bu_test ptbl init)
+add_test(NAME bu_ptbl_init_0 COMMAND bu_test ptbl init 0)
+add_test(NAME bu_ptbl_init_10000 COMMAND bu_test ptbl init 10000)
+
+add_test(NAME bu_ptbl_reset COMMAND bu_test ptbl reset)
+add_test(NAME bu_ptbl_zero COMMAND bu_test ptbl zero)
+
+add_test(NAME bu_ptbl_ins COMMAND bu_test ptbl ins)
+add_test(NAME bu_ptbl_ins_uniq COMMAND bu_test ptbl ins uniq)
+add_test(NAME bu_ptbl_locate COMMAND bu_test ptbl locate)
+
+add_test(NAME bu_ptbl_rm_cons COMMAND bu_test ptbl rm cons)
+add_test(NAME bu_ptbl_rm_mix COMMAND bu_test ptbl rm mix)
+
+add_test(NAME bu_ptbl_cat COMMAND bu_test ptbl cat)
+add_test(NAME bu_ptbl_cat_uniq COMMAND bu_test ptbl cat uniq)
+
+add_test(NAME bu_ptbl_trunc COMMAND bu_test ptbl trunc)
 
 CMAKEFILES(
   tests_bitv.cmake

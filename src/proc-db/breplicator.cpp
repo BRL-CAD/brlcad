@@ -445,7 +445,7 @@ main(int argc, char *argv[])
     mk_id(wdbp, "Breplicator test geometry");
 
     bu_log("Creating the BREP as BRL-CAD geometry\n");
-    ret = mk_brep(wdbp, name, brep);
+    ret = mk_brep(wdbp, name, (void *)brep);
     if (ret) {
 	delete brep;
 	wdb_close(wdbp);

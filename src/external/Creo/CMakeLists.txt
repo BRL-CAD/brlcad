@@ -342,6 +342,10 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     "${REGEX_INCLUDE_DIR}"
     )
 
+  # The build shims aren't so great at mocking the initialization
+  # behavior of the real code.
+  CHECK_CXX_FLAG("Wno-maybe-uninitialized")
+
   set(creo_brl_srcs ${creo_brl_srcs} shim.cpp)
   add_definitions(-DTEST_BUILD)
   add_library(creo-brl ${creo_brl_srcs})

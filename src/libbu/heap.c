@@ -92,11 +92,27 @@ struct cpus {
  */
 static struct cpus per_cpu[MAX_PSW] = {{{{0, 0, 0}}, 0}};
 
+/* Need a function signature that matches bu_heap_func_t, so wrap bu_log in
+ * order to allow it to act as the default bu_heap_log function. */
+HIDDEN int
+_log_heap_wrapper(const char *fmt, ...)
+{
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    va_list ap;
+
+    va_start(ap, fmt);
+    bu_vls_vprintf(&output, fmt, ap);
+    bu_log("%s", bu_vls_addr(&output));
+    bu_vls_free(&output);
+    va_end(ap);
+
+    return 0;
+}
 
 bu_heap_func_t
 bu_heap_log(bu_heap_func_t log)
 {
-    static bu_heap_func_t heap_log = (bu_heap_func_t)&bu_log;
+    static bu_heap_func_t heap_log = &_log_heap_wrapper;
 
     if (log)
 	heap_log = log;

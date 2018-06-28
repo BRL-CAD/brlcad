@@ -225,17 +225,23 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 
     /* Ugh. This needs much repair/cleanup. */
     if (state->updpos == 0) {
+	struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
 	sscanf(dp->d_namep, "%[!-/, :-~]%d%[!-/, :-~]%512s", prefix, &num, suffix, suffix2); /* CLONE_BUFSIZE */
-	snprintf(suffix, CLONE_BUFSIZE, "%s%s", suffix, suffix2);
+	bu_vls_sprintf(&tmpbuf, "%s%s", suffix, suffix2);
+	snprintf(suffix, CLONE_BUFSIZE, "%s", bu_vls_addr(&tmpbuf));
+	bu_vls_free(&tmpbuf);
     } else if (state->updpos == 1) {
 	int num2 = 0;
+	struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
 	sscanf(dp->d_namep, "%[!-/, :-~]%d%[!-/, :-~]%d%[!-/, :-~]", prefix, &num2, suffix2, &num, suffix);
 	if (num > 0) {
-	    snprintf(prefix, CLONE_BUFSIZE, "%s%d%s", prefix, num2, suffix2);
+	    bu_vls_sprintf(&tmpbuf, "%s%d%s", prefix, num2, suffix2);
 	} else {
 	    num = num2;
-	    snprintf(prefix, CLONE_BUFSIZE, "%s%s", prefix, suffix2);
+	    bu_vls_sprintf(&tmpbuf, "%s%s", prefix, suffix2);
 	}
+	snprintf(prefix, CLONE_BUFSIZE, "%s", bu_vls_addr(&tmpbuf));
+	bu_vls_free(&tmpbuf);
     } else
 	bu_exit(EXIT_FAILURE, "multiple -c options not supported yet.");
 

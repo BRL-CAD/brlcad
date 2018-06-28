@@ -1313,7 +1313,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #ifdef _OLD_SUBDIVISION_
 	delete q3surf;
 #endif
-	memset(newframes, 0, 9 * sizeof(ON_Plane *));
+	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;
@@ -1500,7 +1500,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	delete west;
 #endif
 
-	memset(newframes, 0, 9 * sizeof(ON_Plane *));
+	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;
@@ -1669,7 +1669,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	delete north;
 #endif
 
-	memset(newframes, 0, 9 * sizeof(ON_Plane *));
+	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;

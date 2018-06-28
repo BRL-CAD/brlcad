@@ -468,9 +468,10 @@ mk_bot_w_normals(
     );
 
 /**
- * Create a brep in the geometry file.
+ * Create a brep in the geometry file.  vbrep must be a void cast pointer to
+ * an ON_Brep shape.
  */
-WDB_EXPORT int mk_brep( struct rt_wdb* wdbp, const char* name, ON_Brep* brep );
+WDB_EXPORT int mk_brep( struct rt_wdb* wdbp, const char* name, void* vbrep );
 
 /**
  * Output an array of B-spline (NURBS) surfaces which comprise a

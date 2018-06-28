@@ -131,8 +131,8 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
     const char * const *sub, *subcommands[] = {"solid", "degen_faces", "open_edges", "extra_edges", "flipped_edges", NULL};
     struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
     struct bg_trimesh_halfedge *edge_list;
-    int (*edge_test)(size_t, struct bg_trimesh_halfedge *, bg_edge_error_funct_t, void *);
-    size_t num_edges;
+    int (*edge_test)(int, struct bg_trimesh_halfedge *, bg_edge_error_funct_t, void *);
+    int num_vertices, num_faces, num_edges;
     int found;
     int blue[] = {0, 0, 255};
     int yellow[] = {255, 255, 0};
@@ -146,9 +146,13 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 	return GED_ERROR;
     }
 
+    num_vertices = (int)bot->num_vertices;
+    num_faces = (int)bot->num_faces;
+    num_edges = num_faces * 3;
+
     if (argc < 3 || BU_STR_EQUAL(check, "solid")) {
 	struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLDID_ERRORS_INIT_NULL;
-	int not_solid = bg_trimesh_solid2(bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, visualize_results ? &errors : NULL);
+	int not_solid = bg_trimesh_solid2(num_vertices, num_faces, bot->vertices, bot->faces, visualize_results ? &errors : NULL);
 	bu_vls_printf(gedp->ged_result_str, not_solid ? "0" : "1");
 
 	if (not_solid && visualize_results) {
@@ -184,13 +188,13 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 
 	if (visualize_results) {
 	    /* first pass - count errors */
-	    degenerate_faces = bg_trimesh_degenerate_faces(bot->num_faces, bot->faces, bg_trimesh_face_continue, NULL);
+	    degenerate_faces = bg_trimesh_degenerate_faces(num_faces, bot->faces, bg_trimesh_face_continue, NULL);
 
 	    if (degenerate_faces) {
 		/* second pass - generate error faces array and draw it */
 		degenerate.count = 0;
 		degenerate.faces = (int *)bu_calloc(degenerate_faces, sizeof(int), "degenerate faces");
-		bg_trimesh_degenerate_faces(bot->num_faces, bot->faces, bg_trimesh_face_gather, &degenerate);
+		bg_trimesh_degenerate_faces(num_faces, bot->faces, bg_trimesh_face_gather, &degenerate);
 
 		draw_faces(gedp, bot, degenerate.count, degenerate.faces, yellow, "degenerate faces");
 
@@ -198,7 +202,7 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 	    }
 	} else {
 	    /* fast path - exit on first error */
-	    degenerate_faces = bg_trimesh_degenerate_faces(bot->num_faces, bot->faces, bg_trimesh_face_exit, NULL);
+	    degenerate_faces = bg_trimesh_degenerate_faces(num_faces, bot->faces, bg_trimesh_face_exit, NULL);
 	}
 
 	bu_vls_printf(gedp->ged_result_str, degenerate_faces ? "1" : "0");
@@ -210,8 +214,7 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
     /* must be doing one of the edge tests */
 
     /* generate half-edge list */
-    num_edges = bot->num_faces * 3;
-    if (!(edge_list = bg_trimesh_generate_edge_list(bot->num_faces, bot->faces))) {
+    if (!(edge_list = bg_trimesh_generate_edge_list(num_faces, bot->faces))) {
 	rt_db_free_internal(ip);
 	bu_vls_printf(gedp->ged_result_str, "ERROR: failed to generate an edge list\n");
 	return GED_ERROR;

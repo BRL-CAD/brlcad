@@ -39,8 +39,9 @@
 
 
 int
-mk_brep(struct rt_wdb* file, const char* name, ON_Brep* brep)
+mk_brep(struct rt_wdb* file, const char* name, void* vbrep)
 {
+    ON_Brep *brep = (ON_Brep *)vbrep;
     struct rt_brep_internal* bi;
 
     BU_ASSERT(brep != NULL);

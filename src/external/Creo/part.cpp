@@ -453,7 +453,7 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
 
     /* Output the solid */
     *sname = get_brlcad_name(cinfo, wname, "brep", N_SOLID);
-    mk_brep(cinfo->wdbp, bu_vls_addr(*sname), nbrep);
+    mk_brep(cinfo->wdbp, bu_vls_addr(*sname), (void *)nbrep);
     /*
      * Things to investigate:
      *
@@ -597,7 +597,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	}
 
 	/* Check solidity */
-	int bot_is_solid = !bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL);
+	int bot_is_solid = !bg_trimesh_solid((int)vert_tree->curr_vert, (int)faces.size() / 3, vert_tree->the_array, &faces[0], NULL);
 
 	/* If it's not solid and we're testing solidity, keep trying... */
 	if (!bot_is_solid) {

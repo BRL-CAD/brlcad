@@ -63,7 +63,7 @@ write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct
     /* write the object in brep/nurbs form */
     brep = ON_Brep::New();
     ip->idb_meth->ft_brep(&brep, ip, tol);
-    mk_brep(fp, bname.c_str(), brep);
+    mk_brep(fp, bname.c_str(), (void *)brep);
     // delete brep;
 }
 

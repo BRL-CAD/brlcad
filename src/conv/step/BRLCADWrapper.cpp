@@ -297,7 +297,7 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat)
     if (dry_run)
 	return true;
 
-    mk_brep(outfp, sol.c_str(), brep);
+    mk_brep(outfp, sol.c_str(), (void *)brep);
     unsigned char rgb[] = {200, 180, 180};
 
     BRLCADWrapper::getRandomColor(rgb);

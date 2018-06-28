@@ -48,34 +48,6 @@
 #include "bu/exit.h"
 #include "mmatomic.h"
 
-#if !defined(HAVE_STRUCT_TIMESPEC) && !defined(timespec) && !defined(__timespec_defined)  /* tinycthread.h will define timespec on Windows */
-struct timespec {
-  time_t tv_sec;
-  long tv_nsec;
-};
-#endif
-
-#if 0
-static inline void mtSignalWaitTimeout(cnd_t *gsignal, mtx_t *mutex, long milliseconds)
-{
-    uint64_t microsecs;
-    struct timespec ts;
-
-    timespec_get(&ts, TIME_UTC);
-    ts.tv_sec += (milliseconds / 1000);
-    microsecs = ((ts.tv_nsec + 500) / 1000) + ((milliseconds % 1000) * 1000);
-
-    if (microsecs >= 1000000) {
-	ts.tv_sec++;
-	microsecs -= 1000000;
-    }
-
-    ts.tv_nsec = microsecs * 1000;
-
-    if (cnd_timedwait(gsignal, mutex, &ts) == bu_thrd_error)
-	bu_bomb("cnd_timedwait() failed");
-}
-#endif
 
 #ifdef MM_ATOMIC_SUPPORT
 

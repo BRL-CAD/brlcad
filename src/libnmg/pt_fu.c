@@ -74,7 +74,7 @@ struct fpi {
     struct bu_list ve_dh;		/* ve_dist list head */
     plane_t norm;		/* surface normal for face(use) */
     point_t pt;		/* pt in plane of face to classify */
-    void (*eu_func)(struct edgeuse *, point_t, const char *);	/* call w/eu when pt on edgeuse */
+    void (*eu_func)(struct edgeuse *, point_t, const char *, struct bu_list *);	/* call w/eu when pt on edgeuse */
     void (*vu_func)(struct vertexuse *, point_t, const char *);	/* call w/vu when pt on vertexuse */
     const char *priv;		/* caller's private data */
     int hits;		/* flag PERUSE/PERGEOM */
@@ -92,7 +92,7 @@ static int nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu);
 static struct edge_info *nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list, const int in_or_out_only);
 static int compute_loop_class(struct fpi *fpi, const struct loopuse *lu, struct edge_info *edge_list, struct bu_list *vlfree);
 static int nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only, struct bu_list *vlfree);
-int nmg_class_pt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func)(struct edgeuse *, point_t, const char *), void (*vu_func)(struct vertexuse *, point_t, const char *), const char *priv, const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol);
+int nmg_class_pt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func)(struct edgeuse *, point_t, const char *, struct bu_list *), void (*vu_func)(struct vertexuse *, point_t, const char *), const char *priv, const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol);
 
 
 /**
@@ -614,10 +614,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	    if (fpi->eu_func &&
 		(fpi->hits == NMG_FPI_PERUSE ||
 		 (fpi->hits == NMG_FPI_PERGEOM && !found_data))) {
-		/* need to cast eu_func pointer for actual use as a function */
-		void (*cfp)(struct edgeuse *, point_t, const char*);
-		cfp = (void (*)(struct edgeuse *, point_t, const char *))fpi->eu_func;
-		cfp(eu, fpi->pt, fpi->priv);
+		fpi->eu_func(eu, fpi->pt, fpi->priv, NULL);
 	    }
 	    break;
 	case 1:	/* within tolerance of endpoint at ved->v1 */
@@ -1228,7 +1225,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt, struct bu_list *v
  */
 int
 nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct loopuse *ignore_lu,
-		       void (*eu_func) (struct edgeuse *, point_t, const char *), void (*vu_func) (struct vertexuse *, point_t, const char *), const char *priv,
+		       void (*eu_func) (struct edgeuse *, point_t, const char *, struct bu_list *), void (*vu_func) (struct vertexuse *, point_t, const char *), const char *priv,
 		       const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
 
 /* func to call when pt on edgeuse */
@@ -1445,8 +1442,8 @@ nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge 
     fpi.tol = tol;
     BU_LIST_INIT(&fpi.ve_dh);
     VMOVE(fpi.pt, pt);
-    fpi.eu_func = (void (*)(struct edgeuse *, point_t, const char *))NULL;
-    fpi.vu_func = (void (*)(struct vertexuse *, point_t, const char *))NULL;
+    fpi.eu_func = NULL;
+    fpi.vu_func = NULL;
     fpi.priv = (char *)NULL;
     fpi.hits = 0;
     fpi.magic = NMG_FPI_MAGIC;

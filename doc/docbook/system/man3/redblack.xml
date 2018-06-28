@@ -43,20 +43,6 @@ int nm_orders;
 <void/></funcprototype>
 
 <funcprototype>
-<funcdef>struct <function>bu_rb_tree</function> *bu_rb_create1</funcdef>
-<paramdef><parameter>description</parameter></paramdef>
-<paramdef><parameter>order_func</parameter></paramdef>
-</funcprototype>
-<funcsynopsisinfo>
-
-char *description;
-
-</funcsynopsisinfo>
-<funcprototype>
-<funcdef>int ( *<function>order_func</function> )</funcdef>
-<void/></funcprototype>
-
-<funcprototype>
 <funcdef>void *<function>bu_rb_curr</function></funcdef>
 <paramdef><parameter>tree</parameter></paramdef>
 <paramdef><parameter>order</parameter></paramdef>

@@ -63,6 +63,7 @@ rt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 	    *pos_flag = RT_ANNOT_POS_BL;
 	    goto case2;
 	}
+	goto case2;
 case2:
     case 2:
 	switch(p_hor) {
@@ -76,6 +77,7 @@ case2:
 	    *pos_flag = RT_ANNOT_POS_ML;
 	    goto case3;
 	}
+	goto case3;
 case3:
     case 3:
 	switch(p_hor) {

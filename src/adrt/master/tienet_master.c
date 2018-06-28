@@ -85,7 +85,7 @@ void tienet_master_end(void);
 void tienet_master_wait(void);
 
 void tienet_master_connect_slaves(fd_set *readfds);
-int* tienet_master_listener(void *ptr);
+int tienet_master_listener(void *ptr);
 void tienet_master_send_work(tienet_master_socket_t *sock);
 void tienet_master_result(tienet_master_socket_t *sock);
 void tienet_master_shutdown(void);
@@ -401,7 +401,7 @@ void tienet_master_connect_slaves(fd_set *readfds)
 }
 
 
-int* tienet_master_listener(void *UNUSED(ptr))
+int tienet_master_listener(void *UNUSED(ptr))
 {
     struct sockaddr_in master, slave;
     socklen_t addrlen;
@@ -463,7 +463,7 @@ int* tienet_master_listener(void *UNUSED(ptr))
 	 * units that were out have come back in.
 	 */
 	if (tienet_master_halt_networking)
-	    return NULL;
+	    return 0;
 
 
 	/* Slave Communication */
@@ -574,6 +574,8 @@ int* tienet_master_listener(void *UNUSED(ptr))
 	    FD_SET(sock->num, &readfds);
 	}
     }
+
+    return 1;
 }
 
 

@@ -258,7 +258,7 @@ main(int argc, char** argv)
     if (!brep)
 	bu_exit(1, "ERROR: unable to make the cube\n");
 
-    mk_brep(outfp, geom_name, brep);
+    mk_brep(outfp, geom_name, (void *)brep);
 
     //mk_comb1(outfp, "cube.r", geom_name, 1);
     unsigned char rgb[] = {255, 255, 255};

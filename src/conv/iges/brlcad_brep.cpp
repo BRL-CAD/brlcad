@@ -88,7 +88,7 @@ BRLCADBrepHandler::write(const string& filename) {
     string sol = geom_name+".s";
     string reg = geom_name+".r";
     if (_brep_flip) _brep->Flip();
-    mk_brep(outfp, sol.c_str(), _brep);
+    mk_brep(outfp, sol.c_str(), (void *)_brep);
     unsigned char rgb[] = {200, 180, 180};
     mk_region1(outfp, reg.c_str(), sol.c_str(), "plastic", "", rgb);
     wdb_close(outfp);
