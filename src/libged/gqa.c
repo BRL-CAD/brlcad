@@ -82,6 +82,8 @@ static double elevation_deg;
 static char *densityFileName;
 static double gridSpacing;
 static double gridSpacingLimit;
+static const double GRIDSPACING_STEP = 1.0 / 2.0;
+
 static char makeOverlapAssemblies;
 static size_t require_num_hits;
 static int ncpu;
@@ -89,7 +91,6 @@ static double Samples_per_model_axis;
 static double overlap_tolerance;
 static double volume_tolerance;
 static double weight_tolerance;
-static const fastf_t one_twelfth = 1.0 / 12.0;
 static int aborted = 0;
 
 static int print_per_region_stats;
@@ -1155,12 +1156,13 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 			    fastf_t dy_sq = cmass[Y]*cmass[Y];
 			    fastf_t dz_sq = cmass[Z]*cmass[Z];
 			    fastf_t mass = val * cell_area;
+			    static const fastf_t ONE_TWELFTH = 1.0 / 12.0;
 
 			    /* Collect moments and products of inertia for the current object */
 			    moi = &prd->optr->o_moi[state->i_axis*3];
-			    moi[X] += one_twelfth*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
-			    moi[Y] += one_twelfth*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
-			    moi[Z] += one_twelfth*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
+			    moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
+			    moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
+			    moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
 			    poi = &prd->optr->o_poi[state->i_axis*3];
 			    poi[X] -= mass*cmass[X]*cmass[Y];
 			    poi[Y] -= mass*cmass[X]*cmass[Z];
@@ -1168,9 +1170,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
 			    /* Collect moments and products of inertia for all objects */
 			    moi = &state->m_moi[state->i_axis*3];
-			    moi[X] += one_twelfth*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
-			    moi[Y] += one_twelfth*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
-			    moi[Z] += one_twelfth*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
+			    moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
+			    moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
+			    moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
 			    poi = &state->m_poi[state->i_axis*3];
 			    poi[X] -= mass*cmass[X]*cmass[Y];
 			    poi[Y] -= mass*cmass[X]*cmass[Z];
@@ -1924,7 +1926,7 @@ terminate_check(struct cstate *state)
 	    /* since we've found an overlap, we can quit */
 	    return 0;
 	} else {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlaps list at %gmm is empty\n", gridSpacing*2);
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlaps list at %gmm is empty\n", gridSpacing / GRIDSPACING_STEP);
 	}
     }
     if ((analysis_flags & ANALYSIS_GAP)) {
@@ -2019,9 +2021,9 @@ summary_reports(struct cstate *state)
     struct region *regp;
 
     if (multiple_analyses)
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summaries (%gmm grid spacing):\n", gridSpacing*2);
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summaries (%gmm grid spacing):\n", gridSpacing / GRIDSPACING_STEP);
     else
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summary (%gmm grid spacing):\n", gridSpacing*2);
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summary (%gmm grid spacing):\n", gridSpacing / GRIDSPACING_STEP);
 
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Weight:\n");
@@ -2466,8 +2468,9 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	    gridSpacing *= 2.0;
 	} while (gridSpacing < min_span);
 
+	/* dial it back a little bit */
 	gridSpacing *= 0.25;
-	if (gridSpacing < gridSpacingLimit) gridSpacing = gridSpacingLimit;
+	V_MAX(gridSpacing, gridSpacingLimit);
 
 	bu_log("Trying estimated initial grid spacing: %g %s\n",
 	    gridSpacing / units[LINE]->val, units[LINE]->name);
@@ -2532,7 +2535,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	state.first = 0;
-	gridSpacing *= 0.5;
+	gridSpacing *= GRIDSPACING_STEP;
 
     } while (terminate_check(&state));
 
