@@ -181,10 +181,10 @@ analov_worker(int cpu, void *arg)
 
 	for (pixelnum = pixel_start; pixelnum < pixel_start+(workerData->per_processor_chunk); pixelnum++) {
 
-	if (pixelnum > workerData->last_pixel)
-	    return;
+	    if (pixelnum > workerData->last_pixel)
+		return;
 
-	analov_do_pixel(cpu, pixelnum, arg);
+	    analov_do_pixel(cpu, pixelnum, arg);
 	}
     }
 }
