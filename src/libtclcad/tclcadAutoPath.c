@@ -231,6 +231,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	join_path(&auto_path, data, "tclscripts", "rtwizard", NULL);
 	join_path(&auto_path, data, "tclscripts", "archer", NULL);
 	join_path(&auto_path, data, "tclscripts", "boteditor", NULL);
+	join_path(&auto_path, data, "tclscripts", "checker", NULL);
 	join_path(&auto_path, data, "tclscripts", "lod", NULL);
     }
 
@@ -256,6 +257,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	join_path(&auto_path, srcpath, "src", "tclscripts", "rtwizard", NULL);
 	join_path(&auto_path, srcpath, "src", "tclscripts", "archer", NULL);
 	join_path(&auto_path, srcpath, "src", "tclscripts", "boteditor", NULL);
+	join_path(&auto_path, srcpath, "src", "tclscripts", "checker", NULL);
 	join_path(&auto_path, srcpath, "src", "tclscripts", "lod", NULL);
     }
 
@@ -281,6 +283,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "rtwizard", NULL);
 	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "archer", NULL);
 	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "boteditor", NULL);
+	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "checker", NULL);
 	}
     }
 
@@ -305,6 +308,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	join_path(&auto_path, data, "tclscripts", "rtwizard", NULL);
 	join_path(&auto_path, data, "tclscripts", "archer", NULL);
 	join_path(&auto_path, data, "tclscripts", "boteditor", NULL);
+	join_path(&auto_path, data, "tclscripts", "checker", NULL);
 	join_path(&auto_path, data, "tclscripts", "lod", NULL);
     }
 
