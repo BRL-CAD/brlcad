@@ -571,9 +571,9 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
     while (op) {
 	/* free struct */
 	nextop = op->next;
-	bu_free(op, "overlap_list");
 	bu_free(op->reg1,"reg1 name");
 	bu_free(op->reg2,"reg2 name");
+	bu_free(op, "overlap_list");
 	op = nextop;
     }
     olist = (struct overlap_list *)NULL;
