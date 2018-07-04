@@ -2183,13 +2183,13 @@ if(NOT MSVC)
 
     # want inline warnings, but not for some c++ buggy compilers
     CHECK_C_FLAG(Winline)
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
       # g++ 4.7 spews unquellable bogus warnings on default
       # constructors (e.g., in opennurbs and boost)
       CHECK_CXX_FLAG(Wno-inline)
     else()
       CHECK_CXX_FLAG(Winline)
-    endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+    endif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
     # NOTE: Cannot directly test for -Wno-... flags because GCC
     # intentionally emits no diagnostic, only warning about
