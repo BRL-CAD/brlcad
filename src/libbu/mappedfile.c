@@ -150,6 +150,8 @@ bu_open_mapped_file(const char *name, const char *appl)
 
 	/* It is safe to reuse mp */
 	mp->uses++;
+
+	bu_semaphore_release(BU_SEM_MAPPEDFILE);
 	return mp;
 
     }
