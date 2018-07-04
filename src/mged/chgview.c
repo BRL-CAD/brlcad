@@ -689,30 +689,6 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 }
 
 
-/*
- * To return all the free "struct bn_vlist" and "struct solid" items
- * lurking on their respective freelists, back to bu_malloc().
- * Primarily as an aid to tracking memory leaks.
- */
-void
-mged_freemem(void)
-{
-    struct solid *sp;
-    struct bn_vlist *vp;
-
-    FOR_ALL_SOLIDS(sp, &gedp->freesolid->l) {
-	BU_LIST_DEQUEUE(&((sp)->l));
-	FREE_SOLID(sp, &gedp->freesolid->l);
-    }
-
-    while (BU_LIST_NON_EMPTY(&RTG.rtg_vlfree)) {
-	vp = BU_LIST_FIRST(bn_vlist, &RTG.rtg_vlfree);
-	BU_LIST_DEQUEUE(&(vp->l));
-	bu_free((void *)vp, "mged_freemem: struct bn_vlist");
-    }
-}
-
-
 /* ZAP the display -- everything dropped */
 /* Format: Z */
 int
@@ -732,11 +708,6 @@ cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
     }
 
     ged_zap(gedp, 1, (const char **)av);
-
-    /* Keeping freelists improves performance.  When debugging, give mem back */
-    if (RT_G_DEBUG) {
-	mged_freemem();
-    }
 
     (void)chg_state(STATE, STATE, "zap");
     solid_list_callback();
