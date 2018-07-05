@@ -306,7 +306,7 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 	bu_vls_printf(gedp->ged_result_str, not_solid ? "0" : "1");
 
 	if (not_solid && visualize_results) {
-	    struct bg_trimesh_edges *degen_edges, *all_edges, *other_edges;
+	    struct bg_trimesh_edges *degen_edges = NULL, *all_edges, *other_edges;
 	    struct bg_trimesh_edges error_lists[4];
 	    int num_lists = 0;
 
