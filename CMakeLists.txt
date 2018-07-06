@@ -2038,18 +2038,25 @@ if(NOT MSVC)
     CHECK_C_FLAG(flto GROUPS OPTIMIZE_C_FLAGS)
     CHECK_CXX_FLAG(flto GROUPS OPTIMIZE_CXX_FLAGS)
 
-    # When compiling with O3 + flto, GCC 6.3 (e.g. on Debian x64, and maybe others, but I haven't tested) fails
-    # to link executables using libbrep. See also: https://sourceforge.net/p/brlcad/discussion/362510/thread/676f80ce/
+    # When compiling with O3 + flto, GCC 6.3 (e.g. on Debian x64, and maybe
+    # others, but I haven't tested) fails to link executables using libbrep.
+    # See also: https://sourceforge.net/p/brlcad/discussion/362510/thread/676f80ce/
     #
-    # The problem is that openNURBS' ~ON_SimpleArray virtual destructor (used by ON_3dPointArray, for example)
-    # ends up having local binding in libbrep.so. Then, when code calling it (by delete'ing an object) has to
-    # be linked, it results in the error seen in the discussion thread above. libbrep.so's entry for the
-    # destructor has the bogus value that is outside bounds, causing the error in the thread.
+    # The problem is that openNURBS' ~ON_SimpleArray virtual destructor (used by
+    # ON_3dPointArray, for example) ends up having local binding in libbrep.so.
+    # Then, when code calling it (by delete'ing an object) has to be linked, it
+    # results in the error seen in the discussion thread above. libbrep.so's
+    # entry for the destructor has the bogus value that is outside bounds,
+    # causing the error in the thread.
     #
-    # I don't know what tool causes the error (the compiler? the linker? ar? ranlib?), and I don't know if
-    # it's a bug in the tool or in libbrep/libOPENNUBRS, but finline-small-functions (activated by GCC at O2
-    # and above) causes openNURBS' ~ON_SimpleArray virtual destructor to have proper (weak) binding, allowing
-    # compilation to proceed.
+    # I don't know what tool causes the error (the compiler? the linker? ar?
+    # ranlib?), and I don't know if it's a bug in the tool or in
+    # libbrep/libOPENNUBRS, but finline-small-functions (activated by GCC at O2
+    # and above) causes openNURBS' ~ON_SimpleArray virtual destructor to have
+    # proper (weak) binding, allowing compilation to proceed.
+    #
+    # Going back through the commits, compilation started to fail after r70631,
+    # which switched to C++98 from C++11.
     #
     CHECK_CXX_FLAG(fno-inline-small-functions GROUPS OPTIMIZE_CXX_FLAGS)
 
