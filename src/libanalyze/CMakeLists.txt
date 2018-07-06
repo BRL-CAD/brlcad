@@ -27,6 +27,7 @@ set(LIBANALYZE_SOURCES
   MeshHealing/Stitch.cpp
   heal_mesh.cpp
   overlaps/analyze_overlaps.c
+  GridGeneration/rectangular_grid.c
   )
 
 set(libanalyze_ignored_files

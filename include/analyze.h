@@ -70,6 +70,26 @@ struct density_entry {
 };
 
 /*
+ *     Grid specific structures
+ */
+
+struct grid_generator_functions {
+    int (*next_ray)(struct xray *rayp, void *grid_context);
+    double (*grid_cell_width)(void *grid_context);
+};
+
+struct rectangular_grid {
+    vect_t ray_direction;
+    point_t start_coord;
+    vect_t dx_grid;
+    vect_t dy_grid;
+    size_t y_points;
+    fastf_t cell_width;
+    size_t current_point;
+    size_t total_points;
+};
+
+/*
  *     Overlap specific structures
  */
 
@@ -127,22 +147,33 @@ ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *li
 							  double dist, point_t pt);
 
 /**
- * analyze_overlap function for check command
+ * grid generator for rectangular grid type
+ */
+
+ANALYZE_EXPORT extern int rectangular_grid_generator(struct xray *rayp, void *grid_context);
+
+/**
+ * function to get the cell_width of rectangular grid
+ */
+ANALYZE_EXPORT extern double rectangular_grid_cell_width(void *grid_context);
+
+
+/**
+ * callback function for analyze_overlaps
  */
 typedef void (*analyze_overlaps_callback)(const struct xray *rayp, const struct partition *partitionPointer, const struct bu_ptbl *regionTable, void *context);
 
+/**
+ * analyze_overlap function for check_overlaps command
+ */
+
 ANALYZE_EXPORT extern int
 analyze_overlaps(struct rt_i *rtip,
-		 size_t width,
-		 size_t height,
-		 fastf_t cell_width,
-		 fastf_t cell_height,
-		 fastf_t aspect,
-		 fastf_t viewsize,
-		 mat_t model2view,
 		 size_t npsw,
-		 analyze_overlaps_callback callback, 
-		 void *callBackData);
+		 analyze_overlaps_callback callback,
+		 void *callBackData,
+		 struct grid_generator_functions *grid_generator,
+		 void *grid_context);
 
 /**
  * voxelize function takes raytrace instance and user parameters as inputs
