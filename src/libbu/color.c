@@ -300,7 +300,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 		result = strtod(str, (char **)&endptr);
 		break;
 
-	    case 2:
+	    default:
 		return 0;
 	}
 
@@ -327,7 +327,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 		color->buc_rgb[i] = strtod(str, (char **)&endptr);
 		break;
 
-	    case 2: /*UNKNOWN*/
+	    default: /*UNKNOWN*/
 		bu_bomb("error");
 	}
 
