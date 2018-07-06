@@ -25,7 +25,6 @@
 
 #include "analyze.h"
 
-
 int rectangular_grid_generator(struct xray *ray, void *context)
 {
     struct rectangular_grid *grid = (struct rectangular_grid*) context;
@@ -48,13 +47,14 @@ int rectangular_grid_generator(struct xray *ray, void *context)
     return 0;
 }
 
+
 double rectangular_grid_cell_width(void *context)
 {
     struct rectangular_grid *grid = (struct rectangular_grid *)context;
     return (grid->cell_width);
 }
 
-    /*
+/*
  * Local Variables:
  * mode: C
  * tab-width: 8
