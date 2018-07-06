@@ -36,6 +36,7 @@
 #include "bu/log.h"
 #include "bu/parallel.h"
 #include "bn/str.h"
+#include "vmath.h"
 #include "raytrace.h"
 
 #include "./ged_private.h"
@@ -142,9 +143,13 @@ check_grid_setup (int *cell_newsize,
 		  point_t eye_model,
 		  mat_t Viewrotscale,
 		  mat_t model2view,
-		  mat_t view2model)
+		  struct rectangular_grid *grid)
 {
     mat_t toEye;
+    vect_t temp;
+    vect_t dx_unit;	 /* view delta-X as unit-len vect */
+    vect_t dy_unit;	 /* view delta-Y as unit-len vect */
+    mat_t view2model;
 
     if (viewsize <= 0.0) {
 	bu_log("viewsize <= 0");
@@ -179,10 +184,30 @@ check_grid_setup (int *cell_newsize,
     }
 
     if ((*width) <= 0 || (*height) <= 0) {
-	bu_log("grid_setup: ERROR bad image size (%zu, %zu)\n", width, height);
+	bu_log("grid_setup: ERROR bad image size (%zu, %zu)\n", *width, *height);
 	return GED_ERROR;
     }
 
+    grid->cell_width = *cell_width;
+    grid->y_points = *width;
+    grid->total_points = (*width)*(*height);
+
+    /* Create basis vectors dx and dy for emanation plane (grid) */
+    VSET(temp, 1, 0, 0);
+    MAT3X3VEC(dx_unit, view2model, temp);	/* rotate only */
+    VSCALE(grid->dx_grid, dx_unit, *cell_width);
+
+    VSET(temp, 0, 1, 0);
+    MAT3X3VEC(dy_unit, view2model, temp);	/* rotate only */
+    VSCALE(grid->dy_grid, dy_unit, *cell_height);
+
+    /* all rays go this direction */
+    VSET(temp, 0, 0, -1);
+    MAT4X3VEC(grid->ray_direction, view2model, temp);
+    VUNITIZE(grid->ray_direction);
+
+    VSET(temp, -1, -1/aspect, 0);	/* eye plane */
+    MAT4X3PNT(grid->start_coord, view2model, temp);
     return GED_OK;
 }
 
@@ -195,13 +220,14 @@ check_do_ae(double azim,
 	    fastf_t *viewsize,
 	    fastf_t aspect,
 	    mat_t model2view,
-	    mat_t view2model,
 	    point_t eye_model)
 {
     vect_t temp;
     vect_t diag;
     mat_t toEye;
+    mat_t view2model;
     fastf_t eye_backoff = (fastf_t)M_SQRT2;
+
     if (rtip == NULL) {
 	bu_log("analov_do_ae: ERROR: rtip is null");
 	return GED_ERROR;
@@ -297,6 +323,9 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
     const char *check_help = "Options:\n -s #\t\tSquare grid size in pixels (default 512)\n -w # -n #\t\tGrid size width and height in pixels\n -V #\t\tView (pixel) aspect ratio (width/height)\n -a #\t\tAzimuth in degrees\n -e #\t\tElevation in degrees\n -g #\t\tGrid cell width\n -G #\t\tGrid cell height\n -d\t\tDebug flag to print some information\n -P #\t\tSet number of processors\n\n";
     struct rt_i *rtip = NULL;
 
+    struct grid_generator_functions grid_functions;
+    struct rectangular_grid grid;
+
     size_t tnobjs = 0;
     size_t nvobjs = 0;
     char **tobjtab;
@@ -308,7 +337,6 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 			   (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
     fastf_t viewsize = (fastf_t)0.0;
     mat_t model2view;
-    mat_t view2model;
     point_t eye_model = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
     quat_t quat;
 
@@ -317,7 +345,6 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
     struct overlap_list *olist = NULL;
     struct overlap_list *op;
     struct overlaps_context overlapData;
-    void *callbackData;
     /* end overlap specific variables */
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -511,7 +538,7 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 	quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
 	quat_quat2mat(Viewrotscale, quat);
     } else {
-	if (check_do_ae(azimuth, elevation, rtip, Viewrotscale, &viewsize, aspect, model2view, view2model, eye_model)) {
+	if (check_do_ae(azimuth, elevation, rtip, Viewrotscale, &viewsize, aspect, model2view, eye_model)) {
 	    rt_free_rti(rtip);
 	    rtip = NULL;
 	    bu_free(tobjtab, "free tobjtab");
@@ -520,7 +547,7 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (check_grid_setup(&cell_newsize, &width, &height, &cell_width, &cell_height, aspect, viewsize, eye_model, Viewrotscale, model2view, view2model)) {
+    if (check_grid_setup(&cell_newsize, &width, &height, &cell_width, &cell_height, aspect, viewsize, eye_model, Viewrotscale, model2view, &grid)) {
 	rt_free_rti(rtip);
 	rtip = NULL;
 	bu_free(tobjtab, "free tobjtab");
@@ -530,7 +557,9 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 
     if (debug) {
 	vect_t work, temp;
+	mat_t view2model;
 	VSET(work, 0, 0, 1);
+	bn_mat_inv(view2model, model2view);
 	MAT3X3VEC(temp, view2model, work);
 	bn_ae_vec(&azimuth, &elevation, temp);
 	bu_vls_printf(gedp->ged_result_str, "\nView: %g azimuth, %g elevation off of front view\n", azimuth, elevation);
@@ -540,13 +569,16 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Grid: (%g, %g) mm, (%zu, %zu) pixels\n", cell_width, cell_height, width, height);
     }
 
+    grid.current_point = 0;
+    grid_functions.grid_cell_width = rectangular_grid_cell_width;
+    grid_functions.next_ray = rectangular_grid_generator;
+
     overlapData.list = &olist;
     overlapData.numberOfOverlaps = 0;
     overlapData.vbp = rt_vlblock_init();
     overlapData.vhead = bn_vlblock_find(overlapData.vbp, 0xFF, 0xFF, 0x00);
-    callbackData = (void*)(&overlapData);
 
-    if (analyze_overlaps(rtip, width, height, cell_width, cell_height, aspect, viewsize, model2view, npsw, overlapHandler, callbackData)) {
+    if (analyze_overlaps(rtip, npsw, overlapHandler, &overlapData, &grid_functions, &grid)) {
 	rt_free_rti(rtip);
 	rtip = NULL;
 	bu_free(tobjtab, "free tobjtab");

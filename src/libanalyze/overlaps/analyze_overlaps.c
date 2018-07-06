@@ -1,4 +1,4 @@
-/*                    C H E C K _ O V E R L A P S . C
+/*              A N A L Y Z E _ O V E R L A P S . C
  * BRL-CAD
  *
  * Copyright (c) 2018 United States Government as represented by
@@ -26,7 +26,6 @@
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
-#include "vmath.h"
 #include "raytrace.h"	/* librt interface definitions */
 
 #include "analyze.h"
@@ -51,15 +50,10 @@ struct analyze_private_callback_data {
 
 
 struct worker_context {
-    int per_processor_chunk;
-    int cur_pixel;
-    int last_pixel;
     size_t npsw;
     struct application APP;
-    size_t width;
-    vect_t dx_model;
-    vect_t dy_model;
-    point_t viewbase_model;
+    struct grid_generator_functions *grid_function;
+    void *grid_context;
 };
 
 
@@ -93,79 +87,32 @@ overlapsAdapter(struct application *ap, const struct partition *pp, const struct
 }
 
 
-HIDDEN void
-analov_do_pixel(int cpu, int pixelnum, void *workerDataPointer)
+HIDDEN int
+analov_do_pixel(int cpu, void *workerDataPointer)
 {
     struct worker_context *workerData = (struct worker_context *) workerDataPointer;
     struct application a = workerData->APP;
-    vect_t point;		/* Ref point on eye or view plane */
-
     a.a_resource = &analov_res[cpu];
-    a.a_y = (int)(pixelnum/(workerData->width));
-    a.a_x = (int)(pixelnum - (a.a_y * (workerData->width)));
-
-    VJOIN2 (point, workerData->viewbase_model, a.a_x, workerData->dx_model, a.a_y, workerData->dy_model);
 
     a.a_pixelext=(struct pixel_ext *)NULL;
+    bu_semaphore_acquire(RT_SEM_WORKER);
+    if (workerData->grid_function->next_ray(&a.a_ray, workerData->grid_context) == 1){
+	bu_semaphore_release(RT_SEM_WORKER);
+	return ANALYZE_OK;
+    }
+    bu_semaphore_release(RT_SEM_WORKER);
 
-    VMOVE(a.a_ray.r_pt, point);
-    VMOVE(a.a_ray.r_dir, a.a_ray.r_dir);
-
+    /* bu_log("\n%g, %g, %g", V3ARGS(a.a_ray.r_pt)); */
     a.a_level = 0;
     a.a_purpose = "main ray";
     (void)rt_shootray(&a);
+    return 1;
 }
 
 
 HIDDEN void
 analov_worker(int cpu, void *arg)
 {
-    int pixel_start;
-    int pixelnum;
-    struct worker_context *workerData = (struct worker_context *) arg;
-
-    /* Figure out a reasonable chunk size that should keep most
-     * workers busy all the way to the end.  We divide up the image
-     * into chunks equating to tiles 1x1, 2x2, 4x4, 8x8 ... in size.
-     * Work is distributed so that all CPUs work on at least 8 chunks
-     * with the chunking adjusted from a maximum chunk size (512x512)
-     * all the way down to 1 pixel at a time, depending on the number
-     * of cores and the size of our rendering.
-     *
-     * TODO: actually work on image tiles instead of pixel spans.
-     */
-    if (workerData->per_processor_chunk <= 0) {
-	size_t chunk_size;
-	size_t one_eighth = ((workerData->last_pixel) - (workerData->cur_pixel)) / 8;
-	if (UNLIKELY(one_eighth < 1))
-	    one_eighth = 1;
-
-	if (one_eighth > (workerData->npsw) * 262144)
-	    chunk_size = 262144; /* 512x512 */
-	else if (one_eighth > (workerData->npsw) * 65536)
-	    chunk_size = 65536; /* 256x256 */
-	else if (one_eighth > (workerData->npsw) * 16384)
-	    chunk_size = 16384; /* 128x128 */
-	else if (one_eighth > (workerData->npsw) * 4096)
-	    chunk_size = 4096; /* 64x64 */
-	else if (one_eighth > (workerData->npsw) * 1024)
-	    chunk_size = 1024; /* 32x32 */
-	else if (one_eighth > (workerData->npsw) * 256)
-	    chunk_size = 256; /* 16x16 */
-	else if (one_eighth > (workerData->npsw) * 64)
-	    chunk_size = 64; /* 8x8 */
-	else if (one_eighth > (workerData->npsw) * 16)
-	    chunk_size = 16; /* 4x4 */
-	else if (one_eighth > (workerData->npsw) * 4)
-	    chunk_size = 4; /* 2x2 */
-	else
-	    chunk_size = 1; /* one pixel at a time */
-
-	bu_semaphore_acquire(RT_SEM_WORKER);
-	workerData->per_processor_chunk = chunk_size;
-	bu_semaphore_release(RT_SEM_WORKER);
-    }
-
     if (cpu >= MAX_PSW) {
 	bu_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
 	bu_exit(EXIT_FAILURE, "rt/worker() cpu > MAX_PSW, array overrun\n");
@@ -173,27 +120,14 @@ analov_worker(int cpu, void *arg)
 
     RT_CK_RESOURCE(&analov_res[cpu]);
 
-    while (1) {
-	bu_semaphore_acquire(RT_SEM_WORKER);
-	pixel_start = workerData->cur_pixel;
-	workerData->cur_pixel += workerData->per_processor_chunk;
-	bu_semaphore_release(RT_SEM_WORKER);
-
-	for (pixelnum = pixel_start; pixelnum < pixel_start+(workerData->per_processor_chunk); pixelnum++) {
-
-	    if (pixelnum > workerData->last_pixel)
-		return;
-
-	    analov_do_pixel(cpu, pixelnum, arg);
-	}
-    }
+    while (analov_do_pixel(cpu, arg) != ANALYZE_OK);
 }
 
 /*
  * Compute a run of pixels, in parallel if the hardware permits it.
  */
 HIDDEN int
-analov_do_run(int a, int b, void *workerDataPointer)
+analov_do_run(void *workerDataPointer)
 {
     size_t cpu;
     struct worker_context *workerData = (struct worker_context *) workerDataPointer;
@@ -213,9 +147,6 @@ analov_do_run(int a, int b, void *workerDataPointer)
 	}
     }
 #endif
-
-    (workerData->cur_pixel) = a;
-    (workerData->last_pixel) = b;
 
     if (!RTG.rtg_parallel) {
 	/*
@@ -307,82 +238,18 @@ analov_do_run(int a, int b, void *workerDataPointer)
     return ANALYZE_OK;
 }
 
-
-HIDDEN int
-analov_grid_setup(struct application *APP,
-		  fastf_t aspect,
-		  fastf_t viewsize,
-		  size_t width,
-		  fastf_t cell_height,
-		  fastf_t cell_width,
-		  mat_t view2model,
-		  vect_t dx_model,
-		  vect_t dy_model,
-		  vect_t dx_unit,
-		  vect_t dy_unit,
-		  point_t viewbase_model)
-{
-    vect_t temp;
-
-    /* Create basis vectors dx and dy for emanation plane (grid) */
-    VSET(temp, 1, 0, 0);
-    MAT3X3VEC(dx_unit, view2model, temp);	/* rotate only */
-    VSCALE(dx_model, dx_unit, cell_width);
-
-    VSET(temp, 0, 1, 0);
-    MAT3X3VEC(dy_unit, view2model, temp);	/* rotate only */
-    VSCALE(dy_model, dy_unit, cell_height);
-
-    /* all rays go this direction */
-    VSET(temp, 0, 0, -1);
-    MAT4X3VEC(APP->a_ray.r_dir, view2model, temp);
-    VUNITIZE(APP->a_ray.r_dir);
-
-    VSET(temp, -1, -1/aspect, 0);	/* eye plane */
-    APP->a_rbeam = 0.5 * viewsize / width;
-    APP->a_diverge = 0;
-
-    if (ZERO(APP->a_rbeam) && ZERO(APP->a_diverge)) {
-	bu_log("zero-radius beam");
-	return ANALYZE_ERROR;
-    }
-
-    MAT4X3PNT(viewbase_model, view2model, temp);
-
-    return ANALYZE_OK;
-}
-
-
 int
 analyze_overlaps(struct rt_i *rtip,
-		 size_t width,
-		 size_t height,
-		 fastf_t cell_width,
-		 fastf_t cell_height,
-		 fastf_t aspect,
-		 fastf_t viewsize,
-		 mat_t model2view,
 		 size_t npsw,
 		 analyze_overlaps_callback callback,
-		 void *callBackData)
+		 void *callBackData,
+		 struct grid_generator_functions *grid_generator,
+		 void *grid_context)
 {
     int i;
     struct application APP;
     struct analyze_private_callback_data adapterData;
-
-    int pix_start;		/* pixel to start at */
-    int pix_end;		/* pixel to end at */
-    int cur_pixel = 0;		/* current pixel number, 0..last_pixel */
-    int last_pixel = 0;		/* last pixel number */
-    int per_processor_chunk = 0;
     struct worker_context workerData;
-    void *workerDataPointer;
-    mat_t view2model;
-    vect_t dx_model;		/* view delta-X as model-space vect */
-    vect_t dy_model;		/* view delta-Y as model-space vect */
-    vect_t dx_unit;		/* view delta-X as unit-len vect */
-    vect_t dy_unit;		/* view delta-Y as unit-len vect */
-    point_t viewbase_model;	/* model-space location of viewplane corner */
 
     /* application-specific initialization */
     RT_APPLICATION_INIT(&APP);
@@ -418,42 +285,29 @@ analyze_overlaps(struct rt_i *rtip,
     APP.a_logoverlap = overlapsAdapter;
     APP.a_uptr = &adapterData;
     APP.a_onehit = 0;
+    APP.a_rbeam = 0.5 * (grid_generator->grid_cell_width(grid_context));
+    APP.a_diverge = 0;
+
+    if (ZERO(APP.a_rbeam) && ZERO(APP.a_diverge)) {
+	bu_log("zero-radius beam");
+	return ANALYZE_ERROR;
+    }
 
     memset(analov_res, 0, sizeof(analov_res));
     for (i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&analov_res[i], i, rtip);
     }
-    /* needs to be run before grid setup */
+
     if (rtip->needprep) {
 	rt_prep_parallel(rtip, npsw);
     }
-    /* Initialize the view2model before calling do_frame */
-    bn_mat_inv(view2model, model2view);
-    /* remaining parts of grid_setup */
-    if (analov_grid_setup(&APP, aspect, viewsize, width, cell_height, cell_width, view2model, dx_model, dy_model, dx_unit, dy_unit, viewbase_model))
-    	return ANALYZE_ERROR;
-
-    pix_start = 0;
-    pix_end = (int)(height * width - 1);
-
     /* Initialize workerData before calling do_run*/
-    workerData.per_processor_chunk = per_processor_chunk;
-    workerData.cur_pixel = cur_pixel;
-    workerData.last_pixel = last_pixel;
+    workerData.grid_function = grid_generator;
+    workerData.grid_context = grid_context;
     workerData.npsw = npsw;
     workerData.APP = APP;
-    workerData.width = width;
-    VMOVE(workerData.dx_model,dx_model);
-    VMOVE(workerData.dy_model,dy_model);
-    VMOVE(workerData.viewbase_model,viewbase_model);
 
-    workerDataPointer = (void*)(&workerData);
-
-    /*
-     * Compute the image
-     * It may prove desirable to do this in chunks
-     */
-    if (analov_do_run(pix_start, pix_end, workerDataPointer))
+    if (analov_do_run(&workerData))
 	return ANALYZE_ERROR;
 
     return ANALYZE_OK;
