@@ -318,6 +318,7 @@ main_loop(void)
 
     while (!fb_server_got_fb_free) {
 	long refresh_rate = 60000000; /* old default */
+	long usec_to_sec = 1000000;
 	fd_set infds;
 	struct timeval tv;
 	int i;
@@ -329,8 +330,8 @@ main_loop(void)
 
 	infds = select_list;	/* struct copy */
 
-	tv.tv_sec = 0L;
-	tv.tv_usec = refresh_rate;
+	tv.tv_sec = refresh_rate / usec_to_sec;
+	tv.tv_usec = refresh_rate % usec_to_sec;
 	if ((select(max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (struct timeval *)&tv) == 0)) {
 	    /* Process fb events while waiting for client */
 	    /*printf("select timeout waiting for client\n");*/
