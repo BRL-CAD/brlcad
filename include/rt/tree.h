@@ -213,16 +213,18 @@ union tree {
  * DEPRECATED, use BU_GET()
  */
 #define RT_GET_TREE(_tp, _res) { \
-        if (((_tp) = (_res)->re_tree_hd) != TREE_NULL) { \
-            (_res)->re_tree_hd = (_tp)->tr_b.tb_left;    \
-            (_tp)->tr_b.tb_left = TREE_NULL;             \
-            (_res)->re_tree_get++;                       \
-        } else {                                         \
-            BU_ALLOC(_tp, union tree);                   \
-            (_res)->re_tree_malloc++;                    \
-        }                                                \
+	BU_GET((_tp), union tree); \
         RT_TREE_INIT((_tp));                             \
     }
+/*         if (((_tp) = (_res)->re_tree_hd) != TREE_NULL) { \ */
+/*             (_res)->re_tree_hd = (_tp)->tr_b.tb_left;    \ */
+/*             (_tp)->tr_b.tb_left = TREE_NULL;             \ */
+/*             (_res)->re_tree_get++;                       \ */
+/*         } else {                                         \ */
+/*             BU_ALLOC(_tp, union tree);                   \ */
+/*             (_res)->re_tree_malloc++;                    \ */
+/*         }                                                \ */
+
 
 /**
  * RT_FREE_TREE deinitializes a tree union pointer.
@@ -235,13 +237,15 @@ union tree {
  * DEPRECATED, use BU_PUT()
  */
 #define RT_FREE_TREE(_tp, _res) { \
-        (_tp)->magic = 0;                         \
-        (_tp)->tr_b.tb_left = (_res)->re_tree_hd; \
-        (_tp)->tr_b.tb_right = TREE_NULL;         \
-        (_res)->re_tree_hd = (_tp);               \
-        (_tp)->tr_b.tb_op = OP_FREE;              \
-        (_res)->re_tree_free++;                   \
+	BU_PUT((_tp), union tree); \
     }
+
+/*         (_tp)->magic = 0;                         \ */
+/*         (_tp)->tr_b.tb_left = (_res)->re_tree_hd; \ */
+/*         (_tp)->tr_b.tb_right = TREE_NULL;         \ */
+/*         (_res)->re_tree_hd = (_tp);               \ */
+/*         (_tp)->tr_b.tb_op = OP_FREE;              \ */
+/*         (_res)->re_tree_free++;                   \ */
 
 /**
  * flattened version of the union tree

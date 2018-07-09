@@ -180,7 +180,7 @@ rt_comb_import4(
     const struct bu_external *ep,
     const mat_t matrix,		/* NULL if identity */
     const struct db_i *dbip,
-    struct resource *resp)
+    struct resource *UNUSED(resp))
 {
     union record *rp;
     struct rt_tree_array *rt_tree_array;

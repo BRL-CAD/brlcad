@@ -728,7 +728,7 @@ _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int f
 
 
 static union tree *
-bot_dump_leaf(struct db_tree_state *tsp,
+bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
 		  const struct db_full_path *pathp,
 		  struct rt_db_internal *ip,
 		  void *client_data)

@@ -83,7 +83,7 @@ struct rt_comb_internal {
 
 /**
  * deinitialize an rt_comb_internal.  the tree pointer is not released
- * so callers will need to call RT_FREE_TREE() or db_free_tree()
+ * so callers will need to call BU_PUT() or db_free_tree()
  * directly if a tree is set.  the shader and material strings are
  * released.  the comb itself will need to be released with bu_free()
  * unless it resides on the stack.
