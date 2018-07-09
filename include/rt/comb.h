@@ -51,8 +51,7 @@ RT_EXPORT extern int rt_comb_export4(struct bu_external                 *ep,
 RT_EXPORT extern void db_comb_describe(struct bu_vls    *str,
                                        const struct rt_comb_internal    *comb,
                                        int              verbose,
-                                       double           mm2local,
-                                       struct resource  *resp);
+                                       double           mm2local);
 
 /**
  * OBJ[ID_COMBINATION].ft_describe() method
@@ -61,7 +60,6 @@ RT_EXPORT extern int rt_comb_describe(struct bu_vls     *str,
                                       const struct rt_db_internal *ip,
                                       int               verbose,
                                       double            mm2local,
-                                      struct resource *resp,
                                       struct db_i *db_i);
 
 /**

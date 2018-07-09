@@ -782,11 +782,9 @@ db_comb_describe(
     struct bu_vls *str,
     const struct rt_comb_internal *comb,
     int verbose,
-    double mm2local,
-    struct resource *resp)
+    double mm2local)
 {
     RT_CK_COMB(comb);
-    RT_CK_RESOURCE(resp);
 
     if (comb->region_flag) {
 	bu_vls_printf(str,
@@ -826,7 +824,7 @@ db_comb_describe(
 
     if (comb->tree) {
 	if (verbose) {
-	    db_tree_flatten_describe(str, comb->tree, 0, 1, mm2local, resp);
+	    db_tree_flatten_describe(str, comb->tree, 0, 1, mm2local, &rt_uniresource);
 	} else {
 	    rt_pr_tree_vls(str, comb->tree);
 	}
@@ -863,19 +861,17 @@ rt_comb_describe(
     const struct rt_db_internal *ip,
     int verbose,
     double mm2local,
-    struct resource *resp,
     struct db_i *dbip)
 {
     const struct rt_comb_internal *comb;
 
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
     if (dbip) RT_CK_DBI(dbip);
 
     comb = (struct rt_comb_internal *)ip->idb_ptr;
     RT_CK_COMB(comb);
 
-    db_comb_describe(str, comb, verbose, mm2local, resp);
+    db_comb_describe(str, comb, verbose, mm2local);
     return 0;
 }
 
