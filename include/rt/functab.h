@@ -192,9 +192,8 @@ struct rt_functab {
 		       const struct rt_db_internal * /*ip*/,
 		       int /*verbose*/,
 		       double /*mm2local*/,
-		       struct resource * /*resp*/,
 		       struct db_i *);
-#define RTFUNCTAB_FUNC_DESCRIBE_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_db_internal *, int, double, struct resource *, struct db_i *))((void (*)(void))_func))
+#define RTFUNCTAB_FUNC_DESCRIBE_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_db_internal *, int, double, struct db_i *))((void (*)(void))_func))
 
     int (*ft_xform)(struct rt_db_internal * /*op*/,
 		    const mat_t /*mat*/, struct rt_db_internal * /*ip*/,

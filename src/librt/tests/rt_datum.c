@@ -250,12 +250,20 @@ report_object_params(struct db_i *dbip, const char *o)
     int id;
     struct bu_vls rtlog = BU_VLS_INIT_ZERO;
     struct rt_db_internal intern;
+
     struct directory *dp = db_lookup(dbip, o, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) return;
+    if (dp == RT_DIR_NULL)
+	return;
+
     RT_DB_INTERNAL_INIT(&intern);
-    if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) return;
-    if (!OBJ[id].ft_describe) return;
-    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local, &rt_uniresource,dbip) < 0) return;
+    if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0)
+	return;
+
+    if (!OBJ[id].ft_describe)
+	return;
+    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local, dbip) < 0)
+	return;
+
     bu_log("OBJECT %s:\n%s\n", o, bu_vls_addr(&rtlog));
     bu_vls_free(&rtlog);
 }
@@ -272,12 +280,16 @@ report_instance_params(struct db_i *dbip, const char *c, const char *o)
     union tree *tp;
     struct directory *cdp = db_lookup(dbip, c, LOOKUP_QUIET);
     struct directory *dp = db_lookup(dbip, o, LOOKUP_QUIET);
-    if (cdp == RT_DIR_NULL || dp == RT_DIR_NULL) return;
+
+    if (cdp == RT_DIR_NULL || dp == RT_DIR_NULL)
+	return;
+
     RT_DB_INTERNAL_INIT(&cintern);
     if (rt_db_get_internal(&cintern, cdp, dbip, NULL, &rt_uniresource) < 0) {
 	rt_db_free_internal(&cintern);
 	return;
     }
+
     comb = (struct rt_comb_internal *)cintern.idb_ptr;
     if (!comb->tree) return;
     tp = (union tree *)db_find_named_leaf(comb->tree, dp->d_namep);
@@ -285,17 +297,23 @@ report_instance_params(struct db_i *dbip, const char *c, const char *o)
 	rt_db_free_internal(&cintern);
 	return;
     }
+
     /* Got a matching instance, grab matrix */
     if (tp->tr_l.tl_mat) {
 	MAT_COPY(cmat, tp->tr_l.tl_mat);
-    } 
+    }
 
     /* Load the actual object instance, applying the comb matrix to transform the
      * object parameter values into the instance values */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((id = rt_db_get_internal(&intern, dp, dbip, cmat, &rt_uniresource)) < 0) return;
-    if (!OBJ[id].ft_describe) return;
-    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local, &rt_uniresource,dbip) < 0) return;
+    if ((id = rt_db_get_internal(&intern, dp, dbip, cmat, &rt_uniresource)) < 0)
+	return;
+
+    if (!OBJ[id].ft_describe)
+	return;
+    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local, dbip) < 0)
+	return;
+
     bu_log("INSTANCE %s/%s:\n%s\n", c, o, bu_vls_addr(&rtlog));
     bu_vls_free(&rtlog);
 }

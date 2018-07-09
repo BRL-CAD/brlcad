@@ -7313,12 +7313,10 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
     transform_editing_solid(&intern, mat, (struct rt_db_internal *)ip, 0);
 
     if (id != ID_ARS && id != ID_POLY && id != ID_BOT) {
-	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/,
-				       base2local, &rt_uniresource, dbip) < 0)
+	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/, base2local, dbip) < 0)
 	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
     } else {
-	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */,
-				       base2local, &rt_uniresource, dbip) < 0)
+	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */, base2local, dbip) < 0)
 	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
     }
 

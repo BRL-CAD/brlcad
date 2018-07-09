@@ -1270,7 +1270,7 @@ wdb_do_list(struct db_i *dbip,
 	if (OBJ[id].ft_describe) {
 	    int ret;
 	    bu_vls_printf(outstrp, "%s:  ", dp->d_namep);
-	    ret = OBJ[id].ft_describe(outstrp, &intern, verbose, dbip->dbi_base2local, &rt_uniresource, dbip);
+	    ret = OBJ[id].ft_describe(outstrp, &intern, verbose, dbip->dbi_base2local, dbip);
 	    if (ret < 0)
 		bu_log("%s: describe error\n", dp->d_namep);
 	} else {
@@ -3804,7 +3804,7 @@ wdb_list_cmd(struct rt_wdb *wdbp,
 
 	    bu_vls_printf(&str, "%s:  ", argv[arg]);
 
-	    if (!OBJ[id].ft_describe || OBJ[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local, &rt_uniresource, wdbp->dbip) < 0)
+	    if (!OBJ[id].ft_describe || OBJ[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local, wdbp->dbip) < 0)
 		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, dp->d_namep, ": describe error", (char *)NULL);
 
 	    rt_db_free_internal(&intern);

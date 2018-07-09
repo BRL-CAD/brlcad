@@ -590,7 +590,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 	/* verbose=1, mm2local=1.0 */
 	ret = -1;
 	if (stp->st_meth->ft_describe) {
-	    ret = stp->st_meth->ft_describe(&str, ip, 1, 1.0, tsp->ts_resp, tsp->ts_dbip);
+	    ret = stp->st_meth->ft_describe(&str, ip, 1, 1.0, tsp->ts_dbip);
 	}
 	if (ret < 0) {
 	    bu_log("_rt_gettree_leaf(%s):  solid describe failure\n",

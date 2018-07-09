@@ -47,7 +47,7 @@ rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verb
     if (!ft->ft_describe)
 	return -4;
 
-    return ft->ft_describe(logstr, ip, verbose, mm2local, resp, dbip);
+    return ft->ft_describe(logstr, ip, verbose, mm2local, dbip);
 }
 
 

@@ -173,7 +173,6 @@ ged_trace(struct directory *dp,
 				   &intern,
 				   verbose,
 				   gtdp->gtd_gedp->ged_wdbp->dbip->dbi_base2local,
-				   &rt_uniresource,
 				   gtdp->gtd_gedp->ged_wdbp->dbip) < 0)
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
     rt_db_free_internal(&intern);

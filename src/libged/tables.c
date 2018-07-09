@@ -245,7 +245,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		if (!OBJ[sol_intern.idb_type].ft_describe ||
-		    OBJ[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0) {
+		    OBJ[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local, gedp->ged_wdbp->dbip) < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "%s describe error\n", tree_list[i].tl_tree->tr_l.tl_name);
 		}
 		fprintf(tabptr, "%s", bu_vls_addr(&tmp_vls));
