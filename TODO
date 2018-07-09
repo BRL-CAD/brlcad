@@ -20,8 +20,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * clean up the rt options clusterfudge and use png as example
 
-* make brlman a synonym for help in mged/archer so docs work
-
 * fix regions/idents table commands, broken on Windows
 
 

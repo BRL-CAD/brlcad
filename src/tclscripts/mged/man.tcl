@@ -50,6 +50,11 @@ proc man {{cmdname {}}} {
     }
 }
 
+proc brlman {{cmdname {}}} {
+    # simple (intentionally undocumented) pass-through alias
+    man $cmdname
+}
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8
