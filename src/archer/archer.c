@@ -1,4 +1,4 @@
-/*                       B R L M A N  . C
+/*                       A R C H E R  . C
  * BRL-CAD
  *
  * Copyright (c) 2005-2018 United States Government as represented by
@@ -17,17 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file brlman.c
- *
- *  Man page viewer for BRL-CAD man pages.
- *
- */
 
 #include "common.h"
 
 #include <string.h>
-#include "bresource.h"
 
+#include "bresource.h"
 #include "bnetwork.h"
 #include "bio.h"
 
@@ -38,6 +33,7 @@
 
 #include "bu.h"
 #include "tclcad.h"
+
 
 #ifdef HAVE_WINDOWS_H
 int APIENTRY
