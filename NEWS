@@ -22,6 +22,7 @@ changes made.  See document footer for additional details.
 * fixed gcv problem with full paths on Windows - Cliff Yapp
 * removed precision limitation in NIRT input parsing - Cliff Yapp
 * added new example geometry models: chess and die pieces - Jeff Sieu
+* new 'openid' command for listing available region IDs - Nick Reed
 * improved triangle mesh error detection for "bot check" command
 	- Nick Reed, Cliff Yapp, Jon Engbert
 * fixed graphical mode initial page loading in brlman - Cliff Yapp
