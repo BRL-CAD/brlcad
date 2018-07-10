@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * fixed fbserv timeout errors on some BSD platforms - Cezar Elnazli
+* fixed rtcheck bug handling reversed overlap pairs - Saran Narayan
 * new workflow GUI for detecting and fixing geometry overlap errors
 	- Sean Morrison, Nick Reed, Saran Narayan
 * fixed gqa printing wrong grid size on no overlaps - Saran Narayan
