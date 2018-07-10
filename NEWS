@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 
+* new workflow GUI for detecting and fixing geometry overlap errors
+	- Sean Morrison, Nick Reed, Saran Narayan
 * fixed gqa printing wrong grid size on no overlaps - Saran Narayan
 * improved 'idents' command portability - Daniel Ramirez
 * changed remrt/rtsrv to no longer report overlaps - Sean Morrison
