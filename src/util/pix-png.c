@@ -198,7 +198,6 @@ main(int argc, char *argv[])
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-    setmode(fileno(stderr), O_BINARY);
 
     /* important to store these before calling get_args().  they're
      * also not necessarily constants so have to set here instead of
