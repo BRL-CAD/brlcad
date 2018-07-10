@@ -1460,6 +1460,9 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 
     bu_vls_printf(_ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, num_objects);
 
+    /* FIXME: this is wrong.  GED_ERROR is not the same "type" as i
+     *  .. and could very well be a valid index (it is).
+     */
     return GED_ERROR;
 }
 
