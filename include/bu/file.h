@@ -390,8 +390,9 @@ BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
  * Recognized keys include:
  *
  * Key     | Looks Up
- * ------- | ----------------------------------------
- * bin     | Directory containing binary applications
+ * ------- | -------------------------------------------
+ * NULL    | Root installation directory at runtime
+ * bin     | Directory containing applications
  * lib     | Directory containing libraries
  * include | Directory containing headers
  * data    | Directory containing shared data
