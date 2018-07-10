@@ -262,7 +262,7 @@ report_object_params(struct db_i *dbip, const char *o)
 
     if (!OBJ[id].ft_describe)
 	return;
-    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local, dbip) < 0)
+    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local) < 0)
 	return;
 
     bu_log("OBJECT %s:\n%s\n", o, bu_vls_addr(&rtlog));
@@ -312,7 +312,7 @@ report_instance_params(struct db_i *dbip, const char *c, const char *o)
 
     if (!OBJ[id].ft_describe)
 	return;
-    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local, dbip) < 0)
+    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local) < 0)
 	return;
 
     bu_log("INSTANCE %s/%s:\n%s\n", c, o, bu_vls_addr(&rtlog));

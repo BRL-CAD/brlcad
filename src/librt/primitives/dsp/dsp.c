@@ -4531,9 +4531,6 @@ rt_dsp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(
 	(struct rt_dsp_internal *)ip->idb_ptr;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_describe()\n");
-
     RT_DSP_CK_MAGIC(dsp_ip);
 
     dsp_print(&vls, dsp_ip);
@@ -4552,9 +4549,6 @@ void
 rt_dsp_ifree(struct rt_db_internal *ip)
 {
     register struct rt_dsp_internal *dsp_ip;
-
-    if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_ifree()\n");
 
     RT_CK_DB_INTERNAL(ip);
 

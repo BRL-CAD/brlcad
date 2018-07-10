@@ -24,7 +24,7 @@
 
 
 int
-rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *dbip)
+rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
     int id;
     const struct rt_functab *ft;
@@ -34,8 +34,6 @@ rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verb
 
     BU_CK_VLS(logstr);
     RT_CK_DB_INTERNAL(ip);
-    if (resp) RT_CK_RESOURCE(resp);
-    if (dbip) RT_CK_DBI(dbip);
 
     id = ip->idb_minor_type;
     if (id < 0)
@@ -47,7 +45,7 @@ rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verb
     if (!ft->ft_describe)
 	return -4;
 
-    return ft->ft_describe(logstr, ip, verbose, mm2local, dbip);
+    return ft->ft_describe(logstr, ip, verbose, mm2local);
 }
 
 

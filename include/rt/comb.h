@@ -59,8 +59,7 @@ RT_EXPORT extern void db_comb_describe(struct bu_vls    *str,
 RT_EXPORT extern int rt_comb_describe(struct bu_vls     *str,
                                       const struct rt_db_internal *ip,
                                       int               verbose,
-                                      double            mm2local,
-                                      struct db_i *db_i);
+                                      double            mm2local);
 
 /**
  * fills in rgb with the color for a given comb combination

@@ -861,13 +861,11 @@ rt_comb_describe(
     struct bu_vls *str,
     const struct rt_db_internal *ip,
     int verbose,
-    double mm2local,
-    struct db_i *dbip)
+    double mm2local)
 {
     const struct rt_comb_internal *comb;
 
     RT_CK_DB_INTERNAL(ip);
-    if (dbip) RT_CK_DBI(dbip);
 
     comb = (struct rt_comb_internal *)ip->idb_ptr;
     RT_CK_COMB(comb);

@@ -642,7 +642,7 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
     if (debug) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 	/* verbose = 1, mm2local = 1.0 */
-	if (ip->idb_meth->ft_describe(&str, ip, 1, 1.0, dbip) < 0) {
+	if (ip->idb_meth->ft_describe(&str, ip, 1, 1.0) < 0) {
 	    bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
 		   dp->d_namep);
 	}
