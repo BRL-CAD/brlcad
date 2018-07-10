@@ -577,7 +577,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 			bu_log("too many files with the same name (%s)\n", dp->d_namep);
 			bu_exit(1, "Cannot create a unique filename, \n");
 		    }
-		    snprintf(multi_name, len, "%s/%s%s.igs", output_file, dp->d_namep, suffix);
+		    snprintf(multi_name, len, "%s/%s%.6s.igs", output_file, dp->d_namep, suffix);
 		}
 		if ((fp_dir = fopen(multi_name, "wb")) == NULL) {
 		    perror("g-iges");
