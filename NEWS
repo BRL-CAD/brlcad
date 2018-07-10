@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed fbserv timeout errors on some BSD platforms - Cezar Elnazli
 * new workflow GUI for detecting and fixing geometry overlap errors
 	- Sean Morrison, Nick Reed, Saran Narayan
 * fixed gqa printing wrong grid size on no overlaps - Saran Narayan
