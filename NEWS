@@ -79,6 +79,7 @@ and address portability issues.
 * fixed rt support for lights created prior to rel 6.0 - Sean Morrison
 * fixed infinite loop bug in when using shadow lights - Sean Morrison
 * removed man pages: erase_all, export_body, vrmgr, dall - Cliff Yapp
+* fixed MGED 'c' command crash when run with bad arguments - Nick Reed
 * added manual pages for the 'brlman' and 'man' commands - Cliff Yapp
 * improved gdiff default grid spacing and tolerancing - Cliff Yapp
 * updated brlman to support browsing all page categories - Cliff Yapp
