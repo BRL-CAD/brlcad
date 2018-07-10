@@ -317,7 +317,9 @@ wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
     ptr_lparen = strchr(name, '(');
     ptr_rparen = strchr(name, ')');
 
-    RT_GET_TREE(node, &rt_uniresource);
+    BU_GET(node, union tree);
+    RT_TREE_INIT(node);
+
     node->tr_op = OP_DB_LEAF;
     node->tr_l.tl_mat = (matp_t)NULL;
     if (ptr_lparen || ptr_rparen) {
@@ -1353,7 +1355,10 @@ wdb_combadd(struct db_i *dbip,
 	} else {
 	    comb->region_flag = 0;
 	}
-	RT_GET_TREE(tp, &rt_uniresource);
+
+	BU_GET(tp, union tree);
+	RT_TREE_INIT(tp);
+
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(objp->d_namep);
 	tp->tr_l.tl_mat = (matp_t)NULL;
@@ -1420,7 +1425,9 @@ wdb_combadd(struct db_i *dbip,
     }
 
     /* make new leaf node, and insert at end of list */
-    RT_GET_TREE(tp, &rt_uniresource);
+    BU_GET(tp, union tree);
+    RT_TREE_INIT(tp);
+
     tree_list[node_count-1].tl_tree = tp;
     tp->tr_l.tl_op = OP_DB_LEAF;
     tp->tr_l.tl_name = bu_strdup(objp->d_namep);
@@ -7293,7 +7300,8 @@ wdb_push_leaf(struct db_tree_state *tsp,
 	    }
 
 	    bu_semaphore_release(RT_SEM_WORKER);
-	    RT_GET_TREE(curtree, tsp->ts_resp);
+	    BU_GET(curtree, union tree);
+	    RT_TREE_INIT(curtree);
 	    curtree->tr_op = OP_NOP;
 	    return curtree;
 	}
@@ -7310,7 +7318,8 @@ wdb_push_leaf(struct db_tree_state *tsp,
     pip->forw = &wpdp->pi_head;
     pip->back->forw = pip;
     bu_semaphore_release(RT_SEM_WORKER);
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }

@@ -143,7 +143,8 @@ push_leaf(struct db_tree_state *tsp,
 	    }
 
 	    bu_semaphore_release(RT_SEM_WORKER);
-	    RT_GET_TREE(curtree, tsp->ts_resp);
+	    BU_GET(curtree, union tree);
+	    RT_TREE_INIT(curtree);
 	    curtree->tr_op = OP_NOP;
 	    return curtree;
 	}
@@ -160,7 +161,8 @@ push_leaf(struct db_tree_state *tsp,
     gpip->forw = &gpdp->pi_head;
     gpip->back->forw = gpip;
     bu_semaphore_release(RT_SEM_WORKER);
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }

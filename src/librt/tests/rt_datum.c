@@ -135,7 +135,8 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
     tree_list = (struct rt_tree_array *)bu_calloc(obj_argc, sizeof(struct rt_tree_array), "tree list");
     for (i = 0; i < obj_argc; i++) {
 	union tree *tp;
-	RT_GET_TREE(tp, &rt_uniresource);
+	BU_GET(tp, union tree);
+	RT_TREE_INIT(tp);
 	tree_list[i].tl_op = OP_UNION;
 	tree_list[i].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;

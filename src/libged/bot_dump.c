@@ -729,9 +729,9 @@ _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int f
 
 static union tree *
 bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
-		  const struct db_full_path *pathp,
-		  struct rt_db_internal *ip,
-		  void *client_data)
+	      const struct db_full_path *pathp,
+	      struct rt_db_internal *UNUSED(ip),
+	      void *client_data)
 {
     int ret;
     union tree *curtree;
@@ -741,10 +741,9 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
     struct rt_bot_internal *bot;
     struct _ged_bot_dump_client_data *gbdcdp = (struct _ged_bot_dump_client_data *)client_data;
 
-    if (ip) RT_CK_DB_INTERNAL(ip);
-
     /* Indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
     dp = pathp->fp_names[pathp->fp_len-1];

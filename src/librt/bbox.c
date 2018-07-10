@@ -442,7 +442,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
 	RT_COMB_INTERNAL_INIT(combp);
 	combp->region_flag = 0;
 
-	RT_GET_TREE(tp, &rt_uniresource);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	tp->tr_l.tl_op = OP_SOLID;
 	tp->tr_l.tl_name = "dummy";

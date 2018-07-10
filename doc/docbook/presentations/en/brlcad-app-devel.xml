@@ -952,8 +952,10 @@ RT_CK_COMB(comb);</programlisting>
     </itemizedlist>
 
 <programlisting>/* Modify the combination we retrieved */
-RT_GET_TREE(a, &amp;rt_uniresource);
-RT_GET_TREE(b, &amp;rt_uniresource);
+BU_GET(a, union tree);
+RT_TREE_INIT(a);
+BU_GET(b, union tree);
+RT_TREE_INIT(b);
 
 a->tr_l.tl_name = bu_strdup("newball");
 a->tr_l.tl_op = OP_DB_LEAF;

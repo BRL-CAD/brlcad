@@ -840,7 +840,8 @@ addmembers:
 	}
 
 	/* make new leaf node, and insert at end of list */
-	RT_GET_TREE(tp, &rt_uniresource);
+	BU_GET(tp, union tree);
+	RT_TREE_INIT(tp);
 	tree_list[curr_count].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(objp->d_namep);

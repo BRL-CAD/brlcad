@@ -507,7 +507,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	    union tree *tp;
 	    size_t mi;
 
-	    RT_GET_TREE(tp, resp);
+	    BU_GET(tp, union tree);
+	    RT_TREE_INIT(tp);
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 	    tp->tr_l.tl_name = bu_strdup((const char *)leafp);
 	    leafp += strlen((const char *)leafp) + 1;
@@ -576,7 +577,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		}
 
 		if (tp2) {
-		    RT_GET_TREE(unionp, resp);
+		    BU_GET(unionp, union tree);
+		    RT_TREE_INIT(unionp);
 		    unionp->tr_b.tb_op = OP_UNION;
 		    unionp->tr_b.tb_left = tp1;
 		    unionp->tr_b.tb_right = tp2;
@@ -627,7 +629,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	union tree *tp;
 	size_t mi;
 
-	RT_GET_TREE(tp, resp);
+	BU_GET(tp, union tree);
+	RT_TREE_INIT(tp);
 
 	switch (*exprp) {
 	    case DB5COMB_TOKEN_LEAF:

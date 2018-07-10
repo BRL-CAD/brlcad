@@ -200,39 +200,19 @@ union tree {
     }
 
 /**
- * RT_GET_TREE returns a new initialized tree union pointer.  The
- * magic number is set to RT_TREE_MAGIC and all other members are
- * zero-initialized.
+ * RT_GET_TREE returns a union tree pointer with the magic number is
+ * set to RT_TREE_MAGIC.
  *
- * This is a malloc-efficient BU_ALLOC(tp, union tree) replacement.
- * Previously used tree nodes are stored in the provided resource
- * pointer (during RT_FREE_TREE) as a single-linked list using the
- * tb_left field.  Requests for new nodes are pulled first from that
- * list or allocated fresh if needed.
- *
- * DEPRECATED, use BU_GET()
+ * DEPRECATED, use BU_GET()+RT_TREE_INIT()
  */
 #define RT_GET_TREE(_tp, _res) { \
 	BU_GET((_tp), union tree); \
         RT_TREE_INIT((_tp));                             \
     }
-/*         if (((_tp) = (_res)->re_tree_hd) != TREE_NULL) { \ */
-/*             (_res)->re_tree_hd = (_tp)->tr_b.tb_left;    \ */
-/*             (_tp)->tr_b.tb_left = TREE_NULL;             \ */
-/*             (_res)->re_tree_get++;                       \ */
-/*         } else {                                         \ */
-/*             BU_ALLOC(_tp, union tree);                   \ */
-/*             (_res)->re_tree_malloc++;                    \ */
-/*         }                                                \ */
 
 
 /**
  * RT_FREE_TREE deinitializes a tree union pointer.
- *
- * This is a malloc-efficient replacement for bu_free(tp).  Instead of
- * actually freeing the nodes, they are added to a single-linked list
- * in rt_tree_hd down the tb_left field.  Requests for new nodes (via
- * RT_GET_TREE()) pull from this list instead of allocating new nodes.
  *
  * DEPRECATED, use BU_PUT()
  */
@@ -240,12 +220,6 @@ union tree {
 	BU_PUT((_tp), union tree); \
     }
 
-/*         (_tp)->magic = 0;                         \ */
-/*         (_tp)->tr_b.tb_left = (_res)->re_tree_hd; \ */
-/*         (_tp)->tr_b.tb_right = TREE_NULL;         \ */
-/*         (_res)->re_tree_hd = (_tp);               \ */
-/*         (_tp)->tr_b.tb_op = OP_FREE;              \ */
-/*         (_res)->re_tree_free++;                   \ */
 
 /**
  * flattened version of the union tree

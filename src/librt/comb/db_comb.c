@@ -161,7 +161,7 @@ db_flatten_tree(
 		/* The leaves have been stolen, free the binary op */
 		tp->tr_b.tb_left = TREE_NULL;
 		tp->tr_b.tb_right = TREE_NULL;
-		RT_FREE_TREE(tp, resp);
+		BU_PUT(tp, union tree);
 	    }
 	    return rt_tree_array;
 
@@ -234,7 +234,8 @@ rt_comb_import4(
 	    mat_t diskmat;
 	    char namebuf[NAMESIZE+1];
 
-	    RT_GET_TREE(tp, resp);
+	    BU_GET(tp, union tree);
+	    RT_TREE_INIT(tp);
 	    rt_tree_array[j].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 
@@ -995,7 +996,8 @@ db_mkbool_tree(
 	if (tlp->tl_tree == TREE_NULL)
 	    continue;
 
-	RT_GET_TREE(xtp, resp);
+	BU_GET(xtp, union tree);
+	RT_TREE_INIT(xtp);
 	xtp->tr_b.tb_left = curtree;
 	xtp->tr_b.tb_right = tlp->tl_tree;
 	xtp->tr_b.tb_regionp = (struct region *)0;

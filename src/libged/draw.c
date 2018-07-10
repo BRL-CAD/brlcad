@@ -126,7 +126,8 @@ draw_check_leaf(struct db_tree_state *tsp,
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
     /* Indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
     switch (dgcdp->dmode) {

@@ -1115,7 +1115,8 @@ append_solid_to_display_list(
     bu_semaphore_release(RT_SEM_MODEL);
 
     /* indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
     return curtree;
