@@ -18,6 +18,7 @@ changes made.  See document footer for additional details.
 * new workflow GUI for detecting and fixing geometry overlap errors
 	- Sean Morrison, Nick Reed, Saran Narayan
 * fixed gqa printing wrong grid size on no overlaps - Saran Narayan
+* fixed pix-png creating corrupt PNG files on Windows - Sean Morrison
 * improved 'idents' command portability - Daniel Ramirez
 * changed remrt/rtsrv to no longer report overlaps - Sean Morrison
 * fixed geometry directory building bug in remrt/rtsrv - Sean Morrison
