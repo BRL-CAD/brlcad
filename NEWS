@@ -21,6 +21,7 @@ changes made.  See document footer for additional details.
 * fixed pix-png creating corrupt PNG files on Windows - Sean Morrison
 * improved 'idents' command portability - Daniel Ramirez
 * changed remrt/rtsrv to no longer report overlaps - Sean Morrison
+* fixed crash of MGED's overlap tool - Saran Narayan
 * fixed geometry directory building bug in remrt/rtsrv - Sean Morrison
 * fixed gcv problem with full paths on Windows - Cliff Yapp
 * removed precision limitation in NIRT input parsing - Cliff Yapp
@@ -33,7 +34,6 @@ changes made.  See document footer for additional details.
 * ported MGED 'screengrab' command to Windows - Nick Reed
 * removed spectral tracing: libmultispectral & rttherm - Cliff Yapp
 * sped up raytracing by 10% - Cezar Elnazli
-* fixed crash of MGED's overlap tool - Saran Narayan
 
 
 ----------------------------------------------------------------------
