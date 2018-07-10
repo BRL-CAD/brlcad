@@ -19,6 +19,7 @@ changes made.  See document footer for additional details.
 	- Sean Morrison, Nick Reed, Saran Narayan
 * fixed gqa printing wrong grid size on no overlaps - Saran Narayan
 * fixed pix-png creating corrupt PNG files on Windows - Sean Morrison
+* added "check overlaps" menu option to Archer - Saran Narayan
 * improved 'idents' command portability - Daniel Ramirez
 * changed remrt/rtsrv to no longer report overlaps - Sean Morrison
 * fixed unhandled exception in MGED's Overlap Tool - Saran Narayan
