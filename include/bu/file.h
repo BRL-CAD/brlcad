@@ -391,7 +391,6 @@ BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
  *
  * Key     | Looks Up
  * ------- | -------------------------------------------
- * NULL    | Root installation directory at runtime
  * bin     | Directory containing applications
  * lib     | Directory containing libraries
  * include | Directory containing headers
