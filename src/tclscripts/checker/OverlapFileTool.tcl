@@ -28,6 +28,7 @@
 package require Tk
 package require Itcl
 package require Itk
+package require Iwidgets
 
 # go ahead and blow away the class if we are reloading
 # catch {delete class OverlapFileTool} error
@@ -45,9 +46,13 @@ package provide OverlapFileTool 1.0
 	variable runCheckCallback
 
 	method runTools {} {}
+	method getNodeChildren { { node "" }} {}
+	method selectNode { node } {}
+	method manualObjs { option } {}
     }
     private {
 	variable _objs
+	variable _entryObjs
 	variable _statusText
 	variable _progressValue
 
@@ -58,23 +63,61 @@ package provide OverlapFileTool 1.0
 	method rmDupPairs {} {}
 
 	method addToList { new_list } {}
+	method UpdateObjsList { } {}
+
+	method removeParentMark { node } {}
+	method removeChildrenMark { node } {}
+
+	method markNode { node } {}
+	method unmarkNode { { node "" } } {}
     }
 }
 
 ::itcl::body OverlapFileTool::constructor { args } {
     set firstFlag false
-    set _objs [who]
     set _statusText "Ready"
     set _progressValue 0
+    set _entryObjs ""
 
     itk_component add ovFrame {
 	ttk::frame $itk_interior.ovFrame -padding 4
     } {}
     itk_component add objectsLabel {
-	ttk::label $itk_component(ovFrame).objectsLabel -text "Object(s)"
+	ttk::label $itk_component(ovFrame).objectsLabel -text "Manually Enter The Object(s):"
     } {}
     itk_component add objectsEntry {
-	tk::entry $itk_component(ovFrame).objectsEntry -width 40 -textvariable [scope _objs]
+	tk::entry $itk_component(ovFrame).objectsEntry -width 40 -textvariable [scope _entryObjs]
+    } {}
+    itk_component add buttonAdd {
+	ttk::button $itk_component(ovFrame).buttonAdd \
+	-text "Add" -padding 5 -command [code $this manualObjs add ]
+    } {}
+    itk_component add buttonRemove {
+	ttk::button $itk_component(ovFrame).buttonRemove \
+	-text "Remove" -padding 5 -command [code $this manualObjs remove ]
+    } {}
+
+    itk_component add objFrame {
+	ttk::frame $itk_interior.objFrame -padding 10
+    } {}
+    itk_component add object_tree {
+	Hierarchy $itk_component(objFrame).object_tree \
+	    -labeltext "Double click to select/deselect objects" \
+	    -querycommand [ code $this getNodeChildren %n ] \
+	    -dblclickcommand [ code $this selectNode %n ] \
+	    -markforeground black \
+	    -markbackground yellow \
+	    -visibleitems 40x20 \
+	    -alwaysquery 1
+    } {}
+    itk_component add objslist {
+	scrolledlistbox $itk_component(objFrame).objslist \
+	    -labelpos n \
+	    -dblclickcommand [code $this unmarkNode ] \
+	    -visibleitems 40x18 \
+	    -selectbackground yellow \
+	    -selectforeground black \
+	    -labeltext "Selected Items:" \
     } {}
 
     itk_component add progressFrame {
@@ -82,7 +125,7 @@ package provide OverlapFileTool 1.0
     } {}
     itk_component add statusLabel {
 	ttk::label $itk_component(progressFrame).statusLabel \
-	    -textvariable [scope _statusText]
+	-textvariable [scope _statusText] -justify center -wraplength 500
     } {}
     itk_component add progressBar {
 	ttk::progressbar $itk_component(progressFrame).progressBar -variable [scope _progressValue]
@@ -101,8 +144,12 @@ package provide OverlapFileTool 1.0
     pack $itk_component(ovFrame) -side top -fill x -padx 8
     pack $itk_component(objectsLabel) -side top -expand true -anchor nw
     pack $itk_component(objectsEntry) -side left -expand true -fill x 
-    focus $itk_component(objectsEntry)
-    bind $itk_component(objectsEntry) <Return> [code $itk_component(buttonGo) invoke]
+    pack $itk_component(buttonAdd) -side left -padx 8
+    pack $itk_component(buttonRemove) -side right
+
+    pack $itk_component(objFrame) -side top
+    pack $itk_component(object_tree) -side left -padx {0 8}
+    pack $itk_component(objslist) -side right -padx {8 0}
 
     pack $itk_component(ovButtonFrame) -side top -fill both
     pack $itk_component(buttonGo) -side left -expand true
@@ -110,7 +157,307 @@ package provide OverlapFileTool 1.0
     pack $itk_component(progressFrame) -side top -expand true -fill both
     pack $itk_component(statusLabel)
     pack $itk_component(progressBar) -side left -expand true -fill x -anchor nw -pady 8 -padx 8
+}
 
+
+###########
+# begin public methods
+###########
+
+# runTools
+#
+# main driver that calls the commands and
+# creates the overlaps file
+#
+body OverlapFileTool::runTools { } {
+    # get _objs from list
+    set _objs ""
+    foreach obj [$itk_component(objslist) get 0 end] {
+	append _objs " " $obj
+    }
+    # check if user passed the objects list
+    if { [llength $_objs] == 0 } {
+	tk_messageBox -icon info -type ok -title "No Objects Specified" -message "Please input objects names in the objects field"
+	return
+    }
+    # check if the specified objects exist in the database
+    set bad_objs ""
+    foreach obj $_objs {
+	set ret ""
+	catch {set ret [paths $obj]}
+	if { $ret eq "" } {
+	    lappend bad_objs $obj
+	}
+    }
+
+    if { [llength $bad_objs] > 0 } {
+	tk_messageBox -icon error -type ok -title "Bad Object Names" -message "Unrecognized object names:\n$bad_objs"
+	return
+    }
+
+    # disable the go button and entry before proceeding to prevent any re-runs
+    $itk_component(buttonGo) configure -state disabled
+    $itk_component(objectsEntry) configure -state disabled
+    $this configure -cursor watch
+    update
+
+    # run checkoverlaps and gqa for all the specified objects
+    if { [string length $_objs] > 0 } {
+	$this runCheckOverlaps $_objs
+	$this runGqa $_objs
+    }
+    # check for the count of overlaps detected
+    set ov_count [llength $pairsList]
+    if { $ov_count == 0 } {
+	tk_messageBox -type ok -title "No Overlaps Found" -message "No Overlaps Found"
+	$itk_component(buttonGo) configure -state normal
+	$itk_component(objectsEntry) configure -state normal
+	$this configure -cursor ""
+	set _progressValue 0
+	set _statusText "Ready"
+	update
+	return
+    }
+
+    puts "\nCount of overlaps: $ov_count\n"
+
+    # process the overlap pairs
+    $this sortPairs
+    $this rmDupPairs
+
+    # delete any previous overlaps files in the db directory
+    set db_path [eval opendb]
+    set dir [file dirname $db_path]
+    set name [file tail $db_path]
+    set ol_dir [file join $dir "${name}.ck"]
+    set filename [file join $dir "${name}.ck" "ck.${name}.overlaps"]
+    file delete -force -- $ol_dir
+
+    # create new folder
+    file mkdir $ol_dir
+    # write the overlaps file
+    set fp [open $filename w+]
+    foreach pair [lsort -decreasing -real -index 2 $overlapsList] {
+	puts $pair
+	puts $fp $pair
+    }
+    close $fp
+    puts "\nOverlaps file saved: $filename"
+
+    # run checker tool
+    eval $runCheckCallback
+}
+
+# getNodeChildren is the -querycommand
+#
+# returns the geometry at any node in the object tree.
+body OverlapFileTool::getNodeChildren { { node "" } } {
+    # get a list of children for the current node.  the result in childList
+    # should be a list of adorned children nodes.
+    set childList ""
+    if {$node == ""} {
+	# process top geometry
+	set topsCommand "tops -n"
+
+	if [ catch $topsCommand roots ] {
+	    puts $roots
+	    return
+	}
+
+	# the children are all of the top geometry
+	set childList ""
+	foreach topItem $roots {
+	    # XXX handle the case where tops returns decorated paths
+	    if { [ llength [ split $topItem / ] ] >= 2 } {
+		set topItem [ lindex [ split $topItem / ] 0 ]
+	    }
+	    lappend childList "/$topItem"
+	}
+
+    } else {
+	# process some combination or region or primitive
+
+	set lsNodeName [ls [ lindex [ split $node / ] end ]]
+	# if region don't expand
+	if { [ string compare "R" [ string index $lsNodeName end-1 ] ] == 0 } {
+	    if { [ string compare "/" [ string index $lsNodeName end-2 ] ] == 0 } {
+		return
+	    }
+	}
+	set parentName [ lindex [ split $node / ] end ]
+
+	set childrenPairs ""
+	if [ catch { lt $parentName } childrenPairs ] {
+	    set childrenPairs ""
+	}
+
+	foreach child $childrenPairs {
+	    lappend childList "$node/[ lindex $child 1 ]"
+	}
+    }
+
+    # generate the final child list including determining whether the object is a
+    # primitive or a combinatorial (branch or leaf node).
+    set children ""
+    foreach child $childList {
+
+	set childName [ lindex [ split $child / ] end ]
+
+	# we do not call getObjectType for performance reasons (big directories
+	# can choke.  Sides, we do not need to know the type, just whether the
+	# node is a branch or not.
+	if { [ catch { ls $childName } lsName ] } {
+	    puts "$lsName"
+	    continue
+	}
+	set nodeType leaf
+	if { [ string compare "/" [ string index $lsName end-1 ] ] == 0 } {
+	    set nodeType branch
+	}
+
+	lappend children [ list "$node/$childName" "$childName" $nodeType ]
+    }
+    # done iterating over children
+
+    return $children
+}
+
+# selectNode - dblclickcommand
+#
+# to select/deselect the nodes in the object tree on double click
+#
+body OverlapFileTool::selectNode { node } {
+    set nodeName [ lindex $node 1 ]
+    set markedobjs [ $itk_component(object_tree) mark get ]
+
+    if {[lsearch $markedobjs $nodeName] >= 0} {
+	$this unmarkNode $nodeName
+    } else {
+	$this markNode $nodeName
+    }
+    return
+}
+
+# manualObjs
+#
+# function to run the search command on the manually entered objects
+# and add them to the objects list and mark them in the tree.
+#
+body OverlapFileTool::manualObjs { option } {
+    set entrylist {}
+    set badentry {}
+    set searchcmd "search  / -type c -path"
+    foreach object $_entryObjs {
+	if { [string index $object 0] ne "/" } {
+	    lappend entrylist "/$object"
+	} else {
+	    lappend entrylist $object
+	}
+    }
+    foreach object $entrylist {
+	set objlist [eval $searchcmd $object]
+	if { $objlist == "" } {
+	    lappend badentry $object
+	}
+	if { [llength $objlist] > 1 } {
+	    set answer [tk_messageBox -title "Warning" \
+		 -message "Do you want to $option these [llength $objlist] objects:" \
+		 -detail "[lrange [split $objlist \n] 0 end-1]" -type okcancel -icon question]
+	    if { $answer == "cancel" } { continue }
+	}
+	foreach searchobj $objlist {
+	    if { $option eq "add" } { 
+		$this markNode $searchobj
+	    } else { 
+		$this unmarkNode $searchobj
+	    }
+	}
+    }
+    if { [llength $badentry] > 0 } {
+	tk_messageBox -icon error -type ok -title "Bad Object Names" -message "Unrecognized object names:\n$badentry"
+    }
+}
+
+###########
+# end public methods
+###########
+
+
+###########
+# begin private methods
+###########
+
+# UpdateObjsList
+#
+# Updates the object list for any marking/unmarking of the nodes
+# in the object tree.
+#
+body OverlapFileTool::UpdateObjsList { } {
+    set markedobjs [ $itk_component(object_tree) mark get ]
+    $itk_component(objslist) clear
+    foreach obj [ lsort $markedobjs ] {
+	$itk_component(objslist) insert end $obj
+    }
+}
+
+# removeParentMark
+#
+# Removes mark for any parent nodes recursively if a child node is marked
+#
+body OverlapFileTool::removeParentMark { node } {
+    set full ""
+    regexp {(.*)/} $node full parent
+    if { $full ne "" } {
+	$itk_component(object_tree) mark remove $parent
+	$this removeParentMark $parent
+    } else {
+	return
+    }
+}
+
+# removeChildrenMark
+#
+# Removes mark for any child nodes recursively if a parent node is marked
+#
+body OverlapFileTool::removeChildrenMark { node } {
+    set full ""
+    regexp {(.*)/(.*)} $node full parent child
+    if { $full ne "" } {
+	foreach cnodes [$this getNodeChildren $child] {
+	    set subchild [ lindex $cnodes 0 ]
+	    $itk_component(object_tree) mark remove $parent/$subchild
+	    $this removeChildrenMark "$parent/$subchild"
+	}
+    } else {
+	return
+    }
+}
+
+# markNode
+#
+# marks the node in the object tree
+#
+body OverlapFileTool::markNode { node } {
+    # if we are selecting a parent node then disable the mark of children nodes.
+    $this removeChildrenMark $node
+    # we also have to disable the mark of parent nodes as well
+    $this removeParentMark $node
+
+    $itk_component(object_tree) mark add $node
+    $this UpdateObjsList
+}
+
+# unmarkNode
+#
+# unmarks the nodes in the object tree
+#
+body OverlapFileTool::unmarkNode { { node "" } } {
+    # if called from the scrolledlistbox get the current selection
+    if {$node == ""} {
+	set node [$itk_component(objslist) getcurselection]
+    }
+    $itk_component(object_tree) mark remove $node
+    $this UpdateObjsList
 }
 
 # addToList
@@ -185,7 +532,9 @@ body OverlapFileTool::runGqa { obj } {
     set cmd "gqa -Ao -q -g1mm,1mm $obj"
     set _statusText "Running $cmd"
     update
-    catch {set gqa_list [eval $cmd]}
+    if [ catch {set gqa_list [eval $cmd]} ] {
+	set gqa_list {}
+    }
     set lines [split $gqa_list \n]
     foreach line $lines {
 	regexp {(.*) (.*) count:([0-9]*) dist:(.*)mm} $line full left right count depth
@@ -193,7 +542,7 @@ body OverlapFileTool::runGqa { obj } {
 	    continue
 	}
 	set size [expr $count * $depth]
-	# swaps the region names by comparing lexicographically 
+	# swaps the region names by comparing lexicographically
 	if { [string compare $left $right] > 0 } {
 	    lappend pairsList [list $right $left $size]
 	} else {
@@ -218,7 +567,9 @@ body OverlapFileTool::runCheckOverlaps { obj } {
 	    set _statusText "Running $cmd"
 	    incr _progressValue 4
 	    update
-	    catch {set chk_list [eval $cmd]}
+	    if [catch {set chk_list [eval $cmd]}] {
+		set chk_list {}
+	    }
 	    set lines [split $chk_list \n]
 	    foreach line $lines {
 		regexp {<(.*),.(.*)>: ([0-9]*).* (.*)mm} $line full left right count depth
@@ -226,7 +577,7 @@ body OverlapFileTool::runCheckOverlaps { obj } {
 		    continue
 		}
 		set size [expr $count * $depth]
-		# swaps the region names by comparing lexicographically 
+		# swaps the region names by comparing lexicographically
 		if { [string compare $left $right] > 0 } {
 		    lappend pairsList [list $right $left $size]
 		} else {
@@ -238,87 +589,9 @@ body OverlapFileTool::runCheckOverlaps { obj } {
 	}
     }
 }
-
-# runTools
-#
-# main driver that calls the commands and
-# creates the overlaps file
-#
-body OverlapFileTool::runTools { } {
-    # check if user passed the objects list
-    if { [llength $_objs] == 0 } {
-	tk_messageBox -icon info -type ok -title "No Objects Specified" -message "Please input objects names in the objects field"
-	return
-    }
-    # check if the specified objects exist in the database
-    set bad_objs ""
-    foreach obj $_objs {
-	catch {set ret [t $obj]}
-	if { [string first $obj $ret] != 0 } {
-	    lappend bad_objs $obj
-	}
-    }
-
-    if { [llength $bad_objs] > 0 } {
-	tk_messageBox -icon error -type ok -title "Bad Object Names" -message "Unrecognized object names:\n$bad_objs"
-	return
-    }
-
-    # disable the go button and entry before proceeding to prevent any re-runs
-    $itk_component(buttonGo) configure -state disabled
-    $itk_component(objectsEntry) configure -state disabled
-    $this configure -cursor watch
-    update
-
-    # run checkoverlaps and gqa for all the specified objects
-    if { [string length $_objs] > 0 } {
-	foreach obj $_objs {
-	    set _progressValue 0
-	    update
-	    $this runCheckOverlaps $obj
-	    $this runGqa $obj
-	}
-    }
-    # check for the count of overlaps detected
-    set ov_count [llength $pairsList]
-    if { $ov_count == 0 } {
-	tk_messageBox -type ok -title "No Overlaps Found" -message "No Overlaps Found"
-	$itk_component(buttonGo) configure -state normal
-	$itk_component(objectsEntry) configure -state normal
-	$this configure -cursor ""
-	set _progressValue 0
-	update
-	return
-    }
-
-    puts "\nCount of overlaps: $ov_count\n"
-
-    # process the overlap pairs
-    $this sortPairs
-    $this rmDupPairs
-
-    # delete any previous overlaps files in the db directory
-    set db_path [eval opendb]
-    set dir [file dirname $db_path]
-    set name [file tail $db_path]
-    set ol_dir [file join $dir "${name}.ck"]
-    set filename [file join $dir "${name}.ck" "ck.${name}.overlaps"]
-    file delete -force -- $ol_dir
-
-    # create new folder
-    file mkdir $ol_dir
-    # write the overlaps file
-    set fp [open $filename w+]
-    foreach pair [lsort -decreasing -real -index 2 $overlapsList] {
-	puts $pair
-	puts $fp $pair
-    }
-    close $fp
-    puts "\nOverlaps file saved: $filename"
-
-    # run checker tool
-    eval $runCheckCallback
-}
+###########
+# end private methods
+###########
 
 # Local Variables:
 # mode: Tcl
