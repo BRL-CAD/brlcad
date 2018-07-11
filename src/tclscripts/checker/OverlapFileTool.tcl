@@ -83,13 +83,10 @@ package provide OverlapFileTool 1.0
     set _entryObjs ""
 
     itk_component add ovFrame {
-	ttk::frame $itk_interior.ovFrame -padding 4
-    } {}
-    itk_component add objectsLabel {
-	ttk::label $itk_component(ovFrame).objectsLabel -text "Manually Enter The Object(s):"
+	ttk::labelframe $itk_interior.ovFrame -padding 8 -text " Manually Enter The Object(s): "
     } {}
     itk_component add objectsEntry {
-	tk::entry $itk_component(ovFrame).objectsEntry -width 40 -textvariable [scope _entryObjs]
+	tk::entry $itk_component(ovFrame).objectsEntry -textvariable [scope _entryObjs]
     } {}
     itk_component add buttonAdd {
 	ttk::button $itk_component(ovFrame).buttonAdd \
@@ -103,8 +100,8 @@ package provide OverlapFileTool 1.0
     itk_component add objFrame {
 	ttk::frame $itk_interior.objFrame -padding 10
     } {}
-    itk_component add object_tree {
-	Hierarchy $itk_component(objFrame).object_tree \
+    itk_component add objectsTree {
+	Hierarchy $itk_component(objFrame).objectsTree \
 	    -labeltext "Double click to select/deselect objects" \
 	    -querycommand [ code $this getNodeChildren %n ] \
 	    -dblclickcommand [ code $this selectNode %n ] \
@@ -113,25 +110,14 @@ package provide OverlapFileTool 1.0
 	    -visibleitems 40x20 \
 	    -alwaysquery 1
     } {}
-    itk_component add objslist {
-	scrolledlistbox $itk_component(objFrame).objslist \
+    itk_component add objectsList {
+	scrolledlistbox $itk_component(objFrame).objectsList \
 	    -labelpos n \
 	    -dblclickcommand [code $this unmarkNode ] \
 	    -visibleitems 40x18 \
 	    -selectbackground yellow \
 	    -selectforeground black \
 	    -labeltext "Selected Items:" \
-    } {}
-
-    itk_component add progressFrame {
-	ttk::frame $itk_interior.progressFrame -padding 4
-    } {}
-    itk_component add statusLabel {
-	ttk::label $itk_component(progressFrame).statusLabel \
-	-textvariable [scope _statusText] -justify center -wraplength 500
-    } {}
-    itk_component add progressBar {
-	ttk::progressbar $itk_component(progressFrame).progressBar -variable [scope _progressValue]
     } {}
 
     itk_component add ovButtonFrame {
@@ -146,17 +132,27 @@ package provide OverlapFileTool 1.0
 	-text "Clear Selection" -padding 5 -command [code $this clearSelection ]
     } {}
 
+    itk_component add progressFrame {
+	ttk::frame $itk_interior.progressFrame -padding 4
+    } {}
+    itk_component add statusLabel {
+	ttk::label $itk_component(progressFrame).statusLabel \
+	-textvariable [scope _statusText] -justify center -wraplength 500
+    } {}
+    itk_component add progressBar {
+	ttk::progressbar $itk_component(progressFrame).progressBar -variable [scope _progressValue]
+    } {}
+
     eval itk_initialize $args
 
-    pack $itk_component(ovFrame) -side top -fill x -padx 8
-    pack $itk_component(objectsLabel) -side top -expand true -anchor nw
-    pack $itk_component(objectsEntry) -side left -expand true -fill x 
+    pack $itk_component(ovFrame) -side top -fill x -pady 8 -padx 8
+    pack $itk_component(objectsEntry) -side left -expand true -fill x
     pack $itk_component(buttonAdd) -side left -padx 8
     pack $itk_component(buttonRemove) -side right
 
     pack $itk_component(objFrame) -side top
-    pack $itk_component(object_tree) -side left -padx {0 8}
-    pack $itk_component(objslist) -side right -padx {8 0}
+    pack $itk_component(objectsTree) -side left -padx {0 8}
+    pack $itk_component(objectsList) -side right -padx {8 0}
 
     pack $itk_component(ovButtonFrame) -side top
     pack $itk_component(buttonGo) -side left -padx 8
@@ -189,7 +185,7 @@ package provide OverlapFileTool 1.0
 body OverlapFileTool::runTools { } {
     # get _objs from list
     set _objs ""
-    foreach obj [$itk_component(objslist) get 0 end] {
+    foreach obj [$itk_component(objectsList) get 0 end] {
 	append _objs " " $obj
     }
     # check if user passed the objects list
@@ -331,7 +327,7 @@ body OverlapFileTool::getNodeChildren { { node "" } } {
 #
 body OverlapFileTool::selectNode { node } {
     set nodeName [ lindex $node 1 ]
-    set markedobjs [ $itk_component(object_tree) mark get ]
+    set markedobjs [ $itk_component(objectsTree) mark get ]
 
     if {[lsearch $markedobjs $nodeName] >= 0} {
 	$this unmarkNode $nodeName
@@ -386,7 +382,7 @@ body OverlapFileTool::manualObjs { option } {
 # function to clear the selection made
 #
 body OverlapFileTool::clearSelection { } {
-    $itk_component(object_tree) mark clear
+    $itk_component(objectsTree) mark clear
     $this UpdateObjsList
 }
 
@@ -405,10 +401,10 @@ body OverlapFileTool::clearSelection { } {
 # in the object tree.
 #
 body OverlapFileTool::UpdateObjsList { } {
-    set markedobjs [ $itk_component(object_tree) mark get ]
-    $itk_component(objslist) clear
+    set markedobjs [ $itk_component(objectsTree) mark get ]
+    $itk_component(objectsList) clear
     foreach obj [ lsort $markedobjs ] {
-	$itk_component(objslist) insert end $obj
+	$itk_component(objectsList) insert end $obj
     }
 }
 
@@ -420,7 +416,7 @@ body OverlapFileTool::removeParentMark { node } {
     set full ""
     regexp {(.*)/} $node full parent
     if { $full ne "" } {
-	$itk_component(object_tree) mark remove $parent
+	$itk_component(objectsTree) mark remove $parent
 	$this removeParentMark $parent
     } else {
 	return
@@ -437,7 +433,7 @@ body OverlapFileTool::removeChildrenMark { node } {
     if { $full ne "" } {
 	foreach cnodes [$this getNodeChildren $child] {
 	    set subchild [ lindex $cnodes 0 ]
-	    $itk_component(object_tree) mark remove $parent/$subchild
+	    $itk_component(objectsTree) mark remove $parent/$subchild
 	    $this removeChildrenMark "$parent/$subchild"
 	}
     } else {
@@ -455,7 +451,7 @@ body OverlapFileTool::markNode { node } {
     # we also have to disable the mark of parent nodes as well
     $this removeParentMark $node
 
-    $itk_component(object_tree) mark add $node
+    $itk_component(objectsTree) mark add $node
     $this UpdateObjsList
 }
 
@@ -466,9 +462,9 @@ body OverlapFileTool::markNode { node } {
 body OverlapFileTool::unmarkNode { { node "" } } {
     # if called from the scrolledlistbox get the current selection
     if {$node == ""} {
-	set node [$itk_component(objslist) getcurselection]
+	set node [$itk_component(objectsList) getcurselection]
     }
-    $itk_component(object_tree) mark remove $node
+    $itk_component(objectsTree) mark remove $node
     $this UpdateObjsList
 }
 
