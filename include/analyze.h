@@ -73,10 +73,19 @@ struct density_entry {
  *     Grid specific structures
  */
 
+/**
+ * This structure acts a function pointer table for grid generating functions
+ */
+
 struct grid_generator_functions {
     int (*next_ray)(struct xray *rayp, void *grid_context);
     double (*grid_cell_width)(void *grid_context);
 };
+
+/**
+ * This structure is the context passed to the grid generating functions for
+ * the rectangular grid type.
+ */
 
 struct rectangular_grid {
     vect_t ray_direction;
