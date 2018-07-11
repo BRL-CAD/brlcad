@@ -1,6 +1,7 @@
 set(checker_TCLSCRIPTS
   check.tcl
   menu.tcl
+  OverlapFileTool.tcl
   )
 BRLCAD_ADDDATA(checker_TCLSCRIPTS tclscripts/checker)
 pkgIndex_BUILD(tclscripts/checker)
