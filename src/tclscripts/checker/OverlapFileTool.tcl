@@ -31,7 +31,7 @@ package require Itk
 package require Iwidgets
 
 # go ahead and blow away the class if we are reloading
-# catch {delete class OverlapFileTool} error
+catch {delete class OverlapFileTool} error
 
 package provide OverlapFileTool 1.0
 
@@ -187,20 +187,6 @@ body OverlapFileTool::runTools { } {
     # check if user passed the objects list
     if { [llength $_objs] == 0 } {
 	tk_messageBox -icon info -type ok -title "No Objects Specified" -message "Please input objects names in the objects field"
-	return
-    }
-    # check if the specified objects exist in the database
-    set bad_objs ""
-    foreach obj $_objs {
-	set ret ""
-	catch {set ret [paths $obj]}
-	if { $ret eq "" } {
-	    lappend bad_objs $obj
-	}
-    }
-
-    if { [llength $bad_objs] > 0 } {
-	tk_messageBox -icon error -type ok -title "Bad Object Names" -message "Unrecognized object names:\n$bad_objs"
 	return
     }
 
