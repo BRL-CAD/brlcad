@@ -1460,10 +1460,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 
     bu_vls_printf(_ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, num_objects);
 
-    /* FIXME: this is wrong.  GED_ERROR is not the same "type" as i
-     *  .. and could very well be a valid index (it is).
-     */
-    return GED_ERROR;
+    return -1;
 }
 
 
@@ -1478,6 +1475,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     struct rt_i *rtip = state->rtip;
     int i;
     int m;
+    int index;
 
     if (start > ac) {
 	/* what? */
@@ -1541,8 +1539,11 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
 
 	m = (int)strlen(regp->reg_name);
 	if (m > max_region_name_len) max_region_name_len = m;
-	reg_tbl[i].optr = &obj_tbl[ find_cmd_line_obj(obj_tbl, &regp->reg_name[1]) ];
-
+	index = find_cmd_line_obj(obj_tbl, &regp->reg_name[1]);
+	if (index == -1)
+	    reg_tbl[i].optr = NULL;
+	else
+	    reg_tbl[i].optr = &obj_tbl[index];
     }
 }
 
