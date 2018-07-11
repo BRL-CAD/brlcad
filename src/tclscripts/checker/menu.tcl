@@ -490,8 +490,8 @@ proc validateOvFile { filename } {
 	set left [lindex $line 0]
 	set right [lindex $line 1]
 
-	catch {set path_left [eval pathlist $left]}
-	catch {set path_right [eval pathlist $right]}
+	catch { set path_left [ paths $left ] }
+	catch { set path_right [ paths $right ] }
 	if { $path_left eq "" || $path_right eq ""  } {
 	    tk_messageBox -icon error -type ok -title "Bad Overlaps File" -message "Unrecognized region pair:\n$left $right\n\nLoad correct overlaps file!"
 	    return -1
