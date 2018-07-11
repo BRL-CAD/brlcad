@@ -157,6 +157,15 @@ package provide OverlapFileTool 1.0
     pack $itk_component(progressFrame) -side top -expand true -fill both
     pack $itk_component(statusLabel)
     pack $itk_component(progressBar) -side left -expand true -fill x -anchor nw -pady 8 -padx 8
+
+    set visibleObjs [who]
+    foreach vobj $visibleObjs {
+	if { [string index $vobj 0] ne "/" } {
+	    $this markNode "/$vobj"
+	} else {
+	    $this markNode $vobj
+	}
+    }
 }
 
 
