@@ -46,9 +46,12 @@ package provide OverlapFileTool 1.0
 	variable runCheckCallback
 
 	method runTools {} {}
+
 	method getNodeChildren { { node "" }} {}
 	method selectNode { node } {}
 	method manualObjs { option } {}
+
+	method clearSelection { } { }
     }
     private {
 	variable _objs
@@ -138,6 +141,10 @@ package provide OverlapFileTool 1.0
 	ttk::button $itk_component(ovButtonFrame).buttonGo \
 	-text "Check For Overlaps" -padding 5 -command [code $this runTools ]
     } {}
+    itk_component add buttonClear {
+	ttk::button $itk_component(ovButtonFrame).buttonClear \
+	-text "Clear Selection" -padding 5 -command [code $this clearSelection ]
+    } {}
 
     eval itk_initialize $args
 
@@ -151,8 +158,9 @@ package provide OverlapFileTool 1.0
     pack $itk_component(object_tree) -side left -padx {0 8}
     pack $itk_component(objslist) -side right -padx {8 0}
 
-    pack $itk_component(ovButtonFrame) -side top -fill both
-    pack $itk_component(buttonGo) -side left -expand true
+    pack $itk_component(ovButtonFrame) -side top
+    pack $itk_component(buttonGo) -side left -padx 8
+    pack $itk_component(buttonClear) -side right -padx 8
 
     pack $itk_component(progressFrame) -side top -expand true -fill both
     pack $itk_component(statusLabel)
@@ -371,6 +379,15 @@ body OverlapFileTool::manualObjs { option } {
     if { [llength $badentry] > 0 } {
 	tk_messageBox -icon error -type ok -title "Bad Object Names" -message "Unrecognized object names:\n$badentry"
     }
+}
+
+# clearSelection
+#
+# function to clear the selection made
+#
+body OverlapFileTool::clearSelection { } {
+    $itk_component(object_tree) mark clear
+    $this UpdateObjsList
 }
 
 ###########
