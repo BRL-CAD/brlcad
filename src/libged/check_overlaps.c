@@ -189,7 +189,7 @@ check_grid_setup (int *cell_newsize,
     }
 
     grid->cell_width = *cell_width;
-    grid->y_points = *width;
+    grid->x_points = *width;
     grid->total_points = (*width)*(*height);
 
     /* Create basis vectors dx and dy for emanation plane (grid) */

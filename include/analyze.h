@@ -92,7 +92,7 @@ struct rectangular_grid {
     point_t start_coord;
     vect_t dx_grid;
     vect_t dy_grid;
-    size_t y_points;
+    size_t x_points;
     fastf_t cell_width;
     size_t current_point;
     size_t total_points;

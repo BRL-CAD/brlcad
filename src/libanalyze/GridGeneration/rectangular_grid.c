@@ -29,8 +29,8 @@ int rectangular_grid_generator(struct xray *ray, void *context)
 {
     struct rectangular_grid *grid = (struct rectangular_grid*) context;
     int y_index,x_index;
-    y_index = (int)(grid->current_point / (grid->y_points));
-    x_index = (int)(grid->current_point - (y_index * (grid->y_points)));
+    y_index = (int)(grid->current_point / (grid->x_points));
+    x_index = (int)(grid->current_point - (y_index * (grid->x_points)));
 
     /* reached end of grid generation */
     if (grid->current_point == grid->total_points){
