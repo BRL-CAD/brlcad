@@ -562,6 +562,7 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 	bn_mat_inv(view2model, model2view);
 	MAT3X3VEC(temp, view2model, work);
 	bn_ae_vec(&azimuth, &elevation, temp);
+	quat_mat2quat(quat, Viewrotscale);
 	bu_vls_printf(gedp->ged_result_str, "\nView: %g azimuth, %g elevation off of front view\n", azimuth, elevation);
 	bu_vls_printf(gedp->ged_result_str, "Orientation: %g, %g, %g, %g\n", V4ARGS(quat));
 	bu_vls_printf(gedp->ged_result_str, "Eye_pos: %g, %g, %g\n", V3ARGS(eye_model));
