@@ -2058,7 +2058,7 @@ if(NOT MSVC)
     # Going back through the commits, compilation started to fail after r70631,
     # which switched to C++98 from C++11.
     #
-    CHECK_CXX_FLAG(fno-inline-small-functions GROUPS OPTIMIZE_CXX_FLAGS)
+    # CHECK_CXX_FLAG(fno-inline-small-functions GROUPS OPTIMIZE_CXX_FLAGS)
 
   endif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.9)
 
