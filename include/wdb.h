@@ -515,6 +515,14 @@ WDB_EXPORT int mk_annot(
     const struct rt_annot_internal *ann );
 
 /**
+ * Make a script
+ */
+WDB_EXPORT int mk_script(
+    struct rt_wdb *fp,
+    const char *name,
+    const struct rt_script_internal *scr );
+
+/**
  * Make an extrusion solid
  */
 WDB_EXPORT int mk_extrusion(

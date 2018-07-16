@@ -155,6 +155,7 @@ __BEGIN_DECLS
 #include "./rt/primitives/tgc.h"
 #include "./rt/primitives/sketch.h"
 #include "./rt/primitives/annot.h"
+#include "./rt/primitives/script.h"
 #include "./rt/primitives/bot.h"
 #include "./rt/primitives/brep.h"
 #include "./rt/primitives/tor.h"

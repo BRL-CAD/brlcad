@@ -33,6 +33,7 @@ set(LIBWDB_SOURCES
   reg.c
   sketch.c
   submodel.c
+  script.c
   units.c
   vol.c
   wdb.c

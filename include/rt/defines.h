@@ -106,7 +106,7 @@
  * NOTE: must update the non-geometric object id's below the
  * ADD_BELOW_HERE marker
  */
-#define ID_MAX_SOLID    45      /**< @brief Maximum defined ID_xxx for solids */
+#define ID_MAX_SOLID    46      /**< @brief Maximum defined ID_xxx for solids */
 
 /*
  * Non-geometric objects
@@ -128,8 +128,8 @@
 #define ID_ANNOT        42      /**< @brief Annotation */
 #define ID_HRT          43      /**< @brief Heart */
 #define ID_DATUM        44      /**< @brief Datum references */
-
-#define ID_MAXIMUM      45      /**< @brief Maximum defined ID_xxx value */
+#define ID_SCRIPT       45      /**< @brief Script */
+#define ID_MAXIMUM      46      /**< @brief Maximum defined ID_xxx value */
 
 /**
  * DEPRECATED: external applications should use other LIBRT API to

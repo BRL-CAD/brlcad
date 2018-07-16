@@ -384,6 +384,12 @@ struct annot_rec {
     unsigned char       ant_count[4];           /* number of additional granules */
 }; /* struct annot_rec */
 
+struct script_rec {
+    char    script_id;         /*DBID_SCRIPT */
+    char    script_pad;
+    char    script_name[NAMESIZE];
+}; /* struct script_rec */
+
 struct cline_rec {
     char	cli_id;			/* DBID_CLINE */
     char	cli_pad;
@@ -437,6 +443,7 @@ union record {
 #define	DBID_EXTR	'e'	/* solid of extrusion */
 #define DBID_CLINE	'c'	/* FASTGEN4 CLINE solid */
 #define	DBID_BOT	't'	/* Bag o' triangles */
+#define DBID_SCRIPT 'T' /* script */
 
     char	u_size[DB_MINREC];	/* Minimum record size */
 
@@ -477,6 +484,9 @@ union record {
 
     /* annotation */
     struct annot_rec ant;
+
+    /* script */
+    struct script_rec scr;
 
     /* FASTGEN4 CLINE element */
     struct cline_rec cli;

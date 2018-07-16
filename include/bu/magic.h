@@ -125,6 +125,7 @@ __BEGIN_DECLS
 #define RT_PNTS_INTERNAL_MAGIC		0x706e7473 /**< pnts */
 #define RT_ANNOT_INTERNAL_MAGIC		0x616e6e6f /**< anno */
 #define RT_HRT_INTERNAL_MAGIC		0x6872743f /**< hrt? */
+#define RT_SCRIPT_INTERNAL_MAGIC	0x73637269 /**< scri */
 
 /* n-manifold geometry */
 

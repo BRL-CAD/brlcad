@@ -639,6 +639,13 @@ static char *p_annot[] = {
 };
 
 
+/**
+ * TODO:
+ * add support
+ */
+static char *p_script[] = {
+    "Enter the script type: "
+};
 
 /**
  * helper function that infers a boolean value from a given string
@@ -3163,6 +3170,23 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
 }
 
 
+static int
+script_in(const char **cmd_argvs, struct rt_db_internal *intern)
+{
+    struct rt_script_internal *script_ip;
+
+    intern->idb_type = ID_SCRIPT;
+    intern->idb_meth = &OBJ[ID_SCRIPT];
+    BU_ALLOC(intern->idb_ptr, struct rt_script_internal);
+    script_ip = (struct rt_script_internal *)intern->idb_ptr;
+    script_ip->magic = RT_SCRIPT_INTERNAL_MAGIC;
+
+    bu_vls_init(&script_ip->s_type);
+    bu_vls_strcpy(&script_ip->s_type, cmd_argvs[6]);
+    return GED_OK;
+}
+
+
 int
 ged_in(struct ged *gedp, int argc, const char *argv[])
 {
@@ -3432,6 +3456,10 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	nvals = 3 + 1+ 2 + 2;
 	menu = p_annot;
 	fn_in = annot_in;
+    } else if (BU_STR_EQUAL(argv[2], "script")) {
+    nvals = 1 + 1;
+    menu = p_script;
+    fn_in = script_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:

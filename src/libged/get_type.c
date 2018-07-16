@@ -176,6 +176,9 @@ ged_get_type(struct ged *gedp, int argc, const char *argv[])
 	case DB5_MINORTYPE_BRLCAD_ANNOT:
 	    bu_vls_printf(gedp->ged_result_str, "annot");
 	    break;
+	case DB5_MINORTYPE_BRLCAD_SCRIPT:
+	    bu_vls_printf(gedp->ged_result_str, "script");
+	    break;
 	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
 	    bu_vls_printf(gedp->ged_result_str, "extrude");
 	    break;

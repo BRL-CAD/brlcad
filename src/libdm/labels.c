@@ -507,6 +507,8 @@ dm_label_primitive(struct rt_wdb *wdbp,
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ANNOT:
 	    break;
+	case DB5_MINORTYPE_BRLCAD_SCRIPT:
+	    break;
 	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
 	    break;
 	case DB5_MINORTYPE_BRLCAD_SUBMODEL:

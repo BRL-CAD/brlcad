@@ -79,6 +79,7 @@ static const struct db5_type type_table[] = {
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_DSP, 1, "dsp", "displacement map (height field)" },
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_SKETCH, 1, "sketch", "sketch" },
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_ANNOT, 1, "annot", "annotation"},
+    { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_SCRIPT, 1, "script", "script"},
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_EXTRUDE, 1, "extrude", "extrusion" },
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_SUBMODEL, 1, "submodel", "submodel" },
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_CLINE, 1, "cline", "cline" },
