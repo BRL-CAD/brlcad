@@ -201,6 +201,7 @@ set(LIBGED_SOURCES
   pmodel2view.c
   png.c
   png2fb.c
+  pnts.c
   polyclip.cpp
   prcolor.c
   prefix.c

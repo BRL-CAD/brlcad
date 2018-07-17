@@ -859,6 +859,8 @@ GED_EXPORT extern int ged_track2(struct bu_vls *log_str, struct rt_wdb *wdbp, co
 GED_EXPORT int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);
 
 
+GED_EXPORT int ged_pnts(struct ged *gedp, int argc, const char *argv[]);
+
 
 __END_DECLS
 
