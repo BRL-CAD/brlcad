@@ -57,7 +57,7 @@
  * !0 Error in description
  *
  */
-    int
+int
 rt_script_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     if (!stp)
@@ -71,7 +71,7 @@ rt_script_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-    void
+void
 rt_script_print(const struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
@@ -86,7 +86,7 @@ rt_script_print(const struct soltab *stp)
  * 0 MISS
  * >0 HIT
  */
-    int
+int
 rt_script_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     if (!stp || !rp || !ap || !seghead)
@@ -97,7 +97,7 @@ rt_script_shot(struct soltab *stp, struct xray *rp, struct application *ap, stru
     RT_CK_APPLICATION(ap);
 
     /* script cannot be ray traced.
-    */
+     */
 
     return 0;			/* MISS */
 }
@@ -106,7 +106,7 @@ rt_script_shot(struct soltab *stp, struct xray *rp, struct application *ap, stru
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-    void
+void
 rt_script_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     if (!hitp || !rp)
@@ -123,7 +123,7 @@ rt_script_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 /**
  * Return the curvature of the script.
  */
-    void
+void
 rt_script_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     if (!cvp || !hitp)
@@ -138,7 +138,7 @@ rt_script_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-    void
+void
 rt_script_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     if (ap) RT_CK_APPLICATION(ap);
@@ -149,14 +149,14 @@ rt_script_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struc
 }
 
 
-    void
+void
 rt_script_free(struct soltab *stp)
 {
     if (stp) RT_CK_SOLTAB(stp);
 }
 
 
-    int
+int
 rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_script_internal *script_ip;
@@ -167,17 +167,17 @@ rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn
     RT_SCRIPT_CK_MAGIC(script_ip);
 
     if (bu_vls_addr(&script_ip->s_type)) {
-		    bu_log("Script data not found or not specified\n");
-	}
+	bu_log("Script data not found or not specified\n");
+    }
 
-	return 0;
+    return 0;
 }
 
 
 /**
  * Import a script from the database format to the internal format.
  */
-    int
+int
 rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, const struct db_i *dbip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -191,7 +191,7 @@ rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 /**
  * The name is added by the caller, in the usual place.
  */
-    int
+int
 rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, const struct db_i *dbip)
 {
     if (ep) BU_CK_EXTERNAL(ep);
@@ -205,7 +205,7 @@ rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, const
 /**
  * Import a script from the database format to the internal format.
  */
-    int
+int
 rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const struct db_i *dbip)
 {
     struct rt_script_internal *script_ip;
@@ -242,7 +242,7 @@ rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 /**
  * The name is added by the caller, in the usual place.
  */
-    int
+int
 rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, const struct db_i *dbip)
 {
     struct rt_script_internal *script_ip;
@@ -280,7 +280,7 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, const
  * line describes type of primitive. Additional lines are indented one
  * tab, and give parameter values.
  */
-    int
+int
 rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip)
 {
     char buf[256];
@@ -292,7 +292,7 @@ rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip)
 
 
     sprintf(buf, "\tScript type: %s\n", bu_vls_addr(&script_ip->s_type));
-                bu_vls_strcat(str, buf);
+    bu_vls_strcat(str, buf);
     bu_vls_strcat(str, "\n");
 
 
@@ -304,7 +304,7 @@ rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip)
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
-    void
+void
 rt_script_ifree(struct rt_db_internal *ip)
 {
     struct rt_script_internal *script_ip;
@@ -316,14 +316,14 @@ rt_script_ifree(struct rt_db_internal *ip)
     script_ip->magic = 0;			/* sanity */
 
     if (BU_VLS_IS_INITIALIZED(&script_ip->s_type))
-                    bu_vls_free(&script_ip->s_type);
+	bu_vls_free(&script_ip->s_type);
 
     bu_free((char *)script_ip, "script ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
-    int
+int
 rt_script_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     BU_CK_VLS(logstr);
@@ -335,7 +335,7 @@ rt_script_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 }
 
 
-    int
+int
 rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct rt_script_internal *script_ip=(struct rt_script_internal *)intern->idb_ptr;
@@ -355,7 +355,7 @@ rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
 }
 
 
-    int
+int
 rt_script_adjust(struct rt_db_internal *intern)
 {
     struct rt_script_internal *script_ip;
@@ -370,7 +370,7 @@ rt_script_adjust(struct rt_db_internal *intern)
 }
 
 
-    int
+int
 rt_script_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
