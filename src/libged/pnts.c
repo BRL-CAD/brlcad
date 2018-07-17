@@ -23,6 +23,8 @@
  *
  */
 
+/* TODO - merge make_pnts in with this... */
+
 #include "common.h"
 
 #include <stdlib.h>
