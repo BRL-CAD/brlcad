@@ -81,10 +81,11 @@ struct wmember {
     char *wm_name;
 };
 
+
 #define WMEMBER_INIT_ZERO { BU_LIST_INIT_ZERO, 0, MAT_INIT_IDN, NULL }
 #define WMEMBER_INIT(x) { BU_LIST_INIT(&((x)->l)); (x)->wm_op = 0; MAT_IDN((x)->wm_mat); (x)->wm_name = NULL; }
 #define WMEMBER_NULL	((struct wmember *)0)
-#define WDB_CK_WMEMBER(_p)	BU_CKMAG(_p, WMEMBER_MAGIC, "wmember" );
+#define WDB_CK_WMEMBER(_p) BU_CKMAG(_p, WMEMBER_MAGIC, "wmember");
 
 /**
  * Make a database header (ID) record.
@@ -119,7 +120,7 @@ WDB_EXPORT extern int mk_id_units(struct rt_wdb *fp, const char *title, const ch
 WDB_EXPORT int mk_id_editunits(
     struct rt_wdb *fp,
     const char *title,
-    double local2mm );
+    double local2mm);
 
 /**
  * Make a halfspace.  Specified by distance from origin, and outward
@@ -238,7 +239,7 @@ WDB_EXPORT int mk_rpc(
     const point_t vert,
     const vect_t height,
     const vect_t breadth,
-    double half_w );
+    double half_w);
 
 /**
  * Makes a right hyperbolic cylinder given the origin, or main vertex,
@@ -254,7 +255,7 @@ WDB_EXPORT int mk_rhc(
     const vect_t height,
     const vect_t breadth,
     fastf_t	half_w,
-    fastf_t asymp );
+    fastf_t asymp);
 
 /**
  * Makes an elliptical paraboloid given the origin, a height vector H,
@@ -268,7 +269,7 @@ WDB_EXPORT int mk_epa(
     const vect_t height,
     const vect_t breadth,
     fastf_t r1,
-    fastf_t r2 );
+    fastf_t r2);
 
 /**
  * Makes an elliptical hyperboloid given the origin, a height vector
@@ -285,7 +286,7 @@ WDB_EXPORT int mk_ehy(
     const vect_t breadth,
     fastf_t r1,
     fastf_t r2,
-    fastf_t c );
+    fastf_t c);
 
 /**
  * Make a hyperboloid at the given center point with a vertex, height
@@ -299,7 +300,7 @@ WDB_EXPORT int mk_hyp(
     const vect_t height_vector,
     const vect_t vectA,
     fastf_t magB,
-    fastf_t base_neck_ratio );
+    fastf_t base_neck_ratio);
 
 /**
  * Makes an elliptical torus given the origin, a plane normal vector
@@ -315,7 +316,7 @@ WDB_EXPORT int mk_eto(
     const vect_t norm,
     const vect_t smajor,
     fastf_t rrot,
-    fastf_t sminor );
+    fastf_t sminor);
 
 
 /**
@@ -327,7 +328,7 @@ WDB_EXPORT int mk_metaball(
     const size_t nctlpt,	/* number of control points */
     const int method,		/* metaball rendering method */
     const fastf_t threshold,
-    const fastf_t *verts[5] );	/* X, Y, Z, fldstr, goo/Beta */
+    const fastf_t *verts[5]);	/* X, Y, Z, fldstr, goo/Beta */
 
 /**
  * Caller is responsible for freeing eqn[]
@@ -404,12 +405,10 @@ typedef enum {
 WDB_EXPORT extern int mk_binunif(struct rt_wdb *fp, const char *name, const void *data, wdb_binunif data_type, long count);
 
 
-
 /**
  * Create a BOT (Bag O'Triangles) solid
  */
-WDB_EXPORT int
-mk_bot(
+WDB_EXPORT int mk_bot(
     struct rt_wdb *fp,			/**< database file pointer to write to */
     const char *name,			/**< name of bot object to write out */
     unsigned char	mode,		/**< bot mode */
@@ -436,8 +435,7 @@ mk_bot(
 /**
  * Create a BOT (Bag O'Triangles) solid with face normals
  */
-WDB_EXPORT int
-mk_bot_w_normals(
+WDB_EXPORT int mk_bot_w_normals(
     struct rt_wdb *fp,			/**< database file pointer to write to */
     const char *name,			/**< name of bot object to write out */
     unsigned char	mode,		/**< bot mode */
@@ -448,11 +446,11 @@ mk_bot_w_normals(
     const fastf_t		*vertices,	/**< array of floats for vertices [num_vertices*3] */
     const int			*faces,		/**< array of ints for faces [num_faces*3] */
     const fastf_t		*thickness,	/**< array of plate mode
-					 * thicknesses (corresponds to
-					 * array of faces) NULL for
-					 * modes RT_BOT_SURFACE and
-					 * RT_BOT_SOLID.
-					 */
+						 * thicknesses (corresponds to
+						 * array of faces) NULL for
+						 * modes RT_BOT_SURFACE and
+						 * RT_BOT_SOLID.
+						 */
     struct bu_bitv	*face_mode,	/**< a flag for each face
 					 * indicating thickness is
 					 * appended to hit point,
@@ -471,7 +469,7 @@ mk_bot_w_normals(
  * Create a brep in the geometry file.  vbrep must be a void cast pointer to
  * an ON_Brep shape.
  */
-WDB_EXPORT int mk_brep( struct rt_wdb* wdbp, const char* name, void* vbrep );
+WDB_EXPORT int mk_brep(struct rt_wdb* wdbp, const char* name, void* vbrep);
 
 /**
  * Output an array of B-spline (NURBS) surfaces which comprise a
@@ -480,14 +478,14 @@ WDB_EXPORT int mk_brep( struct rt_wdb* wdbp, const char* name, void* vbrep );
  * Note: unless there is a specific need to work with the older BRL-CAD
  * NURBS objects, mk_brep should be used instead of this routine.
  */
-WDB_EXPORT int mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs );
+WDB_EXPORT int mk_bspline(struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs);
 
 /**
  * The NMG is freed after being written.
  *
  * @return <0 error, 0 success
  */
-WDB_EXPORT int mk_nmg( struct rt_wdb *filep, const char *name, struct model *m );
+WDB_EXPORT int mk_nmg(struct rt_wdb *filep, const char *name, struct model *m);
 
 /**
  * For ray-tracing speed, many database conversion routines like to
@@ -495,7 +493,7 @@ WDB_EXPORT int mk_nmg( struct rt_wdb *filep, const char *name, struct model *m )
  * (BoT).  Here is a convenience routine to replace the old routine
  * write_shell_as_polysolid.  (obsolete since BRL-CAD 6.0)
  */
-WDB_EXPORT int mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct shell *s );
+WDB_EXPORT int mk_bot_from_nmg(struct rt_wdb *ofp, const char *name, struct shell *s);
 
 
 /**
@@ -504,7 +502,7 @@ WDB_EXPORT int mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct she
 WDB_EXPORT int mk_sketch(
     struct rt_wdb *fp,
     const char *name,
-    const struct rt_sketch_internal *skt );
+    const struct rt_sketch_internal *skt);
 
 /**
  * Make a annotation
@@ -512,7 +510,7 @@ WDB_EXPORT int mk_sketch(
 WDB_EXPORT int mk_annot(
     struct rt_wdb *fp,
     const char *name,
-    const struct rt_annot_internal *ann );
+    const struct rt_annot_internal *ann);
 
 /**
  * Make a script
@@ -533,7 +531,7 @@ WDB_EXPORT int mk_extrusion(
     const vect_t h,
     const vect_t u_vec,
     const vect_t v_vec,
-    int keypoint );
+    int keypoint);
 
 /**
  * Support for cline solids (kludges from FASTGEN)
@@ -547,7 +545,7 @@ WDB_EXPORT int mk_cline(
     const point_t V,
     const vect_t height,
     fastf_t radius,
-    fastf_t thickness );
+    fastf_t thickness);
 
 /**
  * Make a particle primitive.
@@ -571,7 +569,7 @@ WDB_EXPORT extern int mk_pipe(struct rt_wdb *fp, const char *name, struct bu_lis
  * Release the storage from a list of pipe segments.  The head is left
  * in initialized state (i.e., forward & back point to head).
  */
-WDB_EXPORT void mk_pipe_free( struct bu_list *headp );
+WDB_EXPORT void mk_pipe_free(struct bu_list *headp);
 
 /**
  * Add another pipe segment to the linked list of pipe segments.
@@ -581,12 +579,12 @@ WDB_EXPORT void mk_add_pipe_pt(
     const point_t coord,
     double od,
     double id,
-    double bendradius );
+    double bendradius);
 
 /**
  * initialize a linked list of pipe segments with the first segment
  */
-WDB_EXPORT void mk_pipe_init( struct bu_list *headp );
+WDB_EXPORT void mk_pipe_init(struct bu_list *headp);
 
 
 /**
@@ -599,7 +597,7 @@ WDB_EXPORT extern int mk_dsp(struct rt_wdb *fp, const char *name, const char *fi
  * Extruded bitmap primitive.
  */
 WDB_EXPORT extern int mk_ebm(struct rt_wdb *fp, const char *name, const char *file,
-				   size_t xdim, size_t ydim, fastf_t tallness, const matp_t mat);
+			     size_t xdim, size_t ydim, fastf_t tallness, const matp_t mat);
 
 /**
  * Heart primitive.
@@ -629,7 +627,7 @@ WDB_EXPORT extern int mk_submodel(struct rt_wdb *fp, const char *name, const cha
  * rt_color_addrec(), write it into the database.
  *
  */
-WDB_EXPORT int mk_write_color_table( struct rt_wdb *ofp );
+WDB_EXPORT int mk_write_color_table(struct rt_wdb *ofp);
 
 /**
  * Obtain dynamic storage for a new wmember structure, fill in the
@@ -649,14 +647,14 @@ WDB_EXPORT extern struct wmember *mk_addmember(const char	*name,
 					       int		op);
 
 #define mk_lcomb(_fp, _name, _headp, _rf, _shadername, _shaderargs, _rgb, _inh)	\
-	mk_comb(_fp, _name, &((_headp)->l), _rf, _shadername, _shaderargs, \
-		_rgb, 0, 0, 0, 0, _inh, 0, 0)
+    mk_comb(_fp, _name, &((_headp)->l), _rf, _shadername, _shaderargs, \
+	    _rgb, 0, 0, 0, 0, _inh, 0, 0)
 
 /* mk_lrcomb() would not append, and did not have GIFT semantics
- mk_lrcomb() had (struct wmember *) head, need (struct bu_list *) */
-#define mk_lrcomb(fp, name, _headp, region_flag, shadername, shaderargs, rgb, id, air, material, los, inherit_flag )	\
-	mk_comb( fp, name, &((_headp)->l), region_flag, shadername, shaderargs, \
-		rgb, id, air, material, los, inherit_flag, 0, 0 )
+   mk_lrcomb() had (struct wmember *) head, need (struct bu_list *) */
+#define mk_lrcomb(fp, name, _headp, region_flag, shadername, shaderargs, rgb, id, air, material, los, inherit_flag)	\
+    mk_comb(fp, name, &((_headp)->l), region_flag, shadername, shaderargs, \
+	    rgb, id, air, material, los, inherit_flag, 0, 0)
 
 
 /**
@@ -687,15 +685,15 @@ WDB_EXPORT int mk_comb(
     int			inherit,		/**< whether objects below inherit from this comb */
     int			append_ok,		/**< 0 = obj must not exit */
     int			gift_semantics		/**< 0 = pure, 1 = gift */
-);
+    );
 
 /**
  * Convenience interface to make a combination with a single member.
  */
-WDB_EXPORT int mk_comb1( struct rt_wdb *fp,
-			 const char *combname,
-			 const char *membname,
-			 int regflag );
+WDB_EXPORT int mk_comb1(struct rt_wdb *fp,
+			const char *combname,
+			const char *membname,
+			int regflag);
 
 
 /**
@@ -708,7 +706,7 @@ WDB_EXPORT int mk_region1(
     const char *membname,
     const char *shadername,
     const char *shaderargs,
-    const unsigned char *rgb );
+    const unsigned char *rgb);
 
 #define WMOP_INTERSECT	DB_OP_INTERSECT /**< @brief must track db.h */
 #define WMOP_SUBTRACT	DB_OP_SUBTRACT  /**< @brief must track db.h */
@@ -716,7 +714,7 @@ WDB_EXPORT int mk_region1(
 
 /* Convenient definitions */
 #define mk_lfcomb(fp, name, headp, region) \
-    mk_lcomb( fp, name, headp, region, (char *)0, (char *)0, (unsigned char *)0, 0 );
+    mk_lcomb(fp, name, headp, region, (char *)0, (char *)0, (unsigned char *)0, 0);
 
 /**
  * Given a string conversion value, find the appropriate factor, and
@@ -748,9 +746,9 @@ WDB_EXPORT extern int mk_version;		/**< @brief  Which version database to write 
 /**
  * TODO - document this...
  */
-WDB_EXPORT void mk_freemembers( struct bu_list *headp );
+WDB_EXPORT void mk_freemembers(struct bu_list *headp);
 
-#define mk_export_fwrite(wdbp, name, gp, id)	wdb_export(wdbp, name, gp, id, mk_conv2mm)
+#define mk_export_fwrite(wdbp, name, gp, id) wdb_export(wdbp, name, gp, id, mk_conv2mm)
 
 /**
  * @brief
