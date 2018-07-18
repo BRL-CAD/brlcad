@@ -31,10 +31,10 @@
 static int
 test_bu_rgb_to_hsv(int argc, char *argv[])
 {
-    fastf_t expected_hsv_color[3];
-    fastf_t actual_hsv_color[3];
-    unsigned int scanned_rgb_color[3];
-    unsigned char rgb_color[3];
+    fastf_t expected_hsv_color[3] = {11.0, 22.0, 33.0};
+    fastf_t actual_hsv_color[3] = {11.0, 22.0, 33.0};
+    unsigned int scanned_rgb_color[3] = {11, 22, 33};
+    unsigned char rgb_color[3] = {11, 22, 33};
 
     if (argc != 4) {
 	bu_exit(1, "ERROR: input format is rgb_values expected_hsv_values [%s]\n", argv[0]);
@@ -59,9 +59,9 @@ test_bu_rgb_to_hsv(int argc, char *argv[])
 static int
 test_bu_hsv_to_rgb(int argc, char *argv[])
 {
-    unsigned int expected_rgb_color[3];
-    unsigned char actual_rgb_color[3];
-    fastf_t hsv_color[3];
+    unsigned int expected_rgb_color[3] = {11, 22, 33};
+    unsigned char actual_rgb_color[3] = {11, 22, 33};
+    fastf_t hsv_color[3] = {11.0, 22.0, 33.0};
 
     if (argc != 4) {
 	bu_exit(1, "ERROR: input format is hsv_values expected_rgb_values [%s]\n", argv[0]);
@@ -82,8 +82,8 @@ test_bu_hsv_to_rgb(int argc, char *argv[])
 static int
 test_bu_str_to_rgb(int argc, char *argv[])
 {
-    unsigned int expected_rgb_color[3];
-    unsigned char actual_rgb_color[3];
+    unsigned int expected_rgb_color[3] = {11, 22, 33};
+    unsigned char actual_rgb_color[3] = {11, 22, 33};
     char *rgb_string;
 
     if (argc != 4) {
@@ -105,8 +105,8 @@ test_bu_str_to_rgb(int argc, char *argv[])
 static int
 test_bu_color_to_rgb_floats(int argc, char *argv[])
 {
-    fastf_t expected_rgb_color[3];
-    fastf_t actual_rgb_color[3];
+    fastf_t expected_rgb_color[3] = {11.0, 22.0, 33.0};
+    fastf_t actual_rgb_color[3] = {11.0, 22.0, 33.0};
     struct bu_color color = BU_COLOR_INIT_ZERO;
 
     if (argc != 3) {
@@ -131,8 +131,8 @@ test_bu_color_to_rgb_floats(int argc, char *argv[])
 static int
 test_bu_color_from_rgb_floats(int argc, char *argv[])
 {
-    fastf_t expected_rgb_color[3];
-    fastf_t actual_rgb_color[3];
+    fastf_t expected_rgb_color[3] = {11.0, 22.0, 33.0};
+    fastf_t actual_rgb_color[3] = {11.0, 22.0, 33.0};
     struct bu_color color = BU_COLOR_INIT_ZERO;
 
     if (argc != 3) {
@@ -158,8 +158,8 @@ test_bu_color_from_rgb_floats(int argc, char *argv[])
 static int
 test_bu_color_to_rgb_chars(int argc, char *argv[])
 {
-    int expected_rgb_color[3];
-    unsigned char actual_rgb_color[3];
+    int expected_rgb_color[3] = {11, 22, 33};
+    unsigned char actual_rgb_color[3] = {11, 22, 33};
 
     struct bu_color color = BU_COLOR_INIT_ZERO;
 
@@ -185,9 +185,9 @@ test_bu_color_to_rgb_chars(int argc, char *argv[])
 static int
 test_bu_color_from_rgb_chars(int argc, char *argv[])
 {
-    int scanned_rgb_color[3];
-    unsigned char expected_rgb_color[3];
-    unsigned char actual_rgb_color[3];
+    int scanned_rgb_color[3] = {11, 22, 33};
+    unsigned char expected_rgb_color[3] = {11, 22, 33};
+    unsigned char actual_rgb_color[3] = {11, 22, 33};
     struct bu_color color = BU_COLOR_INIT_ZERO;
 
     if (argc != 3) {
