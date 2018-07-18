@@ -69,64 +69,71 @@ void
 usage(const char *argv0)
 {
     bu_log("Usage:  %s [options] model.g objects...\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -r		Report overlaps (default)\n");
-    bu_log(" -R		Do not report overlaps\n");
-    bu_log(" -M		Read matrix+commands on stdin\n");
-    bu_log(" -o image.png	Output .png format file (default is window)\n");
-    bu_log(" -s #		Square grid size in pixels (default is 512)\n");
-    bu_log(" -w # -n #	Grid size width (w) and height (n) in pixels\n");
-    bu_log(" -a # -e #	Azimuth (a) and elevation (e) in degrees\n");
-    bu_log(" -V #		View (pixel) aspect ratio (width/height)\n");
-    bu_log(" -p #		Perspective angle, degrees side to side (0 <= # < 180)\n");
-    bu_log(" -P #		Set number of processors\n");
-    bu_log(" -T # or -T #,# or -T #/#\n");
-    bu_log("		Tolerance: distance or distance,angular or distance/angular\n");
-    bu_log(" -l #		Set lighting model rendering style (default is 0)\n");
-    bu_log(" -U #		Use air if # is greater than 0\n");
-    bu_log(" -x #		librt debug flags\n");
-    bu_log(" -N #		NMG debug flags\n");
-    bu_log(" -X #		rt debug flags\n");
-#ifdef USE_OPENCL
-    bu_log(" -z # 		Use OpenCL ray-trace engine: no/default (0), yes (1)\n");
-#endif
-    bu_log(" -, #		Selection of which space partitioning algorithm to use\n");
-    bu_log(" -b \"# #\"	Specify X and Y pixel coordinates (need quotes) for single ray to be fired, for debugging\n");
-    bu_log(" -c script_command\n");
-    bu_log("		Supply, on command line, command which can appear in -M command script\n");
-    bu_log(" -d #		Set flag for reporting of pixel distances\n");
-    bu_log(" -f #		Set expected playback rate in frames-per-second (default is 30)\n");
-    bu_log(" -g #		Set grid cell width, in millimeters\n");
-    bu_log(" -m density,r,g,b\n");
-    bu_log("		Provide parameters for an exponential shading (default r,g,b is 0.8,0.9,0.99)\n");
-    bu_log(" -i		Enable incremental mode processing\n");
+    bu_log("\nImage Options:\n");
+    bu_log(" -a # -e #        Azimuth and elevation in degrees (default: -a 35 -e 25)\n");
+    bu_log(" -o filename      Render to specified image file (e.g., image.png or image.pix)\n");
+    bu_log(" -F framebuffer   Render to a framebuffer (defaults to a window)\n");
+    bu_log(" -s #             Square image size (default: 512 - implies 512x512 image)\n");
+    bu_log(" -w # -n #        Image dimensions as width ('w') and height ('n' scanlines)\n");
+    bu_log(" -p #             Perspective angle, degrees side to side (0 <= # < 180)\n");
+    bu_log(" -E #             Set eye distance from center of model (default: 1.414)\n");
+    bu_log(" -C #/#/#         Set background image color to R/G/B values (default: 0/0/1)\n");
+    bu_log(" -W               Set background image color to white\n");
+    bu_log("\nRender Options:\n");
+    bu_log(" -A #             Set ambient light intensity (default: 0.4)\n");
+    bu_log(" -H #             Specify number of hypersample rays per pixel (default: 0)\n");
+    bu_log(" -J #             Specify a \"jitter\" pattern (default: 0 - no jitter)\n");
+    bu_log(" -P #             Specify number of processors to use (default: all available)\n");
+    bu_log(" -R               Disable reporting of overlaps\n");
+    bu_log(" -T # or -T #,#   Tolerance as distance or distance,angular\n");
+    bu_log(" -i               Enable incremental (progressive-style) rendering\n");
+    bu_log(" -t               Render from top to bottom (default: from bottom up)\n");
+    bu_log("\nAdvanced Options:\n");
+    bu_log(" -c \"command\"     Runs a semicolon-separated list of commands (related: -M)\n");
+    bu_log(" -M               Read matrix + commands on stdin (RT 'saveview' scripts)\n");
+    bu_log(" -D #             Specify starting frame number (ending is specified via -K #)\n");
+    bu_log(" -K #             Specify ending frame number (starting is specified via -D #)\n");
+    bu_log(" -g #             Specify grid cell (pixel) width, in millimeters\n");
+    bu_log(" -G #             Specify grid cell (pixel) height, in millimeters\n");
+    bu_log(" -O file.dpix     Render to .dpix format file, double precision image data\n");
+    bu_log(" -S               Enable stereo rendering\n");
+    bu_log(" -U #             Turn on air region rendering (default: 0 - off)\n");
+    bu_log(" -V #             View (pixel) aspect ratio (width/height)\n");
     bu_log(" -j xmin,xmax,ymin,ymax\n");
-    bu_log("		Enable processing of sub-rectangle\n");
+    bu_log("                  Only render pixels within the specified sub-rectangle\n");
     bu_log(" -k xdir,ydir,zdir,dist\n");
-    bu_log("		Enable use of a cutting plane\n");
-    bu_log(" -l #		Select lighting model (default is 0)\n");
-    bu_log(" -t		Reverse the order of grid traversal (default is not to do that)\n");
-    bu_log(" -u units	Specify the units (or use \"model\" for the local model's units)\n");
-    bu_log(" -v #		Set the verbosity bit vector flags\n");
-    bu_log(" -A #		Set the ambient light intensity\n");
-    bu_log(" -B		Turn on the \"benchmark\" flag (default is off)\n");
-    bu_log(" -C #/#/#	Set the background color to the RGB value #/#/#\n");
-    bu_log(" -D #		Specify the starting frame number (ending frame number is specified via -K #)\n");
-    bu_log(" -E #           Set the distance from eye point to center of the model RPP (default is sqrt(2))\n");
-    bu_log(" -F framebuffer	Cause output to be sent to the indicated framebuffer\n");
-    bu_log(" -G #		Set grid cell height, in millimeters\n");
-    bu_log(" -H #		Set number of extra rays to fire\n");
-    bu_log(" -J #		Set a bit vector for \"jitter\"\n");
-    bu_log(" -K #		Specify the ending frame number (starting frame number is specified via -D #)\n");
-    bu_log(" -O model.dpix	Output .dpix format file, double precision image data\n");
-    bu_log(" -Q x,y		Select pixel ray for query with debugging; compute other pixels without debugging\n");
-    bu_log(" -S		Enable stereo viewing (off by default)\n");
-    bu_log(" -W		Set background image color to white (default is black)\n");
-    bu_log(" -! #		Turn on the libbu(3) library debugging flags\n");
-    bu_log(" -+ t		Specify that output is NOT binary (default is that it is); -+ is otherwise not\n");
-    bu_log("		implemented\n");
+    bu_log("                  Specify a cutting plane for the entire render scene\n");
+    bu_log(" -m density,r,g,b\n");
+    bu_log("                  Render hazy air (e.g., 0.0002,0.8,0.9,0.99 for sky-blue haze)\n");
+    bu_log("\nDeveloper Options:\n");
+    bu_log(" -v #             Specify RT verbosity flags\n");
+    bu_log(" -X #             Specify RT debugging flags\n");
+    bu_log(" -x #             Specify librt debugging flags\n");
+    bu_log(" -N #             Specify libnmg debugging flags\n");
+    bu_log(" -! #             Specify libbu debugging flags\n");
+    bu_log(" -, #             Specify space partitioning algorithm\n");
+    bu_log(" -B               Disable randomness for \"benchmark\"-style repeatability\n");
+    bu_log(" -b \"x y\"         Only shoot one ray at pixel coordinates (quotes required)\n");
+    bu_log(" -Q x,y           Shoot one pixel with debugging; compute others without\n");
+    bu_log(" -l #             Select lighting model (default is 0)\n");
+#ifdef USE_OPENCL
+    bu_log(" -z #             Turn on OpenCL ray-trace engine (default: 0 - off)\n");
+#endif
+    bu_log("\n");
+
+/* kill:
+	   " -u units         Specify the units (or use \"model\" for the local model's units)\n"
+           " -r               Report overlaps (default)\n"
+	   " -f #             Set expected playback rate, frames-per-second (default is 30)\n"
+   broken  " -d #             Report hit distance after RGB value: 0 (no/default), 1 (yes)\n"
+   kill pixd references, delete pixdsplit
+*/
 }
 
+/*
+    " -+ t                Specify that output is NOT binary (default is that it is -+ is otherwise not\n"
+    "                implemented\n"
+*/
 
 extern fb *fbp;			/* Framebuffer handle */
 
