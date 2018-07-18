@@ -50,15 +50,19 @@ extern FILE *fdopen(int, const char *);
 #  endif
 #endif
 
+#define NUM_INITIAL_TEMP_FILES 8
 
-struct temp_file_list {
-    struct bu_list l;
+struct temp_file {
     struct bu_vls fn;
     int fd;
 };
 
-static int temp_files = 0;
-static struct temp_file_list *TF = NULL;
+struct temp_file initial_temp_files[NUM_INITIAL_TEMP_FILES];
+
+static struct temp_file_list {
+    size_t size, capacity;
+    struct temp_file *temp_files;
+} all_temp_files;
 
 /* Get Windows to shut up about trying to close an already closed file -
  * the libbu temp_close_files routine is designed to make sure that any
@@ -77,12 +81,13 @@ static void disable_duplicate_close_check(const wchar_t* UNUSED(expression),
 HIDDEN void
 temp_close_files(void)
 {
+    size_t i;
+
 #if defined(HAVE_WINDOWS_H)
     _invalid_parameter_handler stdhandler, nhandler;
 #endif
-    struct temp_file_list *popped;
-    if (!TF) {
-	return;
+    if (all_temp_files.size == 0) {
+        return;
     }
 
 #if defined(HAVE_WINDOWS_H)
@@ -90,45 +95,28 @@ temp_close_files(void)
     stdhandler = _set_invalid_parameter_handler(nhandler);
 	/* Turn off the message box as well. */
 	(void)_CrtSetReportMode(_CRT_ASSERT, 0);
-#endif 
+#endif
 
     /* close all files, free their nodes, and unlink */
-    while (BU_LIST_WHILE(popped, temp_file_list, &(TF->l))) {
-	if (!popped)
-	    break;
-
-	/* take it off the list */
-	BU_LIST_DEQUEUE(&(popped->l));
+    for (i = 0; i < all_temp_files.size; i++) {
 
 	/* close up shop */
-	if (popped->fd != -1) {
-	    close(popped->fd);
-	    popped->fd = -1;
+	if (all_temp_files.temp_files[i].fd != -1) {
+	    close(all_temp_files.temp_files[i].fd);
+	    all_temp_files.temp_files[i].fd = -1;
 	}
 
 	/* burn the house down */
-	if (BU_VLS_IS_INITIALIZED(&popped->fn) && bu_vls_addr(&popped->fn)) {
-	    bu_file_delete(bu_vls_addr(&popped->fn));
-	    bu_vls_free(&popped->fn);
+	if (BU_VLS_IS_INITIALIZED(&all_temp_files.temp_files[i].fn) && bu_vls_addr(&all_temp_files.temp_files[i].fn)) {
+	    bu_file_delete(bu_vls_addr(&all_temp_files.temp_files[i].fn));
+	    bu_vls_free(&all_temp_files.temp_files[i].fn);
 	}
-	BU_PUT(popped, struct temp_file_list);
     }
-
-    /* free the head */
-    if (TF->fd != -1) {
-	close(TF->fd);
-	TF->fd = -1;
-    }
-    if (BU_VLS_IS_INITIALIZED(&TF->fn) && bu_vls_addr(&TF->fn)) {
-	bu_file_delete(bu_vls_addr(&TF->fn));
-	bu_vls_free(&TF->fn);
-    }
-    BU_PUT(TF, struct temp_file_list);
 
 #if defined(HAVE_WINDOWS_H)
     /* Now that we're done, restore default behavior */
     (void)_set_invalid_parameter_handler(stdhandler);
-#endif 
+#endif
 
 }
 
@@ -136,34 +124,27 @@ temp_close_files(void)
 HIDDEN void
 temp_add_to_list(const char *fn, int fd)
 {
-    struct temp_file_list *newtf;
-
-    temp_files++;
-
-    if (temp_files == 1) {
-	/* schedule files for closure on exit */
-	atexit(temp_close_files);
-
-	BU_GET(TF, struct temp_file_list);
-	BU_LIST_INIT(&(TF->l));
-	bu_vls_init(&TF->fn);
-
-	bu_vls_strcpy(&TF->fn, fn);
-	TF->fd = fd;
-
-	return;
+    if (all_temp_files.capacity == 0) {
+        all_temp_files.capacity = NUM_INITIAL_TEMP_FILES;
+        all_temp_files.temp_files = initial_temp_files;
+    } else if (all_temp_files.size == NUM_INITIAL_TEMP_FILES) {
+        all_temp_files.capacity *= 2;
+        all_temp_files.temp_files = bu_malloc(all_temp_files.capacity * sizeof(struct temp_file), "initial resize of temp file list");
+    } else if (all_temp_files.size == all_temp_files.capacity) {
+        all_temp_files.capacity *= 2;
+        all_temp_files.temp_files = bu_realloc(all_temp_files.temp_files, all_temp_files.capacity * sizeof(struct temp_file), "additional resize of temp file list");
     }
 
-    BU_GET(newtf, struct temp_file_list);
-    BU_LIST_INIT(&(TF->l));
-    bu_vls_init(&TF->fn);
+    if (all_temp_files.size == 0) {
+	/* schedule files for closure on exit */
+	atexit(temp_close_files);
+    }
 
-    bu_vls_strcpy(&TF->fn, fn);
-    newtf->fd = fd;
+    bu_vls_init(&all_temp_files.temp_files[all_temp_files.size].fn);
+    bu_vls_strcpy(&all_temp_files.temp_files[all_temp_files.size].fn, fn);
+    all_temp_files.temp_files[all_temp_files.size].fd = fd;
 
-    BU_LIST_PUSH(&(TF->l), &(newtf->l));
-
-    return;
+    all_temp_files.size++;
 }
 
 
