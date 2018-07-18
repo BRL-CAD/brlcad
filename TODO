@@ -18,9 +18,13 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* prep caching
+
 * clean up the rt options clusterfudge and use png as example
 
 * fix regions/idents table commands, broken on Windows
+
+* rtwizard unit test legitimately failing on mac/windows
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
