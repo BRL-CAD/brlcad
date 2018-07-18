@@ -201,7 +201,7 @@ get_args(int argc, const char *argv[])
 		bn_randhalftabsize = i;
 		break;
 	    case 'm':
-		i = sscanf(bu_optarg, "%lg, %lg, %lg, %lg", &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		i = sscanf(bu_optarg, "%lg, %lg, %lg, %lg", &airdensity, &haze[RED], &haze[GRN], &haze[BLU]);
 		if (i != 4) {
 		    bu_exit(EXIT_FAILURE, "ERROR: bad air density + haze\n");
 		}
