@@ -352,9 +352,18 @@ add_test(NAME bu_hsv_to_rgb_7 COMMAND bu_test color 2 0.0,0.0,0.501 128,128,128)
 # Where rgb colors are represented by comma-separated triples of
 # integers.
 
-add_test(NAME bu_str_to_rgb_1 COMMAND bu_test color 3 "#C04ED6" 192,78,214)
-add_test(NAME bu_str_to_rgb_2 COMMAND bu_test color 3 "192/78/214" 192,78,214)
-add_test(NAME bu_str_to_rgb_3 COMMAND bu_test color 3 "192 78 214" 192,78,214)
+add_test(NAME bu_str_to_rgb_1 COMMAND bu_test color 3 "1 2 3" 1,2,3)
+add_test(NAME bu_str_to_rgb_2 COMMAND bu_test color 3 "78/214/192" 78,214,192)
+add_test(NAME bu_str_to_rgb_3 COMMAND bu_test color 3 "214 192 78" 214,192,78)
+add_test(NAME bu_str_to_rgb_4 COMMAND bu_test color 3 "192,214,78" 192,214,78)
+add_test(NAME bu_str_to_rgb_5 COMMAND bu_test color 3 "1234/1234/1234" 255,255,255)
+add_test(NAME bu_str_to_rgb_6 COMMAND bu_test color 3 "-1 -2 -3" 0,0,0)
+add_test(NAME bu_str_to_rgb_7 COMMAND bu_test color 3 "#000000" 0,0,0)
+add_test(NAME bu_str_to_rgb_8 COMMAND bu_test color 3 "#ffffff" 255,255,255)
+add_test(NAME bu_str_to_rgb_9 COMMAND bu_test color 3 "#FfFFfF" 255,255,255)
+add_test(NAME bu_str_to_rgb_10 COMMAND bu_test color 3 "#fff" 255,255,255)
+add_test(NAME bu_str_to_rgb_11 COMMAND bu_test color 3 "#C04ED6" 192,78,214)
+add_test(NAME bu_str_to_rgb_12 COMMAND bu_test color 3 "#C4D" 204,68,221)
 
 # For function #4 (bu_color_to_rgb_floats) the <args> format is as follows:
 #
