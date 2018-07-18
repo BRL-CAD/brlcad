@@ -1,5 +1,5 @@
 # To minimize the number of build targets and binaries that are created, we
-# combine most (not all) of the unit tests into a single program.
+# combine some of the unit tests into a single program.
 
 set(bu_test_srcs
   b64.c
@@ -322,6 +322,12 @@ add_test(NAME bu_sort_fastf_inf COMMAND bu_test sort 10)
 # of floats.
 
 add_test(NAME bu_rgb_to_hsv_1 COMMAND bu_test color 1 192,78,214 290.294,0.636,0.839)
+add_test(NAME bu_rgb_to_hsv_2 COMMAND bu_test color 1 0,0,0 0.0,0.0,0.0)
+add_test(NAME bu_rgb_to_hsv_3 COMMAND bu_test color 1 255,255,255 0.0,0.0,1.0)
+add_test(NAME bu_rgb_to_hsv_4 COMMAND bu_test color 1 255,0,0 0.0,1.0,1.0)
+add_test(NAME bu_rgb_to_hsv_5 COMMAND bu_test color 1 0,255,0 120.0,1.0,1.0)
+add_test(NAME bu_rgb_to_hsv_6 COMMAND bu_test color 1 0,0,255 240.0,1.0,1.0)
+add_test(NAME bu_rgb_to_hsv_7 COMMAND bu_test color 1 128,128,128 0.0,0.0,0.501)
 
 # For function #2 (bu_hsv_to_rgb) the <args> format is as follows:
 #
@@ -352,6 +358,7 @@ add_test(NAME bu_str_to_rgb_3 COMMAND bu_test color 3 "192 78 214" 192,78,214)
 # integers or floats.
 
 add_test(NAME bu_color_to_rgb_floats_1 COMMAND bu_test color 4 192,78,214)
+
 #
 # ************ str.c tests ************
 #
