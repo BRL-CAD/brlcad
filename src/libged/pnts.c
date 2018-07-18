@@ -37,7 +37,8 @@
 #include "wdb.h"
 #include "./ged_private.h"
 
-void
+
+HIDDEN void
 _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale, unsigned long pntcnt)
 {
     fastf_t ty1 =  0.57735026918962573 * scale; /* tan(PI/6) */
@@ -73,7 +74,8 @@ _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale
     bot_ip->faces[pntcnt*3+2] = pntcnt*3+2;
 }
 
-int
+
+HIDDEN int
 _pnts_to_bot(struct ged *gedp, struct rt_pnts_internal *pnts, const char *bot_name, fastf_t uscale)
 {
     int have_normals = 1;
@@ -183,7 +185,6 @@ _pnts_to_bot(struct ged *gedp, struct rt_pnts_internal *pnts, const char *bot_na
 }
 
 
-
 HIDDEN void
 _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
 {
@@ -213,6 +214,7 @@ _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
     bu_vls_vlscat(gedp->ged_result_str, &str);
     bu_vls_free(&str);
 }
+
 
 #if 0
 HIDDEN int
@@ -245,10 +247,11 @@ pnts_chull(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d
 
 #endif
 
+
 int
 ged_pnts(struct ged *gedp, int argc, const char *argv[])
 {
-   struct directory *pnt_dp;
+    struct directory *pnt_dp;
     struct rt_db_internal intern;
     struct rt_pnts_internal *pnt;
     const char *cmd = argv[0];
@@ -261,7 +264,8 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
     int opt_ret = 0;
     int opt_argc;
     struct bu_opt_desc d[2];
-    const char * const pnt_subcommands[] = {"tri",NULL};
+    const char * const pnt_subcommands[] = {"tri", NULL};
+
     BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
     BU_OPT_NULL(d[1]);
 
