@@ -154,6 +154,62 @@ test_bu_color_from_rgb_floats(int argc, char *argv[])
 	     && EQUAL(expected_rgb_color[BLU], actual_rgb_color[BLU]));
 }
 
+
+static int
+test_bu_color_to_rgb_chars(int argc, char *argv[])
+{
+    int expected_rgb_color[3];
+    unsigned char actual_rgb_color[3];
+
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+
+    if (argc != 3) {
+	bu_exit(1, "ERROR: input format is rgb_color [%s]\n", argv[0]);
+    }
+
+    sscanf(argv[2], "%d,%d,%d", &expected_rgb_color[RED], &expected_rgb_color[GRN], &expected_rgb_color[BLU]);
+
+    color.buc_rgb[RED] = expected_rgb_color[RED] / 255.0;
+    color.buc_rgb[GRN] = expected_rgb_color[GRN] / 255.0;
+    color.buc_rgb[BLU] = expected_rgb_color[BLU] / 255.0;
+
+    bu_color_to_rgb_chars(&color, actual_rgb_color);
+
+    printf("Result: %d,%d,%d", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
+
+    return !(EQUAL(expected_rgb_color[RED], actual_rgb_color[RED])
+	     && EQUAL(expected_rgb_color[GRN], actual_rgb_color[GRN])
+	     && EQUAL(expected_rgb_color[BLU], actual_rgb_color[BLU]));
+}
+
+static int
+test_bu_color_from_rgb_chars(int argc, char *argv[])
+{
+    int scanned_rgb_color[3];
+    unsigned char expected_rgb_color[3];
+    unsigned char actual_rgb_color[3];
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+
+    if (argc != 3) {
+	bu_exit(1, "ERROR: input format is rgb_color [%s]\n", argv[0]);
+    }
+
+    sscanf(argv[2], "%d,%d,%d", &scanned_rgb_color[RED], &scanned_rgb_color[GRN], &scanned_rgb_color[BLU]);
+    expected_rgb_color[RED] = scanned_rgb_color[RED];
+    expected_rgb_color[GRN] = scanned_rgb_color[GRN];
+    expected_rgb_color[BLU] = scanned_rgb_color[BLU];
+
+    bu_color_from_rgb_chars(&color, expected_rgb_color);
+    bu_color_to_rgb_chars(&color, actual_rgb_color);
+
+    printf("Result: %d,%d,%d", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
+
+    return !(EQUAL(expected_rgb_color[RED], actual_rgb_color[RED])
+	     && EQUAL(expected_rgb_color[GRN], actual_rgb_color[GRN])
+	     && EQUAL(expected_rgb_color[BLU], actual_rgb_color[BLU]));
+}
+
+
 int
 color_main(int argc, char *argv[])
 {
@@ -176,6 +232,10 @@ color_main(int argc, char *argv[])
 	    return test_bu_color_to_rgb_floats(argc, argv);
 	case 5:
 	    return test_bu_color_from_rgb_floats(argc, argv);
+	case 6:
+	    return test_bu_color_to_rgb_chars(argc, argv);
+	case 7:
+	    return test_bu_color_from_rgb_chars(argc, argv);
     }
 
     bu_log("ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);
