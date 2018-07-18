@@ -144,7 +144,7 @@ int use_air = 0;		/* whether librt should handle air */
 
 /***** variables shared with view.c *****/
 fastf_t frame_delta_t = (fastf_t)(1.0/30.0); /* 1.0 / frames_per_second_playback */
-double airdensity;    /* is the scene hazy (we shade the void space) */
+double airdensity = 0.0;    /* is the scene hazy (we shade the void space) */
 double haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
 int do_kut_plane = 0;
 plane_t kut_plane;
@@ -203,7 +203,7 @@ get_args(int argc, const char *argv[])
 	    case 'm':
 		i = sscanf(bu_optarg, "%lg, %lg, %lg, %lg", &airdensity, &haze[RED], &haze[GRN], &haze[BLU]);
 		if (i != 4) {
-		    bu_exit(EXIT_FAILURE, "ERROR: bad air density + haze\n");
+		    bu_exit(EXIT_FAILURE, "ERROR: bad air density or haze 0.0-to-1.0 RGB values\n");
 		}
 		break;
 	    case 't':
