@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rt -t (render from top to bottom) is broken
+
 * rtsil command works if do what usage says and redirect output to
   file, but mentions .pix when data is actually .bw; and using the -o
   option results in a black image.  it is also inconsistent, writing a
