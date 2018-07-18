@@ -360,6 +360,7 @@ if(CPP_DLL_DEFINES)
   set_property(TARGET libged APPEND PROPERTY COMPILE_DEFINITIONS "CLIPPER_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
+add_subdirectory(tests)
 add_subdirectory(simulate/tests)
 
 set(ged_ignore_files
