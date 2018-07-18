@@ -91,10 +91,10 @@ temp_close_files(void)
     }
 
 #if defined(HAVE_WINDOWS_H)
-	nhandler = disable_duplicate_close_check;
+    nhandler = disable_duplicate_close_check;
     stdhandler = _set_invalid_parameter_handler(nhandler);
-	/* Turn off the message box as well. */
-	(void)_CrtSetReportMode(_CRT_ASSERT, 0);
+    /* Turn off the message box as well. */
+    (void)_CrtSetReportMode(_CRT_ASSERT, 0);
 #endif
 
     /* close all files, free their nodes, and unlink */
