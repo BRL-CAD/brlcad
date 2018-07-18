@@ -87,7 +87,7 @@ temp_close_files(void)
     _invalid_parameter_handler stdhandler, nhandler;
 #endif
     if (all_temp_files.size == 0) {
-        return;
+	return;
     }
 
 #if defined(HAVE_WINDOWS_H)
@@ -125,14 +125,14 @@ HIDDEN void
 temp_add_to_list(const char *fn, int fd)
 {
     if (all_temp_files.capacity == 0) {
-        all_temp_files.capacity = NUM_INITIAL_TEMP_FILES;
-        all_temp_files.temp_files = initial_temp_files;
+	all_temp_files.capacity = NUM_INITIAL_TEMP_FILES;
+	all_temp_files.temp_files = initial_temp_files;
     } else if (all_temp_files.size == NUM_INITIAL_TEMP_FILES) {
-        all_temp_files.capacity *= 2;
-        all_temp_files.temp_files = bu_malloc(all_temp_files.capacity * sizeof(struct temp_file), "initial resize of temp file list");
+	all_temp_files.capacity *= 2;
+	all_temp_files.temp_files = bu_malloc(all_temp_files.capacity * sizeof(struct temp_file), "initial resize of temp file list");
     } else if (all_temp_files.size == all_temp_files.capacity) {
-        all_temp_files.capacity *= 2;
-        all_temp_files.temp_files = bu_realloc(all_temp_files.temp_files, all_temp_files.capacity * sizeof(struct temp_file), "additional resize of temp file list");
+	all_temp_files.capacity *= 2;
+	all_temp_files.temp_files = bu_realloc(all_temp_files.temp_files, all_temp_files.capacity * sizeof(struct temp_file), "additional resize of temp file list");
     }
 
     if (all_temp_files.size == 0) {
