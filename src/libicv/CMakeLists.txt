@@ -30,9 +30,7 @@ if(CPP_DLL_DEFINES)
   set_property(TARGET libicv APPEND PROPERTY COMPILE_DEFINITIONS "NETPBM_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  add_subdirectory(tests)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(tests)
 
 CMAKEFILES(
   TODO

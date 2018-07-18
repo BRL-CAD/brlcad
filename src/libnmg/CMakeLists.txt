@@ -62,9 +62,7 @@ CMAKEFILES(junk.c)
 
 BRLCAD_ADDLIB(libnmg "${LIBNMG_SOURCES}" "libbg;libbn;libbu;${STDCXX_LIBRARIES}")
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  add_subdirectory(tests)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(tests)
 
 # Local Variables:
 # tab-width: 8

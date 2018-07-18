@@ -21,9 +21,7 @@ set(LIBBG_SOURCES
 BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  add_subdirectory(tests)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(tests)
 
 CMAKEFILES(bg_private.h pointgen.c)
 
