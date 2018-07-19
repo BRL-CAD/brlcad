@@ -78,6 +78,9 @@
 #define BN_TABDATA_H
 
 #include "common.h"
+
+#include "vmath.h"
+
 #include "bn/defines.h"
 #include "bu/magic.h"
 #include "bu/vls.h"
