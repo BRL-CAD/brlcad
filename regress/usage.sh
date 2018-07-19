@@ -50,6 +50,11 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 DISPLAY=/dev/null
 export DISPLAY
 
+# number of usage tests to run in parallel
+NPSW=100
+# number of seconds to wait for usage
+WAIT=8
+
 RT="`ensearch rt`"
 if test ! -f "$RT" ; then
     echo "Unable to find rt, aborting"
@@ -83,6 +88,70 @@ echo "Testing usage statements ..."
 dir="`dirname $RT`"
 rm -f usage.log
 
+
+# run a single command, wrapped in a function so we can background it
+# and keep track of it.  writes counters to the log as a poor means of
+# interprocess communication, as a way to send several pieces of data
+# back to the parent despite being backgrounded.
+test_usage ( ) {
+    cmd=$1
+
+    echo "=== $cmd === (pid: $$)" >> usage.log
+
+    usage="`timeout ${WAIT}s $cmd -h -? 2>&1`"
+    echo "$usage" >> usage.log
+
+    length=`echo "$usage" | grep -v -i DEPREC | grep -v -i WARN | grep -v -i ERROR | grep -v -i FAIL | wc -L 2>&1`
+    lines=`echo "$usage" | wc -l 2>&1`
+
+    printf "  %-30s lines:%3d  maxline:%3d\n" "$cmd ..." "$lines" "$length"
+
+    if test "x`echo $usage | grep -i usage`" != "x" ; then
+	echo "USAGE=\"\`expr \$USAGE + 1\`\" # $cmd" >> usage.log
+    else
+	echo "NOUSE=\"\`expr \$NOUSE + 1\`\" # $cmd" >> usage.log
+    fi
+    if test $length -gt 80 ; then
+	echo "LONG=\"\`expr \$LONG + 1\`\" # $cmd" >> usage.log
+    elif test $length -lt 8 ; then
+	echo "SHORT=\"\`expr \$SHORT + 1\`\" # $cmd" >> usage.log
+    fi
+    if test "x`echo $usage | grep -i DEPREC`" != "x" ; then
+	echo "DEPREC=\"\`expr \$DEPREC + 1\`\" # $cmd" >> usage.log
+    elif test "x`echo $usage | grep -i WARN`" != "x" ; then
+	echo "WARNED=\"\`expr \$WARNED + 1\`\" # $cmd" >> usage.log
+    fi
+    if test "x`echo $usage | grep -i ERROR`" != "x" ; then
+	echo "ERROR=\"\`expr \$ERROR + 1\`\" # $cmd" >> usage.log
+    elif test "x`echo $usage | grep -i FAIL`" != "x" ; then
+	echo "ERROR=\"\`expr \$ERROR + 1\`\" # $cmd" >> usage.log
+    fi
+    echo "CNT=\"\`expr \$CNT + 1\`\" # $cmd" >> usage.log
+
+    # echo $length
+}
+
+
+# dark.  wait for all our children to die or kill them ourselves after
+# they've lived long enough.
+wait_on ( ) {
+    pids="$1"
+    waited=0
+    for pid in $pids ; do
+	while test "x`jobs -p | grep $pid`" != "x" ; do
+	    if test $waited -gt `expr $WAIT + 2` ; then
+		kill -9 $pid >/dev/null 2>&1
+		# echo "ERROR=\"\`expr \$ERROR + 1\`\" # $pid" >> usage.log
+		# echo "CNT=\"\`expr \$CNT + 1\`\" # $cmd" >> usage.log
+		break
+	    fi
+	    sleep 1
+	    waited="`expr $waited + 1`"
+	done
+	wait $pid >/dev/null 2>&1
+    done
+}
+
 # test all commands
 CNT=0
 LONG=0
@@ -92,44 +161,29 @@ NOUSE=0
 WARNED=0
 FAILED=0
 DEPREC=0
+workers=0
+pids=""
 for cmd in $dir/* ; do
-    echo -n "  $cmd ... "
-
-    echo "=== $cmd ===" >> usage.log
-    CNT="`expr $CNT + 1`"
-
-    usage="`timeout 5s $cmd -h -? 2>&1`"
-    echo "$usage" >> usage.log
-
-    length=`echo "$usage" | grep -v -i DEPREC | grep -v -i WARN | grep -v -i ERROR | grep -v -i FAIL | wc -L 2>&1`
-    if test "x`echo $usage | grep -i usage`" != "x" ; then
-	USAGE="`expr $USAGE + 1`"
-    else
-	NOUSE="`expr $NOUSE + 1`"
+    test_usage "$cmd" &
+    pids="$pids $!"
+    workers="`expr $workers + 1`"
+    if test $workers -gt $NPSW ; then
+	wait_on "$pids"
+	pids=""
+	workers=0
     fi
-    if test $length -gt 80 ; then
-	LONG="`expr $LONG + 1`"
-    elif test $length -lt 8 ; then
-	SHORT="`expr $SHORT + 1`"
-    fi
-    if test "x`echo $usage | grep -i DEPREC`" != "x" ; then
-	DEPREC="`expr $DEPREC + 1`"
-    elif test "x`echo $usage | grep -i WARN`" != "x" ; then
-	WARNED="`expr $WARNED + 1`"
-    fi
-    if test "x`echo $usage | grep -i ERROR`" != "x" ; then
-	ERROR="`expr $ERROR + 1`"
-    elif test "x`echo $usage | grep -i FAIL`" != "x" ; then
-	ERROR="`expr $ERROR + 1`"
-    fi
-
-    echo $length
-
-    # if test $CNT -eq 10 ; then
-    # 	break
-    # fi
 done
+wait_on "$pids"
 
+# tabulate results from tallies we stored in the log file
+vars="`grep -E '(CNT=|USAGE=|NOUSE=|LONG=|SHORT=|DEPREC=|WARNED=|ERROR=)' usage.log`"
+while read var ; do
+    eval $var # increments our VARIABLES above
+done <<EOF
+$vars
+EOF
+
+# print a summary
 printf "\nCOMMAND SUMMARY:\n"
 echo "----------------------------------------------------------------------"
 echo "| TOTAL | Usage | NoUsage | Long | Short | Deprecated | Warn | Error |"
