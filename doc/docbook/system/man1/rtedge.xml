@@ -113,21 +113,6 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-f #</option></term>
-	<listitem>
-	  <para>sets the expected playback rate in frames-per-second;
-	  the default is 30.
-	  Several time-evolving shaders
-	  such as
-	  <emphasis remap="I">fire</emphasis>
-	  and
-	  <emphasis remap="I">grass</emphasis>
-	  need to know the time at which each frame and pixel occur to drive their
-	  evolution.</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
 	<term><option>-g #</option></term>
 	<listitem>
 	  <para>sets the grid cell width, in millimeters.

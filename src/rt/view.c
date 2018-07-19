@@ -120,13 +120,10 @@ usage(const char *argv0)
     bu_log(" -z #             Turn on OpenCL ray-trace engine (default: 0 - off)\n");
 #endif
     bu_log("\n");
-
-/* kill:
-	   " -u units         Specify the units (or use \"model\" for the local model's units)\n"
-           " -r               Report overlaps (default)\n"
-	   " -f #             Set expected playback rate, frames-per-second (default is 30)\n"
-   broken  " -d #             Report hit distance after RGB value: 0 (no/default), 1 (yes)\n"
-*/
+/* intentionally not listed:
+ *   -u units -- because it only applies to rtarea
+ *   -r -- is only being reserved to pair with -R (muses a lower/upper on/off convention)
+ */
 }
 
 /*
@@ -137,7 +134,6 @@ usage(const char *argv0)
 extern fb *fbp;			/* Framebuffer handle */
 
 extern int curframe;		/* from main.c */
-extern fastf_t frame_delta_t;		/* from main.c */
 extern double airdensity;		/* from opt.c */
 extern double haze[3];		/* from opt.c */
 extern int do_kut_plane;           /* from opt.c */
@@ -1200,7 +1196,6 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
     sw.sw_xmitonly = 0;		/* want full data */
     sw.sw_inputs = 0;		/* no fields filled yet */
     sw.sw_frame = curframe;
-    sw.sw_pixeltime = sw.sw_frametime = curframe * frame_delta_t;
     sw.sw_segs = finished_segs;
     VSETALL(sw.sw_color, 1);
     VSETALL(sw.sw_basecolor, 1);

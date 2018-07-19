@@ -142,7 +142,6 @@ int use_air = 0;		/* whether librt should handle air */
 
 
 /***** variables shared with view.c *****/
-fastf_t frame_delta_t = (fastf_t)(1.0/30.0); /* 1.0 / frames_per_second_playback */
 double airdensity = 0.0;    /* is the scene hazy (we shade the void space) */
 double haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
 int do_kut_plane = 0;
@@ -522,20 +521,6 @@ get_args(int argc, const char *argv[])
 		/* Actually processed in do_frame() */
 		string_pix_start = bu_optarg;
 		npsw = 1;	/* Cancel running in parallel */
-		break;
-	    case 'f':
-		/* input expected playback rate in frames-per-second;
-		 * actually stored as the delta-t per frame
-		 */
-		frame_delta_t = atof(bu_optarg);
-		if (ZERO(frame_delta_t)) {
-		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0; set to default\n",
-			    bu_optarg);
-		    frame_delta_t = 30.0;
-		}
-		/* now convert to delta-t per frame
-		 */
-		frame_delta_t = 1.0 / frame_delta_t;
 		break;
 	    case 'V':
 		{

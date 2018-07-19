@@ -24,9 +24,9 @@
  * Parameters:
  *
  * flicker=rate Specifies rate of translation through noise space for
- * animation.  swp->frametime * flicker gives a delta in Z of noise
- * space for animation.  Useful values probably in range 0 > flicker >
- * 10
+ * animation.  the flicker rate is used to calculated a delta in Z of
+ * noise space for animation across frames.  Useful values probably in
+ * range 0 > flicker > 10
  *
  * stretch=dist Specifies a scaling of the exponential stretch of the
  * flames.  flame stretch = e^(pos[Z] * -stretch)
@@ -360,7 +360,14 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
     MAT4X3PNT(sh_o_pt, fire_sp->fire_m_to_sh, m_o_pt);
     DEBUG_SPACE_PRINT("shader", sh_i_pt, sh_o_pt);
 
-    noise_zdelta = fire_sp->fire_flicker * swp->sw_frametime;
+    /* rt used to specify a 'framerate' (defaulting to 1/30), which
+     * was preserved here after support was removed.  observed here in
+     * context, it doesn't look like it is a very good method for
+     * calculating noise_zdelta as it only increases.  better would
+     * probably be something that oscillates in a period, or some
+     * completely different flicker method.
+     */
+    noise_zdelta = fire_sp->fire_flicker * ((double)swp->sw_frame / 30.0) ;
 
     SHADER_TO_NOISE(noise_i_pt, sh_i_pt, fire_sp, noise_zdelta);
     SHADER_TO_NOISE(noise_o_pt, sh_o_pt, fire_sp, noise_zdelta);

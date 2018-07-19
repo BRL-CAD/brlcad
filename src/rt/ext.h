@@ -111,7 +111,6 @@ extern double pmargs[9];
 extern int objc;			/* Number of cmd-line treetops */
 extern char **objv;			/* array of treetop strings */
 extern char *outputfile;		/* name of base of output file */
-extern fastf_t frame_delta_t;		/* 1.0 / frames_per_second_playback */
 extern int benchmark;			/* No random numbers:  benchmark */
 extern int curframe;			/* current frame number */
 extern int desiredframe;		/* frame to start at */
