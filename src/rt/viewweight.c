@@ -421,7 +421,10 @@ view_end(struct application *ap)
 	}
     }
 
-    /* is this test really necessary? or can we return if !rpt_overlap? */
+    /* NOTE: rtweight repurposes the -r report overlap flag, used here
+     * as a report region information verbosely flag by default.  Thus
+     * -R will output just the summary.
+     */
     if (rpt_overlap) {
 	/* move block scope variables here */
 	fastf_t *item_wt;
