@@ -39,6 +39,24 @@
 
 
 HIDDEN void
+_pnts_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    const char *option_help;
+
+    bu_vls_sprintf(&str, "%s", usage);
+
+    if ((option_help = bu_opt_describe(d, NULL))) {
+	bu_vls_printf(&str, "Options:\n%s\n", option_help);
+	bu_free((char *)option_help, "help str");
+    }
+
+    bu_vls_vlscat(gedp->ged_result_str, &str);
+    bu_vls_free(&str);
+}
+
+
+HIDDEN void
 _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale, unsigned long pntcnt)
 {
     fastf_t ty1 =  0.57735026918962573 * scale; /* tan(PI/6) */
@@ -74,24 +92,73 @@ _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale
     bot_ip->faces[pntcnt*3+2] = pntcnt*3+2;
 }
 
-
 HIDDEN int
-_pnts_to_bot(struct ged *gedp, struct rt_pnts_internal *pnts, const char *bot_name, fastf_t uscale)
+_pnts_to_bot(struct ged *gedp, int argc, const char **argv)
 {
     int have_normals = 1;
     unsigned long pntcnt = 0;
-    struct rt_db_internal internal;
+    struct rt_db_internal intern, internal;
     struct rt_bot_internal *bot_ip;
+    struct directory *pnt_dp;
     struct directory *dp;
-    fastf_t scale = uscale;
+    int print_help = 0;
+    int opt_ret = 0;
+    fastf_t scale;
+    struct rt_pnts_internal *pnts = NULL;
+    const char *pnt_prim= NULL;
+    const char *bot_name = NULL;
+    const char *usage = "Usage: pnts tri [options] <pnts> <output_bot>\n\n";
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
+    BU_OPT(d[1], "s", "scale",     "#", &bu_opt_fastf_t, &scale,        "Specify scale factor to apply to unit triangle - will scale the triangle size, with the triangle centered on the original point.");
+    BU_OPT_NULL(d[2]);
+
+    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
+
+    /* must be wanting help */
+    if (argc < 1) {
+	_pnts_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    /* parse standard options */
+    opt_ret = bu_opt_parse(NULL, argc, argv, d);
+
+    if (print_help) {
+	_pnts_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    /* adjust argc to match the leftovers of the options parsing */
+    argc = opt_ret;
+
+    if (argc != 2) {
+	_pnts_cmd_help(gedp, usage, d);
+	return GED_ERROR;
+    }
+
+    pnt_prim = argv[0];
+    bot_name = argv[1];
+
+    /* get pnt */
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
+	bu_vls_printf(gedp->ged_result_str, "pnts tri: %s is not a pnts object!", pnt_prim);
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+
+    pnts = (struct rt_pnts_internal *)intern.idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
 
     /* Sanity */
-    if (!bot_name || !pnts || !gedp) return GED_ERROR;
+    if (!bot_name || !gedp) return GED_ERROR;
     if (db_lookup(gedp->ged_wdbp->dbip, bot_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s already exists!\n", bot_name);
 	return GED_ERROR;
     }
-    RT_PNTS_CK_MAGIC(pnts);
 
     /* For the moment, only generate BoTs when we have a normal to guide us.  Eventually,
      * we might add logic to find the avg center point and calculate normals radiating out
@@ -181,6 +248,7 @@ _pnts_to_bot(struct ged *gedp, struct rt_pnts_internal *pnts, const char *bot_na
 
     bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s with %d triangles", bot_name, pntcnt);
 
+    rt_db_free_internal(&intern);
     return GED_OK;
 }
 
@@ -198,19 +266,18 @@ _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
 	bu_free((char *)option_help, "help str");
     }
     bu_vls_printf(&str, "Subcommands:\n\n");
-    bu_vls_printf(&str, "  get [-p][-n][-r radius] [-k px py pz] (pnt_ind|pnt_ind_min-pnt_ind_max) <pnts> [new_pnts_obj]\n");
+    bu_vls_printf(&str, "  get [-p][-n][-t dist_tol] [-k px py pz] (pnt_ind|pnt_ind_min-pnt_ind_max) <pnts> [new_pnts_obj]\n");
     bu_vls_printf(&str, "    - Get specific subset (1 or more) points from a point set and\n");
     bu_vls_printf(&str, "      print information. (todo - document subcmd options...)\n\n");
-    bu_vls_printf(&str, "  add <pnts> x y z [nx ny nz]\n");
-    bu_vls_printf(&str, "    - Add the specified point to the point set\n\n");
-    bu_vls_printf(&str, "  rm  [-r radius]  [-k px py pz] (pnt_ind|pnt_ind_min-pnt_ind_max) <pnts>\n");
-    bu_vls_printf(&str, "    - Remove 1 or more points from a point set\n\n");
+    bu_vls_printf(&str, "  read <pnts> input_file format units pnt_size\n");
+    bu_vls_printf(&str, "    - Read data from an input file into a pnts object\n\n");
     bu_vls_printf(&str, "  tri [-s scale] <pnts> <output_bot>\n");
     bu_vls_printf(&str, "    - Generate unit or scaled triangles for each pnt in a point set. If no normal\n");
     bu_vls_printf(&str, "      information is present, use origin at avg of all set points to make normals.\n\n");
-    bu_vls_printf(&str, "  chull <pnts> <output_bot>\n");
+    bu_vls_printf(&str, "  [TODO] chull <pnts> <output_bot>\n");
     bu_vls_printf(&str, "    - Store the convex hull of the point set in <output_bot>.\n\n");
-
+    bu_vls_printf(&str, "  [TODO] generate [-f format] <obj> [new_pnts_obj]\n");
+    bu_vls_printf(&str, "    - Generate a point set from an existing database object (terminate using the stability of a volume calculation? -- might be merged with get...)\n");
     bu_vls_vlscat(gedp->ged_result_str, &str);
     bu_vls_free(&str);
 }
@@ -251,20 +318,15 @@ pnts_chull(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d
 int
 ged_pnts(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *pnt_dp;
-    struct rt_db_internal intern;
-    struct rt_pnts_internal *pnt;
     const char *cmd = argv[0];
-    const char *sub = NULL;
-    const char *pnt_prim = NULL;
-    const char *output_obj = NULL;
     size_t len;
     int i;
     int print_help = 0;
     int opt_ret = 0;
-    int opt_argc;
+    int opt_argc = argc;
     struct bu_opt_desc d[2];
-    const char * const pnt_subcommands[] = {"tri", NULL};
+    const char * const pnt_subcommands[] = {"generate", "get", "read", "tri", NULL};
+    const char * const *subcmd;
 
     BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
     BU_OPT_NULL(d[1]);
@@ -276,17 +338,17 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
+
     /* must be wanting help */
-    if (argc < 3) {
+    if (argc < 1) {
 	_pnts_show_help(gedp, d);
-	return GED_ERROR;
+	return GED_OK;
     }
 
     /* See if we have any options to deal with.  Once we hit a subcommand, we're done */
-    opt_argc = argc;
-    for (i = 1; i < argc; ++i) {
-	const char * const *subcmd = pnt_subcommands;
-
+    for (i = 0; i < argc; ++i) {
+	subcmd = pnt_subcommands;
 	for (; *subcmd != NULL; ++subcmd) {
 	    if (BU_STR_EQUAL(argv[i], *subcmd)) {
 		opt_argc = i;
@@ -296,72 +358,37 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (opt_argc >= argc) {
-	/* no subcommand given */
-	_pnts_show_help(gedp, d);
-	return GED_ERROR;
-    }
-
-    if (opt_argc > 1) {
+    if (opt_argc > 0) {
 	/* parse standard options */
 	opt_ret = bu_opt_parse(NULL, opt_argc, argv, d);
-	if (opt_ret < 0) _pnts_show_help(gedp, d);
+	if (opt_ret < 0) {
+	    _pnts_show_help(gedp, d);
+	    return GED_ERROR;
+	}
     }
 
-    /* shift past standard options to subcommand args */
+    if (print_help) {
+	_pnts_show_help(gedp, d);
+	return GED_OK;
+    }
+
+    /* shift argv to subcommand */
     argc -= opt_argc;
     argv = &argv[opt_argc];
 
-    if (argc < 2) {
+    /* If we don't have a subcommand, we're done */
+    if (argc < 1) {
 	_pnts_show_help(gedp, d);
 	return GED_ERROR;
     }
 
-    /* determine subcommand */
-    sub = argv[0];
-    len = strlen(sub);
-    if (bu_strncmp(sub, "tri", len) == 0) {
-	output_obj = argv[argc - 1];
-	pnt_prim = argv[argc - 2];
-    } else {
-	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
-	return GED_ERROR;
-    }
+    len = strlen(argv[0]);
+    if (bu_strncmp(argv[0], "tri", len) == 0) return _pnts_to_bot(gedp, argc, argv);
 
-    /* get pnt */
-    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
-
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
-	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a pnts object!", cmd, pnt_prim);
-	rt_db_free_internal(&intern);
-	return GED_ERROR;
-    }
-
-    pnt = (struct rt_pnts_internal *)intern.idb_ptr;
-    RT_PNTS_CK_MAGIC(pnt);
-
-    if (bu_strncmp(sub, "tri", len) == 0) {
-	int retval = 0;
-
-	/* must be wanting help */
-	if (argc < 3) {
-	    _pnts_show_help(gedp, d);
-	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
-	}
-
-	retval = _pnts_to_bot(gedp, pnt, output_obj, 1.0);
-
-	if (retval != GED_OK) {
-	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
-	}
-    }
-
-    rt_db_free_internal(&intern);
-    return GED_OK;
-
+    /* If we don't have a valid subcommand, we're done */
+    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!\n", cmd, argv[0]);
+    _pnts_show_help(gedp, d);
+    return GED_ERROR;
 }
 
 
