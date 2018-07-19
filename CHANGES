@@ -385,9 +385,10 @@ include/raytrace.h
 
 7.28.0
 ------
-
+pixdsplit, rt -d
+	removed, broken tool [minimally impacting]
 libmultispectral, rttherm, ssamp-bw, ssampview, ssampview.tcl
-	removed, not working in testing [minimally impacting]
+	removed, broken tools [minimally impacting]
 
 7.26.0
 ------

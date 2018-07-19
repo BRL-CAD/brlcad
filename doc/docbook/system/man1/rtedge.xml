@@ -103,22 +103,6 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-d #</option></term>
-	<listitem>
-	  <para>sets flag for reporting of pixel distances: 1 for on, 0 (default) for off.
-	  (Each pixel is represented by 3 bytes of color information followed by 8 bytes
-	  for a double, in IEEE format, which gives the distance to the ray's first hit.
-	  If the ray doesn't hit, a zero distance is reported by default
-	  which causes <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-	  to write only the color information.
-	  See
-	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-	  and
-	  <citerefentry><refentrytitle>pixd</refentrytitle><manvolnum>5</manvolnum></citerefentry>.)</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
 	<term><option>-e #</option></term>
 	<listitem>
 	  <para>selects auto-sizing, and gives the view elevation in degrees.  Used with

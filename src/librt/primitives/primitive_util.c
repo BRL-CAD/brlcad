@@ -828,7 +828,7 @@ clt_db_release(void)
 }
 
 void
-clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
+clt_frame(void *pixels, uint8_t o[2], int cur_pixel, int last_pixel,
 	  int width, int ibackground[3], int inonbackground[3],
 	  double airdensity, double haze[3], fastf_t gamma,
           mat_t view2model, fastf_t cell_width, fastf_t cell_height,
@@ -848,7 +848,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	cl_uint randhalftabsize;
         cl_int cur_pixel, last_pixel, width;
         cl_int lightmodel;
-        cl_uchar3 o;
+        cl_uchar2 o;
         cl_uchar3 ibackground, inonbackground;
     }p;
 
@@ -860,7 +860,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
     p.cur_pixel = cur_pixel;
     p.last_pixel = last_pixel;
     p.width = width;
-    VMOVE(p.o.s, o);
+    V2MOVE(p.o.s, o);
     VMOVE(p.ibackground.s, ibackground);
     VMOVE(p.inonbackground.s, inonbackground);
     p.airdensity = airdensity;
@@ -872,7 +872,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
     p.aspect = aspect;
     p.lightmodel = lightmodel;
 
-    sz_pixels = sizeof(cl_uchar)*o[2]*npix;
+    sz_pixels = sizeof(cl_uchar)*o[1]*npix;
     ppixels = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY|CL_MEM_HOST_READ_ONLY, sz_pixels, NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL pixels buffer");
 
@@ -890,7 +890,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
     if (a_no_booleans) {
 	bu_semaphore_acquire(clt_semaphore);
 	error = clSetKernelArg(clt_frame_kernel, 0, sizeof(cl_mem), &ppixels);
-	error |= clSetKernelArg(clt_frame_kernel, 1, sizeof(cl_uchar3), &p.o);
+	error |= clSetKernelArg(clt_frame_kernel, 1, sizeof(cl_uchar2), &p.o);
 	error |= clSetKernelArg(clt_frame_kernel, 2, sizeof(cl_int), &p.cur_pixel);
 	error |= clSetKernelArg(clt_frame_kernel, 3, sizeof(cl_int), &p.last_pixel);
 	error |= clSetKernelArg(clt_frame_kernel, 4, sizeof(cl_int), &p.width);
@@ -1095,7 +1095,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 
 	bu_semaphore_acquire(clt_semaphore);
 	error = clSetKernelArg(clt_shade_segs_kernel, 0, sizeof(cl_mem), &ppixels);
-	error |= clSetKernelArg(clt_shade_segs_kernel, 1, sizeof(cl_uchar3), &p.o);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 1, sizeof(cl_uchar2), &p.o);
 	error |= clSetKernelArg(clt_shade_segs_kernel, 2, sizeof(cl_mem), &psegs);
         error |= clSetKernelArg(clt_shade_segs_kernel, 3, sizeof(cl_mem), &head_partition);
 	error |= clSetKernelArg(clt_shade_segs_kernel, 4, sizeof(cl_int), &p.cur_pixel);

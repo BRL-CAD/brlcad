@@ -750,7 +750,6 @@ system/man1/pixcolors.xml
 system/man1/pixcrop.xml
 system/man1/pixcut.xml
 system/man1/pixdiff.xml
-system/man1/pixdsplit.xml
 system/man1/pixfade.xml
 system/man1/pixfilter.xml
 system/man1/pixhalve.xml

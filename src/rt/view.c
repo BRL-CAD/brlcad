@@ -126,7 +126,6 @@ usage(const char *argv0)
            " -r               Report overlaps (default)\n"
 	   " -f #             Set expected playback rate, frames-per-second (default is 30)\n"
    broken  " -d #             Report hit distance after RGB value: 0 (no/default), 1 (yes)\n"
-   kill pixd references, delete pixdsplit
 */
 }
 
@@ -246,7 +245,6 @@ view_pixel(struct application *ap)
     unsigned char *pixelp;
     struct scanline *slp;
     int do_eol = 0;
-    unsigned char dist[8];	/* pixel distance (in IEEE format) */
 
 #ifdef DRAW_INDICATOR_LINE
     /* this draws a nice indicator line to let you know where you are
@@ -261,10 +259,6 @@ view_pixel(struct application *ap)
     (void)fb_write(fbp, ap->a_x, ap->a_y, (unsigned char *)white, 1);
     bu_semaphore_release(BU_SEM_SYSCALL);
 #endif
-
-
-    if (rpt_dist)
-	bu_cv_htond(dist, (unsigned char *)&(ap->a_dist), 1);
 
     if (ap->a_user == 0) {
 	/* Shot missed the model, don't dither */
@@ -381,9 +375,6 @@ view_pixel(struct application *ap)
 			fprintf(stderr, "fseek error\n");
 		    if (fwrite(p, 3, 1, outfp) != 1)
 			bu_exit(EXIT_FAILURE, "pixel fwrite error");
-		    if (rpt_dist &&
-			(fwrite(dist, 8, 1, outfp) != 1))
-			bu_exit(EXIT_FAILURE, "pixel fwrite error");
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		}
 
@@ -407,16 +398,6 @@ view_pixel(struct application *ap)
 	    *pixelp++ = r;
 	    *pixelp++ = g;
 	    *pixelp++ = b;
-	    if (rpt_dist) {
-		*pixelp++ = dist[0];
-		*pixelp++ = dist[1];
-		*pixelp++ = dist[2];
-		*pixelp++ = dist[3];
-		*pixelp++ = dist[4];
-		*pixelp++ = dist[5];
-		*pixelp++ = dist[6];
-		*pixelp++ = dist[7];
-	    }
 	    bu_semaphore_release(RT_SEM_RESULTS);
 	    return;
 #endif
@@ -437,16 +418,6 @@ view_pixel(struct application *ap)
 	    *pixelp++ = r;
 	    *pixelp++ = g;
 	    *pixelp++ = b;
-	    if (rpt_dist) {
-		*pixelp++ = dist[0];
-		*pixelp++ = dist[1];
-		*pixelp++ = dist[2];
-		*pixelp++ = dist[3];
-		*pixelp++ = dist[4];
-		*pixelp++ = dist[5];
-		*pixelp++ = dist[6];
-		*pixelp++ = dist[7];
-	    }
 	    if (--(slp->sl_left) <= 0)
 		do_eol = 1;
 	    bu_semaphore_release(RT_SEM_RESULTS);
@@ -465,16 +436,6 @@ view_pixel(struct application *ap)
 	    *pixelp++ = r;
 	    *pixelp++ = g;
 	    *pixelp++ = b;
-	    if (rpt_dist) {
-		*pixelp++ = dist[0];
-		*pixelp++ = dist[1];
-		*pixelp++ = dist[2];
-		*pixelp++ = dist[3];
-		*pixelp++ = dist[4];
-		*pixelp++ = dist[5];
-		*pixelp++ = dist[6];
-		*pixelp++ = dist[7];
-	    }
 	    if (--(slp->sl_left) <= 0)
 		do_eol = 1;
 	    break;
@@ -499,16 +460,6 @@ view_pixel(struct application *ap)
 			*pixelp++ = r;
 			*pixelp++ = g;
 			*pixelp++ = b;
-			if (rpt_dist) {
-			    *pixelp++ = dist[0];
-			    *pixelp++ = dist[1];
-			    *pixelp++ = dist[2];
-			    *pixelp++ = dist[3];
-			    *pixelp++ = dist[4];
-			    *pixelp++ = dist[5];
-			    *pixelp++ = dist[6];
-			    *pixelp++ = dist[7];
-			}
 		    }
 		}
 		/* First 3 incremental iterations are boring */
@@ -532,10 +483,6 @@ view_pixel(struct application *ap)
 
 		tmp_pixel = (fastf_t *)bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
 		VMOVE(tmp_pixel, ap->a_color);
-		if (rpt_dist) {
-		    for (i = 0; i < 8; i++)
-			tmp_pixel[i + 3] = dist[i];
-		}
 
 		psum_p = &psum_buffer[ap->a_y*width*pwidth + ap->a_x*pwidth];
 		slp = &scanline[ap->a_y];
@@ -1481,11 +1428,6 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 
     optical_shader_init(&mfHead);	/* in liboptical/init.c */
 
-    if (rpt_dist && !minus_o) {
-	bu_log("Warning: -d ignored.  Writing to frame buffer only\n");
-	rpt_dist = 0;
-    }
-
     if (do_kut_plane) {
 	struct rt_functab *functab;
 	struct directory *dp;
@@ -1681,10 +1623,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	ap->a_no_booleans = a_no_booleans;
     }
 
-    if (rpt_dist)
-	pwidth = 3+8;
-    else
-	pwidth = 3;
+    pwidth = 3;
 
     /* Always allocate the scanline[] array (unless we already have
      * one in incremental mode)

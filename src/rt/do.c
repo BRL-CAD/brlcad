@@ -515,7 +515,7 @@ extern double airdensity;
 
 
 static unsigned int clt_mode;           /* Active render buffers */
-static uint8_t clt_o[3];		/* Sub buffer offsets in bytes: {CLT_COLOR, CLT_DEPTH, MAX} */
+static uint8_t clt_o[2];		/* Sub buffer offsets in bytes: {CLT_COLOR, MAX} */
 
 static fb *clt_fbp = FB_NULL;
 
@@ -529,17 +529,16 @@ clt_connect_fb(fb *fbp)
 void
 clt_view_init(unsigned int mode)
 {
-    uint8_t o[3];
+    uint8_t o[2];
     int i;
 
     clt_mode = mode;
 
     o[0] = (mode & CLT_COLOR) ? 3 : 0;	/* uchar rgb[3] */
-    o[1] = (mode & CLT_DEPTH) ? 8 : 0;  /* double depth */
-    o[2] = 0;
+    o[1] = 0;
 
     clt_o[0] = 0;
-    for (i=1; i<3; i++) {
+    for (i=1; i<2; i++) {
 	clt_o[i] = o[i-1] + clt_o[i-1];
     }
 }
@@ -560,7 +559,7 @@ clt_run(int cur_pixel, int last_pixel)
     ssize_t count;
 
     npix = last_pixel-cur_pixel+1;
-    size = npix * clt_o[2];
+    size = npix * clt_o[1];
 
     a_y = (int)(cur_pixel/width);
     a_x = (int)(cur_pixel - (a_y * width));
@@ -602,7 +601,7 @@ clt_run(int cur_pixel, int last_pixel)
 	      airdensity, haze, gamma_corr, view2model, cell_width,
               cell_height, aspect, lightmodel, APP.a_no_booleans);
 
-    pixelp = pixels + cur_pixel*clt_o[2];
+    pixelp = pixels + cur_pixel*clt_o[1];
 
     if (clt_fbp != FB_NULL) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -613,14 +612,14 @@ clt_run(int cur_pixel, int last_pixel)
     }
     if (outfp) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
-        if (bu_fseek(outfp, cur_pixel*clt_o[2], 0) != 0)
+        if (bu_fseek(outfp, cur_pixel*clt_o[1], 0) != 0)
             fprintf(stderr, "fseek error\n");
         if (fwrite(pixelp, size, 1, outfp) != 1)
             bu_exit(EXIT_FAILURE, "pixel fwrite error");
         bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (bif) {
-        int span = width*clt_o[2];
+        int span = width*clt_o[1];
 
         BU_ASSERT(a_x == 0);
         while (pixelp < pixels+size) {
@@ -933,7 +932,6 @@ do_frame(int framenumber)
         unsigned int mode = 0;
 
                             mode |= CLT_COLOR;
-        if (rpt_dist)       mode |= CLT_DEPTH;
         if (full_incr_mode) mode |= CLT_ACCUM;
 
         clt_view_init(mode);

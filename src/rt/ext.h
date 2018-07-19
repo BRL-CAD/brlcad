@@ -39,7 +39,6 @@ extern int query_debug;
 extern int query_rdebug;
 extern int query_x;
 extern int query_y;
-extern int rpt_dist;			/* Output depth along w/ RGB? */
 extern int rpt_overlap;			/* Warn about overlaps? */
 extern int space_partition;		/* Space partitioning algorithm to use */
 extern int sub_grid_mode;		/* mode to raytrace a rectangular portion of view */
@@ -132,8 +131,7 @@ extern int do_frame(int framenumber);
 #ifdef USE_OPENCL
 enum {
     CLT_COLOR = (1<<0),
-    CLT_DEPTH = (1<<1),
-    CLT_ACCUM = (1<<2)      /* TODO */
+    CLT_ACCUM = (1<<1)      /* TODO */
 };
 
 extern void clt_connect_fb(fb *fbp);

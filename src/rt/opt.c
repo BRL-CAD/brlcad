@@ -51,7 +51,6 @@
 #define COMMA ','
 
 
-int rpt_dist = 0;		/* report distance to each pixel */
 size_t width = 0;		/* # of pixels in X */
 size_t height = 0;		/* # of lines in Y */
 
@@ -567,9 +566,6 @@ get_args(int argc, const char *argv[])
 	    case 'R':
 		/* DON'T report overlapping region names */
 		rpt_overlap = 0;
-		break;
-	    case 'd':
-		rpt_dist = atoi(bu_optarg);
 		break;
 	    case 'z':
 		opencl_mode = atoi(bu_optarg);

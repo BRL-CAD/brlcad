@@ -157,7 +157,6 @@ set(man1_EN
   pixcrop.xml
   pixcut.xml
   pixdiff.xml
-  pixdsplit.xml
   pixfade.xml
   pixfilter.xml
   pixhalve.xml

@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 
+* removed "pixd" support: rt -d option and pixdsplit - Sean Morrison
 * fixed fbserv timeout errors on some BSD platforms - Cezar Elnazli
 * fixed rtcheck bug handling reversed overlap pairs - Saran Narayan
 * new workflow GUI for detecting and fixing geometry overlap errors

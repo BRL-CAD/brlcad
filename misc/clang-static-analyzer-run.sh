@@ -351,7 +351,6 @@ if [ "0" -eq "1" ]; then
  failingtest pixcrop
  cleantest pixcut
  cleantest pixdiff
- cleantest pixdsplit
  cleantest pixelswap
  cleantest pixembed
  cleantest pixfade
