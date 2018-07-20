@@ -71,7 +71,7 @@ if(SH_EXEC)
   Sh_Regression_Test(weight "rtweight;mged")
   Sh_Regression_Test(gqa "gqa;mged")
   Sh_Regression_Test(bots "mged;pixdiff;rt")
-  # Sh_Regression_Test(usage "" EXCLUDE_FROM_REGRESS)
+  Sh_Regression_Test(usage "rt" EXCLUDE_FROM_REGRESS)
   Sh_Regression_Test(flawfinder "" EXCLUDE_FROM_REGRESS)
 
   # TODO - keep all tests short.  right now, regress repository
