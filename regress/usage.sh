@@ -72,16 +72,9 @@ fi
 
 exists="`timeout --version 2>&1 | head -1 | awk '{print $1}'`"
 if test "x$exists" != "xtimeout" ; then
-    echo "Unable to find timeout utility for testing, aborting"
-    exit 1
+    function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
 fi
 
-longest=`echo "$works" | wc -L 2>&1`
-echo "$longest" | grep -q '[^0-9]'
-if test $? -ne 1 ; then
-    echo "Unable to calculate line lengths using wc, aborting"
-    exit 1
-fi
 
 echo "Testing usage statements ..."
 
@@ -98,11 +91,17 @@ test_usage ( ) {
 
     echo "=== $cmd === (pid: $$)" >> usage.log
 
-    usage="`timeout ${WAIT}s $cmd -h -? 2>&1`"
+    usage="`timeout ${WAIT} $cmd -h -? 2>&1`"
     echo "$usage" >> usage.log
 
-    length=`echo "$usage" | grep -v -i DEPREC | grep -v -i WARN | grep -v -i ERROR | grep -v -i FAIL | wc -L 2>&1`
+    length=`echo "$usage" | grep -v -i DEPREC | grep -v -i WARN | grep -v -i ERROR | grep -v -i FAIL | awk '{print length, $0}' | sort -nr | head -1 | awk '{print $1}'`
+    if test "x$length" = "x" ; then
+	length=0
+    fi
     lines=`echo "$usage" | wc -l 2>&1`
+    if test "x$lines" = "x" ; then
+	lines=0
+    fi
 
     printf "  %-30s lines:%3d  maxline:%3d\n" "$cmd ..." "$lines" "$length"
 
@@ -122,9 +121,9 @@ test_usage ( ) {
 	echo "WARNED=\"\`expr \$WARNED + 1\`\" # $cmd" >> usage.log
     fi
     if test "x`echo $usage | grep -i ERROR`" != "x" ; then
-	echo "ERROR=\"\`expr \$ERROR + 1\`\" # $cmd" >> usage.log
+	echo "FAILED=\"\`expr \$FAILED + 1\`\" # $cmd" >> usage.log
     elif test "x`echo $usage | grep -i FAIL`" != "x" ; then
-	echo "ERROR=\"\`expr \$ERROR + 1\`\" # $cmd" >> usage.log
+	echo "FAILED=\"\`expr \$FAILED + 1\`\" # $cmd" >> usage.log
     fi
     echo "CNT=\"\`expr \$CNT + 1\`\" # $cmd" >> usage.log
 
@@ -141,7 +140,7 @@ wait_on ( ) {
 	while test "x`jobs -p | grep $pid`" != "x" ; do
 	    if test $waited -gt `expr $WAIT + 2` ; then
 		kill -9 $pid >/dev/null 2>&1
-		# echo "ERROR=\"\`expr \$ERROR + 1\`\" # $pid" >> usage.log
+		# echo "FAILED=\"\`expr \$FAILED + 1\`\" # $pid" >> usage.log
 		# echo "CNT=\"\`expr \$CNT + 1\`\" # $cmd" >> usage.log
 		break
 	    fi
@@ -165,6 +164,7 @@ workers=0
 pids=""
 for cmd in $dir/* ; do
     test_usage "$cmd" &
+
     pids="$pids $!"
     workers="`expr $workers + 1`"
     if test $workers -gt $NPSW ; then
@@ -176,7 +176,7 @@ done
 wait_on "$pids"
 
 # tabulate results from tallies we stored in the log file
-vars="`grep -E '(CNT=|USAGE=|NOUSE=|LONG=|SHORT=|DEPREC=|WARNED=|ERROR=)' usage.log`"
+vars="`grep -E '(CNT=|LONG=|SHORT=|USAGE=|NOUSE=|WARNED=|FAILED=|DEPREC=)' usage.log`"
 while read var ; do
     eval $var # increments our VARIABLES above
 done <<EOF
@@ -185,10 +185,10 @@ EOF
 
 # print a summary
 printf "\nCOMMAND SUMMARY:\n"
-echo "----------------------------------------------------------------------"
-echo "| TOTAL | Usage | NoUsage | Long | Short | Deprecated | Warn | Error |"
-printf "| %5d | %5d | %7d | %4d | %5d | %10d | %4d | %5d |\n" $CNT $USAGE $NOUSE $LONG $SHORT $DEPREC $WARNED $ERROR
-echo "----------------------------------------------------------------------"
+echo "---------------------------------------------------------------------"
+echo "| TOTAL | Usage | NoUsage | Long | Short | Deprecated | Warn | Fail |"
+printf "| %5d | %5d | %7d | %4d | %5d | %10d | %4d | %4d |\n" $CNT $USAGE $NOUSE $LONG $SHORT $DEPREC $WARNED $FAILED
+echo "---------------------------------------------------------------------"
 
 if test $LONG -eq 0 ; then
     echo "-> usage check succeeded"
