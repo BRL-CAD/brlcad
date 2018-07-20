@@ -285,7 +285,7 @@ analyze_overlaps(struct rt_i *rtip,
     APP.a_logoverlap = overlapsAdapter;
     APP.a_uptr = &adapterData;
     APP.a_onehit = 0;
-    APP.a_rbeam = 0.5 * (grid_generator->grid_cell_width(grid_context));
+    APP.a_rbeam = 0.5 * (grid_generator->grid_spacing(grid_context));
     APP.a_diverge = 0;
 
     if (ZERO(APP.a_rbeam) && ZERO(APP.a_diverge)) {

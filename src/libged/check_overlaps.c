@@ -188,7 +188,7 @@ check_grid_setup (int *cell_newsize,
 	return GED_ERROR;
     }
 
-    grid->cell_width = *cell_width;
+    grid->grid_spacing = *cell_width;
     grid->x_points = *width;
     grid->total_points = (*width)*(*height);
 
@@ -571,7 +571,7 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
     }
 
     grid.current_point = 0;
-    grid_functions.grid_cell_width = rectangular_grid_cell_width;
+    grid_functions.grid_spacing = rectangular_grid_spacing;
     grid_functions.next_ray = rectangular_grid_generator;
 
     overlapData.list = &olist;

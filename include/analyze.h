@@ -79,7 +79,7 @@ struct density_entry {
 
 struct grid_generator_functions {
     int (*next_ray)(struct xray *rayp, void *grid_context);
-    double (*grid_cell_width)(void *grid_context);
+    double (*grid_spacing)(void *grid_context);
 };
 
 /**
@@ -88,12 +88,18 @@ struct grid_generator_functions {
  */
 
 struct rectangular_grid {
+    int view;
+    int max_views;
+    point_t mdl_origin;
+    long steps[3];
+    int refine_flag;
+
     vect_t ray_direction;
     point_t start_coord;
     vect_t dx_grid;
     vect_t dy_grid;
     size_t x_points;
-    fastf_t cell_width;
+    fastf_t grid_spacing;
     size_t current_point;
     size_t total_points;
 };
@@ -158,13 +164,17 @@ ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *li
 /**
  * grid generator for rectangular grid type
  */
-
 ANALYZE_EXPORT extern int rectangular_grid_generator(struct xray *rayp, void *grid_context);
 
 /**
- * function to get the cell_width of rectangular grid
+ * grid generator for rectangular triple grid type
  */
-ANALYZE_EXPORT extern double rectangular_grid_cell_width(void *grid_context);
+ANALYZE_EXPORT extern int rectangular_triple_grid_generator(struct xray *rayp, void *grid_context);
+
+/**
+ * function to get the grid spacing of rectangular grid
+ */
+ANALYZE_EXPORT extern double rectangular_grid_spacing(void *grid_context);
 
 
 /**
@@ -175,7 +185,6 @@ typedef void (*analyze_overlaps_callback)(const struct xray *rayp, const struct 
 /**
  * analyze_overlap function for check_overlaps command
  */
-
 ANALYZE_EXPORT extern int
 analyze_overlaps(struct rt_i *rtip,
 		 size_t npsw,

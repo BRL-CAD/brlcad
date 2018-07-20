@@ -28,12 +28,22 @@
 int rectangular_grid_generator(struct xray *ray, void *context)
 {
     struct rectangular_grid *grid = (struct rectangular_grid*) context;
-    int y_index,x_index;
+    int y_index, x_index;
     y_index = (int)(grid->current_point / (grid->x_points));
     x_index = (int)(grid->current_point - (y_index * (grid->x_points)));
 
+    /* if refine flag is set then we skip for even values of
+     * x_index and y_index in case of single grid
+     */
+    if (grid->refine_flag && grid->max_views == 1) {
+	if (!(y_index&1) && !(x_index&1)) {
+	    (grid->current_point++);
+	    return(rectangular_grid_generator(ray, grid));
+	}
+    }
+
     /* reached end of grid generation */
-    if (grid->current_point == grid->total_points){
+    if (grid->current_point >= grid->total_points) {
 	return 1;
     }
 
@@ -48,10 +58,62 @@ int rectangular_grid_generator(struct xray *ray, void *context)
 }
 
 
-double rectangular_grid_cell_width(void *context)
+double rectangular_grid_spacing(void *context)
 {
     struct rectangular_grid *grid = (struct rectangular_grid *)context;
-    return (grid->cell_width);
+    return (grid->grid_spacing);
+}
+
+
+int rectangular_triple_grid_generator(struct xray *ray, void *context)
+{
+    struct rectangular_grid *grid = (struct rectangular_grid*) context;
+    if (grid->current_point >= grid->total_points) {
+	int i_axis, u_axis, v_axis, curr_view;
+	vect_t u_dir, v_dir;
+	if (grid->view == grid->max_views) return 1;
+	curr_view = grid->view;
+	i_axis = curr_view;
+	u_axis = (curr_view+1) % 3;
+	v_axis = (curr_view+2) % 3;
+
+	u_dir[u_axis] = 1;
+	u_dir[v_axis] = 0;
+	u_dir[i_axis] = 0;
+
+	v_dir[u_axis] = 0;
+	v_dir[v_axis] = 1;
+	v_dir[i_axis] = 0;
+
+	grid->ray_direction[u_axis] = 0;
+	grid->ray_direction[v_axis] = 0;
+	grid->ray_direction[i_axis] = 1;
+
+	VMOVE(grid->start_coord, grid->mdl_origin);
+	grid->start_coord[u_axis] += grid->grid_spacing;
+	grid->start_coord[v_axis] += grid->grid_spacing;
+
+	VSCALE(grid->dx_grid, u_dir, grid->grid_spacing);
+	VSCALE(grid->dy_grid, v_dir, grid->grid_spacing);
+
+	grid->x_points = grid->steps[u_axis] - 1;
+	grid->total_points = grid->x_points * (grid->steps[v_axis] - 1);
+	(grid->view)++;
+	grid->current_point = 0;
+    }
+    if (grid->refine_flag) {
+	int y_index, x_index;
+	y_index = (int)(grid->current_point / (grid->x_points));
+	x_index = (int)(grid->current_point - (y_index * (grid->x_points)));
+	    /* if refine flag is set then we skip for odd values of
+	     * x_index and y_index in case of triple grid
+	     */
+	if (x_index&1 && y_index&1) {
+	    grid->current_point++;
+	    return (rectangular_triple_grid_generator(ray, grid));
+	}
+    }
+    return (rectangular_grid_generator(ray, grid));
 }
 
 /*
