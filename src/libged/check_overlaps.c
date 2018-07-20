@@ -191,6 +191,9 @@ check_grid_setup (int *cell_newsize,
     grid->grid_spacing = *cell_width;
     grid->x_points = *width;
     grid->total_points = (*width)*(*height);
+    grid->current_point = 0;
+    grid->refine_flag = 0;
+    grid->max_views = 1;
 
     /* Create basis vectors dx and dy for emanation plane (grid) */
     VSET(temp, 1, 0, 0);
@@ -208,6 +211,7 @@ check_grid_setup (int *cell_newsize,
 
     VSET(temp, -1, -1/aspect, 0);	/* eye plane */
     MAT4X3PNT(grid->start_coord, view2model, temp);
+
     return GED_OK;
 }
 
@@ -570,7 +574,6 @@ ged_check_overlaps(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Grid: (%g, %g) mm, (%zu, %zu) pixels\n", cell_width, cell_height, width, height);
     }
 
-    grid.current_point = 0;
     grid_functions.grid_spacing = rectangular_grid_spacing;
     grid_functions.next_ray = rectangular_grid_generator;
 
