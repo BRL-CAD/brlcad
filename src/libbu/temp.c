@@ -36,7 +36,6 @@
 
 #include "bu/file.h"
 #include "bu/log.h"
-#include "bu/list.h"
 #include "bu/malloc.h"
 #include "bu/time.h"
 #include "bu/vls.h"
