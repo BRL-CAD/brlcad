@@ -132,7 +132,7 @@ size_t
 clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct rt_ebm_specific *ebm =
-        (struct rt_ebm_specific *)stp->st_specific;
+	(struct rt_ebm_specific *)stp->st_specific;
     struct clt_ebm_specific *args;
 
     struct rt_ebm_internal *eip = &ebm->ebm_i;
@@ -162,7 +162,7 @@ clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
     for (y = 0; y < eip->ydim; y++) {
 	for (x = 0; x < eip->xdim; x++) {
 	    if (BIT(eip, x, y) != 0) {
-		id = (y+BIT_YWIDEN)*(eip->xdim + BIT_XWIDEN*2)+x+BIT_XWIDEN; 
+		id = (y+BIT_YWIDEN)*(eip->xdim + BIT_XWIDEN*2)+x+BIT_XWIDEN;
 		args->apbuf[(id >> 3)] |= (1 << (id & 7));
 	    }
 	}
@@ -910,7 +910,6 @@ rt_ebm_ifree(struct rt_db_internal *ip)
     RT_EBM_CK_MAGIC(eip);
 
     if (eip->mp) {
-	BU_CK_MAPPED_FILE(eip->mp);
 	bu_close_mapped_file(eip->mp);
     }
 
@@ -1137,7 +1136,6 @@ rt_ebm_free(struct soltab *stp)
     register struct rt_ebm_specific *ebmp =
 	(struct rt_ebm_specific *)stp->st_specific;
 
-    BU_CK_MAPPED_FILE(ebmp->ebm_i.mp);
     bu_close_mapped_file(ebmp->ebm_i.mp);
 
     BU_PUT(ebmp, struct rt_ebm_specific);

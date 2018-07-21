@@ -2196,7 +2196,6 @@ rt_hf_ifree(struct rt_db_internal *ip)
     xip->magic = 0;			/* sanity */
 
     if (xip->mp) {
-	BU_CK_MAPPED_FILE(xip->mp);
 	bu_close_mapped_file(xip->mp);
     }
 

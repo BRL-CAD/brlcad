@@ -855,7 +855,6 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		return 1; /* BAD */
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 
 	    /* we do this here and now because we will need it for the
 	     * dsp_specific structure in a few lines
@@ -983,7 +982,6 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		return 1; /* BAD */
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 
 	    /* we do this here and now because we will need it for the
 	     * dsp_specific structure in a few lines
@@ -2552,7 +2550,6 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     switch (dsp->dsp_i.dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
@@ -2803,7 +2800,6 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     switch (dsp->dsp_i.dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
@@ -3139,7 +3135,6 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		}
 		return 0;
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
@@ -3519,7 +3514,6 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 		return -1;
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {

@@ -58,7 +58,6 @@ db5_scan(
 	const unsigned char *cp = (const unsigned char *)dbip->dbi_inmem;
 	off_t eof;
 
-	BU_CK_MAPPED_FILE(dbip->dbi_mf);
 	eof = (off_t)dbip->dbi_mf->buflen;
 
 	if (db5_header_is_valid(cp) == 0) {

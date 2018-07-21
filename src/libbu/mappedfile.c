@@ -39,7 +39,6 @@
 
 #include "bu/debug.h"
 #include "bu/file.h"
-#include "bu/list.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/mapped_file.h"
@@ -49,7 +48,14 @@
 
 
 /* list of currently open mapped files */
-static struct bu_list bu_mapped_file_list = BU_LIST_INIT_ZERO;
+#define NUM_INITIAL_MAPPED_FILES 8
+
+static struct bu_mapped_file initial_mapped_files[NUM_INITIAL_MAPPED_FILES];
+
+static struct bu_mapped_file_list {
+    size_t size, capacity;
+    struct bu_mapped_file *mapped_files;
+} all_mapped_files;
 
 
 struct bu_mapped_file *
@@ -68,18 +74,16 @@ bu_open_mapped_file(const char *name, const char *appl)
     FILE *fp = (FILE *)NULL;	/* stdio file pointer */
 #endif
     int ret;
+    size_t i;
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	bu_log("bu_open_mapped_file(%s(canonical path - %s), %s)\n", name, real_path, appl?appl:"(NIL)");
 
     /* See if file has already been mapped, and can be shared */
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
-    if (!BU_LIST_IS_INITIALIZED(&bu_mapped_file_list)) {
-	BU_LIST_INIT(&bu_mapped_file_list);
-    }
 
-    for (BU_LIST_FOR(mp, bu_mapped_file, &bu_mapped_file_list)) {
-	BU_CK_MAPPED_FILE(mp);
+    for (i = 0; i < all_mapped_files.size; i++) {
+	mp = &all_mapped_files.mapped_files[i];
 
 	/* find a match */
 
@@ -156,7 +160,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
     /* necessary in case we take a 'fail' path before BU_ALLOC() */
-    mp = NULL;
+    mp = (struct bu_mapped_file *)NULL;
 
     /* File is not yet mapped or has changed, open file read only if
      * we didn't find it earlier.
@@ -190,7 +194,20 @@ bu_open_mapped_file(const char *name, const char *appl)
 #endif /* HAVE_SYS_STAT_H */
 
     /* Optimistically assume that things will proceed OK */
-    BU_ALLOC(mp, struct bu_mapped_file);
+    if (all_mapped_files.capacity == 0) {
+	all_mapped_files.capacity = NUM_INITIAL_MAPPED_FILES;
+	all_mapped_files.size = 0;
+	all_mapped_files.mapped_files = initial_mapped_files;
+    } else if (all_mapped_files.size == NUM_INITIAL_MAPPED_FILES) {
+	all_mapped_files.capacity *= 2;
+	all_mapped_files.mapped_files = (struct bu_mapped_file *)bu_malloc(all_mapped_files.capacity * sizeof(struct bu_mapped_file), "initial resize of mapped file list");
+    } else if (all_mapped_files.size == all_mapped_files.capacity) {
+	all_mapped_files.capacity *= 2;
+	all_mapped_files.mapped_files = (struct bu_mapped_file *)bu_realloc(all_mapped_files.mapped_files, all_mapped_files.capacity * sizeof(struct bu_mapped_file), "additional resize of mapped file list");
+    }
+
+    mp = &all_mapped_files.mapped_files[all_mapped_files.size];
+    all_mapped_files.size++;
     mp->name = bu_strdup(real_path);
     if (appl)
 	mp->appl = bu_strdup(appl);
@@ -299,11 +316,6 @@ bu_open_mapped_file(const char *name, const char *appl)
     }
 
     mp->uses = 1;
-    mp->l.magic = BU_MAPPED_FILE_MAGIC;
-
-    bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
-    BU_LIST_APPEND(&bu_mapped_file_list, &mp->l);
-    bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
 	bu_pr_mapped_file("1st_open", mp);
@@ -348,8 +360,6 @@ bu_close_mapped_file(struct bu_mapped_file *mp)
 	return;
     }
 
-    BU_CK_MAPPED_FILE(mp);
-
     if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	bu_pr_mapped_file("close:uses--", mp);
 
@@ -365,8 +375,6 @@ bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
     if (UNLIKELY(!mp))
 	return;
 
-    BU_CK_MAPPED_FILE(mp);
-
     bu_log("%p mapped_file %s %p len=%ld mapped=%d, uses=%d %s\n",
 	   (void *)mp, mp->name, mp->buf, mp->buflen,
 	   mp->is_mapped, mp->uses,
@@ -377,18 +385,16 @@ bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
 void
 bu_free_mapped_files(int verbose)
 {
-    struct bu_mapped_file *mp, *next;
+    struct bu_mapped_file *mp;
+    size_t i;
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	bu_log("bu_free_mapped_files(verbose=%d)\n", verbose);
 
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 
-    next = BU_LIST_FIRST(bu_mapped_file, &bu_mapped_file_list);
-    while (BU_LIST_NOT_HEAD(next, &bu_mapped_file_list)) {
-	BU_CK_MAPPED_FILE(next);
-	mp = next;
-	next = BU_LIST_NEXT(bu_mapped_file, &mp->l);
+    for (i = 0; i < all_mapped_files.size; i++) {
+	mp = &all_mapped_files.mapped_files[i];
 
 	if (mp->uses > 0)
 	    continue;
@@ -396,8 +402,6 @@ bu_free_mapped_files(int verbose)
 	/* Found one that needs to have storage released */
 	if (UNLIKELY(verbose || (bu_debug&BU_DEBUG_MAPPED_FILE)))
 	    bu_pr_mapped_file("freeing", mp);
-
-	BU_LIST_DEQUEUE(&mp->l);
 
 	/* If application pointed mp->apbuf at mp->buf, break that
 	 * association so we don't double-free the buffer.
@@ -426,8 +430,8 @@ bu_free_mapped_files(int verbose)
 
 	if (mp->appl)
 	    bu_free((void *)mp->appl, "bu_mapped_file.appl");
-
-	bu_free((void *)mp, "struct bu_mapped_file");
+    memmove(all_mapped_files.mapped_files + i, all_mapped_files.mapped_files + i + 1, sizeof(all_mapped_files.mapped_files[0]) * (all_mapped_files.size - i - 1));
+    all_mapped_files.size--;
     }
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 }

@@ -144,7 +144,6 @@ new_image(const struct bu_structparse *UNUSED(sdp),
 	bu_log("error opening image %s\n", bu_vls_addr(&bbd_sp->img_filename));
 	bu_bomb("");
     }
-    BU_CK_MAPPED_FILE(bbdi->img_mf);
 
     bbdi->img_width = bbd_sp->img_width;
     bbdi->img_width = bbd_sp->img_height;

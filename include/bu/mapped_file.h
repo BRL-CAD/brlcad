@@ -27,8 +27,6 @@
 #include <stddef.h> /* for size_t */
 
 #include "bu/defines.h"
-#include "bu/magic.h"
-#include "bu/list.h"
 
 __BEGIN_DECLS
 
@@ -79,7 +77,6 @@ __BEGIN_DECLS
  * For appl == "db_i", file is a ".g" database & apbuf is (struct db_i *).
  */
 struct bu_mapped_file {
-    struct bu_list l;
     char *name;		/**< bu_strdup() of file name */
     void *buf;	/**< In-memory copy of file (may be mmapped)  */
     size_t buflen;	/**< # bytes in 'buf'  */
@@ -95,33 +92,10 @@ typedef struct bu_mapped_file bu_mapped_file_t;
 #define BU_MAPPED_FILE_NULL ((struct bu_mapped_file *)0)
 
 /**
- * assert the integrity of a bu_mapped_file struct.
- */
-#define BU_CK_MAPPED_FILE(_mf) BU_CKMAG(_mf, BU_MAPPED_FILE_MAGIC, "bu_mapped_file")
-
-/**
- * initialize a bu_mapped_file struct without allocating any memory.
- */
-#define BU_MAPPED_FILE_INIT(_mf) { \
-	BU_LIST_INIT_MAGIC(&(_mf)->l, BU_MAPPED_FILE_MAGIC); \
-	(_mf)->name = (_mf)->buf = NULL; \
-	(_mf)->buflen = (_mf)->is_mapped = 0; \
-	(_mf)->appl = (_mf)->apbuf = NULL; \
-	(_mf)->apbuflen = (_mf)->modtime = (_mf)->uses = (_mf)->dont_restat = 0; \
-    }
-
-/**
  * macro suitable for declaration statement initialization of a
  * bu_mapped_file struct.  does not allocate memory.
  */
-#define BU_MAPPED_FILE_INIT_ZERO { {BU_MAPPED_FILE_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, NULL, NULL, 0, 0, NULL, NULL, 0, 0, 0, 0 }
-
-/**
- * returns truthfully whether a bu_mapped_file has been initialized via
- * BU_MAPPED_FILE_INIT() or BU_MAPPED_FILE_INIT_ZERO.
- */
-#define BU_MAPPED_FILE_IS_INITIALIZED(_hp) (((struct bu_mapped_file *)(_hp) != BU_MAPPED_FILE_NULL) && LIKELY((_hp)->l.magic == BU_MAPPED_FILE_MAGIC))
-
+#define BU_MAPPED_FILE_INIT_ZERO { {BU_LIST_NULL, BU_LIST_NULL}, NULL, NULL, 0, 0, NULL, NULL, 0, 0, 0, 0 }
 
 /**
  * Provides a standardized interface for acquiring the entire contents
