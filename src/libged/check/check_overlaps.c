@@ -32,56 +32,14 @@ struct ged_check_plot {
     struct bu_list *vhead;
 };
 
-struct overlap_list {
-    struct overlap_list *next;	/* next one */
-    char *reg1;			/* overlapping region 1 */
-    char *reg2;			/* overlapping region 2 */
-    size_t count;		/* number of time reported */
-    double maxdepth;		/* maximum overlap depth */
-};
-
 struct overlaps_context {
-    struct overlap_list **overlapList;
+    struct regions_list *overlapList;
     size_t numberOfOverlaps;
     int overlaps_overlay_flag;
     FILE *plot_overlaps;
     int overlap_color[3];
     struct ged_check_plot overlaps_overlay_plot;
 };
-
-
-HIDDEN void
-log_overlaps(const char *reg1, const char *reg2, double depth, struct overlap_list **olist)
-{
-    struct overlap_list *prev_ol = (struct overlap_list *)0;
-    struct overlap_list *op;		/* overlap list */
-    struct overlap_list *new_op;
-    BU_ALLOC(new_op, struct overlap_list);
-    for (op=*olist; op; prev_ol=op, op=op->next) {
-	if ((BU_STR_EQUAL(reg1, op->reg1)) && (BU_STR_EQUAL(reg2, op->reg2))) {
-	    op->count++;
-	    if (depth > op->maxdepth)
-		op->maxdepth = depth;
-	    bu_free((char *) new_op, "overlap list");
-	    return;	/* already on list */
-	}
-    }
-
-    /* we have a new overlapping region pair */
-    op = new_op;
-    if (*olist)		/* previous entry exists */
-	prev_ol->next = op;
-    else
-	*olist = op;	/* finally initialize root */
-
-    new_op->reg1 = (char *)bu_malloc(strlen(reg1)+1, "reg1");
-    new_op->reg2 = (char *)bu_malloc(strlen(reg2)+1, "reg2");
-    bu_strlcpy(new_op->reg1, reg1, strlen(reg1)+1);
-    bu_strlcpy(new_op->reg2, reg2, strlen(reg2)+1);
-    op->maxdepth = depth;
-    op->next = NULL;
-    op->count = 1;
-}
 
 
 HIDDEN void
@@ -103,7 +61,7 @@ overlap(struct region *reg1,
 
     bu_semaphore_acquire(GED_SEM_LIST);
     context->numberOfOverlaps++;
-    log_overlaps(reg1->reg_name, reg2->reg_name, depth, context->overlapList);
+    add_to_list(context->overlapList, reg1->reg_name, reg2->reg_name, depth, ihit);
     bu_semaphore_release(GED_SEM_LIST);
 
     if (context->plot_overlaps) {
@@ -124,14 +82,13 @@ int check_overlaps(struct current_state *state,
     int flags = 0;
     struct ged_check_plot check_plot;
     struct overlaps_context callbackdata;
-
-    struct overlap_list *overlapList = NULL;
-    struct overlap_list *nextop=(struct overlap_list *)NULL;
-    struct overlap_list *op;
+    struct regions_list overlapList;
 
     FILE *plot_overlaps = NULL;
     char *name = "overlaps.plot3";
     int overlap_color[3] = { 255, 255, 0 };	/* yellow */
+
+    BU_LIST_INIT(&(overlapList.l));
 
     if (options->plot_files) {
 	if ((plot_overlaps=fopen(name, "wb")) == (FILE *)NULL) {
@@ -162,12 +119,10 @@ int check_overlaps(struct current_state *state,
 
     if(callbackdata.numberOfOverlaps > 0) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nNumber of Overlaps: %d\n", callbackdata.numberOfOverlaps);
-	for (op=overlapList; op; op=op->next) {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str,"\t<%s, %s>: %zu overlap%c detected, maximum depth is %gmm\n", op->reg1, op->reg2, op->count, op->count>1 ? 's' : (char) 0, op->maxdepth);
-	}
-    } else {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nNo overlaps detected");
     }
+
+    print_list(&overlapList, options->units, "Overlaps");
+    clear_list(&overlapList);
 
     if (options->overlaps_overlay_flag) {
 	_ged_cvt_vlblock_to_solids(_ged_current_gedp, check_plot.vbp, "OVERLAPS", 0);
@@ -178,18 +133,6 @@ int check_overlaps(struct current_state *state,
 	fclose(plot_overlaps);
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
     }
-
-    /* Clear out the overlap list */
-    op = overlapList;
-    while (op) {
-	/* free struct */
-	nextop = op->next;
-	bu_free(op->reg1,"reg1 name");
-	bu_free(op->reg2,"reg2 name");
-	bu_free(op, "overlap_list");
-	op = nextop;
-    }
-    overlapList = (struct overlap_list *)NULL;
 
     return GED_OK;
 }
