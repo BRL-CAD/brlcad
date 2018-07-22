@@ -188,8 +188,30 @@ struct check_parameters {
     const struct cvt_tab *units[3];
 };
 
+struct regions_list {
+    struct bu_list l;
+    char* region1;
+    char* region2;
+    unsigned long count;
+    double max_dist;
+    vect_t coord;
+};
+
 extern void
 check_list_report(struct region_pair *list, const struct cvt_tab *units[3]);
+
+extern void
+add_to_list(struct regions_list *list,
+	    const char *r1,
+	    const char *r2,
+	    double dist,
+	    point_t pt);
+
+extern void
+print_list(struct regions_list *list, const struct cvt_tab *units[3], char* name);
+
+extern void
+clear_list(struct regions_list *list);
 
 typedef int check_functions_t(struct current_state *state,
 			      struct db_i *dbip,
@@ -202,6 +224,8 @@ extern check_functions_t check_overlaps;
 extern check_functions_t check_volume;
 
 extern check_functions_t check_exp_air;
+
+extern check_functions_t check_gap;
 
 __END_DECLS
 

@@ -114,6 +114,20 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    }
 	}
 
+	/* looking for voids in the model */
+	if (analysis_flags & ANALYSIS_GAP) {
+	    if (pp->pt_back != PartHeadp) {
+		/* if this entry point is further than the previous
+		 * exit point then we have a void
+		 */
+		gap_dist = pp->pt_inhit->hit_dist - last_out_dist;
+
+		if (gap_dist > state->overlap_tolerance) {
+		    state->gaps_callback(&ap->a_ray, pp, gap_dist, pt, state->gaps_callback_data);
+		}
+	    }
+	}
+
 	/* computing the weight of the objects */
 	if (analysis_flags & ANALYSIS_WEIGHT) {
 	    if (debug) {
@@ -790,6 +804,13 @@ options_set(struct current_state *state)
     if (analysis_flags & ANALYSIS_EXP_AIR) {
 	if (state->exp_air_callback == NULL) {
 	    bu_log("\nexp_air callback function not registered!");
+	    return ANALYZE_ERROR;
+	}
+    }
+
+    if (analysis_flags & ANALYSIS_GAP) {
+	if (state->gaps_callback == NULL) {
+	    bu_log("\ngaps callback function not registered!");
 	    return ANALYZE_ERROR;
 	}
     }

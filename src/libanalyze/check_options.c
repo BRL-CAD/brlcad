@@ -46,11 +46,15 @@ analyze_current_state_init()
     state->ncpu = (int) bu_avail_cpus();
     state->use_single_grid = 0;
     state->plot_volume = NULL;
+
     state->exp_air_callback = NULL;
     state->exp_air_callback_data = NULL;
+
     state->overlaps_callback = NULL;
     state->overlaps_callback_data = NULL;
 
+    state->gaps_callback = NULL;
+    state->gaps_callback_data = NULL;
     return state;
 }
 
@@ -167,6 +171,13 @@ void analyze_register_exp_air_callback(struct current_state *state, exp_air_call
 {
     state->exp_air_callback = callback_function;
     state->exp_air_callback_data = callback_data;
+}
+
+
+void analyze_register_gaps_callback(struct current_state *state, gaps_callback_t callback_function, void* callback_data)
+{
+    state->gaps_callback = callback_function;
+    state->gaps_callback_data = callback_data;
 }
 
 
