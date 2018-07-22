@@ -64,6 +64,9 @@ analyze_free_current_state(struct current_state *state)
 {
     int i;
 
+    if (state == NULL)
+	return;
+
     if (state->densities != NULL) {
 	for (i = 0; i < state->num_densities; ++i) {
 	    if (state->densities[i].name != 0)
@@ -75,17 +78,22 @@ analyze_free_current_state(struct current_state *state)
 	state->num_densities = 0;
     }
 
-    bu_free(state->shots, "m_shots");
-
-    for (i = 0; i < state->num_objects; i++) {
-	bu_free(state->objs[i].o_len, "o_len");
-	bu_free(state->objs[i].o_lenDensity, "o_lenDensity");
-	bu_free(state->objs[i].o_volume, "o_volume");
-	bu_free(state->objs[i].o_weight, "o_weight");
-	bu_free(state->objs[i].o_lenTorque, "o_lenTorque");
+    if (state->shots != NULL) {
+	bu_free(state->shots, "m_shots");
+	state->shots = NULL;
     }
-    bu_free(state->objs, "object table");
-    state->objs = NULL;
+
+    if (state->objs != NULL) {
+	for (i = 0; i < state->num_objects; i++) {
+	    bu_free(state->objs[i].o_len, "o_len");
+	    bu_free(state->objs[i].o_lenDensity, "o_lenDensity");
+	    bu_free(state->objs[i].o_volume, "o_volume");
+	    bu_free(state->objs[i].o_weight, "o_weight");
+	    bu_free(state->objs[i].o_lenTorque, "o_lenTorque");
+	}
+	bu_free(state->objs, "object table");
+	state->objs = NULL;
+    }
 
     bu_free((char *)state, "struct current_state");
 }
