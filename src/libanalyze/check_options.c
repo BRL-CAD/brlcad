@@ -1,0 +1,186 @@
+/*                 C H E C K _ O P T I O N S. C
+ * BRL-CAD
+ *
+ * Copyright (c) 2018 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
+#include "common.h"
+
+#include "bu/malloc.h"
+
+#include "analyze.h"
+#include "./analyze_private.h"
+
+struct current_state *
+analyze_current_state_init()
+{
+    struct current_state *state;
+    BU_ALLOC(state, struct current_state);
+
+    state->num_objects = 0;
+    state->num_views = 3;
+    state->densityFileName = NULL;
+    state->volume_tolerance = -1;
+    state->weight_tolerance = -1;
+    state->sa_tolerance = -1;
+    state->azimuth_deg = 35.0;
+    state->elevation_deg = 25.0;
+    state->gridSpacing = 50.0;
+    state->gridSpacingLimit = 0.5;
+    state->use_air = 1;
+    state->required_number_hits = 1;
+    state->ncpu = (int) bu_avail_cpus();
+    state->use_single_grid = 0;
+    state->plot_volume = NULL;
+    state->exp_air_callback = NULL;
+    state->exp_air_callback_data = NULL;
+    state->overlaps_callback = NULL;
+    state->overlaps_callback_data = NULL;
+
+    return state;
+}
+
+
+void
+analyze_free_current_state(struct current_state *state)
+{
+    int i;
+
+    if (state->densities != NULL) {
+	for (i = 0; i < state->num_densities; ++i) {
+	    if (state->densities[i].name != 0)
+		bu_free(state->densities[i].name, "density name");
+	}
+
+	bu_free(state->densities, "densities");
+	state->densities = NULL;
+	state->num_densities = 0;
+    }
+
+    bu_free(state->shots, "m_shots");
+
+    for (i = 0; i < state->num_objects; i++) {
+	bu_free(state->objs[i].o_len, "o_len");
+	bu_free(state->objs[i].o_lenDensity, "o_lenDensity");
+	bu_free(state->objs[i].o_volume, "o_volume");
+	bu_free(state->objs[i].o_weight, "o_weight");
+	bu_free(state->objs[i].o_lenTorque, "o_lenTorque");
+    }
+    bu_free(state->objs, "object table");
+    state->objs = NULL;
+
+    bu_free((char *)state, "struct current_state");
+}
+
+
+void analyze_set_azimuth(struct current_state *state, fastf_t azimuth)
+{
+    state->azimuth_deg = azimuth;
+    state->use_single_grid = 1;
+}
+
+
+void analyze_set_elevation(struct current_state *state, fastf_t elevation)
+{
+    state->elevation_deg = elevation;
+    state->use_single_grid = 1;
+}
+
+
+void analyze_set_grid_spacing(struct current_state *state, fastf_t gridSpacing, fastf_t gridSpacingLimit)
+{
+    state->gridSpacing = gridSpacing;
+    state->gridSpacingLimit = gridSpacingLimit;
+}
+
+
+void analyze_set_overlap_tolerance(struct current_state *state, fastf_t overlap_tolerance)
+{
+    state->overlap_tolerance = overlap_tolerance;
+}
+
+
+void analyze_set_volume_tolerance(struct current_state *state, fastf_t volume_tolerance)
+{
+    state->volume_tolerance = volume_tolerance;
+}
+
+
+void analyze_set_weight_tolerance(struct current_state *state, fastf_t weight_tolerance)
+{
+    state->weight_tolerance = weight_tolerance;
+}
+
+
+void analyze_set_ncpu(struct current_state *state, int ncpu)
+{
+    state->ncpu = ncpu;
+}
+
+
+void analyze_set_required_number_hits(struct current_state *state, int required_number_hits)
+{
+    state->required_number_hits = required_number_hits;
+}
+
+
+void analyze_set_use_air(struct current_state *state, int use_air)
+{
+    state->use_air = use_air;
+}
+
+
+void analyze_set_num_views(struct current_state *state, int num_views)
+{
+    state->num_views = num_views;
+}
+
+
+void analyze_set_densityfile(struct current_state *state, char *densityFileName)
+{
+    state->densityFileName = densityFileName;
+}
+
+
+void analyze_register_overlaps_callback(struct current_state *state, overlap_callback_t callback_function, void* callback_data)
+{
+    state->overlaps_callback = callback_function;
+    state->overlaps_callback_data = callback_data;
+}
+
+
+void analyze_register_exp_air_callback(struct current_state *state, exp_air_callback_t callback_function, void* callback_data)
+{
+    state->exp_air_callback = callback_function;
+    state->exp_air_callback_data = callback_data;
+}
+
+
+void analyze_set_volume_plotfile(struct current_state *state, FILE* plot_volume)
+{
+    state->plot_volume = plot_volume;
+}
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

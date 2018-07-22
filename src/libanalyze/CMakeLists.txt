@@ -10,6 +10,7 @@ BRLCAD_LIB_INCLUDE_DIRS(analyze ANALYZE_INCLUDE_DIRS "")
 set(LIBANALYZE_SOURCES
   api.c
   centroid.c
+  check_options.c
   density.c
   inside.c
   nirt.cxx

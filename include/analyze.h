@@ -379,6 +379,91 @@ analyze_surf_area(struct current_state *context, const char *name);
 ANALYZE_EXPORT extern int
 perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[], int num_objects, int flags);
 
+/**
+ * functions to initialize and clear current_state struct
+ */
+ANALYZE_EXPORT extern 
+struct current_state * analyze_current_state_init();
+
+ANALYZE_EXPORT extern void
+analyze_free_current_state(struct current_state *state);
+
+/*
+ * Below are the setter functions for the parameters of check API
+ */
+
+/**
+ * sets the azimuth and elevation for single grid to shoot rays
+ */
+ANALYZE_EXPORT extern void
+analyze_set_azimuth(struct current_state *state , fastf_t azimuth);
+
+ANALYZE_EXPORT extern void
+analyze_set_elevation(struct current_state *state , fastf_t elevation);
+
+/**
+ * sets the grid_spacing and grid spacing limit for shooting the rays
+ */
+ANALYZE_EXPORT extern void
+analyze_set_grid_spacing(struct current_state *state , fastf_t gridSpacing, fastf_t gridSpacingLimit);
+
+/**
+ * sets the tolerance values for overlaps, volume and weight for the analysis
+ */
+ANALYZE_EXPORT extern void
+analyze_set_overlap_tolerance(struct current_state *state , fastf_t overlap_tolerance);
+
+ANALYZE_EXPORT extern void
+analyze_set_volume_tolerance(struct current_state *state , fastf_t volume_tolerance);
+
+ANALYZE_EXPORT extern void
+analyze_set_weight_tolerance(struct current_state *state , fastf_t weight_tolerance);
+
+/**
+ * sets the number of cpus to be used for raytracing
+ */
+ANALYZE_EXPORT extern void
+analyze_set_ncpu(struct current_state *state , int ncpu);
+
+/**
+ * sets the required number of hits per object when raytracing
+ */
+ANALYZE_EXPORT extern void
+analyze_set_required_number_hits(struct current_state *state , int required_number_hits);
+
+/**
+ * sets the use_air flag for raytracing
+ */
+ANALYZE_EXPORT extern void
+analyze_set_use_air(struct current_state *state , int use_air);
+
+/**
+ * set the number of views when shooting triple grids of rays
+ */
+ANALYZE_EXPORT extern void
+analyze_set_num_views(struct current_state *state , int num_views);
+
+/**
+ * set the name of the density file
+ */
+ANALYZE_EXPORT extern void
+analyze_set_densityfile(struct current_state *state , char *densityFileName);
+
+/**
+ * registers the plotfile used to store the plot information for volume
+ */
+ANALYZE_EXPORT extern void
+analyze_set_volume_plotfile(struct current_state *state , FILE* plotvolume);
+
+/**
+ * registers the callback functions defined by the user to be called when raytracing
+ */
+ANALYZE_EXPORT extern void
+analyze_register_overlaps_callback(struct current_state *state, overlap_callback_t callback_function, void* callback_data);
+
+ANALYZE_EXPORT extern void
+analyze_register_exp_air_callback(struct current_state *state, exp_air_callback_t callback_function, void* callback_data);
+
 __END_DECLS
 
 #endif /* ANALYZE_H */
