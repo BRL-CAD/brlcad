@@ -1026,6 +1026,7 @@ static struct to_cmdtab to_cmds[] = {
     {"c",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_comb_std},
     {"cat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_cat},
     {"center",	"[x y z]", 5, to_view_func_plus, ged_center},
+    {"check",	(char *)0, TO_UNLIMITED, to_view_func, ged_check},
     {"check_overlaps",	(char *)0, TO_UNLIMITED, to_view_func, ged_check_overlaps},
     {"clear",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_zap},
     {"clone",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_clone},

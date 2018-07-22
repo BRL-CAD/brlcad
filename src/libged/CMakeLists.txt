@@ -60,6 +60,10 @@ set(LIBGED_SOURCES
   cc.c
   center.c
   check_overlaps.c
+  check/check.c
+  check/check_overlaps.c
+  check/check_volume.c
+  check/check_exp_air.c
   clone.c
   coil.c
   color.c
@@ -366,6 +370,7 @@ add_subdirectory(simulate/tests)
 set(ged_ignore_files
   TODO
   ged_private.h
+  check/check_private.h
   joint.h
   qray.h
   simulate/rt_collision_algorithm.hpp
