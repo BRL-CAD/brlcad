@@ -27,7 +27,7 @@
 
 
 struct exp_air_context {
-    struct region_pair *exposedAirList;
+    struct regions_list *exposedAirList;
     FILE *plot_exp_air;
     int expAir_color[3];
 };
@@ -42,11 +42,11 @@ exposed_air(struct partition *pp,
     struct exp_air_context *context = (struct exp_air_context*) callback_data;
     /* this shouldn't be air */
     bu_semaphore_acquire(GED_SEM_LIST);
-    add_unique_pair(context->exposedAirList,
-	    pp->pt_regionp,
-	    (struct region *)NULL,
-	    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist, /* thickness */
-	    last_out_point); /* location */
+    add_to_list(context->exposedAirList,
+    		pp->pt_regionp->reg_name,
+		(char *)NULL,
+		pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist,
+		last_out_point);
     bu_semaphore_release(GED_SEM_LIST);
 
     if (context->plot_exp_air) {
@@ -71,21 +71,8 @@ int check_exp_air(struct current_state *state,
     struct exp_air_context callbackdata;
     int expAir_color[3] = { 255, 128, 255 }; /* magenta */
 
-    /**
-     * list of exposed air
-     */
-    static struct region_pair exposedAirList = {
-	{
-	    BU_LIST_HEAD_MAGIC,
-	    (struct bu_list *)&exposedAirList,
-	    (struct bu_list *)&exposedAirList
-	},
-	{ "Exposed Air" },
-	(struct region *)NULL,
-	(unsigned long)0,
-	(double)0.0,
-	{0.0, 0.0, 0.0, }
-    };
+    struct regions_list exposedAirList;
+    BU_LIST_INIT(&(exposedAirList.l));
 
     if (options->plot_files) {
 	if ((plot_exp_air=fopen(name, "wb")) == (FILE *)NULL) {
@@ -104,7 +91,8 @@ int check_exp_air(struct current_state *state,
 	return GED_ERROR;
     }
 
-    check_list_report(&exposedAirList, options->units);
+    print_list(&exposedAirList, options->units, "Exposed Air");
+    clear_list(&exposedAirList);
 
     if (plot_exp_air) {
 	fclose(plot_exp_air);
