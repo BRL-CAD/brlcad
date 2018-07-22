@@ -35,13 +35,22 @@ int rectangular_grid_generator(struct xray *ray, void *context)
     /* if refine flag is set then we skip for even values of
      * x_index and y_index in case of single grid
      */
-    if (grid->refine_flag && grid->max_views == 1) {
+    if (grid->refine_flag && grid->single_grid) {
 	if (!(y_index&1) && !(x_index&1)) {
 	    (grid->current_point++);
 	    return(rectangular_grid_generator(ray, grid));
 	}
     }
 
+    /* if refine flag is set then we skip for odd values of
+     * x_index and y_index in case of triple grid
+     */
+    if (grid->refine_flag && grid->single_grid == 0) {
+	if (x_index&1 && y_index&1) {
+	    grid->current_point++;
+	    return (rectangular_grid_generator(ray, grid));
+	}
+    }
     /* reached end of grid generation */
     if (grid->current_point >= grid->total_points) {
 	return 1;
@@ -100,18 +109,6 @@ int rectangular_triple_grid_generator(struct xray *ray, void *context)
 	grid->total_points = grid->x_points * (grid->steps[v_axis] - 1);
 	(grid->view)++;
 	grid->current_point = 0;
-    }
-    if (grid->refine_flag) {
-	int y_index, x_index;
-	y_index = (int)(grid->current_point / (grid->x_points));
-	x_index = (int)(grid->current_point - (y_index * (grid->x_points)));
-	    /* if refine flag is set then we skip for odd values of
-	     * x_index and y_index in case of triple grid
-	     */
-	if (x_index&1 && y_index&1) {
-	    grid->current_point++;
-	    return (rectangular_triple_grid_generator(ray, grid));
-	}
     }
     return (rectangular_grid_generator(ray, grid));
 }

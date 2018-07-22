@@ -193,7 +193,7 @@ check_grid_setup (int *cell_newsize,
     grid->total_points = (*width)*(*height);
     grid->current_point = 0;
     grid->refine_flag = 0;
-    grid->max_views = 1;
+    grid->single_grid = 1;
 
     /* Create basis vectors dx and dy for emanation plane (grid) */
     VSET(temp, 1, 0, 0);

@@ -90,6 +90,7 @@ struct grid_generator_functions {
 struct rectangular_grid {
     int view;
     int max_views;
+    int single_grid;
     point_t mdl_origin;
     long steps[3];
     int refine_flag;
