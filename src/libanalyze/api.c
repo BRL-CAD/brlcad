@@ -839,7 +839,7 @@ find_cmd_obj(struct current_state *state, struct per_obj_data *obj_rpt, const ch
 
     bu_log("%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, state->num_objects);
 
-    return ANALYZE_ERROR;
+    return -1;
 }
 
 /**
@@ -852,7 +852,7 @@ allocate_region_data(struct current_state *state, char *av[])
     struct region *regp;
     struct rt_i *rtip = state->rtip;
     int i;
-
+    int index;
     if (state->num_objects < 1) {
 	/* what?? */
 	bu_log("WARNING: No objects remaining.\n");
@@ -908,7 +908,12 @@ allocate_region_data(struct current_state *state, char *av[])
 	state->reg_tbl[i].r_weight = (double *)bu_calloc(state->num_views, sizeof(double), "len");
 	state->reg_tbl[i].r_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "surface area");
 
-	state->reg_tbl[i].optr = &state->objs[ find_cmd_obj(state, state->objs, &regp->reg_name[1]) ];
+	index = find_cmd_obj(state, state->objs, &regp->reg_name[1]);
+	if (index == -1) {
+	    state->reg_tbl[i].optr = NULL;
+	} else {
+	    state->reg_tbl[i].optr = &state->objs[index];
+	}
     }
 }
 
