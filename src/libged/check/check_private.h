@@ -197,8 +197,6 @@ struct regions_list {
     vect_t coord;
 };
 
-extern void
-check_list_report(struct region_pair *list, const struct cvt_tab *units[3]);
 
 extern void
 add_to_list(struct regions_list *list,

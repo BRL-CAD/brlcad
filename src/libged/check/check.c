@@ -420,36 +420,6 @@ clear_list(struct regions_list *list)
 }
 
 
-/**
- * list_report
- */
-void
-check_list_report(struct region_pair *list, const struct cvt_tab *units[3])
-{
-    struct region_pair *rp;
-
-    if (BU_LIST_IS_EMPTY(&list->l)) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "No %s\n", (char *)list->r.name);
-
-	return;
-    }
-
-    bu_vls_printf(_ged_current_gedp->ged_result_str, "list %s:\n", (char *)list->r.name);
-
-    for (BU_LIST_FOR (rp, region_pair, &(list->l))) {
-	if (rp->r2) {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s %s count: %lu dist: %g%s @ (%g %g %g)\n",
-			  rp->r.r1->reg_name, rp->r2->reg_name, rp->count,
-			  rp->max_dist / units[LINE]->val, units[LINE]->name, V3ARGS(rp->coord));
-	} else {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s count: %lu dist: %g%s @ (%g %g %g)\n",
-			  rp->r.r1->reg_name, rp->count,
-			  rp->max_dist / units[LINE]->val, units[LINE]->name, V3ARGS(rp->coord));
-	}
-    }
-}
-
-
 int ged_check(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
