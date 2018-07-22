@@ -461,7 +461,7 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     struct current_state *state = NULL;
 
     struct check_parameters options;
-    const char *check_subcommands[] = {"weight", "volume", "overlaps", "exp_air", "gaps", "adj_air", NULL};
+    const char *check_subcommands[] = {"weight", "volume", "overlaps", "exp_air", "gap", "adj_air", NULL};
     const struct cvt_tab *units[3] = {
 	&units_tab[0][0],	/* linear */
 	&units_tab[1][0],	/* volume */
@@ -595,7 +595,7 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 	    state = NULL;
 	    return GED_ERROR;
 	}
-    } else if (bu_strncmp(sub, "gaps", len) == 0) {
+    } else if (bu_strncmp(sub, "gap", len) == 0) {
 
 	if (check_gap(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options) == GED_ERROR) {
 	    bu_free(tobjtab, "free tobjtab");
