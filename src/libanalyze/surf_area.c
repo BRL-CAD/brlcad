@@ -24,66 +24,31 @@
  *
  */
 
-/* BRL-CAD includes */
 #include "common.h"
-#include "raytrace.h"			/* For interfacing to librt */
-#include "vmath.h"			/* Vector Math macros */
-#include "rt/geom.h"
-#include "bu/parallel.h"
+
 #include "analyze.h"
+#include "./analyze_private.h"
 
-/* System headers */
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-
-struct per_obj_data {
-    char *o_name;
-    double *o_len;
-    double *o_lenDensity;
-    double *o_volume;
-    double *o_weight;
-    double *o_surf_area;
-    fastf_t *o_lenTorque; /* torque vector for each view */
-};
-
-struct cvt_tab {
-    double val;
-    char name[32];
-};
-
-/* this table keeps track of the "current" or "user selected units and
- * the associated conversion values
- */
-#define LINE 0
-#define VOL 1
-#define WGT 2
-static const struct cvt_tab units[3][3] = {
-    {{1.0, "mm"}},	/* linear */
-    {{1.0, "cu mm"}},	/* volume */
-    {{1.0, "grams"}}	/* weight */
-};
 
 fastf_t
-analyze_surf_area(struct raytracing_context *context, const char *name)
+analyze_surf_area(struct current_state *state, const char *name)
 {
     fastf_t area;
     int i, view, obj = 0;
     double avg_area;
 
-    for (i = 0; i < context->num_objects; i++) {
-	if(!(bu_strcmp(context->objs[i].o_name, name))) {
+    for (i = 0; i < state->num_objects; i++) {
+	if(!(bu_strcmp(state->objs[i].o_name, name))) {
 	    obj = i;
 	    break;
 	}
     }
 
     avg_area = 0.0;
-    for (view = 0; view < context->num_views; view++)
-	avg_area += context->objs[obj].o_surf_area[view];
+    for (view = 0; view < state->num_views; view++)
+	avg_area += state->objs[obj].o_surf_area[view];
 
-    avg_area /= context->num_views;
+    avg_area /= state->num_views;
     area = avg_area / units[VOL]->val;
     return area;
 }

@@ -58,6 +58,120 @@ typedef int *         (*getflag_t)(void *ptr);
 
 extern void analyze_seg_filter(struct bu_ptbl *segs, getray_t gray, getflag_t gflag, struct rt_i *rtip, struct resource *resp, fastf_t tol, int ncpus);
 
+/* summary data structure for objects specified on command line */
+struct per_obj_data {
+    char *o_name;
+    double *o_len;
+    double *o_lenDensity;
+    double *o_volume;
+    double *o_weight;
+    double *o_surf_area;
+    fastf_t *o_lenTorque; /* torque vector for each view */
+};
+
+/**
+ * this is the data we track for each region
+ */
+struct per_region_data {
+    unsigned long hits;
+    double *r_lenDensity; /* for per-region per-view weight computation */
+    double *r_len;        /* for per-region, per-view computation */
+    double *r_weight;
+    double *r_volume;
+    double *r_surf_area;
+    struct per_obj_data *optr;
+};
+
+/* Some defines for re-using the values from the application structure
+ * for other purposes
+ */
+#define A_LENDEN a_color[0]
+#define A_LEN a_color[1]
+#define A_STATE a_uptr
+
+struct cvt_tab {
+    double val;
+    char name[32];
+};
+
+/* this table keeps track of the "current" or "user selected units and
+ * the associated conversion values
+ */
+#define LINE 0
+#define VOL 1
+#define WGT 2
+static const struct cvt_tab units[3][3] = {
+    {{1.0, "mm"}},	/* linear */
+    {{1.0, "cu mm"}},	/* volume */
+    {{1.0, "grams"}}	/* weight */
+};
+
+struct current_state {
+    int curr_view; 	/* the "view" number we are shooting */
+    int u_axis;    	/* these 3 are in the range 0..2 inclusive and indicate which axis (X, Y, or Z) */
+    int v_axis;    	/* is being used for the U, V, or invariant vector direction */
+    int i_axis;
+
+    /* ANALYZE_SEM_WORKER protects this */
+    int v;         	/* indicates how many "grid_size" steps in the v direction have been taken */
+
+    /* ANALYZE_SEM_STATS protects this */
+    double *m_lenDensity;
+    double *m_len;
+    double *m_volume;
+    double *m_weight;
+    double *m_surf_area;
+    unsigned long *shots;
+
+    vect_t u_dir;  	/* direction of U vector for "current view" */
+    vect_t v_dir;  	/* direction of V vector for "current view" */
+    long steps[3]; 	/* this is per-dimension, not per-view */
+    vect_t span;   	/* How much space does the geometry span in each of X, Y, Z directions */
+    vect_t area;   	/* area of the view for view with invariant at index */
+
+    int num_objects; 	/* number of objects specified on command line */
+
+    struct per_obj_data *objs;
+    struct per_region_data *reg_tbl;
+
+    struct density_entry *densities;
+    int num_densities;
+
+    /* the parameters */
+    int num_views;
+    double overlap_tolerance;
+    double volume_tolerance;
+    double weight_tolerance;
+    double sa_tolerance;
+    double azimuth_deg, elevation_deg;
+    double gridSpacing, gridSpacingLimit;
+    int ncpu;
+    int required_number_hits;
+    int use_air;
+    int use_single_grid;
+    char *densityFileName;
+
+    FILE *plot_volume;
+
+    fastf_t *m_lenTorque; /* torque vector for each view */
+
+    /* single gird variables */
+    mat_t Viewrotscale;
+    fastf_t viewsize;
+    mat_t model2view;
+    point_t eye_model;
+    struct rectangular_grid *grid;
+
+    struct rt_i *rtip;
+    struct resource *resp;
+
+    overlap_callback_t overlaps_callback;
+    void* overlaps_callback_data;
+
+    exp_air_callback_t exp_air_callback;
+    void* exp_air_callback_data;
+};
+
 __END_DECLS
 
 #endif /* ANALYZE_PRIVATE_H */

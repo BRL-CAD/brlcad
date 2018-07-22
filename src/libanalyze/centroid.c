@@ -24,45 +24,20 @@
  *
  */
 
-/* BRL-CAD includes */
 #include "common.h"
-#include "vmath.h"			/* Vector Math macros */
-#include "bu/parallel.h"
-#include "raytrace.h"			/* For interfacing to librt */
-#include "rt/geom.h"
+
 #include "analyze.h"
-
-/* System headers */
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-
-struct per_obj_data {
-    char *o_name;
-    double *o_len;
-    double *o_lenDensity;
-    double *o_volume;
-    double *o_weight;
-    double *o_surf_area;
-    fastf_t *o_lenTorque; /* torque vector for each view */
-};
-
-struct cvt_tab {
-    double val;
-    char name[32];
-};
-
+#include "./analyze_private.h"
 
 point_t *
-analyze_centroid(struct raytracing_context *context, const char *name)
+analyze_centroid(struct current_state *state, const char *name)
 {
     point_t *cent;
     int i, view, obj = 0;
     double avg_mass;
 
-    for (i = 0; i < context->num_objects; i++) {
-	if(!(bu_strcmp(context->objs[i].o_name, name))) {
+    for (i = 0; i < state->num_objects; i++) {
+	if(!(bu_strcmp(state->objs[i].o_name, name))) {
 	    obj = i;
 	    break;
 	}
@@ -70,23 +45,23 @@ analyze_centroid(struct raytracing_context *context, const char *name)
 
     BU_GET(cent, point_t);
     avg_mass = 0.0;
-    for (view = 0; view < context->num_views; view++)
-	avg_mass += context->objs[obj].o_weight[view];
+    for (view = 0; view < state->num_views; view++)
+	avg_mass += state->objs[obj].o_weight[view];
 
-    avg_mass /= context->num_views;
+    avg_mass /= state->num_views;
     if (!ZERO(avg_mass)) {
 	point_t centroid = VINIT_ZERO;
 	fastf_t inv_total_mass = 1.0/avg_mass;
 
-	for (view = 0; view < context->num_views; view++) {
+	for (view = 0; view < state->num_views; view++) {
 	    vect_t torque;
-	    fastf_t cell_area = context->area[view] / context->shots[view];
+	    fastf_t cell_area = state->area[view] / state->shots[view];
 
-	    VSCALE(torque, &context->objs[obj].o_lenTorque[view*3], cell_area);
+	    VSCALE(torque, &state->objs[obj].o_lenTorque[view*3], cell_area);
 	    VADD2(centroid, centroid, torque);
 	}
 
-	VSCALE(centroid, centroid, 1.0/(fastf_t)context->num_views);
+	VSCALE(centroid, centroid, 1.0/(fastf_t)state->num_views);
 	VSCALE(centroid, centroid, inv_total_mass);
 	(*cent)[0] = centroid[X];
 	(*cent)[1] = centroid[Y];

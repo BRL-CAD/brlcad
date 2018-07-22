@@ -23,22 +23,18 @@
  *
  */
 
-/* BRL-CAD includes */
 #include "common.h"
-#include "analyze.h"
-#include "raytrace.h"
-#include "vmath.h"
-#include "rt/geom.h"
-#include "bu/parallel.h"
 
-/* System includes */
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <math.h>
-#include <limits.h>
+
+#include "raytrace.h"
+#include "vmath.h"
+#include "bu/parallel.h"
+
+#include "analyze.h"
+#include "./analyze_private.h"
 
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_CENTROIDS 2
@@ -53,105 +49,13 @@
 #define ANALYSIS_MOMENTS 1024
 #define ANALYSIS_PLOT_OVERLAPS 2048
 
-struct current_state {
-    int curr_view; 	/* the "view" number we are shooting */
-    int u_axis;    	/* these 3 are in the range 0..2 inclusive and indicate which axis (X, Y, or Z) */
-    int v_axis;    	/* is being used for the U, V, or invariant vector direction */
-    int i_axis;
-
-    /* ANALYZE_SEM_WORKER protects this */
-    int v;         	/* indicates how many "grid_size" steps in the v direction have been taken */
-
-    /* ANALYZE_SEM_STATS protects this */
-    double *m_lenDensity;
-    double *m_len;
-    double *m_volume;
-    double *m_weight;
-    double *m_surf_area;
-    unsigned long *shots;
-    int first;     	/* this is the first time we've computed a set of views */
-
-    vect_t u_dir;  	/* direction of U vector for "current view" */
-    vect_t v_dir;  	/* direction of V vector for "current view" */
-    struct rt_i *rtip;
-    long steps[3]; 	/* this is per-dimension, not per-view */
-    vect_t span;   	/* How much space does the geometry span in each of X, Y, Z directions */
-    vect_t area;   	/* area of the view for view with invariant at index */
-    double overlap_tolerance;
-    double volume_tolerance;
-    double weight_tolerance;
-    double sa_tolerance;
-    int num_objects; 	/* number of objects specified on command line */
-    int num_views;
-
-    fastf_t *m_lenTorque; /* torque vector for each view */
-
-    struct resource *resp;
-    struct raytracing_context *context;
-};
-
-/* summary data structure for objects specified on command line */
-struct per_obj_data {
-    char *o_name;
-    double *o_len;
-    double *o_lenDensity;
-    double *o_volume;
-    double *o_weight;
-    double *o_surf_area;
-    fastf_t *o_lenTorque; /* torque vector for each view */
-};
-
-struct per_obj_data *obj_tbl;
-
-/**
- * this is the data we track for each region
- */
-struct per_region_data {
-    unsigned long hits;
-    double *r_lenDensity; /* for per-region per-view weight computation */
-    double *r_len;        /* for per-region, per-view computation */
-    double *r_weight;
-    double *r_volume;
-    double *r_surf_area;
-    struct per_obj_data *optr;
-};
-
-static struct per_region_data *reg_tbl;
-
 static int debug = 0;
 static int default_den = 0;
 static int analysis_flags;
-static char *densityFileName;
-static double gridSpacing;
-static double gridSpacingLimit;
-static int ncpu;
 static double Samples_per_model_axis = 2.0;
 static int aborted = 0;
 static int verbose = 0;
 
-/* Some defines for re-using the values from the application structure
- * for other purposes
- */
-#define A_LENDEN a_color[0]
-#define A_LEN a_color[1]
-#define A_STATE a_uptr
-
-struct cvt_tab {
-    double val;
-    char name[32];
-};
-
-/* this table keeps track of the "current" or "user selected units and
- * the associated conversion values
- */
-#define LINE 0
-#define VOL 1
-#define WGT 2
-static const struct cvt_tab units[3][3] = {
-    {{1.0, "mm"}},	/* linear */
-    {{1.0, "cu mm"}},	/* volume */
-    {{1.0, "grams"}}	/* weight */
-};
 
 /**
  * rt_shootray() was told to call this on a hit.  It passes the
@@ -166,9 +70,12 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 {
     /* see raytrace.h for all of these guys */
     struct partition *pp;
-    point_t pt;
+    point_t pt, opt, last_out_point;
     double dist;       /* the thickness of the partition */
+    int air_first = 1; /* are we in an air before a solid */
     double val;
+    double last_out_dist = -1.0;
+    double gap_dist;
     struct current_state *state = (struct current_state *)ap->A_STATE;
 
     if (!segs) /* unexpected */
@@ -192,6 +99,21 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    bu_semaphore_release(ANALYZE_SEM_WORKER);
 	}
 
+	if (analysis_flags & ANALYSIS_EXP_AIR) {
+
+	    gap_dist = (pp->pt_inhit->hit_dist - last_out_dist);
+
+	    /* if air is first on the ray, or we're moving from void/gap to air
+	     * then this is exposed air
+	     */
+	    if (pp->pt_regionp->reg_aircode &&
+		(air_first || gap_dist > state->overlap_tolerance)) {
+		state->exp_air_callback(pp, last_out_point, pt, opt, state->exp_air_callback_data);
+	    } else {
+		air_first = 0;
+	    }
+	}
+
 	/* computing the weight of the objects */
 	if (analysis_flags & ANALYSIS_WEIGHT) {
 	    if (debug) {
@@ -201,13 +123,13 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    }
 
 	    /* make sure mater index is within range of densities */
-	    if (pp->pt_regionp->reg_gmater >= state->context->num_densities) {
+	    if (pp->pt_regionp->reg_gmater >= state->num_densities) {
 		if(default_den == 0) {
 		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
 		    bu_log("Density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
 			    pp->pt_regionp->reg_gmater,
 			    pp->pt_regionp->reg_name,
-			    state->context->num_densities); /* XXX this should do something else */
+			    state->num_densities); /* XXX this should do something else */
 		    bu_semaphore_release(ANALYZE_SEM_WORKER);
 		    return ANALYZE_ERROR;
 		}
@@ -215,13 +137,13 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 	    /* make sure the density index has been set */
 	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-	    if(default_den || state->context->densities[pp->pt_regionp->reg_gmater].magic != DENSITY_MAGIC) {
+	    if(default_den || state->densities[pp->pt_regionp->reg_gmater].magic != DENSITY_MAGIC) {
 		BU_GET(de, struct density_entry);		/* Aluminium 7xxx series as default material */
 		de->magic = DENSITY_MAGIC;
 		de->grams_per_cu_mm = 2.74;
 		de->name = "Aluminium, 7079-T6";
 	    } else {
-		de = state->context->densities + pp->pt_regionp->reg_gmater;
+		de = state->densities + pp->pt_regionp->reg_gmater;
 	    }
 	    bu_semaphore_release(ANALYZE_SEM_WORKER);
 	    if (de->magic == DENSITY_MAGIC) {
@@ -334,11 +256,25 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 			pp->pt_regionp->reg_name, dist, prd->optr->o_len[state->curr_view], prd->optr->o_name);
 		bu_semaphore_release(ANALYZE_SEM_WORKER);
 	    }
+	    if (state->plot_volume) {
+		VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		if (ap->a_user & 1) {
+		    pl_color(state->plot_volume, 128, 255, 192);  /* pale green */
+		} else {
+		    pl_color(state->plot_volume, 128, 192, 255);  /* cyan */
+		}
+
+		pdv_3line(state->plot_volume, pt, opt);
+		bu_semaphore_release(BU_SEM_SYSCALL);
+	    }
 	}
 
 	/* note that this region has been seen */
 	((struct per_region_data *)pp->pt_regionp->reg_udata)->hits++;
+	last_out_dist = pp->pt_outhit->hit_dist;
+	VJOIN1(last_out_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
     }
 
     /* This value is returned by rt_shootray a hit usually returns 1,
@@ -361,13 +297,69 @@ analyze_miss(struct application *ap)
     return 0;
 }
 
+
+/**
+ * Write end points of partition to the standard output.  If this
+ * routine return !0, this partition will be dropped from the boolean
+ * evaluation.
+ *
+ * Returns:
+ * 0 to eliminate partition with overlap entirely
+ * 1 to retain partition in output list, claimed by reg1
+ * 2 to retain partition in output list, claimed by reg2
+ *
+ * This routine must be prepared to run in parallel
+ */
+HIDDEN int
+analyze_overlap(struct application *ap,
+		struct partition *pp,
+		struct region *reg1,
+		struct region *reg2,
+		struct partition *hp)
+{
+
+    struct xray *rp = &ap->a_ray;
+    struct current_state *state = (struct current_state *)ap->A_STATE;
+    struct hit *ihitp = pp->pt_inhit;
+    struct hit *ohitp = pp->pt_outhit;
+    vect_t ihit;
+    vect_t ohit;
+    double depth;
+
+    if (!hp) /* unexpected */
+	return 0;
+
+    /* if one of the regions is air, let it loose */
+    if (reg1->reg_aircode && ! reg2->reg_aircode)
+	return 2;
+    if (reg2->reg_aircode && ! reg1->reg_aircode)
+	return 1;
+
+    depth = ohitp->hit_dist - ihitp->hit_dist;
+
+    if (depth < state->overlap_tolerance)
+	/* too small to matter, pick one or none */
+	return 1;
+
+    VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
+    VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
+
+    state->overlaps_callback(reg1, reg2, depth, ihit, ohit, state->overlaps_callback_data);
+
+    /* XXX We should somehow flag the volume/weight calculations as invalid */
+
+    /* since we have no basis to pick one over the other, just pick */
+    return 1;	/* No further consideration to this partition */
+}
+
+
 /**
  * Returns
  * 0 on success
  * !0 on failure
  */
 HIDDEN int
-densities_from_file(struct raytracing_context *context, char *name)
+densities_from_file(struct current_state *state, char *name)
 {
     struct stat sb;
 
@@ -388,15 +380,15 @@ densities_from_file(struct raytracing_context *context, char *name)
 	return ANALYZE_ERROR;
     }
 
-    context->densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    context->num_densities = 128;
+    state->densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
+    state->num_densities = 128;
 
     /* a mapped file would make more sense here */
     buf = (char *)bu_malloc(sb.st_size+1, "density buffer");
     sret = fread(buf, sb.st_size, 1, fp);
     if (sret != 1)
 	perror("fread");
-    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, context->densities, NULL, &context->num_densities);
+    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, state->densities, NULL, &state->num_densities);
     bu_free(buf, "density buffer");
     fclose(fp);
 
@@ -410,7 +402,7 @@ densities_from_file(struct raytracing_context *context, char *name)
  * !0 on failure
  */
 HIDDEN int
-densities_from_database(struct raytracing_context *context, struct rt_i *rtip)
+densities_from_database(struct current_state *state, struct rt_i *rtip)
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -436,39 +428,20 @@ densities_from_database(struct raytracing_context *context, struct rt_i *rtip)
 
     RT_CHECK_BINUNIF (bu);
 
-    context->densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    context->num_densities = 128;
+    state->densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
+    state->num_densities = 128;
 
     /* Acquire one extra byte to accommodate parse_densities_buffer()
      * (i.e. it wants to write an EOS in buf[bu->count]).
      */
     buf = (char *)bu_malloc(bu->count+1, "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
-    ret = parse_densities_buffer(buf, bu->count, context->densities, NULL, &context->num_densities);
+    ret = parse_densities_buffer(buf, bu->count, state->densities, NULL, &state->num_densities);
     bu_free((void *)buf, "density buffer");
 
     return ret;
 }
 
-/**
- * This routine must be prepared to run in parallel
- */
-HIDDEN int
-next_row(struct current_state *state)
-{
-    int v;
-    /* look for more work */
-    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-
-    if (state->v < state->steps[state->v_axis])
-	v = state->v++;	/* get a row to work on */
-    else
-	v = 0; /* signal end of work */
-
-    bu_semaphore_release(ANALYZE_SEM_WORKER);
-
-    return v;
-}
 
 /**
  * These checks are unique because they must both be completed.  Early
@@ -509,8 +482,8 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    hi = -INFINITY;
 	    tmp = 0.0;
 	    for (view = 0; view < state->num_views; view++) {
-		val = obj_tbl[obj].o_weight[view] =
-		    obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
+		val = state->objs[obj].o_weight[view] =
+		    state->objs[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
 		if(verbose)
 		    bu_log("Value : %g\n", val);
 		V_MIN(low, val);
@@ -522,7 +495,7 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    if (verbose)
 		bu_log(
 			"\t%s running avg weight %g %s hi=(%g) low=(%g)\n",
-			obj_tbl[obj].o_name,
+			state->objs[obj].o_name,
 			(tmp / state->num_views) / units[WGT]->val,
 			units[WGT]->name,
 			hi / units[WGT]->val,
@@ -536,7 +509,7 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 		can_terminate = 0;
 		if (verbose)
 		    bu_log("\t%s differs too much in weight per view.\n",
-			    obj_tbl[obj].o_name);
+			    state->objs[obj].o_name);
 	    }
 	}
 	if (can_terminate) {
@@ -559,8 +532,8 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    hi = -INFINITY;
 	    tmp = 0.0;
 	    for (view = 0; view < state->num_views; view++) {
-		val = obj_tbl[obj].o_volume[view] =
-		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
+		val = state->objs[obj].o_volume[view] =
+		    state->objs[obj].o_len[view] * (state->area[view] / state->shots[view]);
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -570,7 +543,7 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    if (verbose)
 		bu_log(
 			"\t%s running avg volume %g %s hi=(%g) low=(%g)\n",
-			obj_tbl[obj].o_name,
+			state->objs[obj].o_name,
 			(tmp / state->num_views) / units[VOL]->val, units[VOL]->name,
 			hi / units[VOL]->val,
 			low / units[VOL]->val);
@@ -582,7 +555,7 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 		can_terminate = 0;
 		if (verbose)
 		    bu_log("\tvolume tol not met on %s.  Refine grid\n",
-			    obj_tbl[obj].o_name);
+			    state->objs[obj].o_name);
 		break;
 	    }
 	}
@@ -599,7 +572,7 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    hi = -INFINITY;
 	    tmp = 0.0;
 	    for(view = 0; view < state->num_views; view++) {
-		val = obj_tbl[obj].o_surf_area[view];
+		val = state->objs[obj].o_surf_area[view];
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -638,17 +611,18 @@ check_terminate(struct current_state *state)
     wv_status = weight_volume_surf_area_terminate_check(state);
 
     /* if we've reached the grid limit, we're done, no matter what */
-    if (gridSpacing < gridSpacingLimit) {
+    if (state->gridSpacing < state->gridSpacingLimit) {
 	bu_log("NOTE: Stopped, grid spacing refined to %g (below lower limit %g).\n",
-		gridSpacing, gridSpacingLimit);
+		state->gridSpacing, state->gridSpacingLimit);
 	return 0;
     }
-    if (wv_status == 0) {
-	if (verbose)
-	    bu_log("%s: Volume/Weight tolerance met. Terminate\n", CPP_FILELINE);
-	return 0; /* terminate */
+    if (analysis_flags & (ANALYSIS_WEIGHT|ANALYSIS_VOLUME)) {
+	if (wv_status == 0) {
+	    if (verbose)
+		bu_log("%s: Volume/Weight tolerance met. Terminate\n", CPP_FILELINE);
+	    return 0; /* terminate */
+	}
     }
-
     return 1;
 }
 
@@ -659,8 +633,6 @@ HIDDEN void
 analyze_worker(int cpu, void *ptr)
 {
     struct application ap;
-    int u, v;
-    double v_coord;
     struct current_state *state = (struct current_state *)ptr;
     unsigned long shot_cnt;
 
@@ -672,93 +644,28 @@ analyze_worker(int cpu, void *ptr)
     ap.a_hit = analyze_hit;    /* where to go on a hit */
     ap.a_miss = analyze_miss;  /* where to go on a miss */
     ap.a_resource = &state->resp[cpu];
+    ap.a_logoverlap = rt_silent_logoverlap;
     ap.A_LENDEN = 0.0; /* really the cumulative length*density for weight computation*/
     ap.A_LEN = 0.0;    /* really the cumulative length for volume computation */
-
-    /* gross hack */
-    ap.a_ray.r_dir[state->u_axis] = ap.a_ray.r_dir[state->v_axis] = 0.0;
-    ap.a_ray.r_dir[state->i_axis] = 1.0;
-
     ap.A_STATE = ptr; /* really copying the state ptr to the a_uptr */
 
-    u = -1;
-
-    v = next_row(state);
-
-    shot_cnt = 0;
-    while (v) {
-
-	v_coord = v * gridSpacing;
-	if (debug) {
-	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-	    bu_log("  v = %d v_coord=%g\n", v, v_coord);
-	    bu_semaphore_release(ANALYZE_SEM_WORKER);
-	}
-
-	if ((v&1) || state->first) {
-	    /* shoot all the rays in this row.  This is either the
-	     * first time a view has been computed or it is an odd
-	     * numbered row in a grid refinement
-	     */
-	    for (u=1; u < state->steps[state->u_axis]; u++) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
-		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
-
-		if (debug) {
-		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		    bu_log("%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt),
-			    V3ARGS(ap.a_ray.r_dir));
-		    bu_semaphore_release(ANALYZE_SEM_WORKER);
-		}
-		ap.a_user = v;
-		(void)rt_shootray(&ap);
-
-		if (aborted)
-		    return;
-
-		shot_cnt++;
-	    }
-	} else {
-	    /* shoot only the rays we need to on this row.  Some of
-	     * them have been computed in a previous iteration.
-	     */
-	    for (u=1; u < state->steps[state->u_axis]; u+=2) {
-		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
-		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
-
-		if (debug) {
-		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		    bu_log("%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt),
-			    V3ARGS(ap.a_ray.r_dir));
-		    bu_semaphore_release(ANALYZE_SEM_WORKER);
-		}
-		ap.a_user = v;
-		(void)rt_shootray(&ap);
-
-		if (aborted)
-		    return;
-
-		shot_cnt++;
-
-		if (debug)
-		    if (u+1 < state->steps[state->u_axis]) {
-			bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-			bu_log("  ---\n");
-			bu_semaphore_release(ANALYZE_SEM_WORKER);
-		    }
-	    }
-	}
-
-	/* iterate */
-	v = next_row(state);
+    if (analysis_flags & ANALYSIS_OVERLAPS) {
+	ap.a_overlap = analyze_overlap;
     }
 
-    if (debug && (u == -1)) {
+    shot_cnt = 0;
+    while (1) {
 	bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-	bu_log("Didn't shoot any rays\n");
+	if (rectangular_grid_generator(&ap.a_ray, state->grid) == 1){
+	    bu_semaphore_release(ANALYZE_SEM_WORKER);
+	    break;
+	}
+	ap.a_user = (int)(state->grid->current_point / (state->grid->x_points));
 	bu_semaphore_release(ANALYZE_SEM_WORKER);
+	(void)rt_shootray(&ap);
+	if (aborted)
+	    return;
+	shot_cnt++;
     }
 
     /* There's nothing else left to work on in this view.  It's time
@@ -785,24 +692,24 @@ HIDDEN int
 options_set(struct current_state *state)
 {
     struct rt_i *rtip = state->rtip;
-    double newGridSpacing = gridSpacing;
+    double newGridSpacing = state->gridSpacing;
     int axis;
 
     /* figure out where the density values are coming from and get
      * them.
      */
     if (analysis_flags & ANALYSIS_WEIGHT) {
-	if (densityFileName) {
+	if (state->densityFileName) {
 	    if(debug)
 		bu_log("Density from file\n");
-	    if (densities_from_file(state->context, densityFileName) != ANALYZE_OK) {
+	    if (densities_from_file(state, state->densityFileName) != ANALYZE_OK) {
 		bu_log("Couldn't load density table from file. Using default density.\n");
 		default_den = 1;
 	    }
 	} else {
 	    if(debug)
 		bu_log("Density from db\n");
-	    if (densities_from_database(state->context, rtip) != ANALYZE_OK) {
+	    if (densities_from_database(state, rtip) != ANALYZE_OK) {
 		bu_log("Couldn't load density table from database. Using default density.\n");
 		default_den = 1;
 	    }
@@ -820,14 +727,14 @@ options_set(struct current_state *state)
 	}
     }
 
-    if (!ZERO(newGridSpacing - gridSpacing)) {
+    if (!ZERO(newGridSpacing - state->gridSpacing)) {
 	bu_log("Initial grid spacing %g %s does not allow %g samples per axis.\n",
-		gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
+		state->gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
 
 	bu_log("Adjusted initial grid spacing to %g %s to get %g samples per model axis.\n",
 		newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
 
-	gridSpacing = newGridSpacing;
+	state->gridSpacing = newGridSpacing;
     }
 
     /* if the vol/weight tolerances are not set, pick something */
@@ -858,9 +765,9 @@ options_set(struct current_state *state)
 	if (state->weight_tolerance < 0.0) {
 	    double max_den = 2.74;	/* Aluminium 7xxx series as default material */
 	    int i;
-	    for (i = 0; i < state->context->num_densities; i++) {
-		if (state->context->densities[i].grams_per_cu_mm > max_den)
-		    max_den = state->context->densities[i].grams_per_cu_mm;
+	    for (i = 0; i < state->num_densities; i++) {
+		if (state->densities[i].grams_per_cu_mm > max_den)
+		    max_den = state->densities[i].grams_per_cu_mm;
 	    }
 	    state->weight_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.1 * max_den;
 	    bu_log("Setting weight tolerance to %g %s\n",
@@ -870,6 +777,23 @@ options_set(struct current_state *state)
 	    bu_log("Weight tolerance   %g\n", state->weight_tolerance);
 	}
     }
+
+    if (analysis_flags & ANALYSIS_OVERLAPS) {
+	if (!ZERO(state->overlap_tolerance))
+	    bu_log("overlap tolerance to %g\n", state->overlap_tolerance);
+	if (state->overlaps_callback == NULL) {
+	    bu_log("\nOverlaps callback function not registered!");
+	    return ANALYZE_ERROR;
+	}
+    }
+
+    if (analysis_flags & ANALYSIS_EXP_AIR) {
+	if (state->exp_air_callback == NULL) {
+	    bu_log("\nexp_air callback function not registered!");
+	    return ANALYZE_ERROR;
+	}
+    }
+
     return ANALYZE_OK;
 }
 
@@ -902,7 +826,7 @@ find_cmd_obj(struct current_state *state, struct per_obj_data *obj_rpt, const ch
  * basis for each of the view, object and region levels.
  */
 HIDDEN void
-allocate_region_data(struct current_state *state, struct raytracing_context *context, const char *av[])
+allocate_region_data(struct current_state *state, char *av[])
 {
     struct region *regp;
     struct rt_i *rtip = state->rtip;
@@ -934,137 +858,242 @@ allocate_region_data(struct current_state *state, struct raytracing_context *con
     state->shots = (unsigned long *)bu_calloc(state->num_views, sizeof(unsigned long), "volume");
     state->m_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
 
-    context->shots = (unsigned long *)bu_calloc(state->num_views, sizeof(unsigned long), "volume");
-    context->objs = (struct per_obj_data *)bu_calloc(state->num_objects, sizeof(struct per_obj_data), "state report tables");
+    state->objs = (struct per_obj_data *)bu_calloc(state->num_objects, sizeof(struct per_obj_data), "state report tables");
 
     /* build data structures for the list of objects the user
      * specified on the command line
      */
-    obj_tbl = (struct per_obj_data *)bu_calloc(state->num_objects, sizeof(struct per_obj_data), "report tables");
+    state->objs = (struct per_obj_data *)bu_calloc(state->num_objects, sizeof(struct per_obj_data), "report tables");
     for (i = 0; i < state->num_objects; i++) {
-	obj_tbl[i].o_name = (char *)av[i];
-	obj_tbl[i].o_len = (double *)bu_calloc(state->num_views, sizeof(double), "o_len");
-	obj_tbl[i].o_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "o_lenDensity");
-	obj_tbl[i].o_volume = (double *)bu_calloc(state->num_views, sizeof(double), "o_volume");
-	obj_tbl[i].o_weight = (double *)bu_calloc(state->num_views, sizeof(double), "o_weight");
-	obj_tbl[i].o_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "o_surf_area");
-	obj_tbl[i].o_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
+	state->objs[i].o_name = (char *)av[i];
+	state->objs[i].o_len = (double *)bu_calloc(state->num_views, sizeof(double), "o_len");
+	state->objs[i].o_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "o_lenDensity");
+	state->objs[i].o_volume = (double *)bu_calloc(state->num_views, sizeof(double), "o_volume");
+	state->objs[i].o_weight = (double *)bu_calloc(state->num_views, sizeof(double), "o_weight");
+	state->objs[i].o_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "o_surf_area");
+	state->objs[i].o_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
     }
 
     /* build objects for each region */
-    reg_tbl = (struct per_region_data *)bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
+    state->reg_tbl = (struct per_region_data *)bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
 
 
     for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
-	regp->reg_udata = &reg_tbl[i];
+	regp->reg_udata = &state->reg_tbl[i];
 
-	reg_tbl[i].r_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "r_lenDensity");
-	reg_tbl[i].r_len = (double *)bu_calloc(state->num_views, sizeof(double), "r_len");
-	reg_tbl[i].r_volume = (double *)bu_calloc(state->num_views, sizeof(double), "len");
-	reg_tbl[i].r_weight = (double *)bu_calloc(state->num_views, sizeof(double), "len");
-	reg_tbl[i].r_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "surface area");
+	state->reg_tbl[i].r_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "r_lenDensity");
+	state->reg_tbl[i].r_len = (double *)bu_calloc(state->num_views, sizeof(double), "r_len");
+	state->reg_tbl[i].r_volume = (double *)bu_calloc(state->num_views, sizeof(double), "len");
+	state->reg_tbl[i].r_weight = (double *)bu_calloc(state->num_views, sizeof(double), "len");
+	state->reg_tbl[i].r_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "surface area");
 
-	reg_tbl[i].optr = &obj_tbl[ find_cmd_obj(state, obj_tbl, &regp->reg_name[1]) ];
+	state->reg_tbl[i].optr = &state->objs[ find_cmd_obj(state, state->objs, &regp->reg_name[1]) ];
     }
 }
 
-HIDDEN struct raytracing_context *
-perform_raytracing(struct current_state *state, struct raytracing_context *context)
+
+HIDDEN int
+analyze_single_grid_setup(fastf_t gridSpacing,
+			  fastf_t viewsize,
+			  point_t eye_model,
+			  mat_t Viewrotscale,
+			  mat_t model2view,
+			  struct rectangular_grid *grid)
+{
+    mat_t toEye;
+    vect_t temp;
+    vect_t dx_unit;	 /* view delta-X as unit-len vect */
+    vect_t dy_unit;	 /* view delta-Y as unit-len vect */
+    mat_t view2model;
+
+    if (viewsize <= 0.0) {
+	bu_log("viewsize <= 0");
+	return ANALYZE_ERROR;
+    }
+    /* model2view takes us to eye_model location & orientation */
+    MAT_IDN(toEye);
+    MAT_DELTAS_VEC_NEG(toEye, eye_model);
+    Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
+    bn_mat_mul(model2view, Viewrotscale, toEye);
+    bn_mat_inv(view2model, model2view);
+
+    grid->grid_spacing = gridSpacing;
+    grid->x_points = viewsize/gridSpacing;
+    grid->total_points = grid->x_points*grid->x_points;
+    bu_log("Processing with grid spacing %g mm %ld x %ld\n", grid->grid_spacing, grid->x_points, grid->x_points);
+    grid->current_point=0;
+
+    /* Create basis vectors dx and dy for emanation plane (grid) */
+    VSET(temp, 1, 0, 0);
+    MAT3X3VEC(dx_unit, view2model, temp);	/* rotate only */
+    VSCALE(grid->dx_grid, dx_unit, gridSpacing);
+
+    VSET(temp, 0, 1, 0);
+    MAT3X3VEC(dy_unit, view2model, temp);	/* rotate only */
+    VSCALE(grid->dy_grid, dy_unit, gridSpacing);
+
+    /* all rays go this direction */
+    VSET(temp, 0, 0, -1);
+    MAT4X3VEC(grid->ray_direction, view2model, temp);
+    VUNITIZE(grid->ray_direction);
+
+    VSET(temp, -1, -1, 0);	/* eye plane */
+    MAT4X3PNT(grid->start_coord, view2model, temp);
+    return ANALYZE_OK;
+}
+
+
+HIDDEN void
+analyze_triple_grid_setup(int view, struct current_state *state)
+{
+    struct rectangular_grid *grid = (struct rectangular_grid *)state->grid;
+    grid->grid_spacing = state->gridSpacing;
+    grid->current_point = 0;
+    state->curr_view = view;
+    state->i_axis = state->curr_view;
+    state->u_axis = (state->curr_view+1) % 3;
+    state->v_axis = (state->curr_view+2) % 3;
+
+    state->u_dir[state->u_axis] = 1;
+    state->u_dir[state->v_axis] = 0;
+    state->u_dir[state->i_axis] = 0;
+
+    state->v_dir[state->u_axis] = 0;
+    state->v_dir[state->v_axis] = 1;
+    state->v_dir[state->i_axis] = 0;
+
+    grid->ray_direction[state->u_axis] = 0;
+    grid->ray_direction[state->v_axis] = 0;
+    grid->ray_direction[state->i_axis] = 1;
+
+    VMOVE(grid->start_coord, state->rtip->mdl_min);
+    grid->start_coord[state->u_axis] += grid->grid_spacing;
+    grid->start_coord[state->v_axis] += grid->grid_spacing;
+
+    VSCALE(grid->dx_grid, state->u_dir, grid->grid_spacing);
+    VSCALE(grid->dy_grid, state->v_dir, grid->grid_spacing);
+
+    grid->x_points = grid->steps[state->u_axis] - 1;
+    grid->total_points = grid->x_points * (grid->steps[state->v_axis] - 1);
+}
+
+
+HIDDEN void
+shoot_rays(struct current_state *state)
 {
     /* compute */
     do {
-	double inv_spacing = 1.0/gridSpacing;
-	int view;
-
-	VSCALE(state->steps, state->span, inv_spacing);
-
-	bu_log("Processing with grid spacing %g %s %ld x %ld x %ld\n",
-		gridSpacing / units[LINE]->val,
-		units[LINE]->name,
-		state->steps[0]-1,
-		state->steps[1]-1,
-		state->steps[2]-1);
-
-
-	for (view = 0; view < state->num_views; view++) {
-
-	    if(verbose)
-		bu_log("  view %d\n", view);
-
-	    /* gross hack.  By assuming we have <= 3 views, we can let
-	     * the view # indicate a coordinate axis.  Note this is
-	     * used as an index into state.area[]
-	     */
-	    state->i_axis = state->curr_view = view;
-	    state->u_axis = (state->curr_view+1) % 3;
-	    state->v_axis = (state->curr_view+2) % 3;
-
-	    state->u_dir[state->u_axis] = 1;
-	    state->u_dir[state->v_axis] = 0;
-	    state->u_dir[state->i_axis] = 0;
-
-	    state->v_dir[state->u_axis] = 0;
-	    state->v_dir[state->v_axis] = 1;
-	    state->v_dir[state->i_axis] = 0;
-	    state->v = 1;
-
-	    bu_parallel(analyze_worker, ncpu, (void *)state);
-
-	    if (aborted)
-		break;
+	if (state->use_single_grid) {
+	    analyze_single_grid_setup(state->gridSpacing, state->viewsize, state->eye_model, state->Viewrotscale, state->model2view, state->grid);
+	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
+	} else {
+	    int view;
+	    double inv_spacing = 1.0/state->gridSpacing;
+	    VSCALE(state->grid->steps, state->span, inv_spacing);
+	    bu_log("Processing with grid spacing %g mm %ld x %ld x %ld\n",
+		    state->gridSpacing,
+		    state->grid->steps[0]-1,
+		    state->grid->steps[1]-1,
+		    state->grid->steps[2]-1);
+	    for (view = 0; view < state->num_views; view++) {
+		analyze_triple_grid_setup(view, state);
+		bu_parallel(analyze_worker, state->ncpu, (void *)state);
+		if (aborted)
+		    break;
+	    }
 	}
-	state->first = 0;
-	gridSpacing *= 0.5;
+	state->grid->refine_flag = 1;
+	state->gridSpacing *= 0.5;
 
     } while (check_terminate(state));
 
-    if(!aborted) {
-	context->objs = obj_tbl;
-	context->shots = state->shots;
-    }
-    else {
-	analyze_raytracing_context_clear(context);
-    }
-
     rt_free_rti(state->rtip);
-
-    return context;
 }
 
+
+HIDDEN int
+analyze_setup_ae(double azim,
+		 double elev,
+		 struct rt_i *rtip,
+		 mat_t Viewrotscale,
+		 fastf_t *viewsize,
+		 mat_t model2view,
+		 point_t eye_model)
+{
+    vect_t temp;
+    vect_t diag;
+    mat_t toEye;
+    mat_t view2model;
+    fastf_t eye_backoff = (fastf_t)M_SQRT2;
+
+    if (rtip == NULL) {
+	bu_log("analov_do_ae: ERROR: rtip is null");
+	return ANALYZE_ERROR;
+    }
+
+    if (rtip->nsolids <= 0) {
+	bu_log("ERROR: no primitives active\n");
+	return ANALYZE_ERROR;
+    }
+
+    if (rtip->nregions <= 0) {
+	bu_log("ERROR: no regions active\n");
+	return ANALYZE_ERROR;
+    }
+
+    if (rtip->mdl_max[X] >= INFINITY) {
+	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
+	VSETALL(rtip->mdl_min, -1);
+    }
+    if (rtip->mdl_max[X] <= -INFINITY) {
+	bu_log("do_ae: infinite model bounds? setting a unit maximum\n");
+	VSETALL(rtip->mdl_max, 1);
+    }
+
+    MAT_IDN(Viewrotscale);
+    bn_mat_angles(Viewrotscale, 270.0+elev, 0.0, 270.0-azim);
+
+    /* Look at the center of the model */
+    MAT_IDN(toEye);
+    toEye[MDX] = -((rtip->mdl_max[X]+rtip->mdl_min[X])/2.0);
+    toEye[MDY] = -((rtip->mdl_max[Y]+rtip->mdl_min[Y])/2.0);
+    toEye[MDZ] = -((rtip->mdl_max[Z]+rtip->mdl_min[Z])/2.0);
+
+    VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
+    *viewsize = MAGNITUDE(diag);
+
+    /* sanity check: make sure viewsize still isn't zero in case
+     * bounding box is empty, otherwise bn_mat_int() will bomb.
+     */
+    if (*viewsize < 0 || ZERO(*viewsize)) {
+	*viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
+    }
+
+    Viewrotscale[15] = 0.5*(*viewsize);	/* Viewscale */
+    bn_mat_mul(model2view, Viewrotscale, toEye);
+    bn_mat_inv(view2model, model2view);
+    VSET(temp, 0, 0, eye_backoff);
+    MAT4X3PNT(eye_model, view2model, temp);
+    return ANALYZE_OK;
+}
+
+
 int
-analyze_raytracing_context_init(struct raytracing_context *context, struct db_i *dbip,
-	const char *names[], int *flags)
+perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[], int num_objects, int flags)
 {
     int i;
-    struct current_state state;
     struct rt_i *rtip;
     struct resource resp[MAX_PSW];
-    char *densityfile = NULL;
-    FILE *densityfp = (FILE *)0;
-    const char *curdir = getenv("PWD");
-    const char *homedir = getenv("HOME");
+    struct rectangular_grid grid;
 
     /* TODO : Add a bu_vls struct / use bu_log() wherever
      * possible.
      */
 
-#define maxm(a, b) (a>b?a:b)
-#define DENSITY_FILE ".density"
+    state->grid = &grid;
+    grid.single_grid = 0;
 
-    context->densities = NULL;
-    context->num_densities = 0;
-    state.context = context;
-
-    analysis_flags = (*flags);
-    i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
-    /* densityfile is global to this file and will be used later (and then freed) */
-    densityfile = (char *)bu_calloc((unsigned int)i, sizeof(char), "densityfile");
-
-    snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
-
-    if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
-	snprintf(densityfile, i, "%s/%s", homedir, DENSITY_FILE);
-    }
+    analysis_flags = flags;
 
     /* Get raytracing instance */
     rtip = rt_new_rti(dbip);
@@ -1074,119 +1103,84 @@ analyze_raytracing_context_init(struct raytracing_context *context, struct db_i 
     }
 
     /* Prep for raytracing */
-    state.num_objects = 0;
-    state.num_views = 3;
-    densityFileName = densityfile;
-    state.volume_tolerance = -1;
-    state.weight_tolerance = -1;
-    state.sa_tolerance = -1;
-    for(i = 0; ; i++) {
-	if(names[i])
-	    state.num_objects++;
-	else
-	    break;
-    }
-    for(i = 0; i < state.num_objects; i++) {
+    state->num_objects = num_objects;
+    for(i = 0; i < state->num_objects; i++) {
 	if(rt_gettree(rtip, names[i]) < 0) {
 	    bu_log("Loading geometry for [%s] FAILED", names[i]);
+	    rt_free_rti(rtip);
+	    rtip = NULL;
 	    return ANALYZE_ERROR;
 	}
     }
-    rt_prep_parallel(rtip, ncpu);
+    rt_prep_parallel(rtip, state->ncpu);
+
+    if (state->use_single_grid) {
+	state->num_views = 1;
+	grid.single_grid = 1;
+	if (analyze_setup_ae(state->azimuth_deg, state->elevation_deg, rtip, state->Viewrotscale, &state->viewsize, state->model2view, state->eye_model)) {
+	    rt_free_rti(rtip);
+	    rtip = NULL;
+	    return ANALYZE_ERROR;
+	}
+    }
 
     /* we now have to subdivide space */
-    VSUB2(state.span, rtip->mdl_max, rtip->mdl_min);
-    state.area[0] = state.span[1] * state.span[2];
-    state.area[1] = state.span[2] * state.span[0];
-    state.area[2] = state.span[0] * state.span[1];
-    VMOVE(context->span, state.span);
-    VMOVE(context->area, state.area);
-    context->num_objects = state.num_objects;
-    context->num_views = state.num_views;
-
-    gridSpacing = 50.0;
-    gridSpacingLimit = 0.001;
+    VSUB2(state->span, rtip->mdl_max, rtip->mdl_min);
+    state->area[0] = state->span[1] * state->span[2];
+    state->area[1] = state->span[2] * state->span[0];
+    state->area[2] = state->span[0] * state->span[1];
 
     if (analysis_flags & ANALYSIS_BOX) {
 	bu_log("Bounding Box: %g %g %g  %g %g %g\n",
 		V3ARGS(rtip->mdl_min), V3ARGS(rtip->mdl_max));
 
-	bu_log("Area: (%g, %g, %g)\n", state.area[X], state.area[Y], state.area[Z]);
+	bu_log("Area: (%g, %g, %g)\n", state->area[X], state->area[Y], state->area[Z]);
     }
-    if (verbose) bu_log("ncpu: %d\n", ncpu);
+    if (verbose) bu_log("ncpu: %d\n", state->ncpu);
 
     /* if the user did not specify the initial grid spacing limit, we
      * need to compute a reasonable one for them.
      */
-    if (ZERO(gridSpacing)) {
+    if (ZERO(state->gridSpacing)) {
 	double min_span = MAX_FASTF;
-	VPRINT("span", state.span);
+	VPRINT("span", state->span);
 
-	V_MIN(min_span, state.span[X]);
-	V_MIN(min_span, state.span[Y]);
-	V_MIN(min_span, state.span[Z]);
+	V_MIN(min_span, state->span[X]);
+	V_MIN(min_span, state->span[Y]);
+	V_MIN(min_span, state->span[Z]);
 
-	gridSpacing = gridSpacingLimit;
+	state->gridSpacing = state->gridSpacingLimit;
 	do {
-	    gridSpacing *= 2.0;
-	} while (gridSpacing < min_span);
+	    state->gridSpacing *= 2.0;
+	} while (state->gridSpacing < min_span);
 
-	gridSpacing *= 0.25;
-	if (gridSpacing < gridSpacingLimit) gridSpacing = gridSpacingLimit;
+	state->gridSpacing *= 0.25;
+	if (state->gridSpacing < state->gridSpacingLimit) state->gridSpacing = state->gridSpacingLimit;
 
 	bu_log("Trying estimated initial grid spacing: %g %s\n",
-		gridSpacing / units[LINE]->val, units[LINE]->name);
+		state->gridSpacing / units[LINE]->val, units[LINE]->name);
     } else {
 	bu_log("Trying initial grid spacing: %g %s\n",
-		gridSpacing / units[LINE]->val, units[LINE]->name);
+		state->gridSpacing / units[LINE]->val, units[LINE]->name);
     }
 
     bu_log("Using grid spacing lower limit: %g %s\n",
-	    gridSpacingLimit / units[LINE]->val, units[LINE]->name);
+	    state->gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 
-    if (options_set(&state) != ANALYZE_OK) {
+    if (options_set(state) != ANALYZE_OK) {
 	bu_log("Couldn't set up the options correctly!\n");
 	return ANALYZE_ERROR;
     }
 
     /* initialize some stuff */
-    state.rtip = rtip;
-    state.resp = resp;
-    allocate_region_data(&state, context, names);
-
-    context = perform_raytracing(&state, context);
-    (*flags) = analysis_flags;
-    return (!context) ? ANALYZE_ERROR : ANALYZE_OK;
+    state->rtip = rtip;
+    state->resp = resp;
+    allocate_region_data(state, names);
+    grid.refine_flag = 0;
+    shoot_rays(state);
+    return ANALYZE_OK;
 }
 
-void
-analyze_raytracing_context_clear(struct raytracing_context *context)
-{
-    int i;
-
-    if (context->densities != NULL) {
-	for (i = 0; i < context->num_densities; ++i) {
-	    if (context->densities[i].name != 0)
-		bu_free(context->densities[i].name, "density name");
-	}
-
-	bu_free(context->densities, "densities");
-	context->densities = NULL;
-	context->num_densities = 0;
-    }
-
-    bu_free(context->shots, "m_shots");
-
-    for (i = 0; i < context->num_objects; i++) {
-	bu_free(obj_tbl[i].o_len, "o_len");
-	bu_free(obj_tbl[i].o_lenDensity, "o_lenDensity");
-	bu_free(obj_tbl[i].o_volume, "o_volume");
-	bu_free(obj_tbl[i].o_weight, "o_weight");
-	bu_free(obj_tbl[i].o_lenTorque, "o_lenTorque");
-    }
-    bu_free(obj_tbl, "object table");
-    context->objs = obj_tbl = NULL;
-}
 
 /*
  * Local Variables:
