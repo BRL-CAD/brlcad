@@ -72,6 +72,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
     struct partition *pp;
     point_t pt, opt, last_out_point;
     double dist;       /* the thickness of the partition */
+    int last_air = 0;  /* what was the aircode of the last item */
     int air_first = 1; /* are we in an air before a solid */
     double val;
     double last_out_dist = -1.0;
@@ -287,8 +288,17 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 	/* note that this region has been seen */
 	((struct per_region_data *)pp->pt_regionp->reg_udata)->hits++;
+
+	last_air = pp->pt_regionp->reg_aircode;
 	last_out_dist = pp->pt_outhit->hit_dist;
 	VJOIN1(last_out_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+    }
+
+    if (analysis_flags & ANALYSIS_EXP_AIR && last_air) {
+	/* the last thing we hit was air.  Make a note of that */
+	pp = PartHeadp->pt_back;
+
+	state->exp_air_callback(pp, last_out_point, pt, opt, state->exp_air_callback_data);
     }
 
     /* This value is returned by rt_shootray a hit usually returns 1,
