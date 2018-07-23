@@ -817,6 +817,11 @@ options_set(struct current_state *state)
 	}
     }
 
+    if ((analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR)) && ! state->use_air) {
+	bu_log("\nError:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
+	return GED_ERROR;
+    }
+
     if (analysis_flags & ANALYSIS_EXP_AIR) {
 	if (state->exp_air_callback == NULL) {
 	    bu_log("\nexp_air callback function not registered!");
@@ -1146,6 +1151,8 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 
     /* Get raytracing instance */
     rtip = rt_new_rti(dbip);
+    rtip->useair = state->use_air;
+
     memset(resp, 0, sizeof(resp));
     for(i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&resp[i], i, rtip);
