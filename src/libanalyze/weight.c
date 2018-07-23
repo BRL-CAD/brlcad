@@ -35,7 +35,6 @@ analyze_weight(struct current_state *state, const char *name)
 {
     fastf_t weight;
     int i, view, obj = 0;
-    double avg_mass;
 
     for (i = 0; i < state->num_objects; i++) {
 	if(!(bu_strcmp(state->objs[i].o_name, name))) {
@@ -44,12 +43,11 @@ analyze_weight(struct current_state *state, const char *name)
 	}
     }
 
-    avg_mass = 0.0;
+    weight = 0.0;
     for (view = 0; view < state->num_views; view++)
-	avg_mass += state->objs[obj].o_weight[view];
+	weight += state->objs[obj].o_weight[view];
 
-    avg_mass /= state->num_views;
-    weight = avg_mass / units[WGT]->val;
+    weight /= state->num_views;
     return weight;
 }
 

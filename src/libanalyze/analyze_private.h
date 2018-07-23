@@ -89,23 +89,6 @@ struct per_region_data {
 #define A_LEN a_color[1]
 #define A_STATE a_uptr
 
-struct cvt_tab {
-    double val;
-    char name[32];
-};
-
-/* this table keeps track of the "current" or "user selected units and
- * the associated conversion values
- */
-#define LINE 0
-#define VOL 1
-#define WGT 2
-static const struct cvt_tab units[3][3] = {
-    {{1.0, "mm"}},	/* linear */
-    {{1.0, "cu mm"}},	/* volume */
-    {{1.0, "grams"}}	/* weight */
-};
-
 struct current_state {
     int curr_view; 	/* the "view" number we are shooting */
     int u_axis;    	/* these 3 are in the range 0..2 inclusive and indicate which axis (X, Y, or Z) */

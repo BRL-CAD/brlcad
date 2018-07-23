@@ -35,7 +35,6 @@ analyze_surf_area(struct current_state *state, const char *name)
 {
     fastf_t area;
     int i, view, obj = 0;
-    double avg_area;
 
     for (i = 0; i < state->num_objects; i++) {
 	if(!(bu_strcmp(state->objs[i].o_name, name))) {
@@ -44,12 +43,9 @@ analyze_surf_area(struct current_state *state, const char *name)
 	}
     }
 
-    avg_area = 0.0;
+    area = 0.0;
     for (view = 0; view < state->num_views; view++)
-	avg_area += state->objs[obj].o_surf_area[view];
-
-    avg_area /= state->num_views;
-    area = avg_area / units[VOL]->val;
+	area += state->objs[obj].o_surf_area[view];
     return area;
 }
 

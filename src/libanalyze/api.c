@@ -526,13 +526,7 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_log(
-			"\t%s running avg weight %g %s hi=(%g) low=(%g)\n",
-			state->objs[obj].o_name,
-			(tmp / state->num_views) / units[WGT]->val,
-			units[WGT]->name,
-			hi / units[WGT]->val,
-			low / units[WGT]->val);
+		bu_log("\t%s running avg weight %g mm hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low );
 
 	    if (delta > state->weight_tolerance) {
 		/* this object differs too much in each view, so we
@@ -574,12 +568,7 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_log(
-			"\t%s running avg volume %g %s hi=(%g) low=(%g)\n",
-			state->objs[obj].o_name,
-			(tmp / state->num_views) / units[VOL]->val, units[VOL]->name,
-			hi / units[VOL]->val,
-			low / units[VOL]->val);
+		bu_log("\t%s running avg volume %g mm hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low);
 
 	    if (delta > state->volume_tolerance) {
 		/* this object differs too much in each view, so we
@@ -587,8 +576,7 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 		 */
 		can_terminate = 0;
 		if (verbose)
-		    bu_log("\tvolume tol not met on %s.  Refine grid\n",
-			    state->objs[obj].o_name);
+		    bu_log("\tvolume tol not met on %s.  Refine grid\n", state->objs[obj].o_name);
 		break;
 	    }
 	}
@@ -758,12 +746,8 @@ options_set(struct current_state *state)
     }
 
     if (!ZERO(newGridSpacing - state->gridSpacing)) {
-	bu_log("Initial grid spacing %g %s does not allow %g samples per axis.\n",
-		state->gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
-
-	bu_log("Adjusted initial grid spacing to %g %s to get %g samples per model axis.\n",
-		newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
-
+	bu_log("Initial grid spacing %g mm does not allow %g samples per axis.\n", state->gridSpacing, Samples_per_model_axis - 1);
+	bu_log("Adjusted initial grid spacing to %g mm to get %g samples per model axis.\n", newGridSpacing, Samples_per_model_axis);
 	state->gridSpacing = newGridSpacing;
     }
 
@@ -772,15 +756,9 @@ options_set(struct current_state *state)
 	if (state->volume_tolerance < 0.0) {
 	    /* using 1/1000th the volume as a default tolerance, no particular reason */
 	    state->volume_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.001;
-	    bu_log("Using estimated volume tolerance %g %s\n",
-		    state->volume_tolerance / units[VOL]->val, units[VOL]->name);
+	    bu_log("Using estimated volume tolerance %g mm\n", state->volume_tolerance);
 	} else
-	    bu_log("Using volume tolerance %g %s\n",
-		    state->volume_tolerance / units[VOL]->val, units[VOL]->name);
-	/*if (plot_files)
-	    if ((plot_volume=fopen(name, "wb")) == (FILE *)NULL) {
-		bu_log("Cannot open plot file %s\n", name);
-	    }*/
+	    bu_log("Using volume tolerance %g mm\n", state->volume_tolerance);
     }
     if(analysis_flags & ANALYSIS_SURF_AREA) {
 	if(state->sa_tolerance < 0.0) {
@@ -800,9 +778,7 @@ options_set(struct current_state *state)
 		    max_den = state->densities[i].grams_per_cu_mm;
 	    }
 	    state->weight_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.1 * max_den;
-	    bu_log("Setting weight tolerance to %g %s\n",
-		    state->weight_tolerance / units[WGT]->val,
-		    units[WGT]->name);
+	    bu_log("Setting weight tolerance to %g mm\n", state->weight_tolerance);
 	} else {
 	    bu_log("Weight tolerance   %g\n", state->weight_tolerance);
 	}
@@ -1218,15 +1194,12 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	state->gridSpacing *= 0.25;
 	if (state->gridSpacing < state->gridSpacingLimit) state->gridSpacing = state->gridSpacingLimit;
 
-	bu_log("Trying estimated initial grid spacing: %g %s\n",
-		state->gridSpacing / units[LINE]->val, units[LINE]->name);
+	bu_log("Trying estimated initial grid spacing: %g mm\n", state->gridSpacing);
     } else {
-	bu_log("Trying initial grid spacing: %g %s\n",
-		state->gridSpacing / units[LINE]->val, units[LINE]->name);
+	bu_log("Trying initial grid spacing: %g mm\n", state->gridSpacing);
     }
 
-    bu_log("Using grid spacing lower limit: %g %s\n",
-	    state->gridSpacingLimit / units[LINE]->val, units[LINE]->name);
+    bu_log("Using grid spacing lower limit: %g mm\n", state->gridSpacingLimit);
 
     if (options_set(state) != ANALYZE_OK) {
 	bu_log("Couldn't set up the options correctly!\n");
