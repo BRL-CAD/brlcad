@@ -526,7 +526,7 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_log("\t%s running avg weight %g mm hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low );
+		bu_log("\t%s running avg weight %g gram hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low );
 
 	    if (delta > state->weight_tolerance) {
 		/* this object differs too much in each view, so we
@@ -568,7 +568,7 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_log("\t%s running avg volume %g mm hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low);
+		bu_log("\t%s running avg volume %g cu mm hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low);
 
 	    if (delta > state->volume_tolerance) {
 		/* this object differs too much in each view, so we
@@ -756,9 +756,9 @@ options_set(struct current_state *state)
 	if (state->volume_tolerance < 0.0) {
 	    /* using 1/1000th the volume as a default tolerance, no particular reason */
 	    state->volume_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.001;
-	    bu_log("Using estimated volume tolerance %g mm\n", state->volume_tolerance);
+	    bu_log("Using estimated volume tolerance %g cu mm\n", state->volume_tolerance);
 	} else
-	    bu_log("Using volume tolerance %g mm\n", state->volume_tolerance);
+	    bu_log("Using volume tolerance %g cu mm\n", state->volume_tolerance);
     }
     if(analysis_flags & ANALYSIS_SURF_AREA) {
 	if(state->sa_tolerance < 0.0) {
@@ -778,9 +778,9 @@ options_set(struct current_state *state)
 		    max_den = state->densities[i].grams_per_cu_mm;
 	    }
 	    state->weight_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.1 * max_den;
-	    bu_log("Setting weight tolerance to %g mm\n", state->weight_tolerance);
+	    bu_log("Setting weight tolerance to %g gram\n", state->weight_tolerance);
 	} else {
-	    bu_log("Weight tolerance   %g\n", state->weight_tolerance);
+	    bu_log("Weight tolerance   %g gram\n", state->weight_tolerance);
 	}
     }
 
