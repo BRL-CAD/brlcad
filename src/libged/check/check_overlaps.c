@@ -38,7 +38,7 @@ struct overlaps_context {
     int overlaps_overlay_flag;
     FILE *plot_overlaps;
     int overlap_color[3];
-    struct ged_check_plot overlaps_overlay_plot;
+    struct ged_check_plot *overlaps_overlay_plot;
 };
 
 
@@ -54,8 +54,8 @@ overlap(struct region *reg1,
 
     if (context->overlaps_overlay_flag) {
 	bu_semaphore_acquire(GED_SEM_WORKER);
-	BN_ADD_VLIST(context->overlaps_overlay_plot.vbp->free_vlist_hd, context->overlaps_overlay_plot.vhead, ihit, BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(context->overlaps_overlay_plot.vbp->free_vlist_hd, context->overlaps_overlay_plot.vhead, ohit, BN_VLIST_LINE_DRAW);
+	BN_ADD_VLIST(context->overlaps_overlay_plot->vbp->free_vlist_hd, context->overlaps_overlay_plot->vhead, ihit, BN_VLIST_LINE_MOVE);
+	BN_ADD_VLIST(context->overlaps_overlay_plot->vbp->free_vlist_hd, context->overlaps_overlay_plot->vhead, ohit, BN_VLIST_LINE_DRAW);
 	bu_semaphore_release(GED_SEM_WORKER);
     }
 
@@ -106,7 +106,7 @@ int check_overlaps(struct current_state *state,
     callbackdata.plot_overlaps = plot_overlaps;
     callbackdata.overlapList = &overlapList;
     callbackdata.overlaps_overlay_flag = options->overlaps_overlay_flag;
-    callbackdata.overlaps_overlay_plot = check_plot;
+    callbackdata.overlaps_overlay_plot = &check_plot;
 
     /* register callback */
     analyze_register_overlaps_callback(state, overlap, &callbackdata);
