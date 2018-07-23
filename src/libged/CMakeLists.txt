@@ -61,6 +61,7 @@ set(LIBGED_SOURCES
   center.c
   check_overlaps.c
   check/check.c
+  check/check_adj_air.c
   check/check_exp_air.c
   check/check_gap.c
   check/check_overlaps.c

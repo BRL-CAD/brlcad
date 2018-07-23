@@ -173,6 +173,9 @@ struct current_state {
 
     gaps_callback_t gaps_callback;
     void* gaps_callback_data;
+
+    adj_air_callback_t adj_air_callback;
+    void* adj_air_callback_data;
 };
 
 __END_DECLS

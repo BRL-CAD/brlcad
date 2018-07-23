@@ -225,6 +225,8 @@ extern check_functions_t check_exp_air;
 
 extern check_functions_t check_gap;
 
+extern check_functions_t check_adj_air;
+
 __END_DECLS
 
 #endif /* LIBGED_CHECK_PRIVATE_H */

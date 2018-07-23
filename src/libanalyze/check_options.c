@@ -55,6 +55,9 @@ analyze_current_state_init()
 
     state->gaps_callback = NULL;
     state->gaps_callback_data = NULL;
+
+    state->adj_air_callback = NULL;
+    state->adj_air_callback_data = NULL;
     return state;
 }
 
@@ -186,6 +189,13 @@ void analyze_register_gaps_callback(struct current_state *state, gaps_callback_t
 {
     state->gaps_callback = callback_function;
     state->gaps_callback_data = callback_data;
+}
+
+
+void analyze_register_adj_air_callback(struct current_state *state, adj_air_callback_t callback_function, void* callback_data)
+{
+    state->adj_air_callback = callback_function;
+    state->adj_air_callback_data = callback_data;
 }
 
 

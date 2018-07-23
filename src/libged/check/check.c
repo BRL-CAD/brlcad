@@ -575,7 +575,13 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
     } else if (bu_strncmp(sub, "adj_air", len) == 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s", sub);
+	if (check_adj_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options) == GED_ERROR) {
+	    bu_free(tobjtab, "free tobjtab");
+	    tobjtab = NULL;
+	    analyze_free_current_state(state);
+	    state = NULL;
+	    return GED_ERROR;
+	}
     } else {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
 	return GED_ERROR;

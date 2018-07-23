@@ -286,6 +286,14 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    }
 	}
 
+	/* look for two adjacent air regions */
+	if (analysis_flags & ANALYSIS_ADJ_AIR) {
+	    if (last_air && pp->pt_regionp->reg_aircode &&
+		pp->pt_regionp->reg_aircode != last_air) {
+		state->adj_air_callback(&ap->a_ray, pp, pt, state->adj_air_callback_data);
+	    }
+	}
+
 	/* note that this region has been seen */
 	((struct per_region_data *)pp->pt_regionp->reg_udata)->hits++;
 
@@ -297,7 +305,6 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
     if (analysis_flags & ANALYSIS_EXP_AIR && last_air) {
 	/* the last thing we hit was air.  Make a note of that */
 	pp = PartHeadp->pt_back;
-
 	state->exp_air_callback(pp, last_out_point, pt, opt, state->exp_air_callback_data);
     }
 
@@ -821,6 +828,13 @@ options_set(struct current_state *state)
     if (analysis_flags & ANALYSIS_GAP) {
 	if (state->gaps_callback == NULL) {
 	    bu_log("\ngaps callback function not registered!");
+	    return ANALYZE_ERROR;
+	}
+    }
+
+    if (analysis_flags & ANALYSIS_ADJ_AIR) {
+	if (state->adj_air_callback == NULL) {
+	    bu_log("\nadj_air callback function not registered!");
 	    return ANALYZE_ERROR;
 	}
     }

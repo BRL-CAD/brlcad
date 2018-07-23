@@ -355,6 +355,7 @@ struct current_state;
 typedef void (*overlap_callback_t)(struct region *reg1, struct region *reg2, double depth, vect_t ihit, vect_t ohit, void* callback_data);
 typedef void (*exp_air_callback_t)(struct partition *pp, point_t last_out_point, point_t pt, point_t opt, void* callback_data);
 typedef void (*gaps_callback_t)(const struct xray* ray, const struct partition *pp, double gap_dist, point_t pt, void* callback_data);
+typedef void (*adj_air_callback_t)(const struct xray* ray, const struct partition *pp, point_t pt, void* callback_data);
 
 /**
  * returns the volume of the specified object (name)
@@ -467,6 +468,9 @@ analyze_register_exp_air_callback(struct current_state *state, exp_air_callback_
 
 ANALYZE_EXPORT extern void
 analyze_register_gaps_callback(struct current_state *state, gaps_callback_t callback_function, void* callback_data);
+
+ANALYZE_EXPORT extern void
+analyze_register_adj_air_callback(struct current_state *state, adj_air_callback_t callback_function, void* callback_data);
 
 __END_DECLS
 
