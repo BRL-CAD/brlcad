@@ -50,6 +50,7 @@ check_show_help(struct ged *gedp)
 
     bu_vls_printf(&str, "\nOptions:\n\n");
     bu_vls_printf(&str, "  -a #[deg|rad] - Azimuth angle.\n");
+    bu_vls_printf(&str, "  -d - Set debug flag.\n");
     bu_vls_printf(&str, "  -e #[deg|rad] - Elevation angle.\n");
     bu_vls_printf(&str, "  -f filename - Specifies that density values should be taken from an external file instead of from the _DENSITIES object in the database.\n");
     bu_vls_printf(&str, "  -g [initial_grid_spacing-]grid_spacing_limit or [initial_grid_spacing,]grid_spacing_limit - Specifies a limit on how far the grid can be refined and optionally the initial spacing between rays in the grids.\n");
@@ -64,8 +65,9 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  -t - Sets the tolerance for computing overlaps.\n");
     bu_vls_printf(&str, "  -u distance_units,volume_units,weight_units - Specify the units used when reporting values.\n");
     bu_vls_printf(&str, "  -U # - Specifies the Boolean value (0 or 1) for use_air which indicates whether regions which are marked as 'air' should be retained and included in the raytrace.\n");
-    bu_vls_printf(&str, "  -v # - Specifies a volumetric tolerance value.\n");
-    bu_vls_printf(&str, "  -w # - Specifies a weight tolerance value.\n");
+    bu_vls_printf(&str, "  -v - Set verbose flag.\n");
+    bu_vls_printf(&str, "  -V # - Specifies a volumetric tolerance value.\n");
+    bu_vls_printf(&str, "  -W # - Specifies a weight tolerance value.\n");
 
     bu_vls_vlscat(gedp->ged_result_str, &str);
     bu_vls_free(&str);
@@ -127,7 +129,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
     double a;
     char *p;
 
-    char *options_str = "a:e:f:g:n:N:opP:qrS:t:U:u:V:W:h?";
+    char *options_str = "a:de:f:g:n:N:opP:qrS:t:U:u:vV:W:h?";
 
     /* Turn off getopt's error messages */
     bu_opterr = 0;
@@ -143,6 +145,11 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		}
 		analyze_set_azimuth(state, options->azimuth_deg);
 		options->getfromview = 0;
+		break;
+	    case 'd':
+		options->debug = 1;
+		options->debug_str = bu_vls_vlsinit();
+		analyze_enable_debug(state, options->debug_str);
 		break;
 	    case 'e':
 		if (bn_decode_angle(&(options->elevation_deg), bu_optarg) == 0) {
@@ -242,6 +249,11 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    return -1;
 		}
 		analyze_set_overlap_tolerance(state, options->overlap_tolerance);
+		break;
+	    case 'v':
+		options->verbose = 1;
+		options->verbose_str = bu_vls_vlsinit();
+		analyze_enable_verbose(state, options->verbose_str);
 		break;
 	    case 'V':
 		if (read_units_double(&(options->volume_tolerance), bu_optarg, units_tab[1])) {
@@ -420,6 +432,14 @@ clear_list(struct regions_list *list)
 }
 
 
+void
+print_verbose_debug(struct check_parameters *options)
+{
+    if (options->verbose) bu_vls_vlscat(_ged_current_gedp->ged_result_str, options->verbose_str);
+    if (options->debug) bu_vls_vlscat(_ged_current_gedp->ged_result_str, options->debug_str);
+}
+
+
 int ged_check(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
@@ -444,6 +464,7 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     char **objp;
     int nobjs = 0;			/* Number of cmd-line treetops */
     const char **objtab;		/* array of treetop strings */
+    int error = 0;
     VMOVE(options.units, units);
 
     state = analyze_current_state_init();
@@ -484,6 +505,8 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     options.quiet_missed_report = 0;
     options.overlaps_overlay_flag = 0;
     options.plot_files = 0;
+    options.debug = 0;
+    options.verbose = 0;
 
     /* shift to subcommand args */
     argc -= opt_argc;
@@ -507,6 +530,8 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 
     if (tnobjs <= 0) {
 	bu_vls_printf(gedp->ged_result_str,"no objects specified or in view -- raytrace aborted\n");
+	analyze_free_current_state(state);
+	state = NULL;
 	return GED_ERROR;
     }
 
@@ -523,11 +548,8 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 	/* now, as we know the exact number of objects in the view, check again for > 0 */
 	if (nvobjs <= 0) {
 	    bu_vls_printf(gedp->ged_result_str,"no objects specified or in view, aborting\n");
-	    bu_free(tobjtab, "free tobjtab");
-	    tobjtab = NULL;
-	    analyze_free_current_state(state);
-	    state = NULL;
-	    return GED_ERROR;
+	    error = 1;
+	    goto freemem;
 	}
     }
 
@@ -537,73 +559,48 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     sub = argv[0];
     len = strlen(sub);
     if (bu_strncmp(sub, "weight", len) == 0) {
-	if (perform_raytracing(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, ANALYSIS_WEIGHT) == ANALYZE_ERROR){
-	    bu_free(tobjtab, "free tobjtab");
-	    tobjtab = NULL;
-	    analyze_free_current_state(state);
-	    state = NULL;
-	    return GED_ERROR;
-	}
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Weight:\n");
-
-	for (i=0; i < tnobjs; i++){
-	    fastf_t weight = 0;
-	    weight = analyze_weight(state, tobjtab[i]);
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s %g %s\n", tobjtab[i], weight / options.units[WGT]->val, options.units[WGT]->name);
+	if (check_weight(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "volume", len) == 0) {
-	
-	if (check_volume(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options) == GED_ERROR) {
-	    bu_free(tobjtab, "free tobjtab");
-	    tobjtab = NULL;
-	    analyze_free_current_state(state);
-	    state = NULL;
-	    return GED_ERROR;
+	if (check_volume(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "overlaps", len) == 0) {
-	
-	if (check_overlaps(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options) == GED_ERROR) {
-	    bu_free(tobjtab, "free tobjtab");
-	    tobjtab = NULL;
-	    analyze_free_current_state(state);
-	    state = NULL;
-	    return GED_ERROR;
+	if (check_overlaps(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "exp_air", len) == 0) {
-
-	if (check_exp_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options) == GED_ERROR) {
-	    bu_free(tobjtab, "free tobjtab");
-	    tobjtab = NULL;
-	    analyze_free_current_state(state);
-	    state = NULL;
-	    return GED_ERROR;
+	if (check_exp_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "gap", len) == 0) {
-
-	if (check_gap(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options) == GED_ERROR) {
-	    bu_free(tobjtab, "free tobjtab");
-	    tobjtab = NULL;
-	    analyze_free_current_state(state);
-	    state = NULL;
-	    return GED_ERROR;
+	if (check_gap(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "adj_air", len) == 0) {
-	if (check_adj_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options) == GED_ERROR) {
-	    bu_free(tobjtab, "free tobjtab");
-	    tobjtab = NULL;
-	    analyze_free_current_state(state);
-	    state = NULL;
-	    return GED_ERROR;
+	if (check_adj_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
 	}
     } else {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
-	return GED_ERROR;
+	error = 1;
     }
 
+freemem:
+    bu_free(tobjtab, "free tobjtab");
+    tobjtab = NULL;
     analyze_free_current_state(state);
     state = NULL;
-
-    return GED_OK;
+    if (options.verbose) bu_vls_free(options.verbose_str);
+    if (options.debug) bu_vls_free(options.debug_str);
+    return (error) ? GED_ERROR : GED_OK;
 }
 /*
  * Local Variables:

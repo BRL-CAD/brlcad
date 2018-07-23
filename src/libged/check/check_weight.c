@@ -1,4 +1,4 @@
-/*                C H E C K _ V O L U M E . C
+/*                C H E C K _ W E I G H T . C
  * BRL-CAD
  *
  * Copyright (c) 2018 United States Government as represented by
@@ -25,40 +25,26 @@
 #include "../ged_private.h"
 #include "./check_private.h"
 
-int check_volume(struct current_state *state,
+int check_weight(struct current_state *state,
 		 struct db_i *dbip,
 		 char **tobjtab,
 		 int tnobjs,
 		 struct check_parameters *options)
 {
     int i;
-    FILE *plot_volume = NULL;
-    char *name = "volume.plot3";
 
-    if (options->plot_files) {
-	if ((plot_volume=fopen(name, "wb")) == (FILE *)NULL) {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
-	}
-	analyze_set_volume_plotfile(state, plot_volume);
-    }
-
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_VOLUME)) return GED_ERROR;
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_WEIGHT)) return GED_ERROR;
 
     print_verbose_debug(options);
-    bu_vls_printf(_ged_current_gedp->ged_result_str, "Volume:\n");
+    bu_vls_printf(_ged_current_gedp->ged_result_str, "Weight:\n");
 
     for (i=0; i < tnobjs; i++){
-	fastf_t volume = 0;
-	volume = analyze_volume(state, tobjtab[i]);
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s %g %s\n", tobjtab[i], volume / options->units[VOL]->val, options->units[VOL]->name);
+	fastf_t weight = 0;
+	weight = analyze_weight(state, tobjtab[i]);
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s %g %s\n", tobjtab[i], weight / options->units[WGT]->val, options->units[WGT]->name);
     }
 
-    if (plot_volume){
-	fclose(plot_volume);
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
-    } 
-
-    return 0;
+    return GED_OK;
 }
 
 /*

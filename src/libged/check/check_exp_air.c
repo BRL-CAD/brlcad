@@ -64,8 +64,6 @@ int check_exp_air(struct current_state *state,
 		  int tnobjs,
 		  struct check_parameters *options)
 {
-    int flags = 0;
-
     FILE *plot_exp_air = NULL;
     char *name = "exp_air.plot3";
     struct exp_air_context callbackdata;
@@ -84,13 +82,14 @@ int check_exp_air(struct current_state *state,
     callbackdata.plot_exp_air = plot_exp_air;
     VMOVE(callbackdata.expAir_color,expAir_color);
 
-    flags |= ANALYSIS_EXP_AIR;
     analyze_register_exp_air_callback(state, exposed_air, &callbackdata);
 
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, flags) == ANALYZE_ERROR){
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_EXP_AIR)) {
+	clear_list(&exposedAirList);
 	return GED_ERROR;
     }
 
+    print_verbose_debug(options);
     print_list(&exposedAirList, options->units, "Exposed Air");
     clear_list(&exposedAirList);
 

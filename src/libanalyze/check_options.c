@@ -45,6 +45,8 @@ analyze_current_state_init()
     state->required_number_hits = 1;
     state->ncpu = (int) bu_avail_cpus();
     state->use_single_grid = 0;
+    state->debug = 0;
+    state->verbose = 0;
     state->plot_volume = NULL;
 
     state->exp_air_callback = NULL;
@@ -207,6 +209,20 @@ void analyze_register_adj_air_callback(struct current_state *state, adj_air_call
 void analyze_set_volume_plotfile(struct current_state *state, FILE* plot_volume)
 {
     state->plot_volume = plot_volume;
+}
+
+
+void analyze_enable_debug(struct current_state *state, struct bu_vls *vls)
+{
+    state->debug = 1;
+    state->debug_str = vls;
+}
+
+
+void analyze_enable_verbose(struct current_state *state, struct bu_vls *vls)
+{
+    state->verbose = 1;
+    state->verbose_str = vls;
 }
 
 /*

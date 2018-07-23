@@ -66,6 +66,7 @@ set(LIBGED_SOURCES
   check/check_gap.c
   check/check_overlaps.c
   check/check_volume.c
+  check/check_weight.c
   clone.c
   coil.c
   color.c

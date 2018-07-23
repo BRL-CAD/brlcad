@@ -49,13 +49,10 @@
 #define ANALYSIS_MOMENTS 1024
 #define ANALYSIS_PLOT_OVERLAPS 2048
 
-static int debug = 0;
 static int default_den = 0;
 static int analysis_flags;
 static double Samples_per_model_axis = 2.0;
 static int aborted = 0;
-static int verbose = 0;
-
 
 /**
  * rt_shootray() was told to call this on a hit.  It passes the
@@ -93,10 +90,10 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 
-	if (debug) {
+	if (state->debug) {
 	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-	    bu_log("%s %g->%g\n", pp->pt_regionp->reg_name,
-		    pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
+	    bu_vls_printf(state->debug_str, "%s %g->%g\n", pp->pt_regionp->reg_name,
+			  pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
 	    bu_semaphore_release(ANALYZE_SEM_WORKER);
 	}
 
@@ -131,9 +128,9 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 	/* computing the weight of the objects */
 	if (analysis_flags & ANALYSIS_WEIGHT) {
-	    if (debug) {
+	    if (state->debug) {
 		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		bu_log("Hit %s doing weight\n", pp->pt_regionp->reg_name);
+		bu_vls_printf(state->debug_str, "Hit %s doing weight\n", pp->pt_regionp->reg_name);
 		bu_semaphore_release(ANALYZE_SEM_WORKER);
 	    }
 
@@ -265,10 +262,10 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 		bu_semaphore_release(ANALYZE_SEM_STATS);
 	    }
-	    if (debug) {
+	    if (state->debug) {
 		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		bu_log("\t\tvol hit %s oDist:%g objVol:%g %s\n",
-			pp->pt_regionp->reg_name, dist, prd->optr->o_len[state->curr_view], prd->optr->o_name);
+		bu_vls_printf(state->debug_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
+			      pp->pt_regionp->reg_name, dist, prd->optr->o_len[state->curr_view], prd->optr->o_name);
 		bu_semaphore_release(ANALYZE_SEM_WORKER);
 	    }
 	    if (state->plot_volume) {
@@ -507,8 +504,8 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    int view;
 	    double tmp;
 
-	    if (verbose)
-		bu_log("object %d of %d\n", obj, state->num_objects);
+	    if (state->verbose)
+		bu_vls_printf(state->verbose_str, "object %d of %d\n", obj, state->num_objects);
 
 	    /* compute weight of object for given view */
 	    low = INFINITY;
@@ -517,16 +514,16 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    for (view = 0; view < state->num_views; view++) {
 		val = state->objs[obj].o_weight[view] =
 		    state->objs[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
-		if(verbose)
-		    bu_log("Value : %g\n", val);
+		if (state->verbose)
+		    bu_vls_printf(state->verbose_str, "Value : %g\n", val);
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
 	    }
 	    delta = hi - low;
 
-	    if (verbose)
-		bu_log("\t%s running avg weight %g gram hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low );
+	    if (state->verbose)
+		bu_vls_printf(state->verbose_str, "\t%s running avg weight %g gram hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low );
 
 	    if (delta > state->weight_tolerance) {
 		/* this object differs too much in each view, so we
@@ -534,14 +531,14 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 		 * terminate.
 		 */
 		can_terminate = 0;
-		if (verbose)
-		    bu_log("\t%s differs too much in weight per view.\n",
+		if (state->verbose)
+		    bu_vls_printf(state->verbose_str, "\t%s differs too much in weight per view.\n",
 			    state->objs[obj].o_name);
 	    }
 	}
 	if (can_terminate) {
-	    if (verbose)
-		bu_log("all objects within tolerance on weight calculation\n");
+	    if (state->verbose)
+		bu_vls_printf(state->verbose_str, "all objects within tolerance on weight calculation\n");
 	}
     }
 
@@ -567,16 +564,16 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    }
 	    delta = hi - low;
 
-	    if (verbose)
-		bu_log("\t%s running avg volume %g cu mm hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low);
+	    if (state->verbose)
+		bu_vls_printf(state->verbose_str, "\t%s running avg volume %g cu mm hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low);
 
 	    if (delta > state->volume_tolerance) {
 		/* this object differs too much in each view, so we
 		 * need to refine the grid.
 		 */
 		can_terminate = 0;
-		if (verbose)
-		    bu_log("\tvolume tol not met on %s.  Refine grid\n", state->objs[obj].o_name);
+		if (state->verbose)
+		    bu_vls_printf(state->verbose_str, "\tvolume tol not met on %s.  Refine grid\n", state->objs[obj].o_name);
 		break;
 	    }
 	}
@@ -639,8 +636,8 @@ check_terminate(struct current_state *state)
     }
     if (analysis_flags & (ANALYSIS_WEIGHT|ANALYSIS_VOLUME)) {
 	if (wv_status == 0) {
-	    if (verbose)
-		bu_log("%s: Volume/Weight tolerance met. Terminate\n", CPP_FILELINE);
+	    if (state->verbose)
+		bu_vls_printf(state->verbose_str, "%s: Volume/Weight tolerance met. Terminate\n", CPP_FILELINE);
 	    return 0; /* terminate */
 	}
     }
@@ -718,15 +715,15 @@ options_set(struct current_state *state)
      */
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	if (state->densityFileName) {
-	    if(debug)
-		bu_log("Density from file\n");
+	    if(state->debug)
+		bu_vls_printf(state->debug_str, "Density from file\n");
 	    if (densities_from_file(state, state->densityFileName) != ANALYZE_OK) {
 		bu_log("Couldn't load density table from file. Using default density.\n");
 		default_den = 1;
 	    }
 	} else {
-	    if(debug)
-		bu_log("Density from db\n");
+	    if(state->debug)
+		bu_vls_printf(state->debug_str, "Density from db\n");
 	    if (densities_from_database(state, rtip) != ANALYZE_OK) {
 		bu_log("Couldn't load density table from database. Using default density.\n");
 		default_den = 1;
@@ -1173,7 +1170,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 
 	bu_log("Area: (%g, %g, %g)\n", state->area[X], state->area[Y], state->area[Z]);
     }
-    if (verbose) bu_log("ncpu: %d\n", state->ncpu);
+    if (state->verbose) bu_vls_printf(state->verbose_str, "ncpu: %d\n", state->ncpu);
 
     /* if the user did not specify the initial grid spacing limit, we
      * need to compute a reasonable one for them.

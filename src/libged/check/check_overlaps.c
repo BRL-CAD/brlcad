@@ -79,7 +79,6 @@ int check_overlaps(struct current_state *state,
 		   int tnobjs,
 		   struct check_parameters *options)
 {
-    int flags = 0;
     struct ged_check_plot check_plot;
     struct overlaps_context callbackdata;
     struct regions_list overlapList;
@@ -111,11 +110,13 @@ int check_overlaps(struct current_state *state,
 
     /* register callback */
     analyze_register_overlaps_callback(state, overlap, &callbackdata);
-    /* set flags */
-    flags |= ANALYSIS_OVERLAPS;
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, flags) == ANALYZE_ERROR){
+
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_OVERLAPS)) {
+	clear_list(&overlapList);
 	return GED_ERROR;
     }
+
+    print_verbose_debug(options);
 
     if(callbackdata.numberOfOverlaps > 0) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nNumber of Overlaps: %d\n", callbackdata.numberOfOverlaps);

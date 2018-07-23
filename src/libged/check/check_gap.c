@@ -62,7 +62,6 @@ int check_gap(struct current_state *state,
 	      int tnobjs,
 	      struct check_parameters *options)
 {
-    int flags = 0;
     FILE *plot_gaps = NULL;
     char *name = "gaps.plot3";
     struct gap_context callbackdata;
@@ -81,13 +80,14 @@ int check_gap(struct current_state *state,
     callbackdata.plot_gaps = plot_gaps;
     VMOVE(callbackdata.gap_color, gap_color);
 
-    flags |= ANALYSIS_GAP;
     analyze_register_gaps_callback(state, gaps, &callbackdata);
 
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, flags) == ANALYZE_ERROR){
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_GAP)) {
+	clear_list(&gapList);
 	return GED_ERROR;
     }
 
+    print_verbose_debug(options);
     print_list(&gapList, options->units, "Gaps");
     clear_list(&gapList);
 

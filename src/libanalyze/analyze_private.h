@@ -138,6 +138,12 @@ struct current_state {
 
     struct bu_vls *log_str;
 
+    int verbose;
+    struct bu_vls *verbose_str;
+
+    int debug;
+    struct bu_vls *debug_str;
+
     fastf_t *m_lenTorque; /* torque vector for each view */
 
     /* single gird variables */

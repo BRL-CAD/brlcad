@@ -178,6 +178,8 @@ struct check_parameters {
     int getfromview;
     int overlaps_overlay_flag;
     int plot_files;
+    int verbose;
+    int debug;
     char *densityFileName;
     fastf_t azimuth_deg, elevation_deg;
     fastf_t gridSpacing, gridSpacingLimit;
@@ -186,6 +188,8 @@ struct check_parameters {
     fastf_t volume_tolerance;
     fastf_t weight_tolerance;
     const struct cvt_tab *units[3];
+    struct bu_vls *debug_str;
+    struct bu_vls *verbose_str;
 };
 
 struct regions_list {
@@ -211,6 +215,9 @@ print_list(struct regions_list *list, const struct cvt_tab *units[3], char* name
 extern void
 clear_list(struct regions_list *list);
 
+extern void
+print_verbose_debug(struct check_parameters *options);
+
 typedef int check_functions_t(struct current_state *state,
 			      struct db_i *dbip,
 			      char **tobjtab,
@@ -226,6 +233,8 @@ extern check_functions_t check_exp_air;
 extern check_functions_t check_gap;
 
 extern check_functions_t check_adj_air;
+
+extern check_functions_t check_weight;
 
 __END_DECLS
 

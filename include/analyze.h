@@ -464,6 +464,19 @@ ANALYZE_EXPORT extern void
 analyze_set_volume_plotfile(struct current_state *state , FILE* plotvolume);
 
 /**
+ * used to set debug flag and get debug information into the bu_vls pointer
+ */
+ANALYZE_EXPORT extern void
+analyze_enable_debug(struct current_state *state, struct bu_vls *vls);
+
+/**
+ * used to set verbose flag and get verbose information into the bu_vls pointer
+ */
+ANALYZE_EXPORT extern void
+analyze_enable_verbose(struct current_state *state, struct bu_vls *vls);
+
+
+/**
  * registers the callback functions defined by the user to be called when raytracing
  */
 ANALYZE_EXPORT extern void

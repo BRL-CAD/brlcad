@@ -63,7 +63,6 @@ int check_adj_air(struct current_state *state,
 		  int tnobjs,
 		  struct check_parameters *options)
 {
-    int flags = 0;
     FILE *plot_adjair = NULL;
     char *name = "adj_air.plot3";
     struct adj_air_context callbackdata;
@@ -82,13 +81,14 @@ int check_adj_air(struct current_state *state,
     callbackdata.plot_adjair = plot_adjair;
     VMOVE(callbackdata.adjAir_color, adjAir_color);
 
-    flags |= ANALYSIS_ADJ_AIR;
     analyze_register_adj_air_callback(state, adj_air, &callbackdata);
 
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, flags) == ANALYZE_ERROR){
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_ADJ_AIR)) {
+	clear_list(&adjAirList);
 	return GED_ERROR;
     }
 
+    print_verbose_debug(options);
     print_list(&adjAirList, options->units, "Adjacent Air");
     clear_list(&adjAirList);
 
