@@ -153,6 +153,8 @@ struct current_state {
 
     FILE *plot_volume;
 
+    struct bu_vls *log_str;
+
     fastf_t *m_lenTorque; /* torque vector for each view */
 
     /* single gird variables */

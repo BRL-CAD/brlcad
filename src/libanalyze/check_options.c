@@ -58,6 +58,9 @@ analyze_current_state_init()
 
     state->adj_air_callback = NULL;
     state->adj_air_callback_data = NULL;
+
+    state->log_str = bu_vls_vlsinit();
+
     return state;
 }
 
@@ -69,6 +72,8 @@ analyze_free_current_state(struct current_state *state)
 
     if (state == NULL)
 	return;
+
+    bu_vls_free(state->log_str);
 
     if (state->densities != NULL) {
 	for (i = 0; i < state->num_densities; ++i) {

@@ -141,10 +141,10 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    if (pp->pt_regionp->reg_gmater >= state->num_densities) {
 		if(default_den == 0) {
 		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		    bu_log("Density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
-			    pp->pt_regionp->reg_gmater,
-			    pp->pt_regionp->reg_name,
-			    state->num_densities); /* XXX this should do something else */
+		    bu_vls_printf(state->log_str, "Density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
+				  pp->pt_regionp->reg_gmater,
+				  pp->pt_regionp->reg_name,
+				  state->num_densities); /* XXX this should do something else */
 		    bu_semaphore_release(ANALYZE_SEM_WORKER);
 		    return ANALYZE_ERROR;
 		}
@@ -175,7 +175,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 		if (los < 1) {
 		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		    bu_log("bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
+		    bu_vls_printf(state->log_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
 		    bu_semaphore_release(ANALYZE_SEM_WORKER);
 		}
 
@@ -209,8 +209,8 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 	    } else {
 		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		bu_log("Density index %d from region %s is not set.\nAdd entry to density table\n",
-			pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
+		bu_vls_printf(state->log_str, "Density index %d from region %s is not set.\nAdd entry to density table\n",
+			      pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
 		bu_semaphore_release(ANALYZE_SEM_WORKER);
 
 		aborted = 1;
@@ -793,7 +793,7 @@ options_set(struct current_state *state)
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	if (state->weight_tolerance < 0.0) {
-	    double max_den = 2.74;	/* Aluminium 7xxx series as default material */
+	    double max_den = 0.0;
 	    int i;
 	    for (i = 0; i < state->num_densities; i++) {
 		if (state->densities[i].grams_per_cu_mm > max_den)
@@ -1040,6 +1040,7 @@ shoot_rays(struct current_state *state)
 	if (state->use_single_grid) {
 	    analyze_single_grid_setup(state->gridSpacing, state->viewsize, state->eye_model, state->Viewrotscale, state->model2view, state->grid);
 	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
+	    bu_log("%s", bu_vls_strgrab(state->log_str));
 	} else {
 	    int view;
 	    double inv_spacing = 1.0/state->gridSpacing;
@@ -1052,6 +1053,7 @@ shoot_rays(struct current_state *state)
 	    for (view = 0; view < state->num_views; view++) {
 		analyze_triple_grid_setup(view, state);
 		bu_parallel(analyze_worker, state->ncpu, (void *)state);
+		bu_log("%s", bu_vls_strgrab(state->log_str));
 		if (aborted)
 		    break;
 	    }
@@ -1158,6 +1160,9 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	rt_init_resource(&resp[i], i, rtip);
     }
 
+    state->rtip = rtip;
+    state->resp = resp;
+
     /* Prep for raytracing */
     state->num_objects = num_objects;
     for(i = 0; i < state->num_objects; i++) {
@@ -1229,8 +1234,6 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     }
 
     /* initialize some stuff */
-    state->rtip = rtip;
-    state->resp = resp;
     allocate_region_data(state, names);
     grid.refine_flag = 0;
     shoot_rays(state);

@@ -537,7 +537,20 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     sub = argv[0];
     len = strlen(sub);
     if (bu_strncmp(sub, "weight", len) == 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s", sub);
+	if (perform_raytracing(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, ANALYSIS_WEIGHT) == ANALYZE_ERROR){
+	    bu_free(tobjtab, "free tobjtab");
+	    tobjtab = NULL;
+	    analyze_free_current_state(state);
+	    state = NULL;
+	    return GED_ERROR;
+	}
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "Weight:\n");
+
+	for (i=0; i < tnobjs; i++){
+	    fastf_t weight = 0;
+	    weight = analyze_weight(state, tobjtab[i]);
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s %g %s\n", tobjtab[i], weight / options.units[WGT]->val, options.units[WGT]->name);
+	}
     } else if (bu_strncmp(sub, "volume", len) == 0) {
 	
 	if (check_volume(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options) == GED_ERROR) {

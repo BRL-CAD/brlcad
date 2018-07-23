@@ -21,6 +21,7 @@ set(LIBANALYZE_SOURCES
   util.cpp
   volume.c
   voxels.c
+  weight.c
   MeshHealing/MeshConversion_brlcad.cpp
   MeshHealing/MeshConversion.cpp
   MeshHealing/Zipper.cpp

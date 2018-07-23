@@ -364,6 +364,12 @@ ANALYZE_EXPORT extern fastf_t
 analyze_volume(struct current_state *context, const char *name);
 
 /**
+ * returns the weight of the specified object (name)
+  */
+ANALYZE_EXPORT extern fastf_t
+analyze_weight(struct current_state *context, const char *name);
+
+/**
  * returns the centroid of the specified object (name)
   */
 ANALYZE_EXPORT extern point_t *
