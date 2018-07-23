@@ -43,7 +43,7 @@ exposed_air(struct partition *pp,
     /* this shouldn't be air */
     bu_semaphore_acquire(GED_SEM_LIST);
     add_to_list(context->exposedAirList,
-    		pp->pt_regionp->reg_name,
+		pp->pt_regionp->reg_name,
 		(char *)NULL,
 		pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist,
 		last_out_point);
