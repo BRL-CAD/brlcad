@@ -375,7 +375,9 @@ analyze_overlap(struct application *ap,
     VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
     VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
 
-    state->overlaps_callback(reg1, reg2, depth, ihit, ohit, state->overlaps_callback_data);
+    if (analysis_flags & ANALYSIS_OVERLAPS) {
+	state->overlaps_callback(reg1, reg2, depth, ihit, ohit, state->overlaps_callback_data);
+    }
 
     /* XXX We should somehow flag the volume/weight calculations as invalid */
 
@@ -679,10 +681,7 @@ analyze_worker(int cpu, void *ptr)
     ap.A_LENDEN = 0.0; /* really the cumulative length*density for weight computation*/
     ap.A_LEN = 0.0;    /* really the cumulative length for volume computation */
     ap.A_STATE = ptr; /* really copying the state ptr to the a_uptr */
-
-    if (analysis_flags & ANALYSIS_OVERLAPS) {
-	ap.a_overlap = analyze_overlap;
-    }
+    ap.a_overlap = analyze_overlap;
 
     shot_cnt = 0;
     while (1) {
