@@ -13,6 +13,7 @@ set(LIBANALYZE_SOURCES
   check_options.c
   density.c
   inside.c
+  mass.c
   nirt.cxx
   overlaps.c
   raydiff.c
@@ -21,7 +22,6 @@ set(LIBANALYZE_SOURCES
   util.cpp
   volume.c
   voxels.c
-  weight.c
   MeshHealing/MeshConversion_brlcad.cpp
   MeshHealing/MeshConversion.cpp
   MeshHealing/Zipper.cpp

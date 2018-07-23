@@ -64,7 +64,7 @@ struct per_obj_data {
     double *o_len;
     double *o_lenDensity;
     double *o_volume;
-    double *o_weight;
+    double *o_mass;
     double *o_surf_area;
     fastf_t *o_lenTorque; /* torque vector for each view */
 };
@@ -74,9 +74,9 @@ struct per_obj_data {
  */
 struct per_region_data {
     unsigned long hits;
-    double *r_lenDensity; /* for per-region per-view weight computation */
+    double *r_lenDensity; /* for per-region per-view mass computation */
     double *r_len;        /* for per-region, per-view computation */
-    double *r_weight;
+    double *r_mass;
     double *r_volume;
     double *r_surf_area;
     struct per_obj_data *optr;
@@ -102,7 +102,7 @@ struct current_state {
     double *m_lenDensity;
     double *m_len;
     double *m_volume;
-    double *m_weight;
+    double *m_mass;
     double *m_surf_area;
     unsigned long *shots;
 
@@ -124,7 +124,7 @@ struct current_state {
     int num_views;
     double overlap_tolerance;
     double volume_tolerance;
-    double weight_tolerance;
+    double mass_tolerance;
     double sa_tolerance;
     double azimuth_deg, elevation_deg;
     double gridSpacing, gridSpacingLimit;

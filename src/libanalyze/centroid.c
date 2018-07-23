@@ -46,7 +46,7 @@ analyze_centroid(struct current_state *state, const char *name)
     BU_GET(cent, point_t);
     avg_mass = 0.0;
     for (view = 0; view < state->num_views; view++)
-	avg_mass += state->objs[obj].o_weight[view];
+	avg_mass += state->objs[obj].o_mass[view];
 
     avg_mass /= state->num_views;
     if (!ZERO(avg_mass)) {

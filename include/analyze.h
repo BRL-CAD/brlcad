@@ -364,10 +364,10 @@ ANALYZE_EXPORT extern fastf_t
 analyze_volume(struct current_state *context, const char *name);
 
 /**
- * returns the weight of the specified object (name)
+ * returns the mass of the specified object (name)
   */
 ANALYZE_EXPORT extern fastf_t
-analyze_weight(struct current_state *context, const char *name);
+analyze_mass(struct current_state *context, const char *name);
 
 /**
  * returns the centroid of the specified object (name)
@@ -416,7 +416,7 @@ ANALYZE_EXPORT extern void
 analyze_set_grid_spacing(struct current_state *state , fastf_t gridSpacing, fastf_t gridSpacingLimit);
 
 /**
- * sets the tolerance values for overlaps, volume and weight for the analysis
+ * sets the tolerance values for overlaps, volume and mass for the analysis
  */
 ANALYZE_EXPORT extern void
 analyze_set_overlap_tolerance(struct current_state *state , fastf_t overlap_tolerance);
@@ -425,7 +425,7 @@ ANALYZE_EXPORT extern void
 analyze_set_volume_tolerance(struct current_state *state , fastf_t volume_tolerance);
 
 ANALYZE_EXPORT extern void
-analyze_set_weight_tolerance(struct current_state *state , fastf_t weight_tolerance);
+analyze_set_mass_tolerance(struct current_state *state , fastf_t mass_tolerance);
 
 /**
  * sets the number of cpus to be used for raytracing

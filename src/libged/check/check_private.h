@@ -29,7 +29,7 @@ __BEGIN_DECLS
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_CENTROIDS 2
 #define ANALYSIS_SURF_AREA 4
-#define ANALYSIS_WEIGHT 8
+#define ANALYSIS_MASS 8
 #define ANALYSIS_GAP 16
 #define ANALYSIS_EXP_AIR 32
 #define ANALYSIS_BOX 64
@@ -136,7 +136,7 @@ static const struct cvt_tab units_tab[3][40] = {
 	{0.0,		""}			/* LAST ENTRY */
     },
     {
-	/* weight
+	/* mass
 	 * Values for converting given units to grams
 	 */
 	{1.0, "grams"}, /* default */
@@ -164,7 +164,7 @@ static const struct cvt_tab units_tab[3][40] = {
  */
 #define LINE 0
 #define VOL 1
-#define WGT 2
+#define MASS 2
 #define COMMA ','
 #define STRCOMMA ","
 
@@ -186,7 +186,7 @@ struct check_parameters {
     fastf_t Samples_per_model_axis;
     fastf_t overlap_tolerance;
     fastf_t volume_tolerance;
-    fastf_t weight_tolerance;
+    fastf_t mass_tolerance;
     const struct cvt_tab *units[3];
     struct bu_vls *debug_str;
     struct bu_vls *verbose_str;
@@ -234,7 +234,7 @@ extern check_functions_t check_gap;
 
 extern check_functions_t check_adj_air;
 
-extern check_functions_t check_weight;
+extern check_functions_t check_mass;
 
 __END_DECLS
 

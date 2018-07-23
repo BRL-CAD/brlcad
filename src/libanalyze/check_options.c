@@ -35,7 +35,7 @@ analyze_current_state_init()
     state->num_views = 3;
     state->densityFileName = NULL;
     state->volume_tolerance = -1;
-    state->weight_tolerance = -1;
+    state->mass_tolerance = -1;
     state->sa_tolerance = -1;
     state->azimuth_deg = 35.0;
     state->elevation_deg = 25.0;
@@ -98,7 +98,7 @@ analyze_free_current_state(struct current_state *state)
 	    bu_free(state->objs[i].o_len, "o_len");
 	    bu_free(state->objs[i].o_lenDensity, "o_lenDensity");
 	    bu_free(state->objs[i].o_volume, "o_volume");
-	    bu_free(state->objs[i].o_weight, "o_weight");
+	    bu_free(state->objs[i].o_mass, "o_mass");
 	    bu_free(state->objs[i].o_lenTorque, "o_lenTorque");
 	}
 	bu_free(state->objs, "object table");
@@ -142,9 +142,9 @@ void analyze_set_volume_tolerance(struct current_state *state, fastf_t volume_to
 }
 
 
-void analyze_set_weight_tolerance(struct current_state *state, fastf_t weight_tolerance)
+void analyze_set_mass_tolerance(struct current_state *state, fastf_t mass_tolerance)
 {
-    state->weight_tolerance = weight_tolerance;
+    state->mass_tolerance = mass_tolerance;
 }
 
 

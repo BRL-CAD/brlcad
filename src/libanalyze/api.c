@@ -39,7 +39,7 @@
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_CENTROIDS 2
 #define ANALYSIS_SURF_AREA 4
-#define ANALYSIS_WEIGHT 8
+#define ANALYSIS_MASS 8
 #define ANALYSIS_GAP 16
 #define ANALYSIS_EXP_AIR 32 /* exposed air */
 #define ANALYSIS_BOX 64
@@ -126,11 +126,11 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    }
 	}
 
-	/* computing the weight of the objects */
-	if (analysis_flags & ANALYSIS_WEIGHT) {
+	/* computing the mass of the objects */
+	if (analysis_flags & ANALYSIS_MASS) {
 	    if (state->debug) {
 		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		bu_vls_printf(state->debug_str, "Hit %s doing weight\n", pp->pt_regionp->reg_name);
+		bu_vls_printf(state->debug_str, "Hit %s doing mass\n", pp->pt_regionp->reg_name);
 		bu_semaphore_release(ANALYZE_SEM_WORKER);
 	    }
 
@@ -164,7 +164,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		vect_t lenTorque;
 		int los;
 
-		/* factor in the density of this object weight
+		/* factor in the density of this object mass
 		 * computation, factoring in the LOS percentage
 		 * material of the object
 		 */
@@ -176,16 +176,16 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		    bu_semaphore_release(ANALYZE_SEM_WORKER);
 		}
 
-		/* accumulate the total weight values */
+		/* accumulate the total mass values */
 		val = de->grams_per_cu_mm * dist * (pp->pt_regionp->reg_los * 0.01);
 		ap->A_LENDEN += val;
 
 		prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
-		/* accumulate the per-region per-view weight values */
+		/* accumulate the per-region per-view mass values */
 		bu_semaphore_acquire(ANALYZE_SEM_STATS);
 		prd->r_lenDensity[state->i_axis] += val;
 
-		/* accumulate the per-object per-view weight values */
+		/* accumulate the per-object per-view mass values */
 		prd->optr->o_lenDensity[state->i_axis] += val;
 
 		if (analysis_flags & ANALYSIS_CENTROIDS) {
@@ -376,7 +376,7 @@ analyze_overlap(struct application *ap,
 	state->overlaps_callback(reg1, reg2, depth, ihit, ohit, state->overlaps_callback_data);
     }
 
-    /* XXX We should somehow flag the volume/weight calculations as invalid */
+    /* XXX We should somehow flag the volume/mass calculations as invalid */
 
     /* since we have no basis to pick one over the other, just pick */
     return 1;	/* No further consideration to this partition */
@@ -483,21 +483,21 @@ densities_from_database(struct current_state *state, struct rt_i *rtip)
  * 1 continue processing
  */
 HIDDEN int
-weight_volume_surf_area_terminate_check(struct current_state *state)
+mass_volume_surf_area_terminate_check(struct current_state *state)
 {
-    /* Both weight and volume computations rely on this routine to
+    /* Both mass and volume computations rely on this routine to
      * compute values that are printed in summaries.  Hence, both
      * checks must always be done before this routine exits.  So we
      * store the status (can we terminate processing?) in this
-     * variable and act on it once both volume and weight computations
+     * variable and act on it once both volume and mass computations
      * are done.
      */
     int can_terminate = 1;
 
     double low, hi, val, delta;
 
-    if (analysis_flags & ANALYSIS_WEIGHT) {
-	/* for each object, compute the weight for all views */
+    if (analysis_flags & ANALYSIS_MASS) {
+	/* for each object, compute the mass for all views */
 	int obj;
 
 	for (obj = 0; obj < state->num_objects; obj++) {
@@ -507,12 +507,12 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    if (state->verbose)
 		bu_vls_printf(state->verbose_str, "object %d of %d\n", obj, state->num_objects);
 
-	    /* compute weight of object for given view */
+	    /* compute mass of object for given view */
 	    low = INFINITY;
 	    hi = -INFINITY;
 	    tmp = 0.0;
 	    for (view = 0; view < state->num_views; view++) {
-		val = state->objs[obj].o_weight[view] =
+		val = state->objs[obj].o_mass[view] =
 		    state->objs[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
 		if (state->verbose)
 		    bu_vls_printf(state->verbose_str, "Value : %g\n", val);
@@ -523,22 +523,22 @@ weight_volume_surf_area_terminate_check(struct current_state *state)
 	    delta = hi - low;
 
 	    if (state->verbose)
-		bu_vls_printf(state->verbose_str, "\t%s running avg weight %g gram hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low );
+		bu_vls_printf(state->verbose_str, "\t%s running avg mass %g gram hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low );
 
-	    if (delta > state->weight_tolerance) {
+	    if (delta > state->mass_tolerance) {
 		/* this object differs too much in each view, so we
 		 * need to refine the grid. signal that we cannot
 		 * terminate.
 		 */
 		can_terminate = 0;
 		if (state->verbose)
-		    bu_vls_printf(state->verbose_str, "\t%s differs too much in weight per view.\n",
+		    bu_vls_printf(state->verbose_str, "\t%s differs too much in mass per view.\n",
 			    state->objs[obj].o_name);
 	    }
 	}
 	if (can_terminate) {
 	    if (state->verbose)
-		bu_vls_printf(state->verbose_str, "all objects within tolerance on weight calculation\n");
+		bu_vls_printf(state->verbose_str, "all objects within tolerance on mass calculation\n");
 	}
     }
 
@@ -626,7 +626,7 @@ check_terminate(struct current_state *state)
     /* this computation is done first, because there are side effects
      * that must be obtained whether we terminate or not
      */
-    wv_status = weight_volume_surf_area_terminate_check(state);
+    wv_status = mass_volume_surf_area_terminate_check(state);
 
     /* if we've reached the grid limit, we're done, no matter what */
     if (state->gridSpacing < state->gridSpacingLimit) {
@@ -634,10 +634,10 @@ check_terminate(struct current_state *state)
 		state->gridSpacing, state->gridSpacingLimit);
 	return 0;
     }
-    if (analysis_flags & (ANALYSIS_WEIGHT|ANALYSIS_VOLUME)) {
+    if (analysis_flags & (ANALYSIS_MASS|ANALYSIS_VOLUME)) {
 	if (wv_status == 0) {
 	    if (state->verbose)
-		bu_vls_printf(state->verbose_str, "%s: Volume/Weight tolerance met. Terminate\n", CPP_FILELINE);
+		bu_vls_printf(state->verbose_str, "%s: Volume/mass tolerance met. Terminate\n", CPP_FILELINE);
 	    return 0; /* terminate */
 	}
     }
@@ -663,7 +663,7 @@ analyze_worker(int cpu, void *ptr)
     ap.a_miss = analyze_miss;  /* where to go on a miss */
     ap.a_resource = &state->resp[cpu];
     ap.a_logoverlap = rt_silent_logoverlap;
-    ap.A_LENDEN = 0.0; /* really the cumulative length*density for weight computation*/
+    ap.A_LENDEN = 0.0; /* really the cumulative length*density for mass computation*/
     ap.A_LEN = 0.0;    /* really the cumulative length for volume computation */
     ap.A_STATE = ptr; /* really copying the state ptr to the a_uptr */
     ap.a_overlap = analyze_overlap;
@@ -713,7 +713,7 @@ options_set(struct current_state *state)
     /* figure out where the density values are coming from and get
      * them.
      */
-    if (analysis_flags & ANALYSIS_WEIGHT) {
+    if (analysis_flags & ANALYSIS_MASS) {
 	if (state->densityFileName) {
 	    if(state->debug)
 		bu_vls_printf(state->debug_str, "Density from file\n");
@@ -748,7 +748,7 @@ options_set(struct current_state *state)
 	state->gridSpacing = newGridSpacing;
     }
 
-    /* if the vol/weight tolerances are not set, pick something */
+    /* if the vol/mass tolerances are not set, pick something */
     if (analysis_flags & ANALYSIS_VOLUME) {
 	if (state->volume_tolerance < 0.0) {
 	    /* using 1/1000th the volume as a default tolerance, no particular reason */
@@ -766,18 +766,18 @@ options_set(struct current_state *state)
 	    state->sa_tolerance *= 0.01;
 	}
     }
-    if (analysis_flags & ANALYSIS_WEIGHT) {
-	if (state->weight_tolerance < 0.0) {
+    if (analysis_flags & ANALYSIS_MASS) {
+	if (state->mass_tolerance < 0.0) {
 	    double max_den = 0.0;
 	    int i;
 	    for (i = 0; i < state->num_densities; i++) {
 		if (state->densities[i].grams_per_cu_mm > max_den)
 		    max_den = state->densities[i].grams_per_cu_mm;
 	    }
-	    state->weight_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.1 * max_den;
-	    bu_log("Setting weight tolerance to %g gram\n", state->weight_tolerance);
+	    state->mass_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.1 * max_den;
+	    bu_log("Setting mass tolerance to %g gram\n", state->mass_tolerance);
 	} else {
-	    bu_log("Weight tolerance   %g gram\n", state->weight_tolerance);
+	    bu_log("mass tolerance   %g gram\n", state->mass_tolerance);
 	}
     }
 
@@ -875,7 +875,7 @@ allocate_region_data(struct current_state *state, char *av[])
     state->m_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "densityLen");
     state->m_len = (double *)bu_calloc(state->num_views, sizeof(double), "volume");
     state->m_volume = (double *)bu_calloc(state->num_views, sizeof(double), "volume");
-    state->m_weight = (double *)bu_calloc(state->num_views, sizeof(double), "volume");
+    state->m_mass = (double *)bu_calloc(state->num_views, sizeof(double), "volume");
     state->m_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "surface area");
     state->shots = (unsigned long *)bu_calloc(state->num_views, sizeof(unsigned long), "volume");
     state->m_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
@@ -891,7 +891,7 @@ allocate_region_data(struct current_state *state, char *av[])
 	state->objs[i].o_len = (double *)bu_calloc(state->num_views, sizeof(double), "o_len");
 	state->objs[i].o_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "o_lenDensity");
 	state->objs[i].o_volume = (double *)bu_calloc(state->num_views, sizeof(double), "o_volume");
-	state->objs[i].o_weight = (double *)bu_calloc(state->num_views, sizeof(double), "o_weight");
+	state->objs[i].o_mass = (double *)bu_calloc(state->num_views, sizeof(double), "o_mass");
 	state->objs[i].o_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "o_surf_area");
 	state->objs[i].o_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
     }
@@ -906,7 +906,7 @@ allocate_region_data(struct current_state *state, char *av[])
 	state->reg_tbl[i].r_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "r_lenDensity");
 	state->reg_tbl[i].r_len = (double *)bu_calloc(state->num_views, sizeof(double), "r_len");
 	state->reg_tbl[i].r_volume = (double *)bu_calloc(state->num_views, sizeof(double), "len");
-	state->reg_tbl[i].r_weight = (double *)bu_calloc(state->num_views, sizeof(double), "len");
+	state->reg_tbl[i].r_mass = (double *)bu_calloc(state->num_views, sizeof(double), "len");
 	state->reg_tbl[i].r_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "surface area");
 
 	index = find_cmd_obj(state, state->objs, &regp->reg_name[1]);

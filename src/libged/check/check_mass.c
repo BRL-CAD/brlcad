@@ -1,4 +1,4 @@
-/*                        W E I G H T . C
+/*                C H E C K _ M A S S . C
  * BRL-CAD
  *
  * Copyright (c) 2018 United States Government as represented by
@@ -17,44 +17,40 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file weight.c
- *
- * Libanalyze utility to calculate the weight using generic
- * method.
- *
- */
 
 #include "common.h"
 
-#include "analyze.h"
-#include "./analyze_private.h"
+#include "ged.h"
 
+#include "../ged_private.h"
+#include "./check_private.h"
 
-fastf_t
-analyze_weight(struct current_state *state, const char *name)
+int check_mass(struct current_state *state,
+		 struct db_i *dbip,
+		 char **tobjtab,
+		 int tnobjs,
+		 struct check_parameters *options)
 {
-    fastf_t weight;
-    int i, view, obj = 0;
+    int i;
 
-    for (i = 0; i < state->num_objects; i++) {
-	if(!(bu_strcmp(state->objs[i].o_name, name))) {
-	    obj = i;
-	    break;
-	}
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS)) return GED_ERROR;
+
+    print_verbose_debug(options);
+    bu_vls_printf(_ged_current_gedp->ged_result_str, "Mass:\n");
+
+    for (i=0; i < tnobjs; i++){
+	fastf_t mass = 0;
+	mass = analyze_mass(state, tobjtab[i]);
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s %g %s\n", tobjtab[i], mass / options->units[MASS]->val, options->units[MASS]->name);
     }
 
-    weight = 0.0;
-    for (view = 0; view < state->num_views; view++)
-	weight += state->objs[obj].o_weight[view];
-
-    weight /= state->num_views;
-    return weight;
+    return GED_OK;
 }
 
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

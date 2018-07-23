@@ -44,9 +44,9 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  adj_air - Detects air volumes which are next to each other but have different air_code values applied to the region.\n");
     bu_vls_printf(&str, "  exp_air - Check if the ray encounters air regions before (or after all) solid objects.\n");
     bu_vls_printf(&str, "  gap - This reports when there is more than overlap tolerance distance between objects on the ray path.\n");
+    bu_vls_printf(&str, "  mass - Computes the mass of the objects specified.\n");
     bu_vls_printf(&str, "  overlaps - This reports overlaps, when two regions occupy the same space.\n");
     bu_vls_printf(&str, "  volume - Computes the volume of the objects specified.\n");
-    bu_vls_printf(&str, "  weight - Computes the weight of the objects specified.\n");
 
     bu_vls_printf(&str, "\nOptions:\n\n");
     bu_vls_printf(&str, "  -a #[deg|rad] - Azimuth angle.\n");
@@ -54,20 +54,20 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  -e #[deg|rad] - Elevation angle.\n");
     bu_vls_printf(&str, "  -f filename - Specifies that density values should be taken from an external file instead of from the _DENSITIES object in the database.\n");
     bu_vls_printf(&str, "  -g [initial_grid_spacing-]grid_spacing_limit or [initial_grid_spacing,]grid_spacing_limit - Specifies a limit on how far the grid can be refined and optionally the initial spacing between rays in the grids.\n");
+    bu_vls_printf(&str, "  -M # - Specifies a mass tolerance value.\n");
     bu_vls_printf(&str, "  -n # - Specifies that the grid be refined until each region has at least num_hits ray intersections.\n");
     bu_vls_printf(&str, "  -N # - Specifies that only the first num_views should be computed.\n");
     bu_vls_printf(&str, "  -o - Specifies to display the overlaps as overlays.\n");
     bu_vls_printf(&str, "  -p - Specifies to produce plot files for each of the analyses it performs.\n");
     bu_vls_printf(&str, "  -P # - Specifies that ncpu CPUs should be used for performing the calculation. By default, all local CPUs are utilized.\n");
     bu_vls_printf(&str, "  -q - Quiets (suppresses) the 'was not hit' reporting.\n");
-    bu_vls_printf(&str, "  -r - Indicates to print per-region statistics for weight and volume as well as the values for the objects specified.\n");
+    bu_vls_printf(&str, "  -r - Indicates to print per-region statistics for mass and volume as well as the values for the objects specified.\n");
     bu_vls_printf(&str, "  -S # - Specifies that the grid spacing will be initially refined so that at least samples_per_axis_min will be shot along each axis of the bounding box of the model.\n");
     bu_vls_printf(&str, "  -t - Sets the tolerance for computing overlaps.\n");
-    bu_vls_printf(&str, "  -u distance_units,volume_units,weight_units - Specify the units used when reporting values.\n");
+    bu_vls_printf(&str, "  -u distance_units,volume_units,mass_units - Specify the units used when reporting values.\n");
     bu_vls_printf(&str, "  -U # - Specifies the Boolean value (0 or 1) for use_air which indicates whether regions which are marked as 'air' should be retained and included in the raytrace.\n");
     bu_vls_printf(&str, "  -v - Set verbose flag.\n");
     bu_vls_printf(&str, "  -V # - Specifies a volumetric tolerance value.\n");
-    bu_vls_printf(&str, "  -W # - Specifies a weight tolerance value.\n");
 
     bu_vls_vlscat(gedp->ged_result_str, &str);
     bu_vls_free(&str);
@@ -129,7 +129,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
     double a;
     char *p;
 
-    char *options_str = "a:de:f:g:n:N:opP:qrS:t:U:u:vV:W:h?";
+    char *options_str = "a:de:f:g:M:n:N:opP:qrS:t:U:u:vV:h?";
 
     /* Turn off getopt's error messages */
     bu_opterr = 0;
@@ -206,6 +206,13 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    analyze_set_grid_spacing(state, options->gridSpacing, options->gridSpacingLimit);
 		    break;
 		}
+	    case 'M':
+		if (read_units_double(&(options->mass_tolerance), bu_optarg, units_tab[2])) {
+		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in mass tolerance \"%s\"\n", bu_optarg);
+		    return -1;
+		}
+		analyze_set_mass_tolerance(state, options->mass_tolerance);
+		break;
 	    case 'n':
 		if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0) {
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
@@ -262,13 +269,6 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		}
 		analyze_set_volume_tolerance(state, options->volume_tolerance);
 		break;
-	    case 'W':
-		if (read_units_double(&(options->weight_tolerance), bu_optarg, units_tab[2])) {
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in weight tolerance \"%s\"\n", bu_optarg);
-		    return -1;
-		}
-		analyze_set_weight_tolerance(state, options->weight_tolerance);
-		break;
 
 	    case 'U':
 		errno = 0;
@@ -284,7 +284,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    int i;
 		    char *ptr = bu_optarg;
 		    const struct cvt_tab *cv;
-		    static const char *dim[3] = {"length", "volume", "weight"};
+		    static const char *dim[3] = {"length", "volume", "mass"};
 		    char *units_name[3] = {NULL, NULL, NULL};
 		    char **units_ap;
 
@@ -451,11 +451,11 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     struct current_state *state = NULL;
 
     struct check_parameters options;
-    const char *check_subcommands[] = {"weight", "volume", "overlaps", "exp_air", "gap", "adj_air", NULL};
+    const char *check_subcommands[] = {"mass", "volume", "overlaps", "exp_air", "gap", "adj_air", NULL};
     const struct cvt_tab *units[3] = {
 	&units_tab[0][0],	/* linear */
 	&units_tab[1][0],	/* volume */
-	&units_tab[2][0]	/* weight */
+	&units_tab[2][0]	/* mass */
     };
 
     int tnobjs = 0;
@@ -558,8 +558,8 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     /* determine subcommand */
     sub = argv[0];
     len = strlen(sub);
-    if (bu_strncmp(sub, "weight", len) == 0) {
-	if (check_weight(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+    if (bu_strncmp(sub, "mass", len) == 0) {
+	if (check_mass(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
