@@ -150,6 +150,12 @@ void analyze_set_mass_tolerance(struct current_state *state, fastf_t mass_tolera
 }
 
 
+void analyze_set_surf_area_tolerance(struct current_state *state, fastf_t sa_tolerance)
+{
+    state->sa_tolerance = sa_tolerance;
+}
+
+
 void analyze_set_ncpu(struct current_state *state, int ncpu)
 {
     state->ncpu = ncpu;

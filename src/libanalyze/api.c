@@ -658,8 +658,13 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	    }
 	    delta = hi - low;
 
+	    if (state->verbose)
+		bu_vls_printf(state->verbose_str, "\t%s running avg surface area %g mm^2 hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low);
+
 	    if(delta > state->sa_tolerance) {
 		can_terminate = 0;
+		if (state->verbose)
+		    bu_vls_printf(state->verbose_str, "\tsurface area tol not met on %s.  Refine grid\n", state->objs[obj].o_name);
 		break;
 	    }
 	}
@@ -835,7 +840,9 @@ options_set(struct current_state *state)
 	    V_MIN(state->sa_tolerance, state->span[1] * state->span[2]);
 	    V_MIN(state->sa_tolerance, state->span[2] * state->span[0]);
 	    state->sa_tolerance *= 0.01;
-	}
+	    bu_log("Using estimated surface area tolerance %g mm^2\n", state->sa_tolerance);
+	} else
+	    bu_log("Using surface area tolerance %g mm^2\n", state->sa_tolerance);
     }
     if (analysis_flags & ANALYSIS_MASS) {
 	if (state->mass_tolerance < 0.0) {

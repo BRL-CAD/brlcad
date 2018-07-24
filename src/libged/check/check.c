@@ -48,6 +48,7 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  mass - Computes the mass of the objects specified.\n");
     bu_vls_printf(&str, "  moments - Computes the moments and products of inertia of the objects specified.\n");
     bu_vls_printf(&str, "  overlaps - This reports overlaps, when two regions occupy the same space.\n");
+    bu_vls_printf(&str, "  surf_area - Computes the surface area of the objects specified.\n");
     bu_vls_printf(&str, "  volume - Computes the volume of the objects specified.\n");
 
     bu_vls_printf(&str, "\nOptions:\n\n");
@@ -64,6 +65,7 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  -P # - Specifies that ncpu CPUs should be used for performing the calculation. By default, all local CPUs are utilized.\n");
     bu_vls_printf(&str, "  -q - Quiets (suppresses) the 'was not hit' reporting.\n");
     bu_vls_printf(&str, "  -r - Indicates to print per-region statistics for mass and volume as well as the values for the objects specified.\n");
+    bu_vls_printf(&str, "  -s # - Specifies surface area tolerance value.\n");
     bu_vls_printf(&str, "  -S # - Specifies that the grid spacing will be initially refined so that at least samples_per_axis_min will be shot along each axis of the bounding box of the model.\n");
     bu_vls_printf(&str, "  -t - Sets the tolerance for computing overlaps.\n");
     bu_vls_printf(&str, "  -u distance_units,volume_units,mass_units - Specify the units used when reporting values.\n");
@@ -131,7 +133,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
     double a;
     char *p;
 
-    char *options_str = "a:de:f:g:M:n:N:opP:qrS:t:U:u:vV:h?";
+    char *options_str = "a:de:f:g:M:n:N:opP:qrs:S:t:U:u:vV:h?";
 
     /* Turn off getopt's error messages */
     bu_opterr = 0;
@@ -223,7 +225,6 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		options->require_num_hits = c;
 		analyze_set_required_number_hits(state, options->require_num_hits);
 		break;
-
 	    case 'N':
 		options->num_views = atoi(bu_optarg);
 		analyze_set_num_views(state, options->num_views);
@@ -244,6 +245,10 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		break;
 	    case 'r':
 		options->print_per_region_stats = 1;
+		break;
+	    case 's':
+		options->surf_area_tolerance = atof(bu_optarg);
+		analyze_set_surf_area_tolerance(state, options->surf_area_tolerance);
 		break;
 	    case 'S':
 		if (sscanf(bu_optarg, "%lg", &a) != 1 || a <= 1.0) {
@@ -453,7 +458,9 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     struct current_state *state = NULL;
 
     struct check_parameters options;
-    const char *check_subcommands[] = {"mass", "volume", "overlaps", "exp_air", "gap", "adj_air", "centroid", "moments", NULL};
+    const char *check_subcommands[] = {"adj_air", "centroid", "exp_air", "gap",
+				       "mass", "moments", "overlaps", "surf_area",
+				       "volume", NULL};
     const struct cvt_tab *units[3] = {
 	&units_tab[0][0],	/* linear */
 	&units_tab[1][0],	/* volume */
@@ -560,18 +567,13 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     /* determine subcommand */
     sub = argv[0];
     len = strlen(sub);
-    if (bu_strncmp(sub, "mass", len) == 0) {
-	if (check_mass(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+    if (bu_strncmp(sub, "adj_air", len) == 0) {
+	if (check_adj_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
-    } else if (bu_strncmp(sub, "volume", len) == 0) {
-	if (check_volume(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
-	    error = 1;
-	    goto freemem;
-	}
-    } else if (bu_strncmp(sub, "overlaps", len) == 0) {
-	if (check_overlaps(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+    } else if (bu_strncmp(sub, "centroid", len) == 0) {
+	if (check_centroid(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
@@ -585,18 +587,28 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 	    error = 1;
 	    goto freemem;
 	}
-    } else if (bu_strncmp(sub, "adj_air", len) == 0) {
-	if (check_adj_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
-	    error = 1;
-	    goto freemem;
-	}
-    } else if (bu_strncmp(sub, "centroid", len) == 0) {
-	if (check_centroid(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+    } else if (bu_strncmp(sub, "mass", len) == 0) {
+	if (check_mass(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "moments", len) == 0) {
 	if (check_moments(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
+	}
+    } else if (bu_strncmp(sub, "overlaps", len) == 0) {
+	if (check_overlaps(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
+	}
+    } else if (bu_strncmp(sub, "surf_area", len) == 0) {
+	if (check_surf_area(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
+	}
+    } else if (bu_strncmp(sub, "volume", len) == 0) {
+	if (check_volume(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}

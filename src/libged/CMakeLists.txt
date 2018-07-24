@@ -68,6 +68,7 @@ set(LIBGED_SOURCES
   check/check_mass.c
   check/check_moments.c
   check/check_overlaps.c
+  check/check_surf_area.c
   check/check_volume.c
   clone.c
   coil.c

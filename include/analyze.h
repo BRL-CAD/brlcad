@@ -422,7 +422,7 @@ ANALYZE_EXPORT extern void
 analyze_set_grid_spacing(struct current_state *state , fastf_t gridSpacing, fastf_t gridSpacingLimit);
 
 /**
- * sets the tolerance values for overlaps, volume and mass for the analysis
+ * sets the tolerance values for overlaps, volume, mass and surface area for the analysis
  */
 ANALYZE_EXPORT extern void
 analyze_set_overlap_tolerance(struct current_state *state , fastf_t overlap_tolerance);
@@ -432,6 +432,9 @@ analyze_set_volume_tolerance(struct current_state *state , fastf_t volume_tolera
 
 ANALYZE_EXPORT extern void
 analyze_set_mass_tolerance(struct current_state *state , fastf_t mass_tolerance);
+
+ANALYZE_EXPORT extern void
+analyze_set_surf_area_tolerance(struct current_state *state, fastf_t sa_tolerance);
 
 /**
  * sets the number of cpus to be used for raytracing

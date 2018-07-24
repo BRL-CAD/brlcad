@@ -186,6 +186,7 @@ struct check_parameters {
     fastf_t overlap_tolerance;
     fastf_t volume_tolerance;
     fastf_t mass_tolerance;
+    fastf_t surf_area_tolerance;
     const struct cvt_tab *units[3];
     struct bu_vls *debug_str;
     struct bu_vls *verbose_str;
@@ -223,22 +224,23 @@ typedef int check_functions_t(struct current_state *state,
 			      int tnobjs,
 			      struct check_parameters *options);
 
-extern check_functions_t check_overlaps;
+extern check_functions_t check_adj_air;
 
-extern check_functions_t check_volume;
+extern check_functions_t check_centroid;
 
 extern check_functions_t check_exp_air;
 
 extern check_functions_t check_gap;
 
-extern check_functions_t check_adj_air;
-
 extern check_functions_t check_mass;
-
-extern check_functions_t check_centroid;
 
 extern check_functions_t check_moments;
 
+extern check_functions_t check_overlaps;
+
+extern check_functions_t check_surf_area;
+
+extern check_functions_t check_volume;
 __END_DECLS
 
 #endif /* LIBGED_CHECK_PRIVATE_H */
