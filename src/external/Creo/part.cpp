@@ -453,7 +453,7 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
 
     /* Output the solid */
     *sname = get_brlcad_name(cinfo, wname, "brep", N_SOLID);
-    mk_brep(cinfo->wdbp, bu_vls_addr(*sname), (void *)nbrep);
+    mk_brep(cinfo->wdbp, bu_vls_addr(*sname), nbrep);
     /*
      * Things to investigate:
      *
