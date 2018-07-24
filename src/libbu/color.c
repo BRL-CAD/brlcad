@@ -148,48 +148,6 @@ bu_hsv_to_rgb(const fastf_t *hsv, unsigned char *rgb)
 
 
 int
-bu_str_to_rgb(const char *str, unsigned char *rgb)
-{
-    int num;
-    unsigned int r = 0;
-    unsigned int g = 0;
-    unsigned int b = 0;
-
-    if (UNLIKELY(!str || !rgb)) {
-	return 0;
-    }
-
-    while (isspace((int)(*str)))
-	++str;
-
-    if (*str == '#') {
-	if (strlen(++str) != 6)
-	    return 0;
-	sscanf(str, "%02x%02x%02x", (unsigned int *)&r, (unsigned int *)&g, (unsigned int *)&b);
-    } else if (isdigit((int)(*str))) {
-	num = sscanf(str, "%u/%u/%u", &r, &g, &b);
-	if (num == 1) {
-	    num = sscanf(str, "%u %u %u", &r, &g, &b);
-	    if (num != 3)
-		return 0;
-	}
-	if (r > 255)
-	    r = 255;
-	if (g > 255)
-	    g = 255;
-	if (b > 255)
-	    b = 255;
-    } else {
-	return 0;
-    }
-
-    VSET(rgb, (fastf_t)r, (fastf_t)g, (fastf_t)b);
-
-    return 1;
-}
-
-
-int
 bu_color_to_rgb_chars(const struct bu_color *cp, unsigned char *rgb)
 {
     if (UNLIKELY(!cp || !rgb)) {
@@ -258,7 +216,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 
     BU_COLOR_INIT(color);
 
-    /* skip past any leading whitespace  */
+    /* skip past any leading whitespace */
     while (*str && isspace(str))
 	str++;
 
@@ -345,6 +303,48 @@ bu_color_from_str(struct bu_color *color, const char *str)
 
 	str = endptr + 1;
     }
+
+    return 1;
+}
+
+
+int
+bu_str_to_rgb(const char *str, unsigned char *rgb)
+{
+    int num;
+    unsigned int r = 0;
+    unsigned int g = 0;
+    unsigned int b = 0;
+
+    if (UNLIKELY(!str || !rgb)) {
+	return 0;
+    }
+
+    while (isspace((int)(*str)))
+	++str;
+
+    if (*str == '#') {
+	if (strlen(++str) != 6)
+	    return 0;
+	sscanf(str, "%02x%02x%02x", (unsigned int *)&r, (unsigned int *)&g, (unsigned int *)&b);
+    } else if (isdigit((int)(*str))) {
+	num = sscanf(str, "%u/%u/%u", &r, &g, &b);
+	if (num == 1) {
+	    num = sscanf(str, "%u %u %u", &r, &g, &b);
+	    if (num != 3)
+		return 0;
+	}
+	if (r > 255)
+	    r = 255;
+	if (g > 255)
+	    g = 255;
+	if (b > 255)
+	    b = 255;
+    } else {
+	return 0;
+    }
+
+    VSET(rgb, (fastf_t)r, (fastf_t)g, (fastf_t)b);
 
     return 1;
 }
