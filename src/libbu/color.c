@@ -214,20 +214,23 @@ bu_color_from_str(struct bu_color *color, const char *str)
     char separator = '\0';
     int mode = 0;
 
-    BU_COLOR_INIT(color);
+    if (UNLIKELY(!color || !str)) {
+	return 0;
+    }
 
     /* skip past any leading whitespace */
-    while (*str && isspace(str))
+    while (isspace(*str))
 	str++;
 
     /* hexadecimal color in #FFF or #FFFFFF form */
     if (*str == '#') {
 	int ret = 0;
-	int len = strlen(str);
+	int len;
 	unsigned int rgb[3] = {0, 0, 0};
 
 	str++;
 
+	len = strlen(str);
 	if (len == 3) {
 	    ret = sscanf(str, "%01x%01x%01x", &rgb[RED], &rgb[GRN], &rgb[BLU]);
 	    rgb[RED] += rgb[RED] * 16;
@@ -249,7 +252,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 
     /* determine the format - 0 = RGB, 1 = FLOAT, 2 = HEX, 3 = UNKNOWN */
     for (mode = 0; mode <= 3; ++mode) {
-	const char * const allowed_separators = "/" CPP_XSTR(COMMA);
+	const char * const allowed_separators = "/, ";
 	const char *endptr;
 	float result;
 
@@ -311,40 +314,12 @@ bu_color_from_str(struct bu_color *color, const char *str)
 int
 bu_str_to_rgb(const char *str, unsigned char *rgb)
 {
-    int num;
-    unsigned int r = 0;
-    unsigned int g = 0;
-    unsigned int b = 0;
+    struct bu_color color = BU_COLOR_INIT_ZERO;
 
-    if (UNLIKELY(!str || !rgb)) {
+    if (!bu_color_from_str(&color, str))
 	return 0;
-    }
-
-    while (isspace((int)(*str)))
-	++str;
-
-    if (*str == '#') {
-	if (strlen(++str) != 6)
-	    return 0;
-	sscanf(str, "%02x%02x%02x", (unsigned int *)&r, (unsigned int *)&g, (unsigned int *)&b);
-    } else if (isdigit((int)(*str))) {
-	num = sscanf(str, "%u/%u/%u", &r, &g, &b);
-	if (num == 1) {
-	    num = sscanf(str, "%u %u %u", &r, &g, &b);
-	    if (num != 3)
-		return 0;
-	}
-	if (r > 255)
-	    r = 255;
-	if (g > 255)
-	    g = 255;
-	if (b > 255)
-	    b = 255;
-    } else {
+    if (!bu_color_to_rgb_chars(&color, rgb))
 	return 0;
-    }
-
-    VSET(rgb, (fastf_t)r, (fastf_t)g, (fastf_t)b);
 
     return 1;
 }
