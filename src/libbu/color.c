@@ -268,8 +268,39 @@ bu_color_from_str(struct bu_color *color, const char *str)
 
     BU_COLOR_INIT(color);
 
-    /* determine the format - 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
-    for (mode = 0; mode <= 2; ++mode) {
+    /* skip past any leading whitespace  */
+    while (*str && isspace(str))
+	str++;
+
+    /* hexadecimal color in #FFF or #FFFFFF form */
+    if (*str == '#') {
+	int ret = 0;
+	int len = strlen(str);
+	unsigned int rgb[3] = {0, 0, 0};
+
+	str++;
+
+	if (len == 3) {
+	    ret = sscanf(str, "%01x%01x%01x", &rgb[RED], &rgb[GRN], &rgb[BLU]);
+	    rgb[RED] += rgb[RED] * 16;
+	    rgb[GRN] += rgb[GRN] * 16;
+	    rgb[BLU] += rgb[BLU] * 16;
+	} else if (len == 6) {
+	    ret = sscanf(str, "%02x%02x%02x", &rgb[RED], &rgb[GRN], &rgb[BLU]);
+	}
+	if (ret != 3) {
+	    return 0;
+	}
+
+	color->buc_rgb[RED] = (fastf_t)rgb[RED] / 255.0;
+	color->buc_rgb[GRN] = (fastf_t)rgb[GRN] / 255.0;
+	color->buc_rgb[BLU] = (fastf_t)rgb[BLU] / 255.0;
+
+	return 1;
+    }
+
+    /* determine the format - 0 = RGB, 1 = FLOAT, 2 = HEX, 3 = UNKNOWN */
+    for (mode = 0; mode <= 3; ++mode) {
 	const char * const allowed_separators = "/" CPP_XSTR(COMMA);
 	const char *endptr;
 	float result;
@@ -277,11 +308,11 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	errno = 0;
 
 	switch (mode) {
-	    case 0: /*RGB*/
+	    case 0: /* RGB */
 		result = strtol(str, (char **)&endptr, 10);
 		break;
 
-	    case 1: /*FLOAT*/
+	    case 1: /* FLOAT */
 		result = strtod(str, (char **)&endptr);
 		break;
 
