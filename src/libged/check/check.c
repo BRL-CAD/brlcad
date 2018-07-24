@@ -296,9 +296,9 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 			int found_unit;
 
 			if (i == 0) {
-			    *units_ap = strtok(ptr, STRCOMMA);
+			    *units_ap = strtok(ptr, CPP_XSTR(COMMA));
 			} else {
-			    *units_ap = strtok(NULL, STRCOMMA);
+			    *units_ap = strtok(NULL, CPP_XSTR(COMMA));
 			}
 
 			/* got something? */

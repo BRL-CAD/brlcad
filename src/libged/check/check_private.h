@@ -166,7 +166,6 @@ static const struct cvt_tab units_tab[3][40] = {
 #define VOL 1
 #define MASS 2
 #define COMMA ','
-#define STRCOMMA ","
 
 struct check_parameters {
     int require_num_hits;

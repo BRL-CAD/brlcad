@@ -47,7 +47,7 @@
 
 
 /* NOTE: there should be no space after comma */
-#define STRCOMMA ","
+#define COMMA ','
 
 
 /* convenient macro for building regions */
@@ -2495,7 +2495,7 @@ make_region_list(char *str)
     region_list_len = REGION_LIST_BLOCK;
     f4_do_skips = 0;
 
-    ptr = strtok(str, STRCOMMA);
+    ptr = strtok(str, CPP_XSTR(COMMA));
     while (ptr) {
 	if ((ptr2=strchr(ptr, '-'))) {
 	    int i, start, stop;

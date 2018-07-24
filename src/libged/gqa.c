@@ -72,7 +72,6 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f density
  * that spaces got inserted incorrectly.
  */
 #define COMMA ','
-#define STRCOMMA ","
 
 static int analysis_flags;
 static int multiple_analyses;
@@ -694,9 +693,9 @@ parse_args(int ac, char *av[])
 			int found_unit;
 
 			if (i == 0) {
-			    *units_ap = strtok(ptr, STRCOMMA);
+			    *units_ap = strtok(ptr, CPP_XSTR(COMMA));
 			} else {
-			    *units_ap = strtok(NULL, STRCOMMA);
+			    *units_ap = strtok(NULL, CPP_XSTR(COMMA));
 			}
 
 			/* got something? */
