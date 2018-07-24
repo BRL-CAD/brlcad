@@ -356,8 +356,8 @@ add_test(NAME bu_str_to_rgb_1 COMMAND bu_test color 3 "1 2 3" 1,2,3)
 add_test(NAME bu_str_to_rgb_2 COMMAND bu_test color 3 "78/214/192" 78,214,192)
 add_test(NAME bu_str_to_rgb_3 COMMAND bu_test color 3 "214 192 78" 214,192,78)
 add_test(NAME bu_str_to_rgb_4 COMMAND bu_test color 3 "192,214,78" 192,214,78)
-add_test(NAME bu_str_to_rgb_5 COMMAND bu_test color 3 "1234/1234/1234" 255,255,255)
-add_test(NAME bu_str_to_rgb_6 COMMAND bu_test color 3 "-1 -2 -3" 0,0,0)
+add_test(NAME bu_str_to_rgb_5 COMMAND bu_test color 3 "1234/1234/1234" 11,22,33) # invalid
+add_test(NAME bu_str_to_rgb_6 COMMAND bu_test color 3 "-1 -2 -3" 11,22,33) # invalid
 add_test(NAME bu_str_to_rgb_7 COMMAND bu_test color 3 "#000000" 0,0,0)
 add_test(NAME bu_str_to_rgb_8 COMMAND bu_test color 3 "#ffffff" 255,255,255)
 add_test(NAME bu_str_to_rgb_9 COMMAND bu_test color 3 "#FfFFfF" 255,255,255)
