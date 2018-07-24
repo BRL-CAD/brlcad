@@ -44,6 +44,8 @@
 #define GRN 1
 #define BLU 2
 
+#define COMMA ','
+
 
 void
 bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
@@ -204,6 +206,7 @@ bu_str_to_rgb(char *str, unsigned char *rgb)
     return 1;
 }
 
+
 int
 bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb)
 {
@@ -285,7 +288,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 
     /* determine the format - 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
     for (mode = 0; mode <= 2; ++mode) {
-	const char * const allowed_separators = "/,";
+	const char * const allowed_separators = "/" CPP_XSTR(COMMA);
 	const char *endptr;
 	float result;
 
@@ -305,7 +308,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	}
 
 	if (!((NEAR_ZERO(result, 0.0) && errno) || endptr == str
-		    || !strchr(allowed_separators, *endptr))) {
+	      || !strchr(allowed_separators, *endptr))) {
 	    separator = *endptr;
 	    break;
 	}
@@ -332,7 +335,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	}
 
 	if ((NEAR_ZERO(color->buc_rgb[i], 0.0) && errno) || endptr == str || *endptr != expected_char
-		|| !(0.0 <= color->buc_rgb[i] && color->buc_rgb[i] <= 1.0)) {
+	    || !(0.0 <= color->buc_rgb[i] && color->buc_rgb[i] <= 1.0)) {
 	    VSETALL(color->buc_rgb, 0.0);
 	    return 0;
 	}
