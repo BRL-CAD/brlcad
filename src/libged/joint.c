@@ -778,6 +778,8 @@ static struct bu_lex_key lex_solids[] = {
 #define SYM_MINUS	9
 #define SYM_PLUS	10
 
+#define COMMA ','
+
 static struct bu_lex_key animsyms[] = {
     {SYM_OP_GROUP,	"{"},
     {SYM_CL_GROUP,	"}"},
@@ -786,7 +788,7 @@ static struct bu_lex_key animsyms[] = {
     {SYM_EQ,	"="},
     {SYM_ARC,	"/"},
     {SYM_END,	";"},
-    {SYM_COMMA,	", "},
+    {SYM_COMMA,	CPP_XSTR(COMMA)},
     {SYM_MINUS,	"-"},
     {SYM_PLUS,	"+"},
     {0, 0}};
