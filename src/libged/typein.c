@@ -550,25 +550,27 @@ static char *p_revolve[] = {
 
 
 static char *p_pnts[] = {
-    "Are points in a file (yes/no)? ",
-    "Enter number of points (-1 for auto): ",
-    "Are the points orientated (yes/no)? ",
-    "Do the points have color values (yes/no)? ",
-    "Do the points differ in size (yes/no)? ",
-    "Enter default point size (>= 0.0): ",
-    "Enter X, Y, Z position",
-    "Enter Y position component",
-    "Enter Z position component",
-    "Enter X, Y, Z orientation vector",
-    "Enter Y orientation vector component",
-    "Enter Z orientation vector component",
-    "Enter R, G, B color values (0 to 255)",
-    "Enter G component color value",
-    "Enter B component color value",
-    "Enter point size (>= 0.0, -1 for default)",
-    "Enter point file path and name: ",
-    "Enter file data format (px, py, pz, cr, cg, cb, s, nx, ny, nz): ",
-    "Enter file data units ([mm|cm|m|in|ft]): "
+    /*00*/ "Are points in a file (yes/no)? ",
+    /*01*/ "Enter number of points (-1 for auto): ",
+    /*02*/ "Are the points orientated (yes/no)? ",
+    /*03*/ "Do the points have color values (yes/no)? ",
+    /*04*/ "Do the points have transparency values (yes/no)? ",
+    /*05*/ "Do the points differ in size (yes/no)? ",
+    /*06*/ "Enter default point size (>= 0.0): ",
+    /*07*/ "Enter X, Y, Z position",
+    /*08*/ "Enter Y position component",
+    /*09*/ "Enter Z position component",
+    /*10*/ "Enter X, Y, Z orientation vector",
+    /*11*/ "Enter Y orientation vector component",
+    /*12*/ "Enter Z orientation vector component",
+    /*13*/ "Enter R, G, B color values (0 to 255)",
+    /*14*/ "Enter G component color value",
+    /*15*/ "Enter B component color value",
+    /*16*/ "Enter RGB alpha transparency (1.0==opaque)",
+    /*17*/ "Enter point size (>= 0.0, -1 for default)",
+    /*18*/ "Enter point file path and name: ",
+    /*19*/ "Enter file data format (px, py, pz, cr, cg, cb, s, nx, ny, nz): ",
+    /*20*/ "Enter file data units ([mm|cm|m|in|ft]): "
 };
 
 
@@ -2551,27 +2553,33 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* if points are in a file */
     if (bu_str_true(argv[3])) {
 
+	/*                    file?   path  fmt? units? size?
+	 *       in obj pnts   yes  mydata   cr     in   123
+	 * argv [0] [1]  [2]   [3]     [4]  [5]    [6]   [7]
+	 * argc  1   2    3     4       5    6      7     8
+	 */
+
 	/* prompt for point file path and name */
 	if (argc < 5) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[16]);
+	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[18]);
 	    return GED_MORE;
 	}
 
 	/* prompt for file data format */
 	if (argc < 6) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[17]);
+	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[19]);
 	    return GED_MORE;
 	}
 
 	/* prompt for file data units */
 	if (argc < 7) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[18]);
+	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[20]);
 	    return GED_MORE;
 	}
 
 	/* prompt for default point size */
 	if (argc < 8) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[5]);
+	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[6]);
 	    return GED_MORE;
 	}
 
