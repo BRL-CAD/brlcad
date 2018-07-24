@@ -42,9 +42,11 @@ check_show_help(struct ged *gedp)
 
     bu_vls_printf(&str, "Subcommands:\n\n");
     bu_vls_printf(&str, "  adj_air - Detects air volumes which are next to each other but have different air_code values applied to the region.\n");
+    bu_vls_printf(&str, "  centroid - Computes the centroid of the objects specified.\n");
     bu_vls_printf(&str, "  exp_air - Check if the ray encounters air regions before (or after all) solid objects.\n");
     bu_vls_printf(&str, "  gap - This reports when there is more than overlap tolerance distance between objects on the ray path.\n");
     bu_vls_printf(&str, "  mass - Computes the mass of the objects specified.\n");
+    bu_vls_printf(&str, "  moments - Computes the moments and products of inertia of the objects specified.\n");
     bu_vls_printf(&str, "  overlaps - This reports overlaps, when two regions occupy the same space.\n");
     bu_vls_printf(&str, "  volume - Computes the volume of the objects specified.\n");
 
