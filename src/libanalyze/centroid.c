@@ -29,26 +29,12 @@
 #include "analyze.h"
 #include "./analyze_private.h"
 
-point_t *
-analyze_centroid(struct current_state *state, const char *name)
+void
+analyze_centroid(struct current_state *state, const char *name, point_t cent)
 {
-    point_t *cent;
-    int i, view, obj = 0;
-    double avg_mass;
-
-    for (i = 0; i < state->num_objects; i++) {
-	if(!(bu_strcmp(state->objs[i].o_name, name))) {
-	    obj = i;
-	    break;
-	}
-    }
-
-    BU_GET(cent, point_t);
-    avg_mass = 0.0;
-    for (view = 0; view < state->num_views; view++)
-	avg_mass += state->objs[obj].o_mass[view];
-
-    avg_mass /= state->num_views;
+    int view, obj = 0;
+    /* get mass by calling analyze_mass for the object name */
+    double avg_mass = analyze_mass(state, name);
     if (!ZERO(avg_mass)) {
 	point_t centroid = VINIT_ZERO;
 	fastf_t inv_total_mass = 1.0/avg_mass;
@@ -63,11 +49,10 @@ analyze_centroid(struct current_state *state, const char *name)
 
 	VSCALE(centroid, centroid, 1.0/(fastf_t)state->num_views);
 	VSCALE(centroid, centroid, inv_total_mass);
-	(*cent)[0] = centroid[X];
-	(*cent)[1] = centroid[Y];
-	(*cent)[2] = centroid[Z];
+	cent[0] = centroid[X];
+	cent[1] = centroid[Y];
+	cent[2] = centroid[Z];
     }
-    return cent;
 }
 
 /*

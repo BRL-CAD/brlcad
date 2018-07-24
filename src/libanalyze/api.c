@@ -162,7 +162,39 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		struct per_region_data *prd;
 		vect_t cmass;
 		vect_t lenTorque;
+		fastf_t Lx = state->span[0]/state->steps[0];
+		fastf_t Ly = state->span[1]/state->steps[1];
+		fastf_t Lz = state->span[2]/state->steps[2];
+		fastf_t Lx_sq;
+		fastf_t Ly_sq;
+		fastf_t Lz_sq;
+		fastf_t cell_area;
 		int los;
+
+		switch (state->i_axis) {
+		    case 0:
+			Lx_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Lx_sq *= Lx_sq;
+			Ly_sq = Ly*Ly;
+			Lz_sq = Lz*Lz;
+			cell_area = Ly_sq;
+			break;
+		    case 1:
+			Lx_sq = Lx*Lx;
+			Ly_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Ly_sq *= Ly_sq;
+			Lz_sq = Lz*Lz;
+			cell_area = Lx_sq;
+			break;
+		    case 2:
+		    default:
+			Lx_sq = Lx*Lx;
+			Ly_sq = Ly*Ly;
+			Lz_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Lz_sq *= Lz_sq;
+			cell_area = Lx_sq;
+			break;
+		}
 
 		/* factor in the density of this object mass
 		 * computation, factoring in the LOS percentage
@@ -201,6 +233,35 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		    /* accumulate the total lenTorque */
 		    VADD2(&state->m_lenTorque[state->i_axis*3], &state->m_lenTorque[state->i_axis*3], lenTorque);
 
+		    if (analysis_flags & ANALYSIS_MOMENTS) {
+			vectp_t moi;
+			vectp_t poi = &state->m_poi[state->i_axis*3];
+			fastf_t dx_sq = cmass[X]*cmass[X];
+			fastf_t dy_sq = cmass[Y]*cmass[Y];
+			fastf_t dz_sq = cmass[Z]*cmass[Z];
+			fastf_t mass = val * cell_area;
+			static const fastf_t ONE_TWELFTH = 1.0 / 12.0;
+
+			/* Collect moments and products of inertia for the current object */
+			moi = &prd->optr->o_moi[state->i_axis*3];
+			moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
+			moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
+			moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
+			poi = &prd->optr->o_poi[state->i_axis*3];
+			poi[X] -= mass*cmass[X]*cmass[Y];
+			poi[Y] -= mass*cmass[X]*cmass[Z];
+			poi[Z] -= mass*cmass[Y]*cmass[Z];
+
+			/* Collect moments and products of inertia for all objects */
+			moi = &state->m_moi[state->i_axis*3];
+			moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
+			moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
+			moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
+			poi = &state->m_poi[state->i_axis*3];
+			poi[X] -= mass*cmass[X]*cmass[Y];
+			poi[Y] -= mass*cmass[X]*cmass[Z];
+			poi[Z] -= mass*cmass[Y]*cmass[Z];
+		    }
 		}
 		bu_semaphore_release(ANALYZE_SEM_STATS);
 
@@ -622,6 +683,7 @@ HIDDEN int
 check_terminate(struct current_state *state)
 {
     int wv_status;
+    int view, obj;
 
     /* this computation is done first, because there are side effects
      * that must be obtained whether we terminate or not
@@ -640,6 +702,15 @@ check_terminate(struct current_state *state)
 		bu_vls_printf(state->verbose_str, "%s: Volume/mass tolerance met. Terminate\n", CPP_FILELINE);
 	    return 0; /* terminate */
 	}
+    }
+    for (view=0; view < state->num_views; view++) {
+	for (obj = 0; obj < state->num_objects; obj++) {
+	    VSCALE(&state->objs[obj].o_moi[view*3], &state->objs[obj].o_moi[view*3], 0.25);
+	    VSCALE(&state->objs[obj].o_poi[view*3], &state->objs[obj].o_poi[view*3], 0.25);
+	}
+
+	VSCALE(&state->m_moi[view*3], &state->m_moi[view*3], 0.25);
+	VSCALE(&state->m_poi[view*3], &state->m_poi[view*3], 0.25);
     }
     return 1;
 }
@@ -879,8 +950,8 @@ allocate_region_data(struct current_state *state, char *av[])
     state->m_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "surface area");
     state->shots = (unsigned long *)bu_calloc(state->num_views, sizeof(unsigned long), "volume");
     state->m_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
-
-    state->objs = (struct per_obj_data *)bu_calloc(state->num_objects, sizeof(struct per_obj_data), "state report tables");
+    state->m_moi = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "moments of inertia");
+    state->m_poi = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "products of inertia");
 
     /* build data structures for the list of objects the user
      * specified on the command line
@@ -894,6 +965,8 @@ allocate_region_data(struct current_state *state, char *av[])
 	state->objs[i].o_mass = (double *)bu_calloc(state->num_views, sizeof(double), "o_mass");
 	state->objs[i].o_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "o_surf_area");
 	state->objs[i].o_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
+	state->objs[i].o_moi = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "moments of inertia");
+	state->objs[i].o_poi = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "products of inertia");
     }
 
     /* build objects for each region */
@@ -1000,8 +1073,8 @@ analyze_triple_grid_setup(int view, struct current_state *state)
     VSCALE(grid->dx_grid, state->u_dir, grid->grid_spacing);
     VSCALE(grid->dy_grid, state->v_dir, grid->grid_spacing);
 
-    grid->x_points = grid->steps[state->u_axis] - 1;
-    grid->total_points = grid->x_points * (grid->steps[state->v_axis] - 1);
+    grid->x_points = state->steps[state->u_axis] - 1;
+    grid->total_points = grid->x_points * (state->steps[state->v_axis] - 1);
 }
 
 
@@ -1017,12 +1090,12 @@ shoot_rays(struct current_state *state)
 	} else {
 	    int view;
 	    double inv_spacing = 1.0/state->gridSpacing;
-	    VSCALE(state->grid->steps, state->span, inv_spacing);
+	    VSCALE(state->steps, state->span, inv_spacing);
 	    bu_log("Processing with grid spacing %g mm %ld x %ld x %ld\n",
 		    state->gridSpacing,
-		    state->grid->steps[0]-1,
-		    state->grid->steps[1]-1,
-		    state->grid->steps[2]-1);
+		    state->steps[0]-1,
+		    state->steps[1]-1,
+		    state->steps[2]-1);
 	    for (view = 0; view < state->num_views; view++) {
 		analyze_triple_grid_setup(view, state);
 		bu_parallel(analyze_worker, state->ncpu, (void *)state);
@@ -1035,8 +1108,6 @@ shoot_rays(struct current_state *state)
 	state->gridSpacing *= 0.5;
 
     } while (check_terminate(state));
-
-    rt_free_rti(state->rtip);
 }
 
 
@@ -1112,6 +1183,8 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 {
     int i;
     struct rt_i *rtip;
+    struct region *regp;
+
     struct resource resp[MAX_PSW];
     struct rectangular_grid grid;
 
@@ -1207,6 +1280,33 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     allocate_region_data(state, names);
     grid.refine_flag = 0;
     shoot_rays(state);
+
+    /* Free dynamically allocated state */
+    bu_vls_free(state->log_str);
+
+    bu_free(state->m_lenDensity, "m_lenDensity");
+    bu_free(state->m_len, "m_len");
+    bu_free(state->m_volume, "m_volume");
+    bu_free(state->m_mass, "m_mass");
+    bu_free(state->m_lenTorque, "m_lenTorque");
+    bu_free(state->m_moi, "m_moi");
+    bu_free(state->m_poi, "m_poi");
+
+    for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
+	bu_free(state->reg_tbl[i].r_lenDensity, "r_lenDensity");
+	bu_free(state->reg_tbl[i].r_len, "r_len");
+	bu_free(state->reg_tbl[i].r_volume, "r_volume");
+	bu_free(state->reg_tbl[i].r_mass, "r_mass");
+    }
+    bu_free(state->reg_tbl, "object table");
+    state->reg_tbl = NULL;
+
+    if (state->densities != NULL) {
+	bu_free(state->densities, "densities");
+	state->densities = NULL;
+    }
+
+    rt_free_rti(rtip);
     return ANALYZE_OK;
 }
 

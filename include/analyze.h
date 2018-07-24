@@ -372,8 +372,14 @@ analyze_mass(struct current_state *context, const char *name);
 /**
  * returns the centroid of the specified object (name)
   */
-ANALYZE_EXPORT extern point_t *
-analyze_centroid(struct current_state *context, const char *name);
+ANALYZE_EXPORT extern void
+analyze_centroid(struct current_state *context, const char *name, point_t value);
+
+/**
+ * returns the moments and products of inertia of the specified object (name)
+  */
+ANALYZE_EXPORT extern void
+analyze_moments(struct current_state *context, const char *name, mat_t value);
 
 /**
  * returns the surface area of the specified object (name)

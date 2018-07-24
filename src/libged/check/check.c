@@ -451,7 +451,7 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     struct current_state *state = NULL;
 
     struct check_parameters options;
-    const char *check_subcommands[] = {"mass", "volume", "overlaps", "exp_air", "gap", "adj_air", NULL};
+    const char *check_subcommands[] = {"mass", "volume", "overlaps", "exp_air", "gap", "adj_air", "centroid", "moments", NULL};
     const struct cvt_tab *units[3] = {
 	&units_tab[0][0],	/* linear */
 	&units_tab[1][0],	/* volume */
@@ -585,6 +585,16 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 	}
     } else if (bu_strncmp(sub, "adj_air", len) == 0) {
 	if (check_adj_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
+	}
+    } else if (bu_strncmp(sub, "centroid", len) == 0) {
+	if (check_centroid(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
+	}
+    } else if (bu_strncmp(sub, "moments", len) == 0) {
+	if (check_moments(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}

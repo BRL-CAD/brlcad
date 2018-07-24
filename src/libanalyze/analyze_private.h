@@ -67,6 +67,8 @@ struct per_obj_data {
     double *o_mass;
     double *o_surf_area;
     fastf_t *o_lenTorque; /* torque vector for each view */
+    fastf_t *o_moi;       /* one vector per view for collecting the partial moments of inertia calculation */
+    fastf_t *o_poi;       /* one vector per view for collecting the partial products of inertia calculation */
 };
 
 /**
@@ -145,6 +147,8 @@ struct current_state {
     struct bu_vls *debug_str;
 
     fastf_t *m_lenTorque; /* torque vector for each view */
+    fastf_t *m_moi;       /* one vector per view for collecting the partial moments of inertia calculation */
+    fastf_t *m_poi;       /* one vector per view for collecting the partial products of inertia calculation */
 
     /* single gird variables */
     mat_t Viewrotscale;

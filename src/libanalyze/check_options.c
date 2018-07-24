@@ -100,6 +100,8 @@ analyze_free_current_state(struct current_state *state)
 	    bu_free(state->objs[i].o_volume, "o_volume");
 	    bu_free(state->objs[i].o_mass, "o_mass");
 	    bu_free(state->objs[i].o_lenTorque, "o_lenTorque");
+	    bu_free(state->objs[i].o_moi, "o_moi");
+	    bu_free(state->objs[i].o_poi, "o_poi");
 	}
 	bu_free(state->objs, "object table");
 	state->objs = NULL;

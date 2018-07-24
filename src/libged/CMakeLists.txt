@@ -62,9 +62,11 @@ set(LIBGED_SOURCES
   check_overlaps.c
   check/check.c
   check/check_adj_air.c
+  check/check_centroid.c
   check/check_exp_air.c
   check/check_gap.c
   check/check_mass.c
+  check/check_moments.c
   check/check_overlaps.c
   check/check_volume.c
   clone.c

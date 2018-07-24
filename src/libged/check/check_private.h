@@ -235,6 +235,10 @@ extern check_functions_t check_adj_air;
 
 extern check_functions_t check_mass;
 
+extern check_functions_t check_centroid;
+
+extern check_functions_t check_moments;
+
 __END_DECLS
 
 #endif /* LIBGED_CHECK_PRIVATE_H */

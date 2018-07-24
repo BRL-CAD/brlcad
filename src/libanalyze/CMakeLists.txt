@@ -14,6 +14,7 @@ set(LIBANALYZE_SOURCES
   density.c
   inside.c
   mass.c
+  moments.c
   nirt.cxx
   overlaps.c
   raydiff.c
