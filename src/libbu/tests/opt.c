@@ -138,28 +138,32 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
 }
 
 #define EXPECT_SUCCESS_COLOR(_name, _color, _r, _g, _b) { \
+    unsigned char rgb[3] = {0, 0, 0}; \
     set_msg_str(&parse_msgs, ac, av); \
     ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (ret || (!NEAR_EQUAL(_color.buc_rgb[0], _r, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[1], _g, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[2], _b, SMALL_FASTF))) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected value \"%d/%d/%d\" and got value %.0f/%.0f/%.0f\n", _r, _g, _b, _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
+    bu_color_to_rgb_chars(&_color, rgb); \
+    if (ret || (!NEAR_EQUAL(rgb[RED], _r, SMALL_FASTF) || !NEAR_EQUAL(rgb[GRN], _g, SMALL_FASTF) || !NEAR_EQUAL(rgb[BLU], _b, SMALL_FASTF))) { \
+	bu_vls_printf(&parse_msgs, "\nError - expected value \"%d/%d/%d\" and got value %d/%d/%d\n", _r, _g, _b, rgb[RED], rgb[GRN], rgb[BLU]); \
 	val_ok = 0; \
     } else { \
-	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %.0f/%.0f/%.0f\n", _name,  _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
+	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %d/%d/%d\n", _name, rgb[RED], rgb[GRN], rgb[BLU]); \
     } \
 }
 
 #define EXPECT_SUCCESS_COLOR_UNKNOWN(_name, _color, _r, _g, _b) { \
+    unsigned char rgb[3] = {0, 0, 0}; \
     set_msg_str(&parse_msgs, ac, av); \
     ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+    bu_color_to_rgb_chars(&_color, rgb); \
     if (ret <= 0) { \
 	bu_vls_printf(&parse_msgs, "\nError - extra args expected but not found\n"); \
 	val_ok = 0; \
     } else { \
-	if ((!NEAR_EQUAL(_color.buc_rgb[0], _r, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[1], _g, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[2], _b, SMALL_FASTF))) { \
-	    bu_vls_printf(&parse_msgs, "\nError - expected value \"%d/%d/%d\" and got value %.0f/%.0f/%.0f\n", _r, _g, _b, _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
+	if ((!NEAR_EQUAL(rgb[RED], _r, SMALL_FASTF) || !NEAR_EQUAL(rgb[GRN], _g, SMALL_FASTF) || !NEAR_EQUAL(rgb[BLU], _b, SMALL_FASTF))) { \
+	    bu_vls_printf(&parse_msgs, "\nError - expected value \"%d/%d/%d\" and got value %d/%d/%d\n", _r, _g, _b, rgb[RED], rgb[GRN], rgb[BLU]); \
 	    val_ok = 0; \
 	} else { \
-	    bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %.0f/%.0f/%.0f\n", _name,  _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
+	    bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %d/%d/%d\n", _name, rgb[RED], rgb[GRN], rgb[BLU]); \
 	}} \
 }
 
@@ -576,11 +580,15 @@ int desc_1(const char *cgy, int test_num)
 int
 isnum(const char *str) {
     int i, sl;
-    if (!str) return 0;
+    if (!str)
+	return 0;
     sl = strlen(str);
-    for (i = 0; i < sl; i++) if (!isdigit(str[i])) return 0;
+    for (i = 0; i < sl; i++)
+	if (!isdigit(str[i]))
+	    return 0;
     return 1;
 }
+
 
 int
 dc_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
@@ -599,30 +607,36 @@ dc_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
 	    if (!bu_str_to_rgb(bu_vls_addr(&tmp_color), (unsigned char *)&rgb)) {
 		/* Not valid with 3 */
 		bu_vls_free(&tmp_color);
-		if (msg) bu_vls_sprintf(msg, "No valid color found.\n");
+		if (msg)
+		    bu_vls_sprintf(msg, "No valid color found.\n");
 		return -1;
 	    } else {
 		/* 3 did the job */
 		bu_vls_free(&tmp_color);
-		if (set_color) (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
+		if (set_color)
+		    (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
 		return 3;
 	    }
 	} else {
 	    /* Not valid with 1 and don't have 3 - we require at least one, so
 	     * claim one argv as belonging to this option regardless. */
-	    if (msg) bu_vls_sprintf(msg, "No valid color found: %s\n", argv[0]);
+	    if (msg)
+		bu_vls_sprintf(msg, "No valid color found: %s\n", argv[0]);
 	    return -1;
 	}
     } else {
 	/* yep, 1 did the job */
-	if (set_color) (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
+	if (set_color)
+	    (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
 	return 1;
     }
 
     return -1;
 }
 
-int desc_2(int test_num)
+
+int
+desc_2(int test_num)
 {
     int ret = 0;
     int val_ok = 1;

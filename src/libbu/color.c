@@ -192,17 +192,13 @@ bu_str_to_rgb(const char *str, unsigned char *rgb)
 int
 bu_color_to_rgb_chars(const struct bu_color *cp, unsigned char *rgb)
 {
-    unsigned int r, g, b;
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
-    r = (unsigned int)cp->buc_rgb[RED];
-    g = (unsigned int)cp->buc_rgb[GRN];
-    b = (unsigned int)cp->buc_rgb[BLU];
 
-    rgb[0] = (unsigned char)r;
-    rgb[1] = (unsigned char)g;
-    rgb[2] = (unsigned char)b;
+    rgb[RED] = (unsigned char)lrint(cp->buc_rgb[RED] * 255.0);
+    rgb[GRN] = (unsigned char)lrint(cp->buc_rgb[GRN] * 255.0);
+    rgb[BLU] = (unsigned char)lrint(cp->buc_rgb[BLU] * 255.0);
 
     return 1;
 }
@@ -211,19 +207,13 @@ bu_color_to_rgb_chars(const struct bu_color *cp, unsigned char *rgb)
 int
 bu_color_from_rgb_chars(struct bu_color *cp, const unsigned char *rgb)
 {
-    unsigned int r, g, b;
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
 
-    r = (unsigned int)rgb[RED];
-    g = (unsigned int)rgb[GRN];
-    b = (unsigned int)rgb[BLU];
-
-
-    cp->buc_rgb[RED] = (fastf_t)r;
-    cp->buc_rgb[GRN] = (fastf_t)g;
-    cp->buc_rgb[BLU] = (fastf_t)b;
+    cp->buc_rgb[RED] = (fastf_t)rgb[RED] / 255.0;
+    cp->buc_rgb[GRN] = (fastf_t)rgb[GRN] / 255.0;
+    cp->buc_rgb[BLU] = (fastf_t)rgb[BLU] / 255.0;
 
     return 1;
 }
