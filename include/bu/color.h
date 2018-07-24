@@ -48,6 +48,9 @@ __BEGIN_DECLS
 #define VAL 2
 
 
+/**
+ * a single color value, stored as a 0.0 to 1.0 triplet for RGB
+ */
 struct bu_color
 {
     uint32_t buc_magic;
