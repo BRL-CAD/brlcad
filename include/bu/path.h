@@ -89,7 +89,7 @@ __BEGIN_DECLS
  * This routine will return "." if other valid results are not available
  * but should never return NULL.
  */
-BU_EXPORT extern char *bu_dirname(const char *path);
+BU_EXPORT extern char *bu_path_dirname(const char *path);
 
 
 /**
@@ -136,7 +136,7 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  * ///           | /
  *
  */
-BU_EXPORT extern char *bu_basename(const char *path, char *basename);
+BU_EXPORT extern char *bu_path_basename(const char *path, char *basename);
 
 /**
  * Normalize a path according to rules used for realpath, but
@@ -147,7 +147,7 @@ BU_EXPORT extern char *bu_basename(const char *path, char *basename);
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
   */
-BU_EXPORT extern const char *bu_normalize(const char *path);
+BU_EXPORT extern const char *bu_path_normalize(const char *path);
 
 /**
  * Components of a path recognized by libbu, identified below in the
@@ -186,7 +186,7 @@ BU_EXPORT extern int bu_path_component(struct bu_vls *component,
  * as all elements in the array using bu_argv_free() or manually
  * calling bu_free().
  */
-BU_EXPORT extern char **bu_argv_from_path(const char *path, int *ac);
+BU_EXPORT extern char **bu_path_to_argv(const char *path, int *ac);
 
 
 
