@@ -1332,6 +1332,7 @@ s/RTG.NMG_debug/nmg_debug/g
 s/BU_ASSERT(_[A-Z_]+)\(([^,]+|.*\(.*,.*\)),([^,]+|.*\(.*,.*\)),([^,]+|.*\(.*,.*\))\);/BU_ASSERT(\2\3\4);/g
 	consolidated BU_ASSERT_PTR, BU_ASSERT_LONG, BU_ASSERT_SIZE_T, BU_ASSERT_SSIZE_T, BU_ASSERT_DOUBLE [7.26]
 s/BU_FLSTR/CPP_FILELINE/g
+        symbol now owned by common.h, not specific to libbu [7.26]
 s/vert_root/bn_vert_tree/g
 s/create_vert_tree[[:space:]]*\(/bn_vert_tree_create\(/g
 s/create_vert_tree_w_norms[[:space:]]*\(/bn_vert_tree_create_w_norms\(/g
@@ -1339,5 +1340,12 @@ s/free_vert_tree[[:space:]]*\(/bn_vert_tree_destroy\(/g
 s/Add_vert[[:space:]]*\(([^,]*,)([^,]*,)([^,]*,)([^,]*,)/bn_vert_tree_add\(\4\1\2\3/g
 s/Add_vert_and_norm[[:space:]]*\(([^,]*,)([^,]*,)([^,]*,)([^,]*,)([^,]*,)([^,]*,)([^,]*,)/bn_vert_tree_add_w_norm\(\7\1\2\3\4\5\6/g
 s/clean_vert_tree[[:space:]]*\(/bn_vert_tree_clean\(/g
+        symbols renamed per convention with their library prefix [7.26]
 s/BU_DEBUG_MEM_CHECK/0/g
 s/DEBUG_MEM_FULL/0/g
+        developer debugging symbols removed [7.26]
+s/bu_dirname\(/bu_path_dirname\(/g
+s/bu_basename\(/bu_path_basename\(/g
+s/bu_normalize\(/bu_path_normalize\(/g
+        renamed path functons with proper group label [7.26]
+
