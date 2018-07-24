@@ -47,7 +47,6 @@ __BEGIN_DECLS
 #define SAT 1
 #define VAL 2
 
-#define ACHROMATIC	-1.0
 
 struct bu_color
 {
@@ -153,15 +152,15 @@ size_t bn_color_samples(struct bu_color **samples, const bu_color *colors, enum 
  *
  * H is in [0.0, 360.0), and S and V are in [0.0, 1.0],
  *
- * unless S = 0.0, in which case H = ACHROMATIC.
+ * If S == 0.0, H is achromatic and set to 0.0
  *
  * These two routines are adapted from:
  * pp. 592-3 of J.D. Foley, A. van Dam, S.K. Feiner, and J.F. Hughes,
  * _Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
  * Reading, MA, 1990.
  */
-BU_EXPORT extern void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv);
-BU_EXPORT extern int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb);
+BU_EXPORT extern void bu_rgb_to_hsv(const unsigned char *rgb, fastf_t *hsv);
+BU_EXPORT extern int bu_hsv_to_rgb(const fastf_t *hsv, unsigned char *rgb);
 
 
 /**
@@ -178,16 +177,16 @@ BU_EXPORT extern int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb);
  *   bu_color_create(&colors, "%d/%d/%d", rgb[0], rgb[1], rgb[2], "hsv(%lf,0.5,0.95)", hsv, NULL);
  *   bu_color_destroy(colors);
  */
-BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb);
-BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb);
+BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb);
+BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, const unsigned char *rgb);
 BU_EXPORT extern int bu_color_from_str(struct bu_color *cp, const char *str);
 /* UNIMPLEMENTED: BU_EXPORT extern int bu_color_from_hsv_floats(struct bu_color *cp, fastf_t *hsv); */
 
-BU_EXPORT extern int bu_str_to_rgb(char *str, unsigned char *rgb);  /* inconsistent, deprecate */
+BU_EXPORT extern int bu_str_to_rgb(const char *str, unsigned char *rgb);  /* inconsistent, deprecate */
 
-BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb); /* bu_color_as_rgb_3fv */
-BU_EXPORT extern int bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb); /* bu_color_as_rgb */
-BU_EXPORT extern int bu_color_to_rgb_ints(struct bu_color *cp, int *r, int *g, int *b); /* bu_color_as_rgb_3i */
+BU_EXPORT extern int bu_color_to_rgb_floats(const struct bu_color *cp, fastf_t *rgb); /* bu_color_as_rgb_3fv */
+BU_EXPORT extern int bu_color_to_rgb_chars(const struct bu_color *cp, unsigned char *rgb); /* bu_color_as_rgb */
+BU_EXPORT extern int bu_color_to_rgb_ints(const struct bu_color *cp, int *r, int *g, int *b); /* bu_color_as_rgb_3i */
 /* UNIMPLEMENTED: BU_EXPORT extern int bu_color_to_hsv_floats(struct bu_color *cp, fastf_t *hsv); */ /* bu_color_as_hsv_3fv */
 
 

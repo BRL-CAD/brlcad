@@ -33,22 +33,11 @@
 #include "bu/malloc.h"
 
 
-/* libfb defines replicated here to avoid a libfb dependency */
-#define ACHROMATIC -1.0
-
-#define HUE 0
-#define SAT 1
-#define VAL 2
-
-#define RED 0
-#define GRN 1
-#define BLU 2
-
 #define COMMA ','
 
 
 void
-bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
+bu_rgb_to_hsv(const unsigned char *rgb, fastf_t *hsv)
 {
     fastf_t red, grn, blu;
     fastf_t *hue = &hsv[HUE];
@@ -89,7 +78,7 @@ bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
      * Compute hue
      */
     if (NEAR_ZERO(*sat, SMALL_FASTF)) {
-	*hue = ACHROMATIC;
+	*hue = 0.0; /* achromatic */
     } else {
 	if (NEAR_ZERO(red - max, SMALL_FASTF))      /* red == max */
 	    *hue = (grn - blu) / chroma;
@@ -109,7 +98,7 @@ bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
 
 
 int
-bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
+bu_hsv_to_rgb(const fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t float_rgb[3] = { 0.0, 0.0, 0.0 };
     fastf_t hue, sat, val;
@@ -117,22 +106,15 @@ bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
     fastf_t p, q, t;
     long int hue_int;
 
-    hue = hsv[HUE];
-    sat = hsv[SAT];
-    val = hsv[VAL];
+    hue = FMIN(hsv[HUE], 0.0);
+    hue = FMAX(hsv[HUE], 360.0);
+    sat = FMIN(hsv[SAT], 0.0);
+    sat = FMAX(hsv[SAT], 1.0);
+    val = FMIN(hsv[VAL], 0.0);
+    val = FMAX(hsv[VAL], 1.0);
 
-    if ((((hue < 0.0) || (hue > 360.0)) && (!NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF))) /* hue != ACHROMATIC */
-	|| (sat < 0.0) || (sat > 1.0)
-	|| (val < 0.0) || (val > 1.0)
-	|| ((NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF)) && (sat > 0.0))) /* hue == ACHROMATIC */
-    {
-	bu_log("bu_hsv_to_rgb: Illegal HSV (%g, %g, %g)\n",
-	       V3ARGS(hsv));
-	return 0;
-    }
-
-    /* so hue == ACHROMATIC (or is ignored)	*/
     if (NEAR_ZERO(sat, SMALL_FASTF)) {
+	/* hue is achromatic, so just set constant value */
 	VSETALL(float_rgb, val);
     } else {
 	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
@@ -166,7 +148,7 @@ bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
 
 
 int
-bu_str_to_rgb(char *str, unsigned char *rgb)
+bu_str_to_rgb(const char *str, unsigned char *rgb)
 {
     int num;
     unsigned int r = 0;
@@ -208,7 +190,7 @@ bu_str_to_rgb(char *str, unsigned char *rgb)
 
 
 int
-bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb)
+bu_color_to_rgb_chars(const struct bu_color *cp, unsigned char *rgb)
 {
     unsigned int r, g, b;
     if (UNLIKELY(!cp || !rgb)) {
@@ -227,7 +209,7 @@ bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb)
 
 
 int
-bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb)
+bu_color_from_rgb_chars(struct bu_color *cp, const unsigned char *rgb)
 {
     unsigned int r, g, b;
     if (UNLIKELY(!cp || !rgb)) {
@@ -248,7 +230,7 @@ bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb)
 
 
 int
-bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb)
+bu_color_to_rgb_floats(const struct bu_color *cp, fastf_t *rgb)
 {
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
@@ -263,7 +245,7 @@ bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb)
 
 
 int
-bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb)
+bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb)
 {
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
