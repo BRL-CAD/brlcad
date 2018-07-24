@@ -58,8 +58,7 @@ struct rt_point_labels {
  * change */
 RT_EXPORT void
 rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
-		 struct db_i *dbip, const char *obj, int fidelity);
-
+	         struct db_i *dbip, const char *obj, fastf_t delta);
 
 /**
  * reduce an object into some form of simpler representation
