@@ -23,8 +23,11 @@
  *
  */
 #include "common.h"
-
 #include "vmath.h"
+#include "bu/log.h"
+
+#ifdef ENABLE_SPR
+
 #include "raytrace.h"
 #include "../other/PoissonRecon/Src/SPR.h"
 
@@ -286,6 +289,19 @@ rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	return;
     }
 }
+
+#else /* ENABLE_SPR */
+
+extern "C" void
+rt_generate_mesh(int **UNUSED(faces), int *UNUSED(num_faces), point_t **UNUSED(points), int *UNUSED(num_pnts),
+	        struct db_i *UNUSED(dbip), const char *UNUSED(obj), fastf_t UNUSED(delta))
+{
+    bu_log("Screened Poisson Reconstruction was not enabled for this compilation.\n");
+    return;
+}
+
+#endif /* ENABLE_SPR */
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

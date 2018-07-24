@@ -1362,7 +1362,7 @@ if(BRLCAD_ENABLE_OPENCL)
 endif(BRLCAD_ENABLE_OPENCL)
 
 # Enable features requiring Screened Poisson Surface Reconstruction
-option(BRLCAD_ENABLE_SPR "Enable features requiring Screened Poisson Surface Reconstruction" ON)
+option(BRLCAD_ENABLE_SPR "Enable features requiring Screened Poisson Surface Reconstruction" OFF)
 mark_as_advanced(BRLCAD_ENABLE_SPR)
 
 # Enable experimental support for binary attributes
