@@ -250,8 +250,8 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	return 1;
     }
 
-    /* determine the format - 0 = RGB, 1 = FLOAT, 2 = HEX, 3 = UNKNOWN */
-    for (mode = 0; mode <= 3; ++mode) {
+    /* determine the format - 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
+    for (mode = 0; mode < 3; ++mode) {
 	const char * const allowed_separators = "/, ";
 	const char *endptr;
 	float result;
