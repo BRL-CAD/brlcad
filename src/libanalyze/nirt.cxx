@@ -1874,7 +1874,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	bu_vls_sprintf(s->path_name, "%s", part->pt_regionp->reg_name);
 	{
 	    char *tmp_regname = (char *)bu_calloc(bu_vls_strlen(s->path_name) + 1, sizeof(char), "tmp reg_name");
-	    bu_basename(part->pt_regionp->reg_name, tmp_regname);
+	    bu_path_basename(part->pt_regionp->reg_name, tmp_regname);
 	    bu_vls_sprintf(s->reg_name, "%s", tmp_regname);
 	    bu_free(tmp_regname, "tmp reg_name");
 	}
@@ -1898,9 +1898,9 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		if (s->claimant_count) bu_vls_strcat(s->claimant_list, " ");
 		s->claimant_count++;
 		bu_vls_sprintf(&tmpcp, "%s", (*rpp)->reg_name);
-		base = bu_basename(bu_vls_addr(&tmpcp), NULL);
+		base = bu_path_basename(bu_vls_addr(&tmpcp), NULL);
 		bu_vls_strcat(s->claimant_list, base);
-		bu_free(base, "bu_basename");
+		bu_free(base, "bu_path_basename");
 	    }
 	    bu_vls_free(&tmpcp);
 
@@ -1946,12 +1946,12 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    char *copy_ovlp_reg1 = bu_strdup(ovp->reg1->reg_name);
 	    char *copy_ovlp_reg2 = bu_strdup(ovp->reg2->reg_name);
 	    char *t1 = (char *)bu_calloc(strlen(copy_ovlp_reg1), sizeof(char), "if_hit sval2");
-	    bu_basename(copy_ovlp_reg1, t1);
+	    bu_path_basename(copy_ovlp_reg1, t1);
 	    bu_vls_sprintf(s->ov_reg1_name, "%s", t1);
 	    bu_free(t1, "t1");
 	    bu_free(copy_ovlp_reg1, "cp1");
 	    char *t2 = (char *)bu_calloc(strlen(copy_ovlp_reg2), sizeof(char), "if_hit sval3");
-	    bu_basename(copy_ovlp_reg2, t2);
+	    bu_path_basename(copy_ovlp_reg2, t2);
 	    bu_vls_sprintf(s->ov_reg2_name, "%s", t2);
 	    bu_free(t2, "t2");
 	    bu_free(copy_ovlp_reg2, "cp2");

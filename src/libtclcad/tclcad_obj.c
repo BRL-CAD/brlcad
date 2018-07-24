@@ -7074,7 +7074,7 @@ to_mouse_brep_selection_append(struct ged *gedp,
     }
 
     /* parse args */
-    brep_name = bu_basename(argv[2], NULL);
+    brep_name = bu_path_basename(argv[2], NULL);
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7183,7 +7183,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 	    break;
     }
 
-    brep_name = bu_basename(argv[2], NULL);
+    brep_name = bu_path_basename(argv[2], NULL);
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7836,7 +7836,7 @@ to_mouse_joint_select(
     }
 
     /* parse args */
-    joint_name = bu_basename(argv[2], NULL);
+    joint_name = bu_path_basename(argv[2], NULL);
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7943,7 +7943,7 @@ to_mouse_joint_selection_translate(
 	    break;
     }
 
-    joint_name = bu_basename(argv[2], NULL);
+    joint_name = bu_path_basename(argv[2], NULL);
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {

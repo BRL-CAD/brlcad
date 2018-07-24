@@ -336,12 +336,12 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     if (lhs) {
 	char *dirpath;
 	char *real_path = bu_realpath(lhs, NULL);
-	dirpath = bu_dirname(real_path);
+	dirpath = bu_path_dirname(real_path);
 	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
-	bu_free(dirpath, "free bu_dirname");
-	dirpath = bu_dirname(real_path);
+	bu_free(dirpath, "free bu_path_dirname");
+	dirpath = bu_path_dirname(real_path);
 	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
-	bu_free(dirpath, "free bu_dirname");
+	bu_free(dirpath, "free bu_path_dirname");
 	if (find_path(result, real_path, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: Run-time path identification [%s]\n", result);

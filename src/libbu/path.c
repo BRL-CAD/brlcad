@@ -30,7 +30,7 @@
 
 
 char *
-bu_dirname(const char *cp)
+bu_path_dirname(const char *cp)
 {
     char *ret;
     char *found_dslash;
@@ -72,7 +72,7 @@ bu_dirname(const char *cp)
     found_dslash = strrchr(ret, BU_DIR_SEPARATOR);
     found_fslash = strrchr(ret, '/');
     if (!found_dslash && !found_fslash) {
-        bu_free(ret, "bu_dirname");
+        bu_free(ret, "bu_path_dirname");
         return bu_strdup(DOT);
     }
 
@@ -91,7 +91,7 @@ bu_dirname(const char *cp)
 
 
 char *
-bu_basename(const char *path, char *basename)
+bu_path_basename(const char *path, char *basename)
 {
     const char *p;
     char *base;
@@ -139,7 +139,7 @@ bu_basename(const char *path, char *basename)
     }
 
     /* Create a new string */
-    base = (char *)bu_calloc(len + 2, sizeof(char), "bu_basename alloc");
+    base = (char *)bu_calloc(len + 2, sizeof(char), "bu_path_basename alloc");
     if (len > 0) {
 	bu_strlcpy(base, path, len+1);
     } else {
@@ -163,7 +163,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 
     switch (type) {
 	case BU_PATH_DIRNAME:
-	    dirname = bu_dirname(path);
+	    dirname = bu_path_dirname(path);
 	    if (!(!dirname || strlen(dirname) == 0)) {
 		ret = 1;
 		if (component) {
@@ -182,7 +182,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 	    break;
 	case BU_PATH_BASENAME:
 	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
-	    bu_basename(path, basename);
+	    bu_path_basename(path, basename);
 	    if (strlen(basename) > 0) {
 		ret = 1;
 		if (component) {
@@ -192,7 +192,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 	    break;
 	case BU_PATH_BASENAME_EXTLESS:
 	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
-	    bu_basename(path, basename);
+	    bu_path_basename(path, basename);
 	    if (strlen(basename) > 0) {
 		ret = 1;
 		if (component) {
@@ -206,7 +206,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 	    break;
 	case BU_PATH_EXT:
 	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
-	    bu_basename(path, basename);
+	    bu_path_basename(path, basename);
 	    if (strlen(basename) > 0) {
 		period_pos = strrchr(basename, '.');
 		if (period_pos && strlen(period_pos) > 1) {
@@ -232,7 +232,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 
 
 char **
-bu_argv_from_path(const char *path, int *ac)
+bu_path_to_argv(const char *path, int *ac)
 {
     char **av;
     char *begin;
@@ -252,7 +252,7 @@ bu_argv_from_path(const char *path, int *ac)
         ++i;
 
     if (UNLIKELY(newstr[i] == '\0')) {
-        bu_free((void *)newstr, "bu_argv_from_path");
+        bu_free((void *)newstr, "bu_path_to_argv");
         return (char **)0;
     }
 
@@ -268,7 +268,7 @@ bu_argv_from_path(const char *path, int *ac)
 
         begin = end + 1;
     }
-    av = (char **)bu_calloc((unsigned int)(*ac)+1, sizeof(char *), "bu_argv_from_path");
+    av = (char **)bu_calloc((unsigned int)(*ac)+1, sizeof(char *), "bu_path_to_argv");
 
     begin = headpath;
     i = 0;
@@ -288,12 +288,12 @@ bu_argv_from_path(const char *path, int *ac)
         av[i] = (char *)0;
         --*ac;
     }
-    bu_free((void *)newstr, "bu_argv_from_path");
+    bu_free((void *)newstr, "bu_path_to_argv");
 
     return av;
 }
 
-/* Most of bu_normalize is a subset of NetBSD's realpath function:
+/* Most of bu_path_normalize is a subset of NetBSD's realpath function:
  *
  * Copyright (c) 1989, 1991, 1993, 1995
  *      The Regents of the University of California.  All rights reserved.
@@ -326,7 +326,7 @@ bu_argv_from_path(const char *path, int *ac)
  * SUCH DAMAGE.
  */
 const char *
-bu_normalize(const char *path)
+bu_path_normalize(const char *path)
 {
     static char resolved[MAXPATHLEN] = {0};
     const char *q;

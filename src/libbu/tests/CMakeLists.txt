@@ -62,31 +62,31 @@ BRLCAD_ADDEXEC(bu_gethostname gethostname.c libbu TEST)
 #  ************ basename.c tests *************
 #
 
-###############################
-#      bu_basename testing    #
-###############################
-add_test(NAME bu_basename_null                                   COMMAND bu_test basename) # tests NULL
-add_test(NAME bu_basename_empty                                  COMMAND bu_test basename "")
-add_test(NAME bu_basename_sl_usr_sl_dir_sl_file                  COMMAND bu_test basename "/usr/dir/file")
-add_test(NAME bu_basename_sl_usr_sl_dir_sl_                      COMMAND bu_test basename "/usr/dir/")
-add_test(NAME bu_basename_sl_usr_bsl__sl_dir                     COMMAND bu_test basename "/usr\\\\/dir")
-add_test(NAME bu_basename_sl_usr_sl__p_                          COMMAND bu_test basename "/usr/.")
-add_test(NAME bu_basename_sl_usr_sl_                             COMMAND bu_test basename "/usr/")
-add_test(NAME bu_basename_sl_usr                                 COMMAND bu_test basename "/usr")
-add_test(NAME bu_basename_usr                                    COMMAND bu_test basename "usr")
-add_test(NAME bu_basename_sl_usr_sl_some_sp_long_sl_file         COMMAND bu_test basename "/usr/some long/file")
-add_test(NAME bu_basename_sl_usr_sl_some_sp_file                 COMMAND bu_test basename "/usr/some file")
-add_test(NAME bu_basename_C_c__sl_usr_sl_some_bsl__sp_drivepath  COMMAND bu_test basename "C:/usr/some\\\\ drivepath")
-add_test(NAME bu_basename_sl_a_sp_test_sp_file                   COMMAND bu_test basename "/a test file")
-add_test(NAME bu_basename_another_sp_file                        COMMAND bu_test basename "another file")
-add_test(NAME bu_basename_C_c__bsl__Temp                         COMMAND bu_test basename "C:\\\\Temp")
-add_test(NAME bu_basename_C_c__sl_Temp                           COMMAND bu_test basename "C:/Temp")
-add_test(NAME bu_basename_sl_                                    COMMAND bu_test basename "/")
-add_test(NAME bu_basename_sl__sl__sl__sl__sl_                    COMMAND bu_test basename "/////")
-add_test(NAME bu_basename_p_                                     COMMAND bu_test basename ".")
-add_test(NAME bu_basename_p__p_                                  COMMAND bu_test basename "..")
-add_test(NAME bu_basename_p__p__p_                               COMMAND bu_test basename "...")
-add_test(NAME bu_basename_sp__sp__sp_                            COMMAND bu_test basename "   ")
+####################################
+#      bu_path_basename testing    #
+####################################
+add_test(NAME bu_path_basename_null                                   COMMAND bu_test basename) # tests NULL
+add_test(NAME bu_path_basename_empty                                  COMMAND bu_test basename "")
+add_test(NAME bu_path_basename_sl_usr_sl_dir_sl_file                  COMMAND bu_test basename "/usr/dir/file")
+add_test(NAME bu_path_basename_sl_usr_sl_dir_sl_                      COMMAND bu_test basename "/usr/dir/")
+add_test(NAME bu_path_basename_sl_usr_bsl__sl_dir                     COMMAND bu_test basename "/usr\\\\/dir")
+add_test(NAME bu_path_basename_sl_usr_sl__p_                          COMMAND bu_test basename "/usr/.")
+add_test(NAME bu_path_basename_sl_usr_sl_                             COMMAND bu_test basename "/usr/")
+add_test(NAME bu_path_basename_sl_usr                                 COMMAND bu_test basename "/usr")
+add_test(NAME bu_path_basename_usr                                    COMMAND bu_test basename "usr")
+add_test(NAME bu_path_basename_sl_usr_sl_some_sp_long_sl_file         COMMAND bu_test basename "/usr/some long/file")
+add_test(NAME bu_path_basename_sl_usr_sl_some_sp_file                 COMMAND bu_test basename "/usr/some file")
+add_test(NAME bu_path_basename_C_c__sl_usr_sl_some_bsl__sp_drivepath  COMMAND bu_test basename "C:/usr/some\\\\ drivepath")
+add_test(NAME bu_path_basename_sl_a_sp_test_sp_file                   COMMAND bu_test basename "/a test file")
+add_test(NAME bu_path_basename_another_sp_file                        COMMAND bu_test basename "another file")
+add_test(NAME bu_path_basename_C_c__bsl__Temp                         COMMAND bu_test basename "C:\\\\Temp")
+add_test(NAME bu_path_basename_C_c__sl_Temp                           COMMAND bu_test basename "C:/Temp")
+add_test(NAME bu_path_basename_sl_                                    COMMAND bu_test basename "/")
+add_test(NAME bu_path_basename_sl__sl__sl__sl__sl_                    COMMAND bu_test basename "/////")
+add_test(NAME bu_path_basename_p_                                     COMMAND bu_test basename ".")
+add_test(NAME bu_path_basename_p__p_                                  COMMAND bu_test basename "..")
+add_test(NAME bu_path_basename_p__p__p_                               COMMAND bu_test basename "...")
+add_test(NAME bu_path_basename_sp__sp__sp_                            COMMAND bu_test basename "   ")
 
 
 ##########################################
@@ -170,31 +170,31 @@ add_test(NAME bu_str_isprint_carriage_return      COMMAND bu_test str_isprint 7)
 #  ************ dirname.c tests *************
 #
 
-##############################
-#      bu_dirname testing    #
-##############################
-add_test(NAME bu_dirname__usr_dir_file COMMAND bu_test dirname "/usr/dir/file")
-add_test(NAME bu_dirname__usr_dir_ COMMAND bu_test dirname "/usr/dir/")
-add_test(NAME bu_dirname__usr__bsl__dir COMMAND bu_test dirname "/usr\\\\/dir")
-add_test(NAME bu_dirname__usr_period COMMAND bu_test dirname "/usr/.")
-add_test(NAME bu_dirname__usr_ COMMAND bu_test dirname "/usr/")
-add_test(NAME bu_dirname__usr COMMAND bu_test dirname "/usr")
-add_test(NAME bu_dirname_usr COMMAND bu_test dirname "usr")
-add_test(NAME bu_dirname__usr_some_sp_long_file COMMAND bu_test dirname "/usr/some long/file")
-add_test(NAME bu_dirname__usr_some_sp_file COMMAND bu_test dirname "/usr/some file")
-add_test(NAME bu_dirname__usr_some__bsl__sp_drivepath COMMAND bu_test dirname "C:/usr/some\\\\ drivepath")
-add_test(NAME bu_dirname__a_sp_file COMMAND bu_test dirname "/a test file")
-add_test(NAME bu_dirname_another_file COMMAND bu_test dirname "another file")
-add_test(NAME bu_dirname_C_colon__bsl_Temp COMMAND bu_test dirname "C:\\\\Temp")
-add_test(NAME bu_dirname_C_colon__Temp COMMAND bu_test dirname "C:/Temp")
-add_test(NAME bu_dirname__ COMMAND bu_test dirname "/")
-add_test(NAME bu_dirname______ COMMAND bu_test dirname "/////")
-add_test(NAME bu_dirname__period_ COMMAND bu_test dirname ".")
-add_test(NAME bu_dirname__period__period_ COMMAND bu_test dirname "..")
-add_test(NAME bu_dirname__period__period__period_ COMMAND bu_test dirname "...")
-add_test(NAME bu_dirname__sp__sp__sp_ COMMAND bu_test dirname "   ")
-add_test(NAME bu_dirname_empty COMMAND bu_test dirname "")
-add_test(NAME bu_dirname_null COMMAND bu_test dirname)
+###################################
+#      bu_path_dirname testing    #
+###################################
+add_test(NAME bu_path_dirname__usr_dir_file COMMAND bu_test dirname "/usr/dir/file")
+add_test(NAME bu_path_dirname__usr_dir_ COMMAND bu_test dirname "/usr/dir/")
+add_test(NAME bu_path_dirname__usr__bsl__dir COMMAND bu_test dirname "/usr\\\\/dir")
+add_test(NAME bu_path_dirname__usr_period COMMAND bu_test dirname "/usr/.")
+add_test(NAME bu_path_dirname__usr_ COMMAND bu_test dirname "/usr/")
+add_test(NAME bu_path_dirname__usr COMMAND bu_test dirname "/usr")
+add_test(NAME bu_path_dirname_usr COMMAND bu_test dirname "usr")
+add_test(NAME bu_path_dirname__usr_some_sp_long_file COMMAND bu_test dirname "/usr/some long/file")
+add_test(NAME bu_path_dirname__usr_some_sp_file COMMAND bu_test dirname "/usr/some file")
+add_test(NAME bu_path_dirname__usr_some__bsl__sp_drivepath COMMAND bu_test dirname "C:/usr/some\\\\ drivepath")
+add_test(NAME bu_path_dirname__a_sp_file COMMAND bu_test dirname "/a test file")
+add_test(NAME bu_path_dirname_another_file COMMAND bu_test dirname "another file")
+add_test(NAME bu_path_dirname_C_colon__bsl_Temp COMMAND bu_test dirname "C:\\\\Temp")
+add_test(NAME bu_path_dirname_C_colon__Temp COMMAND bu_test dirname "C:/Temp")
+add_test(NAME bu_path_dirname__ COMMAND bu_test dirname "/")
+add_test(NAME bu_path_dirname______ COMMAND bu_test dirname "/////")
+add_test(NAME bu_path_dirname__period_ COMMAND bu_test dirname ".")
+add_test(NAME bu_path_dirname__period__period_ COMMAND bu_test dirname "..")
+add_test(NAME bu_path_dirname__period__period__period_ COMMAND bu_test dirname "...")
+add_test(NAME bu_path_dirname__sp__sp__sp_ COMMAND bu_test dirname "   ")
+add_test(NAME bu_path_dirname_empty COMMAND bu_test dirname "")
+add_test(NAME bu_path_dirname_null COMMAND bu_test dirname)
 
 #
 #  ************ escape.c tests *************

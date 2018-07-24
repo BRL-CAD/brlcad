@@ -98,7 +98,7 @@ get_bu_output(const char *input)
 
     char *output = (char *)bu_calloc(max_result_chars, sizeof(char), "bu output");
 
-    bu_basename(input, output);
+    bu_path_basename(input, output);
 
     return output;
 }

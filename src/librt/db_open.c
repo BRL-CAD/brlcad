@@ -152,7 +152,7 @@ db_open(const char *name, const char *mode)
      */
     argv = (char **)bu_malloc(3 * sizeof(char *), "dbi_filepath[3]");
     argv[0] = bu_strdup(".");
-    argv[1] = bu_dirname(name);
+    argv[1] = bu_path_dirname(name);
     argv[2] = NULL;
     dbip->dbi_filepath = argv;
 

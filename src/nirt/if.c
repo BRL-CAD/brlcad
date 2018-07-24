@@ -144,7 +144,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 
 	ValTab[VTI_PATH_NAME].value.sval = part->pt_regionp->reg_name;
 	ValTab[VTI_REG_NAME].value.sval = (char *)bu_calloc(strlen(regionPN), sizeof(char), "if_hit sval");
-	bu_basename(regionPN, (char *)ValTab[VTI_REG_NAME].value.sval);
+	bu_path_basename(regionPN, (char *)ValTab[VTI_REG_NAME].value.sval);
 	ValTab[VTI_REG_ID].value.ival = part->pt_regionp->reg_regionid;
 	ValTab[VTI_SURF_NUM_IN].value.ival = part->pt_inhit->hit_surfno;
 	ValTab[VTI_SURF_NUM_OUT].value.ival = part->pt_outhit->hit_surfno;
@@ -172,9 +172,9 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 		    bu_vls_strcat(&claimant_list, " ");
 		bu_strlcpy(tmpcp, (*rpp)->reg_name, sizeof(tmpcp));
 
-		base = bu_basename(tmpcp, NULL);
+		base = bu_path_basename(tmpcp, NULL);
 		bu_vls_strcat(&claimant_list, base);
-		bu_free(base, "bu_basename");
+		bu_free(base, "bu_path_basename");
 	    }
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =
 		bu_vls_addr(&claimant_list);
@@ -217,9 +217,9 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *UNUSED(f
 	    char *copy_ovlp_reg2 = bu_strdup(ovp->reg2->reg_name);
 
 	    ValTab[VTI_OV_REG1_NAME].value.sval = (char *)bu_calloc(strlen(copy_ovlp_reg1), sizeof(char), "if_hit sval2");
-	    bu_basename(copy_ovlp_reg1, (char *)ValTab[VTI_OV_REG1_NAME].value.sval);
+	    bu_path_basename(copy_ovlp_reg1, (char *)ValTab[VTI_OV_REG1_NAME].value.sval);
 	    ValTab[VTI_OV_REG2_NAME].value.sval = (char *)bu_calloc(strlen(copy_ovlp_reg2), sizeof(char), "if_hit sval3");
-	    bu_basename(copy_ovlp_reg2, (char *)ValTab[VTI_OV_REG2_NAME].value.sval);
+	    bu_path_basename(copy_ovlp_reg2, (char *)ValTab[VTI_OV_REG2_NAME].value.sval);
 #endif
 	    ValTab[VTI_OV_REG1_ID].value.ival = ovp->reg1->reg_regionid;
 	    ValTab[VTI_OV_REG2_ID].value.ival = ovp->reg2->reg_regionid;

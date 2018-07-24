@@ -117,7 +117,7 @@ HIDDEN struct region *
 _rt_getregion(struct rt_i *rtip, const char *reg_name)
 {
     struct region *regp;
-    char *reg_base = bu_basename(reg_name, NULL);
+    char *reg_base = bu_path_basename(reg_name, NULL);
 
     RT_CK_RTI(rtip);
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
@@ -128,7 +128,7 @@ _rt_getregion(struct rt_i *rtip, const char *reg_name)
 	    return regp;
 	}
 	/* Second, check for a match of the database node name */
-	cp = bu_basename(regp->reg_name, NULL);
+	cp = bu_path_basename(regp->reg_name, NULL);
 	if (BU_STR_EQUAL(cp, reg_name)) {
 	    bu_free(reg_base, "reg_base free");
 	    bu_free(cp, "cp free");

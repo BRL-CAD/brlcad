@@ -102,8 +102,8 @@ bu_getprogname(void)
 {
     /* this static buffer is needed so we don't have to write into
      * bu_progname[], which potentially holds a full path.  we have to
-     * free the bu_basename() memory, so we need to copy the string
-     * somewhere before returning.
+     * free the bu_path_basename() memory, so we need to copy the
+     * string somewhere before returning.
      */
     static char buffer[MAXPATHLEN] = {0};
     const char *name = bu_progname;
@@ -125,7 +125,7 @@ bu_getprogname(void)
 #endif
 
     /* want just the basename from paths, otherwise default result */
-    bu_basename(name, tmp_basename);
+    bu_path_basename(name, tmp_basename);
     if (BU_STR_EQUAL(tmp_basename, ".") || BU_STR_EQUAL(tmp_basename, "/")) {
 	name = DEFAULT_PROGNAME;
     } else {

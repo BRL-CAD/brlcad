@@ -102,7 +102,7 @@ int parse_args(int ac, char *av[])
 	    case '?':
 	    case 'h':
 	    default:
-		bu_basename(av[0], tmp_basename);
+		bu_path_basename(av[0], tmp_basename);
 		usage(tmp_basename, "Bad or help flag specified\n");
 		break;
 	}
@@ -251,7 +251,7 @@ int main(int ac, char *av[])
     arg_count = parse_args(ac, av);
 
     if ((ac - arg_count) < 1) {
-	bu_basename(av[0], tmp_basename);
+	bu_path_basename(av[0], tmp_basename);
 	usage(tmp_basename, "bad argument count");
     }
 

@@ -53,9 +53,9 @@ automatic_test(const char *input)
 	ans = dirname(dirname_buf_input);
 
     if (!input)
-	res = bu_dirname(NULL);
+	res = bu_path_dirname(NULL);
     else
-	res = bu_dirname(buf_input);
+	res = bu_path_dirname(buf_input);
 
     if (BU_STR_EQUAL(res, ans)) {
 	printf("%24s -> %24s [PASSED]\n", input, res);

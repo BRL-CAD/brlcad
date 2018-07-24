@@ -63,11 +63,11 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
     for (i = 1; i < argc; ++i) {
 	struct rt_bot_list *headRblp = NULL;
 	/* Skip past any path elements */
-	char *obj = bu_basename(argv[i], NULL);
+	char *obj = bu_path_basename(argv[i], NULL);
 
 	if (BU_STR_EQUAL(obj, ".")) {
 	    /* malformed path, lookup using exactly what was provided */
-	    bu_free(obj, "free bu_basename");
+	    bu_free(obj, "free bu_path_basename");
 	    obj = bu_strdup(argv[i]);
 	}
 

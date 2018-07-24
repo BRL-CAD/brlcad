@@ -2325,7 +2325,7 @@ rt_shader_mat(
     RT_CK_RTI(rtip);
     RT_CK_RESOURCE(resp);
 
-    reg_name = bu_basename(rp->reg_name, NULL);
+    reg_name = bu_path_basename(rp->reg_name, NULL);
 
     /* get model-to-region space mapping */
     if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0) {

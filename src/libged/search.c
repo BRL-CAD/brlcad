@@ -61,12 +61,12 @@ _path_scrub(struct bu_vls *path)
     if (bu_vls_addr(path)[0] == '/')
 	islocal = 0;
 
-    normalized = bu_normalize(bu_vls_addr(path));
+    normalized = bu_path_normalize(bu_vls_addr(path));
 
     if (normalized && !BU_STR_EQUAL(normalized, "/")) {
-	char *tbasename = bu_basename(normalized, NULL);
+	char *tbasename = bu_path_basename(normalized, NULL);
 	bu_vls_sprintf(&tmp, "%s", tbasename);
-	bu_free(tbasename, "free bu_basename string (caller's responsibility per bu/log.h)");
+	bu_free(tbasename, "free bu_path_basename string (caller's responsibility per bu/log.h)");
 	bu_vls_sprintf(path, "%s", bu_vls_addr(&tmp));
 	bu_vls_free(&tmp);
     } else {

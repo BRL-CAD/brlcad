@@ -335,7 +335,7 @@ main(int ac, char *av[])
 	bu_vls_printf(&vp, "%s\\n", bu_vls_addr(gp->ged_result_str));
 	if (!(av[0][0] == '-' && av[0][1] == '\0')) {
 	    char base[MAXPATHLEN] = {0};
-	    bu_basename(av[0], base);
+	    bu_path_basename(av[0], base);
 	    bu_vls_printf(&vp, "%s ", base);
 	}
 	bu_vls_printf(&vp, "BRL-CAD Geometry Database");
