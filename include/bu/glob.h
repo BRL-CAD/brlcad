@@ -67,7 +67,7 @@ struct bu_stat {
  * main structure used by bu_glob() to specify behavior, callbacks,
  * and return results.
  */
-struct bu_glob {
+struct bu_glob_context {
 
 #define BU_GLOB_APPEND   0x0001  /* Append to output from previous call. */
 #define BU_GLOB_NOSORT   0x0002  /* Don't sort. */
@@ -82,16 +82,16 @@ struct bu_glob {
 
     /* Callback functions */
 
-    struct bu_glob *(*gl_opendir)(const char *);
-    int (*gl_readdir)(struct bu_dirent *, struct bu_glob *);
-    void (*gl_closedir)(struct bu_glob *);
+    struct bu_glob_context *(*gl_opendir)(const char *);
+    int (*gl_readdir)(struct bu_dirent *, struct bu_glob_context *);
+    void (*gl_closedir)(struct bu_glob_context *);
 
-    int (*gl_lstat)(const char *, struct bu_stat *, struct bu_glob *);
-    int (*gl_stat)(const char *, struct bu_stat *, struct bu_glob *);
+    int (*gl_lstat)(const char *, struct bu_stat *, struct bu_glob_context *);
+    int (*gl_stat)(const char *, struct bu_stat *, struct bu_glob_context *);
 
 #define BU_GLOB_NOMATCH (-1)     /* No match. */
 #define BU_GLOB_ABORTED (-2)     /* Unignored error. */
-    int (*gl_errfunc)(const char *, int, struct bu_glob *);
+    int (*gl_errfunc)(const char *, int, struct bu_glob_context *);
 
     /* For caller use */
 
@@ -101,26 +101,26 @@ struct bu_glob {
 
     void *priv;               /**< For internal use only */
 };
-typedef struct bu_glob bu_glob_t;
+typedef struct bu_glob_context bu_glob_t;
 
 
 /**
  * declaration statement initialization of a bu_glob struct
  */
-#define BU_GLOB_INIT_ZERO(_gp) {0, 0, 0, NULL, (int)(*)(const char *)NULL, (int)(*)(struct bu_dirent *, struct bu_glob *)NULL, (void)(*)(struct bu_glob *)NULL, (int)(*)(const char *, struct bu_stat *, struct bu_glob *)NULL, (int)(*)(const char *, struct bu_stat *, struct bu_glob *)NULL, NULL, NULL}
+#define BU_GLOB_INIT_ZERO(_gp) {0, 0, 0, NULL, (int)(*)(const char *)NULL, (int)(*)(struct bu_dirent *, struct bu_glob_context *)NULL, (void)(*)(struct bu_glob_context *)NULL, (int)(*)(const char *, struct bu_stat *, struct bu_glob_context *)NULL, (int)(*)(const char *, struct bu_stat *, struct bu_glob_context *)NULL, NULL, NULL}
 
 
 /**
  * initialize a globbing context for use prior to calling bu_glob()
  */
-BU_EXPORT struct bu_glob *bu_glob_init();
+BU_EXPORT struct bu_glob_context *bu_glob_init();
 
 
 /**
  * release any resoures allocated during bu_glob(), including any
  * returned paths
  */
-BU_EXPORT extern void bu_glob_free(struct bu_glob *);
+BU_EXPORT extern void bu_glob_free(struct bu_glob_context *);
 
 
 /**
@@ -145,7 +145,7 @@ BU_EXPORT extern void bu_glob_free(struct bu_glob *);
  *
  * gl_pathv contains a list of matched paths.
  */
-BU_EXPORT extern int bu_glob(const char *pattern, int flags, struct bu_glob *context);
+BU_EXPORT extern int bu_glob(const char *pattern, int flags, struct bu_glob_context *context);
 
 /** @} */
 
