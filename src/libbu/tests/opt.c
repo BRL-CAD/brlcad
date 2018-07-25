@@ -766,7 +766,11 @@ desc_2(int test_num)
 	    av[4] = "50";
 	    EXPECT_FAILURE("color", "invalid argument");
 	    break;
-
+    	case 16:
+	    ac = 1;
+	    av[0] = "-C0/0/50";
+	    EXPECT_SUCCESS_COLOR("color", color, 0, 0, 50);
+	    break;
     }
 
     if (ret > 0) {

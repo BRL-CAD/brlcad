@@ -615,6 +615,7 @@ add_test(NAME bu_opt_2_color_12  COMMAND bu_test opt 2 C 12)
 add_test(NAME bu_opt_2_color_13  COMMAND bu_test opt 2 C 13)
 add_test(NAME bu_opt_2_color_14  COMMAND bu_test opt 2 C 14)
 add_test(NAME bu_opt_2_color_15  COMMAND bu_test opt 2 C 15)
+add_test(NAME bu_opt_2_color_16  COMMAND bu_test opt 2 C 16)
 
 # vector tests
 add_test(NAME bu_opt_3_vect_00  COMMAND bu_test opt 3 V 0)
