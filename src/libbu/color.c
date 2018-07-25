@@ -278,13 +278,13 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	}
     }
 
-    /* 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
+    /* iterate over RGB */
     for (i = 0; i < 3; ++i) {
-	const char expected_char = i == 2 ? '\0' : separator;
 	const char *endptr;
 
 	errno = 0;
 
+        /* 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
 	switch (mode) {
 	    case 0: /*RGB*/
 		color->buc_rgb[i] = strtol(str, (char **)&endptr, 10) / 255.0;
@@ -298,7 +298,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 		bu_bomb("error");
 	}
 
-	if ((NEAR_ZERO(color->buc_rgb[i], 0.0) && errno) || endptr == str || *endptr != expected_char
+	if ((NEAR_ZERO(color->buc_rgb[i], 0.0) && errno) || endptr == str || (i != 2 && *endptr == '\0')
 	    || !(0.0 <= color->buc_rgb[i] && color->buc_rgb[i] <= 1.0)) {
 	    VSETALL(color->buc_rgb, 0.0);
 	    return 0;
