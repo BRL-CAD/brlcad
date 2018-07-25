@@ -211,7 +211,7 @@ int
 bu_color_from_str(struct bu_color *color, const char *str)
 {
     size_t i;
-    char separator = '\0';
+    /*char separator = '\0'; set but unused??*/
     int mode = 0;
 
     if (UNLIKELY(!color || !str)) {
@@ -252,30 +252,32 @@ bu_color_from_str(struct bu_color *color, const char *str)
 
     /* determine the format - 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
     for (mode = 0; mode < 3; ++mode) {
-	const char * const allowed_separators = "/, ";
+	/*const char * const allowed_separators = "/, ";*/
 	const char *endptr;
-	float result;
 
 	errno = 0;
 
 	switch (mode) {
 	    case 0: /* RGB */
-		result = strtol(str, (char **)&endptr, 10);
+		(void)strtol(str, (char **)&endptr, 10);
 		break;
 
 	    case 1: /* FLOAT */
-		result = strtod(str, (char **)&endptr);
+		(void)strtod(str, (char **)&endptr);
 		break;
 
 	    default:
 		return 0;
 	}
 
+	/* TODO: We're not doing anything with the separator once set... ?? */
+#if 0
 	if (!((NEAR_ZERO(result, 0.0) && errno) || endptr == str
 	      || !strchr(allowed_separators, *endptr))) {
 	    separator = *endptr;
 	    break;
 	}
+#endif
     }
 
     /* iterate over RGB */
