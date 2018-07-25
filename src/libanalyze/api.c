@@ -434,7 +434,14 @@ analyze_overlap(struct application *ap,
     VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
 
     if (analysis_flags & ANALYSIS_OVERLAPS) {
+	bu_semaphore_acquire(ANALYZE_SEM_LIST);
+	add_unique_pair(state->overlapList, reg1, reg2, depth, ihit);
+	bu_semaphore_release(ANALYZE_SEM_LIST);
 	state->overlaps_callback(reg1, reg2, depth, ihit, ohit, state->overlaps_callback_data);
+    }  else {
+	bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+	bu_vls_printf(state->log_str, "overlap %s %s\n", reg1->reg_name, reg2->reg_name);
+	bu_semaphore_release(ANALYZE_SEM_WORKER);
     }
 
     /* XXX We should somehow flag the volume/mass calculations as invalid */
@@ -1101,7 +1108,6 @@ shoot_rays(struct current_state *state)
 	if (state->use_single_grid) {
 	    analyze_single_grid_setup(state);
 	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
-	    bu_log("%s", bu_vls_strgrab(state->log_str));
 	} else {
 	    int view;
 	    bu_log("Processing with grid spacing %g mm %ld x %ld x %ld\n",
@@ -1112,7 +1118,6 @@ shoot_rays(struct current_state *state)
 	    for (view = 0; view < state->num_views; view++) {
 		analyze_triple_grid_setup(view, state);
 		bu_parallel(analyze_worker, state->ncpu, (void *)state);
-		bu_log("%s", bu_vls_strgrab(state->log_str));
 		if (aborted)
 		    break;
 	    }
@@ -1197,12 +1202,18 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     int i;
     struct rt_i *rtip;
 
+    struct region *regp;
     struct resource resp[MAX_PSW];
     struct rectangular_grid grid;
+    struct region_pair overlapList;
 
     /* TODO : Add a bu_vls struct / use bu_log() wherever
      * possible.
      */
+
+    /* local copy for overlaps list to check later for hits */
+    BU_LIST_INIT(&overlapList.l);
+    state->overlapList = &overlapList;
 
     state->grid = &grid;
     grid.single_grid = 0;
@@ -1293,8 +1304,50 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     grid.refine_flag = 0;
     shoot_rays(state);
 
+    /* print any logs in main thread */
+    bu_log("%s", bu_vls_strgrab(state->log_str));
+
+    /* check for any non-hits */
+    for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
+	size_t hits;
+	struct region_pair *rp;
+	int is_overlap_only_hit;
+
+	RT_CK_REGION(regp);
+	hits = (size_t)((struct per_region_data *)regp->reg_udata)->hits;
+	if (hits < state->required_number_hits) {
+	    if (hits == 0 && !state->quiet_missed_report) {
+		is_overlap_only_hit = 0;
+		if (analysis_flags & ANALYSIS_OVERLAPS) {
+		    /* If the region is in the overlap list, it has
+		     * been hit even though the hit count is zero.
+		     * Do not report zero hit regions if they are in
+		     * the overlap list.
+		     */
+		    for (BU_LIST_FOR (rp, region_pair, &(overlapList.l))) {
+			if (rp->r.r1->reg_name == regp->reg_name) {
+			    is_overlap_only_hit = 1;
+			    break;
+			} else if (rp->r2) {
+			    if (rp->r2->reg_name == regp->reg_name) {
+				is_overlap_only_hit = 1;
+				break;
+			    }
+			}
+		    }
+		}
+		if (!is_overlap_only_hit) {
+		    bu_log("%s was not hit\n", regp->reg_name);
+		}
+	    } else if (hits) {
+		bu_log("%s hit only %zu times (< %zu)\n", regp->reg_name, hits, state->required_number_hits);
+	    }
+	}
+    }
+
     /* Free dynamically allocated state */
     bu_vls_free(state->log_str);
+    bu_list_free(&overlapList.l);
 
     bu_free(state->m_lenDensity, "m_lenDensity");
     bu_free(state->m_len, "m_len");

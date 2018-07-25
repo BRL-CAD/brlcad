@@ -168,12 +168,11 @@ static const struct cvt_tab units_tab[3][40] = {
 #define COMMA ','
 
 struct check_parameters {
-    int require_num_hits;
+    size_t require_num_hits;
     int ncpu;
     int print_per_region_stats;
     int use_air;
     int num_views;
-    int quiet_missed_report;
     int getfromview;
     int overlaps_overlay_flag;
     int plot_files;

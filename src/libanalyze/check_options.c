@@ -48,6 +48,7 @@ analyze_current_state_init()
     state->use_view_information = 0;
     state->debug = 0;
     state->verbose = 0;
+    state->quiet_missed_report = 0;
     state->plot_volume = NULL;
 
     state->exp_air_callback = NULL;
@@ -175,9 +176,15 @@ void analyze_set_ncpu(struct current_state *state, int ncpu)
 }
 
 
-void analyze_set_required_number_hits(struct current_state *state, int required_number_hits)
+void analyze_set_required_number_hits(struct current_state *state, size_t required_number_hits)
 {
     state->required_number_hits = required_number_hits;
+}
+
+
+void analyze_set_quiet_missed_report(struct current_state *state)
+{
+    state->quiet_missed_report = 1;
 }
 
 

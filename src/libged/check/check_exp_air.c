@@ -33,7 +33,7 @@ struct exp_air_context {
 };
 
 HIDDEN void 
-exposed_air(struct partition *pp,
+exposed_air(const struct partition *pp,
 	    point_t last_out_point,
 	    point_t pt,
 	    point_t opt,

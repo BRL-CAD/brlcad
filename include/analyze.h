@@ -352,8 +352,8 @@ ANALYZE_EXPORT int nirt_help(struct bu_vls *h, struct nirt_state *ns, bu_opt_for
 ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_state *ns);
 
 struct current_state;
-typedef void (*overlap_callback_t)(struct region *reg1, struct region *reg2, double depth, vect_t ihit, vect_t ohit, void* callback_data);
-typedef void (*exp_air_callback_t)(struct partition *pp, point_t last_out_point, point_t pt, point_t opt, void* callback_data);
+typedef void (*overlap_callback_t)(const struct region *reg1, const struct region *reg2, double depth, vect_t ihit, vect_t ohit, void* callback_data);
+typedef void (*exp_air_callback_t)(const struct partition *pp, point_t last_out_point, point_t pt, point_t opt, void* callback_data);
 typedef void (*gaps_callback_t)(const struct xray* ray, const struct partition *pp, double gap_dist, point_t pt, void* callback_data);
 typedef void (*adj_air_callback_t)(const struct xray* ray, const struct partition *pp, point_t pt, void* callback_data);
 
@@ -460,7 +460,13 @@ analyze_set_ncpu(struct current_state *state , int ncpu);
  * sets the required number of hits per object when raytracing
  */
 ANALYZE_EXPORT extern void
-analyze_set_required_number_hits(struct current_state *state , int required_number_hits);
+analyze_set_required_number_hits(struct current_state *state , size_t required_number_hits);
+
+/**
+ * sets a flag which quiets the missed reports
+ */
+ANALYZE_EXPORT extern void
+analyze_set_quiet_missed_report(struct current_state *state);
 
 /**
  * sets the use_air flag for raytracing
@@ -505,7 +511,7 @@ ANALYZE_EXPORT extern int
 analyze_get_num_regions(struct current_state *state);
 
 /**
- * used prepare single grid (eye position) to shoot according the view information
+ * used to prepare single grid (eye position) to shoot according the view information
  */
 ANALYZE_EXPORT extern void
 analyze_get_from_view(struct current_state *state, const struct bview *ged_gvp, point_t *eye_model);

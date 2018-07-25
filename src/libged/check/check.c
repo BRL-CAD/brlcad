@@ -226,7 +226,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
 		    return -1;
 		}
-		options->require_num_hits = c;
+		options->require_num_hits = (size_t) c;
 		analyze_set_required_number_hits(state, options->require_num_hits);
 		break;
 	    case 'N':
@@ -245,7 +245,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		analyze_set_ncpu(state, options->ncpu);
 		break;
 	    case 'q':
-		options->quiet_missed_report = 1;
+		analyze_set_quiet_missed_report(state);
 		break;
 	    case 'r':
 		options->print_per_region_stats = 1;
@@ -514,8 +514,6 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     }
     options.getfromview = 0;
     options.print_per_region_stats = 0;
-    options.use_air = 1;
-    options.quiet_missed_report = 0;
     options.overlaps_overlay_flag = 0;
     options.plot_files = 0;
     options.debug = 0;

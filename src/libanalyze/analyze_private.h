@@ -133,10 +133,11 @@ struct current_state {
     double azimuth_deg, elevation_deg;
     double gridSpacing, gridSpacingLimit;
     int ncpu;
-    int required_number_hits;
+    size_t required_number_hits;
     int use_air;
     int use_single_grid;
     int use_view_information;
+    int quiet_missed_report;
     char *densityFileName;
 
     FILE *plot_volume;
@@ -163,6 +164,7 @@ struct current_state {
     struct rt_i *rtip;
     struct resource *resp;
 
+    struct region_pair *overlapList;
     overlap_callback_t overlaps_callback;
     void* overlaps_callback_data;
 

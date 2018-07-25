@@ -43,8 +43,8 @@ struct overlaps_context {
 
 
 HIDDEN void
-overlap(struct region *reg1,
-	struct region *reg2,
+overlap(const struct region *reg1,
+	const struct region *reg2,
 	double depth,
 	vect_t ihit,
 	vect_t ohit,
