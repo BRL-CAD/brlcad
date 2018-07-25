@@ -254,20 +254,28 @@ bu_color_from_str(struct bu_color *color, const char *str)
     for (mode = 0; mode < 3; ++mode) {
 	/*const char * const allowed_separators = "/, ";*/
 	const char *endptr;
+	long lr = 0;
+	double dr = 0.0;
 
 	errno = 0;
 
 	switch (mode) {
 	    case 0: /* RGB */
-		(void)strtol(str, (char **)&endptr, 10);
+		lr = strtol(str, (char **)&endptr, 10);
 		break;
 
 	    case 1: /* FLOAT */
-		(void)strtod(str, (char **)&endptr);
+		dr = strtod(str, (char **)&endptr);
 		break;
 
 	    default:
 		return 0;
+	}
+
+	if (UNLIKELY (lr < 0 || dr < 0)) {
+	    /* a valid negative number conversion means something
+	     * is not valid with the input string - bail */
+	    return 0;
 	}
 
 	/* TODO: We're not doing anything with the separator once set... ?? */
