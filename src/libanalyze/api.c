@@ -1014,6 +1014,7 @@ analyze_single_grid_setup(struct current_state *state)
     state->i_axis = 0;
     state->u_axis = 1;
     state->v_axis = 2;
+    state->grid->single_grid = 1;
 
     if (state->viewsize <= 0.0) {
 	bu_log("viewsize <= 0");
@@ -1232,9 +1233,9 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     }
     rt_prep_parallel(rtip, state->ncpu);
 
-    if (state->use_single_grid) {
-	state->num_views = 1;
-	grid.single_grid = 1;
+    if (state->use_single_grid) state->num_views = 1;
+
+    if (state->use_single_grid && !state->use_view_information) {
 	if (analyze_setup_ae(state->azimuth_deg, state->elevation_deg, rtip, state->Viewrotscale, &state->viewsize, state->model2view, state->eye_model)) {
 	    rt_free_rti(rtip);
 	    rtip = NULL;

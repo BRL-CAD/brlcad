@@ -45,6 +45,7 @@ analyze_current_state_init()
     state->required_number_hits = 1;
     state->ncpu = (int) bu_avail_cpus();
     state->use_single_grid = 0;
+    state->use_view_information = 0;
     state->debug = 0;
     state->verbose = 0;
     state->plot_volume = NULL;
@@ -251,6 +252,19 @@ int analyze_get_num_regions(struct current_state *state)
     return (state->num_regions);
 }
 
+
+void analyze_get_from_view(struct current_state *state, const struct bview *ged_gvp, point_t *eye_model)
+{
+    quat_t quat;
+
+    VMOVE(state->eye_model, *eye_model);
+    state->viewsize =  ged_gvp->gv_size;
+    quat_mat2quat(quat, ged_gvp->gv_rotation);
+    quat_quat2mat(state->Viewrotscale, quat);
+
+    state->use_view_information = 1;
+    state->use_single_grid = 1;
+}
 
 /*
  * Local Variables:

@@ -505,6 +505,12 @@ ANALYZE_EXPORT extern int
 analyze_get_num_regions(struct current_state *state);
 
 /**
+ * used prepare single grid (eye position) to shoot according the view information
+ */
+ANALYZE_EXPORT extern void
+analyze_get_from_view(struct current_state *state, const struct bview *ged_gvp, point_t *eye_model);
+
+/**
  * registers the callback functions defined by the user to be called when raytracing
  */
 ANALYZE_EXPORT extern void

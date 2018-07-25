@@ -136,6 +136,7 @@ struct current_state {
     int required_number_hits;
     int use_air;
     int use_single_grid;
+    int use_view_information;
     char *densityFileName;
 
     FILE *plot_volume;

@@ -57,6 +57,7 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  -e #[deg|rad] - Elevation angle.\n");
     bu_vls_printf(&str, "  -f filename - Specifies that density values should be taken from an external file instead of from the _DENSITIES object in the database.\n");
     bu_vls_printf(&str, "  -g [initial_grid_spacing-]grid_spacing_limit or [initial_grid_spacing,]grid_spacing_limit - Specifies a limit on how far the grid can be refined and optionally the initial spacing between rays in the grids.\n");
+    bu_vls_printf(&str, "  -i - gets 'view information' from the view to setup eye position.\n");
     bu_vls_printf(&str, "  -M # - Specifies a mass tolerance value.\n");
     bu_vls_printf(&str, "  -n # - Specifies that the grid be refined until each region has at least num_hits ray intersections.\n");
     bu_vls_printf(&str, "  -N # - Specifies that only the first num_views should be computed.\n");
@@ -133,7 +134,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
     double a;
     char *p;
 
-    char *options_str = "a:de:f:g:M:n:N:opP:qrs:S:t:U:u:vV:h?";
+    char *options_str = "a:de:f:g:iM:n:N:opP:qrs:S:t:U:u:vV:h?";
 
     /* Turn off getopt's error messages */
     bu_opterr = 0;
@@ -210,6 +211,9 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    analyze_set_grid_spacing(state, options->gridSpacing, options->gridSpacingLimit);
 		    break;
 		}
+	    case 'i':
+		options->getfromview = 1;
+		break;
 	    case 'M':
 		if (read_units_double(&(options->mass_tolerance), bu_optarg, units_tab[2])) {
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in mass tolerance \"%s\"\n", bu_optarg);
@@ -508,7 +512,7 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 	check_show_help(gedp);
 	return GED_HELP;
     }
-
+    options.getfromview = 0;
     options.print_per_region_stats = 0;
     options.use_air = 1;
     options.quiet_missed_report = 0;
@@ -598,6 +602,11 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "overlaps", len) == 0) {
+	if (options.getfromview) {
+	    point_t eye_model;
+	    _ged_rt_set_eye_model(gedp, eye_model);
+	    analyze_get_from_view(state, gedp->ged_gvp, &eye_model);
+	}
 	if (check_overlaps(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
