@@ -157,6 +157,7 @@ CMAKEFILES(
   tgms/m35.cg.gz
   tgms/solids-simple.mged
   tgms/solids.mged
+  usage.sh
   weight.sh
   )
 

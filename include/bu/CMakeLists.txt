@@ -11,6 +11,7 @@ set(bu_headers
   exit.h
   file.h
   getopt.h
+  glob.h
   hash.h
   hist.h
   hook.h
