@@ -594,7 +594,7 @@ int
 dc_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
 {
     struct bu_color *set_color = (struct bu_color *)set_c;
-    unsigned int rgb[3];
+    unsigned int rgb[3] = {0, 0, 0};
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "color");
 
