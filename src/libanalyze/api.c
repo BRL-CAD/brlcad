@@ -982,7 +982,8 @@ allocate_region_data(struct current_state *state, char *av[])
 
     for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
 	regp->reg_udata = &state->reg_tbl[i];
-
+	state->reg_tbl[i].r_name = (char *)bu_malloc(strlen(regp->reg_name)+1, "r_name");
+	bu_strlcpy(state->reg_tbl[i].r_name, regp->reg_name, strlen(regp->reg_name)+1);
 	state->reg_tbl[i].r_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "r_lenDensity");
 	state->reg_tbl[i].r_len = (double *)bu_calloc(state->num_views, sizeof(double), "r_len");
 	state->reg_tbl[i].r_volume = (double *)bu_calloc(state->num_views, sizeof(double), "len");
@@ -996,6 +997,7 @@ allocate_region_data(struct current_state *state, char *av[])
 	    state->reg_tbl[i].optr = &state->objs[index];
 	}
     }
+    state->num_regions = i;
 }
 
 
@@ -1193,7 +1195,6 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 {
     int i;
     struct rt_i *rtip;
-    struct region *regp;
 
     struct resource resp[MAX_PSW];
     struct rectangular_grid grid;
@@ -1301,15 +1302,6 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     bu_free(state->m_lenTorque, "m_lenTorque");
     bu_free(state->m_moi, "m_moi");
     bu_free(state->m_poi, "m_poi");
-
-    for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
-	bu_free(state->reg_tbl[i].r_lenDensity, "r_lenDensity");
-	bu_free(state->reg_tbl[i].r_len, "r_len");
-	bu_free(state->reg_tbl[i].r_volume, "r_volume");
-	bu_free(state->reg_tbl[i].r_mass, "r_mass");
-    }
-    bu_free(state->reg_tbl, "object table");
-    state->reg_tbl = NULL;
 
     if (state->densities != NULL) {
 	bu_free(state->densities, "densities");

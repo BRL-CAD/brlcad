@@ -359,37 +359,51 @@ typedef void (*adj_air_callback_t)(const struct xray* ray, const struct partitio
 
 /**
  * returns the volume of the specified object (name)
-  */
+ */
 ANALYZE_EXPORT extern fastf_t
 analyze_volume(struct current_state *context, const char *name);
 
 /**
+ * stores the region name, volume, high and low ranges of volume
+ * for the specifed index of region in region table.
+ */
+ANALYZE_EXPORT extern void
+analyze_volume_region(struct current_state *state, int index, char** reg_name, double *volume, double *high, double *low);
+
+/**
  * returns the mass of the specified object (name)
-  */
+ */
 ANALYZE_EXPORT extern fastf_t
 analyze_mass(struct current_state *context, const char *name);
 
 /**
+ * stores the region name, mass, high and low ranges of mass
+ * for the specifed index of region in region table.
+ */
+ANALYZE_EXPORT extern void
+analyze_mass_region(struct current_state *state, int index, char** reg_name, double *mass, double *high, double *low);
+
+/**
  * returns the centroid of the specified object (name)
-  */
+ */
 ANALYZE_EXPORT extern void
 analyze_centroid(struct current_state *context, const char *name, point_t value);
 
 /**
  * returns the moments and products of inertia of the specified object (name)
-  */
+ */
 ANALYZE_EXPORT extern void
 analyze_moments(struct current_state *context, const char *name, mat_t value);
 
 /**
  * returns the surface area of the specified object (name)
-  */
+ */
 ANALYZE_EXPORT extern fastf_t
 analyze_surf_area(struct current_state *context, const char *name);
 
 /**
  * performs raytracing based on the current state
-  */
+ */
 ANALYZE_EXPORT extern int
 perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[], int num_objects, int flags);
 
@@ -484,6 +498,11 @@ analyze_enable_debug(struct current_state *state, struct bu_vls *vls);
 ANALYZE_EXPORT extern void
 analyze_enable_verbose(struct current_state *state, struct bu_vls *vls);
 
+/**
+ * used to get the value of number of regions
+ */
+ANALYZE_EXPORT extern int
+analyze_get_num_regions(struct current_state *state);
 
 /**
  * registers the callback functions defined by the user to be called when raytracing

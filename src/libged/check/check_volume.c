@@ -53,6 +53,23 @@ int check_volume(struct current_state *state,
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s %g %s\n", tobjtab[i], volume / options->units[VOL]->val, options->units[VOL]->name);
     }
 
+    if (options->print_per_region_stats) {
+	int num_regions = analyze_get_num_regions(state);
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "\tregions:\n");
+	for (i = 0; i < num_regions; i++) {
+	    char *reg_name = NULL;
+	    double volume;
+	    double high, low;
+	    analyze_volume_region(state, i, &reg_name, &volume, &high, &low);
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s volume:%g %s +(%g) -(%g)\n",
+			  reg_name,
+			  volume/options->units[VOL]->val,
+			  options->units[VOL]->name,
+			  high/options->units[VOL]->val,
+			  low/options->units[VOL]->val);
+	}
+    }
+
     if (plot_volume){
 	fclose(plot_volume);
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);

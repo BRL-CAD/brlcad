@@ -107,6 +107,18 @@ analyze_free_current_state(struct current_state *state)
 	state->objs = NULL;
     }
 
+    if (state->reg_tbl != NULL) {
+	for (i = 0; i < state->num_regions; i++) {
+	    bu_free(state->reg_tbl[i].r_name, "r_name");
+	    bu_free(state->reg_tbl[i].r_lenDensity, "r_lenDensity");
+	    bu_free(state->reg_tbl[i].r_len, "r_len");
+	    bu_free(state->reg_tbl[i].r_volume, "r_volume");
+	    bu_free(state->reg_tbl[i].r_mass, "r_mass");
+	}
+	bu_free(state->reg_tbl, "object table");
+	state->reg_tbl = NULL;
+    }
+
     bu_free((char *)state, "struct current_state");
 }
 
@@ -232,6 +244,13 @@ void analyze_enable_verbose(struct current_state *state, struct bu_vls *vls)
     state->verbose = 1;
     state->verbose_str = vls;
 }
+
+
+int analyze_get_num_regions(struct current_state *state)
+{
+    return (state->num_regions);
+}
+
 
 /*
  * Local Variables:

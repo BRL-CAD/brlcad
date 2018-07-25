@@ -51,6 +51,37 @@ analyze_volume(struct current_state *state, const char *name)
     return volume;
 }
 
+
+void
+analyze_volume_region(struct current_state *state, int i, char **name, double *volume, double *high, double *low) {
+    double *vv;
+    double lo = INFINITY;
+    double hi = -INFINITY;
+    double avg_vol = 0.0;
+    int view;
+
+    for (view=0; view < state->num_views; view++) {
+	vv = &state->reg_tbl[i].r_volume[view];
+
+	/* convert view length to a volume */
+	*vv = state->reg_tbl[i].r_len[view] * (state->area[view] / state->shots[view]);
+
+	/* find limits of values */
+	if (*vv < lo) lo = *vv;
+	if (*vv > hi) hi = *vv;
+
+	avg_vol += *vv;
+    }
+
+    avg_vol /= state->num_views;
+
+    /* set values to the pointers */
+    *volume = avg_vol;
+    *name = state->reg_tbl[i].r_name;
+    *high = hi - avg_vol;
+    *low = avg_vol - lo;
+}
+
 /*
  * Local Variables:
  * tab-width: 8

@@ -51,6 +51,36 @@ analyze_mass(struct current_state *state, const char *name)
     return mass;
 }
 
+
+void
+analyze_mass_region(struct current_state *state, int i, char **name, double *mass, double *high, double *low) {
+    double *mm;
+    double lo = INFINITY;
+    double hi = -INFINITY;
+    double avg_mass = 0.0;
+    int view;
+
+    for (view=0; view < state->num_views; view++) {
+	mm = &state->reg_tbl[i].r_mass[view];
+
+	/* convert view length to a mass */
+	*mm = state->reg_tbl[i].r_lenDensity[view] * (state->area[view] / state->shots[view]);
+
+	/* find limits of values */
+	if (*mm < lo) lo = *mm;
+	if (*mm > hi) hi = *mm;
+
+	avg_mass += *mm;
+    }
+
+    avg_mass /= state->num_views;
+
+    /* set values to the pointers */
+    *mass = avg_mass;
+    *name = state->reg_tbl[i].r_name;
+    *high = hi - avg_mass;
+    *low = avg_mass - lo;
+}
 /*
  * Local Variables:
  * tab-width: 8

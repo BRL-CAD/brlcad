@@ -76,6 +76,7 @@ struct per_obj_data {
  */
 struct per_region_data {
     unsigned long hits;
+    char *r_name;
     double *r_lenDensity; /* for per-region per-view mass computation */
     double *r_len;        /* for per-region, per-view computation */
     double *r_mass;
@@ -114,7 +115,8 @@ struct current_state {
     vect_t span;   	/* How much space does the geometry span in each of X, Y, Z directions */
     vect_t area;   	/* area of the view for view with invariant at index */
 
-    int num_objects; 	/* number of objects specified on command line */
+    int num_objects;	/* number of objects specified on command line */
+    int num_regions;	/* number of regions */
 
     struct per_obj_data *objs;
     struct per_region_data *reg_tbl;

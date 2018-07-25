@@ -44,6 +44,23 @@ int check_mass(struct current_state *state,
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s %g %s\n", tobjtab[i], mass / options->units[MASS]->val, options->units[MASS]->name);
     }
 
+    if (options->print_per_region_stats) {
+	int num_regions = analyze_get_num_regions(state);
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "\tregions:\n");
+	for (i = 0; i < num_regions; i++) {
+	    char *reg_name = NULL;
+	    double mass;
+	    double high, low;
+	    analyze_mass_region(state, i, &reg_name, &mass, &high, &low);
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s mass:%g %s +(%g) -(%g)\n",
+			  reg_name,
+			  mass/options->units[MASS]->val,
+			  options->units[MASS]->name,
+			  high/options->units[MASS]->val,
+			  low/options->units[MASS]->val);
+	}
+    }
+
     return GED_OK;
 }
 
