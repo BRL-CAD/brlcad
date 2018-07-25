@@ -253,8 +253,8 @@ bu_color_from_str(struct bu_color *color, const char *str)
     for (mode = 0; mode < 3; ++mode) {
 	const char * const allowed_separators = "/, ";
 	const char *endptr;
-	long lr = 0;
-	double dr = 0.0;
+	long lr = -1;
+	double dr = -1.0;
 
 	errno = 0;
 
@@ -271,11 +271,8 @@ bu_color_from_str(struct bu_color *color, const char *str)
 		return 0;
 	}
 
-	if ((mode == 0 && lr <= 0) || (mode == 1 && dr < 0.0)
-	    || (mode == 1 && errno && NEAR_ZERO(dr, 0.0)))
-	{
-	    /* a valid negative number conversion means something
-	     * is not valid with the input string - bail */
+	if ((mode == 0 && lr < 0) || (mode == 1 && dr < 0.0)) {
+	    /* negative means string conversion failed */
 	    return 0;
 	}
 
