@@ -1000,12 +1000,7 @@ allocate_region_data(struct current_state *state, char *av[])
 
 
 HIDDEN int
-analyze_single_grid_setup(fastf_t gridSpacing,
-			  fastf_t viewsize,
-			  point_t eye_model,
-			  mat_t Viewrotscale,
-			  mat_t model2view,
-			  struct rectangular_grid *grid)
+analyze_single_grid_setup(struct current_state *state)
 {
     mat_t toEye;
     vect_t temp;
@@ -1013,39 +1008,46 @@ analyze_single_grid_setup(fastf_t gridSpacing,
     vect_t dy_unit;	 /* view delta-Y as unit-len vect */
     mat_t view2model;
 
-    if (viewsize <= 0.0) {
+    state->curr_view = 0;
+    state->i_axis = 0;
+    state->u_axis = 1;
+    state->v_axis = 2;
+
+    if (state->viewsize <= 0.0) {
 	bu_log("viewsize <= 0");
 	return ANALYZE_ERROR;
     }
     /* model2view takes us to eye_model location & orientation */
     MAT_IDN(toEye);
-    MAT_DELTAS_VEC_NEG(toEye, eye_model);
-    Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
-    bn_mat_mul(model2view, Viewrotscale, toEye);
-    bn_mat_inv(view2model, model2view);
+    MAT_DELTAS_VEC_NEG(toEye, state->eye_model);
+    state->Viewrotscale[15] = 0.5*(state->viewsize);	/* Viewscale */
+    bn_mat_mul(state->model2view, state->Viewrotscale, toEye);
+    bn_mat_inv(view2model, state->model2view);
 
-    grid->grid_spacing = gridSpacing;
-    grid->x_points = viewsize/gridSpacing;
-    grid->total_points = grid->x_points*grid->x_points;
-    bu_log("Processing with grid spacing %g mm %ld x %ld\n", grid->grid_spacing, grid->x_points, grid->x_points);
-    grid->current_point=0;
+    state->area[0] = state->viewsize * state->viewsize;
+
+    state->grid->grid_spacing = state->gridSpacing;
+    state->grid->x_points = state->viewsize/state->gridSpacing;
+    state->grid->total_points = state->grid->x_points*state->grid->x_points;
+    bu_log("Processing with grid spacing %g mm %ld x %ld\n", state->grid->grid_spacing, state->grid->x_points, state->grid->x_points);
+    state->grid->current_point=0;
 
     /* Create basis vectors dx and dy for emanation plane (grid) */
     VSET(temp, 1, 0, 0);
     MAT3X3VEC(dx_unit, view2model, temp);	/* rotate only */
-    VSCALE(grid->dx_grid, dx_unit, gridSpacing);
+    VSCALE(state->grid->dx_grid, dx_unit, state->gridSpacing);
 
     VSET(temp, 0, 1, 0);
     MAT3X3VEC(dy_unit, view2model, temp);	/* rotate only */
-    VSCALE(grid->dy_grid, dy_unit, gridSpacing);
+    VSCALE(state->grid->dy_grid, dy_unit, state->gridSpacing);
 
     /* all rays go this direction */
     VSET(temp, 0, 0, -1);
-    MAT4X3VEC(grid->ray_direction, view2model, temp);
-    VUNITIZE(grid->ray_direction);
+    MAT4X3VEC(state->grid->ray_direction, view2model, temp);
+    VUNITIZE(state->grid->ray_direction);
 
     VSET(temp, -1, -1, 0);	/* eye plane */
-    MAT4X3PNT(grid->start_coord, view2model, temp);
+    MAT4X3PNT(state->grid->start_coord, view2model, temp);
     return ANALYZE_OK;
 }
 
@@ -1089,15 +1091,16 @@ HIDDEN void
 shoot_rays(struct current_state *state)
 {
     /* compute */
+    double inv_spacing;
     do {
+	inv_spacing = 1.0/state->gridSpacing;
+	VSCALE(state->steps, state->span, inv_spacing);
 	if (state->use_single_grid) {
-	    analyze_single_grid_setup(state->gridSpacing, state->viewsize, state->eye_model, state->Viewrotscale, state->model2view, state->grid);
+	    analyze_single_grid_setup(state);
 	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
 	    bu_log("%s", bu_vls_strgrab(state->log_str));
 	} else {
 	    int view;
-	    double inv_spacing = 1.0/state->gridSpacing;
-	    VSCALE(state->steps, state->span, inv_spacing);
 	    bu_log("Processing with grid spacing %g mm %ld x %ld x %ld\n",
 		    state->gridSpacing,
 		    state->steps[0]-1,
