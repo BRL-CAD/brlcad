@@ -397,7 +397,7 @@ static const struct cvt_tab *units[3] = {
 
 
 /**
- * read_units_double
+ * _gqa_read_units_double
  *
  * Read a non-negative floating point value with optional units
  *
@@ -406,7 +406,7 @@ static const struct cvt_tab *units[3] = {
  * 0 Success
  */
 int
-read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
+_gqa_read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 {
     double a;
 #define UNITS_STRING_SZ 256
@@ -588,7 +588,7 @@ parse_args(int ac, char *av[])
 		    }
 
 
-		    if (read_units_double(&value1, bu_optarg, units_tab[0])) {
+		    if (_gqa_read_units_double(&value1, bu_optarg, units_tab[0])) {
 			bu_vls_printf(_ged_current_gedp->ged_result_str, "error parsing grid spacing value \"%s\"\n", bu_optarg);
 			return -1;
 		    }
@@ -597,7 +597,7 @@ parse_args(int ac, char *av[])
 			/* we've got 2 values, they are upper limit
 			 * and lower limit.
 			 */
-			if (read_units_double(&value2, p, units_tab[0])) {
+			if (_gqa_read_units_double(&value2, p, units_tab[0])) {
 			    bu_vls_printf(_ged_current_gedp->ged_result_str, "error parsing grid spacing limit value \"%s\"\n", p);
 			    return -1;
 			}
@@ -648,7 +648,7 @@ parse_args(int ac, char *av[])
 		Samples_per_model_axis = a + 1;
 		break;
 	    case 't':
-		if (read_units_double(&overlap_tolerance, bu_optarg, units_tab[0])) {
+		if (_gqa_read_units_double(&overlap_tolerance, bu_optarg, units_tab[0])) {
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
@@ -657,13 +657,13 @@ parse_args(int ac, char *av[])
 		verbose = 1;
 		break;
 	    case 'V':
-		if (read_units_double(&volume_tolerance, bu_optarg, units_tab[1])) {
+		if (_gqa_read_units_double(&volume_tolerance, bu_optarg, units_tab[1])) {
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in volume tolerance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		break;
 	    case 'W':
-		if (read_units_double(&weight_tolerance, bu_optarg, units_tab[2])) {
+		if (_gqa_read_units_double(&weight_tolerance, bu_optarg, units_tab[2])) {
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in weight tolerance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
@@ -841,7 +841,7 @@ get_densities_from_database(struct rt_i *rtip)
  * This routine must be prepared to run in parallel
  */
 int
-overlap(struct application *ap,
+_gqa_overlap(struct application *ap,
 	struct partition *pp,
 	struct region *reg1,
 	struct region *reg2,
@@ -932,7 +932,7 @@ logoverlap(struct application *ap,
 }
 
 
-void exposed_air(struct partition *pp,
+void _gqa_exposed_air(struct partition *pp,
 		 point_t last_out_point,
 		 point_t pt,
 		 point_t opt)
@@ -1013,7 +1013,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	     */
 	    if (pp->pt_regionp->reg_aircode &&
 		(air_first || gap_dist > overlap_tolerance)) {
-		exposed_air(pp, last_out_point, pt, opt);
+		_gqa_exposed_air(pp, last_out_point, pt, opt);
 	    } else {
 		air_first = 0;
 	    }
@@ -1268,7 +1268,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	/* the last thing we hit was air.  Make a note of that */
 	pp = PartHeadp->pt_back;
 
-	exposed_air(pp, last_out_point, pt, opt);
+	_gqa_exposed_air(pp, last_out_point, pt, opt);
     }
 
 
@@ -1334,7 +1334,7 @@ plane_worker(int cpu, void *ptr)
     ap.a_hit = hit;    /* where to go on a hit */
     ap.a_miss = miss;  /* where to go on a miss */
     ap.a_logoverlap = logoverlap;
-    ap.a_overlap = overlap;
+    ap.a_overlap = _gqa_overlap;
     ap.a_resource = &state->resp[cpu];
     ap.A_LENDEN = 0.0; /* really the cumulative length*density for weight computation*/
     ap.A_LEN = 0.0;    /* really the cumulative length for volume computation */
