@@ -489,7 +489,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
     COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" --output-on-failure ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -R \"benchmark\" --output-on-failure ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -L \"Regression\" --output-on-failure ${JFLAG}
     )
