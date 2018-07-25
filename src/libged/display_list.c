@@ -30,6 +30,7 @@
 
 #include "bu/ptbl.h"
 #include "bu/str.h"
+#include "bu/color.h"
 #include "bn/plot3.h"
 
 #include "rt/solid.h"
