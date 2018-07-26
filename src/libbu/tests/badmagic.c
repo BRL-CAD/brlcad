@@ -86,7 +86,7 @@ badmagic_main(int argc, char *argv[])
 	return 0;
     case 3:
 	ptr = NULL;
-	magic = BU_COLOR_MAGIC;
+	magic = BU_VLS_MAGIC;
 	str = (char *)bu_identify_magic(magic);
 	sprintf(expected_str, "ERROR: NULL %s pointer, file %s, line %d\n",
 		str, file, line);
