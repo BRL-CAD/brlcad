@@ -235,7 +235,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 		    if (analysis_flags & ANALYSIS_MOMENTS) {
 			vectp_t moi;
-			vectp_t poi = &state->m_poi[state->i_axis*3];
+			vectp_t poi;
 			fastf_t dx_sq = cmass[X]*cmass[X];
 			fastf_t dy_sq = cmass[Y]*cmass[Y];
 			fastf_t dz_sq = cmass[Z]*cmass[Z];
