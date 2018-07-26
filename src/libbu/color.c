@@ -107,11 +107,11 @@ bu_hsv_to_rgb(const fastf_t *hsv, unsigned char *rgb)
     long int hue_int;
 
     hue = FMAX(hsv[HUE], 0.0);
-    hue = FMIN(hsv[HUE], 360.0);
+    hue = FMIN(hue, 360.0);
     sat = FMAX(hsv[SAT], 0.0);
-    sat = FMIN(hsv[SAT], 1.0);
+    sat = FMIN(sat, 1.0);
     val = FMAX(hsv[VAL], 0.0);
-    val = FMIN(hsv[VAL], 1.0);
+    val = FMIN(val, 1.0);
 
     if (NEAR_ZERO(sat, SMALL_FASTF)) {
 	/* hue is achromatic, so just set constant value */
