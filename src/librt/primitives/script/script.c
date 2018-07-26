@@ -209,7 +209,7 @@ int
 rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const struct db_i *dbip)
 {
     struct rt_script_internal *script_ip;
-    unsigned char *ptr;
+    /*    unsigned char *ptr; */
 
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
@@ -223,7 +223,7 @@ rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     script_ip = (struct rt_script_internal *)ip->idb_ptr;
     script_ip->magic = RT_SCRIPT_INTERNAL_MAGIC;
 
-    ptr = ep->ext_buf;
+    /*    ptr = ep->ext_buf; */
 
     /* !!! FIXME: not the way to deserialize a bu_vls...
         see primitives/dsp/dsp.c:import5/export5 for example (dsp_name)
