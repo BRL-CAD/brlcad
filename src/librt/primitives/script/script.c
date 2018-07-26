@@ -225,6 +225,9 @@ rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 
     ptr = ep->ext_buf;
 
+    /* !!! FIXME: not the way to deserialize a bu_vls...
+        see primitives/dsp/dsp.c:import5/export5 for example (dsp_name)
+
     bu_vls_init(&script_ip->s_type);
     script_ip->s_type.vls_str = bu_strdup((const char *)ptr);
     ptr += strlen(script_ip->s_type.vls_str);
@@ -234,6 +237,8 @@ rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     ptr += SIZEOF_NETWORK_LONG;
     script_ip->s_type.vls_max = ntohl(*(uint32_t *)ptr);
     ptr += SIZEOF_NETWORK_LONG;
+
+    */
 
     return 0;			/* OK */
 }
@@ -268,8 +273,10 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, const
     *(uint32_t *)cp = htonl(RT_SCRIPT_INTERNAL_MAGIC);
     cp += SIZEOF_NETWORK_LONG;
 
+    /* !!! FIXME:
     bu_strlcpy((char *)cp, bu_vls_addr(&script_ip->s_type), bu_vls_strlen(&script_ip->s_type) + 1);
     cp += bu_vls_strlen(&script_ip->s_type) + 1;
+    */
 
     return 0;
 }
