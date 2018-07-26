@@ -81,6 +81,7 @@ db_find_subregion(int *ret, union tree *tp, struct db_i *dbip, int *depth, int m
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    db_find_subregion(ret, tp->tr_b.tb_right, dbip, depth, max_depth, traverse_func);
+	    break;
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
@@ -324,7 +325,7 @@ get_type_icon(struct directory *dp, struct db_i *dbip)
 	    case DB5_MINORTYPE_BRLCAD_REVOLVE:
 		raw_type_icon.load(":/images/primitives/other.png");
 		break;
-	    case DB5_MINORTYPE_BRLCAD_ANNOTATION:
+	    case DB5_MINORTYPE_BRLCAD_ANNOT:
 		raw_type_icon.load(":/images/primitives/other.png");
 		break;
 	    case DB5_MINORTYPE_BRLCAD_HRT:
@@ -412,6 +413,7 @@ db_find_subtree(int *ret, const char *name, union tree *tp, struct db_i *dbip, i
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    db_find_subtree(ret, name, tp->tr_b.tb_right, dbip, depth, max_depth, combinternals, traverse_func);
+	    break;
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
@@ -545,11 +547,13 @@ CADTreeModel::expand_tree_node_relationships(const QModelIndex & idx)
     struct directory *instance_dp = RT_DIR_NULL;
     int interaction_mode = ((CADApp *)qApp)->interaction_mode;
     if (interaction_mode && ((CADApp *)qApp)->current_idx.isValid()) {
-	if (interaction_mode == 1)
+	if (interaction_mode == 1) {
 	    selected_dp = (struct directory *)(((CADApp *)qApp)->current_idx.parent().data(DirectoryInternalRole).value<void *>());
 	    instance_dp = (struct directory *)(((CADApp *)qApp)->current_idx.data(DirectoryInternalRole).value<void *>());
-	if (interaction_mode == 2)
+	}
+	if (interaction_mode == 2) {
 	    selected_dp = (struct directory *)(((CADApp *)qApp)->current_idx.data(DirectoryInternalRole).value<void *>());
+	}
     }
 
     if (selected_dp != RT_DIR_NULL) {
