@@ -646,7 +646,7 @@ static char *p_annot[] = {
  * add support
  */
 static char *p_script[] = {
-    "Enter the script type: "
+    "Enter the script type: ",
 };
 
 /**
@@ -3179,9 +3179,16 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
 
 
 static int
-script_in(const char **cmd_argvs, struct rt_db_internal *intern)
+script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_internal *intern, char *UNUSED(name))
 {
     struct rt_script_internal *script_ip;
+    int i=0;
+
+    /* !!! temporary debugging, print out our args */
+    while (cmd_argvs && cmd_argvs[i] != NULL) {
+	bu_log("cmd_argvs[%d] = [%s]\n", i, cmd_argvs[i]);
+	i++;
+    }
 
     intern->idb_type = ID_SCRIPT;
     intern->idb_meth = &OBJ[ID_SCRIPT];
@@ -3190,7 +3197,11 @@ script_in(const char **cmd_argvs, struct rt_db_internal *intern)
     script_ip->magic = RT_SCRIPT_INTERNAL_MAGIC;
 
     bu_vls_init(&script_ip->s_type);
-    bu_vls_strcpy(&script_ip->s_type, cmd_argvs[6]);
+    bu_vls_strcpy(&script_ip->s_type, cmd_argvs[0]);
+
+    /* !!! */
+    bu_log("done creating script object, next it gets exported\n");
+
     return GED_OK;
 }
 
@@ -3465,9 +3476,9 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	menu = p_annot;
 	fn_in = annot_in;
     } else if (BU_STR_EQUAL(argv[2], "script")) {
-    nvals = 1 + 1;
-    menu = p_script;
-    fn_in = script_in;
+	nvals = 1;
+	menu = p_script;
+	fn_in = script_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:
