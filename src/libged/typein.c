@@ -554,23 +554,21 @@ static char *p_pnts[] = {
     /*01*/ "Enter number of points (-1 for auto): ",
     /*02*/ "Are the points orientated (yes/no)? ",
     /*03*/ "Do the points have color values (yes/no)? ",
-    /*04*/ "Do the points have transparency values (yes/no)? ",
-    /*05*/ "Do the points differ in size (yes/no)? ",
-    /*06*/ "Enter default point size (>= 0.0): ",
-    /*07*/ "Enter X, Y, Z position",
-    /*08*/ "Enter Y position component",
-    /*09*/ "Enter Z position component",
-    /*10*/ "Enter X, Y, Z orientation vector",
-    /*11*/ "Enter Y orientation vector component",
-    /*12*/ "Enter Z orientation vector component",
-    /*13*/ "Enter R, G, B color values (0 to 255)",
-    /*14*/ "Enter G component color value",
-    /*15*/ "Enter B component color value",
-    /*16*/ "Enter RGB alpha transparency (1.0==opaque)",
-    /*17*/ "Enter point size (>= 0.0, -1 for default)",
-    /*18*/ "Enter point file path and name: ",
-    /*19*/ "Enter file data format (px, py, pz, cr, cg, cb, s, nx, ny, nz): ",
-    /*20*/ "Enter file data units ([mm|cm|m|in|ft]): "
+    /*04*/ "Do the points differ in size (yes/no)? ",
+    /*05*/ "Enter default point size (>= 0.0): ",
+    /*06*/ "Enter X, Y, Z position",
+    /*07*/ "Enter Y position component",
+    /*08*/ "Enter Z position component",
+    /*09*/ "Enter X, Y, Z orientation vector",
+    /*10*/ "Enter Y orientation vector component",
+    /*11*/ "Enter Z orientation vector component",
+    /*12*/ "Enter R, G, B color values (0 to 255)",
+    /*13*/ "Enter G component color value",
+    /*14*/ "Enter B component color value",
+    /*15*/ "Enter point size (>= 0.0, -1 for default)",
+    /*16*/ "Enter point file path and name: ",
+    /*17*/ "Enter file data format (px, py, pz, cr, cg, cb, s, nx, ny, nz): ",
+    /*18*/ "Enter file data units ([mm|cm|m|in|ft]): "
 };
 
 
@@ -2558,47 +2556,17 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	 * argv [0] [1]  [2]   [3]     [4]  [5]    [6]   [7]
 	 * argc  1   2    3     4       5    6      7     8
 	 */
-
-	/* prompt for point file path and name */
-	if (argc < 5) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[18]);
-	    return GED_MORE;
-	}
-
-	/* prompt for file data format */
-	if (argc < 6) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[19]);
-	    return GED_MORE;
-	}
-
-	/* prompt for file data units */
-	if (argc < 7) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[20]);
-	    return GED_MORE;
-	}
-
-	/* prompt for default point size */
-	if (argc < 8) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[6]);
-	    return GED_MORE;
-	}
-
-	/* call function(s) to validate 'point file data format string' and return the
-	 * point-cloud type.
-	 */
-
-	/* call function(s) to validate the units string and return the conversion factor to
-	 * millimeters.
-	 */
-
-	/* call function(s) to read point cloud data and save into database.
-	 */
-
 	bu_log("The ability to create a pnts primitive from a data file is not yet implemented.\n");
 
 	return GED_ERROR;
 
     } /* endif to process point data file */
+
+    /*                    file? #pnts orient? color? scale? size    data
+     *       in obj pnts    no  12345     no     yes     no 12.0 ...pnts...
+     * argv [0] [1]  [2]   [3]    [4]    [5]     [6]    [7]  [8]
+     * argc  1   2    3     4      5      6       7      8    9
+     */
 
 
     /* prompt for readPoints if not entered */
