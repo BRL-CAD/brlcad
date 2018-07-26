@@ -52,7 +52,6 @@
 #define INSERT_COLOR_INTO_STRUCTURE(_structure_type, _control_variable, _variable_to_insert) \
     switch (_control_variable) {					\
 	case 'r':							\
-	    ((struct _structure_type *)point)->c.buc_magic = BU_COLOR_MAGIC; \
 	    ((struct _structure_type *)point)->c.buc_rgb[0] = _variable_to_insert; \
 	    break;							\
 	case 'g':							\

@@ -2807,7 +2807,6 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		((struct pnt_color *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_color *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_color *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_color *)point)->c.buc_magic = BU_COLOR_MAGIC;
 		((struct pnt_color *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 3], NULL);
 		((struct pnt_color *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 4], NULL);
 		((struct pnt_color *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 5], NULL);
@@ -2836,7 +2835,6 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		((struct pnt_color_scale *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_color_scale *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_color_scale *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_color_scale *)point)->c.buc_magic = BU_COLOR_MAGIC;
 		((struct pnt_color_scale *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 3], NULL);
 		((struct pnt_color_scale *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 4], NULL);
 		((struct pnt_color_scale *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 5], NULL);
@@ -2851,7 +2849,6 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		((struct pnt_color_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
 		((struct pnt_color_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
 		((struct pnt_color_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
-		((struct pnt_color_normal *)point)->c.buc_magic = BU_COLOR_MAGIC;
 		((struct pnt_color_normal *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 6], NULL);
 		((struct pnt_color_normal *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 7], NULL);
 		((struct pnt_color_normal *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 8], NULL);
@@ -2876,7 +2873,6 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		((struct pnt_color_scale_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
 		((struct pnt_color_scale_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
 		((struct pnt_color_scale_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->c.buc_magic = BU_COLOR_MAGIC;
 		((struct pnt_color_scale_normal *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 6], NULL);
 		((struct pnt_color_scale_normal *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 7], NULL);
 		((struct pnt_color_scale_normal *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 8], NULL);
