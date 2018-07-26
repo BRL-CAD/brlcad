@@ -3003,11 +3003,16 @@ DeleteIndexRange(
      * The code below is ugly, but it's needed to make sure there is always a
      * dummy empty line at the end of the text. If the final newline of the
      * file (just before the dummy line) is being deleted, then back up index
-     * to just before the newline. Furthermore, remove any tags that are
-     * present on the newline that isn't going to be deleted after all (this
-     * simulates deleting the newline and then adding a "clean" one back
-     * again). Note that index1 and index2 might now be equal again which
-     * means that no text will be deleted but tags might be removed.
+     * to just before the newline. If there is a newline just before the first
+     * character being deleted, then back up the first index too. The idea is
+     * that a deletion involving a range starting at a line start and
+     * including the final \n (i.e. index2 is "end") is an attempt to delete
+     * complete lines, so the \n before the deleted block shall become the new
+     * final \n. Furthermore, remove any tags that are present on the newline
+     * that isn't going to be deleted after all (this simulates deleting the
+     * newline and then adding a "clean" one back again). Note that index1 and
+     * index2 might now be equal again which means that no text will be
+     * deleted but tags might be removed.
      */
 
     line1 = TkBTreeLinesTo(textPtr, index1.linePtr);
@@ -3020,6 +3025,10 @@ DeleteIndexRange(
 	oldIndex2 = index2;
 	TkTextIndexBackChars(NULL, &oldIndex2, 1, &index2, COUNT_INDICES);
 	line2--;
+	if ((index1.byteIndex == 0) && (line1 != 0)) {
+	    TkTextIndexBackChars(NULL, &index1, 1, &index1, COUNT_INDICES);
+	    line1--;
+	}
 	arrayPtr = TkBTreeGetTags(&index2, NULL, &arraySize);
 	if (arrayPtr != NULL) {
 	    for (i = 0; i < arraySize; i++) {

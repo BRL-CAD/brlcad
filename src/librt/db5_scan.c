@@ -1,7 +1,7 @@
 /*                      D B 5 _ S C A N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,7 +58,6 @@ db5_scan(
 	const unsigned char *cp = (const unsigned char *)dbip->dbi_inmem;
 	off_t eof;
 
-	BU_CK_MAPPED_FILE(dbip->dbi_mf);
 	eof = (off_t)dbip->dbi_mf->buflen;
 
 	if (db5_header_is_valid(cp) == 0) {
@@ -297,6 +296,13 @@ db5_diradd_handler(
     return;
 }
 
+HIDDEN int
+db_diradd4(struct db_i *dbi, const char *s, off_t o,  size_t st,  int i,  void *v)
+{
+    if (!db_diradd(dbi, s, o, st, i, v)) return 0;
+    return 1;
+}
+
 int
 db_dirbuild(struct db_i *dbip)
 {
@@ -396,7 +402,7 @@ db_dirbuild(struct db_i *dbip)
     } else if (version == 4) {
 	/* things used to be pretty simple with v4 */
 
-	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, void *))db_diradd, 1, NULL) < 0) {
+	if (db_scan(dbip, db_diradd4, 1, NULL) < 0) {
 	    return -1;
 	}
 

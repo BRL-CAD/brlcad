@@ -1,7 +1,7 @@
 /*                     D B 5 _ T Y P E S . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2016 United States Government as represented by
+ * Copyright (c) 2000-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -79,6 +79,7 @@ static const struct db5_type type_table[] = {
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_DSP, 1, "dsp", "displacement map (height field)" },
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_SKETCH, 1, "sketch", "sketch" },
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_ANNOT, 1, "annot", "annotation"},
+    { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_SCRIPT, 1, "script", "script"},
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_EXTRUDE, 1, "extrude", "extrusion" },
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_SUBMODEL, 1, "submodel", "submodel" },
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_CLINE, 1, "cline", "cline" },
@@ -196,7 +197,7 @@ db5_type_codes_from_tag(int *major, int *minor, const char *tag)
     for (tp = (struct db5_type *) type_table;
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if ((*(tp->tag) == *tag) && (BU_STR_EQUAL(tp->tag, tag))) {
+	if (BU_STR_EQUAL(tp->tag, tag)) {
 	    *major = tp->major_code;
 	    *minor = tp->minor_code;
 	    return 0;
@@ -214,8 +215,7 @@ db5_type_codes_from_descrip(int *major, int *minor, const char *descrip)
     for (tp = (struct db5_type *) type_table;
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if ((*(tp->description) == *descrip)
-	    && (BU_STR_EQUAL(tp->description, descrip))) {
+	if (BU_STR_EQUAL(tp->description, descrip)) {
 	    *major = tp->major_code;
 	    *minor = tp->minor_code;
 	    return 0;

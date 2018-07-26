@@ -1,7 +1,7 @@
 /*                            B U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,6 +71,7 @@
 #include "./bu/endian.h"
 #include "./bu/env.h"
 #include "./bu/file.h"
+#include "./bu/glob.h"
 #include "./bu/path.h"
 #include "./bu/getopt.h"
 #include "./bu/hash.h"

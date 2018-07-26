@@ -1,0 +1,6 @@
+set(linenoise_ignore_files
+linenoise.c
+linenoise.h
+utf8.c
+utf8.h
+)

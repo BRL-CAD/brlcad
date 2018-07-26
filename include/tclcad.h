@@ -1,7 +1,7 @@
 /*                        T C L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -153,7 +153,6 @@ TCLCAD_EXPORT extern int tclcad_rt_parse_ray(Tcl_Interp *interp,
  * Examples -
  * type cutnode
  * type boxnode
- * type nugridnode
  */
 TCLCAD_EXPORT extern void tclcad_rt_pr_cutter(Tcl_Interp *interp,
                                        const union cutter *cutp);

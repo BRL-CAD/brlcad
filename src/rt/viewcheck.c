@@ -1,7 +1,7 @@
 /*                     V I E W C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2016 United States Government as represented by
+ * Copyright (c) 1988-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -186,7 +186,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	    }
 	}
 
-	for (op=olist; op; prev_ol=op, op=op->next) {
+	for (op=olist; op; op=op->next) {
 	    /* if this pair was seen in reverse, decrease the unique counter */
 	    if ((BU_STR_EQUAL(reg1->reg_name, op->reg2)) && (BU_STR_EQUAL(reg2->reg_name, op->reg1))) {
 		unique_overlap_count--;

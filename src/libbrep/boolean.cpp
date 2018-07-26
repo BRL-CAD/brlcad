@@ -1,7 +1,7 @@
 /*                  B O O L E A N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -519,46 +519,6 @@ is_point_outside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &lo
     return (point_loop_location(pt, loop) == OUTSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
 }
 
-#if 0
-HIDDEN ON_Interval
-union_intervals(const ON_SimpleArray<ON_Interval> &intervals)
-{
-    ON_Interval union_interval;
-    for (int i = 0; i < intervals.Count(); ++i) {
-	union_interval.Union(intervals[i]);
-    }
-    if (!union_interval.IsValid()) {
-	throw IntervalGenerationError("union_intervals() created invalid interval\n");
-    }
-    return union_interval;
-}
-
-
-HIDDEN ON_Interval
-intersect_intervals(const ON_Interval &interval1, const ON_Interval &interval2)
-{
-    ON_Interval intersection_interval;
-    if (!intersection_interval.Intersection(interval1, interval2)) {
-	throw IntervalGenerationError("intersect_intervals() failed to intersect intervals\n");
-    }
-    return intersection_interval;
-}
-
-
-HIDDEN void
-replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
-{
-    try {
-	ON_Curve *subcurve = sub_curve(curve, interval.Min(), interval.Max());
-	delete curve;
-	curve = subcurve;
-    } catch (InvalidInterval &) {
-	throw GeometryGenerationError("replace_curve_with_subcurve(): NULL "
-				      "subcurve\n");
-    }
-}
-#endif
-
 
 HIDDEN ON_SimpleArray<ON_Interval>
 get_curve_intervals_inside_or_on_face(
@@ -649,14 +609,6 @@ get_curve_intervals_inside_or_on_face(
 
     return final_intervals;
 }
-
-#if 0
-HIDDEN int
-compare_interval(const ON_Interval *a, const ON_Interval *b)
-{
-    return a->Compare(*b);
-}
-#endif
 
 
 struct IntervalPoints {
@@ -1579,13 +1531,13 @@ public:
 
 CurvePoint::Location
 CurvePoint::PointLoopLocation(
-    ON_2dPoint pt,
+    ON_2dPoint point,
     const ON_SimpleArray<ON_Curve *> &loop)
 {
-    if (is_point_on_loop(pt, loop)) {
+    if (is_point_on_loop(point, loop)) {
 	return CurvePoint::BOUNDARY;
     }
-    if (point_loop_location(pt, loop) == OUTSIDE_OR_ON_LOOP) {
+    if (point_loop_location(point, loop) == OUTSIDE_OR_ON_LOOP) {
 	return CurvePoint::OUTSIDE;
     }
     return CurvePoint::INSIDE;
@@ -3555,7 +3507,7 @@ get_face_intersection_curves(
     // determine which of the "fully used/fully non-used" faces are needed?
 
     if (DEBUG_BREP_BOOLEAN) {
-	bu_log("Summary of brep status: \n unused1: %zd\n unused2: %zd\n finalform1: %zd\n finalform2 %zd\nintersection_candidates(%zd):\n", unused1.size(), unused2.size(), finalform1.size(), finalform2.size(), intersection_candidates.size());
+	//bu_log("Summary of brep status: \n unused1: %zd\n unused2: %zd\n finalform1: %zd\n finalform2 %zd\nintersection_candidates(%zd):\n", unused1.size(), unused2.size(), finalform1.size(), finalform2.size(), intersection_candidates.size());
 	for (std::set<std::pair<int, int> >::iterator it = intersection_candidates.begin(); it != intersection_candidates.end(); ++it) {
 	    bu_log("     (%d, %d)\n", (*it).first, (*it).second);
 	}

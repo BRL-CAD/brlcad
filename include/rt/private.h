@@ -1,7 +1,7 @@
 /*                       P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,22 +72,6 @@ struct rt_shootray_status {
     struct rt_shootray_status *old_status;
     int                 box_num;        /**< @brief  which cell along ray */
 };
-
-#define NUGRID_T_SETUP(_ax, _cval, _cno) \
-    if (ssp->rstep[_ax] > 0) { \
-        ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_epos - _cval) * \
-            ssp->inv_dir[_ax]; \
-    } else if (ssp->rstep[_ax] < 0) { \
-        ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_spos - _cval) * \
-            ssp->inv_dir[_ax]; \
-    } else { \
-        ssp->tv[_ax] = INFINITY; \
-    }
-#define NUGRID_T_ADV(_ax, _cno) \
-    if (ssp->rstep[_ax] != 0) { \
-        ssp->tv[_ax] += nu_axis[_ax][_cno].nu_width * \
-            ssp->abs_inv_dir[_ax]; \
-    }
 
 
 __END_DECLS

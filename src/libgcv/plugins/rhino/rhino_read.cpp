@@ -1,7 +1,7 @@
 /*                  R H I N O _ R E A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016 United States Government as represented by
+ * Copyright (c) 2016-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -304,7 +304,8 @@ load_model(const gcv_opts &gcv_options, const std::string &path,
 HIDDEN void
 write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 {
-    if (mk_brep(&wdb, name.c_str(), const_cast<ON_Brep *>(&brep)))
+    ON_Brep *b = const_cast<ON_Brep *>(&brep);
+    if (mk_brep(&wdb, name.c_str(), (void *)b))
 	bu_bomb("mk_brep() failed");
 }
 
@@ -367,7 +368,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 	bot.num_faces = num_faces;
 	bot.vertices = &vertices.at(0);
 	bot.faces = &faces.at(0);
-	mode = bg_trimesh_solid(bot.num_vertices, bot.num_faces, bot.vertices, bot.faces, NULL) ? RT_BOT_PLATE : RT_BOT_SOLID;
+	mode = bg_trimesh_solid((int)bot.num_vertices, (int)bot.num_faces, bot.vertices, bot.faces, NULL) ? RT_BOT_PLATE : RT_BOT_SOLID;
     }
 
     std::vector<fastf_t> thicknesses;

@@ -1,6 +1,20 @@
 #!/bin/bash
+
+# We want the script to fail hard and immediately if anything goes wrong, in
+# order to avoid masking failures (e.g. build failures, which will leave
+# empty scan reports but certainly don't constitute successes. See (for example)
+# https://stackoverflow.com/q/821396
+set -e
+set -o pipefail
+
 export CCC_CC=clang
 export CCC_CXX=clang++
+
+# This appears to be a workable way to enable the new Z3 static analyzer
+# support, but at least as of 2017-12 it greatly slows the testing (by orders
+# of magnitude).  Might be viable (or at least more useful even if it can't
+# quickly complete) if we completely pre-build src/other
+#export CCC_ANALYZER_CONSTRAINTS_MODEL=z3
 
 expected_success=()
 declare -A expected_failure
@@ -82,7 +96,6 @@ cleantest libdm
 cleantest libfft
 failingtest libtclcad
 cleantest libtermio
-failingtest libremrt
 cleantest librender
 
 # Executables
@@ -338,7 +351,6 @@ if [ "0" -eq "1" ]; then
  failingtest pixcrop
  cleantest pixcut
  cleantest pixdiff
- cleantest pixdsplit
  cleantest pixelswap
  cleantest pixembed
  cleantest pixfade

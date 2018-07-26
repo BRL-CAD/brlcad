@@ -1,7 +1,7 @@
 /*                     B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1557,7 +1557,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 #endif
 		const brep_hit& out = *i;
 
-		register struct seg* segp;
+		struct seg* segp;
 		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
 
@@ -1682,7 +1682,7 @@ rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * v = elevation
  */
 void
-rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct brep_specific* bs;
 
@@ -1700,7 +1700,7 @@ rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 
 
 void
-rt_brep_free(register struct soltab *stp)
+rt_brep_free(struct soltab *stp)
 {
     TRACE1("rt_brep_free");
 
@@ -4407,7 +4407,7 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  * whole lot of effort, we're going to (for now) extend the
  * ON_BinaryArchive to support an "in-memory" representation of a
  * binary archive. Currently, the openNURBS library only supports
- * file-based archiving operations. This implies the
+ * file-based archiving operations.
  */
 class RT_MemoryArchive : public ON_BinaryArchive
 {
@@ -4538,32 +4538,51 @@ RT_MemoryArchive::Flush()
     return true;
 }
 
-int
-rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
+
+HIDDEN void
+brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
 {
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
+    ON_Layer default_layer;
+    default_layer.Default();
+    default_layer.SetLayerIndex(0);
+    default_layer.SetLayerName("Default");
+    model.m_layer_table.Reserve(1);
+    model.m_layer_table.Append(default_layer);
+
+    ON_DimStyle default_style;
+    default_style.SetDefaults();
+    model.m_dimstyle_table.Reserve(1);
+    model.m_dimstyle_table.Append(default_style);
+
+    ONX_Model_Object& mo = model.m_object_table.AppendNew();
+    mo.m_object = bi->brep;
+
+    /* XXX what to do about the version */
+    mo.m_attributes.m_layer_index = 0;
+    mo.m_attributes.m_name = "brep";
+    mo.m_attributes.m_uuid = ON_opennurbs4_id;
+
+    model.m_properties.m_RevisionHistory.NewRevision();
+    model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
+
+    model.Polish();
+}
+
+
+int
+rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
+{
     if (attr == (char *)NULL) {
 	bu_vls_sprintf(logstr, "brep");
-	/* Create the serialized version for encoding */
-	RT_MemoryArchive archive;
+
 	ONX_Model model;
-	{
-	    ON_Layer default_layer;
-	    default_layer.SetLayerIndex(0);
-	    default_layer.SetLayerName("Default");
-	    model.m_layer_table.Reserve(1);
-	    model.m_layer_table.Append(default_layer);
-	}
-	ONX_Model_Object& mo = model.m_object_table.AppendNew();
-	mo.m_object = bi->brep;
-	mo.m_attributes.m_layer_index = 0;
-	mo.m_attributes.m_name = "brep";
-	mo.m_attributes.m_uuid = ON_opennurbs4_id;
-	model.m_properties.m_RevisionHistory.NewRevision();
-	model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
-	model.Polish();
+	brep_dbi2on(intern, model);
+
+	/* Create a serialized version for base-64 encoding */
+	RT_MemoryArchive archive;
 	ON_TextLog err(stderr);
 	bool ok = model.Write(archive, 4, "export5", &err);
 	if (ok) {
@@ -4604,38 +4623,19 @@ int
 rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     TRACE1("rt_brep_export5");
-    struct rt_brep_internal* bi;
 
-    if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_BREP) return -1;
-    bi = (struct rt_brep_internal*)ip->idb_ptr;
-    RT_BREP_CK_MAGIC(bi);
+    if (ip->idb_type != ID_BREP)
+	return -1;
+    if (dbip)
+	RT_CK_DBI(dbip);
 
     BU_EXTERNAL_INIT(ep);
 
-    RT_MemoryArchive archive;
-    /* XXX what to do about the version */
     ONX_Model model;
+    brep_dbi2on(ip, model);
 
-    {
-	ON_Layer default_layer;
-	default_layer.SetLayerIndex(0);
-	default_layer.SetLayerName("Default");
-	model.m_layer_table.Reserve(1);
-	model.m_layer_table.Append(default_layer);
-    }
-
-    ONX_Model_Object& mo = model.m_object_table.AppendNew();
-    mo.m_object = bi->brep;
-    mo.m_attributes.m_layer_index = 0;
-    mo.m_attributes.m_name = "brep";
-    mo.m_attributes.m_uuid = ON_opennurbs4_id;
-
-    model.m_properties.m_RevisionHistory.NewRevision();
-    model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
-
-    model.Polish();
+    RT_MemoryArchive archive;
     ON_TextLog err(stderr);
     bool ok = model.Write(archive, 4, "export5", &err);
     if (ok) {

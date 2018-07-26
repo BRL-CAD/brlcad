@@ -1,7 +1,7 @@
 /*                         S O L I D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
-
 
 /* defined in read.c */
 extern int get_line(char *cp, int buflen, char *title);
@@ -251,7 +250,7 @@ getsolid(void)
 
 	cp = solid_type;
 	while ((c = *cp) != '\0') {
-	    if (!isascii(c)) {
+	    if (!isprint(c)) {
 		*cp++ = '?';
 	    } else if (isupper((int)c)) {
 		*cp++ = tolower((int)c);

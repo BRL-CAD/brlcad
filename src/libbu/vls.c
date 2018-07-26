@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -213,7 +213,9 @@ bu_vls_trunc(struct bu_vls *vp, int len)
     if (len == 0)
 	vp->vls_offset = 0;
 
-    vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
+    if (vp->vls_str)
+       	vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
+
     vp->vls_len = len;
 }
 
@@ -807,7 +809,7 @@ bu_vls_detab(struct bu_vls *vp)
 
 
 void
-bu_vls_prepend(struct bu_vls *vp, char *str)
+bu_vls_prepend(struct bu_vls *vp, const char *str)
 {
     size_t len = strlen(str);
 

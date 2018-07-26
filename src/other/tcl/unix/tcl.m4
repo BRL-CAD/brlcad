@@ -2854,7 +2854,7 @@ AC_DEFUN([SC_TCL_CFG_ENCODING], [
 #	advancedTest - the advanced test to run if the function is present
 #
 # Results:
-#	Might cause compatability versions of the function to be used.
+#	Might cause compatibility versions of the function to be used.
 #	Might affect the following vars:
 #		USE_COMPAT	(implicit)
 #

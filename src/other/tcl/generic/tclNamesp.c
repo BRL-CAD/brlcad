@@ -6480,13 +6480,31 @@ MakeCachedEnsembleCommand(
  */
 
 static void
+ClearTable(
+    EnsembleConfig *ensemblePtr)
+{
+    Tcl_HashTable *hash = &ensemblePtr->subcommandTable;
+
+    if (hash->numEntries != 0) {
+	Tcl_HashSearch search;
+	Tcl_HashEntry *hPtr = Tcl_FirstHashEntry(hash, &search);
+
+	while (hPtr != NULL) {
+	    Tcl_Obj *prefixObj = Tcl_GetHashValue(hPtr);
+	    Tcl_DecrRefCount(prefixObj);
+	    hPtr = Tcl_NextHashEntry(&search);
+	}
+	ckfree((char *) ensemblePtr->subcommandArrayPtr);
+    }
+    Tcl_DeleteHashTable(hash);
+}
+
+static void
 DeleteEnsembleConfig(
     ClientData clientData)
 {
     EnsembleConfig *ensemblePtr = clientData;
     Namespace *nsPtr = ensemblePtr->nsPtr;
-    Tcl_HashSearch search;
-    Tcl_HashEntry *hEnt;
 
     /*
      * Unlink from the ensemble chain if it has not been marked as having been
@@ -6519,17 +6537,8 @@ DeleteEnsembleConfig(
      * Kill the pointer-containing fields.
      */
 
-    if (ensemblePtr->subcommandTable.numEntries != 0) {
-	ckfree((char *) ensemblePtr->subcommandArrayPtr);
-    }
-    hEnt = Tcl_FirstHashEntry(&ensemblePtr->subcommandTable, &search);
-    while (hEnt != NULL) {
-	Tcl_Obj *prefixObj = Tcl_GetHashValue(hEnt);
+    ClearTable(ensemblePtr);
 
-	Tcl_DecrRefCount(prefixObj);
-	hEnt = Tcl_NextHashEntry(&search);
-    }
-    Tcl_DeleteHashTable(&ensemblePtr->subcommandTable);
     if (ensemblePtr->subcmdList != NULL) {
 	Tcl_DecrRefCount(ensemblePtr->subcmdList);
     }
@@ -6582,101 +6591,111 @@ BuildEnsembleConfig(
     int i, j, isNew;
     Tcl_HashTable *hash = &ensemblePtr->subcommandTable;
     Tcl_HashEntry *hPtr;
+    Tcl_Obj *mapDict = ensemblePtr->subcommandDict;
+    Tcl_Obj *subList = ensemblePtr->subcmdList;
 
-    if (hash->numEntries != 0) {
+    ClearTable(ensemblePtr);
+    Tcl_InitHashTable(hash, TCL_STRING_KEYS);
+
+    if (subList) {
+	int subc;
+	Tcl_Obj **subv, *target, *cmdObj, *cmdPrefixObj;
+	char *name;
+
 	/*
-	 * Remove pre-existing table.
+	 * There is a list of exactly what subcommands go in the table.
+	 * Must determine the target for each.
 	 */
 
-	Tcl_HashSearch search;
-
-	ckfree((char *) ensemblePtr->subcommandArrayPtr);
-	hPtr = Tcl_FirstHashEntry(hash, &search);
-	while (hPtr != NULL) {
-	    Tcl_Obj *prefixObj = Tcl_GetHashValue(hPtr);
-	    Tcl_DecrRefCount(prefixObj);
-	    hPtr = Tcl_NextHashEntry(&search);
-	}
-	Tcl_DeleteHashTable(hash);
-	Tcl_InitHashTable(hash, TCL_STRING_KEYS);
-    }
-
-    /*
-     * See if we've got an export list. If so, we will only export exactly
-     * those commands, which may be either implemented by the prefix in the
-     * subcommandDict or mapped directly onto the namespace's commands.
-     */
-
-    if (ensemblePtr->subcmdList != NULL) {
-	Tcl_Obj **subcmdv, *target, *cmdObj, *cmdPrefixObj;
-	int subcmdc;
-
-	TclListObjGetElements(NULL, ensemblePtr->subcmdList, &subcmdc,
-		&subcmdv);
-	for (i=0 ; i<subcmdc ; i++) {
-	    char *name = TclGetString(subcmdv[i]);
-
-	    hPtr = Tcl_CreateHashEntry(hash, name, &isNew);
-
+	Tcl_ListObjGetElements(NULL, subList, &subc, &subv);
+	if (subList == mapDict) {
 	    /*
-	     * Skip non-unique cases.
+	     * Strange case where explicit list of subcommands is same value
+	     * as the dict mapping to targets.
 	     */
 
-	    if (!isNew) {
-		continue;
-	    }
+	    for (i = 0; i < subc; i += 2) {
+		name = TclGetString(subv[i]);
+		hPtr = Tcl_CreateHashEntry(hash, name, &isNew);
+		if (!isNew) {
+		    cmdObj = (Tcl_Obj *)Tcl_GetHashValue(hPtr);
+		    Tcl_DecrRefCount(cmdObj);
+		}
+		Tcl_SetHashValue(hPtr, subv[i+1]);
+		Tcl_IncrRefCount(subv[i+1]);
 
-	    /*
-	     * Look in our dictionary (if present) for the command.
-	     */
-
-	    if (ensemblePtr->subcommandDict != NULL) {
-		Tcl_DictObjGet(NULL, ensemblePtr->subcommandDict, subcmdv[i],
-			&target);
-		if (target != NULL) {
-		    Tcl_SetHashValue(hPtr, target);
-		    Tcl_IncrRefCount(target);
-		    continue;
+		name = TclGetString(subv[i+1]);
+		hPtr = Tcl_CreateHashEntry(hash, name, &isNew);
+		if (isNew) {
+		    cmdObj = Tcl_NewStringObj(ensemblePtr->nsPtr->fullName, -1);
+		    if (ensemblePtr->nsPtr->parentPtr != NULL) {
+			Tcl_AppendStringsToObj(cmdObj, "::", name, NULL);
+		    } else {
+			Tcl_AppendStringsToObj(cmdObj, name, NULL);
+		    }
+		    cmdPrefixObj = Tcl_NewListObj(1, &cmdObj);
+		    Tcl_SetHashValue(hPtr, cmdPrefixObj);
+		    Tcl_IncrRefCount(cmdPrefixObj);
 		}
 	    }
+	} else {
+	    /* Usual case where we can freely act on the list and dict. */
 
-	    /*
-	     * Not there, so map onto the namespace. Note in this case that we
-	     * do not guarantee that the command is actually there; that is
-	     * the programmer's responsibility (or [::unknown] of course).
-	     */
+	    for (i = 0; i < subc; i++) {
+		name = TclGetString(subv[i]);
+		hPtr = Tcl_CreateHashEntry(hash, name, &isNew);
+		if (!isNew) {
+		    continue;
+		}
 
-	    cmdObj = Tcl_NewStringObj(ensemblePtr->nsPtr->fullName, -1);
-	    if (ensemblePtr->nsPtr->parentPtr != NULL) {
-		Tcl_AppendStringsToObj(cmdObj, "::", name, NULL);
-	    } else {
-		Tcl_AppendStringsToObj(cmdObj, name, NULL);
+		/* Lookup target in the dictionary */
+		if (mapDict) {
+		    Tcl_DictObjGet(NULL, mapDict, subv[i], &target);
+		    if (target) {
+			Tcl_SetHashValue(hPtr, target);
+			Tcl_IncrRefCount(target);
+			continue;
+		    }
+		}
+
+		/*
+		 * target was not in the dictionary so map onto the namespace.
+		 * Note in this case that we do not guarantee that the
+		 * command is actually there; that is the programmer's
+		 * responsibility (or [::unknown] of course).
+		 */
+		cmdObj = Tcl_NewStringObj(ensemblePtr->nsPtr->fullName, -1);
+		if (ensemblePtr->nsPtr->parentPtr != NULL) {
+		    Tcl_AppendStringsToObj(cmdObj, "::", name, NULL);
+		} else {
+		    Tcl_AppendStringsToObj(cmdObj, name, NULL);
+		}
+		cmdPrefixObj = Tcl_NewListObj(1, &cmdObj);
+		Tcl_SetHashValue(hPtr, cmdPrefixObj);
+		Tcl_IncrRefCount(cmdPrefixObj);
 	    }
-	    cmdPrefixObj = Tcl_NewListObj(1, &cmdObj);
-	    Tcl_SetHashValue(hPtr, cmdPrefixObj);
-	    Tcl_IncrRefCount(cmdPrefixObj);
 	}
-    } else if (ensemblePtr->subcommandDict != NULL) {
-	/*
-	 * No subcmd list, but we do have a mapping dictionary so we should
-	 * use the keys of that. Convert the dictionary's contents into the
-	 * form required for the ensemble's internal hashtable.
-	 */
+    } else if (mapDict) {
+        /*
+         * No subcmd list, but we do have a mapping dictionary so we should
+         * use the keys of that. Convert the dictionary's contents into the
+         * form required for the ensemble's internal hashtable.
+         */
 
-	Tcl_DictSearch dictSearch;
-	Tcl_Obj *keyObj, *valueObj;
-	int done;
+        Tcl_DictSearch dictSearch;
+        Tcl_Obj *keyObj, *valueObj;
+        int done;
 
-	Tcl_DictObjFirst(NULL, ensemblePtr->subcommandDict, &dictSearch,
-		&keyObj, &valueObj, &done);
-	while (!done) {
-	    char *name = TclGetString(keyObj);
+        Tcl_DictObjFirst(NULL, ensemblePtr->subcommandDict, &dictSearch,
+                &keyObj, &valueObj, &done);
+        while (!done) {
+            char *name = TclGetString(keyObj);
 
-	    hPtr = Tcl_CreateHashEntry(hash, name, &isNew);
-	    Tcl_SetHashValue(hPtr, valueObj);
-	    Tcl_IncrRefCount(valueObj);
-	    Tcl_DictObjNext(&dictSearch, &keyObj, &valueObj, &done);
-	}
+            hPtr = Tcl_CreateHashEntry(hash, name, &isNew);
+            Tcl_SetHashValue(hPtr, valueObj);
+            Tcl_IncrRefCount(valueObj);
+            Tcl_DictObjNext(&dictSearch, &keyObj, &valueObj, &done);
+        }
     } else {
 	/*
 	 * Discover what commands are actually exported by the namespace.

@@ -2,7 +2,7 @@
 #                   R E P O S I T O R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2016 United States Government as represented by
+# Copyright (c) 2008-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -361,7 +361,7 @@ fi
 # make sure no more WIN32 issues are introduced than existed
 # previously.  for cases where it "seems" necessary, can find and fix
 # a case that is not before adding another.  lets not increase this.
-NEED_FIXING=195
+NEED_FIXING=193
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	echo "********************************************************"

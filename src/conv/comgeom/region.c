@@ -1,7 +1,7 @@
 /*                        R E G I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,6 +56,7 @@ void group_init(void);
 void group_register(char *name, int lo, int hi);
 void group_add(int val, char *name);
 void group_write(void);
+
 
 /*
  * Use wmp[region_number] as head for each region.
@@ -139,7 +140,7 @@ top:
 	    /* Remove all spaces from the number */
 	    np = nbuf;
 	    for (j = 2; j < 7; j++) {
-		if (!isascii((int)cp[j]))
+		if (!isprint((int)cp[j]))
 		    *np++ = '?';
 		else if (isspace((int)cp[j]))
 		    continue;

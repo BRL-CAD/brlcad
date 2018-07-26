@@ -1,7 +1,7 @@
 /*                          S H A D E W O R K . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,8 +56,6 @@ struct shadework {
     /**< @brief  sw_xmitonly=2, want parameters only, not even transmission */
     int			sw_inputs;	/**< @brief  fields from mf_inputs actually filled */
     int			sw_frame;	/**< @brief  # of current frame */
-    fastf_t		sw_frametime;	/**< @brief  frame time delta off 1st frame */
-    fastf_t		sw_pixeltime;	/**< @brief  pixel time delta off 1st pixel of 1st frame */
     struct seg *	sw_segs;	/**< @brief  segs which made partition */
 };
 

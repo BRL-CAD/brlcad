@@ -698,6 +698,42 @@ EXTERN int		XSync(Display *display, Bool discard);
 /* 114 */
 EXTERN VisualID		XVisualIDFromVisual(Visual *visual);
 #endif
+/* Slot 115 is reserved */
+/* Slot 116 is reserved */
+/* Slot 117 is reserved */
+/* Slot 118 is reserved */
+/* Slot 119 is reserved */
+/* Slot 120 is reserved */
+/* Slot 121 is reserved */
+/* Slot 122 is reserved */
+/* Slot 123 is reserved */
+/* Slot 124 is reserved */
+/* Slot 125 is reserved */
+/* Slot 126 is reserved */
+/* Slot 127 is reserved */
+/* Slot 128 is reserved */
+/* Slot 129 is reserved */
+/* Slot 130 is reserved */
+/* Slot 131 is reserved */
+/* Slot 132 is reserved */
+#ifndef XDrawSegments_TCL_DECLARED
+#define XDrawSegments_TCL_DECLARED
+/* 133 */
+EXTERN int		XDrawSegments(Display *d, Drawable dr, GC gc,
+				XSegment *s, int n);
+#endif
+#ifndef XDrawPoint_TCL_DECLARED
+#define XDrawPoint_TCL_DECLARED
+/* 134 */
+EXTERN int		XDrawPoint(Display *d, Drawable dr, GC gc, int x,
+				int y);
+#endif
+#ifndef XDrawPoints_TCL_DECLARED
+#define XDrawPoints_TCL_DECLARED
+/* 135 */
+EXTERN int		XDrawPoints(Display *d, Drawable dr, GC gc,
+				XPoint *p, int n, int m);
+#endif
 #endif /* WIN */
 #ifdef MAC_OSX_TK /* AQUA */
 #ifndef XSetDashes_TCL_DECLARED
@@ -1168,7 +1204,7 @@ EXTERN Status		XStringListToTextProperty(char **list, int count,
 #ifndef XDrawSegments_TCL_DECLARED
 #define XDrawSegments_TCL_DECLARED
 /* 80 */
-EXTERN void		XDrawSegments(Display *display, Drawable d, GC gc,
+EXTERN int		XDrawSegments(Display *display, Drawable d, GC gc,
 				XSegment *segments, int nsegments);
 #endif
 #ifndef XForceScreenSaver_TCL_DECLARED
@@ -1197,13 +1233,13 @@ EXTERN void		XClearWindow(Display *d, Window w);
 #ifndef XDrawPoint_TCL_DECLARED
 #define XDrawPoint_TCL_DECLARED
 /* 85 */
-EXTERN void		XDrawPoint(Display *display, Drawable d, GC gc,
+EXTERN int		XDrawPoint(Display *display, Drawable d, GC gc,
 				int x, int y);
 #endif
 #ifndef XDrawPoints_TCL_DECLARED
 #define XDrawPoints_TCL_DECLARED
 /* 86 */
-EXTERN void		XDrawPoints(Display *display, Drawable d, GC gc,
+EXTERN int		XDrawPoints(Display *display, Drawable d, GC gc,
 				XPoint *points, int npoints, int mode);
 #endif
 #ifndef XWarpPointer_TCL_DECLARED
@@ -1360,6 +1396,27 @@ typedef struct TkIntXlibStubs {
     XAfterFunction (*xSynchronize) (Display *display, Bool onoff); /* 112 */
     int (*xSync) (Display *display, Bool discard); /* 113 */
     VisualID (*xVisualIDFromVisual) (Visual *visual); /* 114 */
+    VOID *reserved115;
+    VOID *reserved116;
+    VOID *reserved117;
+    VOID *reserved118;
+    VOID *reserved119;
+    VOID *reserved120;
+    VOID *reserved121;
+    VOID *reserved122;
+    VOID *reserved123;
+    VOID *reserved124;
+    VOID *reserved125;
+    VOID *reserved126;
+    VOID *reserved127;
+    VOID *reserved128;
+    VOID *reserved129;
+    VOID *reserved130;
+    VOID *reserved131;
+    VOID *reserved132;
+    int (*xDrawSegments) (Display *d, Drawable dr, GC gc, XSegment *s, int n); /* 133 */
+    int (*xDrawPoint) (Display *d, Drawable dr, GC gc, int x, int y); /* 134 */
+    int (*xDrawPoints) (Display *d, Drawable dr, GC gc, XPoint *p, int n, int m); /* 135 */
 #endif /* WIN */
 #ifdef MAC_OSX_TK /* AQUA */
     int (*xSetDashes) (Display *display, GC gc, int dash_offset, _Xconst char *dash_list, int n); /* 0 */
@@ -1442,13 +1499,13 @@ typedef struct TkIntXlibStubs {
     XVisualInfo * (*xGetVisualInfo) (Display *display, long vinfo_mask, XVisualInfo *vinfo_template, int *nitems_return); /* 77 */
     void (*xSetWMClientMachine) (Display *display, Window w, XTextProperty *text_prop); /* 78 */
     Status (*xStringListToTextProperty) (char **list, int count, XTextProperty *text_prop_return); /* 79 */
-    void (*xDrawSegments) (Display *display, Drawable d, GC gc, XSegment *segments, int nsegments); /* 80 */
+    int (*xDrawSegments) (Display *display, Drawable d, GC gc, XSegment *segments, int nsegments); /* 80 */
     void (*xForceScreenSaver) (Display *display, int mode); /* 81 */
     int (*xDrawLine) (Display *d, Drawable dr, GC g, int x1, int y1, int x2, int y2); /* 82 */
     int (*xFillRectangle) (Display *display, Drawable d, GC gc, int x, int y, unsigned int width, unsigned int height); /* 83 */
     void (*xClearWindow) (Display *d, Window w); /* 84 */
-    void (*xDrawPoint) (Display *display, Drawable d, GC gc, int x, int y); /* 85 */
-    void (*xDrawPoints) (Display *display, Drawable d, GC gc, XPoint *points, int npoints, int mode); /* 86 */
+    int (*xDrawPoint) (Display *display, Drawable d, GC gc, int x, int y); /* 85 */
+    int (*xDrawPoints) (Display *display, Drawable d, GC gc, XPoint *points, int npoints, int mode); /* 86 */
     int (*xWarpPointer) (Display *display, Window src_w, Window dest_w, int src_x, int src_y, unsigned int src_width, unsigned int src_height, int dest_x, int dest_y); /* 87 */
     void (*xQueryColor) (Display *display, Colormap colormap, XColor *def_in_out); /* 88 */
     void (*xQueryColors) (Display *display, Colormap colormap, XColor *defs_in_out, int ncolors); /* 89 */
@@ -1926,6 +1983,36 @@ extern TkIntXlibStubs *tkIntXlibStubsPtr;
 #ifndef XVisualIDFromVisual
 #define XVisualIDFromVisual \
 	(tkIntXlibStubsPtr->xVisualIDFromVisual) /* 114 */
+#endif
+/* Slot 115 is reserved */
+/* Slot 116 is reserved */
+/* Slot 117 is reserved */
+/* Slot 118 is reserved */
+/* Slot 119 is reserved */
+/* Slot 120 is reserved */
+/* Slot 121 is reserved */
+/* Slot 122 is reserved */
+/* Slot 123 is reserved */
+/* Slot 124 is reserved */
+/* Slot 125 is reserved */
+/* Slot 126 is reserved */
+/* Slot 127 is reserved */
+/* Slot 128 is reserved */
+/* Slot 129 is reserved */
+/* Slot 130 is reserved */
+/* Slot 131 is reserved */
+/* Slot 132 is reserved */
+#ifndef XDrawSegments
+#define XDrawSegments \
+	(tkIntXlibStubsPtr->xDrawSegments) /* 133 */
+#endif
+#ifndef XDrawPoint
+#define XDrawPoint \
+	(tkIntXlibStubsPtr->xDrawPoint) /* 134 */
+#endif
+#ifndef XDrawPoints
+#define XDrawPoints \
+	(tkIntXlibStubsPtr->xDrawPoints) /* 135 */
 #endif
 #endif /* WIN */
 #ifdef MAC_OSX_TK /* AQUA */

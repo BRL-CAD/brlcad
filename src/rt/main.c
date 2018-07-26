@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,6 @@ mat_t		model2view;
 
 /***** variables shared with worker() ******/
 struct application APP;
-vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern size_t	incr_nlevel;		/* number of levels */
@@ -83,8 +82,6 @@ extern size_t	incr_nlevel;		/* number of levels */
 /***** variables shared with do.c *****/
 extern int	pix_start;		/* pixel to start at */
 extern int	pix_end;		/* pixel to end at */
-extern int	nobjs;			/* Number of cmd-line treetops */
-extern char	**objtab;		/* array of treetop strings */
 size_t		n_malloc;		/* Totals at last check */
 size_t		n_free;
 size_t		n_realloc;
@@ -292,10 +289,10 @@ int main(int argc, const char **argv)
 
     title_file = argv[bu_optind];
     title_obj = argv[bu_optind+1];
-    nobjs = argc - bu_optind - 1;
-    objtab = (char **)&(argv[bu_optind+1]);
+    objc = argc - bu_optind - 1;
+    objv = (char **)&(argv[bu_optind+1]);
 
-    if (nobjs <= 0) {
+    if (objc <= 0) {
 	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
 	return 1;
     }
@@ -327,10 +324,14 @@ int main(int argc, const char **argv)
 	bu_vls_strcat(&str, "\nopendb ");
 	bu_vls_strcat(&str, title_file);
 	bu_vls_strcat(&str, ";\ntree ");
+
+	/* arbitrarily limit the number of command-line objects being
+	 * echo'd back for log printing, followed by ellipses.
+	 */
 	bu_vls_from_argv( &str,
-			  nobjs <= 16 ? nobjs : 16,
+			  objc <= 16 ? objc : 16,
 			  (const char **)argv+bu_optind+1);
-	if (nobjs > 16)
+	if (objc > 16)
 	    bu_vls_strcat(&str, " ...");
 	else
 	    bu_vls_putc(&str, ';');
@@ -355,8 +356,6 @@ int main(int argc, const char **argv)
 
     /* Copy values from command line options into rtip */
     rtip->rti_space_partition = space_partition;
-    rtip->rti_nugrid_dimlimit = nugrid_dimlimit;
-    rtip->rti_nu_gfactor = nu_gfactor;
     rtip->useair = use_air;
     rtip->rti_save_overlaps = save_overlaps;
     if (rt_dist_tol > 0)  {

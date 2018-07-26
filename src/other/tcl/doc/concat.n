@@ -21,6 +21,7 @@ This command joins each of its arguments together with spaces after
 trimming leading and trailing white-space from each of them.  If all the
 arguments are lists, this has the same effect as concatenating them
 into a single list.
+Arguments that are empty (after trimming) are ignored entirely.
 It permits any number of arguments;
 if no \fIarg\fRs are supplied, the result is an empty string.
 .SH EXAMPLES

@@ -1,7 +1,7 @@
 /*                         U N I T S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,9 @@
 #include "common.h"
 
 #ifdef HAVE_INTTYPES_H
+#  if defined(__cplusplus)
+#  define __STDC_FORMAT_MACROS
+#  endif
 #  include <inttypes.h>
 #else
 #  include "pinttypes.h"
@@ -32,6 +35,7 @@
 #include <string.h>
 #include <float.h>
 #include <limits.h>
+#include "vmath.h"
 
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -39,11 +43,17 @@
 #include "bu/units.h"
 #include "bu/vls.h"
 
+/* strict c89 doesn't declare strtoll() */
+#ifndef HAVE_DECL_STRTOLL
+extern long long int strtoll(const char *, char **, int);
+#endif
 
-/* done specifically to avoid a libbn dependency */
-#define NEAR_ZERO(val, epsilon) (((val) > -epsilon) && ((val) < epsilon))
-#define ZERO(val) NEAR_ZERO((val), SMALL_FASTF)
-
+#if !defined(LLONG_MAX) && defined(__LONG_LONG_MAX__)
+#  define LLONG_MAX __LONG_LONG_MAX__
+#endif
+#if !defined(LLONG_MIN) && defined(__LONG_LONG_MAX__)
+#  define LLONG_MIN (-__LONG_LONG_MAX__-1LL)
+#endif
 
 struct cvt_tab {
     double val;
@@ -450,7 +460,7 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
 {
     struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
     const char *prefixes, *sep;
-    int	i, r, remainder, s1, s2, sign;
+    int	i, r, leftover, s1, s2, sign;
     int	divisordeccut;
     int64_t	divisor, max;
     size_t	baselen;
@@ -471,7 +481,7 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
 	return (-1);
 
     /* setup parameters */
-    remainder = 0;
+    leftover = 0;
 
     if (flags & BU_HN_IEC_PREFIXES) {
 	baselen = 2;
@@ -543,8 +553,8 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
 	 */
 	for (i = 0;
 		(quotient >= max || (quotient == max - 1 &&
-				     remainder >= divisordeccut)) && i < hn_maxscale; i++) {
-	    remainder = quotient % divisor;
+				     leftover >= divisordeccut)) && i < hn_maxscale; i++) {
+	    leftover = quotient % divisor;
 	    quotient /= divisor;
 	}
 
@@ -552,7 +562,7 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
 	    return (i);
     } else {
 	for (i = 0; i < scale && i < hn_maxscale; i++) {
-	    remainder = quotient % divisor;
+	    leftover = quotient % divisor;
 	    quotient /= divisor;
 	}
     }
@@ -562,10 +572,10 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
      * XXX - should we make sure there is enough space for the decimal
      * place and if not, don't do BU_HN_DECIMAL?
      */
-    if (((quotient == 9 && remainder < divisordeccut) || quotient < 9) && i > 0 && flags & BU_HN_DECIMAL) {
+    if (((quotient == 9 && leftover < divisordeccut) || quotient < 9) && i > 0 && flags & BU_HN_DECIMAL) {
 	int rcpy = 0;
-	s1 = (int)quotient + ((remainder * 10 + divisor / 2) / divisor / 10);
-	s2 = ((remainder * 10 + divisor / 2) / divisor) % 10;
+	s1 = (int)quotient + ((leftover * 10 + divisor / 2) / divisor / 10);
+	s2 = ((leftover * 10 + divisor / 2) / divisor) % 10;
 	bu_vls_sprintf(&tmpbuf, "%d%s%d%s%s%s", sign * s1, ".", s2, sep, SCALE2PREFIX(i), suffix);
 	bu_vls_trimspace(&tmpbuf);
 	r = bu_vls_strlen(&tmpbuf);
@@ -575,7 +585,7 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
 	buf[len-1] = '\0';
     } else {
 	int rcpy = 0;
-	bu_vls_sprintf(&tmpbuf, "%" PRId64 "%s%s%s", sign * (quotient + (remainder + divisor / 2) / divisor), sep, SCALE2PREFIX(i), suffix);
+	bu_vls_sprintf(&tmpbuf, "%" PRId64 "%s%s%s", sign * (quotient + (leftover + divisor / 2) / divisor), sep, SCALE2PREFIX(i), suffix);
 	bu_vls_trimspace(&tmpbuf);
 	r = bu_vls_strlen(&tmpbuf);
 	rcpy = r + 1 > (int)len ? (int)len : r + 1;

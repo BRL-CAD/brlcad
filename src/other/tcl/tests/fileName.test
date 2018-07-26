@@ -434,6 +434,9 @@ test filename-7.18 {Tcl_JoinPath: unix} {testsetplatform} {
     testsetplatform unix
     file join /// a b
 } "/a/b"
+test filename-7.19 {[Bug f34cf83dd0]} {
+    file join foo //bar
+} /bar
 
 
 test filename-9.1 {Tcl_JoinPath: win} {testsetplatform} {

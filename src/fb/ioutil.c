@@ -1,7 +1,7 @@
 /*                        I O U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,13 +40,13 @@ HIDDEN void
 VMessage(const char *format, va_list ap)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *tmp_basename = bu_basename(bu_getprogname(), NULL);
+    char *tmp_basename = bu_path_basename(bu_getprogname(), NULL);
 
     bu_vls_printf(&str, format, ap);
     bu_log("%s: %s\n", tmp_basename, bu_vls_addr(&str));
 
     bu_vls_free(&str);
-    bu_free(tmp_basename, "bu_basename");
+    bu_free(tmp_basename, "bu_path_basename");
 }
 
 

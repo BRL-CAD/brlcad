@@ -1,7 +1,7 @@
 /*                         R E M R T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,8 +46,24 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* sometimes includes <time.h> */
 #endif
+#include "bio.h"
 #include "bresource.h"
 #include "bsocket.h"
+
+/* decls for strict c90 */
+
+#if !defined(HAVE_DECL_FDOPEN) && !defined(fdopen)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
+#if !defined(HAVE_DECL_VFORK) && !defined(vfork)
+extern pid_t vfork(void);
+#endif
+#if !defined(HAVE_DECL_FCHMOD) && !defined(fchmod)
+extern int fchmod(int fd, mode_t mode);
+#endif
+#if !defined(HAVE_DECL_GETTIMEOFDAY) && !defined(gettimeofday)
+extern int gettimeofday(struct timeval *, void *);
+#endif
 
 /* FIXME: is this basically FD_COPY()? */
 #ifndef FD_MOVE
@@ -72,8 +88,6 @@
 #include "brlcad_ident.h"
 
 
-
-
 #ifndef HAVE_VFORK
 #  ifdef HAVE_FORK
 #    define vfork fork
@@ -82,8 +96,8 @@
 #  endif
 #endif
 
-#define TARDY_SERVER_INTERVAL	(9*60)		/* max seconds of silence */
-#define N_SERVER_ASSIGNMENTS	3		/* desired # of assignments */
+#define TARDY_SERVER_INTERVAL	(900*60)	/* max seconds of silence */
+#define N_SERVER_ASSIGNMENTS	1		/* desired # of assignments */
 #define MIN_ASSIGNMENT_TIME	5		/* desired seconds/result */
 #define SERVER_CHECK_INTERVAL	(10*60)		/* seconds */
 #ifndef RSH
@@ -725,7 +739,7 @@ static double
 tvdiff(struct timeval *t1, struct timeval *t0)
 {
     return ((t1->tv_sec - t0->tv_sec) +
-	   (t1->tv_usec - t0->tv_usec) / 1000000.);
+	    (t1->tv_usec - t0->tv_usec) / 1000000.);
 }
 
 
@@ -1543,7 +1557,7 @@ send_gettrees(struct servers *sp, struct frame *fr)
 static void
 send_do_lines(struct servers *sp, int start, int stop, int framenum)
 {
-    char obuf[128];
+    char obuf[256] = {0};
 
     if (sp->sr_pc == PKC_NULL) return;
 
@@ -1590,14 +1604,13 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
     }
 
     /*
-     * Check for tardy server.
-     * The assignments are estimated to take about MIN_ASSIGNMENT_TIME
-     * seconds, so waiting many minutes is unreasonable.
-     * However, if the picture "suddenly" became very complex,
-     * or a system got very busy,
-     * the estimate could be quite low.
-     * This mechanism exists mostly to protect against servers that
-     * go into "black hole" mode while REMRT is running unattended.
+     * Check for tardy server.  The assignments are estimated to take
+     * about MIN_ASSIGNMENT_TIME seconds, so waiting many minutes is
+     * unreasonable.  However, if the picture "suddenly" became very
+     * complex, or a system got very busy, the estimate could be quite
+     * low.  This mechanism exists mostly to protect against servers
+     * that go into "black hole" mode while REMRT is running
+     * unattended.
      */
     if (server_q_len(sp) > 0 &&
 	sp->sr_sendtime.tv_sec > 0 &&
@@ -1666,8 +1679,8 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
     if (work_allocate_method == OPT_MOVIE) {
 	lump = fr->fr_width * 2;	/* 2 scanlines at a whack */
     } else {
-	/* Limit growth in assignment size to 2X each assignment */
-	if (lump > 2*sp->sr_lump) lump = 2*sp->sr_lump;
+	/* Limit growth in assignment size to 1.5X each assignment */
+	if (lump > 1.5*sp->sr_lump) lump = 1.5*sp->sr_lump;
     }
     /* Provide some bounds checking */
     if (lump < 32) lump = 32;
@@ -2340,23 +2353,6 @@ cd_frames(const int argc, const char **UNUSED(argv))
 	pr_list(&(fr->fr_todo));
 	bu_log("\tcmd=%s\n", bu_vls_addr(&fr->fr_cmd));
 	bu_log("\tafter_cmd=%s\n", bu_vls_addr(&fr->fr_after_cmd));
-    }
-    return 0;
-}
-
-
-static int
-cd_memprint(const int argc, const char **argv)
-{
-    if (argc < 2)
-	return 1;
-
-    if (BU_STR_EQUAL(argv[1], "on")) {
-	RTG.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
-    } else if (BU_STR_EQUAL(argv[1], "off")) {
-	RTG.debug &= ~(DEBUG_MEM|DEBUG_MEM_FULL);
-    } else {
-	bu_prmem("memprint command");
     }
     return 0;
 }
@@ -3734,8 +3730,6 @@ struct command_tab cmd_tab[] = {
      cd_persp,	2, 2},
     {"print", "[0|1]",	"set/toggle remote message printing",
      cd_print,	1, 2},
-    {"memprint", "on|off|NULL",	"debug dump of memory usage",
-     cd_memprint,	1, 2},
     /* HELP */
     {"?", "",		"help",
      cd_help,	1, 1},

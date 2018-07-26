@@ -148,7 +148,7 @@ BitmapRepFromDrawableRect(
 	cg_image = CGBitmapContextCreateImage( (CGContextRef) cg_context);
 	sub_cg_image = CGImageCreateWithImageInRect(cg_image, image_rect);
 	if ( sub_cg_image ) {
-	  /*This can be dealloc'ed prematurely if set for autorelease, causing crashes.*/
+	    /*This can be dealloc'ed prematurely if set for autorelease, causing crashes.*/
 	    bitmap_rep = [NSBitmapImageRep alloc];
 	    [bitmap_rep initWithCGImage:sub_cg_image];
 	}
@@ -163,7 +163,7 @@ BitmapRepFromDrawableRect(
 				      width,height);
 
 	if ( [view lockFocusIfCanDraw] ) {
-	     /*This can be dealloc'ed prematurely if set for autorelease, causing crashes.*/
+	    /*This can be dealloc'ed prematurely if set for autorelease, causing crashes.*/
 	    bitmap_rep = [NSBitmapImageRep alloc];
 	    bitmap_rep = [bitmap_rep initWithFocusedViewRect:view_rect];
 	    [view unlockFocus];
@@ -786,9 +786,6 @@ DrawCGImage(
 	CGContextDrawImage(context, dstBounds, image);
 	CGContextRestoreGState(context);
 #endif /* TK_MAC_DEBUG_IMAGE_DRAWING */
-	/*if (CGImageIsMask(image)) {
-	    CGContextRestoreGState(context);
-	}*/
 	if (subImage) {
 	    CFRelease(subImage);
 	}
@@ -875,7 +872,7 @@ XDrawLines(
  *----------------------------------------------------------------------
  */
 
-void
+int
 XDrawSegments(
     Display *display,
     Drawable d,
@@ -889,7 +886,7 @@ XDrawSegments(
 
     display->request++;
     if (!TkMacOSXSetupDrawingContext(d, gc, 1, &dc)) {
-	return;
+	return BadDrawable;
     }
     if (dc.context) {
 	double o = (lw % 2) ? .5 : 0;
@@ -906,6 +903,7 @@ XDrawSegments(
 	}
     }
     TkMacOSXRestoreDrawingContext(&dc);
+    return Success;
 }
 
 /*
@@ -1828,7 +1826,7 @@ TkMacOSXGetClipRgn(
 {
     MacDrawable *macDraw = (MacDrawable *) drawable;
     HIShapeRef clipRgn = NULL;
-    
+
     if (macDraw->winPtr && macDraw->flags & TK_CLIP_INVALID) {
 	TkMacOSXUpdateClipRgn(macDraw->winPtr);
 #ifdef TK_MAC_DEBUG_DRAWING
@@ -1905,7 +1903,7 @@ TkpClipDrawableToRect(
 {
     MacDrawable *macDraw = (MacDrawable *) d;
     NSView *view = TkMacOSXDrawableView(macDraw);
-    
+
     if (macDraw->drawRgn) {
 	CFRelease(macDraw->drawRgn);
 	macDraw->drawRgn = NULL;

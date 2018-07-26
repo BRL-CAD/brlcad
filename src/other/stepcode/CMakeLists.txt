@@ -55,12 +55,7 @@ SET(SC_ABI_SOVERSION 2)
 SET(SC_ABI_VERSION ${SC_ABI_SOVERSION}.0.0)
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.0.2)
-IF(COMMAND CMAKE_POLICY)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-	  CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-ENDIF(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 IF( NOT DEFINED INCLUDE_INSTALL_DIR )
   SET( INCLUDE_INSTALL_DIR include )
@@ -81,6 +76,10 @@ endif(NOT DEFINED BIN_DIR)
 if(NOT DEFINED LIB_DIR)
   set(LIB_DIR lib)
 endif(NOT DEFINED LIB_DIR)
+
+# Because the STEPcode headers are used in BRL-CAD, we have added some decl code
+# to the headers for strict c89/c++98.  Don't use it for the stepcode build itself
+add_definitions(-DHAVE_DECL_FSEEKO)
 
 IF( NOT DEFINED SC_BUILD_TYPE )
   SET( SC_BUILD_TYPE "Debug" CACHE STRING "Build type" ) # By default set debug build

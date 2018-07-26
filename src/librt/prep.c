@@ -1,7 +1,7 @@
 /*                          P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -122,9 +122,6 @@ rt_new_rti(struct db_i *dbip)
      * (in shoot.c), to handle the different algorithm -JRA
      */
     rtip->rti_space_partition = RT_PART_NUBSPT;
-
-    rtip->rti_nugrid_dimlimit = 0;
-    rtip->rti_nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 
     /*
      * Zero the solid instancing counters in dbip database instance.
@@ -453,7 +450,7 @@ rt_btree_translate(struct rt_i *rtip, struct soltab **primitives, struct bit_tre
 {
     size_t i;
     long j;
-    uint uop, st_bit;
+    unsigned uop, st_bit;
 
     RT_CK_RTI(rtip);
 
@@ -475,8 +472,8 @@ static void
 build_regions_table(cl_uint *regions_table, struct bit_tree *btp, size_t start, size_t end, const long n_primitives, const size_t n_regions, const long reg_id)
 {
     size_t i;
-    uint uop, st_bit;
-    uint rt_index;
+    unsigned uop, st_bit;
+    unsigned rt_index;
 
     rt_index = n_regions/32 + 1;
     for (i=start; i<end; i++) {
@@ -1193,10 +1190,12 @@ rt_clean(register struct rt_i *rtip)
 	}
     }
 
+    /* Clear the hash table, if we have one */
     if (rtip->Orca_hash_tbl) {
-	bu_free((char *)rtip->Orca_hash_tbl, "rtip->Orca_hash_tbl");
+	bu_hash_destroy((struct bu_hash_tbl *)rtip->Orca_hash_tbl);
 	rtip->Orca_hash_tbl = NULL;
     }
+
     if (rt_uniresource.re_magic) {
 	rt_clean_resource(rtip, &rt_uniresource);/* Used for rt_optim_tree() */
     }

@@ -1,7 +1,7 @@
 /*                   C R A S H R E P O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,15 +21,23 @@
 #include "common.h"
 
 /* system headers */
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "bio.h"
 
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
 #include "brlcad_ident.h"
+
+#if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(popen)
+extern FILE *popen(const char *, const char *);
+#endif
+
+#if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(pclose)
+extern int pclose(FILE *);
+#endif
 
 
 #define CR_BUFSIZE 2048
@@ -97,7 +105,7 @@ bu_crashreport(const char *filename)
     path = bu_which("uname");
     if (path) {
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
-#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
+#ifdef HAVE_POPEN
 	popenfp = popen(buffer, "r");
 	if (!popenfp) {
 	    perror("unable to popen uname");
@@ -117,7 +125,7 @@ bu_crashreport(const char *filename)
 		    perror("fwrite failed");
 	    }
 	}
-#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
+#ifdef HAVE_POPEN
 	(void)pclose(popenfp);
 #endif
 	popenfp = NULL;
@@ -129,7 +137,7 @@ bu_crashreport(const char *filename)
     if (path) {
 	/* need 2>&1 to capture stderr junk from sysctl on Mac OS X for kern.exec */
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
-#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
+#ifdef HAVE_POPEN
 	popenfp = popen(buffer, "r");
 	if (popenfp == (FILE *)NULL) {
 	    perror("unable to popen sysctl");
@@ -155,7 +163,7 @@ bu_crashreport(const char *filename)
 		    perror("fwrite failed");
 	    }
 	}
-#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
+#ifdef HAVE_POPEN
 	(void)pclose(popenfp);
 #endif
 	popenfp = NULL;

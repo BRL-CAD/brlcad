@@ -1,7 +1,7 @@
 /*                           C - D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,9 @@
 #include "bu/exit.h"
 #include "vmath.h"
 
+#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT)
+extern double hypot(double x, double y);
+#endif
 
 int
 main(int argc, char *argv[])

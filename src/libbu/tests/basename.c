@@ -1,7 +1,7 @@
 /*                     B A S E N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -98,7 +98,7 @@ get_bu_output(const char *input)
 
     char *output = (char *)bu_calloc(max_result_chars, sizeof(char), "bu output");
 
-    bu_basename(input, output);
+    bu_path_basename(input, output);
 
     return output;
 }

@@ -257,7 +257,6 @@ pixcolors
 pixcount
 pixcut
 pixdiff
-pixdsplit
 pixelswap
 pixembed
 pixfade

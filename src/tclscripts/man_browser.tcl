@@ -1,7 +1,7 @@
 #               M A N _ B R O W S E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2016 United States Government as represented by
+# Copyright (c) 1998-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -95,10 +95,7 @@ package require cadwidgets::Accordian 1.0
 #
 ::itcl::body ManBrowser::loadPage {pageName} {
 # Get page
-    # For the moment doing this explicit 'existing file' read test is a problem
-    # since benchmark the file shows up before benchmark the man page in the
-    # search order...
-    #if {[file exists $pageName] && ![file isdirectory $pageName]} {set pathname $pageName}
+    if {[file exists $pageName] && ![file isdirectory $pageName] && ![file executable $pageName]} {set pathname $pageName}
     if {![info exists pathname]} {
 	if {[file exists [file join $path $current_section $pageName.html]]} {
 	    set pathname [file join $path $current_section $pageName.html]

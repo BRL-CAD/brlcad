@@ -3,7 +3,6 @@ set(ADRT_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/src/adrt
   ${BRLCAD_SOURCE_DIR}/src/adrt/libcommon
   ${BRLCAD_SOURCE_DIR}/src/adrt/librender
-  ${TINYCTHREAD_INCLUDE_DIR}
   )
 list(REMOVE_DUPLICATES ADRT_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(ADRT_INCLUDE_DIRS)
@@ -36,7 +35,7 @@ set(LIBRENDER_SRCS
   librender/texture_perlin.c
   librender/texture_stack.c
   )
-BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv;${TINYCTHREAD_LIBRARY}")
+BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv")
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_dependencies(librender libgcv_plugins)
 
@@ -65,7 +64,7 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
     )
   BRLCAD_INCLUDE_DIRS(isst_dirs)
 
-  set(isst_libs libtclcad librender libdm ${TCL_LIBRARIES} ${OPENGL_LIBRARIES} ${TINYCTHREAD_LIBRARY})
+  set(isst_libs libtclcad librender libdm ${TCL_LIBRARIES} ${OPENGL_LIBRARIES})
 
   if(CPP_DLL_DEFINES)
     set(isst_libs ${isst_libs} imm32.lib comctl32.lib opengl32.lib)

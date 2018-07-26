@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -82,6 +82,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"bot", cmd_ged_plain_wrapper, ged_bot},
     {"bot_condense", cmd_ged_plain_wrapper, ged_bot_condense},
     {"bot_decimate", cmd_ged_plain_wrapper, ged_bot_decimate},
+    {"bot_dump", cmd_ged_plain_wrapper, ged_bot_dump},
     {"bot_face_fuse", cmd_ged_plain_wrapper, ged_bot_face_fuse},
     {"bot_face_sort", cmd_ged_plain_wrapper, ged_bot_face_sort},
     {"bot_flip", cmd_ged_plain_wrapper, ged_bot_flip},
@@ -97,6 +98,8 @@ static struct cmdtab mged_cmdtab[] = {
     {"cat", cmd_ged_info_wrapper, ged_cat},
     {"cc", cmd_ged_plain_wrapper, ged_cc},
     {"center", cmd_center, GED_FUNC_PTR_NULL},
+    {"check", cmd_ged_plain_wrapper, ged_check},
+    {"check_overlaps", cmd_ged_plain_wrapper , ged_check_overlaps},
     {"clone", cmd_ged_edit_wrapper, ged_clone},
     {"closedb", f_closedb, GED_FUNC_PTR_NULL},
     {"cmd_win", cmd_cmd_win, GED_FUNC_PTR_NULL},
@@ -255,6 +258,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"permute", f_permute, GED_FUNC_PTR_NULL},
     {"plot", cmd_ged_plain_wrapper, ged_plot},
     {"png", cmd_ged_plain_wrapper, ged_png},
+    {"pnts", cmd_ged_plain_wrapper, ged_pnts},
     {"prcolor", cmd_ged_plain_wrapper, ged_prcolor},
     {"prefix", cmd_ged_plain_wrapper, ged_prefix},
     {"press", f_press, GED_FUNC_PTR_NULL},

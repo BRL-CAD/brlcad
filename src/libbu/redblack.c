@@ -1,7 +1,7 @@
 /*                           R B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,8 @@
  */
 #define RB_CKORDER(t, o)						\
     if (UNLIKELY(((o) < 0) || ((o) >= (t)->rbt_nm_orders))) {		\
-	char buf[128] = {0};						\
-	snprintf(buf, 128, "ERROR: Order %d outside 0..%d (nm_orders-1), file %s, line %d\n", \
+	char buf[256] = {0};						\
+	snprintf(buf, 256, "ERROR: Order %d outside 0..%d (nm_orders-1), file %s, line %d\n", \
 		 (o), (t)->rbt_nm_orders - 1, __FILE__, __LINE__);	\
 	bu_bomb(buf);							\
     }
@@ -110,7 +110,7 @@
 
 
 struct bu_rb_tree *
-bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const void *, const void *))
+bu_rb_create(const char *description, int nm_orders, bu_rb_cmp_t *compare_funcs)
 {
     int order;
     struct bu_rb_tree *tree;
@@ -179,19 +179,6 @@ bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const
 
     return tree;
 }
-
-
-struct bu_rb_tree *
-bu_rb_create1(const char *description, int (*compare_func)(void))
-{
-    int (**cfp)(const void *, const void *);
-
-    cfp = (int (**)(const void *, const void *))
-	bu_malloc(sizeof(int (*)(const void *, const void *)), "red-black function table");
-    *cfp = (int (*)(const void *, const void *)) compare_func;
-    return bu_rb_create(description, 1, cfp);
-}
-
 
 void
 rb_free_node(struct bu_rb_node *node)
@@ -617,14 +604,12 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
 {
     struct bu_rb_tree *tree;
     struct bu_rb_package *package;
-    void (*pp)(void *, const int);	/* Pretty print function */
 
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
     tree = node->rbn_tree;
     RB_CKORDER(tree, d_order);
 
     package = (node->rbn_package)[d_order];
-    pp = (void (*)(void *, const int))tree->rbt_print;
 
     bu_log("%*snode <%p>...\n", depth * 2, "", (void*)node);
     bu_log("%*s  tree:    <%p>\n", depth * 2, "", (void*)node->rbn_tree);
@@ -634,8 +619,8 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
     bu_log("%*s  color:   %s\n", depth * 2, "", (RB_GET_COLOR(node, d_order) == RB_RED) ? "RED" : (RB_GET_COLOR(node, d_order) == RB_BLK) ? "BLACK" : "Huh?");
     bu_log("%*s  package: <%p>\n", depth * 2, "", (void*)package);
 
-    if ((pp != 0) && (package != BU_RB_PKG_NULL))
-	(*pp)(package->rbp_data, depth);
+    if ((tree->rbt_print != 0) && (package != BU_RB_PKG_NULL))
+	(*tree->rbt_print)(package->rbp_data);
     else
 	bu_log("\n");
 }

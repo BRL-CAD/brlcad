@@ -92,13 +92,14 @@ generation.
 Redhat/Fedora
 -------------
 
-Development packages needed to build on Redhat/Fedora platforms:
+Development packages for building on Redhat/Fedora platforms:
 
-libXext-devel
-libXi-devel
-freetype-devel
-fontconfig-devel
-mesa-libGL-devel
+  yum install libX11-devel
+  yum install libXext-devel    # optional
+  yum install libXi-devel      # optional
+  yum install freetype-devel   # optional
+  yum install fontconfig-devel # optional
+  yum install mesa-libGL-devel # optional
 
 To determine what particular version of Redhat or Fedora you are
 using, check these files:

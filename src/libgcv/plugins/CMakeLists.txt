@@ -5,13 +5,7 @@ set_target_properties(libgcv_plugins PROPERTIES FOLDER "BRL-CAD Shared Libraries
 function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
   set(target_name libgcv_${plugin_name})
   BRLCAD_ADDLIB(${target_name} "${sources}" "libgcv;${libs}" SHARED NO_INSTALL FOLDER "LibGCV Plugins")
-  # TODO - not sure if a straight-up include_directories will work, but if not
-  # we're going to have to up our minimum required version of CMake to >=2.8.12
-  if("${CMAKE_VERSION}" VERSION_GREATER 2.8.11)
-    target_include_directories(${target_name} PRIVATE "${GCV_INCLUDE_DIRS}")
-  else("${CMAKE_VERSION}" VERSION_GREATER 2.8.11)
-    include_directories("${GCV_INCLUDE_DIRS}")
-  endif("${CMAKE_VERSION}" VERSION_GREATER 2.8.11)
+  target_include_directories(${target_name} PRIVATE "${GCV_INCLUDE_DIRS}")
 
   set(DIR_TYPES LIBRARY RUNTIME ARCHIVE)
   if(NOT CMAKE_CONFIGURATION_TYPES)

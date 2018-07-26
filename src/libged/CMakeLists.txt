@@ -59,6 +59,17 @@ set(LIBGED_SOURCES
   cat.c
   cc.c
   center.c
+  check_overlaps.c
+  check/check.c
+  check/check_adj_air.c
+  check/check_centroid.c
+  check/check_exp_air.c
+  check/check_gap.c
+  check/check_mass.c
+  check/check_moments.c
+  check/check_overlaps.c
+  check/check_surf_area.c
+  check/check_volume.c
   clone.c
   coil.c
   color.c
@@ -200,6 +211,7 @@ set(LIBGED_SOURCES
   pmodel2view.c
   png.c
   png2fb.c
+  pnts.c
   polyclip.cpp
   prcolor.c
   prefix.c
@@ -347,18 +359,24 @@ set(GED_LOCAL_INCLUDE_DIRS
 
 BRLCAD_LIB_INCLUDE_DIRS(ged GED_INCLUDE_DIRS GED_LOCAL_INCLUDE_DIRS)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
+if(BRLCAD_ENABLE_BULLET)
+  set(CADBULLET_LIBRARY cadbullet)
+endif(BRLCAD_ENABLE_BULLET)
+
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(CPP_DLL_DEFINES)
   set_property(TARGET libged APPEND PROPERTY COMPILE_DEFINITIONS "CLIPPER_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
+add_subdirectory(tests)
 add_subdirectory(simulate/tests)
 
 set(ged_ignore_files
   TODO
   ged_private.h
+  check/check_private.h
   joint.h
   qray.h
   simulate/rt_collision_algorithm.hpp

@@ -1,7 +1,7 @@
 /*                       G - S A T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -185,6 +185,7 @@ parse_args(int ac, char **av)
 	    case 't':               /* calculational tolerance */
 		tol.dist = atof(bu_optarg);
 		tol.dist_sq = tol.dist * tol.dist;
+		/* fall through */
 	    case 'o':               /* Output file name */
 		/* grab output file name */
 		output_file = bu_optarg;

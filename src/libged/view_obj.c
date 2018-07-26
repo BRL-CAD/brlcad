@@ -1,7 +1,7 @@
 /*                      V I E W _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1950,7 +1950,7 @@ vo_arot_cmd(struct view_obj *vop,
 	    int (*func)())
 {
     mat_t newrot;
-    point_t pt;
+    point_t pt = VINIT_ZERO;
     vect_t axis;
 
     /* intentionally double for scan */
@@ -1990,7 +1990,6 @@ vo_arot_cmd(struct view_obj *vop,
 	return TCL_ERROR;
     }
 
-    VSETALL(pt, 0.0);
     VUNITIZE(axis);
 
     bn_mat_arb_rot(newrot, pt, axis, angle*DEG2RAD);

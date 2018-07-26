@@ -1,7 +1,7 @@
 /*                    V E G E T A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,10 @@
  */
 
 #include "./vegetation.h"
+
+#if defined(HAVE_SRAND48) && !defined(HAVE_DECL_SRAND48)
+extern void srand48(long int seedval);
+#endif
 
 static void
 ageStructure(structure_t *structure)

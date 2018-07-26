@@ -11,42 +11,42 @@ add_subdirectory(rt)
 add_subdirectory(fb)
 
 set(public_hdrs
-  bio.h
-  bresource.h
-  bsocket.h
-  bnetwork.h
   RtServerImpl.h
-  bn.h
-  bu.h
-  bg.h
-  common.h
-  cursor.h
-  ged.h
-  pinttypes.h
-  pstdint.h
-  raytrace.h
-  rtserver.h
-  tclcad.h
   analyze.h
+  bg.h
+  bio.h
+  bn.h
+  bnetwork.h
   brep.h
+  bresource.h
   brlcad.h
   brlcad.i
+  bsocket.h
+  bu.h
+  common.h
+  cursor.h
   dm.h
   fb.h
   fft.h
   gcv.h
+  ged.h
   icv.h
   libtermio.h
   nmg.h
   optical.h
-  photonmap.h
   pc.h
+  photonmap.h
+  pinttypes.h
   pkg.h
+  pstdint.h
+  raytrace.h
+  rtserver.h
+  tclcad.h
   vmath.h
   wdb.h
   )
-CMAKEFILES(${public_hdrs})
 install(FILES ${public_hdrs} DESTINATION ${INCLUDE_DIR}/brlcad)
+CMAKEFILES(${public_hdrs})
 
 # Configuration headers
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h" DESTINATION ${INCLUDE_DIR}/brlcad)
@@ -54,12 +54,9 @@ if(WIN32)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config_win.h" DESTINATION ${INCLUDE_DIR}/brlcad)
 endif(WIN32)
 
-# headers used by multiple packages but still considered private.
-# public headers should NOT include these headers.
-set(noinst_HEADERS
-  brlcad_version.h
-  )
-CMAKEFILES(${noinst_HEADERS})
+# Used by others but still considered private
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/brlcad_version.h" DESTINATION ${INCLUDE_DIR})
+CMAKEFILES(brlcad_version.h)
 
 # Enforce the above list - check the public headers to make sure
 # they do not include any private headers.

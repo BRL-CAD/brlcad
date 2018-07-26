@@ -1,7 +1,7 @@
 /*                        M A T _ D B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,12 @@
 #include "./extern.h"
 #include "./mat_db.h"
 #include "./screen.h"
+
+
+#if defined(__GNUC__) && __GNUC__ >= 7 && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#  pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
+
 
 static Mat_Db_Entry mat_db_table[MAX_MAT_DB];
 static int mat_db_size = 0;

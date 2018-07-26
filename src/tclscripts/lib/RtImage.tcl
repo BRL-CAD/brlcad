@@ -1,7 +1,7 @@
 #                          R T I M A G E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2016 United States Government as represented by
+# Copyright (c) 1998-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ proc rtimage {rtimage_dict} {
 
     set ar [ expr $_w.0 / $_n.0 ]
 
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	if {[catch {set dir $env(TMP)}]} {
 	    return "make_image: env(TMP) does not exist"
 	}

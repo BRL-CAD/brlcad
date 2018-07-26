@@ -1,7 +1,7 @@
 /*                        V O L U M E . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,69 +24,62 @@
  *
  */
 
-/* BRL-CAD includes */
 #include "common.h"
-#include "raytrace.h"			/* For interfacing to librt */
-#include "vmath.h"			/* Vector Math macros */
-#include "ged.h"
-#include "rt/geom.h"
-#include "bu/parallel.h"
+
 #include "analyze.h"
+#include "./analyze_private.h"
 
-/* System headers */
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-
-struct per_obj_data {
-    char *o_name;
-    double *o_len;
-    double *o_lenDensity;
-    double *o_volume;
-    double *o_weight;
-    double *o_surf_area;
-    fastf_t *o_lenTorque; /* torque vector for each view */
-};
-
-struct cvt_tab {
-    double val;
-    char name[32];
-};
-
-/* this table keeps track of the "current" or "user selected units and
- * the associated conversion values
- */
-#define LINE 0
-#define VOL 1
-#define WGT 2
-static const struct cvt_tab units[3][3] = {
-    {{1.0, "mm"}},	/* linear */
-    {{1.0, "cu mm"}},	/* volume */
-    {{1.0, "grams"}}	/* weight */
-};
 
 fastf_t
-analyze_volume(struct raytracing_context *context, const char *name)
+analyze_volume(struct current_state *state, const char *name)
 {
     fastf_t volume;
     int i, view, obj = 0;
-    double avg_mass;
 
-    for (i = 0; i < context->num_objects; i++) {
-	if(!(bu_strcmp(context->objs[i].o_name, name))) {
+    for (i = 0; i < state->num_objects; i++) {
+	if(!(bu_strcmp(state->objs[i].o_name, name))) {
 	    obj = i;
 	    break;
 	}
     }
 
-    avg_mass = 0.0;
-    for (view = 0; view < context->num_views; view++)
-	avg_mass += context->objs[obj].o_volume[view];
+    volume = 0.0;
+    for (view = 0; view < state->num_views; view++)
+	volume += state->objs[obj].o_volume[view];
 
-    avg_mass /= context->num_views;
-    volume = avg_mass / units[VOL]->val;
+    volume /= state->num_views;
     return volume;
+}
+
+
+void
+analyze_volume_region(struct current_state *state, int i, char **name, double *volume, double *high, double *low) {
+    double *vv;
+    double lo = INFINITY;
+    double hi = -INFINITY;
+    double avg_vol = 0.0;
+    int view;
+
+    for (view=0; view < state->num_views; view++) {
+	vv = &state->reg_tbl[i].r_volume[view];
+
+	/* convert view length to a volume */
+	*vv = state->reg_tbl[i].r_len[view] * (state->area[view] / state->shots[view]);
+
+	/* find limits of values */
+	if (*vv < lo) lo = *vv;
+	if (*vv > hi) hi = *vv;
+
+	avg_vol += *vv;
+    }
+
+    avg_vol /= state->num_views;
+
+    /* set values to the pointers */
+    *volume = avg_vol;
+    *name = state->reg_tbl[i].r_name;
+    *high = hi - avg_vol;
+    *low = avg_vol - lo;
 }
 
 /*

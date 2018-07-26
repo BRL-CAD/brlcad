@@ -1,7 +1,7 @@
 /*                         M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -115,7 +115,7 @@ match(char *pattern, char *string)
 	    }
 	    case '\\': /* Escape special character.			*/
 		++pattern;
-		/* WARNING: falls through to default case.	*/
+		/* fall through */
 	    default:  /* Compare characters.			*/
 		if (pattern[0] != string[0])
 		    return	0;

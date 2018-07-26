@@ -1,7 +1,7 @@
 /*                           D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2016 United States Government as represented by
+ * Copyright (c) 1999-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -546,7 +546,8 @@ plot_cell_top(struct isect_stuff *isect,
 HIDDEN void
 dsp_print(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 {
-    point_t pt, v;
+    point_t pt = VINIT_ZERO;
+    point_t v = VINIT_ZERO;
 
     BU_CK_VLS(vls);
 
@@ -586,9 +587,6 @@ dsp_print(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 			  dsp_ip->dsp_cuttype,
 			  dsp_ip->dsp_cuttype); break;
     }
-
-
-    VSETALL(pt, 0.0);
 
     MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
 
@@ -857,7 +855,6 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		return 1; /* BAD */
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 
 	    /* we do this here and now because we will need it for the
 	     * dsp_specific structure in a few lines
@@ -985,7 +982,6 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		return 1; /* BAD */
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 
 	    /* we do this here and now because we will need it for the
 	     * dsp_specific structure in a few lines
@@ -2554,7 +2550,6 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     switch (dsp->dsp_i.dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
@@ -2805,7 +2800,6 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     switch (dsp->dsp_i.dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
@@ -3141,7 +3135,6 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		}
 		return 0;
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
@@ -3521,7 +3514,6 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 		return -1;
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
@@ -4085,12 +4077,12 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	    bu_vls_nibble(&binudesc, 1);
 
 	bu_log("ERROR: Binary object '%s' has invalid data (expected type %d, found %d).\n"
-	       "       Expecting %llu 16-bit unsigned short (nus) integer data values.\n"
+	       "       Expecting %zu 16-bit unsigned short (nus) integer data values.\n"
 	       "       Encountered %s\n",
 	       bu_vls_cstr(&dsp_ip->dsp_name),
 	       DB5_MINORTYPE_BINU_16BITINT_U,
 	       bip->type,
-	       dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt,
+	       (size_t)(dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt),
 	       bu_vls_cstr(&binudesc));
 	return -2;
     }
@@ -4533,9 +4525,6 @@ rt_dsp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(
 	(struct rt_dsp_internal *)ip->idb_ptr;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_describe()\n");
-
     RT_DSP_CK_MAGIC(dsp_ip);
 
     dsp_print(&vls, dsp_ip);
@@ -4554,9 +4543,6 @@ void
 rt_dsp_ifree(struct rt_db_internal *ip)
 {
     register struct rt_dsp_internal *dsp_ip;
-
-    if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_ifree()\n");
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -4732,7 +4718,6 @@ swap_cell_pts(int A[3],
     switch (dsp->dsp_i.dsp_cuttype) {
 	case DSP_CUT_DIR_llUR:
 	    return 0;
-	    break;
 
 	case DSP_CUT_DIR_ADAPT: {
 	    int lo[2], hi[2];
@@ -4797,10 +4782,10 @@ swap_cell_pts(int A[3],
 
 		return 0;
 	    }
-
-	    /* fallthrough */
-
 	}
+
+	/* fall through */
+
 	case DSP_CUT_DIR_ULlr: {
 	    /* prefer the B-C cut */
 	    int tmp[3];

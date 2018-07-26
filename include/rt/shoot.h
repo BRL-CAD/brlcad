@@ -1,7 +1,7 @@
 /*                        S H O O T . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,10 +67,19 @@ __BEGIN_DECLS
  * a_hit =======> Routine to call when something is hit
  * a_miss ======> Routine to call when ray misses everything
  *
- * Calls user's a_miss() or a_hit() routine as appropriate.  Passes
- * a_hit() routine list of partitions, with only hit_dist fields
- * valid.  Normal computation deferred to user code, to avoid needless
- * computation here.
+ * Calls user's a_miss() or a_hit() routine as appropriate passing
+ * a_hit() a list of partitions intersected.  Note that only the
+ * hit_dist elements of pt_inhit and pt_outhit are computed.  To
+ * compute both hit_point and hit_normal, use:
+ *
+ * RT_HIT_NORMAL(NULL, hitp, stp, rayp, 0);
+ *
+ * To compute just the hit_point, use:
+ *
+ * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
+ *
+ * These calculations are deferred to user code to avoid needless
+ * computation in other ray situations.
  *
  * Formal Return: whatever the application function returns (an int).
  *
@@ -189,7 +198,7 @@ struct cl_partition {
 };
 
 RT_EXPORT extern void
-clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
+clt_frame(void *pixels, uint8_t o[2], int cur_pixel, int last_pixel,
 	  int width, int ibackground[3], int inonbackground[3],
 	  double airdensity, double haze[3], fastf_t gamma,
           mat_t view2model, fastf_t cell_width, fastf_t cell_height,

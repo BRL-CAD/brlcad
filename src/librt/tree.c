@@ -1,7 +1,7 @@
 /*                          T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2016 United States Government as represented by
+ * Copyright (c) 1995-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -590,7 +590,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 	/* verbose=1, mm2local=1.0 */
 	ret = -1;
 	if (stp->st_meth->ft_describe) {
-	    ret = stp->st_meth->ft_describe(&str, ip, 1, 1.0, tsp->ts_resp, tsp->ts_dbip);
+	    ret = stp->st_meth->ft_describe(&str, ip, 1, 1.0);
 	}
 	if (ret < 0) {
 	    bu_log("_rt_gettree_leaf(%s):  solid describe failure\n",
@@ -601,7 +601,8 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     }
 
 found_it:
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_SOLID;
     curtree->tr_a.tu_stp = stp;
     /* regionp will be filled in later by _rt_tree_region_assign() */
@@ -950,14 +951,14 @@ top:
 	    right = tp->tr_b.tb_right;
 	    if (rt_tree_elim_nops(left, resp) < 0) {
 		*tp = *right;	/* struct copy */
-		RT_FREE_TREE(left, resp);
-		RT_FREE_TREE(right, resp);
+		BU_PUT(left, union tree);
+		BU_PUT(right, union tree);
 		goto top;
 	    }
 	    if (rt_tree_elim_nops(right, resp) < 0) {
 		*tp = *left;	/* struct copy */
-		RT_FREE_TREE(left, resp);
-		RT_FREE_TREE(right, resp);
+		BU_PUT(left, union tree);
+		BU_PUT(right, union tree);
 		goto top;
 	    }
 	    break;
@@ -987,8 +988,8 @@ top:
 	    }
 	    if (rt_tree_elim_nops(right, resp) < 0) {
 		*tp = *left;	/* struct copy */
-		RT_FREE_TREE(left, resp);
-		RT_FREE_TREE(right, resp);
+		BU_PUT(left, union tree);
+		BU_PUT(right, union tree);
 		goto top;
 	    }
 	    break;
@@ -998,7 +999,7 @@ top:
 	    /* UNARY tree -- for completeness only, should never be seen */
 	    left = tp->tr_b.tb_left;
 	    if (rt_tree_elim_nops(left, resp) < 0) {
-		RT_FREE_TREE(left, resp);
+		BU_PUT(left, union tree);
 		tp->tr_op = OP_NOP;
 		return -1;	/* Kill ref to unary op, too */
 	    }
@@ -1097,7 +1098,7 @@ void
 rt_bit_tree(struct bit_tree *btp, const union tree *tp, size_t *len)
 {
     int idx;
-    uint st_bit, uop, rchild;
+    unsigned st_bit, uop, rchild;
 
     if (tp == TREE_NULL)
         return;

@@ -535,7 +535,7 @@ extern Status XMatchVisualInfo(
 #endif
 );
 
-extern void XOffsetRegion(
+extern int XOffsetRegion(
 #if NeedFunctionPrototypes
     Region		/* r */,
     int			/* dx */,
@@ -814,7 +814,7 @@ extern void XUnionRectWithRegion(
 #endif
 );
 
-extern void XUnionRegion(
+extern int XUnionRegion(
 #if NeedFunctionPrototypes
     Region		/* sra */,
     Region		/* srb */,

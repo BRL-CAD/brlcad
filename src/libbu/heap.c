@@ -1,7 +1,7 @@
 /*                          H E A P . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,11 +92,27 @@ struct cpus {
  */
 static struct cpus per_cpu[MAX_PSW] = {{{{0, 0, 0}}, 0}};
 
+/* Need a function signature that matches bu_heap_func_t, so wrap bu_log in
+ * order to allow it to act as the default bu_heap_log function. */
+HIDDEN int
+_log_heap_wrapper(const char *fmt, ...)
+{
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    va_list ap;
+
+    va_start(ap, fmt);
+    bu_vls_vprintf(&output, fmt, ap);
+    bu_log("%s", bu_vls_addr(&output));
+    bu_vls_free(&output);
+    va_end(ap);
+
+    return 0;
+}
 
 bu_heap_func_t
 bu_heap_log(bu_heap_func_t log)
 {
-    static bu_heap_func_t heap_log = (bu_heap_func_t)&bu_log;
+    static bu_heap_func_t heap_log = &_log_heap_wrapper;
 
     if (log)
 	heap_log = log;
@@ -186,8 +202,8 @@ bu_heap_get(size_t sz)
 	if (bu_debug) {
 	    bu_log("DEBUG: heap size %zd out of range\n", sz);
 
-	    if (bu_debug & (BU_DEBUG_COREDUMP | BU_DEBUG_MEM_CHECK)) {
-		bu_bomb("Intentionally bombing due to BU_DEBUG_COREDUMP and BU_DEBUG_MEM_CHECK\n");
+	    if (bu_debug & BU_DEBUG_COREDUMP) {
+		bu_bomb("Intentionally bombing due to BU_DEBUG_COREDUMP\n");
 	    }
 	}
 	return bu_calloc(1, sz, "heap calloc");

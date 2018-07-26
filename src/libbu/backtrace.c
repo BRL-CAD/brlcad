@@ -1,7 +1,7 @@
 /*                     B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,15 +50,20 @@
 #include "bu/str.h"
 
 /* strict c99 doesn't declare kill() (but POSIX does) */
-#if defined(HAVE_KILL) && !defined(HAVE_DECL_KILL)
+#ifndef HAVE_DECL_KILL
 extern int kill(pid_t, int);
 #endif
 
 /* fileno() may be a macro (e.g., Windows) or may not even be declared
  * when compiling strict, but declare it as needed
  */
-#if defined(HAVE_FILENO) && !defined(HAVE_DECL_FILENO)
+#ifndef HAVE_DECL_FILENO
 extern int fileno(FILE*);
+#endif
+
+/* strict c90 doesn't provide basics */
+#ifndef HAVE_DECL_GETTIMEOFDAY
+extern int gettimeofday(struct timeval *, void *);
 #endif
 
 

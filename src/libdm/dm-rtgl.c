@@ -1,7 +1,7 @@
 /*                        D M - R T G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2016 United States Government as represented by
+ * Copyright (c) 1988-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,10 @@
 #  undef X_NOT_POSIX
 #endif
 
-#include <X11/extensions/XInput.h>
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
+#  include <X11/extensions/XInput.h>
+#endif /* HAVE_X11_XINPUT_H */
+
 #include <GL/glx.h>
 #include <GL/gl.h>
 
@@ -163,10 +166,14 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     int ndevices;
     int nclass = 0;
     int unused;
+
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     XDeviceInfoPtr olist = NULL, list = NULL;
     XDevice *dev = NULL;
     XEventClass e_class[15];
     XInputClassInfo *cip;
+#endif
+
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     Display *tmp_dpy = (Display *)NULL;
@@ -383,6 +390,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	(char) glXIsDirect(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			   ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc);
 
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     /*
      * Take a look at the available input devices. We're looking
      * for "dial+buttons".
@@ -436,6 +444,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     }
 Done:
     XFreeDeviceList(olist);
+#endif
 
     Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 

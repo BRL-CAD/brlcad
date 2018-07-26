@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2016 United States Government as represented by
+# Copyright (c) 1998-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -165,7 +165,6 @@ package provide cadwidgets::Ged 1.0
 	method bu_brlcad_data {args}
 	method bu_brlcad_dir {args}
 	method bu_brlcad_root {args}
-	method bu_mem_barriercheck {args}
 	method bu_prmem {args}
 	method bu_get_value_by_keyword {args}
 	method bu_rgb_to_hsv {args}
@@ -173,6 +172,7 @@ package provide cadwidgets::Ged 1.0
 	method c {args}
 	method cat {args}
 	method center {args}
+	method check_overlaps {args}
 	method clear {args}
 	method clone {args}
 	method coil {args}
@@ -405,6 +405,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_autoview {_pane args}
 	method pane_bind {_pane _event _script}
 	method pane_center {_pane args}
+	method pane_check_overlaps {_pane args}
 	method pane_constrain_rmode {_pane args}
 	method pane_constrain_tmode {_pane args}
 	method pane_data_scale_mode {_pane args}
@@ -1394,10 +1395,6 @@ package provide cadwidgets::Ged 1.0
     uplevel \#0 bu_brlcad_root $args
 }
 
-::itcl::body cadwidgets::Ged::bu_mem_barriercheck {args} {
-    uplevel \#0 bu_mem_barriercheck $args
-}
-
 ::itcl::body cadwidgets::Ged::bu_prmem {args} {
     uplevel \#0 bu_prmem $args
 }
@@ -1424,6 +1421,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::center {args} {
     eval $mGed center $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::check_overlaps {args} {
+    eval $mGed check_overlaps $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::clear {args} {
@@ -2130,7 +2131,7 @@ package provide cadwidgets::Ged 1.0
     set binpath [bu_brlcad_root "bin"]
     catch {exec [file join $binpath fb-fb] $fbs_port $port &}
 
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	set kill_cmd [auto_execok taskkill]
     } else {
 	set kill_cmd [auto_execok kill]
@@ -2606,6 +2607,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_center {_pane args} {
     eval $mGed center $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_check_overlaps {_pane args} {
+    eval $mGed check_overlaps $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_constrain_rmode {_pane args} {
@@ -5086,7 +5091,7 @@ package provide cadwidgets::Ged 1.0
     # Turn off <Enter> bindings. This fixes the problem where various
     # various dialogs disappear when the mouse enters the geometry
     # window when on the "windows" platform.
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	foreach dm {ur ul ll lr} {
 	    bind $itk_component($dm) <Enter> {}
 	}
@@ -6218,7 +6223,6 @@ package provide cadwidgets::Ged 1.0
     $help add bu_brlcad_data	{{subdir} {}}
     $help add bu_brlcad_dir	{{dirkey} {}}
     $help add bu_brlcad_root	{{subdir} {}}
-    $help add bu_mem_barriercheck {{} {}}
     $help add bu_prmem		{{title} {}}
     $help add bu_get_value_by_keyword {{iwant list} {}}
     $help add bu_rgb_to_hsv	{{rgb} {}}
@@ -6226,6 +6230,7 @@ package provide cadwidgets::Ged 1.0
     $help add c		{{[-gr] comb_name <boolean_expr>} {create or extend a combination using standard notation}}
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add center		{{["x y z"]} {set/get the view center}}
+    $help add check_overlaps	{{[options] [objects]} {check for overlaps in the current view or the specified objects}}
     $help add clear		{{} {clear screen}}
     $help add clone		{{[options] object} {clone the specified object}}
     $help add coord		{{[m|v]} {set/get the coordinate system}}

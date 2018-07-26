@@ -1,7 +1,7 @@
 /*                          U G - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1715,11 +1715,10 @@ get_thru_faces_length( tag_t feat_tag,
     min_exit = MAX_FASTF;
     max_entr = -min_exit;
     for ( i=X; i<=Z; i++ ) {
-	plane_t pl;
+	plane_t pl = HINIT_ZERO;
 	int ret;
 	fastf_t dist;
 
-	VSETALLN( pl, 0.0, 4 );
 	pl[i] = 1.0;
 	pl[W] = bb[i+3];
 	DO_INDENT;
@@ -1766,11 +1765,10 @@ get_thru_faces_length( tag_t feat_tag,
 	min_exit = MAX_FASTF;
 	max_entr = -min_exit;
 	for ( i=X; i<=Z; i++ ) {
-	    plane_t pl;
+	    plane_t pl = HINIT_ZERO;
 	    int ret;
 	    fastf_t dist;
 
-	    VSETALLN( pl, 0.0, 4 );
 	    pl[i] = 1.0;
 	    pl[W] = bb[i+3];
 	    ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );

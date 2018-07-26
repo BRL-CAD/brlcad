@@ -402,9 +402,10 @@ SOURCE CODE LANGUAGES
 The vast majority of BRL-CAD is written in ANSI C with the intent to
 be strictly conformant to the C standard.  A majority of the MGED
 geometry editor is written in a combination of C, Tcl/Tk, and Incr
-Tcl/Tk.  The BRL-CAD Benchmark, build system, and utility scripts are
-written in what should be POSIX-compliant Bourne Shell Script.  An
-initial implementation of a BRL-CAD Geometry Server is written in PHP.
+Tcl/Tk.  The BRL-CAD Benchmark and utility scripts are written in what
+should be POSIX-compliant Bourne Shell Script.  The build system uses
+the CMake build tool.  An initial implementation of a BRL-CAD Geometry
+Server is written in PHP.
 
 With release 7.0, BRL-CAD has moved forward and worked toward making
 all of BRL-CAD C code conform strictly with the ANSI/ISO standard for

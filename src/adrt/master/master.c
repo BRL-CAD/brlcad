@@ -1,7 +1,7 @@
 /*                        M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,9 @@
 #  include <getopt.h>
 #endif
 
+#if 0
 #include <tinycthread.h>
+#endif
 #include <zlib.h>
 
 #include "bnetwork.h"
@@ -87,14 +89,14 @@ typedef struct master_s
     uint32_t frame_ind;
     uint8_t slave_data[64];
     uint32_t slave_data_len;
-    thrd_t networking_thread;
+    bu_thrd_t networking_thread;
     uint32_t active_connections;
     uint32_t alive;
 } master_t;
 
 
 void master_dispatcher_init();
-int* master_networking(void *ptr);
+int master_networking(void *ptr);
 void master_result(tienet_buffer_t *result);
 
 master_t master;
@@ -120,17 +122,17 @@ master_setup()
 
 
 void
-master_init(int port, int obs_port, char *list, char *exec, char *comp_host)
+master_init(int port, int obs_port, char *list, char *exec, char *comp_host, int verbose)
 {
     /* Setup defaults */
     master_setup();
 
     /* Initialize tienet master */
     master.tile_num = DISPATCHER_TILE_NUM * DISPATCHER_TILE_NUM;
-    tienet_master_init(port, master_result, list, exec, 5, ADRT_VER_KEY, bu_debug & BU_DEBUG_UNUSED_1);
+    tienet_master_init(port, master_result, list, exec, 5, ADRT_VER_KEY, verbose);
 
     /* Launch a thread to handle networking */
-    thrd_create(&master.networking_thread, (thrd_start_t)master_networking, &obs_port);
+    bu_thrd_create(&master.networking_thread, (bu_thrd_start_t)master_networking, &obs_port);
 
     /* Connect to the component Server */
     compnet_connect(comp_host, ISST_COMPNET_PORT);
@@ -159,7 +161,7 @@ master_init(int port, int obs_port, char *list, char *exec, char *comp_host)
     TIENET_BUFFER_FREE(master.buf_comp);
 
     /* Wait for networking thread to end */
-    thrd_join(master.networking_thread, NULL);
+    bu_thrd_join(master.networking_thread, NULL);
 }
 
 
@@ -313,7 +315,7 @@ master_result(tienet_buffer_t *result)
 }
 
 
-int *
+int
 master_networking(void *ptr)
 {
     master_socket_t *sock, *tmp;
@@ -450,7 +452,7 @@ master_networking(void *ptr)
 	    switch (op) {
 		case ADRT_NETOP_SHUTDOWN:
 		    tienet_sem_post(&master.wait_sem);
-		    return NULL;
+		    return 0;
 		    break;
 
 		case ADRT_NETOP_INIT:
@@ -646,10 +648,9 @@ static void help() {
 int main(int argc, char **argv) {
     int port = 0, obs_port = 0, c = 0;
     char exec[64], list[64], comp_host[64];
-
+    int verbose = 0;
 
     signal(SIGINT, finish);
-
 
     /* Initialize strings */
     list[0] = 0;
@@ -704,14 +705,7 @@ int main(int argc, char **argv) {
 		break;
 
 	    case 'v':
-		if (!(bu_debug & BU_DEBUG_UNUSED_1))
-		    bu_debug |= BU_DEBUG_UNUSED_1;
-		else if (!(bu_debug & BU_DEBUG_UNUSED_2))
-		    bu_debug |= BU_DEBUG_UNUSED_2;
-		else if (!(bu_debug & BU_DEBUG_UNUSED_3))
-		    bu_debug |= BU_DEBUG_UNUSED_3;
-		else
-		    bu_log("Too verbose!\n");
+		verbose = 1;
 		break;
 
 	    default:
@@ -722,7 +716,7 @@ int main(int argc, char **argv) {
     argc -= bu_optind;
     argv += bu_optind;
 
-    master_init(port, obs_port, list, exec, comp_host);
+    master_init(port, obs_port, list, exec, comp_host, verbose);
 
     return EXIT_SUCCESS;
 }

@@ -1,7 +1,7 @@
 /*                        E D I T I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -148,7 +148,7 @@ _ged_editit(char *editstring, const char *filename)
 	} else {
 	    bu_log("Invoking [%s %s]\n\n", editor, file);
 	}
-	editor_basename = bu_basename(editor, NULL);
+	editor_basename = bu_path_basename(editor, NULL);
 	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", editor_basename, bu_getprogname());
 	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
 	    bu_vls_putc(&sep, '*');
@@ -199,7 +199,7 @@ _ged_editit(char *editstring, const char *filename)
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
-	    char *editor_basename = bu_basename(editor, NULL);
+	    char *editor_basename = bu_path_basename(editor, NULL);
 	    if (BU_STR_EQUAL(editor_basename, "TextEdit")) {
 		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
 		close(fileno(stdout));

@@ -1576,7 +1576,10 @@ test namespace-42.7 {ensembles: nested} {
     namespace delete ns
     set result
 } {{1 ::ns::x0::z} 1 2 3}
-test namespace-42.8 {ensembles: [Bug 1670091]} -setup {
+test namespace-42.8 {
+    ensembles: [Bug 1670091], panic due to pointer to a deallocated List
+    struct.
+} -setup {
     proc demo args {}
     variable target [list [namespace which demo] x]
     proc trial args {variable target; string length $target}
@@ -1590,6 +1593,34 @@ test namespace-42.8 {ensembles: [Bug 1670091]} -setup {
     rename trial {}
     rename foo {}
 } -result {}
+
+test namespace-42.9 {
+    ensembles: [Bug 4f6a1ebd64], segmentation fault due to pointer to a
+    deallocated List struct.
+} -setup {
+    namespace eval n {namespace ensemble create}
+    set lst [dict create one ::two]
+    namespace ensemble configure n -subcommands $lst -map $lst
+} -body {
+    n one
+} -cleanup {
+    namespace delete n
+    unset -nocomplain lst
+} -returnCodes error -match glob -result {invalid command name*}
+
+test namespace-42.10 {
+    ensembles: [Bug 4f6a1ebd64] segmentation fault due to pointer to a
+    deallocated List struct (this time with duplicate of one in "dict").
+} -setup {
+    namespace eval n {namespace ensemble create}
+    set lst [list one ::two one ::three]
+    namespace ensemble configure n -subcommands $lst -map $lst
+} -body {
+    n one
+} -cleanup {
+    namespace delete n
+    unset -nocomplain lst
+} -returnCodes error -match glob -result {invalid command name *three*}
 
 test namespace-43.1 {ensembles: dict-driven} {
     namespace eval ns {

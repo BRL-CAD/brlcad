@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -359,7 +359,7 @@ run_scripts(struct bu_list *sl, struct rt_i *rtip)
 
 
 int
-main(int argc, char *argv[])
+old_nirt_main(int argc, char *argv[])
 {
     struct rt_i *rtip = NULL;
 
@@ -398,7 +398,7 @@ main(int argc, char *argv[])
 
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
-    	if (bu_optopt == '?') Ch='h';
+	if (bu_optopt == '?') Ch='h';
 	switch (Ch) {
 	    case 'A':
 		attrib_add(bu_optarg, &need_prep);
@@ -435,6 +435,7 @@ main(int argc, char *argv[])
 	    case 'L':
 		listformats(NULL);
 		bu_exit(EXIT_SUCCESS, NULL);
+		break;
 	    case 'M':
 		mat_flag = 1;
 		break;

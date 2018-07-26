@@ -1,7 +1,7 @@
 /*                        T E R M I O . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -453,10 +453,10 @@ set_O_NDELAY(int fd)
 {
 #if defined(O_NDELAY)
     return fcntl(fd, F_SETFL, O_NDELAY);
-#else
-#  if defined(HAVE_TERMIOS_H)
+#elif defined(O_NONBLOCK)
+    return fcntl(fd, F_SETFL, O_NONBLOCK);
+#elif defined(HAVE_TERMIOS_H) && defined(FNDELAY)
     return fcntl(fd, F_SETFL, FNDELAY);
-#  endif
 #endif
 }
 

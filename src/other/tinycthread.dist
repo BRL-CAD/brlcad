@@ -1,6 +1,0 @@
-set(tinycthread_ignore_files
-CMakeLists.txt
-README.txt
-tinycthread.c
-tinycthread.h
-)

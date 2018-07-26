@@ -14,6 +14,22 @@ supported.  Enhancements or bug reports are welcome.
 Visual Studio
 -------------
 
+=== Notes on Windows 10 with latest SDK ===
+Because Tk before 8.6.8 cannot be built with the latest Windows SDK
+(naming conflicts; see [1]), an earlier one (10.0.15063.0 is the
+last working version) is needed (available at [2]).
+
+Targets `tk`, `tkstub` and `libfb` need to be changed to use this SDK
+(right click on a target -> Configuration Properties -> General;
+select the SDK in Windows SDK Version).
+
+Compilation is then unchanged from the below.
+
+[1]: https://core.tcl.tk/tk/tktview?name=3d34589aa0
+[2]: https://developer.microsoft.com/en-us/windows/downloads/sdk-archive
+
+===========================================
+
 To build with CMake and Visual Studio, the first step is to obtain the
 BRL-CAD sources and create a build directory.  In principle, it is not
 *required* to have a separate build directory, but with Windows and
@@ -49,8 +65,8 @@ example, mged.exe would be in brlcad-svn-trunk\.build\Debug\bin if
 brlcad-svn-trunk\.build is the build directory specified to CMake and
 CMAKE_BUILD_TYPE was set to Debug.
 
-You may want to produce an NSIS installer.  If so, locate a target 
-named PACKAGE and run it.  The end result should be an .exe file 
+You may want to produce an NSIS installer.  If so, locate a target
+named PACKAGE and run it.  The end result should be an .exe file
 capable of installing BRL-CAD.
 
 MINGW (WORK IN PROGRESS - THIS DOES NOT YET WORK!!!)

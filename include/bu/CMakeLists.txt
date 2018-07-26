@@ -11,6 +11,7 @@ set(bu_headers
   exit.h
   file.h
   getopt.h
+  glob.h
   hash.h
   hist.h
   hook.h
@@ -29,6 +30,7 @@ set(bu_headers
   simd.h
   sort.h
   str.h
+  tc.h
   time.h
   units.h
   uuid.h

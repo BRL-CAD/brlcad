@@ -1,7 +1,7 @@
 /*                           N M G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,6 +51,15 @@
  * containers and just extend them with the necessary extra information...
  * Don't know if that's possible, but it would be really nice from a data
  * conversion standpoint...
+ *
+ * TODO:  This paper may be worth a look from an API design perspective:
+ * Topological Operators for Non-Manifold Modeling (1995) 
+ * http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.50.1961
+ *
+ * also potentially useful:
+ * https://www.cs.purdue.edu/homes/cmh/distribution/books/geo.html
+ * https://cs.nyu.edu/faculty/yap/book/egc/
+ *
  */
 
 #ifndef NMG_H
@@ -68,6 +77,10 @@
 #include "bn/tol.h"
 #include "bn/vlist.h"
 #include "vmath.h"
+
+/* system headers */
+#include "bio.h" /* for FILE */
+
 
 #ifndef NMG_EXPORT
 #  if defined(NMG_DLL_EXPORTS) && defined(NMG_DLL_IMPORTS)
@@ -1028,9 +1041,11 @@ NMG_EXPORT extern struct bu_list re_nmgfree;     /**< @brief  head of NMG hitmis
             case NMG_MISS_LIST: \
                 bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
                 bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+                break; \
             case NMG_HIT_LIST: \
                 bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
                 bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+                break; \
             default: \
                 bu_log(CPP_FILELINE ": bad struct hitmiss magic: %u:(0x%08x)\n", \
                        hm->l.magic, hm->l.magic); \
@@ -2099,7 +2114,7 @@ NMG_EXPORT extern int nmg_class_pt_lu_except(point_t             pt,
 NMG_EXPORT extern int nmg_class_pt_fu_except(const point_t pt,
                                             const struct faceuse *fu,
                                             const struct loopuse *ignore_lu,
-                                            void (*eu_func)(struct edgeuse *, point_t, const char *),
+                                            void (*eu_func)(struct edgeuse *, point_t, const char *, struct bu_list *),
                                             void (*vu_func)(struct vertexuse *, point_t, const char *),
                                             const char *priv,
                                             const int call_on_hits,

@@ -1,7 +1,7 @@
 /*                      S H _ L I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1460,7 +1460,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     int vis_ray;
     int tot_vis_rays;
     int visibility;
-    struct light_obs_stuff los;
+    struct light_obs_stuff los = {NULL, NULL, NULL, NULL, NULL, 0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
     static int rand_idx;
     int flag_size = 0;
 

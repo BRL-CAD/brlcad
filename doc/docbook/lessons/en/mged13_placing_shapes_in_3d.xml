@@ -353,21 +353,21 @@ Move End H
 
    u base1.r/R
 
-   u eto1.s
+     u eto1.s
 
-   u rcc1.s
+     u rcc1.s
 
-   u eto2.s
+     u eto2.s
 
-   - rcc2.s
+     - rcc2.s
 
    u candle1.r/R
 
-   u rcc2.s
+     u rcc2.s
 
    u flame1.r/R
 
-   u part1.s
+     u part1.s
 	</literallayout>
       </para>
     </section>

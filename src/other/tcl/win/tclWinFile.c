@@ -1783,7 +1783,7 @@ NativeAccess(
  * NativeIsExec --
  *
  *	Determines if a path is executable. On windows this is simply defined
- *	by whether the path ends in any of ".exe", ".com", or ".bat"
+ *	by whether the path ends in a standard executable extension.
  *
  * Results:
  *	1 = executable, 0 = not.
@@ -1834,6 +1834,8 @@ NativeIsExec(
 
 	    if ((strcasecmp(p, "exe") == 0)
 		    || (strcasecmp(p, "com") == 0)
+		    || (strcasecmp(p, "cmd") == 0)
+		    || (strcasecmp(p, "ps1") == 0)
 		    || (strcasecmp(p, "bat") == 0)) {
 		/*
 		 * File that ends with .exe, .com, or .bat is executable.

@@ -1,7 +1,7 @@
 /*                        F C H M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,6 +45,12 @@
 /* extern int fchmod(int, mode_t); */
 /* use correct fchmod decl: */
 #  include <sys/stat.h>
+
+/* c89 strict doesn't declare fchmod */
+# ifndef HAVE_DECL_FCHMOD
+extern int fchmod(int, mode_t);
+# endif
+
 #else
 
 /* Presumably Windows, pulled from MSDN sample code */

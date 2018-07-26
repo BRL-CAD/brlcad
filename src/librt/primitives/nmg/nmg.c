@@ -1,7 +1,7 @@
 /*                           N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2016 United States Government as represented by
+ * Copyright (c) 2005-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1145,15 +1145,14 @@ state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
     return state5and6(seghead, seg_p, seg_count, a_hit, stp, ap, tol, 6);
 }
 
-
-static int (*state_table[7])(void) = {
-    (int (*)(void))state0,
-    (int (*)(void))state1,
-    (int (*)(void))state2,
-    (int (*)(void))state3,
-    (int (*)(void))state4,
-    (int (*)(void))state5,
-    (int (*)(void))state6
+static int (*state_table[7])(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *) = {
+    state0,
+    state1,
+    state2,
+    state3,
+    state4,
+    state5,
+    state6
 };
 
 
@@ -2724,7 +2723,6 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	case NMG_KIND_FACE_G_SNURB: {
 	    struct face_g_snurb *fg = (struct face_g_snurb *)op;
 	    struct disk_face_g_snurb *d;
-	    const matp_t matrix = (const matp_t)mat;
 	    d = &((struct disk_face_g_snurb *)ip)[iindex];
 	    NMG_CK_FACE_G_SNURB(fg);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_FACE_G_SNURB_MAGIC);
@@ -2735,14 +2733,14 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    fg->u.knots = rt_nmg_import4_fastf(basep,
 					       ecnt,
 					       ntohl(*(uint32_t*)(d->u_knots)),
-					       (const matp_t)NULL,
+					       NULL,
 					       fg->u.k_size,
 					       0);
 	    fg->v.k_size = ntohl(*(uint32_t*)(d->v_size));
 	    fg->v.knots = rt_nmg_import4_fastf(basep,
 					       ecnt,
 					       ntohl(*(uint32_t*)(d->v_knots)),
-					       (const matp_t)NULL,
+					       NULL,
 					       fg->v.k_size,
 					       0);
 	    fg->s_size[0] = ntohl(*(uint32_t*)(d->us_size));
@@ -2752,7 +2750,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    fg->ctl_points = rt_nmg_import4_fastf(basep,
 						  ecnt,
 						  ntohl(*(uint32_t*)(d->ctl_points)),
-						  matrix,
+						  (matp_t)mat,
 						  fg->s_size[0] * fg->s_size[1],
 						  fg->pt_type);
 	}
@@ -2903,7 +2901,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    eg->k.knots = rt_nmg_import4_fastf(basep,
 					       ecnt,
 					       ntohl(*(uint32_t*)(d->knots)),
-					       (const matp_t)NULL,
+					       NULL,
 					       eg->k.k_size,
 					       0);
 	    eg->c_size = ntohl(*(uint32_t*)(d->c_size));
@@ -2917,17 +2915,15 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 		eg->ctl_points = rt_nmg_import4_fastf(basep,
 						      ecnt,
 						      ntohl(*(uint32_t*)(d->ctl_points)),
-						      (const matp_t)NULL,
+						      NULL,
 						      eg->c_size,
 						      eg->pt_type);
 	    } else {
-		const matp_t matrix = (const matp_t)mat;
-
 		/* XYZ coords on planar face DO get xformed */
 		eg->ctl_points = rt_nmg_import4_fastf(basep,
 						      ecnt,
 						      ntohl(*(uint32_t*)(d->ctl_points)),
-						      matrix,
+						      (matp_t)mat,
 						      eg->c_size,
 						      eg->pt_type);
 	    }
@@ -4533,7 +4529,8 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
 	nmg_vshell(&r1->s_hd, r1);
     }
 
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NMG_TESS;
     curtree->tr_d.td_name = bu_strdup(dp->d_namep);
     curtree->tr_d.td_r = r1;
@@ -4589,7 +4586,8 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
 	nmg_vshell(&r1->s_hd, r1);
     }
 
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NMG_TESS;
     curtree->tr_d.td_name = bu_strdup(dp->d_namep);
     curtree->tr_d.td_r = r1;

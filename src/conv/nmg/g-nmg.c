@@ -1,7 +1,7 @@
 /*                         G - N M G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -263,9 +263,6 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
      *  so we need to cons up an OP_NOP node to return.
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
-
-    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-	bu_prmem("At end of do_region_end()");
 
     BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);

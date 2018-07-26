@@ -1,7 +1,7 @@
 /*                        G E T C W D . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,10 @@
 #include "bu/log.h"
 #include "bu/exit.h"
 
+/* c89 strict doesn't declare realpath */
+#ifndef HAVE_DECL_REALPATH
+extern char *realpath(const char *, char *);
+#endif
 
 char *
 bu_getcwd(char *buf, size_t size)

@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,32 +33,11 @@
 #include "bu/malloc.h"
 
 
-/* libfb defines replicated here to avoid a libfb dependency */
-#define ACHROMATIC -1.0
-
-#define HUE 0
-#define SAT 1
-#define VAL 2
-
-#define RED 0
-#define GRN 1
-#define BLU 2
-
-
-/* vmath/libbu routines replicated here to avoid a libbn dependency */
-enum axis {
-    X = 0,
-    Y = 1,
-    Z = 2
-};
-#define VSET(a, b, c, d) { (a)[X] = (b); (a)[Y] = (c); (a)[Z] = (d); }
-#define VSETALL(a, s) { (a)[X] = (a)[Y] = (a)[Z] = (s); }
-#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
-#define V3ARGS(a) (a)[X], (a)[Y], (a)[Z]
+#define COMMA ','
 
 
 void
-bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
+bu_rgb_to_hsv(const unsigned char *rgb, fastf_t *hsv)
 {
     fastf_t red, grn, blu;
     fastf_t *hue = &hsv[HUE];
@@ -99,7 +78,7 @@ bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
      * Compute hue
      */
     if (NEAR_ZERO(*sat, SMALL_FASTF)) {
-	*hue = ACHROMATIC;
+	*hue = 0.0; /* achromatic */
     } else {
 	if (NEAR_ZERO(red - max, SMALL_FASTF))      /* red == max */
 	    *hue = (grn - blu) / chroma;
@@ -119,7 +98,7 @@ bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
 
 
 int
-bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
+bu_hsv_to_rgb(const fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t float_rgb[3] = { 0.0, 0.0, 0.0 };
     fastf_t hue, sat, val;
@@ -127,22 +106,15 @@ bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
     fastf_t p, q, t;
     long int hue_int;
 
-    hue = hsv[HUE];
-    sat = hsv[SAT];
-    val = hsv[VAL];
+    hue = FMAX(hsv[HUE], 0.0);
+    hue = FMIN(hsv[HUE], 360.0);
+    sat = FMAX(hsv[SAT], 0.0);
+    sat = FMIN(hsv[SAT], 1.0);
+    val = FMAX(hsv[VAL], 0.0);
+    val = FMIN(hsv[VAL], 1.0);
 
-    if ((((hue < 0.0) || (hue > 360.0)) && (!NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF))) /* hue != ACHROMATIC */
-	|| (sat < 0.0) || (sat > 1.0)
-	|| (val < 0.0) || (val > 1.0)
-	|| ((NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF)) && (sat > 0.0))) /* hue == ACHROMATIC */
-    {
-	bu_log("bu_hsv_to_rgb: Illegal HSV (%g, %g, %g)\n",
-	       V3ARGS(hsv));
-	return 0;
-    }
-
-    /* so hue == ACHROMATIC (or is ignored)	*/
     if (NEAR_ZERO(sat, SMALL_FASTF)) {
+	/* hue is achromatic, so just set constant value */
 	VSETALL(float_rgb, val);
     } else {
 	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
@@ -176,88 +148,37 @@ bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
 
 
 int
-bu_str_to_rgb(char *str, unsigned char *rgb)
+bu_color_to_rgb_chars(const struct bu_color *cp, unsigned char *rgb)
 {
-    int num;
-    unsigned int r = 0;
-    unsigned int g = 0;
-    unsigned int b = 0;
-
-    if (UNLIKELY(!str || !rgb)) {
-	return 0;
-    }
-
-    while (isspace((int)(*str)))
-	++str;
-
-    if (*str == '#') {
-	if (strlen(++str) != 6)
-	    return 0;
-	sscanf(str, "%02x%02x%02x", (unsigned int *)&r, (unsigned int *)&g, (unsigned int *)&b);
-    } else if (isdigit((int)(*str))) {
-	num = sscanf(str, "%u/%u/%u", &r, &g, &b);
-	if (num == 1) {
-	    num = sscanf(str, "%u %u %u", &r, &g, &b);
-	    if (num != 3)
-		return 0;
-	}
-	if (r > 255)
-	    r = 255;
-	if (g > 255)
-	    g = 255;
-	if (b > 255)
-	    b = 255;
-    } else {
-	return 0;
-    }
-
-    VSET(rgb, (fastf_t)r, (fastf_t)g, (fastf_t)b);
-
-    return 1;
-}
-
-int
-bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb)
-{
-    unsigned int r, g, b;
-    if (UNLIKELY(!cp || !rgb)) {
-	return 0;
-    }
-    r = (unsigned int)cp->buc_rgb[RED];
-    g = (unsigned int)cp->buc_rgb[GRN];
-    b = (unsigned int)cp->buc_rgb[BLU];
-
-    rgb[0] = (unsigned char)r;
-    rgb[1] = (unsigned char)g;
-    rgb[2] = (unsigned char)b;
-
-    return 1;
-}
-
-
-int
-bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb)
-{
-    unsigned int r, g, b;
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
 
-    r = (unsigned int)rgb[RED];
-    g = (unsigned int)rgb[GRN];
-    b = (unsigned int)rgb[BLU];
-
-
-    cp->buc_rgb[RED] = (fastf_t)r;
-    cp->buc_rgb[GRN] = (fastf_t)g;
-    cp->buc_rgb[BLU] = (fastf_t)b;
+    rgb[RED] = (unsigned char)lrint(cp->buc_rgb[RED] * 255.0);
+    rgb[GRN] = (unsigned char)lrint(cp->buc_rgb[GRN] * 255.0);
+    rgb[BLU] = (unsigned char)lrint(cp->buc_rgb[BLU] * 255.0);
 
     return 1;
 }
 
 
 int
-bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb)
+bu_color_from_rgb_chars(struct bu_color *cp, const unsigned char *rgb)
+{
+    if (UNLIKELY(!cp || !rgb)) {
+	return 0;
+    }
+
+    cp->buc_rgb[RED] = (fastf_t)rgb[RED] / 255.0;
+    cp->buc_rgb[GRN] = (fastf_t)rgb[GRN] / 255.0;
+    cp->buc_rgb[BLU] = (fastf_t)rgb[BLU] / 255.0;
+
+    return 1;
+}
+
+
+int
+bu_color_to_rgb_floats(const struct bu_color *cp, fastf_t *rgb)
 {
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
@@ -272,7 +193,7 @@ bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb)
 
 
 int
-bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb)
+bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb)
 {
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
@@ -290,46 +211,83 @@ int
 bu_color_from_str(struct bu_color *color, const char *str)
 {
     size_t i;
-    char separator = '\0';
     int mode = 0;
 
-    BU_COLOR_INIT(color);
+    if (UNLIKELY(!color || !str)) {
+	return 0;
+    }
+
+    /* skip past any leading whitespace */
+    while (isspace(*str))
+	str++;
+
+    /* hexadecimal color in #FFF or #FFFFFF form */
+    if (*str == '#') {
+	int ret = 0;
+	int len;
+	unsigned int rgb[3] = {0, 0, 0};
+
+	str++;
+
+	len = strlen(str);
+	if (len == 3) {
+	    ret = sscanf(str, "%01x%01x%01x", &rgb[RED], &rgb[GRN], &rgb[BLU]);
+	    rgb[RED] += rgb[RED] * 16;
+	    rgb[GRN] += rgb[GRN] * 16;
+	    rgb[BLU] += rgb[BLU] * 16;
+	} else if (len == 6) {
+	    ret = sscanf(str, "%02x%02x%02x", &rgb[RED], &rgb[GRN], &rgb[BLU]);
+	}
+	if (ret != 3) {
+	    return 0;
+	}
+
+	color->buc_rgb[RED] = (fastf_t)rgb[RED] / 255.0;
+	color->buc_rgb[GRN] = (fastf_t)rgb[GRN] / 255.0;
+	color->buc_rgb[BLU] = (fastf_t)rgb[BLU] / 255.0;
+
+	return 1;
+    }
 
     /* determine the format - 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
-    for (mode = 0; mode <= 2; ++mode) {
-	const char * const allowed_separators = "/,";
+    for (mode = 0; mode < 3; ++mode) {
+	const char * const allowed_separators = "/, ";
 	const char *endptr;
-	float result;
+	long lr = -1;
+	double dr = -1.0;
 
 	errno = 0;
 
 	switch (mode) {
-	    case 0: /*RGB*/
-		result = strtol(str, (char **)&endptr, 10);
+	    case 0: /* RGB */
+		lr = strtol(str, (char **)&endptr, 10);
 		break;
 
-	    case 1: /*FLOAT*/
-		result = strtod(str, (char **)&endptr);
+	    case 1: /* FLOAT */
+		dr = strtod(str, (char **)&endptr);
 		break;
 
-	    case 2:
+	    default:
 		return 0;
 	}
 
-	if (!((NEAR_ZERO(result, 0.0) && errno) || endptr == str
-		    || !strchr(allowed_separators, *endptr))) {
-	    separator = *endptr;
+	if ((mode == 0 && lr < 0) || (mode == 1 && dr < 0.0)) {
+	    /* negative means string conversion failed */
+	    return 0;
+	}
+
+	if (endptr != str && strchr(allowed_separators, *endptr)) {
 	    break;
 	}
     }
 
-    /* 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
+    /* iterate over RGB */
     for (i = 0; i < 3; ++i) {
-	const char expected_char = i == 2 ? '\0' : separator;
 	const char *endptr;
 
 	errno = 0;
 
+        /* 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
 	switch (mode) {
 	    case 0: /*RGB*/
 		color->buc_rgb[i] = strtol(str, (char **)&endptr, 10) / 255.0;
@@ -339,18 +297,32 @@ bu_color_from_str(struct bu_color *color, const char *str)
 		color->buc_rgb[i] = strtod(str, (char **)&endptr);
 		break;
 
-	    case 2: /*UNKNOWN*/
+	    default: /*UNKNOWN*/
 		bu_bomb("error");
 	}
 
-	if ((NEAR_ZERO(color->buc_rgb[i], 0.0) && errno) || endptr == str || *endptr != expected_char
-		|| !(0.0 <= color->buc_rgb[i] && color->buc_rgb[i] <= 1.0)) {
+	if ((NEAR_ZERO(color->buc_rgb[i], 0.0) && errno) || endptr == str || (i != 2 && *endptr == '\0')
+	    || !(0.0 <= color->buc_rgb[i] && color->buc_rgb[i] <= 1.0)) {
 	    VSETALL(color->buc_rgb, 0.0);
 	    return 0;
 	}
 
 	str = endptr + 1;
     }
+
+    return 1;
+}
+
+
+int
+bu_str_to_rgb(const char *str, unsigned char *rgb)
+{
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+
+    if (!bu_color_from_str(&color, str))
+	return 0;
+    if (!bu_color_to_rgb_chars(&color, rgb))
+	return 0;
 
     return 1;
 }

@@ -1420,6 +1420,18 @@ test binary-37.9 {GetFormatSpec: numbers} {
     binary scan $x f* bla
     set bla
 } {1.0 -1.0 2.0 -2.0 0.0}
+test binary-37.10 {GetFormatSpec: count overflow} {
+    binary scan x a[format %ld 0x7fffffff] r
+} 0
+test binary-37.11 {GetFormatSpec: count overflow} {
+    binary scan x a[format %ld 0x10000000] r
+} 0
+test binary-37.12 {GetFormatSpec: count overflow} {
+    binary scan x a[format %ld 0x100000000] r
+} 0
+test binary-37.13 {GetFormatSpec: count overflow} {
+    binary scan x a[format %lld 0x10000000000000000] r
+} 0
 
 test binary-38.1 {FormatNumber: word alignment} {
     set x [binary format c1s1 1 1]

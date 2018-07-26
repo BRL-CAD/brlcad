@@ -15,7 +15,9 @@ keysyms \- keysyms recognized by Tk
 Tk recognizes many keysyms when specifying key bindings (e.g. 
 \fBbind . <Key-\fR\fIkeysym\fR\fB>\fR).  The following list enumerates the
 keysyms that will be recognized by Tk.  Note that not all keysyms will
-be valid on all platforms.  For example, on Unix systems, the presence
+be valid on all platforms, and some keysyms are also available on
+platforms that have a different native name for that key.
+For example, on Unix systems, the presence
 of a particular keysym is dependant on the configuration of the
 keyboard modifier map.  This list shows keysyms along with their
 decimal and hexadecimal values.
@@ -918,6 +920,13 @@ Super_R                          65516     0xffec
 Hyper_L                          65517     0xffed
 Hyper_R                          65518     0xffee
 Delete                           65535     0xffff
+XF86AudioLowerVolume         269025041     0x1008FF11
+XF86AudioMute                269025042     0x1008FF12
+XF86AudioRaiseVolume         269025043     0x1008FF13
+XF86AudioPlay                269025044     0x1008FF14
+XF86AudioStop                269025045     0x1008FF15
+XF86AudioPrev                269025046     0x1008FF16
+XF86AudioNext                269025047     0x1008FF17
 .CE
 
 .SH "SEE ALSO"

@@ -283,7 +283,7 @@ test utf-21.1 {TclUniCharIsAlnum} {
 } {1}
 test utf-21.2 {unicode alnum char in regc_locale.c} {
     # this returns 1 with Unicode 7 compliance
-    list [regexp {^[[:alnum:]]+$} \u1040\u021f\u0220] [regexp {^\w+$} \u1040\u021f\u0220]
+    list [regexp {^[[:alnum:]]+$} \u1040\u021f\u0220] [regexp {^\w+$} \u1040\u021f\u0220_\u203f\u2040\u2054\ufe33\ufe34\ufe4d\ufe4e\ufe4f\uff3f]
 } {1 1}
 test utf-21.3 {unicode print char in regc_locale.c} {
     # this returns 1 with Unicode 7 compliance

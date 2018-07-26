@@ -1,7 +1,7 @@
 /*                           D B 5 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -172,6 +172,7 @@ struct db5_ondisk_header {
 #define DB5_MINORTYPE_BRLCAD_ANNOT		42
 #define DB5_MINORTYPE_BRLCAD_HRT		43
 #define DB5_MINORTYPE_BRLCAD_DATUM		44
+#define DB5_MINORTYPE_BRLCAD_SCRIPT     45
 
 /* Uniform-array binary */
 #define DB5_MINORTYPE_BINU_WID_MASK		0x30

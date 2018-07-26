@@ -1,7 +1,7 @@
 #               G E O M E T R Y I O . T C L
 # BRL-CAD
 #
-# Copyright (c) 2014-2016 United States Government as represented by
+# Copyright (c) 2014-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ package provide cadwidgets::GeometryIO 1.0
 
 namespace eval cadwidgets {
 set ::exe_ext ""
-if {$tcl_platform(platform) == "windows"} {
+if {$::tcl_platform(platform) == "windows"} {
     set ::exe_ext ".exe"
 }
 

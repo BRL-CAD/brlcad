@@ -1,7 +1,7 @@
 /*                     N M G _ C L A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -675,9 +675,9 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		 * short circuit everything.
 		 */
 		nmg_class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
-						   (void (*)(struct edgeuse *, point_t, const char *))NULL,
-						   (void (*)(struct vertexuse *, point_t, const char *))NULL,
-						   (const char *)NULL, 0, 0, vlfree, tol);
+						   NULL,
+						   NULL,
+						   NULL, 0, 0, vlfree, tol);
 		if (nmg_class == NMG_CLASS_AonBshared) {
 		    bu_bomb("nmg_class_pt_s(): function nmg_class_pt_fu_except returned AonBshared when it can only return AonBanti\n");
 		}
@@ -2111,7 +2111,7 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
     fastf_t point_count = 0.0;
     double one_over_count;
     point_t test_pt;
-    point_t average_pt;
+    point_t average_pt = VINIT_ZERO;
     int i;
 
     NMG_CK_LOOPUSE(lu);
@@ -2127,7 +2127,6 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
 	return 3;
 
     /* first try just averaging all the vertices */
-    VSETALL(average_pt, 0.0);
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	struct vertex_g *vg;
 	NMG_CK_EDGEUSE(eu);

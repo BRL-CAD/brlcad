@@ -1,7 +1,7 @@
 /*                         F I L E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -390,8 +390,8 @@ BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
  * Recognized keys include:
  *
  * Key     | Looks Up
- * ------- | ----------------------------------------
- * bin     | Directory containing binary applications
+ * ------- | -------------------------------------------
+ * bin     | Directory containing applications
  * lib     | Directory containing libraries
  * include | Directory containing headers
  * data    | Directory containing shared data

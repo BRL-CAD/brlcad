@@ -52,7 +52,6 @@ BRLCAD_ADDDATA(nsis/archer.ico icons)
 
 add_subdirectory(doxygen)
 add_subdirectory(CMake)
-add_subdirectory(d-bindings)
 add_subdirectory(debian)
 add_subdirectory(osl_shaders)
 
@@ -96,14 +95,20 @@ set(misc_ignore_files
   svn2git/README
   svn2git/account-map
   svn2git/archive_branches.sh
+  svn2git/manual_replay.sh
+  svn2git/md5_process_lines.cxx
+  svn2git/pstream.h
   svn2git/rules
+  svn2git/sphflake.pix,v
+  svn2git/svn_logmsg.xsl
+  svn2git/svn_moved_and_edited.cxx
   svn2git/svn2git/CMake/FindAPR.cmake
   svn2git/svn2git/CMake/FindSubversionLibrary.cmake
   svn2git/svn2git/CMakeLists.txt
-  svn2git/svn2git/COPYING
+  svn2git/svn2git/LICENSE
   svn2git/svn2git/CommandLineParser.cpp
   svn2git/svn2git/CommandLineParser.h
-  svn2git/svn2git/README
+  svn2git/svn2git/README.md
   svn2git/svn2git/main.cpp
   svn2git/svn2git/repository.cpp
   svn2git/svn2git/repository.h

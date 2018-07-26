@@ -1,7 +1,7 @@
 /*                        C M D . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,9 +25,14 @@
 #define RT_CMD_H
 
 #include "common.h"
+
+/* interface headers */
 #include "vmath.h"
 #include "rt/defines.h"
 #include "rt/rt_instance.h"
+
+/* system headers */
+#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 

@@ -1,7 +1,7 @@
 /*                      P L O T 3 - D M . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2016 United States Government as represented by
+ * Copyright (c) 1999-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1146,6 +1146,9 @@ int
 main(int argc, char *argv[])
 {
     const char usage[] = "Usage: plot3-dm [-t o|X] plot_file(s)\n";
+
+    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv))
 	bu_exit (1, "%s", usage);

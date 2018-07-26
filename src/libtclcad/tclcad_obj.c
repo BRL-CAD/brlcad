@@ -1,7 +1,7 @@
 /*                       T C L C A D _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2016 United States Government as represented by
+ * Copyright (c) 2000-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1026,6 +1026,8 @@ static struct to_cmdtab to_cmds[] = {
     {"c",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_comb_std},
     {"cat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_cat},
     {"center",	"[x y z]", 5, to_view_func_plus, ged_center},
+    {"check",	(char *)0, TO_UNLIMITED, to_view_func, ged_check},
+    {"check_overlaps",	(char *)0, TO_UNLIMITED, to_view_func, ged_check_overlaps},
     {"clear",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_zap},
     {"clone",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_clone},
     {"coil",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_coil},
@@ -1487,8 +1489,7 @@ to_cmd(ClientData clientData,
     current_top = top;
 
     for (ctp = to_cmds; ctp->to_name != (char *)0; ctp++) {
-	if (ctp->to_name[0] == argv[1][0] &&
-	    BU_STR_EQUAL(ctp->to_name, argv[1])) {
+	if (BU_STR_EQUAL(ctp->to_name, argv[1])) {
 	    struct ged *gedp = top->to_gop->go_gedp;
 	    ret = (*ctp->to_wrapper_func)(gedp, argc-1, (const char **)argv+1, ctp->to_func, ctp->to_usage, ctp->to_maxargs);
 	    break;
@@ -7073,7 +7074,7 @@ to_mouse_brep_selection_append(struct ged *gedp,
     }
 
     /* parse args */
-    brep_name = bu_basename(argv[2], NULL);
+    brep_name = bu_path_basename(argv[2], NULL);
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7182,7 +7183,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 	    break;
     }
 
-    brep_name = bu_basename(argv[2], NULL);
+    brep_name = bu_path_basename(argv[2], NULL);
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7835,7 +7836,7 @@ to_mouse_joint_select(
     }
 
     /* parse args */
-    joint_name = bu_basename(argv[2], NULL);
+    joint_name = bu_path_basename(argv[2], NULL);
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7942,7 +7943,7 @@ to_mouse_joint_selection_translate(
 	    break;
     }
 
-    joint_name = bu_basename(argv[2], NULL);
+    joint_name = bu_path_basename(argv[2], NULL);
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {

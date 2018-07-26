@@ -1,7 +1,7 @@
 /*                          S T R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,13 @@
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/str.h"
+
+#ifndef HAVE_DECL_STRLCAT
+extern size_t strlcat(char *, const char *, size_t);
+#endif
+#ifndef HAVE_DECL_STRLCPY
+extern size_t strlcpy(char *, const char *, size_t);
+#endif
 
 
 size_t
@@ -156,12 +163,6 @@ bu_strdupm(register const char *cp, const char *label)
     if (cp) {
 	len = strlen(cp)+1;
 	base = (char *)bu_malloc(len, label);
-
-	if (UNLIKELY(bu_debug&BU_DEBUG_MEM_LOG)) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    fprintf(stderr, "%p strdup%llu \"%s\"\n", (void *)base, (unsigned long long)len, cp);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	}
 
 	memcpy(base, cp, len);
     }

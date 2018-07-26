@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "bu/units.h"
+#include "bn/str.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -50,7 +51,6 @@
 #define COMMA ','
 
 
-int rpt_dist = 0;		/* report distance to each pixel */
 size_t width = 0;		/* # of pixels in X */
 size_t height = 0;		/* # of lines in Y */
 
@@ -109,12 +109,12 @@ char pmfile[255];
 /***** ************************ *****/
 
 /***** variables shared with do.c *****/
+int objc = 0;		/* Number of cmd-line treetops */
+char **objv = (char **)NULL;	/* array of treetop strings */
 char *string_pix_start = (char *)NULL;	/* string spec of starting pixel */
 char *string_pix_end = (char *)NULL;	/* string spec of ending pixel */
 int pix_start = -1;		/* pixel to start at */
 int pix_end = 0;		/* pixel to end at */
-int nobjs = 0;		/* Number of cmd-line treetops */
-char **objtab = (char **)NULL;	/* array of treetop strings */
 int matflag = 0;		/* read matrix from stdin */
 int orientflag = 0;		/* 1 means orientation has been set */
 int desiredframe = 0;	/* frame to start at */
@@ -142,8 +142,7 @@ int use_air = 0;		/* whether librt should handle air */
 
 
 /***** variables shared with view.c *****/
-fastf_t frame_delta_t = (fastf_t)(1.0/30.0); /* 1.0 / frames_per_second_playback */
-double airdensity;    /* is the scene hazy (we shade the void space) */
+double airdensity = 0.0;    /* is the scene hazy (we shade the void space) */
 double haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
 int do_kut_plane = 0;
 plane_t kut_plane;
@@ -160,24 +159,12 @@ fastf_t rt_dist_tol = (fastf_t)0.0005;	/* Value for rti_tol.dist */
 fastf_t rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
 char *framebuffer = (char *)NULL;		/* desired framebuffer */
 
-int space_partition = 	/*space partitioning algorithm to use*/
-/* Do NOT insert value above for space_partition ; it's taken care of below. */
-
-/* TODO: need a run-time mechanism for toggling spatial partitioning
- * methods.  Use this compile-time switch to toggle between different
- * spatial partitioning methods.
+/**
+ * space partitioning algorithm to use.  previously had experimental
+ * grid support, but now only uses a Non-uniform Binary Spatial
+ * Partitioning (BSP) tree.
  */
-#ifdef USE_NUGRID
-/* Non-uniform grid/mesh discretized spatial partitioning */
-    RT_PART_NUGRID;
-#else
-/* Non-uniform Binary Spatial Partitioning (BSP) tree */
-RT_PART_NUBSPT;
-#endif
-int nugrid_dimlimit = 0;	/* limit to each dimension of
-				   the nugrid */
-double nu_gfactor = RT_NU_GFACTOR_DEFAULT;
-/* constant factor in NUgrid algorithm, if applicable */
+int space_partition = RT_PART_NUBSPT;
 
 #define MAX_WIDTH (32*1024)
 
@@ -212,9 +199,9 @@ get_args(int argc, const char *argv[])
 		bn_randhalftabsize = i;
 		break;
 	    case 'm':
-		i = sscanf(bu_optarg, "%lg, %lg, %lg, %lg", &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		i = sscanf(bu_optarg, "%lg, %lg, %lg, %lg", &airdensity, &haze[RED], &haze[GRN], &haze[BLU]);
 		if (i != 4) {
-		    bu_exit(EXIT_FAILURE, "ERROR: bad air density + haze\n");
+		    bu_exit(EXIT_FAILURE, "ERROR: bad air density or haze 0.0-to-1.0 RGB values\n");
 		}
 		break;
 	    case 't':
@@ -269,14 +256,8 @@ get_args(int argc, const char *argv[])
 		kut_plane[W] *= f;
 		break;
 	    }
-	    case '.':
-		nu_gfactor = (double)atof(bu_optarg);
-		break;
 	    case COMMA:
 		space_partition = atoi(bu_optarg);
-		break;
-	    case '@':
-		nugrid_dimlimit = atoi(bu_optarg);
 		break;
 	    case 'c':
 		(void)rt_do_cmd((struct rt_i *)0, bu_optarg, rt_cmdtab);
@@ -398,12 +379,16 @@ get_args(int argc, const char *argv[])
 
 	    case 'a':
 		/* Set azimuth */
-		azimuth = atof(bu_optarg);
+		if (bn_decode_angle(&azimuth,bu_optarg) == 0) {
+		    fprintf(stderr, "WARNING: Unexpected units for azimuth angle, using default value\n");
+		}
 		matflag = 0;
 		break;
 	    case 'e':
 		/* Set elevation */
-		elevation = atof(bu_optarg);
+		if (bn_decode_angle(&elevation,bu_optarg) == 0) {
+		    fprintf(stderr, "WARNING: Unexpected units for elevation angle, using default value\n");
+		}
 		matflag = 0;
 		break;
 	    case 'l':
@@ -537,20 +522,6 @@ get_args(int argc, const char *argv[])
 		string_pix_start = bu_optarg;
 		npsw = 1;	/* Cancel running in parallel */
 		break;
-	    case 'f':
-		/* input expected playback rate in frames-per-second;
-		 * actually stored as the delta-t per frame
-		 */
-		frame_delta_t = atof(bu_optarg);
-		if (ZERO(frame_delta_t)) {
-		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0; set to default\n",
-			    bu_optarg);
-		    frame_delta_t = 30.0;
-		}
-		/* now convert to delta-t per frame
-		 */
-		frame_delta_t = 1.0 / frame_delta_t;
-		break;
 	    case 'V':
 		{
 		    /* View aspect */
@@ -580,9 +551,6 @@ get_args(int argc, const char *argv[])
 	    case 'R':
 		/* DON'T report overlapping region names */
 		rpt_overlap = 0;
-		break;
-	    case 'd':
-		rpt_dist = atoi(bu_optarg);
 		break;
 	    case 'z':
 		opencl_mode = atoi(bu_optarg);
@@ -616,17 +584,10 @@ get_args(int argc, const char *argv[])
     if (RT_G_DEBUG || R_DEBUG || nmg_debug)
 	bu_debug |= BU_DEBUG_COREDUMP;
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_debug |= BU_DEBUG_MEM_CHECK;
-    if (RT_G_DEBUG & DEBUG_MEM)
-	bu_debug |= BU_DEBUG_MEM_LOG;
     if (RT_G_DEBUG & DEBUG_PARALLEL)
 	bu_debug |= BU_DEBUG_PARALLEL;
     if (RT_G_DEBUG & DEBUG_MATH)
 	bu_debug |= BU_DEBUG_MATH;
-
-    if (R_DEBUG & RDEBUG_RTMEM_END)
-	bu_debug |= BU_DEBUG_MEM_CHECK;
 
     /* TODO: add options instead of reading from ENV */
     env_str = getenv("LIBRT_RAND_MODE");

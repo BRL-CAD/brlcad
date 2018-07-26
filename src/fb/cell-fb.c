@@ -1,7 +1,7 @@
 /*                       C E L L - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -932,7 +932,6 @@ main(int argc, char **argv)
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     sleep(1);
 
-    bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_MEM_LOG;
     bu_debug = 0;
 
     BU_LIST_INIT(&(gp_locs.l));

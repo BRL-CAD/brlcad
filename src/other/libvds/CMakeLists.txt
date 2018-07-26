@@ -24,7 +24,7 @@
 # This file contains the top level CMakeLists.txt logic for the
 # BRL-CAD software package.
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
 project(VDS)

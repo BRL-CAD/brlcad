@@ -13,6 +13,7 @@ set(primitives_headers
   pipe.h
   rhc.h
   rpc.h
+  script.h
   sketch.h
   tgc.h
   tor.h)

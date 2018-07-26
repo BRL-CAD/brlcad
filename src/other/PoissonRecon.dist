@@ -37,7 +37,6 @@ Src/PlyFile.cpp
 Src/PointStream.h
 Src/PointStream.inl
 Src/PoissonRecon.cpp
-Src/PoissonRecon_new.cpp
 Src/Polynomial.h
 Src/Polynomial.inl
 Src/SPR.cpp

@@ -414,7 +414,7 @@
 	Tcl_IsChannelExisting, and Tcl_ClearChannelHandlers to conform to the
 	new stacked channel implementation. Their stub slots were also moved
 	to give preference to the new 8.3.2 stub functions. This will cause an
-	incompatability with 8.4a1 only.
+	incompatibility with 8.4a1 only.
 	(StopCopy): fixed a bug introduced by a partial fix in 8.3.2 that
 	didn't set nonBlocking correctly when resetting the flags for the
 	write side. [Bug: 6261]

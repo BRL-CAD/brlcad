@@ -156,7 +156,9 @@ returns \fB/home\fR (or something similar).
 \fBfile executable \fIname\fR
 .
 Returns \fB1\fR if file \fIname\fR is executable by the current user,
-\fB0\fR otherwise.  
+\fB0\fR otherwise. On Windows, which does not have an executable attribute,
+the command treats all directories and any files with extensions
+\fBexe\fR, \fBcom\fR, \fBcmd\fR, \fBbat\fR or \fBps1\fR as executable.
 .TP
 \fBfile exists \fIname\fR
 .

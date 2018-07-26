@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2016 United States Government as represented by
+ * Copyright (c) 1988-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <signal.h>
@@ -46,6 +47,10 @@
 
 #include "./qray.h"
 #include "./ged_private.h"
+
+#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
 
 /**
  * Invoke nirt with the current view & stuff
@@ -201,7 +206,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    else {
 		struct bu_vls tmp = BU_VLS_INIT_ZERO;
 		bu_vls_strncpy(&tmp, val, count);
-		bu_vls_printf(&o_vls, " fmt r \"\\n%V\" ", (&tmp));
+		bu_vls_printf(&o_vls, " fmt r \"\\n%s\" ", bu_vls_addr(&tmp));
 		bu_vls_free(&tmp);
 
 		if (count)

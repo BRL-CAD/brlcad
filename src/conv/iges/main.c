@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -181,10 +181,6 @@ main(int argc, char *argv [])
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
-		if (RT_G_DEBUG & DEBUG_MEM)
-		    bu_debug |= BU_DEBUG_MEM_LOG;
-		if (RT_G_DEBUG & DEBUG_MEM_FULL)
-		    bu_debug |= BU_DEBUG_MEM_CHECK;
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
@@ -197,11 +193,6 @@ main(int argc, char *argv [])
 
     if (bu_optind >= argc || output_file == (char *)NULL || do_drawings+do_splines+trimmed_surf > 1) {
 	usage(argv[0]);
-    }
-
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("Memory checking enabled\n");
-	bu_mem_barriercheck();
     }
 
     bu_log("%s", brlcad_ident("IGES to BRL-CAD Translator"));
@@ -252,9 +243,6 @@ main(int argc, char *argv [])
     BU_LIST_APPEND(&iges_list.l, &curr_file->l);
 
     while (BU_LIST_NON_EMPTY(&iges_list.l)) {
-	if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	    bu_mem_barriercheck();
-
 	curr_file = BU_LIST_FIRST(file_list, &iges_list.l);
 	iges_file = curr_file->file_name;
 
@@ -311,22 +299,12 @@ main(int argc, char *argv [])
 	    Convassem();	/* Convert solid assemblies */
 	}
 
-	if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	    bu_mem_barriercheck();
-
 	Free_dir();
-
-	if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	    bu_mem_barriercheck();
 
 	BU_LIST_DEQUEUE(&curr_file->l);
 	bu_free((char *)curr_file->file_name, "iges-g: curr_file->file_name");
 	bu_free((char *)curr_file, "iges-g: curr_file");
 	file_count++;
-
-	if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	    bu_mem_barriercheck();
-
     }
 
     iges_file = argv[0];

@@ -1,7 +1,7 @@
 /*                        M A K E _ P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2016 United States Government as represented by
+ * Copyright (c) 2009-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -651,7 +651,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
     if (num_doubles_read < num_doubles_per_point) {
 	bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. Number of values read inconsistent with point-cloud type ", argv[1]);
-	bu_vls_printf(gedp->ged_result_str, "defined by format string '%V'. The number of values read must be an even ", format_string);
+	bu_vls_printf(gedp->ged_result_str, "defined by format string '%s'. The number of values read must be an even ", bu_vls_addr(&format_string));
 	bu_vls_printf(gedp->ged_result_str, "multiple of %d but read %lu values.\n", num_doubles_per_point, num_doubles_read);
 	bu_vls_free(&format_string);
 	rt_db_free_internal(&internal);
@@ -660,7 +660,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
     if (num_doubles_read % num_doubles_per_point) {
 	bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. Number of values read inconsistent with point-cloud type ", argv[1]);
-	bu_vls_printf(gedp->ged_result_str, "defined by format string '%V'. The number of values read must be an even ", format_string);
+	bu_vls_printf(gedp->ged_result_str, "defined by format string '%s'. The number of values read must be an even ", bu_vls_addr(&format_string));
 	bu_vls_printf(gedp->ged_result_str, "multiple of %d but read %lu values.\n", num_doubles_per_point, num_doubles_read);
 	bu_vls_free(&format_string);
 	rt_db_free_internal(&internal);

@@ -148,6 +148,9 @@
 /* Define to 1 if you have the <locale.h> header file. */
 #cmakedefine HAVE_LOCALE_H 1
 
+/* Define to 1 if you have the <xlocale.h> header file. */
+#cmakedefine HAVE_XLOCALE_H 1
+
 /* Define to 1, if your compiler supports long long data type */
 #cmakedefine HAVE_LONG_LONG 1
 

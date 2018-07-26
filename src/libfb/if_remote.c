@@ -1,7 +1,7 @@
 /*                     I F _ R E M O T E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,12 +45,7 @@
 #ifdef HAVE_WRITEV
 #  include <sys/uio.h>		/* for struct iovec */
 #endif
-#ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>		/* for htons(), etc. */
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h>
-#endif
+#include "bnetwork.h"
 
 #include "bu/color.h"
 #include "bu/log.h"

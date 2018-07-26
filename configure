@@ -70,14 +70,6 @@ do
                                   shift;;
      --disable-all-cxx)                options="$options -DENABLE_ALL_CXX_COMPILE=OFF";
                                   shift;;
-     --enable-posix)                options="$options -DENABLE_POSIX_COMPLIANCE=ON";
-                                  shift;;
-     --disable-posix)                options="$options -DENABLE_POSIX_COMPLIANCE=OFF";
-                                  shift;;
-     --strict-iso-c)                options="$options -DENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE=ON";
-                                  shift;;
-     --strict-iso-c)                options="$options -DENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE=OFF";
-                                  shift;;
      --enable-docs)                options="$options -DBRLCAD_EXTRADOCS=ON";
                                   shift;;
      --disable-docs)                options="$options -DBRLCAD_EXTRADOCS=OFF";
@@ -125,10 +117,6 @@ do
      --enable-libz)                options="$options -DBRLCAD_ZLIB=BUNDLED";
                                   shift;;
      --disable-libz)                options="$options -DBRLCAD_ZLIB=SYSTEM";
-                                  shift;;
-     --enable-tinycthread)                options="$options -DBRLCAD_TINYCTHREAD=BUNDLED";
-                                  shift;;
-     --disable-tinycthread)                options="$options -DBRLCAD_TINYCTHREAD=SYSTEM";
                                   shift;;
      --enable-lz4)                options="$options -DBRLCAD_LZ4=BUNDLED";
                                   shift;;

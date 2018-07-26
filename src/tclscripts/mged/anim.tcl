@@ -1,7 +1,7 @@
 #                        A N I M . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2016 United States Government as represented by
+# Copyright (c) 2004-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -3465,7 +3465,7 @@ proc sketch_sort { sortp outfile list } {
 
     frame $sortp.fa
     label $sortp.fa.l0 -text "Sorting $outfile ..."
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	set kill_cmd taskkill
     } else {
 	set kill_cmd kill

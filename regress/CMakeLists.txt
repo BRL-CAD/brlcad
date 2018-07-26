@@ -12,11 +12,11 @@ macro(Add_Regression_Test testname depends_list)
       add_dependencies(check ${depends_list})
     endif(TARGET check)
   endif(NOT "${depends_list}" STREQUAL "")
+  set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
 endmacro(Add_Regression_Test)
 
 # Define the toplevel regression target - unless specifically excluded
 # via a macro argument, this should collect all regression targets.
-# TODO - need to generalize it to accommodate regressions not using sh
 include(ProcessorCount)
 ProcessorCount(N)
 if(NOT N EQUAL 0)
@@ -53,14 +53,15 @@ if(SH_EXEC)
       set_tests_properties(regress-${testname} PROPERTIES LABELS "NOT_WORKING")
     endif(NOT ${testname}_EXCLUDE_FROM_REGRESS)
     if(NOT "${depends_list}" STREQUAL "")
+      add_dependencies(regress-${testname} ${depends_list})
       add_dependencies(regress ${depends_list})
       if(TARGET check)
 	add_dependencies(check ${depends_list})
       endif(TARGET check)
     endif(NOT "${depends_list}" STREQUAL "")
+    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
   endmacro(Sh_Regression_Test)
 
-  Sh_Regression_Test(mged mged)
   Sh_Regression_Test(moss "rt;asc2g;pixdiff;asc2pix;pix-png;png-pix")
   Sh_Regression_Test(lights "rt;asc2g;pixdiff;asc2pix")
   Sh_Regression_Test(solids "rt;mged;pixdiff;asc2pix;gencolor")
@@ -70,8 +71,17 @@ if(SH_EXEC)
   Sh_Regression_Test(weight "rtweight;mged")
   Sh_Regression_Test(gqa "gqa;mged")
   Sh_Regression_Test(bots "mged;pixdiff;rt")
+  Sh_Regression_Test(usage "rt" EXCLUDE_FROM_REGRESS)
   Sh_Regression_Test(flawfinder "" EXCLUDE_FROM_REGRESS)
+
+  # TODO - keep all tests short.  right now, regress repository
+  # violates this as it spends considerable time scanning the entire
+  # source tree, then scanning different sets of files for properties.
   Sh_Regression_Test(repository "")
+  set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
+  Sh_Regression_Test(mged mged)
+  set_tests_properties(regress-mged PROPERTIES TIMEOUT 600)
+
   Sh_Regression_Test(red mged)
   Sh_Regression_Test(nirt "mged;nirt")
   Sh_Regression_Test(comgeom "mged;asc2g;vdeck;comgeom-g")
@@ -118,6 +128,7 @@ CMAKEFILES(
   gqa.sh
   iges.sh
   library.sh
+  lights.cmake
   lights.sh
   lights_ref.asc
   master_fetch.sh
@@ -146,6 +157,7 @@ CMAKEFILES(
   tgms/m35.cg.gz
   tgms/solids-simple.mged
   tgms/solids.mged
+  usage.sh
   weight.sh
   )
 

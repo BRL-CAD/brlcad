@@ -366,7 +366,6 @@ test iocmd-10.5 {fblocked command} {
 set path(test4) [makeFile {} test4]
 set path(test5) [makeFile {} test5]
 
-file delete $path(test5)
 test iocmd-11.1 {I/O to command pipelines} {unixOrPc unixExecs} {
     set f [open $path(test4) w]
     close $f
@@ -3643,8 +3642,6 @@ foreach file [list test1 test2 test3 test4] {
 }
 # delay long enough for background processes to finish
 after 500
-foreach file [list test5] {
-    removeFile $file
-}
+removeFile test5
 cleanupTests
 return

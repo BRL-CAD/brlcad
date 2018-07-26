@@ -1,7 +1,7 @@
 /*                       P A T C H - G . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,6 +63,9 @@
 
 #include "./patch-g.h"
 
+#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT)
+extern double hypot(double x, double y);
+#endif
 
 #define ABS(_x)	((_x > 0.0)? _x : (-_x))
 
@@ -3725,9 +3728,6 @@ main(int argc, char **argv)
 		    bu_log("IN: %f %f %f\n", in[j].x, in[j].y, in[j].z);
 	    }
 
-	    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-		bu_prmem("At start of component");
-
 	    switch (in[i-1].surf_type) {
 		/* Key on surface types. */
 
@@ -3801,9 +3801,6 @@ main(int argc, char **argv)
 
 	    in[0] = in[i];
 	    i = 0;
-
-	    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-		bu_prmem("At end of component");
 
 	}       /* end "processing" if */
     }

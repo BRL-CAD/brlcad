@@ -1,7 +1,7 @@
 /*               O P E N N U R B S _ E X T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -659,24 +659,22 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
 
     TRACE("Creating surface tree for: " << face->m_face_index);
 
-#ifdef _OLD_SUBDIVISION_
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
-#else
-    ON_Interval dom[2] = { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval };
-    for (int i = 0; i < 2; i++) {
-	dom[i] = surf->Domain(i);
+
+#ifndef _OLD_SUBDIVISION_
 #ifdef LOOSEN_UV
-	min[i] -= within_distance_tol;
-	max[i] += within_distance_tol;
+    min[0] -= within_distance_tol;
+    max[0] += within_distance_tol;
+    min[1] -= within_distance_tol;
+    max[1] += within_distance_tol;
 #endif
-	if ((min != ON_3dPoint::UnsetPoint) && (max != ON_3dPoint::UnsetPoint)) {
-	    dom[i].Set(min[i], max[i]);
-	}
+    if ((min != ON_3dPoint::UnsetPoint) && (max != ON_3dPoint::UnsetPoint)) {
+	u.Set(min[0], max[0]);
+	v.Set(min[1], max[1]);
     }
-    ON_Interval u = dom[0];
-    ON_Interval v = dom[1];
 #endif
+
     double uq = u.Length()*0.25;
     double vq = v.Length()*0.25;
 
@@ -990,9 +988,10 @@ initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_Interval& u
 
 // Cache surface information as file static to ensure initialization once;
 static const ON_Surface *prev_surf[MAX_PSW] = {NULL};
-static ON_Interval dom[MAX_PSW][2] = {{ON_Interval::EmptyInterval, ON_Interval::EmptyInterval}};
+static ON_Interval dom[MAX_PSW][2];
 static int span_cnt[MAX_PSW][2] = {{0, 0}};
 static double *span[MAX_PSW][2] = {{NULL, NULL}};
+
 bool
 hasSplit(const ON_Surface *surf, const int dir, const ON_Interval& interval, double &split)
 {
@@ -1313,7 +1312,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #ifdef _OLD_SUBDIVISION_
 	delete q3surf;
 #endif
-	memset(newframes, 0, 9 * sizeof(ON_Plane *));
+	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;
@@ -1500,7 +1499,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	delete west;
 #endif
 
-	memset(newframes, 0, 9 * sizeof(ON_Plane *));
+	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;
@@ -1669,7 +1668,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	delete north;
 #endif
 
-	memset(newframes, 0, 9 * sizeof(ON_Plane *));
+	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;

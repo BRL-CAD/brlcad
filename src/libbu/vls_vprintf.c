@@ -1,7 +1,7 @@
 /*                        V L S _ V P R I N T F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -483,11 +483,12 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	bu_vls_strncpy(&fbuf, sp, (size_t)len);
 	fbufp = bu_vls_addr(&fbuf);
 
-#ifndef HAVE_C99_FORMAT_SPECIFIERS
-	/* if the format string uses the %z, %t, or %j width specifiers, we need to
-	 * them it with something more palatable to this busted compiler.
+	/* if the format string uses the %z, %t, or %j width
+	 * specifiers, we may need to substitute them with something
+	 * more palatable on lame compilers.
 	 */
 
+#ifndef HAVE_PERCENT_Z
 	if ((f.flags & SIZETINT) || (f.flags & PTRDIFFT) || (f.flags & INTMAX_T)) {
 	    char *fp = fbufp;
 	    while (*fp) {
@@ -509,11 +510,11 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    continue;
 			}
 			if (*fp == 'z' || *fp == 't' || *fp == 'j') {
-			    /* assume MSVC replacing instances of %z or %t or
-			     * %j with %I (capital i) until we encounter
-			     * anything different.
-			     */
-			    *fp = 'I';
+#  ifdef HAVE_WINDOWS_H
+			    *fp = 'I'; /* MSVC: replace with %I (uppercase i) */
+#  else
+			    *fp = 'l'; /* anyone else: assume it fits in long */
+#  endif /* HAVE_WINDOWS_H */
 			}
 
 			break;
@@ -525,7 +526,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		fp++;
 	    }
 	}
-#endif
+#endif /* HAVE_PERCENT_Z */
 
 	/* use type specifier to grab parameter appropriately from arg
 	   list, and print it correctly */

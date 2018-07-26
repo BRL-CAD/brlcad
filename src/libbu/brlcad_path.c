@@ -1,7 +1,7 @@
 /*                   B R L C A D _ P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,83 +48,6 @@
 
 /* arbitrary buffer size large enough to hold a couple paths and a label */
 #define MAX_WHERE_SIZE (size_t)((MAXPATHLEN*2) + 64)
-
-
-HIDDEN const char *
-_brlcad_data(void)
-{
-    static char path[MAXPATHLEN] = {0};
-
-#ifndef BRLCAD_DATA
-#  ifdef BRLCAD_DATA_DIR
-    if (find_path(path, BRLCAD_ROOT, BRLCAD_DATA_DIR, NULL, 0))
-	return path;
-#  endif
-
-    snprintf(path, MAXPATHLEN, "%s%cshare", BRLCAD_ROOT, BU_DIR_SEPARATOR);
-
-#else
-    /* do this instead of just returning BRLCAD_DATA to keep compiler
-     * quiet about unreachable code.
-     */
-    snprintf(path, MAXPATHLEN, "%s", BRLCAD_DATA);
-#endif
-
-    return path;
-}
-
-
-/**
- * print out an error/warning message if we cannot find the specified
- * BRLCAD_ROOT (compile-time install path)
- */
-HIDDEN void
-root_missing(const char *paths)
-{
-    bu_log("\
-Unable to locate where BRL-CAD %s is installed while searching:\n\
-%s\n\
-This version of BRL-CAD was compiled to be installed at:\n\
-	%s\n\n", brlcad_version(), paths, BRLCAD_ROOT);
-
-    bu_log("\
-You may specify where to locate BRL-CAD by setting the BRLCAD_ROOT\n\
-environment variable.  For example:\n\
-\n\
-for csh/tcsh users:\n\
-	setenv BRLCAD_ROOT /path/to/brlcad\n\
-for sh/bash users:\n\
-	BRLCAD_ROOT=/path/to/brlcad ; export BRLCAD_ROOT\n\n");
-
-    return;
-}
-
-
-/**
- * print out an error/warning message if we cannot find the specified
- * BRLCAD_DATA (compile-time install path)
- */
-HIDDEN void
-data_missing(const char *paths)
-{
-    bu_log("\
-Unable to locate where BRL-CAD %s data resources are installed\n\
-while searching:\n\
-%s\n\
-This release of BRL-CAD expects data resources to be at:\n\
-	%s\n\n", brlcad_version(), paths, _brlcad_data());
-
-    bu_log("\
-You may specify where to locate BRL-CAD data resources by setting\n\
-the BRLCAD_DATA environment variable.  For example:\n\
-\n\
-for csh/tcsh users:\n\
-	setenv BRLCAD_DATA /path/to/brlcad/data\n\
-for sh/bash users:\n\
-	BRLCAD_DATA=/path/to/brlcad/data ; export BRLCAD_DATA\n\n");
-
-    return;
-}
 
 
 /**
@@ -222,6 +145,84 @@ find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_v
     }
     return 0;
 }
+
+
+HIDDEN const char *
+_brlcad_data(void)
+{
+    static char path[MAXPATHLEN] = {0};
+
+#ifndef BRLCAD_DATA
+#  ifdef BRLCAD_DATA_DIR
+    if (find_path(path, BRLCAD_ROOT, BRLCAD_DATA_DIR, NULL, 0))
+	return path;
+#  endif
+
+    snprintf(path, MAXPATHLEN, "%s%cshare", BRLCAD_ROOT, BU_DIR_SEPARATOR);
+
+#else
+    /* print instead of just returning BRLCAD_DATA to keep compiler
+     * quiet about unreachable code.
+     */
+    snprintf(path, MAXPATHLEN, "%s", BRLCAD_DATA);
+#endif
+
+    return path;
+}
+
+
+/**
+ * print out an error/warning message if we cannot find the specified
+ * BRLCAD_ROOT (compile-time install path)
+ */
+HIDDEN void
+root_missing(const char *paths)
+{
+    bu_log("\
+Unable to locate where BRL-CAD %s is installed while searching:\n\
+%s\n\
+This version of BRL-CAD was compiled to be installed at:\n\
+	%s\n\n", brlcad_version(), paths, BRLCAD_ROOT);
+
+    bu_log("\
+You may specify where to locate BRL-CAD by setting the BRLCAD_ROOT\n\
+environment variable.  For example:\n\
+\n\
+for csh/tcsh users:\n\
+	setenv BRLCAD_ROOT /path/to/brlcad\n\
+for sh/bash users:\n\
+	BRLCAD_ROOT=/path/to/brlcad ; export BRLCAD_ROOT\n\n");
+
+    return;
+}
+
+
+/**
+ * print out an error/warning message if we cannot find the specified
+ * BRLCAD_DATA (compile-time install path)
+ */
+HIDDEN void
+data_missing(const char *paths)
+{
+    bu_log("\
+Unable to locate where BRL-CAD %s data resources are installed\n\
+while searching:\n\
+%s\n\
+This release of BRL-CAD expects data resources to be at:\n\
+	%s\n\n", brlcad_version(), paths, _brlcad_data());
+
+    bu_log("\
+You may specify where to locate BRL-CAD data resources by setting\n\
+the BRLCAD_DATA environment variable.  For example:\n\
+\n\
+for csh/tcsh users:\n\
+	setenv BRLCAD_DATA /path/to/brlcad/data\n\
+for sh/bash users:\n\
+	BRLCAD_DATA=/path/to/brlcad/data ; export BRLCAD_DATA\n\n");
+
+    return;
+}
+
 
 const char *
 bu_brlcad_dir(const char *dirkey, int fail_quietly)
@@ -335,12 +336,12 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     if (lhs) {
 	char *dirpath;
 	char *real_path = bu_realpath(lhs, NULL);
-	dirpath = bu_dirname(real_path);
+	dirpath = bu_path_dirname(real_path);
 	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
-	bu_free(dirpath, "free bu_dirname");
-	dirpath = bu_dirname(real_path);
+	bu_free(dirpath, "free bu_path_dirname");
+	dirpath = bu_path_dirname(real_path);
 	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
-	bu_free(dirpath, "free bu_dirname");
+	bu_free(dirpath, "free bu_path_dirname");
 	if (find_path(result, real_path, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: Run-time path identification [%s]\n", result);

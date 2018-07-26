@@ -1,7 +1,7 @@
 /*                         P A R S E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include <string.h>
 #include <assert.h>
 #include <limits.h>
+#include "vmath.h"
 
 #include "bu/cv.h"
 #include "bu/log.h"
@@ -499,7 +500,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     if (UNLIKELY(val != PARSE_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, PARSE_MAGIC_1,
-	       bu_identify_magic(val), val, __FILE__, __LINE__);
+	       bu_identify_magic(val), (unsigned long)val, __FILE__, __LINE__);
 	bu_bomb("bad getput buffer");
     }
 
@@ -530,7 +531,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     if (UNLIKELY(val != PARSE_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, PARSE_MAGIC_2,
-	       bu_identify_magic(val), val, __FILE__, __LINE__);
+	       bu_identify_magic(val), (unsigned long)val, __FILE__, __LINE__);
 	ext->ext_nbytes = 0;
 	bu_free(ext->ext_buf, "bu_struct_get full buffer");
 	ext->ext_buf = NULL;
@@ -1896,7 +1897,7 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 
 		bu_vls_strcat(vls, " {");
 		while (1) {
-		    if (*iptr == '"' && *prev != '\\') {
+		    if (*iptr == '"' && (!prev || *prev != '\\')) {
 			bu_vls_putc(vls, '}');
 			iptr++;
 			break;

@@ -1,7 +1,7 @@
 /*               P U L L B A C K C U R V E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2016 United States Government as represented by
+ * Copyright (c) 2009-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2959,7 +2959,11 @@ pullback_samples_from_closed_surface(PBCData* data,
 
     ON_2dPointArray *samples= new ON_2dPointArray();
     size_t numKnots = curve->SpanCount();
-    double *knots = new double[numKnots+1];
+    if (numKnots > INT_MAX - 1) {
+	bu_log("Error - more than INT_MAX - 1 knots in curve\n");
+	return;
+    }
+    double *knots = new double[(unsigned int)(numKnots+1)];
 
     curve->GetSpanVector(knots);
 

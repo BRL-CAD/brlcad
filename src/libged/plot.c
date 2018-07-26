@@ -1,7 +1,7 @@
 /*                         P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,14 +26,21 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 
 #include "bn.h"
 #include "bn/plot3.h"
 
-
 #include "./ged_private.h"
+
+#if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN) && !defined(popen)
+extern FILE *popen(const char *command, const char *type);
+#endif
+#if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(pclose)
+extern int pclose(FILE *stream);
+#endif
 
 
 /*

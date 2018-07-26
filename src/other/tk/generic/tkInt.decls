@@ -1361,28 +1361,38 @@ declare 106 win {
 
 # new for 8.4.20+/8.5.12+ Cygwin only
 declare 107 win {
-   int XFlush(Display *display)
+    int XFlush(Display *display)
 }
 declare 108 win {
-   int XGrabServer(Display *display)
+    int XGrabServer(Display *display)
 }
 declare 109 win {
-   int XUngrabServer(Display *display)
+    int XUngrabServer(Display *display)
 }
 declare 110 win {
-   int XFree(void *data)
+    int XFree(void *data)
 }
 declare 111 win {
-   int XNoOp(Display *display)
+    int XNoOp(Display *display)
 }
 declare 112 win {
-   XAfterFunction XSynchronize(Display *display, Bool onoff)
+    XAfterFunction XSynchronize(Display *display, Bool onoff)
 }
 declare 113 win {
-   int XSync(Display *display, Bool discard)
+    int XSync(Display *display, Bool discard)
 }
 declare 114 win {
-   VisualID XVisualIDFromVisual(Visual *visual)
+    VisualID XVisualIDFromVisual(Visual *visual)
+}
+
+declare 133 win {
+    int XDrawSegments(Display *d, Drawable dr, GC gc, XSegment *s, int n)
+}
+declare 134 win {
+    int XDrawPoint(Display *d, Drawable dr, GC gc, int x, int y)
+}
+declare 135 win {
+    int XDrawPoints(Display *d, Drawable dr, GC gc, XPoint *p, int n, int m)
 }
 
 ################################
@@ -1664,7 +1674,7 @@ declare 79 aqua {
 	    XTextProperty *text_prop_return)
 }
 declare 80 aqua {
-    void XDrawSegments(Display *display, Drawable d, GC gc,
+    int XDrawSegments(Display *display, Drawable d, GC gc,
 	    XSegment *segments, int nsegments)
 }
 declare 81 aqua {
@@ -1682,10 +1692,10 @@ declare 84 aqua {
     void XClearWindow(Display *d, Window w)
 }
 declare 85 aqua {
-    void XDrawPoint(Display *display, Drawable d, GC gc, int x, int y)
+    int XDrawPoint(Display *display, Drawable d, GC gc, int x, int y)
 }
 declare 86 aqua {
-    void XDrawPoints(Display *display, Drawable d, GC gc, XPoint *points,
+    int XDrawPoints(Display *display, Drawable d, GC gc, XPoint *points,
 	    int npoints, int mode)
 }
 declare 87 aqua {

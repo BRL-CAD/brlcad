@@ -1,7 +1,7 @@
 /*                        O C T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -393,13 +393,8 @@ ir_shootray_octree(struct application *ap)
 {
     vect_t inv_dir;	/* Inverses of ap->a_ray.r_dir */
     Octree *leafp = NULL;	/* Intersected octree leaf.	*/
-    inv_dir[X] = inv_dir[Y] = inv_dir[Z] = INFINITY;
-    if (!ZERO(ap->a_ray.r_dir[X]))
-	inv_dir[X] = 1.0 / ap->a_ray.r_dir[X];
-    if (!ZERO(ap->a_ray.r_dir[Y]))
-	inv_dir[Y] = 1.0 / ap->a_ray.r_dir[Y];
-    if (!ZERO(ap->a_ray.r_dir[Z]))
-	inv_dir[Z] = 1.0 / ap->a_ray.r_dir[Z];
+    VINVDIR(inv_dir, ap->a_ray.r_dir);
+
     /* Descend octree from root to find the closest intersected leaf node.
        Store minimum hit distance in "a_uvec[0]" field of application
        structure.  Implicitly return the leaf node in "leafp".

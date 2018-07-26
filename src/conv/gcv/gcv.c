@@ -1,7 +1,7 @@
 /*                           G C V . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -207,7 +207,10 @@ extract_format_prefix(struct bu_vls *format, const char *input)
 	int ret = 0;
 	bu_vls_sprintf(&wformat, "%s", input);
 	bu_vls_trunc(&wformat, -1 * strlen(colon_pos));
-	if (bu_vls_strlen(&wformat) > 0) {
+	/* Note: because Windows supports drive letters in the form {drive}: in
+	 * paths, we can't use single characters as format specifiers for the
+	 * {format}: prefix - they must be multi-character. */
+	if (bu_vls_strlen(&wformat) > 1) {
 	    ret = 1;
 	    if (format) bu_vls_sprintf(format, "%s", bu_vls_addr(&wformat));
 	}
@@ -488,6 +491,8 @@ main(int ac, const char **av)
 	{"B", "input-and-output-opts", "opts",  &gcv_fmt_fun, (void *)&both_opts,     gcv_both_str,                 },
 	BU_OPT_DESC_NULL
     };
+
+    bu_setprogname(av[0]);
 
     gcv_fmt_opts_init(&in_only_opts, gcv_opt_desc);
     gcv_fmt_opts_init(&out_only_opts, gcv_opt_desc);

@@ -132,6 +132,7 @@ set tail /a/b/c
 set url //[info hostname]:$port/a/b/c
 set fullurl HTTP://user:pass@[info hostname]:$port/a/b/c
 set binurl //[info hostname]:$port/binary
+set xmlurl //[info hostname]:$port/xml
 set posturl //[info hostname]:$port/post
 set badposturl //[info hostname]:$port/droppost
 set authorityurl //[info hostname]:$port
@@ -364,6 +365,12 @@ test http-3.31 {http::geturl fragment without path} -body {
 } -cleanup {
     catch { http::cleanup $token }
 } -result 200
+test http-3.32 {http::geturl application/xml is text} -body {
+    set token [http::geturl "$xmlurl"]
+    scan [http::data $token] "<%\[^>]>%c<%\[^>]>"
+} -cleanup {
+    catch { http::cleanup $token }
+} -result {test 4660 /test}
 
 test http-4.1 {http::Event} {
     set token [http::geturl $url -keepalive 0]

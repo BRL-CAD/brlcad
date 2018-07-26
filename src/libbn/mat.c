@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2016 United States Government as represented by
+ * Copyright (c) 1996-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,9 @@
 #include "bn/mat.h"
 #include "bn/plane.h"
 
+#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT) && !defined(__cplusplus)
+extern double hypot(double x, double y);
+#endif
 
 const mat_t bn_mat_identity = MAT_INIT_IDN;
 

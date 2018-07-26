@@ -35,6 +35,37 @@ RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 # Quiet all warnings in this directory
 DISABLE_WARNINGS()
 
+# For src/other, be liberal about standards
+unset(CMAKE_C_EXTENSIONS)
+unset(CMAKE_C_STANDARD_REQUIRED)
+unset(CMAKE_C_STANDARD)
+unset(CMAKE_CXX_EXTENSIONS)
+unset(CMAKE_CXX_STANDARD_REQUIRED)
+unset(CMAKE_CXX_STANDARD)
+
+###############################################################################
+# Unlike the misc/tools directory components built in src/other are part of
+# the distribution, not just the compilation.  Hence we need to make sure of
+# some basic compatibility between the build settings.
+
+# We don't want to try to mix 32 and 64 bit builds so despite clearing the
+# parent build flags,  set the 32/64 bit flag specifically if we have it from
+# the parent build.
+if(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64 AND DEFINED 64BIT_FLAG)
+  ADD_NEW_FLAG(C 64BIT_FLAG ALL)
+  ADD_NEW_FLAG(CXX 64BIT_FLAG ALL)
+  ADD_NEW_FLAG(SHARED_LINKER 64BIT_FLAG ALL)
+  ADD_NEW_FLAG(EXE_LINKER 64BIT_FLAG ALL)
+endif(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64 AND DEFINED 64BIT_FLAG)
+if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT MSVC AND DEFINED 32BIT_FLAG)
+  ADD_NEW_FLAG(C 32BIT_FLAG ALL)
+  ADD_NEW_FLAG(CXX 32BIT_FLAG ALL)
+  ADD_NEW_FLAG(SHARED_LINKER 32BIT_FLAG ALL)
+  ADD_NEW_FLAG(EXE_LINKER 32BIT_FLAG ALL)
+endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT MSVC AND DEFINED 32BIT_FLAG)
+
+###############################################################################
+
 # Set a variable that will tell build logic in subdirectories that there is a
 # parent build.  This will in some cases disable attempts to define settings
 # such as RPATH values that we need the parent build to manage.
@@ -112,18 +143,6 @@ SetTargetFolder(zlib "Third Party Libraries")
 SetTargetFolder(zlib-static "Third Party Libraries")
 SetTargetFolder(example "Third Party Executables")
 SetTargetFolder(minigzip "Third Party Executables")
-
-# tinycthread Library - C11 style threads portability wrapper 
-set(tinycthread_DESCRIPTION "
-Option for enabling and disabling compilation of the tinycthread library
-provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(tinycthread TINYCTHREAD tinycthread tinycthread_DESCRIPTION ALIASES ENABLE_TINYCTHREAD)
-SetTargetFolder(tinycthread "Third Party Libraries")
-SetTargetFolder(tinycthread-static "Third Party Libraries")
-
 
 # LZ4 compression/decompression library
 set(lz4_DESCRIPTION "
@@ -268,6 +287,7 @@ AUTO.
 # Note - we don't actually know the libpng build target name for the
 # shared library at this point - use png as a stub and override
 # once we know what PNG_LIB_NAME is.
+set(CMAKE_FIND_FRAMEWORK LAST)
 THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_PNG)
 if(BRLCAD_PNG_BUILD)
 
@@ -1030,7 +1050,7 @@ AUTO.
 THIRD_PARTY(proj-4 PROJ4 proj4 proj4_DESCRIPTION REQUIRED_VARS "BRLCAD_ENABLE_GDAL;BRLCAD_LEVEL2" ALIASES ENABLE_PROJ4)
 if(BRLCAD_PROJ4_BUILD)
   set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
-  set(PROJ4_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
+  set(PROJ4_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/proj-4/proj_config.h")
   SetTargetFolder(proj "Third Party Libraries/GDAL")
 endif(BRLCAD_PROJ4_BUILD)
@@ -1071,6 +1091,10 @@ mark_as_advanced(GDAL_LIBRARY)
 #add_subdirectory(gct)
 include("${CMAKE_CURRENT_SOURCE_DIR}/gct.dist")
 CMAKEFILES_IN_DIR(gct_ignore_files gct)
+
+# linenoise is used by applications directly
+include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
+CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
 
 CMAKEFILES(README)
 

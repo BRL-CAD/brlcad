@@ -372,6 +372,8 @@ MODULE_SCOPE void Ttk_RegisterNamedColor(Ttk_ResourceCache, const char *, XColor
 
 typedef struct TtkImageSpec Ttk_ImageSpec;
 TTKAPI Ttk_ImageSpec *TtkGetImageSpec(Tcl_Interp *, Tk_Window, Tcl_Obj *);
+TTKAPI Ttk_ImageSpec *TtkGetImageSpecEx(Tcl_Interp *, Tk_Window, Tcl_Obj *,
+					Tk_ImageChangedProc *, ClientData);
 TTKAPI void TtkFreeImageSpec(Ttk_ImageSpec *);
 TTKAPI Tk_Image TtkSelectImage(Ttk_ImageSpec *, Ttk_State);
 

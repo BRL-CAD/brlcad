@@ -1,7 +1,7 @@
 /*                          B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 1987-2016 United States Government as represented by
+ * Copyright (c) 1987-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,8 +39,9 @@
 
 
 int
-mk_brep(struct rt_wdb* file, const char* name, ON_Brep* brep)
+mk_brep(struct rt_wdb* file, const char* name, void* vbrep)
 {
+    ON_Brep *brep = (ON_Brep *)vbrep;
     struct rt_brep_internal* bi;
 
     BU_ASSERT(brep != NULL);

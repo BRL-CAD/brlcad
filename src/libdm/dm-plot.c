@@ -1,7 +1,7 @@
 /*                       D M - P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,6 +49,13 @@
 #include "bn/plot3.h"
 
 #include "./dm_private.h"
+
+#if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(popen)
+extern FILE *popen(const char *command, const char *type);
+#endif
+#if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(pclose)
+extern int pclose(FILE *stream);
+#endif
 
 /* Display Manager package interface */
 
