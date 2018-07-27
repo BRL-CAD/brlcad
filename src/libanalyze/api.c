@@ -49,6 +49,8 @@
 #define ANALYSIS_MOMENTS 1024
 #define ANALYSIS_PLOT_OVERLAPS 2048
 
+#define RAND_ANGLE ((rand()/(fastf_t)RAND_MAX) * 360)
+
 static int default_den = 0;
 static int analysis_flags;
 static double Samples_per_model_axis = 2.0;
@@ -283,6 +285,9 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    fastf_t Ly = state->span[1] / state->steps[1];
 	    fastf_t Lz = state->span[2] / state->steps[2];
 	    fastf_t cell_area;
+	    vect_t inormal = VINIT_ZERO;
+	    vect_t onormal = VINIT_ZERO;
+	    double icos, ocos;
 	    switch(state->i_axis) {
 		case 0:
 		    cell_area = Ly*Ly;
@@ -297,12 +302,22 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 	    {
 		bu_semaphore_acquire(ANALYZE_SEM_STATS);
+		/* factor in the normal vector to find how 'skew' the surface is */
+		RT_HIT_NORMAL(inormal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
+		VREVERSE(inormal, inormal);
+		RT_HIT_NORMAL(onormal, pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip);
+
+		/* find the cosine angle between the normal vector and ray_direction */
+		icos = VDOT(inormal, ap->a_ray.r_dir)/(MAGSQ(inormal)*MAGSQ(ap->a_ray.r_dir));
+		ocos = VDOT(onormal, ap->a_ray.r_dir)/(MAGSQ(onormal)*MAGSQ(ap->a_ray.r_dir));
 
 		/* add to region surface area */
-		prd->r_surf_area[state->curr_view] += (cell_area * 2);
+		prd->r_area[state->curr_view] += (cell_area/icos);
+		prd->r_area[state->curr_view] += (cell_area/ocos);
 
 		/* add to object surface area */
-		prd->optr->o_surf_area[state->curr_view] += (cell_area * 2);
+		prd->optr->o_area[state->curr_view] += (cell_area/icos);
+		prd->optr->o_area[state->curr_view] += (cell_area/ocos);
 
 		bu_semaphore_release(ANALYZE_SEM_STATS);
 	    }
@@ -658,7 +673,8 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	    hi = -INFINITY;
 	    tmp = 0.0;
 	    for(view = 0; view < state->num_views; view++) {
-		val = state->objs[obj].o_surf_area[view];
+		val = state->objs[obj].o_surf_area[view] = state->objs[obj].o_area[view];
+		state->objs[obj].o_area[view] /= 4;
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -708,7 +724,7 @@ check_terminate(struct current_state *state)
 		state->gridSpacing, state->gridSpacingLimit);
 	return 0;
     }
-    if (analysis_flags & (ANALYSIS_MASS|ANALYSIS_VOLUME)) {
+    if (analysis_flags & (ANALYSIS_MASS|ANALYSIS_VOLUME|ANALYSIS_SURF_AREA)) {
 	if (wv_status == 0) {
 	    if (state->verbose)
 		bu_vls_printf(state->verbose_str, "%s: Volume/mass tolerance met. Terminate\n", CPP_FILELINE);
@@ -958,11 +974,10 @@ allocate_region_data(struct current_state *state, char *av[])
     }
 
     state->m_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "densityLen");
-    state->m_len = (double *)bu_calloc(state->num_views, sizeof(double), "volume");
+    state->m_len = (double *)bu_calloc(state->num_views, sizeof(double), "len");
     state->m_volume = (double *)bu_calloc(state->num_views, sizeof(double), "volume");
-    state->m_mass = (double *)bu_calloc(state->num_views, sizeof(double), "volume");
-    state->m_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "surface area");
-    state->shots = (unsigned long *)bu_calloc(state->num_views, sizeof(unsigned long), "volume");
+    state->m_mass = (double *)bu_calloc(state->num_views, sizeof(double), "mass");
+    state->shots = (unsigned long *)bu_calloc(state->num_views, sizeof(unsigned long), "shots");
     state->m_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
     state->m_moi = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "moments of inertia");
     state->m_poi = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "products of inertia");
@@ -977,6 +992,7 @@ allocate_region_data(struct current_state *state, char *av[])
 	state->objs[i].o_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "o_lenDensity");
 	state->objs[i].o_volume = (double *)bu_calloc(state->num_views, sizeof(double), "o_volume");
 	state->objs[i].o_mass = (double *)bu_calloc(state->num_views, sizeof(double), "o_mass");
+	state->objs[i].o_area = (double *)bu_calloc(state->num_views, sizeof(double), "o_area");
 	state->objs[i].o_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "o_surf_area");
 	state->objs[i].o_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
 	state->objs[i].o_moi = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "moments of inertia");
@@ -995,6 +1011,7 @@ allocate_region_data(struct current_state *state, char *av[])
 	state->reg_tbl[i].r_len = (double *)bu_calloc(state->num_views, sizeof(double), "r_len");
 	state->reg_tbl[i].r_volume = (double *)bu_calloc(state->num_views, sizeof(double), "len");
 	state->reg_tbl[i].r_mass = (double *)bu_calloc(state->num_views, sizeof(double), "len");
+	state->reg_tbl[i].r_area = (double *)bu_calloc(state->num_views, sizeof(double), "area");
 	state->reg_tbl[i].r_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "surface area");
 
 	index = find_cmd_obj(state, state->objs, &regp->reg_name[1]);
@@ -1097,6 +1114,67 @@ analyze_triple_grid_setup(int view, struct current_state *state)
 }
 
 
+HIDDEN int
+analyze_setup_ae(struct current_state *state)
+{
+    vect_t temp;
+    vect_t diag;
+    mat_t toEye;
+    mat_t view2model;
+    fastf_t eye_backoff = (fastf_t)M_SQRT2;
+    struct rt_i *rtip = (struct rt_i *) state->rtip;
+
+    if (rtip == NULL) {
+	bu_log("analyze_setup_ae: ERROR: rtip is null");
+	return ANALYZE_ERROR;
+    }
+
+    if (rtip->nsolids <= 0) {
+	bu_log("ERROR: no primitives active\n");
+	return ANALYZE_ERROR;
+    }
+
+    if (rtip->nregions <= 0) {
+	bu_log("ERROR: no regions active\n");
+	return ANALYZE_ERROR;
+    }
+
+    if (rtip->mdl_max[X] >= INFINITY) {
+	bu_log("analyze_setup_ae: infinite model bounds? setting a unit minimum\n");
+	VSETALL(rtip->mdl_min, -1);
+    }
+    if (rtip->mdl_max[X] <= -INFINITY) {
+	bu_log("analyze_setup_ae: infinite model bounds? setting a unit maximum\n");
+	VSETALL(rtip->mdl_max, 1);
+    }
+    MAT_IDN(state->Viewrotscale);
+    bn_mat_angles(state->Viewrotscale, 270.0 + state->elevation_deg, 0.0, 270.0 - state->azimuth_deg);
+
+    /* Look at the center of the model */
+    MAT_IDN(toEye);
+    toEye[MDX] = -((rtip->mdl_max[X]+rtip->mdl_min[X])/2.0);
+    toEye[MDY] = -((rtip->mdl_max[Y]+rtip->mdl_min[Y])/2.0);
+    toEye[MDZ] = -((rtip->mdl_max[Z]+rtip->mdl_min[Z])/2.0);
+
+    VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
+    state->viewsize = MAGNITUDE(diag);
+
+    /* sanity check: make sure viewsize still isn't zero in case
+     * bounding box is empty, otherwise bn_mat_int() will bomb.
+     */
+    if (state->viewsize < 0 || ZERO(state->viewsize)) {
+	state->viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
+    }
+
+    state->Viewrotscale[15] = 0.5*(state->viewsize);	/* Viewscale */
+    bn_mat_mul(state->model2view, state->Viewrotscale, toEye);
+    bn_mat_inv(view2model, state->model2view);
+    VSET(temp, 0, 0, eye_backoff);
+    MAT4X3PNT(state->eye_model, view2model, temp);
+    return ANALYZE_OK;
+}
+
+
 HIDDEN void
 shoot_rays(struct current_state *state)
 {
@@ -1108,7 +1186,19 @@ shoot_rays(struct current_state *state)
 	if (state->use_single_grid) {
 	    analyze_single_grid_setup(state);
 	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
-	} else {
+	} else if (analysis_flags & ANALYSIS_SURF_AREA) {
+	    int view;
+	    for (view = 0; view < state->num_views; view++) {
+		/* fire rays at random azimuth and elevation angles */
+		state->azimuth_deg = RAND_ANGLE;
+		state->elevation_deg = RAND_ANGLE;
+		analyze_setup_ae(state);
+		analyze_single_grid_setup(state);
+		state->curr_view = view;
+		bu_parallel(analyze_worker, state->ncpu, (void *)state);
+	    }
+	}
+	else {
 	    int view;
 	    bu_log("Processing with grid spacing %g mm %ld x %ld x %ld\n",
 		    state->gridSpacing,
@@ -1126,73 +1216,6 @@ shoot_rays(struct current_state *state)
 	state->gridSpacing *= 0.5;
 
     } while (check_terminate(state));
-}
-
-
-HIDDEN int
-analyze_setup_ae(double azim,
-		 double elev,
-		 struct rt_i *rtip,
-		 mat_t Viewrotscale,
-		 fastf_t *viewsize,
-		 mat_t model2view,
-		 point_t eye_model)
-{
-    vect_t temp;
-    vect_t diag;
-    mat_t toEye;
-    mat_t view2model;
-    fastf_t eye_backoff = (fastf_t)M_SQRT2;
-
-    if (rtip == NULL) {
-	bu_log("analov_do_ae: ERROR: rtip is null");
-	return ANALYZE_ERROR;
-    }
-
-    if (rtip->nsolids <= 0) {
-	bu_log("ERROR: no primitives active\n");
-	return ANALYZE_ERROR;
-    }
-
-    if (rtip->nregions <= 0) {
-	bu_log("ERROR: no regions active\n");
-	return ANALYZE_ERROR;
-    }
-
-    if (rtip->mdl_max[X] >= INFINITY) {
-	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
-	VSETALL(rtip->mdl_min, -1);
-    }
-    if (rtip->mdl_max[X] <= -INFINITY) {
-	bu_log("do_ae: infinite model bounds? setting a unit maximum\n");
-	VSETALL(rtip->mdl_max, 1);
-    }
-
-    MAT_IDN(Viewrotscale);
-    bn_mat_angles(Viewrotscale, 270.0+elev, 0.0, 270.0-azim);
-
-    /* Look at the center of the model */
-    MAT_IDN(toEye);
-    toEye[MDX] = -((rtip->mdl_max[X]+rtip->mdl_min[X])/2.0);
-    toEye[MDY] = -((rtip->mdl_max[Y]+rtip->mdl_min[Y])/2.0);
-    toEye[MDZ] = -((rtip->mdl_max[Z]+rtip->mdl_min[Z])/2.0);
-
-    VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
-    *viewsize = MAGNITUDE(diag);
-
-    /* sanity check: make sure viewsize still isn't zero in case
-     * bounding box is empty, otherwise bn_mat_int() will bomb.
-     */
-    if (*viewsize < 0 || ZERO(*viewsize)) {
-	*viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
-    }
-
-    Viewrotscale[15] = 0.5*(*viewsize);	/* Viewscale */
-    bn_mat_mul(model2view, Viewrotscale, toEye);
-    bn_mat_inv(view2model, model2view);
-    VSET(temp, 0, 0, eye_backoff);
-    MAT4X3PNT(eye_model, view2model, temp);
-    return ANALYZE_OK;
 }
 
 
@@ -1247,7 +1270,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     if (state->use_single_grid) state->num_views = 1;
 
     if (state->use_single_grid && !state->use_view_information) {
-	if (analyze_setup_ae(state->azimuth_deg, state->elevation_deg, rtip, state->Viewrotscale, &state->viewsize, state->model2view, state->eye_model)) {
+	if (analyze_setup_ae(state)) {
 	    rt_free_rti(rtip);
 	    rtip = NULL;
 	    return ANALYZE_ERROR;

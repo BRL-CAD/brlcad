@@ -102,6 +102,8 @@ analyze_free_current_state(struct current_state *state)
 	    bu_free(state->objs[i].o_volume, "o_volume");
 	    bu_free(state->objs[i].o_mass, "o_mass");
 	    bu_free(state->objs[i].o_lenTorque, "o_lenTorque");
+	    bu_free(state->objs[i].o_area, "o_area");
+	    bu_free(state->objs[i].o_surf_area, "o_surf_area");
 	    bu_free(state->objs[i].o_moi, "o_moi");
 	    bu_free(state->objs[i].o_poi, "o_poi");
 	}
@@ -116,6 +118,8 @@ analyze_free_current_state(struct current_state *state)
 	    bu_free(state->reg_tbl[i].r_len, "r_len");
 	    bu_free(state->reg_tbl[i].r_volume, "r_volume");
 	    bu_free(state->reg_tbl[i].r_mass, "r_mass");
+	    bu_free(state->reg_tbl[i].r_area, "r_area");
+	    bu_free(state->reg_tbl[i].r_surf_area, "r_surf_area");
 	}
 	bu_free(state->reg_tbl, "object table");
 	state->reg_tbl = NULL;

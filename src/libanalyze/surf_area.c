@@ -34,7 +34,8 @@ fastf_t
 analyze_surf_area(struct current_state *state, const char *name)
 {
     fastf_t area;
-    int i, view, obj = 0;
+    int i, view, obj = 0, mean_count = 0;
+    double limit;
 
     for (i = 0; i < state->num_objects; i++) {
 	if(!(bu_strcmp(state->objs[i].o_name, name))) {
@@ -42,11 +43,22 @@ analyze_surf_area(struct current_state *state, const char *name)
 	    break;
 	}
     }
-
     area = 0.0;
+    /* find the maximum value of surface area */
     for (view = 0; view < state->num_views; view++)
-	area += state->objs[obj].o_surf_area[view];
-    return area;
+	V_MAX(limit, state->objs[obj].o_surf_area[view]);
+
+    /* take 80% of max value as a limit */
+    limit *= 0.8;
+
+    for (view = 0; view < state->num_views; view++) {
+	if (state->objs[obj].o_surf_area[view] >= limit) {
+	    area += state->objs[obj].o_surf_area[view];
+	    mean_count++;
+	}
+    }
+    /* return mean of acceptable surface areas */
+    return area/mean_count;
 }
 
 /*

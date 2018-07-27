@@ -65,6 +65,7 @@ struct per_obj_data {
     double *o_lenDensity;
     double *o_volume;
     double *o_mass;
+    double *o_area;
     double *o_surf_area;
     fastf_t *o_lenTorque; /* torque vector for each view */
     fastf_t *o_moi;       /* one vector per view for collecting the partial moments of inertia calculation */
@@ -81,6 +82,7 @@ struct per_region_data {
     double *r_len;        /* for per-region, per-view computation */
     double *r_mass;
     double *r_volume;
+    double *r_area;
     double *r_surf_area;
     struct per_obj_data *optr;
 };
@@ -106,7 +108,6 @@ struct current_state {
     double *m_len;
     double *m_volume;
     double *m_mass;
-    double *m_surf_area;
     unsigned long *shots;
 
     vect_t u_dir;  	/* direction of U vector for "current view" */
