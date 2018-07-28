@@ -172,6 +172,41 @@ gui_output(void *clientData, void *str)
 
 
 int
+mged_db_search_callback(int argc, const char *argv[], void *userdata)
+{
+    /* FIXME: pretty much copied from tclcad, ideally this should call
+     * tclcad's eval instead of doing its own thing but this is probably
+     * fine for now */
+    int ret;
+    int i;
+    size_t len;
+
+    Tcl_DString script;
+    Tcl_DStringInit(&script);
+    if (argc<=0) /* empty exec is a true no-op */
+    	return 1;
+    Tcl_DStringAppend(&script, argv[0], -1);
+
+    for (i = 1; i < argc; ++i)
+	Tcl_DStringAppendElement(&script, argv[i]);
+
+    ret =Tcl_Eval((Tcl_Interp *)userdata, Tcl_DStringValue(&script));
+    Tcl_DStringFree(&script);
+
+    len = strlen(((Tcl_Interp *)userdata)->result);
+    puts(((Tcl_Interp *)userdata)->result);
+    fflush(stdout);
+    /* FIXME: this might not be such a good idea, but
+     * if we don't trim the newline then basic things like
+     * `search -exec echo 0` won't work */
+    if (((Tcl_Interp *)userdata)->result[len-1] == '\n')
+	((Tcl_Interp *)userdata)->result[len-1] = '\0';
+
+    return ret == TCL_OK && TCL_OK == Tcl_GetBoolean((Tcl_Interp *)userdata, ((Tcl_Interp *)userdata)->result, &ret) && ret;
+}
+
+
+int
 cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int ret;

@@ -481,6 +481,7 @@ mged_setup(Tcl_Interp **interpreter)
     mged_global_variable_setup(*interpreter);
     mged_variable_setup(*interpreter);
     gedp->ged_interp = (void *)*interpreter;
+    gedp->ged_interp_eval = &mged_db_search_callback;
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
