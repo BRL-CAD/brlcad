@@ -352,7 +352,7 @@ ANALYZE_EXPORT int nirt_help(struct bu_vls *h, struct nirt_state *ns, bu_opt_for
 ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_state *ns);
 
 struct current_state;
-typedef void (*overlap_callback_t)(const struct region *reg1, const struct region *reg2, double depth, vect_t ihit, vect_t ohit, void* callback_data);
+typedef void (*overlap_callback_t)(const struct xray* ray, const struct partition *pp, const struct region *reg1, const struct region *reg2, double depth, void* callback_data);
 typedef void (*exp_air_callback_t)(const struct partition *pp, point_t last_out_point, point_t pt, point_t opt, void* callback_data);
 typedef void (*gaps_callback_t)(const struct xray* ray, const struct partition *pp, double gap_dist, point_t pt, void* callback_data);
 typedef void (*adj_air_callback_t)(const struct xray* ray, const struct partition *pp, point_t pt, void* callback_data);

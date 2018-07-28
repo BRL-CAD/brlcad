@@ -427,7 +427,6 @@ analyze_overlap(struct application *ap,
     struct hit *ihitp = pp->pt_inhit;
     struct hit *ohitp = pp->pt_outhit;
     vect_t ihit;
-    vect_t ohit;
     double depth;
 
     if (!hp) /* unexpected */
@@ -446,13 +445,12 @@ analyze_overlap(struct application *ap,
 	return 1;
 
     VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
-    VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
 
     if (analysis_flags & ANALYSIS_OVERLAPS) {
 	bu_semaphore_acquire(ANALYZE_SEM_LIST);
 	add_unique_pair(state->overlapList, reg1, reg2, depth, ihit);
 	bu_semaphore_release(ANALYZE_SEM_LIST);
-	state->overlaps_callback(reg1, reg2, depth, ihit, ohit, state->overlaps_callback_data);
+	state->overlaps_callback(&ap->a_ray, pp, reg1, reg2, depth, state->overlaps_callback_data);
     }  else {
 	bu_semaphore_acquire(ANALYZE_SEM_WORKER);
 	bu_vls_printf(state->log_str, "overlap %s %s\n", reg1->reg_name, reg2->reg_name);

@@ -43,14 +43,21 @@ struct overlaps_context {
 
 
 HIDDEN void
-overlap(const struct region *reg1,
+overlap(const struct xray *ray,
+	const struct partition *pp,
+	const struct region *reg1,
 	const struct region *reg2,
 	double depth,
-	vect_t ihit,
-	vect_t ohit,
 	void* callback_data)
 {
     struct overlaps_context *context = (struct overlaps_context*) callback_data;
+    struct hit *ihitp = pp->pt_inhit;
+    struct hit *ohitp = pp->pt_outhit;
+    vect_t ihit;
+    vect_t ohit;
+
+    VJOIN1(ihit, ray->r_pt, ihitp->hit_dist, ray->r_dir);
+    VJOIN1(ohit, ray->r_pt, ohitp->hit_dist, ray->r_dir);
 
     if (context->overlaps_overlay_flag) {
 	bu_semaphore_acquire(GED_SEM_WORKER);
