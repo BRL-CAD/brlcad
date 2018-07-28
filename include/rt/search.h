@@ -139,7 +139,8 @@ RT_EXPORT extern int db_search(struct bu_ptbl *results,
                                const char *filter,
                                int path_c,
                                struct directory **path_v,
-                               struct db_i *dbip
+                               struct db_i *dbip,
+                               struct db_search_context *ctx
 );
 
 /* These are the possible search flags. */

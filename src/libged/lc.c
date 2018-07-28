@@ -294,7 +294,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     /* The 7 is for the "-name" and '\0' */
     plan = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 7), "ged_lc");
     sprintf(plan, "-name %s", group_name);
-    matches = db_search(&results1, DB_SEARCH_TREE, plan, 0, NULL, gedp->ged_wdbp->dbip);
+    matches = db_search(&results1, DB_SEARCH_TREE, plan, 0, NULL, gedp->ged_wdbp->dbip, NULL);
     if (matches < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Error: Group '%s' does not exist.\n", group_name);
 	return GED_ERROR;
@@ -310,7 +310,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     path = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 2), "ged_lc");
     sprintf(path, "/%s", group_name);
     db_string_to_path(&root, gedp->ged_wdbp->dbip, path);
-    matches = db_search(&results2, DB_SEARCH_TREE, plan, root.fp_len, root.fp_names, gedp->ged_wdbp->dbip);
+    matches = db_search(&results2, DB_SEARCH_TREE, plan, root.fp_len, root.fp_names, gedp->ged_wdbp->dbip, NULL);
     bu_free(path, "ged_lc");
     if (matches < 1) { return GED_ERROR; }
     regions = (struct region_record *) bu_malloc(sizeof(struct region_record) * BU_PTBL_LEN(&results2), "ged_lc");

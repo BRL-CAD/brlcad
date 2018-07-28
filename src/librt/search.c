@@ -2385,7 +2385,7 @@ void db_search_register_data(struct db_search_context *ctx, void *userdata)
 
 
 int
-db_search_new(struct bu_ptbl *search_results,
+db_search(struct bu_ptbl *search_results,
 	  int search_flags,
 	  const char *plan_str,
 	  int input_path_cnt,
@@ -2531,17 +2531,6 @@ db_search_new(struct bu_ptbl *search_results,
     }
 
     return result_cnt;
-}
-
-int
-db_search(struct bu_ptbl *search_results,
-	  int search_flags,
-	  const char *plan_str,
-	  int input_path_cnt,
-	  struct directory **input_paths,
-	  struct db_i *dbip)
-{
-    return db_search_new(search_results, search_flags, plan_str, input_path_cnt, input_paths, dbip, NULL);
 }
 
 /*
