@@ -1203,10 +1203,7 @@ shoot_rays(struct current_state *state)
     do {
 	inv_spacing = 1.0/state->gridSpacing;
 	VSCALE(state->steps, state->span, inv_spacing);
-	if (state->use_single_grid) {
-	    analyze_single_grid_setup(state);
-	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
-	} else if (analysis_flags & ANALYSIS_SURF_AREA) {
+	if (analysis_flags & ANALYSIS_SURF_AREA) {
 	    int view;
 	    for (view = 0; view < state->num_views; view++) {
 		/* fire rays at random azimuth and elevation angles */
@@ -1217,8 +1214,11 @@ shoot_rays(struct current_state *state)
 		state->curr_view = view;
 		bu_parallel(analyze_worker, state->ncpu, (void *)state);
 	    }
-	}
-	else {
+	} else if (state->use_single_grid) {
+	    state->num_views = 1;
+	    analyze_single_grid_setup(state);
+	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
+	} else {
 	    int view;
 	    bu_log("Processing with grid spacing %g mm %ld x %ld x %ld\n",
 		    state->gridSpacing,
@@ -1286,8 +1286,6 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	}
     }
     rt_prep_parallel(rtip, state->ncpu);
-
-    if (state->use_single_grid) state->num_views = 1;
 
     if (state->use_single_grid && !state->use_view_information) {
 	if (analyze_setup_ae(state)) {
