@@ -34,6 +34,7 @@
 #include "bu/list.h"
 #include "bu/vls.h"
 #include "dm/bview.h"
+#include "rt/search.h"
 
 __BEGIN_DECLS
 
@@ -230,6 +231,7 @@ struct ged {
     int (*run)(struct ged *gedp, int ac, char *av[]);
 
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
+    db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
 
     /* Interface to LIBDM */
     int ged_dm_width;
