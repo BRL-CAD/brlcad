@@ -33,11 +33,6 @@
 
 #include "./ged_private.h"
 
-
-#define RT_TERMINAL_WIDTH 80
-#define RT_COLUMNS ((RT_TERMINAL_WIDTH + V4_MAXNAME - 1) / V4_MAXNAME)
-
-
 /*
  * List constraint objects in this database
  */

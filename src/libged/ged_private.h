@@ -74,6 +74,9 @@ __BEGIN_DECLS
 #define DG_GED_MAX 2047.0
 #define DG_GED_MIN -2048.0
 
+/* Default libged column width assumption */
+#define GED_TERMINAL_WIDTH 80
+
 struct _ged_funtab {
     char *ft_name;
     char *ft_parms;
@@ -315,16 +318,6 @@ extern int _ged_cm_end(const int argc,
 extern int _ged_cm_null(const int argc,
 			const char **argv);
 
-
-/* defined in ls.c */
-extern void _ged_vls_col_pr4v(struct bu_vls *vls,
-			      struct directory **list_of_names,
-			      size_t num_in_list,
-			      int no_decorate,
-			      int ssflag);
-extern struct directory ** _ged_getspace(struct db_i *dbip,
-					 size_t num_entries);
-
 /* defined in preview.c */
 extern void _ged_setup_rt(struct ged *gedp,
 			  char **vp,
@@ -531,6 +524,44 @@ extern int _ged_results_add(struct ged_results *results, const char *result_stri
 
 extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 extern int _ged_brep_tikz(struct ged *gedp, const char *obj_name, const char *outfile);
+
+
+/* defined in ged_util.c.c */
+
+/**
+ * Given two pointers to pointers to directory entries, do a string
+ * compare on the respective names and return that value.
+ */
+int cmpdirname(const void *a, const void *b, void *arg);
+
+/**
+ * Given two pointers to pointers to directory entries, compare
+ * the dp->d_len sizes.
+ */
+int cmpdlen(const void *a, const void *b, void *arg);
+
+
+/**
+ * Given a pointer to a list of pointers to names and the number of
+ * names in that list, sort and print that list in column order over
+ * four columns.
+ */
+extern void _ged_vls_col_pr4v(struct bu_vls *vls,
+			      struct directory **list_of_names,
+			      size_t num_in_list,
+			      int no_decorate,
+			      int ssflag);
+
+/**
+ * This routine walks through the directory entry list and mallocs
+ * enough space for pointers to hold the number of entries specified
+ * by the argument if > 0.
+ *
+ */
+extern struct directory ** _ged_getspace(struct db_i *dbip,
+					 size_t num_entries);
+
+
 
 __END_DECLS
 
