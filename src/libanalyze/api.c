@@ -371,21 +371,21 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	/* look for air first on shotlines */
 	if (analysis_flags & ANALYSIS_FIRST_AIR) {
 	    if (pp->pt_regionp->reg_aircode && pp->pt_back == PartHeadp) {
-		/* TODO: call FIRST_AIR callback */
+		state->first_air_callback(&ap->a_ray, pp, state->first_air_callback_data);
 	    }
 	}
 
 	/* look for air last on shotlines */
 	if (analysis_flags & ANALYSIS_LAST_AIR) {
 	    if (pp->pt_regionp->reg_aircode && pp->pt_forw == PartHeadp) {
-		/* TODO: call LAST_AIR callback */
+		state->last_air_callback(&ap->a_ray, pp, state->last_air_callback_data);
 	    }
 	}
 
 	/* look for unconfined airs regions*/
 	if (analysis_flags & ANALYSIS_UNCONF_AIR) {
 	    if (pp->pt_regionp->reg_aircode && (pp->pt_back != PartHeadp || pp->pt_forw != PartHeadp)) {
-		/* TODO: call UNCONF_AIR callback */
+		state->unconf_air_callback(&ap->a_ray, pp, state->unconf_air_callback_data);
 	    }
 	}
 
@@ -911,7 +911,7 @@ options_set(struct current_state *state)
 	}
     }
 
-    if ((analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR)) && ! state->use_air) {
+    if ((analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR|ANALYSIS_FIRST_AIR|ANALYSIS_LAST_AIR|ANALYSIS_UNCONF_AIR)) && ! state->use_air) {
 	bu_log("\nError:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
 	return GED_ERROR;
     }
@@ -937,6 +937,26 @@ options_set(struct current_state *state)
 	}
     }
 
+    if (analysis_flags & ANALYSIS_FIRST_AIR) {
+	if (state->first_air_callback == NULL) {
+	    bu_log("\nfirst_air callback function not registered!");
+	    return ANALYZE_ERROR;
+	}
+    }
+
+    if (analysis_flags & ANALYSIS_LAST_AIR) {
+	if (state->last_air_callback == NULL) {
+	    bu_log("\nlast_air callback function not registered!");
+	    return ANALYZE_ERROR;
+	}
+    }
+
+    if (analysis_flags & ANALYSIS_UNCONF_AIR) {
+	if (state->unconf_air_callback == NULL) {
+	    bu_log("\nunconf_air callback function not registered!");
+	    return ANALYZE_ERROR;
+	}
+    }
     return ANALYZE_OK;
 }
 

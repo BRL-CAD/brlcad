@@ -356,6 +356,9 @@ typedef void (*overlap_callback_t)(const struct xray* ray, const struct partitio
 typedef void (*exp_air_callback_t)(const struct partition *pp, point_t last_out_point, point_t pt, point_t opt, void* callback_data);
 typedef void (*gaps_callback_t)(const struct xray* ray, const struct partition *pp, double gap_dist, point_t pt, void* callback_data);
 typedef void (*adj_air_callback_t)(const struct xray* ray, const struct partition *pp, point_t pt, void* callback_data);
+typedef void (*first_air_callback_t)(const struct xray* ray, const struct partition *pp, void* callback_data);
+typedef void (*last_air_callback_t)(const struct xray* ray, const struct partition *pp, void* callback_data);
+typedef void (*unconf_air_callback_t)(const struct xray* ray, const struct partition *pp, void* callback_data);
 
 /**
  * returns the volume of the specified object (name)
@@ -530,6 +533,15 @@ analyze_register_gaps_callback(struct current_state *state, gaps_callback_t call
 
 ANALYZE_EXPORT extern void
 analyze_register_adj_air_callback(struct current_state *state, adj_air_callback_t callback_function, void* callback_data);
+
+ANALYZE_EXPORT extern void
+analyze_register_first_air_callback(struct current_state *state, first_air_callback_t callback_function, void* callback_data);
+
+ANALYZE_EXPORT extern void
+analyze_register_last_air_callback(struct current_state *state, last_air_callback_t callback_function, void* callback_data);
+
+ANALYZE_EXPORT extern void
+analyze_register_unconf_air_callback(struct current_state *state, unconf_air_callback_t callback_function, void* callback_data);
 
 __END_DECLS
 

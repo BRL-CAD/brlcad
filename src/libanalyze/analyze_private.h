@@ -177,6 +177,15 @@ struct current_state {
 
     adj_air_callback_t adj_air_callback;
     void* adj_air_callback_data;
+
+    first_air_callback_t first_air_callback;
+    void* first_air_callback_data;
+
+    last_air_callback_t last_air_callback;
+    void* last_air_callback_data;
+
+    unconf_air_callback_t unconf_air_callback;
+    void* unconf_air_callback_data;
 };
 
 __END_DECLS

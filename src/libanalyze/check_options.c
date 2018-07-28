@@ -63,6 +63,15 @@ analyze_current_state_init()
     state->adj_air_callback = NULL;
     state->adj_air_callback_data = NULL;
 
+    state->first_air_callback = NULL;
+    state->first_air_callback_data = NULL;
+
+    state->last_air_callback = NULL;
+    state->last_air_callback_data = NULL;
+
+    state->unconf_air_callback = NULL;
+    state->unconf_air_callback_data = NULL;
+
     state->log_str = bu_vls_vlsinit();
 
     return state;
@@ -235,6 +244,27 @@ void analyze_register_adj_air_callback(struct current_state *state, adj_air_call
 {
     state->adj_air_callback = callback_function;
     state->adj_air_callback_data = callback_data;
+}
+
+
+void analyze_register_first_air_callback(struct current_state *state, first_air_callback_t callback_function, void* callback_data)
+{
+    state->first_air_callback = callback_function;
+    state->first_air_callback_data = callback_data;
+}
+
+
+void analyze_register_last_air_callback(struct current_state *state, last_air_callback_t callback_function, void* callback_data)
+{
+    state->last_air_callback = callback_function;
+    state->last_air_callback_data = callback_data;
+}
+
+
+void analyze_register_unconf_air_callback(struct current_state *state, unconf_air_callback_t callback_function, void* callback_data)
+{
+    state->unconf_air_callback = callback_function;
+    state->unconf_air_callback_data = callback_data;
 }
 
 
