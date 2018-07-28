@@ -720,12 +720,19 @@ RT_EXPORT extern int db_dircheck(struct db_i *dbip,
 /* convert name to directory ptr */
 
 /**
- * This routine takes a name and looks it up in the directory table.
- * If the name is present, a pointer to the directory struct element
- * is returned, otherwise NULL is returned.
+ * This routine takes a path or a name and returns the current directory
+ * pointer (if any) associated with the object.
  *
- * If noisy is non-zero, a print occurs, else only the return code
- * indicates failure.
+ * If given an object name, it will look up the object name in the directory
+ * table.  If the name is present, a pointer to the directory struct element is
+ * returned, otherwise NULL is returned.
+ *
+ * If given a path, it will validate that the path is a valid path in the
+ * current database.  If it is, a pointer to the current directory in the path
+ * (i.e. the leaf object on the path) is returned, otherwise NULL is returned.
+ *
+ * If noisy is non-zero, a print occurs, else only the return code indicates
+ * failure.
  *
  * Returns -
  * struct directory if name is found
