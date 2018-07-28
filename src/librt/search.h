@@ -106,9 +106,12 @@ struct db_plan_t {
 	} fl;
 	struct db_plan_t *_p_data[2];	/* PLAN trees */
 	struct _ex {
+	    void *_e_userdata;
+	    db_search_callback_t _e_callback;
 	    char **_e_argv;		/* argv array */
-	    char **_e_orig;		/* original strings */
-	    int *_e_len;		/* allocated length */
+	    int _e_argc;		/* allocated length */
+	    int *_e_holes;
+	    int _e_nholes;
 	} ex;
 	struct db_plan_t *_ab_data[2];	/* PLAN trees */
 	struct db_plan_t *_bl_data[2];  /* PLAN trees */
@@ -132,7 +135,7 @@ struct db_plan_t {
 typedef struct _option {
     char *name;				/* option name */
     enum db_search_ntype token;			/* token type */
-    int (*create)(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);	/* create function */
+    int (*create)(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);	/* create function */
 #define O_NONE		0x01			/* no call required */
 #define O_ZERO		0x02			/* pass: nothing */
 #define O_ARGV		0x04			/* pass: argv, increment argv */
@@ -144,27 +147,28 @@ extern int isdepth, isoutput;
 
 __BEGIN_DECLS
 
-static int c_attr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_objparam(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_iname(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_maxdepth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_mindepth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_depth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_name(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_nnodes(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_regex(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_iregex(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_path(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_print(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_stdattr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_type(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_bool(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_openparen(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_closeparen(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_not(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_or(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_above(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
-static int c_below(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_attr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_objparam(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_iname(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_maxdepth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_mindepth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_depth(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_name(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_nnodes(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_regex(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_iregex(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_path(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_print(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_stdattr(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_type(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_bool(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_openparen(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_closeparen(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_not(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_or(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_above(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_below(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
+static int c_exec(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);
 
 __END_DECLS
 
