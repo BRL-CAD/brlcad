@@ -905,13 +905,14 @@
       <para>
 	<command>search</command> supports a <command>find</command> command style
 	<option>exec</option> option, that lets you do custom filtering and execute arbitrary commands on the objects.
+	To illustrate, load the M35 example model and search for all regions below subtractions or intersections:
 	<literallayout>
 	  <computeroutput>
-	    <prompt>mged&gt;</prompt><userinput>search all.g -type region ! -below -bool - -and ! -below -bool + -exec draw "{}" ";"</userinput>
+	    <prompt>mged&gt;</prompt><userinput>search all.g -type region -and ( -below -bool - -or -below -bool + ) -exec draw "{}" ";"</userinput>
 	  </computeroutput>
 	</literallayout>
 	The above command finds all regions below the <emphasis>all.g</emphasis>
-	object that contain only unioned objects and draws those regions in the MGED
+	object that are also below subtraction or intersection operators and draws those regions in the MGED
 	display manager window.
       </para>
       <para>
