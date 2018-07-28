@@ -1054,7 +1054,7 @@ analyze_single_grid_setup(struct current_state *state)
     state->area[0] = state->viewsize * state->viewsize;
 
     state->grid->grid_spacing = state->gridSpacing;
-    state->grid->x_points = state->viewsize/state->gridSpacing;
+    state->grid->x_points = state->viewsize/state->gridSpacing + 0.99;
     state->grid->total_points = state->grid->x_points*state->grid->x_points;
     bu_log("Processing with grid spacing %g mm %ld x %ld\n", state->grid->grid_spacing, state->grid->x_points, state->grid->x_points);
     state->grid->current_point=0;
