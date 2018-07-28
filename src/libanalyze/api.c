@@ -40,14 +40,15 @@
 #define ANALYSIS_CENTROIDS 2
 #define ANALYSIS_SURF_AREA 4
 #define ANALYSIS_MASS 8
-#define ANALYSIS_GAP 16
-#define ANALYSIS_EXP_AIR 32 /* exposed air */
+#define ANALYSIS_OVERLAPS 16
+#define ANALYSIS_MOMENTS 32
 #define ANALYSIS_BOX 64
-#define ANALYSIS_INTERFACES 128
-#define ANALYSIS_ADJ_AIR 256
-#define ANALYSIS_OVERLAPS 512
-#define ANALYSIS_MOMENTS 1024
-#define ANALYSIS_PLOT_OVERLAPS 2048
+#define ANALYSIS_GAP 128
+#define ANALYSIS_EXP_AIR 256 /* exposed air */
+#define ANALYSIS_ADJ_AIR 512
+#define ANALYSIS_FIRST_AIR 1024
+#define ANALYSIS_LAST_AIR 2048
+#define ANALYSIS_UNCONF_AIR 4096
 
 #define RAND_ANGLE ((rand()/(fastf_t)RAND_MAX) * 360)
 
@@ -364,6 +365,27 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    if (last_air && pp->pt_regionp->reg_aircode &&
 		pp->pt_regionp->reg_aircode != last_air) {
 		state->adj_air_callback(&ap->a_ray, pp, pt, state->adj_air_callback_data);
+	    }
+	}
+
+	/* look for air first on shotlines */
+	if (analysis_flags & ANALYSIS_FIRST_AIR) {
+	    if (pp->pt_regionp->reg_aircode && pp->pt_back == PartHeadp) {
+		/* TODO: call FIRST_AIR callback */
+	    }
+	}
+
+	/* look for air last on shotlines */
+	if (analysis_flags & ANALYSIS_LAST_AIR) {
+	    if (pp->pt_regionp->reg_aircode && pp->pt_forw == PartHeadp) {
+		/* TODO: call LAST_AIR callback */
+	    }
+	}
+
+	/* look for unconfined airs regions*/
+	if (analysis_flags & ANALYSIS_UNCONF_AIR) {
+	    if (pp->pt_regionp->reg_aircode && (pp->pt_back != PartHeadp || pp->pt_forw != PartHeadp)) {
+		/* TODO: call UNCONF_AIR callback */
 	    }
 	}
 
