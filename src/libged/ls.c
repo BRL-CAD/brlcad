@@ -30,6 +30,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 
@@ -229,6 +230,25 @@ vls_line_dpp(struct ged *gedp,
     }
 }
 
+HIDDEN void
+_ged_ls_show_help(struct ged *gedp, struct bu_opt_desc *d)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    const char *option_help;
+
+    bu_vls_sprintf(&str, "Usage:\n");
+    bu_vls_printf(&str,  "ls [-achlpqrs] [object_pattern_1] [object_pattern_2]...\n");
+    bu_vls_printf(&str,  "ls -A [-o] [-achlpqrs] [Key1{value1}] [Key2{value2}]...\n");
+    bu_vls_printf(&str,  "\n");
+
+    if ((option_help = bu_opt_describe(d, NULL))) {
+	bu_vls_printf(&str, "Options:\n%s", option_help);
+	bu_free((char *)option_help, "help str");
+    }
+
+    bu_vls_vlscat(gedp->ged_result_str, &str);
+    bu_vls_free(&str);
+}
 
 /**
  * List objects in this database
@@ -236,9 +256,13 @@ vls_line_dpp(struct ged *gedp,
 int
 ged_ls(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *dp;
     size_t i;
-    int c;
+    int ret_ac = 0;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct directory *dp;
+    struct directory **dirp;
+    struct directory **dirp0 = (struct directory **)NULL;
+    int print_help = 0;
     int aflag = 0;		/* print all objects without formatting */
     int cflag = 0;		/* print combinations */
     int rflag = 0;		/* print regions */
@@ -248,12 +272,21 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     int hflag = 0;		/* use human readable units for size in long format */
     int ssflag = 0;		/* sort by size in long format */
     int attr_flag = 0;		/* arguments are attribute name/value pairs */
-    int or_flag = 0;		/* flag indicating that any one attribute match is sufficient
-				 * default is all attributes must match.
-				 */
-    struct directory **dirp;
-    struct directory **dirp0 = (struct directory **)NULL;
-    static const char *usage = "[-A name/value pairs] OR [-acrslopq] object(s)";
+    int or_flag = 0;		/* flag for "one attribute match is sufficient" mode */
+    struct bu_opt_desc d[13];
+    BU_OPT(d[0],  "h", "help",           "",  NULL, &print_help,  "Print help and exit");
+    BU_OPT(d[1],  "a", "all",            "",  NULL, &aflag,       "Do not ignore HIDDEN objects.");
+    BU_OPT(d[2],  "c", "combs",          "",  NULL, &cflag,       "List combinations");
+    BU_OPT(d[3],  "r", "regions",        "",  NULL, &rflag,       "List regions");
+    BU_OPT(d[4],  "p", "primitives",     "",  NULL, &sflag,       "List primitives");
+    BU_OPT(d[5],  "s", "",               "",  NULL, &sflag,       "");
+    BU_OPT(d[6],  "q", "quiet",          "",  NULL, &qflag,       "Suppress informational output messages during database lookup process");
+    BU_OPT(d[7],  "l", "",               "",  NULL, &lflag,       "Use long reporting format");
+    BU_OPT(d[8],  "H", "human-readable", "",  NULL, &hflag,       "When printing using long format, use human readable sizes for object size");
+    BU_OPT(d[9],  "S", "sort",           "",  NULL, &ssflag,      "Sort using object size");
+    BU_OPT(d[10], "A", "attributes",     "",  NULL, &attr_flag,   "List objects having all of the specified attribute name/value pairs");
+    BU_OPT(d[11], "o", "or",             "",  NULL, &or_flag,     "In attribute mode, match if one or more attribute patterns match");
+    BU_OPT_NULL(d[12]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -262,49 +295,24 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
     ged_results_clear(gedp->ged_results);
 
-    bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "acrslopqAHS")) != -1) {
-	switch (c) {
-	    case 'A':
-		attr_flag = 1;
-		break;
-	    case 'o':
-		or_flag = 1;
-		break;
-	    case 'a':
-		aflag = 1;
-		break;
-	    case 'c':
-		cflag = 1;
-		break;
-	    case 'q':
-		qflag = 1;
-		break;
-	    case 'r':
-		rflag = 1;
-		break;
-	    case 's':
-	    case 'p':
-		sflag = 1;
-		break;
-	    case 'l':
-		lflag = 1;
-		break;
-	    case 'H':
-		hflag = 1;
-		break;
-	    case 'S':
-		ssflag = 1;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
-		_ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
-		return GED_ERROR;
-	}
+    /* Skip first arg */
+    argv++; argc--;
+
+    /* Handle options, if any */
+    ret_ac = bu_opt_parse(&str, argc, argv, d);
+    if (ret_ac < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
+	bu_vls_free(&str);
+	return GED_ERROR;
     }
-    /* skip options processed plus command name */
-    argc -= bu_optind;
-    argv += bu_optind;
+    if (print_help) {
+	_ged_ls_show_help(gedp, d);
+	bu_vls_free(&str);
+	return GED_OK;
+    }
+
+    /* object patterns are whatever is left in argv (none is OK) */
+    argc = ret_ac;
 
     /* create list of selected objects from database */
     if (attr_flag) {
@@ -315,8 +323,9 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	int op;
 	if ((argc < 2) || (argc%2 != 0)) {
 	    /* should be even number of name/value pairs */
-	    bu_log("ls -A option expects even number of 'name value' pairs\n");
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_log("Error: ls -A option expects even number of 'name value' pairs\n\n");
+	    _ged_ls_show_help(gedp, d);
+	    bu_vls_free(&str);
 	    _ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
 	    return TCL_ERROR;
 	}
