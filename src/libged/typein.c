@@ -3158,10 +3158,10 @@ script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_interna
     intern->idb_meth = &OBJ[ID_SCRIPT];
     BU_ALLOC(intern->idb_ptr, struct rt_script_internal);
     script_ip = (struct rt_script_internal *)intern->idb_ptr;
-    script_ip->magic = RT_SCRIPT_INTERNAL_MAGIC;
+    script_ip->script_magic = RT_SCRIPT_INTERNAL_MAGIC;
 
     bu_vls_init(&script_ip->s_type);
-    bu_vls_strcpy(&script_ip->s_type, cmd_argvs[0]);
+    bu_vls_strcpy(&script_ip->s_type, cmd_argvs[3]);
 
     /* !!! */
     bu_log("done creating script object, next it gets exported\n");

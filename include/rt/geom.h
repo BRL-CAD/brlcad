@@ -1041,7 +1041,7 @@ struct rt_hrt_internal
 /** @addtogroup rt_script */
 /** @{ */
 struct rt_script_internal {
-    uint32_t magic;
+    uint32_t script_magic;
     struct bu_vls s_type;
 };
 #define RT_SCRIPT_CK_MAGIC(_p) BU_CKMAG(_p, RT_SCRIPT_INTERNAL_MAGIC, "rt_script_internal")
