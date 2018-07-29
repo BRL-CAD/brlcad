@@ -228,7 +228,7 @@ rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     /*    ptr = ep->ext_buf; */
 
     bu_vls_init(&script_ip->s_type);
-    bu_vls_strcpy(&script_ip->s_type, (char *)ptr);
+    /*bu_vls_strcpy(&script_ip->s_type, (char *)ptr);*/
 
     bu_log("importing done\n");
     return 0;			/* OK */
