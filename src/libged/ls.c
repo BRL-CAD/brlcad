@@ -250,6 +250,18 @@ _ged_ls_show_help(struct ged *gedp, struct bu_opt_desc *d)
     bu_vls_free(&str);
 }
 
+struct _ged_ls_flags {
+    int aflag;	   /* print all objects without formatting */
+    int cflag;	   /* print combinations */
+    int rflag;	   /* print regions */
+    int sflag;	   /* print solids */
+    int lflag;	   /* use long format */
+    int qflag;	   /* quiet flag - do a quiet lookup */
+    int hflag;	   /* use human readable units for size in long format */
+    int ssflag;	   /* sort by size in long format */
+    int or_flag;   /* flag for "one attribute match is sufficient" mode */
+};
+
 /**
  * List objects in this database
  */
@@ -263,29 +275,21 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
     int print_help = 0;
-    int aflag = 0;		/* print all objects without formatting */
-    int cflag = 0;		/* print combinations */
-    int rflag = 0;		/* print regions */
-    int sflag = 0;		/* print solids */
-    int lflag = 0;		/* use long format */
-    int qflag = 0;		/* quiet flag - do a quiet lookup */
-    int hflag = 0;		/* use human readable units for size in long format */
-    int ssflag = 0;		/* sort by size in long format */
-    int attr_flag = 0;		/* arguments are attribute name/value pairs */
-    int or_flag = 0;		/* flag for "one attribute match is sufficient" mode */
+    struct _ged_ls_flags ls_flags = {0};
+    int attr_flag = 0; /* arguments are attribute name/value pairs */
     struct bu_opt_desc d[13];
-    BU_OPT(d[0],  "h", "help",           "",  NULL, &print_help,  "Print help and exit");
-    BU_OPT(d[1],  "a", "all",            "",  NULL, &aflag,       "Do not ignore HIDDEN objects.");
-    BU_OPT(d[2],  "c", "combs",          "",  NULL, &cflag,       "List combinations");
-    BU_OPT(d[3],  "r", "regions",        "",  NULL, &rflag,       "List regions");
-    BU_OPT(d[4],  "p", "primitives",     "",  NULL, &sflag,       "List primitives");
-    BU_OPT(d[5],  "s", "",               "",  NULL, &sflag,       "");
-    BU_OPT(d[6],  "q", "quiet",          "",  NULL, &qflag,       "Suppress informational output messages during database lookup process");
-    BU_OPT(d[7],  "l", "",               "",  NULL, &lflag,       "Use long reporting format");
-    BU_OPT(d[8],  "H", "human-readable", "",  NULL, &hflag,       "When printing using long format, use human readable sizes for object size");
-    BU_OPT(d[9],  "S", "sort",           "",  NULL, &ssflag,      "Sort using object size");
-    BU_OPT(d[10], "A", "attributes",     "",  NULL, &attr_flag,   "List objects having all of the specified attribute name/value pairs");
-    BU_OPT(d[11], "o", "or",             "",  NULL, &or_flag,     "In attribute mode, match if one or more attribute patterns match");
+    BU_OPT(d[0],  "h", "help",           "",  NULL, &print_help,         "Print help and exit");
+    BU_OPT(d[1],  "a", "all",            "",  NULL, &(ls_flags.aflag),   "Do not ignore HIDDEN objects.");
+    BU_OPT(d[2],  "c", "combs",          "",  NULL, &(ls_flags.cflag),   "List combinations");
+    BU_OPT(d[3],  "r", "regions",        "",  NULL, &(ls_flags.rflag),   "List regions");
+    BU_OPT(d[4],  "p", "primitives",     "",  NULL, &(ls_flags.sflag),   "List primitives");
+    BU_OPT(d[5],  "s", "",               "",  NULL, &(ls_flags.sflag),   "");
+    BU_OPT(d[6],  "q", "quiet",          "",  NULL, &(ls_flags.qflag),   "Suppress informational output messages during database lookup process");
+    BU_OPT(d[7],  "l", "",               "",  NULL, &(ls_flags.lflag),   "Use long reporting format");
+    BU_OPT(d[8],  "H", "human-readable", "",  NULL, &(ls_flags.hflag),   "When printing using long format, use human readable sizes for object size");
+    BU_OPT(d[9],  "S", "sort",           "",  NULL, &(ls_flags.ssflag),  "Sort using object size");
+    BU_OPT(d[10], "A", "attributes",     "",  NULL, &attr_flag,          "List objects having all of the specified attribute name/value pairs");
+    BU_OPT(d[11], "o", "or",             "",  NULL, &(ls_flags.or_flag), "In attribute mode, match if one or more attribute patterns match");
     BU_OPT_NULL(d[12]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -330,22 +334,22 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	if (or_flag) {
+	if (ls_flags.or_flag) {
 	    op = 2;
 	} else {
 	    op = 1;
 	}
 
 	dir_flags = 0;
-	if (aflag) dir_flags = -1;
-	if (cflag) dir_flags = RT_DIR_COMB;
-	if (sflag) dir_flags = RT_DIR_SOLID;
-	if (rflag) dir_flags = RT_DIR_REGION;
+	if (ls_flags.aflag) dir_flags = -1;
+	if (ls_flags.cflag) dir_flags = RT_DIR_COMB;
+	if (ls_flags.sflag) dir_flags = RT_DIR_SOLID;
+	if (ls_flags.rflag) dir_flags = RT_DIR_REGION;
 	if (!dir_flags) dir_flags = -1 ^ RT_DIR_HIDDEN;
 
 	bu_avs_init(&avs, argc, "wdb_ls_cmd avs");
 	for (i = 0; i < (size_t)argc; i += 2) {
-	    if (or_flag) {
+	    if (ls_flags.or_flag) {
 		bu_avs_add_nonunique(&avs, (char *)argv[i], (char *)argv[i+1]);
 	    } else {
 		bu_avs_add(&avs, (char *)argv[i], (char *)argv[i+1]);
@@ -371,7 +375,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	 * Verify the names, and add pointers to them to the array.
 	 */
 	for (i = 0; i < (size_t)argc; i++) {
-	    if (qflag) {
+	    if (ls_flags.qflag) {
 		dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
 	    } else {
 		dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY);
@@ -390,18 +394,18 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	 */
 	for (i = 0; i < RT_DBNHASH; i++)
 	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (!aflag && (dp->d_flags & RT_DIR_HIDDEN))
+		if (!ls_flags.aflag && (dp->d_flags & RT_DIR_HIDDEN))
 		    continue;
 		*dirp++ = dp;
 	    }
     }
 
-    if (lflag)
-	vls_long_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag, hflag, ssflag);
-    else if (aflag || cflag || rflag || sflag)
-	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag, ssflag);
+    if (ls_flags.lflag)
+	vls_long_dpp(gedp, dirp0, (int)(dirp - dirp0), ls_flags.aflag, ls_flags.cflag, ls_flags.rflag, ls_flags.sflag, ls_flags.hflag, ls_flags.ssflag);
+    else if (ls_flags.aflag || ls_flags.cflag || ls_flags.rflag || ls_flags.sflag)
+	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), ls_flags.aflag, ls_flags.cflag, ls_flags.rflag, ls_flags.sflag, ls_flags.ssflag);
     else {
-	_ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0, ssflag);
+	_ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0, ls_flags.ssflag);
 	_ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
     }
 
