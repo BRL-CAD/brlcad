@@ -262,6 +262,21 @@ struct _ged_ls_flags {
     int or_flag;   /* flag for "one attribute match is sufficient" mode */
 };
 
+void
+_ged_ls_flags_init(struct _ged_ls_flags *f)
+{
+    if (!f) return;
+    f->aflag = 0;
+    f->cflag = 0;
+    f->rflag = 0;
+    f->sflag = 0;
+    f->lflag = 0;
+    f->qflag = 0;
+    f->hflag = 0;
+    f->ssflag = 0;
+    f->or_flag = 0;
+}
+
 /**
  * List objects in this database
  */
@@ -275,7 +290,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
     int print_help = 0;
-    struct _ged_ls_flags ls_flags = {0};
+    struct _ged_ls_flags ls_flags;
     int attr_flag = 0; /* arguments are attribute name/value pairs */
     struct bu_opt_desc d[13];
     BU_OPT(d[0],  "h", "help",           "",  NULL, &print_help,         "Print help and exit");
@@ -295,7 +310,8 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    /* initialize result */
+    /* initialize */
+    _ged_ls_flags_init(&ls_flags);
     bu_vls_trunc(gedp->ged_result_str, 0);
     ged_results_clear(gedp->ged_results);
 
