@@ -16,7 +16,7 @@ set(LIBANALYZE_SOURCES
   mass.c
   moments.c
   nirt.cxx
-  outer_pnts.c
+  obj_to_pnts.c
   overlaps.c
   raydiff.c
   #find_subtracted_shapes.cpp
