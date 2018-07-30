@@ -351,6 +351,15 @@ ANALYZE_EXPORT int nirt_help(struct bu_vls *h, struct nirt_state *ns, bu_opt_for
  * number of line segments in segs, or -1 if there was an error. */
 ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_state *ns);
 
+/**
+ * Using ray intersection, sample the database object obj and return a pnts primitive
+ * with the first and last hits along each ray intersection (for the whole object,
+ * not per region.)*/
+ANALYZE_EXPORT int analyze_outer_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
+	       const char *obj, struct bn_tol *tol);
+
+
+
 struct current_state;
 typedef void (*overlap_callback_t)(const struct xray* ray, const struct partition *pp, const struct region *reg1, const struct region *reg2, double depth, void* callback_data);
 typedef void (*exp_air_callback_t)(const struct partition *pp, point_t last_out_point, point_t pt, point_t opt, void* callback_data);

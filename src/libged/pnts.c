@@ -35,6 +35,7 @@
 #include "bu/sort.h"
 #include "rt/geom.h"
 #include "wdb.h"
+#include "analyze.h"
 #include "./ged_private.h"
 
 
@@ -252,6 +253,97 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
     return GED_OK;
 }
 
+HIDDEN int
+_obj_to_pnts(struct ged *gedp, int argc, const char **argv)
+{
+    struct directory *dp;
+    int print_help = 0;
+    int opt_ret = 0;
+    fastf_t len_tol = 0.0;
+    struct rt_db_internal internal;
+    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    struct rt_pnts_internal *pnts = NULL;
+    const char *pnt_prim= NULL;
+    const char *obj_name = NULL;
+    const char *usage = "Usage: pnts gen [options] <obj> <output_pnts>\n\n";
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
+    BU_OPT(d[1], "t", "tolerance", "#", &bu_opt_fastf_t, &len_tol,      "Specify sampling grid spacing (in mm).");
+    BU_OPT_NULL(d[2]);
+
+    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
+
+    /* must be wanting help */
+    if (argc < 1) {
+	_pnts_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    /* parse standard options */
+    opt_ret = bu_opt_parse(NULL, argc, argv, d);
+
+    if (print_help) {
+	_pnts_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    /* adjust argc to match the leftovers of the options parsing */
+    argc = opt_ret;
+
+    if (argc != 2) {
+	_pnts_cmd_help(gedp, usage, d);
+	return GED_ERROR;
+    }
+
+    obj_name = argv[0];
+    pnt_prim = argv[1];
+
+    /* Sanity */
+    if (db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_QUIET) == RT_DIR_NULL) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s doesn't exist!\n", obj_name);
+	return GED_ERROR;
+    }
+    if (db_lookup(gedp->ged_wdbp->dbip, pnt_prim, LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s already exists!\n", pnt_prim);
+	return GED_ERROR;
+    }
+
+    /* If we don't have a tolerance, try to guess something sane from the bbox */
+    if (NEAR_ZERO(len_tol, RT_LEN_TOL)) {
+	point_t rpp_min, rpp_max;
+	point_t obj_min, obj_max;
+	VSETALL(rpp_min, INFINITY);
+	VSETALL(rpp_max, -INFINITY);
+	ged_get_obj_bounds(gedp, 1, (const char **)&obj_name, 0, obj_min, obj_max);
+	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
+	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
+	len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
+	bu_log("Note - no tolerance specified, using %f\n", len_tol);
+    }
+    btol.dist = len_tol;
+
+    RT_DB_INTERNAL_INIT(&internal);
+    internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    internal.idb_type = ID_PNTS;
+    internal.idb_meth = &OBJ[ID_PNTS];
+    BU_ALLOC(internal.idb_ptr, struct rt_pnts_internal);
+    pnts = (struct rt_pnts_internal *) internal.idb_ptr;
+    pnts->magic = RT_PNTS_INTERNAL_MAGIC;
+    pnts->scale = 0.0;
+    pnts->type = RT_PNT_TYPE_NRM;
+
+    if (analyze_outer_pnts(pnts, gedp->ged_wdbp->dbip, obj_name, &btol)) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
+	return GED_ERROR;
+    }
+
+    GED_DB_DIRADD(gedp, dp, pnt_prim, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+
+    bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %d points", pnt_prim, pnts->count);
+
+    return GED_OK;
+}
 
 HIDDEN void
 _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
@@ -271,6 +363,10 @@ _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
     bu_vls_printf(&str, "      print information. (todo - document subcmd options...)\n\n");
     bu_vls_printf(&str, "  read <pnts> input_file format units pnt_size\n");
     bu_vls_printf(&str, "    - Read data from an input file into a pnts object\n\n");
+    bu_vls_printf(&str, "  gen [-t tol] <obj> <output_pnts>\n");
+    bu_vls_printf(&str, "    - Generate a point set from the object and store the set in a points object.\n");
+    bu_vls_printf(&str, "      Collects the first and last hit and normal for any given ray, generating\n");
+    bu_vls_printf(&str, "      an \"outer surface\" point set.\n\n");
     bu_vls_printf(&str, "  tri [-s scale] <pnts> <output_bot>\n");
     bu_vls_printf(&str, "    - Generate unit or scaled triangles for each pnt in a point set. If no normal\n");
     bu_vls_printf(&str, "      information is present, use origin at avg of all set points to make normals.\n\n");
@@ -325,7 +421,7 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
     int opt_ret = 0;
     int opt_argc = argc;
     struct bu_opt_desc d[2];
-    const char * const pnt_subcommands[] = {"generate", "get", "read", "tri", NULL};
+    const char * const pnt_subcommands[] = {"gen", "get", "read", "tri", NULL};
     const char * const *subcmd;
 
     BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
@@ -384,6 +480,8 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
 
     len = strlen(argv[0]);
     if (bu_strncmp(argv[0], "tri", len) == 0) return _pnts_to_bot(gedp, argc, argv);
+
+    if (bu_strncmp(argv[0], "gen", len) == 0) return _obj_to_pnts(gedp, argc, argv);
 
     /* If we don't have a valid subcommand, we're done */
     bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!\n", cmd, argv[0]);
