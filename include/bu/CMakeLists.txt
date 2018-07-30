@@ -3,6 +3,7 @@ set(bu_headers
   bitv.h
   cmd.h
   color.h
+  column.h
   cv.h
   debug.h
   defines.h
