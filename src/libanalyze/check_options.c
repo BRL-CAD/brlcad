@@ -103,6 +103,21 @@ analyze_free_current_state(struct current_state *state)
 	state->num_densities = 0;
     }
 
+    if (state->m_lenTorque != NULL)
+	bu_free(state->m_lenTorque, "m_lenTorque");
+
+    if (state->m_moi != NULL)
+	bu_free(state->m_moi, "m_moi");
+
+    if (state->m_poi != NULL)
+	bu_free(state->m_poi, "m_poi");
+
+    if (state->m_lenDensity != NULL)
+	bu_free(state->m_lenDensity, "m_lenDensity");
+
+    if (state->m_len != NULL)
+	bu_free(state->m_len, "m_len");
+
     if (state->shots != NULL) {
 	bu_free(state->shots, "m_shots");
 	state->shots = NULL;

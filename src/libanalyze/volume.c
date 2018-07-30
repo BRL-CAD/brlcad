@@ -83,6 +83,19 @@ analyze_volume_region(struct current_state *state, int i, char **name, double *v
     *low = avg_vol - lo;
 }
 
+
+fastf_t
+analyze_total_volume(struct current_state *state)
+{
+    int view;
+    double avg_vol = 0.0;
+    for (view=0; view < state->num_views; view++) {
+	avg_vol += state->m_len[view] * (state->area[view] / state->shots[view]);
+    }
+    avg_vol /= state->num_views;
+    return avg_vol;
+}
+
 /*
  * Local Variables:
  * tab-width: 8

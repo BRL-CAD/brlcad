@@ -106,8 +106,6 @@ struct current_state {
     /* ANALYZE_SEM_STATS protects this */
     double *m_lenDensity;
     double *m_len;
-    double *m_volume;
-    double *m_mass;
     unsigned long *shots;
 
     vect_t u_dir;  	/* direction of U vector for "current view" */

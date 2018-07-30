@@ -82,6 +82,20 @@ analyze_mass_region(struct current_state *state, int i, char **name, double *mas
     *high = hi - avg_mass;
     *low = avg_mass - lo;
 }
+
+
+fastf_t
+analyze_total_mass(struct current_state *state)
+{
+    int view;
+    double avg_mass = 0.0;
+    for (view=0; view < state->num_views; view++) {
+	avg_mass += state->m_lenDensity[view] * (state->area[view] / state->shots[view]);
+    }
+    avg_mass /= state->num_views;
+    return avg_mass;
+}
+
 /*
  * Local Variables:
  * tab-width: 8

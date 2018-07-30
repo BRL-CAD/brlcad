@@ -33,12 +33,19 @@
 void
 analyze_moments(struct current_state *state, const char *name, mat_t moments)
 {
-    int view, obj = 0;
+    int view, obj, i;
     fastf_t Dx_sq, Dy_sq, Dz_sq;
     double avg_mass = analyze_mass(state, name);
     point_t centroid;
     analyze_centroid(state, name, centroid);
     MAT_ZERO(moments);
+
+    for (i = 0; i < state->num_objects; i++) {
+	if(!(bu_strcmp(state->objs[i].o_name, name))) {
+	    obj = i;
+	    break;
+	}
+    }
 
     for (view=0; view < state->num_views; view++) {
 	vectp_t moi = &state->objs[obj].o_moi[view*3];
@@ -75,6 +82,51 @@ analyze_moments(struct current_state *state, const char *name, mat_t moments)
     moments[9] = moments[6];
 }
 
+
+void
+analyze_moments_total(struct current_state *state, mat_t moments)
+{
+    int view;
+    fastf_t Dx_sq, Dy_sq, Dz_sq;
+    double avg_mass = analyze_total_mass(state);
+    point_t centroid;
+    analyze_total_centroid(state, centroid);
+    MAT_ZERO(moments);
+
+    for (view=0; view < state->num_views; view++) {
+	vectp_t moi = &state->m_moi[view*3];
+	vectp_t poi = &state->m_poi[view*3];
+
+	moments[MSX] += moi[X];
+	moments[MSY] += moi[Y];
+	moments[MSZ] += moi[Z];
+	moments[1] += poi[X];
+	moments[2] += poi[Y];
+	moments[6] += poi[Z];
+    }
+
+    moments[MSX] /= (fastf_t)state->num_views;
+    moments[MSY] /= (fastf_t)state->num_views;
+    moments[MSZ] /= (fastf_t)state->num_views;
+    moments[1] /= (fastf_t)state->num_views;
+    moments[2] /= (fastf_t)state->num_views;
+    moments[6] /= (fastf_t)state->num_views;
+
+    /* Lastly, apply the parallel axis theorem */
+    Dx_sq = centroid[X] * centroid[X];
+    Dy_sq = centroid[Y] * centroid[Y];
+    Dz_sq = centroid[Z] * centroid[Z];
+    moments[MSX] -= avg_mass * (Dy_sq + Dz_sq);
+    moments[MSY] -= avg_mass * (Dx_sq + Dz_sq);
+    moments[MSZ] -= avg_mass * (Dx_sq + Dy_sq);
+    moments[1] += avg_mass * centroid[X] * centroid[Y];
+    moments[2] += avg_mass * centroid[X] * centroid[Z];
+    moments[6] += avg_mass * centroid[Y] * centroid[Z];
+
+    moments[4] = moments[1];
+    moments[8] = moments[2];
+    moments[9] = moments[6];
+}
 /*
  * Local Variables:
  * tab-width: 8

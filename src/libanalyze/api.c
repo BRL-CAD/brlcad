@@ -1012,8 +1012,6 @@ allocate_region_data(struct current_state *state, char *av[])
 
     state->m_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "densityLen");
     state->m_len = (double *)bu_calloc(state->num_views, sizeof(double), "len");
-    state->m_volume = (double *)bu_calloc(state->num_views, sizeof(double), "volume");
-    state->m_mass = (double *)bu_calloc(state->num_views, sizeof(double), "mass");
     state->shots = (unsigned long *)bu_calloc(state->num_views, sizeof(unsigned long), "shots");
     state->m_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
     state->m_moi = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "moments of inertia");
@@ -1412,14 +1410,6 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     /* Free dynamically allocated state */
     bu_vls_free(state->log_str);
     bu_list_free(&overlapList.l);
-
-    bu_free(state->m_lenDensity, "m_lenDensity");
-    bu_free(state->m_len, "m_len");
-    bu_free(state->m_volume, "m_volume");
-    bu_free(state->m_mass, "m_mass");
-    bu_free(state->m_lenTorque, "m_lenTorque");
-    bu_free(state->m_moi, "m_moi");
-    bu_free(state->m_poi, "m_poi");
 
     if (state->densities != NULL) {
 	bu_free(state->densities, "densities");
