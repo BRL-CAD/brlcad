@@ -368,24 +368,26 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    }
 	}
 
-	/* look for air first on shotlines */
-	if (analysis_flags & ANALYSIS_FIRST_AIR) {
-	    if (pp->pt_regionp->reg_aircode && pp->pt_back == PartHeadp) {
-		state->first_air_callback(&ap->a_ray, pp, state->first_air_callback_data);
+	if (pp->pt_regionp->reg_aircode) {
+	    /* look for air first on shotlines */	
+	    if (pp->pt_back == PartHeadp) {
+		if (analysis_flags & ANALYSIS_FIRST_AIR)
+		    state->first_air_callback(&ap->a_ray, pp, state->first_air_callback_data);
+	    } else {
+		/* else add to unconfined air regions list */
+		if (analysis_flags & ANALYSIS_UNCONF_AIR) {
+		    state->unconf_air_callback(&ap->a_ray, pp, pp->pt_back, state->unconf_air_callback_data);
+		}
 	    }
-	}
-
-	/* look for air last on shotlines */
-	if (analysis_flags & ANALYSIS_LAST_AIR) {
-	    if (pp->pt_regionp->reg_aircode && pp->pt_forw == PartHeadp) {
-		state->last_air_callback(&ap->a_ray, pp, state->last_air_callback_data);
-	    }
-	}
-
-	/* look for unconfined airs regions*/
-	if (analysis_flags & ANALYSIS_UNCONF_AIR) {
-	    if (pp->pt_regionp->reg_aircode && (pp->pt_back != PartHeadp || pp->pt_forw != PartHeadp)) {
-		state->unconf_air_callback(&ap->a_ray, pp, state->unconf_air_callback_data);
+	    /* look for air last on shotlines */
+	    if (pp->pt_forw == PartHeadp) {
+		if (analysis_flags & ANALYSIS_LAST_AIR)
+		    state->first_air_callback(&ap->a_ray, pp, state->first_air_callback_data);
+	    } else {
+		/* else add to unconfined air regions list */
+		if (analysis_flags & ANALYSIS_UNCONF_AIR) {
+		    state->unconf_air_callback(&ap->a_ray, pp->pt_forw, pp, state->unconf_air_callback_data);
+		}
 	    }
 	}
 

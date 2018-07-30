@@ -240,6 +240,8 @@ extern check_functions_t check_overlaps;
 
 extern check_functions_t check_surf_area;
 
+extern check_functions_t check_unconf_air;
+
 extern check_functions_t check_volume;
 __END_DECLS
 

@@ -358,7 +358,7 @@ typedef void (*gaps_callback_t)(const struct xray* ray, const struct partition *
 typedef void (*adj_air_callback_t)(const struct xray* ray, const struct partition *pp, point_t pt, void* callback_data);
 typedef void (*first_air_callback_t)(const struct xray* ray, const struct partition *pp, void* callback_data);
 typedef void (*last_air_callback_t)(const struct xray* ray, const struct partition *pp, void* callback_data);
-typedef void (*unconf_air_callback_t)(const struct xray* ray, const struct partition *pp, void* callback_data);
+typedef void (*unconf_air_callback_t)(const struct xray* ray, const struct partition *in_part, const struct partition *out_part, void* callback_data);
 
 /**
  * returns the volume of the specified object (name)

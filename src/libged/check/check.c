@@ -49,6 +49,7 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  moments - Computes the moments and products of inertia of the objects specified.\n");
     bu_vls_printf(&str, "  overlaps - This reports overlaps, when two regions occupy the same space.\n");
     bu_vls_printf(&str, "  surf_area - Computes the surface area of the objects specified.\n");
+    bu_vls_printf(&str, "  unconf_air - This reports when there are unconfined air regions.\n");
     bu_vls_printf(&str, "  volume - Computes the volume of the objects specified.\n");
 
     bu_vls_printf(&str, "\nOptions:\n\n");
@@ -464,7 +465,7 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     struct check_parameters options;
     const char *check_subcommands[] = {"adj_air", "centroid", "exp_air", "gap",
 				       "mass", "moments", "overlaps", "surf_area",
-				       "volume", NULL};
+				       "unconf_air", "volume", NULL};
     const struct cvt_tab *units[3] = {
 	&units_tab[0][0],	/* linear */
 	&units_tab[1][0],	/* volume */
@@ -611,6 +612,11 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 	}
     } else if (bu_strncmp(sub, "surf_area", len) == 0) {
 	if (check_surf_area(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
+	}
+    } else if (bu_strncmp(sub, "unconf_air", len) == 0) {
+	if (check_unconf_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
