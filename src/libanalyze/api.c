@@ -52,11 +52,6 @@
 
 #define RAND_ANGLE ((rand()/(fastf_t)RAND_MAX) * 360)
 
-static int default_den = 0;
-static int analysis_flags;
-static double Samples_per_model_axis = 2.0;
-static int aborted = 0;
-
 /**
  * rt_shootray() was told to call this on a hit.  It passes the
  * application structure which describes the state of the world (see
@@ -100,7 +95,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    bu_semaphore_release(ANALYZE_SEM_WORKER);
 	}
 
-	if (analysis_flags & ANALYSIS_EXP_AIR) {
+	if (state->analysis_flags & ANALYSIS_EXP_AIR) {
 
 	    gap_dist = (pp->pt_inhit->hit_dist - last_out_dist);
 
@@ -116,7 +111,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	}
 
 	/* looking for voids in the model */
-	if (analysis_flags & ANALYSIS_GAP) {
+	if (state->analysis_flags & ANALYSIS_GAP) {
 	    if (pp->pt_back != PartHeadp) {
 		/* if this entry point is further than the previous
 		 * exit point then we have a void
@@ -130,7 +125,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	}
 
 	/* computing the mass of the objects */
-	if (analysis_flags & ANALYSIS_MASS) {
+	if (state->analysis_flags & ANALYSIS_MASS) {
 	    if (state->debug) {
 		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
 		bu_vls_printf(state->debug_str, "Hit %s doing mass\n", pp->pt_regionp->reg_name);
@@ -139,7 +134,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 	    /* make sure mater index is within range of densities */
 	    if (pp->pt_regionp->reg_gmater >= state->num_densities) {
-		if(default_den == 0) {
+		if(state->default_den == 0) {
 		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
 		    bu_vls_printf(state->log_str, "Density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
 				  pp->pt_regionp->reg_gmater,
@@ -152,7 +147,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 	    /* make sure the density index has been set */
 	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-	    if(default_den || state->densities[pp->pt_regionp->reg_gmater].magic != DENSITY_MAGIC) {
+	    if(state->default_den || state->densities[pp->pt_regionp->reg_gmater].magic != DENSITY_MAGIC) {
 		BU_GET(de, struct density_entry);		/* Aluminium 7xxx series as default material */
 		de->magic = DENSITY_MAGIC;
 		de->grams_per_cu_mm = 2.74;
@@ -223,7 +218,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		/* accumulate the per-object per-view mass values */
 		prd->optr->o_lenDensity[state->i_axis] += val;
 
-		if (analysis_flags & ANALYSIS_CENTROIDS) {
+		if (state->analysis_flags & ANALYSIS_CENTROIDS) {
 		    /* calculate the center of mass for this partition */
 		    VJOIN1(cmass, pt, dist*0.5, ap->a_ray.r_dir);
 
@@ -236,7 +231,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		    /* accumulate the total lenTorque */
 		    VADD2(&state->m_lenTorque[state->i_axis*3], &state->m_lenTorque[state->i_axis*3], lenTorque);
 
-		    if (analysis_flags & ANALYSIS_MOMENTS) {
+		    if (state->analysis_flags & ANALYSIS_MOMENTS) {
 			vectp_t moi;
 			vectp_t poi;
 			fastf_t dx_sq = cmass[X]*cmass[X];
@@ -274,13 +269,13 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 			      pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
 		bu_semaphore_release(ANALYZE_SEM_WORKER);
 
-		aborted = 1;
+		state->aborted = 1;
 		return ANALYZE_ERROR;
 	    }
 	}
 
 	/* compute the surface area of the object */
-	if(analysis_flags & ANALYSIS_SURF_AREA) {
+	if(state->analysis_flags & ANALYSIS_SURF_AREA) {
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    fastf_t Lx = state->span[0] / state->steps[0];
 	    fastf_t Ly = state->span[1] / state->steps[1];
@@ -325,7 +320,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	}
 
 	/* compute the volume of the object */
-	if (analysis_flags & ANALYSIS_VOLUME) {
+	if (state->analysis_flags & ANALYSIS_VOLUME) {
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    ap->A_LEN += dist; /* add to total volume */
 	    {
@@ -361,7 +356,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	}
 
 	/* look for two adjacent air regions */
-	if (analysis_flags & ANALYSIS_ADJ_AIR) {
+	if (state->analysis_flags & ANALYSIS_ADJ_AIR) {
 	    if (last_air && pp->pt_regionp->reg_aircode &&
 		pp->pt_regionp->reg_aircode != last_air) {
 		state->adj_air_callback(&ap->a_ray, pp, pt, state->adj_air_callback_data);
@@ -371,21 +366,21 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	if (pp->pt_regionp->reg_aircode) {
 	    /* look for air first on shotlines */	
 	    if (pp->pt_back == PartHeadp) {
-		if (analysis_flags & ANALYSIS_FIRST_AIR)
+		if (state->analysis_flags & ANALYSIS_FIRST_AIR)
 		    state->first_air_callback(&ap->a_ray, pp, state->first_air_callback_data);
 	    } else {
 		/* else add to unconfined air regions list */
-		if (analysis_flags & ANALYSIS_UNCONF_AIR) {
+		if (state->analysis_flags & ANALYSIS_UNCONF_AIR) {
 		    state->unconf_air_callback(&ap->a_ray, pp, pp->pt_back, state->unconf_air_callback_data);
 		}
 	    }
 	    /* look for air last on shotlines */
 	    if (pp->pt_forw == PartHeadp) {
-		if (analysis_flags & ANALYSIS_LAST_AIR)
+		if (state->analysis_flags & ANALYSIS_LAST_AIR)
 		    state->first_air_callback(&ap->a_ray, pp, state->first_air_callback_data);
 	    } else {
 		/* else add to unconfined air regions list */
-		if (analysis_flags & ANALYSIS_UNCONF_AIR) {
+		if (state->analysis_flags & ANALYSIS_UNCONF_AIR) {
 		    state->unconf_air_callback(&ap->a_ray, pp->pt_forw, pp, state->unconf_air_callback_data);
 		}
 	    }
@@ -399,7 +394,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	VJOIN1(last_out_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
     }
 
-    if (analysis_flags & ANALYSIS_EXP_AIR && last_air) {
+    if (state->analysis_flags & ANALYSIS_EXP_AIR && last_air) {
 	/* the last thing we hit was air.  Make a note of that */
 	pp = PartHeadp->pt_back;
 	state->exp_air_callback(pp, last_out_point, pt, opt, state->exp_air_callback_data);
@@ -470,7 +465,7 @@ analyze_overlap(struct application *ap,
 
     VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
 
-    if (analysis_flags & ANALYSIS_OVERLAPS) {
+    if (state->analysis_flags & ANALYSIS_OVERLAPS) {
 	bu_semaphore_acquire(ANALYZE_SEM_LIST);
 	add_unique_pair(state->overlapList, reg1, reg2, depth, ihit);
 	bu_semaphore_release(ANALYZE_SEM_LIST);
@@ -601,7 +596,7 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 
     double low, hi, val, delta;
 
-    if (analysis_flags & ANALYSIS_MASS) {
+    if (state->analysis_flags & ANALYSIS_MASS) {
 	/* for each object, compute the mass for all views */
 	int obj;
 
@@ -647,7 +642,7 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	}
     }
 
-    if (analysis_flags & ANALYSIS_VOLUME) {
+    if (state->analysis_flags & ANALYSIS_VOLUME) {
 	/* find the range of values for object volumes */
 	int obj;
 
@@ -684,7 +679,7 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	}
     }
 
-    if(analysis_flags & ANALYSIS_SURF_AREA) {
+    if(state->analysis_flags & ANALYSIS_SURF_AREA) {
 	int obj;
 
 	for(obj = 0; obj < state->num_objects; obj++) {
@@ -746,7 +741,7 @@ check_terminate(struct current_state *state)
 		state->gridSpacing, state->gridSpacingLimit);
 	return 0;
     }
-    if (analysis_flags & (ANALYSIS_MASS|ANALYSIS_VOLUME|ANALYSIS_SURF_AREA)) {
+    if (state->analysis_flags & (ANALYSIS_MASS|ANALYSIS_VOLUME|ANALYSIS_SURF_AREA)) {
 	if (wv_status == 0) {
 	    if (state->verbose)
 		bu_vls_printf(state->verbose_str, "%s: Volume/mass tolerance met. Terminate\n", CPP_FILELINE);
@@ -775,7 +770,7 @@ analyze_worker(int cpu, void *ptr)
     struct current_state *state = (struct current_state *)ptr;
     unsigned long shot_cnt;
 
-    if (aborted)
+    if (state->aborted)
 	return;
 
     RT_APPLICATION_INIT(&ap);
@@ -799,7 +794,7 @@ analyze_worker(int cpu, void *ptr)
 	ap.a_user = (int)(state->grid->current_point / (state->grid->x_points));
 	bu_semaphore_release(ANALYZE_SEM_WORKER);
 	(void)rt_shootray(&ap);
-	if (aborted)
+	if (state->aborted)
 	    return;
 	shot_cnt++;
     }
@@ -834,20 +829,20 @@ options_set(struct current_state *state)
     /* figure out where the density values are coming from and get
      * them.
      */
-    if (analysis_flags & ANALYSIS_MASS) {
+    if (state->analysis_flags & ANALYSIS_MASS) {
 	if (state->densityFileName) {
 	    if(state->debug)
 		bu_vls_printf(state->debug_str, "Density from file\n");
 	    if (densities_from_file(state, state->densityFileName) != ANALYZE_OK) {
 		bu_log("Couldn't load density table from file. Using default density.\n");
-		default_den = 1;
+		state->default_den = 1;
 	    }
 	} else {
 	    if(state->debug)
 		bu_vls_printf(state->debug_str, "Density from db\n");
 	    if (densities_from_database(state, rtip) != ANALYZE_OK) {
 		bu_log("Couldn't load density table from database. Using default density.\n");
-		default_den = 1;
+		state->default_den = 1;
 	    }
 	}
     }
@@ -855,22 +850,22 @@ options_set(struct current_state *state)
      * the number of rays per model axis
      */
     for (axis = 0; axis < 3; axis++) {
-	if (state->span[axis] < newGridSpacing * Samples_per_model_axis) {
+	if (state->span[axis] < newGridSpacing * state->Samples_per_model_axis) {
 	    /* along this axis, the gridSpacing is larger than the
 	     * model span.  We need to refine.
 	     */
-	    newGridSpacing = state->span[axis] / Samples_per_model_axis;
+	    newGridSpacing = state->span[axis] / state->Samples_per_model_axis;
 	}
     }
 
     if (!ZERO(newGridSpacing - state->gridSpacing)) {
-	bu_log("Initial grid spacing %g mm does not allow %g samples per axis.\n", state->gridSpacing, Samples_per_model_axis - 1);
-	bu_log("Adjusted initial grid spacing to %g mm to get %g samples per model axis.\n", newGridSpacing, Samples_per_model_axis);
+	bu_log("Initial grid spacing %g mm does not allow %g samples per axis.\n", state->gridSpacing, state->Samples_per_model_axis - 1);
+	bu_log("Adjusted initial grid spacing to %g mm to get %g samples per model axis.\n", newGridSpacing, state->Samples_per_model_axis);
 	state->gridSpacing = newGridSpacing;
     }
 
     /* if the vol/mass tolerances are not set, pick something */
-    if (analysis_flags & ANALYSIS_VOLUME) {
+    if (state->analysis_flags & ANALYSIS_VOLUME) {
 	if (state->volume_tolerance < 0.0) {
 	    /* using 1/1000th the volume as a default tolerance, no particular reason */
 	    state->volume_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.001;
@@ -878,7 +873,7 @@ options_set(struct current_state *state)
 	} else
 	    bu_log("Using volume tolerance %g cu mm\n", state->volume_tolerance);
     }
-    if(analysis_flags & ANALYSIS_SURF_AREA) {
+    if(state->analysis_flags & ANALYSIS_SURF_AREA) {
 	if(state->sa_tolerance < 0.0) {
 	    state->sa_tolerance = INFINITY;
 	    V_MIN(state->sa_tolerance, state->span[0] * state->span[1]);
@@ -889,7 +884,7 @@ options_set(struct current_state *state)
 	} else
 	    bu_log("Using surface area tolerance %g mm^2\n", state->sa_tolerance);
     }
-    if (analysis_flags & ANALYSIS_MASS) {
+    if (state->analysis_flags & ANALYSIS_MASS) {
 	if (state->mass_tolerance < 0.0) {
 	    double max_den = 0.0;
 	    int i;
@@ -904,7 +899,7 @@ options_set(struct current_state *state)
 	}
     }
 
-    if (analysis_flags & ANALYSIS_OVERLAPS) {
+    if (state->analysis_flags & ANALYSIS_OVERLAPS) {
 	if (!ZERO(state->overlap_tolerance))
 	    bu_log("overlap tolerance to %g\n", state->overlap_tolerance);
 	if (state->overlaps_callback == NULL) {
@@ -913,47 +908,47 @@ options_set(struct current_state *state)
 	}
     }
 
-    if ((analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR|ANALYSIS_FIRST_AIR|ANALYSIS_LAST_AIR|ANALYSIS_UNCONF_AIR)) && ! state->use_air) {
+    if ((state->analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR|ANALYSIS_FIRST_AIR|ANALYSIS_LAST_AIR|ANALYSIS_UNCONF_AIR)) && ! state->use_air) {
 	bu_log("\nError:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
 	return GED_ERROR;
     }
 
-    if (analysis_flags & ANALYSIS_EXP_AIR) {
+    if (state->analysis_flags & ANALYSIS_EXP_AIR) {
 	if (state->exp_air_callback == NULL) {
 	    bu_log("\nexp_air callback function not registered!");
 	    return ANALYZE_ERROR;
 	}
     }
 
-    if (analysis_flags & ANALYSIS_GAP) {
+    if (state->analysis_flags & ANALYSIS_GAP) {
 	if (state->gaps_callback == NULL) {
 	    bu_log("\ngaps callback function not registered!");
 	    return ANALYZE_ERROR;
 	}
     }
 
-    if (analysis_flags & ANALYSIS_ADJ_AIR) {
+    if (state->analysis_flags & ANALYSIS_ADJ_AIR) {
 	if (state->adj_air_callback == NULL) {
 	    bu_log("\nadj_air callback function not registered!");
 	    return ANALYZE_ERROR;
 	}
     }
 
-    if (analysis_flags & ANALYSIS_FIRST_AIR) {
+    if (state->analysis_flags & ANALYSIS_FIRST_AIR) {
 	if (state->first_air_callback == NULL) {
 	    bu_log("\nfirst_air callback function not registered!");
 	    return ANALYZE_ERROR;
 	}
     }
 
-    if (analysis_flags & ANALYSIS_LAST_AIR) {
+    if (state->analysis_flags & ANALYSIS_LAST_AIR) {
 	if (state->last_air_callback == NULL) {
 	    bu_log("\nlast_air callback function not registered!");
 	    return ANALYZE_ERROR;
 	}
     }
 
-    if (analysis_flags & ANALYSIS_UNCONF_AIR) {
+    if (state->analysis_flags & ANALYSIS_UNCONF_AIR) {
 	if (state->unconf_air_callback == NULL) {
 	    bu_log("\nunconf_air callback function not registered!");
 	    return ANALYZE_ERROR;
@@ -1225,7 +1220,7 @@ shoot_rays(struct current_state *state)
     do {
 	inv_spacing = 1.0/state->gridSpacing;
 	VSCALE(state->steps, state->span, inv_spacing);
-	if (analysis_flags & ANALYSIS_SURF_AREA) {
+	if (state->analysis_flags & ANALYSIS_SURF_AREA) {
 	    int view;
 	    for (view = 0; view < state->num_views; view++) {
 		/* fire rays at random azimuth and elevation angles */
@@ -1250,7 +1245,7 @@ shoot_rays(struct current_state *state)
 	    for (view = 0; view < state->num_views; view++) {
 		analyze_triple_grid_setup(view, state);
 		bu_parallel(analyze_worker, state->ncpu, (void *)state);
-		if (aborted)
+		if (state->aborted)
 		    break;
 	    }
 	}
@@ -1283,7 +1278,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     state->grid = &grid;
     grid.single_grid = 0;
 
-    analysis_flags = flags;
+    state->analysis_flags = flags;
 
     /* Get raytracing instance */
     rtip = rt_new_rti(dbip);
@@ -1323,7 +1318,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     state->area[1] = state->span[2] * state->span[0];
     state->area[2] = state->span[0] * state->span[1];
 
-    if (analysis_flags & ANALYSIS_BOX) {
+    if (state->analysis_flags & ANALYSIS_BOX) {
 	bu_log("Bounding Box: %g %g %g  %g %g %g\n",
 		V3ARGS(rtip->mdl_min), V3ARGS(rtip->mdl_max));
 
@@ -1381,7 +1376,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	if (hits < state->required_number_hits) {
 	    if (hits == 0 && !state->quiet_missed_report) {
 		is_overlap_only_hit = 0;
-		if (analysis_flags & ANALYSIS_OVERLAPS) {
+		if (state->analysis_flags & ANALYSIS_OVERLAPS) {
 		    /* If the region is in the overlap list, it has
 		     * been hit even though the hit count is zero.
 		     * Do not report zero hit regions if they are in

@@ -50,6 +50,10 @@ analyze_current_state_init()
     state->verbose = 0;
     state->quiet_missed_report = 0;
     state->plot_volume = NULL;
+    state->default_den = 0;
+    state->analysis_flags = 0;
+    state->Samples_per_model_axis = 2.0;
+    state->aborted = 0;
 
     state->exp_air_callback = NULL;
     state->exp_air_callback_data = NULL;
