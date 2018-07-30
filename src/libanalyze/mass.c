@@ -53,7 +53,8 @@ analyze_mass(struct current_state *state, const char *name)
 
 
 void
-analyze_mass_region(struct current_state *state, int i, char **name, double *mass, double *high, double *low) {
+analyze_mass_region(struct current_state *state, int i, char **name, double *mass, double *high, double *low)
+{
     double *mm;
     double lo = INFINITY;
     double hi = -INFINITY;

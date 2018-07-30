@@ -53,7 +53,8 @@ analyze_volume(struct current_state *state, const char *name)
 
 
 void
-analyze_volume_region(struct current_state *state, int i, char **name, double *volume, double *high, double *low) {
+analyze_volume_region(struct current_state *state, int i, char **name, double *volume, double *high, double *low)
+{
     double *vv;
     double lo = INFINITY;
     double hi = -INFINITY;
