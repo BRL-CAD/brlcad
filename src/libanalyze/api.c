@@ -850,17 +850,17 @@ options_set(struct current_state *state)
      * the number of rays per model axis
      */
     for (axis = 0; axis < 3; axis++) {
-	if (state->span[axis] < newGridSpacing * state->Samples_per_model_axis) {
+	if (state->span[axis] < newGridSpacing * state->samples_per_model_axis) {
 	    /* along this axis, the gridSpacing is larger than the
 	     * model span.  We need to refine.
 	     */
-	    newGridSpacing = state->span[axis] / state->Samples_per_model_axis;
+	    newGridSpacing = state->span[axis] / state->samples_per_model_axis;
 	}
     }
 
     if (!ZERO(newGridSpacing - state->gridSpacing)) {
-	bu_log("Initial grid spacing %g mm does not allow %g samples per axis.\n", state->gridSpacing, state->Samples_per_model_axis - 1);
-	bu_log("Adjusted initial grid spacing to %g mm to get %g samples per model axis.\n", newGridSpacing, state->Samples_per_model_axis);
+	bu_log("Initial grid spacing %g mm does not allow %g samples per axis.\n", state->gridSpacing, state->samples_per_model_axis - 1);
+	bu_log("Adjusted initial grid spacing to %g mm to get %g samples per model axis.\n", newGridSpacing, state->samples_per_model_axis);
 	state->gridSpacing = newGridSpacing;
     }
 

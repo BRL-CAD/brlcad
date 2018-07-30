@@ -260,7 +260,8 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
 		    break;
 		}
-		options->Samples_per_model_axis = a + 1;
+		options->samples_per_model_axis = a + 1;
+		analyze_set_samples_per_model_axis(state, options->samples_per_model_axis);
 		break;
 	    case 't':
 		if (read_units_double(&(options->overlap_tolerance), bu_optarg, units_tab[0])) {

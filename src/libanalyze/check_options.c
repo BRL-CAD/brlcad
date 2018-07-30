@@ -52,7 +52,7 @@ analyze_current_state_init()
     state->plot_volume = NULL;
     state->default_den = 0;
     state->analysis_flags = 0;
-    state->Samples_per_model_axis = 2.0;
+    state->samples_per_model_axis = 2.0;
     state->aborted = 0;
 
     state->exp_air_callback = NULL;
@@ -160,6 +160,12 @@ void analyze_set_grid_spacing(struct current_state *state, fastf_t gridSpacing, 
 {
     state->gridSpacing = gridSpacing;
     state->gridSpacingLimit = gridSpacingLimit;
+}
+
+
+void analyze_set_samples_per_model_axis(struct current_state *state, fastf_t samples_per_model_axis)
+{
+    state->samples_per_model_axis = samples_per_model_axis;
 }
 
 

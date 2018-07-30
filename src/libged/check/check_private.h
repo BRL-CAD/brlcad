@@ -182,7 +182,7 @@ struct check_parameters {
     char *densityFileName;
     fastf_t azimuth_deg, elevation_deg;
     fastf_t gridSpacing, gridSpacingLimit;
-    fastf_t Samples_per_model_axis;
+    fastf_t samples_per_model_axis;
     fastf_t overlap_tolerance;
     fastf_t volume_tolerance;
     fastf_t mass_tolerance;

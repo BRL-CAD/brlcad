@@ -439,6 +439,12 @@ ANALYZE_EXPORT extern void
 analyze_set_grid_spacing(struct current_state *state , fastf_t gridSpacing, fastf_t gridSpacingLimit);
 
 /**
+ * used to specify the minimum samples per model axis
+ */
+ANALYZE_EXPORT extern void
+analyze_set_samples_per_model_axis(struct current_state *state, fastf_t samples_per_model_axis);
+
+/**
  * sets the tolerance values for overlaps, volume, mass and surface area for the analysis
  */
 ANALYZE_EXPORT extern void
