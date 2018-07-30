@@ -1223,6 +1223,8 @@ shoot_rays(struct current_state *state)
 	if (state->analysis_flags & ANALYSIS_SURF_AREA) {
 	    int view;
 	    for (view = 0; view < state->num_views; view++) {
+		if (state->verbose)
+		    bu_vls_printf(state->verbose_str, "  view %d\n", view);
 		/* fire rays at random azimuth and elevation angles */
 		state->azimuth_deg = RAND_ANGLE;
 		state->elevation_deg = RAND_ANGLE;
@@ -1243,6 +1245,8 @@ shoot_rays(struct current_state *state)
 		    state->steps[1]-1,
 		    state->steps[2]-1);
 	    for (view = 0; view < state->num_views; view++) {
+		if (state->verbose)
+		    bu_vls_printf(state->verbose_str, "  view %d\n", view);
 		analyze_triple_grid_setup(view, state);
 		bu_parallel(analyze_worker, state->ncpu, (void *)state);
 		if (state->aborted)
@@ -1253,6 +1257,8 @@ shoot_rays(struct current_state *state)
 	state->gridSpacing *= 0.5;
 
     } while (check_terminate(state));
+    if (state->verbose)
+	bu_vls_printf(state->verbose_str, "Computation Done\n");
 }
 
 
