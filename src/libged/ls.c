@@ -360,7 +360,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     struct directory **dirp0 = (struct directory **)NULL;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int print_help = 0;
-    struct _ged_ls_data ls = {0};
+    struct _ged_ls_data ls;
     int attr_flag = 0; /* arguments are attribute name/value pairs */
     struct bu_opt_desc d[13];
     BU_OPT(d[0],  "h", "help",           "",  NULL, &print_help,   "Print help and exit");
