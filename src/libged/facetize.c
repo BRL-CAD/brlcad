@@ -91,8 +91,8 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     static int make_bot;
     static int marching_cube;
     static int screened_poisson;
-    fastf_t len_tol = 0.0;
 #ifdef ENABLE_SPR
+    fastf_t len_tol = 0.0;
     int sp_fidelity = 0;  /* default to LOW fidelity */
 #endif
 
@@ -131,11 +131,17 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options. */
     bu_optind = 1;		/* re-init bu_getopt() */
+#ifdef ENABLE_SPR
     while ((c=bu_getopt(argc, (char * const *)argv, "g:mntTPLMH")) != -1) {
+#else
+    while ((c=bu_getopt(argc, (char * const *)argv, "mntTPLMH")) != -1) {
+#endif
 	switch (c) {
+#ifdef ENABLE_SPR
 	    case 'g':
 		len_tol = atof(bu_optarg);
 		break;
+#endif
 	    case 'm':
 		marching_cube = triangulate = 1;
 		/* fall through - marching cubes assumes nmg for now */
