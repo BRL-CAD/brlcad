@@ -41,6 +41,7 @@ analyze_current_state_init()
     state->elevation_deg = 25.0;
     state->gridSpacing = 50.0;
     state->gridSpacingLimit = 0.5;
+    state->gridRatio = 1;
     state->use_air = 1;
     state->required_number_hits = 1;
     state->ncpu = (int) bu_avail_cpus();
@@ -175,6 +176,12 @@ void analyze_set_grid_spacing(struct current_state *state, fastf_t gridSpacing, 
 {
     state->gridSpacing = gridSpacing;
     state->gridSpacingLimit = gridSpacingLimit;
+}
+
+
+void analyze_set_grid_ratio(struct current_state *state, fastf_t gridRatio)
+{
+    state->gridRatio = gridRatio;
 }
 
 

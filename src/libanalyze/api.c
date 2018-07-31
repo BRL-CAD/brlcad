@@ -1076,6 +1076,8 @@ analyze_single_grid_setup(struct current_state *state)
     vect_t dx_unit;	 /* view delta-X as unit-len vect */
     vect_t dy_unit;	 /* view delta-Y as unit-len vect */
     mat_t view2model;
+    double cell_width, cell_height;
+    size_t width, height;
 
     state->curr_view = 0;
     state->i_axis = 0;
@@ -1096,20 +1098,25 @@ analyze_single_grid_setup(struct current_state *state)
 
     state->area[0] = state->viewsize * state->viewsize;
 
-    state->grid->grid_spacing = state->gridSpacing;
-    state->grid->x_points = state->viewsize/state->gridSpacing + 0.99;
-    state->grid->total_points = state->grid->x_points*state->grid->x_points;
-    bu_log("Processing with grid spacing %g mm %ld x %ld\n", state->grid->grid_spacing, state->grid->x_points, state->grid->x_points);
+    cell_width = state->gridSpacing;
+    cell_height = cell_width / state->gridRatio;
+    width = state->viewsize/cell_width + 0.99;
+    height = state->viewsize/cell_height + 0.99;
+
+    state->grid->grid_spacing = cell_width;
+    state->grid->x_points = width;
+    state->grid->total_points = width*height;
+    bu_log("Processing with grid: (%g, %g) mm, (%zu, %zu) pixels\n", cell_width, cell_height, width, height);
     state->grid->current_point=0;
 
     /* Create basis vectors dx and dy for emanation plane (grid) */
     VSET(temp, 1, 0, 0);
     MAT3X3VEC(dx_unit, view2model, temp);	/* rotate only */
-    VSCALE(state->grid->dx_grid, dx_unit, state->gridSpacing);
+    VSCALE(state->grid->dx_grid, dx_unit, cell_width);
 
     VSET(temp, 0, 1, 0);
     MAT3X3VEC(dy_unit, view2model, temp);	/* rotate only */
-    VSCALE(state->grid->dy_grid, dy_unit, state->gridSpacing);
+    VSCALE(state->grid->dy_grid, dy_unit, cell_height);
 
     /* all rays go this direction */
     VSET(temp, 0, 0, -1);
