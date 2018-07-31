@@ -2309,11 +2309,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* parse */
 	sizeof(struct rt_script_internal),
 	RT_SCRIPT_INTERNAL_MAGIC,
-	RTFUNCTAB_FUNC_GET_CAST(rt_script_get),
-	RTFUNCTAB_FUNC_ADJUST_CAST(rt_script_adjust),
-	RTFUNCTAB_FUNC_FORM_CAST(rt_script_form),
+	RTFUNCTAB_FUNC_GET_CAST(rt_script_get), 
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_script_adjust), 
+	RTFUNCTAB_FUNC_FORM_CAST(rt_script_form), 
 	NULL, /* make */
-	RTFUNCTAB_FUNC_PARAMS_CAST(rt_script_params),
+	RTFUNCTAB_FUNC_PARAMS_CAST(rt_script_params), 
 	NULL, /* bbox */
 	NULL, /* volume */
 	NULL, /* surf_area */

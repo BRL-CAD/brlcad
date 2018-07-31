@@ -206,31 +206,29 @@ rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, const
  * Import a script from the database format to the internal format.
  */
 int
-rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const struct db_i *dbip)
-{
+rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep)
+{    
     struct rt_script_internal *script_ip;
-    /*    unsigned char *ptr; */
+    unsigned char *ptr;
 
-    if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
-
     RT_CK_DB_INTERNAL(ip);
+
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SCRIPT;
     ip->idb_meth = &OBJ[ID_SCRIPT];
     BU_ALLOC(ip->idb_ptr, struct rt_script_internal);
 
     script_ip = (struct rt_script_internal *)ip->idb_ptr;
-    
     BU_VLS_INIT(&script_ip->s_type);
     script_ip->script_magic = RT_SCRIPT_INTERNAL_MAGIC;
 
-    /*    ptr = ep->ext_buf; */
+    ptr = ep->ext_buf;
 
     bu_vls_init(&script_ip->s_type);
-    /*bu_vls_strcpy(&script_ip->s_type, (char *)ptr);*/
+    bu_vls_strncpy(&script_ip->s_type, (char *)ptr,
+           ep->ext_nbytes - (ptr - (unsigned char *)ep->ext_buf));
 
-    bu_log("importing done\n");
     return 0;			/* OK */
 }
 
@@ -257,7 +255,7 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, const
     BU_CK_EXTERNAL(ep);
 
     /* tally up size of buffer needed */
-    ep->ext_nbytes = SIZEOF_NETWORK_LONG + sizeof(struct bu_vls);
+    ep->ext_nbytes = SIZEOF_NETWORK_LONG + bu_vls_strlen(&script_ip->s_type) + 1;
 
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "script external");
 
@@ -267,8 +265,8 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, const
     cp += SIZEOF_NETWORK_LONG;
 
     bu_strlcpy((char *)cp, bu_vls_addr(&script_ip->s_type), rem);
-    bu_log("exporting done\n");
-
+    cp += bu_vls_strlen(&script_ip->s_type) + 1;
+ 
     return 0;
 }
 

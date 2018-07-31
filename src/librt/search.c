@@ -1063,6 +1063,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     if (!bu_fnmatch(plan->p_un._type_data, "shape", 0) &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOT &&
+        intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_CONSTRAINT &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_GRIP &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT
