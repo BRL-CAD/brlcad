@@ -76,11 +76,27 @@ BU_EXPORT extern int bu_debug;
 #define BU_DEBUG_UNUSED_8       0x00080000      /* Unallocated */
 
 /* Format string for bu_printb() */
-#define BU_DEBUG_FORMAT \
-    "\020\
-\025TABDATA\
-\014MAPPED_FILE\013AVS\012PTBL\011MATH\5PARALLEL\
-\3MEM_LOG\1COREDUMP"
+#define BU_DEBUG_FORMAT         "\020" /* print hex */ \
+    "\024UNUSED_8" \
+    "\023UNUSED_7" \
+    "\022UNUSED_6" \
+    "\021TABDATA" \
+    "\020UNUSED_5" \
+    "\017UNUSED_4" \
+    "\016UNUSED_3" \
+    "\015PATHS" \
+    "\014MAPPED_FILE" \
+    "\013AVS" \
+    "\012PTBL" \
+    "\011MATH" \
+    "\010ATTACH" \
+    "\7BACKTRACE" \
+    "\6UNUSED_2" \
+    "\5PARALLEL" \
+    "\4UNUSED_1" \
+    "\3MEM_LOG" \
+    "\2UNUSED_0" \
+    "\1COREDUMP"
 
 /** @} */
 

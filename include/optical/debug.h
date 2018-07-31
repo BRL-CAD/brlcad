@@ -54,25 +54,24 @@ OPTICAL_EXPORT extern int	rdebug;
 
 /* These definitions are each for one bit */
 /* Should be reorganized to put most useful ones first */
-#define RDEBUG_HITS	0x00000001	/* 1 Print hits used by view() */
-#define RDEBUG_MATERIAL	0x00000002	/* 2 Material properties */
-#define RDEBUG_SHOWERR	0x00000004	/* 3 Colorful markers on errors */
-#define RDEBUG_RTMEM	0x00000008	/* 4 Debug librt mem after startup */
-#define RDEBUG_SHADE	0x00000010	/* 5 Shading calculation */
-#define RDEBUG_PARSE	0x00000020	/* 6 Command parsing */
-#define RDEBUG_LIGHT	0x00000040	/* 7 Debug lighting */
-#define RDEBUG_REFRACT	0x00000080	/* 8 Debug reflection & refraction */
+#define RDEBUG_HITS      0x00000001	/* 1 Print hits used by view() */
+#define RDEBUG_MATERIAL  0x00000002	/* 2 Material properties */
+#define RDEBUG_SHOWERR   0x00000004	/* 3 Colorful markers on errors */
+#define RDEBUG_RTMEM     0x00000008	/* 4 Debug librt mem after startup */
+#define RDEBUG_SHADE     0x00000010	/* 5 Shading calculation */
+#define RDEBUG_PARSE     0x00000020	/* 6 Command parsing */
+#define RDEBUG_LIGHT     0x00000040	/* 7 Debug lighting */
+#define RDEBUG_REFRACT   0x00000080	/* 8 Debug reflection & refraction */
 
-#define RDEBUG_STATS	0x00000200	/* 10 Print more statistics */
+#define RDEBUG_STATS     0x00000200	/* 10 Print more statistics */
 #define RDEBUG_RTMEM_END 0x00000400	/* 11 Print librt mem use on 'clean' */
 
 /* These will cause binary debugging output */
-#define RDEBUG_MISSPLOT	0x20000000	/* 30 plot(5) missed rays to stdout */
-#define RDEBUG_RAYWRITE	0x40000000	/* 31 Ray(5V) view rays to stdout */
-#define RDEBUG_RAYPLOT	0x80000000	/* 32 plot(5) rays to stdout */
+#define RDEBUG_MISSPLOT  0x20000000	/* 30 plot(5) missed rays to stdout */
+#define RDEBUG_RAYWRITE  0x40000000	/* 31 Ray(5V) view rays to stdout */
+#define RDEBUG_RAYPLOT   0x80000000	/* 32 plot(5) rays to stdout */
 
-#define RDEBUG_FORMAT	\
-    "\020" \
+#define RDEBUG_FORMAT    "\020" /* print hex */ \
     "\040RAYPLOT" \
     "\037RAYWRITE" \
     "\036MISSPLOT" \
@@ -108,8 +107,7 @@ OPTICAL_EXPORT extern int	rt_verbosity;
 #define VERBOSE_MULTICPU     0x00000100	/* #  of CPU's to be used */
 #define VERBOSE_OUTPUTFILE   0x00000200	/* name of output image */
 
-#define VERBOSE_FORMAT \
-    "\020" \
+#define VERBOSE_FORMAT       "\020" /* print hex */ \
     "\012OUTPUTFILE" \
     "\011MULTICPU" \
     "\010INCREMENTAL" \
