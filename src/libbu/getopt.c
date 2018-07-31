@@ -29,7 +29,7 @@
  * see globals.c for details
  */
 
-#define BADCH (int)'?'
+#define BADCH ( int)'?'
 #define EMSG ""
 #define tell(s) if (bu_opterr) {		\
 	fputs(*nargv, stderr);			\
@@ -45,7 +45,7 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
     static const char *place = EMSG;	/* option letter processing */
     register const char *oli;		/* option letter list index */
 
-    if (*place=='\0') {
+    if (*place == '\0') {
 	/* update scanning pointer */
 	if (bu_optind >= nargc
 	    || *(place = nargv[bu_optind]) != '-'
@@ -70,18 +70,32 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	tell(": illegal option -- ");
     }
     if (*++oli != ':') {
-	/* don't need argument */
+	/* don't require argument */
 	bu_optarg = NULL;
 	if (*place == '\0') {
 	    ++bu_optind;
 	    place = EMSG;
 	}
-    } else {
-	/* need an argument */
+    } else if (*++oli == ':') {
+	/* optional argument '::' */
 	if (*place) {
 	    /* no white space */
 	    bu_optarg = (char *)place;
-	} else if (nargc <= ++bu_optind) {
+	} else if (nargc <= bu_optind+1 || *nargv[bu_optind+1] == '-') {
+	    /* no arg, it's okay */
+	    bu_optarg = NULL;
+	} else {
+	    /* white space */
+	    bu_optarg = nargv[++bu_optind];
+	}
+	place = EMSG;
+	++bu_optind;
+    } else {
+	/* requires an argument */
+	if (*place) {
+	    /* no white space */
+	    bu_optarg = (char *)place;
+	} else if (nargc <= ++bu_optind || *nargv[bu_optind] == '-') {
 	    /* no arg */
 	    place = EMSG;
 	    tell(": option requires an argument -- ");
