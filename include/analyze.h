@@ -352,11 +352,20 @@ ANALYZE_EXPORT int nirt_help(struct bu_vls *h, struct nirt_state *ns, bu_opt_for
 ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_state *ns);
 
 /**
- * Using ray intersection, sample the database object obj and return a pnts primitive
- * with the first and last hits along each ray intersection (for the whole object,
- * not per region.)*/
-ANALYZE_EXPORT int analyze_outer_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
-	       const char *obj, struct bn_tol *tol);
+ * Using ray intersection, sample the database object obj and return a pnts primitive.
+ *
+ * Modes:
+ *
+ * 0 - all hit points
+ * 1 - first and last points along ray intersection (for the whole object,
+ * not per region.)
+ *
+ * TODO - add flag option to use either or both of grid and pseudo-random
+ * sampling.  May want to combine them to get both coverage assurance and
+ * less mesh structure from gridding.
+ */
+ANALYZE_EXPORT int analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
+	       const char *obj, struct bn_tol *tol, int mode);
 
 
 

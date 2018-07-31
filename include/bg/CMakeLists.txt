@@ -3,6 +3,7 @@ set(bg_headers
   defines.h
   obr.h
   polygon.h
+  spsr.h
   tri_ray.h
   tri_tri.h
   trimesh.h

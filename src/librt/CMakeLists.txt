@@ -213,7 +213,6 @@ set(LIBRT_SOURCES
   reduce_db.cpp
   regionfix.c
   roots.c
-  screened_poisson.cpp
   search.c
   shoot.c
   tol.c
@@ -369,7 +368,6 @@ if(CPP_DLL_DEFINES)
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
-  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "SPR_DLL_IMPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
 endif(CPP_DLL_DEFINES)
 

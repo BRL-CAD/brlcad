@@ -1,4 +1,4 @@
-/*                    O U T E R _ P N T S . C
+/*                    O B J _ T O  _ P N T S . C
  * BRL-CAD
  *
  * Copyright (c) 2015-2018 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file outer_pnts.c
+/** @file obj_to_pnts.c
  *
  * Brief description
  *
@@ -34,10 +34,6 @@
 #include "raytrace.h"
 #include "analyze.h"
 #include "./analyze_private.h"
-
-struct outer_pnts_container {
-    struct bu_ptbl *pnset;
-};
 
 HIDDEN void
 _tgc_hack_fix(struct partition *part, struct soltab *stp) {
@@ -63,7 +59,9 @@ outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *
     struct soltab *stp = in_part->pt_inseg->seg_stp;
     struct soltab *ostp = out_part->pt_inseg->seg_stp;
     struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(ap->a_uptr);
-    struct outer_pnts_container *state = (struct outer_pnts_container *)(s->ptr);
+    struct bu_ptbl *pnset = (struct bu_ptbl *)(s->ptr);
+
+    RT_CK_APPLICATION(ap);
 
     _tgc_hack_fix(in_part, stp);
     _tgc_hack_fix(out_part, ostp);
@@ -71,21 +69,55 @@ outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *
     BU_ALLOC(in_pt, struct pnt_normal);
     VJOIN1(in_pt->v, ap->a_ray.r_pt, in_part->pt_inhit->hit_dist, ap->a_ray.r_dir);
     RT_HIT_NORMAL(in_pt->n, in_part->pt_inhit, stp, &(app->a_ray), in_part->pt_inflip);
-    bu_ptbl_ins(state->pnset, (long *)in_pt);
+    bu_ptbl_ins(pnset, (long *)in_pt);
 
     /* add "out" hit point info (unless half-space) */
     if (bu_strncmp("half", ostp->st_meth->ft_label, 4) != 0) {
 	BU_ALLOC(out_pt, struct pnt_normal);
 	VJOIN1(out_pt->v, ap->a_ray.r_pt, out_part->pt_outhit->hit_dist, ap->a_ray.r_dir);
 	RT_HIT_NORMAL(out_pt->n, out_part->pt_outhit, ostp, &(app->a_ray), out_part->pt_outflip);
-	bu_ptbl_ins(state->pnset, (long *)out_pt);
+	bu_ptbl_ins(pnset, (long *)out_pt);
     }
 
     return 0;
 }
 
 HIDDEN int
-outer_pnts_overlap(struct application *ap, struct partition *UNUSED(pp),
+all_pnts_hit(struct application *app, struct partition *partH, struct seg *UNUSED(segs))
+{
+    struct pnt_normal *pt;
+    struct partition *pp;
+    struct soltab *stp;
+    struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(app->a_uptr);
+    struct bu_ptbl *pnset = (struct bu_ptbl *)(s->ptr);
+
+    RT_CK_APPLICATION(app);
+
+    /* add all hit points */
+    for (pp = partH->pt_forw; pp != partH; pp = pp->pt_forw) {
+
+	/* always add in hit */
+	stp = pp->pt_inseg->seg_stp;
+	_tgc_hack_fix(pp, stp);
+	BU_ALLOC(pt, struct pnt_normal);
+	VJOIN1(pt->v, app->a_ray.r_pt, pp->pt_inhit->hit_dist, app->a_ray.r_dir);
+	RT_HIT_NORMAL(pt->n, pp->pt_inhit, stp, &(app->a_ray), pp->pt_inflip);
+	bu_ptbl_ins(pnset, (long *)pt);
+
+	/* add "out" hit point unless it's a half-space */
+	if (bu_strncmp("half", stp->st_meth->ft_label, 4) != 0) {
+	    BU_ALLOC(pt, struct pnt_normal);
+	    VJOIN1(pt->v, app->a_ray.r_pt, pp->pt_outhit->hit_dist, app->a_ray.r_dir);
+	    RT_HIT_NORMAL(pt->n, pp->pt_outhit, stp, &(app->a_ray), pp->pt_outflip);
+	    bu_ptbl_ins(pnset, (long *)pt);
+	}
+    }
+
+    return 0;
+}
+
+HIDDEN int
+op_overlap(struct application *ap, struct partition *UNUSED(pp),
 		struct region *UNUSED(reg1), struct region *UNUSED(reg2),
 		struct partition *UNUSED(hp))
 {
@@ -95,7 +127,7 @@ outer_pnts_overlap(struct application *ap, struct partition *UNUSED(pp),
 
 
 HIDDEN int
-outer_pnts_miss(struct application *ap)
+op_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
     return 0;
@@ -103,8 +135,8 @@ outer_pnts_miss(struct application *ap)
 
 /* 0 = success, -1 error */
 int
-analyze_outer_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
-       const char *obj, struct bn_tol *tol)
+analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
+       const char *obj, struct bn_tol *tol, int mode)
 {
     int pntcnt = 0;
     int ret, i, j;
@@ -115,7 +147,7 @@ analyze_outer_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
     int ncpus = bu_avail_cpus();
     fastf_t *rays;
     struct rt_gen_worker_vars *state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
-    struct outer_pnts_container *local_state = (struct outer_pnts_container *)bu_calloc(ncpus+1, sizeof(struct outer_pnts_container), "local state");
+    struct bu_ptbl **local_state = (struct bu_ptbl **)bu_calloc(ncpus+1, sizeof(struct bu_ptbl *), "local state");
     struct resource *resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
 
     if (!rpnts || !dbip || !obj || !tol || ncpus == 0) {
@@ -130,16 +162,20 @@ analyze_outer_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
     for (i = 0; i < ncpus+1; i++) {
 	/* standard */
 	state[i].rtip = rtip;
-	state[i].fhit = outer_pnts_hit;
-	state[i].fmiss = outer_pnts_miss;
-	state[i].foverlap = outer_pnts_overlap;
+	if (mode == 1) {
+	    state[i].fhit = outer_pnts_hit;
+	} else {
+	    state[i].fhit = all_pnts_hit;
+	}
+	state[i].fmiss = op_miss;
+	state[i].foverlap = op_overlap;
 	state[i].resp = &resp[i];
 	state[i].ind_src = &ind;
 	rt_init_resource(state[i].resp, i, rtip);
 	/* local */
-	BU_GET(local_state[i].pnset, struct bu_ptbl);
-	bu_ptbl_init(local_state[i].pnset, 64, "first and last hit points");
-	state[i].ptr = (void *)&(local_state[i]);
+	BU_GET(local_state[i], struct bu_ptbl);
+	bu_ptbl_init(local_state[i], 64, "first and last hit points");
+	state[i].ptr = (void *)local_state[i];
     }
     if (rt_gettree(rtip, obj) < 0) return -1;
 
@@ -167,7 +203,7 @@ analyze_outer_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
     /* Collect and print all of the results */
 
     for (i = 0; i < ncpus+1; i++) {
-	pntcnt += (int)BU_PTBL_LEN(local_state[i].pnset);
+	pntcnt += (int)BU_PTBL_LEN(local_state[i]);
     }
 
     if (pntcnt < 1) {
@@ -177,8 +213,8 @@ analyze_outer_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	BU_ALLOC(rpnts->point, struct pnt_normal);
 	BU_LIST_INIT(&(((struct pnt_normal *)rpnts->point)->l));
 	for (i = 0; i < ncpus+1; i++) {
-	    for (j = 0; j < (int)BU_PTBL_LEN(local_state[i].pnset); j++) {
-		BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &((struct pnt_normal *)BU_PTBL_GET(local_state[i].pnset, j))->l);
+	    for (j = 0; j < (int)BU_PTBL_LEN(local_state[i]); j++) {
+		BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &((struct pnt_normal *)BU_PTBL_GET(local_state[i], j))->l);
 	    }
 	}
 	ret = 0;
@@ -187,9 +223,9 @@ analyze_outer_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 memfree:
     /* Free memory not stored in tables */
     for (i = 0; i < ncpus+1; i++) {
-	if (local_state[i].pnset != NULL) {
-	    bu_ptbl_free(local_state[i].pnset);
-	    BU_PUT(local_state[i].pnset, struct bu_ptbl);
+	if (local_state[i] != NULL) {
+	    bu_ptbl_free(local_state[i]);
+	    BU_PUT(local_state[i], struct bu_ptbl);
 	}
     }
     bu_free(state, "free state containers");

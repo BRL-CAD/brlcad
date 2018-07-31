@@ -260,15 +260,17 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     int print_help = 0;
     int opt_ret = 0;
     fastf_t len_tol = 0.0;
+    int pnt_mode = 0;
     struct rt_db_internal internal;
     struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
     struct rt_pnts_internal *pnts = NULL;
     const char *pnt_prim= NULL;
     const char *obj_name = NULL;
     const char *usage = "Usage: pnts gen [options] <obj> <output_pnts>\n\n";
-    struct bu_opt_desc d[3];
+    struct bu_opt_desc d[4];
     BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
     BU_OPT(d[1], "t", "tolerance", "#", &bu_opt_fastf_t, &len_tol,      "Specify sampling grid spacing (in mm).");
+    BU_OPT(d[2], "S", "surface",   "",  NULL,            &pnt_mode,     "Save only first and last points along ray.");
     BU_OPT_NULL(d[2]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
@@ -332,7 +334,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     pnts->scale = 0.0;
     pnts->type = RT_PNT_TYPE_NRM;
 
-    if (analyze_outer_pnts(pnts, gedp->ged_wdbp->dbip, obj_name, &btol)) {
+    if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, obj_name, &btol, pnt_mode)) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
 	return GED_ERROR;
     }

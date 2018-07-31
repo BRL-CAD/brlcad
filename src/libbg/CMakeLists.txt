@@ -12,16 +12,23 @@ set(LIBBG_SOURCES
   chull3d.cpp
   obr.c
   polygon.c
+  spsr.c
   tri_ray.c
   tri_tri.c
   trimesh.c
   util.c
   )
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu")
-set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
+if(BRLCAD_ENABLE_SPR)
+  set(SPR_LIB libSPR)
+endif(BRLCAD_ENABLE_SPR)
 
-add_subdirectory(tests)
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;${SPR_LIB}")
+set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
+if(CPP_DLL_DEFINES)
+  add_subdirectory(tests)
+  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "SPR_DLL_IMPORTS")
+endif(CPP_DLL_DEFINES)
 
 CMAKEFILES(bg_private.h pointgen.c)
 

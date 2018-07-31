@@ -29,9 +29,10 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "bg/spsr.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-
+#include "analyze.h"
 #include "./ged_private.h"
 
 
@@ -90,6 +91,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     static int make_bot;
     static int marching_cube;
     static int screened_poisson;
+    fastf_t len_tol = 0.0;
 #ifdef ENABLE_SPR
     int sp_fidelity = 0;  /* default to LOW fidelity */
 #endif
@@ -129,8 +131,11 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options. */
     bu_optind = 1;		/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "mntTPLMH")) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "g:mntTPLMH")) != -1) {
 	switch (c) {
+	    case 'g':
+		len_tol = atof(bu_optarg);
+		break;
 	    case 'm':
 		marching_cube = triangulate = 1;
 		/* fall through - marching cubes assumes nmg for now */
@@ -192,7 +197,63 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     if (screened_poisson) {
 #ifdef ENABLE_SPR
+	struct rt_db_internal in_intern;
+	struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	struct rt_pnts_internal *pnts;
 	struct rt_bot_internal *bot;
+	struct pnt_normal *pn, *pl;
+	point_t *input_points_3d;
+	vect_t *input_normals_3d;
+	dp = db_lookup(dbip, argv[0], LOOKUP_QUIET);
+
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Error: object %s doesn't exist\n", argv[0]);
+	    return GED_ERROR;
+	}
+	if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Error: could not determine type of object %s\n", argv[0]);
+	    return GED_ERROR;
+	}
+
+	if (in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_PNTS) {
+	    /* If we have a point cloud, there's no point raytracing it */
+	    pnts = (struct rt_pnts_internal *)in_intern.idb_ptr;
+	} else {
+	    BU_ALLOC(pnts, struct rt_pnts_internal);
+	    pnts->magic = RT_PNTS_INTERNAL_MAGIC;
+	    pnts->scale = 0.0;
+	    pnts->type = RT_PNT_TYPE_NRM;
+
+	    /* If we don't have a tolerance, try to guess something sane from the bbox */
+	    if (NEAR_ZERO(len_tol, RT_LEN_TOL)) {
+		point_t rpp_min, rpp_max;
+		point_t obj_min, obj_max;
+		VSETALL(rpp_min, INFINITY);
+		VSETALL(rpp_max, -INFINITY);
+		ged_get_obj_bounds(gedp, 1, (const char **)&(argv[0]), 0, obj_min, obj_max);
+		VMINMAX(rpp_min, rpp_max, (double *)obj_min);
+		VMINMAX(rpp_min, rpp_max, (double *)obj_max);
+		len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
+		bu_log("Note - no tolerance specified, using %f\n", len_tol);
+	    }
+	    btol.dist = len_tol;
+
+	    if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, argv[0], &btol, 0)) {
+		bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
+		bu_free(pnts, "free pnts");
+		return GED_ERROR;
+	    }
+	}
+
+	input_points_3d = (point_t *)bu_calloc(pnts->count, sizeof(point_t), "points");
+	input_normals_3d = (vect_t *)bu_calloc(pnts->count, sizeof(vect_t), "normals");
+	i = 0;
+	pl = (struct pnt_normal *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
+	    VMOVE(input_points_3d[i], pn->v);
+	    VMOVE(input_normals_3d[i], pn->n);
+	    i++;
+	}
 
 	BU_ALLOC(bot, struct rt_bot_internal);
 	bot->magic = RT_BOT_INTERNAL_MAGIC;
@@ -201,11 +262,18 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	bot->thickness = (fastf_t *)NULL;
 	bot->face_mode = (struct bu_bitv *)NULL;
 
-	/* TODO - generate point cloud, then mesh - need to see the input points for debugging */
-	(void)rt_generate_mesh(&(bot->faces), (int *)&(bot->num_faces),
+	if (bg_3d_spsr(&(bot->faces), (int *)&(bot->num_faces),
 			       (point_t **)&(bot->vertices),
 			       (int *)&(bot->num_vertices),
-			       dbip, argv[0], sp_fidelity);
+			       (const point_t *)input_points_3d,
+			       (const vect_t *)input_normals_3d,
+			       pnts->count, NULL) ) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Error: Screened Poisson reconstruction failed\n");
+	    bu_free(input_points_3d, "3d pnts");
+	    bu_free(input_normals_3d, "3d pnts");
+	    rt_db_free_internal(&in_intern);
+	    return GED_ERROR;
+	}
 
 	/* Export BOT as a new solid */
 	RT_DB_INTERNAL_INIT(&intern);
@@ -213,6 +281,10 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_type = ID_BOT;
 	intern.idb_meth = &OBJ[ID_BOT];
 	intern.idb_ptr = (void *) bot;
+
+	bu_free(input_points_3d, "3d pnts");
+	bu_free(input_normals_3d, "3d pnts");
+	rt_db_free_internal(&in_intern);
 #else
 	bu_vls_printf(gedp->ged_result_str, "%s: Screened Poisson support was not enabled for this build.  To test, pass -DBRLCAD_ENABLE_SPR=ON to the cmake configure.\n", newname);
 	return GED_ERROR;
