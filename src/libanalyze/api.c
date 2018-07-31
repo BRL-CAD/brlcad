@@ -87,6 +87,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	/* inhit info */
 	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+	VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
 	if (state->debug) {
 	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
@@ -341,8 +342,6 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		bu_semaphore_release(ANALYZE_SEM_WORKER);
 	    }
 	    if (state->plot_volume) {
-		VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
-
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (ap->a_user & 1) {
 		    pl_color(state->plot_volume, 128, 255, 192);  /* pale green */
@@ -377,7 +376,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    /* look for air last on shotlines */
 	    if (pp->pt_forw == PartHeadp) {
 		if (state->analysis_flags & ANALYSIS_LAST_AIR)
-		    state->first_air_callback(&ap->a_ray, pp, state->first_air_callback_data);
+		    state->last_air_callback(&ap->a_ray, pp, state->last_air_callback_data);
 	    } else {
 		/* else add to unconfined air regions list */
 		if (state->analysis_flags & ANALYSIS_UNCONF_AIR) {
