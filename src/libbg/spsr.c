@@ -27,6 +27,8 @@
 #include "bu/log.h"
 #include "bg/spsr.h"
 
+#include "bg/spsr.h"
+
 #ifdef ENABLE_SPR
 
 #include "bu/malloc.h"
@@ -41,7 +43,7 @@ struct c_vert {
 int
 bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	const point_t *input_points_3d, const vect_t *input_normals_3d,
-	int num_input_pnts, struct bg_3d_spsr_opts *UNUSED(opts))
+	int num_input_pnts, struct bg_3d_spsr_opts *UNUSED(spsr_opts))
 {
     int i = 0;
     struct spr_options opts = SPR_OPTIONS_DEFAULT_INIT;
@@ -68,7 +70,7 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 int
 bg_3d_spsr(int **UNUSED(faces), int *UNUSED(num_faces), point_t **UNUSED(points), int *UNUSED(num_pnts),
 	const point_t *UNUSED(input_points_3d), const vect_t *UNUSED(input_normals_3d),
-	int UNUSED(num_input_pnts), struct bg_3d_spsr_opts *UNUSED(opts))
+	int UNUSED(num_input_pnts), struct bg_3d_spsr_opts *UNUSED(spsr_opts))
 {
     bu_log("Screened Poisson Reconstruction was not enabled for this compilation.\n");
     return 0;
