@@ -93,7 +93,6 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     static int screened_poisson;
 #ifdef ENABLE_SPR
     fastf_t len_tol = 0.0;
-    int sp_fidelity = 0;  /* default to LOW fidelity */
 #endif
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -132,9 +131,9 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     /* Parse options. */
     bu_optind = 1;		/* re-init bu_getopt() */
 #ifdef ENABLE_SPR
-    while ((c=bu_getopt(argc, (char * const *)argv, "g:mntTPLMH")) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "g:mntTP")) != -1) {
 #else
-    while ((c=bu_getopt(argc, (char * const *)argv, "mntTPLMH")) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "mntTP")) != -1) {
 #endif
 	switch (c) {
 #ifdef ENABLE_SPR
@@ -153,17 +152,6 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		triangulate = 1;
 		make_bot = 1;
 		break;
-#ifdef ENABLE_SPR
-	    case 'L':
-		sp_fidelity = 0;
-		break;
-	    case 'M':
-		sp_fidelity = 1;
-		break;
-	    case 'H':
-		sp_fidelity = 2;
-		break;
-#endif
 	    case 'T':
 		triangulate = 1;
 		break;
