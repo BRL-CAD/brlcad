@@ -271,7 +271,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
     BU_OPT(d[1], "t", "tolerance", "#", &bu_opt_fastf_t, &len_tol,      "Specify sampling grid spacing (in mm).");
     BU_OPT(d[2], "S", "surface",   "",  NULL,            &pnt_mode,     "Save only first and last points along ray.");
-    BU_OPT_NULL(d[2]);
+    BU_OPT_NULL(d[3]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
