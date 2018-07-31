@@ -28,6 +28,40 @@
 
 #include "optical.h"
 #include "fb.h"
+#include "bu/parallel.h" /* for MAX_PSW */
+
+
+/*
+ *	A Bit vector to determine how much stuff rt prints when not in
+ *	debugging mode.
+ *
+ */
+extern int rt_verbosity; /* from opt.c */
+
+/*	   flag_name		value		prints */
+#define VERBOSE_LIBVERSIONS  0x00000001	/* Library version strings */
+#define VERBOSE_MODELTITLE   0x00000002	/* model title */
+#define VERBOSE_TOLERANCE    0x00000004	/* model tolerance */
+#define VERBOSE_STATS	     0x00000008	/* stats about rt_gettrees() */
+#define VERBOSE_FRAMENUMBER  0x00000010	/* current frame number */
+#define VERBOSE_VIEWDETAIL   0x00000020	/* view specifications */
+#define VERBOSE_LIGHTINFO    0x00000040	/* scene lights */
+#define VERBOSE_INCREMENTAL  0x00000080	/* progressive/incremental state */
+#define VERBOSE_MULTICPU     0x00000100	/* #  of CPU's to be used */
+#define VERBOSE_OUTPUTFILE   0x00000200	/* name of output image */
+
+#define VERBOSE_FORMAT       "\020" /* print hex */ \
+    "\012OUTPUTFILE" \
+    "\011MULTICPU" \
+    "\010INCREMENTAL" \
+    "\7LIGHTINFO" \
+    "\6VIEWDETAIL" \
+    "\5FRAMENUMBER" \
+    "\4STATS" \
+    "\3TOLERANCE" \
+    "\2MODELTITLE" \
+    "\1LIBVERSIONS"
+
 
 /***** Variables declared in opt.c *****/
 extern char *framebuffer;		/* desired framebuffer */
@@ -145,7 +179,7 @@ extern int get_args(int argc, const char *argv[]);
 extern void color_hook(const struct bu_structparse *sp, const char *name, void *base, const char *value, void *data);
 
 
-/* view.c */
+/* usage.c */
 extern void usage(const char *argv0);
 
 #endif /* RT_EXT_H */

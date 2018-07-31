@@ -50,6 +50,7 @@
  */
 #define COMMA ','
 
+int rt_verbosity = -1;	/* blather incessantly by default */
 
 size_t width = 0;		/* # of pixels in X */
 size_t height = 0;		/* # of lines in Y */

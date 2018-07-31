@@ -95,7 +95,6 @@ int report_progress;	/* !0 = user wants progress report */
 extern fastf_t rt_dist_tol;	/* Value for rti_tol.dist */
 extern fastf_t rt_perp_tol;	/* Value for rti_tol.perp */
 extern int rdebug;		/* RT program debugging (not library) */
-extern int rt_verbosity;	/* from liboptical */
 static char idbuf[132];		/* First ID record info */
 
 /* State flags */

@@ -332,7 +332,6 @@ extern size_t height;
 /* variables shared with do.c */
 extern int matflag;
 extern int benchmark;
-extern int rt_verbosity;
 extern char *outputfile;		/* output file name */
 extern int desiredframe;
 extern int finalframe;
