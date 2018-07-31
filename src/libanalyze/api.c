@@ -679,17 +679,17 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	}
     }
 
-    if(state->analysis_flags & ANALYSIS_SURF_AREA) {
-	int obj;
-
-	for(obj = 0; obj < state->num_objects; obj++) {
+    if (state->analysis_flags & ANALYSIS_SURF_AREA) {
+	int obj, i;
+	struct region *regp;
+	for (obj = 0; obj < state->num_objects; obj++) {
 	    int view;
 	    double tmp;
 
 	    low = INFINITY;
 	    hi = -INFINITY;
 	    tmp = 0.0;
-	    for(view = 0; view < state->num_views; view++) {
+	    for (view = 0; view < state->num_views; view++) {
 		val = state->objs[obj].o_surf_area[view] = state->objs[obj].o_area[view];
 		state->objs[obj].o_area[view] /= 4;
 		V_MIN(low, val);
@@ -701,11 +701,19 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	    if (state->verbose)
 		bu_vls_printf(state->verbose_str, "\t%s running avg surface area %g mm^2 hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low);
 
-	    if(delta > state->sa_tolerance) {
+	    if (delta > state->sa_tolerance) {
 		can_terminate = 0;
 		if (state->verbose)
 		    bu_vls_printf(state->verbose_str, "\tsurface area tol not met on %s.  Refine grid\n", state->objs[obj].o_name);
 		break;
+	    }
+	}
+
+	for (i = 0, BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion)), i++) {
+	    int view;
+	    for (view = 0; view < state->num_views; view++) {
+		state->reg_tbl[i].r_surf_area[view] = state->reg_tbl[i].r_area[view];
+		state->reg_tbl[i].r_area[view] /= 4;
 	    }
 	}
     }

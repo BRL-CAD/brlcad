@@ -447,6 +447,19 @@ ANALYZE_EXPORT extern fastf_t
 analyze_surf_area(struct current_state *context, const char *name);
 
 /**
+ * returns the surface area of all the specified objects while ray-tracing
+ */
+ANALYZE_EXPORT extern fastf_t
+analyze_total_surf_area(struct current_state *state);
+
+/**
+ * stores the region name, surf_area, high and low ranges of surf_area
+ * for the specifed index of region in region table.
+ */
+ANALYZE_EXPORT extern void
+analyze_surf_area_region(struct current_state *state, int i, char **name, double *surf_area, double *high, double *low);
+
+/**
  * performs raytracing based on the current state
  */
 ANALYZE_EXPORT extern int
