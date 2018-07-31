@@ -1122,7 +1122,7 @@ analyze_single_grid_setup(struct current_state *state)
     MAT4X3VEC(state->grid->ray_direction, view2model, temp);
     VUNITIZE(state->grid->ray_direction);
 
-    VSET(temp, -1, -1, 0);	/* eye plane */
+    VSET(temp, -1, -1/state->gridRatio, 0);	/* eye plane */
     MAT4X3PNT(state->grid->start_coord, view2model, temp);
     return ANALYZE_OK;
 }
