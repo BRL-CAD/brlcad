@@ -405,6 +405,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
 	    num_doubles_per_point = 10;
 	    break;
+	default:
+	    break;
     }
     BU_ASSERT(headPoint != NULL);
     pnts->point = headPoint;
@@ -444,6 +446,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case RT_PNT_TYPE_COL_SCA_NRM:
 		BU_ALLOC(point, struct pnt_color_scale_normal);
+		break;
+	    default:
 		break;
 	}
 
@@ -598,6 +602,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 			    INSERT_SCALE_INTO_STRUCTURE(pnt_color_scale_normal, format, (temp_double * local2base));
 			    INSERT_NORMAL_INTO_STRUCTURE(pnt_color_scale_normal, format, (temp_double * local2base));
 			    break;
+			default:
+			    break;
 		    }
 		}
 		found_double = 0;  /* allows loop to continue */
@@ -639,6 +645,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 		    break;
 		case RT_PNT_TYPE_COL_SCA_NRM:
 		    BU_LIST_PUSH(&(((struct pnt_color_scale_normal *)headPoint)->l), &((struct pnt_color_scale_normal *)point)->l);
+		    break;
+		default:
 		    break;
 	    }
 	    numPoints++;

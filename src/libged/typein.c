@@ -2692,6 +2692,8 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	    case RT_PNT_TYPE_COL_SCA_NRM:
 		/* do nothing, they're in order */
 		break;
+	    default:
+		break;
 	}
 
 	bu_vls_printf(&vls, "%s for point %d: ",
@@ -2753,6 +2755,8 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	case RT_PNT_TYPE_COL_SCA_NRM:
 	    BU_ALLOC(headPoint, struct pnt_color_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
+	    break;
+	default:
 	    break;
     }
     pnts->point = headPoint;
@@ -2846,6 +2850,8 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		((struct pnt_color_scale_normal *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 8], NULL);
 		((struct pnt_color_scale_normal *)point)->s = strtod(argv[i + 9], NULL) * local2base;
 		BU_LIST_PUSH(&(((struct pnt_color_scale_normal *)headPoint)->l), &((struct pnt_color_scale_normal *)point)->l);
+		break;
+	    default:
 		break;
 	}
     }
