@@ -71,12 +71,23 @@ OPTICAL_EXPORT extern int	rdebug;
 #define RDEBUG_RAYWRITE	0x40000000	/* 31 Ray(5V) view rays to stdout */
 #define RDEBUG_RAYPLOT	0x80000000	/* 32 plot(5) rays to stdout */
 
-/* Format string for rt_printb() */
 #define RDEBUG_FORMAT	\
-"\020\040RAYPLOT\037RAYWRITE\036MISSPLOT\
-\013RTMEM_END\
-\012STATS\010REFRACT\
-\7LIGHT\6PARSE\5SHADE\4RTMEM\3SHOWERR\2MATERIAL\1HITS"
+    "\020" \
+    "\040RAYPLOT" \
+    "\037RAYWRITE" \
+    "\036MISSPLOT" \
+    /* many unused */ \
+    "\013RTMEM_END" \
+    "\012STATS" \
+    "\011UNUSED" \
+    "\010REFRACT" \
+    "\7LIGHT" \
+    "\6PARSE" \
+    "\5SHADE" \
+    "\4RTMEM" \
+    "\3SHOWERR" \
+    "\2MATERIAL" \
+    "\1HITS"
 
 
 /*
@@ -98,8 +109,17 @@ OPTICAL_EXPORT extern int	rt_verbosity;
 #define VERBOSE_OUTPUTFILE   0x00000200	/* name of output image */
 
 #define VERBOSE_FORMAT \
-"\012OUTPUTFILE\011MULTICPU\010INCREMENTAL\7LIGHTINFO\6VIEWDETAIL\
-\5FRAMENUMBER\4STATS\3TOLERANCE\2MODELTITLE\1LIBVERSIONS"
+    "\020" \
+    "\012OUTPUTFILE" \
+    "\011MULTICPU" \
+    "\010INCREMENTAL" \
+    "\7LIGHTINFO" \
+    "\6VIEWDETAIL" \
+    "\5FRAMENUMBER" \
+    "\4STATS" \
+    "\3TOLERANCE" \
+    "\2MODELTITLE" \
+    "\1LIBVERSIONS"
 
 __END_DECLS
 
