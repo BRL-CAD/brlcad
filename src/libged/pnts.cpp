@@ -36,6 +36,7 @@
 #include <iomanip>
 #include <limits>
 
+#include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
 #include "rt/geom.h"
@@ -369,7 +370,6 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 {
     int print_help = 0;
     int opt_ret = 0;
-    struct bu_vls fmt = BU_VLS_INIT_ZERO;
     FILE *fp;
     struct rt_db_internal intern;
     struct rt_pnts_internal *pnts = NULL;
@@ -377,12 +377,11 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     struct bu_vls pnt_str = BU_VLS_INIT_ZERO;
     const char *pnt_prim = NULL;
     const char *filename = NULL;
-    const char *usage = "Usage: pnts write [options] <pnts_obj> <output_file>\n\n";
-    struct bu_opt_desc d[4];
-    fastf_t precis = 0.0;
-    BU_OPT(d[0], "h", "help",      "",   NULL,             &print_help,   "Print help and exit");
-    BU_OPT(d[1], "f", "format", "<fmt>", &bu_opt_vls,      &fmt,          "File format or printf-style specifier");
-    BU_OPT(d[2], "p", "precision", "#",  &bu_opt_fastf_t,  &precis,       "Number of digits after decimal to use when printing out numbers(default 17)");
+    const char *usage = "Usage: pnts write [options] <pnts_obj> <output_file>\n\nWrites out data based on the point type, one row per point, using a format of x y z [i j k] [scale] [R G B] (bracketed groups may or may not be present depending on point type.)\n\n";
+    struct bu_opt_desc d[3];
+    int precis = 0;
+    BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,   "Print help and exit");
+    BU_OPT(d[1], "p", "precision", "#",  &bu_opt_int,  &precis,       "Number of digits after decimal to use when printing out numbers (default 17)");
     BU_OPT_NULL(d[2]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
@@ -409,11 +408,6 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    if (bu_vls_strlen(&fmt) > 0 || !NEAR_ZERO(precis, SMALL_FASTF)) {
-	bu_vls_sprintf(gedp->ged_result_str, "Error: unsupported option\n");
-	return GED_ERROR;
-    }
-
     pnt_prim = argv[0];
     filename = argv[1];
 
@@ -436,7 +430,6 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     RT_PNTS_CK_MAGIC(pnts);
 
     if (pnts->type != RT_PNT_TYPE_NRM) {
-	bu_vls_printf(gedp->ged_result_str, "pnts write: unsupported point type");
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
@@ -445,6 +438,62 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     if ((fp=fopen(filename, "wb+")) == NULL) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: cannot open file %s for writing\n", filename);
 	return GED_ERROR;
+    }
+
+    if (pnts->type == RT_PNT_TYPE_PNT) {
+	struct pnt *pn = NULL;
+	struct pnt *pl = (struct pnt *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt, &(pl->l))) {
+	    int i = 0;
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		if (i != 2) {
+		    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+		} else {
+		    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+		}
+	    }
+	}
+	rt_db_free_internal(&intern);
+	return GED_OK;
+    }
+
+
+    if (pnts->type == RT_PNT_TYPE_COL) {
+	unsigned char rgb[3] = {0, 0, 0};
+	struct pnt_color *pn = NULL;
+	struct pnt_color *pl = (struct pnt_color *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt_color, &(pl->l))) {
+	    int i = 0;
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
+	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	    fprintf(fp, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
+	}
+	rt_db_free_internal(&intern);
+	return GED_OK;
+    }
+
+    if (pnts->type == RT_PNT_TYPE_SCA) {
+	struct pnt_scale *pn = NULL;
+	struct pnt_scale *pl = (struct pnt_scale *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt_scale, &(pl->l))) {
+	    int i = 0;
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
+	    _pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+	    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+	}
+	rt_db_free_internal(&intern);
+	return GED_OK;
     }
 
     if (pnts->type == RT_PNT_TYPE_NRM) {
@@ -457,16 +506,114 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
 	    for (i = 0; i < 3; i++) {
-		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
-		if (i == 2) {
-		    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
-		} else {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
+		if (i != 2) {
 		    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+		} else {
+		    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
 		}
 	    }
 	}
+	rt_db_free_internal(&intern);
+	return GED_OK;
     }
 
+    if (pnts->type == RT_PNT_TYPE_COL_SCA) {
+	unsigned char rgb[3] = {0, 0, 0};
+	struct pnt_color_scale *pn = NULL;
+	struct pnt_color_scale *pl = (struct pnt_color_scale *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt_color_scale, &(pl->l))) {
+	    int i = 0;
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
+	    _pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+	    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	    fprintf(fp, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
+	}
+	rt_db_free_internal(&intern);
+	return GED_OK;
+    }
+
+    if (pnts->type == RT_PNT_TYPE_COL_NRM) {
+	unsigned char rgb[3] = {0, 0, 0};
+	struct pnt_color_normal *pn = NULL;
+	struct pnt_color_normal *pl = (struct pnt_color_normal *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt_color_normal, &(pl->l))) {
+	    int i = 0;
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
+	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	    fprintf(fp, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
+	}
+	rt_db_free_internal(&intern);
+	return GED_OK;
+    }
+
+    if (pnts->type == RT_PNT_TYPE_SCA_NRM) {
+	struct pnt_scale_normal *pn = NULL;
+	struct pnt_scale_normal *pl = (struct pnt_scale_normal *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt_scale_normal, &(pl->l))) {
+	    int i = 0;
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
+	    _pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+	    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+	}
+	rt_db_free_internal(&intern);
+	return GED_OK;
+    }
+
+    if (pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
+	unsigned char rgb[3] = {0, 0, 0};
+	struct pnt_color_scale_normal *pn = NULL;
+	struct pnt_color_scale_normal *pl = (struct pnt_color_scale_normal *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt_color_scale_normal, &(pl->l))) {
+	    int i = 0;
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
+	    _pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+	    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	    fprintf(fp, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
+	}
+	rt_db_free_internal(&intern);
+	return GED_OK;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "Error - pnts write: unsupported point type");
     rt_db_free_internal(&intern);
     return GED_OK;
 }
@@ -484,58 +631,14 @@ _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
 	bu_free((char *)option_help, "help str");
     }
     bu_vls_printf(&str, "Subcommands:\n\n");
-    bu_vls_printf(&str, "  get [-p][-n][-t dist_tol] [-k px py pz] (pnt_ind|pnt_ind_min-pnt_ind_max) <pnts> [new_pnts_obj]\n");
-    bu_vls_printf(&str, "    - Get specific subset (1 or more) points from a point set and\n");
-    bu_vls_printf(&str, "      print information. (todo - document subcmd options...)\n\n");
-    bu_vls_printf(&str, "  read <pnts> input_file format units pnt_size\n");
-    bu_vls_printf(&str, "    - Read data from an input file into a pnts object\n\n");
-    bu_vls_printf(&str, "  gen [-t tol] <obj> <output_pnts>\n");
-    bu_vls_printf(&str, "    - Generate a point set from the object and store the set in a points object.\n");
-    bu_vls_printf(&str, "      Collects the first and last hit and normal for any given ray, generating\n");
-    bu_vls_printf(&str, "      an \"outer surface\" point set.\n\n");
-    bu_vls_printf(&str, "  tri [-s scale] <pnts> <output_bot>\n");
-    bu_vls_printf(&str, "    - Generate unit or scaled triangles for each pnt in a point set. If no normal\n");
-    bu_vls_printf(&str, "      information is present, use origin at avg of all set points to make normals.\n\n");
-    bu_vls_printf(&str, "  [TODO] chull <pnts> <output_bot>\n");
-    bu_vls_printf(&str, "    - Store the convex hull of the point set in <output_bot>.\n\n");
-    bu_vls_printf(&str, "  [TODO] generate [-f format] <obj> [new_pnts_obj]\n");
-    bu_vls_printf(&str, "    - Generate a point set from an existing database object (terminate using the stability of a volume calculation? -- might be merged with get...)\n");
+    bu_vls_printf(&str, "  read  - Read data from an input file into a pnts object\n\n");
+    bu_vls_printf(&str, "  write - Write data from a point set into a file\n\n");
+    bu_vls_printf(&str, "  gen   - Generate a point set from the object and store the set in a points object.\n\n");
+    bu_vls_printf(&str, "  tri   - Generate unit or scaled triangles for each pnt in a point set. If no normal\n");
+    bu_vls_printf(&str, "          information is present, use origin at avg of all set points to make normals.\n\n");
     bu_vls_vlscat(gedp->ged_result_str, &str);
     bu_vls_free(&str);
 }
-
-
-#if 0
-HIDDEN int
-pnts_get(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d, struct rt_db_internal *ip)
-{
-    struct rt_pnts_internal *pnts = (struct rt_pnts_internal *)ip->idb_ptr;
-    return GED_OK;
-}
-
-HIDDEN int
-pnts_add(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d, struct rt_db_internal *ip)
-{
-    struct rt_pnts_internal *pnts = (struct rt_pnts_internal *)ip->idb_ptr;
-    return GED_OK;
-}
-
-HIDDEN int
-pnts_rm(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d, struct rt_db_internal *ip)
-{
-    struct rt_pnts_internal *pnts = (struct rt_pnts_internal *)ip->idb_ptr;
-    return GED_OK;
-}
-
-HIDDEN int
-pnts_chull(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d, struct rt_db_internal *ip)
-{
-    struct rt_pnts_internal *pnts = (struct rt_pnts_internal *)ip->idb_ptr;
-    return GED_OK;
-}
-
-#endif
-
 
 int
 ged_pnts(struct ged *gedp, int argc, const char *argv[])
@@ -547,7 +650,7 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
     int opt_ret = 0;
     int opt_argc = argc;
     struct bu_opt_desc d[2];
-    const char * const pnt_subcommands[] = {"gen", "get", "read", "tri", "write", NULL};
+    const char * const pnt_subcommands[] = {"gen", "read", "tri", "write", NULL};
     const char * const *subcmd;
 
     BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
