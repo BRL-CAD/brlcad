@@ -31,6 +31,11 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <limits>
+
 #include "bu/opt.h"
 #include "bu/sort.h"
 #include "rt/geom.h"
@@ -91,6 +96,18 @@ _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale
     bot_ip->faces[pntcnt*3] = pntcnt*3;
     bot_ip->faces[pntcnt*3+1] = pntcnt*3+1;
     bot_ip->faces[pntcnt*3+2] = pntcnt*3+2;
+}
+
+/* TODO - need some generic version of this logic in libbn - 
+ * used in libanalyze's NIRT as well */
+void _pnts_fastf_t_to_vls(struct bu_vls *o, fastf_t d, int p)
+{
+    // TODO - once we enable C++ 11 switch the precision below to std::numeric_limits<double>::max_digits10
+    size_t prec = (p > 0) ? (size_t)p : std::numeric_limits<fastf_t>::digits10 + 2;
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(prec) << d;
+    std::string sd = ss.str();
+    bu_vls_sprintf(o, "%s", sd.c_str());
 }
 
 HIDDEN int
@@ -347,6 +364,113 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     return GED_OK;
 }
 
+HIDDEN int
+_write_pnts(struct ged *gedp, int argc, const char **argv)
+{
+    int print_help = 0;
+    int opt_ret = 0;
+    struct bu_vls fmt = BU_VLS_INIT_ZERO;
+    FILE *fp;
+    struct rt_db_internal intern;
+    struct rt_pnts_internal *pnts = NULL;
+    struct directory *pnt_dp;
+    struct bu_vls pnt_str = BU_VLS_INIT_ZERO;
+    const char *pnt_prim = NULL;
+    const char *filename = NULL;
+    const char *usage = "Usage: pnts write [options] <pnts_obj> <output_file>\n\n";
+    struct bu_opt_desc d[4];
+    fastf_t precis = 0.0;
+    BU_OPT(d[0], "h", "help",      "",   NULL,             &print_help,   "Print help and exit");
+    BU_OPT(d[1], "f", "format", "<fmt>", &bu_opt_vls,      &fmt,          "File format or printf-style specifier");
+    BU_OPT(d[2], "p", "precision", "#",  &bu_opt_fastf_t,  &precis,       "Number of digits after decimal to use when printing out numbers(default 17)");
+    BU_OPT_NULL(d[2]);
+
+    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
+
+    /* must be wanting help */
+    if (argc < 1) {
+	_pnts_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    /* parse standard options */
+    opt_ret = bu_opt_parse(NULL, argc, argv, d);
+
+    if (print_help) {
+	_pnts_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    /* adjust argc to match the leftovers of the options parsing */
+    argc = opt_ret;
+
+    if (argc != 2) {
+	_pnts_cmd_help(gedp, usage, d);
+	return GED_ERROR;
+    }
+
+    if (bu_vls_strlen(&fmt) > 0 || !NEAR_ZERO(precis, SMALL_FASTF)) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: unsupported option\n");
+	return GED_ERROR;
+    }
+
+    pnt_prim = argv[0];
+    filename = argv[1];
+
+    if (bu_file_exists(filename, NULL)) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: file %s already exists\n", filename);
+	return GED_ERROR;
+    }
+
+    /* get pnt */
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
+	bu_vls_printf(gedp->ged_result_str, "pnts write: %s is not a pnts object!", pnt_prim);
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+
+    pnts = (struct rt_pnts_internal *)intern.idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
+
+    if (pnts->type != RT_PNT_TYPE_NRM) {
+	bu_vls_printf(gedp->ged_result_str, "pnts write: unsupported point type");
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+
+    /* Write points */
+    if ((fp=fopen(filename, "wb+")) == NULL) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: cannot open file %s for writing\n", filename);
+	return GED_ERROR;
+    }
+
+    if (pnts->type == RT_PNT_TYPE_NRM) {
+	struct pnt_normal *pn = NULL;
+	struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
+	    int i = 0;
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
+	    for (i = 0; i < 3; i++) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
+		if (i == 2) {
+		    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+		} else {
+		    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+		}
+	    }
+	}
+    }
+
+    rt_db_free_internal(&intern);
+    return GED_OK;
+}
+
 HIDDEN void
 _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
 {
@@ -423,7 +547,7 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
     int opt_ret = 0;
     int opt_argc = argc;
     struct bu_opt_desc d[2];
-    const char * const pnt_subcommands[] = {"gen", "get", "read", "tri", NULL};
+    const char * const pnt_subcommands[] = {"gen", "get", "read", "tri", "write", NULL};
     const char * const *subcmd;
 
     BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
@@ -484,6 +608,8 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
     if (bu_strncmp(argv[0], "tri", len) == 0) return _pnts_to_bot(gedp, argc, argv);
 
     if (bu_strncmp(argv[0], "gen", len) == 0) return _obj_to_pnts(gedp, argc, argv);
+
+    if (bu_strncmp(argv[0], "write", len) == 0) return _write_pnts(gedp, argc, argv);
 
     /* If we don't have a valid subcommand, we're done */
     bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!\n", cmd, argv[0]);
