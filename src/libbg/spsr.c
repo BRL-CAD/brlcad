@@ -25,11 +25,11 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/log.h"
+#include "bg/spsr.h"
 
 #ifdef ENABLE_SPR
 
 #include "bu/malloc.h"
-#include "bg/spsr.h"
 #include "../other/PoissonRecon/Src/SPR.h"
 
 struct c_vert {
