@@ -295,11 +295,15 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-v #</option></term>
+	<term><option>-v [#]</option></term>
 	<listitem>
-	  <para>sets the verbosity bit vector flags for <command>rtedge</command> .
-	  Use -v 0 for no output or -v fff for all available output.
-	  See include/brlcad/rtprivate.h for various bit definitions.</para>
+	  <para>sets the output verbosity level for
+	  <command>rtedge</command>.  You can use -v 0 for no/minimal
+	  output or add -v repeatedly up through four levels (e.g.,
+	  -vvvv) to see all available output.  Default is all
+	  available output.  The -v option will also take a specific
+	  hexadecimal value to turn on specific message categories
+	  (e.g., -v 0xFF010030) of output.</para>
 	</listitem>
       </varlistentry>
 
