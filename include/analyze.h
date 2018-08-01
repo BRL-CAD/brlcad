@@ -355,16 +355,16 @@ ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_stat
  * Using ray intersection, sample the database object obj and return a pnts primitive.
  *
  * For the grid sampling method, the tolerance sets the number of rays fired.
- * max_time do *not* impact the GRID sampling logic.
+ * max_time does *not* impact the GRID sampling logic.  max_pnts will cap the
+ * number of reported points, but be aware that the subset of points returned
+ * from a grid result will be the first points seen in the results and will
+ * not be randomly selected from the grid.  For combining grid and non-grid
+ * results where the total number of points should be capped, the caller is
+ * advised to perform separate generations and then merge the point sets.
  *
  * In the case where more than one pseudorandom sampling method is selected,
- * the max_time limit applies per method.  If unset, the maximum ray count
- * fired for the non-grid methods is determined by the formula 16*r^2/t^2,
- * where r is the radius of the bounding sphere and t is the length tolerance
- * in bn_tol.  The formula is based on the point at which the sum of the area
- * of the circles around each point with radius 0.5*t equals the surface area
- * of the bounding sphere, and thus adjusting the tolerance scales the number
- * of rays as a function of the object size.
+ * the max_time and max_pnts limits apply per method.  If unset, the maximum
+ * pnt count return is 500,000 per method (except for GRID).
  *
  * Return codes:
  *
@@ -377,7 +377,7 @@ ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_stat
 #define ANALYZE_OBJ_TO_PNTS_RAND  0x4 /**< @brief sample using Marsaglia sampling on the bounding sphere with pseudo random numbers */
 #define ANALYZE_OBJ_TO_PNTS_SOBOL 0x8 /**< @brief sample using Marsaglia sampling on the bounding sphere with Sobol' low-discrepancy-sequence generation */
 ANALYZE_EXPORT int analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
-	       const char *obj, struct bn_tol *tol, int flags, long int max_ray_cnt, unsigned int max_time);
+	       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time);
 
 
 struct current_state;

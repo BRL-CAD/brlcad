@@ -158,26 +158,36 @@ analyze_prand_pnt_worker(int cpu, void *ptr)
 }
 
 void
-get_random_rays(fastf_t *rays, long int craynum)
+get_random_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius)
 {
     long int i = 0;
+    point_t p1, p2;
     if (!rays) return;
     for (i = 0; i < craynum; i++) {
-	rays[i*6+0] = 0.0;
-	rays[i*6+1] = 0.0;
-	rays[i*6+2] = 0.0;
-	rays[i*6+3] = 0.0;
-	rays[i*6+4] = 0.0;
-	rays[i*6+5] = 0.0;
+	vect_t n;
+	bn_rand_sph_sample(p1, center, radius);
+	bn_rand_sph_sample(p2, center, radius);
+	VSUB2(n, p2, p1);
+	rays[i*6+0] = p1[X];
+	rays[i*6+1] = p1[Y];
+	rays[i*6+2] = p1[Z];
+	rays[i*6+3] = n[X];
+	rays[i*6+4] = n[Y];
+	rays[i*6+5] = n[Z];
     }
 }
 
 void
-get_sobol_rays(fastf_t *rays, long int craynum)
+get_sobol_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius)
 {
     long int i = 0;
+    point_t p1, p2;
     if (!rays) return;
     for (i = 0; i < craynum; i++) {
+	vect_t n;
+	bn_rand_sph_sample(p1, center, radius);
+	bn_rand_sph_sample(p2, center, radius);
+	VSUB2(n, p2, p1);
 	rays[i*6+0] = 0.0;
 	rays[i*6+1] = 0.0;
 	rays[i*6+2] = 0.0;
@@ -190,7 +200,7 @@ get_sobol_rays(fastf_t *rays, long int craynum)
 /* 0 = success, -1 error */
 int
 analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
-       const char *obj, struct bn_tol *tol, int flags, long int max_ray_cnt, unsigned int max_time)
+       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time)
 {
     int pntcnt = 0;
     int ret, i, j;
@@ -199,13 +209,10 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
     int ind = 0;
     int count = 0;
     struct rt_i *rtip;
-    long int mrc;
     int ncpus = bu_avail_cpus();
     struct rt_gen_worker_vars *state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
     struct bu_ptbl **output_pnts = (struct bu_ptbl **)bu_calloc(ncpus+1, sizeof(struct bu_ptbl *), "local state");
     struct resource *resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
-    long int raycntseed = (max_ray_cnt < 10000000) ? max_ray_cnt : 10000000;
-    long int craynum = raycntseed/(ncpus+1);
 
     if (!rpnts || !dbip || !obj || !tol || ncpus == 0) {
 	ret = 0;
@@ -261,50 +268,78 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	oldtime = bu_gettime();
 	bu_parallel(analyze_gen_worker, ncpus, (void *)state);
 	currtime = bu_gettime();
-	bu_log("grid raytrace time: %.1f\n", (currtime - oldtime)/1e6);
 	for (i = 0; i < ncpus+1; i++) {
 	    state[i].rays = NULL;
 	}
     }
 
-    /* We now know enough to get the max ray count, if it wasn't supplied */
-    mrc = (max_ray_cnt) ? max_ray_cnt : (long int)((16 * rtip->rti_radius*rtip->rti_radius)/tol->dist_sq);
+    if (flags & ANALYZE_OBJ_TO_PNTS_RAND || flags & ANALYZE_OBJ_TO_PNTS_SOBOL) {
+	/* The formula 16*r^2/t^2 is based on the point at which the sum of the
+	 * area of the circles around each point with radius 0.5*t equals the
+	 * surface area of the bounding sphere, and thus adjusting the
+	 * tolerance scales the number of rays as a function of the object
+	 * size. However, before this can go live a way is needed to make sure
+	 * it doesn't set the maximum to crazy large levels... maybe capping it
+	 * at some ratio of bsph radius/tol */
+	/* long int mrc = (max_ray_cnt) ? max_ray_cnt : (long int)((16 * rtip->rti_radius*rtip->rti_radius)/tol->dist_sq); */
 
-    if (flags & ANALYZE_OBJ_TO_PNTS_RAND) {
-	fastf_t delta = 0;
-	long int raycnt = 0;
-	for (i = 0; i < ncpus+1; i++) {
-	    if (!state[i].rays) {
-		state[i].rays = (fastf_t *)bu_calloc(craynum * 6 + 1, sizeof(fastf_t), "rays");
-	    }
-	}
-	oldtime = bu_gettime();
-	while (delta < (fastf_t)max_time && raycnt < mrc) {
-	    for (i = 0; i < ncpus+1; i++) {
-		get_random_rays(state[i].rays, craynum);
-	    }
-	    bu_parallel(analyze_prand_pnt_worker, ncpus, (void *)state);
-	    raycnt += craynum * (ncpus+1);
-	    delta = (bu_gettime() - oldtime)/1e6;
-	}
-    }
+	/* We now know enough to get the max ray count.  Try up to 10x the number of max
+	 * points of rays, or up to 2 million. */
+	long int mrc = ((max_pnts * 10) > 2000000 || !max_pnts) ? 2000000 : max_pnts * 10;
+	long int craynum = mrc/(ncpus+1);
+	fastf_t mt = (max_time > 0) ? (fastf_t)max_time : (fastf_t)INT_MAX;
 
-    if (flags & ANALYZE_OBJ_TO_PNTS_SOBOL) {
-	fastf_t delta = 0;
-	long int raycnt = 0;
-	for (i = 0; i < ncpus+1; i++) {
-	    if (!state[i].rays) {
-		state[i].rays = (fastf_t *)bu_calloc(craynum * 6 + 1, sizeof(fastf_t), "rays");
+	point_t center;
+
+	VADD2SCALE(center, rtip->mdl_max, rtip->mdl_min, 0.5);
+
+	if (flags & ANALYZE_OBJ_TO_PNTS_RAND) {
+	    fastf_t delta = 0;
+	    long int raycnt = 0;
+	    int pc = 0;
+	    oldtime = bu_gettime();
+	    for (i = 0; i < ncpus+1; i++) {
+		if (!state[i].rays) {
+		    state[i].rays = (fastf_t *)bu_calloc(craynum * 6 + 1, sizeof(fastf_t), "rays");
+		    state[i].rays_cnt = craynum;
+		}
+	    }
+	    while (delta < mt && raycnt < mrc && (!max_pnts || pc < max_pnts)) {
+		for (i = 0; i < ncpus+1; i++) {
+		    get_random_rays(state[i].rays, craynum, center, rtip->rti_radius);
+		}
+		bu_parallel(analyze_prand_pnt_worker, ncpus, (void *)state);
+		raycnt += craynum * (ncpus+1);
+		pc = 0;
+		for (i = 0; i < ncpus+1; i++) {
+		    pc += (int)BU_PTBL_LEN(output_pnts[i]);
+		}
+		delta = (bu_gettime() - oldtime)/1e6;
 	    }
 	}
-	oldtime = bu_gettime();
-	while (delta < (fastf_t)max_time && raycnt < mrc) {
+
+	if (flags & ANALYZE_OBJ_TO_PNTS_SOBOL) {
+	    fastf_t delta = 0;
+	    long int raycnt = 0;
+	    int pc = 0;
 	    for (i = 0; i < ncpus+1; i++) {
-		get_sobol_rays(state[i].rays, craynum);
+		if (!state[i].rays) {
+		    state[i].rays = (fastf_t *)bu_calloc(craynum * 6 + 1, sizeof(fastf_t), "rays");
+		    state[i].rays_cnt = craynum;
+		}
 	    }
-	    bu_parallel(analyze_prand_pnt_worker, ncpus, (void *)state);
-	    raycnt += craynum * (ncpus+1);
-	    delta = (bu_gettime() - oldtime)/1e6;
+	    oldtime = bu_gettime();
+	    while (delta < mt && raycnt < mrc && (!max_pnts || pc < max_pnts)) {
+		for (i = 0; i < ncpus+1; i++) {
+		    get_sobol_rays(state[i].rays, craynum, center, rtip->rti_radius);
+		}
+		bu_parallel(analyze_prand_pnt_worker, ncpus, (void *)state);
+		raycnt += craynum * (ncpus+1);
+		for (i = 0; i < ncpus+1; i++) {
+		    pc += (int)BU_PTBL_LEN(output_pnts[i]);
+		}
+		delta = (bu_gettime() - oldtime)/1e6;
+	    }
 	}
     }
 
@@ -317,13 +352,17 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
     if (pntcnt < 1) {
 	ret = ANALYZE_ERROR;
     } else {
-	rpnts->count = pntcnt;
+	int pc = 0;
+	rpnts->count = (max_pnts && (pntcnt > max_pnts)) ? max_pnts : pntcnt;
 	BU_ALLOC(rpnts->point, struct pnt_normal);
 	BU_LIST_INIT(&(((struct pnt_normal *)rpnts->point)->l));
 	for (i = 0; i < ncpus+1; i++) {
 	    for (j = 0; j < (int)BU_PTBL_LEN(output_pnts[i]); j++) {
 		BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &((struct pnt_normal *)BU_PTBL_GET(output_pnts[i], j))->l);
+		pc++;
+		if (max_pnts && (pc == max_pnts)) break;
 	    }
+	    if (max_pnts && (pc == max_pnts)) break;
 	}
 	ret = 0;
     }

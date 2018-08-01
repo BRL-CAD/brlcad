@@ -261,6 +261,11 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     int opt_ret = 0;
     fastf_t len_tol = 0.0;
     int pnt_surf_mode = 0;
+    int pnt_grid_mode= 0;
+    int pnt_rand_mode = 0;
+    int pnt_sobol_mode = 0;
+    int max_pnts = 0;
+    int max_time = 0;
     int flags = 0;
     struct rt_db_internal internal;
     struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
@@ -268,11 +273,15 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     const char *pnt_prim= NULL;
     const char *obj_name = NULL;
     const char *usage = "Usage: pnts gen [options] <obj> <output_pnts>\n\n";
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
-    BU_OPT(d[1], "t", "tolerance", "#", &bu_opt_fastf_t, &len_tol,      "Specify sampling grid spacing (in mm).");
-    BU_OPT(d[2], "S", "surface",   "",  NULL,            &pnt_surf_mode,     "Save only first and last points along ray.");
-    BU_OPT_NULL(d[3]);
+    struct bu_opt_desc d[6];
+    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,    "Print help and exit");
+    BU_OPT(d[1], "t", "tolerance", "#", &bu_opt_fastf_t, &len_tol,       "Specify sampling grid spacing (in mm).");
+    BU_OPT(d[2], "",  "surface",   "",  NULL,            &pnt_surf_mode, "Save only first and last points along ray.");
+    BU_OPT(d[3], "",  "grid",      "",  NULL,            &pnt_grid_mode, "Sample using a gridded ray pattern (default).");
+    BU_OPT(d[4], "",  "rand",      "",  NULL,            &pnt_rand_mode, "Sample using a random Marsaglia ray pattern on the bounding sphere.");
+    BU_OPT(d[5], "",  "max-pnts",  "",  &bu_opt_int,     &max_pnts,      "Maximum number of pnts to return.");
+    BU_OPT(d[6], "",  "max-time",  "",  &bu_opt_int,     &max_time,      "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
+    BU_OPT_NULL(d[7]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
@@ -313,6 +322,15 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 	flags |= ANALYZE_OBJ_TO_PNTS_SURF;
     }
 
+    /* Pick our mode(s) */
+    if (!pnt_grid_mode && !pnt_rand_mode && !pnt_sobol_mode) {
+	flags |= ANALYZE_OBJ_TO_PNTS_GRID;
+    } else {
+	if (pnt_grid_mode)  flags |= ANALYZE_OBJ_TO_PNTS_GRID;
+	if (pnt_rand_mode)  flags |= ANALYZE_OBJ_TO_PNTS_RAND;
+	if (pnt_sobol_mode) flags |= ANALYZE_OBJ_TO_PNTS_SOBOL;
+    }
+
     /* If we don't have a tolerance, try to guess something sane from the bbox */
     if (NEAR_ZERO(len_tol, RT_LEN_TOL)) {
 	point_t rpp_min, rpp_max;
@@ -337,7 +355,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     pnts->scale = 0.0;
     pnts->type = RT_PNT_TYPE_NRM;
 
-    if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, obj_name, &btol, flags, 0, 0)) {
+    if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, obj_name, &btol, flags, max_pnts, max_time)) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
 	return GED_ERROR;
     }
