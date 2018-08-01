@@ -171,6 +171,28 @@ int space_partition = RT_PART_NUBSPT;
 
 extern struct command_tab rt_cmdtab[];
 
+
+/* this helper function is used to increase a bit variable through
+ * five levels (8 bits set at a time, 0 through level 4).  this can be
+ * used to incrementally increase uint32 bits as typically used for
+ * verbose and/or debug printing.
+ */
+static unsigned int
+increase_level(unsigned int bits)
+{
+    if ((bits & 0x000000ff) != 0x000000ff)
+	bits |= 0x000000ff;
+    else if ((bits & 0x0000ff00) != 0x0000ff00)
+	bits |= 0x0000ff00;
+    else if ((bits & 0x00ff0000) != 0x00ff0000)
+	bits |= 0x00ff0000;
+    else if ((bits & 0xff000000) != 0xff000000)
+	bits |= 0xff000000;
+
+    return bits;
+}
+
+
 int
 get_args(int argc, const char *argv[])
 {
@@ -182,7 +204,7 @@ get_args(int argc, const char *argv[])
 
 
 #define GETOPT_STR	\
-    ".:, :@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v:w:x:z:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
+    ".:, :@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v::w:x:z:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
 
     while ((c=bu_getopt(argc, (char * const *)argv, GETOPT_STR)) != -1) {
 	if (bu_optopt == '?')
@@ -380,14 +402,14 @@ get_args(int argc, const char *argv[])
 
 	    case 'a':
 		/* Set azimuth */
-		if (bn_decode_angle(&azimuth,bu_optarg) == 0) {
+		if (bn_decode_angle(&azimuth, bu_optarg) == 0) {
 		    fprintf(stderr, "WARNING: Unexpected units for azimuth angle, using default value\n");
 		}
 		matflag = 0;
 		break;
 	    case 'e':
 		/* Set elevation */
-		if (bn_decode_angle(&elevation,bu_optarg) == 0) {
+		if (bn_decode_angle(&elevation, bu_optarg) == 0) {
 		    fprintf(stderr, "WARNING: Unexpected units for elevation angle, using default value\n");
 		}
 		matflag = 0;
@@ -462,12 +484,45 @@ get_args(int argc, const char *argv[])
 		    }
 		}
 		break;
-	    case 'v': /* Set level of "non-debug" debugging output */
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_verbosity);
-		bu_printb("Verbosity:", rt_verbosity,
-			  VERBOSE_FORMAT);
+	    case 'v': {
+		/* change our "verbosity" level, increasing the amount
+		 * of (typically non-debug) information printed during
+		 * ray tracing for each -v specified or to the
+		 * specific setting if an optional hexadecimal value
+		 * is provided as an argument.
+		 */
+
+		int ret;
+		unsigned int scanned_verbosity = 0;
+		size_t num_v = 1;
+		const char *cp = bu_optarg;
+
+		if (!bu_optarg || *bu_optarg == '\0') {
+		    /* turn on next 2 bits */
+		    rt_verbosity = increase_level(rt_verbosity);
+		} else {
+
+		    while (*cp == 'v') {
+			num_v++;
+			cp++;
+		    }
+
+		    while (num_v--)
+			rt_verbosity = increase_level(rt_verbosity);
+
+		    /* we have a hex, set it specifically */
+		    if (*cp != '\0' && isxdigit((int)*cp)) {
+			ret = sscanf(cp, "%x", (unsigned int *)&scanned_verbosity);
+			if (ret == 1) {
+			    rt_verbosity = scanned_verbosity;
+			}
+		    }
+		}
+
+		bu_printb("Verbosity:", rt_verbosity, VERBOSE_FORMAT);
 		bu_log("\n");
 		break;
+	    }
 	    case 'E':
 		eye_backoff = atof(bu_optarg);
 		break;
