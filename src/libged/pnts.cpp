@@ -409,11 +409,13 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
     int pnts_cnt = 0;
     int array_size = 0;
     fastf_t conv_factor = 1.0;
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",      "",              NULL,         &print_help,   "Print help and exit");
-    BU_OPT(d[1], "f", "format",    "[xyzijksrgb]",  &bu_opt_vls,  &fmt,          "Format of input data");
-    BU_OPT(d[2], "u", "units",     "unit",          &bu_opt_vls,  &unit,         "Either a named unit (e.g. in) or a unit expression (.15m)");
-    BU_OPT_NULL(d[3]);
+    fastf_t psize = 0.0;
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0], "h", "help",      "",              NULL,            &print_help,  "Print help and exit");
+    BU_OPT(d[1], "f", "format",    "[xyzijksrgb]",  &bu_opt_vls,     &fmt,         "Format of input data");
+    BU_OPT(d[2], "u", "units",     "unit",          &bu_opt_vls,     &unit,        "Either a named unit (e.g. in), number (implicit unit is mm) or a unit expression (.15m)");
+    BU_OPT(d[3], "",  "size",      "#",             &bu_opt_fastf_t, &psize,       "Default size to use for points");
+    BU_OPT_NULL(d[4]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
@@ -484,7 +486,7 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
     BU_ALLOC(internal.idb_ptr, struct rt_pnts_internal);
     pnts = (struct rt_pnts_internal *) internal.idb_ptr;
     pnts->magic = RT_PNTS_INTERNAL_MAGIC;
-    pnts->scale = 0.0;
+    pnts->scale = psize;
     pnts->type = _ged_pnts_fmt_type(bu_vls_addr(&fmt));
     if (pnts->type != RT_PNT_UNKNOWN) {
 	pnts->point = _ged_pnts_new_pnt(pnts->type);
