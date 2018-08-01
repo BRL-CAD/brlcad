@@ -378,7 +378,7 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
 	    continue;
 	}
 	if ((fc == 's')) {
-	    _ged_pnt_s_set(point, pnts->type, fc, val);
+	    _ged_pnt_s_set(point, pnts->type, fc, val * conv_factor);
 	    continue;
 	}
     }
