@@ -172,7 +172,6 @@ set(LIBGED_SOURCES
   m2v_point.c
   make.c
   make_name.c
-  make_pnts.c
   match.c
   mater.c
   mirror.c

@@ -23,8 +23,6 @@
  *
  */
 
-/* TODO - merge make_pnts in with this... */
-
 #include "common.h"
 
 extern "C" {
@@ -161,10 +159,7 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
 
     /* Sanity */
     if (!bot_name || !gedp) return GED_ERROR;
-    if (db_lookup(gedp->ged_wdbp->dbip, bot_name, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s already exists!\n", bot_name);
-	return GED_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, bot_name, LOOKUP_QUIET, GED_ERROR);
 
     /* For the moment, only generate BoTs when we have a normal to guide us.  Eventually,
      * we might add logic to find the avg center point and calculate normals radiating out
@@ -310,10 +305,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s doesn't exist!\n", obj_name);
 	return GED_ERROR;
     }
-    if (db_lookup(gedp->ged_wdbp->dbip, pnt_prim, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s already exists!\n", pnt_prim);
-	return GED_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, pnt_prim, LOOKUP_QUIET, GED_ERROR);
 
     /* If we don't have a tolerance, try to guess something sane from the bbox */
     if (NEAR_ZERO(len_tol, RT_LEN_TOL)) {
@@ -513,7 +505,7 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
 	}
 
 	if (pnts->type == RT_PNT_UNKNOWN) {
-	    /* If we dont' have a specified format, try to guess */
+	    /* If we don't have a specified format, try to guess */
 	    bu_log("Warning - no point format specified, trying to match template xyz[ijk][s][rgb]\n");
 	    pnts->type = _ged_pnts_fmt_guess(numcnt);
 	    if (pnts->type != RT_PNT_UNKNOWN) {
@@ -928,6 +920,115 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
     return GED_ERROR;
 }
 
+/* Compatibility wrapper for the old make_pnts command ordering/prompting:
+ *
+ * Input values:
+ * argv[1] object name
+ * argv[2] filename with path
+ * argv[3] point data file format string
+ * argv[4] point data file units string or conversion factor to millimeters
+ * argv[5] default size of each point
+ */
+int
+ged_make_pnts(struct ged *gedp, int argc, const char *argv[]) 
+{
+    double conv_factor = -1.0;
+    double psize = -1.0;
+    char *endp = (char *)NULL;
+    static const char *usage = "point_cloud_name filename_with_path file_format file_data_units default_point_size";
+    static const char *prompt[] = {
+	"Enter point-cloud name: ",
+	"Enter point file path and name: ",
+	"Enter file data format (xyzrgbsijk?): ",
+	"Enter file data units (um|mm|cm|m|km|in|ft|yd|mi)\nor conversion factor from file data units to millimeters: ",
+	"Enter default point size: "
+    };
+    static const char *r_cmd = "read";
+    static const char *s_opt = "--size";
+    static const char *f_opt = "--format";
+    static const char *u_opt = "--units";
+    const char *nargv[10];
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc > 6) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* prompt for point-cloud name */
+    if (argc < 2) {
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[0]);
+	return GED_MORE;
+    }
+
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
+
+    /* prompt for data file name with path */
+    if (argc < 3) {
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[1]);
+	return GED_MORE;
+    }
+
+    /* prompt for data file format */
+    if (argc < 4) {
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[2]);
+	return GED_MORE;
+    }
+
+    /* Validate 'point file data format string' and return point-cloud type. */
+    if ((_ged_pnts_fmt_type(argv[3]) == RT_PNT_UNKNOWN)) {
+	bu_vls_printf(gedp->ged_result_str, "could not validate format string: %s\n", argv[3]);
+	return GED_ERROR;
+    }
+
+    /* prompt for data file units */
+    if (argc < 5) {
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[3]);
+	return GED_MORE;
+    }
+
+    /* Validate unit */
+    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[4], (void *)&conv_factor) == -1) {
+	conv_factor = bu_mm_value(argv[4]);
+    }
+    if (conv_factor < 0) {
+	bu_vls_sprintf(gedp->ged_result_str, "invalid unit specification: %s\n", argv[4]);
+	return GED_ERROR;
+    }
+
+    /* prompt for default point size */
+    if (argc < 6) {
+	bu_vls_printf(gedp->ged_result_str, "%s", prompt[4]);
+	return GED_MORE;
+    }
+
+    psize = strtod(argv[5], &endp);
+    if ((endp != argv[5]) && (*endp == '\0')) {
+	/* convert to double success */
+	if (psize < 0.0) {
+	    bu_vls_printf(gedp->ged_result_str, "Default point size '%lf' must be non-negative.\n", psize);
+	    return GED_ERROR;
+	}
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "Invalid default point size '%s'\n", argv[5]);
+	return GED_ERROR;
+    }
+
+    nargv[0] = argv[0];
+    nargv[1] = r_cmd;
+    nargv[2] = s_opt;
+    nargv[3] = argv[5];
+    nargv[4] = f_opt;
+    nargv[5] = argv[3];
+    nargv[6] = u_opt;
+    nargv[7] = argv[4];
+    nargv[8] = argv[2];
+    nargv[9] = argv[1];
+
+    return ged_pnts(gedp, 10, (const char **)nargv);
+}
 
 /*
  * Local Variables:
