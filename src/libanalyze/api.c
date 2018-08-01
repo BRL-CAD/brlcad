@@ -1088,6 +1088,7 @@ analyze_single_grid_setup(struct current_state *state)
 	bu_log("viewsize <= 0");
 	return ANALYZE_ERROR;
     }
+
     /* model2view takes us to eye_model location & orientation */
     MAT_IDN(toEye);
     MAT_DELTAS_VEC_NEG(toEye, state->eye_model);
@@ -1100,7 +1101,7 @@ analyze_single_grid_setup(struct current_state *state)
     cell_width = state->gridSpacing;
     cell_height = cell_width / state->gridRatio;
     width = state->viewsize/cell_width + 0.99;
-    height = state->viewsize/cell_height + 0.99;
+    height = state->viewsize/(cell_height * state->aspect) + 0.99;
 
     state->grid->grid_spacing = cell_width;
     state->grid->x_points = width;
@@ -1122,7 +1123,7 @@ analyze_single_grid_setup(struct current_state *state)
     MAT4X3VEC(state->grid->ray_direction, view2model, temp);
     VUNITIZE(state->grid->ray_direction);
 
-    VSET(temp, -1, -1/state->gridRatio, 0);	/* eye plane */
+    VSET(temp, -1, -1/state->aspect, 0);	/* eye plane */
     MAT4X3PNT(state->grid->start_coord, view2model, temp);
     return ANALYZE_OK;
 }
@@ -1205,8 +1206,14 @@ analyze_setup_ae(struct current_state *state)
     toEye[MDY] = -((rtip->mdl_max[Y]+rtip->mdl_min[Y])/2.0);
     toEye[MDZ] = -((rtip->mdl_max[Z]+rtip->mdl_min[Z])/2.0);
 
-    VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
-    state->viewsize = MAGNITUDE(diag);
+    if ((state->viewsize) <= 0) {
+	VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
+	state->viewsize = MAGNITUDE(diag);
+	if (state->aspect > 1) {
+	    /* don't clip any of the image when autoscaling */
+	    state->viewsize *= state->aspect;
+	}
+    }
 
     /* sanity check: make sure viewsize still isn't zero in case
      * bounding box is empty, otherwise bn_mat_int() will bomb.

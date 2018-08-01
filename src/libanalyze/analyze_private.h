@@ -130,7 +130,7 @@ struct current_state {
     double mass_tolerance;
     double sa_tolerance;
     double azimuth_deg, elevation_deg;
-    double gridSpacing, gridSpacingLimit, gridRatio;
+    double gridSpacing, gridSpacingLimit, gridRatio, aspect;
     double samples_per_model_axis;
     int ncpu;
     size_t required_number_hits;

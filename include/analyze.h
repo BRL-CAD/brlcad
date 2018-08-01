@@ -497,7 +497,13 @@ analyze_set_grid_spacing(struct current_state *context , fastf_t gridSpacing, fa
  * sets the cell_width by cell_height ratio (default is 1)
  */
 ANALYZE_EXPORT extern void
-analyze_set_grid_ratio(struct current_state *state, fastf_t gridRatio);
+analyze_set_grid_ratio(struct current_state *context, fastf_t gridRatio);
+
+/**
+ * sets the width by height ratio (default is 1)
+ */
+ANALYZE_EXPORT extern void
+analyze_set_aspect(struct current_state *context, fastf_t aspect);
 
 /**
  * used to specify the minimum samples per model axis
