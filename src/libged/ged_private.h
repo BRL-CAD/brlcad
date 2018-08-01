@@ -30,6 +30,7 @@
 
 #include <time.h>
 
+#include "bu/opt.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -526,19 +527,19 @@ extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 extern int _ged_brep_tikz(struct ged *gedp, const char *obj_name, const char *outfile);
 
 
-/* defined in ged_util.c.c */
+/* defined in ged_util.c */
 
 /**
  * Given two pointers to pointers to directory entries, do a string
  * compare on the respective names and return that value.
  */
-int cmpdirname(const void *a, const void *b, void *arg);
+extern int cmpdirname(const void *a, const void *b, void *arg);
 
 /**
  * Given two pointers to pointers to directory entries, compare
  * the dp->d_len sizes.
  */
-int cmpdlen(const void *a, const void *b, void *arg);
+extern int cmpdlen(const void *a, const void *b, void *arg);
 
 
 /**
@@ -561,7 +562,10 @@ extern void _ged_vls_col_pr4v(struct bu_vls *vls,
 extern struct directory ** _ged_getspace(struct db_i *dbip,
 					 size_t num_entries);
 
-
+/**
+ * Routine for generic command help printing.
+ */
+extern void _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d);
 
 __END_DECLS
 

@@ -258,6 +258,23 @@ _ged_getspace(struct db_i *dbip,
 }
 
 
+void
+_ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    const char *option_help;
+
+    bu_vls_sprintf(&str, "%s", usage);
+
+    if ((option_help = bu_opt_describe(d, NULL))) {
+	bu_vls_printf(&str, "Options:\n%s\n", option_help);
+	bu_free((char *)option_help, "help str");
+    }
+
+    bu_vls_vlscat(gedp->ged_result_str, &str);
+    bu_vls_free(&str);
+}
+
 
 /*
  * Local Variables:

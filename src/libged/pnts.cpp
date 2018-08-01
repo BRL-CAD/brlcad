@@ -27,15 +27,18 @@
 
 #include "common.h"
 
+extern "C" {
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+}
 
 #include <string>
 #include <sstream>
 #include <iomanip>
 #include <limits>
 
+extern "C" {
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
@@ -44,205 +47,8 @@
 #include "wdb.h"
 #include "analyze.h"
 #include "./ged_private.h"
-
-#define PNT_V_IN(_pt, _key, _v)               \
-    switch (_key) {                           \
-        case 'x':                             \
-            ((struct _pt *)point)->v[X] = _v; \
-            break;                            \
-        case 'y':                             \
-            ((struct _pt *)point)->v[Y] = _v; \
-            break;                            \
-        case 'z':                             \
-            ((struct _pt *)point)->v[Z] = _v; \
-            break;                            \
-    }
-
-#define PNT_C_IN(_pt, _key, _v)                       \
-    switch (_key) {                                   \
-        case 'r':                                     \
-            ((struct _pt *)point)->c.buc_rgb[0] = _v; \
-            break;                                    \
-        case 'g':                                     \
-            ((struct _pt *)point)->c.buc_rgb[1] = _v; \
-            break;                                    \
-        case 'b':                                     \
-            ((struct _pt *)point)->c.buc_rgb[2] = _v; \
-            break;                                    \
-    }
-
-#define PNT_S_IN(_pt, _key, _v)           \
-    switch (_key) {                       \
-	case 's':                         \
-	   ((struct _pt *)point)->s = _v; \
-	break;                            \
-    }
-
-#define PNT_N_IN(_pt, _key, _v)              \
-    switch (_key) {                          \
-	case 'i':                            \
-	   ((struct _pt *)point)->n[X] = _v; \
-	break;                               \
-	case 'j':                            \
-	   ((struct _pt *)point)->n[Y] = _v; \
-	break;                               \
-	case 'k':                            \
-	   ((struct _pt *)point)->n[Z] = _v; \
-	break;                               \
-    }
-
-HIDDEN const char *
-_pnt_default_fmt_str(rt_pnt_type type) {
-    static const char *pntfmt = "xyz";
-    static const char *colfmt = "xyzrgb";
-    static const char *scafmt = "xyzs";
-    static const char *nrmfmt = "xyzijk";
-    static const char *colscafmt = "xyzsrgb";
-    static const char *colnrmfmt = "xyzijkrgb";
-    static const char *scanrmfmt = "xyzijks";
-    static const char *colscanrmfmt = "xyzijksrgb";
-
-    switch (type) {
-	case RT_PNT_TYPE_PNT:
-	    return pntfmt;
-	    break;
-	case RT_PNT_TYPE_COL:
-	    return colfmt;
-	    break;
-	case RT_PNT_TYPE_SCA:
-	    return scafmt;
-	    break;
-	case RT_PNT_TYPE_NRM:
-	    return nrmfmt;
-	    break;
-	case RT_PNT_TYPE_COL_SCA:
-	    return colscafmt;
-	    break;
-	case RT_PNT_TYPE_COL_NRM:
-	    return colnrmfmt;
-	    break;
-	case RT_PNT_TYPE_SCA_NRM:
-	    return scanrmfmt;
-	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
-	    return colscanrmfmt;
-	    break;
-	default:
-	    return NULL;
-	    break;
-    }
+#include "./pnts_util.h"
 }
-
-void
-pnt_v_set(void *point, rt_pnt_type type, char key, fastf_t val) {
-    switch (type) {
-	case RT_PNT_TYPE_PNT:
-	    PNT_V_IN(pnt, key, val);
-	    break;
-	case RT_PNT_TYPE_COL:
-	    PNT_V_IN(pnt_color, key, val);
-	    break;
-	case RT_PNT_TYPE_SCA:
-	    PNT_V_IN(pnt_scale, key, val);
-	    break;
-	case RT_PNT_TYPE_NRM:
-	    PNT_V_IN(pnt_normal, key, val);
-	    break;
-	case RT_PNT_TYPE_COL_SCA:
-	    PNT_V_IN(pnt_color_scale, key, val);
-	    break;
-	case RT_PNT_TYPE_COL_NRM:
-	    PNT_V_IN(pnt_color_normal, key, val);
-	    break;
-	case RT_PNT_TYPE_SCA_NRM:
-	    PNT_V_IN(pnt_scale_normal, key, val);
-	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
-	    PNT_V_IN(pnt_color_scale_normal, key, val);
-	    break;
-	default:
-	    break;
-    }
-}
-
-void
-pnt_c_set(void *point, rt_pnt_type type, char key, fastf_t val) {
-    switch (type) {
-	case RT_PNT_TYPE_COL:
-	    PNT_C_IN(pnt_color, key, val);
-	    break;
-	case RT_PNT_TYPE_COL_SCA:
-	    PNT_C_IN(pnt_color_scale, key, val);
-	    break;
-	case RT_PNT_TYPE_COL_NRM:
-	    PNT_C_IN(pnt_color_normal, key, val);
-	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
-	    PNT_C_IN(pnt_color_scale_normal, key, val);
-	    break;
-	default:
-	    break;
-    }
-}
-
-void
-pnt_s_set(void *point, rt_pnt_type type, char key, fastf_t val) {
-    switch (type) {
-	case RT_PNT_TYPE_SCA:
-	    PNT_S_IN(pnt_scale, key, val);
-	    break;
-	case RT_PNT_TYPE_COL_SCA:
-	    PNT_S_IN(pnt_color_scale, key, val);
-	    break;
-	case RT_PNT_TYPE_SCA_NRM:
-	    PNT_S_IN(pnt_scale_normal, key, val);
-	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
-	    PNT_S_IN(pnt_color_scale_normal, key, val);
-	    break;
-	default:
-	    break;
-    }
-}
-
-void
-pnt_n_set(void *point, rt_pnt_type type, char key, fastf_t val) {
-    switch (type) {
-	case RT_PNT_TYPE_NRM:
-	    PNT_N_IN(pnt_normal, key, val);
-	    break;
-	case RT_PNT_TYPE_COL_NRM:
-	    PNT_N_IN(pnt_color_normal, key, val);
-	    break;
-	case RT_PNT_TYPE_SCA_NRM:
-	    PNT_N_IN(pnt_scale_normal, key, val);
-	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
-	    PNT_N_IN(pnt_color_scale_normal, key, val);
-	    break;
-	default:
-	    break;
-    }
-}
-
-
-HIDDEN void
-_pnts_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d)
-{
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    const char *option_help;
-
-    bu_vls_sprintf(&str, "%s", usage);
-
-    if ((option_help = bu_opt_describe(d, NULL))) {
-	bu_vls_printf(&str, "Options:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
-    }
-
-    bu_vls_vlscat(gedp->ged_result_str, &str);
-    bu_vls_free(&str);
-}
-
 
 HIDDEN void
 _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale, unsigned long pntcnt)
@@ -317,7 +123,7 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
 
     /* must be wanting help */
     if (argc < 1) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_OK;
     }
 
@@ -325,7 +131,7 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
     opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
     if (print_help) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_OK;
     }
 
@@ -333,7 +139,7 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
     argc = opt_ret;
 
     if (argc != 2) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_ERROR;
     }
 
@@ -476,7 +282,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 
     /* must be wanting help */
     if (argc < 1) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_OK;
     }
 
@@ -484,7 +290,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
     if (print_help) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_OK;
     }
 
@@ -492,7 +298,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     argc = opt_ret;
 
     if (argc != 2) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_ERROR;
     }
 
@@ -546,190 +352,12 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     return GED_OK;
 }
 
-rt_pnt_type
-_pnts_fmt_type(struct bu_vls *f)
-{
-    int has_pnt = 0;
-    int has_nrm = 0;
-    int has_s = 0;
-    int has_c = 0;
-    const char *fc = bu_vls_addr(f);
-
-    if (!f || !bu_vls_strlen(f)) return RT_PNT_UNKNOWN;
-    if (strchr(fc, 'x') && strchr(fc, 'y') && strchr(fc, 'z')) has_pnt = 1;
-    if (strchr(fc, 'i') && strchr(fc, 'j') && strchr(fc, 'k')) has_nrm = 1;
-    if (strchr(fc, 's')) has_s = 1;
-    if (strchr(fc, 'r') && strchr(fc, 'g') && strchr(fc, 'b')) has_c = 1;
-
-    if (has_pnt && has_nrm && has_s && has_c) return RT_PNT_TYPE_COL_SCA_NRM;
-    if (has_pnt && has_nrm && has_s) return RT_PNT_TYPE_SCA_NRM;
-    if (has_pnt && has_nrm && has_c) return RT_PNT_TYPE_COL_NRM;
-    if (has_pnt && has_nrm) return RT_PNT_TYPE_NRM;
-    if (has_pnt && has_s && has_c) return RT_PNT_TYPE_COL_SCA;
-    if (has_pnt && has_s) return RT_PNT_TYPE_SCA;
-    if (has_pnt && has_c) return RT_PNT_TYPE_SCA;
-    if (has_pnt) return RT_PNT_TYPE_PNT;
-
-    return RT_PNT_UNKNOWN;
-}
-
-rt_pnt_type
-_pnts_fmt_guess(int numcnt) {
-    switch (numcnt) {
-	case 3:
-	    return RT_PNT_TYPE_PNT;
-	    break;
-	case 4:
-	    return RT_PNT_TYPE_SCA;
-	    break;
-	case 6:
-	    bu_log("Warning - found 6 numbers, which is ambiguous - assuming RT_PNT_TYPE_NRM.  To read in as RT_PNT_TYPE_COL, specify the format string \"xyzrgb\"\n");
-	    return RT_PNT_TYPE_NRM;
-	    break;
-	case 7:
-	    bu_log("Warning - found 7 numbers, which is ambiguous - assuming RT_PNT_TYPE_COL_SCA.  To read in as RT_PNT_TYPE_SCA_NRM, specify the format string \"xyzijks\"\n");
-	    return RT_PNT_TYPE_COL_SCA;
-	    break;
-	case 9:
-	    return RT_PNT_TYPE_COL_NRM;
-	    break;
-	case 10:
-	    return RT_PNT_TYPE_COL_SCA_NRM;
-	    break;
-	default:
-	    return RT_PNT_UNKNOWN;
-	    break;
-    }
-}
-
-int
-_pnts_fmt_match(rt_pnt_type t, int numcnt)
-{
-    if (t == RT_PNT_UNKNOWN || numcnt < 3 || numcnt > 10) return 0;
-
-    if (numcnt == 3 && t == RT_PNT_TYPE_PNT) return 1;
-    if (numcnt == 4 && t == RT_PNT_TYPE_SCA) return 1;
-    if (numcnt == 6 && t == RT_PNT_TYPE_NRM) return 1;
-    if (numcnt == 6 && t == RT_PNT_TYPE_COL) return 1;
-    if (numcnt == 7 && t == RT_PNT_TYPE_COL_SCA) return 1;
-    if (numcnt == 7 && t == RT_PNT_TYPE_SCA_NRM) return 1;
-    if (numcnt == 9 && t == RT_PNT_TYPE_COL_NRM) return 1;
-    if (numcnt == 10 && t == RT_PNT_TYPE_COL_SCA_NRM) return 1;
-
-    return 0;
-}
-
-void
-_pnts_init_head_pnt(struct rt_pnts_internal *pnts)
-{
-    if (!pnts) return;
-    switch (pnts->type) {
-	case RT_PNT_TYPE_PNT:
-	    BU_LIST_INIT(&(((struct pnt *)pnts->point)->l));
-	    break;
-	case RT_PNT_TYPE_COL:
-	    BU_LIST_INIT(&(((struct pnt_color *)pnts->point)->l));
-	    break;
-	case RT_PNT_TYPE_SCA:
-	    BU_LIST_INIT(&(((struct pnt_scale *)pnts->point)->l));
-	    break;
-	case RT_PNT_TYPE_NRM:
-	    BU_LIST_INIT(&(((struct pnt_normal *)pnts->point)->l));
-	    break;
-	case RT_PNT_TYPE_COL_SCA:
-	    BU_LIST_INIT(&(((struct pnt_color_scale *)pnts->point)->l));
-	    break;
-	case RT_PNT_TYPE_COL_NRM:
-	    BU_LIST_INIT(&(((struct pnt_color_normal *)pnts->point)->l));
-	    break;
-	case RT_PNT_TYPE_SCA_NRM:
-	    BU_LIST_INIT(&(((struct pnt_scale_normal *)pnts->point)->l));
-	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
-	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)pnts->point)->l));
-	    break;
-	default:
-	    break;
-    }
-}
-
-
-void *
-_pnts_new_pnt(rt_pnt_type t)
-{
-    void *point = NULL;
-    if (t == RT_PNT_UNKNOWN) return NULL;
-    switch (t) {
-	case RT_PNT_TYPE_PNT:
-	    BU_ALLOC(point, struct pnt);
-	    break;
-	case RT_PNT_TYPE_COL:
-	    BU_ALLOC(point, struct pnt_color);
-	    break;
-	case RT_PNT_TYPE_SCA:
-	    BU_ALLOC(point, struct pnt_scale);
-	    break;
-	case RT_PNT_TYPE_NRM:
-	    BU_ALLOC(point, struct pnt_normal);
-	    break;
-	case RT_PNT_TYPE_COL_SCA:
-	    BU_ALLOC(point, struct pnt_color_scale);
-	    break;
-	case RT_PNT_TYPE_COL_NRM:
-	    BU_ALLOC(point, struct pnt_color_normal);
-	    break;
-	case RT_PNT_TYPE_SCA_NRM:
-	    BU_ALLOC(point, struct pnt_scale_normal);
-	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
-	    BU_ALLOC(point, struct pnt_color_scale_normal);
-	    break;
-	default:
-	    break;
-    }
-    return point;
-}
-
-void
-_pnts_add(struct rt_pnts_internal *pnts, void *point)
-{
-    switch (pnts->type) {
-	case RT_PNT_TYPE_PNT:
-	    BU_LIST_PUSH(&(((struct pnt *)pnts->point)->l), &((struct pnt *)point)->l);
-	    break;
-	case RT_PNT_TYPE_COL:
-	    BU_LIST_PUSH(&(((struct pnt_color *)pnts->point)->l), &((struct pnt_color *)point)->l);
-	    break;
-	case RT_PNT_TYPE_SCA:
-	    BU_LIST_PUSH(&(((struct pnt_scale *)pnts->point)->l), &((struct pnt_scale *)point)->l);
-	    break;
-	case RT_PNT_TYPE_NRM:
-	    BU_LIST_PUSH(&(((struct pnt_normal *)pnts->point)->l), &((struct pnt_normal *)point)->l);
-	    break;
-	case RT_PNT_TYPE_COL_SCA:
-	    BU_LIST_PUSH(&(((struct pnt_color_scale *)pnts->point)->l), &((struct pnt_color_scale *)point)->l);
-	    break;
-	case RT_PNT_TYPE_COL_NRM:
-	    BU_LIST_PUSH(&(((struct pnt_color_normal *)pnts->point)->l), &((struct pnt_color_normal *)point)->l);
-	    break;
-	case RT_PNT_TYPE_SCA_NRM:
-	    BU_LIST_PUSH(&(((struct pnt_scale_normal *)pnts->point)->l), &((struct pnt_scale_normal *)point)->l);
-	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
-	    BU_LIST_PUSH(&(((struct pnt_color_scale_normal *)pnts->point)->l), &((struct pnt_color_scale_normal *)point)->l);
-	    break;
-	default:
-	    break;
-    }
-}
-
-
 int
 _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const char *fmt, fastf_t conv_factor)
 {
     int i = 0;
     char fc = '\0';
-    void *point = _pnts_new_pnt(pnts->type);
+    void *point = _ged_pnts_new_pnt(pnts->type);
     for (i = 0; i < numcnt; i++) {
 	fastf_t val;
 	fc = fmt[i];
@@ -738,24 +366,24 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
 	    return GED_ERROR;
 	}
 	if ((fc == 'x') || (fc == 'y') || (fc == 'z')) {
-	    pnt_v_set(point, pnts->type, fc, val * conv_factor);
+	    _ged_pnt_v_set(point, pnts->type, fc, val * conv_factor);
 	    continue;
 	}
 	if ((fc == 'i') || (fc == 'j') || (fc == 'k')) {
-	    pnt_n_set(point, pnts->type, fc, val * conv_factor);
+	    _ged_pnt_n_set(point, pnts->type, fc, val * conv_factor);
 	    continue;
 	}
 	if ((fc == 'r') || (fc == 'g') || (fc == 'b')) {
-	    pnt_c_set(point, pnts->type, fc, val);
+	    _ged_pnt_c_set(point, pnts->type, fc, val);
 	    continue;
 	}
 	if ((fc == 's')) {
-	    pnt_s_set(point, pnts->type, fc, val);
+	    _ged_pnt_s_set(point, pnts->type, fc, val);
 	    continue;
 	}
     }
 
-    _pnts_add(pnts, point);
+    _ged_pnts_add(pnts, point);
 
     return GED_OK;
 }
@@ -791,7 +419,7 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
 
     /* must be wanting help */
     if (argc < 1) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_OK;
     }
 
@@ -799,7 +427,7 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
     opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
     if (print_help) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_OK;
     }
 
@@ -807,7 +435,7 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
     argc = opt_ret;
 
     if (argc != 2) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_ERROR;
     }
 
@@ -857,10 +485,10 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
     pnts = (struct rt_pnts_internal *) internal.idb_ptr;
     pnts->magic = RT_PNTS_INTERNAL_MAGIC;
     pnts->scale = 0.0;
-    pnts->type = _pnts_fmt_type(&fmt);
+    pnts->type = _ged_pnts_fmt_type(bu_vls_addr(&fmt));
     if (pnts->type != RT_PNT_UNKNOWN) {
-	pnts->point = _pnts_new_pnt(pnts->type);
-	_pnts_init_head_pnt(pnts);
+	pnts->point = _ged_pnts_new_pnt(pnts->type);
+	_ged_pnts_init_head_pnt(pnts);
     }
 
     while (!(bu_vls_gets(&fl, fp) < 0)) {
@@ -884,18 +512,18 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
 
 	if (pnts->type == RT_PNT_UNKNOWN) {
 	    /* If we dont' have a specified format, try to guess */
-	    bu_log("Warning - no point format specified, trying to deduce format from input according to the template xyz[ijk][s][rgb]\n");
-	    pnts->type = _pnts_fmt_guess(numcnt);
+	    bu_log("Warning - no point format specified, trying to match template xyz[ijk][s][rgb]\n");
+	    pnts->type = _ged_pnts_fmt_guess(numcnt);
 	    if (pnts->type != RT_PNT_UNKNOWN) {
-		pnts->point = _pnts_new_pnt(pnts->type);
-		_pnts_init_head_pnt(pnts);
-		bu_vls_sprintf(&fmt, "%s", _pnt_default_fmt_str(pnts->type));
+		pnts->point = _ged_pnts_new_pnt(pnts->type);
+		_ged_pnts_init_head_pnt(pnts);
+		bu_vls_sprintf(&fmt, "%s", _ged_pnt_default_fmt_str(pnts->type));
 		bu_log("Assuming format %s\n", bu_vls_addr(&fmt));
 	    }
 	}
 
 	/* Validate numcnt against type */
-	if (!_pnts_fmt_match(pnts->type, numcnt)) {
+	if (!_ged_pnts_fmt_match(pnts->type, numcnt)) {
 	    if (pnts->type == RT_PNT_UNKNOWN) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: could not determine point type, aborting\n");
 	    } else {
@@ -952,7 +580,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 
     /* must be wanting help */
     if (argc < 1) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_OK;
     }
 
@@ -960,7 +588,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
     if (print_help) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_OK;
     }
 
@@ -968,7 +596,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     argc = opt_ret;
 
     if (argc != 2) {
-	_pnts_cmd_help(gedp, usage, d);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_ERROR;
     }
 

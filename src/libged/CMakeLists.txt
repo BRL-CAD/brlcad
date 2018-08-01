@@ -212,6 +212,7 @@ set(LIBGED_SOURCES
   pmodel2view.c
   png.c
   png2fb.c
+  pnts_util.c
   pnts.cpp
   polyclip.cpp
   prcolor.c
@@ -376,6 +377,7 @@ add_subdirectory(simulate/tests)
 
 set(ged_ignore_files
   TODO
+  pnts_util.h
   ged_private.h
   check/check_private.h
   joint.h
