@@ -314,6 +314,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 		for (i = 0; i < ncpus+1; i++) {
 		    pc += (int)BU_PTBL_LEN(output_pnts[i]);
 		}
+		if (max_pnts && (pc >= max_pnts)) break;
 		delta = (bu_gettime() - oldtime)/1e6;
 	    }
 	}
@@ -338,6 +339,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 		for (i = 0; i < ncpus+1; i++) {
 		    pc += (int)BU_PTBL_LEN(output_pnts[i]);
 		}
+		if (max_pnts && (pc >= max_pnts)) break;
 		delta = (bu_gettime() - oldtime)/1e6;
 	    }
 	}
