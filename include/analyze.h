@@ -235,7 +235,7 @@ struct rt_gen_worker_vars {
     struct rt_i *rtip;
     struct resource *resp;
     int rays_cnt;
-    const fastf_t *rays;
+    fastf_t *rays;
     hitfunc_t fhit;
     missfunc_t fmiss;
     overlapfunc_t foverlap;
@@ -354,19 +354,30 @@ ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_stat
 /**
  * Using ray intersection, sample the database object obj and return a pnts primitive.
  *
- * Modes:
+ * For the grid sampling method, the tolerance sets the number of rays fired.
+ * max_time do *not* impact the GRID sampling logic.
  *
- * 0 - all hit points
- * 1 - first and last points along ray intersection (for the whole object,
- * not per region.)
+ * In the case where more than one pseudorandom sampling method is selected,
+ * the max_time limit applies per method.  If unset, the maximum ray count
+ * fired for the non-grid methods is determined by the formula 16*r^2/t^2,
+ * where r is the radius of the bounding sphere and t is the length tolerance
+ * in bn_tol.  The formula is based on the point at which the sum of the area
+ * of the circles around each point with radius 0.5*t equals the surface area
+ * of the bounding sphere, and thus adjusting the tolerance scales the number
+ * of rays as a function of the object size.
  *
- * TODO - add flag option to use either or both of grid and pseudo-random
- * sampling.  May want to combine them to get both coverage assurance and
- * less mesh structure from gridding.
+ * Return codes:
+ *
+ * -1 - error
+ *  0 - success
+ *
  */
+#define ANALYZE_OBJ_TO_PNTS_SURF  0x1 /**< @brief save only the first and last hit point on a ray */
+#define ANALYZE_OBJ_TO_PNTS_GRID  0x2 /**< @brief sample using an XYZ grid based on the bounding box (default if no method flags are specified) */
+#define ANALYZE_OBJ_TO_PNTS_RAND  0x4 /**< @brief sample using Marsaglia sampling on the bounding sphere with pseudo random numbers */
+#define ANALYZE_OBJ_TO_PNTS_SOBOL 0x8 /**< @brief sample using Marsaglia sampling on the bounding sphere with Sobol' low-discrepancy-sequence generation */
 ANALYZE_EXPORT int analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
-	       const char *obj, struct bn_tol *tol, int mode);
-
+	       const char *obj, struct bn_tol *tol, int flags, long int max_ray_cnt, unsigned int max_time);
 
 
 struct current_state;

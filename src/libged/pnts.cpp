@@ -260,7 +260,8 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     int print_help = 0;
     int opt_ret = 0;
     fastf_t len_tol = 0.0;
-    int pnt_mode = 0;
+    int pnt_surf_mode = 0;
+    int flags = 0;
     struct rt_db_internal internal;
     struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
     struct rt_pnts_internal *pnts = NULL;
@@ -270,7 +271,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     struct bu_opt_desc d[4];
     BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
     BU_OPT(d[1], "t", "tolerance", "#", &bu_opt_fastf_t, &len_tol,      "Specify sampling grid spacing (in mm).");
-    BU_OPT(d[2], "S", "surface",   "",  NULL,            &pnt_mode,     "Save only first and last points along ray.");
+    BU_OPT(d[2], "S", "surface",   "",  NULL,            &pnt_surf_mode,     "Save only first and last points along ray.");
     BU_OPT_NULL(d[3]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
@@ -307,6 +308,11 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     }
     GED_CHECK_EXISTS(gedp, pnt_prim, LOOKUP_QUIET, GED_ERROR);
 
+
+    if (pnt_surf_mode) {
+	flags |= ANALYZE_OBJ_TO_PNTS_SURF;
+    }
+
     /* If we don't have a tolerance, try to guess something sane from the bbox */
     if (NEAR_ZERO(len_tol, RT_LEN_TOL)) {
 	point_t rpp_min, rpp_max;
@@ -331,7 +337,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     pnts->scale = 0.0;
     pnts->type = RT_PNT_TYPE_NRM;
 
-    if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, obj_name, &btol, pnt_mode)) {
+    if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, obj_name, &btol, flags, 0, 0)) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
 	return GED_ERROR;
     }

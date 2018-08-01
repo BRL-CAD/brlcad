@@ -232,7 +232,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    btol.dist = len_tol;
 
-	    if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, argv[0], &btol, 0)) {
+	    if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, argv[0], &btol, 0, 0, 0)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
 		bu_free(pnts, "free pnts");
 		return GED_ERROR;
