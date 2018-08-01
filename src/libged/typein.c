@@ -34,6 +34,7 @@
 #include "wdb.h"
 
 #include "./ged_private.h"
+#include "./pnts_util.h"
 
 
 static char *p_half[] = {
@@ -2528,7 +2529,6 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     unsigned long numPoints;
     long readPoints;
     struct rt_pnts_internal *pnts;
-    void *headPoint = NULL;
 
     rt_pnt_type type;
 
@@ -2720,140 +2720,69 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     pnts->scale = defaultSize;
     pnts->type = type;
     pnts->count = numPoints;
-    pnts->point = NULL;
-
-    /* empty list head */
-    switch (type) {
-	case RT_PNT_TYPE_PNT:
-	    BU_ALLOC(headPoint, struct pnt);
-	    BU_LIST_INIT(&(((struct pnt *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_COL:
-	    BU_ALLOC(headPoint, struct pnt_color);
-	    BU_LIST_INIT(&(((struct pnt_color *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_SCA:
-	    BU_ALLOC(headPoint, struct pnt_scale);
-	    BU_LIST_INIT(&(((struct pnt_scale *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_NRM:
-	    BU_ALLOC(headPoint, struct pnt_normal);
-	    BU_LIST_INIT(&(((struct pnt_normal *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_COL_SCA:
-	    BU_ALLOC(headPoint, struct pnt_color_scale);
-	    BU_LIST_INIT(&(((struct pnt_color_scale *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_COL_NRM:
-	    BU_ALLOC(headPoint, struct pnt_color_normal);
-	    BU_LIST_INIT(&(((struct pnt_color_normal *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_SCA_NRM:
-	    BU_ALLOC(headPoint, struct pnt_scale_normal);
-	    BU_LIST_INIT(&(((struct pnt_scale_normal *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
-	    BU_ALLOC(headPoint, struct pnt_color_scale_normal);
-	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
-	    break;
-	default:
-	    break;
-    }
-    pnts->point = headPoint;
+    pnts->point = _ged_pnts_new_pnt(pnts->type);
+    _ged_pnts_init_head_pnt(pnts);
 
     /* store points in list */
     for (i = 0; i < numPoints * valuesPerPoint; i += valuesPerPoint) {
-	void *point;
+	void *point = _ged_pnts_new_pnt(pnts->type);
+
+	/* We always have X, Y and Z as the first 3 */
+	_ged_pnt_v_set(point, pnts->type, 'x', strtod(argv[i + 0], NULL) * local2base);
+	_ged_pnt_v_set(point, pnts->type, 'y', strtod(argv[i + 1], NULL) * local2base);
+	_ged_pnt_v_set(point, pnts->type, 'z', strtod(argv[i + 2], NULL) * local2base);
 
 	/* bu_log("%d: [%s, %s, %s]\n", ((i-5)/3)+1, argv[i], argv[i+1], argv[i+2]); */
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:
-		BU_ALLOC(point, struct pnt);
-		((struct pnt *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt *)headPoint)->l), &((struct pnt *)point)->l);
 		break;
 	    case RT_PNT_TYPE_COL:
-		BU_ALLOC(point, struct pnt_color);
-		((struct pnt_color *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_color *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_color *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_color *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 3], NULL);
-		((struct pnt_color *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 4], NULL);
-		((struct pnt_color *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 5], NULL);
-		BU_LIST_PUSH(&(((struct pnt_color *)headPoint)->l), &((struct pnt_color *)point)->l);
+		_ged_pnt_c_set(point, pnts->type, 'r', strtod(argv[i + 3], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'g', strtod(argv[i + 4], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'b', strtod(argv[i + 5], NULL));
 		break;
 	    case RT_PNT_TYPE_SCA:
-		BU_ALLOC(point, struct pnt_scale);
-		((struct pnt_scale *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_scale *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_scale *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_scale *)point)->s = strtod(argv[i + 3], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt_scale *)headPoint)->l), &((struct pnt_scale *)point)->l);
+		_ged_pnt_s_set(point, pnts->type, 's', strtod(argv[i + 3], NULL) * local2base);
 		break;
 	    case RT_PNT_TYPE_NRM:
-		BU_ALLOC(point, struct pnt_normal);
-		((struct pnt_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
-		((struct pnt_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
-		((struct pnt_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt_normal *)headPoint)->l), &((struct pnt_normal *)point)->l);
+		_ged_pnt_n_set(point, pnts->type, 'i', strtod(argv[i + 3], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'j', strtod(argv[i + 4], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'k', strtod(argv[i + 5], NULL) * local2base);
 		break;
 	    case RT_PNT_TYPE_COL_SCA:
-		BU_ALLOC(point, struct pnt_color_scale);
-		((struct pnt_color_scale *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_color_scale *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_color_scale *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_color_scale *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 3], NULL);
-		((struct pnt_color_scale *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 4], NULL);
-		((struct pnt_color_scale *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 5], NULL);
-		((struct pnt_color_scale *)point)->s = strtod(argv[i + 6], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt_color_scale *)headPoint)->l), &((struct pnt_color_scale *)point)->l);
+		_ged_pnt_c_set(point, pnts->type, 'r', strtod(argv[i + 3], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'g', strtod(argv[i + 4], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'b', strtod(argv[i + 5], NULL));
+		_ged_pnt_s_set(point, pnts->type, 's', strtod(argv[i + 6], NULL) * local2base);
 		break;
 	    case RT_PNT_TYPE_COL_NRM:
-		BU_ALLOC(point, struct pnt_color_normal);
-		((struct pnt_color_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_color_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_color_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_color_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
-		((struct pnt_color_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
-		((struct pnt_color_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
-		((struct pnt_color_normal *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 6], NULL);
-		((struct pnt_color_normal *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 7], NULL);
-		((struct pnt_color_normal *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 8], NULL);
-		BU_LIST_PUSH(&(((struct pnt_color_normal *)headPoint)->l), &((struct pnt_color_normal *)point)->l);
+		_ged_pnt_n_set(point, pnts->type, 'i', strtod(argv[i + 3], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'j', strtod(argv[i + 4], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'k', strtod(argv[i + 5], NULL) * local2base);
+		_ged_pnt_c_set(point, pnts->type, 'r', strtod(argv[i + 6], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'g', strtod(argv[i + 7], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'b', strtod(argv[i + 8], NULL));
 		break;
 	    case RT_PNT_TYPE_SCA_NRM:
-		BU_ALLOC(point, struct pnt_scale_normal);
-		((struct pnt_scale_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->s = strtod(argv[i + 6], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt_scale_normal *)headPoint)->l), &((struct pnt_scale_normal *)point)->l);
+		_ged_pnt_n_set(point, pnts->type, 'i', strtod(argv[i + 3], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'j', strtod(argv[i + 4], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'k', strtod(argv[i + 5], NULL) * local2base);
+		_ged_pnt_s_set(point, pnts->type, 's', strtod(argv[i + 6], NULL) * local2base);
 		break;
 	    case RT_PNT_TYPE_COL_SCA_NRM:
-		BU_ALLOC(point, struct pnt_color_scale_normal);
-		((struct pnt_color_scale_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 6], NULL);
-		((struct pnt_color_scale_normal *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 7], NULL);
-		((struct pnt_color_scale_normal *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 8], NULL);
-		((struct pnt_color_scale_normal *)point)->s = strtod(argv[i + 9], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt_color_scale_normal *)headPoint)->l), &((struct pnt_color_scale_normal *)point)->l);
+		_ged_pnt_n_set(point, pnts->type, 'i', strtod(argv[i + 3], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'j', strtod(argv[i + 4], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'k', strtod(argv[i + 5], NULL) * local2base);
+		_ged_pnt_c_set(point, pnts->type, 'r', strtod(argv[i + 6], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'g', strtod(argv[i + 7], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'b', strtod(argv[i + 8], NULL));
+		_ged_pnt_s_set(point, pnts->type, 's', strtod(argv[i + 9], NULL) * local2base);
 		break;
 	    default:
 		break;
 	}
+
+	_ged_pnts_add(pnts, point);
     }
 
     return GED_OK;
