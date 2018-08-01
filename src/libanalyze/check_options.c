@@ -333,18 +333,15 @@ int analyze_get_num_regions(struct current_state *state)
 }
 
 
-void analyze_get_from_view(struct current_state *state, const struct bview *ged_gvp, point_t *eye_model)
+void analyze_set_view_information(struct current_state *state, double viewsize, point_t *eye_model, quat_t *orientation)
 {
-    quat_t quat;
-
     VMOVE(state->eye_model, *eye_model);
-    state->viewsize =  ged_gvp->gv_size;
-    quat_mat2quat(quat, ged_gvp->gv_rotation);
-    quat_quat2mat(state->Viewrotscale, quat);
-
+    state->viewsize = viewsize;
+    quat_quat2mat(state->Viewrotscale, *orientation);
     state->use_view_information = 1;
     state->use_single_grid = 1;
 }
+
 
 /*
  * Local Variables:

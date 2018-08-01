@@ -604,8 +604,10 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     } else if (bu_strncmp(sub, "overlaps", len) == 0) {
 	if (options.getfromview) {
 	    point_t eye_model;
+	    quat_t quat;
+	    quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
 	    _ged_rt_set_eye_model(gedp, eye_model);
-	    analyze_get_from_view(state, gedp->ged_gvp, &eye_model);
+	    analyze_set_view_information(state, gedp->ged_gvp->gv_size, &eye_model, &quat);
 	}
 	if (check_overlaps(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
