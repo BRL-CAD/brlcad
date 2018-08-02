@@ -51,6 +51,7 @@
 #include <math.h>
 #include "bu/malloc.h"
 #include "bn/rand.h"
+#include "bn/sobol.h"
 #include "soboldata.h"
 
 /* Period parameters */
@@ -60,7 +61,10 @@
 #define NL_UPPER_MASK 0x80000000UL /* most significant w-r bits */
 #define NL_LOWER_MASK 0x7fffffffUL /* least significant r bits */
 
-typedef struct bn_soboldata_s {
+/* Maximum supported dimension of Sobol output array */
+#define SOBOL_MAXDIM 1111
+
+struct bn_soboldata {
     unsigned sdim; /* dimension of sequence being generated */
     uint32_t *mdata; /* array of length 32 * sdim */
     uint32_t *m[32]; /* more convenient pointers to mdata, of direction #s */
@@ -69,10 +73,11 @@ typedef struct bn_soboldata_s {
     uint32_t n; /* number of x's generated so far */
     uint32_t NL_mt[NL_N]; /* the array for the state vector  */
     int NL_mti; /* mti==N+1 means mt[N] is not initialized */
-} soboldata;
+    double *cvec;  /* The current sequence vector */
+};
 
 /* initializes NLmt[N] with a seed */
-static void nlopt_init_genrand(soboldata *sd, unsigned long s)
+static void nlopt_init_genrand(struct bn_soboldata *sd, unsigned long s)
 {
     sd->NL_mt[0]= s & 0xffffffffUL;
     for (sd->NL_mti=1; sd->NL_mti<NL_N; sd->NL_mti++) {
@@ -87,7 +92,7 @@ static void nlopt_init_genrand(soboldata *sd, unsigned long s)
 }
 
 /* generates a random number on [0,0xffffffff]-interval */
-static uint32_t nlopt_genrand_int32(soboldata *sd)
+static uint32_t nlopt_genrand_int32(struct bn_soboldata *sd)
 {
     uint32_t y;
     static uint32_t mag01[2]={0x0UL, NL_MATRIX_A};
@@ -124,7 +129,7 @@ static uint32_t nlopt_genrand_int32(soboldata *sd)
 }
 
 /* generates a random number on [0,1) with 53-bit resolution*/
-static double nlopt_genrand_res53(soboldata *sd)
+static double nlopt_genrand_res53(struct bn_soboldata *sd)
 {
     uint32_t a=nlopt_genrand_int32(sd)>>5, b=nlopt_genrand_int32(sd)>>6;
     return(a*67108864.0+b)*(1.0/9007199254740992.0);
@@ -133,8 +138,9 @@ static double nlopt_genrand_res53(soboldata *sd)
 
 
 /* generate uniform random number in [a,b) with 53-bit resolution,
- * added by SGJ */
-double bn_sobol_urand(soboldata *sd, double a, double b)
+ * added by SGJ.  Not static because we use this in libbn testing,
+ * but it is not public API. */
+double _sobol_urand(struct bn_soboldata *sd, double a, double b)
 {
     return(a + (b - a) * nlopt_genrand_res53(sd));
 }
@@ -166,7 +172,7 @@ static unsigned rightzero32(uint32_t n)
 /* generate the next term x_{n+1} in the Sobol sequence, as an array
    x[sdim] of numbers in (0,1).  Returns 1 on success, 0 on failure
    (if too many #'s generated) */
-static int sobol_gen(soboldata *sd, double *x)
+static int sobol_gen(struct bn_soboldata *sd, double *x)
 {
     unsigned c, b, i, sdim;
 
@@ -190,8 +196,19 @@ static int sobol_gen(soboldata *sd, double *x)
     return 1;
 }
 
+/* next vector x[sdim] in Sobol sequence, with each x[i] in (0,1) */
+static void bn_sobol_next_01(struct bn_soboldata *s)
+{
+    if (!sobol_gen(s, s->cvec)) {
+	/* fall back on pseudo random numbers in the unlikely event
+	   that we exceed 2^32-1 points */
+	unsigned int i;
+	for (i = 0; i < s->sdim; ++i)
+	    s->cvec[i] = _sobol_urand(s, 0.0,1.0);
+    }
+}
 
-static int sobol_init(soboldata *sd, unsigned sdim, unsigned long seed)
+static int sobol_init(struct bn_soboldata *sd, unsigned sdim, unsigned long seed)
 {
     unsigned i,j;
 
@@ -246,141 +263,60 @@ static int sobol_init(soboldata *sd, unsigned sdim, unsigned long seed)
     sd->n = 0;
     sd->sdim = sdim;
 
-    if (seed) nlopt_init_genrand(sd, seed); 
+    if (seed) nlopt_init_genrand(sd, seed);
 
     return 1;
 }
 
-static void sobol_destroy(soboldata *sd)
-{
-    bu_free(sd->mdata, "sobol mdata");
-    bu_free(sd->x, "sobol x");
-    bu_free(sd->b, "sobol b");
-}
+
 
 /************************************************************************/
-/* API to Sobol sequence creation, which hides bn_soboldata structure
-   behind an opaque pointer */
+/* API to Sobol sequence creation */
 
-bn_soboldata bn_sobol_create(unsigned int sdim, unsigned long seed)
+struct bn_soboldata *bn_sobol_create(unsigned int sdim, unsigned long seed)
 {
-    bn_soboldata s = (bn_soboldata) bu_malloc(sizeof(soboldata), "sobol data");
+    struct bn_soboldata *s = NULL;
+    if (sdim > BN_SOBOL_MAXDIM) return NULL;
+    s = (struct bn_soboldata *) bu_malloc(sizeof(struct bn_soboldata), "sobol data");
     if (!s) return NULL;
+    s->cvec = (double *)bu_malloc(sizeof(double) * SOBOL_MAXDIM, "results array");
     if (!sobol_init(s, sdim, seed)) { bu_free(s, "sobol data"); return NULL; }
     return s;
 }
 
-extern void bn_sobol_destroy(bn_soboldata s)
+void bn_sobol_destroy(struct bn_soboldata *sd)
 {
-    if (s) {
-	sobol_destroy(s);
-	bu_free(s, "sobol");
+    if (sd) {
+	bu_free(sd->mdata, "sobol mdata");
+	bu_free(sd->x, "sobol x");
+	bu_free(sd->b, "sobol b");
+	bu_free(sd->cvec, "sobol cvec");
+	bu_free(sd, "sobol");
     }
 }
 
-/* next vector x[sdim] in Sobol sequence, with each x[i] in (0,1) */
-void bn_sobol_next01(bn_soboldata s, double *x)
-{
-    if (!sobol_gen(s, x)) {
-	/* fall back on pseudo random numbers in the unlikely event
-	   that we exceed 2^32-1 points */
-	unsigned int i;
-	for (i = 0; i < s->sdim; ++i)
-	    x[i] = bn_sobol_urand(s, 0.0,1.0);
-    }
-}
-
-/* next vector in Sobol sequence, scaled to (lb[i], ub[i]) interval */
-void bn_sobol_next(bn_soboldata s, double *x,
-	const double *lb, const double *ub)
+/* return next vector in Sobol sequence, scaled to (lb[i], ub[i]) interval */
+double *bn_sobol_next(struct bn_soboldata *s, const double *lb, const double *ub)
 {
     unsigned int i;
-    bn_sobol_next01(s, x);
-    for (i = 0; i < s->sdim; ++i) {
-	x[i] = lb[i] + (ub[i] - lb[i]) * x[i];
+    bn_sobol_next_01(s);
+    if (lb && ub) {
+	for (i = 0; i < s->sdim; ++i) {
+	    s->cvec[i] = lb[i] + (ub[i] - lb[i]) * s->cvec[i];
+	}
     }
+    return s->cvec;
 }
 
-/* if we know in advance how many points (n) we want to compute, then
-   adopt the suggestion of the Joe and Kuo paper, which in turn
-   is taken from Acworth et al (1998), of skipping a number of
-   points equal to the largest power of 2 smaller than n */
-void bn_sobol_skip(bn_soboldata s, unsigned n, double *x)
+/* Joe and Kuo (2003), per Acworth et al (1998) */
+void bn_sobol_skip(struct bn_soboldata *s, unsigned n)
 {
     if (s) {
 	unsigned int k = 1;
 	while (k*2 < n) k *= 2;
-	while (k-- > 0) sobol_gen(s, x);
+	while (k-- > 0) sobol_gen(s, s->cvec);
     }
 }
-
-/*************************************************************/
-/* Below code goes into the public header if/when we decide
- * we need this */
-/*************************************************************/
-
-#if 0
-/* Sobol' low-discrepancy-sequence generation */
-
-typedef struct bn_soboldata_s *bn_soboldata;
-
-/**
- * Create and initialize an instance of a Sobol sequence data container.  If seed
- * is non-zero the value will be used in initialization, otherwise a default will
- * be used.  User must destroy the returned data with bn_sobol_destroy */
-BN_EXPORT extern bn_soboldata bn_sobol_create(unsigned int sdim, unsigned long seed);
-
-/** Destroy a Sobol data container */
-BN_EXPORT extern void bn_sobol_destroy(bn_soboldata s);
-
-/**
- * Return the next vector in Sobol sequence, scaled to (lb[i], ub[i]) interval.
- *
- * Note: If the user attempts to read more than 2^32-1 points from the sequence,
- * the generator will fall back on pseudo random number generation.
- */
-BN_EXPORT extern void bn_sobol_next(bn_soboldata s, double *x,
-        const double *lb, const double *ub);
-
-/**
- * Return the next vector x[sdim] in Sobol sequence, with each x[i] in (0,1).
- * This saves some extra math operations compared to bn_sobol_next if the
- * required interval for the caller's application happens to be (0,1).
- *
- * Note: If the user attempts to read more than 2^32-1 points from the sequence,
- * the generator will fall back on pseudo random number generation.
- */
-BN_EXPORT extern void bn_sobol_next01(bn_soboldata s, double *x);
-
-/**
- * If the user knows in advance how many points (n) they want to compute, this
- * function supports the suggestion of the Joe and Kuo paper, which in turn is
- * taken from Acworth et al (1998), of skipping a number of points equal to the
- * largest power of 2 smaller than n
- */
-BN_EXPORT extern void bn_sobol_skip(bn_soboldata s, unsigned n, double *x);
-
-
-
-/**
- * @brief
- * Generate a sample point on a sphere per Marsaglia (1972).
- *
- * This routine use bn_randmt internally for the random numbers needed.
- *
- * Note that bn_sph_sample and its internal routines do not initialize the
- * randmt seed - the user should call bn_randmt_seed in their code if a
- * variable seed is required.
- *
- * NOTE: this form of the function is almost certainly not final - will
- * investigate quasi-random rather than random points for better distribution,
- * which may require a different function signature...
- */
-BN_EXPORT extern void bn_sph_sample(point_t sample, const point_t center, const fastf_t radius);
-
-#endif
-
-
 
 /*
  * Local Variables:

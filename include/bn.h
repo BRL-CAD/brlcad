@@ -56,6 +56,7 @@
 #include "bn/rand.h"
 #include "bn/randmt.h"
 #include "bn/wavelet.h"
+#include "bn/sobol.h"
 #include "bn/str.h"
 #include "bn/tabdata.h"
 #include "bn/vlist.h"

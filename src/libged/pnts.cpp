@@ -273,15 +273,16 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     const char *pnt_prim= NULL;
     const char *obj_name = NULL;
     const char *usage = "Usage: pnts gen [options] <obj> <output_pnts>\n\n";
-    struct bu_opt_desc d[6];
-    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,    "Print help and exit");
-    BU_OPT(d[1], "t", "tolerance", "#", &bu_opt_fastf_t, &len_tol,       "Specify sampling grid spacing (in mm).");
-    BU_OPT(d[2], "",  "surface",   "",  NULL,            &pnt_surf_mode, "Save only first and last points along ray.");
-    BU_OPT(d[3], "",  "grid",      "",  NULL,            &pnt_grid_mode, "Sample using a gridded ray pattern (default).");
-    BU_OPT(d[4], "",  "rand",      "",  NULL,            &pnt_rand_mode, "Sample using a random Marsaglia ray pattern on the bounding sphere.");
-    BU_OPT(d[5], "",  "max-pnts",  "",  &bu_opt_int,     &max_pnts,      "Maximum number of pnts to return.");
-    BU_OPT(d[6], "",  "max-time",  "",  &bu_opt_int,     &max_time,      "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
-    BU_OPT_NULL(d[7]);
+    struct bu_opt_desc d[9];
+    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,     "Print help and exit");
+    BU_OPT(d[1], "t", "tolerance", "#", &bu_opt_fastf_t, &len_tol,        "Specify sampling grid spacing (in mm).");
+    BU_OPT(d[2], "",  "surface",   "",  NULL,            &pnt_surf_mode,  "Save only first and last points along ray.");
+    BU_OPT(d[3], "",  "grid",      "",  NULL,            &pnt_grid_mode,  "Sample using a gridded ray pattern (default).");
+    BU_OPT(d[4], "",  "rand",      "",  NULL,            &pnt_rand_mode,  "Sample using a random Marsaglia ray pattern on the bounding sphere.");
+    BU_OPT(d[5], "",  "sobol",     "",  NULL,            &pnt_sobol_mode, "Sample using a Sobol pseudo-random Marsaglia ray pattern on the bounding sphere.");
+    BU_OPT(d[6], "",  "max-pnts",  "",  &bu_opt_int,     &max_pnts,       "Maximum number of pnts to return.");
+    BU_OPT(d[7], "",  "max-time",  "",  &bu_opt_int,     &max_time,       "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
+    BU_OPT_NULL(d[8]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 

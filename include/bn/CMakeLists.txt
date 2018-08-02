@@ -17,6 +17,7 @@ set(bn_headers
   randmt.h
   spm.h
   tabdata.h
+  sobol.h
   str.h
   tol.h
   vectfont.h

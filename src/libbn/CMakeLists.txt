@@ -27,6 +27,7 @@ set(LIBBN_SOURCES
   randmt.c
   randsph.c
   scale.c
+  sobolseq.c
   sphmap.c
   str.c
   symbol.c
@@ -49,7 +50,6 @@ add_subdirectory(tests)
 
 CMAKEFILES(
   README
-  sobolseq.c
   soboldata.h
   numgen.c
   )

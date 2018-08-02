@@ -23,13 +23,14 @@
  *
  */
 #include "common.h"
-
+#include <time.h>
 #include <string.h> /* for memset */
 
 #include "vmath.h"
 #include "bu/log.h"
 #include "bu/ptbl.h"
 #include "bn/mat.h"
+#include "bn/sobol.h"
 #include "bu/time.h"
 #include "raytrace.h"
 #include "analyze.h"
@@ -178,16 +179,15 @@ get_random_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius)
 }
 
 void
-get_sobol_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius)
+get_sobol_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius, struct bn_soboldata *s)
 {
     long int i = 0;
-    point_t p1, p2;
+    point_t p1;
     if (!rays) return;
     for (i = 0; i < craynum; i++) {
 	vect_t n;
-	bn_rand_sph_sample(p1, center, radius);
-	bn_rand_sph_sample(p2, center, radius);
-	VSUB2(n, p2, p1);
+	bn_sobol_sph_sample(p1, center, radius, s);
+	VSUB2(n, center, p1);
 	rays[i*6+0] = p1[X];
 	rays[i*6+1] = p1[Y];
 	rays[i*6+2] = p1[Z];
@@ -323,25 +323,29 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	    fastf_t delta = 0;
 	    long int raycnt = 0;
 	    int pc = 0;
+	    struct bn_soboldata *sobolseq = bn_sobol_create(2, time(NULL));
+	    bn_sobol_skip(sobolseq, (int)craynum);
+	    oldtime = bu_gettime();
 	    for (i = 0; i < ncpus+1; i++) {
 		if (!state[i].rays) {
 		    state[i].rays = (fastf_t *)bu_calloc(craynum * 6 + 1, sizeof(fastf_t), "rays");
 		    state[i].rays_cnt = craynum;
 		}
 	    }
-	    oldtime = bu_gettime();
 	    while (delta < mt && raycnt < mrc && (!max_pnts || pc < max_pnts)) {
 		for (i = 0; i < ncpus+1; i++) {
-		    get_sobol_rays(state[i].rays, craynum, center, rtip->rti_radius);
+		    get_sobol_rays(state[i].rays, craynum, center, rtip->rti_radius, sobolseq);
 		}
 		bu_parallel(analyze_prand_pnt_worker, ncpus, (void *)state);
 		raycnt += craynum * (ncpus+1);
+		pc = 0;
 		for (i = 0; i < ncpus+1; i++) {
 		    pc += (int)BU_PTBL_LEN(output_pnts[i]);
 		}
 		if (max_pnts && (pc >= max_pnts)) break;
 		delta = (bu_gettime() - oldtime)/1e6;
 	    }
+	    bn_sobol_destroy(sobolseq);
 	}
     }
 

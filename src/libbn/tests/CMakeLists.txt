@@ -15,6 +15,7 @@ set(bn_test_srcs
   poly_sub.c
   poly_synthetic_div.c
   qmath.c
+  sobolseq.c
   tabdata.c
   )
 
@@ -681,6 +682,9 @@ add_test(NAME bn_mat_ck_3             COMMAND bn_test mat 26 -0.38457345,-0.944,
 
 add_test(NAME bn_mat_dup              COMMAND bn_test mat 27 0)
 
+#  ***************** sobolseq.c tests ***************
+
+add_test(NAME bn_sobol_3_1000         COMMAND bn_test sobolseq 3 1000)
 
 #
 #  *************** tabdata.c tests ***************
@@ -1116,7 +1120,7 @@ add_test(NAME bn_quat_log_1 COMMAND bn_test qmath 10 0.5,0.5,0.5,0.5 0.605,0.605
 add_test(NAME bn_quat_log_2 COMMAND bn_test qmath 10 0.548,0.365,0.730,0.183 0.773,0.515,1.030,0)
 
 
-CMAKEFILES(poly_cubic_roots.c poly_quartic_roots.c sobolseq.c)
+CMAKEFILES(poly_cubic_roots.c poly_quartic_roots.c)
 CMAKEFILES(bntester.dat)
 
 # Local Variables:
