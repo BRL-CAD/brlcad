@@ -550,9 +550,12 @@
 	<term><option>-W</option></term>
 	<listitem>
 	  <para>
-	    inverts the foreground and background colors, changing the default from
-	    white lines on a black background to black lines on a white
-	    background
+            specifies black lines on a white background.  this option
+            sets the image background color to a nearly pure white RGB
+            of 255/255/254 and the foreground edge color to a nearly
+            pure black RGB of 0/0/1.  This is equivalent to setting -c
+            "set background=255/255/254" and -c "set
+            foreground=0/0/1".
 	  </para>
 	</listitem>
       </varlistentry>
