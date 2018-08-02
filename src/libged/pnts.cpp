@@ -56,8 +56,8 @@ _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale
     fastf_t tx1 = 0.5 * scale;
     point_t v1, v2, v3;
     vect_t n1;
-    vect_t v1p, v2p, v3p = {0.0, 0.0, 0.0};
-    vect_t v1f, v2f, v3f = {0.0, 0.0, 0.0};
+    vect_t v1pp, v2pp, v3pp = {0.0, 0.0, 0.0};
+    vect_t v1fp, v2fp, v3fp = {0.0, 0.0, 0.0};
     mat_t rot;
     struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
 
@@ -66,19 +66,19 @@ _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale
     VSET(v2, -1*tx1, ty2, 0);
     VSET(v3, tx1, ty2, 0);
 
-    VMOVE(v1p, v1);
-    VMOVE(v2p, v2);
-    VMOVE(v3p, v3);
+    VMOVE(v1pp, v1);
+    VMOVE(v2pp, v2);
+    VMOVE(v3pp, v3);
     bn_mat_fromto(rot, n1, *n, &btol);
-    MAT4X3VEC(v1f, rot, v1p);
-    MAT4X3VEC(v2f, rot, v2p);
-    MAT4X3VEC(v3f, rot, v3p);
-    VADD2(v1p, v1f, *p);
-    VADD2(v2p, v2f, *p);
-    VADD2(v3p, v3f, *p);
-    VMOVE(&bot_ip->vertices[pntcnt*3*3], v1p);
-    VMOVE(&bot_ip->vertices[pntcnt*3*3+3], v2p);
-    VMOVE(&bot_ip->vertices[pntcnt*3*3+6], v3p);
+    MAT4X3VEC(v1fp, rot, v1pp);
+    MAT4X3VEC(v2fp, rot, v2pp);
+    MAT4X3VEC(v3fp, rot, v3pp);
+    VADD2(v1pp, v1fp, *p);
+    VADD2(v2pp, v2fp, *p);
+    VADD2(v3pp, v3fp, *p);
+    VMOVE(&bot_ip->vertices[pntcnt*3*3], v1pp);
+    VMOVE(&bot_ip->vertices[pntcnt*3*3+3], v2pp);
+    VMOVE(&bot_ip->vertices[pntcnt*3*3+6], v3pp);
     bot_ip->faces[pntcnt*3] = pntcnt*3;
     bot_ip->faces[pntcnt*3+1] = pntcnt*3+1;
     bot_ip->faces[pntcnt*3+2] = pntcnt*3+2;
