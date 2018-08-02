@@ -146,6 +146,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add a multiview rt script to regression testing (e.g., see rtwalk output)
+
 * screengrab on windows
 
 * bot overlaps when unoriented, when clearly not overlapping
