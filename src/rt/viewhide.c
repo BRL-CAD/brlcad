@@ -84,22 +84,6 @@ struct bu_structparse view_parse[] = {
 
 const char title[] = "RT Hidden-Line Plot";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... >file.pl\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -A angle	Angle between surface normals (default=5degrees)\n");
-    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
-    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
-    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -o output.plot3	Specify output file (default=stdout)\n");
-    bu_log(" -U #		Set use_air boolean to # (default=0)\n");
-    bu_log(" -x #		Set librt debug flags\n");
-}
-
-
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *);
 int	raymiss(register struct application *ap);
 
@@ -665,7 +649,6 @@ swapbuff(struct cell **onepp, struct cell **twopp)
  *  reflecting the width of the file.  It proceeds to ZERO fill the buffer.
  *  This routine returns nothing.
  */
-
 void
 cleanline(struct cell *inbuffp, int file_width)
 {
@@ -681,7 +664,13 @@ cleanline(struct cell *inbuffp, int file_width)
     }
 }
 
-void application_init (void) {}
+
+void
+application_init (void)
+{
+    option("", "-A angle", "Angle between surface normals (default=5degrees)", 0);
+    option("", "-o output.plot3", "Specify output file (default=stdout)", 0);
+}
 
 /*
  * Local Variables:

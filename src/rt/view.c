@@ -65,67 +65,6 @@
 
 const char title[] = "The BRL-CAD Raytracer RT";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects...\n", argv0);
-    bu_log("\nImage Options:\n");
-    bu_log(" -a # -e #        Azimuth and elevation in degrees (default: -a 35 -e 25)\n");
-    bu_log(" -o filename      Render to specified image file (e.g., image.png or image.pix)\n");
-    bu_log(" -F framebuffer   Render to a framebuffer (defaults to a window)\n");
-    bu_log(" -s #             Square image size (default: 512 - implies 512x512 image)\n");
-    bu_log(" -w # -n #        Image dimensions as width ('w') and height ('n' scanlines)\n");
-    bu_log(" -p #             Perspective angle, degrees side to side (0 <= # < 180)\n");
-    bu_log(" -E #             Set eye distance from center of model (default: 1.414)\n");
-    bu_log(" -C #/#/#         Set background image color to R/G/B values (default: 0/0/1)\n");
-    bu_log(" -W               Set background image color to white\n");
-    bu_log("\nRender Options:\n");
-    bu_log(" -A #             Set ambient light intensity (default: 0.4)\n");
-    bu_log(" -H #             Specify number of hypersample rays per pixel (default: 0)\n");
-    bu_log(" -J #             Specify a \"jitter\" pattern (default: 0 - no jitter)\n");
-    bu_log(" -P #             Specify number of processors to use (default: all available)\n");
-    bu_log(" -R               Disable reporting of overlaps\n");
-    bu_log(" -T # or -T #,#   Tolerance as distance or distance,angular\n");
-    bu_log(" -i               Enable incremental (progressive-style) rendering\n");
-    bu_log(" -t               Render from top to bottom (default: from bottom up)\n");
-    bu_log("\nAdvanced Options:\n");
-    bu_log(" -c \"command\"     Runs a semicolon-separated list of commands (related: -M)\n");
-    bu_log(" -M               Read matrix + commands on stdin (RT 'saveview' scripts)\n");
-    bu_log(" -D #             Specify starting frame number (ending is specified via -K #)\n");
-    bu_log(" -K #             Specify ending frame number (starting is specified via -D #)\n");
-    bu_log(" -g #             Specify grid cell (pixel) width, in millimeters\n");
-    bu_log(" -G #             Specify grid cell (pixel) height, in millimeters\n");
-    bu_log(" -O file.dpix     Render to .dpix format file, double precision image data\n");
-    bu_log(" -S               Enable stereo rendering\n");
-    bu_log(" -U #             Turn on air region rendering (default: 0 - off)\n");
-    bu_log(" -V #             View (pixel) aspect ratio (width/height)\n");
-    bu_log(" -j xmin,xmax,ymin,ymax\n");
-    bu_log("                  Only render pixels within the specified sub-rectangle\n");
-    bu_log(" -k xdir,ydir,zdir,dist\n");
-    bu_log("                  Specify a cutting plane for the entire render scene\n");
-    bu_log(" -m density,r,g,b\n");
-    bu_log("                  Render hazy air (e.g., 0.0002,0.8,0.9,0.99 for sky-blue haze)\n");
-    bu_log("\nDeveloper Options:\n");
-    bu_log(" -v #             Specify RT verbosity flags\n");
-    bu_log(" -X #             Specify RT debugging flags\n");
-    bu_log(" -x #             Specify librt debugging flags\n");
-    bu_log(" -N #             Specify libnmg debugging flags\n");
-    bu_log(" -! #             Specify libbu debugging flags\n");
-    bu_log(" -, #             Specify space partitioning algorithm\n");
-    bu_log(" -B               Disable randomness for \"benchmark\"-style repeatability\n");
-    bu_log(" -b \"x y\"         Only shoot one ray at pixel coordinates (quotes required)\n");
-    bu_log(" -Q x,y           Shoot one pixel with debugging; compute others without\n");
-    bu_log(" -l #             Select lighting model (default is 0)\n");
-#ifdef USE_OPENCL
-    bu_log(" -z #             Turn on OpenCL ray-trace engine (default: 0 - off)\n");
-#endif
-    bu_log("\n");
-/* intentionally not listed:
- *   -u units -- because it only applies to rtarea
- *   -r -- is only being reserved to pair with -R (muses a lower/upper on/off convention)
- */
-}
-
 /*
     " -+ t                Specify that output is NOT binary (default is that it is -+ is otherwise not\n"
     "                implemented\n"
@@ -1910,8 +1849,6 @@ view_2init(struct application *ap, char *UNUSED(framename))
 void
 application_init(void)
 {
-    /* rpt_overlap = 1; */
-
     /* Set the byte offsets at run time */
     view_parse[ 0].sp_offset = bu_byteoffset(gamma_corr);
     view_parse[ 1].sp_offset = bu_byteoffset(max_bounces);
@@ -1925,6 +1862,17 @@ application_init(void)
     view_parse[ 9].sp_offset = bu_byteoffset(ambRadius);
     view_parse[10].sp_offset = bu_byteoffset(ambOffset);
     view_parse[11].sp_offset = bu_byteoffset(ambSlow);
+
+    option("", "-A #", "Set image brightness, ambient light intensity (default: 0.4)", 0);
+    option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);
+    option("Raytrace", "-t", "Render from top to bottom (default: from bottom up)", 1);
+    option("Advanced", "-O file.dpix", "Render to .dpix format file, double precision image data", 1);
+    option("Advanced", "-m density,r,g,b", "Render hazy air (e.g., 0.0002,0.8,0.9,1 for sky-blue haze)", 1);
+    option("Developer", "-l #", "Select lighting model (default is 0)", 1);
+
+    /* this reassignment hack ensures help is last in the first list */
+    option("dummy", "-? or -h", "Display help", 1);
+    option("", "-? or -h", "Display help", 1);
 }
 
 

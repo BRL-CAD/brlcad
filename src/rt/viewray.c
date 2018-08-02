@@ -53,21 +53,6 @@ extern FILE	*outfp;			/* optional output file */
 
 const char title[] = "RT Ray";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
-    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
-    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -o model.ray	Specify output file, ray(5V) format (default=stdout)\n");
-    bu_log(" -U #		Set use_air boolean to # (default=1)\n");
-    bu_log(" -x #		Set librt debug flags\n");
-}
-
-
 void	view_pixel(struct application *UNUSED(ap)) {}
 void	view_setup(struct rt_i *UNUSED(rtip)) {}
 void	view_cleanup(struct rt_i *UNUSED(rtip)) {}
@@ -221,7 +206,16 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 	bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 }
 
-void application_init (void) {}
+
+void
+application_init (void)
+{
+    option("", "-o model.ray", "Specify output file, ray(5V) format (default=stdout)", 0);
+    option("", "-U #", "Set use_air boolean to # (default=1)", 0);
+
+    option(NULL, "-C", "Disabled, not implemented", 2);
+    option(NULL, "-W", "Disabled, non implemented", 2);
+}
 
 /*
  * Local Variables:

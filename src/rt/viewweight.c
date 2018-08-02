@@ -59,26 +59,6 @@ struct bu_structparse view_parse[] = {
 
 const char title[] = "RT Weight";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage: %s [options] model.g objects...\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -g #		Grid cell width [and height] in mm\n");
-    bu_log(" -G #		Grid cell height [and width] in mm\n");
-    bu_log(" -a Az		Azimuth in degrees\n");
-    bu_log(" -e Elev	Elevation in degrees\n");
-    bu_log(" -o file.out	Weights and Moments output file\n");
-    bu_log(" -M		Read matrix, cmds on stdin\n");
-    bu_log(" -r 		Report verbosely mass of each region\n");
-    bu_log(" -x #		Set librt debug flags\n");
-    bu_log("Files:\n");
-    bu_log(" .density, OR\n");
-    bu_log(" $HOME/.density\n");
-}
-
-
 int noverlaps = 0;
 FILE *densityfp;
 char *densityfile;
@@ -609,6 +589,19 @@ view_cleanup(struct rt_i *UNUSED(rtip))
 void
 application_init(void)
 {
+    option("", "-o file.out", "Weights and Moments output file", 0);
+    option("", "-r", "Report verbosely mass of each region", 0);
+    /* this reassignment hack ensures help is last in the first list */
+    option("dummy", "-? or -h", "Display help", 1);
+    option("", "-? or -h", "Display help", 1);
+
+    option(NULL, "", NULL, 0);
+    option(NULL, "Files:", NULL, 0);
+    option(NULL, "  .density, OR", NULL, 0);
+    option(NULL, "  $HOME/.density", NULL, 0);
+
+    option(NULL, "-C", "Disabled, not implemented", 2);
+    option(NULL, "-W", "Disabled, non implemented", 2);
 }
 
 

@@ -53,23 +53,6 @@ static mat_t	model2hv;		/* model coords to GIFT h, v in inches */
 
 const char title[] = "RT Cell";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... >file.cell\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
-    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
-    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -g #		Grid cell width in millimeters (conflicts with -s\n");
-    bu_log(" -G #		Grid cell height in millimeters (conflicts with -s\n");
-    bu_log(" -J #		Jitter.  Default is off.  Any non-zero number is on\n");
-    bu_log(" -o model.cell	Specify output file (default=stdout)\n");
-    bu_log(" -U #		Set use_air boolean to # (default=0)\n");
-    bu_log(" -x #		Set librt debug flags\n");
-}
-
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int     raymiss(register struct application *ap);
@@ -221,10 +204,20 @@ view_end(struct application *UNUSED(ap))
     fflush(outfp);
 }
 
+
+/* stubs */
 void view_setup(struct rt_i *UNUSED(rtip)) {}
 void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
-void application_init (void) {}
+
+void
+application_init (void)
+{
+    option("", "-o model.cell", "Specify output file (default=stdout)", 0);
+
+    option(NULL, "-C", "Disabled, not implemented", 2);
+    option(NULL, "-W", "Disabled, non implemented", 2);
+}
 
 /*
  * Local Variables:

@@ -38,6 +38,7 @@
 /* private */
 #include "./rtuif.h"
 #include "./rad.h"
+#include "./ext.h"
 
 
 #define MAXREFLECT 16
@@ -71,20 +72,6 @@ struct bu_structparse view_parse[] = {
 };
 
 const char title[] = "RTRAD";
-
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... >file.rad\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -a Az		Azimuth in degrees\n");
-    bu_log(" -e Elev	Elevation in degrees\n");
-    bu_log(" -M		Read matrix, cmds on stdin\n");
-    bu_log(" -o file.rad	Output file name, else stdout\n");
-    bu_log(" -x #		Set librt debug flags\n");
-}
-
 
 static struct xray firstray;
 
@@ -561,7 +548,14 @@ dumpray(struct rayinfo *rp)
 }
 
 
-void application_init (void) {}
+void
+application_init (void)
+{
+    option("", "-o file.rad", "Output file name, else stdout", 0);
+
+    option(NULL, "-C", "Disabled, not implemented", 2);
+    option(NULL, "-W", "Disabled, non implemented", 2);
+}
 
 /*
  * Local Variables:

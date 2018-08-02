@@ -30,6 +30,9 @@
 #include "fb.h"
 #include "bu/parallel.h" /* for MAX_PSW */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  *	A Bit vector to determine how much stuff rt prints when not in
@@ -180,7 +183,17 @@ extern void color_hook(const struct bu_structparse *sp, const char *name, void *
 
 
 /* usage.c */
-extern void usage(const char *argv0);
+extern void usage(const char *argv0, int verbose);
+
+/**
+ * called by apps during application_init() to register
+ * application-specific usage options.
+ */
+extern void option(const char *option, const char *description, const char *category, int verbose);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* RT_EXT_H */
 /*

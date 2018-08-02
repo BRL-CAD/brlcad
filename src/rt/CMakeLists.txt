@@ -19,6 +19,7 @@ set(LIBRTUIF_SOURCES
   main.c
   opt.c
   scanline.c
+  usage.cpp
   worker.c
   )
 

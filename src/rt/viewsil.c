@@ -38,11 +38,12 @@
 
 /* private */
 #include "./rtuif.h"
+#include "./ext.h"
 
 
 extern FILE *outfp;
 extern size_t width, height;
-static unsigned char *scanbuf;
+static unsigned char *scanline;
 
 /*
  *  Viewing module specific "set" variables.
@@ -56,19 +57,6 @@ struct bu_structparse view_parse[] = {
 };
 
 const char title[] = "RT Simple Intersection Lightmap";
-
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... [> file.pix]\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -a Az		Azimuth in degrees\n");
-    bu_log(" -e Elev	Elevation in degrees\n");
-    bu_log(" -M		Read matrix, cmds on stdin\n");
-    bu_log(" -o file.pix	Output file name, else stdout\n");
-    bu_log(" -x #		Set librt debug flags\n");
-}
 
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
@@ -86,7 +74,7 @@ view_init(register struct application *UNUSED(ap), char *UNUSED(file), char *UNU
 	RTG.rtg_parallel = 0;
 	bu_log("rtsil: Can't do parallel yet, using one CPU\n");
     }
-    scanbuf = (unsigned char *)bu_malloc( width, "scanline buffer" );
+    scanline = (unsigned char *)bu_malloc( width, "scanline buffer" );
     return 0;		/* no framebuffer needed */
 }
 
@@ -120,7 +108,7 @@ view_eol(struct application *UNUSED(ap))
     size_t ret;
     bu_semaphore_acquire( BU_SEM_SYSCALL );
     if ( outfp != NULL ) {
-	ret = fwrite( scanbuf, 1, width, outfp );
+	ret = fwrite( scanline, 1, width, outfp );
 	if (ret < (size_t)width)
 	    perror("fwrite");
     }
@@ -161,7 +149,7 @@ int
 rayhit(register struct application *ap, struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segp))
 {
     bu_semaphore_acquire( RT_SEM_RESULTS );
-    scanbuf[ap->a_x] = 1;
+    scanline[ap->a_x] = 1;
     bu_semaphore_release( RT_SEM_RESULTS );
     return 1;	/* report hit to main routine */
 }
@@ -173,12 +161,17 @@ int
 raymiss(register struct application *ap)
 {
     bu_semaphore_acquire( RT_SEM_RESULTS );
-    scanbuf[ap->a_x] = 255;
+    scanline[ap->a_x] = 255;
     bu_semaphore_release( RT_SEM_RESULTS );
     return 0;
 }
 
-void application_init (void) {}
+void
+application_init (void)
+{
+    option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);
+    option("Raytrace", "-t", "Render from top to bottom (default: from bottom up)", 1);
+}
 
 
 /*

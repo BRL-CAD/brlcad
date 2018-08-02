@@ -164,10 +164,16 @@ int main(int argc, const char **argv)
     application_init();
 
     /* Process command line options */
-    if (!get_args(argc, argv))  {
-	usage(argv[0]);
+    i = get_args(argc, argv);
+    if (i < 0)  {
+	usage(argv[0], 0);
 	return 1;
+    } else if (i == 0) {
+	/* asking for help is ok */
+	usage(argv[0], 1);
+	return 0;
     }
+
     /* Identify the versions of the libraries we are using. */
     if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 	fprintf(stderr, "%s%s%s%s\n",
@@ -193,7 +199,7 @@ int main(int argc, const char **argv)
 
     if (bu_optind >= argc) {
 	fprintf(stderr, "%s:  BRL-CAD geometry database not specified\n", argv[0]);
-	usage(argv[0]);
+	usage(argv[0], 0);
 	return 1;
     }
 
@@ -294,6 +300,7 @@ int main(int argc, const char **argv)
 
     if (objc <= 0) {
 	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
+	usage(argv[0], 0);
 	return 1;
     }
 

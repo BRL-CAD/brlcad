@@ -208,6 +208,7 @@ get_args(int argc, const char *argv[])
 
     while ((c=bu_getopt(argc, (char * const *)argv, GETOPT_STR)) != -1) {
 	if (bu_optopt == '?')
+	    /* specifically asking for help? */
 	    c = 'h';
 	switch (c) {
 	    case 'q':
@@ -216,8 +217,7 @@ get_args(int argc, const char *argv[])
 		    bu_exit(EXIT_FAILURE, "-q %d is < 0\n", i);
 		}
 		if (i > BN_RANDHALFTABSIZE) {
-		    bu_exit(EXIT_FAILURE, "-q %d is > maximum (%d)\n",
-			    i, BN_RANDHALFTABSIZE);
+		    bu_exit(EXIT_FAILURE, "-q %d is > maximum (%d)\n", i, BN_RANDHALFTABSIZE);
 		}
 		bn_randhalftabsize = i;
 		break;
@@ -290,8 +290,7 @@ get_args(int argc, const char *argv[])
 		    struct bu_color color = BU_COLOR_INIT_ZERO;
 
 		    if (!bu_color_from_str(&color, bu_optarg)) {
-			bu_log("ERROR: invalid color string: '%s'\n", bu_optarg);
-			return 0;
+			bu_exit(EXIT_FAILURE, "ERROR: invalid color string: '%s'\n", bu_optarg);
 		    }
 		    {
 			char buf[128] = {0};
@@ -619,15 +618,17 @@ get_args(int argc, const char *argv[])
 			    output_is_binary = 0;
 			    break;
 			default:
-			    fprintf(stderr, "ERROR: unknown option %c\n", *cp);
-			    return 0;	/* BAD */
+			    bu_exit(EXIT_FAILURE, "ERROR: unknown option %c\n", *cp);
 		    }
 		}
 		break;
-	    default:		/* '?' 'h' */
-		if(bu_optopt != 'h')
-		    fprintf(stderr, "ERROR: argument missing or bad option specified\n");
-		return 0;	/* BAD */
+	    case 'h':
+		/* asking for help */
+		return 0;
+	    default:
+		/* '?' except not -? */
+		fprintf(stderr, "ERROR: argument missing or bad option specified\n");
+		return -1;
 	}
     }
 

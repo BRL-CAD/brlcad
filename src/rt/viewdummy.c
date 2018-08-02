@@ -51,20 +51,6 @@ struct bu_structparse view_parse[] = {
     "",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL
 };
 
-/*
- *  The usage message for this application.
- */
-char usage[] = "\
-Usage:  rtdummy [options] model.g objects... >file.rad\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees\n\
- -e Elev	Elevation in degrees\n\
- -M		Read matrix, cmds on stdin\n\
- -o file.rad	Output file name, else stdout\n\
- -x #		Set librt debug flags\n\
-";
-
 int	rayhit(register struct application *ap, struct partition *PartHeadp);
 int	raymiss(register struct application *ap);
 
@@ -155,7 +141,14 @@ raymiss(register struct application *ap)
     return 0;
 }
 
-void application_init (void) {}
+void
+application_init (void)
+{
+    /* You can customize usage for this application here. */
+    option("", "-o custom.out", "This overrides the default -o option", 0);
+    option(NULL, "", NULL, 1); /* blank line, verbose mode */
+    option(NULL, "", "Note: this adds a note to the end when the ask for help.", 1);
+}
 
 /*
  * Local Variables:

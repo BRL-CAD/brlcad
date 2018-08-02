@@ -73,22 +73,6 @@ static char *floatfilename=NULL;
 const char floatfileext[] = ".los";
 
 const char title[] = "RT X-Ray";
-void
-usage(const char *argv0)
-{
-    bu_log("Usage: %s [options] model.g objects... >stuff\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
-    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
-    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -o file.bw	Output file name, else frame buffer\n");
-    bu_log(" -A #		Contrast boost (default 2.0), may clip if > 1\n");
-    bu_log(" -x #		Set librt debug flags\n");
-    bu_log(" -l 0		line buffered B&W X-Rays (default)\n");
-    bu_log(" -l 1		Floating point X-Rays (path lengths in doubles)\n");
-}
-
 
 /*
  *  Called at the start of a run.
@@ -294,6 +278,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
     return 1;	/* report hit to main routine */
 }
 
+
 static int
 xraymiss(register struct application *ap)
 {
@@ -327,7 +312,20 @@ xraymiss(register struct application *ap)
     return 0;	/* report miss to main routine */
 }
 
-void application_init (void) {}
+
+void
+application_init (void)
+{
+    option("", "-o file.bw", "Output black & white image filename", 0);
+    option("", "-A #", "Contrast boost (default 2.0), may clip if > 1", 0);
+    option("", "-l 0", "line buffered B&W X-Rays (default)", 1);
+    option("", "-l 1", "Floating point X-Rays (path lengths in doubles)", 1);
+    option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);
+    option("Raytrace", "-t", "Render from top to bottom (default: from bottom up)", 1);
+
+    option(NULL, "-C", "Disabled, not implemented", 2);
+    option(NULL, "-W", "Disabled, non implemented", 2);
+}
 
 /*
  * Local Variables:

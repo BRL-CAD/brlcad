@@ -42,19 +42,6 @@
 
 const char title[] = "RT Pretty Picture";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... >file.pp\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512, max 1024\n");
-    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
-    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
-    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -x #		Set librt debug flags\n");
-}
-
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
@@ -185,12 +172,17 @@ view_init(struct application *ap, char *file, char *obj, int minus_o, int UNUSED
     return 0;		/* no framebuffer needed */
 }
 
+/* stubs */
 void view_2init(struct application *UNUSED(ap), char *UNUSED(framename)) {;}
-
 void view_setup(struct rt_i *UNUSED(rtip)) {}
 void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
-void application_init (void) {}
+
+void
+application_init (void)
+{
+    option("", "-o file.pp", "Output pretty picture file", 0);
+}
 
 /*
  * Local Variables:

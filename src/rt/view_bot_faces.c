@@ -65,26 +65,6 @@ struct bu_structparse view_parse[] = {
 
 const char title[] = "RT BoT Faces";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
-    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
-    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -g #		Grid cell width in millimeters (conflicts with -s)\n");
-    bu_log(" -G #		Grid cell height in millimeters (conflicts with -s)\n");
-    bu_log(" -J #		Jitter.  Default is off.  Any non-zero number is on\n");
-    bu_log(" -o bot_faces_file	Specify output file, list of bot_faces hit (default=stdout)\n");
-    bu_log(" -U #		Set use_air boolean to # (default=1)\n");
-    bu_log(" -c \"set save_overlaps=1\"     Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n");
-    bu_log(" -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n");
-    bu_log(" -x #		Set librt debug flags\n");
-}
-
-
 /*
  * Rayhit() is called by rt_shootray() when the ray hits one or more objects.
  */
@@ -291,14 +271,21 @@ view_end(struct application *UNUSED(ap))
 }
 
 
-void view_setup(struct rt_i *UNUSED(rtip))
+/* stubs */
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
+
+
+void
+application_init()
 {
-}
-void view_cleanup(struct rt_i *UNUSED(rtip))
-{
-}
-void application_init()
-{
+    option("", "-o file.ray", "Specify output file, list of BoT faces hit (default=stdout)", 0);
+    option("", "-U #", "Set use_air boolean to # (default=1)", 0);
+    option("Command (-c)", "\"set save_overlaps=1\"", "Reproduce FASTGEN behavior for FASTGEN-flagged regions", 0);
+    option("Command (-c)", "\"set rt_cline_radius=radius\"", "Additional radius to be added to CLINE solids", 0);
+
+    option(NULL, "-C", "Disabled, not implemented", 2);
+    option(NULL, "-W", "Disabled, non implemented", 2);
 }
 
 /*

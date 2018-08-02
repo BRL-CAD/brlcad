@@ -72,32 +72,6 @@ struct bu_structparse view_parse[] = {
 
 const char title[] = "RT Area";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects...\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
-    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
-    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -g #		Grid cell width in millimeters (conflicts with -s)\n");
-    bu_log(" -G #		Grid cell height in millimeters (conflicts with -s)\n");
-    bu_log(" -J #		Jitter.  Default is off.  Any non-zero number is on\n");
-    bu_log(" -U #		Set use_air boolean to # (default=1)\n");
-    bu_log(" -u units	Set the display units (default=mm)\n");
-    bu_log(" -x #		Set librt debug flags\n");
-    bu_log(" -c             Auxiliary commands (see man page)\n");
-    bu_log("\n");
-    bu_log("WARNING: rtarea may not correctly report area or center when instancing is\n");
-    bu_log("done at the group level. Using 'xpush' can be a workaround for this problem.\n");
-    bu_log("\n");
-    bu_log("WARNING: rtarea presently outputs in storage units (mm) by default but will\n");
-    bu_log("be changed to output in local units in the near future.\n");
-    bu_log("\n");
-}
-
-
 struct point_list {
     struct point_list * next;
     point_t pt_cell;
@@ -1194,8 +1168,30 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNU
 /* stubs */
 void view_setup(struct rt_i *UNUSED(rtip)) {}
 void view_cleanup(struct rt_i *UNUSED(rtip)) {}
-void application_init () {}
 
+
+void
+application_init () {
+    option("", "-u units", "Set the display units (default=mm)", 0);
+    option("", "-U #", "Set use_air boolean to # (default=1)", 0);
+    option("", "-c", "Auxiliary commands (see rtarea manual)", 0);
+
+    /* this reassignment hack ensures help is last in the first list */
+    option("dummy", "-? or -h", "Display help", 1);
+    option("", "-? or -h", "Display help", 1);
+
+    option(NULL, "", NULL, 0);
+    option(NULL, "", "WARNING: rtarea may not correctly report area or center", 0);
+    option(NULL, "", "         when instancing is done at the group level. Using", 0);
+    option(NULL, "", "         'xpush' can be a workaround for this problem.", 0);
+    option(NULL, "", NULL, 0);
+    option(NULL, "", "WARNING: rtarea presently outputs in storage units (mm) by", 0);
+    option(NULL, "", "         default but will be changed to output in local", 0);
+    option(NULL, "", "         units in the near future.", 0);
+
+    option(NULL, "-C", "Disabled, not implemented", 2);
+    option(NULL, "-W", "Disabled, non implemented", 2);
+}
 
 /*
  * Local Variables:

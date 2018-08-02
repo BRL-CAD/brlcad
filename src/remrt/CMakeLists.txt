@@ -14,7 +14,7 @@ include_directories(
 
 BRLCAD_ADDEXEC(remrt "../rt/opt.c;ihost.c;remrt.c" "liboptical;libfb")
 
-BRLCAD_ADDEXEC(rtsrv "../rt/view.c;../rt/do.c;../rt/heatgraph.c;../rt/opt.c;../rt/scanline.c;../rt/worker.c;rtsrv.c" "libfb;liboptical;libpkg;libicv")
+BRLCAD_ADDEXEC(rtsrv "../rt/usage.cpp;../rt/view.c;../rt/do.c;../rt/heatgraph.c;../rt/opt.c;../rt/scanline.c;../rt/worker.c;rtsrv.c" "libfb;liboptical;libpkg;libicv")
 SET_TARGET_PROPERTIES(rtsrv PROPERTIES COMPILE_DEFINITIONS "RTSRV")
 
 CMAKEFILES(ihost.h protocol.h)
