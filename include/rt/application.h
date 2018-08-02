@@ -132,7 +132,7 @@ struct application {
     struct partition *  a_Final_Part_hdp;
     vect_t              a_inv_dir;      /**< @brief  filled in by rt_shootray(), inverse of ray direction cosines */
     /* THE FOLLOWING ELEMENTS ARE MAINLINE & APPLICATION SPECIFIC. */
-    /* THEY ARE NEVER EXAMINED BY THE LIBRARY. */
+    /* THEY SHOULD NEVER BE USED BY THE LIBRARY. */
     int                 a_user;         /**< @brief  application-specific value */
     void *              a_uptr;         /**< @brief  application-specific pointer */
     struct bn_tabdata * a_spectrum;     /**< @brief  application-specific bn_tabdata pointer */
