@@ -352,19 +352,20 @@ ANALYZE_EXPORT int nirt_help(struct bu_vls *h, struct nirt_state *ns, bu_opt_for
 ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_state *ns);
 
 /**
- * Using ray intersection, sample the database object obj and return a pnts primitive.
+ * Using ray intersection, sample the database object obj and return a pnts
+ * primitive.
  *
  * For the grid sampling method, the tolerance sets the number of rays fired.
- * max_time does *not* impact the GRID sampling logic.  max_pnts will cap the
- * number of reported points, but be aware that the subset of points returned
- * from a grid result will be the first points seen in the results and will
- * not be randomly selected from the grid.  For combining grid and non-grid
- * results where the total number of points should be capped, the caller is
- * advised to perform separate generations and then merge the point sets.
+ * max_time and max_pnts do *not* impact the GRID sampling logic.
  *
- * In the case where more than one pseudorandom sampling method is selected,
- * the max_time and max_pnts limits apply per method.  If unset, the maximum
- * pnt count return is 500,000 per method (except for GRID).
+ * The max_pnts limit will cap the number of reported points for the
+ * pseudorandom sampling methods, on a per method basis - i.e., the function
+ * will return up to max_pnts for each non-grid sampling method that is
+ * enabled.  If unset, the maximum pnt count return is 500,000 per method
+ * (except for GRID).
+ *
+ * Likewise, max_time will limit the run time of each pseudorandom method, with
+ * the total limit for all methods being method_cnt_enabled * max_time.
  *
  * Return codes:
  *

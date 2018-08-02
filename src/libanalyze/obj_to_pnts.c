@@ -211,8 +211,13 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
     struct rt_i *rtip;
     int ncpus = bu_avail_cpus();
     struct rt_gen_worker_vars *state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
-    struct bu_ptbl **output_pnts = (struct bu_ptbl **)bu_calloc(ncpus+1, sizeof(struct bu_ptbl *), "local state");
+    struct bu_ptbl **grid_pnts = NULL;
+    struct bu_ptbl **rand_pnts = NULL;
+    struct bu_ptbl **sobol_pnts = NULL;
     struct resource *resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
+    int pntcnt_grid = 0;
+    int pntcnt_rand = 0;
+    int pntcnt_sobol = 0;
 
     if (!rpnts || !dbip || !obj || !tol || ncpus == 0) {
 	ret = 0;
@@ -243,10 +248,6 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	state[i].resp = &resp[i];
 	state[i].ind_src = &ind;
 	rt_init_resource(state[i].resp, i, rtip);
-	/* per-cpu hit point storage */
-	BU_GET(output_pnts[i], struct bu_ptbl);
-	bu_ptbl_init(output_pnts[i], 64, "first and last hit points");
-	state[i].ptr = (void *)output_pnts[i];
     }
     if (rt_gettree(rtip, obj) < 0) return -1;
 
@@ -259,6 +260,13 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
      * guide for how many rays to fire */
     if (do_grid) {
 	fastf_t *rays;
+	grid_pnts = (struct bu_ptbl **)bu_calloc(ncpus+1, sizeof(struct bu_ptbl *), "local state");
+	for (i = 0; i < ncpus+1; i++) {
+	    /* per-cpu hit point storage */
+	    BU_GET(grid_pnts[i], struct bu_ptbl);
+	    bu_ptbl_init(grid_pnts[i], 64, "first and last hit points");
+	    state[i].ptr = (void *)grid_pnts[i];
+	}
 	count = analyze_get_bbox_rays(&rays, rtip->mdl_min, rtip->mdl_max, tol);
 	for (i = 0; i < ncpus+1; i++) {
 	    state[i].step = (int)(count/ncpus * 0.1);
@@ -297,13 +305,18 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	    fastf_t delta = 0;
 	    long int raycnt = 0;
 	    int pc = 0;
-	    oldtime = bu_gettime();
+	    rand_pnts = (struct bu_ptbl **)bu_calloc(ncpus+1, sizeof(struct bu_ptbl *), "local state");
 	    for (i = 0; i < ncpus+1; i++) {
+		/* per-cpu hit point storage */
+		BU_GET(rand_pnts[i], struct bu_ptbl);
+		bu_ptbl_init(rand_pnts[i], 64, "first and last hit points");
+		state[i].ptr = (void *)rand_pnts[i];
 		if (!state[i].rays) {
 		    state[i].rays = (fastf_t *)bu_calloc(craynum * 6 + 1, sizeof(fastf_t), "rays");
 		    state[i].rays_cnt = craynum;
 		}
 	    }
+	    oldtime = bu_gettime();
 	    while (delta < mt && raycnt < mrc && (!max_pnts || pc < max_pnts)) {
 		for (i = 0; i < ncpus+1; i++) {
 		    get_random_rays(state[i].rays, craynum, center, rtip->rti_radius);
@@ -312,7 +325,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 		raycnt += craynum * (ncpus+1);
 		pc = 0;
 		for (i = 0; i < ncpus+1; i++) {
-		    pc += (int)BU_PTBL_LEN(output_pnts[i]);
+		    pc += (int)BU_PTBL_LEN(rand_pnts[i]);
 		}
 		if (max_pnts && (pc >= max_pnts)) break;
 		delta = (bu_gettime() - oldtime)/1e6;
@@ -326,7 +339,12 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	    struct bn_soboldata *sobolseq = bn_sobol_create(2, time(NULL));
 	    bn_sobol_skip(sobolseq, (int)craynum);
 	    oldtime = bu_gettime();
+	    sobol_pnts = (struct bu_ptbl **)bu_calloc(ncpus+1, sizeof(struct bu_ptbl *), "local state");
 	    for (i = 0; i < ncpus+1; i++) {
+		/* per-cpu hit point storage */
+		BU_GET(sobol_pnts[i], struct bu_ptbl);
+		bu_ptbl_init(sobol_pnts[i], 64, "first and last hit points");
+		state[i].ptr = (void *)sobol_pnts[i];
 		if (!state[i].rays) {
 		    state[i].rays = (fastf_t *)bu_calloc(craynum * 6 + 1, sizeof(fastf_t), "rays");
 		    state[i].rays_cnt = craynum;
@@ -340,7 +358,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 		raycnt += craynum * (ncpus+1);
 		pc = 0;
 		for (i = 0; i < ncpus+1; i++) {
-		    pc += (int)BU_PTBL_LEN(output_pnts[i]);
+		    pc += (int)BU_PTBL_LEN(sobol_pnts[i]);
 		}
 		if (max_pnts && (pc >= max_pnts)) break;
 		delta = (bu_gettime() - oldtime)/1e6;
@@ -352,23 +370,63 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
     /* Collect and print all of the results */
 
     for (i = 0; i < ncpus+1; i++) {
-	pntcnt += (int)BU_PTBL_LEN(output_pnts[i]);
+	if (grid_pnts) {
+	    pntcnt_grid += (int)BU_PTBL_LEN(grid_pnts[i]);
+	}
+	if (rand_pnts) {
+	    pntcnt_rand += (int)BU_PTBL_LEN(rand_pnts[i]);
+	}
+	if (sobol_pnts) {
+	    pntcnt_sobol += (int)BU_PTBL_LEN(sobol_pnts[i]);
+	}
     }
+    /* we probably dont' want to cap grid points, but cap the others */
+    if (max_pnts && pntcnt_rand > max_pnts) pntcnt_rand = max_pnts;
+    if (max_pnts && pntcnt_sobol > max_pnts) pntcnt_sobol = max_pnts;
 
+    pntcnt = pntcnt_grid + pntcnt_rand + pntcnt_sobol;
     if (pntcnt < 1) {
 	ret = ANALYZE_ERROR;
     } else {
 	int pc = 0;
-	rpnts->count = (max_pnts && (pntcnt > max_pnts)) ? max_pnts : pntcnt;
+	rpnts->count = pntcnt;
 	BU_ALLOC(rpnts->point, struct pnt_normal);
 	BU_LIST_INIT(&(((struct pnt_normal *)rpnts->point)->l));
-	for (i = 0; i < ncpus+1; i++) {
-	    for (j = 0; j < (int)BU_PTBL_LEN(output_pnts[i]); j++) {
-		BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &((struct pnt_normal *)BU_PTBL_GET(output_pnts[i], j))->l);
-		pc++;
-		if (max_pnts && (pc == max_pnts)) break;
+	/* Grid points */
+	if (grid_pnts) {
+	    pc = 0;
+	    for (i = 0; i < ncpus+1; i++) {
+		for (j = 0; j < (int)BU_PTBL_LEN(grid_pnts[i]); j++) {
+		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &((struct pnt_normal *)BU_PTBL_GET(grid_pnts[i], j))->l);
+		    pc++;
+		    if (pc == pntcnt_grid) break;
+		}
+		if (pc == pntcnt_grid) break;
 	    }
-	    if (max_pnts && (pc == max_pnts)) break;
+	}
+	/* Random points */
+	if (rand_pnts) {
+	    pc = 0;
+	    for (i = 0; i < ncpus+1; i++) {
+		for (j = 0; j < (int)BU_PTBL_LEN(rand_pnts[i]); j++) {
+		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &((struct pnt_normal *)BU_PTBL_GET(rand_pnts[i], j))->l);
+		    pc++;
+		    if (pc == pntcnt_rand) break;
+		}
+		if (pc == pntcnt_rand) break;
+	    }
+	}
+	/* Sobol points */
+	if (sobol_pnts) {
+	    pc = 0;
+	    for (i = 0; i < ncpus+1; i++) {
+		for (j = 0; j < (int)BU_PTBL_LEN(sobol_pnts[i]); j++) {
+		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &((struct pnt_normal *)BU_PTBL_GET(sobol_pnts[i], j))->l);
+		    pc++;
+		    if (pc == pntcnt_sobol) break;
+		}
+		if (pc == pntcnt_sobol) break;
+	    }
 	}
 	ret = 0;
     }
@@ -376,13 +434,29 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 memfree:
     /* Free memory not stored in tables */
     for (i = 0; i < ncpus+1; i++) {
-	if (output_pnts[i] != NULL) {
-	    bu_ptbl_free(output_pnts[i]);
-	    BU_PUT(output_pnts[i], struct bu_ptbl);
+	if (grid_pnts) {
+	    if (grid_pnts[i] != NULL) {
+		bu_ptbl_free(grid_pnts[i]);
+		BU_PUT(grid_pnts[i], struct bu_ptbl);
+	    }
+	}
+	if (rand_pnts) {
+	    if (rand_pnts[i] != NULL) {
+		bu_ptbl_free(rand_pnts[i]);
+		BU_PUT(rand_pnts[i], struct bu_ptbl);
+	    }
+	}
+	if (sobol_pnts) {
+	    if (sobol_pnts[i] != NULL) {
+		bu_ptbl_free(sobol_pnts[i]);
+		BU_PUT(sobol_pnts[i], struct bu_ptbl);
+	    }
 	}
     }
+    if (grid_pnts) bu_free(grid_pnts, "free state containers");
+    if (rand_pnts) bu_free(rand_pnts, "free state containers");
+    if (sobol_pnts) bu_free(sobol_pnts, "free state containers");
     bu_free(state, "free state containers");
-    bu_free(output_pnts, "free state containers");
     bu_free(resp, "free resources");
     return ret;
 }
