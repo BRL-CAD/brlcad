@@ -52,8 +52,6 @@ struct shadework {
     struct light_specific *sw_visible[SW_NLIGHTS]; /**< @brief  visibility flags/ptrs */
     fastf_t		sw_lightfract[SW_NLIGHTS];/**< @brief  % light visible */
     int			sw_xmitonly;	/**< @brief  flag: need sw_transmit only */
-    /**< @brief  sw_xmitonly=1, compute transmission only */
-    /**< @brief  sw_xmitonly=2, want parameters only, not even transmission */
     int			sw_inputs;	/**< @brief  fields from mf_inputs actually filled */
     int			sw_frame;	/**< @brief  # of current frame */
     struct seg *	sw_segs;	/**< @brief  segs which made partition */
