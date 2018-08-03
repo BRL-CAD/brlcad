@@ -94,8 +94,6 @@ struct bg_3d_spsr_opts {
     fastf_t confidence_bias;     /**< normal confidence bias exponent */
     fastf_t cgsolver_accuracy;   /**< cg solver accuracy */
     fastf_t point_weight;        /**< interpolation weight */
-
-    /* bools ? */
     int nonManifold;             /**< NonManifold */
     int linearFit;               /**< LinearFit */
     int exact;                   /**< exact interpolation */
