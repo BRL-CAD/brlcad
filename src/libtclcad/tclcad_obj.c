@@ -1560,7 +1560,7 @@ to_deleteProc(ClientData clientData)
 #if 1
 	/* This removes the view related command and results in a call to to_deleteViewProc to release resources. */
 	Tcl_DeleteCommand(top->to_interp, bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
-#else	
+#else
 	BU_LIST_DEQUEUE(&(gdvp->l));
 	bu_vls_free(&gdvp->gdv_name);
 	bu_vls_free(&gdvp->gdv_callback);
@@ -1703,7 +1703,6 @@ Usage: go_open\n\
     bu_vls_strcpy(&top->to_gop->go_name, argv[1]);
     bu_vls_init(&top->to_gop->go_more_args_callback);
     bu_vls_init(&top->to_gop->go_rt_end_callback);
-    BU_LIST_INIT(&top->to_gop->go_observers.l);
     top->to_gop->go_refresh_on = 1;
     top->to_gop->go_edited_paths = bu_hash_create(0);
 
@@ -6404,7 +6403,7 @@ struct redraw_edited_path_data {
 };
 
 
-HIDDEN void 
+HIDDEN void
 redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 {
     const char *av[5] = {0};

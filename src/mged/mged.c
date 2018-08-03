@@ -2822,7 +2822,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_strcpy(&wdbp->wdb_name, MGED_DB_NAME);
 
-    BU_LIST_INIT(&wdbp->wdb_observers.l);
     wdbp->wdb_interp = interpreter;
 
     /* append to list of rt_wdb's */

@@ -10434,7 +10434,6 @@ wdb_init_obj(Tcl_Interp *interp,
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_strcpy(&wdbp->wdb_name, oname);
 
-    BU_LIST_INIT(&wdbp->wdb_observers.l);
     wdbp->wdb_interp = (void *)interp;
 
     /* append to list of rt_wdb's */

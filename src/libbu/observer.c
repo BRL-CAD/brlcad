@@ -27,6 +27,20 @@
 #include "bu/str.h"
 #include "bu/observer.h"
 
+#define NUM_INITIAL_OBSERVERS 8
+
+HIDDEN void
+bu_observer_list_init(struct bu_observer_list *all_observers)
+{
+    if (all_observers->capacity == 0) {
+        all_observers->capacity = NUM_INITIAL_OBSERVERS;
+        all_observers->observers = (struct bu_observer *)bu_malloc(all_observers->capacity * sizeof(struct bu_observer), "init observer list");
+    } else if (all_observers->size == all_observers->capacity) {
+        all_observers->capacity *= 2;
+        all_observers->observers = (struct bu_observer *)bu_realloc(all_observers->observers, all_observers->capacity * sizeof(struct bu_observer), "resize of observer list");
+    }
+}
+
 /**
  * Attach observer.
  *
@@ -37,8 +51,9 @@
 HIDDEN int
 observer_attach(void *clientData, int argc, const char **argv)
 {
-    struct bu_observer *headp = (struct bu_observer *)clientData;
+    struct bu_observer_list *observers = (struct bu_observer_list *)clientData;
     struct bu_observer *op;
+    size_t i;
 
     if (argc < 2 || 3 < argc) {
 	bu_log("ERROR: expecting only three arguments\n");
@@ -46,7 +61,8 @@ observer_attach(void *clientData, int argc, const char **argv)
     }
 
     /* see if it already exists, if so, modify it */
-    for (BU_LIST_FOR(op, bu_observer, &headp->l))
+    for (i = 0; i < observers->size; i++) {
+        op = &observers->observers[i];
 	if (BU_STR_EQUAL(bu_vls_addr(&op->observer), argv[1])) {
 	    if (argc == 2)
 		/* clobber cmd */
@@ -57,9 +73,12 @@ observer_attach(void *clientData, int argc, const char **argv)
 
 	    return BRLCAD_OK;
 	}
+	}
 
     /* acquire bu_observer struct */
-    BU_GET(op, struct bu_observer);
+    bu_observer_list_init(observers);
+    op = &observers->observers[observers->size];
+    observers->size++;
 
     /* initialize observer */
     bu_vls_init(&op->observer);
@@ -68,9 +87,6 @@ observer_attach(void *clientData, int argc, const char **argv)
 
     if (argc == 3)
 	bu_vls_strcpy(&op->cmd, argv[2]);
-
-    /* append to list of bu_observer's */
-    BU_LIST_APPEND(&headp->l, &op->l);
 
     return BRLCAD_OK;
 }
@@ -86,8 +102,9 @@ observer_attach(void *clientData, int argc, const char **argv)
 HIDDEN int
 observer_detach(void *clientData, int argc, const char **argv)
 {
-    struct bu_observer *headp = (struct bu_observer *)clientData;
+    struct bu_observer_list *observers = (struct bu_observer_list *)clientData;
     struct bu_observer *op;
+    size_t i;
 
     if (argc != 2) {
 	bu_log("ERROR: expecting two arguments\n");
@@ -95,14 +112,16 @@ observer_detach(void *clientData, int argc, const char **argv)
     }
 
     /* search for observer and remove from list */
-    for (BU_LIST_FOR(op, bu_observer, &headp->l))
+    for (i = 0; i < observers->size; i++) {
+        op = &observers->observers[i];
 	if (BU_STR_EQUAL(bu_vls_addr(&op->observer), argv[1])) {
-	    BU_LIST_DEQUEUE(&op->l);
 	    bu_vls_free(&op->observer);
 	    bu_vls_free(&op->cmd);
-	    BU_PUT(op, struct bu_observer);
+
+	    memmove(op, op + 1, sizeof(struct bu_observer_list) * (observers->size - i - 1));
 
 	    return BRLCAD_OK;
+	}
 	}
 
     bu_log("detach: %s not found", argv[1]);
@@ -120,15 +139,17 @@ observer_detach(void *clientData, int argc, const char **argv)
 HIDDEN int
 observer_show(void *clientData, int argc, const char **UNUSED(argv))
 {
-    struct bu_observer *headp = (struct bu_observer *)clientData;
+    struct bu_observer_list *observers = (struct bu_observer_list *)clientData;
     struct bu_observer *op;
+    size_t i;
 
     if (argc != 1) {
 	bu_log("ERROR: expecting only one argument\n");
 	return BRLCAD_ERROR;
     }
 
-    for (BU_LIST_FOR(op, bu_observer, &headp->l)) {
+    for (i = 0; i < observers->size; i++) {
+        op = &observers->observers[i];
 	bu_log("%s - %s\n", bu_vls_addr(&op->observer), bu_vls_addr(&op->cmd));
     }
 
@@ -136,12 +157,14 @@ observer_show(void *clientData, int argc, const char **UNUSED(argv))
 }
 
 void
-bu_observer_notify(void *context, struct bu_observer *headp, char *self, bu_observer_eval_t *cmd_eval)
+bu_observer_notify(void *context, struct bu_observer_list *observers, char *self, bu_observer_eval_t *cmd_eval)
 {
     struct bu_observer *op;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    size_t i;
 
-    for (BU_LIST_FOR(op, bu_observer, &headp->l)) {
+    for (i = 0; i < observers->size; i++) {
+        op = &observers->observers[i];
 	if (bu_vls_strlen(&op->cmd) > 0) {
 	    /* Execute cmd */
 	    bu_vls_strcpy(&vls, bu_vls_addr(&op->cmd));
@@ -159,20 +182,16 @@ bu_observer_notify(void *context, struct bu_observer *headp, char *self, bu_obse
 }
 
 void
-bu_observer_free(struct bu_observer *headp)
+bu_observer_free(struct bu_observer_list *observers)
 {
-    struct bu_observer *op;
-    struct bu_observer *nop;
+    size_t i;
 
-    op = BU_LIST_FIRST(bu_observer, &headp->l);
-    while (BU_LIST_NOT_HEAD(op, &headp->l)) {
-	nop = BU_LIST_PNEXT(bu_observer, op);
-	BU_LIST_DEQUEUE(&op->l);
-	bu_vls_free(&op->observer);
-	bu_vls_free(&op->cmd);
-	BU_PUT(op, struct bu_observer);
-	op = nop;
+    for (i = 0; i < observers->size; i++) {
+        bu_vls_free(&observers->observers[i].observer);
+        bu_vls_free(&observers->observers[i].cmd);
     }
+
+    bu_free(observers->observers, "freeing observers");
 }
 
 
@@ -186,7 +205,6 @@ static struct bu_cmdtab bu_observer_cmds[] = {
     {"show",	observer_show},
     {(const char *)NULL, BU_CMD_NULL}
 };
-
 
 int
 bu_observer_cmd(void *clientData, int argc, const char **argv)
