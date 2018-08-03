@@ -482,7 +482,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "Usage: facetize [ -nmhT | [--poisson] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
     static const char *pusage = "Usage: facetize --poisson [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
 
-    int print_help;
+    int print_help = 0;
     int screened_poisson = 0;
     struct _ged_facetize_opts opts = _GED_SPSR_OPTS_INIT;
     struct bu_opt_desc d[7];
