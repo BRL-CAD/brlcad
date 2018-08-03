@@ -9,9 +9,9 @@
 
 <refnamediv xml:id="name">
   <refname>facetize</refname>
-  <refpurpose>Creates <emphasis>new_object</emphasis> as a BOT shape by tessellating all the
-	primitive shapes in <emphasis>old_object</emphasis> and then performing any Boolean operations specified
-	in <emphasis>old_object</emphasis>.
+  <refpurpose>
+    Creates <emphasis>new_object</emphasis> using <emphasis>old_object</emphasis> as a
+    starting point and then creating an NMG or BoT approximation of the original shape.
    </refpurpose>
 </refnamediv>
 
@@ -19,24 +19,43 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>facetize</command>
-    <group choice="opt" rep="norepeat">
-     <arg choice="opt" rep="norepeat">-n</arg>
-     <arg choice="opt" rep="norepeat">-t</arg>
-     <arg choice="opt" rep="norepeat">-T</arg>
+    <group choice="opt">
+      <arg choice="opt" rep="norepeat">-h</arg>
+      <arg choice="opt" rep="norepeat">-n</arg>
+      <arg choice="opt" rep="norepeat">-T</arg>
+      <arg choice="opt" rep="norepeat">-m</arg>
     </group>
-    <group choice="opt" rep="norepeat">
-     <arg choice="opt" rep="norepeat">-P</arg>
-     <arg choice="opt" rep="norepeat"><replaceable>#</replaceable></arg>
+    <group choice="opt">
+      <arg choice="opt" rep="norepeat">--poisson</arg>
+      <arg choice="opt" rep="norepeat">poisson options</arg>
     </group>
-     <arg choice="req" rep="norepeat"><replaceable>new_object old_object</replaceable></arg>
+     <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
+  </cmdsynopsis>
+  <cmdsynopsis sepchar=" ">
+    <command>facetize --poisson</command>
+    <group choice="opt">
+      <arg choice="opt" rep="norepeat">-d</arg>
+      <arg choice="opt" rep="norepeat">-w</arg>
+      <arg choice="opt" rep="norepeat">--samples-per-node</arg>
+    </group>
+    <group>
+      <arg choice="opt">-t</arg>
+      <arg choice="opt" rep="norepeat">--surface</arg>
+      <arg choice="opt" rep="norepeat">--grid</arg>
+      <arg choice="opt" rep="norepeat">--rand</arg>
+      <arg choice="opt" rep="norepeat">--sobol</arg>
+      <arg choice="opt" rep="norepeat">--max-pnts</arg>
+      <arg choice="opt" rep="norepeat">--max-time</arg>
+    </group>
+     <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Creates <emphasis>new_object</emphasis> as a BOT shape by tessellating all the
-	primitive shapes in <emphasis>old_object</emphasis> and then performing any Boolean operations specified
-	in <emphasis>old_object</emphasis>. The <emphasis>-T</emphasis> option indicates that all faces in the    	<emphasis>new_object</emphasis> should be triangulated. The <emphasis>-n</emphasis> option specifies that  	the resulting shape should be saved as an NMG shape. The <emphasis>-t</emphasis> option is to create TNURB 	faces rather than planar approximations (this option is still under development). The <emphasis>-P 	</emphasis> option is intended to allow the user to specify the number of CPUs to use for this command, 	but it is currently ignored.
+  <para>
+    Creates <emphasis>new_object</emphasis> as planar primitive shape (either an NMG or a BOT) approximating the
+    volume bound by <emphasis>old_object</emphasis>.
   </para>
 </refsection>
 
@@ -48,7 +67,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>facetize region1.nmg region1.r</userinput></term>
+	   <term><prompt>mged&gt;</prompt> <userinput>facetize region1.r region1.nmg</userinput></term>
 	   <listitem>
 	     <para>Creates a facetized BOT version of existing object <emphasis>region1.r</emphasis>.
 		     </para>
