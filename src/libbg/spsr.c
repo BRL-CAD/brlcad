@@ -49,8 +49,9 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
     struct spr_options opts = SPR_OPTIONS_DEFAULT_INIT;
     struct c_vert **c_verts = (struct c_vert **)bu_calloc(num_input_pnts, sizeof(struct c_vert *), "output array");
     if (spsr_opts) {
-	opts.depth = spsr_opts->depth;
-	opts.pointweight = spsr_opts->point_weight;
+	if (spsr_opts->depth) opts.depth = spsr_opts->depth;
+	if (spsr_opts->point_weight > 0) opts.pointweight = spsr_opts->point_weight;
+	if (spsr_opts->samples_per_node > 0) opts.samples_per_node = spsr_opts->samples_per_node;
     }
     for (i = 0; i < num_input_pnts; i++) {
 	struct c_vert *v;

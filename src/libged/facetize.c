@@ -479,34 +479,35 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 int
 ged_facetize(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "Usage: facetize [ -nmhtT | [--poisson] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
+    static const char *usage = "Usage: facetize [ -nmhT | [--poisson] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
     static const char *pusage = "Usage: facetize --poisson [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
 
     int print_help;
     int screened_poisson = 0;
     struct _ged_facetize_opts opts = _GED_SPSR_OPTS_INIT;
     struct bu_opt_desc d[7];
-    struct bu_opt_desc pd[10];
+    struct bu_opt_desc pd[11];
 
     BU_OPT(d[0], "h", "help",            "",  NULL,  &print_help,       "Print help and exit");
     BU_OPT(d[1], "m", "marching-cube",   "",  NULL,  &(opts.marching_cube),    "Use the raytraced points and marching cube algorithm to construct an NMG");
     BU_OPT(d[2], "",  "poisson",         "",  NULL,  &screened_poisson, "Use raytraced points and SPSR - run -h --poisson to see more options for this mode");
     BU_OPT(d[3], "n", "NMG",             "",  NULL,  &(opts.make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
-    BU_OPT(d[4], "t", "TNURB",           "",  NULL,  &(opts.nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
+    BU_OPT(d[4], "",  "TNURB",           "",  NULL,  &(opts.nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
     BU_OPT(d[5], "T", "triangles",       "",  NULL,  &(opts.triangulate),      "Generate a mesh using only triangles");
     BU_OPT_NULL(d[6]);
 
     /* Poisson specific options */
-    BU_OPT(pd[0], "d", "depth",       "#", &bu_opt_int,     &(opts.s_opts.depth),         "Maximum reconstruction depth");
-    BU_OPT(pd[1], "w", "interpolate", "#", &bu_opt_int,     &(opts.s_opts.point_weight),  "Lower values (down to 0) bias towards a smoother mesh, higher values bias towards interpolation accuracy.");
-    BU_OPT(pd[2], "t", "tolerance",   "#", &bu_opt_fastf_t, &(opts.len_tol),        "Specify sampling grid spacing (in mm).");
-    BU_OPT(pd[3], "",  "surface",     "",  NULL,            &(opts.pnt_surf_mode),  "Save only first and last points along ray.");
-    BU_OPT(pd[4], "",  "grid",        "",  NULL,            &(opts.pnt_grid_mode),  "Sample using a gridded ray pattern (default).");
-    BU_OPT(pd[5], "",  "rand",        "",  NULL,            &(opts.pnt_rand_mode),  "Sample using a random Marsaglia ray pattern on the bounding sphere.");
-    BU_OPT(pd[6], "",  "sobol",       "",  NULL,            &(opts.pnt_sobol_mode), "Sample using a Sobol pseudo-random Marsaglia ray pattern on the bounding sphere.");
-    BU_OPT(pd[7], "",  "max-pnts",    "#", &bu_opt_int,     &(opts.max_pnts),       "Maximum number of pnts to return per non-grid sampling method.");
-    BU_OPT(pd[8], "",  "max-time",    "#", &bu_opt_int,     &(opts.max_time),       "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
-    BU_OPT_NULL(pd[9]);
+    BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts.s_opts.depth),            "Maximum reconstruction depth (default 8)");
+    BU_OPT(pd[1], "w", "interpolate",      "#", &bu_opt_fastf_t, &(opts.s_opts.point_weight),     "Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. (Default 2.0)");
+    BU_OPT(pd[2], "",  "samples-per-node", "#", &bu_opt_fastf_t, &(opts.s_opts.samples_per_node), "How many samples should go into a cell before it is refined. (Default 1.5)");
+    BU_OPT(pd[3], "t", "tolerance",        "#", &bu_opt_fastf_t, &(opts.len_tol),        "Specify sampling grid spacing (in mm).");
+    BU_OPT(pd[4], "",  "surface",          "",  NULL,            &(opts.pnt_surf_mode),  "Save only first and last points along ray.");
+    BU_OPT(pd[5], "",  "grid",             "",  NULL,            &(opts.pnt_grid_mode),  "Sample using a gridded ray pattern (default).");
+    BU_OPT(pd[6], "",  "rand",             "",  NULL,            &(opts.pnt_rand_mode),  "Sample using a random Marsaglia ray pattern on the bounding sphere.");
+    BU_OPT(pd[7], "",  "sobol",            "",  NULL,            &(opts.pnt_sobol_mode), "Sample using a Sobol pseudo-random Marsaglia ray pattern on the bounding sphere.");
+    BU_OPT(pd[8], "",  "max-pnts",         "#", &bu_opt_int,     &(opts.max_pnts),       "Maximum number of pnts to return per non-grid sampling method.");
+    BU_OPT(pd[9], "",  "max-time",         "#", &bu_opt_int,     &(opts.max_time),       "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
+    BU_OPT_NULL(pd[10]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
