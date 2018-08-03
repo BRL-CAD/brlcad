@@ -498,7 +498,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",       "#", &bu_opt_int,     &(opts.s_opts.depth),         "Maximum reconstruction depth");
-    BU_OPT(pd[1], "w", "interpolate", "#", &bu_opt_int,     &(opts.s_opts.point_weight),  "Weights importance of interpolation (value significance - NEED TO EXPLAIN)");
+    BU_OPT(pd[1], "w", "interpolate", "#", &bu_opt_int,     &(opts.s_opts.point_weight),  "Lower values (down to 0) bias towards a smoother mesh, higher values bias towards interpolation accuracy.");
     BU_OPT(pd[2], "t", "tolerance",   "#", &bu_opt_fastf_t, &(opts.len_tol),        "Specify sampling grid spacing (in mm).");
     BU_OPT(pd[3], "",  "surface",     "",  NULL,            &(opts.pnt_surf_mode),  "Save only first and last points along ray.");
     BU_OPT(pd[4], "",  "grid",        "",  NULL,            &(opts.pnt_grid_mode),  "Sample using a gridded ray pattern (default).");
