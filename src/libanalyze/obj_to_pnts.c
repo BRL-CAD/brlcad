@@ -169,6 +169,7 @@ get_random_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius)
 	bn_rand_sph_sample(p1, center, radius);
 	bn_rand_sph_sample(p2, center, radius);
 	VSUB2(n, p2, p1);
+	VUNITIZE(n);
 	rays[i*6+0] = p1[X];
 	rays[i*6+1] = p1[Y];
 	rays[i*6+2] = p1[Z];
@@ -188,6 +189,7 @@ get_sobol_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius, 
 	vect_t n;
 	bn_sobol_sph_sample(p1, center, radius, s);
 	VSUB2(n, center, p1);
+	VUNITIZE(n);
 	rays[i*6+0] = p1[X];
 	rays[i*6+1] = p1[Y];
 	rays[i*6+2] = p1[Z];
