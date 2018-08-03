@@ -39,16 +39,7 @@
 /**
  * list of callbacks to call during bu_bomb.
  */
-struct bu_hook_list bomb_hook_list = {
-    {
-	BU_LIST_HEAD_MAGIC,
-	&bomb_hook_list.l,
-	&bomb_hook_list.l
-    },
-    NULL,
-    ((void *)0)
-};
-
+struct bu_hook_list bomb_hook_list = BU_HOOK_LIST_INIT_ZERO;
 
 /* failsafe storage to help ensure graceful shutdown */
 static char *bomb_failsafe = NULL;
@@ -111,7 +102,7 @@ bu_bomb(const char *str)
     _freebomb_failsafe();
 
     /* MGED would like to be able to additional logging, do callbacks. */
-    if (BU_LIST_NON_EMPTY(&bomb_hook_list.l)) {
+    if (bomb_hook_list.size != 0) {
 	bu_hook_call(&bomb_hook_list, (void *)str);
     }
 

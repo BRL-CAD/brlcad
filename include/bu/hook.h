@@ -41,40 +41,29 @@ __BEGIN_DECLS
 /** log indentation hook */
 typedef int (*bu_hook_t)(void *, void *);
 
-struct bu_hook_list {
-    struct bu_list l; /**< linked list */
+struct bu_hook {
     bu_hook_t hookfunc; /**< function to call */
     void *clientdata; /**< data for caller */
 };
+
+struct bu_hook_list {
+    size_t size, capacity;
+    struct bu_hook *hooks; /**< linked list */
+};
 typedef struct bu_hook_list bu_hook_list_t;
-#define BU_HOOK_LIST_NULL ((struct bu_hook_list *) 0)
-
-/**
- * assert the integrity of a non-head node bu_hook_list struct.
- */
-#define BU_CK_HOOK_LIST(_hl) BU_CKMAG(_hl, BU_HOOK_LIST_MAGIC, "bu_hook_list")
-
-/**
- * initialize a bu_hook_list struct without allocating any memory.
- * this macro is not suitable for initialization of a list head node.
- */
-#define BU_HOOK_LIST_INIT(_hl) { \
-	BU_LIST_INIT_MAGIC(&(_hl)->l, BU_HOOK_LIST_MAGIC); \
-	(_hl)->hookfunc = (_hl)->clientdata = NULL; \
-    }
 
 /**
  * macro suitable for declaration statement initialization of a
  * bu_hook_list struct.  does not allocate memory.  not suitable for
  * initialization of a list head node.
  */
-#define BU_HOOK_LIST_INIT_ZERO { {BU_HOOK_LIST_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, NULL, NULL }
+#define BU_HOOK_LIST_INIT_ZERO { 0, 0, NULL}
 
 /**
  * returns truthfully whether a non-head node bu_hook_list has been
  * initialized via BU_HOOK_LIST_INIT() or BU_HOOK_LIST_INIT_ZERO.
  */
-#define BU_HOOK_LIST_IS_INITIALIZED(_p) (((struct bu_hook_list *)(_p) != BU_HOOK_LIST_NULL) && LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
+#define BU_HOOK_LIST_IS_INITIALIZED(_p) ((_p)->capacity != 0)
 
 /** @brief BRL-CAD support library's hook utility. */
 BU_EXPORT extern void bu_hook_list_init(struct bu_hook_list *hlp);
