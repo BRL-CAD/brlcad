@@ -497,15 +497,15 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT_NULL(d[6]);
 
     /* Poisson specific options */
-    BU_OPT(pd[0], "d", "depth",       "",  NULL,            &(opts.s_opts.depth),         "Maximum reconstruction depth");
-    BU_OPT(pd[1], "w", "interpolate", "",  NULL,            &(opts.s_opts.point_weight),  "Weights importance of interpolation (value significance - NEED TO EXPLAIN)");
+    BU_OPT(pd[0], "d", "depth",       "#", &bu_opt_int,     &(opts.s_opts.depth),         "Maximum reconstruction depth");
+    BU_OPT(pd[1], "w", "interpolate", "#", &bu_opt_int,     &(opts.s_opts.point_weight),  "Weights importance of interpolation (value significance - NEED TO EXPLAIN)");
     BU_OPT(pd[2], "t", "tolerance",   "#", &bu_opt_fastf_t, &(opts.len_tol),        "Specify sampling grid spacing (in mm).");
     BU_OPT(pd[3], "",  "surface",     "",  NULL,            &(opts.pnt_surf_mode),  "Save only first and last points along ray.");
     BU_OPT(pd[4], "",  "grid",        "",  NULL,            &(opts.pnt_grid_mode),  "Sample using a gridded ray pattern (default).");
     BU_OPT(pd[5], "",  "rand",        "",  NULL,            &(opts.pnt_rand_mode),  "Sample using a random Marsaglia ray pattern on the bounding sphere.");
     BU_OPT(pd[6], "",  "sobol",       "",  NULL,            &(opts.pnt_sobol_mode), "Sample using a Sobol pseudo-random Marsaglia ray pattern on the bounding sphere.");
-    BU_OPT(pd[7], "",  "max-pnts",    "",  &bu_opt_int,     &(opts.max_pnts),       "Maximum number of pnts to return per non-grid sampling method.");
-    BU_OPT(pd[8], "",  "max-time",    "",  &bu_opt_int,     &(opts.max_time),       "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
+    BU_OPT(pd[7], "",  "max-pnts",    "#", &bu_opt_int,     &(opts.max_pnts),       "Maximum number of pnts to return per non-grid sampling method.");
+    BU_OPT(pd[8], "",  "max-time",    "#", &bu_opt_int,     &(opts.max_time),       "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
     BU_OPT_NULL(pd[9]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -558,7 +558,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* Parse Poisson specific options */
-	argc = bu_opt_parse(NULL, argc, argv, d);
+	argc = bu_opt_parse(NULL, argc, argv, pd);
 
 	if (argc < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Screened Poisson option parsing failed\n");

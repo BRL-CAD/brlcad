@@ -43,11 +43,15 @@ struct c_vert {
 int
 bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	const point_t *input_points_3d, const vect_t *input_normals_3d,
-	int num_input_pnts, struct bg_3d_spsr_opts *UNUSED(spsr_opts))
+	int num_input_pnts, struct bg_3d_spsr_opts *spsr_opts)
 {
     int i = 0;
     struct spr_options opts = SPR_OPTIONS_DEFAULT_INIT;
     struct c_vert **c_verts = (struct c_vert **)bu_calloc(num_input_pnts, sizeof(struct c_vert *), "output array");
+    if (spsr_opts) {
+	opts.depth = spsr_opts->depth;
+	opts.pointweight = spsr_opts->point_weight;
+    }
     for (i = 0; i < num_input_pnts; i++) {
 	struct c_vert *v;
 	BU_GET(v, struct c_vert);
