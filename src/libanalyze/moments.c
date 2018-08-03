@@ -33,7 +33,9 @@
 void
 analyze_moments(struct current_state *state, const char *name, mat_t moments)
 {
-    int view, obj, i;
+    int view = 0;
+    int obj = 0;
+    int i;
     fastf_t Dx_sq, Dy_sq, Dz_sq;
     double avg_mass = analyze_mass(state, name);
     point_t centroid;

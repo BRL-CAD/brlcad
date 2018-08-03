@@ -35,7 +35,7 @@ analyze_surf_area(struct current_state *state, const char *name)
 {
     fastf_t area;
     int i, view, obj = 0, mean_count = 0;
-    double limit;
+    double limit = 0.0;
 
     for (i = 0; i < state->num_objects; i++) {
 	if(!(bu_strcmp(state->objs[i].o_name, name))) {

@@ -32,7 +32,9 @@
 void
 analyze_centroid(struct current_state *state, const char *name, point_t cent)
 {
-    int view, obj, i;
+    int view = 0;
+    int obj = 0;
+    int i;
     /* get mass by calling analyze_mass for the object name */
     double avg_mass = analyze_mass(state, name);
 
