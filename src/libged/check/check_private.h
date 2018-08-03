@@ -176,6 +176,7 @@ struct check_parameters {
     int num_views;
     int getfromview;
     int overlaps_overlay_flag;
+    int rpt_overlap_flag;
     int plot_files;
     int verbose;
     int debug;

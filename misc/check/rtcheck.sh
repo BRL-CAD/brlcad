@@ -47,13 +47,13 @@ for DB in "/usr/brlcad/share/db/"*.g; do
 	    for el in `$loop 0 179 15` ; do
 		echo "\ncheck overlaps -g $gs,$gs -a $az -e $el $obj"
 		$mged -c $DB check overlaps -g $gs,$gs -a $az -e $el -t 0.1 $obj 2> check.txt
-		sed -n "/dist:/{
-			s/$(echo '\t')//g
-			s/[[:space:]]*count://g
-			s/[[:space:]]*dist://g
-			s/[[:space:]]*mm @.*$//g
+		sed -n '/maximum depth/{
+			s/[<>]//g
+			s/[,:] / /g
+			s/^[[:space:]]*//g
+			s/mm[[:space:]]*$//g
 			p
-			}" check.txt | sort > sort.check.txt
+			}' check.txt | cut -f 1,2,3,9 -d ' ' | sort > sort.check.txt
 		cat sort.check.txt
 
 		echo "\nrtcheck -g $gs -G $gs -a $az -e $el $obj"
@@ -64,7 +64,7 @@ for DB in "/usr/brlcad/share/db/"*.g; do
 			s/^[[:space:]]*//g
 			s/mm[[:space:]]*$//g
 			p
-			}' rtcheck.txt | cut -f 1,2,3,9 -d ' ' | sort> sort.rtcheck.txt
+			}' rtcheck.txt | cut -f 1,2,3,9 -d ' ' | sort > sort.rtcheck.txt
 		cat sort.rtcheck.txt
 
 		diff -u0 --label $db.$obj.check.g$gs.a$az.e$el --label $db.$obj.rtcheck.g$gs.a$az.e$el sort.check.txt sort.rtcheck.txt >> rtcheck_report.txt
@@ -79,13 +79,13 @@ for DB in "/usr/brlcad/share/db/"*.g; do
 	    for el in `$loop 0 179 15` ; do
 		echo "\ncheck overlaps -g $gs,$gs -a $az -e $el $obj"
 		$mged -c $DB check overlaps -g $gs,$gs -a $az -e $el -t 0.1 $obj 2> check.txt
-		sed -n "/dist:/{
-			s/$(echo '\t')//g
-			s/[[:space:]]*count://g
-			s/[[:space:]]*dist://g
-			s/[[:space:]]*mm @.*$//g
+		sed -n '/maximum depth/{
+			s/[<>]//g
+			s/[,:] / /g
+			s/^[[:space:]]*//g
+			s/mm[[:space:]]*$//g
 			p
-			}" check.txt | sort > sort.check.txt
+			}' check.txt | cut -f 1,2,3,9 -d ' ' | sort > sort.check.txt
 		cat sort.check.txt
 
 		echo "\nrtcheck -g $gs -G $gs -a $az -e $el $obj"
@@ -96,7 +96,7 @@ for DB in "/usr/brlcad/share/db/"*.g; do
 			s/^[[:space:]]*//g
 			s/mm[[:space:]]*$//g
 			p
-			}' rtcheck.txt | cut -f 1,2,3,9 -d ' ' | sort> sort.rtcheck.txt
+			}' rtcheck.txt | cut -f 1,2,3,9 -d ' ' | sort > sort.rtcheck.txt
 		cat sort.rtcheck.txt
 
 		diff -u0 --label $db.$obj.check.g$gs.a$az.e$el --label $db.$obj.rtcheck.g$gs.a$az.e$el sort.check.txt sort.rtcheck.txt >> rtcheck_report.txt

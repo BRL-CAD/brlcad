@@ -44,13 +44,13 @@ for DB in "/usr/brlcad/share/db/"*.g; do
 	for gs in `$loop 30 10 -10` ; do
 	    echo "\ncheck overlaps -g $gs,$gs $obj"
 	    $mged -c $DB check overlaps -g $gs,$gs $obj 2> check.txt
-	    sed -n "/dist:/{
-		    s/$(echo '\t')//g
-		    s/[[:space:]]*count://g
-		    s/[[:space:]]*dist://g
-		    s/[[:space:]]*mm @.*$//g
+	    sed -n '/maximum depth/{
+		    s/[<>]//g
+		    s/[,:] / /g
+		    s/^[[:space:]]*//g
+		    s/mm[[:space:]]*$//g
 		    p
-		    }" check.txt | sort > sort.check.txt
+		    }' check.txt | cut -f 1,2,3,9 -d ' ' | sort > sort.check.txt
 	    cat sort.check.txt
 
 	    echo "\ngqa -Ao -g $gs,$gs $obj"

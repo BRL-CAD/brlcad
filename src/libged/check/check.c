@@ -67,6 +67,7 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  -P # - Specifies that ncpu CPUs should be used for performing the calculation. By default, all local CPUs are utilized.\n");
     bu_vls_printf(&str, "  -q - Quiets (suppresses) the 'was not hit' reporting.\n");
     bu_vls_printf(&str, "  -r - Indicates to print per-region statistics for mass and volume as well as the values for the objects specified.\n");
+    bu_vls_printf(&str, "  -R - Disable reporting of overlaps.\n");
     bu_vls_printf(&str, "  -s # - Specifies surface area tolerance value.\n");
     bu_vls_printf(&str, "  -S # - Specifies that the grid spacing will be initially refined so that at least samples_per_axis_min will be shot along each axis of the bounding box of the model.\n");
     bu_vls_printf(&str, "  -t - Sets the tolerance for computing overlaps.\n");
@@ -135,7 +136,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
     double a;
     char *p;
 
-    char *options_str = "a:de:f:g:iM:n:N:opP:qrs:S:t:U:u:vV:h?";
+    char *options_str = "a:de:f:g:iM:n:N:opP:qrRs:S:t:U:u:vV:h?";
 
     /* Turn off getopt's error messages */
     bu_opterr = 0;
@@ -250,6 +251,9 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		break;
 	    case 'r':
 		options->print_per_region_stats = 1;
+		break;
+	    case 'R':
+		options->rpt_overlap_flag = 0;
 		break;
 	    case 's':
 		options->surf_area_tolerance = atof(bu_optarg);
@@ -514,12 +518,14 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 	check_show_help(gedp);
 	return GED_HELP;
     }
+
     options.getfromview = 0;
     options.print_per_region_stats = 0;
     options.overlaps_overlay_flag = 0;
     options.plot_files = 0;
     options.debug = 0;
     options.verbose = 0;
+    options.rpt_overlap_flag = 1;
 
     /* shift to subcommand args */
     argc -= opt_argc;
