@@ -349,7 +349,7 @@ get_diff_components(struct diff_elements *el, const struct db_i *dbip, const str
 
 	/* Convert the rest of the params to attributes, if possible */
 	bu_vls_trunc(&s_tcl, 0);
-	if (el->intern->idb_meth->ft_get(&s_tcl, el->intern, NULL) == BRLCAD_ERROR) have_tcl = 0;
+	if (!(el->intern->idb_meth->ft_get) || (el->intern->idb_meth->ft_get(&s_tcl, el->intern, NULL) == BRLCAD_ERROR)) have_tcl = 0;
 	if (!have_tcl || tcl_list_to_avs(bu_vls_addr(&s_tcl), el->params, 1)) have_tcl = 0;
 	if (!have_tcl) {
 	    el->bin_params = 1;
