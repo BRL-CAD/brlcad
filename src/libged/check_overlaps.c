@@ -63,7 +63,7 @@ struct overlaps_context {
 
 
 HIDDEN void
-log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit, vect_t ohit, void *context)
+ck_ov_log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit, vect_t ohit, void *context)
 {
     struct overlaps_context *callbackdata = (struct overlaps_context*)context;
     struct overlap_list **olist = (struct overlap_list **) callbackdata->list;
@@ -127,7 +127,7 @@ overlapHandler(const struct xray *rp, const struct partition *pp, const struct b
     reg2 = (struct region *)BU_PTBL_GET(regiontable, 1);
     RT_CK_REGION(reg2);
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    log_overlaps(reg1->reg_name, reg2->reg_name, depth, ihit, ohit, context);
+    ck_ov_log_overlaps(reg1->reg_name, reg2->reg_name, depth, ihit, ohit, context);
     bu_semaphore_release(BU_SEM_SYSCALL);
 }
 

@@ -56,7 +56,7 @@ struct overlaps_context {
 
 
 HIDDEN void
-log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit, vect_t ohit, void *context)
+check_log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit, vect_t ohit, void *context)
 {
     struct overlaps_context *callbackdata = (struct overlaps_context*)context;
     struct overlap_list *olist= (struct overlap_list *)callbackdata->overlapList;
@@ -259,7 +259,7 @@ overlap(const struct xray *ray,
     }
 
     bu_semaphore_acquire(GED_SEM_LIST);
-    log_overlaps(reg1->reg_name, reg2->reg_name, depth, ihit, ohit, context);
+    check_log_overlaps(reg1->reg_name, reg2->reg_name, depth, ihit, ohit, context);
     bu_semaphore_release(GED_SEM_LIST);
 
     if (context->plot_overlaps) {
