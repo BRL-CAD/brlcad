@@ -850,12 +850,12 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	fb_objs.objs = fb_obj_list_init;
     } else if (fb_objs.size == fb_objs.capacity && fb_objs.capacity == FB_OBJ_LIST_INIT_CAPACITY) {
 	fb_objs.capacity *= 2;
-	fb_objs.objs = bu_malloc(
+	fb_objs.objs = (struct fb_obj *)bu_malloc(
 		sizeof (struct fb_obj) * fb_objs.capacity,
 		"first resize of fb_obj list");
     } else if (fb_objs.size == fb_objs.capacity) {
 	fb_objs.capacity *= 2;
-	fb_objs.objs = bu_realloc(
+	fb_objs.objs = (struct fb_obj *)bu_realloc(
 		fb_objs.objs,
 		sizeof (struct fb_obj) * fb_objs.capacity,
 		"additional resize of fb_obj list");
