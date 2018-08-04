@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include "bu/defines.h"
-#include "bu/list.h"
 
 
 __BEGIN_DECLS

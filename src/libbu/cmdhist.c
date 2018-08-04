@@ -26,6 +26,8 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 
+#define BU_CMDHIST_OBJ_LIST_INIT_CAPACITY 8
+
 /**
  * Stores the given command with start and finish times in the
  * history vls'es. 'status' is either BRLCAD_OK or BRLCAD_ERROR.
@@ -39,15 +41,27 @@ cmdhist_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval 
     if (UNLIKELY(BU_STR_EQUAL(bu_vls_addr(cmdp), eol)))
 	return;
 
-    BU_ALLOC(new_hist, struct bu_cmdhist);
+    if (chop->cmdhist.capacity == 0) {
+	chop->cmdhist.capacity = BU_CMDHIST_OBJ_LIST_INIT_CAPACITY;
+	chop->cmdhist.cmdhist = (struct bu_cmdhist *)bu_malloc(
+		sizeof (struct bu_cmdhist) * chop->cmdhist.capacity,
+		"init chop");
+    } else if (chop->cmdhist.size == chop->cmdhist.capacity) {
+	chop->cmdhist.capacity *= 2;
+	chop->cmdhist.cmdhist = (struct bu_cmdhist *)bu_realloc(
+		chop->cmdhist.cmdhist,
+		sizeof (struct bu_cmdhist_obj) * chop->cmdhist.capacity,
+		"init chop");
+    }
+
+    new_hist = &chop->cmdhist.cmdhist[chop->cmdhist.size];
     bu_vls_init(&new_hist->h_command);
     bu_vls_vlscat(&new_hist->h_command, cmdp);
     new_hist->h_start = *start;
     new_hist->h_finish = *finish;
     new_hist->h_status = status;
-    BU_LIST_INSERT(&chop->cho_head.l, &new_hist->l);
-
-    chop->cho_curr = &chop->cho_head;
+    chop->cmdhist.current = chop->cmdhist.size;
+    chop->cmdhist.size++;
 }
 
 
@@ -79,6 +93,7 @@ bu_cmdhist_history(void *data, int argc, const char *argv[])
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct timeval tvdiff;
     struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)data;
+    size_t i;
 
     if (argc < 2 || 5 < argc) {
 	bu_log("Usage: %s -delays\nList command history.\n", argv[0]);
@@ -116,10 +131,11 @@ bu_cmdhist_history(void *data, int argc, const char *argv[])
 	++argv;
     }
 
-    for (BU_LIST_FOR(hp, bu_cmdhist, &chop->cho_head.l)) {
+    for (i = 1; i < chop->cmdhist.size; i++) {
+	hp = &(chop->cmdhist.cmdhist[i]);
+	hp_prev = &(chop->cmdhist.cmdhist[i - 1]);
 	bu_vls_trunc(&str, 0);
-	hp_prev = BU_LIST_PREV(bu_cmdhist, &hp->l);
-	if (with_delays && BU_LIST_NOT_HEAD(hp_prev, &chop->cho_head.l)) {
+	if (with_delays) {
 	    if (cmdhist_timediff(&tvdiff, &(hp_prev->h_finish), &(hp->h_start)) >= 0)
 		bu_vls_printf(&str, "delay %ld %ld\n", (long)tvdiff.tv_sec,
 			      (long)tvdiff.tv_usec);
@@ -176,18 +192,17 @@ int
 bu_cmdhist_prev(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
-    struct bu_cmdhist *hp;
 
     if (argc != 2) {
 	bu_log("ERROR: expecting only two arguments\n");
 	return BRLCAD_ERROR;
     }
 
-    hp = BU_LIST_PLAST(bu_cmdhist, chop->cho_curr);
-    if (BU_LIST_NOT_HEAD(hp, &chop->cho_head.l))
-	chop->cho_curr = hp;
+    if (chop->cmdhist.capacity != 0 && chop->cmdhist.current > 0) {
+	chop->cmdhist.current--;
+    }
 
-    /* result is in chop->cho_curr */
+    /* result is at index chop->cmdhist.current */
     return BRLCAD_OK;
 }
 
@@ -202,8 +217,8 @@ bu_cmdhist_curr(void *clientData, int argc, const char **UNUSED(argv))
 	return BRLCAD_ERROR;
     }
 
-    if (BU_LIST_NOT_HEAD(chop->cho_curr, &chop->cho_head.l)) {
-	/* result is in chop->cho_curr */
+    if (chop->cmdhist.capacity > 0) {
+    /* result is at index chop->cmdhist.current */
 	return BRLCAD_OK;
     }
 
@@ -222,14 +237,14 @@ bu_cmdhist_next(void *clientData, int argc, const char **UNUSED(argv))
 	return BRLCAD_ERROR;
     }
 
-    if (BU_LIST_IS_HEAD(chop->cho_curr, &chop->cho_head.l))
+	if (chop->cmdhist.capacity == 0 ||
+		chop->cmdhist.current == chop->cmdhist.size - 1) {
 	return BRLCAD_ERROR;
+	}
 
-    chop->cho_curr = BU_LIST_PNEXT(bu_cmdhist, chop->cho_curr);
-    if (BU_LIST_IS_HEAD(chop->cho_curr, &chop->cho_head.l))
-	return BRLCAD_ERROR;
+	chop->cmdhist.current++;
 
-    /* result is in chop->cho_curr */
+    /* result is at index chop->cmdhist.current */
     return BRLCAD_OK;
 }
 

@@ -36,6 +36,7 @@
 #endif
 
 #include "tcl.h"
+#include "bu/list.h"
 #include "bu/cmd.h"
 #include "bu/color.h"
 #include "bu/getopt.h"

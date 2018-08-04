@@ -44,12 +44,12 @@
 #include "bu/str.h"
 #include "libtermio.h"
 
+#define BU_CMDHIST_LIST_INIT_CAPACITY 8
 
 /* defined in tcl.c */
 extern void Cad_Exit(int status);
 
-HIDDEN struct bu_cmdhist histHead;
-HIDDEN struct bu_cmdhist *currHist;
+HIDDEN struct bu_cmdhist_list currHist;
 
 
 /***************************** BWISH/BTCLSH COMMANDS *****************************/
@@ -79,13 +79,18 @@ HIDDEN int historyInitialized=0;
 HIDDEN void
 historyInit(void)
 {
-    BU_LIST_INIT(&(histHead.l));
-    bu_vls_init(&(histHead.h_command));
-    histHead.h_start.tv_sec = histHead.h_start.tv_usec =
-	histHead.h_finish.tv_sec = histHead.h_finish.tv_usec = 0L;
-    histHead.h_status = TCL_OK;
-    currHist = &histHead;
-    historyInitialized=1;
+    if (currHist.capacity == 0) {
+	currHist.capacity = BU_CMDHIST_LIST_INIT_CAPACITY;
+	currHist.cmdhist = (struct bu_cmdhist *)bu_malloc(
+		sizeof (struct bu_cmdhist) * currHist.capacity,
+		"init chop");
+    } else if (currHist.size == currHist.capacity) {
+	currHist.capacity *= 2;
+	currHist.cmdhist = (struct bu_cmdhist *)bu_realloc(
+		currHist.cmdhist,
+		sizeof (struct bu_cmdhist_obj) * currHist.capacity,
+		"init chop");
+    }
 }
 
 
@@ -103,7 +108,11 @@ history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *
     if (BU_STR_EQUAL(bu_vls_addr(cmdp), "\n"))
 	return;
 
-    BU_ALLOC(new_hist, struct bu_cmdhist);
+    if (!historyInitialized) {
+	historyInit();
+    }
+
+    new_hist = &currHist.cmdhist[currHist.size];
 
     bu_vls_init(&(new_hist->h_command));
     bu_vls_vlscat(&(new_hist->h_command), cmdp);
@@ -111,20 +120,13 @@ history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *
     new_hist->h_finish = *finish;
     new_hist->h_status = status;
 
-    /* make sure list is initialized before attempting to add entry */
-    if (!historyInitialized) {
-	historyInit();
-    }
-
-    BU_LIST_INSERT(&(histHead.l), &(new_hist->l));
-
     /* As long as this isn't our first command to record after setting
      * up the journal (which would be "journal", which we don't want
      * recorded!)...
      */
 
-
-    currHist = &histHead;
+    currHist.current = currHist.size;
+    currHist.size++;
 }
 
 
@@ -159,6 +161,7 @@ cmd_history(void *clientData, int argc, const char **argv)
     struct bu_cmdhist *hp, *hp_prev;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct timeval tvdiff;
+    size_t i;
 
     if (argc < 1 || 4 < argc) {
 	Tcl_AppendResult(interp, "history [-delays] [-outfile file]\n\tlist command history", (char *)0);
@@ -195,10 +198,11 @@ cmd_history(void *clientData, int argc, const char **argv)
 	++argv;
     }
 
-    for (BU_LIST_FOR(hp, bu_cmdhist, &(histHead.l))) {
+    for (i = 1; i < currHist.size; i++) {
+	    hp = &currHist.cmdhist[i];
+	    hp_prev = &currHist.cmdhist[i - 1];
 	bu_vls_trunc(&str, 0);
-	hp_prev = BU_LIST_PREV(bu_cmdhist, &(hp->l));
-	if (with_delays && BU_LIST_NOT_HEAD(hp_prev, &(histHead.l))) {
+	if (with_delays) {
 	    if (timediff(&tvdiff, &(hp_prev->h_finish), &(hp->h_start)) >= 0)
 		bu_vls_printf(&str, "delay %ld %ld\n", (long)tvdiff.tv_sec,
 			      (long)tvdiff.tv_usec);
@@ -224,14 +228,11 @@ cmd_history(void *clientData, int argc, const char **argv)
 struct bu_vls *
 history_prev(void)
 {
-    struct bu_cmdhist *hp;
-
-    hp = BU_LIST_PREV(bu_cmdhist, &(currHist->l));
-    if (BU_LIST_IS_HEAD(hp, &(histHead.l)))
+    if (currHist.current == 0) {
 	return NULL;
-    else {
-	currHist = hp;
-	return &(hp->h_command);
+    } else {
+	currHist.current--;
+	return &(currHist.cmdhist[currHist.current].h_command);
     }
 }
 
@@ -239,30 +240,23 @@ history_prev(void)
 struct bu_vls *
 history_cur(void)
 {
-    if (BU_LIST_IS_HEAD(currHist, &(histHead.l)))
+    if (currHist.capacity == 0) {
 	return NULL;
-    else
-	return &(currHist->h_command);
+    } else {
+	return &(currHist.cmdhist[currHist.current].h_command);
+	}
 }
 
 
 struct bu_vls *
 history_next(void)
 {
-    struct bu_cmdhist *hp;
-
-    if (BU_LIST_IS_HEAD(currHist, &(histHead.l))) {
-	return 0;
+    if (currHist.capacity == 0 || currHist.current == currHist.size - 1) {
+	return NULL;
     }
 
-    hp = BU_LIST_NEXT(bu_cmdhist, &(currHist->l));
-    if (BU_LIST_IS_HEAD(hp, &(histHead.l))) {
-	currHist = hp;
-	return 0;
-    } else {
-	currHist = hp;
-	return &(hp->h_command);
-    }
+    currHist.current++;
+    return &(currHist.cmdhist[currHist.current].h_command);
 }
 
 

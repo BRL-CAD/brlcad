@@ -41,7 +41,6 @@
 #define BU_CMD_NULL (int (*)(void *, int, const char **))NULL
 
 #include "bu/defines.h"
-#include "bu/list.h"
 #include "bu/log.h"
 #include "bu/vls.h"
 
@@ -56,7 +55,6 @@ struct bu_cmdtab {
 
 /* deprecated 2016-01-14 */
 struct bu_cmdhist {
-    struct bu_list l;
     struct bu_vls h_command;
     struct timeval h_start;
     struct timeval h_finish;
@@ -64,12 +62,16 @@ struct bu_cmdhist {
 };
 #define BU_CMDHIST_NULL (struct bu_cmdhist *)NULL
 
+struct bu_cmdhist_list {
+    size_t size, capacity;
+    size_t current;
+    struct bu_cmdhist *cmdhist;
+};
+
 /* deprecated 2016-01-14 */
 struct bu_cmdhist_obj {
-    struct bu_list l;
     struct bu_vls cho_name;
-    struct bu_cmdhist cho_head;
-    struct bu_cmdhist *cho_curr;
+    struct bu_cmdhist_list cmdhist;
 };
 #define BU_CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL
 
