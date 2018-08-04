@@ -1110,12 +1110,12 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
      */
 	if (tree->rbt_packages.capacity == 0) {
 	    tree->rbt_packages.capacity = BU_RB_LIST_INIT_CAPACITY;
-	    tree->rbt_packages.rbl_package = bu_malloc(
+	    tree->rbt_packages.rbl_package = (struct bu_rb_package *)bu_malloc(
 		    sizeof tree->rbt_packages.rbl_package[0] * tree->rbt_packages.capacity,
 		    "initial rb list init");
 	} else if (tree->rbt_packages.size == tree->rbt_packages.capacity) {
 	    tree->rbt_packages.capacity *= 2;
-	    tree->rbt_packages.rbl_package = bu_realloc(
+	    tree->rbt_packages.rbl_package = (struct bu_rb_package *)bu_realloc(
 		tree->rbt_packages.rbl_package,
 		    sizeof tree->rbt_packages.rbl_package[0] * tree->rbt_packages.capacity,
 		    "initial rb list init");
@@ -1133,12 +1133,12 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
      */
 	if (tree->rbt_nodes.capacity == 0) {
 	    tree->rbt_nodes.capacity = BU_RB_LIST_INIT_CAPACITY;
-	    tree->rbt_nodes.rbl_node = bu_malloc(
+	    tree->rbt_nodes.rbl_node = (struct bu_rb_node *)bu_malloc(
 		    sizeof tree->rbt_nodes.rbl_node[0] * tree->rbt_nodes.capacity,
 		    "initial rb list init");
 	} else if (tree->rbt_nodes.size == tree->rbt_nodes.capacity) {
 	    tree->rbt_nodes.capacity *= 2;
-	    tree->rbt_nodes.rbl_node = bu_realloc(
+	    tree->rbt_nodes.rbl_node = (struct bu_rb_node *)bu_realloc(
 		tree->rbt_nodes.rbl_node,
 		    sizeof tree->rbt_nodes.rbl_node[0] * tree->rbt_nodes.capacity,
 		    "initial rb list init");
