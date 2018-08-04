@@ -30,13 +30,13 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
 #endif
 
 #include "tcl.h"
-#include "bu/list.h"
 #include "bu/cmd.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
@@ -52,15 +52,20 @@ extern int fb_refresh(fb *ifp, int x, int y, int w, int h);
 #define FBO_CONSTRAIN(_v, _a, _b)		\
     ((_v > _a) ? (_v < _b ? _v : _b) : _a)
 
+#define FB_OBJ_LIST_INIT_CAPACITY 8
+
 struct fb_obj {
-    struct bu_list l;
     struct bu_vls fbo_name;	/* framebuffer object name/cmd */
     struct fbserv_obj fbo_fbs;	/* fbserv object */
     Tcl_Interp *fbo_interp;
 };
 
+static struct fb_obj fb_obj_list_init[FB_OBJ_LIST_INIT_CAPACITY];
 
-static struct fb_obj HeadFBObj;			/* head of display manager object list */
+static struct fb_obj_list {
+    size_t capacity, size;
+    struct fb_obj *objs;
+} fb_objs;
 
 
 HIDDEN int
@@ -114,7 +119,9 @@ fbo_deleteProc(void *clientData)
     fb_close(fbop->fbo_fbs.fbs_fbp);
 
     bu_vls_free(&fbop->fbo_name);
-    BU_LIST_DEQUEUE(&fbop->l);
+    memmove(fbop,
+	    fbop + 1,
+	    sizeof (struct fb_obj) * (fb_objs.objs + fb_objs.size - fbop));
     bu_free((void *)fbop, "fbo_deleteProc: fbop");
 }
 
@@ -783,11 +790,14 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     int height = 512;
     register int c;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
+    size_t i;
 
     if (argc == 1) {
 	/* get list of framebuffer objects */
-	for (BU_LIST_FOR(fbop, fb_obj, &HeadFBObj.l))
+	for (i = 0; i < fb_objs.size; i++) {
+	    fbop = &fb_objs.objs[fb_objs.size];
 	    Tcl_AppendResult(interp, bu_vls_addr(&fbop->fbo_name), " ", (char *)NULL);
+	}
 
 	return BRLCAD_OK;
     }
@@ -834,7 +844,24 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	return BRLCAD_ERROR;
     }
 
-    BU_ALLOC(fbop, struct fb_obj);
+    if (fb_objs.capacity == 0) {
+	fb_objs.capacity = FB_OBJ_LIST_INIT_CAPACITY;
+	fb_objs.objs = fb_obj_list_init;
+    } else if (fb_objs.size == fb_objs.capacity && fb_objs.capacity == FB_OBJ_LIST_INIT_CAPACITY) {
+	fb_objs.capacity *= 2;
+	fb_objs.objs = bu_malloc(
+		sizeof (struct fb_obj) * fb_objs.capacity,
+		"first resize of fb_obj list");
+    } else if (fb_objs.size == fb_objs.capacity) {
+	fb_objs.capacity *= 2;
+	fb_objs.objs = bu_realloc(
+		fb_objs.objs,
+		sizeof (struct fb_obj) * fb_objs.capacity,
+		"additional resize of fb_obj list");
+    }
+
+    /* append to list of fb_obj's */
+    fbop = &fb_objs.objs[fb_objs.size];
     bu_vls_init(&fbop->fbo_name);
     bu_vls_strcpy(&fbop->fbo_name, argv[1]);
     fbop->fbo_fbs.fbs_fbp = ifp;
@@ -843,8 +870,7 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     fbop->fbo_fbs.fbs_listener.fbsl_port = -1;
     fbop->fbo_interp = interp;
 
-    /* append to list of fb_obj's */
-    BU_LIST_APPEND(&HeadFBObj.l, &fbop->l);
+    fb_objs.size++;
 
     (void)Tcl_CreateCommand(interp,
 			    bu_vls_addr(&fbop->fbo_name),
@@ -862,7 +888,11 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 int
 Fbo_Init(Tcl_Interp *interp)
 {
-    BU_LIST_INIT(&HeadFBObj.l);
+    if (fb_objs.capacity == 0) {
+	fb_objs.capacity = FB_OBJ_LIST_INIT_CAPACITY;
+	fb_objs.objs = fb_obj_list_init;
+    }
+
     (void)Tcl_CreateCommand(interp, "fb_open", (Tcl_CmdProc *)fbo_open_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
