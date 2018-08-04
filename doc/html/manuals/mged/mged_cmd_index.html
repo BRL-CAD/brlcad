@@ -94,6 +94,8 @@
 <FONT SIZE=2><P></FONT><A HREF="#center"><FONT SIZE=2>center</FONT></A></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="MIDDLE">
+<FONT SIZE=2><P></FONT><A HREF="#check"><FONT SIZE=2>check</FONT></A></TD>
+<TD WIDTH="18%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#color"><FONT SIZE=2>color</FONT></A></TD>
 <TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#comb"><FONT SIZE=2>comb</FONT></A></TD>
@@ -101,10 +103,10 @@
 <FONT SIZE=2><P></FONT><A HREF="#comb_color"><FONT SIZE=2>comb_color</FONT></A></TD>
 <TD WIDTH="22%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#copyeval"><FONT SIZE=2>copyeval</FONT></A></TD>
-<TD WIDTH="21%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#copymat"><FONT SIZE=2>copymat</FONT></A></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="MIDDLE">
+<FONT SIZE=2><P></FONT><A HREF="#copymat"><FONT SIZE=2>copymat</FONT></A></TD>
+<TD WIDTH="18%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#cp"><FONT SIZE=2>cp</FONT></A></TD>
 <TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#cpi"><FONT SIZE=2>cpi</FONT></A></TD>
@@ -1021,6 +1023,62 @@
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
+<DT><A NAME="check"></A>check</B> {<I>subcommand</I>}[<I>options</I>][<I>objects...</I>]</DT>
+<DD>The &quot;check&quot; command computes and reports a variety of characteristics of the objects specified from the opened database. The characteristics which can be computed include <emphasis>mass, centroid, moments of inertia, volume, overlaps, surface area, exposed air, gaps/voids, adjacent air and unconfined air</emphasis>. Only the objects from the database specified on the command line are analyzed. The following are the sub-commands offered:</DD>
+<B><DT>adj_air</DT>
+</B><DD>Detects air volumes which are next to each other but have different air_code values applied to the region.</DD>
+<B><DT>centroid</B></DT>
+<DD>Computes the centroid of the objects specified.</DD>
+<B><DT>exp_air</B></DT>
+<DD>Check if the ray encounters air regions before (or after all) solid objects.</DD>
+<B><DT>gap</B></DT>
+<DD>This reports when there is more than overlap tolerance distance between objects on the ray path.</DD>
+<B><DT>mass</B></DT>
+<DD>Computes the mass of the objects specified.</DD>
+<B><DT>moments</B></DT>
+<DD>Computes the moments and products of inertia of the objects specified.</DD>
+<B><DT>overlaps</B></DT>
+<DD>This reports overlaps, when two regions occupy the same space.</DD>
+<B><DT>surf_area</B></DT>
+<DD>Computes the surface area of the objects specified.</DD>
+<B><DT>unconf_air</B></DT>
+<DD>This reports when there are unconfined air regions.</DD>
+<B><DT>volume</B></DT>
+<DD>Computes the volume of the objects specified.</DD>
+
+<DT>The following are the options offered by the check command: </DT>
+<UL><FONT SIZE=2>
+<LI><I>a #[deg|rad]</I> -- Select azimuth in degrees with an implicit <emphasis>"deg"</emphasis> suffix and in radians with an explicit <emphasis>"rad"</emphasis> suffix. Used with -e. Default value is 35 degrees. </LI>
+<LI><I>e #[deg|rad]</I> -- Select elevation in degrees with an implicit <emphasis>"deg"</emphasis> suffix and in radians with an explicit <emphasis>"rad"</emphasis> suffix.Used with -a. Default value is 25 degrees. </LI>
+<LI><I>d</I> -- Set debug flag. </LI>
+<LI><I>f filename</I> -- Specifies that density values should be taken from an external file instead of from the _DENSITIES object in the database. </LI>
+<LI><I>g [initial_grid_spacing-]grid_spacing_limit or [initial_grid_spacing,]grid_spacing_limit</I> -- Specifies a limit on how far the grid can be refined and optionally the initial spacing between rays in the grids. </LI>
+<LI><I>i</I> -- gets 'view information' from the view to setup eye position. </LI>
+<LI><I>M #</I> --Specifies a mass tolerance value. </LI>
+<LI><I>n #</I> -- Specifies that the grid be refined until each region has at least num_hits ray intersections. </LI>
+<LI><I>N #</I> -- Specifies that only the first num_views should be computed. </LI>
+<LI><I>o</I> -- Specifies to display the overlaps as overlays. </LI>
+<LI><I>p</I> -- Specifies to produce plot files for each of the analyses it performs. </LI>
+<LI><I>P #</I> -- Specifies that ncpu CPUs should be used for performing the calculation. By default, all local CPUs are utilized. </LI>
+<LI><I>q</I> -- Quiets (suppresses) the 'was not hit' reporting. </LI>
+<LI><I>r</I> -- Indicates to print per-region statistics for mass/volume/surf_area as well as the values for the objects specified. </LI>
+<LI><I>R</I> -- Disable reporting of overlaps. </LI>
+<LI><I>s #</I> -- Specifies surface area tolerance value. </LI>
+<LI><I>S #</I> -- Specifies that the grid spacing will be initially refined so that at least samples_per_axis_min will be shot along each axis of the bounding box of the model. </LI>
+<LI><I>t #</I> -- Sets the tolerance for computing overlaps. </LI>
+<LI><I>u distance_units,volume_units,mass_units</I> -- Specify the units used when reporting values. </LI>
+<LI><I>U #</I> -- Specifies the Boolean value (0 or 1) for use_air which indicates whether regions which are marked as 'air' should be retained and included in the raytrace. </LI>
+<LI><I>v</I> -- Set verbose flag. </LI>
+<LI><I>V #</I> -- Specifies a volumetric tolerance value. </LI>
+</FONT></UL>
+<FONT SIZE=4><DT>Examples:</DT>
+</FONT><TT><DD>mged&gt;</TT> <B>check overlaps -g10,10 box</DD>
+</DL><DIR>
+
+</B><FONT SIZE=2><P>-- Run the <I>check</I> command with rays fired from a uniform grid with the rays spaced every 10 mm, and reports any overlaps seen while raytracing. </P></DIR>
+
+<P><HR ALIGN="RIGHT"></P>
+</FONT><B><DL>
 <DT><A NAME="color"></A>color</B> <I>low high r g b str</DT>
 </I><DD>The &quot;color&quot; command creates an entry in the database that functions as part of a color lookup table for displayed regions.  The ident number for the region is used to find the appropriate color from the lookup table.  The <I>low</I> and <I>high</I> values are the limits of region ident numbers to have the indicated <I>rgb</I> color (0-255) applied.  The <I>str</I> parameter is intended to be an identifying character string, but is currently ignored.  The current list of color table entries may be displayed with the <A HREF="#prcolor">prcolor</A> command, and the entire color table may be edited using the <A HREF="#edcolor">edcolor</A> command.  If a color lookup table exists, its entries will override any color assigned using the <A HREF="#mater">mater</A> command.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
@@ -1137,7 +1195,7 @@ mged <B>db form tgc</B> <BR>
 
 <P><HR ALIGN="RIGHT"></P>
 
-</FONT> <B>
+</FONT>
 <DL>
 <DT><A NAME="db_glob"></a>
 <B><DT>db_glob</B> <I>cmd_string</DT>
@@ -1154,7 +1212,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </FONT>
 <B>
 <DL>
-<DT><A NAME="dbconcat"></A>dbconcat</B> <I>[-s/-p] [-t] [-u] [-c] <I>database_file</I> [<I>affix</I>]</DT>
+<DT><A NAME="dbconcat"></A>dbconcat</B> <I>[-s/-p] [-t] [-u] [-c]</I> <I>database_file</I> [<I>affix</I>]</DT>
 <DD><p>The &quot;dbconcat&quot; command concatenates an existing <I>BRL-CAD</I> database to the database currently being edited.  If an <I>affix</I> is supplied, then all objects from the <I>database_file</I> will have that <I>affix</I> added to their names. The <I>-s</I> option indicates that the <I>affix</I> is a suffix, while the <I>-p</I> option (default) indicates that the <I>affix</I> is a prefix.  Note that each <I>BRL-CAD</I> object must have a unique name, so care must be taken not to &quot;dbconcat&quot; a database that has objects with names the same as objects in the current database.  The <A HREF="#dup">dup</A> command may be used to check for duplicate names.  If the <I>dup</I> command finds duplicate names, use the <I>prefix</I> option to both the <I>dup</I> and <I>dbconcat</I> commands to find a <I>prefix</I> that produces no duplicates.  If duplicate names are encountered during the &quot;dbconcat&quot; process, and no <I>affix</I> is supplied, computer-generated prefixes will be added to the object names coming from the <I>database_file</I> (but member names appearing in combinations will not be modified, so this is a dangerous practice and should be avoided). If the <I>-t</I> option is specified, then the title of the <I>database_file</I> will become the new title of the current <I>BRL-CAD</I> database. If the <I>-u</I> option is specified, the units of the current database will be set to that of the <I>database_file</I> being concatted. The <I>-c</I> option specifies that the region color table in the concatted <I>database_file</I> should replace any region color table in the current <I>BRL-CAD</I> database.</p></DD>
 
   <FONT SIZE=4><DT>Examples:</DT></font>

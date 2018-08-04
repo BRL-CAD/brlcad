@@ -5137,6 +5137,9 @@ x 					delete character
 </row>
 <row>
   <entry>
+    <link linkend="check">check</link>
+  </entry>
+  <entry>
     <link linkend="color">color</link>
   </entry>
   <entry>
@@ -5148,11 +5151,11 @@ x 					delete character
   <entry>
     <link linkend="copyeval">copyeval</link>
   </entry>
+</row>
+<row>
   <entry>
     <link linkend="copymat">copymat</link>
   </entry>
-</row>
-<row>
   <entry>
     <link linkend="cp">cp</link>
   </entry>
@@ -7614,6 +7617,283 @@ x 					delete character
 
  <literal>mged&gt;</literal> <emphasis role="strong">db
     adjust sphere.s V [center]</emphasis>
+  </para>
+  <para>
+    <emphasis role="strong"></emphasis>
+  </para>
+  <variablelist>
+    <varlistentry>
+      <term>
+       check {<emphasis>subcommand</emphasis>} [<emphasis>options</emphasis>][<emphasis>objects...</emphasis>]
+      </term>
+      <listitem>
+        <para xml:id="check">
+          The <emphasis>check</emphasis> command computes and reports a
+          variety of characteristics of the objects specified from the 
+          opened database. The characteristics which can be computed include
+          <emphasis>mass, centroid, moments of inertia, volume, overlaps, 
+          surface area, exposed air, gaps/voids, adjacent air and unconfined
+          air.</emphasis> Only the objects from the database specified on
+          the command line are analyzed.
+        </para>
+        <para>
+          The following are the sub-commands offered:
+        </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+  <variablelist>
+    <varlistentry>
+      <term>
+        <emphasis>adj_air</emphasis>
+      </term>
+      <listitem>
+        <para>
+          Detects air volumes which are next to each other but have
+          different air_code values applied to the region.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
+        <emphasis>centroid</emphasis>
+      </term>
+      <listitem>
+        <para>
+          Computes the centroid of the objects specified.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
+        <emphasis>exp_air</emphasis>
+      </term>
+      <listitem>
+        <para>
+          Check if the ray encounters air regions before (or after all)
+          solid objects.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
+        <emphasis>gap</emphasis>
+      </term>
+      <listitem>
+        <para>
+          This reports when there is more than overlap tolerance
+          distance between objects on the ray path.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
+        <emphasis>mass</emphasis>
+      </term>
+      <listitem>
+        <para>
+          Computes the mass of the objects specified.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
+        <emphasis>moments</emphasis>
+      </term>
+      <listitem>
+        <para>
+          Computes the moments and products of inertia of the
+          objects specified.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
+        <emphasis>overlaps</emphasis>
+      </term>
+      <listitem>
+        <para>
+          This reports overlaps, when two regions occupy the same space.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
+        <emphasis>surf_area</emphasis>
+      </term>
+      <listitem>
+        <para>
+          Computes the surface area of the objects specified.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
+        <emphasis>unconf_air</emphasis>
+      </term>
+      <listitem>
+        <para>
+          This reports when there are unconfined air regions.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
+        <emphasis>volume</emphasis>
+      </term>
+      <listitem>
+        <para>
+          Computes the volume of the objects specified.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
+        The following are the options offered:
+      </term>
+      <listitem><para></para></listitem>
+    </varlistentry>
+  </variablelist>
+  <itemizedlist>
+    <listitem>
+      <para>
+        a#[deg|rad] – Select azimuth in degrees with an implicit <emphasis>"deg"</emphasis> 
+        suffix and in radians with an explicit <emphasis>"rad"</emphasis> suffix.
+        Used with <option>-e</option>. Default value is 35 degrees.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        e#[deg|rad] – Select elevation in degrees with an implicit <emphasis>"deg"</emphasis> 
+        suffix and in radians with an explicit <emphasis>"rad"</emphasis> suffix.
+        Used with <option>-a</option>. Default value is 25 degrees.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        d - Set debug flag.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        f filename - Specifies that density values should be taken from an external file
+        instead of from the _DENSITIES object in the database.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        g [initial_grid_spacing-]grid_spacing_limit or [initial_grid_spacing,]grid_spacing_limit
+         - Specifies a limit on how far the grid can be refined and optionally the initial
+        spacing between rays in the grids.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        i - gets 'view information' from the view to setup eye position.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        M # - Specifies a mass tolerance value.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        n # - Specifies that the grid be refined until each region has at least num_hits
+        ray intersections.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        N # - Specifies that only the first num_views should be computed.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        o - Specifies to display the overlaps as overlays.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        p - Specifies to produce plot files for each of the analyses it performs.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        P # - Specifies that ncpu CPUs should be used for performing the calculation.
+        By default, all local CPUs are utilized.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        q - Quiets (suppresses) the 'was not hit' reporting.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        r - Indicates to print per-region statistics for mass/volume/surf_area as well as
+        the values for the objects specified.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        R - Disable reporting of overlaps.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        s # - Specifies surface area tolerance value.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        S # - Specifies that the grid spacing will be initially refined so that at least
+        samples_per_axis_min will be shot along each axis of the bounding box of the model.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        t # - Sets the tolerance for computing overlaps.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        u distance_units,volume_units,mass_units - Specify the units used when reporting values.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        U # - Specifies the Boolean value (0 or 1) for use_air which indicates whether 
+        regions which are marked as 'air' should be retained and included in the raytrace.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        v - Set verbose flag.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        V # - Specifies a volumetric tolerance value.
+      </para>
+    </listitem>
+  </itemizedlist>
+  <variablelist>
+    <varlistentry>
+      <term>
+        Examples:
+      </term>
+      <listitem>
+        <para>
+          mged&gt; check overlaps -g10,10 box
+        </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+  <para>
+    – Run the <emphasis>check</emphasis> command with rays fired from
+    a uniform grid with the rays spaced every 10 mm, and reports any
+    overlaps seen while raytracing.
   </para>
   <para>
     <emphasis role="strong"></emphasis>

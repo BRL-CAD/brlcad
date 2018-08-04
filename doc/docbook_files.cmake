@@ -902,6 +902,7 @@ system/mann/build_region.xml
 system/mann/c.xml
 system/mann/cat.xml
 system/mann/center.xml
+system/mann/check.xml
 system/mann/color.xml
 system/mann/comb.xml
 system/mann/comb_color.xml
