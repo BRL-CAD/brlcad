@@ -117,7 +117,7 @@ log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit, vect
 
 
 HIDDEN void
-printOverlaps(void *context)
+printOverlaps(void *context, struct check_parameters *options)
 {
     struct overlaps_context *overlapData = (struct overlaps_context*)context;
     struct overlap_list *olist= (struct overlap_list *)overlapData->overlapList;
@@ -163,13 +163,13 @@ printOverlaps(void *context)
 		 * reverse pair */
 	    }
 
-	    bu_vls_printf(&str, "\t<%s, %s>: %zu overlap%c detected, maximum depth is %gmm\n",
-			  op->reg1, op->reg2, op->count, op->count>1 ? 's' : (char) 0, op->maxdepth);
+	    bu_vls_printf(&str, "\t<%s, %s>: %zu overlap%c detected, maximum depth is %g %s\n",
+			  op->reg1, op->reg2, op->count, op->count>1 ? 's' : (char) 0, op->maxdepth/options->units[LINE]->val, options->units[LINE]->name);
 	    if (nextop && BU_LIST_NOT_HEAD(nextop, &(olist->l))) {
 		    bu_vls_printf(&str,
-				  "\t<%s, %s>: %zu overlap%c detected, maximum depth is %gmm\n",
+				  "\t<%s, %s>: %zu overlap%c detected, maximum depth is %g %s\n",
 				  nextop->reg1, nextop->reg2, nextop->count,
-				  nextop->count > 1 ? 's' : (char)0, nextop->maxdepth);
+				  nextop->count > 1 ? 's' : (char)0, nextop->maxdepth/options->units[LINE]->val, options->units[LINE]->name);
 		    /* counter the decrement below to account for
 		 * the matched reverse pair
 		 */
@@ -329,7 +329,7 @@ int check_overlaps(struct current_state *state,
 
     print_verbose_debug(options);
 
-    printOverlaps(&callbackdata);
+    printOverlaps(&callbackdata, options);
 
     if (options->overlaps_overlay_flag) {
 	_ged_cvt_vlblock_to_solids(_ged_current_gedp, check_plot.vbp, "OVERLAPS", 0);
