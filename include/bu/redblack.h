@@ -81,8 +81,8 @@ struct bu_rb_list
     size_t size, capacity;
     union
     {
-	struct bu_rb_node *rbl_n;
-	struct bu_rb_package *rbl_p;
+	struct bu_rb_node **rbl_n;
+	struct bu_rb_package **rbl_p;
     } rbl_u;
 };
 #define rbl_node rbl_u.rbl_n
