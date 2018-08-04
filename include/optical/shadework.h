@@ -37,24 +37,23 @@
 #define SW_NLIGHTS	16		/* Max # of light sources */
 
 struct shadework {
-/* FIXME: At least the first three of these need to be spectral curves */
-    fastf_t		sw_transmit;	/**< @brief  0.0 -> 1.0 */
-    fastf_t		sw_reflect;	/**< @brief  0.0 -> 1.0 */
-    fastf_t		sw_extinction;	/**< @brief  extinction coeff, mm^-1 */
-    fastf_t		sw_refrac_index;
-    fastf_t		sw_temperature;
-    fastf_t		sw_color[3];	/**< @brief  shaded color */
-    fastf_t		sw_basecolor[3]; /**< @brief  base color */
-    struct hit		sw_hit;		/**< @brief  ray hit (dist, point, normal) */
-    struct uvcoord	sw_uv;
-    fastf_t		sw_intensity[3*SW_NLIGHTS]; /**< @brief  light intensities */
-    fastf_t		sw_tolight[3*SW_NLIGHTS];   /**< @brief  light directions */
-    struct light_specific *sw_visible[SW_NLIGHTS]; /**< @brief  visibility flags/ptrs */
-    fastf_t		sw_lightfract[SW_NLIGHTS];/**< @brief  % light visible */
-    int			sw_xmitonly;	/**< @brief  flag: need sw_transmit only */
-    int			sw_inputs;	/**< @brief  fields from mf_inputs actually filled */
-    int			sw_frame;	/**< @brief  # of current frame */
-    struct seg *	sw_segs;	/**< @brief  segs which made partition */
+    fastf_t                sw_transmit;                /**< @brief 0.0 -> 1.0 */
+    fastf_t                sw_reflect;                 /**< @brief 0.0 -> 1.0 */
+    fastf_t                sw_extinction;              /**< @brief extinction coeff, mm^-1 */
+    fastf_t                sw_refrac_index;            /**< @brief refactive index */
+    fastf_t                sw_temperature;             /**< @brief color temperature */
+    fastf_t                sw_color[3];                /**< @brief shaded color */
+    fastf_t                sw_basecolor[3];            /**< @brief base color */
+    struct hit             sw_hit;                     /**< @brief ray hit (dist, point, normal) */
+    struct uvcoord         sw_uv;
+    fastf_t                sw_intensity[3*SW_NLIGHTS]; /**< @brief light intensities */
+    fastf_t                sw_tolight[3*SW_NLIGHTS];   /**< @brief light directions */
+    struct light_specific *sw_visible[SW_NLIGHTS];     /**< @brief visibility flags/ptrs */
+    fastf_t                sw_lightfract[SW_NLIGHTS];  /**< @brief % light visible */
+    int                    sw_xmitonly;                /**< @brief flag: need sw_transmit only */
+    int                    sw_inputs;                  /**< @brief fields from mf_inputs actually filled */
+    int                    sw_frame;                   /**< @brief # of current frame */
+    struct seg *           sw_segs;                    /**< @brief segs which made partition */
 };
 
 __BEGIN_DECLS
