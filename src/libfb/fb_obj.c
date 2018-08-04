@@ -122,6 +122,7 @@ fbo_deleteProc(void *clientData)
     memmove(fbop,
 	    fbop + 1,
 	    sizeof (struct fb_obj) * (fb_objs.objs + fb_objs.size - fbop));
+	fb_objs.size--;
     bu_free((void *)fbop, "fbo_deleteProc: fbop");
 }
 
