@@ -180,6 +180,7 @@ mged_db_search_callback(int argc, const char *argv[], void *userdata)
     int ret;
     int i;
     size_t len;
+    char *result = ((Tcl_Interp *)userdata)->result;
 
     Tcl_DString script;
     Tcl_DStringInit(&script);
@@ -193,16 +194,16 @@ mged_db_search_callback(int argc, const char *argv[], void *userdata)
     ret =Tcl_Eval((Tcl_Interp *)userdata, Tcl_DStringValue(&script));
     Tcl_DStringFree(&script);
 
-    len = strlen(((Tcl_Interp *)userdata)->result);
-    puts(((Tcl_Interp *)userdata)->result);
+    len = strlen(result);
+    puts(result);
     fflush(stdout);
     /* FIXME: this might not be such a good idea, but
      * if we don't trim the newline then basic things like
      * `search -exec echo 0` won't work */
-    if (((Tcl_Interp *)userdata)->result[len-1] == '\n')
-	((Tcl_Interp *)userdata)->result[len-1] = '\0';
+    if (len > 0 && result[len-1] == '\n')
+	result[len-1] = '\0';
 
-    return ret == TCL_OK && TCL_OK == Tcl_GetBoolean((Tcl_Interp *)userdata, ((Tcl_Interp *)userdata)->result, &ret) && ret;
+    return TCL_OK == ret && TCL_OK == Tcl_GetBoolean((Tcl_Interp *)userdata, result, &ret) && ret;
 }
 
 
