@@ -193,7 +193,7 @@ mged_db_search_callback(int argc, const char *argv[], void *userdata)
 
     ret =Tcl_Eval((Tcl_Interp *)userdata, Tcl_DStringValue(&script));
     Tcl_DStringFree(&script);
-    
+
     result = Tcl_GetStringFromObj(Tcl_GetObjResult((Tcl_Interp *)userdata), &len);
 
     puts(result);
