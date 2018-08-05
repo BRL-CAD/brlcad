@@ -43,6 +43,7 @@ typedef void (bu_observer_eval_t)(void *, const char *);
  * TBD
  */
 struct bu_observer {
+    uint32_t magic;
     struct bu_vls observer;
     struct bu_vls cmd;
 };
@@ -63,6 +64,7 @@ struct bu_observer_list {
  * initializes a bu_observer struct without allocating any memory.
  */
 #define BU_OBSERVER_INIT(_op) { \
+    (_op)->magic = BU_OBSERVER_MAGIC; \
 	BU_VLS_INIT(&(_op)->observer); \
 	BU_VLS_INIT(&(_op)->cmd); \
     }
@@ -71,7 +73,7 @@ struct bu_observer_list {
  * macro suitable for declaration statement initialization of a bu_observer
  * struct.  does not allocate memory.  not suitable for a head node.
  */
-#define BU_OBSERVER_INIT_ZERO { BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO }
+#define BU_OBSERVER_INIT_ZERO { BU_OBSERVER_MAGIC, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO }
 
 #define BU_OBSERVER_LIST_INIT_ZERO { 0, 0, NULL }
 

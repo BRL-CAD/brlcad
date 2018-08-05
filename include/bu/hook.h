@@ -49,7 +49,7 @@ struct bu_hook_list {
     size_t size, capacity;
     struct bu_hook *hooks; /**< linked list */
 };
-typedef struct bu_hook_list bu_hook_list_t;
+typedef struct bu_hook bu_hook_list_t;
 
 /**
  * macro suitable for declaration statement initialization of a
