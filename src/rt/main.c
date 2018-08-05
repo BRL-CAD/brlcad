@@ -171,7 +171,7 @@ int main(int argc, const char **argv)
     } else if (i == 0) {
 	/* asking for help is ok */
 	usage(argv[0], 1);
-	return 0;
+	return 1;
     }
 
     /* Identify the versions of the libraries we are using. */
@@ -425,7 +425,7 @@ int main(int argc, const char **argv)
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
 #ifdef USE_OPENCL
-        clt_connect_fb(fbp);
+	clt_connect_fb(fbp);
 #endif
     }
     if ((outputfile == (char *)0) && (fbp == FB_NULL)) {
