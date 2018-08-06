@@ -31,6 +31,7 @@
 #include "bn/tol.h"
 #include "bg/spsr.h"
 #include "rt/geom.h"
+#include "rt/search.h"
 #include "raytrace.h"
 #include "analyze.h"
 #include "./ged_private.h"
@@ -38,20 +39,23 @@
 /* Sort the argv array to list existing objects first and everything else at
  * the end.  Returns the number of argv entries where db_lookup failed */
 HIDDEN int
-_ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[])
+_ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa)
 {
     int i = 0;
     int exist_cnt = 0;
     int nonexist_cnt = 0;
+    struct directory *dp;
     const char **exists = (const char **)bu_calloc(argc, sizeof(const char *), "obj exists array");
     const char **nonexists = (const char **)bu_calloc(argc, sizeof(const char *), "obj nonexists array");
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     for (i = 0; i < argc; i++) {
-	if (db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET) == RT_DIR_NULL) {
+	dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
 	    nonexists[nonexist_cnt] = argv[i];
 	    nonexist_cnt++;
 	} else {
 	    exists[exist_cnt] = argv[i];
+	    if (dpa) dpa[exist_cnt] = dp;
 	    exist_cnt++;
 	}
     }
@@ -61,6 +65,9 @@ _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < nonexist_cnt; i++) {
 	argv[i + exist_cnt] = nonexists[i];
     }
+
+    bu_free(exists, "exists array");
+    bu_free(nonexists, "nonexists array");
 
     return nonexist_cnt;
 }
@@ -91,12 +98,15 @@ _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], int newo
     return GED_OK;
 }
 
+
+
 struct _ged_facetize_opts {
     /* NMG specific options */
     int triangulate;
     int make_nmg;
     int marching_cube;
     int nmg_use_tnurbs;
+    int regions;
 
     /* Poisson specific options */ 
     int pnt_surf_mode;
@@ -106,9 +116,97 @@ struct _ged_facetize_opts {
     int max_pnts;
     int max_time;
     fastf_t len_tol;
+    struct bu_vls *cp_suffix;
     struct bg_3d_spsr_opts s_opts;
 };
-#define _GED_SPSR_OPTS_INIT {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, BG_3D_SPSR_OPTS_DEFAULT}
+
+struct _ged_facetize_opts * _ged_facetize_opts_create()
+{
+    struct bg_3d_spsr_opts s_opts = BG_3D_SPSR_OPTS_DEFAULT;
+    struct _ged_facetize_opts *o = NULL;
+    BU_GET(o, struct _ged_facetize_opts);
+    o->triangulate = 0;
+    o->make_nmg = 0;
+    o->marching_cube = 0;
+    o->nmg_use_tnurbs = 0;
+    o->regions = 0;
+    BU_GET(o->cp_suffix, struct bu_vls);
+    bu_vls_init(o->cp_suffix);
+    bu_vls_sprintf(o->cp_suffix, "_f");
+
+    o->pnt_surf_mode = 0;
+    o->pnt_grid_mode = 0;
+    o->pnt_rand_mode = 0;
+    o->pnt_sobol_mode = 0;
+    o->max_pnts = 0;
+    o->max_time = 0;
+    o->len_tol = 0.0;
+    o->s_opts = s_opts;
+    return o;
+}
+void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
+{
+    if (!o) return;
+    if (o->cp_suffix) {
+	bu_vls_free(o->cp_suffix);
+	BU_PUT(o->cp_suffix, struct bu_vls);
+    }
+    BU_PUT(o, struct _ged_facetize_opts);
+}
+
+int
+_ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *UNUSED(opts))
+{
+    char *newname;
+    int newobj_cnt;
+    int ret = GED_OK;
+    /*int i;
+    struct directory *dp;*/
+    struct directory **dpa;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    /* We need to copy combs above regions that are not themselves regions.
+     * Also, facetize will need all "active" regions that will define shapes.
+     * Construct searches to get these sets. */
+    struct bu_ptbl *pc, *ar;
+    const char *preserve_combs = "-type c ! -type r ! -below -type r";
+    const char *active_regions = "-type r ! -below -type r";
+
+    if (argc) dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
+    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
+    if (_ged_validate_objs_list(gedp, argc, argv, newobj_cnt) == GED_ERROR) {
+	return GED_ERROR;
+    }
+
+    newname = (char *)argv[argc-1];
+    argc--;
+
+    BU_ALLOC(pc, struct bu_ptbl);
+    BU_ALLOC(ar, struct bu_ptbl);
+    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, preserve_combs, newobj_cnt, dpa, dbip, NULL) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "problem searching for parent combs - aborting.\n");
+	ret = GED_ERROR;
+	goto ged_facetize_regions_memfree;
+    }
+    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, newobj_cnt, dpa, dbip, NULL) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "problem searching for active regions - aborting.\n");
+	ret = GED_ERROR;
+	goto ged_facetize_regions_memfree;
+    }
+
+    if (!BU_PTBL_LEN(ar)) {
+	/* No active regions (unlikely but technically possible), nothing to do */
+	ret = GED_OK;
+	goto ged_facetize_regions_memfree;
+    }
+
+ged_facetize_regions_memfree:
+    bu_ptbl_free(pc);
+    bu_ptbl_free(ar);
+    bu_free(pc, "pc table");
+    bu_free(ar, "ar table");
+    return ret;
+}
+
 
 #ifdef ENABLE_SPR
 HIDDEN int
@@ -129,7 +227,7 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
     point_t *input_points_3d;
     vect_t *input_normals_3d;
 
-    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv);
+    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, NULL);
     if (_ged_validate_objs_list(gedp, argc, argv, newobj_cnt) == GED_ERROR) {
 	return GED_ERROR;
     }
@@ -313,7 +411,7 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 	return GED_ERROR;
     }
 
-    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv);
+    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, NULL);
     if (_ged_validate_objs_list(gedp, argc, argv, newobj_cnt) == GED_ERROR) {
 	return GED_ERROR;
     }
@@ -479,34 +577,36 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 int
 ged_facetize(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret = GED_OK;
     static const char *usage = "Usage: facetize [ -nmhT | [--poisson] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
     static const char *pusage = "Usage: facetize --poisson [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
 
     int print_help = 0;
     int screened_poisson = 0;
-    struct _ged_facetize_opts opts = _GED_SPSR_OPTS_INIT;
-    struct bu_opt_desc d[7];
+    struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
+    struct bu_opt_desc d[8];
     struct bu_opt_desc pd[11];
 
     BU_OPT(d[0], "h", "help",            "",  NULL,  &print_help,       "Print help and exit");
-    BU_OPT(d[1], "m", "marching-cube",   "",  NULL,  &(opts.marching_cube),    "Use the raytraced points and marching cube algorithm to construct an NMG");
+    BU_OPT(d[1], "m", "marching-cube",   "",  NULL,  &(opts->marching_cube),    "Use the raytraced points and marching cube algorithm to construct an NMG");
     BU_OPT(d[2], "",  "poisson",         "",  NULL,  &screened_poisson, "Use raytraced points and SPSR - run -h --poisson to see more options for this mode");
-    BU_OPT(d[3], "n", "NMG",             "",  NULL,  &(opts.make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
-    BU_OPT(d[4], "",  "TNURB",           "",  NULL,  &(opts.nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
-    BU_OPT(d[5], "T", "triangles",       "",  NULL,  &(opts.triangulate),      "Generate a mesh using only triangles");
+    BU_OPT(d[3], "n", "NMG",             "",  NULL,  &(opts->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
+    BU_OPT(d[4], "",  "TNURB",           "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
+    BU_OPT(d[5], "T", "triangles",       "",  NULL,  &(opts->triangulate),      "Generate a mesh using only triangles");
+    BU_OPT(d[5], "r", "regions",         "",  NULL,  &(opts->regions),      "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
     BU_OPT_NULL(d[6]);
 
     /* Poisson specific options */
-    BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts.s_opts.depth),            "Maximum reconstruction depth (default 8)");
-    BU_OPT(pd[1], "w", "interpolate",      "#", &bu_opt_fastf_t, &(opts.s_opts.point_weight),     "Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. (Default 2.0)");
-    BU_OPT(pd[2], "",  "samples-per-node", "#", &bu_opt_fastf_t, &(opts.s_opts.samples_per_node), "How many samples should go into a cell before it is refined. (Default 1.5)");
-    BU_OPT(pd[3], "t", "tolerance",        "#", &bu_opt_fastf_t, &(opts.len_tol),        "Specify sampling grid spacing (in mm).");
-    BU_OPT(pd[4], "",  "surface",          "",  NULL,            &(opts.pnt_surf_mode),  "Save only first and last points along ray.");
-    BU_OPT(pd[5], "",  "grid",             "",  NULL,            &(opts.pnt_grid_mode),  "Sample using a gridded ray pattern (default).");
-    BU_OPT(pd[6], "",  "rand",             "",  NULL,            &(opts.pnt_rand_mode),  "Sample using a random Marsaglia ray pattern on the bounding sphere.");
-    BU_OPT(pd[7], "",  "sobol",            "",  NULL,            &(opts.pnt_sobol_mode), "Sample using a Sobol pseudo-random Marsaglia ray pattern on the bounding sphere.");
-    BU_OPT(pd[8], "",  "max-pnts",         "#", &bu_opt_int,     &(opts.max_pnts),       "Maximum number of pnts to return per non-grid sampling method.");
-    BU_OPT(pd[9], "",  "max-time",         "#", &bu_opt_int,     &(opts.max_time),       "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
+    BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
+    BU_OPT(pd[1], "w", "interpolate",      "#", &bu_opt_fastf_t, &(opts->s_opts.point_weight),     "Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. (Default 2.0)");
+    BU_OPT(pd[2], "",  "samples-per-node", "#", &bu_opt_fastf_t, &(opts->s_opts.samples_per_node), "How many samples should go into a cell before it is refined. (Default 1.5)");
+    BU_OPT(pd[3], "t", "tolerance",        "#", &bu_opt_fastf_t, &(opts->len_tol),        "Specify sampling grid spacing (in mm).");
+    BU_OPT(pd[4], "",  "surface",          "",  NULL,            &(opts->pnt_surf_mode),  "Save only first and last points along ray.");
+    BU_OPT(pd[5], "",  "grid",             "",  NULL,            &(opts->pnt_grid_mode),  "Sample using a gridded ray pattern (default).");
+    BU_OPT(pd[6], "",  "rand",             "",  NULL,            &(opts->pnt_rand_mode),  "Sample using a random Marsaglia ray pattern on the bounding sphere.");
+    BU_OPT(pd[7], "",  "sobol",            "",  NULL,            &(opts->pnt_sobol_mode), "Sample using a Sobol pseudo-random Marsaglia ray pattern on the bounding sphere.");
+    BU_OPT(pd[8], "",  "max-pnts",         "#", &bu_opt_int,     &(opts->max_pnts),       "Maximum number of pnts to return per non-grid sampling method.");
+    BU_OPT(pd[9], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
     BU_OPT_NULL(pd[10]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -521,40 +621,65 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 1) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_HELP;
+	ret = GED_HELP;
+	goto ged_facetize_memfree;
     }
 
     /* parse standard options */
     argc = bu_opt_parse(NULL, argc, argv, d);
 
+    /* If we're in multi-region mode, we may employ more than one technique, so a
+     * lot of options may make sense here - just pull the other options out and
+     * let the subsequent logic use them (or not). */
+    if (opts->regions) {
+
+	/* Parse Poisson specific options */
+	argc = bu_opt_parse(NULL, argc, argv, pd);
+
+	if (argc < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Screened Poisson option parsing failed\n");
+	    ret = GED_ERROR;
+	}
+
+	ret = _ged_facetize_regions(gedp, argc, argv, opts);
+	goto ged_facetize_memfree;
+    }
+
+    /* If we're making one object using one technique, be more alert about which
+     * options don't make sense in combination */
     if (!screened_poisson) {
 
 	/* must be wanting help */
 	if (print_help || argc < 2) {
 	    _ged_cmd_help(gedp, usage, d);
-	    return GED_OK;
+	    ret = GED_OK;
+	    goto ged_facetize_memfree;
 	}
 
-	if (opts.triangulate && opts.nmg_use_tnurbs) {
+	if (opts->triangulate && opts->nmg_use_tnurbs) {
 	    bu_vls_printf(gedp->ged_result_str, "both -T and -t specified!\n");
-	    return GED_ERROR;
+	    ret = GED_ERROR;
+	    goto ged_facetize_memfree;
 	}
-	return _ged_nmg_facetize(gedp, argc, argv, &opts);
-
+	ret =  _ged_nmg_facetize(gedp, argc, argv, opts);
+	goto ged_facetize_memfree;
     } else {
 
-	if (argc < 2 || print_help || opts.make_nmg || opts.marching_cube || opts.nmg_use_tnurbs) {
+	if (argc < 2 || print_help || opts->make_nmg || opts->marching_cube || opts->nmg_use_tnurbs) {
 	    if (print_help || argc < 2) {
 		_ged_cmd_help(gedp, pusage, pd);
-		return GED_OK;
+		ret = GED_OK;
+		goto ged_facetize_memfree;
 	    }
-	    if (opts.make_nmg || opts.nmg_use_tnurbs) {
+	    if (opts->make_nmg || opts->nmg_use_tnurbs) {
 		bu_vls_printf(gedp->ged_result_str, "Screened Poisson reconstruction only supports BoT output currently\n");
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_facetize_memfree;
 	    }
-	    if (opts.marching_cube) {
+	    if (opts->marching_cube) {
 		bu_vls_printf(gedp->ged_result_str, "multiple reconstruction methods (Marching Cubes and Screened Poisson) specified\n");
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_facetize_memfree;
 	    }
 	}
 
@@ -563,17 +688,21 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Screened Poisson option parsing failed\n");
-	    return GED_ERROR;
+	    ret = GED_ERROR;
 	}
 
 #ifdef ENABLE_SPR
-	return _ged_spsr_facetize(gedp, argc, argv, &opts);
+	ret =  _ged_spsr_facetize(gedp, argc, argv, opts);
 #else
 	bu_vls_printf(gedp->ged_result_str, "Screened Poisson support was not enabled for this build.  To test, pass -DBRLCAD_ENABLE_SPR=ON to the cmake configure.\n");
-	return GED_ERROR;
+	ret = GED_ERROR;
 #endif
 
     }
+
+ged_facetize_memfree:
+    _ged_facetize_opts_destroy(opts);
+    return ret;
 }
 
 
