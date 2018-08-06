@@ -246,7 +246,6 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
 int
 _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *UNUSED(opts))
 {
-    char *newname;
     int newobj_cnt;
     int ret = GED_OK;
     unsigned int i;
@@ -266,7 +265,6 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	return GED_ERROR;
     }
 
-    newname = (char *)argv[argc-1];
     argc--;
 
     BU_ALLOC(pc, struct bu_ptbl);
