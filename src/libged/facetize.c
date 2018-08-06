@@ -206,7 +206,7 @@ struct _ged_facetize_opts {
     int nmg_use_tnurbs;
     int regions;
 
-    /* Poisson specific options */ 
+    /* Poisson specific options */
     int pnt_surf_mode;
     int pnt_grid_mode;
     int pnt_rand_mode;
@@ -260,7 +260,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     int newobj_cnt;
     int ret = GED_OK;
     unsigned int i;
-    struct directory **dpa;
+    struct directory **dpa = NULL;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     /* We need to copy combs above regions that are not themselves regions.
      * Also, facetize will need all "active" regions that will define shapes.
@@ -308,11 +308,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	printf("NMG tessellating %s\n", n->d_namep);
     }
 
-    /* 
+    /*
     for (i = 0; i < BU_PTBL_LEN(pc); i++) {
     }
     */
-
 
 
 ged_facetize_regions_memfree:
