@@ -200,6 +200,8 @@ struct _ged_facetize_opts {
     /* NMG specific options */
     int triangulate;
     int make_nmg;
+    int nmgbool;
+    int screened_poisson;
     int marching_cube;
     int nmg_use_tnurbs;
     int regions;
@@ -223,7 +225,9 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     BU_GET(o, struct _ged_facetize_opts);
     o->triangulate = 0;
     o->make_nmg = 0;
+    o->nmgbool = 0;
     o->marching_cube = 0;
+    o->screened_poisson = 0;
     o->nmg_use_tnurbs = 0;
     o->regions = 0;
     BU_GET(o->cp_suffix, struct bu_vls);
@@ -554,12 +558,18 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 
 	nmg_km(nmg_model);
 
+	if (!bot) {
+	    bu_vls_printf(gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
+	    return GED_ERROR;
+	}
+
 	/* Export BOT as a new solid */
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_BOT;
 	intern.idb_meth = &OBJ[ID_BOT];
 	intern.idb_ptr = (void *) bot;
+
     } else {
 
 	bu_vls_printf(gedp->ged_result_str, "facetize:  converting NMG to database format\n");
@@ -595,19 +605,19 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     static const char *pusage = "Usage: facetize --poisson [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
 
     int print_help = 0;
-    int screened_poisson = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[8];
+    struct bu_opt_desc d[9];
     struct bu_opt_desc pd[11];
 
-    BU_OPT(d[0], "h", "help",            "",  NULL,  &print_help,       "Print help and exit");
-    BU_OPT(d[1], "m", "marching-cube",   "",  NULL,  &(opts->marching_cube),    "Use the raytraced points and marching cube algorithm to construct an NMG");
-    BU_OPT(d[2], "",  "poisson",         "",  NULL,  &screened_poisson, "Use raytraced points and SPSR - run -h --poisson to see more options for this mode");
-    BU_OPT(d[3], "n", "NMG",             "",  NULL,  &(opts->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
-    BU_OPT(d[4], "",  "TNURB",           "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
-    BU_OPT(d[5], "T", "triangles",       "",  NULL,  &(opts->triangulate),      "Generate a mesh using only triangles");
-    BU_OPT(d[5], "r", "regions",         "",  NULL,  &(opts->regions),      "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
-    BU_OPT_NULL(d[6]);
+    BU_OPT(d[0], "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
+    BU_OPT(d[1], "",  "nmgbool",       "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
+    BU_OPT(d[2], "m", "marching-cube", "",  NULL,  &(opts->marching_cube),    "Use the raytraced points and marching cube algorithm to create output");
+    BU_OPT(d[3], "",  "poisson",       "",  NULL,  &(opts->screened_poisson), "Use raytraced points and SPSR to create output - run -h --poisson to see more options for this mode");
+    BU_OPT(d[4], "n", "NMG",           "",  NULL,  &(opts->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
+    BU_OPT(d[5], "",  "TNURB",         "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
+    BU_OPT(d[6], "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");
+    BU_OPT(d[7], "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
+    BU_OPT_NULL(d[8]);
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
@@ -658,9 +668,27 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_memfree;
     }
 
+
+    if (!opts->nmgbool && !opts->screened_poisson && !opts->marching_cube) {
+	opts->nmgbool = 1;
+    }
+
+    if (opts->screened_poisson && opts->nmg_use_tnurbs && !opts->nmgbool && !opts->marching_cube) {
+	bu_vls_printf(gedp->ged_result_str, "Note: Screened Poisson reconstruction does not support TNURBS output\n");
+	ret = GED_ERROR;
+	goto ged_facetize_memfree;
+    }
+
+    if (opts->triangulate && opts->nmg_use_tnurbs) {
+	bu_vls_printf(gedp->ged_result_str, "both -T and -t specified!\n");
+	ret = GED_ERROR;
+	goto ged_facetize_memfree;
+    }
+
+
     /* If we're making one object using one technique, be more alert about which
      * options don't make sense in combination */
-    if (!screened_poisson) {
+    if (!opts->screened_poisson) {
 
 	/* must be wanting help */
 	if (print_help || argc < 2) {
@@ -669,13 +697,9 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    goto ged_facetize_memfree;
 	}
 
-	if (opts->triangulate && opts->nmg_use_tnurbs) {
-	    bu_vls_printf(gedp->ged_result_str, "both -T and -t specified!\n");
-	    ret = GED_ERROR;
-	    goto ged_facetize_memfree;
-	}
 	ret =  _ged_nmg_facetize(gedp, argc, argv, opts);
 	goto ged_facetize_memfree;
+
     } else {
 
 	if (argc < 2 || print_help || opts->marching_cube || opts->nmg_use_tnurbs) {
