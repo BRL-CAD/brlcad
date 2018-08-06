@@ -538,7 +538,7 @@ body OverlapFileTool::sortPairs { } {
 # in triple grid mode
 #
 body OverlapFileTool::runCheckOverlapsTriple { obj } {
-    set cmd "check overlaps -g1,1 -q $obj"
+    set cmd "check overlaps -g1mm,1mm -q $obj"
     set _statusText "Running $cmd"
     update
     if [ catch {set check_list [eval $cmd]} ] {
@@ -573,7 +573,7 @@ body OverlapFileTool::runCheckOverlapsTriple { obj } {
 body OverlapFileTool::runCheckOverlapsAE { obj } {
     for { set az 0}  {$az < 180} {incr az 45} {
 	for { set el 0}  {$el < 180} {incr el 45} {
-	    set cmd "check overlaps -g10,10 -a$az -e$el -q $obj"
+	    set cmd "check overlaps -G1024 -a$az -e$el -q $obj"
 	    set _statusText "Running $cmd"
 	    incr _progressValue 4
 	    update
