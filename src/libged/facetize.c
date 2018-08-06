@@ -330,7 +330,7 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
     struct rt_db_internal in_intern;
     struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
     struct rt_pnts_internal *pnts;
-    struct rt_bot_internal *bot;
+    struct rt_bot_internal *bot = NULL;
     struct pnt_normal *pn, *pl;
     int flags = 0;
     int newobj_cnt = 0;
@@ -428,16 +428,40 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
 	return GED_ERROR;
     }
 
-    /* Export BOT as a new solid */
-    RT_DB_INTERNAL_INIT(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_BOT;
-    intern.idb_meth = &OBJ[ID_BOT];
-    intern.idb_ptr = (void *) bot;
+    if (!opts->make_nmg) {
+	/* Export BoT as a new solid */
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_BOT;
+	intern.idb_meth = &OBJ[ID_BOT];
+	intern.idb_ptr = (void *) bot;
 
-    bu_free(input_points_3d, "3d pnts");
-    bu_free(input_normals_3d, "3d pnts");
-    rt_db_free_internal(&in_intern);
+	bu_free(input_points_3d, "3d pnts");
+	bu_free(input_normals_3d, "3d pnts");
+	rt_db_free_internal(&in_intern);
+
+    } else {
+	/* Convert BoT to NMG */
+	struct model *m = nmg_mm();
+	struct nmgregion *r;
+
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+	/* Use our new intern to fake out rt_bot_tess, since it expects an
+	 * rt_db_internal wrapper */
+	intern.idb_type = ID_BOT;
+	intern.idb_ptr = (void *)bot;
+	if (rt_bot_tess(&r, m, &intern, NULL, &btol) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Failed to convert Bot to NMG\n");
+	    rt_db_free_internal(&intern);
+	} else {
+	    /* OK,have NMG now - write it out */
+	    intern.idb_type = ID_NMG;
+	    intern.idb_meth = &OBJ[ID_NMG];
+	    intern.idb_ptr = (void *)m;
+	}
+    }
 
     dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
@@ -463,7 +487,8 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct rt_db_internal intern;
     struct directory *dp;
-    struct model *nmg_model;
+    struct model *nmg_model = NULL;
+    struct rt_bot_internal *bot = NULL;
     /* static due to jumping */
     static int triangulate;
     static int make_nmg;
@@ -516,7 +541,6 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
     }
 
     if (!make_nmg) {
-	struct rt_bot_internal *bot;
 	if (!BU_SETJUMP) {
 	    /* try */
 	    bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
@@ -654,14 +678,14 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_memfree;
     } else {
 
-	if (argc < 2 || print_help || opts->make_nmg || opts->marching_cube || opts->nmg_use_tnurbs) {
+	if (argc < 2 || print_help || opts->marching_cube || opts->nmg_use_tnurbs) {
 	    if (print_help || argc < 2) {
 		_ged_cmd_help(gedp, pusage, pd);
 		ret = GED_OK;
 		goto ged_facetize_memfree;
 	    }
-	    if (opts->make_nmg || opts->nmg_use_tnurbs) {
-		bu_vls_printf(gedp->ged_result_str, "Screened Poisson reconstruction only supports BoT output currently\n");
+	    if (opts->nmg_use_tnurbs) {
+		bu_vls_printf(gedp->ged_result_str, "Screened Poisson reconstruction does not support TNURBS output\n");
 		ret = GED_ERROR;
 		goto ged_facetize_memfree;
 	    }
