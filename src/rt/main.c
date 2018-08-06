@@ -171,7 +171,7 @@ int main(int argc, const char **argv)
     } else if (i == 0) {
 	/* asking for help is ok */
 	usage(argv[0], 1);
-	return 1;
+	return 0;
     }
 
     /* Identify the versions of the libraries we are using. */

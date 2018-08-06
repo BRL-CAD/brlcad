@@ -62,7 +62,7 @@ if test ! -f "$RT" ; then
 fi
 
 works="`$RT -h -? 2>&1`"
-if test $? -ne 1 ; then
+if test $? -ne 0 ; then
     echo "Unable to run rt, aborting"
     exit 1
 elif test "x$works" = "x" ; then
