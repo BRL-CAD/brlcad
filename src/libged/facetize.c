@@ -130,8 +130,8 @@ facetize_region_end(struct db_tree_state *tsp,
     return TREE_NULL;
 }
 
-HIDDEN int
-_try_nmg_facetize(struct model **n, union tree **f, struct ged *gedp, int argc, const char **argv, int nmg_use_tnurbs)
+HIDDEN struct model *
+_try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnurbs)
 {
     int i;
     int failed = 0;
@@ -163,7 +163,7 @@ _try_nmg_facetize(struct model **n, union tree **f, struct ged *gedp, int argc, 
     if (i < 0) {
 	/* Destroy NMG */
 	nmg_km(nmg_model);
-	return GED_ERROR;
+	return NULL;
     }
 
     if (facetize_tree) {
@@ -175,17 +175,24 @@ _try_nmg_facetize(struct model **n, union tree **f, struct ged *gedp, int argc, 
 	    BU_UNSETJUMP;
 	    db_free_tree(facetize_tree, &rt_uniresource);
 	    nmg_km(nmg_model);
-	    return GED_ERROR;
+	    return NULL;
 	} BU_UNSETJUMP;
 
     } else {
 	failed = 1;
     }
 
-    if (nmg_model && n) (*n) = nmg_model;
-    if (facetize_tree && f) (*f) = facetize_tree;
+    if (facetize_tree) {
+	NMG_CK_REGION(facetize_tree->tr_d.td_r);
+	bu_vls_printf(gedp->ged_result_str, "facetize:  %s\n", facetize_tree->tr_d.td_name);
+    }
 
-    return (failed) ? GED_ERROR : GED_OK;
+    if (facetize_tree) {
+	facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
+	db_free_tree(facetize_tree, &rt_uniresource);
+    }
+
+    return (failed) ? NULL : nmg_model;
 }
 
 
@@ -456,7 +463,6 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct rt_db_internal intern;
     struct directory *dp;
-    union tree *facetize_tree;
     struct model *nmg_model;
     /* static due to jumping */
     static int triangulate;
@@ -485,15 +491,11 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 	    "facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
 	    gedp->ged_wdbp->wdb_ttol.abs, gedp->ged_wdbp->wdb_ttol.rel, gedp->ged_wdbp->wdb_ttol.norm);
 
-    if (_try_nmg_facetize(&nmg_model, &facetize_tree, gedp, argc, argv, opts->nmg_use_tnurbs) != GED_OK) {
+    nmg_model = _try_nmg_facetize(gedp, argc, argv, opts->nmg_use_tnurbs);
+    if (nmg_model == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "facetize:  no resulting region, aborting\n");
-	db_free_tree(facetize_tree, &rt_uniresource);
 	return GED_ERROR;
     }
-
-    /* New region remains part of this nmg "model" */
-    NMG_CK_REGION(facetize_tree->tr_d.td_r);
-    bu_vls_printf(gedp->ged_result_str, "facetize:  %s\n", facetize_tree->tr_d.td_name);
 
     /* Triangulate model, if requested */
     if (triangulate && make_nmg) {
@@ -508,10 +510,7 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 	    /* catch */
 	    BU_UNSETJUMP;
 	    bu_vls_printf(gedp->ged_result_str, "WARNING: triangulation failed!!!\n");
-	    db_free_tree(facetize_tree, &rt_uniresource);
-	    facetize_tree = (union tree *)NULL;
 	    nmg_km(nmg_model);
-	    nmg_model = (struct model *)NULL;
 	    return GED_ERROR;
 	} BU_UNSETJUMP;
     }
@@ -540,15 +539,11 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 	    /* catch */
 	    BU_UNSETJUMP;
 	    bu_vls_printf(gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
-	    db_free_tree(facetize_tree, &rt_uniresource);
-	    facetize_tree = (union tree *)NULL;
 	    nmg_km(nmg_model);
-	    nmg_model = (struct model *)NULL;
 	    return GED_ERROR;
 	} BU_UNSETJUMP;
 
 	nmg_km(nmg_model);
-	nmg_model = (struct model *)NULL;
 
 	/* Export BOT as a new solid */
 	RT_DB_INTERNAL_INIT(&intern);
@@ -566,7 +561,6 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 	intern.idb_type = ID_NMG;
 	intern.idb_meth = &OBJ[ID_NMG];
 	intern.idb_ptr = (void *)nmg_model;
-	nmg_model = (struct model *)NULL;
     }
 
     dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
@@ -580,12 +574,6 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
-
-    facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
-
-    /* Free boolean tree, and the regions in it */
-    db_free_tree(facetize_tree, &rt_uniresource);
-    facetize_tree = (union tree *)NULL;
 
     return GED_OK;
 }
