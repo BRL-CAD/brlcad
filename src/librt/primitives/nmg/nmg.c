@@ -5913,7 +5913,7 @@ _nmg_shell_tabulate(struct bu_ptbl *va, struct bu_ptbl *fa, struct shell *s, str
  * Convert all shells of an NMG to a BOT solid
  */
 struct rt_bot_internal *
-nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_mdl_to_bot(struct model *m, int triangulate, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     unsigned int i = 0;
     struct nmgregion *r;
@@ -5927,8 +5927,10 @@ nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
     BN_CK_TOL(tol);
     NMG_CK_MODEL(m);
 
-    /* first convert the NMG to triangles */
-    nmg_triangulate_model(m, vlfree, tol);
+    /* first convert the NMG to triangles, if the caller says we need to. */
+    if (triangulate) {
+	nmg_triangulate_model(m, vlfree, tol);
+    }
 
     /* For each shell, tabulate faces and vertices */
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
