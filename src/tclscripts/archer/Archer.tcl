@@ -4033,17 +4033,17 @@ proc title_node_handler {node} {
 	keep -background
     }
     $itk_component(${_prefix}checkoverlapsmenu) add command \
-	-label "1mm" \
-	-command [::itcl::code $this launchCheckOverlaps 1]
-    $itk_component(${_prefix}checkoverlapsmenu) add command \
-	-label "10mm" \
-	-command [::itcl::code $this launchCheckOverlaps 10]
-    $itk_component(${_prefix}checkoverlapsmenu) add command \
-	-label "25mm" \
-	-command [::itcl::code $this launchCheckOverlaps 25]
-    $itk_component(${_prefix}checkoverlapsmenu) add command \
-	-label "50mm" \
+	-label "50x50" \
 	-command [::itcl::code $this launchCheckOverlaps 50]
+    $itk_component(${_prefix}checkoverlapsmenu) add command \
+	-label "100x100" \
+	-command [::itcl::code $this launchCheckOverlaps 100]
+    $itk_component(${_prefix}checkoverlapsmenu) add command \
+	-label "256x256" \
+	-command [::itcl::code $this launchCheckOverlaps 256]
+    $itk_component(${_prefix}checkoverlapsmenu) add command \
+	-label "512x512" \
+	-command [::itcl::code $this launchCheckOverlaps 512]
 
     itk_component add ${_prefix}rtmenu {
 	::menu $itk_component(${_prefix}raytracemenu).${_prefix}rtmenu \
@@ -4816,17 +4816,17 @@ proc title_node_handler {node} {
 	}
 
 	switch -- $op {
-	    "1mm" {
-		set mStatusStr "Run check overlaps with a 1mm spaced grid on the displayed geometry"
+	    "50x50" {
+		set mStatusStr "Run check overlaps with a size of 50 on the displayed geometry"
 	    }
-	    "10mm" {
-		set mStatusStr "Run check overlaps with a 10mm spaced grid on the displayed geometry"
+	    "100x100" {
+		set mStatusStr "Run check overlaps with a size of 100 on the displayed geometry"
 	    }
-	    "25mm" {
-		set mStatusStr "Run check overlaps with a 25mm spaced grid on the displayed geometry"
+	    "256x256" {
+		set mStatusStr "Run check overlaps with a size of 256 on the displayed geometry"
 	    }
-	    "50mm" {
-		set mStatusStr "Run check overlaps with a 50mm spaced grid on the displayed geometry"
+	    "512x512" {
+		set mStatusStr "Run check overlaps with a size of 512 on the displayed geometry"
 	    }
 	    default {
 		set mStatusStr ""
@@ -5898,14 +5898,14 @@ proc title_node_handler {node} {
 	    options -tearoff 0
 
 	    cascade checkoverlaps -label "check overlaps" -menu {
-		command checkoverlaps50 -label "1mm" \
-		    -helpstr "Run check overlaps -g1,1"
-		command checkoverlaps100 -label "10mm" \
-		    -helpstr "Run check overlaps -g10,10"
-		command checkoverlaps256 -label "25mm" \
-		    -helpstr "Run check overlaps -g25,25"
-		command checkoverlaps512 -label "50mm" \
-		    -helpstr "Run check overlaps -g50,50"
+		command checkoverlaps50 -label "50x50" \
+		    -helpstr "Run check overlaps -G 50."
+		command checkoverlaps100 -label "100x100" \
+		    -helpstr "Run check overlaps -G 100."
+		command checkoverlaps256 -label "256x256" \
+		    -helpstr "Run check overlaps -G 256."
+		command checkoverlaps512 -label "512x512" \
+		    -helpstr "Run check overlaps -G 512."
 	    }
 
 	    cascade rt -label "rt" -menu {
@@ -5943,14 +5943,14 @@ proc title_node_handler {node} {
 	
     $itk_component(menubar) menuconfigure .raytrace.checkoverlaps \
 	-state disabled
-    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps1 \
-	-command [::itcl::code $this launchCheckOverlaps 1]
-    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps10 \
-	-command [::itcl::code $this launchCheckOverlaps 10]
-    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps25 \
-	-command [::itcl::code $this launchCheckOverlaps 25]
     $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps50 \
 	-command [::itcl::code $this launchCheckOverlaps 50]
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps100 \
+	-command [::itcl::code $this launchCheckOverlaps 100]
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps256 \
+	-command [::itcl::code $this launchCheckOverlaps 256]
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps512 \
+	-command [::itcl::code $this launchCheckOverlaps 512]
 
     $itk_component(menubar) menuconfigure .raytrace.rt \
 	-state disabled
