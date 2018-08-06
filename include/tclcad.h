@@ -104,7 +104,6 @@ struct ged_obj {
     struct ged		*go_gedp;
     struct ged_dm_view	go_head_views;
     struct bu_vls	go_name;
-    struct bu_observer_list	go_observers;
     struct bu_vls	go_more_args_callback;
     struct bu_vls	go_rt_end_callback;
     struct bu_vls	*go_prim_label_list;
