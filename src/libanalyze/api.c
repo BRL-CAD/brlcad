@@ -1328,6 +1328,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	    return ANALYZE_ERROR;
 	}
     }
+
     rt_prep_parallel(rtip, state->ncpu);
 
     if (state->use_single_grid && !state->use_view_information) {
@@ -1336,6 +1337,16 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	    rtip = NULL;
 	    return ANALYZE_ERROR;
 	}
+    }
+
+    if (state->grid_size_flag && state->use_single_grid) {
+	double cell_height = 0.0;
+	double cell_width = 0.0;
+	cell_width = state->viewsize / state->grid_width;
+	cell_height = state->viewsize / (state->grid_height * state->aspect);
+	state->gridSpacing = cell_width;
+	state->gridSpacingLimit = cell_width;
+	state->gridRatio = cell_width/cell_height;
     }
 
     /* we now have to subdivide space */

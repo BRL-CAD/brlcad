@@ -32,6 +32,8 @@
 
 #include "analyze.h"
 
+#define MAX_WIDTH (32*1024)
+
 
 HIDDEN void
 check_show_help(struct ged *gedp)
@@ -58,6 +60,7 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  -e #[deg|rad] - Elevation angle.\n");
     bu_vls_printf(&str, "  -f filename - Specifies that density values should be taken from an external file instead of from the _DENSITIES object in the database.\n");
     bu_vls_printf(&str, "  -g [initial_grid_spacing-]grid_spacing_limit or [initial_grid_spacing,]grid_spacing_limit - Specifies a limit on how far the grid can be refined and optionally the initial spacing between rays in the grids.\n");
+    bu_vls_printf(&str, "  -G [grid width,] grid height - sets the grid size, if only grid width is mentioned then a square grid size is set\n");
     bu_vls_printf(&str, "  -i - gets 'view information' from the view to setup eye position.\n");
     bu_vls_printf(&str, "  -M # - Specifies a mass tolerance value.\n");
     bu_vls_printf(&str, "  -n # - Specifies that the grid be refined until each region has at least num_hits ray intersections.\n");
@@ -136,7 +139,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
     double a;
     char *p;
 
-    char *options_str = "a:de:f:g:iM:n:N:opP:qrRs:S:t:U:u:vV:h?";
+    char *options_str = "a:de:f:g:G:iM:n:N:opP:qrRs:S:t:U:u:vV:h?";
 
     /* Turn off getopt's error messages */
     bu_opterr = 0;
@@ -213,6 +216,36 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    analyze_set_grid_spacing(state, options->gridSpacing, options->gridSpacingLimit);
 		    break;
 		}
+	    case 'G':
+		{
+		    double width, height;
+		    /* find out if we have two or one args; user can
+		     * separate them with , delimiter
+		     */
+		    p = strchr(bu_optarg, COMMA);
+		    if (p)
+			*p++ = '\0';
+		    width = atoi(bu_optarg);
+
+		    if (width < 1 || width > MAX_WIDTH) {
+			bu_vls_printf(_ged_current_gedp->ged_result_str,"mentioned grid size is out of range\n");
+			return -1;
+		    }
+
+		    if (p) {
+			/* widht and height mentioned */
+			height = atoi(p);
+			if (height < 1 || height > MAX_WIDTH) {
+			    bu_vls_printf(_ged_current_gedp->ged_result_str,"mentioned grid size is out of range\n");
+			    return -1;
+			}
+			analyze_set_grid_size(state, width, height);
+		    } else {
+			/* square grid */
+			analyze_set_grid_size(state, width, width);
+		    }
+		    break;
+		}
 	    case 'i':
 		options->getfromview = 1;
 		break;
@@ -286,7 +319,6 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		}
 		analyze_set_volume_tolerance(state, options->volume_tolerance);
 		break;
-
 	    case 'U':
 		errno = 0;
 		options->use_air = strtol(bu_optarg, (char **)NULL, 10);

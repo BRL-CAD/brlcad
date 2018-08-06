@@ -56,6 +56,7 @@ analyze_current_state_init()
     state->analysis_flags = 0;
     state->samples_per_model_axis = 2.0;
     state->aborted = 0;
+    state->grid_size_flag = 0;
 
     state->exp_air_callback = NULL;
     state->exp_air_callback_data = NULL;
@@ -183,6 +184,14 @@ void analyze_set_grid_spacing(struct current_state *state, fastf_t gridSpacing, 
 void analyze_set_grid_ratio(struct current_state *state, fastf_t gridRatio)
 {
     state->gridRatio = gridRatio;
+}
+
+
+void analyze_set_grid_size(struct current_state *state, fastf_t width, fastf_t height)
+{
+    state->grid_size_flag = 1;
+    state->grid_height = height;
+    state->grid_width = width;
 }
 
 
