@@ -33,11 +33,11 @@ HIDDEN void
 bu_observer_list_init(struct bu_observer_list *all_observers)
 {
     if (all_observers->capacity == 0) {
-        all_observers->capacity = NUM_INITIAL_OBSERVERS;
-        all_observers->observers = (struct bu_observer *)bu_malloc(all_observers->capacity * sizeof(struct bu_observer), "init observer list");
+	all_observers->capacity = NUM_INITIAL_OBSERVERS;
+	all_observers->observers = (struct bu_observer *)bu_malloc(all_observers->capacity * sizeof(struct bu_observer), "init observer list");
     } else if (all_observers->size == all_observers->capacity) {
-        all_observers->capacity *= 2;
-        all_observers->observers = (struct bu_observer *)bu_realloc(all_observers->observers, all_observers->capacity * sizeof(struct bu_observer), "resize of observer list");
+	all_observers->capacity *= 2;
+	all_observers->observers = (struct bu_observer *)bu_realloc(all_observers->observers, all_observers->capacity * sizeof(struct bu_observer), "resize of observer list");
     }
 }
 
@@ -62,7 +62,7 @@ observer_attach(void *clientData, int argc, const char **argv)
 
     /* see if it already exists, if so, modify it */
     for (i = 0; i < observers->size; i++) {
-        op = &observers->observers[i];
+	op = &observers->observers[i];
 	if (BU_STR_EQUAL(bu_vls_addr(&op->observer), argv[1])) {
 	    if (argc == 2)
 		/* clobber cmd */
@@ -113,12 +113,13 @@ observer_detach(void *clientData, int argc, const char **argv)
 
     /* search for observer and remove from list */
     for (i = 0; i < observers->size; i++) {
-        op = &observers->observers[i];
+	op = &observers->observers[i];
 	if (BU_STR_EQUAL(bu_vls_addr(&op->observer), argv[1])) {
 	    bu_vls_free(&op->observer);
 	    bu_vls_free(&op->cmd);
 
-	    memmove(op, op + 1, sizeof(struct bu_observer_list) * (observers->size - i - 1));
+	    memmove(op, op + 1, sizeof(struct bu_observer) * (observers->size - i - 1));
+	    observers->size--;
 
 	    return BRLCAD_OK;
 	}
@@ -149,7 +150,7 @@ observer_show(void *clientData, int argc, const char **UNUSED(argv))
     }
 
     for (i = 0; i < observers->size; i++) {
-        op = &observers->observers[i];
+	op = &observers->observers[i];
 	bu_log("%s - %s\n", bu_vls_addr(&op->observer), bu_vls_addr(&op->cmd));
     }
 
@@ -164,7 +165,7 @@ bu_observer_notify(void *context, struct bu_observer_list *observers, char *self
     size_t i;
 
     for (i = 0; i < observers->size; i++) {
-        op = &observers->observers[i];
+	op = &observers->observers[i];
 	if (bu_vls_strlen(&op->cmd) > 0) {
 	    /* Execute cmd */
 	    bu_vls_strcpy(&vls, bu_vls_addr(&op->cmd));
@@ -187,11 +188,12 @@ bu_observer_free(struct bu_observer_list *observers)
     size_t i;
 
     for (i = 0; i < observers->size; i++) {
-        bu_vls_free(&observers->observers[i].observer);
-        bu_vls_free(&observers->observers[i].cmd);
+	bu_vls_free(&observers->observers[i].observer);
+	bu_vls_free(&observers->observers[i].cmd);
     }
 
-    bu_free(observers->observers, "freeing observers");
+    if (observers->capacity != 0)
+	bu_free(observers->observers, "freeing observers");
 }
 
 
