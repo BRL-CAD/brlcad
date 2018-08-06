@@ -5887,10 +5887,11 @@ HIDDEN void
 _nmg_shell_tabulate(struct bu_ptbl *va, struct bu_ptbl *fa, struct shell *s, struct bu_list *vlfree)
 {
     struct bu_ptbl *nmg_vertices, *nmg_faces;
+
+    NMG_CK_SHELL(s);
+
     BU_ALLOC(nmg_vertices, struct bu_ptbl);
     BU_ALLOC(nmg_faces, struct bu_ptbl);
-    bu_ptbl_init(nmg_vertices, 64, "nmg_verts");
-    bu_ptbl_init(nmg_faces, 64, "nmg_faces");
 
     /* make a list of all the vertices */
     nmg_vertex_tabulate(nmg_vertices, &s->l.magic, vlfree);
@@ -5918,6 +5919,7 @@ nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
     int face_cnt = 0;
 
     BN_CK_TOL(tol);
+    NMG_CK_MODEL(m);
 
     /* first convert the NMG to triangles */
     nmg_triangulate_model(m, vlfree, tol);
@@ -5926,7 +5928,6 @@ nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	NMG_CK_REGION(r);
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    NMG_CK_MODEL(s);
 	    _nmg_shell_tabulate(&vert_arrays, &face_arrays, s, vlfree);
 	}
     }
@@ -5940,7 +5941,7 @@ nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
     /* Count up the faces */
     for (i = 0; i < BU_PTBL_LEN(&face_arrays); i++) {
 	struct bu_ptbl *nfaces = (struct bu_ptbl *)BU_PTBL_GET(&face_arrays, i);
-	for (j = 0; i<BU_PTBL_LEN(nfaces); j++) {
+	for (j = 0; j < BU_PTBL_LEN(nfaces); j++) {
 	    struct face *f;
 	    struct faceuse *fu;
 	    struct loopuse *lu;
@@ -5950,10 +5951,13 @@ nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
 
 	    fu = f->fu_p;
 
-	    if (fu->orientation != OT_SAME && fu->fumate_p->orientation != OT_SAME) {
-		bu_log("nmg_bot(): Face has no OT_SAME use!\n");
-		return (struct rt_bot_internal *)NULL;
+	    if (fu->orientation != OT_SAME) {
+		fu = fu->fumate_p;
+		if (fu->orientation != OT_SAME) {
+		    return (struct rt_bot_internal *)NULL;
+		}
 	    }
+
 
 	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
