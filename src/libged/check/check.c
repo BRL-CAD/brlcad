@@ -60,7 +60,7 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  -e #[deg|rad] - Elevation angle.\n");
     bu_vls_printf(&str, "  -f filename - Specifies that density values should be taken from an external file instead of from the _DENSITIES object in the database.\n");
     bu_vls_printf(&str, "  -g [initial_grid_spacing-]grid_spacing_limit or [initial_grid_spacing,]grid_spacing_limit - Specifies a limit on how far the grid can be refined and optionally the initial spacing between rays in the grids.\n");
-    bu_vls_printf(&str, "  -G [grid width,] grid height - sets the grid size, if only grid width is mentioned then a square grid size is set\n");
+    bu_vls_printf(&str, "  -G [grid_width,]grid_height - sets the grid size, if only grid width is mentioned then a square grid size is set\n");
     bu_vls_printf(&str, "  -i - gets 'view information' from the view to setup eye position.\n");
     bu_vls_printf(&str, "  -M # - Specifies a mass tolerance value.\n");
     bu_vls_printf(&str, "  -n # - Specifies that the grid be refined until each region has at least num_hits ray intersections.\n");

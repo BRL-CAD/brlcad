@@ -337,6 +337,15 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>-G </option>[<emphasis remap="I">grid_width</emphasis>,]<emphasis remap="I">grid_height</emphasis></term>
+	<listitem>
+	  <para>
+	    sets the grid size, if only grid width is mentioned	then a
+	    <emphasis remap="I">square</emphasis> grid size is set.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>-i</option></term>
 	<listitem>
 	  <para>
