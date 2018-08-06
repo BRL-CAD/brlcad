@@ -5729,6 +5729,80 @@ nmg_to_poly(const struct model *m, struct rt_pg_internal *poly_int, struct bu_li
     return 1;
 }
 
+
+HIDDEN int
+_nmg_shell_append(struct rt_bot_internal *bot, struct bu_ptbl *nmg_vertices, struct bu_ptbl *nmg_faces, int *voffset, int *foffset)
+{
+    unsigned int i;
+    unsigned int vo = (voffset) ? (unsigned int)*voffset : 0;
+    unsigned int fo = (foffset) ? (unsigned int)*foffset : 0;
+    int face_no;
+    struct vertex *v;
+
+    /* fill in the vertices */
+    for (i = 0; i < BU_PTBL_LEN(nmg_vertices); i++) {
+	struct vertex_g *vg;
+
+	v = (struct vertex *)BU_PTBL_GET(nmg_vertices, i);
+	NMG_CK_VERTEX(v);
+
+	vg = v->vg_p;
+	NMG_CK_VERTEX_G(vg);
+
+	VMOVE(&bot->vertices[(i + vo)*3], vg->coord);
+    }
+    if (voffset) (*voffset) += (int)BU_PTBL_LEN(nmg_vertices);
+
+    /* fill in the faces */
+    face_no = 0;
+    for (i = 0; i < BU_PTBL_LEN(nmg_faces); i++) {
+	struct face *f;
+	struct faceuse *fu;
+	struct loopuse *lu;
+
+	f = (struct face *)BU_PTBL_GET(nmg_faces, i);
+	NMG_CK_FACE(f);
+
+	fu = f->fu_p;
+
+	if (fu->orientation != OT_SAME) {
+	    fu = fu->fumate_p;
+	    if (fu->orientation != OT_SAME) {
+		bu_log("nmg_bot(): Face has no OT_SAME use!\n");
+		return -1;
+	    }
+	}
+
+	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
+	    struct edgeuse *eu;
+	    size_t vertex_no=0;
+
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+		continue;
+
+	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
+		if (vertex_no > 2) {
+		    bu_log("nmg_bot(): Face has not been triangulated!\n");
+		    return -1;
+		}
+
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+
+		bot->faces[ (face_no + fo)*3 + vertex_no ] = bu_ptbl_locate(nmg_vertices, (long *)v);
+
+		vertex_no++;
+	    }
+
+	    face_no++;
+	}
+    }
+
+    if (foffset) (*foffset) += face_no;
+
+    return 0;
+}
+
 /**
  * Convert an NMG to a BOT solid
  */
@@ -5738,8 +5812,7 @@ nmg_bot(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
     struct rt_bot_internal *bot;
     struct bu_ptbl nmg_vertices;
     struct bu_ptbl nmg_faces;
-    size_t i, face_no;
-    struct vertex *v;
+    size_t i;
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
@@ -5799,69 +5872,9 @@ nmg_bot(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
     bot->thickness = (fastf_t *)NULL;
     bot->face_mode = (struct bu_bitv *)NULL;
 
-    /* fill in the vertices */
-    for (i=0; i<BU_PTBL_LEN(&nmg_vertices); i++) {
-	struct vertex_g *vg;
-
-	v = (struct vertex *)BU_PTBL_GET(&nmg_vertices, i);
-	NMG_CK_VERTEX(v);
-
-	vg = v->vg_p;
-	NMG_CK_VERTEX_G(vg);
-
-	VMOVE(&bot->vertices[i*3], vg->coord);
-    }
-
-    /* fill in the faces */
-    face_no = 0;
-    for (i=0; i<BU_PTBL_LEN(&nmg_faces); i++) {
-	struct face *f;
-	struct faceuse *fu;
-	struct loopuse *lu;
-
-	f = (struct face *)BU_PTBL_GET(&nmg_faces, i);
-	NMG_CK_FACE(f);
-
-	fu = f->fu_p;
-
-	if (fu->orientation != OT_SAME) {
-	    fu = fu->fumate_p;
-	    if (fu->orientation != OT_SAME) {
-		bu_log("nmg_bot(): Face has no OT_SAME use!\n");
-		bu_free((char *)bot->vertices, "BOT vertices");
-		bu_free((char *)bot->faces, "BOT faces");
-		bu_free((char *)bot, "BOT");
-		return (struct rt_bot_internal *)NULL;
-	    }
-	}
-
-	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-	    struct edgeuse *eu;
-	    size_t vertex_no=0;
-
-	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		continue;
-
-	    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-		if (vertex_no > 2) {
-		    bu_log("nmg_bot(): Face has not been triangulated!\n");
-		    bu_free((char *)bot->vertices, "BOT vertices");
-		    bu_free((char *)bot->faces, "BOT faces");
-		    bu_free((char *)bot, "BOT");
-		    return (struct rt_bot_internal *)NULL;
-		}
-
-		v = eu->vu_p->v_p;
-		NMG_CK_VERTEX(v);
-
-
-		bot->faces[ face_no*3 + vertex_no ] = bu_ptbl_locate(&nmg_vertices, (long *)v);
-
-		vertex_no++;
-	    }
-
-	    face_no++;
-	}
+    if (_nmg_shell_append(bot, &nmg_vertices, &nmg_faces, NULL, NULL) < 0) {
+	bu_log("nmg_bot(): Failed to process shell!\n");
+	return (struct rt_bot_internal *)NULL;
     }
 
     bu_ptbl_free(&nmg_vertices);
@@ -5869,6 +5882,131 @@ nmg_bot(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
 
     return bot;
 }
+
+HIDDEN void
+_nmg_shell_tabulate(struct bu_ptbl *va, struct bu_ptbl *fa, struct shell *s, struct bu_list *vlfree)
+{
+    struct bu_ptbl *nmg_vertices, *nmg_faces;
+    BU_ALLOC(nmg_vertices, struct bu_ptbl);
+    BU_ALLOC(nmg_faces, struct bu_ptbl);
+    bu_ptbl_init(nmg_vertices, 64, "nmg_verts");
+    bu_ptbl_init(nmg_faces, 64, "nmg_faces");
+
+    /* make a list of all the vertices */
+    nmg_vertex_tabulate(nmg_vertices, &s->l.magic, vlfree);
+    bu_ptbl_ins(va, (long *)nmg_vertices);
+    /* and a list of all the faces */
+    nmg_face_tabulate(nmg_faces, &s->l.magic, vlfree);
+    bu_ptbl_ins(fa, (long *)nmg_faces);
+}
+
+
+/**
+ * Convert all shells of an NMG to a BOT solid
+ */
+struct rt_bot_internal *
+nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol)
+{
+    unsigned int i = 0;
+    unsigned int j = 0;
+    struct nmgregion *r;
+    struct shell *s;
+    struct rt_bot_internal *bot;
+    struct bu_ptbl vert_arrays = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl face_arrays = BU_PTBL_INIT_ZERO;
+    int vert_cnt = 0;
+    int face_cnt = 0;
+
+    BN_CK_TOL(tol);
+
+    /* first convert the NMG to triangles */
+    nmg_triangulate_model(m, vlfree, tol);
+
+    /* For each shell, tabulate faces and vertices */
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	NMG_CK_REGION(r);
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    NMG_CK_MODEL(s);
+	    _nmg_shell_tabulate(&vert_arrays, &face_arrays, s, vlfree);
+	}
+    }
+
+    /* Count up the verts */
+    for (i = 0; i < BU_PTBL_LEN(&vert_arrays); i++) {
+	struct bu_ptbl *vac = (struct bu_ptbl *)BU_PTBL_GET(&vert_arrays, i);
+	vert_cnt += BU_PTBL_LEN(vac);
+    }
+
+    /* Count up the faces */
+    for (i = 0; i < BU_PTBL_LEN(&face_arrays); i++) {
+	struct bu_ptbl *nfaces = (struct bu_ptbl *)BU_PTBL_GET(&face_arrays, i);
+	for (j = 0; i<BU_PTBL_LEN(nfaces); j++) {
+	    struct face *f;
+	    struct faceuse *fu;
+	    struct loopuse *lu;
+
+	    f = (struct face *)BU_PTBL_GET(nfaces, i);
+	    NMG_CK_FACE(f);
+
+	    fu = f->fu_p;
+
+	    if (fu->orientation != OT_SAME && fu->fumate_p->orientation != OT_SAME) {
+		bu_log("nmg_bot(): Face has no OT_SAME use!\n");
+		return (struct rt_bot_internal *)NULL;
+	    }
+
+	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+		    continue;
+		face_cnt++;
+	    }
+	}
+    }
+
+
+    /* now build the BOT */
+    BU_ALLOC(bot, struct rt_bot_internal);
+
+    bot->magic = RT_BOT_INTERNAL_MAGIC;
+    bot->mode = RT_BOT_SOLID;
+    bot->orientation = RT_BOT_CCW;
+    bot->bot_flags = 0;
+
+    bot->num_vertices = vert_cnt;
+    bot->vertices = (fastf_t *)bu_calloc(bot->num_vertices * 3, sizeof(fastf_t), "BOT vertices");
+    bot->num_faces = face_cnt;
+    bot->faces = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "BOT faces");
+
+    bot->thickness = (fastf_t *)NULL;
+    bot->face_mode = (struct bu_bitv *)NULL;
+
+    vert_cnt = 0;
+    face_cnt = 0;
+    for (i = 0; i < BU_PTBL_LEN(&vert_arrays); i++) {
+	struct bu_ptbl *va = (struct bu_ptbl *)BU_PTBL_GET(&vert_arrays, i);
+	struct bu_ptbl *fa = (struct bu_ptbl *)BU_PTBL_GET(&face_arrays, i);
+	if (_nmg_shell_append(bot, va, fa, &vert_cnt, &face_cnt) < 0) {
+	    bu_log("nmg_mdl_to_bot(): Failed to process shell!\n");
+	    bu_free((char *)bot->vertices, "BOT vertices");
+	    bu_free((char *)bot->faces, "BOT faces");
+	    bu_free((char *)bot, "BOT");
+	    return (struct rt_bot_internal *)NULL;
+	}
+    }
+
+    for (i = 0; i < BU_PTBL_LEN(&vert_arrays); i++) {
+	struct bu_ptbl *va = (struct bu_ptbl *)BU_PTBL_GET(&vert_arrays, i);
+	struct bu_ptbl *fa = (struct bu_ptbl *)BU_PTBL_GET(&face_arrays, i);
+	bu_ptbl_free(va);
+	bu_ptbl_free(fa);
+	bu_free(va, "va container");
+	bu_free(fa, "va container");
+    }
+    bu_ptbl_free(&vert_arrays);
+    bu_ptbl_free(&face_arrays);
+    return bot;
+}
+
 
 
 void
