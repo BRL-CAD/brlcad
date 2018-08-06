@@ -98,6 +98,95 @@ _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], int newo
     return GED_OK;
 }
 
+static union tree *
+facetize_region_end(struct db_tree_state *tsp,
+		    const struct db_full_path *pathp,
+		    union tree *curtree,
+		    void *client_data)
+{
+    union tree **facetize_tree;
+
+    if (tsp) RT_CK_DBTS(tsp);
+    if (pathp) RT_CK_FULL_PATH(pathp);
+
+    facetize_tree = (union tree **)client_data;
+
+    if (curtree->tr_op == OP_NOP) return curtree;
+
+    if (*facetize_tree) {
+	union tree *tr;
+	BU_ALLOC(tr, union tree);
+	RT_TREE_INIT(tr);
+	tr->tr_op = OP_UNION;
+	tr->tr_b.tb_regionp = REGION_NULL;
+	tr->tr_b.tb_left = *facetize_tree;
+	tr->tr_b.tb_right = curtree;
+	*facetize_tree = tr;
+    } else {
+	*facetize_tree = curtree;
+    }
+
+    /* Tree has been saved, and will be freed later */
+    return TREE_NULL;
+}
+
+HIDDEN int
+_try_nmg_facetize(struct model **n, union tree **f, struct ged *gedp, int argc, const char **argv, int nmg_use_tnurbs)
+{
+    int i;
+    int failed = 0;
+    struct db_tree_state init_state;
+    union tree *facetize_tree;
+    struct model *nmg_model;
+
+    db_init_db_tree_state(&init_state, gedp->ged_wdbp->dbip, gedp->ged_wdbp->wdb_resp);
+
+    /* Establish tolerances */
+    init_state.ts_ttol = &gedp->ged_wdbp->wdb_ttol;
+    init_state.ts_tol = &gedp->ged_wdbp->wdb_tol;
+
+    facetize_tree = (union tree *)0;
+    nmg_model = nmg_mm();
+    init_state.ts_m = &nmg_model;
+
+    i = db_walk_tree(gedp->ged_wdbp->dbip, argc, (const char **)argv,
+	    1,
+	    &init_state,
+	    0,			/* take all regions */
+	    facetize_region_end,
+	    nmg_use_tnurbs ?
+	    nmg_booltree_leaf_tnurb :
+	    nmg_booltree_leaf_tess,
+	    (void *)&facetize_tree
+	    );
+
+    if (i < 0) {
+	/* Destroy NMG */
+	nmg_km(nmg_model);
+	return GED_ERROR;
+    }
+
+    if (facetize_tree) {
+	if (!BU_SETJUMP) {
+	    /* try */
+	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
+	} else {
+	    /* catch */
+	    BU_UNSETJUMP;
+	    db_free_tree(facetize_tree, &rt_uniresource);
+	    nmg_km(nmg_model);
+	    return GED_ERROR;
+	} BU_UNSETJUMP;
+
+    } else {
+	failed = 1;
+    }
+
+    if (nmg_model && n) (*n) = nmg_model;
+    if (facetize_tree && f) (*f) = facetize_tree;
+
+    return (failed) ? GED_ERROR : GED_OK;
+}
 
 
 struct _ged_facetize_opts {
@@ -160,14 +249,14 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     char *newname;
     int newobj_cnt;
     int ret = GED_OK;
-    /*int i;
-    struct directory *dp;*/
+    unsigned int i;
     struct directory **dpa;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     /* We need to copy combs above regions that are not themselves regions.
      * Also, facetize will need all "active" regions that will define shapes.
      * Construct searches to get these sets. */
     struct bu_ptbl *pc, *ar;
+    struct bu_ptbl *ar_failed_nmg;
     const char *preserve_combs = "-type c ! -type r ! -below -type r";
     const char *active_regions = "-type r ! -below -type r";
 
@@ -198,6 +287,24 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	ret = GED_OK;
 	goto ged_facetize_regions_memfree;
     }
+
+    /* TODO - someday this object-level facetization should be done in
+     * parallel, but that's one deep rabbit hole - for now, just try them in
+     * order and make sure we can handle (non-crashing) failures to convert
+     * sanely. */
+    BU_ALLOC(ar_failed_nmg, struct bu_ptbl);
+    bu_ptbl_init(ar_failed_nmg, 64, "failed list init");
+    for (i = 0; i < BU_PTBL_LEN(ar); i++) {
+	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
+	printf("NMG tessellating %s\n", n->d_namep);
+    }
+
+    /* 
+    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
+    }
+    */
+
+
 
 ged_facetize_regions_memfree:
     bu_ptbl_free(pc);
@@ -343,53 +450,16 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
 }
 #endif
 
-static union tree *
-facetize_region_end(struct db_tree_state *tsp,
-		    const struct db_full_path *pathp,
-		    union tree *curtree,
-		    void *client_data)
-{
-    union tree **facetize_tree;
-
-    if (tsp) RT_CK_DBTS(tsp);
-    if (pathp) RT_CK_FULL_PATH(pathp);
-
-    facetize_tree = (union tree **)client_data;
-
-    if (curtree->tr_op == OP_NOP) return curtree;
-
-    if (*facetize_tree) {
-	union tree *tr;
-	BU_ALLOC(tr, union tree);
-	RT_TREE_INIT(tr);
-	tr->tr_op = OP_UNION;
-	tr->tr_b.tb_regionp = REGION_NULL;
-	tr->tr_b.tb_left = *facetize_tree;
-	tr->tr_b.tb_right = curtree;
-	*facetize_tree = tr;
-    } else {
-	*facetize_tree = curtree;
-    }
-
-    /* Tree has been saved, and will be freed later */
-    return TREE_NULL;
-}
-
-
 int
 _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
 {
-    int i;
     int newobj_cnt;
-    int failed;
     char *newname;
-    struct db_tree_state init_state;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct rt_db_internal intern;
     struct directory *dp;
     union tree *facetize_tree;
     struct model *nmg_model;
-    int nmg_use_tnurbs = opts->nmg_use_tnurbs;
     /* static due to jumping */
     static int triangulate;
     static int make_nmg;
@@ -399,12 +469,6 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
     marching_cube = opts->marching_cube;
 
     RT_CHECK_DBI(dbip);
-
-    db_init_db_tree_state(&init_state, dbip, gedp->ged_wdbp->wdb_resp);
-
-    /* Establish tolerances */
-    init_state.ts_ttol = &gedp->ged_wdbp->wdb_ttol;
-    init_state.ts_tol = &gedp->ged_wdbp->wdb_tol;
 
     if (argc < 0) {
 	bu_vls_printf(gedp->ged_result_str, "facetize: missing argument\n");
@@ -423,58 +487,12 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 	    "facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
 	    gedp->ged_wdbp->wdb_ttol.abs, gedp->ged_wdbp->wdb_ttol.rel, gedp->ged_wdbp->wdb_ttol.norm);
 
-    facetize_tree = (union tree *)0;
-    nmg_model = nmg_mm();
-    init_state.ts_m = &nmg_model;
-
-    i = db_walk_tree(dbip, argc, (const char **)argv,
-	    1,
-	    &init_state,
-	    0,			/* take all regions */
-	    facetize_region_end,
-	    nmg_use_tnurbs ?
-	    nmg_booltree_leaf_tnurb :
-	    nmg_booltree_leaf_tess,
-	    (void *)&facetize_tree
-	    );
-
-
-    if (i < 0) {
-	bu_vls_printf(gedp->ged_result_str, "facetize: error in db_walk_tree()\n");
-	/* Destroy NMG */
-	nmg_km(nmg_model);
-	return GED_ERROR;
-    }
-
-    if (facetize_tree) {
-	/* Now, evaluate the boolean tree into ONE region */
-	bu_vls_printf(gedp->ged_result_str, "facetize:  evaluating boolean expressions\n");
-
-	if (!BU_SETJUMP) {
-	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
-	} else {
-	    /* catch */
-	    BU_UNSETJUMP;
-	    bu_vls_printf(gedp->ged_result_str, "WARNING: facetization failed!!!\n");
-	    db_free_tree(facetize_tree, &rt_uniresource);
-	    facetize_tree = (union tree *)NULL;
-	    nmg_km(nmg_model);
-	    nmg_model = (struct model *)NULL;
-	    return GED_ERROR;
-	} BU_UNSETJUMP;
-
-    } else
-	failed = 1;
-
-    if (failed) {
+    if (_try_nmg_facetize(&nmg_model, &facetize_tree, gedp, argc, argv, opts->nmg_use_tnurbs) != GED_OK) {
 	bu_vls_printf(gedp->ged_result_str, "facetize:  no resulting region, aborting\n");
 	db_free_tree(facetize_tree, &rt_uniresource);
-	facetize_tree = (union tree *)NULL;
-	nmg_km(nmg_model);
-	nmg_model = (struct model *)NULL;
 	return GED_ERROR;
     }
+
     /* New region remains part of this nmg "model" */
     NMG_CK_REGION(facetize_tree->tr_d.td_r);
     bu_vls_printf(gedp->ged_result_str, "facetize:  %s\n", facetize_tree->tr_d.td_name);
