@@ -983,7 +983,8 @@ find_cmd_obj(struct current_state *state, struct per_obj_data *obj_rpt, const ch
 	}
     }
 
-    bu_log("%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, state->num_objects);
+    if(state->debug)
+	bu_vls_printf(state->debug_str, "%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, state->num_objects);
 
     return -1;
 }
