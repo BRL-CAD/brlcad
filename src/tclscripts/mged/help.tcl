@@ -100,7 +100,7 @@ set mged_help_data(c)		$helplib_data(wdb_comb_std)
 set mged_help_data(cat)		$helplib_data(wdb_cat)
 set mged_help_data(cc)		{{name constraint_expression} {create a constraint based on the expression}}
 set mged_help_data(center)	$helplib_data(vo_center)
-set mged_help_data(check_overlaps)	$helplib_data(dgo_check_overlaps)
+set mged_help_data(check)	$helplib_data(dgo_check)
 set mged_help_data(closedb)	{{}	{close any open database}}
 set mged_help_data(clone)	{{[-abhimnprtv] <object>}	{clone allows user to quickly create copies of objects
 

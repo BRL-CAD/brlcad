@@ -172,7 +172,7 @@ set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
 set helplib_data(dgo_assoc)		{{[wdb_obj]} {set/get the associated database object}}
 set helplib_data(dgo_autoview)		{{view_obj} {calculate an appropriate view size and center for view_obj}}
 set helplib_data(dgo_blast)		{{[-A] [-o] [-C#/#/#] [-s] <object(s) | attribute name/value pairs>} {erase all currently displayed geometry and draw the specified object(s)}}
-set helplib_data(dgo_check_overlaps)	{{[options] [objects]} {check for overlaps of the current view or specified objects}}
+set helplib_data(dgo_check)		{{{subcommand} [options] [objects]} {do geometry analysis on the current view or specified objects}}
 set helplib_data(dgo_clear)		{{} {erase all objects from the display}}
 set helplib_data(dgo_draw)		{{[-A] [-o] [-C#/#/#] [-s] <objects | attribute name/value pairs>} {prepare object(s) for display}}
 set helplib_data(dgo_E)			{{[-C#/#/#] [-s] <objects>} {evaluated display of objects}}

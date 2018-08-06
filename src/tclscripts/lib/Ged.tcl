@@ -172,7 +172,7 @@ package provide cadwidgets::Ged 1.0
 	method c {args}
 	method cat {args}
 	method center {args}
-	method check_overlaps {args}
+	method check {args}
 	method clear {args}
 	method clone {args}
 	method coil {args}
@@ -405,7 +405,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_autoview {_pane args}
 	method pane_bind {_pane _event _script}
 	method pane_center {_pane args}
-	method pane_check_overlaps {_pane args}
+	method pane_check {_pane args}
 	method pane_constrain_rmode {_pane args}
 	method pane_constrain_tmode {_pane args}
 	method pane_data_scale_mode {_pane args}
@@ -1423,8 +1423,8 @@ package provide cadwidgets::Ged 1.0
     eval $mGed center $itk_component($itk_option(-pane)) $args
 }
 
-::itcl::body cadwidgets::Ged::check_overlaps {args} {
-    eval $mGed check_overlaps $itk_component($itk_option(-pane)) $args
+::itcl::body cadwidgets::Ged::check {args} {
+    eval $mGed check $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::clear {args} {
@@ -2609,8 +2609,8 @@ package provide cadwidgets::Ged 1.0
     eval $mGed center $itk_component($_pane) $args
 }
 
-::itcl::body cadwidgets::Ged::pane_check_overlaps {_pane args} {
-    eval $mGed check_overlaps $itk_component($_pane) $args
+::itcl::body cadwidgets::Ged::pane_check {_pane args} {
+    eval $mGed check $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_constrain_rmode {_pane args} {
@@ -6230,7 +6230,7 @@ package provide cadwidgets::Ged 1.0
     $help add c		{{[-gr] comb_name <boolean_expr>} {create or extend a combination using standard notation}}
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add center		{{["x y z"]} {set/get the view center}}
-    $help add check_overlaps	{{[options] [objects]} {check for overlaps in the current view or the specified objects}}
+    $help add check		{{{subcommand} [options] [objects]} {do geometry analysis on the current view or specified objects}}
     $help add clear		{{} {clear screen}}
     $help add clone		{{[options] object} {clone the specified object}}
     $help add coord		{{[m|v]} {set/get the coordinate system}}

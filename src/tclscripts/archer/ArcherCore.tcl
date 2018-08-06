@@ -1553,17 +1553,17 @@ namespace eval ArcherCore {
 		    -label "check overlaps" \
 		    -menu {
 			command fifty \
-			    -label "50x50" \
-			    -helpstr "Check for overlaps using a 50x50 grid"
+			    -label "1mm" \
+			    -helpstr "Check for overlaps using a 1mm grid"
 			command hundred \
-			    -label "100x100" \
-			    -helpstr "Check for overlaps using a 100x100 grid"
+			    -label "10mm" \
+			    -helpstr "Check for overlaps using a 10mm grid"
 			command twofiftysix \
-			    -label "256x256" \
-			    -helpstr "Check for overlaps using a 256x256 grid"
+			    -label "25mm" \
+			    -helpstr "Check for overlaps using a 25mm grid"
 			command fivetwelve \
-			    -label "512x512" \
-			    -helpstr "Check for overlaps using a 512x512 grid"
+			    -label "50mm" \
+			    -helpstr "Check for overlaps using a 50mm grid"
 		    }
 		cascade rt \
 		    -label "rt" \
@@ -1615,17 +1615,17 @@ namespace eval ArcherCore {
 
 	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps \
 	    -state disabled
+	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.one \
+	    -command [::itcl::code $this launchCheckOverlaps 1] \
+	    -state disabled
+	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.ten \
+	    -command [::itcl::code $this launchCheckOverlaps 10] \
+	    -state disabled
+	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.twentyfive \
+	    -command [::itcl::code $this launchCheckOverlaps 25] \
+	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fifty \
 	    -command [::itcl::code $this launchCheckOverlaps 50] \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.hundred \
-	    -command [::itcl::code $this launchCheckOverlaps 100] \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.twofiftysix \
-	    -command [::itcl::code $this launchCheckOverlaps 256] \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fivetwelve \
-	    -command [::itcl::code $this launchCheckOverlaps 512] \
 	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
 	    -state disabled
@@ -2092,13 +2092,13 @@ namespace eval ArcherCore {
     if {$mViewOnly && !$mNoToolbar} {
 	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps \
 	    -state normal
+	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.one \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.ten \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.twentyfive \
+	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fifty \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.hundred \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.twofiftysix \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fivetwelve \
 	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
 	    -state normal
@@ -5938,8 +5938,8 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::launchCheckOverlaps {size} {
-    putString "running check_overlaps -s $size"
-    if {[catch {$itk_component(ged) check_overlaps -s $size} output]} {
+    putString "running check overlaps -g$size,$size"
+    if {[catch {$itk_component(ged) check overlaps -g$size,$size -i -o -q} output]} {
 	tk_messageBox -message "$output"
 	return
     }
