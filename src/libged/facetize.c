@@ -38,6 +38,66 @@
 #include "wdb.h"
 #include "./ged_private.h"
 
+struct _ged_facetize_opts {
+    /* NMG specific options */
+    int triangulate;
+    int make_nmg;
+    int nmgbool;
+    int screened_poisson;
+    int marching_cube;
+    int nmg_use_tnurbs;
+    int regions;
+    int in_place;
+
+    /* Poisson specific options */ 
+    int pnt_surf_mode;
+    int pnt_grid_mode;
+    int pnt_rand_mode;
+    int pnt_sobol_mode;
+    int max_pnts;
+    int max_time;
+    fastf_t len_tol;
+    struct bu_vls *faceted_suffix;
+    struct bg_3d_spsr_opts s_opts;
+};
+
+struct _ged_facetize_opts * _ged_facetize_opts_create()
+{
+    struct bg_3d_spsr_opts s_opts = BG_3D_SPSR_OPTS_DEFAULT;
+    struct _ged_facetize_opts *o = NULL;
+    BU_GET(o, struct _ged_facetize_opts);
+    o->triangulate = 0;
+    o->make_nmg = 0;
+    o->nmgbool = 0;
+    o->marching_cube = 0;
+    o->screened_poisson = 0;
+    o->nmg_use_tnurbs = 0;
+    o->regions = 0;
+    o->in_place = 0;
+    BU_GET(o->faceted_suffix, struct bu_vls);
+    bu_vls_init(o->faceted_suffix);
+    bu_vls_sprintf(o->faceted_suffix, ".bot");
+
+    o->pnt_surf_mode = 0;
+    o->pnt_grid_mode = 0;
+    o->pnt_rand_mode = 0;
+    o->pnt_sobol_mode = 0;
+    o->max_pnts = 0;
+    o->max_time = 0;
+    o->len_tol = 0.0;
+    o->s_opts = s_opts;
+    return o;
+}
+void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
+{
+    if (!o) return;
+    if (o->faceted_suffix) {
+	bu_vls_free(o->faceted_suffix);
+	BU_PUT(o->faceted_suffix, struct bu_vls);
+    }
+    BU_PUT(o, struct _ged_facetize_opts);
+}
+
 /* Sort the argv array to list existing objects first and everything else at
  * the end.  Returns the number of argv entries where db_lookup failed */
 HIDDEN int
@@ -75,27 +135,48 @@ _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct d
 }
 
 HIDDEN int
-_ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], int newobj_cnt)
+_ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], struct _ged_facetize_opts *o, int newobj_cnt)
 {
     int i;
 
-    if (newobj_cnt < 1) {
-	bu_vls_printf(gedp->ged_result_str, "all objects listed already exist, aborting.  (Need new object name to write out results to.)\n");
-	return GED_ERROR;
-    }
-
-    if (newobj_cnt > 1) {
-	bu_vls_printf(gedp->ged_result_str, "More than one object listed does not exist:\n");
+    if (o->in_place && newobj_cnt) {
+	bu_vls_printf(gedp->ged_result_str, "In place conversion specified, but object list includes objects that do not exist:\n");
 	for (i = argc - newobj_cnt; i < argc; i++) {
 	    bu_vls_printf(gedp->ged_result_str, "	%s\n", argv[i]);
 	}
-	bu_vls_printf(gedp->ged_result_str, "\nAborting.  Need to specify exactly one object name that does not exist to hold facetization output.\n");
+	bu_vls_printf(gedp->ged_result_str, "\nAborting.  When performing an in-place facetization, a single pre-existing object must be specified.\n");
+	return GED_ERROR;
+
+    }
+
+    if (o->in_place && argc > 1) {
+	bu_vls_printf(gedp->ged_result_str, "In place conversion specified, but multiple objects listed:\n");
+	for (i = 0; i < argc; i++) {
+	    bu_vls_printf(gedp->ged_result_str, "	%s\n", argv[i]);
+	}
+	bu_vls_printf(gedp->ged_result_str, "\nAborting.  An in-place conversion replaces the specified object (or regions in a hierarchy in -r mode) with a faceted approximation.  Because a single object is generated, in-place conversion has no clear interpretation when multiple input objects are specified.\n");
 	return GED_ERROR;
     }
 
-    if (argc - newobj_cnt == 0) {
-	bu_vls_printf(gedp->ged_result_str, "No existing objects specified, nothing to facetize.  Aborting.\n");
-	return GED_ERROR;
+    if (!o->in_place) {
+	if (newobj_cnt < 1) {
+	    bu_vls_printf(gedp->ged_result_str, "all objects listed already exist, aborting.  (Need new object name to write out results to.)\n");
+	    return GED_ERROR;
+	}
+
+	if (newobj_cnt > 1) {
+	    bu_vls_printf(gedp->ged_result_str, "More than one object listed does not exist:\n");
+	    for (i = argc - newobj_cnt; i < argc; i++) {
+		bu_vls_printf(gedp->ged_result_str, "	%s\n", argv[i]);
+	    }
+	    bu_vls_printf(gedp->ged_result_str, "\nAborting.  Need to specify exactly one object name that does not exist to hold facetization output.\n");
+	    return GED_ERROR;
+	}
+
+	if (argc - newobj_cnt == 0) {
+	    bu_vls_printf(gedp->ged_result_str, "No existing objects specified, nothing to facetize.  Aborting.\n");
+	    return GED_ERROR;
+	}
     }
     return GED_OK;
 }
@@ -107,6 +188,42 @@ _int_to_opt(int op)
     if (op == 3) return DB_OP_INTERSECT;
     if (op == 4) return DB_OP_SUBTRACT;
     return DB_OP_NULL;
+}
+
+HIDDEN int
+_db_uniq_test(struct bu_vls *n, void *data)
+{
+    struct ged *gedp = (struct ged *)data;
+    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
+    return 0;
+}
+
+HIDDEN int
+_ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n)
+{
+    const char *mav[3];
+    const char *cmdname = "facetize";
+    struct bu_vls tname = BU_VLS_INIT_ZERO;
+    mav[0] = cmdname;
+    bu_vls_sprintf(&tname, "%s", o);
+    bu_vls_incr(&tname, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+    mav[1] = o;
+    mav[2] = bu_vls_addr(&tname);
+    if (ged_move(gedp, 3, (const char **)mav) != GED_OK) {
+	return GED_ERROR;
+    }
+    mav[1] = n;
+    mav[2] = o;
+    if (ged_move(gedp, 3, (const char **)mav) != GED_OK) {
+	return GED_ERROR;
+    }
+    mav[1] = bu_vls_addr(&tname);
+    mav[2] = n;
+    if (ged_move(gedp, 3, (const char **)mav) != GED_OK) {
+	return GED_ERROR;
+    }
+    
+    return GED_OK;
 }
 
 static union tree *
@@ -207,64 +324,6 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 }
 
 
-struct _ged_facetize_opts {
-    /* NMG specific options */
-    int triangulate;
-    int make_nmg;
-    int nmgbool;
-    int screened_poisson;
-    int marching_cube;
-    int nmg_use_tnurbs;
-    int regions;
-
-    /* Poisson specific options */ 
-    int pnt_surf_mode;
-    int pnt_grid_mode;
-    int pnt_rand_mode;
-    int pnt_sobol_mode;
-    int max_pnts;
-    int max_time;
-    fastf_t len_tol;
-    struct bu_vls *faceted_suffix;
-    struct bg_3d_spsr_opts s_opts;
-};
-
-struct _ged_facetize_opts * _ged_facetize_opts_create()
-{
-    struct bg_3d_spsr_opts s_opts = BG_3D_SPSR_OPTS_DEFAULT;
-    struct _ged_facetize_opts *o = NULL;
-    BU_GET(o, struct _ged_facetize_opts);
-    o->triangulate = 0;
-    o->make_nmg = 0;
-    o->nmgbool = 0;
-    o->marching_cube = 0;
-    o->screened_poisson = 0;
-    o->nmg_use_tnurbs = 0;
-    o->regions = 0;
-    BU_GET(o->faceted_suffix, struct bu_vls);
-    bu_vls_init(o->faceted_suffix);
-    bu_vls_sprintf(o->faceted_suffix, ".bot");
-
-    o->pnt_surf_mode = 0;
-    o->pnt_grid_mode = 0;
-    o->pnt_rand_mode = 0;
-    o->pnt_sobol_mode = 0;
-    o->max_pnts = 0;
-    o->max_time = 0;
-    o->len_tol = 0.0;
-    o->s_opts = s_opts;
-    return o;
-}
-void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
-{
-    if (!o) return;
-    if (o->faceted_suffix) {
-	bu_vls_free(o->faceted_suffix);
-	BU_PUT(o->faceted_suffix, struct bu_vls);
-    }
-    BU_PUT(o, struct _ged_facetize_opts);
-}
-
 
 #ifdef ENABLE_SPR
 HIDDEN int
@@ -278,6 +337,7 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
     struct rt_pnts_internal *pnts;
     struct rt_bot_internal *bot = NULL;
     struct pnt_normal *pn, *pl;
+    struct bu_vls oname = BU_VLS_INIT_ZERO;
     int flags = 0;
     int newobj_cnt = 0;
     int i;
@@ -286,7 +346,7 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
     vect_t *input_normals_3d;
 
     newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, NULL);
-    if (_ged_validate_objs_list(gedp, argc, argv, newobj_cnt) == GED_ERROR) {
+    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
 	return GED_ERROR;
     }
 
@@ -295,8 +355,18 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
 	return GED_ERROR;
     }
 
-    newname = (char *)argv[argc-1];
-    argc--;
+    if (!opts->in_place) {
+	newname = (char *)argv[argc-1];
+	argc--;
+    } else {
+	/* Find a new name for the original object - that's also our working
+	 * "newname" for the initial processing, until we swap at the end. */
+	bu_vls_sprintf(&oname, "%s_original", argv[0]);
+	if (db_lookup(dbip, bu_vls_addr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_incr(&oname, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+	}
+	newname = (char *)bu_vls_addr(&oname);
+    }
 
     dp = db_lookup(dbip, argv[0], LOOKUP_QUIET);
 
@@ -421,12 +491,18 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
 	return GED_ERROR;
     }
 
+    if (opts->in_place) {
+	if (_ged_facetize_obj_swap(gedp, argv[0], newname) != GED_OK) {
+	    return GED_ERROR;
+	}
+    }
+
     return GED_OK;
 }
 #endif
 
 int
-_ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
+_ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts, struct bu_attribute_value_set *nmap)
 {
     int newobj_cnt;
     char *newname;
@@ -435,7 +511,8 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
     struct directory *dp;
     struct model *nmg_model = NULL;
     struct rt_bot_internal *bot = NULL;
-    /* static due to jumping */
+    struct bu_vls oname = BU_VLS_INIT_ZERO;
+    /* static due to jumping - TODO, do these still need to be static? */
     static int triangulate;
     static int make_nmg;
     static int marching_cube;
@@ -451,12 +528,22 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
     }
 
     newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, NULL);
-    if (_ged_validate_objs_list(gedp, argc, argv, newobj_cnt) == GED_ERROR) {
+    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
 	return GED_ERROR;
     }
 
-    newname = (char *)argv[argc-1];
-    argc--;
+    if (!opts->in_place) {
+	newname = (char *)argv[argc-1];
+	argc--;
+    } else {
+	/* Find a new name for the original object - that's also our working
+	 * "newname" for the initial processing, until we swap at the end. */
+	bu_vls_sprintf(&oname, "%s_original", argv[0]);
+	if (db_lookup(dbip, bu_vls_addr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_incr(&oname, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+	}
+	newname = (char *)bu_vls_addr(&oname);
+    }
 
     bu_vls_printf(gedp->ged_result_str,
 	    "facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
@@ -536,19 +623,20 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 	return GED_ERROR;
     }
 
+    if (opts->in_place) {
+	if (_ged_facetize_obj_swap(gedp, argv[0], newname) != GED_OK) {
+	    return GED_ERROR;
+	}
+	if (nmap && !bu_avs_add(nmap, argv[0], newname)) {
+	    return GED_ERROR;
+	}
+    }
+
     return GED_OK;
 }
 
 int
-_db_uniq_test(struct bu_vls *n, void *data)
-{
-    struct ged *gedp = (struct ged *)data;
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
-    return 0;
-}
-
-int
-_ged_facetize_cpcomb(struct ged *gedp, const char *o, struct bu_attribute_value_set *nmap)
+_ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts *opts, struct bu_attribute_value_set *nmap)
 {
     int ret = GED_OK;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
@@ -571,9 +659,12 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct bu_attribute_value_
     flags = dp->d_flags;
 
     /* Get new name */
-    bu_vls_sprintf(&tmp, "%s", o);
-    bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
-
+    if (!bu_avs_get(nmap, o)) {
+	bu_vls_sprintf(&tmp, "%s", o);
+	bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+    } else {
+	bu_vls_sprintf(&tmp, "%s", bu_avs_get(nmap, o));
+    }
 
     /* Make a new empty comb with the same properties as the original, sans tree */
     RT_DB_INTERNAL_INIT(&intern);
@@ -600,17 +691,19 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct bu_attribute_value_
     /* apply attributes to new comb */
     db5_update_attributes(dp, &avs, dbip);
 
-    /* If we already have a matching object name in the map, add it to the comb - the
-     * comb is going to take over now as the "representative" object for the original
-     * in the map. */
-    fname = bu_avs_get(nmap, o);
-    if (fname) {
-	ret = _ged_combadd2(gedp, bu_vls_addr(&tmp), 1, (const char **)&fname, 0, DB_OP_UNION, 0, 0, NULL, 0);
-    }
+    if (!opts->in_place) {
+	/* If we already have a matching object name in the map, add it to the comb - the
+	 * comb is going to take over now as the "representative" object for the original
+	 * in the map. */
+	fname = bu_avs_get(nmap, o);
+	if (fname) {
+	    ret = _ged_combadd2(gedp, bu_vls_addr(&tmp), 1, (const char **)&fname, 0, DB_OP_UNION, 0, 0, NULL, 0);
+	}
 
-    /* Update the map */
-    if (!bu_avs_add(nmap, o, bu_vls_addr(&tmp))) {
-	return GED_ERROR;
+	/* Update the map */
+	if (!bu_avs_add(nmap, o, bu_vls_addr(&tmp))) {
+	    return GED_ERROR;
+	}
     }
     return ret;
 }
@@ -625,6 +718,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
     struct bu_attribute_value_set nmap = BU_AVS_INIT_ZERO;
     struct directory **dpa = NULL;
+    struct bu_vls oname = BU_VLS_INIT_ZERO;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     const char **ntop;
     /* We need to copy combs above regions that are not themselves regions.
@@ -638,22 +732,32 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 
     if (argc) dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
     newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
-    if (_ged_validate_objs_list(gedp, argc, argv, newobj_cnt) == GED_ERROR) {
+    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
 	return GED_ERROR;
     }
 
-    newname = (char *)argv[argc-1];
-    argc--;
-
+    if (!opts->in_place) {
+	newname = (char *)argv[argc-1];
+	argc--;
+    } else {
+	/* Find a new name for the original object, and a temporary name to use
+	 * during the working process */
+	bu_vls_sprintf(&oname, "%s_original", argv[0]);
+	if (db_lookup(dbip, bu_vls_addr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_incr(&oname, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+	}
+	bu_avs_add(&nmap, argv[0], bu_vls_addr(&oname));
+	newname = (char *)bu_avs_get(&nmap, argv[0]);
+    }
 
     BU_ALLOC(pc, struct bu_ptbl);
     BU_ALLOC(ar, struct bu_ptbl);
-    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, preserve_combs, newobj_cnt, dpa, dbip, NULL) < 0) {
+    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, preserve_combs, argc, dpa, dbip, NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "problem searching for parent combs - aborting.\n");
 	ret = GED_ERROR;
 	goto ged_facetize_regions_memfree;
     }
-    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, newobj_cnt, dpa, dbip, NULL) < 0) {
+    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "problem searching for active regions - aborting.\n");
 	ret = GED_ERROR;
 	goto ged_facetize_regions_memfree;
@@ -672,23 +776,27 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     BU_ALLOC(ar_failed_nmg, struct bu_ptbl);
     bu_ptbl_init(ar_failed_nmg, 64, "failed list init");
     for (i = 0; i < BU_PTBL_LEN(ar); i++) {
+	int ac = (opts->in_place) ? 1 : 2;
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	const char *nargv[2];
 	const char *narg;
-	bu_vls_sprintf(&tmp, "%s%s", n->d_namep, bu_vls_addr(opts->faceted_suffix));
-	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmp), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+	struct bu_attribute_value_set *nmp = (opts->in_place) ? &nmap : NULL;
+	if (!opts->in_place) {
+	    bu_vls_sprintf(&tmp, "%s%s", n->d_namep, bu_vls_addr(opts->faceted_suffix));
+	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmp), LOOKUP_QUIET) != RT_DIR_NULL) {
+		bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+	    }
+	    bu_avs_add(&nmap, n->d_namep, bu_vls_addr(&tmp));
 	}
-	bu_avs_add(&nmap, n->d_namep, bu_vls_addr(&tmp));
 	narg = bu_avs_get(&nmap, n->d_namep);
 	nargv[0] = n->d_namep;
-	nargv[1] = narg;
+	nargv[1] = (opts->in_place) ? NULL : narg;
 
 	bu_vls_printf(gedp->ged_result_str, "NMG tessellating %s from %s\n", narg, n->d_namep);
-	if (_ged_nmg_facetize(gedp, 2, nargv, opts) != GED_OK) {
+	if (_ged_nmg_facetize(gedp, ac, nargv, opts, nmp) != GED_OK) {
 	    bu_ptbl_ins(ar_failed_nmg, (long *)narg);
 	} else {
-	    if (_ged_facetize_cpcomb(gedp, n->d_namep, &nmap) != GED_OK) {
+	    if (_ged_facetize_cpcomb(gedp, n->d_namep, opts, &nmap) != GED_OK) {
 		bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", n->d_namep);
 	    }
 	}
@@ -697,7 +805,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     /* For all the pc combs, make new versions with the suffixed names */
     for (i = 0; i < BU_PTBL_LEN(pc); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
-	if (_ged_facetize_cpcomb(gedp, n->d_namep, &nmap) != GED_OK) {
+	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts, &nmap) != GED_OK) {
 	    bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", n->d_namep);
 	}
 	bu_vls_printf(gedp->ged_result_str, "Making new comb %s from %s\n", bu_avs_get(&nmap, n->d_namep), n->d_namep);
@@ -753,6 +861,25 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     }
     ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, NULL, 0);
 
+    if (opts->in_place) {
+
+	/* The "new" tree is actually the preservation of the old tree in this
+	 * scenario, so rename accordingly */
+	const char *mav[3];
+	const char *cmdname = "facetize";
+	mav[0] = cmdname;
+	for (i = 0; i < BU_PTBL_LEN(pc); i++) {
+	    struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
+	    if (_ged_facetize_obj_swap(gedp, n->d_namep, bu_avs_get(&nmap, n->d_namep)) != GED_OK) {
+		return GED_ERROR;
+	    }
+	}
+	if (_ged_facetize_obj_swap(gedp, argv[0], newname) != GED_OK) {
+	    return GED_ERROR;
+	}
+	bu_free(newname, "local newname copy");
+    }
+
     /* Done changing stuff - update nref. */
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
@@ -774,7 +901,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     int print_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[9];
+    struct bu_opt_desc d[10];
     struct bu_opt_desc pd[11];
 
     BU_OPT(d[0], "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
@@ -785,7 +912,8 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[5], "",  "TNURB",         "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
     BU_OPT(d[6], "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");
     BU_OPT(d[7], "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
-    BU_OPT_NULL(d[8]);
+    BU_OPT(d[8], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
+    BU_OPT_NULL(d[9]);
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
@@ -867,18 +995,18 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     if (!opts->screened_poisson) {
 
 	/* must be wanting help */
-	if (print_help || argc < 2) {
+	if (print_help || (argc < 2 && !opts->in_place) || argc < 1) {
 	    _ged_cmd_help(gedp, usage, d);
 	    ret = GED_OK;
 	    goto ged_facetize_memfree;
 	}
 
-	ret =  _ged_nmg_facetize(gedp, argc, argv, opts);
+	ret =  _ged_nmg_facetize(gedp, argc, argv, opts, NULL);
 	goto ged_facetize_memfree;
 
     } else {
 
-	if (argc < 2 || print_help || opts->marching_cube || opts->nmg_use_tnurbs) {
+	if ((argc < 2 && !opts->in_place) || argc < 1 || print_help || opts->marching_cube || opts->nmg_use_tnurbs) {
 	    if (print_help || argc < 2) {
 		_ged_cmd_help(gedp, pusage, pd);
 		ret = GED_OK;
