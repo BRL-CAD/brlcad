@@ -459,7 +459,7 @@ _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name)
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
-    
+
     return GED_OK;
 }
 
@@ -488,7 +488,7 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name)
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
-    
+
     return GED_OK;
 }
 
@@ -499,7 +499,6 @@ _ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname, struct
     int ret = GED_OK;
     struct directory *dp;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct rt_db_internal intern;
     struct rt_db_internal in_intern;
     struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
     struct rt_pnts_internal *pnts;
@@ -596,21 +595,23 @@ _ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname, struct
 	/* Convert BoT to NMG */
 	struct model *m = nmg_mm();
 	struct nmgregion *r;
+	struct rt_db_internal intern;
 
+	/* Use intern to fake out rt_bot_tess, since it expects an
+	 * rt_db_internal wrapper */
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-
-	/* Use our new intern to fake out rt_bot_tess, since it expects an
-	 * rt_db_internal wrapper */
 	intern.idb_type = ID_BOT;
 	intern.idb_ptr = (void *)bot;
 	if (rt_bot_tess(&r, m, &intern, NULL, &btol) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Failed to convert Bot to NMG\n");
+	    rt_db_free_internal(&intern);
 	    ret = GED_ERROR;
 	    goto ged_facetize_spsr_memfree;
 	} else {
 	    /* OK,have NMG now - write it out */
 	    ret = _write_nmg(gedp, m, newname);
+	    rt_db_free_internal(&intern);
 	}
     }
 
