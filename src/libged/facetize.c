@@ -597,13 +597,21 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     bu_ptbl_init(ar_failed_nmg, 64, "failed list init");
     for (i = 0; i < BU_PTBL_LEN(ar); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
+	const char *nargv[2];
+	const char *narg;
 	bu_vls_sprintf(&tmp, "%s%s", n->d_namep, bu_vls_addr(opts->faceted_suffix));
 	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmp), LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
 	}
 	bu_avs_add(&nmap, n->d_namep, bu_vls_addr(&tmp));
+	narg = bu_avs_get(&nmap, n->d_namep);
+	nargv[0] = n->d_namep;
+	nargv[1] = narg;
 
-	bu_vls_printf(gedp->ged_result_str, "NMG tessellating %s from %s\n", bu_avs_get(&nmap, n->d_namep), n->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "NMG tessellating %s from %s\n", narg, n->d_namep);
+	if (_ged_nmg_facetize(gedp, 2, nargv, opts) != GED_OK) {
+	    bu_ptbl_ins(ar_failed_nmg, (long *)narg);
+	}
     }
 
     /* For all the pc combs, make new versions with the suffixed names */
