@@ -162,7 +162,6 @@ RT_EXPORT extern struct rt_bot_internal *nmg_bot(struct shell *s,
 						 struct bu_list *vlfree,
                                                  const struct bn_tol *tol);
 RT_EXPORT extern struct rt_bot_internal *nmg_mdl_to_bot(struct model *m,
-       	                                                int triangulate,
        	                                                struct bu_list *vlfree,
        	                                                const struct bn_tol *tol);
 struct db_tree_state; /* forward declaration */

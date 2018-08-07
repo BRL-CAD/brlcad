@@ -458,7 +458,7 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
     }
 
     /* Triangulate model, if requested */
-    if (triangulate) {
+    if (triangulate && make_nmg) {
 	bu_vls_printf(gedp->ged_result_str, "facetize:  triangulating resulting object\n");
 	if (!BU_SETJUMP) {
 	    /* try */
@@ -478,7 +478,7 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
     if (!make_nmg) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, 0, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
+	    bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
