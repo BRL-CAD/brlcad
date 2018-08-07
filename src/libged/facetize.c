@@ -537,6 +537,31 @@ _db_uniq_test(struct bu_vls *n, void *data)
 }
 
 int
+_ged_facetize_mkrcomb(struct ged *gedp, const char *o, struct bu_attribute_value_set *avs)
+{
+    struct bu_vls tmp = BU_VLS_INIT_ZERO;
+    const char *fname;
+
+    fname = bu_avs_get(avs, o);
+    if (!fname) return GED_ERROR;
+    bu_vls_sprintf(&tmp, "%s", o);
+    bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+
+    /* TODO - unpack original comb to get info to duplicate in new comb */
+
+/*
+    mk_lcomb(gedp->ged_wdbp, bu_vls_addr(&tmp), NULL, 1, 
+*/
+
+    /* region comb hides the bot as far as the rest of the tree is concerned, so
+     * update the map */
+    if (bu_avs_add(avs, o, bu_vls_addr(&tmp)) != 1) {
+	return GED_ERROR;
+    }
+    return GED_OK;
+}
+
+int
 _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
 {
     char *newname = NULL;
@@ -611,6 +636,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	bu_vls_printf(gedp->ged_result_str, "NMG tessellating %s from %s\n", narg, n->d_namep);
 	if (_ged_nmg_facetize(gedp, 2, nargv, opts) != GED_OK) {
 	    bu_ptbl_ins(ar_failed_nmg, (long *)narg);
+	} else {
+	    if (_ged_facetize_mkrcomb(gedp, n->d_namep, &nmap) != GED_OK) {
+		bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", n->d_namep);
+	    }
 	}
     }
 
