@@ -38,6 +38,9 @@
 #include "wdb.h"
 #include "./ged_private.h"
 
+#define SOLID_OBJ_NAME 1
+#define COMB_OBJ_NAME 2
+
 struct _ged_facetize_opts {
     /* NMG specific options */
     int triangulate;
@@ -49,7 +52,7 @@ struct _ged_facetize_opts {
     int regions;
     int in_place;
 
-    /* Poisson specific options */ 
+    /* Poisson specific options */
     int pnt_surf_mode;
     int pnt_grid_mode;
     int pnt_rand_mode;
@@ -59,6 +62,10 @@ struct _ged_facetize_opts {
     fastf_t len_tol;
     struct bu_vls *faceted_suffix;
     struct bg_3d_spsr_opts s_opts;
+
+    /* internal */
+    struct bu_attribute_value_set *c_map;
+    struct bu_attribute_value_set *s_map;
 };
 
 struct _ged_facetize_opts * _ged_facetize_opts_create()
@@ -86,6 +93,13 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     o->max_time = 0;
     o->len_tol = 0.0;
     o->s_opts = s_opts;
+
+    BU_ALLOC(o->c_map, struct bu_attribute_value_set);
+    BU_ALLOC(o->s_map, struct bu_attribute_value_set);
+
+    bu_avs_init_empty(o->c_map);
+    bu_avs_init_empty(o->s_map);
+
     return o;
 }
 void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
@@ -95,7 +109,59 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
 	bu_vls_free(o->faceted_suffix);
 	BU_PUT(o->faceted_suffix, struct bu_vls);
     }
+
+    bu_avs_free(o->c_map);
+    bu_avs_free(o->s_map);
+    bu_free(o->c_map, "comb map");
+    bu_free(o->s_map, "solid map");
+
     BU_PUT(o, struct _ged_facetize_opts);
+}
+
+HIDDEN db_op_t
+_int_to_opt(int op)
+{
+    if (op == 2) return DB_OP_UNION;
+    if (op == 3) return DB_OP_INTERSECT;
+    if (op == 4) return DB_OP_SUBTRACT;
+    return DB_OP_NULL;
+}
+
+HIDDEN int
+_db_uniq_test(struct bu_vls *n, void *data)
+{
+    struct ged *gedp = (struct ged *)data;
+    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
+    return 0;
+}
+
+
+HIDDEN void
+_ged_facetize_mkname(struct ged *gedp, struct _ged_facetize_opts *opts, const char *n, int type)
+{
+    struct bu_vls incr_template = BU_VLS_INIT_ZERO;
+
+    if (type == SOLID_OBJ_NAME) {
+	bu_vls_sprintf(&incr_template, "%s%s", n, bu_vls_addr(opts->faceted_suffix));
+    }
+    if (type == COMB_OBJ_NAME) {
+	if (opts->in_place) {
+	    bu_vls_sprintf(&incr_template, "%s_orig", n);
+	} else {
+	    bu_vls_sprintf(&incr_template, "%s", n);
+	}
+    }
+    if (!bu_vls_strlen(&incr_template)) return;
+    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&incr_template), LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_incr(&incr_template, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+    }
+
+    if (type == SOLID_OBJ_NAME) {
+	bu_avs_add(opts->s_map, n, bu_vls_addr(&incr_template));
+    }
+    if (type == COMB_OBJ_NAME) {
+	bu_avs_add(opts->c_map, n, bu_vls_addr(&incr_template));
+    }
 }
 
 /* Sort the argv array to list existing objects first and everything else at
@@ -181,49 +247,46 @@ _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], struct _
     return GED_OK;
 }
 
-HIDDEN db_op_t
-_int_to_opt(int op)
-{
-    if (op == 2) return DB_OP_UNION;
-    if (op == 3) return DB_OP_INTERSECT;
-    if (op == 4) return DB_OP_SUBTRACT;
-    return DB_OP_NULL;
-}
-
-HIDDEN int
-_db_uniq_test(struct bu_vls *n, void *data)
-{
-    struct ged *gedp = (struct ged *)data;
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
-    return 0;
-}
-
 HIDDEN int
 _ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n)
 {
+    int ret = GED_OK;
     const char *mav[3];
     const char *cmdname = "facetize";
+    /* o or n may point to a d_namep location, which will change with
+     * moves, so copy them up front for consistent values */
+    struct bu_vls oname = BU_VLS_INIT_ZERO;
+    struct bu_vls nname = BU_VLS_INIT_ZERO;
     struct bu_vls tname = BU_VLS_INIT_ZERO;
     mav[0] = cmdname;
+    bu_vls_sprintf(&oname, "%s", o);
+    bu_vls_sprintf(&nname, "%s", n);
     bu_vls_sprintf(&tname, "%s", o);
     bu_vls_incr(&tname, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
-    mav[1] = o;
+    mav[1] = bu_vls_addr(&oname);
     mav[2] = bu_vls_addr(&tname);
     if (ged_move(gedp, 3, (const char **)mav) != GED_OK) {
-	return GED_ERROR;
+	ret = GED_ERROR;
+	goto ged_facetize_obj_swap_memfree;
     }
-    mav[1] = n;
-    mav[2] = o;
+    mav[1] = bu_vls_addr(&nname);
+    mav[2] = bu_vls_addr(&oname);
     if (ged_move(gedp, 3, (const char **)mav) != GED_OK) {
-	return GED_ERROR;
+	ret = GED_ERROR;
+	goto ged_facetize_obj_swap_memfree;
     }
     mav[1] = bu_vls_addr(&tname);
-    mav[2] = n;
+    mav[2] = bu_vls_addr(&nname);
     if (ged_move(gedp, 3, (const char **)mav) != GED_OK) {
-	return GED_ERROR;
+	ret = GED_ERROR;
+	goto ged_facetize_obj_swap_memfree;
     }
-    
-    return GED_OK;
+
+ged_facetize_obj_swap_memfree:
+    bu_vls_free(&oname);
+    bu_vls_free(&nname);
+    bu_vls_free(&tname);
+    return ret;
 }
 
 static union tree *
@@ -323,7 +386,100 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     return (failed) ? NULL : nmg_model;
 }
 
+HIDDEN int
+_try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, int marching_cube)
+{
+    bu_vls_printf(gedp->ged_result_str, "facetize:  triangulating resulting object\n");
+    if (!BU_SETJUMP) {
+	/* try */
+	if (marching_cube == 1)
+	    nmg_triangulate_model_mc(nmg_model, &gedp->ged_wdbp->wdb_tol);
+	else
+	    nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
+    } else {
+	/* catch */
+	BU_UNSETJUMP;
+	bu_vls_printf(gedp->ged_result_str, "WARNING: triangulation failed!!!\n");
+	nmg_km(nmg_model);
+	return GED_ERROR;
+    } BU_UNSETJUMP;
+    return GED_OK;
+} 
 
+HIDDEN struct rt_bot_internal *
+_try_nmg_to_bot(struct ged *gedp, struct model *nmg_model)
+{
+    struct rt_bot_internal *bot = NULL;
+    if (!BU_SETJUMP) {
+	/* try */
+	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
+    } else {
+	/* catch */
+	BU_UNSETJUMP;
+	bu_vls_printf(gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
+	return NULL;
+    } BU_UNSETJUMP;
+
+    return bot;
+} 
+
+HIDDEN int
+_write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name)
+{
+    struct rt_db_internal intern;
+    struct directory *dp;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+
+    /* Export BOT as a new solid */
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_BOT;
+    intern.idb_meth = &OBJ[ID_BOT];
+    intern.idb_ptr = (void *)bot;
+
+    dp=db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", name);
+	return GED_ERROR;
+    }
+
+    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to write %s to database\n", name);
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+    
+    return GED_OK;
+}
+
+HIDDEN int
+_write_nmg(struct ged *gedp, struct model *nmg_model, const char *name)
+{
+    struct rt_db_internal intern;
+    struct directory *dp;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+
+    /* Export NMG as a new solid */
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_NMG;
+    intern.idb_meth = &OBJ[ID_NMG];
+    intern.idb_ptr = (void *)nmg_model;
+
+    dp=db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", name);
+	return GED_ERROR;
+    }
+
+    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to write %s to database\n", name);
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+    
+    return GED_OK;
+}
 
 #ifdef ENABLE_SPR
 HIDDEN int
@@ -502,23 +658,64 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
 #endif
 
 int
-_ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts, struct bu_attribute_value_set *nmap)
+_ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname, struct _ged_facetize_opts *opts)
+{
+    struct rt_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
+    int ret = GED_OK;
+    struct model *nmg_model = NULL;
+    struct rt_bot_internal *bot = NULL;
+
+    bu_vls_printf(gedp->ged_result_str,
+	    "facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
+	    tol->abs, tol->rel, tol->norm);
+
+    nmg_model = _try_nmg_facetize(gedp, argc, argv, opts->nmg_use_tnurbs);
+    if (nmg_model == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "facetize:  no resulting region, aborting\n");
+	return GED_ERROR;
+    }
+
+    /* Triangulate model, if requested */
+    if (opts->triangulate && opts->make_nmg) {
+	if (_try_nmg_triangulate(gedp, nmg_model, opts->marching_cube) != GED_OK) {
+	    return GED_ERROR;
+	}
+    }
+
+    if (!opts->make_nmg) {
+
+	/* Make and write out the bot */
+	bot = _try_nmg_to_bot(gedp, nmg_model);
+	nmg_km(nmg_model);
+
+	if (!bot) {
+	    bu_vls_printf(gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
+	    return GED_ERROR;
+	}
+
+	ret = _write_bot(gedp, bot, newname);
+
+    } else {
+
+	/* Just write the NMG */
+	bu_vls_printf(gedp->ged_result_str, "facetize:  converting NMG to database format\n");
+	ret = _write_nmg(gedp, nmg_model, newname);
+
+    }
+
+    return ret;
+}
+
+
+
+
+int
+_ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
 {
     int newobj_cnt;
     char *newname;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct rt_db_internal intern;
-    struct directory *dp;
-    struct model *nmg_model = NULL;
-    struct rt_bot_internal *bot = NULL;
     struct bu_vls oname = BU_VLS_INIT_ZERO;
-    /* static due to jumping - TODO, do these still need to be static? */
-    static int triangulate;
-    static int make_nmg;
-    static int marching_cube;
-    triangulate = opts->triangulate;
-    make_nmg = opts->make_nmg;
-    marching_cube = opts->marching_cube;
 
     RT_CHECK_DBI(dbip);
 
@@ -545,89 +742,12 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 	newname = (char *)bu_vls_addr(&oname);
     }
 
-    bu_vls_printf(gedp->ged_result_str,
-	    "facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
-	    gedp->ged_wdbp->wdb_ttol.abs, gedp->ged_wdbp->wdb_ttol.rel, gedp->ged_wdbp->wdb_ttol.norm);
-
-    nmg_model = _try_nmg_facetize(gedp, argc, argv, opts->nmg_use_tnurbs);
-    if (nmg_model == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "facetize:  no resulting region, aborting\n");
-	return GED_ERROR;
-    }
-
-    /* Triangulate model, if requested */
-    if (triangulate && make_nmg) {
-	bu_vls_printf(gedp->ged_result_str, "facetize:  triangulating resulting object\n");
-	if (!BU_SETJUMP) {
-	    /* try */
-	    if (marching_cube == 1)
-		nmg_triangulate_model_mc(nmg_model, &gedp->ged_wdbp->wdb_tol);
-	    else
-		nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
-	} else {
-	    /* catch */
-	    BU_UNSETJUMP;
-	    bu_vls_printf(gedp->ged_result_str, "WARNING: triangulation failed!!!\n");
-	    nmg_km(nmg_model);
-	    return GED_ERROR;
-	} BU_UNSETJUMP;
-    }
-
-    if (!make_nmg) {
-	if (!BU_SETJUMP) {
-	    /* try */
-	    bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
-	} else {
-	    /* catch */
-	    BU_UNSETJUMP;
-	    bu_vls_printf(gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
-	    nmg_km(nmg_model);
-	    return GED_ERROR;
-	} BU_UNSETJUMP;
-
-	nmg_km(nmg_model);
-
-	if (!bot) {
-	    bu_vls_printf(gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
-	    return GED_ERROR;
-	}
-
-	/* Export BOT as a new solid */
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_BOT;
-	intern.idb_meth = &OBJ[ID_BOT];
-	intern.idb_ptr = (void *) bot;
-
-    } else {
-
-	bu_vls_printf(gedp->ged_result_str, "facetize:  converting NMG to database format\n");
-
-	/* Export NMG as a new solid */
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_NMG;
-	intern.idb_meth = &OBJ[ID_NMG];
-	intern.idb_ptr = (void *)nmg_model;
-    }
-
-    dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-    if (dp == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", newname);
-	return GED_ERROR;
-    }
-
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Failed to write %s to database\n", newname);
-	rt_db_free_internal(&intern);
+    if (_ged_nmg_obj(gedp, argc, argv, newname, opts) != GED_OK) {
 	return GED_ERROR;
     }
 
     if (opts->in_place) {
 	if (_ged_facetize_obj_swap(gedp, argv[0], newname) != GED_OK) {
-	    return GED_ERROR;
-	}
-	if (nmap && !bu_avs_add(nmap, argv[0], newname)) {
 	    return GED_ERROR;
 	}
     }
@@ -636,7 +756,7 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 }
 
 int
-_ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts *opts, struct bu_attribute_value_set *nmap)
+_ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts *opts)
 {
     int ret = GED_OK;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
@@ -644,8 +764,6 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts 
     struct rt_db_internal ointern, intern;
     struct rt_comb_internal *ocomb, *comb;
     struct bu_attribute_value_set avs;
-    struct bu_vls tmp = BU_VLS_INIT_ZERO;
-    const char *fname;
     int flags;
 
     /* Unpack original comb to get info to duplicate in new comb */
@@ -658,14 +776,6 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts 
     RT_CK_COMB(ocomb);
     flags = dp->d_flags;
 
-    /* Get new name */
-    if (!bu_avs_get(nmap, o)) {
-	bu_vls_sprintf(&tmp, "%s", o);
-	bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
-    } else {
-	bu_vls_sprintf(&tmp, "%s", bu_avs_get(nmap, o));
-    }
-
     /* Make a new empty comb with the same properties as the original, sans tree */
     RT_DB_INTERNAL_INIT(&intern);
     BU_ALLOC(comb, struct rt_comb_internal);
@@ -674,7 +784,7 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts 
     intern.idb_type = ID_COMBINATION;
     intern.idb_ptr = (void *)comb;
     intern.idb_meth = &OBJ[ID_COMBINATION];
-    GED_DB_DIRADD(gedp, dp, bu_vls_addr(&tmp), -1, 0, flags, (void *)&intern.idb_type, 0);
+    GED_DB_DIRADD(gedp, dp, bu_avs_get(opts->c_map, o), -1, 0, flags, (void *)&intern.idb_type, 0);
     comb->region_flag = ocomb->region_flag;
     bu_vls_vlscat(&comb->shader, &ocomb->shader);
     comb->rgb_valid = ocomb->rgb_valid;
@@ -691,20 +801,6 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts 
     /* apply attributes to new comb */
     db5_update_attributes(dp, &avs, dbip);
 
-    if (!opts->in_place) {
-	/* If we already have a matching object name in the map, add it to the comb - the
-	 * comb is going to take over now as the "representative" object for the original
-	 * in the map. */
-	fname = bu_avs_get(nmap, o);
-	if (fname) {
-	    ret = _ged_combadd2(gedp, bu_vls_addr(&tmp), 1, (const char **)&fname, 0, DB_OP_UNION, 0, 0, NULL, 0);
-	}
-
-	/* Update the map */
-	if (!bu_avs_add(nmap, o, bu_vls_addr(&tmp))) {
-	    return GED_ERROR;
-	}
-    }
     return ret;
 }
 
@@ -715,10 +811,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     int newobj_cnt = 0;
     int ret = GED_OK;
     unsigned int i = 0;
-    struct bu_vls tmp = BU_VLS_INIT_ZERO;
-    struct bu_attribute_value_set nmap = BU_AVS_INIT_ZERO;
     struct directory **dpa = NULL;
-    struct bu_vls oname = BU_VLS_INIT_ZERO;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     const char **ntop;
     /* We need to copy combs above regions that are not themselves regions.
@@ -739,24 +832,34 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     if (!opts->in_place) {
 	newname = (char *)argv[argc-1];
 	argc--;
-    } else {
-	/* Find a new name for the original object, and a temporary name to use
-	 * during the working process */
-	bu_vls_sprintf(&oname, "%s_original", argv[0]);
-	if (db_lookup(dbip, bu_vls_addr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_incr(&oname, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+    }
+
+    /* Set up mapping names for the original toplevel object(s).  If we have
+     * top level solids, deal with them now. */
+    for (i = 0; i < (unsigned int)argc; i++) {
+	struct directory *dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
+	if (!(dp->d_flags & RT_DIR_COMB)) {
+	    /* solid object in list at top level - handle directly */
+	    _ged_facetize_mkname(gedp, opts, argv[i], SOLID_OBJ_NAME);
+	    if (_ged_nmg_obj(gedp, 1, (const char **)&argv[i], bu_avs_get(opts->s_map, argv[i]), opts) != GED_OK) {
+		bu_vls_printf(gedp->ged_result_str, "failed to convert %s\n", argv[i]);
+		return GED_ERROR;
+	    }
 	}
-	bu_avs_add(&nmap, argv[0], bu_vls_addr(&oname));
-	newname = (char *)bu_avs_get(&nmap, argv[0]);
     }
 
     BU_ALLOC(pc, struct bu_ptbl);
-    BU_ALLOC(ar, struct bu_ptbl);
     if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, preserve_combs, argc, dpa, dbip, NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "problem searching for parent combs - aborting.\n");
 	ret = GED_ERROR;
 	goto ged_facetize_regions_memfree;
     }
+    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
+	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
+	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
+    }
+
+    BU_ALLOC(ar, struct bu_ptbl);
     if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "problem searching for active regions - aborting.\n");
 	ret = GED_ERROR;
@@ -769,6 +872,14 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	goto ged_facetize_regions_memfree;
     }
 
+    /* Regions will have a name mapping both to a new region comb AND a facetized
+     * solid object - set up both */
+    for (i = 0; i < BU_PTBL_LEN(ar); i++) {
+	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
+	_ged_facetize_mkname(gedp, opts, n->d_namep, SOLID_OBJ_NAME);
+	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
+    }
+
     /* TODO - someday this object-level facetization should be done in
      * parallel, but that's one deep rabbit hole - for now, just try them in
      * order and make sure we can handle (non-crashing) failures to convert
@@ -776,28 +887,21 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     BU_ALLOC(ar_failed_nmg, struct bu_ptbl);
     bu_ptbl_init(ar_failed_nmg, 64, "failed list init");
     for (i = 0; i < BU_PTBL_LEN(ar); i++) {
-	int ac = (opts->in_place) ? 1 : 2;
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
-	const char *nargv[2];
-	const char *narg;
-	struct bu_attribute_value_set *nmp = (opts->in_place) ? &nmap : NULL;
-	if (!opts->in_place) {
-	    bu_vls_sprintf(&tmp, "%s%s", n->d_namep, bu_vls_addr(opts->faceted_suffix));
-	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmp), LOOKUP_QUIET) != RT_DIR_NULL) {
-		bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
-	    }
-	    bu_avs_add(&nmap, n->d_namep, bu_vls_addr(&tmp));
-	}
-	narg = bu_avs_get(&nmap, n->d_namep);
-	nargv[0] = n->d_namep;
-	nargv[1] = (opts->in_place) ? NULL : narg;
-
-	bu_vls_printf(gedp->ged_result_str, "NMG tessellating %s from %s\n", narg, n->d_namep);
-	if (_ged_nmg_facetize(gedp, ac, nargv, opts, nmp) != GED_OK) {
-	    bu_ptbl_ins(ar_failed_nmg, (long *)narg);
+	const char *oname = n->d_namep;
+	const char *nname = bu_avs_get(opts->s_map, n->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "NMG tessellating %s from %s\n", nname, oname);
+	if (_ged_nmg_obj(gedp, 1, (const char **)&oname, nname, opts) != GED_OK) {
+	    bu_ptbl_ins(ar_failed_nmg, (long *)oname);
 	} else {
-	    if (_ged_facetize_cpcomb(gedp, n->d_namep, opts, &nmap) != GED_OK) {
+	    if (_ged_facetize_cpcomb(gedp, oname, opts) != GED_OK) {
 		bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", n->d_namep);
+	    } else {
+		const char *rname = bu_avs_get(opts->c_map, oname);
+		const char *sname = bu_avs_get(opts->s_map, oname);
+		if (_ged_combadd2(gedp, (char *)rname, 1, (const char **)&sname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
+		    bu_vls_printf(gedp->ged_result_str, "Error adding %s to comb %s \n", sname, rname);
+		}
 	    }
 	}
     }
@@ -805,10 +909,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     /* For all the pc combs, make new versions with the suffixed names */
     for (i = 0; i < BU_PTBL_LEN(pc); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
-	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts, &nmap) != GED_OK) {
+	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
 	    bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", n->d_namep);
 	}
-	bu_vls_printf(gedp->ged_result_str, "Making new comb %s from %s\n", bu_avs_get(&nmap, n->d_namep), n->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "Making new comb %s from %s\n", bu_avs_get(opts->c_map, n->d_namep), n->d_namep);
     }
 
     /* For all the pc combs, add the members from the map with the settings from the
@@ -824,7 +928,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	const char *nparent;
 	RT_DB_INTERNAL_INIT(&intern);
 	cdp = (struct directory *)BU_PTBL_GET(pc, i);
-	nparent = bu_avs_get(&nmap, cdp->d_namep);
+	nparent = bu_avs_get(opts->c_map, cdp->d_namep);
 	if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
 	    ret = GED_ERROR;
 	    goto ged_facetize_regions_memfree;
@@ -837,7 +941,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	j = 0;
 	cdp = children[0];
 	while (cdp != RT_DIR_NULL) {
-	    const char *nc = bu_avs_get(&nmap, cdp->d_namep);
+	    const char *nc = bu_avs_get(opts->c_map, cdp->d_namep);
 	    matp_t m = (mats[j]) ? mats[j] : NULL;
 	    ret = _ged_combadd2(gedp, (char *)nparent, 1, (const char **)&nc, 0, _int_to_opt(bool_ops[j]), 0, 0, m, 0);
 	    j++;
@@ -855,26 +959,26 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     }
 
     /* Last one - add the new toplevel comb to hold all the new geometry */
-    ntop = (const char **)bu_calloc(argc, sizeof(const char *), "new top level names");
-    for (i = 0; i < (unsigned int)argc; i++) {
-	ntop[i] = bu_avs_get(&nmap, argv[i]);
+    if (!opts->in_place) {
+	ntop = (const char **)bu_calloc(argc, sizeof(const char *), "new top level names");
+	for (i = 0; i < (unsigned int)argc; i++) {
+	    ntop[i] = bu_avs_get(opts->c_map, argv[i]);
+	    if (!ntop[i]) {
+		ntop[i] = bu_avs_get(opts->s_map, argv[i]);
+	    }
+	}
+	ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, NULL, 0);
     }
-    ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, NULL, 0);
 
     if (opts->in_place) {
-
 	/* The "new" tree is actually the preservation of the old tree in this
-	 * scenario, so rename accordingly */
-	for (i = 0; i < BU_PTBL_LEN(pc); i++) {
-	    struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
-	    if (_ged_facetize_obj_swap(gedp, n->d_namep, bu_avs_get(&nmap, n->d_namep)) != GED_OK) {
+	 * scenario, so swap all the region names */
+	for (i = 0; i < BU_PTBL_LEN(ar); i++) {
+	    struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
+	    if (_ged_facetize_obj_swap(gedp, n->d_namep, bu_avs_get(opts->c_map, n->d_namep)) != GED_OK) {
 		return GED_ERROR;
 	    }
 	}
-	if (_ged_facetize_obj_swap(gedp, argv[0], newname) != GED_OK) {
-	    return GED_ERROR;
-	}
-	bu_free(newname, "local newname copy");
     }
 
     /* Done changing stuff - update nref. */
@@ -998,7 +1102,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    goto ged_facetize_memfree;
 	}
 
-	ret =  _ged_nmg_facetize(gedp, argc, argv, opts, NULL);
+	ret =  _ged_nmg_facetize(gedp, argc, argv, opts);
 	goto ged_facetize_memfree;
 
     } else {
