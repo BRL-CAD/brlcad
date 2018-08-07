@@ -27,6 +27,8 @@
 
 #include <string.h>
 
+#include "bu/exit.h"
+#include "bu/hook.h"
 #include "bu/cmd.h"
 #include "bn/tol.h"
 #include "bg/spsr.h"
@@ -135,6 +137,14 @@ _db_uniq_test(struct bu_vls *n, void *data)
     return 0;
 }
 
+HIDDEN int
+_ged_facetize_bomb_hook(void *sdata, void *cdata)
+{
+    struct ged *gedp = (struct ged *)sdata;
+    char *str = (char *)cdata;
+    bu_vls_printf(gedp->ged_result_str, "%s\n", str);
+    return GED_OK;
+}
 
 HIDDEN void
 _ged_facetize_mkname(struct ged *gedp, struct _ged_facetize_opts *opts, const char *n, int type)
@@ -999,7 +1009,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int ret = GED_OK;
     static const char *usage = "Usage: facetize [ -nmhT | [--poisson] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
     static const char *pusage = "Usage: facetize --poisson [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
-
+    struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
     int print_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
     struct bu_opt_desc d[10];
@@ -1044,6 +1054,15 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	ret = GED_HELP;
 	goto ged_facetize_memfree;
     }
+
+    /* It is known that libnmg will (as of 2018 anyway) throw a lot of
+     * bu_bomb calls during operation. Because we need facetize to run
+     * to completion and potentially try multiple ways to convert before
+     * giving up, we need to un-hook any pre-existing bu_bomb hooks */
+    bu_hook_list_init(&saved_hooks);
+    bu_bomb_save_all_hooks(&saved_hooks);
+    bu_bomb_delete_all_hooks();
+    bu_bomb_add_hook(_ged_facetize_bomb_hook, (void *)gedp);
 
     /* parse standard options */
     argc = bu_opt_parse(NULL, argc, argv, d);
@@ -1144,6 +1163,11 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
 ged_facetize_memfree:
     _ged_facetize_opts_destroy(opts);
+
+    /* put the original bu_bomb hooks back */
+    bu_bomb_restore_hooks(&saved_hooks);
+    bu_hook_delete_all(&saved_hooks);
+
     return ret;
 }
 

@@ -82,6 +82,23 @@ bu_bomb_add_hook(bu_hook_t func, void *clientdata)
     bu_hook_add(&bomb_hook_list, func, clientdata);
 }
 
+void
+bu_bomb_save_all_hooks(struct bu_hook_list *save_hlp)
+{
+    bu_hook_save_all(&bomb_hook_list, save_hlp);
+}
+
+void
+bu_bomb_delete_all_hooks()
+{
+    bu_hook_delete_all(&bomb_hook_list);
+}
+
+void
+bu_bomb_restore_hooks(struct bu_hook_list *save_hlp)
+{
+    bu_hook_restore_all(&bomb_hook_list, save_hlp);
+}
 
 void
 bu_bomb(const char *str)
