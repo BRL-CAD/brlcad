@@ -494,8 +494,9 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name)
 
 #ifdef ENABLE_SPR
 HIDDEN int
-_ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_facetize_opts *opts)
+_ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts, int quiet)
 {
+    int ret = GED_OK;
     struct directory *dp;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct rt_db_internal intern;
@@ -504,42 +505,16 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
     struct rt_pnts_internal *pnts;
     struct rt_bot_internal *bot = NULL;
     struct pnt_normal *pn, *pl;
-    struct bu_vls oname = BU_VLS_INIT_ZERO;
     int flags = 0;
-    int newobj_cnt = 0;
     int i;
-    char *newname;
-    point_t *input_points_3d;
-    vect_t *input_normals_3d;
+    int free_pnts = 0;
+    point_t *input_points_3d = NULL;
+    vect_t *input_normals_3d = NULL;
 
-    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, NULL);
-    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
-	return GED_ERROR;
-    }
-
-    if ((argc - newobj_cnt) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Screened Poisson mode (currently) only supports one existing object at a time as input.\n");
-	return GED_ERROR;
-    }
-
-    if (!opts->in_place) {
-	newname = (char *)argv[argc-1];
-	argc--;
-    } else {
-	/* Find a new name for the original object - that's also our working
-	 * "newname" for the initial processing, until we swap at the end. */
-	bu_vls_sprintf(&oname, "%s_original", argv[0]);
-	if (db_lookup(dbip, bu_vls_addr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_printf(&oname, "-0");
-	    bu_vls_incr(&oname, NULL, NULL, &_db_uniq_test, (void *)gedp);
-	}
-	newname = (char *)bu_vls_addr(&oname);
-    }
-
-    dp = db_lookup(dbip, argv[0], LOOKUP_QUIET);
+    dp = db_lookup(dbip, objname, LOOKUP_QUIET);
 
     if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Error: could not determine type of object %s\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Error: could not determine type of object %s\n", objname);
 	return GED_ERROR;
     }
 
@@ -551,6 +526,7 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
 	pnts->magic = RT_PNTS_INTERNAL_MAGIC;
 	pnts->scale = 0.0;
 	pnts->type = RT_PNT_TYPE_NRM;
+	free_pnts = 1;
 
 	/* Pick our mode(s) */
 	if (!opts->pnt_grid_mode && !opts->pnt_rand_mode && !opts->pnt_sobol_mode) {
@@ -567,18 +543,20 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
 	    point_t obj_min, obj_max;
 	    VSETALL(rpp_min, INFINITY);
 	    VSETALL(rpp_max, -INFINITY);
-	    ged_get_obj_bounds(gedp, 1, (const char **)&(argv[0]), 0, obj_min, obj_max);
+	    ged_get_obj_bounds(gedp, 1, (const char **)&objname, 0, obj_min, obj_max);
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 	    opts->len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
-	    bu_log("Note - no tolerance specified, using %f\n", opts->len_tol);
+	    if (!quiet) {
+		bu_log("Note - no tolerance specified, using %f\n", opts->len_tol);
+	    }
 	}
 	btol.dist = opts->len_tol;
 
-	if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, argv[0], &btol, flags, opts->max_pnts, opts->max_time)) {
+	if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, objname, &btol, flags, opts->max_pnts, opts->max_time)) {
 	    bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
-	    bu_free(pnts, "free pnts");
-	    return GED_ERROR;
+	    ret = GED_ERROR;
+	    goto ged_facetize_spsr_memfree;
 	}
     }
 
@@ -606,23 +584,13 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
 		(const vect_t *)input_normals_3d,
 		pnts->count, &(opts->s_opts)) ) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: Screened Poisson reconstruction failed\n");
-	bu_free(input_points_3d, "3d pnts");
-	bu_free(input_normals_3d, "3d pnts");
-	rt_db_free_internal(&in_intern);
-	return GED_ERROR;
+	ret = GED_ERROR;
+	goto ged_facetize_spsr_memfree;
     }
 
     if (!opts->make_nmg) {
-	/* Export BoT as a new solid */
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_BOT;
-	intern.idb_meth = &OBJ[ID_BOT];
-	intern.idb_ptr = (void *) bot;
 
-	bu_free(input_points_3d, "3d pnts");
-	bu_free(input_normals_3d, "3d pnts");
-	rt_db_free_internal(&in_intern);
+	ret = _write_bot(gedp, bot, newname);
 
     } else {
 	/* Convert BoT to NMG */
@@ -638,24 +606,59 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
 	intern.idb_ptr = (void *)bot;
 	if (rt_bot_tess(&r, m, &intern, NULL, &btol) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Failed to convert Bot to NMG\n");
-	    rt_db_free_internal(&intern);
+	    ret = GED_ERROR;
+	    goto ged_facetize_spsr_memfree;
 	} else {
 	    /* OK,have NMG now - write it out */
-	    intern.idb_type = ID_NMG;
-	    intern.idb_meth = &OBJ[ID_NMG];
-	    intern.idb_ptr = (void *)m;
+	    ret = _write_nmg(gedp, m, newname);
 	}
     }
 
-    dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-    if (dp == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", newname);
+ged_facetize_spsr_memfree:
+    if (free_pnts) bu_free(pnts, "free pnts");
+    if (input_points_3d) bu_free(input_points_3d, "3d pnts");
+    if (input_normals_3d) bu_free(input_normals_3d, "3d pnts");
+    rt_db_free_internal(&in_intern);
+
+    return ret;
+}
+#endif
+
+
+#ifdef ENABLE_SPR
+HIDDEN int
+_ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_facetize_opts *opts)
+{
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct bu_vls oname = BU_VLS_INIT_ZERO;
+    int newobj_cnt = 0;
+    char *newname;
+
+    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, NULL);
+    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
 	return GED_ERROR;
     }
 
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Failed to write %s to database\n", newname);
-	rt_db_free_internal(&intern);
+    if ((argc - newobj_cnt) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Screened Poisson mode (currently) only supports one existing object at a time as input.\n");
+	return GED_ERROR;
+    }
+
+    if (!opts->in_place) {
+	newname = (char *)argv[argc-1];
+	argc--;
+    } else {
+	/* Find a new name for the original object - that's also our working
+	 * "newname" for the initial processing, until we swap at the end. */
+	bu_vls_sprintf(&oname, "%s_original", argv[0]);
+	if (db_lookup(dbip, bu_vls_addr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_printf(&oname, "-0");
+	    bu_vls_incr(&oname, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	}
+	newname = (char *)bu_vls_addr(&oname);
+    }
+
+    if (_ged_spsr_obj(gedp, argv[0], newname, opts, 0) != GED_OK) {
 	return GED_ERROR;
     }
 
