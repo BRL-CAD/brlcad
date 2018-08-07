@@ -153,6 +153,8 @@ bu_color_to_rgb_chars(const struct bu_color *cp, unsigned char *rgb)
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
+    BU_ASSERT(!(cp->buc_rgb[RED] < 0.0 || cp->buc_rgb[GRN] < 0.0 || cp->buc_rgb[BLU] < 0.0));
+    BU_ASSERT(cp->buc_rgb[RED] < 1.0 && cp->buc_rgb[GRN] < 1.0 && cp->buc_rgb[BLU] < 1.0);
 
     rgb[RED] = (unsigned char)lrint(cp->buc_rgb[RED] * 255.0);
     rgb[GRN] = (unsigned char)lrint(cp->buc_rgb[GRN] * 255.0);
@@ -183,10 +185,10 @@ bu_color_to_rgb_floats(const struct bu_color *cp, fastf_t *rgb)
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
+    BU_ASSERT(!(cp->buc_rgb[RED] < 0.0 || cp->buc_rgb[GRN] < 0.0 || cp->buc_rgb[BLU] < 0.0));
+    BU_ASSERT(cp->buc_rgb[RED] < 1.0 && cp->buc_rgb[GRN] < 1.0 && cp->buc_rgb[BLU] < 1.0);
 
-    rgb[0] = cp->buc_rgb[RED];
-    rgb[1] = cp->buc_rgb[GRN];
-    rgb[2] = cp->buc_rgb[BLU];
+    VMOVE(rgb, cp->buc_rgb);
 
     return 1;
 }
@@ -198,10 +200,10 @@ bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb)
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
+    if (rgb[RED] > 1.0 || rgb[GRN] > 1.0 || rgb[BLU] > 1.0)
+	return 0;
 
-    cp->buc_rgb[RED] = rgb[0];
-    cp->buc_rgb[GRN] = rgb[1];
-    cp->buc_rgb[BLU] = rgb[2];
+    VMOVE(cp->buc_rgb, rgb);
 
     return 1;
 }
