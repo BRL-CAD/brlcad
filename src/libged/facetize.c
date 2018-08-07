@@ -31,9 +31,11 @@
 #include "bn/tol.h"
 #include "bg/spsr.h"
 #include "rt/geom.h"
+#include "rt/op.h"
 #include "rt/search.h"
 #include "raytrace.h"
 #include "analyze.h"
+#include "wdb.h"
 #include "./ged_private.h"
 
 /* Sort the argv array to list existing objects first and everything else at
@@ -96,6 +98,15 @@ _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], int newo
 	return GED_ERROR;
     }
     return GED_OK;
+}
+
+HIDDEN db_op_t
+_int_to_opt(int op)
+{
+    if (op == 2) return DB_OP_UNION;
+    if (op == 3) return DB_OP_INTERSECT;
+    if (op == 4) return DB_OP_SUBTRACT;
+    return DB_OP_NULL;
 }
 
 static union tree *
@@ -182,13 +193,13 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	failed = 1;
     }
 
-    if (facetize_tree) {
+    if (!failed && facetize_tree) {
 	NMG_CK_REGION(facetize_tree->tr_d.td_r);
 	bu_vls_printf(gedp->ged_result_str, "facetize:  %s\n", facetize_tree->tr_d.td_name);
+	facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
     }
 
     if (facetize_tree) {
-	facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
 	db_free_tree(facetize_tree, &rt_uniresource);
     }
 
@@ -537,28 +548,71 @@ _db_uniq_test(struct bu_vls *n, void *data)
 }
 
 int
-_ged_facetize_mkrcomb(struct ged *gedp, const char *o, struct bu_attribute_value_set *avs)
+_ged_facetize_cpcomb(struct ged *gedp, const char *o, struct bu_attribute_value_set *nmap)
 {
+    int ret = GED_OK;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct directory *dp;
+    struct rt_db_internal ointern, intern;
+    struct rt_comb_internal *ocomb, *comb;
+    struct bu_attribute_value_set avs;
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
     const char *fname;
+    int flags;
 
-    fname = bu_avs_get(avs, o);
-    if (!fname) return GED_ERROR;
+    /* Unpack original comb to get info to duplicate in new comb */
+    dp = db_lookup(dbip, o, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL || !(dp->d_flags & RT_DIR_COMB)) return GED_ERROR;
+    bu_avs_init_empty(&avs);
+    if (db5_get_attributes(dbip, &avs, dp)) return GED_ERROR;
+    if (rt_db_get_internal(&ointern, dp, dbip, NULL, &rt_uniresource) < 0) return GED_ERROR;
+    ocomb = (struct rt_comb_internal *)ointern.idb_ptr;
+    RT_CK_COMB(ocomb);
+    flags = dp->d_flags;
+
+    /* Get new name */
     bu_vls_sprintf(&tmp, "%s", o);
     bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
 
-    /* TODO - unpack original comb to get info to duplicate in new comb */
 
-/*
-    mk_lcomb(gedp->ged_wdbp, bu_vls_addr(&tmp), NULL, 1, 
-*/
+    /* Make a new empty comb with the same properties as the original, sans tree */
+    RT_DB_INTERNAL_INIT(&intern);
+    BU_ALLOC(comb, struct rt_comb_internal);
+    RT_COMB_INTERNAL_INIT(comb);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_COMBINATION;
+    intern.idb_ptr = (void *)comb;
+    intern.idb_meth = &OBJ[ID_COMBINATION];
+    GED_DB_DIRADD(gedp, dp, bu_vls_addr(&tmp), -1, 0, flags, (void *)&intern.idb_type, 0);
+    comb->region_flag = ocomb->region_flag;
+    bu_vls_vlscat(&comb->shader, &ocomb->shader);
+    comb->rgb_valid = ocomb->rgb_valid;
+    comb->rgb[0] = ocomb->rgb[0];
+    comb->rgb[1] = ocomb->rgb[1];
+    comb->rgb[2] = ocomb->rgb[2];
+    comb->region_id = ocomb->region_id;
+    comb->aircode = ocomb->aircode;
+    comb->GIFTmater = ocomb->GIFTmater;
+    comb->los = ocomb->los;
+    comb->inherit = ocomb->inherit;
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
 
-    /* region comb hides the bot as far as the rest of the tree is concerned, so
-     * update the map */
-    if (bu_avs_add(avs, o, bu_vls_addr(&tmp)) != 1) {
+    /* apply attributes to new comb */
+    db5_update_attributes(dp, &avs, dbip);
+
+    /* If we already have a matching object name in the map, add it to the comb - the
+     * comb is going to take over now as the "representative" object for the original
+     * in the map. */
+    fname = bu_avs_get(nmap, o);
+    if (fname) {
+	ret = _ged_combadd2(gedp, bu_vls_addr(&tmp), 1, (const char **)&fname, 0, DB_OP_UNION, 0, 0, NULL, 0);
+    }
+
+    /* Update the map */
+    if (!bu_avs_add(nmap, o, bu_vls_addr(&tmp))) {
 	return GED_ERROR;
     }
-    return GED_OK;
+    return ret;
 }
 
 int
@@ -569,9 +623,6 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     int ret = GED_OK;
     unsigned int i = 0;
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
-    /* When we start making lots of combs, see if we can (re) use a bu_ptbl as
-     * a dynamic storage for the argv array to feed to ged_combadd2...
-    struct bu_ptbl avtbl = BU_PTBL_INIT_ZERO; */
     struct bu_attribute_value_set nmap = BU_AVS_INIT_ZERO;
     struct directory **dpa = NULL;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
@@ -637,7 +688,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	if (_ged_nmg_facetize(gedp, 2, nargv, opts) != GED_OK) {
 	    bu_ptbl_ins(ar_failed_nmg, (long *)narg);
 	} else {
-	    if (_ged_facetize_mkrcomb(gedp, n->d_namep, &nmap) != GED_OK) {
+	    if (_ged_facetize_cpcomb(gedp, n->d_namep, &nmap) != GED_OK) {
 		bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", n->d_namep);
 	    }
 	}
@@ -646,10 +697,53 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     /* For all the pc combs, make new versions with the suffixed names */
     for (i = 0; i < BU_PTBL_LEN(pc); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
-	bu_vls_sprintf(&tmp, "%s", n->d_namep);
-	bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
-	bu_avs_add(&nmap, n->d_namep, bu_vls_addr(&tmp));
+	if (_ged_facetize_cpcomb(gedp, n->d_namep, &nmap) != GED_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", n->d_namep);
+	}
 	bu_vls_printf(gedp->ged_result_str, "Making new comb %s from %s\n", bu_avs_get(&nmap, n->d_namep), n->d_namep);
+    }
+
+    /* For all the pc combs, add the members from the map with the settings from the
+     * original comb */
+    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
+	int j = 0;
+	struct rt_db_internal intern;
+	struct directory *cdp = RT_DIR_NULL;
+	struct directory **children = NULL;
+	struct rt_comb_internal *comb = NULL;
+	int *bool_ops = NULL;
+	matp_t *mats = NULL;
+	const char *nparent;
+	RT_DB_INTERNAL_INIT(&intern);
+	cdp = (struct directory *)BU_PTBL_GET(pc, i);
+	nparent = bu_avs_get(&nmap, cdp->d_namep);
+	if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
+	    ret = GED_ERROR;
+	    goto ged_facetize_regions_memfree;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	if (db_comb_children(dbip, comb, &children, &bool_ops, &mats) < 0) {
+	    ret = GED_ERROR;
+	    goto ged_facetize_regions_memfree;
+	}
+	j = 0;
+	cdp = children[0];
+	while (cdp != RT_DIR_NULL) {
+	    const char *nc = bu_avs_get(&nmap, cdp->d_namep);
+	    matp_t m = (mats[j]) ? mats[j] : NULL;
+	    ret = _ged_combadd2(gedp, (char *)nparent, 1, (const char **)&nc, 0, _int_to_opt(bool_ops[j]), 0, 0, m, 0);
+	    j++;
+	    cdp = children[j];
+	}
+
+	j = 0;
+	while (mats[j]) {
+	    bu_free(mats[j], "free matrix");
+	    j++;
+	}
+	bu_free(mats, "free mats array");
+	bu_free(bool_ops, "free ops");
+	bu_free(children, "free children struct directory ptr array");
     }
 
     /* Last one - add the new toplevel comb to hold all the new geometry */
@@ -657,7 +751,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     for (i = 0; i < (unsigned int)argc; i++) {
 	ntop[i] = bu_avs_get(&nmap, argv[i]);
     }
-    ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, 0);
+    ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, NULL, 0);
 
     /* Done changing stuff - update nref. */
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);

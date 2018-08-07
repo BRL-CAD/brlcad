@@ -172,6 +172,7 @@ extern int _ged_combadd2(struct ged *gedp,
 			 db_op_t relation,
 			 int ident,
 			 int air,
+			 matp_t m,
 			 int validate);
 
 /* defined in display_list.c */
