@@ -1260,8 +1260,6 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	return BRLCAD_ERROR;
     }
 
-    ret = !bu_fnmatch(plan->p_un._c_data, dp->d_namep, 0);
-
     /* fill in each hole in the argv array */
     for (i=0; i<plan->p_un.ex._e_nholes; i++) {
 	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[i]] = dp->d_namep;
