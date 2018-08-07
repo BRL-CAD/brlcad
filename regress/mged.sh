@@ -56,6 +56,53 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
+# test a single command, return 0 if successful
+check_command ( ) {
+    cmd="$1"
+
+    # make sure each command exists and will run without error
+    output="`$MGED -c mged.g $cmd 2>&1`"
+    if test $? != 0 ; then
+	echo "ERROR: $cmd returned non-zero exit status $?"
+	echo "Output: $output"
+	return 1
+    fi
+    if test "x`echo \"$output\" | grep -i invalid`" != "x" ; then
+	echo "ERROR: $cmd does not exist!"
+	echo "Output: $output"
+	return 1
+    fi
+    if test "x`echo \"$output\" | grep -i error | grep -i -v _error | grep -i -v error_`" != "x" ; then
+	echo "ERROR: $cmd reported an error on default use"
+	echo "Output: $output"
+	return 1
+    fi
+
+    # make sure each command has help listed
+    output="`$MGED -c mged.g help $cmd 2>&1`"
+    if test "x`echo \"$output\" | grep -i 'no help found'`" != "x" ; then
+	echo "ERROR: $cmd does not have help"
+	return 1
+    fi
+
+    # special tests for some commands due to bug reports
+    if test "x$cmd" = "xregions" || test "x$cmd" = "xsolids" ; then
+	# regions or solids are special because they may core dump
+	# test is a result of bug 3392558 which was fixed at revision 48037
+	rm -f $t.cmd
+	$MGED -c mged.g $cmd t.$cmd all > /dev/null 2>&1 <<EOF
+exit
+EOF
+	if test $? != 0 ; then
+	    echo "ERROR: $cmd returned non-zero exit status $?"
+	    echo "Output: $output"
+	    return 1
+	fi
+    fi
+
+    return 0
+}
+
 touch mged.g
 output="`$MGED -c mged.g quit 2>&1`"
 if test $? != 0 ; then
@@ -116,50 +163,10 @@ EOF
 	continue
     fi
 
-    # make sure each command exists and will run without error
-    output="`$MGED -c mged.g $cmd 2>&1`"
+    check_command "$cmd"
     if test $? != 0 ; then
-	echo "ERROR: $cmd returned non-zero exit status $?"
-	echo "Output: $output"
 	FAILED="`expr $FAILED + 1`"
-	continue
     fi
-    if test "x`echo \"$output\" | grep -i invalid`" != "x" ; then
-	echo "ERROR: $cmd does not exist!"
-	echo "Output: $output"
-	FAILED="`expr $FAILED + 1`"
-	continue
-    fi
-    if test "x`echo \"$output\" | grep -i error | grep -i -v _error | grep -i -v error_`" != "x" ; then
-	echo "ERROR: $cmd reported an error on default use"
-	echo "Output: $output"
-	FAILED="`expr $FAILED + 1`"
-	continue
-    fi
-
-    # make sure each command has help listed
-    output="`$MGED -c mged.g help $cmd 2>&1`"
-    if test "x`echo \"$output\" | grep -i 'no help found'`" != "x" ; then
-	echo "ERROR: $cmd does not have help"
-	FAILED="`expr $FAILED + 1`"
-	continue
-    fi
-
-    # special tests for some commands due to bug reports
-    if test "x$cmd" = "xregions" || test "x$cmd" = "xsolids" ; then
-	# regions or solids are special because they may core dump
-	# test is a result of bug 3392558 which was fixed at revision 48037
-	rm -f $t.cmd
-	$MGED -c mged.g $cmd t.$cmd all > /dev/null 2>&1 <<EOF
-exit
-EOF
-	if test $? != 0 ; then
-	    echo "ERROR: $cmd returned non-zero exit status $?"
-	    echo "Output: $output"
-	    FAILED="`expr $FAILED + 1`"
-	fi
-    fi
-
 done
 
 if test $FAILED -eq 0 ; then
