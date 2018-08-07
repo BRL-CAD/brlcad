@@ -99,7 +99,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"cc", cmd_ged_plain_wrapper, ged_cc},
     {"center", cmd_center, GED_FUNC_PTR_NULL},
     {"check", cmd_ged_plain_wrapper, ged_check},
-    {"check_overlaps", cmd_ged_plain_wrapper , ged_check_overlaps},
     {"clone", cmd_ged_edit_wrapper, ged_clone},
     {"closedb", f_closedb, GED_FUNC_PTR_NULL},
     {"cmd_win", cmd_cmd_win, GED_FUNC_PTR_NULL},

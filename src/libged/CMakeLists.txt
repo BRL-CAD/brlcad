@@ -59,7 +59,6 @@ set(LIBGED_SOURCES
   cat.c
   cc.c
   center.c
-  check_overlaps.c
   check/check.c
   check/check_adj_air.c
   check/check_centroid.c
