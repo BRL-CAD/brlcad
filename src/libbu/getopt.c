@@ -81,7 +81,7 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	if (*place) {
 	    /* no white space */
 	    bu_optarg = (char *)place;
-	} else if (nargc <= bu_optind+1 || *nargv[bu_optind+1] == '-') {
+	} else if (nargc <= bu_optind+1 || (nargv[bu_optind+1][0] == '-' && strchr(ostr, nargv[bu_optind+1][1]))) {
 	    /* no arg, it's okay */
 	    bu_optarg = NULL;
 	} else {
@@ -95,7 +95,7 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	if (*place) {
 	    /* no white space */
 	    bu_optarg = (char *)place;
-	} else if (nargc <= ++bu_optind || *nargv[bu_optind] == '-') {
+	} else if (nargc <= ++bu_optind || (nargv[bu_optind][0] == '-' && strchr(ostr, nargv[bu_optind][1]))) {
 	    /* no arg */
 	    place = EMSG;
 	    tell(": option requires an argument -- ");
