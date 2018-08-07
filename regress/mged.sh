@@ -87,6 +87,9 @@ help="`$MGED -c mged.g help 2>&1 | grep -v Using`"
 # cmds="$cmds `$MGED -c mged.g ?lib 2>&1`"
 # cmds="$cmds `$MGED -c mged.g ?devel 2>&1`"
 
+# turn off globbing as some of mged's commands have glob characters
+set -f
+
 # test all commands
 FAILED=0
 for cmd in $cmds ; do
