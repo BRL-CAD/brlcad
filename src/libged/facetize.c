@@ -865,7 +865,6 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 
 	/* The "new" tree is actually the preservation of the old tree in this
 	 * scenario, so rename accordingly */
-	const char *cmdname = "facetize";
 	for (i = 0; i < BU_PTBL_LEN(pc); i++) {
 	    struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
 	    if (_ged_facetize_obj_swap(gedp, n->d_namep, bu_avs_get(&nmap, n->d_namep)) != GED_OK) {
