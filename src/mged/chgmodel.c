@@ -81,9 +81,9 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	char scale[128];
 
 	sprintf(center, "%.17f %.17f %.17f",
-		(NEAR_ZERO(view_state->vs_gvp->gv_center[MDX])) ? 0.0 : -view_state->vs_gvp->gv_center[MDX],
-		(NEAR_ZERO(view_state->vs_gvp->gv_center[MDY])) ? 0.0 : -view_state->vs_gvp->gv_center[MDY],
-		(NEAR_ZERO(view_state->vs_gvp->gv_center[MDZ])) ? 0.0 : -view_state->vs_gvp->gv_center[MDZ]);
+		(ZERO(view_state->vs_gvp->gv_center[MDX])) ? 0.0 : -view_state->vs_gvp->gv_center[MDX],
+		(ZERO(view_state->vs_gvp->gv_center[MDY])) ? 0.0 : -view_state->vs_gvp->gv_center[MDY],
+		(ZERO(view_state->vs_gvp->gv_center[MDZ])) ? 0.0 : -view_state->vs_gvp->gv_center[MDZ]);
 	sprintf(scale, "%.17f", view_state->vs_gvp->gv_scale * 2.0);
 
 	av[0] = argv[0];
