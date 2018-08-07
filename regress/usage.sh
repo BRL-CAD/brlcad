@@ -167,7 +167,7 @@ for cmd in $dir/* ; do
 
     pids="$pids $!"
     workers="`expr $workers + 1`"
-    if test $workers -gt $NPSW ; then
+    if ! test $workers -lt $NPSW ; then
 	wait_on "$pids"
 	pids=""
 	workers=0
