@@ -163,7 +163,8 @@ _ged_facetize_mkname(struct ged *gedp, struct _ged_facetize_opts *opts, const ch
     }
     if (!bu_vls_strlen(&incr_template)) return;
     if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&incr_template), LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_incr(&incr_template, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+	bu_vls_printf(&incr_template, "-0");
+	bu_vls_incr(&incr_template, NULL, NULL, &_db_uniq_test, (void *)gedp);
     }
 
     if (type == SOLID_OBJ_NAME) {
@@ -529,7 +530,8 @@ _ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_f
 	 * "newname" for the initial processing, until we swap at the end. */
 	bu_vls_sprintf(&oname, "%s_original", argv[0]);
 	if (db_lookup(dbip, bu_vls_addr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_incr(&oname, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+	    bu_vls_printf(&oname, "-0");
+	    bu_vls_incr(&oname, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	}
 	newname = (char *)bu_vls_addr(&oname);
     }
@@ -747,7 +749,8 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 	 * "newname" for the initial processing, until we swap at the end. */
 	bu_vls_sprintf(&oname, "%s_original", argv[0]);
 	if (db_lookup(dbip, bu_vls_addr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_incr(&oname, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+	    bu_vls_printf(&oname, "-0");
+	    bu_vls_incr(&oname, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	}
 	newname = (char *)bu_vls_addr(&oname);
     }
