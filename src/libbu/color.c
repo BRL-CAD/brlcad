@@ -210,6 +210,7 @@ bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb)
 int
 bu_color_from_str(struct bu_color *color, const char *str)
 {
+    struct bu_color newcolor = BU_COLOR_INIT_ZERO;
     size_t i;
     int mode = 0;
 
@@ -239,6 +240,9 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	    ret = sscanf(str, "%02x%02x%02x", &rgb[RED], &rgb[GRN], &rgb[BLU]);
 	}
 	if (ret != 3) {
+	    return 0;
+	}
+	if (rgb[RED] > 255 || rgb[GRN] > 255 || rgb[BLU] > 255)	{
 	    return 0;
 	}
 
@@ -290,25 +294,28 @@ bu_color_from_str(struct bu_color *color, const char *str)
         /* 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
 	switch (mode) {
 	    case 0: /*RGB*/
-		color->buc_rgb[i] = strtol(str, (char **)&endptr, 10) / 255.0;
+		newcolor.buc_rgb[i] = strtol(str, (char **)&endptr, 10) / 255.0;
 		break;
 
 	    case 1: /*FLOAT*/
-		color->buc_rgb[i] = strtod(str, (char **)&endptr);
+		newcolor.buc_rgb[i] = strtod(str, (char **)&endptr);
 		break;
 
 	    default: /*UNKNOWN*/
 		bu_bomb("error");
 	}
 
-	if ((NEAR_ZERO(color->buc_rgb[i], 0.0) && errno) || endptr == str || (i != 2 && *endptr == '\0')
-	    || !(0.0 <= color->buc_rgb[i] && color->buc_rgb[i] <= 1.0)) {
-	    VSETALL(color->buc_rgb, 0.0);
+	if ((NEAR_ZERO(newcolor.buc_rgb[i], 0.0) && errno)
+	    || endptr == str
+	    || (i != 2 && *endptr == '\0')
+	    || !(newcolor.buc_rgb[i] >= 0.0 && newcolor.buc_rgb[i] <= 1.0))
+	{
 	    return 0;
 	}
 
 	str = endptr + 1;
     }
+    VMOVE(color->buc_rgb, newcolor.buc_rgb);
 
     return 1;
 }
