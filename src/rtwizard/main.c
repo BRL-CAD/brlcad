@@ -93,10 +93,13 @@ struct rtwizard_settings {
 
 };
 
-struct rtwizard_settings * rtwizard_settings_create() {
+
+struct rtwizard_settings *
+rtwizard_settings_create()
+{
     struct rtwizard_settings *s;
-    fastf_t white[3] = {255.0, 255.0, 255.0};
-    fastf_t black[3] = {0.0, 0.0, 0.0};
+    unsigned char white[3] = {255, 255, 255};
+    unsigned char black[3] = {0, 0, 0};
     BU_GET(s, struct rtwizard_settings);
     s->magic = RTWIZARD_MAGIC;
     BU_GET(s->color, struct bu_ptbl);
@@ -118,11 +121,11 @@ struct rtwizard_settings * rtwizard_settings_create() {
     bu_vls_init(s->pid_file);
 
     BU_GET(s->bkg_color, struct bu_color);
-    (void)bu_color_from_rgb_floats(s->bkg_color, white);
+    (void)bu_color_from_rgb_chars(s->bkg_color, white);
     BU_GET(s->line_color, struct bu_color);
-    (void)bu_color_from_rgb_floats(s->line_color, black);
+    (void)bu_color_from_rgb_chars(s->line_color, black);
     BU_GET(s->non_line_color, struct bu_color);
-    (void)bu_color_from_rgb_floats(s->non_line_color, black);
+    (void)bu_color_from_rgb_chars(s->non_line_color, black);
     s->benchmark = 0;
     s->port = -1;
     s->cpus = 0;
@@ -156,6 +159,7 @@ struct rtwizard_settings * rtwizard_settings_create() {
     s->verbose = 0;
     return s;
 }
+
 
 void rtwizard_settings_destroy(struct rtwizard_settings *s) {
     bu_ptbl_free(s->color);
