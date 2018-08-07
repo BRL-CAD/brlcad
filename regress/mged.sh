@@ -56,6 +56,10 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
+# run this many commands in parallel
+NPSW=64
+
+
 # test a single command, return 0 if successful
 check_command ( ) {
     cmd="$1"
@@ -125,6 +129,7 @@ set -f
 # test all commands
 FAILED=0
 workers=0
+pids=""
 for cmd in $cmds ; do
     echo "...$cmd"
 
@@ -152,9 +157,19 @@ EOF
     fi
     # END OF SPECIALIZATIONS
 
-    check_command "$cmd"
-    if test $? != 0 ; then
-	FAILED="`expr $FAILED + 1`"
+    check_command "$cmd" &
+    pids="$pids $!"
+
+    workers="`expr $workers + 1`"
+    if ! test $workers -lt $NPSW ; then
+	for pid in $pids ; do
+	    wait $pid
+	    if test $? != 0 ; then
+		FAILED="`expr $FAILED + 1`"
+	    fi
+	done
+	pids=""
+	workers=0
     fi
 done
 
