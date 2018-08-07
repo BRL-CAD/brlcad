@@ -698,7 +698,7 @@ _ged_combadd(struct ged *gedp,
     av[0] = objp->d_namep;
     av[1] = NULL;
 
-    if (_ged_combadd2(gedp, combname, ac, av, region_flag, relation, ident, air) == GED_ERROR)
+    if (_ged_combadd2(gedp, combname, ac, av, region_flag, relation, ident, air, 1) == GED_ERROR)
 	return RT_DIR_NULL;
 
     /* Done changing stuff - update nref. */
@@ -723,7 +723,8 @@ _ged_combadd2(struct ged *gedp,
 	      int region_flag,	/* true if adding region */
 	      db_op_t relation,	/* = UNION, SUBTRACT, INTERSECT */
 	      int ident,	/* "Region ID" */
-	      int air		/* Air code */)
+	      int air,		/* Air code */
+	      int validate      /* 1 to check if new members exist, 0 to just add them */)
 {
     struct directory *dp;
     struct directory *objp;
@@ -818,9 +819,11 @@ addmembers:
     }
 
     for (i = 0; i < argc; ++i) {
-	if ((objp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "skip member %s\n", argv[i]);
-	    continue;
+	if (validate) {
+	    if ((objp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "skip member %s\n", argv[i]);
+		continue;
+	    }
 	}
 
 	/* insert new member at end */
@@ -844,7 +847,7 @@ addmembers:
 	RT_TREE_INIT(tp);
 	tree_list[curr_count].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;
-	tp->tr_l.tl_name = bu_strdup(objp->d_namep);
+	tp->tr_l.tl_name = bu_strdup(argv[i]);
 	tp->tr_l.tl_mat = (matp_t)NULL;
 
 	++curr_count;

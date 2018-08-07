@@ -171,7 +171,8 @@ extern int _ged_combadd2(struct ged *gedp,
 			 int region_flag,
 			 db_op_t relation,
 			 int ident,
-			 int air);
+			 int air,
+			 int validate);
 
 /* defined in display_list.c */
 extern void _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
