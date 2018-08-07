@@ -254,111 +254,6 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
     BU_PUT(o, struct _ged_facetize_opts);
 }
 
-int
-_db_uniq_test(struct bu_vls *n, void *data)
-{
-    struct ged *gedp = (struct ged *)data;
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
-    return 0;
-}
-
-int
-_ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
-{
-    char *newname = NULL;
-    int newobj_cnt = 0;
-    int ret = GED_OK;
-    unsigned int i = 0;
-    struct bu_vls tmp = BU_VLS_INIT_ZERO;
-    /* When we start making lots of combs, see if we can (re) use a bu_ptbl as
-     * a dynamic storage for the argv array to feed to ged_combadd2...
-    struct bu_ptbl avtbl = BU_PTBL_INIT_ZERO; */
-    struct bu_attribute_value_set nmap = BU_AVS_INIT_ZERO;
-    struct directory **dpa = NULL;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
-    const char **ntop;
-    /* We need to copy combs above regions that are not themselves regions.
-     * Also, facetize will need all "active" regions that will define shapes.
-     * Construct searches to get these sets. */
-    struct bu_ptbl *pc = NULL;
-    struct bu_ptbl *ar = NULL;
-    struct bu_ptbl *ar_failed_nmg = NULL;
-    const char *preserve_combs = "-type c ! -type r ! -below -type r";
-    const char *active_regions = "-type r ! -below -type r";
-
-    if (argc) dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
-    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
-    if (_ged_validate_objs_list(gedp, argc, argv, newobj_cnt) == GED_ERROR) {
-	return GED_ERROR;
-    }
-
-    newname = (char *)argv[argc-1];
-    argc--;
-
-
-    BU_ALLOC(pc, struct bu_ptbl);
-    BU_ALLOC(ar, struct bu_ptbl);
-    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, preserve_combs, newobj_cnt, dpa, dbip, NULL) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "problem searching for parent combs - aborting.\n");
-	ret = GED_ERROR;
-	goto ged_facetize_regions_memfree;
-    }
-    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, newobj_cnt, dpa, dbip, NULL) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "problem searching for active regions - aborting.\n");
-	ret = GED_ERROR;
-	goto ged_facetize_regions_memfree;
-    }
-
-    if (!BU_PTBL_LEN(ar)) {
-	/* No active regions (unlikely but technically possible), nothing to do */
-	ret = GED_OK;
-	goto ged_facetize_regions_memfree;
-    }
-
-    /* TODO - someday this object-level facetization should be done in
-     * parallel, but that's one deep rabbit hole - for now, just try them in
-     * order and make sure we can handle (non-crashing) failures to convert
-     * sanely. */
-    BU_ALLOC(ar_failed_nmg, struct bu_ptbl);
-    bu_ptbl_init(ar_failed_nmg, 64, "failed list init");
-    for (i = 0; i < BU_PTBL_LEN(ar); i++) {
-	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
-	bu_vls_sprintf(&tmp, "%s%s", n->d_namep, bu_vls_addr(opts->faceted_suffix));
-	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmp), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
-	}
-	bu_avs_add(&nmap, n->d_namep, bu_vls_addr(&tmp));
-
-	bu_vls_printf(gedp->ged_result_str, "NMG tessellating %s from %s\n", bu_avs_get(&nmap, n->d_namep), n->d_namep);
-    }
-
-    /* For all the pc combs, make new versions with the suffixed names */
-    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
-	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
-	bu_vls_sprintf(&tmp, "%s", n->d_namep);
-	bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
-	bu_avs_add(&nmap, n->d_namep, bu_vls_addr(&tmp));
-	bu_vls_printf(gedp->ged_result_str, "Making new comb %s from %s\n", bu_avs_get(&nmap, n->d_namep), n->d_namep);
-    }
-
-    /* Last one - add the new toplevel comb to hold all the new geometry */
-    ntop = (const char **)bu_calloc(argc, sizeof(const char *), "new top level names");
-    for (i = 0; i < (unsigned int)argc; i++) {
-	ntop[i] = bu_avs_get(&nmap, argv[i]);
-    }
-    ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, 0);
-
-    /* Done changing stuff - update nref. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-
-ged_facetize_regions_memfree:
-    bu_ptbl_free(pc);
-    bu_ptbl_free(ar);
-    bu_free(pc, "pc table");
-    bu_free(ar, "ar table");
-    return ret;
-}
-
 
 #ifdef ENABLE_SPR
 HIDDEN int
@@ -632,6 +527,112 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 
     return GED_OK;
 }
+
+int
+_db_uniq_test(struct bu_vls *n, void *data)
+{
+    struct ged *gedp = (struct ged *)data;
+    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
+    return 0;
+}
+
+int
+_ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
+{
+    char *newname = NULL;
+    int newobj_cnt = 0;
+    int ret = GED_OK;
+    unsigned int i = 0;
+    struct bu_vls tmp = BU_VLS_INIT_ZERO;
+    /* When we start making lots of combs, see if we can (re) use a bu_ptbl as
+     * a dynamic storage for the argv array to feed to ged_combadd2...
+    struct bu_ptbl avtbl = BU_PTBL_INIT_ZERO; */
+    struct bu_attribute_value_set nmap = BU_AVS_INIT_ZERO;
+    struct directory **dpa = NULL;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    const char **ntop;
+    /* We need to copy combs above regions that are not themselves regions.
+     * Also, facetize will need all "active" regions that will define shapes.
+     * Construct searches to get these sets. */
+    struct bu_ptbl *pc = NULL;
+    struct bu_ptbl *ar = NULL;
+    struct bu_ptbl *ar_failed_nmg = NULL;
+    const char *preserve_combs = "-type c ! -type r ! -below -type r";
+    const char *active_regions = "-type r ! -below -type r";
+
+    if (argc) dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
+    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
+    if (_ged_validate_objs_list(gedp, argc, argv, newobj_cnt) == GED_ERROR) {
+	return GED_ERROR;
+    }
+
+    newname = (char *)argv[argc-1];
+    argc--;
+
+
+    BU_ALLOC(pc, struct bu_ptbl);
+    BU_ALLOC(ar, struct bu_ptbl);
+    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, preserve_combs, newobj_cnt, dpa, dbip, NULL) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "problem searching for parent combs - aborting.\n");
+	ret = GED_ERROR;
+	goto ged_facetize_regions_memfree;
+    }
+    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, newobj_cnt, dpa, dbip, NULL) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "problem searching for active regions - aborting.\n");
+	ret = GED_ERROR;
+	goto ged_facetize_regions_memfree;
+    }
+
+    if (!BU_PTBL_LEN(ar)) {
+	/* No active regions (unlikely but technically possible), nothing to do */
+	ret = GED_OK;
+	goto ged_facetize_regions_memfree;
+    }
+
+    /* TODO - someday this object-level facetization should be done in
+     * parallel, but that's one deep rabbit hole - for now, just try them in
+     * order and make sure we can handle (non-crashing) failures to convert
+     * sanely. */
+    BU_ALLOC(ar_failed_nmg, struct bu_ptbl);
+    bu_ptbl_init(ar_failed_nmg, 64, "failed list init");
+    for (i = 0; i < BU_PTBL_LEN(ar); i++) {
+	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
+	bu_vls_sprintf(&tmp, "%s%s", n->d_namep, bu_vls_addr(opts->faceted_suffix));
+	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmp), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+	}
+	bu_avs_add(&nmap, n->d_namep, bu_vls_addr(&tmp));
+
+	bu_vls_printf(gedp->ged_result_str, "NMG tessellating %s from %s\n", bu_avs_get(&nmap, n->d_namep), n->d_namep);
+    }
+
+    /* For all the pc combs, make new versions with the suffixed names */
+    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
+	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
+	bu_vls_sprintf(&tmp, "%s", n->d_namep);
+	bu_vls_incr(&tmp, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
+	bu_avs_add(&nmap, n->d_namep, bu_vls_addr(&tmp));
+	bu_vls_printf(gedp->ged_result_str, "Making new comb %s from %s\n", bu_avs_get(&nmap, n->d_namep), n->d_namep);
+    }
+
+    /* Last one - add the new toplevel comb to hold all the new geometry */
+    ntop = (const char **)bu_calloc(argc, sizeof(const char *), "new top level names");
+    for (i = 0; i < (unsigned int)argc; i++) {
+	ntop[i] = bu_avs_get(&nmap, argv[i]);
+    }
+    ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, 0);
+
+    /* Done changing stuff - update nref. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
+ged_facetize_regions_memfree:
+    bu_ptbl_free(pc);
+    bu_ptbl_free(ar);
+    bu_free(pc, "pc table");
+    bu_free(ar, "ar table");
+    return ret;
+}
+
 
 int
 ged_facetize(struct ged *gedp, int argc, const char *argv[])
