@@ -30,7 +30,6 @@ set(LIBANALYZE_SOURCES
   MeshHealing/Geometry.cpp
   MeshHealing/Stitch.cpp
   heal_mesh.cpp
-  overlaps/analyze_overlaps.c
   GridGeneration/rectangular_grid.c
   )
 

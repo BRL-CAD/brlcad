@@ -179,22 +179,6 @@ ANALYZE_EXPORT extern double rectangular_grid_spacing(void *grid_context);
 
 
 /**
- * callback function for analyze_overlaps
- */
-typedef void (*analyze_overlaps_callback)(const struct xray *rayp, const struct partition *partitionPointer, const struct bu_ptbl *regionTable, void *context);
-
-/**
- * analyze_overlap function for check_overlaps command
- */
-ANALYZE_EXPORT extern int
-analyze_overlaps(struct rt_i *rtip,
-		 size_t npsw,
-		 analyze_overlaps_callback callback,
-		 void *callBackData,
-		 struct grid_generator_functions *grid_generator,
-		 void *grid_context);
-
-/**
  * voxelize function takes raytrace instance and user parameters as inputs
  */
 ANALYZE_EXPORT extern void
