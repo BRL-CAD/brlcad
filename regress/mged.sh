@@ -60,7 +60,7 @@ fi
 check_command ( ) {
     cmd="$1"
 
-    # make sure each command exists and will run without error
+    # make sure command exists and will run without error
     output="`$MGED -c mged.g $cmd 2>&1`"
     if test $? != 0 ; then
 	echo "ERROR: $cmd returned non-zero exit status $?"
@@ -78,26 +78,11 @@ check_command ( ) {
 	return 1
     fi
 
-    # make sure each command has help listed
+    # make sure command has help listed
     output="`$MGED -c mged.g help $cmd 2>&1`"
     if test "x`echo \"$output\" | grep -i 'no help found'`" != "x" ; then
 	echo "ERROR: $cmd does not have help"
 	return 1
-    fi
-
-    # special tests for some commands due to bug reports
-    if test "x$cmd" = "xregions" || test "x$cmd" = "xsolids" ; then
-	# regions or solids are special because they may core dump
-	# test is a result of bug 3392558 which was fixed at revision 48037
-	rm -f $t.cmd
-	$MGED -c mged.g $cmd t.$cmd all > /dev/null 2>&1 <<EOF
-exit
-EOF
-	if test $? != 0 ; then
-	    echo "ERROR: $cmd returned non-zero exit status $?"
-	    echo "Output: $output"
-	    return 1
-	fi
     fi
 
     return 0
@@ -139,9 +124,12 @@ set -f
 
 # test all commands
 FAILED=0
+workers=0
 for cmd in $cmds ; do
     echo "...$cmd"
 
+    # BEGIN SPECIALIZATIONS
+    # FIXME: there should be NO specializations
     if test "x$cmd" = "x%" ; then
 	# % is special because it invokes a shell
 	$MGED -c mged.g $cmd > /dev/null 2>&1 <<EOF
@@ -153,8 +141,8 @@ EOF
 	fi
 	continue
     elif test "x$cmd" = "xedcolor" ; then
-	# edcolor is special because it kicks off an editor
-	echo "XXX: Unable to test edcolor"
+	# edcolor it kicks off an editor, ugh
+	echo "FIXME: Unable to test edcolor"
 	echo "It probably shouldn't kick off an editor without an argument"
 	continue
     elif test "x$cmd" = "xgraph" ; then
@@ -162,6 +150,7 @@ EOF
     elif test "x$cmd" = "xigraph" ; then
 	continue
     fi
+    # END OF SPECIALIZATIONS
 
     check_command "$cmd"
     if test $? != 0 ; then
