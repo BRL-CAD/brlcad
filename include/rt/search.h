@@ -55,8 +55,7 @@ RT_EXPORT extern struct db_search_context *db_search_context_create(void); /* FI
 /**
  * @brief Free a context created by db_search_context_create.
  */
-void
-db_search_context_destroy(struct db_search_context *ctx);
+RT_EXPORT extern void db_search_context_destroy(struct db_search_context *ctx);
 
 /**
  * @brief Register a callback for -exec filters.
