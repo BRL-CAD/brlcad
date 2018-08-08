@@ -102,9 +102,6 @@ bu_hook_save_all(struct bu_hook_list *hlp, struct bu_hook_list *save_hlp)
 {
     size_t i;
 
-    save_hlp->size = hlp->size;
-    save_hlp->capacity = hlp->capacity;
-
     for (i = 0; i < hlp->size; i++) {
 	bu_hook_add(save_hlp, hlp->hooks[i].hookfunc, hlp->hooks[i].clientdata);
     }
