@@ -1353,3 +1353,6 @@ s/bu_fnmatch\(/bu_path_match\(/g
 s/BU_FNMATCH_LEADING_DIR/0x0/g
 s/BU_FNMATCH_/BU_PATH_MATCH/g
         renamed for consistency, simplified [7.27]
+s/bu_path_canonicalize[[:space:]]*\(([^,]*)/bu_realpath(\1, NULL/g
+	duplicate functionality consolidated to bu_realpath() [7.27] 
+                                                    

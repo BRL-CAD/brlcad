@@ -224,6 +224,7 @@ BU_EXPORT extern int bu_file_mime_int(const char *str);
  */
 BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char ***files);
 
+
 /**
  * Call canonicalization routines to both expand and validate
  * a path name.
@@ -234,19 +235,6 @@ BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char
  * at least MAXPATHLEN characters.
  */
 BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
-
-/**
- * TODO - is this bu_realpath?
- *
- * Call canonicalization routines to both expand and validate
- * a path name.
- *
- * returns a pointer to the canonical path.  Caller must free
- * the path.
- */
-/*BU_EXPORT extern char * bu_path_canonicalize(const char *path);*/
-
-
 
 
 /**
