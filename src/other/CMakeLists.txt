@@ -786,14 +786,14 @@ provided with BRL-CAD's source code.  Default is AUTO, responsive to
 the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(PoissonRecon SPR PoissonRecon poissonrecon_DESCRIPTION ALIASES
-  ENABLE_SPR REQUIRED_VARS "BRLCAD_ENABLE_SPR"  FLAGS NOSYS)
-if(BRLCAD_SPR_BUILD)
+THIRD_PARTY(PoissonRecon SPSR PoissonRecon poissonrecon_DESCRIPTION ALIASES
+  ENABLE_SPSR FLAGS NOSYS)
+if(BRLCAD_SPSR_BUILD)
   SetTargetFolder(PoissonRecon "Third Party Executables")
   SetTargetFolder(SurfaceTrimmer "Third Party Executables")
-  SetTargetFolder(libSPR "Third Party Libraries")
-  SetTargetFolder(libSPR-static "Third Party Libraries")
-endif(BRLCAD_SPR_BUILD)
+  SetTargetFolder(libSPSR "Third Party Libraries")
+  SetTargetFolder(libSPSR-static "Third Party Libraries")
+endif(BRLCAD_SPSR_BUILD)
 
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 #=== LIBBSON ==================================================

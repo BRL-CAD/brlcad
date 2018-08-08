@@ -19,11 +19,7 @@ set(LIBBG_SOURCES
   util.c
   )
 
-if(BRLCAD_ENABLE_SPR)
-  set(SPR_LIB libSPR)
-endif(BRLCAD_ENABLE_SPR)
-
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;${SPR_LIB}")
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;libSPR")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
   add_subdirectory(tests)

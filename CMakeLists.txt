@@ -1361,10 +1361,6 @@ if(BRLCAD_ENABLE_OPENCL)
   endif(NOT OPENCL_FOUND)
 endif(BRLCAD_ENABLE_OPENCL)
 
-# Enable features requiring Screened Poisson Surface Reconstruction
-option(BRLCAD_ENABLE_SPR "Enable features requiring Screened Poisson Surface Reconstruction" OFF)
-mark_as_advanced(BRLCAD_ENABLE_SPR)
-
 # Enable experimental support for binary attributes
 option(BRLCAD_ENABLE_BINARY_ATTRIBUTES "Enable support for binary attributes" OFF)
 mark_as_advanced(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
@@ -2563,10 +2559,6 @@ if(HAVE_EMMINTRIN_H)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_EMMINTRIN 1\n")
   endif(HAVE_EMMINTRIN)
 endif(HAVE_EMMINTRIN_H)
-
-if(BRLCAD_ENABLE_SPR)
-  CONFIG_H_APPEND(BRLCAD "#define ENABLE_SPR 1\n")
-endif(BRLCAD_ENABLE_SPR)
 
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)

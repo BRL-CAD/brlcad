@@ -546,7 +546,6 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name)
     return GED_OK;
 }
 
-#ifdef ENABLE_SPR
 HIDDEN int
 _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts, int quiet)
 {
@@ -709,7 +708,6 @@ ged_facetize_spsr_memfree:
 
     return ret;
 }
-#endif
 
 int
 _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname, struct _ged_facetize_opts *opts)
@@ -799,6 +797,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
     }
 
     while (!done_trying) {
+
 	if (flags & GED_FACETIZE_NMGBOOL) {
 	    if (_ged_nmg_obj(gedp, argc, argv, newname, opts) == GED_OK) {
 		done_trying = 1;
@@ -809,7 +808,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		continue;
 	    }
 	}
-#ifdef ENABLE_SPR
+
 	if (flags & GED_FACETIZE_SPSR) {
 	    if (argc != 1) {
 		bu_vls_printf(gedp->ged_result_str, "Screened Poisson mode (currently) only supports one existing object at a time as input.\n");
@@ -824,7 +823,6 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		}
 	    }
 	}
-#endif
 
 	/* Out of options */
 	done_trying = 1;
@@ -992,8 +990,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	}
     }
 
-#ifdef ENABLE_SPR
-    /* If we've got SPSR available, try it as a fallback */
+    /* Try SPSR as a fallback, if NMG booleans failed */
     BU_ALLOC(facetize_failed, struct bu_ptbl);
     bu_ptbl_init(facetize_failed, 64, "failed list init");
     if (BU_PTBL_LEN(&ar_failed_nmg) > 0 && (opts->method_flags & GED_FACETIZE_SPSR)) {
@@ -1050,9 +1047,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	}
 	bu_ptbl_free(&spsr_succeeded);
     }
-#else
-    facetize_failed = &ar_failed_nmg;
-#endif
+
     if (BU_PTBL_LEN(facetize_failed) > 0) {
 	/* Stash any failed regions into a top level comb for easy subsequent examination */
 	struct bu_vls failed_name = BU_VLS_INIT_ZERO;
@@ -1147,10 +1142,8 @@ ged_facetize_regions_memfree:
     bu_ptbl_free(pc);
     bu_ptbl_free(ar);
     bu_ptbl_free(&ar_failed_nmg);
-    if (facetize_failed != &ar_failed_nmg) {
-	bu_ptbl_free(facetize_failed);
-	bu_free(facetize_failed, "pc table");
-    }
+    bu_ptbl_free(facetize_failed);
+    bu_free(facetize_failed, "failed table");
     bu_free(pc, "pc table");
     bu_free(ar, "ar table");
     return ret;
@@ -1224,21 +1217,11 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_sprintf(opts->faceted_suffix, ".bot");
     }
 
-#ifndef ENABLE_SPR
-    if (opts->screened_poisson) {
-	bu_vls_printf(gedp->ged_result_str, "Screened Poisson support was not enabled for this build.  To test, pass -DBRLCAD_ENABLE_SPR=ON to the cmake configure.\n");
-	ret = GED_ERROR;
-	goto ged_facetize_memfree;
-    }
-#endif
-
     /* Sort out which methods we can try */
     if (!opts->nmgbool && !opts->screened_poisson && !opts->marching_cube) {
 	/* Default to NMGBOOL and SPSR active */
 	opts->method_flags |= GED_FACETIZE_NMGBOOL;
-#ifdef ENABLE_SPR
 	opts->method_flags |= GED_FACETIZE_SPSR;
-#endif
     } else {
 	if (opts->nmgbool)          opts->method_flags |= GED_FACETIZE_NMGBOOL;
 	if (opts->screened_poisson) opts->method_flags |= GED_FACETIZE_SPSR;
