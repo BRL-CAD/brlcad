@@ -910,6 +910,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	}
     }
 
+#ifdef ENABLE_SPR
     /* If we've got SPSR available, try it as a fallback */
     if (BU_PTBL_LEN(ar_failed_nmg) > 0 && (opts->method_flags & GED_FACETIZE_SPSR)) {
 	for (i = 0; i < BU_PTBL_LEN(ar_failed_nmg); i++) {
@@ -929,6 +930,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    }
 	}
     }
+#endif
 
     /* For all the pc combs, make new versions with the suffixed names */
     for (i = 0; i < BU_PTBL_LEN(pc); i++) {
