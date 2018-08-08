@@ -28,10 +28,6 @@
 #include <stddef.h> /* for size_t */
 #include <stdlib.h> /* for getenv */
 
-#ifdef HAVE_DLFCN_H
-#  include <dlfcn.h>   /* for RTLD_* */
-#endif
-
 #include "bu/defines.h"
 #include "bu/magic.h"
 #include "bu/mime.h"
@@ -484,23 +480,6 @@ BU_EXPORT extern int bu_suspend_interrupts(void);
  */
 BU_EXPORT extern int bu_restore_interrupts(void);
 
-/** @brief Dynamic Library functionality */
-
-#ifdef HAVE_DLOPEN
-# define BU_RTLD_LAZY RTLD_LAZY
-# define BU_RTLD_NOW RTLD_NOW
-# define BU_RTLD_GLOBAL RTLD_GLOBAL
-# define BU_RTLD_LOCAL RTLD_LOCAL
-#else
-# define BU_RTLD_LAZY 1
-# define BU_RTLD_NOW 2
-# define BU_RTLD_GLOBAL 0x100
-# define BU_RTLD_LOCAL 0
-#endif
-BU_EXPORT extern void *bu_dlopen(const char *path, int mode);
-BU_EXPORT extern void *bu_dlsym(void *path, const char *symbol);
-BU_EXPORT extern int bu_dlclose(void *handle);
-BU_EXPORT extern const char *bu_dlerror(void);
 
 /** NEW: Do not use. */
 BU_EXPORT extern int bu_fseek(FILE *stream, off_t offset, int origin);

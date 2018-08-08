@@ -7,6 +7,7 @@ set(bu_headers
   cv.h
   debug.h
   defines.h
+  dylib.h
   endian.h
   env.h
   exit.h

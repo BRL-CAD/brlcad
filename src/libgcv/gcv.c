@@ -29,7 +29,7 @@
 
 #include "vmath.h"
 #include "bu/debug.h"
-#include "bu/file.h"
+#include "bu/dylib.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/mime.h"

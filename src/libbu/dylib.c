@@ -1,4 +1,4 @@
-/*                        D L F C N . C
+/*                        D Y L I B . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2018 United States Government as represented by

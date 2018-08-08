@@ -68,6 +68,7 @@
 #include "./bu/color.h"
 #include "./bu/cv.h"
 #include "./bu/debug.h"
+#include "./bu/dylib.h"
 #include "./bu/endian.h"
 #include "./bu/env.h"
 #include "./bu/file.h"

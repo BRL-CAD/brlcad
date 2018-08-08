@@ -62,7 +62,7 @@ set(LIBBU_SOURCES
   ctype.c
   dirent.c
   datetime.c
-  dlfcn.c
+  dylib.c
   encode.c
   endian.c
   env.c
