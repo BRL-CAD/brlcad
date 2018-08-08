@@ -927,6 +927,9 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 			bu_vls_printf(gedp->ged_result_str, "Error adding %s to comb %s \n", sname, rname);
 		    }
 		}
+	    } else {
+		/* TODO - implement verbosity flags for reporting */
+		bu_log("SPSR tessellation failed: %s\n", oname);
 	    }
 	}
     }
@@ -1062,15 +1065,6 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (argc < 1) {
-	_ged_cmd_help(gedp, usage, d);
-	ret = GED_HELP;
-	goto ged_facetize_memfree;
-    }
-
     /* It is known that libnmg will (as of 2018 anyway) throw a lot of
      * bu_bomb calls during operation. Because we need facetize to run
      * to completion and potentially try multiple ways to convert before
@@ -1079,6 +1073,9 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     bu_bomb_save_all_hooks(&saved_hooks);
     bu_bomb_delete_all_hooks();
     bu_bomb_add_hook(_ged_facetize_bomb_hook, (void *)gedp);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* parse standard options */
     argc = bu_opt_parse(NULL, argc, argv, d);
@@ -1112,11 +1109,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	if (opts->marching_cube)    opts->method_flags |= GED_FACETIZE_MC;
     }
 
-    /* If we're in multi-region mode, we may employ more than one technique, so a
-     * lot of options may make sense here - just pull the other options out and
-     * let the subsequent logic use them (or not). */
-    if (opts->regions) {
-
+    if (opts->screened_poisson) {
 	/* Parse Poisson specific options */
 	argc = bu_opt_parse(NULL, argc, argv, pd);
 
@@ -1124,13 +1117,10 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "Screened Poisson option parsing failed\n");
 	    ret = GED_ERROR;
 	}
-
-	ret = _ged_facetize_regions(gedp, argc, argv, opts);
-	goto ged_facetize_memfree;
     }
 
-
-    if (opts->screened_poisson && opts->nmg_use_tnurbs && !opts->nmgbool && !opts->marching_cube) {
+    /* Check for a couple of non-valid combinations */
+    if (opts->method_flags == GED_FACETIZE_SPSR && opts->nmg_use_tnurbs) {
 	bu_vls_printf(gedp->ged_result_str, "Note: Screened Poisson reconstruction does not support TNURBS output\n");
 	ret = GED_ERROR;
 	goto ged_facetize_memfree;
@@ -1152,7 +1142,12 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_memfree;
     }
 
-    ret =  _ged_facetize_objlist(gedp, argc, argv, opts);
+    /* Multi-region mode has a different processing logic */
+    if (opts->regions) {
+	ret = _ged_facetize_regions(gedp, argc, argv, opts);
+    } else {
+	ret = _ged_facetize_objlist(gedp, argc, argv, opts);
+    }
 
 ged_facetize_memfree:
     _ged_facetize_opts_destroy(opts);
