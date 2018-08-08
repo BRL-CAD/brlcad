@@ -443,6 +443,51 @@ _try_nmg_to_bot(struct ged *gedp, struct model *nmg_model)
     return bot;
 } 
 
+
+HIDDEN struct rt_bot_internal *
+_try_decimate(struct rt_bot_internal *bot, fastf_t feature_size)
+{
+    size_t success = 0;
+    struct rt_bot_internal *nbot;
+
+    BU_ALLOC(nbot, struct rt_bot_internal);
+    nbot->magic = RT_BOT_INTERNAL_MAGIC;
+    nbot->mode = RT_BOT_SOLID;
+    nbot->orientation = RT_BOT_UNORIENTED;
+    nbot->thickness = (fastf_t *)NULL;
+    nbot->face_mode = (struct bu_bitv *)NULL;
+    nbot->num_faces = bot->num_faces;
+    nbot->num_vertices = bot->num_vertices;
+    nbot->faces = (int *)bu_calloc(nbot->num_faces*3, sizeof(int), "copy of faces array");
+    nbot->vertices = (fastf_t *)bu_calloc(nbot->num_vertices*3, sizeof(fastf_t), "copy of faces array");
+    memcpy(nbot->faces, bot->faces, nbot->num_faces*3*sizeof(int));
+    memcpy(nbot->vertices, bot->vertices, nbot->num_vertices*3*sizeof(fastf_t));
+
+    if (!BU_SETJUMP) {
+	/* try */
+	success = rt_bot_decimate_gct(nbot, feature_size);
+    } else {
+	/* catch */
+	BU_UNSETJUMP;
+	bu_free(nbot->faces, "free faces");
+	bu_free(nbot->vertices, "free vertices");
+	bu_free(nbot, "free bot");
+	return bot;
+    } BU_UNSETJUMP;
+
+    if (success) {
+	bu_free(bot->faces, "free faces");
+	bu_free(bot->vertices, "free vertices");
+	bu_free(bot, "free bot");
+	return nbot;
+    } else {
+	bu_free(nbot->faces, "free faces");
+	bu_free(nbot->vertices, "free vertices");
+	bu_free(nbot, "free bot");
+	return bot;
+    }
+} 
+
 HIDDEN int
 _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name)
 {
@@ -530,20 +575,28 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	return GED_ERROR;
     }
 
-    /* Key some settings off the bbox size */
-    ged_get_obj_bounds(gedp, 1, (const char **)&objname, 0, obj_min, obj_max);
-    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
-    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
-
     if (in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_PNTS) {
 	/* If we have a point cloud, there's no need to raytrace it */
 	pnts = (struct rt_pnts_internal *)in_intern.idb_ptr;
+	pl = (struct pnt_normal *)pnts->point;
+
+	/* Key some settings off the bbox size - ged_get_obj_bounds not
+	 * currently working on pnt sets, so just run through the pnts. */
+	for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
+	    VMINMAX(rpp_min, rpp_max, (double *)pn->v);
+	    i++;
+	}
     } else {
 	BU_ALLOC(pnts, struct rt_pnts_internal);
 	pnts->magic = RT_PNTS_INTERNAL_MAGIC;
 	pnts->scale = 0.0;
 	pnts->type = RT_PNT_TYPE_NRM;
 	free_pnts = 1;
+
+	/* Key some settings off the bbox size */
+	ged_get_obj_bounds(gedp, 1, (const char **)&objname, 0, obj_min, obj_max);
+	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
+	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 
 	/* Pick our mode(s) */
 	if (!opts->pnt_grid_mode && !opts->pnt_rand_mode && !opts->pnt_sobol_mode) {
@@ -600,6 +653,7 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 
 /* do decimation */
     if (opts->decim_feat_perc > 0) {
+	struct rt_bot_internal *obot = bot;
 	fastf_t feature_size = 0.0;
 	fastf_t xlen = fabs(rpp_max[X] - rpp_min[X]);
 	fastf_t ylen = fabs(rpp_max[Y] - rpp_min[Y]);
@@ -608,8 +662,9 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	feature_size = (feature_size < zlen) ? feature_size : zlen;
 	feature_size = feature_size * ((opts->decim_feat_perc > 1.0) ? 1.0 : opts->decim_feat_perc);
 
-	if (!rt_bot_decimate_gct(bot, feature_size)) {
-	    bu_log("no decimation completed??");
+	bot = _try_decimate(bot, feature_size); 
+	if (bot == obot) {
+	    bu_log("WARNING: decimation of %s failed!!!\n", newname);
 	}
     }
 
@@ -756,16 +811,17 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	}
 #ifdef ENABLE_SPR
 	if (flags & GED_FACETIZE_SPSR) {
-	    if ((argc - newobj_cnt) != 1) {
+	    if (argc != 1) {
 		bu_vls_printf(gedp->ged_result_str, "Screened Poisson mode (currently) only supports one existing object at a time as input.\n");
 		flags = flags & ~(GED_FACETIZE_SPSR);
-	    }
-	    if (_ged_spsr_obj(NULL, gedp, argv[0], newname, opts, 0) == GED_OK) {
-		done_trying = 1;
-		ret = GED_OK;
 	    } else {
-		flags = flags & ~(GED_FACETIZE_SPSR);
-		continue;
+		if (_ged_spsr_obj(NULL, gedp, argv[0], newname, opts, 0) == GED_OK) {
+		    done_trying = 1;
+		    ret = GED_OK;
+		} else {
+		    flags = flags & ~(GED_FACETIZE_SPSR);
+		    continue;
+		}
 	    }
 	}
 #endif
