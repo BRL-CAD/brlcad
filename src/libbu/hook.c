@@ -32,27 +32,23 @@
 #include "bu/malloc.h"
 #include "bu/log.h"
 
-#define BU_HOOK_LIST_INIT_CAPACITY 4
 
 void
 bu_hook_list_init(struct bu_hook_list *hlp)
 {
-    if (hlp->capacity == 0) {
-	hlp->capacity = BU_HOOK_LIST_INIT_CAPACITY;
-	hlp->hooks = (struct bu_hook *)bu_malloc(
-		sizeof (struct bu_hook) * hlp->capacity,
-		"initial hooks");
-    }
+    if (UNLIKELY(hlp == (struct bu_hook_list *)NULL))
+	bu_bomb("bu_hook_list_init passed NULL pointer");
+
+    hlp->capacity = hlp->size =  0;
+    hlp->hooks = NULL;
 }
 
 
 void
 bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 {
-    if (hlp->capacity == 0) {
-	bu_hook_list_init(hlp);
-    } else if (hlp->size == hlp->capacity) {
-	hlp->capacity *= 2;
+    if (hlp->size == hlp->capacity) {
+	hlp->capacity = (hlp->capacity > 0) ? hlp->capacity * 2 : 1;
 	hlp->hooks = (struct bu_hook *)bu_realloc(
 		hlp->hooks,
 		sizeof (struct bu_hook) * hlp->capacity,
