@@ -181,6 +181,12 @@ void analyze_set_grid_spacing(struct current_state *state, fastf_t gridSpacing, 
 }
 
 
+fastf_t analyze_get_grid_spacing(struct current_state *state)
+{
+    return state->gridSpacing;
+}
+
+
 void analyze_set_grid_ratio(struct current_state *state, fastf_t gridRatio)
 {
     state->gridRatio = gridRatio;

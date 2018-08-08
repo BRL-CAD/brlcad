@@ -490,6 +490,12 @@ ANALYZE_EXPORT extern void
 analyze_set_grid_spacing(struct current_state *context , fastf_t gridSpacing, fastf_t gridSpacingLimit);
 
 /**
+ * returns the grid_spacing when the raytracing stopped -- used for printing summaries
+ */
+ANALYZE_EXPORT extern fastf_t
+analyze_get_grid_spacing(struct current_state *context);
+
+/**
  * sets the cell_width by cell_height ratio (default is 1)
  */
 ANALYZE_EXPORT extern void
