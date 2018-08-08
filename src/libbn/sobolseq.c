@@ -140,7 +140,7 @@ static double nlopt_genrand_res53(struct bn_soboldata *sd)
 /* generate uniform random number in [a,b) with 53-bit resolution,
  * added by SGJ.  Not static because we use this in libbn testing,
  * but it is not public API. */
-double _sobol_urand(struct bn_soboldata *sd, double a, double b)
+BN_EXPORT double _sobol_urand(struct bn_soboldata *sd, double a, double b)
 {
     return(a + (b - a) * nlopt_genrand_res53(sd));
 }
