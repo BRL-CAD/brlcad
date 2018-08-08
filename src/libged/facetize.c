@@ -614,7 +614,7 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
     }
 
     if (is_valid) {
-	int is_v = bg_trimesh_solid(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
+	int is_v = !bg_trimesh_solid(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
 	(*is_valid) = is_v;
     }
 
@@ -1084,6 +1084,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
 ged_facetize_regions_memfree:
+    for (i = 0; i < BU_PTBL_LEN(&tmpnames); i++) {
+	bu_free((char *)BU_PTBL_GET(&tmpnames, i), "temp name string");
+    }
+    bu_ptbl_free(&tmpnames);
     bu_ptbl_free(pc);
     bu_ptbl_free(ar);
     bu_ptbl_free(&ar_failed_nmg);
