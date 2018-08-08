@@ -50,6 +50,11 @@
 #define ANALYSIS_LAST_AIR 2048
 #define ANALYSIS_UNCONF_AIR 4096
 
+/*
+ * returns a random angle between 0 and 360 degrees
+ * used for when doing surface area analysis to shoot grids at
+ * random azimuth and elevation angles.
+ */
 #define RAND_ANGLE ((rand()/(fastf_t)RAND_MAX) * 360)
 
 /**
@@ -679,8 +684,11 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
     }
 
     if (state->analysis_flags & ANALYSIS_SURF_AREA) {
+	/* find the range of values for surface area */
 	int obj, i;
 	struct region *regp;
+
+	/* for each object, compute the surface area for all views */
 	for (obj = 0; obj < state->num_objects; obj++) {
 	    int view;
 	    double tmp;
@@ -690,6 +698,7 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	    tmp = 0.0;
 	    for (view = 0; view < state->num_views; view++) {
 		val = state->objs[obj].o_surf_area[view] = state->objs[obj].o_area[view];
+		/* divide by 4 to prepare for next iteration of grid refinment */
 		state->objs[obj].o_area[view] /= 4;
 		V_MIN(low, val);
 		V_MAX(hi, val);
@@ -701,6 +710,9 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 		bu_vls_printf(state->verbose_str, "\t%s running avg surface area %g mm^2 hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low);
 
 	    if (delta > state->sa_tolerance) {
+		/* this object differs too much in each view, so we
+		 * need to refine the grid.
+		 */
 		can_terminate = 0;
 		if (state->verbose)
 		    bu_vls_printf(state->verbose_str, "\tsurface area tol not met on %s.  Refine grid\n", state->objs[obj].o_name);
@@ -708,10 +720,12 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	    }
 	}
 
+	/* for each region, compute the surface area for all views */
 	for (i = 0, BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion)), i++) {
 	    int view;
 	    for (view = 0; view < state->num_views; view++) {
 		state->reg_tbl[i].r_surf_area[view] = state->reg_tbl[i].r_area[view];
+		/* divide by 4 to prepare for next iteration of grid refinment */
 		state->reg_tbl[i].r_area[view] /= 4;
 	    }
 	}
@@ -871,7 +885,7 @@ options_set(struct current_state *state)
 	state->gridSpacing = newGridSpacing;
     }
 
-    /* if the vol/mass tolerances are not set, pick something */
+    /* if the vol/mass/surf_area tolerances are not set, pick something */
     if (state->analysis_flags & ANALYSIS_VOLUME) {
 	if (state->volume_tolerance < 0.0) {
 	    /* using 1/1000th the volume as a default tolerance, no particular reason */
@@ -1293,10 +1307,6 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     struct rectangular_grid grid;
     struct region_pair overlapList;
 
-    /* TODO : Add a bu_vls struct / use bu_log() wherever
-     * possible.
-     */
-
     /* local copy for overlaps list to check later for hits */
     BU_LIST_INIT(&overlapList.l);
     state->overlapList = &overlapList;
@@ -1331,6 +1341,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 
     rt_prep_parallel(rtip, state->ncpu);
 
+    /* setup azimuth and elevation angles in case of single grid */
     if (state->use_single_grid && !state->use_view_information) {
 	if (analyze_setup_ae(state)) {
 	    rt_free_rti(rtip);
@@ -1339,6 +1350,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	}
     }
 
+    /* set the grid spacing from viewsize if the width and height are mentioned */
     if (state->grid_size_flag && state->use_single_grid) {
 	double cell_height = 0.0;
 	double cell_width = 0.0;
@@ -1440,7 +1452,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	}
     }
 
-    /* Free dynamically allocated state */
+    /* Free dynamically allocated memory */
     bu_vls_free(state->log_str);
     bu_list_free(&overlapList.l);
 
