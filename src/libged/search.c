@@ -437,6 +437,8 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
 			}
 		    }
+		    /* Make sure to clear the flag in case of subsequent searches of different types */
+		    flags = flags & ~(DB_SEARCH_FLAT);
 		    db_search_free(search_results);
 		    bu_free(search_results, "free search container");
 		} else {
