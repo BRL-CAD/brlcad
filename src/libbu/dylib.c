@@ -31,7 +31,7 @@
 #endif
 #include "bio.h"
 
-#include "bu/file.h"
+#include "bu/dylib.h"
 
 void *
 bu_dlopen(const char *path, int mode)
