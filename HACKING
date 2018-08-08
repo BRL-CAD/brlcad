@@ -563,17 +563,26 @@ variables should be utilized instead of the standard C facility:
   bu_malloc() instead of malloc()
   bu_calloc() instead of calloc()
   bu_realloc() instead of realloc()
-  bu_fgets() instead of fgets()
   bu_free() instead of free()
-  bu_log() instead of printf()
+
   bu_bomb() instead of abort()
   bu_exit() instead of printf()+exit()
-  bu_dirname() instead of dirname()
+
   bu_getopt() instead of getopt()
   bu_opterr instead of opterr
   bu_optind instead of optind
   bu_optopt instead of optopt
   bu_optarg instead of optarg
+
+  bu_file_delete() instead of unlink(), rmdir(), and remove()
+  bu_path_basename() instead of basename()
+  bu_path_dirname() instead of dirname()
+  bu_path_match() instead of fnmatch()
+
+  bu_log() instead of printf()
+  bu_fgets() instead of fgets()
+  bu_sort() instead of qsort()
+
   bu_strdup() instead of strdup()
   bu_strlcat() instead of strcat(), strncat(), and strlcat()
   bu_strlcpy() instead of strcpy(), strncpy(), and strlcpy()
@@ -581,8 +590,6 @@ variables should be utilized instead of the standard C facility:
   bu_strcasecmp() and BU_STR_EQUIV() instead of stricmp()/strcasecmp()
   bu_strncmp() instead of strncmp()
   bu_strcasecmp() instead of strnicmp()/strncasecmp()
-  bu_file_delete() instead of unlink(), rmdir(), and remove()
-  bu_sort() instead of qsort()
 
 Similarly, ANSI C functions are preferred over the BSD and POSIX
 interfaces.  The following functions should be used:
