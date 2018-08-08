@@ -10338,7 +10338,7 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
-    struct bu_hook_list save_hook_list;
+    struct bu_hook_list save_hook_list = BU_HOOK_LIST_INIT_ZERO;
     int ret;
 
     /* look for the new libged commands before trying one of the old ones */
