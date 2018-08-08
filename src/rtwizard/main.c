@@ -29,6 +29,7 @@
 #include "vmath.h"
 #include "bu/color.h"
 #include "bu/file.h"
+#include "bu/mime.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/path.h"

@@ -39,10 +39,10 @@
 
 # Set locations for final mime C source and header files
 set(BU_MIME_C_FILE ${CMAKE_CURRENT_BINARY_DIR}/mime.c)
-set(BU_MIME_H_FILE ${CMAKE_BINARY_DIR}/include/bu/mime.h)
+set(BU_MIME_TYPES_H_FILE ${CMAKE_BINARY_DIR}/include/bu/mime_types.h)
 
 # Set locations for intermediate C source and header files
-set(mime_h_file_tmp ${CMAKE_CURRENT_BINARY_DIR}/mime.h.tmp)
+set(mime_types_h_file_tmp ${CMAKE_CURRENT_BINARY_DIR}/mime_types.h.tmp)
 set(mime_c_file_tmp ${CMAKE_CURRENT_BINARY_DIR}/mime.c.tmp)
 
 # Common comment header on our C source and header files
@@ -59,8 +59,8 @@ set(header "${header} * This file is generated from public domain data and is in
 
 # Header to our C header file
 set(h_contents "${header}")
-set(h_contents "${h_contents}#ifndef BU_MIME_H\n")
-set(h_contents "${h_contents}#define BU_MIME_H\n")
+set(h_contents "${h_contents}#ifndef BU_MIME_TYPES_H\n")
+set(h_contents "${h_contents}#define BU_MIME_TYPES_H\n")
 set(h_contents "${h_contents}\n#include \"common.h\"\n")
 set(h_contents "${h_contents}#include \"bu/defines.h\"\n")
 set(h_contents "${h_contents}\n__BEGIN_DECLS\n")
@@ -152,11 +152,11 @@ foreach(c ${ACTIVE_TYPES})
   set(h_contents "${h_contents}\n${enum_str}")
 endforeach(c ${ACTIVE_TYPES})
 set(h_contents "${h_contents}\n__END_DECLS\n")
-set(h_contents "${h_contents}\n#endif /*BU_MIME_H*/\n")
+set(h_contents "${h_contents}\n#endif /*BU_MIME_TYPES_H*/\n")
 
 # C mapping functions - extension to type
 foreach(c ${ACTIVE_TYPES})
-  set(enum_str "HIDDEN int\nbu_file_mime_${c}(const char *ext)\n{")
+  set(enum_str "HIDDEN int\nmime_${c}(const char *ext)\n{")
   list(SORT ${c}_types)
   foreach(type ${${c}_types})
     foreach(ext ${${type}_extensions})
@@ -168,12 +168,12 @@ foreach(c ${ACTIVE_TYPES})
 endforeach(c ${ACTIVE_TYPES})
 
 # Public C mapping function - extension to type
-set(mcstr "\nint bu_file_mime(const char *ext, bu_mime_context_t context)\n{")
+set(mcstr "\nint\nbu_file_mime(const char *ext, bu_mime_context_t context)\n{")
 set(mcstr "${mcstr}\n    switch (context) {\n")
 foreach(context ${ACTIVE_TYPES})
   string(TOUPPER "${context}" c)
   set(mcstr "${mcstr}        case BU_MIME_${c}:\n")
-  set(mcstr "${mcstr}             return bu_file_mime_${context}(ext);\n")
+  set(mcstr "${mcstr}             return mime_${context}(ext);\n")
   set(mcstr "${mcstr}             break;\n")
 endforeach(context ${ACTIVE_TYPES})
 set(mcstr "${mcstr}        default:\n")
@@ -186,7 +186,7 @@ set(c_contents "${c_contents}\n${mcstr}")
 
 # C mapping functions - type to string
 foreach(c ${ACTIVE_TYPES})
-  set(enum_str "HIDDEN const char *\nbu_file_mime_str_${c}(int type)\n{")
+  set(enum_str "HIDDEN const char *\nmime_str_${c}(int type)\n{")
   string(TOUPPER "${c}" c_u)
   set(enum_str "${enum_str}\n    const char *ret = NULL;")
   set(enum_str "${enum_str}\n    if (type < 0 || type >= BU_MIME_${c_u}_UNKNOWN) {\n\tret = bu_strdup(\"BU_MIME_${c_u}_UNKNOWN\");\n\tgoto found_type;\n    }\n")
@@ -200,12 +200,12 @@ foreach(c ${ACTIVE_TYPES})
 endforeach(c ${ACTIVE_TYPES})
 
 # Public C mapping function - type to string
-set(mcstr "\nconst char *bu_file_mime_str(int t, bu_mime_context_t context)\n{")
+set(mcstr "\nconst char *\nbu_file_mime_str(int t, bu_mime_context_t context)\n{")
 set(mcstr "${mcstr}\n    switch (context) {\n")
 foreach(context ${ACTIVE_TYPES})
   string(TOUPPER "${context}" c)
   set(mcstr "${mcstr}        case BU_MIME_${c}:\n")
-  set(mcstr "${mcstr}             return bu_file_mime_str_${context}(t);\n")
+  set(mcstr "${mcstr}             return mime_str_${context}(t);\n")
   set(mcstr "${mcstr}             break;\n")
 endforeach(context ${ACTIVE_TYPES})
 set(mcstr "${mcstr}        default:\n")
@@ -230,7 +230,7 @@ set(c_contents "${c_contents}\n${enum_str}")
 
 # C mapping functions - type to extension(s)
 foreach(c ${ACTIVE_TYPES})
-  set(enum_str "HIDDEN const char *\nbu_file_mime_ext_${c}(int type)\n{")
+  set(enum_str "HIDDEN const char *\nmime_ext_${c}(int type)\n{")
   string(TOUPPER "${c}" c_u)
   set(enum_str "${enum_str}\n    const char *ret = NULL;")
   set(enum_str "${enum_str}\n    if (type < 0 || type >= BU_MIME_${c_u}_UNKNOWN) {\n\tgoto found_type;\n    }\n")
@@ -246,12 +246,12 @@ foreach(c ${ACTIVE_TYPES})
 endforeach(c ${ACTIVE_TYPES})
 
 # Public C mapping function - type to string
-set(mcstr "\nconst char *bu_file_mime_ext(int t, bu_mime_context_t context)\n{")
+set(mcstr "\nconst char *\nbu_file_mime_ext(int t, bu_mime_context_t context)\n{")
 set(mcstr "${mcstr}\n    switch (context) {\n")
 foreach(context ${ACTIVE_TYPES})
   string(TOUPPER "${context}" c)
   set(mcstr "${mcstr}        case BU_MIME_${c}:\n")
-  set(mcstr "${mcstr}             return bu_file_mime_ext_${context}(t);\n")
+  set(mcstr "${mcstr}             return mime_ext_${context}(t);\n")
   set(mcstr "${mcstr}             break;\n")
 endforeach(context ${ACTIVE_TYPES})
 set(mcstr "${mcstr}        default:\n")
@@ -262,16 +262,16 @@ set(mcstr "${mcstr}    return NULL;\n")
 set(mcstr "${mcstr}}\n")
 set(c_contents "${c_contents}\n${mcstr}")
 
-file(WRITE ${mime_h_file_tmp} "${h_contents}")
+file(WRITE ${mime_types_h_file_tmp} "${h_contents}")
 file(WRITE ${mime_c_file_tmp} "${c_contents}")
 
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_h_file_tmp} ${BU_MIME_H_FILE})
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_types_h_file_tmp} ${BU_MIME_TYPES_H_FILE})
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_c_file_tmp} ${BU_MIME_C_FILE})
 
-execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_h_file_tmp})
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_types_h_file_tmp})
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_c_file_tmp})
 
-DISTCLEAN(${BU_MIME_C_FILE} ${BU_MIME_H_FILE})
+DISTCLEAN(${BU_MIME_C_FILE} ${BU_MIME_TYPES_H_FILE})
 
 # Local Variables:
 # tab-width: 8

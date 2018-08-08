@@ -32,7 +32,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/t
 include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 
 # We do want to install the mime header
-install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
+install(FILES ${BU_MIME_TYPES_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
 
 # Year 2038+ support
 set_property(SOURCE y2038/time64.c PROPERTY EXTERNAL 1)
