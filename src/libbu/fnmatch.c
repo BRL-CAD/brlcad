@@ -66,8 +66,8 @@
 
 #include "./charclass.h"
 
-#define FNMATCH_IGNORECASE  BU_FNMATCH_CASEFOLD
-#define FNMATCH_FILE_NAME   BU_FNMATCH_PATHNAME
+#define FNMATCH_IGNORECASE  BU_PATH_MATCH_CASEFOLD
+#define FNMATCH_FILE_NAME   BU_PATH_MATCH_PATHNAME
 
 #define FNMATCH_EOS '\0'
 
@@ -154,7 +154,7 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 	++pattern;
 
 
-    if (flags & BU_FNMATCH_CASEFOLD)
+    if (flags & BU_PATH_MATCH_CASEFOLD)
 	test = (char)tolower((unsigned char)test);
 
     ok = 0;
@@ -166,23 +166,23 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
      */
     c = *pattern++;
     do {
-	if (c == '\\' && !(flags & BU_FNMATCH_NOESCAPE))
+	if (c == '\\' && !(flags & BU_PATH_MATCH_NOESCAPE))
 	    c = *pattern++;
 	if (c == FNMATCH_EOS)
 	    return FNMATCH_RANGE_ERROR;
-	if (c == '/' && (flags & BU_FNMATCH_PATHNAME))
+	if (c == '/' && (flags & BU_PATH_MATCH_PATHNAME))
 	    return FNMATCH_RANGE_NOMATCH;
-	if ((flags & BU_FNMATCH_CASEFOLD))
+	if ((flags & BU_PATH_MATCH_CASEFOLD))
 	    c = (char)tolower((unsigned char)c);
 	if (*pattern == '-'
 	    && (c2 = *(pattern+1)) != FNMATCH_EOS && c2 != ']')
 	{
 	    pattern += 2;
-	    if (c2 == '\\' && !(flags & BU_FNMATCH_NOESCAPE))
+	    if (c2 == '\\' && !(flags & BU_PATH_MATCH_NOESCAPE))
 		c2 = *pattern++;
 	    if (c2 == FNMATCH_EOS)
 		return FNMATCH_RANGE_ERROR;
-	    if (flags & BU_FNMATCH_CASEFOLD)
+	    if (flags & BU_PATH_MATCH_CASEFOLD)
 		c2 = (char)tolower((unsigned char)c2);
 	    if (c <= test && test <= c2)
 		ok = 1;
@@ -204,7 +204,7 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 
 
 int
-bu_fnmatch(const char *pattern, const char *string, int flags)
+bu_path_match(const char *pattern, const char *string, int flags)
 {
     const char *stringstart;
     char *newp;
@@ -214,17 +214,15 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
     for (stringstart = string; limit > 0; limit--) {
 	switch (c = *pattern++) {
 	    case FNMATCH_EOS:
-		if ((flags & BU_FNMATCH_LEADING_DIR) && *string == '/')
-		    return 0;
 		return *string == FNMATCH_EOS ? 0 : FNMATCH_NOMATCH;
 	    case '?':
 		if (*string == FNMATCH_EOS)
 		    return FNMATCH_NOMATCH;
-		if (*string == '/' && (flags & BU_FNMATCH_PATHNAME))
+		if (*string == '/' && (flags & BU_PATH_MATCH_PATHNAME))
 		    return FNMATCH_NOMATCH;
-		if (*string == '.' && (flags & BU_FNMATCH_PERIOD) &&
+		if (*string == '.' && (flags & BU_PATH_MATCH_PERIOD) &&
 		    (string == stringstart ||
-		     ((flags & BU_FNMATCH_PATHNAME) && *(string - 1) == '/')))
+		     ((flags & BU_PATH_MATCH_PATHNAME) && *(string - 1) == '/')))
 		    return FNMATCH_NOMATCH;
 		++string;
 		break;
@@ -234,20 +232,19 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		while (c == '*')
 		    c = *++pattern;
 
-		if (*string == '.' && (flags & BU_FNMATCH_PERIOD) &&
+		if (*string == '.' && (flags & BU_PATH_MATCH_PERIOD) &&
 		    (string == stringstart ||
-		     ((flags & BU_FNMATCH_PATHNAME) && *(string - 1) == '/')))
+		     ((flags & BU_PATH_MATCH_PATHNAME) && *(string - 1) == '/')))
 		    return FNMATCH_NOMATCH;
 
 		/* Optimize for pattern with * at end or before /. */
 		if (c == FNMATCH_EOS) {
-		    if (flags & BU_FNMATCH_PATHNAME)
-			return ((flags & BU_FNMATCH_LEADING_DIR) ||
-				strchr(string, '/') == NULL ?
+		    if (flags & BU_PATH_MATCH_PATHNAME)
+			return (strchr(string, '/') == NULL ?
 				0 : FNMATCH_NOMATCH);
 		    else
 			return 0;
-		} else if (c == '/' && (flags & BU_FNMATCH_PATHNAME)) {
+		} else if (c == '/' && (flags & BU_PATH_MATCH_PATHNAME)) {
 		    if ((string = strchr(string, '/')) == NULL)
 			return FNMATCH_NOMATCH;
 		    break;
@@ -255,9 +252,9 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 
 		/* General case, use recursion. */
 		while ((test = *string) != FNMATCH_EOS) {
-		    if (!bu_fnmatch(pattern, string, flags & ~BU_FNMATCH_PERIOD))
+		    if (!bu_path_match(pattern, string, flags & ~BU_PATH_MATCH_PERIOD))
 			return 0;
-		    if (test == '/' && (flags & BU_FNMATCH_PATHNAME))
+		    if (test == '/' && (flags & BU_PATH_MATCH_PATHNAME))
 			break;
 		    ++string;
 		}
@@ -265,11 +262,11 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 	    case '[':
 		if (*string == FNMATCH_EOS)
 		    return FNMATCH_NOMATCH;
-		if (*string == '/' && (flags & BU_FNMATCH_PATHNAME))
+		if (*string == '/' && (flags & BU_PATH_MATCH_PATHNAME))
 		    return FNMATCH_NOMATCH;
-		if (*string == '.' && (flags & BU_FNMATCH_PERIOD) &&
+		if (*string == '.' && (flags & BU_PATH_MATCH_PERIOD) &&
 		    (string == stringstart ||
-		     ((flags & BU_FNMATCH_PATHNAME) && *(string - 1) == '/')))
+		     ((flags & BU_PATH_MATCH_PATHNAME) && *(string - 1) == '/')))
 		    return FNMATCH_NOMATCH;
 
 		switch (_rangematch(pattern, *string, flags, &newp)) {
@@ -285,7 +282,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		++string;
 		break;
 	    case '\\':
-		if (!(flags & BU_FNMATCH_NOESCAPE)) {
+		if (!(flags & BU_PATH_MATCH_NOESCAPE)) {
 		    if ((c = *pattern++) == FNMATCH_EOS) {
 			c = '\\';
 			--pattern;
@@ -294,7 +291,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		/* FALLTHROUGH */
 	    default:
 	    normal:
-		if (c != *string && !((flags & BU_FNMATCH_CASEFOLD) &&
+		if (c != *string && !((flags & BU_PATH_MATCH_CASEFOLD) &&
 				      (tolower((unsigned char)c) ==
 				       tolower((unsigned char)*string))))
 		    return FNMATCH_NOMATCH;

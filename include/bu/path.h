@@ -138,6 +138,7 @@ BU_EXPORT extern char *bu_path_dirname(const char *path);
  */
 BU_EXPORT extern char *bu_path_basename(const char *path, char *basename);
 
+
 /**
  * Normalize a path according to rules used for realpath, but
  * without filesystem (or database object) validation.
@@ -149,9 +150,10 @@ BU_EXPORT extern char *bu_path_basename(const char *path, char *basename);
   */
 BU_EXPORT extern const char *bu_path_normalize(const char *path);
 
+
 /**
- * Components of a path recognized by libbu, identified below in the
- * context of the example path:
+ * Components of a path recognized by bu_path_component(), identified
+ * below in the context of the example path:
  *
  *     /dir1/dir2/file.ext
  */
@@ -165,16 +167,15 @@ typedef enum {
 } bu_path_component_t;
 
 /**
- * Attempt to extract a component from a file path.
+ * Identify components of a file path such as the filename (basename),
+ * file extension, directory path (dirname) and more.
  *
- * returns 0 if the specified component was not found, 1 if it was.  If the
- * bu_vls pointer component is not NULL, the component will be written to the
- * vls.
+ * Returns truthfully (non-zero) if the specified component type was
+ * found in the provided path.  A copy of the component will be
+ * written to the 'component' vls if non-NULL.
  */
 
-BU_EXPORT extern int bu_path_component(struct bu_vls *component,
-	                               const char *path,
-	                               bu_path_component_t type);
+BU_EXPORT extern int bu_path_component(struct bu_vls *component, const char *path, bu_path_component_t type);
 
 
 /**
@@ -189,21 +190,38 @@ BU_EXPORT extern int bu_path_component(struct bu_vls *component,
 BU_EXPORT extern char **bu_path_to_argv(const char *path, int *ac);
 
 
-
-#define BU_FNMATCH_NOESCAPE    0x01 /**< bu_fnmatch() flag.  Backslash escaping. */
-#define BU_FNMATCH_PATHNAME    0x02 /**< bu_fnmatch() flag.  Slash must be matched by slash. */
-#define BU_FNMATCH_PERIOD      0x04 /**< bu_fnmatch() flag.  Period must be matched by period. */
-#define BU_FNMATCH_LEADING_DIR 0x08 /**< bu_fnmatch() flag.  Ignore `/<tail>` after Imatch. */
-#define BU_FNMATCH_CASEFOLD    0x10 /**< bu_fnmatch() flag.  Case-insensitive searching. */
-
+#define BU_PATH_MATCH_NOESCAPE    0x01 /**< bu_path_match() flag:
+					* Backslash is ordinary
+					* character, not an escape
+					* character.
+					*/
+#define BU_PATH_MATCH_PATHNAME    0x02 /**< bu_path_match() flag:
+					* Match a slash in pathname
+					* only with a slash in pattern
+					* and not by an asterisk or a
+					* question mark metacharacter,
+					* nor by a bracket expression
+					* containing a slash.
+					*/
+#define BU_PATH_MATCH_PERIOD      0x04 /**< bu_path_match() flag:
+					* Leading period in pathname
+					* has to be matched exactly by
+					* a period in pattern.
+					*/
+#define BU_PATH_MATCH_CASEFOLD    0x08 /**< bu_path_match() flag:
+					* Case-insensitive
+					* matching.
+					*/
 /**
- * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
  * Compares a string filename or pathname to a pattern.
+ *
+ * This is a portable implementation of the fnmatch() function as
+ * specified in POSIX 1003.2-1992, section B.6.
  *
  * Returns 0 if a match is found or 1 otherwise.
  *
  */
-BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int flags);
+BU_EXPORT extern int bu_path_match(const char *pattern, const char *pathname, int flags);
 
 
 /** @} */

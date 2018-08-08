@@ -166,7 +166,7 @@ _ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, 
             bu_vls_trunc(&temp, 0);
             for (i = num = 0; i < RT_DBNHASH; i++) {
                 for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-                    if (bu_fnmatch(bu_vls_addr(&word), dp->d_namep, 0) != 0) continue;
+                    if (bu_path_match(bu_vls_addr(&word), dp->d_namep, 0) != 0) continue;
                     if (!(flags & _GED_GLOB_HIDDEN) && (dp->d_flags & RT_DIR_HIDDEN)) continue;
                     if (!(flags & _GED_GLOB_NON_GEOM) && (dp->d_flags & RT_DIR_NON_GEOM)) continue;
                     if (num == 0)

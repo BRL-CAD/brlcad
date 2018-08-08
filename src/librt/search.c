@@ -482,7 +482,7 @@ f_name(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	return 0;
     }
 
-    ret = !bu_fnmatch(plan->p_un._c_data, dp->d_namep, 0);
+    ret = !bu_path_match(plan->p_un._c_data, dp->d_namep, 0);
 
     if (!ret) db_node->matched_filters = 0;
     return ret;
@@ -520,7 +520,7 @@ f_iname(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
 	return 0;
     }
 
-    ret = !bu_fnmatch(plan->p_un._c_data, dp->d_namep, BU_FNMATCH_CASEFOLD);
+    ret = !bu_path_match(plan->p_un._c_data, dp->d_namep, BU_PATH_MATCH_CASEFOLD);
     if (!ret) db_node->matched_filters = 0;
     return ret;
 }
@@ -652,12 +652,12 @@ avs_check(const char *keystr, const char *value, int checkval, int strcomparison
     struct bu_attribute_value_pair *avpp;
 
     for (BU_AVS_FOR(avpp, avs)) {
-	if (!bu_fnmatch(keystr, avpp->name, 0)) {
+	if (!bu_path_match(keystr, avpp->name, 0)) {
 	    if (checkval >= 1) {
 
 		/* String based comparisons */
 		if ((checkval == 1) && (strcomparison == 1)) {
-		    if (!bu_fnmatch(value, avpp->value, 0)) {
+		    if (!bu_path_match(value, avpp->value, 0)) {
 			return 1;
 		    } else {
 			return 0;
@@ -678,14 +678,14 @@ avs_check(const char *keystr, const char *value, int checkval, int strcomparison
 		    }
 		}
 		if ((checkval == 4) && (strcomparison == 1)) {
-		    if ((!bu_fnmatch(value, avpp->value, 0)) || (bu_strcmp(value, avpp->value) < 0)) {
+		    if ((!bu_path_match(value, avpp->value, 0)) || (bu_strcmp(value, avpp->value) < 0)) {
 			return 1;
 		    } else {
 			return 0;
 		    }
 		}
 		if ((checkval == 5) && (strcomparison == 1)) {
-		    if ((!bu_fnmatch(value, avpp->value, 0)) || (bu_strcmp(value, avpp->value) > 0)) {
+		    if ((!bu_path_match(value, avpp->value, 0)) || (bu_strcmp(value, avpp->value) > 0)) {
 			return 1;
 		    } else {
 			return 0;
@@ -764,7 +764,8 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
      * the attribute must satisfy the logical expression.  In the case
      * where a > or < is used with a string argument the behavior will
      * follow ASCII lexicographical order.  In the case of equality
-     * between strings, fnmatch is used to support pattern matching
+     * between strings, bu_path_match() is used to support pattern
+     * matching.
      */
 
     checkval = string_to_name_and_val(plan->p_un._attr_data, &paramname, &value);
@@ -854,7 +855,8 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
      * the attribute must satisfy the logical expression.  In the case
      * where a > or < is used with a string argument the behavior will
      * follow ASCII lexicographical order.  In the case of equality
-     * between strings, fnmatch is used to support pattern matching
+     * between strings, bu_path_match() is used to support pattern
+     * matching.
      */
 
     checkval = string_to_name_and_val(plan->p_un._attr_data, &attribname, &value);
@@ -1003,16 +1005,16 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
      * to help performance. */
     if (dp->d_flags & RT_DIR_COMB) {
 	if (dp->d_flags & RT_DIR_REGION) {
-	    if ((!bu_fnmatch(plan->p_un._type_data, "r", 0)) || (!bu_fnmatch(plan->p_un._type_data, "reg", 0))  || (!bu_fnmatch(plan->p_un._type_data, "region", 0))) {
+	    if ((!bu_path_match(plan->p_un._type_data, "r", 0)) || (!bu_path_match(plan->p_un._type_data, "reg", 0))  || (!bu_path_match(plan->p_un._type_data, "region", 0))) {
 		type_match = 1;
 	    }
 	}
-	if ((!bu_fnmatch(plan->p_un._type_data, "c", 0)) || (!bu_fnmatch(plan->p_un._type_data, "comb", 0)) || (!bu_fnmatch(plan->p_un._type_data, "combination", 0))) {
+	if ((!bu_path_match(plan->p_un._type_data, "c", 0)) || (!bu_path_match(plan->p_un._type_data, "comb", 0)) || (!bu_path_match(plan->p_un._type_data, "combination", 0))) {
 	    type_match = 1;
 	}
 	goto return_label;
     } else {
-	if ((!bu_fnmatch(plan->p_un._type_data, "r", 0)) || (!bu_fnmatch(plan->p_un._type_data, "reg", 0))  || (!bu_fnmatch(plan->p_un._type_data, "region", 0)) || (!bu_fnmatch(plan->p_un._type_data, "c", 0)) || (!bu_fnmatch(plan->p_un._type_data, "comb", 0)) || (!bu_fnmatch(plan->p_un._type_data, "combination", 0))) {
+	if ((!bu_path_match(plan->p_un._type_data, "r", 0)) || (!bu_path_match(plan->p_un._type_data, "reg", 0))  || (!bu_path_match(plan->p_un._type_data, "region", 0)) || (!bu_path_match(plan->p_un._type_data, "c", 0)) || (!bu_path_match(plan->p_un._type_data, "comb", 0)) || (!bu_path_match(plan->p_un._type_data, "combination", 0))) {
 	    goto return_label;
 	}
 
@@ -1030,37 +1032,39 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 	    type = rt_arb_std_type(&intern, &arb_tol);
 	    switch (type) {
 		case 4:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb4", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "arb4", 0));
 		    break;
 		case 5:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb5", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "arb5", 0));
 		    break;
 		case 6:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb6", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "arb6", 0));
 		    break;
 		case 7:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb7", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "arb7", 0));
 		    break;
 		case 8:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb8", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "arb8", 0));
 		    break;
 		default:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "invalid", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "invalid", 0));
 		    break;
 	    }
 	    break;
 	case DB5_MINORTYPE_BRLCAD_METABALL:
-	    /* Because ft_label is only 8 characters, ft_label doesn't work in fnmatch for metaball*/
-	    type_match = (!bu_fnmatch(plan->p_un._type_data, "metaball", 0));
+	    /* Because ft_label is only 8 characters, ft_label doesn't
+	     * work in bu_path_match() for metaball.
+	     */
+	    type_match = (!bu_path_match(plan->p_un._type_data, "metaball", 0));
 	    break;
 	default:
-	    type_match = !bu_fnmatch(plan->p_un._type_data, intern.idb_meth->ft_label, 0);
+	    type_match = !bu_path_match(plan->p_un._type_data, intern.idb_meth->ft_label, 0);
 	    break;
     }
 
     /* Match anything that doesn't define a 2D or 3D shape - unfortunately, this list will have to
      * be updated manually unless/until some functionality is added to generate it */
-    if (!bu_fnmatch(plan->p_un._type_data, "shape", 0) &&
+    if (!bu_path_match(plan->p_un._type_data, "shape", 0) &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOT &&
         intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
@@ -1119,9 +1123,9 @@ c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 
     newplan = palloc(N_BOOL, f_bool, tbl);
 
-    if (!bu_fnmatch(pattern, "u", 0) || !bu_fnmatch(pattern, "U", 0)) bool_type = 2;
-    if (!bu_fnmatch(pattern, "+", 0)) bool_type = 3;
-    if (!bu_fnmatch(pattern, "-", 0)) bool_type = 4;
+    if (!bu_path_match(pattern, "u", 0) || !bu_path_match(pattern, "U", 0)) bool_type = 2;
+    if (!bu_path_match(pattern, "+", 0)) bool_type = 3;
+    if (!bu_path_match(pattern, "-", 0)) bool_type = 4;
 
     newplan->p_un._bool_data = bool_type;
     (*resultplan) = newplan;
@@ -1206,7 +1210,8 @@ f_depth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
      * the attribute must satisfy the logical expression.  In the case
      * where a > or < is used with a string argument the behavior will
      * follow ASCII lexicographical order.  In the case of equality
-     * between strings, fnmatch is used to support pattern matching
+     * between strings, bu_path_match() is used to support pattern
+     * matching.
      */
 
     checkval = string_to_name_and_val(plan->p_un._depth_data, &name, &value);
@@ -1468,7 +1473,7 @@ c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
 HIDDEN int
 f_path(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
-    int ret = !bu_fnmatch(plan->p_un._path_data, db_path_to_string(db_node->path), 0);
+    int ret = !bu_path_match(plan->p_un._path_data, db_path_to_string(db_node->path), 0);
     if (!ret) db_node->matched_filters = 0;
     return ret;
 }

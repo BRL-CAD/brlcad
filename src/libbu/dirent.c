@@ -53,7 +53,7 @@ bu_file_list(const char *path, const char *pattern, char ***files)
     while ((dp = readdir(dir)) != NULL) {
 	if (!pattern
 	    || (strlen(pattern) == 0)
-	    || (bu_fnmatch(pattern, dp->d_name, 0) == 0))
+	    || (bu_path_match(pattern, dp->d_name, 0) == 0))
 	{
 	    filecount++;
 	}
@@ -72,7 +72,7 @@ bu_file_list(const char *path, const char *pattern, char ***files)
     while ((dp = readdir(dir)) != NULL) {
 	if (!pattern
 	    || (strlen(pattern) == 0)
-	    || (bu_fnmatch(pattern, dp->d_name, 0) == 0))
+	    || (bu_path_match(pattern, dp->d_name, 0) == 0))
 	{
 	    (*files)[i++] = bu_strdup(dp->d_name);
 	}

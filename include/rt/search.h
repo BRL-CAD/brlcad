@@ -162,9 +162,9 @@ RT_EXPORT extern void db_search_free(struct bu_ptbl *search_results);
 /**
  * db_ls takes a database instance pointer and assembles a directory
  * pointer array of objects in the database according to a set of
- * flags.  An optional pattern can be supplied for match filtering
- * via globbing rules (see bu_fnmatch).  If pattern is NULL, filtering
- * is performed using only the flags.
+ * flags.  An optional pattern can be supplied for match filtering via
+ * globbing rules (see bu_path_match()).  If pattern is NULL,
+ * filtering is performed using only the flags.
  *
  * The caller is responsible for freeing the array.
  *

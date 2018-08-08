@@ -388,11 +388,11 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 
     /* A couple of the commands are application level, not
      * library level - handle them here. */
-    if (BU_STR_EQUAL(bu_vls_addr(iline), "dest") || !bu_fnmatch("dest *", bu_vls_addr(iline), 0)) {
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "dest") || !bu_path_match("dest *", bu_vls_addr(iline), 0)) {
 	_nirt_dest_cmd(io_data, iline);
 	return 0;
     }
-    if (BU_STR_EQUAL(bu_vls_addr(iline), "dump") || !bu_fnmatch("dump *", bu_vls_addr(iline), 0)) {
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "dump") || !bu_path_match("dump *", bu_vls_addr(iline), 0)) {
 	bu_vls_nibble(iline, 4);
 	bu_vls_trimspace(iline);
 	if (bu_vls_strlen(iline)) {
@@ -425,7 +425,7 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 	bu_vls_free(&dumpstr);
 	return 0;
     }
-    if (BU_STR_EQUAL(bu_vls_addr(iline), "load") || !bu_fnmatch("load *", bu_vls_addr(iline), 0)) {
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "load") || !bu_path_match("load *", bu_vls_addr(iline), 0)) {
 	bu_vls_nibble(iline, 4);
 	bu_vls_trimspace(iline);
 	if (bu_vls_strlen(iline)) {
@@ -454,7 +454,7 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 	}
 	return 0;
     }
-    if (BU_STR_EQUAL(bu_vls_addr(iline), "statefile") || !bu_fnmatch("statefile *", bu_vls_addr(iline), 0)) {
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "statefile") || !bu_path_match("statefile *", bu_vls_addr(iline), 0)) {
 	bu_vls_nibble(iline, 9);
 	bu_vls_trimspace(iline);
 	if (!bu_vls_strlen(iline)) {
