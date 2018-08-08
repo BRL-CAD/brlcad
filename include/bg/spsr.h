@@ -109,7 +109,7 @@ struct bg_3d_spsr_opts {
 #define BG_3D_SPRS_BOUNDARY_DIRICHLET        3
 
 #define BG_3D_SPRS_DEFAULT_DEGREE            1     /* DEFAULT_FEM_DEGREE */
-#define BG_3D_SPRS_DEFAULT_DEPTH             8
+#define BG_3D_SPRS_DEFAULT_DEPTH             11
 #define BG_3D_SPRS_DEFAULT_KERNELDEPTH       0
 #define BG_3D_SPRS_DEFAULT_ITERATIONS        0
 #define BG_3D_SPRS_DEFAULT_FULL_DEPTH        0
@@ -117,13 +117,13 @@ struct bg_3d_spsr_opts {
 #define BG_3D_SPRS_DEFAULT_BASEVCYCLES       0
 #define BG_3D_SPRS_DEFAULT_MAX_MEM           0
 #define BG_3D_SPRS_DEFAULT_THREADS           0
-#define BG_3D_SPRS_DEFAULT_SAMPLES_PER_NODE  1.5
+#define BG_3D_SPRS_DEFAULT_SAMPLES_PER_NODE  1.1
 #define BG_3D_SPRS_DEFAULT_SCALE             1.0
 #define BG_3D_SPRS_DEFAULT_WIDTH             0.0
 #define BG_3D_SPRS_DEFAULT_CONFIDENCE        0.0
 #define BG_3D_SPRS_DEFAULT_CONFIDENCE_BIAS   0.0
 #define BG_3D_SPRS_DEFAULT_CGSOLVER_ACCURACY 1.0e-3
-#define BG_3D_SPRS_DEFAULT_POINT_WEIGHT      2.0    /* DefaultPointWeightMultiplier * Degree */
+#define BG_3D_SPRS_DEFAULT_POINT_WEIGHT      8.0    /* DefaultPointWeightMultiplier * Degree */
 #define BG_3D_SPRS_DEFAULT_NONMANIFOLD       0
 #define BG_3D_SPRS_DEFAULT_LINEARFIT         0
 #define BG_3D_SPRS_DEFAULT_EXACT             1

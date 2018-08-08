@@ -32,6 +32,7 @@
 #include "bu/cmd.h"
 #include "bn/tol.h"
 #include "bg/spsr.h"
+#include "bg/trimesh.h"
 #include "rt/geom.h"
 #include "rt/op.h"
 #include "rt/search.h"
@@ -59,6 +60,7 @@ struct _ged_facetize_opts {
     int nmg_use_tnurbs;
     int regions;
     int in_place;
+    fastf_t decim_feat_perc;
 
     /* Poisson specific options */
     int pnt_surf_mode;
@@ -89,6 +91,7 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     o->nmg_use_tnurbs = 0;
     o->regions = 0;
     o->in_place = 0;
+    o->decim_feat_perc = 0.15;
     BU_GET(o->faceted_suffix, struct bu_vls);
     bu_vls_init(o->faceted_suffix);
     bu_vls_sprintf(o->faceted_suffix, ".bot");
@@ -500,7 +503,7 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name)
 
 #ifdef ENABLE_SPR
 HIDDEN int
-_ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts, int quiet)
+_ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts, int quiet)
 {
     int ret = GED_OK;
     struct directory *dp;
@@ -515,6 +518,10 @@ _ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname, struct
     int free_pnts = 0;
     point_t *input_points_3d = NULL;
     vect_t *input_normals_3d = NULL;
+    point_t rpp_min, rpp_max;
+    point_t obj_min, obj_max;
+    VSETALL(rpp_min, INFINITY);
+    VSETALL(rpp_max, -INFINITY);
 
     dp = db_lookup(dbip, objname, LOOKUP_QUIET);
 
@@ -522,6 +529,11 @@ _ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname, struct
 	bu_vls_printf(gedp->ged_result_str, "Error: could not determine type of object %s\n", objname);
 	return GED_ERROR;
     }
+
+    /* Key some settings off the bbox size */
+    ged_get_obj_bounds(gedp, 1, (const char **)&objname, 0, obj_min, obj_max);
+    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
+    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 
     if (in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_PNTS) {
 	/* If we have a point cloud, there's no need to raytrace it */
@@ -544,13 +556,6 @@ _ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname, struct
 
 	/* If we don't have a tolerance, try to guess something sane from the bbox */
 	if (NEAR_ZERO(opts->len_tol, RT_LEN_TOL)) {
-	    point_t rpp_min, rpp_max;
-	    point_t obj_min, obj_max;
-	    VSETALL(rpp_min, INFINITY);
-	    VSETALL(rpp_max, -INFINITY);
-	    ged_get_obj_bounds(gedp, 1, (const char **)&objname, 0, obj_min, obj_max);
-	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
-	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 	    opts->len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
 	    if (!quiet) {
 		bu_log("Note - no tolerance specified, using %f\n", opts->len_tol);
@@ -591,6 +596,26 @@ _ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname, struct
 	bu_vls_sprintf(gedp->ged_result_str, "Error: Screened Poisson reconstruction failed\n");
 	ret = GED_ERROR;
 	goto ged_facetize_spsr_memfree;
+    }
+
+/* do decimation */
+    if (opts->decim_feat_perc > 0) {
+	fastf_t feature_size = 0.0;
+	fastf_t xlen = fabs(rpp_max[X] - rpp_min[X]);
+	fastf_t ylen = fabs(rpp_max[Y] - rpp_min[Y]);
+	fastf_t zlen = fabs(rpp_max[Z] - rpp_min[Z]);
+	feature_size = (xlen < ylen) ? xlen : ylen;
+	feature_size = (feature_size < zlen) ? feature_size : zlen;
+	feature_size = feature_size * ((opts->decim_feat_perc > 1.0) ? 1.0 : opts->decim_feat_perc);
+
+	if (!rt_bot_decimate_gct(bot, feature_size)) {
+	    bu_log("no decimation completed??");
+	}
+    }
+
+    if (is_valid) {
+	int is_v = bg_trimesh_solid(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
+	(*is_valid) = is_v;
     }
 
     if (!opts->make_nmg) {
@@ -735,7 +760,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		bu_vls_printf(gedp->ged_result_str, "Screened Poisson mode (currently) only supports one existing object at a time as input.\n");
 		flags = flags & ~(GED_FACETIZE_SPSR);
 	    }
-	    if (_ged_spsr_obj(gedp, argv[0], newname, opts, 0) == GED_OK) {
+	    if (_ged_spsr_obj(NULL, gedp, argv[0], newname, opts, 0) == GED_OK) {
 		done_trying = 1;
 		ret = GED_OK;
 	    } else {
@@ -818,12 +843,15 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     struct directory **dpa = NULL;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     const char **ntop;
+    struct bu_ptbl *pc = NULL;
+    struct bu_ptbl *ar = NULL;
+    struct bu_ptbl ar_failed_nmg = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl *facetize_failed;
+    struct bu_ptbl tmpnames = BU_PTBL_INIT_ZERO;
+
     /* We need to copy combs above regions that are not themselves regions.
      * Also, facetize will need all "active" regions that will define shapes.
      * Construct searches to get these sets. */
-    struct bu_ptbl *pc = NULL;
-    struct bu_ptbl *ar = NULL;
-    struct bu_ptbl *ar_failed_nmg = NULL;
     const char *preserve_combs = "-type c ! -type r ! -below -type r";
     const char *active_regions = "-type r ! -below -type r";
 
@@ -888,15 +916,13 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
      * parallel, but that's one deep rabbit hole - for now, just try them in
      * order and make sure we can handle (non-crashing) failures to convert
      * sanely. */
-    BU_ALLOC(ar_failed_nmg, struct bu_ptbl);
-    bu_ptbl_init(ar_failed_nmg, 64, "failed list init");
     for (i = 0; i < BU_PTBL_LEN(ar); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	const char *oname = n->d_namep;
 	const char *nname = bu_avs_get(opts->s_map, n->d_namep);
 	bu_vls_printf(gedp->ged_result_str, "NMG tessellating %s from %s\n", nname, oname);
 	if (_ged_nmg_obj(gedp, 1, (const char **)&oname, nname, opts) != GED_OK) {
-	    bu_ptbl_ins(ar_failed_nmg, (long *)oname);
+	    bu_ptbl_ins(&ar_failed_nmg, (long *)oname);
 	} else {
 	    if (_ged_facetize_cpcomb(gedp, oname, opts) != GED_OK) {
 		bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", n->d_namep);
@@ -912,28 +938,72 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 
 #ifdef ENABLE_SPR
     /* If we've got SPSR available, try it as a fallback */
-    if (BU_PTBL_LEN(ar_failed_nmg) > 0 && (opts->method_flags & GED_FACETIZE_SPSR)) {
-	for (i = 0; i < BU_PTBL_LEN(ar_failed_nmg); i++) {
-	    const char *oname = (const char *)BU_PTBL_GET(ar_failed_nmg, i);
+    BU_ALLOC(facetize_failed, struct bu_ptbl);
+    bu_ptbl_init(facetize_failed, 64, "failed list init");
+    if (BU_PTBL_LEN(&ar_failed_nmg) > 0 && (opts->method_flags & GED_FACETIZE_SPSR)) {
+	struct bu_ptbl spsr_succeeded = BU_PTBL_INIT_ZERO;
+	for (i = 0; i < BU_PTBL_LEN(&ar_failed_nmg); i++) {
+	    const char *oname = (const char *)BU_PTBL_GET(&ar_failed_nmg, i);
 	    const char *nname = bu_avs_get(opts->s_map, oname);
+	    int is_valid = 0;
 	    bu_vls_printf(gedp->ged_result_str, "SPSR tessellating %s from %s\n", nname, oname);
-	    if (_ged_spsr_obj(gedp, oname, nname, opts, 1) == GED_OK) {
-		if (_ged_facetize_cpcomb(gedp, oname, opts) != GED_OK) {
-		    bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", oname);
-		} else {
-		    const char *rname = bu_avs_get(opts->c_map, oname);
-		    const char *sname = bu_avs_get(opts->s_map, oname);
-		    if (_ged_combadd2(gedp, (char *)rname, 1, (const char **)&sname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
-			bu_vls_printf(gedp->ged_result_str, "Error adding %s to comb %s \n", sname, rname);
+	    if (_ged_spsr_obj(&is_valid, gedp, oname, nname, opts, 1) == GED_OK) {
+		/* Check the validity */
+		if (is_valid) {
+		    if (_ged_facetize_cpcomb(gedp, oname, opts) != GED_OK) {
+			bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", oname);
+		    } else {
+			const char *rname = bu_avs_get(opts->c_map, oname);
+			const char *sname = bu_avs_get(opts->s_map, oname);
+			if (_ged_combadd2(gedp, (char *)rname, 1, (const char **)&sname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
+			    bu_vls_printf(gedp->ged_result_str, "Error adding %s to comb %s \n", sname, rname);
+			}
 		    }
+		    bu_ptbl_ins(&spsr_succeeded, (long *)bu_avs_get(opts->s_map, oname));
+		} else {
+		    /* rename to INVALID and add the bot to the facetize_failed list for inspection */
+		    const char *sname;
+		    const char *mav[3];
+		    const char *cmdname = "facetize";
+		    struct bu_vls invalid_name = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&invalid_name, "%s_SPSR_INVALID-0", nname);
+		    sname = bu_strdup(bu_vls_addr(&invalid_name));
+		    bu_vls_free(&invalid_name);
+		    mav[0] = cmdname;
+		    mav[1] = nname;
+		    mav[2] = sname;
+		    if (ged_move(gedp, 3, (const char **)mav) != GED_OK) {
+			bu_log("move failed: %s to %s\n", nname, sname);
+		    }
+		    bu_ptbl_ins(&tmpnames, (long *)sname);
+		    bu_ptbl_ins(facetize_failed, (long *)sname);
 		}
 	    } else {
 		/* TODO - implement verbosity flags for reporting */
 		bu_log("SPSR tessellation failed: %s\n", oname);
+		bu_ptbl_ins(facetize_failed, (long *)oname);
 	    }
 	}
+	if (BU_PTBL_LEN(&spsr_succeeded) > 0) {
+	    /* Put all of the spsr tessellations into their own top level comb for
+	     * easy manual inspection */
+	    struct bu_vls spsr_name = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&spsr_name, "%s_SPSR-0", newname);
+	    bu_vls_incr(&spsr_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	    ret = _ged_combadd2(gedp, bu_vls_addr(&spsr_name), (int)BU_PTBL_LEN(&spsr_succeeded), (const char **)spsr_succeeded.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+	}
+	bu_ptbl_free(&spsr_succeeded);
     }
+#else
+    facetize_failed = &ar_failed_nmg;
 #endif
+    if (BU_PTBL_LEN(facetize_failed) > 0) {
+	/* Stash any failed regions into a top level comb for easy subsequent examination */
+	struct bu_vls failed_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&failed_name, "%s_FAILED-0", newname);
+	bu_vls_incr(&failed_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	ret = _ged_combadd2(gedp, bu_vls_addr(&failed_name), (int)BU_PTBL_LEN(facetize_failed), (const char **)facetize_failed->buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+    }
 
     /* For all the pc combs, make new versions with the suffixed names */
     for (i = 0; i < BU_PTBL_LEN(pc); i++) {
@@ -1016,6 +1086,11 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 ged_facetize_regions_memfree:
     bu_ptbl_free(pc);
     bu_ptbl_free(ar);
+    bu_ptbl_free(&ar_failed_nmg);
+    if (facetize_failed != &ar_failed_nmg) {
+	bu_ptbl_free(facetize_failed);
+	bu_free(facetize_failed, "pc table");
+    }
     bu_free(pc, "pc table");
     bu_free(ar, "ar table");
     return ret;
@@ -1032,7 +1107,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
     struct bu_opt_desc d[10];
-    struct bu_opt_desc pd[11];
+    struct bu_opt_desc pd[12];
 
     BU_OPT(d[0], "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
     BU_OPT(d[1], "",  "nmgbool",       "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
@@ -1056,7 +1131,8 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(pd[7], "",  "sobol",            "",  NULL,            &(opts->pnt_sobol_mode), "Sample using a Sobol pseudo-random Marsaglia ray pattern on the bounding sphere.");
     BU_OPT(pd[8], "",  "max-pnts",         "#", &bu_opt_int,     &(opts->max_pnts),       "Maximum number of pnts to return per non-grid sampling method.");
     BU_OPT(pd[9], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
-    BU_OPT_NULL(pd[10]);
+    BU_OPT(pd[10], "F",  "decimation-size-percentage",         "#", &bu_opt_fastf_t,     &(opts->decim_feat_perc),       "Percentage of the minimum bounding box length to use as a feature size when decimating. Default is 0.15, max is 1 (Note: setting this to 0 disables decimation, which for SPSR outputs may produce very large meshes).");
+    BU_OPT_NULL(pd[11]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -1109,8 +1185,8 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	if (opts->marching_cube)    opts->method_flags |= GED_FACETIZE_MC;
     }
 
-    if (opts->screened_poisson) {
-	/* Parse Poisson specific options */
+    if (opts->method_flags & GED_FACETIZE_SPSR) {
+	/* Parse Poisson specific options, if we might be using that method */
 	argc = bu_opt_parse(NULL, argc, argv, pd);
 
 	if (argc < 0) {
