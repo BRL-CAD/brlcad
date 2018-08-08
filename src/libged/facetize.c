@@ -43,6 +43,10 @@
 #define SOLID_OBJ_NAME 1
 #define COMB_OBJ_NAME 2
 
+#define GED_FACETIZE_NMGBOOL  0x1
+#define GED_FACETIZE_SPSR  0x2
+#define GED_FACETIZE_MC  0x4
+
 struct _ged_facetize_opts {
     /* NMG specific options */
     int triangulate;
@@ -50,6 +54,8 @@ struct _ged_facetize_opts {
     int nmgbool;
     int screened_poisson;
     int marching_cube;
+    int method_flags;
+
     int nmg_use_tnurbs;
     int regions;
     int in_place;
@@ -625,54 +631,6 @@ ged_facetize_spsr_memfree:
 }
 #endif
 
-
-#ifdef ENABLE_SPR
-HIDDEN int
-_ged_spsr_facetize(struct ged *gedp, int argc, const char *argv[], struct _ged_facetize_opts *opts)
-{
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct bu_vls oname = BU_VLS_INIT_ZERO;
-    int newobj_cnt = 0;
-    char *newname;
-
-    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, NULL);
-    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
-	return GED_ERROR;
-    }
-
-    if ((argc - newobj_cnt) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Screened Poisson mode (currently) only supports one existing object at a time as input.\n");
-	return GED_ERROR;
-    }
-
-    if (!opts->in_place) {
-	newname = (char *)argv[argc-1];
-	argc--;
-    } else {
-	/* Find a new name for the original object - that's also our working
-	 * "newname" for the initial processing, until we swap at the end. */
-	bu_vls_sprintf(&oname, "%s_original", argv[0]);
-	if (db_lookup(dbip, bu_vls_addr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_printf(&oname, "-0");
-	    bu_vls_incr(&oname, NULL, NULL, &_db_uniq_test, (void *)gedp);
-	}
-	newname = (char *)bu_vls_addr(&oname);
-    }
-
-    if (_ged_spsr_obj(gedp, argv[0], newname, opts, 0) != GED_OK) {
-	return GED_ERROR;
-    }
-
-    if (opts->in_place) {
-	if (_ged_facetize_obj_swap(gedp, argv[0], newname) != GED_OK) {
-	    return GED_ERROR;
-	}
-    }
-
-    return GED_OK;
-}
-#endif
-
 int
 _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname, struct _ged_facetize_opts *opts)
 {
@@ -723,15 +681,16 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
 }
 
 
-
-
 int
-_ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
+_ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
 {
+    int ret = GED_ERROR;
+    int done_trying = 0;
     int newobj_cnt;
     char *newname;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct bu_vls oname = BU_VLS_INIT_ZERO;
+    int flags = opts->method_flags;
 
     RT_CHECK_DBI(dbip);
 
@@ -759,17 +718,45 @@ _ged_nmg_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_fac
 	newname = (char *)bu_vls_addr(&oname);
     }
 
-    if (_ged_nmg_obj(gedp, argc, argv, newname, opts) != GED_OK) {
-	return GED_ERROR;
+    while (!done_trying) {
+	if (flags & GED_FACETIZE_NMGBOOL) {
+	    if (_ged_nmg_obj(gedp, argc, argv, newname, opts) == GED_OK) {
+		done_trying = 1;
+		ret = GED_OK;
+		break;
+	    } else {
+		flags = flags & ~(GED_FACETIZE_NMGBOOL);
+		continue;
+	    }
+	}
+#ifdef ENABLE_SPR
+	if (flags & GED_FACETIZE_SPSR) {
+	    if ((argc - newobj_cnt) != 1) {
+		bu_vls_printf(gedp->ged_result_str, "Screened Poisson mode (currently) only supports one existing object at a time as input.\n");
+		flags = flags & ~(GED_FACETIZE_SPSR);
+	    }
+	    if (_ged_spsr_obj(gedp, argv[0], newname, opts, 0) == GED_OK) {
+		done_trying = 1;
+		ret = GED_OK;
+	    } else {
+		flags = flags & ~(GED_FACETIZE_SPSR);
+		continue;
+	    }
+	}
+#endif
+
+	/* Out of options */
+	done_trying = 1;
+
     }
 
-    if (opts->in_place) {
+    if ((ret == GED_OK) && opts->in_place) {
 	if (_ged_facetize_obj_swap(gedp, argv[0], newname) != GED_OK) {
 	    return GED_ERROR;
 	}
     }
 
-    return GED_OK;
+    return ret;
 }
 
 int
@@ -918,6 +905,26 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 		const char *sname = bu_avs_get(opts->s_map, oname);
 		if (_ged_combadd2(gedp, (char *)rname, 1, (const char **)&sname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
 		    bu_vls_printf(gedp->ged_result_str, "Error adding %s to comb %s \n", sname, rname);
+		}
+	    }
+	}
+    }
+
+    /* If we've got SPSR available, try it as a fallback */
+    if (BU_PTBL_LEN(ar_failed_nmg) > 0 && (opts->method_flags & GED_FACETIZE_SPSR)) {
+	for (i = 0; i < BU_PTBL_LEN(ar_failed_nmg); i++) {
+	    const char *oname = (const char *)BU_PTBL_GET(ar_failed_nmg, i);
+	    const char *nname = bu_avs_get(opts->s_map, oname);
+	    bu_vls_printf(gedp->ged_result_str, "SPSR tessellating %s from %s\n", nname, oname);
+	    if (_ged_spsr_obj(gedp, oname, nname, opts, 1) == GED_OK) {
+		if (_ged_facetize_cpcomb(gedp, oname, opts) != GED_OK) {
+		    bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", oname);
+		} else {
+		    const char *rname = bu_avs_get(opts->c_map, oname);
+		    const char *sname = bu_avs_get(opts->s_map, oname);
+		    if (_ged_combadd2(gedp, (char *)rname, 1, (const char **)&sname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
+			bu_vls_printf(gedp->ged_result_str, "Error adding %s to comb %s \n", sname, rname);
+		    }
 		}
 	    }
 	}
@@ -1082,6 +1089,27 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_sprintf(opts->faceted_suffix, ".bot");
     }
 
+#ifndef ENABLE_SPR
+    if (opts->screened_poisson) {
+	bu_vls_printf(gedp->ged_result_str, "Screened Poisson support was not enabled for this build.  To test, pass -DBRLCAD_ENABLE_SPR=ON to the cmake configure.\n");
+	ret = GED_ERROR;
+	goto ged_facetize_memfree;
+    }
+#endif
+
+    /* Sort out which methods we can try */
+    if (!opts->nmgbool && !opts->screened_poisson && !opts->marching_cube) {
+	/* Default to NMGBOOL and SPSR active */
+	opts->method_flags |= GED_FACETIZE_NMGBOOL;
+#ifdef ENABLE_SPR
+	opts->method_flags |= GED_FACETIZE_SPSR;
+#endif
+    } else {
+	if (opts->nmgbool)          opts->method_flags |= GED_FACETIZE_NMGBOOL;
+	if (opts->screened_poisson) opts->method_flags |= GED_FACETIZE_SPSR;
+	if (opts->marching_cube)    opts->method_flags |= GED_FACETIZE_MC;
+    }
+
     /* If we're in multi-region mode, we may employ more than one technique, so a
      * lot of options may make sense here - just pull the other options out and
      * let the subsequent logic use them (or not). */
@@ -1100,10 +1128,6 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if (!opts->nmgbool && !opts->screened_poisson && !opts->marching_cube) {
-	opts->nmgbool = 1;
-    }
-
     if (opts->screened_poisson && opts->nmg_use_tnurbs && !opts->nmgbool && !opts->marching_cube) {
 	bu_vls_printf(gedp->ged_result_str, "Note: Screened Poisson reconstruction does not support TNURBS output\n");
 	ret = GED_ERROR;
@@ -1116,57 +1140,17 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_memfree;
     }
 
-
-    /* If we're making one object using one technique, be more alert about which
-     * options don't make sense in combination */
-    if (!opts->screened_poisson) {
-
-	/* must be wanting help */
-	if (print_help || (argc < 2 && !opts->in_place) || argc < 1) {
-	    _ged_cmd_help(gedp, usage, d);
-	    ret = GED_OK;
-	    goto ged_facetize_memfree;
+    /* Check if we want/need help */
+    if (print_help || (argc < 2 && !opts->in_place) || argc < 1) {
+	_ged_cmd_help(gedp, usage, d);
+	if (opts->method_flags & GED_FACETIZE_SPSR) {
+	    _ged_cmd_help(gedp, pusage, pd);
 	}
-
-	ret =  _ged_nmg_facetize(gedp, argc, argv, opts);
+	ret = (print_help || argc < 1) ? GED_OK : GED_ERROR;
 	goto ged_facetize_memfree;
-
-    } else {
-
-	if ((argc < 2 && !opts->in_place) || argc < 1 || print_help || opts->marching_cube || opts->nmg_use_tnurbs) {
-	    if (print_help || argc < 2) {
-		_ged_cmd_help(gedp, pusage, pd);
-		ret = GED_OK;
-		goto ged_facetize_memfree;
-	    }
-	    if (opts->nmg_use_tnurbs) {
-		bu_vls_printf(gedp->ged_result_str, "Screened Poisson reconstruction does not support TNURBS output\n");
-		ret = GED_ERROR;
-		goto ged_facetize_memfree;
-	    }
-	    if (opts->marching_cube) {
-		bu_vls_printf(gedp->ged_result_str, "multiple reconstruction methods (Marching Cubes and Screened Poisson) specified\n");
-		ret = GED_ERROR;
-		goto ged_facetize_memfree;
-	    }
-	}
-
-	/* Parse Poisson specific options */
-	argc = bu_opt_parse(NULL, argc, argv, pd);
-
-	if (argc < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Screened Poisson option parsing failed\n");
-	    ret = GED_ERROR;
-	}
-
-#ifdef ENABLE_SPR
-	ret =  _ged_spsr_facetize(gedp, argc, argv, opts);
-#else
-	bu_vls_printf(gedp->ged_result_str, "Screened Poisson support was not enabled for this build.  To test, pass -DBRLCAD_ENABLE_SPR=ON to the cmake configure.\n");
-	ret = GED_ERROR;
-#endif
-
     }
+
+    ret =  _ged_facetize_objlist(gedp, argc, argv, opts);
 
 ged_facetize_memfree:
     _ged_facetize_opts_destroy(opts);
