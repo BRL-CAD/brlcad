@@ -42,7 +42,7 @@
 #include <stdexcept>
 
 
-namespace
+namespace rhino_read
 {
 
 
@@ -929,7 +929,7 @@ static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, NULL};
 
 extern "C"
 {
-    extern const gcv_plugin gcv_plugin_info_s = {filters};
+    extern const gcv_plugin gcv_plugin_info_s = {rhino_read::filters};
     GCV_EXPORT const struct gcv_plugin *
     gcv_plugin_info()
     {
