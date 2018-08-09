@@ -118,6 +118,7 @@ void
 bu_hook_delete_all(struct bu_hook_list *hlp)
 {
     if (hlp->hooks) bu_free(hlp->hooks, "free hooks");
+    hlp->hooks = NULL;
     hlp->size = hlp->capacity = 0;
 }
 
