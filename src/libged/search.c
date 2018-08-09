@@ -51,8 +51,8 @@ struct ged_search {
 HIDDEN db_search_callback_t
 ged_get_interp_eval_callback(struct ged *gedp)
 {
-	/* FIXME this might need to be more robust? */
-	return gedp->ged_interp_eval;
+    /* FIXME this might need to be more robust? */
+    return gedp->ged_interp_eval;
 }
 
 
