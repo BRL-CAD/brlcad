@@ -29,19 +29,20 @@ package require Tk
 package require Itcl
 package require Itk
 package require OverlapFileTool
+package require GeometryChecker
 
 ::itcl::class OverlapMenu {
     inherit ::itk::Widget
     constructor { args } {}
     public {
 	variable firstFlag
+	variable ovfile
 	method browseOverlapFile {} {}
 	method loadOverlapFile { filename } {}
 	method runOvFileTool {} {}
-	method runCheck {} {}
+	method runCheckerTool {} {}
     }
     private {
-	variable _ovfile
 	variable _hintText
 	method handleHintText { text } {}
     }
@@ -49,7 +50,7 @@ package require OverlapFileTool
 
 ::itcl::body OverlapMenu::constructor { args } {
     set firstFlag false
-    set _ovfile ""
+    set ovfile ""
 
     itk_component add buttonsFrame {
 	ttk::frame $itk_interior.buttonsFrame -padding 4
@@ -70,7 +71,7 @@ package require OverlapFileTool
     } {}
     itk_component add buttonLastFile {
 	ttk::button $itk_component(exisitingFileFrame).buttonLastFile \
-	-text "Use Last File" -padding 8 -state disabled -command [ code $this runCheck ]
+	-text "Use Last File" -padding 8 -state disabled -command [ code $this runCheckerTool ]
     } {}
     itk_component add hintLabel {
 	ttk::label $itk_interior.hintLabel \
@@ -104,11 +105,11 @@ package require OverlapFileTool
     set name [file tail $db_path]
     set ol_path [file join $dir "${name}.ck" "ck.${name}.overlaps"]
     if {[file exists $ol_path]} {
-	set _ovfile $ol_path
+	set ovfile $ol_path
     }
-    $this loadOverlapFile $_ovfile
+    $this loadOverlapFile $ovfile
 
-    bind $itk_component(buttonLastFile) <Enter> [code $this handleHintText "Run checker tool on previously created overlaps file\n$_ovfile"]
+    bind $itk_component(buttonLastFile) <Enter> [code $this handleHintText "Run checker tool on previously created overlaps file\n$ovfile"]
     bind $itk_component(buttonLastFile) <Leave> [code $this handleHintText ""]
 }
 
@@ -116,17 +117,54 @@ package require OverlapFileTool
 # begin public methods
 ###########
 
-# runCheck
+# runCheckerTool
 #
 # runs the checker tool
 #
-body OverlapMenu::runCheck { } {
-    if { $firstFlag } {
-	eval check -F $_ovfile
-    } else {
-	eval check $_ovfile
+body OverlapMenu::runCheckerTool { } {
+    set parent ""
+
+    if {[winfo exists $parent.checker]} {
+	destroy $parent.checker
     }
-    destroy ".overlapmenu"
+
+    set checkerWindow [toplevel $parent.checker]
+    set checker [GeometryChecker $checkerWindow.ck]
+
+    $checker setMode $firstFlag
+    $checker registerWhoCallback [code who]
+    $checker registerDrawCallbacks [code drawLeft] [code drawRight]
+    $checker registerEraseCallback [code erase]
+    $checker registerOverlapCallback [code subtractRightFromLeft]
+
+    if {[catch {$checker loadOverlaps $ovfile} result]} {
+	wm withdraw $checkerWindow
+	update
+	destroy $checkerWindow
+	return -code error $result
+    }
+
+    if {$firstFlag} {
+	puts "WARNING: Running with -F means check will assume that only the first unioned"
+	puts "         solid in a region is responsible for any overlap. When subtracting"
+	puts "         region A from overlapping region B, the first unioned solid in A will"
+	puts "         be subtracted from the first unioned solid in B. This may cause the"
+	puts "         wrong volume to be subtracted, leaving the overlap unresolved."
+	puts ""
+    }
+
+    wm title $checkerWindow "Geometry Checker"
+    pack $checker -expand true -fill both
+
+    # ensure window isn't too narrow
+    update
+    set geom [split [wm geometry $checkerWindow] "=x+-"]
+    if {[lindex $geom 0] > [lindex $geom 1]} {
+	lreplace $geom 1 1 [lindex $geom 0]
+    }
+    wm geometry $checkerWindow "=[::tcl::mathfunc::round [expr 1.62 * [lindex $geom 1]]]x[lindex $geom 1]"
+
+    destroy $parent.overlapmenu
 }
 
 # runOvFileTool
@@ -144,7 +182,7 @@ body OverlapMenu::runOvFileTool { } {
     wm title $overlapfilegenWindow "Overlap File Tool"
     pack $overlapfiletool -expand true -fill both
     $overlapfiletool configure -firstFlag $firstFlag
-    $overlapfiletool configure -runCheckCallback [code $this runCheck]
+    $overlapfiletool configure -runCheckCallback [code $this runCheckerTool]
     grab set $overlapfilegenWindow
 }
 
@@ -160,8 +198,8 @@ body OverlapMenu::browseOverlapFile { } {
     }
 
     if { [validateOvFile $filename] == 0 } { 
-	set _ovfile $filename
-	$this runCheck
+	set ovfile $filename
+	$this runCheckerTool
     }
 }
 
@@ -173,7 +211,7 @@ body OverlapMenu::loadOverlapFile { filename } {
     if {$filename eq ""} {
 	return
     }
-    set _ovfile $filename
+    set ovfile $filename
     $itk_component(buttonLastFile) configure -state active
 }
 ###########
@@ -245,18 +283,11 @@ proc overlaps_tool { args } {
     if {$usage} {
 	return -code error {Usage: overlaps_tool [-F] [overlaps_file]}
     }
-    # if filename is specified directly run check command
-    if {$filename != ""} {
-	if { [validateOvFile $filename] == 0 } {
-	    eval check $args
-	}
-	return
-    }
-
 
     if {[winfo exists $parent.overlapmenu]} {
 	destroy $parent.overlapmenu
     }
+
     catch {set db_path [opendb]}
     if {$db_path eq ""} {
 	return -code 1 "no database seems to be open"
@@ -266,7 +297,16 @@ proc overlaps_tool { args } {
     set overlapmenu [OverlapMenu $overlapmenuWindow.overlapmenu]
     wm title $overlapmenuWindow "Overlap Menu"
     pack $overlapmenu
+
     $overlapmenu configure -firstFlag $firstFlag
+
+    # if filename is specified directly run checker tool
+    if {$filename != ""} {
+	if { [validateOvFile $filename] == 0 } {
+	    $overlapmenu configure -ovfile $filename
+	    $overlapmenu runCheckerTool
+	}
+    }
 }
 
 # Local Variables:

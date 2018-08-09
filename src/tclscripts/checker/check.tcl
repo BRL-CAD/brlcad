@@ -33,6 +33,7 @@ package require Itk
 # go ahead and blow away the class if we are reloading
 catch {delete class GeometryChecker} error
 
+package provide GeometryChecker 1.0
 
 ::itcl::class GeometryChecker {
     inherit ::itk::Widget
@@ -1045,10 +1046,10 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
     if [ catch { opendb } dbname ] {
 	return -code error "no database seems to be open"
     }
-    if [ exists $left ] {
+    if {![ exists $left ]} {
 	return -code error "unable to find $left"
     }
-    if [ exists $right ] {
+    if {![ exists $right ]} {
 	return -code error "unable to find $right"
     }
     if { $left eq $right } {
@@ -1128,80 +1129,6 @@ proc drawRight {path} {
     if [catch {draw -C0/0/255 $path} path_error] {
 	puts "ERROR: $path_error"
     }
-}
-
-
-# All GeometryChecker stuff is in the GeometryChecker namespace
-proc check {{args}} {
-    set parent ""
-    set filename ""
-
-    set usage false
-    set firstFlag false
-    if {[llength $args] == 1} {
-	if {[lindex $args 0] == "-F"} {
-	    set firstFlag true
-	} else {
-	    set filename $args
-	}
-    } elseif {[llength $args] == 2} {
-	if {[lindex $args 0] == "-F"} {
-	    set firstFlag true
-	    set filename [lindex $args 1]
-	} else {
-	    set usage true
-	}
-    } elseif {[llength $args] > 3} {
-	set usage true
-    }
-
-    if {$usage} {
-	return -code error {Usage: check [-F] [overlaps_file]}
-    }
-
-    if {[winfo exists $parent.checker]} {
-	destroy $parent.checker
-    }
-
-    if {[catch {opendb} db_path]} {
-	return -code 1 "no database seems to be open"
-    }
-
-    set checkerWindow [toplevel $parent.checker]
-    set checker [GeometryChecker $checkerWindow.ck]
-
-    $checker setMode $firstFlag
-    $checker registerWhoCallback [code who]
-    $checker registerDrawCallbacks [code drawLeft] [code drawRight]
-    $checker registerEraseCallback [code erase]
-    $checker registerOverlapCallback [code subtractRightFromLeft]
-
-    if {[catch {$checker loadOverlaps $filename} result]} {
-	wm withdraw $checkerWindow
-	update
-	destroy $checkerWindow
-	return -code error $result
-    }
-
-    if {$firstFlag} {
-	puts "WARNING: Running with -F means check will assume that only the first unioned"
-	puts "         solid in a region is responsible for any overlap. When subtracting"
-	puts "         region A from overlapping region B, the first unioned solid in A will"
-	puts "         be subtracted from the first unioned solid in B. This may cause the"
-	puts "         wrong volume to be subtracted, leaving the overlap unresolved."
-	puts ""
-    }
-
-    wm title $checkerWindow "Geometry Checker"
-    pack $checker -expand true -fill both
-
-    # ensure window isn't too narrow
-    update
-    set geom [split [wm geometry $checkerWindow] "=x+-"]
-    if {[lindex $geom 0] > [lindex $geom 1]} {
-	lreplace $geom 1 1 [lindex $geom 0]
-    }
-    wm geometry $checkerWindow "=[::tcl::mathfunc::round [expr 1.62 * [lindex $geom 1]]]x[lindex $geom 1]"
 }
 
 
