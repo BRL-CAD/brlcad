@@ -47,6 +47,16 @@ bu_hook_list_init(struct bu_hook_list *hlp)
 void
 bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 {
+    if (!func) {
+	/* Nothing to add, done */
+	return;
+    }
+    if (!hlp->capacity) {
+	/* If we don't have *anything* and we're adding, malloc */
+	hlp->hooks = (struct bu_hook *)bu_malloc(sizeof(struct bu_hook), "first hook");
+	hlp->capacity = 1;
+	hlp->size = 0;
+    }
     if (hlp->size == hlp->capacity) {
 	hlp->capacity = (hlp->capacity > 0) ? hlp->capacity * 2 : 1;
 	hlp->hooks = (struct bu_hook *)bu_realloc(
