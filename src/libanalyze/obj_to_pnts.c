@@ -256,7 +256,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
     rt_prep_parallel(rtip, ncpus);
 
     currtime = bu_gettime();
-    bu_log("prep time: %.1f\n", (currtime - oldtime)/1e6);
+    bu_log("prep time: %.1f\n", (currtime - oldtime)/1.0e6);
 
     /* Regardless of whether or not we're shooting the grid, it is our
      * guide for how many rays to fire */
@@ -281,6 +281,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	for (i = 0; i < ncpus+1; i++) {
 	    state[i].rays = NULL;
 	}
+	bu_log("analyze time: %.1f\n", (currtime - oldtime)/1.0e6);
     }
 
     if (flags & ANALYZE_OBJ_TO_PNTS_RAND || flags & ANALYZE_OBJ_TO_PNTS_SOBOL) {
