@@ -50,6 +50,7 @@
 
 struct _ged_facetize_opts {
 
+    int quiet;
     int verbosity;
 
     /* NMG specific options */
@@ -79,6 +80,10 @@ struct _ged_facetize_opts {
     /* internal */
     struct bu_attribute_value_set *c_map;
     struct bu_attribute_value_set *s_map;
+    struct bu_hook_list *saved_log_hooks;
+    struct bu_vls *nmg_log;
+    struct bu_vls *nmg_log_header;
+    int nmg_log_print_header;
 };
 
 struct _ged_facetize_opts * _ged_facetize_opts_create()
@@ -115,6 +120,15 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     bu_avs_init_empty(o->c_map);
     bu_avs_init_empty(o->s_map);
 
+    BU_ALLOC(o->saved_log_hooks, struct bu_hook_list);
+    bu_hook_list_init(o->saved_log_hooks);
+
+    BU_GET(o->nmg_log, struct bu_vls);
+    bu_vls_init(o->nmg_log);
+
+    BU_GET(o->nmg_log_header, struct bu_vls);
+    bu_vls_init(o->nmg_log_header);
+
     return o;
 }
 void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
@@ -129,6 +143,13 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
     bu_avs_free(o->s_map);
     bu_free(o->c_map, "comb map");
     bu_free(o->s_map, "solid map");
+
+    bu_hook_delete_all(o->saved_log_hooks);
+    bu_free(o->saved_log_hooks, "saved log hooks");
+    bu_vls_free(o->nmg_log);
+    bu_vls_free(o->nmg_log_header);
+    BU_PUT(o->nmg_log, struct bu_vls);
+    BU_PUT(o->nmg_log_header, struct bu_vls);
 
     BU_PUT(o, struct _ged_facetize_opts);
 }
@@ -151,12 +172,45 @@ _db_uniq_test(struct bu_vls *n, void *data)
 }
 
 HIDDEN int
-_ged_facetize_bomb_hook(void *sdata, void *cdata)
+_ged_facetize_bomb_hook(void *cdata, void *str)
 {
-    struct ged *gedp = (struct ged *)sdata;
-    char *str = (char *)cdata;
-    bu_vls_printf(gedp->ged_result_str, "%s\n", str);
-    return GED_OK;
+    struct _ged_facetize_opts *o = (struct _ged_facetize_opts *)cdata;
+    if (o->nmg_log_print_header) {
+	bu_vls_printf(o->nmg_log, "%s\n", bu_vls_addr(o->nmg_log_header));
+	o->nmg_log_print_header = 0;
+    }
+    bu_vls_printf(o->nmg_log, "%s\n", (const char *)str);
+    return 0;
+}
+
+HIDDEN int
+_ged_facetize_nmg_logging_hook(void *data, void *str)
+{
+    struct _ged_facetize_opts *o = (struct _ged_facetize_opts *)data;
+    if (o->nmg_log_print_header) {
+	bu_vls_printf(o->nmg_log, "%s\n", bu_vls_addr(o->nmg_log_header));
+	o->nmg_log_print_header = 0;
+    }
+    bu_vls_printf(o->nmg_log, "%s\n", (const char *)str);
+    return 0;
+}
+
+HIDDEN void
+_ged_facetize_log_nmg(struct _ged_facetize_opts *o)
+{
+    /* Set bu_log logging to capture in nmg_log, rather than the
+     * application defaults */
+    bu_log_hook_delete_all();
+    bu_log_add_hook(_ged_facetize_nmg_logging_hook, (void *)o);
+}
+
+
+HIDDEN void
+_ged_facetize_log_default(struct _ged_facetize_opts *o)
+{
+    /* Restore bu_log logging to the application defaults */
+    bu_log_hook_delete_all();
+    bu_log_hook_restore_all(o->saved_log_hooks);
 }
 
 HIDDEN void
@@ -346,13 +400,15 @@ facetize_region_end(struct db_tree_state *tsp,
 }
 
 HIDDEN struct model *
-_try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnurbs)
+_try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnurbs, struct _ged_facetize_opts *o)
 {
     int i;
     int failed = 0;
     struct db_tree_state init_state;
     union tree *facetize_tree;
     struct model *nmg_model;
+
+    _ged_facetize_log_nmg(o);
 
     db_init_db_tree_state(&init_state, gedp->ged_wdbp->dbip, gedp->ged_wdbp->wdb_resp);
 
@@ -378,6 +434,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (i < 0) {
 	/* Destroy NMG */
 	nmg_km(nmg_model);
+	_ged_facetize_log_default(o);
 	return NULL;
     }
 
@@ -390,6 +447,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	    BU_UNSETJUMP;
 	    db_free_tree(facetize_tree, &rt_uniresource);
 	    nmg_km(nmg_model);
+	    _ged_facetize_log_default(o);
 	    return NULL;
 	} BU_UNSETJUMP;
 
@@ -399,7 +457,6 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
     if (!failed && facetize_tree) {
 	NMG_CK_REGION(facetize_tree->tr_d.td_r);
-	bu_vls_printf(gedp->ged_result_str, "facetize:  %s\n", facetize_tree->tr_d.td_name);
 	facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
     }
 
@@ -407,13 +464,14 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	db_free_tree(facetize_tree, &rt_uniresource);
     }
 
+    _ged_facetize_log_default(o);
     return (failed) ? NULL : nmg_model;
 }
 
 HIDDEN int
-_try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, int marching_cube)
+_try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, int marching_cube, struct _ged_facetize_opts *o)
 {
-    bu_vls_printf(gedp->ged_result_str, "facetize:  triangulating resulting object\n");
+    _ged_facetize_log_nmg(o);
     if (!BU_SETJUMP) {
 	/* try */
 	if (marching_cube == 1)
@@ -423,33 +481,37 @@ _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, int marching_cub
     } else {
 	/* catch */
 	BU_UNSETJUMP;
-	bu_vls_printf(gedp->ged_result_str, "WARNING: triangulation failed!!!\n");
+	bu_log("WARNING: triangulation failed!!!\n");
 	nmg_km(nmg_model);
+	_ged_facetize_log_default(o);
 	return GED_ERROR;
     } BU_UNSETJUMP;
+    _ged_facetize_log_default(o);
     return GED_OK;
-} 
+}
 
 HIDDEN struct rt_bot_internal *
-_try_nmg_to_bot(struct ged *gedp, struct model *nmg_model)
+_try_nmg_to_bot(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_opts *o)
 {
     struct rt_bot_internal *bot = NULL;
+    _ged_facetize_log_nmg(o);
     if (!BU_SETJUMP) {
 	/* try */
 	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
     } else {
 	/* catch */
 	BU_UNSETJUMP;
-	bu_vls_printf(gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
+	_ged_facetize_log_default(o);
 	return NULL;
     } BU_UNSETJUMP;
 
+    _ged_facetize_log_default(o);
     return bot;
-} 
+}
 
 
 HIDDEN struct rt_bot_internal *
-_try_decimate(struct rt_bot_internal *bot, fastf_t feature_size)
+_try_decimate(struct rt_bot_internal *bot, fastf_t feature_size, struct _ged_facetize_opts *o)
 {
     size_t success = 0;
     struct rt_bot_internal *nbot;
@@ -467,6 +529,7 @@ _try_decimate(struct rt_bot_internal *bot, fastf_t feature_size)
     memcpy(nbot->faces, bot->faces, nbot->num_faces*3*sizeof(int));
     memcpy(nbot->vertices, bot->vertices, nbot->num_vertices*3*sizeof(fastf_t));
 
+    _ged_facetize_log_nmg(o);
     if (!BU_SETJUMP) {
 	/* try */
 	success = rt_bot_decimate_gct(nbot, feature_size);
@@ -476,6 +539,7 @@ _try_decimate(struct rt_bot_internal *bot, fastf_t feature_size)
 	bu_free(nbot->faces, "free faces");
 	bu_free(nbot->vertices, "free vertices");
 	bu_free(nbot, "free bot");
+	_ged_facetize_log_default(o);
 	return bot;
     } BU_UNSETJUMP;
 
@@ -483,17 +547,19 @@ _try_decimate(struct rt_bot_internal *bot, fastf_t feature_size)
 	bu_free(bot->faces, "free faces");
 	bu_free(bot->vertices, "free vertices");
 	bu_free(bot, "free bot");
+	_ged_facetize_log_default(o);
 	return nbot;
     } else {
 	bu_free(nbot->faces, "free faces");
 	bu_free(nbot->vertices, "free vertices");
 	bu_free(nbot, "free bot");
+	_ged_facetize_log_default(o);
 	return bot;
     }
-} 
+}
 
 HIDDEN int
-_write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name)
+_write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name, struct _ged_facetize_opts *opts)
 {
     struct rt_db_internal intern;
     struct directory *dp;
@@ -508,12 +574,16 @@ _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name)
 
     dp=db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", name);
+	if (opts->verbosity) {
+	    bu_log("Cannot add %s to directory\n", name);
+	}
 	return GED_ERROR;
     }
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Failed to write %s to database\n", name);
+	if (opts->verbosity) {
+	    bu_log("Failed to write %s to database\n", name);
+	}
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
@@ -522,7 +592,7 @@ _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name)
 }
 
 HIDDEN int
-_write_nmg(struct ged *gedp, struct model *nmg_model, const char *name)
+_write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _ged_facetize_opts *opts)
 {
     struct rt_db_internal intern;
     struct directory *dp;
@@ -537,12 +607,16 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name)
 
     dp=db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", name);
+	if (opts->verbosity) {
+	    bu_log("Cannot add %s to directory\n", name);
+	}
 	return GED_ERROR;
     }
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Failed to write %s to database\n", name);
+	if (opts->verbosity) {
+	    bu_log("Failed to write %s to database\n", name);
+	}
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
@@ -573,12 +647,14 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 
     dp = db_lookup(dbip, objname, LOOKUP_QUIET);
 
-    if (opts->verbosity > 1) {
-	bu_log("SPSR: tessellating %s from %s\n", newname, objname);
+    if (!opts->quiet) {
+	bu_log("SPSR: tessellating %s with depth %d, interpolation weight %g, and samples-per-node %g\n", objname, opts->s_opts.depth, opts->s_opts.point_weight, opts->s_opts.samples_per_node);
     }
 
     if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Error: could not determine type of object %s\n", objname);
+	if (opts->verbosity) {
+	    bu_log("Error: could not determine type of object %s, skipping\n", objname);
+	}
 	return GED_ERROR;
     }
 
@@ -594,6 +670,7 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	    i++;
 	}
     } else {
+	struct bu_vls pnt_msg = BU_VLS_INIT_ZERO;
 	BU_ALLOC(pnts, struct rt_pnts_internal);
 	pnts->magic = RT_PNTS_INTERNAL_MAGIC;
 	pnts->scale = 0.0;
@@ -617,15 +694,32 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	/* If we don't have a tolerance, try to guess something sane from the bbox */
 	if (NEAR_ZERO(opts->len_tol, RT_LEN_TOL)) {
 	    opts->len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
-	    if (opts->verbosity > 2) {
-		bu_log("%s: no tolerance specified, using %f\n", newname, opts->len_tol);
+	    if (opts->verbosity > 1) {
+		bu_log("SPSR: no tolerance specified for %s, using %f\n", newname, opts->len_tol);
 	    }
 	}
 	btol.dist = opts->len_tol;
 
+	if (opts->verbosity) {
+	    bu_vls_printf(&pnt_msg, "SPSR: generating points from %s with the following settings:\n", objname);
+	    bu_vls_printf(&pnt_msg, "      point sampling methods:");
+	    if (flags & ANALYZE_OBJ_TO_PNTS_GRID) bu_vls_printf(&pnt_msg, " grid");
+	    if (flags & ANALYZE_OBJ_TO_PNTS_RAND) bu_vls_printf(&pnt_msg, " rand");
+	    if (flags & ANALYZE_OBJ_TO_PNTS_SOBOL) bu_vls_printf(&pnt_msg, " sobol");
+	    bu_vls_printf(&pnt_msg, "\n");
+	    if (opts->max_pnts) {
+		bu_vls_printf(&pnt_msg, "      Maximum pnt count per method: %d", opts->max_pnts);
+	    }
+	    if (opts->max_time) {
+		bu_vls_printf(&pnt_msg, "      Maximum time per method (sec): %d", opts->max_time);
+	    }
+	    bu_log("%s\n", bu_vls_addr(&pnt_msg));
+	    bu_vls_free(&pnt_msg);
+	}
+
 	if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, objname, &btol, flags, opts->max_pnts, opts->max_time)) {
-	    if (opts->verbosity) {
-		bu_log("%s: point generation failed\n", newname, opts->len_tol);
+	    if (!opts->quiet) {
+		bu_log("SPSR: point generation failed: %s\n", objname);
 	    }
 	    ret = GED_ERROR;
 	    goto ged_facetize_spsr_memfree;
@@ -655,8 +749,8 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 		(const point_t *)input_points_3d,
 		(const vect_t *)input_normals_3d,
 		pnts->count, &(opts->s_opts)) ) {
-	if (opts->verbosity) {
-	    bu_log("%s: screened Poisson reconstruction failed\n", newname);
+	if (!opts->quiet) {
+	    bu_log("SPSR: Screened Poisson surface reconstruction failed: %s\n", objname);
 	}
 	ret = GED_ERROR;
 	goto ged_facetize_spsr_memfree;
@@ -673,9 +767,13 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	feature_size = (feature_size < zlen) ? feature_size : zlen;
 	feature_size = feature_size * ((opts->decim_feat_perc > 1.0) ? 1.0 : opts->decim_feat_perc);
 
-	bot = _try_decimate(bot, feature_size); 
+	if (opts->verbosity) {
+	    bu_log("SPSR: trying decimation with decimation size percentage: %g\n", opts->decim_feat_perc);
+	}
+
+	bot = _try_decimate(bot, feature_size, opts);
 	if (bot == obot && opts->verbosity) {
-	    bu_log("WARNING: decimation of %s failed!!!\n", newname);
+	    bu_log("SPSR: decimation failed, returning original BoT (may be large)\n");
 	}
     }
 
@@ -686,7 +784,7 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 
     if (!opts->make_nmg) {
 
-	ret = _write_bot(gedp, bot, newname);
+	ret = _write_bot(gedp, bot, newname, opts);
 
     } else {
 	/* Convert BoT to NMG */
@@ -701,15 +799,15 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	intern.idb_type = ID_BOT;
 	intern.idb_ptr = (void *)bot;
 	if (rt_bot_tess(&r, m, &intern, NULL, &btol) < 0) {
-	    if (opts->verbosity) {
-		bu_log("%s: failed to convert Bot to NMG\n", newname);
+	    if (!opts->quiet) {
+		bu_log("SPSR: failed to convert BoT to NMG: %s\n", objname);
 	    }
 	    rt_db_free_internal(&intern);
 	    ret = GED_ERROR;
 	    goto ged_facetize_spsr_memfree;
 	} else {
 	    /* OK,have NMG now - write it out */
-	    ret = _write_nmg(gedp, m, newname);
+	    ret = _write_nmg(gedp, m, newname, opts);
 	    rt_db_free_internal(&intern);
 	}
     }
@@ -720,63 +818,62 @@ ged_facetize_spsr_memfree:
     if (input_normals_3d) bu_free(input_normals_3d, "3d pnts");
     rt_db_free_internal(&in_intern);
 
-    if (opts->verbosity && ret != GED_OK) {
-	bu_log("SPSR tessellation failed: %s\n", objname);
-    }
     return ret;
 }
 
 int
 _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname, struct _ged_facetize_opts *opts)
 {
-    struct rt_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
     int ret = GED_OK;
     struct model *nmg_model = NULL;
     struct rt_bot_internal *bot = NULL;
 
-    if (opts->verbosity) {
-	if (argc == 1) {
-	    bu_log("NMG tessellating %s with tolerances a=%g, r=%g, n=%g\n", argv[0], tol->abs, tol->rel, tol->norm);
-	} else {
-	    bu_log("NMG tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
-	}
-    }
-
-    nmg_model = _try_nmg_facetize(gedp, argc, argv, opts->nmg_use_tnurbs);
+    nmg_model = _try_nmg_facetize(gedp, argc, argv, opts->nmg_use_tnurbs, opts);
     if (nmg_model == NULL) {
 	if (opts->verbosity > 1) {
-	    bu_log("NMG:  no resulting region, aborting\n");
+	    bu_log("NMG(%s):  no resulting region, aborting\n", newname);
 	}
-	return GED_ERROR;
+	ret = GED_ERROR;
+	goto ged_nmg_obj_memfree;
     }
 
     /* Triangulate model, if requested */
     if (opts->triangulate && opts->make_nmg) {
-	if (_try_nmg_triangulate(gedp, nmg_model, opts->marching_cube) != GED_OK) {
-	    return GED_ERROR;
+	if (_try_nmg_triangulate(gedp, nmg_model, opts->marching_cube, opts) != GED_OK) {
+	    if (opts->verbosity > 1) {
+		bu_log("NMG(%s):  triangulation failed, aborting\n", newname);
+	    }
+	    ret = GED_ERROR;
+	    goto ged_nmg_obj_memfree;
 	}
     }
 
     if (!opts->make_nmg) {
 
 	/* Make and write out the bot */
-	bot = _try_nmg_to_bot(gedp, nmg_model);
+	bot = _try_nmg_to_bot(gedp, nmg_model, opts);
 	nmg_km(nmg_model);
 
 	if (!bot) {
 	    if (opts->verbosity > 1) {
-		bu_log("NMG: conversion to BOT failed!\n");
+		bu_log("NMG(%s): conversion to BOT failed, aborting\n", newname);
 	    }
-	    return GED_ERROR;
+	    ret = GED_ERROR;
+	    goto ged_nmg_obj_memfree;
 	}
 
-	ret = _write_bot(gedp, bot, newname);
+	ret = _write_bot(gedp, bot, newname, opts);
 
     } else {
 
 	/* Just write the NMG */
-	ret = _write_nmg(gedp, nmg_model, newname);
+	ret = _write_nmg(gedp, nmg_model, newname, opts);
 
+    }
+
+ged_nmg_obj_memfree:
+    if (!opts->quiet && ret != GED_OK) {
+	bu_log("NMG: failed to generate %s\n", newname);
     }
 
     return ret;
@@ -793,6 +890,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct bu_vls oname = BU_VLS_INIT_ZERO;
     int flags = opts->method_flags;
+    struct rt_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
 
     RT_CHECK_DBI(dbip);
 
@@ -820,6 +918,17 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
     while (!done_trying) {
 
 	if (flags & GED_FACETIZE_NMGBOOL) {
+	    opts->nmg_log_print_header = 1;
+	    if (argc == 1) {
+		bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %s with tolerances a=%g, r=%g, n=%g\n", argv[0], tol->abs, tol->rel, tol->norm);
+	    } else {
+		bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
+	    }
+	    /* Let the user know what's going on, unless output is suppressed */
+	    if (!opts->quiet) {
+		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
+	    }
+
 	    if (_ged_nmg_obj(gedp, argc, argv, newname, opts) == GED_OK) {
 		done_trying = 1;
 		ret = GED_OK;
@@ -832,7 +941,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 
 	if (flags & GED_FACETIZE_SPSR) {
 	    if (argc != 1) {
-		if (opts->verbosity > 1) {
+		if (opts->verbosity) {
 		    bu_log("Screened Poisson mode (currently) only supports one existing object at a time as input - not attempting.\n");
 		}
 		flags = flags & ~(GED_FACETIZE_SPSR);
@@ -856,6 +965,10 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	if (_ged_facetize_obj_swap(gedp, argv[0], newname) != GED_OK) {
 	    return GED_ERROR;
 	}
+    }
+
+    if (bu_vls_strlen(opts->nmg_log) && opts->method_flags & GED_FACETIZE_NMGBOOL && opts->verbosity > 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(opts->nmg_log));
     }
 
     return ret;
@@ -923,8 +1036,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     struct bu_ptbl *pc = NULL;
     struct bu_ptbl *ar = NULL;
     struct bu_ptbl ar_failed_nmg = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl spsr_succeeded = BU_PTBL_INIT_ZERO;
     struct bu_ptbl *facetize_failed;
     struct bu_ptbl tmpnames = BU_PTBL_INIT_ZERO;
+    struct rt_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
 
     /* We need to copy combs above regions that are not themselves regions.
      * Also, facetize will need all "active" regions that will define shapes.
@@ -950,10 +1065,15 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    /* solid object in list at top level - handle directly */
 	    _ged_facetize_mkname(gedp, opts, argv[i], SOLID_OBJ_NAME);
+
+	    /* Let the user know what's going on, unless output is suppressed */
+	    bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating solid %s with tolerances a=%g, r=%g, n=%g\n", argv[0], tol->abs, tol->rel, tol->norm);
+	    if (!opts->quiet) {
+		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
+	    }
+	    opts->nmg_log_print_header = 1;
+
 	    if (_ged_nmg_obj(gedp, 1, (const char **)&argv[i], bu_avs_get(opts->s_map, argv[i]), opts) != GED_OK) {
-		if (opts->verbosity) {
-		    bu_vls_printf(gedp->ged_result_str, "failed to convert %s\n", argv[i]);
-		}
 		return GED_ERROR;
 	    }
 	}
@@ -1003,6 +1123,17 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	const char *oname = n->d_namep;
 	const char *nname = bu_avs_get(opts->s_map, n->d_namep);
+	/* We're staring a new object, so we want to write out the header in the
+	 * log file the first time we get an NMG logging event.  (Re)set the flag
+	 * so the logger knows to do so. */
+	opts->nmg_log_print_header = 1;
+	bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %s (%d of %d) with tolerances a=%g, r=%g, n=%g\n", oname, i+1, BU_PTBL_LEN(ar), tol->abs, tol->rel, tol->norm);
+
+	/* Let the user know what's going on, unless output is suppressed */
+	if (!opts->quiet) {
+	    bu_log("%s", bu_vls_addr(opts->nmg_log_header));
+	}
+
 	if (_ged_nmg_obj(gedp, 1, (const char **)&oname, nname, opts) != GED_OK) {
 	    bu_ptbl_ins(&ar_failed_nmg, (long *)oname);
 	} else {
@@ -1026,7 +1157,6 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     BU_ALLOC(facetize_failed, struct bu_ptbl);
     bu_ptbl_init(facetize_failed, 64, "failed list init");
     if (BU_PTBL_LEN(&ar_failed_nmg) > 0 && (opts->method_flags & GED_FACETIZE_SPSR)) {
-	struct bu_ptbl spsr_succeeded = BU_PTBL_INIT_ZERO;
 	for (i = 0; i < BU_PTBL_LEN(&ar_failed_nmg); i++) {
 	    const char *oname = (const char *)BU_PTBL_GET(&ar_failed_nmg, i);
 	    const char *nname = bu_avs_get(opts->s_map, oname);
@@ -1076,7 +1206,11 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    bu_vls_incr(&spsr_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	    ret = _ged_combadd2(gedp, bu_vls_addr(&spsr_name), (int)BU_PTBL_LEN(&spsr_succeeded), (const char **)spsr_succeeded.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
 	}
-	bu_ptbl_free(&spsr_succeeded);
+    } else {
+	for (i = 0; i < BU_PTBL_LEN(&ar_failed_nmg); i++) {
+	    const char *oname = (const char *)BU_PTBL_GET(&ar_failed_nmg, i);
+	    bu_ptbl_ins(facetize_failed, (long *)oname);
+	}
     }
 
     if (BU_PTBL_LEN(facetize_failed) > 0) {
@@ -1088,6 +1222,9 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     }
 
     /* For all the pc combs, make new versions with the suffixed names */
+    if (!opts->quiet) {
+	bu_log("Initializing copies of assembly combinations...\n");
+    }
     for (i = 0; i < BU_PTBL_LEN(pc); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
 	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
@@ -1111,6 +1248,9 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	RT_DB_INTERNAL_INIT(&intern);
 	cdp = (struct directory *)BU_PTBL_GET(pc, i);
 	nparent = bu_avs_get(opts->c_map, cdp->d_namep);
+	if (!opts->quiet) {
+	    bu_log("Rebuilding assembly %s (%d of %d) using facetized shapes...\n", nparent, i+1, BU_PTBL_LEN(pc));
+	}
 	if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
 	    ret = GED_ERROR;
 	    goto ged_facetize_regions_memfree;
@@ -1155,18 +1295,41 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     if (opts->in_place) {
 	/* The "new" tree is actually the preservation of the old tree in this
 	 * scenario, so swap all the region names */
+	if (opts->verbosity) {
+	    bu_log("Generation complete, swapping new geometry into original tree...\n");
+	}
 	for (i = 0; i < BU_PTBL_LEN(ar); i++) {
 	    struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	    if (_ged_facetize_obj_swap(gedp, n->d_namep, bu_avs_get(opts->c_map, n->d_namep)) != GED_OK) {
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_facetize_regions_memfree;
 	    }
 	}
     }
 
+ged_facetize_regions_memfree:
+
     /* Done changing stuff - update nref. */
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
-ged_facetize_regions_memfree:
+    if (bu_vls_strlen(opts->nmg_log) && opts->method_flags & GED_FACETIZE_NMGBOOL && opts->verbosity > 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(opts->nmg_log));
+    }
+
+    /* Final report */
+    bu_vls_printf(gedp->ged_result_str, "Objects successfully converted: %d of %d\n", BU_PTBL_LEN(ar) - BU_PTBL_LEN(facetize_failed), BU_PTBL_LEN(ar));
+    if (BU_PTBL_LEN(&spsr_succeeded)) {
+	bu_vls_printf(gedp->ged_result_str, "Objects converted with SPSR: %d\n", BU_PTBL_LEN(&spsr_succeeded));
+    }
+    if (BU_PTBL_LEN(facetize_failed)) {
+	bu_vls_printf(gedp->ged_result_str, "WARNING: %d objects failed:\n", BU_PTBL_LEN(facetize_failed));
+	if (BU_PTBL_LEN(facetize_failed)) {
+	    for (i = 0; i < BU_PTBL_LEN(facetize_failed); i++) {
+		bu_vls_printf(gedp->ged_result_str, "	%s\n", (const char *)BU_PTBL_GET(facetize_failed, i));
+	    }
+	}
+    }
+
     for (i = 0; i < BU_PTBL_LEN(&tmpnames); i++) {
 	bu_free((char *)BU_PTBL_GET(&tmpnames, i), "temp name string");
     }
@@ -1175,6 +1338,7 @@ ged_facetize_regions_memfree:
     bu_ptbl_free(ar);
     bu_ptbl_free(&ar_failed_nmg);
     bu_ptbl_free(facetize_failed);
+    bu_ptbl_free(&spsr_succeeded);
     bu_free(facetize_failed, "failed table");
     bu_free(pc, "pc table");
     bu_free(ar, "ar table");
@@ -1199,20 +1363,21 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
     int print_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[11];
+    struct bu_opt_desc d[12];
     struct bu_opt_desc pd[12];
 
     BU_OPT(d[0], "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
     BU_OPT(d[1], "v", "verbose",       "",  &_ged_vopt,  &(opts->verbosity),  "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[2], "",  "nmgbool",       "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
-    BU_OPT(d[3], "m", "marching-cube", "",  NULL,  &(opts->marching_cube),    "Use the raytraced points and marching cube algorithm to create output");
-    BU_OPT(d[4], "",  "poisson",       "",  NULL,  &(opts->screened_poisson), "Use raytraced points and SPSR to create output - run -h --poisson to see more options for this mode");
-    BU_OPT(d[5], "n", "NMG",           "",  NULL,  &(opts->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
-    BU_OPT(d[6], "",  "TNURB",         "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
-    BU_OPT(d[7], "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");
-    BU_OPT(d[8], "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
-    BU_OPT(d[9], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
-    BU_OPT_NULL(d[10]);
+    BU_OPT(d[2], "q", "quiet",         "",  NULL,  &(opts->quiet),            "Suppress all output (overrides verbose flag)");
+    BU_OPT(d[3], "",  "nmgbool",       "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
+    BU_OPT(d[4], "m", "marching-cube", "",  NULL,  &(opts->marching_cube),    "Use the raytraced points and marching cube algorithm to create output");
+    BU_OPT(d[5], "",  "poisson",       "",  NULL,  &(opts->screened_poisson), "Use raytraced points and SPSR to create output - run -h --poisson to see more options for this mode");
+    BU_OPT(d[6], "n", "NMG",           "",  NULL,  &(opts->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
+    BU_OPT(d[7], "",  "TNURB",         "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
+    BU_OPT(d[8], "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");
+    BU_OPT(d[9], "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
+    BU_OPT(d[10], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
+    BU_OPT_NULL(d[11]);
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
@@ -1239,16 +1404,23 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
      * bu_bomb calls during operation. Because we need facetize to run
      * to completion and potentially try multiple ways to convert before
      * giving up, we need to un-hook any pre-existing bu_bomb hooks */
-    bu_hook_list_init(&saved_hooks);
     bu_bomb_save_all_hooks(&saved_hooks);
     bu_bomb_delete_all_hooks();
-    bu_bomb_add_hook(_ged_facetize_bomb_hook, (void *)gedp);
+    bu_bomb_add_hook(_ged_facetize_bomb_hook, (void *)opts);
+
+    /* We will need to catch libnmg output and store it up for later
+     * use, while still bu_logging our own status updates. Cache the
+     * current bu_log hooks so they can be restored at need */
+    bu_log_hook_save_all(opts->saved_log_hooks);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* parse standard options */
     argc = bu_opt_parse(NULL, argc, argv, d);
+
+    /* Sync -q and -v options */
+    if (opts->quiet && opts->verbosity) opts->verbosity = 0;
 
     /* Enforce type matching on suffix */
     if (opts->make_nmg && BU_STR_EQUAL(bu_vls_addr(opts->faceted_suffix), ".bot")) {
