@@ -1259,24 +1259,24 @@ HIDDEN int
 f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
     int i, ret;
-    struct directory *dp =  DB_FULL_PATH_CUR_DIR(db_node->path);
+    char *name = NULL;
 
-    if (!dp) {
-	return BRLCAD_ERROR;
+    if (db_node->path->fp_len > 1) {
+	name = db_path_to_string(db_node->path);
+    } else {
+	name = DB_FULL_PATH_CUR_DIR(db_node->path)->d_namep;
     }
 
     /* fill in each hole in the argv array */
     for (i=0; i<plan->p_un.ex._e_nholes; i++) {
-	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[i]] = dp->d_namep;
+	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[i]] = name;
     }
 
     ret = (*plan->p_un.ex._e_callback)(plan->p_un.ex._e_argc, (const char**)plan->p_un.ex._e_argv, plan->p_un.ex._e_userdata);
 
-    /*
-    for (i=0; i<plan->p_un.ex._e_nholes; i++) {
-       bu_free(plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[i]], "e_holes");
+    if (db_node->path->fp_len > 1) {
+    	bu_free(name, "f_exec string");
     }
-    */
 
     return ret;
 }
