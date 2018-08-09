@@ -558,7 +558,7 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
     struct rt_bot_internal *bot = NULL;
     struct pnt_normal *pn, *pl;
     int flags = 0;
-    int i;
+    int i = 0;
     int free_pnts = 0;
     point_t *input_points_3d = NULL;
     vect_t *input_normals_3d = NULL;
