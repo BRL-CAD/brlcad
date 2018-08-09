@@ -49,6 +49,9 @@
 #define GED_FACETIZE_MC  0x4
 
 struct _ged_facetize_opts {
+
+    int verbosity;
+
     /* NMG specific options */
     int triangulate;
     int make_nmg;
@@ -83,6 +86,7 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     struct bg_3d_spsr_opts s_opts = BG_3D_SPSR_OPTS_DEFAULT;
     struct _ged_facetize_opts *o = NULL;
     BU_GET(o, struct _ged_facetize_opts);
+    o->verbosity = 0;
     o->triangulate = 0;
     o->make_nmg = 0;
     o->nmgbool = 0;
@@ -547,7 +551,7 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name)
 }
 
 HIDDEN int
-_ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts, int quiet)
+_ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
 {
     int ret = GED_OK;
     struct directory *dp;
@@ -568,6 +572,10 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
     VSETALL(rpp_max, -INFINITY);
 
     dp = db_lookup(dbip, objname, LOOKUP_QUIET);
+
+    if (opts->verbosity > 1) {
+	bu_log("SPSR: tessellating %s from %s\n", newname, objname);
+    }
 
     if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error: could not determine type of object %s\n", objname);
@@ -609,14 +617,16 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	/* If we don't have a tolerance, try to guess something sane from the bbox */
 	if (NEAR_ZERO(opts->len_tol, RT_LEN_TOL)) {
 	    opts->len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
-	    if (!quiet) {
-		bu_log("Note - no tolerance specified, using %f\n", opts->len_tol);
+	    if (opts->verbosity > 2) {
+		bu_log("%s: no tolerance specified, using %f\n", newname, opts->len_tol);
 	    }
 	}
 	btol.dist = opts->len_tol;
 
 	if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, objname, &btol, flags, opts->max_pnts, opts->max_time)) {
-	    bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
+	    if (opts->verbosity) {
+		bu_log("%s: point generation failed\n", newname, opts->len_tol);
+	    }
 	    ret = GED_ERROR;
 	    goto ged_facetize_spsr_memfree;
 	}
@@ -645,7 +655,9 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 		(const point_t *)input_points_3d,
 		(const vect_t *)input_normals_3d,
 		pnts->count, &(opts->s_opts)) ) {
-	bu_vls_sprintf(gedp->ged_result_str, "Error: Screened Poisson reconstruction failed\n");
+	if (opts->verbosity) {
+	    bu_log("%s: screened Poisson reconstruction failed\n", newname);
+	}
 	ret = GED_ERROR;
 	goto ged_facetize_spsr_memfree;
     }
@@ -662,7 +674,7 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	feature_size = feature_size * ((opts->decim_feat_perc > 1.0) ? 1.0 : opts->decim_feat_perc);
 
 	bot = _try_decimate(bot, feature_size); 
-	if (bot == obot) {
+	if (bot == obot && opts->verbosity) {
 	    bu_log("WARNING: decimation of %s failed!!!\n", newname);
 	}
     }
@@ -689,7 +701,9 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	intern.idb_type = ID_BOT;
 	intern.idb_ptr = (void *)bot;
 	if (rt_bot_tess(&r, m, &intern, NULL, &btol) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Failed to convert Bot to NMG\n");
+	    if (opts->verbosity) {
+		bu_log("%s: failed to convert Bot to NMG\n", newname);
+	    }
 	    rt_db_free_internal(&intern);
 	    ret = GED_ERROR;
 	    goto ged_facetize_spsr_memfree;
@@ -706,6 +720,9 @@ ged_facetize_spsr_memfree:
     if (input_normals_3d) bu_free(input_normals_3d, "3d pnts");
     rt_db_free_internal(&in_intern);
 
+    if (opts->verbosity && ret != GED_OK) {
+	bu_log("SPSR tessellation failed: %s\n", objname);
+    }
     return ret;
 }
 
@@ -717,13 +734,19 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
     struct model *nmg_model = NULL;
     struct rt_bot_internal *bot = NULL;
 
-    bu_vls_printf(gedp->ged_result_str,
-	    "facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
-	    tol->abs, tol->rel, tol->norm);
+    if (opts->verbosity) {
+	if (argc == 1) {
+	    bu_log("NMG tessellating %s with tolerances a=%g, r=%g, n=%g\n", argv[0], tol->abs, tol->rel, tol->norm);
+	} else {
+	    bu_log("NMG tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
+	}
+    }
 
     nmg_model = _try_nmg_facetize(gedp, argc, argv, opts->nmg_use_tnurbs);
     if (nmg_model == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "facetize:  no resulting region, aborting\n");
+	if (opts->verbosity > 1) {
+	    bu_log("NMG:  no resulting region, aborting\n");
+	}
 	return GED_ERROR;
     }
 
@@ -741,7 +764,9 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
 	nmg_km(nmg_model);
 
 	if (!bot) {
-	    bu_vls_printf(gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
+	    if (opts->verbosity > 1) {
+		bu_log("NMG: conversion to BOT failed!\n");
+	    }
 	    return GED_ERROR;
 	}
 
@@ -750,7 +775,6 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
     } else {
 
 	/* Just write the NMG */
-	bu_vls_printf(gedp->ged_result_str, "facetize:  converting NMG to database format\n");
 	ret = _write_nmg(gedp, nmg_model, newname);
 
     }
@@ -772,10 +796,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 
     RT_CHECK_DBI(dbip);
 
-    if (argc < 0) {
-	bu_vls_printf(gedp->ged_result_str, "facetize: missing argument\n");
-	return GED_ERROR;
-    }
+    if (argc < 0) return GED_ERROR;
 
     newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, NULL);
     if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
@@ -811,10 +832,12 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 
 	if (flags & GED_FACETIZE_SPSR) {
 	    if (argc != 1) {
-		bu_vls_printf(gedp->ged_result_str, "Screened Poisson mode (currently) only supports one existing object at a time as input.\n");
+		if (opts->verbosity > 1) {
+		    bu_log("Screened Poisson mode (currently) only supports one existing object at a time as input - not attempting.\n");
+		}
 		flags = flags & ~(GED_FACETIZE_SPSR);
 	    } else {
-		if (_ged_spsr_obj(NULL, gedp, argv[0], newname, opts, 0) == GED_OK) {
+		if (_ged_spsr_obj(NULL, gedp, argv[0], newname, opts) == GED_OK) {
 		    done_trying = 1;
 		    ret = GED_OK;
 		} else {
@@ -928,7 +951,9 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    /* solid object in list at top level - handle directly */
 	    _ged_facetize_mkname(gedp, opts, argv[i], SOLID_OBJ_NAME);
 	    if (_ged_nmg_obj(gedp, 1, (const char **)&argv[i], bu_avs_get(opts->s_map, argv[i]), opts) != GED_OK) {
-		bu_vls_printf(gedp->ged_result_str, "failed to convert %s\n", argv[i]);
+		if (opts->verbosity) {
+		    bu_vls_printf(gedp->ged_result_str, "failed to convert %s\n", argv[i]);
+		}
 		return GED_ERROR;
 	    }
 	}
@@ -936,7 +961,9 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 
     BU_ALLOC(pc, struct bu_ptbl);
     if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, preserve_combs, argc, dpa, dbip, NULL) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "problem searching for parent combs - aborting.\n");
+	if (opts->verbosity) {
+	    bu_log("Problem searching for parent combs - aborting.\n");
+	}
 	ret = GED_ERROR;
 	goto ged_facetize_regions_memfree;
     }
@@ -947,7 +974,9 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 
     BU_ALLOC(ar, struct bu_ptbl);
     if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "problem searching for active regions - aborting.\n");
+	if (opts->verbosity) {
+	    bu_log("Problem searching for active regions - aborting.\n");
+	}
 	ret = GED_ERROR;
 	goto ged_facetize_regions_memfree;
     }
@@ -974,17 +1003,20 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	const char *oname = n->d_namep;
 	const char *nname = bu_avs_get(opts->s_map, n->d_namep);
-	bu_vls_printf(gedp->ged_result_str, "NMG tessellating %s from %s\n", nname, oname);
 	if (_ged_nmg_obj(gedp, 1, (const char **)&oname, nname, opts) != GED_OK) {
 	    bu_ptbl_ins(&ar_failed_nmg, (long *)oname);
 	} else {
 	    if (_ged_facetize_cpcomb(gedp, oname, opts) != GED_OK) {
-		bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", n->d_namep);
+		if (opts->verbosity) {
+		    bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, oname), oname);
+		}
 	    } else {
 		const char *rname = bu_avs_get(opts->c_map, oname);
 		const char *sname = bu_avs_get(opts->s_map, oname);
 		if (_ged_combadd2(gedp, (char *)rname, 1, (const char **)&sname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
-		    bu_vls_printf(gedp->ged_result_str, "Error adding %s to comb %s \n", sname, rname);
+		    if (opts->verbosity) {
+			bu_log("Error adding %s to comb %s", sname, rname);
+		    }
 		}
 	    }
 	}
@@ -999,17 +1031,20 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    const char *oname = (const char *)BU_PTBL_GET(&ar_failed_nmg, i);
 	    const char *nname = bu_avs_get(opts->s_map, oname);
 	    int is_valid = 0;
-	    bu_vls_printf(gedp->ged_result_str, "SPSR tessellating %s from %s\n", nname, oname);
-	    if (_ged_spsr_obj(&is_valid, gedp, oname, nname, opts, 1) == GED_OK) {
+	    if (_ged_spsr_obj(&is_valid, gedp, oname, nname, opts) == GED_OK) {
 		/* Check the validity */
 		if (is_valid) {
 		    if (_ged_facetize_cpcomb(gedp, oname, opts) != GED_OK) {
-			bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", oname);
+			if (opts->verbosity) {
+			    bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, oname), oname);
+			}
 		    } else {
 			const char *rname = bu_avs_get(opts->c_map, oname);
 			const char *sname = bu_avs_get(opts->s_map, oname);
 			if (_ged_combadd2(gedp, (char *)rname, 1, (const char **)&sname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
-			    bu_vls_printf(gedp->ged_result_str, "Error adding %s to comb %s \n", sname, rname);
+			    if (opts->verbosity) {
+				bu_log("Error adding %s to comb %s \n", sname, rname);
+			    }
 			}
 		    }
 		    bu_ptbl_ins(&spsr_succeeded, (long *)bu_avs_get(opts->s_map, oname));
@@ -1025,15 +1060,11 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 		    mav[0] = cmdname;
 		    mav[1] = nname;
 		    mav[2] = sname;
-		    if (ged_move(gedp, 3, (const char **)mav) != GED_OK) {
-			bu_log("move failed: %s to %s\n", nname, sname);
-		    }
+		    ret = ged_move(gedp, 3, (const char **)mav);
 		    bu_ptbl_ins(&tmpnames, (long *)sname);
 		    bu_ptbl_ins(facetize_failed, (long *)sname);
 		}
 	    } else {
-		/* TODO - implement verbosity flags for reporting */
-		bu_log("SPSR tessellation failed: %s\n", oname);
 		bu_ptbl_ins(facetize_failed, (long *)oname);
 	    }
 	}
@@ -1060,9 +1091,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     for (i = 0; i < BU_PTBL_LEN(pc); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
 	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
-	    bu_vls_printf(gedp->ged_result_str, "Error creating comb for %s \n", n->d_namep);
+	    if (opts->verbosity) {
+		bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, n->d_namep), n->d_namep);
+	    }
 	}
-	bu_vls_printf(gedp->ged_result_str, "Making new comb %s from %s\n", bu_avs_get(opts->c_map, n->d_namep), n->d_namep);
     }
 
     /* For all the pc combs, add the members from the map with the settings from the
@@ -1149,6 +1181,14 @@ ged_facetize_regions_memfree:
     return ret;
 }
 
+HIDDEN int
+_ged_vopt(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+{
+    int *v_set = (int *)set_var;
+    (*v_set) = (*v_set) + 1;
+    return 0;
+}
+
 
 int
 ged_facetize(struct ged *gedp, int argc, const char *argv[])
@@ -1159,19 +1199,20 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
     int print_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[10];
+    struct bu_opt_desc d[11];
     struct bu_opt_desc pd[12];
 
     BU_OPT(d[0], "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
-    BU_OPT(d[1], "",  "nmgbool",       "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
-    BU_OPT(d[2], "m", "marching-cube", "",  NULL,  &(opts->marching_cube),    "Use the raytraced points and marching cube algorithm to create output");
-    BU_OPT(d[3], "",  "poisson",       "",  NULL,  &(opts->screened_poisson), "Use raytraced points and SPSR to create output - run -h --poisson to see more options for this mode");
-    BU_OPT(d[4], "n", "NMG",           "",  NULL,  &(opts->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
-    BU_OPT(d[5], "",  "TNURB",         "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
-    BU_OPT(d[6], "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");
-    BU_OPT(d[7], "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
-    BU_OPT(d[8], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
-    BU_OPT_NULL(d[9]);
+    BU_OPT(d[1], "v", "verbose",       "",  &_ged_vopt,  &(opts->verbosity),  "Verbose output (multiple flags increase verbosity)");
+    BU_OPT(d[2], "",  "nmgbool",       "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
+    BU_OPT(d[3], "m", "marching-cube", "",  NULL,  &(opts->marching_cube),    "Use the raytraced points and marching cube algorithm to create output");
+    BU_OPT(d[4], "",  "poisson",       "",  NULL,  &(opts->screened_poisson), "Use raytraced points and SPSR to create output - run -h --poisson to see more options for this mode");
+    BU_OPT(d[5], "n", "NMG",           "",  NULL,  &(opts->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
+    BU_OPT(d[6], "",  "TNURB",         "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
+    BU_OPT(d[7], "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");
+    BU_OPT(d[8], "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
+    BU_OPT(d[9], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
+    BU_OPT_NULL(d[10]);
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
