@@ -3,293 +3,293 @@
     <title>The Overlap Tool</title>
   </info>
 
-<section>
-  <title>Introduction</title>
-<para>
-The overlap tool is an MGED GUI intended to make it easier to
-visualize and resolve overlaps between regions.
-</para>
-
-<para>
-The biggest assumption made by the overlap tool is that all matrices
-in the database are identity (e.g. they've been pushed using the <command>xpush</command> command).
-</para>
-</section>
-
-<section>
-  <title>Command Usage</title>
   <section>
-    <title>Step 1 - Find Overlaps</title>
-<para>
-Run the <command>check.sh</command> Shell script to find overlaps and generate input
-for the GUI.
-</para>
+    <title>Introduction</title>
+    <para>
+      The overlap tool is an MGED GUI intended to make it easier to
+      visualize and resolve overlaps between regions.
+    </para>
 
-<para>
-The basic script invocation looks like this:
-</para>
+    <para>
+      The biggest assumption made by the overlap tool is that all matrices
+      in the database are identity (e.g. they've been pushed using the <command>xpush</command> command).
+    </para>
+  </section>
 
-<screen>
+  <section>
+    <title>Command Usage</title>
+    <section>
+      <title>Step 1 - Find Overlaps</title>
+      <para>
+	Run the <command>check.sh</command> Shell script to find overlaps and generate input
+	for the GUI.
+      </para>
+
+      <para>
+	The basic script invocation looks like this:
+      </para>
+
+      <screen>
 $ ./check.sh model.g [top ...]
-</screen>
+      </screen>
 
-<para>
-  This assumes <filename>check.sh</filename> and <filename>model.g</filename> are both in your current
-directory. If they aren't, you can specify full paths to either or
-both. For example:
-</para>
+      <para>
+	This assumes <filename>check.sh</filename> and <filename>model.g</filename> are both in your current
+	directory. If they aren't, you can specify full paths to either or
+	both. For example:
+      </para>
 
-<screen>
+      <screen>
 $ ~/checker/check.sh ./models/model.g
-</screen>
+      </screen>
 
-<para>
-By default, all top-level objects in the model are checked, but you
-can specify specific ones if you want to save time or get a shorter
-and more manageable list to work through.
-</para>
+      <para>
+	By default, all top-level objects in the model are checked, but you
+	can specify specific ones if you want to save time or get a shorter
+	and more manageable list to work through.
+      </para>
 
-<para>
-The script produces an output directory in the current directory (i.e. not the model directory unless it's the same)
-named <filename>&lt;model.g&gt;.ck</filename>. If you rerun the script in the same
-directory, the previous output will be overwritten.
-</para>
+      <para>
+	The script produces an output directory in the current directory (i.e. not the model directory unless it's the same)
+	named <filename>&lt;model.g&gt;.ck</filename>. If you rerun the script in the same
+	directory, the previous output will be overwritten.
+      </para>
 
-<para>
-  The script uses the BRL-CAD programs <command>loop</command>, <command>mged</command>, <command>rtcheck</command>, <command>gqa</command>, and
-<command>mged</command>. It will uses the versions determined by the <varname>PATH</varname>
-environment variable, or else the ones installed in
-<filename>/usr/brlcad/bin</filename>.
-</para>
+      <para>
+	The script uses the BRL-CAD programs <command>loop</command>, <command>mged</command>, <command>rtcheck</command>, <command>gqa</command>, and
+	<command>mged</command>. It will uses the versions determined by the <varname>PATH</varname>
+	environment variable, or else the ones installed in
+	<filename>/usr/brlcad/bin</filename>.
+      </para>
 
-<para>
-  In order to find overlaps the script runs <command>rtcheck</command> at size 1024 from
-16 different views (45 degree steps in az and el directions) and
-then runs <command>gqa -Ao -g1mm,1mm</command>.
-</para>
+      <para>
+	In order to find overlaps the script runs <command>rtcheck</command> at size 1024 from
+	16 different views (45 degree steps in az and el directions) and
+	then runs <command>gqa -Ao -g1mm,1mm</command>.
+      </para>
 
-<warning><para>
-  Running <command>rtcheck</command> and <command>gqa</command> can take many hours for non-trivial
-geometry. If your terminal window gets closed for any reason, the
-script will terminate and you'll get incomplete/unusable output.
-</para></warning>
-  </section> <!-- step 1 - find overlaps -->
-  <section>
-    <title>Step 2 - View &amp; Resolve Overlaps</title>
+      <warning><para>
+	Running <command>rtcheck</command> and <command>gqa</command> can take many hours for non-trivial
+	geometry. If your terminal window gets closed for any reason, the
+	script will terminate and you'll get incomplete/unusable output.
+      </para></warning>
+    </section> <!-- step 1 - find overlaps -->
     <section>
-      <title>Basic Steps to Launch the Overlap Resolution GUI</title>
-<orderedlist>
-<listitem><para>
-    Open MGED and load the <filename>check.tcl</filename> script. This adds a <command>check</command> command.
-</para></listitem>
+      <title>Step 2 - View &amp; Resolve Overlaps</title>
+      <section>
+	<title>Basic Steps to Launch the Overlap Resolution GUI</title>
+	<orderedlist>
+	  <listitem><para>
+	   Open MGED and load the <filename>check.tcl</filename> script. This adds a <command>check</command> command.
+	  </para></listitem>
 
-<listitem><para>
-    Open the .g file that was processed with <filename>check.sh</filename>.
-</para></listitem>
+	  <listitem><para>
+	    Open the .g file that was processed with <filename>check.sh</filename>.
+	  </para></listitem>
 
-<listitem><para>
-In the mged command window:
+	  <listitem><para>
+	   In the mged command window:
 
-<screen>
+	  <screen>
 mged&gt; check -F [.overlaps file]
-</screen>
-</para></listitem>
-</orderedlist>
+	  </screen>
+	  </para></listitem>
+	</orderedlist>
+      </section>
+      <section>
+	<title>Invocation Details</title>
+	<para>
+	  Running just <command>check</command> with no arguments causes the script to look
+	  in the same directory as the open database for a <filename>&lt;model.g&gt;.ck</filename>
+	  directory, which contains a <filename>ck.&lt;model.g&gt;.overlaps</filename> file that has
+	  the primary script output.
+	</para>
+
+	<para>
+	  You can give the path of the <filename>.overlaps</filename> file as an argument if the
+	  database is in a different directory than the <filename>.ck</filename> results
+	  directory is in, or if you rename the database file after
+	  generating th results directory.
+	</para>
+
+	<para>
+	  The <literal>-F</literal> option tells the tool it's okay to make assumptions about
+	  overlaps when doing subtractions (see <xref linkend="subtraction_assumptions"/>).
+	</para>
+      </section>
+    </section> <!-- step 2 -->
+  </section> <!-- command usage -->
+  <section>
+    <title>Using the GUI</title>
+    <section>
+      <title>Bounding-Box Volume Calculation</title>
+      <para>
+	When you run the check command, the first thing that happens is
+	the volume of the axis-aligned bounding box for each overlapping
+	object is calculated. This can take several minutes depending on
+	the size of the overlaps file.
+      </para>
+
+      <para>
+	When this finishes, the GUI window will populate.
+      </para>
+
     </section>
     <section>
-      <title>Invocation Details</title>
-<para>
-Running just <command>check</command> with no arguments causes the script to look
-in the same directory as the open database for a <filename>&lt;model.g&gt;.ck</filename>
-directory, which contains a <filename>ck.&lt;model.g&gt;.overlaps</filename> file that has
-the primary script output.
-</para>
+      <title>The Overlap List</title>
+      <para>
+	The main element of the GUI is the overlap list, which consists
+	of four columns. The first column on the left is just a reference
+	number for the overlap.
+      </para>
 
-<para>
-  You can give the path of the <filename>.overlaps</filename> file as an argument if the
-  database is in a different directory than the <filename>.ck</filename> results
-directory is in, or if you rename the database file after
-generating th results directory.
-</para>
+      <para>
+	The second and third columns are the paths of the overlapping
+	regions. <emphasis role="bold">The region with the smaller bounding-box volume is
+	always listed first</emphasis>, as the "Left" side of the overlapping pair.
+      </para>
 
-<para>
-  The <literal>-F</literal> option tells the tool it's okay to make assumptions about
-  overlaps when doing subtractions (see <xref linkend="subtraction_assumptions"/>).
-</para>
+      <para>
+	The rightmost column is an estimate of the overlapping volume in
+	mm<superscript>3</superscript>. This is not a separately calculated value, but rather an
+	estimate derived from the overlap data. It's not particularly
+	accurate for any given overlap pair, but the relative
+	relationship of the estimates is fairly accurate, so pairs with a
+	higher volume estimate generally have a larger overlap volume
+	than pairs with a lower volume estimate.
+      </para>
+
+      <para>
+	By default, the overlap list is sorted by highest volume estimate
+	first, but you can click any of the headers to sort
+	ascending/descending by overlap number, left or right path name,
+	or volume estimate.
+      </para>
+
     </section>
-  </section> <!-- step 2 -->
-</section> <!-- command usage -->
-<section>
-  <title>Using the GUI</title>
-  <section>
-    <title>Bounding-Box Volume Calculation</title>
-<para>
-When you run the check command, the first thing that happens is
-the volume of the axis-aligned bounding box for each overlapping
-object is calculated. This can take several minutes depending on
-the size of the overlaps file.
-</para>
+    <section>
+      <title>Drawing Overlap Paths</title>
+      <para>
+	Clicking on an overlap will cause the left and right paths to be
+	drawn as wireframes in the display window. The wireframes are
+	colored red and blue respectively (matching the subtraction
+	buttons at the bottom of the window).
+      </para>
 
-<para>
-When this finishes, the GUI window will populate.
-</para>
+      <para>
+	Below the overlap list is an option to draw only the first
+	unioned solid in the region instead of the whole region. It's
+	enabled automatically when using the <literal>-F</literal> option, because it shows
+	just the two objects the <literal>-F</literal> mode assumes to be responsible for
+	the overlap. However, this display option can be toggled whether
+	you're using <literal>-F</literal> or not.
+      </para>
 
-  </section>
-  <section>
-    <title>The Overlap List</title>
-<para>
-The main element of the GUI is the overlap list, which consists
-of four columns. The first column on the left is just a reference
-number for the overlap.
-</para>
-
-<para>
-The second and third columns are the paths of the overlapping
-regions. <emphasis role="bold">The region with the smaller bounding-box volume is
-always listed first</emphasis>, as the "Left" side of the overlapping pair.
-</para>
-
-<para>
-The rightmost column is an estimate of the overlapping volume in
-mm<superscript>3</superscript>. This is not a separately calculated value, but rather an
-estimate derived from the overlap data. It's not particularly
-accurate for any given overlap pair, but the relative
-relationship of the estimates is fairly accurate, so pairs with a
-higher volume estimate generally have a larger overlap volume
-than pairs with a lower volume estimate.
-</para>
-
-<para>
-By default, the overlap list is sorted by highest volume estimate
-first, but you can click any of the headers to sort
-ascending/descending by overlap number, left or right path name,
-or volume estimate.
-</para>
-
-  </section>
-  <section>
-    <title>Drawing Overlap Paths</title>
-<para>
-Clicking on an overlap will cause the left and right paths to be
-drawn as wireframes in the display window. The wireframes are
-colored red and blue respectively (matching the subtraction
-buttons at the bottom of the window).
-</para>
-
-<para>
-Below the overlap list is an option to draw only the first
-unioned solid in the region instead of the whole region. It's
-enabled automatically when using the <literal>-F</literal> option, because it shows
-just the two objects the <literal>-F</literal> mode assumes to be responsible for
-the overlap. However, this display option can be toggled whether
-you're using <literal>-F</literal> or not.
-</para>
-
-<para>
-To navigate through overlaps you can:
-</para>
-<itemizedlist>
-<listitem><para>Use the up/down keyboard keys to draw each overlap in turn.
-</para></listitem>
-<listitem><para>Use the scroll bar on the right side of the overlap list to
-find a specific overlap.
-</para></listitem>
-<listitem><para>Use the Home and End keyboard keys to scroll all the way to the
-top or bottom of the list.
-</para></listitem>
-</itemizedlist>
+      <para>
+	To navigate through overlaps you can:
+      </para>
+      <itemizedlist>
+	<listitem><para>Use the up/down keyboard keys to draw each overlap in turn.
+	</para></listitem>
+	<listitem><para>Use the scroll bar on the right side of the overlap list to
+	find a specific overlap.
+	</para></listitem>
+	<listitem><para>Use the Home and End keyboard keys to scroll all the way to the
+	top or bottom of the list.
+	</para></listitem>
+      </itemizedlist>
 
 
-<para>
-If you shift-select multiple paths, all those paths are
-drawn. For large regions, it can take a while for all paths to be
-drawn. There's a progress bar below the overlap list that shows
-how many of the selected paths have been drawn. The specific
-region being drawn appears above the progress bar.
-</para>
+      <para>
+	If you shift-select multiple paths, all those paths are
+	drawn. For large regions, it can take a while for all paths to be
+	drawn. There's a progress bar below the overlap list that shows
+	how many of the selected paths have been drawn. The specific
+	region being drawn appears above the progress bar.
+      </para>
 
-<para>
-The "X" button to the right of the progress bar can be pressed at
-any time during drawing to stop any more regions from being
-drawn. On a shift-select, there's a short pause (about three
-seconds) before any drawing begins so you can hit the X button
-and prevent anything from being drawn at all.
-</para>
+      <para>
+	The "X" button to the right of the progress bar can be pressed at
+	any time during drawing to stop any more regions from being
+	drawn. On a shift-select, there's a short pause (about three
+	seconds) before any drawing begins so you can hit the X button
+	and prevent anything from being drawn at all.
+      </para>
 
-  </section>
-  <section>
-    <title>Marking Overlaps</title>
-<para>
-You can right-click on selected overlaps and chose "Mark
-Selected" or "Unmark Selected" to indicate which overlap pairs
-you have reviewed or attempted a fix on.
-</para>
+    </section>
+    <section>
+      <title>Marking Overlaps</title>
+      <para>
+	You can right-click on selected overlaps and chose "Mark
+	Selected" or "Unmark Selected" to indicate which overlap pairs
+	you have reviewed or attempted a fix on.
+      </para>
 
-<para>
-Marked overlaps are grayed out and moved to the bottom of the
-overlap list. The marked and unmarked sections independently
-maintain the current sorting of the overlap list.
-</para>
+      <para>
+	Marked overlaps are grayed out and moved to the bottom of the
+	overlap list. The marked and unmarked sections independently
+	maintain the current sorting of the overlap list.
+      </para>
 
-<para>
-  These markings are saved to the <filename>.ck</filename> directory, so they are
-maintained when you close and reopen MGED.
-</para>
+      <para>
+	These markings are saved to the <filename>.ck</filename> directory, so they are
+	maintained when you close and reopen MGED.
+      </para>
 
-  </section>
-  <section>
-    <title>Automatic Subtraction</title>
-<para>
-For each pair of overlapping objects, the overlap GUI can
-automatically rewrite the tree of one side of the pair to
-subtract the other side to attempt to resolve the overlap.
-</para>
+    </section>
+    <section>
+      <title>Automatic Subtraction</title>
+      <para>
+	For each pair of overlapping objects, the overlap GUI can
+	automatically rewrite the tree of one side of the pair to
+	subtract the other side to attempt to resolve the overlap.
+      </para>
 
-<para>
-Once you select one or more unmarked overlap pairs, the subtract
-buttons at the bottom of the window will enable and you can
-choose to subtract all the left-hand regions from the right-hand
-ones or vice versa.
-</para>
+      <para>
+	Once you select one or more unmarked overlap pairs, the subtract
+	buttons at the bottom of the window will enable and you can
+	choose to subtract all the left-hand regions from the right-hand
+	ones or vice versa.
+      </para>
 
-<para>
-Each pair that's processed will be automatically marked in the
-overlap list.
-</para>
+      <para>
+	Each pair that's processed will be automatically marked in the
+	overlap list.
+      </para>
 
-<para>
-The progress bar and X button work the same for subtractions as
-for drawing.
-</para>
-<warning><para>Performing many subtractions at the
-same time can take a while and if MGED is killed for some reason
-(e.g. system restart), the overlap tool isn't guaranteed to
-handle that situation gracefully. It may corrupt the region it's
-currently re-writing or fail to mark a processed overlap pair.
-</para></warning>
+      <para>
+	The progress bar and X button work the same for subtractions as
+	for drawing.
+      </para>
+      <warning><para>Performing many subtractions at the
+	same time can take a while and if MGED is killed for some reason
+	(e.g. system restart), the overlap tool isn't guaranteed to
+	handle that situation gracefully. It may corrupt the region it's
+	currently re-writing or fail to mark a processed overlap pair.
+      </para></warning>
 
-<para xml:id="subtraction_assumptions" xreflabel="subtraction assumptions">
-By default, the overlap GUI will refuse to
-subtract any combination that doesn't reduce to a single
-solid. That's because subtracting a non-trivial combination
-complicates the re-written tree, and can lead to cycles (a - b -
-a).
-</para>
+      <para xml:id="subtraction_assumptions" xreflabel="subtraction assumptions">
+	By default, the overlap GUI will refuse to
+	subtract any combination that doesn't reduce to a single
+	solid. That's because subtracting a non-trivial combination
+	complicates the re-written tree, and can lead to cycles (a - b -
+	a).
+      </para>
 
-<para>
-Providing the <literal>-F</literal> ("first") option to the check command causes the
-overlap GUI to assume that the overlap between an overlapping
-pair only involves the first unioned solid in their respective
-trees. Subtracting a combination with the <literal>-F</literal> option enabled
-results in just the first unioned solid of that combination being
-subtracted from the first unioned solid in the other object's tree.
-</para>
+      <para>
+	Providing the <literal>-F</literal> ("first") option to the check command causes the
+	overlap GUI to assume that the overlap between an overlapping
+	pair only involves the first unioned solid in their respective
+	trees. Subtracting a combination with the <literal>-F</literal> option enabled
+	results in just the first unioned solid of that combination being
+	subtracted from the first unioned solid in the other object's tree.
+      </para>
 
-<para>
-For example, if <emphasis>a</emphasis> overlaps <emphasis>b</emphasis> and they look like this:
-</para>
+      <para>
+	For example, if <emphasis>a</emphasis> overlaps <emphasis>b</emphasis> and they look like this:
+      </para>
 
-<screen>
+      <screen>
 a/R
   u <emphasis role="bold">adapter.s</emphasis>
   u alert.c
@@ -302,20 +302,20 @@ b/R
       u <emphasis role="bold">bend.s</emphasis>
   - blend.c
     u balance.s
-</screen>
+      </screen>
 
-<para>
-Then subtracting <emphasis>b</emphasis> from <emphasis>a</emphasis> would rewrite <emphasis>a</emphasis> to:
-</para>
+      <para>
+	Then subtracting <emphasis>b</emphasis> from <emphasis>a</emphasis> would rewrite <emphasis>a</emphasis> to:
+      </para>
 
-<screen>
+      <screen>
 a/R
   u <emphasis role="bold">adapter.s</emphasis>
   - <emphasis role="bold">bend.s</emphasis>
   u alert.c
     u ac.s
   - ant.s
-</screen>
-  </section> <!-- automatic subtraction -->
-</section> <!-- gui -->
+      </screen>
+    </section> <!-- automatic subtraction -->
+  </section> <!-- gui -->
 </article>
