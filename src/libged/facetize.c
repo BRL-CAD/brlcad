@@ -514,7 +514,12 @@ HIDDEN struct rt_bot_internal *
 _try_decimate(struct rt_bot_internal *bot, fastf_t feature_size, struct _ged_facetize_opts *o)
 {
     size_t success = 0;
-    struct rt_bot_internal *nbot;
+    /* these are static for longjmp */
+    static struct rt_bot_internal *nbot;
+    static struct rt_bot_internal *obot;
+
+    obot = bot;
+    nbot = NULL;
 
     BU_ALLOC(nbot, struct rt_bot_internal);
     nbot->magic = RT_BOT_INTERNAL_MAGIC;
@@ -540,7 +545,7 @@ _try_decimate(struct rt_bot_internal *bot, fastf_t feature_size, struct _ged_fac
 	bu_free(nbot->vertices, "free vertices");
 	bu_free(nbot, "free bot");
 	_ged_facetize_log_default(o);
-	return bot;
+	return obot;
     } BU_UNSETJUMP;
 
     if (success) {
@@ -554,7 +559,7 @@ _try_decimate(struct rt_bot_internal *bot, fastf_t feature_size, struct _ged_fac
 	bu_free(nbot->vertices, "free vertices");
 	bu_free(nbot, "free bot");
 	_ged_facetize_log_default(o);
-	return bot;
+	return obot;
     }
 }
 
