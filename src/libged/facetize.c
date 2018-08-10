@@ -80,6 +80,7 @@ struct _ged_facetize_opts {
     /* internal */
     struct bu_attribute_value_set *c_map;
     struct bu_attribute_value_set *s_map;
+    struct bu_hook_list *saved_bomb_hooks;
     struct bu_hook_list *saved_log_hooks;
     struct bu_vls *nmg_log;
     struct bu_vls *nmg_log_header;
@@ -126,6 +127,9 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     BU_ALLOC(o->saved_log_hooks, struct bu_hook_list);
     bu_hook_list_init(o->saved_log_hooks);
 
+    BU_ALLOC(o->saved_bomb_hooks, struct bu_hook_list);
+    bu_hook_list_init(o->saved_bomb_hooks);
+
     BU_GET(o->nmg_log, struct bu_vls);
     bu_vls_init(o->nmg_log);
 
@@ -149,6 +153,10 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
 
     bu_hook_delete_all(o->saved_log_hooks);
     bu_free(o->saved_log_hooks, "saved log hooks");
+
+    bu_hook_delete_all(o->saved_bomb_hooks);
+    bu_free(o->saved_bomb_hooks, "saved log hooks");
+
     bu_vls_free(o->nmg_log);
     bu_vls_free(o->nmg_log_header);
     BU_PUT(o->nmg_log, struct bu_vls);
@@ -220,16 +228,16 @@ _ged_facetize_log_nmg(struct _ged_facetize_opts *o)
      * application defaults */
     bu_log_hook_delete_all();
     bu_log_add_hook(_ged_facetize_nmg_logging_hook, (void *)o);
+
+    /* Also engage the nmg bomb hooks */
+    bu_bomb_delete_all_hooks();
+    bu_bomb_add_hook(_ged_facetize_bomb_hook, (void *)o);
 }
 
 
 HIDDEN void
 _ged_facetize_log_default(struct _ged_facetize_opts *o)
 {
-    /* Restore bu_log logging to the application defaults */
-    bu_log_hook_delete_all();
-    bu_log_hook_restore_all(o->saved_log_hooks);
-
     /* Put stderr back */
     if (o->fnull != -1) {
 	fflush(stderr);
@@ -237,6 +245,14 @@ _ged_facetize_log_default(struct _ged_facetize_opts *o)
 	close(o->stderr_stashed);
 	o->fnull = -1;
     }
+
+    /* Restore bu_bomb hooks to the application defaults */
+    bu_bomb_delete_all_hooks();
+    bu_bomb_restore_hooks(o->saved_bomb_hooks);
+
+    /* Restore bu_log hooks to the application defaults */
+    bu_log_hook_delete_all();
+    bu_log_hook_restore_all(o->saved_log_hooks);
 }
 
 HIDDEN void
@@ -1408,7 +1424,6 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int ret = GED_OK;
     static const char *usage = "Usage: facetize [ -nmhT | [--poisson] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
     static const char *pusage = "Usage: facetize --poisson [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
-    struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
     int print_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
     struct bu_opt_desc d[12];
@@ -1452,9 +1467,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
      * bu_bomb calls during operation. Because we need facetize to run
      * to completion and potentially try multiple ways to convert before
      * giving up, we need to un-hook any pre-existing bu_bomb hooks */
-    bu_bomb_save_all_hooks(&saved_hooks);
-    bu_bomb_delete_all_hooks();
-    bu_bomb_add_hook(_ged_facetize_bomb_hook, (void *)opts);
+    bu_bomb_save_all_hooks(opts->saved_bomb_hooks);
 
     /* We will need to catch libnmg output and store it up for later
      * use, while still bu_logging our own status updates. Cache the
@@ -1532,11 +1545,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 ged_facetize_memfree:
     _ged_facetize_opts_destroy(opts);
 
-    /* put the original bu_bomb hooks back */
-    bu_bomb_restore_hooks(&saved_hooks);
-    bu_hook_delete_all(&saved_hooks);
-
-    return ret;
+     return ret;
 }
 
 
